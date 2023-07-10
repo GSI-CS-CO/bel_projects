@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 07-Jul-2023
+ *  version : 10-Jul-2023
  *
  * checks jitter between two timing receivers connected via a Lemo cable 
  * the first timing receiver outputs a PPS pulse
@@ -97,38 +97,106 @@ uint32_t    disStateId        = 0;
 uint32_t    disJitterChkId    = 0;
 
 // saftlib
-std::shared_ptr<TimingReceiver_Proxy> receiverPPS;   // TR for PPS
-std::shared_ptr<Output_Proxy>         output_proxy;
+std::shared_ptr<TimingReceiver_Proxy> ppsReceiver;   // TR for PPS and TS
+std::shared_ptr<Output_Proxy>         ppsOutProxy;
+std::shared_ptr<Input_Proxy>          ppsInProxy;
+bool                                  ppsOutFound;
+bool                                  ppsInFound;
 char                                  ppsName[128];
 
-std::shared_ptr<TimingReceiver_Proxy> receiverTS;    // TR for TS
-std::shared_ptr<Input_Proxy>          input_proxy;
+std::shared_ptr<TimingReceiver_Proxy> tsReceiver;    // TR for TS
+std::shared_ptr<Output_Proxy>         tsOutProxy;
+std::shared_ptr<Input_Proxy>          tsInProxy;
+bool                                  tsOutFound;
+bool                                  tsInFound;
 char                                  tsName[128];
 
+
+// calc basic statistic properties
+void calcStats(double *meanNew,         // new mean value, please remember for later
+               double meanOld,          // old mean value (required for 'running stats')
+               double *streamNew,       // new stream value, please remember for later
+               double streamOld,        // old stream value (required for 'running stats')
+               double val,              // the new value :-)
+               uint32_t n,              // number of values (required for 'running stats')
+               double *var,             // standard variance
+               double *sdev             // standard deviation
+               )
+{
+  // see  ”The Art of ComputerProgramming, Volume 2: Seminumerical Algorithms“, Donald Knuth, or
+  // http://www.netzmafia.de/skripten/hardware/Control/auswertung.pdf
+  if (n > 1) {
+    *meanNew   = meanOld + (val - meanOld) / (double)n;
+    *streamNew = streamOld + (val - meanOld)*(val - *meanNew);
+    *var       = *streamNew / (double)(n - 1);
+    *sdev      = sqrt(*var);
+  }
+  else {
+    *meanNew = val;
+    *var     = 0;
+  }
+} // calcStats
 
 
 // handle received timing message
 static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, uint64_t param, uint32_t tef, uint32_t isLate, uint32_t isEarly, uint32_t isConflict, uint32_t isDelayed)
 {
+  double    tAct;                   // fractional time (sub second part) of the deadline
+  double    tAve;
+  double    tmpStream        = 0;
+  double    tSdev;
+  double    dummy;
+  static double   tMin       = 999999999;
+  static double   tMax       = 0;
+  static uint32_t tN         = 0;
+  static double   tAveOld    = 0;   
+  static double   tStreamOld = 0;
 
-  uint32_t            recSid;          // received SID
+  if (tsReceiver->getLocked() && ppsReceiver->getLocked()) sprintf(disState, "%s", b2b_state_text(COMMON_STATE_OPREADY));
+  else                                                     sprintf(disState, "%s", b2b_state_text(COMMON_STATE_ERROR));
 
-  recSid      = ((evtId  & 0x00000000fff00000) >> 20);
+  if (tag == 17) {
+    tAct = deadline.getTAI() % 1000000000;
+      
+    // statistics
+    tN++;
+    calcStats(&tAve, tAveOld, &tmpStream, tStreamOld, tAct, tN , &dummy, &tSdev);
+    tAveOld          = tAve;
+    tStreamOld       = tmpStream;
+    if (tAct < tMin) tMin = tAct;
+    if (tAct > tMax) tMax = tAct;
+    
+    //printf("# %6d, act %f, ave %f, sdev %f, min %f, max %f\n", tN, tAct, tAve, tSdev, tMin, tMax);
+    
+    disJitterChk.ppsAct  = tAct;
+    disJitterChk.ppsN    = tN;
+    disJitterChk.ppsMean = tAve;
+    disJitterChk.ppsSdev = tSdev;
+    disJitterChk.ppsMin  = tMin;
+    disJitterChk.ppsMax  = tMax;
+  } // if locked
+  else {
+    disJitterChk.ppsAct  = NAN;
+  } // else locked
 
-  // check ranges
-  if (recSid  > B2B_NSID)                 return;
-  if (tag > tagStop)                      return;
+  dis_update_service(disJitterChkId);
+  dis_update_service(disStateId);
+} // timingMessage
+
+
+// this will be called in case no message was received
+static void recTimeout()
+{
+  saftlib::Time time = saftlib::makeTimeTAI(12345); 
   
- 
-  //printf("out tag %d, bpid %d\n", tag, bpid);
-} // timingmessage
+  timingMessage(42, time, 0x0, 0x0, 0x0, 0, 0, 0, 0);
+} // recTimeout()
 
 
 // this will be called when receiving ECA actions from software action queue
-// informative: this routine is presently not used, as the softare action queue does not support the TEF field
 static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags, uint32_t tag)
 {
-  int                 flagLate;
+  int flagLate;
 
   flagLate    = flags & 0x1;
 
@@ -157,7 +225,7 @@ void disAddServices(char *prefix)
   disVersionId   = dis_add_service(name, "C", disVersion, 8, 0 , 0);
 
   sprintf(name, "%s-jitter-check_state", prefix);
-  sprintf(disState, "%s", b2b_state_text(COMMON_STATE_OPREADY));
+  sprintf(disState, "%s", b2b_state_text(COMMON_STATE_ERROR));
   disStateId      = dis_add_service(name, "C", disState, 10, 0 , 0);
 
   sprintf(name, "%s-jitter-check_hostname", prefix);
@@ -194,54 +262,99 @@ static void help(void) {
 
 void ppsOutConfig()
 {
+  std::map< std::string, std::string > ins;  
   std::map< std::string, std::string > outs;
-  bool   io_found  = false;
+  bool                                 i_found  = false;
+  bool                                 o_found  = false;
 
-  outs = receiverPPS->getOutputs();
+  outs = ppsReceiver->getOutputs();
+  ins  = ppsReceiver->getInputs();
 
   for (std::map<std::string,std::string>::iterator it=outs.begin(); it!=outs.end(); ++it) {
     if (it->first == ppsName) {
-      io_found = true;
-      output_proxy = Output_Proxy::create(it->second);
+      i_found = true;
+      ppsOutProxy = Output_Proxy::create(it->second);
     } // if it
   } // for it
 
-  // found IO
-  if (io_found == false) {
-    std::cerr << "no IO with the name " << ppsName << std::endl;
+  for (std::map<std::string,std::string>::iterator ito=ins.begin(); ito!=ins.end(); ++ito) {
+    if (ito->first == tsName) {
+      o_found = true;
+      ppsInProxy = Input_Proxy::create(ito->second); 
+    } // if it
+  } // for it
+
+
+  // input not found
+  if (i_found == false) {
+    std::cerr << "no input with the name " << ppsName << std::endl;
     exit(1);
   }
 
-  output_proxy->setOutputEnable(true);
-  output_proxy->setGateOut(true);
-  output_proxy->WriteOutput(false);
-  output_proxy->setPPSMultiplexer(true); 
+  // output not found
+  if (o_found == false) {
+    std::cerr << "no output with the name " << ppsName << std::endl;
+    exit(1);
+  }
+  
+  // reset input properties
+  ppsInProxy->setEventEnable(false);
+  ppsInProxy->setInputTermination(false);
+  ppsInProxy->setGateIn(false);
+  
+  // set output properties
+  ppsOutProxy->setOutputEnable(true);
+  ppsOutProxy->setGateOut(true);
+  ppsOutProxy->WriteOutput(false);
+  ppsOutProxy->setPPSMultiplexer(true); 
 } //ppsOutConfig
 
 
 void tsInConfig()
 {
+  std::map< std::string, std::string > outs; 
   std::map< std::string, std::string > ins;
-  bool   io_found  = false;
+  bool                                 i_found  = false;
+  bool                                 o_found  = false;
 
-  ins = receiverPPS->getInputs();
+  ins  = tsReceiver->getInputs();
+  outs = tsReceiver->getOutputs();
+  
 
   for (std::map<std::string,std::string>::iterator it=ins.begin(); it!=ins.end(); ++it) {
     if (it->first == tsName) {
-      io_found = true;
-      input_proxy = Input_Proxy::create(it->second);
+      i_found = true;
+      tsInProxy  = Input_Proxy::create(it->second);
     } // if it
   } // for it
 
-  // found IO
-  if (io_found == false) {
-    std::cerr << "no IO with the name " << tsName << std::endl;
+  for (std::map<std::string,std::string>::iterator ito=outs.begin(); ito!=outs.end(); ++ito) {
+    if (ito->first == tsName) {
+      o_found = true;
+      tsOutProxy = Output_Proxy::create(ito->second); 
+    } // if it
+  } // for it
+
+  // input not found
+  if (i_found == false) {
+    std::cerr << "no input with the name " << tsName << std::endl;
     exit(1);
   }
 
-  /* chk, maybe we need to set the output properties too (like a reset, just in case ...) */
-  input_proxy->setInputTermination(true);
-  input_proxy->setGateIn(true);
+  // output not found
+  if (o_found == false) {
+    std::cerr << "no output with the name " << tsName << std::endl;
+    exit(1);
+  }
+
+  // reset output properties
+  tsOutProxy->setOutputEnable(false);
+  tsOutProxy->setGateOut(false);
+  tsOutProxy->setPPSMultiplexer(false);
+
+  // set input properties
+  tsInProxy->setInputTermination(true);
+  tsInProxy->setGateIn(true);
 } //tsInConfig
 
 
@@ -271,12 +384,12 @@ int main(int argc, char** argv)
 
   // parse for options
   program = argv[0];
-  while ((opt = getopt(argc, argv, "pt:h")) != -1) {
+  while ((opt = getopt(argc, argv, "p:t:h")) != -1) {
     switch (opt) {
       case 'p' :
         ioPPS = strtol(optarg, &tail, 0);
         if (ioPPS < 0) {
-          std::cerr << "option -e: parameter out of range" << std::endl;
+          std::cerr << "option -t: parameter out of range" << std::endl;
           return 1;
         } // switch optarg
         if (*tail != 0) {
@@ -287,7 +400,7 @@ int main(int argc, char** argv)
       case 't' :
         ioTS = strtol(optarg, &tail, 0);
         if (ioTS < 0) {
-          std::cerr << "option -e: parameter out of range" << std::endl;
+          std::cerr << "option -t: parameter out of range" << std::endl;
           return 1;
         } // switch optarg
         if (*tail != 0) {
@@ -316,14 +429,19 @@ int main(int argc, char** argv)
     return 0;
   } // if optind
 
-  deviceNamePPS = argv[optind - 1];
-  deviceNameTS  = argv[optind];
+  //printf("optind %d\n", optind);
+
+  deviceNamePPS = argv[optind];
+  deviceNameTS  = argv[optind+1];
+  if (optind+1 < argc) sprintf(prefix, "b2b_%s", argv[optind+2]);
+  else                 sprintf(prefix, "b2b_blabla");
+
   gethostname(disHostname, 32);
   sprintf(ppsName, "IO%d", ioPPS);
   sprintf(tsName,  "IO%d", ioTS);
 
-  if (optind+1 < argc) sprintf(prefix, "b2b_%s", argv[++optind]);
-  else                 sprintf(prefix, "b2b_blabla");
+  printf("PPS %s, TS %s\n", deviceNamePPS, deviceNameTS);
+
 
   printf("%s: starting server using prefix %s\n", program, prefix);
 
@@ -342,31 +460,31 @@ int main(int argc, char** argv)
     // connect to timing receiver
     map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
 
-    // PPS out
+    // PPS
     if (devices.find(deviceNamePPS) == devices.end()) {
       std::cerr << "Device '" << deviceNamePPS << "' does not exist" << std::endl;
       return -1;
     } // find device
-    receiverPPS = TimingReceiver_Proxy::create(devices[deviceNamePPS]);
+    ppsReceiver = TimingReceiver_Proxy::create(devices[deviceNamePPS]);
     ppsOutConfig();
-
-
-    // TS in
+    
+    // TS
     if (devices.find(deviceNameTS) == devices.end()) {
       std::cerr << "Device '" << deviceNameTS << "' does not exist" << std::endl;
       return -1;
     } // find device
-    receiverTS = TimingReceiver_Proxy::create(devices[deviceNameTS]);
+    tsReceiver = TimingReceiver_Proxy::create(devices[deviceNameTS]);
     tsInConfig();
 
     // create software action sink
-    std::shared_ptr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiverTS->NewSoftwareActionSink(""));
+    std::shared_ptr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(tsReceiver->NewSoftwareActionSink(""));
     std::shared_ptr<SoftwareCondition_Proxy> condition;
 
     // configure condition; convention: prefix contains io number
     ioPrefix   = (uint64_t)ioTS << 36;
     evtPrefix |= ioPrefix;            
     snoopID    = evtPrefix + 0x1; // last bit is set: rising edge
+    //printf("id %llx\n", snoopID);
     condition  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xffffffffffffffff, 17));
     condition->setAcceptLate(true);
     condition->setAcceptEarly(true);
@@ -375,17 +493,20 @@ int main(int argc, char** argv)
     condition->SigAction.connect(sigc::bind(sigc::ptr_fun(&recTimingMessage), 17));
 
     // configure input to create an event (with timestamp) when LVTTL input is received
-    input_proxy->setEventEnable(false);
-    input_proxy->setEventPrefix(evtPrefix);
-    input_proxy->setEventEnable(true);
-
+    tsInProxy->setEventEnable(false);
+    tsInProxy->setEventPrefix(evtPrefix);
+    tsInProxy->setEventEnable(true);
 
     // let's go
     condition->setActive(true);    
 
     while(true) {
-      saftlib::wait_for_signal();
-    }
+      int mstimeout;
+
+      mstimeout = 10000;
+      
+      if (saftlib::wait_for_signal(mstimeout) == 0) recTimeout();
+    } // while true
     
   } // try
   catch (const saftbus::Error& error) {
