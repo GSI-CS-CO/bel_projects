@@ -13,8 +13,4 @@ logger 'starting 25MHz clock'
 saft-io-ctl  tr1 -n IO2 -o 1 -t 0
 saft-clk-gen tr1 -n IO2 -f 25000000 0
 
-logger 'starting 10 Hz clock'
-# generate 10 Hz clock with 0ns phase offset
-saft-io-ctl  tr1 -n IO1 -o 1 -t 0
-saft-clk-gen tr1 -n IO1 -f 10 0
 
