@@ -3,3 +3,4 @@ export DIM_DNS_NODE=asl105
 
 b2b-serv-sys dev/wbm0 -s int_esr-pm &
 b2b-serv-sys dev/wbm1 -s int_esr-cbu &
+b2b-jitter-check tr1 tr0 -p1 -t1 int_esr-pm &
