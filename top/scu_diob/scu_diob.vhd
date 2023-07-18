@@ -4119,45 +4119,54 @@ end generate Quench_Matrix_Gen;
                                               case conf_reg(1) is
                                                   when "00000011"  => -- 6 LEMO Input Modul FG902.130in slot 1
                                                       AW_SK_Input_Reg(1)( 5 downto  0) <=   (Deb_Sync72( 5 downto  0)   AND not IOBP_Masken_Reg1( 5 downto  0));
-                                                      IOBP_sK_Aktiv_LED_i(1)  <=  Deb72_out( 5 DOWNTO 0);   -- Signale für Aktiv-LED's
+                                                      --IOBP_sK_Aktiv_LED_i(1)  <=  Deb72_out( 5 DOWNTO 0);   -- Signale für Aktiv-LED's
+                                                      IOBP_sK_Aktiv_LED_i(1)  <= not ( IOBP_Masken_Reg1( 5 downto 0) );  -- Register für Sel-LED's vom Slave 1
                                                       IOBP_SK_Input(1)  <= ( PIO_SYNC(56),  PIO_SYNC(62),  PIO_SYNC(54),  PIO_SYNC(60),  PIO_SYNC(52),  PIO_SYNC(58));
                                                       IOBP_SK_Output(1) <=  (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(1)   <=  not ( IOBP_Masken_Reg1( 5 downto 0) );  -- Register für Sel-LED's vom Slave 1
+                                                      --IOBP_SK_Sel_LED(1)   <=  not ( IOBP_Masken_Reg1( 5 downto 0) );  -- Register für Sel-LED's vom Slave 1
+                                                      IOBP_SK_Sel_LED(1)   <=  Deb72_out( 5 DOWNTO 0);   -- Signale für Aktiv-LED's
                                                   
                                                   when "00000111"   => -- 6 LEMO Input Modul FG902150 in slot 1
                                                       AW_SK_Input_Reg(1)( 5 downto  0) <=   (Deb_Sync72( 5 downto  0)   AND not IOBP_Masken_Reg1( 5 downto  0));
-                                                      IOBP_sK_Aktiv_LED_i(1)  <=  Deb72_out( 5 DOWNTO 0);   -- Signale für Aktiv-LED's
+                                                      --IOBP_sK_Aktiv_LED_i(1)  <=  Deb72_out( 5 DOWNTO 0);   -- Signale für Aktiv-LED's
+                                                      IOBP_sK_Aktiv_LED_i(1)  <=  not ( IOBP_Masken_Reg1( 5 downto 0) );  -- Register für Sel-LED's vom Slave 1
                                                       IOBP_SK_Input(1)  <= not ( PIO_SYNC(56),  PIO_SYNC(62),  PIO_SYNC(54),  PIO_SYNC(60),  PIO_SYNC(52),  PIO_SYNC(58));
                                                       IOBP_SK_Output(1) <=  (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(1)   <=  not ( IOBP_Masken_Reg1( 5 downto 0) );  -- Register für Sel-LED's vom Slave 1
+                                                      --IOBP_SK_Sel_LED(1)   <=  not ( IOBP_Masken_Reg1( 5 downto 0) );  -- Register für Sel-LED's vom Slave 1
+                                                      IOBP_SK_Sel_LED(1)   <=  Deb72_out( 5 DOWNTO 0);   -- Signale für Aktiv-LED's
                                                       
 
                                                   when "00000100" => -- 6 LWL  Input Modul in slot 1
                                                       AW_SK_Input_Reg(1)( 5 downto  0) <=   (Deb_Sync72( 5 downto  0)   AND not IOBP_Masken_Reg1( 5 downto  0));
-                                                      IOBP_sK_Aktiv_LED_i(1)  <=  Deb72_out( 5 DOWNTO 0);   -- Signale für Aktiv-LED's
+                                                      --IOBP_sK_Aktiv_LED_i(1)  <=  Deb72_out( 5 DOWNTO 0);   -- Signale für Aktiv-LED's
+                                                      IOBP_sK_Aktiv_LED_i(1)  <=  not ( IOBP_Masken_Reg1( 5 downto 0) );  -- Register für Sel-LED's vom Slave 1
                                                       IOBP_SK_Input(1)  <= ( PIO_SYNC(56),  PIO_SYNC(60),  PIO_SYNC(62),  PIO_SYNC(52),  PIO_SYNC(54),  PIO_SYNC(58));
                                                       IOBP_SK_Output(1) <=  (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(1)   <=  not ( IOBP_Masken_Reg1( 5 downto 0) );  -- Register für Sel-LED's vom Slave 1
+                                                      --IOBP_SK_Sel_LED(1)   <=  not ( IOBP_Masken_Reg1( 5 downto 0) );  -- Register für Sel-LED's vom Slave 1
+                                                      IOBP_SK_Sel_LED(1)   <= Deb72_out( 5 DOWNTO 0);   -- Signale für Aktiv-LED's
 
                                                   when "00000101"  | "00000110" => -- Output Modul in slot 1
                                                       AW_SK_Input_Reg(1)( 5 downto  0) <=  (OTHERS => '0');
                                                       IOBP_SK_Output(1) <= (AW_Output_Reg(1)(5 downto 0) AND not IOBP_Masken_Reg1( 5 downto 0));
                                                       PIO_OUT_SLOT_1 <= IOBP_SK_Output(1);
                                                       PIO_ENA_SLOT_1 <= std_logic_vector'("111111");
-                                                      IOBP_SK_Aktiv_LED_i(1)  <=  IOBP_SK_Output(1);
+                                                      --IOBP_SK_Aktiv_LED_i(1)  <=  IOBP_SK_Output(1);
+                                                      IOBP_SK_Aktiv_LED_i(1)  <=   not ( IOBP_Masken_Reg1( 5 downto 0) );  -- Register für Sel-LED's vom Slave 1
                                                       IOBP_SK_Input(1)  <= (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(1)   <=  not ( IOBP_Masken_Reg1( 5 downto 0) );  -- Register für Sel-LED's vom Slave 1
+                                                      --IOBP_SK_Sel_LED(1)   <=  not ( IOBP_Masken_Reg1( 5 downto 0) );  -- Register für Sel-LED's vom Slave 1
+                                                      IOBP_SK_Sel_LED(1)   <=   IOBP_SK_Output(1);
 
                                                   when "00000001"|"00000010" => -- 5 In/1 Out Modul in slot 1
                                                       AW_SK_Input_Reg(1)( 4 downto  0) <=   (Deb_Sync72( 4 downto  0) AND not IOBP_Masken_Reg1( 4 downto  0));
                                                       AW_SK_Input_Reg(1)(5) <='0';
-                                                      IOBP_SK_Aktiv_LED_i(1)  <=  (IOBP_SK_Output(1)(5)    &  Deb72_out( 4 DOWNTO  0));  -- Signale für Aktiv-LED's
+                                                      --IOBP_SK_Aktiv_LED_i(1)  <=  (IOBP_SK_Output(1)(5)    &  Deb72_out( 4 DOWNTO  0));  -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Aktiv_LED_i(1)  <=  not ( IOBP_Masken_Reg7( 0) & IOBP_Masken_Reg1( 4 downto  0) );  -- Register für Sel-LED's vom Slave 1
                                                       IOBP_SK_Input(1) (4 downto 0) <= ( PIO_SYNC(62),  PIO_SYNC(54),  PIO_SYNC(60),  PIO_SYNC(52),  PIO_SYNC(58));
                                                       IOBP_SK_Output(1)(5)  <= (AW_Output_Reg(1)( 5) AND not IOBP_Masken_Reg7( 0));
                                                       PIO_OUT_SLOT_1 <= IOBP_SK_Output(1);
                                                       PIO_ENA_SLOT_1 <= std_logic_vector'("100000");
-                                                      IOBP_SK_Sel_LED(1) <=  not ( IOBP_Masken_Reg7( 0) & IOBP_Masken_Reg1( 4 downto  0) );  -- Register für Sel-LED's vom Slave 1
-												
+                                                      --IOBP_SK_Sel_LED(1) <=  not ( IOBP_Masken_Reg7( 0) & IOBP_Masken_Reg1( 4 downto  0) );  -- Register für Sel-LED's vom Slave 1
+                                                      IOBP_SK_Sel_LED(1) <= (IOBP_SK_Output(1)(5)    &  Deb72_out( 4 DOWNTO  0));  -- Signale für Aktiv-LED's
 
                                                   when others     =>  NULL;
                                               end case;
@@ -4168,45 +4177,56 @@ end generate Quench_Matrix_Gen;
                                         case conf_reg(2) is
                                                   when "00000011"   => -- 6 LEMO Input Modul FG902.130 in slot 2
                                                       AW_SK_Input_Reg(1)( 11 downto  6)<=   (Deb_Sync72( 11 downto  6)  AND not IOBP_Masken_Reg1( 11 downto  6));
-                                                      IOBP_SK_Aktiv_LED_i(2)  <=   Deb72_out(11 DOWNTO 6);   -- Signale für Aktiv-LED's
+                                                      --IOBP_SK_Aktiv_LED_i(2)  <=   Deb72_out(11 DOWNTO 6);   -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Aktiv_LED_i(2)  <=   not ( IOBP_Masken_Reg1(11 downto 6) );  -- Register für Sel-LED's vom Slave 2
                                                       IOBP_SK_Input(2)  <=( PIO_SYNC(96),  PIO_SYNC(102), PIO_SYNC(94), PIO_SYNC(100),  PIO_SYNC(92),  PIO_SYNC(98));
                                                       IOBP_SK_Output(2) <=  (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(2)   <=  not ( IOBP_Masken_Reg1(11 downto 6) );  -- Register für Sel-LED's vom Slave 2
-                                                  
+                                                      --IOBP_SK_Sel_LED(2)   <=  not ( IOBP_Masken_Reg1(11 downto 6) );  -- Register für Sel-LED's vom Slave 2
+                                                      IOBP_SK_Sel_LED(2)   <= Deb72_out(11 DOWNTO 6);   -- Signale für Aktiv-LED's
+
                                                   when "00000111"   => -- 6 LEMO Input Modul FG902150 in slot 2
                                                       AW_SK_Input_Reg(1)( 11 downto  6)<=   (Deb_Sync72( 11 downto  6)  AND not IOBP_Masken_Reg1( 11 downto  6));
-                                                      IOBP_SK_Aktiv_LED_i(2)  <=   Deb72_out(11 DOWNTO 6);   -- Signale für Aktiv-LED's
+                                                      --IOBP_SK_Aktiv_LED_i(2)  <=   Deb72_out(11 DOWNTO 6);   -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Aktiv_LED_i(2)  <=   not ( IOBP_Masken_Reg1(11 downto 6) );  -- Register für Sel-LED's vom Slave 2
                                                       IOBP_SK_Input(2)  <= not ( PIO_SYNC(96),  PIO_SYNC(102), PIO_SYNC(94), PIO_SYNC(100),  PIO_SYNC(92),  PIO_SYNC(98));
                                                       IOBP_SK_Output(2) <=  (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(2)   <=  not ( IOBP_Masken_Reg1(11 downto 6) );  -- Register für Sel-LED's vom Slave 2
+                                                      --IOBP_SK_Sel_LED(2)   <=  not ( IOBP_Masken_Reg1(11 downto 6) );  -- Register für Sel-LED's vom Slave 2
+                                                      IOBP_SK_Sel_LED(2)   <=   Deb72_out(11 DOWNTO 6);   -- Signale für Aktiv-LED's
                                                       
 
                                                   when "00000100" => -- 6 LWL Input Modul in slot 2
                                                       AW_SK_Input_Reg(1)( 11 downto  6)<=   (Deb_Sync72( 11 downto  6)  AND not IOBP_Masken_Reg1( 11 downto  6));
-                                                      IOBP_SK_Aktiv_LED_i(2)  <=   Deb72_out(11 DOWNTO 6);   -- Signale für Aktiv-LED's
+                                                      --IOBP_SK_Aktiv_LED_i(2)  <=   Deb72_out(11 DOWNTO 6);   -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Aktiv_LED_i(2)  <=   not ( IOBP_Masken_Reg1(11 downto 6) );  -- Register für Sel-LED's vom Slave 2
                                                       IOBP_SK_Input(2)  <=( PIO_SYNC(96),  PIO_SYNC(100), PIO_SYNC(102), PIO_SYNC(92),  PIO_SYNC(94),  PIO_SYNC(98));
                                                       IOBP_SK_Output(2) <=  (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(2)   <=  not ( IOBP_Masken_Reg1(11 downto 6) );  -- Register für Sel-LED's vom Slave 2
+                                                      --IOBP_SK_Sel_LED(2)   <=  not ( IOBP_Masken_Reg1(11 downto 6) );  -- Register für Sel-LED's vom Slave 2
+                                                      IOBP_SK_Sel_LED(2)   <=   Deb72_out(11 DOWNTO 6);   -- Signale für Aktiv-LED's
+
 
                                                   when "00000101"  | "00000110" => -- Output Modul in slot 2
                                                       AW_SK_Input_Reg(1)( 11 downto  6) <=  (OTHERS => '0');
-                                                      IOBP_SK_Output(2) <= (AW_Output_Reg(1)(11 downto 6) AND not IOBP_Masken_Reg1(11 downto 6));
-                                                      
+                                                     IOBP_SK_Output(2) <= (AW_Output_Reg(1)(11 downto 6) AND not IOBP_Masken_Reg1(11 downto 6));
+                                                     -- IOBP_SK_Output(2) <= "000010" AND not IOBP_Masken_Reg1( 11 downto  6);  --only for test
                                                       PIO_OUT_SLOT_2 <= IOBP_SK_Output(2);
                                                       PIO_ENA_SLOT_2 <= std_logic_vector'("111111");
-                                                      IOBP_SK_Aktiv_LED_i(2)  <=  IOBP_SK_Output(2);
+                                                      --IOBP_SK_Aktiv_LED_i(2)  <=  IOBP_SK_Output(2);
+                                                      IOBP_SK_Aktiv_LED_i(2)  <= not ( IOBP_Masken_Reg1(11 downto 6) );  -- Register für Sel-LED's vom Slave 2
                                                       IOBP_SK_Input(2)  <= (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(2)   <=  not ( IOBP_Masken_Reg1(11 downto 6) );  -- Register für Sel-LED's vom Slave 2
+                                                      --IOBP_SK_Sel_LED(2)   <=  not ( IOBP_Masken_Reg1(11 downto 6) );  -- Register für Sel-LED's vom Slave 2
+                                                      IOBP_SK_Sel_LED(2)   <=  IOBP_SK_Output(2);
 
                                                     when "00000001"|"00000010" => -- 5 In/1 Out Modul in slot 2
                                                       AW_SK_Input_Reg(1)( 10 downto  6) <=   (Deb_Sync72( 10 downto  6) AND not IOBP_Masken_Reg1( 10 downto  6));  -- Input, IO-Modul Nr. 2
                                                       AW_SK_Input_Reg(1)(11) <='0';
-                                                      IOBP_SK_Aktiv_LED_i(2)  <=  (IOBP_SK_Output(2)(5)    &  Deb72_out( 10 DOWNTO  6));  -- Signale für Aktiv-LED's
+                                                      --IOBP_SK_Aktiv_LED_i(2)  <=  (IOBP_SK_Output(2)(5)    &  Deb72_out( 10 DOWNTO  6));  -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Aktiv_LED_i(2)  <=   not ( IOBP_Masken_Reg7( 1) & IOBP_Masken_Reg1( 10 downto  6) );  -- Register für Sel-LED's vom Slave 2
                                                       IOBP_SK_Input(2) (4 downto 0) <= ( PIO_SYNC(102), PIO_SYNC(94), PIO_SYNC(100),  PIO_SYNC(92),  PIO_SYNC(98));
                                                       IOBP_SK_Output(2)(5)  <= (AW_Output_Reg(1)( 11) AND not IOBP_Masken_Reg7(1));
                                                       PIO_OUT_SLOT_2 <= IOBP_SK_Output(2);
                                                       PIO_ENA_SLOT_2 <= std_logic_vector'("100000");
-                                                      IOBP_SK_Sel_LED(2)<=    not ( IOBP_Masken_Reg7( 1) & IOBP_Masken_Reg1( 10 downto  6) );  -- Register für Sel-LED's vom Slave 2
+                                                      --IOBP_SK_Sel_LED(2)<=    not ( IOBP_Masken_Reg7( 1) & IOBP_Masken_Reg1( 10 downto  6) );  -- Register für Sel-LED's vom Slave 2
+                                                      IOBP_SK_Sel_LED(2)<=     (IOBP_SK_Output(2)(5)    &  Deb72_out( 10 DOWNTO  6));  -- Signale für Aktiv-LED's
 
                                                   when others     =>  NULL;
                                               end case;
@@ -4217,44 +4237,54 @@ end generate Quench_Matrix_Gen;
                                             case conf_reg(3) is
                                                 when "00000011"    => -- 6 LEMO Input Modul FG902.130  in slot 3
                                                       AW_SK_Input_Reg(2)( 5 downto  0) <=   (Deb_Sync72( 17 downto  12) AND not IOBP_Masken_Reg2( 5 downto  0));
-                                                      IOBP_SK_Aktiv_LED_i(3)  <=   Deb72_out(17 DOWNTO 12);   -- Signale für Aktiv-LED's
+                                                      --IOBP_SK_Aktiv_LED_i(3)  <=   Deb72_out(17 DOWNTO 12);   -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Aktiv_LED_i(3)  <=  not ( IOBP_Masken_Reg2( 5 downto 0) );  -- Register für Sel-LED's vom Slave 3
                                                       IOBP_SK_Input(3)  <=( PIO_SYNC(73),  PIO_SYNC(79),  PIO_SYNC(71),  PIO_SYNC(77),  PIO_SYNC(69),  PIO_SYNC(75));
                                                       IOBP_SK_Output(3) <=  (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(3)   <=  not ( IOBP_Masken_Reg2( 5 downto 0) );  -- Register für Sel-LED's vom Slave 3
+                                                      --IOBP_SK_Sel_LED(3)   <=  not ( IOBP_Masken_Reg2( 5 downto 0) );  -- Register für Sel-LED's vom Slave 3
+                                                      IOBP_SK_Sel_LED(3)   <=   Deb72_out(17 DOWNTO 12);   -- Signale für Aktiv-LED's
+
 
                                                when "00000111"   => -- 6 LEMO Input ModulFG902150 in slot 3
                                                     AW_SK_Input_Reg(2)( 5 downto  0) <=   (Deb_Sync72( 17 downto  12) AND not IOBP_Masken_Reg2( 5 downto  0));
-                                                    IOBP_SK_Aktiv_LED_i(3)  <=   Deb72_out(17 DOWNTO 12);   -- Signale für Aktiv-LED's
+                                                    --IOBP_SK_Aktiv_LED_i(3)  <=   Deb72_out(17 DOWNTO 12);   -- Signale für Aktiv-LED's
+                                                    IOBP_SK_Aktiv_LED_i(3)  <=   not( IOBP_Masken_Reg2( 5 downto 0) );  -- Register für Sel-LED's vom Slave 3
                                                     IOBP_SK_Input(3)  <= not ( PIO_SYNC(73),  PIO_SYNC(79),  PIO_SYNC(71),  PIO_SYNC(77),  PIO_SYNC(69),  PIO_SYNC(75));
                                                     IOBP_SK_Output(3) <=  (OTHERS => '0');
-                                                    IOBP_SK_Sel_LED(3)   <=  not( IOBP_Masken_Reg2( 5 downto 0) );  -- Register für Sel-LED's vom Slave 3
+                                                    --IOBP_SK_Sel_LED(3)   <=  not( IOBP_Masken_Reg2( 5 downto 0) );  -- Register für Sel-LED's vom Slave 3
+                                                    IOBP_SK_Sel_LED(3)   <= Deb72_out(17 DOWNTO 12);   -- Signale für Aktiv-LED's
 
                                                 when  "00000100" => -- 6 LWL Input Modul in slot 3
                                                       AW_SK_Input_Reg(2)( 5 downto  0) <=   (Deb_Sync72( 17 downto  12) AND not IOBP_Masken_Reg2( 5 downto  0));
-                                                      IOBP_SK_Aktiv_LED_i(3)  <=   Deb72_out(17 DOWNTO 12);   -- Signale für Aktiv-LED's
+                                                      --IOBP_SK_Aktiv_LED_i(3)  <=   Deb72_out(17 DOWNTO 12);   -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Aktiv_LED_i(3)  <=   not ( IOBP_Masken_Reg2( 5 downto 0) );  -- Register für Sel-LED's vom Slave 3
                                                       IOBP_SK_Input(3)  <=( PIO_SYNC(73),  PIO_SYNC(77),  PIO_SYNC(79),  PIO_SYNC(69),  PIO_SYNC(71),  PIO_SYNC(75));
                                                       IOBP_SK_Output(3) <=  (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(3)   <=  not ( IOBP_Masken_Reg2( 5 downto 0) );  -- Register für Sel-LED's vom Slave 3
-      
+                                                      --IOBP_SK_Sel_LED(3)   <=  not ( IOBP_Masken_Reg2( 5 downto 0) );  -- Register für Sel-LED's vom Slave 3
+                                                      IOBP_SK_Sel_LED(3)   <=   Deb72_out(17 DOWNTO 12);   -- Signale für Aktiv-LED's
+
                                                 when "00000101"  | "00000110" => -- Output Modul in slot 3
                                                       AW_SK_Input_Reg(2)( 5 downto  0) <=  (OTHERS => '0');
-                                                      IOBP_SK_Output(3) <= (AW_Output_Reg(2)(5 downto 0) AND not IOBP_Masken_Reg2(5 downto 0));
-                                                    
+                                                      IOBP_SK_Output(3) <= (AW_Output_Reg(2)(5 downto 0) AND not IOBP_Masken_Reg2(5 downto 0));      
                                                       PIO_OUT_SLOT_3 <= IOBP_SK_Output(3);
                                                       PIO_ENA_SLOT_3 <= std_logic_vector'("111111");
-                                                      IOBP_SK_Aktiv_LED_i(3)  <=  IOBP_SK_Output(3);
+                                                      --IOBP_SK_Aktiv_LED_i(3)  <=  IOBP_SK_Output(3);
+                                                      IOBP_SK_Aktiv_LED_i(3)  <=  not ( IOBP_Masken_Reg2( 5 downto 0) );  -- Register für Sel-LED's vom Slave 3
                                                       IOBP_SK_Input(3)  <= (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(3)   <=  not ( IOBP_Masken_Reg2( 5 downto 0) );  -- Register für Sel-LED's vom Slave 3
+                                                      --IOBP_SK_Sel_LED(3)   <=  not ( IOBP_Masken_Reg2( 5 downto 0) );  -- Register für Sel-LED's vom Slave 3
+                                                      IOBP_SK_Sel_LED(3)   <= IOBP_SK_Output(3);
 
                                                 when "00000001"|"00000010" => -- 5 In/1 Out Modul in slot 3
                                                       AW_SK_Input_Reg(2)( 4 downto  0) <=   (Deb_Sync72( 16 downto  12) AND not IOBP_Masken_Reg2( 4 downto  0));  -- Input, IO-Modul Nr. 3
                                                       AW_SK_Input_Reg(2)(5) <='0';
-                                                      IOBP_SK_Aktiv_LED_i(3)  <=  (IOBP_SK_Output(3)(5)    &  Deb72_out( 16 DOWNTO  12));  -- Signale für Aktiv-LED's
+                                                      --IOBP_SK_Aktiv_LED_i(3)  <=  (IOBP_SK_Output(3)(5)    &  Deb72_out( 16 DOWNTO  12));  -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Aktiv_LED_i(3)  <=  not ( IOBP_Masken_Reg7( 2) & IOBP_Masken_Reg2( 4 downto  0) );  -- Register für Sel-LED's vom Slave 3
                                                       IOBP_SK_Input(3) (4 downto 0) <= ( PIO_SYNC(79),  PIO_SYNC(71),  PIO_SYNC(77),  PIO_SYNC(69),  PIO_SYNC(75));
                                                       IOBP_SK_Output(3)(5)  <= (AW_Output_Reg(2)( 5) AND not IOBP_Masken_Reg7( 2));
                                                       PIO_OUT_SLOT_3 <= IOBP_SK_Output(3);
                                                       PIO_ENA_SLOT_3 <= std_logic_vector'("100000");
-                                                      IOBP_SK_Sel_LED(3) <=  not ( IOBP_Masken_Reg7( 2) & IOBP_Masken_Reg2( 4 downto  0) );  -- Register für Sel-LED's vom Slave 3
+                                                      --IOBP_SK_Sel_LED(3) <=  not ( IOBP_Masken_Reg7( 2) & IOBP_Masken_Reg2( 4 downto  0) );  -- Register für Sel-LED's vom Slave 3
+                                                      IOBP_SK_Sel_LED(3) <=  (IOBP_SK_Output(3)(5)    &  Deb72_out( 16 DOWNTO  12));  -- Signale für Aktiv-LED's
 
                                                 when others     =>   NULL;
                                             end case;
@@ -4265,45 +4295,54 @@ end generate Quench_Matrix_Gen;
                                             case conf_reg(4) is
                                                 when "00000011"    => -- 6 LEMO Input Modul FG902.130 in slot 4
                                                       AW_SK_Input_Reg(2)( 11 downto  6)<=   (Deb_Sync72( 23 downto  18) AND not IOBP_Masken_Reg2( 11 downto  6));
-                                                      IOBP_SK_Aktiv_LED_i(4)  <=   Deb72_out(23 DOWNTO 18);  -- Signale für Aktiv-LED's
+                                                      --IOBP_SK_Aktiv_LED_i(4)  <=   Deb72_out(23 DOWNTO 18);  -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Aktiv_LED_i(4)  <=    not ( IOBP_Masken_Reg2(11 downto 6) );  -- Register für Sel-LED's vom Slave 4
                                                       IOBP_SK_Input(4)  <= ( PIO_SYNC(101), PIO_SYNC(93), PIO_SYNC(103), PIO_SYNC(91), PIO_SYNC(105), PIO_SYNC(89));
                                                       IOBP_SK_Output(4) <=  (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(4)   <=  not ( IOBP_Masken_Reg2(11 downto 6) );  -- Register für Sel-LED's vom Slave 4
+                                                     -- IOBP_SK_Sel_LED(4)   <=  not ( IOBP_Masken_Reg2(11 downto 6) );  -- Register für Sel-LED's vom Slave 4
+                                                      IOBP_SK_Sel_LED(4)   <=  Deb72_out(23 DOWNTO 18);  -- Signale für Aktiv-LED's
 
                                                 when "00000111"   => -- 6 LEMO Input Modul FG902150 in slot 4
                                                       AW_SK_Input_Reg(2)( 11 downto  6)<=   (Deb_Sync72( 23 downto  18) AND not IOBP_Masken_Reg2( 11 downto  6));
-                                                      IOBP_SK_Aktiv_LED_i(4)  <=   Deb72_out(23 DOWNTO 18);  -- Signale für Aktiv-LED's
+                                                      --IOBP_SK_Aktiv_LED_i(4)  <=   Deb72_out(23 DOWNTO 18);  -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Aktiv_LED_i(4)  <=   not ( IOBP_Masken_Reg2(11 downto 6) );  -- Register für Sel-LED's vom Slave 4
                                                       IOBP_SK_Input(4)  <= not ( PIO_SYNC(101), PIO_SYNC(93), PIO_SYNC(103), PIO_SYNC(91), PIO_SYNC(105), PIO_SYNC(89));
                                                       IOBP_SK_Output(4) <=  (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(4)   <=  not ( IOBP_Masken_Reg2(11 downto 6) );  -- Register für Sel-LED's vom Slave 4
+                                                      --IOBP_SK_Sel_LED(4)   <=  not ( IOBP_Masken_Reg2(11 downto 6) );  -- Register für Sel-LED's vom Slave 4
+                                                      IOBP_SK_Sel_LED(4)   <=   Deb72_out(23 DOWNTO 18);  -- Signale für Aktiv-LED's
+
 
                                                 when "00000100" => -- 6 LWL Input Modul in slot 4
                                                       AW_SK_Input_Reg(2)( 11 downto  6)<=   (Deb_Sync72( 23 downto  18) AND not IOBP_Masken_Reg2( 11 downto  6));
-                                                      IOBP_SK_Aktiv_LED_i(4)  <=   Deb72_out(23 DOWNTO 18);  -- Signale für Aktiv-LED's
+                                                      --IOBP_SK_Aktiv_LED_i(4)  <=   Deb72_out(23 DOWNTO 18);  -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Aktiv_LED_i(4)  <=   not ( IOBP_Masken_Reg2(11 downto 6) );  -- Register für Sel-LED's vom Slave 4
                                                       IOBP_SK_Input(4)  <= ( PIO_SYNC(101), PIO_SYNC(91), PIO_SYNC(93), PIO_SYNC(105), PIO_SYNC(103), PIO_SYNC(89));
                                                       IOBP_SK_Output(4) <=  (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(4)   <=  not ( IOBP_Masken_Reg2(11 downto 6) );  -- Register für Sel-LED's vom Slave 4
+                                                      --IOBP_SK_Sel_LED(4)   <=  not ( IOBP_Masken_Reg2(11 downto 6) );  -- Register für Sel-LED's vom Slave 4
+                                                      IOBP_SK_Sel_LED(4)   <=   Deb72_out(23 DOWNTO 18);  -- Signale für Aktiv-LED's
 
                                                 when "00000101"  | "00000110" => -- Output Modul in slot 4
                                                       AW_SK_Input_Reg(2)( 11 downto  6) <=  (OTHERS => '0');
-                                                      IOBP_SK_Output(4) <= AW_Output_Reg(2)( 11 downto  6) AND not IOBP_Masken_Reg2(11 downto 6);
-                                                      
+                                                      IOBP_SK_Output(4) <= AW_Output_Reg(2)( 11 downto  6) AND not IOBP_Masken_Reg2(11 downto 6);    
                                                       PIO_OUT_SLOT_4 <= IOBP_SK_Output(4);
                                                       PIO_ENA_SLOT_4 <= std_logic_vector'("111111");
-                                                      IOBP_SK_Aktiv_LED_i(4)  <=  IOBP_SK_Output(4);
+                                                      --IOBP_SK_Aktiv_LED_i(4)  <=  IOBP_SK_Output(4);
+                                                      IOBP_SK_Aktiv_LED_i(4)  <=   not ( IOBP_Masken_Reg2(11 downto 6) );  -- Register für Sel-LED's vom Slave 4
                                                       IOBP_SK_Input(4)  <= (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(4)   <=  not ( IOBP_Masken_Reg2(11 downto 6) );  -- Register für Sel-LED's vom Slave 4
+                                                      --IOBP_SK_Sel_LED(4)   <=  not ( IOBP_Masken_Reg2(11 downto 6) );  -- Register für Sel-LED's vom Slave 4
+                                                      IOBP_SK_Sel_LED(4)   <=  IOBP_SK_Output(4);
 
                                                 when "00000001"|"00000010" => -- 5 In/1 Out Modul in slot 4
                                                       AW_SK_Input_Reg(2)( 10 downto  6) <=   (Deb_Sync72( 22 downto  18) AND not IOBP_Masken_Reg2( 10 downto  6));  -- Input, IO-Modul Nr. 4
                                                       AW_SK_Input_Reg(2)(11) <='0';
-                                                      IOBP_SK_Aktiv_LED_i(4)  <=  (IOBP_SK_Output(4)(5)    &  Deb72_out( 22 DOWNTO  18));  -- Signale für Aktiv-LED's
+                                                      --IOBP_SK_Aktiv_LED_i(4)  <=  (IOBP_SK_Output(4)(5)    &  Deb72_out( 22 DOWNTO  18));  -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Aktiv_LED_i(4)  <=  not ( IOBP_Masken_Reg7( 3) & IOBP_Masken_Reg2( 10 downto  6) );  -- Register für Sel-LED's vom Slave 4
                                                       IOBP_SK_Input(4) (4 downto 0) <= ( PIO_SYNC(93), PIO_SYNC(103), PIO_SYNC(91), PIO_SYNC(105), PIO_SYNC(89));
                                                       IOBP_SK_Output(4)(5)  <= (AW_Output_Reg(2)( 11) AND not IOBP_Masken_Reg7(3));
                                                       PIO_OUT_SLOT_4 <= IOBP_SK_Output(4);
                                                       PIO_ENA_SLOT_4 <= std_logic_vector'("100000");
-                                                      IOBP_SK_Sel_LED(4) <=  not ( IOBP_Masken_Reg7( 3) & IOBP_Masken_Reg2( 10 downto  6) );  -- Register für Sel-LED's vom Slave 4
-
+                                                      --IOBP_SK_Sel_LED(4) <=  not ( IOBP_Masken_Reg7( 3) & IOBP_Masken_Reg2( 10 downto  6) );  -- Register für Sel-LED's vom Slave 4
+                                                      IOBP_SK_Sel_LED(4) <=  (IOBP_SK_Output(4)(5)    &  Deb72_out( 22 DOWNTO  18));  -- Signale für Aktiv-LED's
                                                   when others     =>   NULL;
                                             end case;
 
@@ -4313,45 +4352,55 @@ end generate Quench_Matrix_Gen;
                                               case conf_reg(5) is
                                                   when "00000011"    => -- 6 LEMO Input Modul FG902.130 in slot 5
                                                       AW_SK_Input_Reg(3)( 5 downto  0) <=   (Deb_Sync72( 29 downto  24) AND not IOBP_Masken_Reg3( 5 downto  0));
-                                                      IOBP_SK_Aktiv_LED_i(5)  <=   Deb72_out(29 DOWNTO 24);   -- Signale für Aktiv-LED's
+                                                      --IOBP_SK_Aktiv_LED_i(5)  <=   Deb72_out(29 DOWNTO 24);   -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Aktiv_LED_i(5)  <=   not ( IOBP_Masken_Reg3( 5 downto 0) );  -- Register für Sel-LED's vom Slave 5
                                                       IOBP_SK_Input(5)  <= ( PIO_SYNC(53),  PIO_SYNC(63),  PIO_SYNC(55),  PIO_SYNC(61),  PIO_SYNC(57),  PIO_SYNC(59));
                                                       IOBP_SK_Output(5) <=  (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(5)   <=  not ( IOBP_Masken_Reg3( 5 downto 0) );  -- Register für Sel-LED's vom Slave 5
+                                                      --IOBP_SK_Sel_LED(5)   <=  not ( IOBP_Masken_Reg3( 5 downto 0) );  -- Register für Sel-LED's vom Slave 5
+                                                      IOBP_SK_Sel_LED(5)   <=  Deb72_out(29 DOWNTO 24);   -- Signale für Aktiv-LED's
 
                                                   when "00000111"   => -- 6 LEMO Input Modul  FG902150 in slot 5
                                                       AW_SK_Input_Reg(3)( 5 downto  0) <=   (Deb_Sync72( 29 downto  24) AND not IOBP_Masken_Reg3( 5 downto  0));
-                                                      IOBP_SK_Aktiv_LED_i(5)  <=   Deb72_out(29 DOWNTO 24);   -- Signale für Aktiv-LED's
+                                                      --IOBP_SK_Aktiv_LED_i(5)  <=   Deb72_out(29 DOWNTO 24);   -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Aktiv_LED_i(5)  <=   not ( IOBP_Masken_Reg3( 5 downto 0) );  -- Register für Sel-LED's vom Slave 5
                                                       IOBP_SK_Input(5)  <= not ( PIO_SYNC(53),  PIO_SYNC(63),  PIO_SYNC(55),  PIO_SYNC(61),  PIO_SYNC(57),  PIO_SYNC(59));
                                                       IOBP_SK_Output(5) <=  (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(5)   <=  not ( IOBP_Masken_Reg3( 5 downto 0) );  -- Register für Sel-LED's vom Slave 5
+                                                      --IOBP_SK_Sel_LED(5)   <=  not ( IOBP_Masken_Reg3( 5 downto 0) );  -- Register für Sel-LED's vom Slave 5
+                                                      IOBP_SK_Sel_LED(5)   <=   Deb72_out(29 DOWNTO 24);   -- Signale für Aktiv-LED's
 
 
                                                     when "00000100" => -- 6 LWL Input Modul in slot 5
                                                       AW_SK_Input_Reg(3)( 5 downto  0) <=   (Deb_Sync72( 29 downto  24) AND not IOBP_Masken_Reg3( 5 downto  0));
-                                                      IOBP_SK_Aktiv_LED_i(5)  <=   Deb72_out(29 DOWNTO 24);   -- Signale für Aktiv-LED's
+                                                      --IOBP_SK_Aktiv_LED_i(5)  <=   Deb72_out(29 DOWNTO 24);   -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Aktiv_LED_i(5)  <=  not ( IOBP_Masken_Reg3( 5 downto 0) );  -- Register für Sel-LED's vom Slave 5
                                                       IOBP_SK_Input(5)  <= ( PIO_SYNC(53),  PIO_SYNC(61),  PIO_SYNC(63),  PIO_SYNC(57),  PIO_SYNC(55),  PIO_SYNC(59));
                                                       IOBP_SK_Output(5) <=  (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(5)   <=  not ( IOBP_Masken_Reg3( 5 downto 0) );  -- Register für Sel-LED's vom Slave 5
+                                                      --IOBP_SK_Sel_LED(5)   <=  not ( IOBP_Masken_Reg3( 5 downto 0) );  -- Register für Sel-LED's vom Slave 5
+                                                      IOBP_SK_Sel_LED(5)   <=  Deb72_out(29 DOWNTO 24);   -- Signale für Aktiv-LED's
 
                                                   when "00000101"  | "00000110" => -- Output Modul in slot 5
                                                       AW_SK_Input_Reg(3)( 5 downto  0) <=  (OTHERS => '0');
-                                                      IOBP_SK_Output(5) <= AW_Output_Reg(3)(5 downto  0) AND not IOBP_Masken_Reg3(5 downto 0);
-                                                      
+                                                      IOBP_SK_Output(5) <= AW_Output_Reg(3)(5 downto  0) AND not IOBP_Masken_Reg3(5 downto 0); 
                                                       PIO_OUT_SLOT_5 <= IOBP_SK_Output(5);
                                                       PIO_ENA_SLOT_5 <= std_logic_vector'("111111");
-                                                      IOBP_SK_Aktiv_LED_i(5)  <=  IOBP_SK_Output(5);
+                                                      --IOBP_SK_Aktiv_LED_i(5)  <=  IOBP_SK_Output(5);
+                                                      IOBP_SK_Aktiv_LED_i(5)  <=   not ( IOBP_Masken_Reg3( 5 downto 0) );  -- Register für Sel-LED's vom Slave 5
                                                       IOBP_SK_Input(5)  <= (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(5)   <=  not ( IOBP_Masken_Reg3( 5 downto 0) );  -- Register für Sel-LED's vom Slave 5
+                                                      --IOBP_SK_Sel_LED(5)   <=  not ( IOBP_Masken_Reg3( 5 downto 0) );  -- Register für Sel-LED's vom Slave 5
+                                                      IOBP_SK_Sel_LED(5)   <= IOBP_SK_Output(5); 
+
 
                                                   when "00000001"|"00000010" => -- 5 In/1 Out Modul in slot 5
                                                       AW_SK_Input_Reg(3)( 4 downto  0) <=   (Deb_Sync72( 28 downto  24) AND not IOBP_Masken_Reg3( 4 downto  0));  -- Input, IO-Modul Nr. 5
                                                       AW_SK_Input_Reg(3)(5) <='0';
-                                                      IOBP_SK_Aktiv_LED_i(5)  <=  (IOBP_SK_Output(5)(5)    &  Deb72_out( 28 DOWNTO  24));  -- Signale für Aktiv-LED's
+                                                      --IOBP_SK_Aktiv_LED_i(5)  <=  (IOBP_SK_Output(5)(5)    &  Deb72_out( 28 DOWNTO  24));  -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Aktiv_LED_i(5)  <=  not ( IOBP_Masken_Reg7( 4) & IOBP_Masken_Reg3( 4 downto  0) );  -- Register für Sel-LED's vom Slave 5
                                                       IOBP_SK_Input(5) (4 downto 0) <= ( PIO_SYNC(63),  PIO_SYNC(55),  PIO_SYNC(61),  PIO_SYNC(57),  PIO_SYNC(59));
                                                       IOBP_SK_Output(5)(5)  <= (AW_Output_Reg(3)( 5) AND not IOBP_Masken_Reg7(4));
                                                       PIO_OUT_SLOT_5 <= IOBP_SK_Output(5);
                                                       PIO_ENA_SLOT_5 <= std_logic_vector'("100000");
-                                                      IOBP_SK_Sel_LED(5) <=  not ( IOBP_Masken_Reg7( 4) & IOBP_Masken_Reg3( 4 downto  0) );  -- Register für Sel-LED's vom Slave 5
+                                                      --IOBP_SK_Sel_LED(5) <=  not ( IOBP_Masken_Reg7( 4) & IOBP_Masken_Reg3( 4 downto  0) );  -- Register für Sel-LED's vom Slave 5
+                                                      IOBP_SK_Sel_LED(5) <=  (IOBP_SK_Output(5)(5)    &  Deb72_out( 28 DOWNTO  24));  -- Signale für Aktiv-LED's
 
 
                                               when others     =>  NULL;
@@ -4363,44 +4412,53 @@ end generate Quench_Matrix_Gen;
                                               case conf_reg(6) is
                                                   when "00000011"   => -- 6 LEMO Input Modul FG902.130  in slot 6
                                                       AW_SK_Input_Reg(3)( 11 downto  6)<=   (Deb_Sync72( 35 downto  30) AND not IOBP_Masken_Reg3( 11 downto  6));
-                                                      IOBP_SK_Aktiv_LED_i(6)  <=    Deb72_out(35 DOWNTO 30);
+                                                      --IOBP_SK_Aktiv_LED_i(6)  <=    Deb72_out(35 DOWNTO 30);
+                                                      IOBP_SK_Aktiv_LED_i(6)  <= not ( IOBP_Masken_Reg3(11 downto 6) );  -- Register für Sel-LED's vom Slave 6
                                                       IOBP_SK_Input(6)  <= ( PIO_SYNC(119), PIO_SYNC(111), PIO_SYNC(121), PIO_SYNC(109), PIO_SYNC(123), PIO_SYNC(107));
                                                       IOBP_SK_Output(6) <=  (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(6)   <=  not ( IOBP_Masken_Reg3(11 downto 6) );  -- Register für Sel-LED's vom Slave 6
+                                                      --IOBP_SK_Sel_LED(6)   <=  not ( IOBP_Masken_Reg3(11 downto 6) );  -- Register für Sel-LED's vom Slave 6
+                                                      IOBP_SK_Sel_LED(6)   <=   Deb72_out(35 DOWNTO 30);
 
                                                   when "00000111"   => -- 6 LEMO Input Modul  FG902150 in slot 6
                                                       AW_SK_Input_Reg(3)( 11 downto  6)<=   (Deb_Sync72( 35 downto  30) AND not IOBP_Masken_Reg3( 11 downto  6));
-                                                      IOBP_SK_Aktiv_LED_i(6)  <=    Deb72_out(35 DOWNTO 30);
+                                                      --IOBP_SK_Aktiv_LED_i(6)  <=    Deb72_out(35 DOWNTO 30);
+                                                      IOBP_SK_Aktiv_LED_i(6)  <=   not ( IOBP_Masken_Reg3(11 downto 6) );  -- Register für Sel-LED's vom Slave 6
                                                       IOBP_SK_Input(6)  <= not ( PIO_SYNC(119), PIO_SYNC(111), PIO_SYNC(121), PIO_SYNC(109), PIO_SYNC(123), PIO_SYNC(107));
                                                       IOBP_SK_Output(6) <=  (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(6)   <=  not ( IOBP_Masken_Reg3(11 downto 6) );  -- Register für Sel-LED's vom Slave 6
+                                                      --IOBP_SK_Sel_LED(6)   <=  not ( IOBP_Masken_Reg3(11 downto 6) );  -- Register für Sel-LED's vom Slave 6
+                                                      IOBP_SK_Sel_LED(6)   <=    Deb72_out(35 DOWNTO 30);
 
                                                   when "00000100" => -- 6 LWL Input Modul in slot 6
                                                       AW_SK_Input_Reg(3)( 11 downto  6)<=   (Deb_Sync72( 35 downto  30) AND not IOBP_Masken_Reg3( 11 downto  6));
-                                                      IOBP_SK_Aktiv_LED_i(6)  <=    Deb72_out(35 DOWNTO 30);
+                                                      --IOBP_SK_Aktiv_LED_i(6)  <=    Deb72_out(35 DOWNTO 30);
+                                                      IOBP_SK_Aktiv_LED_i(6)  <=  not ( IOBP_Masken_Reg3(11 downto 6) );  -- Register für Sel-LED's vom Slave 6
                                                       IOBP_SK_Input(6)  <= ( PIO_SYNC(119), PIO_SYNC(109), PIO_SYNC(111), PIO_SYNC(123), PIO_SYNC(121), PIO_SYNC(107));
                                                       IOBP_SK_Output(6) <=  (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(6)   <=  not ( IOBP_Masken_Reg3(11 downto 6) );  -- Register für Sel-LED's vom Slave 6
+                                                      --IOBP_SK_Sel_LED(6)   <=  not ( IOBP_Masken_Reg3(11 downto 6) );  -- Register für Sel-LED's vom Slave 6
+                                                      IOBP_SK_Sel_LED(6)   <=  Deb72_out(35 DOWNTO 30);
 
                                                   when "00000101"  | "00000110" => -- Output Modul in slot 6
                                                       AW_SK_Input_Reg(3)( 11 downto  6)<=   (OTHERS => '0');
                                                       IOBP_SK_Output(6) <= AW_Output_Reg(3)(11 downto  6) AND not IOBP_Masken_Reg3(11 downto 6);
-                                                      
                                                       PIO_OUT_SLOT_6 <= IOBP_SK_Output(6);
                                                       PIO_ENA_SLOT_6 <= std_logic_vector'("111111");
-                                                      IOBP_SK_Aktiv_LED_i(6)  <=  IOBP_SK_Output(6);
+                                                      --IOBP_SK_Aktiv_LED_i(6)  <=  IOBP_SK_Output(6);
+                                                      IOBP_SK_Aktiv_LED_i(6)  <=  not ( IOBP_Masken_Reg3(11 downto 6) );  -- Register für Sel-LED's vom Slave 6
                                                       IOBP_SK_Input(6)  <= (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(6)   <=  not ( IOBP_Masken_Reg3(11 downto 6) );  -- Register für Sel-LED's vom Slave 6
+                                                      --IOBP_SK_Sel_LED(6)   <=  not ( IOBP_Masken_Reg3(11 downto 6) );  -- Register für Sel-LED's vom Slave 6
+                                                      IOBP_SK_Sel_LED(6)   <= IOBP_SK_Output(6);
 
                                               when "00000001"|"00000010" => -- 5 In/1 Out Modul in slot 6
                                                       AW_SK_Input_Reg(3)( 10 downto  6) <=   (Deb_Sync72( 34 downto  30) AND not IOBP_Masken_Reg3( 10 downto  6));  -- Input, IO-Modul Nr. 6
                                                       AW_SK_Input_Reg(3)(11) <='0';
-                                                      IOBP_SK_Aktiv_LED_i(6)  <=  (IOBP_SK_Output(6)(5)    &  Deb72_out( 34 DOWNTO  30));  -- Signale für Aktiv-LED's
+                                                      --IOBP_SK_Aktiv_LED_i(6)  <=  (IOBP_SK_Output(6)(5)    &  Deb72_out( 34 DOWNTO  30));  -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Aktiv_LED_i(6)  <=  not ( IOBP_Masken_Reg7( 5) & IOBP_Masken_Reg3( 10 downto  6) );  -- Register für Sel-LED's vom Slave 6
                                                       IOBP_SK_Input(6) (4 downto 0) <= ( PIO_SYNC(111), PIO_SYNC(121), PIO_SYNC(109), PIO_SYNC(123), PIO_SYNC(107));
                                                       IOBP_SK_Output(6)(5)  <= (AW_Output_Reg(3)( 11) AND not IOBP_Masken_Reg7(5));
                                                       PIO_OUT_SLOT_6 <= IOBP_SK_Output(6);
                                                       PIO_ENA_SLOT_6 <= std_logic_vector'("100000");
-                                                      IOBP_SK_Sel_LED(6)<=  not ( IOBP_Masken_Reg7( 5) & IOBP_Masken_Reg3( 10 downto  6) );  -- Register für Sel-LED's vom Slave 6
+                                                      --IOBP_SK_Sel_LED(6)<=  not ( IOBP_Masken_Reg7( 5) & IOBP_Masken_Reg3( 10 downto  6) );  -- Register für Sel-LED's vom Slave 6
+                                                      IOBP_SK_Sel_LED(6)<=  (IOBP_SK_Output(6)(5)    &  Deb72_out( 34 DOWNTO  30));  -- Signale für Aktiv-LED's
 
                                                   when others     =>  NULL;
                                       end case;
@@ -4411,43 +4469,54 @@ end generate Quench_Matrix_Gen;
                                               case conf_reg(7) is
                                                   when "00000011"  => -- 6 LEMO Input Modul FG902.130 in slot 7
                                                       AW_SK_Input_Reg(4)( 5 downto  0) <=   (Deb_Sync72( 41 downto  36) AND not IOBP_Masken_Reg4( 5 downto  0));
-                                                      IOBP_SK_Aktiv_LED_i(7)  <=    Deb72_out(41 DOWNTO 36);
+                                                      --IOBP_SK_Aktiv_LED_i(7)  <=    Deb72_out(41 DOWNTO 36);
+                                                      IOBP_SK_Aktiv_LED_i(7)  <=     not ( IOBP_Masken_Reg4( 5 downto 0) );  -- Register für Sel-LED's vom Slave 7
                                                       IOBP_SK_Input(7)  <= ( PIO_SYNC(35),  PIO_SYNC(45),  PIO_SYNC(37),  PIO_SYNC(43),  PIO_SYNC(39),  PIO_SYNC(41));
                                                       IOBP_SK_Output(7) <=  (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(7)   <=  not ( IOBP_Masken_Reg4( 5 downto 0) );  -- Register für Sel-LED's vom Slave 7
+                                                      --IOBP_SK_Sel_LED(7)   <=  not ( IOBP_Masken_Reg4( 5 downto 0) );  -- Register für Sel-LED's vom Slave 7
+                                                      IOBP_SK_Sel_LED(7)   <=   Deb72_out(41 DOWNTO 36);
+
 
                                                   when "00000111"   => -- 6 LEMO Input Modul F FG902150 in slot 7
                                                       AW_SK_Input_Reg(4)( 5 downto  0) <=   (Deb_Sync72( 41 downto  36) AND not IOBP_Masken_Reg4( 5 downto  0));
-                                                      IOBP_SK_Aktiv_LED_i(7)  <=    Deb72_out(41 DOWNTO 36);
+                                                      --IOBP_SK_Aktiv_LED_i(7)  <=    Deb72_out(41 DOWNTO 36);
+                                                      IOBP_SK_Aktiv_LED_i(7)  <=    not ( IOBP_Masken_Reg4( 5 downto 0) );  -- Register für Sel-LED's vom Slave 7
                                                       IOBP_SK_Input(7)  <= not ( PIO_SYNC(35),  PIO_SYNC(45),  PIO_SYNC(37),  PIO_SYNC(43),  PIO_SYNC(39),  PIO_SYNC(41));
                                                       IOBP_SK_Output(7) <=  (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(7)   <=  not ( IOBP_Masken_Reg4( 5 downto 0) );  -- Register für Sel-LED's vom Slave 7
+                                                      --IOBP_SK_Sel_LED(7)   <=  not ( IOBP_Masken_Reg4( 5 downto 0) );  -- Register für Sel-LED's vom Slave 7
+                                                      IOBP_SK_Sel_LED(7)   <= Deb72_out(41 DOWNTO 36);
 
                                                   when  "00000100" => -- 6 LWL Input Modul in slot 7
                                                       AW_SK_Input_Reg(4)( 5 downto  0) <=   (Deb_Sync72( 41 downto  36) AND not IOBP_Masken_Reg4( 5 downto  0));
-                                                      IOBP_SK_Aktiv_LED_i(7)  <=    Deb72_out(41 DOWNTO 36);
+                                                      --IOBP_SK_Aktiv_LED_i(7)  <=    Deb72_out(41 DOWNTO 36);
+                                                      IOBP_SK_Aktiv_LED_i(7)  <=    not ( IOBP_Masken_Reg4( 5 downto 0) );  -- Register für Sel-LED's vom Slave 7
                                                       IOBP_SK_Input(7)  <= ( PIO_SYNC(35),  PIO_SYNC(43),  PIO_SYNC(45),  PIO_SYNC(39),  PIO_SYNC(37),  PIO_SYNC(41));
                                                       IOBP_SK_Output(7) <=  (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(7)   <=  not ( IOBP_Masken_Reg4( 5 downto 0) );  -- Register für Sel-LED's vom Slave 7
+                                                      --IOBP_SK_Sel_LED(7)   <=  not ( IOBP_Masken_Reg4( 5 downto 0) );  -- Register für Sel-LED's vom Slave 7
+                                                      IOBP_SK_Sel_LED(7)   <=   Deb72_out(41 DOWNTO 36);
 
                                                   when "00000101"  | "00000110" => -- Output Modul in slot 7
                                                       AW_SK_Input_Reg(4)( 5 downto  0)<=   (OTHERS => '0');
                                                       IOBP_SK_Output(7) <= AW_Output_Reg(4)(5 downto  0) AND not IOBP_Masken_Reg4(5 downto 0);
                                                       PIO_OUT_SLOT_7 <= IOBP_SK_Output(7);
                                                       PIO_ENA_SLOT_7 <= std_logic_vector'("111111");
-                                                      IOBP_SK_Aktiv_LED_i(7)  <=  IOBP_SK_Output(7);
+                                                      --IOBP_SK_Aktiv_LED_i(7)  <=  IOBP_SK_Output(7);
+                                                      IOBP_SK_Aktiv_LED_i(7)  <=  not ( IOBP_Masken_Reg4( 5 downto 0) );  -- Register für Sel-LED's vom Slave 7
                                                       IOBP_SK_Input(7)  <= (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(7)   <=  not ( IOBP_Masken_Reg4( 5 downto 0) );  -- Register für Sel-LED's vom Slave 7
+                                                      --IOBP_SK_Sel_LED(7)   <=  not ( IOBP_Masken_Reg4( 5 downto 0) );  -- Register für Sel-LED's vom Slave 7
+                                                      IOBP_SK_Sel_LED(7)   <=   IOBP_SK_Output(7);
 
                                                   when "00000001"|"00000010" => -- 5 In/1 Out Modul in slot 7
                                                       AW_SK_Input_Reg(4)( 4 downto  0) <=   (Deb_Sync72( 40 downto  36) AND not IOBP_Masken_Reg4( 4 downto  0));  -- Input, IO-Modul Nr. 7
                                                       AW_SK_Input_Reg(4)(5) <='0';
-                                                      IOBP_SK_Aktiv_LED_i(7)  <=  (IOBP_SK_Output(7)(5)    &  Deb72_out( 40 DOWNTO  36));  -- Signale für Aktiv-LED's
+                                                      --IOBP_SK_Aktiv_LED_i(7)  <=  (IOBP_SK_Output(7)(5)    &  Deb72_out( 40 DOWNTO  36));  -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Aktiv_LED_i(7)  <=   not ( IOBP_Masken_Reg7( 6) & IOBP_Masken_Reg4( 4 downto  0) );  -- Register für Sel-LED's vom Slave 7
                                                       IOBP_SK_Input(7) (4 downto 0) <= ( PIO_SYNC(45),  PIO_SYNC(37),  PIO_SYNC(43),  PIO_SYNC(39),  PIO_SYNC(41));
                                                       IOBP_SK_Output(7)(5)  <= (AW_Output_Reg(4)( 5) AND not IOBP_Masken_Reg7(6));
                                                       PIO_OUT_SLOT_7 <= IOBP_SK_Output(7);
                                                       PIO_ENA_SLOT_7 <= std_logic_vector'("100000");
-                                                      IOBP_SK_Sel_LED(7) <=  not ( IOBP_Masken_Reg7( 6) & IOBP_Masken_Reg4( 4 downto  0) );  -- Register für Sel-LED's vom Slave 7
+                                                      --IOBP_SK_Sel_LED(7) <=  not ( IOBP_Masken_Reg7( 6) & IOBP_Masken_Reg4( 4 downto  0) );  -- Register für Sel-LED's vom Slave 7
+                                                      IOBP_SK_Sel_LED(7) <=  (IOBP_SK_Output(7)(5)    &  Deb72_out( 40 DOWNTO  36));  -- Signale für Aktiv-LED's
 
                                                   when others     =>  NULL;
                                       end case;
@@ -4458,43 +4527,54 @@ end generate Quench_Matrix_Gen;
                                               case conf_reg(8) is
                                                   when "00000011"  => -- 6 LEMO Input Modul FG902.130 in slot 8
                                                       AW_SK_Input_Reg(4)( 11 downto  6)<=   (Deb_Sync72( 47 downto  42) AND not IOBP_Masken_Reg4( 11 downto  6));
-                                                      IOBP_SK_Aktiv_LED_i(8)  <=    Deb72_out(47 DOWNTO 42);
+                                                      --IOBP_SK_Aktiv_LED_i(8)  <=    Deb72_out(47 DOWNTO 42);
+                                                      IOBP_SK_Aktiv_LED_i(8)  <=    not ( IOBP_Masken_Reg4(11 downto 6) );  -- Register für Sel-LED's vom Slave 8
                                                       IOBP_SK_Input(8)  <= ( PIO_SYNC(137), PIO_SYNC(129), PIO_SYNC(139), PIO_SYNC(127), PIO_SYNC(141), PIO_SYNC(125));
                                                       IOBP_SK_Output(8) <=  (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(8)   <=  not ( IOBP_Masken_Reg4(11 downto 6) );  -- Register für Sel-LED's vom Slave 8
+                                                      --IOBP_SK_Sel_LED(8)   <=  not ( IOBP_Masken_Reg4(11 downto 6) );  -- Register für Sel-LED's vom Slave 8
+                                                      IOBP_SK_Sel_LED(8)   <=  Deb72_out(47 DOWNTO 42);
                                                    
                                                   when "00000111"   => -- 6 LEMO Input Modul FG902150 in slot 8
                                                     AW_SK_Input_Reg(4)( 11 downto  6)<=   (Deb_Sync72( 47 downto  42) AND not IOBP_Masken_Reg4( 11 downto  6));
-                                                    IOBP_SK_Aktiv_LED_i(8)  <=    Deb72_out(47 DOWNTO 42);
+                                                   --IOBP_SK_Aktiv_LED_i(8)  <=    Deb72_out(47 DOWNTO 42);
+                                                    IOBP_SK_Aktiv_LED_i(8)  <=    not ( IOBP_Masken_Reg4(11 downto 6) );  -- Register für Sel-LED's vom Slave 8
                                                     IOBP_SK_Input(8)  <= not ( PIO_SYNC(137), PIO_SYNC(129), PIO_SYNC(139), PIO_SYNC(127), PIO_SYNC(141), PIO_SYNC(125));
                                                     IOBP_SK_Output(8) <=  (OTHERS => '0');
-                                                    IOBP_SK_Sel_LED(8)   <=  not ( IOBP_Masken_Reg4(11 downto 6) );  -- Register für Sel-LED's vom Slave 8
+                                                    --IOBP_SK_Sel_LED(8)   <=  not ( IOBP_Masken_Reg4(11 downto 6) );  -- Register für Sel-LED's vom Slave 8
+                                                    IOBP_SK_Sel_LED(8)   <=   Deb72_out(47 DOWNTO 42);
 
                                                   when "00000100" => -- 6 LWL Input Modul in slot 8
                                                       AW_SK_Input_Reg(4)( 11 downto  6)<=   (Deb_Sync72( 47 downto  42) AND not IOBP_Masken_Reg4( 11 downto  6));
-                                                      IOBP_SK_Aktiv_LED_i(8)  <=    Deb72_out(47 DOWNTO 42);
+                                                      --IOBP_SK_Aktiv_LED_i(8)  <=    Deb72_out(47 DOWNTO 42);
+                                                      IOBP_SK_Aktiv_LED_i(8)  <=     not ( IOBP_Masken_Reg4(11 downto 6) );  -- Register für Sel-LED's vom Slave 8
                                                       IOBP_SK_Input(8)  <= ( PIO_SYNC(137), PIO_SYNC(127), PIO_SYNC(129), PIO_SYNC(141), PIO_SYNC(139), PIO_SYNC(125));
                                                       IOBP_SK_Output(8) <=  (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(8)   <=  not ( IOBP_Masken_Reg4(11 downto 6) );  -- Register für Sel-LED's vom Slave 8
+                                                      --IOBP_SK_Sel_LED(8)   <=  not ( IOBP_Masken_Reg4(11 downto 6) );  -- Register für Sel-LED's vom Slave 8
+                                                      IOBP_SK_Sel_LED(8)   <=  Deb72_out(47 DOWNTO 42);
+
 
                                                   when "00000101"  | "00000110" => -- Output Modul in slot 8
                                                       AW_SK_Input_Reg(4)(11 downto  6)<=   (OTHERS => '0');
                                                       IOBP_SK_Output(8) <= AW_Output_Reg(4)(11 downto  6) AND not IOBP_Masken_Reg4(11 downto 6);
                                                       PIO_OUT_SLOT_8 <= IOBP_SK_Output(8);
                                                       PIO_ENA_SLOT_8 <= std_logic_vector'("111111");
-                                                      IOBP_SK_Aktiv_LED_i(8)  <=  IOBP_SK_Output(8);
+                                                      --IOBP_SK_Aktiv_LED_i(8)  <=  IOBP_SK_Output(8);
+                                                      IOBP_SK_Aktiv_LED_i(8)  <=  not ( IOBP_Masken_Reg4(11 downto 6) );  -- Register für Sel-LED's vom Slave 8
                                                       IOBP_SK_Input(8)  <= (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(8)   <=  not ( IOBP_Masken_Reg4(11 downto 6) );  -- Register für Sel-LED's vom Slave 8
+                                                      --IOBP_SK_Sel_LED(8)   <=  not ( IOBP_Masken_Reg4(11 downto 6) );  -- Register für Sel-LED's vom Slave 8
+                                                      IOBP_SK_Sel_LED(8)   <=  IOBP_SK_Output(8);
 
                                                   when "00000001"|"00000010" => -- 5 In/1 Out Modul in slot 8
                                                       AW_SK_Input_Reg(4)( 10 downto  6) <=   (Deb_Sync72( 46 downto  42) AND not IOBP_Masken_Reg4( 10 downto  6));  -- Input, IO-Modul Nr. 8
                                                       AW_SK_Input_Reg(4)(11) <='0';
-                                                      IOBP_SK_Aktiv_LED_i(8)  <=  (IOBP_SK_Output(8)(5)    &  Deb72_out( 46 DOWNTO  42));  -- Signale für Aktiv-LED's
+                                                      --IOBP_SK_Aktiv_LED_i(8)  <=  (IOBP_SK_Output(8)(5)    &  Deb72_out( 46 DOWNTO  42));  -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Aktiv_LED_i(8)  <=  not ( IOBP_Masken_Reg7( 7) & IOBP_Masken_Reg4( 10 downto  6) );  -- Register für Sel-LED's vom Slave 8
                                                       IOBP_SK_Input(8) (4 downto 0) <= ( PIO_SYNC(129), PIO_SYNC(139), PIO_SYNC(127), PIO_SYNC(141), PIO_SYNC(125));
                                                       IOBP_SK_Output(8)(5)  <= (AW_Output_Reg(4)( 11) AND not IOBP_Masken_Reg7(7));
                                                       PIO_OUT_SLOT_8 <= IOBP_SK_Output(8);
                                                       PIO_ENA_SLOT_8 <= std_logic_vector'("100000");
-                                                      IOBP_SK_Sel_LED(8) <=  not ( IOBP_Masken_Reg7( 7) & IOBP_Masken_Reg4( 10 downto  6) );  -- Register für Sel-LED's vom Slave 8
+                                                      --IOBP_SK_Sel_LED(8) <=  not ( IOBP_Masken_Reg7( 7) & IOBP_Masken_Reg4( 10 downto  6) );  -- Register für Sel-LED's vom Slave 8
+                                                      IOBP_SK_Sel_LED(8) <=  (IOBP_SK_Output(8)(5)    &  Deb72_out( 46 DOWNTO  42));  -- Signale für Aktiv-LED's
 
                                                   when others     =>  NULL;
                                               end case;
@@ -4505,24 +4585,31 @@ end generate Quench_Matrix_Gen;
                                               case conf_reg(9) is
                                                   when "00000011"   => -- 6 LEMO Input Modul FG902.130  in slot 9
                                                       AW_SK_Input_Reg(5)( 5 downto  0) <=   (Deb_Sync72(53 DOWNTO 48) AND not IOBP_Masken_Reg5( 5 downto  0));
-                                                      IOBP_SK_Aktiv_LED_i(9)  <=    Deb72_out(53 DOWNTO 48);
+                                                      --IOBP_SK_Aktiv_LED_i(9)  <=    Deb72_out(53 DOWNTO 48);
+                                                      IOBP_SK_Aktiv_LED_i(9)  <=   not ( IOBP_Masken_Reg5( 5 downto 0) );  -- Register für Sel-LED's vom Slave 9
                                                       IOBP_SK_Input(9)  <= ( PIO_SYNC(30),  PIO_SYNC(20),  PIO_SYNC(28),  PIO_SYNC(22),  PIO_SYNC(26),  PIO_SYNC(24));
                                                       IOBP_SK_Output(9) <=  (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(9)   <=  not ( IOBP_Masken_Reg5( 5 downto 0) );  -- Register für Sel-LED's vom Slave 9
+                                                      --IOBP_SK_Sel_LED(9)   <=  not ( IOBP_Masken_Reg5( 5 downto 0) );  -- Register für Sel-LED's vom Slave 9
+                                                      IOBP_SK_Sel_LED(9)   <=  Deb72_out(53 DOWNTO 48);
 
                                                   when  "00000111"   => -- 6 LEMO Input Modul FG902150 in slot 9
                                                       AW_SK_Input_Reg(5)( 5 downto  0) <=   (Deb_Sync72(53 DOWNTO 48) AND not IOBP_Masken_Reg5( 5 downto  0));
-                                                      IOBP_SK_Aktiv_LED_i(9)  <=    Deb72_out(53 DOWNTO 48);
+                                                      --IOBP_SK_Aktiv_LED_i(9)  <=    Deb72_out(53 DOWNTO 48);
+                                                      IOBP_SK_Aktiv_LED_i(9)  <=   not ( IOBP_Masken_Reg5( 5 downto 0) );  -- Register für Sel-LED's vom Slave 9
                                                       IOBP_SK_Input(9)  <= not ( PIO_SYNC(30),  PIO_SYNC(20),  PIO_SYNC(28),  PIO_SYNC(22),  PIO_SYNC(26),  PIO_SYNC(24));
                                                       IOBP_SK_Output(9) <=  (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(9)   <=  not ( IOBP_Masken_Reg5( 5 downto 0) );  -- Register für Sel-LED's vom Slave 9
+                                                      --IOBP_SK_Sel_LED(9)   <=  not ( IOBP_Masken_Reg5( 5 downto 0) );  -- Register für Sel-LED's vom Slave 9
+                                                      IOBP_SK_Sel_LED(9)   <= Deb72_out(53 DOWNTO 48);
+
 
                                                   when "00000100" => -- 6 LWL Input Modul in slot 9
                                                       AW_SK_Input_Reg(5)( 5 downto  0) <=   (Deb_Sync72(53 DOWNTO 48) AND not IOBP_Masken_Reg5( 5 downto  0));
-                                                      IOBP_SK_Aktiv_LED_i(9)  <=    Deb72_out(53 DOWNTO 48);
+                                                      --IOBP_SK_Aktiv_LED_i(9)  <=    Deb72_out(53 DOWNTO 48);
+                                                      IOBP_SK_Aktiv_LED_i(9)  <=    not ( IOBP_Masken_Reg5( 5 downto 0) );  -- Register für Sel-LED's vom Slave 9
                                                       IOBP_SK_Input(9)  <= ( PIO_SYNC(30),  PIO_SYNC(22),  PIO_SYNC(20),  PIO_SYNC(26),  PIO_SYNC(28),  PIO_SYNC(24));
                                                       IOBP_SK_Output(9) <=  (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(9)   <=  not ( IOBP_Masken_Reg5( 5 downto 0) );  -- Register für Sel-LED's vom Slave 9
+                                                      --IOBP_SK_Sel_LED(9)   <=  not ( IOBP_Masken_Reg5( 5 downto 0) );  -- Register für Sel-LED's vom Slave 9
+                                                      IOBP_SK_Sel_LED(9)   <=  Deb72_out(53 DOWNTO 48);
 
                                                       
                                                   when "00000101"  | "00000110" => -- Output Modul in slot 9
@@ -4530,19 +4617,24 @@ end generate Quench_Matrix_Gen;
                                                       IOBP_SK_Output(9) <= AW_Output_Reg(5)(5 downto  0) AND not IOBP_Masken_Reg5(5 downto 0);
                                                       PIO_OUT_SLOT_9 <= IOBP_SK_Output(9);
                                                       PIO_ENA_SLOT_9 <= std_logic_vector'("111111");
-                                                      IOBP_SK_Aktiv_LED_i(9)  <=  IOBP_SK_Output(9);
+                                                      --IOBP_SK_Aktiv_LED_i(9)  <=  IOBP_SK_Output(9);
+                                                      IOBP_SK_Aktiv_LED_i(9)  <= not ( IOBP_Masken_Reg5( 5 downto 0) );  -- Register für Sel-LED's vom Slave 9
                                                       IOBP_SK_Input(9)  <= (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(9)   <=  not ( IOBP_Masken_Reg5( 5 downto 0) );  -- Register für Sel-LED's vom Slave 9
+                                                      --IOBP_SK_Sel_LED(9)   <=  not ( IOBP_Masken_Reg5( 5 downto 0) );  -- Register für Sel-LED's vom Slave 9
+                                                      IOBP_SK_Sel_LED(9)   <=  IOBP_SK_Output(9);
 
                                                   when "00000001"|"00000010" => -- 5 In/1 Out Modul in slot 9
                                                       AW_SK_Input_Reg(5)( 4 downto  0) <=   (Deb_Sync72( 52 downto  48) AND not IOBP_Masken_Reg5( 4 downto  0));  -- Input, IO-Modul Nr. 9
                                                       AW_SK_Input_Reg(5)(5) <='0';
-                                                      IOBP_SK_Aktiv_LED_i(9)  <=  (IOBP_SK_Output(9)(5)    &  Deb72_out( 52 DOWNTO 48));  -- Signale für Aktiv-LED's
+                                                      --IOBP_SK_Aktiv_LED_i(9)  <=  (IOBP_SK_Output(9)(5)    &  Deb72_out( 52 DOWNTO 48));  -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Aktiv_LED_i(9)  <=  not ( IOBP_Masken_Reg7( 8) & IOBP_Masken_Reg5( 4 downto  0) );  -- Register für Sel-LED's vom Slave 9
                                                       IOBP_SK_Input(9) (4 downto 0) <= ( PIO_SYNC(20),  PIO_SYNC(28),  PIO_SYNC(22),  PIO_SYNC(26),  PIO_SYNC(24));
                                                       IOBP_SK_Output(9)(5)  <= (AW_Output_Reg(5)(5) AND not IOBP_Masken_Reg7(8));
                                                       PIO_OUT_SLOT_9 <= IOBP_SK_Output(9);
                                                       PIO_ENA_SLOT_9 <= std_logic_vector'("100000");
-                                                      IOBP_SK_Sel_LED(9) <=  not ( IOBP_Masken_Reg7( 8) & IOBP_Masken_Reg5( 4 downto  0) );  -- Register für Sel-LED's vom Slave 9
+                                                      --IOBP_SK_Sel_LED(9) <=  not ( IOBP_Masken_Reg7( 8) & IOBP_Masken_Reg5( 4 downto  0) );  -- Register für Sel-LED's vom Slave 9
+                                                      IOBP_SK_Sel_LED(9) <=  (IOBP_SK_Output(9)(5)    &  Deb72_out( 52 DOWNTO 48));  -- Signale für Aktiv-LED's
+
                                                   when others     =>  NULL;
                                               end case;
   ---
@@ -4552,44 +4644,53 @@ end generate Quench_Matrix_Gen;
                                               case conf_reg(10) is
                                                   when "00000011"    => -- 6 LEMO Input Modul FG902.130 in slot 10
                                                       AW_SK_Input_Reg(5)( 11 downto  6) <=   (Deb_Sync72(59 DOWNTO 54) AND not IOBP_Masken_Reg5( 11 downto  6));
-                                                      IOBP_SK_Aktiv_LED_i(10)  <=    Deb72_out(59 DOWNTO 54);
+                                                      --IOBP_SK_Aktiv_LED_i(10)  <=    Deb72_out(59 DOWNTO 54);
+                                                      IOBP_SK_Aktiv_LED_i(10)  <=   not ( IOBP_Masken_Reg5(11 downto 6)  ); 
                                                       IOBP_SK_Input(10)  <= (PIO_SYNC(130), PIO_SYNC(138), PIO_SYNC(128), PIO_SYNC(140), PIO_SYNC(126), PIO_SYNC(142));
                                                       IOBP_SK_Output(10) <=  (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(10)  <=  not ( IOBP_Masken_Reg5(11 downto 6)  );  -- Register für Sel-LED's vom Slave 10
+                                                     -- IOBP_SK_Sel_LED(10)  <=  not ( IOBP_Masken_Reg5(11 downto 6)  );  -- Register für Sel-LED's vom Slave 10
+                                                      IOBP_SK_Sel_LED(10)  <=  Deb72_out(59 DOWNTO 54);  -- Register für Sel-LED's vom Slave 10
 
                                                   when  "00000111"   => -- 6 LEMO Input Modul FG902150 in slot 10
                                                     AW_SK_Input_Reg(5)( 11 downto  6) <=   (Deb_Sync72(59 DOWNTO 54) AND not IOBP_Masken_Reg5( 11 downto  6));
-                                                    IOBP_SK_Aktiv_LED_i(10)  <=    Deb72_out(59 DOWNTO 54);
+                                                    --IOBP_SK_Aktiv_LED_i(10)  <=    Deb72_out(59 DOWNTO 54);
+                                                    IOBP_SK_Aktiv_LED_i(10)  <=   not ( IOBP_Masken_Reg5(11 downto 6)  ); 
                                                     IOBP_SK_Input(10)  <= not (PIO_SYNC(130), PIO_SYNC(138), PIO_SYNC(128), PIO_SYNC(140), PIO_SYNC(126), PIO_SYNC(142));
                                                     IOBP_SK_Output(10) <=  (OTHERS => '0');
-                                                    IOBP_SK_Sel_LED(10)  <=  not ( IOBP_Masken_Reg5(11 downto 6)  );  -- Register für Sel-LED's vom Slave 10
-
+                                                    --IOBP_SK_Sel_LED(10)  <=  not ( IOBP_Masken_Reg5(11 downto 6)  );  -- Register für Sel-LED's vom Slave 10
+                                                    IOBP_SK_Sel_LED(10)  <=  Deb72_out(59 DOWNTO 54);
+                                                    
                                                   when "00000100" => --  6 LWL Input Modul in slot 10
                                                       AW_SK_Input_Reg(5)( 11 downto  6) <=   (Deb_Sync72(59 DOWNTO 54) AND not IOBP_Masken_Reg5( 11 downto  6));
-                                                      IOBP_SK_Aktiv_LED_i(10)  <=    Deb72_out(59 DOWNTO 54);
+                                                     -- IOBP_SK_Aktiv_LED_i(10)  <=    Deb72_out(59 DOWNTO 54);
+                                                      IOBP_SK_Aktiv_LED_i(10)  <=    not ( IOBP_Masken_Reg5(11 downto 6)  ); -- Register für Sel-LED's vom Slave 10
                                                       IOBP_SK_Input(10)  <= (PIO_SYNC(130), PIO_SYNC(140), PIO_SYNC(138), PIO_SYNC(126), PIO_SYNC(128), PIO_SYNC(142));
                                                       IOBP_SK_Output(10) <=  (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(10)  <=  not ( IOBP_Masken_Reg5(11 downto 6)  );  -- Register für Sel-LED's vom Slave 10
+                                                     -- IOBP_SK_Sel_LED(10)  <=  not ( IOBP_Masken_Reg5(11 downto 6)  );  -- Register für Sel-LED's vom Slave 10
+                                                      IOBP_SK_Sel_LED(10)  <= Deb72_out(59 DOWNTO 54);
 
                                                   when "00000101"  | "00000110" => -- Output Modul in slot 10
                                                       AW_SK_Input_Reg(5)(11 downto  6)<=   (OTHERS => '0');
                                                       IOBP_SK_Output(10) <= AW_Output_Reg(5)(11 downto  6) AND not IOBP_Masken_Reg5(11 downto 6);
                                                       PIO_OUT_SLOT_10 <= IOBP_SK_Output(10);
                                                       PIO_ENA_SLOT_10 <= std_logic_vector'("111111");
-                                                      IOBP_SK_Aktiv_LED_i(10)  <=  IOBP_SK_Output(10);
+                                                      --IOBP_SK_Aktiv_LED_i(10)  <=  IOBP_SK_Output(10);
+                                                      IOBP_SK_Aktiv_LED_i(10)  <=  not ( IOBP_Masken_Reg5(11 downto 6)  );  -- Register für Sel-LED's vom Slave 10
                                                       IOBP_SK_Input(10)  <= (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(10)  <=  not ( IOBP_Masken_Reg5(11 downto 6)  );  -- Register für Sel-LED's vom Slave 10
+                                                      --IOBP_SK_Sel_LED(10)  <=  not ( IOBP_Masken_Reg5(11 downto 6)  );  -- Register für Sel-LED's vom Slave 10
+                                                      IOBP_SK_Sel_LED(10)  <=  IOBP_SK_Output(10); 
 
                                                   when "00000001"|"00000010" => -- 5 In/1 Out Modul in slot 10
                                                       AW_SK_Input_Reg(5)( 10 downto  6) <=   (Deb_Sync72( 58 downto  54) AND not IOBP_Masken_Reg5( 10 downto  6));  -- Input, IO-Modul Nr. 10
                                                       AW_SK_Input_Reg(5)(11) <='0';
-                                                      IOBP_SK_Aktiv_LED_i(10)  <=  (IOBP_SK_Output(10)(5)    &  Deb72_out( 58 DOWNTO  54));  -- Signale für Aktiv-LED's
+                                                      --IOBP_SK_Aktiv_LED_i(10)  <=  (IOBP_SK_Output(10)(5)    &  Deb72_out( 58 DOWNTO  54));  -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Aktiv_LED_i(10)  <=  not ( IOBP_Masken_Reg7( 9) & IOBP_Masken_Reg5( 10 downto  6) );  -- Register für Sel-LED's vom Slave 10
                                                       IOBP_SK_Input(10) (4 downto 0) <= (PIO_SYNC(138), PIO_SYNC(128), PIO_SYNC(140), PIO_SYNC(126), PIO_SYNC(142));
                                                       IOBP_SK_Output(10)(5)  <= (AW_Output_Reg(5)( 11) AND not IOBP_Masken_Reg7(9));
                                                       PIO_OUT_SLOT_10 <= IOBP_SK_Output(10);
                                                       PIO_ENA_SLOT_10 <= std_logic_vector'("100000");
-                                                      IOBP_SK_Sel_LED(10) <=  not ( IOBP_Masken_Reg7( 9) & IOBP_Masken_Reg5( 10 downto  6) );  -- Register für Sel-LED's vom Slave 10
-
+                                                      --IOBP_SK_Sel_LED(10) <=  not ( IOBP_Masken_Reg7( 9) & IOBP_Masken_Reg5( 10 downto  6) );  -- Register für Sel-LED's vom Slave 10
+                                                      IOBP_SK_Sel_LED(10) <=   (IOBP_SK_Output(10)(5)    &  Deb72_out( 58 DOWNTO  54));  -- Signale für Aktiv-LED's
                                                   when others     =>  NULL;
                                               end case;
 
@@ -4599,43 +4700,53 @@ end generate Quench_Matrix_Gen;
                                               case conf_reg(11) is
                                                   when "00000011"   => -- 6 LEMO Input Modul FG902.130  in slot 11
                                                       AW_SK_Input_Reg(6)( 5 downto  0) <=   (Deb_Sync72(65 DOWNTO 60) AND not IOBP_Masken_Reg6( 5 downto  0));
-                                                      IOBP_SK_Aktiv_LED_i(11)  <=    Deb72_out(65 DOWNTO 60);
+                                                      --IOBP_SK_Aktiv_LED_i(11)  <=    Deb72_out(65 DOWNTO 60);
+                                                      IOBP_SK_Aktiv_LED_i(11)  <=   not ( IOBP_Masken_Reg6(5 downto 0) ); 
                                                       IOBP_SK_Input(11)  <= (PIO_SYNC(48),PIO_SYNC(38), PIO_SYNC(46), PIO_SYNC(40), PIO_SYNC(44), PIO_SYNC(42));
                                                       IOBP_SK_Output(11) <=  (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(11)  <=  not ( IOBP_Masken_Reg6(5 downto 0) );  -- Register für Sel-LED's vom Slave 11
+                                                      --IOBP_SK_Sel_LED(11)  <=  not ( IOBP_Masken_Reg6(5 downto 0) );  -- Register für Sel-LED's vom Slave 11
+                                                      IOBP_SK_Sel_LED(11)  <=  Deb72_out(65 DOWNTO 60); -- Register für Sel-LED's vom Slave 11
 
                                                   when "00000111"   => -- 6 LEMO Input Modul FG902150 in slot 11
                                                       AW_SK_Input_Reg(6)( 5 downto  0) <=   (Deb_Sync72(65 DOWNTO 60) AND not IOBP_Masken_Reg6( 5 downto  0));
-                                                      IOBP_SK_Aktiv_LED_i(11)  <=    Deb72_out(65 DOWNTO 60);
+                                                      --IOBP_SK_Aktiv_LED_i(11)  <=    Deb72_out(65 DOWNTO 60);
+                                                      IOBP_SK_Aktiv_LED_i(11)  <=    not ( IOBP_Masken_Reg6(5 downto 0) );  -- Register für Sel-LED's vom Slave 11
                                                       IOBP_SK_Input(11)  <= not (PIO_SYNC(48),PIO_SYNC(38), PIO_SYNC(46), PIO_SYNC(40), PIO_SYNC(44), PIO_SYNC(42));
                                                       IOBP_SK_Output(11) <=  (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(11)  <=  not ( IOBP_Masken_Reg6(5 downto 0) );  -- Register für Sel-LED's vom Slave 11
+                                                      --IOBP_SK_Sel_LED(11)  <=  not ( IOBP_Masken_Reg6(5 downto 0) );  -- Register für Sel-LED's vom Slave 11
+                                                      IOBP_SK_Sel_LED(11)  <= Deb72_out(65 DOWNTO 60);  -- Register für Sel-LED's vom Slave 11
 
                                                       when "00000100" => -- 6 LWL Input Modul in slot 11
                                                       AW_SK_Input_Reg(6)( 5 downto  0) <=   (Deb_Sync72(65 DOWNTO 60) AND not IOBP_Masken_Reg6( 5 downto  0));
-                                                      IOBP_SK_Aktiv_LED_i(11)  <=    Deb72_out(65 DOWNTO 60);
+                                                      --IOBP_SK_Aktiv_LED_i(11)  <=    Deb72_out(65 DOWNTO 60);
+                                                      IOBP_SK_Aktiv_LED_i(11)  <=    not ( IOBP_Masken_Reg6(5 downto 0) ); 
                                                       IOBP_SK_Input(11)  <= (PIO_SYNC(48),PIO_SYNC(40), PIO_SYNC(38), PIO_SYNC(44), PIO_SYNC(46), PIO_SYNC(42));
                                                       IOBP_SK_Output(11) <=  (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(11)  <=  not ( IOBP_Masken_Reg6(5 downto 0) );  -- Register für Sel-LED's vom Slave 11
+                                                      IOBP_SK_Sel_LED(11)  <= Deb72_out(65 DOWNTO 60); -- Register für Sel-LED's vom Slave 11
+                                                      --IOBP_SK_Sel_LED(11)  <=  not ( IOBP_Masken_Reg6(5 downto 0) );  -- Register für Sel-LED's vom Slave 11
 
                                                   when "00000101"  | "00000110" => -- Output Modul in slot 11
                                                       AW_SK_Input_Reg(6)(5 downto  0)<=   (OTHERS => '0');
                                                       IOBP_SK_Output(11) <= AW_Output_Reg(6)(5 downto  0) AND not IOBP_Masken_Reg6(5 downto 0);
                                                       PIO_OUT_SLOT_11 <= IOBP_SK_Output(11);
                                                       PIO_ENA_SLOT_11 <= std_logic_vector'("111111");
-                                                      IOBP_SK_Aktiv_LED_i(11)  <=  IOBP_SK_Output(11);
+                                                      --IOBP_SK_Aktiv_LED_i(11)  <=  IOBP_SK_Output(11);
+                                                      IOBP_SK_Aktiv_LED_i(11)  <=  not ( IOBP_Masken_Reg6(5 downto 0) );
                                                       IOBP_SK_Input(11)  <= (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(11)  <=  not ( IOBP_Masken_Reg6(5 downto 0) );  -- Register für Sel-LED's vom Slave 11
+                                                      --IOBP_SK_Sel_LED(11)  <=  not ( IOBP_Masken_Reg6(5 downto 0) );  -- Register für Sel-LED's vom Slave 11
+                                                      IOBP_SK_Sel_LED(11)  <=  IOBP_SK_Output(11); -- Register für Sel-LED's vom Slave 11
 
                                                   when "00000001"|"00000010" => -- 5 In/1 Out Modul in slot 11
                                                       AW_SK_Input_Reg(6)( 4 downto  0) <=   (Deb_Sync72( 64 downto  60) AND not IOBP_Masken_Reg6( 4 downto  0));  -- Input, IO-Modul Nr. 11
                                                       AW_SK_Input_Reg(6)(5) <='0';
-                                                      IOBP_SK_Aktiv_LED_i(11)  <=  (IOBP_SK_Output(11)(5)    &  Deb72_out( 64 DOWNTO 60));  -- Signale für Aktiv-LED's
+                                                      --IOBP_SK_Aktiv_LED_i(11)  <=  (IOBP_SK_Output(11)(5)    &  Deb72_out( 64 DOWNTO 60));  -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Aktiv_LED_i(11)  <= not ( IOBP_Masken_Reg7( 10) & IOBP_Masken_Reg6( 4 downto  0) ); -- Signale für Aktiv-LED's
                                                       IOBP_SK_Input(11) (4 downto 0) <= ( PIO_SYNC(38), PIO_SYNC(46), PIO_SYNC(40), PIO_SYNC(44), PIO_SYNC(42));
                                                       IOBP_SK_Output(11)(5)  <= (AW_Output_Reg(6)( 5) AND not IOBP_Masken_Reg7(10));
                                                       PIO_OUT_SLOT_11 <= IOBP_SK_Output(11);
                                                       PIO_ENA_SLOT_11 <= std_logic_vector'("100000");
-                                                      IOBP_SK_Sel_LED(11) <=  not ( IOBP_Masken_Reg7( 10) & IOBP_Masken_Reg6( 4 downto  0) );  -- Register für Sel-LED's vom Slave 11
+                                                      --IOBP_SK_Sel_LED(11) <=  not ( IOBP_Masken_Reg7( 10) & IOBP_Masken_Reg6( 4 downto  0) );  -- Register für Sel-LED's vom Slave 11
+                                                      IOBP_SK_Sel_LED(11) <=  (IOBP_SK_Output(11)(5)    &  Deb72_out( 64 DOWNTO 60)); -- Register für Sel-LED's vom Slave 11
 
                                                   when others     =>  NULL;
                                               end case;
@@ -4646,43 +4757,54 @@ end generate Quench_Matrix_Gen;
                                               case conf_reg(12) is
                                                   when "00000011"   => -- 6 LEMO Input Modul FG902.130  in slot 12
                                                       AW_SK_Input_Reg(6)( 11 downto  6) <=   (Deb_Sync72(71 DOWNTO 66) AND not IOBP_Masken_Reg6( 11 downto  6));
-                                                      IOBP_SK_Aktiv_LED_i(12)  <=    Deb72_out(71 DOWNTO 66);
+                                                      --IOBP_SK_Aktiv_LED_i(12)  <=    Deb72_out(71 DOWNTO 66);
+                                                      IOBP_SK_Aktiv_LED_i(12)  <=     not ( IOBP_Masken_Reg6( 11 downto 6) );
                                                       IOBP_SK_Input(12)  <= (PIO_SYNC(112), PIO_SYNC(120), PIO_SYNC(110), PIO_SYNC(122), PIO_SYNC(108), PIO_SYNC(124));
                                                       IOBP_SK_Output(12) <=  (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(12)  <=  not ( IOBP_Masken_Reg6( 11 downto 6) );  -- Register für Sel-LED's vom Slave 12
+                                                      --IOBP_SK_Sel_LED(12)  <=  not ( IOBP_Masken_Reg6( 11 downto 6) );  -- Register für Sel-LED's vom Slave 12
+                                                      IOBP_SK_Sel_LED(12)  <=   Deb72_out(71 DOWNTO 66);  -- Register für Sel-LED's vom Slave 12
 
                                                   when "00000111"   => -- 6 LEMO Input Modul  FG902150 in slot 12
                                                       AW_SK_Input_Reg(6)( 11 downto  6) <=   (Deb_Sync72(71 DOWNTO 66) AND not IOBP_Masken_Reg6( 11 downto  6));
-                                                      IOBP_SK_Aktiv_LED_i(12)  <=    Deb72_out(71 DOWNTO 66);
+                                                      --IOBP_SK_Aktiv_LED_i(12)  <=    Deb72_out(71 DOWNTO 66);
+                                                      IOBP_SK_Aktiv_LED_i(12)  <=   not ( IOBP_Masken_Reg6( 11 downto 6) );  -- Register für Sel-LED's vom Slave 12
                                                       IOBP_SK_Input(12)  <= not (PIO_SYNC(112), PIO_SYNC(120), PIO_SYNC(110), PIO_SYNC(122), PIO_SYNC(108), PIO_SYNC(124));
                                                       IOBP_SK_Output(12) <=  (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(12)  <=  not ( IOBP_Masken_Reg6( 11 downto 6) );  -- Register für Sel-LED's vom Slave 12
+                                                      --IOBP_SK_Sel_LED(12)  <=  not ( IOBP_Masken_Reg6( 11 downto 6) );  -- Register für Sel-LED's vom Slave 12
+                                                      IOBP_SK_Sel_LED(12)  <=  Deb72_out(71 DOWNTO 66);  -- Register für Sel-LED's vom Slave 12
+
 
                                                   when "00000100" => -- 6 LWL Input Modul in slot 12
                                                       AW_SK_Input_Reg(6)( 11 downto  6) <=   (Deb_Sync72(71 DOWNTO 66) AND not IOBP_Masken_Reg6( 11 downto  6));
-                                                      IOBP_SK_Aktiv_LED_i(12)  <=    Deb72_out(71 DOWNTO 66);
+                                                      --IOBP_SK_Aktiv_LED_i(12)  <=    Deb72_out(71 DOWNTO 66);
+                                                      IOBP_SK_Aktiv_LED_i(12)  <=    not ( IOBP_Masken_Reg6( 11 downto 6) );  -- Register für Sel-LED's vom Slave 12
                                                       IOBP_SK_Input(12)  <= (PIO_SYNC(112),PIO_SYNC(122), PIO_SYNC(120), PIO_SYNC(108), PIO_SYNC(110), PIO_SYNC(124));
                                                       IOBP_SK_Output(12) <=  (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(12)  <=  not ( IOBP_Masken_Reg6( 11 downto 6) );  -- Register für Sel-LED's vom Slave 12
+                                                      --IOBP_SK_Sel_LED(12)  <=  not ( IOBP_Masken_Reg6( 11 downto 6) );  -- Register für Sel-LED's vom Slave 12
+                                                      IOBP_SK_Sel_LED(12)  <=   Deb72_out(71 DOWNTO 66);
 
                                                   when "00000101"  | "00000110" => -- Output Modul in slot 12
                                                       AW_SK_Input_Reg(6)(11 downto  6)<=   (OTHERS => '0');
                                                       IOBP_SK_Output(12) <= AW_Output_Reg(6)(11 downto  6) AND not IOBP_Masken_Reg6(11 downto 6);
                                                       PIO_OUT_SLOT_12 <= IOBP_SK_Output(12);
                                                       PIO_ENA_SLOT_12 <= std_logic_vector'("111111");
-                                                      IOBP_SK_Aktiv_LED_i(12)  <=  IOBP_SK_Output(12);
+                                                      --IOBP_SK_Aktiv_LED_i(12)  <=  IOBP_SK_Output(12);
+                                                      IOBP_SK_Aktiv_LED_i(12)  <=   not ( IOBP_Masken_Reg6( 11 downto 6) );  -- Register für Sel-LED's vom Slave 12
                                                       IOBP_SK_Input(12)  <= (OTHERS => '0');
-                                                      IOBP_SK_Sel_LED(12)  <=  not ( IOBP_Masken_Reg6( 11 downto 6) );  -- Register für Sel-LED's vom Slave 12
+                                                      --IOBP_SK_Sel_LED(12)  <=  not ( IOBP_Masken_Reg6( 11 downto 6) );  -- Register für Sel-LED's vom Slave 12
+                                                      IOBP_SK_Sel_LED(12)  <=  IOBP_SK_Output(12);
 
                                                   when "00000001"|"00000010" => -- 5 In/1 Out Modul in slot 12
                                                       AW_SK_Input_Reg(6)( 10 downto  6) <=   (Deb_Sync72( 70 downto  66) AND not IOBP_Masken_Reg6( 10 downto  6));  -- Input, IO-Modul Nr. 12
                                                       AW_SK_Input_Reg(6)(11) <='0';
-                                                      IOBP_SK_Aktiv_LED_i(12)  <=  (IOBP_SK_Output(12)(5)    &  Deb72_out( 70 DOWNTO  66));  -- Signale für Aktiv-LED's
+                                                      --IOBP_SK_Aktiv_LED_i(12)  <=  (IOBP_SK_Output(12)(5)    &  Deb72_out( 70 DOWNTO  66));  -- Signale für Aktiv-LED's
+                                                      IOBP_SK_Aktiv_LED_i(12)  <=  not ( IOBP_Masken_Reg7( 11) & IOBP_Masken_Reg6( 10 downto  6) );  -- Register für Sel-LED's vom Slave 12
                                                       IOBP_SK_Input(12) (4 downto 0) <= ( PIO_SYNC(120), PIO_SYNC(110), PIO_SYNC(122), PIO_SYNC(108), PIO_SYNC(124));
                                                       IOBP_SK_Output(12)(5)  <= (AW_Output_Reg(6)( 11) AND not IOBP_Masken_Reg7(11));
                                                       PIO_OUT_SLOT_12 <= IOBP_SK_Output(12);
                                                       PIO_ENA_SLOT_12 <= std_logic_vector'("100000");
-                                                      IOBP_SK_Sel_LED(12) <=  not ( IOBP_Masken_Reg7( 11) & IOBP_Masken_Reg6( 10 downto  6) );  -- Register für Sel-LED's vom Slave 12
+                                                      --IOBP_SK_Sel_LED(12) <=  not ( IOBP_Masken_Reg7( 11) & IOBP_Masken_Reg6( 10 downto  6) );  -- Register für Sel-LED's vom Slave 12
+                                                      IOBP_SK_Sel_LED(12) <=  (IOBP_SK_Output(12)(5)    &  Deb72_out( 70 DOWNTO  66));  -- Signale für Aktiv-LED's
 
                                                   when others     =>  NULL;
                                               end case;
