@@ -120,7 +120,7 @@ regset_t regSet[N_REGSET] = {
 // application-specific function prototypes
 static void initLast();
 static status_t probeSbSlave(volatile uint16_t* pMaster, uint16_t sysId, uint16_t grpId, uint32_t* slaves);
-static void probeSbSlaveExt(volatile uint16_t* pMaster, uint32_t slaves, uint32_t* pSharedDest);
+static void probeSbSlaveExt(volatile uint16_t* pMaster, uint32_t slot, uint32_t* pSharedDest);
 static status_t readSbSlaveReg(volatile uint16_t* pSlave, regset_t* regset, uint16_t *pData);
 static status_t writeSbSlaveReg(volatile uint16_t* pSlave, regset_t* regset, uint16_t *pData);
 
@@ -144,39 +144,74 @@ status_t probeSbSlave(volatile uint16_t* pMaster, uint16_t sysId, uint16_t grpId
     if (cidSys == sysId && cidGrp == grpId) {
       *slaves |= (uint32_t)(0x1) << slot;
 
-      u16val  = *(pMaster + (slot << 16) + SBS_CLK_10K); // get macro clock of a SCU bus slave
-      DBPRINT1("sb_scan: clk (x10K)=%d\n", u16val);
+      DBPRINT1("sb_scan: slot=%d, sys=0x%x, grp=0x%x detected\n",
+          slot, sysId, grpId);
+
+      // standard register values of a chosen SCU bus slave
+      u16val  = *(pMaster + (slot << 16) + SBS_SLAVE_ID); // get slave ID
+      DBPRINT1("\t       id=0x%x\n", u16val);
+
+      u16val  = *(pMaster + (slot << 16) + SBS_FW_VER);  // get FW version
+      DBPRINT1("\t   fw ver=0x%x\n", u16val);
+
+      u16val  = *(pMaster + (slot << 16) + SBS_FW_REL);  // get FW release
+      DBPRINT1("\t   fw rel=0x%x\n", u16val);
+
+      u16val  = *(pMaster + (slot << 16) + SBS_MACRO_VER); // get version and release of macro
+      DBPRINT1("\tmacro ver=0x%x\n", u16val);
+
+      u16val  = *(pMaster + (slot << 16) + SBS_CLK_10K); // get clock frequency of macro
+      DBPRINT1("\tmacro clk=%d [MHz]\n", u16val/100);
+
+      u16val  = *(pMaster + (slot << 16) + SBS_EXT_CID_SYS); // get extension system ID
+      DBPRINT1("\t  ext sys=0x%x\n", u16val);
+
+      u16val  = *(pMaster + (slot << 16) + SBS_EXT_CID_GRP); // get extension group ID
+      DBPRINT1("\t  ext grp=0x%x\n", u16val);
+
+      u16val  = *(pMaster + (slot << 16) + SBS_ECHO); // get echo register
+      DBPRINT1("\t     echo=0x%x\n", u16val);
+
+      u16val  = *(pMaster + (slot << 16) + SBS_STATUS); // get status register
+      DBPRINT1("\t   status=0x%x\n", u16val);
+
+      // probe extension card of a SCU bus slave
+      probeSbSlaveExt(pMaster, slot, pSharedGetSbStd);
+
+    } else {
+      DBPRINT1("sb_scan: slot=%d, sys=0x%x, grp=0x%x not found\n",
+          slot, sysId, grpId);
     }
   }
 
-  DBPRINT1("sb_scan: slaves=%08x\n", *slaves);
+  DBPRINT1("sb_scan: slaves=%08x (slot1 starts at bit1)\n", *slaves);
   return COMMON_STATUS_OK;
 }
 
 // probe an extension card of a SCU bus slave
 // pMaster     - address of the SCU bus master
-// slaves      - SCU slaves (bit1=slot1, bits=31..0)
+// slot        - SCU bus slot number
 // pSharedDest - destination location in the shared memory
-void probeSbSlaveExt(volatile uint16_t* pMaster, uint32_t slaves, uint32_t* pSharedDest)
+void probeSbSlaveExt(volatile uint16_t* pMaster, uint32_t slot, uint32_t* pSharedDest)
 {
-  uint8_t u8val;
   uint16_t u16val, u16val2;
   uint32_t u32val, u32val2;
 
-  for (u8val = 1; u8val <= N_SB_SLOTS; ++u8val) {
-    u32val = (slaves >> u8val) & 0x1;    // get slot number
-    u32val <<= 16;                       // offset for a SCU bus slave
-    u16val  = *(pMaster + u32val + SBS_EXT_CID_SYS); // read extension CID system ID
-    u16val2 = *(pMaster + u32val + SBS_EXT_CID_GRP); // read extension CID group ID
+  u32val = (0x1) << slot;              // encode slot to bit (slot1=bit1, bits=0..31)
+  u32val <<= 16;                       // offset for a SCU bus slave
+  u16val  = *(pMaster + u32val + SBS_EXT_CID_SYS); // read extension CID system ID
+  u16val2 = *(pMaster + u32val + SBS_EXT_CID_GRP); // read extension CID group ID
 
-    if (u16val != SBS_CID_NO_EXT) {
-      u32val = u16val;
-      u32val <<= 16;
-      u32val |= u16val2;
+  if (u16val != SBS_CID_NO_EXT) {
+    u32val = u16val;
+    u32val <<= 16;
+    u32val |= u16val2;
 
-      *(pSharedDest + SBS_EXT_CID_SYS + u8val - 1) = u32val;
-    }
-    DBPRINT1("sb_scan: slot%d: reg=%x, sys=%04x, grp=%04x\n",u8val, SBS_EXT_CID_SYS, u16val, u16val2);
+    *(pSharedDest + SBS_EXT_CID_SYS + slot - 1) = u32val;
+    DBPRINT1("\textension=yes (sys=0x%04x, grp=0x%04x)\n", u16val, u16val2);
+
+  } else {
+    DBPRINT1("\textension=no (sys=0x%04x, grp=0x%04x)\n", u16val, u16val2);
   }
 }
 
@@ -338,7 +373,6 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
       case FBAS_CMD_PROBE_SB_DIOB:       // probe DIOB card on SCU bus
         if (probeSbSlave(pSbMaster, CID_SYS_DIOB, CID_GRP_DIOB, &sbSlaves) == COMMON_STATUS_OK) {
           *pSharedGetSbSlaves = sbSlaves;
-          probeSbSlaveExt(pSbMaster, sbSlaves, pSharedGetSbStd);
 
           for (i = 1; i < N_SB_SLOTS; ++i) {
             u32val = (sbSlaves >> i) & 0x01;
@@ -376,7 +410,6 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
         if (u16val && u16val2) {
           if (probeSbSlave(pSbMaster, u16val, u16val2, &sbSlaves) == COMMON_STATUS_OK) {
             *pSharedGetSbSlaves = sbSlaves;
-            probeSbSlaveExt(pSbMaster, sbSlaves, pSharedGetSbStd);
           } else
             DBPRINT1("sb_scan: probe failed!\n");
         } else
