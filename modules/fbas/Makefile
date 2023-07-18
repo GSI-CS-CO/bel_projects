@@ -22,19 +22,19 @@ deploy:
 	# TR LM32 firmware
 	echo deploy '$(FW)/*.bin' to '$(NFSBASE)/$(TIMING_RTE)/$(TARGET_RTE)/firmware'
 	mkdir -p $(NFSBASE)/$(TIMING_RTE)/$(TARGET_RTE)/firmware
-	cp $(FW)/*.bin $(NFSBASE)/$(TIMING_RTE)/$(TARGET_RTE)/firmware
+	cp -u -p $(FW)/*.bin $(NFSBASE)/$(TIMING_RTE)/$(TARGET_RTE)/firmware
 
 	# test scripts
 	echo deploy '$(TEST)/scu/*.sh to $(NFSBASE)/$(TIMING_RTE)/$(TARGET_RTE)/$(ARCH)/bin'
-	cp $(TEST)/scu/*.sh $(NFSBASE)/$(TIMING_RTE)/$(TARGET_RTE)/$(ARCH)/bin
+	cp -u -p $(TEST)/scu/*.sh $(NFSBASE)/$(TIMING_RTE)/$(TARGET_RTE)/$(ARCH)/bin
 
 	# RTE script for NFSinit symlink
 	echo deploy '$(ASL)/timing-rte-$(TARGET_RTE)' to '$(NFSBASE)/nfsinit/global'
-	cp $(ASL)/timing-rte-$(TARGET_RTE) $(NFSBASE)/nfsinit/global
+	cp -u -p $(ASL)/timing-rte-$(TARGET_RTE) $(NFSBASE)/nfsinit/global
 
 	# NFSinit script
 	echo deploy '$(ASL)/timing-rte.sh' to '$(NFSBASE)/$(TIMING_RTE)/$(TARGET_RTE)'
-	cp $(ASL)/timing-rte.sh $(NFSBASE)/$(TIMING_RTE)/$(TARGET_RTE)
+	cp -u -p $(ASL)/timing-rte.sh $(NFSBASE)/$(TIMING_RTE)/$(TARGET_RTE)
 
 # deploy the FBAS artifacts to the target RTE directory (for Yocto based ramdisk)
 deploy-yocto-rte:
