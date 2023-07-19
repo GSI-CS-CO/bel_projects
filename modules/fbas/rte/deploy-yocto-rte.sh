@@ -34,6 +34,12 @@ deploy_fbas_artifacts() {
 	echo "deploy $TEST_PATH/scu/*.sh to $TARGET_RTE_PATH/$ARCH/bin"
 	mkdir -p $TARGET_RTE_PATH/$ARCH/bin
 	cp -u -p $TEST_PATH/scu/*.sh $TARGET_RTE_PATH/$ARCH/bin
+
+	# test artifacts
+	echo "deploy $TEST_PATH/scu/*.sched to $TARGET_RTE_PATH/test"
+	mkdir -p $TARGET_RTE_PATH/test
+	cp -u -p $TEST_PATH/scu/*.sched $TARGET_RTE_PATH/test
+
 }
 
 deploy_rte_scripts() {

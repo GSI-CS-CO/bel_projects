@@ -86,6 +86,9 @@ fi
 log 'copying firmware to ramdisk'
 cp -a /opt/$NAME/firmware/* /
 
+log 'copying test artifacts to ramdisk'
+cp -a /opt/$NAME/test/* /
+
 log 'starting services'
 # start saftlib for multiple devices: saftd tr0:dev/wbm0 tr1:dev/wbm1 tr2:dev/wbm2 ... trXYZ:dev/wbmXYZ
 saftlib_devices=$(for dev in /dev/wbm*; do echo tr${dev#/dev/wbm}:${dev#/}; done)
