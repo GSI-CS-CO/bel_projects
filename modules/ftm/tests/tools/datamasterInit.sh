@@ -1,10 +1,19 @@
 #! /bin/bash
+#
+# Example: ./datamasterInit.sh $(hostname) ~/bel_projects/dev/syn/gsi_pexarria5/ftm/ftm.bin
 
 if [ $# -eq 1 ]
 then
   DM_HOST=$1
 else
   DM_HOST=$(hostname)
+fi
+
+if [ $# -eq 2 ]
+then
+  FIRMWARE=$2
+else
+  FIRMWARE=~/Documents/fel0069/ftm_v8.0.4-rc1.bin
 fi
 
 if [ "$DM_HOST" = "ACOPC042" ]
@@ -21,9 +30,9 @@ then
   echo -n 'dev/wbm1 datamaster IP: '; eb-mon -i dev/wbm1
   echo -n 'dev/wbm1 datamaster WR sync status: '; eb-mon -y dev/wbm1
   # Load the latest firmware to datamaster
-  ~/bel_projects/dev/syn/gsi_pexarria5/ftm/fwload_all.sh $DM ~/Documents/fel0069/ftm_v8.0.4-rc1.bin
+  ~/bel_projects/dev/syn/gsi_pexarria5/ftm/fwload_all.sh $DM $FIRMWARE
   # Test that the tools version and the firmware version are compatible
-  ~/bel_projects/dev/modules/ftm/bin/dm-cmd $DM
+  LD_LIBRARY_PATH=~/bel_projects/dev/modules/ftm/lib/ ~/bel_projects/dev/modules/ftm/bin/dm-cmd $DM
   OPTIONS='-k zzz' make -C ~/bel_projects/dev/modules/ftm/tests
 elif [ "$DM_HOST" = "fel0069" ]
 then
@@ -44,9 +53,9 @@ then
   echo -n 'dev/wbm0 datamaster WR sync status: '; ssh root@fel0069.acc.gsi.de 'eb-mon -y dev/wbm0'
   echo -n 'dev/wbm0 datamaster link status: '; ssh root@fel0069.acc.gsi.de 'eb-mon -l dev/wbm0'
   # load the latest firmware to datamaster
-  ~/bel_projects/dev/syn/gsi_pexarria5/ftm/fwload_all.sh tcp/fel0069.acc.gsi.de ~/Documents/fel0069/ftm_v8.0.4-rc1.bin
+  ~/bel_projects/dev/syn/gsi_pexarria5/ftm/fwload_all.sh tcp/fel0069.acc.gsi.de $FIRMWARE
   # Test that the tools version and the firmware version are compatible
-  ~/bel_projects/dev/modules/ftm/bin/dm-cmd tcp/fel0069.acc.gsi.de
+  LD_LIBRARY_PATH=~/bel_projects/dev/modules/ftm/lib/ ~/bel_projects/dev/modules/ftm/bin/dm-cmd tcp/fel0069.acc.gsi.de
   OPTIONS='-k zzz' make -C ~/bel_projects/dev/modules/ftm/tests remote
 else
   echo "Unknown datamaster host $DM_HOST, known are ACOPC042, fel0069."
