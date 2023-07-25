@@ -20,9 +20,9 @@
 }
 ]]></parameter>
  <parameter name="clockCrossingAdapter" value="HANDSHAKE" />
- <parameter name="device" value="10AX115S2F45I1SG" />
+ <parameter name="device" value="10AX027E3F29E2SG" />
  <parameter name="deviceFamily" value="Arria 10" />
- <parameter name="deviceSpeedGrade" value="1" />
+ <parameter name="deviceSpeedGrade" value="2" />
  <parameter name="fabricMode" value="QSYS" />
  <parameter name="generateLegacySim" value="false" />
  <parameter name="generationId" value="0" />
@@ -189,7 +189,7 @@
   <parameter name="DATA_WIDTH" value="QUAD" />
   <parameter name="DEVICE_FAMILY" value="Arria 10" />
   <parameter name="ENABLE_SIM" value="false" />
-  <parameter name="EPCS_TYPE" value="EPCQL1024" />
+  <parameter name="EPCS_TYPE" value="EPCQL512" />
   <parameter name="FLASH_RSTPIN" value="FALSE" />
   <parameter name="INTENDED_DEVICE_FAMILY" value="Arria 10" />
   <parameter name="PAGE_SIZE" value="256" />

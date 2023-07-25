@@ -3,7 +3,7 @@ use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
 
 package asmi10_pkg is
-	component asmi10_altera_asmi_parallel_181_fmv4jaq is
+	component asmi10_altera_asmi_parallel_181_qykenlq is
 		port (
 			clkin         : in  std_logic                     := 'X';             -- clk
 			fast_read     : in  std_logic                     := 'X';             -- fast_read
@@ -30,6 +30,6 @@ package asmi10_pkg is
 			read_address  : out std_logic_vector(31 downto 0);                    -- read_address
 			rdid_out      : out std_logic_vector(7 downto 0)                      -- rdid_out
 		);
-	end component asmi10_altera_asmi_parallel_181_fmv4jaq;
+	end component asmi10_altera_asmi_parallel_181_qykenlq;
 
 end asmi10_pkg;
