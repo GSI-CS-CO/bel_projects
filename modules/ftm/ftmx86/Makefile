@@ -10,7 +10,7 @@ VERSION_TOOL   = 0.36.3
 ############################
 
 ifeq ($(findstring asl75,$(shell hostname)),asl75)
-  EBPATH	=/common/export/timing-rte/tg-fallout-v6.2.x-rocky8/x86_64
+  EBPATH	=/common/export/timing-rte/tg-fallout-v6.2.x-rocky9/x86_64
   BOOSTPATH	=/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation
 else
 ifeq ($(findstring asl,$(shell hostname)),asl)
