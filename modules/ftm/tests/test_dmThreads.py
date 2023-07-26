@@ -17,13 +17,9 @@ class UnitTestDatamasterThreads(dm_testbench.DmTestbench):
     scheduleFile = f'pps-all-threads-cpu0-{count}.dot'
     self.generate_schedule(scheduleFile, count)
     self.addSchedule(f'../{scheduleFile}')
-    index = 0
-    threadList = [('a', '0'), ('b', '1'), ('c', '2'), ('d', '3'), ('e', '4'), ('f', '5'), ('g', '6'), ('h', '7')]
-    self.assertIn(count, range(1,len(threadList)+1), f'{count} {range(1,len(threadList)+1)}')
-    for x, y in threadList:
-      if index < count:
-        self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'Pattern0_' + x, '-t', y), [0])
-        index = index + 1
+    self.assertIn(count, range(1,len(self.patternNames)+1), f'Number of threads is {count}, not in {range(1,len(self.patternNames)+1)}')
+    for i in range(count):
+      self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'Pattern0_' + chr(self.patternNames[i]), '-t', str(i)), [0])
     self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster), [0], 13 + count)
     self.checkRunningThreadsCmd()
     self.deleteFile(scheduleFile)
@@ -51,6 +47,98 @@ class UnitTestDatamasterThreads(dm_testbench.DmTestbench):
 
   def test_dmThreads8(self):
     self.run_dmThreads(8)
+
+  @pytest.mark.thread32
+  def test_dmThreads9(self):
+    self.run_dmThreads(9)
+
+  @pytest.mark.thread32
+  def test_dmThreads10(self):
+    self.run_dmThreads(10)
+
+  @pytest.mark.thread32
+  def test_dmThreads11(self):
+    self.run_dmThreads(11)
+
+  @pytest.mark.thread32
+  def test_dmThreads12(self):
+    self.run_dmThreads(12)
+
+  @pytest.mark.thread32
+  def test_dmThreads13(self):
+    self.run_dmThreads(13)
+
+  @pytest.mark.thread32
+  def test_dmThreads14(self):
+    self.run_dmThreads(14)
+
+  @pytest.mark.thread32
+  def test_dmThreads15(self):
+    self.run_dmThreads(15)
+
+  @pytest.mark.thread32
+  def test_dmThreads16(self):
+    self.run_dmThreads(16)
+
+  @pytest.mark.thread32
+  def test_dmThreads17(self):
+    self.run_dmThreads(17)
+
+  @pytest.mark.thread32
+  def test_dmThreads18(self):
+    self.run_dmThreads(18)
+
+  @pytest.mark.thread32
+  def test_dmThreads19(self):
+    self.run_dmThreads(19)
+
+  @pytest.mark.thread32
+  def test_dmThreads20(self):
+    self.run_dmThreads(20)
+
+  @pytest.mark.thread32
+  def test_dmThreads21(self):
+    self.run_dmThreads(21)
+
+  @pytest.mark.thread32
+  def test_dmThreads22(self):
+    self.run_dmThreads(22)
+
+  @pytest.mark.thread32
+  def test_dmThreads23(self):
+    self.run_dmThreads(23)
+
+  @pytest.mark.thread32
+  def test_dmThreads24(self):
+    self.run_dmThreads(24)
+
+  @pytest.mark.thread32
+  def test_dmThreads25(self):
+    self.run_dmThreads(25)
+
+  @pytest.mark.thread32
+  def test_dmThreads26(self):
+    self.run_dmThreads(26)
+
+  @pytest.mark.thread32
+  def test_dmThreads27(self):
+    self.run_dmThreads(27)
+
+  @pytest.mark.thread32
+  def test_dmThreads28(self):
+    self.run_dmThreads(28)
+
+  @pytest.mark.thread32
+  def test_dmThreads29(self):
+    self.run_dmThreads(29)
+
+  @pytest.mark.thread32
+  def test_dmThreads30(self):
+    self.run_dmThreads(30)
+
+  @pytest.mark.thread32
+  def test_dmThreads31(self):
+    self.run_dmThreads(31)
 
   @pytest.mark.thread32
   def test_dmThreads32(self):
