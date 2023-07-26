@@ -105,11 +105,12 @@
  * point (node) of origin. It also contains the preparation time, which specificies the internal time lead for dispatch.
  */
 //@{ 
-#define T_TS_FLAGS              (0)                           ///< Flags. RW Host, RW LM32
-#define T_TS_NODE_PTR           (T_TS_FLAGS     + _32b_SIZE_) ///< Origin node. WR Host, RD LM32
-#define T_TS_STARTTIME          (T_TS_NODE_PTR  + _PTR_SIZE_) ///< Time when to start this thread. Used for sync start of multiple threads. WR Host, RD LM32
-#define T_TS_PREPTIME           (T_TS_STARTTIME + _TS_SIZE_)  ///< Preparation time, internal lead. WR Host, RD LM32
-#define _T_TS_SIZE_             (T_TS_PREPTIME  + _TS_SIZE_)  ///< Size of per thread staging data register area
+#define T_TS_FLAGS              (0)                                 ///< Flags. RW Host, RW LM32
+#define T_TS_NODE_PTR           (T_TS_FLAGS          + _32b_SIZE_)  ///< Origin node. WR Host, RD LM32
+#define T_TS_STARTTIME          (T_TS_NODE_PTR       + _PTR_SIZE_)  ///< Time when to start this thread. Used for sync start of multiple threads. WR Host, RD LM32
+#define T_TS_PREPTIME           (T_TS_STARTTIME      + _TS_SIZE_)   ///< Preparation time, internal lead. WR Host, RD LM32
+#define T_TS_STARTTIME_PTR      (T_TS_PREPTIME       + _TS_SIZE_)   ///< Ptr to Starttime. Default pointing to T_TS_STARTTIME. For a synced start, point to a forking thread's T_TD_CURRTIME
+#define _T_TS_SIZE_             (T_TS_STARTTIME_PTR  + _PTR_SIZE_)  ///< Size of per thread staging data register area
 //@}
 
 
@@ -190,8 +191,8 @@
 #define SHCTL_THR_CTL    (SHCTL_TGATHER + _TS_SIZE_  )                ///< Thread Control Registers (1 bit per Thread )
 #define SHCTL_THR_STA    (SHCTL_THR_CTL + _T_TC_SIZE_  )              ///< Thread Staging Areas (1 area per Thread )
 #define SHCTL_THR_DAT    (SHCTL_THR_STA + _THR_QTY_ * _T_TS_SIZE_  )  ///< Thread Runtime Meta Data Areas(1 area per Thread )
-#define SHCTL_INBOXES    (SHCTL_THR_DAT + _THR_QTY_ * _T_TD_SIZE_  )  ///< Inboxes for MSI (1 per Core in System ), NOT IMPLEMENTED
-#define _SHCTL_END_      (SHCTL_INBOXES + _THR_QTY_ * _32b_SIZE_)	  ///< Size of all control register sections	
+#define SHCTL_GPREGS     (SHCTL_THR_DAT + _THR_QTY_ * _T_TD_SIZE_  )  ///< GPREGS 
+#define _SHCTL_END_      (SHCTL_GPREGS + _THR_QTY_ * _32b_SIZE_)	    ///< Size of all control register sections	
 //@}
 
 /*
@@ -697,6 +698,9 @@
 //FIXME selling my soul here by allowing dynamic changes to timing msg content.
 // Prime BS caused by Jutta's "we must know which pattern it belongs to and dont want to use a proper DB lookup".
 // Evil stuff and likely to explode in our faces at some point
+
+// oh well, let's pile more bad practice on top. make all fields *ptr or even **ptr
+// type ... treat as val or as ptr. low word always the ptr, so ptr32 and ptr64 are same determined by field 
 
 //
 /** @name Node flag field bit defs - interprete ID word as 64b word */

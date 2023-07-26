@@ -143,6 +143,8 @@ void dmInit() {
   actionFuncs[ACT_TYPE_FLUSH]           = execFlush;
   actionFuncs[ACT_TYPE_WAIT]            = execWait;
 
+  
+
   uint8_t i;
   for(i=0; i < _THR_QTY_; i++) {
     //set thread times to infinity
@@ -150,8 +152,13 @@ void dmInit() {
     *(uint64_t*)&tp[T_TD_CURRTIME >> 2] = -1ULL;
     *(uint64_t*)&tp[T_TD_DEADLINE >> 2] = -1ULL;
     *(uint32_t*)&tp[T_TD_FLAGS >> 2]    = i;
-    *(uint64_t*)(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_PREPTIME  ) >> 2)) = PREPTIME_DEFAULT;
-    *(uint64_t*)(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_STARTTIME ) >> 2)) = 0ULL;
+    //setup start stuff 
+    uint32_t* tp1 = (uint32_t*)(p + (( SHCTL_THR_DAT + i * _T_TD_SIZE_) >> 2));
+    *(uint64_t*)&tp1[T_TS_NODE_PTR        >> 2] = LM32_NULL_PTR;
+    *(uint64_t*)&tp1[T_TS_STARTTIME       >> 2] = 0ULL;
+    *(uint64_t*)&tp1[T_TS_PREPTIME        >> 2] = PREPTIME_DEFAULT;
+    *(uint64_t**)&tp1[T_TS_STARTTIME_PTR  >> 2] = (uint64_t*)&tp1[T_TS_STARTTIME  >> 2]; //default to starttime for referencing
+    
     //add thread to heap
     hp[i] = tp;
   }

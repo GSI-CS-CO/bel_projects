@@ -242,7 +242,7 @@ void main(void) {
             uint8_t* thrData   = (uint8_t*)&p[( SHCTL_THR_DAT + i * _T_TD_SIZE_) >> 2]; // thread Data array
 
 	    //pointers to start fields
-            uint64_t* startTime = (uint64_t*)&thrStart[T_TS_STARTTIME];
+            uint64_t** startTime = (uint64_t**)&thrStart[T_TS_STARTTIME_PTR];
             uint64_t* prepTime  = (uint64_t*)&thrStart[T_TS_PREPTIME];
             uint32_t* origin    = (uint32_t*)&thrStart[T_TS_NODE_PTR];
             
@@ -255,8 +255,8 @@ void main(void) {
             DBPRINT1("#%02u: ThrIdx %u, Preptime: %s\n", cpuId, i, print64(*prepTime, 0));
 
 	    //init fields
-            if (!(*startTime)) {*currTime = getSysTime() + (*prepTime << 1); } // if 0, set to now + 2 * preptime
-            else                *currTime = *startTime;
+            if (!(**startTime)) {*currTime = getSysTime() + (*prepTime << 1); } // if 0, set to now + 2 * preptime
+            else                *currTime = **startTime;
 
             *cursor   = *origin;          // Set cursor to origin node
             *deadline = *currTime;        // Set the deadline to first blockstart
