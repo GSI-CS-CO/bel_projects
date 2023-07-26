@@ -317,15 +317,18 @@ class DmTestbench(unittest.TestCase):
       if index > 11 and index < (countLines - 1):
         try:
           cpu = int(line[3 + offset1])
-          thread = int(line[9 + offset1])
+          if line[8 + offset1] == ' ':
+            thread = int(line[9 + offset1])
+          else:
+            thread = int(line[8 + offset1:10 + offset1])
           running = line[21 + offset1:24 + offset1]
           count = int(line[32 + offset:42 + offset])
+          msgCounts[str(10*cpu) + str(thread)] = str(count)
+          if running == 'yes':
+            threadsCheck = threadsCheck + (1 << (8*cpu + thread))
+          # ~ print(f'threadsCheck: {threadsCheck:#X}, threadsToCheck: {threadsToCheck:#X}, running:{running} {cpu} {thread} "{line[8 + offset1:10 + offset1]}"')
         except ValueError:
           print(f'ValueError:{index} CPU {cpu} Thread {thread}  line: "{line}", "{line[3 + offset1]}", "{line[9 + offset1]}", "{line[32 + offset:42 + offset]}", offset={offset}, offset1={offset1}')
-        msgCounts[str(10*cpu) + str(thread)] = str(count)
-        if running == 'yes':
-          threadsCheck = threadsCheck + (1 << (8*cpu + thread))
-        # ~ print(f'threadsCheck: {threadsCheck:#X}, threadsToCheck: {threadsToCheck:#X}, running:{running} {cpu} {thread}')
         if offset == 0:
           offset = 10
           offset1 = 5
@@ -333,7 +336,7 @@ class DmTestbench(unittest.TestCase):
           offset = 0
           offset1 = 0
       index = index + 1
-    self.assertEqual(countLines-13, len(msgCounts))
+    self.assertEqual(countLines-13, len(msgCounts), f'Output has {countLines} lines, messages: {len(msgCounts)}')
     if threadsToCheck > 0:
       self.assertEqual(threadsCheck, threadsToCheck, f'threads running: {threadsCheck:#X}, expected: {threadsToCheck:#X}')
     return msgCounts
