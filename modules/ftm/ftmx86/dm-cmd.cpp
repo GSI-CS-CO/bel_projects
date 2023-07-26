@@ -369,7 +369,7 @@ int main(int argc, char* argv[]) {
             break;
          case 't':
             tmp = strtol(optarg, NULL, 0);
-            if ((tmp < 0) || (tmp >= 8)) {
+            if ((tmp < 0) || (tmp >= _THR_QTY_)) {
               std::cerr << program << ": Thread idx '" << optarg << "' is invalid. Choose an index between 0 and " << _THR_QTY_ -1 << std::endl;
               error = -1;
             } else {thrIdx = (uint32_t)tmp;}
