@@ -479,9 +479,9 @@ int main(int argc, char* argv[]) {
     std::string tmpGlobalCmds(typeName);
 
     if (tmpGlobalCmds == dnt::sCmdAbort)  {
-      if((!targetName.empty())){
+      if (!targetName.empty()) {
         uint32_t bits = std::stol(targetName, nullptr, 0);
-       cdm.setThrAbort(ew, cpuIdx, bits & ((1<<_THR_QTY_)-1)  );
+        cdm.setThrAbort(ew, cpuIdx, bits & ((1ll<<_THR_QTY_)-1));
       } else { cdm.abortThr(ew, cpuIdx, thrIdx); }
       return 0;
     }
@@ -743,7 +743,7 @@ int main(int argc, char* argv[]) {
             if ((origin == DotStr::Node::Special::sIdle) || (origin == DotStr::Misc::sUndefined)) {std::cerr << program << ": Cannot start, origin of CPU " << cpuIdx << "'s thread " << thrIdx << " is not a valid node" << std::endl; return -1;}
          }
         }
-        cdm.setThrStart(ew, cpuIdx, bits & ((1<<_THR_QTY_)-1) );
+        cdm.setThrStart(ew, cpuIdx, bits & ((1ll<<_THR_QTY_)-1));
       } else {
         origin = cdm.getThrOrigin(cpuIdx, thrIdx);
         if ((origin == DotStr::Node::Special::sIdle) || (origin == DotStr::Misc::sUndefined)) {std::cerr << program << ": Cannot start, origin of CPU " << cpuIdx << "'s thread " << thrIdx << " is not a valid node" << std::endl; return -1;}
