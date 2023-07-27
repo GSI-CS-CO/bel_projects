@@ -35,6 +35,11 @@ test-all:
 		SNOOP_COMMAND="$(SNOOP)" DATAMASTER="$(DATAMASTER)" TEST_SCHEDULES=schedules/ \
 		python3 -m pytest $(IGNORE) --runslow $(OPTIONS)
 
+test-32-threads:
+	TEST_BINARY_DM_CMD="$(TEST_DM_CMD)" TEST_BINARY_DM_SCHED="$(TEST_DM_SCHED)" LD_LIBRARY_PATH="$(CARPEDM_PATH):$(LD_LIBRARY_PATH)" \
+		SNOOP_COMMAND="$(SNOOP)" DATAMASTER="$(DATAMASTER)" TEST_SCHEDULES=schedules/ \
+		python3 -m pytest $(IGNORE) --runslow --runthread32 $(OPTIONS)
+
 all: test-all dmPerformance dmThreads pps singleEdgeTest
 
 dmPerformance:
