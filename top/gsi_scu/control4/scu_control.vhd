@@ -192,6 +192,10 @@ architecture rtl of scu_control is
   signal s_i2c_sda_pad_in   : std_logic_vector(1 downto 1);
   signal s_i2c_sda_padoen   : std_logic_vector(1 downto 1);
 
+
+  signal rstn_ref              : std_logic;
+  
+
   constant io_mapping_table : t_io_mapping_table_arg_array(0 to 14) :=
   (
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
@@ -253,6 +257,7 @@ begin
       core_clk_125m_pllref_i  => clk_125m_tcb_pllref_i,
       core_clk_125m_local_i   => clk_125m_tcb_local_i,
       core_clk_125m_sfpref_i  => clk_125m_tcb_sfpref_i,
+      core_rstn_wr_ref_o      => rstn_ref,
       wr_onewire_io           => OneWire_CB,
       wr_sfp_sda_io           => sfp_mod2_io,
       wr_sfp_scl_io           => sfp_mod1_io,
@@ -355,6 +360,9 @@ begin
   avr_sda             <= s_i2c_sda_pad_out(1) when (s_i2c_sda_padoen(1) = '0') else 'Z';
   s_i2c_scl_pad_in(1) <= avr_scl;
   s_i2c_sda_pad_in(1) <= avr_sda;
+
+  -- Resets
+  A_nReset    <= rstn_ref;
 
 
 end rtl;
