@@ -32,6 +32,7 @@ class UnitTestLzma(dm_testbench.DmTestbench):
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', patternName),
         [0], linesCout=1, linesCerr=0)
 
+  @pytest.mark.thread8
   def test_extra_large_patternname_large(self):
     """OK test: use a schedule with 1867 messages and a pattern name of 1000 chars.
     This works without an exception, including start of pattern.
@@ -45,6 +46,7 @@ class UnitTestLzma(dm_testbench.DmTestbench):
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', patternName),
         [0], linesCout=1, linesCerr=0)
 
+  @pytest.mark.thread8
   def test_large_patternname_large(self):
     """OK test: use a schedule with 1867 messages and a pattern name of 30 chars.
     This works without an exception, including start of pattern.
@@ -53,6 +55,35 @@ class UnitTestLzma(dm_testbench.DmTestbench):
     fileName = self.schedules_folder + 'lzma_1867_30_msg.dot'
     patternName = 'PatternNameMsg4567890123456789'
     self.generate_schedule_msg(fileName, patternName, 1867)
+    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
+        fileName), [0], linesCout=0, linesCerr=0)
+    self.deleteFile(fileName)
+    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', patternName),
+        [0], linesCout=1, linesCerr=0)
+
+  @pytest.mark.thread32
+  def test_extra_large_patternname_large_thread32(self):
+    """OK test: use a schedule with 1838 messages and a pattern name of 1000 chars.
+    This works without an exception, including start of pattern.
+    """
+    fileName = self.schedules_folder + 'lzma_1838_1000_msg.dot'
+    patternName = 'PatternNameMsg4567890123456789'
+    patternName = self.generate_schedule_msg(fileName, patternName, 1838, patternNameLength=1000)
+    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
+        fileName), [0], linesCout=0, linesCerr=0)
+    self.deleteFile(fileName)
+    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', patternName),
+        [0], linesCout=1, linesCerr=0)
+
+  @pytest.mark.thread32
+  def test_large_patternname_large_thread32(self):
+    """OK test: use a schedule with 1838 messages and a pattern name of 30 chars.
+    This works without an exception, including start of pattern.
+    This is the maximal number of nodes. 100% memory used.
+    """
+    fileName = self.schedules_folder + 'lzma_1838_30_msg.dot'
+    patternName = 'PatternNameMsg4567890123456789'
+    self.generate_schedule_msg(fileName, patternName, 1838)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [0], linesCout=0, linesCerr=0)
     self.deleteFile(fileName)
