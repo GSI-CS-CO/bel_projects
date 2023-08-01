@@ -1,0 +1,10 @@
+[Unit]
+Description = b2b data analysis for INT ESR
+
+[Service]
+Type = simple
+Environment="DIM_DNS_NODE=asl105"
+ExecStart = b2b-analyzer int_esr
+
+[Install]
+WantedBy = multi-user.target

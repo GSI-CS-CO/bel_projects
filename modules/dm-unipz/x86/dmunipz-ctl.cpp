@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 08-Feb-2022
+ *  version : 06-Feb-2023
  *
  * Command-line interface for dmunipz
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.8.11"
+#define DMUNIPZ_X86_VERSION "0.8.12"
 
 // standard includes 
 #include <unistd.h> // getopt

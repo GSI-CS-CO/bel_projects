@@ -25,7 +25,10 @@ all: simple-display
 simple-display: $(SOURCES)
 	$(CC) $(CFLAGS) $(WCFLAGS) $(DEFINE) -o $@ $^ $(LIBS) -I../../modules/oled_display
 
-clean:  rm -f $(TARGETS)
+install:
+	cp $(TARGETS) $(STAGING)$(PREFIX)/bin
+clean:
+	rm -f $(TARGETS)
 # =================================================================================================
 # END OF ASL DEPLOYMENT
 # =================================================================================================

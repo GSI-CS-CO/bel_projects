@@ -4,7 +4,7 @@
 /* register maps for some selected Wishbone devices  */
 #include "../../tools/wb_slaves.h" /* this is a hack */
 #include "../../ip_cores/wr-cores/modules/wr_eca/eca_regs.h"
-#include "../../ip_cores/saftlib/drivers/eca_flags.h"
+#include "../../ip_cores/saftlib/src/eca_flags.h"
 #include "../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"
 #include "../common-libs/include/common-defs.h" // COMMON_STATUS_OK
 
@@ -37,13 +37,20 @@ extern uint32_t*       _startshared[];
 #define ECACHANNELFORLM32 2     // the id of an ECA channel for embedded CPU
 
 /* definitions of buffers in shared memory */
-#define BG_SHARED_BEGIN         COMMON_SHARED_END
+#define BG_SHARED_COMMON_SIZE   2048                      // reserved size of the common-lib section in shared memory
+#define BG_SHARED_BEGIN         BG_SHARED_COMMON_SIZE     // App-spec section: firmware ID
 #define BG_SHARED_MB_SLOT_LM32  BG_SHARED_BEGIN + 0x04UL  // Mailbox slot for LM32
 #define BG_SHARED_MB_SLOT_HOST  BG_SHARED_BEGIN + 0x0CUL  // Mailbox slot for the host
-#define BG_SHARED_CMD           COMMON_SHARED_CMD         // Command buffer
-#define BG_SHARED_INPUT         BG_SHARED_BEGIN + 0x20UL  // Command argument buffer
+#define BG_SHARED_COMMON_BEGIN  BG_SHARED_BEGIN + 0x10UL  // Start address of the common-lib section
+#define BG_SHARED_COMMON_END    BG_SHARED_BEGIN + 0x14UL  // End address of the common-lib section
+#define BG_SHARED_COMMON_CMD    BG_SHARED_BEGIN + 0x18UL  // Address of the command buffer (common-lib)
+#define BG_SHARED_COMMON_STATE  BG_SHARED_BEGIN + 0x1CUL  // Address of the state buffer (common-lib)
+                                                          // app specific section in shared memory (for host communication)
+#define BG_SHARED_CMD           COMMON_SHARED_CMD         // Offset to the command buffer
+#define BG_SHARED_CMD_ARGS      BG_SHARED_BEGIN + 0x20UL  // Offset to the command argument buffer
 #define BG_SHARED_END           BG_SHARED_BEGIN + 0x40UL  // End of the shared memory
 #define MB_SLOT_CFG_FREE  0xFFFFFFFFUL
+
 
 /* id number to identify the LM32 firmware for burst generator */
 #define BG_FW_ID          0xb2b2b2b2UL
@@ -82,10 +89,10 @@ enum BURST_INFO {                // burst info fields
 #define CMD_LS_FW_ID      0x33UL   // list the firmware id
 #define CMD_MASK          0xFFFFUL // command mask
 
-#define CMD_DIAG_TOGGLE_MEASUREMENT        0x40 // toggle diagnostic measurements
-#define CMD_DIAG_PRINT_MSI_HANDLE_DURATION 0x41 // print the elapsed time to handle MSIs
-#define CMD_DIAG_PRINT_IO_EVENT_CTRL_CFG   0x42 // print IO event control and configuration table
-#define CMD_DIAG_PRINT_TASK_INTERVAL       0x43 // print the task interval
+#define CMD_DIAG_TOGGLE_MSR_TASK_SCHED_PERIOD 0x40 // toggle diagnostic measurements
+#define CMD_DIAG_PRINT_MSI_HANDLE_DURATION    0x41 // print the elapsed time to handle MSIs
+#define CMD_DIAG_PRINT_IO_EVENT_CTRL_CFG      0x42 // print IO event control and configuration table
+#define CMD_DIAG_PRINT_MSR_TASK_SCHED_PERIOD  0x43 // print the results of the scheduler period measurement
 
 /* offsets of arguments in the user commands */
 enum ARGS_CMD_GET_PARAM {

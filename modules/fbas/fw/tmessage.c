@@ -59,10 +59,12 @@ void initItr(timedItr_t* itr, uint8_t total, uint64_t now, uint32_t freq)
   itr->total = total;
   itr->last = now;
   itr->period = TIM_1000_MS;
+
+  // set the iteration period
   if (freq && itr->total) {
     itr->period /=(freq * itr->total); // for 30Hz it's 33312 us (30.0192 Hz)
 
-    itr->ttl = itr->total * freq / 15; // TTL value of the MPS protocol data (2x lost msgs)
+    itr->ttl = TIM_100_MS/TIM_1_MS + 1; // TTL value = 101 milliseconds
 
     //itr->period /= 1000ULL; // granularity in 1 us
     //itr->period *= 1000ULL;
@@ -236,42 +238,6 @@ status_t sendMpsMsgSpecific(timedItr_t* itr, mpsMsg_t* buf, uint64_t evtid, uint
 }
 
 /**
- * \brief alter lifetime of received MPS messages [MPS_FS_600]
- *
- * \param itr iterator used to access MPS messages in pre-defined period
- *
- * \ret ptr pointer to expired MPS message
- **/
-mpsMsg_t* expireMpsMsg(timedItr_t* itr)
-{
-  uint64_t now = getSysTime();
-  uint64_t deadline = itr->last + itr->period;
-  mpsMsg_t* buf = 0;
-
-  if (!itr->last)
-    deadline = now;       // initial check
-
-  // check lifetime of next MPS flag
-  if (deadline <= now) {
-
-    if (bufMpsMsg[itr->idx].ttl) {
-
-      if (now - bufMpsMsg[itr->idx].ts > TIM_100_MS) {
-        //DBPRINT2("%llu %llu\n", now, bufMpsMsg[itr->idx].ts);
-        bufMpsMsg[itr->idx].prot.flag = MPS_FLAG_NOK;
-        bufMpsMsg[itr->idx].ttl = 0;
-        buf = &bufMpsMsg[itr->idx];  // expired MPS message
-      }
-    }
-
-    // update iterator with deadline
-    resetItr(itr, now);
-  }
-
-  return buf;
-}
-
-/**
  * \brief update MPS message with a given MPS event
  *
  * \param buf Pointer to MPS message buffer
@@ -297,15 +263,17 @@ mpsMsg_t* updateMpsMsg(mpsMsg_t* buf, uint64_t evt)
  * \param raw Raw MPS protocol (bits 63-16 = addr, 15-8 = index, 7-0 = flag)
  * \param ts  Timestamp
  * \param itr Read-access iterator
+ * \param[out] offset Offset to the selected MPS msg buffer
  *
- * \ret ptr pointer to the stored MPS flag
+ * \ret status Returns OK if received message is saved, otherwise ERROR
  **/
-mpsMsg_t* storeMpsMsg(uint64_t raw, uint64_t ts, timedItr_t* itr)
+status_t storeMpsMsg(uint64_t raw, uint64_t ts, timedItr_t* itr, int* offset)
 {
   uint8_t flag = raw;
   uint8_t idx = raw >> 8;
   uint8_t addr[ETH_ALEN];
   mpsMsg_t* buf = &bufMpsMsg[0];
+  *offset = -1;
 
   memcpy(addr, &raw, ETH_ALEN);
 
@@ -315,14 +283,37 @@ mpsMsg_t* storeMpsMsg(uint64_t raw, uint64_t ts, timedItr_t* itr)
         buf->pending = buf->prot.flag ^ flag;
         buf->prot.flag = flag;
         buf->ttl = itr->ttl;
-        buf->ts = ts;
-        return buf;
+        buf->tsRx = ts;
+        *offset = i;
+        return COMMON_STATUS_OK;
       }
     }
     ++buf;
   }
 
-  return 0;
+  return COMMON_STATUS_ERROR;
+}
+
+/**
+ * \brief Evaluate the lifetime of received MPS protocols [MPS_FS_600]
+ *
+ * \param idx Index of the MPS protocol
+ *
+ * \ret   ptr Pointer to expired MPS protocol
+ **/
+mpsMsg_t* evalMpsMsgTtl(uint64_t now, int idx) {
+  mpsMsg_t* buf = 0;
+
+  if (bufMpsMsg[idx].ttl) {
+    --bufMpsMsg[idx].ttl;
+
+    if (!bufMpsMsg[idx].ttl) {
+      bufMpsMsg[idx].prot.flag = MPS_FLAG_NOK;
+      buf = &bufMpsMsg[idx];
+    }
+  }
+
+  return buf;
 }
 
 /**
@@ -342,7 +333,7 @@ void resetMpsMsg(size_t len, mpsMsg_t* buf)
     (buf + i)->pending = (buf + i)->prot.flag ^ flag;
     (buf + i)->prot.flag  = flag;
     (buf + i)->ttl = 0;
-    (buf + i)->ts = 0;
+    (buf + i)->tsRx = 0;
   }
 }
 
@@ -369,7 +360,7 @@ void setMpsMsgSenderId(mpsMsg_t* msg, uint64_t raw, uint8_t verbose)
     DBPRINT1("tmessage: sender ID: ");
     for (int i = 0; i < ETH_ALEN; i++)
       DBPRINT1("%02x", msg->prot.addr[i]);
-    DBPRINT1("\n");
+    DBPRINT1(" (raw: %016llx)\n", raw);
   }
 }
 
@@ -397,4 +388,137 @@ int addr_equal(uint8_t a[ETH_ALEN], uint8_t b[ETH_ALEN])
 uint8_t *addr_copy(uint8_t dst[ETH_ALEN], uint8_t src[ETH_ALEN])
 {
   return memcpy(dst, src, ETH_ALEN);
+}
+
+/**
+ * \brief Send the node registration request
+ *
+ * TX nodes send the registration request (in form of the MPS protocol) to
+ * register them to the designated RX node.
+ * The transmission type should be broadcast.
+ *
+ * \param req   Registration request type
+ *
+ * \ret status  Zero on success, otherwise non-zero
+ **/
+status_t sendRegReq(int req)
+{
+  uint64_t evtId, param, ext;
+  uint32_t res, tef = 0;
+  uint32_t evtIdHi, evtIdLo;
+  uint32_t paramHi, paramLo;
+  uint32_t deadlineHi, deadlineLo;
+  uint32_t forceLate = 1;
+  status_t status;
+  uint64_t now = getSysTime();
+
+  // MAC (lower 6 bytes in myMac) is written to higher 6 bytes in 'param'
+  paramHi    = (uint32_t)((myMac >> 16) & 0xffffffff);
+  paramLo    = (uint32_t)((myMac << 16) & 0xffffffff);
+  paramLo   |= req << 8;                // set request type as 'index'
+  deadlineHi = (uint32_t)((now >> 32)   & 0xffffffff);
+  deadlineLo = (uint32_t)(now           & 0xffffffff);
+
+  switch (req) {
+    case IDX_REG_REQ:
+
+      param = ((uint64_t)(paramHi) << 32) | paramLo;
+      status = fwlib_ebmWriteTM(now, FBAS_REG_EID, param, tef, forceLate);
+      if (status != COMMON_STATUS_OK)
+        DBPRINT1("Err - failed to send reg.req!\n");
+      return status;
+
+    case IDX_REG_EREQ:
+
+    default:
+      break;
+  }
+
+  return COMMON_STATUS_ERROR;
+}
+
+/**
+ * \brief Send the registration response
+ *
+ * RX nodes respond a special MPS message on reception of the registration
+ * request from the RX nodes.
+ * Parameter includes the MAC address of RX and index of registration response.
+ *
+ * \ret status   Returns zero on success, otherwise non-zero
+ **/
+status_t sendRegRsp(void)
+{
+  uint32_t tef = 0;
+  uint32_t forceLate = 1;
+  uint64_t param = (myMac << 16) | (IDX_REG_RSP << 8);
+  uint64_t now = getSysTime();
+
+  status_t status = fwlib_ebmWriteTM(now, FBAS_REG_EID, param, tef, forceLate);
+  if (status != COMMON_STATUS_OK)
+    DBPRINT1("Err - failed to send reg.rsp!\n");
+
+  return status;
+}
+
+/**
+ * \brief Check if the given sender ID is known to the RX node
+ *
+ * \param raw     raw sender ID (MAC address in high-order 6 bytes)
+ *
+ * \ret status    Returns true on success, otherwise false
+ **/
+bool isSenderKnown(uint64_t raw)
+{
+  uint8_t  senderId[ETH_ALEN];
+  uint8_t bits = 0;
+  int i;
+
+  for (i = ETH_ALEN - 1; i >= 0; i--) {
+    senderId[i] = raw >> bits;
+    bits += 8;
+  }
+
+  int compare = 1;
+  i = 0;
+  while (compare && i < N_MPS_CHANNELS) {
+    compare = memcmp(bufMpsMsg[i].prot.addr, senderId, ETH_ALEN);
+    DBPRINT3("cmp: %d: %x%x%x%x%x%x - %x%x%x%x%x%x\n",
+        compare,
+        bufMpsMsg[i].prot.addr[0], bufMpsMsg[i].prot.addr[1],
+        bufMpsMsg[i].prot.addr[2], bufMpsMsg[i].prot.addr[3],
+        bufMpsMsg[i].prot.addr[4], bufMpsMsg[i].prot.addr[5],
+        senderId[0], senderId[1], senderId[2],
+        senderId[3], senderId[4], senderId[5]);
+    ++i;
+  }
+
+  if (compare) {  // differs
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * \brief Print the MPS message buffer
+ *
+ * MPS message buffer contains MPS protocols
+ *
+ **/
+void diagPrintMpsMsgBuf(void)
+{
+  DBPRINT2("bufMpsMsg\n");
+  DBPRINT2("buf_idx: protocol (MAC - idx - flag), msg (tsRx - ttl - pending)\n");
+
+  for (int i = 0; i < N_MPS_CHANNELS; ++i)
+     DBPRINT2("%x: %02x%02x%02x%02x%02x%02x - %x - %x, %llx - %x - %x\n",
+        i,
+        bufMpsMsg[i].prot.addr[0], bufMpsMsg[i].prot.addr[1],
+        bufMpsMsg[i].prot.addr[2], bufMpsMsg[i].prot.addr[3],
+        bufMpsMsg[i].prot.addr[4], bufMpsMsg[i].prot.addr[5],
+        bufMpsMsg[i].prot.idx,
+        bufMpsMsg[i].prot.flag,
+        bufMpsMsg[i].tsRx,
+        bufMpsMsg[i].ttl,
+        bufMpsMsg[i].pending);
 }

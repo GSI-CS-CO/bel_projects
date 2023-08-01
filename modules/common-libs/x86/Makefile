@@ -22,6 +22,9 @@ all: $(TARGETS)
 example-ctl: example-ctl.c
 	$(CC) $(CFLAGS) common-lib.c -o example-ctl example-ctl.c $(LIBS)
 
+example-div: example-div.c
+	$(CC) $(CFLAGS) common-lib.c -o example-div example-div.c $(LIBS)
+
 example-ivtpar: example-ivtpar.c
 	$(CC) $(CFLAGS) common-lib.c ivtpar.c -o example-ivtpar example-ivtpar.c $(LIBS)
 

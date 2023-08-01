@@ -88,32 +88,20 @@ typedef enum {
 #define FBAS_CMD_PRINT_OWD      0x33   // print result of one-way delay measurement
 #define FBAS_CMD_PRINT_SG_LTY   0x34   // print result of MSP signalling latency measurement
 #define FBAS_CMD_PRINT_TTL      0x35   // print result of TTL interval measurement
+#define FBAS_CMD_PRINT_MPS_BUF  0x36   // print all MSP message relevant buffers
 
 // mask bit for MPS-relevant tasks (up to 31)
 #define TSK_TX_MPS_FLAGS        0x10000000 // transmit MPS flags
 #define TSK_TX_MPS_EVENTS       0x20000000 // transmit MPS events
-#define TSK_TTL_MPS_FLAGS       0x40000000 // monitor lifetime of MPS flags
-
-// FBAS timing messages
-#define FBAS_FLG_FID       0x1       // format ID, 2-bit
-#define FBAS_FLG_GID       0xfcbUL   // group ID = 4043, 12-bit
-#define FBAS_FLG_EVTNO     0xfcbUL   // event number = 4043, 12-bit
-#define FBAS_FLG_FLAGS     0x0       // flags, 4-bit
-#define FBAS_FLG_SID       0x0       // sequence ID, 12-bit
-#define FBAS_FLG_BPID      0x0       // beam process ID, 14-bit
-#define FBAS_FLG_RES       0x0       // reserved, 6-bit
-
-#define FBAS_EVT_FID       0x1       // format ID, 2-bit
-#define FBAS_EVT_GID       0xfccUL   // group ID = 4044, 12-bit
-#define FBAS_EVT_EVTNO     0xfccUL   // event number = 4044, 12-bit
-#define FBAS_EVT_FLAGS     0x0       // flags, 4-bit
-#define FBAS_EVT_SID       0x0       // sequence ID, 12-bit
-#define FBAS_EVT_BPID      0x0       // beam process ID, 14-bit
-#define FBAS_EVT_RES       0x0       // reserved, 6-bit
+#define TSK_MONIT_MPS_TTL       0x40000000 // monitor lifetime of MPS flags
+#define TSK_EVAL_MPS_TTL        0x80000000 // evaluate the lifetime of MPS flags
+#define TSK_REG_COMPLETE        0x01000000 // registration is complete
+#define TSK_REG_PER_OVER        0x02000000 // registration period is over
 
 // ECA action tags
 #define FBAS_GEN_EVT       0x42      // ECA condition tag for generator event (handled by TX)
 #define FBAS_TLU_EVT       0x43      // ECA condition tag for TLU event (handled by TX)
+#define FBAS_NODE_REG      0x45      // ECA condition tag for the node registration
 #define FBAS_WR_EVT        0x24      // ECA condition tag for MPS event via WR (handled by RX)
 #define FBAS_WR_FLG        0x25      // ECA condition tag for MPS flag via WR (handled by RX)
 #define FBAS_AUX_NEWCYCLE  0x26      // ECA condition tag for MPS auxiliary signal (clear internal errors in TX & RX)

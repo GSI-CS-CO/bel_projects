@@ -40,20 +40,36 @@ typedef uint32_t status_t;
 #define ETH_ALEN           6
 #define ETH_ALEN_STR       18
 
+// number of destination addresses
+enum DST_ADDR {
+  DST_ADDR_EBM = 0,         // current Endpoint destination address
+  DST_ADDR_RXNODE,          // RX node address
+  DST_ADDR_BROADCAST,       // broadcast address
+  N_DST_ADDR                // total
+};
+
 // structure for an MPS protocol
 typedef struct mpsProtocol mpsProtocol_t;
 struct mpsProtocol {
   uint8_t  addr[ETH_ALEN];  // Ethernet MAC addr
-  uint8_t  idx;             // index of MPS flag
+  uint8_t  idx;             // index (0-127: MPS flag, 128-255: refer to index_t)
   uint8_t  flag;            // MPS flag
 };
+
+// index field in the MPS protocol (for intern usage)
+typedef enum {
+  IDX_REG_REQ  = 128,       // registration request (by TX)
+  IDX_REG_RSP  = 129,       // registration response (by RX)
+  IDX_REG_EREQ = 192,       // extended registration request (with sender ID)
+  IDX_UNDEF                 // undefined
+} index_t;
 
 typedef struct mpsMsg mpsMsg_t;
 struct mpsMsg {
   mpsProtocol_t prot;       // MPS protocol
-  uint64_t ts;              // timestamp
+  uint64_t tsRx;            // reception timestamp (RX)
   uint8_t  ttl;             // time-to-live (RX)
-  uint8_t  pending;         // flag change indicator
+  uint8_t  pending;         // flag change indicator (RX)
 };
 
 // iterator used to access available MPS flags

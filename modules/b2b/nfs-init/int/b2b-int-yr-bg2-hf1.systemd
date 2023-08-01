@@ -1,0 +1,4 @@
+# this is a hack for sl7
+export DIM_DNS_NODE=asl105
+
+b2b-serv-sys dev/wbm0 -s int_yr-cbu &

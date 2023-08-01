@@ -34,7 +34,7 @@ eb_tlu_demo: $(IDIR)/eb_tlu_demo.c
 
 eb_perf_demo: $(IDIR)/eb_perf_demo.c
 	@echo Making eb_perf_demo
-	gcc -g -Wall $(INCLUDE) -L$(PREFIX)/lib -Wl,-rpath,$(PREFIX)/lib -o $(ODIR)/eb_perf_demo $(IDIR)/eb_perf_demo.c $(LIB)
+	$(CC) -Wall $(INCLUDE) -L$(PREFIX)/lib -Wl,-rpath,$(PREFIX)/lib -o $(ODIR)/eb_perf_demo $(IDIR)/eb_perf_demo.c $(LIB)
 
 clean:
 	@echo cleaning stuff

@@ -1,0 +1,11 @@
+SERVICEA=b2b-servsys-int-yr-kickinj.service
+SERVICEB=b2b-servraw-int-yr.service
+SERVICEC=b2b-analyzer-int-yr.service
+cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
+cp -a $MOUNTPOINT/systemd/$SERVICEB /lib/systemd/system
+cp -a $MOUNTPOINT/systemd/$SERVICEC /lib/systemd/system
+systemctl daemon-reload
+
+systemctl start $SERVICEA
+systemctl start $SERVICEB
+systemctl start $SERVICEC

@@ -1,0 +1,6 @@
+SERVICEA=fm-int-sis18.service
+cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
+systemctl daemon-reload
+
+systemctl start $SERVICEA
+

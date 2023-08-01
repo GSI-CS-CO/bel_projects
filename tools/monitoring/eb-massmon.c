@@ -3,7 +3,7 @@
 //
 //  created : 2018
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 06-Feb-2021
+//  version : 22-Jun-2023
 //
 // Command-line interface for WR monitoring of many nodes via Etherbone.
 //
@@ -34,7 +34,7 @@
 // For all questions and ideas contact: d.beck@gsi.de
 // Last update: 27-April-2018
 //////////////////////////////////////////////////////////////////////////////////////////////
-#define EBMASSMON_VERSION "0.3.0"
+#define EBMASSMON_VERSION "0.3.1"
 
 // standard includes
 #include <unistd.h> // getopt
@@ -772,11 +772,7 @@ int main(int argc, char** argv) {
     fprintf(stderr, "usage of protocol 'tcp' with non-SCU is not allowed; use option '-y1'\n");
     return 1;
   } // usage of tcp with non-SCU is not allowed
-  if ((strstr(ebProto, "udp") != NULL) && (networkType == 0) && !quietMode){
-    fprintf(stderr, "usage of protocol 'udp' for 'all' networks is not allowed; use option '-xn' with non-zero 'n'\n");
-    return 1;
-  } // usage of tcp with non-SCU is not allowed
-
+  
   fileName = argv[optind+1];
   domain   = argv[optind+2];
   // finished with getopt stuff
@@ -852,7 +848,7 @@ int main(int argc, char** argv) {
               if (getWRLink)   {if ((status = wb_wr_get_link(device, devIndex, &tmp)) == EB_OK)                          nodeLink[nNodes]      = tmp;}
               if (getWRIP)     {if ((status = wb_wr_get_ip(device, devIndex, &tmp)) == EB_OK)                            nodeIp[nNodes]        = tmp;}
               if (getWRUptime) {if ((status = wb_wr_get_uptime(device, devIndex, &tmp32)) == EB_OK)                      nodeUptime[nNodes]    = tmp32;}
-              if (getBuildVer) {if ((status = wb_get_build_type(device, MAXLEN, tmpStr)) == EB_OK)                       sprintf(buildType[nNodes], "%s", tmpStr);}
+              if (getBuildVer) {if ((status = wb_get_build_type(device, MAXLEN, tmpStr, &tmp32)) == EB_OK)               sprintf(buildType[nNodes], "%s", tmpStr);}
               if (getWRTCont)  {
                 if ((status = wb_wr_stats_get_continuity(device, devIndex, &contObsT, &contMaxPosDT, &tmp64, &contMaxNegDT, &temp64)) == EB_OK) {
                   if (contObsT == 8) {/* chk */ // just take the max jump; should be '16' for 62.5 MHz or '8' for 125 MHz eCPU

@@ -115,16 +115,12 @@ etherbone-install::
 	$(call ldconfig_note)
 
 saftlib::
-	test -f ip_cores/saftlib/Makefile.in || ./ip_cores/saftlib/autogen.sh
-ifeq ($(YOCTO_BUILD),yes)
-	cd ip_cores/saftlib; test -f Makefile || ./configure --enable-maintainer-mode --prefix=$(PREFIX) --sysconfdir=$(SYSCONFDIR) --host=x86_64
-else
-	cd ip_cores/saftlib; test -f Makefile || ./configure --enable-maintainer-mode --prefix=$(PREFIX) --sysconfdir=$(SYSCONFDIR)
-endif
-	$(MAKE) -C ip_cores/saftlib all
+	cd ip_cores/saftlib; test -f Makefile.in || ./autogen.sh
+	cd ip_cores/saftlib; ./configure $(CONFIGURE_FLAGS) --prefix=$(PREFIX) --sysconfdir=$(SYSCONFDIR)
+	$(MAKE) -C ip_cores/saftlib
 
-saftlib-clean::
-	! test -f ip_cores/saftlib/Makefile || $(MAKE) -C ip_cores/saftlib distclean
+saftlib-clean:: 
+	$(MAKE) -C ip_cores/saftlib clean
 
 saftlib-install::
 	$(MAKE) -C ip_cores/saftlib DESTDIR=$(STAGING) install

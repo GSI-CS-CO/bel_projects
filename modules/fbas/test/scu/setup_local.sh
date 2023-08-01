@@ -45,6 +45,7 @@ export evt_mps_prot_std="0x1fcbfcb000000000"  # event with MPS protocol (regular
 export evt_mps_prot_chg="0x1fccfcc000000000"  # event with MPS protocol (change in flag)
 export          evt_tlu="0xffff100000000000"  # TLU event (used to catch the signal change at IO port)
 export    evt_new_cycle="0xffffdddd00000000"  # event for new cycle
+export evt_mps_node_reg="0x1fcdfcd000000000"  # event ID for the node registration messages
 export      evt_id_mask="0xffffffff00000000"  # event mask
 
 user_approval() {
@@ -188,7 +189,7 @@ load_fw() {
 configure_node() {
     # $1 - node type (DEV_RX or DEV_TX)
     # $2 - sender node groups (SENDER_TX or SENDER_ANY or SENDER_ALL)
-    # $3 - sender ID of SENDER_TX
+    # $[3:] - sender ID(s) of SENDER_TX
 
     check_node "$1"
 
@@ -210,33 +211,48 @@ configure_node() {
         eb-read $device $addr_get_node_type/4
         wait_seconds 1
 
-        if [ -n "$2" ]; then
-            if [ -n "$3" ]; then
-                set_senderid "$2" "$3"
-            else
-                set_senderid "$2"
-            fi
+        if [ $# -gt 1 ]; then
+            shift
+            set_senderid "$@"
         fi
     fi
 }
 
 set_senderid() {
     # $1 - sender groups, valid values: SENDER_TX, SENDER_ANY, SENDER_ALL
-    # $2 - sender ID of SENDER_TX (without leading 0x)
+    # $[2:] - sender ID(s) of SENDER_TX (without leading 0x)
 
     # SENDER_TX - only TX node
     # SENDER_ANY - only any nodes
     # SENDER_ALL - TX and any nodes
 
+    sender_grp="$1"
+    shift                   # re-set positional parameters
+    #set -- "${@/#/0x}"      # add prefix (0x) to all positional parameters
+    unset senderid          # init variable
+    for mac in "$@"; do
+        senderid="$senderid 0x$mac"   # format to hexadecimal number (for arithmetic calc.)
+    done
+
     first_idx=1
     last_idx=15
     unset idx_mac_list  # list with idx_mac
-    senderid="0x$2"     # format to hexadecimal number (for arithmetic calc.)
+    device=$DEV_RX
 
-    if [ "$1" == "SENDER_TX" ]; then
-        idx_mac_list="$senderid"
-    elif [ "$1" == "SENDER_ALL" ] || [ "$1" == "SENDER_ANY" ]; then
-        if [ "$1" == "SENDER_ALL" ]; then
+    if [ "$sender_grp" == "SENDER_TX" ]; then
+        # Structure of the MPS message buffer: 'sender id', 'index' and 'MPS flag'.
+        # The buffer can keep the MPS flag of up to 16 TX nodes.
+        # The 'index' is used to identify channels of the same sender, therefore
+        # it's set to zero if each sender has only one MPS channel.
+        i=0
+        for sender in $senderid; do
+            idx=$(( $i << 48 ))
+            idx_mac=$(( $idx + $sender ))
+            idx_mac=$(printf "0x%x" $idx_mac)
+            idx_mac_list="$idx_mac_list $idx_mac"
+        done
+    elif [ "$sender_grp" == "SENDER_ALL" ] || [ "$sender_grp" == "SENDER_ANY" ]; then
+        if [ "$sender_grp" == "SENDER_ALL" ]; then
             idx_mac_list="$senderid"
             first_idx=$(( $first_idx - 1 ))
             last_idx=$(( $last_idx - 1 ))
@@ -255,9 +271,8 @@ set_senderid() {
         return
     fi
 
-    echo "set the sender IDs: $1 $idx_mac_list"
+    echo "set the sender IDs: $sender_grp $idx_mac_list"
 
-    device=$DEV_RX
     i=0
     for idx_mac in $idx_mac_list; do
         pos=$(( $i << 56 ))                               # position in RX buffer
@@ -294,23 +309,25 @@ configure_tr() {
     echo "disable all events from IO inputs to ECA"
     saft-io-ctl tr0 -w
 
+    # configure ECA: general rules for both nodes
+    echo "configure ECA: listen to the node registration messages, tag 0x45"
+    saft-ecpu-ctl tr0 -c $evt_mps_node_reg $evt_id_mask 0 0x45 -d
+
+    echo "configure ECA: listen for FBAS_AUX_CYCLE event, tag 0x26"
+    saft-ecpu-ctl tr0 -c $evt_new_cycle $evt_id_mask 0 0x26 -d
+
     if [ "$1" == "DEV_RX" ]; then
 
         echo "configure ECA: set FBAS_WR_EVT, FBAS_WR_FLG for LM32 channel, tag 0x24 and 0x25"
         saft-ecpu-ctl tr0 -c $evt_mps_prot_std $evt_id_mask 0 0x24 -d
         saft-ecpu-ctl tr0 -c $evt_mps_prot_chg $evt_id_mask 0 0x25 -d
 
-        echo "configure ECA: listen for FBAS_AUX_CYCLE event, tag 0x26"
-        saft-ecpu-ctl tr0 -c $evt_new_cycle $evt_id_mask 0 0x26 -d
     else
         echo "configure ECA: set FBAS_GEN_EVT for LM32 channel, tag 0x42"
         saft-ecpu-ctl tr0 -c $evt_mps_flag_any $evt_id_mask 0 0x42 -d
 
         echo "configure ECA: listen for TLU event with the given ID, tag 0x43"
         saft-ecpu-ctl tr0 -c $evt_tlu $evt_id_mask 0 0x43 -d
-
-        echo "configure ECA: listen for FBAS_AUX_CYCLE event, tag 0x26"
-        saft-ecpu-ctl tr0 -c $evt_new_cycle $evt_id_mask 0 0x26 -d
 
         echo "configure TLU: on signal transition at B2 input, it will generate a timing event with the given ID"
         saft-io-ctl tr0 -n B2 -b $evt_tlu
@@ -351,16 +368,15 @@ setup_mpstx() {
 setup_mpsrx() {
     # $1 - LM32 firmware
     # $2 - sender node groups (SENDER_TX/ALL/ANY)
-    # $3 - sender ID of SENDER_TX
+    # $[3:] - sender ID(s) of SENDER_TX
 
     echo "load firmware"
     load_fw "DEV_RX" "$1"
 
     echo "CONFIGURE state "
-    if [ -n "$3" ]; then
-        configure_node "DEV_RX" "$2" "$3"
-    else
-        configure_node "DEV_RX" "$2"
+    if [ $# -gt 2 ]; then
+        shift
+        configure_node "DEV_RX" "$@"
     fi
 
     echo "OPREADY state "
@@ -463,10 +479,6 @@ start_nw_perf() {
         echo -en " $i:  OK\r"
         sleep 1
     done
-
-    wait_seconds 1
-    echo -e "\nTX: send 'new cycle'"
-    saft-ctl tr0 -p inject $evt_new_cycle $evt_id_mask 1000000
 }
 
 result_event_count() {

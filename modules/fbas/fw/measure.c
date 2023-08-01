@@ -267,7 +267,7 @@ void measureTtlInterval(mpsMsg_t* buf)
 
   // measure time interval
   if (!buf->ttl) {
-    interval = now - buf->ts;
+    interval = now - buf->tsRx;
 
     calculateSumStats(interval, pStats);
   }

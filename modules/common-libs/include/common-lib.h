@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-Sep-2021
+ *  version : 15-Feb-2023
  *
  * common x86 routines for firmware
  *
@@ -37,12 +37,16 @@
 #ifndef _COMMON_LIB_H_
 #define _COMMON_LIB_H_
 
-#define COMMON_LIB_VERSION "0.02.01"
+#define COMMON_LIB_VERSION "0.03.01"
 
 #include <etherbone.h>
 
-// small helper functions; actual time [us]
+// small helper function; actual time [ns]
 uint64_t comlib_getSysTime();
+
+// small helper function; very expensive sleep function!!
+void comlib_nsleep(uint64_t t                         // time to sleep [ns]
+                   );
 
 // get character from stdin, 0: no character
 char comlib_term_getChar();
@@ -82,6 +86,7 @@ int comlib_readDiag(eb_device_t device,                // Etherbone device
                     int         printFlag              // '1' print information to stdout
                     );
 
+// prints diagnostic data
 void comlib_printDiag(uint64_t  statusArray,           // array with status bits
                       uint32_t  state,                 // state
                       uint32_t  version,               // firmware version
@@ -96,5 +101,38 @@ void comlib_printDiag(uint64_t  statusArray,           // array with status bits
                       uint32_t  statTrans,             // status bits of transfer (application specific)
                       uint32_t  usedSize               // used size of shared memory
                       );
+
+// open Etherbone connection to ECA queue
+uint32_t comlib_ecaq_open(const char* devName,         // EB device name such as dev/wbm0
+                          uint32_t qIdx,               // index of action queue we'd like to connect to
+                          eb_device_t *device,         // EB device
+                          eb_address_t *ecaq_base      // EB address
+                          );
+
+// closes Etherbone connection to ECA queue
+uint32_t comlib_ecaq_close(eb_device_t device          // EB device
+                           );
+
+// directly reads messages from an ECA queue via Etherbone(not via saftlib)
+uint32_t comlib_wait4ECAEvent(uint32_t     timeout_ms, // timeout [ms]
+                              eb_device_t  device,     // EB device 
+                              eb_address_t ecaq_base,  // EB address
+                              uint32_t     *tag,       // tag
+                              uint64_t     *deadline,  // messages deadline
+                              uint64_t     *evtId,     // EvtId
+                              uint64_t     *param,     // parameter field
+                              uint32_t     *tef,       // TEF field
+                              uint32_t     *isLate,    // flags ...
+                              uint32_t     *isEarly,
+                              uint32_t     *isConflict,
+                              uint32_t     *isDelayed
+                              );
+
+// converts half precision float to single precision float
+float comlib_half2float(uint16_t h                     // half precision float
+                        );
+// converts single precision float to half precision float
+uint16_t comlib_float2half(float f                     // single precision float
+                           );
 
 #endif
