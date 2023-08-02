@@ -280,6 +280,7 @@ Answer: You need to have installed the following packages before you can configu
 - libz-dev (saftlib)
 
 † Ubuntu 22.04 and later: pkg-config
+
 ‡ Ubuntu 22.04 and later: libsigc++-2.0-dev
 
 ‡ Ubuntu 22.04 and later: libsigc++-2.0-dev
