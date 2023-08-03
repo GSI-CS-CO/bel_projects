@@ -740,7 +740,7 @@ int main(int argc, char* argv[]) {
         for(int i=0; i < _THR_QTY_; i++) {
           if((bits >> i) & 1) {
             origin = cdm.getThrOrigin(cpuIdx, i);
-            if ((origin == DotStr::Node::Special::sIdle) || (origin == DotStr::Misc::sUndefined)) {std::cerr << program << ": Cannot start, origin of CPU " << cpuIdx << "'s thread " << thrIdx << " is not a valid node" << std::endl; return -1;}
+            if ((origin == DotStr::Node::Special::sIdle) || (origin == DotStr::Misc::sUndefined)) {std::cerr << program << ": Cannot start, origin of CPU " << cpuIdx << "'s thread " << i << " is not a valid node" << std::endl; return -1;}
          }
         }
         cdm.setThrStart(ew, cpuIdx, bits & ((1ll<<_THR_QTY_)-1));
