@@ -19,6 +19,8 @@ class DmBlink(dm_testbench.DmTestbench):
     # ~ # check that paramter 0x123, 0x456, 0x789, and 0xABC occur.
     self.analyseFrequencyFromCsv(fileName, column=20, printTable=True, checkValues={'0x0000000000000001': '=1', '0x0000000000000123': '>0', '0x0000000000000456': '>0', '0x0000000000000789': '>0', '0x0000000000000abc': '>0'})
     self.deleteFile(fileName)
+    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'preptime', '-c0',  '-t0', '1000000'), linesCout=0, linesCerr=0)
+    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'preptime', '-c0', '-t1', '1000000'), linesCout=0, linesCerr=0)
 
   def doAction(self):
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'ping'), linesCout=1, linesCerr=0)
