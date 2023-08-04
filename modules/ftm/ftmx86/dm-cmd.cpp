@@ -105,7 +105,7 @@ void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
   cdm.showMemSpace();
   if(cdm.isOptimisedS2R()) cdm.dirtyCtShow();
   uint8_t cpuQty = cdm.getCpuQty();
-  uint8_t thrQty = _THR_QTY_;
+  uint8_t thrQty = cdm.getThrQty();
 
   std::vector<std::string> vsCursor;
   std::vector<std::string> vsCursorPattern;
@@ -170,7 +170,7 @@ void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
 
 void showRawStatus(const char *netaddress, CarpeDM& cdm) {
   uint8_t cpuQty = cdm.getCpuQty();
-  uint8_t thrQty = _THR_QTY_;
+  uint8_t thrQty = cdm.getThrQty();
 
   std::vector<std::string> vsCursor;
   std::vector<std::string> vsCursorPattern;
@@ -368,8 +368,8 @@ int main(int argc, char* argv[]) {
             break;
          case 't':
             tmp = strtol(optarg, NULL, 0);
-            if ((tmp < 0) || (tmp >= 8)) {
-              std::cerr << program << ": Thread idx '" << optarg << "' is invalid. Choose an index between 0 and " << _THR_QTY_ -1 << std::endl;
+            if ((tmp < 0) || (tmp >= 31)) {
+              std::cerr << program << ": Thread idx '" << optarg << "' is invalid. Choose an index between 0 and " << 31 << std::endl;
               error = -1;
             } else {thrIdx = (uint32_t)tmp;}
          case 'l':
@@ -467,6 +467,13 @@ int main(int argc, char* argv[]) {
     }
   }
 
+  // yes, would be nicer to catch a bad thrIdx outright, but we need to ask the firmware first how many threads it supports
+  uint32_t thrQty = cdm.getThrQty();
+  if (thrIdx > thrQty-1) {
+    std::cerr << program << ": Thread idx '" << thrIdx << "' is invalid. Choose an index between 0 and " << thrQty << std::endl;
+    error = -1;
+  }
+
   cdm.updateModTime();
 
   vEbwrs ew;
@@ -480,7 +487,7 @@ int main(int argc, char* argv[]) {
     if (tmpGlobalCmds == dnt::sCmdAbort)  {
       if(( targetName != NULL) && ( targetName != std::string(""))){
         uint32_t bits = strtol(targetName, NULL, 0);
-       cdm.setThrAbort(ew, cpuIdx, bits & ((1<<_THR_QTY_)-1)  );
+       cdm.setThrAbort(ew, cpuIdx, bits & ((1<<cdm.getThrQty())-1)  );
       } else { cdm.abortThr(ew, cpuIdx, thrIdx); }
       return 0;
     }
@@ -728,13 +735,13 @@ int main(int argc, char* argv[]) {
       std::string origin;
       if(( targetName != NULL) && ( targetName != std::string(""))) {
         uint32_t bits = strtol(targetName, NULL, 0);
-        for(int i=0; i < _THR_QTY_; i++) {
+        for(int i=0; i < cdm.getThrQty(); i++) {
           if((bits >> i) & 1) {
             origin = cdm.getThrOrigin(cpuIdx, i);
             if ((origin == DotStr::Node::Special::sIdle) || (origin == DotStr::Misc::sUndefined)) {std::cerr << program << ": Cannot start, origin of CPU " << cpuIdx << "'s thread " << thrIdx << " is not a valid node" << std::endl; return -1;}
          }
         }
-        cdm.setThrStart(ew, cpuIdx, bits & ((1<<_THR_QTY_)-1) );
+        cdm.setThrStart(ew, cpuIdx, bits & ((1<<cdm.getThrQty())-1) );
       } else {
         origin = cdm.getThrOrigin(cpuIdx, thrIdx);
         if ((origin == DotStr::Node::Special::sIdle) || (origin == DotStr::Misc::sUndefined)) {std::cerr << program << ": Cannot start, origin of CPU " << cpuIdx << "'s thread " << thrIdx << " is not a valid node" << std::endl; return -1;}

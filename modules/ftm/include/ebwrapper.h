@@ -39,6 +39,7 @@ protected:
   std::vector<int> vFoundVersion;
   std::map<uint8_t, uint8_t> cpuIdxMap;
   uint8_t cpuQty;
+  uint8_t thrQty;
 
   std::string ebdevname;
 
@@ -78,8 +79,10 @@ public:
   int write64b(uint32_t startAdr, uint64_t data) const;
   //bool isSimulation() ;
   uint64_t getDmWrTime() const;
+  uint8_t readThrQty(uint32_t extBaseAdr, uint32_t sharedOffs) const;
   bool isValidDMCpu(uint8_t cpuIdx) {return (cpuIdxMap.count(cpuIdx) > 0);}; //Check if CPU is registered as running a valid firmware
   uint8_t getCpuQty()   const {return cpuQty;} //Return number of found CPUs (not necessarily valid ones!)
+  uint8_t getThrQty()   const {return thrQty;} //Return number of found Threads per CPU
   bool isCpuIdxValid(uint8_t cpuIdx) { if ( cpuIdxMap.find(cpuIdx) != cpuIdxMap.end() ) return true; else return false;}
   uint32_t getDiagDevAdr() {return diagDevs[0].sdb_component.addr_first;}
   int getExpVersionMin() const {return expVersionMin;} 

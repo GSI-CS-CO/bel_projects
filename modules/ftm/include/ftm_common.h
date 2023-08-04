@@ -193,8 +193,8 @@
 #define SHCTL_STATUS     (SHCTL_HEAP    + _THR_QTY_ * _PTR_SIZE_)     ///< Status Registers
 #define SHCTL_META       (SHCTL_STATUS  + _32b_SIZE_ )                ///< Group/Node Lookup Table Overhead
 #define SHCTL_DIAG       (SHCTL_META    + _T_META_SIZE_ )             ///< Diagnostic Registers
-#define SHCTL_CMD        (SHCTL_DIAG    + _T_DIAG_SIZE_ )             ///< Command Register, NOT IMPLEMENTED
-#define SHCTL_TGATHER    (SHCTL_CMD     + _32b_SIZE_ )                ///< Gather Time (HW Priority Queue Config) Register
+#define SHCTL_INFO       (SHCTL_DIAG    + _T_DIAG_SIZE_ )             ///< Command Register, NOT IMPLEMENTED
+#define SHCTL_TGATHER    (SHCTL_INFO     + _32b_SIZE_ )               ///< Gather Time (HW Priority Queue Config) Register
 #define SHCTL_THR_CTL    (SHCTL_TGATHER + _TS_SIZE_  )                ///< Thread Control Registers (1 bit per Thread )
 #define SHCTL_THR_STA    (SHCTL_THR_CTL + _T_TC_SIZE_  )              ///< Thread Staging Areas (1 area per Thread )
 #define SHCTL_THR_DAT    (SHCTL_THR_STA + _THR_QTY_ * _T_TS_SIZE_  )  ///< Thread Runtime Meta Data Areas(1 area per Thread )
@@ -208,7 +208,7 @@
 #pragma message(VAR_NAME_VALUE(SHCTL_STATUS ))
 #pragma message(VAR_NAME_VALUE(SHCTL_META   ))
 #pragma message(VAR_NAME_VALUE(SHCTL_DIAG   ))
-#pragma message(VAR_NAME_VALUE(SHCTL_CMD    ))
+#pragma message(VAR_NAME_VALUE(SHCTL_INFO    ))
 #pragma message(VAR_NAME_VALUE(SHCTL_TGATHER))
 #pragma message(VAR_NAME_VALUE(SHCTL_THR_CTL))
 #pragma message(VAR_NAME_VALUE(SHCTL_THR_STA))

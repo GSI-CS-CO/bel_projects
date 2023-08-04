@@ -101,7 +101,10 @@ void dmInit() {
   actionFuncs[ACT_TYPE_FLUSH]           = execFlush;
   actionFuncs[ACT_TYPE_WAIT]            = execWait;
 
+  p[SHCTL_INFO  >> 2] = _THR_QTY_; // allow carpeDM to find out how many threads this FW uses
+
   uint8_t i;
+
   for(i=0; i < _THR_QTY_; i++) {
     //set thread times to infinity
     uint32_t* tp = (uint32_t*)(p + (( SHCTL_THR_DAT + i * _T_TD_SIZE_) >> 2));

@@ -192,6 +192,7 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
               atUp.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize );
             atDown.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize );
             mappedIdx++;
+            thrQty = readThrQty(extBaseAdr, sharedOffs);
           }
           
        
@@ -384,3 +385,9 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
            << std::setfill(' ') << std::setw(11) << createFwVersionString(getExpVersionMax());
     }
   }
+
+  uint8_t EbWrapper::readThrQty(uint32_t extBaseAdr, uint32_t sharedOffs) const{
+    return (uint8_t)read32b(extBaseAdr + sharedOffs + SHCTL_INFO);
+  }
+
+ 
