@@ -477,14 +477,17 @@ void CarpeDM::CarpeDMimpl::inspectHeap(uint8_t cpuIdx) {
   uint32_t heapAdr = baseAdr + SHCTL_HEAP;
   uint32_t thrAdr  = baseAdr + SHCTL_THR_DAT;
 
-  for(int i=0; i<_THR_QTY_; i++) vRa.push_back(heapAdr + i * _PTR_SIZE_);
+  for(int i=0; i<ebd.getThrQty(); i++) vRa.push_back(heapAdr + i * _PTR_SIZE_);
   heap = ebd.readCycle(vRa);
 
 
   sLog << std::setfill(' ') << "CPU " << "Rank  " << std::setfill(' ') << std::setw(5) << "Thread  " << std::setfill(' ') << std::setw(21)
   << "Deadline  " << std::setfill(' ') << std::setw(21) << "Origin  " << std::setfill(' ') << std::setw(21) << "Cursor" << std::endl;
 
-  for(int i=0; i<_THR_QTY_; i++) {
+
+
+  for(int i=0; i<ebd.getThrQty(); i++) {
+
     uint8_t thrIdx = (writeBeBytesToLeNumber<uint32_t>((uint8_t*)&heap[i * _PTR_SIZE_])  - atDown.adrConv(AdrType::EXT, AdrType::INT,cpuIdx, thrAdr)) / _T_TD_SIZE_;
     sLog << std::dec
     << std::setfill(' ') << std::setw(3) << (int)cpuIdx
@@ -519,7 +522,7 @@ vEbwrs& CarpeDM::CarpeDMimpl::clearHealth(vEbwrs& ew, uint8_t cpuIdx) {
 
   //reset thread message counters
   //printf("VA size before %u, VCS size \n", ew.va.size(), ew.vcs.size());
-  for (uint8_t thrIdx = 0; thrIdx < _THR_QTY_; thrIdx++) {
+  for (uint8_t thrIdx = 0; thrIdx < ebd.getThrQty(); thrIdx++) {
 
     resetThrMsgCnt(ew, cpuIdx, thrIdx);
     //printf("VA size %u, VCS size \n", ew.va.size(), ew.vcs.size());
