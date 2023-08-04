@@ -3,6 +3,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
+use work.gencores_pkg.all;
 use work.monster_pkg.all;
 use work.ramsize_pkg.c_lm32_ramsizes;
 
@@ -53,8 +54,8 @@ entity scu_control is
     ser1_txd          : in  std_logic;  -- RX/TX view from ComX
     nTHRMTRIP         : in  std_logic;
     WDT               : in  std_logic;
-    fpga_res_i        : in  std_logic;
-    nFPGA_Res_Out     : out std_logic;  --Reset  Output
+    fpga_res_i        : in  std_logic; 
+    nSys_Reset        : in    std_logic;  -- Reset From ComX
 
     -----------------------------------------------------------------------
     -- SCU Bus
@@ -78,7 +79,7 @@ entity scu_control is
     -----------------------------------------------------------------------
     -- Misc.
     -----------------------------------------------------------------------
-    nSys_Reset    : in    std_logic;  -- Reset From ComX
+    nFPGA_Res_Out     : out std_logic;  --Reset  Output
     user_btn      : in    std_logic;  -- User Button
     avr_sda       : inout std_logic;  -- I2C Connection to AVR MCU
     avr_scl       : inout std_logic;  -- I2C Connection to AVR MCU
@@ -170,6 +171,7 @@ architecture rtl of scu_control is
   signal s_led_link_act : std_logic;
   signal s_led_track    : std_logic;
   signal s_led_pps      : std_logic;
+  signal s_lemo_led     : std_logic_vector (5 downto 0);
 
   signal s_gpio_o    : std_logic_vector(6 downto 0);
   signal s_lvds_p_i  : std_logic_vector(2 downto 0);
@@ -194,6 +196,7 @@ architecture rtl of scu_control is
 
 
   signal rstn_ref              : std_logic;
+  signal clk_ref               : std_logic;
   
 
   constant io_mapping_table : t_io_mapping_table_arg_array(0 to 14) :=
@@ -235,6 +238,7 @@ begin
       g_gpio_out           => 7,
       g_lvds_in            => 3,
       g_lvds_out           => 3,
+      g_en_user_ow        => true,
       g_en_i2c_wrapper     => true,
       g_num_i2c_interfaces => 1,
       g_en_scubus          => true,
@@ -257,6 +261,7 @@ begin
       core_clk_125m_pllref_i  => clk_125m_tcb_pllref_i,
       core_clk_125m_local_i   => clk_125m_tcb_local_i,
       core_clk_125m_sfpref_i  => clk_125m_tcb_sfpref_i,
+      core_clk_wr_ref_o      => clk_ref,
       core_rstn_wr_ref_o      => rstn_ref,
       wr_onewire_io           => OneWire_CB,
       wr_sfp_sda_io           => sfp_mod2_io,
@@ -267,8 +272,10 @@ begin
       wr_dac_sclk_o           => wr_dac_sclk_o,
       wr_dac_din_o            => wr_dac_din_o,
       wr_ndac_cs_o            => wr_ndac_cs_o,
-      wr_uart_o               => ser0_rxd,
-      wr_uart_i               => ser0_txd,
+      --wr_uart_o               => ser0_rxd, --IBN
+      --wr_uart_i               => ser0_txd,--IBN
+      wr_uart_o               => open, --IBN
+      wr_uart_i               => '1', --IBN
       wbar_phy_dis_o          => sfp_tx_disable_o,
       sfp_tx_fault_i          => sfp_tx_fault_i,
       sfp_los_i               => sfp_los_i,
@@ -325,7 +332,7 @@ begin
       ps_data                => psram_dq,
       ps_seln(0)             => psram_ubn,
       ps_seln(1)             => psram_lbn,
-      ps_cen                 => psram_cen (0),
+      ps_cen                 => psram_cen (1), --IBN
       ps_oen                 => psram_oen,
       ps_wen                 => psram_wen,
       ps_cre                 => psram_cre,
@@ -333,12 +340,12 @@ begin
       ps_wait                => psram_wait,
       hw_version             => x"0000000" & not scu_cb_version);
 
-  -- LEDs
-  wr_led_pps    <= not s_led_pps;                            -- white = PPS
-  wr_rgb_led(0) <= not s_led_link_act;                       -- WR-RGB Red
-  wr_rgb_led(1) <= not s_led_track;                          -- WR-RGB Green
-  wr_rgb_led(2) <= not (not s_led_track and  s_led_link_up); -- WR-RGB Blue
-  user_led_0    <= not s_gpio_o(2 downto 0);
+  -- 
+  wr_led_pps    <= s_led_pps;                            -- white = PPS
+  wr_rgb_led(0) <= s_led_link_act;                       -- WR-RGB Red
+  wr_rgb_led(1) <= s_led_track;                          -- WR-RGB Green
+  wr_rgb_led(2) <= '1' when (not s_led_track and  s_led_link_up) else '0'; -- WR-RGB Blue
+  user_led_0    <= s_gpio_o(2 downto 0);
 
   -- LEMOs
   lemos : for i in 0 to 2 generate
@@ -346,10 +353,27 @@ begin
     s_lvds_n_i(i) <= fastIO_n_i(i);
     fastIO_p_o(i) <= s_lvds_p_o(i);
   end generate;
-  lemo_out <= not s_gpio_o(6 downto 3);
+  lemo_out <= s_gpio_o(6 downto 3);
+
+  -- Lemo LEDs
+  s_lemo_led (3 downto 0) <= s_gpio_o(6 downto 3);
+  s_lemo_led (5 downto 4) <= lemo_in;
+
+  -- Extend LEMO input/outputs to LEDs at 20Hz
+  lemo_leds : for i in 0 to 5 generate
+    lemo_ledx : gc_extend_pulse
+      generic map(
+        g_width => 125_000_000/20) -- 20 Hz
+      port map(
+        clk_i      => clk_ref,
+        rst_n_i    => rstn_ref,
+        pulse_i    => s_lemo_led(i),
+        extended_o => lemo_led(i));
+  end generate;
+
 
   -- OneWire
-  onewire_ext_splz  <= '1';  --Strong Pull-Up disabled
+  --onewire_ext_splz  <= '1';  --Strong Pull-Up disabled
   OneWire_CB_splz   <= '1';  --Strong Pull-Up disabled
 
   --Extension Piggy
@@ -363,6 +387,17 @@ begin
 
   -- Resets
   A_nReset    <= rstn_ref;
+
+    -- fixed scubus signals
+    ADR_TO_SCUB <= '1';
+    nADR_EN     <= '0';
+    A_Spare     <= (others => 'Z');
+    --A_OneWire   <= 'Z';
+
+  --IBN (not for Production)
+  ser0_rxd  <= ser1_txd;
+  ser1_rxd  <= ser0_txd;
+  onewire_ext_splz  <= user_btn; --Strong Pull-up test
 
 
 end rtl;
