@@ -7,7 +7,8 @@ SHARED_SIZE     = 98304
 USRCPUCLK       = 125000
 VERSION         = 8.0.4
 RELEASE         = Fallout 
-DEBUGLVL  		= 0 
+DEBUGLVL  		= 0
+THR_QTY			= 32 
 
 EBMPATH   = ../../../ip_cores/etherbone-core/hdl/eb_master_core
 PRIOPATH  = ../../../modules/prioq2

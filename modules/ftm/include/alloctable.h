@@ -129,7 +129,7 @@ public:
   void cpyWithoutMgmt(AllocTable const &src);
 
   std::vector<MemPool>& getMemories() {return vPool;}
-  void addMemory(uint8_t cpu, uint32_t extBaseAdr, uint32_t intBaseAdr, uint32_t peerBaseAdr, uint32_t sharedOffs, uint32_t space, uint32_t rawSize) {vPool.push_back(MemPool(cpu, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize)); }
+  void addMemory(uint8_t cpu, uint32_t extBaseAdr, uint32_t intBaseAdr, uint32_t peerBaseAdr, uint32_t sharedOffs, uint32_t space, uint32_t rawSize, uint32_t ctlSize) {vPool.push_back(MemPool(cpu, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize, ctlSize)); }
   void clearMemories() { for (unsigned int i = 0; i < vPool.size(); i++ ) vPool[i].init(); }
   void removeMemories() { vPool.clear(); }
   uint32_t getTotalSpace(uint8_t cpu)    const { return vPool[cpu].getTotalSpace(); }
