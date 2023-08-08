@@ -176,22 +176,32 @@
 #define _T_META_SIZE_       (T_META_FLAGS       + _32b_SIZE_) ///< Size of Name/Group table meta data
 //@}
 
+
+
+#define ADRLUT_SHCTL_THR_STA  0
+#define ADRLUT_SHCTL_THR_DAT  1
+#define ADRLUT_SHCTL_HEAP     2
+#define ADRLUT_SHCTL_REGS     3
+#define ADRLUT_SHCTL_END      4
+
 /** @name Top control register sections
  * Top layout of all control register areas. Sections are Scheduler, Status, Meta Data, Diagnostics, Thread Control, Thread Staging, Thread Metadata
  */
 //@{ 
 #define _SHCTL_START_    0
-#define SHCTL_HEAP       (_SHCTL_START_)                              ///< Scheduler Heap
-#define SHCTL_STATUS     (SHCTL_HEAP    + _THR_QTY_ * _PTR_SIZE_)     ///< Status Registers
+#define SHCTL_ADR_TAB    (_SHCTL_START_)                              ///< pTHRDAT, pHEAP, pREGS, pEND
+#define SHCTL_STATUS     (SHCTL_ADR_TAB + 12 * _PTR_SIZE_)            ///< Status Registers
 #define SHCTL_META       (SHCTL_STATUS  + _32b_SIZE_ )                ///< Group/Node Lookup Table Overhead
 #define SHCTL_DIAG       (SHCTL_META    + _T_META_SIZE_ )             ///< Diagnostic Registers
 #define SHCTL_INFO       (SHCTL_DIAG    + _T_DIAG_SIZE_ )             ///< Command Register, NOT IMPLEMENTED
-#define SHCTL_TGATHER    (SHCTL_INFO     + _32b_SIZE_ )               ///< Gather Time (HW Priority Queue Config) Register
+#define SHCTL_TGATHER    (SHCTL_INFO    + _32b_SIZE_ )                ///< Gather Time (HW Priority Queue Config) Register
 #define SHCTL_THR_CTL    (SHCTL_TGATHER + _TS_SIZE_  )                ///< Thread Control Registers (1 bit per Thread )
 #define SHCTL_THR_STA    (SHCTL_THR_CTL + _T_TC_SIZE_  )              ///< Thread Staging Areas (1 area per Thread )
+//From here on addresses depend on THR_QTY
 #define SHCTL_THR_DAT    (SHCTL_THR_STA + _THR_QTY_ * _T_TS_SIZE_  )  ///< Thread Runtime Meta Data Areas(1 area per Thread )
-#define SHCTL_INBOXES    (SHCTL_THR_DAT + _THR_QTY_ * _T_TD_SIZE_  )  ///< Inboxes for MSI (1 per Core in System ), NOT IMPLEMENTED
-#define _SHCTL_END_      (SHCTL_INBOXES + _THR_QTY_ * _32b_SIZE_)	  ///< Size of all control register sections	
+#define SHCTL_HEAP       (SHCTL_THR_DAT + _THR_QTY_ * _T_TD_SIZE_  )  ///< Scheduler Heap
+#define SHCTL_REGS       (SHCTL_HEAP    + _THR_QTY_ * _PTR_SIZE_)     ///< Inboxes for MSI (1 per Core in System ), NOT IMPLEMENTED
+#define _SHCTL_END_      (SHCTL_REGS    + _THR_QTY_ * _32b_SIZE_)	    ///< Size of all control register sections	
 //@}
 
 /*

@@ -136,6 +136,28 @@ int EbWrapper::write64b(uint32_t startAdr, uint64_t d) const {
 
 }
 
+int EbWrapper::readAdrLUT(uint32_t extBaseAdr, uint32_t sharedOffs, uint32_t* lut) const{
+  vAdr va;
+  uint32_t startAdr = extBaseAdr + sharedOffs + SHCTL_ADR_TAB;
+  for(uint32_t x = startAdr; x < startAdr - SHCTL_ADR_TAB + SHCTL_STATUS; x += _32b_SIZE_){ va.push_back(x);}
+  
+  Cycle cyc;
+  int i;
+  try {
+    cyc.open(ebd);
+    for(i = 0; i < (va.end()-va.begin()); i++) {
+      cyc.read(va[i], EB_BIG_ENDIAN | EB_DATA32, (eb_data_t*)&lut[i]);
+    }
+    cyc.close();
+
+  } catch (etherbone::exception_t const& ex) {
+    throw std::runtime_error("Etherbone " + std::string(ex.method) + " returned " + std::string(eb_status(ex.status)) + "\n" );
+  }  
+  return i;
+}
+
+
+
 
 bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atDown) {
   
@@ -183,16 +205,19 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
             cpuIdxMap[cpuIdx]    = mappedIdx;
 
             uint32_t extBaseAdr   = cpuDevs[cpuIdx].sdb_component.addr_first;
-            uint32_t intBaseAdr   = getIntBaseAdr(vFwIdROM[cpuIdx]);
+            uint32_t intBaseAdr   = parseIntBaseAdr(vFwIdROM[cpuIdx]);
             uint32_t peerBaseAdr  = WORLD_BASE_ADR + extBaseAdr;
             uint32_t rawSize      = cpuDevs[cpuIdx].sdb_component.addr_last - cpuDevs[cpuIdx].sdb_component.addr_first;
-            uint32_t sharedOffs   = getSharedOffs(vFwIdROM[cpuIdx]);
-            uint32_t space        = getSharedSize(vFwIdROM[cpuIdx]) - _SHCTL_END_;
-
-              atUp.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize );
-            atDown.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize );
+            uint32_t sharedOffs   = parseSharedOffs(vFwIdROM[cpuIdx]);
+                     thrQty       = parseThrQty(vFwIdROM[cpuIdx]);
+                                    readAdrLUT(extBaseAdr, sharedOffs, adrLut);
+            uint32_t ctlSize      = adrLut[ADRLUT_SHCTL_END];
+            uint32_t space        = parseSharedSize(vFwIdROM[cpuIdx]) - ctlSize;
+                     
+              atUp.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize, ctlSize );
+            atDown.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize, ctlSize );
             mappedIdx++;
-            thrQty = readThrQty(extBaseAdr, sharedOffs);
+            
           }
           
        
@@ -326,7 +351,7 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
     //FIXME replace with FW ID string constants
     //get Version string xx.yy.zz
 
-    std::string version = readFwIdROMTag(fwIdROM, "Version     : ", 10, true);
+    std::string version = parseFwIdROMTag(fwIdROM, "Version     : ", 10, true);
 
     int ret = parseFwVersionString(version);
 
@@ -334,7 +359,7 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
   }
 
 
-  std::string EbWrapper::readFwIdROMTag(const std::string& fwIdROM, const std::string& tag, size_t maxlen, bool stopAtCr ) const {
+  std::string EbWrapper::parseFwIdROMTag(const std::string& fwIdROM, const std::string& tag, size_t maxlen, bool stopAtCr ) const {
     size_t pos, posEnd, tmp;
     std::string s = fwIdROM;
 
@@ -351,29 +376,37 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
 
 
 
-   uint32_t EbWrapper::getIntBaseAdr(const std::string& fwIdROM) const {
+   uint32_t EbWrapper::parseIntBaseAdr(const std::string& fwIdROM) const {
     //FIXME replace with FW ID string constants
     //CAREFUL: Get the EXACT position. If you miss out on leading spaces, the parsed number gets truncated!
-    std::string value = readFwIdROMTag(fwIdROM, "IntAdrOffs  : ", 10, true);
+    std::string value = parseFwIdROMTag(fwIdROM, "IntAdrOffs  : ", 10, true);
     //sLog << "IntAdrOffs : " << value << " parsed: 0x" << std::hex << s2u<uint32_t>(value) << std::endl;
     return s2u<uint32_t>(value);
 
   }
 
-  uint32_t EbWrapper::getSharedOffs(const std::string& fwIdROM) const {
+  uint32_t EbWrapper::parseSharedOffs(const std::string& fwIdROM) const {
     //FIXME replace with FW ID string constants
-    std::string value = readFwIdROMTag(fwIdROM, "SharedOffs  : ", 10, true);
+    std::string value = parseFwIdROMTag(fwIdROM, "SharedOffs  : ", 10, true);
     //sLog << "Parsing SharedOffs : " << value << " parsed: 0x" << std::hex << s2u<uint32_t>(value) << std::endl;
     return s2u<uint32_t>(value);
 
   }
 
-  uint32_t EbWrapper::getSharedSize(const std::string& fwIdROM) const{
-    std::string value = readFwIdROMTag(fwIdROM, "SharedSize  : ", 10, true);
+  uint32_t EbWrapper::parseSharedSize(const std::string& fwIdROM) const{
+    std::string value = parseFwIdROMTag(fwIdROM, "SharedSize  : ", 10, true);
     //sLog << "SharedSize : " << value << " parsed: "  << std::dec << s2u<uint32_t>(value) << std::endl;
     return s2u<uint32_t>(value);
 
   }
+
+  uint32_t EbWrapper::parseThrQty(const std::string& fwIdROM) const{
+    std::string value = parseFwIdROMTag(fwIdROM, "ThreadQty   : ", 10, true);
+    //sLog << "SharedSize : " << value << " parsed: "  << std::dec << s2u<uint32_t>(value) << std::endl;
+    return s2u<uint32_t>(value);
+
+  }
+
 
   void EbWrapper::showCpuList() const {
     sLog << std::endl << std::setfill(' ') << std::setw(5) << "CPU" << std::setfill(' ') << std::setw(11) << "FW found"
@@ -385,3 +418,6 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
            << std::setfill(' ') << std::setw(11) << createFwVersionString(getExpVersionMax());
     }
   }
+
+
+ 
