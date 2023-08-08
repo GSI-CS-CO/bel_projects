@@ -38,7 +38,7 @@
 
 \Large{Martin Skorsky}
 
-\Large{Last change: 2022-07-20}
+\Large{Last change: 2023-08-08}
 \end{center}
 \vfill
 \end{titlepage}
@@ -68,6 +68,7 @@ test\_addDownloadCompare.py   &  5                  &   T        &   T          
 test\_altDestinations.py      &  4                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
 test\_async.py                &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_basic.py                &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_blink.py                &  1                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
 test\_booster\_startthread.py &  7                  &   x        &   T             &   T           &   x              &   x                 \\ \hline
 test\_bpcStart.py             &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_coupling.py             &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
@@ -190,6 +191,27 @@ This test was \texttt{full\_test/static/basic}.
   \item Success Criteria
 
   The test is successful if no schedule is loaded. Checked with \texttt{dm-sched status}
+\end{enumerate}
+
+\section{test\_blink.py}
+\begin{enumerate}
+  \item Purpose of Test
+
+  Test flow nodes in connection with origin, preptime and two threads.
+  \item Test Actions
+
+  Start pattern \texttt{ping} for a single timing message which indicates the start of the test.
+  Set origin, preptime, starttime for threads 0, 1 of cpu 0. Read these values. Start thread 0, 1 of cpu 0
+  with a single command. Snoop timing messages for 10 seconds and check the frequency of the messages.
+    \begin{figure}
+        \centering
+        \includegraphics*[width=1.0\textwidth,keepaspectratio]{TestPattern/blink-download.pdf}
+        \caption{Flip between two sequences of timing events}
+        \label{fig:blink}
+    \end{figure}
+  \item Success Criteria
+
+  The test is successful when snoop of timing messages receives all four types of messages, each marked by the parameter.
 \end{enumerate}
 
 \section{test\_booster\_startthread.py}
