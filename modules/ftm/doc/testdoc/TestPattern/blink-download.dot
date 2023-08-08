@@ -1,0 +1,51 @@
+digraph G {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+B_FIREF[pos="0, 100" cpu="0", flags="0x00108107", type="block", tperiod="200000000", pattern="firefighter", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green", penwidth=2, color = "purple"];
+B_FIREF_ListDst[pos="50, 150" cpu="0", flags="0x0000000c", type="listdst", shape = "rectangle", color = "gray", style = "dashed, filled"];
+B_FIREF_QBl_Lo[pos="-50, 150" cpu="0", flags="0x00000009", type="qinfo", shape = "rectangle", color = "gray", style = "dashed, filled"];
+B_FIREF_Qb_Lo0[pos="-100, 200" cpu="0", flags="0x0000000a", type="qbuf", shape = "rectangle", color = "gray", style = "dashed, filled"];
+B_FIREF_Qb_Lo1[pos="-50, 200" cpu="0", flags="0x0000000a", type="qbuf", shape = "rectangle", color = "gray", style = "dashed, filled"];
+B_POLICE[pos="0, -100" cpu="0", flags="0x00508107", type="block", tperiod="100000000", pattern="police", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="true", shape     = "rectangle", fillcolor = "green", penwidth=2, color = "purple"];
+B_POLICE_ListDst[pos="50, -150" cpu="0", flags="0x0000000c", type="listdst", shape = "rectangle", color = "gray", style = "dashed, filled"];
+B_POLICE_QBl_Il[pos="0, -150" cpu="0", flags="0x00000009", type="qinfo", shape = "rectangle", color = "gray", style = "dashed, filled"];
+B_POLICE_QBl_Lo[pos="-50, -150" cpu="0", flags="0x00000009", type="qinfo", shape = "rectangle", color = "gray", style = "dashed, filled"];
+B_POLICE_Qb_Il0[pos="0, -200" cpu="0", flags="0x0000000a", type="qbuf", shape = "rectangle", color = "gray", style = "dashed, filled"];
+B_POLICE_Qb_Il1[pos="50, -200" cpu="0", flags="0x0000000a", type="qbuf", shape = "rectangle", color = "gray", style = "dashed, filled"];
+B_POLICE_Qb_Lo0[pos="-100, -200" cpu="0", flags="0x0000000a", type="qbuf", shape = "rectangle", color = "gray", style = "dashed, filled"];
+B_POLICE_Qb_Lo1[pos="-50, -200" cpu="0", flags="0x0000000a", type="qbuf", shape = "rectangle", color = "gray", style = "dashed, filled"];
+Block0[pos="-100, -50" cpu="0", flags="0x00008107", type="block", tperiod="100000", pattern="ping", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green", penwidth=2, color = "purple"];
+Cmd_CALL_FIREF[pos="0, 0" cpu="0", flags="0x00000104", type="flow", tvalid="0", vabs="false", prio="0", toffs="50000000", pattern="police", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", qty="1", shape     = "hexagon", fillcolor = "green"];
+Cmd_CALL_POLICE[pos="100, 0" cpu="0", flags="0x00000104", type="flow", tvalid="0", vabs="false", prio="0", toffs="100000000", pattern="firefighter", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", qty="1", shape     = "hexagon", fillcolor = "green"];
+Evt0[pos="-100, 50" cpu="0", flags="0x00002102", type="tmsg", toffs="0", pattern="ping", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="0", evtno="1", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1000001000000000", par="0x0000000000000001", tef="0", shape     = "oval", fillcolor = "green", penwidth=2, color = "darkorange3"];
+Evt_FIREF0[pos="100, 100" cpu="0", flags="0x00002102", type="tmsg", toffs="0", pattern="firefighter", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="0", evtno="274", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1000112000000000", par="0x0000000000000789", tef="0", shape     = "oval", fillcolor = "green", penwidth=2, color = "darkorange3"];
+Evt_FIREF1[pos="150, 50" cpu="0", flags="0x00000102", type="tmsg", toffs="50000000", pattern="firefighter", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="0", evtno="274", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1000112000000000", par="0x0000000000000abc", tef="0", shape     = "oval", fillcolor = "green"];
+Evt_POLICE0[pos="100, -100" cpu="0", flags="0x00002102", type="tmsg", toffs="0", pattern="police", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="0", evtno="272", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1000110000000000", par="0x0000000000000123", tef="0", shape     = "oval", fillcolor = "green", penwidth=2, color = "darkorange3"];
+Evt_POLICE1[pos="150, -50" cpu="0", flags="0x00000102", type="tmsg", toffs="25000000", pattern="police", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="0", evtno="272", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1000110000000000", par="0x0000000000000456", tef="0", shape     = "oval", fillcolor = "green"];
+B_FIREF->B_FIREF_ListDst [type="listdst", color = "gray"];
+B_FIREF->B_FIREF_QBl_Lo [type="priolo", color = "gray"];
+Evt0->Block0 [type="defdst", color = "red"];
+B_POLICE->B_POLICE_ListDst [type="listdst", color = "gray"];
+B_POLICE->B_POLICE_QBl_Il [type="prioil", color = "gray"];
+B_POLICE->B_POLICE_QBl_Lo [type="priolo", color = "gray"];
+Cmd_CALL_FIREF->B_POLICE [type="defdst", color = "red"];
+Cmd_CALL_FIREF->B_FIREF [type="target", color = "blue"];
+Cmd_CALL_FIREF->Evt_FIREF0 [type="flowdst", color = "pink"];
+Cmd_CALL_POLICE->B_FIREF [type="defdst", color = "red"];
+Cmd_CALL_POLICE->B_POLICE [type="target", color = "blue"];
+Cmd_CALL_POLICE->Evt_POLICE0 [type="flowdst", color = "pink"];
+Evt_FIREF0->Evt_FIREF1 [type="defdst", color = "red"];
+Evt_FIREF1->Cmd_CALL_POLICE [type="defdst", color = "red"];
+Evt_POLICE0->Evt_POLICE1 [type="defdst", color = "red"];
+Evt_POLICE1->Cmd_CALL_FIREF [type="defdst", color = "red"];
+B_FIREF->B_FIREF [type="defdst", color = "red"];
+B_FIREF->Evt_FIREF0 [type="altdst", color = "black"];
+B_FIREF_QBl_Lo->B_FIREF_Qb_Lo0 [type="meta", color = "gray"];
+B_FIREF_QBl_Lo->B_FIREF_Qb_Lo1 [type="meta", color = "gray"];
+B_POLICE_QBl_Il->B_POLICE_Qb_Il0 [type="meta", color = "gray"];
+B_POLICE_QBl_Il->B_POLICE_Qb_Il1 [type="meta", color = "gray"];
+B_POLICE->B_POLICE [type="defdst", color = "red"];
+B_POLICE->Evt_POLICE0 [type="altdst", color = "black"];
+B_POLICE_QBl_Lo->B_POLICE_Qb_Lo0 [type="meta", color = "gray"];
+B_POLICE_QBl_Lo->B_POLICE_Qb_Lo1 [type="meta", color = "gray"];
+}
