@@ -414,12 +414,12 @@ vEbwrs& CarpeDM::CarpeDMimpl::createCommandBurst(vEbwrs& ew, Graph& g) {
 
   //Returns the external address of a thread's initial node register
   uint32_t CarpeDM::CarpeDMimpl::getThrInitialNodeAdr(uint8_t cpuIdx, uint8_t thrIdx) {
-    return atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_NODE_PTR;
+    return atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + ebd.getCtlAdr(ADRLUT_SHCTL_THR_STA) + thrIdx * _T_TS_SIZE_ + T_TS_NODE_PTR;
   }
 
   //Returns the external address of a thread's cursor pointer
   uint32_t CarpeDM::CarpeDMimpl::getThrCurrentNodeAdr(uint8_t cpuIdx, uint8_t thrIdx) {
-    return atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_NODE_PTR;
+    return atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + ebd.getCtlAdr(ADRLUT_SHCTL_THR_DAT) + thrIdx * _T_TD_SIZE_ + T_TD_NODE_PTR;
   }
 
 
@@ -559,7 +559,7 @@ vEbwrs& CarpeDM::CarpeDMimpl::createCommandBurst(vEbwrs& ew, Graph& g) {
 
 
 vEbwrs& CarpeDM::CarpeDMimpl::resetThrMsgCnt(vEbwrs& ew, uint8_t cpuIdx, uint8_t thrIdx) {
-  uint32_t msgCntAdr = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_MSG_CNT;
+  uint32_t msgCntAdr = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + ebd.getCtlAdr(ADRLUT_SHCTL_THR_DAT) + thrIdx * _T_TD_SIZE_ + T_TD_MSG_CNT;
 
   ew.va.push_back(msgCntAdr + 0);
   ew.va.push_back(msgCntAdr + _32b_SIZE_);
@@ -596,15 +596,15 @@ void CarpeDM::CarpeDMimpl::resetAllThreads() {
 
 
 uint64_t CarpeDM::CarpeDMimpl::getThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx) {
-  return ebd.read64b(atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_MSG_CNT);
+  return ebd.read64b(atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + ebd.getCtlAdr(ADRLUT_SHCTL_THR_DAT) + thrIdx * _T_TD_SIZE_ + T_TD_MSG_CNT);
 }
 
 uint64_t CarpeDM::CarpeDMimpl::getThrDeadline(uint8_t cpuIdx, uint8_t thrIdx) {
-  return ebd.read64b(atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_DEADLINE);
+  return ebd.read64b(atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + ebd.getCtlAdr(ADRLUT_SHCTL_THR_DAT) + thrIdx * _T_TD_SIZE_ + T_TD_DEADLINE);
 }
 
 vEbwrs&  CarpeDM::CarpeDMimpl::setThrDeadline(vEbwrs& ew, uint8_t cpuIdx, uint8_t thrIdx, uint64_t t) {
-  uint32_t startAdr = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_DEADLINE;
+  uint32_t startAdr = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + ebd.getCtlAdr(ADRLUT_SHCTL_THR_DAT) + thrIdx * _T_TD_SIZE_ + T_TD_DEADLINE;
   ew.va += {startAdr, startAdr + _32b_SIZE_};
   writeLeNumberToBeBytes<uint64_t>(ew.vb, t );
   ew.vcs += leadingOne(2);
@@ -612,7 +612,7 @@ vEbwrs&  CarpeDM::CarpeDMimpl::setThrDeadline(vEbwrs& ew, uint8_t cpuIdx, uint8_
 }
 
 vEbwrs&  CarpeDM::CarpeDMimpl::setThrStartTime(vEbwrs& ew, uint8_t cpuIdx, uint8_t thrIdx, uint64_t t) {
-  uint32_t startAdr = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_STARTTIME;
+  uint32_t startAdr = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + ebd.getCtlAdr(ADRLUT_SHCTL_THR_STA) + thrIdx * _T_TS_SIZE_ + T_TS_STARTTIME;
   ew.va += {startAdr, startAdr + _32b_SIZE_};
   writeLeNumberToBeBytes<uint64_t>(ew.vb, t );
   ew.vcs += leadingOne(2);
@@ -620,12 +620,12 @@ vEbwrs&  CarpeDM::CarpeDMimpl::setThrStartTime(vEbwrs& ew, uint8_t cpuIdx, uint8
 }
 
 uint64_t CarpeDM::CarpeDMimpl::getThrStartTime(uint8_t cpuIdx, uint8_t thrIdx) {
-  return ebd.read64b(atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_STARTTIME);
+  return ebd.read64b(atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + ebd.getCtlAdr(ADRLUT_SHCTL_THR_STA) + thrIdx * _T_TS_SIZE_ + T_TS_STARTTIME);
 }
 
 //FIXME wtf ... this doesnt queue anything!
 vEbwrs&  CarpeDM::CarpeDMimpl::setThrPrepTime(vEbwrs& ew, uint8_t cpuIdx, uint8_t thrIdx, uint64_t t) {
-  uint32_t startAdr = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME;
+  uint32_t startAdr = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + ebd.getCtlAdr(ADRLUT_SHCTL_THR_STA) + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME;
   ew.va += {startAdr, startAdr + _32b_SIZE_};
   writeLeNumberToBeBytes<uint64_t>(ew.vb, t );
   ew.vcs += leadingOne(2);
@@ -633,7 +633,7 @@ vEbwrs&  CarpeDM::CarpeDMimpl::setThrPrepTime(vEbwrs& ew, uint8_t cpuIdx, uint8_
 }
 
 uint64_t CarpeDM::CarpeDMimpl::getThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx) {
-  return ebd.read64b(atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME);
+  return ebd.read64b(atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + ebd.getCtlAdr(ADRLUT_SHCTL_THR_STA) + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME);
 }
 
 const vAdr CarpeDM::CarpeDMimpl::getCmdWrAdrs(uint32_t hash, uint8_t prio) {

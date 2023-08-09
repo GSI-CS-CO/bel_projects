@@ -146,6 +146,7 @@ int EbWrapper::readAdrLUT(uint32_t extBaseAdr, uint32_t sharedOffs, uint32_t* lu
   try {
     cyc.open(ebd);
     for(i = 0; i < (va.end()-va.begin()); i++) {
+      //sLog << " Reading LUT @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << std::endl;
       cyc.read(va[i], EB_BIG_ENDIAN | EB_DATA32, (eb_data_t*)&lut[i]);
     }
     cyc.close();
@@ -211,7 +212,8 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
             uint32_t sharedOffs   = parseSharedOffs(vFwIdROM[cpuIdx]);
                      thrQty       = parseThrQty(vFwIdROM[cpuIdx]);
                                     readAdrLUT(extBaseAdr, sharedOffs, adrLut);
-            uint32_t ctlSize      = adrLut[ADRLUT_SHCTL_END];
+            //sLog << "Reading LUT" << std::endl;                                    
+            uint32_t ctlSize      = getCtlAdr(ADRLUT_SHCTL_END);
             uint32_t space        = parseSharedSize(vFwIdROM[cpuIdx]) - ctlSize;
                      
               atUp.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize, ctlSize );
