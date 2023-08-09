@@ -474,8 +474,8 @@ void CarpeDM::CarpeDMimpl::inspectHeap(uint8_t cpuIdx) {
 
 
   uint32_t baseAdr = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs;
-  uint32_t heapAdr = baseAdr + SHCTL_HEAP;
-  uint32_t thrAdr  = baseAdr + SHCTL_THR_DAT;
+  uint32_t heapAdr = baseAdr + ebd.getCtlAdr(ADRLUT_SHCTL_HEAP);
+  uint32_t thrAdr  = baseAdr + ebd.getCtlAdr(ADRLUT_SHCTL_THR_DAT);
 
   for(int i=0; i<ebd.getThrQty(); i++) vRa.push_back(heapAdr + i * _PTR_SIZE_);
   heap = ebd.readCycle(vRa);

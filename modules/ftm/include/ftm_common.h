@@ -57,7 +57,7 @@
 //@{ 
 #define PREPTIME_DEFAULT 		1000000ULL // standard preptime offset, sets lead to 1 ms
 #define WORLD_BASE_ADR          0x80000000 ///< Base address leading from the CPU cluster to top crossbar ('world')
-#define _THR_QTY_               8 ///< Maximum number of threads
+//#define _THR_QTY_               32 ///< Maximum number of threads
 #define _HEAP_SIZE_             (_THR_QTY_) ///< Scheduler heap size (power of 2)
 #define _T_GRID_OFFS_           0ULL      ///< Origin of time grid for align blocks in ns
 #define _T_GRID_SIZE_           10000ULL  ///< Grid size for align blocks ns
@@ -212,20 +212,21 @@
 #define _SHCTL_END_      (SHCTL_REGS    + _THR_QTY_ * _32b_SIZE_)	    ///< Size of all control register sections	
 //@}
 
-/*
-#pragma message(VAR_NAME_VALUE(_SHCTL_START_))
-#pragma message(VAR_NAME_VALUE(SHCTL_HEAP   ))
-#pragma message(VAR_NAME_VALUE(SHCTL_STATUS ))
-#pragma message(VAR_NAME_VALUE(SHCTL_META   ))
-#pragma message(VAR_NAME_VALUE(SHCTL_DIAG   ))
-#pragma message(VAR_NAME_VALUE(SHCTL_INFO    ))
-#pragma message(VAR_NAME_VALUE(SHCTL_TGATHER))
-#pragma message(VAR_NAME_VALUE(SHCTL_THR_CTL))
-#pragma message(VAR_NAME_VALUE(SHCTL_THR_STA))
-#pragma message(VAR_NAME_VALUE(SHCTL_THR_DAT))
-#pragma message(VAR_NAME_VALUE(SHCTL_INBOXES))
-#pragma message(VAR_NAME_VALUE(_SHCTL_END_  ))
-*/
+  
+#pragma message(VAR_NAME_VALUE(_SHCTL_START_ ))
+#pragma message(VAR_NAME_VALUE(SHCTL_ADR_TAB ))
+#pragma message(VAR_NAME_VALUE(SHCTL_STATUS  ))
+#pragma message(VAR_NAME_VALUE(SHCTL_META    ))
+#pragma message(VAR_NAME_VALUE(SHCTL_DIAG    ))
+#pragma message(VAR_NAME_VALUE(SHCTL_INFO     ))
+#pragma message(VAR_NAME_VALUE(SHCTL_TGATHER ))
+#pragma message(VAR_NAME_VALUE(SHCTL_THR_CTL ))
+#pragma message(VAR_NAME_VALUE(SHCTL_THR_STA ))
+#pragma message(VAR_NAME_VALUE(SHCTL_THR_DAT ))
+#pragma message(VAR_NAME_VALUE(SHCTL_HEAP    ))
+#pragma message(VAR_NAME_VALUE(SHCTL_REGS    ))
+#pragma message(VAR_NAME_VALUE(_SHCTL_END_))
+
 
 
 
