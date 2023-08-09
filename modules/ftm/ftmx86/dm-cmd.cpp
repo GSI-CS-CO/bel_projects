@@ -129,34 +129,45 @@ void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
     }
   }
 
-  const uint16_t width = 149;
+  // In verbose mode, origin and origin pattern is displayed. This needs 55 + 3 chars each.
+  const uint16_t width = 149 + (verbose ? 2 * 58 : 0);
   //this is horrible code, but harmless. Does the job for now.
   //TODO: replace this with something more sensible
 
   uint64_t timeWrNs = cdm.getDmWrTime();
 
   printf("\n\u2554"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2557\n");
-  printf("\u2551 DataMaster: %-77s \u2502 ECA-Time: 0x%08x%08x ns \u2502 %.19s   \u2551\n", netaddress, (uint32_t)(timeWrNs>>32), (uint32_t)timeWrNs, formatTime(timeWrNs).c_str() );
+  const char* FORMAT_STRING = (verbose ?
+                  "\u2551 DataMaster: %-77s \u2502 ECA-Time: 0x%08x%08x ns \u2502 %-135.19s   \u2551\n" :
+                  "\u2551 DataMaster: %-77s \u2502 ECA-Time: 0x%08x%08x ns \u2502 %.19s   \u2551\n");
+  printf(FORMAT_STRING, netaddress, (uint32_t)(timeWrNs>>32), (uint32_t)timeWrNs, formatTime(timeWrNs).c_str() );
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
-  printf("\u2551 %3s \u2502 %3s \u2502 %7s \u2502 %9s \u2502 %55s \u2502 %55s \u2551\n", "Cpu", "Thr", "Running", "MsgCount", "Pattern", "Node");
+  // print the column headers
+  if (verbose) {
+    printf("\u2551 %3s \u2502 %3s \u2502 %7s \u2502 %9s \u2502 %55s \u2502 %55s \u2502 %55s \u2502 %55s \u2551\n", "Cpu", "Thr", "Running", "MsgCount", "Pattern", "Node", "Origin pattern", "Origin");
+  } else {
+    printf("\u2551 %3s \u2502 %3s \u2502 %7s \u2502 %9s \u2502 %55s \u2502 %55s \u2551\n", "Cpu", "Thr", "Running", "MsgCount", "Pattern", "Node");
+  }
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
 
   bool toggle=false;
 
-
+  // print one line for each thread on each CPU in verbose mode. Otherwise only running threads.
   for(uint8_t cpuIdx=0; cpuIdx < cpuQty; cpuIdx++) {
     for(uint8_t thrIdx=0; thrIdx < thrQty; thrIdx++) {
       if (verbose || ((cdm.getThrRun(cpuIdx) >> thrIdx) & 1)) {
         //if (!first) {printf("\u2560"); for(int i=0;i<width;i++) printf("\u2500"); printf("\u2563\n");
         std::string running = (((cdm.getThrRun(cpuIdx) >> thrIdx) & 1) ? std::string(KGRN) + std::string("yes") : std::string(KRED) + std::string(" no")) + std::string(KNRM);
-        std::string originPattern = vsOriginPattern[cpuIdx * thrQty + thrIdx];
-        std::string origin        = vsOrigin[cpuIdx * thrQty + thrIdx];
-
-        printf("\u2551%s %2u  \u2502 %2u  \u2502   %3s%s   \u2502 %9llu \u2502 %55s \u2502 %55s %s\u2551\n", (toggle ? BLGR : ""), cpuIdx, thrIdx, running.c_str(),
+        const char* FORMAT_STRING2 = (verbose ?
+                        "\u2551%s %2u  \u2502 %2u  \u2502   %3s%s   \u2502 %9llu \u2502 %55s \u2502 %55s \u2502 %55s \u2502 %55s %s\u2551\n" :
+                        "\u2551%s %2u  \u2502 %2u  \u2502   %3s%s   \u2502 %9llu \u2502 %55s \u2502 %55s %s\u2551\n");
+        printf(FORMAT_STRING2, (toggle ? BLGR : ""), cpuIdx, thrIdx, running.c_str(),
           (toggle ? BLGR : ""),
           (unsigned long long int)vsMsgCnt[cpuIdx * thrQty + thrIdx],
           vsCursorPattern[cpuIdx * thrQty + thrIdx].c_str(),
           vsCursor[cpuIdx * thrQty + thrIdx].c_str(),
+          (verbose ? vsOriginPattern[cpuIdx * thrQty + thrIdx].c_str() : ""),
+          (verbose ? vsOrigin[cpuIdx * thrQty + thrIdx].c_str() : ""),
           BNRM
         );
         toggle = !toggle;
@@ -196,12 +207,12 @@ void showRawStatus(const char *netaddress, CarpeDM& cdm) {
 
   for(uint8_t cpuIdx=0; cpuIdx < cpuQty; cpuIdx++) {
     for(uint8_t thrIdx=0; thrIdx < thrQty; thrIdx++) {
-      std::string originPattern = vsOriginPattern[cpuIdx * thrQty + thrIdx];
-      std::string origin        = vsOrigin[cpuIdx * thrQty + thrIdx];
-      printf("CPU:%02u,THR:%02u,RUN:%1u\nMSG:%09llu\nPAT:%s,NOD:%s\n", cpuIdx, thrIdx, (cdm.getThrRun(cpuIdx) >> thrIdx) & 1,
+      printf("CPU:%02u,THR:%02u,RUN:%1u\nMSG:%09llu\nPAT:%s,NOD:%s, Origin:%s, OriginPattern:%s\n", cpuIdx, thrIdx, (cdm.getThrRun(cpuIdx) >> thrIdx) & 1,
         (unsigned long long int)vsMsgCnt[cpuIdx * thrQty + thrIdx],
         vsCursorPattern[cpuIdx * thrQty + thrIdx].c_str(),
-        vsCursor[cpuIdx * thrQty + thrIdx].c_str()
+        vsCursor[cpuIdx * thrQty + thrIdx].c_str(),
+        vsOriginPattern[cpuIdx * thrQty + thrIdx].c_str(),
+        vsOrigin[cpuIdx * thrQty + thrIdx].c_str()
       );
     }
   }
