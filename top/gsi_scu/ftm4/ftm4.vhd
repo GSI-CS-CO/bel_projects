@@ -242,7 +242,7 @@ begin
       core_clk_20m_vcxo_i     => clk_20m_vcxo_i,
       core_clk_125m_pllref_i  => clk_125m_tcb_pllref_i,
       core_clk_125m_local_i   => clk_125m_tcb_local_i,
-      core_clk_125m_sfpref_i  => clk_125m_tcb_sfpref_i,
+      core_clk_125m_sfpref_i  => clk_125m_tcb_pllref_i,
       wr_onewire_io           => OneWire_CB,
       wr_sfp_sda_io           => sfp_mod2_io,
       wr_sfp_scl_io           => sfp_mod1_io,
