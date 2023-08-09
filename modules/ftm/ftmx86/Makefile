@@ -20,9 +20,14 @@ endif
 # ##########################
 
 TOP            ?= ../../..
-EBPATH         ?= $(TOP)/ip_cores/etherbone-core/api/
-EBPATH1        ?= .
-BOOSTPATH      ?= .
+
+VERSION_FW     = 9.0.0
+VERSION_TOOL   = 0.37.0
+
+BUILD_DATE     = $(shell date +'%Y%m%d')
+BUILD_ID_ROM_ADR = 0x100
+BUILD_ID_ROM_SIZE = 0x400
+
 EBMPATH        ?= $(TOP)/ip_cores/etherbone-core/hdl/eb_master_core
 PRIOPATH       ?= $(TOP)/modules/prioq2
 DIAGPATH       ?= $(TOP)/modules/dm_diag
