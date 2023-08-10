@@ -11,7 +11,7 @@ class DmPps(dm_testbench.DmTestbench):
   def test_pps(self):
     fileName = 'snoop_pps.csv'
     self.startPattern('pps.dot')
-    self.snoopToCsv(fileName, 2)
+    self.snoopToCsv(fileName, duration=2)
     # analyse column 8 which contains the evtno.
     # check that evtno 0x00d7 and 0x00cd occur.
     self.analyseFrequencyFromCsv(fileName, column=8, printTable=True, checkValues={'0x00d7': '>0', '0x00cd': '>0'})

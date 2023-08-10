@@ -17,7 +17,7 @@ class UnitTestAltDestinations(dm_testbench.DmTestbench):
     for x, y in listSwitch:
       self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'switch', 'Block', 'Msg0' + str(x)), [0], 0, 0)
       self.checkRunningThreadsCmd(0.1)
-      self.snoopToCsv(file_name, 1)
+      self.snoopToCsv(file_name, duration=1)
       self.analyseFrequencyFromCsv(file_name, column_EVTNO, checkValues={'0x00' + y: '>0'})
     self.deleteFile(file_name)
 
