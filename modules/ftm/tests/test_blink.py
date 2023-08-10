@@ -13,7 +13,7 @@ class DmBlink(dm_testbench.DmTestbench):
     schedule = 'blink.dot'
     fileName = 'snoop_blink.csv'
     self.addSchedule(schedule)
-    self.snoopToCsvWithAction(fileName, self.doActionThread8, 10)
+    self.snoopToCsvWithAction(fileName, self.doActionThread8, duration=10)
     # analyse column 8 which contains the evtno.
     # check that evtno 0x0110 and 0x0112 occur.
     self.analyseFrequencyFromCsv(fileName, column=8, printTable=True, checkValues={'0x0001': '=1', '0x0110': '>0', '0x0112': '>0'})
@@ -27,7 +27,7 @@ class DmBlink(dm_testbench.DmTestbench):
     schedule = 'blink.dot'
     fileName = 'snoop_blink_thread32.csv'
     self.addSchedule(schedule)
-    self.snoopToCsvWithAction(fileName, self.doActionThread32, 10)
+    self.snoopToCsvWithAction(fileName, self.doActionThread32, duration=10)
     # analyse column 8 which contains the evtno.
     # check that evtno 0x0110 and 0x0112 occur.
     self.analyseFrequencyFromCsv(fileName, column=8, printTable=True, checkValues={'0x0001': '=1', '0x0110': '>0', '0x0112': '>0'})

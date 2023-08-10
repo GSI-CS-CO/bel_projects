@@ -48,7 +48,7 @@ class TestOriginStartthread(dm_testbench.DmTestbench):
     self.addSchedule('threadsStartStop.dot')
     fileName = 'snoop_threadsStartStop.csv'
     # ~ print("before snoop ", datetime.now().time())
-    self.snoopToCsvWithAction(fileName, self.startStopPattern, 1)
+    self.snoopToCsvWithAction(fileName, self.startStopPattern, duration=1)
     # analyse column 20 which contains the parameter.
     # check par=0:1, par=1:18, par=2:36, par=3:27, par=4:1 for snoop of 1 second.
     self.analyseFrequencyFromCsv(fileName, column=20, printTable=True,
@@ -65,7 +65,7 @@ class TestOriginStartthread(dm_testbench.DmTestbench):
     self.startPattern('nodeInTwoThreads.dot', 'A')
     fileName = 'snoop_nodeInTwoThreads.csv'
     self.delay(0.1)
-    self.snoopToCsv(fileName, 1)
+    self.snoopToCsv(fileName, duration=1)
     self.analyseFrequencyFromCsv(fileName, column=20, printTable=True,
         checkValues={'0x0000000000000000': '>99', '0x0000000000000001': '100', '0x0000000000000002': '100', '0x0000000000000003': '100', '0x0000000000000003!conflict': '100'})
     self.deleteFile(fileName)

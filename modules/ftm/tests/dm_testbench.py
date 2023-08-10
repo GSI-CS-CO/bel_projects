@@ -189,10 +189,8 @@ class DmTestbench(unittest.TestCase):
     diffLines = list(difflib.unified_diff(current, expected, n=0))
     self.assertEqual(len(diffLines), 0, f'Diff: file {fileExpected}\n{diffLines}')
 
-  def getSnoopCommand(self, duration):
-    snoop_command1 = self.snoop_command + ' ' + str(duration)
-    if self.snoop_command[len(self.snoop_command)-1:] == "'":
-      snoop_command1 = self.snoop_command[:-1] + ' ' + str(duration) + "'"
+  def getSnoopCommand(self, eventId='0', mask='0', duration=1):
+    snoop_command1 = self.snoop_command.replace('snoop 0 0 0', f'snoop {eventId} {mask} 0 {str(duration)}')
     # ~ print(f'getSnoopCommand: {snoop_command1}')
     return snoop_command1
 
@@ -203,21 +201,21 @@ class DmTestbench(unittest.TestCase):
     # ~ print(f'getEbResetCommand: {ebResetCommand1}')
     return ebResetCommand1
 
-  def snoopToCsv(self, csvFileName, duration=1):
+  def snoopToCsv(self, csvFileName, eventId='0', mask='0', duration=1):
     """Snoop timing messages with saft-ctl for <duration> seconds (default = 1) and write the messages to <csvFileName>.
     Details: start saft-ctl with Popen, run it for <duration> seconds.
     """
     with open(csvFileName, 'wb') as file1:
-      process = subprocess.run(self.getSnoopCommand(duration), shell=True, check=True, stdout=file1)
+      process = subprocess.run(self.getSnoopCommand(eventId, mask, duration), shell=True, check=True, stdout=file1)
       self.assertEqual(process.returncode, 0, f'Returncode: {process.returncode}')
 
-  def snoopToCsvWithAction(self, csvFileName, action, duration=1):
+  def snoopToCsvWithAction(self, csvFileName, action, eventId='0', mask='0', duration=1):
     """Snoop timing messages with saft-ctl for <duration> seconds (default = 1).
     Write the messages to <csvFileName>.
     Details: start saft-ctl with Popen in its own thread, run it for <duration> seconds.
     action should end before snoop.
     """
-    snoop = threading.Thread(target=self.snoopToCsv, args=(csvFileName, duration))
+    snoop = threading.Thread(target=self.snoopToCsv, args=(csvFileName, eventId, mask, duration))
     snoop.start()
     action()
     snoop.join()
