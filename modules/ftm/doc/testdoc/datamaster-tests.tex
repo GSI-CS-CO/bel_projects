@@ -65,32 +65,39 @@ These are considered as OK if no exception occurs.}
 Test                          & \ry{count of tests} & \ry{Tools} & \ry{libcarpedm} & \ry{firmware} & \ry{uses Python} & \ry{checks result } \\ \hline
 dmPerformance                 &                     &   x        &   T             &   x           &   -              &   -                 \\ \hline
 test\_addDownloadCompare.py   &  5                  &   T        &   T             &   T           &   x              &   -                 \\ \hline
-test\_altDestinations.py      &  4                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_altDestinations.py      &  5                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
 test\_async.py                &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_basic.py                &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_blink.py                &  1                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
-test\_booster\_startthread.py &  7                  &   x        &   T             &   T           &   x              &   x                 \\ \hline
+test\_basic.py                &  2                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_blink.py                &  2                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_booster\_startthread.py &  8                  &   x        &   T             &   T           &   x              &   x                 \\ \hline
 test\_bpcStart.py             &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_coupling.py             &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_dmThreads.py            &  9                  &   x        &   x             &   T           &   x              &   x                 \\ \hline
-test\_dm\_cmd.py              &  24                 &   T        &   x             &   x           &   x              &   x                 \\ \hline
+test\_dmThreads.py            &  33                 &   x        &   x             &   T           &   x              &   x                 \\ \hline
+test\_dm\_cmd.py              &  31                 &   T        &   x             &   x           &   x              &   x                 \\ \hline
+test\_dm\_sched.py            &  8                  &   T        &   x             &   x           &   x              &   x                 \\ \hline
+test\_dm\_testbench.py        &  8                  &   T        &   x             &   x           &   x              &   x                 \\ \hline
 test\_environment.py          &  3                  &   -        &   -             &   -           &   x              &   x                 \\ \hline
 test\_fid7.py                 &  1                  &   x        &   x             &   T           &   x              &   x                 \\ \hline
 test\_flow.py                 &  5                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_flowpattern.py          &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_flush.py                &  24                 &   x        &   T             &   T           &   x              &   x                 \\ \hline
-test\_loop.py                 &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_memory.py               &  10                 &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_loop.py                 &  2                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_lzma.py                 &  6                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_memory.py               &  20                 &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_origin\_startthread.py  &  2                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_origin\_twothreads.py   &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_parallelBranch.py       &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_pps.py                  &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_prio\_and\_type.py      &  2                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_run\_all\_single.py     &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_run\_cpu0\_single.py    &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_safe2remove.py          &  17                 &   x        &   T             &   T           &   x              &   x                 \\ \hline
+test\_safe2remove.py          &  19                 &   x        &   T             &   T           &   x              &   x                 \\ \hline
 test\_schedules.py            &  2                  &   x        &   x             &   T           &   x              &   -                 \\ \hline
 test\_singleEdgeTest.py       &  1                  &   -        &   T             &   -           &   -              &   x                 \\ \hline
-test\_start\_stop\_abort.py   &  2                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_start\_stop\_abort.py   &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_switch.py               &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_unilac.py               &  3                  &   x        &   x             &   T           &   x              &   x                 \\ \hline
+test\_waitloop\_flush.py      &  1                  &   x        &   x             &   T           &   x              &   x                 \\ \hline
 test\_zzz\_finish.py          &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 \end{tabular}
 
@@ -394,6 +401,19 @@ with commands and options and checks the result with the output on stdout and st
 \item \texttt{dm-sched $<$datamaster$>$ add pps.dot}: check for adding a schedule.
 \end{enumerate}
 
+\section{test\_dm\_testbench.py}
+\begin{enumerate}
+  \item Purpose of Test
+  \item Test Actions
+    \begin{figure}
+        \centering
+        % \includegraphics*[height=0.95\textheight,keepaspectratio]{TestPattern/???.pdf}
+        \caption{???}
+        \label{fig:dm_testbench}
+    \end{figure}
+  \item Success Criteria
+\end{enumerate}
+
 \section{test\_dmThreads.py}
 \texttt{test\_dmThreads.py} tests the firmware with up to 8 threads and up to 4 CPUs.
 For each thread a pattern with one block and one timing message per second is
@@ -576,6 +596,19 @@ See Figure~\ref{fig:schedule_nodeInTwoThreads} for the schedule.
     \end{figure}
 \end{enumerate}
 
+\section{test\_origin\_twothreads.py}
+\begin{enumerate}
+  \item Purpose of Test
+  \item Test Actions
+    \begin{figure}
+        \centering
+        % \includegraphics*[height=0.95\textheight,keepaspectratio]{TestPattern/???.pdf}
+        \caption{???}
+        \label{fig:???}
+    \end{figure}
+  \item Success Criteria
+\end{enumerate}
+
 \section{test\_parallelBranch.py}
 Use schedule \texttt{branch1.dot} to test branching with flow commands
 with absolute time offset. The checks use snoop for specific event numbers.
@@ -728,6 +761,30 @@ This test was \texttt{full\_test/dynamic/switch}. The schedule \\
   \item Success Criteria
 
   The correct nodes are visited after each step.
+\end{enumerate}
+
+\section{test\_unilac.py}
+There are three tests with the same structure. The tests work with message rates of
+5 kHz, 45kHz, 90 kHz.
+\begin{enumerate}
+  \item Purpose of Test
+
+  This test is used to ensure that the datamaster can handle the amount of timming messages
+  needed to control UNILAC. This should be at least 600 messages in a 20 msec intervall. This
+  is a message rate of 30 kHz.
+  \item Test Actions
+  The schedule consists of two series of timing messages which are numbered by evtno and parameter.
+  At the end of the first series a flow command directs the flow to the second series of timing messages.
+  The block has a length of 10 msec, so it is executed with 100 Hz.
+    \begin{figure}
+        \centering
+        \includegraphics*[width=0.95\textwidth,keepaspectratio]{TestPattern/unilac100.pdf}
+        \caption{Schedule to test the message rate for the UNILAC}
+        \label{fig:unilac100}
+    \end{figure}
+  \item Success Criteria
+
+  Mesages with parameter 1 are received by saft-ctl snoop with 50 Hz.
 \end{enumerate}
 
 \section{test\_waitloop\_flush.py}
