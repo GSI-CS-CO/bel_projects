@@ -203,7 +203,7 @@
 #define SHCTL_REGS       (SHCTL_HEAP    + _THR_QTY_ * _PTR_SIZE_)     ///< Inboxes for MSI (1 per Core in System ), NOT IMPLEMENTED
 #define _SHCTL_END_      (SHCTL_REGS    + _THR_QTY_ * _32b_SIZE_)	    ///< Size of all control register sections	
 //@}
-
+/*
   
 #pragma message(VAR_NAME_VALUE(_SHCTL_START_ ))
 #pragma message(VAR_NAME_VALUE(SHCTL_ADR_TAB ))
@@ -218,7 +218,7 @@
 #pragma message(VAR_NAME_VALUE(SHCTL_HEAP    ))
 #pragma message(VAR_NAME_VALUE(SHCTL_REGS    ))
 #pragma message(VAR_NAME_VALUE(_SHCTL_END_))
-
+*/
 
 
 

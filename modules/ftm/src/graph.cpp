@@ -9,6 +9,7 @@ myVertex::myVertex(myVertex const &src) {
   this->patName   = src.patName;
   this->bpName    = src.bpName;
   this->cpu = src.cpu;
+  this->section = src.section;
   this->thread = src.thread;
   this->hash = src.hash;
 

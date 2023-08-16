@@ -108,8 +108,12 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
     boost::ref_property_map<Graph *, std::string> gname( boost::get_property(g, boost::graph_name));
     dp.property(dgp::sName,     gname);
     dp.property(dep::Base::sType,               boost::get(&myEdge::type,          g));
+    dp.property(dep::Data::sFieldHead,          boost::get(&myEdge::fhead,         g));
+    dp.property(dep::Data::sFieldTail,          boost::get(&myEdge::ftail,         g));
     dp.property(dnp::Base::sName,               boost::get(&myVertex::name,        g));
     dp.property(dnp::Base::sCpu,                boost::get(&myVertex::cpu,         g));
+
+    dp.property(dnp::Base::sSection,            boost::get(&myVertex::section,     g));
 
     dp.property(dnp::Base::sType,               boost::get(&myVertex::type,        g));
     dp.property(dnp::Base::sFlags,              boost::get(&myVertex::flags,       g));
