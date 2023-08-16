@@ -36,6 +36,10 @@ namespace DotStr {
       namespace Base {
         const std::string sType = "type"; // type specifier for edges (see namespace TypeVal )
       }
+      namespace Data {
+        const std::string sFieldHead = "fieldhead";  // field in the node at the arrow head of edge (pointee)
+        const std::string sFieldTail = "fieldtail";  // field in the node at the tail of the edge (pointing)
+      }
     }
 
     namespace TypeVal {
@@ -57,6 +61,11 @@ namespace DotStr {
       const std::string sDynTef       = "dyntef";     // Links to Source for dynamic TEF field in Tmsg nodes
       const std::string sDynRes       = "dynres";     // Links to Source for dynamic reserved field in Tmsg nodes
       const std::string sMeta         = "meta";       // Links to Source for dynamic reserved field in Tmsg nodes
+      
+      const std::string sRef          = "reference";  // References a field on the pointee node as a field inside the pointing node
+      const std::string sVal          = "valuecopy";  // Copies a value from a field on the pointee node to a field inside the pointing node
+      const std::string sWrite        = "write";      // Writes a value from a field inside the pointing node to a field inside the pointee node
+      
       const std::string sAny          = "";           // Wildcard type (carpeDM internal)
       const std::string sDynFlowDst   = "dynflowdst"; // Auxiliary dynamic type for safe removal check  (carpeDM internal)
       const std::string sResFlowDst   = "resflowdst"; // Auxiliary resident type for safe removal check  (carpeDM internal)
@@ -74,7 +83,8 @@ namespace DotStr {
         const std::string sType          = "type";      // type specifier for nodes (see namespace TypeVal )
         const std::string sName          = "node_id";   // - (carpeDM internal)
         const std::string sCpu           = "cpu";       // specifies CPU (and RAM) this node is located. For cmd dots, designates target cpu
-        const std::string sThread        = "thread";    // For cmd dots, designates target thread
+        const std::string sSection       = "section";   // With globals, we often need to specify, for example "register", currenttime", "threaddata", "threadstart"
+        const std::string sThread        = "thread";    // For cmd dots, designates target thread. With thread specific globals, it chooses the thread
         const std::string sFlags         = "flags";     // debug field (carpeDM internal)
         const std::string sPatEntry      = "patentry";  // pattern entry point
         const std::string sPatExit       = "patexit";   // pattern exit point
@@ -172,6 +182,7 @@ namespace DotStr {
       const std::string sDstList       = "listdst";     // destination list (carpeDM internal)
       const std::string sQBuf          = "qbuf";        // queue buffer (carpeDM internal)
       const std::string sMeta          = "meta";        // generic meta node (carpeDM internal)
+      const std::string sGlobal        = "global";      // global nodes. This binds a graph node to a specific memory location, eg. WR time or a thread's overhead data
       const bool bMetaNode             = true;          // as comparison against isMeta() Node class member function.
       const bool bRealNode             = false;         //yeah yeah, it's not a string. I know
 
