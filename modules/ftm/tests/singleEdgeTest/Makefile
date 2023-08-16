@@ -27,7 +27,7 @@ INSTALLPATH = $(PREFIX)/bin
 
 EBPATH1 ?=../../../ip_cores/etherbone-core/api/
 
-CXX = g++
+CXX ?= g++
 CXXFLAGS = -g -std=c++11 -fPIC -Wall -I../../include -I$(EBPATH)/include -I../$(EBPATH1) -I$(BOOSTPATH)/include
 # for coverage: add to CXXFLAGS: -fprofile-arcs -ftest-coverage
 
