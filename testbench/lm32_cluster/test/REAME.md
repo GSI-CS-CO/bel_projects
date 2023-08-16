@@ -103,7 +103,7 @@ hello world 5
 ...
 ```
 
-While the simulation runs, the UART ouptut of the LM32-Cluster 
+While the simulation runs, the UART ouptut of the LM32-Cluster can be observed with "tail -f uart_output.txt".
 
 ## Simulation parameters
 The runtime of the simulation can be controlled in the makefile by modifying the `--stop-time=1000us` argument in the `run` target.
