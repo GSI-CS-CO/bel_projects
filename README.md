@@ -13,6 +13,7 @@ GSI Timing Gateware and Tools
   - [Additional Targets](#additional-targets)
     - [Check Timing Constraints](#check-timing-constraints)
     - [Sort QSF Files](#sort-qsf-files)
+    - [LM32 Cluster Testbench](#lm32-cluster-testbench)
 - [FAQ and Common Problems](#faq-and-common-problems)
   - [Synthesis](#synthesis)
     - [Quartus Version](#quartus-version)
@@ -147,6 +148,13 @@ make exploder5-check # example
 make $device-sort
 make exploder5-sort # example
 ```
+
+### LM32 Cluster Testbench
+
+```
+make lm32-cluster-testbench-run
+```
+[Click here for additional information.](testbench/lm32_cluster/test/REAME.md)
 
 # FAQ and Common Problems
 

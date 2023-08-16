@@ -202,6 +202,12 @@ lm32-toolchain:	lm32-toolchain-download
 lm32-toolchain-clean::
 	rm -rf lm32-toolchain
 
+lm32-cluster-testbench-run:: lm32-toolchain hdlmake_install
+	make -C testbench/lm32_cluster/test run
+
+lm32-cluster-testbench-clean:: lm32-toolchain hdlmake_install
+	make -C testbench/lm32_cluster/test clean
+
 wrpc-sw-config::
 	test -s ip_cores/wrpc-sw/.config || \
 		$(MAKE) -C ip_cores/wrpc-sw/ gsi_defconfig
