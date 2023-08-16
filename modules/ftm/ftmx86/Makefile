@@ -5,15 +5,13 @@
 VERSION_FW     = 8.0.4
 VERSION_TOOL   = 0.36.3
 
-############################
-# ASL build paths          #
-############################
-
 ifeq ($(findstring asl75,$(shell hostname)),asl75)
+  # ASL build paths for asl75x
   EBPATH	=/common/export/timing-rte/tg-fallout-v6.2.x-rocky9/x86_64
   BOOSTPATH	=/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation
 else
 ifeq ($(findstring asl,$(shell hostname)),asl)
+  # ASL build paths for asl74x
   EBPATH	=/common/export/timing-rte/tg-fallout-v6.2.0/x86_64
   BOOSTPATH	=/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation
 endif
@@ -23,9 +21,9 @@ endif
 # ##########################
 
 TOP            ?= ../../..
-BOOSTPATH      ?=/usr
-EBPATH         ?=/usr/local
-EBPATH1 ?=/usr/local/include
+EBPATH         ?= $(TOP)/ip_cores/etherbone-core/api/
+EBPATH1        ?= .
+BOOSTPATH      ?= .
 EBMPATH        ?= $(TOP)/ip_cores/etherbone-core/hdl/eb_master_core
 PRIOPATH       ?= $(TOP)/modules/prioq2
 DIAGPATH       ?= $(TOP)/modules/dm_diag
@@ -50,11 +48,14 @@ BUILD_DATE     = $(shell date +'%Y%m%d')
 BUILD_ID_ROM_ADR = 0x100
 BUILD_ID_ROM_SIZE = 0x400
 
-T_CXX           = g++
-T_CXXFLAGS      = -std=c++11 -fPIC -I$(FTMPATH)/include -I$(EBPATH)/include -I$(EBPATH1) -I$(DIAGPATH) -I$(LZMAPATH) -I$(BOOSTPATH)/include -Wall -O
+CXX ?= g++
+T_CXX           = $(CXX)
+T_CXXFLAGS      = $(CXXFLAGS) -std=c++11 -fPIC -I$(FTMPATH)/include -I$(EBPATH)/include -I$(EBPATH1) -I$(DIAGPATH) -I$(LZMAPATH) -I$(BOOSTPATH)/include -Wall -O
 T_CXXFLAGS_CDM  = -DBUILD_DATE=\"$(BUILD_DATE)\" -DTOOL_VER=\"$(VERSION_TOOL)\"  -DEXP_VER=\"$(VERSION_FW)\" -DETHERBONE_THROWS=1 -DBUILDID_OFFS=$(BUILD_ID_ROM_ADR) -DBUILDID_SIZE=$(BUILD_ID_ROM_SIZE)
-T_CC            = gcc
-T_CFLAGS        = -Wall -I$(LZMAPATH) -fPIC -Wfatal-errors -D_7ZIP_ST -O
+
+CC ?= gcc
+T_CC            = $(CC)
+T_CFLAGS        = $(CFLAGS) -Wall -I$(LZMAPATH) -fPIC -Wfatal-errors -D_7ZIP_ST -O
 
 LZMA_SRC_FILES  = LzmaEnc.c LzmaDec.c LzFind.c
 CDM_SRC_FILES   = event.cpp meta.cpp block.cpp visitoruploadcrawler.cpp visitordownloadcrawler.cpp visitorvertexwriter.cpp hashmap.cpp carpeDMimpl.cpp carpeDM.cpp carpeDMcommand.cpp carpeDMuploadschedule.cpp carpeDMdownloadschedule.cpp carpeDMdiagnostics.cpp graph.cpp alloctable.cpp mempool.cpp dotstr.cpp idformat.cpp grouptable.cpp validation.cpp visitorvalidation.cpp common.cpp carpeDMsafe2remove.cpp lzmaCompression.cpp delayDiagnostics.cpp lockmanager.cpp blocklock.cpp ebwrapper.cpp
