@@ -35,6 +35,10 @@ namespace DotStr {
       namespace Base {
         extern const std::string sType;
       }
+      namespace Data {
+        extern const std::string sFieldHead;
+        extern const std::string sFieldTail;
+      }
     }
 
     namespace TypeVal {
@@ -55,6 +59,11 @@ namespace DotStr {
       extern const std::string sDynTef;
       extern const std::string sDynRes;
       extern const std::string sMeta;
+
+      extern const std::string sRef;
+      extern const std::string sVal;
+      extern const std::string sWrite;
+
       extern const std::string sAny;
       extern const std::string sDynFlowDst;
       extern const std::string sResFlowDst;
@@ -72,6 +81,7 @@ namespace DotStr {
         extern const std::string sType;
         extern const std::string sName;
         extern const std::string sCpu;
+        extern const std::string sSection;
         extern const std::string sThread;
         extern const std::string sFlags;
         extern const std::string sPatEntry;

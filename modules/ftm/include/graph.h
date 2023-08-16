@@ -22,6 +22,7 @@ public:
   std::string patName   = sUndefined;
   std::string bpName    = sUndefined;
   std::string cpu       = sUndefined;
+  std::string section   = sUndefined;
   std::string thread    = sUndefined;
   uint32_t hash = uUndefined32;
   node_ptr np = nullptr;
@@ -115,8 +116,11 @@ public:
 class myEdge {
 public:
   std::string type;
+  std::string fhead;
+  std::string ftail;
   myEdge() : type(sUndefined) {}
   myEdge(std::string type) : type(type) {}
+  myEdge(std::string type, std::string fhead, std::string ftail) : type(type), fhead(fhead), ftail(ftail){}
 };
 
 //TODO change to aliases C++14 Style?
