@@ -15,7 +15,7 @@ class UnitTestSingleEdgeTest(dm_testbench.DmTestbench):
     folderName = 'dot/'
     Path(folderName).mkdir(exist_ok=True)
     # run singleEdgeTest
-    output = self.startAndGetSubprocessStdout(['./singleEdgeTest/SingleEdgeTest'], [0])
+    output = self.startAndGetSubprocessStdout(['./singleEdgeTest/singleEdgeTest'], [0])
     # check stdout
     self.compareExpectedOutput(output, 'singleEdgeTest/expected-result.txt')
     # delete output folder
