@@ -6,7 +6,7 @@
  *  version : 05-Jun-2020
  *
  *  very basic example program for lm32 softcore on GSI timing receivers
- * 
+ *
  * -------------------------------------------------------------------------------------------
  * License Agreement for this software:
  *
@@ -27,7 +27,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *
@@ -41,14 +41,14 @@
 #include <inttypes.h>
 #include <stdint.h>
 
-// includes specific for bel_projects 
+// includes specific for bel_projects
 #include "pp-printf.h"
 #include "mini_sdb.h"
 #include "aux.h"
 #include "dbg.h"
 #include "uart.h"
 
-// shared memory map for communication via Wishbone 
+// shared memory map for communication via Wishbone
 #include "miniExample_shared_mmap.h"
 
 // stuff required for environment
@@ -59,22 +59,25 @@ uint64_t SHARED dummy = 0;
 
 void init(){
   discoverPeriphery();   // mini-sdb: get info on important Wishbone infrastructure
-  uart_init_hw();        // init UART, required for printf... 
-  cpuId = getCpuIdx();   // get ID of THIS CPU 
+  uart_init_hw();        // init UART, required for printf...
+  cpuId = getCpuIdx();   // get ID of THIS CPU
 } // init
 
-void main(void) {
+int main(void) {
   int j;
-  
+
   init();
-  
+
   // wait 1 second and print initial message to UART
   // pro tip: try 'eb-console' to view printed messages
   for (j = 0; j < (31000000); ++j) { asm("nop"); } // 31.25 x 'asm("nop")' operations take 1 us; handmade sleep
+
   pp_printf("Hello World!\n");
 
   while (1) {
     pp_printf("boring...\n");
     uwait(1000000);                                // alternative to handmade sleep using the wb_timer for lm32
   } // while
+
+  return 0;
 } // main

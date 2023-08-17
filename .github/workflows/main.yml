@@ -39,7 +39,7 @@ jobs:
       run: make tools-install
 
     - name: Build saftlib
-      run: make saftlib -j$(nproc)
+      run: make saftlib
 
     - name: Install saftlib
       run: sudo make saftlib-install

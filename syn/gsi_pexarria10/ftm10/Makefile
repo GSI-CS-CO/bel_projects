@@ -2,7 +2,7 @@ TARGET		= ftm10
 DEVICE		= 10AX066H2F
 FLASH		= EPCQL256
 SPI_LANES	= ASx4
-RAM_SIZE	= 458752
+RAM_SIZE	= 393216
 SKIP_JIC	= yes
 
 include ../../build.mk

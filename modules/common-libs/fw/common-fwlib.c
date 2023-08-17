@@ -311,9 +311,9 @@ b2bt_t fwlib_tfns2tps(float t_ns)
 
 
 float fwlib_tps2tfns(b2bt_t t_ps)
-{  
+{
   float  tmp1, tmp2;
-  
+
   tmp1 = (float)(t_ps.ns);
   tmp2 = (float)(t_ps.ps) / 1000.0;
 
