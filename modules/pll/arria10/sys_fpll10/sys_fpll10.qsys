@@ -6,7 +6,7 @@
    version="1.0"
    description=""
    tags="INTERNAL_COMPONENT=true"
-   categories="" />
+   categories="System" />
  <parameter name="bonusData"><![CDATA[bonusData 
 {
    element xcvr_fpll_a10_0
@@ -98,7 +98,7 @@
  <module
    name="xcvr_fpll_a10_0"
    kind="altera_xcvr_fpll_a10"
-   version="16.0"
+   version="18.1"
    enabled="1"
    autoexport="1">
   <parameter name="base_device" value="NIGHTFURY4" />
@@ -127,6 +127,7 @@
   <parameter name="gui_desired_outclk2_frequency" value="20.0" />
   <parameter name="gui_desired_outclk3_frequency" value="10.0" />
   <parameter name="gui_desired_refclk_frequency" value="100.0" />
+  <parameter name="gui_enable_50G_support" value="false" />
   <parameter name="gui_enable_active_clk" value="false" />
   <parameter name="gui_enable_cascade_out" value="false" />
   <parameter name="gui_enable_clk_bad" value="false" />
@@ -143,6 +144,7 @@
   <parameter name="gui_hssi_output_clock_frequency" value="1250.0" />
   <parameter name="gui_hssi_prot_mode" value="0" />
   <parameter name="gui_iqtxrxclk_outclk_index" value="0" />
+  <parameter name="gui_is_downstream_cascaded_pll" value="false" />
   <parameter name="gui_number_of_output_clocks" value="4" />
   <parameter name="gui_operation_mode" value="0" />
   <parameter name="gui_outclk0_actual_phase_shift" value="0.0" />
@@ -190,25 +192,12 @@
   <parameter name="rcfg_h_file_enable" value="0" />
   <parameter name="rcfg_jtag_enable" value="0" />
   <parameter name="rcfg_mif_file_enable" value="0" />
-  <parameter name="rcfg_multi_enable" value="0" />
-  <parameter name="rcfg_profile_cnt" value="2" />
-  <parameter name="rcfg_profile_data0" value="" />
-  <parameter name="rcfg_profile_data1" value="" />
-  <parameter name="rcfg_profile_data2" value="" />
-  <parameter name="rcfg_profile_data3" value="" />
-  <parameter name="rcfg_profile_data4" value="" />
-  <parameter name="rcfg_profile_data5" value="" />
-  <parameter name="rcfg_profile_data6" value="" />
-  <parameter name="rcfg_profile_data7" value="" />
-  <parameter name="rcfg_profile_select" value="1" />
-  <parameter name="rcfg_reduced_files_enable" value="0" />
   <parameter name="rcfg_separate_avmm_busy" value="0" />
   <parameter name="rcfg_sv_file_enable" value="0" />
   <parameter name="rcfg_txt_file_enable" value="0" />
   <parameter name="set_altera_xcvr_fpll_a10_calibration_en" value="1" />
   <parameter name="set_capability_reg_enable" value="0" />
   <parameter name="set_csr_soft_logic_enable" value="0" />
-  <parameter name="set_rcfg_emb_strm_enable" value="0" />
   <parameter name="set_user_identifier" value="0" />
   <parameter name="silicon_rev" value="false" />
   <parameter name="support_mode" value="user_mode" />
