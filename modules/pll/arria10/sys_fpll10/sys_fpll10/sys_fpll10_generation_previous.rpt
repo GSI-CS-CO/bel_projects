@@ -15,9 +15,9 @@ Info: sys_fpll10: "Transforming system: sys_fpll10"
 Info: sys_fpll10: Running transform generation_view_transform
 Info: sys_fpll10: Running transform generation_view_transform took 0.000s
 Info: xcvr_fpll_a10_0: Running transform generation_view_transform
-Info: xcvr_fpll_a10_0: Running transform generation_view_transform took 0.000s
+Info: xcvr_fpll_a10_0: Running transform generation_view_transform took 0.003s
 Info: sys_fpll10: Running transform merlin_avalon_transform
-Info: sys_fpll10: Running transform merlin_avalon_transform took 0.098s
+Info: sys_fpll10: Running transform merlin_avalon_transform took 0.163s
 Info: sys_fpll10: "Naming system components in system: sys_fpll10"
 Info: sys_fpll10: "Processing generation queue"
 Info: sys_fpll10: "Generating: sys_fpll10"

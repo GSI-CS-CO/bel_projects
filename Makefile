@@ -214,6 +214,12 @@ riscv-toolchain:	riscv-toolchain-download
 	test -d riscv-toolchain || tar zxvf riscv_gcc.tgz -o
 	test -d riscv-11.2-small && mv riscv-11.2-small riscv-toolchain || true
 
+lm32-cluster-testbench-run:: lm32-toolchain hdlmake_install
+	make -C testbench/lm32_cluster/test run
+
+lm32-cluster-testbench-clean:: lm32-toolchain hdlmake_install
+	make -C testbench/lm32_cluster/test clean
+
 riscv-toolchain-clean::
 	rm -rf riscv_gcc.tgz || true
 	rm -rf riscv-toolchain || true

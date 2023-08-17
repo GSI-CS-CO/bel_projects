@@ -13,9 +13,9 @@ Info: sys_pll10: "Transforming system: sys_pll10"
 Info: sys_pll10: Running transform generation_view_transform
 Info: sys_pll10: Running transform generation_view_transform took 0.000s
 Info: iopll_0: Running transform generation_view_transform
-Info: iopll_0: Running transform generation_view_transform took 0.000s
+Info: iopll_0: Running transform generation_view_transform took 0.001s
 Info: sys_pll10: Running transform merlin_avalon_transform
-Info: sys_pll10: Running transform merlin_avalon_transform took 0.063s
+Info: sys_pll10: Running transform merlin_avalon_transform took 0.042s
 Info: sys_pll10: "Naming system components in system: sys_pll10"
 Info: sys_pll10: "Processing generation queue"
 Info: sys_pll10: "Generating: sys_pll10"

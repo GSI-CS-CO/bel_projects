@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <deploy
- date="2019.02.05.08:48:24"
- outputDirectory="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10/sys_fpll10/sys_fpll10/">
+ date="2023.08.17.16:21:25"
+ outputDirectory="/local/alex/2023/bel_projects/fallout_a10_sys_pll_fix/modules/pll/arria10/sys_fpll10/sys_fpll10/">
  <perimeter>
   <parameter
      name="AUTO_GENERATION_ID"
@@ -108,7 +108,7 @@
  <entity kind="sys_fpll10" version="1.0" name="sys_fpll10">
   <parameter name="AUTO_PLL_REFCLK0_RESET_DOMAIN" value="-1" />
   <parameter name="AUTO_PLL_REFCLK0_CLOCK_DOMAIN" value="-1" />
-  <parameter name="AUTO_GENERATION_ID" value="1549352903" />
+  <parameter name="AUTO_GENERATION_ID" value="1692282085" />
   <parameter name="AUTO_DEVICE" value="10AX066H2F34I2SG" />
   <parameter name="AUTO_DEVICE_FAMILY" value="Arria 10" />
   <parameter name="AUTO_UNIQUE_ID" value="" />
@@ -116,27 +116,27 @@
   <parameter name="AUTO_DEVICE_SPEEDGRADE" value="2" />
   <generatedFiles>
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10/sys_fpll10/sys_fpll10/synth/sys_fpll10.v"
-       attributes="CONTAINS_INLINE_CONFIGURATION" />
+       path="/local/alex/2023/bel_projects/fallout_a10_sys_pll_fix/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_181/synth/sys_fpll10_pkg.vhd"
+       attributes="IS_CONFIGURATION_PACKAGE" />
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10/sys_fpll10/sys_fpll10/synth/sys_fpll10_cfg.v"
+       path="/local/alex/2023/bel_projects/fallout_a10_sys_pll_fix/modules/pll/arria10/sys_fpll10/sys_fpll10/synth/sys_fpll10.vhd"
        attributes="CONTAINS_INLINE_CONFIGURATION" />
   </generatedFiles>
   <childGeneratedFiles>
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10/sys_fpll10/sys_fpll10/synth/sys_fpll10.v"
-       attributes="CONTAINS_INLINE_CONFIGURATION" />
+       path="/local/alex/2023/bel_projects/fallout_a10_sys_pll_fix/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_181/synth/sys_fpll10_pkg.vhd"
+       attributes="IS_CONFIGURATION_PACKAGE" />
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10/sys_fpll10/sys_fpll10/synth/sys_fpll10_cfg.v"
+       path="/local/alex/2023/bel_projects/fallout_a10_sys_pll_fix/modules/pll/arria10/sys_fpll10/sys_fpll10/synth/sys_fpll10.vhd"
        attributes="CONTAINS_INLINE_CONFIGURATION" />
   </childGeneratedFiles>
   <sourceFiles>
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10/sys_fpll10/sys_fpll10.qsys" />
+       path="/local/alex/2023/bel_projects/fallout_a10_sys_pll_fix/modules/pll/arria10/sys_fpll10/sys_fpll10.qsys" />
   </sourceFiles>
   <childSourceFiles>
    <file
-       path="/home/alex/workspace/optional/quartus16/ip/altera/alt_xcvr/altera_xcvr_pll/altera_xcvr_fpll_vi/tcl/altera_xcvr_fpll_a10_hw.tcl" />
+       path="/opt/quartus/18/ip/altera/alt_xcvr/altera_xcvr_pll/altera_xcvr_fpll_vi/tcl/altera_xcvr_fpll_a10_hw.tcl" />
   </childSourceFiles>
   <messages>
    <message level="Info" culprit="sys_fpll10">"Generating: sys_fpll10"</message>
@@ -152,7 +152,7 @@
  </entity>
  <entity
    kind="altera_xcvr_fpll_a10"
-   version="16.0"
+   version="18.1"
    name="altera_xcvr_fpll_a10">
   <parameter name="cmu_fpll_pll_n_counter_fine_dly" value="0 ps" />
   <parameter name="cmu_fpll_pll_c_counter_0_coarse_dly" value="0 ps" />
@@ -173,9 +173,6 @@
   <parameter name="cmu_fpll_pll_vco_freq_band_0_dyn_low_bits" value="0" />
   <parameter name="f_out_c0_bitvec" value="000000000011101110011010110010100000" />
   <parameter name="cmu_fpll_prot_mode" value="basic_tx" />
-  <parameter
-     name="rcfg_param_labels"
-     value="rcfg_debug,Enable dynamic reconfiguration,Enable Altera Debug Master Endpoint,Separate reconfig_waitrequest from the status of AVMM arbitration with PreSICE,Enable avmm_busy port,Enable capability registers,Set user-defined IP identifier,Enable control and status registers,Multiply factor (M-counter),Divide factor (N-counter),Divide factor (L-counter),Divide factor (K-counter),Protocol mode,Bandwidth,Number of PLL reference clocks,Selected reference clock source,enable_pld_fpll_cal_busy_port,Enable calibration status ports for HIP,Enable PCIe hard IP calibration,Multiply factor (M-counter),Divide factor (N-counter),Fractional factor (x),Divide factor (C-counter 0),Divide factor (C-counter 1),Divide factor (C-counter 2),Divide factor (C-counter 3),Include Master Clock Generation Block,Clock division factor,Enable x6/xN non-bonded high-speed clock output port,Enable PCIe clock switch interface,Number of auxiliary MCGB clock input ports.,Enable bonding clock output ports,Enable feedback compensation bonding,PMA interface width,enable_pld_mcgb_cal_busy_port" />
   <parameter name="cmu_fpll_n_counter" value="1" />
   <parameter name="cmu_fpll_pll_c_counter_3_fine_dly" value="0 ps" />
   <parameter name="cmu_fpll_pll_lock_fltr_cfg" value="25" />
@@ -200,7 +197,7 @@
   <parameter name="base_device" value="NIGHTFURY4" />
   <parameter name="pll_c_counter_3_prst" value="1" />
   <parameter name="gui_fractional_f" value="0.0" />
-  <parameter name="cmu_fpll_f_min_pfd" value="29000000" />
+  <parameter name="cmu_fpll_f_min_pfd" value="25000000" />
   <parameter
      name="cmu_fpll_pll_vco_freq_band_1_fix_high"
      value="pll_vco_freq_band_1_fix_high_0" />
@@ -213,7 +210,6 @@
   <parameter name="gui_actual_outclk0_frequency" value="100.0" />
   <parameter name="cmu_fpll_refclk_select_mux_silicon_rev" value="20nm5es" />
   <parameter name="gui_outclk1_actual_phase_shift" value="0.0" />
-  <parameter name="rcfg_multi_enable" value="0" />
   <parameter name="cmu_fpll_pll_iqclk_mux_sel" value="power_down" />
   <parameter name="cmu_fpll_pll_c_counter_0_prst" value="1" />
   <parameter
@@ -227,20 +223,11 @@
   <parameter name="set_altera_xcvr_fpll_a10_calibration_en" value="1" />
   <parameter name="gui_fractional_x" value="32" />
   <parameter name="gui_outclk3_actual_phase_shift_deg" value="0.0" />
-  <parameter
-     name="rcfg_params"
-     value="rcfg_debug,enable_pll_reconfig,rcfg_jtag_enable,rcfg_separate_avmm_busy,rcfg_enable_avmm_busy_port,set_capability_reg_enable,set_user_identifier,set_csr_soft_logic_enable,gui_pll_set_hssi_m_counter,gui_pll_set_hssi_n_counter,gui_pll_set_hssi_l_counter,gui_pll_set_hssi_k_counter,gui_hssi_prot_mode,gui_bw_sel,gui_refclk_cnt,gui_refclk_index,gui_enable_pld_cal_busy_port,gui_enable_hip_cal_done_port,gui_hip_cal_en,gui_pll_m_counter,gui_pll_n_counter,gui_fractional_x,gui_pll_c_counter_0,gui_pll_c_counter_1,gui_pll_c_counter_2,gui_pll_c_counter_3,enable_mcgb,mcgb_div,enable_hfreq_clk,enable_mcgb_pcie_clksw,mcgb_aux_clkin_cnt,enable_bonding_clks,enable_fb_comp_bonding,pma_width,enable_pld_mcgb_cal_busy_port" />
+  <parameter name="is_c10" value="0" />
   <parameter name="cmu_fpll_pll_vco_ph3_value" value="pll_vco_ph3_vss" />
   <parameter
      name="cmu_fpll_refclk_select_mux_pll_clkin_0_scratch2_src"
      value="pll_clkin_0_scratch2_src_vss" />
-  <parameter name="rcfg_param_vals7" value="" />
-  <parameter name="rcfg_param_vals5" value="" />
-  <parameter name="rcfg_param_vals6" value="" />
-  <parameter name="rcfg_param_vals3" value="" />
-  <parameter name="rcfg_param_vals4" value="" />
-  <parameter name="rcfg_param_vals1" value="" />
-  <parameter name="rcfg_param_vals2" value="" />
   <parameter name="pll_n_counter" value="1" />
   <parameter name="gui_actual_outclk2_frequency" value="100.0" />
   <parameter name="cmu_fpll_pll_cp_testmode" value="cp_normal" />
@@ -268,7 +255,6 @@
   <parameter name="gui_pll_n_counter" value="1" />
   <parameter name="cmu_fpll_out_freq" value="000000000000000000000000000000000000" />
   <parameter name="hssi_l_counter_bypass" value="1" />
-  <parameter name="rcfg_reduced_files_enable" value="0" />
   <parameter name="cmu_fpll_out_freq_hz" value="0 hz" />
   <parameter name="cmu_fpll_pll_c_counter_1_prst" value="1" />
   <parameter name="gui_outclk3_desired_phase_shift" value="0" />
@@ -301,7 +287,6 @@
   <parameter name="pll_clk_sw_dly" value="0" />
   <parameter name="cmu_fpll_input_tolerance" value="0" />
   <parameter name="gui_refclk1_frequency" value="100.0" />
-  <parameter name="rcfg_param_vals0" value="" />
   <parameter name="cmu_fpll_pll_c_counter_2_ph_mux_prst" value="0" />
   <parameter name="hssi_cascade_pfd_frequency" value="300.0 MHz" />
   <parameter name="pll_c_counter_2_ph_mux_prst" value="0" />
@@ -362,7 +347,6 @@
   <parameter name="cmu_fpll_enable_idle_fpll_support" value="idle_none" />
   <parameter name="hssi_pma_cgb_master_silicon_rev" value="20nm4" />
   <parameter name="gui_pfd_frequency" value="125.0" />
-  <parameter name="set_rcfg_emb_strm_enable" value="0" />
   <parameter name="core_c_counter_1_fine_dly" value="0 ps" />
   <parameter name="hssi_cascade_actual_using_fractional" value="false" />
   <parameter name="hssi_l_counter_ph_mux_prst" value="0" />
@@ -454,7 +438,6 @@
   <parameter name="cmu_fpll_phase_shift_1" value="0.0 ps" />
   <parameter name="cmu_fpll_pll_cmp_buf_dly" value="0 ps" />
   <parameter name="cmu_fpll_phase_shift_0" value="0.0 ps" />
-  <parameter name="rcfg_emb_strm_enable_for_atx" value="0" />
   <parameter name="cmu_fpll_is_otn" value="false" />
   <parameter name="hssi_cascade_c_counter_in_src" value="m_cnt_in_src_ph_mux_clk" />
   <parameter name="hssi_l_counter_enable" value="false" />
@@ -483,7 +466,7 @@
   <parameter name="core_c_counter_2_prst" value="1" />
   <parameter name="core_c_counter_0" value="24" />
   <parameter name="cmu_fpll_dps_en" value="false" />
-  <parameter name="hssi_pma_cgb_master_input_select" value="lcpll_top" />
+  <parameter name="hssi_pma_cgb_master_input_select" value="fpll_top" />
   <parameter name="cmu_fpll_refclk_select_mux_pll_auto_clk_sw_en" value="false" />
   <parameter name="core_c_counter_2" value="75" />
   <parameter name="pll_c_counter_2" value="75" />
@@ -493,6 +476,7 @@
   <parameter name="pll_c_counter_0" value="24" />
   <parameter name="core_c_counter_3" value="150" />
   <parameter name="pll_c_counter_1" value="15" />
+  <parameter name="gui_enable_50G_support" value="false" />
   <parameter name="enable_analog_resets" value="0" />
   <parameter name="gui_pll_c_counter_3" value="1" />
   <parameter name="gui_pll_c_counter_2" value="1" />
@@ -593,7 +577,6 @@
      name="cmu_fpll_refclk_select_mux_pll_clkin_1_scratch0_src"
      value="pll_clkin_1_scratch0_src_vss" />
   <parameter name="cgb_div_bitvec" value="1" />
-  <parameter name="rcfg_profile_cnt" value="2" />
   <parameter name="full_actual_outclk2_frequency" value="20.0" />
   <parameter name="core_dsm_fractional_division" value="0" />
   <parameter name="pll_clk_loss_edge" value="pll_clk_loss_both_edges" />
@@ -651,25 +634,17 @@
   <parameter name="cmu_fpll_f_out_c0" value="000000000011101110011010110010100000" />
   <parameter name="system_info_device_family" value="Arria 10" />
   <parameter name="calibration_en" value="enable" />
-  <parameter name="rcfg_profile_data4" value="" />
   <parameter name="gui_switchover_mode" value="Automatic Switchover" />
   <parameter name="pll_c_counter_0_fine_dly" value="0 ps" />
-  <parameter name="rcfg_profile_data3" value="" />
-  <parameter name="rcfg_profile_data2" value="" />
-  <parameter name="rcfg_profile_data1" value="" />
   <parameter name="cmu_fpll_pll_rstn_override" value="false" />
-  <parameter name="rcfg_profile_data0" value="" />
   <parameter name="core_c_counter_3_fine_dly" value="0 ps" />
   <parameter name="gui_parameter_values" value="24,15,75,150,1,24,1,6000.0 MHz,1" />
   <parameter name="pll_auto_clk_sw_en" value="false" />
   <parameter name="cmu_fpll_reference_clock_frequency_scratch" value="0 hz" />
   <parameter name="cmu_fpll_pll_c_counter_2_fine_dly" value="0 ps" />
-  <parameter name="rcfg_profile_data7" value="" />
-  <parameter name="rcfg_profile_data6" value="" />
   <parameter
      name="cmu_fpll_refclk_select_mux_mux1_inclk4_logical_to_physical_mapping"
      value="power_down" />
-  <parameter name="rcfg_profile_data5" value="" />
   <parameter name="gui_enable_cascade_out" value="false" />
   <parameter
      name="cmu_fpll_refclk_select_mux_pll_clkin_0_scratch1_src"
@@ -684,6 +659,7 @@
      value="scratch4_power_down" />
   <parameter name="cmu_fpll_refclk_select_mux_refclk_select1" value="ref_iqclk0" />
   <parameter name="f_out_c1_bitvec" value="000000000101111101011110000100000000" />
+  <parameter name="gui_is_downstream_cascaded_pll" value="false" />
   <parameter name="pll_l_counter" value="1" />
   <parameter name="hssi_cascade_m_counter" value="11" />
   <parameter
@@ -707,8 +683,7 @@
   <parameter name="cmu_fpll_f_max_band_8" value="14025000000" />
   <parameter name="cmu_fpll_f_max_band_7" value="6374148000" />
   <parameter name="gui_outclk0_actual_phase_shift_deg" value="0.0" />
-  <parameter name="cmu_fpll_f_max_vco" value="12500000000" />
-  <parameter name="rcfg_emb_strm_enable" value="0" />
+  <parameter name="cmu_fpll_f_max_vco" value="14150000000" />
   <parameter name="gui_refclk_index" value="0" />
   <parameter name="gui_pll_set_hssi_l_counter" value="1" />
   <parameter name="enable_mcgb_debug_ports_parameters" value="0" />
@@ -719,6 +694,7 @@
      name="cmu_fpll_pll_c_counter_0_in_src"
      value="m_cnt_in_src_ph_mux_clk" />
   <parameter name="cmu_fpll_pll_unlock_fltr_cfg" value="2" />
+  <parameter name="gui_enable_low_f_support" value="false" />
   <parameter name="pma_width_bitvec" value="64" />
   <parameter name="cmu_fpll_f_min_band_0" value="7000000000" />
   <parameter name="cmu_fpll_pll_cal_status" value="false" />
@@ -791,7 +767,6 @@
   <parameter name="output_clock_frequency_1" value="100.0 MHz" />
   <parameter name="temp_bw_sel" value="high" />
   <parameter name="refclk_select1" value="ref_iqclk0" />
-  <parameter name="rcfg_profile_select" value="1" />
   <parameter name="gui_outclk1_phase_shift_unit" value="0" />
   <parameter name="refclk_select0" value="lvpecl" />
   <parameter
@@ -875,59 +850,59 @@
   <parameter name="hssi_cascade_c_counter_coarse_dly" value="0 ps" />
   <generatedFiles>
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_160/synth/twentynm_xcvr_avmm.sv"
+       path="/local/alex/2023/bel_projects/fallout_a10_sys_pll_fix/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_181/synth/twentynm_xcvr_avmm.sv"
        attributes="" />
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_160/synth/alt_xcvr_resync.sv"
+       path="/local/alex/2023/bel_projects/fallout_a10_sys_pll_fix/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_181/synth/alt_xcvr_resync.sv"
        attributes="" />
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_160/synth/altera_xcvr_fpll_a10.sv"
+       path="/local/alex/2023/bel_projects/fallout_a10_sys_pll_fix/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_181/synth/altera_xcvr_fpll_a10.sv"
        attributes="" />
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_160/synth/a10_avmm_h.sv"
+       path="/local/alex/2023/bel_projects/fallout_a10_sys_pll_fix/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_181/synth/a10_avmm_h.sv"
        attributes="" />
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_160/synth/alt_xcvr_native_avmm_nf.sv"
+       path="/local/alex/2023/bel_projects/fallout_a10_sys_pll_fix/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_181/synth/alt_xcvr_native_avmm_nf.sv"
        attributes="" />
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_160/synth/alt_xcvr_pll_embedded_debug.sv"
+       path="/local/alex/2023/bel_projects/fallout_a10_sys_pll_fix/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_181/synth/alt_xcvr_pll_embedded_debug.sv"
        attributes="" />
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_160/synth/alt_xcvr_pll_avmm_csr.sv"
+       path="/local/alex/2023/bel_projects/fallout_a10_sys_pll_fix/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_181/synth/alt_xcvr_pll_avmm_csr.sv"
        attributes="" />
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_160/synth/plain_files.txt"
+       path="/local/alex/2023/bel_projects/fallout_a10_sys_pll_fix/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_181/synth/plain_files.txt"
        attributes="" />
   </generatedFiles>
   <childGeneratedFiles>
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_160/synth/twentynm_xcvr_avmm.sv"
+       path="/local/alex/2023/bel_projects/fallout_a10_sys_pll_fix/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_181/synth/twentynm_xcvr_avmm.sv"
        attributes="" />
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_160/synth/alt_xcvr_resync.sv"
+       path="/local/alex/2023/bel_projects/fallout_a10_sys_pll_fix/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_181/synth/alt_xcvr_resync.sv"
        attributes="" />
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_160/synth/altera_xcvr_fpll_a10.sv"
+       path="/local/alex/2023/bel_projects/fallout_a10_sys_pll_fix/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_181/synth/altera_xcvr_fpll_a10.sv"
        attributes="" />
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_160/synth/a10_avmm_h.sv"
+       path="/local/alex/2023/bel_projects/fallout_a10_sys_pll_fix/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_181/synth/a10_avmm_h.sv"
        attributes="" />
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_160/synth/alt_xcvr_native_avmm_nf.sv"
+       path="/local/alex/2023/bel_projects/fallout_a10_sys_pll_fix/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_181/synth/alt_xcvr_native_avmm_nf.sv"
        attributes="" />
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_160/synth/alt_xcvr_pll_embedded_debug.sv"
+       path="/local/alex/2023/bel_projects/fallout_a10_sys_pll_fix/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_181/synth/alt_xcvr_pll_embedded_debug.sv"
        attributes="" />
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_160/synth/alt_xcvr_pll_avmm_csr.sv"
+       path="/local/alex/2023/bel_projects/fallout_a10_sys_pll_fix/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_181/synth/alt_xcvr_pll_avmm_csr.sv"
        attributes="" />
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_160/synth/plain_files.txt"
+       path="/local/alex/2023/bel_projects/fallout_a10_sys_pll_fix/modules/pll/arria10/sys_fpll10/sys_fpll10/altera_xcvr_fpll_a10_181/synth/plain_files.txt"
        attributes="" />
   </childGeneratedFiles>
   <sourceFiles>
    <file
-       path="/home/alex/workspace/optional/quartus16/ip/altera/alt_xcvr/altera_xcvr_pll/altera_xcvr_fpll_vi/tcl/altera_xcvr_fpll_a10_hw.tcl" />
+       path="/opt/quartus/18/ip/altera/alt_xcvr/altera_xcvr_pll/altera_xcvr_fpll_vi/tcl/altera_xcvr_fpll_a10_hw.tcl" />
   </sourceFiles>
   <childSourceFiles/>
   <instantiator instantiator="sys_fpll10" as="xcvr_fpll_a10_0" />
