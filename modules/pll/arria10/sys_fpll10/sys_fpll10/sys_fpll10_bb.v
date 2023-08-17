@@ -1,20 +1,20 @@
 
 module sys_fpll10 (
-	pll_refclk0,
-	pll_powerdown,
-	pll_locked,
-	pll_cal_busy,
 	outclk0,
 	outclk1,
 	outclk2,
-	outclk3);	
+	outclk3,
+	pll_cal_busy,
+	pll_locked,
+	pll_powerdown,
+	pll_refclk0);	
 
-	input		pll_refclk0;
-	input		pll_powerdown;
-	output		pll_locked;
-	output		pll_cal_busy;
 	output		outclk0;
 	output		outclk1;
 	output		outclk2;
 	output		outclk3;
+	output		pll_cal_busy;
+	output		pll_locked;
+	input		pll_powerdown;
+	input		pll_refclk0;
 endmodule

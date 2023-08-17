@@ -1,8 +1,9 @@
 Info: Starting: Create HDL design files for synthesis
-Info: qsys-generate /home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10/sys_fpll10/sys_fpll10.qsys --synthesis=VERILOG --output-directory=/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10/sys_fpll10/sys_fpll10 --family="Arria 10" --part=10AX066H2F34I2SG
+Info: qsys-generate /local/alex/2023/bel_projects/fallout_a10_sys_pll_fix/modules/pll/arria10/sys_fpll10/sys_fpll10.qsys --synthesis=VHDL --output-directory=/local/alex/2023/bel_projects/fallout_a10_sys_pll_fix/modules/pll/arria10/sys_fpll10/sys_fpll10 --family="Arria 10" --part=10AX066H2F34I2SG
 Progress: Loading sys_fpll10/sys_fpll10.qsys
 Progress: Reading input file
-Progress: Adding xcvr_fpll_a10_0 [altera_xcvr_fpll_a10 16.0]
+Progress: Adding xcvr_fpll_a10_0 [altera_xcvr_fpll_a10 18.1]
+Info: altera_xcvr_fpll_a10: NOTE: Modified mcgb tcl package that enables ATX PLL Sharing
 Progress: Parameterizing module xcvr_fpll_a10_0
 Progress: Building connections
 Progress: Parameterizing connections
@@ -15,9 +16,9 @@ Info: sys_fpll10: "Transforming system: sys_fpll10"
 Info: sys_fpll10: Running transform generation_view_transform
 Info: sys_fpll10: Running transform generation_view_transform took 0.000s
 Info: xcvr_fpll_a10_0: Running transform generation_view_transform
-Info: xcvr_fpll_a10_0: Running transform generation_view_transform took 0.003s
+Info: xcvr_fpll_a10_0: Running transform generation_view_transform took 0.000s
 Info: sys_fpll10: Running transform merlin_avalon_transform
-Info: sys_fpll10: Running transform merlin_avalon_transform took 0.163s
+Info: sys_fpll10: Running transform merlin_avalon_transform took 0.024s
 Info: sys_fpll10: "Naming system components in system: sys_fpll10"
 Info: sys_fpll10: "Processing generation queue"
 Info: sys_fpll10: "Generating: sys_fpll10"
