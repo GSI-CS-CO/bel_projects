@@ -34,7 +34,7 @@ ARCH        := /x86_64
 endif
 
 ifeq ($(SYSENV), ACC7)
-USRPATH     := /common/usr/timing/b2b/centos7/usr/
+USRPATH     := /common/usr/timing/b2b/centos7/usr
 ARCH        := /x86_64
 endif
 
@@ -58,6 +58,9 @@ nfsinit:
 
 clean:
 	$(MAKE) -C $(SW) clean
+	rm -f nfs-init/ftdimcp-int*.sh
+	rm -f nfs-init/ftdimcp-pro*.sh
+	rm -f nfs-init/ftdimcp-tools.sh
 
 deploy:
 # create folders
