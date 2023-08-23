@@ -7,17 +7,15 @@
 
 ifeq ($(findstring asl75,$(shell hostname)),asl75)
   EBPATH =/common/export/timing-rte/tg-fallout-v6.2.x-rocky8/x86_64
-  BOOST =/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation
 else
 ifeq ($(findstring asl,$(shell hostname)),asl)
   EBPATH =/common/export/timing-rte/tg-fallout-v6.2.0/x86_64
-  BOOST =/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation
 else
   EBPATH =/usr/local
-  BOOST =$$HOME/dev/boost_1_69_0/stage
 endif
 endif
 
+BOOSTPATH ?= .
 NAME ?=dm-monitor-int
 BIN ?=dm-monitor
 APPBUILD ?=./$(NAME)
