@@ -23,6 +23,9 @@ all: $(TARGETS)
 nfsinit:
 	echo $(shell cd $(NFSINIT); $(GENNFSINIT)/generate-main.sh $(ENV); cd ..)
 
+clean:
+	rm -f nfs-init/network-diag*.sh
+
 deploy: 
 # create folders
 	mkdir -p $(STAGING)/$(SYSTEMD)
