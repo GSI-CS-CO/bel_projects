@@ -5,7 +5,7 @@ After = dev-wbm0.device
 
 [Service]
 Type = simple
-ExecStart = /bin/sh -c 'eb-mon dev/wbm0 -s 10 0 | logshipper.sh eb-mon'
+ExecStart = /bin/sh -c 'eb-mon dev/wbm0 -s 10 0 | logger -t eb-mon -p local0.info'
 
 [Install]
 WantedBy = multi-user.target
