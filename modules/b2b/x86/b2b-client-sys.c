@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 11-Jul-2022
+ *  version : 23-Aug-2023
  *
  * subscribes to and displays status of a b2b system (CBU, PM, KD ...)
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_CLIENT_SYS_VERSION 0x000505
+#define B2B_CLIENT_SYS_VERSION 0x000506
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -252,9 +252,11 @@ void printServices(int flagOnce)
     tmp = (uint32_t *)(&(dicSystem[i].jitter));
     if (*tmp == no_link_32)                      sprintf(cJitter, "  ");           // no link
     else  {
-      if (dicSystem[i].jitter.ppsAct == NAN)     sprintf(cJitter, "wr");           // bad state
-      if (dicSystem[i].jitter.ppsSdev > 0.5)     sprintf(cJitter, ">1");           // jitter too large
-      else                                       sprintf(cJitter, "ok");           // jitter ok
+      if (isnan(dicSystem[i].jitter.ppsAct))     sprintf(cJitter, "wr");           // bad state
+      else {
+        if (dicSystem[i].jitter.ppsSdev > 0.5)   sprintf(cJitter, ">1");           // jitter too large
+        else                                     sprintf(cJitter, "ok");           // jitter ok
+      } // if NAN
     } // else
     printf(" %2x %6s %3s %8s %10s %9s %13s %2s %18s\n", i, ringNames[i], typeNames[i], cVersion, cState, cTransfer, cStatus, cJitter, cHost);
   } // for i
