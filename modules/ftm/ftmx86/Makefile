@@ -4,16 +4,15 @@
 
 VERSION_FW     = 8.0.4
 VERSION_TOOL   = 0.36.3
+VERSION_CARPEDM= 1.0.0
 
 ifeq ($(findstring asl75,$(shell hostname)),asl75)
   # ASL build paths for asl75x
   EBPATH	=/common/export/timing-rte/tg-fallout-v6.2.x-rocky9/x86_64
-  BOOSTPATH	=/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation
 else
 ifeq ($(findstring asl,$(shell hostname)),asl)
   # ASL build paths for asl74x
   EBPATH	=/common/export/timing-rte/tg-fallout-v6.2.0/x86_64
-  BOOSTPATH	=/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation
 endif
 endif
 ############################
@@ -44,6 +43,12 @@ else
 endif
 INSTALLPATH     = $(PREFIX)/bin
 
+# set BOOST_FLAGS depending on the Boost version
+BOOST_VERSION:=$(shell grep 'BOOST_LIB_VERSION "' $(BOOSTPATH)/include/boost/version.hpp | cut -b28-31)
+ifeq ($(BOOST_VERSION),1_75)
+  BOOST_FLAGS=-DBOOST_ALLOW_DEPRECATED_HEADERS
+endif
+
 BUILD_DATE     = $(shell date +'%Y%m%d')
 BUILD_ID_ROM_ADR = 0x100
 BUILD_ID_ROM_SIZE = 0x400
@@ -51,7 +56,7 @@ BUILD_ID_ROM_SIZE = 0x400
 CXX ?= g++
 T_CXX           = $(CXX)
 T_CXXFLAGS      = $(CXXFLAGS) -std=c++11 -fPIC -I$(FTMPATH)/include -I$(EBPATH)/include -I$(EBPATH1) -I$(DIAGPATH) -I$(LZMAPATH) -I$(BOOSTPATH)/include -Wall -O
-T_CXXFLAGS_CDM  = -DBUILD_DATE=\"$(BUILD_DATE)\" -DTOOL_VER=\"$(VERSION_TOOL)\"  -DEXP_VER=\"$(VERSION_FW)\" -DETHERBONE_THROWS=1 -DBUILDID_OFFS=$(BUILD_ID_ROM_ADR) -DBUILDID_SIZE=$(BUILD_ID_ROM_SIZE)
+T_CXXFLAGS_CDM  = -DBUILD_DATE=\"$(BUILD_DATE)\" -DTOOL_VER=\"$(VERSION_TOOL)\"  -DEXP_VER=\"$(VERSION_FW)\" -DETHERBONE_THROWS=1 -DBUILDID_OFFS=$(BUILD_ID_ROM_ADR) -DBUILDID_SIZE=$(BUILD_ID_ROM_SIZE) $(BOOST_FLAGS)
 
 CC ?= gcc
 T_CC            = $(CC)
@@ -67,7 +72,7 @@ T_OBJECTS       = $(subst .c,.o,$(LZMA_SRC_FILES)) $(subst .cpp,.o,$(CDM_SRC_FIL
 TEST_SOURCES    = $(addprefix $(SRCPATH)/, $(TEST_SRC_FILES)) $(addprefix $(LZMAPATH)/, $(LZMA_SRC_FILES))
 TEST_OBJECTS    = $(subst .c,.o,$(LZMA_SRC_FILES)) $(subst .cpp,.o,$(TEST_SRC_FILES))
 
-T_LIBS          = -Wl,-rpath,$(EBPATH)/lib,-rpath,$(EBPATH1)/.libs,-rpath,$(BOOSTPATH)/lib -L$(BOOSTPATH)/lib -L$(EBPATH)/lib -L$(EBPATH1)/.libs -letherbone -lboost_serialization -lboost_graph -lboost_regex
+T_LIBS          = -L$(BOOSTPATH)/lib -L$(EBPATH)/lib -L$(EBPATH1)/.libs -letherbone -lboost_serialization -lboost_graph -lboost_regex
 EXECS           = dm-sched dm-cmd
 TOOLS           = $(addprefix $(TOOLPATH)/, $(EXECS))
 BINS            = $(addprefix $(BINPATH)/, $(EXECS))
@@ -103,7 +108,12 @@ libdmtest.so: $(TEST_OBJECTS)
 
 install: $(BINS)
 	cp $(BINS) $(INSTALLPATH)
-	cp $(LIBPATH)/libcarpedm.so $(LIBPATH)/libdmtest.so $(PREFIX)/lib
+	cp $(LIBPATH)/libcarpedm.so $(PREFIX)/lib/libcarpedm.so.$(VERSION_CARPEDM)
+	ln -sf libcarpedm.so.$(VERSION_CARPEDM) $(PREFIX)/lib/libcarpedm.so.$$(echo $(VERSION_CARPEDM) | cut -b1)
+	ln -sf libcarpedm.so.$(VERSION_CARPEDM) $(PREFIX)/lib/libcarpedm.so
+	cp $(LIBPATH)/libdmtest.so $(PREFIX)/lib/libdmtest.so.$(VERSION_CARPEDM)
+	ln -sf libdmtest.so.$(VERSION_CARPEDM) $(PREFIX)/lib/libdmtest.so.$$(echo $(VERSION_CARPEDM) | cut -b1)
+	ln -sf libdmtest.so.$(VERSION_CARPEDM) $(PREFIX)/lib/libdmtest.so
 
 clean::
 	rm -f $(TOOLPATH)/*.o $(TOOLPATH)/*.a $(TOOLPATH)/*.so $(TOOLPATH)/*.elf $(BINPATH)/dm-sched $(BINPATH)/dm-cmd $(LIBPATH)/libcarpedm.so $(LIBPATH)/libdmtest.so

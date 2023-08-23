@@ -1,22 +1,11 @@
 
-ifeq ($(findstring asl75,$(shell hostname)),asl75)
-  # ASL build paths for asl75x
-  BOOSTPATH	=/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation
-else
-ifeq ($(findstring asl,$(shell hostname)),asl)
-  # ASL build paths for asl74x
-  BOOSTPATH	=/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation
-else
-  # this Makefile lives in modules/ftm/tests/singleEdgeTest, thus go down 4 levels.
-  EBPATH ?= ../../../../ip_cores/etherbone-core/api/
-  BOOSTPATH ?= .
-endif
-endif
+EBPATH ?= ../../../../ip_cores/etherbone-core/api/
+BOOSTPATH ?= .
 
 CXX ?= g++
 CXXFLAGS = -g -std=c++11 -fPIC -Wall -I../../include -I$(BOOSTPATH)/include
 
-LDFLAGS = -Wl,-rpath,/usr/local/lib,-rpath,$(BOOSTPATH)/lib
+#LDFLAGS = -Wl,-rpath,/usr/local/lib,-rpath,$(BOOSTPATH)/lib
 LDLIBS = -Wl,-rpath,$(BOOSTPATH)/lib -L$(BOOSTPATH)/lib -lstdc++ -lboost_serialization -lboost_graph -lboost_regex
 
 # check that make runs with  sudo rights

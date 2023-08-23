@@ -2,18 +2,17 @@
 ifeq ($(findstring asl75,$(shell hostname)),asl75)
   # ASL build paths for asl75x
   EBPATH ?=/common/export/timing-rte/tg-fallout-v6.2.x-rocky9/x86_64
-  BOOSTPATH =/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation
 else
 ifeq ($(findstring asl,$(shell hostname)),asl)
   # ASL build paths for asl74x
   EBPATH ?=/common/export/timing-rte/tg-fallout-v6.2.0/x86_64
-  BOOSTPATH =/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation
 else
   # this Makefile lives in modules/ftm/tests/singleEdgeTest, thus go down 4 levels.
   EBPATH ?= ../../../../ip_cores/etherbone-core/api/
-  BOOSTPATH ?= .
 endif
 endif
+
+BOOSTPATH ?= .
 
 # check that make runs with  sudo rights
 RIGHTS := $(shell id -u)
@@ -31,7 +30,7 @@ CXX ?= g++
 CXXFLAGS = -g -std=c++11 -fPIC -Wall -I../../include -I$(EBPATH)/include -I../$(EBPATH1) -I$(BOOSTPATH)/include
 # for coverage: add to CXXFLAGS: -fprofile-arcs -ftest-coverage
 
-LDFLAGS = -Wl,-rpath,$(BOOSTPATH)/lib,-rpath,../$(EBPATH1)/.libs
+# LDFLAGS = -Wl,-rpath,$(BOOSTPATH)/lib,-rpath,../$(EBPATH1)/.libs
 LDLIBS = -L../../lib -L../$(EBPATH1)/.libs -L$(BOOSTPATH)/lib -lstdc++ -lboost_serialization -lboost_graph -lboost_regex -ldmtest -lgcov
 
 STYLE = --style="{BasedOnStyle: Google, ColumnLimit: 180}"

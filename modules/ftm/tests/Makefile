@@ -64,6 +64,10 @@ singleEdgeTest:
 prepare:
 	$(MAKE) -C ../ftmx86/ clean
 	$(MAKE) -C ../ftmx86/
+	$(MAKE) -C ../analysis/scheduleCompare/main/ clean
+	$(MAKE) -C ../analysis/scheduleCompare/main/
+	$(MAKE) -C singleEdgeTest/ clean
+	$(MAKE) -C singleEdgeTest/
 
 prepare-all:
 	$(MAKE) -C ../ftmx86/ clean
