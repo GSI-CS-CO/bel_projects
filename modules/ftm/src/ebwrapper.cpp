@@ -212,7 +212,8 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
             uint32_t sharedOffs   = parseSharedOffs(vFwIdROM[cpuIdx]);
                      thrQty       = parseThrQty(vFwIdROM[cpuIdx]);
                                     readAdrLUT(extBaseAdr, sharedOffs, adrLut);
-            //sLog << "Reading LUT" << std::endl;                                    
+            //In addition to the number of max threads we get from FWidrom, we read an addr table from FW memory.
+            //This tells us the addresses of all sections depending on makefile params (such as thrqty)
             uint32_t ctlSize      = getCtlAdr(ADRLUT_SHCTL_END);
             uint32_t space        = parseSharedSize(vFwIdROM[cpuIdx]) - ctlSize;
                      

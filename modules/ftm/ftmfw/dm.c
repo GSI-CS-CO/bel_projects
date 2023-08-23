@@ -1,3 +1,43 @@
+/********************************************************************************************
+ *  dm.c
+ *
+ *  created : 08.03.2016
+ *  author  : Mathias Kreider, GSI-Darmstadt
+ *
+ *  LM32 firmware, core routines of FAIR Data Master 
+ *  To be used with carpeDM library
+ * 
+ * -------------------------------------------------------------------------------------------
+ * License Agreement for this software:
+ *
+ * Copyright (C) 2016  Mathias Kreider
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
+ * Planckstrasse 1
+ * D-64291 Darmstadt
+ * Germany
+ *
+ * Contact: m.kreider@gsi.de
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *  
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * For all questions and ideas contact: m.kreider@gsi.de
+ * Last update: 09.01.2022
+ * 
+ * Currently known bugs: None 
+ ********************************************************************************************/
+
+
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
@@ -73,7 +113,8 @@ void dmInit() {
   nodeFuncs[NODE_TYPE_QBUF]             = dummyNodeFunc;
   nodeFuncs[NODE_TYPE_SHARE]            = dummyNodeFunc;
   nodeFuncs[NODE_TYPE_ALTDST]           = dummyNodeFunc;
-  nodeFuncs[NODE_TYPE_SYNC]             = dummyNodeFunc;
+  nodeFuncs[NODE_TYPE_ORIGIN]           = origin;
+  nodeFuncs[NODE_TYPE_STARTTHREAD]      = startThread;
   nodeFuncs[NODE_TYPE_NULL]             = nodeNull;
 
   //deadline updater. Return infinity (-1) if no or unsupported node was given
@@ -91,7 +132,8 @@ void dmInit() {
   deadlineFuncs[NODE_TYPE_QBUF]         = dummyDeadlineFunc;
   deadlineFuncs[NODE_TYPE_SHARE]        = dummyDeadlineFunc;
   deadlineFuncs[NODE_TYPE_ALTDST]       = dummyDeadlineFunc;
-  deadlineFuncs[NODE_TYPE_SYNC]         = dummyDeadlineFunc;
+  deadlineFuncs[NODE_TYPE_ORIGIN]       = dlEvt;
+  deadlineFuncs[NODE_TYPE_STARTTHREAD]  = dlEvt;
   deadlineFuncs[NODE_TYPE_NULL]         = deadlineNull;
 
 
@@ -101,20 +143,20 @@ void dmInit() {
   actionFuncs[ACT_TYPE_FLUSH]           = execFlush;
   actionFuncs[ACT_TYPE_WAIT]            = execWait;
 
-
-
-
-
   uint8_t i;
-
   for(i=0; i < _THR_QTY_; i++) {
     //set thread times to infinity
     uint32_t* tp = (uint32_t*)(p + (( SHCTL_THR_DAT + i * _T_TD_SIZE_) >> 2));
     *(uint64_t*)&tp[T_TD_CURRTIME >> 2] = -1ULL;
     *(uint64_t*)&tp[T_TD_DEADLINE >> 2] = -1ULL;
     *(uint32_t*)&tp[T_TD_FLAGS >> 2]    = i;
-    *(uint64_t*)(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_PREPTIME  ) >> 2)) = PREPTIME_DEFAULT;
-    *(uint64_t*)(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_STARTTIME ) >> 2)) = 0ULL;
+    //setup start stuff 
+    uint32_t* tp1 = (uint32_t*)(p + (( SHCTL_THR_DAT + i * _T_TD_SIZE_) >> 2));
+    *(uint64_t*)&tp1[T_TS_NODE_PTR        >> 2] = LM32_NULL_PTR;
+    *(uint64_t*)&tp1[T_TS_STARTTIME       >> 2] = 0ULL;
+    *(uint64_t*)&tp1[T_TS_PREPTIME        >> 2] = PREPTIME_DEFAULT;
+    *(uint64_t**)&tp1[T_TS_STARTTIME_PTR  >> 2] = (uint64_t*)&tp1[T_TS_STARTTIME  >> 2]; //default to starttime for referencing
+    
     //add thread to heap
     hp[i] = tp;
   }
@@ -199,19 +241,21 @@ uint32_t* execFlush(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
   uint32_t action     = cmd[T_CMD_ACT >> 2];  // command action field
   uint8_t  flushees   =         (action >> ACT_FLUSH_PRIO_POS) & ACT_FLUSH_PRIO_MSK;  // mask of flushee (target queue) priorities
   uint8_t  flusher    =  1 <<  ((action >> ACT_PRIO_POS)       & ACT_PRIO_MSK);       // mask of flusher (current command) priority
-  uint8_t  qtyIsOne   = (1 ==  ((action >> ACT_QTY_POS)        & ACT_QTY_MSK));       // flag: flush is attempted exactly once (flusher qty == 1). Should always be true, but we better make sure
   uint32_t wrIdxs     = node[BLOCK_CMDQ_WR_IDXS >> 2] & BLOCK_CMDQ_WR_IDXS_SMSK;      // flushee buffer wr indices
   uint32_t rdIdxs     = node[BLOCK_CMDQ_RD_IDXS >> 2] & BLOCK_CMDQ_RD_IDXS_SMSK;      // flushee buffer read indices
+  uint8_t  prio;                                                                      // loop variable, iterate over all  priorities
 
-  uint8_t prio; // loop variable, iterate over all  priorities
   for(prio = PRIO_LO; prio <= PRIO_IL; prio++) { // iterate priorities of flushees
     // if execution would flush the very queue containing the flush command (the flusher), we must prevent the queue from being popped in block() function afterwards.
     // Otherwise, rd idx will overtake wr idx -> queue corrupted. To minimize corner case impact, we do this by adjusting the
     // new read idx to be wr idx-1. Then the queue pop leaves us with new rd idx = wr idx as it should be after a flush.
-    uint8_t flushMyselfB4pop  = ((flushees & flusher) >> prio) & 1 & qtyIsOne; // flag: selfflush requested (flush cmd is in flushed queue)
-    uint8_t newRdIdx          = (*((uint8_t *)&wrIdxs + _32b_SIZE_ - prio -1) - flushMyselfB4pop) & Q_IDX_MAX_OVF_MSK;  // The new rd idx. Must equal the wr idx for queue to be empty, adjust by -1 if this is a selfflush 
+    if(flushees & (1 << prio)) {
+      uint8_t* rdIdx = ((uint8_t *)&rdIdxs + 3 - prio);
+      uint8_t* wrIdx = ((uint8_t *)&wrIdxs + 3 - prio);
 
-    if(flushees & (1 << prio)) { *((uint8_t *)&rdIdxs + _32b_SIZE_  - prio -1) = newRdIdx; } // execute flush if loop variable prio matches a flushee
+      uint8_t flushMyselfB4pop  = (flusher & (1 << prio)) != 0; // flag: selfflush requested (flush cmd is in flushed queue)
+      *rdIdx      = ((*wrIdx - flushMyselfB4pop) & Q_IDX_MAX_OVF_MSK);  // The new rd idx. Must equal the wr idx for queue to be empty, adjust by -1 if this is a selfflush 
+    } // execute flush if loop variable prio matches a flushee
   }
   //write back potentially updated read indices
   node[BLOCK_CMDQ_RD_IDXS >> 2] = rdIdxs;
@@ -256,7 +300,12 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
   const uint32_t *tg  = (uint32_t*)node[CMD_TARGET >> 2]; // ptr to target block
   const uint32_t adrPrefix = (uint32_t)tg & ~PEER_ADR_MSK; // Address prefix. If target is on a different RAM, the B (Host) Port is used and the global adr prefix must be added 
 
-
+  // if this command tries to write to priority that does not exist, this is an emergency. Halt everything, set error bit for bad cmd action.
+  if(!((tg[NODE_FLAGS >> 2] >> NFLG_BLOCK_QS_POS) & (1 << prio))) {
+    *abort1 = 0xffffffff; 
+    *status |= SHCTL_STATUS_BAD_ACT_TYPE_SMSK;
+    return node; // return this node to show where the problem was 
+  }  
  
   uint32_t *bl;     // ptr to buffer list of target queue
   uint32_t *b;      // ptr to specific buffer
@@ -272,7 +321,7 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
 
   //check if the target queues are write locked
   const uint32_t qFlags = tg[BLOCK_CMDQ_FLAGS >> 2]; // queue flags field, contains lock bits. Only copy cmd action into buffer if Do not write (DNW) is false
-    
+  
   if(qFlags & BLOCK_CMDQ_DNW_SMSK) { return ret; }
 
   /*                    tg
@@ -285,7 +334,7 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
    *  e0 e1 e2 e3  e0 e1 e2 e3    e0 e1 e2 e3
    */
 
-  wrIdx   = ((uint8_t *)tg + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_  - prio -1);                           // calculate pointer (8b) to current write index
+  wrIdx   = ((uint8_t *)tg + BLOCK_CMDQ_WR_IDXS + 3 - prio);                           // calculate pointer (8b) to current write index
   bufOffs = (*wrIdx & Q_IDX_MAX_MSK) / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _PTR_SIZE_;             // calculate Offsets
   elOffs  = (*wrIdx & Q_IDX_MAX_MSK) % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _T_CMD_SIZE_;
   bl      = (uint32_t*)(tg[(BLOCK_CMDQ_PTRS + prio * _PTR_SIZE_) >> 2]  - INT_BASE_ADR + adrPrefix); // get pointer to buf list
@@ -308,14 +357,6 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
   if((node[CMD_ACT  >> 2] >> ACT_VABS_POS) & ACT_VABS_MSK) tValid = *ptValid;
   else                                                     tValid = *ptCurrent + *ptValid;
 
-//TODO: find out what's wrong with this code
-/*
-  uint64_t vabsMsk    = (uint64_t)((node[CMD_ACT  >> 2] >> ACT_VABS_POS) & ACT_VABS_MSK) -1; // abs -> 0x0, !abs -> 0xfff..f
-  uint64_t tMinimum   = getSysTime() + _T_TVALID_OFFS_;                 // minimum timestamp that we consider 'future'
-  uint64_t tValidCalc = *ptValid + *ptCurrent & vabsMsk;                // if tValid is relative offset (not absolute), add current time sum
-  uint64_t tMinMsk    = (uint64_t)(tMinimum < tValidCalc) -1;           // min < calc -> 0x0, min >= calc -> 0xfff..f
-  uint64_t tValid     = (tMinimum & tMinMsk) | (tValidCalc & ~tMinMsk); // equiv. tValid = (tMinimum < tvalidCalc) ? tvalidCalc : tMinimum;
-*/
   //copy cmd data to target queue
   e[(T_CMD_TIME + 0)          >> 2]  = (uint32_t)(tValid >> 32);
   e[(T_CMD_TIME + _32b_SIZE_) >> 2]  = (uint32_t)(tValid);
@@ -421,26 +462,48 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
   node[NODE_FLAGS >> 2] |= NFLG_PAINT_LM32_SMSK; // set paint bit to mark this node as visited
 
   //3 ringbuffers -> 3 wr indices, 3 rd indices (one per priority).
-  //If Do not Read flag is not set and the indices differ, there's work to do
+  //////////////////////////////////////////////////////////////////////////////////////////////////////
+  // Check queues for pending commands
+  // If Do not Read flag is not set and the indices differ, there's work to do
+
   if(!(qFlags & BLOCK_CMDQ_DNR_SMSK) 
   && ((*awrOffs & BLOCK_CMDQ_WR_IDXS_SMSK) != (*ardOffs & BLOCK_CMDQ_RD_IDXS_SMSK)) ) {
-    //only process one command, and that of the highest priority. default is low, check up
-    prio = PRIO_LO;
-    //MSB first: bit 31 is at byte offset 0!
-    if (*((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + _32b_SIZE_ - PRIO_HI - 1) ^ *((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_ - PRIO_HI - 1)) { prio = PRIO_HI; }
-    if (*((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + _32b_SIZE_ - PRIO_IL - 1) ^ *((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_ - PRIO_IL - 1)) { prio = PRIO_IL; }
-    //correct prio found, create shortcuts to control data of corresponding queue
-    rdIdx   = ((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + _32b_SIZE_  - prio -1);               // this queues read index   (using overflow bit for empty/full)
-    wrIdx   = ((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_  - prio -1);               // this queues write index
-    bufOffs = (*rdIdx & Q_IDX_MAX_MSK) / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _PTR_SIZE_;   // offset of active command buffer's pointer in this queues buffer list
-    elOffs  = (*rdIdx & Q_IDX_MAX_MSK) % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _T_CMD_SIZE_; // offset of active command data in active command buffer
-    bl      = (uint32_t*)node[(BLOCK_CMDQ_PTRS + prio * _PTR_SIZE_) >> 2];                  // pointer to this queues buffer list
-    b       = (uint32_t*)bl[bufOffs >> 2];                                                  // pointer to active command buffer
-    cmd     = (uint32_t*)&b[elOffs  >> 2];                                                  // pointer to active command data
+    
+    //Iterate over queues, highest priority first. If we find a pending command that has reached its valid time, we take it.
+    int32_t i;
+    for (i = PRIO_IL; i >= PRIO_LO; i--) {
+      prio = (uint32_t)i;
+      
+      // make sure we only check queue prios this Block actually has
+      if(((node[NODE_FLAGS >> 2] >> NFLG_BLOCK_QS_POS) & (1 << prio))) {
+        
+        //Notation "3 - prio" seems weird, but remember: It's big endian, MSB first. bit 31/byte 3 is at address offset 0.
+        //Addr  0x0 0x1 0x2 0x3
+        //Byte    3   2   1   0
+        //Field   -  IL  HI  LO
+        rdIdx   = ((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + 3 - prio); // this queues read index   (using overflow bit for empty/full)
+        wrIdx   = ((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + 3 - prio); // this queues write index
 
-
-    if (getSysTime() < *((uint64_t*)((void*)cmd + T_CMD_TIME))) return ret;                 // if chosen command is not yet valid, directly return to scheduler
-
+        //Check if rd - wr cnt differs. 
+        if (*rdIdx ^ *wrIdx) {
+          
+          //found pending command
+          //create shortcuts to control data of corresponding queue
+          bufOffs = (*rdIdx & Q_IDX_MAX_MSK) / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _PTR_SIZE_;   // offset of active command buffer's pointer in this queues buffer list
+          elOffs  = (*rdIdx & Q_IDX_MAX_MSK) % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _T_CMD_SIZE_; // offset of active command data in active command buffer
+          bl      = (uint32_t*)node[(BLOCK_CMDQ_PTRS + prio * _PTR_SIZE_) >> 2];                  // pointer to this queues buffer list
+          b       = (uint32_t*)bl[bufOffs >> 2];                                                  // pointer to active command buffer
+          cmd     = (uint32_t*)&b[elOffs  >> 2];                                                  // pointer to active command data
+  
+          // if this command is already valid, leave check loop and execute it.
+          if (getSysTime() >= *((uint64_t*)((void*)cmd + T_CMD_TIME))) break;
+                      
+          
+        }
+      }
+    }
+      
+    if (getSysTime() < *((uint64_t*)((void*)cmd + T_CMD_TIME))) return ret;                 // if no command is yet valid, take default successor.
 
     act     = (uint32_t*)&cmd[T_CMD_ACT >> 2];          //pointer to command's action
     actTmp  = *act;                                     //create working copy of action word
@@ -507,42 +570,103 @@ uint32_t* blockAlign(uint32_t* node, uint32_t* thrData) {
   return ret;
 }
 
+uint32_t* origin(uint32_t* node, uint32_t* thrData) {
+  DBPRINT3("#%02u: Hello, Origin function check, base shared 0x%08x\n", cpuId, PEER_ADR_MSK);
+  uint32_t *ret = (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
+  uint32_t newOrigin = *(uint32_t*)&node[ORIGIN_DEST >> 2];
+  uint32_t targetCpu = *(uint32_t*)&node[ORIGIN_CPU >> 2];
+  uint32_t targetThr = *(uint32_t*)&node[ORIGIN_THR >> 2];
+
+
+
+
+  //FIXME black magic ahead! RAM sizes are assumed to be equal, _startshared adr is assumed to be the same everywhere
+  uint32_t* targetBaseP = p; //(uint8_t*)(newOrigin & PEER_ADR_MSK);// + 
+  
+
+  uint32_t* targetOrigin = (uint32_t*)&targetBaseP[( SHCTL_THR_STA + targetThr * _T_TS_SIZE_ + T_TS_NODE_PTR) >> 2]; 
+  *targetOrigin = newOrigin;
+  
+  DBPRINT3("#%02u: Hello, Origin node, target 0x%08x, cpu %u, thr %u, new origin 0x%08x, target origin 0x%08x\n", cpuId, targetOrigin , targetCpu, targetThr, newOrigin, *targetOrigin);
+  
+  return ret;
+}
+
+
+uint32_t* startThread(uint32_t* node, uint32_t* thrData) {
+  uint32_t *ret = (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
+  uint64_t offset = *(uint64_t*)&node[STARTTHREAD_STARTOFFS >> 2];
+  //uint32_t cpu = *(uint32_t*)&node[STARTTHREAD_CPU >> 2];
+  uint32_t thr = *(uint32_t*)&node[STARTTHREAD_THR >> 2];
+
+
+  //FIXME This must go to the selected CPUs control area, not necessarily our own!
+  uint64_t* thrStarttime  = (uint64_t*)&p[( SHCTL_THR_STA + thr * _T_TS_SIZE_ + T_TS_STARTTIME) >> 2]; // thread Start time
+  //FIXME Loop this for all designated threads
+  *thrStarttime = *((uint64_t*)&thrData[T_TD_CURRTIME >> 2]) + offset; // set time
+  DBPRINT3("#%02u: Hello, StartThread function check. Thr %u, time 0x%08x%08x, ptr 0x%08x\n", cpuId, thr, (uint32_t)(*thrStarttime>>32), (uint32_t)*thrStarttime, &thrData[T_TD_CURRTIME >> 2]);
+  *start |= (1 << thr);  // set start bit
+  
+  return ret;
+}
+
+
 
 void heapify() {
+  //restore MinHeap property
+  // Start at the second to last layer of the heap (heapsize/2-1,  last layer not have children)
   int startSrc;
-  //go through the heap, restore heap property
-  for(startSrc=(_HEAP_SIZE_-1)>>1; startSrc >= 0; startSrc--) { heapReplace(startSrc); }
+  for(startSrc=(_HEAP_SIZE_>>1) - 1; startSrc >= 0; startSrc--) {
+    heapReplace(startSrc); // Work your way up to the top sorting nodes
+  }
 }
 
 void heapReplace(uint32_t src) {
-  uint32_t  dst = src, cl = 1, cr = 1, mask, lLEr, mGr, mGl, l, r;
-  uint32_t* mov = hp[dst];
-  int j;
-  //for (j = 0; j < ((125000000/4)); ++j) { asm("nop"); }
+  // HeapRrelace, aka HeapMin Extraction
+  //
+  // We take the min element away from top of the heap and put a new element on top.
+  // Then we sort the new element downward until it rests in the right place.
+  // This is the case when the parent is less or equal than both left child (l) and right child (r)
 
-  DBPRINT3("#%02u: Looking at Dl Mov %u: %20s Dl LC %u: %20s, DL RC %u: %20s\n",  cpuId, dst, print64(DL(mov), 0), l, print64(DL(hp[l]), 0), r, print64(DL(hp[r]), 0) );
+  // normally, heap sort involves a swap at each layer, but that uses more copy operations than necessary (3*n vs n+1).
+  // This approach compares the children not to their parent, but the moving node, ie. the original source node.
+  // Each time the moving node is greater than its children, the chosen child is copied to its parents position, thus moving it upward one layer.
+  // Once the moving node is less or equal to both children (or does not have childern), we copy the moving node to the parent position and are done.
+  
+  uint32_t parent = src;      // index of the parent, initial value is the source node we were given  
+  uint32_t choice;            // index of the child we choose in each step
+  uint32_t* moving = hp[src]; // The source node is moving downward, and we compare to this moving node in each step. Must be saved because we overwrite hp[src]
 
-  // unrolled heap replace operation
-  while (cl | cr)  {
-    //for (j = 0; j < ((125000000/4)); ++j) { asm("nop"); }
-    l       = (dst<<1)+1; // left child
-    r       = l + 1;      // right child
+  uint8_t sort;
+  do { //sort loop happens at least once... 
+    sort = 0;
+    
+    uint32_t left   = (parent << 1) + 1;  // left child idx is parent idx * 2 + 1
+    uint32_t right  = left + 1;           // right child idx is left child idx +1 = parent idx * 2 + 2
+             choice = parent;             // parent is the default choice. Means copy has no effect in case we dont choose a child.
 
-    lLEr    = (DL(hp[l]) <= DL(hp[r]))  | (r  > _HEAP_SIZE_ -1);  // (left child less or equal r c) or r c non existent
-    mGr     = (DL(mov)   >  DL(hp[r]))  & (r  < _HEAP_SIZE_ );    // mover greater right child and r c exists
-    mGl     = (DL(mov)   >  DL(hp[l]))  & (l  < _HEAP_SIZE_ );    // mover greater left child and l c exists
+    //we choose left child if...
+    if( (        left < _HEAP_SIZE_   )   // left child exists...
+    &&  (DL(hp[left]) < DL(moving)))      // and its deadline less than moving node's
+    {  
+        sort = 1;
+        choice = left;
+    }
+    
+    //we choose right child (can override left) if...
+    if( (         right < _HEAP_SIZE_    )  // right child exists...
+    &&  ( DL(hp[right]) < DL(moving)     )  // and its deadline is less than moving node's ...
+    &&  ( DL(hp[right]) < DL(hp[left])   )) // and its deadline is less than left child's
+    { 
+      sort = 1;
+      choice = right;
+    }
 
-    cl      = ( mGl &  lLEr);                    // choose left child
-    cr      = ( mGr & ~lLEr);                    // choose right child
-    mask    = -(cl | cr);                        // all 0 when no chosen child, all 1 otherwise
-    src     = dst + ((dst + 1) & mask) + cr;     //parent  = dst, left = dst+(dst+1), rightC  = dst+(dst+1)+1
+    hp[parent]  = hp[choice]; // copy chosen child upward to parent location
+    parent      = choice;     // parent location for the next round is the location of our chosen child.
 
-    hp[dst] = hp[src];
-    dst     = src;
+  } while(sort); // ... and sort loop continues if nodes were rearranged last round.
 
-  }
-
-  hp[dst] = mov;
-
-
+  // we found the location the moving node is supposed to go. Copy it in and we are done.
+  hp[choice]    = moving; 
 }
