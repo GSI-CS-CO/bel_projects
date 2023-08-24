@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-Aug-2023
+ *  version : 24-Aug-2023
  *
  * subscribes to and displays status of a b2b system (CBU, PM, KD ...)
  *
@@ -168,7 +168,7 @@ static void help(void) {
 void buildHeader()
 {
   sprintf(title, "\033[7m B2B System Status --------------------------------------------------- v%8s\033[0m", b2b_version_text(B2B_CLIENT_SYS_VERSION));
-  sprintf(header, "  #   ring sys  version     state  transfers        status jc               node");
+  sprintf(header, "  #   ring sys  version     state  transfers        status jttr             node");
   sprintf(empty , "                                                                                ");
   //       printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
 } // buildHeader
@@ -213,15 +213,16 @@ void printServices(int flagOnce)
 {
   int i;
 
-  char   cTransfer[10];
-  char   cStatus[17];
-  char   cVersion[9];
-  char   cState[11];
-  char   cHost[19];
-  char   cJitter[2];
-  char   buff[100];
-  time_t time_date;
+  char     cTransfer[10];
+  char     cStatus[17];
+  char     cVersion[9];
+  char     cState[11];
+  char     cHost[19];
+  char     cJitter[2];
+  char     buff[100];
+  time_t   time_date;
   uint32_t *tmp;
+  double   maxmin;
 
   //printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
 
@@ -247,18 +248,19 @@ void printServices(int flagOnce)
     if (*tmp == no_link_32)                      sprintf(cVersion, "%8s",          no_link_str);
     else                                         sprintf(cVersion, "%8s",          dicSystem[i].version); 
     tmp = (uint32_t *)(&(dicSystem[i].hostname));
-    if (*tmp == no_link_32)                      sprintf(cHost,   "%18s",          no_link_str);
-    else                                         sprintf(cHost,   "%18s",          dicSystem[i].hostname);
+    if (*tmp == no_link_32)                      sprintf(cHost,   "%16s",          no_link_str);
+    else                                         sprintf(cHost,   "%16s",          dicSystem[i].hostname);
     tmp = (uint32_t *)(&(dicSystem[i].jitter));
-    if (*tmp == no_link_32)                      sprintf(cJitter, "  ");           // no link
+    if (*tmp == no_link_32)                      sprintf(cJitter, "   ");          // no link, just 'blank' as not all processes have a jitter check
     else  {
-      if (isnan(dicSystem[i].jitter.ppsAct))     sprintf(cJitter, "wr");           // bad state
-      else {
-        if (dicSystem[i].jitter.ppsSdev > 0.5)   sprintf(cJitter, ">1");           // jitter too large
-        else                                     sprintf(cJitter, "ok");           // jitter ok
-      } // if NAN
-    } // else
-    printf(" %2x %6s %3s %8s %10s %9s %13s %2s %18s\n", i, ringNames[i], typeNames[i], cVersion, cState, cTransfer, cStatus, cJitter, cHost);
+      if (isnan(dicSystem[i].jitter.ppsAct))     sprintf(cJitter, " err");         // bad state, no WR lock or not PPS signal detected
+      // check for fluctations
+      maxmin = dicSystem[i].jitter.ppsMax - dicSystem[i].jitter.ppsMin;
+      if ( maxmin <= 0.1)                        sprintf(cJitter, "  ok");         // good
+      if ((maxmin > 0.1) && (maxmin < 1.1))      sprintf(cJitter, " ~ok");         // hm, up to 1ns is in principle possible
+      if ( maxmin >= 1.1)                        sprintf(cJitter, "%4d", (int)maxmin);    
+    } // else nolink
+    printf(" %2x %6s %3s %8s %10s %9s %13s %4s %16s\n", i, ringNames[i], typeNames[i], cVersion, cState, cTransfer, cStatus, cJitter, cHost);
   } // for i
 
   for (i=0; i<4; i++) printf("%s\n", empty);
