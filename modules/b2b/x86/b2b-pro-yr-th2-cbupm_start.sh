@@ -92,9 +92,10 @@ saft-ecpu-ctl $SDPM -c 0x13a6801000000000 0xfffffff000000000 15900000 0x821 -d
 saft-ecpu-ctl $SDPM -c 0x13aa800000000000 0xfffffff000000000 15900000 0x820 -d
 
 # diag: generate pulse upon CMD_B2B_TRIGGERINJ message from ESR CBU
-saft-io-ctl $SDPM -n IO1 -o 1 -t 0
-saft-io-ctl $SDPM -n IO1 -c 0x10d2805000000000 0xfffffff000000000 0 0x0 1 -u
-saft-io-ctl $SDPM -n IO1 -c 0x10d2805000000000 0xfffffff000000000 10000000 0x0 0 -u
+# sacrifice IO1 for 'jitter check'
+#saft-io-ctl $SDPM -n IO1 -o 1 -t 0
+#saft-io-ctl $SDPM -n IO1 -c 0x10d2805000000000 0xfffffff000000000 0 0x0 1 -u
+#saft-io-ctl $SDPM -n IO1 -c 0x10d2805000000000 0xfffffff000000000 10000000 0x0 0 -u
 
 # diag: generate pulse upon CMD_B2B_TRIGGEREXT message from CRYRING CBU
 saft-io-ctl $SDPM -n IO2 -o 1 -t 0
@@ -115,6 +116,7 @@ saft-ecpu-ctl $SDCBU -c 0x13aa802000000000 0xfffffff000000000 250000 0x802 -dg
 #saft-ecpu-ctl $SDCBU -c 0x13a1803000000000 0xfffffff000000000 0 0x803 -d
 
 # diag: generate pulse upon CMD_B2B_START event
-saft-io-ctl $SDCBU -n IO1 -o 1 -t 0
-saft-io-ctl $SDCBU -n IO1 -c 0x10d281f000000000 0xfffffff000000000 0 0x0 1 -u
-saft-io-ctl $SDCBU -n IO1 -c 0x10d281f000000000 0xfffffff000000000 10000000 0x0 0 -u
+# sacrifice IO1 for 'jitter check'
+#saft-io-ctl $SDCBU -n IO1 -o 1 -t 0
+#saft-io-ctl $SDCBU -n IO1 -c 0x10d281f000000000 0xfffffff000000000 0 0x0 1 -u
+#saft-io-ctl $SDCBU -n IO1 -c 0x10d281f000000000 0xfffffff000000000 10000000 0x0 0 -u
