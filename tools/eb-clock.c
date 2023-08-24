@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <etherbone.h>
 #include <math.h>
+#include <stdbool.h>
 
 #define GSI_ID	0x651
 #define SERDES_CLK_GEN_ID	0x5f3eaf43
@@ -34,6 +35,7 @@ static void help(void) {
   fprintf(stderr, "  -H <hi-period> set high period (in nanosec.) on the channel\n");
   fprintf(stderr, "  -L <lo-period> set low period (in nanosec.) on the channel\n");
   fprintf(stderr, "  -p <ns>        set channel phase offset in nanoseconds\n");
+  fprintf(stderr, "  -s             skip IO hack module\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Report bugs to <t.stana@gsi.de>\n");
 }
@@ -150,6 +152,7 @@ int main(int argc, char** argv) {
   double hi;
   double lo;
   uint64_t phase;
+  bool skip_io_hack;
   struct Control control;
 
   int base;
@@ -162,8 +165,12 @@ int main(int argc, char** argv) {
   hi    = 0;
   lo    = 0;
   phase = 0;
-  while ((opt = getopt(argc, argv, "hc:H:L:p:")) != -1) {
+  skip_io_hack = false;
+  while ((opt = getopt(argc, argv, "shc:H:L:p:")) != -1) {
     switch (opt) {
+    case 's':
+      skip_io_hack = true;
+      break;
     case 'h':
       help();
       return 0;
@@ -207,27 +214,27 @@ int main(int argc, char** argv) {
   /* Set channel I/O as output using IO_HACK module */
   // TODO: change when IO_HACK removed
   c = 1;
-  if ((status = eb_sdb_find_by_identity(device, GSI_ID, 0x4d78adfd, &sdb, &c)) != EB_OK)
-    die("eb_sdb_find_by_identity", status);
-  if (c != 1) {
-    fprintf(stderr, "Found %d IO_HACK identifiers on that device\n", c);
-    exit(1);
-  }
-  
+  if (!skip_io_hack)
+  {
+    if ((status = eb_sdb_find_by_identity(device, GSI_ID, 0x4d78adfd, &sdb, &c)) != EB_OK)
+      die("eb_sdb_find_by_identity", status);
+    if (c != 1) {
+      fprintf(stderr, "Found %d IO_HACK identifiers on that device\n", c);
+      exit(1);
+    }
   /* Enable the channel's output using the IO_HACK module */
-  base = sdb.sdb_component.addr_first;
-  eb_data_t iodir;
-  if ((status = eb_device_read(device, base + 4, EB_DATA32, &iodir, 0, NULL)) != EB_OK)
-    die("eb_device_read(iodir)", status);
+    base = sdb.sdb_component.addr_first;
+    eb_data_t iodir;
+    if ((status = eb_device_read(device, base + 4, EB_DATA32, &iodir, 0, NULL)) != EB_OK)
+      die("eb_device_read(iodir)", status);
+      
+    fprintf(stderr, "IOHACK+4: %x\n", (unsigned int) iodir);
+    iodir |= (1 << (chan-1));
+    fprintf(stderr, "IOHACK+4 modify: %x\n", (unsigned int) iodir);
     
-  fprintf(stderr, "IOHACK+4: %x\n", (unsigned int) iodir);
-   
-  iodir |= (1 << (chan-1));
-  
-  fprintf(stderr, "IOHACK+4 modify: %x\n", (unsigned int) iodir);
-  
-  if ((status = eb_device_write(device, base + 4, EB_DATA32, iodir, 0, NULL)) != EB_OK)
-    die("eb_device_write(iodir)", status);
+    if ((status = eb_device_write(device, base + 4, EB_DATA32, iodir, 0, NULL)) != EB_OK)
+      die("eb_device_write(iodir)", status);
+  }
 
   /* Now find the clock generator module and set the addresses */
   c = 1;
@@ -254,4 +261,3 @@ int main(int argc, char** argv) {
 
   return 0;
 }
-
