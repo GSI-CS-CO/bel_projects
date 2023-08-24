@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 10-Jul-2023
+ *  version : 24-Aug-2023
  *
  * checks jitter between two timing receivers connected via a Lemo cable 
  * the first timing receiver outputs a PPS pulse
@@ -37,7 +37,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_JITTER_CHECK_VERSION 0x000505
+#define B2B_JITTER_CHECK_VERSION 0x000506
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -278,7 +278,7 @@ void ppsOutConfig()
   } // for it
 
   for (std::map<std::string,std::string>::iterator ito=ins.begin(); ito!=ins.end(); ++ito) {
-    if (ito->first == tsName) {
+    if (ito->first == ppsName) {
       o_found = true;
       ppsInProxy = Input_Proxy::create(ito->second); 
     } // if it
