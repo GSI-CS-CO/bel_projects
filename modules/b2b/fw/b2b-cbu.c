@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000502                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000506                                      // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
