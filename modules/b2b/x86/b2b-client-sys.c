@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 24-Aug-2023
+ *  version : 25-Aug-2023
  *
  * subscribes to and displays status of a b2b system (CBU, PM, KD ...)
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_CLIENT_SYS_VERSION 0x000506
+#define B2B_CLIENT_SYS_VERSION 0x000507
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -206,6 +206,16 @@ void dicCmdClearDiag(char *prefix, uint32_t indexServer)
   sprintf(name, "%s_%s_cmd_cleardiag", prefix, sysShortNames[indexServer]);
   dic_cmnd_service(name, 0, 0);
 } // dicCmdClearDiag
+
+
+// send 'clear diag' command to server
+void dicCmdClearJitterChk(char *prefix, uint32_t indexServer)
+{
+  char name[DIMMAXSIZE];
+
+  sprintf(name, "%s_%s-jittercheck_cmd_cleardiag", prefix, sysShortNames[indexServer]);
+  dic_cmnd_service(name, 0, 0);
+} // dicCmdClearJitterChk
 
 
 // print services to screen
@@ -387,6 +397,7 @@ int main(int argc, char** argv) {
           case '0' ... '9' :
             if (sysId == 0xffff) sysId = userInput - 48; // ugly
             dicCmdClearDiag(prefix, sysId);
+            dicCmdClearJitterChk(prefix, sysId);
             break;
           case 'h'         :
             printHelpText();

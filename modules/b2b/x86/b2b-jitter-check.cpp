@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 24-Aug-2023
+ *  version : 25-Aug-2023
  *
  * checks jitter between two timing receivers connected via a Lemo cable 
  * the first timing receiver outputs a PPS pulse
@@ -37,7 +37,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_JITTER_CHECK_VERSION 0x000506
+#define B2B_JITTER_CHECK_VERSION 0x000507
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -111,6 +111,24 @@ bool                                  tsOutFound;
 bool                                  tsInFound;
 char                                  tsName[128];
 
+// statistics
+double   tMin;
+double   tMax;
+uint32_t tN;
+double   tAveOld;
+double   tStreamOld;
+
+
+// clear statistics
+void clearStats()
+{
+  tMin       = 999999999;
+  tMax       = 0;
+  tN         = 0;
+  tAveOld    = 0;   
+  tStreamOld = 0;
+} // clearStats
+
 
 // calc basic statistic properties
 void calcStats(double *meanNew,         // new mean value, please remember for later
@@ -146,11 +164,6 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
   double    tmpStream        = 0;
   double    tSdev;
   double    dummy;
-  static double   tMin       = 999999999;
-  static double   tMax       = 0;
-  static uint32_t tN         = 0;
-  static double   tAveOld    = 0;   
-  static double   tStreamOld = 0;
 
   if (tsReceiver->getLocked() && ppsReceiver->getLocked()) sprintf(disState, "%s", b2b_state_text(COMMON_STATE_OPREADY));
   else                                                     sprintf(disState, "%s", b2b_state_text(COMMON_STATE_ERROR));
@@ -208,7 +221,11 @@ static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline
 class RecvCommand : public DimCommand
 {
   int  reset;
-  void commandHandler() {/* action */}
+  void commandHandler() {
+    /* action */
+    printf("huhu clear\n");
+    clearStats();
+  } // commandHandler
 public :
   RecvCommand(const char *name) : DimCommand(name,"C"){}
 }; 
@@ -452,6 +469,9 @@ int main(int argc, char** argv)
   
   sprintf(disName, "%s-jittercheck", prefix);
   dis_start_serving(disName);
+
+  // clear statistics
+  clearStats();
   
   try {
     // basic saftd stuff
@@ -505,7 +525,7 @@ int main(int argc, char** argv)
 
       mstimeout = 10000;
       
-      if (saftlib::wait_for_signal(mstimeout) == 0) recTimeout();
+     if (saftlib::wait_for_signal(mstimeout) == 0) recTimeout();
     } // while true
     
   } // try
