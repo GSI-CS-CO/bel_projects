@@ -254,11 +254,13 @@ void printServices(int flagOnce)
     if (*tmp == no_link_32)                      sprintf(cJitter, "   ");          // no link, just 'blank' as not all processes have a jitter check
     else  {
       if (isnan(dicSystem[i].jitter.ppsAct))     sprintf(cJitter, " err");         // bad state, no WR lock or not PPS signal detected
+      else {
       // check for fluctations
-      maxmin = dicSystem[i].jitter.ppsMax - dicSystem[i].jitter.ppsMin;
-      if ( maxmin <= 0.1)                        sprintf(cJitter, "  ok");         // good
-      if ((maxmin > 0.1) && (maxmin < 1.1))      sprintf(cJitter, " ~ok");         // hm, up to 1ns is in principle possible
-      if ( maxmin >= 1.1)                        sprintf(cJitter, "%4d", (int)maxmin);    
+        maxmin = dicSystem[i].jitter.ppsMax - dicSystem[i].jitter.ppsMin;
+        if ( maxmin <= 0.1)                      sprintf(cJitter, "  ok");         // good
+        if ((maxmin > 0.1) && (maxmin < 1.1))    sprintf(cJitter, " ~ok");         // hm, up to 1ns is in principle possible
+        if ( maxmin >= 1.1)                      sprintf(cJitter, "%4d", (int)maxmin);
+      } // else isnan
     } // else nolink
     printf(" %2x %6s %3s %8s %10s %9s %13s %4s %16s\n", i, ringNames[i], typeNames[i], cVersion, cState, cTransfer, cStatus, cJitter, cHost);
   } // for i
