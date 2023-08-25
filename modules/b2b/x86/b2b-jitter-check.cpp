@@ -222,8 +222,6 @@ class RecvCommand : public DimCommand
 {
   int  reset;
   void commandHandler() {
-    /* action */
-    printf("huhu clear\n");
     clearStats();
   } // commandHandler
 public :
