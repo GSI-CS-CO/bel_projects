@@ -7,6 +7,7 @@ use work.monster_pkg.all;
 use work.ramsize_pkg.c_lm32_ramsizes;
 
 entity pci_control is
+  generic(g_simulation : boolean := false);
   port(
     clk_20m_vcxo_i    : in std_logic;  -- 20MHz VCXO clock
     clk_125m_pllref_i : in std_logic;  -- 125 MHz PLL reference
@@ -256,6 +257,7 @@ begin
 
   main : monster
     generic map(
+      g_simulation        => g_simulation,
       g_family            => c_family,
       g_project           => c_project,
       g_flash_bits        => 25,
@@ -331,8 +333,8 @@ begin
       usb_slwrn_o             => slwr,
       usb_pktendn_o           => pa(6),
       usb_fd_io               => fd,
-      ow_io(0)                => n15,
-      ow_io(1)                => 'Z',
+      --ow_io(0)                => n15,
+      --ow_io(1)                => 'Z',
       lcd_scp_o               => di(3),
       lcd_lp_o                => di(1),
       lcd_flm_o               => di(2),

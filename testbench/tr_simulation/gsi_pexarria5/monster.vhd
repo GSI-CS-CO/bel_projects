@@ -74,10 +74,10 @@ use work.remote_update_pkg.all;
 
 entity monster is
   generic(
+    g_simulation           : boolean; -- false for synthesis, true for simulation
     g_family               : string; -- "Arria II", "Arria V", or "Arria 10"
     g_project              : string;
     g_flash_bits           : natural;
-    g_simulation           : boolean; -- false for synthesis, true for simulation
     g_psram_bits           : natural;
     g_ram_size             : natural;
     g_gpio_inout           : natural;
@@ -626,6 +626,7 @@ architecture rtl of monster is
   signal clk_20m          : std_logic;
   signal clk_update       : std_logic;
   signal rstn_sys         : std_logic;
+  signal rst_sys          : std_logic;
   signal rstn_update      : std_logic;
   signal clk_200m         : std_logic;
 
@@ -708,6 +709,8 @@ architecture rtl of monster is
 
   -- END OF Master signals
   ----------------------------------------------------------------------------------
+
+  signal drop_link : std_logic;
 
   ----------------------------------------------------------------------------------
   -- White Rabbit signals ----------------------------------------------------------
@@ -980,6 +983,8 @@ begin
       g_clocks => 4,
       g_areset => f_pick(g_simulation, 16, f_pick(c_is_arria5, 100, 1)*1024),
       g_stable => f_pick(g_simulation, 16, f_pick(c_is_arria5, 100, 1)*1024))
+      --g_areset => f_pick(c_is_arria5, 100, 1)*1024,
+      --g_stable => f_pick(c_is_arria5, 100, 1)*1024)
     port map(
       clk_free_i    => clk_free,
       rstn_i        => core_rstn_i,
@@ -1139,20 +1144,20 @@ begin
   end generate;
 
   ref_a10 : if (c_is_arria10 and not(g_a10_use_ref_fpll)) generate
-    ref_inst : ref_pll10 port map(
-      rst         => pll_rst,
-      refclk      => core_clk_125m_pllref_i, -- 125 MHz
-      outclk_2    => clk_ref0, --  125 MHz
-      outclk_3    => clk_ref1, --  200 MHz
-      outclk_4    => clk_ref2, --   25 MHz
-      lvds_clk(0) => clk_ref3, -- 1000 MHz
-      loaden(0)   => clk_ref4, -- 125 MHz, 1/8 duty, -1.5ns phase
-      locked      => ref_locked,
-      scanclk     => clk_free,
-      cntsel      => phase_sel,
-      phase_en    => phase_step,
-      updn        => '1',              -- positive phase shift (widen period)
-      phase_done  => phase_done);
+    --ref_inst : ref_pll10 port map(
+    --  rst         => pll_rst,
+    --  refclk      => core_clk_125m_pllref_i, -- 125 MHz
+    --  outclk_2    => clk_ref0, --  125 MHz
+    --  outclk_3    => clk_ref1, --  200 MHz
+    --  outclk_4    => clk_ref2, --   25 MHz
+    --  lvds_clk(0) => clk_ref3, -- 1000 MHz
+    --  loaden(0)   => clk_ref4, -- 125 MHz, 1/8 duty, -1.5ns phase
+    --  locked      => ref_locked,
+    --  scanclk     => clk_free,
+    --  cntsel      => phase_sel,
+    --  phase_en    => phase_step,
+    --  updn        => '1',              -- positive phase shift (widen period)
+    --  phase_done  => phase_done);
   end generate;
 
   ref_fa10 : if (c_is_arria10 and g_a10_use_ref_fpll) generate
@@ -1513,7 +1518,7 @@ end generate;
         vme_write_n_i   => vme_write_n_i,
         vme_am_i        => vme_am_i,
         vme_ds_n_i      => vme_ds_n_i,
-        vme_ga_i        => b"00" & vme_ga_i,
+        vme_ga_i        => "000000",--b"00" & vme_ga_i,
         vme_berr_o      => s_vme_berr_o,
         vme_dtack_n_o   => s_vme_dtack_n_o,
         vme_retry_n_o   => open,
@@ -2024,6 +2029,7 @@ end generate;
       dac_sclk_o    => wr_dac_sclk_o,
       dac_din_o     => wr_dac_din_o);
 
+  drop_link <= (phy_rst or wbar_phy_rst);
   phy_a2 : if c_is_arria2 generate
     phy : wr_arria2_phy
       port map (
@@ -2034,7 +2040,7 @@ end generate;
         rst_i          => pll_rst,
         locked_o       => phy_ready,
         loopen_i       => phy_loopen,
-        drop_link_i    => (phy_rst or wbar_phy_rst),
+        drop_link_i    => drop_link,
         tx_clk_i       => clk_ref,
         tx_data_i      => phy_tx_data,
         tx_k_i         => phy_tx_k(0),
@@ -2060,7 +2066,7 @@ end generate;
         clk_phy_i      => phy_clk,
         ready_o        => phy_ready,
         loopen_i       => phy_loopen,
-        drop_link_i    => (phy_rst or wbar_phy_rst),
+        drop_link_i    => drop_link,
         tx_clk_o       => open,
         tx_data_i      => phy_tx_data,
         tx_k_i         => phy_tx_k,
@@ -2100,9 +2106,9 @@ end generate;
         reconfig_readdata_o    => reconfig_readdata,
         reconfig_waitrequest_o => reconfig_waitrequest,
         reconfig_clk_i(0)      => clk_sys,
-        reconfig_reset_i(0)    => not(rstn_sys),
+        reconfig_reset_i(0)    => rst_sys,
         ready_o                => phy_ready,
-        drop_link_i            => (phy_rst or wbar_phy_rst),
+        drop_link_i            => drop_link,
         loopen_i               => phy_loopen,
         sfp_los_i              => sfp_los_i,
         tx_clk_o               => phy_tx_clk,
@@ -2122,6 +2128,7 @@ end generate;
         phy_rx_ready_o <= phy_ready;
         phy_tx_ready_o <= phy_ready and not(phy_tx_enc_err);
   end generate phy_a10;
+  rst_sys <= not rstn_sys;
 
   dual_port_wr : if g_dual_port_wr generate
     phy_aux_a10 : if c_is_arria10 generate
@@ -2147,7 +2154,7 @@ end generate;
           reconfig_readdata_o    => open,
           reconfig_waitrequest_o => open,
           reconfig_clk_i(0)      => clk_sys,
-          reconfig_reset_i(0)    => not(rstn_sys),
+          reconfig_reset_i(0)    => rst_sys,
           ready_o                => phy_aux_ready,
           drop_link_i            => phy_aux_rst,
           loopen_i               => phy_aux_loopen,
@@ -3022,12 +3029,13 @@ end generate;
       ctrl_slave_o    => dev_bus_master_i(dev_slaves'pos(devs_mil_ctrl)),
       ctrl_slave_i    => dev_bus_master_o(dev_slaves'pos(devs_mil_ctrl)),
       --irq lines
-      irq_i           => (mil_every_ms_intr_o,
-                          mil_ev_fifo_ne_intr_o,
-                          mil_dly_intr_o,
-                          mil_data_req_intr_o,
-                          mil_data_rdy_intr_o,
-                          mil_interlock_intr_o)
+      irq_i           => "000000"
+                          --(mil_every_ms_intr_o,
+                          --mil_ev_fifo_ne_intr_o,
+                          --mil_dly_intr_o,
+                          --mil_data_req_intr_o,
+                          --mil_data_rdy_intr_o,
+                          --mil_interlock_intr_o)
       );
 
     mil : wb_mil_scu
@@ -3057,7 +3065,7 @@ end generate;
         ME_TD               => mil_me_td_i,
         Mil_BOI             => mil_boi_i,
         Mil_BZI             => mil_bzi_i,
-        Sel_Mil_Drv         => mil_sel_drv_o,
+        Sel_Mil_Drv         => open,--mil_sel_drv_o,
         nSel_Mil_Rcv        => mil_nsel_rcv_o,
         Mil_nBOO            => mil_nboo_o,
         Mil_nBZO            => mil_nbzo_o,
@@ -3177,7 +3185,7 @@ end generate;
         g_num_interfaces => g_num_i2c_interfaces)
       port map (
         wb_clk_i     => clk_sys,
-        wb_rst_i     => not(rstn_sys),
+        wb_rst_i     => rst_sys,
         arst_i       => '1',
         wb_adr_i     => dev_bus_master_o(dev_slaves'pos(devs_i2c_wrapper)).adr(4 downto 2),
         wb_dat_i     => dev_bus_master_o(dev_slaves'pos(devs_i2c_wrapper)).dat(7 downto 0),

@@ -113,7 +113,7 @@ package monster_pkg is
       g_en_i2c_wrapper       : boolean := false;
       g_num_i2c_interfaces   : integer := 1;
       g_dual_port_wr         : boolean := false;
-      g_io_table             : t_io_mapping_table_arg_array(natural range <>);
+      g_io_table             : t_io_mapping_table_arg_array;
       g_en_pmc               : boolean := false;
       g_a10_use_sys_fpll     : boolean := false;
       g_a10_use_ref_fpll     : boolean := false;
