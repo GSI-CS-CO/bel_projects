@@ -77,6 +77,7 @@ entity monster is
     g_family               : string; -- "Arria II", "Arria V", or "Arria 10"
     g_project              : string;
     g_flash_bits           : natural;
+    g_simulation           : boolean; -- false for synthesis, true for simulation
     g_psram_bits           : natural;
     g_ram_size             : natural;
     g_gpio_inout           : natural;
@@ -977,8 +978,8 @@ begin
     generic map(
       g_plls   => 4,
       g_clocks => 4,
-      g_areset => f_pick(c_is_arria5, 100, 1)*1024,
-      g_stable => f_pick(c_is_arria5, 100, 1)*1024)
+      g_areset => f_pick(g_simulation, 16, f_pick(c_is_arria5, 100, 1)*1024),
+      g_stable => f_pick(g_simulation, 16, f_pick(c_is_arria5, 100, 1)*1024))
     port map(
       clk_free_i    => clk_free,
       rstn_i        => core_rstn_i,
@@ -1577,7 +1578,8 @@ end generate;
     usb_fd_io <= s_usb_fd_o when s_usb_fd_oen='1' else (others => 'Z');
     usb : ez_usb
       generic map(
-        g_sdb_address => c_top_sdb_address)
+        g_sdb_address => c_top_sdb_address,
+        g_sys_freq    => f_pick(g_simulation, 10, 65000)) -- this is 65000 kHz for g_simulation=false, and 10 kHz for g_simulation=true
       port map(
         clk_sys_i => clk_sys,
         rstn_i    => rstn_sys,
