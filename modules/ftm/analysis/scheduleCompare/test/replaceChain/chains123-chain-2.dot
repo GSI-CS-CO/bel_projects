@@ -1,0 +1,25 @@
+digraph G {
+graph [
+name="chains123-compact"
+]
+a11;
+x;
+y;
+"a21
+a22";
+"a31
+a32
+a33";
+x->a11 ;
+a11->y ;
+x->"a21
+a22" ;
+"a21
+a22"->y ;
+x->"a31
+a32
+a33" ;
+"a31
+a32
+a33"->y ;
+}

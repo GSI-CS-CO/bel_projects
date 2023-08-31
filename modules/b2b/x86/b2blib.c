@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 2-July-2021
+ *  version : 23-Mar-2023
  *
  * library for b2b
  *
@@ -56,11 +56,16 @@
 #define GSI           0x00000651
 #define LM32_RAM_USER 0x54111351
 
+// experimental hackish for debugging
+#define DEBUGFNAME    "/tmp/b2blib.log" // name of logfile
+
 // public variables
 eb_socket_t  eb_socket;                 // EB socket
 eb_address_t lm32_base;                 // lm32
 eb_address_t b2b_cmd;                   // command, write
 eb_address_t b2b_state;                 // state of state machine
+uint32_t     b2b_flagDebug = 0;         // flag debug
+FILE         *logfile = NULL;           // log file 
 
 // application specific stuff
 // set values
@@ -77,6 +82,10 @@ eb_address_t b2b_set_fFinTune;          // flag: use fine tune
 eb_address_t b2b_set_fMBTune;           // flag: use multi-beat tune
 eb_address_t b2b_set_sidEInj;           // SID for transfer; value must equal sidExt    
 eb_address_t b2b_set_gidInj;            // b2b GID offset of injection ring
+eb_address_t b2b_set_lsidInj;           // LSA SID of injection ring
+eb_address_t b2b_set_lbpidInj;          // LSA BPID of injection ring
+eb_address_t b2b_set_lparamInjHi;       // LSA param of injection ring, high bits
+eb_address_t b2b_set_lparamInjLo;       // LSA param of injection ring, low bits
 eb_address_t b2b_set_TH1InjHi;          // period of h=1 injection, high bits
 eb_address_t b2b_set_TH1InjLo;          // period of h=1 injection, low bits
 eb_address_t b2b_set_nHInj;             // harmonic number of injection RF
@@ -101,14 +110,13 @@ eb_address_t b2b_get_cTrigExt;          // kicker correction extraction
 eb_address_t b2b_get_cTrigInj;          // kicker correction injection
 eb_address_t b2b_get_comLatency;        // latency for message transfer via ECA
 
-
 #define WAITCMDDONE COMMON_DEFAULT_TIMEOUT * 1000 // use default timeout and convert to us to be sure the command is processed
 
 uint64_t b2b_getSysTime()
 {
   struct timeval tv;
   gettimeofday(&tv,NULL);
-  return tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
+  return tv.tv_sec * (uint64_t)1000000000+ tv.tv_usec * (uint64_t)1000;
 } // b2b_getSysTime()
 
 
@@ -123,6 +131,7 @@ const char* b2b_status_text(uint32_t code)
     case B2B_STATUS_NORF                 : sprintf(message, "error %d, %s", code, "no RF signal detected"); break;
     case B2B_STATUS_LATEMESSAGE          : sprintf(message, "error %d, %s", code, "late timing message received"); break;
     case B2B_STATUS_NOKICK               : sprintf(message, "error %d, %s", code, "no kicker signal detected"); break;
+    case B2B_STATUS_BADSETTING           : sprintf(message, "error %d, %s", code, "bad setting data"); break;
     default                              : sprintf(message, "%s", comlib_statusText(code)); break;
   } // switch code
   
@@ -168,7 +177,70 @@ void b2b_t2secs(uint64_t ts, uint32_t *secs, uint32_t *nsecs)
   *nsecs = (uint32_t)(ts % 1000000000);
   *secs  = (uint32_t)(ts / 1000000000);
 } // b2b_t2secs
+
+
+double b2b_fixTS(double tsDiff, double   corr, uint64_t TH1As)
+{
+  double  ts0;                                         // timestamp with correction removed [ns]
+  double  dtMatch;
+  int64_t ts0as;                                       // t0 [as]
+  int64_t remainder;                     
+  int64_t half;
+  int     flagNeg; 
+
+  if (TH1As == 0) return tsDiff;                       // can't fix
+  ts0  = tsDiff - corr;
+  if (ts0 < 0) {ts0 = -ts0; flagNeg = 1;}              // make this work for negative numbers too
+  else         flagNeg = 0;
+
+  ts0as     = (int64_t)(ts0 * 1000000000.0);
+  half      = TH1As >> 1;
+  remainder = ts0as % TH1As;                                 
+  if (remainder > half) ts0as = remainder - TH1As;
+  else                  ts0as = remainder;
+  dtMatch   = (double)ts0as / 1000000000.0;
   
+  if (flagNeg) dtMatch = -dtMatch;
+
+  return dtMatch + corr;                               // we have to add back the correction (!)
+} //b2b_fixTS
+
+
+void b2b_log(char *message){
+  uint64_t ts;
+  uint32_t secs;
+  uint32_t nsecs;
+  uint32_t msecs;
+  char     mess[81];
+  int      len;
+
+  if (!logfile) return;
+
+  ts    = b2b_getSysTime();
+  b2b_t2secs(ts, &secs, &nsecs);
+  msecs = nsecs / 1000000;
+
+  len = strlen(message);
+  if (len > 80) len = 80;
+    
+  strncat(mess, message, len);
+  fprintf(logfile, "%12u.%03u: %s\n", secs, msecs, message);
+  fflush(logfile);
+} // b2b_log
+
+void b2b_debug(uint32_t flagDebug)
+{
+  if (flagDebug > 0) {
+    if (!logfile) logfile = fopen(DEBUGFNAME, "a");
+    if (logfile) b2b_flagDebug = 1;
+    else         b2b_flagDebug = 0;
+  } // if flagdebug
+  else {
+    b2b_flagDebug = 0;
+    if (logfile) fclose(logfile);
+  } // else flagdebug
+} // b2b_debug
+
 
 uint32_t b2b_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t cpu, uint32_t *address)
 {
@@ -177,6 +249,9 @@ uint32_t b2b_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t cpu
   struct sdb_device   sdbDevice;                           // instantiated lm32 core
   int                 nDevices;                            // number of instantiated cores
 
+  // b2b_debug(1);                                            /* enable/disable this for implicit debugging */
+  b2b_log("open firmware");
+  
   *ebDevice = 0x0;
   if (cpu != 0) return COMMON_STATUS_OUTOFRANGE;           // chk, only support 1st core (this is a quick hack)
   nDevices = 1;
@@ -205,7 +280,11 @@ uint32_t b2b_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t cpu
   b2b_set_fFinTune     = lm32_base + SHARED_OFFS + B2B_SHARED_SET_FFINTUNE;
   b2b_set_fMBTune      = lm32_base + SHARED_OFFS + B2B_SHARED_SET_FMBTUNE;
   b2b_set_sidEInj      = lm32_base + SHARED_OFFS + B2B_SHARED_SET_SIDEINJ;     
-  b2b_set_gidInj       = lm32_base + SHARED_OFFS + B2B_SHARED_SET_GIDINJ;     
+  b2b_set_gidInj       = lm32_base + SHARED_OFFS + B2B_SHARED_SET_GIDINJ;
+  b2b_set_lsidInj      = lm32_base + SHARED_OFFS + B2B_SHARED_SET_LSIDINJ;
+  b2b_set_lbpidInj     = lm32_base + SHARED_OFFS + B2B_SHARED_SET_LBPIDINJ;
+  b2b_set_lparamInjHi  = lm32_base + SHARED_OFFS + B2B_SHARED_SET_LPARAMINJHI;
+  b2b_set_lparamInjLo  = lm32_base + SHARED_OFFS + B2B_SHARED_SET_LPARAMINJLO;
   b2b_set_TH1InjHi     = lm32_base + SHARED_OFFS + B2B_SHARED_SET_TH1INJHI;
   b2b_set_TH1InjLo     = lm32_base + SHARED_OFFS + B2B_SHARED_SET_TH1INJLO;
   b2b_set_nHInj        = lm32_base + SHARED_OFFS + B2B_SHARED_SET_NHINJ;
@@ -230,7 +309,7 @@ uint32_t b2b_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t cpu
 
   // do this just at the very end
   *ebDevice = (uint64_t)eb_device;
-  
+
   return COMMON_STATUS_OK;
 } // b2b_firmware_open
 
@@ -240,12 +319,16 @@ uint32_t b2b_firmware_close(uint64_t ebDevice)
   eb_status_t status;
   eb_device_t eb_device;
 
+  b2b_log("close firmware");
+  
   if (!ebDevice) return COMMON_STATUS_EB;
   eb_device = (eb_device_t)ebDevice;
   
   // close Etherbone device and socket
   if ((status = eb_device_close(eb_device)) != EB_OK) return COMMON_STATUS_EB;
   if ((status = eb_socket_close(eb_socket)) != EB_OK) return COMMON_STATUS_EB;
+
+  b2b_debug(0);
 
   return COMMON_STATUS_OK;
 } // b2b_firmware_close
@@ -274,7 +357,7 @@ uint32_t b2b_version_library(uint32_t *version)
 } // b2b_version_library
 
 
-void b2b_printDiag(uint32_t sid, uint32_t gid, uint32_t mode, uint64_t TH1Ext, uint32_t nHExt, uint64_t TH1Inj, uint32_t nHInj, uint64_t TBeat, int32_t cPhase, int32_t cTrigExt, int32_t cTrigInj, int32_t comLatency)
+void b2b_printDiag(uint32_t sid, uint32_t gid, uint32_t mode, uint64_t TH1Ext, uint32_t nHExt, uint64_t TH1Inj, uint32_t nHInj, uint64_t TBeat, float cPhase, float cTrigExt, float cTrigInj, int32_t comLatency)
 {
   printf("b2b: info  ...\n\n");
 
@@ -286,19 +369,24 @@ void b2b_printDiag(uint32_t sid, uint32_t gid, uint32_t mode, uint64_t TH1Ext, u
   printf("harmonic number extr. : %012d\n"     , nHExt);
   printf("harmonic number inj.  : %012d\n"     , nHInj);
   printf("period of beating     : %012.6f us\n", (double)TBeat/1000000000000.0);
-  printf("adjust RF-phase       : %012d ns\n"  , cPhase);
-  printf("adjust ext kicker     : %012d ns\n"  , cTrigExt);
-  printf("adjust inj kicker     : %012d ns\n"  , cTrigInj);
+  printf("adjust RF-phase       : %012.3f ns\n", cPhase);
+  printf("adjust ext kicker     : %012.3f ns\n", cTrigExt);
+  printf("adjust inj kicker     : %012.3f ns\n", cTrigInj);
   printf("communication latency : %012.3f us\n", (double)comLatency/1000.0);
 } // b2b_printDiags
 
 
 uint32_t b2b_info_read(uint64_t ebDevice, uint32_t *sid, uint32_t *gid, uint32_t *mode, uint64_t *TH1Ext, uint32_t *nHExt, uint64_t *TH1Inj, uint32_t *nHInj, uint64_t *TBeat, int32_t *cPhase, int32_t *cTrigExt, int32_t *cTrigInj, int32_t *comLatency, int printFlag)
 {
-  eb_cycle_t  eb_cycle;
-  eb_status_t eb_status;
-  eb_device_t eb_device;
-  eb_data_t   data[30];
+  eb_cycle_t   eb_cycle;
+  eb_status_t  eb_status;
+  eb_device_t  eb_device;
+  eb_data_t    data[30];
+
+  fdat_t tmp;
+  float fCPhase;
+  float fCTrigExt;
+  float fCTrigInj;
 
   if (!ebDevice) return COMMON_STATUS_EB;
   eb_device = (eb_device_t)ebDevice;
@@ -332,12 +420,18 @@ uint32_t b2b_info_read(uint64_t ebDevice, uint32_t *sid, uint32_t *gid, uint32_t
   *nHInj         = data[8];
   *TBeat         = (uint64_t)(data[9]) << 32;
   *TBeat        += data[10];
-  *cPhase        = data[11];
-  *cTrigExt      = data[12];
-  *cTrigInj      = data[13];
+  tmp.data       = data[11];            // copy four bytes
+  *cPhase        = (int32_t)(tmp.f);    // intermediate solution: convert to i32; later convert to double
+  fCPhase        = tmp.f;
+  tmp.data       = data[12];            // see above ...
+  *cTrigExt      = (int32_t)(tmp.f);
+  fCTrigExt      = tmp.f;
+  tmp.data       = data[13];            // see above ...
+  *cTrigInj      = (int32_t)(tmp.f);
+  fCTrigInj      = tmp.f;
   *comLatency    = data[14];
 
-  if (printFlag) b2b_printDiag(*sid, *gid, *mode, *TH1Ext, *nHExt, *TH1Inj, *nHInj, *TBeat, *cPhase, *cTrigExt, *cTrigInj, *comLatency);
+  if (printFlag) b2b_printDiag(*sid, *gid, *mode, *TH1Ext, *nHExt, *TH1Inj, *nHInj, *TBeat, fCPhase, fCTrigExt, fCTrigInj, *comLatency);
   
   return COMMON_STATUS_OK;
 } // b2b_info_read
@@ -368,6 +462,12 @@ uint32_t b2b_context_ext_upload(uint64_t ebDevice, uint32_t sid, uint32_t gid, u
   eb_status_t  eb_status;    // eb status
   uint32_t     gidExt;       // b2b group ID
   uint64_t     TH1;          // revolution period [as]
+  char         buff[100];
+
+  fdat_t tmp;
+
+  sprintf(buff, "ext_upload: sid %u, gid %u, mode %u", sid, gid, mode);
+  // b2b_log("ext upload start");
   
   if (!ebDevice) return COMMON_STATUS_EB;
 
@@ -402,13 +502,17 @@ uint32_t b2b_context_ext_upload(uint64_t ebDevice, uint32_t sid, uint32_t gid, u
   eb_cycle_write(eb_cycle, b2b_set_TH1ExtHi,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1 >> 32));
   eb_cycle_write(eb_cycle, b2b_set_TH1ExtLo,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1 & 0xffffffff));
   eb_cycle_write(eb_cycle, b2b_set_nHExt,         EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)nH);
-  eb_cycle_write(eb_cycle, b2b_set_cTrigExt,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)((uint32_t)cTrig));
+  tmp.f = (float)cTrig;
+  eb_cycle_write(eb_cycle, b2b_set_cTrigExt,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(tmp.data));
   eb_cycle_write(eb_cycle, b2b_set_nBuckExt,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)((uint32_t)nBucket));
-  eb_cycle_write(eb_cycle, b2b_set_cPhase,        EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)((uint32_t)cPhase));
+  tmp.f = (float)cPhase;
+  eb_cycle_write(eb_cycle, b2b_set_cPhase,        EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(tmp.data));
   eb_cycle_write(eb_cycle, b2b_set_fFinTune,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)fFineTune);
   eb_cycle_write(eb_cycle, b2b_set_fMBTune,       EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)fMBTune);
   if ((eb_status = eb_cycle_close(eb_cycle)) != EB_OK) return COMMON_STATUS_EB;
 
+  b2b_log(buff);
+  
   return COMMON_STATUS_OK;
 } // b2b_context_ext_upload
 
@@ -419,6 +523,16 @@ uint32_t b2b_context_inj_upload(uint64_t ebDevice, uint32_t sidExt, uint32_t gid
   eb_status_t  eb_status;    // eb status
   uint32_t     gidInj;       // b2b group ID
   uint64_t     TH1;          // revolution period [as]
+  char         buff[100];
+
+  // tmporary variables, should become parameters of this routine
+  uint32_t     sid=1;        // LSA SID
+  uint32_t     bpid=2;       // LSA bpid
+  uint64_t     param=3;      // LSA parameter
+
+  fdat_t tmp;
+
+  //b2b_log("inj_upload start");
   
   if (!ebDevice) return COMMON_STATUS_EB;
 
@@ -446,13 +560,21 @@ uint32_t b2b_context_inj_upload(uint64_t ebDevice, uint32_t sidExt, uint32_t gid
   if (eb_cycle_open(ebDevice, 0, eb_block, &eb_cycle) != EB_OK) return COMMON_STATUS_EB;
   eb_cycle_write(eb_cycle, b2b_set_sidEInj,       EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)sidExt);               // this looks funny but writing sidExt to the sidEInj register is not a bug
   eb_cycle_write(eb_cycle, b2b_set_gidInj,        EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)gidInj);
+  eb_cycle_write(eb_cycle, b2b_set_lsidInj,       EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)sid);
+  eb_cycle_write(eb_cycle, b2b_set_lbpidInj,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)bpid);
+  eb_cycle_write(eb_cycle, b2b_set_lparamInjHi,   EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(param >> 32));
+  eb_cycle_write(eb_cycle, b2b_set_lparamInjLo,   EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(param & 0xffffffff));
   eb_cycle_write(eb_cycle, b2b_set_TH1InjHi,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1 >> 32));
   eb_cycle_write(eb_cycle, b2b_set_TH1InjLo,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1 & 0xffffffff));
   eb_cycle_write(eb_cycle, b2b_set_nHInj,         EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)nH);
-  eb_cycle_write(eb_cycle, b2b_set_cTrigInj,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)((uint32_t)cTrig));
+  tmp.f = (float)cTrig;
+  eb_cycle_write(eb_cycle, b2b_set_cTrigInj,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(tmp.data));
   eb_cycle_write(eb_cycle, b2b_set_nBuckInj,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)((uint32_t)nBucket));
   if ((eb_status = eb_cycle_close(eb_cycle)) != EB_OK) return COMMON_STATUS_EB;
 
+  sprintf(buff, "inj_upload: sidExt %u, gid %u", sidExt, gid);
+  b2b_log(buff);
+  
   return COMMON_STATUS_OK;
 } // b2b_context_inj_upload
 
@@ -531,6 +653,8 @@ void b2b_cmd_submit(uint64_t ebDevice)
   eb_device = (eb_device_t)ebDevice;
   eb_device_write(eb_device, b2b_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)B2B_CMD_CONFSUBMIT, 0, eb_block);
   usleep(WAITCMDDONE); // wait for command execution to complete
+  b2b_log("cmd_submit done");
+
 } // b2b_cmd_submit
 
 

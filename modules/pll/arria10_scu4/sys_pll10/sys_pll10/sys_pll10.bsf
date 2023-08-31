@@ -96,7 +96,7 @@ refer to the applicable agreement for further details.
 		(text "clk" (rect 53 67 124 144)(font "Arial" (color 0 0 0)))
 		(text "reset" (rect 19 83 68 179)(font "Arial" (color 128 0 0)(font_size 9)))
 		(text "reset" (rect 53 107 136 224)(font "Arial" (color 0 0 0)))
-		(text " sys_pll10 " (rect 117 288 300 586)(font "Arial" ))
+		(text " system " (rect 125 288 298 586)(font "Arial" ))
 		(line (pt 48 32)(pt 112 32)(line_width 1))
 		(line (pt 112 32)(pt 112 288)(line_width 1))
 		(line (pt 48 288)(pt 112 288)(line_width 1))

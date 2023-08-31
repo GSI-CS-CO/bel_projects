@@ -1,15 +1,16 @@
 .PHONY: test fast clean
 
-all: test convertTime
-	
+all:
+	PYTHONPATH=../ python3 -m pytest $(OPTIONS)
+
 test:
-	PYTHONPATH=../ python3 -m pytest testCommandsHistory.py $(ARGS)
+	PYTHONPATH=../ python3 -m pytest test_CommandsHistory.py $(ARGS)
 
 convertTime:
-	PYTHONPATH=../ python3 -m pytest testConvertTimestamp.py
+	PYTHONPATH=../ python3 -m pytest test_ConvertTimestamp.py
 
 fast:
-	PYTHONPATH=../ python3 -m unittest testCommandsHistory.py --failfast
+	PYTHONPATH=../ python3 -m unittest test_CommandsHistory.py --failfast
 
 clean:
 	rm -r CommandsHistory_Fri_Feb__5_13.33.22_2021*

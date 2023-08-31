@@ -248,11 +248,11 @@ architecture rtl of ftm is
     ("MHDMR_SYOU ", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_LVDS)
   );
 
-  constant c_family  : string := "Arria V";
-  constant c_project : string := "ftm";
-  constant c_cores   : natural := 4;
-  constant c_initf_name 	: string := c_project & ".mif";
-  constant c_profile_name  : string := "medium_icache";
+  constant c_family       : string  := "Arria V";
+  constant c_project      : string  := "ftm";
+  constant c_initf_name   : string  := c_project & ".mif";
+  constant c_profile_name : string  := "medium_icache";
+  constant c_cores        : natural := 4;
 
 begin
 
@@ -277,9 +277,9 @@ begin
       g_lm32_MSIs           => 1,
       g_delay_diagnostics   => true,
       g_lm32_init_files     => f_string_list_repeat(c_initf_name, c_cores),
-		  g_lm32_profiles       => f_string_list_repeat(c_profile_name, c_cores),
+      g_lm32_profiles       => f_string_list_repeat(c_profile_name, c_cores),
       g_en_eca              => false
-		)
+    )
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
       core_clk_125m_pllref_i => clk_125m_pllref_i,

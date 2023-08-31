@@ -1,0 +1,12 @@
+digraph chainX {
+name = chainX
+1 [color=white label=""]
+2 [color=white label=""]
+3 [color=white label=""]
+4 [color=white label=""]
+1 -> a
+2 -> a
+a -> b -> c -> d -> e
+e -> 3
+e -> 4
+}

@@ -1,0 +1,4 @@
+digraph eight {
+name = eight
+a -> b -> c -> d -> a -> b1 -> c1 -> d1 -> a
+}

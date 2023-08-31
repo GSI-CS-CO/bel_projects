@@ -1,4 +1,5 @@
 DATAMASTER ?=$$DM
+SNOOP ?=saft-ctl tr0 -xv snoop 0 0 0
 DOT_FILE ?= pps-all-threads.dot
 PROTOCOL_FILE ?= pps-threads.log
 DURATION ?= 5
@@ -6,6 +7,8 @@ SNOOP_FILE ?= pps-snoop.txt
 # since timeout terminates saft-ctl, we need echo to get a status code of 0. Otherwise, make would stop.
 SNOOP_AND_LOG ?= $(SNOOP) $(DURATION) >> $(SNOOP_FILE)
 DUMP = eb-get -v $(DATAMASTER) 0x4120000/0x20000
+# start test1 from jenkins environment on tsl025.acc:
+#TEST_BINARY_DM_CMD="../bin/dm-cmd" TEST_BINARY_DM_SCHED="../bin/dm-sched" LD_LIBRARY_PATH="../lib/" SNOOP="ssh -t root@fel0069.acc.gsi.de 'saft-ctl tr1 -xv snoop 0 0 0'" DATAMASTER="tcp/fel0069.acc.gsi.de" make -C dmThreads/ test1
 
 test1:
 	dm-cmd $(DATAMASTER) halt

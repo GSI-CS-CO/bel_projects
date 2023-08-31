@@ -1,0 +1,14 @@
+digraph G {
+graph [
+_draw_=""
+bb=""
+name="chain2x3-compact"
+xdotversion=""
+]
+0 [_draw_="", _hdraw_="", _ldraw_="", beamin="", beamproc="", bpcstart="", bpentry="", bpexit="", bpid="", clear="", dst="", evtno="", fid="", gid="", height="", id="", label="node1
+node2
+node3", ovr="", par="", patentry="", patexit="", pattern="", pos="", prio="", qhi="", qil="", qlo="", reps="", reqnobeam="", res="", sid="", tabs="", target="", tef="", toffs="", tperiod="", tvalid="", twait="", type="", vacc="", wabs="", width=""];
+1 [_draw_="", _hdraw_="", _ldraw_="", beamin="", beamproc="", bpcstart="", bpentry="", bpexit="", bpid="", clear="", dst="", evtno="", fid="", gid="", height="", id="", label="node4
+node5
+node6", ovr="", par="", patentry="", patexit="", pattern="", pos="", prio="", qhi="", qil="", qlo="", reps="", reqnobeam="", res="", sid="", tabs="", target="", tef="", toffs="", tperiod="", tvalid="", twait="", type="", vacc="", wabs="", width=""];
+}

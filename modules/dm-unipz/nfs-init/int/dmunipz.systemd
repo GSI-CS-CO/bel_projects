@@ -1,0 +1,5 @@
+SERVICEA=dmunipz-logger.service
+cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
+systemctl daemon-reload
+
+systemctl start $SERVICEA

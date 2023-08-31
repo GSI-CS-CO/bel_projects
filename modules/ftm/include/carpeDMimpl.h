@@ -278,9 +278,9 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
 
             vEbwrs& startThr(vEbwrs& ew, uint8_t cpuIdx, uint8_t thrIdx); //Requests Thread to start
             vEbwrs& startPattern(vEbwrs& ew, const std::string& sPattern, uint8_t thrIdx, uint64_t t=0ULL); //Requests Pattern to start
-            vEbwrs& startPattern(vEbwrs& ew, const std::string& sPattern, uint64_t t=0ULL); //Requests Pattern to start on first free thread
+            //vEbwrs& startPattern(vEbwrs& ew, const std::string& sPattern, uint64_t t=0ULL); //Requests Pattern to start on first free thread
             vEbwrs& startNodeOrigin(vEbwrs& ew, const std::string& sNode, uint8_t thrIdx, uint64_t t=0ULL); //Requests thread <thrIdx> to start at node <sNode>
-            vEbwrs& startNodeOrigin(vEbwrs& ew, const std::string& sNode, uint64_t t=0ULL); //Requests a start at node <sNode>
+            //vEbwrs& startNodeOrigin(vEbwrs& ew, const std::string& sNode, uint64_t t=0ULL); //Requests a start at node <sNode>
             vEbwrs& stopPattern(vEbwrs& ew, const std::string& sPattern); //Requests Pattern to stop
             vEbwrs& stopNodeOrigin(vEbwrs& ew, const std::string& sNode); //Requests stop at node <sNode> (vEbwrs& ew, flow to idle)
             vEbwrs& abortPattern(vEbwrs& ew, const std::string& sPattern); //Immediately aborts a Pattern
@@ -297,16 +297,16 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
             vEbwrs& resetThrMsgCnt(vEbwrs& ew, uint8_t cpuIdx, uint8_t thrIdx);
             vEbwrs& blockAsyncClearQueues(vEbwrs& ew, const std::string& sTarget);
             vEbwrs& switching(vEbwrs& ew, const std::string& sTarget, const std::string& sDst);
-            vEbwrs& createNonQCommand(vEbwrs& ew, const std::string& type, const std::string& target);
+            vEbwrs& createNonQCommand(vEbwrs& ew, const std::string& type, const std::string& target, uint8_t cmdThr);
             vEbwrs& createLockCtrlCommand(vEbwrs& ew, const std::string& type, const std::string& target, bool lockRd, bool lockWr );
-            vEbwrs& createQCommand(vEbwrs& ew, const std::string& type, const std::string& target, uint8_t cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid);
-            vEbwrs& createWaitCommand(vEbwrs& ew, const std::string& type, const std::string& target, uint8_t cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, uint64_t cmdTwait, bool abswait );
+            vEbwrs& createQCommand(vEbwrs& ew, const std::string& type, const std::string& target, uint8_t cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, uint8_t cmdThr);
+            vEbwrs& createWaitCommand(vEbwrs& ew, const std::string& type, const std::string& target, uint8_t cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, uint64_t cmdTwait, bool abswait  );
             vEbwrs& createFlowCommand(vEbwrs& ew, const std::string& type, const std::string& target, const std::string& destination, uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, bool perma);
             vEbwrs& createFlushCommand(vEbwrs& ew, const std::string& type, const std::string& target, const std::string& destination, uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, bool qIl, bool qHi, bool qLo);
-            vEbwrs& createFullCommand(vEbwrs& ew, const std::string& type, const std::string& target, const std::string& destination, uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, bool perma, bool qIl, bool qHi, bool qLo, uint64_t cmdTwait, bool abswait, bool lockRd, bool lockWr);
+            vEbwrs& createFullCommand(vEbwrs& ew, const std::string& type, const std::string& target, const std::string& destination, uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, bool perma, bool qIl, bool qHi, bool qLo, uint64_t cmdTwait, bool abswait, bool lockRd, bool lockWr, uint8_t cmdThr);
             vEbwrs& createCommandBurst(vEbwrs& ew, Graph& g);
             vEbwrs& createMiniCommand(vEbwrs& ew, const std::string& targetName, uint8_t cmdPrio, mc_ptr mc);
-            vEbwrs& createCommand(vEbwrs& ew, const std::string& type, const std::string& target, const std::string& destination, uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, bool perma, bool qIl, bool qHi, bool qLo,  uint64_t cmdTwait, bool abswait, bool lockRd, bool lockWr );
+            vEbwrs& createCommand(vEbwrs& ew, const std::string& type, const std::string& target, const std::string& destination, uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, bool perma, bool qIl, bool qHi, bool qLo,  uint64_t cmdTwait, bool abswait, bool lockRd, bool lockWr, uint8_t cmdThr);
                 int send(vEbwrs& ew);
 /*
             //convenience wrappers without eb cycle control, send immediately

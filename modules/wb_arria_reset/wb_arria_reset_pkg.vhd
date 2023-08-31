@@ -35,6 +35,20 @@ component arria5_reset
   );
 end component;
 
+component arria10_reset
+  PORT
+  (
+    clock       : IN STD_LOGIC ;
+    param       : IN STD_LOGIC_VECTOR (2 DOWNTO 0);
+    read_param  : IN STD_LOGIC ;
+    reconfig    : IN STD_LOGIC ;
+    reset       : IN STD_LOGIC ;
+    reset_timer : IN STD_LOGIC ;
+    busy        : OUT STD_LOGIC ;
+    data_out    : OUT STD_LOGIC_VECTOR (31 DOWNTO 0)
+  );
+end component;
+
 component wb_arria_reset is
   generic (
             arria_family : string                := "Arria II";

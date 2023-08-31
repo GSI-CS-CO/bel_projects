@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 26-July-2021
+ *  version : 21-Feb-2023
  *
  * library for b2b
  *
@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define B2BLIB_VERSION 0x000301
+#define B2BLIB_VERSION 0x000426
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  B2BLIB_STATUS_OK                 0            // OK
@@ -75,72 +75,80 @@ extern "C" {
   enum evtTag{tagPme, tagPmi, tagPre, tagPri, tagKte, tagKti, tagKde, tagKdi, tagPde, tagPdi, tagStart, tagStop};
   typedef enum evtTag evtTag_t;
 
-  typedef struct{                                      // data type set values
+  // data type set values; data are in 'native units' used by the lm32 firmware
+  typedef struct{                                      
     uint32_t flag_nok;                                 // flag: data not ok; bit 0: mode, bit 1: ext_T, ...
     uint32_t mode;                                     // mode of B2B system
     uint64_t ext_T;                                    // extraction: period of h=1 Group DDS [as]
     uint32_t ext_h;                                    // extraction: harmonic number of rf
-    int32_t  ext_cTrig;                                // extraction: correction for extraction kicker [ns]
+    float    ext_cTrig;                                // extraction: correction for extraction kicker [ns]
     uint64_t inj_T;                                    // injection : ...
     uint32_t inj_h;
-    int32_t  inj_cTrig;
-    int32_t  cPhase;                                   // phase correction for b2b mode
+    float    inj_cTrig;
+    float    cPhase;                                   // phase correction for b2b mode
   } setval_t;
 
-  typedef struct{                                      // data type get values
+  // data type get values; data are in 'native units' used by the lm32 firmware
+  typedef struct{                                      
     uint32_t flag_nok;                                 // flag: data not ok; bit 0: ext_phase, bit 1: ext_dKickMon ...
-    uint64_t ext_phase;                                // extraction: phase of h=1 Group DDS [ns]
+    uint64_t ext_phase;                                // extraction: phase of h=1 Group DDS, ns part
+    int32_t  ext_phaseFract_ps;                        // extraction: fractional phase [ps]
+    int32_t  ext_phaseErr_ps;                          // extraction: uncertainty of phase [ps]
     int32_t  ext_dKickMon;                             // extraction: offset electronics monitor signal [ns]
     int32_t  ext_dKickProb;                            // extraction: offset magnet probe signal [ns]
-    int32_t  ext_diagPhase;                            // extraction: offset from expected h=1 to actual h=1 signal [ns]
-    int32_t  ext_diagMatch;                            // extraction: offset from calculated 'phase match' to actual h=1 signal [ns]
+    float    ext_diagPhase;                            // extraction: offset from expected h=1 to actual h=1 signal [ns]
+    float    ext_diagMatch;                            // extraction: offset from calculated 'phase match' to actual h=1 signal [ns]
     uint64_t inj_phase;                                // injection : ...
+    int32_t  inj_phaseFract_ps;
+    int32_t  inj_phaseErr_ps;  
     int32_t  inj_dKickMon;                             
     int32_t  inj_dKickProb;
-    int32_t  inj_diagPhase;
-    int32_t  inj_diagMatch;
-    uint32_t flagEvtRec;                               // flag for events received; pme, pmi, pre, pri, kte, kti, kde, kdi, pde, pdi
+    float    inj_diagPhase;
+    float    inj_diagMatch;
+    uint32_t flagEvtRec;                               // flag for events received; pme, pmi, pre, pri, kte, kti, kde, kdi, pde, pdi, start, stop
     uint32_t flagEvtErr;                               // error flag;               pme, pmi, ...
     uint32_t flagEvtLate;                              // flag for events late;     pme, pmi, ...
-    uint64_t tCBS;                                     // deadline of CMD_B2B_START
-    int32_t  doneOff;                                  // offset from EKS deadline to time when CBU sends KTE
-    int32_t  preOff;                                   // offset from EKS to measured extraction phase
-    int32_t  priOff;                                   // offset from EKS to measured injection phase
-    int32_t  kteOff;                                   // offset from EKS to KTE deadline
-    int32_t  ktiOff;                                   // offset from EKS to KTI deadline
+    uint64_t tCBS;                                     // deadline of CMD_B2B_START [ns]
+    int32_t  finOff;                                   // offset from CBS deadline to time when CBU sends KTE [ns]
+    int32_t  prrOff;                                   // offset from CBS to time when CBU received all phase results
+    int32_t  preOff;                                   // offset from CBS to measured extraction phase [ns]
+    int32_t  priOff;                                   // offset from CBS to measured injection phase [ns]
+    int32_t  kteOff;                                   // offset from CBS to KTE deadline [ns]
+    int32_t  ktiOff;                                   // offset from CBS to KTI deadline [ns]
   } getval_t;
 
-  typedef struct{
-    int32_t  ext_ddsOffAct;                            // extraction, gDDS measured offset: actual value
+  // data type for diagnostic values
+  typedef struct{                                      
+    double   ext_ddsOffAct;                            // extraction, gDDS measured offset: actual value
     uint32_t ext_ddsOffN;                              // number of values
     double   ext_ddsOffAve;                            // average value
     double   ext_ddsOffSdev;                           // standard deviation
-    int32_t  ext_ddsOffMin;                            // minimum value
-    int32_t  ext_ddsOffMax;                            // maximum value
-    int32_t  inj_ddsOffAct;                            // injection, gDDS measured offset: ...
+    double   ext_ddsOffMin;                            // minimum value
+    double   ext_ddsOffMax;                            // maximum value
+    double   inj_ddsOffAct;                            // injection, gDDS measured offset: ...
     uint32_t inj_ddsOffN;
     double   inj_ddsOffAve;
     double   inj_ddsOffSdev;
-    int32_t  inj_ddsOffMin;
-    int32_t  inj_ddsOffMax;
-    int32_t  phaseOffAct;                              // gDDS measured phase offset: ...
+    double   inj_ddsOffMin;
+    double   inj_ddsOffMax;
+    double   phaseOffAct;                              // gDDS measured phase offset: ...
     uint32_t phaseOffN;
     double   phaseOffAve;
     double   phaseOffSdev;
-    int32_t  phaseOffMin;
-    int32_t  phaseOffMax;
-    int32_t  ext_rfOffAct;                             // extraction, measured rf offset
+    double   phaseOffMin;
+    double   phaseOffMax;
+    double   ext_rfOffAct;                             // extraction, measured rf offset
     uint32_t ext_rfOffN;
     double   ext_rfOffAve;
     double   ext_rfOffSdev;
-    int32_t  ext_rfOffMin;
-    int32_t  ext_rfOffMax;
-    int32_t  inj_rfOffAct;                             // injection, measured rf offset
+    double   ext_rfOffMin;
+    double   ext_rfOffMax;
+    double   inj_rfOffAct;                             // injection, measured rf offset
     uint32_t inj_rfOffN;
     double   inj_rfOffAve;
     double   inj_rfOffSdev;
-    int32_t  inj_rfOffMin;
-    int32_t  inj_rfOffMax;
+    double   inj_rfOffMin;
+    double   inj_rfOffMax;
     uint32_t ext_rfNueN;                               // extraction, measured rf frequency
     double   ext_rfNueAve;
     double   ext_rfNueSdev;
@@ -153,56 +161,76 @@ extern "C" {
     double   inj_rfNueEst;
   } diagval_t;
 
-  typedef struct {    
-    int32_t  eks_doneOffAct;                           // offset from EKS deadline to time when we are done
-    uint32_t eks_doneOffN;
-    double   eks_doneOffAve;
-    double   eks_doneOffSdev;
-    int32_t  eks_doneOffMin;
-    int32_t  eks_doneOffMax;
-    int32_t  eks_preOffAct;                            // offset from EKS to measured extraction phase
-    uint32_t eks_preOffN;
-    double   eks_preOffAve;
-    double   eks_preOffSdev;
-    int32_t  eks_preOffMin;
-    int32_t  eks_preOffMax;
-    int32_t  eks_priOffAct;                            // offset from EKS to measured injection phase
-    uint32_t eks_priOffN;
-    double   eks_priOffAve;
-    double   eks_priOffSdev;
-    int32_t  eks_priOffMin;
-    int32_t  eks_priOffMax;
-    int32_t  eks_kteOffAct;                            // offset from EKS to KTE
-    uint32_t eks_kteOffN;
-    double   eks_kteOffAve;
-    double   eks_kteOffSdev;
-    int32_t  eks_kteOffMin;
-    int32_t  eks_kteOffMax;
-    int32_t  eks_ktiOffAct;                            // offset from EKS to KTE
-    uint32_t eks_ktiOffN;
-    double   eks_ktiOffAve;
-    double   eks_ktiOffSdev;
-    int32_t  eks_ktiOffMin;
-    int32_t  eks_ktiOffMax;
-    int32_t  ext_monRemAct;                            // remainder (ext_T, h=1) from phase to electronics monitor
+  // data type for status information
+  typedef struct {                                     
+    double   cbs_finOffAct;                            // offset from CBS deadline to time when we are done
+    uint32_t cbs_finOffN;
+    double   cbs_finOffAve;
+    double   cbs_finOffSdev;
+    double   cbs_finOffMin;
+    double   cbs_finOffMax;
+    double   cbs_prrOffAct;                            // offset from CBS deadline to time when we received the PRE message
+    uint32_t cbs_prrOffN;
+    double   cbs_prrOffAve;
+    double   cbs_prrOffSdev;
+    double   cbs_prrOffMin;
+    double   cbs_prrOffMax;
+    double   cbs_preOffAct;                            // offset from CBS to measured extraction phase
+    uint32_t cbs_preOffN;
+    double   cbs_preOffAve;
+    double   cbs_preOffSdev;
+    double   cbs_preOffMin;
+    double   cbs_preOffMax;
+    double   cbs_priOffAct;                            // offset from CBS to measured injection phase
+    uint32_t cbs_priOffN;
+    double   cbs_priOffAve;
+    double   cbs_priOffSdev;
+    double   cbs_priOffMin;
+    double   cbs_priOffMax;
+    double   cbs_kteOffAct;                            // offset from CBS to KTE
+    uint32_t cbs_kteOffN;
+    double   cbs_kteOffAve;
+    double   cbs_kteOffSdev;
+    double   cbs_kteOffMin;
+    double   cbs_kteOffMax;
+    double   cbs_ktiOffAct;                            // offset from CBS to KTE
+    uint32_t cbs_ktiOffN;
+    double   cbs_ktiOffAve;
+    double   cbs_ktiOffSdev;
+    double   cbs_ktiOffMin;
+    double   cbs_ktiOffMax;
+    double   ext_monRemAct;                            // remainder (ext_T, h=1) from phase to electronics monitor
     uint32_t ext_monRemN;
     double   ext_monRemAve;
     double   ext_monRemSdev;
-    int32_t  ext_monRemMin;
-    int32_t  ext_monRemMax;
-    int32_t  inj_monRemAct;                            // remainder (ext_T, h=1) from phase to electronics monitor
+    double   ext_monRemMin;
+    double   ext_monRemMax;
+    double   inj_monRemAct;                            // remainder (ext_T, h=1) from phase to electronics monitor
     uint32_t inj_monRemN;
     double   inj_monRemAve;
     double   inj_monRemSdev;
-    int32_t  inj_monRemMin;
-    int32_t  inj_monRemMax;
+    double   inj_monRemMin;
+    double   inj_monRemMax;
   } diagstat_t;
+
+  typedef struct {
+    double   nueSet;                                   // DDS set value; just a crosscheck [Hz]
+    double   nueGet;                                   // DDS measured value [Hz]
+    double   nueDiff;                                  // difference nue - nueSet [Hz]
+    double   nueErr;                                   // uncertainty of measured nue [Hz]
+    double   nuerChi2;                                 // reduced chi square
+    double   nueSlope;                                 // slope of measuared values [kHz/s], should be 0
+    double   nueSlopeErr;                              // uncertainty of measured slope
+    int32_t  nSeries;                                  // # of data series, a series contains multiple timestamps
+    int32_t  nTS;                                      // # total number of time stamps used for calculus
+    int32_t  nBadTS;                                   // # total number of bad (= dropped) time stamps
+  } nueMeas_t; 
     
   // ---------------------------------
   // helper routines
   // ---------------------------------
   
-  // get host system time (us)
+  // get host system time [ns]
   uint64_t b2b_getSysTime();
 
   // convert status code to status text
@@ -217,11 +245,21 @@ extern "C" {
   // convert LSA frequency to DDS frequency
   double b2b_flsa2fdds(double flsa                             // LSA frequency [Hz]
                        );
-  //convert timestamp to seconds and nanoseconds
-  void b2b_t2secs(uint64_t ts,                                 // timestamp
+  //convert timestamp [ns] to seconds and nanoseconds
+  void b2b_t2secs(uint64_t ts,                                 // timestamp [ns]
                   uint32_t *secs,                              // seconds
                   uint32_t *nsecs                              // nanosecons
                   );
+
+  // find rising edge of h=1 signal nearest to 0; result [ns]
+  double b2b_fixTS(double   tsDiff,                            // timestamp difference to '0' [ns]
+                   double   corr,                              // given (trigger) correction [ns]
+                   uint64_t TH1As                              // h=1 period [as]
+                   );
+
+  // enable debugging to trace library activity (experimental)
+  void b2b_debug(uint32_t flagDebug                            // 1: debug on; 0: debug off
+                 );
   
   // ---------------------------------
   // communication with lm32 firmware
@@ -248,6 +286,7 @@ extern "C" {
                                );
   
   // get info from firmware, returns error code
+  // after the 2022 beamtime, data types of cPhase, cTrigExt cTrigInj should change to *double
   uint32_t b2b_info_read(uint64_t ebDevice,                    // EB device
                          uint32_t *sid,                        // SID
                          uint32_t *gid,                        // GID
@@ -276,6 +315,7 @@ extern "C" {
                            );
   
   // uploads configuration for the extraction machine, returns error code
+  // after the 2022 beamtime, data types of cPhase, cTrig should change to double
   uint32_t b2b_context_ext_upload(uint64_t ebDevice,           // EB device
                                   uint32_t sid,                // SID
                                   uint32_t gid,                // GID of ring machine
@@ -291,6 +331,7 @@ extern "C" {
                                   );
 
   // uploads configuration for a injection machine, returns error code
+  // after the 2022 beamtime, data type of cTrig should change to double
   uint32_t b2b_context_inj_upload(uint64_t ebDevice,           // EB device
                                   uint32_t sidExt,             // SID; NB: this is the SID of the extraction machine!!!
                                   uint32_t gid,                // GID of ring machine

@@ -58,19 +58,27 @@ architecture fg_quad_scu_bus_arch of fg_quad_ifa is
   constant start_lo_rd_fc:    unsigned(7 downto 0) := x"a5";
   constant fw_version_rd_fc:  unsigned(7 downto 0) := x"a6";
   constant irq_act_rd_fc:     unsigned(7 downto 0) := x"a7";
+  constant stat_buffer_rd_fc: unsigned(7 downto 0) := x"a8";
+  constant stat_min_rd_fc:    unsigned(7 downto 0) := x"a9";
+  constant stat_max_rd_fc:    unsigned(7 downto 0) := x"aa";
+  constant stat_avg_rd_fc:    unsigned(7 downto 0) := x"ab";
 
 
-  signal  fg_cntrl_reg:     std_logic_vector(15 downto 0);
-  signal  fg_cntrl_rd_reg:  std_logic_vector(15 downto 0);
-  signal  coeff_a_reg:      std_logic_vector(15 downto 0);
-  signal  coeff_b_reg:      std_logic_vector(15 downto 0);
-  signal  start_value_reg:  std_logic_vector(31 downto 0);
-  signal  shift_reg:        std_logic_vector(15 downto 0);
-  signal  ramp_cnt_reg:     unsigned(31 downto 0);
-  signal  ramp_cnt_shadow:  unsigned(31 downto 0);
-  signal  tag_low_reg:      std_logic_vector(15 downto 0);
-  signal  tag_high_reg:     std_logic_vector(15 downto 0);
-  signal  irq_act_reg:      std_logic_vector(15 downto 0);
+  signal  fg_cntrl_reg        : std_logic_vector(15 downto 0);
+  signal  fg_cntrl_rd_reg     : std_logic_vector(15 downto 0);
+  signal  coeff_a_reg         : std_logic_vector(15 downto 0);
+  signal  coeff_b_reg         : std_logic_vector(15 downto 0);
+  signal  start_value_reg     : std_logic_vector(31 downto 0);
+  signal  shift_reg           : std_logic_vector(15 downto 0);
+  signal  ramp_cnt_reg        : unsigned(31 downto 0);
+  signal  ramp_cnt_shadow     : unsigned(31 downto 0);
+  signal  tag_low_reg         : std_logic_vector(15 downto 0);
+  signal  tag_high_reg        : std_logic_vector(15 downto 0);
+  signal  irq_act_reg         : std_logic_vector(15 downto 0);
+  signal  stat_min_value      : std_logic_vector(15 downto 0);
+  signal  stat_max_value      : std_logic_vector(15 downto 0);
+  signal  stat_avg_value      : std_logic_vector(15 downto 0);
+  signal  stat_buffered_value : std_logic_vector(15 downto 0);
 
   signal  wr_fg_cntrl:      std_logic;
   signal  rd_fg_cntrl:      std_logic;
@@ -88,6 +96,11 @@ architecture fg_quad_scu_bus_arch of fg_quad_ifa is
   signal  rd_fw_version:    std_logic;
   signal  wr_irq_act:       std_logic;
   signal  rd_irq_act:       std_logic;
+  signal  rd_stat_buffer:   std_logic;
+  signal  rd_stat_min:      std_logic;
+  signal  rd_stat_max:      std_logic;
+  signal  rd_stat_avg:      std_logic;
+
 
   signal  fg_is_running:    std_logic;
   signal  ramp_sec_fin:     std_logic;
@@ -142,6 +155,23 @@ begin
       fg_is_running       => fg_is_running
     );
 
+  statistics: fg_quad_statistics
+    generic map (
+      clk_in_hz => clk_in_hz
+    )
+    port map (
+      clk              => clk,
+      reset            => not nReset,
+      data_in          => "000000" & wr_irq_act & dreq,
+      reset_statistics => '0',
+      read_from_buffer => rd_stat_buffer and fc_str_edge,
+      min_value        => stat_min_value,
+      max_value        => stat_max_value,
+      avg_value        => stat_avg_value,
+      buffered_values  => stat_buffered_value,
+      fill_level       => open
+    );
+      
 
   adr_decoder: process (clk, nReset)
   begin
@@ -162,6 +192,11 @@ begin
       wr_brc_start      <= '0';
       rd_irq_act        <= '0';
       wr_irq_act        <= '0';
+      rd_stat_buffer    <= '0';
+      rd_stat_min       <= '0';
+      rd_stat_max       <= '0';
+      rd_stat_avg       <= '0';
+
 
 
     elsif rising_edge(clk) then
@@ -181,6 +216,10 @@ begin
       wr_brc_start      <= '0';
       rd_irq_act        <= '0';
       wr_irq_act        <= '0';
+      rd_stat_buffer    <= '0';
+      rd_stat_min       <= '0';
+      rd_stat_max       <= '0';
+      rd_stat_avg       <= '0';
 
 
       if fc_str = '1' then
@@ -227,6 +266,16 @@ begin
             rd_irq_act <= '1';
           when irq_act_wr_fc =>
             wr_irq_act <= '1';
+
+          when stat_buffer_rd_fc =>
+            rd_stat_buffer <= '1';
+          when stat_min_rd_fc =>
+            rd_stat_min <= '1';
+          when stat_max_rd_fc =>
+            rd_stat_max <= '1';
+          when stat_avg_rd_fc =>
+            rd_stat_avg <= '1';
+
           when others =>
             wr_fg_cntrl       <= '0';
             rd_fg_cntrl       <= '0';
@@ -244,6 +293,10 @@ begin
             wr_brc_start      <= '0';
             rd_irq_act        <= '0';
             wr_irq_act        <= '0';
+            rd_stat_buffer    <= '0';
+            rd_stat_min       <= '0';
+            rd_stat_max       <= '0';
+            rd_stat_avg       <= '0';
         end case;
       end if;
     end if;
@@ -422,8 +475,9 @@ begin
     user_rd_act := '0';
 
     if fc_str = '1' then
-      user_rd_act := rd_fg_cntrl or rd_coeff_a or rd_coeff_b or rd_start_value_h
-                  or rd_start_value_l or rd_shift or rd_fw_version or rd_irq_act;
+      user_rd_act := or_reduce(rd_fg_cntrl & rd_coeff_a & rd_coeff_b & rd_start_value_h &
+                                rd_start_value_l & rd_shift & rd_fw_version & rd_irq_act &
+                                rd_stat_buffer & rd_stat_min & rd_stat_max & rd_stat_avg);
     end if;
   end if;
   user_rd_active <= user_rd_act;
@@ -451,6 +505,14 @@ begin
       Rd_Port <= std_logic_vector(to_unsigned(fw_version, 16));
     elsif rd_irq_act = '1' then
       Rd_Port <= irq_act_reg;
+    elsif rd_stat_buffer = '1' then
+      Rd_Port <= stat_buffered_value;
+    elsif rd_stat_min = '1' then
+      Rd_Port <= stat_min_value;
+    elsif rd_stat_max = '1' then
+      Rd_Port <= stat_max_value;
+    elsif rd_stat_avg = '1' then
+      Rd_Port <= stat_avg_value;
     end if;
   end if;
 end process;

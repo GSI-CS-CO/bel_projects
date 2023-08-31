@@ -21,7 +21,7 @@
 #include "scu_mil.h"
 #include "dow_crc.h"
 #include "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"
-#include "../../../ip_cores/saftlib/drivers/eca_flags.h"
+#include "../../ip_cores/saftlib/src/eca_flags.h"
 #include "history.h"
 #include "scu_control_shared_mmap.h"
 
@@ -271,7 +271,7 @@ inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg, signe
       scub_base[OFFS(slot) + fg_base + FG_SHIFT]  = blk_data[3];
       scub_base[OFFS(slot) + fg_base + FG_STARTL] = blk_data[4];
       scub_base[OFFS(slot) + fg_base + FG_STARTH] = blk_data[5];
-      // no setvalue for scu bus daq 
+      // no setvalue for scu bus daq
       *setvalue = 0;
     } else if (slot & DEV_MIL_EXT) {
       // save coeff_c as setvalue
@@ -450,7 +450,7 @@ int configure_fg_macro(int channel) {
       scub_base[OFFS(slot) + SLAVE_INT_ENA] |= 0xc000; // enable fg1 and fg2 irq
     } else if (slot & DEV_MIL_EXT) {
       // check for PUR
-      //if((status = read_mil(scu_mil_base, &data, FC_IRQ_STAT | dev)) != OKAY)          dev_failure(status, 0, "check PUR"); 
+      //if((status = read_mil(scu_mil_base, &data, FC_IRQ_STAT | dev)) != OKAY)          dev_failure(status, 0, "check PUR");
       //if (!(data & 0x100)) {
         //SEND_SIG(SIG_DISARMED);
         //return 0;
@@ -458,7 +458,7 @@ int configure_fg_macro(int channel) {
       if ((status = write_mil(scu_mil_base, 1 << 13, FC_IRQ_MSK | dev)) != OKAY) dev_failure(status, slot & 0xf, "enable dreq"); //enable Data-Request
     } else if (slot & DEV_SIO) {
       // check for PUR
-      //if((status = scub_read_mil(scub_base, slot & 0xf, &data, FC_IRQ_STAT | dev)) != OKAY)          dev_failure(status, slot & 0xf, "check PUR"); 
+      //if((status = scub_read_mil(scub_base, slot & 0xf, &data, FC_IRQ_STAT | dev)) != OKAY)          dev_failure(status, slot & 0xf, "check PUR");
       //if (!(data & 0x100)) {
         //SEND_SIG(SIG_DISARMED);
         //return 0;
@@ -623,13 +623,13 @@ void disable_channel(unsigned int channel) {
 
   } else if (slot & DEV_MIL_EXT) {
     // disarm hardware
-    if((status = read_mil(scu_mil_base, &data, FC_CNTRL_RD | dev)) != OKAY)          dev_failure(status, 0, "disarm hw"); 
-    if((status = write_mil(scu_mil_base, data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY) dev_failure(status, 0, "disarm hw"); 
+    if((status = read_mil(scu_mil_base, &data, FC_CNTRL_RD | dev)) != OKAY)          dev_failure(status, 0, "disarm hw");
+    if((status = write_mil(scu_mil_base, data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY) dev_failure(status, 0, "disarm hw");
 
   } else if (slot & DEV_SIO) {
     // disarm hardware
-    if((status = scub_read_mil(scub_base, slot & 0xf, &data, FC_CNTRL_RD | dev)) != OKAY)          dev_failure(status, slot & 0xf, "disarm hw"); 
-    if((status = scub_write_mil(scub_base, slot & 0xf, data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY) dev_failure(status, slot & 0xf, "disarm hw"); 
+    if((status = scub_read_mil(scub_base, slot & 0xf, &data, FC_CNTRL_RD | dev)) != OKAY)          dev_failure(status, slot & 0xf, "disarm hw");
+    if((status = scub_write_mil(scub_base, slot & 0xf, data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY) dev_failure(status, slot & 0xf, "disarm hw");
   }
 
 
@@ -652,7 +652,7 @@ void updateTemp() {
   wrpc_w1_init();
   ReadTempDevices(0, &ext_id, &ext_temp);
   ReadTempDevices(1, &backplane_id, &backplane_temp);
-  BASE_ONEWIRE = (unsigned char *)wr_1wire_base; // important for PTP deamon 
+  BASE_ONEWIRE = (unsigned char *)wr_1wire_base; // important for PTP deamon
   wrpc_w1_init();
 }
 
@@ -775,7 +775,7 @@ void findECAQ()
 #define ECAQMAX           4         //  max number of ECA queues
 #define ECACHANNELFORLM32 2         //  this is a hack! suggest to implement proper sdb-records with info for queues
 
-  // stuff below needed to get WB address of ECA queue 
+  // stuff below needed to get WB address of ECA queue
   sdb_location ECAQ_base[ECAQMAX]; // base addresses of ECA queues
   uint32_t ECAQidx = 0;            // max number of ECA queues in the SoC
   uint32_t *tmp;
@@ -839,10 +839,10 @@ void ecaHandler()
     }
   }
 
-  // read flag and check if there was an action 
+  // read flag and check if there was an action
   flag         = *(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));
   if (flag & (0x0001 << ECA_VALID)) {
-    // read data 
+    // read data
     //evtIdHigh    = *(pECAQ + (ECA_QUEUE_EVENT_ID_HI_GET >> 2));
     //evtIdLow     = *(pECAQ + (ECA_QUEUE_EVENT_ID_LO_GET >> 2));
     //evtDeadlHigh = *(pECAQ + (ECA_QUEUE_DEADLINE_HI_GET >> 2));
@@ -865,7 +865,7 @@ void ecaHandler()
           scub_base[OFFS(13) + MIL_SIO3_TX_CMD] = 0x20ff;
         }
       break;
-    
+
       default:
       break;
     } // switch
@@ -949,7 +949,7 @@ void scu_bus_handler(int id) {
         add_msg(&msg_buf[0], DEVSIO, m);
         slave_acks |= DREQ;
       }
-      scub_base[OFFS(slave_nr) + SLAVE_INT_ACT] = slave_acks; // ack all pending irqs 
+      scub_base[OFFS(slave_nr) + SLAVE_INT_ACT] = slave_acks; // ack all pending irqs
     }
   }
   return;
@@ -1342,7 +1342,7 @@ int main(void) {
   else
     mprintf("SYS_CON found on adr: 0x%x\n", BASE_SYSCON);
 
-  timer_init(1); //needed by usleep_init() 
+  timer_init(1); //needed by usleep_init()
   usleep_init();
 
   if((int)cpu_info_base == ERROR_NOT_FOUND) {

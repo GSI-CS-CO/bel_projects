@@ -1,0 +1,8 @@
+SERVICEA=b2b-servsys-int-sis18-pm.service
+SERVICEB=b2b-servsys-int-sis18-cbu.service
+cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
+cp -a $MOUNTPOINT/systemd/$SERVICEB /lib/systemd/system
+systemctl daemon-reload
+
+systemctl start $SERVICEA
+systemctl start $SERVICEB

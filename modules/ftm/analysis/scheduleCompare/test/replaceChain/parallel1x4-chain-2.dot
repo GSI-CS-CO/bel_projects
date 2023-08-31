@@ -1,0 +1,19 @@
+digraph G {
+graph [
+name="parallel1x4-compact"
+]
+node1;
+node6;
+"node2
+...(2)
+node5" [label="node2
+...(2)
+node5"];
+node1->node6 ;
+node1->"node2
+...(2)
+node5" ;
+"node2
+...(2)
+node5"->node6 ;
+}

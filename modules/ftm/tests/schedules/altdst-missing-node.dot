@@ -1,0 +1,26 @@
+digraph g {
+name="altdst-missing-node"
+node[type=block cpu=0 patentry=1 patexit=1 tperiod=10000 qlo=1]
+  A [pattern="A"]
+  B [pattern="B"]
+  C [pattern="C"]
+  D [pattern="B"]
+  E [pattern="C"]
+  F [pattern="B"]
+  G [pattern="C"]
+  H [pattern="B"]
+  I [pattern="C"]
+  K [pattern="C"]
+  L [pattern="C"]
+
+  A -> B[type="altdst"]
+  A -> C[type="altdst"]
+  A -> D[type="altdst"]
+  A -> E[type="altdst"]
+  A -> F[type="altdst"]
+  A -> G[type="altdst"]
+  A -> H[type="altdst"]
+  A -> I[type="altdst"]
+  A -> K[type="defdst"]
+  A -> L[type="altdst"]
+}

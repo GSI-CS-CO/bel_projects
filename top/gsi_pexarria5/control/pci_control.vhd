@@ -7,6 +7,7 @@ use work.monster_pkg.all;
 use work.ramsize_pkg.c_lm32_ramsizes;
 
 entity pci_control is
+  generic(g_simulation : boolean := false);
   port(
     clk_20m_vcxo_i    : in std_logic;  -- 20MHz VCXO clock
     clk_125m_pllref_i : in std_logic;  -- 125 MHz PLL reference
@@ -246,18 +247,17 @@ architecture rtl of pci_control is
     ("MHDMR_CK200", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_LVDS),
     ("MHDMR_SYOU ", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_LVDS)
   );
-  constant c_family    : string := "Arria V";
-  constant c_project   : string := "pci_control";
-  constant c_cores         : natural:= 1;
-  constant c_initf_name 	: string := c_project & "_stub.mif";
-  constant c_profile_name  : string := "medium_icache_debug";
-  -- projectname is standard to ensure a stub mif that prevents unwanted scanning of the bus
-  -- multiple init files for n processors are to be seperated by semicolon ';'
+  constant c_family       : string := "Arria V";
+  constant c_project      : string := "pci_control";
+  constant c_initf_name   : string := c_project & "_stub.mif";
+  constant c_profile_name : string := "medium_icache_debug";
+  constant c_cores        : natural := 1;
 
 begin
 
   main : monster
     generic map(
+      g_simulation        => g_simulation,
       g_family            => c_family,
       g_project           => c_project,
       g_flash_bits        => 25,
@@ -279,7 +279,8 @@ begin
       g_lm32_cores        => c_cores,
       g_lm32_ramsizes     => c_lm32_ramsizes/4,
       g_lm32_init_files   => f_string_list_repeat(c_initf_name, c_cores),
-      g_lm32_profiles     => f_string_list_repeat(c_profile_name, c_cores)
+      g_lm32_profiles     => f_string_list_repeat(c_profile_name, c_cores),
+      g_en_asmi           => false
     )
     port map(
       core_clk_20m_vcxo_i     => clk_20m_vcxo_i,
@@ -332,8 +333,8 @@ begin
       usb_slwrn_o             => slwr,
       usb_pktendn_o           => pa(6),
       usb_fd_io               => fd,
-      ow_io(0)                => n15,
-      ow_io(1)                => 'Z',
+      --ow_io(0)                => n15,
+      --ow_io(1)                => 'Z',
       lcd_scp_o               => di(3),
       lcd_lp_o                => di(1),
       lcd_flm_o               => di(2),

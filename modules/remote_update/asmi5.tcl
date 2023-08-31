@@ -1,0 +1,1 @@
+qsys-generate asmi5

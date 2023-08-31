@@ -1,46 +1,77 @@
-# PREFIX  controls where programs and libraries get installed
+# PREFIX controls where programs and libraries get installed
 # Note: during compile (all), PREFIX must be set to the final installation path
+# If using the Yocto SDK, you must additionally use YOCTO=YES  
 # Example usage:
 #   'make clean'                                                                        (!!! this is important !!!)
-#   'make MASP=YES PRO=NO PREFIX= all'                                                  (hack: leave PREFIX empty for SCU path)
-#   'make MASP=YES PRO=YES PREFIX= all'                                                 (hack: leave PREFIX empty for SCU path)
+#   'make MASP=YES ENV=int YOCTO=YES PREFIX= all'                                       (hack: leave PREFIX empty for SCU path)
+#   'make MASP=YES ENV=pro YOCTO=YES PREFIX= all'                                       (hack: leave PREFIX empty for SCU path)
 # Example deploy:
-#   'make MASP=YES PRO=NO PREFIX= STAGING=/common/export/timing-rte/dmunipz-dev deploy' (hack: leave PREFIX empty for SCU path)
-#   'make MASP=YES PRO=YES PREFIX= STAGING=/common/export/timing-rte/dmunipz deploy'    (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= YOCTO=YES STAGING=/common/export/timing-rte/dmunipz-dev-yocto deploy' (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= YOCTO=YES STAGING=/common/export/timing-rte/dmunipz-yocto deploy'     (hack: leave PREFIX empty for SCU path)
+
+# install
 PREFIX      ?= /usr/local
 STAGING     ?=
-ARCH        ?= /x86_64
-# EB          ?= ../../ip_cores/etherbone-core/api
+
+# relative paths
 FW          ?= fw
 SW          ?= x86
-ASL         ?= asl
-#TARGETS     := firmware software
+SYSTEMD     ?= systemd
+NFSINIT     ?= nfs-init
+GENNFSINIT  ?= ../../../../ci_cd/scripts/yocto_helper/nfsinit/fec-init
 
-#EXTRA_FLAGS ?=
-#CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -I $(EB) -I $(FW)
-#LIBS        ?= -L $(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm
+# support Yocto SDK
+ifeq ($(YOCTO), YES)
+EB          ?= .
+ARCH        := /x86_64
+else
+EB          ?= ../../ip_cores/etherbone-core/api
+ARCH        ?= /x86_64
+endif
 
-all:: firmware software
+# set enviorinment, default is int
+ENV         ?= int
+ifeq ($(ENV), pro)
+PRO         ?= YES
+else
+PRO         ?= NO
+endif
 
-software:: 
+TARGETS := firmware software nfsinit
+
+all: $(TARGETS)
+
+software: 
 	$(MAKE) -C $(SW) all
 
 firmware:
 	$(MAKE) -C $(FW)
+
+nfsinit:
+	echo $(shell cd $(NFSINIT); $(GENNFSINIT)/generate-main.sh $(ENV); cd ..)
 
 clean:
 	$(MAKE) -C $(SW) clean
 	$(MAKE) -C $(FW) clean
 
 deploy: 
-	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
+# create folders
+	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/usr/bin                         # '/usr' is a hack
+	mkdir -p $(STAGING)/$(SYSTEMD)
 	mkdir -p $(STAGING)/firmware
-	cp ../../tools/eb-fwload $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
-	cp $(ASL)/dmunipz.sh $(STAGING)
-	cp $(SW)/dm-unipz_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
-	cp $(SW)/dmunipz-ctl $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
+
+# nfsinit scripts
+	cp $(NFSINIT)/*.sh $(STAGING)
+
+# tools
+	cp $(SW)/dmunipz-ctl $(STAGING)$(ARCH)$(PREFIX)/usr/bin             # '/usr' is a hack
 	cp $(FW)/dmunipz.bin $(STAGING)/firmware
-#	script /common/export/nfsinit/global/timing-rte-dmunipz-dev is _here_ in sub-folder dmunipz-asl 
+
+# configuration
+	cp $(SW)/*.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin                    # '/usr' is a hack
+
+# systemd
+	cp $(SYSTEMD)/*.service $(STAGING)/$(SYSTEMD)                       # systemd units
 
 .PHONY: all clean
 

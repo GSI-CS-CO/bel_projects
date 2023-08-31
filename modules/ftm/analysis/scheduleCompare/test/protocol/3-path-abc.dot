@@ -1,0 +1,6 @@
+digraph "3-path-abc" {
+name="3-path-abc"
+node [type=tmsg]
+edge [type=xy]
+a -> b -> c
+}

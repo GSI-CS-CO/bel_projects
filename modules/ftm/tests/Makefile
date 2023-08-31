@@ -2,24 +2,40 @@
 DATAMASTER ?= $$DM
 # Command for saft-ctl snoop. May be different for remote execution.
 SNOOP ?= saft-ctl tr0 -xv snoop 0 0 0
-SNOOP_FEL0069 ?= ssh -t root@fel0069.acc.gsi.de 'saft-ctl tr1 -xv snoop 0 0 0'
+SNOOP_FEL0069 ?= ssh root@fel0069.acc.gsi.de 'saft-ctl tr1 -xv snoop 0 0 0'
 # Path for libcarpedm to test
 CARPEDM_PATH ?= ../lib/
+# DM Tools to test
+TEST_DM_CMD ?= ../bin/dm-cmd
+TEST_DM_SCHED ?= ../bin/dm-sched
 # folders to ignore (no tests inside)
-IGNORE = --ignore=addDownloadCompare/ --ignore=blockAlign/ --ignore=dmPerformance/ --ignore=dmThreads/ --ignore=full_test/ --ignore=schedules/
+IGNORE = --ignore=blockAlign/ --ignore=dmPerformance/ --ignore=dmThreads/ --ignore=messageCounter/ --ignore=other/ --ignore=schedules/ --ignore=singleEdgeTest/
 # pass the command line arguments to pytest
+# Example: OPTIONS=--runslow   this runs also the slow tests.
+# Example: OPTIONS="-rP"       show stdout for all tests.
+# Example: OPTIONS="-k <test name pattern>" run only tests which match the pattern in the test name.
+# Example: OPTIONS=" --junitxml=dm-test-result.xml" generate a report on failed or passed tests.
 OPTIONS ?=
 
 test:
-	TEST_BINARY_DM_CMD=dm-cmd SNOOP_COMMAND="$(SNOOP)" DATAMASTER="$(DATAMASTER)" TEST_SCHEDULES=schedules/ python3 -m pytest $(IGNORE) $(OPTIONS)
+	TEST_BINARY_DM_CMD="$(TEST_DM_CMD)" TEST_BINARY_DM_SCHED="$(TEST_DM_SCHED)" LD_LIBRARY_PATH="$(CARPEDM_PATH):$(LD_LIBRARY_PATH)" \
+		SNOOP_COMMAND="$(SNOOP)" DATAMASTER="$(DATAMASTER)" TEST_SCHEDULES=schedules/ \
+		python3 -m pytest $(IGNORE) $(OPTIONS)
 
 remote:
-	TEST_BINARY_DM_CMD=dm-cmd SNOOP_COMMAND="$(SNOOP_FEL0069)" DATAMASTER="tcp/fel0069.acc.gsi.de" TEST_SCHEDULES=schedules/ python3 -m pytest $(IGNORE) $(OPTIONS)
+	TEST_BINARY_DM_CMD="$(TEST_DM_CMD)" TEST_BINARY_DM_SCHED="$(TEST_DM_SCHED)" LD_LIBRARY_PATH="$(CARPEDM_PATH):$(LD_LIBRARY_PATH)" \
+		SNOOP_COMMAND="$(SNOOP_FEL0069)" DATAMASTER="tcp/fel0069.acc.gsi.de" TEST_SCHEDULES=schedules/ \
+		python3 -m pytest --junitxml=dm-test-result.xml $(IGNORE) $(OPTIONS)
 
 test-default:
 	DATAMASTER="$(DATAMASTER)" python3 -m pytest $(IGNORE) $(OPTIONS)
 
-all: dmPerformance dmThreads full_test pps singleEdgeTest
+test-all:
+	TEST_BINARY_DM_CMD="$(TEST_DM_CMD)" TEST_BINARY_DM_SCHED="$(TEST_DM_SCHED)" LD_LIBRARY_PATH="$(CARPEDM_PATH):$(LD_LIBRARY_PATH)" \
+		SNOOP_COMMAND="$(SNOOP)" DATAMASTER="$(DATAMASTER)" TEST_SCHEDULES=schedules/ \
+		python3 -m pytest $(IGNORE) --runslow $(OPTIONS)
+
+all: test-all dmPerformance dmThreads pps singleEdgeTest
 
 dmPerformance:
 	SNOOP="$(SNOOP)" DATAMASTER="$(DATAMASTER)" $(MAKE) -C dmPerformance/ test0
@@ -29,20 +45,13 @@ dmPerformance:
 dmThreads:
 	SNOOP="$(SNOOP)" DATAMASTER="$(DATAMASTER)" $(MAKE) -C dmThreads/ four-threads
 
-full_test:
-	LD_LIBRARY_PATH=$(CARPEDM_PATH) python3 full_test/dm_testman.py "$(DATAMASTER)"
-	rm download.dot
-
-#messageCounter:
-#	LD_LIBRARY_PATH=$(CARPEDM_PATH) PYTHONPATH=$(CARPEDM_WRAPPER) python3 messageCounter/messageCounter.py $(DATAMASTER)
-
 pps:
 	DATAMASTER="$(DATAMASTER)" python3 -m pytest -k pps $(IGNORE) $(OPTIONS)
 
 singleEdgeTest:
 	test -d dot/ || mkdir dot/
 	$(MAKE) -C singleEdgeTest/
-	LD_LIBRARY_PATH=$(CARPEDM_PATH) ./singleEdgeTest/SingleEdgeTest > singleEdgeTest/result.txt
+	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(CARPEDM_PATH) ./singleEdgeTest/SingleEdgeTest > singleEdgeTest/result.txt
 	diff --color singleEdgeTest/result.txt singleEdgeTest/expected-result.txt
 	rm -f singleEdgeTest/result.txt
 	rm -r dot/
@@ -50,6 +59,16 @@ singleEdgeTest:
 prepare:
 	$(MAKE) -C ../ftmx86/ clean
 	$(MAKE) -C ../ftmx86/
-#	$(MAKE) -C ../ftmx86/ dmpy
 
-.PHONY: dmPerformance dmThreads full_test messageCounter pps singleEdgeTest schedules test test-default
+prepare-all:
+	$(MAKE) -C ../ftmx86/ clean
+	$(MAKE) -C ../ftmx86/
+	$(MAKE) -C ../ftmx86/ install
+	$(MAKE) -C ../analysis/scheduleCompare/main/ clean
+	$(MAKE) -C ../analysis/scheduleCompare/main/
+	$(MAKE) -C ../analysis/scheduleCompare/main/ install
+	$(MAKE) -C singleEdgeTest/ clean
+	$(MAKE) -C singleEdgeTest/
+	$(MAKE) -C singleEdgeTest/ install
+
+.PHONY: dmPerformance dmThreads pps remote singleEdgeTest test test-default remote test-all prepare prepare-all

@@ -234,6 +234,27 @@ component local_20_to_12p5 is
   );
 end component;
 
+component prio_encoder_16_4 is
+  port (
+    input : in std_logic_vector(15 downto 0);
+    index : out std_logic_vector(3 downto 0);
+    valid : out std_logic
+  );
+end component;
+component prio_encoder_64_6 is
+  port (
+    input : in std_logic_vector(63 downto 0);
+    index : out std_logic_vector(5 downto 0);
+    valid : out std_logic
+  );
+end component;
+component prio_encoder_256_8 is
+  port (
+    input : in std_logic_vector(255 downto 0);
+    index : out std_logic_vector(7 downto 0);
+    valid : out std_logic
+  );
+end component;
 
 
 end package aux_functions_pkg;

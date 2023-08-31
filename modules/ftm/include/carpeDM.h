@@ -139,21 +139,21 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
             vEbwrs& resetThrMsgCnt(vEbwrs& ew, uint8_t cpuIdx, uint8_t thrIdx);
             vEbwrs& blockAsyncClearQueues(vEbwrs& ew, const std::string& sTarget);
             vEbwrs& switching(vEbwrs& ew, const std::string& sTarget, const std::string& sDst);
-            vEbwrs& createNonQCommand(vEbwrs& ew, const std::string& type, const std::string& target);
+            vEbwrs& createNonQCommand(vEbwrs& ew, const std::string& type, const std::string& target, uint8_t cmdThr);
             vEbwrs& createLockCtrlCommand(vEbwrs& ew, const std::string& type, const std::string& target, bool lockRd, bool lockWr );
-            vEbwrs& createQCommand(vEbwrs& ew, const std::string& type, const std::string& target, uint8_t cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid);
+            vEbwrs& createQCommand(vEbwrs& ew, const std::string& type, const std::string& target, uint8_t cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, uint8_t cmdThr);
             vEbwrs& createWaitCommand(vEbwrs& ew, const std::string& type, const std::string& target, uint8_t cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, uint64_t cmdTwait, bool abswait );
             vEbwrs& createFlowCommand(vEbwrs& ew, const std::string& type, const std::string& target, const std::string& destination, uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, bool perma);
             vEbwrs& createFlushCommand(vEbwrs& ew, const std::string& type, const std::string& target, const std::string& destination, uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, bool qIl, bool qHi, bool qLo);
-            vEbwrs& createFullCommand(vEbwrs& ew, const std::string& type, const std::string& target, const std::string& destination, uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, bool perma, bool qIl, bool qHi, bool qLo, uint64_t cmdTwait, bool abswait, bool lockRd, bool lockWr);
-            vEbwrs& createCommand(vEbwrs& ew, const std::string& type, const std::string& target, const std::string& destination, uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, bool perma, bool qIl, bool qHi, bool qLo,  uint64_t cmdTwait, bool abswait, bool lockRd, bool lockWr );
+            vEbwrs& createFullCommand(vEbwrs& ew, const std::string& type, const std::string& target, const std::string& destination, uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, bool perma, bool qIl, bool qHi, bool qLo, uint64_t cmdTwait, bool abswait, bool lockRd, bool lockWr, uint8_t cmdThr);
+            vEbwrs& createCommand(vEbwrs& ew, const std::string& type, const std::string& target, const std::string& destination, uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, bool perma, bool qIl, bool qHi, bool qLo,  uint64_t cmdTwait, bool abswait, bool lockRd, bool lockWr, uint8_t cmdThr );
                 int send(vEbwrs& ew);
             //FIXME workaround for flawed template approach (disambiguation of member functin pointers failing). no time to figure it out right  now, get the job done first
             //convenience wrappers without eb cycle control, send immediately
             int startThr(uint8_t cpuIdx, uint8_t thrIdx)                              ;
             int startPattern(const std::string& sPattern, uint8_t thrIdx)             ;
             int startNodeOrigin(const std::string& sNode, uint8_t thrIdx)             ;
-            int startNodeOrigin(const std::string& sNode)                             ;
+//            int startNodeOrigin(const std::string& sNode)                             ;
             int stopPattern(const std::string& sPattern)                              ;
             int stopNodeOrigin(const std::string& sNode)                              ;
             int abortPattern(const std::string& sPattern)                             ;
