@@ -56,7 +56,7 @@ pps:
 singleEdgeTest:
 	test -d dot/ || mkdir dot/
 	$(MAKE) -C singleEdgeTest/
-	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(CARPEDM_PATH) ./singleEdgeTest/SingleEdgeTest > singleEdgeTest/result.txt
+	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(CARPEDM_PATH) ./singleEdgeTest/singleEdgeTest > singleEdgeTest/result.txt
 	diff --color singleEdgeTest/result.txt singleEdgeTest/expected-result.txt
 	rm -f singleEdgeTest/result.txt
 	rm -r dot/
