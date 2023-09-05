@@ -43,7 +43,7 @@ singleEdgeTest: SingleEdgeTest
 SingleEdgeTest: SingleEdgeGraph.o SingleEdgeTables.o SingleEdgeTest.o SingleEdgeStatus.o
 
 clean:
-	rm -f *.o *.gcda *.gcno *.gcov SingleEdgeTest SingleEdgeTest.info
+	rm -f *.o *.gcda *.gcno *.gcov SingleEdgeTest singleEdgeTest SingleEdgeTest.info
 
 install: singleEdgeTest
 	cp singleEdgeTest $(INSTALLPATH)
