@@ -3,23 +3,28 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 
+Library
+UNISIM;
+use UNISIM.vcomponents.all;
+
 -- pexp-TR Entity
 entity pexp_tr_prog is
   Port (
-    cdone    : in    std_logic;                    -- from FPGA, low during configuration
-    confix   : inout std_logic;                    -- input from reset chip (on schematics CONFIG)
-    config1  : in    std_logic;                    -- input from reset chip (on schematics CONFIG1)
-    con      : out   std_logic_vector(5 downto 1); -- connection to/from fpga
-    pgclk_i  : in    std_logic;                    -- clock from 50 MHz oscillator
-    sel_clk_o: inout std_logic_vector(1 downto 0); -- output to gbit switch
-    hsw      : in    std_logic_vector(4 downto 1); -- input from hex switch
-    m        : out   std_logic_vector(4 downto 0); -- config mode to FPGA
-    fpga_res : in    std_logic;                    -- output to FPGA, optional reset
-    pled     : inout std_logic_vector(5 downto 1); -- 5 leds
-    nstat    : in    std_logic;                    -- status to/from fpga
-    mres     : in    std_logic;                    -- reset output to reset chip then to FPGA reconfig
-    mres1    : in    std_logic;                    -- reset output to reset chip then to FPGA "nres"
-    pbs1     : in    std_logic                     -- input from push button
+    pgclk_i         : in    std_logic;                    -- clock from 50 MHz oscillator
+    CONFIG_SPV_i    : in    std_logic;                    -- input from reset chip (on schematics CONFIG_SPV)
+
+    mres1_o         : out   std_logic;                    -- reset output to reset chip then to FPGA "nres"
+
+    CONF_DONE_i     : in    std_logic;                    -- from FPGA, low during configuration
+    nCONFIG_PROG_io : inout std_logic;                    -- input from reset chip (on schematics CONFIG)
+    fpga_con_io     : out   std_logic_vector(5 downto 1); -- connection to/from fpga
+    sel_clk_o       : out   std_logic_vector(1 downto 0); -- output to gbit switch
+    config_mode_o   : out   std_logic_vector(4 downto 0); -- config mode to FPGA 
+    fpga_res_o      : out   std_logic;                    -- output to FPGA, optional reset
+    pled_o          : inout std_logic_vector(5 downto 1); -- 5 leds
+    nstatus_i       : in    std_logic;                    -- status to/from fpga
+    hsw_i           : in    std_logic_vector(4 downto 1); -- input from hex switch
+    pbf1_i          : in    std_logic                     -- input from push button
   );
 end pexp_tr_prog;
 
@@ -27,32 +32,49 @@ end pexp_tr_prog;
 architecture rtl of pexp_tr_prog is
 
   -- internal signals
+  signal clk     : std_logic;
   signal countx  : std_logic_vector(26 downto 0); -- counter
-
+  signal leds    : std_logic_vector(5 downto 1);  
+  
 begin
 
+  i_BUFG_clk : BUFG
+  port map (
+    I => pgclk_i,  -- Clock buffer input
+    O => clk -- Clock buffer output
+  );
+ 
+  
   -- fixed configuration
-  m          <= b"10010"; -- master SPI
-  sel_clk_o(0) <= '1';      -- in1 to q0 SW1
-  sel_clk_o(1) <= '1';      -- in1 to q1 SW1
-  confix     <= '1';      -- immediaty ready
-
-  -- counter process
-  process(pgclk_i) begin
-    if (rising_edge(pgclk_i)) then
+  config_mode_o   <= b"10010"; -- master SPI
+  sel_clk_o(0)    <= '1';      -- in1 to q0 SW1
+  sel_clk_o(1)    <= '1';      -- in1 to q1 SW1
+  nCONFIG_PROG_io <= '1';      -- immediaty ready
+  
+  -- reset outputs
+  mres1_o     <= '1';
+  fpga_res_o  <= '1';
+  
+  -- counter
+  process(clk) begin
+    if (rising_edge(clk)) then 
       countx <= countx + 1;
     end if;
   end process;
-
+  
   -- leds
-  pled(1) <= not(cdone); -- yellow
-  pled(2) <= confix;     -- red
-  pled(3) <= config1;    -- white
-  pled(4) <= nstat;      -- blue
-  pled(5) <= pgclk_i;      -- green
+  leds(1) <= not(CONF_DONE_i);  -- yellow
+  leds(2) <= nCONFIG_PROG_io;   -- red
+  leds(3) <= CONFIG_SPV_i;      -- white
+  leds(4) <= nstatus_i;         -- blue
+  leds(5) <= countx(26);        -- green
 
+  
+  -- when CPLD button pressed then show CPLD hex switch state
+  pled_o <= (countx(24) & hsw_i) when pbf1_i = '0' else leds;
+  
   -- connection to fpga
-  con(4 downto 1) <= hsw;
-  con(5)          <= pbs1;
-
+  fpga_con_io(4 downto 1) <= not hsw_i;
+  fpga_con_io(5)          <= not pbf1_i;
+  
 end;
