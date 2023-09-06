@@ -12,6 +12,7 @@ else
 endif
 endif
 
+EBPATH1 ?=../../../../ip_cores/etherbone-core/api/
 BOOSTPATH ?= .
 
 # check that make runs with  sudo rights
@@ -24,23 +25,31 @@ else
 endif
 INSTALLPATH = $(PREFIX)/bin
 
-EBPATH1 ?=../../../ip_cores/etherbone-core/api/
+# assume that Boost is installed on the maschine. Use BOOSTPATH if the global installed version should not be used.
+# set BOOST_FLAGS depending on the Boost version
+ifeq (,$(wildcard $(BOOSTPATH)/include/boost/version.hpp))
+  BOOST_VERSION:=$(shell grep 'BOOST_LIB_VERSION "' /usr/include/boost/version.hpp | cut -b28-31)
+else
+  BOOST_VERSION:=$(shell grep 'BOOST_LIB_VERSION "' $(BOOSTPATH)/include/boost/version.hpp | cut -b28-31)
+endif
+ifeq ($(BOOST_VERSION),1_75)
+  BOOST_FLAGS=-DBOOST_ALLOW_DEPRECATED_HEADERS -Wno-nonnull
+endif
 
 CXX ?= g++
-CXXFLAGS = -g -std=c++11 -fPIC -Wall -I../../include -I$(EBPATH)/include -I../$(EBPATH1) -I$(BOOSTPATH)/include
+CXXFLAGS = -g -std=c++11 -fPIC -Wall -I../../include -I$(EBPATH)/include -I../$(EBPATH1) -I$(BOOSTPATH)/include $(BOOST_FLAGS)
 # for coverage: add to CXXFLAGS: -fprofile-arcs -ftest-coverage
 
 # LDFLAGS = -Wl,-rpath,$(BOOSTPATH)/lib,-rpath,../$(EBPATH1)/.libs
-LDLIBS = -L../../lib -L../$(EBPATH1)/.libs -L$(BOOSTPATH)/lib -lstdc++ -lboost_serialization -lboost_graph -lboost_regex -ldmtest -lgcov
+LDLIBS = -L../../lib -L../$(EBPATH1)/.libs -L$(BOOSTPATH)/lib -lstdc++ -lboost_serialization -lboost_graph -lboost_regex -ldmtest
+# for coverage: add to LDLIBS: -lgcov
 
 STYLE = --style="{BasedOnStyle: Google, ColumnLimit: 180}"
 
 .PHONY: clean format coverage doc
 
-singleEdgeTest: SingleEdgeTest
-	mv SingleEdgeTest singleEdgeTest
-
-SingleEdgeTest: SingleEdgeGraph.o SingleEdgeTables.o SingleEdgeTest.o SingleEdgeStatus.o
+singleEdgeTest: SingleEdgeGraph.o SingleEdgeTables.o SingleEdgeTest.o SingleEdgeStatus.o
+	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 clean:
 	rm -f *.o *.gcda *.gcno *.gcov SingleEdgeTest singleEdgeTest SingleEdgeTest.info
