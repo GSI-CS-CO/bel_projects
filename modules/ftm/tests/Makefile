@@ -80,4 +80,10 @@ prepare-all:
 	$(MAKE) -C singleEdgeTest/
 	$(MAKE) -C singleEdgeTest/ install
 
-.PHONY: dmPerformance dmThreads pps remote singleEdgeTest test test-default remote test-all prepare prepare-all
+checkEnvironment:
+	./tools/getBoostVersion.sh
+	gcc --version
+	python --version
+	python3 -m pytest -VV
+
+.PHONY: dmPerformance dmThreads pps remote singleEdgeTest test test-default remote test-all prepare prepare-all checkEnvironment
