@@ -2,8 +2,19 @@
 EBPATH ?= ../../../../ip_cores/etherbone-core/api/
 BOOSTPATH ?= .
 
+# assume that Boost is installed on the maschine. Use BOOSTPATH if the global installed version should not be used.
+# set BOOST_FLAGS depending on the Boost version
+ifeq (,$(wildcard $(BOOSTPATH)/include/boost/version.hpp))
+  BOOST_VERSION:=$(shell grep 'BOOST_LIB_VERSION "' /usr/include/boost/version.hpp | cut -b28-31)
+else
+  BOOST_VERSION:=$(shell grep 'BOOST_LIB_VERSION "' $(BOOSTPATH)/include/boost/version.hpp | cut -b28-31)
+endif
+ifeq ($(BOOST_VERSION),1_75)
+  BOOST_FLAGS=-DBOOST_ALLOW_DEPRECATED_HEADERS -Wno-nonnull
+endif
+
 CXX ?= g++
-CXXFLAGS = -g -std=c++11 -fPIC -Wall -I../../include -I$(BOOSTPATH)/include
+CXXFLAGS = -g -std=c++11 -fPIC -Wall -I../../include -I$(BOOSTPATH)/include $(BOOST_FLAGS)
 
 #LDFLAGS = -Wl,-rpath,/usr/local/lib,-rpath,$(BOOSTPATH)/lib
 LDLIBS = -Wl,-rpath,$(BOOSTPATH)/lib -L$(BOOSTPATH)/lib -lstdc++ -lboost_serialization -lboost_graph -lboost_regex

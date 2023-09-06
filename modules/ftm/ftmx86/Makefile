@@ -51,7 +51,7 @@ else
   BOOST_VERSION:=$(shell grep 'BOOST_LIB_VERSION "' $(BOOSTPATH)/include/boost/version.hpp | cut -b28-31)
 endif
 ifeq ($(BOOST_VERSION),1_75)
-  BOOST_FLAGS=-DBOOST_ALLOW_DEPRECATED_HEADERS
+  BOOST_FLAGS=-DBOOST_ALLOW_DEPRECATED_HEADERS -Wno-nonnull
 endif
 
 BUILD_DATE     = $(shell date +'%Y%m%d')
