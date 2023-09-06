@@ -3,6 +3,6 @@ DEVICE		= 10AX066H2
 FLASH		= MT25QU512
 SPI_LANES	= ASx4
 RAM_SIZE	= 458752
-SKIP_JIC	= yes
+ARRIA10_JIC	= yes
 
 include ../../build.mk
