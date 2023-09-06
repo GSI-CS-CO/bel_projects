@@ -801,6 +801,10 @@ set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to scu_cb_version[0]
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to scu_cb_version[1]
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to scu_cb_version[2]
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to scu_cb_version[3]
+set_instance_assignment -name XCVR_VCCR_VCCT_VOLTAGE 0_9V -to sfp_aux_rxp_i
+set_instance_assignment -name XCVR_VCCR_VCCT_VOLTAGE 0_9V -to sfp_aux_txp_o
+set_instance_assignment -name XCVR_VCCR_VCCT_VOLTAGE 0_9V -to sfp_rxp_i
+set_instance_assignment -name XCVR_VCCR_VCCT_VOLTAGE 0_9V -to sfp_txp_o
 set_location_assignment IOBANK_2J -to A_A
 set_location_assignment IOBANK_2K -to pa
 set_location_assignment IOBANK_2K -to rear_in
