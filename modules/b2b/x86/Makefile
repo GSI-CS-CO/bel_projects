@@ -61,6 +61,9 @@ b2b-archiver: b2b-archiver.c
 b2b-serv-raw: b2b-serv-raw.cpp
 	$(CXX) $(CFLAGS) $(CXFLAGS) ../../common-libs/x86/common-lib.c -o b2b-serv-raw b2b-serv-raw.cpp $(XLIBS) -ldim -lpthread
 
+b2b-sim: b2b-sim.c
+	$(CC) $(CFLAGS) $(CCFLAGS) -o b2b-sim b2b-sim.c $(LIBS)	
+
 b2b-pname-info: b2b-pname-info.cpp
 	$(CXX) $(CFLAGS) $(CCFLAGS) -o b2b-pname-info b2b-pname-info.cpp $(XLIBS) -ldim -lpthread
 

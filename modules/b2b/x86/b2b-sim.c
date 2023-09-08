@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 13-Jan-2023
+ *  version : 08-Sep-2023
  *
  * simple simulation program for b2b measurements
  * - phase diagnostics
@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2BSIM_VERSION 0x000506
+#define B2BSIM_VERSION 0x000507
 #define MAXSAMPLES     1000
 #define MAXDATA        10000000
 
@@ -59,7 +59,7 @@ typedef struct{
 
 
 uint64_t   TH1_as      = 1283767311562;     // h=1 period [as]
-uint64_t   one_ns_as   = 1000000000;         // 1 ns [as]
+uint64_t   one_ns_as   = 1000000000;        // 1 ns [as]
 int        mode        = 1;                 // simulate, 1: single phase 2: phase difference
 int        fit         = 1;                 // fit method, 1: sub-ns, 2: average
 int        nSamples    = 3;                 // number of samples to be used
@@ -80,8 +80,24 @@ double     dev[MAXDATA];                    // deviation for stdev
 static void help(void) {
   fprintf(stderr, "Usage: %s [OPTION] <etherbone-device> [COMMAND]\n", program);
   fprintf(stderr, "\n");
-  fprintf(stderr, "  -h                  display this help and exit\n");
-  fprintf(stderr, "  -e                  display version\n");
+  fprintf(stderr, "  -h                      display this help and exit\n");
+  fprintf(stderr, "  -e                      display version\n");
+  fprintf(stderr, "\n");
+  fprintf(stderr, "  -T <rf-period>          hf period (h=1) [as])\n");
+  fprintf(stderr, "  -s <nSamples>           number of samples (timestamps)\n");
+  fprintf(stderr, "  -r <noise ts>           noise on timestamps [fs] \n");
+  fprintf(stderr, "  -d <nData>              number of measurements\n");
+  fprintf(stderr, "  -o <phase offset>       offset on rf-phase at 'beginning of flattop' [fs]\n");
+  fprintf(stderr, "  -p <noise phase offset> offset on rf-phase [fs]\n");
+  fprintf(stderr, "  -m <mode>               \n");
+  fprintf(stderr, "  -t <fit method>         1: sub-ns fit; else: average fit \n");
+  fprintf(stderr, "  -c <scan type>          0: don't scan; 1: scan phase offset, 2:???\n");
+  fprintf(stderr, "  -i <scan increment>     scan increment [fs]\n");
+  fprintf(stderr, "  -f <filename>           write data to file\n");
+  fprintf(stderr, "  -n <nPeriods>           \n");
+  fprintf(stderr, "\n");
+  fprintf(stderr, "Example1: '%s '\n", program);
+  fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
   fprintf(stderr, "Version %x. Licensed under the LGPL v3.\n", B2BSIM_VERSION);
 } //help
@@ -275,6 +291,13 @@ int main(int argc, char** argv) {
   double   ave_width     = 0;
   uint32_t max_width_as  = 0;
   uint64_t nPeriods;
+  double   spanCovered;                       // time span covered by samples
+  double   spanUncovered;                     // time span not covered by samples within granularity of 1ns
+  double   nsModulo;                          // remainder of TH1 within 1 ns
+  double   nsModuloLo;                        // 'modulo' to lower full 1ns
+  double   nsModuloHi;                        // 'modulo' to upper full 1ns
+  double   errModulo;                         // uncertainty due to remainder
+  double   errNSamples;                       // uncertainty due to number of samples within 1ns 
   
   int     i;
   
@@ -284,7 +307,7 @@ int main(int argc, char** argv) {
  
   program = argv[0];    
 
-  while ((opt = getopt(argc, argv, "c:i:t:n:f:m:o:p:s:r:d:eh")) != -1) {
+  while ((opt = getopt(argc, argv, "T:c:i:t:n:f:m:o:p:s:r:d:eh")) != -1) {
     switch (opt) {
       case 'e' :
         getVersion = 1;
@@ -292,6 +315,9 @@ int main(int argc, char** argv) {
       case 'h' :
         help();
         return 0;
+        break;
+      case 'T' :
+        TH1_as      = strtol(optarg, &tail, 0);                            // as!
         break;
       case 's' :
         nSamples    = strtol(optarg, &tail, 0);
@@ -437,6 +463,7 @@ int main(int argc, char** argv) {
   printf("fit           (-t): %13d\n"    , fit);
   printf("scan type     (-c): %13d\n"    , scanType);
   printf("scan incrmnt  (-i): %13.6f\n"  , (double)scanInc_as  / (double)one_ns_as);
+  printf("T_rev         (-T): %13.6f\n"  , (double)TH1_as  / (double)one_ns_as);
   if (strlen(filename) > 0)
     printf("file          (-f): %13s\n"  , filename);
   if (mode == 2)
@@ -460,8 +487,21 @@ int main(int argc, char** argv) {
   printf("max_width1        : %13.3f\n", (double)max_width_as / 1000000.0);  
   printf("min               : %13.3f\n", min   *          1000);
   printf("max               : %13.3f\n", max   *          1000);
-  printf("stdev             : %13.3f\n", stdev *          1000);
-  printf("FWHM              : %13.3f\n", stdev * 2.3548 * 1000);
+  errNSamples   = 1000.0 / (double)nSamples;
+  nsModuloHi    = (double)(one_ns_as - TH1_as % 1000000000) / 1000000.0;            // difference of TH1 to higher full 1ns [fs]
+  nsModuloLo    = 1000.0 - nsModuloHi;                                              // difference of TH1 to lower full 1ns [fs]
+  if (nsModuloHi < nsModuloLo) nsModulo = nsModuloHi;
+  else                         nsModulo = nsModuloLo;
+  spanCovered   = (nSamples - 2) * nsModulo;                                        // time span covered by samples [fs]
+  spanUncovered = 1000.0 - spanCovered;                                             // time span not covered by samples [fs]
+  if (spanUncovered > 0) errModulo = spanUncovered / 2.0;                           
+  else                   errModulo = 0;
+  printf("sys-err, 1ns-mod  : %13.3f\n", errModulo);
+  printf("      1ns-modulo  : %13.3f\n", nsModulo);
+  printf("sys-err, nSamples : %13.3f\n", errNSamples);
+  printf("sys-err, sub-ns   : %13.3f\n", errNSamples + errModulo);                  // hm, this could be the max deviation, is this really the uncertainty, or shall we divide by 2, 3, ...?
+  printf("stdev             : %13.3f\n", stdev *          1000);                    // ... moreover, this should be added quadratically
+  printf("FWHM              : %13.3f\n", stdev * 2.3548 * 1000);                    // ... moreover, if the phase at the beginning of that flat-top is not fixed, the systematic deviation will cancel out ...
   //stdev = sqrt(2)*stdev;
   //printf("stdev *1.4: %13.3f\n", stdev);
   //printf("FWHM  *1.4: %13.3f\n", stdev * 2.3548);
