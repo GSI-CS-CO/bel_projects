@@ -40,7 +40,7 @@ end entity asmi10;
 architecture rtl of asmi10 is
 begin
 
-	asmi_parallel_0 : component asmi10_altera_asmi_parallel_181.asmi10_pkg.asmi10_altera_asmi_parallel_181_fmv4jaq
+	asmi_parallel_0 : component asmi10_altera_asmi_parallel_181.asmi10_pkg.asmi10_altera_asmi_parallel_181_35cnp6i
 		port map (
 			clkin         => clkin,         --         clkin.clk
 			fast_read     => fast_read,     --     fast_read.fast_read
