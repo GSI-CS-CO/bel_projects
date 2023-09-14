@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 08-Sep-2023
+ *  version : 14-Sep-2023
  *
  * simple simulation program for b2b measurements
  * - phase diagnostics
@@ -78,12 +78,12 @@ double     dev[MAXDATA];                    // deviation for stdev
 
 
 static void help(void) {
-  fprintf(stderr, "Usage: %s [OPTION] <etherbone-device> [COMMAND]\n", program);
+  fprintf(stderr, "Usage: %s [OPTION] <etherbone-device>\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "  -h                      display this help and exit\n");
   fprintf(stderr, "  -e                      display version\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "  -T <rf-period>          hf period (h=1) [as])\n");
+  fprintf(stderr, "  -T <rf-period>          hf period (h=1) [fs])\n");
   fprintf(stderr, "  -s <nSamples>           number of samples (timestamps)\n");
   fprintf(stderr, "  -r <noise ts>           noise on timestamps [fs] \n");
   fprintf(stderr, "  -d <nData>              number of measurements\n");
@@ -96,7 +96,7 @@ static void help(void) {
   fprintf(stderr, "  -f <filename>           write data to file\n");
   fprintf(stderr, "  -n <nPeriods>           \n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "Example1: '%s '\n", program);
+  fprintf(stderr, "Example1: '%s -T 732996993'\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
   fprintf(stderr, "Version %x. Licensed under the LGPL v3.\n", B2BSIM_VERSION);
@@ -268,7 +268,7 @@ void calcTStamp() {
 
 
 int main(int argc, char** argv) {
-  const char* command;
+  //const char* command;
 
   int  opt, error = 0;
   int  exitCode   = 0;
@@ -277,7 +277,7 @@ int main(int argc, char** argv) {
 
   b2bt_t   phase_t;
   int64_t  tPhase1_as, tPhase2_as;
-  double   tEdge1;
+  double   tEdge1        = 0;
   double   tEdgeNoisy1;
   int64_t  diff_as;
   uint32_t width_as;
@@ -291,13 +291,14 @@ int main(int argc, char** argv) {
   double   ave_width     = 0;
   uint32_t max_width_as  = 0;
   uint64_t nPeriods;
-  double   spanCovered;                       // time span covered by samples
-  double   spanUncovered;                     // time span not covered by samples within granularity of 1ns
   double   nsModulo;                          // remainder of TH1 within 1 ns
   double   nsModuloLo;                        // 'modulo' to lower full 1ns
   double   nsModuloHi;                        // 'modulo' to upper full 1ns
-  double   errModulo;                         // uncertainty due to remainder
-  double   errNSamples;                       // uncertainty due to number of samples within 1ns 
+  double   spanCovered;                       // time span covered by samples
+  double   spanUncovered;                     // time span not covered by samples within granularity of 1ns
+  double   errUncovered;                      // uncertainty due to uncovered time span
+  double   errCovered;                        // uncertainty of 'overcovering'
+  double   errFinal;                          // 'final' uncertainty
   
   int     i;
   
@@ -317,7 +318,7 @@ int main(int argc, char** argv) {
         return 0;
         break;
       case 'T' :
-        TH1_as      = strtol(optarg, &tail, 0);                            // as!
+        TH1_as      = strtol(optarg, &tail, 0) * 1000;                     // fs -> as
         break;
       case 's' :
         nSamples    = strtol(optarg, &tail, 0);
@@ -417,7 +418,7 @@ int main(int argc, char** argv) {
     phaseFitAverage(TH1_as, nSamples, &phase_t, &width_as);
     tPhase1_as     = phase_t.ns * one_ns_as + phase_t.ps * 1000000 + one_ns_as / 2;
     tEdge1         = (double)(tEdge_as[1])      / one_ns_as;
-    tEdgeNoisy1    = (double)(tEdgeNoisy_as[1]) / one_ns_as;;
+    tEdgeNoisy1    = (double)(tEdgeNoisy_as[1]) / one_ns_as;
     ave_width     += (double)width_as           / one_ns_as;
     if (width_as > max_width_as) max_width_as = width_as;
 
@@ -482,24 +483,67 @@ int main(int argc, char** argv) {
   printf("\n");
   printf("stats [ps]:\n");
   printf("comb              : %13.3f\n", 1000.0 / (double)nSamples);
-  printf("average           : %13.3f\n", ave   *          1000);
-  printf("ave_width1        : %13.3f\n", ave_width *      1000);
-  printf("max_width1        : %13.3f\n", (double)max_width_as / 1000000.0);  
-  printf("min               : %13.3f\n", min   *          1000);
-  printf("max               : %13.3f\n", max   *          1000);
-  errNSamples   = 1000.0 / (double)nSamples;
+  printf("ave_width (of fit): %13.3f\n", ave_width *      1000);
+  printf("max_width (of fit): %13.3f\n", (double)max_width_as / 1000000.0);  
+  printf("average deviation : %13.3f\n", ave   *          1000);
+  printf("min deviation     : %13.3f\n", min   *          1000);
+  printf("max deviation     : %13.3f\n", max   *          1000);
+
+  // ideal case: nSamples * nsModulo exactly covers one full nanosecond
+  // uncovered range: this happens, if an rf-period is close to one nanosecond; then, the 
+  //                  sub-ns fit might not 'see' a transition into the next full nanoseconds
+  //                  criteria: nsModulo * nSamples < 1 ns
+  // lost range     : this happens, if nsModulo is large and its fit into a full nanosecond is close
+  //                  to an integer number.
+
+  // calculate 'modulo'
   nsModuloHi    = (double)(one_ns_as - TH1_as % 1000000000) / 1000000.0;            // difference of TH1 to higher full 1ns [fs]
   nsModuloLo    = 1000.0 - nsModuloHi;                                              // difference of TH1 to lower full 1ns [fs]
   if (nsModuloHi < nsModuloLo) nsModulo = nsModuloHi;
   else                         nsModulo = nsModuloLo;
+
+  // check for uncovered time span within one full nanosecond
+  spanUncovered = 0.0;
+  errUncovered  = 0.0;
+  errCovered    = 0.0;
+  errFinal      = 0.0;
+    
   spanCovered   = (nSamples - 2) * nsModulo;                                        // time span covered by samples [fs]
-  spanUncovered = 1000.0 - spanCovered;                                             // time span not covered by samples [fs]
-  if (spanUncovered > 0) errModulo = spanUncovered / 2.0;                           
-  else                   errModulo = 0;
-  printf("sys-err, 1ns-mod  : %13.3f\n", errModulo);
-  printf("      1ns-modulo  : %13.3f\n", nsModulo);
-  printf("sys-err, nSamples : %13.3f\n", errNSamples);
-  printf("sys-err, sub-ns   : %13.3f\n", errNSamples + errModulo);                  // hm, this could be the max deviation, is this really the uncertainty, or shall we divide by 2, 3, ...?
+  if (spanCovered < 1000.0) {
+    spanUncovered = 1000.0 - spanCovered;                                           // time span not covered by samples [fs]
+    errUncovered  = spanUncovered / 2.0;                                            // nsModulo actually only covers half a nanosecond
+    errFinal      = errUncovered;
+  } // if spancovered
+  else {                                                                            
+    errCovered    = nsModulo / 2.0;                                                 // just a very poor mans solution
+    errFinal      = errCovered;
+  } // else spancovered
+  
+  // check, if time span is larger than one full nanosecond, 'over sampling'
+  /*if (spanCovered > 1000.0) {
+    tmpMod       = nsModulo;
+    overModuloHi = 1000.0;
+    overModuloLo = 0.0;
+    for (i=0; i<nSamples-1;i++) {
+      tmpMod      += nsModulo;                                                      // never use first timestamp
+      tmpHi        = (uint32_t)tmpMod % 1000;                                       // difference to higher full 1ns [fs]
+      tmpLo        = 1000.0 - tmpHi;
+      if (tmpHi < overModuloHi) overModuloHi = tmpHi;
+      if (tmpLo > overModuloLo) overModuloLo = tmpLo;
+      printf("over %13.3f, hi %13.3f, lo %13.3f\n", tmpMod, overModuloHi, overModuloLo);
+    } // for i
+    if (overModuloHi < overModuloLo) overModulo = overModuloHi;
+    else                             overModulo = overModuloLo;
+    overModulo     = overModulo / 2.0;
+    printf("overModulo %13.3f\n", overModulo);
+  } // if spanCovered
+  */
+
+  printf("modulo to full ns : %13.3f\n", nsModulo);
+  printf("span covered      : %13.3f\n", spanCovered);
+  printf("sys-err, uncovered: %13.3f\n", errUncovered);
+  printf("sys-err, covered  : %13.3f\n", errCovered);
+  printf("sys-err, final    : %13.3f\n", errFinal);
   printf("stdev             : %13.3f\n", stdev *          1000);                    // ... moreover, this should be added quadratically
   printf("FWHM              : %13.3f\n", stdev * 2.3548 * 1000);                    // ... moreover, if the phase at the beginning of that flat-top is not fixed, the systematic deviation will cancel out ...
   //stdev = sqrt(2)*stdev;
