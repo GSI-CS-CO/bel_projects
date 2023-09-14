@@ -226,8 +226,14 @@ void main(void) {
     if (DL(pT(hp))  <= getSysTime() + *(uint64_t*)(p + (( SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME   ) >> 2) )) {
       //node is due. Execute it, then update cursor and deadline, return control to scheduler
       backlog++;
-      *pncN(hp)   = (uint32_t)nodeFuncs[getNodeType(pN(hp))](pN(hp), pT(hp));       //process node and return thread's next node
-      DL(pT(hp))  = (uint64_t)deadlineFuncs[getNodeType(pN(hp))](pN(hp), pT(hp));   // return thread's next deadline (returns infinity on upcoming NULL ptr)
+
+      ///check if the node uses fields with references 
+      uint32_t*       pNode   = dynamicNodeStaging(pN(hp), pT(hp));
+
+      ///// CAREFUL - WE CAN NEVER PUT THE TMP PTR TO HEAP!!! HOW DO WE AVOID THAT?
+
+      *pncN(hp)   = (uint32_t)nodeFuncs[nodeType](pNode, pT(hp));       //process node and return thread's next node
+      DL(pT(hp))  = (uint64_t)deadlineFuncs[getNodeType(pNode)](pNode, pT(hp));   // return thread's next deadline (returns infinity on upcoming NULL ptr)
       *running   &= ~((DL(pT(hp)) == -1ULL) << thrIdx);                             // clear running bit if deadline is at infinity
       heapReplace(0);                                                               // call scheduler, re-sort only current thread
 

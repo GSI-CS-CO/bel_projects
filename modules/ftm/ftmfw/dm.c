@@ -670,3 +670,42 @@ void heapReplace(uint32_t src) {
   // we found the location the moving node is supposed to go. Copy it in and we are done.
   hp[choice]    = moving; 
 }
+
+uint32_t* dynamicNodeStaging(uint32_t* node, uint32_t* thrData) {
+  uint32_t* ret = node;
+  
+  if (node != LM32_NULL_PTR) {
+    uint32_t flags = *(node + (NODE_FLAGS >> 2));
+    
+
+    if(flags & NFLG_DYNAMIC_FIELDS_SMSK) {
+      
+      //make a copy of the original node we can edit
+      memcpy(nodeTmp, node, _MEM_BLOCK_SIZE);
+      ret = nodeTmp;
+      
+      // tells us if its 32/64 and if a word is an immediate, value (dynamically generated at compile time, static now), reference, or a doubel reference
+      uint32_t wordFormats = nodeTmp[NODE_OPT_DYN >> 2]; //3b per Word
+        
+
+      for(unsigned i = 0; i < 9; i++) { // a memory block has 13 words, not 9 - but last four (dyn, hash, flags, nextPtr) must not be changed.
+        //Whats the format of the current word?
+        if ((wordFormats & DYN_MODE_MSK) >= DYN_MODE_REF) { // some kind of reference? yay, let's dynamically copy stuff in!
+
+          //reference or reference 2 reference?
+          if ((wordFormats & DYN_MODE_MSK) == DYN_MODE_REF2)  {val = **(uint64**)node[i];}
+          else                                                {val =  *(uint64*) node[i];}
+          
+          // 32 or 64b?
+          nodeTmp[i] = (uint32_t)val; //low word is alway filled in. if it's 64b, fill in high word too.
+          if (wordFormats & DYN_WIDTH64_SMSK) nodeTmp[i+1] = (uint32_t)(val>>32);
+
+        } else {} //it's a IM or VAL, we leave the original value in, regardless if its 32 or 64b
+        wordFormats >>= 3; //shift right by 3 bits to get next wordFormat
+
+      }
+    }
+  }
+
+  return ret;
+}  

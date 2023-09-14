@@ -693,6 +693,13 @@
 #define NFLG_DEBUG1_SMSK    (NFLG_DEBUG1_MSK << NFLG_DEBUG1_POS)
 //@}
 
+/** @name Node flag field bit defs - Node has dynamic fields */
+//@{
+#define NFLG_DYNAMIC_FIELDS_MSK     0x1
+#define NFLG_DYNAMIC_FIELDS_POS     18
+#define NFLG_DYNAMIC_FIELDS_SMSK    (NFLG_DYNAMIC_FIELDS_MSK << NFLG_DYNAMIC_FIELDS_POS)
+//@}
+
 /** @name Node flag field bit defs - Position of type specific flags */
 //@{
 #define NFLG_BITS_SPECIFIC_POS  20
@@ -706,9 +713,29 @@
 //@}
 
 
-//FIXME selling my soul here by allowing dynamic changes to timing msg content.
-// Prime BS caused by Jutta's "we must know which pattern it belongs to and dont want to use a proper DB lookup".
-// Evil stuff and likely to explode in our faces at some point
+
+#define DYN_MODE_IM        0  ///< Tmsg - Address of dynamic ID source
+#define DYN_MODE_VAL       1  ///< Tmsg - Address of dynamic PAR high word source (node)  
+#define DYN_MODE_REF       2  ///< Tmsg - Address of dynamic PAR high word source (node)
+#define DYN_MODE_REF2      3  ///< Tmsg - Address of dynamic TEF source
+
+//
+/** @name Node flag field bit defs - interprete ID word as 64b word */
+//@{
+#define DYN_MODE_MSK    0x3
+#define DYN_MODE_POS    0
+#define DYN_MODE_SMSK   (DYN_MODE_MSK << DYN_MODE_POS)
+//@}
+
+//
+/** @name Node flag field bit defs - interprete ID word as 64b word */
+//@{
+#define DYN_WIDTH64_MSK    0x1 
+#define DYN_WIDTH64_POS    2
+#define DYN_WIDTH64_SMSK   (DYN_WIDTH64_MSK << DYN_WIDTH64_POS)
+//@}
+
+
 
 //
 /** @name Node flag field bit defs - interprete ID word as 64b word */

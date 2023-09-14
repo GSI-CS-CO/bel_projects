@@ -90,9 +90,16 @@ typedef uint32_t* (*nodeFuncPtr)  ( uint32_t*, uint32_t* );
 typedef uint32_t* (*actionFuncPtr)( uint32_t*, uint32_t*, uint32_t* );
 extern deadlineFuncPtr deadlineFuncs[_NODE_TYPE_END_];  ///< Function pointer array to deadline generating Functions
 extern nodeFuncPtr         nodeFuncs[_NODE_TYPE_END_];  ///< Function pointer array to node handler functions
-extern actionFuncPtr     actionFuncs[_ACT_TYPE_END_];   ///< Function pointer array to command action handler functions
+extern actionFuncPtr      actionFuncs[_ACT_TYPE_END_];  ///< Function pointer array to command action handler functions
 //@}
 
+/** @name Compilation of nodes referencing fields from others during runtime.
+ *  This is in fact not references but done by value copy, the node handler function is always given a 'static' node to work with. Thus, this is RO, changes will not propagate back.
+ */
+//@{ 
+extern uint32_t              nodeTmp[_MEM_BLOCK_SIZE / _32b_SIZE_]; ///< Staging area when a node is constructed from references
+extern uint32_t* dynamicNodeStaging(uint32_t* node, uint32_t* thrData);     ///< Returns ptr to the original node if all fields are immediates or ptr to nodeTmp if a dynamic verion was compiled
+//@}
 
 /** @name Ptrs to diagnostic data
  *  Provides a shorthand to the diagnostic buffers for msg count, dispatch delta, late warnings, backlog etc
@@ -363,12 +370,23 @@ uint64_t  deadlineNull (uint32_t* node, uint32_t* thrData);
   */ 
 uint32_t* dummyNodeFunc (uint32_t* node, uint32_t* thrData);
 
+/// Dummy node function, used to catch bad node types
+/** Reports bad/unknown node type to error register and calls the handler for a null node  
+  * @param node Pointer to current node
+  * @param thrData Pointer to the associated thread's metadata
+  * @return null
+  */ 
+
+uint32_t* dynamicNodeFunc (uint32_t* node, uint32_t* thrData);
+
 /// Dummy deadline function, used to catch bad node types
 /** Reports bad/unknown node type to error register and calls the handler for a null node deadline
   * @param node Pointer to the block basetype node whose deadline is to be determined
   * @param thrData Pointer to the associated thread's metadata
   * @return 64b TAI timestamp with new deadline (MAX_INT)
 */
+
+
 uint64_t  dummyDeadlineFunc (uint32_t* node, uint32_t* thrData);
 
 /// Dummy action function, used to catch bad action types
@@ -399,5 +417,8 @@ void heapify();
 */
 void heapReplace(uint32_t src);
 //@}
+
+
+
 
 #endif
