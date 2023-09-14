@@ -6,12 +6,17 @@ library work;
 use work.monster_pkg.all;
 use work.ramsize_pkg.c_lm32_ramsizes;
 
+-- Important:
+-- You need to apply one change inside the dmtd_pll10.qsys file
+-- REMOVE: <parameter name="gui_reference_clock_frequency" value="20.0" />
+-- ADD:    <parameter name="gui_reference_clock_frequency" value="125.0" />
+
 entity idrogen is
   port(
     ------------------------------------------------------------------------
     -- Input clocks
     ------------------------------------------------------------------------
-    clk_20m_vcxo_i    : in std_logic; -- 20MHz VCXO clock, aka DMTD, aka WR_CLK_DMTD
+    clk_20m_vcxo_i    : in std_logic; -- 125 MHz VCXO clock, aka DMTD, aka WR_CLK_DMTD !!!
     clk_125m_pllref_i : in std_logic; -- 125 MHz PLL reference at tranceiver bank, WR_REFCLK_125
 
     ------------------------------------------------------------------------
