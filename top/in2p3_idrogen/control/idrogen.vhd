@@ -102,6 +102,7 @@ begin
       core_clk_125m_pllref_i  => clk_125m_pllref_i,
       core_clk_125m_local_i   => clk_125m_pllref_i, -- TBD: Feed 62m5 in to a PLL and generate 125 MHz
       core_clk_125m_sfpref_i  => clk_125m_pllref_i,
+      core_rstn_i             => dev_clr_n,
       wr_sfp_sda_io           => sfp_mod2_io,
       wr_sfp_scl_io           => sfp_mod1_io,
       wr_sfp_det_i            => sfp_mod0_i,
@@ -116,7 +117,8 @@ begin
       wbar_phy_dis_o          => sfp_tx_disable_o,
       sfp_tx_fault_i          => sfp_tx_fault_i,
       sfp_los_i               => sfp_los_i,
-      led_pps_o               => pps_out,
+      wr_pps_o                => pps_out,
+      --led_pps_o               => pps_out,
       led_link_up_o           => led_n(0),
       led_link_act_o          => led_n(1),
       led_track_o             => led_n(2),
