@@ -24,7 +24,10 @@ void init() {
         cRules.insert(ConstellationRule(n::sTMsg,        e::sDefDst,     cNonMeta,  1, 1  ));
         cRules.insert(ConstellationRule(n::sTMsg,        e::sDynPar0,    cNonMeta,  0, 1  ));
         cRules.insert(ConstellationRule(n::sTMsg,        e::sDynPar1,    cNonMeta,  0, 1  ));
-        cRules.insert(ConstellationRule(n::sCmdNoop,     e::sDefDst,     cNonMeta, 0, 1  ));
+        cRules.insert(ConstellationRule(n::sTMsg,        e::sRef,        cNonMeta,  0, 3  ));
+        cRules.insert(ConstellationRule(n::sTMsg,        e::sVal,        cNonMeta,  0, 3  ));
+        cRules.insert(ConstellationRule(n::sTMsg,        e::sWrite,      cNonMeta,  0, 1  ));
+        cRules.insert(ConstellationRule(n::sCmdNoop,     e::sDefDst,     cNonMeta,  0, 1  ));
         cRules.insert(ConstellationRule(n::sCmdNoop,     e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},  0, 1  ));
         cRules.insert(ConstellationRule(n::sCmdFlow,     e::sDefDst,     cNonMeta, 0, 1  ));
         cRules.insert(ConstellationRule(n::sCmdFlow,     e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},  0, 1  ));

@@ -73,14 +73,14 @@ int64_t* const diffwth    = (int64_t*) &_startshared[(SHCTL_DIAG  + T_DIAG_DIF_W
 uint32_t* const diffwcnt  = (uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_WAR_CNT ) >> 2];       
 uint32_t* const diffwhash = (uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_WAR_1ST_HASH ) >> 2];  
 uint64_t* const diffwts   = (uint64_t*) &_startshared[(SHCTL_DIAG + T_DIAG_WAR_1ST_TS ) >> 2];    
-uint32_t* const bcklogmax = (uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_BCKLOG_STRK )  >> 2];  
+uint32_t* const backlogmax = (uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_BCKLOG_STRK )  >> 2];  
 uint32_t* const badwaitcnt = (uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_BAD_WAIT_CNT )  >> 2];
 #endif
 uint32_t* const start   = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_START)   >> 2];          
 uint32_t* const running = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_RUNNING) >> 2];          
 uint32_t* const abort1  = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_ABORT)   >> 2];          
 uint32_t** const hp     = (uint32_t**)&_startshared[SHCTL_HEAP >> 2];                             
-
+uint32_t nodeTmp[_MEM_BLOCK_SIZE / _32b_SIZE_]; 
 
 void prioQueueInit()
 {
@@ -168,7 +168,7 @@ void dmInit() {
     *diffwcnt  = 0;
     *diffwhash = 0;
     *diffwts   = 0;
-    *bcklogmax = 0;
+    *backlogmax = 0;
     *badwaitcnt = 0;
     *boottime  = getSysTime();
   #endif
@@ -670,3 +670,41 @@ void heapReplace(uint32_t src) {
   // we found the location the moving node is supposed to go. Copy it in and we are done.
   hp[choice]    = moving; 
 }
+
+
+
+uint32_t* dynamicNodeStaging(uint32_t* node, uint32_t* thrData) {
+  uint32_t* ret;
+  memcpy(nodeTmp, node, _MEM_BLOCK_SIZE); //make a copy of the original node we can edit
+      
+  // tells us if its 32/64 and if a word is an immediate, value (dynamically generated at compile time, static now), reference, or a double reference
+  uint32_t wordFormats = nodeTmp[NODE_OPT_DYN >> 2]; //load word description
+      
+  for(unsigned i = 0; i < 9; i++) { // a memory block has 13 words, not 9 - but last four (dyn, hash, flags, nextPtr) must not be changed.
+    if ((wordFormats & DYN_MODE_MSK) >= DYN_MODE_REF) { // Is current word a kind of reference? yay, let's dynamically copy stuff in!
+      uint64_t val;
+      if ((wordFormats & DYN_MODE_MSK) == DYN_MODE_REF2)  {val = **(uint64_t**)node[i];} //reference or reference 2 reference?
+      else                                                {val =  *(uint64_t*) node[i];}
+      
+      nodeTmp[i] = (uint32_t)val;
+      if (wordFormats & DYN_WIDTH64_SMSK) nodeTmp[i+1] = (uint32_t)(val>>32); //low word is alway filled in. if it's 64b, fill in high word too.
+    
+    } //ELSE - it's a IM or VAL, we leave the original value in, regardless if its 32 or 64b
+    wordFormats >>= 3; //shift right by 3 bits to get next wordFormat
+  }
+  
+  //call handler function
+  ret = nodeFuncs[getNodeType(nodeTmp)](nodeTmp, thrData); 
+  
+  //copy back all changes to immediate/val fields
+  wordFormats = nodeTmp[NODE_OPT_DYN >> 2]; //reload description
+  for(unsigned i = 0; i < 9; i++) {
+    if ((wordFormats & DYN_MODE_MSK) < DYN_MODE_REF) { node[i] = nodeTmp[i]; } // immediate/val ?
+    wordFormats >>= 3; //shift right by 3 bits to get next wordFormat
+  }
+
+  //we must never return nodeTmp, as this is not threadsafe. if handler wants to return nodeTmp, return original node instead.
+  if (ret != nodeTmp) return ret;
+  else                return node;
+
+}  

@@ -228,14 +228,28 @@ void main(void) {
     if (DL(pT(hp))  <= getSysTime() + *(uint64_t*)(p + (( SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME   ) >> 2) )) {
       //node is due. Execute it, then update cursor and deadline, return control to scheduler
       backlog++;
-      *pncN(hp)   = (uint32_t)nodeFuncs[getNodeType(pN(hp))](pN(hp), pT(hp));       //process node and return thread's next node
+
+      ///check if the node uses fields with references
+      if (!hasNodeDynamicFields(pN(hp))) {
+        //no dynamic fields. do go as normal on, nothing to see here
+        //FIXME Why not pncN(hp) = nodeFuncs[ ...?
+        *pncN(hp)   = (uint32_t)nodeFuncs[getNodeType(pN(hp))](pN(hp), pT(hp));       //process node and return thread's next node
+      } else {
+        /*We got some dynamic fields. Now:
+         * do a copy of original node
+         * insert all dynamic fields
+         * call appropriate node handler
+         * write back all changes of immediate/val fields to original
+        */ 
+        *pncN(hp)   = (uint32_t)dynamicNodeStaging(pN(hp), pT(hp));  
+      }
       DL(pT(hp))  = (uint64_t)deadlineFuncs[getNodeType(pN(hp))](pN(hp), pT(hp));   // return thread's next deadline (returns infinity on upcoming NULL ptr)
       *running   &= ~((DL(pT(hp)) == -1ULL) << thrIdx);                             // clear running bit if deadline is at infinity
       heapReplace(0);                                                               // call scheduler, re-sort only current thread
 
     } else {
       //nothing due right now. Check for requests of new threads to be started
-      *bcklogmax   = ((backlog > *bcklogmax) ? backlog : *bcklogmax);
+      *backlogmax   = ((backlog > *backlogmax) ? backlog : *backlogmax);
       backlog = 0;
 
       if(*start) { //check start bitfield for any request
