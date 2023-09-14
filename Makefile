@@ -41,10 +41,11 @@ CHECK_PEXP             = ./syn/gsi_pexp/control/pexp_control
 CHECK_SCU4             = ./syn/gsi_scu/control4/scu_control
 CHECK_FTM4             = ./syn/gsi_scu/ftm4/ftm4
 CHECK_FTM4DP           = ./syn/gsi_scu/ftm4dp/ftm4dp
-CHECK_A10GX            = ./syn/gsi_a10gx_pcie/control/pci_control
 CHECK_FTM              = ./syn/gsi_pexarria5/ftm/ftm
 CHECK_PEXARRIA10       = ./syn/gsi_pexarria10/control/pexarria10
 CHECK_FTM10            = ./syn/gsi_pexarria10/ftm10/ftm10
+CHECK_A10GX            = ./syn/gsi_a10gx_pcie/control/pci_control
+CHECK_IDROGEN          = ./syn/in2p3_idrogen/control/idrogen
 
 # Project paths
 PATH_SCU2              = syn/gsi_scu/control2
@@ -59,10 +60,11 @@ PATH_PEXP              = syn/gsi_pexp/control
 PATH_SCU4              = syn/gsi_scu/control4
 PATH_FTM4              = syn/gsi_scu/ftm4
 PATH_FTM4DP            = syn/gsi_scu/ftm4dp
-PATH_A10GX             = syn/gsi_a10gx_pcie/control
 PATH_FTM               = syn/gsi_pexarria5/ftm
 PATH_PEXARRIA10        = syn/gsi_pexarria10/control
 PATH_FTM10             = syn/gsi_pexarria10/ftm10
+PATH_A10GX             = syn/gsi_a10gx_pcie/control
+PATH_IDROGEN           = syn/in2p3_idrogen/control
 
 define sort_file
 	sort $(1).qsf >> temp_sorted
@@ -119,7 +121,7 @@ saftlib::
 	cd ip_cores/saftlib; ./configure $(CONFIGURE_FLAGS) --prefix=$(PREFIX) --sysconfdir=$(SYSCONFDIR)
 	$(MAKE) -C ip_cores/saftlib
 
-saftlib-clean:: 
+saftlib-clean::
 	$(MAKE) -C ip_cores/saftlib clean
 
 saftlib-install::
@@ -392,18 +394,6 @@ ftm4dp-check:
 ftm4dp-clean::
 	$(MAKE) -C $(PATH_FTM4DP) clean
 
-a10gx_pcie::	firmware
-	$(MAKE) -C $(PATH_A10GX) all
-
-a10gx_pcie-clean::
-	$(MAKE) -C $(PATH_A10GX) clean
-
-a10gx_pcie-sort:
-	$(call sort_file, $(CHECK_A10GX))
-
-a10gx_pcie-check:
-	$(call check_timing, $(CHECK_A10GX))
-
 pexarria10:	firmware
 	$(MAKE) -C $(PATH_PEXARRIA10) all
 
@@ -499,6 +489,30 @@ pexarria10_soc::	firmware
 
 pexarria10_soc-clean::
 	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/lm-32toolchain/bin:$(PATH) clean
+
+a10gx_pcie::	firmware
+	$(MAKE) -C $(PATH_A10GX) all
+
+a10gx_pcie-clean::
+	$(MAKE) -C $(PATH_A10GX) clean
+
+a10gx_pcie-sort:
+	$(call sort_file, $(CHECK_A10GX))
+
+a10gx_pcie-check:
+	$(call check_timing, $(CHECK_A10GX))
+
+idrogen::	firmware
+	$(MAKE) -C $(PATH_IDROGEN) all
+
+idrogen-clean::
+	$(MAKE) -C $(PATH_IDROGEN) clean
+
+idrogen-sort:
+	$(call sort_file, $(CHECK_IDROGEN))
+
+idrogen-check:
+	$(call check_timing, $(CHECK_IDROGEN))
 
 # We need to run ./fix-git.sh and ./install-hdlmake.sh: make them a prerequisite for Makefile
 Makefile: prereq-rule
