@@ -13,8 +13,8 @@ entity quench_detection is
            nReset : in STD_LOGIC;
            time_pulse : in STD_LOGIC;
            delay : in STD_LOGIC;
-           QuDIn: in STD_LOGIC_VECTOR (24 downto 0);
-           mute: in STD_LOGIC_VECTOR (24 downto 0);
+           QuDIn: in STD_LOGIC_VECTOR (29 downto 0);
+           mute: in STD_LOGIC_VECTOR (29 downto 0);
            QuDOut : out STD_LOGIC);
 end quench_detection;
 
