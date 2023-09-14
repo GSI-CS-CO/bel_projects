@@ -166,6 +166,7 @@ entity monster is
     wr_ext_pps_i           : in    std_logic;
     wr_uart_o              : out   std_logic;
     wr_uart_i              : in    std_logic;
+    wr_pps_o               : out   std_logic;
     -- SFP
     sfp_tx_disable_o       : out   std_logic;
     sfp_tx_fault_i         : in    std_logic;
@@ -1915,6 +1916,8 @@ end generate;
       link_ok_o            => s_link_ok);
   end generate;
 
+  wr_pps_o <= pps;
+  
   dual_port_wr_core : if g_dual_port_wr generate
     wr_a10 : if c_is_arria10 generate
     U_WR_CORE : xwr_core
@@ -2080,8 +2083,8 @@ end generate;
     phy : wr_arria10_transceiver
       generic map (
         g_family               => g_family,
-        g_use_atx_pll          => false,
-        g_use_cmu_pll          => true,
+        g_use_atx_pll          => true,
+        g_use_cmu_pll          => false,
         g_use_simple_wa        => true,
         g_use_det_phy          => true,
         g_use_sfp_los_rst      => true,
