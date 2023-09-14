@@ -1,0 +1,1499 @@
+set_global_assignment -name ACTIVE_SERIAL_CLOCK FREQ_100MHZ
+set_global_assignment -name ADV_NETLIST_OPT_SYNTH_WYSIWYG_REMAP OFF
+set_global_assignment -name AHDL_FILE ../../../modules/modulbus/i2c.tdf
+set_global_assignment -name ALLOW_POWER_UP_DONT_CARE OFF
+set_global_assignment -name AUTO_SHIFT_REGISTER_RECOGNITION OFF
+set_global_assignment -name CRC_ERROR_OPEN_DRAIN OFF
+set_global_assignment -name CVP_CONFDONE_OPEN_DRAIN ON
+set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
+set_global_assignment -name DEVICE 10ax027h4f34i3sg
+set_global_assignment -name ECO_OPTIMIZE_TIMING ON
+set_global_assignment -name EDA_BOARD_DESIGN_BOUNDARY_SCAN_TOOL "<None>"
+set_global_assignment -name EDA_OUTPUT_DATA_FORMAT NONE -section_id eda_board_design_boundary_scan
+set_global_assignment -name EDA_OUTPUT_DATA_FORMAT NONE -section_id eda_simulation
+set_global_assignment -name EDA_SIMULATION_TOOL "<None>"
+set_global_assignment -name ENABLE_BOOT_SEL_PIN OFF
+set_global_assignment -name ENABLE_CONFIGURATION_PINS OFF
+set_global_assignment -name ENABLE_INIT_DONE_OUTPUT ON
+set_global_assignment -name ENABLE_NCE_PIN OFF
+set_global_assignment -name ENABLE_OCT_DONE OFF
+set_global_assignment -name ENABLE_SIGNALTAP ON
+set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 2
+set_global_assignment -name FAMILY "Arria 10"
+set_global_assignment -name FINAL_PLACEMENT_OPTIMIZATION ALWAYS
+set_global_assignment -name FITTER_AGGRESSIVE_ROUTABILITY_OPTIMIZATION AUTOMATICALLY
+set_global_assignment -name FITTER_EFFORT "STANDARD FIT"
+set_global_assignment -name LAST_QUARTUS_VERSION "18.1.0 Standard Edition"
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 100
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name NUM_PARALLEL_PROCESSORS 8
+set_global_assignment -name OPTIMIZATION_MODE "AGGRESSIVE PERFORMANCE"
+set_global_assignment -name OPTIMIZATION_TECHNIQUE SPEED
+set_global_assignment -name OPTIMIZE_HOLD_TIMING "ALL PATHS"
+set_global_assignment -name OPTIMIZE_MULTI_CORNER_TIMING ON
+set_global_assignment -name OPTIMIZE_POWER_DURING_FITTING "EXTRA EFFORT"
+set_global_assignment -name OPTIMIZE_SSN OFF
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION 11.1
+set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -fall
+set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -rise
+set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -fall
+set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -rise
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PHYSICAL_SYNTHESIS_EFFORT EXTRA
+set_global_assignment -name PHYSICAL_SYNTHESIS ON
+set_global_assignment -name PLACEMENT_EFFORT_MULTIPLIER 100
+set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
+set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
+set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:idrogen.tcl"
+set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:00:25 FEBRUARY 13, 2012"
+set_global_assignment -name QSYS_FILE "../../../ip_cores/general-cores/platform/altera/networks/arria10gx/dual_region/dual_region.qsys"
+set_global_assignment -name QSYS_FILE "../../../ip_cores/general-cores/platform/altera/networks/arria10gx/global_region/global_region.qsys"
+set_global_assignment -name QSYS_FILE "../../../ip_cores/general-cores/platform/altera/networks/arria10gx/single_region/single_region.qsys"
+set_global_assignment -name QSYS_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/arria10gx_scu4_pcie_hip/arria10gx_scu4_pcie_hip.qsys"
+set_global_assignment -name QSYS_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria10_phy/wr_arria10_scu4_phy/wr_arria10_scu4_atx_pll/wr_arria10_scu4_atx_pll.qsys"
+set_global_assignment -name QSYS_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria10_phy/wr_arria10_scu4_phy/wr_arria10_scu4_cmu_pll/wr_arria10_scu4_cmu_pll.qsys"
+set_global_assignment -name QSYS_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria10_phy/wr_arria10_scu4_phy/wr_arria10_scu4_det_phy/wr_arria10_scu4_det_phy.qsys"
+set_global_assignment -name QSYS_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria10_phy/wr_arria10_scu4_phy/wr_arria10_scu4_phy/wr_arria10_scu4_phy.qsys"
+set_global_assignment -name QSYS_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria10_phy/wr_arria10_scu4_phy/wr_arria10_scu4_rst_ctl/wr_arria10_scu4_rst_ctl.qsys"
+set_global_assignment -name QSYS_FILE ../../../modules/lvds/arria10_scu4/arria10_scu4_lvds_ibuf/arria10_scu4_lvds_ibuf.qsys
+set_global_assignment -name QSYS_FILE ../../../modules/lvds/arria10_scu4/arria10_scu4_lvds_obuf/arria10_scu4_lvds_obuf.qsys
+set_global_assignment -name QSYS_FILE ../../../modules/lvds/arria10_scu4/arria10_scu4_lvds_pll/arria10_scu4_lvds_pll.qsys
+set_global_assignment -name QSYS_FILE ../../../modules/lvds/arria10_scu4/arria10_scu4_lvds_rx/arria10_scu4_lvds_rx.qsys
+set_global_assignment -name QSYS_FILE ../../../modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/arria10_scu4_lvds_tx.qsys
+set_global_assignment -name QSYS_FILE ../../../modules/pll/arria10_idrogen/dmtd_pll10/dmtd_pll10.qsys
+set_global_assignment -name QSYS_FILE ../../../modules/pll/arria10_idrogen/ref_fpll10_idrogen/ref_fpll10_idrogen.qsys
+set_global_assignment -name QSYS_FILE ../../../modules/pll/arria10_idrogen/ref_pll10/ref_pll10.qsys
+set_global_assignment -name QSYS_FILE ../../../modules/pll/arria10_idrogen/sys_fpll10_idrogen/sys_fpll10_idrogen.qsys
+set_global_assignment -name QSYS_FILE ../../../modules/pll/arria10_idrogen/sys_pll10/sys_pll10.qsys
+set_global_assignment -name QSYS_FILE ../../../modules/remote_update/asmi10/asmi10.qsys
+set_global_assignment -name QSYS_FILE ../../../modules/wb_arria_reset/arria10_reset/arria10_reset.qsys
+set_global_assignment -name RESERVE_DATA0_AFTER_CONFIGURATION "USE AS REGULAR IO"
+set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
+set_global_assignment -name SDC_FILE ../../../top/common/arria10.sdc
+set_global_assignment -name SEED 97
+set_global_assignment -name SIGNALTAP_FILE stp2.stp
+set_global_assignment -name SLD_FILE db/stp2_auto_stripped.stp
+set_global_assignment -name SLD_NODE_CREATOR_ID 110 -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_ENTITY_NAME sld_signaltap -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_ADVANCED_TRIGGER_ENTITY=basic,1," -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_ATTRIBUTE_MEM_MODE=OFF" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_BUFFER_FULL_STOP=1" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_COUNTER_PIPELINE=0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_CURRENT_RESOURCE_WIDTH=1" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_DATA_BITS=209" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_ENABLE_ADVANCED_TRIGGER=0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_INCREMENTAL_ROUTING=1" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_INVERSION_MASK=000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_INVERSION_MASK_LENGTH=648" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_NODE_INFO=805334528" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_POWER_UP_TRIGGER=0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_RAM_BLOCK_TYPE=AUTO" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_RAM_PIPELINE=0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_SAMPLE_DEPTH=128" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_SEGMENT_SIZE=128" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_STATE_BITS=11" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_STATE_FLOW_USE_GENERATED=0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_STORAGE_QUALIFIER_BITS=209" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_STORAGE_QUALIFIER_INVERSION_MASK_LENGTH=0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_TRIGGER_BITS=209" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_TRIGGER_IN_ENABLED=0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_TRIGGER_LEVEL=1" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_TRIGGER_LEVEL_PIPELINE=1" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_TRIGGER_PIPELINE=0" -section_id auto_signaltap_0
+set_global_assignment -name SMART_RECOMPILE OFF
+set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "1.8 V"
+set_global_assignment -name STRATIXII_CONFIGURATION_DEVICE AUTO
+set_global_assignment -name STRATIXIII_CONFIGURATION_SCHEME "ACTIVE SERIAL"
+set_global_assignment -name STRATIXIII_UPDATE_MODE REMOTE
+set_global_assignment -name STRATIXV_CONFIGURATION_SCHEME "ACTIVE SERIAL X4"
+set_global_assignment -name SYNCHRONIZER_IDENTIFICATION "FORCED IF ASYNCHRONOUS"
+set_global_assignment -name SYNTH_TIMING_DRIVEN_SYNTHESIS ON
+set_global_assignment -name TIMING_ANALYZER_DO_CCPP_REMOVAL ON
+set_global_assignment -name TIMING_ANALYZER_MULTICORNER_ANALYSIS ON
+set_global_assignment -name TOP_LEVEL_ENTITY idrogen
+set_global_assignment -name TRI_STATE_SPI_PINS ON
+set_global_assignment -name USE_CONFIGURATION_DEVICE ON
+set_global_assignment -name USE_SIGNALTAP_FILE stp2.stp
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/generated/lm32_allprofiles.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/platform/altera/jtag_tap.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/platform/generic/lm32_multiplier.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/jtag_cores.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_adder.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_addsub.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_include.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_logic_op.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_mc_arithmetic.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_shifter.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_onewire_master/sockit_owm.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_spi/spi_clgen.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_spi/spi_defines.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_spi/spi_shift.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_spi/spi_top.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_spi/timescale.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/bus_commands.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_async_reset_flop.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_bridge32.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_cbe_en_crit.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_conf_cyc_addr_dec.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_conf_space.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_constants.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_cur_out_reg.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_delayed_sync.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_delayed_write_reg.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_frame_crit.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_frame_en_crit.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_frame_load_crit.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_in_reg.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_io_mux_ad_en_crit.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_io_mux_ad_load_crit.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_io_mux.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_irdy_out_crit.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_mas_ad_en_crit.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_mas_ad_load_crit.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_mas_ch_state_crit.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_master32_sm_if.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_master32_sm.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_out_reg.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_par_crit.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_parity_check.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_pci_decoder.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_pcir_fifo_control.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_pci_tpram.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_pciw_fifo_control.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_pciw_pcir_fifos.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_perr_crit.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_perr_en_crit.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_ram_16x40d.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_rst_int.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_serr_crit.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_serr_en_crit.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_spoci_ctrl.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_synchronizer_flop.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_sync_module.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_target32_clk_en.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_target32_devs_crit.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_target32_interface.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_target32_sm.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_target32_stop_crit.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_target32_trdy_crit.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_target_unit.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_user_constants.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_wb_addr_mux.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_wb_decoder.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_wb_master.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_wbr_fifo_control.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_wb_slave_unit.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_wb_slave.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_wbs_wbb3_2_wbb2.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_wb_tpram.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_wbw_fifo_control.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/pci_wbw_wbr_fifos.v" -library work
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/pci-core/src/hdl/verilog/timescale.v" -library work
+set_global_assignment -name VERILOG_FILE ../../../modules/cfi_flash/cfi_ctrl_engine.v -library work
+set_global_assignment -name VERILOG_FILE ../../../modules/cfi_flash/cfi_ctrl.v -library work
+set_global_assignment -name VERILOG_FILE ../../../modules/lpc_uart/serirq_defines.v -library work
+set_global_assignment -name VERILOG_FILE ../../../modules/lpc_uart/serirq_slave.v -library work
+set_global_assignment -name VERILOG_FILE ../../../modules/remote_update/asmi10/asmi10/altera_asmi_parallel_181/synth/asmi10_altera_asmi_parallel_181_gdoqleq.v -library work
+set_global_assignment -name VERILOG_FILE ../../../modules/remote_update/asmi10/asmi10/altera_asmi_parallel_181/synth/asmi10_altera_asmi_parallel_181_svbigkq.v -library work
+set_global_assignment -name VERILOG_FILE ../../../modules/remote_update/asmi5/asmi5/synthesis/submodules/asmi5_asmi_parallel_0.v -library work
+set_global_assignment -name VERILOG_FILE ../../../modules/remote_update/asmi_arriaII/asmi_arriaII/synthesis/submodules/asmi_arriaII_asmi_parallel_0.v -library work
+set_global_assignment -name VERILOG_FILE ../../../modules/stub_pll/stub_pll/altera_iopll_160/synth/stub_pll_altera_iopll_160_z2kwsvq.v -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_commit_len_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_framer.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_master_eth_tx.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_master_slave_wrapper.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_master_top.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_master_core/ebm_auto_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_master_core/ebm_auto.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_record_gen.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_cfg_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_checksum.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_commit_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_ethernet_slave.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_eth_rx.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_eth_tx.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_hdr_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_internals_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_pass_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_raw_slave.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_slave_core.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_slave_fsm.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_slave_top.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_stream_narrow.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_stream_widen.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_tag_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_tx_mux.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_wbm_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/etherbone_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb_fifos.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Access_Decode.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Am_Match.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Buffer_pack.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Buffer.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_bus.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_CRAM.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_CR_CSR_Space.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_CR_pack.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_CSR_pack.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Funct_Match.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Init.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_IRQ_Controller.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_SharedComps.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_swapper.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Wb_master_eb.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Wb_slave.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/xVME64xCore_Top.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/xvme64x_pack.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/axi/axi4lite_wb_bridge/xaxi4lite_wb_bridge.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/axi/axi4_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/axi/z7_axi_gpio_expander/axi_gpio_expander.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_arbitrated_mux.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_async_counter_diff.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_async_signals_input_stage.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_bicolor_led_ctrl.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_big_adder.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_comparator.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_crc_gen.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_delay_gen.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_delay_line.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_ds182x_interface.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_ds182x_readout/gc_ds182x_readout.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_dual_pi_controller.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_dyn_extend_pulse.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_dyn_glitch_filt.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_extend_pulse.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_frequency_meter.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_fsm_watchdog.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_glitch_filt.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_i2c_slave.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_moving_average.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_multichannel_frequency_meter.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_prio_encoder.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_pulse_synchronizer2.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_pulse_synchronizer.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_reset_multi_aasd.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_reset.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_rr_arbiter.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_serial_dac.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_sfp_i2c_adapter.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_single_reset_gen.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_sync_ffs.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_sync_register.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_sync_word_rd.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_sync_word_wr.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_word_packer.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gencores_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/matrix_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/altera/altera_async_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/altera/altera_sync_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/altera/gc_shiftreg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/altera/generic_dpram_mixed.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/altera/generic_dpram.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/altera/generic_simple_dpram.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/altera/generic_spram.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/common/generic_shiftreg_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/common/inferred_async_fifo_dual_rst.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/common/inferred_async_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/common/inferred_sync_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/generic/generic_async_fifo_dual_rst.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/generic/generic_async_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/generic/generic_sync_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/genram_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/memory_loader_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_async_bridge/wb_async_bridge.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_async_bridge/xwb_async_bridge.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_axi4lite_bridge/wb_axi4lite_bridge.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_axi4lite_bridge/xwb_axi4lite_bridge.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_bus_fanout/xwb_bus_fanout.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_clock_crossing/xwb_clock_bridge.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_clock_crossing/xwb_clock_crossing.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_crossbar/sdb_rom.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_crossbar.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_sdb_crossbar.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_dma/xwb_dma.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_dma/xwb_streamer.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_dpram/xwb_dpram.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_ds182x_readout/wb_ds182x_regs.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_ds182x_readout/xwb_ds182x_readout.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wbgen2/wbgen2_dpssram.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wbgen2/wbgen2_eic.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wbgen2/wbgen2_fifo_async.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wbgen2/wbgen2_fifo_sync.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wbgen2/wbgen2_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wbgenplus/wbgenplus_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_gpio_port/wb_gpio_port.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_gpio_port/xwb_gpio_port.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_i2c_bridge/wb_i2c_bridge.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_i2c_master/i2c_master_bit_ctrl.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_i2c_master/i2c_master_byte_ctrl.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_i2c_master/i2c_master_top.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_i2c_master/wb_i2c_master.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_i2c_master/xwb_i2c_master.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_irq/irqm_core.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_lm32.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_master.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_slave.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_timer.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/generated/xwb_lm32.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_dp_ram.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_ram.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_metadata/xwb_metadata.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_onewire_master/wb_onewire_master.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_onewire_master/xwb_onewire_master.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_register/wb_skidpad.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_register/xwb_register_link.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_register/xwb_register.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_remapper/xwb_remapper.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_serial_lcd/wb_serial_lcd.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_simple_pwm/simple_pwm_wbgen2_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_simple_pwm/simple_pwm_wb.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_simple_pwm/wb_simple_pwm.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_simple_pwm/xwb_simple_pwm.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_simple_timer/wb_tics.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_simple_timer/xwb_tics.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_slave_adapter/wb_slave_adapter.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_spi_flash/wb_spi_flash.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_spi/wb_spi.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_spi/xwb_spi.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_split/xwb_split.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_uart/simple_uart_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_uart/simple_uart_wb.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_uart/uart_async_rx.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_uart/uart_async_tx.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_uart/uart_baud_gen.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_uart/wb_simple_uart.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_uart/xwb_simple_uart.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_vic/wb_vic_regs.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_vic/wb_vic.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_vic/xwb_vic.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wishbone_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/flash/altera_flash_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/flash/altera_spi.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/flash/flash_top.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/networks/altera_networks_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_32to64.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_64to32.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_altera.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_tlp.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_wb_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_wb.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/pci-core/src/hdl/wb_pci_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/pci-core/src/hdl/wb_pmc_host_bridge_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/pci-core/src/hdl/wb_pmc_host_bridge.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/fabric/wr_fabric_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/fabric/xwb_fabric_sink.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/fabric/xwb_fabric_source.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/fabric/xwrf_loopback/lbk_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/fabric/xwrf_loopback/lbk_wishbone_controller.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/fabric/xwrf_loopback/wrf_loopback.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/fabric/xwrf_loopback/xwrf_loopback.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/fabric/xwrf_mux.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/fabric/xwrf_reg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/timing/dmtd_phase_meas.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/timing/dmtd_with_deglitcher.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/timing/hpll_period_detect.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/timing/multi_dmtd_with_deglitcher.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/timing/pulse_gen.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/timing/pulse_stamper.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/wrc_diags_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/wrc_diags_wb.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/wrcore_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/wr_core.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/wrc_periph.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/wrc_syscon_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/wrc_syscon_wb.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/xwrc_diags_wb.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/xwr_core.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_dacs/spec_serial_dac_arb.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_dacs/spec_serial_dac.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_ac_wbm_auto_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_ac_wbm_auto.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_ac_wbm.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_adder.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_auto_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_auto.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_channel.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_data.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_free.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_internals_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_msi.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_offset.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_piso_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_auto_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_auto.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_rmw.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_scan.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_scubus_channel.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_sdp.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_search.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_tag_channel.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_tdp.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_tlu_auto_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_tlu_auto.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_tlu_fsm.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_tlu.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_walker.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_wb_event.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_wr_time.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/wr_eca.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/endpoint_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/endpoint_private_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_1000basex_pcs.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_autonegotiation.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_clock_alignment_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_crc32_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_leds_controller.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_packet_filter.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_pcs_tbi_mdio_wb.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_registers_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rtu_header_extract.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_buffer.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_bypass_queue.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_crc_size_check.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_early_address_match.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_oob_insert.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_path.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_pcs_16bit.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_pcs_8bit.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_status_reg_insert.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_vlan_unit.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_wb_master.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_sync_detect_16bit.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_sync_detect.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_timestamping_unit.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_ts_counter.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_crc_inserter.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_header_processor.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_inject_ctrl.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_packet_injection.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_path.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_pcs_16bit.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_pcs_8bit.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_vlan_unit.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_wishbone_controller.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/wr_endpoint.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/xwr_endpoint.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_mini_nic/minic_packet_buffer.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_mini_nic/minic_wbgen2_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_mini_nic/minic_wb_slave.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_mini_nic/wr_mini_nic.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_mini_nic/xwr_mini_nic.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_pps_gen/pps_gen_wb.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_pps_gen/wr_pps_gen.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_pps_gen/xwr_pps_gen.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_si57x_interface/si570_if_wbgen2_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_si57x_interface/si570_if_wb.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_si57x_interface/wr_si57x_interface.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_si57x_interface/xwr_si57x_interface.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_softpll_ng/softpll_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_softpll_ng/spll_aligner.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_softpll_ng/spll_period_detect.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_softpll_ng/spll_wbgen2_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_softpll_ng/spll_wb_slave.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_softpll_ng/wr_softpll_ng.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_softpll_ng/xwr_softpll_ng.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_streamers/dropping_buffer.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_streamers/escape_detector.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_streamers/escape_inserter.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_streamers/rx_streamer.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_streamers/streamers_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_streamers/streamers_priv_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_streamers/tx_streamer.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_streamers/wr_streamers_wbgen2_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_streamers/wr_streamers_wb.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_streamers/xrtx_streamers_stats.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_streamers/xrx_streamers_stats.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_streamers/xrx_streamer.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_streamers/xtx_streamers_stats.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_streamers/xtx_streamer.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_streamers/xwr_streamers.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_tbi_phy/dec_8b10b.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_tbi_phy/disparity_gen_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_tbi_phy/enc_8b10b.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_tbi_phy/wr_tbi_phy.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_tlu/tlu_fsm.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_tlu/tlu_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_tlu/tlu.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/platform/altera/wr_altera_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria10_phy/wr_arria10_phy.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/platform/altera/xwrc_platform_altera.vhd" -library work
+set_global_assignment -name VHDL_FILE ../../../modules/ad7606/ad7606.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/ad7606/adc_modul_bus.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/ad7606/adc_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/ad7606/adc_scu_bus.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/aux_functions_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/Debounce.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/div_n.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/IO_4x8.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/led_n.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/lemo_io.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/local_125_to_12p5.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/local_20_to_12p5.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/prio_encoder/prio_encoder_16_4.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/prio_encoder/prio_encoder_256_8.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/prio_encoder/prio_encoder_64_6.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/slave_clk_switch.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/sys_clk_or_local_clk.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/tmr_scu_bus.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/Zeitbasis.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/beam_dump/beam_dump_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/beam_dump/beam_dump.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/build_id/build_id_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/build_id/build_id.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/BuTis_T0_generator.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/crc8_data8.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/TimestampDecoder.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/TimestampEncoder.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/wr_serialtimestamp_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/cfi_flash/cfi_flash_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/cfi_flash/xwb_cfi_wrapper.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/chopper/Bus_io.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/chopper/Debounce_Skal.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/chopper/Independent_Clk.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/chopper/K12_K23_Logik_Leds.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/chopper/Kanal.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/chopper/Kicker_Leds.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/cpri_phy_reconf/cpri_phy_reconf_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/cpri_phy_reconf/cpri_phy_reconf.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/dac714/dac714_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/dac714/dac714.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/daq/crc5x16.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/daq/daq_chan_reg_logic.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/daq/daq_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/daq/daq.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/daq/Zeitbasis_daq.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/ddr3/ddr3_wrapper_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/ddr3/ddr3_wrapper.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/diob/hw_interlock.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/diob/quench_detection.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/diob/spill_abort.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/dm_diag/dm_diag_auto_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/dm_diag/dm_diag_auto.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/dm_diag/dm_diag.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/eca_tap/eca_tap_auto_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/eca_tap/eca_tap_auto.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/eca_tap/eca_tap_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/eca_tap/eca_tap.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/flash_loader/flash_loader_v01.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_lm32_cluster.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_lm32.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/ftm/time_clk_cross.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/fg_quad/fg_quad_datapath.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/fg_quad/fg_quad_ifa.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/fg_quad/fg_quad_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/fg_quad/fg_quad_scu_bus.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/fg_quad/fg_quad_statistics.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/fg_quad/ring_buffer.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/fg_quad/wbmstr_core.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/scu_slave_fg_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/scu_slave_fg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/serdes_clk_gen/serdes_clk_gen_regs.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/serdes_clk_gen/serdes_clk_gen.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/serdes_clk_gen/wb_serdes_clk_gen_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/serdes_clk_gen/wb_serdes_clk_gen.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/serdes_clk_gen/xwb_serdes_clk_gen.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/heap/heap_pathfinder.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/heap/heap_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/heap/heap_top.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/heap/heap_writer.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/heap/xwb_heap.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/i2c_wrapper/src/hdl/wb_i2c_wrapper_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/io_control/src/hdl/io_control_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/io_control/src/hdl/io_control.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/led_blink.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/lpc_uart/i8042_kbc.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/lpc_uart/lpc_peripheral.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/lpc_uart/lpc_uart_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/lpc_uart/lpc_uart.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/lpc_uart/postcode.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_ibuf.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_obuf.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_rx.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_tx.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria10_lvds_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria2_lvds_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria5_lvds_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/eca_lvds_channel.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/mbox/mbox_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/mbox/mbox.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/mil/hw6408_vhdl.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/mil/Mil_bipol_dec.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/mil/Mil_dec_edge_timed.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/mil/Mil_Enc_Vhdl.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/mil/mil_en_decoder.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/mil/mil_hw_or_soft_ip.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/mil/Mil_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/mil/PLL_SIO.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/mil/PU_Reset.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/mil/SysClock.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/Epcs_spi.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/f_divider.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/global_reg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/I2C_Cntrl.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/K_EPCS_IF.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/led.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/Loader_MB.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/modul2spi.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/modulbus_loader.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/modulbus_v5.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/Rd_mb_ld.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/rdram.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/monster/monster_iodir.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/monster/monster_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/monster/monster.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/nau8811/src/hdl/wb_nau8811_audio_driver_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/oled_display/char_render.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/oled_display/display_console.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/oled_display/Display_RAM_Ini_v01.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/oled_display/oled_auto_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/oled_display/oled_auto.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/oled_display/oled_display_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/oled_display/spi_master.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/oled_display/wb_console.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/pll/altera_butis.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/pll/altera_phase.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/pll/altera_reset.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/pll/pll_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/power_test/power_test_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/power_test/power_test.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/power_test/pwm.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/power_test/row_array.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/power_test/row.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/prioq2/arbiter.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/prioq2/min3.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/prioq2/min9_64.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/prioq2/prio_auto_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/prioq2/prio_auto.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/prioq2/prio_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/prioq2/prio.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/prioq2/queue_unit.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/psram/psram_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/psram/psram.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/remote_update/altasmi.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/remote_update/asmi10/asmi10/altera_asmi_parallel_181/synth/asmi10_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/remote_update/asmi10/asmi10/synth/asmi10.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/remote_update/asmi5/asmi5/synthesis/asmi5.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/remote_update/asmi_arriaII/asmi_arriaII/synthesis/asmi_arriaII.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/remote_update/remote_update_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/remote_update/remote_update.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/remote_update/wb_asmi_slave.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/remote_update/wb_asmi.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/remote_update/wb_remote_update.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/reverse_lpb/reverse_lpb.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/housekeeping.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/scu_bus_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/scu_bus_slave_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/scu_bus_slave.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/scu_to_wb.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/wb_irq_scu_bus.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/wb_scu_bus.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/simple_tag_decoder/simple_tag_decoder_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/simple_tag_decoder/simple_tag_decoder.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/ssd1325/src/hdl/generic_fifo_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/ssd1325/src/hdl/generic_fifo.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/ssd1325/src/hdl/generic_serial_master_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/ssd1325/src/hdl/generic_serial_master.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/ssd1325/src/hdl/wb_ssd1325_serial_driver_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/ssd1325/src/hdl/wb_ssd1325_serial_driver.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/stub_pll/stub_pll/altera_iopll_160/synth/stub_pll_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/stub_pll/stub_pll/synth/stub_pll.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/temp_sens/hdl/wb_temp_sense_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/transceiver_prbs/trans_loop.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/transceiver_prbs/trans_rcfg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/trans_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/trans_pll/trans_pll.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/uart/slib_clock_div.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/uart/slib_counter.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/uart/slib_edge_detect.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/uart/slib_fifo.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/uart/slib_input_filter.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/uart/slib_input_sync.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/uart/slib_mv_filter.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/uart/uart_16750.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/uart/uart_baudgen.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/uart/uart_interrupt.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/uart/uart_receiver.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/uart/uart_transmitter.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/watchdog/watchdog_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/watchdog/watchdog.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria10_reset/arria10_reset/altera_remote_update_181/synth/arria10_reset_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria10_reset/arria10_reset/synth/arria10_reset.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria5_reset.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria_reset.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/wb_arria_reset_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/wb_arria_reset.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/wb_mil_scu/event_processing.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/wb_mil_scu/mil_pll.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/wb_mil_scu/wb_mil_scu_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/wb_mil_scu/wb_mil_scu.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/wb_scu_reg/wb_scu_reg_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/wb_scu_reg/wb_scu_reg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/wb_timer/wb_timer_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/wb_timer/wb_timer.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../top/in2p3_idrogen/control/idrogen.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../top/in2p3_idrogen/control/ramsize_pkg.vhd -library work
+set_global_assignment -name VHDL_INPUT_VERSION VHDL_2008
+set_global_assignment -name VHDL_SHOW_LMF_MAPPING_MESSAGES OFF
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_clk -to "monster:main|ref_pll10:\\ref_a10:ref_inst|outclk_2" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[0] -to dev_clr_n -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[100] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[101] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[102] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[103] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[104] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[105] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[106] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[107] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[108] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[26]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[109] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[27]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[10] -to "monster:main|altera_reset:reset|rstn_o[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[110] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[28]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[111] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[29]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[112] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[113] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[30]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[114] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[31]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[115] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[116] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[117] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[118] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[119] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[11] -to "monster:main|altera_reset:reset|rstn_o[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[120] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[121] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[122] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.err" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[123] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.rty" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[124] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.stall" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[125] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[126] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[127] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[128] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[129] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[12] -to "monster:main|altera_reset:reset|rstn_o[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[130] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[131] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[132] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[133] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[134] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[135] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[136] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[137] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[138] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[139] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[13] -to "monster:main|altera_reset:reset|rstn_o[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[140] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[141] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[142] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[143] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[26]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[144] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[27]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[145] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[28]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[146] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[29]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[147] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[148] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[30]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[149] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[31]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[14] -to "monster:main|led_link_act_o" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[150] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[151] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[152] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[153] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[154] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[155] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[156] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[157] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.cyc" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[158] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[159] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[15] -to "monster:main|led_link_up_o" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[160] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[161] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[162] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[163] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[164] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[165] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[166] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[167] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[168] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[169] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[16] -to "monster:main|led_pps_o" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[170] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[171] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[172] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[173] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[174] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[175] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[176] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[26]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[177] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[27]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[178] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[28]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[179] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[29]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[17] -to "monster:main|led_track_o" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[180] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[181] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[30]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[182] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[31]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[183] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[184] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[185] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[186] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[187] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[188] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[189] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[18] -to "monster:main|ref_pll10:\\ref_a10:ref_inst|locked" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[190] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.sel[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[191] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.sel[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[192] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.sel[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[193] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.sel[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[194] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.stb" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[195] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.we" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[196] -to pps_in -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[197] -to pps_out -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[198] -to sfp_los_i -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[199] -to sfp_mod0_i -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[19] -to "monster:main|ref_pll10:\\ref_a10:ref_inst|outclk_4" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[1] -to "monster:main|altera_reset:reset|locked[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[200] -to sfp_mod1_io -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[201] -to sfp_mod2_io -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[202] -to sfp_rate_o -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[203] -to sfp_tx_disable_o -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[204] -to sfp_tx_fault_i -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[205] -to trigger_in -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[206] -to trigger_out -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[207] -to uart_i -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[208] -to uart_o -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[20] -to "monster:main|sys_pll10:\\sys_a10:sys_inst|locked" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[21] -to "monster:main|sys_pll10:\\sys_a10:sys_inst|outclk_0" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[22] -to "monster:main|wb_arria_reset:wb_reset|rstn_sys_i" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[23] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|rx_bitslide_o[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[24] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|rx_bitslide_o[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[25] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|rx_bitslide_o[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[26] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|rx_bitslide_o[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[27] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|wr_arria10_scu4_atx_pll:\\det_phy:scu4_pll_and_reset:atx_pll:inst_atx_pll|pll_cal_busy" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[28] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|wr_arria10_scu4_atx_pll:\\det_phy:scu4_pll_and_reset:atx_pll:inst_atx_pll|pll_locked" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[29] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|wr_arria10_scu4_det_phy:\\det_phy:scu4_phy:inst_phy|rx_is_lockedtodata[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[2] -to "monster:main|altera_reset:reset|locked[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[30] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|wr_arria10_scu4_det_phy:\\det_phy:scu4_phy:inst_phy|rx_is_lockedtoref[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[31] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|wr_arria10_scu4_det_phy:\\det_phy:scu4_phy:inst_phy|rx_std_bitslipboundarysel[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[32] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|wr_arria10_scu4_det_phy:\\det_phy:scu4_phy:inst_phy|rx_std_bitslipboundarysel[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[33] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|wr_arria10_scu4_det_phy:\\det_phy:scu4_phy:inst_phy|rx_std_bitslipboundarysel[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[34] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|wr_arria10_scu4_det_phy:\\det_phy:scu4_phy:inst_phy|rx_std_bitslipboundarysel[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[35] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|wr_arria10_scu4_det_phy:\\det_phy:scu4_phy:inst_phy|rx_std_bitslipboundarysel[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[36] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|wr_arria10_scu4_rst_ctl:\\det_phy:scu4_pll_and_reset:inst_rst_ctl|pll_locked[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[37] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|wr_arria10_scu4_rst_ctl:\\det_phy:scu4_pll_and_reset:inst_rst_ctl|rx_cal_busy[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[38] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|wr_arria10_scu4_rst_ctl:\\det_phy:scu4_pll_and_reset:inst_rst_ctl|rx_is_lockedtodata[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[39] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|wr_arria10_scu4_rst_ctl:\\det_phy:scu4_pll_and_reset:inst_rst_ctl|rx_ready[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[3] -to "monster:main|altera_reset:reset|locked[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[40] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|wr_arria10_scu4_rst_ctl:\\det_phy:scu4_pll_and_reset:inst_rst_ctl|tx_cal_busy[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[41] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|wr_arria10_scu4_rst_ctl:\\det_phy:scu4_pll_and_reset:inst_rst_ctl|tx_ready[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[42] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|phy_rx_bitslide_i[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[43] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|phy_rx_bitslide_i[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[44] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|phy_rx_bitslide_i[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[45] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|phy_rx_bitslide_i[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[46] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[47] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[48] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[49] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[4] -to "monster:main|altera_reset:reset|pll_arst_o" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[50] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[51] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[52] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[53] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[54] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[55] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[56] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[57] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[58] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[59] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[5] -to "monster:main|altera_reset:reset|pll_lock_i[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[60] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[61] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[62] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[63] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[64] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[26]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[65] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[27]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[66] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[67] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[68] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[69] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[6] -to "monster:main|altera_reset:reset|pll_lock_i[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[70] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[71] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[72] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[73] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[74] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_tai_o[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[75] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_tai_o[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[76] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_tai_o[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[77] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_tai_o[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[78] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_tai_o[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[79] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_tai_o[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[7] -to "monster:main|altera_reset:reset|pll_lock_i[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[80] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_tai_o[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[81] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_tai_o[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[82] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_tai_o[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[83] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_tai_o[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[84] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_tai_o[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[85] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_tai_o[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[86] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|inst" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[87] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|inst_addr" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[88] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|inst_length" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[89] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.ack" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[8] -to "monster:main|altera_reset:reset|pll_lock_i[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[90] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[91] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[92] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[93] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[94] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[95] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[96] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[97] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[98] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[99] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[9] -to "monster:main|altera_reset:reset|rstn_i" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[0] -to dev_clr_n -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[100] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[101] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[102] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[103] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[104] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[105] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[106] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[107] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[108] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[26]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[109] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[27]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[10] -to "monster:main|altera_reset:reset|rstn_o[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[110] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[28]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[111] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[29]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[112] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[113] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[30]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[114] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[31]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[115] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[116] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[117] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[118] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[119] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[11] -to "monster:main|altera_reset:reset|rstn_o[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[120] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[121] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[122] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.err" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[123] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.rty" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[124] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.stall" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[125] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[126] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[127] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[128] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[129] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[12] -to "monster:main|altera_reset:reset|rstn_o[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[130] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[131] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[132] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[133] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[134] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[135] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[136] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[137] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[138] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[139] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[13] -to "monster:main|altera_reset:reset|rstn_o[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[140] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[141] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[142] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[143] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[26]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[144] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[27]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[145] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[28]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[146] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[29]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[147] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[148] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[30]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[149] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[31]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[14] -to "monster:main|led_link_act_o" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[150] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[151] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[152] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[153] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[154] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[155] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[156] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[157] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.cyc" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[158] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[159] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[15] -to "monster:main|led_link_up_o" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[160] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[161] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[162] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[163] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[164] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[165] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[166] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[167] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[168] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[169] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[16] -to "monster:main|led_pps_o" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[170] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[171] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[172] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[173] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[174] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[175] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[176] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[26]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[177] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[27]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[178] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[28]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[179] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[29]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[17] -to "monster:main|led_track_o" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[180] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[181] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[30]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[182] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[31]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[183] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[184] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[185] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[186] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[187] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[188] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[189] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[18] -to "monster:main|ref_pll10:\\ref_a10:ref_inst|locked" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[190] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.sel[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[191] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.sel[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[192] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.sel[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[193] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.sel[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[194] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.stb" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[195] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.we" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[196] -to pps_in -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[197] -to pps_out -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[198] -to sfp_los_i -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[199] -to sfp_mod0_i -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[19] -to "monster:main|ref_pll10:\\ref_a10:ref_inst|outclk_4" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[1] -to "monster:main|altera_reset:reset|locked[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[200] -to sfp_mod1_io -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[201] -to sfp_mod2_io -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[202] -to sfp_rate_o -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[203] -to sfp_tx_disable_o -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[204] -to sfp_tx_fault_i -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[205] -to trigger_in -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[206] -to trigger_out -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[207] -to uart_i -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[208] -to uart_o -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[20] -to "monster:main|sys_pll10:\\sys_a10:sys_inst|locked" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[21] -to "monster:main|sys_pll10:\\sys_a10:sys_inst|outclk_0" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[22] -to "monster:main|wb_arria_reset:wb_reset|rstn_sys_i" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[23] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|rx_bitslide_o[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[24] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|rx_bitslide_o[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[25] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|rx_bitslide_o[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[26] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|rx_bitslide_o[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[27] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|wr_arria10_scu4_atx_pll:\\det_phy:scu4_pll_and_reset:atx_pll:inst_atx_pll|pll_cal_busy" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[28] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|wr_arria10_scu4_atx_pll:\\det_phy:scu4_pll_and_reset:atx_pll:inst_atx_pll|pll_locked" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[29] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|wr_arria10_scu4_det_phy:\\det_phy:scu4_phy:inst_phy|rx_is_lockedtodata[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[2] -to "monster:main|altera_reset:reset|locked[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[30] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|wr_arria10_scu4_det_phy:\\det_phy:scu4_phy:inst_phy|rx_is_lockedtoref[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[31] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|wr_arria10_scu4_det_phy:\\det_phy:scu4_phy:inst_phy|rx_std_bitslipboundarysel[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[32] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|wr_arria10_scu4_det_phy:\\det_phy:scu4_phy:inst_phy|rx_std_bitslipboundarysel[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[33] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|wr_arria10_scu4_det_phy:\\det_phy:scu4_phy:inst_phy|rx_std_bitslipboundarysel[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[34] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|wr_arria10_scu4_det_phy:\\det_phy:scu4_phy:inst_phy|rx_std_bitslipboundarysel[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[35] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|wr_arria10_scu4_det_phy:\\det_phy:scu4_phy:inst_phy|rx_std_bitslipboundarysel[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[36] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|wr_arria10_scu4_rst_ctl:\\det_phy:scu4_pll_and_reset:inst_rst_ctl|pll_locked[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[37] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|wr_arria10_scu4_rst_ctl:\\det_phy:scu4_pll_and_reset:inst_rst_ctl|rx_cal_busy[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[38] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|wr_arria10_scu4_rst_ctl:\\det_phy:scu4_pll_and_reset:inst_rst_ctl|rx_is_lockedtodata[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[39] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|wr_arria10_scu4_rst_ctl:\\det_phy:scu4_pll_and_reset:inst_rst_ctl|rx_ready[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[3] -to "monster:main|altera_reset:reset|locked[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[40] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|wr_arria10_scu4_rst_ctl:\\det_phy:scu4_pll_and_reset:inst_rst_ctl|tx_cal_busy[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[41] -to "monster:main|wr_arria10_transceiver:\\phy_a10:phy|wr_arria10_scu4_rst_ctl:\\det_phy:scu4_pll_and_reset:inst_rst_ctl|tx_ready[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[42] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|phy_rx_bitslide_i[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[43] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|phy_rx_bitslide_i[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[44] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|phy_rx_bitslide_i[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[45] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|phy_rx_bitslide_i[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[46] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[47] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[48] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[49] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[4] -to "monster:main|altera_reset:reset|pll_arst_o" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[50] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[51] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[52] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[53] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[54] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[55] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[56] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[57] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[58] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[59] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[5] -to "monster:main|altera_reset:reset|pll_lock_i[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[60] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[61] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[62] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[63] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[64] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[26]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[65] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[27]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[66] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[67] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[68] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[69] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[6] -to "monster:main|altera_reset:reset|pll_lock_i[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[70] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[71] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[72] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[73] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_cycles_o[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[74] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_tai_o[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[75] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_tai_o[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[76] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_tai_o[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[77] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_tai_o[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[78] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_tai_o[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[79] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_tai_o[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[7] -to "monster:main|altera_reset:reset|pll_lock_i[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[80] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_tai_o[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[81] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_tai_o[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[82] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_tai_o[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[83] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_tai_o[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[84] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_tai_o[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[85] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|tm_tai_o[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[86] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|inst" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[87] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|inst_addr" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[88] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|inst_length" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[89] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.ack" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[8] -to "monster:main|altera_reset:reset|pll_lock_i[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[90] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[91] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[92] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[93] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[94] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[95] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[96] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[97] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[98] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[99] -to "monster:main|xwr_core:\\wr_a10:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[9] -to "monster:main|altera_reset:reset|rstn_i" -section_id auto_signaltap_0
+set_instance_assignment -name IO_STANDARD "1.8 V" -to CLKUSR
+set_instance_assignment -name IO_STANDARD "1.8 V" -to PWR_RSTn
+set_instance_assignment -name IO_STANDARD "1.8 V" -to QSFP_ModIntL
+set_instance_assignment -name IO_STANDARD "1.8 V" -to QSFP_ModLP
+set_instance_assignment -name IO_STANDARD "1.8 V" -to QSFP_ModPrsL
+set_instance_assignment -name IO_STANDARD "1.8 V" -to QSFP_ModRtL
+set_instance_assignment -name IO_STANDARD "1.8 V" -to QSFP_ModSelL
+set_instance_assignment -name IO_STANDARD "1.8 V" -to QSFP_SCL_b
+set_instance_assignment -name IO_STANDARD "1.8 V" -to QSFP_SDA_b
+set_instance_assignment -name IO_STANDARD "1.8 V" -to SPARE_UC
+set_instance_assignment -name IO_STANDARD "1.8 V" -to SW_USER
+set_instance_assignment -name IO_STANDARD "1.8 V" -to SYNC_LMK
+set_instance_assignment -name IO_STANDARD "1.8 V" -to uC_CSn
+set_instance_assignment -name IO_STANDARD "1.8 V" -to uC_INT
+set_instance_assignment -name IO_STANDARD "1.8 V" -to uC_MISO
+set_instance_assignment -name IO_STANDARD "1.8 V" -to uC_MOSI
+set_instance_assignment -name IO_STANDARD "1.8 V" -to uC_RST
+set_instance_assignment -name IO_STANDARD "1.8 V" -to uC_SCLK
+set_instance_assignment -name IO_STANDARD "1.8 V" -to uC_SPI_A10_IS_MASTER
+set_instance_assignment -name IO_STANDARD "1.8 V" -to USB_ADDR
+set_instance_assignment -name IO_STANDARD "1.8 V" -to USB_CLK
+set_instance_assignment -name IO_STANDARD "1.8 V" -to USB_DATA
+set_instance_assignment -name IO_STANDARD "1.8 V" -to USB_EMPTY
+set_instance_assignment -name IO_STANDARD "1.8 V" -to USB_FULL
+set_instance_assignment -name IO_STANDARD "1.8 V" -to USB_OEn
+set_instance_assignment -name IO_STANDARD "1.8 V" -to USB_RDn
+set_instance_assignment -name IO_STANDARD "1.8 V" -to USB_RESETn
+set_instance_assignment -name IO_STANDARD "1.8 V" -to USB_WRn
+set_instance_assignment -name IO_STANDARD HCSL -to AMC_PCI_CLK
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to AMC_1GbE_RX
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to AMC_1GbE_TX
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to AMC_PCIE_RX
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to AMC_PCIE_TX
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to QSFP_RX
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to QSFP_TX
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to sfp_rxp_i
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to sfp_txp_o
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to VIta57_DP_C2M
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to VIta57_DP_M2C
+set_instance_assignment -name IO_STANDARD LVDS -to AMC_CLK1
+set_instance_assignment -name IO_STANDARD LVDS -to AMC_CLK2
+set_instance_assignment -name IO_STANDARD LVDS -to AMC_REFCLK_1G
+set_instance_assignment -name IO_STANDARD LVDS -to AMC_TRIGA_0
+set_instance_assignment -name IO_STANDARD LVDS -to AMC_TRIGA_1
+set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_pllref_i
+set_instance_assignment -name IO_STANDARD LVDS -to FPGA_CLK_2_SI5338
+set_instance_assignment -name IO_STANDARD LVDS -to lmk_clkref_12
+set_instance_assignment -name IO_STANDARD LVDS -to lmk_clkref_2
+set_instance_assignment -name IO_STANDARD LVDS -to LMK_CLKREF_4
+set_instance_assignment -name IO_STANDARD LVDS -to LMK_SYSREF_5
+set_instance_assignment -name IO_STANDARD LVDS -to pps_in
+set_instance_assignment -name IO_STANDARD LVDS -to pps_out
+set_instance_assignment -name IO_STANDARD LVDS -to REFCLK_40G
+set_instance_assignment -name IO_STANDARD LVDS -to RTM30_P0
+set_instance_assignment -name IO_STANDARD LVDS -to RTM30_P1
+set_instance_assignment -name IO_STANDARD LVDS -to RTM30_P2
+set_instance_assignment -name IO_STANDARD LVDS -to VIta57_CLK0_M2C
+set_instance_assignment -name IO_STANDARD LVDS -to VIta57_CLK1_M2C
+set_instance_assignment -name IO_STANDARD LVDS -to VIta57_CLK2_BIDIR
+set_instance_assignment -name IO_STANDARD LVDS -to VIta57_GBTCLK0_M2C
+set_instance_assignment -name IO_STANDARD LVDS -to VIta57_GBTCLK1_M2C
+set_instance_assignment -name IO_STANDARD LVDS -to VIta57_HA
+set_instance_assignment -name IO_STANDARD LVDS -to VIta57_HA_CC[0]
+set_instance_assignment -name IO_STANDARD LVDS -to VIta57_HB
+set_instance_assignment -name IO_STANDARD LVDS -to VIta57_HB_CC[0]
+set_instance_assignment -name IO_STANDARD LVDS -to VIta57_LA
+set_instance_assignment -name IO_STANDARD LVDS -to VIta57_LA_CC[0]
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[0] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[10] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[11] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[12] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[13] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[14] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[15] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[16] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[17] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[18] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[19] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[1] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[20] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[21] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[22] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[23] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[24] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[25] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[26] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[27] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[28] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[29] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[2] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[30] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[31] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[3] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[4] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[5] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[6] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[7] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[8] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[9] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_location_assignment PIN_A18 -to QSFP_ModLP
+set_location_assignment PIN_A19 -to QSFP_ModSelL
+set_location_assignment PIN_A20 -to QSFP_ModRtL
+set_location_assignment PIN_A21 -to QSFP_ModIntL
+set_location_assignment PIN_A23 -to QSFP_ModPrsL
+set_location_assignment PIN_A24 -to QSFP_SDA_b
+set_location_assignment PIN_AA30 -to VIta57_DP_M2C[9]
+set_location_assignment PIN_AA34 -to VIta57_DP_C2M[4]
+set_location_assignment PIN_AA3 -to VIta57_LA[29]
+set_location_assignment PIN_AA5 -to VIta57_LA[18]
+set_location_assignment PIN_AA8 -to VIta57_LA[14]
+set_location_assignment PIN_AB10 -to VIta57_HA[3]
+set_location_assignment PIN_AB1 -to RTM30_P2[2]
+set_location_assignment PIN_AB28 -to AMC_PCI_CLK
+set_location_assignment PIN_AB2 -to VIta57_HB[9]
+set_location_assignment PIN_AB32 -to AMC_PCIE_RX[3]
+set_location_assignment PIN_AB6 -to VIta57_LA[24]
+set_location_assignment PIN_AB8 -to VIta57_HB[2]
+set_location_assignment PIN_AC17 -to dev_clr_n
+set_location_assignment PIN_AC24 -to USB_RESETn
+set_location_assignment PIN_AC30 -to AMC_PCIE_RX[2]
+set_location_assignment PIN_AC34 -to VIta57_DP_C2M[5]
+set_location_assignment PIN_AC3 -to RTM30_P2[3]
+set_location_assignment PIN_AC4 -to RTM30_P0[1]
+set_location_assignment PIN_AC9 -to VIta57_HB[3]
+set_location_assignment PIN_AD10 -to VIta57_LA[21]
+set_location_assignment PIN_AD24 -to USB_EMPTY
+set_location_assignment PIN_AD25 -to USB_DATA[4]
+set_location_assignment PIN_AD28 -to AMC_CLK1
+set_location_assignment PIN_AD2 -to VIta57_LA[31]
+set_location_assignment PIN_AD32 -to AMC_PCIE_RX[1]
+set_location_assignment PIN_AD5 -to VIta57_HB[4]
+set_location_assignment PIN_AD7 -to VIta57_LA[25]
+set_location_assignment PIN_AE12 -to VIta57_LA[17]
+set_location_assignment PIN_AE16 -to AMC_NPERSTL
+set_location_assignment PIN_AE24 -to USB_DATA[0]
+set_location_assignment PIN_AE2 -to VIta57_HB_CC[0]
+set_location_assignment PIN_AE30 -to AMC_PCIE_RX[0]
+set_location_assignment PIN_AE34 -to VIta57_DP_C2M[9]
+set_location_assignment PIN_AE4 -to VIta57_HB[8]
+set_location_assignment PIN_AF11 -to VIta57_LA[23]
+set_location_assignment PIN_AF1 -to RTM30_P0[0]
+set_location_assignment PIN_AF23 -to pps_out
+set_location_assignment PIN_AF24 -to USB_RDn
+set_location_assignment PIN_AF25 -to uC_INT
+set_location_assignment PIN_AF28 -to AMC_REFCLK_1G
+set_location_assignment PIN_AF4 -to VIta57_LA[32]
+set_location_assignment PIN_AF8 -to VIta57_HB[5]
+set_location_assignment PIN_AF9 -to VIta57_LA[28]
+set_location_assignment PIN_AG10 -to VIta57_HB[7]
+set_location_assignment PIN_AG1 -to VIta57_LA[33]
+set_location_assignment PIN_AG23 -to "pps_out(n)"
+set_location_assignment PIN_AG25 -to USB_DATA[7]
+set_location_assignment PIN_AG34 -to AMC_PCIE_TX[3]
+set_location_assignment PIN_AG5 -to RTM30_P0[6]
+set_location_assignment PIN_AG6 -to RTM30_P0[7]
+set_location_assignment PIN_AH10 -to RTM30_P1[5]
+set_location_assignment PIN_AH19 -to clk_20m_vcxo_i
+set_location_assignment PIN_AH23 -to trigger_out
+set_location_assignment PIN_AH25 -to USB_DATA[3]
+set_location_assignment PIN_AH26 -to USB_OEn
+set_location_assignment PIN_AH27 -to USB_DATA[6]
+set_location_assignment PIN_AH3 -to RTM30_P0[3]
+set_location_assignment PIN_AH7 -to RTM30_P1[1]
+set_location_assignment PIN_AH8 -to VIta57_LA[30]
+set_location_assignment PIN_AJ1 -to RTM30_P0[2]
+set_location_assignment PIN_AJ22 -to LMK_SYSREF_5
+set_location_assignment PIN_AJ24 -to AMC_TRIGA_1
+set_location_assignment PIN_AJ25 -to uC_MOSI
+set_location_assignment PIN_AJ26 -to USB_DATA[2]
+set_location_assignment PIN_AJ27 -to USB_WRn
+set_location_assignment PIN_AJ30 -to AMC_1GbE_RX[0]
+set_location_assignment PIN_AJ34 -to AMC_PCIE_TX[2]
+set_location_assignment PIN_AJ4 -to VIta57_HB[19]
+set_location_assignment PIN_AJ5 -to VIta57_HB[13]
+set_location_assignment PIN_AK16 -to CLKUSR
+set_location_assignment PIN_AK26 -to USB_ADDR[1]
+set_location_assignment PIN_AK27 -to USB_FULL
+set_location_assignment PIN_AK2 -to RTM30_P0[5]
+set_location_assignment PIN_AK4 -to VIta57_HB[16]
+set_location_assignment PIN_AK7 -to RTM30_P1[3]
+set_location_assignment PIN_AL13 -to RTM30_P2[4]
+set_location_assignment PIN_AL14 -to RTM30_P2[6]
+set_location_assignment PIN_AL16 -to FPGA_CLK_2_SI5338
+set_location_assignment PIN_AL1 -to RTM30_P0[4]
+set_location_assignment PIN_AL23 -to AMC_TRIGA_0
+set_location_assignment PIN_AL24 -to uC_CSn
+set_location_assignment PIN_AL25 -to uC_SPI_A10_IS_MASTER
+set_location_assignment PIN_AL27 -to LMK_CLKREF_4
+set_location_assignment PIN_AL30 -to AMC_1GbE_RX[1]
+set_location_assignment PIN_AL34 -to AMC_PCIE_TX[1]
+set_location_assignment PIN_AL5 -to RTM30_P1[2]
+set_location_assignment PIN_AL6 -to VIta57_HB[12]
+set_location_assignment PIN_AL9 -to RTM30_P1[7]
+set_location_assignment PIN_AM1 -to RTM30_P1[0]
+set_location_assignment PIN_AM22 -to wr_dac_din_o
+set_location_assignment PIN_AM23 -to uC_MISO
+set_location_assignment PIN_AM26 -to USB_DATA[5]
+set_location_assignment PIN_AM27 -to USB_DATA[1]
+set_location_assignment PIN_AM32 -to AMC_1GbE_TX[0]
+set_location_assignment PIN_AM3 -to AMC_CLK2
+set_location_assignment PIN_AM6 -to RTM30_P1[4]
+set_location_assignment PIN_AN13 -to led_n[0]
+set_location_assignment PIN_AN14 -to led_n[2]
+set_location_assignment PIN_AN18 -to wr_ndac_cs_o[1]
+set_location_assignment PIN_AN20 -to uart_i
+set_location_assignment PIN_AN22 -to wr_sda_flash_b
+set_location_assignment PIN_AN23 -to uC_SCLK
+set_location_assignment PIN_AN24 -to USB_CLK
+set_location_assignment PIN_AN25 -to SPARE_UC[1]
+set_location_assignment PIN_AN27 -to SPARE_UC[0]
+set_location_assignment PIN_AN34 -to AMC_PCIE_TX[0]
+set_location_assignment PIN_AN7 -to RTM30_P2[5]
+set_location_assignment PIN_AN8 -to RTM30_P2[7]
+set_location_assignment PIN_AP14 -to led_n[1]
+set_location_assignment PIN_AP15 -to SW_USER
+set_location_assignment PIN_AP16 -to uart_o
+set_location_assignment PIN_AP17 -to wr_dac_sclk_o
+set_location_assignment PIN_AP20 -to wr_one_wire_io
+set_location_assignment PIN_AP21 -to wr_ndac_cs_o[2]
+set_location_assignment PIN_AP22 -to wr_scl_flash_b
+set_location_assignment PIN_AP24 -to SYNC_LMK
+set_location_assignment PIN_AP26 -to uC_RST
+set_location_assignment PIN_AP27 -to USB_ADDR[0]
+set_location_assignment PIN_AP32 -to AMC_1GbE_TX[1]
+set_location_assignment PIN_AP5 -to RTM30_P1[6]
+set_location_assignment PIN_AP9 -to led_n[3]
+set_location_assignment PIN_B18 -to sfp_mod2_io
+set_location_assignment PIN_B20 -to sfp_rate_o
+set_location_assignment PIN_B21 -to QSFP_SCL_b
+set_location_assignment PIN_B22 -to sfp_los_i
+set_location_assignment PIN_B23 -to VIta57_HA[1]
+set_location_assignment PIN_B31 -to "sfp_txp_o(n)"
+set_location_assignment PIN_B32 -to sfp_txp_o
+set_location_assignment PIN_C18 -to sfp_tx_disable_o
+set_location_assignment PIN_C19 -to sfp_mod1_io
+set_location_assignment PIN_C20 -to sfp_mod0_i
+set_location_assignment PIN_C24 -to VIta57_HA[6]
+set_location_assignment PIN_C27 -to VIta57_HA[2]
+set_location_assignment PIN_C29 -to "sfp_rxp_i(n)"
+set_location_assignment PIN_C30 -to sfp_rxp_i
+set_location_assignment PIN_C34 -to QSFP_TX[3]
+set_location_assignment PIN_D17 -to sfp_tx_fault_i
+set_location_assignment PIN_D25 -to VIta57_HB[15]
+set_location_assignment PIN_E22 -to VIta57_HB[14]
+set_location_assignment PIN_E23 -to lmk_clkref_2
+set_location_assignment PIN_E24 -to "lmk_clkref_2(n)"
+set_location_assignment PIN_E26 -to VIta57_HB[6]
+set_location_assignment PIN_E27 -to VIta57_HB[1]
+set_location_assignment PIN_E34 -to QSFP_TX[2]
+set_location_assignment PIN_F25 -to VIta57_HB[10]
+set_location_assignment PIN_F32 -to QSFP_TX[1]
+set_location_assignment PIN_G23 -to VIta57_LA[5]
+set_location_assignment PIN_G26 -to VIta57_HB[11]
+set_location_assignment PIN_G30 -to QSFP_RX[1]
+set_location_assignment PIN_G34 -to VIta57_DP_C2M[0]
+set_location_assignment PIN_H22 -to VIta57_LA[6]
+set_location_assignment PIN_H24 -to VIta57_HB[18]
+set_location_assignment PIN_H25 -to VIta57_HB[17]
+set_location_assignment PIN_H27 -to trigger_in
+set_location_assignment PIN_H32 -to QSFP_TX[0]
+set_location_assignment PIN_J1 -to VIta57_HA[17]
+set_location_assignment PIN_J26 -to "pps_in(n)"
+set_location_assignment PIN_J27 -to pps_in
+set_location_assignment PIN_J30 -to QSFP_RX[0]
+set_location_assignment PIN_J34 -to VIta57_DP_C2M[1]
+set_location_assignment PIN_J4 -to VIta57_HA[4]
+set_location_assignment PIN_K1 -to VIta57_HA[14]
+set_location_assignment PIN_K23 -to VIta57_HB[20]
+set_location_assignment PIN_K24 -to VIta57_LA[11]
+set_location_assignment PIN_K25 -to VIta57_CLK1_M2C
+set_location_assignment PIN_K32 -to QSFP_RX[3]
+set_location_assignment PIN_K6 -to VIta57_CLK0_M2C
+set_location_assignment PIN_L23 -to VIta57_HB[21]
+set_location_assignment PIN_L30 -to QSFP_RX[2]
+set_location_assignment PIN_L34 -to VIta57_DP_C2M[8]
+set_location_assignment PIN_L3 -to VIta57_LA[3]
+set_location_assignment PIN_L4 -to VIta57_LA[12]
+set_location_assignment PIN_M1 -to VIta57_LA[13]
+set_location_assignment PIN_M27 -to "clk_125m_pllref_i(n)"
+set_location_assignment PIN_M28 -to clk_125m_pllref_i
+set_location_assignment PIN_M2 -to VIta57_HA[21]
+set_location_assignment PIN_M32 -to VIta57_DP_M2C[0]
+set_location_assignment PIN_M5 -to VIta57_HA[8]
+set_location_assignment PIN_M6 -to VIta57_CLK2_BIDIR
+set_location_assignment PIN_N2 -to VIta57_LA[19]
+set_location_assignment PIN_N30 -to VIta57_DP_M2C[1]
+set_location_assignment PIN_N34 -to VIta57_DP_C2M[2]
+set_location_assignment PIN_N4 -to VIta57_LA[4]
+set_location_assignment PIN_N7 -to VIta57_HA[10]
+set_location_assignment PIN_N8 -to VIta57_HA[5]
+set_location_assignment PIN_N9 -to VIta57_HA[7]
+set_location_assignment PIN_P28 -to REFCLK_40G
+set_location_assignment PIN_P2 -to VIta57_LA[7]
+set_location_assignment PIN_P32 -to VIta57_DP_M2C[8]
+set_location_assignment PIN_P4 -to VIta57_HA[23]
+set_location_assignment PIN_R1 -to VIta57_HA[20]
+set_location_assignment PIN_R30 -to VIta57_DP_M2C[2]
+set_location_assignment PIN_R34 -to VIta57_DP_C2M[7]
+set_location_assignment PIN_R6 -to VIta57_HA_CC[0]
+set_location_assignment PIN_R8 -to VIta57_HA[9]
+set_location_assignment PIN_T27 -to "lmk_clkref_12(n)"
+set_location_assignment PIN_T28 -to lmk_clkref_12
+set_location_assignment PIN_T32 -to VIta57_DP_M2C[7]
+set_location_assignment PIN_T3 -to VIta57_LA[20]
+set_location_assignment PIN_T4 -to VIta57_HA[16]
+set_location_assignment PIN_T5 -to VIta57_HA[12]
+set_location_assignment PIN_T9 -to VIta57_LA[2]
+set_location_assignment PIN_U10 -to VIta57_LA[9]
+set_location_assignment PIN_U1 -to VIta57_HA[22]
+set_location_assignment PIN_U30 -to VIta57_DP_M2C[3]
+set_location_assignment PIN_U34 -to VIta57_DP_C2M[3]
+set_location_assignment PIN_U3 -to VIta57_HA[15]
+set_location_assignment PIN_U6 -to VIta57_HA[11]
+set_location_assignment PIN_U8 -to VIta57_LA[15]
+set_location_assignment PIN_V28 -to VIta57_GBTCLK1_M2C
+set_location_assignment PIN_V32 -to VIta57_DP_M2C[6]
+set_location_assignment PIN_V5 -to VIta57_LA[8]
+set_location_assignment PIN_V7 -to VIta57_LA[1]
+set_location_assignment PIN_V9 -to VIta57_LA[16]
+set_location_assignment PIN_W10 -to VIta57_LA[10]
+set_location_assignment PIN_W1 -to VIta57_LA[26]
+set_location_assignment PIN_W30 -to VIta57_DP_M2C[4]
+set_location_assignment PIN_W34 -to VIta57_DP_C2M[6]
+set_location_assignment PIN_W4 -to VIta57_LA[22]
+set_location_assignment PIN_W6 -to VIta57_HA[18]
+set_location_assignment PIN_Y1 -to VIta57_LA[27]
+set_location_assignment PIN_Y28 -to VIta57_GBTCLK0_M2C
+set_location_assignment PIN_Y32 -to VIta57_DP_M2C[5]
+set_location_assignment PIN_Y3 -to VIta57_HA[19]
+set_location_assignment PIN_Y6 -to VIta57_LA_CC[0]
+set_location_assignment PIN_Y8 -to VIta57_HA[13]
