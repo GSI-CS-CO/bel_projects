@@ -105,7 +105,7 @@ begin
     port map(
       core_clk_20m_vcxo_i     => clk_20m_vcxo_i,
       core_clk_125m_pllref_i  => clk_125m_pllref_i,
-      core_clk_125m_local_i   => clk_125m_pllref_i, -- TBD: Feed 62m5 in to a PLL and generate 125 MHz
+      core_clk_125m_local_i   => clk_125m_pllref_i,
       core_clk_125m_sfpref_i  => clk_125m_pllref_i,
       core_rstn_i             => dev_clr_n,
       wr_sfp_sda_io           => sfp_mod2_io,
