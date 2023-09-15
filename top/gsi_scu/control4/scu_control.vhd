@@ -341,7 +341,7 @@ begin
     s_lvds_n_i(i) <= fastIO_n_i(i);
     fastIO_p_o(i) <= s_lvds_p_o(i);
   end generate;
-  lemo_out <= not s_gpio_o(6 downto 3);
+  lemo_out <= s_gpio_o(6 downto 3);
 
   -- OneWire
   onewire_ext_splz  <= '1';  --Strong Pull-Up disabled
