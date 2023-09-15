@@ -322,7 +322,7 @@ begin
   wr_rgb_led(2)           <= not (not s_led_track and  s_led_link_up); -- WR-RGB Blue
   user_led_0              <= not s_gpio_o(2 downto 0);
 
-  lemo_out <= not s_gpio_o(6 downto 3);
+  lemo_out <= s_gpio_o(6 downto 3);
 
   onewire_ext_splz  <= '1';  --Strong Pull-Up disabled
   OneWire_CB_splz   <= '1';  --Strong Pull-Up disabled
