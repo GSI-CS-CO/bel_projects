@@ -4,13 +4,15 @@
 #define ADC_BIT_RES 4096
 
 #define POR_DELAY 50 //Power of Reset Delay in ms
+#define DELTA_V 0.05
 
 //Main Power rail ADC
 #define MP_ON_THRESHOLD_V 11.9
 #define MP_FAIL_THRESHOLD_V 11
 #define MP_R_SERIES 12
 #define MP_R_MEASURE 1
-#define MP_ON_ADC_THRES ( ((float)MP_R_MEASURE / (float)(MP_R_SERIES + MP_R_MEASURE) ) * (ADC_BIT_RES / (float)ADC_REF_VOLTAGE) * (float)MP_ON_THRESHOLD_V )
+//#define MP_ON_ADC_THRES ( ((float)MP_R_MEASURE / (float)(MP_R_SERIES + MP_R_MEASURE) ) * (ADC_BIT_RES / (float)ADC_REF_VOLTAGE) * (float)MP_ON_THRESHOLD_V )
+#define MP_ON_ADC_THRES (uint16_t)  ( (( (MP_R_MEASURE /(float) (MP_R_MEASURE+MP_R_SERIES) ) * MP_ON_THRESHOLD_V + DELTA_V))/ (float) ADC_REF_VOLTAGE    * ADC_BIT_RES) 
 #define MP_FAIL_ADC_THRES ( ((float)MP_R_MEASURE / (float)(MP_R_SERIES + MP_R_MEASURE) ) * (ADC_BIT_RES / (float)ADC_REF_VOLTAGE) * (float)MP_FAIL_THRESHOLD_V )
 
 //FPGA 1.8V Power rail ADC
