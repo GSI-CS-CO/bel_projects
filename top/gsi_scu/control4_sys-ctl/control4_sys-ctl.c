@@ -13,6 +13,11 @@
 
 int main (void)
 {
+    while ( !readPGood3_3V() )
+    {
+        _delay_ms(DELAY_16MS_EARLY_OSC);
+    }
+    
 
     typedef enum {PWR_IDLE = 0,PWR_UP0,PWR_UP1,PWR_UP2,PWR_OK,PWR_DOWN1,PWR_DOWN0} pwr_state_t;
 

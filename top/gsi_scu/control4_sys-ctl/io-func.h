@@ -4,10 +4,11 @@
 #define ADC_BIT_RES 4096
 
 #define POR_DELAY 50 //Power of Reset Delay in ms
+#define DELAY_16MS_EARLY_OSC 1
 #define DELTA_V 0.05
 
 //Main Power rail ADC
-#define MP_ON_THRESHOLD_V 11.9
+#define MP_ON_THRESHOLD_V 11.8
 #define MP_FAIL_THRESHOLD_V 11
 #define MP_R_SERIES 12
 #define MP_R_MEASURE 1
