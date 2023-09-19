@@ -54,7 +54,7 @@ int main (void)
                 case PWR_IDLE:
                     PORflag = 0;
                     indicatorLED(red);
-                    if (read_MP_ADC() >= MP_ON_ADC_THRES && readPGood3_3V())
+                    if ( ( read_MP_ADC() >= MP_ON_ADC_THRES ) && readPGood3_3V())
                         {
                             state = PWR_UP0;
                         }
@@ -62,7 +62,7 @@ int main (void)
                 case PWR_UP0:
                     enableCoreVoltage (high);
                     indicatorLED(yellow);
-                    if (read_MP_ADC() <= MP_FAIL_ADC_THRES || !readPGood3_3V())
+                    if ( ( read_MP_ADC() <= MP_FAIL_ADC_THRES )|| !readPGood3_3V())
                         {
                             state = PWR_DOWN0;
                         }
@@ -74,7 +74,7 @@ int main (void)
                 case PWR_UP1:
                     enable1_8V (high);
                     indicatorLED(yellow);
-                    if (read_MP_ADC() <= MP_FAIL_ADC_THRES || !readPGood3_3V() || !readPGoodCore())
+                    if ( ( read_MP_ADC() <= MP_FAIL_ADC_THRES )|| !readPGood3_3V() || !readPGoodCore())
                         {
                             state = PWR_DOWN1;
                         }
@@ -87,7 +87,7 @@ int main (void)
                 case PWR_UP2:
                     enable1_8VIO (high);
                     indicatorLED(yellow);
-                    if (read_MP_ADC() <= MP_FAIL_ADC_THRES || !readPGood3_3V() || !readPGoodCore() || !readPGood1_8V())
+                    if ( ( read_MP_ADC() <= MP_FAIL_ADC_THRES ) || !readPGood3_3V() || !readPGoodCore() || !readPGood1_8V())
                         {
                             state = PWR_DOWN1;
                         }
@@ -104,7 +104,7 @@ int main (void)
                     enable1_8VIO (low);
                     enable1_8V (low);
                     indicatorLED(magenta);
-                    if (read_V1_8_ADC() <= V1_8_OFF_ADC_THRES && read_V1_8IO_ADC() <= V1_8IO_OFF_ADC_THRES)
+                    if ( (read_V1_8_ADC() <= V1_8_OFF_ADC_THRES) && (read_V1_8IO_ADC() <= V1_8IO_OFF_ADC_THRES) )
                         {
                             state = PWR_DOWN0;
                         }
@@ -119,7 +119,7 @@ int main (void)
                     break;
                 // Power OK
                 case PWR_OK:
-                    if (read_MP_ADC() <= MP_FAIL_ADC_THRES || !readPGood3_3V() || !readPGoodCore() || !readPGood1_8V() || read_V1_8IO_ADC() <= V1_8IO_FAIL_ADC_THRES)
+                    if ( ( read_MP_ADC() <= MP_FAIL_ADC_THRES ) || !readPGood3_3V() || !readPGoodCore() || !readPGood1_8V() || ( read_V1_8IO_ADC() <= V1_8IO_FAIL_ADC_THRES ) )
                         {
                             performReset();
                             state = PWR_DOWN1;
@@ -127,7 +127,7 @@ int main (void)
                     enable5V (high);
                     enableComXpowerOk(high);
                     enableIO();
-                    //Reset BehaviorA
+                    //Reset Behavior                
                     if (!readAllResets())
                         {
                             //Reset
