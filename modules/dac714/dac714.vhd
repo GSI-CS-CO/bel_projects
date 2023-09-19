@@ -18,10 +18,17 @@ use work.dac714_pkg.all;
 --                                                                                                                  --
 --    Funktionsbeschreibung                                                                                         --
 --                                                                                                                  --
---    Register-Layout                                                                                               --
+--    Register-Layout MIT AENDERUNGEN FUER VERS. 4                                                                                              --
 --                                                                                                                  --
 --      Base_addr   : Kontrollregister                                                                              --
---                    Lesen Bit:  15..5 | immer null                                                                --
+--                    Lesen Bit:  15..5 | immer null    
+--                                ------+-----------------------------------------------------------------------    --
+--                                  6   | RRG_mode; 1 = Switched to RRG when in FG Mode (see bit 4)                 --
+--                                      |           0 = Operate in 'normal' FG mode                                 --                                                            --
+--                                      |           This bit has no meaning if FG_mode=0                            --
+--                                      |           Introduced in ver 4                                             --
+--                                ------+-----------------------------------------------------------------------    --
+--                                  5   | Ext_Trig_wait   																			  --
 --                                ------+-----------------------------------------------------------------------    --
 --                                  4   | FG_mode;  1 = Funktiongenerator-Mode, DAC-Werte kommen von FG_Data und    --
 --                                      |               werden mit FG_Strobe uebernommen. Kein externer Trigger!    --
@@ -42,6 +49,13 @@ use work.dac714_pkg.all;
 --                                ------+-----------------------------------------------------------------------    --
 --                                                                                                                  --
 --                Schreiben Bit:  15..5 | kein Einfluss                                                             --
+--                                ------+-----------------------------------------------------------------------    --
+--                                  6   | RRG_mode; 1 = Switch to RRG when in FG Mode (see bit 4)                   --
+--                                      |           0 = Operate in 'normal' FG mode                                 --                                                            
+--                                      |           This bit has no meaning if FG_mode=0                            --
+--                                      |           Introduced in ver 4                                             --
+--                                ------+-----------------------------------------------------------------------    --
+--                                  5   | (empty)                                                                   --
 --                                ------+-----------------------------------------------------------------------    --
 --                                  4   | FG_mode;  1 = Funktiongenerator-Mode                                      --
 --                                      |           0 = Software-Mode                                               --
@@ -192,7 +206,14 @@ use work.dac714_pkg.all;
 --    generator oder durch einen exteren Trigger ausgeloest wurde.                                                  --
 ----------------------------------------------------------------------------------------------------------------------
 
-
+----------------------------------------------------------------------------------------------------------------------
+--  Vers: 4 Revi: 0: erstellt am 18.09.2023, Autor: M.Dziewiecki                                                    --
+--                                                                                                                  --
+--  Aenderung 1)                                                                                                    --
+--    Added separate input for Realtime Ramp Generator (RRG). The two new inputs: 'RRG_Data' und 'RRG-Strobe'       --
+--    are used in an analogue way to  'FG-Data' und 'FG_Strobe' genutzt. Bit 6 of control register is used to       --
+--    switch between FG and GGR mode.                                                                               --
+----------------------------------------------------------------------------------------------------------------------
 
 entity dac714 is
   generic (
@@ -213,8 +234,11 @@ entity dac714 is
     nExt_Trig_DAC:      in      std_logic;                      -- external trigger input over optocoupler,
                                                                 -- led on -> nExt_Trig_DAC is low
     FG_Data:            in      std_logic_vector(15 downto 0) := (others => '0');  -- parallel dac data during FG-Mode
-    FG_Strobe:          in      std_logic := '0';               -- strobe to start SPI transfer (if possible) during FG-Mode
-    DAC_SI:             out     std_logic;                      -- connect to DAC-SDI
+    FG_Strobe:          in      std_logic := '0';               -- strobe to start SPI transfer (if possible) during RRG-Mode
+    RRG_Data:           in      std_logic_vector(15 downto 0) := (others => '0');  -- parallel dac data during RRG-Mode
+    RRG_Strobe:         in      std_logic := '0';               -- strobe to start SPI transfer (if possible) during RRG-Mode
+    
+	 DAC_SI:             out     std_logic;                      -- connect to DAC-SDI
     nDAC_CLK:           out     std_logic;                      -- spi-clock of DAC
     nCS_DAC:            out     std_logic;                      -- '0' enable shift of internal shift register of DAC
     nLD_DAC:            out     std_logic;                      -- '0' copy shift register to output latch of DAC
@@ -252,6 +276,7 @@ architecture arch_dac714 OF dac714 IS
   signal    Rd_DAC_Cntrl:     std_logic;
 
   signal    FG_Strobe_dly:    std_logic;
+  signal    RRG_Strobe_dly:   std_logic;
 
   signal    S_Dtack:          std_logic;
 
@@ -287,6 +312,7 @@ architecture arch_dac714 OF dac714 IS
   signal  dac_conv_extern:    std_logic;    -- '1' => enable external convert dac strobe, its bit(2) of DAC control register
   signal  dac_neg_edge_conv:  std_logic;    -- '1' => negative edge convert dac strobe,   its bit(3) of DAC control register
   signal  FG_mode:            std_logic;    -- '1' => enable fuction generator mode,      its bit(4) of DAC control register
+  signal  RRG_mode:           std_logic;    -- '1' => switch between fuction generator and RRG mode, its bit(5) of DAC control register
 
   signal  clear_spi_clk:    std_logic;
 
@@ -494,6 +520,7 @@ P_SPI_SM: process (clk, nReset_ff)
     elsif rising_edge(clk) then
 
       FG_Strobe_dly <= FG_Strobe;
+      RRG_Strobe_dly <= RRG_Strobe;
 
       clear_spi_clk <= '0';
       New_trm_during_trm_active <= '0';
@@ -522,15 +549,28 @@ P_SPI_SM: process (clk, nReset_ff)
         end if;
       else
         -- funktiongenerator mode is selected
-        if FG_Strobe = '1' and FG_Strobe_dly = '0' then
-          if SPI_SM = Idle then
-            Shift_Reg <= unsigned(FG_Data);               -- in FG mode load Shift_Reg only in Idle state alowed, source FG_Data
-            clear_spi_clk <= '1';
-            SPI_TRM <= '1';
-         else
-            New_trm_during_trm_active <= '1';
-          end if;
-        end if;
+		  if RRG_mode = '0' then
+			  if FG_Strobe = '1' and FG_Strobe_dly = '0' then
+				 if SPI_SM = Idle then
+					Shift_Reg <= unsigned(FG_Data);               -- in FG mode load Shift_Reg only in Idle state alowed, source FG_Data
+					clear_spi_clk <= '1';
+					SPI_TRM <= '1';
+				else
+					New_trm_during_trm_active <= '1';
+				 end if;
+			  end if;
+			else
+			-- RRG mode is selected
+			  if RRG_Strobe = '1' and RRG_Strobe_dly = '0' then
+				 if SPI_SM = Idle then
+					Shift_Reg <= unsigned(RRG_Data);               -- in FG mode load Shift_Reg only in Idle state alowed, source FG_Data
+					clear_spi_clk <= '1';
+					SPI_TRM <= '1';
+				else
+					New_trm_during_trm_active <= '1';
+				 end if;
+			  end if;		  
+		   end if;
       end if;
 
       if spi_clk_ena = '1' then
@@ -675,6 +715,7 @@ P_DAC_Cntrl:  process (clk, nReset_ff)
       dac_neg_edge_conv <= '0';
       clr_cnt           := "00";
       FG_mode <= '0';
+		RRG_mode <= '0';
 
     elsif rising_edge(clk) then
 
@@ -690,6 +731,7 @@ P_DAC_Cntrl:  process (clk, nReset_ff)
         dac_conv_extern   <= Data_from_SCUB_LA(2) and not FG_mode;  -- '1' => enable external convert dac strobe, allowed only when FG_mode is off
         dac_neg_edge_conv <= Data_from_SCUB_LA(3) and not FG_mode;  -- '1' => negative edge convert dac strobe, allowed only when FG_mode is off
         FG_mode           <= Data_from_SCUB_LA(4);                  -- '1' => enable fuction generator mode
+        RRG_mode          <= Data_from_SCUB_LA(6);                  -- '1' => enable RRG mode (when FG mode is active, see above)
       else
         if nCLR_DAC = '0' then
           if spi_clk_ena = '1' then
@@ -762,14 +804,14 @@ nDAC_CLK <= not spi_clk;
 DAC_convert_o <= DAC_convert; -- '1' when DAC convert driven by software, functiongenerator or external trigger
 
 P_read_mux: process (rd_trm_during_trm_active_err_cnt, rd_old_data_err_cnt, rd_shift_err_cnt, Rd_DAC_Cntrl,
-                     Ext_Trig_wait, FG_mode, dac_neg_edge_conv, dac_conv_extern, nCLR_DAC, SPI_TRM,
+                     Ext_Trig_wait, FG_mode, RRG_mode, dac_neg_edge_conv, dac_conv_extern, nCLR_DAC, SPI_TRM,
                      Trig_DAC_during_shift_err_cnt_b, Trig_DAC_with_old_data_err_cnt_b, New_trm_during_trm_active_err_cnt_b,
                      rd_dac_data, dac_data, rd_fw_version)
   variable  sel_mux:  std_logic_vector(5 downto 0);
   begin
     sel_mux := (rd_fw_version, rd_dac_data, rd_trm_during_trm_active_err_cnt, rd_old_data_err_cnt, rd_shift_err_cnt, Rd_DAC_Cntrl);
     case sel_mux is
-      when "000001" => Rd_Port <= (X"00" & "00" & Ext_Trig_wait & FG_mode & dac_neg_edge_conv & dac_conv_extern & not nCLR_DAC & SPI_TRM);
+      when "000001" => Rd_Port <= (X"00" & "0" & RRG_mode & Ext_Trig_wait & FG_mode & dac_neg_edge_conv & dac_conv_extern & not nCLR_DAC & SPI_TRM);
       when "000010" => Rd_Port <= (X"00" & std_logic_vector(Trig_DAC_during_shift_err_cnt_b));
       when "000100" => Rd_Port <= (X"00" & std_logic_vector(Trig_DAC_with_old_data_err_cnt_b));
       when "001000" => Rd_Port <= (X"00" & std_logic_vector(New_trm_during_trm_active_err_cnt_b));

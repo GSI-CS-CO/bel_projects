@@ -19,6 +19,8 @@ use work.daq_pkg.all;
 -------------------------------------------------------------------------------------------------------------------
 -- FW 4.2  2017-Nov-16  KK:  FW rel incremented. ADDAC now running with DAQ (initial version)
 -------------------------------------------------------------------------------------------------------------------
+-- FW 4.3?  2023-??-??  MD:  Added Realtime Ramp Generator (RRG)
+-------------------------------------------------------------------------------------------------------------------
 
 entity scu_addac is
   generic(
@@ -137,8 +139,10 @@ constant c_adc_base:                    unsigned := x"0230";
 constant c_fg1_base:                    unsigned := x"0300";
 constant c_tmr_base:                    unsigned := x"0330";
 constant c_fg2_base:                    unsigned := x"0340";
-constant c_rrg_base:                    Integer := 16#0370#;  --Real Ramp Generator 
-constant c_daq_base:                    unsigned := x"2000";  --scu_sio3 event filter ends at x1fff
+constant c_rrg_base:                    Integer := 16#0370#;  --Both Realtime Ramp Generators
+--constant c_rrg1_base:                    Integer := 16#0370#;  --Realtime Ramp Generator 1
+--constant c_rrg2_base:                    Integer := 16#0380#;  --Realtime Ramp Generator 2
+constant c_daq_base:                    unsigned := x"2000";   --scu_sio3 event filter ends at x1fff
 constant daq_ch_num:                    integer  := 4;
 
 component IO_4x8
@@ -211,18 +215,6 @@ COMPONENT io_reg
   );
 END COMPONENT io_reg;
 
-COMPONENT rrg is
-  Port ( clk : in STD_LOGIC;
-         nReset : in STD_LOGIC;
-         time_pulse : in STD_LOGIC;
-         ControlReg : in STD_LOGIC_VECTOR (15 downto 0);
-         TargetReg  : in STD_LOGIC_VECTOR (15 downto 0);
-         TimeStepReg : in STD_LOGIC_VECTOR (15 downto 0);
-			CountStepReg : in STD_LOGIC_VECTOR (15 downto 0);
-         DAC_Out : out STD_LOGIC_VECTOR (15 downto 0);
-         DAC_Strobe : out STD_LOGIC);
-END COMPONENT rrg;
-
 COMPONENT rrg_round is
   Port ( clk : in STD_LOGIC;
 			clk_slow : in STD_LOGIC;
@@ -233,10 +225,10 @@ COMPONENT rrg_round is
          reg_1  : in STD_LOGIC_VECTOR (15 downto 0);
          reg_2 : in STD_LOGIC_VECTOR (15 downto 0);
 			reg_3 : in STD_LOGIC_VECTOR (15 downto 0);
-			num_cycle : in STD_LOGIC_VECTOR (15 downto 0);
+			ext_dataset : in STD_LOGIC_VECTOR (7 downto 0);
 			DACStrobe : out STD_LOGIC;
-         Yis : out STD_LOGIC_VECTOR (63 downto 0);
-         Ris : out STD_LOGIC_VECTOR (63 downto 0));
+         Yis : out STD_LOGIC_VECTOR (15 downto 0));
+         -- Ris : out STD_LOGIC_VECTOR (63 downto 0));
 END COMPONENT rrg_round;
 
   signal clk_sys, clk_cal, locked : std_logic;
@@ -377,19 +369,21 @@ END COMPONENT rrg_round;
   signal rrg_dtack              : std_logic;
   signal rrg_out                : std_logic_vector(15 downto 0);
   signal rrg_strobe             : std_logic;
-  signal rrgConfigReg           : std_logic_vector (15 downto 0);
-  signal rrgTargetReg           : std_logic_vector (15 downto 0);        
-  signal rrgTimeStepReg         : std_logic_vector (15 downto 0);
-  signal rrgCountStepReg   	  : std_logic_vector (15 downto 0);
-  signal rrgreg_control 			: std_logic_vector (15 downto 0);
-  signal rrgreg_0		  			  : std_logic_vector (15 downto 0); 
-  signal rrgreg_1 		  : std_logic_vector (15 downto 0); 
-	signal rrgreg_2 		  : std_logic_vector (15 downto 0);  
-	signal rrgreg_3 		  : std_logic_vector (15 downto 0);
-	signal rrgnum_cycle         : std_logic_vector (15 downto 0);
-	signal rrgYis		 	  : std_logic_vector (63 downto 0);
-	signal rrgRis		 	  : std_logic_vector (63 downto 0);
-	signal rrgDACStrobe             : std_logic;
+
+	signal rrgreg_0				: std_logic_vector (15 downto 0); 
+	signal rrgreg_1 		  		: std_logic_vector (15 downto 0); 
+	signal rrgreg_2 		  		: std_logic_vector (15 downto 0);  
+	signal rrgreg_3 		  		: std_logic_vector (15 downto 0);
+	
+	signal rrgreg_control1		: std_logic_vector (15 downto 0);
+	signal rrgreg_extdataset1	: std_logic_vector (15 downto 0);
+	signal rrgYis1		 	  		: std_logic_vector (15 downto 0);
+	signal rrgDACStrobe1   		: std_logic;
+
+	signal rrgreg_control2		: std_logic_vector (15 downto 0);
+	signal rrgreg_extdataset2	: std_logic_vector (15 downto 0);
+	signal rrgYis2					: std_logic_vector (15 downto 0);
+	signal rrgDACStrobe2			: std_logic;
 
 
   begin
@@ -609,10 +603,11 @@ dac_1: dac714
     nReset            => rstn_sys,              -- in, '0' => resets the DAC_1
     nExt_Trig_DAC     => EXT_TRIG_DAC,          -- external trigger input over optocoupler,
                                                 -- led on -> nExt_Trig_DAC is low
-    --FG_Data           => fg_1_sw(31 downto 16), -- parallel dac data during FG-Mode
-    --FG_Strobe         => fg_1_strobe,           -- strobe to start SPI transfer (if possible) during FG-Mode
-    FG_Data           => rrgYis ( 63 downto 48),--63 to 48 -- parallel dac data during FG-Mode
-    FG_Strobe         => rrgDACStrobe,           -- strobe to start SPI transfer (if possible) during FG-Mode
+    FG_Data           => fg_1_sw(31 downto 16), -- parallel dac data during FG-Mode
+    FG_Strobe         => fg_1_strobe,           -- strobe to start SPI transfer (if possible) during FG-Mode
+    RRG_Data          => rrgYis1,					-- parallel dac data during RRG-Mode
+    RRG_Strobe        => rrgDACStrobe1,         -- strobe to start SPI transfer (if possible) during RRG-Mode
+
     DAC_SI            => DAC1_SDI,              -- out, is connected to DAC1-SDI
     nDAC_CLK          => nDAC1_CLK,             -- out, spi-clock of DAC1
     nCS_DAC           => nDAC1_A0,              -- out, '0' enable shift of internal shift register of DAC1
@@ -644,6 +639,9 @@ dac_2: dac714
                                                 -- led on -> nExt_Trig_DAC is low
     FG_Data           => fg_2_sw(31 downto 16), -- parallel dac data during FG-Mode
     FG_Strobe         => fg_2_strobe,           -- strobe to start SPI transfer (if possible) during FG-Mode
+    RRG_Data          => rrgYis2,					-- parallel dac data during RRG-Mode
+    RRG_Strobe        => rrgDACStrobe2,         -- strobe to start SPI transfer (if possible) during RRG-Mode
+
     DAC_SI            => DAC2_SDI,              -- out, is connected to DAC2-SDI
     nDAC_CLK          => nDAC2_CLK,             -- out, spi-clock of DAC2
     nCS_DAC           => nDAC2_A0,              -- out, '0' enable shift of internal shift register of DAC2
@@ -904,10 +902,10 @@ p_led_ena: div_n
           clk                =>  clk_sys,
           nReset             =>  rstn_sys,
     --
-          Reg_IO1            =>  rrgConfigReg,
-          Reg_IO2            =>  rrgTargetReg,
-          Reg_IO3            =>  rrgnum_cycle,
-          Reg_IO4            =>  rrgreg_control,
+          Reg_IO1            =>  rrgreg_control1,
+          Reg_IO2            =>  rrgreg_control2,
+          Reg_IO3            =>  rrgreg_extdataset1,
+          Reg_IO4            =>  rrgreg_extdataset2,
           Reg_IO5            =>  rrgreg_0,
           Reg_IO6            =>  rrgreg_1,
           Reg_IO7            =>  rrgreg_2,
@@ -918,36 +916,39 @@ p_led_ena: div_n
           Data_to_SCUB       =>  rrg_data_to_SCUB
         );
 
-  rrg_inst: rrg
-   port map (
-          clk           => clk_sys,
-          nReset        => rstn_sys,
-          time_pulse    => Ena_Every_1us,
-          ControlReg    => rrgConfigReg,
-          TargetReg     => rrgTargetReg,
-          TimeStepReg   => rrgTimeStepReg,
-          DAC_Out       => rrg_out,
-          DAC_Strobe    => rrg_strobe,
-CountStepReg  => rrgCountStepReg
-        );
 		  
-  rrg_round_inst: rrg_round
+  rrg_round_inst1: rrg_round
    port map (
           clk           => clk_sys,
           nReset        => rstn_sys,
 			 clk_slow		=> clk_update,
 			 timepulse     => Ena_Every_1us,
-			 reg_control   => rrgreg_control ,
+			 reg_control   => rrgreg_control1,
           reg_0    		=> rrgreg_0,
           reg_1     		=> rrgreg_1,
           reg_2   		=> rrgreg_2,
           reg_3       	=> rrgreg_3,
-			 num_cycle 		=> rrgnum_cycle,
-			 DACStrobe 		=> rrgDACStrobe,
-          Yis    			=> rrgYis,
-			 Ris				=> rrgRis
+			 ext_dataset	=> rrgreg_extdataset1(7 downto 0),
+			 DACStrobe 		=> rrgDACStrobe1,
+          Yis    			=> rrgYis1
         );
 
+	rrg_round_inst2: rrg_round
+   port map (
+          clk           => clk_sys,
+          nReset        => rstn_sys,
+			 clk_slow		=> clk_update,
+			 timepulse     => Ena_Every_1us,
+			 reg_control   => rrgreg_control2,
+          reg_0    		=> rrgreg_0,
+          reg_1     		=> rrgreg_1,
+          reg_2   		=> rrgreg_2,
+          reg_3       	=> rrgreg_3,
+			 ext_dataset	=> rrgreg_extdataset1(7 downto 0),
+			 DACStrobe 		=> rrgDACStrobe2,
+          Yis    			=> rrgYis2
+        );
+		  
   -------------------------------------------------------------------------------
   -- rotating bit as a test vector for led testing
   -------------------------------------------------------------------------------

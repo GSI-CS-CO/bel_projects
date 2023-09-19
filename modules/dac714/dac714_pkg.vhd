@@ -21,10 +21,17 @@ package dac714_pkg is
 --                                                                                                                  --
 --    Funktionsbeschreibung                                                                                         --
 --                                                                                                                  --
---    Register-Layout                                                                                               --
+--    Register-Layout MIT AENDERUNGEN FUER VERS. 4                                                                                              --
 --                                                                                                                  --
 --      Base_addr   : Kontrollregister                                                                              --
---                    Lesen Bit:  15..5 | immer null                                                                --
+--                    Lesen Bit:  15..5 | immer null    
+--                                ------+-----------------------------------------------------------------------    --
+--                                  6   | RRG_mode; 1 = Switched to RRG when in FG Mode (see bit 4)                 --
+--                                      |           0 = Operate in 'normal' FG mode                                 --                                                            --
+--                                      |           This bit has no meaning if FG_mode=0                            --
+--                                      |           Introduced in ver 4                                             --
+--                                ------+-----------------------------------------------------------------------    --
+--                                  5   | Ext_Trig_wait   																			  --
 --                                ------+-----------------------------------------------------------------------    --
 --                                  4   | FG_mode;  1 = Funktiongenerator-Mode, DAC-Werte kommen von FG_Data und    --
 --                                      |               werden mit FG_Strobe uebernommen. Kein externer Trigger!    --
@@ -45,6 +52,13 @@ package dac714_pkg is
 --                                ------+-----------------------------------------------------------------------    --
 --                                                                                                                  --
 --                Schreiben Bit:  15..5 | kein Einfluss                                                             --
+--                                ------+-----------------------------------------------------------------------    --
+--                                  6   | RRG_mode; 1 = Switch to RRG when in FG Mode (see bit 4)                   --
+--                                      |           0 = Operate in 'normal' FG mode                                 --                                                            
+--                                      |           This bit has no meaning if FG_mode=0                            --
+--                                      |           Introduced in ver 4                                             --
+--                                ------+-----------------------------------------------------------------------    --
+--                                  5   | (empty)                                                                   --
 --                                ------+-----------------------------------------------------------------------    --
 --                                  4   | FG_mode;  1 = Funktiongenerator-Mode                                      --
 --                                      |           0 = Software-Mode                                               --
@@ -195,6 +209,15 @@ package dac714_pkg is
 --    generator oder durch einen exteren Trigger ausgeloest wurde.                                                  --
 ----------------------------------------------------------------------------------------------------------------------
 
+----------------------------------------------------------------------------------------------------------------------
+--  Vers: 4 Revi: 0: erstellt am 18.09.2023, Autor: M.Dziewiecki                                                    --
+--                                                                                                                  --
+--  Aenderung 1)                                                                                                    --
+--    Added separate input for Realtime Ramp Generator (RRG). The two new inputs: 'RRG_Data' und 'RRG-Strobe'       --
+--    are used in an analogue way to  'FG-Data' und 'FG_Strobe' genutzt. Bit 6 of control register is used to       --
+--    switch between FG and GGR mode.                                                                               --
+----------------------------------------------------------------------------------------------------------------------
+
 component dac714 is
   generic (
     Base_addr:        unsigned(15 downto 0) := X"0300";
@@ -214,6 +237,9 @@ component dac714 is
                                                                 -- led on -> nExt_Trig_DAC is low
     FG_Data:            in      std_logic_vector(15 downto 0) := (others => '0');  -- parallel dac data during FG-Mode
     FG_Strobe:          in      std_logic := '0';               -- strobe to start SPI transfer (if possible) during FG-Mode
+    RRG_Data:           in      std_logic_vector(15 downto 0) := (others => '0');  -- parallel dac data during RRG-Mode
+    RRG_Strobe:         in      std_logic := '0';               -- strobe to start SPI transfer (if possible) during RRG-Mode
+
     DAC_SI:             out     std_logic;                      -- connect to DAC-SDI
     nDAC_CLK:           out     std_logic;                      -- spi-clock of DAC
     nCS_DAC:            out     std_logic;                      -- '0' enable shift of internal shift register of DAC
