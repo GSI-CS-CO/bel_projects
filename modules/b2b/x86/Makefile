@@ -30,7 +30,7 @@ $(info compiling x86 binaries for $(SYSENV))
 $(info ours CCFLAGS for c code is $(CCFLAGS))
 $(info ours CXFLAGS for c++ code is $(CXFLAGS))
 
-TARGETS     := b2b-ctl b2b-ui b2b-serv-sys b2b-client-sys b2b-viewer b2b-analyzer b2b-archiver b2b-mon b2b-pname-info b2b-serv-raw b2b-jitter-check
+TARGETS     := b2b-ctl b2b-ui b2b-serv-sys b2b-client-sys b2b-viewer b2b-analyzer b2b-archiver b2b-mon b2b-pname-info b2b-serv-raw b2b-jitter-check b2b-sim
 
 all: lib $(TARGETS)
 

@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define B2BLIB_VERSION 0x000506
+#define B2BLIB_VERSION 0x000507
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  B2BLIB_STATUS_OK                 0            // OK
@@ -269,6 +269,12 @@ extern "C" {
   // enable debugging to trace library activity (experimental)
   void b2b_debug(uint32_t flagDebug                            // 1: debug on; 0: debug off
                  );
+
+  // returns the maximum systematic deviation of the sub-ns fit [ps]
+  uint32_t b2b_calc_max_sysdev_ps(uint64_t TH1_fs,               // h=1 period [fs]
+                                uint32_t nSamples,             // number of timestamp samples
+                                uint32_t printFlag             // 0: don't print info; >1 print info
+                                );
   
   // ---------------------------------
   // communication with lm32 firmware

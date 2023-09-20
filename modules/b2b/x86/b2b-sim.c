@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 15-Sep-2023
+ *  version : 20-Sep-2023
  *
  * simple simulation program for b2b measurements
  * - phase diagnostics
@@ -48,6 +48,9 @@
 #include <math.h>
 #include <time.h>
 
+// b2b includes
+#include <b2blib.h>
+
 const char* program;
 static int getVersion = 0;
 
@@ -89,14 +92,14 @@ static void help(void) {
   fprintf(stderr, "  -d <nData>              number of measurements\n");
   fprintf(stderr, "  -o <phase offset>       offset on rf-phase at 'beginning of flattop' [fs]\n");
   fprintf(stderr, "  -p <noise phase offset> offset on rf-phase [fs]\n");
-  fprintf(stderr, "  -m <mode>               \n");
+  fprintf(stderr, "  -m <mode>               1: single timestamp; 2: difference between two timestamps\n");
   fprintf(stderr, "  -t <fit method>         1: sub-ns fit; else: average fit \n");
   fprintf(stderr, "  -c <scan type>          0: don't scan; 1: scan phase offset, 2:???\n");
   fprintf(stderr, "  -i <scan increment>     scan increment [fs]\n");
   fprintf(stderr, "  -f <filename>           write data to file\n");
-  fprintf(stderr, "  -n <nPeriods>           \n");
+  fprintf(stderr, "  -n <nPeriods>           number of periods between two measurements\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "Example1: '%s -T 732996993'\n", program);
+  fprintf(stderr, "Example1: '%s -T732996993 -m1 -t1 -c1 -i20000 -d500 -s30'\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
   fprintf(stderr, "Version %x. Licensed under the LGPL v3.\n", B2BSIM_VERSION);
@@ -266,113 +269,6 @@ void calcTStamp() {
 } // calcTstamps
 
 
-// integer division with rounding
-uint32_t intdiv(uint32_t n, uint32_t d){
-  int a;
-
-  a = ((n < 0) == (d < 0)) ? ((n + d/2)/d) : ((n - d/2)/d);
-
-  return a;
-} // intdiv
-
-
-// returns the maximum systematic deviation of the sub-ns fit [ps]
-uint32_t calcMaxSysDev_ps(uint64_t TH1_fs, uint32_t nSamples) { 
-#define TS_JITTER 50000                              // jitter of timestamps
-  // internally: all units are fs
-  // two systematic effects are considered
-  // a: comb-like substructure; here the max systematic deviation is half the distance between comb-peaks
-  // b: the sub-ns fractional part of TH1 is close to 1ns;
-  //    example TH1 = 732.996993 ns or TH1 = 732.002932 ns
-  //    however, we need to consider also higher integer of fractions of the full nanosecond;
-  //    in the following following code, they are called 'harmonics'
-  //    example h=2: TH1 = 732.496993 ns; h=3: TH1 = 732.332993; h=4: TH1 = 732.246993 ...
-  //    (being close to the full nanosecond can be seen as h=1: TH1 = 732.996993)
-  //    the problem with 'harmonics' is, that event many samples will not achieve to cover the full
-  //    1ns range; in this case, a maximum systematic deviation of half the >>un<<covered range needs
-  //    to be considered
-  // the main problem is effect 'b', as the actual deviation depends on the position of the rf-phase (relative
-  // to the full nanosecond) when the measurement starts
-
-  uint32_t one_ns_fs = 1000000;                   // conversion ns to fs
-  uint32_t comb;                                  // distance between 'comb' peaks
-  uint32_t dComb;                                 // uncertainty due to 'comb'
-  uint32_t h;                                     // 'harmonic' integer divisor of sub-ns fraction of TH1 to full ns
-  uint32_t hMax;                                  // maximum 'harmonic' to consider
-  uint32_t fracT;                                 // sub-ns fraction of TH1
-  uint32_t fracH = 0;                             // sub-ns fraction of T-harmonic
-  uint32_t tmp;                                   // helper variable
-  uint32_t covered = 0;                           // span of full nanosecond covered by timestamps
-  uint32_t dSpan   = 0;                           // uncertainty due to uncovered span
-  double   overcover;                             // overcovery of 1ns
-  uint32_t dOvercover = 0;                        // uncertainty due to overcovering (a bit fudgy)
-  uint32_t dSysMax;                               // maximum systematic deviation from true value
-
-  // ommit 1st timestamp
-  nSamples--;
-  
-  dSysMax = 0.0;
-  
-  // calculate comb and respective hMax
-  comb  = one_ns_fs / nSamples;
-  dComb = comb >> 1;                              // division by 2 as sub-ns fit is (max - min) / 2
-
-  // calculate hMax and limit by jitter; we don't need to consider higher harmonics
-  hMax  = nSamples;
-  tmp   = one_ns_fs / TS_JITTER;
-  if (tmp < hMax) hMax = tmp;
-
-  // fractional part TH1 of ns
-  fracT = one_ns_fs - TH1_fs % one_ns_fs;
-  tmp   = one_ns_fs - fracT;
-  if (tmp < fracT) fracT = tmp;
-
-  // calculate harmonic
-  // special treatment for h=1 requires the following if-statement
-  if (fracT < (one_ns_fs / hMax)) tmp = one_ns_fs - fracT;
-  else                            tmp = fracT;
-  h     = intdiv(one_ns_fs, tmp);
-
-  // only consider relevant harmonics
-  if (h < hMax) {
-    // fractional part of 'harmonic'
-    tmp   = one_ns_fs / h;
-    fracH = fracT % tmp;
-    tmp   = tmp - fracH;
-    if (tmp < fracH) fracH = tmp;
-
-    covered = fracH * (nSamples - 1);
-    tmp = one_ns_fs / h;
-    if (covered < tmp) dSpan = tmp - covered;
-    else               dSpan = 0;
-    dSpan   = dSpan >> 1;                         // division by 2 as sub-ns fit is (max - min) / 2
-  } // if h
-
-  // large coverage
-  overcover = (double)(covered * h) / (double)one_ns_fs;
-  if (overcover > 1) dOvercover = dComb * overcover;
-
-  dSysMax = dComb;
-  if (dOvercover > dSysMax) dSysMax = dOvercover;
-  if (dSpan      > dSysMax) dSysMax = dSpan;
-
-  printf("calc maximum systematic devation [ps]\n");
-  printf("  dJitter %13.3f\n", (double)TS_JITTER / 1000.0);
-  printf("  dComb   %13.3f\n", (double)dComb     / 1000.0);
-  printf("  dSpan   %13.3f\n", (double)dSpan     / 1000.0);
-  printf("   fractT %13.3f\n", (double)fracT     / 1000.0);
-  printf("   hMax   %13.3f\n", (double)hMax              );
-  printf("   h      %13.3f\n", (double)h                 );
-  printf("   fractH %13.3f\n", (double)fracH     / 1000.0);
-  printf("   covrd  %13.3f\n", (double)covered   / 1000.0);
-  printf("  dOverCvd%13.3f\n", (double)dOvercover/ 1000.0);
-  printf("  dSysMax %13.3f\n", (double)dSysMax   / 1000.0);
-
-  return dSysMax;
-} // calcMaxSysDev_ps
-
-
-
 int main(int argc, char** argv) {
   //const char* command;
 
@@ -397,20 +293,11 @@ int main(int argc, char** argv) {
   double   ave_width     = 0;
   uint32_t max_width_as  = 0;
   uint64_t nPeriods;
-  double   nsModulo;                          // remainder of TH1 within 1 ns
-  double   nsModuloLo;                        // 'modulo' to lower full 1ns
-  double   nsModuloHi;                        // 'modulo' to upper full 1ns
-  double   spanCovered;                       // time span covered by samples
-  double   spanUncovered;                     // time span not covered by samples within granularity of 1ns
-  double   errUncovered;                      // uncertainty due to uncovered time span
-  double   errCovered;                        // uncertainty of 'overcovering'
-  double   errFinal;                          // 'final' uncertainty
   
   int     i;
   
-  sprintf(filename, "");
+  sprintf(filename, "%s", "");
   nPeriods         = (floor)(((uint64_t)15900000 * one_ns_as) / TH1_as);
-
  
   program = argv[0];    
 
@@ -602,8 +489,7 @@ int main(int argc, char** argv) {
   //printf("stdev *1.4: %13.3f\n", stdev);
   //printf("FWHM  *1.4: %13.3f\n", stdev * 2.3548);
 
-  calcMaxSysDev_ps(TH1_as / 1000, nSamples);
-
+   b2b_calc_max_sysdev_ps(TH1_as / 1000, nSamples, 1);
   
   if (dataFile) fclose(dataFile);
   

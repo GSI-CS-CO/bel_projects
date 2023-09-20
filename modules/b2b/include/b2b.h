@@ -102,6 +102,7 @@
 #define B2B_TDIAGOBS            15900000    // observation interval for phase diagnostic; a bit shorter than length of flat top
 #define B2B_NSID                      16    // max number of SID settings
 #define B2B_F_CLK              200000000    // clock for DDS, here: BuTiS 200 MHz
+#define B2B_WR_JITTER              30000    // jitter of White Rabbit clock
 
 
 // ****************************************************************************************

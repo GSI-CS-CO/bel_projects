@@ -110,3 +110,13 @@ float comcore_half2float(uint16_t h){
 
   return f;
 } // comcore_half2float
+
+
+// integer division with rounding
+uint32_t comcore_intdiv(uint32_t n, uint32_t d){
+  int a;
+
+  a = ((n < 0) == (d < 0)) ? ((n + d/2)/d) : ((n - d/2)/d);
+
+  return a;
+} // comcore_intdiv
