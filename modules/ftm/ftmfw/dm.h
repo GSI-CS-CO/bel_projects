@@ -418,7 +418,9 @@ void heapify();
 void heapReplace(uint32_t src);
 //@}
 
-
-
+inline uint8_t hasNodeDynamicFields(uint32_t* node) {
+  if (node == LM32_NULL_PTR) return 0;
+  return ((node[NODE_FLAGS >> 2] >> NFLG_DYNAMIC_FIELDS_POS) & NFLG_DYNAMIC_FIELDS_MSK);
+}
 
 #endif

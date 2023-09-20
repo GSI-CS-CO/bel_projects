@@ -671,6 +671,8 @@ void heapReplace(uint32_t src) {
   hp[choice]    = moving; 
 }
 
+
+
 uint32_t* dynamicNodeStaging(uint32_t* node, uint32_t* thrData) {
   uint32_t* ret = node;
   

@@ -227,13 +227,20 @@ void main(void) {
       //node is due. Execute it, then update cursor and deadline, return control to scheduler
       backlog++;
 
-      ///check if the node uses fields with references 
-      uint32_t*       pNode   = dynamicNodeStaging(pN(hp), pT(hp));
-
-      ///// CAREFUL - WE CAN NEVER PUT THE TMP PTR TO HEAP!!! HOW DO WE AVOID THAT?
-
-      *pncN(hp)   = (uint32_t)nodeFuncs[nodeType](pNode, pT(hp));       //process node and return thread's next node
-      DL(pT(hp))  = (uint64_t)deadlineFuncs[getNodeType(pNode)](pNode, pT(hp));   // return thread's next deadline (returns infinity on upcoming NULL ptr)
+      ///check if the node uses fields with references
+      if (!hasNodeDynamicFields(pN(hp)) {
+        //no dynamic fields. do go as normal on, nothing to see here
+        *pncN(hp)   = (uint32_t)nodeFuncs[nodeType](pN(hp), pT(hp));       //process node and return thread's next node
+      } else {
+        /*We got some dynamic fields. Now:
+         * do a copy of original node
+         * insert all dynamic fields
+         * call appropriate node handler
+         * write back all changes to immediate fields to original
+        */ 
+        *pncN(hp)   = dynamicNodeStaging(pN(hp), pT(hp));  
+      }
+      DL(pT(hp))  = (uint64_t)deadlineFuncs[getNodeType(pN(hp))](pN(hp), pT(hp));   // return thread's next deadline (returns infinity on upcoming NULL ptr)
       *running   &= ~((DL(pT(hp)) == -1ULL) << thrIdx);                             // clear running bit if deadline is at infinity
       heapReplace(0);                                                               // call scheduler, re-sort only current thread
 
