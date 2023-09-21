@@ -477,3 +477,9 @@ class DmTestbench(unittest.TestCase):
     fileToRemove = pathlib.Path(fileName)
     if fileToRemove.exists():
       fileToRemove.unlink()
+
+  def resetAllCpus(self):
+    self.startAndCheckSubprocess((self.getEbResetCommand(), self.datamaster, 'cpureset', '0'), [0])
+    self.startAndCheckSubprocess((self.getEbResetCommand(), self.datamaster, 'cpureset', '1'), [0])
+    self.startAndCheckSubprocess((self.getEbResetCommand(), self.datamaster, 'cpureset', '2'), [0])
+    self.startAndCheckSubprocess((self.getEbResetCommand(), self.datamaster, 'cpureset', '3'), [0])
