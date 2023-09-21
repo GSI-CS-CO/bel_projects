@@ -9,10 +9,7 @@ class UnitTestDatamasterThreads(dm_testbench.DmTestbench):
   def run_dmThreads(self, count):
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'reset', 'all'), [0])
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'clear', '-f'), [0])
-    self.startAndCheckSubprocess((self.getEbResetCommand(), self.datamaster, 'cpureset', '0'), [0])
-    self.startAndCheckSubprocess((self.getEbResetCommand(), self.datamaster, 'cpureset', '1'), [0])
-    self.startAndCheckSubprocess((self.getEbResetCommand(), self.datamaster, 'cpureset', '2'), [0])
-    self.startAndCheckSubprocess((self.getEbResetCommand(), self.datamaster, 'cpureset', '3'), [0])
+    self.resetAllCpus()
     self.delay(1)
     scheduleFile = f'pps-all-threads-cpu0-{count}.dot'
     self.generate_schedule(scheduleFile, count)
@@ -148,10 +145,7 @@ class UnitTestDatamasterThreads(dm_testbench.DmTestbench):
     count = 8
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'reset', 'all'), [0])
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'clear', '-f'), [0])
-    self.startAndCheckSubprocess((self.getEbResetCommand(), self.datamaster, 'cpureset', '0'), [0])
-    self.startAndCheckSubprocess((self.getEbResetCommand(), self.datamaster, 'cpureset', '1'), [0])
-    self.startAndCheckSubprocess((self.getEbResetCommand(), self.datamaster, 'cpureset', '2'), [0])
-    self.startAndCheckSubprocess((self.getEbResetCommand(), self.datamaster, 'cpureset', '3'), [0])
+    self.resetAllCpus()
     self.delay(1)
     self.addSchedule('../dmThreads/pps-all-threads-cpu0.dot')
     self.addSchedule('../dmThreads/pps-all-threads-cpu1.dot')
