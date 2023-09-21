@@ -103,6 +103,7 @@
 #define B2B_NSID                      16    // max number of SID settings
 #define B2B_F_CLK              200000000    // clock for DDS, here: BuTiS 200 MHz
 #define B2B_WR_JITTER              30000    // jitter of White Rabbit clock
+#define B2B_NSAMPLES                  32    // number of samples for phase measurement
 
 
 // ****************************************************************************************

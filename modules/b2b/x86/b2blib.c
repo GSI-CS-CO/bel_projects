@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 02-Jun-2023
+ *  version : 21-Sep-2023
  *
  * library for b2b
  *
@@ -242,7 +242,7 @@ void b2b_debug(uint32_t flagDebug)
 } // b2b_debug
 
 
-uint32_t b2b_calc_max_sysdev_ps(uint64_t TH1_fs, uint32_t nSamples, uint32_t printFlag)
+uint32_t b2b_calc_max_sysdev_ps(uint64_t TH1_as, uint32_t nSamples, uint32_t printFlag)
 {
   // internally: all units are fs
   // two systematic effects are considered
@@ -259,6 +259,7 @@ uint32_t b2b_calc_max_sysdev_ps(uint64_t TH1_fs, uint32_t nSamples, uint32_t pri
   // the main problem is effect 'b', as the actual deviation depends on the position of the rf-phase (relative
   // to the full nanosecond) when the measurement starts
 
+  uint64_t TH1_fs;                                // rf-period [fs];
   uint32_t one_ns_fs = 1000000;                   // conversion ns to fs
   uint32_t comb;                                  // distance between 'comb' peaks
   uint32_t dComb;                                 // uncertainty due to 'comb'
@@ -273,13 +274,16 @@ uint32_t b2b_calc_max_sysdev_ps(uint64_t TH1_fs, uint32_t nSamples, uint32_t pri
   uint32_t dOvercover = 0;                        // uncertainty due to overcovering (a bit fudgy)
   uint32_t dSysMax;                               // maximum systematic deviation from true value
 
+  // convert to fs
+  TH1_fs = TH1_as / 1000;
+  
   // ommit 1st timestamp
   nSamples--;
   
   dSysMax = 0.0;
   
   // calculate comb and respective hMax
-  comb  = one_ns_fs / nSamples;
+  comb  = comcore_intdiv(one_ns_fs / nSamples);
   dComb = comb >> 1;                              // division by 2 as sub-ns fit is (max - min) / 2
 
   // calculate hMax and limit by jitter; we don't need to consider higher harmonics
@@ -335,7 +339,7 @@ uint32_t b2b_calc_max_sysdev_ps(uint64_t TH1_fs, uint32_t nSamples, uint32_t pri
     printf("  dSysMax %13.3f\n", (double)dSysMax       / 1000.0);
   } // if printFlag
 
-  return dSysMax;
+  return dSysMax / 1000;
 } //  b2b_calc_max_sysdev_ps
 
 

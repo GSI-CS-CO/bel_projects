@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 24-Feb-2023
+ *  version : 21-Sep-2023
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -42,7 +42,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION      0x000506                                  // make this consistent with makefile
+#define B2BPM_FW_VERSION      0x000508                                  // make this consistent with makefile
 #define B2BPM_FW_USESUBNSFIT  0
 
 // standard includes
@@ -90,8 +90,7 @@ uint32_t transStat;                     // status of transfer, here: meanDelta o
 int32_t  comLatency;                    // latency for messages received via ECA
 
 // for phase measurement
-#define NSAMPLES 32                     // # of timestamps for sampling h=1
-uint64_t tStamp[NSAMPLES];              // timestamp samples
+uint64_t tStamp[B2B_NSAMPLES];          // timestamp samples
 
 // debug 
 uint64_t t1, t2;
@@ -513,11 +512,11 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       tH1_t.ns         = 0x6fffffffffffffff;                          // bogus number, might help for debugging chk
 
       
-      nSamples                              = NSAMPLES;               
-      if (TH1_as >  2500000000000) nSamples = NSAMPLES >> 1;          // use only 1/2 for nue < 400 kHz: 80us@400kHz and NSAMPLES-32
-      if (TH1_as >  5000000000000) nSamples = NSAMPLES >> 2;          // use only 1/4 for nue < 200 kHz: 80us@200kHz and NSAMPLES-32
-      if (TH1_as > 10000000000000) nSamples = NSAMPLES >> 3;          // use only 1/8 for nue < 100 kHz: 80us@100kHz and NSAMPLES-32
-      if (TH1_as > 20000000000000) nSamples = 3;                      // use minimum for  nue <  50 kHz: 80us@ 27kHz and NSAMPLES-32
+      nSamples                              = B2B_NSAMPLES;               
+      if (TH1_as >  2500000000000) nSamples = B2B_NSAMPLES >> 1;      // use only 1/2 for nue < 400 kHz: 80us@400kHz and B2B_NSAMPLES=32
+      if (TH1_as >  5000000000000) nSamples = B2B_NSAMPLES >> 2;      // use only 1/4 for nue < 200 kHz: 80us@200kHz and B2B_NSAMPLES=32
+      if (TH1_as > 10000000000000) nSamples = B2B_NSAMPLES >> 3;      // use only 1/8 for nue < 100 kHz: 80us@100kHz and B2B_NSAMPLES=32
+      if (TH1_as > 20000000000000) nSamples = 3;                      // use minimum for  nue <  50 kHz: 80us@ 27kHz and B2B_NSAMPLES=32
 
       TMeas           = (uint64_t)(nSamples)*(TH1_as >> 30);          // window for acquiring timestamps ~[ns]; use bitshift as division
       TMeas_us        = (int32_t)(TMeas >> 10) + 16;                  // ~[ns] -> ~[us] add 16us to correct for too short window

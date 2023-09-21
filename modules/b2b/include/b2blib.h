@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 07-July-2023
+ *  version : 21-Sep-2023
  *
  * library for b2b
  *
@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define B2BLIB_VERSION 0x000507
+#define B2BLIB_VERSION 0x000508
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  B2BLIB_STATUS_OK                 0            // OK
@@ -93,15 +93,17 @@ extern "C" {
     uint32_t flag_nok;                                 // flag: data not ok; bit 0: ext_phase, bit 1: ext_dKickMon ...
     uint64_t ext_phase;                                // extraction: phase of h=1 Group DDS, ns part
     int32_t  ext_phaseFract_ps;                        // extraction: fractional phase [ps]
-    int32_t  ext_phaseErr_ps;                          // extraction: uncertainty of phase [ps]
+    int32_t  ext_phaseErr_ps;                          // extraction: (statistical) uncertainty of phase [ps]
+    int32_t  ext_phaseSysmaxErr_ps;                    // extraction: maximum systematic error of phase [ps]
     int32_t  ext_dKickMon;                             // extraction: offset electronics monitor signal [ns]
     int32_t  ext_dKickProb;                            // extraction: offset magnet probe signal [ns]
     float    ext_diagPhase;                            // extraction: offset from expected h=1 to actual h=1 signal [ns]
     float    ext_diagMatch;                            // extraction: offset from calculated 'phase match' to actual h=1 signal [ns]
     uint64_t inj_phase;                                // injection : ...
     int32_t  inj_phaseFract_ps;
-    int32_t  inj_phaseErr_ps;  
-    int32_t  inj_dKickMon;                             
+    int32_t  inj_phaseErr_ps;
+    int32_t  inj_phaseSysmaxErr_ps;    
+    int32_t  inj_dKickMon;
     int32_t  inj_dKickProb;
     float    inj_diagPhase;
     float    inj_diagMatch;
@@ -271,10 +273,10 @@ extern "C" {
                  );
 
   // returns the maximum systematic deviation of the sub-ns fit [ps]
-  uint32_t b2b_calc_max_sysdev_ps(uint64_t TH1_fs,               // h=1 period [fs]
-                                uint32_t nSamples,             // number of timestamp samples
-                                uint32_t printFlag             // 0: don't print info; >1 print info
-                                );
+  uint32_t b2b_calc_max_sysdev_ps(uint64_t TH1_as,             // h=1 period [as]
+                                  uint32_t nSamples,           // number of timestamp samples
+                                  uint32_t printFlag           // 0: don't print info; >1 print info
+                                  );
   
   // ---------------------------------
   // communication with lm32 firmware

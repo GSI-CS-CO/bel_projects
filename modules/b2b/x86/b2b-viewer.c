@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 10-May-2023
+ *  version : 21-Sep-2023
  *
  * subscribes to and displays status of a b2b transfer
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_VIEWER_VERSION 0x000506
+#define B2B_VIEWER_VERSION 0x000508
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -81,7 +81,7 @@ enum {SETVAL, GETVAL} what;
 // set values
 uint32_t flagSetValid;                                      // flag set data are valid 
 uint32_t set_mode;                                          // b2b mode
-double   set_extT;                                          // extraction, h=1 period [as]
+double   set_extT;                                          // extraction, h=1 period [ns]
 double   set_extNue;                                        // extraction, h=1 frequency [Hz]
 uint32_t set_extH;                                          // extraction, harmonic number
 double   set_extCTrig;                                      // extraction, kick trigger correction
@@ -370,7 +370,7 @@ int printSet(uint32_t sid)
 // print diagnostic values
 int printDiag(uint32_t sid)
 {
-  printf("--- diag diff DDS ---                        #b2b %5u, #ext %5u, #inj %5u\n", dicDiagval.phaseOffN, dicDiagval.ext_ddsOffN, dicDiagval.inj_ddsOffN);
+  printf("--- diag diff DDS [ns] ---                   #b2b %5u, #ext %5u, #inj %5u\n", dicDiagval.phaseOffN, dicDiagval.ext_ddsOffN, dicDiagval.inj_ddsOffN);
   switch(set_mode) {
     case 0 ... 1 :
       printf("ext: %s\n", TXTNA);
@@ -379,21 +379,21 @@ int printDiag(uint32_t sid)
       break;
     case 2 ... 3 :
       if (dicDiagval.ext_ddsOffN == 0) printf("ext: %s\n", TXTNA);
-      else  printf("ext [ns]: act %8.3f, ave(sdev) %8.3f(%6.3f), minmax %8.3f, %8.3f\n",
-                   dicDiagval.ext_ddsOffAct, dicDiagval.ext_ddsOffAve, dicDiagval.ext_ddsOffSdev, dicDiagval.ext_ddsOffMin, dicDiagval.ext_ddsOffMax);
+      else  printf("ext: act %8.3f ave(sdev,sys) %8.3f(%6.3f,0.%3d) minmax %8.3f %8.3f\n",
+                   dicDiagval.ext_ddsOffAct, dicDiagval.ext_ddsOffAve, dicDiagval.ext_ddsOffSdev, dicGetval.ext_phaseSysmaxErr_ps, dicDiagval.ext_ddsOffMin, dicDiagval.ext_ddsOffMax);
       printf("inj: %s\n", TXTNA);
       printf("b2b: %s\n", TXTNA);
       break;
     case 4      :
       if (dicDiagval.ext_ddsOffN == 0) printf("ext: %s\n", TXTNA);
-      else  printf("ext [ns]: act %8.3f, ave(sdev) %8.3f(%6.3f), minmax %8.3f, %8.3f\n",
-                   dicDiagval.ext_ddsOffAct, dicDiagval.ext_ddsOffAve, dicDiagval.ext_ddsOffSdev, dicDiagval.ext_ddsOffMin, dicDiagval.ext_ddsOffMax);
+      else  printf("ext: act %8.3f ave(sdev,sys) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
+                   dicDiagval.ext_ddsOffAct, dicDiagval.ext_ddsOffAve, dicDiagval.ext_ddsOffSdev, 42, dicDiagval.ext_ddsOffMin, dicDiagval.ext_ddsOffMax);
       if (dicDiagval.inj_ddsOffN == 0) printf("inj: %s\n", TXTNA);
-      else  printf("inj [ns]: act %8.3f, ave(sdev) %8.3f(%6.3f), minmax %8.3f, %8.3f\n",
-                   dicDiagval.inj_ddsOffAct, dicDiagval.inj_ddsOffAve, dicDiagval.inj_ddsOffSdev, dicDiagval.inj_ddsOffMin, dicDiagval.inj_ddsOffMax);
+      else  printf("inj: act %8.3f ave(sdev,sys) %8.3f(%6.3f,%5.3f) minmax %8.3f, %8.3f\n",
+                   dicDiagval.inj_ddsOffAct, dicDiagval.inj_ddsOffAve, dicDiagval.inj_ddsOffSdev, 42, dicDiagval.inj_ddsOffMin, dicDiagval.inj_ddsOffMax);
       if (dicDiagval.phaseOffN == 0) printf("inj: %s\n", TXTNA);
-      else  printf("b2b [ns]: act %8.3f, ave(sdev) %8.3f(%6.3f), minmax %8.3f, %8.3f\n",
-                   dicDiagval.phaseOffAct, dicDiagval.phaseOffAve, dicDiagval.phaseOffSdev, dicDiagval.phaseOffMin, dicDiagval.phaseOffMax);
+      else  printf("b2b: act %8.3f, ave(sdev,sys) %8.3f(%6.3f,%5.3f), minmax %8.3f, %8.3f\n",
+                   dicDiagval.phaseOffAct, dicDiagval.phaseOffAve, dicDiagval.phaseOffSdev, 84, dicDiagval.phaseOffMin, dicDiagval.phaseOffMax);
       break;
     default :
       ;
@@ -511,16 +511,20 @@ int printStatus(uint32_t sid)
 // print rf values
 int printRf(uint32_t sid)
 {
-  printf("--- rf DDS ---                                           #ext %5u, #inj %5u\n", dicDiagval.ext_rfOffN, dicDiagval.inj_rfOffN);
+  double max_sys_error_ext;                                 // maximum systematic error extraction
+  double max_sys_error_inj;                                 // maximum systematic error injection
+
+  printf("--- rf DDS [ns] ---                                      #ext %5u, #inj %5u\n", dicDiagval.ext_rfOffN, dicDiagval.inj_rfOffN);
   switch(set_mode) {
     case 0 ... 1 :
       printf("ext: %s\n", TXTNA);
       printf("inj: %s\n", TXTNA);
       break;
     case 2 ... 3 :
+      max_sys_error_ext = (double)b2b_calc_max_sysdev_ps((uint32_t)(set_extT * 1000000), B2B_NSAMPLES, 0) / 1000.0;
       if (dicDiagval.ext_rfOffN == 0) printf("ext: %s\n", TXTNA);
-      else printf("ext: [ns] act %8.3f, ave(sdev) %8.3f(%6.3f), minmax %8.3f, %8.3f\n",
-                  dicDiagval.ext_rfOffAct, dicDiagval.ext_rfOffAve, dicDiagval.ext_rfOffSdev, dicDiagval.ext_rfOffMin, dicDiagval.ext_rfOffMax);
+      else printf("ext: act %8.3f ave(sdev,sys) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
+                  dicDiagval.ext_rfOffAct, dicDiagval.ext_rfOffAve, dicDiagval.ext_rfOffSdev, max_sys_error_ext, dicDiagval.ext_rfOffMin, dicDiagval.ext_rfOffMax);
       printf("inj: %s\n", TXTNA);
       if (dicDiagval.ext_rfNueN == 0) printf("ext: %s\n\n", TXTNA);
       else {
@@ -530,12 +534,14 @@ int printRf(uint32_t sid)
       printf("inj: %s\n\n", TXTNA);
       break;
     case 4      :
+      max_sys_error_ext = (double)b2b_calc_max_sysdev_ps((uint32_t)(set_extT * 1000000), B2B_NSAMPLES, 0) / 1000.0;
+      max_sys_error_inj = (double)b2b_calc_max_sysdev_ps((uint32_t)(set_injT * 1000000), B2B_NSAMPLES, 0) / 1000.0;
       if (dicDiagval.ext_rfOffN == 0) printf("ext: %s\n", TXTNA);
-      else printf("ext: [ns] act %8.3f, ave(sdev) %8.3f(%6.3f), minmax %8.3f, %8.3f\n",
-                  dicDiagval.ext_rfOffAct, dicDiagval.ext_rfOffAve, dicDiagval.ext_rfOffSdev, dicDiagval.ext_rfOffMin, dicDiagval.ext_rfOffMax);
+      else printf("ext: act %8.3f ave(sdev,sys) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
+                  dicDiagval.ext_rfOffAct, dicDiagval.ext_rfOffAve, dicDiagval.ext_rfOffSdev, max_sys_error_ext, dicDiagval.ext_rfOffMin, dicDiagval.ext_rfOffMax);
       if (dicDiagval.inj_rfOffN == 0) printf("inj: %s\n", TXTNA);
-      else printf("inj: [ns] act %8.3f, ave(sdev) %8.3f(%6.3f), minmax %8.3f, %8.3f\n",
-                  dicDiagval.inj_rfOffAct, dicDiagval.inj_rfOffAve, dicDiagval.inj_rfOffSdev, dicDiagval.inj_rfOffMin, dicDiagval.inj_rfOffMax);
+      else printf("inj: act %8.3f ave(sdev,sys) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
+                  dicDiagval.inj_rfOffAct, dicDiagval.inj_rfOffAve, dicDiagval.inj_rfOffSdev, max_sys_error_inj, dicDiagval.inj_rfOffMin, dicDiagval.inj_rfOffMax);
       if (dicDiagval.ext_rfNueN == 0) printf("ext: %s\n\n", TXTNA);
       else {
            printf("ext: calc [Hz] ave(sdev) %14.6f(%8.6f), diff %9.6f\n", dicDiagval.ext_rfNueAve, dicDiagval.ext_rfNueSdev, dicDiagval.ext_rfNueDiff);

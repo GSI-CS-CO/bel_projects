@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 02-Mar-2023
+ *  version : 21-Sep-2023
  *
  * archives set and get values to data files
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_ARCHIVER_VERSION 0x000506
+#define B2B_ARCHIVER_VERSION 0x000508
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -106,7 +106,7 @@ static void help(void) {
 // header String for file
 char * headerString()
 {
-  return "patternName; time_CBS_UTC; sid; mode; valid; ext_T [as]; valid; ext_h; valid; ext_cTrig; valid; inj_T; valid; inj_h; valid; inj_cTrig; valid; cPhase; valid; ext_phase; ext_phaseFract; ext_phaseErr; valid; ext_dKickMon; valid; ext_dKickProb; valid; ext_diagPhase [as]; valid; ext_diag_Match; valid; inj_phase; inj_phaseFract; inj_phaseErr; valid; inj_dKickMon; valid; inj_dKickProb; valid; inj_diagPhase; valid; inj_diagMatch; received PME; PMI; PRE; PRI; KTE; KTI; KDE; KDI; PDE; PDI; error PME; PMI; PRE; PRI; KTE; KTI; KDE; KDI; PDE; PDI; late PME; PMI; PRE; PRI; KTE; KTI; KDE; KDI; PDE; PDI; fin-CBS; prr-CBS; t0E-CBS; t0I-CBS; kte-CBS; kti-CBS; ext_nueMeas; ext_dNueMeas";
+  return "patternName; time_CBS_UTC; sid; mode; valid; ext_T [as]; valid; ext_h; valid; ext_cTrig; valid; inj_T; valid; inj_h; valid; inj_cTrig; valid; cPhase; valid; ext_phase; ext_phaseFract; ext_phaseErr; ext_maxsysErr; valid; ext_dKickMon; valid; ext_dKickProb; valid; ext_diagPhase [as]; valid; ext_diag_Match; valid; inj_phase; inj_phaseFract; inj_phaseErr; inj_maxsysErr; valid; inj_dKickMon; valid; inj_dKickProb; valid; inj_diagPhase; valid; inj_diagMatch; received PME; PMI; PRE; PRI; KTE; KTI; KDE; KDI; PDE; PDI; error PME; PMI; PRE; PRI; KTE; KTI; KDE; KDI; PDE; PDI; late PME; PMI; PRE; PRI; KTE; KTI; KDE; KDI; PDE; PDI; fin-CBS; prr-CBS; t0E-CBS; t0I-CBS; kte-CBS; kti-CBS; ext_nueMeas; ext_dNueMeas";
 } // headerString
 
 // receive get values
@@ -151,8 +151,9 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   // get values
   new  = strGetval;
   new += sprintf(new, "; %d; %lu"  ,  !((dicGetval[sid].flag_nok     ) & 0x1), dicGetval[sid].ext_phase);
-  new += sprintf(new, "; %7.3f"    ,  (double)dicGetval[sid].ext_phaseFract_ps / 1000.0);
-  new += sprintf(new, "; %7.3f"    ,  (double)dicGetval[sid].ext_phaseErr_ps   / 1000.0);  
+  new += sprintf(new, "; %7.3f"    ,  (double)dicGetval[sid].ext_phaseFract_ps     / 1000.0);
+  new += sprintf(new, "; %7.3f"    ,  (double)dicGetval[sid].ext_phaseErr_ps       / 1000.0);
+  new += sprintf(new, "; %5.3f"    ,  (double)dicGetval[sid].ext_phaseSysmaxErr_ps / 1000.0);
   new += sprintf(new, "; %d; %d"   ,  !((dicGetval[sid].flag_nok >> 1) & 0x1), dicGetval[sid].ext_dKickMon);
   new += sprintf(new, "; %d; %d"   ,  !((dicGetval[sid].flag_nok >> 2) & 0x1), dicGetval[sid].ext_dKickProb);
 
@@ -165,8 +166,9 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   new += sprintf(new, "; %d; %8.3f",  !((dicGetval[sid].flag_nok >> 4) & 0x1), act);
   
   new += sprintf(new, "; %d; %lu",    !((dicGetval[sid].flag_nok >> 5) & 0x1), dicGetval[sid].inj_phase);
-  new += sprintf(new, "; %7.3f  ",    (double)dicGetval[sid].inj_phaseFract_ps / 1000.0);
-  new += sprintf(new, "; %7.3f"  ,    (double)dicGetval[sid].inj_phaseErr_ps   / 1000.0);  
+  new += sprintf(new, "; %7.3f  ",    (double)dicGetval[sid].inj_phaseFract_ps     / 1000.0);
+  new += sprintf(new, "; %7.3f"  ,    (double)dicGetval[sid].inj_phaseErr_ps       / 1000.0);
+  new += sprintf(new, "; %5.3f"    ,  (double)dicGetval[sid].inj_phaseSysmaxErr_ps / 1000.0);
   new += sprintf(new, "; %d; %d" ,    !((dicGetval[sid].flag_nok >> 6) & 0x1), dicGetval[sid].inj_dKickMon);
   new += sprintf(new, "; %d; %d" ,    !((dicGetval[sid].flag_nok >> 7) & 0x1), dicGetval[sid].inj_dKickProb);
 
