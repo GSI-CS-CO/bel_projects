@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 17-Feb-2023
+ *  version : 21-Sep-2023
  *
  * common routines x86 and epcu firmware
  *
@@ -49,9 +49,9 @@ uint16_t comcore_float2half(float f             // single precision number
 float comcore_half2float(uint16_t h             // half precision number
                          );
 
-// integer division with rounding
-uint32_t comcore_intdiv(uint32_t n,                     // integer number
-                uint32_t d                      // divisor
-                );
+// unsigned 32 bit integer division with rounding
+uint32_t comcore_intdiv(uint32_t n,             // integer number
+                        uint32_t d              // divisor
+                        );
 
 #endif

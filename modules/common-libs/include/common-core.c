@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-Feb-2023
+ *  version : 21-Sep-2023
  *
  *  common routines for x86 and ecpu firmware; common-lib and common-fwlib provide
  *  wrappers to this code 
@@ -114,7 +114,7 @@ float comcore_half2float(uint16_t h){
 
 // integer division with rounding
 uint32_t comcore_intdiv(uint32_t n, uint32_t d){
-  int a;
+  uint32_t a;
 
   a = ((n < 0) == (d < 0)) ? ((n + d/2)/d) : ((n - d/2)/d);
 
