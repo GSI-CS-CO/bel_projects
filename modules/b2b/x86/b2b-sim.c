@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 20-Sep-2023
+ *  version : 21-Sep-2023
  *
  * simple simulation program for b2b measurements
  * - phase diagnostics
@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2BSIM_VERSION 0x000507
+#define B2BSIM_VERSION 0x000508
 #define MAXSAMPLES     1000
 #define MAXDATA        10000000
 
@@ -485,11 +485,8 @@ int main(int argc, char** argv) {
   printf("stdev             : %13.3f\n", stdev *          1000);                    // ... moreover, this should be added quadratically
   printf("FWHM              : %13.3f\n", stdev * 2.3548 * 1000);                    // ... moreover, if the phase at the beginning of that flat-top is not fixed, the systematic deviation will cancel out ...
 
-  //stdev = sqrt(2)*stdev;
-  //printf("stdev *1.4: %13.3f\n", stdev);
-  //printf("FWHM  *1.4: %13.3f\n", stdev * 2.3548);
-
-   b2b_calc_max_sysdev_ps(TH1_as / 1000, nSamples, 1);
+  printf("\n");
+  printf("'native' max_sysdev from b2blib [ps]: %u\n", b2b_calc_max_sysdev_ps(TH1_as, nSamples, 1));
   
   if (dataFile) fclose(dataFile);
   

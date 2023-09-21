@@ -379,21 +379,21 @@ int printDiag(uint32_t sid)
       break;
     case 2 ... 3 :
       if (dicDiagval.ext_ddsOffN == 0) printf("ext: %s\n", TXTNA);
-      else  printf("ext: act %8.3f ave(sdev,sys) %8.3f(%6.3f,0.%3d) minmax %8.3f %8.3f\n",
+      else  printf("ext: act %8.3f ave(sdev,sys) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
                    dicDiagval.ext_ddsOffAct, dicDiagval.ext_ddsOffAve, dicDiagval.ext_ddsOffSdev, dicGetval.ext_phaseSysmaxErr_ps, dicDiagval.ext_ddsOffMin, dicDiagval.ext_ddsOffMax);
       printf("inj: %s\n", TXTNA);
       printf("b2b: %s\n", TXTNA);
       break;
     case 4      :
       if (dicDiagval.ext_ddsOffN == 0) printf("ext: %s\n", TXTNA);
-      else  printf("ext: act %8.3f ave(sdev,sys) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
-                   dicDiagval.ext_ddsOffAct, dicDiagval.ext_ddsOffAve, dicDiagval.ext_ddsOffSdev, 42, dicDiagval.ext_ddsOffMin, dicDiagval.ext_ddsOffMax);
+      else  printf("ext: act %8.3f ave(sdev,sys) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
+                   dicDiagval.ext_ddsOffAct, dicDiagval.ext_ddsOffAve, dicDiagval.ext_ddsOffSdev, dicGetval.ext_phaseSysmaxErr_ps, dicDiagval.ext_ddsOffMin, dicDiagval.ext_ddsOffMax);
       if (dicDiagval.inj_ddsOffN == 0) printf("inj: %s\n", TXTNA);
-      else  printf("inj: act %8.3f ave(sdev,sys) %8.3f(%6.3f,%5.3f) minmax %8.3f, %8.3f\n",
-                   dicDiagval.inj_ddsOffAct, dicDiagval.inj_ddsOffAve, dicDiagval.inj_ddsOffSdev, 42, dicDiagval.inj_ddsOffMin, dicDiagval.inj_ddsOffMax);
+      else  printf("inj: act %8.3f ave(sdev,sys) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
+                   dicDiagval.inj_ddsOffAct, dicDiagval.inj_ddsOffAve, dicDiagval.inj_ddsOffSdev, dicGetval.inj_phaseSysmaxErr_ps, dicDiagval.inj_ddsOffMin, dicDiagval.inj_ddsOffMax);
       if (dicDiagval.phaseOffN == 0) printf("inj: %s\n", TXTNA);
-      else  printf("b2b: act %8.3f, ave(sdev,sys) %8.3f(%6.3f,%5.3f), minmax %8.3f, %8.3f\n",
-                   dicDiagval.phaseOffAct, dicDiagval.phaseOffAve, dicDiagval.phaseOffSdev, 84, dicDiagval.phaseOffMin, dicDiagval.phaseOffMax);
+      else  printf("b2b: act %8.3f ave(sdev,sys) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
+                   dicDiagval.phaseOffAct, dicDiagval.phaseOffAve, dicDiagval.phaseOffSdev, dicGetval.ext_phaseSysmaxErr_ps + dicGetval.inj_phaseSysmaxErr_ps, dicDiagval.phaseOffMin, dicDiagval.phaseOffMax);
       break;
     default :
       ;
@@ -511,9 +511,10 @@ int printStatus(uint32_t sid)
 // print rf values
 int printRf(uint32_t sid)
 {
-  double max_sys_error_ext;                                 // maximum systematic error extraction
-  double max_sys_error_inj;                                 // maximum systematic error injection
-
+  uint32_t nPeriods;       // number of rf-periods in observation interval
+  double   DT_scaled;      // max systematic error scaled down by number of rf-periods
+  double   dNue;           // frequency shift due to systematic max systematic error in phase measurement
+  
   printf("--- rf DDS [ns] ---                                      #ext %5u, #inj %5u\n", dicDiagval.ext_rfOffN, dicDiagval.inj_rfOffN);
   switch(set_mode) {
     case 0 ... 1 :
@@ -521,36 +522,42 @@ int printRf(uint32_t sid)
       printf("inj: %s\n", TXTNA);
       break;
     case 2 ... 3 :
-      max_sys_error_ext = (double)b2b_calc_max_sysdev_ps((uint32_t)(set_extT * 1000000), B2B_NSAMPLES, 0) / 1000.0;
       if (dicDiagval.ext_rfOffN == 0) printf("ext: %s\n", TXTNA);
-      else printf("ext: act %8.3f ave(sdev,sys) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
-                  dicDiagval.ext_rfOffAct, dicDiagval.ext_rfOffAve, dicDiagval.ext_rfOffSdev, max_sys_error_ext, dicDiagval.ext_rfOffMin, dicDiagval.ext_rfOffMax);
+      else printf("ext: act %8.3f ave(sdev,sys) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
+                  dicDiagval.ext_rfOffAct, dicDiagval.ext_rfOffAve, dicDiagval.ext_rfOffSdev, dicGetval.ext_phaseSysmaxErr_ps, dicDiagval.ext_rfOffMin, dicDiagval.ext_rfOffMax);
       printf("inj: %s\n", TXTNA);
       if (dicDiagval.ext_rfNueN == 0) printf("ext: %s\n\n", TXTNA);
       else {
-           printf("ext: calc [Hz] ave(sdev) %14.6f(%8.6f), diff %9.6f\n", dicDiagval.ext_rfNueAve, dicDiagval.ext_rfNueSdev, dicDiagval.ext_rfNueDiff);
-           printf("     calc [Hz] estimate  %14.6f,        stepsize 0.046566\n", dicDiagval.ext_rfNueEst);
+        nPeriods  = (double)B2B_TDIAGOBS / set_extT;
+        DT_scaled = ((double)dicGetval.ext_phaseSysmaxErr_ps / 1000.0) / (double)nPeriods;
+        dNue      = (1.0 / set_extT - 1.0 / (set_extT + DT_scaled)) * 1000000000.0;
+        printf("ext: calc [Hz] ave(sdev,sys) %14.6f(%8.6f,%8.6f), diff %9.6f\n", dicDiagval.ext_rfNueAve, dicDiagval.ext_rfNueSdev, dNue, dicDiagval.ext_rfNueDiff);
+        printf("     calc [Hz] estimate      %14.6f,                 stepsize 0.046566\n", dicDiagval.ext_rfNueEst);
       } // else
       printf("inj: %s\n\n", TXTNA);
       break;
     case 4      :
-      max_sys_error_ext = (double)b2b_calc_max_sysdev_ps((uint32_t)(set_extT * 1000000), B2B_NSAMPLES, 0) / 1000.0;
-      max_sys_error_inj = (double)b2b_calc_max_sysdev_ps((uint32_t)(set_injT * 1000000), B2B_NSAMPLES, 0) / 1000.0;
       if (dicDiagval.ext_rfOffN == 0) printf("ext: %s\n", TXTNA);
-      else printf("ext: act %8.3f ave(sdev,sys) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
-                  dicDiagval.ext_rfOffAct, dicDiagval.ext_rfOffAve, dicDiagval.ext_rfOffSdev, max_sys_error_ext, dicDiagval.ext_rfOffMin, dicDiagval.ext_rfOffMax);
+      else printf("ext: act %8.3f ave(sdev,sys) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
+                  dicDiagval.ext_rfOffAct, dicDiagval.ext_rfOffAve, dicDiagval.ext_rfOffSdev, dicGetval.ext_phaseSysmaxErr_ps, dicDiagval.ext_rfOffMin, dicDiagval.ext_rfOffMax);
       if (dicDiagval.inj_rfOffN == 0) printf("inj: %s\n", TXTNA);
-      else printf("inj: act %8.3f ave(sdev,sys) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
-                  dicDiagval.inj_rfOffAct, dicDiagval.inj_rfOffAve, dicDiagval.inj_rfOffSdev, max_sys_error_inj, dicDiagval.inj_rfOffMin, dicDiagval.inj_rfOffMax);
+      else printf("inj: act %8.3f ave(sdev,sys) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
+                  dicDiagval.inj_rfOffAct, dicDiagval.inj_rfOffAve, dicDiagval.inj_rfOffSdev, dicGetval.inj_phaseSysmaxErr_ps, dicDiagval.inj_rfOffMin, dicDiagval.inj_rfOffMax);
       if (dicDiagval.ext_rfNueN == 0) printf("ext: %s\n\n", TXTNA);
       else {
-           printf("ext: calc [Hz] ave(sdev) %14.6f(%8.6f), diff %9.6f\n", dicDiagval.ext_rfNueAve, dicDiagval.ext_rfNueSdev, dicDiagval.ext_rfNueDiff);
-           printf("     calc [Hz] estimate  %14.6f,        stepsize 0.046566\n", dicDiagval.ext_rfNueEst);
+        nPeriods  = (double)B2B_TDIAGOBS / set_extT;
+        DT_scaled = ((double)dicGetval.ext_phaseSysmaxErr_ps / 1000.0) / (double)nPeriods;
+        dNue      = (1.0 / set_extT - 1.0 / (set_extT + DT_scaled)) * 1000000000.0;
+        printf("ext: calc [Hz] ave(sdev,sys) %14.6f(%8.6f,%8.6f), diff %9.6f\n", dicDiagval.ext_rfNueAve, dicDiagval.ext_rfNueSdev, dNue, dicDiagval.ext_rfNueDiff);
+        printf("     calc [Hz] estimate      %14.6f,                 stepsize 0.046566\n", dicDiagval.ext_rfNueEst);
       } // else
       if (dicDiagval.inj_rfNueN == 0) printf("inj: %s\n\n", TXTNA);
       else {
-           printf("inj: calc [Hz] ave(sdev) %14.6f(%8.6f), diff %9.6f\n", dicDiagval.inj_rfNueAve, dicDiagval.inj_rfNueSdev, dicDiagval.inj_rfNueDiff);
-           printf("     calc [Hz] estimate  %14.6f,        stepsize 0.046566\n", dicDiagval.inj_rfNueEst);
+        nPeriods  = (double)B2B_TDIAGOBS / set_injT;
+        DT_scaled = ((double)dicGetval.inj_phaseSysmaxErr_ps / 1000.0) / (double)nPeriods;
+        dNue      = (1.0 / set_injT - 1.0 / (set_injT + DT_scaled)) * 1000000000.0;
+        printf("inj: calc [Hz] ave(sdev,sys) %14.6f(%8.6f,%8.6f), diff %9.6f\n", dicDiagval.inj_rfNueAve, dicDiagval.inj_rfNueSdev, dNue, dicDiagval.inj_rfNueDiff);
+        printf("     calc [Hz] estimate      %14.6f,                 stepsize 0.046566\n", dicDiagval.inj_rfNueEst);
       } // else
       break;
     default :
