@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 25-Aug-2023
+ *  version : 25-Sep-2023
  *
  * subscribes to and displays status of a b2b system (CBU, PM, KD ...)
  *
@@ -228,7 +228,7 @@ void printServices(int flagOnce)
   char     cVersion[9];
   char     cState[11];
   char     cHost[19];
-  char     cJitter[2];
+  char     cJitter[5];
   char     buff[100];
   time_t   time_date;
   uint32_t *tmp;
@@ -245,7 +245,6 @@ void printServices(int flagOnce)
   
   if (!flagOnce) printf("%s\n", title);
   printf("%s\n", header);
-
   for (i=0; i<B2BNSYS; i++) {
     if (dicSystem[i].nTransfer == no_link_32)    sprintf(cTransfer, "%9s",         no_link_str);
     else                                         sprintf(cTransfer, "%9u",         dicSystem[i].nTransfer);
@@ -374,15 +373,13 @@ int main(int argc, char** argv) {
 
   if (optind< argc) sprintf(prefix, "b2b_%s", argv[optind]);
   else              sprintf(prefix, "b2b");
-
   comlib_term_clear();
   buildHeader();
-
   if (getVersion) printf("%s: version %s\n", program, b2b_version_text(B2B_CLIENT_SYS_VERSION));
 
   if (subscribe) {
     printf("b2b-client-sys: starting client using prefix %s\n", prefix);
-
+    sleep(1);
     dicSubscribeServices(prefix);
 
     while (!quit) {
