@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-Sep-2023
+ *  version : 25-Sep-2023
  *
  * subscribes to and displays status of many b2b transfers
  *
@@ -312,7 +312,7 @@ void buildPrintLine(uint32_t idx)
     if ((dicGetval[idx].flagEvtRec >> 4) & 0x1) {
       // data invalid
       if ((dicGetval[idx].flag_nok >> 4) & 0x1) sprintf(tmp1, "%s", TXTUNKWN);
-      else sprintf(tmp1, "%9.3f", convertUnit(set_extCTrig[idx] + dicDiagval[idx].ext_ddsOffAct, dicSetval[idx].ext_T));
+      else sprintf(tmp1, "%7.1f", convertUnit(set_extCTrig[idx] + dicDiagval[idx].ext_ddsOffAct, dicSetval[idx].ext_T));
     } // if flagEvtRec
     else sprintf(tmp1, "%s", TXTERROR);
     // signal from output of kicker electronics
@@ -326,7 +326,7 @@ void buildPrintLine(uint32_t idx)
       if ((dicGetval[idx].flag_nok >> 2) & 0x1) sprintf(tmp3, "%s",  TXTUNKWN);
       else                                      sprintf(tmp3, "%5d", dicGetval[idx].ext_dKickProb);
     } //else not ok
-    sprintf(extTrig, "%9.3f %9s %5s %5s", convertUnit(set_extCTrig[idx], dicSetval[idx].ext_T), tmp1, tmp2, tmp3);
+    sprintf(extTrig, "%7.1f %9s %5s %5s", convertUnit(set_extCTrig[idx], dicSetval[idx].ext_T), tmp1, tmp2, tmp3);
   } // if flagExtTrig
   else sprintf(extTrig, "---");
 
@@ -336,10 +336,10 @@ void buildPrintLine(uint32_t idx)
       // data invalid
       if ((dicGetval[idx].flag_nok >> 3) & 0x1) sprintf(tmp1, "%s", TXTUNKWN);
       else {
-        if (flagB2b) dtmp1 = convertUnit(set_injCTrig[idx] + dicDiagval[idx].inj_ddsOffAct, dicSetval[idx].ext_T);  //b2b : diff to DDS of injection ring
-        else         dtmp1 = convertUnit(set_injCTrig[idx] + dicDiagval[idx].ext_ddsOffAct, dicSetval[idx].ext_T);  //else: diff to DDS of extraction ring
+        if (flagB2b) dtmp1 = convertUnit(set_injCTrig[idx] + dicDiagval[idx].inj_ddsOffAct, dicSetval[idx].inj_T);  //b2b : diff to DDS of injection ring
+        else         dtmp1 = convertUnit(set_injCTrig[idx] + dicDiagval[idx].ext_ddsOffAct, dicSetval[idx].inj_T);  //else: diff to DDS of extraction ring
       } // else flag_nok
-      sprintf(tmp1, "%9.3f", dtmp1);
+      sprintf(tmp1, "%7.1f", dtmp1);
     } // if flagEvtRec
     else sprintf(tmp1, "%s", TXTERROR);
     // signal from output of kicker electronics    
@@ -362,11 +362,11 @@ void buildPrintLine(uint32_t idx)
         else                                      sprintf(tmp5, "%5d", utmp2);
       } // if not nok
     } //else not ok
-    sprintf(injTrig, "%9.3f %9s %5s %5s %5s %5s", set_injCTrig[idx], tmp1, tmp2, tmp3, tmp4, tmp5);
+    sprintf(injTrig, "%7.1f %9s %5s %5s %5s %5s", convertUnit(set_injCTrig[idx], dicSetval[idx].inj_T), tmp1, tmp2, tmp3, tmp4, tmp5);
   } // if flagExtTrig
   else sprintf(injTrig, "---");
 
-  sprintf(printLineK[idx], "|%20s | %12s |%6s | %2d | %31s |%6s |%9s | %43s |", pattern, tCBS, origin, sid, extTrig, dest, b2b, injTrig);
+  sprintf(printLineK[idx], "|%20s | %12s |%6s | %2d | %29s   |%6s |%9s | %43s |", pattern, tCBS, origin, sid, extTrig, dest, b2b, injTrig);
   sprintf(printLineN[idx], "|%20s | %12s |%6s | %2d | %38s |%10s | %43s |", pattern, tCBS, origin, sid, nueMeasExt, dest, injTrig);
   //                printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
 
