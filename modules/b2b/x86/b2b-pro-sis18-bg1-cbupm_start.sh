@@ -13,8 +13,8 @@ export TRCBU=dev/wbm1
 export SDCBU=tr1
 ###########################################
 # setting for development
-# PM : dev/ttyUSB0, tr0
-# CBU: dev/ttyUSB1, tr1
+# PM : dev/ttyUSB1, tr0
+# CBU: dev/ttyUSB0, tr1
 #export TRPM=$(saft-eb-fwd tr0)
 #export SDPM=tr0
 #export TRCBU=$(saft-eb-fwd tr1)
