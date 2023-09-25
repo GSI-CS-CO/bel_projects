@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 02-Mar-2023
+ *  version : 22-Sep-2023
  *
  * subscribes to and displays status of many b2b transfers
  *
@@ -120,6 +120,7 @@ int      flagPrintSis18;                                    // flag: print SIDs 
 int      flagPrintEsr;                                      // flag: print SIDs for ESR
 int      flagPrintYr;                                       // flag: print SIDs for CRYRINg
 int      flagPrintNow;                                      // flag: print stuff to screen NOW
+int      flagPrintNs;                                       // flag: in units of nanoseconds
 
 int      modeMask;                                          // mask: marks events used in actual mode
 
@@ -129,8 +130,10 @@ char     headerK[SCREENWIDTH+1];                            // header line to be
 char     headerN[SCREENWIDTH+1];                            // header line to be printed; header for frequency info
 char     emptyK[SCREENWIDTH+1];                             // empty line to be printed; kicker info
 char     emptyN[SCREENWIDTH+1];                             // empty line to be printed; frequency info
-char     printLineK[NALLSID][SCREENWIDTH+1];                // lines to be printed; line for kicker info
+char     printLineK[NALLSID][SCREENWIDTH+1];               // lines to be printed; line for kicker info
 char     printLineN[NALLSID][SCREENWIDTH+1];                // lines to be printed; line for frequency info
+
+double   one_ns_as = 1000000000.0;
 
 
 // help
@@ -176,6 +179,14 @@ void idx2RingSid(uint32_t idx, ring_t *ring, uint32_t *sid)
       break;
   } // switch idx
 } // idx2RingSid
+
+
+// convert to appripriate units; nanoseconds or degree
+double convertUnit(double value_ns, uint64_t TH1)
+{
+  if (flagPrintNs) return value_ns;
+  else             return 360.0 * value_ns / ((double)(TH1) / one_ns_as);
+} // convertUnit
 
 
 void buildHeader()
@@ -289,7 +300,7 @@ void buildPrintLine(uint32_t idx)
   }
   if (flagB2b) {
     if ((dicGetval[idx].flagEvtErr >> 4) & 0x1) sprintf(b2b, "%s",  TXTERROR);
-    else                                        sprintf(b2b, "%9.3f", dicDiagval[idx].phaseOffAct);
+    else                                        sprintf(b2b, "%9.3f", convertUnit(dicDiagval[idx].phaseOffAct, dicSetval[idx].ext_T));
   } // if flagB2B
   else {
     if (flagInjTrig) sprintf(b2b, "coastg");
@@ -301,7 +312,7 @@ void buildPrintLine(uint32_t idx)
     if ((dicGetval[idx].flagEvtRec >> 4) & 0x1) {
       // data invalid
       if ((dicGetval[idx].flag_nok >> 4) & 0x1) sprintf(tmp1, "%s", TXTUNKWN);
-      else sprintf(tmp1, "%9.3f", set_extCTrig[idx] + dicDiagval[idx].ext_ddsOffAct);
+      else sprintf(tmp1, "%9.3f", convertUnit(set_extCTrig[idx] + dicDiagval[idx].ext_ddsOffAct, dicSetval[idx].ext_T));
     } // if flagEvtRec
     else sprintf(tmp1, "%s", TXTERROR);
     // signal from output of kicker electronics
@@ -315,7 +326,7 @@ void buildPrintLine(uint32_t idx)
       if ((dicGetval[idx].flag_nok >> 2) & 0x1) sprintf(tmp3, "%s",  TXTUNKWN);
       else                                      sprintf(tmp3, "%5d", dicGetval[idx].ext_dKickProb);
     } //else not ok
-    sprintf(extTrig, "%9.3f %9s %5s %5s", set_extCTrig[idx], tmp1, tmp2, tmp3);
+    sprintf(extTrig, "%9.3f %9s %5s %5s", convertUnit(set_extCTrig[idx], dicSetval[idx].ext_T), tmp1, tmp2, tmp3);
   } // if flagExtTrig
   else sprintf(extTrig, "---");
 
@@ -325,8 +336,8 @@ void buildPrintLine(uint32_t idx)
       // data invalid
       if ((dicGetval[idx].flag_nok >> 3) & 0x1) sprintf(tmp1, "%s", TXTUNKWN);
       else {
-        if (flagB2b) dtmp1 = set_injCTrig[idx] + dicDiagval[idx].inj_ddsOffAct;  //b2b : diff to DDS of injection ring
-        else         dtmp1 = set_injCTrig[idx] + dicDiagval[idx].ext_ddsOffAct;  //else: diff to DDS of extraction ring
+        if (flagB2b) dtmp1 = convertUnit(set_injCTrig[idx] + dicDiagval[idx].inj_ddsOffAct, dicSetval[idx].ext_T);  //b2b : diff to DDS of injection ring
+        else         dtmp1 = convertUnit(set_injCTrig[idx] + dicDiagval[idx].ext_ddsOffAct, dicSetval[idx].ext_T);  //else: diff to DDS of extraction ring
       } // else flag_nok
       sprintf(tmp1, "%9.3f", dtmp1);
     } // if flagEvtRec
@@ -509,6 +520,7 @@ uint32_t calcFlagPrint()
 void printData(char *name)
 {
   char     buff[100];
+  char     unitInfo[100];
   time_t   time_date;
   uint32_t nLines;
   uint32_t minLines = 20;
@@ -518,7 +530,9 @@ void printData(char *name)
 
   time_date = time(0);
   strftime(buff,53,"%d-%b-%y %H:%M:%S",localtime(&time_date));
-  sprintf(title,  "\033[7m B2B Monitor %3s ------------------------------------------------------------------------------------ (units [ns] unless explicitly given) - v%8s\033[0m", name, b2b_version_text(B2B_MON_VERSION));
+  if (flagPrintNs) sprintf(unitInfo, "(units [ns] unless explicitly given)");
+  else             sprintf(unitInfo, " (units [°] unless explicitly given)");
+  sprintf(title,  "\033[7m B2B Monitor %3s ------------------------------------------------------------------------------------ %s - v%8s\033[0m", name, unitInfo, b2b_version_text(B2B_MON_VERSION));
   sprintf(footer, "\033[7m exit <q> | toggle inactive <i>, SIS18 <0>, ESR <1>, YR <2> | toggle data <d> | help <h>                                            %s\033[0m", buff);
 
   comlib_term_curpos(1,1);
@@ -585,6 +599,7 @@ int main(int argc, char** argv)
   flagPrintEsr      = 1;
   flagPrintYr       = 1;
   flagPrintNue      = 0;
+  flagPrintNs       = 0;
 
   while ((opt = getopt(argc, argv, "eh")) != -1) {
     switch (opt) {
@@ -659,29 +674,39 @@ int main(int argc, char** argv)
           clearStatus();
           break;
         case 'i' :
+          // toggle printing of inactive patterns
           comlib_term_clear();
           flagPrintInactive = !flagPrintInactive;
           flagPrintNow = 1;
           break;
         case '0' :
+          // toggle printint of SIS18 patterns
           flagPrintSis18 = !flagPrintSis18;
           flagPrintNow = 1;
           break;
         case '1' :
+          // toggle printing of ESR patterns
           flagPrintEsr = !flagPrintEsr;
           flagPrintNow = 1;
           break;
         case '2' :
+          // toggle printing of CRYRING patterns
           flagPrintYr = !flagPrintYr;
           flagPrintNow = 1;
           break;
         case 'd' :
+          // toggle printing of data (kicker data of frequencies)
           flagPrintNue = !flagPrintNue;
+          flagPrintNow = 1;
+          break;
+        case 'u' :
+          // toggle printing of units (nanoseconds or degree), 'secret' option
+          flagPrintNs  = !flagPrintNs;
+          for (i=0; i<NALLSID; i++) buildPrintLine(i);
           flagPrintNow = 1;
           break;
         case 'h'         :
           printHelpText();
-          //          flagSetUpdate[0] = 1; // this is a hack to force an update
           flagPrintNow = 1;
           break;
         case 'q'         :
