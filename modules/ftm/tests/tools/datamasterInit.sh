@@ -25,8 +25,8 @@ if [ "$DM_HOST" = "ACOPC042" ]
 then
   echo 'Check kernel modules and CERN pci devices.'
   sudo lspci -nn -vkd 10dc:
-  echo 'start saft daemon for TR0.'
-  sudo saftd tr0:$TR0
+  echo 'display info from saft daemon for TR0.'
+  saft-ctl -tij tr0
   # set the time for this ptp master, first seconds, then nanoseconds.
   echo -n 'dev/wbm0 set time: '; echo -n -e '\r'time setsec $(date -u +%s)'\r\r' | eb-console dev/wbm0;
   echo -n 'dev/wbm0 set time: '; echo -n -e '\r'time setnsec $(date -u +%N)'\r\r' | eb-console dev/wbm0;
