@@ -116,7 +116,7 @@ extern int64_t*  const diffwth;         ///< ptr to dispatch delta warning thres
 extern uint32_t* const diffwcnt;        ///< ptr to dispatch delta warning count
 extern uint32_t* const diffwhash;       ///< ptr to dispatch delta warning node hash of 1st occurrence
 extern uint64_t* const diffwts;         ///< ptr to dispatch delta warning timestamp of 1st occurrence
-extern uint32_t* const bcklogmax;       ///< ptr to backlog max
+extern uint32_t* const backlogmax;       ///< ptr to backlog max
 extern uint32_t* const badwaitcnt;      ///< ptr to bad waittime count
 //#endif
 //@}
@@ -195,6 +195,12 @@ static char* print64(uint64_t x, int align)
 
 inline uint32_t hiW(uint64_t dword) {return (uint32_t)(dword >> 32);} ///< Returns high word of 64b value
 inline uint32_t loW(uint64_t dword) {return (uint32_t)dword;} ///< Returns low word of 64b value
+
+inline uint8_t hasNodeDynamicFields(uint32_t* node) {
+  if (node == LM32_NULL_PTR) return 0;
+  return ( (node[NODE_FLAGS >> 2] >> NFLG_DYNAMIC_FIELDS_POS) & NFLG_DYNAMIC_FIELDS_MSK);
+}
+
 
 /// Validate WR time
 /** Checks WR module status bits for valid PPS signal and timestamp  
@@ -418,9 +424,5 @@ void heapify();
 void heapReplace(uint32_t src);
 //@}
 
-inline uint8_t hasNodeDynamicFields(uint32_t* node) {
-  if (node == LM32_NULL_PTR) return 0;
-  return ((node[NODE_FLAGS >> 2] >> NFLG_DYNAMIC_FIELDS_POS) & NFLG_DYNAMIC_FIELDS_MSK);
-}
 
 #endif

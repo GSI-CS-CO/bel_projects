@@ -279,6 +279,7 @@
 /** @name Generic node layout definitions. Goes for all nodes */
 //@{
 #define NODE_BEGIN              (0)		///< First word
+#define NODE_OPT_DYN            (0x24)   ///< Word definitions if we have dynamic fields
 #define NODE_HASH               (0x28)	///< 32b hash of the node name string
 #define NODE_FLAGS              (NODE_HASH  + _32b_SIZE_) ///< Flag field
 #define NODE_DEF_DEST_PTR       (NODE_FLAGS + _32b_SIZE_) ///< Default destination (successor) pointer

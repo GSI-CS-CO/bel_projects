@@ -228,17 +228,18 @@ void main(void) {
       backlog++;
 
       ///check if the node uses fields with references
-      if (!hasNodeDynamicFields(pN(hp)) {
+      if (!hasNodeDynamicFields(pN(hp))) {
         //no dynamic fields. do go as normal on, nothing to see here
-        *pncN(hp)   = (uint32_t)nodeFuncs[nodeType](pN(hp), pT(hp));       //process node and return thread's next node
+        //FIXME Why not pncN(hp) = nodeFuncs[ ...?
+        *pncN(hp)   = (uint32_t)nodeFuncs[getNodeType(pN(hp))](pN(hp), pT(hp));       //process node and return thread's next node
       } else {
         /*We got some dynamic fields. Now:
          * do a copy of original node
          * insert all dynamic fields
          * call appropriate node handler
-         * write back all changes to immediate fields to original
+         * write back all changes of immediate/val fields to original
         */ 
-        *pncN(hp)   = dynamicNodeStaging(pN(hp), pT(hp));  
+        *pncN(hp)   = (uint32_t)dynamicNodeStaging(pN(hp), pT(hp));  
       }
       DL(pT(hp))  = (uint64_t)deadlineFuncs[getNodeType(pN(hp))](pN(hp), pT(hp));   // return thread's next deadline (returns infinity on upcoming NULL ptr)
       *running   &= ~((DL(pT(hp)) == -1ULL) << thrIdx);                             // clear running bit if deadline is at infinity
@@ -246,7 +247,7 @@ void main(void) {
 
     } else {
       //nothing due right now. Check for requests of new threads to be started
-      *bcklogmax   = ((backlog > *bcklogmax) ? backlog : *bcklogmax);
+      *backlogmax   = ((backlog > *backlogmax) ? backlog : *backlogmax);
       backlog = 0;
 
       if(*start) { //check start bitfield for any request
