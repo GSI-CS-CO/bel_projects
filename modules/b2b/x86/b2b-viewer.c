@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-Sep-2023
+ *  version : 25-Sep-2023
  *
  * subscribes to and displays status of a b2b transfer
  *
@@ -415,8 +415,9 @@ int printKick(uint32_t sid)
       printf("ext: monitor delay [ns] %5d", dicGetval.ext_dKickMon);
       if ((dicGetval.flag_nok >> 2) & 0x1)  printf(", probe delay [ns] %s\n", TXTUNKWN);
       else                                  printf(", probe delay [ns] %5d\n", dicGetval.ext_dKickProb);
-      printf("     mon h=1 ph [ns] act %4f, ave(sdev) %8.3f(%6.3f), minmax %4f, %4f\n", dicDiagstat.ext_monRemAct, dicDiagstat.ext_monRemAve, dicDiagstat.ext_monRemSdev,
-             dicDiagstat.ext_monRemMin, dicDiagstat.ext_monRemMax);
+      if (set_mode > 1) printf("     mon h=1 ph [ns] act %4.0f, ave(sdev) %8.3f(%6.3f), minmax %4.0f, %4.0f\n", dicDiagstat.ext_monRemAct, dicDiagstat.ext_monRemAve, dicDiagstat.ext_monRemSdev,
+                               dicDiagstat.ext_monRemMin, dicDiagstat.ext_monRemMax);
+      else              printf("\n");
     } // else flag_nok
   } // else mode == 0
 
@@ -429,8 +430,9 @@ int printKick(uint32_t sid)
       if ((dicGetval.flag_nok >> 7) & 0x1)  printf(", probe delay [ns] %5s", TXTUNKWN);
       else                                  printf(", probe delay [ns] %5d", dicGetval.inj_dKickProb);
       printf(", diff mon. [ns] %d\n", dicGetval.inj_dKickMon - dicGetval.ext_dKickMon);
-      printf("     mon h=1 ph [ns] act %4f, ave(sdev) %8.3f(%6.3f), minmax %4f, %4f\n", dicDiagstat.inj_monRemAct, dicDiagstat.inj_monRemAve, dicDiagstat.inj_monRemSdev,
-             dicDiagstat.inj_monRemMin, dicDiagstat.inj_monRemMax);
+      if (set_mode > 3) printf("     mon h=1 ph [ns] act %4.0f, ave(sdev) %8.3f(%6.3f), minmax %4.0f, %4.0f\n", dicDiagstat.inj_monRemAct, dicDiagstat.inj_monRemAve, dicDiagstat.inj_monRemSdev,
+                               dicDiagstat.inj_monRemMin, dicDiagstat.inj_monRemMax);
+      else              printf("\n");
     } // else flag_nok
   } // else mode < 3
 
