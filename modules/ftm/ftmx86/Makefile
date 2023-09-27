@@ -86,7 +86,7 @@ BINS            = $(addprefix $(BINPATH)/, $(EXECS))
 
 all: lib tools
 
-lib: libcarpedm.so libdmtest.so
+lib: libcarpedm.so.$(VERSION_CARPEDM) libdmtest.so.$(VERSION_CARPEDM)
 
 tools: $(TOOLS)
 
@@ -101,15 +101,19 @@ carpeDM.o: $(SRCPATH)/carpeDM.cpp
 	$(T_CC) $(T_CFLAGS) -fPIC -c $^ -o $@
 
 
-libcarpedm.so: $(T_OBJECTS)
+libcarpedm.so.$(VERSION_CARPEDM): $(T_OBJECTS)
 	$(T_CXX) $(T_CXXFLAGS) -shared -o $@ $^ $(T_LIBS)
 	mkdir -p $(LIBPATH)
 	cp $@ $(LIBPATH)
+	ln -sf $@ $(LIBPATH)/libcarpedm.so.$$(echo $(VERSION_CARPEDM) | cut -b1)
+	ln -sf $@ $(LIBPATH)/libcarpedm.so
 
-libdmtest.so: $(TEST_OBJECTS)
+libdmtest.so.$(VERSION_CARPEDM): $(TEST_OBJECTS)
 	$(T_CXX) $(T_CXXFLAGS) -shared -o $@ $^ $(T_LIBS)
 	mkdir -p $(LIBPATH)
 	cp $@ $(LIBPATH)
+	ln -sf $@ $(LIBPATH)/libdmtest.so.$$(echo $(VERSION_CARPEDM) | cut -b1)
+	ln -sf $@ $(LIBPATH)/libdmtest.so
 
 install: $(BINS)
 	cp $(BINS) $(INSTALLPATH)
@@ -121,11 +125,11 @@ install: $(BINS)
 	ln -sf libdmtest.so.$(VERSION_CARPEDM) $(PREFIX)/lib/libdmtest.so
 
 clean::
-	rm -f $(TOOLPATH)/*.o $(TOOLPATH)/*.a $(TOOLPATH)/*.so $(TOOLPATH)/*.elf $(BINPATH)/dm-sched $(BINPATH)/dm-cmd $(LIBPATH)/libcarpedm.so $(LIBPATH)/libdmtest.so
+	rm -f $(TOOLPATH)/*.o $(TOOLPATH)/*.a $(TOOLPATH)/libcarpedm.so* $(TOOLPATH)/libdmtest.so* $(TOOLPATH)/*.elf $(BINPATH)/dm-sched $(BINPATH)/dm-cmd $(LIBPATH)/libcarpedm.so* $(LIBPATH)/libdmtest.so*
 
 .SECONDEXPANSION:
-$(TOOLS): $$@.cpp libcarpedm.so
-	$(T_CXX) $(T_CXXFLAGS) $(T_CXXFLAGS_CDM) -o $@ $< -L$(LIBPATH) -lcarpedm $(T_LIBS)
+$(TOOLS): $$@.cpp libcarpedm.so.$(VERSION_CARPEDM)
+	$(T_CXX) $(T_CXXFLAGS) $(T_CXXFLAGS_CDM) -o $@ $< -L. -l:libcarpedm.so.$(VERSION_CARPEDM) $(T_LIBS)
 	mkdir -p $(BINPATH)
 	cp $@ $(BINPATH)
 
