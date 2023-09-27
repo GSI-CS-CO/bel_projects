@@ -247,6 +247,8 @@ typedef struct {
 
 
 
+typedef std::map<unsigned, uint32_t> mVal; ///< exchange map for override values/ptrs
+
 /** @name Etherbone external cycle staging
  * Etherbone lib does not allow cancellation of prepared cycles and icompleted cycles cannot be stored for later sending.
  * So these structs are a workaround to allow a more flexible staging of transmissions from carpeDM to DM
