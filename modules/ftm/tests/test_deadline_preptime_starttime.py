@@ -64,8 +64,37 @@ class ThreadBitsTest(dm_testbench.DmTestbench):
     for thread in range(self.threadQuantity):
       self.runThreadXCommand(f'0x{(1 << thread):x}', 'deadline', '100000000', commandSet=False)
 
-  def runThreadXCommand(self, thread, command, parameter, commandSet=True):
-    """Test for one thread. If commandSet=True set the time (parameter) with the command. In all cases, read this value. Check the output of both commands.
+  def testCursorSingleThreadDecimal(self):
+    """Loop for all threads reading the cursor.
+    Uses the thread number in decimal form.
+    """
+    for thread in range(self.threadQuantity):
+      self.runThreadXCommand(thread, 'cursor', '0', commandSet=False, assertText='Currently at idle')
+
+  def testCursorSingleThreadHex(self):
+    """Loop for all threads reading the cursor.
+    Uses the thread number in hexadecimal form.
+    """
+    for thread in range(self.threadQuantity):
+      self.runThreadXCommand(f'0x{(1 << thread):x}', 'cursor', '0', commandSet=False, assertText='Currently at idle')
+
+  def testOriginSingleThreadDecimal(self):
+    """Loop for all threads reading the origin.
+    Uses the thread number in decimal form.
+    """
+    for thread in range(self.threadQuantity):
+      self.runThreadXCommand(thread, 'origin', '0', commandSet=False, assertText='CPU 0 Thread {variable} origin points to node idle')
+
+  def testOriginSingleThreadHex(self):
+    """Loop for all threads reading the origin.
+    Uses the thread number in hexadecimal form.
+    """
+    for thread in range(self.threadQuantity):
+      self.runThreadXCommand(f'0x{(1 << thread):x}', 'origin', '0', commandSet=False, assertText='CPU 0 Thread {variable} origin points to node idle')
+
+  def runThreadXCommand(self, thread, command, parameter, commandSet=True, assertText=''):
+    """Test for one thread. If commandSet=True set the time (parameter) with the command.
+    In all cases, read this value. Check the output of both commands.
     """
     threads = []
     if isinstance(thread, str):
@@ -80,7 +109,7 @@ class ThreadBitsTest(dm_testbench.DmTestbench):
       threadD = thread
       threads.append(thread)
       threadCount = self.threadCount(2**thread)
-    print(f'{thread=}, {threadD=}, {type(thread)=}, {threadCount=}, {threads=}')
+    # ~ print(f'{thread=}, {threadD=}, {type(thread)=}, {threadCount=}, {threads=}')
     if commandSet:
       lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-t', f'{thread}', command, parameter), [0], threadCount, 0)
       for i in range(threadCount):
@@ -88,8 +117,12 @@ class ThreadBitsTest(dm_testbench.DmTestbench):
     lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-t', f'{thread}', command), [0], threadCount, 0)
     for i in range(threadCount):
       positionDeadline = lines[i].find('Deadline')
+      if assertText == '':
+        text = f'CPU 0 Thr {threads[i]} {command.capitalize()} {parameter}'
+      else:
+        text = assertText.format(variable=threads[i])
       if positionDeadline == -1:
-        self.assertEqual(lines[i], f'CPU 0 Thr {threads[i]} {command.capitalize()} {parameter}', 'wrong output')
+        self.assertEqual(lines[i], text, 'wrong output')
       else:
         self.assertEqual(lines[i][0:positionDeadline], f'CPU 0 Thr {threads[i]} ', 'wrong output')
 
