@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 25-Sep-2023
+ *  version : 27-Sep-2023
  *
  * subscribes to and displays status of a b2b system (CBU, PM, KD ...)
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_CLIENT_SYS_VERSION 0x000508
+#define B2B_CLIENT_SYS_VERSION 0x000509
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -150,7 +150,7 @@ struct b2bSystem_t dicSystem[B2BNSYS];
 
 // help
 static void help(void) {
-  fprintf(stderr, "Usage: %s [OPTION] [PREFIX]\n", program);
+  fprintf(stderr, "Usage: %s [OPTION] [ENVIRONMENT]\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "  -h                  display this help and exit\n");
   fprintf(stderr, "  -e                  display version\n");
@@ -165,9 +165,9 @@ static void help(void) {
 } //help
 
 
-void buildHeader()
+void buildHeader(char * environment)
 {
-  sprintf(title, "\033[7m B2B System Status --------------------------------------------------- v%8s\033[0m", b2b_version_text(B2B_CLIENT_SYS_VERSION));
+  sprintf(title, "\033[7m B2B System Status %3s ----------------------------------------------- v%8s\033[0m", environment, b2b_version_text(B2B_CLIENT_SYS_VERSION));
   sprintf(header, "  #   ring sys  version     state  transfers        status jttr             node");
   sprintf(empty , "                                                                                ");
   //       printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
@@ -331,6 +331,7 @@ int main(int argc, char** argv) {
   int      quit;
 
   char     prefix[DIMMAXSIZE];
+  char     environment[132];
 
   program    = argv[0];
   getVersion = 0;
@@ -371,10 +372,17 @@ int main(int argc, char** argv) {
     return 0;
   } // if optind
 
-  if (optind< argc) sprintf(prefix, "b2b_%s", argv[optind]);
-  else              sprintf(prefix, "b2b");
+  if (optind< argc) {
+    sprintf(environment, "%s", argv[optind]);
+    sprintf(prefix, "b2b_%s", environment);
+  } // if optind
+  else {
+    sprintf(environment, "%s", "n/a");
+    sprintf(prefix, "b2b");
+  } // else optind
+
   comlib_term_clear();
-  buildHeader();
+  buildHeader(environment);
   if (getVersion) printf("%s: version %s\n", program, b2b_version_text(B2B_CLIENT_SYS_VERSION));
 
   if (subscribe) {

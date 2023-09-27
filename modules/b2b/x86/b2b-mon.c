@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 26-Sep-2023
+ *  version : 27-Sep-2023
  *
  * subscribes to and displays status of many b2b transfers
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_MON_VERSION 0x000508
+#define B2B_MON_VERSION 0x000509
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -345,7 +345,7 @@ void buildPrintLine(uint32_t idx)
     if ((dicGetval[idx].flagEvtRec >> 4) & 0x1) {
       // data invalid
       if ((dicGetval[idx].flag_nok >> 4) & 0x1) sprintf(tmp1, "%s", TXTUNKWN);
-      else sprintf(tmp1, "%7.1f", convertUnit(set_extCTrig[idx] + dicDiagval[idx].ext_ddsOffAct, dicSetval[idx].ext_T));
+      else sprintf(tmp1, "%7.1f", convertUnit(set_extCTrig[idx] - dicDiagval[idx].ext_ddsOffAct, dicSetval[idx].ext_T));
     } // if flagEvtRec
     else sprintf(tmp1, "%s", TXTERROR);
     // signal from output of kicker electronics
@@ -369,8 +369,8 @@ void buildPrintLine(uint32_t idx)
       // data invalid
       if ((dicGetval[idx].flag_nok >> 3) & 0x1) sprintf(tmp1, "%s", TXTUNKWN);
       else {
-        if (flagB2b) dtmp1 = convertUnit(set_injCTrig[idx] + dicDiagval[idx].inj_ddsOffAct, dicSetval[idx].inj_T);  //b2b : diff to DDS of injection ring
-        else         dtmp1 = convertUnit(set_injCTrig[idx] + dicDiagval[idx].ext_ddsOffAct, dicSetval[idx].inj_T);  //else: diff to DDS of extraction ring
+        if (flagB2b) dtmp1 = convertUnit(set_injCTrig[idx] - dicDiagval[idx].inj_ddsOffAct, dicSetval[idx].inj_T);  //b2b : diff to DDS of injection ring
+        else         dtmp1 = convertUnit(set_injCTrig[idx] - dicDiagval[idx].ext_ddsOffAct, dicSetval[idx].inj_T);  //else: diff to DDS of extraction ring
       } // else flag_nok
       sprintf(tmp1, "%7.1f", dtmp1);
     } // if flagEvtRec
