@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 25-Sep-2023
+ *  version : 28-Sep-2023
  *
  * subscribes to and displays status of a b2b transfer
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_VIEWER_VERSION 0x000508
+#define B2B_VIEWER_VERSION 0x000509
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -513,10 +513,6 @@ int printStatus(uint32_t sid)
 // print rf values
 int printRf(uint32_t sid)
 {
-  uint32_t nPeriods;       // number of rf-periods in observation interval
-  double   DT_scaled;      // max systematic error scaled down by number of rf-periods
-  double   dNue;           // frequency shift due to systematic max systematic error in phase measurement
-  
   printf("--- rf DDS [ns] ---                                      #ext %5u, #inj %5u\n", dicDiagval.ext_rfOffN, dicDiagval.inj_rfOffN);
   switch(set_mode) {
     case 0 ... 1 :
@@ -525,47 +521,41 @@ int printRf(uint32_t sid)
       break;
     case 2 ... 3 :
       if (dicDiagval.ext_rfOffN == 0) printf("ext: %s\n", TXTNA);
-      else printf("ext: act %8.3f ave(sdev,sys) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
+      else printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
                   dicDiagval.ext_rfOffAct, dicDiagval.ext_rfOffAve, dicDiagval.ext_rfOffSdev, dicGetval.ext_phaseSysmaxErr_ps, dicDiagval.ext_rfOffMin, dicDiagval.ext_rfOffMax);
       printf("inj: %s\n", TXTNA);
-      if (dicDiagval.ext_rfNueN == 0) printf("ext: %s\n\n", TXTNA);
+      if (dicDiagval.ext_rfNueN == 0) printf("ext: %s\n\n\n", TXTNA);
       else {
-        nPeriods  = (double)B2B_TDIAGOBS / set_extT;
-        DT_scaled = ((double)dicGetval.ext_phaseSysmaxErr_ps / 1000.0) / (double)nPeriods;
-        dNue      = (1.0 / set_extT - 1.0 / (set_extT + DT_scaled)) * 1000000000.0;
-        printf("ext: calc [Hz] ave(sdev,sys) %14.6f(%8.6f,%8.6f), diff %9.6f\n", dicDiagval.ext_rfNueAve, dicDiagval.ext_rfNueSdev, dNue, dicDiagval.ext_rfNueDiff);
-        printf("     calc [Hz] estimate      %14.6f,                 stepsize 0.046566\n", dicDiagval.ext_rfNueEst);
+        printf("ext: calc [Hz] act(unctnty)  %14.6f(%8.6f),          diff %9.6f\n", dicDiagval.ext_rfNueAct, dicDiagval.ext_rfNueActErr, dicDiagval.ext_rfNueAct - 1000000000.0 / set_extT);
+        printf("               ave(sdev)     %14.6f(%8.6f),          diff %9.6f\n", dicDiagval.ext_rfNueAve, dicDiagval.ext_rfNueSdev, dicDiagval.ext_rfNueDiff);
+        printf("               estimate      %14.6f,                 stepsize 0.046566\n", dicDiagval.ext_rfNueEst);
       } // else
-      printf("inj: %s\n\n", TXTNA);
+      printf("inj: %s\n\n\n", TXTNA);
       break;
     case 4      :
       if (dicDiagval.ext_rfOffN == 0) printf("ext: %s\n", TXTNA);
-      else printf("ext: act %8.3f ave(sdev,sys) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
+      else printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
                   dicDiagval.ext_rfOffAct, dicDiagval.ext_rfOffAve, dicDiagval.ext_rfOffSdev, dicGetval.ext_phaseSysmaxErr_ps, dicDiagval.ext_rfOffMin, dicDiagval.ext_rfOffMax);
       if (dicDiagval.inj_rfOffN == 0) printf("inj: %s\n", TXTNA);
-      else printf("inj: act %8.3f ave(sdev,sys) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
+      else printf("inj: act %8.3f ave(sdev,smx) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
                   dicDiagval.inj_rfOffAct, dicDiagval.inj_rfOffAve, dicDiagval.inj_rfOffSdev, dicGetval.inj_phaseSysmaxErr_ps, dicDiagval.inj_rfOffMin, dicDiagval.inj_rfOffMax);
-      if (dicDiagval.ext_rfNueN == 0) printf("ext: %s\n\n", TXTNA);
+      if (dicDiagval.ext_rfNueN == 0) printf("ext: %s\n\n\n", TXTNA);
       else {
-        nPeriods  = (double)B2B_TDIAGOBS / set_extT;
-        DT_scaled = ((double)dicGetval.ext_phaseSysmaxErr_ps / 1000.0) / (double)nPeriods;
-        dNue      = (1.0 / set_extT - 1.0 / (set_extT + DT_scaled)) * 1000000000.0;
-        printf("ext: calc [Hz] ave(sdev,sys) %14.6f(%8.6f,%8.6f), diff %9.6f\n", dicDiagval.ext_rfNueAve, dicDiagval.ext_rfNueSdev, dNue, dicDiagval.ext_rfNueDiff);
-        printf("     calc [Hz] estimate      %14.6f,                 stepsize 0.046566\n", dicDiagval.ext_rfNueEst);
+        printf("ext: calc [Hz] act(unctnty)  %14.6f(%8.6f),          diff %9.6f\n", dicDiagval.ext_rfNueAct, dicDiagval.ext_rfNueActErr, dicDiagval.ext_rfNueAct - 1000000000.0 / set_extT);
+        printf("               ave(sdev)     %14.6f(%8.6f),          diff %9.6f\n", dicDiagval.ext_rfNueAve, dicDiagval.ext_rfNueSdev, dicDiagval.ext_rfNueDiff);
+        printf("               estimate      %14.6f,                 stepsize 0.046566\n", dicDiagval.ext_rfNueEst);
       } // else
-      if (dicDiagval.inj_rfNueN == 0) printf("inj: %s\n\n", TXTNA);
+      if (dicDiagval.inj_rfNueN == 0) printf("inj: %s\n\n\n", TXTNA);
       else {
-        nPeriods  = (double)B2B_TDIAGOBS / set_injT;
-        DT_scaled = ((double)dicGetval.inj_phaseSysmaxErr_ps / 1000.0) / (double)nPeriods;
-        dNue      = (1.0 / set_injT - 1.0 / (set_injT + DT_scaled)) * 1000000000.0;
-        printf("inj: calc [Hz] ave(sdev,sys) %14.6f(%8.6f,%8.6f), diff %9.6f\n", dicDiagval.inj_rfNueAve, dicDiagval.inj_rfNueSdev, dNue, dicDiagval.inj_rfNueDiff);
-        printf("     calc [Hz] estimate      %14.6f,                 stepsize 0.046566\n", dicDiagval.inj_rfNueEst);
+        printf("inj: calc [Hz] act(unctnty)  %14.6f(%8.6f),          diff %9.6f\n", dicDiagval.inj_rfNueAct, dicDiagval.inj_rfNueActErr, dicDiagval.inj_rfNueAct - 1000000000.0 / set_injT);
+        printf("               ave(sdev)     %14.6f(%8.6f),          diff %9.6f\n", dicDiagval.inj_rfNueAve, dicDiagval.inj_rfNueSdev, dicDiagval.inj_rfNueDiff);
+        printf("               estimate      %14.6f,                 stepsize 0.046566\n", dicDiagval.inj_rfNueEst);
       } // else
       break;
     default :
       ;
   } // switch set mode
-  return 7;                                                 // 7 lines
+  return 9;                                                 // 7 lines
 } // printRf
 
 

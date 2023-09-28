@@ -330,11 +330,13 @@ void calcStats(double *meanNew,         // new mean value, please remember for l
 } // calcStats
 
 
-// calculate DDS frequency from observed phase offset
-int calcNue(double *nue,                // frequency value [Hz]
-            double obsOffset,           // observed mean value of deviation from 'soll value'
+// calculate DDS frequency from observed phase offset and uncertainty for a single measurement
+int calcNue(double  *nue,               // frequency value [Hz]
+            double  *nueErr,            // estimated uncertainty [Hz]
+            double   obsOffset,         // observed mean value of deviation from 'soll value'
             uint64_t TObs,              // observation interval
-            uint64_t TH1As              // H=1 gDDS period [as]
+            uint64_t TH1As,             // H=1 gDDS period [as],
+            double   sysmax_ps          // max systematic error of phase measurement [ps]
             )
 {
   int64_t  nPeriod;                     // # of rf periods within T
@@ -343,8 +345,13 @@ int calcNue(double *nue,                // frequency value [Hz]
   int64_t  TAs;                         // TObs [as]
   int64_t  TH1ObsAs;                    // observed TH1 [as]
   double   TH1ObsNs;                    // observed TH1 [ns]
+  double   diffStat;                    // statistical uncertainty of a phase measurement [ns]
+  double   diffSys;                     // systematic uncertainty of a phase measuremetn [ns]
+  double   diffErr;                     // total estimated uncertainty of a phase measurement [ns]
+  double   relErr;                      // relative total uncertainty
 
   if ((TH1As != 0) && (TObs != 0)) {
+    // frequency
     TAs       = TObs * 1000000000;
     half      = TH1As >> 1;
     nPeriod   = TAs / TH1As;
@@ -353,9 +360,32 @@ int calcNue(double *nue,                // frequency value [Hz]
     TH1ObsAs  = TH1As + offsetAs / (double)nPeriod;
     TH1ObsNs  = (double)TH1ObsAs / 1000000000.0;
     *nue      = 1000000000.0 / TH1ObsNs;
+
+    // uncertainty for a single (!!!) meausurement
+    // here it is assumed, that for a single (!) measurement
+    // - systematic uncertainty equals 1/3 of 'sysmax'
+    // - statistical uncertainty equals the assumed jitter
+    // - statistical and systematic uncertainty can be added quadratically [1]
+    // -  as a frequency measurement involves two phase measurements, the uncertainties
+    //    resulting from two phase measurements are added quadratically, sqrt(2)
+    // - finally the uncertainty needs to be scaled down with the number of rf-periods
+    // [1] systematic error may not cancel out over many measurements; thus, when the
+    // results of many measurements are analyzed, it should not be included into the
+    // uncertainties the individual data but only added to the final result
+    diffStat = (double)B2B_WR_JITTER / 1000000.0;
+    diffSys  = sysmax_ps / 1000.0 / 3.0;
+    diffErr  = sqrt(diffStat*diffStat + diffSys*diffSys);
+    diffErr  = sqrt(2) * diffErr;
+    diffErr  = diffErr / (double)nPeriod;
+
+    relErr   = diffErr / ((double)TH1As / 1000000000.0);
+    *nueErr  = fabs(*nue * relErr);
+
+    // printf("stat %f, sys %f, tot %f, rel %f, nue %9.3f, nue_err %0.3f\n", diffStat, diffSys, diffErr, relErr, *nue, *nueErr);
+
     return 0;
   } // avoid division by zero
-  else return 0;
+  else return 1;
 } // calcNue
 
 
@@ -395,6 +425,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   uint32_t  mode;
   double    cor;
   double    act;
+  double    actErr;
   uint32_t  n;
   double    sdev = 0;
   double    aveNew;
@@ -539,8 +570,8 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
     disDiagval[sid].ext_rfOffMin   = ext_rfOffMin[sid];
     disDiagval[sid].ext_rfOffMax   = ext_rfOffMax[sid];
 
-    // rf frequency diagnostics; theoretical value is '0'
-    calcNue(&act, disDiagval[sid].ext_rfOffAct, (double)B2B_TDIAGOBS, dicSetval[sid].ext_T);
+    // rf frequency diagnostics; theoretical value is set value
+    calcNue(&act, &actErr, disDiagval[sid].ext_rfOffAct, (double)B2B_TDIAGOBS, dicSetval[sid].ext_T, dicGetval[sid].ext_phaseSysmaxErr_ps);
     if (dicSetval[sid].ext_T != 0) tmp = 1000000000000000000.0 /  (double)(dicSetval[sid].ext_T);
     else                           tmp = 0.0;
     n   = ++(ext_rfNueN[sid]);
@@ -551,6 +582,8 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
     ext_rfNueStreamOld[sid]        = streamNew;
 
     // copy
+    disDiagval[sid].ext_rfNueAct   = act;
+    disDiagval[sid].ext_rfNueActErr= actErr;    
     disDiagval[sid].ext_rfNueN     = n;
     disDiagval[sid].ext_rfNueAve   = aveNew;
     disDiagval[sid].ext_rfNueSdev  = sdev;
@@ -686,7 +719,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
     disDiagval[sid].phaseOffMax  = phaseOffMax[sid];
 
     // rf frequency diagnostics; theoretical value is '0'
-    calcNue(&act, disDiagval[sid].inj_rfOffAct, (double)B2B_TDIAGOBS, dicSetval[sid].inj_T);
+    calcNue(&act, &actErr, disDiagval[sid].inj_rfOffAct, (double)B2B_TDIAGOBS, dicSetval[sid].inj_T, dicGetval[sid].inj_phaseSysmaxErr_ps);
     if (dicSetval[sid].inj_T != 0) tmp = 1000000000000000000.0 /  (double)(dicSetval[sid].inj_T);
     else                           tmp = 0.0;
     n   = ++(inj_rfNueN[sid]);
@@ -697,6 +730,8 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
     inj_rfNueStreamOld[sid]        = streamNew;
 
     // copy
+    disDiagval[sid].inj_rfNueAct   = act;
+    disDiagval[sid].inj_rfNueActErr= actErr;
     disDiagval[sid].inj_rfNueN     = n;
     disDiagval[sid].inj_rfNueAve   = aveNew;
     disDiagval[sid].inj_rfNueSdev  = sdev;
@@ -785,7 +820,7 @@ void disAddServices(char *prefix)
   
   for (i=0; i<B2B_NSID; i++) {
     sprintf(name, "%s-cal_diag_sid%02d", prefix, i);
-    disDiagvalId[i]  = dis_add_service(name, "D:1;I:1;D:5;I:1;D:5;I:1;D:5;I:1;D:5;I:1;D:4;I:1;D:4;I:1;D:4", &(disDiagval[i]), sizeof(diagval_t), 0 , 0);
+    disDiagvalId[i]  = dis_add_service(name, "D:1;I:1;D:5;I:1;D:5;I:1;D:5;I:1;D:5;I:1;D:6;I:1;D:6;I:1;D:4", &(disDiagval[i]), sizeof(diagval_t), 0 , 0);
 
     sprintf(name, "%s-cal_stat_sid%02d", prefix, i);
     disDiagstatId[i] = dis_add_service(name, "D:1;I:1;D:5;I:1;D:5;I:1;D:5;I:1;D:5;I:1;D:5;I:1;D:5;I:1;D:5;I:1;D:4", &(disDiagstat[i]), sizeof(diagstat_t), 0 , 0);
@@ -804,7 +839,7 @@ int main(int argc, char** argv) {
   int      subscribe;
 
 
-  char     prefix[DIMMAXSIZE];
+  char     prefix[132];
   char     disName[DIMMAXSIZE];
   int      i;
 

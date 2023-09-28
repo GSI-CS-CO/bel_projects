@@ -151,12 +151,16 @@ extern "C" {
     double   inj_rfOffSdev;
     double   inj_rfOffMin;
     double   inj_rfOffMax;
-    uint32_t ext_rfNueN;                               // extraction, measured rf frequency
+    double   ext_rfNueAct;                             // extraction, measured rf frequency
+    double   ext_rfNueActErr;
+    uint32_t ext_rfNueN;
     double   ext_rfNueAve;
     double   ext_rfNueSdev;
     double   ext_rfNueDiff;
-    double   ext_rfNueEst;
-    uint32_t inj_rfNueN;                               // injection, measured rf frequency
+    double   ext_rfNueEst;                             // estimated 'true' DDS frequency based on its DDS resolution
+    double   inj_rfNueAct;                             // injection, measured rf frequency
+    double   inj_rfNueActErr;
+    uint32_t inj_rfNueN;
     double   inj_rfNueAve;
     double   inj_rfNueSdev;
     double   inj_rfNueDiff;

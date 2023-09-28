@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 27-Sep-2023
+ *  version : 28-Sep-2023
  *
  * subscribes to and displays status of many b2b transfers
  *
@@ -71,7 +71,6 @@ setval_t   dicSetval[NALLSID];            // b2b set-values
 getval_t   dicGetval[NALLSID];            // b2b get-values
 diagval_t  dicDiagval[NALLSID];           // diagnostic (analyzed values)
 diagstat_t dicDiagstat[NALLSID];          // additional status data
-nueMeas_t  dicNueMeasExt[NALLSID];        // frequency data
 char       dicPName[NALLSID][DIMMAXSIZE]; // pattern names
 double     dicLevelExtSis18;              // actual comparator level of kicker probe signal
 double     dicLevelInjEsr;
@@ -83,7 +82,6 @@ uint32_t  dicSetvalId[NALLSID];
 uint32_t  dicGetvalId[NALLSID];
 uint32_t  dicDiagvalId[NALLSID];
 uint32_t  dicDiagstatId[NALLSID];
-uint32_t  dicNueMeasExtId[NALLSID];
 uint32_t  dicPNameId[NALLSID];
 uint32_t  dicLevelExtSis18Id;
 uint32_t  dicLevelInjEsrId;
@@ -210,8 +208,8 @@ void buildHeader()
 {
   sprintf(headerK, "|        pattern name | t_last [UTC] | orign | sid| kick set    trg offst probR | destn | phase set get  | kick  set     trg offst probR Doffst Dprob|");
   sprintf(emptyK,  "|                     |              |       |    |                             |       |                |                                           |");
-  sprintf(headerN, "|        pattern name | t_last [UTC] | orign | sid| h1gDDS  set         get(stdev)diff[Hz] | destn | prob ext inj [%%]                                |");
-  sprintf(emptyN,  "|                     |              |       |    |                                        |       |                                                 |");
+  sprintf(headerN, "|        pattern name | t_last [UTC] | orign | sid| h1gDDS ext set      get(stdev)diff[Hz] | h1gDDS inj set      get(stdev)diff[Hz] |prob ext inj [%%]|");
+  sprintf(emptyN,  "|                     |              |       |    |                                        |                                        |                |");
   //        printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
 } // buildHeader
 
@@ -233,6 +231,7 @@ void buildPrintLine(uint32_t idx)
   char     extTrig[512];
   char     injTrig[521];
   char     nueMeasExt[128];
+  char     nueMeasInj[128];
   char     setLevelExt[32];
   char     setLevelInj[32];
 
@@ -246,6 +245,8 @@ void buildPrintLine(uint32_t idx)
   double   dtmp1;
   double   *pLevelExt;
   double   *pLevelInj;
+
+  double   nueDiff;
 
   uint32_t sid;
   ring_t   ring;
@@ -302,20 +303,37 @@ void buildPrintLine(uint32_t idx)
   else sprintf(tCBS, "---");
 
   if (flagOther) {
-    // frequency data
-    if ((dicGetval[idx].flagEvtErr >> 2) & 0x1) sprintf(extNue, "%s",    TXTERROR);
-    else                                        sprintf(extNue, "%11.3f", set_extNue[idx]);
-    if (*(uint32_t *)&(dicNueMeasExt[idx]) == no_link_32) sprintf(nueMeasExt, "NOLINK");
+    // frequency data, extraction
+    if (*(uint32_t *)&(dicDiagval[idx]) == no_link_32) sprintf(nueMeasExt, "NOLINK");
     else {
-      if (dicNueMeasExt[idx].nTS > 2) {
-        if (dicNueMeasExt[idx].nueErr > 10.0)     sprintf(tmp1, " > 10");
-        else                                      sprintf(tmp1, "%5.3f", dicNueMeasExt[idx].nueErr);
-        if (fabs(dicNueMeasExt[idx].nueDiff)>100) sprintf(tmp2, "  > 100");
-        else                                      sprintf(tmp2, "%7.3f", dicNueMeasExt[idx].nueDiff);
-        sprintf(nueMeasExt, "%11.3f %11.3f(%5s) %s", dicNueMeasExt[idx].nueSet, dicNueMeasExt[idx].nueGet, tmp1, tmp2);
-      } // if nTS
-    else                                          sprintf(nueMeasExt, "ERROR: no RF signal detected %x ", *(uint32_t *)&(dicNueMeasExt[idx]));
+      nueDiff = dicDiagval[idx].ext_rfNueAct - set_extNue[idx];
+      if ((dicGetval[idx].flagEvtErr >> 2) & 0x1)  sprintf(nueMeasExt, "ERROR: no RF signal detected");
+      else {
+        if (dicDiagval[idx].ext_rfNueActErr > 10.0) sprintf(tmp1, " > 10");
+        else                                        sprintf(tmp1, "%5.3f", dicDiagval[idx].ext_rfNueActErr);
+        if (fabs(nueDiff) >100)                     sprintf(tmp2, "  > 100");
+        else                                        sprintf(tmp2, "%7.3f", nueDiff);
+        sprintf(nueMeasExt, "%11.3f %11.3f(%5s) %s", set_extNue[idx], dicDiagval[idx].ext_rfNueAct, tmp1, tmp2);
+      } // else flagEvtErr
     } // else NOLINK
+
+    // frequency data, injection
+    if (set_mode[idx] > 3) {
+      if (*(uint32_t *)&(dicDiagval[idx]) == no_link_32) sprintf(nueMeasInj, "NOLINK");
+      else {
+        nueDiff = dicDiagval[idx].inj_rfNueAct - set_injNue[idx];
+        if ((dicGetval[idx].flagEvtErr >> 3) & 0x1)   sprintf(nueMeasInj, "ERROR: no RF signal detected");
+        else {
+          if (dicDiagval[idx].inj_rfNueActErr > 10.0) sprintf(tmp1, " > 10");
+          else                                        sprintf(tmp1, "%5.3f", dicDiagval[idx].inj_rfNueActErr);
+          if (fabs(nueDiff) >100)                     sprintf(tmp2, "  > 100");
+          else                                        sprintf(tmp2, "%7.3f", nueDiff);
+          sprintf(nueMeasInj, "%11.3f %11.3f(%5s) %s", set_injNue[idx], dicDiagval[idx].inj_rfNueAct, tmp1, tmp2);
+        } // else flagEvtErr
+      } // else NOLINK
+    } // if set_mode
+    else                                            sprintf(nueMeasInj, "---");
+    
     // comparator level for kicker probe signal
     if (pLevelExt == NULL)                                  sprintf(setLevelExt, "%s", "---");
     else if (*(uint32_t *)pLevelExt == no_link_32)          sprintf(setLevelExt, "%s", "NOLINK");
@@ -327,6 +345,7 @@ void buildPrintLine(uint32_t idx)
   else {
     sprintf(extNue, "---");
     sprintf(nueMeasExt, "---");
+    sprintf(nueMeasInj, "---");
     sprintf(setLevelExt, "---");
     sprintf(setLevelInj, "---");
   } // else flagOther
@@ -400,7 +419,7 @@ void buildPrintLine(uint32_t idx)
   else sprintf(injTrig, "---");
 
   sprintf(printLineK[idx], "|%20s | %12s |%6s | %2d | %27s |%6s |%15s | %41s |", pattern, tCBS, origin, sid, extTrig, dest, b2b, injTrig);
-  sprintf(printLineN[idx], "|%20s | %12s |%6s | %2d | %38s |%6s |   %6s  %6s                                |", pattern, tCBS, origin, sid, nueMeasExt, dest, setLevelExt, setLevelInj);
+  sprintf(printLineN[idx], "|%20s | %12s |%6s | %2d | %38s | %38s | %6s  %6s |", pattern, tCBS, origin, sid, nueMeasExt, nueMeasInj, setLevelExt, setLevelInj);
   //                printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
 
 } //buildPrintLine
@@ -497,10 +516,6 @@ void dicSubscribeServices(char *prefix, uint32_t idx)
   sprintf(name, "%s_%s-cal_stat_sid%02d", prefix, ringName,  sid);
   /* printf("name %s\n", name); */
   dicDiagstatId[idx]     = dic_info_service_stamped(name, MONITORED, 0, &(dicDiagstat[idx]), sizeof(diagstat_t), 0 , 0, &no_link_32, sizeof(uint32_t));
-
-  sprintf(name, "%s_%s-other-rf_sid%02d_ext", prefix, ringName,  sid);
-  /* printf("name %s\n", name); */
-  dicNueMeasExtId[idx]   = dic_info_service_stamped(name, MONITORED, 0, &(dicNueMeasExt[idx]), sizeof(nueMeas_t), 0 , 0, &no_link_32, sizeof(uint32_t));
 
   sprintf(name,"%s_%s-pname_sid%02d", prefix, ringName, sid);
   /* printf("name %s\n", name);*/
