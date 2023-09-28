@@ -141,10 +141,21 @@ class ThreadBitsTest(dm_testbench.DmTestbench):
     self.assertEqual(lines[0], f'CPU 0 Thr 0 {command.capitalize()} {parameter}', 'wrong output')
     self.assertEqual(lines[1], f'CPU 0 Thr 1 {command.capitalize()} {parameter}', 'wrong output')
 
+  @pytest.mark.thread8
   def testThreadMaxPlusOne(self):
     """Set the thread number 'threadQuantity + 1'. Should return code 255.
+    Only useful for 8 threads.
     """
     thread = f'0x{(1 << self.threadQuantity):x}'
+    lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-t', f'{thread}', 'preptime'), [255], 0, 1)
+    self.assertEqual(lines[1][0], f"{self.binaryDmCmd}: Thread mask '{thread}' is invalid. Choose a mask that fits to 0x{self.threadMask:x}.", 'wrong output')
+
+  @pytest.mark.thread32
+  def testThreadMaxPlusOne32(self):
+    """Set the thread number 'threadQuantity + 1'. Should return code 255.
+    Only useful for 32 threads.
+    """
+    thread = f'0x{(1 << 32):x}'
     lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-t', f'{thread}', 'preptime'), [255], 0, 1)
     self.assertEqual(lines[1][0], f"{self.binaryDmCmd}: Thread mask '{thread}' is invalid. Choose a mask that fits to 0x{self.threadMask:x}.", 'wrong output')
 
@@ -195,7 +206,7 @@ class ThreadBitsTest(dm_testbench.DmTestbench):
     self.assertEqual(lines[1][0], f"{self.binaryDmCmd}: Thread argument 'preptime' is invalid. Not a number.", 'wrong output')
 
   def testMissingArgumentVerbose(self):
-    lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-v', '-t', 'preptime'), [255], 0, 1)
+    lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-v', '-t', 'preptime'), [255], 2, 1)
     self.assertEqual(lines[1][0], f"{self.binaryDmCmd}: Thread argument 'preptime' is invalid. Not a number.", 'wrong output')
 
   def tearDown(self):
