@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 01-Jun-2023
+ *  version : 28-Sep-2023
  *
  * analyzes and publishes get values
  * 
@@ -36,7 +36,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_ANALYZER_VERSION 0x000508
+#define B2B_ANALYZER_VERSION 0x000509
 
 // standard includes 
 #include <unistd.h> // getopt

@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 28-Sep-2023
+ *  version : 29-Sep-2023
  *
  * subscribes to and displays status of many b2b transfers
  *
@@ -214,7 +214,7 @@ void buildHeader()
 } // buildHeader
 
 
-// build string for printing
+// build strings for printing
 void buildPrintLine(uint32_t idx)
 {
   char     origin[10];
@@ -309,11 +309,17 @@ void buildPrintLine(uint32_t idx)
       nueDiff = dicDiagval[idx].ext_rfNueAct - set_extNue[idx];
       if ((dicGetval[idx].flagEvtErr >> 2) & 0x1)  sprintf(nueMeasExt, "ERROR: no RF signal detected");
       else {
-        if (dicDiagval[idx].ext_rfNueActErr > 10.0) sprintf(tmp1, " > 10");
-        else                                        sprintf(tmp1, "%5.3f", dicDiagval[idx].ext_rfNueActErr);
-        if (fabs(nueDiff) >100)                     sprintf(tmp2, "  > 100");
-        else                                        sprintf(tmp2, "%7.3f", nueDiff);
-        sprintf(nueMeasExt, "%11.3f %11.3f(%5s) %s", set_extNue[idx], dicDiagval[idx].ext_rfNueAct, tmp1, tmp2);
+        if ((fabs(dicDiagval[idx].ext_ddsOffAct) > set_extT[idx] / 10) || (fabs(dicDiagval[idx].ext_rfOffAct) > set_extT[idx] / 4)){  // this is hack to possibly detect wrong set-values
+          sprintf(tmp1, "check DDS");
+          sprintf(tmp2, "value");
+          sprintf(tmp3, "n/a");
+        } // if fabs
+        else {
+          sprintf(tmp1, "%11.3f", dicDiagval[idx].ext_rfNueAct);
+          sprintf(tmp2, "%5.3f", dicDiagval[idx].ext_rfNueActErr);
+          sprintf(tmp3, "%7.3f", nueDiff);
+        } // else fabs
+        sprintf(nueMeasExt, "%11.3f %11s(%5s) %7s",  set_extNue[idx], tmp1, tmp2, tmp3);
       } // else flagEvtErr
     } // else NOLINK
 
@@ -324,11 +330,17 @@ void buildPrintLine(uint32_t idx)
         nueDiff = dicDiagval[idx].inj_rfNueAct - set_injNue[idx];
         if ((dicGetval[idx].flagEvtErr >> 3) & 0x1)   sprintf(nueMeasInj, "ERROR: no RF signal detected");
         else {
-          if (dicDiagval[idx].inj_rfNueActErr > 10.0) sprintf(tmp1, " > 10");
-          else                                        sprintf(tmp1, "%5.3f", dicDiagval[idx].inj_rfNueActErr);
-          if (fabs(nueDiff) >100)                     sprintf(tmp2, "  > 100");
-          else                                        sprintf(tmp2, "%7.3f", nueDiff);
-          sprintf(nueMeasInj, "%11.3f %11.3f(%5s) %s", set_injNue[idx], dicDiagval[idx].inj_rfNueAct, tmp1, tmp2);
+          if ((fabs(dicDiagval[idx].inj_ddsOffAct) > set_injT[idx] / 10) || (fabs(dicDiagval[idx].inj_rfOffAct) > set_injT[idx] / 4)){  // this is hack to possibly detect wrong set-values
+            sprintf(tmp1, "check DDS");
+            sprintf(tmp2, "value");
+            sprintf(tmp3, "n/a");
+          } // if fabs
+          else {
+            sprintf(tmp1, "%11.3f", dicDiagval[idx].inj_rfNueAct);
+            sprintf(tmp2, "%5.3f", dicDiagval[idx].inj_rfNueActErr);
+            sprintf(tmp3, "%7.3f", nueDiff);
+          } // else fabs
+          sprintf(nueMeasInj, "%11.3f %11s(%5s) %s", set_injNue[idx], tmp1, tmp2, tmp3);
         } // else flagEvtErr
       } // else NOLINK
     } // if set_mode
