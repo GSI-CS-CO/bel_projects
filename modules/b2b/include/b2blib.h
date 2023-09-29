@@ -91,6 +91,7 @@ extern "C" {
   // data type get values; data are in 'native units' used by the lm32 firmware
   typedef struct{                                      
     uint32_t flag_nok;                                 // flag: data not ok; bit 0: ext_phase, bit 1: ext_dKickMon ...
+                                                       /* chk, these flags are a mess and shall be redone */
     uint64_t ext_phase;                                // extraction: phase of h=1 Group DDS, ns part
     int32_t  ext_phaseFract_ps;                        // extraction: fractional phase [ps]
     int32_t  ext_phaseErr_ps;                          // extraction: (statistical) uncertainty of phase [ps]

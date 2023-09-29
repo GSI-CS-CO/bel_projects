@@ -398,7 +398,7 @@ void buildPrintLine(uint32_t idx)
     // trigger event received
     if ((dicGetval[idx].flagEvtRec >> 5) & 0x1) {
       // data invalid
-      if ((dicGetval[idx].flag_nok >> 3) & 0x1) sprintf(tmp1, "%s", TXTUNKWN);
+      if ((dicGetval[idx].flag_nok >> 5) & 0x1) sprintf(tmp1, "%s", TXTUNKWN);
       else {
         if (flagB2b) dtmp1 = convertUnit(set_injCTrig[idx] - dicDiagval[idx].inj_ddsOffAct, dicSetval[idx].inj_T);  //b2b : diff to DDS of injection ring
         else         dtmp1 = convertUnit(set_injCTrig[idx] - dicDiagval[idx].ext_ddsOffAct, dicSetval[idx].inj_T);  //else: diff to DDS of extraction ring
