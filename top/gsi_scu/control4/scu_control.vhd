@@ -198,10 +198,6 @@ architecture rtl of scu_control is
   signal rstn_ref              : std_logic;
   signal clk_ref               : std_logic;
 
-  --IBN
-  signal wr_uart_i : std_logic;
-  signal wr_uart_o : std_logic;
-  
 
   constant io_mapping_table : t_io_mapping_table_arg_array(0 to 14) :=
   (
@@ -278,10 +274,8 @@ begin
       wr_dac_sclk_o           => wr_dac_sclk_o,
       wr_dac_din_o            => wr_dac_din_o,
       wr_ndac_cs_o            => wr_ndac_cs_o,
-      --wr_uart_o               => ser0_rxd, --IBN
-      --wr_uart_i               => ser0_txd,--IBN
-      wr_uart_o               => wr_uart_o, --IBN
-      wr_uart_i               => wr_uart_i, --IBN
+      wr_uart_o               => ser1_rxd,
+      wr_uart_i               => ser1_txd,
       wbar_phy_dis_o          => sfp_tx_disable_o,
       sfp_tx_fault_i          => sfp_tx_fault_i,
       sfp_los_i               => sfp_los_i,
@@ -400,17 +394,6 @@ begin
     nADR_EN     <= '0';
     A_Spare     <= (others => 'Z');
     --A_OneWire   <= 'Z';
-
-  --IBN (not for Production)
-  --ser0_rxd  <= ser1_txd;
-  --ser1_rxd  <= ser1_txd;
-  serial_cb_out(1) <= ser1_txd;
-  --ser0_rxd <= serial_cb_in(0);
-  ser1_rxd <= serial_cb_in(1);
-
-  serial_cb_out (0) <= ser0_txd when s_gpio_o(5) = '1' else wr_uart_o;
-  ser0_rxd <= serial_cb_in(0) when s_gpio_o(5) = '1' else '1';
-  wr_uart_i <= serial_cb_in(0) when s_gpio_o(5) = '0' else '1';
 
 
 
