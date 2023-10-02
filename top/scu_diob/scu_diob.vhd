@@ -790,8 +790,10 @@ component  TM_quench_detection is
          nReset : in STD_LOGIC;
          time_pulse : in STD_LOGIC;
          delay : in STD_LOGIC_VECTOR(23 DOWNTO 0);
-         quench_out_nr : in STD_LOGIC_VECTOR(5 downto 0);
+         quench_in_out_sel : in STD_LOGIC_VECTOR(11 downto 0);
+         out_reset: in std_logic;
          QuDIn: in STD_LOGIC_VECTOR (53 downto 0);
+         quench_en: in STD_LOGIC_VECTOR (53 downto 0);
          mute: in STD_LOGIC_VECTOR (53 downto 0);
          QuDOut : out STD_LOGIC_VECTOR(23 downto 0));
 end component;
@@ -1633,7 +1635,8 @@ signal quench_sk_out:  std_logic_vector(23 downto 0):=(others=>'0');
 --signal quench_sk_enable_signal: t_sk_quench_array:= (others=>(others=>'0'));
 signal quench_sk_enable_signal: std_logic_vector(53 downto 0):=(others=>'0');
 signal TM_out_delay: std_logic_vector(23 downto 0):=(others=>'0');
-signal quench_out_sel: std_logic_vector(5 downto 0) := (others=>'0');
+--signal quench_out_sel: std_logic_vector(5 downto 0) := (others=>'0');
+signal quench_in_out_sel :  STD_LOGIC_VECTOR(11 downto 0);
 --  +============================================================================================================================+
 --  |                                   Übergabe-Signale für Anwender-IO: Out16   -- FG901_010                                   |
 --  +============================================================================================================================+
@@ -4120,10 +4123,12 @@ end generate Quench_Matrix_Gen;
     Port map( clk => clk_sys,
               nReset => rstn_sys,
               time_pulse => Ena_Every_1us,
-              quench_out_nr => quench_out_sel,
+              quench_in_out_sel => quench_in_out_sel,
+              out_reset=>  quench_reg(0)(15),
               delay => TM_out_delay,
               QuDIn => Deb72_in(53 downto 0),
-              mute => IOBP_Masken_Reg5 (5 downto 0)& IOBP_Masken_Reg4 (11 downto 0) & IOBP_Masken_Reg3 (11 downto 0)& IOBP_Masken_Reg2 (11 downto 0) & IOBP_Masken_Reg1 (11 downto 0) or not (quench_sk_enable_signal ) ,
+              quench_en => not quench_sk_enable_signal,
+              mute => IOBP_Masken_Reg5 (5 downto 0)& IOBP_Masken_Reg4 (11 downto 0) & IOBP_Masken_Reg3 (11 downto 0)& IOBP_Masken_Reg2 (11 downto 0) & IOBP_Masken_Reg1 (11 downto 0)  ,
               QuDOut => quench_sk_out);
 
   ID_Front_Board_proc: process (clk_sys, rstn_sys)
@@ -7911,38 +7916,36 @@ END IF;
 ( PIO_ENA(48),  PIO_ENA(38),  PIO_ENA(46),  PIO_ENA(40),  PIO_ENA(44),  PIO_ENA(42)) <= PIO_ENA_SLOT_11;
 ( PIO_ENA(112), PIO_ENA(120), PIO_ENA(110), PIO_ENA(122), PIO_ENA(108), PIO_ENA(124))<= PIO_ENA_SLOT_12;
 
+( PIO_OUT(56),  PIO_OUT(62),  PIO_OUT(54),  PIO_OUT(60),  PIO_OUT(52),  PIO_OUT(58)) <= PIO_OUT_SLOT_1;
+( PIO_OUT(96),  PIO_OUT(102), PIO_OUT(94), PIO_OUT(100),  PIO_OUT(92),  PIO_OUT(98)) <= PIO_OUT_SLOT_2;
+( PIO_OUT(73),  PIO_OUT(79),  PIO_OUT(71),  PIO_OUT(77),  PIO_OUT(69),  PIO_OUT(75)) <= PIO_OUT_SLOT_3;
+( PIO_OUT(101), PIO_OUT(93),  PIO_OUT(103), PIO_OUT(91),  PIO_OUT(105), PIO_OUT(89)) <= PIO_OUT_SLOT_4;
+( PIO_OUT(53),  PIO_OUT(63),  PIO_OUT(55),  PIO_OUT(61),  PIO_OUT(57),  PIO_OUT(59)) <= PIO_OUT_SLOT_5;
+( PIO_OUT(119), PIO_OUT(111), PIO_OUT(121), PIO_OUT(109), PIO_OUT(123), PIO_OUT(107))<= PIO_OUT_SLOT_6;
+( PIO_OUT(35),  PIO_OUT(45),  PIO_OUT(37),  PIO_OUT(43),  PIO_OUT(39),  PIO_OUT(41)) <= PIO_OUT_SLOT_7;
+( PIO_OUT(137), PIO_OUT(129), PIO_OUT(139), PIO_OUT(127), PIO_OUT(141), PIO_OUT(125))<= PIO_OUT_SLOT_8;
+
 case AW_Config2 is
   when x"DEDE" => --Quench Detection Development
   
- ( PIO_OUT(56),  PIO_OUT(62),  PIO_OUT(54),  PIO_OUT(60),  PIO_OUT(52),  PIO_OUT(58)) <= PIO_ENA_SLOT_1;
- ( PIO_OUT(96),  PIO_OUT(102), PIO_OUT(94), PIO_OUT(100),  PIO_OUT(92),  PIO_OUT(98)) <= PIO_ENA_SLOT_2;
- ( PIO_OUT(73),  PIO_OUT(79),  PIO_OUT(71),  PIO_OUT(77),  PIO_OUT(69),  PIO_OUT(75)) <= PIO_ENA_SLOT_3;
- ( PIO_OUT(101), PIO_OUT(93),  PIO_OUT(103), PIO_OUT(91),  PIO_OUT(105), PIO_OUT(89)) <= PIO_ENA_SLOT_4;
- ( PIO_OUT(53),  PIO_OUT(63),  PIO_OUT(55),  PIO_OUT(61),  PIO_OUT(57),  PIO_OUT(59)) <= PIO_ENA_SLOT_5;
- ( PIO_OUT(119), PIO_OUT(111), PIO_OUT(121), PIO_OUT(109), PIO_OUT(123), PIO_OUT(107))<= PIO_ENA_SLOT_6;
- ( PIO_OUT(35),  PIO_OUT(45),  PIO_OUT(37),  PIO_OUT(43),  PIO_OUT(39),  PIO_OUT(41)) <= PIO_ENA_SLOT_7;
- ( PIO_OUT(137), PIO_OUT(129), PIO_OUT(139), PIO_OUT(127), PIO_OUT(141), PIO_OUT(125))<= PIO_ENA_SLOT_8;
+
  ( PIO_OUT(30),  PIO_OUT(20),  PIO_OUT(28),  PIO_OUT(22),  PIO_OUT(26),  PIO_OUT(24)) <= quench_sk_out(23 downto 18);
  ( PIO_OUT(130), PIO_OUT(138), PIO_OUT(128), PIO_OUT(140), PIO_OUT(126), PIO_OUT(142))<= quench_sk_out(17 downto 12);
  ( PIO_OUT(48),  PIO_OUT(38),  PIO_OUT(46),  PIO_OUT(40),  PIO_OUT(44),  PIO_OUT(42)) <= quench_sk_out(11 downto 6);
  ( PIO_OUT(112), PIO_OUT(120), PIO_OUT(110), PIO_OUT(122), PIO_OUT(108), PIO_OUT(124))<= quench_sk_out(5 downto 0);
  
-  
+ IOBP_Output_Readback(4) <= "0000" & quench_sk_out(23 downto 12);
+ IOBP_Output_Readback(5) <= "0000" & quench_sk_out(11 downto 0); --slot 11 & slot 12
    when OTHERS =>
    
- ( PIO_OUT(56),  PIO_OUT(62),  PIO_OUT(54),  PIO_OUT(60),  PIO_OUT(52),  PIO_OUT(58)) <= PIO_OUT_SLOT_1;
- ( PIO_OUT(96),  PIO_OUT(102), PIO_OUT(94), PIO_OUT(100),  PIO_OUT(92),  PIO_OUT(98)) <= PIO_OUT_SLOT_2;
- ( PIO_OUT(73),  PIO_OUT(79),  PIO_OUT(71),  PIO_OUT(77),  PIO_OUT(69),  PIO_OUT(75)) <= PIO_OUT_SLOT_3;
- ( PIO_OUT(101), PIO_OUT(93),  PIO_OUT(103), PIO_OUT(91),  PIO_OUT(105), PIO_OUT(89)) <= PIO_OUT_SLOT_4;
- ( PIO_OUT(53),  PIO_OUT(63),  PIO_OUT(55),  PIO_OUT(61),  PIO_OUT(57),  PIO_OUT(59)) <= PIO_OUT_SLOT_5;
- ( PIO_OUT(119), PIO_OUT(111), PIO_OUT(121), PIO_OUT(109), PIO_OUT(123), PIO_OUT(107))<= PIO_OUT_SLOT_6;
- ( PIO_OUT(35),  PIO_OUT(45),  PIO_OUT(37),  PIO_OUT(43),  PIO_OUT(39),  PIO_OUT(41)) <= PIO_OUT_SLOT_7;
- ( PIO_OUT(137), PIO_OUT(129), PIO_OUT(139), PIO_OUT(127), PIO_OUT(141), PIO_OUT(125))<= PIO_OUT_SLOT_8;
+
  ( PIO_OUT(30),  PIO_OUT(20),  PIO_OUT(28),  PIO_OUT(22),  PIO_OUT(26),  PIO_OUT(24)) <= PIO_OUT_SLOT_9;
  ( PIO_OUT(130), PIO_OUT(138), PIO_OUT(128), PIO_OUT(140), PIO_OUT(126), PIO_OUT(142))<= PIO_OUT_SLOT_10;
  ( PIO_OUT(48),  PIO_OUT(38),  PIO_OUT(46),  PIO_OUT(40),  PIO_OUT(44),  PIO_OUT(42)) <= PIO_OUT_SLOT_11;
  ( PIO_OUT(112), PIO_OUT(120), PIO_OUT(110), PIO_OUT(122), PIO_OUT(108), PIO_OUT(124))<= PIO_OUT_SLOT_12;
- 
+
+ IOBP_Output_Readback(4) <= "0000" & IOBP_SK_Output(10) & IOBP_SK_Output(9);
+IOBP_Output_Readback(5) <= "0000" & IOBP_SK_Output(12) & IOBP_SK_Output(11);
  end case;
 
 --( PIO_OUT(56),  PIO_OUT(62),  PIO_OUT(54),  PIO_OUT(60),  PIO_OUT(52),  PIO_OUT(58)) <= PIO_OUT_SLOT_1;
@@ -7966,13 +7969,13 @@ IOBP_Output_Readback(0) <= "0000" & IOBP_SK_Output(2) & IOBP_SK_Output(1);
 IOBP_Output_Readback(1) <= "0000" & IOBP_SK_Output(4) & IOBP_SK_Output(3);
 IOBP_Output_Readback(2) <= "0000" & IOBP_SK_Output(6) & IOBP_SK_Output(5);
 IOBP_Output_Readback(3) <= "0000" & IOBP_SK_Output(8) & IOBP_SK_Output(7);
-IOBP_Output_Readback(4) <= "0000" & IOBP_SK_Output(10) & IOBP_SK_Output(9);
-IOBP_Output_Readback(5) <= "0000" & IOBP_SK_Output(12) & IOBP_SK_Output(11);
+--IOBP_Output_Readback(4) <= "0000" & IOBP_SK_Output(10) & IOBP_SK_Output(9);
+--IOBP_Output_Readback(5) <= "0000" & IOBP_SK_Output(12) & IOBP_SK_Output(11);
 IOBP_Output_Readback(6) <= (OTHERS => '0');
 IOBP_Output_Readback(7) <= (OTHERS => '0');
 
-quench_sk_enable_signal <= quench_reg(4)(5 downto 0) & quench_reg(3)(11 downto 0) & quench_reg(2)(11 downto 0) & 
-                            quench_reg(1)(11 downto 0) & quench_reg(0)(11 downto 0);
+quench_sk_enable_signal <= quench_reg(5)(5 downto 0) & quench_reg(4)(11 downto 0) & quench_reg(3)(11 downto 0) & 
+                            quench_reg(2)(11 downto 0) & quench_reg(1)(11 downto 0);
 
 TM_out_delay(23 downto 0) <= quench_reg(7)(11 downto 0) & quench_reg(6)(11 downto 0);
 --TM_out_delay(5 - 0) delay for outputs in slot 12   quench_reg(6)(5-0) 
@@ -7980,7 +7983,7 @@ TM_out_delay(23 downto 0) <= quench_reg(7)(11 downto 0) & quench_reg(6)(11 downt
 --TM_out_delay(17 - 8) delay for outputs in slot 10   quench_reg(7)(5-0) 
 --TM_out_delay(23 - 18) delay for outputs in slot 9   quench_reg(7)(11-6) 
 
-quench_out_sel <= quench_reg(5)(5 downto 0);
+quench_in_out_sel <= quench_reg(0)(11 downto 0);
 
 ---------------- Output-Register(Maske) für die Iput- und Output Sel-LED's vom Slave 1-12
 IOBP_Sel_Led <= IOBP_SK_Sel_Led;
