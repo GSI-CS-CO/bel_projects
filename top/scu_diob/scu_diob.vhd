@@ -7936,6 +7936,17 @@ case AW_Config2 is
  
  IOBP_Output_Readback(4) <= "0000" & quench_sk_out(23 downto 12);
  IOBP_Output_Readback(5) <= "0000" & quench_sk_out(11 downto 0); --slot 11 & slot 12
+
+ ---------------- Output-Register(Maske) für die Iput- und Output Sel-LED's vom Slave 1-12
+ for i in 1 to 8 loop
+IOBP_Sel_Led(i) <= IOBP_SK_Sel_Led(i);
+ end loop;
+
+IOBP_Sel_Led(9)<= quench_sk_out(23 downto 18);
+IOBP_Sel_Led(10)<= quench_sk_out(17 downto 12);
+IOBP_Sel_Led(11)<= quench_sk_out(11 downto 6);
+IOBP_Sel_Led(12)<= quench_sk_out(5 downto 0);
+
    when OTHERS =>
    
 
@@ -7946,6 +7957,9 @@ case AW_Config2 is
 
  IOBP_Output_Readback(4) <= "0000" & IOBP_SK_Output(10) & IOBP_SK_Output(9);
 IOBP_Output_Readback(5) <= "0000" & IOBP_SK_Output(12) & IOBP_SK_Output(11);
+
+---------------- Output-Register(Maske) für die Iput- und Output Sel-LED's vom Slave 1-12
+IOBP_Sel_Led <= IOBP_SK_Sel_Led;
  end case;
 
 --( PIO_OUT(56),  PIO_OUT(62),  PIO_OUT(54),  PIO_OUT(60),  PIO_OUT(52),  PIO_OUT(58)) <= PIO_OUT_SLOT_1;
@@ -7985,8 +7999,7 @@ TM_out_delay(23 downto 0) <= quench_reg(7)(11 downto 0) & quench_reg(6)(11 downt
 
 quench_in_out_sel <= quench_reg(0)(11 downto 0);
 
----------------- Output-Register(Maske) für die Iput- und Output Sel-LED's vom Slave 1-12
-IOBP_Sel_Led <= IOBP_SK_Sel_Led;
+
 
 
 --################################ Debounce oder Sync Input's  ##################################
