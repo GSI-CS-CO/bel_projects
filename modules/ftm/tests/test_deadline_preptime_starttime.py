@@ -11,17 +11,6 @@ class ThreadBitsTest(dm_testbench.DmTestbench):
   threadQuantity = 8
   threadMask = (1 << threadQuantity) - 1
 
-  def threadCount(self, thread):
-    """Count how many bits are 1 in the number 'thread'.
-    This is the number of threads enabled in the number.
-    """
-    threadCount = 0
-    for i in range(self.threadQuantity):
-      print(f'{i=}, {(1 << i)=}, {thread=}, {threadCount=}')
-      if (1 << i) & thread > 0:
-        threadCount = threadCount + 1
-    return threadCount
-
   def testPreptimeSingleThreadDecimal(self):
     """Loop for all threads setting and reading the preptime.
     Uses the thread number in decimal form.
@@ -96,25 +85,20 @@ class ThreadBitsTest(dm_testbench.DmTestbench):
     """Test for one thread. If commandSet=True set the time (parameter) with the command.
     In all cases, read this value. Check the output of both commands.
     """
-    threads = []
+    threadX = thread
     if isinstance(thread, str):
-      threadD = self.threadQuantity
-      for i in range(self.threadQuantity):
-        if f'0x{(1 << i):x}' == thread:
-          threadD = i
-          threads.append(i)
-          break
-      threadCount = self.threadCount(2**threadD)
+      thread = int(thread, base=16)
+      threads = self.listFromBits(thread, self.threadQuantity)
     else:
-      threadD = thread
-      threads.append(thread)
-      threadCount = self.threadCount(2**thread)
-    # ~ print(f'{thread=}, {threadD=}, {type(thread)=}, {threadCount=}, {threads=}')
+      threads = self.listFromBits((1 << thread), self.threadQuantity)
+    threadCount = len(threads)
+    print(f'{thread=}, {type(thread)=}, {threadX=}, {threadCount=}, {threads=}')
     if commandSet:
-      lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-t', f'{thread}', command, parameter), [0], threadCount, 0)
+      lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-t', f'{threadX}', command, parameter), [0], threadCount, 0)
+      print(f"{(self.binaryDmCmd, self.datamaster, '-t', f'{threadX}', command, parameter)}")
       for i in range(threadCount):
         self.assertEqual(lines[i], f'setting {command}: CPU 0 Thread {threads[i]}.', 'wrong output')
-    lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-t', f'{thread}', command), [0], threadCount, 0)
+    lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-t', f'{threadX}', command), [0], threadCount, 0)
     for i in range(threadCount):
       positionDeadline = lines[i].find('Deadline')
       if assertText == '':
@@ -133,11 +117,11 @@ class ThreadBitsTest(dm_testbench.DmTestbench):
     command = 'preptime'
     parameter = '10000000'
     lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-t', f'{thread}', command, parameter), [0], 2, 0)
-    print(f'{lines=}')
+    # ~ print(f'{lines=}')
     self.assertEqual(lines[0], f'setting preptime: CPU 0 Thread 0.', 'wrong output')
     self.assertEqual(lines[1], f'setting preptime: CPU 0 Thread 1.', 'wrong output')
     lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-t', f'{thread}', command), [0], 2, 0)
-    print(f'{lines=}')
+    # ~ print(f'{lines=}')
     self.assertEqual(lines[0], f'CPU 0 Thr 0 {command.capitalize()} {parameter}', 'wrong output')
     self.assertEqual(lines[1], f'CPU 0 Thr 1 {command.capitalize()} {parameter}', 'wrong output')
 

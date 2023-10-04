@@ -479,7 +479,33 @@ class DmTestbench(unittest.TestCase):
       fileToRemove.unlink()
 
   def resetAllCpus(self):
-    self.startAndCheckSubprocess((self.getEbResetCommand(), self.datamaster, 'cpureset', '0'), [0])
-    self.startAndCheckSubprocess((self.getEbResetCommand(), self.datamaster, 'cpureset', '1'), [0])
-    self.startAndCheckSubprocess((self.getEbResetCommand(), self.datamaster, 'cpureset', '2'), [0])
-    self.startAndCheckSubprocess((self.getEbResetCommand(), self.datamaster, 'cpureset', '3'), [0])
+    """Reset each CPU (loop over all lm32 CPUs).
+    """
+    for cpu in ['0', '1', '2', '3']:
+      self.startAndCheckSubprocess((self.getEbResetCommand(), self.datamaster, 'cpureset', cpu), [0])
+
+  def listFromBits(self, bits, quantity) -> list:
+    """Convert a 'bits', given as a string or an int, into a list of
+    int items. quantity is the maximal int + 1.
+    """
+    itemList = []
+    if isinstance(bits, str):
+      bits = int(bits, base=16)
+    for i in range(quantity):
+      if (1 << i) & bits > 0:
+        itemList.append(i)
+      print(f'{bits=}, {i=}, {itemList=}, {((1 << i) & bits)=}')
+    return itemList
+
+  def bitCount(self, bits, quantity) -> int:
+    """Count how many bits are 1 in the number 'bits'.
+    This is the number of items enabled in 'bits'.
+    """
+    if isinstance(bits, str):
+      bits = int(bits, base=16)
+    count = 0
+    for i in range(quantity):
+      print(f'{i=}, {(1 << i)=}, {bits=}, {count=}')
+      if (1 << i) & bits > 0:
+        count = count + 1
+    return count
