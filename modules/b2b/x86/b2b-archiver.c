@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 25-Sep-2023
+ *  version : 04-Oct-2023
  *
  * archives set and get values to data files
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_ARCHIVER_VERSION 0x000509
+#define B2B_ARCHIVER_VERSION 0x000510
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -69,12 +69,12 @@ char       no_link_str[] = "NO_LINK";
 
 setval_t   dicSetval[B2B_NSID]; 
 getval_t   dicGetval[B2B_NSID];
-nueMeas_t  dicNueMeasExt[B2B_NSID];
+diagval_t  dicDiagval[B2B_NSID];
 char       dicPName[B2B_NSID][DIMMAXSIZE];
 
 uint32_t   dicSetvalId[B2B_NSID];
 uint32_t   dicGetvalId[B2B_NSID];
-uint32_t   dicNueMeasExtId[B2B_NSID];
+uint32_t   dicDiagvalId[B2B_NSID];
 uint32_t   dicPNameId[B2B_NSID];
 
 // global variables
@@ -106,7 +106,7 @@ static void help(void) {
 // header String for file
 char * headerString()
 {
-  return "patternName; time_CBS_UTC; sid; mode; valid; ext_T [as]; valid; ext_h; valid; ext_cTrig; valid; inj_T; valid; inj_h; valid; inj_cTrig; valid; cPhase; valid; ext_phase; ext_phaseFract; ext_phaseErr; ext_maxsysErr; valid; ext_dKickMon; valid; ext_dKickProb; valid; ext_diagPhase; valid; ext_diag_Match; valid; inj_phase; inj_phaseFract; inj_phaseErr; inj_maxsysErr; valid; inj_dKickMon; valid; inj_dKickProb; valid; inj_diagPhase; valid; inj_diagMatch; received PME; PMI; PRE; PRI; KTE; KTI; KDE; KDI; PDE; PDI; error PME; PMI; PRE; PRI; KTE; KTI; KDE; KDI; PDE; PDI; late PME; PMI; PRE; PRI; KTE; KTI; KDE; KDI; PDE; PDI; fin-CBS; prr-CBS; t0E-CBS; t0I-CBS; kte-CBS; kti-CBS; ext_nueMeas; ext_dNueMeas";
+  return "patternName; time_CBS_UTC; sid; mode; valid; ext_T [as]; valid; ext_h; valid; ext_cTrig; valid; inj_T; valid; inj_h; valid; inj_cTrig; valid; cPhase; valid; ext_phase; ext_phaseFract; ext_phaseErr; ext_maxsysErr; valid; ext_dKickMon; valid; ext_dKickProb; valid; ext_diagPhase; valid; ext_diag_Match; valid; inj_phase; inj_phaseFract; inj_phaseErr; inj_maxsysErr; valid; inj_dKickMon; valid; inj_dKickProb; valid; inj_diagPhase; valid; inj_diagMatch; received PME; PMI; PRE; PRI; KTE; KTI; KDE; KDI; PDE; PDI; error PME; PMI; PRE; PRI; KTE; KTI; KDE; KDI; PDE; PDI; late PME; PMI; PRE; PRI; KTE; KTI; KDE; KDI; PDE; PDI; fin-CBS; prr-CBS; t0E-CBS; t0I-CBS; kte-CBS; kti-CBS; ext_nueGet; ext_dNueGet; inj_nueGet; inj_dNueGet";
 } // headerString
 
 // receive get values
@@ -187,16 +187,17 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
 
   // frequency values; chk: in principle we should check the timestammp of the service too?
   new = strNueval;
-  if (*(uint32_t *)&(dicNueMeasExt[sid]) == no_link_32)
-    new += sprintf(new, "; NOLINK; NOLINK");
+  if (*(uint32_t *)&(dicDiagval[sid]) == no_link_32)
+    new += sprintf(new, "; NOLINK; NOLINK; NOLINK; NOLINK");
   else 
-    new += sprintf(new, "; %13.6f; %13.6f", dicNueMeasExt[sid].nueGet, dicNueMeasExt[sid].nueErr);
+    new += sprintf(new, "; %13.6f; %13.6f; %13.6f; %13.6f", dicDiagval[sid].ext_rfNueAct, dicDiagval[sid].ext_rfNueActErr, dicDiagval[sid].inj_rfNueAct, dicDiagval[sid].inj_rfNueActErr);
 
   if (!(dataFile = fopen(filename[sid], "a"))) return;
   fprintf(dataFile, "%s; %s%s%s\n", dicPName[sid], strSetval, strGetval, strNueval);
   fclose(dataFile); 
 } // recGetvalue
   
+
 // receive set values
 void recSetvalue(long *tag, setval_t *address, int *size)
 {
@@ -211,7 +212,7 @@ void recSetvalue(long *tag, setval_t *address, int *size)
   utc_msecs[sid]    = msecs;
   flagSetValid[sid] = (*size != sizeof(uint32_t));
 } // recSetValue
-  
+
 
 // add all dim services
 void dicSubscribeServices(char *prefix)
@@ -228,9 +229,8 @@ void dicSubscribeServices(char *prefix)
     //printf("name %s\n", name);
     dicPNameId[i]      = dic_info_service_stamped(name, MONITORED, 0, &(dicPName[i]), DIMMAXSIZE, 0 , 0, &no_link_str, sizeof(no_link_str));
 
-    sprintf(name, "%s-other-rf_sid%02d_ext", prefix, i);
-    /* printf("name %s\n", name); */
-    dicNueMeasExtId[i] = dic_info_service_stamped(name, MONITORED, 0, &(dicNueMeasExt[i]), sizeof(nueMeas_t), 0 , 0, &no_link_32, sizeof(uint32_t));
+    sprintf(name, "%s-cal_diag_sid%02d", prefix, i);
+    dicDiagvalId[i]    = dic_info_service_stamped(name, MONITORED, 0, &(dicDiagval[i]), sizeof(diagval_t), 0, 0, &no_link_32, sizeof(uint32_t));
 
     sleep (2);  // data is taken upon callback of set-values; wait a bit until the other services have connected to their servers
 
