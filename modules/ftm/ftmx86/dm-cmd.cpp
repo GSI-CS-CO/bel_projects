@@ -23,7 +23,9 @@ static void help(const char *program) {
   fprintf(stderr, "\n");
   fprintf(stderr, "\nGeneral Options:\n");
   fprintf(stderr, "  -c <cpu-idx>              Select CPU core by index, default is 0\n");
-  fprintf(stderr, "  -t <thread-idx>           Select thread inside selected CPU core by index, default is 0\n");
+  fprintf(stderr, "                            <cpu-idx> is used as a bit mask if hex number. Example: 0x0c represents cpu 2 and 3.\n");
+  fprintf(stderr, "  -t <thread-idx>           Select thread inside selected CPU core by index, default is 0.\n");
+  fprintf(stderr, "                            <thread-idx> is used as a bit mask if hex number. Example: 0xf0 represents thread 4 to 7.\n");
   fprintf(stderr, "  -v                        Verbose operation, print more details\n");
   fprintf(stderr, "  -d                        Debug operation, print everything\n");
   fprintf(stderr, "  -i <command .dot file>    Run commands from dot file\n");
@@ -342,42 +344,49 @@ std::string get_working_path() {
    return ( getcwd(temp, sizeof(temp)) ? std::string( temp ) : std::string("") );
 }
 
-uint32_t getThreadBits(const char *optarg, const char *program, int *error) {
-  uint32_t threadMask = (1ll << getThreadQty()) - 1;
-  uint32_t threadBits = threadMask;
-  int32_t tmp;
-  bool isNumber = true;
-  if (strlen(optarg) > 1 && optarg[0] == '0' && (optarg[1] == 'x' || optarg[1] == 'X')) {
-    tmp = strtol(optarg, NULL, 0);
-    if ((tmp & ~threadMask) != 0) {
-      std::cerr << program << ": Thread mask '" << optarg << "' is invalid. Choose a mask that fits to 0x" << std::hex << threadMask << "." << std::endl;
-      *error = -1;
-    } else {
-      threadBits = (uint32_t) tmp;
-    }
+uint32_t getBitMask(const char *optarg, const uint32_t quantity, const char *program, int *error, const char *text) {
+  uint32_t bitMask = (1ll << quantity) - 1;
+  uint32_t bits = bitMask;
+  uint32_t tmp;
+  if (optarg == NULL) {
+    *error = -1;
+    return 0;
   } else {
-    for (size_t i=0; isNumber && i < strlen(optarg); i++) {
-      isNumber = isdigit(optarg[i]);
-    }
-    if (isNumber) {
+    bool isNumber = true;
+    if (strlen(optarg) > 1 && optarg[0] == '0' && (optarg[1] == 'x' || optarg[1] == 'X')) {
       tmp = strtol(optarg, NULL, 0);
-      if ((tmp < 0) || (tmp >= getThreadQty())) {
-        std::cerr << program << ": Thread idx '" << optarg << "' is invalid. Choose an index between 0 and " << getThreadQty() -1 << "." << std::endl;
+      if ((tmp & ~bitMask) != 0) {
+        std::cerr << program << ": " << text << " mask '" << optarg << "' is invalid. Choose a mask that fits to 0x" << std::hex << bitMask << "." << std::endl;
         *error = -1;
       } else {
-        threadBits = (1 << (uint32_t)tmp);
+        bits = (uint32_t) tmp;
       }
     } else {
-      std::cerr << program << ": Thread argument '" << optarg << "' is invalid. Not a number." << std::endl;
-      *error = -1;
+      for (size_t i=0; isNumber && i < strlen(optarg); i++) {
+        isNumber = isdigit(optarg[i]);
+      }
+      if (isNumber) {
+        tmp = strtol(optarg, NULL, 0);
+        if ((tmp < 0) || (tmp >= quantity)) {
+          std::cerr << program << ": " << text << " idx '" << optarg << "' is invalid. Choose an index between 0 and " << quantity -1 << "." << std::endl;
+          *error = -1;
+        } else {
+          bits = (1 << (uint32_t)tmp);
+        }
+      } else {
+        std::cerr << program << ": " << text << " argument '" << optarg << "' is invalid. Not a number." << std::endl;
+        *error = -1;
+      }
     }
+    return bits;
   }
-  return threadBits;
 }
 
 int main(int argc, char* argv[]) {
 
   bool verbose = false, permanent = false, debug=false, vabs=false, force=false;
+  bool setThreadBits = false;
+  bool setCpuBits = false;
 
   int opt;
   const char *program = argv[0];
@@ -389,95 +398,80 @@ int main(int argc, char* argv[]) {
   int32_t tmp;
   int32_t error=0;
   uint32_t cpuIdx = 0;
-  //~ uint32_t thrIdx = 0;
   uint32_t cmdPrio = PRIO_LO;
   uint32_t cmdQty = 1;
   uint64_t cmdTvalid = 0, longtmp;
-  uint32_t uTemp = 0;
   uint32_t threadBits = 0x1;
+  const char *tempThreadBits = NULL;
+  uint32_t cpuBits = 0x1;
+  const char *tempCpuBits = NULL;
 
 // start getopt
    while ((opt = getopt(argc, argv, "shvc:p:l:t:q:i:daf")) != -1) {
       switch (opt) {
-          case 'f':
-            force = true;
-            break;
-          case 'a':
-            vabs = true;
-            break;
-          case 'i':
-            cmdFilename = optarg;
-            break;
-         case 'd':
-            debug = true;
-            break;
-         case 'v':
-            verbose = 1;
-            break;
-         case 't':
-            tmp = strtol(optarg, NULL, 0);
-            uTemp = getThreadBits(optarg, program, &error);
-            if (error == 0) {
-              threadBits = uTemp;
-              //~ if ((tmp < 0) || (tmp >= getThreadQty())) {
-                //~ std::cerr << program << ": Thread idx '" << optarg << "' is invalid. Choose an index between 0 and " << getThreadQty() -1 << std::endl;
-                //~ error = -1;
-              //~ } else {
-                //~ thrIdx = (uint32_t)tmp;
-              //~ }
-            }
-            break;
-         case 'l':
-            longtmp = strtoll(optarg, NULL, 0);
-            if (longtmp < 0) {
-              std::cerr << program << ": Valid time must be a positive offset of nanoseconds to UTC 0 (12:00 Jan 1st 1970)" << std::endl;
-              error = -1;
-            } else {
-              cmdTvalid = (uint64_t)longtmp;
-            }
-            break;
-         case 'p':
-            tmp = strtol(optarg, NULL, 0);
-            if ((tmp < PRIO_LO) || (tmp > PRIO_IL)) {
-              std::cerr << program << ": Priority must be 0 (Low), 1 (High) or Interlock (2)  -- '" << std::endl;
-               error = -1;
-            } else {
-              cmdPrio = (uint32_t)tmp;
-            }
-            break;
-         case 'q':
-            tmp = strtol(optarg, NULL, 0);
-            if ((tmp < 0) || (tmp > ACT_QTY_MSK)) {
-              std::cerr << program << ": Command quantity must be between 0 and " << ACT_QTY_MSK << std::endl;
-              error = -1;
-            } else {
-              cmdQty = (uint32_t)tmp;
-            }
-            break;
-         case 'c':
-            tmp = strtol(optarg, NULL, 0);
-            if (tmp < 0) {
-              std::cerr << program << ": CPU idx '" << optarg << "' is invalid, must be a positive number " << std::endl;
-              error = -1;
-            } else {cpuIdx = (uint32_t)tmp;}
-            break;
-          case 's':
-            permanent = true;
-            break;
-
-         case 'h':
-            help(program);
-            return 0;
-
-         case ':':
-
-         case '?':
-            error = -2;
-            break;
-
-         default:
-            std::cerr << program << ": bad getopt result" << std::endl;
-            error = -3;
+        case 'f':
+          force = true;
+          break;
+        case 'a':
+          vabs = true;
+          break;
+        case 'i':
+          cmdFilename = optarg;
+          break;
+        case 'd':
+          debug = true;
+          break;
+        case 'v':
+          verbose = 1;
+          break;
+        case 't':
+          tempThreadBits = optarg;
+          setThreadBits = true;
+          break;
+        case 'c':
+          tempCpuBits = optarg;
+          setCpuBits = true;
+          break;
+        case 'l':
+          longtmp = strtoll(optarg, NULL, 0);
+          if (longtmp < 0) {
+            std::cerr << program << ": Valid time must be a positive offset of nanoseconds to UTC 0 (12:00 Jan 1st 1970)" << std::endl;
+            error = -1;
+          } else {
+            cmdTvalid = (uint64_t)longtmp;
+          }
+          break;
+        case 'p':
+          tmp = strtol(optarg, NULL, 0);
+          if ((tmp < PRIO_LO) || (tmp > PRIO_IL)) {
+            std::cerr << program << ": Priority must be 0 (Low), 1 (High) or Interlock (2)  -- '" << std::endl;
+             error = -1;
+          } else {
+            cmdPrio = (uint32_t)tmp;
+          }
+          break;
+        case 'q':
+          tmp = strtol(optarg, NULL, 0);
+          if ((tmp < 0) || (tmp > ACT_QTY_MSK)) {
+            std::cerr << program << ": Command quantity must be between 0 and " << ACT_QTY_MSK << std::endl;
+            error = -1;
+          } else {
+            cmdQty = (uint32_t)tmp;
+          }
+          break;
+        case 's':
+          permanent = true;
+          break;
+        case 'h':
+          help(program);
+          return 0;
+        case ':':
+        case '?':
+          error = -2;
+          break;
+        default:
+          std::cerr << program << ": bad getopt result" << std::endl;
+          error = -3;
       }
    }
 
@@ -496,22 +490,20 @@ int main(int argc, char* argv[]) {
     std::cerr << program << ": expecting one non-optional arguments: <etherbone-device>" << std::endl;
     //help();
     return -4;
-    }
+  }
 
-    // process command arguments
+  // process command arguments
 
-    netaddress = argv[optind];
+  netaddress = argv[optind];
 
-    if (optind+1 < argc) typeName        = argv[optind+1];
-    if (optind+2 < argc) targetName      = std::string(argv[optind+2]);
-    if (optind+3 < argc) para            = argv[optind+3];
+  if (optind+1 < argc) typeName        = argv[optind+1];
+  if (optind+2 < argc) targetName      = std::string(argv[optind+2]);
+  if (optind+3 < argc) para            = argv[optind+3];
 
   CarpeDM cdm;
 
   if(verbose) cdm.verboseOn();
   if(debug)   cdm.debugOn();
-
-
 
   try {
     cdm.connect(std::string(netaddress));
@@ -519,12 +511,26 @@ int main(int argc, char* argv[]) {
     std::cerr << program << ": Could not connect to DM. Cause: " << err.what() << std::endl; return -20;
   }
 
-  if (!(cdm.isCpuIdxValid(cpuIdx))) {
-
-    if (!(cdm.isCpuIdxValid(cpuIdx))) {
-      std::cerr << program << ": CPU Idx " << cpuIdx << " does not refer to a CPU with valid firmware." << std::endl << std::endl;
-       return -30;
+  if (setCpuBits) {
+    uint32_t uTemp = getBitMask(tempCpuBits, cdm.getCpuQty(), program, &error, "Cpu");
+    if (error == 0) {
+      cpuBits = uTemp;
+    } else {
+      return error;
     }
+  }
+  if (setThreadBits) {
+    uint32_t uTemp = getBitMask(tempThreadBits, getThreadQty(), program, &error, "Thread");
+    if (error == 0) {
+      threadBits = uTemp;
+    } else {
+      return error;
+    }
+  }
+
+  if (!(cdm.isCpuIdxValid(cpuIdx))) {
+    std::cerr << program << ": CPU Idx " << cpuIdx << " does not refer to a CPU with valid firmware." << std::endl << std::endl;
+    return -30;
   }
 
   cdm.updateModTime();
@@ -540,11 +546,21 @@ int main(int argc, char* argv[]) {
     if (tmpGlobalCmds == dnt::sCmdAbort)  {
       if (!targetName.empty()) {
         uint32_t bits = std::stol(targetName, nullptr, 0);
-        cdm.setThrAbort(ew, cpuIdx, bits & ((1ll<<getThreadQty())-1));
+        for (int cpu=0; cpu < cdm.getCpuQty(); cpu++) {
+          if ((cpuBits >> cpu) & 1) {
+            cdm.setThrAbort(ew, cpu, bits & ((1ll<<getThreadQty())-1));
+            std::cout << "CPU " << cpu << " Threads 0x" << std::hex << bits << " set for abort." << std::endl;
+          }
+        }
       } else {
-        for (int thread=0; thread < getThreadQty(); thread++) {
-          if ((threadBits >> thread) & 1) {
-            cdm.abortThr(ew, cpuIdx, thread);
+        for (int cpu=0; cpu < cdm.getCpuQty(); cpu++) {
+          if ((cpuBits >> cpu) & 1) {
+            for (int thread=0; thread < getThreadQty(); thread++) {
+              if ((threadBits >> thread) & 1) {
+                cdm.abortThr(ew, cpu, thread);
+                std::cout << "CPU " << cpu << " Thread " << thread << " aborted. " << std::bitset<8>{threadBits} << std::endl;
+              }
+            }
           }
         }
       }
@@ -911,12 +927,18 @@ int main(int argc, char* argv[]) {
         std::cout << "Missing valid Pattern name" << std::endl;
       }
       return 0;
-    }
-    else if (cmp == "running")  {
-      std::cout << "CPU #" << cpuIdx << " Running Threads: 0x" << cdm.getThrRun(cpuIdx) << std::endl;
+    } else if (cmp == "running")  {
+      for (int cpu = 0; cpu < cdm.getCpuQty(); cpu++) {
+        if ((cpuBits >> cpu) & 1) {
+          if (getThreadQty() == 8) {
+            std::cout << "CPU " << cpu << " Running Threads: 0x" << cdm.getThrRun(cpu) << ", " << std::bitset<8>{cdm.getThrRun(cpu)} << std::endl;
+          } else {
+            std::cout << "CPU " << cpu << " Running Threads: 0x" << cdm.getThrRun(cpu) << std::endl;
+          }
+        }
+      }
       return 0;
-    }
-    else if (cmp == "hex")  {
+    } else if (cmp == "hex")  {
       try {
         cdm.dumpNode(targetName);
       } catch (std::runtime_error const& err) {
