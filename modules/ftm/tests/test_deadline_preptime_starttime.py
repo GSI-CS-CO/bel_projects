@@ -148,7 +148,7 @@ class ThreadBitsTest(dm_testbench.DmTestbench):
     """Test all combinations of threads from 0 to 255 (0xFF).
     """
     for thread in range(256):
-      threadCount = self.threadCount(thread)
+      threadCount = self.bitCount(thread, self.threadQuantity)
       threadX = f'0x{thread:x}'
       lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-t', threadX, 'preptime'), [0], threadCount, 0)
       # check stdout for thread 0 if thread 0 is involved (last bit is set in 'thread').
@@ -162,7 +162,7 @@ class ThreadBitsTest(dm_testbench.DmTestbench):
     """
     threads = min(self.threadQuantity, 12)
     for thread in range(2**threads):
-      threadCount = self.threadCount(thread)
+      threadCount = self.bitCount(thread, self.threadQuantity)
       threadX = f'0x{thread:x}'
       lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-t', threadX, 'preptime'), [0], threadCount, 0)
       # check stdout for thread 0 if thread 0 is involved (last bit is set in 'thread').
