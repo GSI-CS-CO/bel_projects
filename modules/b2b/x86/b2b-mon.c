@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 29-Sep-2023
+ *  version : 05-Oct-2023
  *
  * subscribes to and displays status of many b2b transfers
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_MON_VERSION 0x000509
+#define B2B_MON_VERSION 0x000600
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -113,12 +113,11 @@ time_t   set_secs[NALLSID];                                 // CBS deadline, tim
 
 time_t   secsOffset;                                        // offset between timestamp and system time
 
-#define MSKRECMODE0 0x0                 // mask defining events that should be received for the different modes, mode off
-#define MSKRECMODE1 0x050               // ... mode CBS
+#define MSKRECMODE0 0x105               // mask defining events that should be received for the different modes, mode off
+#define MSKRECMODE1 0x155               // ... mode BSE
 #define MSKRECMODE2 0x155               // ... mode B2E
-#define MSKRECMODE3 0x1f5               // ... mode B2C
+#define MSKRECMODE3 0x3ff               // ... mode B2C
 #define MSKRECMODE4 0x3ff               // ... mode B2B
-
 
 // other
 int      flagPrintIdx[NALLSID];                             // flag: print line with given index
@@ -282,11 +281,11 @@ void buildPrintLine(uint32_t idx)
 
   // destination
   switch (set_mode[idx]) {
-    case 0 : sprintf(dest, "---");      flagTCBS = 1; flagOther = 0; flagB2b = 0; flagExtTrig = 0; flagInjTrig = 0; pLevelExt = NULL; pLevelInj = NULL; break;
-    case 1 : sprintf(dest, "kicker");   flagTCBS = 1; flagOther = 0; flagB2b = 0; flagExtTrig = 1; flagInjTrig = 0; pLevelInj = NULL;                   break;
-    case 2 : sprintf(dest, "target");   flagTCBS = 1; flagOther = 1; flagB2b = 0; flagExtTrig = 1; flagInjTrig = 0; pLevelInj = NULL;                   break;
-    case 3 : sprintf(dest, "%s", tmp1); flagTCBS = 1; flagOther = 1; flagB2b = 0; flagExtTrig = 1; flagInjTrig = 1;                                     break;
-    case 4 : sprintf(dest, "%s", tmp1); flagTCBS = 1; flagOther = 1; flagB2b = 1; flagExtTrig = 1; flagInjTrig = 1;                                     break;
+    case B2B_MODE_OFF : sprintf(dest, "---");      flagTCBS = 1; flagOther = 1; flagB2b = 0; flagExtTrig = 0; flagInjTrig = 0; pLevelExt = NULL; pLevelInj = NULL; break;
+    case B2B_MODE_BSE : sprintf(dest, "kicker");   flagTCBS = 1; flagOther = 1; flagB2b = 0; flagExtTrig = 1; flagInjTrig = 0; pLevelInj = NULL;                   break;
+    case B2B_MODE_B2E : sprintf(dest, "target");   flagTCBS = 1; flagOther = 1; flagB2b = 0; flagExtTrig = 1; flagInjTrig = 0; pLevelInj = NULL;                   break;
+    case B2B_MODE_B2C : sprintf(dest, "%s", tmp1); flagTCBS = 1; flagOther = 1; flagB2b = 0; flagExtTrig = 1; flagInjTrig = 1;                                     break;
+    case B2B_MODE_B2B : sprintf(dest, "%s", tmp1); flagTCBS = 1; flagOther = 1; flagB2b = 1; flagExtTrig = 1; flagInjTrig = 1;                                     break;
     default: sprintf(dest, TXTUNKWN);   flagTCBS = 0; flagOther = 0; flagB2b = 0; flagExtTrig = 0; flagInjTrig = 0; pLevelExt = NULL; pLevelInj = NULL; break;
   } // switch set_mode
 
@@ -324,7 +323,7 @@ void buildPrintLine(uint32_t idx)
     } // else NOLINK
 
     // frequency data, injection
-    if (set_mode[idx] > 3) {
+    if (set_mode[idx] > B2B_MODE_B2E) {
       if (*(uint32_t *)&(dicDiagval[idx]) == no_link_32) sprintf(nueMeasInj, "NOLINK");
       else {
         nueDiff = dicDiagval[idx].inj_rfNueAct - set_injNue[idx];

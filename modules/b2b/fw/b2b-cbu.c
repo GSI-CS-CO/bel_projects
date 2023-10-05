@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 14-Jun-2023
+ *  version : 05-Oct-2023
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  NB: units of variables are [ns] unless explicitely mentioned as suffix
@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000509                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000600                                      // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -817,9 +817,24 @@ uint32_t getNextMState(uint32_t mode, uint32_t actMState) {
   uint32_t nextMState = B2B_MFSM_NOTHING;
 
   switch (mode) {
+    case B2B_MODE_OFF :     // off (slow extraction)
+      switch (actMState) {
+        case B2B_MFSM_S0 :
+          nextMState = B2B_MFSM_EXTPS;
+          break;
+        case B2B_MFSM_EXTPS :
+          nextMState = B2B_MFSM_NOTHING;
+          break;
+        default :
+          nextMState = B2B_MFSM_NOTHING;
+      } // switch actMState mode OFF
+      break;
     case B2B_MODE_BSE :     // kick on start event
       switch (actMState) {
         case B2B_MFSM_S0 :
+          nextMState = B2B_MFSM_EXTPS;
+          break;
+        case B2B_MFSM_EXTPS :
           nextMState =  B2B_MFSM_EXTKICK;
           break;
         case B2B_MFSM_EXTKICK :
@@ -858,7 +873,10 @@ uint32_t getNextMState(uint32_t mode, uint32_t actMState) {
         case B2B_MFSM_S0 :
           nextMState = B2B_MFSM_EXTPS;
           break;
-        case  B2B_MFSM_EXTPS :
+        case B2B_MFSM_EXTPS :
+          nextMState = B2B_MFSM_INJPS;
+          break;
+        case B2B_MFSM_INJPS :
           nextMState = B2B_MFSM_EXTPR;
           break;
         case B2B_MFSM_EXTPR :
@@ -1046,6 +1064,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       break;
 
     case B2B_ECADO_B2B_PREXT :                                // received: measured phase from extraction machine
+      if (mode < B2B_MODE_B2E) return status;                 // ignore phase result if not required
       tmpf         = (float)(getSysTime() - tCBS) / 1000.0;   // time from CBS to now [us]
       offsetPrr_us = fwlib_float2half(tmpf);                  // -> half precision
       recGid       = (uint32_t)((recId >> 48) & 0xfff     );
@@ -1097,13 +1116,6 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       return status;                                          // the miniFSM is driven by ECA Events; don't continue if timeout
   } // switch ecaAction
 
-  // trigger at earliest kicker deadline
-  if (mState == B2B_MFSM_EXTKICK) {
-    tTrig      = tCBS + B2B_KICKOFFSETMIN;
-    transStat |= mState;
-    mState     = getNextMState(mode, mState);
-  } // B2B_MFSM_EXTKICK
-
   // request phase measurement of extraction 
   if (mState == B2B_MFSM_EXTPS) {
     tH1Ext_t.ns    = 0x0;
@@ -1112,15 +1124,23 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     
     // send command: phase measurement at extraction machine
     sendEvtId      = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PMEXT, flagsExt, sidExt, bpidExt, 0); 
-    sendParam      = TH1Ext_as & 0x00ffffffffffffff;                            // use low 56 bit as period
+    sendParam      = TH1Ext_as & 0x000fffffffffffff;                            // use low 52 bit as period
     sendParam     |= (uint64_t)(nGExt & 0xff) << 56;                            // use upper 8 bit as geometric harmonic number
-    sendTef        = (uint32_t)(cTrigExt_us) << 16;                             // high 16 bit: ext kicker correction
+    sendParam     |= (uint64_t)(mode & 0xf)   << 52;                            // use next upper 4 bit as mode info
+    sendTef        = (uint32_t)(cTrigExt_us)  << 16;                            // high 16 bit: ext kicker correction
     sendTef       |= (uint32_t)(cTrigInj_us);                                   // low 16 bit : inj kicker correction
     sendDeadline   = tCBS + (uint64_t)B2B_PMOFFSET;                             // fixed deadline relative to CBS
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, sendTef, 0);
     transStat     |= mState;
     mState         = getNextMState(mode, mState);
   } // B2B_MFSM_EXTPS
+
+  // trigger at earliest kicker deadline
+  if (mState == B2B_MFSM_EXTKICK) {
+    tTrig      = tCBS + B2B_KICKOFFSETMIN;
+    transStat |= mState;
+    mState     = getNextMState(mode, mState);
+  } // B2B_MFSM_EXTKICK
 
   // request phase measurement of injection
   if (mState == B2B_MFSM_INJPS) {
@@ -1130,8 +1150,9 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     
     // send command: phase measurement at injection machine
     sendEvtId      = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PMINJ, flagsInj, sidExt, bpidExt, 0); 
-    sendParam      = TH1Inj_as & 0x00ffffffffffffff;                            // use low 56 bit as period
+    sendParam      = TH1Inj_as & 0x000fffffffffffff;                            // use low 52 bit as period
     sendParam     |= (uint64_t)(nGInj & 0xff) << 56;                            // use upper 8 bit as geometric harmonic number
+    // sendParam: next upper 4 bit: reserved
     sendTef        = (uint32_t)(cPhase_us) << 16;                               // high 16 bit: phase correction, low 16 bit: reserved
     sendDeadline   = tCBS + (uint64_t)B2B_PMOFFSET + 1;                         // fixed deadline relative to B2BS, add 1ns to avoid collision with PMEXT
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, sendTef, 0);

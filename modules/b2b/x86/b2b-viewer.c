@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 28-Sep-2023
+ *  version : 05-Oct-2023
  *
  * subscribes to and displays status of a b2b transfer
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_VIEWER_VERSION 0x000509
+#define B2B_VIEWER_VERSION 0x000600
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -107,10 +107,10 @@ double   b2b_diffD;                                         // difference of rf 
 double   b2b_beatNue;                                       // beat frequency
 double   b2b_beatT;                                         // beat period
 
-#define MSKRECMODE0 0x0                 // mask defining events that should be received for the different modes, mode off
-#define MSKRECMODE1 0x050               // ... mode CBS
+#define MSKRECMODE0 0x105               // mask defining events that should be received for the different modes, mode off
+#define MSKRECMODE1 0x155               // ... mode BSE
 #define MSKRECMODE2 0x155               // ... mode B2E
-#define MSKRECMODE3 0x1f5               // ... mode B2C
+#define MSKRECMODE3 0x3ff               // ... mode B2C
 #define MSKRECMODE4 0x3ff               // ... mode B2B
 
 // other
@@ -309,7 +309,7 @@ int printSet(uint32_t sid)
   switch (set_mode) {
     case 0 :
       sprintf(modeStr, "'off'");
-      modeMask = 0;
+      modeMask = MSKRECMODE0;
       break;
     case 1 :
       sprintf(modeStr, "'CMD_B2B_START'");
@@ -335,16 +335,16 @@ int printSet(uint32_t sid)
   printf("--- set values ---                                                     v%8s\n", b2b_version_text(B2B_VIEWER_VERSION));
   switch (set_mode) {
     case 0 :
-      printf("ext: %s\n", TXTNA);
+      printf("ext: kick  corr %8s ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", "n/a", set_extNue, set_extT, set_extH);
       printf("inj: %s\n", TXTNA);
       printf("b2b: %s\n", TXTNA);
       break;
-    case 1 :
+      /*    case 1 :
       printf("ext: kick  corr %8.3f ns\n", set_extCTrig);
       printf("inj: %s\n", TXTNA);
       printf("b2b: %s\n", TXTNA);
-      break;
-    case 2 : 
+      break;*/
+    case 1 ... 2 : 
       printf("ext: kick  corr %8.3f ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_extCTrig, set_extNue, set_extT, set_extH);
       printf("inj: %s\n", TXTNA);
       printf("b2b: %s\n", TXTNA);
@@ -468,8 +468,9 @@ int printStatus(uint32_t sid)
   for (i=0; i<10; i++) if ((flagEvtErr  >> i) & 0x1) printf("    X"); else printf("     ");
   printf("\n");
 
-  if (set_mode == 0) {
+  if (set_mode == B2B_MODE_OFF) {
     printf("fin-CBS [us]: %s\n", TXTNA);
+    printf("PRR-CBS [us]: %s\n", TXTNA);
     printf("KTE-CBS [us]: %s\n", TXTNA);
     printf("KTE-fin [us]: %s\n", TXTNA);
   }
@@ -488,19 +489,16 @@ int printStatus(uint32_t sid)
            (double)dicDiagstat.cbs_kteOffAct/1000.0, dicDiagstat.cbs_kteOffAve/1000.0, dicDiagstat.cbs_kteOffSdev/1000.0,
            (double)dicDiagstat.cbs_kteOffMin/1000.0, (double)dicDiagstat.cbs_kteOffMax/1000.0);
   }
-  if (set_mode < 3)
+  if (set_mode < B2B_MODE_B2C)
     printf("KTI-CBS [us]: %s\n", TXTNA);
   else
     printf("KTI-CBS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
            (double)dicDiagstat.cbs_ktiOffAct/1000.0, dicDiagstat.cbs_ktiOffAve/1000.0, dicDiagstat.cbs_ktiOffSdev/1000.0,
            (double)dicDiagstat.cbs_ktiOffMin/1000.0, (double)dicDiagstat.cbs_ktiOffMax/1000.0);
-  if (set_mode <  2)
-    printf("t0E-CBS [us]: %s\n", TXTNA);
-  else
-    printf("t0E-CBS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
-           (double)dicDiagstat.cbs_preOffAct/1000.0, dicDiagstat.cbs_preOffAve/1000.0, dicDiagstat.cbs_preOffSdev/1000.0,
-           (double)dicDiagstat.cbs_preOffMin/1000.0, (double)dicDiagstat.cbs_preOffMax/1000.0);
-  if (set_mode < 4)
+  printf("t0E-CBS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
+         (double)dicDiagstat.cbs_preOffAct/1000.0, dicDiagstat.cbs_preOffAve/1000.0, dicDiagstat.cbs_preOffSdev/1000.0,
+         (double)dicDiagstat.cbs_preOffMin/1000.0, (double)dicDiagstat.cbs_preOffMax/1000.0);
+  if (set_mode < B2B_MODE_B2C)
     printf("t0I-CBS [us]: %s\n", TXTNA);
   else
     printf("t0I-CBS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
@@ -518,21 +516,28 @@ int printRf(uint32_t sid)
     case 0 ... 1 :
       printf("ext: %s\n", TXTNA);
       printf("inj: %s\n", TXTNA);
+      if (dicDiagval.ext_rfNueN == 0) printf("ext: %s\n\n\n", TXTNA);
+      else {
+        printf("ext: calc [Hz] act(unctnty)  %14.6f(%8.6f)           diff %9.6f\n", dicDiagval.ext_rfNueAct, dicDiagval.ext_rfNueActErr, dicDiagval.ext_rfNueAct - 1000000000.0 / set_extT);
+        printf("               ave(sdev)     %14.6f(%8.6f)           diff %9.6f\n", dicDiagval.ext_rfNueAve, dicDiagval.ext_rfNueSdev, dicDiagval.ext_rfNueDiff);
+        printf("               estimate      %14.6f                  stepsize 0.046566\n", dicDiagval.ext_rfNueEst);
+      } // else
+      printf("inj: %s\n\n\n", TXTNA);
       break;
-    case 2 ... 3 :
+    case 2 :
       if (dicDiagval.ext_rfOffN == 0) printf("ext: %s\n", TXTNA);
       else printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
                   dicDiagval.ext_rfOffAct, dicDiagval.ext_rfOffAve, dicDiagval.ext_rfOffSdev, dicGetval.ext_phaseSysmaxErr_ps, dicDiagval.ext_rfOffMin, dicDiagval.ext_rfOffMax);
       printf("inj: %s\n", TXTNA);
       if (dicDiagval.ext_rfNueN == 0) printf("ext: %s\n\n\n", TXTNA);
       else {
-        printf("ext: calc [Hz] act(unctnty)  %14.6f(%8.6f),          diff %9.6f\n", dicDiagval.ext_rfNueAct, dicDiagval.ext_rfNueActErr, dicDiagval.ext_rfNueAct - 1000000000.0 / set_extT);
-        printf("               ave(sdev)     %14.6f(%8.6f),          diff %9.6f\n", dicDiagval.ext_rfNueAve, dicDiagval.ext_rfNueSdev, dicDiagval.ext_rfNueDiff);
-        printf("               estimate      %14.6f,                 stepsize 0.046566\n", dicDiagval.ext_rfNueEst);
+        printf("ext: calc [Hz] act(unctnty)  %14.6f(%8.6f)           diff %9.6f\n", dicDiagval.ext_rfNueAct, dicDiagval.ext_rfNueActErr, dicDiagval.ext_rfNueAct - 1000000000.0 / set_extT);
+        printf("               ave(sdev)     %14.6f(%8.6f)           diff %9.6f\n", dicDiagval.ext_rfNueAve, dicDiagval.ext_rfNueSdev, dicDiagval.ext_rfNueDiff);
+        printf("               estimate      %14.6f                  stepsize 0.046566\n", dicDiagval.ext_rfNueEst);
       } // else
       printf("inj: %s\n\n\n", TXTNA);
       break;
-    case 4      :
+    case 3 ... 4 :
       if (dicDiagval.ext_rfOffN == 0) printf("ext: %s\n", TXTNA);
       else printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
                   dicDiagval.ext_rfOffAct, dicDiagval.ext_rfOffAve, dicDiagval.ext_rfOffSdev, dicGetval.ext_phaseSysmaxErr_ps, dicDiagval.ext_rfOffMin, dicDiagval.ext_rfOffMax);
@@ -541,15 +546,15 @@ int printRf(uint32_t sid)
                   dicDiagval.inj_rfOffAct, dicDiagval.inj_rfOffAve, dicDiagval.inj_rfOffSdev, dicGetval.inj_phaseSysmaxErr_ps, dicDiagval.inj_rfOffMin, dicDiagval.inj_rfOffMax);
       if (dicDiagval.ext_rfNueN == 0) printf("ext: %s\n\n\n", TXTNA);
       else {
-        printf("ext: calc [Hz] act(unctnty)  %14.6f(%8.6f),          diff %9.6f\n", dicDiagval.ext_rfNueAct, dicDiagval.ext_rfNueActErr, dicDiagval.ext_rfNueAct - 1000000000.0 / set_extT);
-        printf("               ave(sdev)     %14.6f(%8.6f),          diff %9.6f\n", dicDiagval.ext_rfNueAve, dicDiagval.ext_rfNueSdev, dicDiagval.ext_rfNueDiff);
-        printf("               estimate      %14.6f,                 stepsize 0.046566\n", dicDiagval.ext_rfNueEst);
+        printf("ext: calc [Hz] act(unctnty)  %14.6f(%8.6f)           diff %9.6f\n", dicDiagval.ext_rfNueAct, dicDiagval.ext_rfNueActErr, dicDiagval.ext_rfNueAct - 1000000000.0 / set_extT);
+        printf("               ave(sdev)     %14.6f(%8.6f)           diff %9.6f\n", dicDiagval.ext_rfNueAve, dicDiagval.ext_rfNueSdev, dicDiagval.ext_rfNueDiff);
+        printf("               estimate      %14.6f                  stepsize 0.046566\n", dicDiagval.ext_rfNueEst);
       } // else
       if (dicDiagval.inj_rfNueN == 0) printf("inj: %s\n\n\n", TXTNA);
       else {
-        printf("inj: calc [Hz] act(unctnty)  %14.6f(%8.6f),          diff %9.6f\n", dicDiagval.inj_rfNueAct, dicDiagval.inj_rfNueActErr, dicDiagval.inj_rfNueAct - 1000000000.0 / set_injT);
-        printf("               ave(sdev)     %14.6f(%8.6f),          diff %9.6f\n", dicDiagval.inj_rfNueAve, dicDiagval.inj_rfNueSdev, dicDiagval.inj_rfNueDiff);
-        printf("               estimate      %14.6f,                 stepsize 0.046566\n", dicDiagval.inj_rfNueEst);
+        printf("inj: calc [Hz] act(unctnty)  %14.6f(%8.6f)           diff %9.6f\n", dicDiagval.inj_rfNueAct, dicDiagval.inj_rfNueActErr, dicDiagval.inj_rfNueAct - 1000000000.0 / set_injT);
+        printf("               ave(sdev)     %14.6f(%8.6f)           diff %9.6f\n", dicDiagval.inj_rfNueAve, dicDiagval.inj_rfNueSdev, dicDiagval.inj_rfNueDiff);
+        printf("               estimate      %14.6f                  stepsize 0.046566\n", dicDiagval.inj_rfNueEst);
       } // else
       break;
     default :

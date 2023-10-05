@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-Sep-2023
+ *  version : 05-Oct-2023
  *
  * publishes raw data of the b2b system
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000509
+#define B2B_SERV_RAW_VERSION 0x000600
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -213,9 +213,9 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       disUpdateGetval(sid, tStart, getval);      
       break;
     case tagPme     :
-      setval.mode              = 2;
+      setval.mode              = ((param & 0x00f0000000000000) >> 52);
       setval.ext_h             = ((param & 0xff00000000000000) >> 56);
-      setval.ext_T             = ((param & 0x00ffffffffffffff));    // [as]
+      setval.ext_T             = ((param & 0x000fffffffffffff));    // [as]
       if (setval.ext_h) setval.flag_nok &= 0xfffffffb;              // if ok, reset bit ext_h invalid
       if (setval.ext_T) setval.flag_nok &= 0xfffffffd;              // if ok, reset bit ext_T invalid
       tmpf                     = comlib_half2float((uint16_t)((tef & 0xffff0000)  >> 16)); // [us, hfloat]; chk for NAN?
@@ -226,9 +226,8 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       setval.flag_nok         &= 0xffffffbf;                        // / if ok, reset bit inj_cTrig invalid
       break;
     case tagPmi     :
-      setval.mode              = 4;
       setval.inj_h             = ((param & 0xff00000000000000) >> 56);
-      setval.inj_T             = ((param & 0x00ffffffffffffff));    // [as]
+      setval.inj_T             = ((param & 0x000fffffffffffff));    // [as]
       if (setval.inj_h) setval.flag_nok &= 0xffffffdf;              // if ok, reset bit inj_h invalid
       if (setval.inj_T) setval.flag_nok &= 0xffffffef;              // if ok, reset bit inj_T invalid
       tmpf                     = comlib_half2float((uint16_t)((tef & 0xffff0000) >> 16));              // [us, hfloat]]
@@ -256,7 +255,6 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       getval.flagEvtErr           |= flagErr << tag;
       break;     
     case tagKte     :
-      if (!setval.mode) setval.mode = 1;                    // special case: extraction kickers shall fire upon CBS
       getval.kteOff            = deadline.getTAI() - getval.tCBS;
       tmpf                     = comlib_half2float((uint16_t)((tef & 0xffff0000) >> 16));        // [us, hfloat]
       getval.finOff            = round(tmpf * 1000.0);
@@ -266,7 +264,6 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       getval.flagEvtErr       |= flagErr << tag;
       break;
     case tagKti     :
-      if (setval.mode < 3) setval.mode = 3;
       getval.ktiOff            = deadline.getTAI() - getval.tCBS;
       flagErr                  = ((evtId    & 0x0000000000000010) >> 4);
       getval.flagEvtErr       |= flagErr << tag;
