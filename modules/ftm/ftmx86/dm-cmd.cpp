@@ -563,7 +563,8 @@ int main(int argc, char* argv[]) {
             for (int thread=0; thread < getThreadQty(); thread++) {
               if ((threadBits >> thread) & 1) {
                 cdm.abortThr(ew, cpu, thread);
-                std::cout << "CPU " << cpu << " Thread " << thread << " aborted. " << std::bitset<8>{threadBits} << std::endl;
+                //~ std::cout << "CPU " << cpu << " Thread " << thread << " aborted. " << std::bitset<8>{threadBits} << std::endl;
+                std::cout << "CPU " << cpu << " Thread " << thread << " aborted." << std::endl;
               }
             }
           }
@@ -935,11 +936,7 @@ int main(int argc, char* argv[]) {
     } else if (cmp == "running")  {
       for (int cpu = 0; cpu < cdm.getCpuQty(); cpu++) {
         if ((cpuBits >> cpu) & 1) {
-          if (getThreadQty() == 8) {
-            std::cout << "CPU " << cpu << " Running Threads: 0x" << cdm.getThrRun(cpu) << ", " << std::bitset<8>{cdm.getThrRun(cpu)} << std::endl;
-          } else {
-            std::cout << "CPU " << cpu << " Running Threads: 0x" << cdm.getThrRun(cpu) << std::endl;
-          }
+          std::cout << "CPU " << cpu << " Running Threads: 0x" << cdm.getThrRun(cpu) << std::endl;
         }
       }
       return 0;

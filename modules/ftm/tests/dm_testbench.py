@@ -494,7 +494,7 @@ class DmTestbench(unittest.TestCase):
     for i in range(quantity):
       if (1 << i) & bits > 0:
         itemList.append(i)
-      print(f'{bits=}, {i=}, {itemList=}, {((1 << i) & bits)=}')
+      # ~ print(f'{bits=}, {i=}, {itemList=}, {((1 << i) & bits)=}')
     return itemList
 
   def bitCount(self, bits, quantity) -> int:
@@ -505,7 +505,7 @@ class DmTestbench(unittest.TestCase):
       bits = int(bits, base=16)
     count = 0
     for i in range(quantity):
-      print(f'{i=}, {(1 << i)=}, {bits=}, {count=}')
+      # ~ print(f'{i=}, {(1 << i)=}, {bits=}, {count=}')
       if (1 << i) & bits > 0:
         count = count + 1
     return count
