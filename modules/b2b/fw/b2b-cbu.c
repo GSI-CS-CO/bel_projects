@@ -975,6 +975,11 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   status = actStatus;
 
   ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recId, &recParam, &recTef, &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
+
+  /* if (flagIsLate) {
+    tmp32 = (uint32_t)(recId >> 32) & 0xffffffff;
+    pp_printf("late event is %x\n", tmp32);
+    } */
     
   switch (ecaAction) {
 
@@ -1063,13 +1068,13 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       errorFlags  = 0x0;
       break;
 
-    case B2B_ECADO_B2B_PREXT :                                // received: measured phase from extraction machine
-      if (mode < B2B_MODE_B2E) return status;                 // ignore phase result if not required
-      tmpf         = (float)(getSysTime() - tCBS) / 1000.0;   // time from CBS to now [us]
-      offsetPrr_us = fwlib_float2half(tmpf);                  // -> half precision
+    case B2B_ECADO_B2B_PREXT :                                 // received: measured phase from extraction machine
+      if (mode < B2B_MODE_B2E) return status;                  // ignore phase result if not required
+      tmpf         = (float)(getSysTime() - tCBS) / 1000.0;    // time from CBS to now [us]
+      offsetPrr_us = fwlib_float2half(tmpf);                   // -> half precision
       recGid       = (uint32_t)((recId >> 48) & 0xfff     );
       recSid       = (uint32_t)((recId >> 20) & 0xfff     );
-      recRes       = (uint32_t)(recId & 0x3f);                // lowest 6 bit of EvtId
+      recRes       = (uint32_t)(recId & 0x3f);                 // lowest 6 bit of EvtId
 
       // check, if received evtID is valid
       if (recGid != gid)                                             return COMMON_STATUS_OUTOFRANGE;   
@@ -1088,7 +1093,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       //pp_printf("b2b: PREXT %u\n", mState);
       break;
 
-    case B2B_ECADO_B2B_PRINJ :                                // received: measured phase from injection machine
+    case B2B_ECADO_B2B_PRINJ :                                 // received: measured phase from injection machine
+      if (mode <  B2B_MODE_B2B) return status;                 // ignore phase result if not required
       recGid        = (uint32_t)((recId >> 48) & 0xfff     );
       recSid        = (uint32_t)((recId >> 20) & 0xfff     );
       recRes        = (uint32_t)(recId & 0x3f);               // lowest 6 bit of EvtId
