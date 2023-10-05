@@ -32,7 +32,7 @@ class AbortTests(dm_testbench.DmTestbench):
     if len(lines[1]) > 0:
       print(f'{chr(10).join(lines[1])}')
     for i in range(cpuCount):
-      self.assertEqual(lines[0][i], f'CPU {i} Running Threads: 0x0, 00000000', 'wrong output')
+      self.assertEqual(lines[0][i], f'CPU {i} Running Threads: 0x0', 'wrong output')
     lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', f'{cpu}', '-t', f'{thread}', command), [0], threadCount * cpuCount, 0)
     if len(lines[0]) > 0:
       print(f'{chr(10).join(lines[0])}')
@@ -42,14 +42,14 @@ class AbortTests(dm_testbench.DmTestbench):
     cpus = self.listFromBits(cpu, self.cpuQuantity)
     for i in range(cpuCount):
       for j in range(threadCount):
-        self.assertEqual(lines[0][i*threadCount+j], f'CPU {cpus[i]} Thread {threads[j]} aborted. 10101010', 'wrong output')
+        self.assertEqual(lines[0][i*threadCount+j], f'CPU {cpus[i]} Thread {threads[j]} aborted.', 'wrong output')
     lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', f'{cpu}', 'running'), [0], cpuCount, 0)
     if len(lines[0]) > 0:
       print(f'{chr(10).join(lines[0])}')
     if len(lines[1]) > 0:
       print(f'{chr(10).join(lines[1])}')
     for i in range(cpuCount):
-      self.assertEqual(lines[0][i], f'CPU {i} Running Threads: 0x0, 00000000', 'wrong output')
+      self.assertEqual(lines[0][i], f'CPU {i} Running Threads: 0x0', 'wrong output')
 
   def runThreadXCommand(self, cpu, thread, command, assertText=''):
     """Test for one thread. If commandSet=True set the time (parameter) with the command.
