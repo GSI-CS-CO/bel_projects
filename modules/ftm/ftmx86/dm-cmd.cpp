@@ -14,6 +14,8 @@
 #include "strprintf.h"
 #include "filenames.h"
 
+#include <typeinfo>
+
 namespace dnt = DotStr::Node::TypeVal;
 
 
@@ -345,16 +347,19 @@ std::string get_working_path() {
 }
 
 uint32_t getBitMask(const char *optarg, const uint32_t quantity, const char *program, int *error, const char *text) {
-  uint32_t bitMask = (1ll << quantity) - 1;
+  /* This method works for quantity < 64. Otherwise bitMask has an overflow.
+   */
+  assert(quantity < 64);
+  uint64_t bitMask = (1ll << quantity) - 1;
   uint32_t bits = bitMask;
-  uint32_t tmp;
+  uint64_t tmp;
   if (optarg == NULL) {
     *error = -1;
     return 0;
   } else {
     bool isNumber = true;
     if (strlen(optarg) > 1 && optarg[0] == '0' && (optarg[1] == 'x' || optarg[1] == 'X')) {
-      tmp = strtol(optarg, NULL, 0);
+      tmp = strtoll(optarg, NULL, 0);
       if ((tmp & ~bitMask) != 0) {
         std::cerr << program << ": " << text << " mask '" << optarg << "' is invalid. Choose a mask that fits to 0x" << std::hex << bitMask << "." << std::endl;
         *error = -1;
