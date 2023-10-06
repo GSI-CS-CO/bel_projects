@@ -85,15 +85,15 @@ begin
         if out_reset ='1' then 
             QuDout <= (others =>'0');
         else
-            QuD_in_data (0) <= QuDIn(0) or mute (0);
+            QuD_in_data (0) <= QuDIn(0) and (not mute (0));
             for i in 1 to 53 loop
-                QuD_in_data(i) <= QuDin(i)or (mute(i) or quench_en(i));
+                QuD_in_data(i) <= QuDin(i) and ((not mute(i)) and quench_en(i));
             end loop;
 
             int_sel <= to_integer(unsigned(quench_in_out_sel(5 downto 0)));
             out_sel <= to_integer(unsigned(quench_in_out_sel(11 downto 6)));
             combi(out_sel)<=QuD_in_data(int_sel);
-            
+
             QuDout <= QUD_data;
         end if;
     end if;
