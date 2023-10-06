@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 05-Oct-2023
+ *  version : 06-Oct-2023
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  NB: units of variables are [ns] unless explicitely mentioned as suffix
@@ -832,12 +832,12 @@ uint32_t getNextMState(uint32_t mode, uint32_t actMState) {
     case B2B_MODE_BSE :     // kick on start event
       switch (actMState) {
         case B2B_MFSM_S0 :
-          nextMState = B2B_MFSM_EXTPS;
-          break;
-        case B2B_MFSM_EXTPS :
-          nextMState =  B2B_MFSM_EXTKICK;
+          nextMState = B2B_MFSM_EXTKICK;
           break;
         case B2B_MFSM_EXTKICK :
+          nextMState =  B2B_MFSM_EXTPS;
+          break;
+        case B2B_MFSM_EXTPS :
           nextMState =  B2B_MFSM_EXTTRIG;
           break;
         case B2B_MFSM_EXTTRIG :
@@ -907,7 +907,7 @@ uint32_t getNextMState(uint32_t mode, uint32_t actMState) {
           nPhaseResult = 0;     
           nextMState = B2B_MFSM_BOTHPR;
           break;                           
-        case B2B_MFSM_BOTHPR :                                      // we have a diamond structure: we request two phase measurements
+        case B2B_MFSM_BOTHPR :                                      // we have a diamond structure: we requested two phase measurements
           nPhaseResult++;                                           // but we don't know which result is received first; the simplest 
           if (nPhaseResult == 2) nextMState = B2B_MFSM_EXTMATCHT;   // solution is to use a counter and count to 2
           else                   nextMState = B2B_MFSM_BOTHPR;
@@ -1069,7 +1069,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       break;
 
     case B2B_ECADO_B2B_PREXT :                                 // received: measured phase from extraction machine
-      if (mode < B2B_MODE_B2E) return status;                  // ignore phase result if not required
+      if (mode < B2B_MODE_B2E) return status;                  // ignore informative phase result
       tmpf         = (float)(getSysTime() - tCBS) / 1000.0;    // time from CBS to now [us]
       offsetPrr_us = fwlib_float2half(tmpf);                   // -> half precision
       recGid       = (uint32_t)((recId >> 48) & 0xfff     );
@@ -1094,7 +1094,9 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       break;
 
     case B2B_ECADO_B2B_PRINJ :                                 // received: measured phase from injection machine
-      if (mode <  B2B_MODE_B2B) return status;                 // ignore phase result if not required
+      if (mode <  B2B_MODE_B2B) return status;                 // ignore informative phase result
+      tmpf         = (float)(getSysTime() - tCBS) / 1000.0;    // time from CBS to now [us]
+      offsetPrr_us = fwlib_float2half(tmpf);                   // -> half precision
       recGid        = (uint32_t)((recId >> 48) & 0xfff     );
       recSid        = (uint32_t)((recId >> 20) & 0xfff     );
       recRes        = (uint32_t)(recId & 0x3f);               // lowest 6 bit of EvtId
@@ -1122,6 +1124,13 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       return status;                                          // the miniFSM is driven by ECA Events; don't continue if timeout
   } // switch ecaAction
 
+  // trigger at earliest kicker deadline
+  if (mState == B2B_MFSM_EXTKICK) {
+    tTrig      = tCBS + B2B_KICKOFFSETMIN;
+    transStat |= mState;
+    mState     = getNextMState(mode, mState);
+  } // B2B_MFSM_EXTKICK
+
   // request phase measurement of extraction 
   if (mState == B2B_MFSM_EXTPS) {
     tH1Ext_t.ns    = 0x0;
@@ -1140,13 +1149,6 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     transStat     |= mState;
     mState         = getNextMState(mode, mState);
   } // B2B_MFSM_EXTPS
-
-  // trigger at earliest kicker deadline
-  if (mState == B2B_MFSM_EXTKICK) {
-    tTrig      = tCBS + B2B_KICKOFFSETMIN;
-    transStat |= mState;
-    mState     = getNextMState(mode, mState);
-  } // B2B_MFSM_EXTKICK
 
   // request phase measurement of injection
   if (mState == B2B_MFSM_INJPS) {
