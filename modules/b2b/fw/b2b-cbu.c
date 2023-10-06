@@ -976,10 +976,15 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
   ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recId, &recParam, &recTef, &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
 
-  /* if (flagIsLate) {
+  /*if (flagIsLate) {
+    tmp32 = (uint32_t)(getSysTime() - recDeadline);
+    pp_printf("late event....\n");
+    pp_printf("late by            %u\n", tmp32);
     tmp32 = (uint32_t)(recId >> 32) & 0xffffffff;
-    pp_printf("late event is %x\n", tmp32);
-    } */
+    pp_printf("late event is idhi 0x%08x\n", tmp32);
+    tmp32 = (uint32_t)(recId)       & 0xffffffff;
+    pp_printf("late event is idlo 0x%08x\n", tmp32);
+    } // if flag late */
     
   switch (ecaAction) {
 
