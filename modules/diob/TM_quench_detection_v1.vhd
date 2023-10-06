@@ -83,6 +83,8 @@ begin
 
     elsif rising_edge (clk) then
         if out_reset ='1' then 
+            QuD_in_data <= (others =>'0');
+            combi  <= (others =>'0');
             QuDout <= (others =>'0');
         else
             QuD_in_data (0) <= QuDIn(0) and (not mute (0));
