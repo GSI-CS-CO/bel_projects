@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 05-Oct-2023
+ *  version : 09-Oct-2023
  *
  * archives set and get values to data files
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_ARCHIVER_VERSION 0x000600
+#define B2B_ARCHIVER_VERSION 0x000601
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -55,9 +55,6 @@
 #include <b2b.h>                           // FW
 
 const char* program;
-
-#define TDIAGOBS    20000000               // observation time for diagnostic [ns]
-#define DDSSTEP     0.046566129            // min frequency step of gDDS
 
 // dim stuff
 #define    DIMCHARSIZE 32                  // standard size for char services
@@ -128,6 +125,9 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
 
   FILE      *dataFile;                       // file for data
 
+  // usleep: see comment in routine 'dicSubscribeServices'
+  usleep(100000);  // 100 ms should be safe
+  
   sid = *tag;
   if ((sid < 0) || (sid >= B2B_NSID)) return;
   if (!flagSetValid[sid])             return;
@@ -237,6 +237,12 @@ void dicSubscribeServices(char *prefix)
     sprintf(name, "%s-raw_sid%02d_getval", prefix, i);
     //printf("name %s\n", name);
     dicGetvalId[i]     = dic_info_service_stamped(name, MONITORED, 0, &(dicGetval[i]), sizeof(getval_t), recGetvalue, i, &no_link_32, sizeof(uint32_t));
+
+    // note: presently, the archiver is driven by get values. However, the 'analyzer' only calculates and publishes the the frequency values
+    // _after_ the get values are available. Thus, the 'archiver' starts processing the data prior the 'analyzer' has finished its work.
+    // Presently, the frequency values are an 'experimental feature' and a sleep is added to the 'recGetValue' routine to wait for the analyzer.
+    // In pinciple, one could consider using a change of the analyzed values as a 'trigger' for the archiver; but then the archiver will not
+    // work if the 'analyzer' is not available. Thus, we presently use the workaround of an additional sleep in routine 'recGetValue'. 
   } // for i
 } // dicSubscribeServices
 

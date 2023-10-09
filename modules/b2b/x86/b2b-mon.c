@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 05-Oct-2023
+ *  version : 09-Oct-2023
  *
  * subscribes to and displays status of many b2b transfers
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_MON_VERSION 0x000600
+#define B2B_MON_VERSION 0x000601
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -611,7 +611,7 @@ void printData(char *name)
   if (flagPrintNs) sprintf(unitInfo, "(units [ns] unless explicitly given)");
   else             sprintf(unitInfo, " (units [°] unless explicitly given)");
   sprintf(title,  "\033[7m B2B Monitor %3s ------------------------------------------------------------------------------------ %s - v%8s\033[0m", name, unitInfo, b2b_version_text(B2B_MON_VERSION));
-  sprintf(footer, "\033[7m exit <q> | toggle inactive <i>, SIS18 <0>, ESR <1>, YR <2> | toggle data <d>, units <u> | help <h>                                 %s\033[0m", buff);
+  sprintf(footer, "\033[7m exit <q> | toggle data <d>, units <u> | toggle inactive <i>, SIS18 <0>, ESR <1>, YR <2> | help <h>                                 %s\033[0m", buff);
 
   comlib_term_curpos(1,1);
 
