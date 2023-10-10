@@ -50,9 +50,9 @@
 	
 	reg signed [63:0] Yis_copy1=0;
 	reg signed [DAC_WIDTH-1:0]	Yis_copy2=0;
-	reg signed [63:0]	Yis_state=0;
+	//reg signed [63:0]	Yis_state=0;
 	
-	reg unsigned [3:0]time_step_tc=0;
+	reg 			time_step_tc=0;
 	reg unsigned [63:0]time_step=0;
 	
 	reg signed[63:0] Yset=0;
@@ -94,27 +94,26 @@
 		else
 		begin
 			//once the time_step_tc is high we begin calculations
-			//this is done to slow down the calculation speed as the DAC could recognize it.
-			if(time_step_tc ==1)
-	
+			//this is done to slow down the calculation speed so that the DAC can recognize it.
+			if(time_step_tc == 1)
+			begin
 					//Update set values from dataset
 				if (use_ext_dataset)
-			begin
-				Yset = Yset_buf[ext_dataset];
-				Rset = Rset_buf[ext_dataset];
-				RIset = RIset_buf[ext_dataset];
-				ROset = ROset_buf[ext_dataset];			
-			end
-			else
-			begin	
-				Yset = Yset_buf[current_dataset];
-				Rset = Rset_buf[current_dataset];
-				RIset = RIset_buf[current_dataset];
-				ROset = ROset_buf[current_dataset];					
-			end
-					// Algorithm begins
-				
 				begin
+					Yset = Yset_buf[ext_dataset];
+					Rset = Rset_buf[ext_dataset];
+					RIset = RIset_buf[ext_dataset];
+					ROset = ROset_buf[ext_dataset];			
+				end
+				else
+				begin	
+					Yset = Yset_buf[current_dataset];
+					Rset = Rset_buf[current_dataset];
+					RIset = RIset_buf[current_dataset];
+					ROset = ROset_buf[current_dataset];					
+				end
+
+				// Algorithm begins
 				Ydiff = Yset -Yis_copy1;
 				if (Ydiff <0)
 				begin
@@ -258,17 +257,18 @@
 	begin
 		if(nReset == 1'b0)
 		begin
-			time_step_tc= 64'd0;
+			time_step_tc = 0;
 			time_step = 1000;	//temp_num_cycle;
-			end
+		end
 		else if (time_step_tc == 1)
 			time_step = num_cycle; 
-         else if (clk_slow == 1) 
-				time_step = time_step-1;	
-		if (time_step ==0)
-			time_step_tc =1;
+      else //if (clk_slow == 1) 
+			time_step = time_step-1;	
+		
+		if (time_step == 0)
+			time_step_tc = 1;
 		else
-			time_step_tc =0;
+			time_step_tc = 0;
 	end
 	
 	

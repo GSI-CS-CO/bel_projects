@@ -24,7 +24,7 @@ package dac714_pkg is
 --    Register-Layout MIT AENDERUNGEN FUER VERS. 4                                                                                              --
 --                                                                                                                  --
 --      Base_addr   : Kontrollregister                                                                              --
---                    Lesen Bit:  15..5 | immer null    
+--                    Lesen Bit:  15..7 | immer null    
 --                                ------+-----------------------------------------------------------------------    --
 --                                  6   | RRG_mode; 1 = Switched to RRG when in FG Mode (see bit 4)                 --
 --                                      |           0 = Operate in 'normal' FG mode                                 --                                                            --
