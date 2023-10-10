@@ -141,7 +141,7 @@ class ThreadBitsTest(dm_testbench.DmTestbench):
     """
     thread = f'0x{(1 << 32):x}'
     lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-t', f'{thread}', 'preptime'), [255], 0, 1)
-    self.assertEqual(lines[1][0], f"{self.binaryDmCmd}: Thread mask '{thread}' is invalid. Choose a mask that fits to 0x{self.threadMask:x}.", 'wrong output')
+    self.assertEqual(lines[1][0], f"{self.binaryDmCmd}: Thread mask '{thread}' is invalid. Choose a mask that fits to 0xffffffff.", 'wrong output')
 
   @pytest.mark.slow
   def testThread256(self):
