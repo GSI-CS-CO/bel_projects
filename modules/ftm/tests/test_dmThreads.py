@@ -10,7 +10,6 @@ class UnitTestDatamasterThreads(dm_testbench.DmTestbench):
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'reset', 'all'), [0])
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'clear', '-f'), [0])
     self.resetAllCpus()
-    self.delay(1)
     scheduleFile = f'pps-all-threads-cpu0-{count}.dot'
     self.generate_schedule(scheduleFile, count)
     self.addSchedule(f'../{scheduleFile}')
@@ -146,7 +145,6 @@ class UnitTestDatamasterThreads(dm_testbench.DmTestbench):
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'reset', 'all'), [0])
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'clear', '-f'), [0])
     self.resetAllCpus()
-    self.delay(1)
     self.addSchedule('pps-all-threads-cpu0.dot')
     self.addSchedule('pps-all-threads-cpu1.dot')
     self.addSchedule('pps-all-threads-cpu2.dot')
