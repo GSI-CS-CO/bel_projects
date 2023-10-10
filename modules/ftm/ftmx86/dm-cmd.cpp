@@ -936,7 +936,7 @@ int main(int argc, char* argv[]) {
     } else if (cmp == "running")  {
       for (int cpu = 0; cpu < cdm.getCpuQty(); cpu++) {
         if ((cpuBits >> cpu) & 1) {
-          std::cout << "CPU " << cpu << " Running Threads: 0x" << cdm.getThrRun(cpu) << std::endl;
+          std::cout << "CPU " << cpu << " Running Threads: 0x" << std::hex << cdm.getThrRun(cpu) << std::endl;
         }
       }
       return 0;
