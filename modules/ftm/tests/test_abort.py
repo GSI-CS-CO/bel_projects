@@ -63,5 +63,4 @@ class AbortTests(dm_testbench.DmTestbench):
   def tearDown(self):
     # reset all CPUs to get a clean state. This is not done by dm-cmd reset all.
     self.resetAllCpus()
-    self.delay(1.0)
 
