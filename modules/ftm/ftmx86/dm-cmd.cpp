@@ -964,46 +964,72 @@ int main(int argc, char* argv[]) {
       }
       return 0;
     } else if (cmp == "heap")  {
-      cdm.inspectHeap(cpuIdx);
+      for (int cpu = 0; cpu < cdm.getCpuQty(); cpu++) {
+        if ((cpuBits >> cpu) & 1) {
+          cdm.inspectHeap(cpu);
+        }
+      }
       return 0;
     } else if (cmp == "starttime")  {
       if (!targetName.empty()) {
-        for (int thread=0; thread < getThreadQty(); thread++) {
-          if ((threadBits >> thread) & 1) {
-            cdm.setThrStartTime(ew, cpuIdx, thread, std::stoll(targetName, nullptr, 0));
-            std::cout << "setting starttime: CPU " << cpuIdx << " Thread " << std::dec << thread << "." << std::endl;
+        uint64_t startTime = std::stoll(targetName, nullptr, 0);
+        for (int cpu = 0; cpu < cdm.getCpuQty(); cpu++) {
+          if ((cpuBits >> cpu) & 1) {
+            for (int thread=0; thread < getThreadQty(); thread++) {
+              if ((threadBits >> thread) & 1) {
+                cdm.setThrStartTime(ew, cpu, thread, startTime);
+                std::cout << std::dec << "setting starttime: CPU " << cpu << " Thread " << thread << "." << std::endl;
+              }
+            }
           }
         }
         // no return here, next action: send commands with ew vector.
       } else {
-        for (int thread=0; thread < getThreadQty(); thread++) {
-          if ((threadBits >> thread) & 1) {
-            std::cout << "CPU " << cpuIdx << " Thr " << thread << " Starttime " << cdm.getThrStartTime(cpuIdx, thread) << std::endl;
+        for (int cpu = 0; cpu < cdm.getCpuQty(); cpu++) {
+          if ((cpuBits >> cpu) & 1) {
+            for (int thread=0; thread < getThreadQty(); thread++) {
+              if ((threadBits >> thread) & 1) {
+                std::cout << std::dec << "CPU " << cpu << " Thr " << thread << " Starttime " << cdm.getThrStartTime(cpu, thread) << std::endl;
+              }
+            }
           }
         }
         return 0;
       }
     } else if (cmp == "preptime")  {
       if (!targetName.empty()) {
-        for (int thread=0; thread < getThreadQty(); thread++) {
-          if ((threadBits >> thread) & 1) {
-            cdm.setThrPrepTime(ew, cpuIdx, thread, std::stoll(targetName, nullptr, 0));
-            std::cout << "setting preptime: CPU " << cpuIdx << " Thread " << std::dec << thread << "." << std::endl;
+        uint64_t prepTime = std::stoll(targetName, nullptr, 0);
+        for (int cpu = 0; cpu < cdm.getCpuQty(); cpu++) {
+          if ((cpuBits >> cpu) & 1) {
+            for (int thread=0; thread < getThreadQty(); thread++) {
+              if ((threadBits >> thread) & 1) {
+                cdm.setThrPrepTime(ew, cpu, thread, prepTime);
+                std::cout << std::dec << "setting preptime: CPU " << cpu << " Thread " << thread << "." << std::endl;
+              }
+            }
           }
         }
         // no return here, next action: send commands with ew vector.
       } else {
-        for (int thread=0; thread < getThreadQty(); thread++) {
-          if ((threadBits >> thread) & 1) {
-            std::cout << "CPU " << cpuIdx << " Thr " << thread << " Preptime " << cdm.getThrPrepTime(cpuIdx, thread) << std::endl;
+        for (int cpu = 0; cpu < cdm.getCpuQty(); cpu++) {
+          if ((cpuBits >> cpu) & 1) {
+            for (int thread=0; thread < getThreadQty(); thread++) {
+              if ((threadBits >> thread) & 1) {
+                std::cout << std::dec << "CPU " << cpu << " Thr " << thread << " Preptime " << cdm.getThrPrepTime(cpu, thread) << std::endl;
+              }
+            }
           }
         }
         return 0;
       }
     } else if (cmp == "deadline")  {
-      for (int thread=0; thread < getThreadQty(); thread++) {
-        if ((threadBits >> thread) & 1) {
-          std::cout << "CPU " << cpuIdx << " Thr " << thread << " Deadline " << cdm.getThrDeadline(cpuIdx, thread) << std::endl;
+      for (int cpu = 0; cpu < cdm.getCpuQty(); cpu++) {
+        if ((cpuBits >> cpu) & 1) {
+          for (int thread=0; thread < getThreadQty(); thread++) {
+            if ((threadBits >> thread) & 1) {
+              std::cout << std::dec << "CPU " << cpu << " Thr " << thread << " Deadline " << cdm.getThrDeadline(cpu, thread) << std::endl;
+            }
+          }
         }
       }
       return 0;
