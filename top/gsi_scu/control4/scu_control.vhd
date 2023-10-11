@@ -173,7 +173,7 @@ architecture rtl of scu_control is
   signal s_led_pps      : std_logic;
   signal s_lemo_led     : std_logic_vector (5 downto 0);
 
-  signal s_gpio_o    : std_logic_vector(6 downto 0);
+  signal s_gpio_o    : std_logic_vector(10 downto 0);
   signal s_lvds_p_i  : std_logic_vector(2 downto 0);
   signal s_lvds_n_i  : std_logic_vector(2 downto 0);
   signal s_lvds_p_o  : std_logic_vector(2 downto 0);
@@ -194,12 +194,13 @@ architecture rtl of scu_control is
   signal s_i2c_sda_pad_in   : std_logic_vector(1 downto 1);
   signal s_i2c_sda_padoen   : std_logic_vector(1 downto 1);
 
+  signal s_psram_cen        : std_logic;
 
   signal rstn_ref              : std_logic;
   signal clk_ref               : std_logic;
 
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 14) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 18) :=
   (
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
     ("LEMO_IN_0  ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
@@ -211,6 +212,10 @@ architecture rtl of scu_control is
     ("LEMO_OUT_1 ",  IO_NONE,         false,   false,  4,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LEMO_OUT_2 ",  IO_NONE,         false,   false,  5,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LEMO_OUT_3 ",  IO_NONE,         false,   false,  6,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("PSRAM_SEL_0",  IO_NONE,         false,   false,  7,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("PSRAM_SEL_1",  IO_NONE,         false,   false,  8,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("PSRAM_SEL_2",  IO_NONE,         false,   false,  9,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("PSRAM_SEL_3",  IO_NONE,         false,   false, 10,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("FAST_IN_0  ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
     ("FAST_IN_1  ",  IO_NONE,         false,   false,  1,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
     ("FAST_IN_2  ",  IO_NONE,         false,   false,  2,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
@@ -235,7 +240,7 @@ begin
       g_flash_bits         => 25, -- !!! TODO: Check this
       g_psram_bits         => c_psram_bits,
       g_gpio_in            => 2,
-      g_gpio_out           => 7,
+      g_gpio_out           => 11,
       g_lvds_in            => 3,
       g_lvds_out           => 3,
       g_en_user_ow         => true,
@@ -280,7 +285,7 @@ begin
       sfp_tx_fault_i          => sfp_tx_fault_i,
       sfp_los_i               => sfp_los_i,
       gpio_i                  => lemo_in,
-      gpio_o                  => s_gpio_o,
+      gpio_o(10 downto 0)     => s_gpio_o(10 downto 0),
       lvds_p_i                => s_lvds_p_i,
       lvds_n_i                => s_lvds_n_i,
       lvds_p_o                => s_lvds_p_o,
@@ -332,7 +337,7 @@ begin
       ps_data                => psram_dq,
       ps_seln(0)             => psram_lbn,
       ps_seln(1)             => psram_ubn,
-      ps_cen                 => psram_cen (3), --IBN
+      ps_cen                 => s_psram_cen,
       ps_oen                 => psram_oen,
       ps_wen                 => psram_wen,
       ps_cre                 => psram_cre,
@@ -340,11 +345,16 @@ begin
       ps_wait                => psram_wait,
       hw_version             => x"0000000" & not scu_cb_version);
 
-  -- 
-  wr_led_pps    <= s_led_pps;                            -- white = PPS
-  wr_rgb_led(0) <= s_led_link_act;                       -- WR-RGB Red
-  wr_rgb_led(1) <= s_led_track;                          -- WR-RGB Green
-  wr_rgb_led(2) <= '1' when (not s_led_track and  s_led_link_up) else '0'; -- WR-RGB Blue
+  psram_cen(0) <= s_psram_cen when (s_gpio_o(7) = '1')  else '1';
+  psram_cen(1) <= s_psram_cen when (s_gpio_o(8) = '1')  else '1'; 
+  psram_cen(2) <= s_psram_cen when (s_gpio_o(9) = '1')  else '1'; 
+  psram_cen(3) <= s_psram_cen when (s_gpio_o(10) = '1') else '1'; 
+ 
+  -- LEDs
+  wr_led_pps    <= s_led_pps;                                             -- white = PPS
+  wr_rgb_led(0) <= s_led_link_act;                                        -- WR-RGB Red
+  wr_rgb_led(1) <= s_led_track;                                           -- WR-RGB Green
+  wr_rgb_led(2) <= '1' when (not s_led_track and s_led_link_up) else '0'; -- WR-RGB Blue
   user_led_0    <= s_gpio_o(2 downto 0);
 
   -- LEMOs
@@ -354,7 +364,6 @@ begin
     fastIO_p_o(i) <= s_lvds_p_o(i);
   end generate;
   lemo_out <= s_gpio_o(6 downto 3);
-
 
   -- Lemo LEDs
   s_lemo_led (3 downto 0) <= s_gpio_o(6 downto 3);
@@ -371,7 +380,6 @@ begin
         pulse_i    => s_lemo_led(i),
         extended_o => lemo_led(i));
   end generate;
-
 
   -- OneWire
   onewire_ext_splz  <= '1';  --Strong Pull-Up disabled
@@ -394,7 +402,5 @@ begin
     nADR_EN     <= '0';
     A_Spare     <= (others => 'Z');
     --A_OneWire   <= 'Z';
-
-
 
 end rtl;
