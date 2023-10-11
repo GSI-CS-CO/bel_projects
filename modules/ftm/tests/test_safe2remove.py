@@ -18,6 +18,7 @@ Check status of remaining schedule.
 class UnitTestSafe2Remove(dm_testbench.DmTestbench):
 
   def tearDown(self):
+    super().tearDown()
     self.deleteFile('debug.dot')
     self.deleteFile('status.dot')
 
