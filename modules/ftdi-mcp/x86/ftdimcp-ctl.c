@@ -213,6 +213,7 @@ int main(int argc, char** argv) {
   program      = argv[0];
   blinkTime_us = FTDIMCP_POLLINTERVAL_US;
   cHandle      = NULL;
+  sprintf(prefix, "%s", "na");
 
   while ((opt = getopt(argc, argv, "l:d:oseih")) != -1) {
     switch (opt) {
@@ -270,8 +271,29 @@ int main(int argc, char** argv) {
   } // if optint
 
   cIdx = strtol(argv[optind], &p, 10);
+
+  // start DIM server
+#ifdef USEDIM
   sprintf(disStatus, "%s", "OK");
   gethostname(disHostname, 32);
+  sprintf(disName, "N/A");
+  sprintf(disVersion, "N/A");
+  disNTrigger     = 0;
+  disSetLevel     = NAN;
+    
+  printf("%s: starting server using prefix %s\n", program, prefix);
+  
+  // add services, update 'constant' services
+  disAddServices(prefix);
+  
+  sprintf(disName, "%s", prefix);
+  dis_start_serving(disName);
+  
+  sprintf(disVersion, "%06x", FTDIMCP_LIB_VERSION);
+  dis_update_service(disVersionId);
+  dis_update_service(disStatusId);
+  dis_update_service(disHostnameId);
+#endif
 
 
   if (optind+1 < argc)  command = argv[++optind];
@@ -332,10 +354,6 @@ int main(int argc, char** argv) {
     
   if (daemon) {
 #ifdef USEDIM
-    sprintf(disName, "N/A");
-    sprintf(disVersion, "N/A");
-    disNTrigger     = 0;
-    disSetLevel     = NAN;
     outAct          = 0;
     outActOld       = 0;
     outStretched    = 0;
@@ -343,20 +361,7 @@ int main(int argc, char** argv) {
     ftStatus        = FT_OK;
     ftStatusOld     = FT_OK;
     flagBlink       = 0;
-    
-    printf("%s: starting server using prefix %s\n", program, prefix);
-
-    // add services, update 'constant' services
-    disAddServices(prefix);
-
-    sprintf(disName, "%s", prefix);
-    dis_start_serving(disName);
-
-    sprintf(disVersion, "%06x", FTDIMCP_LIB_VERSION);
-    dis_update_service(disVersionId);
-    dis_update_service(disStatusId);
-    dis_update_service(disHostnameId);
-       
+          
     while (1) {
       if (flagOk) {
         // get values
