@@ -8,4 +8,4 @@
 # hack for acc7
 export DIM_DNS_NODE=asl105
 
-ftdimcp-ctl 0 -d b2b_pro_yr-ksi &
+ftdimcp-ctl 0 -d b2b_pro_yr-ksi -l 44.5 &
