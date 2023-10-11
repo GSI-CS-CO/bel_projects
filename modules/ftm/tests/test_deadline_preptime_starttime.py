@@ -194,6 +194,7 @@ class ThreadBitsTest(dm_testbench.DmTestbench):
     self.assertEqual(lines[1][0], f"{self.binaryDmCmd}: Thread argument 'preptime' is invalid. Not a number.", 'wrong output')
 
   def tearDown(self):
-    # reset CPU 0 to get a clean state. This is not done by dm-cmd reset all.
+    super().tearDown()
+    # reset all CPUs to get a clean state. This is not done by dm-cmd reset all.
     self.resetAllCpus()
 

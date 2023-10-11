@@ -109,6 +109,7 @@ class AbortTests(dm_testbench.DmTestbench):
     self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', f'{cpu}', '-t', f'{thread}', command), [0], 1, 0)
 
   def tearDown(self):
+    super().tearDown()
     # reset all CPUs to get a clean state. This is not done by dm-cmd reset all.
     self.resetAllCpus()
 
