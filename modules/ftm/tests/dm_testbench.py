@@ -510,3 +510,9 @@ class DmTestbench(unittest.TestCase):
       if (1 << i) & bits > 0:
         count = count + 1
     return count
+
+  def printStdOutStdErr(self, lines):
+    if len(lines[0]) > 0:
+      print(f'{chr(10).join(lines[0])}')
+    if len(lines[1]) > 0:
+      print(f'{chr(10).join(lines[1])}')

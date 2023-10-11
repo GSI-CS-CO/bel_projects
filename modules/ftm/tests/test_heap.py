@@ -3,9 +3,9 @@ import dm_testbench    # contains super class
 import pytest
 
 """
-Module collects tests for dm-cmd with the command 'abort'.
+Module collects tests for dm-cmd with the command 'heap'.
 """
-class AbortTests(dm_testbench.DmTestbench):
+class HeapTests(dm_testbench.DmTestbench):
 
   def setUp(self):
     super().setUp()
@@ -13,17 +13,17 @@ class AbortTests(dm_testbench.DmTestbench):
     self.cpuQuantity = 4
 
   @pytest.mark.thread8
-  def testAbortrunningThreads(self):
-    self.runAbortRunningThreads()
+  def testInspectHeap(self):
+    self.runInspectHeapThreads()
 
   @pytest.mark.thread32
-  def testAbortrunningThreads32(self):
+  def testInspectHeap32(self):
     self.threadQuantitiy = 32
-    self.runAbortRunningThreads()
+    self.runInspectHeapThreads()
 
-  def runAbortRunningThreads(self):
+  def runInspectHeapThreads(self):
     """Load a schedule and start all threads. Check that these are running.
-    Abort some threads. Check that these are not running.
+    Inspect the heap of some threads. Check that these are not running.
     """
     # Check all CPUs that no thread is running.
     lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', '0xf', 'running'), [0], self.cpuQuantity, 0)
@@ -53,32 +53,12 @@ class AbortTests(dm_testbench.DmTestbench):
         self.assertEqual(lines[0][i], f'CPU {i} Running Threads: 0xffffffff', 'wrong output')
       else:
         self.assertEqual(lines[0][i], f'CPU {i} Running Threads: 0xff', 'wrong output')
-    # Abort some threads
+    # Inspect heap for some CPUs
     cpu = '0x3'
     thread = '0xaa'
-    threadCount = self.bitCount(thread, self.threadQuantity)
     cpuCount = self.bitCount(cpu, self.cpuQuantity)
-    lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', f'{cpu}', '-t', f'{thread}', 'abort'), [0], threadCount * cpuCount, 0)
+    lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', f'{cpu}', '-t', f'{thread}', 'heap'), [0], (self.threadQuantity + 1) * cpuCount, 0)
     # ~ self.printStdOutStdErr(lines)
-    threads = self.listFromBits(thread, self.threadQuantity)
-    cpus = self.listFromBits(cpu, self.cpuQuantity)
-    for i in range(cpuCount):
-      for j in range(threadCount):
-        self.assertEqual(lines[0][i*threadCount+j], f'CPU {cpus[i]} Thread {threads[j]} aborted.', 'wrong output')
-    # Check that the remaining threads are running
-    lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', '0xf', 'running'), [0], 4, 0)
-    # ~ self.printStdOutStdErr(lines)
-    for i in range(self.cpuQuantity):
-      if i in cpus:
-        if self.threadQuantity > 8:
-          self.assertEqual(lines[0][i], f'CPU {i} Running Threads: 0xffffff55', 'wrong output')
-        else:
-          self.assertEqual(lines[0][i], f'CPU {i} Running Threads: 0x55', 'wrong output')
-      else:
-        if self.threadQuantity > 8:
-          self.assertEqual(lines[0][i], f'CPU {i} Running Threads: 0xffffffff', 'wrong output')
-        else:
-          self.assertEqual(lines[0][i], f'CPU {i} Running Threads: 0xff', 'wrong output')
 
   def testAbortSingleThreadDecimal(self):
     """Loop for all threads aborting this thread.
@@ -86,7 +66,7 @@ class AbortTests(dm_testbench.DmTestbench):
     """
     for cpu in range(self.cpuQuantity):
       for thread in range(self.threadQuantity):
-        self.runThreadXCommand(cpu, thread, 'abort')
+        self.runThreadXCommand(cpu, thread, 'heap')
 
   def testAbortSingleThreadHex(self):
     """Loop for all threads aborting this thread.
@@ -94,16 +74,10 @@ class AbortTests(dm_testbench.DmTestbench):
     """
     for cpu in range(self.cpuQuantity):
       for thread in range(self.threadQuantity):
-        self.runThreadXCommand(cpu, f'0x{(1 << thread):x}', 'abort')
+        self.runThreadXCommand(cpu, f'0x{(1 << thread):x}', 'heap')
 
   def runThreadXCommand(self, cpu, thread, command, assertText=''):
     """Test for one thread. If commandSet=True set the time (parameter) with the command.
     In all cases, read this value. Check the output of both commands.
     """
-    self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', f'{cpu}', '-t', f'{thread}', command), [0], 1, 0)
-
-  def tearDown(self):
-    super().tearDown()
-    # reset all CPUs to get a clean state. This is not done by dm-cmd reset all.
-    self.resetAllCpus()
-
+    self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', f'{cpu}', '-t', f'{thread}', command), [0], 9, 0)
