@@ -53,13 +53,13 @@
 	//reg signed [63:0]	Yis_state=0;
 	
 	reg 			time_step_tc=0;
-	reg unsigned [63:0]time_step=0;
+	reg unsigned [31:0]time_step=0;
 	
 	reg signed[63:0] Yset=0;
 	reg signed[63:0] Rset=0;  
 	reg signed[63:0] RIset=0;  
 	reg signed[63:0] ROset=0;
-	reg [15:0] num_cycle=0;
+	reg [31:0] num_cycle=0;
 	
 	reg signed[63:0] Yset_buf[NR_DATASETS-1:0];
 	reg signed[63:0] Rset_buf[NR_DATASETS-1:0];  
@@ -229,7 +229,7 @@
 				CMD_EXT_DATASET:
 					use_ext_dataset = 1;
 				CMD_NUM_CYCLE:
-					num_cycle = reg_0;
+					num_cycle = temp_reg;
 			endcase
 		end
 	end
