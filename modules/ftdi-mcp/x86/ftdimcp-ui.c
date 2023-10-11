@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 06-Jul-2023
+ *  version : 11-Oct-2023
  *
  * user interface that connects to a ftdimcp-ctl instance (started as daemon) via DIM
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define FTDIMCP_UI_VERSION 0x000004
+#define FTDIMCP_UI_VERSION 0x000005
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -216,7 +216,7 @@ void printServices(char *prefix, int flagOnce)
   else                             printf("# of detected triggers        : % 8d\n"   , disNTrigger);
   if (disSetLevel  == no_link_dbl) printf("set value comparator level    : %8s\n"    , no_link_str);
   else                             printf("set value comparator level [%%]: %8.3f\n" , disSetLevel);
-                                   printf("use 'Schornstein'             : % 8d\n"   , flagSchornstein);
+  printf(                                 "use 'Schornstein'             : % 8d\n"   , flagSchornstein);
   printf("\n");
   printf(                                 "server info\n");
   printf(                                 "name                          : %s\n"     , prefix);
@@ -256,7 +256,7 @@ int main(int argc, char** argv) {
   const char* command;
   int         opt, error = 0;
   int         exitCode   = 0;
-  char        *tail;
+  //  char        *tail;
 
   int         getVersion;
   int         subscribe;

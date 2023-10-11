@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 17-May-2023
+ *  version : 11-October-2023
  *
  *  command line program for MCP4725 connected via FT232H
  *
@@ -105,11 +105,27 @@ static void help(void) {
 } //help
 
 
-// set comparator level
+// set comparator level; level [%]
+FT_STATUS setLevel(double level)
+{
+  FT_STATUS ftStatus;
+
+  ftStatus =  ftdimcp_setLevel(cHandle, level, 0, 1);
+#ifdef USEDIM
+  if (ftStatus == FT_OK) {
+    disSetLevel = level;
+    dis_update_service(disSetLevelId);
+  } // if ftStatus
+#endif
+
+  return ftStatus;
+} // setLevel
+
+
+// set comparator level via DIM command
 void cmdSetLevel(long *tag, char *cmnd_buffer, int *size)
 {
 #ifdef USEDIM
-  FT_STATUS ftStatus;
   double    level;
 
   if (cHandle == NULL) {
@@ -120,10 +136,7 @@ void cmdSetLevel(long *tag, char *cmnd_buffer, int *size)
   level    = *((double *)cmnd_buffer);
 
   // set value
-  if ((ftStatus = ftdimcp_setLevel(cHandle, level, 0, 1)) == FT_OK) {
-    disSetLevel = level;
-    dis_update_service(disSetLevelId);
-  } // if ftStatus
+  setLevel(level);
 
   flagBlink = 1;
 #endif
@@ -298,7 +311,7 @@ int main(int argc, char** argv) {
     ftdimpc_setLed(cHandle, 1);
 
     // write to DAC
-    if ((ftStatus = ftdimcp_setLevel(cHandle, dacLevel, 0, 1)) != FT_OK) die ("can't write to DAC");
+    if ((ftStatus = setLevel(dacLevel)) != FT_OK) die ("can't write to DAC");
 
     // activity LED -> OFF
     sleep(1);
