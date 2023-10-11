@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_VIEWER_VERSION 0x000600
+#define B2B_VIEWER_VERSION 0x000601
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -379,20 +379,20 @@ int printDiag(uint32_t sid)
       break;
     case 2 ... 3 :
       if (dicDiagval.ext_ddsOffN == 0) printf("ext: %s\n", TXTNA);
-      else  printf("ext: act %8.3f ave(sdev,sys) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
+      else  printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
                    dicDiagval.ext_ddsOffAct, dicDiagval.ext_ddsOffAve, dicDiagval.ext_ddsOffSdev, dicGetval.ext_phaseSysmaxErr_ps, dicDiagval.ext_ddsOffMin, dicDiagval.ext_ddsOffMax);
       printf("inj: %s\n", TXTNA);
       printf("b2b: %s\n", TXTNA);
       break;
     case 4      :
       if (dicDiagval.ext_ddsOffN == 0) printf("ext: %s\n", TXTNA);
-      else  printf("ext: act %8.3f ave(sdev,sys) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
+      else  printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
                    dicDiagval.ext_ddsOffAct, dicDiagval.ext_ddsOffAve, dicDiagval.ext_ddsOffSdev, dicGetval.ext_phaseSysmaxErr_ps, dicDiagval.ext_ddsOffMin, dicDiagval.ext_ddsOffMax);
       if (dicDiagval.inj_ddsOffN == 0) printf("inj: %s\n", TXTNA);
-      else  printf("inj: act %8.3f ave(sdev,sys) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
+      else  printf("inj: act %8.3f ave(sdev,smx) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
                    dicDiagval.inj_ddsOffAct, dicDiagval.inj_ddsOffAve, dicDiagval.inj_ddsOffSdev, dicGetval.inj_phaseSysmaxErr_ps, dicDiagval.inj_ddsOffMin, dicDiagval.inj_ddsOffMax);
       if (dicDiagval.phaseOffN == 0) printf("inj: %s\n", TXTNA);
-      else  printf("b2b: act %8.3f ave(sdev,sys) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
+      else  printf("b2b: act %8.3f ave(sdev,smx) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
                    dicDiagval.phaseOffAct, dicDiagval.phaseOffAve, dicDiagval.phaseOffSdev, dicGetval.ext_phaseSysmaxErr_ps + dicGetval.inj_phaseSysmaxErr_ps, dicDiagval.phaseOffMin, dicDiagval.phaseOffMax);
       break;
     default :

@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 05-Oct-2023
+ *  version : 11-Oct-2023
  *
  * publishes raw data of the b2b system
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000600
+#define B2B_SERV_RAW_VERSION 0x000601
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -415,14 +415,14 @@ int main(int argc, char** argv)
   uint64_t snoopID     = 0x0;
   int      nCondition  = 0;
 
-  char tmp[128];
+  char tmp[752];
   int i;
 
   // variables attach, remove
   char    *deviceName = NULL;
 
-  char     ringName[DIMMAXSIZE];
-  char     prefix[DIMMAXSIZE];
+  char     ringName[NAMELEN];
+  char     prefix[NAMELEN*2];
   char     disName[DIMMAXSIZE];
 
 

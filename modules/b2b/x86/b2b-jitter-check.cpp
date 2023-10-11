@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 25-Aug-2023
+ *  version : 11-Oct-2023
  *
  * checks jitter between two timing receivers connected via a Lemo cable 
  * the first timing receiver outputs a PPS pulse
@@ -37,7 +37,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_JITTER_CHECK_VERSION 0x000600
+#define B2B_JITTER_CHECK_VERSION 0x000601
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -162,7 +162,7 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
   double    tAct;                   // fractional time (sub second part) of the deadline
   double    tAve;
   double    tmpStream        = 0;
-  double    tSdev;
+  double    tSdev            = 0;
   double    dummy;
 
   if (tsReceiver->getLocked() && ppsReceiver->getLocked()) sprintf(disState, "%s", b2b_state_text(COMMON_STATE_OPREADY));
@@ -390,8 +390,8 @@ int main(int argc, char** argv)
   int     ioTS           = 1;
 
   
-  char    tmp[128];
-  char    prefix[DIMMAXSIZE];
+  char    tmp[512];
+  char    prefix[NAMELEN];
   char    disName[DIMMAXSIZE];
 
   uint64_t evtPrefix = 0xffffa00000000000;

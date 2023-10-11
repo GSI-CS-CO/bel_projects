@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-Sep-2023
+ *  version : 11-Oct-2023
  *
  * library for b2b
  *
@@ -48,6 +48,7 @@
 // wr-unipz
 #include <common-defs.h>                 // common definitions
 #include <common-lib.h>                  // common routines
+#include <common-core.h>                 // common core
 #include <b2bcbu_shared_mmap.h>          // FW shared def
 #include <b2b.h>                         // FW defs
 #include <b2blib.h>                      // x86 library
@@ -283,7 +284,7 @@ uint32_t b2b_calc_max_sysdev_ps(uint64_t TH1_as, uint32_t nSamples, uint32_t pri
   dSysMax = 0.0;
   
   // calculate comb and respective hMax
-  comb  = comcore_intdiv(one_ns_fs / nSamples);
+  comb  = comcore_intdiv(one_ns_fs, nSamples);
   dComb = comb >> 1;                              // division by 2 as sub-ns fit is (max - min) / 2
 
   // calculate hMax and limit by jitter; we don't need to consider higher harmonics
