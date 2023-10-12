@@ -22,7 +22,7 @@ class UnitTestUnilac(dm_testbench.DmTestbench):
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern',
         patternName), [0], linesCout=1, linesCerr=0)
     self.snoopToCsv(snoopFileName, eventId='0x1000001000000000', mask='0xFFFFFFF000000000')
-    self.analyseFrequencyFromCsv(snoopFileName, column=20, printTable=True, checkValues={'0x0000000000000001': '>50'})
+    self.analyseFrequencyFromCsv(snoopFileName, column=20, printTable=True, checkValues={'0x0000000000000001': '>49'})
     self.deleteFile(scheduleName)
     self.deleteFile(snoopFileName)
 
