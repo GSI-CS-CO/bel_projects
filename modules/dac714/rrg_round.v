@@ -148,28 +148,28 @@
 				end			
 				else
 				begin
-					Yt_dash = (Yset*ROset) -( Sign *((Ris **2)/ (2)) );
-					if ((Sign *(Yis_copy1*ROset -Yt_dash))>0)
+					Yt_dash = (Yset*ROset) - ( Sign *((Ris **2)/ (2)) );
+					if ((Sign *(Yis_copy1*ROset - Yt_dash))>0)
 					begin															//Rounding Out
 						Ris = Ris - (Sign_Ris * (ROset));
-						Yis_copy1= Yis_copy1+Ris;
+						Yis_copy1 = Yis_copy1+Ris;
 					end
 					else
 					begin	
 						if ((Sign *Ris) -Rset <-1*RIset)
 						begin														//Rounding In
 							Ris = Ris + Sign *RIset;
-							Yis_copy1= Yis_copy1+Ris;
+							Yis_copy1 = Yis_copy1+Ris;
 						end
 						else if ((Sign *Ris) -Rset > ROset)
 						begin														//Rounding in (2)
 							Ris = Ris - (Sign *RIset);
-							Yis_copy1= Yis_copy1+Ris;
+							Yis_copy1 = Yis_copy1+Ris;
 						end
 						else
 						begin
 							Ris = Sign *Rset;									//Ramping
-							Yis_copy1= Yis_copy1+Ris;
+							Yis_copy1 = Yis_copy1+Ris;
 						end
 					end
 				end		
@@ -229,26 +229,25 @@
 				CMD_EXT_DATASET:
 					use_ext_dataset = 1;
 				CMD_NUM_CYCLE:
-					num_cycle = temp_reg;
+					num_cycle = temp_reg[31:0];
 			endcase
 		end
 	end
 	
-	//Process to buffer the output
+	//Process to buffer and clamp the output
 	always @(posedge clk_slow) 
 	begin
 		if(nReset == 1'b0)
-			Yis_copy2= 64'd0;
+			Yis_copy2 = 0;
 		else
-		//Yis_copy2 = Yis_copy1;
 			//Clamp Yis to half range
-		case (Yis_copy1[63-:2])
-			2'b01: //upper clamp range
+		case (Yis_copy1[63-:3])
+			3'b001, 3'b010, 3'b011: //upper clamp range
 				Yis_copy2 = {1'b0, {(DAC_WIDTH-1){1'b1}}};
-			2'b10: //lower clamp range
-				Yis_copy2 = {DAC_WIDTH{1'b1}};
+			3'b100, 3'b101, 3'b110: //lower clamp range
+				Yis_copy2 = {1'b1, {(DAC_WIDTH-1){1'b0}}};
 			default: //correct range
-				Yis_copy2 = Yis_copy1[62-:DAC_WIDTH];			
+				Yis_copy2 = Yis_copy1[61-:DAC_WIDTH];			
 		endcase
 	end
 	
