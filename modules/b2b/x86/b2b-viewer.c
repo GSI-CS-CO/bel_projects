@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 05-Oct-2023
+ *  version : 13-Oct-2023
  *
  * subscribes to and displays status of a b2b transfer
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_VIEWER_VERSION 0x000601
+#define B2B_VIEWER_VERSION 0x000602
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -513,19 +513,8 @@ int printRf(uint32_t sid)
 {
   printf("--- rf DDS [ns] ---                                      #ext %5u, #inj %5u\n", dicDiagval.ext_rfOffN, dicDiagval.inj_rfOffN);
   switch(set_mode) {
-    case 0 ... 1 :
-      printf("ext: %s\n", TXTNA);
-      printf("inj: %s\n", TXTNA);
-      if (dicDiagval.ext_rfNueN == 0) printf("ext: %s\n\n\n", TXTNA);
-      else {
-        printf("ext: calc [Hz] act(unctnty)  %14.6f(%8.6f)           diff %9.6f\n", dicDiagval.ext_rfNueAct, dicDiagval.ext_rfNueActErr, dicDiagval.ext_rfNueAct - 1000000000.0 / set_extT);
-        printf("               ave(sdev)     %14.6f(%8.6f)           diff %9.6f\n", dicDiagval.ext_rfNueAve, dicDiagval.ext_rfNueSdev, dicDiagval.ext_rfNueDiff);
-        printf("               estimate      %14.6f                  stepsize 0.046566\n", dicDiagval.ext_rfNueEst);
-      } // else
-      printf("inj: %s\n\n\n", TXTNA);
-      break;
-    case 2 :
-      if (dicDiagval.ext_rfOffN == 0) printf("ext: %s\n", TXTNA);
+    case 0 ... 2 :
+      if ((dicGetval.flagEvtErr >> 2) & 0x1) printf("ext: %s\n", TXTERROR);
       else printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
                   dicDiagval.ext_rfOffAct, dicDiagval.ext_rfOffAve, dicDiagval.ext_rfOffSdev, dicGetval.ext_phaseSysmaxErr_ps, dicDiagval.ext_rfOffMin, dicDiagval.ext_rfOffMax);
       printf("inj: %s\n", TXTNA);
@@ -536,12 +525,12 @@ int printRf(uint32_t sid)
         printf("               estimate      %14.6f                  stepsize 0.046566\n", dicDiagval.ext_rfNueEst);
       } // else
       printf("inj: %s\n\n\n", TXTNA);
-      break;
+      break; 
     case 3 ... 4 :
-      if (dicDiagval.ext_rfOffN == 0) printf("ext: %s\n", TXTNA);
+      if ((dicGetval.flagEvtErr >> 2) & 0x1) printf("ext: %s\n", TXTERROR);
       else printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
                   dicDiagval.ext_rfOffAct, dicDiagval.ext_rfOffAve, dicDiagval.ext_rfOffSdev, dicGetval.ext_phaseSysmaxErr_ps, dicDiagval.ext_rfOffMin, dicDiagval.ext_rfOffMax);
-      if (dicDiagval.inj_rfOffN == 0) printf("inj: %s\n", TXTNA);
+      if ((dicGetval.flagEvtErr >> 3) & 0x1) printf("inj: %s\n", TXTERROR);
       else printf("inj: act %8.3f ave(sdev,smx) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
                   dicDiagval.inj_rfOffAct, dicDiagval.inj_rfOffAve, dicDiagval.inj_rfOffSdev, dicGetval.inj_phaseSysmaxErr_ps, dicDiagval.inj_rfOffMin, dicDiagval.inj_rfOffMax);
       if (dicDiagval.ext_rfNueN == 0) printf("ext: %s\n\n\n", TXTNA);
