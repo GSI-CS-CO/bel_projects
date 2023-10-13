@@ -520,14 +520,18 @@ int printRf(uint32_t sid)
       printf("inj: %s\n", TXTNA);
       if (dicDiagval.ext_rfNueN == 0) printf("ext: %s\n\n\n", TXTNA);
       else {
-        printf("ext: calc [Hz] act(unctnty)  %14.6f(%8.6f)           diff %9.6f\n", dicDiagval.ext_rfNueAct, dicDiagval.ext_rfNueActErr, dicDiagval.ext_rfNueAct - 1000000000.0 / set_extT);
-        printf("               ave(sdev)     %14.6f(%8.6f)           diff %9.6f\n", dicDiagval.ext_rfNueAve, dicDiagval.ext_rfNueSdev, dicDiagval.ext_rfNueDiff);
-        printf("               estimate      %14.6f                  stepsize 0.046566\n", dicDiagval.ext_rfNueEst);
+        if ((dicGetval.flagEvtErr >> 2) & 0x1)
+          printf("ext: calc [Hz] act(unctnty)  %s\n", TXTERROR);
+        else
+          printf("ext: calc [Hz] act(unctnty)  %14.6f(%8.6f)           diff %9.6f\n", dicDiagval.ext_rfNueAct, dicDiagval.ext_rfNueActErr, dicDiagval.ext_rfNueAct - 1000000000.0 / set_extT);
+        printf(  "               ave(sdev)     %14.6f(%8.6f)           diff %9.6f\n", dicDiagval.ext_rfNueAve, dicDiagval.ext_rfNueSdev, dicDiagval.ext_rfNueDiff);
+        printf(  "               estimate      %14.6f                  stepsize 0.046566\n", dicDiagval.ext_rfNueEst);
       } // else
       printf("inj: %s\n\n\n", TXTNA);
       break; 
     case 3 ... 4 :
-      if ((dicGetval.flagEvtErr >> 2) & 0x1) printf("ext: %s\n", TXTERROR);
+      if ((dicGetval.flagEvtErr >> 2) & 0x1)
+        printf(   "ext: act %s\n", TXTERROR);
       else printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
                   dicDiagval.ext_rfOffAct, dicDiagval.ext_rfOffAve, dicDiagval.ext_rfOffSdev, dicGetval.ext_phaseSysmaxErr_ps, dicDiagval.ext_rfOffMin, dicDiagval.ext_rfOffMax);
       if ((dicGetval.flagEvtErr >> 3) & 0x1) printf("inj: %s\n", TXTERROR);
@@ -535,15 +539,21 @@ int printRf(uint32_t sid)
                   dicDiagval.inj_rfOffAct, dicDiagval.inj_rfOffAve, dicDiagval.inj_rfOffSdev, dicGetval.inj_phaseSysmaxErr_ps, dicDiagval.inj_rfOffMin, dicDiagval.inj_rfOffMax);
       if (dicDiagval.ext_rfNueN == 0) printf("ext: %s\n\n\n", TXTNA);
       else {
-        printf("ext: calc [Hz] act(unctnty)  %14.6f(%8.6f)           diff %9.6f\n", dicDiagval.ext_rfNueAct, dicDiagval.ext_rfNueActErr, dicDiagval.ext_rfNueAct - 1000000000.0 / set_extT);
-        printf("               ave(sdev)     %14.6f(%8.6f)           diff %9.6f\n", dicDiagval.ext_rfNueAve, dicDiagval.ext_rfNueSdev, dicDiagval.ext_rfNueDiff);
-        printf("               estimate      %14.6f                  stepsize 0.046566\n", dicDiagval.ext_rfNueEst);
+        if ((dicGetval.flagEvtErr >> 2) & 0x1)
+          printf("ext: calc [Hz] act(unctnty)  %s\n", TXTERROR);
+        else
+          printf("ext: calc [Hz] act(unctnty)  %14.6f(%8.6f)           diff %9.6f\n", dicDiagval.ext_rfNueAct, dicDiagval.ext_rfNueActErr, dicDiagval.ext_rfNueAct - 1000000000.0 / set_extT);
+        printf(  "               ave(sdev)     %14.6f(%8.6f)           diff %9.6f\n", dicDiagval.ext_rfNueAve, dicDiagval.ext_rfNueSdev, dicDiagval.ext_rfNueDiff);
+        printf(  "               estimate      %14.6f                  stepsize 0.046566\n", dicDiagval.ext_rfNueEst);
       } // else
       if (dicDiagval.inj_rfNueN == 0) printf("inj: %s\n\n\n", TXTNA);
       else {
-        printf("inj: calc [Hz] act(unctnty)  %14.6f(%8.6f)           diff %9.6f\n", dicDiagval.inj_rfNueAct, dicDiagval.inj_rfNueActErr, dicDiagval.inj_rfNueAct - 1000000000.0 / set_injT);
-        printf("               ave(sdev)     %14.6f(%8.6f)           diff %9.6f\n", dicDiagval.inj_rfNueAve, dicDiagval.inj_rfNueSdev, dicDiagval.inj_rfNueDiff);
-        printf("               estimate      %14.6f                  stepsize 0.046566\n", dicDiagval.inj_rfNueEst);
+        if ((dicGetval.flagEvtErr >> 3) & 0x1)
+          printf("inj: calc [Hz] act(unctnty)  %s\n", TXTERROR);
+        else
+          printf("inj: calc [Hz] act(unctnty)  %14.6f(%8.6f)           diff %9.6f\n", dicDiagval.inj_rfNueAct, dicDiagval.inj_rfNueActErr, dicDiagval.inj_rfNueAct - 1000000000.0 / set_injT);
+        printf(  "               ave(sdev)     %14.6f(%8.6f)           diff %9.6f\n", dicDiagval.inj_rfNueAve, dicDiagval.inj_rfNueSdev, dicDiagval.inj_rfNueDiff);
+        printf(  "               estimate      %14.6f                  stepsize 0.046566\n", dicDiagval.inj_rfNueEst);
       } // else
       break;
     default :
