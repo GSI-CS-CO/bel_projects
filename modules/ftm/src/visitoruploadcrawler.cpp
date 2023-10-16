@@ -5,6 +5,7 @@
 #include "meta.h"
 #include "event.h"
 #include "dotstr.h"
+#include <boost/range/combine.hpp>
 
 namespace dnp = DotStr::Node::Prop;
 namespace dnt = DotStr::Node::TypeVal;
@@ -73,19 +74,41 @@ vertex_set_t VisitorUploadCrawler::getChildrenByEdgeType(vertex_t vStart, const 
   return ret;
 }
 
-
+//FIXME Using vertex_set_t is plain wrong, as the output is a vector with a certain order! input must be a vector of vertices!
 vAdr& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, vAdr& ret, const unsigned int minResults, const unsigned int maxResults, const bool allowPeers, const uint32_t resultPadData) const {
   unsigned int results = ret.size();
 
   for (auto& itVs : vs ) {
     if (ret.size() >= results + maxResults) break;
     auto x = at.lookupVertex(itVs);
-    if (!allowPeers & (x->cpu != cpu)) throw std::runtime_error( exIntro + "Child " + g[x->v].name + "'s CPU must not differ from parent " + g[v].name + "'s CPU\n");
+    if (!allowPeers && (x->cpu != cpu)) throw std::runtime_error( exIntro + "Child " + g[x->v].name + "'s CPU must not differ from parent " + g[v].name + "'s CPU\n");
 
     AdrType aTmp = (x->cpu == cpu ? AdrType::INT : AdrType::PEER);
     ret.push_back(at.adrConv(AdrType::MGMT, aTmp, x->cpu, x->adr));
   }
   for (unsigned int i = ret.size(); i < (results + minResults); i++ ) ret.push_back(resultPadData);
+
+  return ret;
+}
+
+
+//FIXME Using vertex_set_t is plain wrong, as the output map relates adress to key. Decide: is the order important? 
+//Solution 1: It is. inputs must both be vectors of equal length
+mVal& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, mVal& ret, std::vector<std::string> keys, const bool allowPeers) const {
+  
+
+  if (vs.size() != keys.size()) throw std::runtime_error(exIntro + "Number of node adresses to look up (" + vs.size() + ") does not match number of given map keys (" + keys.size() + ")\n")
+
+  for (auto tup : boost::combine(keys, vs)) {
+    std::string eKey; vertex_t eV; boost::tie(eKey, eV) = tup;
+
+    auto x = at.lookupVertex(eV);
+    if (!allowPeers && (x->cpu != cpu)) throw std::runtime_error( exIntro + "Child " + g[x->v].name + "'s CPU must not differ from parent " + g[v].name + "'s CPU\n");
+
+    AdrType aTmp = (x->cpu == cpu ? AdrType::INT : AdrType::PEER);
+    ret.insert({eKey, at.adrConv(AdrType::MGMT, aTmp, x->cpu, x->adr) });
+  }
+
 
   return ret;
 }
