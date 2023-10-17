@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-Oct-2023
+ *  version : 17-Oct-2023
  *
  * subscribes to and displays status of many b2b transfers
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_MON_VERSION 0x000601
+#define B2B_MON_VERSION 0x000700
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -239,7 +239,6 @@ void buildPrintLine(uint32_t idx)
   char     tmp3[32];
   char     tmp4[32];
   char     tmp5[32];
-  int32_t  itmp1;
   int32_t  itmp2;
   double   dtmp1;
   double   *pLevelExt;
@@ -372,23 +371,13 @@ void buildPrintLine(uint32_t idx)
   
   if (flagExtTrig) {
     // trigger event received
-    if ((dicGetval[idx].flagEvtRec >> 4) & 0x1) {
-      // data invalid
-      if ((dicGetval[idx].flag_nok >> 4) & 0x1) sprintf(tmp1, "%s", TXTUNKWN);
-      else sprintf(tmp1, "%7.1f", convertUnit(set_extCTrig[idx] - dicDiagval[idx].ext_ddsOffAct, dicSetval[idx].ext_T));
-    } // if flagEvtRec
+    if ((dicGetval[idx].flagEvtRec >> 4) & 0x1) sprintf(tmp1, "%7.1f", convertUnit(set_extCTrig[idx] - dicDiagval[idx].ext_ddsOffAct, dicSetval[idx].ext_T));
     else sprintf(tmp1, "%s", TXTERROR);
     // signal from output of kicker electronics
-    if ((dicGetval[idx].flag_nok >> 1) & 0x1) {
-      sprintf(tmp2, "%s", TXTERROR);
-      sprintf(tmp3, "%s", TXTUNKWN);
-    } // if not ok
-    else {
-      sprintf(tmp2, "%5.0f", convertUnit((double)(dicGetval[idx].ext_dKickMon), dicSetval[idx].ext_T));;
-      // signal from magnet probe
-      if ((dicGetval[idx].flag_nok >> 2) & 0x1) sprintf(tmp3, "%s",  TXTUNKWN);
-      else                                      sprintf(tmp3, "%5.0f", convertUnit((double)(dicGetval[idx].ext_dKickProb),dicSetval[idx].ext_T));
-    } //else not ok
+    if (isnan(dicGetval[idx].ext_dKickMon))  sprintf(tmp2, "%s", TXTERROR);
+    else                                     sprintf(tmp2, "%5.0f", convertUnit(dicGetval[idx].ext_dKickMon, dicSetval[idx].ext_T));
+    if (isnan(dicGetval[idx].ext_dKickProb)) sprintf(tmp3, "%s", TXTUNKWN);
+    else                                     sprintf(tmp3, "%5.0f", convertUnit(dicGetval[idx].ext_dKickProb,dicSetval[idx].ext_T));
     sprintf(extTrig, "%7.1f %7s %5s %5s", convertUnit(set_extCTrig[idx], dicSetval[idx].ext_T), tmp1, tmp2, tmp3);
   } // if flagExtTrig
   else sprintf(extTrig, "---");
@@ -396,37 +385,41 @@ void buildPrintLine(uint32_t idx)
   if (flagInjTrig) {
     // trigger event received
     if ((dicGetval[idx].flagEvtRec >> 5) & 0x1) {
-      // data invalid
-      if ((dicGetval[idx].flag_nok >> 5) & 0x1) sprintf(tmp1, "%s", TXTUNKWN);
+      if (flagB2b) {
+        if (isnan(dicDiagval[idx].inj_ddsOffAct)) sprintf(tmp1, "%s", TXTUNKWN);
+        else                                      sprintf(tmp1, "%7.1f", convertUnit(set_injCTrig[idx] - dicDiagval[idx].inj_ddsOffAct, dicSetval[idx].inj_T)); //b2b : diff to DDS of injection ring
+      } // if flagB2B
       else {
-        if (flagB2b) dtmp1 = convertUnit(set_injCTrig[idx] - dicDiagval[idx].inj_ddsOffAct, dicSetval[idx].inj_T);  //b2b : diff to DDS of injection ring
-        else         dtmp1 = convertUnit(set_injCTrig[idx] - dicDiagval[idx].ext_ddsOffAct, dicSetval[idx].inj_T);  //else: diff to DDS of extraction ring
-      } // else flag_nok
-      sprintf(tmp1, "%7.1f", dtmp1);
+        if (isnan(dicDiagval[idx].ext_ddsOffAct)) sprintf(tmp1, "%s", TXTUNKWN);
+        else                                      sprintf(tmp1, "%7.1f", convertUnit(set_injCTrig[idx] - dicDiagval[idx].ext_ddsOffAct, dicSetval[idx].inj_T)); //else: diff to DDS of extraction ring
+      } // else flagB2B
     } // if flagEvtRec
     else sprintf(tmp1, "%s", TXTERROR);
-    // signal from output of kicker electronics    
-    if ((dicGetval[idx].flag_nok >> 6) & 0x1) {
-      sprintf(tmp2, "%s", TXTERROR);
-      sprintf(tmp3, "%s", TXTUNKWN);
+    
+    // signal from output of kicker electronics
+    if (isnan(dicGetval[idx].inj_dKickMon))  sprintf(tmp2, "%s", TXTERROR);
+    else                                     sprintf(tmp2, "%5.0f", convertUnit(dicGetval[idx].inj_dKickMon, dicSetval[idx].inj_T));
+    // signal from magnet probes
+    if (isnan(dicGetval[idx].inj_dKickProb)) sprintf(tmp3, "%s", TXTUNKWN);
+    else                                     sprintf(tmp3, "%5.0f", convertUnit(dicGetval[idx].inj_dKickProb, dicSetval[idx].inj_T));
+    // difference to kicker electronics extraction
+    if (isnan(dicGetval[idx].ext_dKickMon) || isnan(dicGetval[idx].inj_dKickMon))
       sprintf(tmp4, "%s", TXTUNKWN);
-      sprintf(tmp5, "%s", TXTUNKWN);     
-    } // if not ok
     else {
-      sprintf(tmp2, "%5.0f", convertUnit((double)(dicGetval[idx].inj_dKickMon), dicSetval[idx].inj_T));
-      itmp1   = set_injCTrig[idx] - set_extCTrig[idx] + dicGetval[idx].inj_dKickMon - dicGetval[idx].ext_dKickMon;
-      if ((dicGetval[idx].flag_nok >> 1) & 0x1)  sprintf(tmp4, "%5s", TXTERROR);
-      else                                       sprintf(tmp4, "%5.0f", convertUnit((double)itmp1, dicSetval[idx].inj_T));
-      if ((dicGetval[idx].flag_nok >> 7) & 0x1) {sprintf(tmp3, "%5s", TXTUNKWN); sprintf(tmp5, "%5s", TXTUNKWN);}
-      else {
-        sprintf(tmp3, "%5.0f", convertUnit((double)(dicGetval[idx].inj_dKickProb), dicSetval[idx].inj_T));
-        itmp2 = set_injCTrig[idx] - set_extCTrig[idx] + dicGetval[idx].inj_dKickProb - dicGetval[idx].ext_dKickProb;
-        if ((dicGetval[idx].flag_nok >> 2) & 0x1) sprintf(tmp5, "%5s", TXTUNKWN);
-        else                                      sprintf(tmp5, "%5.0f", convertUnit((double)itmp2, dicSetval[idx].inj_T));
-      } // if not nok
-    } //else not ok
+      dtmp1 = set_injCTrig[idx] - set_extCTrig[idx] + dicGetval[idx].inj_dKickMon - dicGetval[idx].ext_dKickMon;
+      sprintf(tmp4, "%5.0f", convertUnit(dtmp1, dicSetval[idx].inj_T));
+    } // else isnan
+    // difference to magnet probe extraction
+    if (isnan(dicGetval[idx].ext_dKickProb) || isnan(dicGetval[idx].inj_dKickProb))
+      sprintf(tmp5, "%s", TXTUNKWN);
+    else {
+      dtmp1 = set_injCTrig[idx] - set_extCTrig[idx] + dicGetval[idx].inj_dKickProb - dicGetval[idx].ext_dKickProb;
+      sprintf(tmp5, "%5.0f", convertUnit(dtmp1, dicSetval[idx].inj_T));
+    } // else isnan
+
     sprintf(injTrig, "%7.1f %7s %5s %5s %5s %5s", convertUnit(set_injCTrig[idx], dicSetval[idx].inj_T), tmp1, tmp2, tmp3, tmp4, tmp5);
-  } // if flagExtTrig
+
+  } // if flagInjTrig
   else sprintf(injTrig, "---");
 
   sprintf(printLineK[idx], "|%20s | %12s |%6s | %2d | %27s |%6s |%15s | %41s |", pattern, tCBS, origin, sid, extTrig, dest, b2b, injTrig);
@@ -440,7 +433,6 @@ void recSetvalue(long *tag, setval_t *address, int *size)
 {
   setval_t *tmp;
   uint32_t secs;
-  uint32_t nok;
   uint32_t idx;
 
   uint64_t actNsecs;
@@ -456,30 +448,38 @@ void recSetvalue(long *tag, setval_t *address, int *size)
   if (flagSetValid[idx]) {
     tmp = address;
 
-    nok                = (*tmp).flag_nok;
     set_mode[idx]      = (*tmp).mode;
-    if ((nok >> 1) & 0x1) {
+    set_cPhase[idx]    = (*tmp).cPhase;
+
+    if ((*tmp).ext_T == -1) {
       set_extT[idx]    = 0.0;
       set_extNue[idx]  = 0.0;
-    } // if not valid
+      set_cPhaseD[idx] = 0.0;
+    } // if extT
     else {
       set_extT[idx]    = (double)((*tmp).ext_T)/1000000000.0;
       set_extNue[idx]  = 1000000000.0 / set_extT[idx];
       set_cPhaseD[idx] = (double)((*tmp).cPhase) / (double)(set_extT[idx]) * 360.0; 
-    } // valid
-    set_extH[idx]      = (*tmp).ext_h;
+    } // else extT
+
+    if ((*tmp).ext_h == -1) set_extH[idx] = 0;
+    else                    set_extH[idx] = (*tmp).ext_h;
+    
     set_extCTrig[idx]  = (*tmp).ext_cTrig;
-    if ((nok >> 4) & 0x1) {
+
+    if ((*tmp).inj_T == -1) {
       set_injT[idx]    = 0.0;
       set_injNue[idx]  = 0.0;
-    } // if not valid
+    } // if injT
     else {
       set_injT[idx]    = (double)((*tmp).inj_T)/1000000000.0;
       set_injNue[idx]  = 1000000000.0 / set_injT[idx];
-    } // valid
-    set_injH[idx]      = (*tmp).inj_h;
+    } // else injT
+
+    if ((*tmp).inj_h == -1) set_injH[idx] = 0;
+    else                    set_injH[idx] = (*tmp).inj_h;
+    
     set_injCTrig[idx]  = (*tmp).inj_cTrig;
-    set_cPhase[idx]    = (*tmp).cPhase;
 
     dic_get_timestamp(0, &secs, &(set_msecs[idx]));
     set_secs[idx]      = (time_t)(secs);

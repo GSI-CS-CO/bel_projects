@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 05-Oct-2023
+ *  version : 17-Oct-2023
  *
  * analyzes and publishes get values
  * 
@@ -36,7 +36,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_ANALYZER_VERSION 0x000601
+#define B2B_ANALYZER_VERSION 0x000700
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -446,128 +446,147 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
     disNTransfer++;
 
     // offset from deadline CBS to measured extraction phase
-    act = dicGetval[sid].preOff;
-    n   = ++(cbs_preOffN[sid]);
+    if (!isnan(dicGetval[sid].preOff)) {
+      act = dicGetval[sid].preOff;
+      n   = ++(cbs_preOffN[sid]);
 
-    // statistics
-    calcStats(&aveNew, cbs_preOffAveOld[sid], &streamNew, cbs_preOffStreamOld[sid], act, n , &dummy, &sdev);
-    //printf("ave %7.3f, sdev %7.3f\n", aveNew, sdev);
-    cbs_preOffAveOld[sid]          = aveNew;
-    cbs_preOffStreamOld[sid]       = streamNew;
-    if (act < cbs_preOffMin[sid]) cbs_preOffMin[sid] = act;
-    if (act > cbs_preOffMax[sid]) cbs_preOffMax[sid] = act;
+      // statistics
+      calcStats(&aveNew, cbs_preOffAveOld[sid], &streamNew, cbs_preOffStreamOld[sid], act, n , &dummy, &sdev);
+      //printf("ave %7.3f, sdev %7.3f\n", aveNew, sdev);
+      cbs_preOffAveOld[sid]          = aveNew;
+      cbs_preOffStreamOld[sid]       = streamNew;
+      if (act < cbs_preOffMin[sid]) cbs_preOffMin[sid] = act;
+      if (act > cbs_preOffMax[sid]) cbs_preOffMax[sid] = act;
 
-    // copy
-    disDiagstat[sid].cbs_preOffAct  = act;
-    disDiagstat[sid].cbs_preOffN    = n;
-    disDiagstat[sid].cbs_preOffAve  = aveNew;
-    disDiagstat[sid].cbs_preOffSdev = sdev;
-    disDiagstat[sid].cbs_preOffMin  = cbs_preOffMin[sid];
-    disDiagstat[sid].cbs_preOffMax  = cbs_preOffMax[sid];
+      // copy
+      disDiagstat[sid].cbs_preOffAct  = act;
+      disDiagstat[sid].cbs_preOffN    = n;
+      disDiagstat[sid].cbs_preOffAve  = aveNew;
+      disDiagstat[sid].cbs_preOffSdev = sdev;
+      disDiagstat[sid].cbs_preOffMin  = cbs_preOffMin[sid];
+      disDiagstat[sid].cbs_preOffMax  = cbs_preOffMax[sid];
+    } // if isnan
+    else disDiagstat[sid].cbs_preOffAct = NAN;
+    
 
     // rf phase diagnostics; theoretical value is '0'
-    cor = 0.0;
-    act = b2b_fixTS(dicGetval[sid].ext_diagPhase, cor, dicSetval[sid].ext_T) - cor;
-    n   = ++(ext_rfOffN[sid]);
-
-    // statistics
-    calcStats(&aveNew, ext_rfOffAveOld[sid], &streamNew, ext_rfOffStreamOld[sid], act, n , &dummy, &sdev);
-    ext_rfOffAveOld[sid]           = aveNew;
-    ext_rfOffStreamOld[sid]        = streamNew;
-    if (act < ext_rfOffMin[sid]) ext_rfOffMin[sid] = act;
-    if (act > ext_rfOffMax[sid]) ext_rfOffMax[sid] = act;
-
-    // copy
-    disDiagval[sid].ext_rfOffAct   = act;
-    disDiagval[sid].ext_rfOffN     = n;
-    disDiagval[sid].ext_rfOffAve   = aveNew;
-    disDiagval[sid].ext_rfOffSdev  = sdev;
-    disDiagval[sid].ext_rfOffMin   = ext_rfOffMin[sid];
-    disDiagval[sid].ext_rfOffMax   = ext_rfOffMax[sid];
+    if (!isnan(dicGetval[sid].ext_diagPhase)) {
+      cor = 0.0;
+      act = b2b_fixTS(dicGetval[sid].ext_diagPhase, cor, dicSetval[sid].ext_T) - cor;
+      n   = ++(ext_rfOffN[sid]);
+      
+      // statistics
+      calcStats(&aveNew, ext_rfOffAveOld[sid], &streamNew, ext_rfOffStreamOld[sid], act, n , &dummy, &sdev);
+      ext_rfOffAveOld[sid]           = aveNew;
+      ext_rfOffStreamOld[sid]        = streamNew;
+      if (act < ext_rfOffMin[sid]) ext_rfOffMin[sid] = act;
+      if (act > ext_rfOffMax[sid]) ext_rfOffMax[sid] = act;
+      
+      // copy
+      disDiagval[sid].ext_rfOffAct   = act;
+      disDiagval[sid].ext_rfOffN     = n;
+      disDiagval[sid].ext_rfOffAve   = aveNew;
+      disDiagval[sid].ext_rfOffSdev  = sdev;
+      disDiagval[sid].ext_rfOffMin   = ext_rfOffMin[sid];
+      disDiagval[sid].ext_rfOffMax   = ext_rfOffMax[sid];
+    } // if isnan
+    else disDiagval[sid].ext_rfOffAct = NAN;
 
     // rf frequency diagnostics; theoretical value is set value
-    calcNue(&act, &actErr, disDiagval[sid].ext_rfOffAct, (double)B2B_TDIAGOBS, dicSetval[sid].ext_T, dicGetval[sid].ext_phaseSysmaxErr_ps);
-    if (dicSetval[sid].ext_T != 0) tmp = 1000000000000000000.0 /  (double)(dicSetval[sid].ext_T);
-    else                           tmp = 0.0;
-    n   = ++(ext_rfNueN[sid]);
-
-    // statistics
-    calcStats(&aveNew, ext_rfNueAveOld[sid], &streamNew, ext_rfNueStreamOld[sid], act, n ,&dummy , &sdev);
-    ext_rfNueAveOld[sid]           = aveNew;
-    ext_rfNueStreamOld[sid]        = streamNew;
-
-    // copy
-    disDiagval[sid].ext_rfNueAct   = act;
-    disDiagval[sid].ext_rfNueActErr= actErr;    
-    disDiagval[sid].ext_rfNueN     = n;
-    disDiagval[sid].ext_rfNueAve   = aveNew;
-    disDiagval[sid].ext_rfNueSdev  = sdev;
-    disDiagval[sid].ext_rfNueDiff  = aveNew - tmp ;
-    disDiagval[sid].ext_rfNueEst   = calcDdsNue(aveNew);
+    if (!isnan(disDiagval[sid].ext_rfOffAct)) {
+      calcNue(&act, &actErr, disDiagval[sid].ext_rfOffAct, (double)B2B_TDIAGOBS, dicSetval[sid].ext_T, dicGetval[sid].ext_phaseSysmaxErr_ps);
+      if (dicSetval[sid].ext_T != 0) tmp = 1000000000000000000.0 /  (double)(dicSetval[sid].ext_T);
+      else                           tmp = 0.0;
+      n   = ++(ext_rfNueN[sid]);
+      
+      // statistics
+      calcStats(&aveNew, ext_rfNueAveOld[sid], &streamNew, ext_rfNueStreamOld[sid], act, n ,&dummy , &sdev);
+      ext_rfNueAveOld[sid]           = aveNew;
+      ext_rfNueStreamOld[sid]        = streamNew;
+      
+      // copy
+      disDiagval[sid].ext_rfNueAct   = act;
+      disDiagval[sid].ext_rfNueActErr= actErr;    
+      disDiagval[sid].ext_rfNueN     = n;
+      disDiagval[sid].ext_rfNueAve   = aveNew;
+      disDiagval[sid].ext_rfNueSdev  = sdev;
+      disDiagval[sid].ext_rfNueDiff  = aveNew - tmp ;
+      disDiagval[sid].ext_rfNueEst   = calcDdsNue(aveNew);
+    } // if isnan
+    else  disDiagval[sid].ext_rfNueAct = NAN;
 
   } // if mode B2B_MODE_OFF
   
   if (mode >= B2B_MODE_BSE) {
   
     // offset from deadline CBS to time when CBU is done
-    act = (double)dicGetval[sid].finOff;
-    n   = ++(cbs_finOffN[sid]);
-
-    // statistics
-    calcStats(&aveNew, cbs_finOffAveOld[sid], &streamNew, cbs_finOffStreamOld[sid], act, n , &dummy, &sdev);
-    cbs_finOffAveOld[sid]          = aveNew;
-    cbs_finOffStreamOld[sid]       = streamNew;
-    if (act < cbs_finOffMin[sid]) cbs_finOffMin[sid] = act;
-    if (act > cbs_finOffMax[sid]) cbs_finOffMax[sid] = act;
-
-    // copy
-    disDiagstat[sid].cbs_finOffAct  = act;
-    disDiagstat[sid].cbs_finOffN    = n;
-    disDiagstat[sid].cbs_finOffAve  = aveNew;
-    disDiagstat[sid].cbs_finOffSdev = sdev;
-    disDiagstat[sid].cbs_finOffMin  = cbs_finOffMin[sid];
-    disDiagstat[sid].cbs_finOffMax  = cbs_finOffMax[sid];    
+    if (!isnan(dicGetval[sid].finOff)) {
+      act = dicGetval[sid].finOff;
+      n   = ++(cbs_finOffN[sid]);
+      
+      // statistics
+      calcStats(&aveNew, cbs_finOffAveOld[sid], &streamNew, cbs_finOffStreamOld[sid], act, n , &dummy, &sdev);
+      cbs_finOffAveOld[sid]          = aveNew;
+      cbs_finOffStreamOld[sid]       = streamNew;
+      if (act < cbs_finOffMin[sid]) cbs_finOffMin[sid] = act;
+      if (act > cbs_finOffMax[sid]) cbs_finOffMax[sid] = act;
+      
+      // copy
+      disDiagstat[sid].cbs_finOffAct  = act;
+      disDiagstat[sid].cbs_finOffN    = n;
+      disDiagstat[sid].cbs_finOffAve  = aveNew;
+      disDiagstat[sid].cbs_finOffSdev = sdev;
+      disDiagstat[sid].cbs_finOffMin  = cbs_finOffMin[sid];
+      disDiagstat[sid].cbs_finOffMax  = cbs_finOffMax[sid];
+    } // if isnan
+    else disDiagstat[sid].cbs_finOffAct = NAN;
 
     // offset from deadline CBS to time when the PRE messages is received by CBU
-    act = (double)dicGetval[sid].prrOff;
-    n   = ++(cbs_prrOffN[sid]);
+    if (!isnan(dicGetval[sid].prrOff)) {
+      act = (double)dicGetval[sid].prrOff;
+      n   = ++(cbs_prrOffN[sid]);
 
-    // statistics
-    calcStats(&aveNew, cbs_prrOffAveOld[sid], &streamNew, cbs_prrOffStreamOld[sid], act, n , &dummy, &sdev);
-    cbs_prrOffAveOld[sid]          = aveNew;
-    cbs_prrOffStreamOld[sid]       = streamNew;
-    if (act < cbs_prrOffMin[sid]) cbs_prrOffMin[sid] = act;
-    if (act > cbs_prrOffMax[sid]) cbs_prrOffMax[sid] = act;
+      // statistics
+      calcStats(&aveNew, cbs_prrOffAveOld[sid], &streamNew, cbs_prrOffStreamOld[sid], act, n , &dummy, &sdev);
+      cbs_prrOffAveOld[sid]          = aveNew;
+      cbs_prrOffStreamOld[sid]       = streamNew;
+      if (act < cbs_prrOffMin[sid]) cbs_prrOffMin[sid] = act;
+      if (act > cbs_prrOffMax[sid]) cbs_prrOffMax[sid] = act;
 
-    // copy
-    disDiagstat[sid].cbs_prrOffAct  = act;
-    disDiagstat[sid].cbs_prrOffN    = n;
-    disDiagstat[sid].cbs_prrOffAve  = aveNew;
-    disDiagstat[sid].cbs_prrOffSdev = sdev;
-    disDiagstat[sid].cbs_prrOffMin  = cbs_prrOffMin[sid];
-    disDiagstat[sid].cbs_prrOffMax  = cbs_prrOffMax[sid];
+      // copy
+      disDiagstat[sid].cbs_prrOffAct  = act;
+      disDiagstat[sid].cbs_prrOffN    = n;
+      disDiagstat[sid].cbs_prrOffAve  = aveNew;
+      disDiagstat[sid].cbs_prrOffSdev = sdev;
+      disDiagstat[sid].cbs_prrOffMin  = cbs_prrOffMin[sid];
+      disDiagstat[sid].cbs_prrOffMax  = cbs_prrOffMax[sid];
+    } // if isnan
+    else disDiagstat[sid].cbs_prrOffAct = NAN;
 
     // offset from deadline CBS to KTE
-    act = (double)dicGetval[sid].kteOff;
-    n   = ++(cbs_kteOffN[sid]);
-
-    // statistics
-    calcStats(&aveNew, cbs_kteOffAveOld[sid], &streamNew, cbs_kteOffStreamOld[sid], act, n , &dummy, &sdev);
-    cbs_kteOffAveOld[sid]          = aveNew;
-    cbs_kteOffStreamOld[sid]       = streamNew;
-    if (act < cbs_kteOffMin[sid]) cbs_kteOffMin[sid] = act;
-    if (act > cbs_kteOffMax[sid]) cbs_kteOffMax[sid] = act;
-
-    // copy
-    disDiagstat[sid].cbs_kteOffAct  = act;
-    disDiagstat[sid].cbs_kteOffN    = n;
-    disDiagstat[sid].cbs_kteOffAve  = aveNew;
-    disDiagstat[sid].cbs_kteOffSdev = sdev;
-    disDiagstat[sid].cbs_kteOffMin  = cbs_kteOffMin[sid];
-    disDiagstat[sid].cbs_kteOffMax  = cbs_kteOffMax[sid];    
+    if (!isnan(dicGetval[sid].kteOff)) {
+      act = (double)dicGetval[sid].kteOff;
+      n   = ++(cbs_kteOffN[sid]);
+      
+      // statistics
+      calcStats(&aveNew, cbs_kteOffAveOld[sid], &streamNew, cbs_kteOffStreamOld[sid], act, n , &dummy, &sdev);
+      cbs_kteOffAveOld[sid]          = aveNew;
+      cbs_kteOffStreamOld[sid]       = streamNew;
+      if (act < cbs_kteOffMin[sid]) cbs_kteOffMin[sid] = act;
+      if (act > cbs_kteOffMax[sid]) cbs_kteOffMax[sid] = act;
+      
+      // copy
+      disDiagstat[sid].cbs_kteOffAct  = act;
+      disDiagstat[sid].cbs_kteOffN    = n;
+      disDiagstat[sid].cbs_kteOffAve  = aveNew;
+      disDiagstat[sid].cbs_kteOffSdev = sdev;
+      disDiagstat[sid].cbs_kteOffMin  = cbs_kteOffMin[sid];
+      disDiagstat[sid].cbs_kteOffMax  = cbs_kteOffMax[sid];
+    } // if isnan
+    else disDiagstat[sid].cbs_kteOffAct = NAN;
 
     // remainder of h=1 phase at electronics monitor
-    if ((!((dicGetval[sid].flag_nok >> 1) & 0x1)) && (dicSetval[sid].ext_T != 0)) {
+    if ((dicSetval[sid].ext_T != -1) && !isnan(dicGetval[sid].kteOff) && !isnan(dicGetval[sid].ext_dKickMon) && (dicGetval[sid].ext_phase != -1)) {
       tmp64 = dicGetval[sid].tCBS + dicGetval[sid].kteOff + dicGetval[sid].ext_dKickMon;   // TAI of dKickMon [ns]
       tmp64 = (tmp64 - dicGetval[sid].ext_phase) * 1000000000;                             // difference to measured phase [as]
       act   = (double)((tmp64 % (dicSetval[sid].ext_T) / 1000000000));                     // remainder [ns]
@@ -588,56 +607,64 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
       disDiagstat[sid].ext_monRemMin  = ext_monRemMin[sid];
       disDiagstat[sid].ext_monRemMax  = ext_monRemMax[sid];
     } // if dicGetval
+    else disDiagstat[sid].ext_monRemAct = NAN;
+    
   } // if mode B2B_MODE_BSE
   
   if (mode >=  B2B_MODE_B2E) {                                          // analysis for extraction trigger and rf
     // match diagnostics; theoretical value is '0'
-    cor = (double)dicSetval[sid].ext_cTrig;
-    act = b2b_fixTS(dicGetval[sid].ext_diagMatch, cor, dicSetval[sid].ext_T) - cor;
-    act = -act; // diagMatch is offset of trigger event to phase; but we want offset of phase to trigger
-    // printf("EXT match %8.3f, cor %8.3f, act %8.3f\n", dicGetval[sid].ext_diagMatch, cor, act);
-    n   = ++(ext_ddsOffN[sid]);
-
-    // statistics
-    calcStats(&aveNew, ext_ddsOffAveOld[sid], &streamNew, ext_ddsOffStreamOld[sid], act, n , &dummy, &sdev);
-    //printf("ave %7.3f, sdev %7.3f\n", aveNew, sdev);
-    ext_ddsOffAveOld[sid]          = aveNew;
-    ext_ddsOffStreamOld[sid]       = streamNew;
-    if (act < ext_ddsOffMin[sid]) ext_ddsOffMin[sid] = act;
-    if (act > ext_ddsOffMax[sid]) ext_ddsOffMax[sid] = act;
-
-    // copy
-    disDiagval[sid].ext_ddsOffAct  = act;
-    disDiagval[sid].ext_ddsOffN    = n;
-    disDiagval[sid].ext_ddsOffAve  = aveNew;
-    disDiagval[sid].ext_ddsOffSdev = sdev;
-    disDiagval[sid].ext_ddsOffMin  = ext_ddsOffMin[sid];
-    disDiagval[sid].ext_ddsOffMax  = ext_ddsOffMax[sid];
+    if (!isnan(dicGetval[sid].ext_diagMatch)) {
+      cor = (double)dicSetval[sid].ext_cTrig;
+      act = b2b_fixTS(dicGetval[sid].ext_diagMatch, cor, dicSetval[sid].ext_T) - cor;
+      act = -act; // diagMatch is offset of trigger event to phase; but we want offset of phase to trigger
+      // printf("EXT match %8.3f, cor %8.3f, act %8.3f\n", dicGetval[sid].ext_diagMatch, cor, act);
+      n   = ++(ext_ddsOffN[sid]);
+      
+      // statistics
+      calcStats(&aveNew, ext_ddsOffAveOld[sid], &streamNew, ext_ddsOffStreamOld[sid], act, n , &dummy, &sdev);
+      //printf("ave %7.3f, sdev %7.3f\n", aveNew, sdev);
+      ext_ddsOffAveOld[sid]          = aveNew;
+      ext_ddsOffStreamOld[sid]       = streamNew;
+      if (act < ext_ddsOffMin[sid]) ext_ddsOffMin[sid] = act;
+      if (act > ext_ddsOffMax[sid]) ext_ddsOffMax[sid] = act;
+      
+      // copy
+      disDiagval[sid].ext_ddsOffAct  = act;
+      disDiagval[sid].ext_ddsOffN    = n;
+      disDiagval[sid].ext_ddsOffAve  = aveNew;
+      disDiagval[sid].ext_ddsOffSdev = sdev;
+      disDiagval[sid].ext_ddsOffMin  = ext_ddsOffMin[sid];
+      disDiagval[sid].ext_ddsOffMax  = ext_ddsOffMax[sid];
+    } // if isnan
+    else disDiagval[sid].ext_ddsOffAct = NAN;
 
   } // if mode B2B_MODE_B2E
 
   if (mode >= B2B_MODE_B2C) {
     // offset from deadline CBS to KTI
-    act = dicGetval[sid].ktiOff;
-    n   = ++(cbs_ktiOffN[sid]);
-
-    // statistics
-    calcStats(&aveNew, cbs_ktiOffAveOld[sid], &streamNew, cbs_ktiOffStreamOld[sid], act, n , &dummy, &sdev);
-    cbs_ktiOffAveOld[sid]          = aveNew;
-    cbs_ktiOffStreamOld[sid]       = streamNew;
-    if (act < cbs_ktiOffMin[sid]) cbs_ktiOffMin[sid] = act;
-    if (act > cbs_ktiOffMax[sid]) cbs_ktiOffMax[sid] = act;
-
-    // copy
-    disDiagstat[sid].cbs_ktiOffAct  = act;
-    disDiagstat[sid].cbs_ktiOffN    = n;
-    disDiagstat[sid].cbs_ktiOffAve  = aveNew;
-    disDiagstat[sid].cbs_ktiOffSdev = sdev;
-    disDiagstat[sid].cbs_ktiOffMin  = cbs_ktiOffMin[sid];
-    disDiagstat[sid].cbs_ktiOffMax  = cbs_ktiOffMax[sid];
+    if (!isnan(dicGetval[sid].ktiOff)) {
+      act = dicGetval[sid].ktiOff;
+      n   = ++(cbs_ktiOffN[sid]);
+      
+      // statistics
+      calcStats(&aveNew, cbs_ktiOffAveOld[sid], &streamNew, cbs_ktiOffStreamOld[sid], act, n , &dummy, &sdev);
+      cbs_ktiOffAveOld[sid]          = aveNew;
+      cbs_ktiOffStreamOld[sid]       = streamNew;
+      if (act < cbs_ktiOffMin[sid]) cbs_ktiOffMin[sid] = act;
+      if (act > cbs_ktiOffMax[sid]) cbs_ktiOffMax[sid] = act;
+      
+      // copy
+      disDiagstat[sid].cbs_ktiOffAct  = act;
+      disDiagstat[sid].cbs_ktiOffN    = n;
+      disDiagstat[sid].cbs_ktiOffAve  = aveNew;
+      disDiagstat[sid].cbs_ktiOffSdev = sdev;
+      disDiagstat[sid].cbs_ktiOffMin  = cbs_ktiOffMin[sid];
+      disDiagstat[sid].cbs_ktiOffMax  = cbs_ktiOffMax[sid];
+    } // if isnan
+    else disDiagstat[sid].cbs_ktiOffAct = NAN;
 
     // remainder phase to electronics monitor
-    if ((!((dicGetval[sid].flag_nok >> 6) & 0x1)) && (dicSetval[sid].ext_T != 0)) {
+    if ((dicSetval[sid].ext_T != -1) && !isnan(dicGetval[sid].ktiOff) && !isnan(dicGetval[sid].inj_dKickMon) && (dicGetval[sid].ext_phase != -1)) {
       tmp64 = dicGetval[sid].tCBS + dicGetval[sid].ktiOff + dicGetval[sid].inj_dKickMon;   // TAI of dKickMon [ns]
       tmp64 = (tmp64 - dicGetval[sid].ext_phase) % 1000000000;                             // difference to measured phase [as]; NB: everyting relative to extraction phase
       act   = (int32_t)((tmp64 % (dicSetval[sid].ext_T) / 1000000000));                    // remainder [ns]
@@ -658,111 +685,129 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
       disDiagstat[sid].inj_monRemMin  = inj_monRemMin[sid];
       disDiagstat[sid].inj_monRemMax  = inj_monRemMax[sid];
     } // if dicGetval
+    else disDiagstat[sid].inj_monRemAct = NAN;
 
-        // rf phase diagnostics raw values; theoretical value is '0'
-    cor = 0.0;
-    act = b2b_fixTS(dicGetval[sid].inj_diagPhase, cor, dicSetval[sid].inj_T);
-    n   = ++(inj_rfOffN[sid]);
-
-    // statistics
-    calcStats(&aveNew, inj_rfOffAveOld[sid], &streamNew, inj_rfOffStreamOld[sid], act, n , &dummy, &sdev);
-    inj_rfOffAveOld[sid]           = aveNew;
-    inj_rfOffStreamOld[sid]        = streamNew;
-    if (act < inj_rfOffMin[sid]) inj_rfOffMin[sid] = act;
-    if (act > inj_rfOffMax[sid]) inj_rfOffMax[sid] = act;
-
-    // copy
-    disDiagval[sid].inj_rfOffAct   = act;
-    disDiagval[sid].inj_rfOffN     = n;
-    disDiagval[sid].inj_rfOffAve   = aveNew;
-    disDiagval[sid].inj_rfOffSdev  = sdev;
-    disDiagval[sid].inj_rfOffMin   = inj_rfOffMin[sid];
-    disDiagval[sid].inj_rfOffMax   = inj_rfOffMax[sid];
+    // rf phase diagnostics raw values; theoretical value is '0'
+    if (!isnan(dicGetval[sid].inj_diagPhase)) {
+      cor = 0.0;
+      act = b2b_fixTS(dicGetval[sid].inj_diagPhase, cor, dicSetval[sid].inj_T);
+      n   = ++(inj_rfOffN[sid]);
+      
+      // statistics
+      calcStats(&aveNew, inj_rfOffAveOld[sid], &streamNew, inj_rfOffStreamOld[sid], act, n , &dummy, &sdev);
+      inj_rfOffAveOld[sid]           = aveNew;
+      inj_rfOffStreamOld[sid]        = streamNew;
+      if (act < inj_rfOffMin[sid]) inj_rfOffMin[sid] = act;
+      if (act > inj_rfOffMax[sid]) inj_rfOffMax[sid] = act;
+      
+      // copy
+      disDiagval[sid].inj_rfOffAct   = act;
+      disDiagval[sid].inj_rfOffN     = n;
+      disDiagval[sid].inj_rfOffAve   = aveNew;
+      disDiagval[sid].inj_rfOffSdev  = sdev;
+      disDiagval[sid].inj_rfOffMin   = inj_rfOffMin[sid];
+      disDiagval[sid].inj_rfOffMax   = inj_rfOffMax[sid];
+    } // if isnan
+    else disDiagval[sid].inj_rfOffAct = NAN;
 
     // b2bphase diagnostics; theoretical value is 'phase correction'
-    act = disDiagval[sid].inj_ddsOffAct - disDiagval[sid].ext_ddsOffAct + dicSetval[sid].cPhase;
-    n   = ++(phaseOffN[sid]);
-
-    // statistics
-    calcStats(&aveNew, phaseOffAveOld[sid], &streamNew, phaseOffStreamOld[sid], act, n , &dummy, &sdev);
-    phaseOffAveOld[sid]          = aveNew;
-    phaseOffStreamOld[sid]       = streamNew;
-    if (act < phaseOffMin[sid]) phaseOffMin[sid] = act;
-    if (act > phaseOffMax[sid]) phaseOffMax[sid] = act;
-
-    // copy
-    disDiagval[sid].phaseOffAct  = act;
-    disDiagval[sid].phaseOffN    = n;
-    disDiagval[sid].phaseOffAve  = aveNew;
-    disDiagval[sid].phaseOffSdev = sdev;
-    disDiagval[sid].phaseOffMin  = phaseOffMin[sid];
-    disDiagval[sid].phaseOffMax  = phaseOffMax[sid];
-
+    if (!isnan(disDiagval[sid].inj_ddsOffAct) && !isnan(disDiagval[sid].ext_ddsOffAct) && !isnan(dicSetval[sid].cPhase)) {
+      act = disDiagval[sid].inj_ddsOffAct - disDiagval[sid].ext_ddsOffAct + dicSetval[sid].cPhase;
+      n   = ++(phaseOffN[sid]);
+      
+      // statistics
+      calcStats(&aveNew, phaseOffAveOld[sid], &streamNew, phaseOffStreamOld[sid], act, n , &dummy, &sdev);
+      phaseOffAveOld[sid]          = aveNew;
+      phaseOffStreamOld[sid]       = streamNew;
+      if (act < phaseOffMin[sid]) phaseOffMin[sid] = act;
+      if (act > phaseOffMax[sid]) phaseOffMax[sid] = act;
+      
+      // copy
+      disDiagval[sid].phaseOffAct  = act;
+      disDiagval[sid].phaseOffN    = n;
+      disDiagval[sid].phaseOffAve  = aveNew;
+      disDiagval[sid].phaseOffSdev = sdev;
+      disDiagval[sid].phaseOffMin  = phaseOffMin[sid];
+      disDiagval[sid].phaseOffMax  = phaseOffMax[sid];
+    } // if isnan
+    else disDiagval[sid].phaseOffAct = NAN;
+    
     // rf frequency diagnostics; theoretical value is '0'
-    calcNue(&act, &actErr, disDiagval[sid].inj_rfOffAct, (double)B2B_TDIAGOBS, dicSetval[sid].inj_T, dicGetval[sid].inj_phaseSysmaxErr_ps);
-    if (dicSetval[sid].inj_T != 0) tmp = 1000000000000000000.0 /  (double)(dicSetval[sid].inj_T);
-    else                           tmp = 0.0;
-    n   = ++(inj_rfNueN[sid]);
-
-    // statistics
-    calcStats(&aveNew, inj_rfNueAveOld[sid], &streamNew, inj_rfNueStreamOld[sid], act, n ,&dummy , &sdev);
-    inj_rfNueAveOld[sid]           = aveNew;
-    inj_rfNueStreamOld[sid]        = streamNew;
-
-    // copy
-    disDiagval[sid].inj_rfNueAct   = act;
-    disDiagval[sid].inj_rfNueActErr= actErr;
-    disDiagval[sid].inj_rfNueN     = n;
-    disDiagval[sid].inj_rfNueAve   = aveNew;
-    disDiagval[sid].inj_rfNueSdev  = sdev;
-    disDiagval[sid].inj_rfNueDiff  = aveNew - tmp ;
-    disDiagval[sid].inj_rfNueEst   = calcDdsNue(aveNew);
+    if (!isnan(disDiagval[sid].inj_rfOffAct) && (dicSetval[sid].inj_T != -1)) {
+      calcNue(&act, &actErr, disDiagval[sid].inj_rfOffAct, (double)B2B_TDIAGOBS, dicSetval[sid].inj_T, dicGetval[sid].inj_phaseSysmaxErr_ps);
+      tmp = 1000000000000000000.0 /  (double)(dicSetval[sid].inj_T);
+      n   = ++(inj_rfNueN[sid]);
+      
+      // statistics
+      calcStats(&aveNew, inj_rfNueAveOld[sid], &streamNew, inj_rfNueStreamOld[sid], act, n ,&dummy , &sdev);
+      inj_rfNueAveOld[sid]           = aveNew;
+      inj_rfNueStreamOld[sid]        = streamNew;
+      
+      // copy
+      disDiagval[sid].inj_rfNueAct   = act;
+      disDiagval[sid].inj_rfNueActErr= actErr;
+      disDiagval[sid].inj_rfNueN     = n;
+      disDiagval[sid].inj_rfNueAve   = aveNew;
+      disDiagval[sid].inj_rfNueSdev  = sdev;
+      disDiagval[sid].inj_rfNueDiff  = aveNew - tmp ;
+      disDiagval[sid].inj_rfNueEst   = calcDdsNue(aveNew);
+    } // if isnan
+    else {
+      disDiagval[sid].inj_rfNueAct  = NAN;
+      disDiagval[sid].inj_rfNueDiff = NAN;
+    } // else isnan
 
     // offset from deadline CBS to measured injection phase
-    act = dicGetval[sid].priOff;
-    n   = ++(cbs_priOffN[sid]);
+    if (!isnan(dicGetval[sid].priOff)) {
+      act = dicGetval[sid].priOff;
+      n   = ++(cbs_priOffN[sid]);
 
-    // statistics
-    calcStats(&aveNew, cbs_priOffAveOld[sid], &streamNew, cbs_priOffStreamOld[sid], act, n , &dummy, &sdev);
-    cbs_priOffAveOld[sid]          = aveNew;
-    cbs_priOffStreamOld[sid]       = streamNew;
-    if (act < cbs_priOffMin[sid]) cbs_priOffMin[sid] = act;
-    if (act > cbs_priOffMax[sid]) cbs_priOffMax[sid] = act;
-
-    // copy
-    disDiagstat[sid].cbs_priOffAct  = act;
-    disDiagstat[sid].cbs_priOffN    = n;
-    disDiagstat[sid].cbs_priOffAve  = aveNew;
-    disDiagstat[sid].cbs_priOffSdev = sdev;
-    disDiagstat[sid].cbs_priOffMin  = cbs_priOffMin[sid];
-    disDiagstat[sid].cbs_priOffMax  = cbs_priOffMax[sid];
+      // statistics
+      calcStats(&aveNew, cbs_priOffAveOld[sid], &streamNew, cbs_priOffStreamOld[sid], act, n , &dummy, &sdev);
+      cbs_priOffAveOld[sid]          = aveNew;
+      cbs_priOffStreamOld[sid]       = streamNew;
+      if (act < cbs_priOffMin[sid]) cbs_priOffMin[sid] = act;
+      if (act > cbs_priOffMax[sid]) cbs_priOffMax[sid] = act;
+      
+      // copy
+      disDiagstat[sid].cbs_priOffAct  = act;
+      disDiagstat[sid].cbs_priOffN    = n;
+      disDiagstat[sid].cbs_priOffAve  = aveNew;
+      disDiagstat[sid].cbs_priOffSdev = sdev;
+      disDiagstat[sid].cbs_priOffMin  = cbs_priOffMin[sid];
+      disDiagstat[sid].cbs_priOffMax  = cbs_priOffMax[sid];
+    } // if isnan
+    else disDiagstat[sid].cbs_priOffAct = NAN;
     
   } // if mode B2B_MODE_B2C
 
   if (mode == B2B_MODE_B2B) {
 
     // match diagnostics; theoretical value is '0'
-    cor = (double)dicSetval[sid].inj_cTrig - (double)dicSetval[sid].cPhase;
-    act = b2b_fixTS(dicGetval[sid].inj_diagMatch, cor, dicSetval[sid].inj_T) - cor;
-    act = -act; // diagMatch is offset of trigger event to phase; but we want offset of phase to trigger
-    // printf("INJ match %8.3f, cor %8.3f, act %8.3f\n", dicGetval[sid].inj_diagMatch, cor, act);
-
-    n   = ++(inj_ddsOffN[sid]);
-
-    // statistics
-    calcStats(&aveNew, inj_ddsOffAveOld[sid], &streamNew, inj_ddsOffStreamOld[sid], act, n , &dummy, &sdev);
-    inj_ddsOffAveOld[sid]          = aveNew;
-    inj_ddsOffStreamOld[sid]       = streamNew;
-    if (act < inj_ddsOffMin[sid]) inj_ddsOffMin[sid] = act;
-    if (act > inj_ddsOffMax[sid]) inj_ddsOffMax[sid] = act;
-
-    // copy
-    disDiagval[sid].inj_ddsOffAct  = act;
-    disDiagval[sid].inj_ddsOffN    = n;
-    disDiagval[sid].inj_ddsOffAve  = aveNew;
-    disDiagval[sid].inj_ddsOffSdev = sdev;
-    disDiagval[sid].inj_ddsOffMin  = inj_ddsOffMin[sid];
-    disDiagval[sid].inj_ddsOffMax  = inj_ddsOffMax[sid];
+    if (!isnan(dicGetval[sid].inj_diagMatch) && !isnan(dicSetval[sid].cPhase) && !isnan(dicSetval[sid].inj_cTrig) && (dicSetval[sid].inj_T != -1)) { 
+      cor = dicSetval[sid].inj_cTrig - dicSetval[sid].cPhase;
+      act = b2b_fixTS(dicGetval[sid].inj_diagMatch, cor, dicSetval[sid].inj_T) - cor;
+      act = -act; // diagMatch is offset of trigger event to phase; but we want offset of phase to trigger
+      // printf("INJ match %8.3f, cor %8.3f, act %8.3f\n", dicGetval[sid].inj_diagMatch, cor, act);
+      
+      n   = ++(inj_ddsOffN[sid]);
+      
+      // statistics
+      calcStats(&aveNew, inj_ddsOffAveOld[sid], &streamNew, inj_ddsOffStreamOld[sid], act, n , &dummy, &sdev);
+      inj_ddsOffAveOld[sid]          = aveNew;
+      inj_ddsOffStreamOld[sid]       = streamNew;
+      if (act < inj_ddsOffMin[sid]) inj_ddsOffMin[sid] = act;
+      if (act > inj_ddsOffMax[sid]) inj_ddsOffMax[sid] = act;
+      
+      // copy
+      disDiagval[sid].inj_ddsOffAct  = act;
+      disDiagval[sid].inj_ddsOffN    = n;
+      disDiagval[sid].inj_ddsOffAve  = aveNew;
+      disDiagval[sid].inj_ddsOffSdev = sdev;
+      disDiagval[sid].inj_ddsOffMin  = inj_ddsOffMin[sid];
+      disDiagval[sid].inj_ddsOffMax  = inj_ddsOffMax[sid];
+    } // if isnan
+    else disDiagval[sid].inj_ddsOffAct = NAN;
 
   } // if mode B2B_MODE_B2B
   

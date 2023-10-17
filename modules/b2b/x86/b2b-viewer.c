@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 13-Oct-2023
+ *  version : 17-Oct-2023
  *
  * subscribes to and displays status of a b2b transfer
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_VIEWER_VERSION 0x000602
+#define B2B_VIEWER_VERSION 0x000700
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -160,37 +160,43 @@ void recSetvalue(long *tag, setval_t *address, int *size)
 {
   setval_t *tmp;
   uint32_t secs;
-  uint32_t nok;
 
   flagSetValid = (*size != sizeof(uint32_t));
 
   if (flagSetValid) {
     tmp = address;
 
-    nok           = (*tmp).flag_nok;
     set_mode      = (*tmp).mode;
-    if ((nok >> 1) & 0x1) {
+    set_cPhase    = (*tmp).cPhase;
+
+    if ((*tmp).ext_T == -1) {
       set_extT    = 0.0;
       set_extNue  = 0.0;
-    } // if not valid
+      set_cPhaseD = 0.0;
+    } // if extT
     else {
       set_extT    = (double)((*tmp).ext_T)/1000000000.0;
       set_extNue  = 1000000000.0 / set_extT;
-      set_cPhaseD = (double)((*tmp).cPhase) / (double)set_extT * 360.0; 
+      set_cPhaseD = set_cPhase  / (double)set_extT * 360.0; 
     } // valid
-    set_extH      = (*tmp).ext_h;
+    if ((*tmp).ext_h == -1)  set_extH = 0;
+    else                     set_extH = (*tmp).ext_h;
+
     set_extCTrig  = (*tmp).ext_cTrig;
-    if ((nok >> 4) & 0x1) {
+
+    if ((*tmp).inj_T == -1) {
       set_injT    = 0.0;
       set_injNue  = 0.0;
-    } // if not valid
+    } // if injT
     else {
       set_injT    = (double)((*tmp).inj_T)/1000000000.0;
       set_injNue  = 1000000000.0 / set_injT;
     } // valid
-    set_injH      = (*tmp).inj_h;
+
+    if ((*tmp).inj_h == -1)  set_injH = 0;
+    else                     set_injH = (*tmp).inj_h;
+
     set_injCTrig  = (*tmp).inj_cTrig;
-    set_cPhase    = (*tmp).cPhase;
 
     dic_get_timestamp(0, &secs, &set_msecs);
     set_secs      = (time_t)(secs);
@@ -379,20 +385,20 @@ int printDiag(uint32_t sid)
       break;
     case 2 ... 3 :
       if (dicDiagval.ext_ddsOffN == 0) printf("ext: %s\n", TXTNA);
-      else  printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
+      else  printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
                    dicDiagval.ext_ddsOffAct, dicDiagval.ext_ddsOffAve, dicDiagval.ext_ddsOffSdev, dicGetval.ext_phaseSysmaxErr_ps, dicDiagval.ext_ddsOffMin, dicDiagval.ext_ddsOffMax);
       printf("inj: %s\n", TXTNA);
       printf("b2b: %s\n", TXTNA);
       break;
     case 4      :
       if (dicDiagval.ext_ddsOffN == 0) printf("ext: %s\n", TXTNA);
-      else  printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
+      else  printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
                    dicDiagval.ext_ddsOffAct, dicDiagval.ext_ddsOffAve, dicDiagval.ext_ddsOffSdev, dicGetval.ext_phaseSysmaxErr_ps, dicDiagval.ext_ddsOffMin, dicDiagval.ext_ddsOffMax);
       if (dicDiagval.inj_ddsOffN == 0) printf("inj: %s\n", TXTNA);
-      else  printf("inj: act %8.3f ave(sdev,smx) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
+      else  printf("inj: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
                    dicDiagval.inj_ddsOffAct, dicDiagval.inj_ddsOffAve, dicDiagval.inj_ddsOffSdev, dicGetval.inj_phaseSysmaxErr_ps, dicDiagval.inj_ddsOffMin, dicDiagval.inj_ddsOffMax);
       if (dicDiagval.phaseOffN == 0) printf("inj: %s\n", TXTNA);
-      else  printf("b2b: act %8.3f ave(sdev,smx) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
+      else  printf("b2b: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
                    dicDiagval.phaseOffAct, dicDiagval.phaseOffAve, dicDiagval.phaseOffSdev, dicGetval.ext_phaseSysmaxErr_ps + dicGetval.inj_phaseSysmaxErr_ps, dicDiagval.phaseOffMin, dicDiagval.phaseOffMax);
       break;
     default :
@@ -410,30 +416,22 @@ int printKick(uint32_t sid)
   // extraction kicker
   if (set_mode == 0) printf("ext: %s\n\n", TXTNA);
   else {
-    if ((dicGetval.flag_nok >> 1) & 0x1)  printf("ext: %s\n\n", TXTERROR);
-    else {
-      printf("ext: monitor delay [ns] %5d", dicGetval.ext_dKickMon);
-      if ((dicGetval.flag_nok >> 2) & 0x1)  printf(", probe delay [ns] %s\n", TXTUNKWN);
-      else                                  printf(", probe delay [ns] %5d\n", dicGetval.ext_dKickProb);
-      if (set_mode > 1) printf("     mon h=1 ph [ns] act %4.0f, ave(sdev) %8.3f(%6.3f), minmax %4.0f, %4.0f\n", dicDiagstat.ext_monRemAct, dicDiagstat.ext_monRemAve, dicDiagstat.ext_monRemSdev,
-                               dicDiagstat.ext_monRemMin, dicDiagstat.ext_monRemMax);
-      else              printf("\n");
-    } // else flag_nok
+    printf("ext: monitor delay [ns] %5.0f", dicGetval.ext_dKickMon);
+    printf(", probe delay [ns] %5.0f\n"   , dicGetval.ext_dKickProb);
+    if (set_mode > 1) printf("     mon h=1 ph [ns] act %4.0f, ave(sdev) %8.3f(%6.3f), minmax %4.0f, %4.0f\n", dicDiagstat.ext_monRemAct, dicDiagstat.ext_monRemAve, dicDiagstat.ext_monRemSdev,
+                             dicDiagstat.ext_monRemMin, dicDiagstat.ext_monRemMax);
+    else              printf("\n");
   } // else mode == 0
 
   // injection kicker
   if (set_mode < 3) printf("inj: %s\n\n", TXTNA);
   else {
-    if ((dicGetval.flag_nok >> 6) & 0x1)  printf("inj: %s\n\n", TXTERROR);
-    else {
-      printf("inj: monitor delay [ns] %5d", dicGetval.inj_dKickMon);
-      if ((dicGetval.flag_nok >> 7) & 0x1)  printf(", probe delay [ns] %5s", TXTUNKWN);
-      else                                  printf(", probe delay [ns] %5d", dicGetval.inj_dKickProb);
-      printf(", diff mon. [ns] %d\n", dicGetval.inj_dKickMon - dicGetval.ext_dKickMon);
-      if (set_mode > 3) printf("     mon h=1 ph [ns] act %4.0f, ave(sdev) %8.3f(%6.3f), minmax %4.0f, %4.0f\n", dicDiagstat.inj_monRemAct, dicDiagstat.inj_monRemAve, dicDiagstat.inj_monRemSdev,
-                               dicDiagstat.inj_monRemMin, dicDiagstat.inj_monRemMax);
-      else              printf("\n");
-    } // else flag_nok
+    printf("inj: monitor delay [ns] %5.0f", dicGetval.inj_dKickMon);
+    printf(", probe delay [ns] %5.0f"     , dicGetval.inj_dKickProb);
+    printf(", diff mon. [ns] %f\n", dicGetval.inj_dKickMon - dicGetval.ext_dKickMon);
+    if (set_mode > 3) printf("     mon h=1 ph [ns] act %4.0f, ave(sdev) %8.3f(%6.3f), minmax %4.0f, %4.0f\n", dicDiagstat.inj_monRemAct, dicDiagstat.inj_monRemAve, dicDiagstat.inj_monRemSdev,
+                             dicDiagstat.inj_monRemMin, dicDiagstat.inj_monRemMax);
+    else              printf("\n");
   } // else mode < 3
 
   return 5;                                                 // 5 lines
@@ -515,7 +513,7 @@ int printRf(uint32_t sid)
   switch(set_mode) {
     case 0 ... 2 :
       if ((dicGetval.flagEvtErr >> 2) & 0x1) printf("ext: %s\n", TXTERROR);
-      else printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
+      else printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
                   dicDiagval.ext_rfOffAct, dicDiagval.ext_rfOffAve, dicDiagval.ext_rfOffSdev, dicGetval.ext_phaseSysmaxErr_ps, dicDiagval.ext_rfOffMin, dicDiagval.ext_rfOffMax);
       printf("inj: %s\n", TXTNA);
       if (dicDiagval.ext_rfNueN == 0) printf("ext: %s\n\n\n", TXTNA);
@@ -532,10 +530,10 @@ int printRf(uint32_t sid)
     case 3 ... 4 :
       if ((dicGetval.flagEvtErr >> 2) & 0x1)
         printf(   "ext: act %s\n", TXTERROR);
-      else printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
+      else printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
                   dicDiagval.ext_rfOffAct, dicDiagval.ext_rfOffAve, dicDiagval.ext_rfOffSdev, dicGetval.ext_phaseSysmaxErr_ps, dicDiagval.ext_rfOffMin, dicDiagval.ext_rfOffMax);
       if ((dicGetval.flagEvtErr >> 3) & 0x1) printf("inj: %s\n", TXTERROR);
-      else printf("inj: act %8.3f ave(sdev,smx) %8.3f(%6.3f,0.%03d) minmax %8.3f %8.3f\n",
+      else printf("inj: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
                   dicDiagval.inj_rfOffAct, dicDiagval.inj_rfOffAve, dicDiagval.inj_rfOffSdev, dicGetval.inj_phaseSysmaxErr_ps, dicDiagval.inj_rfOffMin, dicDiagval.inj_rfOffMax);
       if (dicDiagval.ext_rfNueN == 0) printf("ext: %s\n\n\n", TXTNA);
       else {

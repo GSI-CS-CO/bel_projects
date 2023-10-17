@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 11-Oct-2023
+ *  version : 17-Oct-2023
  *
  * publishes raw data of the b2b system
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000601
+#define B2B_SERV_RAW_VERSION 0x000700
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -153,6 +153,7 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
   //uint64_t one_ns_as = 1000000000;
   fdat_t   tmp;
   float    tmpf;
+  uint32_t tmpu;
 
   recSid      = ((evtId  & 0x00000000fff00000) >> 20);
 
@@ -170,42 +171,40 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       sid                          = recSid;
       tStart                       = deadline.getUTC();
       flagActive                   = 1;
-      setval.flag_nok              = 0xfffffffe;                  // mode is 'ok'
-      setval.mode                  = 0;
-      setval.ext_T                 = 0;
-      setval.ext_h                 = 0;
-      setval.ext_cTrig             = 0;
-      setval.inj_T                 = 0;
-      setval.inj_h                 = 0;
-      setval.inj_cTrig             = 0;
-      setval.cPhase                = 0;
-      getval.flag_nok              = 0xffffffff;
-      getval.ext_phase             = 0;
-      getval.ext_phaseFract_ps     = 0;
-      getval.ext_phaseErr_ps       = 0;
-      getval.ext_phaseSysmaxErr_ps = 0.0;
-      getval.ext_dKickMon          = 0;
-      getval.ext_dKickProb         = 0;
-      getval.ext_diagPhase         = 0;
-      getval.ext_diagMatch         = 0;
-      getval.inj_phase             = 0;
-      getval.inj_phaseFract_ps     = 0;
-      getval.inj_phaseErr_ps       = 0;
-      getval.inj_phaseSysmaxErr_ps = 0.0;
-      getval.inj_dKickMon          = 0;
-      getval.inj_dKickProb         = 0;
-      getval.inj_diagPhase         = 0;
-      getval.inj_diagMatch         = 0;
+      setval.mode                  = 0;      // there is no illegal value for 'mode', in the simplest case it is '0' (OFF)
+      setval.ext_T                 = -1;
+      setval.ext_h                 = -1;
+      setval.ext_cTrig             = NAN;
+      setval.inj_T                 = -1;
+      setval.inj_h                 = -1;
+      setval.inj_cTrig             = NAN;
+      setval.cPhase                = NAN;
+      getval.ext_phase             = -1;
+      getval.ext_phaseFract_ps     = NAN;
+      getval.ext_phaseErr_ps       = NAN;
+      getval.ext_phaseSysmaxErr_ps = NAN;
+      getval.ext_dKickMon          = NAN;
+      getval.ext_dKickProb         = NAN;
+      getval.ext_diagPhase         = NAN;
+      getval.ext_diagMatch         = NAN;
+      getval.inj_phase             = -1;
+      getval.inj_phaseFract_ps     = NAN;
+      getval.inj_phaseErr_ps       = NAN;
+      getval.inj_phaseSysmaxErr_ps = NAN;
+      getval.inj_dKickMon          = NAN;
+      getval.inj_dKickProb         = NAN;
+      getval.inj_diagPhase         = NAN;
+      getval.inj_diagMatch         = NAN;
       getval.flagEvtRec            = 0x1 << tag;
       getval.flagEvtErr            = 0;
       getval.flagEvtLate           = isLate << tag;
       getval.tCBS                  = deadline.getTAI();
-      getval.finOff                = 0;
-      getval.prrOff                = 0;
-      getval.preOff                = 0;
-      getval.priOff                = 0;
-      getval.kteOff                = 0;
-      getval.ktiOff                = 0;
+      getval.finOff                = NAN;
+      getval.prrOff                = NAN;
+      getval.preOff                = NAN;
+      getval.priOff                = NAN;
+      getval.kteOff                = NAN;
+      getval.ktiOff                = NAN;
       break;
     case tagStop    :
       flagActive       = 0;
@@ -216,50 +215,41 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       setval.mode              = ((param & 0x00f0000000000000) >> 52);
       setval.ext_h             = ((param & 0xff00000000000000) >> 56);
       setval.ext_T             = ((param & 0x000fffffffffffff));    // [as]
-      if (setval.ext_h) setval.flag_nok &= 0xfffffffb;              // if ok, reset bit ext_h invalid
-      if (setval.ext_T) setval.flag_nok &= 0xfffffffd;              // if ok, reset bit ext_T invalid
       tmpf                     = comlib_half2float((uint16_t)((tef & 0xffff0000)  >> 16)); // [us, hfloat]; chk for NAN?
       setval.ext_cTrig         = tmpf * 1000.0;                     // [ns]
-      setval.flag_nok         &= 0xfffffff7;                        // if ok, reset bit ext_cTrig invalid
       tmpf                     = comlib_half2float((uint16_t)( tef & 0x0000ffff));         // [us, hfloat]; chk for NAN?
       setval.inj_cTrig         = tmpf * 1000.0;                     // [ns]
-      setval.flag_nok         &= 0xffffffbf;                        // / if ok, reset bit inj_cTrig invalid
       break;
     case tagPmi     :
       setval.inj_h             = ((param & 0xff00000000000000) >> 56);
       setval.inj_T             = ((param & 0x000fffffffffffff));    // [as]
-      if (setval.inj_h) setval.flag_nok &= 0xffffffdf;              // if ok, reset bit inj_h invalid
-      if (setval.inj_T) setval.flag_nok &= 0xffffffef;              // if ok, reset bit inj_T invalid
       tmpf                     = comlib_half2float((uint16_t)((tef & 0xffff0000) >> 16));              // [us, hfloat]]
       setval.cPhase            = tmpf  * 1000;                      // [ns]
-      setval.flag_nok         &= 0xffffff7f;                        // if ok, reset cPhase invalid
       break;
     case tagPre     :
-      getval.preOff                = param - getval.tCBS;
+      getval.preOff                = (float)(param - getval.tCBS);
       getval.ext_phase             = param;
-      getval.ext_phaseFract_ps     = (int16_t)( tef & 0x0000ffff);
-      getval.ext_phaseErr_ps       = (int16_t)((tef & 0xffff0000) >> 16);
-      getval.ext_phaseSysmaxErr_ps = b2b_calc_max_sysdev_ps(setval.ext_T, B2B_NSAMPLES, 0);
-      if (param) getval.flag_nok  &= 0xfffffffe;
+      getval.ext_phaseFract_ps     = (float)( tef & 0x0000ffff);
+      getval.ext_phaseErr_ps       = (float)((tef & 0xffff0000) >> 16);
+      getval.ext_phaseSysmaxErr_ps = (float)b2b_calc_max_sysdev_ps(setval.ext_T, B2B_NSAMPLES, 0);
       flagErr                      = ((evtId & B2B_ERRFLAG_PMEXT) != 0);
       getval.flagEvtErr           |= flagErr << tag;
       break;
     case tagPri     :
-      getval.priOff                = param - getval.tCBS;
+      getval.priOff                = (float)(param - getval.tCBS);
       getval.inj_phase             = param;
-      getval.inj_phaseFract_ps     = (int16_t)( tef & 0x0000ffff);
-      getval.inj_phaseErr_ps       = (int16_t)((tef & 0xffff0000) >> 16);
-      getval.inj_phaseSysmaxErr_ps = b2b_calc_max_sysdev_ps(setval.inj_T, B2B_NSAMPLES, 0);
-      if (param) getval.flag_nok  &= 0xffffffdf;
+      getval.inj_phaseFract_ps     = (float)( tef & 0x0000ffff);
+      getval.inj_phaseErr_ps       = (float)((tef & 0xffff0000) >> 16);
+      getval.inj_phaseSysmaxErr_ps = (float)b2b_calc_max_sysdev_ps(setval.inj_T, B2B_NSAMPLES, 0);
       flagErr                      = ((evtId & B2B_ERRFLAG_PMINJ) != 0);
       getval.flagEvtErr           |= flagErr << tag;
       break;     
     case tagKte     :
       getval.kteOff            = deadline.getTAI() - getval.tCBS;
       tmpf                     = comlib_half2float((uint16_t)((tef & 0xffff0000) >> 16));        // [us, hfloat]
-      getval.finOff            = round(tmpf * 1000.0);
+      getval.finOff            = tmpf * 1000.0;
       tmpf                     = comlib_half2float((uint16_t)(tef & 0x0000ffff));                // [us, hfloat]
-      getval.prrOff            = round(tmpf * 1000.0);
+      getval.prrOff            = tmpf * 1000.0;
       flagErr                  = ((evtId & B2B_ERRFLAG_CBU) != 0);
       getval.flagEvtErr       |= flagErr << tag;
       break;
@@ -268,45 +258,41 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       flagErr                  = ((evtId    & 0x0000000000000010) >> 4);
       getval.flagEvtErr       |= flagErr << tag;
       break;
-    case tagKde     :
-      getval.ext_dKickProb     = param & 0x00000000ffffffff;
-      getval.ext_dKickMon      = ((param & 0xffffffff00000000) >> 32);
-      if (getval.ext_dKickProb != 0x7fffffff) getval.flag_nok &= 0xfffffffb;
-      if (getval.ext_dKickMon  != 0x7fffffff) getval.flag_nok &= 0xfffffffd;
+    case tagKde     :          // chk: consider changing the data type from int to float
+      tmpu                     = (uint32_t)(param & 0x00000000ffffffff);
+      if (tmpu == 0x7fffffff) getval.ext_dKickProb = NAN;
+      else                    getval.ext_dKickProb = tmpu;
+      tmpu                     = (uint32_t)((param & 0xffffffff00000000) >> 32);
+      if (tmpu == 0x7fffffff) getval.ext_dKickMon  = NAN;
+      else                    getval.ext_dKickMon  = tmpu;
       flagErr                  = ((evtId & B2B_ERRFLAG_KDEXT) != 0);
       getval.flagEvtErr       |= flagErr << tag;
       break;
-    case tagKdi     :
-      getval.inj_dKickProb     = param & 0x00000000ffffffff;
-      getval.inj_dKickMon      = ((param & 0xffffffff00000000) >> 32);
-      if (getval.inj_dKickProb != 0x7fffffff) getval.flag_nok &= 0xffffff7f;
-      if (getval.inj_dKickMon  != 0x7fffffff) getval.flag_nok &= 0xffffffbf;          
+    case tagKdi     :          // chk: consider changing the data type from int to float
+      tmpu                     = (uint32_t)(param & 0x00000000ffffffff);
+      if (tmpu == 0x7fffffff) getval.inj_dKickProb = NAN;
+      else                    getval.inj_dKickProb = tmpu;
+      tmpu                     = (uint32_t)((param & 0xffffffff00000000) >> 32);
+      if (tmpu == 0x7fffffff) getval.inj_dKickMon  = NAN;
+      else                    getval.inj_dKickMon  = tmpu;
       flagErr                  = ((evtId & B2B_ERRFLAG_KDINJ) != 0);
       getval.flagEvtErr       |= flagErr << tag;
       break;
-    case tagPde     :
+    case tagPde     :         // chk: consider changing 0x7fffffff to NAN
       tmp.data                 = ((param & 0x00000000ffffffff));
-      if (tmp.data != 0x7fffffff) {
-        getval.flag_nok &= 0xffffffef;
-        getval.ext_diagMatch   = (double)tmp.f;
-      } // if ok
+      if (tmp.data == 0x7fffffff) getval.ext_diagMatch = NAN;
+      else                        getval.ext_diagMatch = (double)tmp.f;
       tmp.data                 = ((param & 0xffffffff00000000) >> 32);
-      if (tmp.data != 0x7fffffff) {
-        getval.flag_nok &= 0xfffffff7;
-        getval.ext_diagPhase   = (double)tmp.f;
-      } // if ok
+      if (tmp.data == 0x7fffffff) getval.ext_diagPhase = NAN;
+      else                        getval.ext_diagPhase = (double)tmp.f;
       break;
-    case tagPdi     :
-      tmp.data             = ((param & 0x00000000ffffffff));
-      if (tmp.data != 0x7fffffff) {
-        getval.flag_nok &= 0xfffffdff;
-        getval.inj_diagMatch = (double)tmp.f;
-      } // if ok
-      tmp.data             = ((param & 0xffffffff00000000) >> 32);
-      if (tmp.data != 0x7fffffff) {
-        getval.flag_nok &= 0xfffffeff;
-        getval.inj_diagPhase = (double)tmp.f;
-      } // if ok
+    case tagPdi     :         // chk: consider changing 0x7fffffff to NAN
+      tmp.data                 = ((param & 0x00000000ffffffff));
+      if (tmp.data == 0x7fffffff) getval.inj_diagMatch = NAN;
+      else                        getval.inj_diagMatch = (double)tmp.f;
+      tmp.data                 = ((param & 0xffffffff00000000) >> 32);
+      if (tmp.data == 0x7fffffff) getval.inj_diagPhase = NAN;
+      else                        getval.inj_diagPhase = (double)tmp.f;
       break;
     default         :
       ;
@@ -373,7 +359,7 @@ void disAddServices(char *prefix)
   // set values
   for (i=0; i< B2B_NSID; i++) {
     sprintf(name, "%s-raw_sid%02d_getval", prefix, i);
-    disGetvalId[i]  = dis_add_service(name, "I:1;X:1;I:5;F:2;X:1;I:5;F:2;I:3;X:1;I:6", &(disGetval[i]), sizeof(getval_t), 0, 0);
+    disGetvalId[i]  = dis_add_service(name, "F:1;X:1;F:7;X:1;F:7;I:3;X:1;F:6", &(disGetval[i]), sizeof(getval_t), 0, 0);
     dis_set_timestamp(disGetvalId[i], 1, 0);
   } // for i
 } // disAddServices

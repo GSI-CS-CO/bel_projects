@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define B2BLIB_VERSION 0x000601
+#define B2BLIB_VERSION 0x000700
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  B2BLIB_STATUS_OK                 0            // OK
@@ -75,9 +75,8 @@ extern "C" {
   enum evtTag{tagPme, tagPmi, tagPre, tagPri, tagKte, tagKti, tagKde, tagKdi, tagPde, tagPdi, tagStart, tagStop};
   typedef enum evtTag evtTag_t;
 
-  // data type set values; data are in 'native units' used by the lm32 firmware
+  // data type set values; data are in 'native units' used by the lm32 firmware; NAN of unsigned integers is signaled by all bits set
   typedef struct{                                      
-    uint32_t flag_nok;                                 // flag: data not ok; bit 0: mode, bit 1: ext_T, ...
     uint32_t mode;                                     // mode of B2B system
     uint64_t ext_T;                                    // extraction: period of h=1 Group DDS [as]
     uint32_t ext_h;                                    // extraction: harmonic number of rf
@@ -90,34 +89,32 @@ extern "C" {
 
   // data type get values; data are in 'native units' used by the lm32 firmware
   typedef struct{                                      
-    uint32_t flag_nok;                                 // flag: data not ok; bit 0: ext_phase, bit 1: ext_dKickMon ...
-                                                       /* chk, these flags are a mess and shall be redone */
     uint64_t ext_phase;                                // extraction: phase of h=1 Group DDS, ns part
-    int32_t  ext_phaseFract_ps;                        // extraction: fractional phase [ps]
-    int32_t  ext_phaseErr_ps;                          // extraction: (statistical) uncertainty of phase [ps]
-    int32_t  ext_phaseSysmaxErr_ps;                    // extraction: maximum systematic error of phase [ps]
-    int32_t  ext_dKickMon;                             // extraction: offset electronics monitor signal [ns]
-    int32_t  ext_dKickProb;                            // extraction: offset magnet probe signal [ns]
+    float    ext_phaseFract_ps;                        // extraction: fractional phase [ps]
+    float    ext_phaseErr_ps;                          // extraction: (statistical) uncertainty of phase [ps]
+    float    ext_phaseSysmaxErr_ps;                    // extraction: maximum systematic error of phase [ps]
+    float    ext_dKickMon;                             // extraction: offset electronics monitor signal [ns]
+    float    ext_dKickProb;                            // extraction: offset magnet probe signal [ns]
     float    ext_diagPhase;                            // extraction: offset from expected h=1 to actual h=1 signal [ns]
     float    ext_diagMatch;                            // extraction: offset from calculated 'phase match' to actual h=1 signal [ns]
     uint64_t inj_phase;                                // injection : ...
-    int32_t  inj_phaseFract_ps;
-    int32_t  inj_phaseErr_ps;
-    int32_t  inj_phaseSysmaxErr_ps;    
-    int32_t  inj_dKickMon;
-    int32_t  inj_dKickProb;
+    float    inj_phaseFract_ps;
+    float    inj_phaseErr_ps;
+    float    inj_phaseSysmaxErr_ps;    
+    float    inj_dKickMon;
+    float    inj_dKickProb;
     float    inj_diagPhase;
     float    inj_diagMatch;
     uint32_t flagEvtRec;                               // flag for events received; pme, pmi, pre, pri, kte, kti, kde, kdi, pde, pdi, start, stop
     uint32_t flagEvtErr;                               // error flag;               pme, pmi, ...
     uint32_t flagEvtLate;                              // flag for events late;     pme, pmi, ...
     uint64_t tCBS;                                     // deadline of CMD_B2B_START [ns]
-    int32_t  finOff;                                   // offset from CBS deadline to time when CBU sends KTE [ns]
-    int32_t  prrOff;                                   // offset from CBS to time when CBU received all phase results
-    int32_t  preOff;                                   // offset from CBS to measured extraction phase [ns]
-    int32_t  priOff;                                   // offset from CBS to measured injection phase [ns]
-    int32_t  kteOff;                                   // offset from CBS to KTE deadline [ns]
-    int32_t  ktiOff;                                   // offset from CBS to KTI deadline [ns]
+    float    finOff;                                   // offset from CBS deadline to time when CBU sends KTE [ns]
+    float    prrOff;                                   // offset from CBS to time when CBU received all phase results
+    float    preOff;                                   // offset from CBS to measured extraction phase [ns]
+    float    priOff;                                   // offset from CBS to measured injection phase [ns]
+    float    kteOff;                                   // offset from CBS to KTE deadline [ns]
+    float    ktiOff;                                   // offset from CBS to KTI deadline [ns]
   } getval_t;
 
   // data type for diagnostic values

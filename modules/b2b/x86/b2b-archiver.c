@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-Oct-2023
+ *  version : 17-Oct-2023
  *
  * archives set and get values to data files
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_ARCHIVER_VERSION 0x000601
+#define B2B_ARCHIVER_VERSION 0x000700
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -63,6 +63,7 @@ const char* program;
 uint32_t   no_link_32    = 0xdeadbeef;
 uint64_t   no_link_64    = 0xdeadbeefce420651;
 char       no_link_str[] = "NO_LINK";
+char       nan_str[]     = "NAN";
 
 setval_t   dicSetval[B2B_NSID]; 
 getval_t   dicGetval[B2B_NSID];
@@ -140,50 +141,68 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   // set values
   new  = strSetval;
   new += sprintf(new, "%s.%03d; %d; %d", tCBS, utc_msecs[sid], sid, mode);
-  new += sprintf(new, "; %d; %lu"   , !((dicSetval[sid].flag_nok >> 1) & 0x1), dicSetval[sid].ext_T);
-  new += sprintf(new, "; %d; %d"    , !((dicSetval[sid].flag_nok >> 2) & 0x1), dicSetval[sid].ext_h);
-  new += sprintf(new, "; %d; %8.3f" , !((dicSetval[sid].flag_nok >> 3) & 0x1), dicSetval[sid].ext_cTrig);
-  new += sprintf(new, "; %d; %lu"   , !((dicSetval[sid].flag_nok >> 4) & 0x1), dicSetval[sid].inj_T);
-  new += sprintf(new, "; %d; %d"    , !((dicSetval[sid].flag_nok >> 5) & 0x1), dicSetval[sid].inj_h);
-  new += sprintf(new, "; %d; %8.3f" , !((dicSetval[sid].flag_nok >> 6) & 0x1), dicSetval[sid].inj_cTrig);
-  new += sprintf(new, "; %d; %8.3f" , !((dicSetval[sid].flag_nok >> 7) & 0x1), dicSetval[sid].cPhase);
+  if (dicSetval[sid].ext_T == -1) new += sprintf(new, "; %s"    , nan_str);
+  else new += sprintf(new, "; %lu"   , dicSetval[sid].ext_T);
+  if (dicSetval[sid].ext_h == -1) new += sprintf(new, "; %s"    , nan_str);
+  else new += sprintf(new, "; %d"    , dicSetval[sid].ext_h);
+  new += sprintf(new, "; %8.3f" , dicSetval[sid].ext_cTrig);
+  if (dicSetval[sid].inj_T == -1) new += sprintf(new, "; %s"    , nan_str);
+  else new += sprintf(new, "; %lu"   , dicSetval[sid].inj_T);
+  if (dicSetval[sid].inj_h == -1) new += sprintf(new, "; %s"    , nan_str);
+  else new += sprintf(new, "; %d"    , dicSetval[sid].inj_h);
+  new += sprintf(new, "; %8.3f" , dicSetval[sid].inj_cTrig);
+  new += sprintf(new, "; %8.3f" , dicSetval[sid].cPhase);
 
   // get values
   new  = strGetval;
-  new += sprintf(new, "; %d; %lu"  ,  !((dicGetval[sid].flag_nok     ) & 0x1), dicGetval[sid].ext_phase);
-  new += sprintf(new, "; %7.3f"    ,  (double)dicGetval[sid].ext_phaseFract_ps     / 1000.0);
-  new += sprintf(new, "; %7.3f"    ,  (double)dicGetval[sid].ext_phaseErr_ps       / 1000.0);
-  new += sprintf(new, "; %5.3f"    ,  (double)dicGetval[sid].ext_phaseSysmaxErr_ps / 1000.0);
-  new += sprintf(new, "; %d; %d"   ,  !((dicGetval[sid].flag_nok >> 1) & 0x1), dicGetval[sid].ext_dKickMon);
-  new += sprintf(new, "; %d; %d"   ,  !((dicGetval[sid].flag_nok >> 2) & 0x1), dicGetval[sid].ext_dKickProb);
+  if (dicGetval[sid].ext_phase == -1) new += sprintf(new, "; %s"   , nan_str);
+  else new += sprintf(new, "; %lu"  , dicGetval[sid].ext_phase);
+  new += sprintf(new, "; %7.3f"    ,  dicGetval[sid].ext_phaseFract_ps     / 1000.0);
+  new += sprintf(new, "; %7.3f"    ,  dicGetval[sid].ext_phaseErr_ps       / 1000.0);
+  new += sprintf(new, "; %5.3f"    ,  dicGetval[sid].ext_phaseSysmaxErr_ps / 1000.0);
+  new += sprintf(new, "%f"         ,  dicGetval[sid].ext_dKickMon);
+  new += sprintf(new, "%f"         ,  dicGetval[sid].ext_dKickProb);
 
-  cor  = 0;
-  act  = b2b_fixTS(dicGetval[sid].ext_diagPhase, cor, dicSetval[sid].ext_T) - cor;
-  new += sprintf(new, "; %d; %8.3f",  !((dicGetval[sid].flag_nok >> 3) & 0x1), act);
+  if (isnan(dicGetval[sid].ext_diagPhase) || (dicSetval[sid].ext_T == -1)) new += sprintf(new, "; %s"    , nan_str);
+  else {
+    cor  = 0;
+    act  = b2b_fixTS(dicGetval[sid].ext_diagPhase, cor, dicSetval[sid].ext_T) - cor;
+    new += sprintf(new, "%8.3f",  act);
+  } // is isnan
 
-  cor  = dicSetval[sid].ext_cTrig;
-  act  = b2b_fixTS(dicGetval[sid].ext_diagMatch, cor, dicSetval[sid].ext_T) - cor;
-  new += sprintf(new, "; %d; %8.3f",  !((dicGetval[sid].flag_nok >> 4) & 0x1), act);
-  
-  new += sprintf(new, "; %d; %lu",    !((dicGetval[sid].flag_nok >> 5) & 0x1), dicGetval[sid].inj_phase);
-  new += sprintf(new, "; %7.3f  ",    (double)dicGetval[sid].inj_phaseFract_ps     / 1000.0);
-  new += sprintf(new, "; %7.3f"  ,    (double)dicGetval[sid].inj_phaseErr_ps       / 1000.0);
-  new += sprintf(new, "; %5.3f"    ,  (double)dicGetval[sid].inj_phaseSysmaxErr_ps / 1000.0);
-  new += sprintf(new, "; %d; %d" ,    !((dicGetval[sid].flag_nok >> 6) & 0x1), dicGetval[sid].inj_dKickMon);
-  new += sprintf(new, "; %d; %d" ,    !((dicGetval[sid].flag_nok >> 7) & 0x1), dicGetval[sid].inj_dKickProb);
+  if (isnan(dicGetval[sid].ext_diagMatch) || (dicSetval[sid].ext_T == -1)) new += sprintf(new, "; %s"    , nan_str);
+  else {
+    cor  = dicSetval[sid].ext_cTrig;
+    act  = b2b_fixTS(dicGetval[sid].ext_diagMatch, cor, dicSetval[sid].ext_T) - cor;
+    new += sprintf(new, "%8.3f", act);
+  } // else isnan
 
-  cor  = 0;
-  act  = b2b_fixTS(dicGetval[sid].inj_diagPhase, cor, dicSetval[sid].inj_T) - cor;
-  new += sprintf(new, "; %d; %8.3f",  !((dicGetval[sid].flag_nok >> 8) & 0x1), act);
+  if (dicGetval[sid].inj_phase == -1) new += sprintf(new, "; %s"   , nan_str);
+  else new += sprintf(new, "; %lu", dicGetval[sid].inj_phase);
+  new += sprintf(new, "; %7.3f"   , dicGetval[sid].inj_phaseFract_ps     / 1000.0);
+  new += sprintf(new, "; %7.3f"   , dicGetval[sid].inj_phaseErr_ps       / 1000.0);
+  new += sprintf(new, "; %5.3f"   , dicGetval[sid].inj_phaseSysmaxErr_ps / 1000.0);
+  new += sprintf(new, "; %f"      , dicGetval[sid].inj_dKickMon);
+  new += sprintf(new, "; %f"      , dicGetval[sid].inj_dKickProb);
 
-  cor = dicSetval[sid].inj_cTrig - dicSetval[sid].cPhase;
-  act = b2b_fixTS(dicGetval[sid].inj_diagMatch, cor, dicSetval[sid].inj_T) - cor;
-  new += sprintf(new, "; %d; %8.3f",  !((dicGetval[sid].flag_nok >> 9) & 0x1), act);
+  if (isnan(dicGetval[sid].inj_diagPhase) || (dicSetval[sid].inj_T == -1)) new += sprintf(new, "; %s"   , nan_str);
+  else {
+    cor  = 0;
+    act  = b2b_fixTS(dicGetval[sid].inj_diagPhase, cor, dicSetval[sid].inj_T) - cor;
+    new += sprintf(new, "%8.3f",  act);
+  } // else isnan
+
+  if (isnan(dicSetval[sid].inj_cTrig) || isnan(dicGetval[sid].inj_diagMatch) || (dicSetval[sid].inj_T == -1)) new += sprintf(new, "; %s"   , nan_str);
+  else {
+    cor = dicSetval[sid].inj_cTrig - dicSetval[sid].cPhase;
+    act = b2b_fixTS(dicGetval[sid].inj_diagMatch, cor, dicSetval[sid].inj_T) - cor;
+    new += sprintf(new, "%8.3f",  act);
+  } // else isnan
 
   for (i=0; i<10; i++) new += sprintf(new, "; %d", ((dicGetval[sid].flagEvtRec  >> i) & 0x1));
   for (i=0; i<10; i++) new += sprintf(new, "; %d", ((dicGetval[sid].flagEvtErr  >> i) & 0x1));
   for (i=0; i<10; i++) new += sprintf(new, "; %d", ((dicGetval[sid].flagEvtLate >> i) & 0x1));
-  new += sprintf(new, "; %d; %d; %d; %d; %d; %d", dicGetval[sid].finOff, dicGetval[sid].prrOff, dicGetval[sid].preOff, dicGetval[sid].priOff, dicGetval[sid].kteOff, dicGetval[sid].ktiOff);
+  new += sprintf(new, "; %f; %f; %f; %f; %f; %f", dicGetval[sid].finOff, dicGetval[sid].prrOff, dicGetval[sid].preOff, dicGetval[sid].priOff, dicGetval[sid].kteOff, dicGetval[sid].ktiOff);
 
   // frequency values; chk: in principle we should check the timestammp of the service too?
   new = strNueval;
