@@ -74,7 +74,26 @@ vertex_set_t VisitorUploadCrawler::getChildrenByEdgeType(vertex_t vStart, const 
   return ret;
 }
 
-//FIXME Using vertex_set_t is plain wrong, as the output is a vector with a certain order! input must be a vector of vertices!
+vertex_t getOnlyChildByEdgeType(vertex_t vStart, const std::string edgeType) const {
+
+  vertex_set_t vs = getChildrenByEdgeType(vStart, edgeType);
+  if vs.size() == 0 return null_vertex;
+  if vs.size() == 1 return *vs.begin();
+  if vs.size()  > 1 throw std::runtime_error( exIntro + "Node " + g[vStart].name + "has more than one child of that edge type, result is ambiguous\n");
+}
+
+//get the adress of a dst node as perceived from a given src node (considers differing RAMs)
+  const uint32_t getEdgeTargetAdr(vertex_t vSrc, vertex_t vDst, const std::string& exMsg = "") {
+    uint32_t ret = LM32_NULL_PTR;
+    if (vSrc != null_vertex && vDst != null_vertex) {
+      auto src = at.lookupVertex(vSrc);
+      auto dst = at.lookupVertex(vDst);
+      ret = at.adrConv(AdrType::MGMT, (dst->cpu == src->cpu ? AdrType::INT : AdrType::PEER), dst->cpu, dst->adr);
+    }
+    return ret;
+  }  
+
+//Use this if the order of vertices does not matter
 vAdr& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, vAdr& ret, const unsigned int minResults, const unsigned int maxResults, const bool allowPeers, const uint32_t resultPadData) const {
   unsigned int results = ret.size();
 
@@ -92,30 +111,9 @@ vAdr& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, vAdr& ret, const unsig
 }
 
 
-//FIXME Using vertex_set_t is plain wrong, as the output map relates adress to key. Decide: is the order important? 
-//Solution 1: It is. inputs must both be vectors of equal length
-mVal& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, mVal& ret, std::vector<std::string> keys, const bool allowPeers) const {
-  
-
-  if (vs.size() != keys.size()) throw std::runtime_error(exIntro + "Number of node adresses to look up (" + vs.size() + ") does not match number of given map keys (" + keys.size() + ")\n")
-
-  for (auto tup : boost::combine(keys, vs)) {
-    std::string eKey; vertex_t eV; boost::tie(eKey, eV) = tup;
-
-    auto x = at.lookupVertex(eV);
-    if (!allowPeers && (x->cpu != cpu)) throw std::runtime_error( exIntro + "Child " + g[x->v].name + "'s CPU must not differ from parent " + g[v].name + "'s CPU\n");
-
-    AdrType aTmp = (x->cpu == cpu ? AdrType::INT : AdrType::PEER);
-    ret.insert({eKey, at.adrConv(AdrType::MGMT, aTmp, x->cpu, x->adr) });
-  }
-
-
-  return ret;
-}
-
- vAdr VisitorUploadCrawler::getDefDst() const {
-    vAdr ret;
-    childrenAdrs(getChildrenByEdgeType(v, det::sDefDst), ret);
+  mVal VisitorUploadCrawler::getDefDst() const {
+    mVal ret;
+    ret.insert({ NODE_DEF_DEST_PTR, getEdgeTargetAdr(v, getChildrenByEdgeType(v, det::sDefDst)[0]) });
     return ret;
   }
 
@@ -199,47 +197,51 @@ mVal& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, mVal& ret, std::vector
     return ret;
   }
 
-  vAdr VisitorUploadCrawler::getQInfo() const {
-    vAdr ret;
+  mVal VisitorUploadCrawler::getQInfo() const {
+    mVal ret;
 
     //search for dst list
-    childrenAdrs(getChildrenByEdgeType(v, det::sDstList), ret);
+    ret.insert({BLOCK_ALT_DEST_PTR, getEdgeTargetAdr(v, getOnlyChildByEdgeType(v, det::sDstList)) });
+
+    const uint32_t ptrOffs[3] = {BLOCK_CMDQ_LO_PTR, BLOCK_CMDQ_HI_PTR, BLOCK_CMDQ_IL_PTR};
 
     //search for q lists
     for (unsigned prio=PRIO_LO; prio <= PRIO_IL; prio++) {
-      vertex_set_t vsQ = getChildrenByEdgeType(v, det::sQPrio[prio]);
-      if (vsQ.size() > 0) g[v].np->setFlags(1 << (NFLG_BLOCK_QS_POS + prio));
-      childrenAdrs(vsQ, ret);
+      vertex_t vQ = getOnlyChildByEdgeType(v, det::sQPrio[prio]);
+      ret.insert({ptrOffs[prio], getEdgeTargetAdr(v, vQ) });
+      if (vQ != null_vertex) { g[v].np->setFlags(1 << (NFLG_BLOCK_QS_POS + prio)) }
     }
 
     return ret;
   }
 
-
+//FIXME - How do we know the order of edges is the same through all ser/des operations? if it is not, then the rd/wr indices will be mismatched and can cause trouble
 vAdr VisitorUploadCrawler::getQBuf() const {
   vAdr ret;
 
   vertex_set_t vsTmp = getChildrenByEdgeType(v, det::sMeta);
-  for (auto it : vsTmp) { if (g[it].type != dnt::sQBuf) vsTmp.erase(it); }
+  unsigned bufCnt;
+  for (auto it : vsTmp) { 
+    if (g[it].type == dnt::sQBuf) vsTmp.erase(it); }
   childrenAdrs(vsTmp, ret, 2, 2);
 
   return ret;
 }
 
-vAdr VisitorUploadCrawler::getCmdTarget(Command& el) const {
+ mVal  VisitorUploadCrawler::getCmdTarget(Command& el) const {
 
-  vAdr ret;
+  mVal ret;
   //search for cmd target
-  childrenAdrs(getChildrenByEdgeType(v, det::sCmdTarget), ret, 1, 1, true); // if this command is not connected, return a null pointer as target
-
+  ret.insert({CMD_TARGET, getEdgeTargetAdr(v, getOnlyChildByEdgeType(v, det::sCmdTarget)) });
   return ret;
 }
 
-vAdr VisitorUploadCrawler::getSwitchTarget() const {
+ mVal  VisitorUploadCrawler::getSwitchTarget() const {
 
-  vAdr ret;
+  mVal  ret;
   //search for cmd target
-  childrenAdrs(getChildrenByEdgeType(v, det::sSwitchTarget), ret, 1, 1, true); // if this command is not connected, return a null pointer as target
+  ret.insert({SWITCH_TARGET, getEdgeTargetAdr(v, getOnlyChildByEdgeType(v, det::sSwitchTarget)) });
+  
 
   return ret;
 }

@@ -132,6 +132,7 @@ typedef boost::graph_traits<Graph>::edge_descriptor edge_t;
 typedef boost::container::vector<vertex_t> vVertices;
 typedef std::map<vertex_t, vertex_t> vertex_map_t;
 typedef std::set<vertex_t> vertex_set_t;
+typedef std::vector<vertex_t> vertex_vec_t;
 typedef std::set<edge_t> edge_set_t;
 typedef std::map<vertex_t, std::set<vertex_t>> vertex_set_map_t;
 

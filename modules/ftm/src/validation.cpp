@@ -16,43 +16,44 @@ namespace Validation {
 
 
   const children_t cNonMeta = {n::sTMsg, n::sCmdNoop, n::sCmdFlow, n::sSwitch, n::sCmdFlush, n::sCmdWait, n::sBlockFixed, n::sBlockAlign};
+
 ConstellationRule_set cRules;
 
 
 
 void init() {
-        cRules.insert(ConstellationRule(n::sTMsg,        e::sDefDst,     cNonMeta,  1, 1  ));
-        cRules.insert(ConstellationRule(n::sTMsg,        e::sDynPar0,    cNonMeta,  0, 1  ));
-        cRules.insert(ConstellationRule(n::sTMsg,        e::sDynPar1,    cNonMeta,  0, 1  ));
-        cRules.insert(ConstellationRule(n::sTMsg,        e::sRef,        cNonMeta,  0, 3  ));
-        cRules.insert(ConstellationRule(n::sTMsg,        e::sVal,        cNonMeta,  0, 3  ));
-        cRules.insert(ConstellationRule(n::sTMsg,        e::sWrite,      cNonMeta,  0, 1  ));
-        cRules.insert(ConstellationRule(n::sCmdNoop,     e::sDefDst,     cNonMeta,  0, 1  ));
+        cRules.insert(ConstellationRule(n::sTMsg,        e::sDefDst,      cNonMeta,  1, 1  ));
+        cRules.insert(ConstellationRule(n::sTMsg,        e::sDynPar0,     cNonMeta,  0, 1  ));
+        cRules.insert(ConstellationRule(n::sTMsg,        e::sDynPar1,     cNonMeta,  0, 1  ));
+        cRules.insert(ConstellationRule(n::sTMsg,        e::sRef,         cNonMeta,  0, MaxOccurrance::REF  ));
+        cRules.insert(ConstellationRule(n::sTMsg,        e::sVal,         cNonMeta,  0, MaxOccurrance::REF  ));
+        cRules.insert(ConstellationRule(n::sTMsg,        e::sWrite,       cNonMeta,  0, 1  ));
+        cRules.insert(ConstellationRule(n::sCmdNoop,     e::sDefDst,      cNonMeta,  0, 1  ));
         cRules.insert(ConstellationRule(n::sCmdNoop,     e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},  0, 1  ));
-        cRules.insert(ConstellationRule(n::sCmdFlow,     e::sDefDst,     cNonMeta, 0, 1  ));
+        cRules.insert(ConstellationRule(n::sCmdFlow,     e::sDefDst,      cNonMeta, 0, 1  ));
         cRules.insert(ConstellationRule(n::sCmdFlow,     e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},  0, 1  ));
-        cRules.insert(ConstellationRule(n::sCmdFlow,     e::sCmdFlowDst, cNonMeta, 0, 1  ));
-        cRules.insert(ConstellationRule(n::sSwitch,      e::sDefDst,     cNonMeta, 0, 1  ));
+        cRules.insert(ConstellationRule(n::sCmdFlow,     e::sCmdFlowDst,  cNonMeta, 0, 1  ));
+        cRules.insert(ConstellationRule(n::sSwitch,      e::sDefDst,      cNonMeta, 0, 1  ));
         cRules.insert(ConstellationRule(n::sSwitch,      e::sSwitchTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},  0, 1  ));
-        cRules.insert(ConstellationRule(n::sSwitch,      e::sSwitchDst, cNonMeta, 0, 1  ));
-        cRules.insert(ConstellationRule(n::sCmdFlush,    e::sDefDst,     cNonMeta, 1, 1  ));
+        cRules.insert(ConstellationRule(n::sSwitch,      e::sSwitchDst,   cNonMeta, 0, 1  ));
+        cRules.insert(ConstellationRule(n::sCmdFlush,    e::sDefDst,      cNonMeta, 1, 1  ));
         cRules.insert(ConstellationRule(n::sCmdFlush,    e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},  0, 1  ));
         cRules.insert(ConstellationRule(n::sCmdFlush,    e::sCmdFlushOvr, cNonMeta, 0, 1  ));
-        cRules.insert(ConstellationRule(n::sCmdWait,     e::sDefDst,     cNonMeta, 0, 1  ));
+        cRules.insert(ConstellationRule(n::sCmdWait,     e::sDefDst,      cNonMeta, 0, 1  ));
         cRules.insert(ConstellationRule(n::sCmdWait,     e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},  0, 1  ));
-        cRules.insert(ConstellationRule(n::sBlockFixed,  e::sDefDst,     cNonMeta, 0, 1  ));
-        cRules.insert(ConstellationRule(n::sBlockFixed,  e::sAltDst,     cNonMeta, 0, 10 ));
+        cRules.insert(ConstellationRule(n::sBlockFixed,  e::sDefDst,      cNonMeta, 0, 1  ));
+        cRules.insert(ConstellationRule(n::sBlockFixed,  e::sAltDst,      cNonMeta, 0, MaxOccurrance::DST ));
         cRules.insert(ConstellationRule(n::sBlockFixed,  e::sDstList,    {n::sDstList},                                0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockFixed,  e::sQPrio[PRIO_IL],     {n::sQInfo},                          0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockFixed,  e::sQPrio[PRIO_HI],     {n::sQInfo},                          0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockFixed,  e::sQPrio[PRIO_LO],     {n::sQInfo},                          0, 1  ));
-        cRules.insert(ConstellationRule(n::sBlockAlign,  e::sDefDst,     cNonMeta,  0, 1  ));
-        cRules.insert(ConstellationRule(n::sBlockAlign,  e::sAltDst,     cNonMeta,  0, 10 ));
+        cRules.insert(ConstellationRule(n::sBlockAlign,  e::sDefDst,      cNonMeta,  0, 1  ));
+        cRules.insert(ConstellationRule(n::sBlockAlign,  e::sAltDst,      cNonMeta,  0, MaxOccurrance::DST ));
         cRules.insert(ConstellationRule(n::sBlockAlign,  e::sDstList,    {n::sDstList},                                0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockAlign,  e::sQPrio[PRIO_IL],     {n::sQInfo},                          0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockAlign,  e::sQPrio[PRIO_HI],     {n::sQInfo},                          0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockAlign,  e::sQPrio[PRIO_LO],     {n::sQInfo},                          0, 1  ));
-        cRules.insert(ConstellationRule(n::sQInfo,       e::sMeta,       {n::sQBuf},                                   2, 2  ));
+        cRules.insert(ConstellationRule(n::sQInfo,       e::sMeta,       {n::sQBuf},                                   MaxOccurrance::META, MaxOccurrance::META  ));
 
   }
 
@@ -129,7 +130,7 @@ void init() {
     std::string exIntroBase = "Event Sequence: Node '";
     std::string exIntro;
 
-    while (infiniteLoopGuard < MaxDepth::EVENT) {
+    while (infiniteLoopGuard < MaxOccurrance::EVENT) {
       //find the child connected to this node's defdest
       boost::tie(out_begin, out_end) = out_edges(vcurrent,g);
       for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
@@ -172,7 +173,7 @@ void init() {
       vcurrent = vnext;
       infiniteLoopGuard++;
     }
-    throw std::runtime_error(exIntroBase + g[v].name + "' of type '" + g[v].type + "' is probably part of an infinite loop ( iteration cnt > " + std::to_string(MaxDepth::EVENT) + ")\n");
+    throw std::runtime_error(exIntroBase + g[v].name + "' of type '" + g[v].type + "' is probably part of an infinite loop ( iteration cnt > " + std::to_string(MaxOccurrance::EVENT) + ")\n");
 
     //useless, but eases my mind.
     return;
@@ -183,7 +184,7 @@ void init() {
       Graph::out_edge_iterator out_begin, out_end, out_cur;
       vertex_t vnext;
 
-      if (recursionLvl +1 > MaxDepth::META) throw std::runtime_error("have more than " + std::to_string(MaxDepth::META) + " levels of children\n"); // too many child levels
+      if (recursionLvl +1 > MaxOccurrance::META) throw std::runtime_error("have more than " + std::to_string(MaxOccurrance::META) + " levels of children\n"); // too many child levels
       boost::tie(out_begin, out_end) = out_edges(vcurrent,g);
       for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
         vnext = target(*out_cur,g);
