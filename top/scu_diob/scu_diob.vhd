@@ -790,8 +790,9 @@ component  TM_quench_detection is
          nReset : in STD_LOGIC;
          time_pulse : in STD_LOGIC;
          delay : in STD_LOGIC_VECTOR(23 DOWNTO 0);
-         quench_in_out_sel : in STD_LOGIC_VECTOR(11 downto 0);
+         quench_out_sel : in STD_LOGIC_VECTOR(5 downto 0);
          out_reset: in std_logic;
+         write : in std_logic;
          QuDIn: in STD_LOGIC_VECTOR (53 downto 0);
          quench_en: in STD_LOGIC_VECTOR (53 downto 0);
          mute: in STD_LOGIC_VECTOR (53 downto 0);
@@ -1635,8 +1636,8 @@ signal quench_sk_out:  std_logic_vector(23 downto 0):=(others=>'0');
 --signal quench_sk_enable_signal: t_sk_quench_array:= (others=>(others=>'0'));
 signal quench_sk_enable_signal: std_logic_vector(53 downto 0):=(others=>'0');
 signal TM_out_delay: std_logic_vector(23 downto 0):=(others=>'0');
---signal quench_out_sel: std_logic_vector(5 downto 0) := (others=>'0');
-signal quench_in_out_sel :  STD_LOGIC_VECTOR(11 downto 0);
+signal quench_out_sel: std_logic_vector(5 downto 0) := (others=>'0');
+--signal quench_in_out_sel :  STD_LOGIC_VECTOR(11 downto 0);
 --  +============================================================================================================================+
 --  |                                   Übergabe-Signale für Anwender-IO: Out16   -- FG901_010                                   |
 --  +============================================================================================================================+
@@ -4123,8 +4124,9 @@ end generate Quench_Matrix_Gen;
     Port map( clk => clk_sys,
               nReset => rstn_sys,
               time_pulse => Ena_Every_1us,
-              quench_in_out_sel => quench_in_out_sel,
+              quench_out_sel => quench_out_sel,
               out_reset=>  quench_reg(0)(15),
+              write => quench_reg(0)(14),
               delay => TM_out_delay,
               QuDIn => Deb72_in(53 downto 0),
               quench_en => not quench_sk_enable_signal,
@@ -7997,7 +7999,7 @@ TM_out_delay(23 downto 0) <= quench_reg(7)(11 downto 0) & quench_reg(6)(11 downt
 --TM_out_delay(17 - 8) delay for outputs in slot 10   quench_reg(7)(5-0) 
 --TM_out_delay(23 - 18) delay for outputs in slot 9   quench_reg(7)(11-6) 
 
-quench_in_out_sel <= quench_reg(0)(11 downto 0);
+quench_out_sel <= quench_reg(0)(5 downto 0);
 
 
 
