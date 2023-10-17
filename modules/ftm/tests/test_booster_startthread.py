@@ -55,6 +55,7 @@ class UnitTestBoosterStartThread(dm_testbench.DmTestbench):
     self.startPattern('booster-thread-0-loop.dot', 'MAIN')
     file_name = 'snoop_booster-thread-0-loop.csv'
     column_Param = 20
+    self.delay(0.5)
     self.snoopToCsv(file_name, duration=3)
     self.analyseFrequencyFromCsv(file_name, column_Param)
     # assert that there are more than 61 tmsg in 3 seconds with EVTNO 0x0001.
