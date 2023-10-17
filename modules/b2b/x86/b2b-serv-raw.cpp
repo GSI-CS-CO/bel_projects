@@ -215,16 +215,22 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       setval.mode              = ((param & 0x00f0000000000000) >> 52);
       setval.ext_h             = ((param & 0xff00000000000000) >> 56);
       setval.ext_T             = ((param & 0x000fffffffffffff));    // [as]
-      tmpf                     = comlib_half2float((uint16_t)((tef & 0xffff0000)  >> 16)); // [us, hfloat]; chk for NAN?
-      setval.ext_cTrig         = tmpf * 1000.0;                     // [ns]
-      tmpf                     = comlib_half2float((uint16_t)( tef & 0x0000ffff));         // [us, hfloat]; chk for NAN?
-      setval.inj_cTrig         = tmpf * 1000.0;                     // [ns]
+      if (setval.mode > 0) {
+        tmpf                   = comlib_half2float((uint16_t)((tef & 0xffff0000)  >> 16)); // [us, hfloat]; chk for NAN?
+        setval.ext_cTrig       = tmpf * 1000.0;                     // [ns]
+      } // if mode
+      if (setval.mode > 2) {
+        tmpf                   = comlib_half2float((uint16_t)( tef & 0x0000ffff));         // [us, hfloat]; chk for NAN?
+        setval.inj_cTrig        = tmpf * 1000.0;                     // [ns]
+      } // if mode
       break;
     case tagPmi     :
       setval.inj_h             = ((param & 0xff00000000000000) >> 56);
       setval.inj_T             = ((param & 0x000fffffffffffff));    // [as]
-      tmpf                     = comlib_half2float((uint16_t)((tef & 0xffff0000) >> 16));              // [us, hfloat]]
-      setval.cPhase            = tmpf  * 1000;                      // [ns]
+      if (setval.mode > 3) {
+        tmpf                   = comlib_half2float((uint16_t)((tef & 0xffff0000) >> 16));              // [us, hfloat]]
+        setval.cPhase          = tmpf  * 1000;                      // [ns]
+      } // if mode
       break;
     case tagPre     :
       getval.preOff                = (float)(param - getval.tCBS);
