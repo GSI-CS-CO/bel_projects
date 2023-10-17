@@ -48,11 +48,16 @@ class HeapTests(dm_testbench.DmTestbench):
     # Check all CPUs that all threads are running.
     lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', '0xf', 'running'), [0], self.cpuQuantity, 0)
     # ~ self.printStdOutStdErr(lines)
+    if self.threadQuantity == 32:
+      threadMask = '0xffffffff'
+    elif self.threadQuantity == 8:
+      threadMask = '0xff'
+    else:
+      self.assertFalse(True, f'threadQuantity is {self.threadQuantity}, allowed: 8 or 32')
     for i in range(self.cpuQuantity):
-      if self.threadQuantity > 8:
-        self.assertEqual(lines[0][i], f'CPU {i} Running Threads: 0xffffffff', 'wrong output')
-      else:
-        self.assertEqual(lines[0][i], f'CPU {i} Running Threads: 0xff', 'wrong output')
+      expectedText = 'CPU {variable} Running Threads: {mask}'.format(variable=i, mask=threadMask)
+      messageText = 'wrong output, expected: CPU {variable} Running Threads: {mask}'.format(variable=i, mask=threadMask)
+      self.assertEqual(lines[0][i], expectedText, messageText)
     # Inspect heap for some CPUs
     cpu = '0x3'
     thread = '0xaa'
@@ -67,7 +72,7 @@ class HeapTests(dm_testbench.DmTestbench):
     """
     for cpu in range(self.cpuQuantity):
       for thread in range(self.threadQuantity):
-        self.runThreadXCommand(cpu, thread, 'heap')
+        self.runThreadXCommand(cpu, thread)
 
   @pytest.mark.thread8
   def testAbortSingleThreadHex(self):
@@ -76,30 +81,30 @@ class HeapTests(dm_testbench.DmTestbench):
     """
     for cpu in range(self.cpuQuantity):
       for thread in range(self.threadQuantity):
-        self.runThreadXCommand(cpu, f'0x{(1 << thread):x}', 'heap')
+        self.runThreadXCommand(cpu, f'0x{(1 << thread):x}')
 
   @pytest.mark.thread32
-  def testAbortSingleThreadDecimal(self):
+  def testAbortSingleThreadDecimal32(self):
     """Loop for all threads aborting this thread.
     Uses the thread number in decimal form.
     """
     self.threadQuantity = 32
     for cpu in range(self.cpuQuantity):
       for thread in range(self.threadQuantity):
-        self.runThreadXCommand(cpu, thread, 'heap')
+        self.runThreadXCommand(cpu, thread)
 
   @pytest.mark.thread32
-  def testAbortSingleThreadHex(self):
+  def testAbortSingleThreadHex32(self):
     """Loop for all threads aborting this thread.
     Uses the thread number in decimal form.
     """
     self.threadQuantity = 32
     for cpu in range(self.cpuQuantity):
       for thread in range(self.threadQuantity):
-        self.runThreadXCommand(cpu, f'0x{(1 << thread):x}', 'heap')
+        self.runThreadXCommand(cpu, f'0x{(1 << thread):x}')
 
-  def runThreadXCommand(self, cpu, thread, command, assertText=''):
+  def runThreadXCommand(self, cpu, thread):
     """Test for one thread. If commandSet=True set the time (parameter) with the command.
     In all cases, read this value. Check the output of both commands.
     """
-    self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', f'{cpu}', '-t', f'{thread}', command), [0], self.threadQuantity + 1, 0)
+    self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', f'{cpu}', '-t', f'{thread}', 'heap'), [0], self.threadQuantity + 1, 0)
