@@ -18,7 +18,7 @@ class HeapTests(dm_testbench.DmTestbench):
 
   @pytest.mark.thread32
   def testInspectHeap32(self):
-    self.threadQuantitiy = 32
+    self.threadQuantity = 32
     self.runInspectHeapThreads()
 
   def runInspectHeapThreads(self):
@@ -60,6 +60,7 @@ class HeapTests(dm_testbench.DmTestbench):
     lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', f'{cpu}', '-t', f'{thread}', 'heap'), [0], (self.threadQuantity + 1) * cpuCount, 0)
     # ~ self.printStdOutStdErr(lines)
 
+  @pytest.mark.thread8
   def testAbortSingleThreadDecimal(self):
     """Loop for all threads aborting this thread.
     Uses the thread number in decimal form.
@@ -68,6 +69,7 @@ class HeapTests(dm_testbench.DmTestbench):
       for thread in range(self.threadQuantity):
         self.runThreadXCommand(cpu, thread, 'heap')
 
+  @pytest.mark.thread8
   def testAbortSingleThreadHex(self):
     """Loop for all threads aborting this thread.
     Uses the thread number in decimal form.
@@ -76,8 +78,28 @@ class HeapTests(dm_testbench.DmTestbench):
       for thread in range(self.threadQuantity):
         self.runThreadXCommand(cpu, f'0x{(1 << thread):x}', 'heap')
 
+  @pytest.mark.thread32
+  def testAbortSingleThreadDecimal(self):
+    """Loop for all threads aborting this thread.
+    Uses the thread number in decimal form.
+    """
+    self.threadQuantity = 32
+    for cpu in range(self.cpuQuantity):
+      for thread in range(self.threadQuantity):
+        self.runThreadXCommand(cpu, thread, 'heap')
+
+  @pytest.mark.thread32
+  def testAbortSingleThreadHex(self):
+    """Loop for all threads aborting this thread.
+    Uses the thread number in decimal form.
+    """
+    self.threadQuantity = 32
+    for cpu in range(self.cpuQuantity):
+      for thread in range(self.threadQuantity):
+        self.runThreadXCommand(cpu, f'0x{(1 << thread):x}', 'heap')
+
   def runThreadXCommand(self, cpu, thread, command, assertText=''):
     """Test for one thread. If commandSet=True set the time (parameter) with the command.
     In all cases, read this value. Check the output of both commands.
     """
-    self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', f'{cpu}', '-t', f'{thread}', command), [0], 9, 0)
+    self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', f'{cpu}', '-t', f'{thread}', command), [0], self.threadQuantity + 1, 0)
