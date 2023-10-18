@@ -483,7 +483,7 @@ class DmTestbench(unittest.TestCase):
     """
     for cpu in ['0', '1', '2', '3']:
       self.startAndCheckSubprocess((self.getEbResetCommand(), self.datamaster, 'cpureset', cpu), [0])
-    self.delay(1.0)
+    self.delay(2.0)
 
   def listFromBits(self, bits, quantity) -> list:
     """Convert a 'bits', given as a string or an int, into a list of
