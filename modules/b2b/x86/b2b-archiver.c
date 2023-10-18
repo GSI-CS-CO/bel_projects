@@ -160,21 +160,21 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   new += sprintf(new, "; %7.3f"    ,  dicGetval[sid].ext_phaseFract);
   new += sprintf(new, "; %7.3f"    ,  dicGetval[sid].ext_phaseErr);
   new += sprintf(new, "; %5.3f"    ,  dicGetval[sid].ext_phaseSysmaxErr);
-  new += sprintf(new, "%f"         ,  dicGetval[sid].ext_dKickMon);
-  new += sprintf(new, "%f"         ,  dicGetval[sid].ext_dKickProb);
+  new += sprintf(new, "; %f"       ,  dicGetval[sid].ext_dKickMon);
+  new += sprintf(new, "; %f"       ,  dicGetval[sid].ext_dKickProb);
 
   if (isnan(dicGetval[sid].ext_diagPhase) || (dicSetval[sid].ext_T == -1)) new += sprintf(new, "; %s"    , nan_str);
   else {
     cor  = 0;
     act  = b2b_fixTS(dicGetval[sid].ext_diagPhase, cor, dicSetval[sid].ext_T) - cor;
-    new += sprintf(new, "%8.3f",  act);
+    new += sprintf(new, "; %8.3f",  act);
   } // is isnan
 
   if (isnan(dicGetval[sid].ext_diagMatch) || (dicSetval[sid].ext_T == -1)) new += sprintf(new, "; %s"    , nan_str);
   else {
     cor  = dicSetval[sid].ext_cTrig;
     act  = b2b_fixTS(dicGetval[sid].ext_diagMatch, cor, dicSetval[sid].ext_T) - cor;
-    new += sprintf(new, "%8.3f", act);
+    new += sprintf(new, "; %8.3f", act);
   } // else isnan
 
   if (dicGetval[sid].inj_phase == -1) new += sprintf(new, "; %s"   , nan_str);
@@ -189,14 +189,14 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   else {
     cor  = 0;
     act  = b2b_fixTS(dicGetval[sid].inj_diagPhase, cor, dicSetval[sid].inj_T) - cor;
-    new += sprintf(new, "%8.3f",  act);
+    new += sprintf(new, "; %8.3f",  act);
   } // else isnan
 
   if (isnan(dicSetval[sid].inj_cTrig) || isnan(dicGetval[sid].inj_diagMatch) || (dicSetval[sid].inj_T == -1)) new += sprintf(new, "; %s"   , nan_str);
   else {
     cor = dicSetval[sid].inj_cTrig - dicSetval[sid].cPhase;
     act = b2b_fixTS(dicGetval[sid].inj_diagMatch, cor, dicSetval[sid].inj_T) - cor;
-    new += sprintf(new, "%8.3f",  act);
+    new += sprintf(new, "; %8.3f",  act);
   } // else isnan
 
   for (i=0; i<10; i++) new += sprintf(new, "; %d", ((dicGetval[sid].flagEvtRec  >> i) & 0x1));
