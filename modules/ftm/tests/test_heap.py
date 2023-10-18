@@ -69,7 +69,7 @@ class HeapTests(dm_testbench.DmTestbench):
     # ~ self.printStdOutStdErr(lines)
 
   @pytest.mark.thread8
-  def testAbortSingleThreadDecimal(self):
+  def testHeapSingleThreadDecimal(self):
     """Loop for all threads aborting this thread.
     Uses the thread number in decimal form.
     """
@@ -78,7 +78,7 @@ class HeapTests(dm_testbench.DmTestbench):
         self.runThreadXCommand(cpu, thread)
 
   @pytest.mark.thread8
-  def testAbortSingleThreadHex(self):
+  def testHeapSingleThreadHex(self):
     """Loop for all threads aborting this thread.
     Uses the thread number in decimal form.
     """
@@ -87,7 +87,7 @@ class HeapTests(dm_testbench.DmTestbench):
         self.runThreadXCommand(cpu, f'0x{(1 << thread):x}')
 
   @pytest.mark.thread32
-  def testAbortSingleThreadDecimal32(self):
+  def testHeapSingleThreadDecimal32(self):
     """Loop for all threads aborting this thread.
     Uses the thread number in decimal form.
     """
@@ -97,7 +97,7 @@ class HeapTests(dm_testbench.DmTestbench):
         self.runThreadXCommand(cpu, thread)
 
   @pytest.mark.thread32
-  def testAbortSingleThreadHex32(self):
+  def testHeapSingleThreadHex32(self):
     """Loop for all threads aborting this thread.
     Uses the thread number in decimal form.
     """
