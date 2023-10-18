@@ -390,14 +390,14 @@ uint32_t getBitMask(const char *optarg, const uint32_t quantity, const char *pro
 typedef vEbwrs& (CarpeDM::*setterFunction)(vEbwrs& ew, uint8_t cpuIdx, uint8_t thrIdx, uint64_t t);
 typedef uint64_t (CarpeDM::*getterFunction)(uint8_t cpuIdx, uint8_t thrIdx);
 
-bool handleCpuBitsThreadBits(const char *text, uint32_t cpuBits, uint32_t threadBits, setterFunction setter, getterFunction getter, CarpeDM *cdm, std::string *targetName, vEbwrs *ew) {
+bool handleCpuBitsThreadBits(const char *text, uint32_t cpuBits, uint32_t threadBits, setterFunction setter, getterFunction getter, CarpeDM& cdm, std::string *targetName, vEbwrs& ew) {
   if (setter != nullptr && !targetName->empty()) {
     uint64_t parameter = std::stoll(*targetName, nullptr, 0);
-    for (int cpu = 0; cpu < cdm->getCpuQty(); cpu++) {
+    for (int cpu = 0; cpu < cdm.getCpuQty(); cpu++) {
       if ((cpuBits >> cpu) & 1) {
         for (int thread=0; thread < getThreadQty(); thread++) {
           if ((threadBits >> thread) & 1) {
-            (cdm->*setter)(*ew, cpu, thread, parameter);
+            (cdm.*setter)(ew, cpu, thread, parameter);
             std::cout << std::dec << "setting " << text << ": CPU " << cpu << " Thread " << thread << "." << std::endl;
           }
         }
@@ -406,13 +406,13 @@ bool handleCpuBitsThreadBits(const char *text, uint32_t cpuBits, uint32_t thread
     // no return here, next action: send commands with ew vector.
     return false;
   } else {
-    for (int cpu = 0; cpu < cdm->getCpuQty(); cpu++) {
+    for (int cpu = 0; cpu < cdm.getCpuQty(); cpu++) {
       if ((cpuBits >> cpu) & 1) {
         for (int thread=0; thread < getThreadQty(); thread++) {
           if ((threadBits >> thread) & 1) {
             std::string caption = std::string(text);
             caption[0] = std::toupper(caption[0]);
-            std::cout << std::dec << "CPU " << cpu << " Thr " << thread << " " << caption << " " << (cdm->*getter)(cpu, thread) << std::endl;
+            std::cout << std::dec << "CPU " << cpu << " Thr " << thread << " " << caption << " " << (cdm.*getter)(cpu, thread) << std::endl;
           }
         }
       }
@@ -1006,15 +1006,15 @@ int main(int argc, char* argv[]) {
       }
       return 0;
     } else if (cmp == "starttime") {
-      if (handleCpuBitsThreadBits("starttime", cpuBits, threadBits, &CarpeDM::setThrStartTime, &CarpeDM::getThrStartTime, &cdm, &targetName, &ew)) {
+      if (handleCpuBitsThreadBits("starttime", cpuBits, threadBits, &CarpeDM::setThrStartTime, &CarpeDM::getThrStartTime, cdm, &targetName, ew)) {
         return 0;
       }
     } else if (cmp == "preptime") {
-      if (handleCpuBitsThreadBits("preptime", cpuBits, threadBits, &CarpeDM::setThrPrepTime, &CarpeDM::getThrPrepTime, &cdm, &targetName, &ew)) {
+      if (handleCpuBitsThreadBits("preptime", cpuBits, threadBits, &CarpeDM::setThrPrepTime, &CarpeDM::getThrPrepTime, cdm, &targetName, ew)) {
         return 0;
       }
     } else if (cmp == "deadline")  {
-      if (handleCpuBitsThreadBits("Deadline", cpuBits, threadBits, nullptr, &CarpeDM::getThrDeadline, &cdm, &targetName, &ew)) {
+      if (handleCpuBitsThreadBits("Deadline", cpuBits, threadBits, nullptr, &CarpeDM::getThrDeadline, cdm, &targetName, ew)) {
         return 0;
       }
     } else if (cmp == "cleardiag")  {
