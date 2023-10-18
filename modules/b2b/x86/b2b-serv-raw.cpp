@@ -180,17 +180,17 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       setval.inj_cTrig             = NAN;
       setval.cPhase                = NAN;
       getval.ext_phase             = -1;
-      getval.ext_phaseFract_ps     = NAN;
-      getval.ext_phaseErr_ps       = NAN;
-      getval.ext_phaseSysmaxErr_ps = NAN;
+      getval.ext_phaseFract        = NAN;
+      getval.ext_phaseErr          = NAN;
+      getval.ext_phaseSysmaxErr    = NAN;
       getval.ext_dKickMon          = NAN;
       getval.ext_dKickProb         = NAN;
       getval.ext_diagPhase         = NAN;
       getval.ext_diagMatch         = NAN;
       getval.inj_phase             = -1;
-      getval.inj_phaseFract_ps     = NAN;
-      getval.inj_phaseErr_ps       = NAN;
-      getval.inj_phaseSysmaxErr_ps = NAN;
+      getval.inj_phaseFract        = NAN;
+      getval.inj_phaseErr          = NAN;
+      getval.inj_phaseSysmaxErr    = NAN;
       getval.inj_dKickMon          = NAN;
       getval.inj_dKickProb         = NAN;
       getval.inj_diagPhase         = NAN;
@@ -233,22 +233,22 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       } // if mode
       break;
     case tagPre     :
-      getval.preOff                = (float)(param - getval.tCBS);
-      getval.ext_phase             = param;
-      getval.ext_phaseFract_ps     = (float)( tef & 0x0000ffff);
-      getval.ext_phaseErr_ps       = (float)((tef & 0xffff0000) >> 16);
-      getval.ext_phaseSysmaxErr_ps = (float)b2b_calc_max_sysdev_ps(setval.ext_T, B2B_NSAMPLES, 0);
-      flagErr                      = ((evtId & B2B_ERRFLAG_PMEXT) != 0);
-      getval.flagEvtErr           |= flagErr << tag;
+      getval.preOff             = (float)(param - getval.tCBS);
+      getval.ext_phase          = param;
+      getval.ext_phaseFract     = (float)( tef & 0x0000ffff) / 1000.0 ;
+      getval.ext_phaseErr       = (float)((tef & 0xffff0000) >> 16) / 1000.0;
+      getval.ext_phaseSysmaxErr = (float)b2b_calc_max_sysdev_ps(setval.ext_T, B2B_NSAMPLES, 0) / 1000.0;
+      flagErr                   = ((evtId & B2B_ERRFLAG_PMEXT) != 0);
+      getval.flagEvtErr        |= flagErr << tag;
       break;
     case tagPri     :
-      getval.priOff                = (float)(param - getval.tCBS);
-      getval.inj_phase             = param;
-      getval.inj_phaseFract_ps     = (float)( tef & 0x0000ffff);
-      getval.inj_phaseErr_ps       = (float)((tef & 0xffff0000) >> 16);
-      getval.inj_phaseSysmaxErr_ps = (float)b2b_calc_max_sysdev_ps(setval.inj_T, B2B_NSAMPLES, 0);
-      flagErr                      = ((evtId & B2B_ERRFLAG_PMINJ) != 0);
-      getval.flagEvtErr           |= flagErr << tag;
+      getval.priOff             = (float)(param - getval.tCBS);
+      getval.inj_phase          = param;
+      getval.inj_phaseFract     = (float)( tef & 0x0000ffff) / 1000.0;
+      getval.inj_phaseErr       = (float)((tef & 0xffff0000) >> 16) / 1000.0;
+      getval.inj_phaseSysmaxErr = (float)b2b_calc_max_sysdev_ps(setval.inj_T, B2B_NSAMPLES, 0) / 1000.0;
+      flagErr                   = ((evtId & B2B_ERRFLAG_PMINJ) != 0);
+      getval.flagEvtErr        |= flagErr << tag;
       break;     
     case tagKte     :
       getval.kteOff            = deadline.getTAI() - getval.tCBS;

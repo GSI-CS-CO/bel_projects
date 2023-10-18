@@ -336,7 +336,7 @@ int calcNue(double  *nue,               // frequency value [Hz]
             double   obsOffset,         // observed mean value of deviation from 'soll value'
             uint64_t TObs,              // observation interval
             uint64_t TH1As,             // H=1 gDDS period [as],
-            double   sysmax_ps          // max systematic error of phase measurement [ps]
+            double   sysmax             // max systematic error of phase measurement [ns]
             )
 {
   int64_t  nPeriod;                     // # of rf periods within T
@@ -373,7 +373,7 @@ int calcNue(double  *nue,               // frequency value [Hz]
     // results of many measurements are analyzed, it should not be included into the
     // uncertainties the individual data but only added to the final result
     diffStat = (double)B2B_WR_JITTER / 1000000.0;
-    diffSys  = sysmax_ps / 1000.0 / 3.0;
+    diffSys  = sysmax / 3.0;
     diffErr  = sqrt(diffStat*diffStat + diffSys*diffSys);
     diffErr  = sqrt(2) * diffErr;
     diffErr  = diffErr / (double)nPeriod;
@@ -511,7 +511,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
 
     // rf frequency diagnostics; theoretical value is set value
     if (!isnan(disDiagval[sid].ext_rfOffAct)) {
-      calcNue(&act, &actErr, disDiagval[sid].ext_rfOffAct, (double)B2B_TDIAGOBS, dicSetval[sid].ext_T, dicGetval[sid].ext_phaseSysmaxErr_ps);
+      calcNue(&act, &actErr, disDiagval[sid].ext_rfOffAct, (double)B2B_TDIAGOBS, dicSetval[sid].ext_T, dicGetval[sid].ext_phaseSysmaxErr);
       if (dicSetval[sid].ext_T != 0) tmp = 1000000000000000000.0 /  (double)(dicSetval[sid].ext_T);
       else                           tmp = 0.0;
       n   = ++(ext_rfNueN[sid]);
@@ -719,30 +719,9 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
       disDiagval[sid].inj_rfOffMax   = inj_rfOffMax[sid];
     } // if isnan
 
-    // b2bphase diagnostics; theoretical value is 'phase correction'
-    if (!isnan(disDiagval[sid].inj_ddsOffAct) && !isnan(disDiagval[sid].ext_ddsOffAct) && !isnan(dicSetval[sid].cPhase)) {
-      act = disDiagval[sid].inj_ddsOffAct - disDiagval[sid].ext_ddsOffAct + dicSetval[sid].cPhase;
-      n   = ++(phaseOffN[sid]);
-      
-      // statistics
-      calcStats(&aveNew, phaseOffAveOld[sid], &streamNew, phaseOffStreamOld[sid], act, n , &dummy, &sdev);
-      phaseOffAveOld[sid]          = aveNew;
-      phaseOffStreamOld[sid]       = streamNew;
-      if (act < phaseOffMin[sid]) phaseOffMin[sid] = act;
-      if (act > phaseOffMax[sid]) phaseOffMax[sid] = act;
-      
-      // copy
-      disDiagval[sid].phaseOffAct  = act;
-      disDiagval[sid].phaseOffN    = n;
-      disDiagval[sid].phaseOffAve  = aveNew;
-      disDiagval[sid].phaseOffSdev = sdev;
-      disDiagval[sid].phaseOffMin  = phaseOffMin[sid];
-      disDiagval[sid].phaseOffMax  = phaseOffMax[sid];
-    } // if isnan
-    
     // rf frequency diagnostics; theoretical value is '0'
     if (!isnan(disDiagval[sid].inj_rfOffAct) && (dicSetval[sid].inj_T != -1)) {
-      calcNue(&act, &actErr, disDiagval[sid].inj_rfOffAct, (double)B2B_TDIAGOBS, dicSetval[sid].inj_T, dicGetval[sid].inj_phaseSysmaxErr_ps);
+      calcNue(&act, &actErr, disDiagval[sid].inj_rfOffAct, (double)B2B_TDIAGOBS, dicSetval[sid].inj_T, dicGetval[sid].inj_phaseSysmaxErr);
       tmp = 1000000000000000000.0 /  (double)(dicSetval[sid].inj_T);
       n   = ++(inj_rfNueN[sid]);
       
@@ -809,6 +788,27 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
       disDiagval[sid].inj_ddsOffSdev = sdev;
       disDiagval[sid].inj_ddsOffMin  = inj_ddsOffMin[sid];
       disDiagval[sid].inj_ddsOffMax  = inj_ddsOffMax[sid];
+    } // if isnan
+
+    // b2bphase diagnostics; theoretical value is 'phase correction'
+    if (!isnan(disDiagval[sid].inj_ddsOffAct) && !isnan(disDiagval[sid].ext_ddsOffAct) && !isnan(dicSetval[sid].cPhase)) {
+      act = disDiagval[sid].inj_ddsOffAct - disDiagval[sid].ext_ddsOffAct + dicSetval[sid].cPhase;
+      n   = ++(phaseOffN[sid]);
+      
+      // statistics
+      calcStats(&aveNew, phaseOffAveOld[sid], &streamNew, phaseOffStreamOld[sid], act, n , &dummy, &sdev);
+      phaseOffAveOld[sid]          = aveNew;
+      phaseOffStreamOld[sid]       = streamNew;
+      if (act < phaseOffMin[sid]) phaseOffMin[sid] = act;
+      if (act > phaseOffMax[sid]) phaseOffMax[sid] = act;
+      
+      // copy
+      disDiagval[sid].phaseOffAct  = act;
+      disDiagval[sid].phaseOffN    = n;
+      disDiagval[sid].phaseOffAve  = aveNew;
+      disDiagval[sid].phaseOffSdev = sdev;
+      disDiagval[sid].phaseOffMin  = phaseOffMin[sid];
+      disDiagval[sid].phaseOffMax  = phaseOffMax[sid];
     } // if isnan
 
   } // if mode B2B_MODE_B2B

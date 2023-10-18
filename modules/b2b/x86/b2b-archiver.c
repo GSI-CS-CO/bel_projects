@@ -157,9 +157,9 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   new  = strGetval;
   if (dicGetval[sid].ext_phase == -1) new += sprintf(new, "; %s"   , nan_str);
   else new += sprintf(new, "; %lu"  , dicGetval[sid].ext_phase);
-  new += sprintf(new, "; %7.3f"    ,  dicGetval[sid].ext_phaseFract_ps     / 1000.0);
-  new += sprintf(new, "; %7.3f"    ,  dicGetval[sid].ext_phaseErr_ps       / 1000.0);
-  new += sprintf(new, "; %5.3f"    ,  dicGetval[sid].ext_phaseSysmaxErr_ps / 1000.0);
+  new += sprintf(new, "; %7.3f"    ,  dicGetval[sid].ext_phaseFract);
+  new += sprintf(new, "; %7.3f"    ,  dicGetval[sid].ext_phaseErr);
+  new += sprintf(new, "; %5.3f"    ,  dicGetval[sid].ext_phaseSysmaxErr);
   new += sprintf(new, "%f"         ,  dicGetval[sid].ext_dKickMon);
   new += sprintf(new, "%f"         ,  dicGetval[sid].ext_dKickProb);
 
@@ -179,9 +179,9 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
 
   if (dicGetval[sid].inj_phase == -1) new += sprintf(new, "; %s"   , nan_str);
   else new += sprintf(new, "; %lu", dicGetval[sid].inj_phase);
-  new += sprintf(new, "; %7.3f"   , dicGetval[sid].inj_phaseFract_ps     / 1000.0);
-  new += sprintf(new, "; %7.3f"   , dicGetval[sid].inj_phaseErr_ps       / 1000.0);
-  new += sprintf(new, "; %5.3f"   , dicGetval[sid].inj_phaseSysmaxErr_ps / 1000.0);
+  new += sprintf(new, "; %7.3f"   , dicGetval[sid].inj_phaseFract);
+  new += sprintf(new, "; %7.3f"   , dicGetval[sid].inj_phaseErr);
+  new += sprintf(new, "; %5.3f"   , dicGetval[sid].inj_phaseSysmaxErr);
   new += sprintf(new, "; %f"      , dicGetval[sid].inj_dKickMon);
   new += sprintf(new, "; %f"      , dicGetval[sid].inj_dKickProb);
 

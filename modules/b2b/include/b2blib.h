@@ -90,17 +90,17 @@ extern "C" {
   // data type get values; data are in 'native units' used by the lm32 firmware
   typedef struct{                                      
     uint64_t ext_phase;                                // extraction: phase of h=1 Group DDS, ns part
-    float    ext_phaseFract_ps;                        // extraction: fractional phase [ps]
-    float    ext_phaseErr_ps;                          // extraction: (statistical) uncertainty of phase [ps]
-    float    ext_phaseSysmaxErr_ps;                    // extraction: maximum systematic error of phase [ps]
+    float    ext_phaseFract;                           // extraction: fractional phase [ps]
+    float    ext_phaseErr;                             // extraction: (statistical) uncertainty of phase [ps]
+    float    ext_phaseSysmaxErr;                       // extraction: maximum systematic error of phase [ns]
     float    ext_dKickMon;                             // extraction: offset electronics monitor signal [ns]
     float    ext_dKickProb;                            // extraction: offset magnet probe signal [ns]
     float    ext_diagPhase;                            // extraction: offset from expected h=1 to actual h=1 signal [ns]
     float    ext_diagMatch;                            // extraction: offset from calculated 'phase match' to actual h=1 signal [ns]
     uint64_t inj_phase;                                // injection : ...
-    float    inj_phaseFract_ps;
-    float    inj_phaseErr_ps;
-    float    inj_phaseSysmaxErr_ps;    
+    float    inj_phaseFract;
+    float    inj_phaseErr;
+    float    inj_phaseSysmaxErr;    
     float    inj_dKickMon;
     float    inj_dKickProb;
     float    inj_diagPhase;

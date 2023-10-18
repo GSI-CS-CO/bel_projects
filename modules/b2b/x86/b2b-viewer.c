@@ -386,20 +386,20 @@ int printDiag(uint32_t sid)
     case 2 ... 3 :
       if (dicDiagval.ext_ddsOffN == 0) printf("ext: %s\n", TXTNA);
       else  printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
-                   dicDiagval.ext_ddsOffAct, dicDiagval.ext_ddsOffAve, dicDiagval.ext_ddsOffSdev, dicGetval.ext_phaseSysmaxErr_ps, dicDiagval.ext_ddsOffMin, dicDiagval.ext_ddsOffMax);
+                   dicDiagval.ext_ddsOffAct, dicDiagval.ext_ddsOffAve, dicDiagval.ext_ddsOffSdev, dicGetval.ext_phaseSysmaxErr, dicDiagval.ext_ddsOffMin, dicDiagval.ext_ddsOffMax);
       printf("inj: %s\n", TXTNA);
       printf("b2b: %s\n", TXTNA);
       break;
-    case 4      :
+    case 4 :
       if (dicDiagval.ext_ddsOffN == 0) printf("ext: %s\n", TXTNA);
       else  printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
-                   dicDiagval.ext_ddsOffAct, dicDiagval.ext_ddsOffAve, dicDiagval.ext_ddsOffSdev, dicGetval.ext_phaseSysmaxErr_ps, dicDiagval.ext_ddsOffMin, dicDiagval.ext_ddsOffMax);
+                   dicDiagval.ext_ddsOffAct, dicDiagval.ext_ddsOffAve, dicDiagval.ext_ddsOffSdev, dicGetval.ext_phaseSysmaxErr, dicDiagval.ext_ddsOffMin, dicDiagval.ext_ddsOffMax);
       if (dicDiagval.inj_ddsOffN == 0) printf("inj: %s\n", TXTNA);
       else  printf("inj: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
-                   dicDiagval.inj_ddsOffAct, dicDiagval.inj_ddsOffAve, dicDiagval.inj_ddsOffSdev, dicGetval.inj_phaseSysmaxErr_ps, dicDiagval.inj_ddsOffMin, dicDiagval.inj_ddsOffMax);
-      if (dicDiagval.phaseOffN == 0) printf("inj: %s\n", TXTNA);
+                   dicDiagval.inj_ddsOffAct, dicDiagval.inj_ddsOffAve, dicDiagval.inj_ddsOffSdev, dicGetval.inj_phaseSysmaxErr, dicDiagval.inj_ddsOffMin, dicDiagval.inj_ddsOffMax);
+      if (dicDiagval.phaseOffN == 0) printf("b2b: %s\n", TXTNA);
       else  printf("b2b: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
-                   dicDiagval.phaseOffAct, dicDiagval.phaseOffAve, dicDiagval.phaseOffSdev, dicGetval.ext_phaseSysmaxErr_ps + dicGetval.inj_phaseSysmaxErr_ps, dicDiagval.phaseOffMin, dicDiagval.phaseOffMax);
+                   dicDiagval.phaseOffAct, dicDiagval.phaseOffAve, dicDiagval.phaseOffSdev, dicGetval.ext_phaseSysmaxErr + dicGetval.inj_phaseSysmaxErr, dicDiagval.phaseOffMin, dicDiagval.phaseOffMax);
       break;
     default :
       ;
@@ -514,7 +514,7 @@ int printRf(uint32_t sid)
     case 0 ... 2 :
       if ((dicGetval.flagEvtErr >> 2) & 0x1) printf("ext: %s\n", TXTERROR);
       else printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
-                  dicDiagval.ext_rfOffAct, dicDiagval.ext_rfOffAve, dicDiagval.ext_rfOffSdev, dicGetval.ext_phaseSysmaxErr_ps, dicDiagval.ext_rfOffMin, dicDiagval.ext_rfOffMax);
+                  dicDiagval.ext_rfOffAct, dicDiagval.ext_rfOffAve, dicDiagval.ext_rfOffSdev, dicGetval.ext_phaseSysmaxErr, dicDiagval.ext_rfOffMin, dicDiagval.ext_rfOffMax);
       printf("inj: %s\n", TXTNA);
       if (dicDiagval.ext_rfNueN == 0) printf("ext: %s\n\n\n", TXTNA);
       else {
@@ -531,10 +531,10 @@ int printRf(uint32_t sid)
       if ((dicGetval.flagEvtErr >> 2) & 0x1)
         printf(   "ext: act %s\n", TXTERROR);
       else printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
-                  dicDiagval.ext_rfOffAct, dicDiagval.ext_rfOffAve, dicDiagval.ext_rfOffSdev, dicGetval.ext_phaseSysmaxErr_ps, dicDiagval.ext_rfOffMin, dicDiagval.ext_rfOffMax);
+                  dicDiagval.ext_rfOffAct, dicDiagval.ext_rfOffAve, dicDiagval.ext_rfOffSdev, dicGetval.ext_phaseSysmaxErr, dicDiagval.ext_rfOffMin, dicDiagval.ext_rfOffMax);
       if ((dicGetval.flagEvtErr >> 3) & 0x1) printf("inj: %s\n", TXTERROR);
       else printf("inj: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
-                  dicDiagval.inj_rfOffAct, dicDiagval.inj_rfOffAve, dicDiagval.inj_rfOffSdev, dicGetval.inj_phaseSysmaxErr_ps, dicDiagval.inj_rfOffMin, dicDiagval.inj_rfOffMax);
+                  dicDiagval.inj_rfOffAct, dicDiagval.inj_rfOffAve, dicDiagval.inj_rfOffSdev, dicGetval.inj_phaseSysmaxErr, dicDiagval.inj_rfOffMin, dicDiagval.inj_rfOffMax);
       if (dicDiagval.ext_rfNueN == 0) printf("ext: %s\n\n\n", TXTNA);
       else {
         if ((dicGetval.flagEvtErr >> 2) & 0x1)
