@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 11-Oct-2023
+ *  version : 18-Oct-2023
  *
  * library for b2b
  *
@@ -212,8 +212,6 @@ void b2b_log(char *message){
   uint32_t secs;
   uint32_t nsecs;
   uint32_t msecs;
-  char     mess[81];
-  int      len;
 
   if (!logfile) return;
 
@@ -221,10 +219,6 @@ void b2b_log(char *message){
   b2b_t2secs(ts, &secs, &nsecs);
   msecs = nsecs / 1000000;
 
-  len = strlen(message);
-  if (len > 80) len = 80;
-    
-  strncat(mess, message, len);
   fprintf(logfile, "%12u.%03u: %s\n", secs, msecs, message);
   fflush(logfile);
 } // b2b_log

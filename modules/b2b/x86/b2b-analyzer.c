@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 17-Oct-2023
+ *  version : 18-Oct-2023
  *
  * analyzes and publishes get values
  * 
@@ -441,6 +441,26 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
 
   mode = dicSetval[sid].mode;
 
+  disDiagstat[sid].cbs_preOffAct  = NAN;
+  disDiagstat[sid].cbs_finOffAct  = NAN;
+  disDiagstat[sid].cbs_prrOffAct  = NAN;
+  disDiagstat[sid].cbs_kteOffAct  = NAN;
+  disDiagstat[sid].cbs_ktiOffAct  = NAN;
+  disDiagstat[sid].cbs_priOffAct  = NAN;
+  disDiagstat[sid].inj_monRemAct  = NAN;
+  disDiagstat[sid].ext_monRemAct  = NAN;
+  disDiagval[sid].ext_ddsOffAct   = NAN;
+  disDiagval[sid].ext_rfOffAct    = NAN;
+  disDiagval[sid].ext_rfNueActErr = NAN;
+  disDiagval[sid].ext_rfNueDiff   = NAN;
+  disDiagval[sid].ext_rfNueAct    = NAN;
+  disDiagval[sid].inj_ddsOffAct   = NAN;
+  disDiagval[sid].inj_rfOffAct    = NAN;
+  disDiagval[sid].inj_rfNueAct    = NAN;
+  disDiagval[sid].inj_rfNueActErr = NAN;
+  disDiagval[sid].inj_rfNueDiff   = NAN;
+  disDiagval[sid].phaseOffAct     = NAN;
+ 
   if (mode >=  B2B_MODE_OFF) {
 
     disNTransfer++;
@@ -466,8 +486,6 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
       disDiagstat[sid].cbs_preOffMin  = cbs_preOffMin[sid];
       disDiagstat[sid].cbs_preOffMax  = cbs_preOffMax[sid];
     } // if isnan
-    else disDiagstat[sid].cbs_preOffAct = NAN;
-    
 
     // rf phase diagnostics; theoretical value is '0'
     if (!isnan(dicGetval[sid].ext_diagPhase)) {
@@ -490,7 +508,6 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
       disDiagval[sid].ext_rfOffMin   = ext_rfOffMin[sid];
       disDiagval[sid].ext_rfOffMax   = ext_rfOffMax[sid];
     } // if isnan
-    else disDiagval[sid].ext_rfOffAct = NAN;
 
     // rf frequency diagnostics; theoretical value is set value
     if (!isnan(disDiagval[sid].ext_rfOffAct)) {
@@ -513,7 +530,6 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
       disDiagval[sid].ext_rfNueDiff  = aveNew - tmp ;
       disDiagval[sid].ext_rfNueEst   = calcDdsNue(aveNew);
     } // if isnan
-    else  disDiagval[sid].ext_rfNueAct = NAN;
 
   } // if mode B2B_MODE_OFF
   
@@ -539,7 +555,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
       disDiagstat[sid].cbs_finOffMin  = cbs_finOffMin[sid];
       disDiagstat[sid].cbs_finOffMax  = cbs_finOffMax[sid];
     } // if isnan
-    else disDiagstat[sid].cbs_finOffAct = NAN;
+
 
     // offset from deadline CBS to time when the PRE messages is received by CBU
     if (!isnan(dicGetval[sid].prrOff)) {
@@ -561,7 +577,6 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
       disDiagstat[sid].cbs_prrOffMin  = cbs_prrOffMin[sid];
       disDiagstat[sid].cbs_prrOffMax  = cbs_prrOffMax[sid];
     } // if isnan
-    else disDiagstat[sid].cbs_prrOffAct = NAN;
 
     // offset from deadline CBS to KTE
     if (!isnan(dicGetval[sid].kteOff)) {
@@ -583,7 +598,6 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
       disDiagstat[sid].cbs_kteOffMin  = cbs_kteOffMin[sid];
       disDiagstat[sid].cbs_kteOffMax  = cbs_kteOffMax[sid];
     } // if isnan
-    else disDiagstat[sid].cbs_kteOffAct = NAN;
 
     // remainder of h=1 phase at electronics monitor
     if ((dicSetval[sid].ext_T != -1) && !isnan(dicGetval[sid].kteOff) && !isnan(dicGetval[sid].ext_dKickMon) && (dicGetval[sid].ext_phase != -1)) {
@@ -607,7 +621,6 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
       disDiagstat[sid].ext_monRemMin  = ext_monRemMin[sid];
       disDiagstat[sid].ext_monRemMax  = ext_monRemMax[sid];
     } // if dicGetval
-    else disDiagstat[sid].ext_monRemAct = NAN;
     
   } // if mode B2B_MODE_BSE
   
@@ -636,7 +649,6 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
       disDiagval[sid].ext_ddsOffMin  = ext_ddsOffMin[sid];
       disDiagval[sid].ext_ddsOffMax  = ext_ddsOffMax[sid];
     } // if isnan
-    else disDiagval[sid].ext_ddsOffAct = NAN;
 
   } // if mode B2B_MODE_B2E
 
@@ -661,7 +673,6 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
       disDiagstat[sid].cbs_ktiOffMin  = cbs_ktiOffMin[sid];
       disDiagstat[sid].cbs_ktiOffMax  = cbs_ktiOffMax[sid];
     } // if isnan
-    else disDiagstat[sid].cbs_ktiOffAct = NAN;
 
     // remainder phase to electronics monitor
     if ((dicSetval[sid].ext_T != -1) && !isnan(dicGetval[sid].ktiOff) && !isnan(dicGetval[sid].inj_dKickMon) && (dicGetval[sid].ext_phase != -1)) {
@@ -685,7 +696,6 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
       disDiagstat[sid].inj_monRemMin  = inj_monRemMin[sid];
       disDiagstat[sid].inj_monRemMax  = inj_monRemMax[sid];
     } // if dicGetval
-    else disDiagstat[sid].inj_monRemAct = NAN;
 
     // rf phase diagnostics raw values; theoretical value is '0'
     if (!isnan(dicGetval[sid].inj_diagPhase)) {
@@ -708,7 +718,6 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
       disDiagval[sid].inj_rfOffMin   = inj_rfOffMin[sid];
       disDiagval[sid].inj_rfOffMax   = inj_rfOffMax[sid];
     } // if isnan
-    else disDiagval[sid].inj_rfOffAct = NAN;
 
     // b2bphase diagnostics; theoretical value is 'phase correction'
     if (!isnan(disDiagval[sid].inj_ddsOffAct) && !isnan(disDiagval[sid].ext_ddsOffAct) && !isnan(dicSetval[sid].cPhase)) {
@@ -730,7 +739,6 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
       disDiagval[sid].phaseOffMin  = phaseOffMin[sid];
       disDiagval[sid].phaseOffMax  = phaseOffMax[sid];
     } // if isnan
-    else disDiagval[sid].phaseOffAct = NAN;
     
     // rf frequency diagnostics; theoretical value is '0'
     if (!isnan(disDiagval[sid].inj_rfOffAct) && (dicSetval[sid].inj_T != -1)) {
@@ -752,10 +760,6 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
       disDiagval[sid].inj_rfNueDiff  = aveNew - tmp ;
       disDiagval[sid].inj_rfNueEst   = calcDdsNue(aveNew);
     } // if isnan
-    else {
-      disDiagval[sid].inj_rfNueAct  = NAN;
-      disDiagval[sid].inj_rfNueDiff = NAN;
-    } // else isnan
 
     // offset from deadline CBS to measured injection phase
     if (!isnan(dicGetval[sid].priOff)) {
@@ -777,7 +781,6 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
       disDiagstat[sid].cbs_priOffMin  = cbs_priOffMin[sid];
       disDiagstat[sid].cbs_priOffMax  = cbs_priOffMax[sid];
     } // if isnan
-    else disDiagstat[sid].cbs_priOffAct = NAN;
     
   } // if mode B2B_MODE_B2C
 
@@ -807,7 +810,6 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
       disDiagval[sid].inj_ddsOffMin  = inj_ddsOffMin[sid];
       disDiagval[sid].inj_ddsOffMax  = inj_ddsOffMax[sid];
     } // if isnan
-    else disDiagval[sid].inj_ddsOffAct = NAN;
 
   } // if mode B2B_MODE_B2B
   

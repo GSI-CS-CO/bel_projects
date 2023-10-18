@@ -433,7 +433,7 @@ void menuConfig(uint64_t ebDevice, ring_t ring)
   char     parname[MAXLEN];
   char     txtname[MAXLEN];
   char     parnameSidPrefix[MAXLEN];
-  char     parnameSid[MAXLEN];
+  char     parnameSid[MAXLEN+6];  
   int      done=0;
 
   int      sid;

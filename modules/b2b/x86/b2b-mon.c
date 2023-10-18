@@ -239,7 +239,6 @@ void buildPrintLine(uint32_t idx)
   char     tmp3[32];
   char     tmp4[32];
   char     tmp5[32];
-  int32_t  itmp2;
   double   dtmp1;
   double   *pLevelExt;
   double   *pLevelInj;
