@@ -791,7 +791,7 @@ component  TM_quench_detection is
          time_pulse : in STD_LOGIC;
          delay : in STD_LOGIC_VECTOR(23 DOWNTO 0);
          quench_out_sel : in STD_LOGIC_VECTOR(5 downto 0);
-         out_reset: in std_logic;
+         qud_reset: in std_logic;
          write : in std_logic;
          QuDIn: in STD_LOGIC_VECTOR (53 downto 0);
          quench_en: in STD_LOGIC_VECTOR (53 downto 0);
@@ -4125,7 +4125,7 @@ end generate Quench_Matrix_Gen;
               nReset => rstn_sys,
               time_pulse => Ena_Every_1us,
               quench_out_sel => quench_out_sel,
-              out_reset=>  quench_reg(0)(15),
+              qud_reset=>  quench_reg(0)(15),
               write => quench_reg(0)(14),
               delay => TM_out_delay,
               QuDIn => Deb72_in(53 downto 0),

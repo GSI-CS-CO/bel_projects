@@ -5,6 +5,8 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
+library work;
+use work.qud_pkg.all;
 
 entity TM_quench_detection is
     Port ( clk : in STD_LOGIC;
@@ -12,7 +14,7 @@ entity TM_quench_detection is
            time_pulse : in STD_LOGIC;
            delay: in STD_LOGIC_VECTOR(23 DOWNTO 0);
            quench_out_sel : in STD_LOGIC_VECTOR(5 downto 0);
-           out_reset: in std_logic;
+           qud_reset: in std_logic;
            write : in std_logic;
            QuDIn: in STD_LOGIC_VECTOR (53 downto 0);
            quench_en: in STD_LOGIC_VECTOR (53 downto 0);
@@ -36,10 +38,10 @@ architecture Arch_quench_detection of TM_quench_detection is
         Port ( clk : in STD_LOGIC;
                nReset : in STD_LOGIC;      
                reg_addr : in STD_LOGIC_VECTOR(5 downto 0);
-               out_reset: in std_logic;
+               reg_reset: in std_logic;
                write : in std_logic;
                quench_en: in STD_LOGIC_VECTOR (53 downto 0);
-               QuD_mask : out STD_LOGIC_VECTOR(53 downto 0));
+               QuD_mask : out t_qud_mask);
     end component;
     
 
@@ -50,12 +52,12 @@ signal delay_ctr_tc :    std_logic_vector(23 downto 0);
 
 signal delay_ctr_load :  std_logic_vector(23 downto 0);
 signal combi : std_logic_vector(23 downto 0):=(others =>'0');
-signal out_sel: integer range 0 to 23:=0;
+
 signal QuD_data: STD_LOGIC_VECTOR (23 downto 0);
 
-signal in_count: integer  :=0;
-signal QuD_mask_reg : STD_LOGIC_VECTOR (53 downto 0);
-signal flag: integer := 0;
+signal in_count:t_qud_cnt;
+signal QuD_mask_reg :t_qud_mask;
+signal flag:t_qud_cnt;
 
 begin
 
@@ -74,7 +76,7 @@ end generate del_quench_det;
     Port map( clk => clk,
            nReset => nReset,  
            reg_addr =>quench_out_sel,
-           out_reset => out_reset,
+           reg_reset => qud_reset,
            write => write,
            quench_en => quench_en and (not mute),
            QuD_mask => QuD_mask_reg);
@@ -85,39 +87,52 @@ end generate del_quench_det;
 data_quench_process: process (clk, nReset)
 begin
     if (nReset = '0' ) then
-        in_count <=0; 
-        flag <= 0;
+         
+        for i in 0 to 23 loop
+        flag(i) <= 0;
+        in_count (i) <=0;
+        end loop;
         
         combi <= (others =>'0');
 
     elsif rising_edge (clk) then
-        if out_reset = '1' then 
-            in_count <= 0;
-            flag <= 0;
+        if qud_reset = '1' then 
+        for i in 0 to 23 loop
+            flag(i) <= 0;
+            in_count (i) <=0;
+            end loop;
             combi <=(others =>'0');
         else
 
   
-    out_sel <=(to_integer(unsigned(quench_out_sel)));
-    in_count <= 0;
-    flag <= 0;
+  
+        for i in 0 to 23 loop
+            flag(i) <= 0;
+            in_count (i) <=0;
+            end loop;
+            
+    for j in 0 to 23 loop
     for i in 0 to 53 loop
-      if QuD_mask_reg(i) = '1' then
+      if QuD_mask_reg(j)(i) = '1' then
         if QUDin(i) ='0'then
-            flag <= flag + 1;
+            flag(j) <= flag(j) + 1;
         else
             if QUDin(i) ='1'then
-                in_count <= in_count +1;  
+                in_count(j) <= in_count(j) +1;  
             end if;
-        end if;  
-      end if;     
-    end loop;
-  
-    if (in_count > 0) and (flag = 0) then 
-      combi(out_sel) <='1';
+        end if; 
+   
+      end if;
+
+      end loop;
+      if (in_count(j) > 0) and (flag (j)= 0) then 
+      combi(j) <='1';
     else 
-        combi(out_sel) <= '0';
-    end if; 
+        combi(j) <= '0';
+    end if;  
+      
+ 
+  end loop;
 
   end if;
   end if;
