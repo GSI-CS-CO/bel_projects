@@ -437,7 +437,7 @@ int main(int argc, char* argv[]) {
 
   int32_t tmp;
   int32_t error=0;
-  uint32_t cpuIdx = 0;
+  //~ uint32_t cpuIdx = 0;
   uint32_t cmdPrio = PRIO_LO;
   uint32_t cmdQty = 1;
   uint64_t cmdTvalid = 0, longtmp;
@@ -551,6 +551,7 @@ int main(int argc, char* argv[]) {
     std::cerr << program << ": Could not connect to DM. Cause: " << err.what() << std::endl; return -20;
   }
 
+  // evaluate the bit mask for the CPUs after connecting to firmware. Otherwise getCpuQty() is not valid.
   if (setCpuBits) {
     uint32_t uTemp = getBitMask(tempCpuBits, cdm.getCpuQty(), program, &error, "Cpu");
     if (error == 0) {
@@ -568,9 +569,13 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  if (!(cdm.isCpuIdxValid(cpuIdx))) {
-    std::cerr << program << ": CPU Idx " << cpuIdx << " does not refer to a CPU with valid firmware." << std::endl << std::endl;
-    return -30;
+  for (int cpu=0; cpu < cdm.getCpuQty(); cpu++) {
+    if ((cpuBits >> cpu) & 1) {
+      if (!(cdm.isCpuIdxValid(cpu))) {
+        std::cerr << program << ": CPU Idx " << cpu << " does not refer to a CPU with valid firmware." << std::endl << std::endl;
+        return -30;
+      }
+    }
   }
 
   cdm.updateModTime();
@@ -619,22 +624,29 @@ int main(int argc, char* argv[]) {
   try {
     cdm.download();
   } catch (std::runtime_error const& err) {
-    std::cerr << program << ": Download from CPU "<< cpuIdx << " failed. Cause: " << err.what() << std::endl;
-    return -7;
+    for (int cpu=0; cpu < cdm.getCpuQty(); cpu++) {
+      if ((cpuBits >> cpu) & 1) {
+        std::cerr << program << ": Download from CPU "<< cpu << " failed. Cause: " << err.what() << std::endl;
+        return -7;
+      }
+    }
   }
 
-  uint32_t globalStatus = cdm.getStatus(0), status = cdm.getStatus(cpuIdx);
-
-  if (!force && ( !(globalStatus & (SHCTL_STATUS_EBM_INIT_SMSK | SHCTL_STATUS_PQ_INIT_SMSK))
-    || !(status & (SHCTL_STATUS_UART_INIT_SMSK | SHCTL_STATUS_DM_INIT_SMSK)) ))
-    {
-    std::cerr << program << ": DM is not fully initialised. Cause: " << std::endl;
-    if (!(globalStatus & SHCTL_STATUS_EBM_INIT_SMSK)) std::cerr << "EB Master could not be configured. Does the DM have a valid IP?" << std::endl;
-    if (!(globalStatus & SHCTL_STATUS_PQ_INIT_SMSK))  std::cerr << "Priority Queue could not be configured" << std::endl;
-    if (!(status & SHCTL_STATUS_UART_INIT_SMSK))      std::cerr << "CPU " << cpuIdx << "'s UART is not functional" << std::endl;
-    if (!(status & SHCTL_STATUS_DM_INIT_SMSK))        std::cerr << "CPU " << cpuIdx << " could not be initialised" << std::endl;
-    //if (!(status & SHCTL_STATUS_WR_INIT_SMSK))      std::cerr << "CPU " << cpuIdx << "'s WR time could not be initialised" << std::endl;
-    return -40;
+  for (int cpu=0; cpu < cdm.getCpuQty(); cpu++) {
+    if ((cpuBits >> cpu) & 1) {
+      uint32_t globalStatus = cdm.getStatus(0), status = cdm.getStatus(cpu);
+      if (!force && ( !(globalStatus & (SHCTL_STATUS_EBM_INIT_SMSK | SHCTL_STATUS_PQ_INIT_SMSK))
+        || !(status & (SHCTL_STATUS_UART_INIT_SMSK | SHCTL_STATUS_DM_INIT_SMSK)) ))
+        {
+        std::cerr << program << ": DM is not fully initialised. Cause: " << std::endl;
+        if (!(globalStatus & SHCTL_STATUS_EBM_INIT_SMSK)) std::cerr << "EB Master could not be configured. Does the DM have a valid IP?" << std::endl;
+        if (!(globalStatus & SHCTL_STATUS_PQ_INIT_SMSK))  std::cerr << "Priority Queue could not be configured" << std::endl;
+        if (!(status & SHCTL_STATUS_UART_INIT_SMSK))      std::cerr << "CPU " << cpu << "'s UART is not functional" << std::endl;
+        if (!(status & SHCTL_STATUS_DM_INIT_SMSK))        std::cerr << "CPU " << cpu << " could not be initialised" << std::endl;
+        //if (!(status & SHCTL_STATUS_WR_INIT_SMSK))      std::cerr << "CPU " << cpu << "'s WR time could not be initialised" << std::endl;
+        return -40;
+      }
+    }
   }
 
   //check if we got a dot full of commands and send if so
@@ -681,7 +693,12 @@ int main(int argc, char* argv[]) {
     if (cmp == dnt::sCmdNoop) {
       for (int thread=0; thread < getThreadQty(); thread++) {
         if ((threadBits >> thread) & 1) {
-          cdm.createQCommand(ew, cmp, targetName, cmdPrio, cmdQty, true, 0, thread);
+          try {
+            cdm.createQCommand(ew, cmp, targetName, cmdPrio, cmdQty, true, 0, thread);
+          } catch (std::runtime_error const& err) {
+            std::cerr << program << ": Command noop on " << targetName << " failed, thread " << thread << ". Cause: " << err.what() << std::endl;
+            return -1;
+          }
         }
       }
       // no return here, next action: send commands with ew vector.
@@ -835,35 +852,51 @@ int main(int argc, char* argv[]) {
           std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl;
           return -1;
         }
-        for (int thread=0; thread < getThreadQty(); thread++) {
-          if ((threadBits >> thread) & 1) {
-            // set the origin for the first thread in threadBits, then break.
-            // possible improvement: error message if more bits are set in threadBits.
-            cdm.setThrOrigin(ew, cpuIdx, thread, targetName);
-            break;
+        for (int cpu = 0; cpu < cdm.getCpuQty(); cpu++) {
+          if ((cpuBits >> cpu) & 1) {
+            for (int thread=0; thread < getThreadQty(); thread++) {
+              if ((threadBits >> thread) & 1) {
+                // set the origin for the first thread in threadBits, then break.
+                // possible improvement: error message if more bits are set in threadBits.
+                cdm.setThrOrigin(ew, cpu, thread, targetName);
+                break;
+              }
+            }
           }
         }
       }
       if (verbose | (targetName.empty())) {
-        for (int thread=0; thread < getThreadQty(); thread++) {
-          if ((threadBits >> thread) & 1) {
-            std::cout << "CPU " << cpuIdx << " Thread " << thread << " origin points to node " << cdm.getThrOrigin(cpuIdx, thread) << std::endl;
+        for (int cpu = 0; cpu < cdm.getCpuQty(); cpu++) {
+          if ((cpuBits >> cpu) & 1) {
+            for (int thread=0; thread < getThreadQty(); thread++) {
+              if ((threadBits >> thread) & 1) {
+                std::cout << "CPU " << cpu << " Thread " << thread << " origin points to node " << cdm.getThrOrigin(cpu, thread) << std::endl;
+              }
+            }
           }
         }
         return 0;
       }
       // no return here, next action: send commands with ew vector.
     } else if (cmp == "cursor") {
-      for (int thread=0; thread < getThreadQty(); thread++) {
-        if ((threadBits >> thread) & 1) {
-          std::cout << "Currently at " << cdm.getThrCursor(cpuIdx, thread) << std::endl;
+      for (int cpu = 0; cpu < cdm.getCpuQty(); cpu++) {
+        if ((cpuBits >> cpu) & 1) {
+          for (int thread=0; thread < getThreadQty(); thread++) {
+            if ((threadBits >> thread) & 1) {
+              std::cout << "Currently at " << cdm.getThrCursor(cpu, thread) << std::endl;
+            }
+          }
         }
       }
       return 0;
     } else if (cmp == "force") {
-      for (int thread=0; thread < getThreadQty(); thread++) {
-        if ((threadBits >> thread) & 1) {
-          cdm.forceThrCursor(cpuIdx, thread);
+      for (int cpu = 0; cpu < cdm.getCpuQty(); cpu++) {
+        if ((cpuBits >> cpu) & 1) {
+          for (int thread=0; thread < getThreadQty(); thread++) {
+            if ((threadBits >> thread) & 1) {
+              cdm.forceThrCursor(cpu, thread);
+            }
+          }
         }
       }
       return 0;
@@ -883,25 +916,33 @@ int main(int argc, char* argv[]) {
       std::string origin;
       if ((!targetName.empty())) {
         uint32_t bits = std::stol(targetName, nullptr, 0);
-        for (int i=0; i < getThreadQty(); i++) {
-          if ((bits >> i) & 1) {
-            origin = cdm.getThrOrigin(cpuIdx, i);
-            if ((origin == DotStr::Node::Special::sIdle) || (origin == DotStr::Misc::sUndefined)) {
-              std::cerr << program << ": Cannot start, origin of CPU " << cpuIdx << "'s thread " << i << " is not a valid node" << std::endl;
-              return -1;
+        for (int cpu = 0; cpu < cdm.getCpuQty(); cpu++) {
+          if ((cpuBits >> cpu) & 1) {
+            for (int i=0; i < getThreadQty(); i++) {
+              if ((bits >> i) & 1) {
+                origin = cdm.getThrOrigin(cpu, i);
+                if ((origin == DotStr::Node::Special::sIdle) || (origin == DotStr::Misc::sUndefined)) {
+                  std::cerr << program << ": Cannot start, origin of CPU " << cpu << "'s thread " << i << " is not a valid node" << std::endl;
+                  return -1;
+                }
+              }
             }
+            cdm.setThrStart(ew, cpu, bits & ((1ll<<getThreadQty())-1));
           }
         }
-        cdm.setThrStart(ew, cpuIdx, bits & ((1ll<<getThreadQty())-1));
       } else {
-        for (int thread=0; thread < getThreadQty(); thread++) {
-          if ((threadBits >> thread) & 1) {
-            origin = cdm.getThrOrigin(cpuIdx, thread);
-            if ((origin == DotStr::Node::Special::sIdle) || (origin == DotStr::Misc::sUndefined)) {
-              std::cerr << program << ": Cannot start, origin of CPU " << cpuIdx << "'s thread " << thread << " is not a valid node" << std::endl;
-              return -1;
+        for (int cpu = 0; cpu < cdm.getCpuQty(); cpu++) {
+          if ((cpuBits >> cpu) & 1) {
+            for (int thread=0; thread < getThreadQty(); thread++) {
+              if ((threadBits >> thread) & 1) {
+                origin = cdm.getThrOrigin(cpu, thread);
+                if ((origin == DotStr::Node::Special::sIdle) || (origin == DotStr::Misc::sUndefined)) {
+                  std::cerr << program << ": Cannot start, origin of CPU " << cpu << "'s thread " << thread << " is not a valid node" << std::endl;
+                  return -1;
+                }
+                cdm.startThr(cpu, thread);
+              }
             }
-            cdm.startThr(cpuIdx, thread);
           }
         }
         return 0;
@@ -1031,7 +1072,11 @@ int main(int argc, char* argv[]) {
       cdm.startStopHwDiagnostics(false);
       return 0;
     } else if (cmp == "clearcpudiag")  {
-      cdm.clearHealth(cpuIdx);
+      for (int cpu = 0; cpu < cdm.getCpuQty(); cpu++) {
+        if ((cpuBits >> cpu) & 1) {
+          cdm.clearHealth(cpu);
+        }
+      }
       return 0;
     } else if (cmp == "cfghwdiag") {
       if (!targetName.empty() && (para != NULL) && ( para != std::string(""))) {
