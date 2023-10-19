@@ -471,6 +471,12 @@ class DmTestbench(unittest.TestCase):
     """
     time.sleep(duration)
 
+  def runThreadXCommand(self, cpu, thread, command):
+    """Test for one CPU and one thread with 'command'.
+    Check the return code of 0 for success and one line of output on stdout.
+    """
+    self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', f'{cpu}', '-t', f'{thread}', command), [0], 1, 0)
+
   def deleteFile(self, fileName):
     """Delete file <fileName>.
     """
