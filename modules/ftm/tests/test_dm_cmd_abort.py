@@ -29,38 +29,10 @@ class AbortTests(dm_testbench.DmTestbench):
     self.runAbortRunningThreads()
 
   def runAbortRunningThreads(self):
-    """Check that no thread runs on 4 CPUs. Load 4 schedules, one for
-    each CPU and start all threads. Check that these are running.
+    """Prepare all threads on all CPUs.
     Abort some threads. Check that these are not running.
     """
-    # Check all CPUs that no thread is running.
-    lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', '0xf', 'running'), [0], self.cpuQuantity, 0)
-    # ~ self.printStdOutStdErr(lines)
-    for i in range(self.cpuQuantity):
-      self.assertEqual(lines[0][i], f'CPU {i} Running Threads: 0x0', 'wrong output')
-    # Add schedules for all CPUs and start pattern on all threads.
-    self.addSchedule('pps-all-threads-cpu0.dot')
-    self.addSchedule('pps-all-threads-cpu1.dot')
-    self.addSchedule('pps-all-threads-cpu2.dot')
-    self.addSchedule('pps-all-threads-cpu3.dot')
-    index = 0
-    threadList = [('a', '0'), ('b', '1'), ('c', '2'), ('d', '3'), ('e', '4'), ('f', '5'), ('g', '6'), ('h', '7')]
-    for x, y in threadList:
-      if index < self.threadQuantity:
-        self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'PPS0' + x, '-t', y), [0])
-        self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'PPS1' + x, '-t', y), [0])
-        self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'PPS2' + x, '-t', y), [0])
-        self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'PPS3' + x, '-t', y), [0])
-        index = index + 1
-    self.checkRunningThreadsCmd()
-    # Check all CPUs that all threads are running.
-    lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', '0xf', 'running'), [0], self.cpuQuantity, 0)
-    # ~ self.printStdOutStdErr(lines)
-    for i in range(self.cpuQuantity):
-      if self.threadQuantity > 8:
-        self.assertEqual(lines[0][i], f'CPU {i} Running Threads: 0xffffffff', 'wrong output')
-      else:
-        self.assertEqual(lines[0][i], f'CPU {i} Running Threads: 0xff', 'wrong output')
+    self.prepareRunThreads()
     # Abort some threads on CPUs 0 and 1
     cpu = '0x3' # CPUs 0 and 1
     thread = '0xaa' # Threads 2, 4, 6, 8
