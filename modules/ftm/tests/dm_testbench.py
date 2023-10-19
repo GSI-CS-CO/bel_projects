@@ -189,10 +189,8 @@ class DmTestbench(unittest.TestCase):
     diffLines = list(difflib.unified_diff(current, expected, n=0))
     self.assertEqual(len(diffLines), 0, f'Diff: file {fileExpected}\n{diffLines}')
 
-  def getSnoopCommand(self, duration):
-    snoop_command1 = self.snoop_command + ' ' + str(duration)
-    if self.snoop_command[len(self.snoop_command)-1:] == "'":
-      snoop_command1 = self.snoop_command[:-1] + ' ' + str(duration) + "'"
+  def getSnoopCommand(self, eventId='0', mask='0', duration=1):
+    snoop_command1 = self.snoop_command.replace('snoop 0 0 0', f'snoop {eventId} {mask} 0 {str(duration)}')
     # ~ print(f'getSnoopCommand: {snoop_command1}')
     return snoop_command1
 
@@ -203,21 +201,21 @@ class DmTestbench(unittest.TestCase):
     # ~ print(f'getEbResetCommand: {ebResetCommand1}')
     return ebResetCommand1
 
-  def snoopToCsv(self, csvFileName, duration=1):
+  def snoopToCsv(self, csvFileName, eventId='0', mask='0', duration=1):
     """Snoop timing messages with saft-ctl for <duration> seconds (default = 1) and write the messages to <csvFileName>.
     Details: start saft-ctl with Popen, run it for <duration> seconds.
     """
     with open(csvFileName, 'wb') as file1:
-      process = subprocess.run(self.getSnoopCommand(duration), shell=True, check=True, stdout=file1)
+      process = subprocess.run(self.getSnoopCommand(eventId, mask, duration), shell=True, check=True, stdout=file1)
       self.assertEqual(process.returncode, 0, f'Returncode: {process.returncode}')
 
-  def snoopToCsvWithAction(self, csvFileName, action, duration=1):
+  def snoopToCsvWithAction(self, csvFileName, action, eventId='0', mask='0', duration=1):
     """Snoop timing messages with saft-ctl for <duration> seconds (default = 1).
     Write the messages to <csvFileName>.
     Details: start saft-ctl with Popen in its own thread, run it for <duration> seconds.
     action should end before snoop.
     """
-    snoop = threading.Thread(target=self.snoopToCsv, args=(csvFileName, duration))
+    snoop = threading.Thread(target=self.snoopToCsv, args=(csvFileName, eventId, mask, duration))
     snoop.start()
     action()
     snoop.join()
@@ -225,10 +223,10 @@ class DmTestbench(unittest.TestCase):
   def analyseFrequencyFromCsv(self, csvFileName, column=20, printTable=True, checkValues=dict()):
     """Analyse the frequency of the values in the specified column. Default column is 20 (parameter of the timing message).
     Prints (if printTable=True) the table of values, counters, and frequency over the whole time span.
-    Column for EVTNO is 8.
+    Column for EVTNO is 8. Timing messages should have 'fid=1' otherwise column numbers are different.
     checkValues is a dictionary of key-value pairs to check. Key is a value in the column and value is the required frequency.
     The value can be '>n', '<n', '=n', 'n' (which is the same as '=n'), '=0'. The syntax '<n' fails if there are no occurrences.
-    Checks for intevalls are not possible since checkValues is a dictionary and keys occur at most once.
+    Checks for intervalls are not possible since checkValues is a dictionary and keys occur at most once.
     Example: column=8 and checkValues={'0x0001': 62} checks that EVTNO 0x0001 occurs in 62 lines of the file to analyse.
     Example: column=8 and checkValues={'0x0002': '>0'} checks that EVTNO 0x0002 occurs at least once in the file to analyse.
     Example: column=4 and checkValues={'0x7': '=0'} checks that FID 0x7 does NOT occur in the file to analyse.
@@ -479,3 +477,42 @@ class DmTestbench(unittest.TestCase):
     fileToRemove = pathlib.Path(fileName)
     if fileToRemove.exists():
       fileToRemove.unlink()
+
+  def resetAllCpus(self):
+    """Reset each CPU (loop over all lm32 CPUs).
+    """
+    for cpu in ['0', '1', '2', '3']:
+      self.startAndCheckSubprocess((self.getEbResetCommand(), self.datamaster, 'cpureset', cpu), [0])
+    self.delay(2.0)
+
+  def listFromBits(self, bits, quantity) -> list:
+    """Convert a 'bits', given as a string or an int, into a list of
+    int items. quantity is the maximal int + 1.
+    """
+    itemList = []
+    if isinstance(bits, str):
+      bits = int(bits, base=16)
+    for i in range(quantity):
+      if (1 << i) & bits > 0:
+        itemList.append(i)
+      # ~ print(f'{bits=}, {i=}, {itemList=}, {((1 << i) & bits)=}')
+    return itemList
+
+  def bitCount(self, bits, quantity) -> int:
+    """Count how many bits are 1 in the number 'bits'.
+    This is the number of items enabled in 'bits'.
+    """
+    if isinstance(bits, str):
+      bits = int(bits, base=16)
+    count = 0
+    for i in range(quantity):
+      # ~ print(f'{i=}, {(1 << i)=}, {bits=}, {count=}')
+      if (1 << i) & bits > 0:
+        count = count + 1
+    return count
+
+  def printStdOutStdErr(self, lines):
+    if len(lines[0]) > 0:
+      print(f'{chr(10).join(lines[0])}')
+    if len(lines[1]) > 0:
+      print(f'{chr(10).join(lines[1])}')

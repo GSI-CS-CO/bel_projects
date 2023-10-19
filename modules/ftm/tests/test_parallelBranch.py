@@ -48,7 +48,7 @@ class UnitTestParallelBranch(dm_testbench.DmTestbench):
     self.addSchedule('branch1.dot')
     for x in cpuList:
       self.startPattern('', x)
-    self.snoopToCsvWithAction(file_name, self.doBranch, self.snoopTime)
+    self.snoopToCsvWithAction(file_name, self.doBranch, duration=self.snoopTime)
     checkValues = {}
     column_evtno = 8
     if len(cpuList) == 1:

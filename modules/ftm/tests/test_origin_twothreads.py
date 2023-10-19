@@ -24,7 +24,7 @@ class TestOriginTwoThreads(dm_testbench.DmTestbench):
     self.addSchedule('twothreads.dot')
     fileName = 'snoop_twothreads.csv'
     # ~ print("before snoop ", datetime.now().time())
-    self.snoopToCsvWithAction(fileName, self.startPatternAndSee, 1)
+    self.snoopToCsvWithAction(fileName, self.startPatternAndSee, duration=1)
     # analyse column 20 which contains the parameter.
     # check par=1:>15, par=2:>0 for snoop of 1 second.
     self.analyseFrequencyFromCsv(fileName, column=20, printTable=True,

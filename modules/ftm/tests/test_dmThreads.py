@@ -9,11 +9,7 @@ class UnitTestDatamasterThreads(dm_testbench.DmTestbench):
   def run_dmThreads(self, count):
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'reset', 'all'), [0])
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'clear', '-f'), [0])
-    self.startAndCheckSubprocess((self.getEbResetCommand(), self.datamaster, 'cpureset', '0'), [0])
-    self.startAndCheckSubprocess((self.getEbResetCommand(), self.datamaster, 'cpureset', '1'), [0])
-    self.startAndCheckSubprocess((self.getEbResetCommand(), self.datamaster, 'cpureset', '2'), [0])
-    self.startAndCheckSubprocess((self.getEbResetCommand(), self.datamaster, 'cpureset', '3'), [0])
-    self.delay(1)
+    self.resetAllCpus()
     scheduleFile = f'pps-all-threads-cpu0-{count}.dot'
     self.generate_schedule(scheduleFile, count)
     self.addSchedule(f'../{scheduleFile}')
@@ -148,15 +144,11 @@ class UnitTestDatamasterThreads(dm_testbench.DmTestbench):
     count = 8
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'reset', 'all'), [0])
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'clear', '-f'), [0])
-    self.startAndCheckSubprocess((self.getEbResetCommand(), self.datamaster, 'cpureset', '0'), [0])
-    self.startAndCheckSubprocess((self.getEbResetCommand(), self.datamaster, 'cpureset', '1'), [0])
-    self.startAndCheckSubprocess((self.getEbResetCommand(), self.datamaster, 'cpureset', '2'), [0])
-    self.startAndCheckSubprocess((self.getEbResetCommand(), self.datamaster, 'cpureset', '3'), [0])
-    self.delay(1)
-    self.addSchedule('../dmThreads/pps-all-threads-cpu0.dot')
-    self.addSchedule('../dmThreads/pps-all-threads-cpu1.dot')
-    self.addSchedule('../dmThreads/pps-all-threads-cpu2.dot')
-    self.addSchedule('../dmThreads/pps-all-threads-cpu3.dot')
+    self.resetAllCpus()
+    self.addSchedule('pps-all-threads-cpu0.dot')
+    self.addSchedule('pps-all-threads-cpu1.dot')
+    self.addSchedule('pps-all-threads-cpu2.dot')
+    self.addSchedule('pps-all-threads-cpu3.dot')
     index = 0
     threadList = [('a', '0'), ('b', '1'), ('c', '2'), ('d', '3'), ('e', '4'), ('f', '5'), ('g', '6'), ('h', '7')]
     for x, y in threadList:

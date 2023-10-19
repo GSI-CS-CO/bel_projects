@@ -35,7 +35,7 @@ datamasterInfo() {
     echo " Datamaster status:"
     dm-cmd $DM -v
   fi
-  OPTIONS='-k zzz' make -C ~/bel_projects/dev/modules/ftm/tests
+  OPTIONS='-k zzz' make -C $BEL_PROJECTS_PATH/modules/ftm/tests
   echo
   echo " Datamaster log space"
   df -h /var/log/ || true
@@ -68,11 +68,16 @@ remoteDatamasterInfo() {
   fi
   # Test that the tools version and the firmware version are compatible
   #~ dm-cmd tcp/$DM_HOST
-  #~ OPTIONS='-k zzz' make -C ~/bel_projects/dev/modules/ftm/tests remote
+  #~ OPTIONS='-k zzz' make -C $BEL_PROJECTS_PATH/modules/ftm/tests remote
   echo
   echo " Datamaster log space"
   ssh root@$DM_HOST 'df -h /var/log/' 2>&1 || true
 }
+
+if [ ! $BEL_PROJECTS_PATH ]
+then
+  BEL_PROJECTS_PATH=$HOME/bel_projects/dev
+fi
 
 if [ $# -eq 2 ] && [ "$1" = "remote" ]
 then

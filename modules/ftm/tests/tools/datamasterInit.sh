@@ -1,6 +1,11 @@
 #! /bin/bash
 #
-# Example: ./datamasterInit.sh $(hostname) ~/bel_projects/dev/syn/gsi_pexarria5/ftm/ftm.bin
+# Example: ./datamasterInit.sh $(hostname) $BEL_PROJECTS_PATH/syn/gsi_pexarria5/ftm/ftm.bin
+
+if [ ! $BEL_PROJECTS_PATH ]
+then
+  BEL_PROJECTS_PATH=$HOME/bel_projects/dev
+fi
 
 if [ $# -eq 1 ]
 then
@@ -20,8 +25,8 @@ if [ "$DM_HOST" = "ACOPC042" ]
 then
   echo 'Check kernel modules and CERN pci devices.'
   sudo lspci -nn -vkd 10dc:
-  echo 'start saft daemon for TR0.'
-  sudo saftd tr0:$TR0
+  echo 'display info from saft daemon for TR0.'
+  saft-ctl -tij tr0
   # set the time for this ptp master, first seconds, then nanoseconds.
   echo -n 'dev/wbm0 set time: '; echo -n -e '\r'time setsec $(date -u +%s)'\r\r' | eb-console dev/wbm0;
   echo -n 'dev/wbm0 set time: '; echo -n -e '\r'time setnsec $(date -u +%N)'\r\r' | eb-console dev/wbm0;
@@ -30,10 +35,10 @@ then
   echo -n 'dev/wbm1 datamaster IP: '; eb-mon -i dev/wbm1
   echo -n 'dev/wbm1 datamaster WR sync status: '; eb-mon -y dev/wbm1
   # Load the latest firmware to datamaster
-  ~/bel_projects/dev/syn/gsi_pexarria5/ftm/fwload_all.sh $DM $FIRMWARE
+  $BEL_PROJECTS_PATH/syn/gsi_pexarria5/ftm/fwload_all.sh $DM $FIRMWARE
   # Test that the tools version and the firmware version are compatible
-  LD_LIBRARY_PATH=~/bel_projects/dev/modules/ftm/lib/ ~/bel_projects/dev/modules/ftm/bin/dm-cmd $DM
-  OPTIONS='-k zzz' make -C ~/bel_projects/dev/modules/ftm/tests
+  LD_LIBRARY_PATH=$BEL_PROJECTS_PATH/modules/ftm/lib/ $BEL_PROJECTS_PATH/modules/ftm/bin/dm-cmd $DM
+  OPTIONS='-k zzz' make -C $BEL_PROJECTS_PATH/modules/ftm/tests
 elif [ "$DM_HOST" = "fel0069" ]
 then
   # echo 'Check kernel modules and CERN pci devices.'
@@ -53,10 +58,10 @@ then
   echo -n 'dev/wbm0 datamaster WR sync status: '; ssh root@fel0069.acc.gsi.de 'eb-mon -y dev/wbm0'
   echo -n 'dev/wbm0 datamaster link status: '; ssh root@fel0069.acc.gsi.de 'eb-mon -l dev/wbm0'
   # load the latest firmware to datamaster
-  ~/bel_projects/dev/syn/gsi_pexarria5/ftm/fwload_all.sh tcp/fel0069.acc.gsi.de $FIRMWARE
+  $BEL_PROJECTS_PATH/syn/gsi_pexarria5/ftm/fwload_all.sh tcp/fel0069.acc.gsi.de $FIRMWARE
   # Test that the tools version and the firmware version are compatible
-  LD_LIBRARY_PATH=~/bel_projects/dev/modules/ftm/lib/ ~/bel_projects/dev/modules/ftm/bin/dm-cmd tcp/fel0069.acc.gsi.de
-  OPTIONS='-k zzz' make -C ~/bel_projects/dev/modules/ftm/tests remote
+  LD_LIBRARY_PATH=$BEL_PROJECTS_PATH/modules/ftm/lib/ $BEL_PROJECTS_PATH/modules/ftm/bin/dm-cmd tcp/fel0069.acc.gsi.de
+  OPTIONS='-k zzz' make -C $BEL_PROJECTS_PATH/modules/ftm/tests remote
 else
   echo "Unknown datamaster host $DM_HOST, known are ACOPC042, fel0069."
 fi

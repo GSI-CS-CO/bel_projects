@@ -1,8 +1,5 @@
 #include "common.h"
-
-
-
-
+#include <ctime>
 
 void hexDump (const char *desc, const char* addr, int len) {
     int i;
