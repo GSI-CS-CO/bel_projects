@@ -4,25 +4,33 @@ import pytest
 
 """
 Module collects tests for dm-cmd with the command 'abort'.
+Main focus is testing with bit masks for CPUs and threads.
+
+Tests are prepared for 8 threads and 32 threads in lm32 firmware.
 """
 class AbortTests(dm_testbench.DmTestbench):
 
   def setUp(self):
+    """Setup CPU quantity and thread quantity for 8 threads.
+    Tests for 32 threads must change the threadQuantity before any test
+    action.
+    """
     super().setUp()
     self.threadQuantity = 8
     self.cpuQuantity = 4
 
   @pytest.mark.thread8
-  def testAbortrunningThreads(self):
+  def testAbortRunningThreads(self):
     self.runAbortRunningThreads()
 
   @pytest.mark.thread32
-  def testAbortrunningThreads32(self):
+  def testAbortRunningThreads32(self):
     self.threadQuantitiy = 32
     self.runAbortRunningThreads()
 
   def runAbortRunningThreads(self):
-    """Load a schedule and start all threads. Check that these are running.
+    """Check that no thread runs on 4 CPUs. Load 4 schedules, one for
+    each CPU and start all threads. Check that these are running.
     Abort some threads. Check that these are not running.
     """
     # Check all CPUs that no thread is running.
@@ -53,9 +61,9 @@ class AbortTests(dm_testbench.DmTestbench):
         self.assertEqual(lines[0][i], f'CPU {i} Running Threads: 0xffffffff', 'wrong output')
       else:
         self.assertEqual(lines[0][i], f'CPU {i} Running Threads: 0xff', 'wrong output')
-    # Abort some threads
-    cpu = '0x3'
-    thread = '0xaa'
+    # Abort some threads on CPUs 0 and 1
+    cpu = '0x3' # CPUs 0 and 1
+    thread = '0xaa' # Threads 2, 4, 6, 8
     threadCount = self.bitCount(thread, self.threadQuantity)
     cpuCount = self.bitCount(cpu, self.cpuQuantity)
     lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', f'{cpu}', '-t', f'{thread}', 'abort'), [0], threadCount * cpuCount, 0)
@@ -68,42 +76,65 @@ class AbortTests(dm_testbench.DmTestbench):
     # Check that the remaining threads are running
     lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', '0xf', 'running'), [0], 4, 0)
     # ~ self.printStdOutStdErr(lines)
+    # define the thread masks for 32 and 8 threads.
+    if self.threadQuantity == 32:
+      threadMask = '0xffffffff'
+      threadMaskAborted = '0xffffff55'
+    elif self.threadQuantity == 8:
+      threadMask = '0xff'
+      threadMaskAborted = '0x55'
+    else:
+      self.assertFalse(True, f'threadQuantity is {self.threadQuantity}, allowed: 8 or 32')
+    # compare the lines of stdout with expected texts.
     for i in range(self.cpuQuantity):
       if i in cpus:
-        if self.threadQuantity > 8:
-          self.assertEqual(lines[0][i], f'CPU {i} Running Threads: 0xffffff55', 'wrong output')
-        else:
-          self.assertEqual(lines[0][i], f'CPU {i} Running Threads: 0x55', 'wrong output')
+        expectedText = 'CPU {variable} Running Threads: {mask}'.format(variable=i, mask=threadMaskAborted)
+        messageText = 'wrong output, expected: CPU {variable} Running Threads: {mask}'.format(variable=i, mask=threadMaskAborted)
+        self.assertEqual(lines[0][i], expectedText, messageText)
       else:
-        if self.threadQuantity > 8:
-          self.assertEqual(lines[0][i], f'CPU {i} Running Threads: 0xffffffff', 'wrong output')
-        else:
-          self.assertEqual(lines[0][i], f'CPU {i} Running Threads: 0xff', 'wrong output')
+        expectedText = 'CPU {variable} Running Threads: {mask}'.format(variable=i, mask=threadMask)
+        messageText = 'wrong output, expected: CPU {variable} Running Threads: {mask}'.format(variable=i, mask=threadMask)
+        self.assertEqual(lines[0][i], expectedText, messageText)
 
+  @pytest.mark.thread8
   def testAbortSingleThreadDecimal(self):
-    """Loop for all threads aborting this thread.
+    """Loop over all CPUs and all threads aborting this thread.
     Uses the thread number in decimal form.
     """
     for cpu in range(self.cpuQuantity):
       for thread in range(self.threadQuantity):
         self.runThreadXCommand(cpu, thread, 'abort')
 
+  @pytest.mark.thread8
   def testAbortSingleThreadHex(self):
-    """Loop for all threads aborting this thread.
-    Uses the thread number in decimal form.
+    """Loop over all CPUs and all threads aborting this thread.
+    Uses the thread number in hexadecimal form.
     """
     for cpu in range(self.cpuQuantity):
       for thread in range(self.threadQuantity):
         self.runThreadXCommand(cpu, f'0x{(1 << thread):x}', 'abort')
 
-  def runThreadXCommand(self, cpu, thread, command, assertText=''):
-    """Test for one thread. If commandSet=True set the time (parameter) with the command.
-    In all cases, read this value. Check the output of both commands.
+  @pytest.mark.thread32
+  def testAbortSingleThreadDecimal32(self):
+    """Loop over all CPUs and all threads aborting this thread.
+    Uses the thread number in decimal form.
     """
-    self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', f'{cpu}', '-t', f'{thread}', command), [0], 1, 0)
+    self.threadQuantity = 32
+    for cpu in range(self.cpuQuantity):
+      for thread in range(self.threadQuantity):
+        self.runThreadXCommand(cpu, thread, 'abort')
+
+  @pytest.mark.thread32
+  def testAbortSingleThreadHex32(self):
+    """Loop over all CPUs and all threads aborting this thread.
+    Uses the thread number in hexadecimal form.
+    """
+    self.threadQuantity = 32
+    for cpu in range(self.cpuQuantity):
+      for thread in range(self.threadQuantity):
+        self.runThreadXCommand(cpu, f'0x{(1 << thread):x}', 'abort')
 
   def tearDown(self):
     super().tearDown()
     # reset all CPUs to get a clean state. This is not done by dm-cmd reset all.
     self.resetAllCpus()
-
