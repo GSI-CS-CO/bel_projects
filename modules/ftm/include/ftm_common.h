@@ -314,8 +314,11 @@
 
 /** @name Alternative destination list node layout definition*/
 //@{
+#define DST_MAX                 9
+
 #define DST_ARRAY               (NODE_BEGIN) ///< Array of pointers to all nodes which are alternative definitions
-#define DST_ARRAY_END           (DST_ARRAY + 10 * _PTR_SIZE_) ///< End of Array
+#define DST_ARRAY_END           (DST_ARRAY + DST_MAX * _PTR_SIZE_) ///< End of Array
+#define DST_NXTPTR              (DST_ARRAY_END + _PTR_SIZE_) ///< End of Array
 //@}
 
 /** @name Origin node layout definition.*/

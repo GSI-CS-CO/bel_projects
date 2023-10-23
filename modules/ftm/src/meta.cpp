@@ -29,10 +29,11 @@ void CmdQBuffer::serialise(const mVal &m, uint8_t* b) const {
 void DestList::serialise(const mVal &m, uint8_t* b) const {
   Meta::serialise(m, b);
 
+  //for each map entry, add the element to buffer
 
 
   auto startIt = va.begin();
-  //FIXME size check !
+  
   for(auto it = startIt; it < va.end(); it++) {
     writeLeNumberToBeBytes(b + (ptrdiff_t)DST_ARRAY + (it - startIt) * _32b_SIZE_,  *it);
   }
