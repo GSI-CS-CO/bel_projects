@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 11-Oct-2023
+ *  version : 24-Oct-2023
  *
  * user interface that connects to a ftdimcp-ctl instance (started as daemon) via DIM
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define FTDIMCP_UI_VERSION 0x000005
+#define FTDIMCP_UI_VERSION 0x000006
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -54,7 +54,7 @@
 #define DIMCHARSIZE      32              // standard size for char services
 #define DIMMAXSIZE       1024            // max size for service names
 #define SCREENWIDTH      1024            // width of screen
-#define FTDIMCP_UI_LINES 14              // number of lines at screen
+#define FTDIMCP_UI_LINES 12              // number of lines at screen
 
 char      disName[DIMMAXSIZE];           // name of DIM server
 
@@ -66,6 +66,8 @@ double    disSetLevel;                   // actual comparator level
 double    dicSetLevel;                   // level to set from here
 char      disHostname[DIMCHARSIZE];      // hostname of server
 char      disStatus[DIMCHARSIZE];        // status of server
+uint32_t  disDevice;                     // USB device ID
+char      disSerial[DIMCHARSIZE];        // USB serial number
 
 uint32_t  disVersionId      = 0;
 uint32_t  disActOutputId    = 0;                  
@@ -74,6 +76,8 @@ uint32_t  disNTriggerId     = 0;
 uint32_t  disSetLevelId     = 0;
 uint32_t  disHostnameId     = 0;
 uint32_t  disStatusId       = 0;
+uint32_t  disDeviceId       = 0;
+uint32_t  disSerialId       = 0;
 
 uint32_t  no_link_32        = 0xdeadbeef;
 uint64_t  no_link_64        = 0xdeadbeefce420651;
@@ -143,7 +147,11 @@ void dicSubscribeServices(char *prefix)
   sprintf(name, "%s_status", prefix);
   disStatusId = dic_info_service(name, MONITORED, 0, &disStatus, DIMCHARSIZE, 0, 0, &no_link_32, sizeof(no_link_dbl));
 
-  
+  sprintf(name, "%s_serial", prefix);
+  disSerialId = dic_info_service(name, MONITORED, 0, disSerial, DIMCHARSIZE, 0, 0, &no_link_32,  sizeof(no_link_32));
+
+  sprintf(name, "%s_deviceid", prefix);
+  disDeviceId = dic_info_service(name, MONITORED, 0, &disDevice, sizeof(disDevice), 0, 0, &no_link_32, sizeof(no_link_32));
 } // dimSubscribeServices
 
 
@@ -230,7 +238,12 @@ void printServices(char *prefix, int flagOnce)
   if (*tmp         == no_link_32)  printf("status                        : %-32s\n"  , no_link_str);
   else                             printf("status                        : %-32s\n"  , disStatus);
 
-  
+  if (disDevice    == no_link_32)  printf("USB device ID                 : %-32s\n"  , no_link_str);
+  else                             printf("USB device ID                 : %08x\n"   , disDevice);
+  tmp = (uint32_t *)disSerial;
+  if (*tmp         == no_link_32)  printf("USB serial number             : %-32s\n"  , no_link_str);
+  else                             printf("USB serial number             : %-32s\n"  , disSerial);
+    
   for (i=0; i<FTDIMCP_UI_LINES - 4; i++) printf("%s\n", empty);
   if (!flagOnce) printf("%s\n", footer);
 } // printServices
