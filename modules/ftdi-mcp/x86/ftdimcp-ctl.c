@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 11-October-2023
+ *  version : 24-October-2023
  *
  *  command line program for MCP4725 connected via FT232H
  *
@@ -58,8 +58,10 @@ uint32_t  disActOutput;                  // actual (non-stretched) comparator ou
 uint32_t  disTriggered;                  // value of 'stretched' comparator output
 uint32_t  disNTrigger;                   // approximate number of comparator 'triggers'
 double    disSetLevel;                   // actual comparator level
-char      disHostname[DIMCHARSIZE];
-char      disStatus[DIMCHARSIZE];
+char      disHostname[DIMCHARSIZE];      // hostname of THIS PC
+uint32_t  disDevice;                     // ID of USB device
+char      disSerial[DIMCHARSIZE];        // serial string of FTDI device
+char      disStatus[DIMCHARSIZE];        // status of server
 
 
 uint32_t  disVersionId      = 0;
@@ -68,6 +70,8 @@ uint32_t  disTriggeredId    = 0;
 uint32_t  disNTriggerId     = 0;
 uint32_t  disSetLevelId     = 0;
 uint32_t  disHostnameId     = 0;
+uint32_t  disDeviceId       = 0;
+uint32_t  disSerialId       = 0;
 uint32_t  disStatusId       = 0;
 uint32_t  disCmdLevelId     = 0;
 
@@ -151,7 +155,7 @@ void disAddServices(char *prefix)
   char name[DIMMAXSIZE];
   
   sprintf(name, "%s_version", prefix);
-  disVersionId    = dis_add_service(name, "C", disVersion, 8, 0 , 0);
+  disVersionId   = dis_add_service(name, "C", disVersion, 8, 0 , 0);
 
   sprintf(name, "%s_actoutput", prefix);
   disActOutputId = dis_add_service(name, "I:1", &disActOutput, sizeof(disActOutput), 0, 0);
@@ -160,19 +164,25 @@ void disAddServices(char *prefix)
   disTriggeredId = dis_add_service(name, "I:1", &disTriggered, sizeof(disTriggered), 0, 0);
 
   sprintf(name, "%s_ntrigger", prefix);
-  disNTriggerId   = dis_add_service(name, "I:1", &disNTrigger, sizeof(disNTrigger),  0, 0);
+  disNTriggerId  = dis_add_service(name, "I:1", &disNTrigger, sizeof(disNTrigger),  0, 0);
   
   sprintf(name, "%s_setlevel", prefix);
-  disSetLevelId   = dis_add_service(name, "D:1", &disSetLevel, sizeof(disSetLevel),  0, 0);
+  disSetLevelId  = dis_add_service(name, "D:1", &disSetLevel, sizeof(disSetLevel),  0, 0);
 
   sprintf(name, "%s_hostname", prefix);
-  disHostnameId   = dis_add_service(name, "C", disHostname, DIMCHARSIZE, 0, 0);
+  disHostnameId  = dis_add_service(name, "C", disHostname, DIMCHARSIZE, 0, 0);
+
+  sprintf(name, "%s_deviceid", prefix);
+  disDeviceId    = dis_add_service(name, "I:1", &disDevice, sizeof(disDevice),  0, 0);
+
+  sprintf(name, "%s_serial", prefix);
+  disSerialId    = dis_add_service(name, "C", disSerial, DIMCHARSIZE, 0, 0);
 
   sprintf(name,  "%s_status", prefix);
-  disStatusId     = dis_add_service(name, "C", disStatus, DIMCHARSIZE, 0, 0);  
+  disStatusId    = dis_add_service(name, "C", disStatus, DIMCHARSIZE, 0, 0);  
 
   sprintf(name, "%s_cmd_setlevel", prefix);
-  disCmdLevelId   =  dis_add_cmnd(name, "D:1", cmdSetLevel, 0);
+  disCmdLevelId  =  dis_add_cmnd(name, "D:1", cmdSetLevel, 0);
   
 #endif //USEDIM
 } // dimAddServices
@@ -274,25 +284,33 @@ int main(int argc, char** argv) {
 
   // start DIM server
 #ifdef USEDIM
-  sprintf(disStatus, "%s", "OK");
-  gethostname(disHostname, 32);
-  sprintf(disName, "N/A");
-  sprintf(disVersion, "N/A");
-  disNTrigger     = 0;
-  disSetLevel     = NAN;
+  if (daemon) {
+    sprintf(disStatus, "%s", "OK");
+    gethostname(disHostname, 32);
+    sprintf(disName, "N/A");
+    sprintf(disVersion, "N/A");
+    sprintf(disSerial, "N/A");
+    disDevice       = 0x0;
+    disNTrigger     = 0;
+    disSetLevel     = NAN;
     
-  printf("%s: starting server using prefix %s\n", program, prefix);
+    printf("%s: starting server using prefix %s\n", program, prefix);
   
-  // add services, update 'constant' services
-  disAddServices(prefix);
+    // add services, update 'constant' services
+    disAddServices(prefix);
   
-  sprintf(disName, "%s", prefix);
-  dis_start_serving(disName);
+    sprintf(disName, "%s", prefix);
+    dis_start_serving(disName);
   
-  sprintf(disVersion, "%06x", FTDIMCP_LIB_VERSION);
-  dis_update_service(disVersionId);
-  dis_update_service(disStatusId);
-  dis_update_service(disHostnameId);
+    sprintf(disVersion, "%06x", FTDIMCP_LIB_VERSION);
+    dis_update_service(disVersionId);
+    dis_update_service(disStatusId);
+    dis_update_service(disHostnameId);
+
+    ftdimcp_info(cIdx, &disDevice, disSerial, 0);
+    dis_update_service(disSerialId);
+    dis_update_service(disDeviceId);
+  } // if daemon
 #endif
 
 
@@ -325,7 +343,7 @@ int main(int argc, char** argv) {
   
   // info    
   if (getInfo) {
-    if ((ftStatus = ftdimcp_info(cIdx))!= FT_OK) die("can't get info on FTDI channel");
+    if ((ftStatus = ftdimcp_info(cIdx, &disDevice, disSerial, 1)) != FT_OK) die("can't get info on FTDI channel");
   } // if getInfo
 
   if (setDac) {
@@ -361,6 +379,8 @@ int main(int argc, char** argv) {
     ftStatus        = FT_OK;
     ftStatusOld     = FT_OK;
     flagBlink       = 0;
+
+    
           
     while (1) {
       if (flagOk) {

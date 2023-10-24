@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 10-May-2023
+ *  version : 24-Oct-2023
  *
  *  x86 routines for MCP4725 connected via FT232H
  * 
@@ -70,21 +70,31 @@ void ftdimcp_close(FT_HANDLE cHandle)
 
 
 // gets device info
-FT_STATUS ftdimcp_info(int cIdx)
+FT_STATUS ftdimcp_info(int cIdx, uint32_t *deviceId, char *deviceSerial, int flagPrint)
 {
   FT_STATUS                ftStatus;          // status returned by ftdi library
   FT_DEVICE_LIST_INFO_NODE channelInfo;       // channel info data
 
-  if ((ftStatus = I2C_GetChannelInfo(cIdx, &channelInfo)) == FT_OK) {
-    printf("description: %s\n"  , channelInfo.Description);
-    printf("serial     : %s\n"  , channelInfo.SerialNumber);
-    printf("locId      : 0x%x\n", channelInfo.LocId);
-    printf("ID         : 0x%x\n", channelInfo.ID);
-    printf("type       : 0x%x\n", channelInfo.Type);
-    printf("flags      : 0x%x\n", channelInfo.Flags);
-  } // if ftStatus
-  else
-    printf("error      : can't read channel info, ftStatus is %d\n", ftStatus);
+
+  ftStatus = I2C_GetChannelInfo(cIdx, &channelInfo);
+
+    if (ftStatus == FT_OK) {
+      *deviceId = channelInfo.ID;
+      sprintf(deviceSerial, "%s", channelInfo.SerialNumber);
+      if (flagPrint) {
+        printf("description: %s\n"  , channelInfo.Description);
+        printf("serial     : %s\n"  , channelInfo.SerialNumber);
+        printf("locId      : 0x%x\n", channelInfo.LocId);
+        printf("ID         : 0x%x\n", channelInfo.ID);
+        printf("type       : 0x%x\n", channelInfo.Type);
+        printf("flags      : 0x%x\n", channelInfo.Flags);
+      } // if flagprint
+    } // if ftStatus
+    else {
+      *deviceId = 0x0;
+      sprintf(deviceSerial, "%s", "");
+      if (flagPrint) printf("error      : can't read channel info, ftStatus is %d\n", ftStatus);
+    } // else ftStatus
 
   return ftStatus;
 } // ftdimcp_info

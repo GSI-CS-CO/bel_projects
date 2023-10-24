@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 11-October-2023
+ *  version : 24-October-2023
  * 
  * x86 routines for a MCP4725 connected via FT232H
  * as an example, this can be used to set the level of a comparator circuit
@@ -38,7 +38,7 @@
 #ifndef _FTDIMCP_LIB_H_
 #define _FTDIMCP_LIB_H_
 
-#define FTDIMCP_LIB_VERSION 0x000005
+#define FTDIMCP_LIB_VERSION 0x000006
 
 // ftdi, i2c
 #include <ftd2xx.h>
@@ -72,10 +72,12 @@ void ftdimcp_close(FT_HANDLE cHandle                     // handle to channel
                    );
 
 
-// prints info of the channel
-FT_STATUS ftdimcp_info(int cIdx                          // channel index
+// gets and prints info of the channel
+FT_STATUS ftdimcp_info(int cIdx,                         // channel index
+                       uint32_t *deviceId,               // USB device ID
+                       char *deviceSerial,               // serial number of device
+                       int flagPrint                     // flag; 0: don't print info to screen, 1: print info to screen
                        );
-
 
 // init channel
 FT_STATUS ftdimcp_init(FT_HANDLE cHandle                 // handle to channel
