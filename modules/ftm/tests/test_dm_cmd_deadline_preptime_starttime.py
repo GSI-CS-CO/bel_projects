@@ -5,6 +5,9 @@ import math            # contains log2()
 
 """
 Module collects tests for dm-cmd with the commands preptime, starttime, deadline.
+Main focus is testing with bit masks for CPUs and threads.
+
+Tests are prepared for 8 threads and 32 threads in lm32 firmware.
 """
 class ThreadBitsTest(dm_testbench.DmTestbench):
 
