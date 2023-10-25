@@ -1,21 +1,27 @@
 name: CI Basic Build
 
 on:
+
   push:
     branches: [ "master", "proposed_master", "fallout", "github_actions_development" ]
   pull_request:
     branches: [ "master", "proposed_master", "fallout", "github_actions_development" ]
 
 jobs:
+
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, ubuntu-20.04]
 
     steps:
     - uses: actions/checkout@v3
 
     - name: Install missing packages
-      run: sudo apt-get -y install automake libreadline-dev build-essential libboost-all-dev pkg-config libsigc++-2.0-dev --fix-missing
+      run: sudo apt-get -y install automake libreadline-dev build-essential libboost-all-dev docbook-utils pkg-config libsigc++-2.0-dev --fix-missing
 
     - name: Set PKG_CONFIG_PATH
       run: export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
