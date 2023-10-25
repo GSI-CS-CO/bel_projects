@@ -15,7 +15,7 @@ jobs:
     - uses: actions/checkout@v3
 
     - name: Install missing packages
-      run: sudo apt-get -y install automake libreadline-dev docbook-utils build-essential libboost-all-dev pkg-config libsigc++-2.0-dev --fix-missing
+      run: sudo apt-get -y install automake libreadline-dev build-essential libboost-all-dev pkg-config libsigc++-2.0-dev --fix-missing
 
     - name: Set PKG_CONFIG_PATH
       run: export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
