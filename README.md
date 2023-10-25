@@ -332,10 +332,11 @@ Error: Compillation: "saftbus/process.cpp:14:10: fatal error: linux/ioprio.h: No
 Solution:
 
 1. In Makefile.am
-- line 405: delete 'saft-roundtrip-latency saft-standalone-roundtrip-latency'
 
-- delete lines 486-490
-```
+  - line 405: delete 'saft-roundtrip-latency saft-standalone-roundtrip-latency'
+  - delete lines 486-490
+
+```make
 saft_roundtrip_latency_LDADD = $(EB_LIBS)  $(SIGCPP_LIBS) libsaftbus.la libsaft-proxy.la -ldl #-lltdl
 saft_roundtrip_latency_SOURCES = src/saft-roundtrip-latency.cpp
 
@@ -344,7 +345,8 @@ saft_standalone_roundtrip_latency_SOURCES = src/saft-standalone-roundtrip-latenc
 ```
 
 2. In saftbus/process.cpp, replace the entire code by
-```
+
+```cpp
 #include "process.hpp"
 
 #include <iostream>
