@@ -55,10 +55,11 @@
 #define B2B_ERRFLAG_KDINJ            0x8   // error kick diagnostic injection
 #define B2B_ERRFLAG_CBU             0x10   // error central b2b unit
 
-// B2B mode flags                          //                                            | ext trig | ext phase | inj trig | inj phase |
-#define B2B_MODE_BSE                   1   // CMD_B2B_START: trigger extraction kicker   |     x    |           |   (x)    |           |
+// B2B mode flags                          // required actions (informative)             | ext trig | ext phase | inj trig | inj phase |
+#define B2B_MODE_OFF                   0   // off (slow extraction); phase meas. only    |          |    (x)    |          |           | 
+#define B2B_MODE_BSE                   1   // CMD_B2B_START: trigger extraction kicker   |     x    |    (x)    |          |           |
 #define B2B_MODE_B2E                   2   // simple bunch extraction 'fast extraction'  |     x    |     x     |          |           | 
-#define B2B_MODE_B2C                   3   // bunch to coasting transfer                 |     x    |     x     |    x     |           | 
+#define B2B_MODE_B2C                   3   // bunch to coasting transfer                 |     x    |     x     |    x     |    (x)    | 
 #define B2B_MODE_B2B                   4   // bunch to bucket transfer                   |     x    |     x     |    x     |     x     |
 
 // B2B other flags
@@ -102,7 +103,9 @@
 #define B2B_TDIAGOBS            15900000    // observation interval for phase diagnostic; a bit shorter than length of flat top
 #define B2B_NSID                      16    // max number of SID settings
 #define B2B_F_CLK              200000000    // clock for DDS, here: BuTiS 200 MHz
-
+#define B2B_WR_JITTER              30000    // jitter [fs]!!! of White Rabbit clock
+#define B2B_NSAMPLES                  32    // number of samples for phase measurement
+#define B2B_FW_USESUBNSFIT             1    // 0: use 'average fit'; 1: use 'sub-ns fit'
 
 // ****************************************************************************************
 // DP RAM

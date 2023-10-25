@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 12-Nov-2021
+ *  version : 09-May-2023
  *
  *  user interface for B2B
  *
@@ -129,7 +129,7 @@ void getEbDevice(ring_t ring, char *ebDevice)
 } // getEbDevice
 
 
-void parfileReadSID(char *filename, char *comment, int *mode, int *ringInj, double *fH1Ext, int *nHExt, double *fH1Inj, int *nHInj, int *flagLsa ,int *cTrigExt, int *cTrigInj, int *cPhase)
+void parfileReadSID(char *filename, char *comment, int *mode, int *ringInj, double *fH1Ext, int *nHExt, double *fH1Inj, int *nHInj, int *flagLsa ,double *cTrigExt, double *cTrigInj, double *cPhase)
 {
   int   ok;
   FILE  *parfile;
@@ -144,16 +144,16 @@ void parfileReadSID(char *filename, char *comment, int *mode, int *ringInj, doub
     if (ok) ok = fscanf(parfile,"%lf", fH1Inj);
     if (ok) ok = fscanf(parfile,"%d" , nHInj);
     if (ok) ok = fscanf(parfile,"%d" , flagLsa);
-    if (ok) ok = fscanf(parfile,"%d" , cTrigExt);
-    if (ok) ok = fscanf(parfile,"%d" , cTrigInj);
-    if (ok) ok = fscanf(parfile,"%d" , cPhase);
+    if (ok) ok = fscanf(parfile,"%lf", cTrigExt);
+    if (ok) ok = fscanf(parfile,"%lf", cTrigInj);
+    if (ok) ok = fscanf(parfile,"%lf", cPhase);
     fclose(parfile);
     if (!ok) die("read config for SID: ", 1);
   } // if parfile
   else printf("can't read parfile - %s!\n", filename);
 } // parfileReadSID
 
-void parfileWriteSID(char *filename, char *comment, int mode, int ringInj, double fH1Ext, int nHExt, double fH1Inj, int nHInj, int flagLsa, int cTrigExt, int cTrigInj, int cPhase)
+void parfileWriteSID(char *filename, char *comment, int mode, int ringInj, double fH1Ext, int nHExt, double fH1Inj, int nHInj, int flagLsa, double cTrigExt, double cTrigInj, double cPhase)
 {
   int   ok;
   FILE  *parfile;
@@ -161,17 +161,17 @@ void parfileWriteSID(char *filename, char *comment, int mode, int ringInj, doubl
   
   // write file with parameters
   if ((parfile = fopen(filename,"w"))) {
-    ok         = fprintf(parfile,"%s\n" , comment);
-    if (ok) ok = fprintf(parfile,"%d\n" , mode);
-    if (ok) ok = fprintf(parfile,"%d\n" , ringInj);
+    ok         = fprintf(parfile,"%s\n"   , comment);
+    if (ok) ok = fprintf(parfile,"%d\n"   , mode);
+    if (ok) ok = fprintf(parfile,"%d\n"   , ringInj);
     if (ok) ok = fprintf(parfile,"%.9lf\n", fH1Ext);
-    if (ok) ok = fprintf(parfile,"%d\n" , nHExt);
+    if (ok) ok = fprintf(parfile,"%d\n"   , nHExt);
     if (ok) ok = fprintf(parfile,"%.9lf\n", fH1Inj);
-    if (ok) ok = fprintf(parfile,"%d\n" , nHInj);
-    if (ok) ok = fprintf(parfile,"%d\n" , flagLsa);
-    if (ok) ok = fprintf(parfile,"%d\n" , cTrigExt);
-    if (ok) ok = fprintf(parfile,"%d\n" , cTrigInj);
-    if (ok) ok = fprintf(parfile,"%d\n" , cPhase);
+    if (ok) ok = fprintf(parfile,"%d\n"   , nHInj);
+    if (ok) ok = fprintf(parfile,"%d\n"   , flagLsa);
+    if (ok) ok = fprintf(parfile,"%.3lf\n", cTrigExt);
+    if (ok) ok = fprintf(parfile,"%.3lf\n", cTrigInj);
+    if (ok) ok = fprintf(parfile,"%.3lf\n", cPhase);
     fclose(parfile);
     
     if (!ok) die("write config for SID: ", 1);
@@ -199,9 +199,9 @@ void submitSid(uint64_t ebDevice, ring_t ring, uint32_t sid)
   double   fH1Inj;
   int      nHInj;
   int      flagLsa;
-  int      cTrigExt;
-  int      cTrigInj;
-  int      cPhase;
+  double   cTrigExt;
+  double   cTrigInj;
+  double   cPhase;
 
   uint32_t gid;
   uint32_t status;
@@ -235,7 +235,7 @@ void submitSid(uint64_t ebDevice, ring_t ring, uint32_t sid)
   status    = COMMON_STATUS_OK;
   if (!errorFlag)   if ((status = b2b_context_ext_upload(ebDevice, sid, gid, mode, fH1Ext, 1, nHExt, cTrigExt, 1, cPhase, 1, 1)) != COMMON_STATUS_OK) errorFlag = 1;
   if (mode > B2B_MODE_B2E) 
-    if (!errorFlag) if ((status = b2b_context_inj_upload(ebDevice, sid, ringInj, fH1Inj, 1, nHInj, cTrigInj, 1)) != COMMON_STATUS_OK) errorFlag = 1;
+    if (!errorFlag) if ((status = b2b_context_inj_upload(ebDevice, sid, ringInj, 3, 4, 0x42, fH1Inj, 1, nHInj, cTrigInj, 1)) != COMMON_STATUS_OK) errorFlag = 1;
 
   if (errorFlag) {
     printf("%s\n", b2b_status_text(status));
@@ -247,14 +247,14 @@ void submitSid(uint64_t ebDevice, ring_t ring, uint32_t sid)
 void menuExpert()
 {
   // ivtpar
-  int    i, l0, lchange[IVTMAXPAR];
+  int    l0, lchange[IVTMAXPAR];
   char   parname[MAXLEN];
   char   txtname[MAXLEN];
 
   sprintf(txtname, "%s/%s", path, MENUTXT_EXPERT);
   sprintf(parname, "%s/%s", path, MENUPAR_EXPERT);
 
-  i = ivtpar (txtname, parname, &l0, lchange);
+  ivtpar (txtname, parname, &l0, lchange);
 } // menuExpert
 
 
@@ -274,12 +274,12 @@ void menuIKnob(uint64_t ebDevice, ring_t ring, uint32_t sid, char *sidparname, k
   double   fH1Inj;
   int      nHInj;
   int      flagLsa;
-  int      cTrigExt;
-  int      cTrigInj;
-  int      cPhase;
+  double   cTrigExt;
+  double   cTrigInj;
+  double   cPhase;
 
   int      increment = 10;
-  int      *ipar     = 0x0;
+  double   *ipar     = 0x0;
   char     commentText[MAXLEN];
   char     cDummy[MAXLEN];
 
@@ -328,8 +328,8 @@ void menuIKnob(uint64_t ebDevice, ring_t ring, uint32_t sid, char *sidparname, k
     // write file with parameters
     if ((parfile = fopen(parname,"w"))) {
       ok         = fprintf(parfile,"%s_%s\n" , comment, commentText);
-      if (ok) ok = fprintf(parfile,"%d\n" , increment);
-      if (ok) ok = fprintf(parfile,"%d\n" , *ipar);
+      if (ok) ok = fprintf(parfile,"%d\n"    , increment);
+      if (ok) ok = fprintf(parfile,"%.3f\n"  , *ipar);
       fclose (parfile);
       if (!ok) die("error writing parameter file for knob", ok);
     } // if parfile
@@ -340,7 +340,7 @@ void menuIKnob(uint64_t ebDevice, ring_t ring, uint32_t sid, char *sidparname, k
     if ((parfile = fopen(parname,"r"))) {
       ok         = fscanf(parfile,"%s" , cDummy);
       if (ok) ok = fscanf(parfile,"%d" , &increment);
-      if (ok) ok = fscanf(parfile,"%d" , ipar);
+      if (ok) ok = fscanf(parfile,"%lf", ipar);
       fclose (parfile);
       if (!ok) die("error reading parameter file for knob", ok);
     } // if parfile
@@ -433,7 +433,7 @@ void menuConfig(uint64_t ebDevice, ring_t ring)
   char     parname[MAXLEN];
   char     txtname[MAXLEN];
   char     parnameSidPrefix[MAXLEN];
-  char     parnameSid[MAXLEN];
+  char     parnameSid[MAXLEN+6];  
   int      done=0;
 
   int      sid;
@@ -491,7 +491,8 @@ void menuMonitor(uint64_t ebDevice, ring_t ring)
 
   uint32_t sid, gid, mode, nHExt, nHInj;
   uint64_t TH1Ext, TH1Inj, TBeat;
-  int32_t  cPhase, cTrigExt, cTrigInj, comLatency;
+  double   cPhase, cTrigExt, cTrigInj;
+  int32_t  comLatency;
   int      j=0;
 
   static struct termios oldt, newt;
@@ -564,7 +565,8 @@ void menuRing(ring_t ring)
 
   uint64_t dummy64a, dummy64b, dummy64c;
   uint32_t dummy32a, dummy32b, dummy32c, dummy32d, dummy32e;
-  int32_t  dummy32f, dummy32g, dummy32h, dummy32i;
+  double   dummy32f, dummy32g, dummy32h;
+  int32_t  dummy32i;
 
   // open connection to firmware
   getEbDevice(ring, ebDevName);

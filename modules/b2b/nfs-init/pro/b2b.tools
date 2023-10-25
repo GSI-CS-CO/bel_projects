@@ -1,0 +1,19 @@
+# libraries
+cp -a $MOUNTPOINT/$ARCH/usr/lib/* /usr/lib/
+ldconfig
+# software
+cp -a $MOUNTPOINT/$ARCH/usr/bin/b2b-ui /usr/bin/
+cp -a $MOUNTPOINT/$ARCH/usr/bin/b2b-ctl /usr/bin/
+cp -a $MOUNTPOINT/$ARCH/usr/bin/b2b-serv-sys /usr/bin/
+cp -a $MOUNTPOINT/$ARCH/usr/bin/b2b-client-sys /usr/bin/
+cp -a $MOUNTPOINT/$ARCH/usr/bin/b2b-serv-raw /usr/bin/
+cp -a $MOUNTPOINT/$ARCH/usr/bin/b2b-analyzer /usr/bin/
+cp -a $MOUNTPOINT/$ARCH/usr/bin/b2b-viewer /usr/bin/
+cp -a $MOUNTPOINT/$ARCH/usr/bin/b2b-archiver /usr/bin/
+cp -a $MOUNTPOINT/$ARCH/usr/bin/b2b-mon /usr/bin/
+cp -a $MOUNTPOINT/$ARCH/usr/bin/b2b-jitter-check /usr/bin/
+
+mkdir /tmp/b2bivt
+cp -a $MOUNTPOINT/$ARCH/tmp/b2bivt/* /tmp/b2bivt
+# firmware
+cp -a $MOUNTPOINT/firmware/* /

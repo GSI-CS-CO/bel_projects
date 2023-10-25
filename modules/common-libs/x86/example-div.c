@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 24-Feb-2023
+ *  version : 14-Jun-2023
  *
  *  command-line interface for a few examples
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  *********************************************************************************************/
-#define DIV_X86_VERSION  "00.00.02"
+#define DIV_X86_VERSION  "00.00.03"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -48,6 +48,7 @@
 // common example
 #include <common-lib.h>                  // common API
 #include <common-defs.h>                 // FW
+#include <common-fwlib.h>                // b2bt, hackish
 
 const char*  program;
 
@@ -64,6 +65,41 @@ static void help(void) {
 } //help
 
 
+// just a copy, hackish
+b2bt_t fwlib_cleanB2bt(b2bt_t t_ps)
+{
+  while (t_ps.ps < -500) {t_ps.ns -= 1; t_ps.ps += 1000;}
+  while (t_ps.ps >= 500) {t_ps.ns += 1; t_ps.ps -= 1000;}
+
+  return t_ps;
+} // alignB2bt
+
+
+// just a copy, hackish
+b2bt_t fwlib_tfns2tps(float t_ns)
+{
+  b2bt_t t_ps;
+
+  t_ps.ns = t_ns;
+  t_ps.ps = (t_ns - (float)(t_ps.ns)) * 1000.0;
+  t_ps    = fwlib_cleanB2bt(t_ps);
+
+  return t_ps;
+} // tfns2ps
+
+
+// just a copy, hackish
+float fwlib_tps2tfns(b2bt_t t_ps)
+{  
+  float  tmp1, tmp2;
+  
+  tmp1 = (float)(t_ps.ns);
+  tmp2 = (float)(t_ps.ps) / 1000.0;
+
+  return tmp1 + tmp2;;
+} // fwlib_tps2tfns
+
+
 int main(int argc, char** argv) {
 
   // CLI
@@ -78,6 +114,10 @@ int main(int argc, char** argv) {
   float    single;
   float    diff;
   float    relative;
+  b2bt_t   t_ps;
+  float    t_ns;
+  uint16_t half_us;
+  float    single_us;
 
   program = argv[0];    
 
@@ -118,6 +158,20 @@ int main(int argc, char** argv) {
   printf("back to float: %13.6f\n", single);
   printf("absolute diff: %13.6f\n", diff);
   printf("relative diff: %14.3e\n", relative);
+
+  t_ps     = fwlib_tfns2tps(number);
+  t_ns     = fwlib_tps2tfns(t_ps);
+  half_us  = comlib_float2half(t_ns / 1000.0);
+  single_us= comlib_half2float(half_us);
+  
+  printf("\nconverting b2bt\n");
+  printf("original     : %13.6f\n", number);
+  printf("ns part      : %13lu\n" , t_ps.ns);
+  printf("ps part      : %13d\n"  , t_ps.ps);
+  printf("to float ns  : %13.6f\n", t_ns);
+  printf("half float   :      0x%04x\n", half_us);
+  printf("to float us  : %13.6f\n", single_us);
+  
   
   return 0;
 } // main

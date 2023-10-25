@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 13-Jan-2023
+ *  version : 21-Sep-2023
  *
  * simple simulation program for b2b measurements
  * - phase diagnostics
@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2BSIM_VERSION 0x000424
+#define B2BSIM_VERSION 0x000700
 #define MAXSAMPLES     1000
 #define MAXDATA        10000000
 
@@ -48,6 +48,9 @@
 #include <math.h>
 #include <time.h>
 
+// b2b includes
+#include <b2blib.h>
+
 const char* program;
 static int getVersion = 0;
 
@@ -59,7 +62,7 @@ typedef struct{
 
 
 uint64_t   TH1_as      = 1283767311562;     // h=1 period [as]
-uint64_t   one_ns_as   = 1000000000;         // 1 ns [as]
+uint64_t   one_ns_as   = 1000000000;        // 1 ns [as]
 int        mode        = 1;                 // simulate, 1: single phase 2: phase difference
 int        fit         = 1;                 // fit method, 1: sub-ns, 2: average
 int        nSamples    = 3;                 // number of samples to be used
@@ -78,10 +81,26 @@ double     dev[MAXDATA];                    // deviation for stdev
 
 
 static void help(void) {
-  fprintf(stderr, "Usage: %s [OPTION] <etherbone-device> [COMMAND]\n", program);
+  fprintf(stderr, "Usage: %s [OPTION] <etherbone-device>\n", program);
   fprintf(stderr, "\n");
-  fprintf(stderr, "  -h                  display this help and exit\n");
-  fprintf(stderr, "  -e                  display version\n");
+  fprintf(stderr, "  -h                      display this help and exit\n");
+  fprintf(stderr, "  -e                      display version\n");
+  fprintf(stderr, "\n");
+  fprintf(stderr, "  -T <rf-period>          hf period (h=1) [fs])\n");
+  fprintf(stderr, "  -s <nSamples>           number of samples (timestamps)\n");
+  fprintf(stderr, "  -r <noise ts>           noise on timestamps [fs] \n");
+  fprintf(stderr, "  -d <nData>              number of measurements\n");
+  fprintf(stderr, "  -o <phase offset>       offset on rf-phase at 'beginning of flattop' [fs]\n");
+  fprintf(stderr, "  -p <noise phase offset> offset on rf-phase [fs]\n");
+  fprintf(stderr, "  -m <mode>               1: single timestamp; 2: difference between two timestamps\n");
+  fprintf(stderr, "  -t <fit method>         1: sub-ns fit; else: average fit \n");
+  fprintf(stderr, "  -c <scan type>          0: don't scan; 1: scan phase offset, 2:???\n");
+  fprintf(stderr, "  -i <scan increment>     scan increment [fs]\n");
+  fprintf(stderr, "  -f <filename>           write data to file\n");
+  fprintf(stderr, "  -n <nPeriods>           number of periods between two measurements\n");
+  fprintf(stderr, "\n");
+  fprintf(stderr, "Example1: '%s -T732996993 -m1 -t1 -c1 -i20000 -d500 -s30'\n", program);
+  fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
   fprintf(stderr, "Version %x. Licensed under the LGPL v3.\n", B2BSIM_VERSION);
 } //help
@@ -250,9 +269,8 @@ void calcTStamp() {
 } // calcTstamps
 
 
-
 int main(int argc, char** argv) {
-  const char* command;
+  //const char* command;
 
   int  opt, error = 0;
   int  exitCode   = 0;
@@ -261,7 +279,7 @@ int main(int argc, char** argv) {
 
   b2bt_t   phase_t;
   int64_t  tPhase1_as, tPhase2_as;
-  double   tEdge1;
+  double   tEdge1        = 0;
   double   tEdgeNoisy1;
   int64_t  diff_as;
   uint32_t width_as;
@@ -278,13 +296,12 @@ int main(int argc, char** argv) {
   
   int     i;
   
-  sprintf(filename, "");
+  sprintf(filename, "%s", "");
   nPeriods         = (floor)(((uint64_t)15900000 * one_ns_as) / TH1_as);
-
  
   program = argv[0];    
 
-  while ((opt = getopt(argc, argv, "c:i:t:n:f:m:o:p:s:r:d:eh")) != -1) {
+  while ((opt = getopt(argc, argv, "T:c:i:t:n:f:m:o:p:s:r:d:eh")) != -1) {
     switch (opt) {
       case 'e' :
         getVersion = 1;
@@ -292,6 +309,9 @@ int main(int argc, char** argv) {
       case 'h' :
         help();
         return 0;
+        break;
+      case 'T' :
+        TH1_as      = strtol(optarg, &tail, 0) * 1000;                     // fs -> as
         break;
       case 's' :
         nSamples    = strtol(optarg, &tail, 0);
@@ -371,7 +391,10 @@ int main(int argc, char** argv) {
   tPhase2_as       = 0;
   diff_as          = 0;
   ave_width        = 0;
-  
+  // looping over j can be used to produce nice figures 
+  /*for (int j=0; j<1000; j++) {
+    TH1_as += 1000000;
+    max = 0;*/
   for (i=0; i<nData; i++) {
     switch (scanType) {
       case 1 : 
@@ -391,7 +414,7 @@ int main(int argc, char** argv) {
     phaseFitAverage(TH1_as, nSamples, &phase_t, &width_as);
     tPhase1_as     = phase_t.ns * one_ns_as + phase_t.ps * 1000000 + one_ns_as / 2;
     tEdge1         = (double)(tEdge_as[1])      / one_ns_as;
-    tEdgeNoisy1    = (double)(tEdgeNoisy_as[1]) / one_ns_as;;
+    tEdgeNoisy1    = (double)(tEdgeNoisy_as[1]) / one_ns_as;
     ave_width     += (double)width_as           / one_ns_as;
     if (width_as > max_width_as) max_width_as = width_as;
 
@@ -408,11 +431,6 @@ int main(int argc, char** argv) {
         diff_as    = tPhase2_as - tPhase1_as;
         diff_as    = diff_as % TH1_as;
         if (diff_as > (TH1_as >> 1)) diff_as = diff_as - TH1_as;
-        //printf("tedge1  %ld\n", tEdge_as[1] / 1000);
-        //printf("t1      %ld\n", tPhase1_as / 1000);
-        //printf("t2      %ld\n", tPhase2_as / 1000);
-        //printf("diff_as %ld\n", diff_as / 1000);
-        //printf("diff_as %ld\n", diff_as);
         break;
       default :
         break;
@@ -425,6 +443,9 @@ int main(int argc, char** argv) {
 
     if (dataFile) fprintf(dataFile, "%13.6f    %13.6f    %13lu\n", (double)tOffset1_as/1000000000.0, dev[i], nPeriods);
   } // for i;
+  // looping over 'j'; consider commenting the fprintf statement just above
+  /*if (dataFile) fprintf(dataFile, "ps offset; %4d; maxDev; %13.6f; diffSim; %13.6f\n", j, (double)calcMaxSysDev_ps(TH1_as / 1000, nSamples)/1000.0, (double)max * 1000.0);
+  } // for j;*/
   ave       = ave       / nData;
   ave_width = ave_width / nData;
 
@@ -437,6 +458,7 @@ int main(int argc, char** argv) {
   printf("fit           (-t): %13d\n"    , fit);
   printf("scan type     (-c): %13d\n"    , scanType);
   printf("scan incrmnt  (-i): %13.6f\n"  , (double)scanInc_as  / (double)one_ns_as);
+  printf("T_rev         (-T): %13.6f\n"  , (double)TH1_as  / (double)one_ns_as);
   if (strlen(filename) > 0)
     printf("file          (-f): %13s\n"  , filename);
   if (mode == 2)
@@ -455,17 +477,17 @@ int main(int argc, char** argv) {
   printf("\n");
   printf("stats [ps]:\n");
   printf("comb              : %13.3f\n", 1000.0 / (double)nSamples);
-  printf("average           : %13.3f\n", ave   *          1000);
-  printf("ave_width1        : %13.3f\n", ave_width *      1000);
-  printf("max_width1        : %13.3f\n", (double)max_width_as / 1000000.0);  
-  printf("min               : %13.3f\n", min   *          1000);
-  printf("max               : %13.3f\n", max   *          1000);
-  printf("stdev             : %13.3f\n", stdev *          1000);
-  printf("FWHM              : %13.3f\n", stdev * 2.3548 * 1000);
-  //stdev = sqrt(2)*stdev;
-  //printf("stdev *1.4: %13.3f\n", stdev);
-  //printf("FWHM  *1.4: %13.3f\n", stdev * 2.3548);
+  printf("ave_width (of fit): %13.3f\n", ave_width *      1000);
+  printf("max_width (of fit): %13.3f\n", (double)max_width_as / 1000000.0);  
+  printf("average deviation : %13.3f\n", ave   *          1000);
+  printf("min deviation     : %13.3f\n", min   *          1000);
+  printf("max deviation     : %13.3f\n", max   *          1000);
+  printf("stdev             : %13.3f\n", stdev *          1000);                    // ... moreover, this should be added quadratically
+  printf("FWHM              : %13.3f\n", stdev * 2.3548 * 1000);                    // ... moreover, if the phase at the beginning of that flat-top is not fixed, the systematic deviation will cancel out ...
 
+  printf("\n");
+  printf("'native' max_sysdev from b2blib [ps]: %u\n", b2b_calc_max_sysdev_ps(TH1_as, nSamples, 1));
+  
   if (dataFile) fclose(dataFile);
   
   return exitCode;

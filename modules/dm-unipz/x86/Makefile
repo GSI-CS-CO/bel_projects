@@ -1,10 +1,10 @@
 # PREFIX  controls where programs and libraries get installed
 # Note: during compile (all), PREFIX must be set to the final installation path
-# If using the Yocto SDK, you must additionally use YOCTO=YES
+# Set SYSENV to the target system environment (YOCTO, ACC7, ACC9, OPT)
 # Example usage:
-#   'make MASP=NO PRO=NO YOCTO=YES PREFIX= all'                                         (hack: leave PREFIX empty for SCU path)
-# Example deploy:
-#   'make PREFIX= STAGING=/common/export/timing-rte/dmunipz-dev-yocto deploy'           (hack: leave PREFIX empty for SCU path)
+#   'make MASP=NO SYSENV=OPT PREFIX=/opt/usr all'                                    (hack: leave PREFIX empty for SCU path)
+# Example install:
+#   'make PREFIX=/opt/usr install'                                                   (hack: leave PREFIX empty for SCU path)
 
 # install 
 PREFIX      ?= /usr/local
@@ -13,16 +13,8 @@ STAGING     ?=
 # relative paths
 FW          ?=../fw
 
-# support Yocto SDK
-ifeq ($(YOCTO), YES)
-EB          ?= .
-ARCH        := /x86_64
-CFLAGS      ?=
-else
-EB          ?= ../../../ip_cores/etherbone-core/api
-ARCH        ?= /x86_64
-CFLAGS      ?= -Wall -O2 -g 
-endif
+# include common Makefile stuff
+include ../../b2b/x86/targetsysbuild.db
 
 # special
 # set MASP to YES, if dmunipz-ctl should function as status emitter to MASP (when in monitoring mode)
@@ -60,24 +52,29 @@ endif
 
 
 EXTRA_FLAGS   ?= $(USEMASP) $(PRODUCTIVE)
-CCFLAGS       ?= $(EXTRA_FLAGS) -I$(EB) -I$(FW) -I../include -I../../common-libs/include $(BOOST_INCL) $(MASP_INCL) 
+CXFLAGS       ?= $(EXTRA_FLAGS) -I$(EB) -I$(USRPATH)/include -I$(FW) -I../include -I../../common-libs/include $(BOOST_INCL) $(MASP_INCL) 
 LIBS          ?= $(BOOST_LIBPATH) $(MASP_LIBPATH) -L$(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm $(MASP_LIBS) $(GENERAL_LIBS) $(BOOST_LIBS) 
 
-# setting CC might be required if NOT building against yocto SDK
-#CC            = g++
+$(info PRO is $(PRO))
+$(info PRODUCTIVE is $(PRODUCTIVE))
+$(info MASP is $(MASP))
+$(info ours/theirs CFLAGS is $(CFLAGS))
+$(info compiling x86 binaries for $(SYSENV))
+$(info ours CCFLAGS for c code is $(CCFLAGS))
+$(info ours CXFLAGS for c++ code is $(CXFLAGS))
 
 TARGETS := dmunipz-ctl 
 
 all: $(TARGETS)
 
 dmunipz-ctl: dmunipz-ctl.cpp
-	$(CXX) $(CFLAGS) $(CCFLAGS)  ../../common-libs/x86/common-lib.c -o dmunipz-ctl dmunipz-ctl.cpp $(LIBS)
+	$(CXX) $(CFLAGS) $(CXFLAGS)  ../../common-libs/x86/common-lib.c -o dmunipz-ctl dmunipz-ctl.cpp $(LIBS)
 
 clean:
 	rm -f *.o $(TARGETS)
 
-deploy:
-	mkdir -p $(STAGING)/$(ARCH)$(PREFIX)/bin
-	cp $(TARGETS) $(STAGING)/$(ARCH)$(PREFIX)/bin
+install:
+	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/bin
+	cp $(TARGETS) $(STAGING)$(ARCH)$(PREFIX)/bin
 
 .PHONY: all clean

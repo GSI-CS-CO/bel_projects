@@ -1,13 +1,13 @@
 # PREFIX controls where programs and libraries get installed
 # Note: during compile (all), PREFIX must be set to the final installation path
-# If using the Yocto SDK, you must additionally use YOCTO=YES  
+# Set SYSENV to the target system environment (YOCTO, ACC7, ACC9, OPT)
 # Example usage:
-#   'make clean'                                                                        (!!! this is important !!!)
-#   'make MASP=YES ENV=int YOCTO=YES PREFIX= all'                                       (hack: leave PREFIX empty for SCU path)
-#   'make MASP=YES ENV=pro YOCTO=YES PREFIX= all'                                       (hack: leave PREFIX empty for SCU path)
+#   'make clean'                                                                    (!!! this is important !!!)
+#   'make MASP=YES ENV=int SYSENV=ACC7 PREFIX= all'                                 (hack: leave PREFIX empty for SCU path)
+#   'make MASP=YES ENV=pro SYSENV=ACC7 PREFIX= all'                                 (hack: leave PREFIX empty for SCU path)
 # Example deploy:
-#   'make PREFIX= YOCTO=YES STAGING=/common/export/timing-rte/dmunipz-dev-yocto deploy' (hack: leave PREFIX empty for SCU path)
-#   'make PREFIX= YOCTO=YES STAGING=/common/export/timing-rte/dmunipz-yocto deploy'     (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= SYSENV=ACC7 STAGING=/common/export/timing-rte/dmunipz-dev deploy' (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= SYSENV=ACC7 STAGING=/common/export/timing-rte/dmunipz deploy'     (hack: leave PREFIX empty for SCU path)
 
 # install
 PREFIX      ?= /usr/local
@@ -19,23 +19,35 @@ SW          ?= x86
 SYSTEMD     ?= systemd
 NFSINIT     ?= nfs-init
 GENNFSINIT  ?= ../../../../ci_cd/scripts/yocto_helper/nfsinit/fec-init
+INC         ?= include
 
-# support Yocto SDK
-ifeq ($(YOCTO), YES)
-EB          ?= .
-ARCH        := /x86_64
-else
-EB          ?= ../../ip_cores/etherbone-core/api
-ARCH        ?= /x86_64
+# target system environment, OPT is default
+SYSENV      ?= OPT
+
+ifeq ($(SYSENV), OPT)
+USRPATH     ?= /opt/usr
+ARCH        ?=
 endif
 
-# set enviorinment, default is int
+ifeq ($(SYSENV), YOCTO)
+USRPATH     := /common/usr/timing/b2b/yocto/usr
+ARCH        := /x86_64
+endif
+
+ifeq ($(SYSENV), ACC7)
+USRPATH     := /common/usr/timing/b2b/centos7/usr/
+ARCH        := /x86_64
+endif
+
+# set environment, default is int
 ENV         ?= int
 ifeq ($(ENV), pro)
 PRO         ?= YES
 else
 PRO         ?= NO
 endif
+
+export PRO
 
 TARGETS := firmware software nfsinit
 
@@ -53,6 +65,7 @@ nfsinit:
 clean:
 	$(MAKE) -C $(SW) clean
 	$(MAKE) -C $(FW) clean
+	rm -f $(NFSINIT)/dmunipz-*.sh
 
 deploy: 
 # create folders

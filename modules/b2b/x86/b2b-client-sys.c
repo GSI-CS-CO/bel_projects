@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 27-Jan-2022
+ *  version : 27-Sep-2023
  *
  * subscribes to and displays status of a b2b system (CBU, PM, KD ...)
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_CLIENT_SYS_VERSION 0x000424
+#define B2B_CLIENT_SYS_VERSION 0x000700
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -135,12 +135,14 @@ struct b2bSystem_t {
   char      hostname[DIMCHARSIZE];
   uint64_t  status;
   uint32_t  nTransfer;
+  jitterChk_t jitter;
 
   uint32_t  versionId;
   uint32_t  stateId;
   uint32_t  hostnameId;
   uint32_t  statusId;
   uint32_t  nTransferId;
+  uint32_t  jitterId;
 }; // struct b2bSystem
 
 struct b2bSystem_t dicSystem[B2BNSYS];
@@ -148,7 +150,7 @@ struct b2bSystem_t dicSystem[B2BNSYS];
 
 // help
 static void help(void) {
-  fprintf(stderr, "Usage: %s [OPTION] [PREFIX]\n", program);
+  fprintf(stderr, "Usage: %s [OPTION] [ENVIRONMENT]\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "  -h                  display this help and exit\n");
   fprintf(stderr, "  -e                  display version\n");
@@ -163,10 +165,10 @@ static void help(void) {
 } //help
 
 
-void buildHeader()
+void buildHeader(char * environment)
 {
-  sprintf(title, "\033[7m B2B System Status --------------------------------------------------- v%8s\033[0m", b2b_version_text(B2B_CLIENT_SYS_VERSION));
-  sprintf(header, "  #   ring sys  version     state  transfers           status               node");
+  sprintf(title, "\033[7m B2B System Status %3s ----------------------------------------------- v%8s\033[0m", environment, b2b_version_text(B2B_CLIENT_SYS_VERSION));
+  sprintf(header, "  #   ring sys  version     state  transfers        status jttr             node");
   sprintf(empty , "                                                                                ");
   //       printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
 } // buildHeader
@@ -184,11 +186,14 @@ void dicSubscribeServices(char *prefix)
     sprintf(name, "%s_%s_state", prefix, sysShortNames[i]);
     dicSystem[i].stateId     = dic_info_service(name, MONITORED, 0, (dicSystem[i].state), 10, 0, 0, &no_link_32, sizeof(no_link_32));
     sprintf(name, "%s_%s_hostname", prefix, sysShortNames[i]);
-    dicSystem[i].hostnameId  = dic_info_service(name, MONITORED, 0, (dicSystem[i].hostname), 32, 0, 0, &no_link_32, sizeof(no_link_32));
+    dicSystem[i].hostnameId  = dic_info_service(name, MONITORED, 0, (dicSystem[i].hostname), DIMCHARSIZE, 0, 0, &no_link_32, sizeof(no_link_32));
     sprintf(name, "%s_%s_status", prefix, sysShortNames[i]);
     dicSystem[i].statusId    = dic_info_service(name, MONITORED, 0, &(dicSystem[i].status), sizeof(uint64_t), 0, 0, &no_link_64, sizeof(no_link_64));
     sprintf(name, "%s_%s_ntransfer", prefix, sysShortNames[i]);
     dicSystem[i].nTransferId = dic_info_service(name, MONITORED, 0, &(dicSystem[i].nTransfer), sizeof(dicSystem[i].nTransferId), 0, 0, &no_link_32, sizeof(no_link_32));
+    sprintf(name, "%s_%s-jitter-check_data", prefix, sysShortNames[i]);
+    dicSystem[i].jitterId    = dic_info_service(name, MONITORED, 0, &(dicSystem[i].jitter), sizeof(dicSystem[i].jitter), 0, 0, &no_link_32, sizeof(no_link_32));
+    
   } // for i
 } // dicSubscribeServices
 
@@ -203,19 +208,31 @@ void dicCmdClearDiag(char *prefix, uint32_t indexServer)
 } // dicCmdClearDiag
 
 
+// send 'clear diag' command to server
+void dicCmdClearJitterChk(char *prefix, uint32_t indexServer)
+{
+  char name[DIMMAXSIZE];
+
+  sprintf(name, "%s_%s-jittercheck_cmd_cleardiag", prefix, sysShortNames[indexServer]);
+  dic_cmnd_service(name, 0, 0);
+} // dicCmdClearJitterChk
+
+
 // print services to screen
 void printServices(int flagOnce)
 {
   int i;
 
-  char   cTransfer[10];
-  char   cStatus[17];
-  char   cVersion[9];
-  char   cState[11];
-  char   cHost[19];
-  char   buff[100];
-  time_t time_date;
+  char     cTransfer[10];
+  char     cStatus[17];
+  char     cVersion[9];
+  char     cState[11];
+  char     cHost[19];
+  char     cJitter[5];
+  char     buff[100];
+  time_t   time_date;
   uint32_t *tmp;
+  double   maxmin;
 
   //printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
 
@@ -228,12 +245,11 @@ void printServices(int flagOnce)
   
   if (!flagOnce) printf("%s\n", title);
   printf("%s\n", header);
-
   for (i=0; i<B2BNSYS; i++) {
     if (dicSystem[i].nTransfer == no_link_32)    sprintf(cTransfer, "%9s",         no_link_str);
     else                                         sprintf(cTransfer, "%9u",         dicSystem[i].nTransfer);
-    if (dicSystem[i].status    == no_link_64)    sprintf(cStatus,  "%16s",         no_link_str);
-    else                                         sprintf(cStatus,   "%16"PRIx64"", dicSystem[i].status);
+    if (dicSystem[i].status    == no_link_64)    sprintf(cStatus,  "%13s",         no_link_str);
+    else                                         sprintf(cStatus,  "%13"PRIx64"",  dicSystem[i].status);
     tmp = (uint32_t *)(&(dicSystem[i].state));
     if (*tmp == no_link_32)                      sprintf(cState,   "%10s",         no_link_str);
     else                                         sprintf(cState,   "%10s",         dicSystem[i].state); 
@@ -241,9 +257,21 @@ void printServices(int flagOnce)
     if (*tmp == no_link_32)                      sprintf(cVersion, "%8s",          no_link_str);
     else                                         sprintf(cVersion, "%8s",          dicSystem[i].version); 
     tmp = (uint32_t *)(&(dicSystem[i].hostname));
-    if (*tmp == no_link_32)                      sprintf(cHost,   "%18s",          no_link_str);
-    else                                         sprintf(cHost,   "%18s",          dicSystem[i].hostname); 
-    printf(" %2x %6s %3s %8s %10s %9s %16s %18s\n", i, ringNames[i], typeNames[i], cVersion, cState, cTransfer, cStatus, cHost);
+    if (*tmp == no_link_32)                      sprintf(cHost,   "%16s",          no_link_str);
+    else                                         sprintf(cHost,   "%16s",          dicSystem[i].hostname);
+    tmp = (uint32_t *)(&(dicSystem[i].jitter));
+    if (*tmp == no_link_32)                      sprintf(cJitter, "   ");          // no link, just 'blank' as not all processes have a jitter check
+    else  {
+      if (isnan(dicSystem[i].jitter.ppsAct))     sprintf(cJitter, " err");         // bad state, no WR lock or not PPS signal detected
+      else {
+      // check for fluctations
+        maxmin = dicSystem[i].jitter.ppsMax - dicSystem[i].jitter.ppsMin;
+        if ( maxmin <= 0.1)                      sprintf(cJitter, "  ok");         // good
+        if ((maxmin > 0.1) && (maxmin < 1.1))    sprintf(cJitter, " ~ok");         // hm, up to 1ns is in principle possible
+        if ( maxmin >= 1.1)                      sprintf(cJitter, "%4d", (int)maxmin);
+      } // else isnan
+    } // else nolink
+    printf(" %2x %6s %3s %8s %10s %9s %13s %4s %16s\n", i, ringNames[i], typeNames[i], cVersion, cState, cTransfer, cStatus, cJitter, cHost);
   } // for i
 
   for (i=0; i<4; i++) printf("%s\n", empty);
@@ -303,6 +331,7 @@ int main(int argc, char** argv) {
   int      quit;
 
   char     prefix[DIMMAXSIZE];
+  char     environment[132];
 
   program    = argv[0];
   getVersion = 0;
@@ -343,17 +372,22 @@ int main(int argc, char** argv) {
     return 0;
   } // if optind
 
-  if (optind< argc) sprintf(prefix, "b2b_%s", argv[optind]);
-  else              sprintf(prefix, "b2b");
+  if (optind< argc) {
+    sprintf(environment, "%s", argv[optind]);
+    sprintf(prefix, "b2b_%s", environment);
+  } // if optind
+  else {
+    sprintf(environment, "%s", "n/a");
+    sprintf(prefix, "b2b");
+  } // else optind
 
   comlib_term_clear();
-  buildHeader();
-
+  buildHeader(environment);
   if (getVersion) printf("%s: version %s\n", program, b2b_version_text(B2B_CLIENT_SYS_VERSION));
 
   if (subscribe) {
     printf("b2b-client-sys: starting client using prefix %s\n", prefix);
-
+    sleep(1);
     dicSubscribeServices(prefix);
 
     while (!quit) {
@@ -368,6 +402,7 @@ int main(int argc, char** argv) {
           case '0' ... '9' :
             if (sysId == 0xffff) sysId = userInput - 48; // ugly
             dicCmdClearDiag(prefix, sysId);
+            dicCmdClearJitterChk(prefix, sysId);
             break;
           case 'h'         :
             printHelpText();
@@ -381,7 +416,7 @@ int main(int argc, char** argv) {
           default          :
             usleep(1000000);
         } // switch
-      } // if !once
+      } // if !quit
     } // while
   } // if subscribe
 

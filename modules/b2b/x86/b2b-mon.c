@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 02-Mar-2023
+ *  version : 17-Oct-2023
  *
  * subscribes to and displays status of many b2b transfers
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_MON_VERSION 0x000425
+#define B2B_MON_VERSION 0x000700
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -67,19 +67,27 @@ uint32_t no_link_32    = 0xdeadbeef;
 uint64_t no_link_64    = 0xdeadbeefce420651;
 char     no_link_str[] = "NO_LINK";
 
-setval_t   dicSetval[NALLSID];
-getval_t   dicGetval[NALLSID];
-diagval_t  dicDiagval[NALLSID];
-diagstat_t dicDiagstat[NALLSID];
-nueMeas_t  dicNueMeasExt[NALLSID];
-char       dicPName[NALLSID][DIMMAXSIZE];
+setval_t   dicSetval[NALLSID];            // b2b set-values
+getval_t   dicGetval[NALLSID];            // b2b get-values
+diagval_t  dicDiagval[NALLSID];           // diagnostic (analyzed values)
+diagstat_t dicDiagstat[NALLSID];          // additional status data
+char       dicPName[NALLSID][DIMMAXSIZE]; // pattern names
+double     dicLevelExtSis18;              // actual comparator level of kicker probe signal
+double     dicLevelInjEsr;
+double     dicLevelExtEsr;
+double     dicLevelInjYr;
+double     dicLevelExtYr;
 
 uint32_t  dicSetvalId[NALLSID];
 uint32_t  dicGetvalId[NALLSID];
 uint32_t  dicDiagvalId[NALLSID];
 uint32_t  dicDiagstatId[NALLSID];
-uint32_t  dicNueMeasExtId[NALLSID];
 uint32_t  dicPNameId[NALLSID];
+uint32_t  dicLevelExtSis18Id;
+uint32_t  dicLevelInjEsrId;
+uint32_t  dicLevelExtEsrId;
+uint32_t  dicLevelInjYrId;
+uint32_t  dicLevelExtYrId;
 
 #define  TXTNA       "  N/A"
 #define  TXTUNKWN    "UNKWN"
@@ -105,21 +113,21 @@ time_t   set_secs[NALLSID];                                 // CBS deadline, tim
 
 time_t   secsOffset;                                        // offset between timestamp and system time
 
-#define MSKRECMODE0 0x0                 // mask defining events that should be received for the different modes, mode off
-#define MSKRECMODE1 0x050               // ... mode CBS
+#define MSKRECMODE0 0x105               // mask defining events that should be received for the different modes, mode off
+#define MSKRECMODE1 0x155               // ... mode BSE
 #define MSKRECMODE2 0x155               // ... mode B2E
-#define MSKRECMODE3 0x1f5               // ... mode B2C
+#define MSKRECMODE3 0x3ff               // ... mode B2C
 #define MSKRECMODE4 0x3ff               // ... mode B2B
-
 
 // other
 int      flagPrintIdx[NALLSID];                             // flag: print line with given index
 int      flagPrintInactive;                                 // flag: print inactive SIDs too
-int      flagPrintNue;                                      // flag: print frequency data
+int      flagPrintOther;                                    // flag: print alternative data set
 int      flagPrintSis18;                                    // flag: print SIDs for SIS18
 int      flagPrintEsr;                                      // flag: print SIDs for ESR
 int      flagPrintYr;                                       // flag: print SIDs for CRYRINg
 int      flagPrintNow;                                      // flag: print stuff to screen NOW
+int      flagPrintNs;                                       // flag: in units of nanoseconds
 
 int      modeMask;                                          // mask: marks events used in actual mode
 
@@ -129,8 +137,10 @@ char     headerK[SCREENWIDTH+1];                            // header line to be
 char     headerN[SCREENWIDTH+1];                            // header line to be printed; header for frequency info
 char     emptyK[SCREENWIDTH+1];                             // empty line to be printed; kicker info
 char     emptyN[SCREENWIDTH+1];                             // empty line to be printed; frequency info
-char     printLineK[NALLSID][SCREENWIDTH+1];                // lines to be printed; line for kicker info
+char     printLineK[NALLSID][SCREENWIDTH+1];               // lines to be printed; line for kicker info
 char     printLineN[NALLSID][SCREENWIDTH+1];                // lines to be printed; line for frequency info
+
+double   one_ns_as = 1000000000.0;
 
 
 // help
@@ -178,41 +188,62 @@ void idx2RingSid(uint32_t idx, ring_t *ring, uint32_t *sid)
 } // idx2RingSid
 
 
+// convert to appripriate units; nanoseconds or degree
+double convertUnit(double value_ns, uint64_t TH1)
+{
+  double value;
+  
+  if (flagPrintNs) value = value_ns;
+  else {
+    if (TH1 == 0) value = NAN;
+    else          value = 360.0 * value_ns / ((double)(TH1) / one_ns_as);
+  } // else flagPrintNS
+
+  return value;
+} // convertUnit
+
+
 void buildHeader()
 {
-  sprintf(headerK, "|        pattern name | t_last [UTC] | orign | sid| kick  set       trg offst probR | destn |    phase | kick  set       trg offst probR dOffst 'ToF'|");
-  sprintf(emptyK,  "|                     |              |       |    |                                 |       |          |                                             |");
-  sprintf(headerN, "|        pattern name | t_last [UTC] | orign | sid| h1gDDS  set         get(stdev)diff[Hz] |     destn | kick  set       trg offst probR dOffst 'ToF'|");
-  sprintf(emptyN,  "|                     |              |       |    |                                        |           |                                             |");
+  sprintf(headerK, "|        pattern name | t_last [UTC] | orign | sid| kick set    trg offst probR | destn | phase set get  | kick  set     trg offst probR Doffst Dprob|");
+  sprintf(emptyK,  "|                     |              |       |    |                             |       |                |                                           |");
+  sprintf(headerN, "|        pattern name | t_last [UTC] | orign | sid| h1gDDS ext set      get(stdev)diff[Hz] | h1gDDS inj set      get(stdev)diff[Hz] |prob ext inj [%%]|");
+  sprintf(emptyN,  "|                     |              |       |    |                                        |                                        |                |");
   //        printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
 } // buildHeader
 
 
-// build string for printing
+// build strings for printing
 void buildPrintLine(uint32_t idx)
 {
   char     origin[10];
-  char     dest[10];
+  char     dest[32];
   char     pattern[64];
   int      flagTCBS;
-  int      flagExtNue;
+  int      flagOther;
   int      flagB2b;
   int      flagExtTrig;
   int      flagInjTrig;
   char     tCBS[64];
   char     extNue[64];
   char     b2b[64];
-  char     extTrig[64];
-  char     injTrig[64];
+  char     extTrig[512];
+  char     injTrig[521];
   char     nueMeasExt[128];
+  char     nueMeasInj[128];
+  char     setLevelExt[32];
+  char     setLevelInj[32];
+
   char     tmp1[32];
   char     tmp2[32];
   char     tmp3[32];
   char     tmp4[32];
   char     tmp5[32];
-  uint32_t utmp1;
-  uint32_t utmp2;
   double   dtmp1;
+  double   *pLevelExt;
+  double   *pLevelInj;
+
+  double   nueDiff;
 
   uint32_t sid;
   ring_t   ring;
@@ -220,8 +251,9 @@ void buildPrintLine(uint32_t idx)
   uint64_t actNsecs;
   time_t   actT;
 
-  actNsecs = comlib_getSysTime();
-  actT     = (time_t)(actNsecs / 1000000000);
+  actNsecs  = comlib_getSysTime();
+  actT      = (time_t)(actNsecs / 1000000000);
+  dtmp1     = NAN;
 
   if (idx > NALLSID) return;
 
@@ -229,10 +261,10 @@ void buildPrintLine(uint32_t idx)
 
   // extraction ring name
   switch (ring) {
-    case SIS18   : sprintf(origin, "SIS18");  sprintf(tmp1, "ESR");  break;
-    case ESR     : sprintf(origin, "ESR");    sprintf(tmp1, "YR");   break;
-    case CRYRING : sprintf(origin, "YR");     sprintf(tmp1, " ");    break;
-    default      : sprintf(origin, TXTUNKWN); sprintf(tmp1, " ");    break;
+    case SIS18   : sprintf(origin, "SIS18");  sprintf(tmp1, "ESR");  pLevelExt = &dicLevelExtSis18; pLevelInj = &dicLevelInjEsr; break;
+    case ESR     : sprintf(origin, "ESR");    sprintf(tmp1, "YR");   pLevelExt = &dicLevelExtEsr;   pLevelInj = &dicLevelInjYr;  break;
+    case CRYRING : sprintf(origin, "YR");     sprintf(tmp1, " ");    pLevelExt = &dicLevelExtYr;    pLevelInj = NULL;            break;
+    default      : sprintf(origin, TXTUNKWN); sprintf(tmp1, " ");    pLevelExt = NULL;              pLevelInj = NULL;            break;
   } // switch ring
 
   // pattern name
@@ -247,12 +279,12 @@ void buildPrintLine(uint32_t idx)
 
   // destination
   switch (set_mode[idx]) {
-    case 0 : sprintf(dest, "---");      flagTCBS = 1; flagExtNue = 0; flagB2b = 0; flagExtTrig = 0; flagInjTrig = 0; break;
-    case 1 : sprintf(dest, "kicker");   flagTCBS = 1; flagExtNue = 0; flagB2b = 0; flagExtTrig = 1; flagInjTrig = 0; break;
-    case 2 : sprintf(dest, "target");   flagTCBS = 1; flagExtNue = 1; flagB2b = 0; flagExtTrig = 1; flagInjTrig = 0; break;
-    case 3 : sprintf(dest, "%s", tmp1); flagTCBS = 1; flagExtNue = 1; flagB2b = 0; flagExtTrig = 1; flagInjTrig = 1; break;
-    case 4 : sprintf(dest, "%s", tmp1); flagTCBS = 1; flagExtNue = 1; flagB2b = 1; flagExtTrig = 1; flagInjTrig = 1; break;
-    default: sprintf(dest, TXTUNKWN);   flagTCBS = 0; flagExtNue = 0; flagB2b = 0; flagExtTrig = 0; flagInjTrig = 0; break;
+    case B2B_MODE_OFF : sprintf(dest, "---");      flagTCBS = 1; flagOther = 1; flagB2b = 0; flagExtTrig = 0; flagInjTrig = 0; pLevelExt = NULL; pLevelInj = NULL; break;
+    case B2B_MODE_BSE : sprintf(dest, "kicker");   flagTCBS = 1; flagOther = 1; flagB2b = 0; flagExtTrig = 1; flagInjTrig = 0; pLevelInj = NULL;                   break;
+    case B2B_MODE_B2E : sprintf(dest, "target");   flagTCBS = 1; flagOther = 1; flagB2b = 0; flagExtTrig = 1; flagInjTrig = 0; pLevelInj = NULL;                   break;
+    case B2B_MODE_B2C : sprintf(dest, "%s", tmp1); flagTCBS = 1; flagOther = 1; flagB2b = 0; flagExtTrig = 1; flagInjTrig = 1;                                     break;
+    case B2B_MODE_B2B : sprintf(dest, "%s", tmp1); flagTCBS = 1; flagOther = 1; flagB2b = 1; flagExtTrig = 1; flagInjTrig = 1;                                     break;
+    default: sprintf(dest, TXTUNKWN);   flagTCBS = 0; flagOther = 0; flagB2b = 0; flagExtTrig = 0; flagInjTrig = 0; pLevelExt = NULL; pLevelInj = NULL; break;
   } // switch set_mode
 
   // ignore ancient timestamps
@@ -267,28 +299,69 @@ void buildPrintLine(uint32_t idx)
   } // if flagTCBS
   else sprintf(tCBS, "---");
 
-  if (flagExtNue) {
-    if ((dicGetval[idx].flagEvtErr >> 2) & 0x1) sprintf(extNue, "%s",    TXTERROR);
-    else                                        sprintf(extNue, "%11.3f", set_extNue[idx]);
-    if (*(uint32_t *)&(dicNueMeasExt[idx]) == no_link_32) sprintf(nueMeasExt, "NOLINK");
+  if (flagOther) {
+    // frequency data, extraction
+    if (*(uint32_t *)&(dicDiagval[idx]) == no_link_32) sprintf(nueMeasExt, "NOLINK");
     else {
-      if (dicNueMeasExt[idx].nTS > 2) {
-        if (dicNueMeasExt[idx].nueErr > 10.0)     sprintf(tmp1, " > 10");
-        else                                      sprintf(tmp1, "%5.3f", dicNueMeasExt[idx].nueErr);
-        if (fabs(dicNueMeasExt[idx].nueDiff)>100) sprintf(tmp2, "  > 100");
-        else                                      sprintf(tmp2, "%7.3f", dicNueMeasExt[idx].nueDiff);
-        sprintf(nueMeasExt, "%11.3f %11.3f(%5s) %s", dicNueMeasExt[idx].nueSet, dicNueMeasExt[idx].nueGet, tmp1, tmp2);
-      } // if nTS
-    else                                          sprintf(nueMeasExt, "ERROR: no RF signal detected %x ", *(uint32_t *)&(dicNueMeasExt[idx]));
+      nueDiff = dicDiagval[idx].ext_rfNueAct - set_extNue[idx];
+      if ((dicGetval[idx].flagEvtErr >> 2) & 0x1)  sprintf(nueMeasExt, "ERROR: no RF signal detected");
+      else {
+        if ((fabs(dicDiagval[idx].ext_ddsOffAct) > set_extT[idx] / 10) || (fabs(dicDiagval[idx].ext_rfOffAct) > set_extT[idx] / 4)){  // this is hack to possibly detect wrong set-values
+          sprintf(tmp1, "check DDS");
+          sprintf(tmp2, "value");
+          sprintf(tmp3, "n/a");
+        } // if fabs
+        else {
+          sprintf(tmp1, "%11.3f", dicDiagval[idx].ext_rfNueAct);
+          sprintf(tmp2, "%5.3f", dicDiagval[idx].ext_rfNueActErr);
+          sprintf(tmp3, "%7.3f", nueDiff);
+        } // else fabs
+        sprintf(nueMeasExt, "%11.3f %11s(%5s) %7s",  set_extNue[idx], tmp1, tmp2, tmp3);
+      } // else flagEvtErr
     } // else NOLINK
-  } // if flagExtNue
+
+    // frequency data, injection
+    if (set_mode[idx] > B2B_MODE_B2E) {
+      if (*(uint32_t *)&(dicDiagval[idx]) == no_link_32) sprintf(nueMeasInj, "NOLINK");
+      else {
+        nueDiff = dicDiagval[idx].inj_rfNueAct - set_injNue[idx];
+        if ((dicGetval[idx].flagEvtErr >> 3) & 0x1)   sprintf(nueMeasInj, "ERROR: no RF signal detected");
+        else {
+          if ((fabs(dicDiagval[idx].inj_ddsOffAct) > set_injT[idx] / 10) || (fabs(dicDiagval[idx].inj_rfOffAct) > set_injT[idx] / 4)){  // this is hack to possibly detect wrong set-values
+            sprintf(tmp1, "check DDS");
+            sprintf(tmp2, "value");
+            sprintf(tmp3, "n/a");
+          } // if fabs
+          else {
+            sprintf(tmp1, "%11.3f", dicDiagval[idx].inj_rfNueAct);
+            sprintf(tmp2, "%5.3f", dicDiagval[idx].inj_rfNueActErr);
+            sprintf(tmp3, "%7.3f", nueDiff);
+          } // else fabs
+          sprintf(nueMeasInj, "%11.3f %11s(%5s) %s", set_injNue[idx], tmp1, tmp2, tmp3);
+        } // else flagEvtErr
+      } // else NOLINK
+    } // if set_mode
+    else                                            sprintf(nueMeasInj, "---");
+    
+    // comparator level for kicker probe signal
+    if (pLevelExt == NULL)                                  sprintf(setLevelExt, "%s", "---");
+    else if (*(uint32_t *)pLevelExt == no_link_32)          sprintf(setLevelExt, "%s", "NOLINK");
+    else                                                    sprintf(setLevelExt, "%6.2f", *pLevelExt);
+    if (pLevelInj == NULL)                                  sprintf(setLevelInj, "%s", "---");
+    else if (*(uint32_t *)pLevelInj == no_link_32)          sprintf(setLevelInj, "%s", "NOLINK");
+    else                                                    sprintf(setLevelInj, "%6.2f", *pLevelInj);
+  } // if flagOther
   else {
     sprintf(extNue, "---");
     sprintf(nueMeasExt, "---");
-  }
+    sprintf(nueMeasInj, "---");
+    sprintf(setLevelExt, "---");
+    sprintf(setLevelInj, "---");
+  } // else flagOther
+  
   if (flagB2b) {
     if ((dicGetval[idx].flagEvtErr >> 4) & 0x1) sprintf(b2b, "%s",  TXTERROR);
-    else                                        sprintf(b2b, "%9.3f", dicDiagval[idx].phaseOffAct);
+    else                                        sprintf(b2b, "%7.1f %7.1f", convertUnit(dicSetval[idx].cPhase, dicSetval[idx].ext_T), convertUnit(dicDiagval[idx].phaseOffAct, dicSetval[idx].ext_T));
   } // if flagB2B
   else {
     if (flagInjTrig) sprintf(b2b, "coastg");
@@ -297,65 +370,59 @@ void buildPrintLine(uint32_t idx)
   
   if (flagExtTrig) {
     // trigger event received
-    if ((dicGetval[idx].flagEvtRec >> 4) & 0x1) {
-      // data invalid
-      if ((dicGetval[idx].flag_nok >> 4) & 0x1) sprintf(tmp1, "%s", TXTUNKWN);
-      else sprintf(tmp1, "%9.3f", set_extCTrig[idx] + dicDiagval[idx].ext_ddsOffAct);
-    } // if flagEvtRec
+    if ((dicGetval[idx].flagEvtRec >> 4) & 0x1) sprintf(tmp1, "%7.1f", convertUnit(set_extCTrig[idx] - dicDiagval[idx].ext_ddsOffAct, dicSetval[idx].ext_T));
     else sprintf(tmp1, "%s", TXTERROR);
     // signal from output of kicker electronics
-    if ((dicGetval[idx].flag_nok >> 1) & 0x1) {
-      sprintf(tmp2, "%s", TXTERROR);
-      sprintf(tmp3, "%s", TXTUNKWN);
-    } // if not ok
-    else {
-      sprintf(tmp2, "%5d", dicGetval[idx].ext_dKickMon);
-      // signal from magnet probe
-      if ((dicGetval[idx].flag_nok >> 2) & 0x1) sprintf(tmp3, "%s",  TXTUNKWN);
-      else                                      sprintf(tmp3, "%5d", dicGetval[idx].ext_dKickProb);
-    } //else not ok
-    sprintf(extTrig, "%9.3f %9s %5s %5s", set_extCTrig[idx], tmp1, tmp2, tmp3);
+    if (isnan(dicGetval[idx].ext_dKickMon))  sprintf(tmp2, "%s", TXTERROR);
+    else                                     sprintf(tmp2, "%5.0f", convertUnit(dicGetval[idx].ext_dKickMon, dicSetval[idx].ext_T));
+    if (isnan(dicGetval[idx].ext_dKickProb)) sprintf(tmp3, "%s", TXTUNKWN);
+    else                                     sprintf(tmp3, "%5.0f", convertUnit(dicGetval[idx].ext_dKickProb,dicSetval[idx].ext_T));
+    sprintf(extTrig, "%7.1f %7s %5s %5s", convertUnit(set_extCTrig[idx], dicSetval[idx].ext_T), tmp1, tmp2, tmp3);
   } // if flagExtTrig
   else sprintf(extTrig, "---");
 
   if (flagInjTrig) {
     // trigger event received
     if ((dicGetval[idx].flagEvtRec >> 5) & 0x1) {
-      // data invalid
-      if ((dicGetval[idx].flag_nok >> 3) & 0x1) sprintf(tmp1, "%s", TXTUNKWN);
+      if (flagB2b) {
+        if (isnan(dicDiagval[idx].inj_ddsOffAct)) sprintf(tmp1, "%s", TXTUNKWN);
+        else                                      sprintf(tmp1, "%7.1f", convertUnit(set_injCTrig[idx] - dicDiagval[idx].inj_ddsOffAct, dicSetval[idx].inj_T)); //b2b : diff to DDS of injection ring
+      } // if flagB2B
       else {
-        if (flagB2b) dtmp1 = set_injCTrig[idx] + dicDiagval[idx].inj_ddsOffAct;  //b2b : diff to DDS of injection ring
-        else         dtmp1 = set_injCTrig[idx] + dicDiagval[idx].ext_ddsOffAct;  //else: diff to DDS of extraction ring
-      } // else flag_nok
-      sprintf(tmp1, "%9.3f", dtmp1);
+        if (isnan(dicDiagval[idx].ext_ddsOffAct)) sprintf(tmp1, "%s", TXTUNKWN);
+        else                                      sprintf(tmp1, "%7.1f", convertUnit(set_injCTrig[idx] - dicDiagval[idx].ext_ddsOffAct, dicSetval[idx].inj_T)); //else: diff to DDS of extraction ring
+      } // else flagB2B
     } // if flagEvtRec
     else sprintf(tmp1, "%s", TXTERROR);
-    // signal from output of kicker electronics    
-    if ((dicGetval[idx].flag_nok >> 6) & 0x1) {
-      sprintf(tmp2, "%s", TXTERROR);
-      sprintf(tmp3, "%s", TXTUNKWN);
+    
+    // signal from output of kicker electronics
+    if (isnan(dicGetval[idx].inj_dKickMon))  sprintf(tmp2, "%s", TXTERROR);
+    else                                     sprintf(tmp2, "%5.0f", convertUnit(dicGetval[idx].inj_dKickMon, dicSetval[idx].inj_T));
+    // signal from magnet probes
+    if (isnan(dicGetval[idx].inj_dKickProb)) sprintf(tmp3, "%s", TXTUNKWN);
+    else                                     sprintf(tmp3, "%5.0f", convertUnit(dicGetval[idx].inj_dKickProb, dicSetval[idx].inj_T));
+    // difference to kicker electronics extraction
+    if (isnan(dicGetval[idx].ext_dKickMon) || isnan(dicGetval[idx].inj_dKickMon))
       sprintf(tmp4, "%s", TXTUNKWN);
-      sprintf(tmp5, "%s", TXTUNKWN);     
-    } // if not ok
     else {
-      sprintf(tmp2, "%5d", dicGetval[idx].inj_dKickMon);
-      utmp1   = set_injCTrig[idx] - set_extCTrig[idx] + dicGetval[idx].inj_dKickMon - dicGetval[idx].ext_dKickMon;
-      if ((dicGetval[idx].flag_nok >> 1) & 0x1)  sprintf(tmp4, "%5s", TXTERROR);
-      else                                       sprintf(tmp4, "%5d", utmp1);
-      if ((dicGetval[idx].flag_nok >> 7) & 0x1) {sprintf(tmp3, "%5s", TXTUNKWN); sprintf(tmp5, "%5s", TXTUNKWN);}
-      else {
-        sprintf(tmp3, "%5d", dicGetval[idx].inj_dKickProb);
-        utmp2 = set_injCTrig[idx] - set_extCTrig[idx] + dicGetval[idx].inj_dKickProb - dicGetval[idx].ext_dKickProb;
-        if ((dicGetval[idx].flag_nok >> 2) & 0x1) sprintf(tmp5, "%5s", TXTUNKWN);
-        else                                      sprintf(tmp5, "%5d", utmp2);
-      } // if not nok
-    } //else not ok
-    sprintf(injTrig, "%9.3f %9s %5s %5s %5s %5s", set_injCTrig[idx], tmp1, tmp2, tmp3, tmp4, tmp5);
-  } // if flagExtTrig
+      dtmp1 = set_injCTrig[idx] - set_extCTrig[idx] + dicGetval[idx].inj_dKickMon - dicGetval[idx].ext_dKickMon;
+      sprintf(tmp4, "%5.0f", convertUnit(dtmp1, dicSetval[idx].inj_T));
+    } // else isnan
+    // difference to magnet probe extraction
+    if (isnan(dicGetval[idx].ext_dKickProb) || isnan(dicGetval[idx].inj_dKickProb))
+      sprintf(tmp5, "%s", TXTUNKWN);
+    else {
+      dtmp1 = set_injCTrig[idx] - set_extCTrig[idx] + dicGetval[idx].inj_dKickProb - dicGetval[idx].ext_dKickProb;
+      sprintf(tmp5, "%5.0f", convertUnit(dtmp1, dicSetval[idx].inj_T));
+    } // else isnan
+
+    sprintf(injTrig, "%7.1f %7s %5s %5s %5s %5s", convertUnit(set_injCTrig[idx], dicSetval[idx].inj_T), tmp1, tmp2, tmp3, tmp4, tmp5);
+
+  } // if flagInjTrig
   else sprintf(injTrig, "---");
 
-  sprintf(printLineK[idx], "|%20s | %12s |%6s | %2d | %31s |%6s |%9s | %43s |", pattern, tCBS, origin, sid, extTrig, dest, b2b, injTrig);
-  sprintf(printLineN[idx], "|%20s | %12s |%6s | %2d | %38s |%10s | %43s |", pattern, tCBS, origin, sid, nueMeasExt, dest, injTrig);
+  sprintf(printLineK[idx], "|%20s | %12s |%6s | %2d | %27s |%6s |%15s | %41s |", pattern, tCBS, origin, sid, extTrig, dest, b2b, injTrig);
+  sprintf(printLineN[idx], "|%20s | %12s |%6s | %2d | %38s | %38s | %6s  %6s |", pattern, tCBS, origin, sid, nueMeasExt, nueMeasInj, setLevelExt, setLevelInj);
   //                printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
 
 } //buildPrintLine
@@ -365,7 +432,6 @@ void recSetvalue(long *tag, setval_t *address, int *size)
 {
   setval_t *tmp;
   uint32_t secs;
-  uint32_t nok;
   uint32_t idx;
 
   uint64_t actNsecs;
@@ -381,30 +447,38 @@ void recSetvalue(long *tag, setval_t *address, int *size)
   if (flagSetValid[idx]) {
     tmp = address;
 
-    nok                = (*tmp).flag_nok;
     set_mode[idx]      = (*tmp).mode;
-    if ((nok >> 1) & 0x1) {
+    set_cPhase[idx]    = (*tmp).cPhase;
+
+    if ((*tmp).ext_T == -1) {
       set_extT[idx]    = 0.0;
       set_extNue[idx]  = 0.0;
-    } // if not valid
+      set_cPhaseD[idx] = 0.0;
+    } // if extT
     else {
       set_extT[idx]    = (double)((*tmp).ext_T)/1000000000.0;
       set_extNue[idx]  = 1000000000.0 / set_extT[idx];
       set_cPhaseD[idx] = (double)((*tmp).cPhase) / (double)(set_extT[idx]) * 360.0; 
-    } // valid
-    set_extH[idx]      = (*tmp).ext_h;
+    } // else extT
+
+    if ((*tmp).ext_h == -1) set_extH[idx] = 0;
+    else                    set_extH[idx] = (*tmp).ext_h;
+    
     set_extCTrig[idx]  = (*tmp).ext_cTrig;
-    if ((nok >> 4) & 0x1) {
+
+    if ((*tmp).inj_T == -1) {
       set_injT[idx]    = 0.0;
       set_injNue[idx]  = 0.0;
-    } // if not valid
+    } // if injT
     else {
       set_injT[idx]    = (double)((*tmp).inj_T)/1000000000.0;
       set_injNue[idx]  = 1000000000.0 / set_injT[idx];
-    } // valid
-    set_injH[idx]      = (*tmp).inj_h;
+    } // else injT
+
+    if ((*tmp).inj_h == -1) set_injH[idx] = 0;
+    else                    set_injH[idx] = (*tmp).inj_h;
+    
     set_injCTrig[idx]  = (*tmp).inj_cTrig;
-    set_cPhase[idx]    = (*tmp).cPhase;
 
     dic_get_timestamp(0, &secs, &(set_msecs[idx]));
     set_secs[idx]      = (time_t)(secs);
@@ -439,29 +513,44 @@ void dicSubscribeServices(char *prefix, uint32_t idx)
 
   sprintf(name, "%s_%s-raw_sid%02d_setval", prefix, ringName, sid);
   /* printf("name %s\n", name); */
-  dicSetvalId[idx]     = dic_info_service_stamped(name, MONITORED, 0, &(dicSetval[idx]), sizeof(setval_t), recSetvalue, (long)idx, &no_link_32, sizeof(uint32_t));
+  dicSetvalId[idx]       = dic_info_service_stamped(name, MONITORED, 0, &(dicSetval[idx]), sizeof(setval_t), recSetvalue, (long)idx, &no_link_32, sizeof(uint32_t));
 
   sprintf(name, "%s_%s-raw_sid%02d_getval", prefix, ringName, sid);
   /* printf("name %s\n", name); */
-  dicGetvalId[idx]     = dic_info_service_stamped(name, MONITORED, 0, &(dicGetval[idx]), sizeof(getval_t), 0 , 0, &no_link_32, sizeof(uint32_t));
+  dicGetvalId[idx]       = dic_info_service_stamped(name, MONITORED, 0, &(dicGetval[idx]), sizeof(getval_t), 0 , 0, &no_link_32, sizeof(uint32_t));
 
   sprintf(name, "%s_%s-cal_diag_sid%02d", prefix, ringName, sid);
   /* printf("name %s\n", name); */
-  dicDiagvalId[idx]    = dic_info_service_stamped(name, MONITORED, 0, &(dicDiagval[idx]), sizeof(diagval_t), 0 , 0, &no_link_32, sizeof(uint32_t));
+  dicDiagvalId[idx]      = dic_info_service_stamped(name, MONITORED, 0, &(dicDiagval[idx]), sizeof(diagval_t), 0 , 0, &no_link_32, sizeof(uint32_t));
 
   sprintf(name, "%s_%s-cal_stat_sid%02d", prefix, ringName,  sid);
   /* printf("name %s\n", name); */
-  dicDiagstatId[idx]   = dic_info_service_stamped(name, MONITORED, 0, &(dicDiagstat[idx]), sizeof(diagstat_t), 0 , 0, &no_link_32, sizeof(uint32_t));
-
-  sprintf(name, "%s_%s-other-rf_sid%02d_ext", prefix, ringName,  sid);
-  /* printf("name %s\n", name); */
-  dicNueMeasExtId[idx] = dic_info_service_stamped(name, MONITORED, 0, &(dicNueMeasExt[idx]), sizeof(nueMeas_t), 0 , 0, &no_link_32, sizeof(uint32_t));
+  dicDiagstatId[idx]     = dic_info_service_stamped(name, MONITORED, 0, &(dicDiagstat[idx]), sizeof(diagstat_t), 0 , 0, &no_link_32, sizeof(uint32_t));
 
   sprintf(name,"%s_%s-pname_sid%02d", prefix, ringName, sid);
   /* printf("name %s\n", name);*/
-  dicPNameId[idx]      = dic_info_service_stamped(name, MONITORED, 0, &(dicPName[idx]), DIMMAXSIZE, 0 , 0, &no_link_str, sizeof(no_link_str));
+  dicPNameId[idx]        = dic_info_service_stamped(name, MONITORED, 0, &(dicPName[idx]), DIMMAXSIZE, 0 , 0, &no_link_str, sizeof(no_link_str));
 } // dicSubscribeServices
 
+void dicSubscribeLevelServices(char *prefix)
+{
+  char     name[DIMMAXSIZE];
+  
+  sprintf(name, "%s_sis18-kse_setlevel", prefix);
+  dicLevelExtSis18Id = dic_info_service_stamped(name, MONITORED, 0, &dicLevelExtSis18, sizeof(double), 0 , 0, &no_link_32, sizeof(no_link_str));
+
+  sprintf(name, "%s_esr-ksi_setlevel", prefix);
+  dicLevelInjEsrId   = dic_info_service_stamped(name, MONITORED, 0, &dicLevelInjEsr  , sizeof(double), 0 , 0, &no_link_32, sizeof(no_link_str));
+  
+  sprintf(name, "%s_esr-kse_setlevel", prefix);
+  dicLevelExtEsrId   = dic_info_service_stamped(name, MONITORED, 0, &dicLevelExtEsr  , sizeof(double), 0 , 0, &no_link_32, sizeof(no_link_str));
+  
+  sprintf(name, "%s_yr-ksi_setlevel", prefix);
+  dicLevelInjYrId    = dic_info_service_stamped(name, MONITORED, 0, &dicLevelInjYr   , sizeof(double), 0 , 0, &no_link_32, sizeof(no_link_str));
+
+  sprintf(name, "%s_yr-kse_setlevel", prefix);
+  dicLevelExtYrId    = dic_info_service_stamped(name, MONITORED, 0, &dicLevelExtYr   , sizeof(double), 0 , 0, &no_link_32, sizeof(no_link_str));  
+} // dicSubscribeLevelServices
 
 // clear status
 void clearStatus()
@@ -508,6 +597,7 @@ uint32_t calcFlagPrint()
 void printData(char *name)
 {
   char     buff[100];
+  char     unitInfo[100];
   time_t   time_date;
   uint32_t nLines;
   uint32_t minLines = 20;
@@ -517,23 +607,25 @@ void printData(char *name)
 
   time_date = time(0);
   strftime(buff,53,"%d-%b-%y %H:%M:%S",localtime(&time_date));
-  sprintf(title,  "\033[7m B2B Monitor %3s ------------------------------------------------------------------------------------ (units [ns] unless explicitly given) - v%8s\033[0m", name, b2b_version_text(B2B_MON_VERSION));
-  sprintf(footer, "\033[7m exit <q> | toggle inactive <i>, SIS18 <0>, ESR <1>, YR <2> | toggle data <d> | help <h>                                            %s\033[0m", buff);
+  if (flagPrintNs) sprintf(unitInfo, "(units [ns] unless explicitly given)");
+  else             sprintf(unitInfo, " (units [°] unless explicitly given)");
+  sprintf(title,  "\033[7m B2B Monitor %3s ------------------------------------------------------------------------------------ %s - v%8s\033[0m", name, unitInfo, b2b_version_text(B2B_MON_VERSION));
+  sprintf(footer, "\033[7m exit <q> | toggle data <d>, units <u> | toggle inactive <i>, SIS18 <0>, ESR <1>, YR <2> | help <h>                                 %s\033[0m", buff);
 
   comlib_term_curpos(1,1);
 
   // printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
   printf("%s\n", title);
-  if (flagPrintNue) {
+  if (flagPrintOther) {
     printf("%s\n", headerN);
     for (i=0; i<NALLSID; i++ ) if (flagPrintIdx[i]) printf("%s\n", printLineN[i]);
     if (nLines < minLines) for (i=0; i<(minLines-nLines); i++) printf("%s\n", emptyN);
-  } // if printNue
+  } // if printOther
   else {
     printf("%s\n", headerK);
     for (i=0; i<NALLSID; i++ ) if (flagPrintIdx[i]) printf("%s\n", printLineK[i]);
     if (nLines < minLines) for (i=0; i<(minLines-nLines); i++) printf("%s\n", emptyK);      
-  } // else printNue
+  } // else printOther
   printf("%s\n", footer);
   
   // printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
@@ -564,7 +656,7 @@ int main(int argc, char** argv)
 {
   int opt, error = 0;
   int exitCode   = 0;
-  char *tail;
+  //  char *tail;
 
   int      getVersion;
 
@@ -583,7 +675,8 @@ int main(int argc, char** argv)
   flagPrintSis18    = 1;
   flagPrintEsr      = 1;
   flagPrintYr       = 1;
-  flagPrintNue      = 0;
+  flagPrintOther    = 0;
+  flagPrintNs       = 0;
 
   while ((opt = getopt(argc, argv, "eh")) != -1) {
     switch (opt) {
@@ -632,6 +725,8 @@ int main(int argc, char** argv)
     sprintf(printLineN[i], "not initialized");
     dicSubscribeServices(prefix, i);
   } // for i
+  dicSubscribeLevelServices(prefix);
+
   buildHeader();
   flagPrintNow = 1;
 
@@ -658,29 +753,39 @@ int main(int argc, char** argv)
           clearStatus();
           break;
         case 'i' :
+          // toggle printing of inactive patterns
           comlib_term_clear();
           flagPrintInactive = !flagPrintInactive;
           flagPrintNow = 1;
           break;
         case '0' :
+          // toggle printint of SIS18 patterns
           flagPrintSis18 = !flagPrintSis18;
           flagPrintNow = 1;
           break;
         case '1' :
+          // toggle printing of ESR patterns
           flagPrintEsr = !flagPrintEsr;
           flagPrintNow = 1;
           break;
         case '2' :
+          // toggle printing of CRYRING patterns
           flagPrintYr = !flagPrintYr;
           flagPrintNow = 1;
           break;
         case 'd' :
-          flagPrintNue = !flagPrintNue;
+          // toggle printing of data (kicker data or other data)
+          flagPrintOther = !flagPrintOther;
+          flagPrintNow = 1;
+          break;
+        case 'u' :
+          // toggle printing of units (nanoseconds or degree), 'secret' option
+          flagPrintNs  = !flagPrintNs;
+          for (i=0; i<NALLSID; i++) buildPrintLine(i);
           flagPrintNow = 1;
           break;
         case 'h'         :
           printHelpText();
-          //          flagSetUpdate[0] = 1; // this is a hack to force an update
           flagPrintNow = 1;
           break;
         case 'q'         :

@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 24-Feb-2023
+ *  version : 05-Oct-2023
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -42,8 +42,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION      0x000425                                  // make this consistent with makefile
-#define B2BPM_FW_USESUBNSFIT  0
+#define B2BPM_FW_VERSION      0x000700                                  // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -90,8 +89,7 @@ uint32_t transStat;                     // status of transfer, here: meanDelta o
 int32_t  comLatency;                    // latency for messages received via ECA
 
 // for phase measurement
-#define NSAMPLES 32                     // # of timestamps for sampling h=1
-uint64_t tStamp[NSAMPLES];              // timestamp samples
+uint64_t tStamp[B2B_NSAMPLES];          // timestamp samples
 
 // debug 
 uint64_t t1, t2;
@@ -326,8 +324,8 @@ int32_t phaseFitAverage(uint64_t TH1_as, uint32_t nSamples, b2bt_t *phase_t) {
   window_as        = (uint32_t)(max_deviation_as - min_deviation_as);
   // calculate a phasmax_deviation_as + me value and convert to ps
   ts_t.ns          = tFirst_ns;
-  if (B2BPM_FW_USESUBNSFIT) ts_t.ps = subnsfit_dev_as  / 1000000;  // sub-ns fit
-  else                      ts_t.ps = ave_deviation_as / 1000000;  // average fit
+  if (B2B_FW_USESUBNSFIT) ts_t.ps = subnsfit_dev_as  / 1000000;  // sub-ns fit
+  else                    ts_t.ps = ave_deviation_as / 1000000;  // average fit
   ts_t.dps         = window_as >> 20;                // cheap division by 1000000
   *phase_t         = fwlib_cleanB2bt(ts_t);
 
@@ -498,10 +496,10 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       //t1 = getSysTime();
       comLatency       = (int32_t)(getSysTime() - recDeadline);
       
-      *pSharedGetTH1Hi = (uint32_t)((recParam >> 32) & 0x00ffffff);   // lower 56 bit used as period
+      *pSharedGetTH1Hi = (uint32_t)((recParam >> 32) & 0x000fffff);   // lower 52 bit used as period
       *pSharedGetTH1Lo = (uint32_t)( recParam        & 0xffffffff);
       *pSharedGetNH    = (uint32_t)((recParam>> 56)  & 0xff      );   // upper 8 bit used as harmonic number
-      TH1_as           = recParam & 0x00ffffffffffffff;
+      TH1_as           = recParam & 0x000fffffffffffff;
       recGid           = (uint32_t)((recEvtId >> 48) & 0xfff     );
       recSid           = (uint32_t)((recEvtId >> 20) & 0xfff     );
       recBpid          = (uint32_t)((recEvtId >>  6) & 0x3fff    );
@@ -513,11 +511,11 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       tH1_t.ns         = 0x6fffffffffffffff;                          // bogus number, might help for debugging chk
 
       
-      nSamples                              = NSAMPLES;               
-      if (TH1_as >  2500000000000) nSamples = NSAMPLES >> 1;          // use only 1/2 for nue < 400 kHz: 80us@400kHz and NSAMPLES-32
-      if (TH1_as >  5000000000000) nSamples = NSAMPLES >> 2;          // use only 1/4 for nue < 200 kHz: 80us@200kHz and NSAMPLES-32
-      if (TH1_as > 10000000000000) nSamples = NSAMPLES >> 3;          // use only 1/8 for nue < 100 kHz: 80us@100kHz and NSAMPLES-32
-      if (TH1_as > 20000000000000) nSamples = 3;                      // use minimum for  nue <  50 kHz: 80us@ 27kHz and NSAMPLES-32
+      nSamples                              = B2B_NSAMPLES;               
+      if (TH1_as >  2500000000000) nSamples = B2B_NSAMPLES >> 1;      // use only 1/2 for nue < 400 kHz: 80us@400kHz and B2B_NSAMPLES=32
+      if (TH1_as >  5000000000000) nSamples = B2B_NSAMPLES >> 2;      // use only 1/4 for nue < 200 kHz: 80us@200kHz and B2B_NSAMPLES=32
+      if (TH1_as > 10000000000000) nSamples = B2B_NSAMPLES >> 3;      // use only 1/8 for nue < 100 kHz: 80us@100kHz and B2B_NSAMPLES=32
+      if (TH1_as > 20000000000000) nSamples = 3;                      // use minimum for  nue <  50 kHz: 80us@ 27kHz and B2B_NSAMPLES=32
 
       TMeas           = (uint64_t)(nSamples)*(TH1_as >> 30);          // window for acquiring timestamps ~[ns]; use bitshift as division
       TMeas_us        = (int32_t)(TMeas >> 10) + 16;                  // ~[ns] -> ~[us] add 16us to correct for too short window

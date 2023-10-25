@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 17-Apr-2023
+ *  version : 24-Oct-2023
  *
  *  x86 routines for MCP4725 connected via FT232H
  * 
@@ -70,21 +70,31 @@ void ftdimcp_close(FT_HANDLE cHandle)
 
 
 // gets device info
-FT_STATUS ftdimcp_info(int cIdx)
+FT_STATUS ftdimcp_info(int cIdx, uint32_t *deviceId, char *deviceSerial, int flagPrint)
 {
   FT_STATUS                ftStatus;          // status returned by ftdi library
   FT_DEVICE_LIST_INFO_NODE channelInfo;       // channel info data
 
-  if ((ftStatus = I2C_GetChannelInfo(cIdx, &channelInfo)) == FT_OK) {
-    printf("description: %s\n"  , channelInfo.Description);
-    printf("serial     : %s\n"  , channelInfo.SerialNumber);
-    printf("locId      : 0x%x\n", channelInfo.LocId);
-    printf("ID         : 0x%x\n", channelInfo.ID);
-    printf("type       : 0x%x\n", channelInfo.Type);
-    printf("flags      : 0x%x\n", channelInfo.Flags);
-  } // if ftStatus
-  else
-    printf("error      : can't read channel info, ftStatus is %d\n", ftStatus);
+
+  ftStatus = I2C_GetChannelInfo(cIdx, &channelInfo);
+
+    if (ftStatus == FT_OK) {
+      *deviceId = channelInfo.ID;
+      sprintf(deviceSerial, "%s", channelInfo.SerialNumber);
+      if (flagPrint) {
+        printf("description: %s\n"  , channelInfo.Description);
+        printf("serial     : %s\n"  , channelInfo.SerialNumber);
+        printf("locId      : 0x%x\n", channelInfo.LocId);
+        printf("ID         : 0x%x\n", channelInfo.ID);
+        printf("type       : 0x%x\n", channelInfo.Type);
+        printf("flags      : 0x%x\n", channelInfo.Flags);
+      } // if flagprint
+    } // if ftStatus
+    else {
+      *deviceId = 0x0;
+      sprintf(deviceSerial, "%s", "");
+      if (flagPrint) printf("error      : can't read channel info, ftStatus is %d\n", ftStatus);
+    } // else ftStatus
 
   return ftStatus;
 } // ftdimcp_info
@@ -214,12 +224,12 @@ FT_STATUS ftdimpc_getCompOutAct(FT_HANDLE cHandle, uint32_t *on)
   FT_STATUS ftStatus;
 
   uint8_t   value;                   // value of channel GPIO
-  uint8_t   pinact;                  // pin to which the actual comparator output is connected
+  uint8_t   pin ;                    // pin to read
 
-  pinact    = FTDIMCP_PINACT;
+  pin       = FTDIMCP_PINACT;
   
   ftStatus  = FT_ReadGPIO(cHandle, &value);
-  *on       = (value >> pinact) & 0x1;
+  *on       = (value >> pin) & 0x1;
 
   return ftStatus; 
 } // ftdimpc_getCompOutAct
@@ -229,9 +239,15 @@ FT_STATUS ftdimpc_getCompOutAct(FT_HANDLE cHandle, uint32_t *on)
 FT_STATUS ftdimpc_getCompOutStretched(FT_HANDLE cHandle, uint32_t *on)
 {
   FT_STATUS ftStatus;
-  // not yet implemented, just return actual value
 
-  ftStatus = ftdimpc_getCompOutAct(cHandle, on);
+
+  uint8_t   value;                   // value of channel GPIO
+  uint8_t   pin ;                    // pin to read
+
+  pin       = FTDIMCP_PINSTRETCH;
+  
+  ftStatus  = FT_ReadGPIO(cHandle, &value);
+  *on       = (value >> pin) & 0x1;
   
   return ftStatus;
 } // ftdimpc_getCompOutStretched

@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 17-Feb-2023
+ *  version : 21-Sep-2023
  *
  * common routines x86 and epcu firmware
  *
@@ -37,7 +37,7 @@
 #ifndef _COMMON_CORE_H_
 #define _COMMON_CORE_H_
 
-#define COMMON_CORE_VERSION "0.03.00"
+#define COMMON_CORE_VERSION "0.04.00"
 
 // non-optimed routine for converting single precision to half precision float
 // IEEE 754 but no support for subnormal numbers
@@ -48,5 +48,10 @@ uint16_t comcore_float2half(float f             // single precision number
 // IEEE 754 but no support for subnormal numbers
 float comcore_half2float(uint16_t h             // half precision number
                          );
+
+// unsigned 32 bit integer division with rounding
+uint32_t comcore_intdiv(uint32_t n,             // integer number
+                        uint32_t d              // divisor
+                        );
 
 #endif

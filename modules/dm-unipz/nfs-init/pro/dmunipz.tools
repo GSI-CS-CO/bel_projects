@@ -1,0 +1,4 @@
+# software
+cp -a $MOUNTPOINT/$ARCH/usr/bin/dmunipz-ctl /usr/bin/
+# firmware
+cp -a $MOUNTPOINT/firmware/* /

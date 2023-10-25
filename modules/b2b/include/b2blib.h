@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-Feb-2023
+ *  version : 21-Sep-2023
  *
  * library for b2b
  *
@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define B2BLIB_VERSION 0x000426
+#define B2BLIB_VERSION 0x000700
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  B2BLIB_STATUS_OK                 0            // OK
@@ -75,9 +75,8 @@ extern "C" {
   enum evtTag{tagPme, tagPmi, tagPre, tagPri, tagKte, tagKti, tagKde, tagKdi, tagPde, tagPdi, tagStart, tagStop};
   typedef enum evtTag evtTag_t;
 
-  // data type set values; data are in 'native units' used by the lm32 firmware
+  // data type set values; data are in 'native units' used by the lm32 firmware; NAN of unsigned integers is signaled by all bits set
   typedef struct{                                      
-    uint32_t flag_nok;                                 // flag: data not ok; bit 0: mode, bit 1: ext_T, ...
     uint32_t mode;                                     // mode of B2B system
     uint64_t ext_T;                                    // extraction: period of h=1 Group DDS [as]
     uint32_t ext_h;                                    // extraction: harmonic number of rf
@@ -90,31 +89,32 @@ extern "C" {
 
   // data type get values; data are in 'native units' used by the lm32 firmware
   typedef struct{                                      
-    uint32_t flag_nok;                                 // flag: data not ok; bit 0: ext_phase, bit 1: ext_dKickMon ...
     uint64_t ext_phase;                                // extraction: phase of h=1 Group DDS, ns part
-    int32_t  ext_phaseFract_ps;                        // extraction: fractional phase [ps]
-    int32_t  ext_phaseErr_ps;                          // extraction: uncertainty of phase [ps]
-    int32_t  ext_dKickMon;                             // extraction: offset electronics monitor signal [ns]
-    int32_t  ext_dKickProb;                            // extraction: offset magnet probe signal [ns]
+    float    ext_phaseFract;                           // extraction: fractional phase [ps]
+    float    ext_phaseErr;                             // extraction: (statistical) uncertainty of phase [ps]
+    float    ext_phaseSysmaxErr;                       // extraction: maximum systematic error of phase [ns]
+    float    ext_dKickMon;                             // extraction: offset electronics monitor signal [ns]
+    float    ext_dKickProb;                            // extraction: offset magnet probe signal [ns]
     float    ext_diagPhase;                            // extraction: offset from expected h=1 to actual h=1 signal [ns]
     float    ext_diagMatch;                            // extraction: offset from calculated 'phase match' to actual h=1 signal [ns]
     uint64_t inj_phase;                                // injection : ...
-    int32_t  inj_phaseFract_ps;
-    int32_t  inj_phaseErr_ps;  
-    int32_t  inj_dKickMon;                             
-    int32_t  inj_dKickProb;
+    float    inj_phaseFract;
+    float    inj_phaseErr;
+    float    inj_phaseSysmaxErr;    
+    float    inj_dKickMon;
+    float    inj_dKickProb;
     float    inj_diagPhase;
     float    inj_diagMatch;
     uint32_t flagEvtRec;                               // flag for events received; pme, pmi, pre, pri, kte, kti, kde, kdi, pde, pdi, start, stop
     uint32_t flagEvtErr;                               // error flag;               pme, pmi, ...
     uint32_t flagEvtLate;                              // flag for events late;     pme, pmi, ...
     uint64_t tCBS;                                     // deadline of CMD_B2B_START [ns]
-    int32_t  finOff;                                   // offset from CBS deadline to time when CBU sends KTE [ns]
-    int32_t  prrOff;                                   // offset from CBS to time when CBU received all phase results
-    int32_t  preOff;                                   // offset from CBS to measured extraction phase [ns]
-    int32_t  priOff;                                   // offset from CBS to measured injection phase [ns]
-    int32_t  kteOff;                                   // offset from CBS to KTE deadline [ns]
-    int32_t  ktiOff;                                   // offset from CBS to KTI deadline [ns]
+    float    finOff;                                   // offset from CBS deadline to time when CBU sends KTE [ns]
+    float    prrOff;                                   // offset from CBS to time when CBU received all phase results
+    float    preOff;                                   // offset from CBS to measured extraction phase [ns]
+    float    priOff;                                   // offset from CBS to measured injection phase [ns]
+    float    kteOff;                                   // offset from CBS to KTE deadline [ns]
+    float    ktiOff;                                   // offset from CBS to KTI deadline [ns]
   } getval_t;
 
   // data type for diagnostic values
@@ -149,12 +149,16 @@ extern "C" {
     double   inj_rfOffSdev;
     double   inj_rfOffMin;
     double   inj_rfOffMax;
-    uint32_t ext_rfNueN;                               // extraction, measured rf frequency
+    double   ext_rfNueAct;                             // extraction, measured rf frequency
+    double   ext_rfNueActErr;
+    uint32_t ext_rfNueN;
     double   ext_rfNueAve;
     double   ext_rfNueSdev;
     double   ext_rfNueDiff;
-    double   ext_rfNueEst;
-    uint32_t inj_rfNueN;                               // injection, measured rf frequency
+    double   ext_rfNueEst;                             // estimated 'true' DDS frequency based on its DDS resolution
+    double   inj_rfNueAct;                             // injection, measured rf frequency
+    double   inj_rfNueActErr;
+    uint32_t inj_rfNueN;
     double   inj_rfNueAve;
     double   inj_rfNueSdev;
     double   inj_rfNueDiff;
@@ -224,7 +228,16 @@ extern "C" {
     int32_t  nSeries;                                  // # of data series, a series contains multiple timestamps
     int32_t  nTS;                                      // # total number of time stamps used for calculus
     int32_t  nBadTS;                                   // # total number of bad (= dropped) time stamps
-  } nueMeas_t; 
+  } nueMeas_t;
+
+  typedef struct {
+    double   ppsAct;                                   // actual PPS value, fractional part of a second [ns]
+    uint32_t ppsN;                                     // number of values
+    double   ppsMean;                                  // mean value
+    double   ppsSdev;                                  // standard deviation
+    double   ppsMin;                                   // min value
+    double   ppsMax;                                   // max value
+  } jitterChk_t;
     
   // ---------------------------------
   // helper routines
@@ -260,6 +273,12 @@ extern "C" {
   // enable debugging to trace library activity (experimental)
   void b2b_debug(uint32_t flagDebug                            // 1: debug on; 0: debug off
                  );
+
+  // returns the maximum systematic deviation of the sub-ns fit [ps]
+  uint32_t b2b_calc_max_sysdev_ps(uint64_t TH1_as,             // h=1 period [as]
+                                  uint32_t nSamples,           // number of timestamp samples
+                                  uint32_t printFlag           // 0: don't print info; >1 print info
+                                  );
   
   // ---------------------------------
   // communication with lm32 firmware
@@ -296,9 +315,9 @@ extern "C" {
                          uint64_t *TH1Inj,                     // period of h=1 injection [as]
                          uint32_t *nHInj,                      // harmonic number injection
                          uint64_t *TBeat,                      // period of beating signal [as]
-                         int32_t *cPhase,                      // correction of phase [ns]
-                         int32_t *cTrigExt,                    // correction of extraction kicker trigger [ns]
-                         int32_t *cTrigInj,                    // correction of injection kicker trigger [ns]
+                         double  *cPhase,                      // correction of phase [ns]
+                         double  *cTrigExt,                    // correction of extraction kicker trigger [ns]
+                         double  *cTrigInj,                    // correction of injection kicker trigger [ns]
                          int32_t *comLatency,                  // communication latency [ns]
                          int     printFlag                     // prints info on b2b firmware properties to stdout
                          );
@@ -323,9 +342,9 @@ extern "C" {
                                   double   nueH1,              // h=1 frequency [Hz] of machine
                                   uint32_t fNueConv,           // flag: convert frequency to DDS (default '1')
                                   uint32_t nH,                 // harmonic number of machine
-                                  int32_t  cTrig,              // trigger correction
+                                  double   cTrig,              // trigger correction
                                   int32_t  nBucket,            // bucket number
-                                  int32_t  cPhase,             // phase correction [ns]
+                                  double   cPhase,             // phase correction [ns]
                                   uint32_t fFineTune,          // flag: use fine tune (default '1')
                                   uint32_t fMBTune             // flag: use multi-beat tune (default '1')
                                   );
@@ -334,11 +353,14 @@ extern "C" {
   // after the 2022 beamtime, data type of cTrig should change to double
   uint32_t b2b_context_inj_upload(uint64_t ebDevice,           // EB device
                                   uint32_t sidExt,             // SID; NB: this is the SID of the extraction machine!!!
-                                  uint32_t gid,                // GID of ring machine
+                                  uint32_t gid,                // GID of ring machine (injection machine)
+                                  uint32_t sid,                // SID
+                                  uint32_t bpid,               // bpid
+                                  uint64_t param,              // parameter field
                                   double   nueH1,              // h=1 frequency [Hz] of machine
                                   uint32_t fNueConv,           // flag: convert frequency to DDS (default '1')
                                   uint32_t nH,                 // harmonic number injection machine
-                                  int32_t  cTrig,              // trigger correction injection
+                                  double   cTrig,              // trigger correction injection
                                   int32_t  nBucket             // bucket number
                                   );
 

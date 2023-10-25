@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-Mar-2023
+ *  version : 06-Oct-2023
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  NB: units of variables are [ns] unless explicitely mentioned as suffix
@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000426                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000700                                      // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -104,7 +104,7 @@ uint64_t setTH1Inj_as[B2B_NSID];        // [as]
 uint32_t setNHInj[B2B_NSID];
 uint32_t setLSidInj[B2B_NSID];
 uint32_t setLBpidInj[B2B_NSID];
-uint32_t setLParamInj[B2B_NSID];
+uint64_t setLParamInj[B2B_NSID];
 float    setCPhase[B2B_NSID];           // [ns]
 float    setCTrigExt[B2B_NSID];         // [ns]
 float    setCTrigInj[B2B_NSID];         // [ns]
@@ -140,8 +140,8 @@ uint64_t  TH1Inj_as;                    // h=1 period [as] of injection machine
 uint32_t  nHInj;                        // harmonic number of injection machine 0..255
 uint64_t  TBeat_as;                     // beating period [as]
 b2bt_t    cPhase_t;                     // correction for phase matching
-int32_t   cTrigExt;                     // correction for extraction trigger
-int32_t   cTrigInj;                     // correction for injection trigger
+b2bt_t    cTrigExt_t;                   // correction for extraction trigger
+b2bt_t    cTrigInj_t;                   // correction for injection trigger
 int32_t   nBucketExt;                   // number of bucket for extraction
 int32_t   nBucketInj;                   // number of bucket for injection
 int       fFineTune;                    // flag: uoffse fine tuning
@@ -817,12 +817,27 @@ uint32_t getNextMState(uint32_t mode, uint32_t actMState) {
   uint32_t nextMState = B2B_MFSM_NOTHING;
 
   switch (mode) {
+    case B2B_MODE_OFF :     // off (slow extraction)
+      switch (actMState) {
+        case B2B_MFSM_S0 :
+          nextMState = B2B_MFSM_EXTPS;
+          break;
+        case B2B_MFSM_EXTPS :
+          nextMState = B2B_MFSM_NOTHING;
+          break;
+        default :
+          nextMState = B2B_MFSM_NOTHING;
+      } // switch actMState mode OFF
+      break;
     case B2B_MODE_BSE :     // kick on start event
       switch (actMState) {
         case B2B_MFSM_S0 :
-          nextMState =  B2B_MFSM_EXTKICK;
+          nextMState = B2B_MFSM_EXTKICK;
           break;
         case B2B_MFSM_EXTKICK :
+          nextMState =  B2B_MFSM_EXTPS;
+          break;
+        case B2B_MFSM_EXTPS :
           nextMState =  B2B_MFSM_EXTTRIG;
           break;
         case B2B_MFSM_EXTTRIG :
@@ -858,7 +873,10 @@ uint32_t getNextMState(uint32_t mode, uint32_t actMState) {
         case B2B_MFSM_S0 :
           nextMState = B2B_MFSM_EXTPS;
           break;
-        case  B2B_MFSM_EXTPS :
+        case B2B_MFSM_EXTPS :
+          nextMState = B2B_MFSM_INJPS;
+          break;
+        case B2B_MFSM_INJPS :
           nextMState = B2B_MFSM_EXTPR;
           break;
         case B2B_MFSM_EXTPR :
@@ -889,7 +907,7 @@ uint32_t getNextMState(uint32_t mode, uint32_t actMState) {
           nPhaseResult = 0;     
           nextMState = B2B_MFSM_BOTHPR;
           break;                           
-        case B2B_MFSM_BOTHPR :                                      // we have a diamond structure: we request two phase measurements
+        case B2B_MFSM_BOTHPR :                                      // we have a diamond structure: we requested two phase measurements
           nPhaseResult++;                                           // but we don't know which result is received first; the simplest 
           if (nPhaseResult == 2) nextMState = B2B_MFSM_EXTMATCHT;   // solution is to use a counter and count to 2
           else                   nextMState = B2B_MFSM_BOTHPR;
@@ -957,6 +975,16 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   status = actStatus;
 
   ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recId, &recParam, &recTef, &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
+
+  /*if (flagIsLate) {
+    tmp32 = (uint32_t)(getSysTime() - recDeadline);
+    pp_printf("late event....\n");
+    pp_printf("late by            %u\n", tmp32);
+    tmp32 = (uint32_t)(recId >> 32) & 0xffffffff;
+    pp_printf("late event is idhi 0x%08x\n", tmp32);
+    tmp32 = (uint32_t)(recId)       & 0xffffffff;
+    pp_printf("late event is idlo 0x%08x\n", tmp32);
+    } // if flag late */
     
   switch (ecaAction) {
 
@@ -970,32 +998,34 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       gid          = (uint32_t)((recId >> 48) & 0x0fff);      // temporary assignment useful for debugging if routine setSubmit() fails
 
       // clear 'local' variables
-      flagsExt     = 0x0;
-      sidExt       = 0x0;
-      bpidExt      = 0x0;
-      paramExt     = 0x0;
-      flagsInj     = 0x0;
-      sidInj       = 0x0;
-      bpidInj      = 0x0;
-      paramInj     = 0x0;
-      mode         = 0x0;
-      nHExt        = 0x0;
-      nHInj        = 0x0;
-      TH1Ext_as    = 0x0;
-      TH1Inj_as    = 0x0;
-      TBeat_as     = 0x0;
-      cPhase_t.ns  = 0x0;
-      cPhase_t.ps  = 0x0;
-      cTrigExt     = 0x0;
-      cTrigInj     = 0x0;
-      nBucketExt   = 0x0;
-      nBucketInj   = 0x0;
-      fFineTune    = 0x0;
-      fMBTune      = 0x0;
-      tCBS         = 0x0;
-      nGExt        = 0x0;
-      nGInj        = 0x0;
-      offsetPrr_us = 0x0;
+      flagsExt      = 0x0;
+      sidExt        = 0x0;
+      bpidExt       = 0x0;
+      paramExt      = 0x0;
+      flagsInj      = 0x0;
+      sidInj        = 0x0;
+      bpidInj       = 0x0;
+      paramInj      = 0x0;
+      mode          = 0x0;
+      nHExt         = 0x0;
+      nHInj         = 0x0;
+      TH1Ext_as     = 0x0;
+      TH1Inj_as     = 0x0;
+      TBeat_as      = 0x0;
+      cPhase_t.ns   = 0x0;
+      cPhase_t.ps   = 0x0;
+      cTrigExt_t.ns = 0x0;
+      cTrigExt_t.ps = 0x0;      
+      cTrigInj_t.ns = 0x0;
+      cTrigInj_t.ps = 0x0;
+      nBucketExt    = 0x0;
+      nBucketInj    = 0x0;
+      fFineTune     = 0x0;
+      fMBTune       = 0x0;
+      tCBS          = 0x0;
+      nGExt         = 0x0;
+      nGInj         = 0x0;
+      offsetPrr_us  = 0x0;
 
       transStat    = 0x0;                                     // reset transfer status
       nTransfer++;                                            // increment transfer counter
@@ -1024,16 +1054,16 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       TH1Inj_as   = setTH1Inj_as[sid];
       nHInj       = setNHInj[sid];
       cPhase_t    = fwlib_tfns2tps(setCPhase[sid]);
-      cTrigExt    = setCTrigExt[sid];
-      cTrigInj    = setCTrigInj[sid];
+      cTrigExt_t  = fwlib_tfns2tps(setCTrigExt[sid]);
+      cTrigInj_t  = fwlib_tfns2tps(setCTrigInj[sid]);
       
       nBucketExt  = setNBuckExt[sid];
       nBucketInj  = setNBuckInj[sid];
       fFineTune   = setFFinTune[sid];
       fMBTune     = setFMBTune[sid];
 
-      cTrigExt_us = fwlib_float2half((float)cTrigExt/1000.0);            // 16 bit float [us]
-      cTrigInj_us = fwlib_float2half((float)cTrigInj/1000.0);            // 16 bit float [us]
+      cTrigExt_us = fwlib_float2half(fwlib_tps2tfns(cTrigExt_t)/1000.0); // 16 bit float [us]
+      cTrigInj_us = fwlib_float2half(fwlib_tps2tfns(cTrigInj_t)/1000.0); // 16 bit float [us]
       cPhase_us   = fwlib_float2half(fwlib_tps2tfns(cPhase_t)/1000.0);   // 16 bit float [us]
 
       tCBS        = recDeadline;
@@ -1043,12 +1073,13 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       errorFlags  = 0x0;
       break;
 
-    case B2B_ECADO_B2B_PREXT :                                // received: measured phase from extraction machine
-      tmpf         = (float)(getSysTime() - tCBS) / 1000.0;   // time from CBS to now [us]
-      offsetPrr_us = fwlib_float2half(tmpf);                  // -> half precision
+    case B2B_ECADO_B2B_PREXT :                                 // received: measured phase from extraction machine
+      if (mode < B2B_MODE_B2E) return status;                  // ignore informative phase result
+      tmpf         = (float)(getSysTime() - tCBS) / 1000.0;    // time from CBS to now [us]
+      offsetPrr_us = fwlib_float2half(tmpf);                   // -> half precision
       recGid       = (uint32_t)((recId >> 48) & 0xfff     );
       recSid       = (uint32_t)((recId >> 20) & 0xfff     );
-      recRes       = (uint32_t)(recId & 0x3f);                // lowest 6 bit of EvtId
+      recRes       = (uint32_t)(recId & 0x3f);                 // lowest 6 bit of EvtId
 
       // check, if received evtID is valid
       if (recGid != gid)                                             return COMMON_STATUS_OUTOFRANGE;   
@@ -1067,7 +1098,10 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       //pp_printf("b2b: PREXT %u\n", mState);
       break;
 
-    case B2B_ECADO_B2B_PRINJ :                                // received: measured phase from injection machine
+    case B2B_ECADO_B2B_PRINJ :                                 // received: measured phase from injection machine
+      if (mode <  B2B_MODE_B2B) return status;                 // ignore informative phase result
+      tmpf         = (float)(getSysTime() - tCBS) / 1000.0;    // time from CBS to now [us]
+      offsetPrr_us = fwlib_float2half(tmpf);                   // -> half precision
       recGid        = (uint32_t)((recId >> 48) & 0xfff     );
       recSid        = (uint32_t)((recId >> 20) & 0xfff     );
       recRes        = (uint32_t)(recId & 0x3f);               // lowest 6 bit of EvtId
@@ -1110,9 +1144,10 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     
     // send command: phase measurement at extraction machine
     sendEvtId      = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PMEXT, flagsExt, sidExt, bpidExt, 0); 
-    sendParam      = TH1Ext_as & 0x00ffffffffffffff;                            // use low 56 bit as period
+    sendParam      = TH1Ext_as & 0x000fffffffffffff;                            // use low 52 bit as period
     sendParam     |= (uint64_t)(nGExt & 0xff) << 56;                            // use upper 8 bit as geometric harmonic number
-    sendTef        = (uint32_t)(cTrigExt_us) << 16;                             // high 16 bit: ext kicker correction
+    sendParam     |= (uint64_t)(mode & 0xf)   << 52;                            // use next upper 4 bit as mode info
+    sendTef        = (uint32_t)(cTrigExt_us)  << 16;                            // high 16 bit: ext kicker correction
     sendTef       |= (uint32_t)(cTrigInj_us);                                   // low 16 bit : inj kicker correction
     sendDeadline   = tCBS + (uint64_t)B2B_PMOFFSET;                             // fixed deadline relative to CBS
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, sendTef, 0);
@@ -1128,8 +1163,9 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     
     // send command: phase measurement at injection machine
     sendEvtId      = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PMINJ, flagsInj, sidExt, bpidExt, 0); 
-    sendParam      = TH1Inj_as & 0x00ffffffffffffff;                            // use low 56 bit as period
+    sendParam      = TH1Inj_as & 0x000fffffffffffff;                            // use low 52 bit as period
     sendParam     |= (uint64_t)(nGInj & 0xff) << 56;                            // use upper 8 bit as geometric harmonic number
+    // sendParam: next upper 4 bit: reserved
     sendTef        = (uint32_t)(cPhase_us) << 16;                               // high 16 bit: phase correction, low 16 bit: reserved
     sendDeadline   = tCBS + (uint64_t)B2B_PMOFFSET + 1;                         // fixed deadline relative to B2BS, add 1ns to avoid collision with PMEXT
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, sendTef, 0);
@@ -1169,7 +1205,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   if (mState == B2B_MFSM_EXTTRIG ) {
     sendGid      =  getTrigGid(1);
     if (!sendGid) return COMMON_STATUS_OUTOFRANGE;
-    tTrigExt     = tTrig + cTrigExt;                                          // trigger correction
+    tTrigExt     = tTrig + cTrigExt_t.ns;                                     // trigger correctionl; chk: sub-ns part
     tmpf         = (float)(getSysTime() - tCBS) / 1000.0;                     // time from CBS to now [us]
     //tmp32 = (uint32_t)tmpf; pp_printf("sid %d, fin-cbs %u\n", sid, tmp32);
     offsetFin_us = fwlib_float2half(tmpf);
@@ -1190,7 +1226,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   if (mState == B2B_MFSM_INJTRIG ) {
     sendGid      =  getTrigGid(0);
     if (!sendGid) return COMMON_STATUS_OUTOFRANGE;
-    tTrigInj     = tTrig + cTrigInj;                                          // trigger correction
+    tTrigInj     = tTrig + cTrigInj_t.ns;                                     // trigger correction; chk: sub-ns part
     if (tTrigInj < getSysTime() + (uint64_t)(COMMON_LATELIMIT)) {             // we are too late!
       errorFlags |= B2B_ERRFLAG_CBU;                                          // set error flag
     } // if tTrigInj
@@ -1287,8 +1323,8 @@ int main(void) {
     *pSharedGetTH1InjLo   = (uint32_t)( TH1Inj_as        & 0xffffffff);
     *pSharedGetNHInj      = nHInj;
     *pSharedGetCPhase     = fwlib_tps2tfns(cPhase_t);
-    *pSharedGetCTrigExt   = (float)cTrigExt;
-    *pSharedGetCTrigInj   = (float)cTrigInj;
+    *pSharedGetCTrigExt   = fwlib_tps2tfns(cTrigExt_t);
+    *pSharedGetCTrigInj   = fwlib_tps2tfns(cTrigInj_t);
     *pSharedGetTBeatHi    = (uint32_t)((TBeat_as >> 32)  & 0xffffffff); 
     *pSharedGetTBeatLo    = (uint32_t)( TBeat_as         & 0xffffffff);
     *pSharedGetComLatency = comLatency;

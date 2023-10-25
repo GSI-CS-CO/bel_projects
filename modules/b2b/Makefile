@@ -1,13 +1,12 @@
 # PREFIX  controls where programs and libraries get installed
 # Note: during compile (all), PREFIX must be set to the final installation path
-# If using the Yocto SDK, you must additionally use YOCTO=YES 
-# Example usage:
+# Set SYSENV to the target system environment (YOCTO, ACC7, ACC9, OPT)
+# Example build:
 #   'make clean'                                                 
-#   'make ENV=int YOCTO=YES PREFIX= all'                                               (hack: leave PREFIX empty for SCU path)
-# Example deploy:
-#   'make PREFIX= YOCTO=YES STAGING=/common/export/timing-rte/b2b-dev-yocto deploy'    (hack: leave PREFIX empty for SCU path)
-#   'make PREFIX= STAGING=/common/export/timing-rte/b2b-dev deploy'                    (hack: leave PREFIX empty for SCU path)
-#   'make PREFIX= STAGING=/common/export/timing-rte/b2b deploy'                        (hack: leave PREFIX empty for SCU path)
+#   'make ENV=int SYSENV=ACC7 PREFIX= all'                                             (hack: leave PREFIX empty for SCU path)
+# Example deploy (for ASL only):
+#   'make PREFIX= SYSENV=ACC7 STAGING=/common/export/timing-rte/b2b-dev deploy'        (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= SYSENV=ACC7 STAGING=/common/export/timing-rte/b2b deploy'            (hack: leave PREFIX empty for SCU path)
 
 # install
 PREFIX      ?= /usr/local
@@ -21,27 +20,31 @@ NFSINIT     ?= nfs-init
 GENNFSINIT  ?= ../../../../ci_cd/scripts/yocto_helper/nfsinit/fec-init
 INC         ?= include
 
-# support Yocto SDK
-ifeq ($(YOCTO), YES)
-EB          ?= .
-ARCH        := /x86_64
-DIMPATH      := /common/usr/timing/b2b/yocto/dim_v20r33
-else
-EB          ?= ../../ip_cores/etherbone-core/api
-ARCH        ?= /x86_64
-DIMPATH      := /common/usr/timing/b2b/rocky9/dim_v20r33
+# target system environment, OPT is default
+SYSENV      ?= OPT
+
+ifeq ($(SYSENV), OPT)
+USRPATH     ?= /opt/usr
+ARCH        ?=
 endif
 
-# set enviorinment, default is int
+ifeq ($(SYSENV), YOCTO)
+USRPATH     := /common/usr/timing/b2b/yocto/usr
+ARCH        := /x86_64
+endif
+
+ifeq ($(SYSENV), ACC7)
+USRPATH     := /common/usr/timing/b2b/centos7/usr/
+ARCH        := /x86_64
+endif
+
+# set environment, default is int
 ENV         ?= int
 ifeq ($(ENV), pro)
 PRO         ?= YES
 else
 PRO         ?= NO
 endif
-
-# hack for building on local linux box
-#DIMPATH     := /opt/dim/dim_v20r29
 
 TARGETS := firmware software nfsinit
 
@@ -62,6 +65,9 @@ nfsinit:
 clean:
 	$(MAKE) -C $(SW) clean
 	$(MAKE) -C $(FW) clean
+	rm -f nfs-init/b2b-int*.sh
+	rm -f nfs-init/b2b-pro*.sh
+	rm -f nfs-init/b2b-tools.sh
 
 deploy:
 # create folders
@@ -82,13 +88,14 @@ deploy:
 	cp -a $(SW)/*.so $(STAGING)$(ARCH)$(PREFIX)/usr/lib                 # '/usr' is a hack
 	cp $(SW)/b2b-ui $(STAGING)$(ARCH)$(PREFIX)/usr/bin                  # '/usr' is a hack
 	cp $(SW)/b2bivt/*.txt $(STAGING)$(ARCH)$(PREFIX)/tmp/b2bivt         # needed for ivtpar
-	cp $(DIMPATH)/linux/libdim.so $(STAGING)$(ARCH)$(PREFIX)/usr/lib    # '/usr' is a hack
+	cp $(USRPATH)/lib/libdim.so $(STAGING)$(ARCH)$(PREFIX)/usr/lib      # '/usr' is a hack
 	cp $(SW)/b2b-serv-sys $(STAGING)$(ARCH)$(PREFIX)/usr/bin            # '/usr' is a hack 
 	cp $(SW)/b2b-client-sys $(STAGING)$(ARCH)$(PREFIX)/usr/bin          # '/usr' is a hack 
 	cp $(SW)/b2b-serv-raw $(STAGING)$(ARCH)$(PREFIX)/usr/bin            # '/usr' is a hack 
 	cp $(SW)/b2b-analyzer $(STAGING)$(ARCH)$(PREFIX)/usr/bin            # '/usr' is a hack 
 	cp $(SW)/b2b-viewer $(STAGING)$(ARCH)$(PREFIX)/usr/bin              # '/usr' is a hack 
 	cp $(SW)/b2b-archiver $(STAGING)$(ARCH)$(PREFIX)/usr/bin            # '/usr' is a hack
+	cp $(SW)/b2b-jitter-check $(STAGING)$(ARCH)$(PREFIX)/usr/bin        # '/usr' is a hack
 	cp $(FW)/*.bin $(STAGING)/firmware                   
 #	cp $(SW)/b2b-pname-info $(STAGING)$(ARCH)$(PREFIX)/usr/bin          # '/usr' is a hack; this is special and works only on ASL
 

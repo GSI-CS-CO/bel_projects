@@ -1,10 +1,10 @@
-# PREFIX  controls where programs and libraries get installed
+# PREFIX  controls where programs and libraries get installed (default: '/usr/local')
 # Note: during compile (all), PREFIX must be set to the final installation path
-# If using the Yocto SDK, you must additionally use YOCTO=YES
+# Set SYSENV to the target system environment (YOCTO, ACC7, ACC9, OPT)
 # Example usage:
-#   'make MASP=NO YOCTO=YES PREFIX= all'                                               (hack: leave PREFIX empty for SCU path)
-# Example deploy:
-#   'make MASP=YES PREFIX= STAGING=/common/export/timing-rte/XYZ deploy'               (hack: leave PREFIX empty for SCU path)
+#   'make SYSENV=OPT PREFIX=/opt/usr all'                                             (hack: leave PREFIX empty for SCU path)
+# Example install:
+#   'make PREFIX=/opt/usr install'                                                    (hack: leave PREFIX empty for SCU path)
 
 # install
 PREFIX      ?= /usr/local
@@ -14,45 +14,25 @@ STAGING     ?=
 FW          ?=../fw
 B2BLIB      := libb2blib.so
 
-# support Yocto SDK
-ifeq ($(YOCTO), YES)
-EB          ?= .
-ARCH        := /x86_64
-CFLAGS      ?=
-DIMPATH     := /common/usr/timing/b2b/yocto/dim_v20r33
-ASLLIB      := .
-ASLINC      := .
-else
-EB          ?= ../../../ip_cores/etherbone-core/api
-ARCH        ?= /x86_64
-CFLAGS      ?= -Wall -O2 -g
-CXX         := g++ --std=c++0x
-
-#DIMPATH     := /common/usr/timing/b2b/rocky9/dim_v20r33
-#ASLLIB      := /common/export/timing-rte/tg-fallout-v6.2.1-rocky9/lib
-#ASLINC      := /common/export/timing-rte/tg-fallout-v6.2.1-rocky9/include/saftlib/
-
-# hack for sl7 (deprecated)
-DIMPATH     := /common/usr/timing/b2b/dim_v20r29
-ASLLIB      := /common/export/timing-rte/tg-fallout-v6.2.0/x86_64/lib
-ASLINC      := /common/export/timing-rte/tg-fallout-v6.2.0/x86_64/include/saftlib
-
-# hack for local boxes
-#DIMPATH     := /opt/dim/dim_v20r33
-
-endif
+# include common Makefile stuff
+include targetsysbuild.db
 
 EXTRA_FLAGS ?=
-LIBS        ?= -L. -L$(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm -lb2blib -L$(DIMPATH)/linux
-CCFLAGS     ?= `pkg-config  saftlib --cflags` $(EXTRA_FLAGS) -I$(EB) -I$(FW) -I$(ASLINC) -I../include -I../../common-libs/include  -I$(DIMPATH)/dim
-SAFTLIBS    ?= `pkg-config  saftlib --libs` -L. -L$(ASLLIB) -L$(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm -lb2blib -L$(DIMPATH)/linux
+# the following is for c code
+CCFLAGS     ?= $(EXTRA_FLAGS) -I$(EB) -I$(USRPATH)/include -I$(FW) -I../include -I../../common-libs/include
+LIBS        ?= -L. -L$(EB)/.libs -L$(USRPATH)/lib -Wl,-rpath,$(PREFIX)/lib -letherbone -lm -lb2blib 
+# the following is for c++ code
+CXFLAGS     ?= `pkg-config  saftlib --cflags` -I$(ASLINC) $(CCFLAGS)
+XLIBS       ?= `pkg-config  saftlib --libs` -L$(ASLLIB) $(LIBS)
 
-$(info    CCFLAGS is $(CCFLAGS))
-$(info     CFLAGS is $(CFLAGS))
+$(info ours/theirs CFLAGS is $(CFLAGS))
+$(info compiling x86 binaries for $(SYSENV))
+$(info ours CCFLAGS for c code is $(CCFLAGS))
+$(info ours CXFLAGS for c++ code is $(CXFLAGS))
 
-TARGETS     := lib b2b-serv-raw b2b-ctl b2b-ui b2b-serv-sys b2b-client-sys b2b-viewer b2b-analyzer b2b-archiver b2b-mon b2b-pname
+TARGETS     := b2b-ctl b2b-ui b2b-serv-sys b2b-client-sys b2b-viewer b2b-analyzer b2b-archiver b2b-mon b2b-pname-info b2b-serv-raw b2b-jitter-check b2b-sim
 
-all: $(TARGETS)
+all: lib $(TARGETS)
 
 b2b-ctl: b2b-ctl.c
 	$(CC) $(CFLAGS) $(CCFLAGS) -o b2b-ctl b2b-ctl.c $(LIBS)
@@ -79,10 +59,16 @@ b2b-archiver: b2b-archiver.c
 	$(CC) $(CFLAGS) $(CCFLAGS) -o b2b-archiver b2b-archiver.c $(LIBS) -ldim -lpthread 
 
 b2b-serv-raw: b2b-serv-raw.cpp
-	$(CXX) $(CFLAGS) $(CCFLAGS) ../../common-libs/x86/common-lib.c -o b2b-serv-raw b2b-serv-raw.cpp $(LIBS) $(SAFTLIBS) -ldim -lpthread
+	$(CXX) $(CFLAGS) $(CXFLAGS) ../../common-libs/x86/common-lib.c -o b2b-serv-raw b2b-serv-raw.cpp $(XLIBS) -ldim -lpthread
 
-b2b-pname: b2b-pname-info.cpp
-	$(CXX) $(CFLAGS) $(CCFLAGS) -o b2b-pname-info b2b-pname-info.cpp $(SAFTLIBS) -ldim -lpthread
+b2b-sim: b2b-sim.c
+	$(CC) $(CFLAGS) $(CCFLAGS) -o b2b-sim b2b-sim.c $(LIBS)	
+
+b2b-pname-info: b2b-pname-info.cpp
+	$(CXX) $(CFLAGS) $(CCFLAGS) -o b2b-pname-info b2b-pname-info.cpp $(XLIBS) -ldim -lpthread
+
+b2b-jitter-check: b2b-jitter-check.cpp
+	$(CXX) $(CFLAGS) $(CXFLAGS) ../../common-libs/x86/common-lib.c -o b2b-jitter-check b2b-jitter-check.cpp $(XLIBS) -ldim -lpthread
 
 lib: b2blib.c
 	$(CC) $(CFLAGS) $(CCFLAGS) -fPIC -c b2blib.c ../../common-libs/x86/common-lib.c $(LIBS)
@@ -91,11 +77,11 @@ lib: b2blib.c
 	ln -sf $(B2BLIB).1 $(B2BLIB)
 
 clean:
-	rm -f *.o b2b-mon b2b-pname-info b2b-ctl b2b-ui b2b-serv-sys b2b-client-sys b2b-analyzer b2b-viewer b2b-serv-raw b2b-archiver libb2blib.so*
+	rm -f *.o b2b-mon b2b-pname-info b2b-ctl b2b-ui b2b-serv-sys b2b-client-sys b2b-analyzer b2b-viewer b2b-serv-raw b2b-archiver b2b-jitter-check b2b-sim libb2blib.so*
 
-deploy:
-	mkdir -p $(STAGING)/$(ARCH)$(PREFIX)/bin	
-	cp $(TARGETS) $(STAGING)/$(ARCH)$(PREFIX)/bin	
+install:
+	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/bin	
+	cp $(TARGETS) $(STAGING)$(ARCH)$(PREFIX)/bin	
 	cp $(B2BLIB).1.0 $(STAGING)$(ARCH)$(PREFIX)/lib
 	ln -sf $(STAGING)$(ARCH)$(PREFIX)/lib/$(B2BLIB).1.0 $(STAGING)$(ARCH)$(PREFIX)/lib/$(B2BLIB).1
 	ln -sf $(STAGING)$(ARCH)$(PREFIX)/lib/$(B2BLIB).1 $(STAGING)$(ARCH)$(PREFIX)/lib/$(B2BLIB)

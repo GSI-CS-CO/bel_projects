@@ -327,6 +327,43 @@ sudo apt-get install pkg-config
 export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 ```
 
+Error: Compillation: "saftbus/process.cpp:14:10: fatal error: linux/ioprio.h: No such file or directory"
+
+Solution:
+
+1. In Makefile.am
+- line 405: delete 'saft-roundtrip-latency saft-standalone-roundtrip-latency'
+
+- delete lines 486-490
+```
+saft_roundtrip_latency_LDADD = $(EB_LIBS)  $(SIGCPP_LIBS) libsaftbus.la libsaft-proxy.la -ldl #-lltdl
+saft_roundtrip_latency_SOURCES = src/saft-roundtrip-latency.cpp
+
+saft_standalone_roundtrip_latency_LDADD = $(EB_LIBS)  $(SIGCPP_LIBS) libsaftbus.la libsaft-service.la  -ldl #-lltdl
+saft_standalone_roundtrip_latency_SOURCES = src/saft-standalone-roundtrip-latency.cpp
+```
+
+2. In saftbus/process.cpp, replace the entire code by
+```
+#include "process.hpp"
+
+#include <iostream>
+#include <sstream>
+#include <cstring>
+
+bool set_realtime_scheduling(std::string argvi, char *prio) {
+  return true;
+}
+
+bool set_cpu_affinity(std::string argvi, char *affinity) {
+  return true;
+}
+
+bool set_ioprio(char *ioprio) {
+  return true;
+}
+```
+
 ### CC not found
 
 Error: make[1]: cc: No such file or directory

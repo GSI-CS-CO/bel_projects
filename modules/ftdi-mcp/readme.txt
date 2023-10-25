@@ -8,6 +8,8 @@ the comparator. See documentation in folder 'doc'.
 
 Requirements
 ============
+FTDI Libraries
+--------------
 Tested on  linux. Althouth  a kernel driver  for ftdi  exist, ftdi-mcp
 uses other libraries from ftdi instead.
 
@@ -18,11 +20,20 @@ uses other libraries from ftdi instead.
 -- higher level library required for I2C functionality
 --  requires downloading 'LibMPSSE_1.0.3.zip' from the internet
 
-Prior use, the EEPROM of the device must be initialized/formatted. This
-can be done either with the program FT_PROG (windows) or the linux variant as follows:
-- tool contained in 'ft232r_prog-1.25.tar.gz' (download from the internet)
-- format EEPROM via command line
-  'sudo ./ftx_prog --old-pid 0x6014 --dump --ignore-crc-error'
+EEPROM Config
+-------------
+On linux, the FTDI chip does not work with the stock EEPROM content
+
+Option A1: Use the FT_PROG tool from FTDI on >>Windows<< and just re-init
+           the EEPROM
+
+Option A2: Use the FT_PROG tool from FTDI on >>Windows<< and just init
+           the EEPROM using the 'template' FTDI-MCP.xml, available in
+           the same folder as this readme
+           (FT_PROG tool -> open template...)
+Option B1: Use the ftx-prog on >>Linux<< and just re-init the EEPROM by
+           'sudo ./ftx_prog --old-pid 0x6014 --dump --ignore-crc-error'
+           However, this will make the LEDs unusable.
 
 Install
 =======
@@ -42,8 +53,10 @@ Build
 - 'make'
 - this will build the binary 'ftdimcp-ctl'
 
-Usage
-=====
+Caveats
+=======
+ftdi-sio driver
+---------------
 Connect the  device to the  host system via  USB.  The device  will be
 recognized by the  ftdi_sio driver in the linux  kernel. However, this
 driver should not  be used. There are multiple solutions  of not using
@@ -64,6 +77,21 @@ creating udev rules.  Another option is to 'unbind' the device:
   [4229037.634111] ftdi_sio ttyUSB0: FTDI USB Serial Device converter now disconnected from ttyUSB0
   [4229037.634133] ftdi_sio 2-2:1.0: device disconnected
 
+USB stuck
+---------
+This was observed with kernel 3 on an SCU ramdisk after reboot. The following script solves
+the problem by resetting ALL USB 1/2/3 attached ports, see [1]
+"
+for i in /sys/bus/pci/drivers/[uoex]hci_hcd/*:*; do
+  [ -e "$i" ] || continue
+  echo "${i##*/}" > "${i%/*}/unbind"
+  echo "${i##*/}" > "${i%/*}/bind"
+done
+"
+[1] https://askubuntu.com/questions/645/how-do-you-reset-a-usb-device-from-the-command-line
+
+Usage
+=====
 It should be possible to use the device
 - './ftdimcp-ctl -h'      displays help
 - './ftdimcp-ctl 0 -i'    displays information like

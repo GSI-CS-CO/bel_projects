@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 02-Mar-2023
+ *  version : 17-Oct-2023
  *
  * archives set and get values to data files
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_ARCHIVER_VERSION 0x000424
+#define B2B_ARCHIVER_VERSION 0x000700
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -56,9 +56,6 @@
 
 const char* program;
 
-#define TDIAGOBS    20000000               // observation time for diagnostic [ns]
-#define DDSSTEP     0.046566129            // min frequency step of gDDS
-
 // dim stuff
 #define    DIMCHARSIZE 32                  // standard size for char services
 #define    DIMMAXSIZE  1024                // max size for service names
@@ -66,15 +63,16 @@ const char* program;
 uint32_t   no_link_32    = 0xdeadbeef;
 uint64_t   no_link_64    = 0xdeadbeefce420651;
 char       no_link_str[] = "NO_LINK";
+char       nan_str[]     = "nan";
 
 setval_t   dicSetval[B2B_NSID]; 
 getval_t   dicGetval[B2B_NSID];
-nueMeas_t  dicNueMeasExt[B2B_NSID];
+diagval_t  dicDiagval[B2B_NSID];
 char       dicPName[B2B_NSID][DIMMAXSIZE];
 
 uint32_t   dicSetvalId[B2B_NSID];
 uint32_t   dicGetvalId[B2B_NSID];
-uint32_t   dicNueMeasExtId[B2B_NSID];
+uint32_t   dicDiagvalId[B2B_NSID];
 uint32_t   dicPNameId[B2B_NSID];
 
 // global variables
@@ -106,7 +104,7 @@ static void help(void) {
 // header String for file
 char * headerString()
 {
-  return "patternName; time_CBS_UTC; sid; mode; valid; ext_T [as]; valid; ext_h; valid; ext_cTrig; valid; inj_T; valid; inj_h; valid; inj_cTrig; valid; cPhase; valid; ext_phase; ext_phaseFract; ext_phaseErr; valid; ext_dKickMon; valid; ext_dKickProb; valid; ext_diagPhase [as]; valid; ext_diag_Match; valid; inj_phase; inj_phaseFract; inj_phaseErr; valid; inj_dKickMon; valid; inj_dKickProb; valid; inj_diagPhase; valid; inj_diagMatch; received PME; PMI; PRE; PRI; KTE; KTI; KDE; KDI; PDE; PDI; error PME; PMI; PRE; PRI; KTE; KTI; KDE; KDI; PDE; PDI; late PME; PMI; PRE; PRI; KTE; KTI; KDE; KDI; PDE; PDI; fin-CBS; prr-CBS; t0E-CBS; t0I-CBS; kte-CBS; kti-CBS; ext_nueMeas; ext_dNueMeas";
+  return "patternName; time_CBS_UTC; sid; mode; ext_T [as]; ext_h; ext_cTrig; inj_T; inj_h; inj_cTrig; cPhase; ext_phase; ext_phaseFract; ext_phaseErr; ext_maxsysErr; ext_dKickMon; ext_dKickProb; ext_diagPhase; ext_diag_Match; inj_phase; inj_phaseFract; inj_phaseErr; inj_maxsysErr; inj_dKickMon; inj_dKickProb; inj_diagPhase; inj_diagMatch; received PME; PMI; PRE; PRI; KTE; KTI; KDE; KDI; PDE; PDI; error PME; PMI; PRE; PRI; KTE; KTI; KDE; KDI; PDE; PDI; late PME; PMI; PRE; PRI; KTE; KTI; KDE; KDI; PDE; PDI; fin-CBS; prr-CBS; t0E-CBS; t0I-CBS; kte-CBS; kti-CBS; ext_nueGet; ext_dNueGet; inj_nueGet; inj_dNueGet";
 } // headerString
 
 // receive get values
@@ -128,6 +126,9 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
 
   FILE      *dataFile;                       // file for data
 
+  // usleep: see comment in routine 'dicSubscribeServices'
+  usleep(100000);  // 100 ms should be safe
+  
   sid = *tag;
   if ((sid < 0) || (sid >= B2B_NSID)) return;
   if (!flagSetValid[sid])             return;
@@ -140,61 +141,82 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   // set values
   new  = strSetval;
   new += sprintf(new, "%s.%03d; %d; %d", tCBS, utc_msecs[sid], sid, mode);
-  new += sprintf(new, "; %d; %lu"   , !((dicSetval[sid].flag_nok >> 1) & 0x1), dicSetval[sid].ext_T);
-  new += sprintf(new, "; %d; %d"    , !((dicSetval[sid].flag_nok >> 2) & 0x1), dicSetval[sid].ext_h);
-  new += sprintf(new, "; %d; %8.3f" , !((dicSetval[sid].flag_nok >> 3) & 0x1), dicSetval[sid].ext_cTrig);
-  new += sprintf(new, "; %d; %lu"   , !((dicSetval[sid].flag_nok >> 4) & 0x1), dicSetval[sid].inj_T);
-  new += sprintf(new, "; %d; %d"    , !((dicSetval[sid].flag_nok >> 5) & 0x1), dicSetval[sid].inj_h);
-  new += sprintf(new, "; %d; %8.3f" , !((dicSetval[sid].flag_nok >> 6) & 0x1), dicSetval[sid].inj_cTrig);
-  new += sprintf(new, "; %d; %8.3f" , !((dicSetval[sid].flag_nok >> 7) & 0x1), dicSetval[sid].cPhase);
+  if (dicSetval[sid].ext_T == -1) new += sprintf(new, "; %s"    , nan_str);
+  else new += sprintf(new, "; %lu"   , dicSetval[sid].ext_T);
+  if (dicSetval[sid].ext_h == -1) new += sprintf(new, "; %s"    , nan_str);
+  else new += sprintf(new, "; %d"    , dicSetval[sid].ext_h);
+  new += sprintf(new, "; %8.3f" , dicSetval[sid].ext_cTrig);
+  if (dicSetval[sid].inj_T == -1) new += sprintf(new, "; %s"    , nan_str);
+  else new += sprintf(new, "; %lu"   , dicSetval[sid].inj_T);
+  if (dicSetval[sid].inj_h == -1) new += sprintf(new, "; %s"    , nan_str);
+  else new += sprintf(new, "; %d"    , dicSetval[sid].inj_h);
+  new += sprintf(new, "; %8.3f" , dicSetval[sid].inj_cTrig);
+  new += sprintf(new, "; %8.3f" , dicSetval[sid].cPhase);
 
   // get values
   new  = strGetval;
-  new += sprintf(new, "; %d; %lu"  ,  !((dicGetval[sid].flag_nok     ) & 0x1), dicGetval[sid].ext_phase);
-  new += sprintf(new, "; %7.3f"    ,  (double)dicGetval[sid].ext_phaseFract_ps / 1000.0);
-  new += sprintf(new, "; %7.3f"    ,  (double)dicGetval[sid].ext_phaseErr_ps   / 1000.0);  
-  new += sprintf(new, "; %d; %d"   ,  !((dicGetval[sid].flag_nok >> 1) & 0x1), dicGetval[sid].ext_dKickMon);
-  new += sprintf(new, "; %d; %d"   ,  !((dicGetval[sid].flag_nok >> 2) & 0x1), dicGetval[sid].ext_dKickProb);
+  if (dicGetval[sid].ext_phase == -1) new += sprintf(new, "; %s"   , nan_str);
+  else new += sprintf(new, "; %lu"  , dicGetval[sid].ext_phase);
+  new += sprintf(new, "; %7.3f"    ,  dicGetval[sid].ext_phaseFract);
+  new += sprintf(new, "; %7.3f"    ,  dicGetval[sid].ext_phaseErr);
+  new += sprintf(new, "; %5.3f"    ,  dicGetval[sid].ext_phaseSysmaxErr);
+  new += sprintf(new, "; %f"       ,  dicGetval[sid].ext_dKickMon);
+  new += sprintf(new, "; %f"       ,  dicGetval[sid].ext_dKickProb);
 
-  cor  = 0;
-  act  = b2b_fixTS(dicGetval[sid].ext_diagPhase, cor, dicSetval[sid].ext_T) - cor;
-  new += sprintf(new, "; %d; %8.3f",  !((dicGetval[sid].flag_nok >> 3) & 0x1), act);
+  if (isnan(dicGetval[sid].ext_diagPhase) || (dicSetval[sid].ext_T == -1)) new += sprintf(new, "; %s"    , nan_str);
+  else {
+    cor  = 0;
+    act  = b2b_fixTS(dicGetval[sid].ext_diagPhase, cor, dicSetval[sid].ext_T) - cor;
+    new += sprintf(new, "; %8.3f",  act);
+  } // is isnan
 
-  cor  = dicSetval[sid].ext_cTrig;
-  act  = b2b_fixTS(dicGetval[sid].ext_diagMatch, cor, dicSetval[sid].ext_T) - cor;
-  new += sprintf(new, "; %d; %8.3f",  !((dicGetval[sid].flag_nok >> 4) & 0x1), act);
-  
-  new += sprintf(new, "; %d; %lu",    !((dicGetval[sid].flag_nok >> 5) & 0x1), dicGetval[sid].inj_phase);
-  new += sprintf(new, "; %7.3f  ",    (double)dicGetval[sid].inj_phaseFract_ps / 1000.0);
-  new += sprintf(new, "; %7.3f"  ,    (double)dicGetval[sid].inj_phaseErr_ps   / 1000.0);  
-  new += sprintf(new, "; %d; %d" ,    !((dicGetval[sid].flag_nok >> 6) & 0x1), dicGetval[sid].inj_dKickMon);
-  new += sprintf(new, "; %d; %d" ,    !((dicGetval[sid].flag_nok >> 7) & 0x1), dicGetval[sid].inj_dKickProb);
+  if (isnan(dicGetval[sid].ext_diagMatch) || (dicSetval[sid].ext_T == -1)) new += sprintf(new, "; %s"    , nan_str);
+  else {
+    cor  = dicSetval[sid].ext_cTrig;
+    act  = b2b_fixTS(dicGetval[sid].ext_diagMatch, cor, dicSetval[sid].ext_T) - cor;
+    new += sprintf(new, "; %8.3f", act);
+  } // else isnan
 
-  cor  = 0;
-  act  = b2b_fixTS(dicGetval[sid].inj_diagPhase, cor, dicSetval[sid].inj_T) - cor;
-  new += sprintf(new, "; %d; %8.3f",  !((dicGetval[sid].flag_nok >> 8) & 0x1), act);
+  if (dicGetval[sid].inj_phase == -1) new += sprintf(new, "; %s"   , nan_str);
+  else new += sprintf(new, "; %lu", dicGetval[sid].inj_phase);
+  new += sprintf(new, "; %7.3f"   , dicGetval[sid].inj_phaseFract);
+  new += sprintf(new, "; %7.3f"   , dicGetval[sid].inj_phaseErr);
+  new += sprintf(new, "; %5.3f"   , dicGetval[sid].inj_phaseSysmaxErr);
+  new += sprintf(new, "; %f"      , dicGetval[sid].inj_dKickMon);
+  new += sprintf(new, "; %f"      , dicGetval[sid].inj_dKickProb);
 
-  cor = dicSetval[sid].inj_cTrig - dicSetval[sid].cPhase;
-  act = b2b_fixTS(dicGetval[sid].inj_diagMatch, cor, dicSetval[sid].inj_T) - cor;
-  new += sprintf(new, "; %d; %8.3f",  !((dicGetval[sid].flag_nok >> 9) & 0x1), act);
+  if (isnan(dicGetval[sid].inj_diagPhase) || (dicSetval[sid].inj_T == -1)) new += sprintf(new, "; %s"   , nan_str);
+  else {
+    cor  = 0;
+    act  = b2b_fixTS(dicGetval[sid].inj_diagPhase, cor, dicSetval[sid].inj_T) - cor;
+    new += sprintf(new, "; %8.3f",  act);
+  } // else isnan
+
+  if (isnan(dicSetval[sid].inj_cTrig) || isnan(dicGetval[sid].inj_diagMatch) || (dicSetval[sid].inj_T == -1)) new += sprintf(new, "; %s"   , nan_str);
+  else {
+    cor = dicSetval[sid].inj_cTrig - dicSetval[sid].cPhase;
+    act = b2b_fixTS(dicGetval[sid].inj_diagMatch, cor, dicSetval[sid].inj_T) - cor;
+    new += sprintf(new, "; %8.3f",  act);
+  } // else isnan
 
   for (i=0; i<10; i++) new += sprintf(new, "; %d", ((dicGetval[sid].flagEvtRec  >> i) & 0x1));
   for (i=0; i<10; i++) new += sprintf(new, "; %d", ((dicGetval[sid].flagEvtErr  >> i) & 0x1));
   for (i=0; i<10; i++) new += sprintf(new, "; %d", ((dicGetval[sid].flagEvtLate >> i) & 0x1));
-  new += sprintf(new, "; %d; %d; %d; %d; %d; %d", dicGetval[sid].finOff, dicGetval[sid].prrOff, dicGetval[sid].preOff, dicGetval[sid].priOff, dicGetval[sid].kteOff, dicGetval[sid].ktiOff);
+  new += sprintf(new, "; %f; %f; %f; %f; %f; %f", dicGetval[sid].finOff, dicGetval[sid].prrOff, dicGetval[sid].preOff, dicGetval[sid].priOff, dicGetval[sid].kteOff, dicGetval[sid].ktiOff);
 
   // frequency values; chk: in principle we should check the timestammp of the service too?
   new = strNueval;
-  if (*(uint32_t *)&(dicNueMeasExt[sid]) == no_link_32)
-    new += sprintf(new, "; NOLINK; NOLINK");
+  if (*(uint32_t *)&(dicDiagval[sid]) == no_link_32)
+    new += sprintf(new, "; NOLINK; NOLINK; NOLINK; NOLINK");
   else 
-    new += sprintf(new, "; %13.6f; %13.6f", dicNueMeasExt[sid].nueGet, dicNueMeasExt[sid].nueErr);
+    new += sprintf(new, "; %13.6f; %13.6f; %13.6f; %13.6f", dicDiagval[sid].ext_rfNueAct, dicDiagval[sid].ext_rfNueActErr, dicDiagval[sid].inj_rfNueAct, dicDiagval[sid].inj_rfNueActErr);
 
   if (!(dataFile = fopen(filename[sid], "a"))) return;
   fprintf(dataFile, "%s; %s%s%s\n", dicPName[sid], strSetval, strGetval, strNueval);
   fclose(dataFile); 
 } // recGetvalue
   
+
 // receive set values
 void recSetvalue(long *tag, setval_t *address, int *size)
 {
@@ -209,7 +231,7 @@ void recSetvalue(long *tag, setval_t *address, int *size)
   utc_msecs[sid]    = msecs;
   flagSetValid[sid] = (*size != sizeof(uint32_t));
 } // recSetValue
-  
+
 
 // add all dim services
 void dicSubscribeServices(char *prefix)
@@ -226,15 +248,20 @@ void dicSubscribeServices(char *prefix)
     //printf("name %s\n", name);
     dicPNameId[i]      = dic_info_service_stamped(name, MONITORED, 0, &(dicPName[i]), DIMMAXSIZE, 0 , 0, &no_link_str, sizeof(no_link_str));
 
-    sprintf(name, "%s-other-rf_sid%02d_ext", prefix, i);
-    /* printf("name %s\n", name); */
-    dicNueMeasExtId[i] = dic_info_service_stamped(name, MONITORED, 0, &(dicNueMeasExt[i]), sizeof(nueMeas_t), 0 , 0, &no_link_32, sizeof(uint32_t));
+    sprintf(name, "%s-cal_diag_sid%02d", prefix, i);
+    dicDiagvalId[i]    = dic_info_service_stamped(name, MONITORED, 0, &(dicDiagval[i]), sizeof(diagval_t), 0, 0, &no_link_32, sizeof(uint32_t));
 
     sleep (2);  // data is taken upon callback of set-values; wait a bit until the other services have connected to their servers
 
     sprintf(name, "%s-raw_sid%02d_getval", prefix, i);
     //printf("name %s\n", name);
     dicGetvalId[i]     = dic_info_service_stamped(name, MONITORED, 0, &(dicGetval[i]), sizeof(getval_t), recGetvalue, i, &no_link_32, sizeof(uint32_t));
+
+    // note: presently, the archiver is driven by get values. However, the 'analyzer' only calculates and publishes the the frequency values
+    // _after_ the get values are available. Thus, the 'archiver' starts processing the data prior the 'analyzer' has finished its work.
+    // Presently, the frequency values are an 'experimental feature' and a sleep is added to the 'recGetValue' routine to wait for the analyzer.
+    // In pinciple, one could consider using a change of the analyzed values as a 'trigger' for the archiver; but then the archiver will not
+    // work if the 'analyzer' is not available. Thus, we presently use the workaround of an additional sleep in routine 'recGetValue'. 
   } // for i
 } // dicSubscribeServices
 

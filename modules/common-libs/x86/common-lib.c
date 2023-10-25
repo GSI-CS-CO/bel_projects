@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 17-Feb-2023
+ *  version : 19-May-2023
  *
  *  common x86 routines useful for CLIs handling firmware
  * 
@@ -32,7 +32,7 @@
 
 // eca queue
 #include "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"   // register layout ECA queue
-#include "../../../ip_cores/saftlib/drivers/eca_flags.h"                // definitions for ECA queue
+#include "../../../ip_cores/saftlib/src/eca_flags.h"                    // definitions for ECA queue
 
 // public variables
 eb_address_t common_statusLo;     // common status, read (low word)
@@ -313,7 +313,7 @@ uint32_t comlib_ecaq_open(const char* devName, uint32_t qIdx, eb_device_t *devic
   if ((status = eb_sdb_find_by_identity(*device, ECA_QUEUE_SDB_VENDOR_ID, ECA_QUEUE_SDB_DEVICE_ID, sdbDevice, &nDevices)) != EB_OK) return COMMON_STATUS_EB;
   if (nDevices == 0)       return COMMON_STATUS_EB;
   //if (nDevices > maxDev)   return COMMON_STATUS_EB;
-  if (nDevices < qIdx + 1) return COMMON_STATUS_EB;
+  if ((uint32_t)nDevices < qIdx + 1) return COMMON_STATUS_EB;
   *ecaq_base  = sdbDevice[qIdx].sdb_component.addr_first;
 
   //printf("open eca q, nDevices %d, idx %d, ecaq_base %lx\n", nDevices, qIdx, (uint32_t)(*ecaq_base));
@@ -350,7 +350,7 @@ uint32_t comlib_wait4ECAEvent(uint32_t timeout_ms,  eb_device_t device, eb_addre
   uint32_t    evtParamLow ;        // low 32 bit of parameter field
   uint64_t    timeoutT;            // when to time out
   uint64_t    timeout;             // timeout
-  int32_t     t1, t2;
+  //int32_t     t1, t2;
 
   timeout  = ((uint64_t)timeout_ms + 1) * 1000000;
   timeoutT = comlib_getSysTime() + timeout;

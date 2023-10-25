@@ -26,11 +26,11 @@ eb-fwload dev/wbm0 u 0x0 wrunipz.bin
 ###########################################
 # start software on hostsystem 
 ###########################################
-echo wr-unipz - start: kill monitoring process
-killall wrunipz-ctl
-
-echo wr-unipz - start: start  monitoring
-/bin/daemon -NiU --name=wrunipz-daemon --pidfile=/var/run/wrunipz-ctl.pid --stdout=local0.info --stderr=local0.err -- wrunipz-ctl -s1 dev/wbm0
+#echo wr-unipz - start: kill monitoring process
+#killall wrunipz-ctl
+#
+#echo wr-unipz - start: start  monitoring
+#/bin/daemon -NiU --name=wrunipz-daemon --pidfile=/var/run/wrunipz-ctl.pid --stdout=local0.info --stderr=local0.err -- wrunipz-ctl -s1 dev/wbm0
 
 ###########################################
 # start logger if running without devaccess

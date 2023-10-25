@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 12-Oct-2021
+ *  version : 09-May-2023
  *
  * Command-line interface for b2b
  *
@@ -130,7 +130,7 @@ void printTransfer(uint32_t nTransfer, uint32_t sid, uint32_t gid, uint32_t mode
 } // printTransfer
 
 
-void printDiags(uint32_t sid, uint32_t gid, uint32_t mode, uint64_t TH1Ext, uint32_t nHExt, uint64_t TH1Inj, uint32_t nHInj, uint64_t TBeat, int32_t cPhase, int32_t cTrigExt, int32_t cTrigInj, int32_t comLatency)
+void printDiags(uint32_t sid, uint32_t gid, uint32_t mode, uint64_t TH1Ext, uint32_t nHExt, uint64_t TH1Inj, uint32_t nHInj, uint64_t TBeat, double cPhase, double cTrigExt, double cTrigInj, int32_t comLatency)
 {
   printf("\n\n");
   printf("b2b: statistics ...\n\n");
@@ -143,9 +143,9 @@ void printDiags(uint32_t sid, uint32_t gid, uint32_t mode, uint64_t TH1Ext, uint
   printf("harmonic number extr. : %012d\n"     , nHExt);
   printf("harmonic number inj.  : %012d\n"     , nHInj);
   printf("period of beating     : %012.6f us\n", (double)TBeat/1000000000000.0);
-  printf("corr. matching        : %012d\n"     , cPhase);
-  printf("corr. trigger extr    : %012d\n"     , cTrigExt);
-  printf("corr. trigger inj     : %012d\n"     , cTrigInj);
+  printf("corr. matching        : %012.3f\n"   , cPhase);
+  printf("corr. trigger extr    : %012.3f\n"   , cTrigExt);
+  printf("corr. trigger inj     : %012.3f\n"   , cTrigInj);
   printf("communication latency : %012.3f us\n", (double)comLatency/1000.0);
 } // printDiags
 
@@ -171,9 +171,9 @@ int main(int argc, char** argv) {
   uint64_t getTH1Inj;                          // h=1 period [as] of injection machine
   uint32_t getnHExt;                           // harmonic number extraction machine
   uint32_t getnHInj;                           // harmonic number injection machine
-  int32_t  getcPhase;                          // phase correction
-  int32_t  getcTrigExt;                        // trigger correction extraction
-  int32_t  getcTrigInj;                        // trigger correction injection
+  double   getcPhase;                          // phase correction
+  double   getcTrigExt;                        // trigger correction extraction
+  double   getcTrigInj;                        // trigger correction injection
   uint64_t getTBeat;                           // period [as] of frequency beating
   int32_t  getcomLatency;                      // message latency from ECA
 
