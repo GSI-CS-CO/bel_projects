@@ -54,34 +54,37 @@ Use make ftm.bin in the folder syn/gsi_pexarria5/ftm/ to build the LM32
 firmware ftm.bin.
 
 # Version History
-6578ecdff3 2022-06-01 VERSION_TOOL = 0.36.3 VERSION_FW = 8.0.4
-81f4ffaaf2 2022-03-02                       VERSION_FW = 8.0.3
-91ddd4de16 2021-07-21 VERSION_TOOL = 0.36.0 VERSION_FW = 8.0.0
-c0676086c2 2020-10-20 VERSION_TOOL = 0.34.0 VERSION_FW = 7.0.1
-130c6816ce 2020-04-29 VERSION_TOOL = 0.33.5 VERSION_FW = 6.2.2
-535a7d603e 2019-09-26 VERSION_TOOL = 0.33.4
-c9a95855fa 2019-09-13 VERSION_TOOL = 0.33.2
-dc7551702e 2019-08-26 VERSION_TOOL = 0.33.0
-fa8496d6f9 2019-08-14 VERSION_TOOL = 0.32.1
-5585d1b738 2019-06-03 VERSION_TOOL = 0.32.0 VERSION_FW = 6.2.0
-a4f0e569b7 2019-05-22 VERSION_TOOL = 0.31.0
-4074515bc6 2019-03-18 VERSION_TOOL = 0.30.0
-a3e8de6a81 2019-03-18                       VERSION_FW = 6.1.3
-15f42702c1 2019-02-01 VERSION_TOOL = 0.29.5 VERSION_FW = 6.1.0
-d500cd9722 2018-08-20 VERSION_TOOL = 0.27.1 VERSION_FW = 6.0.0
-73a30a6e11 2018-04-27                       VERSION_FW = 3.0.0
-30a4a55406 2018-04-27 VERSION_TOOL = 0.18.0
-14d5dea052 2018-04-16 VERSION_TOOL = 0.16.0
-f3b22889ee 2018-04-11                       VERSION_FW = 2.2.0
-66620dfba3 2018-04-06 VERSION_TOOL = 0.15.2
-2f5f144238 2018-03-28 VERSION_TOOL = 0.15.0 VERSION_FW = 2.1.0
-bdc6bf08d9 2018-03-16 VERSION_TOOL = 0.14.0
-43b8fb8a5c 2018-03-15 VERSION_TOOL = 0.14.0
-bc9018e42b 2018-03-07 VERSION_TOOL = 0.12.0
-ae87795cbe 2018-02-16 VERSION_TOOL = 0.10.1
-4475d34ef5 2018-02-06 VERSION_TOOL = 0.10.0
-04ca6d8cba 2018-01-30 VERSION_TOOL = 0.9.0
-66926f1545 2018-01-19 VERSION_TOOL = 0.8.0
-186548b04a 2017-12-19 VERSION_TOOL = 0.7.0
-cb8c8e977c 2016-08-03 VERSION_TOOL = 0.6.3
-60007eb0f5 2016-07-22 VERSION_TOOL = 0.1.4
+
+| Commit     | Date       | Tool version          | Firmware Version   |
+|------------|------------|-----------------------|--------------------|
+| 6578ecdff3 | 2022-06-01 | VERSION_TOOL = 0.36.3 | VERSION_FW = 8.0.4 |
+| 81f4ffaaf2 | 2022-03-02 |                       | VERSION_FW = 8.0.3 |
+| 91ddd4de16 | 2021-07-21 | VERSION_TOOL = 0.36.0 | VERSION_FW = 8.0.0 |
+| c0676086c2 | 2020-10-20 | VERSION_TOOL = 0.34.0 | VERSION_FW = 7.0.1 |
+| 130c6816ce | 2020-04-29 | VERSION_TOOL = 0.33.5 | VERSION_FW = 6.2.2 |
+| 535a7d603e | 2019-09-26 | VERSION_TOOL = 0.33.4 |                    |
+| c9a95855fa | 2019-09-13 | VERSION_TOOL = 0.33.2 |                    |
+| dc7551702e | 2019-08-26 | VERSION_TOOL = 0.33.0 |                    |
+| fa8496d6f9 | 2019-08-14 | VERSION_TOOL = 0.32.1 |                    |
+| 5585d1b738 | 2019-06-03 | VERSION_TOOL = 0.32.0 | VERSION_FW = 6.2.0 |
+| a4f0e569b7 | 2019-05-22 | VERSION_TOOL = 0.31.0 |                    |
+| 4074515bc6 | 2019-03-18 | VERSION_TOOL = 0.30.0 |                    |
+| a3e8de6a81 | 2019-03-18 |                       | VERSION_FW = 6.1.3 |
+| 15f42702c1 | 2019-02-01 | VERSION_TOOL = 0.29.5 | VERSION_FW = 6.1.0 |
+| d500cd9722 | 2018-08-20 | VERSION_TOOL = 0.27.1 | VERSION_FW = 6.0.0 |
+| 73a30a6e11 | 2018-04-27 |                       | VERSION_FW = 3.0.0 |
+| 30a4a55406 | 2018-04-27 | VERSION_TOOL = 0.18.0 |                    |
+| 14d5dea052 | 2018-04-16 | VERSION_TOOL = 0.16.0 |                    |
+| f3b22889ee | 2018-04-11 |                       | VERSION_FW = 2.2.0 |
+| 66620dfba3 | 2018-04-06 | VERSION_TOOL = 0.15.2 |                    |
+| 2f5f144238 | 2018-03-28 | VERSION_TOOL = 0.15.0 | VERSION_FW = 2.1.0 |
+| bdc6bf08d9 | 2018-03-16 | VERSION_TOOL = 0.14.0 |                    |
+| 43b8fb8a5c | 2018-03-15 | VERSION_TOOL = 0.14.0 |                    |
+| bc9018e42b | 2018-03-07 | VERSION_TOOL = 0.12.0 |                    |
+| ae87795cbe | 2018-02-16 | VERSION_TOOL = 0.10.1 |                    |
+| 4475d34ef5 | 2018-02-06 | VERSION_TOOL = 0.10.0 |                    |
+| 04ca6d8cba | 2018-01-30 | VERSION_TOOL = 0.9.0  |                    |
+| 66926f1545 | 2018-01-19 | VERSION_TOOL = 0.8.0  |                    |
+| 186548b04a | 2017-12-19 | VERSION_TOOL = 0.7.0  |                    |
+| cb8c8e977c | 2016-08-03 | VERSION_TOOL = 0.6.3  |                    |
+| 60007eb0f5 | 2016-07-22 | VERSION_TOOL = 0.1.4  |                    |
