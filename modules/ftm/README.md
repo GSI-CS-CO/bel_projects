@@ -46,11 +46,11 @@ The folder tests/ contains Python3 (pytest) based automated tests for
 the tools, the library, and the firmware.
 
 # Build Instructions
-Use make in the folder ftmx86/ to build the library and the tools.
-Use make in the folder tests/ to run the automated tests.
-Use make in the folder analysis/scheduleCompare/main to build
+* Use make in the folder ftmx86/ to build the library and the tools.
+* Use make in the folder tests/ to run the automated tests.
+* Use make in the folder analysis/scheduleCompare/main to build
 scheduleCompare and replaceChain.
-Use make ftm.bin in the folder syn/gsi_pexarria5/ftm/ to build the LM32
+* Use make ftm.bin in the folder syn/gsi_pexarria5/ftm/ to build the LM32
 firmware ftm.bin.
 
 # Version History
