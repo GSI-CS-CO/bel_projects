@@ -487,7 +487,8 @@ class DmTestbench(unittest.TestCase):
     lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', '0xf', 'running'), [0], self.cpuQuantity, 0)
     # ~ self.printStdOutStdErr(lines)
     for i in range(self.cpuQuantity):
-      self.assertEqual(lines[0][i], f'CPU {i} Running Threads: 0x0', 'wrong output')
+      expectedText = 'CPU {variable} Running Threads: 0x0'.format(variable=i)
+      self.assertEqual(lines[0][i], expectedText, 'wrong output, expected: ' + expectedText)
     # Add schedules for all CPUs and start pattern on all threads.
     self.addSchedule('pps-all-threads-cpu0.dot')
     self.addSchedule('pps-all-threads-cpu1.dot')
@@ -517,8 +518,7 @@ class DmTestbench(unittest.TestCase):
       self.assertFalse(True, f'threadQuantity is {self.threadQuantity}, allowed: 8 or 32')
     for i in range(self.cpuQuantity):
       expectedText = 'CPU {variable} Running Threads: {mask}'.format(variable=i, mask=threadMask)
-      messageText = 'wrong output, expected: CPU {variable} Running Threads: {mask}'.format(variable=i, mask=threadMask)
-      self.assertEqual(lines[0][i], expectedText, messageText)
+      self.assertEqual(lines[0][i], expectedText, 'wrong output, expected: ' + expectedText)
 
   def deleteFile(self, fileName):
     """Delete file <fileName>.
