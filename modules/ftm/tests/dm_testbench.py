@@ -481,6 +481,8 @@ class DmTestbench(unittest.TestCase):
     """Check that no thread runs on 4 CPUs. Load 4 schedules, one for
     each CPU and start all threads. Check that these are running.
     """
+    # small delay after init of datamaster
+    self.delay(0.1)
     # Check all CPUs that no thread is running.
     lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', '0xf', 'running'), [0], self.cpuQuantity, 0)
     # ~ self.printStdOutStdErr(lines)
