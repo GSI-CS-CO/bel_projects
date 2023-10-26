@@ -82,11 +82,16 @@ if [ "$TR" = "NULL" ]; then
   exit 1
 fi
 
-# Check for dependencies
-if ! command -v eb-find &>/dev/null || ! command -v eb-put &>/dev/null || ! command -v eb-get &>/dev/null || ! command -v saft-io-ctl &>/dev/null; then
-  echo "Error: Required tools not found. Make sure 'eb-find', 'eb-put', 'eb-get', and 'saft-io-ctl' are installed and in the PATH."
-  exit 1
-fi
+# Define an array of required tools
+REQUIRED_TOOLS=("eb-find" "eb-put" "eb-get" "saft-io-ctl")
+
+# Check for the presence of each tool in the array
+for TOOL in "${REQUIRED_TOOLS[@]}"; do
+  if ! command -v "$TOOL" &>/dev/null; then
+    echo "Error: Required tool '$TOOL' not found. Make sure it is installed and in the PATH."
+    exit 1
+  fi
+done
 
 run_test
 
