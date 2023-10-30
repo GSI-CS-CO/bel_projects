@@ -13,7 +13,7 @@ function run_test() {
 
   if [ "$TR" = "scu4" ]; then
     echo "Selecting PSRAM #0 on $TR"
-    saft-io-ctl tr0 -n PSRAM_SEL_0 -d 0
+    saft-io-ctl tr0 -n PSRAM_SEL_0 -d 1
   fi
 
   echo "Creating test file ..."
