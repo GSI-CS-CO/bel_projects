@@ -47,11 +47,14 @@ class VisitorUploadCrawler {
     mVal getSwitchDst(void)   const;
     mVal getFlushOvr(void)  const;
     mVal getListDst(void)   const;
+    mVal getRefLinks() const;
     static const std::string exIntro;
-    vertex_set_t getChildrenByEdgeType(vertex_t vStart, const std::string edgeType) const;
+    vertex_vec_t getChildrenByEdgeType(vertex_t vStart, const std::string edgeType) const;
     //vertex_set_t getChildrenByEdgeType(vertex_t vStart, const std::string edgeType) const;
+    uint32_t getEdgeTargetAdr(vertex_t vSrc, vertex_t vDst) const;
     vertex_t getOnlyChildByEdgeType(vertex_t vStart, const std::string edgeType) const;
     vAdr& childrenAdrs(vertex_set_t vs, vAdr& ret, const unsigned int minResults = 1, const unsigned int maxResults = 1, const bool allowPeers = false, const uint32_t resultPadData = LM32_NULL_PTR) const;
+    
 
   public:
     VisitorUploadCrawler(Graph& g, vertex_t v, AllocTable& at, std::ostream& sLog, std::ostream& sErr)  : g(g), v(v), at(at), sLog(sLog), sErr(sErr) { auto x = at.lookupVertex(v); cpu = x->cpu; b = (uint8_t*)x->b; }
