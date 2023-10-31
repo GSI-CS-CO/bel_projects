@@ -374,14 +374,14 @@ END COMPONENT rrg_round;
 	signal rrgreg_1 		  		: std_logic_vector (15 downto 0); 
 	signal rrgreg_2 		  		: std_logic_vector (15 downto 0);  
 	signal rrgreg_3 		  		: std_logic_vector (15 downto 0);
+	signal rrgreg_extdataset	: std_logic_vector (15 downto 0);
+	signal rrgreg_dummy	: std_logic_vector (15 downto 0);
 	
 	signal rrgreg_control1		: std_logic_vector (15 downto 0);
-	signal rrgreg_extdataset1	: std_logic_vector (15 downto 0);
 	signal rrgYis1		 	  		: std_logic_vector (15 downto 0);
 	signal rrgDACStrobe1   		: std_logic;
 
 	signal rrgreg_control2		: std_logic_vector (15 downto 0);
-	signal rrgreg_extdataset2	: std_logic_vector (15 downto 0);
 	signal rrgYis2					: std_logic_vector (15 downto 0);
 	signal rrgDACStrobe2			: std_logic;
 
@@ -904,8 +904,8 @@ p_led_ena: div_n
     --
           Reg_IO1            =>  rrgreg_control1,
           Reg_IO2            =>  rrgreg_control2,
-          Reg_IO3            =>  rrgreg_extdataset1,
-          Reg_IO4            =>  rrgreg_extdataset2,
+          Reg_IO3            =>  rrgreg_extdataset,
+          Reg_IO4            =>  rrgreg_dummy,
           Reg_IO5            =>  rrgreg_0,
           Reg_IO6            =>  rrgreg_1,
           Reg_IO7            =>  rrgreg_2,
@@ -928,7 +928,7 @@ p_led_ena: div_n
           reg_1     		=> rrgreg_1,
           reg_2   		=> rrgreg_2,
           reg_3       	=> rrgreg_3,
-			 ext_dataset	=> rrgreg_extdataset1(7 downto 0),
+			 ext_dataset	=> rrgreg_extdataset(7 downto 0),
 			 DACStrobe 		=> rrgDACStrobe1,
           Yis    			=> rrgYis1
         );
@@ -944,7 +944,7 @@ p_led_ena: div_n
           reg_1     		=> rrgreg_1,
           reg_2   		=> rrgreg_2,
           reg_3       	=> rrgreg_3,
-			 ext_dataset	=> rrgreg_extdataset1(7 downto 0),
+			 ext_dataset	=> rrgreg_extdataset(7 downto 0),
 			 DACStrobe 		=> rrgDACStrobe2,
           Yis    			=> rrgYis2
         );

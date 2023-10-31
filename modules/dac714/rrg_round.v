@@ -8,18 +8,22 @@
 */
 
 
- module rrg_round#(parameter DAC_WIDTH = 16, NR_DATASETS = 2) 
+ module rrg_round#(parameter DAC_WIDTH = 16, NR_DATASETS = 4) 
  (
 	input clk,
 	input clk_slow,
 	input nReset,
 	input timepulse,								//a pulse every 1us
-	input [15:0] reg_control,
-	input unsigned [15:0] reg_0, 
-	input unsigned[15:0] reg_1,  
-	input unsigned[15:0] reg_2,  
-	input signed[15:0] reg_3,
-	input unsigned [7:0] ext_dataset,				
+	input           [15:0] reg_control,
+	input unsigned  [15:0] reg_0, 
+	input unsigned  [15:0] reg_1,  
+	input unsigned  [15:0] reg_2,  
+	input signed    [15:0] reg_3,
+	output unsigned [15:0] outreg_0,
+	output unsigned [15:0] outreg_1,
+	output unsigned [15:0] outreg_2,
+	output signed   [15:0] outreg_3,
+	input unsigned  [7:0] ext_dataset,				
 	output reg DACStrobe,
 	output reg signed [DAC_WIDTH-1:0] Yis
 );
@@ -33,6 +37,15 @@
 	localparam CMD_SW_DATASET 	= 6;
 	localparam CMD_EXT_DATASET = 7;
 	localparam CMD_NUM_CYCLE	= 8;
+	localparam CMD_HALT			= 9;
+	
+	localparam CMD_READ_YSET	= 11;
+	localparam CMD_READ_RSET 	= 12;
+	localparam CMD_READ_RISET 	= 13;
+	localparam CMD_READ_ROSET 	= 14;
+	
+	localparam CMD_READ_YIS		= 24;
+	localparam CMD_READ_RIS		= 25;
 
 	integer i;
 	
@@ -43,28 +56,31 @@
 	reg signed [63:0] Ris=0;
 	reg signed [63:0] temp_reg =0;
 	reg signed [63:0] temp_Yset=0;
-	reg signed[63:0] temp_Rset=0;  
-	reg signed[63:0] temp_RIset=0;  
-	reg signed[63:0] temp_ROset=0;
+	reg signed [63:0] temp_Rset=0;  
+	reg signed [63:0] temp_RIset=0;  
+	reg signed [63:0] temp_ROset=0;
 	//reg unsigned [15:0] temp_num_cycle = 60000;
 	
 	reg signed [63:0] Yis_copy1=0;
-	reg signed [DAC_WIDTH-1:0]	Yis_copy2=0;
+	//reg signed [DAC_WIDTH-1:0]	Yis_copy2=0;
+	reg signed [63:0]	Yis_copy2=0;
 	//reg signed [63:0]	Yis_state=0;
+	
+	reg signed [63:0] outreg;
 	
 	reg 			time_step_tc=0;
 	reg unsigned [31:0]time_step=0;
 	
-	reg signed[63:0] Yset=0;
-	reg signed[63:0] Rset=0;  
-	reg signed[63:0] RIset=0;  
-	reg signed[63:0] ROset=0;
-	reg [31:0] num_cycle=0;
+	reg signed [63:0] Yset=0;
+	reg signed [63:0] Rset=0;  
+	reg signed [63:0] RIset=0;  
+	reg signed [63:0] ROset=0;
+	reg        [31:0] num_cycle=0;
 	
-	reg signed[63:0] Yset_buf[NR_DATASETS-1:0];
-	reg signed[63:0] Rset_buf[NR_DATASETS-1:0];  
-	reg signed[63:0] RIset_buf[NR_DATASETS-1:0];  
-	reg signed[63:0] ROset_buf[NR_DATASETS-1:0];
+	reg signed [63:0] Yset_buf[NR_DATASETS-1:0];
+	reg signed [63:0] Rset_buf[NR_DATASETS-1:0];  
+	reg signed [63:0] RIset_buf[NR_DATASETS-1:0];  
+	reg signed [63:0] ROset_buf[NR_DATASETS-1:0];
 	
 	reg signed [63:0] Ydiff=0;
 	reg [63:0] abs_Ydiff=0;
@@ -178,6 +194,12 @@
 	end
 
 
+	//Assign output ports
+	assign outreg_0 = outreg[15 -: 16];
+	assign outreg_1 = outreg[31 -: 16];
+	assign outreg_2 = outreg[47 -: 16];
+	assign outreg_3 = outreg[63 -: 16];
+	
 	//Process to assign the variables depending on the control register
 	//syn. with the slow clk
 	//always @(posedge clk_slow) 
@@ -188,7 +210,7 @@
 			current_dataset = 0;
 			use_ext_dataset = 0;
 			num_cycle = 1000;
-			for (i = 0; i < NR_DATASETS; i = 1+1)
+			for (i = 0; i < NR_DATASETS; i = i+1)
 			begin
 				Yset_buf[i] = 0;
 				Rset_buf[i] = 0;
@@ -230,6 +252,26 @@
 					use_ext_dataset = 1;
 				CMD_NUM_CYCLE:
 					num_cycle = temp_reg[31:0];
+				CMD_HALT:
+				begin
+					Yset_buf[write_dataset] = Yis_copy2;
+					Rset_buf[write_dataset] = temp_Rset;
+					RIset_buf[write_dataset] = temp_RIset;
+					ROset_buf[write_dataset] = temp_ROset;		
+		      end
+				CMD_READ_YSET:
+					outreg = Yset_buf[write_dataset];
+				CMD_READ_RSET:
+					outreg = Rset_buf[write_dataset];
+				CMD_READ_RISET:
+					outreg = RIset_buf[write_dataset];
+				CMD_READ_ROSET:
+					outreg = ROset_buf[write_dataset];
+					
+				CMD_READ_YIS:
+					outreg = Yis_copy1;
+				CMD_READ_RIS:
+					outreg = Ris;
 			endcase
 		end
 	end
@@ -243,11 +285,14 @@
 			//Clamp Yis to half range
 		case (Yis_copy1[63-:3])
 			3'b001, 3'b010, 3'b011: //upper clamp range
-				Yis_copy2 = {1'b0, {(DAC_WIDTH-1){1'b1}}};
+				//Yis_copy2 = {1'b0, {(DAC_WIDTH-1){1'b1}}};
+				Yis_copy2 = {3'b000, {60{1'b1}}};
 			3'b100, 3'b101, 3'b110: //lower clamp range
-				Yis_copy2 = {1'b1, {(DAC_WIDTH-1){1'b0}}};
+				//Yis_copy2 = {1'b1, {(DAC_WIDTH-1){1'b0}}};
+				Yis_copy2 = {3'b111, {60{1'b0}}};
 			default: //correct range
-				Yis_copy2 = Yis_copy1[61-:DAC_WIDTH];			
+				//Yis_copy2 = Yis_copy1[61-:DAC_WIDTH];		
+				Yis_copy2 = Yis_copy1;	
 		endcase
 	end
 	
@@ -280,7 +325,7 @@
 		else
 		begin
 			DACStrobe = time_step_tc;
-			Yis = Yis_copy2;
+			Yis = Yis_copy2[61-:DAC_WIDTH];	
 		end
 	end
 	
