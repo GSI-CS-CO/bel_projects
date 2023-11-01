@@ -624,12 +624,8 @@ int main(int argc, char* argv[]) {
   try {
     cdm.download();
   } catch (std::runtime_error const& err) {
-    for (int cpu=0; cpu < cdm.getCpuQty(); cpu++) {
-      if ((cpuBits >> cpu) & 1) {
-        std::cerr << program << ": Download from CPU "<< cpu << " failed. Cause: " << err.what() << std::endl;
-        return -7;
-      }
-    }
+    std::cerr << program << ": Download failed. Cause: " << err.what() << std::endl;
+    return -7;
   }
 
   for (int cpu=0; cpu < cdm.getCpuQty(); cpu++) {
