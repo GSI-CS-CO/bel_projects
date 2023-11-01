@@ -28,24 +28,26 @@
 	output reg signed [DAC_WIDTH-1:0] Yis
 );
 
-	localparam CMD_IDLE			= 0;
-	localparam CMD_WRITE_YSET 	= 1;
-	localparam CMD_WRITE_RSET 	= 2;
-	localparam CMD_WRITE_RISET = 3;
-	localparam CMD_WRITE_ROSET = 4;
-	localparam CMD_UPDATE		= 5;
-	localparam CMD_SW_DATASET 	= 6;
-	localparam CMD_EXT_DATASET = 7;
-	localparam CMD_NUM_CYCLE	= 8;
-	localparam CMD_HALT			= 9;
+	localparam CMD_IDLE				= 0;
+	localparam CMD_WRITE_YSET 		= 1;
+	localparam CMD_WRITE_RSET 		= 2;
+	localparam CMD_WRITE_RISET 	= 3;
+	localparam CMD_WRITE_ROSET 	= 4;
+	localparam CMD_UPDATE			= 5;
+	localparam CMD_SW_DATASET 		= 6;
+	localparam CMD_EXT_DATASET 	= 7;
+	localparam CMD_NUM_CYCLE		= 8;
+	localparam CMD_HALT				= 9;
 	
-	localparam CMD_READ_YSET	= 11;
-	localparam CMD_READ_RSET 	= 12;
-	localparam CMD_READ_RISET 	= 13;
-	localparam CMD_READ_ROSET 	= 14;
+	localparam CMD_READ_YSET		= 11;
+	localparam CMD_READ_RSET 		= 12;
+	localparam CMD_READ_RISET 		= 13;
+	localparam CMD_READ_ROSET 		= 14;
+	localparam CMD_READ_DATASET 	= 16;	//returns {47{1b'0}, use_ext_dataset, ext_dataset, current_dataset}
+	localparam CMD_READ_NUM_CYCLE	= 18;
 	
-	localparam CMD_READ_YIS		= 24;
-	localparam CMD_READ_RIS		= 25;
+	localparam CMD_READ_YIS			= 24;
+	localparam CMD_READ_RIS			= 25;
 
 	integer i;
 	
@@ -283,6 +285,7 @@
 					RIset_buf[write_dataset] = temp_RIset;
 					ROset_buf[write_dataset] = temp_ROset;		
 		      end
+				
 				CMD_READ_YSET:
 					outreg = Yset_buf[write_dataset];
 				CMD_READ_RSET:
@@ -291,7 +294,11 @@
 					outreg = RIset_buf[write_dataset];
 				CMD_READ_ROSET:
 					outreg = ROset_buf[write_dataset];
-					
+				CMD_READ_DATASET:
+					outreg = {{47{1'b0}}, use_ext_dataset, ext_dataset, current_dataset};
+				CMD_READ_NUM_CYCLE:
+					outreg = {{32{1'b0}}, num_cycle};			
+			
 				CMD_READ_YIS:
 					outreg = Yis_copy1;
 				CMD_READ_RIS:

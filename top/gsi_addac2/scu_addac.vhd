@@ -969,7 +969,7 @@ p_led_ena: div_n
 
   RRG_Outreg: in_reg
     generic map(
-          Base_addr =>  c_rrg_base
+          Base_addr =>  c_rrgout_base
           )
     port map  (
           Adr_from_SCUB_LA   =>  ADR_from_SCUB_LA,
