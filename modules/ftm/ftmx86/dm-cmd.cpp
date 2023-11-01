@@ -687,15 +687,12 @@ int main(int argc, char* argv[]) {
 
     // Main 'if else if' over all commands
     if (cmp == dnt::sCmdNoop) {
-      for (int thread=0; thread < getThreadQty(); thread++) {
-        if ((threadBits >> thread) & 1) {
-          try {
-            cdm.createQCommand(ew, cmp, targetName, cmdPrio, cmdQty, true, 0, thread);
-          } catch (std::runtime_error const& err) {
-            std::cerr << program << ": Command noop on " << targetName << " failed, thread " << thread << ". Cause: " << err.what() << std::endl;
-            return -1;
-          }
-        }
+      try {
+        // use thread=0 here. The command queue of the block (targetName) is not connected to threads.
+        cdm.createQCommand(ew, cmp, targetName, cmdPrio, cmdQty, true, 0, 0);
+      } catch (std::runtime_error const& err) {
+        std::cerr << program << ": Command noop on " << targetName << " failed. Cause: " << err.what() << std::endl;
+        return -1;
       }
       // no return here, next action: send commands with ew vector.
     } else if (cmp == "status") {

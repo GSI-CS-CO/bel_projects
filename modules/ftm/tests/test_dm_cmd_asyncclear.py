@@ -41,13 +41,14 @@ class AsyncClearTests(dm_testbench.DmTestbench):
     expectedLine = ['', 'Inspecting Queues of Block Block0b',
     'Priority 2 (prioil)  Not instantiated',
     'Priority 1 (priohi)  Not instantiated',
-    'Priority 0 (priolo)  RdIdx: 0 WrIdx: 4    Pending: 4']
+    'Priority 0 (priolo)  RdIdx: 0 WrIdx: 1    Pending: 1']
     for i in range(1,5):
       self.assertEqual(lines[0][i], expectedLine[i], 'wrong output, expected: ' + expectedLine[i])
-    for i in range(5,9):
-      expectedText = '#{variable} pending Valid Time: 0x0000000000000000 0000000000000000000    CmdType: noop    Qty: 1'.format(variable=i-5)
-      messageText = 'wrong output, expected: ' + expectedText
-      self.assertEqual(lines[0][i], expectedText, messageText)
+    expectedText = '#0 pending Valid Time: 0x0000000000000000 0000000000000000000    CmdType: noop    Qty: 1'
+    self.assertEqual(lines[0][5], expectedText, 'wrong output, expected: ' + expectedText)
+    for i in range(6,9):
+      expectedText = '#{variable} empty   -'.format(variable=i-5)
+      self.assertEqual(lines[0][i], expectedText, 'wrong output, expected: ' + expectedText)
 
     self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', f'{cpu}', '-t', f'{thread}', 'asyncclear', 'Block0b'), [0], 0, 0)
     # check the result with dm-cmd ... queue Block0b.
