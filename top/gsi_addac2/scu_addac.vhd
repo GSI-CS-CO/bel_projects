@@ -140,6 +140,8 @@ constant c_fg1_base:                    unsigned := x"0300";
 constant c_tmr_base:                    unsigned := x"0330";
 constant c_fg2_base:                    unsigned := x"0340";
 constant c_rrg_base:                    Integer := 16#0370#;  --Both Realtime Ramp Generators
+constant c_rrgout_base:                 Integer := 16#0380#;  --Output registers for both Realtime Ramp Generators
+
 --constant c_rrg1_base:                    Integer := 16#0370#;  --Realtime Ramp Generator 1
 --constant c_rrg2_base:                    Integer := 16#0380#;  --Realtime Ramp Generator 2
 constant c_daq_base:                    unsigned := x"2000";   --scu_sio3 event filter ends at x1fff
@@ -215,16 +217,54 @@ COMPONENT io_reg
   );
 END COMPONENT io_reg;
 
+COMPONENT in_reg
+  GENERIC ( Base_addr : INTEGER );
+  PORT		
+  (
+		Adr_from_SCUB_LA:		in		std_logic_vector(15 downto 0);	-- latched address from SCU_Bus
+		Data_from_SCUB_LA:	in		std_logic_vector(15 downto 0);	-- latched data from SCU_Bus 
+		Ext_Adr_Val:			in		std_logic;								-- '1' => "ADR_from_SCUB_LA" is valid
+		Ext_Rd_active:			in		std_logic;								-- '1' => Rd-Cycle is active
+		Ext_Rd_fin:				in		std_logic;								-- marks end of read cycle, active one for one clock period of sys_clk
+		Ext_Wr_active:			in		std_logic;								-- '1' => Wr-Cycle is active
+		Ext_Wr_fin:				in		std_logic;								-- marks end of write cycle, active one for one clock period of sys_clk
+		clk:						in		std_logic;								-- should be the same clk, used by SCU_Bus_Slave
+		nReset:					in		std_logic;
+--
+		Reg_In1:				   in  	std_logic_vector(15 downto 0);	-- Daten-Reg. Out1
+		Reg_In2:				   in  	std_logic_vector(15 downto 0);	-- Daten-Reg. Out2
+		Reg_In3:				   in  	std_logic_vector(15 downto 0);	-- Daten-Reg. Out3
+		Reg_In4:				   in  	std_logic_vector(15 downto 0);	-- Daten-Reg. Out4
+		Reg_In5:				   in  	std_logic_vector(15 downto 0);	-- Daten-Reg. Out5
+		Reg_In6:				   in  	std_logic_vector(15 downto 0);	-- Daten-Reg. Out6
+		Reg_In7:				   in  	std_logic_vector(15 downto 0);	-- Daten-Reg. Out7
+		Reg_In8:				   in  	std_logic_vector(15 downto 0);	-- Daten-Reg. Out7
+--
+		Reg_rd_active:		   out	std_logic;								-- read data available at 'Data_to_SCUB'-INL_Out
+		Data_to_SCUB:		   out	std_logic_vector(15 downto 0);	-- connect read sources to SCUB-Macro
+		Dtack_to_SCUB:		   out	std_logic								-- connect Dtack to SCUB-Macro
+		);	
+END COMPONENT in_reg;
+
+
 COMPONENT rrg_round is
   Port ( clk : in STD_LOGIC;
 			clk_slow : in STD_LOGIC;
          nReset : in STD_LOGIC;
 			timepulse : in STD_LOGIC;
+			
 			reg_control : in STD_LOGIC_VECTOR (15 downto 0);
-         reg_0 : in STD_LOGIC_VECTOR (15 downto 0);
-         reg_1  : in STD_LOGIC_VECTOR (15 downto 0);
+         
+			reg_0 : in STD_LOGIC_VECTOR (15 downto 0);
+         reg_1 : in STD_LOGIC_VECTOR (15 downto 0);
          reg_2 : in STD_LOGIC_VECTOR (15 downto 0);
-			reg_3 : in STD_LOGIC_VECTOR (15 downto 0);
+         reg_3 : in STD_LOGIC_VECTOR (15 downto 0);
+			
+			outreg_0 : out STD_LOGIC_VECTOR (15 downto 0);
+			outreg_1 : out STD_LOGIC_VECTOR (15 downto 0);
+			outreg_2 : out STD_LOGIC_VECTOR (15 downto 0);
+			outreg_3 : out STD_LOGIC_VECTOR (15 downto 0);
+			
 			ext_dataset : in STD_LOGIC_VECTOR (7 downto 0);
 			DACStrobe : out STD_LOGIC;
          Yis : out STD_LOGIC_VECTOR (15 downto 0));
@@ -365,25 +405,36 @@ END COMPONENT rrg_round;
 
   signal Ena_Every_1us          : std_logic;
   signal rrg_rd_active          : std_logic;
+  signal rrg_rdrd_active        : std_logic;
   signal rrg_data_to_SCUB       : std_logic_vector(15 downto 0);
+  signal rrg_rddata_to_SCUB     : std_logic_vector(15 downto 0);
   signal rrg_dtack              : std_logic;
+  signal rrg_rddtack            : std_logic;
   signal rrg_out                : std_logic_vector(15 downto 0);
   signal rrg_strobe             : std_logic;
 
-	signal rrgreg_0				: std_logic_vector (15 downto 0); 
-	signal rrgreg_1 		  		: std_logic_vector (15 downto 0); 
-	signal rrgreg_2 		  		: std_logic_vector (15 downto 0);  
-	signal rrgreg_3 		  		: std_logic_vector (15 downto 0);
-	signal rrgreg_extdataset	: std_logic_vector (15 downto 0);
-	signal rrgreg_dummy	: std_logic_vector (15 downto 0);
+  signal rrgreg_0					: std_logic_vector (15 downto 0); 
+  signal rrgreg_1 		  		: std_logic_vector (15 downto 0); 
+  signal rrgreg_2 		  		: std_logic_vector (15 downto 0);  
+  signal rrgreg_3 		  		: std_logic_vector (15 downto 0);
+  signal rrgreg_extdataset	: std_logic_vector (15 downto 0);
+  signal rrgreg_dummy	: std_logic_vector (15 downto 0);
 	
-	signal rrgreg_control1		: std_logic_vector (15 downto 0);
-	signal rrgYis1		 	  		: std_logic_vector (15 downto 0);
-	signal rrgDACStrobe1   		: std_logic;
-
-	signal rrgreg_control2		: std_logic_vector (15 downto 0);
-	signal rrgYis2					: std_logic_vector (15 downto 0);
-	signal rrgDACStrobe2			: std_logic;
+  signal rrgreg_control1		: std_logic_vector (15 downto 0);
+  signal rrgYis1		 	  		: std_logic_vector (15 downto 0);
+  signal rrgDACStrobe1   		: std_logic;
+  signal rrgoutreg1_0			: std_logic_vector (15 downto 0); 
+  signal rrgoutreg1_1			: std_logic_vector (15 downto 0); 
+  signal rrgoutreg1_2			: std_logic_vector (15 downto 0); 
+  signal rrgoutreg1_3			: std_logic_vector (15 downto 0); 
+	
+  signal rrgreg_control2		: std_logic_vector (15 downto 0);
+  signal rrgYis2					: std_logic_vector (15 downto 0);
+  signal rrgDACStrobe2			: std_logic;
+  signal rrgoutreg2_0			: std_logic_vector (15 downto 0); 
+  signal rrgoutreg2_1			: std_logic_vector (15 downto 0); 
+  signal rrgoutreg2_2			: std_logic_vector (15 downto 0); 
+  signal rrgoutreg2_3			: std_logic_vector (15 downto 0); 
 
 
   begin
@@ -496,7 +547,7 @@ addac_clk_sw: slave_clk_switch
 
 
     Dtack_to_SCUB    <= io_port_Dtack_to_SCUB or dac1_dtack or dac2_dtack or adc_dtack or daq_dtack
-                        or wb_scu_dtack or fg_1_dtack or fg_2_dtack or tmr_dtack or clk_switch_dtack or rrg_dtack;
+                        or wb_scu_dtack or fg_1_dtack or fg_2_dtack or tmr_dtack or clk_switch_dtack or rrg_dtack or rrg_rddtack;
 
     clk_switch_intr  <= sys_clk_is_bad_la or sys_clk_deviation_la;
 
@@ -912,10 +963,40 @@ p_led_ena: div_n
           Reg_IO8            =>  rrgreg_3,
         --
           Reg_rd_active      =>  rrg_rd_active,
-          Dtack_to_SCUB      =>  rrg_Dtack,
+          Dtack_to_SCUB      =>  rrg_dtack,
           Data_to_SCUB       =>  rrg_data_to_SCUB
         );
 
+  RRG_Outreg: in_reg
+    generic map(
+          Base_addr =>  c_rrg_base
+          )
+    port map  (
+          Adr_from_SCUB_LA   =>  ADR_from_SCUB_LA,
+          Data_from_SCUB_LA  =>  Data_from_SCUB_LA,
+          Ext_Adr_Val        =>  Ext_Adr_Val,
+          Ext_Rd_active      =>  Ext_Rd_active,
+          Ext_Rd_fin         =>  '0',
+          Ext_Wr_active      =>  Ext_Wr_active,
+          Ext_Wr_fin         =>  '0',
+          clk                =>  clk_sys,
+          nReset             =>  rstn_sys,
+    --
+          Reg_In1            =>  rrgoutreg1_0,
+          Reg_In2            =>  rrgoutreg1_1,
+          Reg_In3            =>  rrgoutreg1_2,
+          Reg_In4            =>  rrgoutreg1_3,
+          Reg_In5            =>  rrgoutreg2_0,
+          Reg_In6            =>  rrgoutreg2_1,
+          Reg_In7            =>  rrgoutreg2_2,
+          Reg_In8            =>  rrgoutreg2_3,
+        --
+          Reg_rd_active      =>  rrg_rdrd_active,
+          Dtack_to_SCUB      =>  rrg_rddtack,
+          Data_to_SCUB       =>  rrg_rddata_to_SCUB
+        );
+		  
+		  
 		  
   rrg_round_inst1: rrg_round
    port map (
@@ -928,6 +1009,10 @@ p_led_ena: div_n
           reg_1     		=> rrgreg_1,
           reg_2   		=> rrgreg_2,
           reg_3       	=> rrgreg_3,
+			 outreg_0		=> rrgoutreg1_0,
+			 outreg_1		=> rrgoutreg1_1,
+			 outreg_2		=> rrgoutreg1_2,
+			 outreg_3		=> rrgoutreg1_3,
 			 ext_dataset	=> rrgreg_extdataset(7 downto 0),
 			 DACStrobe 		=> rrgDACStrobe1,
           Yis    			=> rrgYis1
@@ -944,6 +1029,10 @@ p_led_ena: div_n
           reg_1     		=> rrgreg_1,
           reg_2   		=> rrgreg_2,
           reg_3       	=> rrgreg_3,
+			 outreg_0		=> rrgoutreg2_0,
+			 outreg_1		=> rrgoutreg2_1,
+			 outreg_2		=> rrgoutreg2_2,
+			 outreg_3		=> rrgoutreg2_3,
 			 ext_dataset	=> rrgreg_extdataset(7 downto 0),
 			 DACStrobe 		=> rrgDACStrobe2,
           Yis    			=> rrgYis2
@@ -1011,11 +1100,14 @@ p_read_mux: process (
     tmr_rd_active,        tmr_data_to_SCUB,
     wb_scu_rd_active,     wb_scu_data_to_SCUB,
     daq_rd_active,        daq_rd_data_to_SCUB,
-    clk_switch_rd_active, clk_switch_rd_data
+    clk_switch_rd_active, clk_switch_rd_data,
+	 rrg_rd_active,        rrg_data_to_SCUB,
+	 rrg_rdrd_active,      rrg_rddata_to_SCUB
     )
-  variable sel: unsigned(10 downto 0);
+  variable sel: unsigned(11 downto 0);
   begin
-    sel := rrg_rd_active
+    sel := rrg_rdrd_active
+			& rrg_rd_active
          & clk_switch_rd_active
          & daq_rd_active
          & wb_scu_rd_active
@@ -1027,17 +1119,18 @@ p_read_mux: process (
          & dac1_rd_active
          & io_port_rd_active;
     case sel IS
-      when "00000000001" => Data_to_SCUB <= io_port_data_to_SCUB;
-      when "00000000010" => Data_to_SCUB <= dac1_data_to_SCUB;
-      when "00000000100" => Data_to_SCUB <= dac2_data_to_SCUB;
-      when "00000001000" => Data_to_SCUB <= adc_data_to_SCUB;
-      when "00000010000" => Data_to_SCUB <= fg_1_data_to_SCUB;
-      when "00000100000" => Data_to_SCUB <= fg_2_data_to_SCUB;
-      when "00001000000" => Data_to_SCUB <= tmr_data_to_SCUB;
-      when "00010000000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
-      when "00100000000" => Data_to_SCUB <= daq_rd_data_to_SCUB;
-      when "01000000000" => Data_to_SCUB <= clk_switch_rd_data;
-      when "10000000000" => Data_to_SCUB <= rrg_data_to_SCUB;
+      when "000000000001" => Data_to_SCUB <= io_port_data_to_SCUB;
+      when "000000000010" => Data_to_SCUB <= dac1_data_to_SCUB;
+      when "000000000100" => Data_to_SCUB <= dac2_data_to_SCUB;
+      when "000000001000" => Data_to_SCUB <= adc_data_to_SCUB;
+      when "000000010000" => Data_to_SCUB <= fg_1_data_to_SCUB;
+      when "000000100000" => Data_to_SCUB <= fg_2_data_to_SCUB;
+      when "000001000000" => Data_to_SCUB <= tmr_data_to_SCUB;
+      when "000010000000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
+      when "000100000000" => Data_to_SCUB <= daq_rd_data_to_SCUB;
+      when "001000000000" => Data_to_SCUB <= clk_switch_rd_data;
+      when "010000000000" => Data_to_SCUB <= rrg_data_to_SCUB;
+      when "100000000000" => Data_to_SCUB <= rrg_rddata_to_SCUB;
       when others =>
         Data_to_SCUB <= X"0000";
     end case;

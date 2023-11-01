@@ -63,7 +63,7 @@
 	
 	reg signed [63:0] Yis_copy1=0;
 	//reg signed [DAC_WIDTH-1:0]	Yis_copy2=0;
-	reg signed [63:0]	Yis_copy2=0;
+	//reg signed [63:0]	Yis_copy2=0;
 	//reg signed [63:0]	Yis_state=0;
 	
 	reg signed [63:0] outreg;
@@ -129,6 +129,7 @@
 					ROset = ROset_buf[current_dataset];					
 				end
 
+			
 				// Algorithm begins
 				Ydiff = Yset -Yis_copy1;
 				if (Ydiff <0)
@@ -188,7 +189,30 @@
 							Yis_copy1 = Yis_copy1+Ris;
 						end
 					end
-				end		
+				end	
+			
+					//Saturate Yis to twice the DAC range
+				/*case (Yis_copy1[63-:2])
+					2'b01: //upper clamp range
+						Yis_copy1 = {2'b00, {62{1'b1}}};
+					2'b10: //lower clamp range
+						Yis_copy1 = {3'b11, {62{1'b0}}};
+				endcase*/
+				
+					//Saturate Yis to the DAC range
+				case (Yis_copy1[63-:3])
+					3'b001, 3'b010, 3'b011: //upper clamp range
+					begin
+						Yis_copy1 = {3'b000, {61{1'b1}}};
+						Ris = 0;
+					end
+					3'b100, 3'b101, 3'b110: //lower clamp range
+					begin
+						Yis_copy1 = {3'b111, {61{1'b0}}};
+						Ris = 0;
+					end
+				endcase
+					
 			end
 		end	
 	end
@@ -254,7 +278,7 @@
 					num_cycle = temp_reg[31:0];
 				CMD_HALT:
 				begin
-					Yset_buf[write_dataset] = Yis_copy2;
+					Yset_buf[write_dataset] = Yis_copy1;
 					Rset_buf[write_dataset] = temp_Rset;
 					RIset_buf[write_dataset] = temp_RIset;
 					ROset_buf[write_dataset] = temp_ROset;		
@@ -277,7 +301,7 @@
 	end
 	
 	//Process to buffer and clamp the output
-	always @(posedge clk_slow) 
+/*	always @(posedge clk_slow) 
 	begin
 		if(nReset == 1'b0)
 			Yis_copy2 = 0;
@@ -286,15 +310,15 @@
 		case (Yis_copy1[63-:3])
 			3'b001, 3'b010, 3'b011: //upper clamp range
 				//Yis_copy2 = {1'b0, {(DAC_WIDTH-1){1'b1}}};
-				Yis_copy2 = {3'b000, {60{1'b1}}};
+				Yis_copy2 = {3'b000, {61{1'b1}}};
 			3'b100, 3'b101, 3'b110: //lower clamp range
 				//Yis_copy2 = {1'b1, {(DAC_WIDTH-1){1'b0}}};
-				Yis_copy2 = {3'b111, {60{1'b0}}};
+				Yis_copy2 = {3'b111, {61{1'b0}}};
 			default: //correct range
 				//Yis_copy2 = Yis_copy1[61-:DAC_WIDTH];		
 				Yis_copy2 = Yis_copy1;	
 		endcase
-	end
+	end*/
 	
 	//process to control the calculations timing
 	always @(posedge clk_slow) 
@@ -325,7 +349,8 @@
 		else
 		begin
 			DACStrobe = time_step_tc;
-			Yis = Yis_copy2[61-:DAC_WIDTH];	
+			//Yis = Yis_copy2[61-:DAC_WIDTH];	
+			Yis = Yis_copy1[61-:DAC_WIDTH];	
 		end
 	end
 	
