@@ -52,7 +52,7 @@ eb-fwload dev/wbm0 u 0x0 dmunipz.bin
 # do some write actions to set register values
 echo -e dm-unipz - start: set MAC and IP of gateway and Data Master
 
-dmunipz-ctl dev/wbm0 ebmdm 0x00267b00046b 0xc0a880f7
+dmunipz-ctl dev/wbm0 ebmdm 0x00267b000484 0xc0a88111
 
 echo -e dm-unipz - start: make firmware operational
 
