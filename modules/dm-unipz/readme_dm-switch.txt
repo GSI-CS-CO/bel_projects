@@ -80,8 +80,8 @@ nfs-init links. Example for INT.
 
 10_timing-rte -> ../global/timing-rte-tg-fallout-v6.2.0-no-graylog           // timing RTE
 20_dmunipz-dev_dmunipz-tools -> ../global/timing-rte-db-yocto                // this will copy the relevant tools to the FEC
-30_dmunipz-dev_dmunipz-tsl008-int-config -> ../global/timing-rte-db-yocto    // this will do the configuration of the FEC
-40_dmunipz-dev_dmunipz-int-systemd -> ../global/timing-rte-db-yocto          // this will fire up everything
+30_dmunipz-dev_dmunipz-tsl008-int-config -> ../global/timing-rte-db-yocto    // this will configure the FEC
+40_dmunipz-dev_dmunipz-int-systemd -> ../global/timing-rte-db-yocto          // this will fire up software on the host
 
 
 [1] https://github.com/GSI-CS-CO/ci_cd/tree/master/scripts/yocto_helper/nfsinit
