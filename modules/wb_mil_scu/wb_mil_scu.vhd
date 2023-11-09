@@ -205,6 +205,9 @@ constant mil_wr_rd_lemo_dat_a_map:  unsigned (15 downto 0) := sio_mil_first_reg_
 constant mil_rd_lemo_inp_a_map:     unsigned (15 downto 0) := sio_mil_first_reg_a + mil_rd_lemo_inp_a;
 constant wr_soft_reset_a_map:       unsigned (15 downto 0) := sio_mil_first_reg_a + wr_soft_reset_a;
 
+constant wr_rd_blk_length_a_map:    unsigned (15 downto 0) := sio_mil_first_reg_a + wr_rd_blk_length_a;
+constant rd_blk_fifo_cnt_a_map:     unsigned (15 downto 0) := sio_mil_first_reg_a + rd_blk_fifo_cnt_a;
+
 
 -- todo constant rd_status_avail_a_map:     unsigned (15 downto 0) := sio_mil_first_reg_a + rd_status_avail_a; --to read corresponding avail bits, bit[31..8] don't care
 
@@ -364,6 +367,34 @@ signal   rx_avail_led:              std_logic;
 signal   highest_prio_index:        std_logic_vector(7 downto 0);
 signal   prio_index_valid:          std_logic;
 
+-----------------------------------------------------------------------
+-- Block mode registers
+signal   blk_length_dat:            std_logic_vector (15 downto 0);
+
+-----------------------------------------------------------------------
+-- Block mode transmitter signals for TX FIFO            
+signal   block_start:               std_logic;
+signal   tx_block_data:             std_logic_vector (16 downto 0);
+signal   tx_block_valid:            std_logic;
+signal   tx_block_ready:            std_logic;
+signal   tx_block_busy:             std_logic;
+
+-----------------------------------------------------------------------
+-- Block mode receiver signals for RX FIFO
+signal   rx_fifo_block_write_en:    std_logic;
+signal   rx_fifo_block_data_in:     std_logic_vector (15 downto 0);
+signal   rx_fifo_block_read_en:     std_logic;
+signal   rx_fifo_block_data_out:    std_logic_vector (15 downto 0);
+signal   rx_fifo_block_empty:       std_logic;
+signal   rx_fifo_block_full:        std_logic;
+signal   rx_fifo_block_count:       std_logic_vector(12 downto 0);
+signal   SRff_rx_err_ps:            std_logic;
+
+-----------------------------------------------------------------------
+
+signal Mil_Rcv_Rdy_latched: std_logic;
+
+-----------------------------------------------------------------------
 function reverse_any_vector (a: in std_logic_vector)
 return std_logic_vector is
   variable result: std_logic_vector(a'RANGE);
@@ -893,7 +924,27 @@ tx_fifo : generic_sync_fifo
     full_o  => tx_fifo_full
   );
 
+------------------------------------------------------------------------------------------------------------------------------
 
+-- RX block mode receiver (filling up fifo and exposing to RX taskram on address 255)
+rx_block_mode : generic_sync_fifo
+  GENERIC MAP(
+    g_data_width => 16,
+    g_size       => 8192
+  )
+  PORT MAP(
+    clk_i   => clk_i,
+    rst_n_i => n_modulreset,
+    we_i    => rx_fifo_block_write_en,
+    d_i     => rx_fifo_block_data_in,
+    rd_i    => rx_fifo_block_read_en,
+    q_o     => rx_fifo_block_data_out,
+    empty_o => rx_fifo_block_empty,
+    full_o  => rx_fifo_block_full,
+    count_o => rx_fifo_block_count
+  );
+
+------------------------------------------------------------------------------------------------------------------------------
 commonclockedlogic_p : PROCESS (clk_i, n_modulreset)
 BEGIN
   IF n_modulreset = '0' THEN
@@ -913,6 +964,8 @@ BEGIN
     task_runs_del           <= '0';
 
     hw6408_rdy_sync         <= '0';
+
+    Mil_Rcv_Rdy_latched     <= '0';
 
   ELSIF rising_edge (clk_i) THEN
 
@@ -942,6 +995,8 @@ BEGIN
     slave_i_we_del           <= slave_i.we;
     mil_trm_start_dly        <= mil_trm_start;
     mil_trm_start_dly2       <= mil_trm_start_dly;
+
+    Mil_Rcv_Rdy_latched      <= Mil_Rcv_Rdy;
 
     task_runs_del            <= task_runs;
 
@@ -978,14 +1033,13 @@ BEGIN
     ELSIF ((timeslot >= 1) AND (timeslot <= ram_count )) THEN
       mil_trm_cmd      <= '1';                                          -- tx_taskram sents only cmd telegrams
       mil_trm_data     <= tx_taskram_rd_d(15 DOWNTO 0);
-
       IF tx_req (timeslot) = '1' THEN
         tx_taskram_rd_a  <= std_logic_vector (to_unsigned (timeslot, 8)) ;
         tx_taskram_re    <= '1';
       end if;
 
     ELSE
-        mil_trm_data     <= (others =>'0');
+      mil_trm_data     <= (others =>'0');
     END IF;
   END IF;--clk_i
 
@@ -1016,6 +1070,10 @@ BEGIN
 
     set_rx_avail_ps    <= (OTHERS => '0');
     set_rx_err_ps      <= (OTHERS => '0');
+
+    SRff_rx_err_ps     <= '0';
+
+    rx_fifo_block_write_en <= '0';
   ELSIF rising_edge (clk_i) THEN
     -- these 6 register are only high for one pulse
     mil_trm_start      <= '0';
@@ -1025,6 +1083,8 @@ BEGIN
     set_rx_err_ps      <= (OTHERS => '0');
     timeout_cntr_clr   <= '0';
     rx_taskram_we      <= '0';
+
+    rx_fifo_block_write_en <= '0';
     -----------------------------------------Timeslot 0 TX_FIFO--------------------------------------------------------------------------------
     IF timeslot= 0 then                                                            --Empty whole TX_FIFO on timeslot 0
 
@@ -1049,12 +1109,12 @@ BEGIN
       ELSE
         NULL;
       END IF;
-   --------------------------------------------Timeslot 1...254 TX_TaskRam----------------------------------------------------------------------
-    ELSIF ((timeslot >= 1) AND (timeslot <= ram_count )) THEN      --If not Timeslot 0: Do all taskram slots one after another
-                                                                   --Timeslot 255 reserved for "Beam Transmission Mode"
+    --------------------------------------------Timeslot 1...254 TX_TaskRam----------------------------------------------------------------------
+    ELSIF ((timeslot >= 1) AND (timeslot <= ram_count - 1)) THEN      --If not Timeslot 0: Do all taskram slots one after another
+                                                                   --Timeslot 255 reserved for "Block Transmission Mode"
       IF    tx_req(timeslot)='0' and task_runs_del='0'  then           --proceed with scheduler on no task and no request
 
-        IF timeslot < ram_count  THEN
+        IF timeslot < ram_count - 1  THEN
           --timeslot           <= timeslot +1;                       --jump to next timeslot(or to 0)
           if prio_index_valid = '1' then
             timeslot <= to_integer(unsigned(highest_prio_index));
@@ -1118,6 +1178,66 @@ BEGIN
       ELSE
         NULL;
       END IF; -- tx_req and task_runs
+
+    --------------------------------------------Timeslot 255 TX_TaskRam----------------------------------------------------------------------
+    ELSIF ((timeslot = ram_count)) THEN --If not Timeslot 0: Do all taskram slots one after another
+                                            --Timeslot 255 reserved for "Block Transmission Mode"
+      IF  tx_req(timeslot)='0'    AND task_runs='0'  THEN                             --skip if there is nothing to do or fifo task finished
+        if prio_index_valid = '1' then
+          timeslot <= to_integer(unsigned(highest_prio_index));
+        end if;
+        timeout_cntr_en  <= '0';
+        timeout_cntr_clr <= '1';
+        task_runs        <= '0';
+        SRff_rx_err_ps   <= '0';
+
+      -- TX ready and task is not running
+      ELSIF tx_req(timeslot) = '1' and mil_trm_rdy = '1' AND task_runs_del = '0' and Mil_Rcv_Rdy = '0'  THEN
+        mil_trm_start    <= '1';
+        task_runs        <= '1';
+        timeout_cntr_en  <= '1';
+        timeout_cntr_clr <= '1';
+
+      ELSE
+        NULL;
+      END IF;
+
+      IF timeout_cntr = timeout_cntr_max  OR (Mil_Rcv_Rdy = '1' and Mil_Rcv_Rdy_latched = '0') THEN  --wait 20µs for tx, 20 for rx and 15 for gap
+        --timeout_cntr_en           <= '0';                            -- only reset timeout_cntr for next message
+        timeout_cntr_clr          <= '1';
+
+        IF unsigned(rx_fifo_block_count) >= unsigned(blk_length_dat) THEN -- finish RX process, configured words received
+          set_rx_avail_ps(timeslot) <= '1';                            -- todo maybe wait until slave_i.stb=0
+          tx_task_ack(timeslot)     <= '1';                            -- pulse to clear tx_req, needs 2 clocks to get effective
+          task_runs                 <= '0';                            -- deasserting task run since RX part of block mode is finished
+          set_rx_err_ps(timeslot)   <= SRff_rx_err_ps;                 -- forward latched error to register
+          SRff_rx_err_ps            <= '0';                            -- reset latched error for next transmission
+          timeout_cntr_en           <= '0';                            -- stop timeout_cntr, since we reached length
+        END IF;
+
+        IF MIL_Rcv_Rdy = '1' AND Mil_Rcv_Error = '0' THEN      --prepare data output
+          rx_fifo_block_write_en  <= '1';
+          rx_fifo_block_data_in   <= MIL_RCV_D;
+          mil_rd_start            <= '1';                      --to bring hd6408 fsm back to idle
+        ELSIF MIL_Rcv_Rdy = '1' AND Mil_Rcv_Error = '1' THEN   --this case handles hd6408 parity error
+          rx_fifo_block_write_en  <= '1';
+          rx_fifo_block_data_in   <= x"beef";
+          SRff_rx_err_ps          <= '1';                      --set rx_err bit
+          mil_rd_start            <= '1';                      --to bring hd6408 fsm back to idle
+        ELSIF timeout_cntr = timeout_cntr_max THEN             --this case handles telegram receive timeout
+          rx_fifo_block_write_en  <= '1' and timeout_cntr_clr;
+          rx_fifo_block_data_in   <= x"babe";                  --if a telegram arrives long time later, there is no chance to bring hd6408 fsm back to 
+          SRff_rx_err_ps          <= '1';                      --idle condition with behalf of mil_rd_start 
+          mil_rd_start            <= '1';
+        ELSE                                                   --this case should never be reached
+          rx_fifo_block_write_en  <= '1';
+          rx_fifo_block_data_in   <= x"dead";
+          SRff_rx_err_ps          <= '1';
+        END IF;--MIL_Rcv_Rdy
+      ELSE
+        NULL;                                                  -- wait for timeout or rx data
+      END IF;--End Case:timeout_cntr=55 or mil_rcv_rdy='1'
+
   -----------------------------------------------------This ELSE should never be reached---------------------------------------------------------------------------
     ELSE
       null;
@@ -1155,7 +1275,7 @@ BEGIN
     ELSIF  LA_a_var = (rd_status_avail_first_adr + 12 ) THEN avail_muxed <=      avail (207 DOWNTO 192);
     ELSIF  LA_a_var = (rd_status_avail_first_adr + 13 ) THEN avail_muxed <=      avail (223 DOWNTO 208);
     ELSIF  LA_a_var = (rd_status_avail_first_adr + 14 ) THEN avail_muxed <=      avail (239 DOWNTO 224);
-    ELSIF  LA_a_var = (rd_status_avail_first_adr + 15 ) THEN avail_muxed <= '0'& avail (254 DOWNTO 240);
+    ELSIF  LA_a_var = (rd_status_avail_first_adr + 15 ) THEN avail_muxed <=      avail (255 DOWNTO 240);
     ELSE
       avail_muxed <= x"beef";	  -- other addresses out of range
     END IF;
@@ -1188,7 +1308,7 @@ BEGIN
     ELSIF  LA_a_var = (rd_rx_err_first_adr + 12 ) THEN rx_err_muxed <=      rx_err(207 DOWNTO 192);
     ELSIF  LA_a_var = (rd_rx_err_first_adr + 13 ) THEN rx_err_muxed <=      rx_err(223 DOWNTO 208);
     ELSIF  LA_a_var = (rd_rx_err_first_adr + 14 ) THEN rx_err_muxed <=      rx_err(239 DOWNTO 224);
-    ELSIF  LA_a_var = (rd_rx_err_first_adr + 15 ) THEN rx_err_muxed <= '0'& rx_err(254 DOWNTO 240);
+    ELSIF  LA_a_var = (rd_rx_err_first_adr + 15 ) THEN rx_err_muxed <=      rx_err(255 DOWNTO 240);
     ELSE
       rx_err_muxed <= x"beef";	  -- other addresses out of range
     END IF;
@@ -1221,7 +1341,7 @@ BEGIN
     ELSIF  LA_a_var = (tx_ram_req_first_adr + 12 ) THEN tx_req_muxed <=       tx_req(207 DOWNTO 192);
     ELSIF  LA_a_var = (tx_ram_req_first_adr + 13 ) THEN tx_req_muxed <=       tx_req(223 DOWNTO 208);
     ELSIF  LA_a_var = (tx_ram_req_first_adr + 14 ) THEN tx_req_muxed <=       tx_req(239 DOWNTO 224);
-    ELSIF  LA_a_var = (tx_ram_req_first_adr + 15 ) THEN tx_req_muxed <= '0' & tx_req(254 DOWNTO 240);
+    ELSIF  LA_a_var = (tx_ram_req_first_adr + 15 ) THEN tx_req_muxed <=       tx_req(255 DOWNTO 240);
     ELSE
       tx_req_muxed <= x"beef";	  -- other addresses out of range
     END IF;
@@ -1332,6 +1452,8 @@ BEGIN
     tx_taskram_we     <= '0';
     rx_taskram_re     <= '0';
 
+    blk_length_dat <= (others => '0');
+
   ELSIF RISING_EDGE(clk_i) THEN
 
     ex_stall          <= '1';
@@ -1355,6 +1477,7 @@ BEGIN
     rx_taskram_re     <= '0';
     slave_o.dat       <= (others => '0');
 
+    rx_fifo_block_read_en <= '0';
 
     -- to clear selective request bits when tx_readout was done
     FOR I IN 1 TO 255 LOOP
@@ -1424,9 +1547,8 @@ BEGIN
           ex_err                              <= '1';
         END IF;
 
-
 --##############################RX_TASKRAM############################################################
-      ELSIF (LA_a_var >= rx_taskram_first_adr and  LA_a_var <= rx_taskram_last_adr ) THEN
+      ELSIF (LA_a_var >= rx_taskram_first_adr and  LA_a_var < rx_taskram_last_adr ) THEN
         IF slave_i.sel = "1111" THEN
 
           IF slave_i.we = '0' THEN                                                                       --scu cycle needs 2 clocks for ram access
@@ -1448,6 +1570,25 @@ BEGIN
         ELSE                                                                                            --highword/unaligned accesses (others than sel=1111) not allowed
            ex_stall                     <= '0';
            ex_err                       <= '1';
+        END IF;--elsif
+
+    -- Block mode RX FIFO is on RX taskram address 255 => read from this register will pop data from FIFO
+      ELSIF (LA_a_var = rx_taskram_last_adr) THEN
+        IF slave_i.sel = "1111" THEN
+          IF slave_i.we = '0' THEN
+            rx_fifo_block_read_en      <= not(slave_i_stb_dly) and slave_i.stb;
+            IF slave_i_stb_dly2 ='1' THEN                                                            --wait for 2 clock cycles for the data to be ready on FIFO output
+              slave_o.dat(15 downto 0) <= rx_fifo_block_data_out;
+              ex_stall                 <= '0';                                                       --the 2 clrs were omitted due to performance optimisation
+              ex_ack                   <= '1';                                                       --Etherbone may re-arange read tasks in same socket, may cause hazards here
+            END IF;
+          ELSE--write attempts result in DTACK Error
+              ex_stall                 <= '0';
+              ex_err                   <= '1';
+          END IF;
+        ELSE                                                                                            --highword/unaligned accesses (others than sel=1111) not allowed
+           ex_stall                    <= '0';
+           ex_err                      <= '1';
         END IF;--elsif
 
 
@@ -1499,6 +1640,45 @@ BEGIN
           ex_err                     <= '1';
         END IF;
 
+--############################ Block mode Regs ###############################################
+      ELSIF (LA_a_var = wr_rd_blk_length_a_map) THEN
+        if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
+          if slave_i.we = '1' then
+            -- write status register
+            blk_length_dat <= slave_i.dat(15 downto 0);
+            ex_stall       <= '0';
+            ex_ack         <= '1';
+          else
+            -- read status register
+            slave_o.dat(15 downto 0) <= blk_length_dat;
+            ex_stall <= '0';
+            ex_ack <= '1';
+          end if;
+        else
+          -- access to high word or unaligned word is not allowed
+          ex_stall <= '0';
+          ex_err <= '1';
+        end if;
+
+      ELSIF (LA_a_var = rd_blk_fifo_cnt_a_map) THEN
+        if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
+          if slave_i.we = '1' then
+            -- write status register
+            ex_stall <= '0';
+            ex_ack <= '1';
+          else
+            -- read block mode fifo fill level register
+            slave_o.dat(15 downto 0) <= (others => '0');
+            slave_o.dat(rx_fifo_block_count'range) <= rx_fifo_block_count;
+            ex_stall <= '0';
+            ex_ack <= '1';
+          end if;
+        else
+          -- access to high word or unaligned word is not allowed
+          ex_stall <= '0';
+          ex_err <= '1';
+        end if;
+        
 --############################Regs from old MIL Macro)###############################################
        ELSIF (LA_a_var = mil_wr_rd_status_a_map)    THEN
          if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
