@@ -48,21 +48,19 @@ void Switch::deserialise(uint8_t* b) {
 void StartThread::deserialise(uint8_t* b) {
   Event::deserialise(b);
   this->setStartOffs(writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[STARTTHREAD_STARTOFFS]));
-//
   this->setThread(writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[STARTTHREAD_THR]));
 }
 
-void StartThread::serialise(const vAdr &va, uint8_t* b) const {
-  Event::serialise(va, b);
+void StartThread::serialise(const mVal &m, uint8_t* b) const {
+  Event::serialise(m, b);
   writeLeNumberToBeBytes(b + (ptrdiff_t)STARTTHREAD_STARTOFFS, this->getStartOffs());
-  //writeLeNumberToBeBytes(b + (ptrdiff_t)STARTTHREAD_CPU ,  va[ADR_ORIGIN_CPU]);
   writeLeNumberToBeBytes(b + (ptrdiff_t)STARTTHREAD_THR,  this->getThread());
 }
 
-void Origin::serialise(const vAdr &va, uint8_t* b) const {
-  Event::serialise(va, b);
-  writeLeNumberToBeBytes(b + (ptrdiff_t)ORIGIN_DEST, va[ADR_ORIGIN_DEST]);
-  writeLeNumberToBeBytes(b + (ptrdiff_t)ORIGIN_CPU,  va[ADR_ORIGIN_CPU]);
+void Origin::serialise(const mVal &m, uint8_t* b) const {
+  Event::serialise(m, b);
+  writeLeNumberToBeBytes(b + (ptrdiff_t)ORIGIN_DEST, m.at(ORIGIN_DEST));
+  writeLeNumberToBeBytes(b + (ptrdiff_t)ORIGIN_CPU,  m.at(ORIGIN_CPU));
   writeLeNumberToBeBytes(b + (ptrdiff_t)ORIGIN_THR,  this->getThread());
 }
 
