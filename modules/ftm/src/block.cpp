@@ -9,16 +9,16 @@ void Block::deserialise(uint8_t* b)  {
   setRdIdxs(writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[BLOCK_CMDQ_RD_IDXS]));
 }
 
-void Block::serialise(const vAdr &va, uint8_t* b) const {
+void Block::serialise(const mVal &m, uint8_t* b) const {
 
 
 
-  Node::serialise(va, b);
+  Node::serialise(m, b);
   writeLeNumberToBeBytes(b + (ptrdiff_t)BLOCK_PERIOD,  this->tPeriod);
-  writeLeNumberToBeBytes(b + (ptrdiff_t)BLOCK_ALT_DEST_PTR,  va[ADR_BLOCK_DST_LST]);
-  writeLeNumberToBeBytes(b + (ptrdiff_t)BLOCK_CMDQ_IL_PTR,   va[ADR_BLOCK_Q_IL]);
-  writeLeNumberToBeBytes(b + (ptrdiff_t)BLOCK_CMDQ_HI_PTR,   va[ADR_BLOCK_Q_HI]);
-  writeLeNumberToBeBytes(b + (ptrdiff_t)BLOCK_CMDQ_LO_PTR,   va[ADR_BLOCK_Q_LO]);
+  writeLeNumberToBeBytes(b + (ptrdiff_t)BLOCK_ALT_DEST_PTR,  m.at(BLOCK_ALT_DEST_PTR));
+  writeLeNumberToBeBytes(b + (ptrdiff_t)BLOCK_CMDQ_IL_PTR,   m.at(BLOCK_CMDQ_IL_PTR));
+  writeLeNumberToBeBytes(b + (ptrdiff_t)BLOCK_CMDQ_HI_PTR,   m.at(BLOCK_CMDQ_HI_PTR));
+  writeLeNumberToBeBytes(b + (ptrdiff_t)BLOCK_CMDQ_LO_PTR,   m.at(BLOCK_CMDQ_LO_PTR));
   writeLeNumberToBeBytes(b + (ptrdiff_t)BLOCK_CMDQ_WR_IDXS,  this->getWrIdxs());
   writeLeNumberToBeBytes(b + (ptrdiff_t)BLOCK_CMDQ_RD_IDXS,  this->getRdIdxs());
 

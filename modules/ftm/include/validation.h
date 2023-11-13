@@ -96,9 +96,12 @@ typedef boost::multi_index_container<
  > ConstellationCnt_set;
 
 
-namespace MaxDepth {
+namespace MaxOccurrance {
   const unsigned META   = 2;
   const unsigned EVENT  = 1000;
+  const unsigned DST    = 10;
+  const unsigned DSTLL  = 10;
+  const unsigned REF    = 3;
 };
 
 extern const children_t cNonMeta;

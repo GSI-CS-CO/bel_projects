@@ -6,6 +6,7 @@
 #include <string.h>
 #include <algorithm>
 #include <vector>
+#include <map>
 #include <stdexcept>
 #include "ftm_common.h"
 #include "dotstr.h"
@@ -247,6 +248,19 @@ typedef struct {
 
 
 
+typedef std::map<unsigned, uint32_t> mVal; ///< exchange map for override values/ptrs
+
+//non destructive map merge, preference in case of existing key is A (first operand)
+inline mVal operator+(const mVal &A, const mVal &B)
+{
+    mVal AB;
+    AB.insert(A.begin(), A.end());
+    AB.insert(B.begin(), B.end());
+    return AB;
+}
+
+
+
 /** @name Etherbone external cycle staging
  * Etherbone lib does not allow cancellation of prepared cycles and icompleted cycles cannot be stored for later sending.
  * So these structs are a workaround to allow a more flexible staging of transmissions from carpeDM to DM
@@ -386,6 +400,6 @@ void hexDump (const char *desc, vBuf vb);
   */
 std::string nsTimeToDate(uint64_t t, bool noSpaces=false);
 
-
+bool hasEnding (std::string const &fullString, std::string const &ending);
 
 #endif
