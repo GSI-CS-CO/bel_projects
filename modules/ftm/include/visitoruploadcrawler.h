@@ -47,6 +47,7 @@ class VisitorUploadCrawler {
     mVal getSwitchTarget(void) const;
     mVal getFlowDst(void)   const;
     mVal getSwitchDst(void)   const;
+    mVal getOriginDst() const;
     mVal getFlushOvr(void)  const;
     mVal getListDst(void)   const;
     mVal getRefLinks() const;

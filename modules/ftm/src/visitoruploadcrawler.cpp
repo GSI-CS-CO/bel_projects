@@ -99,11 +99,14 @@ vertex_set_t VisitorUploadCrawler::getChildrenByEdgeType(vertex_t vStart, const 
 }
 */
  vertex_t VisitorUploadCrawler::getOnlyChildByEdgeType(vertex_t vStart, const std::string edgeType) const {
-
+  vertex_t ret = null_vertex;
+  
   vertex_vec_t vs = getChildrenByEdgeType(vStart, edgeType);
-  if (vs.size() == 0) return null_vertex;
-  if (vs.size() == 1) return *vs.begin();
   if (vs.size()  > 1) throw std::runtime_error( exIntro + "Node " + g[vStart].name + "has more than one child of that edge type, result is ambiguous\n");
+  //if (vs.size() == 0) ret = null_vertex; 
+  if (vs.size() == 1) ret = *vs.begin();
+  
+  return ret;
 }
 
 //get the adress of a dst node as perceived from a given src node (considers differing RAMs)
@@ -356,6 +359,21 @@ mVal VisitorUploadCrawler::getSwitchDst() const {
   if (dst->cpu != tgt->cpu) throw std::runtime_error(  exIntro + "Target " + g[*vsTgt.begin()].name + "'s CPU must not differ from Dst " + g[*vsDst.begin()].name + "'s CPU\n");
   ret.insert({(unsigned)SWITCH_DEST, (unsigned)at.adrConv(AdrType::MGMT, AdrType::INT , dst->cpu, dst->adr)});
 
+  return ret;
+}
+
+mVal VisitorUploadCrawler::getOriginDst() const {
+  mVal ret;
+
+  vertex_vec_t vsDst = getChildrenByEdgeType(v, det::sOriginDst);
+
+  if(vsDst.size() == 0) { ret.insert({ORIGIN_DEST, LM32_NULL_PTR}); return ret;}// if this command is not connected, return a null pointer as Origindst
+
+  auto dst = at.lookupVertex(*vsDst.begin());
+
+  ret.insert({(unsigned)ORIGIN_DEST, (unsigned)at.adrConv(AdrType::MGMT, AdrType::INT , dst->cpu, dst->adr)});
+  ret.insert({(unsigned)ORIGIN_CPU , (unsigned)dst->cpu});
+ 
   return ret;
 }
 

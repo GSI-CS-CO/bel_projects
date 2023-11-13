@@ -111,7 +111,7 @@ public:
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
   virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
   virtual void accept(const VisitorValidation& v)       const override { v.visit(*this); }
-  void serialise(const vAdr &va, uint8_t* b) const;
+  void serialise(const mVal &m, uint8_t* b) const;
   void deserialise(uint8_t* b);
   node_ptr clone() const override { return boost::make_shared<Origin>(Origin(*this)); }
 };
@@ -136,7 +136,7 @@ public:
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
   virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
   virtual void accept(const VisitorValidation& v)       const override { v.visit(*this); }
-  void serialise(const vAdr &va, uint8_t* b) const;
+  void serialise(const mVal &m, uint8_t* b) const;
   void deserialise(uint8_t* b);
   node_ptr clone() const override { return boost::make_shared<StartThread>(StartThread(*this)); }
 };
