@@ -28,6 +28,11 @@ void TimingMsg::serialise(const mVal &m, uint8_t* b) const {
   writeLeNumberToBeBytes(b + (ptrdiff_t)TMSG_PAR, this->par);
   writeLeNumberToBeBytes(b + (ptrdiff_t)TMSG_RES, this->res);
   writeLeNumberToBeBytes(b + (ptrdiff_t)TMSG_TEF, this->tef);
+
+  /* DynLinks - Legacy support. This will be removed in favour of Ref and Val Links */
+  //Overwrite the buffer with the dyn map pairs we got is cheaper than checking first
+  for (auto it = m.begin(); it != m.end(); it++) { writeLeNumberToBeBytes(b + (ptrdiff_t)it->first, it->second); }
+
 }
 
 void Switch::serialise(const mVal &m, uint8_t* b) const {

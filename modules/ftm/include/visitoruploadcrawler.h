@@ -48,6 +48,7 @@ class VisitorUploadCrawler {
     mVal getFlushOvr(void)  const;
     mVal getListDst(void)   const;
     mVal getRefLinks() const;
+    mVal getValLinks() const;
     static const std::string exIntro;
     vertex_vec_t getChildrenByEdgeType(vertex_t vStart, const std::string edgeType) const;
     //vertex_set_t getChildrenByEdgeType(vertex_t vStart, const std::string edgeType) const;

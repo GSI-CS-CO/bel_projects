@@ -166,21 +166,38 @@ vAdr& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, vAdr& ret, const unsig
   }
 
 
-/*
-  mVal VisitorUploadCrawler::getValLinks() const {    
+
+  mVal VisitorUploadCrawler::getValLinks() const {
+    Graph::out_edge_iterator out_begin, out_end, out_cur;
+    mVal t;
+    /*
+    boost::tie(out_begin, out_end) = out_edges(v,g);
+
+    for (out_cur = out_begin; out_cur != out_end; ++out_cur)
+    {
+      if (g[*out_cur].type == edgeType) {
+        uint32_t oTarget  = s2u(g[*out_cur].fHead);
+        uint32_t oSource  = s2u(g[*out_cur].fTail);
+        uint32_t width    = s2u(g[*out_cur].bWidth) == 64 ? 1 : 0;
+        //we create a map entry, adress offset to adress, that will contain our refPtr
+        //key is offset oSource (e.g. TMSG_RES)
+        //value is the address of the target node + offset oTarget
+        t.insert(oSource, getEdgeTargetAdr(v, target(*out_cur, g)) );
+        if (oTarget / )
+        t.insert(NODE_OPT_DYN, )
+      }
+    }
+    */
+    return t;
+  }    
 
 
-  mVal VisitorUploadCrawler::getRefs() const {
+  mVal VisitorUploadCrawler::getDynSrc() const {
 
-    vAdr ret;
+    mVal ret;
     Graph::out_edge_iterator out_begin, out_end, out_cur;
     boost::tie(out_begin, out_end) = out_edges(v,g);
 
-    uint32_t aId   = LM32_NULL_PTR;
-    uint32_t aPar0 = LM32_NULL_PTR;
-    uint32_t aPar1 = LM32_NULL_PTR;
-    uint32_t aTef  = LM32_NULL_PTR;
-    uint32_t aRes  = LM32_NULL_PTR;
     uint32_t hashXor = 0;
 
 
@@ -190,66 +207,53 @@ vAdr& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, vAdr& ret, const unsig
       else {
 
         if (g[*out_cur].type == det::sDynId) {
-          if (aId != LM32_NULL_PTR) {sErr << "Found more than one dynamic id source" << std::endl; break;
+          if (ret.find(TMSG_ID_LO) == ret.end()) {sErr << "Found more than one dynamic id source" << std::endl; break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
-            aId = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_ID_SMSK);
+            uint32_t aId = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_ID_SMSK);
+            ret.insert({TMSG_ID_LO, aId });
+            
             hashXor ^= x->hash;
           }
         }
         if (g[*out_cur].type == det::sDynPar1) {
-          if (aPar1 != LM32_NULL_PTR) {sErr << "Found more than one dynamic par1 source" << std::endl; break;
+          if (ret.find(TMSG_PAR_HI) == ret.end()){sErr << "Found more than one dynamic par1 source" << std::endl; break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
-            aPar1 = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR1_SMSK);
-            //sLog << "DynAdr 1 0x" << std::hex << aPar1 << std::endl;
+            uint32_t aPar1 = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR1_SMSK);
+            ret.insert({TMSG_PAR_HI, aPar1 });
             hashXor ^= x->hash;
           }
         }
         if (g[*out_cur].type == det::sDynPar0) {
-          if (aPar0 != LM32_NULL_PTR) {sErr << "Found more than one dynamic par0 source" << std::endl; break;
+          if (ret.find(TMSG_PAR_LO) == ret.end()) {sErr << "Found more than one dynamic par0 source" << std::endl; break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
-            aPar0 = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR0_SMSK);
-            //sLog << "DynAdr 0 0x" << std::hex << aPar0 << std::endl;
+            uint32_t aPar0 = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR0_SMSK);
+            ret.insert({TMSG_PAR_LO, aPar0 });
             hashXor ^= x->hash;
           }
         }
-        if (g[*out_cur].type == det::sDynTef) {
-          if (aTef != LM32_NULL_PTR) {sErr << "Found more than one dynamic tef source" << std::endl; break;
-          } else {
-            auto x = at.lookupVertex(target(*out_cur,g));
-            aTef = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_TEF_SMSK);
-            hashXor ^= x->hash;
-          }
-        }
-
-        /
+        
         if (g[*out_cur].type == det::sDynRes) {
-          if (aRes != LM32_NULL_PTR) {sErr << "Found more than one dynamic res source" << std::endl; break;
+          if (ret.find(TMSG_RES) == ret.end()) {sErr << "Found more than one dynamic res source" << std::endl; break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
-            aRes = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_RES_SMSK);
+            uint32_t aRes = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_RES_SMSK);
+            ret.insert({TMSG_RES, aRes});
+            hashXor ^= x->hash;
           }
         }
-        /
+        
       }
     }
 
-    // Use Res field for checksum. Exor the hashes of all dyndata children and add here
-    aTef = hashXor;
-
-    //FIXME this ought to be reserve + indexes, push_back order is too error prone
-
-    ret.push_back(aId);
-    ret.push_back(aPar1);
-    ret.push_back(aPar0);
-    ret.push_back(aTef);
-    ret.push_back(aRes);
+    // Use Res field for checksum. Exor the hashes of all dyndata children and add here if hashXor was modified
+    if (hashXor) ret.insert({TMSG_TEF, hashXor });
 
     return ret;
   }
-*/
+
   mVal VisitorUploadCrawler::getQInfo() const {
     mVal ret;
 
