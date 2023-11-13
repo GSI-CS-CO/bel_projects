@@ -94,6 +94,8 @@
 
   }
 
+  
+
   //Allocation functions
   int AllocTable::allocate(uint8_t cpu, uint32_t hash, vertex_t v, bool staged) {
     uint32_t chunkAdr;

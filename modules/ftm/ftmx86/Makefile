@@ -2,8 +2,8 @@
 # Version Numbers to build #
 ############################
 
-VERSION_FW     = 8.0.4
-VERSION_TOOL   = 0.36.3
+VERSION_FW     = 9.0.0
+VERSION_TOOL   = 0.37.0
 VERSION_CARPEDM= 1.0.0
 
 ifeq ($(findstring asl75,$(shell hostname)),asl75)
@@ -21,8 +21,6 @@ endif
 
 TOP            ?= ../../..
 
-VERSION_FW     = 9.0.0
-VERSION_TOOL   = 0.37.0
 
 BUILD_DATE     = $(shell date +'%Y%m%d')
 BUILD_ID_ROM_ADR = 0x100
@@ -48,29 +46,11 @@ else
 endif
 INSTALLPATH     = $(PREFIX)/bin
 
-# assume that Boost is installed on the maschine. Use BOOSTPATH if the global installed version should not be used.
-# set BOOST_FLAGS depending on the Boost version
-ifeq (,$(wildcard $(BOOSTPATH)/include/boost/version.hpp))
-  BOOST_VERSION:=$(shell grep 'BOOST_LIB_VERSION "' /usr/include/boost/version.hpp | cut -b28-31)
-else
-  BOOST_VERSION:=$(shell grep 'BOOST_LIB_VERSION "' $(BOOSTPATH)/include/boost/version.hpp | cut -b28-31)
-endif
-ifeq ($(BOOST_VERSION),1_75)
-  BOOST_FLAGS=-DBOOST_ALLOW_DEPRECATED_HEADERS -Wno-nonnull
-endif
-
-BUILD_DATE     = $(shell date +'%Y%m%d')
-BUILD_ID_ROM_ADR = 0x100
-BUILD_ID_ROM_SIZE = 0x400
-
-CXX ?= g++
-T_CXX           = $(CXX)
-T_CXXFLAGS      = $(CXXFLAGS) -std=c++11 -fPIC -I$(FTMPATH)/include -I$(EBPATH)/include -I$(EBPATH1) -I$(DIAGPATH) -I$(LZMAPATH) -I$(BOOSTPATH)/include -Wall -O
-T_CXXFLAGS_CDM  = -DBUILD_DATE=\"$(BUILD_DATE)\" -DTOOL_VER=\"$(VERSION_TOOL)\"  -DEXP_VER=\"$(VERSION_FW)\" -DETHERBONE_THROWS=1 -DBUILDID_OFFS=$(BUILD_ID_ROM_ADR) -DBUILDID_SIZE=$(BUILD_ID_ROM_SIZE) $(BOOST_FLAGS)
-
-CC ?= gcc
-T_CC            = $(CC)
-T_CFLAGS        = $(CFLAGS) -Wall -I$(LZMAPATH) -fPIC -Wfatal-errors -D_7ZIP_ST -O
+T_CXX           = g++
+T_CXXFLAGS      = -std=c++11 -fPIC -I$(FTMPATH)/include $(EB_INC) -I$(DIAGPATH) -I$(LZMAPATH) -Wall -O 
+T_CXXFLAGS_CDM  = -DBUILD_DATE=\"$(BUILD_DATE)\" -DTOOL_VER=\"$(VERSION_TOOL)\"  -DEXP_VER=\"$(VERSION_FW)\" -DETHERBONE_THROWS=1 -DBUILDID_OFFS=$(BUILD_ID_ROM_ADR) -DBUILDID_SIZE=$(BUILD_ID_ROM_SIZE)
+T_CC            = gcc
+T_CFLAGS        = -Wall -I$(LZMAPATH) -fPIC -Wfatal-errors -D_7ZIP_ST -O
 
 LZMA_SRC_FILES  = LzmaEnc.c LzmaDec.c LzFind.c
 CDM_SRC_FILES   = event.cpp meta.cpp block.cpp visitoruploadcrawler.cpp visitordownloadcrawler.cpp visitorvertexwriter.cpp hashmap.cpp carpeDMimpl.cpp carpeDM.cpp carpeDMcommand.cpp carpeDMuploadschedule.cpp carpeDMdownloadschedule.cpp carpeDMdiagnostics.cpp graph.cpp alloctable.cpp mempool.cpp dotstr.cpp idformat.cpp grouptable.cpp validation.cpp visitorvalidation.cpp common.cpp carpeDMsafe2remove.cpp lzmaCompression.cpp delayDiagnostics.cpp lockmanager.cpp blocklock.cpp ebwrapper.cpp
