@@ -63,6 +63,15 @@ extern uint8_t cpuId; ///< Id number of this cpu
 extern uint8_t cpuQty; ///< total number of cpus on the DM
 //@}
 
+/** @name Firmware thread and scheduler attributes
+ *  Max number of threads affect memory layout, thus hardcoded
+ */
+//@{
+//#define _THR_QTY_               32           ///< Maximum number of threads
+//#define _HEAP_SIZE_             (_THR_QTY_) ///< Scheduler heap size (power of 2)
+//@}
+
+
 /** @name Shorthands for accessing shared memory area
  *  Provides a shorthand to the start and end of the shared memory area used for host/inter cpu communication
  */

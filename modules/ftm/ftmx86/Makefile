@@ -2,8 +2,8 @@
 # Version Numbers to build #
 ############################
 
-VERSION_FW     = 8.0.4
-VERSION_TOOL   = 0.36.3
+VERSION_FW     = 9.0.0
+VERSION_TOOL   = 0.37.0
 VERSION_CARPEDM= 1.0.0
 
 ifeq ($(findstring asl75,$(shell hostname)),asl75)

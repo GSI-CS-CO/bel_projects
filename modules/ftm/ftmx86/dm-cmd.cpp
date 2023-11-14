@@ -93,10 +93,6 @@ static void help(const char *program) {
 
 }
 
-uint8_t getThreadQty() {
-  return _THR_QTY_;
-}
-
 std::string formatTime(uint64_t t) {
   std::string temp = nsTimeToDate(t);
   int length = temp.length();
@@ -113,7 +109,7 @@ void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
   cdm.showMemSpace();
   if(cdm.isOptimisedS2R()) cdm.dirtyCtShow();
   uint8_t cpuQty = cdm.getCpuQty();
-  uint8_t thrQty = getThreadQty();
+  uint8_t thrQty = cdm.getThrQty();
 
   std::vector<std::string> vsCursor;
   std::vector<std::string> vsCursorPattern;
@@ -189,7 +185,7 @@ void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
 
 void showRawStatus(const char *netaddress, CarpeDM& cdm) {
   uint8_t cpuQty = cdm.getCpuQty();
-  uint8_t thrQty = getThreadQty();
+  uint8_t thrQty = cdm.getThrQty();
 
   std::vector<std::string> vsCursor;
   std::vector<std::string> vsCursorPattern;
@@ -395,7 +391,7 @@ bool handleCpuBitsThreadBits(const char *text, uint32_t cpuBits, uint32_t thread
     uint64_t parameter = std::stoll(*targetName, nullptr, 0);
     for (int cpu = 0; cpu < cdm.getCpuQty(); cpu++) {
       if ((cpuBits >> cpu) & 1) {
-        for (int thread=0; thread < getThreadQty(); thread++) {
+        for (int thread=0; thread < cdm.getThrQty(); thread++) {
           if ((threadBits >> thread) & 1) {
             (cdm.*setter)(ew, cpu, thread, parameter);
             std::cout << std::dec << "setting " << text << ": CPU " << cpu << " Thread " << thread << "." << std::endl;
@@ -408,7 +404,7 @@ bool handleCpuBitsThreadBits(const char *text, uint32_t cpuBits, uint32_t thread
   } else {
     for (int cpu = 0; cpu < cdm.getCpuQty(); cpu++) {
       if ((cpuBits >> cpu) & 1) {
-        for (int thread=0; thread < getThreadQty(); thread++) {
+        for (int thread=0; thread < cdm.getThrQty(); thread++) {
           if ((threadBits >> thread) & 1) {
             std::string caption = std::string(text);
             caption[0] = std::toupper(caption[0]);
@@ -561,7 +557,7 @@ int main(int argc, char* argv[]) {
     }
   }
   if (setThreadBits) {
-    uint32_t uTemp = getBitMask(tempThreadBits, getThreadQty(), program, &error, "Thread");
+    uint32_t uTemp = getBitMask(tempThreadBits, cdm.getThrQty(), program, &error, "Thread");
     if (error == 0) {
       threadBits = uTemp;
     } else {
@@ -593,14 +589,14 @@ int main(int argc, char* argv[]) {
         uint32_t bits = std::stol(targetName, nullptr, 0);
         for (int cpu=0; cpu < cdm.getCpuQty(); cpu++) {
           if ((cpuBits >> cpu) & 1) {
-            cdm.setThrAbort(ew, cpu, bits & ((1ll<<getThreadQty())-1));
+            cdm.setThrAbort(ew, cpu, bits & ((1ll<<cdm.getThrQty())-1));
             std::cout << "CPU " << cpu << " Threads 0x" << std::hex << bits << " set for abort." << std::endl;
           }
         }
       } else {
         for (int cpu=0; cpu < cdm.getCpuQty(); cpu++) {
           if ((cpuBits >> cpu) & 1) {
-            for (int thread=0; thread < getThreadQty(); thread++) {
+            for (int thread=0; thread < cdm.getThrQty(); thread++) {
               if ((threadBits >> thread) & 1) {
                 cdm.abortThr(ew, cpu, thread);
                 //~ std::cout << "CPU " << cpu << " Thread " << thread << " aborted. " << std::bitset<8>{threadBits} << std::endl;
@@ -691,7 +687,7 @@ int main(int argc, char* argv[]) {
 
     // Main 'if else if' over all commands
     if (cmp == dnt::sCmdNoop) {
-      for (int thread=0; thread < getThreadQty(); thread++) {
+      for (int thread=0; thread < cdm.getThrQty(); thread++) {
         if ((threadBits >> thread) & 1) {
           try {
             cdm.createQCommand(ew, cmp, targetName, cmdPrio, cmdQty, true, 0, thread);
@@ -802,7 +798,7 @@ int main(int argc, char* argv[]) {
       // no return here, next action: send commands with ew vector.
     } else if (cmp == "asyncclear") {
       try {
-        for (int thread=0; thread < getThreadQty(); thread++) {
+        for (int thread=0; thread < cdm.getThrQty(); thread++) {
           if ((threadBits >> thread) & 1) {
             cdm.createNonQCommand(ew, dnt::sCmdAsyncClear, targetName, thread);
           }
@@ -854,7 +850,7 @@ int main(int argc, char* argv[]) {
         }
         for (int cpu = 0; cpu < cdm.getCpuQty(); cpu++) {
           if ((cpuBits >> cpu) & 1) {
-            for (int thread=0; thread < getThreadQty(); thread++) {
+            for (int thread=0; thread < cdm.getThrQty(); thread++) {
               if ((threadBits >> thread) & 1) {
                 // set the origin for the first thread in threadBits, then break.
                 // possible improvement: error message if more bits are set in threadBits.
@@ -868,7 +864,7 @@ int main(int argc, char* argv[]) {
       if (verbose | (targetName.empty())) {
         for (int cpu = 0; cpu < cdm.getCpuQty(); cpu++) {
           if ((cpuBits >> cpu) & 1) {
-            for (int thread=0; thread < getThreadQty(); thread++) {
+            for (int thread=0; thread < cdm.getThrQty(); thread++) {
               if ((threadBits >> thread) & 1) {
                 std::cout << "CPU " << cpu << " Thread " << thread << " origin points to node " << cdm.getThrOrigin(cpu, thread) << std::endl;
               }
@@ -881,7 +877,7 @@ int main(int argc, char* argv[]) {
     } else if (cmp == "cursor") {
       for (int cpu = 0; cpu < cdm.getCpuQty(); cpu++) {
         if ((cpuBits >> cpu) & 1) {
-          for (int thread=0; thread < getThreadQty(); thread++) {
+          for (int thread=0; thread < cdm.getThrQty(); thread++) {
             if ((threadBits >> thread) & 1) {
               std::cout << "Currently at " << cdm.getThrCursor(cpu, thread) << std::endl;
             }
@@ -892,7 +888,7 @@ int main(int argc, char* argv[]) {
     } else if (cmp == "force") {
       for (int cpu = 0; cpu < cdm.getCpuQty(); cpu++) {
         if ((cpuBits >> cpu) & 1) {
-          for (int thread=0; thread < getThreadQty(); thread++) {
+          for (int thread=0; thread < cdm.getThrQty(); thread++) {
             if ((threadBits >> thread) & 1) {
               cdm.forceThrCursor(cpu, thread);
             }
@@ -918,7 +914,7 @@ int main(int argc, char* argv[]) {
         uint32_t bits = std::stol(targetName, nullptr, 0);
         for (int cpu = 0; cpu < cdm.getCpuQty(); cpu++) {
           if ((cpuBits >> cpu) & 1) {
-            for (int i=0; i < getThreadQty(); i++) {
+            for (int i=0; i < cdm.getThrQty(); i++) {
               if ((bits >> i) & 1) {
                 origin = cdm.getThrOrigin(cpu, i);
                 if ((origin == DotStr::Node::Special::sIdle) || (origin == DotStr::Misc::sUndefined)) {
@@ -927,13 +923,14 @@ int main(int argc, char* argv[]) {
                 }
               }
             }
-            cdm.setThrStart(ew, cpu, bits & ((1ll<<getThreadQty())-1));
+            cdm.setThrStart(ew, cpu, bits & ((1ll<<cdm.getThrQty())-1));
           }
         }
+
       } else {
         for (int cpu = 0; cpu < cdm.getCpuQty(); cpu++) {
           if ((cpuBits >> cpu) & 1) {
-            for (int thread=0; thread < getThreadQty(); thread++) {
+            for (int thread=0; thread < cdm.getThrQty(); thread++) {
               if ((threadBits >> thread) & 1) {
                 origin = cdm.getThrOrigin(cpu, thread);
                 if ((origin == DotStr::Node::Special::sIdle) || (origin == DotStr::Misc::sUndefined)) {
@@ -972,7 +969,7 @@ int main(int argc, char* argv[]) {
     } else if (cmp == "startpattern")  {
       //check if a valid origin was assigned before executing
       if (!targetName.empty()) {
-        for (int thread=0; thread < getThreadQty(); thread++) {
+        for (int thread=0; thread < cdm.getThrQty(); thread++) {
           if ((threadBits >> thread) & 1) {
             cdm.startPattern(ew, targetName, thread);
             //~ std::cout << "Pattern '" << targetName << "' started on thread " << thread << "." << std::endl;

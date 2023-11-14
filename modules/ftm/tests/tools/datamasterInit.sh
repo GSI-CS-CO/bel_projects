@@ -4,7 +4,7 @@
 
 if [ ! $BEL_PROJECTS_PATH ]
 then
-  BEL_PROJECTS_PATH=$HOME/bel_projects/dev
+  BEL_PROJECTS_PATH=$HOME/bel_projects/ftm
 fi
 
 if [ $# -eq 1 ]
@@ -34,6 +34,12 @@ then
   echo -n -e '\n\ndev/wbm0 monitoring: '; eb-mon -v dev/wbm0
   echo -n 'dev/wbm1 datamaster IP: '; eb-mon -i dev/wbm1
   echo -n 'dev/wbm1 datamaster WR sync status: '; eb-mon -y dev/wbm1
+  # Build the latest firmware
+  if [ $# -eq 2 ] && [ ${FIRMWARE} == "ftm.bin" ]
+  then
+    PATH=$PATH:$BEL_PROJECTS_PATH/lm32-toolchain/bin/ make -C $BEL_PROJECTS_PATH/syn/gsi_pexarria5/ftm/ $FIRMWARE
+    FIRMWARE=$BEL_PROJECTS_PATH/syn/gsi_pexarria5/ftm/ftm.bin
+  fi
   # Load the latest firmware to datamaster
   $BEL_PROJECTS_PATH/syn/gsi_pexarria5/ftm/fwload_all.sh $DM $FIRMWARE
   # Test that the tools version and the firmware version are compatible

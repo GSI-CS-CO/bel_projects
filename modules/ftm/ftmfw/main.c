@@ -106,6 +106,11 @@ void init()
   discoverPeriphery();
   cpuId = getCpuIdx();
 
+  p[(SHCTL_ADR_TAB >> 2) + ADRLUT_SHCTL_THR_STA] = SHCTL_THR_STA;
+  p[(SHCTL_ADR_TAB >> 2) + ADRLUT_SHCTL_THR_DAT] = SHCTL_THR_DAT;
+  p[(SHCTL_ADR_TAB >> 2) + ADRLUT_SHCTL_HEAP]    = SHCTL_HEAP;
+  p[(SHCTL_ADR_TAB >> 2) + ADRLUT_SHCTL_REGS]    = SHCTL_REGS;
+  p[(SHCTL_ADR_TAB >> 2) + ADRLUT_SHCTL_END]     = _SHCTL_END_;
 
 
   if (cpuId == 0) {
