@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 18-Oct-2023
+ *  version : 06-Nov-2023
  *
  * publishes raw data of the b2b system
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000700
+#define B2B_SERV_RAW_VERSION 0x000701
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -106,6 +106,51 @@ uint32_t sid;                           // Sequence ID
 uint32_t bpid;                          // Beam Process ID
 
 
+// init setval
+void initSetval(setval_t *setval)
+{
+  setval->mode                  = -1;
+  setval->ext_T                 = -1;
+  setval->ext_h                 = -1;
+  setval->ext_cTrig             = NAN;
+  setval->inj_T                 = -1;
+  setval->inj_h                 = -1;
+  setval->inj_cTrig             = NAN;
+  setval->cPhase                = NAN;
+} // initSetval
+
+// init getval
+void initGetval(getval_t *getval)
+{
+  getval->ext_phase             = -1;
+  getval->ext_phaseFract        = NAN;
+  getval->ext_phaseErr          = NAN;
+  getval->ext_phaseSysmaxErr    = NAN;
+  getval->ext_dKickMon          = NAN;
+  getval->ext_dKickProb         = NAN;
+  getval->ext_diagPhase         = NAN;
+  getval->ext_diagMatch         = NAN;
+  getval->inj_phase             = -1;
+  getval->inj_phaseFract        = NAN;
+  getval->inj_phaseErr          = NAN;
+  getval->inj_phaseSysmaxErr    = NAN;
+  getval->inj_dKickMon          = NAN;
+  getval->inj_dKickProb         = NAN;
+  getval->inj_diagPhase         = NAN;
+  getval->inj_diagMatch         = NAN;
+  getval->flagEvtRec            = 0;
+  getval->flagEvtErr            = 0;
+  getval->flagEvtLate           = 0;
+  getval->tCBS                  = -1;
+  getval->finOff                = NAN;
+  getval->prrOff                = NAN;
+  getval->preOff                = NAN;
+  getval->priOff                = NAN;
+  getval->kteOff                = NAN;
+  getval->ktiOff                = NAN;
+} // initGetval
+
+
 // update set value
 void disUpdateSetval(uint32_t sid, uint64_t tStart, setval_t setval)
 {
@@ -171,40 +216,14 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       sid                          = recSid;
       tStart                       = deadline.getUTC();
       flagActive                   = 1;
-      setval.mode                  = 0;      // there is no illegal value for 'mode', in the simplest case it is '0' (OFF)
-      setval.ext_T                 = -1;
-      setval.ext_h                 = -1;
-      setval.ext_cTrig             = NAN;
-      setval.inj_T                 = -1;
-      setval.inj_h                 = -1;
-      setval.inj_cTrig             = NAN;
-      setval.cPhase                = NAN;
-      getval.ext_phase             = -1;
-      getval.ext_phaseFract        = NAN;
-      getval.ext_phaseErr          = NAN;
-      getval.ext_phaseSysmaxErr    = NAN;
-      getval.ext_dKickMon          = NAN;
-      getval.ext_dKickProb         = NAN;
-      getval.ext_diagPhase         = NAN;
-      getval.ext_diagMatch         = NAN;
-      getval.inj_phase             = -1;
-      getval.inj_phaseFract        = NAN;
-      getval.inj_phaseErr          = NAN;
-      getval.inj_phaseSysmaxErr    = NAN;
-      getval.inj_dKickMon          = NAN;
-      getval.inj_dKickProb         = NAN;
-      getval.inj_diagPhase         = NAN;
-      getval.inj_diagMatch         = NAN;
+      
+      initSetval(&setval);
+      setval.mode                  = 0;      // in the simplest case mode is '0' (OFF)
+
+      initGetval(&getval);
       getval.flagEvtRec            = 0x1 << tag;
-      getval.flagEvtErr            = 0;
       getval.flagEvtLate           = isLate << tag;
       getval.tCBS                  = deadline.getTAI();
-      getval.finOff                = NAN;
-      getval.prrOff                = NAN;
-      getval.preOff                = NAN;
-      getval.priOff                = NAN;
-      getval.kteOff                = NAN;
-      getval.ktiOff                = NAN;
       break;
     case tagStop    :
       flagActive       = 0;
@@ -484,7 +503,11 @@ int main(int argc, char** argv)
         return -1;;
   } // switch extRing
   
-
+  // init DIM service data
+  for (i=0; i< B2B_NSID; i++ ) {
+    initSetval(&(disSetval[i]));
+    initGetval(&(disGetval[i]));
+  } // for i
   
   if (optind+1 < argc) sprintf(prefix, "b2b_%s_%s", argv[++optind], ringName);
   else                 sprintf(prefix, "b2b_%s", ringName);
