@@ -528,7 +528,7 @@ vEbwrs& CarpeDM::CarpeDMimpl::createCommandBurst(vEbwrs& ew, Graph& g) {
     if (verbose) sLog << "Aborting all activity" << std::endl;
     vEbwrs ew;
     uint8_t b[4];
-    writeLeNumberToBeBytes<uint32_t>(b, (1 << ebd.getThrQty())-1 );
+    writeLeNumberToBeBytes<uint32_t>(b, (uint32_t)((1ll << ebd.getThrQty())-1) );
 
 
     for(uint8_t cpuIdx=0; cpuIdx < ebd.getCpuQty(); cpuIdx++) {
