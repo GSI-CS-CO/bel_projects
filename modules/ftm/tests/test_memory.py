@@ -1,5 +1,4 @@
 import dm_testbench
-import pytest
 
 """Class tests the memory limit for single CPUs and the whole datamaster.
 """
@@ -50,51 +49,35 @@ the limit is maxNodesThread32.
 """
 class UnitTestMemoryFull(dm_testbench.DmTestbench):
 
-  maxNodesThread8 = 1869
-  maxNodesThread8Cpu3 = 1675
-  maxNodesThread32 = 1840
-  maxNodesThread32Cpu3 = 1654
+  def setUp(self):
+    super().setUp();
+    if self.threadQuantity == 8:
+      self.maxNodes = 1869
+      self.maxNodesCpu3 = 1675
+    else:
+      self.maxNodes = 1839
+      self.maxNodesCpu3 = 1634
 
   def test_memory_full_bad(self):
     """ Test the memory for one CPU with more nodes than allowed. The add-operation should stop with a rollback. """
     fileName = self.schedules_folder + 'memory_full.dot'
-    self.generate_schedule(fileName, self.maxNodesThread8 + 5)
+    self.generate_schedule(fileName, self.maxNodes + 5)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [250], linesCout=2, linesCerr=2)
     self.deleteFile(fileName)
 
-  @pytest.mark.thread8
   def test_memory_full_bad1(self):
     """ Test the memory for one CPU with more nodes than allowed. The add-operation should stop with a rollback. """
     fileName = self.schedules_folder + 'memory_full.dot'
-    self.generate_schedule(fileName, self.maxNodesThread8 + 1)
+    self.generate_schedule(fileName, self.maxNodes + 1)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [250], linesCout=2, linesCerr=2)
     self.deleteFile(fileName)
 
-  @pytest.mark.thread32
-  def test_memory_full_bad1_thread32(self):
-    """ Test the memory for one CPU with more nodes than allowed. The add-operation should stop with a rollback. """
-    fileName = self.schedules_folder + 'memory_full_bad1_thread32.dot'
-    self.generate_schedule(fileName, self.maxNodesThread32 + 1)
-    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
-        fileName), [250], linesCout=2, linesCerr=2)
-    self.deleteFile(fileName)
-
-  @pytest.mark.thread8
   def test_memory_full_ok(self):
     """ Test the memory for one CPU with the maximum number of nodes."""
     fileName = self.schedules_folder + 'memory_full_ok.dot'
-    self.generate_schedule(fileName, self.maxNodesThread8)
-    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
-        fileName), [0], linesCout=0, linesCerr=0)
-    self.deleteFile(fileName)
-
-  @pytest.mark.thread32
-  def test_memory_full_ok_thread32(self):
-    """ Test the memory for one CPU with the maximum number of nodes."""
-    fileName = self.schedules_folder + 'memory_full_ok_thread32.dot'
-    self.generate_schedule(fileName, self.maxNodesThread32)
+    self.generate_schedule(fileName, self.maxNodes)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [0], linesCout=0, linesCerr=0)
     self.deleteFile(fileName)
@@ -102,103 +85,53 @@ class UnitTestMemoryFull(dm_testbench.DmTestbench):
   def test_memory_overfull(self):
     """ Test the memory for one CPU with more nodes than allowed. The add-operation should stop with a rollback."""
     fileName = self.schedules_folder + 'memory_overfull.dot'
-    self.generate_schedule(fileName, self.maxNodesThread8 + 5)
+    self.generate_schedule(fileName, self.maxNodes + 5)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [250], linesCout=2, linesCerr=2)
     self.deleteFile(fileName)
 
-  @pytest.mark.thread8
   def test_memory_full_4cpuOK(self):
     """Test the memory for all 4 CPUs with the maximum number of nodes allowed."""
     fileName = self.schedules_folder + 'memory_full_4cpuOK_cpu0.dot'
-    self.generate_schedule(fileName, self.maxNodesThread8, 0)
+    self.generate_schedule(fileName, self.maxNodes, 0)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [0], linesCout=0, linesCerr=0)
     self.deleteFile(fileName)
     fileName = self.schedules_folder + 'memory_full_4cpuOK_cpu1.dot'
-    self.generate_schedule(fileName, self.maxNodesThread8, 1)
+    self.generate_schedule(fileName, self.maxNodes, 1)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [0], linesCout=0, linesCerr=0)
     self.deleteFile(fileName)
     fileName = self.schedules_folder + 'memory_full_4cpuOK_cpu2.dot'
-    self.generate_schedule(fileName, self.maxNodesThread8, 2)
+    self.generate_schedule(fileName, self.maxNodes, 2)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [0], linesCout=0, linesCerr=0)
     self.deleteFile(fileName)
     fileName = self.schedules_folder + 'memory_full_4cpuOK_cpu3.dot'
-    self.generate_schedule(fileName, self.maxNodesThread8Cpu3, 3)
+    self.generate_schedule(fileName, self.maxNodesCpu3, 3)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [0], linesCout=0, linesCerr=0)
     self.deleteFile(fileName)
 
-  @pytest.mark.thread32
-  def test_memory_full_4cpuOK_thread32(self):
-    """Test the memory for all 4 CPUs with the maximum number of nodes allowed."""
-    fileName = self.schedules_folder + 'memory_full_4cpuOK_thread32_cpu0.dot'
-    self.generate_schedule(fileName, self.maxNodesThread32, 0)
-    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
-        fileName), [0], linesCout=0, linesCerr=0)
-    self.deleteFile(fileName)
-    fileName = self.schedules_folder + 'memory_full_4cpuOK_thread32_cpu1.dot'
-    self.generate_schedule(fileName, self.maxNodesThread32, 1)
-    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
-        fileName), [0], linesCout=0, linesCerr=0)
-    self.deleteFile(fileName)
-    fileName = self.schedules_folder + 'memory_full_4cpuOK_thread32_cpu2.dot'
-    self.generate_schedule(fileName, self.maxNodesThread32, 2)
-    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
-        fileName), [0], linesCout=0, linesCerr=0)
-    self.deleteFile(fileName)
-    fileName = self.schedules_folder + 'memory_full_4cpuOK_thread32_cpu3.dot'
-    self.generate_schedule(fileName, self.maxNodesThread32Cpu3, 3)
-    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
-        fileName), [0], linesCout=0, linesCerr=0)
-    self.deleteFile(fileName)
-
-  @pytest.mark.thread8
   def test_memory_full_4cpuFail(self):
     """Test the memory for all 4 CPUs with exactly one node more than allowed."""
     fileName = self.schedules_folder + 'memory_full_4cpuFail_cpu0.dot'
-    self.generate_schedule(fileName, self.maxNodesThread8, 0)
+    self.generate_schedule(fileName, self.maxNodes, 0)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [0], linesCout=0, linesCerr=0)
     self.deleteFile(fileName)
     fileName = self.schedules_folder + 'memory_full_4cpuFail_cpu1.dot'
-    self.generate_schedule(fileName, self.maxNodesThread8, 1)
+    self.generate_schedule(fileName, self.maxNodes, 1)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [0], linesCout=0, linesCerr=0)
     self.deleteFile(fileName)
     fileName = self.schedules_folder + 'memory_full_4cpuFail_cpu2.dot'
-    self.generate_schedule(fileName, self.maxNodesThread8, 2)
+    self.generate_schedule(fileName, self.maxNodes, 2)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [0], linesCout=0, linesCerr=0)
     self.deleteFile(fileName)
     fileName = self.schedules_folder + 'memory_full_4cpuFail_cpu3.dot'
-    self.generate_schedule(fileName, self.maxNodesThread8Cpu3 + 1, 3)
-    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
-        fileName), [250], linesCout=2, linesCerr=3)
-    self.deleteFile(fileName)
-
-  @pytest.mark.thread32
-  def test_memory_full_4cpuFail_thread32(self):
-    """Test the memory for all 4 CPUs with exactly one node more than allowed."""
-    fileName = self.schedules_folder + 'memory_full_4cpuFail_thread32_cpu0.dot'
-    self.generate_schedule(fileName, self.maxNodesThread32, 0)
-    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
-        fileName), [0], linesCout=0, linesCerr=0)
-    self.deleteFile(fileName)
-    fileName = self.schedules_folder + 'memory_full_4cpuFail_thread32_cpu1.dot'
-    self.generate_schedule(fileName, self.maxNodesThread32, 1)
-    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
-        fileName), [0], linesCout=0, linesCerr=0)
-    self.deleteFile(fileName)
-    fileName = self.schedules_folder + 'memory_full_4cpuFail_thread32_cpu2.dot'
-    self.generate_schedule(fileName, self.maxNodesThread32, 2)
-    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
-        fileName), [0], linesCout=0, linesCerr=0)
-    self.deleteFile(fileName)
-    fileName = self.schedules_folder + 'memory_full_4cpuFail_thread32_cpu3.dot'
-    self.generate_schedule(fileName, self.maxNodesThread32Cpu3 + 1, 3)
+    self.generate_schedule(fileName, self.maxNodesCpu3 + 1, 3)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [250], linesCout=2, linesCerr=3)
     self.deleteFile(fileName)
@@ -245,28 +178,13 @@ class UnitTestMemoryFull(dm_testbench.DmTestbench):
         [0], linesCout=1, linesCerr=0)
     self.deleteFile(fileName)
 
-  @pytest.mark.thread8
   def test_memory_full_msg_ok(self):
     """ Test the memory with the maximum number of allowed nodes.
     Add the schedule and start the pattern.
     """
     fileName = self.schedules_folder + 'memory_full_msg.dot'
     patternName = 'PatternMsgOk'
-    self.generate_schedule_msg(fileName, patternName, self.maxNodesThread8 - 2)
-    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
-        fileName), [0], linesCout=0, linesCerr=0)
-    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', patternName),
-        [0], linesCout=1, linesCerr=0)
-    self.deleteFile(fileName)
-
-  @pytest.mark.thread32
-  def test_memory_full_msg_ok_thread32(self):
-    """ Test the memory with the maximum number of allowed nodes.
-    Add the schedule and start the pattern.
-    """
-    fileName = self.schedules_folder + 'memory_full_msg_thread32.dot'
-    patternName = 'PatternMsgOk'
-    self.generate_schedule_msg(fileName, patternName, self.maxNodesThread32 - 2)
+    self.generate_schedule_msg(fileName, patternName, self.maxNodes - 2)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [0], linesCout=0, linesCerr=0)
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', patternName),
