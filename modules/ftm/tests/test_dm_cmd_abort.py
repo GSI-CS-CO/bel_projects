@@ -1,34 +1,13 @@
 import subprocess
 import dm_testbench    # contains super class
-import pytest
 
 """
 Module collects tests for dm-cmd with the command 'abort'.
 Main focus is testing with bit masks for CPUs and threads.
-
-Tests are prepared for 8 threads and 32 threads in lm32 firmware.
 """
 class AbortTests(dm_testbench.DmTestbench):
 
-  def setUp(self):
-    """Setup CPU quantity and thread quantity for 8 threads.
-    Tests for 32 threads must change the threadQuantity before any test
-    action.
-    """
-    super().setUp()
-    self.threadQuantity = 8
-    self.cpuQuantity = 4
-
-  @pytest.mark.thread8
   def testAbortRunningThreads(self):
-    self.runAbortRunningThreads()
-
-  @pytest.mark.thread32
-  def testAbortRunningThreads32(self):
-    self.threadQuantitiy = 32
-    self.runAbortRunningThreads()
-
-  def runAbortRunningThreads(self):
     """Prepare all threads on all CPUs.
     Abort some threads. Check that these are not running.
     """
@@ -68,7 +47,6 @@ class AbortTests(dm_testbench.DmTestbench):
         messageText = 'wrong output, expected: CPU {variable} Running Threads: {mask}'.format(variable=i, mask=threadMask)
         self.assertEqual(lines[0][i], expectedText, messageText)
 
-  @pytest.mark.thread8
   def testAbortSingleThreadDecimal(self):
     """Loop over all CPUs and all threads aborting this thread.
     Uses the thread number in decimal form.
@@ -77,31 +55,10 @@ class AbortTests(dm_testbench.DmTestbench):
       for thread in range(self.threadQuantity):
         self.runThreadXCommand(cpu, thread, 'abort')
 
-  @pytest.mark.thread8
   def testAbortSingleThreadHex(self):
     """Loop over all CPUs and all threads aborting this thread.
     Uses the thread number in hexadecimal form.
     """
-    for cpu in range(self.cpuQuantity):
-      for thread in range(self.threadQuantity):
-        self.runThreadXCommand(cpu, f'0x{(1 << thread):x}', 'abort')
-
-  @pytest.mark.thread32
-  def testAbortSingleThreadDecimal32(self):
-    """Loop over all CPUs and all threads aborting this thread.
-    Uses the thread number in decimal form.
-    """
-    self.threadQuantity = 32
-    for cpu in range(self.cpuQuantity):
-      for thread in range(self.threadQuantity):
-        self.runThreadXCommand(cpu, thread, 'abort')
-
-  @pytest.mark.thread32
-  def testAbortSingleThreadHex32(self):
-    """Loop over all CPUs and all threads aborting this thread.
-    Uses the thread number in hexadecimal form.
-    """
-    self.threadQuantity = 32
     for cpu in range(self.cpuQuantity):
       for thread in range(self.threadQuantity):
         self.runThreadXCommand(cpu, f'0x{(1 << thread):x}', 'abort')
