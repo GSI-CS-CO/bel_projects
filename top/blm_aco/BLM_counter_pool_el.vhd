@@ -18,6 +18,8 @@ entity BLM_counter_pool_el is
         neg_threshold     : in std_logic_vector(31 downto 0);
         in_counter        : in std_logic_vector(63 downto 0);
         BLM_cnt_Reg     : in std_logic_vector(15 downto 0);  --bit 11..0
+        up_cnt    : out std_logic_vector (WIDTH-1 downto 0);    -- up Counter register
+        down_cnt  : out std_logic_vector (WIDTH-1 downto 0); -- down Counter register
         UP_OVERFLOW       : out std_logic;     -- UP_Counter overflow for the input signals
         DOWN_OVERFLOW     : out std_logic    -- DOWN_Counter overflow for the input signals
 
@@ -56,6 +58,8 @@ signal cnt_enable: std_logic;
         neg_threshold    : in integer;
         UP_IN            : in std_logic;      -- Load counter register up input
         DOWN_IN          : in std_logic;      -- Load counter register down input
+        up_cnt_val    : out std_logic_vector (WIDTH-1 downto 0);    -- up Counter register
+        down_cnt_val  : out std_logic_vector (WIDTH-1 downto 0); -- down Counter register
         UP_OVERFLOW      : out std_logic;     -- UP_Counter overflow
         DOWN_OVERFLOW    : out std_logic      -- UP_Counter overflow
         );
@@ -128,6 +132,9 @@ end process;
             neg_threshold => to_integer(signed(neg_threshold)),
             UP_IN         => cnt_up,   -- Load counter register up input
             DOWN_IN       => cnt_down,  -- Load counter register down input
+            up_cnt_val   => up_cnt,
+            down_cnt_val => down_cnt,
+            
             UP_OVERFLOW   => UP_OVERFLOW,    -- UP_Counter overflow 
             DOWN_OVERFLOW => DOWN_OVERFLOW   -- UP_Counter overflow 
         );

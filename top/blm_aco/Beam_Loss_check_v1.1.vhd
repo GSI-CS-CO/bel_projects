@@ -18,9 +18,10 @@ port (
     BLM_gate_in       : in std_logic_vector(11 downto 0);
     BLM_tst_ck_sig    : in std_logic_vector (10 downto 0);
     --IN registers
-    pos_threshold           : in t_BLM_th_Array; --t_BLM_th_Array is array (0 to 255) of std_logic_vector(31 downto 0);
+    pos_threshold           : in t_BLM_th_Array; --t_BLM_th_Array is array (0 to 127) of std_logic_vector(31 downto 0);
     neg_threshold           : in t_BLM_th_Array ;
     BLM_wdog_hold_time_Reg  : in std_logic_vector(15 downto 0);
+    BLM_wd_reset            : in std_logic_vector(53 downto 0);
     BLM_gate_hold_time_Reg  : in  t_BLM_gate_hold_Time_Array;
     BLM_ctrl_Reg            : in std_logic_vector(15 downto 0); -- bit 0 = counter RESET, 
                                                                 -- bit 1: when 0 the outputs of board in slot 12 are the direct outptuts of the output OR, 
@@ -29,13 +30,19 @@ port (
                                                                 -- bit 14 reset from gate
                                                                 -- bit 15 free
 
-    BLM_gate_seq_ck_sel_Reg : in std_logic_vector(15 downto 0);
+    BLM_gate_seq_prep_ck_sel_Reg : in std_logic_vector(15 downto 0);-- bit 15 free
+                                                                   -- bit 14-3 for gate_prepare signals
+                                                                  -- bit 2-0 for the clock gate sel, the same for all
+    BLM_gate_recover_Reg : in std_logic_vector(15 downto 0); -- bit 15_12 free
+                                                            -- bit 11-0 for gate_prepare signals
+
     BLM_gate_seq_in_ena_Reg : in std_logic_vector(15 downto 0); --"00"& ena for gate board1 &"00" & ena for gate board2 
-    BLM_in_sel_Reg          : in t_BLM_reg_Array; --256 x (4 bit for gate ena & 6 bit for up signal ena & 6 for down signal ena)
-    BLM_out_sel_reg : in t_BLM_out_sel_reg_Array;  --217 x 16 bits = "0000" and 6 x (54 watchdog errors+ 12 gate errors + 512 counter outputs )     
-    
+    BLM_in_sel_Reg          : in t_BLM_reg_Array; --128 x (4 bit for gate ena & 6 bit for up signal ena & 6 for down signal ena)
+    BLM_out_sel_reg : in t_BLM_out_sel_reg_Array;  --128 x 16 bits = "0000" and 6 x (54 watchdog errors+ 12 gate errors + 256 counter outputs )     
+    BLM_cnt_read_Reg: in std_logic_vector(15 downto 0);
     -- OUT register
-    BLM_status_Reg    : out t_IO_Reg_0_to_37_Array;
+    BLM_status_Reg    : out t_IO_Reg_0_to_23_Array ;
+
       -- OUT BLM
       BLM_Out           : out std_logic_vector(5 downto 0) 
 );
@@ -55,13 +62,20 @@ architecture rtl of Beam_Loss_check is
   signal INT_out: std_logic_vector(53 downto 0);
   signal gate_error: std_logic_vector(11 downto 0);
   signal Gate_In_Mtx: std_logic_vector (11 downto 0):= (OTHERS => '0');  -- gate outputs from the gate timing sequence control
-  signal UP_OVERFLOW: std_logic_vector(255 downto 0);     
-  signal DOWN_OVERFLOW: std_logic_vector(255 downto 0);  
-  signal gate_sel: integer range 0 to 255;
-  signal cnt_enable: std_logic_vector(255 downto 0);
+  signal UP_OVERFLOW: std_logic_vector(127 downto 0);     
+  signal DOWN_OVERFLOW: std_logic_vector(127 downto 0);  
+  signal gate_sel: integer range 0 to 127;
+  signal cnt_enable: std_logic_vector(127 downto 0);
   signal BLM_Output_mtx: t_BLM_out_Array;
   signal gate_output: std_logic_vector (11 downto 0);
-
+  signal wd_reset: std_logic_vector(53 downto 0);
+  signal BLM_gate_recover: std_logic_vector(11 downto 0);
+  signal BLM_gate_seq_clk_sel: std_logic_vector(2 downto 0);
+  signal BLM_gate_prepare : std_logic_vector(11 downto 0);
+  TYPE    t_BLM_counter_Array           is array (0 to 127) of std_logic_vector(19 downto 0);
+  signal up_counter_value, down_counter_value: t_BLM_counter_Array;
+  signal up_counter: t_BLM_reg_Array;  
+  signal down_counter: t_BLM_reg_Array;  
 
   component BLM_watchdog is
   
@@ -88,6 +102,8 @@ component BLM_gate_timing_seq is
       rstn_i : in std_logic;        -- reset signal
       gate_in : in std_logic_vector(n-1 downto 0);        -- input signal
       gate_seq_ena : in std_logic_vector(11 downto 0);     -- enable '1' for input connected to the counter
+      BLM_gate_recover: in std_logic_vector(11 downto 0); 
+      BLM_gate_prepare : in std_logic_vector(11 downto 0); 
       hold_time : in  t_BLM_gate_hold_Time_Array;
       timeout_error : out std_logic_vector(n-1 downto 0); -- gate doesn't start within the given timeout
       gate_out: out std_logic_vector(n-1 downto 0)        -- out gate signal
@@ -100,7 +116,7 @@ component BLM_gate_timing_seq is
           nRST              : in std_logic;      -- Reset
           mux_sel           : in t_BLM_reg_Array;
           in_mux            : in std_logic_vector(11 downto 0);
-          cnt_enable        : out std_logic_vector(255 downto 0)
+          cnt_enable        : out std_logic_vector(127 downto 0)
       );
   end component BLM_ena_in_mux;
 
@@ -121,6 +137,8 @@ component BLM_gate_timing_seq is
         neg_threshold     : in std_logic_vector(31 downto 0);
         in_counter        : in std_logic_vector(63 downto 0);
         BLM_cnt_Reg     : in std_logic_vector(15 downto 0);  -- bit 5-0 = up_in_counter select, bit 11-6 = down_in_counter select, 15..13 in_ena
+        up_cnt    : out std_logic_vector (WIDTH-1 downto 0);    -- up Counter register
+        down_cnt  : out std_logic_vector (WIDTH-1 downto 0); -- down Counter register
         UP_OVERFLOW       : out std_logic;     -- UP_Counter overflow for the input signals
         DOWN_OVERFLOW     : out std_logic    -- DOWN_Counter overflow for the input signals
 
@@ -133,17 +151,20 @@ component BLM_gate_timing_seq is
       port (
         CLK              : in std_logic;      -- Clock
         nRST             : in std_logic;      -- Reset
-        BLM_out_sel_reg : in t_BLM_out_sel_reg_Array;  --217 x 16 bits = "0000" and 6 x (512 counter outputs + 12 gate errors + 54 watchdog errors)                                                
+        BLM_out_sel_reg : in t_BLM_out_sel_reg_Array;  --121 x 16 bits = "0000" and 6 x (128 counter outputs + 12 gate errors + 54 watchdog errors)                                                
         
-        UP_OVERFLOW      : in std_logic_vector(255 downto 0);
-        DOWN_OVERFLOW    : in std_logic_vector(255 downto 0);
-      
+        UP_OVERFLOW      : in std_logic_vector(127 downto 0);
+        DOWN_OVERFLOW    : in std_logic_vector(127 downto 0);
+        
         wd_out           : in std_logic_vector(53 downto 0); 
         gate_in          : in std_logic_vector(11 downto 0); -- to be sent to the status registers
         gate_out        : in std_logic_vector (11 downto 0); 
-           
+        up_counter_reg: in t_BLM_reg_Array;  
+        down_counter_reg: in t_BLM_reg_Array;    
+        BLM_cnt_read_Reg : in std_logic_vector(15 downto 0); 
         BLM_Output      : out std_logic_vector(5 downto 0);
-        BLM_status_Reg : out t_IO_Reg_0_to_37_Array
+        BLM_status_Reg : out t_IO_Reg_0_to_23_Array 
+        
         );
      
     end component BLM_out_el;
@@ -154,16 +175,18 @@ component BLM_gate_timing_seq is
 begin
 
 VALUE_IN <= BLM_test_signal & BLM_data_in;
+BLM_gate_recover <= BLM_gate_recover_Reg(11 downto 0);
+BLM_gate_prepare <= BLM_gate_seq_prep_ck_sel_Reg(14 downto 3);
+BLM_gate_seq_clk_sel <= BLM_gate_seq_prep_ck_sel_Reg(2 downto 0);
 
-
-  gate_timing_clock_sel_proc: process( BLM_gate_seq_ck_sel_Reg)
+  gate_timing_clock_sel_proc: process( BLM_gate_seq_clk_sel)
     begin
     
      for i in 0 to 11 loop
        
       
 
-        case BLM_gate_seq_ck_sel_Reg(2 downto 0)is
+        case BLM_gate_seq_clk_sel is
 
           when "000" 
            =>  gate_clock(i) <= BLM_tst_ck_sig(10);  --100 MHz
@@ -225,6 +248,8 @@ end process direct_gate_operation;
       rstn_i => rstn_sys,         -- reset signal
       gate_in => BLM_gate_in,       -- gate input signals
       gate_seq_ena => BLM_gate_seq_in_ena_Reg(13 downto 8) & BLM_gate_seq_in_ena_Reg(5 downto 0), --"00"& ena for gate board1 &"00" & ena for gate board2
+      BLM_gate_recover => BLM_gate_recover,
+      BLM_gate_prepare => BLM_gate_prepare,
       hold_time => BLM_gate_hold_time_Reg,
       timeout_error => gate_error, -- gate error
       gate_out => gate_output --gate_In_Mtx       -- out gate signal
@@ -237,7 +262,7 @@ end process direct_gate_operation;
          
           port map(
             clk_i => clk_sys,  
-            rstn_i => rstn_sys,   -- reset signal
+            rstn_i => rstn_sys or BLM_wd_reset(i),   -- reset signal
             hold => BLM_wdog_hold_time_Reg,
             in_watchdog => BLM_data_in(i),
             ena_i =>    '1',  -- enable for input connected to the counter
@@ -260,7 +285,7 @@ BLM_counter_ena_block:  BLM_ena_in_mux
 
   ---- counter pool ------------------------------------------------------------------------------
 
-BLM_counter_pool: for i in 0 to 255 generate
+BLM_counter_pool: for i in 0 to 127 generate
 
 BLM_counter_pool_elem: BLM_counter_pool_el
 generic map (      
@@ -275,6 +300,8 @@ port map (
   neg_threshold  => neg_threshold(i),
   in_counter     => VALUE_IN,
   BLM_cnt_Reg    => BLM_in_sel_Reg(i),
+  up_cnt   => up_counter_value(i),
+  down_cnt => down_counter_value(i),
   UP_OVERFLOW    => UP_OVERFLOW(i),
   DOWN_OVERFLOW  => DOWN_OVERFLOW(i)
   );
@@ -299,9 +326,19 @@ BLM_out_section: BLM_out_el
     gate_in         => BLM_gate_in,
     gate_out        => gate_error,
     BLM_Output      => BLM_out,
-  
+    up_counter_reg => up_counter, 
+    down_counter_reg => down_counter,
+    BLM_cnt_read_Reg => BLM_cnt_read_Reg,
     BLM_status_Reg  => BLM_status_Reg 
     );
+
+    debug_counter_value_proc: process( up_counter_value, down_counter_value)
+    begin
+      for i in 0 to 127 loop
+        up_counter(i) <= up_counter_value(i)(19 downto 4);
+        down_counter(i) <= down_counter_value(i)(19 downto 4);
+      end loop;
+    end process;
 
   end architecture;
 

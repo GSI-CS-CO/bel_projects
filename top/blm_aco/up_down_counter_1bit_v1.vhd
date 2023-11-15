@@ -20,6 +20,8 @@ entity up_down_counter is
         DOWN_IN     : in std_logic;    -- Load counter register down input
         pos_threshold: in integer;
         neg_threshold: in integer;
+        up_cnt_val    : out std_logic_vector(WIDTH-1 downto 0);    -- up Counter register
+        down_cnt_val  : out std_logic_vector(WIDTH-1 downto 0); -- down Counter register
         UP_OVERFLOW    : out std_logic ;     -- UP_Counter overflow
         DOWN_OVERFLOW    : out std_logic      -- UP_Counter overflow
     
@@ -123,6 +125,8 @@ begin
  end process;
 UP_OVERFLOW <= up_OVERFLOW_FLAG;
 DOWN_OVERFLOW <= down_OVERFLOW_FLAG;
+up_cnt_val <=  std_logic_vector(up_Counter);
+down_cnt_val <=  std_logic_vector(down_Counter);
 
 end rtl;
 
