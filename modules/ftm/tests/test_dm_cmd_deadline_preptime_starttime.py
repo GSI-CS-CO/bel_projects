@@ -11,7 +11,6 @@ Tests are prepared for 8 threads and 32 threads in lm32 firmware.
 """
 class ThreadBitsTest(dm_testbench.DmTestbench):
 
-  threadQuantity = 8
   threadMask = (1 << threadQuantity) - 1
 
   def testPreptimeSingleThreadDecimal(self):
@@ -128,23 +127,12 @@ class ThreadBitsTest(dm_testbench.DmTestbench):
     self.assertEqual(lines[0], f'CPU 0 Thr 0 {command.capitalize()} {parameter}', 'wrong output')
     self.assertEqual(lines[1], f'CPU 0 Thr 1 {command.capitalize()} {parameter}', 'wrong output')
 
-  @pytest.mark.thread8
   def testThreadMaxPlusOne(self):
     """Set the thread number 'threadQuantity + 1'. Should return code 255.
-    Only useful for 8 threads.
     """
     thread = f'0x{(1 << self.threadQuantity):x}'
     lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-t', f'{thread}', 'preptime'), [255], 0, 1)
     self.assertEqual(lines[1][0], f"{self.binaryDmCmd}: Thread mask '{thread}' is invalid. Choose a mask that fits to 0x{self.threadMask:x}.", 'wrong output')
-
-  @pytest.mark.thread32
-  def testThreadMaxPlusOne32(self):
-    """Set the thread number 'threadQuantity + 1'. Should return code 255.
-    Only useful for 32 threads.
-    """
-    thread = f'0x{(1 << 32):x}'
-    lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-t', f'{thread}', 'preptime'), [255], 0, 1)
-    self.assertEqual(lines[1][0], f"{self.binaryDmCmd}: Thread mask '{thread}' is invalid. Choose a mask that fits to 0xffffffff.", 'wrong output')
 
   @pytest.mark.slow
   def testThread256(self):
@@ -172,19 +160,23 @@ class ThreadBitsTest(dm_testbench.DmTestbench):
       if thread & 1 > 0:
         self.assertEqual(lines[0], f'CPU 0 Thr 0 Preptime 1000000', 'wrong output {threadX} {thread}')
 
-  @pytest.mark.thread8
   def testThread0x100(self):
     """Set a bit in the thread mask outside of range. Should return code 255.
     """
-    threadX = '0x100'
+    if self.threadQuantity == 8:
+      threadX = '0x100'
+    else:
+      treadX = '0x100000000'
     lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-t', threadX, 'preptime'), [255], 0, 1)
     self.assertEqual(lines[1][0], f"{self.binaryDmCmd}: Thread mask '0x100' is invalid. Choose a mask that fits to 0xff.", 'wrong output')
 
-  @pytest.mark.thread8
   def testOutOfRange(self):
     """Test thread 8. If threadQuantity = 8, this is out of range.
     """
-    threadX = '8'
+    if self.threadQuantity == 8:
+      threadX = '8'
+    else:
+      treadX = '32'
     lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-t', threadX, 'preptime'), [255], 0, 1)
     self.assertEqual(lines[1][0], f"{self.binaryDmCmd}: Thread idx '8' is invalid. Choose an index between 0 and 7.", 'wrong output')
 

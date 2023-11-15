@@ -26,11 +26,11 @@ class DmTestbench(unittest.TestCase):
     self.snoop_command = os.environ.get('SNOOP_COMMAND', 'saft-ctl tr0 -xv snoop 0 0 0')
     self.patternStarted = False
     self.threadQuantitySet = False
+    self.cpuQuantity = 4
 
   def setUp(self):
     self.initDatamaster()
     self.threadQuantity = self.getThreadQuantityFromFirmware()
-    print(f'{self.threadQuantity=} Threads')
 
   def initDatamaster(self):
     """Initialize (clean) the datamaster.
@@ -66,7 +66,7 @@ class DmTestbench(unittest.TestCase):
     """
     if len(scheduleFile) > 0:
       scheduleFile = self.schedules_folder + scheduleFile
-      print (f"Connect to device '{self.datamaster}', schedule file '{scheduleFile}'.   ", end='', flush=True)
+      # ~ print (f"Connect to device '{self.datamaster}', schedule file '{scheduleFile}'.   ", end='', flush=True)
       self.startAndGetSubprocessStdout([self.binaryDmSched, self.datamaster, 'add', scheduleFile])
     if start:
       if len(pattern) > 0:
