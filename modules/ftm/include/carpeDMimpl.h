@@ -393,6 +393,8 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
                void dirtyCtShow() {ct.debug(sLog);}
                void showCpuList() {return ebd.showCpuList();}
             uint8_t getCpuQty() {return ebd.getCpuQty();}
+            uint8_t getThrQty() {return ebd.getThrQty();}
+            uint32_t getCtlAdr(const uint8_t& idx) {return ebd.getCtlAdr(idx);}
                bool isCpuIdxValid(uint8_t cpuIdx) {return ebd.isCpuIdxValid(cpuIdx);}
                void showMemSpace();
                void lockManagerClear() {lm.clear();}
