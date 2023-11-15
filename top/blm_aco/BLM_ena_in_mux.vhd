@@ -9,16 +9,16 @@ entity BLM_ena_in_mux is
         nRST              : in std_logic;      -- Reset
         mux_sel           : in t_BLM_reg_Array;  -- I need only bit 15..12 of each BLM_in_sel_Reg register
         in_mux            : in std_logic_vector(11 downto 0);
-        cnt_enable        : out std_logic_vector(255 downto 0)
+        cnt_enable        : out std_logic_vector(127 downto 0)
     );
 end BLM_ena_in_mux;
 
 architecture rtl of BLM_ena_in_mux is
 
-TYPE gate_sel_array is ARRAY (0 to 255) of INTEGER RANGE 0 to 15;
+TYPE gate_sel_array is ARRAY (0 to 127) of INTEGER RANGE 0 to 15;
 signal gate_sel: gate_sel_array;
 signal uns_in: unsigned(11 downto 0);
-signal uns_enable: unsigned(255 downto 0);
+signal uns_enable: unsigned(127 downto 0);
 
 
 begin
@@ -32,7 +32,7 @@ begin
       
 elsif (clk'EVENT AND clk= '1') then 
 
-for i in 0 to 255 loop
+for i in 0 to 127 loop
 
     gate_sel(i) <=  to_integer(unsigned(mux_sel(i)(15 downto 12)));
 

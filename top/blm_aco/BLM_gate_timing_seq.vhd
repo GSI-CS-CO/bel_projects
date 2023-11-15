@@ -17,6 +17,8 @@ port(
   rstn_i : in std_logic;        -- reset signal
   gate_in : in std_logic_vector(n-1 downto 0);        -- input signal
   gate_seq_ena : in std_logic_vector(n-1 downto 0);     -- enable '1' for input connected to the counter
+  BLM_gate_recover: in std_logic_vector(11 downto 0); 
+  BLM_gate_prepare : in std_logic_vector(11 downto 0); 
   hold_time : in  t_BLM_gate_hold_Time_Array;
   timeout_error : out std_logic_vector(n-1 downto 0);  -- gate doesn't start within the given timeout
   gate_out: out std_logic_vector(n-1 downto 0)        -- out gate signal
@@ -38,6 +40,8 @@ component BLM_gate_timing_seq_elem is
     rstn_i : in std_logic;        -- reset signal
     gate_in : in std_logic;        -- input signal
     gate_in_ena : in std_logic;     -- enable '1' for input connected to the counter
+    prepare : in std_logic;
+    recover : in std_logic;
     hold: in std_logic_vector(15 downto 0);
     timeout_error : out std_logic;  -- gate doesn't start within the given timeout
     gate_out: out std_logic      -- out gate signal
@@ -61,6 +65,8 @@ begin
               rstn_i => rstn_i,
               gate_in => gate_in(i),
               gate_in_ena => gate_seq_ena(i),    -- enable '1' for input connected to the counter
+              prepare => BLM_gate_prepare(i),
+              recover => BLM_gate_recover(i),
               hold => hold_time(i),
               timeout_error => timeout_er(i), -- gate doesn't start within the given timeout
               gate_out => Gate_In_Mtx(i)    -- out gate signal

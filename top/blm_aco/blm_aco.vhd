@@ -155,12 +155,12 @@ architecture blm_aco_arch_for_Beam_Loss_Mon of blm_aco is
     CONSTANT c_Tag_Ctrl1_Base_Addr:              Integer := 16#0580#;  -- Tag-Control
     CONSTANT c_IOBP_Masken_Base_Addr:            Integer := 16#0630#;  -- IO-Backplane Maske-Register
     CONSTANT c_IOBP_ID_Base_Addr:                Integer := 16#0638#;  -- IO-Backplane Modul-ID-Register
-    CONSTANT c_Status_READBACK_Base_Addr:        Integer := 16#0670#;  -- IO-Backplane Output Readback Register: 38 x 16 bit registers --> +26h 
+    CONSTANT c_Status_READBACK_Base_Addr:        Integer := 16#0670#;  -- IO-Backplane Output Readback Register: 24 x 16 bit registers --> +18h 
     CONSTANT c_DIOB_DAQ_Base_Addr:               Integer := 16#2000#;  -- DAQ Base Address
-    CONSTANT c_BLM_thres_Base_Addr:              Integer := 16#0700#;  -- BLM threshold for the counter pool: 1024 16 bit registers--> + 400h
-    CONSTANT c_BLM_in_sel_Base_Addr:             Integer := 16#1100#;   --BLM input mux select registers :      256 16 bit registers -->100h
-    CONSTANT c_BLM_out_sel_Base_Addr:            Integer := 16#1200#;   --BLM output mux select registers :      217 16 bit registers -->D9 
-    CONSTANT c_BLM_ctrl_Base_Addr:               Integer := 16#1300#;   --BLM control registers: 15 x 16 bit registers
+    CONSTANT c_BLM_thres_Base_Addr:              Integer := 16#0700#;  -- BLM threshold for the counter pool: 512 16 bit registers--> + 200h
+    CONSTANT c_BLM_in_sel_Base_Addr:             Integer := 16#0900#;   --BLM input mux select registers :      128 16 bit registers -->80h
+    CONSTANT c_BLM_out_sel_Base_Addr:            Integer := 16#0980#;   --BLM output mux select registers :      130 16 bit registers -->82h 
+    CONSTANT c_BLM_ctrl_Base_Addr:               Integer := 16#1000#;   --BLM control registers: 15 x 16 bit registers
     
 
 --  +============================================================================================================================+
@@ -427,19 +427,22 @@ port (
     BLM_gate_in       : in std_logic_vector(11 downto 0);
    BLM_tst_ck_sig    : in std_logic_vector (10 downto 0);
     --IN registers
-    pos_threshold           : in t_BLM_th_Array; --t_BLM_th_Array is array (0 to 255) of std_logic_vector(31 downto 0);
+    pos_threshold           : in t_BLM_th_Array; --t_BLM_th_Array is array (0 to 127) of std_logic_vector(31 downto 0);
     neg_threshold           : in t_BLM_th_Array ;
     BLM_wdog_hold_time_Reg  : in std_logic_vector(15 downto 0);
+    BLM_wd_reset            : in std_logic_vector(53 downto 0);
     BLM_gate_hold_time_Reg  : in  t_BLM_gate_hold_Time_Array;
     BLM_ctrl_Reg            : in std_logic_vector(15 downto 0); --bit 0 = counter RESET, bit 1 = counter LOAD, bit 2: when 0 the outputs of board in slot 12 are the direct outptuts of the output OR, 
     --   when 1, the outputs in slot 12 are the values of AW_Output_Reg(6),  bit 15..3 free
-    BLM_gate_seq_ck_sel_Reg : in std_logic_vector(15 downto 0);
+    BLM_gate_seq_prep_ck_sel_Reg : in std_logic_vector(15 downto 0);
+    BLM_gate_recover_Reg : in std_logic_vector(15 downto 0);
     BLM_gate_seq_in_ena_Reg : in std_logic_vector(15 downto 0); --"00"& ena for gate board1 &"00" & ena for gate board2 
-    BLM_in_sel_Reg          : in t_BLM_reg_Array; --256 x (4 bit for gate ena & 6 bit for up signal ena & 6 for down signal ena)
-   BLM_out_sel_reg : in t_BLM_out_sel_reg_Array;  --217 x 16 bits = "0000" and 6 x (54 watchdog errors+ 12 gate errors + 512 counter outputs )  
-  
+    BLM_in_sel_Reg          : in t_BLM_reg_Array; --128 x (4 bit for gate ena & 6 bit for up signal ena & 6 for down signal ena)
+   BLM_out_sel_reg : in t_BLM_out_sel_reg_Array;  --121 x 16 bits = "0000" and 6 x (54 watchdog errors+ 12 gate errors + 256 counter outputs )  
+   BLM_cnt_read_Reg: in std_logic_vector(15 downto 0);
     -- OUT register
-    BLM_status_Reg    : out t_IO_Reg_0_to_37_Array;
+    BLM_status_Reg    : out t_IO_Reg_0_to_23_Array ;
+
       -- OUT BLM
       BLM_Out           : out std_logic_vector(5 downto 0) 
 );
@@ -824,7 +827,7 @@ end component aw_io_reg;
   signal IOBP_msk_rd_active:      std_logic;
   signal IOBP_msk_Dtack:          std_logic;
   signal IOBP_msk_data_to_SCUB:   std_logic_vector(15 downto 0);
- signal BLM_Status_Reg:    t_IO_Reg_0_to_37_Array;
+ signal BLM_Status_Reg:    t_IO_Reg_0_to_23_Array ;
 
 signal IOBP_Output: std_logic_vector(5 downto 0);     -- Outputs "Slave-Karten 1-12"  --but I use only 1-2-3 respectiverly for slot 10-11-12
 
@@ -840,9 +843,9 @@ signal IOBP_Input:  t_IOBP_array;    -- Inputs "Slave-Karten 1-12"
   signal IOBP_id_rd_active:       std_logic;
   signal IOBP_id_Dtack:           std_logic;
   signal IOBP_id_data_to_SCUB:    std_logic_vector(15 downto 0);
-  signal IOBP_in_data_to_SCUB:    t_IO_Reg_0_to_4_Array;
-  signal IOBP_in_rd_active:       std_logic_vector(4 downto 0);
-  signal IOBP_in_Dtack:            std_logic_vector(4 downto 0);
+  signal IOBP_in_data_to_SCUB:    t_IO_Reg_0_to_2_Array;
+  signal IOBP_in_rd_active:       std_logic_vector(2 downto 0);
+  signal IOBP_in_Dtack:            std_logic_vector(2 downto 0);
   signal IOBP_in_res_Dtack: std_logic;
   signal IOBP_Sel_LED:      t_led_array;    -- Sel-LED's der "Slave-Karten"
   signal IOBP_ID:           t_id_array;     -- IDs of the "Slave-Boards"
@@ -967,18 +970,18 @@ signal daq_ext_trig:          t_daq_ctl (1 to daq_ch_num) := (others => dummy_da
 --------------------------------------------------------------------------------------------------------------------------------------
 --for thresholds
 
-signal pos_thres_Reg:       t_BLM_th_Array; --256x 2 x 16 bit pos threshold
-signal neg_thres_Reg:       t_BLM_th_Array; --256x 2 x 16 bit neg threshold
-signal BLM_th_active:       std_logic_vector(127 downto 0);
-signal BLM_th_Dtack:        std_logic_vector(127 downto 0);
+signal pos_thres_Reg:       t_BLM_th_Array; --128x 2 x 16 bit pos threshold
+signal neg_thres_Reg:       t_BLM_th_Array; --128x 2 x 16 bit neg threshold
+signal BLM_th_active:       std_logic_vector(63 downto 0);
+signal BLM_th_Dtack:        std_logic_vector(63 downto 0);
 signal BLM_th_data_to_SCUB: t_BLM_data_Array; 
 signal BLM_th_res_Dtack: std_logic;
 -------------------------------------------------
 -----for BLM in_sel and gate mux enables
-signal BLM_in_sel_Reg :             t_BLM_reg_Array; --256 x (4 bit for gate ena & 6 bit for up signal ena & 6 for down signal ena)
-signal BLM_in_sel_rd_active :      std_logic_vector(31 downto 0);
-signal BLM_in_sel_Dtack :       std_logic_vector(31 downto 0);
-signal BLM_in_sel_data_to_SCUB: t_BLM_data_Array;
+signal BLM_in_sel_Reg :             t_BLM_reg_Array; --128 x (4 bit for gate ena & 6 bit for up signal ena & 6 for down signal ena)
+signal BLM_in_sel_rd_active :      std_logic_vector(15 downto 0);
+signal BLM_in_sel_Dtack :       std_logic_vector(15 downto 0);
+signal BLM_in_sel_data_to_SCUB: t_BLM_in_sel_Array;
 signal BLM_in_sel_res_Dtack     : std_logic;
 ----------------------------------------------------------------
 
@@ -986,20 +989,24 @@ signal BLM_in_sel_res_Dtack     : std_logic;
 -----for hold times, gate enable and clock for gate sequence selection
 signal BLM_wdog_hold_time_Reg :  std_logic_vector(15 downto 0);
 signal BLM_gate_hold_time_Reg :  t_BLM_gate_hold_Time_Array;
-signal BLM_gate_seq_ck_sel_Reg : std_logic_vector(15 downto 0); 
+signal BLM_gate_seq_prep_ck_sel_Reg: std_logic_vector(15 downto 0); 
+signal BLM_gate_recover_Reg : std_logic_vector(15 downto 0);
 signal BLM_gate_seq_in_ena_Reg :  std_logic_vector(15 downto 0);
+signal BLM_wd_reset_Reg: t_IO_Reg_0_to_3_Array;
+signal BLM_cnt_read_Reg: std_logic_vector(15 downto 0);
+signal BLM_wd_reset: std_logic_vector(53 downto 0);
 signal BLM_ctrl_Reg:  std_logic_vector(15 downto 0); 
-signal BLM_ctrl_rd_active:    std_logic_vector(1 downto 0);
-signal BLM_ctrl_data_to_SCUB: t_BLM_gate_reg_Array;-- Data to SCU Bus Macro
-signal BLM_ctrl_Dtack:        std_logic_vector(1 downto 0);                  -- Dtack to SCU Bus Macro
+signal BLM_ctrl_rd_active:    std_logic_vector(2 downto 0);
+signal BLM_ctrl_data_to_SCUB: t_IO_Reg_0_to_2_Array ;-- Data to SCU Bus Macro
+signal BLM_ctrl_Dtack:        std_logic_vector(2 downto 0);                  -- Dtack to SCU Bus Macro
 ---------------------------------------
             -- Dtack to SCU Bus Macro
 -----for BLM out_sel 
-signal BLM_out_sel_Reg :       t_BLM_out_sel_reg_Array; --217 registers
+signal BLM_out_sel_Reg :       t_BLM_out_sel_reg_Array; --128 registers
 
-signal BLM_out_sel_rd_active:  std_logic_vector(27 downto 0);
-signal BLM_out_sel_Dtack: std_logic_vector(27 downto 0);
-signal BLM_out_sel_data_to_SCUB: t_IO_Reg_0_to_27_Array;
+signal BLM_out_sel_rd_active:  std_logic_vector(16 downto 0);
+signal BLM_out_sel_Dtack: std_logic_vector(16 downto 0);
+signal BLM_out_sel_data_to_SCUB: t_IO_Reg_0_to_16_Array;
 signal BLM_out_sel_res_Dtack     : std_logic;
 ---
 constant ZERO_th: std_logic_vector(BLM_th_Dtack'range) := (others => '0');
@@ -1370,7 +1377,7 @@ port map  (
 -----------------------------------------------------------------------------------------------------------
 ------------------- BLM Registers -------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------
-BLM_status_registers_0_31: for i in 0 to 3 generate 
+BLM_status_registers_0_23:for i in 0 to 2 generate 
 
 
     BLM_Status_READBACK_Reg: in_reg
@@ -1402,39 +1409,11 @@ BLM_status_registers_0_31: for i in 0 to 3 generate
           Dtack_to_SCUB      =>  IOBP_in_Dtack(i),
           Data_to_SCUB       =>  IOBP_in_data_to_SCUB(i)
         );
-    end generate BLM_status_registers_0_31;
+    end generate BLM_status_registers_0_23;
 
-    BLM_status_registers_32_36: in_reg
-    generic map(
-          Base_addr =>  c_Status_READBACK_Base_Addr + 32
-          )
-    port map  (
-          Adr_from_SCUB_LA   =>  ADR_from_SCUB_LA,
-          Data_from_SCUB_LA  =>  Data_from_SCUB_LA,
-          Ext_Adr_Val        =>  Ext_Adr_Val,
-          Ext_Rd_active      =>  Ext_Rd_active,
-          Ext_Rd_fin         =>  Ext_Rd_fin,
-          Ext_Wr_active      =>  Ext_Wr_active,
-          Ext_Wr_fin         =>  SCU_Ext_Wr_fin,
-          clk                =>  clk_sys,
-          nReset             =>  rstn_sys,
-    --
-          Reg_In1            =>  BLM_Status_Reg(32),
-          Reg_In2            =>  BLM_Status_Reg(33),
-          Reg_In3            =>  BLM_Status_Reg(34),
-          Reg_In4            =>  BLM_Status_Reg(35),
-          Reg_In5            =>  BLM_Status_Reg(36),
-          Reg_In6            =>  BLM_Status_Reg(37),
-          Reg_In7            => (others =>'0'),
-          Reg_In8            =>  (others =>'0'),
 
-    --
-          Reg_rd_active      =>  IOBP_in_rd_active(4),
-          Dtack_to_SCUB      =>  IOBP_in_Dtack(4),
-          Data_to_SCUB       =>  IOBP_in_data_to_SCUB(4)
-        );
 
-threshold_registers: for i in 0 to 127 generate
+threshold_registers: for i in 0 to 63 generate
 
 BLM_thr_Reg: io_reg
         generic map(
@@ -1455,10 +1434,10 @@ BLM_thr_Reg: io_reg
               Reg_IO2            =>  pos_thres_Reg(i)(31 downto 16),
               Reg_IO3            =>  neg_thres_Reg(i)(15 downto 0),
               Reg_IO4            =>  neg_thres_Reg(i)(31 downto 16),
-              Reg_IO5            =>  pos_thres_Reg(i+128)(15 downto 0),
-              Reg_IO6            =>  pos_thres_Reg(i+128)(31 downto 16),
-              Reg_IO7            =>  neg_thres_Reg(i+128)(15 downto 0),
-              Reg_IO8            =>  neg_thres_Reg(i+128)(31 downto 16),
+              Reg_IO5            =>  pos_thres_Reg(i+64)(15 downto 0),
+              Reg_IO6            =>  pos_thres_Reg(i+64)(31 downto 16),
+              Reg_IO7            =>  neg_thres_Reg(i+64)(15 downto 0),
+              Reg_IO8            =>  neg_thres_Reg(i+64)(31 downto 16),
         --
               Reg_rd_active      =>  BLM_th_active (i),
               Dtack_to_SCUB      =>  BLM_th_Dtack(i),
@@ -1466,7 +1445,7 @@ BLM_thr_Reg: io_reg
             );
   end generate threshold_registers;
 
-BLM_in_sel_registers: for i in 0 to 31 generate 
+BLM_in_sel_registers: for i in 0 to 15 generate 
 
 BLM_in_sl_Reg: io_reg
 generic map(
@@ -1515,7 +1494,10 @@ BLM_ctrl_Reg_1st_block: io_reg
         nReset             =>  rstn_sys,
  
   Reg_IO1            =>  BLM_wdog_hold_time_Reg,     -- the same for all
-  Reg_IO2            =>  BLM_gate_seq_ck_sel_Reg,    -- "0000000000000"& 3 bit for the clock gate sel, the same for all
+  Reg_IO2            =>  BLM_gate_seq_prep_ck_sel_Reg,    -- bit 15 not used
+                                                          -- bit 14-3 for gate_prepare signals
+                                                          -- bit 2-0 for the clock gate sel, the same for all
+
   Reg_IO3            =>  BLM_ctrl_Reg,               --  bit 0 = counter RESET, 
                                                      --  bit 1: when 0 the outputs of board in slot 12 are the direct outptuts of the output OR,  
                                                      --         when 1, the outputs in slot 12 are the values of AW_Output_Reg(6),  
@@ -1523,7 +1505,8 @@ BLM_ctrl_Reg_1st_block: io_reg
                                                      --  bit 14 reset from gate: when 1 the corresponding gate signal selecting the counter enable
                                                      --         is used instead to reset it.
                                                      -- bit 15 not used
-  Reg_IO4            =>  open,
+  Reg_IO4            =>  BLM_gate_recover_Reg, -- bit 15 -12 not used
+                                                -- bit 11-0 for gate_recover signals
   Reg_IO5            =>   BLM_gate_hold_time_Reg(0), 
   Reg_IO6            =>   BLM_gate_hold_time_Reg(1),
   Reg_IO7            =>   BLM_gate_hold_time_Reg(2),
@@ -1562,8 +1545,37 @@ BLM_ctrl_Reg_1st_block: io_reg
       Dtack_to_SCUB      =>   BLM_ctrl_Dtack(1),
       Data_to_SCUB       =>   BLM_ctrl_data_to_SCUB(1)
           );
+
+      BLM_ctrl_Reg_3rdd_block: io_reg
+          generic map(
+                Base_addr =>  c_BLM_ctrl_Base_Addr + 16
+                )
+          port map  (
+                Adr_from_SCUB_LA   =>  ADR_from_SCUB_LA,
+                Data_from_SCUB_LA  =>  Data_from_SCUB_LA,
+                Ext_Adr_Val        =>  Ext_Adr_Val,
+                Ext_Rd_active      =>  Ext_Rd_active,
+                Ext_Rd_fin         =>  Ext_Rd_fin,
+                Ext_Wr_active      =>  Ext_Wr_active,
+                Ext_Wr_fin         =>  SCU_Ext_Wr_fin,
+                clk                =>  clk_sys,
+                nReset             =>  rstn_sys,
+         
+          Reg_IO1            =>   BLM_wd_reset_Reg(0),
+          Reg_IO2            =>   BLM_wd_reset_Reg(1),
+          Reg_IO3            =>   BLM_wd_reset_Reg(2),
+          Reg_IO4            =>   BLM_wd_reset_Reg(3),
+          Reg_IO5            =>   open,
+          Reg_IO6            =>   open,
+          Reg_IO7            =>   open,
+          Reg_IO8            =>   open,
     
-  BLM_out_sel_registers: for i in 0 to 26 generate 
+          Reg_rd_active      =>   BLM_ctrl_rd_active(2),
+          Dtack_to_SCUB      =>   BLM_ctrl_Dtack(2),
+          Data_to_SCUB       =>   BLM_ctrl_data_to_SCUB(2)
+              );
+          
+  BLM_out_sel_registers: for i in 0 to 15 generate 
 
       BLM_o_sel_Reg: io_reg
       generic map(
@@ -1597,7 +1609,7 @@ BLM_ctrl_Reg_1st_block: io_reg
 
       BLM_out_sel_last_Reg: io_reg
       generic map(
-            Base_addr =>  c_BLM_out_sel_Base_Addr + 216
+            Base_addr =>  c_BLM_out_sel_Base_Addr + 128
             )
       port map  (
             Adr_from_SCUB_LA   =>  ADR_from_SCUB_LA,
@@ -1610,8 +1622,8 @@ BLM_ctrl_Reg_1st_block: io_reg
             clk                =>  clk_sys,
             nReset             =>  rstn_sys,
       --
-            Reg_IO1            =>  BLM_out_sel_Reg(216),
-            Reg_IO2            =>  open,
+            Reg_IO1            =>  BLM_out_sel_Reg(128),
+            Reg_IO2            =>  BLM_cnt_read_Reg,
             Reg_IO3            =>  open,
             Reg_IO4            =>  open,
             Reg_IO5            =>  open,
@@ -1619,9 +1631,9 @@ BLM_ctrl_Reg_1st_block: io_reg
             Reg_IO7            =>  open,
             Reg_IO8            =>  open,
       --
-            Reg_rd_active      =>  BLM_out_sel_rd_active(27),
-            Dtack_to_SCUB      =>  BLM_out_sel_Dtack(27),
-            Data_to_SCUB       =>  BLM_out_sel_data_to_SCUB(27)
+            Reg_rd_active      =>  BLM_out_sel_rd_active(16),
+            Dtack_to_SCUB      =>  BLM_out_sel_Dtack(16),
+            Data_to_SCUB       =>  BLM_out_sel_data_to_SCUB(16)
           );
 
           
@@ -1926,11 +1938,11 @@ rd_port_mux:  process ( clk_switch_rd_active,     clk_switch_rd_data,
                       )
 
 
-  variable sel: unsigned(10 downto 0);
-  variable sel_th: unsigned(127 downto 0);
-  variable sel_in_sel: unsigned(31 downto 0);
-  variable sel_st: unsigned(4 downto 0);
-  variable sel_out_sel: unsigned(27 downto 0); 
+  variable sel: unsigned(11 downto 0);
+  variable sel_th: unsigned(63 downto 0);
+  variable sel_in_sel: unsigned(15 downto 0);
+  variable sel_st: unsigned(2 downto 0);
+  variable sel_out_sel: unsigned(16 downto 0); 
 
   begin
 
@@ -1940,51 +1952,51 @@ rd_port_mux:  process ( clk_switch_rd_active,     clk_switch_rd_data,
     sel_st:= unsigned(IOBP_in_rd_active);
     sel_out_sel := unsigned(BLM_out_sel_rd_active);
     
-    sel:= BLM_ctrl_rd_active(1)&BLM_ctrl_rd_active(0)  &  daq_user_rd_active & 
+    sel:=  BLM_ctrl_rd_active(1)& BLM_ctrl_rd_active(1)&BLM_ctrl_rd_active(0)  &  daq_user_rd_active & 
             AW_Port1_rd_active & tmr_rd_active &  wb_scu_rd_active & clk_switch_rd_active &
             Conf_Sts1_rd_active & Tag_Ctrl1_rd_active & IOBP_msk_rd_active & IOBP_id_rd_active ;
   
-if to_integer(sel(10 downto 0))>0 then
-  case sel(10 downto 0) IS
-    
-      when "10000000000" => Data_to_SCUB <= BLM_ctrl_data_to_SCUB(1);
-      when "01000000000" => Data_to_SCUB <= BLM_ctrl_data_to_SCUB(0);
-      when "00100000000" => Data_to_SCUB <= daq_data_to_SCUB;
-      when "00010000000" => Data_to_SCUB <= AW_Port1_data_to_SCUB;  
-      when "00001000000" => Data_to_SCUB <= tmr_data_to_SCUB;
-      when "00000100000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
-      when "00000010000" => Data_to_SCUB <= clk_switch_rd_data;
-      when "00000001000" => Data_to_SCUB <= Conf_Sts1_data_to_SCUB;
-      when "00000000100" => Data_to_SCUB <= Tag_Ctrl1_data_to_SCUB;
-      when "00000000010" => Data_to_SCUB <= IOBP_msk_data_to_SCUB;
-      when "00000000001" => Data_to_SCUB <= IOBP_id_data_to_SCUB;
+if to_integer(sel(11 downto 0))>0 then
+  case sel(11 downto 0) IS
+      when "100000000000" => Data_to_SCUB <= BLM_ctrl_data_to_SCUB(2);
+      when "010000000000" => Data_to_SCUB <= BLM_ctrl_data_to_SCUB(1);
+      when "001000000000" => Data_to_SCUB <= BLM_ctrl_data_to_SCUB(0);
+      when "000100000000" => Data_to_SCUB <= daq_data_to_SCUB;
+      when "000010000000" => Data_to_SCUB <= AW_Port1_data_to_SCUB;  
+      when "000001000000" => Data_to_SCUB <= tmr_data_to_SCUB;
+      when "000000100000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
+      when "000000010000" => Data_to_SCUB <= clk_switch_rd_data;
+      when "000000001000" => Data_to_SCUB <= Conf_Sts1_data_to_SCUB;
+      when "000000000100" => Data_to_SCUB <= Tag_Ctrl1_data_to_SCUB;
+      when "000000000010" => Data_to_SCUB <= IOBP_msk_data_to_SCUB;
+      when "000000000001" => Data_to_SCUB <= IOBP_id_data_to_SCUB;
 
       when others      => Data_to_SCUB <= (others => '0');
     end case;
 else 
     if to_integer(sel_th)>0 then
-        for i in 0 to 127 loop
+        for i in 0 to 63 loop
           if sel_th(i) = '1' then 
             Data_to_SCUB <= BLM_th_data_to_SCUB(i);
           end if;
         end loop;
         else 
         if to_integer(sel_in_sel) > 0 then  
-           for i in 0 to 31 loop
+           for i in 0 to 15 loop
              if sel_in_sel(i) = '1' then 
                 Data_to_SCUB <= BLM_in_sel_data_to_SCUB(i);
              end if;
            end loop;
            else
            if to_integer(sel_st) > 0 then  
-           for i in 0 to 4 loop
+           for i in 0 to 2 loop
              if sel_st(i) = '1' then 
                 Data_to_SCUB <= IOBP_in_data_to_SCUB(i);
              end if;
            end loop;
            else
            if to_integer(sel_out_sel) > 0 then  
-           for i in 0 to 27 loop
+           for i in 0 to 16 loop
              if sel_out_sel(i) = '1' then 
                 Data_to_SCUB <=  BLM_out_sel_data_to_SCUB(i);
              end if;
@@ -2038,7 +2050,7 @@ end if;
 
     Dtack_to_SCUB <= ( tmr_dtack  or AW_Port1_Dtack   or wb_scu_dtack  or clk_switch_dtack  or Conf_Sts1_Dtack  or Tag_Ctrl1_Dtack  or
                          IOBP_msk_Dtack   or IOBP_id_Dtack    or    IOBP_in_res_Dtack or daq_Dtack or 
-                         BLM_ctrl_Dtack(1) or  BLM_ctrl_Dtack(0) or BLM_th_res_Dtack or BLM_in_sel_res_Dtack or BLM_out_sel_res_Dtack);
+                         BLM_ctrl_Dtack(2) or BLM_ctrl_Dtack(1) or  BLM_ctrl_Dtack(0) or BLM_th_res_Dtack or BLM_in_sel_res_Dtack or BLM_out_sel_res_Dtack);
 
     A_nDtack <= NOT(SCUB_Dtack);
     A_nSRQ   <= NOT(SCUB_SRQ);
@@ -2085,6 +2097,7 @@ BLM_data_in <= AW_IOBP_Input_Reg(5)(5 downto 0) & AW_IOBP_Input_Reg(4)(11 downto
 BLM_gate_in <= AW_IOBP_Input_Reg(5)(11 downto 6) & AW_IOBP_Input_Reg(6)(5 downto 0);
 ---
 BLM_tst_ck_sig <= blm_clk_100MHz & blm_clk_25MHz & blm_clk_24_9MHz & blm_clk_10MHz & blm_clk_1MHz & blm_clk_100kHz & blm_clk_10kHz & blm_clk_1kHz & blm_clk_9_9MHz & blm_clk_0_99MHz & blm_clk_99kHz;-- & blm_clk_9_9kHz& blm_clk_0_99kHz;
+BLM_wd_reset <= BLM_wd_reset_Reg(3)(5 downto 0)&BLM_wd_reset_Reg(2) & BLM_wd_reset_Reg(1) &BLM_wd_reset_Reg(0);
 
 BLM_Module : Beam_Loss_check 
 
@@ -2107,12 +2120,15 @@ BLM_Module : Beam_Loss_check
   pos_threshold            => pos_thres_Reg,
   neg_threshold            => neg_thres_Reg,
   BLM_wdog_hold_time_Reg   => BLM_wdog_hold_time_Reg,
+  BLM_wd_reset => BLM_wd_reset,
   BLM_gate_hold_time_Reg   => BLM_gate_hold_time_Reg,
   BLM_ctrl_Reg             => BLM_ctrl_Reg,
-  BLM_gate_seq_ck_sel_Reg  => BLM_gate_seq_ck_sel_Reg,
+  BLM_gate_seq_prep_ck_sel_Reg  => BLM_gate_seq_prep_ck_sel_Reg,
+  BLM_gate_recover_Reg => BLM_gate_recover_Reg,
   BLM_gate_seq_in_ena_Reg  => BLM_gate_seq_in_ena_Reg,
   BLM_in_sel_Reg           => BLM_in_sel_Reg,
   BLM_out_sel_reg          => BLM_out_sel_Reg,
+  BLM_cnt_read_Reg         => BLM_cnt_read_Reg,
   -- OUT register
   BLM_status_Reg           => BLM_status_Reg,
     -- OUT BLM
