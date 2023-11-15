@@ -25,9 +25,12 @@ class DmTestbench(unittest.TestCase):
     self.schedules_folder = os.environ.get('TEST_SCHEDULES', 'schedules/')
     self.snoop_command = os.environ.get('SNOOP_COMMAND', 'saft-ctl tr0 -xv snoop 0 0 0')
     self.patternStarted = False
+    self.threadQuantitySet = False
 
   def setUp(self):
     self.initDatamaster()
+    self.threadQuantity = self.getThreadQuantityFromFirmware()
+    print(f'{self.threadQuantity=} Threads')
 
   def initDatamaster(self):
     """Initialize (clean) the datamaster.
@@ -482,7 +485,7 @@ class DmTestbench(unittest.TestCase):
     each CPU and start all threads. Check that these are running.
     """
     # small delay after init of datamaster
-    self.delay(0.1)
+    self.delay(0.2)
     # Check all CPUs that no thread is running.
     lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', '0xf', 'running'), [0], self.cpuQuantity, 0)
     # ~ self.printStdOutStdErr(lines)
@@ -565,3 +568,14 @@ class DmTestbench(unittest.TestCase):
       print(f'{chr(10).join(lines[0])}')
     if len(lines[1]) > 0:
       print(f'{chr(10).join(lines[1])}')
+
+  def getThreadQuantityFromFirmware(self) -> int:
+    if self.threadQuantitySet:
+      return self.threadQuantity
+    else:
+      self.threadQuantitySet = True
+      lines = self.startAndGetSubprocessOutput(('eb-info', '-w', self.datamaster), [0], -1, 0)
+      for line in lines[0]:
+        if 'ThreadQty   : 32' in line:
+          return 32
+      return 8
