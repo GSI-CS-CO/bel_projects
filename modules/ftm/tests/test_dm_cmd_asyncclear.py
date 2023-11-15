@@ -4,6 +4,9 @@ import pytest
 
 """
 Module collects tests for dm-cmd with the command 'asyncClear'.
+Main focus is testing with bit masks for CPUs and threads.
+
+Tests are prepared for 8 threads and 32 threads in lm32 firmware.
 """
 class AsyncClearTests(dm_testbench.DmTestbench):
 
@@ -22,48 +25,42 @@ class AsyncClearTests(dm_testbench.DmTestbench):
     self.runInspectAsyncClearThreads()
 
   def runInspectAsyncClearThreads(self):
-    """Load a schedule and start all threads. Check that these are running.
-    Inspect the asyncClear of some threads. Check that these are not running.
+    """Prepare all threads on all CPUs.
+    Run the asyncClear for some threads. This needs a block with a
+    queue. There is no output of the command.
     """
-    # Check all CPUs that no thread is running.
-    lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', '0xf', 'running'), [0], self.cpuQuantity, 0)
-    # ~ self.printStdOutStdErr(lines)
-    for i in range(self.cpuQuantity):
-      self.assertEqual(lines[0][i], f'CPU {i} Running Threads: 0x0', 'wrong output')
-    # Add schedules for all CPUs and start pattern on all threads.
-    self.addSchedule('pps-all-threads-cpu0.dot')
-    self.addSchedule('pps-all-threads-cpu1.dot')
-    self.addSchedule('pps-all-threads-cpu2.dot')
-    self.addSchedule('pps-all-threads-cpu3.dot')
-    index = 0
-    threadList = [('a', '0'), ('b', '1'), ('c', '2'), ('d', '3'), ('e', '4'), ('f', '5'), ('g', '6'), ('h', '7'),
-                  ('a', '8'), ('b', '9'), ('c', '10'), ('d', '11'), ('e', '12'), ('f', '13'), ('g', '14'), ('h', '15'),
-                  ('a', '16'), ('b', '17'), ('c', '18'), ('d', '19'), ('e', '20'), ('f', '21'), ('g', '22'), ('h', '23'),
-                  ('a', '24'), ('b', '25'), ('c', '26'), ('d', '27'), ('e', '28'), ('f', '29'), ('g', '30'), ('h', '31')]
-    for x, y in threadList:
-      if index < self.threadQuantity:
-        self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'PPS0' + x, '-t', y), [0])
-        self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'PPS1' + x, '-t', y), [0])
-        self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'PPS2' + x, '-t', y), [0])
-        self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'PPS3' + x, '-t', y), [0])
-        index = index + 1
-    self.checkRunningThreadsCmd()
-    # Check all CPUs that all threads are running.
-    lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', '0xf', 'running'), [0], self.cpuQuantity, 0)
-    # ~ self.printStdOutStdErr(lines)
-    if self.threadQuantity == 32:
-      threadMask = '0xffffffff'
-    elif self.threadQuantity == 8:
-      threadMask = '0xff'
-    else:
-      self.assertFalse(True, f'threadQuantity is {self.threadQuantity}, allowed: 8 or 32')
-    for i in range(self.cpuQuantity):
-      expectedText = 'CPU {variable} Running Threads: {mask}'.format(variable=i, mask=threadMask)
-      messageText = 'wrong output, expected: CPU {variable} Running Threads: {mask}'.format(variable=i, mask=threadMask)
-      self.assertEqual(lines[0][i], expectedText, messageText)
-    # run asyncClear for some CPUs
+    self.prepareRunThreads()
+    # run asyncClear for some CPUs and threads.
     cpu = '0x3'
+    # Enable at most 4 threads. Otherwise the command queue is full and command fails.
     thread = '0xaa'
-    cpuCount = self.bitCount(cpu, self.cpuQuantity)
-    lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', f'{cpu}', '-t', f'{thread}', 'asyncclear', 'Block0b'), [0], 0, 0)
-    # ~ self.printStdOutStdErr(lines)
+    self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', f'{cpu}', '-t', f'{thread}', 'noop', 'Block0b'), [0], 0, 0)
+    # check the result with dm-cmd ... queue Block0b.
+    lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', f'{cpu}', '-t', f'{thread}', 'queue', 'Block0b'), [0], 10, 0)
+    # verify the output (lines 1 to 9).
+    expectedLine = ['', 'Inspecting Queues of Block Block0b',
+    'Priority 2 (prioil)  Not instantiated',
+    'Priority 1 (priohi)  Not instantiated',
+    'Priority 0 (priolo)  RdIdx: 0 WrIdx: 1    Pending: 1']
+    for i in range(1,5):
+      self.assertEqual(lines[0][i], expectedLine[i], 'wrong output, expected: ' + expectedLine[i])
+    expectedText = '#0 pending Valid Time: 0x0000000000000000 0000000000000000000    CmdType: noop    Qty: 1'
+    self.assertEqual(lines[0][5], expectedText, 'wrong output, expected: ' + expectedText)
+    for i in range(6,9):
+      expectedText = '#{variable} empty   -'.format(variable=i-5)
+      self.assertEqual(lines[0][i], expectedText, 'wrong output, expected: ' + expectedText)
+
+    self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', f'{cpu}', '-t', f'{thread}', 'asyncclear', 'Block0b'), [0], 0, 0)
+    # check the result with dm-cmd ... queue Block0b.
+    lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', f'{cpu}', '-t', f'{thread}', 'queue', 'Block0b'), [0], 10, 0)
+    # verify the output (lines 1 to 9).
+    expectedLine = ['', 'Inspecting Queues of Block Block0b',
+    'Priority 2 (prioil)  Not instantiated',
+    'Priority 1 (priohi)  Not instantiated',
+    'Priority 0 (priolo)  RdIdx: 0 WrIdx: 0    Pending: 0']
+    for i in range(1,5):
+      self.assertEqual(lines[0][i], expectedLine[i], 'wrong output, expected: ' + expectedLine[i])
+    for i in range(5,9):
+      expectedText = '#{variable} empty   -'.format(variable=i-5)
+      messageText = 'wrong output, expected: #{variable} empty   -'.format(variable=i-5)
+      self.assertEqual(lines[0][i], expectedText, messageText)
