@@ -8,7 +8,6 @@ Main focus is testing with bit masks for CPUs and threads.
 class HeapTests(dm_testbench.DmTestbench):
 
   def testInspectHeap(self):
-    self.runInspectHeapThreads()
     """Prepare all threads on all CPUs.
     Inspect the heap of some threads. Check that these are not running.
     """

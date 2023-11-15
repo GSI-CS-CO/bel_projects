@@ -40,12 +40,10 @@ class AbortTests(dm_testbench.DmTestbench):
     for i in range(self.cpuQuantity):
       if i in cpus:
         expectedText = 'CPU {variable} Running Threads: {mask}'.format(variable=i, mask=threadMaskAborted)
-        messageText = 'wrong output, expected: CPU {variable} Running Threads: {mask}'.format(variable=i, mask=threadMaskAborted)
-        self.assertEqual(lines[0][i], expectedText, messageText)
       else:
         expectedText = 'CPU {variable} Running Threads: {mask}'.format(variable=i, mask=threadMask)
-        messageText = 'wrong output, expected: CPU {variable} Running Threads: {mask}'.format(variable=i, mask=threadMask)
-        self.assertEqual(lines[0][i], expectedText, messageText)
+      messageText = 'wrong output, expected: ' + expectedText
+      self.assertEqual(lines[0][i], expectedText, messageText)
 
   def testAbortSingleThreadDecimal(self):
     """Loop over all CPUs and all threads aborting this thread.

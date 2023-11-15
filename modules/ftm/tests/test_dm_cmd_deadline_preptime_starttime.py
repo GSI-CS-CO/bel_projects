@@ -11,8 +11,6 @@ Tests are prepared for 8 threads and 32 threads in lm32 firmware.
 """
 class ThreadBitsTest(dm_testbench.DmTestbench):
 
-  threadMask = (1 << threadQuantity) - 1
-
   def testPreptimeSingleThreadDecimal(self):
     """Loop for all threads setting and reading the preptime.
     Uses the thread number in decimal form.
@@ -94,10 +92,10 @@ class ThreadBitsTest(dm_testbench.DmTestbench):
     else:
       threads = self.listFromBits((1 << thread), self.threadQuantity)
     threadCount = len(threads)
-    print(f'{thread=}, {type(thread)=}, {threadX=}, {threadCount=}, {threads=}')
+    # ~ print(f'{thread=}, {type(thread)=}, {threadX=}, {threadCount=}, {threads=}')
     if commandSet:
       lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-t', f'{threadX}', command, parameter), [0], threadCount, 0)
-      print(f"{(self.binaryDmCmd, self.datamaster, '-t', f'{threadX}', command, parameter)}")
+      # ~ print(f"{(self.binaryDmCmd, self.datamaster, '-t', f'{threadX}', command, parameter)}")
       for i in range(threadCount):
         self.assertEqual(lines[i], f'setting {command}: CPU 0 Thread {threads[i]}.', 'wrong output')
     lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-t', f'{threadX}', command), [0], threadCount, 0)
@@ -132,7 +130,8 @@ class ThreadBitsTest(dm_testbench.DmTestbench):
     """
     thread = f'0x{(1 << self.threadQuantity):x}'
     lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-t', f'{thread}', 'preptime'), [255], 0, 1)
-    self.assertEqual(lines[1][0], f"{self.binaryDmCmd}: Thread mask '{thread}' is invalid. Choose a mask that fits to 0x{self.threadMask:x}.", 'wrong output')
+    threadMask = (1 << self.threadQuantity) - 1
+    self.assertEqual(lines[1][0], f"{self.binaryDmCmd}: Thread mask '{thread}' is invalid. Choose a mask that fits to 0x{threadMask:x}.", 'wrong output')
 
   @pytest.mark.slow
   def testThread256(self):
@@ -166,7 +165,7 @@ class ThreadBitsTest(dm_testbench.DmTestbench):
     if self.threadQuantity == 8:
       threadX = '0x100'
     else:
-      treadX = '0x100000000'
+      threadX = '0x100000000'
     lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-t', threadX, 'preptime'), [255], 0, 1)
     self.assertEqual(lines[1][0], f"{self.binaryDmCmd}: Thread mask '0x100' is invalid. Choose a mask that fits to 0xff.", 'wrong output')
 
@@ -176,7 +175,7 @@ class ThreadBitsTest(dm_testbench.DmTestbench):
     if self.threadQuantity == 8:
       threadX = '8'
     else:
-      treadX = '32'
+      threadX = '32'
     lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-t', threadX, 'preptime'), [255], 0, 1)
     self.assertEqual(lines[1][0], f"{self.binaryDmCmd}: Thread idx '8' is invalid. Choose an index between 0 and 7.", 'wrong output')
 
