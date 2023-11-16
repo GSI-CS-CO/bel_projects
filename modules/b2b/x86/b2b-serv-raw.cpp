@@ -1,5 +1,5 @@
 /*******************************************************************************************
- *  b2b-serv-raw.c
+ *  b2b-serv-raw.cpp
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
