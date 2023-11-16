@@ -503,7 +503,7 @@ int main(int argc, char** argv)
     evtPrefix |= ioPrefix;            
     snoopID    = evtPrefix + 0x1; // last bit is set: rising edge
     //printf("id %llx\n", snoopID);
-    condition  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xffffffffffffffff, 17));
+    condition  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xffffffffffffffff, 0));
     condition->setAcceptLate(true);
     condition->setAcceptEarly(true);
     condition->setAcceptConflict(true);
