@@ -4,7 +4,7 @@
 
 if [ ! $BEL_PROJECTS_PATH ]
 then
-  BEL_PROJECTS_PATH=$HOME/bel_projects/ftm
+  BEL_PROJECTS_PATH=$HOME/bel_projects/dev
 fi
 
 if [ $# -eq 1 ]
