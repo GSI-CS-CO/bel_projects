@@ -8,7 +8,7 @@ class UnitTestLzma(dm_testbench.DmTestbench):
   def setUp(self):
     super().setUp();
     if self.threadQuantity == 8:
-      self.maxNodes = 1867
+      self.maxNodes = 1866
     else:
       self.maxNodes = 1837
 
