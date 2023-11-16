@@ -30,7 +30,7 @@ $(info compiling x86 binaries for $(SYSENV))
 $(info ours CCFLAGS for c code is $(CCFLAGS))
 $(info ours CXFLAGS for c++ code is $(CXFLAGS))
 
-TARGETS     := b2b-ctl b2b-ui b2b-serv-sys b2b-client-sys b2b-viewer b2b-analyzer b2b-archiver b2b-mon b2b-pname-info b2b-serv-raw b2b-jitter-check b2b-sim
+TARGETS     := b2b-ctl b2b-ui b2b-serv-sys b2b-client-sys b2b-viewer b2b-analyzer b2b-archiver b2b-mon b2b-pname-info b2b-serv-raw b2b-jitter-check b2b-serv-kickdiag b2b-sim
 
 all: lib $(TARGETS)
 
@@ -61,6 +61,9 @@ b2b-archiver: b2b-archiver.c
 b2b-serv-raw: b2b-serv-raw.cpp
 	$(CXX) $(CFLAGS) $(CXFLAGS) ../../common-libs/x86/common-lib.c -o b2b-serv-raw b2b-serv-raw.cpp $(XLIBS) -ldim -lpthread
 
+b2b-serv-kickdiag: b2b-serv-kickdiag.cpp
+	$(CXX) $(CFLAGS) $(CXFLAGS) ../../common-libs/x86/common-lib.c -o b2b-serv-raw b2b-serv-kickdiag.cpp $(XLIBS) -ldim -lpthread
+
 b2b-sim: b2b-sim.c
 	$(CC) $(CFLAGS) $(CCFLAGS) -o b2b-sim b2b-sim.c $(LIBS)	
 
@@ -77,7 +80,7 @@ lib: b2blib.c
 	ln -sf $(B2BLIB).1 $(B2BLIB)
 
 clean:
-	rm -f *.o b2b-mon b2b-pname-info b2b-ctl b2b-ui b2b-serv-sys b2b-client-sys b2b-analyzer b2b-viewer b2b-serv-raw b2b-archiver b2b-jitter-check b2b-sim libb2blib.so*
+	rm -f *.o b2b-mon b2b-pname-info b2b-ctl b2b-ui b2b-serv-sys b2b-client-sys b2b-analyzer b2b-viewer b2b-serv-raw b2b-archiver b2b-jitter-check b2b-serv-kickdiag b2b-sim libb2blib.so*
 
 install:
 	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/bin	
