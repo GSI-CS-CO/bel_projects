@@ -919,8 +919,8 @@ set_location_assignment PIN_AC8 -to usbc_tx3_en[2]
 set_location_assignment PIN_AD1 -to usbc_tx2_en[4]
 set_location_assignment PIN_AD24 -to usb_fd_io[1]
 set_location_assignment PIN_AD25 -to usb_fd_io[2]
-set_location_assignment PIN_AD27 -to "clk_125m_tcb_sfpref_i(n)"
-set_location_assignment PIN_AD28 -to clk_125m_tcb_sfpref_i
+set_location_assignment PIN_AD27 -to "clk_125m_tcb_pllref_i(n)"
+set_location_assignment PIN_AD28 -to clk_125m_tcb_pllref_i
 set_location_assignment PIN_AD2 -to usbc_tx2_en[5]
 set_location_assignment PIN_AD31 -to "pcie_rx_i[1](n)"
 set_location_assignment PIN_AD32 -to pcie_rx_i[1]
@@ -941,8 +941,8 @@ set_location_assignment PIN_AE9 -to wr_dac_sclk_o
 set_location_assignment PIN_AF1 -to usbc_tx3_en[3]
 set_location_assignment PIN_AF23 -to UM_nCSO
 set_location_assignment PIN_AF25 -to usb_fd_io[4]
-set_location_assignment PIN_AF27 -to "pcie_refclk_i(n)"
-set_location_assignment PIN_AF28 -to pcie_refclk_i
+set_location_assignment PIN_AF27 -to "clk_125m_tcb_sfpref_i(n)"
+set_location_assignment PIN_AF28 -to clk_125m_tcb_sfpref_i
 set_location_assignment PIN_AF5 -to usbc_tx2_en[2]
 set_location_assignment PIN_AF8 -to wr_dac_din_o
 set_location_assignment PIN_AF9 -to wr_ndac_cs_o[1]
@@ -1150,8 +1150,8 @@ set_location_assignment PIN_W6 -to usbc_tx4_p[5]
 set_location_assignment PIN_W7 -to "usbc_tx4_p[5](n)"
 set_location_assignment PIN_W9 -to usbc_rx4_n[5]
 set_location_assignment PIN_Y1 -to usbc_tx3_p[5]
-set_location_assignment PIN_Y27 -to "clk_125m_tcb_pllref_i(n)"
-set_location_assignment PIN_Y28 -to clk_125m_tcb_pllref_i
+set_location_assignment PIN_Y27 -to "pcie_refclk_i(n)"
+set_location_assignment PIN_Y28 -to pcie_refclk_i
 set_location_assignment PIN_Y2 -to "usbc_tx3_p[5](n)"
 set_location_assignment PIN_Y3 -to usbc_tx3_p[3]
 set_location_assignment PIN_Y4 -to "usbc_tx3_p[3](n)"
