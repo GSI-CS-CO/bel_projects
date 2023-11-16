@@ -391,8 +391,8 @@ int main(int argc, char** argv)
   for (i=0; i< B2B_NSID; i++ ) initValues(i);
  
   if (optind+1 < argc) { 
-    if (!reqMode) sprintf(prefix, "b2b_%s_%s-kde", argv[++optind], ringName);  // extraction
-    else          sprintf(prefix, "b2b_%s_%s-kdi", argv[++optind], ringName);  // injection
+    if (!reqMode) sprintf(prefix, "b2b_%s_%s-kdde", argv[++optind], ringName);  // extraction
+    else          sprintf(prefix, "b2b_%s_%s-kddi", argv[++optind], ringName);  // injection
   }
   else            sprintf(prefix, "b2b_%s", ringName);
 
