@@ -62,7 +62,7 @@ b2b-serv-raw: b2b-serv-raw.cpp
 	$(CXX) $(CFLAGS) $(CXFLAGS) ../../common-libs/x86/common-lib.c -o b2b-serv-raw b2b-serv-raw.cpp $(XLIBS) -ldim -lpthread
 
 b2b-serv-kickdiag: b2b-serv-kickdiag.cpp
-	$(CXX) $(CFLAGS) $(CXFLAGS) ../../common-libs/x86/common-lib.c -o b2b-serv-raw b2b-serv-kickdiag.cpp $(XLIBS) -ldim -lpthread
+	$(CXX) $(CFLAGS) $(CXFLAGS) ../../common-libs/x86/common-lib.c -o b2b-serv-kickdiag b2b-serv-kickdiag.cpp $(XLIBS) -ldim -lpthread
 
 b2b-sim: b2b-sim.c
 	$(CC) $(CFLAGS) $(CCFLAGS) -o b2b-sim b2b-sim.c $(LIBS)	

@@ -1,5 +1,5 @@
 /*******************************************************************************************
- *  b2b-kick-diag.cpp
+ *  b2b-serv-kickdiag.cpp
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000701
+#define B2B_SERV_KICKD_VERSION 0x000701
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -83,7 +83,7 @@ static const char* program;
 #define NAMELEN     256                 // max size for names
 
 // tags for kicker diag
-enum evtKTag{tagKStart, tagKStop, tagKRising, tagKFalling};
+enum evtKTag{tagKRising, tagKFalling, tagKStart, tagKStop};
 
 // services
 char      disVersion[DIMCHARSIZE];
@@ -219,31 +219,31 @@ void disAddServices(char *prefix)
   int  i;
 
   // 'generic' services
-  sprintf(name, "%s-raw_version_fw", prefix);
-  sprintf(disVersion, "%s",  b2b_version_text(B2B_SERV_RAW_VERSION));
+  sprintf(name, "%s-kickd_version", prefix);
+  sprintf(disVersion, "%s",  b2b_version_text(B2B_SERV_KICKD_VERSION));
   disVersionId   = dis_add_service(name, "C", disVersion, 8, 0 , 0);
 
-  sprintf(name, "%s-raw_hostname", prefix);
+  sprintf(name, "%s-kickd_hostname", prefix);
   disHostnameId   = dis_add_service(name, "C", disHostname, DIMCHARSIZE, 0 , 0);
 
-  sprintf(name, "%s-raw_ntransfer", prefix);
+  sprintf(name, "%s-kickd_ntransfer", prefix);
   disNTransferId  = dis_add_service(name, "I", &disNTransfer, sizeof(disNTransfer), 0 , 0);
 
   // values
   for (i=0; i< B2B_NSID; i++) {
-    sprintf(name, "%s-raw_sid%02d_kickd_risingoffs", prefix, i);
+    sprintf(name, "%s-kickd_sid%02d_kickd_risingoffs", prefix, i);
     disRisingOffsId[i]  = dis_add_service(name, "F:1", &(disRisingOffs[i]), sizeof(float), 0, 0);
 
-    sprintf(name, "%s-raw_sid%02d_kickd_risingN", prefix, i);
+    sprintf(name, "%s-kickd_sid%02d_kickd_risingN", prefix, i);
     disRisingNId[i]     = dis_add_service(name, "I:1", &(disRisingN[i]), sizeof(uint32_t), 0, 0);
 
-    sprintf(name, "%s-raw_sid%02d_kickd_fallingoffs", prefix, i);
+    sprintf(name, "%s-kickd_sid%02d_kickd_fallingoffs", prefix, i);
     disFallingOffsId[i] = dis_add_service(name, "F:1", &(disFallingOffs[i]), sizeof(float), 0, 0);
 
-    sprintf(name, "%s-raw_sid%02d_kickd_fallingN", prefix, i);
+    sprintf(name, "%s-kickd_sid%02d_kickd_fallingN", prefix, i);
     disFallingNId[i]    = dis_add_service(name, "I:1", &(disFallingN[i]), sizeof(uint32_t), 0, 0);
 
-    sprintf(name, "%s-raw_sid%02d_kickd_len", prefix, i);
+    sprintf(name, "%s-kickd_sid%02d_kickd_len", prefix, i);
     disLenId[i]         = dis_add_service(name, "F:1", &(disLen[i]), sizeof(float), 0, 0);
 
   } // for i
@@ -268,7 +268,7 @@ static void help(void) {
   std::cerr << std::endl;
 
   std::cerr << "Report bugs to <d.beck@gsi.de> !!!" << std::endl;
-  std::cerr << "Version " << b2b_version_text(B2B_SERV_RAW_VERSION) << ". Licensed under the GPL v3." << std::endl;
+  std::cerr << "Version " << b2b_version_text(B2B_SERV_KICKD_VERSION) << ". Licensed under the GPL v3." << std::endl;
 } // help
 
 int main(int argc, char** argv)
@@ -384,10 +384,10 @@ int main(int argc, char** argv)
 
   disAddServices(prefix);
   // uuuuhhhh, mixing c++ and c  
-  sprintf(tmp, "%s-raw_cmd_cleardiag", prefix);
+  sprintf(tmp, "%s-kickd_cmd_cleardiag", prefix);
   RecvCommand cmdClearDiag(tmp);
   
-  sprintf(disName, "%s-raw", prefix);
+  sprintf(disName, "%s-kickd", prefix);
   dis_start_serving(disName);
   
   try {
@@ -425,19 +425,19 @@ int main(int argc, char** argv)
     tmpTag        = tagKStop;        
     snoopID       = ((uint64_t)FID << 60) | ((uint64_t)reqExtRing  << 48) | ((uint64_t)B2B_ECADO_B2B_TRIGGEREXT << 36);
     condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 100000000));
-    tmp[1]        = tmpTag;
+    tag[1]        = tmpTag;
 
     // IO input rising edge
     tmpTag        = tagKRising;
-    snoopID       = ((uint64_t)FID << 60) | ((uint64_t)reqExtRing  << 48) | ((uint64_t)B2B_ECADO_TLUINPUT1 << 36 | (uint64_t)000000001);
-    condition[2]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
-    tmp[2]        = tmpTag;
+    snoopID       = ((uint64_t)0xf << 60) | ((uint64_t)0xfff  << 48) | ((uint64_t)B2B_ECADO_TLUINPUT1 << 36 | (uint64_t)000000001);
+    condition[2]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xffffffffffffffff, 0));
+    tag[2]        = tmpTag;
 
     // IO input falling edge
     tmpTag        = tagKFalling;
-    snoopID       = ((uint64_t)FID << 60) | ((uint64_t)reqExtRing  << 48) | ((uint64_t)B2B_ECADO_TLUINPUT1 << 36 | (uint64_t)000000000);
-    condition[3]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
-    tmp[4]        = tmpTag;
+    snoopID       = ((uint64_t)0xf << 60) | ((uint64_t)0xfff  << 48) | ((uint64_t)B2B_ECADO_TLUINPUT1 << 36 | (uint64_t)000000000);
+    condition[3]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xffffffffffffffff, 0));
+    tag[3]        = tmpTag;
 
     // let's go!
     for (i=0; i<nCondition; i++) {
