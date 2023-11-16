@@ -1,5 +1,4 @@
 import dm_testbench
-import pytest
 
 """Class tests various variants of the flush command.
 

@@ -164,10 +164,12 @@ class ThreadBitsTest(dm_testbench.DmTestbench):
     """
     if self.threadQuantity == 8:
       threadX = '0x100'
+      expectedMask = '0xff'
     else:
       threadX = '0x100000000'
+      expectedMask = '0xffffffff'
     lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-t', threadX, 'preptime'), [255], 0, 1)
-    self.assertEqual(lines[1][0], f"{self.binaryDmCmd}: Thread mask '0x100' is invalid. Choose a mask that fits to 0xff.", 'wrong output')
+    self.assertEqual(lines[1][0], f"{self.binaryDmCmd}: Thread mask '{threadX}' is invalid. Choose a mask that fits to {expectedMask}.", 'wrong output')
 
   def testOutOfRange(self):
     """Test thread 8. If threadQuantity = 8, this is out of range.
@@ -177,7 +179,7 @@ class ThreadBitsTest(dm_testbench.DmTestbench):
     else:
       threadX = '32'
     lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-t', threadX, 'preptime'), [255], 0, 1)
-    self.assertEqual(lines[1][0], f"{self.binaryDmCmd}: Thread idx '8' is invalid. Choose an index between 0 and 7.", 'wrong output')
+    self.assertEqual(lines[1][0], f"{self.binaryDmCmd}: Thread idx '{threadX}' is invalid. Choose an index between 0 and {int(threadX)-1}.", 'wrong output')
 
   def testMissingArgument(self):
     lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-t', 'preptime'), [255], 0, 1)
