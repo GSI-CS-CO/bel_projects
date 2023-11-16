@@ -1,21 +1,92 @@
 #!/bin/sh
 
-# Set up MPS nodes (run it locally on SCU)
+##########################
+## Setup of the WR network
+##########################
+# TTF:
+# WRS configured with dot-config_timing_access_fbas
+# TX node: scuxl0396 (TR device=dev/wbm0)
+# RX node: scuxl0497 (TR device=dev/wbm0, TLU input: B2)
 
-export DEV_TX="dev/wbm0"
-export DEV_RX="dev/wbm0"
+# HO:
+# WRS configured with dot-config_home_access_fbas
+# RPi with DHCP/FTP server
+# DM: Pexaria5 (TR device=dev/wbm1)
+# TX node: Pexaria5 (TR device=dev/wbm0)
+# RX node: Pexp (TR device=dev/wbm2, TLU input: IO2)
 
-export addr_set_node_type="0x20140820"
-export addr_get_node_type="0x20140830"
-export addr_cmd="0x20140508"     # shared memory location for command buffer
-export addr_cnt1="0x20140934"    # shared memory location for received frames counter
-export addr_msr1="0x20140968"    # shared memory location for measurement results
-export addr_eca_vld="0x20140990" # shared memory location of counter for valid actions
-export addr_eca_ovf="0x20140994" # shared memory location of counter for overflow actions
-export addr_senderid="0x20140998" # shared memory location of sender ID
+#####################################
+## General setup for all FBAS nodes
+#####################################
 
-export FW_TX="fbas.scucontrol.bin"
-export FW_RX="fbas.scucontrol.bin"
+# node platform=SCU|PC
+# node form-factor=SCU|Pexaria|Pexp
+# node TR device=wbm[0|1|2]
+# node TR name=tr0|fbastx|fbasrx
+# node TLU input=B2|IO2
+# node type=[RX|TX]_NODE
+
+# Determine node platform
+platform="SCU"
+node_name=$(hostname)
+if [ "$node_name" = "${node_name#scuxl}" ]; then
+    platform="PC"
+fi
+
+# Declare platform-specific variables
+case $platform in
+    "PC")
+        export node_tlu_input="IO2"
+        export tx_node_dev="dev/wbm0"  # label for node device
+        export rx_node_dev="dev/wbm2"
+        export tx_node_name="fbastx"
+        export rx_node_name="fbasrx"
+
+        export module_dir="${PWD/fbas*/fbas}"
+        export fw_dir="$module_dir/fw"
+        export fw_tx="fbas.pcicontrol.bin"
+        export fw_rx="fbas.pcicontrol.bin"
+        ;;
+    "SCU")
+        export node_tlu_input="B2"
+        export tx_node_dev="dev/wbm0"
+        export rx_node_dev="dev/wbm0"
+        export tx_node_name="tr0"
+        export rx_node_name="tr0"
+
+        export fw_dir="."
+        export fw_tx="fbas.scucontrol.bin"
+        export fw_rx="fbas.scucontrol.bin"
+        ;;
+esac
+
+# Declare platform-specific user RAM ranges of TR
+case $platform in
+    "PC")
+        export addr_set_node_type="0x04060820"      # user RAM range in Pexp/Pexaria
+        export addr_get_node_type="0x04060830"
+        export addr_cmd="0x04060508"     # shared memory location for command buffer
+        export addr_cnt1="0x04060934"    # shared memory location for transmitted message counter
+        export addr_msr1="0x04060968"    # shared memory location for measurement results
+        export addr_eca_vld="0x04060990" # shared memory location of counter for valid actions
+        export addr_eca_ovf="0x04060994" # shared memory location of counter for overflow actions
+        export addr_senderid="0x04060998" # shared memory location of sender ID
+
+        export mac_tx_node="0x00267b0004da" # sender ID of TX node
+        ;;
+    "SCU")
+        export addr_set_node_type="0x20140820"     # user RAM range in SCU
+        export addr_get_node_type="0x20140830"
+        export addr_cmd="0x20140508"     # shared memory location for command buffer
+        export addr_cnt1="0x20140934"    # shared memory location for transmitted message counter
+        export addr_msr1="0x20140968"    # shared memory location for measurement results
+        export addr_eca_vld="0x20140990" # shared memory location of counter for valid actions
+        export addr_eca_ovf="0x20140994" # shared memory location of counter for overflow actions
+        export addr_senderid="0x20140998" # shared memory location of sender ID
+        ;;
+esac
+
+# Declare common constants
 
 export instr_fsm_configure=0x01 # FSM CONFIGURE state
 export instr_fsm_opready=0x02   # FSM OPREADY state
@@ -79,20 +150,6 @@ wait_print_seconds() {
 
 }
 
-check_mpstx() {
-    if [ -z "$DEV_TX" ]; then
-        echo "DEV_TX is not set"
-        exit 1
-    fi
-}
-
-check_mpsrx() {
-    if [ -z "$DEV_RX" ]; then
-        echo "DEV_RX is not set"
-        exit 1
-    fi
-}
-
 check_dev_fw() {
 
     echo "verify if a firmware runs on LM32"
@@ -111,7 +168,7 @@ read_shared_mem() {
     # $1 - device
     # $2 - memory address
 
-    eb-read $1 $2
+    eb-read $1 $2/4
 }
 
 write_shared_mem() {
@@ -119,14 +176,10 @@ write_shared_mem() {
     # $2 - memory address
     # $3 - value
 
-    eb-write $1 $2 $3
+    eb-write $1 $2/4 $3
 }
 
 start_saftd() {
-
-    check_mpstx
-    check_mpsrx
-
     echo "terminate SAFT daemon if it's running"
     sudo killall saftd
 
@@ -138,46 +191,74 @@ start_saftd() {
         done
     fi
 
-    echo "attach mpstx:$DEV_TX and mpsrx:$DEV_RX'"
-    sudo saftd mpstx:$DEV_TX mpsrx:$DEV_RX
+    case $platform in
+        "PC")
+            echo "attach $tx_node_name:$tx_node_dev and $rx_node_name:$rx_node_dev'"
+            sudo saftd $tx_node_name:$tx_node_dev $rx_node_name:$rx_node_dev
+            ;;
+        "SCU")
+            ;;
+    esac
+}
+
+start_saftbusd() {
+    echo "terminate saftbus daemon, if it's running"
+    sudo killall saftbusd
+
+    if [ $? -eq 0 ]; then
+        echo "wait until watchdog is released"
+        for i in $(seq 1 10); do
+            echo -ne "time left (seconds): $[ 10 - $i ]\r"
+            wait_seconds 1
+        done
+    fi
+
+    case $platform in
+        "PC")
+            export SAFTBUS_SOCKET_PATH=/tmp/saftbus
+
+            echo "start saftbus with $tx_node_name:$tx_node_dev and $rx_node_name:$rx_node_dev'"
+            saftbusd libsaft-service.so $tx_node_name:$tx_node_dev $rx_node_name:$rx_node_dev &
+            ;;
+        "SCU")
+            ;;
+    esac
 }
 
 check_node() {
-    # $1 - node type (DEV_RX or DEV_TX)
+    # $1 - node device label
 
-    if [ "$1" != "DEV_RX" ] && [ "$1" != "DEV_TX" ]; then
-        echo "unknown node type: $1 -> Exit!"
+    if [ "$1" != "tx_node_dev" ] && [ "$1" != "rx_node_dev" ]; then
+        echo "unknown label for node device: $1 -> Exit!"
         exit 1
     fi
 }
 
-load_fw() {
-    # $1 - node type (DEV_RX or DEV_TX)
+load_node_fw() {
+    # $1 - node device label
     # $2 - firmware filename
 
     check_node "$1"
 
     unset device fw_filename
 
-    if [ "$1" == "DEV_RX" ]; then
-        check_mpsrx
-        fw_filename=$FW_RX
+    if [ "$1" == "rx_node_dev" ]; then
+        fw_filename=$fw_dir/$fw_rx
     else
-        check_mpstx
-        fw_filename=$FW_TX
+        fw_filename=$fw_dir/$fw_tx
     fi
 
     if [ ! -z "$2" ]; then
-        fw_filename="$2"
+        fw_filename="$fw_dir/$2"
         if [ ! -f "$fw_filename" ]; then
             echo "'$fw_filename' not found. Exit"
             return 1
         fi
     fi
 
-    device=$(eval echo "\$$1") # expand variable
+    device=$(eval echo "\$$1") # reference node device label (string) as variable
 
-    echo "$1: load the LM32 firmware '$fw_filename'"
+    echo "$1 ($device): load the LM32 firmware '$fw_filename'"
     eb-fwload $device u 0x0 $fw_filename
     if [ $? -ne 0 ]; then
         echo "Error: failed to load LM32 FW '$fw_filename'. Exit!"
@@ -187,24 +268,24 @@ load_fw() {
 }
 
 configure_node() {
-    # $1 - node type (DEV_RX or DEV_TX)
+    # $1 - node device label
     # $2 - sender node groups (SENDER_TX or SENDER_ANY or SENDER_ALL)
     # $[3:] - sender ID(s) of SENDER_TX
 
     check_node "$1"
 
-    device=$(eval echo "\$$1")
+    device=$(eval echo "\$$1")  # reference node device label (string) as variable
 
-    eb-write $device $addr_cmd/4 0x1
+    eb-write $device $addr_cmd/4 $instr_fsm_configure
     wait_seconds 1
 
-    if [ "$1" == "DEV_RX" ]; then
+    if [ "$1" == "rx_node_dev" ]; then
         echo "set node type to RX (0x1)"
         eb-write $device $addr_set_node_type/4 0x1
         wait_seconds 1
 
         echo "tell LM32 to set the node type"
-        eb-write $device $addr_cmd/4 0x15
+        eb-write $device $addr_cmd/4 $instr_set_nodetype
         wait_seconds 1
 
         echo "verify the actual node type (expected 0x1)"
@@ -213,21 +294,24 @@ configure_node() {
 
         if [ $# -gt 1 ]; then
             shift
-            set_senderid "$@"
+            set_senderid "$device" "$@"
         fi
     fi
 }
 
 set_senderid() {
-    # $1 - sender groups, valid values: SENDER_TX, SENDER_ANY, SENDER_ALL
-    # $[2:] - sender ID(s) of SENDER_TX (without leading 0x)
+    # $1 - node device
+    # $2 - sender groups, valid values: SENDER_TX, SENDER_ANY, SENDER_ALL
+    # $[3:] - sender ID(s) of SENDER_TX (without leading 0x)
 
     # SENDER_TX - only TX node
     # SENDER_ANY - only any nodes
     # SENDER_ALL - TX and any nodes
 
-    sender_grp="$1"
+    device=$1
+    sender_grp="$2"
     shift                   # re-set positional parameters
+    shift
     #set -- "${@/#/0x}"      # add prefix (0x) to all positional parameters
     unset senderid          # init variable
     for mac in "$@"; do
@@ -237,7 +321,6 @@ set_senderid() {
     first_idx=1
     last_idx=15
     unset idx_mac_list  # list with idx_mac
-    device=$DEV_RX
 
     if [ "$sender_grp" == "SENDER_TX" ]; then
         # Structure of the MPS message buffer: 'sender id', 'index' and 'MPS flag'.
@@ -288,77 +371,95 @@ set_senderid() {
 }
 
 make_node_ready() {
-    # $1 - node type (DEV_RX or DEV_TX)
+    # $1 - node device label
 
     check_node "$1"
 
-    device=$(eval echo "\$$1")
+    device=$(eval echo "\$$1")  # reference node device label (string) as variable
 
-    eb-write $device $addr_cmd/4 0x2
+    eb-write $device $addr_cmd/4 $instr_fsm_opready
     wait_seconds 1
 }
 
-configure_tr() {
-    # $1 - node type (DEV_RX or DEV_TX)
+configure_eca() {
+    # $1 - node device label
 
     check_node "$1"
 
-    echo "destroy all unowned ECA conditions"
-    saft-ecpu-ctl tr0 -x
+    set_eca_rules $1
+}
 
-    echo "disable all events from IO inputs to ECA"
-    saft-io-ctl tr0 -w
+set_eca_rules() {
+    # $1 - node device label
+
+    case $1 in
+        "tx_node_dev")
+            node_name=$tx_node_name
+            node_device=$tx_node_dev
+            ;;
+        "rx_node_dev")
+            node_name=$rx_node_name
+            node_device=$rx_node_dev
+            ;;
+    esac
 
     # configure ECA: general rules for both nodes
-    echo "configure ECA: listen to the node registration messages, tag 0x45"
-    saft-ecpu-ctl tr0 -c $evt_mps_node_reg $evt_id_mask 0 0x45 -d
+    echo "destroy all unowned ECA conditions"
+    saft-ecpu-ctl $node_name -x
 
-    echo "configure ECA: listen for FBAS_AUX_CYCLE event, tag 0x26"
-    saft-ecpu-ctl tr0 -c $evt_new_cycle $evt_id_mask 0 0x26 -d
+    echo "disable all events from IO inputs to ECA"
+    saft-io-ctl $node_name -w
 
-    if [ "$1" == "DEV_RX" ]; then
+    echo "configure ECA ($node_name): listen to the node registration messages ($evt_mps_node_reg), tag 0x45"
+    saft-ecpu-ctl $node_name -c $evt_mps_node_reg $evt_id_mask 0 0x45 -d
 
-        echo "configure ECA: set FBAS_WR_EVT, FBAS_WR_FLG for LM32 channel, tag 0x24 and 0x25"
-        saft-ecpu-ctl tr0 -c $evt_mps_prot_std $evt_id_mask 0 0x24 -d
-        saft-ecpu-ctl tr0 -c $evt_mps_prot_chg $evt_id_mask 0 0x25 -d
+    echo "configure ECA ($node_name): listen for FBAS_AUX_CYCLE event ($evt_new_cycle), tag 0x26"
+    saft-ecpu-ctl $node_name -c $evt_new_cycle $evt_id_mask 0 0x26 -d
 
+    if [ "$1" == "tx_node_dev" ]; then
+        echo "configure ECA ($node_name): set FBAS_GEN_EVT ($evt_mps_flag_any) for LM32 channel, tag 0x42"
+        saft-ecpu-ctl $node_name -c $evt_mps_flag_any $evt_id_mask 0 0x42 -d
+
+        echo "configure ECA ($node_name): listen for TLU event ($evt_tlu), tag 0x43"
+        saft-ecpu-ctl $node_name -c $evt_tlu $evt_id_mask 0 0x43 -d
+
+        echo "configure TLU ($node_name): timing event ($evt_tlu) is generated on signal transition at $node_tlu_input input"
+        saft-io-ctl $node_name -n $node_tlu_input -b $evt_tlu
+
+        echo "now events can be snooped with a following command: saft-ctl $node_name -xv snoop 0 0 0"
+        echo "or events can be presented by the LM32 firmware if WR console is active: $ eb-console $node_device"
     else
-        echo "configure ECA: set FBAS_GEN_EVT for LM32 channel, tag 0x42"
-        saft-ecpu-ctl tr0 -c $evt_mps_flag_any $evt_id_mask 0 0x42 -d
-
-        echo "configure ECA: listen for TLU event with the given ID, tag 0x43"
-        saft-ecpu-ctl tr0 -c $evt_tlu $evt_id_mask 0 0x43 -d
-
-        echo "configure TLU: on signal transition at B2 input, it will generate a timing event with the given ID"
-        saft-io-ctl tr0 -n B2 -b $evt_tlu
-
-        echo "events can be snooped with a following command: saft-ctl tr0 -xv snoop 0 0 0"
-        echo "also events can be presented by the LM32 firmware if WR console is active: $ eb-console \$$1"
+        echo "configure ECA ($node_name): set FBAS_WR_FLG ($evt_mps_prot_std), FBAS_WR_EVT ($evt_mps_prot_chg) for LM32 channel, tag 0x24 and 0x25"
+        saft-ecpu-ctl $node_name -c $evt_mps_prot_std $evt_id_mask 0 0x24 -d
+        saft-ecpu-ctl $node_name -c $evt_mps_prot_chg $evt_id_mask 0 0x25 -d
     fi
 
     echo "show actual ECA conditions"
-    saft-ecpu-ctl tr0 -l
+    saft-ecpu-ctl $node_name -l
 
     echo "list all IO conditions in ECA"
-    saft-io-ctl tr0 -l
+    saft-io-ctl $node_name -l
 }
+
 ######################
 ## Make 'mpstx' ready
 ######################
 
 setup_mpstx() {
 
+    node_dev_label="tx_node_dev"
     echo "load firmware"
-    load_fw "DEV_TX"
+
+    load_node_fw "$node_dev_label"
 
     echo "CONFIGURE state "
-    configure_node "DEV_TX"
+    configure_node "$node_dev_label"
 
     echo "OPREADY state "
-    make_node_ready "DEV_TX"
+    make_node_ready "$node_dev_label"
 
     echo "configure TR"
-    configure_tr "DEV_TX"
+    configure_eca "$node_dev_label"
 }
 
 ####################
@@ -370,20 +471,22 @@ setup_mpsrx() {
     # $2 - sender node groups (SENDER_TX/ALL/ANY)
     # $[3:] - sender ID(s) of SENDER_TX
 
+    node_dev_label="rx_node_dev"
+
     echo "load firmware"
-    load_fw "DEV_RX" "$1"
+    load_node_fw "$node_dev_label" "$1"
 
     echo "CONFIGURE state "
     if [ $# -gt 2 ]; then
         shift
-        configure_node "DEV_RX" "$@"
+        configure_node "$node_dev_label" "$@"
     fi
 
     echo "OPREADY state "
-    make_node_ready "DEV_RX"
+    make_node_ready "$node_dev_label"
 
     echo "configure TR"
-    configure_tr "DEV_RX"
+    configure_eca "$node_dev_label"
 }
 
 ###################
@@ -464,9 +567,9 @@ start_nw_perf() {
         n=$1
     fi
 
-    echo "TX: MPS events will be generated locally ..."
-    echo "TX: $n MPS events -> flag=NOK(2), grpID=1, evtID=0 ($(( $n * 3)) transmissions)"
-    echo "TX: $n MPS events -> flag=OK(1), grpID=1, evtID=0 ($n transmissions)"
+    echo "TX: generating the MPS events locally ..."
+    echo "TX: $n events ($evt_mps_flag_nok, flag=NOK(2), $(( $n * 3)) transmissions)"
+    echo "TX: $n events ($evt_mps_flag_ok, flag=OK(1), $n transmissions)"
     echo -e "TX: $(( $n * 2 - 1))x IO events must be snooped by 'saft-ctl tr0 -vx snoop $evt_tlu $evt_id_mask 0'\n"
 
     for i in $(seq $n); do
@@ -538,28 +641,30 @@ result_ttl_ival() {
 
 disable_mps() {
     echo "Stop MPS on $1"
-    eb-write $1 $addr_cmd/4 0x31
+    eb-write $1 $addr_cmd/4 $instr_dis_mps
+    wait_seconds 1
 }
 
 enable_mps() {
     echo "Start MPS on $1"
-    eb-write $1 $addr_cmd/4 0x30
+    eb-write $1 $addr_cmd/4 $instr_en_mps
+    wait_seconds 1
 }
 
 disable_mps_all() {
     echo "Disable MPS"
-    disable_mps $DEV_TX
-    disable_mps $DEV_RX
+    disable_mps $tx_node_dev
+    disable_mps $rx_node_dev
 }
 
 enable_mps_all() {
     echo "Enable MPS"
-    enable_mps $DEV_RX
-    enable_mps $DEV_TX
+    enable_mps $rx_node_dev
+    enable_mps $tx_node_dev
 }
 
 read_measurement_results() {
-    # $1 - device (dev/wbm0)
+    # $1 - node device (dev/wbm0)
     # $2 - instruction code to store measurement results to a location in the shared memory
     # $3 - shared memory location where measurement results are stored
     # $4 - verbosity
@@ -604,8 +709,8 @@ read_measurement_results() {
 ##########################################################
 
 do_test2() {
-    echo "injectg timing messages to DEV_TX that simulate the FBAS class 2 signals"
-    saft-ctl tr0 -p inject $evt_mps_flag_tst 0x0 1000000
+    echo "injectg timing messages to tx_node_dev that simulate the FBAS class 2 signals"
+    saft-ctl $tx_node_name -p inject $evt_mps_flag_tst 0x0 1000000
 
     # Case 1: consider the ahead time of 500 us (flagForceLate=0)
     # wrc output (TX)
@@ -650,18 +755,12 @@ do_test2() {
 ####################
 
 reset_node() {
-    # $1 - node type (DEV_TX or DEV_RX)
+    # $1 - node device label
     # $2 - sender node groups
 
     check_node "$1"
 
-    if [ "$1" == "DEV_RX" ]; then
-        check_mpsrx
-    else
-        check_mpstx
-    fi
-
-    device=$(eval echo "\$$1")
+    device=$(eval echo "\$$1") # reference node device label (string) as variable
 
     echo "reset LM32"
     eb-reset $device cpureset 0x0
@@ -672,6 +771,21 @@ reset_node() {
 
     echo "OPREADY state "
     make_node_ready "$1"
+
+    case $1 in
+        "tx_node_dev")
+            node_name=$tx_node_name
+            ;;
+        "rx_node_dev")
+            node_name=$rx_node_name
+            ;;
+    esac
+
+    echo "show actual ECA conditions"
+    saft-ecpu-ctl $node_name -l
+
+    echo "list all IO conditions in ECA"
+    saft-io-ctl $node_name -l
 }
 
 ###################
@@ -684,4 +798,27 @@ inject_mps_events() {
     # $2 - filename with the MPS event schedule
 
     saft-dm bla -fp -n $1 $2
+}
+
+###################
+# Print the MD5 checksum and date of a given file
+#
+###################
+print_file_info() {
+    # $1 - filename (in current directory)
+
+    if [ -f $1 ]; then
+        checksum=$(md5sum $1)
+        info=$(ls -l $1)
+
+        checksum=${checksum%% *} # get the checksum only
+        date=${info##*root}      # get the sub-string right to 'root'
+
+        printf "%s " $checksum $date
+        printf "\n"
+
+    else
+        exit 2                   # return error code
+    fi
+
 }

@@ -99,10 +99,11 @@ void resetItr(timedItr_t* itr, uint64_t now)
  * \param itr   Read-access iterator that specifies next MPS flag to send
  * \param evtId Event ID for timing messages
  *
- * \ret status
+ * \ret count   Number of sent messages
  **/
-status_t sendMpsMsgBlock(size_t len, timedItr_t* itr, uint64_t evtId)
+uint32_t sendMpsMsgBlock(size_t len, timedItr_t* itr, uint64_t evtId)
 {
+  uint32_t count = 0;
   uint32_t res, tef;                // temporary variables for bit shifting etc
   uint32_t deadlineLo, deadlineHi;
   uint32_t idLo, idHi;
@@ -157,11 +158,10 @@ status_t sendMpsMsgBlock(size_t len, timedItr_t* itr, uint64_t evtId)
 
     // send timing messages
     ebm_flush();
+    ++count;
   }
-  else
-    return COMMON_STATUS_ERROR;
 
-  return COMMON_STATUS_OK;
+  return count;
 }
 
 /**
@@ -172,10 +172,11 @@ status_t sendMpsMsgBlock(size_t len, timedItr_t* itr, uint64_t evtId)
  * \param itr   Read-access iterator that specifies next MPS message to send
  * \param evtid Event ID used to send a timing message
  *
- * \ret status  Zero on success, otherwise non-zero
+ * \ret count   Number of sent messages
  **/
-status_t sendMpsMsgPeriodic(timedItr_t* itr, uint64_t evtid)
+uint32_t sendMpsMsgPeriodic(timedItr_t* itr, uint64_t evtid)
 {
+  uint32_t count = 0;
   uint32_t tef = 0;
   uint64_t now = getSysTime();
   uint64_t deadline = itr->last + itr->period;
@@ -189,15 +190,14 @@ status_t sendMpsMsgPeriodic(timedItr_t* itr, uint64_t evtid)
     memcpy(&param, prot, sizeof(mpsProtocol_t));
 
     // send MPS message with current timestamp, which varies around deadline
-    fwlib_ebmWriteTM(now, evtid, param, tef, 1);
+    if (fwlib_ebmWriteTM(now, evtid, param, tef, 1) == COMMON_STATUS_OK)
+      ++count;
 
     // update iterator with deadline
     resetItr(itr, now);
   }
-  else
-    return COMMON_STATUS_ERROR;
 
-  return COMMON_STATUS_OK;
+  return count;
 }
 
 /**
@@ -211,30 +211,33 @@ status_t sendMpsMsgPeriodic(timedItr_t* itr, uint64_t evtid)
  * \param evtid Event ID used to send a timing message
  * \param extra Number of extra messages
  *
- * \ret status  Zero on success, otherwise non-zero
+ * \ret count   Number of sent messages
  **/
-status_t sendMpsMsgSpecific(timedItr_t* itr, mpsMsg_t* buf, uint64_t evtid, uint8_t extra)
+uint32_t sendMpsMsgSpecific(timedItr_t* itr, mpsMsg_t* buf, uint64_t evtid, uint8_t extra)
 {
+  uint32_t count = 0;
   uint32_t tef = 0;
   uint64_t now = getSysTime();
 
   if (itr->last >= now) // delayed by a new cycle
-    return COMMON_STATUS_ERROR;
+    return count;
 
   uint64_t param;
   memcpy(&param, &buf->prot, sizeof(buf->prot));
 
   // send specified MPS event
-  fwlib_ebmWriteTM(now, evtid, param, tef, 1);
+  if (fwlib_ebmWriteTM(now, evtid, param, tef, 1) == COMMON_STATUS_OK)
+    ++count;
 
   // NOK flag shall be sent as extra events
   if (buf->prot.flag == MPS_FLAG_NOK) {
     for (uint8_t i = 0; i < extra; ++i) {
-      fwlib_ebmWriteTM(now, evtid, param, tef, 1);
+      if (fwlib_ebmWriteTM(now, evtid, param, tef, 1) == COMMON_STATUS_OK)
+        ++count;
     }
   }
 
-  return COMMON_STATUS_OK;
+  return count;
 }
 
 /**

@@ -84,8 +84,8 @@ main() {
 
     echo 'start test4 (RX, TX)'
     echo "-----------"
-    timeout 20 sshpass -p "$userpasswd" ssh $username@$rxscu "source setup_local.sh && start_test4 \$DEV_RX"
-    timeout 20 sshpass -p "$userpasswd" ssh $username@$txscu "source setup_local.sh && start_test4 \$DEV_TX"
+    timeout 20 sshpass -p "$userpasswd" ssh $username@$rxscu "source setup_local.sh && start_test4 \$rx_node_dev"
+    timeout 20 sshpass -p "$userpasswd" ssh $username@$txscu "source setup_local.sh && start_test4 \$tx_node_dev"
 
     echo "wait $sleep_sec seconds (start Xenabay schedule now)"
     echo "------------"
@@ -94,11 +94,11 @@ main() {
     echo 'stop test4 (TX, RX)'
     echo "----------"
     echo -n "TX: "
-    timeout 20 sshpass -p "$userpasswd" ssh $username@$txscu "source setup_local.sh && stop_test4 \$DEV_TX && \
-        read_counters \$DEV_TX $verbose"
+    timeout 20 sshpass -p "$userpasswd" ssh $username@$txscu "source setup_local.sh && stop_test4 \$tx_node_dev && \
+        read_counters \$tx_node_dev $verbose"
     echo -n "RX: "
-    timeout 20 sshpass -p "$userpasswd" ssh $username@$rxscu "source setup_local.sh && stop_test4 \$DEV_RX && \
-        read_counters \$DEV_RX $verbose && result_ow_delay \$DEV_RX $verbose"
+    timeout 20 sshpass -p "$userpasswd" ssh $username@$rxscu "source setup_local.sh && stop_test4 \$rx_node_dev && \
+        read_counters \$rx_node_dev $verbose && result_ow_delay \$rx_node_dev $verbose"
 }
 
 export -f report_check

@@ -18,13 +18,13 @@
 // base address of standard registers for all slave devices on the SCU bus
 #define STD_REG_BASE      0x0000
 
-// standard registers for SCU bus slaves
+// standard registers for SCU bus slaves, https://www-acc.gsi.de/wiki/Hardware/Intern/StdRegScuBusSlave
 #define SBS_SLAVE_ID      0x01 // slave ID, reserved
 #define SBS_FW_VER        0x02 // firmware version, rd
 #define SBS_FW_REL        0x03 // firmware release, rd
 #define SBS_CID_SYS       0x04 // CID (component ID) system ID, rd
 #define SBS_CID_GRP       0x05 // CID group ID, rd
-#define SBS_MACRO_VR      0x06 // macro version and release, rd
+#define SBS_MACRO_VER     0x06 // macro version and release, rd
 #define SBS_EXT_CID_SYS   0x07 // CID system ID of extension card (dead=no extension), rd
 #define SBS_EXT_CID_GRP   0x08 // CID group ID of extension card (dead=no extension), rd
 #define SBS_CLK_10K       0x09 // macro clock frequency, 10KHz resolution, rd

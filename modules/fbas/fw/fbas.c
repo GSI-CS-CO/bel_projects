@@ -510,13 +510,9 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
             }
 
             // send MPS event
-            if (sendMpsMsgSpecific(itr, *head, FBAS_FLG_EID, N_EXTRA_MPS_NOK) == COMMON_STATUS_OK) {
+            uint32_t count = sendMpsMsgSpecific(itr, *head, FBAS_FLG_EID, N_EXTRA_MPS_NOK);
               // count sent timing messages with MPS event
-              *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = msrCnt(TX_EVT_CNT, 1);
-              if ((*head)->prot.flag == MPS_FLAG_NOK) {
-                *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = msrCnt(TX_EVT_CNT, N_EXTRA_MPS_NOK);
-              }
-            }
+              *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = msrCnt(TX_EVT_CNT, count);
 
             // store timestamps to measure delays
             storeTsMeasureDelays(pSharedApp, FBAS_SHARED_GET_TS1, now, ecaDeadline);
@@ -535,8 +531,8 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
         if (nodeType == FBAS_NODE_RX) { // FBAS RX generates MPS class 2 signals
 
           // count received timing messages with MPS flag or MPS event
-          if (COMMON_STATUS_OK == fwlib_getEcaValidCnt(&actions))    // number of the valid actions
-            *(pSharedApp + (FBAS_SHARED_ECA_VLD >> 2)) = msrCnt(ECA_VLD_ACT, actions);
+          actions=1; // do not use fwlib_getEcaValidCnt() to get the ECA channel valid count => it returns zero value
+          *(pSharedApp + (FBAS_SHARED_ECA_VLD >> 2)) = msrCnt(ECA_VLD_ACT, actions);
 
           if (COMMON_STATUS_OK == fwlib_getEcaOverflowCnt(&actions)) // number of the overflow actions
             *(pSharedApp + (FBAS_SHARED_ECA_OVF >> 2)) = msrCnt(ECA_OVF_ACT, actions);
@@ -844,9 +840,9 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
 
         // periodic, unicast transmission of the MPS flag
         if (setEndpDstAddr(DST_ADDR_RXNODE) == COMMON_STATUS_OK) {
-          if (sendMpsMsgBlock(N_MPS_FLAGS, pRdItr, FBAS_FLG_EID) == COMMON_STATUS_OK)
+          uint32_t count = sendMpsMsgBlock(N_MPS_FLAGS, pRdItr, FBAS_FLG_EID);
             // count sent timing messages with MPS flag
-            *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = msrCnt(TX_EVT_CNT, N_MPS_FLAGS);
+            *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = msrCnt(TX_EVT_CNT, count);
         }
         else {
           DBPRINT1("Err - nothing sent! TODO: set failed status\n");

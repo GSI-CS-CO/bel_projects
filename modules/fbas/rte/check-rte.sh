@@ -93,7 +93,27 @@ setup_rte_build() {
 	sed -i "s|^DEPLOY_TARGET=.*|DEPLOY_TARGET=\"$TARGET_RTE_PATH\"|" $TIMING_RTE_BUILDER
 }
 
+check_fbas_stuff() {
+
+	# check the presence of the FBAS stuff
+	ls $TARGET_RTE_PATH/firmware/*.bin
+	if [ $? -eq 0 ]; then
+		echo "PASS: FBAS LM32 firmware is available: $TARGET_RTE_PATH/firmware/*.bin"
+	else
+		echo "FAIL: FBAS LM32 firmware is not found: $TARGET_RTE_PATH/firmware/*.bin"
+	fi
+
+	ls $TARGET_RTE_PATH/test/*.sched
+	if [ $? -eq 0 ]; then
+		echo "PASS: FBAS test schedules are available: $TARGET_RTE_PATH/test/*.sched"
+	else
+		echo "FAIL: FBAS test schedules are not found: $TARGET_RTE_PATH/test/*.sched"
+	fi
+
+}
+
 check_rte_location
 check_rte_builder
 check_rte_builder_settings
 check_nfsinit_scripts
+check_fbas_stuff

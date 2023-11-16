@@ -28,20 +28,26 @@ deploy_fbas_artifacts() {
 	# TR LM32 firmware
 	echo "deploy $FW_PATH/*.bin to $TARGET_RTE_PATH/firmware"
 	mkdir -p $TARGET_RTE_PATH/firmware
-	cp $FW_PATH/*.bin $TARGET_RTE_PATH/firmware
+	cp -u -p $FW_PATH/*.bin $TARGET_RTE_PATH/firmware
 
 	# test scripts
 	echo "deploy $TEST_PATH/scu/*.sh to $TARGET_RTE_PATH/$ARCH/bin"
 	mkdir -p $TARGET_RTE_PATH/$ARCH/bin
-	cp $TEST_PATH/scu/*.sh $TARGET_RTE_PATH/$ARCH/bin
+	cp -u -p $TEST_PATH/scu/*.sh $TARGET_RTE_PATH/$ARCH/bin
+
+	# test artifacts
+	echo "deploy $TEST_PATH/scu/*.sched to $TARGET_RTE_PATH/test"
+	mkdir -p $TARGET_RTE_PATH/test
+	cp -u -p $TEST_PATH/scu/*.sched $TARGET_RTE_PATH/test
+
 }
 
 deploy_rte_scripts() {
 	echo "deploy $ASL_PATH/loader.sh to $TARGET_RTE_PATH/"
-	cp $ASL_PATH/loader.sh $TARGET_RTE_PATH/
+	cp -u -p $ASL_PATH/loader.sh $TARGET_RTE_PATH/
 
 	echo "deploy $ASL_PATH/$YOCTO_RTE_LOADER to $NFSINIT_PATH/global/"
-	cp $ASL_PATH/$YOCTO_RTE_LOADER $NFSINIT_PATH/global/
+	cp -u -p $ASL_PATH/$YOCTO_RTE_LOADER $NFSINIT_PATH/global/
 }
 
 check_locations() {

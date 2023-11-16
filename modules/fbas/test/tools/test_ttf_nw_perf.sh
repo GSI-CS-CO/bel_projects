@@ -47,43 +47,58 @@ pre_check() {
     echo "    GID: 0x0fff EVTNO: 0x0100 Other: 0x000000001"
     echo "    GID: 0x0fff EVTNO: 0x0100 Other: 0x000000000"
 
-    echo "(RX): drive B1 output:"
+    echo "RX: drive B1 output:"
     echo "      saft-io-ctl tr0 -n B1 -o 1 -d 1"
     echo "      saft-io-ctl tr0 -n B1 -o 1 -d 0"
 }
 
 setup_nodes() {
-    echo -e "\ncheck deployment\n"
 
     filenames="$fw_scu_def $fw_scu_multi $script_rxscu"
-    all_scu+="$rxscu"
-    for scu in ${txscu[@]}; do
-        all_scu+=($scu)
-    done
-
-    for scu in "${all_scu[@]}"; do
-        for filename in $filenames; do
-            timeout 10 sshpass -p "$userpasswd" ssh $ssh_opts $username@$scu "if [ ! -f $filename ]; then echo $filename not found on $scu; exit 2; fi"
-            result=$?
-            report_check $result $filename $scu
-        done
-    done
-
-    for scu in "${all_scu[@]}"; do
-        echo -e "\n$scu:\n"
-        timeout 10 sshpass -p "$userpasswd" ssh $ssh_opts $username@$scu "ls -l $filenames && md5sum $filenames"
-    done
-
-    unset sender_opts
     mac_txscu=()
+    all_scu=(${txscu[@]} "$rxscu")
 
-    for scu in ${txscu[@]}; do
-        mac_txscu+=($(timeout 10 sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" "eb-mon -m dev/wbm0"))
+    for scu in "${all_scu[@]}"; do
+        # get MAC address
+        mac_scu=$(timeout 10 sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" "eb-mon -m dev/wbm0")
+        ret_code=$?
+        if [ $ret_code -eq 0 ]; then
+            if [ "$scu" != "$rxscu" ]; then
+                mac_txscu+=($mac_scu)
+                echo "TX=$scu: $mac_scu"
+            else
+                echo "RX=$scu: $mac_scu"
+            fi
+        fi
+
+        # check deployment
+        for filename in $filenames; do
+            timeout 10 sshpass -p "$userpasswd" ssh $ssh_opts $username@$scu "source setup_local.sh && print_file_info $filename"
+            ret_code=$?
+
+            if [ $ret_code -eq 124 ]; then
+                echo "access to $scu timed out. Exit!"
+                exit 1
+            elif [ $ret_code -ne 0 ]; then
+                echo "$filename not found on ${scu}. Exit!"
+                exit 2
+            fi
+        done
+
+        # set up TX nodes
+        if [ "$scu" != "$rxscu" ]; then
+            output=$(timeout 10 sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" "source setup_local.sh && setup_mpstx")
+            ret_code=$?
+            if [ $ret_code -ne 0 ]; then
+                echo "Error ($ret_code): cannot set up $scu"
+                exit 1
+            fi
+        fi
+        echo
     done
 
-    echo -e "Sender ID(s) of ${txscu[@]}:\n ${mac_txscu[@]}"
-
-    echo -e "\nset up RX=$rxscu_name ...\n"
+    # set up RX node
+    sender_opts="SENDER_ANY"
     if [ ${#mac_txscu[@]} -eq 0 ]; then
         sender_opts="SENDER_ANY"
     else
@@ -97,25 +112,20 @@ setup_nodes() {
         exit 1
     fi
 
-    for scu in ${txscu[@]}; do
-        echo -e "\nset up TX=$scu ...\n"
-        output=$(timeout 10 sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" "source setup_local.sh && setup_mpstx")
-        ret_code=$?
-        if [ $ret_code -ne 0 ]; then
-            echo "Error ($ret_code): cannot set up $scu"
-            exit 1
-        fi
-    done
+    echo "Sender ID(s): ${mac_txscu[@]}"
 }
 
 measure_nw_perf() {
     echo -e "start the measurements\n"
-    output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && enable_mps \$DEV_RX")
+    output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && enable_mps \$rx_node_dev")
 
     # enable simultaneous operation of TX nodes
     pids=()
     for i in ${!txscu[@]}; do
-        output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@${txscu[$i]}" "source setup_local.sh && enable_mps \$DEV_TX")
+        echo ${txscu[$i]}:
+
+        # enable MPS operation, start test => keep process ID
+        output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@${txscu[$i]}" "source setup_local.sh && enable_mps \$tx_node_dev")
 
         # start test sub-process and keep its process ID
         sshpass -p "$userpasswd" ssh $ssh_opts "$username@${txscu[$i]}" "source setup_local.sh && start_nw_perf" &
@@ -129,44 +139,57 @@ measure_nw_perf() {
 
     echo -e "stop the measurements\n"
     for scu in ${txscu[@]}; do
-        output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" "source setup_local.sh && disable_mps \$DEV_TX")
+        output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" "source setup_local.sh && disable_mps \$tx_node_dev")
     done
 
-    output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && disable_mps \$DEV_RX")
+    output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && disable_mps \$rx_node_dev")
 
     # report test result
     echo -e "measurement stats: MPS signaling\n"
 
+    sum_tx_cnt=0
     for scu in ${txscu[@]}; do
         cnt=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" \
             "source setup_local.sh && \
-            read_counters \$DEV_TX $verbose")
+            read_counters \$tx_node_dev $verbose")
         echo "TX (${scu%%.*}): $cnt"
+	tx_cnt=${cnt%% *} # remove the right part including all spaces
+	sum_tx_cnt=$(( $sum_tx_cnt + $tx_cnt ))
     done
 
     cnt=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" \
         "source setup_local.sh && \
-        read_counters \$DEV_RX $verbose")
+        read_counters \$rx_node_dev $verbose")
     echo "RX (${rxscu%%.*}): $cnt"
+
+    rx_cnt=${cnt#* }     # remove the left part including first occurence of space
+    rx_cnt=${rx_cnt%% *} # remove the right part including all spaces
+
+    result="received $rx_cnt of $sum_tx_cnt"
+    if [ $rx_cnt -eq $sum_tx_cnt ]; then
+	echo PASS: $result
+    else
+	echo FAIL: $result
+    fi
 
     for scu in ${txscu[@]}; do
         echo "TX (${scu%%.*}):"
         sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" \
             "source setup_local.sh && \
-            result_sg_latency \$DEV_TX $verbose && \
-            result_tx_delay \$DEV_TX $verbose"
+            result_sg_latency \$tx_node_dev $verbose && \
+            result_tx_delay \$tx_node_dev $verbose"
     done
 
     echo "RX (${rxscu%%.*}):"
     sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" \
         "source setup_local.sh && \
-        result_ow_delay \$DEV_RX $verbose && \
-        result_ttl_ival \$DEV_RX $verbose"
+        result_ow_delay \$rx_node_dev $verbose && \
+        result_ttl_ival \$rx_node_dev $verbose"
 }
 
 measure_ttl() {
     echo -e "start the measurement\n"
-    output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && enable_mps \$DEV_RX")
+    output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && enable_mps \$rx_node_dev")
 
     n_toggle=10
     echo -e "toggle MPS operation (n=$n_toggle): TX=${txscu_name[@]}"
@@ -174,24 +197,24 @@ measure_ttl() {
         echo -en " $i: enable \r"
 
         for scu in ${txscu[@]}; do
-            output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" "source setup_local.sh && enable_mps \$DEV_TX")
+            output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" "source setup_local.sh && enable_mps \$tx_node_dev")
         done
 
         sleep 1
         echo -en " $i: disable\r"
 
         for scu in ${txscu[@]}; do
-            output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" "source setup_local.sh && disable_mps \$DEV_TX")
+            output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" "source setup_local.sh && disable_mps \$tx_node_dev")
         done
 
         sleep 1
     done
 
     echo -e "\nstop the measurement\n"
-    output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && disable_mps \$DEV_RX")
+    output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && disable_mps \$rx_node_dev")
 
     echo -e "measurement stats: TTL\n"
-    sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && result_ttl_ival \$DEV_RX \$addr_cnt1 $verbose"
+    sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && result_ttl_ival \$rx_node_dev \$addr_cnt1 $verbose"
 }
 
 unset username userpasswd option verbose
@@ -225,7 +248,7 @@ if [ ${#txscu_name[@]} -eq 0 ]; then
     txscu+=("$def_txscu_name.$domain")
 fi
 
-echo -e "\n--- Step 1: set up nodes (RX=$rxscu_name, TX=${txscu_name[@]}) ---"
+echo -e "\n--- Step 1: set up nodes (RX=$rxscu_name, TX=${txscu_name[@]}) ---\n"
 setup_nodes
 
 # optional pre-check before real test

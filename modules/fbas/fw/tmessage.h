@@ -69,9 +69,9 @@ extern timedItr_t rdItr;                           // read-access iterator for M
 
 void initItr(timedItr_t* itr, uint8_t total, uint64_t now, uint32_t freq);
 void resetItr(timedItr_t* itr, uint64_t now);
-status_t sendMpsMsgPeriodic(timedItr_t* itr, uint64_t evtid);
-status_t sendMpsMsgSpecific(timedItr_t* itr, mpsMsg_t* buf, uint64_t evtid, uint8_t extra);
-status_t sendMpsMsgBlock(size_t len, timedItr_t* itr, uint64_t evtId);
+uint32_t sendMpsMsgPeriodic(timedItr_t* itr, uint64_t evtid);
+uint32_t sendMpsMsgSpecific(timedItr_t* itr, mpsMsg_t* buf, uint64_t evtid, uint8_t extra);
+uint32_t sendMpsMsgBlock(size_t len, timedItr_t* itr, uint64_t evtId);
 mpsMsg_t* updateMpsMsg(mpsMsg_t* buf, uint64_t evt);
 status_t storeMpsMsg(uint64_t raw, uint64_t ts, timedItr_t* itr, int* offset);
 mpsMsg_t* evalMpsMsgTtl(uint64_t now, int idx);

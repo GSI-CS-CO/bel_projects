@@ -46,6 +46,14 @@ check_fbas_stuff() {
 	else
 		echo "FAIL: FBAS test scripts are not found: $TARGET_RTE_PATH/$ARCH/bin/*.sh"
 	fi
+
+	ls $TARGET_RTE_PATH/test/*.sched
+	if [ $? -eq 0 ]; then
+		echo "PASS: FBAS test schedules are available: $TARGET_RTE_PATH/test/*.sched"
+	else
+		echo "FAIL: FBAS test schedules are not found: $TARGET_RTE_PATH/test/*.sched"
+	fi
+
 }
 
 check_rte_location
