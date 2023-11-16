@@ -109,6 +109,7 @@ uint32_t  disLenId[B2B_NSID];
 uint32_t reqRing;                       // requested extraction ring
 uint32_t reqMode;                       // requested mode; 0: extraction, 1: injection
 uint32_t reqIO;                         // requested IO to which the magnet probe signal is connected
+uint32_t reqEvtNo;                      // requested event number
 
 // init setval
 void initValues(uint32_t sid)
@@ -279,10 +280,11 @@ int main(int argc, char** argv)
   char     prefix[NAMELEN*2];
   char     disName[DIMMAXSIZE];
 
-  reqRing  = SIS18_RING;           // gid SIS18
-  reqMode  = 0;                    // extraction
-  reqIO    = 1;                    // magnet probe connected to IO1
-  tluIn    = B2B_ECADO_TLUINPUT1;  // input IO1
+  reqRing  = SIS18_RING;                // gid SIS18
+  reqMode  = 0;                         // extraction
+  reqIO    = 1;                         // magnet probe connected to IO1
+  reqEvtNo = B2B_ECADO_B2B_TRIGGEREXT;  // extraction trigger
+  tluIn    = B2B_ECADO_TLUINPUT1;       // input IO1
 
 
   // parse for options
@@ -310,6 +312,8 @@ int main(int argc, char** argv)
           fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg);
           return 1;
         } // if *tail
+        if (reqMode == 1) reqEvtNo = B2B_ECADO_B2B_TRIGGERINJ;
+        else              reqEvtNo = B2B_ECADO_B2B_TRIGGEREXT;
         break;
       case 'i' :
         reqIO = strtol(optarg, &tail, 0);
@@ -430,13 +434,13 @@ int main(int argc, char** argv)
 
     // CMD_B2B_EXTTRIG, signals start of data collection
     tmpTag        = tagKStart;
-    snoopID       = ((uint64_t)FID << 60) | ((uint64_t)reqRing  << 48) | ((uint64_t)B2B_ECADO_B2B_TRIGGEREXT << 36);
+    snoopID       = ((uint64_t)FID << 60) | ((uint64_t)reqRing  << 48) | ((uint64_t)reqEvtNo << 36);
     condition[0]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
     tag[0]        = tmpTag;
   
     // CMD_B2B_EXTTRIG, +100ms (!), signals stop of data collection
     tmpTag        = tagKStop;        
-    snoopID       = ((uint64_t)FID << 60) | ((uint64_t)reqRing  << 48) | ((uint64_t)B2B_ECADO_B2B_TRIGGEREXT << 36);
+    snoopID       = ((uint64_t)FID << 60) | ((uint64_t)reqRing  << 48) | ((uint64_t)reqEvtNo << 36);
     condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 100000000));
     tag[1]        = tmpTag;
 
