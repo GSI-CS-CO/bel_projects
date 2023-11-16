@@ -577,11 +577,12 @@ class DmTestbench(unittest.TestCase):
       lines = self.startAndGetSubprocessOutput(('eb-info', '-w', self.datamaster), [0], -1, 0)
       for line in lines[0]:
         if 'ThreadQty   : 32' in line:
-          self.logToFile('getThreadQuantityFromFirmware: 32', 'threadQuantity.txt')
+          # ~ self.logToFile('getThreadQuantityFromFirmware: 32', 'threadQuantity.txt')
           return 32
-      self.logToFile('getThreadQuantityFromFirmware: 8', 'threadQuantity.txt')
+      # ~ self.logToFile('getThreadQuantityFromFirmware: 8', 'threadQuantity.txt')
       return 8
 
   def logToFile(self, text, fileName):
     with open(fileName, 'a') as file1:
       file1.write(text)
+      file1.write('\n')

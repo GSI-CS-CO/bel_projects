@@ -52,8 +52,8 @@ class UnitTestMemoryFull(dm_testbench.DmTestbench):
   def setUp(self):
     super().setUp();
     if self.threadQuantity == 8:
-      self.maxNodes = 1869
-      self.maxNodesCpu3 = 1675
+      self.maxNodes = 1868
+      self.maxNodesCpu3 = 1667
     else:
       self.maxNodes = 1839
       self.maxNodesCpu3 = 1634
