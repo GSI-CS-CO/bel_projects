@@ -317,7 +317,7 @@
 
 #define DST_ARRAY               (NODE_BEGIN) ///< Array of pointers to all nodes which are alternative definitions
 #define DST_ARRAY_END           (DST_ARRAY + DST_MAX * _PTR_SIZE_) ///< End of Array
-#define DST_NXTPTR              (DST_ARRAY_END + _PTR_SIZE_) ///< End of Array
+#define DST_NXTPTR              NODE_DEF_DEST_PTR ///< End of Array
 //@}
 
 /** @name Origin node layout definition.*/
