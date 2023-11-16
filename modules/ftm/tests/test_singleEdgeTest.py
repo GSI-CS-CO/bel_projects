@@ -1,5 +1,4 @@
 import dm_testbench
-import pytest
 from pathlib import Path
 import shutil
 

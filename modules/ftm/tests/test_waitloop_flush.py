@@ -1,5 +1,4 @@
 import dm_testbench
-import pytest
 
 """Class tests a wait loop terminated by the flush command.
 """

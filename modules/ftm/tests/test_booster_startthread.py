@@ -1,5 +1,4 @@
 import dm_testbench
-import pytest
 
 """
 Class collects unit tests for startthread nodes and origin nodes.

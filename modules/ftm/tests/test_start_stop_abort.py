@@ -1,85 +1,60 @@
 import dm_testbench
-import pytest
 
 """Class collects unit tests for loop.
 """
 class UnitTestStartStopAbort(dm_testbench.DmTestbench):
 
-  @pytest.mark.thread8
   def test_dynamic_start_abort(self):
     """Load the schedule dynamic-basic-start_stop_abort-schedule.dot and start pattern *.
     """
+    if self.threadQuantity == 8:
+      fileName1 = self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-0-1.txt'
+      fileName3 = self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-0-3.txt'
+      fileName5 = self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-0-5.txt'
+    else:
+      fileName1 = self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-0-1-thread32.txt'
+      fileName3 = self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-0-3-thread32.txt'
+      fileName5 = self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-0-5-thread32.txt'
     self.addSchedule('dynamic-basic-start_stop_abort-schedule.dot')
     stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmSched, self.datamaster, 'rawvisited'))
     self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-0-0.txt')
     stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, 'rawstatus'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-0-1.txt')
+    self.compareExpectedOutput(stdoutLines, fileName1)
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'IN_C0'))
     stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, 'rawstatus'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-0-3.txt')
+    self.compareExpectedOutput(stdoutLines, fileName3)
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'abortpattern', 'IN_C0'))
     stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, 'rawstatus'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-0-5.txt')
+    self.compareExpectedOutput(stdoutLines, fileName5)
     stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmSched, self.datamaster, 'rawvisited'))
     self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-0-6.txt')
 
-  @pytest.mark.thread8
   def test_dynamic_start_stop(self):
     """Load the schedule dynamic-basic-start_stop_abort-schedule.dot and start pattern *.
     """
+    if self.threadQuantity == 8:
+      fileName01 = self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-0-1.txt'
+      fileName03 = self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-0-3.txt'
+      fileName15 = self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-1-5.txt'
+      fileName16 = self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-1-6.txt'
+    else:
+      fileName01 = self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-0-1-thread32.txt'
+      fileName03 = self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-0-3-thread32.txt'
+      fileName15 = self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-1-5-thread32.txt'
+      fileName16 = self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-1-6-thread32.txt'
     self.addSchedule('dynamic-basic-start_stop_abort-schedule.dot')
     stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmSched, self.datamaster, 'rawvisited'))
     self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-0-0.txt')
     stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, 'rawstatus'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-0-1.txt')
+    self.compareExpectedOutput(stdoutLines, fileName01)
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'IN_C0'))
     stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, 'rawstatus'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-0-3.txt')
+    self.compareExpectedOutput(stdoutLines, fileName03)
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'stoppattern', 'IN_C0'))
     stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, 'rawstatus'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-1-5.txt')
+    self.compareExpectedOutput(stdoutLines, fileName15)
     self.delay(1.5)
     stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, 'rawstatus'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-1-6.txt')
+    self.compareExpectedOutput(stdoutLines, fileName16)
     stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmSched, self.datamaster, 'rawvisited'))
     self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-1-7.txt')
-
-  @pytest.mark.thread32
-  def test_dynamic_start_abort_thread32(self):
-    """Load the schedule dynamic-basic-start_stop_abort-schedule.dot and start pattern *.
-    """
-    self.addSchedule('dynamic-basic-start_stop_abort-schedule.dot')
-    stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmSched, self.datamaster, 'rawvisited'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-0-0.txt')
-    stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, 'rawstatus'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-0-1-thread32.txt')
-    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'IN_C0'))
-    stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, 'rawstatus'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-0-3-thread32.txt')
-    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'abortpattern', 'IN_C0'))
-    stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, 'rawstatus'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-0-5-thread32.txt')
-    stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmSched, self.datamaster, 'rawvisited'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-0-6.txt')
-
-  @pytest.mark.thread32
-  def test_dynamic_start_stop_thread32(self):
-    """Load the schedule dynamic-basic-start_stop_abort-schedule.dot and start pattern *.
-    """
-    self.addSchedule('dynamic-basic-start_stop_abort-schedule.dot')
-    stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmSched, self.datamaster, 'rawvisited'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-0-0.txt')
-    stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, 'rawstatus'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-0-1-thread32.txt')
-    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'IN_C0'))
-    stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, 'rawstatus'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-0-3-thread32.txt')
-    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'stoppattern', 'IN_C0'))
-    stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, 'rawstatus'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-1-5-thread32.txt')
-    self.delay(1.5)
-    stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, 'rawstatus'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-1-6-thread32.txt')
-    stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmSched, self.datamaster, 'rawvisited'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-basic-start_stop_abort-expected-1-7.txt')
-

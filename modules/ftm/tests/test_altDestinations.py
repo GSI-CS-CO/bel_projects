@@ -1,5 +1,4 @@
 import dm_testbench
-import pytest
 
 """Class UnitTestAltDestinations tests the limit of 9 altdst edges per block.
 """
