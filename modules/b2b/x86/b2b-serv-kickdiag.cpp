@@ -106,11 +106,9 @@ uint32_t  disLenId[B2B_NSID];
 
 
 // local variables
-uint32_t reqExtRing;                    // requested extraction ring
-
-
-uint32_t bpid;                          // Beam Process ID
-
+uint32_t reqRing;                       // requested extraction ring
+uint32_t reqMode;                       // requested mode; 0: extraction, 1: injection
+uint32_t reqIO;                         // requested IO to which the magnet probe signal is connected
 
 // init setval
 void initValues(uint32_t sid)
@@ -176,8 +174,6 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
     default         :
       ;
   } // switch tag
-  
-  //printf("out tag %d, bpid %d\n", tag, bpid);
 } // timingmessage
 
 
@@ -202,16 +198,6 @@ static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline
 } // recTimingMessag
 
 
-// call back for command
-class RecvCommand : public DimCommand
-{
-  int  reset;
-  void commandHandler() {disNTransfer = 0;}
-public :
-  RecvCommand(const char *name) : DimCommand(name,"C"){}
-}; 
-
-
 // add all dim services
 void disAddServices(char *prefix)
 {
@@ -219,33 +205,32 @@ void disAddServices(char *prefix)
   int  i;
 
   // 'generic' services
-  sprintf(name, "%s-kickd_version", prefix);
+  sprintf(name, "%s_version", prefix);
   sprintf(disVersion, "%s",  b2b_version_text(B2B_SERV_KICKD_VERSION));
   disVersionId   = dis_add_service(name, "C", disVersion, 8, 0 , 0);
 
-  sprintf(name, "%s-kickd_hostname", prefix);
+  sprintf(name, "%s_hostname", prefix);
   disHostnameId   = dis_add_service(name, "C", disHostname, DIMCHARSIZE, 0 , 0);
 
-  sprintf(name, "%s-kickd_ntransfer", prefix);
+  sprintf(name, "%s_ntransfer", prefix);
   disNTransferId  = dis_add_service(name, "I", &disNTransfer, sizeof(disNTransfer), 0 , 0);
 
   // values
   for (i=0; i< B2B_NSID; i++) {
-    sprintf(name, "%s-kickd_sid%02d_kickd_risingoffs", prefix, i);
+    sprintf(name, "%s_sid%02d_risingoffs", prefix, i);
     disRisingOffsId[i]  = dis_add_service(name, "F:1", &(disRisingOffs[i]), sizeof(float), 0, 0);
 
-    sprintf(name, "%s-kickd_sid%02d_kickd_risingN", prefix, i);
+    sprintf(name, "%s_sid%02d_risingN", prefix, i);
     disRisingNId[i]     = dis_add_service(name, "I:1", &(disRisingN[i]), sizeof(uint32_t), 0, 0);
 
-    sprintf(name, "%s-kickd_sid%02d_kickd_fallingoffs", prefix, i);
+    sprintf(name, "%s_sid%02d_fallingoffs", prefix, i);
     disFallingOffsId[i] = dis_add_service(name, "F:1", &(disFallingOffs[i]), sizeof(float), 0, 0);
 
-    sprintf(name, "%s-kickd_sid%02d_kickd_fallingN", prefix, i);
+    sprintf(name, "%s_sid%02d_fallingN", prefix, i);
     disFallingNId[i]    = dis_add_service(name, "I:1", &(disFallingN[i]), sizeof(uint32_t), 0, 0);
 
-    sprintf(name, "%s-kickd_sid%02d_kickd_len", prefix, i);
+    sprintf(name, "%s_sid%02d_len", prefix, i);
     disLenId[i]         = dis_add_service(name, "F:1", &(disLen[i]), sizeof(float), 0, 0);
-
   } // for i
 } // disAddServices
 
@@ -257,7 +242,9 @@ using namespace std;
 static void help(void) {
   std::cerr << std::endl << "Usage: " << program << " <device name> [OPTIONS] <server name prefix>" << std::endl;
   std::cerr << std::endl;
-  std::cerr << "  -e<index>            specify extraction ring (0: SIS18[default], 1: ESR, 2: CRYRING)" << std::endl;
+  std::cerr << "  -e<index>            specify ring  (0: SIS18[default], 1: ESR, 2: CRYRING)" << std::endl;
+  std::cerr << "  -m<index>            specify mode  (0: extraction[default], 1: injection)" << std::endl;
+  std::cerr << "  -i<index>            specify input (1..N; [default is IO1])" << std::endl;
   std::cerr << "  -h                   display this help and exit" << std::endl;
   std::cerr << "  -f                   use the first attached device (and ignore <device name>)" << std::endl;
   std::cerr << std::endl;
@@ -277,35 +264,36 @@ int main(int argc, char** argv)
   int  opt;
   bool useFirstDev    = false;
   char *tail;
-
+  int i;
 
   // variables snoop event
   uint64_t snoopID     = 0x0;
+  uint64_t tluIn       = 0x0;
   int      nCondition  = 0;
-
-  char tmp[752];
-  int i;
 
   // variables attach, remove
   char    *deviceName = NULL;
 
+  // 
   char     ringName[NAMELEN];
   char     prefix[NAMELEN*2];
   char     disName[DIMMAXSIZE];
 
-
-  reqExtRing  = SIS18_RING;
+  reqRing  = SIS18_RING;           // gid SIS18
+  reqMode  = 0;                    // extraction
+  reqIO    = 1;                    // magnet probe connected to IO1
+  tluIn    = B2B_ECADO_TLUINPUT1;  // input IO1
 
 
   // parse for options
   program = argv[0];
-  while ((opt = getopt(argc, argv, "e:hf")) != -1) {
+  while ((opt = getopt(argc, argv, "r:m:i:hf")) != -1) {
     switch (opt) {
-      case 'e' :
+      case 'r' :
         switch (strtol(optarg, &tail, 0)) {
-          case 0 : reqExtRing = SIS18_RING;   break;
-          case 1 : reqExtRing = ESR_RING;     break;
-          case 2 : reqExtRing = CRYRING_RING; break;
+          case 0 : reqRing = SIS18_RING;   break;
+          case 1 : reqRing = ESR_RING;     break;
+          case 2 : reqRing = CRYRING_RING; break;
           default:
             std::cerr << "option -e: parameter out of range" << std::endl;
             return 1;
@@ -314,6 +302,31 @@ int main(int argc, char** argv)
           fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg);
           return 1;
         } // if *tail
+        break;
+      case 'm' :
+        reqMode = strtol(optarg, &tail, 0);
+        if (reqMode > 1) fprintf(stderr, "parameter out of range)\n");
+        if (*tail != 0) {
+          fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg);
+          return 1;
+        } // if *tail
+        break;
+      case 'i' :
+        reqIO = strtol(optarg, &tail, 0);
+        if (*tail != 0) {
+          fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg);
+          return 1;
+        } // if *tail
+        switch (reqIO) {
+          case 1 : tluIn = B2B_ECADO_TLUINPUT1; break;
+          case 2 : tluIn = B2B_ECADO_TLUINPUT2; break;
+          case 3 : tluIn = B2B_ECADO_TLUINPUT3; break;
+          case 4 : tluIn = B2B_ECADO_TLUINPUT4; break;
+          case 5 : tluIn = B2B_ECADO_TLUINPUT5; break;
+          default :
+            std::cerr << "option -i: parameter out of range" << std::endl;
+            return 1;
+        } // switch reqIO
         break;
       case 'f' :
         useFirstDev = true;
@@ -342,7 +355,7 @@ int main(int argc, char** argv)
   deviceName = argv[optind];
   gethostname(disHostname, 32);
 
-  switch(reqExtRing) {
+  switch(reqRing) {
     case SIS18_RING :
       nCondition = 4;
       sprintf(ringName, "sis18");
@@ -356,7 +369,7 @@ int main(int argc, char** argv)
       sprintf(ringName, "yr");
       break;
     default :
-        std::cerr << "Ring '"<< reqExtRing << "' does not exist" << std::endl;
+        std::cerr << "Ring '"<< reqRing << "' does not exist" << std::endl;
         return -1;;
   } // switch extRing
   
@@ -377,17 +390,17 @@ int main(int argc, char** argv)
   disNTransfer          = 0;
   for (i=0; i< B2B_NSID; i++ ) initValues(i);
  
-  if (optind+1 < argc) sprintf(prefix, "b2b_%s_%s", argv[++optind], ringName);
-  else                 sprintf(prefix, "b2b_%s", ringName);
+  if (optind+1 < argc) { 
+    if (!reqMode) sprintf(prefix, "b2b_%s_%s-kde", argv[++optind], ringName);  // extraction
+    else          sprintf(prefix, "b2b_%s_%s-kdi", argv[++optind], ringName);  // injection
+  }
+  else            sprintf(prefix, "b2b_%s", ringName);
 
   printf("%s: starting server using prefix %s\n", program, prefix);
 
   disAddServices(prefix);
-  // uuuuhhhh, mixing c++ and c  
-  sprintf(tmp, "%s-kickd_cmd_cleardiag", prefix);
-  RecvCommand cmdClearDiag(tmp);
   
-  sprintf(disName, "%s-kickd", prefix);
+  sprintf(disName, "%s", prefix);
   dis_start_serving(disName);
   
   try {
@@ -417,25 +430,25 @@ int main(int argc, char** argv)
 
     // CMD_B2B_EXTTRIG, signals start of data collection
     tmpTag        = tagKStart;
-    snoopID       = ((uint64_t)FID << 60) | ((uint64_t)reqExtRing  << 48) | ((uint64_t)B2B_ECADO_B2B_TRIGGEREXT << 36);
+    snoopID       = ((uint64_t)FID << 60) | ((uint64_t)reqRing  << 48) | ((uint64_t)B2B_ECADO_B2B_TRIGGEREXT << 36);
     condition[0]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
     tag[0]        = tmpTag;
   
     // CMD_B2B_EXTTRIG, +100ms (!), signals stop of data collection
     tmpTag        = tagKStop;        
-    snoopID       = ((uint64_t)FID << 60) | ((uint64_t)reqExtRing  << 48) | ((uint64_t)B2B_ECADO_B2B_TRIGGEREXT << 36);
+    snoopID       = ((uint64_t)FID << 60) | ((uint64_t)reqRing  << 48) | ((uint64_t)B2B_ECADO_B2B_TRIGGEREXT << 36);
     condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 100000000));
     tag[1]        = tmpTag;
 
     // IO input rising edge
     tmpTag        = tagKRising;
-    snoopID       = ((uint64_t)0xf << 60) | ((uint64_t)0xfff  << 48) | ((uint64_t)B2B_ECADO_TLUINPUT1 << 36 | (uint64_t)000000001);
+    snoopID       = ((uint64_t)0xf << 60) | ((uint64_t)0xfff  << 48) | ((uint64_t)tluIn << 36 | (uint64_t)000000001);
     condition[2]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xffffffffffffffff, 0));
     tag[2]        = tmpTag;
 
     // IO input falling edge
     tmpTag        = tagKFalling;
-    snoopID       = ((uint64_t)0xf << 60) | ((uint64_t)0xfff  << 48) | ((uint64_t)B2B_ECADO_TLUINPUT1 << 36 | (uint64_t)000000000);
+    snoopID       = ((uint64_t)0xf << 60) | ((uint64_t)0xfff  << 48) | ((uint64_t)tluIn << 36 | (uint64_t)000000000);
     condition[3]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xffffffffffffffff, 0));
     tag[3]        = tmpTag;
 
