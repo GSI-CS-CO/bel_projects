@@ -135,13 +135,13 @@ begin
 --
     status_reg_counter_value_process: process (up_counter_reg, down_counter_reg, BLM_cnt_read_Reg)
         begin
-            read_up_cnt <=  to_integer(unsigned(BLM_cnt_read_Reg(3 downto 0)));
-            read_down_cnt <=  to_integer(unsigned(BLM_cnt_read_Reg(7 downto 4)));
-            up_backout <= up_counter_reg(read_up_cnt);
-            down_backout <= down_counter_reg(read_down_cnt);
-            --read_cnt <= to_integer(unsigned(BLM_cnt_read_Reg(3 downto 0)));
-            --up_backout <= up_counter_reg(read_cnt);
-            --down_backout <= down_counter_reg(read_cnt);
+            --read_up_cnt <=  to_integer(unsigned(BLM_cnt_read_Reg(15 downto 8)));
+            --read_down_cnt <=  to_integer(unsigned(BLM_cnt_read_Reg(7 downto 4)));
+            --up_backout <= up_counter_reg(read_up_cnt);
+            --down_backout <= down_counter_reg(read_down_cnt);
+            read_cnt <= to_integer(unsigned(BLM_cnt_read_Reg(7 downto 0)));
+            up_backout <= up_counter_reg(read_cnt);
+            down_backout <= down_counter_reg(read_cnt);
             BLM_status_reg(22)<= up_backout;
             BLM_status_reg(23)<= down_backout;
         end process;
