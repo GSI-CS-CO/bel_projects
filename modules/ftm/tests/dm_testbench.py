@@ -583,6 +583,6 @@ class DmTestbench(unittest.TestCase):
       return 8
 
   def logToFile(self, text, fileName):
+    testName = os.environ['PYTEST_CURRENT_TEST']
     with open(fileName, 'a') as file1:
-      file1.write(text)
-      file1.write('\n')
+      file1.write(testName + ': ' + text + '\n')
