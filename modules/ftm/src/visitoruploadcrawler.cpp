@@ -458,8 +458,8 @@ mVal VisitorUploadCrawler::getListDst() const {
   if(vDef != null_vertex) {
     //there is only "dst children" in terms of pointers. We need a way to know edges were alt and which one was def when downloading. Place def at begin so we can find out by order.
     //defdst must be listed in altVec as element zero. Push copy of beginning to back of vector, overwrite first element with def.
-    altVec.push_back(altVec[0]); 
-    altVec[0] = vDef;
+    if(altVec.size() > 0)   {altVec.push_back(altVec[0]); altVec[0] = vDef;}
+    else                    {altVec.push_back(vDef);}  
   }
 
   //find the slice of altVec for this dstLst node
