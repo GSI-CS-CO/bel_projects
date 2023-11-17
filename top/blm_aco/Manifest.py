@@ -22,7 +22,7 @@ files = [
    "in_reg.vhd",
    "BLM_watchdog_v1.0.vhd",
    "BLM_gate_timing_seq.vhd",
-   "up_down_counter_1bit_v1.vhd",
+   "up_down_counter.vhd",
    "Beam_Loss_check_v1.1.vhd",
    "front_board_id_v0.vhd",
    "BLM_counter_pool_el.vhd",

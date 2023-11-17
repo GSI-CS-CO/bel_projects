@@ -18,9 +18,8 @@ port (
   wd_out           : in std_logic_vector(53 downto 0); 
   gate_in          : in std_logic_vector(11 downto 0); -- to be sent to the status registers
   gate_out        : in std_logic_vector (11 downto 0); 
-  up_counter_reg: in t_BLM_reg_Array;  
-  down_counter_reg: in t_BLM_reg_Array; 
-  BLM_cnt_read_Reg: in std_logic_vector(15 downto 0);
+  counter_reg: in t_BLM_counter_Array;
+ 
   BLM_Output      : out std_logic_vector(5 downto 0);
   BLM_status_Reg : out t_IO_Reg_0_to_23_Array 
 
@@ -30,7 +29,7 @@ end BLM_out_el;
 
 
 architecture rtl of BLM_out_el is
-
+--TYPE    t_BLM_reg_Array           is array (0 to 127) of std_logic_vector(15 downto 0);
 signal sel_tot: std_logic_vector(1931 downto 0);
 type t_sel is array (0 to 5) of std_logic_vector(321 downto 0);
 signal sel: t_sel;
@@ -40,40 +39,18 @@ signal int_sel: t_int_sel;
 signal BLM_out_signal, Out_to_or: std_logic_vector(5 downto 0);
 
 signal OVERFLOW : std_logic_vector(321 downto 0);
-signal UP_OVFL, DOWN_OVFL: std_logic_vector(127 downto 0); 
+
 
 signal gate_input: std_logic_vector(11 downto 0);
-signal out_cnt_wr : std_logic_vector(127 downto 0); 
-signal up_backout, down_backout: std_logic_vector(15 downto 0);
-signal read_up_cnt, read_down_cnt: integer range 0 to 127;
+signal out_cnt_wr : std_logic; 
+signal up_down_counter_val: t_BLM_counter_Array;
+signal cnt_backout: std_logic_vector(19 downto 0):=(others =>'0');
+
 signal read_cnt: integer range 0 to 127;
 begin
 
-    out_counter_buffer_proc: process (clk, nRST)
-    begin
-        if not nRST='1' then 
-            for i in 0 to 127 loop
-               UP_OVFL(i) <= '0';
-               DOWN_OVFL(i) <= '0';
-               out_cnt_wr(i) <='0';
-            end loop;
-            elsif (clk'EVENT AND clk= '1') then 
-                for i in 0 to 7 loop
-                    out_cnt_wr((16*i+15)downto (16*i)) <=  BLM_out_sel_reg(121 + i);
-                end loop;
 
-                for i in 0 to 127 loop
-                   
-                    if out_cnt_wr(i) ='1' then  
-                        UP_OVFL(i) <= UP_OVERFLOW(i);
-                        DOWN_OVFL(i) <= DOWN_OVERFLOW(i);    
-                    end if;
-                end loop;
-            end if;        
-    end process;
-
-
-        OVERFLOW <= wd_out& gate_out & UP_OVFL & DOWN_OVFL;
+        OVERFLOW <= wd_out& gate_out & UP_OVERFLOW & DOWN_OVERFLOW;
         gate_input <= gate_in;
 
 
@@ -119,6 +96,42 @@ begin
  BLM_Output <= BLM_out_signal;
 
       
+
+----------------------------------------------------------------------------------------
+out_counter_buffer_proc: process (clk, nRST)
+begin
+    if not nRST='1' then 
+        for i in 0 to 127 loop
+            up_down_counter_val(i) <= (others =>'0');
+        end loop;
+         
+           out_cnt_wr <='0';
+  
+        elsif (clk'EVENT AND clk= '1') then 
+           
+                out_cnt_wr<=  BLM_out_sel_reg(121)(15);
+      
+
+               
+                if out_cnt_wr='1' then  
+
+                for i in 0 to 127 loop
+                    up_down_counter_val(i) <= counter_reg(i);
+            
+                    end loop;
+                end if;
+    
+        end if;        
+end process;
+
+    status_reg_counter_value_process: process (up_down_counter_val,  BLM_out_sel_reg(121))
+        begin
+
+            read_cnt <= to_integer(unsigned(BLM_out_sel_Reg(121)(7 downto 0)));
+            cnt_backout <= up_down_counter_val(read_cnt);
+      
+
+        end process;
     --------------------------------------------------------------------------------------------------
      -----                         BLM_STATUS_REGISTERS               
      --------------------------------------------------------------------------------------------------
@@ -132,18 +145,7 @@ begin
     BLM_status_reg(20) <= "00" & gate_input & OVERFLOW(321 downto 320); -- bits 321-320 = wd_out (53 downto 52)
     BLM_status_reg(21)(5 downto 0) <= BLM_out_signal; -- phyfical outputs
     BLM_status_reg(21)(15 downto 6)  <= (others =>'0');    
---
-    status_reg_counter_value_process: process (up_counter_reg, down_counter_reg, BLM_cnt_read_Reg)
-        begin
-            --read_up_cnt <=  to_integer(unsigned(BLM_cnt_read_Reg(15 downto 8)));
-            --read_down_cnt <=  to_integer(unsigned(BLM_cnt_read_Reg(7 downto 4)));
-            --up_backout <= up_counter_reg(read_up_cnt);
-            --down_backout <= down_counter_reg(read_down_cnt);
-            read_cnt <= to_integer(unsigned(BLM_cnt_read_Reg(7 downto 0)));
-            up_backout <= up_counter_reg(read_cnt);
-            down_backout <= down_counter_reg(read_cnt);
-            BLM_status_reg(22)<= up_backout;
-            BLM_status_reg(23)<= down_backout;
-        end process;
-       
+    BLM_status_reg(22)<= cnt_backout(15 downto 0);
+    BLM_status_reg(23) <= "000000000000"& cnt_backout(19 downto 16);
+
 end architecture;

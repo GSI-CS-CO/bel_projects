@@ -39,7 +39,7 @@ port (
     BLM_gate_seq_in_ena_Reg : in std_logic_vector(15 downto 0); --"00"& ena for gate board1 &"00" & ena for gate board2 
     BLM_in_sel_Reg          : in t_BLM_reg_Array; --128 x (4 bit for gate ena & 6 bit for up signal ena & 6 for down signal ena)
     BLM_out_sel_reg : in t_BLM_out_sel_reg_Array;  --128 x 16 bits = "0000" and 6 x (54 watchdog errors+ 12 gate errors + 256 counter outputs )     
-    BLM_cnt_read_Reg: in std_logic_vector(15 downto 0);
+
     -- OUT register
     BLM_status_Reg    : out t_IO_Reg_0_to_23_Array ;
 
@@ -72,10 +72,9 @@ architecture rtl of Beam_Loss_check is
   signal BLM_gate_recover: std_logic_vector(11 downto 0);
   signal BLM_gate_seq_clk_sel: std_logic_vector(2 downto 0);
   signal BLM_gate_prepare : std_logic_vector(11 downto 0);
-  TYPE    t_BLM_counter_Array           is array (0 to 127) of std_logic_vector(19 downto 0);
-  signal up_counter_value, down_counter_value: t_BLM_counter_Array;
-  signal up_counter: t_BLM_reg_Array;  
-  signal down_counter: t_BLM_reg_Array;  
+
+  signal counter_value: t_BLM_counter_Array;
+
 
   component BLM_watchdog is
   
@@ -137,8 +136,8 @@ component BLM_gate_timing_seq is
         neg_threshold     : in std_logic_vector(31 downto 0);
         in_counter        : in std_logic_vector(63 downto 0);
         BLM_cnt_Reg     : in std_logic_vector(15 downto 0);  -- bit 5-0 = up_in_counter select, bit 11-6 = down_in_counter select, 15..13 in_ena
-        up_cnt    : out std_logic_vector (WIDTH-1 downto 0);    -- up Counter register
-        down_cnt  : out std_logic_vector (WIDTH-1 downto 0); -- down Counter register
+        cnt    : out std_logic_vector (WIDTH-1 downto 0);    -- Counter register
+   
         UP_OVERFLOW       : out std_logic;     -- UP_Counter overflow for the input signals
         DOWN_OVERFLOW     : out std_logic    -- DOWN_Counter overflow for the input signals
 
@@ -159,9 +158,9 @@ component BLM_gate_timing_seq is
         wd_out           : in std_logic_vector(53 downto 0); 
         gate_in          : in std_logic_vector(11 downto 0); -- to be sent to the status registers
         gate_out        : in std_logic_vector (11 downto 0); 
-        up_counter_reg: in t_BLM_reg_Array;  
-        down_counter_reg: in t_BLM_reg_Array;    
-        BLM_cnt_read_Reg : in std_logic_vector(15 downto 0); 
+        counter_reg: in t_BLM_counter_Array;
+      
+
         BLM_Output      : out std_logic_vector(5 downto 0);
         BLM_status_Reg : out t_IO_Reg_0_to_23_Array 
         
@@ -300,8 +299,8 @@ port map (
   neg_threshold  => neg_threshold(i),
   in_counter     => VALUE_IN,
   BLM_cnt_Reg    => BLM_in_sel_Reg(i),
-  up_cnt   => up_counter_value(i),
-  down_cnt => down_counter_value(i),
+  cnt   => counter_value(i),
+
   UP_OVERFLOW    => UP_OVERFLOW(i),
   DOWN_OVERFLOW  => DOWN_OVERFLOW(i)
   );
@@ -326,19 +325,13 @@ BLM_out_section: BLM_out_el
     gate_in         => BLM_gate_in,
     gate_out        => gate_error,
     BLM_Output      => BLM_out,
-    up_counter_reg => up_counter, 
-    down_counter_reg => down_counter,
-    BLM_cnt_read_Reg => BLM_cnt_read_Reg,
+    counter_reg => counter_value, 
+  
+  
     BLM_status_Reg  => BLM_status_Reg 
     );
 
-    debug_counter_value_proc: process( up_counter_value, down_counter_value)
-    begin
-      for i in 0 to 127 loop
-        up_counter(i) <= up_counter_value(i)(19 downto 4);
-        down_counter(i) <= down_counter_value(i)(19 downto 4);
-      end loop;
-    end process;
+   
 
   end architecture;
 

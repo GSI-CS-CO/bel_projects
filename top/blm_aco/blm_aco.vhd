@@ -439,7 +439,7 @@ port (
     BLM_gate_seq_in_ena_Reg : in std_logic_vector(15 downto 0); --"00"& ena for gate board1 &"00" & ena for gate board2 
     BLM_in_sel_Reg          : in t_BLM_reg_Array; --128 x (4 bit for gate ena & 6 bit for up signal ena & 6 for down signal ena)
    BLM_out_sel_reg : in t_BLM_out_sel_reg_Array;  --121 x 16 bits = "0000" and 6 x (54 watchdog errors+ 12 gate errors + 256 counter outputs )  
-   BLM_cnt_read_Reg: in std_logic_vector(15 downto 0);
+
     -- OUT register
     BLM_status_Reg    : out t_IO_Reg_0_to_23_Array ;
 
@@ -993,7 +993,7 @@ signal BLM_gate_seq_prep_ck_sel_Reg: std_logic_vector(15 downto 0);
 signal BLM_gate_recover_Reg : std_logic_vector(15 downto 0);
 signal BLM_gate_seq_in_ena_Reg :  std_logic_vector(15 downto 0);
 signal BLM_wd_reset_Reg: t_IO_Reg_0_to_3_Array;
-signal BLM_cnt_read_Reg: std_logic_vector(15 downto 0);
+
 signal BLM_wd_reset: std_logic_vector(53 downto 0);
 signal BLM_ctrl_Reg:  std_logic_vector(15 downto 0); 
 signal BLM_ctrl_rd_active:    std_logic_vector(2 downto 0);
@@ -1004,9 +1004,9 @@ signal BLM_ctrl_Dtack:        std_logic_vector(2 downto 0);                  -- 
 -----for BLM out_sel 
 signal BLM_out_sel_Reg :       t_BLM_out_sel_reg_Array; --128 registers
 
-signal BLM_out_sel_rd_active:  std_logic_vector(16 downto 0);
-signal BLM_out_sel_Dtack: std_logic_vector(16 downto 0);
-signal BLM_out_sel_data_to_SCUB: t_IO_Reg_0_to_16_Array;
+signal BLM_out_sel_rd_active:  std_logic_vector(15 downto 0);
+signal BLM_out_sel_Dtack: std_logic_vector(15 downto 0);
+signal BLM_out_sel_data_to_SCUB: t_IO_Reg_0_to_15_Array;
 signal BLM_out_sel_res_Dtack     : std_logic;
 ---
 constant ZERO_th: std_logic_vector(BLM_th_Dtack'range) := (others => '0');
@@ -1412,7 +1412,6 @@ BLM_status_registers_0_23:for i in 0 to 2 generate
     end generate BLM_status_registers_0_23;
 
 
-
 threshold_registers: for i in 0 to 63 generate
 
 BLM_thr_Reg: io_reg
@@ -1575,7 +1574,7 @@ BLM_ctrl_Reg_1st_block: io_reg
           Data_to_SCUB       =>   BLM_ctrl_data_to_SCUB(2)
               );
           
-  BLM_out_sel_registers: for i in 0 to 15 generate 
+  BLM_out_sel_registers: for i in 0 to 14 generate 
 
       BLM_o_sel_Reg: io_reg
       generic map(
@@ -1607,34 +1606,36 @@ BLM_ctrl_Reg_1st_block: io_reg
           );
           end generate BLM_out_sel_registers;
 
-      BLM_out_sel_last_Reg: io_reg
-      generic map(
-            Base_addr =>  c_BLM_out_sel_Base_Addr + 128
-            )
-      port map  (
-            Adr_from_SCUB_LA   =>  ADR_from_SCUB_LA,
-            Data_from_SCUB_LA  =>  Data_from_SCUB_LA,
-            Ext_Adr_Val        =>  Ext_Adr_Val,
-            Ext_Rd_active      =>  Ext_Rd_active,
-            Ext_Rd_fin         =>  Ext_Rd_fin,
-            Ext_Wr_active      =>  Ext_Wr_active,
-            Ext_Wr_fin         =>  SCU_Ext_Wr_fin,
-            clk                =>  clk_sys,
-            nReset             =>  rstn_sys,
-      --
-            Reg_IO1            =>  BLM_out_sel_Reg(128),
-            Reg_IO2            =>  BLM_cnt_read_Reg,
-            Reg_IO3            =>  open,
-            Reg_IO4            =>  open,
-            Reg_IO5            =>  open,
-            Reg_IO6            =>  open,
-            Reg_IO7            =>  open,
-            Reg_IO8            =>  open,
-      --
-            Reg_rd_active      =>  BLM_out_sel_rd_active(16),
-            Dtack_to_SCUB      =>  BLM_out_sel_Dtack(16),
-            Data_to_SCUB       =>  BLM_out_sel_data_to_SCUB(16)
-          );
+          
+
+          BLM_o_sel_Reg_120_121: io_reg
+          generic map(
+                Base_addr =>  c_BLM_out_sel_Base_Addr + 120
+                )
+          port map  (
+                Adr_from_SCUB_LA   =>  ADR_from_SCUB_LA,
+                Data_from_SCUB_LA  =>  Data_from_SCUB_LA,
+                Ext_Adr_Val        =>  Ext_Adr_Val,
+                Ext_Rd_active      =>  Ext_Rd_active,
+                Ext_Rd_fin         =>  Ext_Rd_fin,
+                Ext_Wr_active      =>  Ext_Wr_active,
+                Ext_Wr_fin         =>  SCU_Ext_Wr_fin,
+                clk                =>  clk_sys,
+                nReset             =>  rstn_sys,
+          --
+                Reg_IO1            =>  BLM_out_sel_Reg(120),
+                Reg_IO2            =>  BLM_out_sel_Reg(121),
+                Reg_IO3            =>  open,
+                Reg_IO4            =>  open,
+                Reg_IO5            =>  open,
+                Reg_IO6            =>  open,
+                Reg_IO7            =>  open,
+                Reg_IO8            =>  open,
+          --
+                Reg_rd_active      =>  BLM_out_sel_rd_active(15),
+                Dtack_to_SCUB      =>  BLM_out_sel_Dtack(15),
+                Data_to_SCUB       =>  BLM_out_sel_data_to_SCUB(15));
+
 
           
         DAQ_modul: daq
@@ -1942,7 +1943,7 @@ rd_port_mux:  process ( clk_switch_rd_active,     clk_switch_rd_data,
   variable sel_th: unsigned(63 downto 0);
   variable sel_in_sel: unsigned(15 downto 0);
   variable sel_st: unsigned(2 downto 0);
-  variable sel_out_sel: unsigned(16 downto 0); 
+  variable sel_out_sel: unsigned(15 downto 0); 
 
   begin
 
@@ -1996,7 +1997,7 @@ else
            end loop;
            else
            if to_integer(sel_out_sel) > 0 then  
-           for i in 0 to 16 loop
+           for i in 0 to 15 loop
              if sel_out_sel(i) = '1' then 
                 Data_to_SCUB <=  BLM_out_sel_data_to_SCUB(i);
              end if;
@@ -2128,7 +2129,7 @@ BLM_Module : Beam_Loss_check
   BLM_gate_seq_in_ena_Reg  => BLM_gate_seq_in_ena_Reg,
   BLM_in_sel_Reg           => BLM_in_sel_Reg,
   BLM_out_sel_reg          => BLM_out_sel_Reg,
-  BLM_cnt_read_Reg         => BLM_cnt_read_Reg,
+
   -- OUT register
   BLM_status_Reg           => BLM_status_Reg,
     -- OUT BLM
