@@ -340,11 +340,11 @@ status_t setEndpDstAddr(int idx)
   if ((dstNwAddr[DST_ADDR_EBM].mac == dstNwAddr[idx].mac))
     return status;
 
-  // update the Endpoint destination address
-  dstNwAddr[DST_ADDR_EBM].mac = dstNwAddr[idx].mac;
+  // set the destination addresses
+  fwlib_setEbmDstAddr(dstNwAddr[idx].mac, dstNwAddr[idx].ip);
 
-  if ((status = fwlib_ebmInit(TIM_1000_MS, dstNwAddr[DST_ADDR_EBM].mac, dstNwAddr[DST_ADDR_EBM].ip, EBM_NOREPLY)) != COMMON_STATUS_OK)
-    DBPRINT1("fbas%d: Err - failed to set destination address!\n", nodeType);
+  // update the destination address
+  dstNwAddr[DST_ADDR_EBM].mac = dstNwAddr[idx].mac;
 
   return status;
 }
@@ -556,10 +556,8 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
           if (idx == IDX_REG_REQ) {
             if (isSenderKnown(senderId)) {
               // unicast the reg. response
-              if (fwlib_ebmInit(TIM_1000_MS, senderId, BROADCAST_IP, EBM_NOREPLY) == COMMON_STATUS_OK)
-                sendRegRsp();
-              else
-                DBPRINT1("fbas%d: Err - reg. rsp not sent. Failure with Endpoint!\n", nodeType);
+              fwlib_setEbmDstAddr(senderId, BROADCAST_IP);
+              sendRegRsp();
             }
           }
         }
