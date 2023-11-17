@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 06-Nov-2023
+ *  version : 17-Nov-2023
  *
  * publishes raw data of the b2b system
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000701
+#define B2B_SERV_RAW_VERSION 0x000702
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -113,9 +113,11 @@ void initSetval(setval_t *setval)
   setval->ext_T                 = -1;
   setval->ext_h                 = -1;
   setval->ext_cTrig             = NAN;
+  setvla->ext_sid               = -1;
   setval->inj_T                 = -1;
   setval->inj_h                 = -1;
   setval->inj_cTrig             = NAN;
+  setval->inj_sid               = -1;
   setval->cPhase                = NAN;
 } // initSetval
 
@@ -219,6 +221,7 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       
       initSetval(&setval);
       setval.mode                  = 0;      // in the simplest case mode is '0' (OFF)
+      setval.ext_sid               = sid;
 
       initGetval(&getval);
       getval.flagEvtRec            = 0x1 << tag;
@@ -279,6 +282,7 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       getval.flagEvtErr       |= flagErr << tag;
       break;
     case tagKti     :
+      setval.inj_sid           = recSid;;
       getval.ktiOff            = deadline.getTAI() - getval.tCBS;
       flagErr                  = ((evtId    & 0x0000000000000010) >> 4);
       getval.flagEvtErr       |= flagErr << tag;

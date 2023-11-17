@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 17-Oct-2023
+ *  version : 17-Nov-2023
  *
  * subscribes to and displays status of many b2b transfers
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_MON_VERSION 0x000700
+#define B2B_MON_VERSION 0x000701
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -77,6 +77,8 @@ double     dicLevelInjEsr;
 double     dicLevelExtEsr;
 double     dicLevelInjYr;
 double     dicLevelExtYr;
+double     dicKickLenExt[NALLSID];
+double     dicKickLenInj[NALLSID];
 
 uint32_t  dicSetvalId[NALLSID];
 uint32_t  dicGetvalId[NALLSID];
@@ -88,6 +90,8 @@ uint32_t  dicLevelInjEsrId;
 uint32_t  dicLevelExtEsrId;
 uint32_t  dicLevelInjYrId;
 uint32_t  dicLevelExtYrId;
+uint32_t  dicKickLenExtId[NALLSID];
+uint32_t  dicKickLenInjId[NALLSID];
 
 #define  TXTNA       "  N/A"
 #define  TXTUNKWN    "UNKWN"
@@ -205,11 +209,11 @@ double convertUnit(double value_ns, uint64_t TH1)
 
 void buildHeader()
 {
-  sprintf(headerK, "|        pattern name | t_last [UTC] | orign | sid| kick set    trg offst probR | destn | phase set get  | kick  set     trg offst probR Doffst Dprob|");
-  sprintf(emptyK,  "|                     |              |       |    |                             |       |                |                                           |");
-  sprintf(headerN, "|        pattern name | t_last [UTC] | orign | sid| h1gDDS ext set      get(stdev)diff[Hz] | h1gDDS inj set      get(stdev)diff[Hz] |prob ext inj [%%]|");
-  sprintf(emptyN,  "|                     |              |       |    |                                        |                                        |                |");
-  //        printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
+  sprintf(headerK, "|        pattern name | t_last [UTC] | orign | sid| kick set    trg offst start flatp | destn | phase set get  | kick  set     trg offst start flatp Doffst Dprob|");
+  sprintf(emptyK,  "|                     |              |       |    |                                   |       |                |                                                 |");
+  sprintf(headerN, "|        pattern name | t_last [UTC] | orign | sid| h1gDDS ext set      get(stdev)diff[Hz]  v/c | h1gDDS inj set      get(stdev)diff[Hz]  v/c | prob ext inj [%%] |");
+  sprintf(emptyN,  "|                     |              |       |    |                                             |                                             |                  |");
+  //        printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012\n");  
 } // buildHeader
 
 
@@ -239,6 +243,7 @@ void buildPrintLine(uint32_t idx)
   char     tmp3[32];
   char     tmp4[32];
   char     tmp5[32];
+  char     tmp6[32];
   double   dtmp1;
   double   *pLevelExt;
   double   *pLevelInj;
@@ -377,7 +382,9 @@ void buildPrintLine(uint32_t idx)
     else                                     sprintf(tmp2, "%5.0f", convertUnit(dicGetval[idx].ext_dKickMon, dicSetval[idx].ext_T));
     if (isnan(dicGetval[idx].ext_dKickProb)) sprintf(tmp3, "%s", TXTUNKWN);
     else                                     sprintf(tmp3, "%5.0f", convertUnit(dicGetval[idx].ext_dKickProb,dicSetval[idx].ext_T));
-    sprintf(extTrig, "%7.1f %7s %5s %5s", convertUnit(set_extCTrig[idx], dicSetval[idx].ext_T), tmp1, tmp2, tmp3);
+    if (isnan(dicKickLenExt[idx]))           sprintf(tmp4, "%s", TXTUNKWN);
+    else                                     sprintf(tmp4, "%5.0f", convertUnit(dicKickLenExt[idx],dicSetval[idx].ext_T));
+    sprintf(extTrig, "%7.1f %7s %5s %5s %5s", convertUnit(set_extCTrig[idx], dicSetval[idx].ext_T), tmp1, tmp2, tmp3, tmp4);
   } // if flagExtTrig
   else sprintf(extTrig, "---");
 
@@ -421,7 +428,7 @@ void buildPrintLine(uint32_t idx)
   } // if flagInjTrig
   else sprintf(injTrig, "---");
 
-  sprintf(printLineK[idx], "|%20s | %12s |%6s | %2d | %27s |%6s |%15s | %41s |", pattern, tCBS, origin, sid, extTrig, dest, b2b, injTrig);
+  sprintf(printLineK[idx], "|%20s | %12s |%6s | %2d | %32s |%6s |%15s | %46s |", pattern, tCBS, origin, sid, extTrig, dest, b2b, injTrig);
   sprintf(printLineN[idx], "|%20s | %12s |%6s | %2d | %38s | %38s | %6s  %6s |", pattern, tCBS, origin, sid, nueMeasExt, nueMeasInj, setLevelExt, setLevelInj);
   //                printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
 
@@ -529,8 +536,32 @@ void dicSubscribeServices(char *prefix, uint32_t idx)
 
   sprintf(name,"%s_%s-pname_sid%02d", prefix, ringName, sid);
   /* printf("name %s\n", name);*/
-  dicPNameId[idx]        = dic_info_service_stamped(name, MONITORED, 0, &(dicPName[idx]), DIMMAXSIZE, 0 , 0, &no_link_str, sizeof(no_link_str));
+  dicPNameId[idx]        = dic_info_service_stamped(name, MONITORED, 0, &(dicPName[idx]), DIMMAXSIZE, 0 , 0, &no_link_str, sizeof(no_link_str));  
 } // dicSubscribeServices
+
+
+// as the feature of kicker flattop length is still experimental, let's keep this in a dedicated routine;
+// on the long run, this information could possibly be added to dicDiagval, or dicGetVal
+void dicSubscribeKickLenServices(char *prefix, uint32_t idx)
+{
+  char     name[DIMMAXSIZE];
+  char     ringName[32];
+  ring_t   ring;
+  uint32_t sid;
+
+  idx2RingSid(idx, &ring, &sid);
+  switch (ring) {
+    case SIS18   : sprintf(ringName, "sis18"); break;
+    case ESR     : sprintf(ringName, "esr");   break;
+    case CRYRING : sprintf(ringName, "yr");    break;
+    default : break;
+  } // switch ring
+
+  sprintf(name, "%s_%s-kdde_sid%02d_len", prefix, ringName,  sid);
+  /* printf("name %s\n", name); */
+  dicKickLenExtId[idx]      = dic_info_service_stamped(name, MONITORED, 0, &(dicKickLenExt[idx]), sizeof(double), 0 , 0, &no_link_32, sizeof(uint32_t));
+} // dicSubscribeKicklenServices
+
 
 void dicSubscribeLevelServices(char *prefix)
 {
@@ -724,6 +755,7 @@ int main(int argc, char** argv)
     sprintf(printLineK[i], "not initialized");
     sprintf(printLineN[i], "not initialized");
     dicSubscribeServices(prefix, i);
+    dicSubscribeKickLenServices(prefix, i);
   } // for i
   dicSubscribeLevelServices(prefix);
 

@@ -3,9 +3,12 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 16-Nov-2023
+ *  version : 17-Nov-2023
  *
  * publishes additional diagnostic data of the kicker
+ 
+ * this is experimental, as this information is not retrieved via a timing message (sent by 
+ * the b2b system) but it is obtained from local ECA actions at the kicker frontend
  *
  * ------------------------------------------------------------------------------------------
  * License Agreement for this software:
@@ -34,7 +37,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_KICKD_VERSION 0x000701
+#define B2B_SERV_KICKD_VERSION 0x000702
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -89,11 +92,11 @@ enum evtKTag{tagKRising, tagKFalling, tagKStart, tagKStop};
 char      disVersion[DIMCHARSIZE];
 char      disHostname[DIMCHARSIZE];
 uint32_t  disNTransfer;
-float     disRisingOffs[B2B_NSID];       // offset of first rising edge to B2B_TRIGGER
-float     disFallingOffs[B2B_NSID];      // offset of first falling edge to B2B_TRIGGER
+double    disRisingOffs[B2B_NSID];       // offset of first rising edge to B2B_TRIGGER
+double    disFallingOffs[B2B_NSID];      // offset of first falling edge to B2B_TRIGGER
 uint32_t  disRisingN[B2B_NSID];          // number of rising edges; expectation value is 1
 uint32_t  disFallingN[B2B_NSID];         // number of falling edges; expectation value is 1
-float     disLen[B2B_NSID];              // lengh of signal
+double    disLen[B2B_NSID];              // lengh of signal
 
 uint32_t  disVersionId      = 0;
 uint32_t  disHostnameId     = 0;
@@ -219,19 +222,19 @@ void disAddServices(char *prefix)
   // values
   for (i=0; i< B2B_NSID; i++) {
     sprintf(name, "%s_sid%02d_risingoffs", prefix, i);
-    disRisingOffsId[i]  = dis_add_service(name, "F:1", &(disRisingOffs[i]), sizeof(float), 0, 0);
+    disRisingOffsId[i]  = dis_add_service(name, "D:1", &(disRisingOffs[i]), sizeof(float), 0, 0);
 
     sprintf(name, "%s_sid%02d_risingN", prefix, i);
     disRisingNId[i]     = dis_add_service(name, "I:1", &(disRisingN[i]), sizeof(uint32_t), 0, 0);
 
     sprintf(name, "%s_sid%02d_fallingoffs", prefix, i);
-    disFallingOffsId[i] = dis_add_service(name, "F:1", &(disFallingOffs[i]), sizeof(float), 0, 0);
+    disFallingOffsId[i] = dis_add_service(name, "D:1", &(disFallingOffs[i]), sizeof(float), 0, 0);
 
     sprintf(name, "%s_sid%02d_fallingN", prefix, i);
     disFallingNId[i]    = dis_add_service(name, "I:1", &(disFallingN[i]), sizeof(uint32_t), 0, 0);
 
     sprintf(name, "%s_sid%02d_len", prefix, i);
-    disLenId[i]         = dis_add_service(name, "F:1", &(disLen[i]), sizeof(float), 0, 0);
+    disLenId[i]         = dis_add_service(name, "D:1", &(disLen[i]), sizeof(float), 0, 0);
   } // for i
 } // disAddServices
 
