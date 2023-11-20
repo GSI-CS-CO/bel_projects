@@ -222,19 +222,19 @@ void disAddServices(char *prefix)
   // values
   for (i=0; i< B2B_NSID; i++) {
     sprintf(name, "%s_sid%02d_risingoffs", prefix, i);
-    disRisingOffsId[i]  = dis_add_service(name, "D:1", &(disRisingOffs[i]), sizeof(float), 0, 0);
+    disRisingOffsId[i]  = dis_add_service(name, "D:1", &(disRisingOffs[i]), sizeof(double), 0, 0);
 
     sprintf(name, "%s_sid%02d_risingN", prefix, i);
     disRisingNId[i]     = dis_add_service(name, "I:1", &(disRisingN[i]), sizeof(uint32_t), 0, 0);
 
     sprintf(name, "%s_sid%02d_fallingoffs", prefix, i);
-    disFallingOffsId[i] = dis_add_service(name, "D:1", &(disFallingOffs[i]), sizeof(float), 0, 0);
+    disFallingOffsId[i] = dis_add_service(name, "D:1", &(disFallingOffs[i]), sizeof(double), 0, 0);
 
     sprintf(name, "%s_sid%02d_fallingN", prefix, i);
     disFallingNId[i]    = dis_add_service(name, "I:1", &(disFallingN[i]), sizeof(uint32_t), 0, 0);
 
     sprintf(name, "%s_sid%02d_len", prefix, i);
-    disLenId[i]         = dis_add_service(name, "D:1", &(disLen[i]), sizeof(float), 0, 0);
+    disLenId[i]         = dis_add_service(name, "D:1", &(disLen[i]), sizeof(double), 0, 0);
   } // for i
 } // disAddServices
 
@@ -246,7 +246,7 @@ using namespace std;
 static void help(void) {
   std::cerr << std::endl << "Usage: " << program << " <device name> [OPTIONS] <server name prefix>" << std::endl;
   std::cerr << std::endl;
-  std::cerr << "  -e<index>            specify ring  (0: SIS18[default], 1: ESR, 2: CRYRING)" << std::endl;
+  std::cerr << "  -r<index>            specify ring  (0: SIS18[default], 1: ESR, 2: CRYRING)" << std::endl;
   std::cerr << "  -m<index>            specify mode  (0: extraction[default], 1: injection)" << std::endl;
   std::cerr << "  -i<index>            specify input (1..N; [default is IO1])" << std::endl;
   std::cerr << "  -h                   display this help and exit" << std::endl;
@@ -255,7 +255,7 @@ static void help(void) {
   std::cerr << std::endl;
   std::cerr << "This tool provides a server for additional kicker diagnostic data" << std::endl;
   std::cerr << std::endl;
-  std::cerr << "Example1: '" << program << " tr0 -e0 pro'" << std::endl;
+  std::cerr << "Example1: '" << program << " tr0 -r0 pro'" << std::endl;
   std::cerr << std::endl;
 
   std::cerr << "Report bugs to <d.beck@gsi.de> !!!" << std::endl;

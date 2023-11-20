@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 17-Nov-2023
+ *  version : 20-Nov-2023
  *
  * publishes raw data of the b2b system
  *
@@ -113,7 +113,7 @@ void initSetval(setval_t *setval)
   setval->ext_T                 = -1;
   setval->ext_h                 = -1;
   setval->ext_cTrig             = NAN;
-  setvla->ext_sid               = -1;
+  setval->ext_sid               = -1;
   setval->inj_T                 = -1;
   setval->inj_h                 = -1;
   setval->inj_cTrig             = NAN;
@@ -381,7 +381,7 @@ void disAddServices(char *prefix)
   // set values
   for (i=0; i< B2B_NSID; i++) {
     sprintf(name, "%s-raw_sid%02d_setval", prefix, i);
-    disSetvalId[i]  = dis_add_service(name, "I:1;X:1;I:1;F:1;X:1;I:1;F:2", &(disSetval[i]), sizeof(setval_t), 0, 0);
+    disSetvalId[i]  = dis_add_service(name, "I:1;X:1;I:1;F:1;I:1;X:1;I:1;F:1;I:1;F:1", &(disSetval[i]), sizeof(setval_t), 0, 0);
     dis_set_timestamp(disSetvalId[i], 1, 0);
   } // for i
 
