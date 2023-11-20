@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 17-Oct-2023
+ *  version : 20-Nov-2023
  *
  * archives set and get values to data files
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_ARCHIVER_VERSION 0x000700
+#define B2B_ARCHIVER_VERSION 0x000702
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -62,17 +62,20 @@ const char* program;
 
 uint32_t   no_link_32    = 0xdeadbeef;
 uint64_t   no_link_64    = 0xdeadbeefce420651;
+double     no_link_dbl   = NAN;
 char       no_link_str[] = "NO_LINK";
 char       nan_str[]     = "nan";
 
 setval_t   dicSetval[B2B_NSID]; 
 getval_t   dicGetval[B2B_NSID];
 diagval_t  dicDiagval[B2B_NSID];
+double     dicKickLenExt[B2B_NSID];       // hackish, should be integrated into s.th. like getval
 char       dicPName[B2B_NSID][DIMMAXSIZE];
 
 uint32_t   dicSetvalId[B2B_NSID];
 uint32_t   dicGetvalId[B2B_NSID];
 uint32_t   dicDiagvalId[B2B_NSID];
+uint32_t   dicKickLenExtId[B2B_NSID];
 uint32_t   dicPNameId[B2B_NSID];
 
 // global variables
@@ -104,7 +107,7 @@ static void help(void) {
 // header String for file
 char * headerString()
 {
-  return "patternName; time_CBS_UTC; sid; mode; ext_T [as]; ext_h; ext_cTrig; inj_T; inj_h; inj_cTrig; cPhase; ext_phase; ext_phaseFract; ext_phaseErr; ext_maxsysErr; ext_dKickMon; ext_dKickProb; ext_diagPhase; ext_diag_Match; inj_phase; inj_phaseFract; inj_phaseErr; inj_maxsysErr; inj_dKickMon; inj_dKickProb; inj_diagPhase; inj_diagMatch; received PME; PMI; PRE; PRI; KTE; KTI; KDE; KDI; PDE; PDI; error PME; PMI; PRE; PRI; KTE; KTI; KDE; KDI; PDE; PDI; late PME; PMI; PRE; PRI; KTE; KTI; KDE; KDI; PDE; PDI; fin-CBS; prr-CBS; t0E-CBS; t0I-CBS; kte-CBS; kti-CBS; ext_nueGet; ext_dNueGet; inj_nueGet; inj_dNueGet";
+  return "patternName; time_CBS_UTC; sid; mode; ext_T [as]; ext_h; ext_cTrig; inj_T; inj_h; inj_cTrig; cPhase; ext_phase; ext_phaseFract; ext_phaseErr; ext_maxsysErr; ext_dKickMon; ext_dKickProb; ext_kickLen; ext_diagPhase; ext_diag_Match; inj_phase; inj_phaseFract; inj_phaseErr; inj_maxsysErr; inj_dKickMon; inj_dKickProb; inj_diagPhase; inj_diagMatch; received PME; PMI; PRE; PRI; KTE; KTI; KDE; KDI; PDE; PDI; error PME; PMI; PRE; PRI; KTE; KTI; KDE; KDI; PDE; PDI; late PME; PMI; PRE; PRI; KTE; KTI; KDE; KDI; PDE; PDI; fin-CBS; prr-CBS; t0E-CBS; t0I-CBS; kte-CBS; kti-CBS; ext_nueGet; ext_dNueGet; inj_nueGet; inj_dNueGet";
 } // headerString
 
 // receive get values
@@ -162,6 +165,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   new += sprintf(new, "; %5.3f"    ,  dicGetval[sid].ext_phaseSysmaxErr);
   new += sprintf(new, "; %f"       ,  dicGetval[sid].ext_dKickMon);
   new += sprintf(new, "; %f"       ,  dicGetval[sid].ext_dKickProb);
+  new += sprintf(new, "; %f"       ,  dicKickLenExt[sid]);
 
   if (isnan(dicGetval[sid].ext_diagPhase) || (dicSetval[sid].ext_T == -1)) new += sprintf(new, "; %s"    , nan_str);
   else {
@@ -250,6 +254,9 @@ void dicSubscribeServices(char *prefix)
 
     sprintf(name, "%s-cal_diag_sid%02d", prefix, i);
     dicDiagvalId[i]    = dic_info_service_stamped(name, MONITORED, 0, &(dicDiagval[i]), sizeof(diagval_t), 0, 0, &no_link_32, sizeof(uint32_t));
+
+    sprintf(name, "%s-kdde_sid%02d_len", prefix, i);
+    dicKickLenExtId[i] = dic_info_service_stamped(name, MONITORED, 0, &(dicKickLenExt[i]), sizeof(double), 0 , 0, &no_link_dbl, sizeof(double));
 
     sleep (2);  // data is taken upon callback of set-values; wait a bit until the other services have connected to their servers
 
