@@ -62,9 +62,11 @@ const char* program;
 #define  NALLSID     48                   // number of all SIDs observed; SIS18 (16), ESR (16), CRYRING (16)
 #define  TINACTIVE   3600                 // [s]; if the previous data is more in the past than this value, the transfer data is considered inactive
 #define  TOLD        3600 * 24            // [s]; if the previous data is more in the past than this value, the transfer data is considered out of date
+#define  CLIGHT      299792458.0          // speed-of-light in vacuum
 
 uint32_t no_link_32    = 0xdeadbeef;
 uint64_t no_link_64    = 0xdeadbeefce420651;
+double   no_link_dbl   = NAN;
 char     no_link_str[] = "NO_LINK";
 
 setval_t   dicSetval[NALLSID];            // b2b set-values
@@ -209,10 +211,10 @@ double convertUnit(double value_ns, uint64_t TH1)
 
 void buildHeader()
 {
-  sprintf(headerK, "|        pattern name | t_last [UTC] | orign | sid| kick set    trg offst start fltop | destn | sid| phase set get  | kick  set    trg offst start fltop Doffst Dprob|");
+  sprintf(headerK, "|        pattern name | t_last [UTC] | orign | sid| kick set    trg offst start fltop | destn | sid| phase set get  | kick  set    trg offst start fltop Doffst  TOF |");
   sprintf(emptyK,  "|                     |              |       |    |                                   |       |    |                |                                                |");
-  sprintf(headerN, "|        pattern name | t_last [UTC] | orign | sid| h1gDDS ext set      get(stdev)diff[Hz]  v/c | h1gDDS inj set      get(stdev)diff[Hz]  v/c | prob ext inj [%%] |");
-  sprintf(emptyN,  "|                     |              |       |    |                                             |                                             |                  |");
+  sprintf(headerN, "|        pattern name | t_last [UTC] | orign | sid| h1gDDS ext set      get(stdev)diff[Hz]  v/c | h1gDDS inj set      get(stdev)diff[Hz]  v/c | prob ext inj [%%]     |");
+  sprintf(emptyN,  "|                     |              |       |    |                                             |                                             |                      |");
   //        printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
 } // buildHeader
 
@@ -234,8 +236,8 @@ void buildPrintLine(uint32_t idx)
   char     injSid[32];
   char     extTrig[512];
   char     injTrig[521];
-  char     nueMeasExt[128];
-  char     nueMeasInj[128];
+  char     nueMeasExt[164];
+  char     nueMeasInj[164];
   char     setLevelExt[32];
   char     setLevelInj[32];
 
@@ -255,6 +257,8 @@ void buildPrintLine(uint32_t idx)
   ring_t   ringExt;
   ring_t   ringInj;
   uint32_t idxInj;
+  double   cRingExt;
+  double   cRingInj; 
 
   uint64_t actNsecs;
   time_t   actT;
@@ -269,10 +273,10 @@ void buildPrintLine(uint32_t idx)
 
   // extraction ring name
   switch (ringExt) {
-    case SIS18   : sprintf(origin, "SIS18");  sprintf(tmp1, "ESR");  pLevelExt = &dicLevelExtSis18; pLevelInj = &dicLevelInjEsr; ringInj = ESR;     break;
-    case ESR     : sprintf(origin, "ESR");    sprintf(tmp1, "YR");   pLevelExt = &dicLevelExtEsr;   pLevelInj = &dicLevelInjYr;  ringInj = CRYRING; break;
-    case CRYRING : sprintf(origin, "YR");     sprintf(tmp1, " ");    pLevelExt = &dicLevelExtYr;    pLevelInj = NULL;            ringInj = NORING;  break;
-    default      : sprintf(origin, TXTUNKWN); sprintf(tmp1, " ");    pLevelExt = NULL;              pLevelInj = NULL;            ringInj = NORING;  break;
+    case SIS18   : sprintf(origin, "SIS18");  sprintf(tmp1, "ESR");  pLevelExt = &dicLevelExtSis18; pLevelInj = &dicLevelInjEsr; ringInj = ESR;     cRingExt = 216; cRingInj = 108; break;
+    case ESR     : sprintf(origin, "ESR");    sprintf(tmp1, "YR");   pLevelExt = &dicLevelExtEsr;   pLevelInj = &dicLevelInjYr;  ringInj = CRYRING; cRingExt = 108; cRingInj =  54; break;
+    case CRYRING : sprintf(origin, "YR");     sprintf(tmp1, " ");    pLevelExt = &dicLevelExtYr;    pLevelInj = NULL;            ringInj = NORING;  cRingExt =  54; cRingInj = NAN; break;
+    default      : sprintf(origin, TXTUNKWN); sprintf(tmp1, " ");    pLevelExt = NULL;              pLevelInj = NULL;            ringInj = NORING;  cRingExt = NAN; cRingInj = NAN; break;
   } // switch ringExt
 
   idxInj = (ringInj - 1) * 16 + dicSetval[idx].inj_sid;
@@ -320,13 +324,15 @@ void buildPrintLine(uint32_t idx)
           sprintf(tmp1, "check DDS");
           sprintf(tmp2, "value");
           sprintf(tmp3, "n/a");
+          sprintf(tmp4, "n/a");
         } // if fabs
         else {
           sprintf(tmp1, "%11.3f", dicDiagval[idx].ext_rfNueAct);
-          sprintf(tmp2, "%5.3f", dicDiagval[idx].ext_rfNueActErr);
-          sprintf(tmp3, "%7.3f", nueDiff);
+          sprintf(tmp2, "%5.3f",  dicDiagval[idx].ext_rfNueActErr);
+          sprintf(tmp3, "%7.3f",  nueDiff);
+          sprintf(tmp4, "%4.2f",  set_extNue[idx] * cRingExt / CLIGHT);
         } // else fabs
-        sprintf(nueMeasExt, "%11.3f %11s(%5s) %7s",  set_extNue[idx], tmp1, tmp2, tmp3);
+        sprintf(nueMeasExt, "%11.3f %11s(%5s) %7s %4s",  set_extNue[idx], tmp1, tmp2, tmp3, tmp4);
       } // else flagEvtErr
     } // else NOLINK
 
@@ -341,13 +347,15 @@ void buildPrintLine(uint32_t idx)
             sprintf(tmp1, "check DDS");
             sprintf(tmp2, "value");
             sprintf(tmp3, "n/a");
+            sprintf(tmp4, "n/a");  
           } // if fabs
           else {
             sprintf(tmp1, "%11.3f", dicDiagval[idx].inj_rfNueAct);
-            sprintf(tmp2, "%5.3f", dicDiagval[idx].inj_rfNueActErr);
-            sprintf(tmp3, "%7.3f", nueDiff);
+            sprintf(tmp2, "%5.3f",  dicDiagval[idx].inj_rfNueActErr);
+            sprintf(tmp3, "%7.3f",  nueDiff);
+            sprintf(tmp4, "%4.2f",  set_injNue[idx] * cRingInj / CLIGHT);
           } // else fabs
-          sprintf(nueMeasInj, "%11.3f %11s(%5s) %s", set_injNue[idx], tmp1, tmp2, tmp3);
+          sprintf(nueMeasInj, "%11.3f %11s(%5s) %7s %4s", set_injNue[idx], tmp1, tmp2, tmp3, tmp4);
         } // else flagEvtErr
       } // else NOLINK
     } // if set_mode
@@ -387,12 +395,9 @@ void buildPrintLine(uint32_t idx)
     else                                     sprintf(tmp2, "%5.0f", convertUnit(dicGetval[idx].ext_dKickMon, dicSetval[idx].ext_T));
     if (isnan(dicGetval[idx].ext_dKickProb)) sprintf(tmp3, "%s", TXTUNKWN);
     else                                     sprintf(tmp3, "%5.0f", convertUnit(dicGetval[idx].ext_dKickProb,dicSetval[idx].ext_T));
+    if (isnan(dicKickLenExt[idx]))           sprintf(tmp4, "%s", TXTUNKWN);
+    else                                     sprintf(tmp4, "%5.0f", convertUnit(dicKickLenExt[idx],dicSetval[idx].ext_T));
 
-    if (*(uint32_t *)&(dicKickLenExt[idx]) == no_link_32) sprintf(tmp4, "NOLNK");
-    else {
-      if (isnan(dicKickLenExt[idx]))           sprintf(tmp4, "%s", TXTUNKWN);
-      else                                     sprintf(tmp4, "%5.0f", convertUnit(dicKickLenExt[idx],dicSetval[idx].ext_T));
-    } // else nolink
     sprintf(extTrig, "%7.1f %7s %5s %5s %5s", convertUnit(set_extCTrig[idx], dicSetval[idx].ext_T), tmp1, tmp2, tmp3, tmp4);
   } // if flagExtTrig
   else sprintf(extTrig, "---");
@@ -417,14 +422,10 @@ void buildPrintLine(uint32_t idx)
     // signal from magnet probes
     if (isnan(dicGetval[idx].inj_dKickProb)) sprintf(tmp3, "%s", TXTUNKWN);
     else                                     sprintf(tmp3, "%5.0f", convertUnit(dicGetval[idx].inj_dKickProb, dicSetval[idx].inj_T));
+    if (isnan(dicKickLenInj[idxInj]))      sprintf(tmp6, "%s", TXTUNKWN);
+    else                                   sprintf(tmp6, "%5.0f", convertUnit(dicKickLenInj[idxInj],dicSetval[idx].inj_T));
 
-    
-    if (*(uint32_t *)&(dicKickLenInj[idxInj]) == no_link_32) sprintf(tmp6, "NOLNK");
-    else {
-      if (isnan(dicKickLenInj[idxInj]))      sprintf(tmp6, "%s", TXTUNKWN);
-      else                                   sprintf(tmp6, "%5.0f", convertUnit(dicKickLenInj[idxInj],dicSetval[idx].inj_T));
-    } // else nolink
-    // difference to kicker electronics extraction
+      // difference to kicker electronics extraction
     if (isnan(dicGetval[idx].ext_dKickMon) || isnan(dicGetval[idx].inj_dKickMon))
       sprintf(tmp4, "%s", TXTUNKWN);
     else {
@@ -432,10 +433,10 @@ void buildPrintLine(uint32_t idx)
       sprintf(tmp4, "%5.0f", convertUnit(dtmp1, dicSetval[idx].inj_T));
     } // else isnan
     // difference to magnet probe extraction
-    if (isnan(dicGetval[idx].ext_dKickProb) || isnan(dicGetval[idx].inj_dKickProb))
+    if (isnan(dicGetval[idx].ext_dKickProb) || isnan(dicGetval[idx].inj_dKickProb) || isnan(dicKickLenInj[idxInj]))
       sprintf(tmp5, "%s", TXTUNKWN);
     else {
-      dtmp1 = set_injCTrig[idx] - set_extCTrig[idx] + dicGetval[idx].inj_dKickProb - dicGetval[idx].ext_dKickProb;
+      dtmp1 = set_injCTrig[idx] - set_extCTrig[idx] + dicGetval[idx].inj_dKickProb - dicGetval[idx].ext_dKickProb + dicKickLenInj[idxInj];
       sprintf(tmp5, "%5.0f", convertUnit(dtmp1, dicSetval[idx].inj_T));
     } // else isnan
 
@@ -448,7 +449,7 @@ void buildPrintLine(uint32_t idx)
   else             sprintf(injSid, "%s", "--");
 
   sprintf(printLineK[idx], "|%20s | %12s |%6s | %2d | %33s |%6s | %2s |%15s | %46s |", pattern, tCBS, origin, sid, extTrig, dest, injSid, b2b, injTrig);
-  sprintf(printLineN[idx], "|%20s | %12s |%6s | %2d | %38s | %38s | %6s  %6s |", pattern, tCBS, origin, sid, nueMeasExt, nueMeasInj, setLevelExt, setLevelInj);
+  sprintf(printLineN[idx], "|%20s | %12s |%6s | %2d | %38s | %43s | %6s  %6s       |", pattern, tCBS, origin, sid, nueMeasExt, nueMeasInj, setLevelExt, setLevelInj);
   //                printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
 
 } //buildPrintLine
@@ -578,10 +579,10 @@ void dicSubscribeKickLenServices(char *prefix, uint32_t idx)
 
   sprintf(name, "%s_%s-kdde_sid%02d_len", prefix, ringName,  sid);
   /* printf("name %s\n", name); */
-  dicKickLenExtId[idx]      = dic_info_service_stamped(name, MONITORED, 0, &(dicKickLenExt[idx]), sizeof(double), 0 , 0, &no_link_32, sizeof(uint32_t));
+  dicKickLenExtId[idx]      = dic_info_service_stamped(name, MONITORED, 0, &(dicKickLenExt[idx]), sizeof(double), 0 , 0, &no_link_dbl, sizeof(double));
   sprintf(name, "%s_%s-kddi_sid%02d_len", prefix, ringName,  sid);
   /* printf("name %s\n", name); */
-  dicKickLenInjId[idx]      = dic_info_service_stamped(name, MONITORED, 0, &(dicKickLenInj[idx]), sizeof(double), 0 , 0, &no_link_32, sizeof(uint32_t));
+  dicKickLenInjId[idx]      = dic_info_service_stamped(name, MONITORED, 0, &(dicKickLenInj[idx]), sizeof(double), 0 , 0, &no_link_dbl, sizeof(double));
 } // dicSubscribeKicklenServices
 
 
@@ -662,8 +663,8 @@ void printData(char *name)
   strftime(buff,53,"%d-%b-%y %H:%M:%S",localtime(&time_date));
   if (flagPrintNs) sprintf(unitInfo, "(units [ns] unless explicitly given)");
   else             sprintf(unitInfo, " (units [°] unless explicitly given)");
-  sprintf(title,  "\033[7m B2B Monitor %3s ------------------------------------------------------------------------------------ %s - v%8s\033[0m", name, unitInfo, b2b_version_text(B2B_MON_VERSION));
-  sprintf(footer, "\033[7m exit <q> | toggle data <d>, units <u> | toggle inactive <i>, SIS18 <0>, ESR <1>, YR <2> | help <h>                                 %s\033[0m", buff);
+  sprintf(title,  "\033[7m B2B Monitor %3s ---------------------------------------------------------------------------------------------------- %s - v%8s\033[0m", name, unitInfo, b2b_version_text(B2B_MON_VERSION));
+  sprintf(footer, "\033[7m exit <q> | toggle data <d>, units <u> | toggle inactive <i>, SIS18 <0>, ESR <1>, YR <2> | help <h>                                                 %s\033[0m", buff);
 
   comlib_term_curpos(1,1);
 
