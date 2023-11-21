@@ -5,16 +5,22 @@
 #include <boost/format.hpp>
 #include <iostream>
 
+
 enum log_level_t {
-    LOG_NOTHING,
-    LOG_CRITICAL,
-    LOG_ERROR,
-    LOG_WARNING,
-    LOG_INFO,
-    LOG_VERBOSE,
-    LOG_DEBUG
+    NOTHING     = 0,
+    CRITICAL    = 1,
+    ERROR       = 2,
+    WARNING     = 3,
+    INFO        = 4,
+    VERBOSE     = 5,
+    DEBUG_LVL0  = 6,
+    DEBUG_LVL1  = 7,
+    DEBUG_LVL2  = 8,
+    DEBUG       = 8,
 };
 
+
+extern const char* const log_lvl_str[];
 extern log_level_t GLOBAL_LEVEL;
 
 using namespace std;
@@ -28,7 +34,7 @@ public:
     ~formatted_log_t() {
         // GLOBAL_LEVEL is a global variable and could be changed at runtime
         // Any customization could be here
-        if ( level <= GLOBAL_LEVEL ) wcout << level << L" " << fmt << endl;
+        if ( level <= GLOBAL_LEVEL ) wcout << log_lvl_str[level] << L" " << fmt << endl;
     }        
     template <typename T> 
     formatted_log_t& operator %(T value) {
