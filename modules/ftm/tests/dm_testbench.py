@@ -15,6 +15,7 @@ import unittest    # contains super class
 Module dm_testbench collects functions to handle patterns for the data master testbench.
 """
 class DmTestbench(unittest.TestCase):
+
   @classmethod
   def setUpClass(self):
     """Set up for all test cases: store the environment variables in variables.
@@ -25,12 +26,11 @@ class DmTestbench(unittest.TestCase):
     self.schedules_folder = os.environ.get('TEST_SCHEDULES', 'schedules/')
     self.snoop_command = os.environ.get('SNOOP_COMMAND', 'saft-ctl tr0 -xv snoop 0 0 0')
     self.patternStarted = False
-    self.threadQuantitySet = False
+    self.threadQuantity = self.getThreadQuantityFromFirmware()
     self.cpuQuantity = 4
 
   def setUp(self):
     self.initDatamaster()
-    self.threadQuantity = self.getThreadQuantityFromFirmware()
 
   def initDatamaster(self):
     """Initialize (clean) the datamaster.
@@ -570,19 +570,23 @@ class DmTestbench(unittest.TestCase):
     if len(lines[1]) > 0:
       print(f'{chr(10).join(lines[1])}')
 
+  @classmethod
   def getThreadQuantityFromFirmware(self) -> int:
-    if self.threadQuantitySet:
-      return self.threadQuantity
-    else:
-      self.threadQuantitySet = True
-      lines = self.startAndGetSubprocessOutput(('eb-info', '-w', self.datamaster), [0], -1, 0)
-      for line in lines[0]:
-        if 'ThreadQty   : 32' in line:
-          # ~ self.logToFile('getThreadQuantityFromFirmware: 32', 'threadQuantity.txt')
-          return 32
-      # ~ self.logToFile('getThreadQuantityFromFirmware: 8', 'threadQuantity.txt')
-      return 8
+    # pass cmd and args to the function
+    process = subprocess.Popen(('eb-info', '-w', self.datamaster), stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+    # get command output and error
+    stdout, stderr = process.communicate()
+    self.assertTrue(process.returncode in [0], f'wrong return code {process.returncode}, expected: [0], '
+          + f'stderr: {stderr.decode("utf-8").splitlines()}\nstdout: {stdout.decode("utf-8").splitlines()}')
+    lines = stdout.decode("utf-8").splitlines()
+    for line in lines:
+      if 'ThreadQty   : 32' in line:
+        # ~ self.logToFile('getThreadQuantityFromFirmware: 32', 'threadQuantity.txt')
+        return 32
+    # ~ self.logToFile('getThreadQuantityFromFirmware: 8', 'threadQuantity.txt')
+    return 8
 
+  @classmethod
   def logToFile(self, text, fileName):
     testName = os.environ['PYTEST_CURRENT_TEST']
     with open(fileName, 'a') as file1:
