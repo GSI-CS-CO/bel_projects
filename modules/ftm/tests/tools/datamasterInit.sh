@@ -4,7 +4,8 @@
 
 if [ ! $BEL_PROJECTS_PATH ]
 then
-  BEL_PROJECTS_PATH=$HOME/bel_projects/dev
+  # Use the path of the script ${0%/*} and step down.
+  BEL_PROJECTS_PATH=${0%/*}/../../../..
 fi
 
 # the first argument is the host name.
