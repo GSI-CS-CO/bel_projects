@@ -7,6 +7,11 @@
 
 #include "carpeDM.h"
 #include "filenames.h"
+#include "log.h"
+
+extern log_level_t GLOBAL_LEVEL;
+
+
 
 
 
@@ -64,6 +69,7 @@ int main(int argc, char* argv[]) {
             break;
          case 'd':
             debug = true;
+            GLOBAL_LEVEL = DEBUG;
             break;
 
          case 'n':
@@ -75,6 +81,7 @@ int main(int argc, char* argv[]) {
 
          case 'v':
             verbose = true;
+            GLOBAL_LEVEL = VERBOSE;
             break;
 
          case 's':

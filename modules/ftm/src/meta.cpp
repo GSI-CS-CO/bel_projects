@@ -14,14 +14,9 @@ void Meta::serialise(const mVal &m, uint8_t* b) const {
 
 void CmdQMeta::serialise(const mVal &m, uint8_t* b) const {
   Meta::serialise(m, b);
-  /*
-  auto startIt = va.begin() + ADR_CMDQ_BUF_ARRAY;
-  //FIXME size check !
-  for(auto it = startIt; it < va.end(); it++) {
-    writeLeNumberToBeBytes(b + (ptrdiff_t)CMDQ_BUF_ARRAY + (it - startIt) * _32b_SIZE_,  *it);
-  }
-  */
+
   for ( const auto &myPair : m ) {
+    log<DEBUG>(L"Serialiser CmdQMeta: Inserting Adr: %1$#x Val %2$#x ")  % myPair.first % myPair.second;
     writeLeNumberToBeBytes(b + (ptrdiff_t)myPair.first,  myPair.second); 
   }
 
@@ -37,9 +32,8 @@ void DestList::serialise(const mVal &m, uint8_t* b) const {
 
   //for each map entry, add the element to buffer
   for ( const auto &myPair : m ) {
-    //if (verbose) slog << "Override " << this->name << " key 0x" << std::hex << myPair.first << " val 0x " << myPair.second << std::endl;
-    //log<LOG_INFO>(L"Override %1%") % 10;
-    log<LOG_WARNING>(L"Override key %1$#x val %2$#x ")  % myPair.first % myPair.second;
+
+    log<DEBUG>(L"Serialiser DstList: Inserting Adr: %1$#x Val %2$#x ")  % myPair.first % myPair.second;
     writeLeNumberToBeBytes(b + (ptrdiff_t)myPair.first,  myPair.second); 
   }
 
