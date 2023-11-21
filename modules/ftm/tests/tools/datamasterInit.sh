@@ -7,18 +7,28 @@ then
   BEL_PROJECTS_PATH=$HOME/bel_projects/dev
 fi
 
-if [ $# -eq 1 ]
+# the first argument is the host name.
+if [ $# -ge 1 ]
 then
   DM_HOST=$1
 else
   DM_HOST=$(hostname)
 fi
 
-if [ $# -eq 2 ]
+# the second argument is the file of the firmware to be loaded into lm32.
+if [ $# -ge 2 ]
 then
   FIRMWARE=$2
 else
   FIRMWARE=~/Documents/fel0069/ftm_v8.0.4-rc1.bin
+fi
+
+# the third argument is the number of threads. Values 8 or 32 are allowed.
+if [ $# -eq 3 ] && ( [ $3 -eq 8 ] || [ $3 -eq 32 ] )
+then
+  THR_QTY=$3
+else
+  THR_QTY=8
 fi
 
 if [ "$DM_HOST" = "ACOPC042" ]
@@ -34,10 +44,10 @@ then
   echo -n -e '\n\ndev/wbm0 monitoring: '; eb-mon -v dev/wbm0
   echo -n 'dev/wbm1 datamaster IP: '; eb-mon -i dev/wbm1
   echo -n 'dev/wbm1 datamaster WR sync status: '; eb-mon -y dev/wbm1
-  # Build the latest firmware
-  if [ $# -eq 2 ] && [ ${FIRMWARE} == "ftm.bin" ]
+  # Build the latest firmware with 8 or 32 threads
+  if [ $# -ge 2 ] && [ ${FIRMWARE} == "ftm.bin" ]
   then
-    PATH=$PATH:$BEL_PROJECTS_PATH/lm32-toolchain/bin/ make -C $BEL_PROJECTS_PATH/syn/gsi_pexarria5/ftm/ $FIRMWARE
+    THR_QTY=$THR_QTY PATH=$PATH:$BEL_PROJECTS_PATH/lm32-toolchain/bin/ make -C $BEL_PROJECTS_PATH/syn/gsi_pexarria5/ftm/ $FIRMWARE
     FIRMWARE=$BEL_PROJECTS_PATH/syn/gsi_pexarria5/ftm/ftm.bin
   fi
   # Load the latest firmware to datamaster
@@ -63,6 +73,12 @@ then
   echo -n 'dev/wbm0 datamaster IP: '; ssh root@fel0069.acc.gsi.de 'eb-mon -i dev/wbm0'
   echo -n 'dev/wbm0 datamaster WR sync status: '; ssh root@fel0069.acc.gsi.de 'eb-mon -y dev/wbm0'
   echo -n 'dev/wbm0 datamaster link status: '; ssh root@fel0069.acc.gsi.de 'eb-mon -l dev/wbm0'
+  # Build the latest firmware with 8 or 32 threads
+  if [ $# -ge 2 ] && [ ${FIRMWARE} == "ftm.bin" ]
+  then
+    THR_QTY=$THR_QTY PATH=$PATH:$BEL_PROJECTS_PATH/lm32-toolchain/bin/ make -C $BEL_PROJECTS_PATH/syn/gsi_pexarria5/ftm/ $FIRMWARE
+    FIRMWARE=$BEL_PROJECTS_PATH/syn/gsi_pexarria5/ftm/ftm.bin
+  fi
   # load the latest firmware to datamaster
   $BEL_PROJECTS_PATH/syn/gsi_pexarria5/ftm/fwload_all.sh tcp/fel0069.acc.gsi.de $FIRMWARE
   # Test that the tools version and the firmware version are compatible
