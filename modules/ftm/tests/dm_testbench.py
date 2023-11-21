@@ -485,18 +485,19 @@ class DmTestbench(unittest.TestCase):
     each CPU and start all threads. Check that these are running.
     """
     # small delay after init of datamaster
-    self.delay(0.2)
+    # ~ self.delay(0.2)
+    # Add schedules for all CPUs and start pattern on all threads.
+    self.addSchedule('pps-all-threads-cpu0.dot')
+    self.addSchedule('pps-all-threads-cpu1.dot')
+    self.addSchedule('pps-all-threads-cpu2.dot')
+    self.addSchedule('pps-all-threads-cpu3.dot')
     # Check all CPUs that no thread is running.
     lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', '0xf', 'running'), [0], self.cpuQuantity, 0)
     # ~ self.printStdOutStdErr(lines)
     for i in range(self.cpuQuantity):
       expectedText = 'CPU {variable} Running Threads: 0x0'.format(variable=i)
       self.assertEqual(lines[0][i], expectedText, 'wrong output, expected: ' + expectedText)
-    # Add schedules for all CPUs and start pattern on all threads.
-    self.addSchedule('pps-all-threads-cpu0.dot')
-    self.addSchedule('pps-all-threads-cpu1.dot')
-    self.addSchedule('pps-all-threads-cpu2.dot')
-    self.addSchedule('pps-all-threads-cpu3.dot')
+    # Start pattern for all CPUs and all threads
     index = 0
     threadList = [('a', '0'), ('b', '1'), ('c', '2'), ('d', '3'), ('e', '4'), ('f', '5'), ('g', '6'), ('h', '7'),
                   ('a', '8'), ('b', '9'), ('c', '10'), ('d', '11'), ('e', '12'), ('f', '13'), ('g', '14'), ('h', '15'),
