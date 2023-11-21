@@ -12,6 +12,7 @@ cp -a $MOUNTPOINT/$ARCH/usr/bin/b2b-viewer /usr/bin/
 cp -a $MOUNTPOINT/$ARCH/usr/bin/b2b-archiver /usr/bin/
 cp -a $MOUNTPOINT/$ARCH/usr/bin/b2b-mon /usr/bin/
 cp -a $MOUNTPOINT/$ARCH/usr/bin/b2b-jitter-check /usr/bin/
+cp -a $MOUNTPOINT/$ARCH/usr/bin/b2b-serv-kickdiag /usr/bin/
 
 mkdir /tmp/b2bivt
 cp -a $MOUNTPOINT/$ARCH/tmp/b2bivt/* /tmp/b2bivt
