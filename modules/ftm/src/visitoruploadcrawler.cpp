@@ -7,6 +7,7 @@
 #include "dotstr.h"
 #include "validation.h"
 #include <boost/range/combine.hpp>
+#include "log.h"
 
 namespace dnp = DotStr::Node::Prop;
 namespace dnt = DotStr::Node::TypeVal;
@@ -448,9 +449,9 @@ mVal VisitorUploadCrawler::getListDst() const {
     }
   }
   if (unknownAncestor) throw std::runtime_error(  exIntro + "DstList " + g[v].name + "is an orphan!\n");
-  sLog << "dstLL: ancestor " << g[va].name << " " << g[va].type << ". <- " << countHops << " -> thisNode " << g[v].name << " " << g[v].type << ", this parent is " << g[vp].name << " " << g[vp].type;
-
-  
+  log<DEBUG>(L"dstLL: ancestor %1%") % g[va].name.c_str();
+  ///<%2%> <-%3%-> <%4%>/<%5%>(thisnode) <- 1 -> <%6%>/<%7%>
+  //% g[va].type % countHops % g[v].name % g[v].type % g[vp].name % g[vp].type
   /*--- Get us the vector of all altDst nodes ---*/
   vertex_vec_t altVec = getChildrenByEdgeType(va, det::sAltDst); //get all known altdst nodes
   vertex_t       vDef = getOnlyChildByEdgeType(va, det::sDefDst);//search for defdst node
