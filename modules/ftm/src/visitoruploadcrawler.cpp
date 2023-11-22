@@ -449,9 +449,8 @@ mVal VisitorUploadCrawler::getListDst() const {
     }
   }
   if (unknownAncestor) throw std::runtime_error(  exIntro + "DstList " + g[v].name + "is an orphan!\n");
-  log<DEBUG>(L"dstLL: ancestor %1%") % g[va].name.c_str();
-  ///<%2%> <-%3%-> <%4%>/<%5%>(thisnode) <- 1 -> <%6%>/<%7%>
-  //% g[va].type % countHops % g[v].name % g[v].type % g[vp].name % g[vp].type
+  log<DEBUG0>(L"dstLL: ancestor <%1%>/<%2%> <-- %3% --> <%4%>/<%5%>(thisnode) <-- 1 --> <%6%>/<%7%>")  % g[va].name.c_str() % g[va].type.c_str() % countHops % g[v].name.c_str() % g[v].type.c_str() % g[vp].name.c_str() % g[vp].type.c_str();
+  
   /*--- Get us the vector of all altDst nodes ---*/
   vertex_vec_t altVec = getChildrenByEdgeType(va, det::sAltDst); //get all known altdst nodes
   vertex_t       vDef = getOnlyChildByEdgeType(va, det::sDefDst);//search for defdst node

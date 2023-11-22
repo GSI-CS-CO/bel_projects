@@ -32,7 +32,7 @@ void VisitorDownloadCrawler::setDefDst() const {
     // it is possible that a covenant will cause carpeDM to intentionally leave an orphaned def dst to avoid contesting the DM's future changes
     // So if there is a covenant registered for the node we're just processing, ignore the exception. Otherwise rethrow
     if (!ct.isOk(ct.lookup(g[v].name))) { throw; }
-    else {sLog << "setDefDst: Node <" << g[v].name << "> has an invalid def dst, ignoring because of active covenant" << std::endl;}
+    else {log<WARNING>(L"setDefDst: Node %1% has an invalid def dst, ignoring because of active covenant")  % g[v].name.c_str();}
   }
 
 }
@@ -58,7 +58,7 @@ void VisitorDownloadCrawler::visit(const Block& el) const {
   if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(det::sQPrio[PRIO_LO]), g);
   
   } catch (std::runtime_error const& err) {
-   std::cerr << "Failed to create Block <" << g[v].name << " edges: " << err.what() << std::endl;
+    log<ERROR>(L"visitBlock: Failed to create Block %1% edges: %2%") % g[v].name.c_str() % err.what().c_str();
   } 
 }
 
@@ -237,13 +237,15 @@ void VisitorDownloadCrawler::visit(const DestList& el) const {
           boost::add_edge(vPblock, x->v, (myEdge){sType}, g);
         } catch (...) {
           if (!ct.isOk(ct.lookup(g[vPblock].name))) { throw; }
-          else {sLog << "visitDstList: Node <" << g[vPblock].name << "> has an invalid def dst, ignoring because of active covenant" << std::endl;}
+          else {
+            log<ERROR>(L"visitDestList: Node %1% has an invalid def dst, ignoring because of active covenant") % g[vPblock].name.c_str();
+          }
 
         }
       }
     }
     if (!defaultValid) { //default destination was not in alt dest list. that shouldnt happen ... draw it in
-      sErr << "!!! DefDest Adr " << std::hex << "0x" << defAdr << " not in AltDestList. Means someone set an arbitrary pointer for DefDest !!!" << std::endl;
+      log<ERROR>(L"visitDestList: Adr %1$#x not in AltDestList. Someone set an arbitrary pointer for a DefDest, following this edge might crash the DM") % defAdr;
       if (defAdr != LM32_NULL_PTR) {
         try {
           auto x = at.lookupAdr(cpu, defAdr);

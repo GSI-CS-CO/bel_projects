@@ -228,7 +228,7 @@ using namespace DotStr::Misc;
       // A covenant means the DM will change the default dst to a safe value in the near future.
       // If we'd also change def dst, doing it before DM does has no effect, and doing it after the DM did would overwrite the safe def dst
       if(!isCovenantPending(g[x->v].name)) at.setStaged(x);
-      else {sLog << "Node <" << g[v].name << "> has an active covenant. Skipping staging to avoid race condition." << std::endl;}
+      else {log<INFO>(L"updateStaging: Node %1% has an active covenant. Skipping staging to avoid race condition.") % g[v].name.c_str()}
 
     }
 
@@ -427,7 +427,7 @@ using namespace DotStr::Misc;
 
     //Upload
     ebd.writeCycle(ew.va, ew.vb, ew.vcs);
-    if(verbose) sLog << "Done." << std::endl;
+    log<INFO>(L"upload: Done") % g[v].name.c_str()
     freshDownload = false;
     return ew.va.size();
 
@@ -452,11 +452,10 @@ using namespace DotStr::Misc;
   void CarpeDM::CarpeDMimpl::addition(Graph& gTmp) {
 
     vertex_map_t vertexMap, duplicates;
-    if(verbose) sLog << "Generate Metadata" << std::endl;
+    log<VERBOSE>(L"addition: Generating Metadata");
     generateBlockMeta(gTmp); //auto generate desired Block Meta Nodes
 
     //find and list all duplicates i.e. docking points between trees and Update hash dict
-    if(verbose) sLog << "Find duplicates (docking points) and Update hash dict" << std::endl;
     BOOST_FOREACH( vertex_t w, vertices(gTmp) ) {
       //add to hash dict
       hm.add(gTmp[w].name);
@@ -473,7 +472,7 @@ using namespace DotStr::Misc;
     //merge graphs (will lead to disjunct trees with duplicates at overlaps), but keep the mapping for vertex merge
     //boost::associative_property_map<vertex_map_t> vertexMapWrapper(vertexMap);
     //copy_graph(gTmp, gUp, boost::orig_to_copy(vertexMapWrapper));
-    if(verbose) sLog << "Merge graphs" << std::endl;
+    log<VERBOSE>(L"addition: Merging graphs");
     mycopy_graph<Graph>(gTmp, gUp, vertexMap);
     //for(auto& it : vertexMap ) {sLog <<  "gTmp " << gTmp[it.first].name << " @ " << it.first << " gUp " << it.second << std::endl; }
     //merge duplicate nodes
@@ -481,7 +480,7 @@ using namespace DotStr::Misc;
       //sLog <<  it.first << " <- " << it.second << "(" << vertexMap[it.second] << ")" << std::endl;
       mergeUploadDuplicates(it.first, vertexMap[it.second]);
     }
-    if(verbose) sLog << "Remove duplicates" << std::endl;
+    log<VERBOSE>(L"addition: Removing duplicates");
     //now remove duplicates
     for(auto& itDup : duplicates ) {
       boost::clear_vertex(vertexMap[itDup.second], gUp);
@@ -492,7 +491,7 @@ using namespace DotStr::Misc;
 
     //FIXME this also adds/changes the known nodes based on the download. Do we really want that?
     //add whats left to groups dict
-    if(verbose) sLog << "Update Group dict" << std::endl;
+    log<VERBOSE>(L"addition: Updating Group dict");
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
       try {
         gt.setBeamproc(gUp[v].name, gUp[v].bpName, (s2u<bool>(gUp[v].bpEntry)), (s2u<bool>(gUp[v].bpExit)));
@@ -502,10 +501,10 @@ using namespace DotStr::Misc;
       }
     }
     //writeUpDotFile("inspect.dot", false);
-    if(verbose) sLog << "Create binary for upload" << std::endl;
+    log<VERBOSE>(L"addition: creating binary for upload");
     prepareUpload();
     atUp.syncBmpsToPools();
-
+    log<INFO>(L"addition: Done");
   }
 
   void CarpeDM::CarpeDMimpl::pushMetaNeighbours(vertex_t v, Graph& g, vertex_set_t& s) {
@@ -521,6 +520,7 @@ using namespace DotStr::Misc;
         //sLog <<  g[w].name << " is not meta, stopping crawl here" << std::endl;
       }
     }
+    log<INFO>(L"pushMetaNeighbours: Done");
   }
 
   void CarpeDM::CarpeDMimpl::subtraction(Graph& gTmp) {
@@ -534,7 +534,7 @@ using namespace DotStr::Misc;
 
     //TODO probably a more elegant solution out there, but I don't have the time for trial and error on boost property maps.
     //create 1:1 vertex map for all vertices in gUp initially marked for deletion. Also add all their meta children to leave no loose ends
-
+    log<VERBOSE>(L"subtraction: Searching nodes to remove");
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
       vertexMap[v] = v;
       //hvm.insert(hashVertexTuple(gUp[v].hash, v))
@@ -553,7 +553,7 @@ using namespace DotStr::Misc;
         pushMetaNeighbours(x->v, gUp, toDelete); // add all of its meta children as well
       }
     }
-
+    log<VERBOSE>(L"subtraction: updating staging");
     //FIXME Square complexity, but unsure if inner loop can be replaced
     //check staging, vertices might have lost children
     for(auto& vd : toDelete ) {
@@ -570,11 +570,12 @@ using namespace DotStr::Misc;
 
     //FIXME Square complexity, but unsure if inner loop can be replaced
     //remove designated vertices
+    log<VERBOSE>(L"subtraction: removing designated nodes");
     for(auto& vd : toDelete ) {
       //sLog <<  "Removing Node " << gUp[vertexMap[vd]].name << std::endl;
       atUp.deallocate(gUp[vertexMap[vd]].hash); //using the hash is independent of vertex descriptors, so no remapping necessary yet
       //remove node from hash and groups dict
-      if (verbose) sLog <<  "Removing " << gUp[vertexMap[vd]].name << std::endl;
+      log<DEBUG_LVL0>(L"subtraction: removing %1%") % gUp[vertexMap[vd]].name.c_str();
       hm.remove(gUp[vertexMap[vd]].name);
       gt.remove<Groups::Node>(gUp[vertexMap[vd]].name);
       boost::clear_vertex(vertexMap[vd], gUp);
@@ -600,7 +601,7 @@ using namespace DotStr::Misc;
 
     prepareUpload();
     atUp.syncBmpsToPools();
-
+    log<INFO>(L"subtraction: Done");
   }
 
 
