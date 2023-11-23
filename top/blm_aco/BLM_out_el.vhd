@@ -8,9 +8,9 @@ entity BLM_out_el is
 port (
   CLK              : in std_logic;      -- Clock
   nRST             : in std_logic;      -- Reset
- -- BLM_ctrl_reg     : in std_logic_vector(11 downto 0); -- bit 5-0 = up_in_counter select, bit 11-6 = down_in_counter select
-     BLM_out_sel_reg : in t_BLM_out_sel_reg_Array;  --128 x 16 bits = Reg120 -0:  "0000" and 6 x (54 watchdog errors  + 12 gate errors + 256 counter outputs) 
-                                                    -- Reg 128-121  = 128 bits used to write the counters overflows outputs to the UP/DOWN overflows to be read                                           
+
+     BLM_out_sel_reg : in t_BLM_out_sel_reg_Array;  -- 122 x 16 bits = Reg120-0:  "0000" and 6 x (54 watchdog errors  + 12 gate errors + 256 counters overflows outputs) 
+                                                    --                 Reg121: counter outputs buffering enable (bit 15) and buffered output select (bit 7-0). Bits 14-8 not used                                         
 
   UP_OVERFLOW      : in std_logic_vector(127 downto 0);
   DOWN_OVERFLOW    : in std_logic_vector(127 downto 0);
@@ -29,7 +29,7 @@ end BLM_out_el;
 
 
 architecture rtl of BLM_out_el is
---TYPE    t_BLM_reg_Array           is array (0 to 127) of std_logic_vector(15 downto 0);
+
 signal sel_tot: std_logic_vector(1931 downto 0);
 type t_sel is array (0 to 5) of std_logic_vector(321 downto 0);
 signal sel: t_sel;
@@ -44,7 +44,7 @@ signal OVERFLOW : std_logic_vector(321 downto 0);
 signal gate_input: std_logic_vector(11 downto 0);
 signal out_cnt_wr : std_logic; 
 signal up_down_counter_val: t_BLM_counter_Array;
-signal cnt_backout: std_logic_vector(19 downto 0):=(others =>'0');
+signal cnt_readback: std_logic_vector(19 downto 0):=(others =>'0');
 
 signal read_cnt: integer range 0 to 127;
 begin
@@ -128,7 +128,7 @@ end process;
         begin
 
             read_cnt <= to_integer(unsigned(BLM_out_sel_Reg(121)(7 downto 0)));
-            cnt_backout <= up_down_counter_val(read_cnt);
+            cnt_readback <= up_down_counter_val(read_cnt);
       
 
         end process;
@@ -143,9 +143,9 @@ end process;
     end process;
     
     BLM_status_reg(20) <= "00" & gate_input & OVERFLOW(321 downto 320); -- bits 321-320 = wd_out (53 downto 52)
-    BLM_status_reg(21)(5 downto 0) <= BLM_out_signal; -- phyfical outputs
+    BLM_status_reg(21)(5 downto 0) <= BLM_out_signal; -- physical outputs
     BLM_status_reg(21)(15 downto 6)  <= (others =>'0');    
-    BLM_status_reg(22)<= cnt_backout(15 downto 0);
-    BLM_status_reg(23) <= "000000000000"& cnt_backout(19 downto 16);
+    BLM_status_reg(22)<= cnt_readback(15 downto 0);
+    BLM_status_reg(23) <= "000000000000"& cnt_readback(19 downto 16);
 
 end architecture;
