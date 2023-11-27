@@ -142,5 +142,3 @@ end process;
 QuDout <= QuD_data;
 
 end Arch_quench_detection;
-
-
