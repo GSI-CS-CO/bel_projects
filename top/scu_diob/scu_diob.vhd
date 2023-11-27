@@ -788,6 +788,7 @@ end component;
 component  TM_quench_detection is
   Port ( clk : in STD_LOGIC;
          nReset : in STD_LOGIC;
+         --QuD_init: in STD_LOGIC;
          time_pulse : in STD_LOGIC;
          delay : in STD_LOGIC_VECTOR(23 DOWNTO 0);
          quench_out_sel : in STD_LOGIC_VECTOR(5 downto 0);
@@ -4123,6 +4124,7 @@ end generate Quench_Matrix_Gen;
   Quench_MT : TM_quench_detection
     Port map( clk => clk_sys,
               nReset => rstn_sys,
+             -- QuD_init => quench_reg(0)(13),
               time_pulse => Ena_Every_1us,
               quench_out_sel => quench_out_sel,
               qud_reset=>  quench_reg(0)(15),
