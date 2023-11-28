@@ -1,31 +1,61 @@
 digraph g {
-name="helloadv";
+name="multi";
 
 graph []
-edge  [type="defdst"]
-//node [qLo="1", qHi="1", qIl="1"];
-
-subgraph cpu0 {
-  node  [cpu="0"];
+edge  [type="defdst"];
+node  [cpu="0", pattern="PPS"];
 
 
-  Evt_PPS   [type="tmsg",   toffs=          0,   fid=0, gid=5, evtno=205, sid=2, bpid=8, par="0x123"];
-  B_PPS     [type="block",  tperiod=1000000000];
-  Evt_PPSA  [type="tmsg",   toffs=          0,   fid=0, gid=5, evtno=205, sid=2, bpid=8, par="0x1"];
 
-  Evt_PPS   -> B_PPS;
-  B_PPS->Evt_PPSA  -> Evt_PPS;
+
+
+Evt_0     [type="tmsg", toffs=0, fid=1, par="0x0"];
+Evt_1     [type="tmsg", toffs=0, fid=1, par="0x1"];
+Evt_2     [type="tmsg", toffs=0, fid=1, par="0x2"];
+Evt_3     [type="tmsg", toffs=0, fid=1, par="0x3"];
+Evt_4     [type="tmsg", toffs=0, fid=1, par="0x4"];
+Evt_5     [type="tmsg", toffs=0, fid=1, par="0x5"];
+Evt_6     [type="tmsg", toffs=0, fid=1, par="0x6"];
+Evt_7     [type="tmsg", toffs=0, fid=1, par="0x7"];
+Evt_8     [type="tmsg", toffs=0, fid=1, par="0x8"];
+Evt_9     [type="tmsg", toffs=0, fid=1, par="0x9"];
+Evt_10    [type="tmsg", toffs=0, fid=1, par="0xA"];
+Evt_11    [type="tmsg", toffs=0, fid=1, par="0xB"];
+
+B_ENTRY   [type="block", patentry="1", tperiod=100, qLo="1"];
+B_PPS     [type="block",  patexit="1", tperiod=1000000000, qLo="1"];
+
+B_ENTRY -> Evt_0 [type="altdst"];
+B_ENTRY -> Evt_1 [type="altdst"];
+B_ENTRY -> Evt_2 [type="altdst"];
+B_ENTRY -> Evt_3 [type="altdst"];
+B_ENTRY -> Evt_4 [type="altdst"];
+B_ENTRY -> Evt_5 [type="altdst"];
+B_ENTRY -> Evt_6 [type="altdst"];
+B_ENTRY -> Evt_7 [type="altdst"];
+B_ENTRY -> Evt_8 [type="altdst"];
+B_ENTRY -> Evt_9 [type="altdst"];
+B_ENTRY -> Evt_10 [type="altdst"];
+B_ENTRY -> Evt_11 [type="altdst"];
+
+Evt_0 -> B_PPS
+Evt_1 -> B_PPS
+Evt_2 -> B_PPS
+Evt_3 -> B_PPS
+Evt_4 -> B_PPS
+Evt_5 -> B_PPS
+Evt_6 -> B_PPS
+Evt_7 -> B_PPS
+Evt_8 -> B_PPS
+Evt_9 -> B_PPS
+Evt_10 -> B_PPS
+Evt_11 -> B_PPS
+
+B_PPS -> B_ENTRY;
+
+
+
+
 
 }
 
-subgraph cpu1 {
-  node  [cpu="1"];
-
-  Evt_Bla [type="tmsg",   toffs=           0, id="0x0000000000000001", par="0x0"];
-  B_Bla   [type="block",  tperiod=1000000000];
-
-  Evt_Bla -> B_Bla;
-
-}
-
-}
