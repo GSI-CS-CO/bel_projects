@@ -19,6 +19,7 @@
 #include "visitordownloadcrawler.h"
 #include "dotstr.h"
 #include "idformat.h"
+#include "log.h"
 
 namespace dnp = DotStr::Node::Prop;
 namespace dnt = DotStr::Node::TypeVal;
@@ -228,7 +229,7 @@ using namespace DotStr::Misc;
       // A covenant means the DM will change the default dst to a safe value in the near future.
       // If we'd also change def dst, doing it before DM does has no effect, and doing it after the DM did would overwrite the safe def dst
       if(!isCovenantPending(g[x->v].name)) at.setStaged(x);
-      else {log<INFO>(L"updateStaging: Node %1% has an active covenant. Skipping staging to avoid race condition.") % g[v].name.c_str()}
+      else { log<INFO>(L"updateStaging: Node %1% has an active covenant. Skipping staging to avoid race condition.") % g[v].name.c_str(); }
 
     }
 
@@ -354,8 +355,7 @@ using namespace DotStr::Misc;
       bool foundUninitialised = (n != std::string::npos);
 
       if(debug || foundUninitialised) {
-        sLog << std::endl;
-        hexDump(gUp[v].name.c_str(), haystack.c_str(), _MEM_BLOCK_SIZE);
+        log<DEBUG_LVL1>(L"prepareUpload: @ %1$#08x \n %2%") % atUp.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr) % hexDump(gUp[v].name.c_str(), haystack.c_str(), _MEM_BLOCK_SIZE).c_str();
       }
 
       if(foundUninitialised) {
@@ -423,11 +423,11 @@ using namespace DotStr::Misc;
 
     }
 */
-    ew = ewOrphans + ewChg; //order is critical !!!
+    ew = ewOrphans + ewChg; //order of writing is critical !!! Else the above described memory corruption will happen
 
     //Upload
     ebd.writeCycle(ew.va, ew.vb, ew.vcs);
-    log<INFO>(L"upload: Done") % g[v].name.c_str()
+    log<INFO>(L"upload: Done");
     freshDownload = false;
     return ew.va.size();
 

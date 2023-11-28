@@ -17,6 +17,8 @@
 #include "dotstr.h"
 #include "idformat.h"
 
+#include "log.h"
+
 namespace dnt = DotStr::Node::TypeVal;
 
 

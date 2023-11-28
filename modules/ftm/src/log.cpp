@@ -11,5 +11,6 @@ const char* const log_lvl_str[] = {
     "VERBOSE:",
     "DEBUG LVL 0:",
     "DEBUG LVL 1:",
-    "DEBUG LVL 2:"
+    "DEBUG LVL 2:",
+    "DEBUG LVL 3:",
 };

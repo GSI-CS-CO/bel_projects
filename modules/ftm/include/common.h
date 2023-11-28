@@ -385,7 +385,7 @@ inline T s2u(const std::string& s) {
  * @param addr Char array containig bytes to be hex dumped
  * @param len Number of bytes to be hex dumped
  */
-void hexDump (const char *desc, const char* addr, int len);
+std::string hexDump (const char *desc, const char* addr, int len);
 
 /// Hexdump to std::out
 /** Creates a formatted hexadecimal version of a vector of bytes and puts it on std::cout
