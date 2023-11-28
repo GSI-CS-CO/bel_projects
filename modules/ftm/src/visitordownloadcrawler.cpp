@@ -6,6 +6,8 @@
 #include "event.h"
 #include "dotstr.h"
 
+#include "log.h"
+
 namespace dnp = DotStr::Node::Prop;
 namespace dnt = DotStr::Node::TypeVal;
 namespace dep = DotStr::Edge::Prop;
@@ -58,7 +60,7 @@ void VisitorDownloadCrawler::visit(const Block& el) const {
   if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(det::sQPrio[PRIO_LO]), g);
   
   } catch (std::runtime_error const& err) {
-    log<ERROR>(L"visitBlock: Failed to create Block %1% edges: %2%") % g[v].name.c_str() % err.what().c_str();
+    log<ERROR>(L"visitBlock: Failed to create Block %1% edges: %2%") % g[v].name.c_str() % err.what();
   } 
 }
 

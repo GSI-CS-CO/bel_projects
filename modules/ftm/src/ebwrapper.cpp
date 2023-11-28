@@ -1,5 +1,6 @@
 #include <boost/algorithm/string.hpp>
 #include "ebwrapper.h"
+#include "log.h"
 
 const int EbWrapper::expVersionMin = EbWrapper::parseFwVersionString(EXP_VER);
 const int EbWrapper::expVersionMax = (expVersionMin / (int)FwId::VERSION_MAJOR_MUL) * (int)FwId::VERSION_MAJOR_MUL
@@ -22,7 +23,7 @@ int EbWrapper::writeCycle(const vAdr& va, const vBuf& vb, const vBl& vcs) const 
   //eb_status_t status;
   //FIXME What about MTU? What about returned eb status ??
 
-  if (debug) sLog << "Starting Write Cycle" << std::endl;
+  if (debug) log<DEBUG_LVL3>(L"eb: Starting Write Cycle");
   Cycle cyc;
   eb_data_t veb[va.size()];
 
@@ -35,11 +36,10 @@ int EbWrapper::writeCycle(const vAdr& va, const vBuf& vb, const vBl& vcs) const 
     for(int i = 0; i < (va.end()-va.begin()); i++) {
     if (i && vcs.at(i)) {
       cyc.close();
-      if (debug) sLog << "Close and open next Write Cycle" << std::endl;
+      if (debug) log<DEBUG_LVL3>(L"eb: Close and open next Write Cycle");
       cyc.open(ebd);
     }
-
-    if (debug) sLog << " Writing @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << " : 0x" << std::hex << std::setfill('0') << std::setw(8) << veb[i] << std::endl;
+    if (debug) log<DEBUG_LVL3>(L"eb: Writing @ %1$#08x Val %2$#08x ") % va[i] % veb[i];
     cyc.write(va[i], EB_BIG_ENDIAN | EB_DATA32, veb[i]);
 
     }
@@ -66,7 +66,7 @@ vBuf EbWrapper::readCycle(const vAdr& va, const vBl& vcs) const {
   Cycle cyc;
   eb_data_t veb[va.size()];
   vBuf ret = vBuf(va.size() * 4);
-  if (debug) sLog << "Starting Read Cycle" << std::endl;
+  if (debug) log<DEBUG_LVL3>(L"eb: Starting Read Cycle");
   //sLog << "Got Adr Vec with " << va.size() << " Adrs" << std::endl;
 
   try {
@@ -75,10 +75,10 @@ vBuf EbWrapper::readCycle(const vAdr& va, const vBl& vcs) const {
     //FIXME dirty break into cycles
     if (i && vcs.at(i)) {
       cyc.close();
-      if (debug) sLog << "Close and open next Read Cycle" << std::endl;
+      if (debug) log<DEBUG_LVL3>(L"eb: Close and open next Read Cycle");
       cyc.open(ebd);
     }
-    if (debug) sLog << " Reading @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << std::endl;
+    if (debug) log<DEBUG_LVL3>(L"eb: Reading @ %1$#08x ") % va[i];
     cyc.read(va[i], EB_BIG_ENDIAN | EB_DATA32, (eb_data_t*)&veb[i]);
     }
     cyc.close();
@@ -173,7 +173,7 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
     vFoundVersion.clear();
     vFwIdROM.clear();
 
-    if(verbose) sLog << "Connecting to " << ebdevname << "... ";
+    log<VERBOSE>(L"eb: Connecting to %1% ...") % ebdevname.c_str();
    
     try {
       ebs.open(0, EB_DATAX|EB_ADDRX);

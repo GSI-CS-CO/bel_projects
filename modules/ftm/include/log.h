@@ -16,6 +16,7 @@ enum log_level_t {
     DEBUG_LVL0  = 6,
     DEBUG_LVL1  = 7,
     DEBUG_LVL2  = 8,
+    DEBUG_LVL3  = 9,
     DEBUG       = 8,
 };
 
