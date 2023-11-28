@@ -56,6 +56,7 @@ void init() {
         cRules.insert(ConstellationRule(n::sBlockAlign,  e::sQPrio[PRIO_HI],     {n::sQInfo},                          0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockAlign,  e::sQPrio[PRIO_LO],     {n::sQInfo},                          0, 1  ));
         cRules.insert(ConstellationRule(n::sQInfo,       e::sMeta,       {n::sQBuf},                                   MaxOccurrance::META, MaxOccurrance::META  ));
+        cRules.insert(ConstellationRule(n::sDstList,  e::sDstList,    {n::sDstList},                                   0, 1  ));
 
   }
 

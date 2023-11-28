@@ -108,16 +108,23 @@ using namespace DotStr::Misc;
 
 
 
-  void CarpeDM::CarpeDMimpl::generateDstLst(Graph& g, vertex_t v) {
-    const std::string name = g[v].name + dnm::sDstListSuffix;
-    hm.add(name);
+  void CarpeDM::CarpeDMimpl::generateDstLst(Graph& g, vertex_t v, unsigned multiDst) {
+    vertex_t vCur = v;
+    const std::string prefix = g[vCur].name;
+    unsigned loops = (Validation::MaxOccurrance::DST + DST_MAX -1) / DST_MAX;
+    for (unsigned i=0; i<loops;i++) {
+      const std::string name = prefix + dnm::sDstListSuffix + "_" + std::to_string(i);
+      log<DEBUG_LVL0>(L"generateDstLst: %1%/%2%. Generating %3% ") % i % loops % name.c_str(); 
+      hm.add(name);
+      vertex_t vD = boost::add_vertex(myVertex(name, g[vCur].cpu, hm.lookup(name), nullptr, dnt::sDstList, DotStr::Misc::sHexZero), g);
+      //FIXME add to grouptable
+      g[vD].patName = g[vCur].patName;
+      gt.setPattern(g[vD].name, g[vD].patName, false, false);
+      edge_t thisEdge = (boost::add_edge(vCur, vD, myEdge(det::sDstList), g)).first;
+      log<DEBUG_LVL0>(L"generateDstLst: Adding Edge from %1% to %2%") % g[source(thisEdge, g)].name.c_str() % g[target(thisEdge, g)].name.c_str();
+      vCur = vD;
+    }
 
-
-    vertex_t vD = boost::add_vertex(myVertex(name, g[v].cpu, hm.lookup(name), nullptr, dnt::sDstList, DotStr::Misc::sHexZero), g);
-    //FIXME add to grouptable
-    g[vD].patName = g[v].patName;
-    gt.setPattern(g[vD].name, g[vD].patName, false, false);
-    boost::add_edge(v,   vD, myEdge(det::sDstList), g);
   }
 
   void CarpeDM::CarpeDMimpl::generateQmeta(Graph& g, vertex_t v, int prio) {
@@ -134,16 +141,13 @@ using namespace DotStr::Misc;
     vertex_t vB0 = boost::add_vertex(myVertex(nameB0, g[v].cpu, hm.lookup(nameB0), nullptr, dnt::sQBuf,  DotStr::Misc::sHexZero), g);
     vertex_t vB1 = boost::add_vertex(myVertex(nameB1, g[v].cpu, hm.lookup(nameB1), nullptr, dnt::sQBuf,  DotStr::Misc::sHexZero), g);
 
-    //std::cout << g[vBl].name << " -1-> " << getNodePattern(g[vBl].name) << std::endl;
     g[vBl].patName = g[v].patName;
-    //gt.setBeamproc(nameBl, g[v].bpName, false, false);
     gt.setPattern(g[vBl].name, g[vBl].patName, false, false);
     g[vB0].patName = g[v].patName;
     gt.setPattern(g[vB0].name, g[vB0].patName, false, false);
     g[vB1].patName = g[v].patName;
     gt.setPattern(g[vB1].name, g[vB1].patName, false, false);
 
-    //std::cout << g[vBl].name << " -2-> " << getNodePattern(g[vBl].name) << std::endl;
     boost::add_edge(v,   vBl, myEdge(det::sQPrio[prio]), g);
     boost::add_edge(vBl, vB0, myEdge(det::sMeta),    g);
     boost::add_edge(vBl, vB1, myEdge(det::sMeta),    g);
@@ -166,12 +170,13 @@ using namespace DotStr::Misc;
         boost::tie(out_begin, out_end) = out_edges(v,g);
         //check if it already has queue links / Destination List
 
-        bool  genIl, genHi, genLo, hasIl, hasHi, hasLo, hasMultiDst, hasDstLst;
+        bool  genIl, genHi, genLo, hasIl, hasHi, hasLo, hasDstLst;
+        unsigned multiDst;
         try{
               genIl = s2u<bool>(g[v].qIl);  hasIl = false;
               genHi = s2u<bool>(g[v].qHi);  hasHi = false;
               genLo = s2u<bool>(g[v].qLo);  hasLo = false;
-              hasMultiDst = false; hasDstLst = false;
+              multiDst = 0; hasDstLst = false;
         } catch (std::runtime_error const& err) {
           throw std::runtime_error( "Parser error when processing node <" + g[v].name + ">. Cause: " + err.what());
         }
@@ -181,7 +186,7 @@ using namespace DotStr::Misc;
           if (g[*out_cur].type == det::sQPrio[PRIO_IL]) hasIl       = true;
           if (g[*out_cur].type == det::sQPrio[PRIO_HI]) hasHi       = true;
           if (g[*out_cur].type == det::sQPrio[PRIO_LO]) hasLo       = true;
-          if (g[*out_cur].type == det::sAltDst)         hasMultiDst = true;
+          if (g[*out_cur].type == det::sAltDst)         multiDst++;
           if (g[*out_cur].type == det::sDstList)        hasDstLst   = true;
         }
         //std::cout << "IL " << (int)genIl << hasIl << "HI " << (int)genHi << hasHi << "LO " << (int)genLo << hasLo << std::endl;
@@ -190,7 +195,7 @@ using namespace DotStr::Misc;
         if (genIl && !hasIl ) { generateQmeta(g, v, PRIO_IL); }
         if (genHi && !hasHi ) { generateQmeta(g, v, PRIO_HI); }
         if (genLo && !hasLo ) { generateQmeta(g, v, PRIO_LO); }
-        if( (hasMultiDst | genIl | hasIl | genHi | hasHi | genLo | hasLo) & !hasDstLst)    { generateDstLst(g, v); }
+        if( (multiDst || genIl || hasIl || genHi || hasHi || genLo || hasLo) & !hasDstLst)    { generateDstLst(g, v, multiDst); }
       }
     }
   }
