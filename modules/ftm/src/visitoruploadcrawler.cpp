@@ -435,7 +435,9 @@ mVal VisitorUploadCrawler::getListDst() const {
 
   // we need to iterate the ancestor backwards over the LL. Once were at the beginning, va will point to the original block.
   va = v;   //Set va to v (this node) to begin traversal. 
-  for(countHops = 1; countHops < (Validation::MaxOccurrance::DST + DST_MAX -1) / DST_MAX; ++countHops) { // there can be as many hops as dstList nodes needed to fit MaxOccurrance::DST
+  unsigned limit = (Validation::MaxOccurrance::DST + DST_MAX -1) / DST_MAX;
+  for(countHops = 1; countHops <= limit; ++countHops) { // there can be as many hops as dstList nodes needed to fit MaxOccurrance::DST
+    log<DEBUG_LVL0>(L"dstLL: crawling. counthops %1% limit %2%")  % countHops % limit;
     Graph::in_edge_iterator in_begin, in_end;
     boost::tie(in_begin, in_end) = in_edges(va,g);
     va = source(*in_begin,g); // Update va after each hop until va's node type equals block
@@ -448,8 +450,8 @@ mVal VisitorUploadCrawler::getListDst() const {
       break;
     }
   }
-  if (unknownAncestor) throw std::runtime_error(  exIntro + "DstList " + g[v].name + "is an orphan!\n");
-  log<DEBUG0>(L"dstLL: ancestor <%1%>/<%2%> <-- %3% --> <%4%>/<%5%>(thisnode) <-- 1 --> <%6%>/<%7%>")  % g[va].name.c_str() % g[va].type.c_str() % countHops % g[v].name.c_str() % g[v].type.c_str() % g[vp].name.c_str() % g[vp].type.c_str();
+  //if (unknownAncestor) throw std::runtime_error(  exIntro + "DstList " + g[v].name + "is an orphan!\n");
+  log<DEBUG_LVL0>(L"dstLL: ancestor <%1%>/<%2%> <-- %3% --> <%4%>/<%5%>(thisnode) <-- 1 --> <%6%>/<%7%>")  % g[va].name.c_str() % g[va].type.c_str() % countHops % g[v].name.c_str() % g[v].type.c_str() % g[vp].name.c_str() % g[vp].type.c_str();
   
   /*--- Get us the vector of all altDst nodes ---*/
   vertex_vec_t altVec = getChildrenByEdgeType(va, det::sAltDst); //get all known altdst nodes

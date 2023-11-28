@@ -99,8 +99,8 @@ typedef boost::multi_index_container<
 namespace MaxOccurrance {
   const unsigned META   = 2;
   const unsigned EVENT  = 1000;
-  const unsigned DST    = 10;
-  const unsigned DSTLL  = 10;
+  const unsigned DST    = 15;
+  const unsigned DSTLL  = 8;
   const unsigned REF    = 3;
 };
 
