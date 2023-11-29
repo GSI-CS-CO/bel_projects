@@ -400,58 +400,21 @@ mVal VisitorUploadCrawler::getFlushOvr() const {
 mVal VisitorUploadCrawler::getListDst() const {
   mVal ret;
   
-  /* To increase the number of altdst connected to a block beyond the capacity of a single dstLst,
-     the list of all altdst is to be split and stored into a linked list (LL) of dstList nodes.
-     Now the problem for dst LL - we dont have global knowlege, our perspective is local to THIS dstlist node,
-     which sits somewhere in the LL.
-     
-     We must gather the destination list of the original block and then find out which slice of that list must be
-     stored in THIS dstList node by finding THIS node's position in the LL. Then we insert the adresses
-     corresponding to nodes in the slice into THIS node's return address map.
-
-    defDst     altDst  altDst
-       A          A       A
-       |__ _______|_______|...
-          |
-          |          hops                   child  
-          |-------|-------|-------|            |
-        Block -> dstL -> dstL -> THIS_NODE -> dstL -x
-                           |                       |  
-                         parent                   end
- 
-  
-  things we can find out from the graph nodes and edges connected to THIS node
-   - parent/ancestor node type
-   - this node's position in the LL (number of hops until ancestor is the original block)
-   - altdst edges outgoing from original block
-   - defdst edge outgoing from original block
-   - edge outgoing from this node. if there is a child, this is the LL nextPtr, else it is the LL end
-  */
+  // scratch all that. We'll turn it around and create scores of destlists, all pointing to a block as their acnestor (or child? whats better, logically?)
+  // this means single pass/independent reconstroction of altdsts - each dstlst by its own. process all, and you get all the altdsts back.
 
   /*--- find origin block and parent node (can be the same). Count number of hops necessary to reach original block ---*/
-  vertex_t va, vp;// ancestor (the iterator) and parent
-  unsigned countHops;
-  bool unknownAncestor = true; // we better check if we successfully found the ancestor block
-
-  // we need to iterate the ancestor backwards over the LL. Once were at the beginning, va will point to the original block.
-  va = v;   //Set va to v (this node) to begin traversal. 
-  unsigned limit = (Validation::MaxOccurrance::DST + DST_MAX -1) / DST_MAX;
-  for(countHops = 1; countHops <= limit; ++countHops) { // there can be as many hops as dstList nodes needed to fit MaxOccurrance::DST
-    log<DEBUG_LVL0>(L"dstLL: crawling. counthops %1% limit %2%")  % countHops % limit;
-    Graph::in_edge_iterator in_begin, in_end;
-    boost::tie(in_begin, in_end) = in_edges(va,g);
-    va = source(*in_begin,g); // Update va after each hop until va's node type equals block
-    
-    if (countHops == 1) vp = va; // save first degree ancestor as parent.
-
-    if (g[va].np == nullptr) throw std::runtime_error( exIntro + "Node " + g[va].name + " of type " + g[va].type + " has not data object\n");
-    if (g[va].np->isBlock()) { // if the checked ancestor is a block, we're done.
-      unknownAncestor = false;
-      break;
-    }
-  }
-  //if (unknownAncestor) throw std::runtime_error(  exIntro + "DstList " + g[v].name + "is an orphan!\n");
-  log<DEBUG_LVL0>(L"dstLL: ancestor <%1%>/<%2%> <-- %3% --> <%4%>/<%5%>(thisnode) <-- 1 --> <%6%>/<%7%>")  % g[va].name.c_str() % g[va].type.c_str() % countHops % g[v].name.c_str() % g[v].type.c_str() % g[vp].name.c_str() % g[vp].type.c_str();
+  log<DEBUG_LVL0>(L"dstLst: Entering");
+  vertex_t va;
+ 
+  Graph::out_edge_iterator out_begin, out_end;
+  boost::tie(out_begin, out_end) = out_edges(v,g);
+  va = target(*out_begin,g);
+  if (g[va].np == nullptr) throw std::runtime_error( exIntro + "Node " + g[va].name + " of type " + g[va].type + " has not data object\n");
+  if (!g[va].np->isBlock()) { throw std::runtime_error(  exIntro + "DstList " + g[v].name + "is childless!\n");}
+  
+  
+  log<DEBUG_LVL0>(L"dstLst: childblock <%1%>/<%2%> <---- <%3%>/<%4%>(thisListnode)")  % g[va].name.c_str() % g[va].type.c_str() % g[v].name.c_str() % g[v].type.c_str();
   
   /*--- Get us the vector of all altDst nodes ---*/
   vertex_vec_t altVec = getChildrenByEdgeType(va, det::sAltDst); //get all known altdst nodes
@@ -465,21 +428,26 @@ mVal VisitorUploadCrawler::getListDst() const {
   }
 
   //find the slice of altVec for this dstLst node
-  unsigned slice_begin, slice_end;
-  slice_begin = (countHops-1) * DST_MAX;
-  slice_end   = std::min((unsigned)altVec.size(), slice_begin + DST_MAX); // handle the end of altVec / slice not being full
+  //we do it he lazy way and look at the numerical suffix of this node's name
 
+  //who am I? get the number from name suffix
+  log<DEBUG_LVL0>(L"dstLst: I was here 1");
+  unsigned idx = s2u<unsigned>(g[v].name.substr(g[v].name.find_last_not_of("0123456789") + 1));
+  log<DEBUG_LVL0>(L"dstLst: I was here 2");
+  unsigned slice_begin, slice_end;
+  slice_begin = idx * DST_MAX;
+  slice_end   = std::min((unsigned)altVec.size(), slice_begin + DST_MAX); // handle the end of altVec / slice not being full
+  log<DEBUG_LVL0>(L"dstLst: I was here 3");
   //insert into this node's adress map. Keys are word offsets 0..DST_MAX-1, values are altVec elements in this slice
   unsigned offs = DST_ARRAY; // offset for first slice element is zero
   for(unsigned i = slice_begin; i < slice_end; i++) {
     ret.insert({offs, getEdgeTargetAdr(v, altVec[i])});
     offs += _PTR_SIZE_;
   }
+  log<DEBUG_LVL0>(L"dstLst: yay, it worked");
+  //insert pointer to our parent block as this node's defdst (lazy, but it kinda is, even if the firmware does not traverse it)
+  ret.insert({(unsigned)DST_NXTPTR, getEdgeTargetAdr(v, va)});
 
-  //insert LL ptr to next dstLst node into adress map. inserts LM32_NULL_PTR if there is none.
-  ret.insert({(unsigned)DST_NXTPTR, getEdgeTargetAdr(v, getOnlyChildByEdgeType(v, det::sDstList))});
-  
-  
   return ret;
 
 }

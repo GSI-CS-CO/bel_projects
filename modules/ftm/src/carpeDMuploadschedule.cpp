@@ -109,20 +109,19 @@ using namespace DotStr::Misc;
 
 
   void CarpeDM::CarpeDMimpl::generateDstLst(Graph& g, vertex_t v, unsigned multiDst) {
-    vertex_t vCur = v;
-    const std::string prefix = g[vCur].name;
-    unsigned loops = (Validation::MaxOccurrance::DST + DST_MAX -1) / DST_MAX;
+    
+    const std::string prefix = g[v].name;
+    unsigned loops = (multiDst + 1 + DST_MAX -1) / DST_MAX; //add 1 to multidst. its the altdst count, but we need 1 more for a defdst.
     for (unsigned i=0; i<loops;i++) {
       const std::string name = prefix + dnm::sDstListSuffix + "_" + std::to_string(i);
-      log<DEBUG_LVL0>(L"generateDstLst: %1%/%2%. Generating %3% ") % i % loops % name.c_str(); 
+      log<DEBUG_LVL0>(L"generateDstLst: Accomodating %1% + 1 destinations. Loop %2%/%3%, generating %4% ") % multiDst % i % loops % name.c_str(); 
       hm.add(name);
-      vertex_t vD = boost::add_vertex(myVertex(name, g[vCur].cpu, hm.lookup(name), nullptr, dnt::sDstList, DotStr::Misc::sHexZero), g);
+      vertex_t vD = boost::add_vertex(myVertex(name, g[v].cpu, hm.lookup(name), nullptr, dnt::sDstList, DotStr::Misc::sHexZero), g);
       //FIXME add to grouptable
-      g[vD].patName = g[vCur].patName;
+      g[vD].patName = g[v].patName;
       gt.setPattern(g[vD].name, g[vD].patName, false, false);
-      edge_t thisEdge = (boost::add_edge(vCur, vD, myEdge(det::sDstList), g)).first;
-      log<DEBUG_LVL0>(L"generateDstLst: Adding Edge from %1% to %2%") % g[source(thisEdge, g)].name.c_str() % g[target(thisEdge, g)].name.c_str();
-      vCur = vD;
+      edge_t thisEdge = (boost::add_edge(vD, v, myEdge(det::sDefDst), g)).first;
+      log<DEBUG_LVL1>(L"generateDstLst: Adding Edge from %1% to %2%") % g[source(thisEdge, g)].name.c_str() % g[target(thisEdge, g)].name.c_str();
     }
 
   }
@@ -170,13 +169,13 @@ using namespace DotStr::Misc;
         boost::tie(out_begin, out_end) = out_edges(v,g);
         //check if it already has queue links / Destination List
 
-        bool  genIl, genHi, genLo, hasIl, hasHi, hasLo, hasDstLst;
-        unsigned multiDst;
+        bool  genIl, genHi, genLo;
+        bool  hasIl=false, hasHi=false, hasLo=false, hasDstLst=false;
+        unsigned multiDst=0;
         try{
-              genIl = s2u<bool>(g[v].qIl);  hasIl = false;
-              genHi = s2u<bool>(g[v].qHi);  hasHi = false;
-              genLo = s2u<bool>(g[v].qLo);  hasLo = false;
-              multiDst = 0; hasDstLst = false;
+              genIl = s2u<bool>(g[v].qIl);
+              genHi = s2u<bool>(g[v].qHi);
+              genLo = s2u<bool>(g[v].qLo);
         } catch (std::runtime_error const& err) {
           throw std::runtime_error( "Parser error when processing node <" + g[v].name + ">. Cause: " + err.what());
         }
@@ -189,13 +188,14 @@ using namespace DotStr::Misc;
           if (g[*out_cur].type == det::sAltDst)         multiDst++;
           if (g[*out_cur].type == det::sDstList)        hasDstLst   = true;
         }
-        //std::cout << "IL " << (int)genIl << hasIl << "HI " << (int)genHi << hasHi << "LO " << (int)genLo << hasLo << std::endl;
+        
 
         //create requested Queues / Destination List
         if (genIl && !hasIl ) { generateQmeta(g, v, PRIO_IL); }
         if (genHi && !hasHi ) { generateQmeta(g, v, PRIO_HI); }
         if (genLo && !hasLo ) { generateQmeta(g, v, PRIO_LO); }
-        if( (multiDst || genIl || hasIl || genHi || hasHi || genLo || hasLo) & !hasDstLst)    { generateDstLst(g, v, multiDst); }
+        //if(hasDstLst) { removeDstLst(g, v); }
+        if(multiDst || genIl || hasIl || genHi || hasHi || genLo || hasLo)    { generateDstLst(g, v, multiDst); }
       }
     }
   }
