@@ -45,18 +45,18 @@ void init() {
         cRules.insert(ConstellationRule(n::sCmdWait,     e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},  0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockFixed,  e::sDefDst,      cNonMeta, 0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockFixed,  e::sAltDst,      cNonMeta, 0, MaxOccurrance::DST ));
-        cRules.insert(ConstellationRule(n::sBlockFixed,  e::sDstList,    {n::sDstList},                                0, 1  ));
+        //cRules.insert(ConstellationRule(n::sBlockFixed,  e::sDstList,    {n::sDstList},                                0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockFixed,  e::sQPrio[PRIO_IL],     {n::sQInfo},                          0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockFixed,  e::sQPrio[PRIO_HI],     {n::sQInfo},                          0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockFixed,  e::sQPrio[PRIO_LO],     {n::sQInfo},                          0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockAlign,  e::sDefDst,      cNonMeta,  0, 1  ));
-        cRules.insert(ConstellationRule(n::sBlockAlign,  e::sAltDst,      cNonMeta,  0, MaxOccurrance::DST ));
-        cRules.insert(ConstellationRule(n::sBlockAlign,  e::sDstList,    {n::sDstList},                                0, 1  ));
+        //cRules.insert(ConstellationRule(n::sBlockAlign,  e::sAltDst,      cNonMeta,  0, MaxOccurrance::DST ));
+        //cRules.insert(ConstellationRule(n::sBlockAlign,  e::sDstList,    {n::sDstList},                                0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockAlign,  e::sQPrio[PRIO_IL],     {n::sQInfo},                          0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockAlign,  e::sQPrio[PRIO_HI],     {n::sQInfo},                          0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockAlign,  e::sQPrio[PRIO_LO],     {n::sQInfo},                          0, 1  ));
         cRules.insert(ConstellationRule(n::sQInfo,       e::sMeta,       {n::sQBuf},                                   MaxOccurrance::META, MaxOccurrance::META  ));
-        cRules.insert(ConstellationRule(n::sDstList,  e::sDstList,    {n::sDstList},                                   0, 1  ));
+        cRules.insert(ConstellationRule(n::sDstList,     e::sDefDst,      {n::sBlock, n::sBlockFixed, n::sBlockAlign},   1, 1  ));
 
   }
 
@@ -70,12 +70,12 @@ void init() {
     if (g[v].np == nullptr) throw std::runtime_error(exIntro + "' was found unallocated\n");
 
     boost::tie(out_begin, out_end) = out_edges(v,g);
-    if( (out_begin == out_end) && ( g[v].np->isEvent() || (g[v].type == n::sQInfo) )) { //found a childless node. Events and certain meta nodes cannot exist like this
+    if( (out_begin == out_end) && ( g[v].np->isEvent() || (g[v].type == n::sQInfo) || g[v].type == n::sDstList)) { //found a childless node. Events and certain meta nodes cannot exist like this
       throw std::runtime_error(exIntro + "' cannot be childless\n");
     }
 
     boost::tie(in_begin, in_end) = in_edges(v,g);
-    if( (in_begin == in_end) && g[v].np->isMeta() ) { //found an orphan node. meta nodes cannot exist like this
+    if( (in_begin == in_end) && g[v].np->isMeta() && (g[v].type != n::sDstList)) { //found an orphan node. most meta nodes cannot exist like this
       throw std::runtime_error(exIntro + "' cannot be an orphan\n");
     }
 

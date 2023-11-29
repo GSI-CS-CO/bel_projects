@@ -209,31 +209,35 @@ void VisitorDownloadCrawler::visit(const CmdQBuffer& el) const {
 
 void VisitorDownloadCrawler::visit(const DestList& el) const {
   vertex_t vPblock;
-  Graph::in_edge_iterator in_begin, in_end;
+  Graph::out_edge_iterator out_begin, out_end;
   uint32_t tmpAdr, defAdr;
 
-  //sLog << "Trying to find parent of " << g[v].name << std::endl;
-  boost::tie(in_begin, in_end) = in_edges(v,g);
-  if(in_begin != in_end) {
+  setDefDst();
 
+  //sLog << "Trying to find parent of " << g[v].name << std::endl;
+  boost::tie(out_begin, out_end) = out_edges(v,g);
+  if(out_begin != out_end) {
+    unsigned idx = s2u<unsigned>(g[v].name.substr(g[v].name.find_last_not_of("0123456789") + 1));
     //get the parent Block. there is only one, neighbourhood validation function made sure of this
-    vPblock = source(*in_begin,g);
+    vPblock = target(*out_begin,g);
+    log<DEBUG_LVL0>(L"Download dstLst: childblock <%1%>/<%2%> <---- <%3%>/<%4%>(thisListnode) at idx %5%")  % g[vPblock].name.c_str() % g[vPblock].type.c_str() % g[v].name.c_str() % g[v].type.c_str() % idx;
 
     //add all destination (including default destination (defDstPtr might have changed during runtime) connections from the dest list to the parent block
 
     bool defaultValid = false;
     std::string sType = det::sAltDst;
 
+    //find out if there alreay is a defdst from parentblock to somewhere else
+    //getting defdst from parent block for comparison
     defAdr = at.adrConv(AdrType::INT, AdrType::MGMT,cpu, writeBeBytesToLeNumber<uint32_t>((uint8_t*)(at.lookupVertex(vPblock))->b + NODE_DEF_DEST_PTR));
-
+    
+    //create edges from addresses
     for (ptrdiff_t offs = DST_ARRAY; offs < DST_ARRAY_END; offs += _32b_SIZE_) {
       tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT,cpu, writeBeBytesToLeNumber<uint32_t>(b + offs ));
+      if ((tmpAdr == defAdr) && (idx=0)) defaultValid=true;
 
-      //if tmpAdr it is the default address, change edge type to det::sDefDst (defdst)
-      if (tmpAdr == defAdr) { sType = det::sDefDst; defaultValid = true;}
-      else sType = det::sAltDst;
-
-      if (tmpAdr != LM32_NULL_PTR) {
+      //we draw altdst edges, but skip if the adr is the same as the defdst. we never draw a defdst, the block will do that. 
+      if ((tmpAdr != LM32_NULL_PTR) && (tmpAdr != defAdr)) {
         try {
           auto x = at.lookupAdr(cpu, tmpAdr);
           boost::add_edge(vPblock, x->v, (myEdge){sType}, g);
@@ -246,9 +250,10 @@ void VisitorDownloadCrawler::visit(const DestList& el) const {
         }
       }
     }
-    if (!defaultValid) { //default destination was not in alt dest list. that shouldnt happen ... draw it in
+    if (!defaultValid == (idx=0)) { //default destination was not in alt dest list. that shouldnt happen ... draw it in
       log<ERROR>(L"visitDestList: Adr %1$#x not in AltDestList. Someone set an arbitrary pointer for a DefDest, following this edge might crash the DM") % defAdr;
       if (defAdr != LM32_NULL_PTR) {
+        log<DEBUG_LVL0>(L"Download dstLst: defAdr %1$#x will be drawn in")  % defAdr;
         try {
           auto x = at.lookupAdr(cpu, defAdr);
           boost::add_edge(vPblock, x->v, (myEdge){det::sBadDefDst}, g);
@@ -258,7 +263,7 @@ void VisitorDownloadCrawler::visit(const DestList& el) const {
       }
     }
   } else {
-    throw std::runtime_error( exIntro + "Node " + g[v].name + " of type " + g[v].type + " must have a parent\n");
+    throw std::runtime_error( exIntro + "Node " + g[v].name + " of type " + g[v].type + " cannot be childless\n");
   }
 
 }
