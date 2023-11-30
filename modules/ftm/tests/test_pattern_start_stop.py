@@ -22,13 +22,23 @@ class TestStartPatternStopPattern(dm_testbench.DmTestbench):
     # Since the block in the pps pattern has a period of 1 second, the delay is 1 second.
     self.delay(1.0)
     lines[0] = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', '0x1', 'running'), [0], 1, 0)[0]
+    threadState = ''
     if self.threadQuantity > 8:
-      self.checkRunningThreads(lines, ['0xfffffffd', '0xfdffffff', '0xfffdffff', '0xfffffdff'])
+      threadState = self.checkRunningThreads(lines, ['0xfdffffff', '0xfffdffff', '0xfffffdff', '0xfffffffd'])
+      if threadState == '0xfdffffff':
+        thread = '25'
+      elif threadState == '0xfffdffff':
+        thread = '17'
+      elif threadState == '0xfffffdff':
+        thread = '9'
+      elif threadState == '0xfffffffd':
+        thread = '1'
     else:
       self.checkRunningThreads(lines, ['0xfd'])
+      thread = '1'
     self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, 'startpattern', 'Block0b'), [255], 1, 1)
     self.assertEqual(outputErr[0], "../bin/dm-cmd: Target 'Block0b' is not a pattern name.")
-    self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-t', '1', 'startpattern', 'PPS0b'), [0], 1, 0)
+    self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-t', thread, 'startpattern', 'PPS0b'), [0], 1, 0)
     # A delay is needed since the block has to be executed once to process the stop command.
     # Since the block in the pps pattern has a period of 1 second, the delay is 1 second.
     self.delay(1.0)
