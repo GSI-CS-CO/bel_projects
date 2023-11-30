@@ -16,7 +16,7 @@ class TestOriginTwoThreads(dm_testbench.DmTestbench):
     # start pattern B
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'B'), [0], 1, 0)
     # check that thread 1 is running
-    self.analyseDmCmdOutput(0x02)
+    self.analyseDmCmdOutput('01000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'[:self.cpuQuantity*self.threadQuantity])
 
   def test_twoThreads(self):
     """Thread 0
