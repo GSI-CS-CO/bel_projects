@@ -301,12 +301,14 @@ class DmTestbench(unittest.TestCase):
           else:
             self.assertTrue(item in listCounter.keys(), f'Key {item} not found, but expected.')
 
-  def analyseDmCmdOutput(self, threadsToCheck=0):
+  def analyseDmCmdOutput(self, threadsToCheck=''):
+    """Collect the message counts for all threads. Use dm-cmd to get the
+    status with the message counts.
+    """
     outputStdoutStderr = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster), [0])
     output = outputStdoutStderr[0]
     msgCounts = {}
-    # ~ firstCount = 0
-    threadsCheck = 0
+    threadsCheck = '0' * (self.threadQuantity * self.cpuQuantity)
     index = 0
     countLines = len(output)
     offset = 0
@@ -326,8 +328,8 @@ class DmTestbench(unittest.TestCase):
           count = int(line[32 + offset:42 + offset])
           msgCounts[str(10*cpu) + str(thread)] = str(count)
           if running == 'yes':
-            threadsCheck = threadsCheck + (1 << (8*cpu + thread))
-          # ~ print(f'threadsCheck: {threadsCheck:#X}, threadsToCheck: {threadsToCheck:#X}, running:{running} {cpu} {thread} "{line[8 + offset1:10 + offset1]}"')
+            threadsCheck = threadsCheck[:self.threadQuantity * cpu + thread] + '1' + threadsCheck[self.threadQuantity * cpu + thread + 1:]
+          # ~ print(f'threadsCheck: {threadsCheck}, threadsToCheck: {threadsToCheck}, running:{running} {cpu} {thread} "{line[8 + offset1:10 + offset1]}"')
         except ValueError:
           print(f'ValueError:{index} CPU {cpu} Thread {thread}  line: "{line}", "{line[3 + offset1]}", "{line[9 + offset1]}", "{line[32 + offset:42 + offset]}", offset={offset}, offset1={offset1}')
         if offset == 0:
@@ -338,11 +340,18 @@ class DmTestbench(unittest.TestCase):
           offset1 = 0
       index = index + 1
     self.assertEqual(countLines-13, len(msgCounts), f'Output has {countLines} lines, messages: {len(msgCounts)}')
-    if threadsToCheck > 0:
-      self.assertEqual(threadsCheck, threadsToCheck, f'threads running: {threadsCheck:#X}, expected: {threadsToCheck:#X}')
+    if threadsToCheck != '':
+      self.assertEqual(threadsCheck, threadsToCheck, f'threads running: {threadsCheck}, expected: {threadsToCheck}')
     return msgCounts
 
   def checkRunningThreadsCmd(self, messageInterval=1.0):
+    """Check that threads are running by comparison of message counts.
+    Assumption: there is at least one timing message for this thread in
+    messageIntervall (default 1.0 second).
+    dm-cmd runs twice and the message counts for the second run must be
+    greater than the first message counts. In addition the first
+    message counts should be grater than 0.
+    """
     firstCounts = self.analyseDmCmdOutput()
     self.delay(messageInterval)
     secondCounts = self.analyseDmCmdOutput()
@@ -355,33 +364,30 @@ class DmTestbench(unittest.TestCase):
       self.assertGreater(secondCount, firstCount, f'CPU {cpu} Thread {thread} First: {firstCount}, second: {secondCount}')
       self.assertGreater(firstCount, 0, f'CPU {cpu} Thread {thread} firstCount is {firstCount}')
 
-  match = 'Qty: '
-  lengthQ = len(match)
-
-  """Get the quantity of command executions from the output line of 'dm-cmd <datamaster> queue -v <block name>'.
-  Search for 'Qty: ' in the line and parse the number.
-  """
   def getQuantity(self, line):
-    pos = line.find(self.match)
-    pos1 = line.find(' ', pos + self.lengthQ)
+    """Get the quantity of command executions from the output line of 'dm-cmd <datamaster> queue -v <block name>'.
+    Search for 'Qty: ' in the line and parse the number.
+    """
+    pos = line.find('Qty: ')
+    pos1 = line.find(' ', pos + len('Qty: '))
     quantity = 0
     if pos > -1 and pos1 > pos:
-      quantity = int(line[pos + self.lengthQ:pos1])
+      quantity = int(line[pos + len('Qty: '):pos1])
     return quantity
 
-  """ Check that a flush command is executed and the defined queues are flushed.
-  queuesToFlush: binary value between 0 and 7 for the queues to flush.
-  blockName: name of the block with the queues to check.
-  flushPrio: priority of the flush command. Defines the queue where to look for the flush command.
-  Priority queues higher than the flushPrio are not affected by the flush command since these
-  queues are empty when a flush command with lower priority is executed. Therefore queuesToFlush is changed for
-  flushprio = 0, 1.
-  The check for the executed flush command and the checks for the flushed queues are independant. All checks
-  are done in one parse run of the output of 'dm-cmd <datamaster> -v queue <blockName>'. Flags and counters
-  are used to signal the section inside the output.
-  checkFlush = False means: check that no flush is executed.
-  """
   def check_queue_flushed(self, queuesToFlush, blockName, flushPrio, checkFlush=True):
+    """ Check that a flush command is executed and the defined queues are flushed.
+    queuesToFlush: binary value between 0 and 7 for the queues to flush.
+    blockName: name of the block with the queues to check.
+    flushPrio: priority of the flush command. Defines the queue where to look for the flush command.
+    Priority queues higher than the flushPrio are not affected by the flush command since these
+    queues are empty when a flush command with lower priority is executed. Therefore queuesToFlush is changed for
+    flushprio = 0, 1.
+    The check for the executed flush command and the checks for the flushed queues are independant. All checks
+    are done in one parse run of the output of 'dm-cmd <datamaster> -v queue <blockName>'. Flags and counters
+    are used to signal the section inside the output.
+    checkFlush = False means: check that no flush is executed.
+    """
     output = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-v', 'queue', blockName), [0], 38)
     checkQueue0 = False
     check0 = False
@@ -480,17 +486,15 @@ class DmTestbench(unittest.TestCase):
     """
     self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', f'{cpu}', '-t', f'{thread}', command), [0], 1, 0)
 
-  def prepareRunThreads(self):
-    """Check that no thread runs on 4 CPUs. Load 4 schedules, one for
-    each CPU and start all threads. Check that these are running.
+  def prepareRunThreads(self, cpus=15):
+    """Check that no thread runs on the CPUs given by 'cpu' (bit mask).
+    Load schedules into DM, one for each CPU and start all threads.
+    Check that these are running.
     """
-    # small delay after init of datamaster
-    # ~ self.delay(0.2)
+    cpuList = self.listFromBits(cpus, self.cpuQuantity)
     # Add schedules for all CPUs and start pattern on all threads.
-    self.addSchedule('pps-all-threads-cpu0.dot')
-    self.addSchedule('pps-all-threads-cpu1.dot')
-    self.addSchedule('pps-all-threads-cpu2.dot')
-    self.addSchedule('pps-all-threads-cpu3.dot')
+    for cpu in cpuList:
+      self.addSchedule(f'pps-all-threads-cpu{cpu}.dot')
     # Check all CPUs that no thread is running.
     lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', '0xf', 'running'), [0], self.cpuQuantity, 0)
     # ~ self.printStdOutStdErr(lines)
@@ -498,18 +502,13 @@ class DmTestbench(unittest.TestCase):
       expectedText = 'CPU {variable} Running Threads: 0x0'.format(variable=i)
       self.assertEqual(lines[0][i], expectedText, 'wrong output, expected: ' + expectedText)
     # Start pattern for all CPUs and all threads
-    index = 0
     threadList = [('a', '0'), ('b', '1'), ('c', '2'), ('d', '3'), ('e', '4'), ('f', '5'), ('g', '6'), ('h', '7'),
                   ('a', '8'), ('b', '9'), ('c', '10'), ('d', '11'), ('e', '12'), ('f', '13'), ('g', '14'), ('h', '15'),
                   ('a', '16'), ('b', '17'), ('c', '18'), ('d', '19'), ('e', '20'), ('f', '21'), ('g', '22'), ('h', '23'),
                   ('a', '24'), ('b', '25'), ('c', '26'), ('d', '27'), ('e', '28'), ('f', '29'), ('g', '30'), ('h', '31')]
-    for x, y in threadList:
-      if index < self.threadQuantity:
-        self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'PPS0' + x, '-t', y), [0])
-        self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'PPS1' + x, '-t', y), [0])
-        self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'PPS2' + x, '-t', y), [0])
-        self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'PPS3' + x, '-t', y), [0])
-        index = index + 1
+    for x, y in threadList[0:self.threadQuantity]:
+      for cpu in cpuList:
+        self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', f'PPS{cpu}' + x, '-t', y), [0])
     self.checkRunningThreadsCmd()
     # Check all CPUs that all threads are running.
     lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', '0xf', 'running'), [0], self.cpuQuantity, 0)
@@ -521,8 +520,12 @@ class DmTestbench(unittest.TestCase):
     else:
       self.assertFalse(True, f'threadQuantity is {self.threadQuantity}, allowed: 8 or 32')
     for i in range(self.cpuQuantity):
-      expectedText = 'CPU {variable} Running Threads: {mask}'.format(variable=i, mask=threadMask)
-      self.assertEqual(lines[0][i], expectedText, 'wrong output, expected: ' + expectedText)
+      if i in cpuList:
+        expectedText = 'CPU {variable} Running Threads: {mask}'.format(variable=i, mask=threadMask)
+        self.assertEqual(lines[0][i], expectedText, 'wrong output, expected: ' + expectedText)
+      else:
+        expectedText = 'CPU {variable} Running Threads: {mask}'.format(variable=i, mask='0x0')
+        self.assertEqual(lines[0][i], expectedText, 'wrong output, expected: ' + expectedText)
 
   def deleteFile(self, fileName):
     """Delete file <fileName>.
@@ -591,3 +594,20 @@ class DmTestbench(unittest.TestCase):
     testName = os.environ['PYTEST_CURRENT_TEST']
     with open(fileName, 'a') as file1:
       file1.write(testName + ': ' + text + '\n')
+
+  def checkRunningThreads(self, lines, masks):
+    """Check the hex numbers describing the running threads.
+    Since in some cases it is not determined which thread is used for a
+    command, we have to check the lines against multiple masks.
+    :param lines is a list of lines, describes the running threads.
+    :param masks is a list (not a set!) of hex numbers as strings.
+    Each number describes an allowed pattern of running threads.
+    """
+    remainingMasks = masks.copy()
+    for line in lines:
+      pos = line.find('0x')
+      if (pos != -1):
+        threadState = line[pos:]
+        self.assertTrue(threadState in remainingMasks, f'Wrong running state. {threadState} not in {remainingMasks}, line {lines.index(line)}.')
+        remainingMasks.remove(threadState)
+    # ~ self.assertEqual(0, len(remainingMasks),f'Remaining masks: {remainingMasks}')
