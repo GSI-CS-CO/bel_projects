@@ -47,7 +47,7 @@ class UnitTestBoosterStartThread(dm_testbench.DmTestbench):
     self.snoopToCsv(file_name, duration=1)
     column_EVTNO = 8
     self.analyseFrequencyFromCsv(file_name, column_EVTNO, checkValues={'0x0001': '>9'})
-    self.analyseDmCmdOutput(0xFF)
+    self.analyseDmCmdOutput('11111111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'[:self.cpuQuantity*self.threadQuantity])
     self.deleteFile(file_name)
 
   def test_booster_thread_0_loop(self):
