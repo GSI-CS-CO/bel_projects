@@ -903,39 +903,25 @@ int main(int argc, char* argv[]) {
     } else if (cmp == dnt::sCmdStart)  {
       //check if a valid origin was assigned before executing
       std::string origin;
+      uint32_t bits;
       if ((!targetName.empty())) {
-        uint32_t bits = std::stol(targetName, nullptr, 0);
-        for (int cpu = 0; cpu < cdm.getCpuQty(); cpu++) {
-          if ((cpuBits >> cpu) & 1) {
-            for (int i=0; i < cdm.getThrQty(); i++) {
-              if ((bits >> i) & 1) {
-                origin = cdm.getThrOrigin(cpu, i);
-                if ((origin == DotStr::Node::Special::sIdle) || (origin == DotStr::Misc::sUndefined)) {
-                  std::cerr << program << ": Cannot start, origin of CPU " << cpu << "'s thread " << i << " is not a valid node" << std::endl;
-                  return -1;
-                }
-              }
-            }
-            cdm.setThrStart(ew, cpu, bits & ((1ll<<cdm.getThrQty())-1));
-          }
-        }
-
+        bits = std::stol(targetName, nullptr, 0);
       } else {
-        for (int cpu = 0; cpu < cdm.getCpuQty(); cpu++) {
-          if ((cpuBits >> cpu) & 1) {
-            for (int thread=0; thread < cdm.getThrQty(); thread++) {
-              if ((threadBits >> thread) & 1) {
-                origin = cdm.getThrOrigin(cpu, thread);
-                if ((origin == DotStr::Node::Special::sIdle) || (origin == DotStr::Misc::sUndefined)) {
-                  std::cerr << program << ": Cannot start, origin of CPU " << cpu << "'s thread " << thread << " is not a valid node" << std::endl;
-                  return -1;
-                }
-                cdm.startThr(cpu, thread);
+        bits = threadBits;
+      }
+      for (int cpu = 0; cpu < cdm.getCpuQty(); cpu++) {
+        if ((cpuBits >> cpu) & 1) {
+          for (int i=0; i < cdm.getThrQty(); i++) {
+            if ((bits >> i) & 1) {
+              origin = cdm.getThrOrigin(cpu, i);
+              if ((origin == DotStr::Node::Special::sIdle) || (origin == DotStr::Misc::sUndefined)) {
+                std::cerr << program << ": Cannot start, origin of CPU " << cpu << "'s thread " << i << " is not a valid node" << std::endl;
+                return -1;
               }
             }
           }
+          cdm.setThrStart(ew, cpu, bits & ((1ll<<cdm.getThrQty())-1));
         }
-        return 0;
       }
       // no return here, next action: send commands with ew vector.
     } else if (cmp == dnt::sCmdStop) {
@@ -964,18 +950,39 @@ int main(int argc, char* argv[]) {
       if (!targetName.empty()) {
         for (int thread=0; thread < cdm.getThrQty(); thread++) {
           if ((threadBits >> thread) & 1) {
-            cdm.startPattern(ew, targetName, thread);
+            try {
+              cdm.startPattern(ew, targetName, thread);
+            } catch (std::runtime_error const& err) {
+              std::size_t pos = std::string(err.what()).find("HashTable: Name undefined not found");
+              if (pos != std::string::npos) {
+                std::cerr << program << ": Target '" << targetName << "' is not a pattern name." << std::endl;
+              } else {
+                std::cerr << program << ": " << err.what() << "." << std::endl;
+              }
+              return -1;
+            }
             //~ std::cout << "Pattern '" << targetName << "' started on thread " << thread << "." << std::endl;
             break;
           }
         }
       } else {
         std::cout << "Missing valid pattern name" << std::endl;
+        return -1;
       }
       // no return here, next action: send commands with ew vector.
     } else if (cmp == "stoppattern")  {
       if (!targetName.empty()) {
-        cdm.stopPattern(targetName);
+        try {
+          cdm.stopPattern(targetName);
+        } catch (std::runtime_error const& err) {
+          std::size_t pos = std::string(err.what()).find("getBaseAdr: unknown target  HashTable: Name undefined not found");
+          if (pos != std::string::npos) {
+            std::cerr << program << ": Target '" << targetName << "' is not a pattern name." << std::endl;
+          } else {
+            std::cerr << program << ": " << err.what() << "." << std::endl;
+          }
+          return -1;
+        }
       } else {
         std::cout << "Missing valid pattern name" << std::endl;
       }
