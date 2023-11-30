@@ -18,24 +18,24 @@ class TestOriginStartthread(dm_testbench.DmTestbench):
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'A'), [0], 1, 0)
     # check that thread 0 has 1 message, threads 1,2,3 are running
     # TODO check messages
-    self.analyseDmCmdOutput(0x0E)
+    self.analyseDmCmdOutput('01110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'[:self.cpuQuantity*self.threadQuantity])
     # start pattern B
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'B'), [0], 1, 0)
     # check that thread 0 has 2 messages, threads 1,2,3 are running
     # TODO check messages
-    self.analyseDmCmdOutput(0x0E)
+    self.analyseDmCmdOutput('01110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'[:self.cpuQuantity*self.threadQuantity])
     # stop pattern A1
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'stoppattern', 'A1'), [0], 0, 0)
     # check that thread 1 has stopped
-    self.analyseDmCmdOutput(0x0C)
+    self.analyseDmCmdOutput('00110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'[:self.cpuQuantity*self.threadQuantity])
     # stop pattern A
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'stoppattern', 'A'), [0], 0, 0)
     # check that thread 3 has stopped
-    self.analyseDmCmdOutput(0x04)
+    self.analyseDmCmdOutput('00100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'[:self.cpuQuantity*self.threadQuantity])
     # stop block2
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'stop', 'Block2'), [0], 0, 0)
     # check that thread 2 has stopped
-    self.analyseDmCmdOutput(0x00)
+    self.analyseDmCmdOutput('00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'[:self.cpuQuantity*self.threadQuantity])
 
 
   def test_threadsStartStop(self):
@@ -71,7 +71,7 @@ class TestOriginStartthread(dm_testbench.DmTestbench):
     self.deleteFile(fileName)
 
   def test_startStopAllThreads(self):
-    """Run a pps pattern on all threads and all CPUs. Check this state.
+    """Run a pps pattern on all threads and all CPUs. Halt all threads and check this state.
     Then start four threads 0,1,2,3 on all CPUs and check.
     For more than 8 threads:
     Then start four threads 8,9,10,11 on all CPUs and check.
@@ -88,7 +88,7 @@ class TestOriginStartthread(dm_testbench.DmTestbench):
       expectedText = 'CPU {variable} Running Threads: 0x0'.format(variable=cpu)
       self.assertEqual(lines[cpu], expectedText, '0 wrong output, expected: ' + expectedText)
     # Start some threads on all CPUs: 0xf.
-    lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', '0xf', '-t', '0xf', 'start'), [0], 0, 0)
+    self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', '0xf', '-t', '0xf', 'start'), [0], 0, 0)
     # Check all CPUs that threads 0,1,2,3 are running.
     lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', '0xf', 'running'), [0], self.cpuQuantity, 0)
     for cpu in range(self.cpuQuantity):
@@ -96,23 +96,53 @@ class TestOriginStartthread(dm_testbench.DmTestbench):
       self.assertEqual(lines[cpu], expectedText, '1 wrong output, expected: ' + expectedText)
     if self.threadQuantity > 8:
       # Start some threads on all CPUs: 0xf00.
-      lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', '0xf', '-t', '0xf00', 'start'), [0], 0, 0)
+      self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', '0xf', '-t', '0xf00', 'start'), [0], 0, 0)
       # Check all CPUs that threads 0,1,2,3, 8,9,10,11 are running.
       lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', '0xf', 'running'), [0], self.cpuQuantity, 0)
       for cpu in range(self.cpuQuantity):
         expectedText = 'CPU {variable} Running Threads: 0xf0f'.format(variable=cpu)
         self.assertEqual(lines[cpu], expectedText, '2 wrong output, expected: ' + expectedText)
       # Start some threads on all CPUs: 0xf0000.
-      lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', '0xf', '-t', '0xf0000', 'start'), [0], 0, 0)
+      self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', '0xf', '-t', '0xf0000', 'start'), [0], 0, 0)
       # Check all CPUs that threads 0,1,2,3, 8,9,10,11, 16,17,18,19 are running.
       lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', '0xf', 'running'), [0], self.cpuQuantity, 0)
       for cpu in range(self.cpuQuantity):
         expectedText = 'CPU {variable} Running Threads: 0xf0f0f'.format(variable=cpu)
         self.assertEqual(lines[cpu], expectedText, '3 wrong output, expected: ' + expectedText)
       # Start some threads on all CPUs: 0xf000000.
-      lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', '0xf', '-t', '0xf000000', 'start'), [0], 0, 0)
+      self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', '0xf', '-t', '0xf000000', 'start'), [0], 0, 0)
       # Check all CPUs that threads 0,1,2,3, 8,9,10,11, 16,17,18,19, 24,25,26,27 are running.
       lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', '0xf', 'running'), [0], self.cpuQuantity, 0)
       for cpu in range(self.cpuQuantity):
         expectedText = 'CPU {variable} Running Threads: 0xf0f0f0f'.format(variable=cpu)
         self.assertEqual(lines[cpu], expectedText, '4 wrong output, expected: ' + expectedText)
+
+  def test_startStopBlocks(self):
+    """Run a pps pattern on all threads of CPU 0.
+    Stop block Block0b four times and check the result.
+    """
+    # Start pps pattern on all threads of CPU 0.
+    self.prepareRunThreads(cpus=1);
+    lines = ['']
+    # Stop one of threads 1, 9, 17, 25. The firmware scheduler decides which thread is choosen.
+    self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, 'stop', 'Block0b'), [0], 0, 0)
+    # A delay is needed since the block has to be executed once to process the stop command.
+    # Since the block in the pps pattern has a period of 1 second, the delay is 1 second.
+    self.delay(1.0)
+    lines[0] = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', '0x1', 'running'), [0], 1, 0)[0]
+    if self.threadQuantity > 8:
+      self.checkRunningThreads(lines, ['0xfffffffd', '0xfdffffff', '0xfffdffff', '0xfffffdff'])
+      self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, 'stop', 'Block0b'), [0], 0, 0)
+      self.delay(1.0)
+      lines[0] = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', '0x1', 'running'), [0], 1, 0)[0]
+      self.checkRunningThreads(lines, ['0xfffffdfd', '0xfffdfffd', '0xfdfffffd', '0xfffdfdff', '0xfdfffdff', '0xfdfdffff'])
+      self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, 'stop', 'Block0b'), [0], 0, 0)
+      self.delay(1.0)
+      lines[0] = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', '0x1', 'running'), [0], 1, 0)[0]
+      self.checkRunningThreads(lines, ['0xfffdfdfd', '0xfdfffdfd', '0xfdfdfffd', '0xfdfdfdff'])
+      self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, 'stop', 'Block0b'), [0], 0, 0)
+      self.delay(1.0)
+      lines[0] =self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', '0x1', 'running'), [0], 1, 0)[0]
+      self.checkRunningThreads(lines, ['0xfdfdfdfd'])
+    else:
+      self.checkRunningThreads(lines, ['0xfd'])
