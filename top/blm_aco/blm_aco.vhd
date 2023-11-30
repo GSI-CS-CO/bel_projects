@@ -158,9 +158,9 @@ architecture blm_aco_arch_for_Beam_Loss_Mon of blm_aco is
     CONSTANT c_Status_READBACK_Base_Addr:        Integer := 16#0670#;  -- IO-Backplane Output Readback Register: 24 x 16 bit registers --> +18h 
     CONSTANT c_DIOB_DAQ_Base_Addr:               Integer := 16#2000#;  -- DAQ Base Address
     CONSTANT c_BLM_thres_Base_Addr:              Integer := 16#0700#;  -- BLM threshold for the counter pool: 512 16 bit registers--> + 200h
-    CONSTANT c_BLM_in_sel_Base_Addr:             Integer := 16#0900#;   --BLM input mux select registers :      128 16 bit registers -->80h
-    CONSTANT c_BLM_out_sel_Base_Addr:            Integer := 16#0980#;   --BLM output mux select registers :      130 16 bit registers -->82h 
-    CONSTANT c_BLM_ctrl_Base_Addr:               Integer := 16#1000#;   --BLM control registers: 15 x 16 bit registers
+    CONSTANT c_BLM_in_sel_Base_Addr:             Integer := 16#1000#;   --BLM input mux select registers :      128 16 bit registers -->80h
+    CONSTANT c_BLM_out_sel_Base_Addr:            Integer := 16#1100#;   --BLM output mux select registers :      130 16 bit registers -->82h 
+    CONSTANT c_BLM_ctrl_Base_Addr:               Integer := 16#1200#;   --BLM control registers: 15 x 16 bit registers
     
 
 --  +============================================================================================================================+
@@ -2037,7 +2037,7 @@ else
  ------------------------------------------------------
 -----Dtack_to_SCUB for out_sel registers
  
-if (BLM_out_sel_Dtack =ZERO_status_sel) then BLM_out_sel_res_Dtack <='0';
+if (BLM_out_sel_Dtack =ZERO_out_sel) then BLM_out_sel_res_Dtack <='0';
 else BLM_out_sel_res_Dtack <='1';
 end if;
    
