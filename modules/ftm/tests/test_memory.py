@@ -40,12 +40,12 @@ class UnitTestMemory(dm_testbench.DmTestbench):
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         self.schedules_folder + 'groups_1_nonDefaultPatterns_9_blocksPerPattern_10_cpu3.dot'), [250])
 
-"""Class tests the memory limit for CPU 0.
+"""Class tests the memory limit for CPU 0 and for all 4 CPUs.
 
 Structure of test:
-Generate a schedule with n blocks. Add this to DM. Result schould be
-0 for n <= maxNodesThread8 and 250 otherwise (for 8 threads). For 32 threads
-the limit is maxNodesThread32.
+Generate a schedule with n blocks. Add this to DM with dm-sched. Result
+schould be 0 if schedule fits into memory and 250 otherwise. The limits
+are defined in setUp method.
 """
 class UnitTestMemoryFull(dm_testbench.DmTestbench):
 
