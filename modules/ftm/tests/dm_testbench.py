@@ -595,7 +595,7 @@ class DmTestbench(unittest.TestCase):
     with open(fileName, 'a') as file1:
       file1.write(testName + ': ' + text + '\n')
 
-  def checkRunningThreads(self, lines, masks):
+  def checkRunningThreads(self, lines, masks) -> str:
     """Check the hex numbers describing the running threads.
     Since in some cases it is not determined which thread is used for a
     command, we have to check the lines against multiple masks.
@@ -604,6 +604,7 @@ class DmTestbench(unittest.TestCase):
     Each number describes an allowed pattern of running threads.
     """
     remainingMasks = masks.copy()
+    threadState = ''
     for line in lines:
       pos = line.find('0x')
       if (pos != -1):
@@ -611,3 +612,4 @@ class DmTestbench(unittest.TestCase):
         self.assertTrue(threadState in remainingMasks, f'Wrong running state. {threadState} not in {remainingMasks}, line {lines.index(line)}.')
         remainingMasks.remove(threadState)
     # ~ self.assertEqual(0, len(remainingMasks),f'Remaining masks: {remainingMasks}')
+    return threadState
