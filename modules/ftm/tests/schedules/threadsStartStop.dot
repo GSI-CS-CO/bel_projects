@@ -5,16 +5,16 @@ digraph threadsStartStop {
 // Stop pattern A which stops thread 3
 // Stop node Block2 which stops thread 2 (there is no pattern on this thread)
 
-node [cpu=0 fid=1 toffs=0]
+node [cpu=0 fid=1 toffs=0 style=filled fillcolor=white color=black]
 edge [type=defdst]
 
 Tmsg0 [type=tmsg par=0 pattern=A patentry=1]
 // offset 1ms
-Tmsg1 [type=tmsg par=1 toffs=1000000 pattern=A1 patentry=1]
+Tmsg1 [type=tmsg par=1 pattern=A1 toffs=1000000 patentry=1]
 // offset 2ms
-Tmsg2 [type=tmsg par=2 toffs=2000000]
+Tmsg2 [type=tmsg par=2 pattern=C toffs=2000000]
 // offset 3ms
-Tmsg3 [type=tmsg par=3 toffs=3000000 pattern=A]
+Tmsg3 [type=tmsg par=3 pattern=A toffs=3000000]
 Tmsg4 [type=tmsg par=4 pattern=B patentry=1]
 
 Origin1 [type=origin thread=1]
@@ -25,7 +25,7 @@ Origin3 [type=origin thread=3]
 // most blocks have a low prio queue to enable stop command.
 Block0 [type=block tperiod=10000000 pattern=A]
 Block1 [type=block tperiod=10000000 pattern=A1 patexit=1 qlo=1]
-Block2 [type=block tperiod=10000000 patexit=1 qlo=1]
+Block2 [type=block tperiod=10000000 pattern=C patexit=1 qlo=1]
 Block3 [type=block tperiod=10000000 pattern=A patexit=1 qlo=1]
 Block4 [type=block tperiod=10000000 pattern=B patexit=1 qlo=1]
 
