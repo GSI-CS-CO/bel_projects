@@ -11,10 +11,16 @@
 #include "aux_boost.h"
 #include "dotstr.h"
 
+
 using namespace DotStr::Misc;
+namespace dnt = DotStr::Node::TypeVal;
 
 
 class Node;
+
+class HashMap;
+class AllocTable;
+class GroupTable;
 
 class  myVertex {
 public:
@@ -35,7 +41,7 @@ public:
   std::string bpEntry   = sZero;
   std::string bpExit    = sZero;
 
-  //FIXME
+  //TODO
   //now follows a list of all possible properties graphviz_read can assign, to copy to concrete Node objects later
   //dirty business. this will have to go in the future
   // Option 1 (easy and clean, still needs ALL possible properties to be present in myVertex):
@@ -172,6 +178,12 @@ Graph& mycopy_graph(const T& original, Graph& cpy, vertex_map_t& vmap) {
   //std::cout << "ENDING SUPER SIMPLY COPY" << std::endl;
   return cpy;
 }
+
+
+
+Graph& updown_copy_graph(const Graph& original, Graph& cpy, vertex_map_t& vmap, AllocTable &at, HashMap &hm, GroupTable &gt);
+
+
 
 
 /*

@@ -188,13 +188,13 @@ using namespace DotStr::Misc;
           if (g[*out_cur].type == det::sAltDst)         multiDst++;
           if (g[*out_cur].type == det::sDstList)        hasDstLst   = true;
         }
-        
+        log<DEBUG_LVL1>(L"generateBlockMeta: Checking Block %1%. MultiDst=%2% hasDstLst=%3%") % g[v].name.c_str() % multiDst % hasDstLst;
 
         //create requested Queues / Destination List
         if (genIl && !hasIl ) { generateQmeta(g, v, PRIO_IL); }
         if (genHi && !hasHi ) { generateQmeta(g, v, PRIO_HI); }
         if (genLo && !hasLo ) { generateQmeta(g, v, PRIO_LO); }
-        //if(hasDstLst) { removeDstLst(g, v); }
+
         if(multiDst || genIl || hasIl || genHi || hasHi || genLo || hasLo)    { generateDstLst(g, v, multiDst); }
       }
     }
@@ -451,14 +451,15 @@ using namespace DotStr::Misc;
     // for some reason, copy_graph does not copy the name
     //boost::set_property(gTmp, boost::graph_name, boost::get_property(g, boost::graph_name));
     vertex_map_t vmap;
-    mycopy_graph<Graph>(gDown, gUp, vmap);
+    updown_copy_graph(gDown, gUp, vmap, atUp, hm, gt);
+    //mycopy_graph<Graph>(gDown, gUp, vmap);
   }
 
   void CarpeDM::CarpeDMimpl::addition(Graph& gTmp) {
 
     vertex_map_t vertexMap, duplicates;
     log<VERBOSE>(L"addition: Generating Metadata");
-    generateBlockMeta(gTmp); //auto generate desired Block Meta Nodes
+    
 
     //find and list all duplicates i.e. docking points between trees and Update hash dict
     BOOST_FOREACH( vertex_t w, vertices(gTmp) ) {
@@ -493,6 +494,7 @@ using namespace DotStr::Misc;
       //remove_vertex() changes the vertex vector, as it must stay contignuous. descriptors higher than he removed one therefore need to be decremented by 1
       for( auto& updateMapIt : vertexMap) {if (updateMapIt.first > itDup.second) updateMapIt.second--; }
     }
+    generateBlockMeta(gUp); //auto generate desired Block Meta Nodes
 
     //FIXME this also adds/changes the known nodes based on the download. Do we really want that?
     //add whats left to groups dict
@@ -603,7 +605,7 @@ using namespace DotStr::Misc;
     for( auto itIt : itAtVec ) {  //now we can safely iterate over the alloctable iterators
       atUp.modV(itIt, vertexMap[itIt->v]);
     }
-
+    generateBlockMeta(gUp); //auto generate desired Block Meta Nodes
     prepareUpload();
     atUp.syncBmpsToPools();
     log<INFO>(L"subtraction: Done");
