@@ -30,5 +30,14 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
   def test_aScheduleFlow1(self):
     self.addDownloadCompareSchedule('testSingleEdge-flow-tmsg-defdst.dot')
 
+  def test_aScheduleFlowBlockDefdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-flow-block-defdst.dot')
+
+  # ~ def test_aScheduleFlowBlockFlowdst(self):
+    # ~ self.addDownloadCompareSchedule('testSingleEdge-flow-block-flowdst.dot')
+
+  def test_aScheduleFlowBlockTarget(self):
+    self.addDownloadCompareSchedule('testSingleEdge-flow-block-target.dot')
+
   def test_aScheduleFlush1(self):
     self.addDownloadCompareSchedule('testSingleEdge-flush-tmsg-defdst.dot')
