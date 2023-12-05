@@ -20,15 +20,15 @@ class UnitTestAltDestinations(dm_testbench.DmTestbench):
       self.analyseFrequencyFromCsv(file_name, column_EVTNO, checkValues={'0x00' + y: '>0'})
     self.deleteFile(file_name)
 
-  def test_altDestinationsFlowFail(self):
+  def test_alt10DestinationsFlow(self):
     fileName = self.schedules_folder + 'altdst-flow-10.dot'
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
-        fileName), [250], linesCout=2, linesCerr=3)
+        fileName), [0], linesCout=0, linesCerr=0)
 
-  def test_altDestinationsFail(self):
+  def test_alt10Destinations(self):
     fileName = self.schedules_folder + 'altdst-10.dot'
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
-        fileName), [250], linesCout=2, linesCerr=3)
+        fileName), [0], linesCout=0, linesCerr=0)
 
   def test_altdst_missing_node(self):
     """DEV="dev/ttyUSB0"
