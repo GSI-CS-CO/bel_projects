@@ -33,24 +33,22 @@ struct msrSumStats {
   uint32_t cntTotal;     // number of total measurement
 };
 
-enum {
-  msr_tx_dly,  // transmission delay
-  msr_sg_lty,  // signalling latency
-  msr_ow_dly,  // one-way delay
-  msr_ttl,     // TTL threshold/interval
-  msr_all,
-};
+/**
+ * \brief List of measured items
+*/
+typedef enum MSR_ITEMS {
+  MSR_TX_DLY,  // transmission delay
+  MSR_SG_LTY,  // signalling latency
+  MSR_OW_DLY,  // one-way delay
+  MSR_TTL,     // TTL threshold/interval
+  MSR_TX_LTY,  // MPS transmit latency
+  N_MSR_ITEMS,
+} msrItem_t;
 
 void storeTimestamp(uint32_t* reg, uint32_t offset, uint64_t ts);
 int64_t getElapsedTime(uint32_t* reg, uint32_t offset, uint64_t now);
-void storeTsMeasureDelays(uint32_t* base, uint32_t offset, uint64_t tsEca, uint64_t tsTx);
-void measureNwPerf(uint32_t* base, uint32_t offset, uint32_t tag, uint32_t flag, uint64_t now, uint64_t tsEca, bool verbose);
-void printMeasureTxDelay(uint32_t* base, uint32_t offset);
-void printMeasureSgLatency(uint32_t* base, uint32_t offset);
-void measureOwDelay(uint64_t now, uint64_t ts, bool verbose);
-void printMeasureOwDelay(uint32_t* base, uint32_t offset);
-void measureTtlInterval(mpsMsg_t* buf);
-void printMeasureTtl(uint32_t* base, uint32_t offset);
+void measureAverage(msrItem_t item, uint64_t from, uint64_t now, verbosity_t verbose);
+void measurePrintAverage(msrItem_t item, uint32_t* base, uint32_t offset);
 uint32_t calculateSumStats(int64_t value, msrSumStats_t* pStats);
 void wrSumStats(msrSumStats_t* pStats, uint64_t* pSharedReg64);
 

@@ -82,4 +82,9 @@ struct timedItr {
   uint8_t  ttl;      // TTL value used to evaluate validity
 };
 
+typedef enum VERBOSITY {
+  DISABLE_VERBOSITY = 0,
+  ENABLE_VERBOSITY
+} verbosity_t;
+
 #endif

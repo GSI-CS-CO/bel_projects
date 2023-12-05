@@ -515,15 +515,25 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
               *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = msrCnt(TX_EVT_CNT, count);
 
             // store timestamps to measure delays
-            storeTsMeasureDelays(pSharedApp, FBAS_SHARED_GET_TS1, now, ecaDeadline);
+            storeTimestamp(pSharedApp, FBAS_SHARED_GET_TS1, now);
+            storeTimestamp(pSharedApp, FBAS_SHARED_GET_TS2, ecaDeadline);
           }
         }
         break;
       case FBAS_TLU_EVT:
         if (nodeType == FBAS_NODE_TX && *mpsTask & TSK_TX_MPS_EVENTS) {// only FBAS TX node handles the TLU events
-          // measure network delay (broadcast MPS events from TX to RX nodes) and
+          // measure transmission delay (from timing message transmission at TX to timing message reception at RX node)
+          uint64_t *pTs = (uint64_t *)(pSharedApp + (FBAS_SHARED_GET_TS1 >> 2));
+          measureAverage(MSR_TX_DLY, *pTs, ecaDeadline, DISABLE_VERBOSITY);
+
           // signalling latency (from MPS event generation at TX to IO event detection at RX)
-          measureNwPerf(pSharedApp, FBAS_SHARED_GET_TS1, nextAction, flagIsLate, now, ecaDeadline, 0);
+          pTs = (uint64_t *)(pSharedApp + (FBAS_SHARED_GET_TS2 >> 2));
+          measureAverage(MSR_SG_LTY, *pTs, now, DISABLE_VERBOSITY);
+
+          // for details, elapsed time to detect IO (TLU) event (RX->TX)
+          int64_t poll = now - ecaDeadline;
+          DBPRINT3("IO evt (tag %x, flag %x, ts %llu, now %llu, poll %lli)\n",
+          tag, flag, ecaDeadline, now, poll);
         }
         break;
       case FBAS_WR_EVT:
@@ -542,8 +552,8 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
             // drive the assigned output port
             driveEffLogOut((mpsMsg_t*)(*head + offset), offset);
 
-            // measure one-way delay
-            measureOwDelay(now, ecaDeadline, 0);
+            // measure the average one-way delay
+            measureAverage(MSR_OW_DLY, ecaDeadline, now, DISABLE_VERBOSITY);
           }
         }
         break;
@@ -748,16 +758,16 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
         DBPRINT2("fbas%d: disabled MPS %x\n", nodeType, mpsTask);
         break;
       case FBAS_CMD_PRINT_NW_DLY:
-        printMeasureTxDelay(pSharedApp, FBAS_SHARED_GET_AVG);
+        measurePrintAverage(MSR_TX_DLY, pSharedApp, FBAS_SHARED_GET_AVG);
         break;
       case FBAS_CMD_PRINT_SG_LTY:
-        printMeasureSgLatency(pSharedApp, FBAS_SHARED_GET_AVG);
+        measurePrintAverage(MSR_SG_LTY, pSharedApp, FBAS_SHARED_GET_AVG);
         break;
       case FBAS_CMD_PRINT_OWD:
-        printMeasureOwDelay(pSharedApp, FBAS_SHARED_GET_AVG);
+        measurePrintAverage(MSR_OW_DLY, pSharedApp, FBAS_SHARED_GET_AVG);
         break;
       case FBAS_CMD_PRINT_TTL:
-        printMeasureTtl(pSharedApp, FBAS_SHARED_GET_AVG);
+        measurePrintAverage(MSR_TTL, pSharedApp, FBAS_SHARED_GET_AVG);
         break;
 
       case FBAS_CMD_PRINT_MPS_BUF:
@@ -859,7 +869,8 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
           buf = evalMpsMsgTtl(now, i);
           if (buf) {
             driveEffLogOut(buf, i);
-            measureTtlInterval(buf);
+            if (!buf->ttl)
+              measureAverage(MSR_TTL, buf->tsRx, now, DISABLE_VERBOSITY);
           }
         }
       }
