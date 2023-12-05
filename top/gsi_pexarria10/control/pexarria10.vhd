@@ -182,6 +182,15 @@ architecture rtl of pexarria10 is
   signal s_stub_pll_locked      : std_logic;
   signal s_stub_pll_locked_prev : std_logic;
 
+  signal s_psram_ubn  : std_logic;
+  signal s_psram_lbn  : std_logic;
+  signal s_psram_cen  : std_logic;
+  signal s_psram_oen  : std_logic;
+  signal s_psram_wen  : std_logic;
+  signal s_psram_cre  : std_logic;
+  signal s_psram_advn : std_logic;
+  signal s_psram_wait : std_logic;
+
   constant io_mapping_table : t_io_mapping_table_arg_array(0 to 39) :=
   (
   -- TBD: LEDs are missing, how to implement I2C-controlled IOs? Use spec. out and in?
@@ -319,14 +328,14 @@ begin
       ps_clk                  => psram_clk,
       ps_addr                 => psram_a,
       ps_data                 => psram_dq,
-      ps_seln(0)              => psram_ubn,
-      ps_seln(1)              => psram_lbn,
-      ps_cen                  => psram_cen(0),
-      ps_oen                  => psram_oen,
-      ps_wen                  => psram_wen,
-      ps_cre                  => psram_cre,
-      ps_advn                 => psram_advn,
-      ps_wait                 => psram_wait);
+      ps_seln(0)              => s_psram_ubn,
+      ps_seln(1)              => s_psram_lbn,
+      ps_cen                  => s_psram_cen,
+      ps_oen                  => s_psram_oen,
+      ps_wen                  => s_psram_wen,
+      ps_cre                  => s_psram_cre,
+      ps_advn                 => s_psram_advn,
+      ps_wait                 => s_psram_wait);
 
   -- LEDs
   wr_leds_o(0)                  <= not (s_led_link_act and s_led_link_up); -- red   = traffic/no-link
