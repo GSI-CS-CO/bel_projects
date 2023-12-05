@@ -306,10 +306,12 @@ mVal VisitorUploadCrawler::getQBuf() const {
 }
 
  mVal  VisitorUploadCrawler::getCmdTarget(Command& el) const {
-
+  log<DEBUG_LVL0>(L"cmdTarget: Entering");
   mVal ret;
   //search for cmd target, returns NULL PTR if there is no target
   ret.insert({CMD_TARGET, getEdgeTargetAdr(v, getOnlyChildByEdgeType(v, det::sCmdTarget)) });
+
+  log<DEBUG_LVL1>(L"cmdTarget: Done. Target Adr = %1$#08x") % (unsigned)getEdgeTargetAdr(v, getOnlyChildByEdgeType(v, det::sCmdTarget));
   return ret;
 }
 
@@ -327,20 +329,21 @@ mVal  VisitorUploadCrawler::getSwitchTarget() const {
 
 mVal VisitorUploadCrawler::getFlowDst() const {
   mVal ret;
-
+  log<DEBUG_LVL0>(L"flowDst: Entering");
   //this will return exactly one target, otherwise neighbourhood check would have detected the misshapen schedule
   vertex_vec_t vsTgt = getChildrenByEdgeType(v, det::sCmdTarget);
   //command cross over to other CPUs is okay. Find out what Cpu the command target is on
-  auto tgt = at.lookupVertex(*vsTgt.begin());
+  
 
   vertex_vec_t vsDst = getChildrenByEdgeType(v, det::sCmdFlowDst);
-  if((vsTgt.size() == 0) || (vsDst.size() == 0)) { ret.insert({(unsigned)CMD_FLOW_DEST, (unsigned)LM32_NULL_PTR}); return ret;}// if this command is not connected, return a null pointer as flowdst
+  if((vsTgt.size() == 0) || (vsDst.size() == 0)) { ret.insert({(unsigned)CMD_FLOW_DEST, (unsigned)LM32_NULL_PTR}); log<DEBUG_LVL0>(L"flowDst: Done, unconnected"); return ret;}// if this command is not connected, return a null pointer as flowdst
 
+  auto tgt = at.lookupVertex(*vsTgt.begin());
   auto dst = at.lookupVertex(*vsDst.begin());
 
   if (dst->cpu != tgt->cpu) throw std::runtime_error(  exIntro + "Target " + g[*vsTgt.begin()].name + "'s CPU must not differ from Dst " + g[*vsDst.begin()].name + "'s CPU\n");
   ret.insert({(unsigned)CMD_FLOW_DEST, (unsigned)at.adrConv(AdrType::MGMT, AdrType::INT , dst->cpu, dst->adr)});
-
+  log<DEBUG_LVL1>(L"flowDst: Done. Dst Adr = %1$#08x") % (unsigned)at.adrConv(AdrType::MGMT, AdrType::INT , dst->cpu, dst->adr);
   return ret;
 }
 
@@ -350,11 +353,11 @@ mVal VisitorUploadCrawler::getSwitchDst() const {
   //this will return exactly one target, otherwise neighbourhood check would have detected the misshapen schedule
   vertex_vec_t vsTgt = getChildrenByEdgeType(v, det::sSwitchTarget);
   //command cross over to other CPUs is okay. Find out what Cpu the command target is on
-  auto tgt = at.lookupVertex(*vsTgt.begin());
 
   vertex_vec_t vsDst = getChildrenByEdgeType(v, det::sSwitchDst);
   if((vsTgt.size() == 0) || (vsDst.size() == 0)) { ret.insert({SWITCH_DEST, LM32_NULL_PTR}); return ret;}// if this command is not connected, return a null pointer as flowdst
 
+  auto tgt = at.lookupVertex(*vsTgt.begin());
   auto dst = at.lookupVertex(*vsDst.begin());
 
   if (dst->cpu != tgt->cpu) throw std::runtime_error(  exIntro + "Target " + g[*vsTgt.begin()].name + "'s CPU must not differ from Dst " + g[*vsDst.begin()].name + "'s CPU\n");
@@ -384,11 +387,11 @@ mVal VisitorUploadCrawler::getFlushOvr() const {
   //this will return exactly one target, otherwise neighbourhood check would have detected the misshapen schedule
   vertex_vec_t vsTgt = getChildrenByEdgeType(v, det::sCmdTarget);
   //command cross over to other CPUs is okay. Find out what Cpu the command target is on
-  auto tgt = at.lookupVertex(*vsTgt.begin());
 
   vertex_vec_t vsDst = getChildrenByEdgeType(v, det::sCmdFlushOvr);
   if((vsTgt.size() == 0) || (vsDst.size() == 0)) { ret.insert({CMD_FLUSH_DEST_OVR, LM32_NULL_PTR}); return ret;}// if this command is not connected, return a null pointer as flowdst
 
+  auto tgt = at.lookupVertex(*vsTgt.begin());
   auto dst = at.lookupVertex(*vsDst.begin());
 
   if (dst->cpu != tgt->cpu) throw std::runtime_error(  exIntro + "Target " + g[*vsTgt.begin()].name + "'s CPU must not differ from Dst " + g[*vsDst.begin()].name + "'s CPU\n");
@@ -426,25 +429,21 @@ mVal VisitorUploadCrawler::getListDst() const {
     if(altVec.size() > 0)   {altVec.push_back(altVec[0]); altVec[0] = vDef;}
     else                    {altVec.push_back(vDef);}  
   }
-
   //find the slice of altVec for this dstLst node
   //we do it he lazy way and look at the numerical suffix of this node's name
 
   //who am I? get the number from name suffix
-  log<DEBUG_LVL0>(L"dstLst: I was here 1");
   unsigned idx = s2u<unsigned>(g[v].name.substr(g[v].name.find_last_not_of("0123456789") + 1));
-  log<DEBUG_LVL0>(L"dstLst: I was here 2");
   unsigned slice_begin, slice_end;
   slice_begin = idx * DST_MAX;
   slice_end   = std::min((unsigned)altVec.size(), slice_begin + DST_MAX); // handle the end of altVec / slice not being full
-  log<DEBUG_LVL0>(L"dstLst: I was here 3");
   //insert into this node's adress map. Keys are word offsets 0..DST_MAX-1, values are altVec elements in this slice
   unsigned offs = DST_ARRAY; // offset for first slice element is zero
   for(unsigned i = slice_begin; i < slice_end; i++) {
     ret.insert({offs, getEdgeTargetAdr(v, altVec[i])});
     offs += _PTR_SIZE_;
   }
-  log<DEBUG_LVL0>(L"dstLst: yay, it worked");
+  log<DEBUG_LVL0>(L"dstLst: done");
   //insert pointer to our parent block as this node's defdst (lazy, but it kinda is, even if the firmware does not traverse it)
   ret.insert({(unsigned)DST_NXTPTR, getEdgeTargetAdr(v, va)});
 

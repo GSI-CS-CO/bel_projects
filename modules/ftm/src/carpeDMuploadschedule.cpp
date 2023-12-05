@@ -121,7 +121,7 @@ using namespace DotStr::Misc;
       g[vD].patName = g[v].patName;
       gt.setPattern(g[vD].name, g[vD].patName, false, false);
       edge_t thisEdge = (boost::add_edge(vD, v, myEdge(det::sDefDst), g)).first;
-      log<DEBUG_LVL1>(L"generateDstLst: Adding Edge from %1% to %2%") % g[source(thisEdge, g)].name.c_str() % g[target(thisEdge, g)].name.c_str();
+      log<DEBUG_LVL1>(L"generateDstLst: Adding Edge from %1% to %2%. Setting pattern name to %3%") % g[source(thisEdge, g)].name.c_str() % g[target(thisEdge, g)].name.c_str() % g[vD].patName.c_str();
     }
 
   }
@@ -222,11 +222,11 @@ using namespace DotStr::Misc;
     Graph& g = gUp;
     AllocTable& at = atUp;
 
-
+    /*
     if (g[e].type == det::sDefDst || g[e].type == det::sAltDst ) {
       updateListDstStaging(v); // stage source block's Destination List
     }
-
+    */
     if (g[e].type != det::sAltDst ) {
       auto x = at.lookupVertex(v);
 
@@ -452,7 +452,8 @@ using namespace DotStr::Misc;
     //boost::set_property(gTmp, boost::graph_name, boost::get_property(g, boost::graph_name));
     vertex_map_t vmap;
     updown_copy_graph(gDown, gUp, vmap, atUp, hm, gt);
-    //mycopy_graph<Graph>(gDown, gUp, vmap);
+    //copy_graph<Graph>(gDown, gUp, vmap);
+    
   }
 
   void CarpeDM::CarpeDMimpl::addition(Graph& gTmp) {
@@ -518,13 +519,14 @@ using namespace DotStr::Misc;
 
     //recursively find all adjacent meta type vertices
     BOOST_FOREACH( vertex_t w, adjacent_vertices(v, g)) {
+      log<DEBUG_LVL0>(L"Checking adjacent vertex %1%") % g[w].name.c_str();
       if (g[w].np == nullptr) {throw std::runtime_error("Node " + g[w].name + " does not have a data object, this is bad");}
       if (g[w].np->isMeta()) {
         s.insert(w);
-        //sLog <<  "Added Meta Child " << g[w].name << " to del map " << std::endl;
+        log<DEBUG_LVL0>(L"Added adjacent vertex %1% to del map, %2% vertex idx") % g[w].name.c_str() % w;
         pushMetaNeighbours(w, g, s);
       } else {
-        //sLog <<  g[w].name << " is not meta, stopping crawl here" << std::endl;
+        log<DEBUG_LVL0>(L"Skipping adjacent vertex %1%, %2% vertex idx") % g[w].name.c_str() % w;
       }
     }
     log<INFO>(L"pushMetaNeighbours: Done");
@@ -556,7 +558,8 @@ using namespace DotStr::Misc;
 
       auto x = atUp.lookupHashNoEx(gTmp[w].hash);
       if (atUp.isOk(x)) {
-        toDelete.insert(x->v);                   // add the node
+        toDelete.insert(x->v);
+        log<DEBUG_LVL0>(L"subtraction: Checking adjacent vertices of node %1%") % gUp[x->v].name.c_str();                   // add the node
         pushMetaNeighbours(x->v, gUp, toDelete); // add all of its meta children as well
       }
     }
