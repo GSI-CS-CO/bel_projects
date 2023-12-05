@@ -15,8 +15,11 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     self.startAndCheckSubprocess(('scheduleCompare', self.schedules_folder + scheduleFile, status_file))
     self.deleteFile(status_file)
 
-  def test_aScheduleTmsg1(self):
+  def test_aScheduleTmsgBlock(self):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-block-defdst.dot')
+
+  def test_aScheduleTmsgBlockalign(self):
+    self.addDownloadCompareSchedule('testSingleEdge-tmsg-blockalign-defdst.dot')
 
   def test_aScheduleBlock1(self):
     self.addDownloadCompareSchedule('testSingleEdge-block-blockalign-altdst.dot')
