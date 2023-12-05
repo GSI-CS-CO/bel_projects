@@ -496,7 +496,7 @@ vEbwrs& CarpeDM::CarpeDMimpl::createCommandBurst(vEbwrs& ew, Graph& g) {
   //Requests Threads to start
   vEbwrs& CarpeDM::CarpeDMimpl::setThrStart(vEbwrs& ew, uint8_t cpuIdx, uint32_t bits) {
     uint8_t b[4];
-    uint32_t mask = (1<<ebd.getThrQty())-1;
+    uint32_t mask = (uint32_t)((1ll<<ebd.getThrQty())-1);
     ew.va.push_back(getThrCmdAdr(cpuIdx) + T_TC_START);
     writeLeNumberToBeBytes<uint32_t>(b, bits & mask);
     ew.vb.insert( ew.vb.end(), b, b + sizeof(b));
@@ -514,7 +514,7 @@ vEbwrs& CarpeDM::CarpeDMimpl::createCommandBurst(vEbwrs& ew, Graph& g) {
   //Requests Threads to stop
   vEbwrs& CarpeDM::CarpeDMimpl::setThrAbort(vEbwrs& ew, uint8_t cpuIdx, uint32_t bits) {
     uint8_t b[4];
-    uint32_t mask = (1<<ebd.getThrQty())-1;
+    uint32_t mask = (uint32_t)((1ll<<ebd.getThrQty())-1);
     ew.va.push_back(getThrCmdAdr(cpuIdx) + T_TC_ABORT);
     writeLeNumberToBeBytes<uint32_t>(b, bits & mask);
     ew.vb.insert( ew.vb.end(), b, b + sizeof(b));
@@ -528,7 +528,7 @@ vEbwrs& CarpeDM::CarpeDMimpl::createCommandBurst(vEbwrs& ew, Graph& g) {
     if (verbose) sLog << "Aborting all activity" << std::endl;
     vEbwrs ew;
     uint8_t b[4];
-    writeLeNumberToBeBytes<uint32_t>(b, (1 << ebd.getThrQty())-1 );
+    writeLeNumberToBeBytes<uint32_t>(b, (uint32_t)((1ll << ebd.getThrQty())-1) );
 
 
     for(uint8_t cpuIdx=0; cpuIdx < ebd.getCpuQty(); cpuIdx++) {

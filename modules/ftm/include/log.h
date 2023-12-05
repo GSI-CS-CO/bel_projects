@@ -43,8 +43,8 @@ public:
         return *this;
     }    
 protected:
+    boost::wformat  fmt;
     log_level_t     level;
-    boost::wformat      fmt;
 };
 }//namespace log_impl
 // Helper function. Class formatted_log_t will not be used directly.

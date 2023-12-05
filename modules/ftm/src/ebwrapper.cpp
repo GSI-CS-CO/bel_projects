@@ -234,7 +234,7 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
     }
 
     if(verbose) {
-      sLog << " Done."  << std::endl << "Found " << cpuQty << " Cores, " << cpuIdxMap.size() << " of them run a valid DM firmware." << std::endl;
+      sLog << " Done."  << std::endl << "Found " << (unsigned)cpuQty << " Cores, " << cpuIdxMap.size() << " of them run a valid DM firmware." << std::endl;
     }
     std::string fwCause = foundVersionMax == -1 ? "" : "Requires FW v" + createFwVersionString(expVersionMin) + ", found " + createFwVersionString(foundVersionMax);
     if (cpuIdxMap.size() == 0) {throw std::runtime_error("No CPUs running a valid DM firmware found. " + fwCause);}
