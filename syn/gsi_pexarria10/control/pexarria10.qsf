@@ -1056,25 +1056,19 @@ set_location_assignment PIN_E19 -to psram_a[16]
 set_location_assignment PIN_E21 -to psram_a[5]
 set_location_assignment PIN_E23 -to clk_125m_local_i
 set_location_assignment PIN_E24 -to "clk_125m_local_i(n)"
-set_location_assignment PIN_E26 -to psram_lbn
-set_location_assignment PIN_E27 -to psram_oen
+
 set_location_assignment PIN_F18 -to psram_a[12]
 set_location_assignment PIN_F19 -to psram_a[10]
 set_location_assignment PIN_F20 -to psram_a[11]
 set_location_assignment PIN_F21 -to psram_a[15]
-set_location_assignment PIN_F23 -to psram_ubn
-set_location_assignment PIN_F24 -to psram_wait
-set_location_assignment PIN_F25 -to psram_wen
+
 #set_location_assignment PIN_F26 -to "clk_125m_pllref_i(n)"
 set_location_assignment PIN_G17 -to psram_a[9]
-set_location_assignment PIN_G18 -to psram_advn
-set_location_assignment PIN_G20 -to psram_cen[3]
+
+
 set_location_assignment PIN_G21 -to psram_a[22]
 #set_location_assignment PIN_G26 -to clk_125m_pllref_i
-set_location_assignment PIN_H17 -to psram_cen[1]
-set_location_assignment PIN_H18 -to psram_cen[0]
-set_location_assignment PIN_H20 -to psram_clk
-set_location_assignment PIN_J17 -to psram_cre
+
 set_location_assignment PIN_J1 -to usbc_rx2_p[3]
 set_location_assignment PIN_J2 -to usbc_rx2_n[3]
 set_location_assignment PIN_J4 -to usbc_rx1_p[5]
