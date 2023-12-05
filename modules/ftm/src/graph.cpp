@@ -106,6 +106,13 @@ Graph& updown_copy_graph(const Graph& original, Graph& cpy, vertex_map_t& vmap, 
       gt.remove<Groups::Node>(original[v].name);  
     }
   }
+
+  //now we have a problem: all vertex descriptors in the alloctable just got invalidated by the removal ... repair them
+  std::vector<amI> itAtVec; //because elements change order during repair loop, we need to store iterators first
+
+  for( amI it = at.getTable().begin(); it != at.getTable().end(); it++) { itAtVec.push_back(it); }
+  for( auto itIt : itAtVec ) {  at.modV(itIt, vmap[itIt->v]); }
+
   BOOST_FOREACH( vertex_t v, vertices(original) ) {
     typename Graph::out_edge_iterator out_begin, out_end, out_cur;
     boost::tie(out_begin, out_end) = out_edges(v, original);
