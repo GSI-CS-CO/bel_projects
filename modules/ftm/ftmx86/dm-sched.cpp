@@ -172,7 +172,7 @@ int main(int argc, char* argv[]) {
 
       //if(verbose) cdm.showUp(false);
     } catch (std::runtime_error const& err) {
-      std::cerr << std::endl << program << ": Failed to execute <"<< cmd << ". Cause: " << err.what() << std::endl;
+      std::cerr << std::endl << program << ": Failed to execute <"<< cmd << ">. Cause: " << err.what() << std::endl;
       return -6;
     }
   }
