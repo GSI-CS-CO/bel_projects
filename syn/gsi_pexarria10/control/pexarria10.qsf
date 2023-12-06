@@ -1,4 +1,3 @@
-
 set_global_assignment -name ACTIVE_SERIAL_CLOCK FREQ_100MHZ
 set_global_assignment -name ADV_NETLIST_OPT_SYNTH_WYSIWYG_REMAP OFF
 set_global_assignment -name AHDL_FILE ../../../modules/modulbus/i2c.tdf
@@ -782,6 +781,7 @@ set_instance_assignment -name IO_STANDARD "1.8 V" -to UM_AS_D[2]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to UM_AS_D[3]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to UM_DCLK
 set_instance_assignment -name IO_STANDARD "1.8 V" -to UM_nCSO
+set_instance_assignment -name IO_STANDARD "1.8 V" -to usb_clk_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to usb_ctl_i[0]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to usb_ctl_i[1]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to usb_ctl_i[2]
@@ -824,7 +824,6 @@ set_instance_assignment -name IO_STANDARD "1.8 V" -to usb_pa_io[7]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to usb_slrd_o
 set_instance_assignment -name IO_STANDARD "1.8 V" -to usb_slwr_o
 set_instance_assignment -name IO_STANDARD "1.8 V" -to usb_uclk_i
-set_instance_assignment -name IO_STANDARD "1.8 V" -to usb_uclkin_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to usb_ures_o
 set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_aux_leds_or_node_leds_o
 set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_aux_leds_or_node_leds_o[0]
@@ -858,10 +857,6 @@ set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to sfp_
 set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to sfp_txp_o
 set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_local_alt_i
 set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_local_i
-set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_pllref_alt_i
-set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_pllref_i
-set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_sfpref_alt_i
-set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_sfpref_i
 set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_tcb_local_i
 set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_tcb_pllref_i
 set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_tcb_sfpref_i
@@ -885,8 +880,11 @@ set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_tlu:ecatlu"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_wb_event:ecawb"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|ftm_lm32_cluster:lm32*"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|wr_eca:eca"
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_instance_assignment -name XCVR_VCCR_VCCT_VOLTAGE 1_0V -to sfp_rxp_i
+set_instance_assignment -name XCVR_VCCR_VCCT_VOLTAGE 1_0V -to "sfp_rxp_i(n)"
 set_instance_assignment -name XCVR_VCCR_VCCT_VOLTAGE 1_0V -to sfp_txp_o
+set_instance_assignment -name XCVR_VCCR_VCCT_VOLTAGE 1_0V -to "sfp_txp_o(n)"
 set_location_assignment PIN_A18 -to psram_a[20]
 set_location_assignment PIN_A19 -to psram_a[2]
 set_location_assignment PIN_A20 -to psram_a[19]
@@ -927,10 +925,12 @@ set_location_assignment PIN_AD32 -to pcie_rx_i[1]
 set_location_assignment PIN_AD4 -to usbc_tx2_en[3]
 set_location_assignment PIN_AD9 -to usbc_tx4_en[4]
 set_location_assignment PIN_AE11 -to f2f_i2c_scl
+set_location_assignment PIN_AE12 -to usb_clk_i
 #set_location_assignment PIN_AE12 -to usb_uclkin_i
 set_location_assignment PIN_AE16 -to nPCI_RESET_i
 set_location_assignment PIN_AE1 -to usbc_tx4_en[5]
 #set_location_assignment PIN_AE23 -to usb_uclk_i
+set_location_assignment PIN_AE23 -to usb_uclk_i
 set_location_assignment PIN_AE24 -to usb_fd_io[3]
 set_location_assignment PIN_AE29 -to "pcie_rx_i[0](n)"
 set_location_assignment PIN_AE2 -to clk_20m_vcxo_alt_i
@@ -1039,7 +1039,7 @@ set_location_assignment PIN_C19 -to psram_a[4]
 set_location_assignment PIN_C20 -to psram_a[7]
 set_location_assignment PIN_C22 -to psram_a[0]
 set_location_assignment PIN_C23 -to psram_dq[2]
-set_location_assignment PIN_G25 -to psram_dq[8]
+set_location_assignment PIN_C24 -to psram_oen[2]
 set_location_assignment PIN_C25 -to psram_dq[15]
 set_location_assignment PIN_C27 -to psram_dq[6]
 set_location_assignment PIN_D17 -to psram_a[14]
@@ -1048,37 +1048,63 @@ set_location_assignment PIN_D20 -to psram_a[1]
 set_location_assignment PIN_D21 -to psram_a[8]
 set_location_assignment PIN_D22 -to psram_a[13]
 set_location_assignment PIN_D24 -to psram_dq[3]
-set_location_assignment PIN_G22 -to psram_dq[4]
-set_location_assignment PIN_G26 -to psram_dq[7]
+set_location_assignment PIN_D25 -to psram_oen[1]
+set_location_assignment PIN_D26 -to psram_wen[1]
 set_location_assignment PIN_D27 -to psram_dq[0]
 set_location_assignment PIN_E18 -to clk_20m_vcxo_i
 set_location_assignment PIN_E19 -to psram_a[16]
 set_location_assignment PIN_E21 -to psram_a[5]
+set_location_assignment PIN_E22 -to psram_oen[3]
 set_location_assignment PIN_E23 -to clk_125m_local_i
 set_location_assignment PIN_E24 -to "clk_125m_local_i(n)"
-
+set_location_assignment PIN_E26 -to psram_lbn[0]
 set_location_assignment PIN_F18 -to psram_a[12]
 set_location_assignment PIN_F19 -to psram_a[10]
 set_location_assignment PIN_F20 -to psram_a[11]
 set_location_assignment PIN_F21 -to psram_a[15]
-
+set_location_assignment PIN_F23 -to psram_ubn[0]
+set_location_assignment PIN_F24 -to psram_wait[0]
+set_location_assignment PIN_F25 -to psram_wen[0]
 #set_location_assignment PIN_F26 -to "clk_125m_pllref_i(n)"
 set_location_assignment PIN_G17 -to psram_a[9]
-
-
+set_location_assignment PIN_G18 -to psram_advn[0]
+set_location_assignment PIN_G20 -to psram_cen[3]
 set_location_assignment PIN_G21 -to psram_a[22]
+set_location_assignment PIN_G22 -to psram_dq[4]
+set_location_assignment PIN_G23 -to psram_wen[2]
+set_location_assignment PIN_G25 -to psram_dq[8]
 #set_location_assignment PIN_G26 -to clk_125m_pllref_i
-
+set_location_assignment PIN_G26 -to psram_dq[7]
+set_location_assignment PIN_H17 -to psram_cen[1]
+set_location_assignment PIN_H18 -to psram_cen[0]
+set_location_assignment PIN_H20 -to psram_clk
+set_location_assignment PIN_H22 -to psram_advn[3]
+set_location_assignment PIN_H25 -to psram_wait[1]
+set_location_assignment PIN_H27 -to psram_ubn[3]
+set_location_assignment PIN_J17 -to psram_cre[0]
 set_location_assignment PIN_J1 -to usbc_rx2_p[3]
+set_location_assignment PIN_J20 -to psram_cre[1]
+set_location_assignment PIN_J22 -to psram_lbn[2]
+set_location_assignment PIN_J24 -to psram_oen[0]
+set_location_assignment PIN_J25 -to psram_ubn[1]
+set_location_assignment PIN_J26 -to psram_wait[2]
+set_location_assignment PIN_J27 -to psram_wait[3]
 set_location_assignment PIN_J2 -to usbc_rx2_n[3]
 set_location_assignment PIN_J4 -to usbc_rx1_p[5]
 set_location_assignment PIN_J5 -to usbc_rx1_n[5]
+set_location_assignment PIN_K19 -to psram_cre[3]
 set_location_assignment PIN_K1 -to usbc_rx2_p[1]
+set_location_assignment PIN_K22 -to psram_wen[3]
+set_location_assignment PIN_K23 -to psram_lbn[1]
+set_location_assignment PIN_K24 -to psram_ubn[2]
+set_location_assignment PIN_K25 -to psram_lbn[3]
 set_location_assignment PIN_K2 -to usbc_rx2_n[1]
 set_location_assignment PIN_K3 -to usbc_rx1_n[2]
 set_location_assignment PIN_K4 -to usbc_rx1_n[1]
 #set_location_assignment PIN_K6 -to clk_125m_pllref_alt_i
 set_location_assignment PIN_L1 -to usbc_rx2_n[5]
+set_location_assignment PIN_L20 -to psram_cre[2]
+set_location_assignment PIN_L23 -to psram_advn[1]
 set_location_assignment PIN_L3 -to usbc_rx1_p[2]
 set_location_assignment PIN_L4 -to usbc_rx1_p[1]
 #set_location_assignment PIN_L6 -to "clk_125m_pllref_alt_i(n)"
@@ -1087,6 +1113,7 @@ set_location_assignment PIN_M18 -to OneWire_CB_splz
 set_location_assignment PIN_M1 -to usbc_rx2_p[5]
 set_location_assignment PIN_M20 -to OneWire_aux_CB
 set_location_assignment PIN_M21 -to OneWire_aux_CB_splz
+set_location_assignment PIN_M23 -to psram_advn[2]
 set_location_assignment PIN_M2 -to usbc_rx2_p[2]
 set_location_assignment PIN_M3 -to usbc_rx2_n[2]
 set_location_assignment PIN_M6 -to usbc_rx1_p[3]
@@ -1160,40 +1187,3 @@ set_location_assignment PIN_Y9 -to "usbc_tx4_p[2](n)"
 # USBC
 # VCXO
 # WR_LED0_1
-
-
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
-set_instance_assignment -name XCVR_VCCR_VCCT_VOLTAGE 1_0V -to "sfp_rxp_i(n)"
-set_instance_assignment -name XCVR_VCCR_VCCT_VOLTAGE 1_0V -to "sfp_txp_o(n)"
-set_location_assignment PIN_G18 -to psram_advn[0]
-set_location_assignment PIN_L23 -to psram_advn[1]
-set_location_assignment PIN_M23 -to psram_advn[2]
-set_location_assignment PIN_H22 -to psram_advn[3]
-set_location_assignment PIN_H18 -to psram_cen[0]
-set_location_assignment PIN_H17 -to psram_cen[1]
-set_location_assignment PIN_G20 -to psram_cen[3]
-set_location_assignment PIN_H20 -to psram_clk
-set_location_assignment PIN_J17 -to psram_cre[0]
-set_location_assignment PIN_J20 -to psram_cre[1]
-set_location_assignment PIN_L20 -to psram_cre[2]
-set_location_assignment PIN_K19 -to psram_cre[3]
-set_location_assignment PIN_F25 -to psram_wen[0]
-set_location_assignment PIN_D26 -to psram_wen[1]
-set_location_assignment PIN_G23 -to psram_wen[2]
-set_location_assignment PIN_K22 -to psram_wen[3]
-set_location_assignment PIN_F24 -to psram_wait[0]
-set_location_assignment PIN_H25 -to psram_wait[1]
-set_location_assignment PIN_J26 -to psram_wait[2]
-set_location_assignment PIN_J27 -to psram_wait[3]
-set_location_assignment PIN_J24 -to psram_oen[0]
-set_location_assignment PIN_D25 -to psram_oen[1]
-set_location_assignment PIN_C24 -to psram_oen[2]
-set_location_assignment PIN_E22 -to psram_oen[3]
-set_location_assignment PIN_F23 -to psram_ubn[0]
-set_location_assignment PIN_J25 -to psram_ubn[1]
-set_location_assignment PIN_K24 -to psram_ubn[2]
-set_location_assignment PIN_H27 -to psram_ubn[3]
-set_location_assignment PIN_E26 -to psram_lbn[0]
-set_location_assignment PIN_K23 -to psram_lbn[1]
-set_location_assignment PIN_J22 -to psram_lbn[2]
-set_location_assignment PIN_K25 -to psram_lbn[3]
