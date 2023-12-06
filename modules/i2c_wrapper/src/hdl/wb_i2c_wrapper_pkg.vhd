@@ -73,4 +73,20 @@ package wb_i2c_wrapper_pkg is
     date          => x"20211012",
     name          => "I2C_MULTI_WRAPPER  ")));
 
+  constant c_i2c_power_ctl_cpu_sdb : t_sdb_device := (
+    abi_class     => x"0000", -- undocumented device
+    abi_ver_major => x"01",
+    abi_ver_minor => x"01",
+    wbd_endian    => c_sdb_endian_big,
+    wbd_width     => x"4", -- 32-bit port granularity
+    sdb_component => (
+    addr_first    => x"0000000000000000",
+    addr_last     => x"00000000000000ff",
+    product => (
+    vendor_id     => x"0000000000000651", -- GSI
+    device_id     => x"12575a96",
+    version       => x"00000001",
+    date          => x"20231206",
+    name          => "I2C_POWER_CTL_CPU  ")));
+
 end wb_i2c_wrapper_pkg;
