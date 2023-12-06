@@ -75,7 +75,6 @@ entity pexarria10 is
     psram_a            : out   std_logic_vector(23 downto 0) := (others => 'Z');
     psram_dq           : inout std_logic_vector(15 downto 0) := (others => 'Z');
     psram_clk          : out   std_logic := 'Z';
-
     psram_advn         : out   std_logic_vector(3 downto 0) := (others => 'Z');
     psram_cre          : out   std_logic_vector(3 downto 0) := (others => 'Z');
     psram_cen          : out   std_logic_vector(3 downto 0) := (others => '1');
@@ -339,7 +338,7 @@ begin
       ps_advn                 => s_psram_advn,
       ps_wait                 => s_psram_wait_or);
 
-  -- PSRAM test connection, replace this by 4 units later !!!
+  -- PSRAM test connection, add selector later (psram0/1/2/3)
   s_psram_wait_or <= psram_wait(0) or psram_wait(1) or psram_wait(2) or psram_wait(3);
   psram_test : for i in 0 to 3 generate
     psram_advn(i) <= s_psram_advn;
