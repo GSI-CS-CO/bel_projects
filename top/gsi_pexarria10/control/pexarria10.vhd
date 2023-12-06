@@ -93,9 +93,9 @@ entity pexarria10 is
     usb_fd_io    : inout std_logic_vector(7 downto 0);
     usb_pa_io    : inout std_logic_vector(7 downto 0) := (others => 'Z');
     usb_ctl_i    : in    std_logic_vector(2 downto 0);
-    usb_uclk_i   : in    std_logic;
     usb_ures_o   : out   std_logic;
-    usb_uclkin_i : in    std_logic;
+    usb_clk_i    : in    std_logic;
+    usb_uclk_i   : in    std_logic;
 
     -----------------------------------------------------------------------
     -- ATXMega (F2F) previously CPLD
