@@ -532,9 +532,11 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
           uint64_t *pTs = (uint64_t *)(pSharedApp + (FBAS_SHARED_GET_TS1 >> 2));
           measureAverage(MSR_TX_DLY, *pTs, ecaDeadline, DISABLE_VERBOSITY);
 
-          // signalling latency (from MPS event generation at TX to IO event detection at RX)
+          /* signaling latency
+          Time period measured with the ECA timestamps between MPS event generation and
+          associated feedback IO event at a TX node. */
           pTs = (uint64_t *)(pSharedApp + (FBAS_SHARED_GET_TS2 >> 2));
-          measureAverage(MSR_SG_LTY, *pTs, now, DISABLE_VERBOSITY);
+          measureAverage(MSR_SG_LTY, *pTs, ecaDeadline, DISABLE_VERBOSITY);
         }
         break;
       case FBAS_WR_EVT:
