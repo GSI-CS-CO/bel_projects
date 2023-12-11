@@ -521,7 +521,10 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
         }
         break;
       case FBAS_TLU_EVT:
-        if (nodeType == FBAS_NODE_TX && *mpsTask & TSK_TX_MPS_EVENTS) {// only FBAS TX node handles the TLU events
+        /* FBAS TX node handles the TLU events.
+        TLU events (configured externally by saft-ctl-io) are used to detect the feedback
+        by the RX node on reception of the timing messages with the MPS flag/event. */
+        if (nodeType == FBAS_NODE_TX && *mpsTask & TSK_TX_MPS_EVENTS) {
           // measure transmission delay (from timing message transmission at TX to timing message reception at RX node)
           uint64_t *pTs = (uint64_t *)(pSharedApp + (FBAS_SHARED_GET_TS1 >> 2));
           measureAverage(MSR_TX_DLY, *pTs, ecaDeadline, DISABLE_VERBOSITY);
