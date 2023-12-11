@@ -529,11 +529,6 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
           // signalling latency (from MPS event generation at TX to IO event detection at RX)
           pTs = (uint64_t *)(pSharedApp + (FBAS_SHARED_GET_TS2 >> 2));
           measureAverage(MSR_SG_LTY, *pTs, now, DISABLE_VERBOSITY);
-
-          // for details, elapsed time to detect IO (TLU) event (RX->TX)
-          int64_t poll = now - ecaDeadline;
-          DBPRINT3("IO evt (tag %x, flag %x, ts %llu, now %llu, poll %lli)\n",
-          tag, flag, ecaDeadline, now, poll);
         }
         break;
       case FBAS_WR_EVT:
