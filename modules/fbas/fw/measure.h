@@ -42,6 +42,7 @@ typedef enum MSR_ITEMS {
   MSR_OW_DLY,  // one-way delay
   MSR_TTL,     // TTL threshold/interval
   MSR_TX_LTY,  // MPS transmit latency
+  MSR_TX_MPS_HANDLE, // MPS event handling delay at TX node
   N_MSR_ITEMS,
 } msrItem_t;
 
