@@ -93,7 +93,7 @@ show_rx_stats() {
     sshpass -p "$userpasswd" ssh "$username@$rxscu" \
         "source setup_local.sh && \
         read_counters \$rx_node_dev $verbose && \
-        result_ow_delay \$rx_node_dev $verbose && \
+        result_msg_delay \$rx_node_dev $verbose && \
         result_ttl_ival \$rx_node_dev $verbose"
 }
 

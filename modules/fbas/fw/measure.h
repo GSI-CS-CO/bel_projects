@@ -39,7 +39,7 @@ struct msrSumStats {
 typedef enum MSR_ITEMS {
   MSR_TX_DLY,  // transmission delay
   MSR_SG_LTY,  // signalling latency
-  MSR_OW_DLY,  // one-way delay
+  MSR_MSG_DLY, // messaging delay
   MSR_TTL,     // TTL threshold/interval
   MSR_TX_LTY,  // MPS transmit latency
   MSR_TX_MPS_HANDLE, // MPS event handling delay at TX node

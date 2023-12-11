@@ -113,9 +113,10 @@ In order to start a desired test case, switch to the '$HOME/fbas_test/tools' dir
 ### 4.2. Measure the signaling network performance
 
 Here, signaling latency and some internal timing delay are measured:
-   - one-way delay: from timing message transmission at a TX node to reception of corresponding timing message at a RX node
-   - transmission delay: from FBAS event detection at a TX node to reception of corresponding timing message at a RX node
-   - signaling latency: from FBAS event detection at a TX node to corresponding output signal generation at a RX node
+   - event handling delay: time period between generation of MPS event at TX node and storing of corresponding MPS flag at TX node (measured by TX node)
+   - messaging delay (alias one-way): time period between transmission of timing message (with MPS event) by TX node and handling of the same timing message by RX node (measured by RX node)
+   - transmission delay: time period between detection of MPS event by TX node and generation of output signal on reception of corresponding timing message by RX node (measured on TX node by using feedback from RX node)
+   - signaling latency: time period between generation of MPS event at TX node and generation of output signal on reception of corresponding timing message by RX node (measured on TX node by using feedback from RX node)
 
 TX SCU is configured to act on 2 events: FBAS and feedback (IO).
    - on detection of FBAS event, the TX SCU generates a MPS flag and broadcasts it via WR network.

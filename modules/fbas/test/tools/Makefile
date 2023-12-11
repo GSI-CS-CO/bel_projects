@@ -319,7 +319,7 @@ restart_test_rx_rate:
 	@echo "start DM broadcast from '${sched_filename}'"
 	@source dm.sh && run_pattern ${sched_filename}
 	@source setup.sh && read_counters $$rx_node_dev verbose
-	@source setup.sh && result_ow_delay $$rx_node_dev
+	@source setup.sh && result_msg_delay $$rx_node_dev
 
 restart_fbasdm_run_pattern:
 	@$(MAKE) clear_fbasdm

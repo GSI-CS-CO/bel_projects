@@ -555,8 +555,8 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
             // drive the assigned output port
             driveEffLogOut((mpsMsg_t*)(*head + offset), offset);
 
-            // measure the average one-way delay
-            measureAverage(MSR_OW_DLY, ecaDeadline, now, DISABLE_VERBOSITY);
+            // measure the average messaging delay
+            measureAverage(MSR_MSG_DLY, ecaDeadline, now, DISABLE_VERBOSITY);
           }
         }
         break;
@@ -766,8 +766,8 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
       case FBAS_CMD_PRINT_SG_LTY:
         measurePrintAverage(MSR_SG_LTY, pSharedApp, FBAS_SHARED_GET_AVG);
         break;
-      case FBAS_CMD_PRINT_OWD:
-        measurePrintAverage(MSR_OW_DLY, pSharedApp, FBAS_SHARED_GET_AVG);
+      case FBAS_CMD_PRINT_MSG_DLY:
+        measurePrintAverage(MSR_MSG_DLY, pSharedApp, FBAS_SHARED_GET_AVG);
         break;
       case FBAS_CMD_PRINT_TTL:
         measurePrintAverage(MSR_TTL, pSharedApp, FBAS_SHARED_GET_AVG);

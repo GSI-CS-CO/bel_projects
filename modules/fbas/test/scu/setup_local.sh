@@ -103,7 +103,7 @@ export instr_probe_sb_user=0x21 # probe a given slave (sys and group IDs are exp
 export instr_en_mps=0x30        # enable MPS signalling
 export instr_dis_mps=0x31       # disable MPS signalling
 export instr_st_tx_dly=0x32     # store the transmission delay measurement results to shared memory
-export instr_st_ow_dly=0x33     # store the one-way delay measurement results to shared memory
+export instr_st_msg_dly=0x33    # store the measurement results of the messaging delay
 export instr_st_sg_lty=0x34     # store the signalling latency measurement results to shared memory
 export instr_st_ttl_ival=0x35   # store the TTL interval measurement results to shared memory
 export instr_st_tx_mps_handle=0x37    # store the measurement result of the MPS event handling
@@ -620,14 +620,14 @@ result_sg_latency() {
     read_measurement_results $1 $instr_st_sg_lty $addr_msr1 $2
 }
 
-result_ow_delay() {
+result_msg_delay() {
     # $1 - dev/wbmo
     # $2 - verbosity
 
     if [ -n "$2" ]; then
-        echo -n "One-way delay:  "
+        echo -n "Messaging delay:  "
     fi
-    read_measurement_results $1 $instr_st_ow_dly $addr_msr1 $2
+    read_measurement_results $1 $instr_st_msg_dly $addr_msr1 $2
 }
 
 result_ttl_ival() {

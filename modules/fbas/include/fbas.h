@@ -85,7 +85,7 @@ typedef enum {
 #define FBAS_CMD_EN_MPS_FWD     0x30   // enable MPS signal forwarding
 #define FBAS_CMD_DIS_MPS_FWD    0x31   // disable MPS signal forwarding
 #define FBAS_CMD_PRINT_NW_DLY   0x32   // print result of network delay measurement
-#define FBAS_CMD_PRINT_OWD      0x33   // print result of one-way delay measurement
+#define FBAS_CMD_PRINT_MSG_DLY  0x33   // print the measurement result of messaging delay
 #define FBAS_CMD_PRINT_SG_LTY   0x34   // print result of MSP signalling latency measurement
 #define FBAS_CMD_PRINT_TTL      0x35   // print result of TTL interval measurement
 #define FBAS_CMD_PRINT_MPS_BUF  0x36   // print all MSP message relevant buffers

@@ -184,7 +184,7 @@ measure_nw_perf() {
     echo "RX (${rxscu%%.*}):"
     sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" \
         "source setup_local.sh && \
-        result_ow_delay \$rx_node_dev $verbose && \
+        result_msg_delay \$rx_node_dev $verbose && \
         result_ttl_ival \$rx_node_dev $verbose"
 }
 
