@@ -13,6 +13,7 @@ txscu=()                              # array with transmitter domain names
 fw_scu_def="fbas.scucontrol.bin"      # default LM32 FW for TX/RX SCUs
 fw_scu_multi="fbas16.scucontrol.bin"  # supports up to 16 MPS channels
 ssh_opts="-o StrictHostKeyChecking=no"   # no hostkey checking
+getopt_opts="u:p:t:r:n:eyvh"          # user options
 
 usage() {
 
@@ -26,6 +27,8 @@ usage() {
     echo "  -p <userpassd>         user password"
     echo "  -t <TX SCU>            transmitter SCU, by default $def_txscu_name"
     echo "  -r <RX SCU>            receiver SCU, by default $rxscu_name"
+    echo "  -n <MPS events>        number of MPS events, 10 by default"
+    echo "  -e                     exclude TTL measurement"
     echo "  -y                     'yes' to all prompts"
     echo "  -v                     verbosity for the measurement results"
     echo "  -h                     display this help and exit"
@@ -128,7 +131,7 @@ measure_nw_perf() {
         output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@${txscu[$i]}" "source setup_local.sh && enable_mps \$tx_node_dev")
 
         # start test sub-process and keep its process ID
-        sshpass -p "$userpasswd" ssh $ssh_opts "$username@${txscu[$i]}" "source setup_local.sh && start_nw_perf" &
+        sshpass -p "$userpasswd" ssh $ssh_opts "$username@${txscu[$i]}" "source setup_local.sh && start_nw_perf $events" &
         pids[$i]=$!
     done
 
@@ -218,18 +221,20 @@ measure_ttl() {
     sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && result_ttl_ival \$rx_node_dev \$addr_cnt1 $verbose"
 }
 
-unset username userpasswd option verbose
+unset username userpasswd events exclude_ttl auto verbose
 unset OPTIND
 
-while getopts 'hyu:p:vt:r:' c; do
+while getopts $getopt_opts c; do
     case $c in
-        h) usage; exit 0 ;;
         u) username=$OPTARG ;;
         p) userpasswd=$OPTARG ;;
-        y) option="auto" ;;
-        v) verbose="yes" ;;
         t) txscu_name+=("$OPTARG"); txscu+=("$OPTARG.$domain") ;;
         r) rxscu_name=$OPTARG; rxscu=$OPTARG.$domain ;;
+        n) events=$OPTARG ;;
+        e) exclude_ttl="exclude_ttl" ;;
+        y) auto="auto" ;;
+        v) verbose="yes" ;;
+        h) usage; exit 0 ;;
         *) usage; exit 1 ;;
     esac
 done
@@ -256,12 +261,16 @@ setup_nodes
 echo -e "\n--- Step 2: pre-check (RX=$rxscu_name, TX=${txscu_name[@]}) ---\n"
 pre_check
 
-if [ "$option" != "auto" ]; then
+if [ -z "$auto" ]; then
     user_approval
 fi
 
 echo -e "\n--- Step 3: measure network performance (RX=$rxscu_name, TX=${txscu_name[@]}) ---\n"
 measure_nw_perf
+
+if [ -n "$exclude_ttl" ]; then
+    exit 0
+fi
 
 # TTL measurement
 echo -e "\n--- Step 4: measure TTL (RX=$rxscu_name, TX=${txscu_name[@]}) ---\n"
