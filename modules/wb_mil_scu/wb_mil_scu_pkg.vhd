@@ -25,8 +25,8 @@ constant c_xwb_gsi_mil_scu : t_sdb_device := (
   product => (
   vendor_id     => x"0000000000000651", -- GSI
   device_id     => x"35aa6b96",
-  version       => x"00000002",
-  date          => x"20170907",
+  version       => x"00000003",
+  date          => x"20231211",
   name          => "GSI_MIL_SCU        ")));  -- should be 19 Char
 
 
