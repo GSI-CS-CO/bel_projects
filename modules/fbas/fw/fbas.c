@@ -511,8 +511,8 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
 
             // send MPS event
             uint32_t count = sendMpsMsgSpecific(itr, *head, FBAS_FLG_EID, N_EXTRA_MPS_NOK);
-              // count sent timing messages with MPS event
-              *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = msrCnt(TX_EVT_CNT, count);
+            // count sent timing messages with MPS event
+            *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = msrCnt(TX_EVT_CNT, count);
 
             // store timestamps to measure delays
             storeTimestamp(pSharedApp, FBAS_SHARED_GET_TS1, now);
