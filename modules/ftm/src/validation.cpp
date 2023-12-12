@@ -128,7 +128,7 @@ void init() {
       for(auto itPCh : itRules->children) possibleChildren += (itPCh + ", ");
 
       if((itCntChk.cnt < itRules->min) | (itCntChk.cnt > itRules->max)) {
-        throw std::runtime_error(exIntro + "' must must have between "
+        throw std::runtime_error(exIntro + "' must have between "
           + std::to_string(itRules->min) + " and " + std::to_string(itRules->max) + " edge(s) of type '" + itRules->edge
           + "'' connected to children of type(s) '" + possibleChildren + "', found " + std::to_string(itCntChk.cnt) + "\n");
       }
