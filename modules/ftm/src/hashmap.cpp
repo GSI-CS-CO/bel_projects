@@ -82,7 +82,7 @@ void HashMap::load(const std::string& s) {
 void HashMap::debug(std::ostream& os) {
     for (auto& x : hm) {
 
-      os << "Node: " << std::setfill(' ') << std::setw(40) << x.left << " Hash 0x"  << std::hex << std::setfill('0') << std::setw(8) << x.right << std::endl;
+      os << "Node: " << std::setfill(' ') << std::setw(40) << x.right << " Hash 0x"  << std::hex << std::setfill('0') << std::setw(8) << x.left << std::endl;
     }
   }
 

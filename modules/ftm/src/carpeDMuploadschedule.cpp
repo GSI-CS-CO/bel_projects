@@ -159,7 +159,7 @@ using namespace DotStr::Misc;
    * 'listdst', 'altdst'. If the required meta vertices do not exist,
    * generate these.
    */
-  void CarpeDM::CarpeDMimpl::generateBlockMeta(Graph& g) {
+  void CarpeDM::CarpeDMimpl::generateBlockMeta(Graph& g, bool doGenerateDstLst) {
    Graph::out_edge_iterator out_begin, out_end, out_cur;
 
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
@@ -195,7 +195,7 @@ using namespace DotStr::Misc;
         if (genHi && !hasHi ) { generateQmeta(g, v, PRIO_HI); }
         if (genLo && !hasLo ) { generateQmeta(g, v, PRIO_LO); }
 
-        if(multiDst || genIl || hasIl || genHi || hasHi || genLo || hasLo)    { generateDstLst(g, v, multiDst); }
+        if((multiDst || genIl || hasIl || genHi || hasHi || genLo || hasLo) && doGenerateDstLst)   { generateDstLst(g, v, multiDst); }
       }
     }
   }
@@ -673,7 +673,7 @@ using namespace DotStr::Misc;
 
     //FIXME fuckin dangerous stuff, both change the global grouptable. For this to work, it must be 1st baseUploadOnDownload, generateBlockMeta must be 2nd. This is horrible
     baseUploadOnDownload();
-    generateBlockMeta(g);
+    //generateBlockMeta(g);
 
     std::string report;
     std::vector<QueueReport> vQr;
@@ -699,7 +699,7 @@ using namespace DotStr::Misc;
 
     //FIXME fuckin dangerous stuff, both change the global grouptable. For this to work, it must be 1st baseUploadOnDownload, generateBlockMeta must be 2nd. This is horrible
     baseUploadOnDownload();
-    generateBlockMeta(gTmpKeep);
+    generateBlockMeta(gTmpKeep, false);
 
 
     //FIXME Resource hog with square complexity. Replace inner loop by lookup
