@@ -34,7 +34,7 @@ void init() {
         cRules.insert(ConstellationRule(n::sSwitch,      e::sSwitchDst, cNonMeta, 0, 1  ));
         cRules.insert(ConstellationRule(n::sOrigin,      e::sDefDst,     cNonMeta, 0, 1  ));
         cRules.insert(ConstellationRule(n::sOrigin,      e::sOriginDst, cNonMeta, 1, 1  ));
-        cRules.insert(ConstellationRule(n::sStartThread, e::sDefDst,     cNonMeta, 0, 1  ));        
+        cRules.insert(ConstellationRule(n::sStartThread, e::sDefDst,     cNonMeta, 0, 1  ));
         cRules.insert(ConstellationRule(n::sCmdFlush,    e::sDefDst,     cNonMeta, 1, 1  ));
         cRules.insert(ConstellationRule(n::sCmdFlush,    e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},  0, 1  ));
         cRules.insert(ConstellationRule(n::sCmdFlush,    e::sCmdFlushOvr, cNonMeta, 0, 1  ));
@@ -116,7 +116,7 @@ void init() {
 
       // if the child's type is not in the set of allowable children, this is invalid
       if (it->children.count(g[target(*out_cur,g)].type) < 1) {
-        throw std::runtime_error(exIntro + "' with edge of type '" + g[*out_cur].type + " must not have children of type '" + g[target(*out_cur,g)].type + "'\n");
+        throw std::runtime_error(exIntro + "' with edge of type '" + g[*out_cur].type + "' must not have children of type '" + g[target(*out_cur,g)].type + "'\n");
       }
     }
     //check all exisiting constellation counts against rule min/max
