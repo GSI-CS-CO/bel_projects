@@ -45,8 +45,16 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, std::string node
     g[v1].tOffs = "0";
     g[v1].id_fid = "1";
     g[v1].id_gid = "33";
-    g[v1].par = "1";
-    g[v1].tef = "0";
+    if (edgeT.compare(det::sDynPar0) == 0) {
+      g[v1].par = "0x000000000412099c";
+      g[v1].tef = "2068673551";
+    } else if (edgeT.compare(det::sDynPar1) == 0) {
+      g[v1].par = "0x0412099c00000000";
+      g[v1].tef = "2068673551";
+    } else {
+      g[v1].par = "1";
+      g[v1].tef = "0";
+    }
   } else if (g[v1].type.compare(dnt::sCmdFlow) == 0) {
     g[v1].tOffs = "0";
   } else if (g[v1].type.compare(dnt::sBlock) == 0 || g[v1].type.compare(dnt::sBlockAlign) == 0) {
@@ -68,13 +76,16 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, std::string node
   g[v2].type = nodeT2;
   g[v2].patName = "patternA";
   g[v2].bpName = "beamA";
-  if (g[v2].type.compare(dnt::sTMsg) == 0) {
+  if (nodeT2.compare(dnt::sTMsg) == 0) {
+    g[v2].tOffs = "0";
     g[v2].id_fid = "1";
     g[v2].id_gid = "33";
     g[v2].par = "1";
     g[v2].tef = "0";
     cdm->completeId(v2, g);
-  } else if (g[v2].type.compare(dnt::sBlock) == 0 || g[v2].type.compare(dnt::sBlockAlign) == 0) {
+  } else if (nodeT2.compare(dnt::sCmdFlow) == 0 || nodeT2.compare(dnt::sSwitch) == 0) {
+    g[v2].tOffs = "0";
+  } else if (nodeT2.compare(dnt::sBlock) == 0 || nodeT2.compare(dnt::sBlockAlign) == 0) {
     flags=0x00100007;
     g[v2].tPeriod = "1000";
     g[v2].qLo = 1;
@@ -86,7 +97,11 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, std::string node
   // connect v1 and v2 by an edge of type edgeT
   boost::add_edge(v1, v2, myEdge(edgeT), g);
   // connect v1 and v2 by an edge of type defdst in some cases
-  if (g[v1].type.compare(dnt::sCmdFlow) == 0 && g[v2].type.compare(dnt::sBlock) == 0 && edgeT.compare(det::sDefDst) != 0) {
+  if ((g[v1].type.compare(dnt::sCmdFlow) == 0 || g[v1].type.compare(dnt::sTMsg) == 0) && 
+      (g[v2].type.compare(dnt::sBlock) == 0 || g[v2].type.compare(dnt::sBlockAlign) == 0) && 
+      edgeT.compare(det::sDefDst) != 0 &&
+      edgeT.compare(det::sCmdFlowDst) != 0&&
+      edgeT.compare(det::sCmdTarget) != 0) {
     boost::add_edge(v1, v2, myEdge(det::sDefDst), g);
   }
   // add child vertex, blocks for a meta vertex, or a buffer vertex if necessary.
@@ -98,7 +113,7 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, std::string node
 
 void SingleEdgeGraph::extendWithChild(std::string edgeT) {
   uint32_t flags = 0;
-  if ((g1[v2].np->isEvent()) || (g1[v2].type == dnt::sQInfo)) {
+  if ((g1[v2].np->isEvent()) || (g1[v2].type.compare(dnt::sQInfo) == 0) || (g1[v1].type.compare(dnt::sCmdFlow) == 0)) {
     std::string v3Type = (g1[v2].type.compare(dnt::sQInfo) == 0) ? dnt::sQBuf : dnt::sBlock;
     std::string v3Edge = (g1[v2].type.compare(dnt::sQInfo) == 0) ? det::sMeta : det::sDefDst;
     v3 = boost::add_vertex(g1);
@@ -108,11 +123,18 @@ void SingleEdgeGraph::extendWithChild(std::string edgeT) {
     g1[v3].bpName = "beamA";
     if (g1[v3].type.compare(dnt::sBlock) == 0 || g1[v3].type.compare(dnt::sBlockAlign) == 0) {
       flags=0x00100007;
-      g1[v3].tPeriod = "1000";
+      g1[v3].tPeriod = "2000";
     }
     setNodePointer(&g1[v3], v3Type, flags);
     boost::add_edge(v2, v3, myEdge(v3Edge), g1);
-    if (g1[v2].type.compare(dnt::sCmdWait) == 0) {
+    if (g1[v2].type.compare(dnt::sCmdWait) == 0 || 
+        g1[v2].type.compare(dnt::sBlock) == 0 || 
+        g1[v2].type.compare(dnt::sBlockAlign) == 0 || 
+        g1[v2].type.compare(dnt::sCmdFlow) == 0 || 
+        g1[v2].type.compare(dnt::sCmdFlush) == 0 || 
+        g1[v2].type.compare(dnt::sCmdNoop) == 0 || 
+        g1[v2].type.compare(dnt::sSwitch) == 0 || 
+        g1[v2].type.compare(dnt::sTMsg) == 0) {
       if (edgeT.compare(det::sDefDst) != 0) {
         boost::add_edge(v1, v3, myEdge(det::sDefDst), g1);
       }
@@ -178,7 +200,7 @@ void SingleEdgeGraph::setNodePointer(myVertex* vertex, std::string type, uint32_
                                             s2u<uint8_t>(vertex->prio), s2u<uint32_t>(vertex->qty), s2u<bool>(vertex->vabs), s2u<bool>(vertex->perma));
       break;
     case NODE_TYPE_CSWITCH:
-      vertex->np = (node_ptr) new Switch(vertex->name, vertex->patName, vertex->bpName, hash, cpu, flags);
+      vertex->np = (node_ptr) new Switch(vertex->name, vertex->patName, vertex->bpName, hash, cpu, flags, s2u<uint64_t>(vertex->tOffs));
       break;
     case NODE_TYPE_CFLUSH:
       vertex->np = (node_ptr) new Flush(vertex->name, vertex->patName, vertex->bpName, hash, cpu, flags);
