@@ -33,7 +33,7 @@ class SingleEdgeGraph : public Graph {
   /** Complete the myVertex nodes with a valid node pointer depending on the type. */
   void setNodePointer(myVertex* vertex, std::string type, uint32_t flags);
   /** Extend graphs with forbiddden childless nodes. If node2 is of type event or qinfo, it may not be childless. */
-  void extendWithChild();
+  void extendWithChild(std::string edgeT);
   /** Extend graphs with forbidden orphan nodes. If node1 is of type meta, it may not be orphan. */
   void extendOrphanNode();
   /** Extend graphs with a second qbuf node if node1 has type qinfo. */
