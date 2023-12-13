@@ -29,7 +29,7 @@ class SingleEdgeGraph : public Graph {
   /** The created graph. */
   Graph g1;
   /** Memorize the nodes for later use. node1 is stored in v1 an so on.*/
-  vertex_t v1, v2, v3, v4, v5;
+  vertex_t v1, v2, v3, v4, v5, v6;
   /** Complete the myVertex nodes with a valid node pointer depending on the type. */
   void setNodePointer(myVertex* vertex, std::string type, uint32_t flags);
   /** Extend graphs with forbiddden childless nodes. If node2 is of type event or qinfo, it may not be childless. */
