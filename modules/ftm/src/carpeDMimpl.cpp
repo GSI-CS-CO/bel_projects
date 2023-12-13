@@ -17,6 +17,7 @@
 #include "idformat.h"
 #include "lzmaCompression.h"
 #include "ebwrapper.h"
+#include "log.h"
 
 
   CarpeDM::CarpeDMimpl::CarpeDMimpl()                                        : sLog(std::cout),  sErr(std::cerr) {Validation::init();}
@@ -110,6 +111,7 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
     dp.property(dep::Base::sType,               boost::get(&myEdge::type,          g));
     dp.property(dep::Data::sFieldHead,          boost::get(&myEdge::fhead,         g));
     dp.property(dep::Data::sFieldTail,          boost::get(&myEdge::ftail,         g));
+    dp.property(dep::Data::sBitWidth,           boost::get(&myEdge::bwidth,        g));
     dp.property(dnp::Base::sName,               boost::get(&myVertex::name,        g));
     dp.property(dnp::Base::sCpu,                boost::get(&myVertex::cpu,         g));
 

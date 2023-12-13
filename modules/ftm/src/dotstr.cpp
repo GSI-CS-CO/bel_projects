@@ -39,6 +39,7 @@ namespace DotStr {
       namespace Data {
         const std::string sFieldHead = "fieldhead";  // field in the node at the arrow head of edge (pointee)
         const std::string sFieldTail = "fieldtail";  // field in the node at the tail of the edge (pointing)
+        const std::string sBitWidth = "fieldwidth";
       }
     }
 
