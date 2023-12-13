@@ -124,12 +124,15 @@ public:
 
 class myEdge {
 public:
-  std::string type;
-  std::string fhead;
-  std::string ftail;
-  myEdge() : type(sUndefined) {}
+  std::string type  = sUndefined;
+  std::string fhead  = sUndefined32;
+  std::string ftail  = sUndefined32;
+  std::string bwidth = sUndefined32;
+
+  myEdge() {}
+  myEdge(myEdge const &src);
   myEdge(std::string type) : type(type) {}
-  myEdge(std::string type, std::string fhead, std::string ftail) : type(type), fhead(fhead), ftail(ftail){}
+  myEdge(std::string type, std::string fhead, std::string ftail, std::string bwidth) : type(type), fhead(fhead), ftail(ftail), bwidth(bwidth){}
 };
 
 //TODO change to aliases C++14 Style?
@@ -172,7 +175,7 @@ Graph& mycopy_graph(const T& original, Graph& cpy, vertex_map_t& vmap) {
     typename T::out_edge_iterator out_begin, out_end, out_cur;
     boost::tie(out_begin, out_end) = out_edges(v, original);
     for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
-      boost::add_edge(vmap[v], vmap[target(*out_cur, original)], myEdge(original[*out_cur].type), cpy);
+      boost::add_edge(vmap[v], vmap[target(*out_cur, original)], myEdge(original[*out_cur]), cpy);
     }
   }
   //std::cout << "ENDING SUPER SIMPLY COPY" << std::endl;

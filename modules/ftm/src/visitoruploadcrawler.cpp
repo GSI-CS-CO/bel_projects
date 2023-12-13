@@ -21,10 +21,12 @@ const std::string VisitorUploadCrawler::exIntro = "VisitorUploadCrawler: ";
 
 void VisitorUploadCrawler::visit(const Block& el) const {
   el.serialise(getDefDst() + getQInfo(), b);
+  getRefLinks();
 }
 
 void VisitorUploadCrawler::visit(const TimingMsg& el) const  {
   el.serialise(getDefDst() + getDynSrc(), b);
+  getRefLinks();
 }
 
 void VisitorUploadCrawler::visit(const Flow& el) const  {
@@ -156,24 +158,30 @@ vAdr& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, vAdr& ret, const unsig
   mVal VisitorUploadCrawler::getRefLinks() const {
     Graph::out_edge_iterator out_begin, out_end, out_cur;
     mVal t;
-    /*
+    log<DEBUG_LVL0>(L"Entered Reflink handling for Node %1%") % g[v].name.c_str();
+
     boost::tie(out_begin, out_end) = out_edges(v,g);
 
     for (out_cur = out_begin; out_cur != out_end; ++out_cur)
     {
-      if (g[*out_cur].type == edgeType) {
-        uint32_t oTarget  = s2u(g[*out_cur].fHead);
-        uint32_t oSource  = s2u(g[*out_cur].fTail);
-        uint32_t width    = s2u(g[*out_cur].bWidth) == 64 ? 1 : 0;
+      if (g[*out_cur].type == det::sRef) {
+        log<DEBUG_LVL2>(L"Found Reflink to TargetNode %1%. Offset Source: %2% Offset Target: %3% Width: %4%") % g[target(*out_cur,g)].name.c_str() % g[*out_cur].fhead.c_str() % g[*out_cur].ftail.c_str() % g[*out_cur].bwidth.c_str();
+        uint32_t oTarget  = s2u<uint32_t>(g[*out_cur].fhead);
+        uint32_t oSource  = s2u<uint32_t>(g[*out_cur].ftail);
+        uint32_t width    = s2u<uint32_t>(g[*out_cur].bwidth) == 64 ? 1 : 0;
         //we create a map entry, adress offset to adress, that will contain our refPtr
         //key is offset oSource (e.g. TMSG_RES)
         //value is the address of the target node + offset oTarget
+        
+        //log<DEBUG_LVL2>(L"Found Reflink to TargetNode %1%. Offset Source: %2$#02x Offset Target: %3$#02x Width: %4%") % g[target(*out_cur,g)].name.c_str() % oTarget % oSource % width;
+        /*
         t.insert(oSource, getEdgeTargetAdr(v, target(*out_cur, g)) );
         if (oTarget / )
         t.insert(NODE_OPT_DYN, )
+        */
       }
     }
-    */
+    
     return t;
   }
 

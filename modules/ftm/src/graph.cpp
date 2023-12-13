@@ -91,6 +91,16 @@ myVertex::myVertex(myVertex const &src) {
 
 }
 
+//cpy ctor
+//would be nicer to do this in the ctors initilisier, but Class Node's circular inclusion must be resolved
+myEdge::myEdge(myEdge const &src) {
+  this->type      = src.type  ;
+  this->fhead     = src.fhead ;
+  this->ftail     = src.ftail ;
+  this->bwidth    = src.bwidth;
+};
+
+
 Graph& updown_copy_graph(const Graph& original, Graph& cpy, vertex_map_t& vmap, AllocTable &at, HashMap &hm, GroupTable &gt) {
 
   BOOST_FOREACH( vertex_t v, vertices(original) ) {
@@ -117,7 +127,7 @@ Graph& updown_copy_graph(const Graph& original, Graph& cpy, vertex_map_t& vmap, 
     typename Graph::out_edge_iterator out_begin, out_end, out_cur;
     boost::tie(out_begin, out_end) = out_edges(v, original);
     for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
-      if (vmap.find(v) != vmap.end()) boost::add_edge(vmap[v], vmap[target(*out_cur, original)], myEdge(original[*out_cur].type), cpy);
+      if (vmap.find(v) != vmap.end()) boost::add_edge(vmap[v], vmap[target(*out_cur, original)], myEdge(original[*out_cur]), cpy);
     }
   }
 

@@ -38,6 +38,7 @@ namespace DotStr {
       namespace Data {
         extern const std::string sFieldHead;
         extern const std::string sFieldTail;
+        extern const std::string sBitWidth;
       }
     }
 
