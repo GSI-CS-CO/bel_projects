@@ -41,8 +41,8 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, std::string node
   g[v1].type = nodeT1;
   g[v1].patName = "patternA";
   g[v1].bpName = "beamA";
+  g[v1].tOffs = "0";
   if (g[v1].type.compare(dnt::sTMsg) == 0) {
-    g[v1].tOffs = "0";
     g[v1].id_fid = "1";
     g[v1].id_gid = "33";
     if (edgeT.compare(det::sDynPar0) == 0) {
@@ -55,12 +55,25 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, std::string node
       g[v1].par = "1";
       g[v1].tef = "0";
     }
-  } else if (g[v1].type.compare(dnt::sCmdFlow) == 0) {
-    g[v1].tOffs = "0";
+  } else if (g[v1].type.compare(dnt::sCmdFlush) == 0) {
+    g[v1].qLo = "1";
+    g[v1].qIl = "0";
+    g[v1].qHi = "0";
+  } else if (g[v1].type.compare(dnt::sCmdWait) == 0) {
+    g[v1].tWait = "100";
+  } else if (g[v1].type.compare(dnt::sStartThread) == 0) {
+    g[v1].startOffs = "500";
   } else if (g[v1].type.compare(dnt::sBlock) == 0 || g[v1].type.compare(dnt::sBlockAlign) == 0) {
     flags=0x00100007;
     g[v1].tPeriod = "1000";
-    g[v1].qLo = 1;
+    g[v1].qLo = "1";
+    if (edgeT.compare(det::sQPrio[1]) == 0) {
+      g[v1].qHi = "1";
+      flags |= 0x00200000;
+    } else if (edgeT.compare(det::sQPrio[2]) == 0) {
+      g[v1].qIl = "1";
+      flags |= 0x00400000;
+    }
     if (nodeT2.compare(dnt::sQInfo) != 0) {
       generateQmeta(g, v1, 0);
     }
@@ -76,8 +89,8 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, std::string node
   g[v2].type = nodeT2;
   g[v2].patName = "patternA";
   g[v2].bpName = "beamA";
+  g[v2].tOffs = "0";
   if (nodeT2.compare(dnt::sTMsg) == 0) {
-    g[v2].tOffs = "0";
     g[v2].id_fid = "1";
     g[v2].id_gid = "33";
     g[v2].par = "1";
@@ -85,6 +98,12 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, std::string node
     cdm->completeId(v2, g);
   } else if (nodeT2.compare(dnt::sCmdFlow) == 0 || nodeT2.compare(dnt::sSwitch) == 0) {
     g[v2].tOffs = "0";
+  } else if (nodeT2.compare(dnt::sCmdNoop) == 0) {
+    g[v2].tOffs = "0";
+  } else if (nodeT2.compare(dnt::sCmdWait) == 0) {
+    g[v2].tWait = "200";
+  } else if (nodeT2.compare(dnt::sStartThread) == 0) {
+    g[v2].startOffs = "500";
   } else if (nodeT2.compare(dnt::sBlock) == 0 || nodeT2.compare(dnt::sBlockAlign) == 0) {
     flags=0x00100007;
     g[v2].tPeriod = "1000";
@@ -100,8 +119,14 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, std::string node
   if ((g[v1].type.compare(dnt::sCmdFlow) == 0 || g[v1].type.compare(dnt::sTMsg) == 0) && 
       (g[v2].type.compare(dnt::sBlock) == 0 || g[v2].type.compare(dnt::sBlockAlign) == 0) && 
       edgeT.compare(det::sDefDst) != 0 &&
-      edgeT.compare(det::sCmdFlowDst) != 0&&
+      edgeT.compare(det::sCmdFlowDst) != 0 &&
       edgeT.compare(det::sCmdTarget) != 0) {
+    boost::add_edge(v1, v2, myEdge(det::sDefDst), g);
+  }
+  if ((g[v1].type.compare(dnt::sCmdWait) == 0 || g[v1].type.compare(dnt::sSwitch) == 0 || g[v1].type.compare(dnt::sOrigin) == 0 || g[v1].type.compare(dnt::sCmdFlush) == 0) && 
+      (g[v2].type.compare(dnt::sBlock) == 0 || g[v2].type.compare(dnt::sBlockAlign) == 0) && 
+      edgeT.compare(det::sDefDst) != 0 &&
+      edgeT.compare(det::sCmdFlowDst) != 0) {
     boost::add_edge(v1, v2, myEdge(det::sDefDst), g);
   }
   // add child vertex, blocks for a meta vertex, or a buffer vertex if necessary.
@@ -113,7 +138,9 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, std::string node
 
 void SingleEdgeGraph::extendWithChild(std::string edgeT) {
   uint32_t flags = 0;
-  if ((g1[v2].np->isEvent()) || (g1[v2].type.compare(dnt::sQInfo) == 0) || (g1[v1].type.compare(dnt::sCmdFlow) == 0)) {
+  if ((g1[v2].np->isEvent()) || (g1[v2].type.compare(dnt::sQInfo) == 0) || 
+      (g1[v1].type.compare(dnt::sCmdFlow) == 0) ||
+      (g1[v1].type.compare(dnt::sCmdNoop) == 0)) {
     std::string v3Type = (g1[v2].type.compare(dnt::sQInfo) == 0) ? dnt::sQBuf : dnt::sBlock;
     std::string v3Edge = (g1[v2].type.compare(dnt::sQInfo) == 0) ? det::sMeta : det::sDefDst;
     v3 = boost::add_vertex(g1);
@@ -133,6 +160,8 @@ void SingleEdgeGraph::extendWithChild(std::string edgeT) {
         g1[v2].type.compare(dnt::sCmdFlow) == 0 || 
         g1[v2].type.compare(dnt::sCmdFlush) == 0 || 
         g1[v2].type.compare(dnt::sCmdNoop) == 0 || 
+        g1[v2].type.compare(dnt::sOrigin) == 0 || 
+        g1[v2].type.compare(dnt::sStartThread) == 0 || 
         g1[v2].type.compare(dnt::sSwitch) == 0 || 
         g1[v2].type.compare(dnt::sTMsg) == 0) {
       if (edgeT.compare(det::sDefDst) != 0) {
@@ -152,16 +181,25 @@ void SingleEdgeGraph::extendWithChild(std::string edgeT) {
 
 void SingleEdgeGraph::extendOrphanNode() {
   if (g1[v1].np->isMeta()) {
-    std::string v5Type = dnt::sBlock;
-    std::string v5Edge = det::sQPrio[0];
     v5 = boost::add_vertex(g1);
     g1[v5].name = "E5";
-    g1[v5].type = v5Type;
+    g1[v5].type = dnt::sBlock;
     g1[v5].patName = "patternA";
     g1[v5].bpName = "beamA";
     g1[v5].tPeriod = "1000";
-    setNodePointer(&g1[v5], v5Type, 0);
-    boost::add_edge(v5, v1, myEdge(v5Edge), g1);
+    g1[v5].qLo = "1";
+    uint32_t flags=0x00100007;
+    flags |= NFLG_PAT_ENTRY_LM32_SMSK;
+    flags |= NFLG_PAT_EXIT_LM32_SMSK;
+    setNodePointer(&g1[v5], dnt::sBlock, flags);
+    boost::add_edge(v5, v1, myEdge(det::sQPrio[0]), g1);
+    v6 = boost::add_vertex(g1);
+    g1[v6].name = "E5_ListDst";
+    g1[v6].type = dnt::sDstList;
+    g1[v6].patName = "patternA";
+    g1[v6].bpName = "beamA";
+    setNodePointer(&g1[v6], dnt::sDstList, 0);
+    boost::add_edge(v5, v6, myEdge(det::sDstList), g1);
   }
 }
 
@@ -193,7 +231,8 @@ void SingleEdgeGraph::setNodePointer(myVertex* vertex, std::string type, uint32_
                                             s2u<uint64_t>(vertex->par), s2u<uint32_t>(vertex->tef), s2u<uint32_t>(vertex->res));
       break;
     case NODE_TYPE_CNOOP:
-      vertex->np = (node_ptr) new Noop(vertex->name, vertex->patName, vertex->bpName, hash, cpu, flags);
+      vertex->np = (node_ptr) new Noop(vertex->name, vertex->patName, vertex->bpName, hash, cpu, flags, s2u<uint64_t>(vertex->tOffs), s2u<uint64_t>(vertex->tValid),
+                                            s2u<uint8_t>(vertex->prio), s2u<uint32_t>(vertex->qty), s2u<bool>(vertex->vabs));
       break;
     case NODE_TYPE_CFLOW:
       vertex->np = (node_ptr) new Flow(vertex->name, vertex->patName, vertex->bpName, hash, cpu, flags, s2u<uint64_t>(vertex->tOffs), s2u<uint64_t>(vertex->tValid),
@@ -203,10 +242,12 @@ void SingleEdgeGraph::setNodePointer(myVertex* vertex, std::string type, uint32_
       vertex->np = (node_ptr) new Switch(vertex->name, vertex->patName, vertex->bpName, hash, cpu, flags, s2u<uint64_t>(vertex->tOffs));
       break;
     case NODE_TYPE_CFLUSH:
-      vertex->np = (node_ptr) new Flush(vertex->name, vertex->patName, vertex->bpName, hash, cpu, flags);
+      vertex->np = (node_ptr) new Flush(vertex->name, vertex->patName, vertex->bpName, hash, cpu, flags, s2u<uint64_t>(vertex->tOffs), s2u<uint64_t>(vertex->tValid),
+                                            s2u<uint8_t>(vertex->prio), s2u<bool>(vertex->qIl), s2u<bool>(vertex->qHi), s2u<bool>(vertex->qLo), s2u<bool>(vertex->vabs), s2u<bool>(vertex->perma));
       break;
     case NODE_TYPE_CWAIT:
-      vertex->np = (node_ptr) new Wait(vertex->name, vertex->patName, vertex->bpName, hash, cpu, flags);
+      vertex->np = (node_ptr) new Wait(vertex->name, vertex->patName, vertex->bpName, hash, cpu, flags, s2u<uint64_t>(vertex->tOffs), s2u<uint64_t>(vertex->tValid),
+                                            s2u<uint8_t>(vertex->prio), s2u<uint32_t>(vertex->tWait), s2u<bool>(vertex->vabs));
       break;
     case NODE_TYPE_BLOCK_FIXED:
       vertex->np = (node_ptr) new BlockFixed(vertex->name, vertex->patName, vertex->bpName, hash, cpu, flags, s2u<uint64_t>(vertex->tPeriod));
@@ -218,16 +259,17 @@ void SingleEdgeGraph::setNodePointer(myVertex* vertex, std::string type, uint32_
       vertex->np = (node_ptr) new CmdQMeta(vertex->name, vertex->patName, vertex->bpName, hash, cpu, flags);
       break;
     case NODE_TYPE_ALTDST:
+      //~ std::cout << "setNodePointer: NODE_TYPE_ALTDST, " << vertex->name << std::endl;
       vertex->np = (node_ptr) new DestList(vertex->name, vertex->patName, vertex->bpName, hash, cpu, flags);
       break;
     case NODE_TYPE_QBUF:
       vertex->np = (node_ptr) new CmdQBuffer(vertex->name, vertex->patName, vertex->bpName, hash, cpu, flags);
       break;
     case NODE_TYPE_ORIGIN:
-      vertex->np = (node_ptr) new Origin(vertex->name, vertex->patName, vertex->bpName, hash, cpu, flags);
+      vertex->np = (node_ptr) new Origin(vertex->name, vertex->patName, vertex->bpName, hash, cpu, flags, s2u<uint64_t>(vertex->tOffs), 0);
       break;
     case NODE_TYPE_STARTTHREAD:
-      vertex->np = (node_ptr) new StartThread(vertex->name, vertex->patName, vertex->bpName, hash, cpu, flags);
+      vertex->np = (node_ptr) new StartThread(vertex->name, vertex->patName, vertex->bpName, hash, cpu, flags, s2u<uint64_t>(vertex->tOffs), s2u<uint64_t>(vertex->startOffs), 0);
       break;
     case NODE_TYPE_UNKNOWN:
       std::cerr << "not yet implemented " << vertex->type << std::endl;
