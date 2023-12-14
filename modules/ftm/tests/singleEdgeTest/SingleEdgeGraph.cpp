@@ -114,7 +114,13 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, std::string node
   flags |= NFLG_PAT_EXIT_LM32_SMSK;
   setNodePointer(&g[v2], nodeT2, flags);
   // connect v1 and v2 by an edge of type edgeT
-  boost::add_edge(v1, v2, myEdge(edgeT), g);
+  if (nodeT1.compare(dnt::sDstList) == 0 && edgeT.compare(det::sDstList) == 0) {
+    boost::add_edge(v1, v2, myEdge(det::sDefDst), g);
+  } else if (nodeT2.compare(dnt::sDstList) == 0 && edgeT.compare(det::sDstList) == 0) {
+    boost::add_edge(v2, v1, myEdge(det::sDefDst), g);
+  } {
+    boost::add_edge(v1, v2, myEdge(edgeT), g);
+  }
   // connect v1 and v2 by an edge of type defdst in some cases
   if ((g[v1].type.compare(dnt::sCmdFlow) == 0 || g[v1].type.compare(dnt::sTMsg) == 0) && 
       (g[v2].type.compare(dnt::sBlock) == 0 || g[v2].type.compare(dnt::sBlockAlign) == 0) && 
@@ -180,7 +186,7 @@ void SingleEdgeGraph::extendWithChild(std::string edgeT) {
 }
 
 void SingleEdgeGraph::extendOrphanNode() {
-  if (g1[v1].np->isMeta()) {
+  if (g1[v1].np->isMeta() && g1[v1].type.compare(dnt::sDstList) != 0) {
     v5 = boost::add_vertex(g1);
     g1[v5].name = "E5";
     g1[v5].type = dnt::sBlock;
@@ -199,7 +205,7 @@ void SingleEdgeGraph::extendOrphanNode() {
     g1[v6].patName = "patternA";
     g1[v6].bpName = "beamA";
     setNodePointer(&g1[v6], dnt::sDstList, 0);
-    boost::add_edge(v5, v6, myEdge(det::sDstList), g1);
+    boost::add_edge(v6, v5, myEdge(det::sDefDst), g1);
   }
 }
 

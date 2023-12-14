@@ -68,6 +68,10 @@ int main(int, char *[]) {
             status.increment("Known exceptions");
             status.increment("Forbidden child type");
             knownException = true;
+          } else if (std::string(e.what()).find("Node 'A1' of type 'listdst' with edge of type 'defdst' must not have children of type") != std::string::npos) {
+            status.increment("Known exceptions");
+            status.increment("Forbidden child type");
+            knownException = true;
           }
           if (std::string(e.what()).find("Node 'A1' of type '" + nodeT1 + "' cannot be an orphan") != std::string::npos) {
             status.increment("Known exceptions");
