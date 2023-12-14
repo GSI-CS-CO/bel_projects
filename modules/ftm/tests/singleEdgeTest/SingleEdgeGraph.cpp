@@ -118,7 +118,7 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, std::string node
     boost::add_edge(v1, v2, myEdge(det::sDefDst), g);
   } else if (nodeT2.compare(dnt::sDstList) == 0 && edgeT.compare(det::sDstList) == 0) {
     boost::add_edge(v2, v1, myEdge(det::sDefDst), g);
-  } {
+  } else {
     boost::add_edge(v1, v2, myEdge(edgeT), g);
   }
   // connect v1 and v2 by an edge of type defdst in some cases
