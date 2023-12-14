@@ -3,6 +3,8 @@
 mkdir -p dot/
 LD_LIBRARY_PATH=../lib ./singleEdgeTest/singleEdgeTest
 
+mv dot/testSingleEdge-listdst-block-defdst.dot schedules/
+mv dot/testSingleEdge-listdst-blockalign-defdst.dot schedules/
 mv dot/testSingleEdge-block-block-altdst.dot schedules/
 mv dot/testSingleEdge-block-block-defdst.dot schedules/
 mv dot/testSingleEdge-block-blockalign-altdst.dot schedules/
@@ -11,7 +13,6 @@ mv dot/testSingleEdge-block-flow-altdst.dot schedules/
 mv dot/testSingleEdge-block-flow-defdst.dot schedules/
 mv dot/testSingleEdge-block-flush-altdst.dot schedules/
 mv dot/testSingleEdge-block-flush-defdst.dot schedules/
-mv dot/testSingleEdge-block-listdst-listdst.dot schedules/
 mv dot/testSingleEdge-block-noop-altdst.dot schedules/
 mv dot/testSingleEdge-block-noop-defdst.dot schedules/
 mv dot/testSingleEdge-block-origin-altdst.dot schedules/
@@ -35,7 +36,6 @@ mv dot/testSingleEdge-blockalign-flow-altdst.dot schedules/
 mv dot/testSingleEdge-blockalign-flow-defdst.dot schedules/
 mv dot/testSingleEdge-blockalign-flush-altdst.dot schedules/
 mv dot/testSingleEdge-blockalign-flush-defdst.dot schedules/
-mv dot/testSingleEdge-blockalign-listdst-listdst.dot schedules/
 mv dot/testSingleEdge-blockalign-noop-altdst.dot schedules/
 mv dot/testSingleEdge-blockalign-noop-defdst.dot schedules/
 mv dot/testSingleEdge-blockalign-origin-altdst.dot schedules/
