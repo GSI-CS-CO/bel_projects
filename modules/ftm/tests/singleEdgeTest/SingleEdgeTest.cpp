@@ -64,7 +64,7 @@ int main(int, char *[]) {
             status.increment("Forbidden edge type");
             knownException = true;
           }
-          if (std::string(e.what()).find("Node 'A1' of type '" + nodeT1 + "' with edge of type '" + edgeT + " must not have children of type") != std::string::npos) {
+          if (std::string(e.what()).find("Node 'A1' of type '" + nodeT1 + "' with edge of type '" + edgeT + "' must not have children of type") != std::string::npos) {
             status.increment("Known exceptions");
             status.increment("Forbidden child type");
             knownException = true;
