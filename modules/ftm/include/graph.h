@@ -11,10 +11,16 @@
 #include "aux_boost.h"
 #include "dotstr.h"
 
+
 using namespace DotStr::Misc;
+namespace dnt = DotStr::Node::TypeVal;
 
 
 class Node;
+
+class HashMap;
+class AllocTable;
+class GroupTable;
 
 class  myVertex {
 public:
@@ -22,6 +28,7 @@ public:
   std::string patName   = sUndefined;
   std::string bpName    = sUndefined;
   std::string cpu       = sUndefined;
+  std::string section   = sUndefined;
   std::string thread    = sUndefined;
   uint32_t hash = uUndefined32;
   node_ptr np = nullptr;
@@ -34,7 +41,7 @@ public:
   std::string bpEntry   = sZero;
   std::string bpExit    = sZero;
 
-  //FIXME
+  //TODO
   //now follows a list of all possible properties graphviz_read can assign, to copy to concrete Node objects later
   //dirty business. this will have to go in the future
   // Option 1 (easy and clean, still needs ALL possible properties to be present in myVertex):
@@ -117,9 +124,15 @@ public:
 
 class myEdge {
 public:
-  std::string type;
-  myEdge() : type(sUndefined) {}
+  std::string type  = sUndefined;
+  std::string fhead  = sUndefined32;
+  std::string ftail  = sUndefined32;
+  std::string bwidth = sUndefined32;
+
+  myEdge() {}
+  myEdge(myEdge const &src);
   myEdge(std::string type) : type(type) {}
+  myEdge(std::string type, std::string fhead, std::string ftail, std::string bwidth) : type(type), fhead(fhead), ftail(ftail), bwidth(bwidth){}
 };
 
 //TODO change to aliases C++14 Style?
@@ -131,6 +144,7 @@ typedef boost::graph_traits<Graph>::edge_descriptor edge_t;
 typedef boost::container::vector<vertex_t> vVertices;
 typedef std::map<vertex_t, vertex_t> vertex_map_t;
 typedef std::set<vertex_t> vertex_set_t;
+typedef std::vector<vertex_t> vertex_vec_t;
 typedef std::set<edge_t> edge_set_t;
 typedef std::map<vertex_t, std::set<vertex_t>> vertex_set_map_t;
 
@@ -161,12 +175,18 @@ Graph& mycopy_graph(const T& original, Graph& cpy, vertex_map_t& vmap) {
     typename T::out_edge_iterator out_begin, out_end, out_cur;
     boost::tie(out_begin, out_end) = out_edges(v, original);
     for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
-      boost::add_edge(vmap[v], vmap[target(*out_cur, original)], myEdge(original[*out_cur].type), cpy);
+      boost::add_edge(vmap[v], vmap[target(*out_cur, original)], myEdge(original[*out_cur]), cpy);
     }
   }
   //std::cout << "ENDING SUPER SIMPLY COPY" << std::endl;
   return cpy;
 }
+
+
+
+Graph& updown_copy_graph(const Graph& original, Graph& cpy, vertex_map_t& vmap, AllocTable &at, HashMap &hm, GroupTable &gt);
+
+
 
 
 /*

@@ -278,6 +278,7 @@
 /** @name Generic node layout definitions. Goes for all nodes */
 //@{
 #define NODE_BEGIN              (0)		///< First word
+#define NODE_OPT_DYN            (0x24)   ///< Word definitions if we have dynamic fields
 #define NODE_HASH               (0x28)	///< 32b hash of the node name string
 #define NODE_FLAGS              (NODE_HASH  + _32b_SIZE_) ///< Flag field
 #define NODE_DEF_DEST_PTR       (NODE_FLAGS + _32b_SIZE_) ///< Default destination (successor) pointer
@@ -312,8 +313,11 @@
 
 /** @name Alternative destination list node layout definition*/
 //@{
+#define DST_MAX                 9
+
 #define DST_ARRAY               (NODE_BEGIN) ///< Array of pointers to all nodes which are alternative definitions
-#define DST_ARRAY_END           (DST_ARRAY + 10 * _PTR_SIZE_) ///< End of Array
+#define DST_ARRAY_END           (DST_ARRAY + DST_MAX * _PTR_SIZE_) ///< End of Array
+#define DST_NXTPTR              NODE_DEF_DEST_PTR ///< End of Array
 //@}
 
 /** @name Origin node layout definition.*/
@@ -692,6 +696,13 @@
 #define NFLG_DEBUG1_SMSK    (NFLG_DEBUG1_MSK << NFLG_DEBUG1_POS)
 //@}
 
+/** @name Node flag field bit defs - Node has dynamic fields */
+//@{
+#define NFLG_DYNAMIC_FIELDS_MSK     0x1
+#define NFLG_DYNAMIC_FIELDS_POS     18
+#define NFLG_DYNAMIC_FIELDS_SMSK    (NFLG_DYNAMIC_FIELDS_MSK << NFLG_DYNAMIC_FIELDS_POS)
+//@}
+
 /** @name Node flag field bit defs - Position of type specific flags */
 //@{
 #define NFLG_BITS_SPECIFIC_POS  20
@@ -705,9 +716,29 @@
 //@}
 
 
-//FIXME selling my soul here by allowing dynamic changes to timing msg content.
-// Prime BS caused by Jutta's "we must know which pattern it belongs to and dont want to use a proper DB lookup".
-// Evil stuff and likely to explode in our faces at some point
+
+#define DYN_MODE_IM        0  ///< Tmsg - Address of dynamic ID source
+#define DYN_MODE_VAL       1  ///< Tmsg - Address of dynamic PAR high word source (node)  
+#define DYN_MODE_REF       2  ///< Tmsg - Address of dynamic PAR high word source (node)
+#define DYN_MODE_REF2      3  ///< Tmsg - Address of dynamic TEF source
+
+//
+/** @name Node flag field bit defs - interprete ID word as 64b word */
+//@{
+#define DYN_MODE_MSK    0x3
+#define DYN_MODE_POS    0
+#define DYN_MODE_SMSK   (DYN_MODE_MSK << DYN_MODE_POS)
+//@}
+
+//
+/** @name Node flag field bit defs - interprete ID word as 64b word */
+//@{
+#define DYN_WIDTH64_MSK    0x1 
+#define DYN_WIDTH64_POS    2
+#define DYN_WIDTH64_SMSK   (DYN_WIDTH64_MSK << DYN_WIDTH64_POS)
+//@}
+
+
 
 //
 /** @name Node flag field bit defs - interprete ID word as 64b word */

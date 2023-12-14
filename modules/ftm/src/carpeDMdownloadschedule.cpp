@@ -17,6 +17,8 @@
 #include "dotstr.h"
 #include "idformat.h"
 
+#include "log.h"
+
 namespace dnt = DotStr::Node::TypeVal;
 
 
@@ -240,7 +242,7 @@ namespace dnt = DotStr::Node::TypeVal;
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // create edges
-    //Two-pass for edges. First, iterate all non meta-types to establish block -> dstList parenthood
+    //Three-pass for edges. First, iterate all non meta-types to establish block -> dstList parenthood
     for(auto& it : at.getTable().get<Hash>()) {
       // handled by visitor
       if (g[it.v].np == nullptr) {throw std::runtime_error( std::string("Node ") + g[it.v].name + std::string("not initialised")); return;
@@ -248,8 +250,6 @@ namespace dnt = DotStr::Node::TypeVal;
       } else {
 
         if  (!(g[it.v].np->isMeta())) {
-          //g[it.v].np->show();
-          //hexDump("\nDEBUG_Dump_of_node_in_readback_buffer_from_FPGA", (const char*)it.b, _MEM_BLOCK_SIZE );
           g[it.v].np->accept(VisitorDownloadCrawler(g, it.v, at, ct, sLog, sErr));
         }  
       }

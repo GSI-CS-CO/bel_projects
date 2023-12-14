@@ -39,19 +39,24 @@ class VisitorUploadCrawler {
     //void updateStaging() const;
     //void updateListDstStaging(amI x) const;
     //void updateBlockStaging() const;
-    vAdr getDefDst(void)    const;
-    vAdr getDynSrc(void)    const;
-    vAdr getQInfo(void)     const;
-    vAdr getQBuf(void)      const;
-    vAdr getCmdTarget(Command& el) const;
-    vAdr getSwitchTarget(void) const;
-    vAdr getFlowDst(void)   const;
-    vAdr getSwitchDst(void)   const;
-    vAdr getOriginDst(void)   const;
-    vAdr getFlushOvr(void)  const;
-    vAdr getListDst(void)   const;
+    mVal getDefDst(void)    const;
+    mVal getDynSrc(void)    const;
+    mVal getQInfo(void)     const;
+    mVal getQBuf(void)      const;
+    mVal getCmdTarget(Command& el) const;
+    mVal getSwitchTarget(void) const;
+    mVal getFlowDst(void)   const;
+    mVal getSwitchDst(void)   const;
+    mVal getOriginDst() const;
+    mVal getFlushOvr(void)  const;
+    mVal getListDst(void)   const;
+    mVal getRefLinks() const;
+    mVal getValLinks() const;
     static const std::string exIntro;
-    vertex_set_t getChildrenByEdgeType(vertex_t vStart, const std::string edgeType) const;
+    vertex_vec_t getChildrenByEdgeType(vertex_t vStart, const std::string edgeType) const;
+    //vertex_set_t getChildrenByEdgeType(vertex_t vStart, const std::string edgeType) const;
+    uint32_t getEdgeTargetAdr(vertex_t vSrc, vertex_t vDst) const;
+    vertex_t getOnlyChildByEdgeType(vertex_t vStart, const std::string edgeType) const;
     vAdr& childrenAdrs(vertex_set_t vs, vAdr& ret, const unsigned int minResults = 1, const unsigned int maxResults = 1, const bool allowPeers = false, const uint32_t resultPadData = LM32_NULL_PTR) const;
 
   public:

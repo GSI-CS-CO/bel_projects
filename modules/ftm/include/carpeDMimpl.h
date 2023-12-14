@@ -58,8 +58,8 @@ private:
   void updateListDstStaging(vertex_t v);
   void updateStaging(vertex_t v, edge_t e);
   void pushMetaNeighbours(vertex_t v, Graph& g, vertex_set_t& s);
-  void generateBlockMeta(Graph& g);
-  void generateDstLst(Graph& g, vertex_t v);
+  void generateBlockMeta(Graph& g, bool doGenerateDstLst=true);
+  void generateDstLst(Graph& g, vertex_t v, unsigned multiDst);
   void generateQmeta(Graph& g, vertex_t v, int prio);
   void generateMgmtData();
 
