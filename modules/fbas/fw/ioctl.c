@@ -75,11 +75,11 @@ uint32_t getIoOe(uint32_t channel)
     reg = IO_GPIO_OE_SETLOW;
   else if (channel == IO_CFG_CHANNEL_LVDS) // LVDS channel
     reg = IO_LVDS_OE_SETLOW;
-  else
-    return 0xFFFF;
 
   if (reg)
     return *(pIOCtrl + (reg >> 2));
+  else
+    return 0xFFFF;
 }
 
 /**

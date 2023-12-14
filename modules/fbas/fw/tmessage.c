@@ -38,8 +38,8 @@
 #include "tmessage.h"
 
 // application-specific variables
-mpsMsg_t   bufMpsMsg[N_MPS_CHANNELS] = {0};       // buffer for MPS timing messages
-timedItr_t rdItr = {0};                           // read-access iterator for MPS flags
+mpsMsg_t   bufMpsMsg[N_MPS_CHANNELS];       // buffer for MPS timing messages
+timedItr_t rdItr;                           // read-access iterator for MPS flags
 
 static int addr_equal(uint8_t a[ETH_ALEN], uint8_t b[ETH_ALEN]); // wr-switch-sw/userspace/libwr
 static uint8_t *addr_copy(uint8_t dst[ETH_ALEN], uint8_t src[ETH_ALEN]);
@@ -336,7 +336,7 @@ void msgInitMpsMsgBuf()
     setMpsMsgSenderId(&bufMpsMsg[i], myMac, 1);
     bufMpsMsg[i].ttl = 0;
     bufMpsMsg[i].tsRx = 0;
-    DBPRINT1("%x: mac=%x:%x:%x:%x:%x:%x idx=%x flag=%x @0x%08x\n",
+    DBPRINT1("%x: mac=%x:%x:%x:%x:%x:%x idx=%x flag=%x @0x%8p\n",
              i, bufMpsMsg[i].prot.addr[0], bufMpsMsg[i].prot.addr[1], bufMpsMsg[i].prot.addr[2],
              bufMpsMsg[i].prot.addr[3], bufMpsMsg[i].prot.addr[4], bufMpsMsg[i].prot.addr[5],
              bufMpsMsg[i].prot.idx, bufMpsMsg[i].prot.flag, &bufMpsMsg[i]);
@@ -430,9 +430,8 @@ static uint8_t *addr_copy(uint8_t dst[ETH_ALEN], uint8_t src[ETH_ALEN])
  **/
 status_t sendRegReq(int req)
 {
-  uint64_t evtId, param, ext;
-  uint32_t res, tef = 0;
-  uint32_t evtIdHi, evtIdLo;
+  uint64_t param;
+  uint32_t tef = 0;
   uint32_t paramHi, paramLo;
   uint32_t deadlineHi, deadlineLo;
   uint32_t forceLate = 1;

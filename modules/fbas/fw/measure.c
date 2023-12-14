@@ -37,8 +37,8 @@
 
 #include "measure.h"
 
-static msrSumStats_t sumStats[N_MSR_ITEMS] = {0};  // buffer for summary statistics
-static msrCnt_t      cnt[N_MSR_CNT] = {0};         // event and action counters
+static msrSumStats_t sumStats[N_MSR_ITEMS];  // buffer for summary statistics
+static msrCnt_t      cnt[N_MSR_CNT];         // event and action counters
 
 /**
  * \brief store a timestamp
@@ -190,7 +190,7 @@ void measurePrintAverage(msrItem_t item, uint32_t* base, uint32_t offset) {
   uint64_t *pSharedReg64 = (uint64_t *)(base + (offset >> 2));
   msrSumStats_t* pStats = &sumStats[item];
 
-  DBPRINT2("%d @0x%08x avg=%llu min=%lli max=%llu cnt=%d/%d\n",
+  DBPRINT2("%d @0x%8p avg=%llu min=%lli max=%llu cnt=%d/%d\n",
     item,
     pSharedReg64,
     pStats->avg, pStats->min, pStats->max, pStats->cntValid, pStats->cntTotal);

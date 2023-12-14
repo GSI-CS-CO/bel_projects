@@ -132,7 +132,6 @@ static uint64_t getTimerIrqDelay()
   static uint32_t len    = 0x0;
   static uint32_t preset = 0x0;
 
-  uint64_t ts;
   uint64_t irqDelay;
 
   if (!len)    len    = *wb_timer_ticklen;         // read tick length [ns] of counter upon first run

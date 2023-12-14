@@ -66,7 +66,7 @@
 // stuff required for environment
 #define  SHARED  __attribute__((section(".shared")))
 extern uint32_t* _startshared[];
-static unsigned int cpuId, cpuQty;
+static unsigned int cpuId;
 
 // common-fwlib globals
 extern volatile uint32_t *pECAQ;        // WB address of ECA queue
@@ -153,13 +153,13 @@ static void initSharedMem(uint32_t *sharedSize)
 
   // print WB addresses (shared RAM, range reserved to user, command buffer etc) to WR console
   pSharedTemp = pCpuRamExternal + (SHARED_OFFS >> 2) + (COMMON_SHARED_CMD >> 2);
-  DBPRINT2("fbas: CPU RAM External 0x%8x, begin shared 0x%08x, command 0x%08x\n",
+  DBPRINT2("fbas: CPU RAM External 0x%8p, begin shared 0x%08x, command 0x%8p\n",
       pCpuRamExternal, SHARED_OFFS, pSharedTemp);
 
   // clear shared mem
   i = 0;
   pSharedTemp        = (uint32_t *)(pShared + (COMMON_SHARED_BEGIN >> 2 ));
-  DBPRINT2("fbas: app specific shared begin 0x%08x\n", pSharedTemp);
+  DBPRINT2("fbas: app specific shared begin 0x%8p\n", pSharedTemp);
   while (pSharedTemp < (uint32_t *)(pShared + (FBAS_SHARED_END >> 2 ))) {
     *pSharedTemp = 0x0;
     pSharedTemp++;
@@ -171,18 +171,18 @@ static void initSharedMem(uint32_t *sharedSize)
 
   // print application-specific register set (in shared mem)
   pSharedApp = (uint32_t *)(pShared + (FBAS_SHARED_SET_GID >> 2));
-  DBPRINT2("fbas%d: SHARED_SET_NODETYPE 0x%08x\n", nodeType, (pSharedApp + (FBAS_SHARED_SET_NODETYPE >> 2)));
-  DBPRINT2("fbas%d: SHARED_GET_NODETYPE 0x%08x\n", nodeType, (pSharedApp + (FBAS_SHARED_GET_NODETYPE >> 2)));
-  DBPRINT2("fbas%d: SHARED_GET_TS1 0x%08x\n", nodeType, (pSharedApp + (FBAS_SHARED_GET_TS1 >> 2)));
+  DBPRINT2("fbas%d: SHARED_SET_NODETYPE 0x%8p\n", nodeType, (pSharedApp + (FBAS_SHARED_SET_NODETYPE >> 2)));
+  DBPRINT2("fbas%d: SHARED_GET_NODETYPE 0x%8p\n", nodeType, (pSharedApp + (FBAS_SHARED_GET_NODETYPE >> 2)));
+  DBPRINT2("fbas%d: SHARED_GET_TS1 0x%8p\n", nodeType, (pSharedApp + (FBAS_SHARED_GET_TS1 >> 2)));
 
   // reset all event counters
   *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = msrSetCnt(TX_EVT_CNT, 0);
   *(pSharedApp + (FBAS_SHARED_ECA_VLD >> 2)) = msrSetCnt(ECA_VLD_ACT, 0);
   *(pSharedApp + (FBAS_SHARED_ECA_OVF >> 2)) = msrSetCnt(ECA_OVF_ACT, 0);
-  DBPRINT2("fbas%d: SHARED_GET_CNT 0x%08x\n", nodeType, (pSharedApp + (FBAS_SHARED_GET_CNT >> 2)));
-  DBPRINT2("fbas%d: SHARED_CNT_VAL 0x%08x\n", nodeType, (pSharedApp + (FBAS_SHARED_ECA_VLD >> 2)));
-  DBPRINT2("fbas%d: SHARED_CNT_OVF 0x%08x\n", nodeType, (pSharedApp + (FBAS_SHARED_ECA_OVF >> 2)));
-  DBPRINT2("fbas%d: SHARED_SENDERID 0x%08x\n", nodeType, (pSharedApp + (FBAS_SHARED_SENDERID >> 2)));
+  DBPRINT2("fbas%d: SHARED_GET_CNT 0x%8p\n", nodeType, (pSharedApp + (FBAS_SHARED_GET_CNT >> 2)));
+  DBPRINT2("fbas%d: SHARED_CNT_VAL 0x%8p\n", nodeType, (pSharedApp + (FBAS_SHARED_ECA_VLD >> 2)));
+  DBPRINT2("fbas%d: SHARED_CNT_OVF 0x%8p\n", nodeType, (pSharedApp + (FBAS_SHARED_ECA_OVF >> 2)));
+  DBPRINT2("fbas%d: SHARED_SENDERID 0x%8p\n", nodeType, (pSharedApp + (FBAS_SHARED_SENDERID >> 2)));
 
   // clear the summary statistics
   measureClearAverage(DISABLE_VERBOSITY);
@@ -297,7 +297,7 @@ static status_t convertMacToU8(uint8_t buf[ETH_ALEN], uint32_t* hi, uint32_t* lo
 static status_t convertMacToU64(uint64_t* buf, uint32_t* hi, uint32_t* lo)
 {
   if (!(hi && lo && buf)) {
-    DBPRINT1("null pointer: %x %x %x\n", buf, hi, lo);
+    DBPRINT1("null pointer: %p %p %p\n", buf, hi, lo);
     return COMMON_STATUS_ERROR;
   }
 
@@ -321,8 +321,6 @@ static status_t convertMacToU64(uint64_t* buf, uint32_t* hi, uint32_t* lo)
 static status_t setEndpDstAddr(int idx)
 {
   uint32_t status = COMMON_STATUS_OK;
-  uint64_t mac;
-  uint32_t ip;
 
   // check index
   if ((idx < 0) || idx >= N_DST_ADDR)  // invalid or out of range
@@ -432,7 +430,6 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t
   uint32_t flagIsConflict;// flag indicates that received ECA event is 'conflict'
   uint32_t flagIsDelayed; // flag indicates that received ECA event is 'delayed'
   uint64_t now;           // actual timestamp of the system time
-  int64_t  poll;          // elapsed time to poll a pending ECA event
   uint32_t actions;
   int      offset;        // offset to the MPS message buffer location, where received MPS message will be stored
 
@@ -634,7 +631,7 @@ uint32_t extern_entryActionConfigured()
 {
   uint32_t status = COMMON_STATUS_OK;
 
-  DBPRINT2("fbas%d: pIOCtrl=%08x, pECAQ=%08x\n", nodeType, pIOCtrl, pECAQ);
+  DBPRINT2("fbas%d: pIOCtrl=0x%8p, pECAQ=0x%8p\n", nodeType, pIOCtrl, pECAQ);
 
   DBPRINT1("fbas%d: designated platform = %s\n", nodeType, MYPLATFORM);
   if (MYPLATFORM == "pcicontrol") { // GPIO for SCU, LVDS for Pexiara
