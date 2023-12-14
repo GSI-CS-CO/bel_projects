@@ -114,13 +114,7 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, std::string node
   flags |= NFLG_PAT_EXIT_LM32_SMSK;
   setNodePointer(&g[v2], nodeT2, flags);
   // connect v1 and v2 by an edge of type edgeT
-  if (nodeT1.compare(dnt::sDstList) == 0 && edgeT.compare(det::sDstList) == 0) {
-    boost::add_edge(v1, v2, myEdge(det::sDefDst), g);
-  } else if (nodeT2.compare(dnt::sDstList) == 0 && edgeT.compare(det::sDstList) == 0) {
-    boost::add_edge(v2, v1, myEdge(det::sDefDst), g);
-  } else {
-    boost::add_edge(v1, v2, myEdge(edgeT), g);
-  }
+  boost::add_edge(v1, v2, myEdge(edgeT), g);
   // connect v1 and v2 by an edge of type defdst in some cases
   if ((g[v1].type.compare(dnt::sCmdFlow) == 0 || g[v1].type.compare(dnt::sTMsg) == 0) && 
       (g[v2].type.compare(dnt::sBlock) == 0 || g[v2].type.compare(dnt::sBlockAlign) == 0) && 
