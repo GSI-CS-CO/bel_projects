@@ -9,8 +9,6 @@
 #include "fbas.h"
 #include "fbas_common.h"
 
-#define _64b_SIZE  8
-
 enum MSR_CNT {
   RX_EVT_CNT,
   TX_EVT_CNT,
@@ -51,8 +49,6 @@ int64_t getElapsedTime(uint32_t* reg, uint32_t offset, uint64_t now);
 void measureClearAverage(verbosity_t verbose);
 void measureAverage(msrItem_t item, uint64_t from, uint64_t now, verbosity_t verbose);
 void measurePrintAverage(msrItem_t item, uint32_t* base, uint32_t offset);
-uint32_t calculateSumStats(int64_t value, msrSumStats_t* pStats);
-void wrSumStats(msrSumStats_t* pStats, uint64_t* pSharedReg64);
 
 /**
  * \brief Count events

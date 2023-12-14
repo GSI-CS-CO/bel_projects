@@ -12,6 +12,5 @@
 status_t setupTimer(uint32_t preset);
 status_t startTimer();
 status_t stopTimer();
-uint64_t getTimerIrqDelay();
 
 #endif

@@ -37,8 +37,7 @@
 
 #include "ioctl.h"
 
-volatile uint32_t *pIOCtrl;             // WB address of IO Control
-io_port_t EffLogOut[N_MPS_CHANNELS];    // mapping between MPS message buffer and IO output port
+static io_port_t EffLogOut[N_MPS_CHANNELS];    // mapping between MPS message buffer and IO output port
 
 /**
  * \brief Set IO output enable

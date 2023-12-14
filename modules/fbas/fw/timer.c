@@ -37,10 +37,10 @@
 
 #include "timer.h"
 
-volatile uint32_t *wb_timer_preset;     // preset register of timer
-volatile uint32_t *wb_timer_config;     // config register of time
-volatile uint32_t *wb_timer_counter;    // counter of timer
-volatile uint32_t *wb_timer_ticklen;    // period of a counter tick
+static volatile uint32_t *wb_timer_preset;     // preset register of timer
+static volatile uint32_t *wb_timer_config;     // config register of time
+static volatile uint32_t *wb_timer_counter;    // counter of timer
+static volatile uint32_t *wb_timer_ticklen;    // period of a counter tick
 
 /**
  * \brief set up the timer
@@ -127,7 +127,7 @@ status_t stopTimer()
  *
  * \ret delay time delay in nanoseconds
  **/
-uint64_t getTimerIrqDelay()
+static uint64_t getTimerIrqDelay()
 {
   static uint32_t len    = 0x0;
   static uint32_t preset = 0x0;

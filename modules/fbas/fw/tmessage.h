@@ -75,15 +75,13 @@ uint32_t sendMpsMsgBlock(size_t len, timedItr_t* itr, uint64_t evtId);
 mpsMsg_t* updateMpsMsg(mpsMsg_t* buf, uint64_t evt);
 status_t storeMpsMsg(uint64_t raw, uint64_t ts, timedItr_t* itr, int* offset);
 mpsMsg_t* evalMpsMsgTtl(uint64_t now, int idx);
+void msgInitMpsMsgBuf();
 void resetMpsMsg(size_t len, mpsMsg_t* buf);
 void setMpsMsgSenderId(mpsMsg_t* msg, uint64_t raw, uint8_t verbose);
 
 status_t sendRegReq(int req);
 status_t sendRegRsp(void);
 bool isSenderKnown(uint64_t raw);
-
-int addr_equal(uint8_t a[ETH_ALEN], uint8_t b[ETH_ALEN]); // wr-switch-sw/userspace/libwr
-uint8_t *addr_copy(uint8_t dst[ETH_ALEN], uint8_t src[ETH_ALEN]);
 
 void diagPrintMpsMsgBuf(void);
 

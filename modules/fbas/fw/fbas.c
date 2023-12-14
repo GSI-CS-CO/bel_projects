@@ -64,39 +64,37 @@
 #include "fwlib.h"                      // extension to fwlib
 
 // stuff required for environment
-extern uint32_t* _startshared[];
-unsigned int     cpuId, cpuQty;
 #define  SHARED  __attribute__((section(".shared")))
-uint64_t SHARED  dummy = 0;
+extern uint32_t* _startshared[];
+static unsigned int cpuId, cpuQty;
 
-volatile uint32_t *pECAQ;               // WB address of ECA queue
-volatile uint32_t *pPPSGen;             // WB address of PPS Gen
-volatile uint32_t *pWREp;               // WB address of WR Endpoint
+// common-fwlib globals
+extern volatile uint32_t *pECAQ;        // WB address of ECA queue
+extern uint32_t *pSharedMacHi;          // pointer to a "user defined" u32 register; here: high bits of MAC
+extern uint32_t *pSharedMacLo;          // pointer to a "user defined" u32 register; here: low bits of MAC
+extern uint32_t *pSharedIp;             // pointer to a "user defined" u32 register; here: IP
 
-// global variables
+uint64_t myMac;                         // own MAC address
+
 // shared memory layout
-uint32_t *pShared;                      // pointer to begin of shared memory region
-uint32_t *pCpuRamExternal;              // external address (seen from host bridge) of this CPU's RAM
-uint32_t *pSharedMacHi;                 // pointer to a "user defined" u32 register; here: high bits of MAC
-uint32_t *pSharedMacLo;                 // pointer to a "user defined" u32 register; here: low bits of MAC
-uint32_t *pSharedIp;                    // pointer to a "user defined" u32 register; here: IP
-uint32_t *pSharedApp;                   // pointer to a "user defined" u32 register set; here: application-specific register set
+static uint32_t *pShared;               // pointer to begin of shared memory region
+static uint32_t *pCpuRamExternal;       // external address (seen from host bridge) of this CPU's RAM
+static uint32_t *pSharedApp;            // pointer to a "user defined" u32 register set; here: application-specific register set
 
 // other global stuff
-uint32_t statusArray;                   // all status infos are ORed bit-wise into sum status, sum status is then published
+static uint32_t statusArray;            // all status infos are ORed bit-wise into sum status, sum status is then published
 
 // application-specific variables
-nodeType_t nodeType = FBAS_NODE_TX;     // default node type
-opMode_t opMode = FBAS_OPMODE_DEF;      // default operation mode
-uint32_t cntCmd = 0;                    // counter for user commands
-uint32_t mpsTask = 0;                   // MPS-relevant tasks
-volatile uint64_t tsCpu = 0;            // lm32 uptime
-volatile int64_t  prdTimer;             // timer period
-uint8_t n_out_port = N_LEMO_OUT_SCU;    // number of output ports (by default SCU3)
-io_port_t out_port =                    // IO channel (LVDS for Pexaria, GPIO for SCU3)
-  {IO_CFG_CHANNEL_GPIO, 0};             // GPIO port 1 (OUT1 for Pexaria, B1 for SCU3)
-uint64_t myMac;                         // own MAC address
-nw_addr_t dstNwAddr[N_DST_ADDR];        // valid destination addresses for the Endpoint WB device
+static nodeType_t nodeType = FBAS_NODE_TX;  // default node type
+static opMode_t opMode = FBAS_OPMODE_DEF;   // default operation mode
+static uint32_t cntCmd = 0;                 // counter for user commands
+static uint32_t mpsTask = 0;                // MPS-relevant tasks
+static volatile uint64_t tsCpu = 0;         // lm32 uptime
+static volatile int64_t  prdTimer;          // timer period
+static uint8_t n_out_port = N_LEMO_OUT_SCU; // number of output ports (by default SCU3)
+static io_port_t out_port =                 // IO channel (LVDS for Pexaria, GPIO for SCU3)
+  {IO_CFG_CHANNEL_GPIO, 0};                 // GPIO port 1 (OUT1 for Pexaria, B1 for SCU3)
+static nw_addr_t dstNwAddr[N_DST_ADDR];     // valid destination addresses for the Endpoint WB device
 
 // application-specific function prototypes
 static void init();
@@ -121,7 +119,7 @@ static void wrConsolePeriodic(uint32_t seconds);
  * Basic initialization for lm32 firmware
  *
  **/
-void init()
+static void init()
 {
   discoverPeriphery();        // mini-sdb ...
   uart_init_hw();             // needed by WR console
@@ -134,7 +132,7 @@ void init()
  * Set up user defined u32 register set in the shared memory
  *
  **/
-void initSharedMem(uint32_t *sharedSize)
+static void initSharedMem(uint32_t *sharedSize)
 {
   uint32_t idx;
   uint32_t *pSharedTemp;
@@ -196,7 +194,7 @@ void initSharedMem(uint32_t *sharedSize)
  * Initialize task control flag, timing event IDs, MPS message buffer
  *
  **/
-void initMpsData()
+static void initMpsData()
 {
   mpsTask = 0;
 
@@ -205,17 +203,8 @@ void initMpsData()
   // - TX node: sender ID is its MAC address
   convertMacToU64(&myMac, pSharedMacHi, pSharedMacLo);
 
-  for (int i = 0; i < N_MPS_CHANNELS; ++i) {
-    bufMpsMsg[i].prot.flag  = MPS_FLAG_TEST;
-    bufMpsMsg[i].prot.idx = 0;
-    setMpsMsgSenderId(&bufMpsMsg[i], myMac, 1);
-    bufMpsMsg[i].ttl = 0;
-    bufMpsMsg[i].tsRx = 0;
-    DBPRINT1("%x: mac=%x:%x:%x:%x:%x:%x idx=%x flag=%x @0x%08x\n",
-        i, bufMpsMsg[i].prot.addr[0], bufMpsMsg[i].prot.addr[1], bufMpsMsg[i].prot.addr[2],
-        bufMpsMsg[i].prot.addr[3], bufMpsMsg[i].prot.addr[4], bufMpsMsg[i].prot.addr[5],
-        bufMpsMsg[i].prot.idx, bufMpsMsg[i].prot.flag, &bufMpsMsg[i]);
-  }
+  // initialize the MPS message buffer
+  msgInitMpsMsgBuf();
 
   // initialize the read iterator for MPS flags
   initItr(&rdItr, N_MPS_CHANNELS, 0, F_MPS_BCAST);
@@ -235,7 +224,7 @@ void initMpsData()
  * \param none
  * \ret none
  **/
-void initIrqTable()
+static void initIrqTable()
 {
   isr_table_clr();                               // clear table
   // isr_ptr_table[0] = &irq_handler;            // 0: hard-wired MSI; don't use here
@@ -252,7 +241,7 @@ void initIrqTable()
  *
  * \ret status
  **/
-void printSrcAddr()
+static void printSrcAddr()
 {
   uint32_t octet0 = 0x000000ff;
   uint32_t octet1 = octet0 << 8;
@@ -277,7 +266,7 @@ void printSrcAddr()
  * \ret status Zero on success
  **/
 
-status_t convertMacToU8(uint8_t buf[ETH_ALEN], uint32_t* hi, uint32_t* lo)
+static status_t convertMacToU8(uint8_t buf[ETH_ALEN], uint32_t* hi, uint32_t* lo)
 {
   status_t status;
   uint64_t mac = 0;
@@ -305,7 +294,7 @@ status_t convertMacToU8(uint8_t buf[ETH_ALEN], uint32_t* hi, uint32_t* lo)
  * \ret status Zero on success
  **/
 
-status_t convertMacToU64(uint64_t* buf, uint32_t* hi, uint32_t* lo)
+static status_t convertMacToU64(uint64_t* buf, uint32_t* hi, uint32_t* lo)
 {
   if (!(hi && lo && buf)) {
     DBPRINT1("null pointer: %x %x %x\n", buf, hi, lo);
@@ -329,7 +318,7 @@ status_t convertMacToU64(uint64_t* buf, uint32_t* hi, uint32_t* lo)
  * \ret status
  *
  **/
-status_t setEndpDstAddr(int idx)
+static status_t setEndpDstAddr(int idx)
 {
   uint32_t status = COMMON_STATUS_OK;
   uint64_t mac;
@@ -364,7 +353,7 @@ status_t setEndpDstAddr(int idx)
  *
  * \ret status   Zero on success
  **/
-status_t loadSenderId(uint32_t* base, uint32_t offset)
+static status_t loadSenderId(uint32_t* base, uint32_t offset)
 {
   uint64_t* pSenderId = (uint64_t *)(base + (offset >> 2));
   uint8_t pos = *pSenderId >> 56;         // position of MPS message buffer
@@ -396,7 +385,7 @@ status_t loadSenderId(uint32_t* base, uint32_t offset)
  * \param buf Pointer to MPS message buffer
  *
  **/
-void clearError(size_t len, mpsMsg_t* buf) {
+static void clearError(size_t len, mpsMsg_t* buf) {
 
   for (size_t i = 0; i < len; ++i) {
     driveEffLogOut(buf + i, i);
@@ -409,7 +398,7 @@ void clearError(size_t len, mpsMsg_t* buf) {
  * \param mode raw data with operation mode
  *
  **/
-void setOpMode(uint64_t mode) {
+static void setOpMode(uint64_t mode) {
   if (mode)
     opMode = FBAS_OPMODE_TEST;
   else
@@ -431,7 +420,7 @@ void setOpMode(uint64_t mode) {
  *
  * \return ECA action tag (COMMON_ECADO_TIMEOUT on timeout, otherwise non-zero tag)
  **/
-uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, mpsMsg_t** head)
+static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, mpsMsg_t** head)
 {
   uint32_t nextAction;    // action triggered by received ECA event
   uint64_t ecaDeadline;   // deadline of received ECA event
@@ -606,7 +595,7 @@ uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, 
  *
  * \ret none
  **/
-void wrConsolePeriodic(uint32_t seconds)
+static void wrConsolePeriodic(uint32_t seconds)
 {
   static uint64_t tsLast = 0;                 // timestamp of last call
 
@@ -713,7 +702,7 @@ uint32_t extern_exitActionOperation(){
  *
  * \ret none
  **/
-void cmdHandler(uint32_t *reqState, uint32_t cmd)
+static void cmdHandler(uint32_t *reqState, uint32_t cmd)
 {
   uint32_t u32val;
   uint8_t u8val;
@@ -802,7 +791,7 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
  *
  * \ret none
  **/
-void timerHandler()
+static void timerHandler()
 {
   static uint32_t prescaler = 0;
 

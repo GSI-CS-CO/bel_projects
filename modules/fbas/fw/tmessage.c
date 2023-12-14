@@ -41,6 +41,9 @@
 mpsMsg_t   bufMpsMsg[N_MPS_CHANNELS] = {0};       // buffer for MPS timing messages
 timedItr_t rdItr = {0};                           // read-access iterator for MPS flags
 
+static int addr_equal(uint8_t a[ETH_ALEN], uint8_t b[ETH_ALEN]); // wr-switch-sw/userspace/libwr
+static uint8_t *addr_copy(uint8_t dst[ETH_ALEN], uint8_t src[ETH_ALEN]);
+
 /**
  * \brief initialize iterator
  *
@@ -320,6 +323,27 @@ mpsMsg_t* evalMpsMsgTtl(uint64_t now, int idx) {
 }
 
 /**
+ * \brief initialize MPS message buffer
+ *
+ * \return none
+*/
+void msgInitMpsMsgBuf()
+{
+  for (int i = 0; i < N_MPS_CHANNELS; ++i)
+  {
+    bufMpsMsg[i].prot.flag = MPS_FLAG_TEST;
+    bufMpsMsg[i].prot.idx = 0;
+    setMpsMsgSenderId(&bufMpsMsg[i], myMac, 1);
+    bufMpsMsg[i].ttl = 0;
+    bufMpsMsg[i].tsRx = 0;
+    DBPRINT1("%x: mac=%x:%x:%x:%x:%x:%x idx=%x flag=%x @0x%08x\n",
+             i, bufMpsMsg[i].prot.addr[0], bufMpsMsg[i].prot.addr[1], bufMpsMsg[i].prot.addr[2],
+             bufMpsMsg[i].prot.addr[3], bufMpsMsg[i].prot.addr[4], bufMpsMsg[i].prot.addr[5],
+             bufMpsMsg[i].prot.idx, bufMpsMsg[i].prot.flag, &bufMpsMsg[i]);
+  }
+}
+
+/**
  * \brief reset MPS message buffer
  *
  * It is used to reset the CMOS input virtually to high voltage in TX [MPS_FS_620] or
@@ -375,7 +399,7 @@ void setMpsMsgSenderId(mpsMsg_t* msg, uint64_t raw, uint8_t verbose)
  *
  * \ret  Return 1 if both addresses are equal, otherwise 0.
  **/
-int addr_equal(uint8_t a[ETH_ALEN], uint8_t b[ETH_ALEN])
+static int addr_equal(uint8_t a[ETH_ALEN], uint8_t b[ETH_ALEN])
 {
   return !memcmp(a, b, ETH_ALEN);
 }
@@ -388,7 +412,7 @@ int addr_equal(uint8_t a[ETH_ALEN], uint8_t b[ETH_ALEN])
  *
  * \ret  Pointer to the destination MAC address
  **/
-uint8_t *addr_copy(uint8_t dst[ETH_ALEN], uint8_t src[ETH_ALEN])
+static uint8_t *addr_copy(uint8_t dst[ETH_ALEN], uint8_t src[ETH_ALEN])
 {
   return memcpy(dst, src, ETH_ALEN);
 }

@@ -37,8 +37,8 @@
 
 #include "measure.h"
 
-msrSumStats_t sumStats[N_MSR_ITEMS] = {0};  // buffer for summary statistics
-msrCnt_t cnt[N_MSR_CNT] = {0};          // event and action counters
+static msrSumStats_t sumStats[N_MSR_ITEMS] = {0};  // buffer for summary statistics
+static msrCnt_t      cnt[N_MSR_CNT] = {0};         // event and action counters
 
 /**
  * \brief store a timestamp
@@ -119,7 +119,7 @@ uint32_t msrSetCnt(unsigned name, uint32_t value)
  * \param pStats pointer to summary statistics buffer
  * \ret   count  total number of measurements
  **/
-uint32_t calculateSumStats(int64_t value, msrSumStats_t* pStats) {
+static uint32_t calculateSumStats(int64_t value, msrSumStats_t* pStats) {
 
     if (value > 0) {
       pStats->avg = (value + (pStats->cntValid * pStats->avg)) / (pStats->cntValid + 1);
@@ -142,7 +142,7 @@ uint32_t calculateSumStats(int64_t value, msrSumStats_t* pStats) {
  * \param pSharedReg64 address of the shared memory location (64-bit)
  * \ret none
  **/
-void wrSumStats(msrSumStats_t* pStats, uint64_t* pSharedReg64) {
+static void wrSumStats(msrSumStats_t* pStats, uint64_t* pSharedReg64) {
 
   uint32_t *pSharedReg32;
 
