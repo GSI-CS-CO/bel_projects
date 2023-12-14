@@ -1,4 +1,5 @@
 import dm_testbench
+import pathlib
 import pytest
 
 """Start all pattern in the schedules and download status. Compare original schedule with downloaded.
@@ -12,6 +13,11 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
 
   def addDownloadCompareSchedule(self, scheduleFile, statusMeta=False):
     status_file = 'status.dot'
+    if self.threadQuantity == 32:
+      scheduleFile32 = scheduleFile.replace('.dot', '-thread32.dot')
+      fileObj = pathlib.Path(self.schedules_folder + scheduleFile32)
+      if fileObj.exists():
+        scheduleFile = scheduleFile32
     self.startPattern(scheduleFile, 'patternA')
     if statusMeta:
       options = '-so'
