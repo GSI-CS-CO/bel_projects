@@ -48,6 +48,7 @@ typedef enum MSR_ITEMS {
 
 void storeTimestamp(uint32_t* reg, uint32_t offset, uint64_t ts);
 int64_t getElapsedTime(uint32_t* reg, uint32_t offset, uint64_t now);
+void measureClearAverage(verbosity_t verbose);
 void measureAverage(msrItem_t item, uint64_t from, uint64_t now, verbosity_t verbose);
 void measurePrintAverage(msrItem_t item, uint32_t* base, uint32_t offset);
 uint32_t calculateSumStats(int64_t value, msrSumStats_t* pStats);

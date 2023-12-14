@@ -185,6 +185,9 @@ void initSharedMem(uint32_t *sharedSize)
   DBPRINT2("fbas%d: SHARED_CNT_VAL 0x%08x\n", nodeType, (pSharedApp + (FBAS_SHARED_ECA_VLD >> 2)));
   DBPRINT2("fbas%d: SHARED_CNT_OVF 0x%08x\n", nodeType, (pSharedApp + (FBAS_SHARED_ECA_OVF >> 2)));
   DBPRINT2("fbas%d: SHARED_SENDERID 0x%08x\n", nodeType, (pSharedApp + (FBAS_SHARED_SENDERID >> 2)));
+
+  // clear the summary statistics
+  measureClearAverage(DISABLE_VERBOSITY);
 } // initSharedMem
 
 /**
@@ -774,6 +777,9 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
         break;
       case FBAS_CMD_PRINT_TX_MPS_HANDLE:
         measurePrintAverage(MSR_TX_MPS_HANDLE, pSharedApp, FBAS_SHARED_GET_AVG);
+        break;
+      case FBAS_CMD_CLR_SUM_STATS:
+        measureClearAverage(ENABLE_VERBOSITY);
         break;
 
       case FBAS_CMD_PRINT_MPS_BUF:

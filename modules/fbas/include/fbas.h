@@ -90,6 +90,7 @@ typedef enum {
 #define FBAS_CMD_PRINT_TTL      0x35   // print result of TTL interval measurement
 #define FBAS_CMD_PRINT_MPS_BUF  0x36   // print all MSP message relevant buffers
 #define FBAS_CMD_PRINT_TX_MPS_HANDLE  0x37   // delay measurement of MPS event handling at TX node
+#define FBAS_CMD_CLR_SUM_STATS  0x38   // clear the summar statistics
 
 // mask bit for MPS-relevant tasks (up to 31)
 #define TSK_TX_MPS_FLAGS        0x10000000 // transmit MPS flags

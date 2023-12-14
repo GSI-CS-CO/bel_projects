@@ -197,3 +197,24 @@ void measurePrintAverage(msrItem_t item, uint32_t* base, uint32_t offset) {
 
   wrSumStats(pStats, pSharedReg64);
 }
+
+/**
+ * \brief Clear the summary statistics
+ *
+ * \param verbose verbosity
+ *
+ * \return none
+*/
+void measureClearAverage(verbosity_t verbose) {
+  msrItem_t item;
+
+  for (item = 0; item < N_MSR_ITEMS; ++item) {
+    memset(&sumStats[item], 0, sizeof(msrSumStats_t));
+
+    if (verbose)
+      DBPRINT2("%d avg=%llu min=%lli max=%llu val=%d all=%d\n",
+        item,
+        sumStats[item].avg, sumStats[item].min, sumStats[item].max,
+        sumStats[item].cntValid, sumStats[item].cntTotal);
+  }
+}
