@@ -63,7 +63,6 @@ struct nw_addr {
   uint32_t ip;
 };
 
-extern uint64_t myMac;                             // own MAC address
 extern mpsMsg_t bufMpsMsg[N_MPS_CHANNELS];         // buffer for MPS messages
 extern timedItr_t rdItr;                           // read-access iterator for MPS flags
 
@@ -75,12 +74,11 @@ uint32_t sendMpsMsgBlock(size_t len, timedItr_t* itr, uint64_t evtId);
 mpsMsg_t* updateMpsMsg(mpsMsg_t* buf, uint64_t evt);
 status_t storeMpsMsg(uint64_t raw, uint64_t ts, timedItr_t* itr, int* offset);
 mpsMsg_t* evalMpsMsgTtl(uint64_t now, int idx);
-void msgInitMpsMsgBuf();
+void msgInitMpsMsgBuf(uint64_t id);
 void resetMpsMsg(size_t len, mpsMsg_t* buf);
 void setMpsMsgSenderId(mpsMsg_t* msg, uint64_t raw, uint8_t verbose);
 
-status_t sendRegReq(int req);
-status_t sendRegRsp(void);
+status_t msgRegisterNode(uint64_t id, regCmd_t cmd);
 bool isSenderKnown(uint64_t raw);
 
 void diagPrintMpsMsgBuf(void);

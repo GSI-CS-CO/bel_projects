@@ -52,17 +52,17 @@ enum DST_ADDR {
 typedef struct mpsProtocol mpsProtocol_t;
 struct mpsProtocol {
   uint8_t  addr[ETH_ALEN];  // Ethernet MAC addr
-  uint8_t  idx;             // index (0-127: MPS flag, 128-255: refer to index_t)
+  uint8_t  idx;             // index (0-127: MPS flag, 128-255: refer to regCmd_t)
   uint8_t  flag;            // MPS flag
 };
 
 // index field in the MPS protocol (for intern usage)
 typedef enum {
-  IDX_REG_REQ  = 128,       // registration request (by TX)
-  IDX_REG_RSP  = 129,       // registration response (by RX)
-  IDX_REG_EREQ = 192,       // extended registration request (with sender ID)
-  IDX_UNDEF                 // undefined
-} index_t;
+  REG_REQ  = 128,       // registration request (by TX)
+  REG_RSP  = 129,       // registration response (by RX)
+  REG_EREQ = 192,       // extended registration request (with sender ID)
+  REG_UNDEF             // undefined
+} regCmd_t;
 
 typedef struct mpsMsg mpsMsg_t;
 struct mpsMsg {

@@ -325,15 +325,17 @@ mpsMsg_t* evalMpsMsgTtl(uint64_t now, int idx) {
 /**
  * \brief initialize MPS message buffer
  *
+ * \param id node ID (MAC address)
+ *
  * \return none
 */
-void msgInitMpsMsgBuf()
+void msgInitMpsMsgBuf(uint64_t id)
 {
   for (int i = 0; i < N_MPS_CHANNELS; ++i)
   {
     bufMpsMsg[i].prot.flag = MPS_FLAG_TEST;
     bufMpsMsg[i].prot.idx = 0;
-    setMpsMsgSenderId(&bufMpsMsg[i], myMac, 1);
+    setMpsMsgSenderId(&bufMpsMsg[i], id, ENABLE_VERBOSITY);
     bufMpsMsg[i].ttl = 0;
     bufMpsMsg[i].tsRx = 0;
     DBPRINT1("%x: mac=%x:%x:%x:%x:%x:%x idx=%x flag=%x @0x%8p\n",
@@ -418,65 +420,24 @@ static uint8_t *addr_copy(uint8_t dst[ETH_ALEN], uint8_t src[ETH_ALEN])
 }
 
 /**
- * \brief Send the node registration request
+ * \brief Send the node registration request/response
  *
  * TX nodes send the registration request (in form of the MPS protocol) to
- * register them to the designated RX node.
- * The transmission type should be broadcast.
- *
- * \param req   Registration request type
- *
- * \ret status  Zero on success, otherwise non-zero
- **/
-status_t sendRegReq(int req)
-{
-  uint64_t param;
-  uint32_t tef = 0;
-  uint32_t paramHi, paramLo;
-  uint32_t deadlineHi, deadlineLo;
-  uint32_t forceLate = 1;
-  status_t status;
-  uint64_t now = getSysTime();
-
-  // MAC (lower 6 bytes in myMac) is written to higher 6 bytes in 'param'
-  paramHi    = (uint32_t)((myMac >> 16) & 0xffffffff);
-  paramLo    = (uint32_t)((myMac << 16) & 0xffffffff);
-  paramLo   |= req << 8;                // set request type as 'index'
-  deadlineHi = (uint32_t)((now >> 32)   & 0xffffffff);
-  deadlineLo = (uint32_t)(now           & 0xffffffff);
-
-  switch (req) {
-    case IDX_REG_REQ:
-
-      param = ((uint64_t)(paramHi) << 32) | paramLo;
-      status = fwlib_ebmWriteTM(now, FBAS_REG_EID, param, tef, forceLate);
-      if (status != COMMON_STATUS_OK)
-        DBPRINT1("Err - failed to send reg.req!\n");
-      return status;
-
-    case IDX_REG_EREQ:
-
-    default:
-      break;
-  }
-
-  return COMMON_STATUS_ERROR;
-}
-
-/**
- * \brief Send the registration response
+ * register them to the designated RX node. The transmission type should be broadcast.
  *
  * RX nodes respond a special MPS message on reception of the registration
  * request from the RX nodes.
- * Parameter includes the MAC address of RX and index of registration response.
  *
- * \ret status   Returns zero on success, otherwise non-zero
+ * \param id  node ID
+ * \param cmd registration command
+ *
+ * \return status   Returns zero on success, otherwise non-zero
  **/
-status_t sendRegRsp(void)
+status_t msgRegisterNode(uint64_t id, regCmd_t cmd)
 {
   uint32_t tef = 0;
   uint32_t forceLate = 1;
-  uint64_t param = (myMac << 16) | (IDX_REG_RSP << 8);
+  uint64_t param = (id << 16) | (cmd << 8);
   uint64_t now = getSysTime();
 
   status_t status = fwlib_ebmWriteTM(now, FBAS_REG_EID, param, tef, forceLate);

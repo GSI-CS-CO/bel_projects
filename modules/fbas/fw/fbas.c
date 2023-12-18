@@ -204,7 +204,7 @@ static void initMpsData()
   convertMacToU64(&myMac, pSharedMacHi, pSharedMacLo);
 
   // initialize the MPS message buffer
-  msgInitMpsMsgBuf();
+  msgInitMpsMsgBuf(myMac);
 
   // initialize the read iterator for MPS flags
   initItr(&rdItr, N_MPS_CHANNELS, 0, F_MPS_BCAST);
@@ -440,8 +440,8 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t
     now = getSysTime();
     storeTimestamp(pSharedApp, FBAS_SHARED_GET_TS5, now);
 
-    uint64_t senderId; // sender ID (MAC) is in the 'param' field (high 6 bytes)
-    uint8_t  idx;      // registration index (128=request, 129=response)
+    uint64_t nodeId;  // node ID (MAC address) is in the 'param' field (high 6 bytes)
+    uint8_t  regCmd;  // node registration command
 
     switch (nextAction) {
       case FBAS_AUX_NEWCYCLE:
@@ -551,21 +551,22 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t
         break;
 
       case FBAS_NODE_REG:
-        senderId = ecaParam >> 16; // sender ID (MAC) is in the 'param' field (high 6 bytes)
-        idx      = ecaParam >> 8;  // registration index (128=request, 129=response)
+        nodeId = ecaParam >> 16; // node ID (MAC address) is in the 'param' field (high 6 bytes)
+        regCmd = (uint8_t)(ecaParam >> 8);  // node registration command
 
         if (nodeType == FBAS_NODE_RX) {  // registration request from TX
-          if (idx == IDX_REG_REQ) {
-            if (isSenderKnown(senderId)) {
+          if (regCmd == REG_REQ) {
+            if (isSenderKnown(nodeId)) {
               // unicast the reg. response
-              fwlib_setEbmDstAddr(senderId, BROADCAST_IP);
-              sendRegRsp();
+              fwlib_setEbmDstAddr(nodeId, BROADCAST_IP);
+              msgRegisterNode(myMac, REG_RSP);
+              DBPRINT1("reg OK: MAC=%llx\n", nodeId);
             }
           }
         }
         else if (nodeType == FBAS_NODE_TX) { // registration response from RX
-          if (idx == IDX_REG_RSP) {
-            dstNwAddr[DST_ADDR_RXNODE].mac = senderId;
+          if (regCmd == REG_RSP) {
+            dstNwAddr[DST_ADDR_RXNODE].mac = nodeId;
             DBPRINT3("reg.rsp: RX MAC=%llx\n", dstNwAddr[DST_ADDR_RXNODE].mac);
             *mpsTask |= TSK_REG_COMPLETE;
           }
@@ -673,7 +674,7 @@ uint32_t extern_entryActionOperation()
   if (nodeType == FBAS_NODE_TX) {
     if (!(mpsTask & TSK_REG_COMPLETE)) {
       if (setEndpDstAddr(DST_ADDR_BROADCAST) == COMMON_STATUS_OK)
-        sendRegReq(IDX_REG_REQ);
+        msgRegisterNode(myMac, REG_REQ);
       else
         DBPRINT1("Err - nothing sent! TODO: set failed status\n");
     }
@@ -837,7 +838,7 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
           if (*pMpsTask & TSK_REG_PER_OVER) {
             *pMpsTask &= ~TSK_REG_PER_OVER;
             if (setEndpDstAddr(DST_ADDR_BROADCAST) == COMMON_STATUS_OK)
-              sendRegReq(IDX_REG_REQ);
+              msgRegisterNode(myMac, REG_REQ);
             else
               DBPRINT1("Err - nothing sent! TODO: set failed status\n");
           }
