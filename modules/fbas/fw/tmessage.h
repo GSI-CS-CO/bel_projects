@@ -66,21 +66,21 @@ struct nw_addr {
 extern mpsMsg_t bufMpsMsg[N_MPS_CHANNELS];         // buffer for MPS messages
 extern timedItr_t rdItr;                           // read-access iterator for MPS flags
 
-void initItr(timedItr_t* itr, uint8_t total, uint64_t now, uint32_t freq);
-void resetItr(timedItr_t* itr, uint64_t now);
-uint32_t sendMpsMsgPeriodic(timedItr_t* itr, uint64_t evtid);
-uint32_t sendMpsMsgSpecific(timedItr_t* itr, mpsMsg_t* buf, uint64_t evtid, uint8_t extra);
-uint32_t sendMpsMsgBlock(size_t len, timedItr_t* itr, uint64_t evtId);
-mpsMsg_t* updateMpsMsg(mpsMsg_t* buf, uint64_t evt);
-status_t storeMpsMsg(uint64_t raw, uint64_t ts, timedItr_t* itr, int* offset);
+void      initItr(timedItr_t *const itr, const uint8_t total, const uint64_t now, const uint32_t freq);
+void      resetItr(timedItr_t* itr, const uint64_t now);
+uint32_t  msgSendPeriodicMps(timedItr_t* itr, const uint64_t evtid);
+uint32_t  msgSendSpecificMps(const timedItr_t* itr, mpsMsg_t *const buf, const uint64_t evtid, const uint8_t extra);
+uint32_t  sendMpsMsgBlock(size_t len, timedItr_t* itr, uint64_t evtId);
+mpsMsg_t* msgFetchMps(const uint64_t evt);
+int       msgStoreMpsMsg(const uint64_t *raw, const uint64_t *ts, const timedItr_t* itr);
 mpsMsg_t* evalMpsMsgTtl(uint64_t now, int idx);
-void msgInitMpsMsgBuf(uint64_t id);
-void resetMpsMsg(size_t len, mpsMsg_t* buf);
-void setMpsMsgSenderId(mpsMsg_t* msg, uint64_t raw, uint8_t verbose);
+void      msgInitMpsMsgBuf(uint64_t *const pId);
+void      resetMpsMsg(const size_t len, mpsMsg_t *const buf);
+void      msgSetSenderId(const int offset, uint64_t *const pId, uint8_t verbose);
 
-status_t msgRegisterNode(uint64_t id, regCmd_t cmd);
-bool isSenderKnown(uint64_t raw);
+status_t  msgRegisterNode(const uint64_t id, const regCmd_t cmd);
+bool      msgIsSenderIdKnown(uint64_t *const pId);
 
-void diagPrintMpsMsgBuf(void);
+void      ioPrintMpsBuf(void);
 
 #endif

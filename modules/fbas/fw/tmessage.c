@@ -39,6 +39,7 @@
 
 // application-specific variables
 mpsMsg_t   bufMpsMsg[N_MPS_CHANNELS];       // buffer for MPS timing messages
+mpsMsg_t *const headBufMps = &bufMpsMsg[0]; // head of the MPS message buffer
 timedItr_t rdItr;                           // read-access iterator for MPS flags
 
 static int addr_equal(uint8_t a[ETH_ALEN], uint8_t b[ETH_ALEN]); // wr-switch-sw/userspace/libwr
@@ -56,7 +57,7 @@ static uint8_t *addr_copy(uint8_t dst[ETH_ALEN], uint8_t src[ETH_ALEN]);
  *
  * \ret none
  **/
-void initItr(timedItr_t* itr, uint8_t total, uint64_t now, uint32_t freq)
+void initItr(timedItr_t *const itr, const uint8_t total, const uint64_t now, const uint32_t freq)
 {
   itr->idx = 0;
   itr->total = total;
@@ -84,7 +85,7 @@ void initItr(timedItr_t* itr, uint8_t total, uint64_t now, uint32_t freq)
  *
  * \ret none
  **/
-void resetItr(timedItr_t* itr, uint64_t now)
+void resetItr(timedItr_t* itr, const uint64_t now)
 {
   itr->last = now;
 
@@ -177,23 +178,20 @@ uint32_t sendMpsMsgBlock(size_t len, timedItr_t* itr, uint64_t evtId)
  *
  * \ret count   Number of sent messages
  **/
-uint32_t sendMpsMsgPeriodic(timedItr_t* itr, uint64_t evtid)
+uint32_t msgSendPeriodicMps(timedItr_t* itr, const uint64_t evtid)
 {
   uint32_t count = 0;
   uint32_t tef = 0;
-  uint64_t now = getSysTime();
   uint64_t deadline = itr->last + itr->period;
+  uint64_t now = getSysTime();
+
   if (!itr->last)
     deadline = now;       // initial transmission
 
   // send next MPS message if deadline is over
   if (deadline <= now) {
-    uint64_t param;
-    mpsProtocol_t* prot = &bufMpsMsg[itr->idx].prot;
-    memcpy(&param, prot, sizeof(mpsProtocol_t));
-
     // send MPS message with current timestamp, which varies around deadline
-    if (fwlib_ebmWriteTM(now, evtid, param, tef, 1) == COMMON_STATUS_OK)
+    if (fwlib_ebmWriteTM(now, evtid, bufMpsMsg[itr->idx].param, tef, 1) == COMMON_STATUS_OK)
       ++count;
 
     // update iterator with deadline
@@ -216,7 +214,7 @@ uint32_t sendMpsMsgPeriodic(timedItr_t* itr, uint64_t evtid)
  *
  * \ret count   Number of sent messages
  **/
-uint32_t sendMpsMsgSpecific(timedItr_t* itr, mpsMsg_t* buf, uint64_t evtid, uint8_t extra)
+uint32_t msgSendSpecificMps(const timedItr_t* itr, mpsMsg_t *const buf, const uint64_t evtid, const uint8_t extra)
 {
   uint32_t count = 0;
   uint32_t tef = 0;
@@ -225,17 +223,14 @@ uint32_t sendMpsMsgSpecific(timedItr_t* itr, mpsMsg_t* buf, uint64_t evtid, uint
   if (itr->last >= now) // delayed by a new cycle
     return count;
 
-  uint64_t param;
-  memcpy(&param, &buf->prot, sizeof(buf->prot));
-
   // send specified MPS event
-  if (fwlib_ebmWriteTM(now, evtid, param, tef, 1) == COMMON_STATUS_OK)
+  if (fwlib_ebmWriteTM(now, evtid, buf->param, tef, 1) == COMMON_STATUS_OK)
     ++count;
 
   // NOK flag shall be sent as extra events
   if (buf->prot.flag == MPS_FLAG_NOK) {
     for (uint8_t i = 0; i < extra; ++i) {
-      if (fwlib_ebmWriteTM(now, evtid, param, tef, 1) == COMMON_STATUS_OK)
+      if (fwlib_ebmWriteTM(now, evtid, buf->param, tef, 1) == COMMON_STATUS_OK)
         ++count;
     }
   }
@@ -244,60 +239,56 @@ uint32_t sendMpsMsgSpecific(timedItr_t* itr, mpsMsg_t* buf, uint64_t evtid, uint
 }
 
 /**
- * \brief update MPS message with a given MPS event
+ * \brief fetch MPS event
  *
- * \param buf Pointer to MPS message buffer
- * \param evt Raw event data (bits 15-8 = index, 7-0 = flag)
+ * MPS event is fetched from ECA and stored in the dedicated buffer.
  *
- * \ret ptr Pointer to the updated MPS message buffer
+ * \param evt Raw event data (bits 63-16 = node ID, 15-8 = index, 7-0 = flag)
+ *
+ * \return pointer to the MPS message buffer location
  **/
-mpsMsg_t* updateMpsMsg(mpsMsg_t* buf, uint64_t evt)
+mpsMsg_t* msgFetchMps(const uint64_t evt)
 {
-  // evaluate MPS channel and its flag
+  // evaluate MPS channel and MPS flag
   uint8_t idx = evt >> 8;
   uint8_t flag = evt;
 
-  // update MPS message
-  buf->prot.idx = idx;
-  buf->prot.flag = flag;
-  return buf;
+  // store MPS channel and MPS flag
+  headBufMps->prot.idx = idx;
+  headBufMps->prot.flag = flag;
+  return headBufMps;
 }
 
 /**
  * \brief store recieved MPS message
  *
- * \param raw Raw MPS protocol (bits 63-16 = addr, 15-8 = index, 7-0 = flag)
- * \param ts  Timestamp
+ * \param raw Raw MPS protocol (bits 63-16 = node ID, 15-8 = index, 7-0 = flag)
+ * \param ts  Timestamp of the MPS protocol
  * \param itr Read-access iterator
- * \param[out] offset Offset to the selected MPS msg buffer
  *
- * \ret status Returns OK if received message is saved, otherwise ERROR
+ * \return Offset to the MPS msg buffer if the received MPS msg is stored, otherwise negative integer
  **/
-status_t storeMpsMsg(uint64_t raw, uint64_t ts, timedItr_t* itr, int* offset)
+int msgStoreMpsMsg(const uint64_t *raw, const uint64_t *ts, const timedItr_t* itr)
 {
-  uint8_t flag = raw;
-  uint8_t idx = raw >> 8;
-  uint8_t addr[ETH_ALEN];
-  mpsMsg_t* buf = &bufMpsMsg[0];
-  *offset = -1;
-
-  memcpy(addr, &raw, ETH_ALEN);
+  uint8_t idx, flag;
 
   for (int i = 0; i < N_MPS_CHANNELS; ++i) {
-    if (addr_equal(addr, buf->prot.addr)) {
-      if (buf->prot.idx == idx) {
-        buf->pending = buf->prot.flag ^ flag;
-        buf->prot.flag = flag;
-        buf->ttl = itr->ttl;
-        buf->tsRx = ts;
-        *offset = i;
-        return COMMON_STATUS_OK;
+    // node ID match
+    if (!memcmp(raw, (headBufMps+i)->prot.addr, ETH_ALEN)) {
+      idx = (uint8_t)(*raw >> 8);
+      // MPS channel match
+      if ((headBufMps+i)->prot.idx == idx) {
+        flag = (uint8_t)*raw;
+        (headBufMps+i)->pending = (headBufMps+i)->prot.flag ^ flag;
+        (headBufMps+i)->prot.flag = flag;
+        (headBufMps+i)->ttl = itr->ttl;
+        (headBufMps+i)->tsRx = *ts;
+        return i;
       }
     }
-    ++buf;
   }
 
-  return COMMON_STATUS_ERROR;
+  return -1;
 }
 
 /**
@@ -329,13 +320,13 @@ mpsMsg_t* evalMpsMsgTtl(uint64_t now, int idx) {
  *
  * \return none
 */
-void msgInitMpsMsgBuf(uint64_t id)
+void msgInitMpsMsgBuf(uint64_t *const pId)
 {
   for (int i = 0; i < N_MPS_CHANNELS; ++i)
   {
+    msgSetSenderId(i, pId, ENABLE_VERBOSITY);
     bufMpsMsg[i].prot.flag = MPS_FLAG_TEST;
     bufMpsMsg[i].prot.idx = 0;
-    setMpsMsgSenderId(&bufMpsMsg[i], id, ENABLE_VERBOSITY);
     bufMpsMsg[i].ttl = 0;
     bufMpsMsg[i].tsRx = 0;
     DBPRINT1("%x: mac=%x:%x:%x:%x:%x:%x idx=%x flag=%x @0x%8p\n",
@@ -354,7 +345,7 @@ void msgInitMpsMsgBuf(uint64_t id)
  * \param buf Pointer to MPS message buffer
  *
  **/
-void resetMpsMsg(size_t len, mpsMsg_t* buf)
+void resetMpsMsg(const size_t len, mpsMsg_t *const buf)
 {
   uint8_t flag = MPS_FLAG_OK;
 
@@ -371,25 +362,28 @@ void resetMpsMsg(size_t len, mpsMsg_t* buf)
  *
  * RX node evaluates sender ID of the received MPS message.
  *
- * \param msg     MPS message buffer
- * \param raw     Sender ID (MAC address)
+ * \param offset  offset of the MPS message buffer
+ * \param pId     Pointer to the sender node ID (MAC address)
  * \param verbose Non-zero enables verbosity
  *
  * \ret none
  **/
-void setMpsMsgSenderId(mpsMsg_t* msg, uint64_t raw, uint8_t verbose)
+void msgSetSenderId(const int offset, uint64_t *const pId, uint8_t verbose)
 {
-  uint8_t bits = 0;
-  for (int i = ETH_ALEN - 1; i >= 0; i--) {
-    msg->prot.addr[i] = raw >> bits;
-    bits += 8;
-  }
+  uint8_t *p = (uint8_t*)pId; // lower 6 bytes hold the sender node ID
+  p+=2;                       // seek the start of the sender node ID
+
+  // store the sender node ID
+  memcpy(bufMpsMsg[offset].prot.addr, p, ETH_ALEN);
+
+  // store the MPS channel index
+  bufMpsMsg[offset].prot.idx = (uint8_t)(*pId >> 48);
 
   if (verbose) {
     DBPRINT1("tmessage: sender ID: ");
     for (int i = 0; i < ETH_ALEN; i++)
-      DBPRINT1("%02x", msg->prot.addr[i]);
-    DBPRINT1(" (raw: %016llx)\n", raw);
+      DBPRINT1("%02x", bufMpsMsg[offset].prot.addr[i]);
+    DBPRINT1(" (id: %016llx)\n", *pId);
   }
 }
 
@@ -433,7 +427,7 @@ static uint8_t *addr_copy(uint8_t dst[ETH_ALEN], uint8_t src[ETH_ALEN])
  *
  * \return status   Returns zero on success, otherwise non-zero
  **/
-status_t msgRegisterNode(uint64_t id, regCmd_t cmd)
+status_t msgRegisterNode(const uint64_t id, const regCmd_t cmd)
 {
   uint32_t tef = 0;
   uint32_t forceLate = 1;
@@ -450,40 +444,30 @@ status_t msgRegisterNode(uint64_t id, regCmd_t cmd)
 /**
  * \brief Check if the given sender ID is known to the RX node
  *
- * \param raw     raw sender ID (MAC address in high-order 6 bytes)
+ * \param pId   Pointer to the sender node ID (MAC address)
  *
- * \ret status    Returns true on success, otherwise false
+ * \return  Returns true on success, otherwise false
  **/
-bool isSenderKnown(uint64_t raw)
+bool msgIsSenderIdKnown(uint64_t *const pId)
 {
-  uint8_t  senderId[ETH_ALEN];
-  uint8_t bits = 0;
-  int i;
+  uint8_t *p = (uint8_t*)pId; // lower 6 bytes hold the sender ID
+  p+=2;                       // seek the start of the sender ID
 
-  for (i = ETH_ALEN - 1; i >= 0; i--) {
-    senderId[i] = raw >> bits;
-    bits += 8;
-  }
+  int i = 0;
+  int unknown = true;
 
-  int compare = 1;
-  i = 0;
-  while (compare && i < N_MPS_CHANNELS) {
-    compare = memcmp(bufMpsMsg[i].prot.addr, senderId, ETH_ALEN);
+  while (unknown && i < N_MPS_CHANNELS) {
+    unknown = memcmp(bufMpsMsg[i].prot.addr, p, ETH_ALEN);
     DBPRINT3("cmp: %d: %x%x%x%x%x%x - %x%x%x%x%x%x\n",
-        compare,
+        unknown,
         bufMpsMsg[i].prot.addr[0], bufMpsMsg[i].prot.addr[1],
         bufMpsMsg[i].prot.addr[2], bufMpsMsg[i].prot.addr[3],
         bufMpsMsg[i].prot.addr[4], bufMpsMsg[i].prot.addr[5],
-        senderId[0], senderId[1], senderId[2],
-        senderId[3], senderId[4], senderId[5]);
+        *p, *(p+1), *(p+2), *(p+3), *(p+4), *(p+5));
     ++i;
   }
 
-  if (compare) {  // differs
-    return false;
-  }
-
-  return true;
+  return (unknown?false:true);
 }
 
 /**
@@ -492,7 +476,7 @@ bool isSenderKnown(uint64_t raw)
  * MPS message buffer contains MPS protocols
  *
  **/
-void diagPrintMpsMsgBuf(void)
+void ioPrintMpsBuf(void)
 {
   DBPRINT2("bufMpsMsg\n");
   DBPRINT2("buf_idx: protocol (MAC - idx - flag), msg (tsRx - ttl - pending)\n");

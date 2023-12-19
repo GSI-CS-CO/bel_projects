@@ -66,7 +66,11 @@ typedef enum {
 
 typedef struct mpsMsg mpsMsg_t;
 struct mpsMsg {
-  mpsProtocol_t prot;       // MPS protocol
+  union {
+    uint64_t      param;    // 'param' field of timing message
+    mpsProtocol_t prot;     // MPS protocol
+  };
+
   uint64_t tsRx;            // reception timestamp (RX)
   uint8_t  ttl;             // time-to-live (RX)
   uint8_t  pending;         // flag change indicator (RX)
