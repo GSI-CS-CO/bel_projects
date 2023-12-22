@@ -37,82 +37,115 @@
 
 #include "ioctl.h"
 
-static io_port_t EffLogOut[N_MPS_CHANNELS];    // mapping between MPS message buffer and IO output port
+out_port_config_t outPortCfg =
+  {IO_CFG_CHANNEL_GPIO, N_OUT_LEMO_SCU};    // default output port configuration for SCU3
+static io_port_t EffLogOut[N_MPS_CHANNELS]; // mapping between MPS message buffer and IO output port
+
+status_t findOutPort(const uint8_t bufIdx, io_port_t* port);
 
 /**
- * \brief Set IO output enable
+ * \brief Init IO port map
  *
- * \param channel Output channel type (GPIO, LVDS)
- * \param idx     Output channel index (0..31)
- * \param val     Value to enable/disable (true/false) output
- *
- * \ret   status  COMMON_STATUS_OK on success, otherwise ERROR
- **/
-status_t setIoOe(uint32_t channel, uint32_t idx, bool val)
+ * \return None
+*/
+void ioInitPortMap(void)
 {
-  uint32_t reg = 0;
-  if (channel == IO_CFG_CHANNEL_GPIO)      // GPIO channel
-    reg = val ? IO_GPIO_OE_SETLOW : IO_GPIO_OE_RESETLOW;
-  else if (channel == IO_CFG_CHANNEL_LVDS) // LVDS channel
-    reg = val ? IO_LVDS_OE_SETLOW : IO_LVDS_OE_RESETLOW;
-  else
-    return COMMON_STATUS_ERROR;
-
-  if (idx > 31)
-    return COMMON_STATUS_ERROR;
-
-  if (reg)
-    *(pIOCtrl + (reg >> 2)) = (1 << idx);
-
-  return COMMON_STATUS_OK;
+  for (uint8_t i = 0; i < N_MPS_CHANNELS; ++i)
+    EffLogOut[i].idx = N_MPS_CHANNELS;
 }
 
-// get IO output enable
-uint32_t getIoOe(uint32_t channel)
+/**
+ * \brief Set port 'output enable'
+ *
+ * \param index   Output port index (0..31)
+ * \param enable  Control value (enable=true, disable=false)
+ *
+ * \return  COMMON_STATUS_OK on success, otherwise ERROR
+ **/
+status_t ioSetOutEnable(const uint8_t index, const bool enable)
 {
   uint32_t reg = 0;
-  if (channel == IO_CFG_CHANNEL_GPIO) // GPIO channel
-    reg = IO_GPIO_OE_SETLOW;
-  else if (channel == IO_CFG_CHANNEL_LVDS) // LVDS channel
-    reg = IO_LVDS_OE_SETLOW;
 
-  if (reg)
-    return *(pIOCtrl + (reg >> 2));
+  if (index >= outPortCfg.total)
+    return COMMON_STATUS_ERROR;
+
+  if (outPortCfg.type == IO_CFG_CHANNEL_GPIO) // GPIO channel
+    reg = enable ? IO_GPIO_OE_SETLOW : IO_GPIO_OE_RESETLOW;
+  else if (outPortCfg.type == IO_CFG_CHANNEL_LVDS)  // LVDS channel
+    reg = enable ? IO_LVDS_OE_SETLOW : IO_LVDS_OE_RESETLOW;
   else
-    return 0xFFFF;
+    return COMMON_STATUS_ERROR;
+
+  if (reg) {
+    *(pIOCtrl + (reg >> 2)) = (1 << index);
+    return COMMON_STATUS_OK;
+  } else
+    return COMMON_STATUS_ERROR;
+}
+
+/**
+ * \brief Check if output enabled for the given port
+ *
+ * \param index  Port internal index
+ * \param pReg   Pointer to the register value
+ *
+ * \return COMMON_STATUS_OK on success, otherwise COMMON_STATUS_ERROR
+*/
+status_t ioIsOutEnabled(const uint8_t index, uint32_t *pReg)
+{
+  uint32_t reg = 0;
+
+  if (index >= outPortCfg.total)
+    return COMMON_STATUS_ERROR;
+
+  if (outPortCfg.type == IO_CFG_CHANNEL_GPIO)      // GPIO channel
+    reg = IO_GPIO_OE_SETLOW;
+  else if (outPortCfg.type == IO_CFG_CHANNEL_LVDS) // LVDS channel
+    reg = IO_LVDS_OE_SETLOW;
+  else
+    return COMMON_STATUS_ERROR;
+
+  if (reg) {
+    *pReg = *(pIOCtrl + (reg >> 2)) & (1 << index);
+    return COMMON_STATUS_OK;
+  }
+  else
+    return COMMON_STATUS_ERROR;
 }
 
 /**
  * \brief Drive the chosen output port
  *
- * \param channel  Output channel type
- * \param idx      Output channel index
- * \param value    Logic value for high/low signal
+ * \param pOutPort  Pointer to output port
+ * \param value     Logic value for high/low signal
  *
- * \ret   none
+ * \return COMMON_STATUS_OK on success, otherwise COMMON_STATUS_ERROR
  **/
-void driveOutPort(uint32_t channel, uint8_t idx, uint8_t value)
+status_t driveOutPort(io_port_t *const pOutPort, const uint8_t value)
 {
   uint32_t reg = 0;
   uint32_t outVal = 0;
 
   if (value == MPS_SIGNAL_INVALID)
-    return;
+    return COMMON_STATUS_ERROR;
 
-  if (channel == IO_CFG_CHANNEL_GPIO) { // GPIO channel
+  if (pOutPort->type == IO_CFG_CHANNEL_GPIO) {
     reg = IO_GPIO_SET_OUTBEGIN;
     if (value)
       outVal = 0x01;
-  } else if (channel == IO_CFG_CHANNEL_LVDS) { // LVDS channel
+  } else if (pOutPort->type == IO_CFG_CHANNEL_LVDS) {
     reg = IO_LVDS_SET_OUTBEGIN;
     if (value)
       outVal = 0xff;
   }
   else
-    return;
+    return COMMON_STATUS_ERROR;
 
-  if (reg)
-    *(pIOCtrl + (reg >> 2) + idx) = outVal;
+  if (reg) {
+    *(pIOCtrl + (reg >> 2) + pOutPort->idx) = outVal;
+    return COMMON_STATUS_OK;
+  } else
+    return COMMON_STATUS_ERROR;
 }
 
 /**
@@ -124,92 +157,90 @@ void driveOutPort(uint32_t channel, uint8_t idx, uint8_t value)
  *
  * Generate error (internal signal), if lifetime of MPS flag is expired.
  *
- * \param buf    Pointer to MPS message buffer
- * \param offset Port map offset
+ * \param pBuf   Pointer to MPS message buffer
+ * \param bufIdx Port map index
  *
- * \ret none
+ * \return COMMON_STATUS_OK on success, otherwise COMMON_STATUS_ERROR
  **/
-void driveEffLogOut(mpsMsg_t* buf, uint8_t offset)
+status_t ioDriveOutput(mpsMsg_t *const pBuf, const uint8_t bufIdx)
 {
-  if (buf == 0)
-    return;
+  if (pBuf == 0)
+    return COMMON_STATUS_ERROR;
 
   uint8_t ioVal = MPS_SIGNAL_INVALID;
 
   // handle MPS flag if it's changed or expired
-  if (buf->pending) {
-    buf->pending = 0;
-    DBPRINT3("pend: %x %x %x\n", buf->prot.addr[0], buf->prot.idx, buf->prot.flag);
-    if (buf->prot.flag == MPS_FLAG_OK)
+  if (pBuf->pending) {
+    pBuf->pending = 0;
+    DBPRINT3("pend: %x %x %x\n", pBuf->prot.addr[0], pBuf->prot.idx, pBuf->prot.flag);
+    if (pBuf->prot.flag == MPS_FLAG_OK)
       ioVal = MPS_SIGNAL_HIGH;
     else
       ioVal = MPS_SIGNAL_LOW;
-  } else if (!buf->ttl) {
+  } else if (!pBuf->ttl) {
     ioVal = MPS_SIGNAL_LOW;
-    DBPRINT3("ttl: %x %x %x\n", buf->prot.addr[0], buf->prot.idx, buf->prot.flag);
+    DBPRINT3("ttl: %x %x %x\n", pBuf->prot.addr[0], pBuf->prot.idx, pBuf->prot.flag);
   }
 
+  if (ioVal == MPS_SIGNAL_INVALID)
+    return COMMON_STATUS_ERROR;
+
   io_port_t out_port;
-  if (getEffLogOut(offset, &out_port) == COMMON_STATUS_OK)
-    driveOutPort(out_port.type, out_port.idx, ioVal);     // drive the assigned output port
+  if (findOutPort(bufIdx, &out_port) == COMMON_STATUS_OK)
+    return driveOutPort(&out_port, ioVal);
+  else
+    return COMMON_STATUS_ERROR;
 }
 
 /**
- * \brief Set up the output port to the MPS message buffer
+ * \brief Map the MPS msg buffer to the output port
  *
- * For testing purpose, the direct mapping of the MPS buffer index and
+ * For testing purpose, the direct mapping of the MPS msg buffer index and
  * output port is set up.
  * For example, this mapping can be used to measure the MPS signaling latency
  * for multiple TX nodes.
  *
- * \param buf_idx  MPS message buffer index
- * \param ch_type  Channel type (of output port)
- * \param ch_idx   Channel index (of output port)
+ * \param bufIdx  MPS message buffer index
+ * \param portIdx Output port index
  *
- * \ret none
+ * \return COMMON_STATUS_OK on success, otherwise COMMON_STATUS_ERROR
  *
  **/
-void setupEffLogOut(uint8_t buf_idx, uint32_t ch_type, uint8_t ch_idx)
+status_t ioMapOutput(const uint8_t bufIdx, const uint8_t portIdx)
 {
-  if (buf_idx > N_MPS_CHANNELS)
-    return;
+  if (bufIdx >= N_MPS_CHANNELS)
+    return COMMON_STATUS_ERROR;
 
-  if ((ch_type != IO_CFG_CHANNEL_GPIO) &&
-      (ch_type != IO_CFG_CHANNEL_LVDS))
-    return;
+  if (portIdx >= outPortCfg.total)
+    return COMMON_STATUS_ERROR;
 
-  if ((ch_type == IO_CFG_CHANNEL_GPIO) &&
-      (ch_idx > N_LEMO_OUT_SCU))
-    return;
-
-  if ((ch_type == IO_CFG_CHANNEL_LVDS) &&
-      (ch_idx > N_LEMO_OUT_PEXARIA))
-    return;
-
-  EffLogOut[buf_idx].type = ch_type;
-  EffLogOut[buf_idx].idx  = ch_idx;
+  EffLogOut[bufIdx].type = outPortCfg.type;
+  EffLogOut[bufIdx].idx  = portIdx;
+  return COMMON_STATUS_OK;
 }
 
 /**
- * \brief Get the output port of the MPS message buffer
+ * \brief Find the output port mapped to the given MPS message buffer
  *
- * \param buf_idx  MPS message buffer index
- * \param port     Pointer to structure with port channel type and index (assigned to the given MPS message buffer)
+ * \param bufIdx  MPS message buffer index
+ * \param port    Pointer to structure with port channel type and index (assigned to the given MPS message buffer)
  *
- * \ret   status   OK for success, otherwise ERROR
+ * \return COMMON_STATUS_OK for success, otherwise COMMON_STATUS_ERROR
  *
  **/
-status_t getEffLogOut(uint8_t buf_idx, io_port_t* port)
+status_t findOutPort(const uint8_t bufIdx, io_port_t* port)
 {
-  if (buf_idx > N_MPS_CHANNELS)
+  if (bufIdx > N_MPS_CHANNELS)
     return COMMON_STATUS_ERROR;
 
-  switch (EffLogOut[buf_idx].type) {
+  switch (EffLogOut[bufIdx].type) {
     case IO_CFG_CHANNEL_GPIO:
     case IO_CFG_CHANNEL_LVDS:
-      port->type = EffLogOut[buf_idx].type;
-      port->idx = EffLogOut[buf_idx].idx;
-      return COMMON_STATUS_OK;
+      if (EffLogOut[bufIdx].idx < outPortCfg.total) {
+        port->type = EffLogOut[bufIdx].type;
+        port->idx = EffLogOut[bufIdx].idx;
+        return COMMON_STATUS_OK;
+      }
     default:
       break;
   }
@@ -220,8 +251,9 @@ status_t getEffLogOut(uint8_t buf_idx, io_port_t* port)
 /**
  * \brief Print the mapping between output and MPS message buffer
  *
+ * \return None
  **/
-void diagPrintMapIoMsgIdx(void)
+void ioPrintPortMap(void)
 {
   DBPRINT2("EffLogOut\n");
   DBPRINT2("buf_idx: IO port (type - idx)\n");
