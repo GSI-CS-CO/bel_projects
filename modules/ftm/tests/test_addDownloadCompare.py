@@ -162,6 +162,7 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-startthread-dynpar0.dot')
     # ~ {{dnt::sTMsg, dnt::sStartThread, det::sDynPar0}, SingleEdgeTest::TEST_OK},
 
+  @pytest.mark.development
   def test_aScheduleTmsgOriginDynpar0(self):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-origin-dynpar0.dot')
     # ~ {{dnt::sTMsg, dnt::sOrigin, det::sDynPar0}, SingleEdgeTest::TEST_OK},
@@ -171,6 +172,7 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-startthread-dynpar1.dot')
     # ~ {{dnt::sTMsg, dnt::sStartThread, det::sDynPar1}, SingleEdgeTest::TEST_OK},
 
+  @pytest.mark.development
   def test_aScheduleTmsgOriginDynpar1(self):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-origin-dynpar1.dot')
     # ~ {{dnt::sTMsg, dnt::sOrigin, det::sDynPar1}, SingleEdgeTest::TEST_OK},
