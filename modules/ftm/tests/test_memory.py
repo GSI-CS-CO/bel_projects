@@ -4,12 +4,21 @@ import dm_testbench
 """
 class UnitTestMemory(dm_testbench.DmTestbench):
 
+  def setUp(self):
+    super().setUp()
+    if self.threadQuantity == 8:
+      self.file1 = 'groups_4_nonDefaultPatterns_9_blocksPerPattern_150.dot'
+      self.file2 = 'groups_4_nonDefaultPatterns_9_blocksPerPattern_10b.dot'
+    else:
+      self.file1 = 'groups_4_nonDefaultPatterns_9_blocksPerPattern_150.dot'
+      self.file2 = 'groups_4_nonDefaultPatterns_9_blocksPerPattern_10c.dot'
+
   def test_memory_cpu0(self):
     """Test for CPU 0. Add the schedule, add a second schedule: OK. When
     adding a third schedule, return code 250 comes back. This is expected.
     The add opration is rolled back. """
-    self.addSchedule('groups_4_nonDefaultPatterns_9_blocksPerPattern_150.dot')
-    self.addSchedule('groups_4_nonDefaultPatterns_9_blocksPerPattern_10b.dot')
+    self.addSchedule(self.file1)
+    self.addSchedule(self.file2)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         self.schedules_folder + 'groups_1_nonDefaultPatterns_9_blocksPerPattern_10_cpu0.dot'), [250])
 
@@ -17,8 +26,8 @@ class UnitTestMemory(dm_testbench.DmTestbench):
     """Test for CPU 1. Add the schedule, add a second schedule: OK. When
     adding a third schedule, return code 250 comes back. This is expected.
     The add opration is rolled back. """
-    self.addSchedule('groups_4_nonDefaultPatterns_9_blocksPerPattern_150.dot')
-    self.addSchedule('groups_4_nonDefaultPatterns_9_blocksPerPattern_10b.dot')
+    self.addSchedule(self.file1)
+    self.addSchedule(self.file2)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         self.schedules_folder + 'groups_1_nonDefaultPatterns_9_blocksPerPattern_10_cpu1.dot'), [250])
 
@@ -26,8 +35,8 @@ class UnitTestMemory(dm_testbench.DmTestbench):
     """Test for CPU 2. Add the schedule, add a second schedule: OK. When
     adding a third schedule, return code 250 comes back. This is expected.
     The add opration is rolled back. """
-    self.addSchedule('groups_4_nonDefaultPatterns_9_blocksPerPattern_150.dot')
-    self.addSchedule('groups_4_nonDefaultPatterns_9_blocksPerPattern_10b.dot')
+    self.addSchedule(self.file1)
+    self.addSchedule(self.file2)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         self.schedules_folder + 'groups_1_nonDefaultPatterns_9_blocksPerPattern_10_cpu2.dot'), [250])
 
@@ -35,8 +44,8 @@ class UnitTestMemory(dm_testbench.DmTestbench):
     """Test for CPU 3. Add the schedule, add a second schedule: OK. When
     adding a third schedule, return code 250 comes back. This is expected.
     The add opration is rolled back. """
-    self.addSchedule('groups_4_nonDefaultPatterns_9_blocksPerPattern_150.dot')
-    self.addSchedule('groups_4_nonDefaultPatterns_9_blocksPerPattern_10b.dot')
+    self.addSchedule(self.file1)
+    self.addSchedule(self.file2)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         self.schedules_folder + 'groups_1_nonDefaultPatterns_9_blocksPerPattern_10_cpu3.dot'), [250])
 
