@@ -765,6 +765,7 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     self.addDownloadCompareSchedule('testSingleEdge-blockalign-origin-altdst.dot')
     # ~ {{dnt::sBlockAlign, dnt::sOrigin, det::sAltDst}, SingleEdgeTest::TEST_OK},
 
+  @pytest.mark.development
   def test_aScheduleQinfoQbufMeta(self):
     self.addDownloadCompareSchedule('testSingleEdge-qinfo-qbuf-meta.dot', statusMeta=True)
     # ~ {{dnt::sQInfo, dnt::sQBuf, det::sMeta}, SingleEdgeTest::TEST_OK},
