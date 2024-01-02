@@ -103,12 +103,12 @@ vertex_set_t VisitorUploadCrawler::getChildrenByEdgeType(vertex_t vStart, const 
 */
  vertex_t VisitorUploadCrawler::getOnlyChildByEdgeType(vertex_t vStart, const std::string edgeType) const {
   vertex_t ret = null_vertex;
-  
+
   vertex_vec_t vs = getChildrenByEdgeType(vStart, edgeType);
   if (vs.size()  > 1) throw std::runtime_error( exIntro + "Node " + g[vStart].name + "has more than one child of that edge type, result is ambiguous\n");
-  //if (vs.size() == 0) ret = null_vertex; 
+  //if (vs.size() == 0) ret = null_vertex;
   if (vs.size() == 1) ret = *vs.begin();
-  
+
   return ret;
 }
 
@@ -121,7 +121,7 @@ vertex_set_t VisitorUploadCrawler::getChildrenByEdgeType(vertex_t vStart, const 
       ret = at.adrConv(AdrType::MGMT, (dst->cpu == src->cpu ? AdrType::INT : AdrType::PEER), dst->cpu, dst->adr);
     }
     return ret;
-  }  
+  }
 
 //Use this if the order of vertices does not matter
 vAdr& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, vAdr& ret, const unsigned int minResults, const unsigned int maxResults, const bool allowPeers, const uint32_t resultPadData) const {
@@ -172,7 +172,7 @@ vAdr& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, vAdr& ret, const unsig
         //we create a map entry, adress offset to adress, that will contain our refPtr
         //key is offset oSource (e.g. TMSG_RES)
         //value is the address of the target node + offset oTarget
-        
+
         //log<DEBUG_LVL2>(L"Found Reflink to TargetNode %1%. Offset Source: %2$#02x Offset Target: %3$#02x Width: %4%") % g[target(*out_cur,g)].name.c_str() % oTarget % oSource % width;
         /*
         t.insert(oSource, getEdgeTargetAdr(v, target(*out_cur, g)) );
@@ -181,7 +181,7 @@ vAdr& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, vAdr& ret, const unsig
         */
       }
     }
-    
+
     return t;
   }
 
@@ -209,7 +209,7 @@ vAdr& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, vAdr& ret, const unsig
     }
     */
     return t;
-  }    
+  }
 
 
   mVal VisitorUploadCrawler::getDynSrc() const {
@@ -232,7 +232,7 @@ vAdr& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, vAdr& ret, const unsig
             auto x = at.lookupVertex(target(*out_cur,g));
             uint32_t aId = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_ID_SMSK);
             ret.insert({TMSG_ID_LO, aId });
-            
+
             hashXor ^= x->hash;
           }
         }
@@ -254,7 +254,7 @@ vAdr& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, vAdr& ret, const unsig
             hashXor ^= x->hash;
           }
         }
-        
+
         if (g[*out_cur].type == det::sDynRes) {
           if (ret.find(TMSG_RES) == ret.end()) {sErr << "Found more than one dynamic res source" << std::endl; break;
           } else {
@@ -264,7 +264,7 @@ vAdr& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, vAdr& ret, const unsig
             hashXor ^= x->hash;
           }
         }
-        
+
       }
     }
 
@@ -300,7 +300,7 @@ mVal VisitorUploadCrawler::getQBuf() const {
 
   vertex_vec_t vsTmp = getChildrenByEdgeType(v, det::sMeta);
 
-  for (auto it : vsTmp) { 
+  for (auto it : vsTmp) {
     if (g[it].type == dnt::sQBuf) {
       //check name suffix 0 and 1. We must place the buffer node addresses in correct order so they alway match rd/wr indices
       //Dunno if it has a practical effect, we should not write back command buffers anyway but zero them IMO
@@ -309,7 +309,7 @@ mVal VisitorUploadCrawler::getQBuf() const {
       if (hasEnding(g[it].name, dnmg::s1stQBufSuffix)) { ret.insert({0*_32b_SIZE_, getEdgeTargetAdr(v, it) }); }
       if (hasEnding(g[it].name, dnmg::s2ndQBufSuffix)) { ret.insert({1*_32b_SIZE_, getEdgeTargetAdr(v, it) }); }
     }
-  }  
+  }
   return ret;
 }
 
@@ -328,7 +328,7 @@ mVal  VisitorUploadCrawler::getSwitchTarget() const {
   mVal  ret;
   //search for switch target, returns NULL PTR if there is no target
   ret.insert({SWITCH_TARGET, getEdgeTargetAdr(v, getOnlyChildByEdgeType(v, det::sSwitchTarget)) });
-  
+
 
   return ret;
 }
@@ -341,7 +341,7 @@ mVal VisitorUploadCrawler::getFlowDst() const {
   //this will return exactly one target, otherwise neighbourhood check would have detected the misshapen schedule
   vertex_vec_t vsTgt = getChildrenByEdgeType(v, det::sCmdTarget);
   //command cross over to other CPUs is okay. Find out what Cpu the command target is on
-  
+
 
   vertex_vec_t vsDst = getChildrenByEdgeType(v, det::sCmdFlowDst);
   if((vsTgt.size() == 0) || (vsDst.size() == 0)) { ret.insert({(unsigned)CMD_FLOW_DEST, (unsigned)LM32_NULL_PTR}); log<DEBUG_LVL0>(L"flowDst: Done, unconnected"); return ret;}// if this command is not connected, return a null pointer as flowdst
@@ -379,13 +379,17 @@ mVal VisitorUploadCrawler::getOriginDst() const {
 
   vertex_vec_t vsDst = getChildrenByEdgeType(v, det::sOriginDst);
 
-  if(vsDst.size() == 0) { ret.insert({ORIGIN_DEST, LM32_NULL_PTR}); return ret;}// if this command is not connected, return a null pointer as Origindst
+  if(vsDst.size() == 0) {
+    ret.insert({(unsigned)ORIGIN_DEST, LM32_NULL_PTR});
+    ret.insert({(unsigned)ORIGIN_CPU , (unsigned)0});
+    return ret;
+  }// if this command is not connected, return a null pointer as Origindst
 
   auto dst = at.lookupVertex(*vsDst.begin());
 
   ret.insert({(unsigned)ORIGIN_DEST, (unsigned)at.adrConv(AdrType::MGMT, AdrType::INT , dst->cpu, dst->adr)});
   ret.insert({(unsigned)ORIGIN_CPU , (unsigned)dst->cpu});
- 
+
   return ret;
 }
 
@@ -410,23 +414,23 @@ mVal VisitorUploadCrawler::getFlushOvr() const {
 
 mVal VisitorUploadCrawler::getListDst() const {
   mVal ret;
-  
+
   // scratch all that. We'll turn it around and create scores of destlists, all pointing to a block as their acnestor (or child? whats better, logically?)
   // this means single pass/independent reconstroction of altdsts - each dstlst by its own. process all, and you get all the altdsts back.
 
   /*--- find origin block and parent node (can be the same). Count number of hops necessary to reach original block ---*/
   log<DEBUG_LVL0>(L"dstLst: Entering");
   vertex_t va;
- 
+
   Graph::out_edge_iterator out_begin, out_end;
   boost::tie(out_begin, out_end) = out_edges(v,g);
   va = target(*out_begin,g);
   if (g[va].np == nullptr) throw std::runtime_error( exIntro + "Node " + g[va].name + " of type " + g[va].type + " has not data object\n");
   if (!g[va].np->isBlock()) { throw std::runtime_error(  exIntro + "DstList " + g[v].name + "is childless!\n");}
-  
-  
+
+
   log<DEBUG_LVL0>(L"dstLst: childblock <%1%>/<%2%> <---- <%3%>/<%4%>(thisListnode)")  % g[va].name.c_str() % g[va].type.c_str() % g[v].name.c_str() % g[v].type.c_str();
-  
+
   /*--- Get us the vector of all altDst nodes ---*/
   vertex_vec_t altVec = getChildrenByEdgeType(va, det::sAltDst); //get all known altdst nodes
   vertex_t       vDef = getOnlyChildByEdgeType(va, det::sDefDst);//search for defdst node
@@ -435,7 +439,7 @@ mVal VisitorUploadCrawler::getListDst() const {
     //there is only "dst children" in terms of pointers. We need a way to know edges were alt and which one was def when downloading. Place def at begin so we can find out by order.
     //defdst must be listed in altVec as element zero. Push copy of beginning to back of vector, overwrite first element with def.
     if(altVec.size() > 0)   {altVec.push_back(altVec[0]); altVec[0] = vDef;}
-    else                    {altVec.push_back(vDef);}  
+    else                    {altVec.push_back(vDef);}
   }
   //find the slice of altVec for this dstLst node
   //we do it he lazy way and look at the numerical suffix of this node's name
