@@ -227,42 +227,42 @@ vAdr& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, vAdr& ret, const unsig
       else {
 
         if (g[*out_cur].type == det::sDynId) {
-          if (ret.find(TMSG_ID_LO) == ret.end()) {sErr << "Found more than one dynamic id source" << std::endl; break;
-          } else {
+          //~ if (ret.find(TMSG_ID_LO) == ret.end()) {sErr << "Found more than one dynamic id source" << std::endl; break;
+          //~ } else {
             auto x = at.lookupVertex(target(*out_cur,g));
             uint32_t aId = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_ID_SMSK);
             ret.insert({TMSG_ID_LO, aId });
 
             hashXor ^= x->hash;
-          }
+          //~ }
         }
         if (g[*out_cur].type == det::sDynPar1) {
-          if (ret.find(TMSG_PAR_HI) == ret.end()){sErr << "Found more than one dynamic par1 source" << std::endl; break;
-          } else {
+          //~ if (ret.find(TMSG_PAR_HI) == ret.end()){sErr << "Found more than one dynamic par1 source" << std::endl; break;
+          //~ } else {
             auto x = at.lookupVertex(target(*out_cur,g));
             uint32_t aPar1 = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR1_SMSK);
             ret.insert({TMSG_PAR_HI, aPar1 });
             hashXor ^= x->hash;
-          }
+          //~ }
         }
         if (g[*out_cur].type == det::sDynPar0) {
-          if (ret.find(TMSG_PAR_LO) == ret.end()) {sErr << "Found more than one dynamic par0 source" << std::endl; break;
-          } else {
+          //~ if (ret.find(TMSG_PAR_LO) == ret.end()) {sErr << "Found more than one dynamic par0 source" << std::endl; break;
+          //~ } else {
             auto x = at.lookupVertex(target(*out_cur,g));
             uint32_t aPar0 = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR0_SMSK);
             ret.insert({TMSG_PAR_LO, aPar0 });
             hashXor ^= x->hash;
-          }
+          //~ }
         }
 
         if (g[*out_cur].type == det::sDynRes) {
-          if (ret.find(TMSG_RES) == ret.end()) {sErr << "Found more than one dynamic res source" << std::endl; break;
-          } else {
+          //~ if (ret.find(TMSG_RES) == ret.end()) {sErr << "Found more than one dynamic res source" << std::endl; break;
+          //~ } else {
             auto x = at.lookupVertex(target(*out_cur,g));
             uint32_t aRes = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_RES_SMSK);
             ret.insert({TMSG_RES, aRes});
             hashXor ^= x->hash;
-          }
+          //~ }
         }
 
       }

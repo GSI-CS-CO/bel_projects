@@ -69,82 +69,66 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-wait-defdst.dot')
     # ~ {{dnt::sTMsg, dnt::sCmdWait, det::sDefDst}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleTmsgBlockDynpar0(self):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-block-dynpar0.dot')
     # ~ {{dnt::sTMsg, dnt::sBlock, det::sDynPar0}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleTmsgBlockalignDynpar0(self):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-blockalign-dynpar0.dot')
     # ~ {{dnt::sTMsg, dnt::sBlockAlign, det::sDynPar0}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleTmsgFlowDynpar0(self):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-flow-dynpar0.dot')
     # ~ {{dnt::sTMsg, dnt::sCmdFlow, det::sDynPar0}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleTmsgFlushDynpar0(self):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-flush-dynpar0.dot')
     # ~ {{dnt::sTMsg, dnt::sCmdFlush, det::sDynPar0}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleTmsgNoopDynpar0(self):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-noop-dynpar0.dot')
     # ~ {{dnt::sTMsg, dnt::sCmdNoop, det::sDynPar0}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleTmsgSwitchDynpar0(self):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-switch-dynpar0.dot')
     # ~ {{dnt::sTMsg, dnt::sSwitch, det::sDynPar0}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleTmsgTmsgDynpar0(self):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-tmsg-dynpar0.dot')
     # ~ {{dnt::sTMsg, dnt::sTMsg, det::sDynPar0}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleTmsgWaitDynpar0(self):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-wait-dynpar0.dot')
     # ~ {{dnt::sTMsg, dnt::sCmdWait, det::sDynPar0}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleTmsgBlockDynpar1(self):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-block-dynpar1.dot')
     # ~ {{dnt::sTMsg, dnt::sBlock, det::sDynPar1}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleTmsgBlockalignDynpar1(self):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-blockalign-dynpar1.dot')
     # ~ {{dnt::sTMsg, dnt::sBlockAlign, det::sDynPar1}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleTmsgFlowDynpar1(self):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-flow-dynpar1.dot')
     # ~ {{dnt::sTMsg, dnt::sCmdFlow, det::sDynPar1}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleTmsgFlushDynpar1(self):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-flush-dynpar1.dot')
     # ~ {{dnt::sTMsg, dnt::sCmdFlush, det::sDynPar1}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleTmsgNoopDynpar1(self):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-noop-dynpar1.dot')
     # ~ {{dnt::sTMsg, dnt::sCmdNoop, det::sDynPar1}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleTmsgSwitchDynpar1(self):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-switch-dynpar1.dot')
     # ~ {{dnt::sTMsg, dnt::sSwitch, det::sDynPar1}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleTmsgTmsgDynpar1(self):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-tmsg-dynpar1.dot')
     # ~ {{dnt::sTMsg, dnt::sTMsg, det::sDynPar1}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleTmsgWaitDynpar1(self):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-wait-dynpar1.dot')
     # ~ {{dnt::sTMsg, dnt::sCmdWait, det::sDynPar1}, SingleEdgeTest::TEST_OK},
@@ -157,22 +141,18 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-origin-defdst.dot')
     # ~ {{dnt::sTMsg, dnt::sOrigin, det::sDefDst}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleTmsgStartthreadDynpar0(self):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-startthread-dynpar0.dot')
     # ~ {{dnt::sTMsg, dnt::sStartThread, det::sDynPar0}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleTmsgOriginDynpar0(self):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-origin-dynpar0.dot')
     # ~ {{dnt::sTMsg, dnt::sOrigin, det::sDynPar0}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleTmsgStartthreadDynpar1(self):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-startthread-dynpar1.dot')
     # ~ {{dnt::sTMsg, dnt::sStartThread, det::sDynPar1}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleTmsgOriginDynpar1(self):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-origin-dynpar1.dot')
     # ~ {{dnt::sTMsg, dnt::sOrigin, det::sDynPar1}, SingleEdgeTest::TEST_OK},
