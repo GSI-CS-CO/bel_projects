@@ -130,6 +130,12 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, std::string node
       edgeT.compare(det::sDefDst) != 0 &&
       edgeT.compare(det::sCmdFlowDst) != 0) {
     boost::add_edge(v1, v2, myEdge(det::sDefDst), g);
+    if (g[v1].type.compare(dnt::sSwitch) == 0 && edgeT.compare(det::sCmdTarget) != 0) {
+      boost::add_edge(v1, v2, myEdge(det::sCmdTarget), g);
+    }
+    if (g[v1].type.compare(dnt::sSwitch) == 0 && edgeT.compare(det::sSwitchDst) == 0) {
+      boost::add_edge(v2, v2, myEdge(det::sDefDst), g);
+    }
   }
   // add child vertex, blocks for a meta vertex, or a buffer vertex if necessary.
   g1 = g;
@@ -156,6 +162,12 @@ void SingleEdgeGraph::extendWithChild(std::string edgeT) {
     }
     setNodePointer(&g1[v3], v3Type, flags);
     boost::add_edge(v2, v3, myEdge(v3Edge), g1);
+    if (g1[v1].type.compare(dnt::sSwitch) == 0 && v3Type.compare(dnt::sBlock) == 0) {
+      boost::add_edge(v1, v3, myEdge(det::sCmdTarget), g1);
+      if (edgeT.compare(det::sDefDst) != 0) {
+        boost::add_edge(v3, v2, myEdge(det::sDefDst), g1);
+      }
+    }
     if (g1[v2].type.compare(dnt::sCmdWait) == 0 || 
         g1[v2].type.compare(dnt::sBlock) == 0 || 
         g1[v2].type.compare(dnt::sBlockAlign) == 0 || 
@@ -196,7 +208,7 @@ void SingleEdgeGraph::extendOrphanNode() {
     setNodePointer(&g1[v5], dnt::sBlock, flags);
     boost::add_edge(v5, v1, myEdge(det::sQPrio[0]), g1);
     v6 = boost::add_vertex(g1);
-    g1[v6].name = "E5_ListDst";
+    g1[v6].name = "E5_ListDst_0";
     g1[v6].type = dnt::sDstList;
     g1[v6].patName = "patternA";
     g1[v6].bpName = "beamA";
