@@ -5,4 +5,6 @@ A1[cpu="0", flags="0x00002012", type="switch", toffs="0", pattern="patternA", pa
 B2[cpu="0", flags="0x00108008", type="blockalign", tperiod="1000", pattern="patternA", patentry="false", patexit="true", beamproc="beamA", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", style  = "dotted, filled", fillcolor = "white", penwidth=2, color = "purple"];
 A1->B2 [type="switchdst", color = "pink"];
 A1->B2 [type="defdst", color = "red"];
+A1->B2 [type="target", color = "blue"];
+B2->B2 [type="defdst", color = "red"];
 }
