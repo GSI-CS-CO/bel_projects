@@ -48,9 +48,11 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, std::string node
     if (edgeT.compare(det::sDynPar0) == 0) {
       g[v1].par = "0x000000000412099c";
       g[v1].tef = "2068673551";
+      flags = NFLG_TMSG_DYN_PAR0_SMSK;
     } else if (edgeT.compare(det::sDynPar1) == 0) {
       g[v1].par = "0x0412099c00000000";
       g[v1].tef = "2068673551";
+      flags = NFLG_TMSG_DYN_PAR1_SMSK;
     } else {
       g[v1].par = "1";
       g[v1].tef = "0";
