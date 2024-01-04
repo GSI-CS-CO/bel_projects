@@ -245,52 +245,42 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     self.addDownloadCompareSchedule('testSingleEdge-flow-blockalign-target.dot')
     # ~ {{dnt::sCmdFlow, dnt::sBlockAlign, det::sSwitchTarget}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleFlowBlockFlowdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-flow-block-flowdst.dot')
     # ~ {{dnt::sCmdFlow, dnt::sBlock, det::sCmdFlowDst}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleFlowBlockalignFlowdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-flow-blockalign-flowdst.dot')
     # ~ {{dnt::sCmdFlow, dnt::sBlockAlign, det::sCmdFlowDst}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleFlowFlowFlowdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-flow-flow-flowdst.dot')
     # ~ {{dnt::sCmdFlow, dnt::sCmdFlow, det::sCmdFlowDst}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleFlowFlushFlowdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-flow-flush-flowdst.dot')
     # ~ {{dnt::sCmdFlow, dnt::sCmdFlush, det::sCmdFlowDst}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleFlowNoopFlowdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-flow-noop-flowdst.dot')
     # ~ {{dnt::sCmdFlow, dnt::sCmdNoop, det::sCmdFlowDst}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleFlowSwitchFlowdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-flow-switch-flowdst.dot')
     # ~ {{dnt::sCmdFlow, dnt::sSwitch, det::sCmdFlowDst}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleFlowStartthreadFlowdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-flow-startthread-flowdst.dot')
     # ~ {{dnt::sCmdFlow, dnt::sStartThread, det::sCmdFlowDst}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleFlowOriginFlowdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-flow-origin-flowdst.dot')
     # ~ {{dnt::sCmdFlow, dnt::sOrigin, det::sCmdFlowDst}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleFlowTmsgFlowdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-flow-tmsg-flowdst.dot')
     # ~ {{dnt::sCmdFlow, dnt::sTMsg, det::sCmdFlowDst}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleFlowWaitFlowdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-flow-wait-flowdst.dot')
     # ~ {{dnt::sCmdFlow, dnt::sCmdWait, det::sCmdFlowDst}, SingleEdgeTest::TEST_OK},
