@@ -125,8 +125,8 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, std::string node
       edgeT.compare(det::sCmdTarget) != 0) {
     boost::add_edge(v1, v2, myEdge(det::sDefDst), g);
   }
-  if ((g[v1].type.compare(dnt::sCmdWait) == 0 || g[v1].type.compare(dnt::sSwitch) == 0 || g[v1].type.compare(dnt::sOrigin) == 0 || g[v1].type.compare(dnt::sCmdFlush) == 0) && 
-      (g[v2].type.compare(dnt::sBlock) == 0 || g[v2].type.compare(dnt::sBlockAlign) == 0) && 
+  if ((g[v1].type.compare(dnt::sCmdWait) == 0 || g[v1].type.compare(dnt::sSwitch) == 0 || g[v1].type.compare(dnt::sOrigin) == 0 || g[v1].type.compare(dnt::sCmdFlush) == 0) &&
+      (g[v2].type.compare(dnt::sBlock) == 0 || g[v2].type.compare(dnt::sBlockAlign) == 0) &&
       edgeT.compare(det::sDefDst) != 0 &&
       edgeT.compare(det::sCmdFlowDst) != 0) {
     boost::add_edge(v1, v2, myEdge(det::sDefDst), g);
@@ -136,6 +136,11 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, std::string node
     if (g[v1].type.compare(dnt::sSwitch) == 0 && edgeT.compare(det::sSwitchDst) == 0) {
       boost::add_edge(v2, v2, myEdge(det::sDefDst), g);
     }
+  }
+  if (g[v1].type.compare(dnt::sCmdFlush) == 0 &&
+      (g[v2].type.compare(dnt::sBlock) == 0 || g[v2].type.compare(dnt::sBlockAlign) == 0) &&
+      edgeT.compare(det::sCmdFlushOvr) == 0) {
+    boost::add_edge(v1, v2, myEdge(det::sCmdTarget), g);
   }
   // add child vertex, blocks for a meta vertex, or a buffer vertex if necessary.
   g1 = g;
@@ -159,6 +164,8 @@ void SingleEdgeGraph::extendWithChild(std::string edgeT) {
     if (g1[v3].type.compare(dnt::sBlock) == 0 || g1[v3].type.compare(dnt::sBlockAlign) == 0) {
       flags=0x00100007;
       g1[v3].tPeriod = "2000";
+      g1[v3].qLo = 1;
+      cdm->completeId(v3, g1);
     }
     setNodePointer(&g1[v3], v3Type, flags);
     boost::add_edge(v2, v3, myEdge(v3Edge), g1);
@@ -167,6 +174,9 @@ void SingleEdgeGraph::extendWithChild(std::string edgeT) {
       if (edgeT.compare(det::sDefDst) != 0) {
         boost::add_edge(v3, v2, myEdge(det::sDefDst), g1);
       }
+    }
+    if (g1[v1].type.compare(dnt::sCmdFlush) == 0 && v3Type.compare(dnt::sBlock) == 0) {
+      boost::add_edge(v1, v3, myEdge(det::sCmdTarget), g1);
     }
     if (g1[v2].type.compare(dnt::sCmdWait) == 0 || 
         g1[v2].type.compare(dnt::sBlock) == 0 || 
