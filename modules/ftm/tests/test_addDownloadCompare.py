@@ -439,52 +439,42 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     self.addDownloadCompareSchedule('testSingleEdge-flush-blockalign-target.dot')
     # ~ {{dnt::sCmdFlush, dnt::sBlockAlign, det::sCmdTarget}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleFlushBlockFlushovr(self):
     self.addDownloadCompareSchedule('testSingleEdge-flush-block-flushovr.dot')
     # ~ {{dnt::sCmdFlush, dnt::sBlock, det::sCmdFlushOvr}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleFlushBlockalignFlushovr(self):
     self.addDownloadCompareSchedule('testSingleEdge-flush-blockalign-flushovr.dot')
     # ~ {{dnt::sCmdFlush, dnt::sBlockAlign, det::sCmdFlushOvr}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleFlushFlowFlushovr(self):
     self.addDownloadCompareSchedule('testSingleEdge-flush-flow-flushovr.dot')
     # ~ {{dnt::sCmdFlush, dnt::sCmdFlow, det::sCmdFlushOvr}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleFlushFlushFlushovr(self):
     self.addDownloadCompareSchedule('testSingleEdge-flush-flush-flushovr.dot')
     # ~ {{dnt::sCmdFlush, dnt::sCmdFlush, det::sCmdFlushOvr}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleFlushNoopFlushovr(self):
     self.addDownloadCompareSchedule('testSingleEdge-flush-noop-flushovr.dot')
     # ~ {{dnt::sCmdFlush, dnt::sCmdNoop, det::sCmdFlushOvr}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleFlushSwitchFlushovr(self):
     self.addDownloadCompareSchedule('testSingleEdge-flush-switch-flushovr.dot')
     # ~ {{dnt::sCmdFlush, dnt::sSwitch, det::sCmdFlushOvr}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleFlushTmsgFlushovr(self):
     self.addDownloadCompareSchedule('testSingleEdge-flush-tmsg-flushovr.dot')
     # ~ {{dnt::sCmdFlush, dnt::sTMsg, det::sCmdFlushOvr}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleFlushWaitFlushovr(self):
     self.addDownloadCompareSchedule('testSingleEdge-flush-wait-flushovr.dot')
     # ~ {{dnt::sCmdFlush, dnt::sCmdWait, det::sCmdFlushOvr}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleFlushStartthreadFlushovr(self):
     self.addDownloadCompareSchedule('testSingleEdge-flush-startthread-flushovr.dot')
     # ~ {{dnt::sCmdFlush, dnt::sStartThread, det::sCmdFlushOvr}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
   def test_aScheduleFlushOriginFlushovr(self):
     self.addDownloadCompareSchedule('testSingleEdge-flush-origin-flushovr.dot')
     # ~ {{dnt::sCmdFlush, dnt::sOrigin, det::sCmdFlushOvr}, SingleEdgeTest::TEST_OK},

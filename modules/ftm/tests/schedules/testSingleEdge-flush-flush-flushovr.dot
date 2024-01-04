@@ -6,5 +6,6 @@ B2[cpu="0", flags="0x00008005", type="flush", toffs="0", pattern="patternA", pat
 C3[cpu="0", flags="0x00100007", type="block", tperiod="2000", pattern="patternA", patentry="false", patexit="false", beamproc="beamA", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white"];
 A1->B2 [type="flushovr", color = "pink"];
 B2->C3 [type="defdst", color = "red"];
+A1->C3 [type="target", color = "blue"];
 A1->C3 [type="defdst", color = "red"];
 }
