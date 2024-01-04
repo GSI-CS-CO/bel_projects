@@ -185,6 +185,11 @@ void SingleEdgeGraph::extendWithChild(std::string edgeT, configuration& config) 
     if (g1[v1].type.compare(dnt::sCmdFlush) == 0 && v3Type.compare(dnt::sBlock) == 0) {
       boost::add_edge(v1, v3, myEdge(det::sCmdTarget), g1);
     }
+    if (g1[v1].type.compare(dnt::sCmdFlow) == 0 && v3Type.compare(dnt::sBlock) == 0) {
+      if (edgeT.compare(det::sCmdTarget) != 0) {
+        boost::add_edge(v1, v3, myEdge(det::sCmdTarget), g1);
+      }
+    }
     if (g1[v2].type.compare(dnt::sCmdWait) == 0 || 
         g1[v2].type.compare(dnt::sBlock) == 0 || 
         g1[v2].type.compare(dnt::sBlockAlign) == 0 || 
