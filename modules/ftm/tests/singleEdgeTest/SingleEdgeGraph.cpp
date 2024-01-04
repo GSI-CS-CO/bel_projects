@@ -30,7 +30,7 @@ namespace dnm = DotStr::Node::MetaGen;
 
 
 
-SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, std::string nodeT1, std::string nodeT2, std::string edgeT) {
+SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, configuration& config, std::string nodeT1, std::string nodeT2, std::string edgeT) {
   cdm = carpeDM;
   uint32_t flags = 0;
   // declare a graph object, adding the edges and edge properties
@@ -76,8 +76,10 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, std::string node
       g[v1].qIl = "1";
       flags |= 0x00400000;
     }
-    if (nodeT2.compare(dnt::sQInfo) != 0) {
-      generateQmeta(g, v1, 0);
+    if (config.generateMetaNodes) {
+      if (nodeT2.compare(dnt::sQInfo) != 0) {
+        generateQmeta(g, v1, 0);
+      }
     }
   }
   cdm->completeId(v1, g);
@@ -111,7 +113,9 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, std::string node
     g[v2].tPeriod = "1000";
     g[v2].qLo = 1;
     cdm->completeId(v2, g);
-    generateQmeta(g, v2, 0);
+    if (config.generateMetaNodes) {
+      generateQmeta(g, v2, 0);
+    }
   }
   flags |= NFLG_PAT_EXIT_LM32_SMSK;
   setNodePointer(&g[v2], nodeT2, flags);
@@ -144,12 +148,12 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, std::string node
   }
   // add child vertex, blocks for a meta vertex, or a buffer vertex if necessary.
   g1 = g;
-  extendWithChild(edgeT);
+  extendWithChild(edgeT, config);
   extendOrphanNode();
   extendSecondQbuf();
 }
 
-void SingleEdgeGraph::extendWithChild(std::string edgeT) {
+void SingleEdgeGraph::extendWithChild(std::string edgeT, configuration& config) {
   uint32_t flags = 0;
   if ((g1[v2].np->isEvent()) || (g1[v2].type.compare(dnt::sQInfo) == 0) || 
       (g1[v1].type.compare(dnt::sCmdFlow) == 0) ||
@@ -166,7 +170,9 @@ void SingleEdgeGraph::extendWithChild(std::string edgeT) {
       g1[v3].tPeriod = "2000";
       g1[v3].qLo = 1;
       cdm->completeId(v3, g1);
-      generateQmeta(g1, v3, 0);
+      if (config.generateMetaNodes) {
+        generateQmeta(g1, v3, 0);
+      }
     }
     setNodePointer(&g1[v3], v3Type, flags);
     boost::add_edge(v2, v3, myEdge(v3Edge), g1);
