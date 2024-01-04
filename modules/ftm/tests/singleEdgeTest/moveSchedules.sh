@@ -1,7 +1,7 @@
 #! /usr/bin/bash
 
 mkdir -p dot/
-LD_LIBRARY_PATH=../lib ./singleEdgeTest/singleEdgeTest
+LD_LIBRARY_PATH=../lib ./singleEdgeTest/singleEdgeTest -s
 
 mv dot/testSingleEdge-listdst-block-defdst.dot schedules/
 mv dot/testSingleEdge-listdst-blockalign-defdst.dot schedules/

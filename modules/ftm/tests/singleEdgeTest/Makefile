@@ -59,6 +59,7 @@ install: singleEdgeTest
 
 format:
 	clang-format-10 $(STYLE) -i SingleEdgeTest.h
+	clang-format-10 $(STYLE) -i configuration.h
 	clang-format-10 $(STYLE) -i SingleEdgeTest.cpp
 	clang-format-10 $(STYLE) -i SingleEdgeTables.h
 	clang-format-10 $(STYLE) -i SingleEdgeTables.cpp

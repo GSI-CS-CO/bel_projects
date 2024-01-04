@@ -5,6 +5,8 @@
 #include "carpeDMimpl.h"
 #include "dotstr.h"
 
+#include "configuration.h"
+
 namespace dnt = DotStr::Node::TypeVal;
 
 extern std::map<std::string, int> nodeMap;
@@ -33,7 +35,7 @@ class SingleEdgeGraph : public Graph {
   /** Complete the myVertex nodes with a valid node pointer depending on the type. */
   void setNodePointer(myVertex* vertex, std::string type, uint32_t flags);
   /** Extend graphs with forbiddden childless nodes. If node2 is of type event or qinfo, it may not be childless. */
-  void extendWithChild(std::string edgeT);
+  void extendWithChild(std::string edgeT, configuration& config);
   /** Extend graphs with forbidden orphan nodes. If node1 is of type meta, it may not be orphan. */
   void extendOrphanNode();
   /** Extend graphs with a second qbuf node if node1 has type qinfo. */
@@ -43,11 +45,13 @@ class SingleEdgeGraph : public Graph {
 
  public:
   /** Create a graph from given node and edge types.
+\param cdm CarpeDM instance.
+\param config configuration from command line options.
 \param nodeT1 Type of node1. Allowed values from namespace DotStr::Node::TypeVal.
 \param nodeT2 Type of node2. Allowed values from namespace DotStr::Node::TypeVal.
 \param edgeT Type of edge from node1 to node2. Allowed values from namespace DotStr::Edge::TypeVal.
   */
-  SingleEdgeGraph(CarpeDM::CarpeDMimpl* cdm, std::string nodeT1, std::string nodeT2, std::string edgeT);
+  SingleEdgeGraph(CarpeDM::CarpeDMimpl* cdm, configuration& config, std::string nodeT1, std::string nodeT2, std::string edgeT);
   /** Return the graph stored in this object. */
   Graph getGraph() { return g1; };
   /** Print the graph as nodes and edges to stdout. */
