@@ -166,6 +166,7 @@ void SingleEdgeGraph::extendWithChild(std::string edgeT) {
       g1[v3].tPeriod = "2000";
       g1[v3].qLo = 1;
       cdm->completeId(v3, g1);
+      generateQmeta(g1, v3, 0);
     }
     setNodePointer(&g1[v3], v3Type, flags);
     boost::add_edge(v2, v3, myEdge(v3Edge), g1);
