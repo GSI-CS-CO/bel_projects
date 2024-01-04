@@ -75,14 +75,14 @@ entity pexarria10 is
     psram_a            : out   std_logic_vector(23 downto 0) := (others => 'Z');
     psram_dq           : inout std_logic_vector(15 downto 0) := (others => 'Z');
     psram_clk          : out   std_logic := 'Z';
-    psram_advn         : out   std_logic := 'Z';
-    psram_cre          : out   std_logic := 'Z';
+    psram_advn         : out   std_logic_vector(3 downto 0) := (others => 'Z');
+    psram_cre          : out   std_logic_vector(3 downto 0) := (others => 'Z');
     psram_cen          : out   std_logic_vector(3 downto 0) := (others => '1');
-    psram_oen          : out   std_logic := 'Z';
-    psram_wen          : out   std_logic := 'Z';
-    psram_ubn          : out   std_logic := 'Z';
-    psram_lbn          : out   std_logic := 'Z';
-    psram_wait         : in    std_logic; -- DDR magic
+    psram_oen          : out   std_logic_vector(3 downto 0) := (others => 'Z');
+    psram_ubn          : out   std_logic_vector(3 downto 0) := (others => 'Z');
+    psram_wen          : out   std_logic_vector(3 downto 0) := (others => 'Z');
+    psram_lbn          : out   std_logic_vector(3 downto 0) := (others => 'Z');
+    psram_wait         : in    std_logic_vector(3 downto 0); -- DDR magic
 
     -----------------------------------------------------------------------
     -- usb
@@ -92,9 +92,9 @@ entity pexarria10 is
     usb_fd_io    : inout std_logic_vector(7 downto 0);
     usb_pa_io    : inout std_logic_vector(7 downto 0) := (others => 'Z');
     usb_ctl_i    : in    std_logic_vector(2 downto 0);
-    usb_uclk_i   : in    std_logic;
     usb_ures_o   : out   std_logic;
-    usb_uclkin_i : in    std_logic;
+    usb_clk_i    : in    std_logic;
+    usb_uclk_i   : in    std_logic;
 
     -----------------------------------------------------------------------
     -- ATXMega (F2F) previously CPLD
@@ -181,6 +181,16 @@ architecture rtl of pexarria10 is
   signal s_stub_pll_reset       : std_logic;
   signal s_stub_pll_locked      : std_logic;
   signal s_stub_pll_locked_prev : std_logic;
+
+  signal s_psram_ubn     : std_logic;
+  signal s_psram_lbn     : std_logic;
+  signal s_psram_cen     : std_logic;
+  signal s_psram_oen     : std_logic;
+  signal s_psram_wen     : std_logic;
+  signal s_psram_cre     : std_logic;
+  signal s_psram_advn    : std_logic;
+  signal s_psram_wait    : std_logic;
+  signal s_psram_wait_or : std_logic; -- Remove this later
 
   constant io_mapping_table : t_io_mapping_table_arg_array(0 to 39) :=
   (
@@ -319,14 +329,26 @@ begin
       ps_clk                  => psram_clk,
       ps_addr                 => psram_a,
       ps_data                 => psram_dq,
-      ps_seln(0)              => psram_ubn,
-      ps_seln(1)              => psram_lbn,
-      ps_cen                  => psram_cen(0),
-      ps_oen                  => psram_oen,
-      ps_wen                  => psram_wen,
-      ps_cre                  => psram_cre,
-      ps_advn                 => psram_advn,
-      ps_wait                 => psram_wait);
+      ps_seln(0)              => s_psram_ubn,
+      ps_seln(1)              => s_psram_lbn,
+      ps_cen                  => s_psram_cen,
+      ps_oen                  => s_psram_oen,
+      ps_wen                  => s_psram_wen,
+      ps_cre                  => s_psram_cre,
+      ps_advn                 => s_psram_advn,
+      ps_wait                 => s_psram_wait_or);
+
+  -- PSRAM test connection, add selector later (psram0/1/2/3)
+  s_psram_wait_or <= psram_wait(0) or psram_wait(1) or psram_wait(2) or psram_wait(3);
+  psram_test : for i in 0 to 3 generate
+    psram_advn(i) <= s_psram_advn;
+    psram_cre(i)  <= s_psram_cre;
+    psram_cen(i)  <= s_psram_cen;
+    psram_oen(i)  <= s_psram_oen;
+    psram_ubn(i)  <= s_psram_ubn;
+    psram_wen(i)  <= s_psram_wen;
+    psram_lbn(i)  <= s_psram_lbn;
+  end generate;
 
   -- LEDs
   wr_leds_o(0)                  <= not (s_led_link_act and s_led_link_up); -- red   = traffic/no-link
