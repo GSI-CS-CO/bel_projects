@@ -1070,6 +1070,7 @@ set_location_assignment PIN_AJ4 -to usbc_tx3_en[1]
 set_location_assignment PIN_AJ6 -to sfp_tx_fault_i
 set_location_assignment PIN_AJ7 -to sfp_tx_disable_o
 #set_location_assignment PIN_AK1 -to i2c_scl_pad_io[5]
+set_location_assignment PIN_AK22 -to a_nsys_reset
 set_location_assignment PIN_AK24 -to UM_AS_D[1]
 set_location_assignment PIN_AK26 -to usb_slwr_o
 set_location_assignment PIN_AK27 -to usb_slrd_o
@@ -1166,7 +1167,7 @@ set_location_assignment PIN_G22 -to psram_dq[4]
 set_location_assignment PIN_G23 -to psram_wen[2]
 set_location_assignment PIN_G25 -to psram_dq[8]
 #set_location_assignment PIN_G26 -to clk_125m_pllref_i
-set_location_assignment PIN_G26 -to psram_dq[7]
+set_location_assignment PIN_G27 -to psram_dq[7]
 set_location_assignment PIN_H17 -to psram_cen[1]
 set_location_assignment PIN_H18 -to psram_cen[0]
 set_location_assignment PIN_H20 -to psram_clk
