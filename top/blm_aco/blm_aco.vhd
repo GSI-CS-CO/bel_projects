@@ -1565,7 +1565,7 @@ BLM_ctrl_Reg_1st_block: io_reg
           Reg_IO2            =>   BLM_wd_reset_Reg(1),
           Reg_IO3            =>   BLM_wd_reset_Reg(2),
           Reg_IO4            =>   BLM_wd_reset_Reg(3),
-          Reg_IO5            =>   open,
+          Reg_IO5            =>   BLM_gate_seq_in_ena_Reg,
           Reg_IO6            =>   open,
           Reg_IO7            =>   open,
           Reg_IO8            =>   open,
