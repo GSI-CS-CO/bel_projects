@@ -716,6 +716,7 @@ set_instance_assignment -name IO_STANDARD "1.8 V" -to altera_reserved_tck
 set_instance_assignment -name IO_STANDARD "1.8 V" -to altera_reserved_tdi
 set_instance_assignment -name IO_STANDARD "1.8 V" -to altera_reserved_tdo
 set_instance_assignment -name IO_STANDARD "1.8 V" -to altera_reserved_tms
+set_instance_assignment -name IO_STANDARD "1.8 V" -to a_nsys_reset
 set_instance_assignment -name IO_STANDARD "1.8 V" -to clk_20m_vcxo_alt_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to clk_20m_vcxo_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to cpld_io[0]
@@ -873,6 +874,8 @@ set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_leds_o
 set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_leds_o[0]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_leds_o[1]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_leds_o[2]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_leds_o[2]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_leds_o[3]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_leds_o[3]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_ndac_cs_o
 set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_ndac_cs_o[1]
