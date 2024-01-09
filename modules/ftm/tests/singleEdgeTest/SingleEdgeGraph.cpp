@@ -78,7 +78,7 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, configuration& c
     }
     if (config.generateMetaNodes) {
       if (nodeT2.compare(dnt::sQInfo) != 0) {
-        generateQmeta(g, v1, 0);
+        generateQmeta(config, g, v1, 0);
       }
     }
   }
@@ -114,7 +114,7 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, configuration& c
     g[v2].qLo = 1;
     cdm->completeId(v2, g);
     if (config.generateMetaNodes) {
-      generateQmeta(g, v2, 0);
+      generateQmeta(config, g, v2, 0);
     }
   }
   flags |= NFLG_PAT_EXIT_LM32_SMSK;
@@ -148,12 +148,12 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, configuration& c
   }
   // add child vertex, blocks for a meta vertex, or a buffer vertex if necessary.
   g1 = g;
-  extendWithChild(edgeT, config);
+  extendWithChild(config, edgeT);
   extendOrphanNode();
   extendSecondQbuf();
 }
 
-void SingleEdgeGraph::extendWithChild(std::string edgeT, configuration& config) {
+void SingleEdgeGraph::extendWithChild(configuration& config, std::string edgeT) {
   uint32_t flags = 0;
   if ((g1[v2].np->isEvent()) || (g1[v2].type.compare(dnt::sQInfo) == 0) || 
       (g1[v1].type.compare(dnt::sCmdFlow) == 0) ||
@@ -171,7 +171,7 @@ void SingleEdgeGraph::extendWithChild(std::string edgeT, configuration& config) 
       g1[v3].qLo = 1;
       cdm->completeId(v3, g1);
       if (config.generateMetaNodes) {
-        generateQmeta(g1, v3, 0);
+        generateQmeta(config, g1, v3, 0);
       }
     }
     setNodePointer(&g1[v3], v3Type, flags);
@@ -340,8 +340,10 @@ void SingleEdgeGraph::writeDotFile(std::string fileNamePart) {
   cdm->writeDotFile("dot/testSingleEdge-" + fileNamePart + ".dot", g1, false);
 }
 
-
-void SingleEdgeGraph::generateQmeta(Graph& g, vertex_t v, int prio) {
+void SingleEdgeGraph::generateQmeta(configuration& config, Graph& g, vertex_t v, int prio) {
+  if (config.verbose) {
+    std::cout << "generateQmeta: " << g[v].name << std::endl;
+  }
   const std::string nameBl = g[v].name + dnm::sQBufListTag + dnm::sQPrioPrefix[prio];
   const std::string nameB0 = g[v].name + dnm::sQBufTag     + dnm::sQPrioPrefix[prio] + dnm::s1stQBufSuffix;
   const std::string nameB1 = g[v].name + dnm::sQBufTag     + dnm::sQPrioPrefix[prio] + dnm::s2ndQBufSuffix;
@@ -358,7 +360,7 @@ void SingleEdgeGraph::generateQmeta(Graph& g, vertex_t v, int prio) {
   setNodePointer(&g[vB1], dnt::sQBuf, 0);
 
   boost::add_edge(v,   vBl, myEdge(det::sQPrio[prio]), g);
-  boost::add_edge(vBl, vB0, myEdge(det::sMeta),    g);
-  boost::add_edge(vBl, vB1, myEdge(det::sMeta),    g);
+  boost::add_edge(vBl, vB0, myEdge(det::sMeta), g);
+  boost::add_edge(vBl, vB1, myEdge(det::sMeta), g);
 }
 

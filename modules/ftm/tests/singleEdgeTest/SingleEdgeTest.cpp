@@ -45,6 +45,9 @@ int doTest(configuration& config) {
         std::string nodeT2 = entry2.first;
         bool checkedException = false;
         bool knownException = false;
+        if (config.verbose) {
+          std::cout << "Generating: node1=" << nodeT1 << ", node2=" << nodeT2 << ", edge=" << edgeT << std::endl;
+        }
         SingleEdgeGraph singleEdgeGraph = SingleEdgeGraph(&cdm, config, nodeT1, nodeT2, edgeT);
         Graph g = singleEdgeGraph.getGraph();
         try {

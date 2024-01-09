@@ -35,13 +35,13 @@ class SingleEdgeGraph : public Graph {
   /** Complete the myVertex nodes with a valid node pointer depending on the type. */
   void setNodePointer(myVertex* vertex, std::string type, uint32_t flags);
   /** Extend graphs with forbiddden childless nodes. If node2 is of type event or qinfo, it may not be childless. */
-  void extendWithChild(std::string edgeT, configuration& config);
+  void extendWithChild(configuration& config, std::string edgeT);
   /** Extend graphs with forbidden orphan nodes. If node1 is of type meta, it may not be orphan. */
   void extendOrphanNode();
   /** Extend graphs with a second qbuf node if node1 has type qinfo. */
   void extendSecondQbuf();
   /** Generate the meta nodes for blocks*/
-  void generateQmeta(Graph& g, vertex_t v, int prio);
+  void generateQmeta(configuration& config, Graph& g, vertex_t v, int prio);
 
  public:
   /** Create a graph from given node and edge types.
