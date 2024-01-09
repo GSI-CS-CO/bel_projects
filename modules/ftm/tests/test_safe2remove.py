@@ -40,7 +40,8 @@ class UnitTestSafe2Remove(dm_testbench.DmTestbench):
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'remove', self.schedules_folder + dot_file1 + '-remove.dot'))
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', '-o', 'status.dot'))
     duration += dt.now() - start3
-    self.compareExpectedResult('status.dot', self.schedules_folder + dot_file1 + '-status.dot')
+    # ~ self.compareExpectedResult('status.dot', self.schedules_folder + dot_file1 + '-status.dot')
+    self.startAndCheckSubprocess(('scheduleCompare', 'status.dot', self.schedules_folder + dot_file1 + '-status.dot'))
     return duration
 
   def test_safe2remove_blockalign1(self):

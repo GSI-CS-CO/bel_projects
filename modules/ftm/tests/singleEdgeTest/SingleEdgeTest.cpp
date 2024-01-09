@@ -17,6 +17,7 @@
 #include "event.h"
 #include "graph.h"
 #include "meta.h"
+#include "configuration.h"
 
 namespace det = DotStr::Edge::TypeVal;
 
@@ -28,7 +29,7 @@ std::list<std::string> edgeTypes = {
     det::sCmdFlushOvr,  det::sMeta,           det::sAltDst,         det::sDefDst,         det::sBadDefDst, det::sOriginDst,
 };
 
-int main(int, char *[]) {
+int doTest(configuration& config) {
   Validation::init();
   CarpeDM::CarpeDMimpl cdm;
   SingleEdgeStatus status;
@@ -44,7 +45,10 @@ int main(int, char *[]) {
         std::string nodeT2 = entry2.first;
         bool checkedException = false;
         bool knownException = false;
-        SingleEdgeGraph singleEdgeGraph = SingleEdgeGraph(&cdm, nodeT1, nodeT2, edgeT);
+        if (config.verbose) {
+          std::cout << "Generating: node1=" << nodeT1 << ", node2=" << nodeT2 << ", edge=" << edgeT << std::endl;
+        }
+        SingleEdgeGraph singleEdgeGraph = SingleEdgeGraph(&cdm, config, nodeT1, nodeT2, edgeT);
         Graph g = singleEdgeGraph.getGraph();
         try {
           BOOST_FOREACH (vertex_t v, vertices(g)) { Validation::neighbourhoodCheck(v, g); }
@@ -64,7 +68,11 @@ int main(int, char *[]) {
             status.increment("Forbidden edge type");
             knownException = true;
           }
-          if (std::string(e.what()).find("Node 'A1' of type '" + nodeT1 + "' with edge of type '" + edgeT + " must not have children of type") != std::string::npos) {
+          if (std::string(e.what()).find("Node 'A1' of type '" + nodeT1 + "' with edge of type '" + edgeT + "' must not have children of type") != std::string::npos) {
+            status.increment("Known exceptions");
+            status.increment("Forbidden child type");
+            knownException = true;
+          } else if (std::string(e.what()).find("Node 'A1' of type 'listdst' with edge of type 'defdst' must not have children of type") != std::string::npos) {
             status.increment("Known exceptions");
             status.increment("Forbidden child type");
             knownException = true;
@@ -115,4 +123,74 @@ int main(int, char *[]) {
   std::cout << "Test Status:" << std::endl;
   status.printStatus();
   return 0;
+}
+
+void usage(char* program) {
+  std::cerr << "Usage: " << program << " [options]" << std::endl;
+  std::cerr << "Generate compinations of two nodes and an edge." << std::endl;
+  std::cerr << "Options: " << std::endl;
+  std::cerr << "        -h: help and usage." << std::endl;
+  std::cerr << "        -s: do not generate meta nodes for priority queues." << std::endl;
+  std::cerr << "        -q: silent mode, no output, only return code. Usefull for automated tests." << std::endl;
+  std::cerr << "        -v: verbose output." << std::endl;
+  std::cerr << "        -vv: super verbose, more output than verbose." << std::endl;
+  std::cerr << "        -V: print version and exit." << std::endl;
+  std::cerr << "Return codes: " << std::endl;
+  std::cerr << EXIT_SUCCESS << " EXIT_SUCCESS, graphs are isomorphic." << std::endl;
+  std::cerr << BAD_ARGUMENTS << " BAD_ARGUMENTS, unknown arguments on command line." << std::endl;
+  std::cerr << USAGE_MESSAGE << " USAGE_MESSAGE, usage message displayed." << std::endl;
+  std::cerr << VERSION_MESSAGE << " VERSION_MESSAGE, version displayed." << std::endl;
+  std::cerr << "negative values are UNIX signals" << std::endl;
+}
+
+void version(char* program) {
+  std::cerr << program << ", version 1.0.0" << std::endl;
+}
+
+int main(int argc, char* argv[]) {
+  int error = 0;
+  int opt;
+  char* program = argv[0];
+  configuration config;
+  while ((opt = getopt(argc, argv, "hsqvV")) != -1) {
+    switch (opt) {
+      case 'v':
+        if (config.silent) {
+          std::cerr << program << ": silent is true, verbose ignored." << std::endl;
+        } else {
+          if (config.verbose) {
+            config.superverbose = true;
+          }
+          config.verbose = true;
+        }
+        break;
+      case 'q':
+        if (config.verbose) {
+          std::cerr << program << ": verbose is true, silent ignored." << std::endl;
+        } else {
+          config.silent = true;
+        }
+        break;
+      case 'h':
+        usage(program);
+        error = USAGE_MESSAGE;
+        break;
+      case 'V':
+        version(program);
+        error = VERSION_MESSAGE;
+        break;
+      case 's':
+        config.generateMetaNodes = false;
+        break;
+      default:
+        std::cerr << program << ": bad option " << std::endl;
+        error = BAD_ARGUMENTS;
+        break;
+    }
+  }
+  if (error) {
+    return error;
+  } else {
+    return doTest(config);
+  }
 }

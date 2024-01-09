@@ -15,6 +15,6 @@ A_Flush->A_Msg [type="defdst", color = "red"];
 A_Flush->B_Block [type="target", color = "blue"];
 A_Flush->B_Switch [type="flushovr", color = "pink"];
 A_Msg->A_Block [type="defdst", color = "red"];
-B_Block->B_Switch [type="defdst", color = "red"];
 B_Msg->B_Block [type="defdst", color = "red"];
+B_Block->B_Switch [type="defdst", color = "red"];
 }
