@@ -38,7 +38,7 @@
 
 \Large{Martin Skorsky}
 
-\Large{Last change: 2023-08-08}
+\Large{Last change: 2024-01-09}
 \end{center}
 \vfill
 \end{titlepage}
@@ -62,43 +62,60 @@ These are considered as OK if no exception occurs.}
 \centering
 \begin{tabular}[t]{|l|r|c|c|c|c|c|c|c|c|}
 \hline
-Test                          & \ry{count of tests} & \ry{Tools} & \ry{libcarpedm} & \ry{firmware} & \ry{uses Python} & \ry{checks result } \\ \hline
-dmPerformance                 &                     &   x        &   T             &   x           &   -              &   -                 \\ \hline
-test\_addDownloadCompare.py   &  5                  &   T        &   T             &   T           &   x              &   -                 \\ \hline
-test\_altDestinations.py      &  5                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
-test\_async.py                &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_basic.py                &  2                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_blink.py                &  2                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
-test\_booster\_startthread.py &  8                  &   x        &   T             &   T           &   x              &   x                 \\ \hline
-test\_bpcStart.py             &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_coupling.py             &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_dmThreads.py            &  33                 &   x        &   x             &   T           &   x              &   x                 \\ \hline
-test\_dm\_cmd.py              &  31                 &   T        &   x             &   x           &   x              &   x                 \\ \hline
-test\_dm\_sched.py            &  8                  &   T        &   x             &   x           &   x              &   x                 \\ \hline
-test\_dm\_testbench.py        &  8                  &   T        &   x             &   x           &   x              &   x                 \\ \hline
-test\_environment.py          &  3                  &   -        &   -             &   -           &   x              &   x                 \\ \hline
-test\_fid7.py                 &  1                  &   x        &   x             &   T           &   x              &   x                 \\ \hline
-test\_flow.py                 &  5                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_flowpattern.py          &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_flush.py                &  24                 &   x        &   T             &   T           &   x              &   x                 \\ \hline
-test\_loop.py                 &  2                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_lzma.py                 &  6                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_memory.py               &  20                 &   T        &   T             &   T           &   x              &   x                 \\ \hline
-test\_origin\_startthread.py  &  2                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_origin\_twothreads.py   &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_parallelBranch.py       &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_pps.py                  &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_prio\_and\_type.py      &  2                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_run\_all\_single.py     &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_run\_cpu0\_single.py    &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_safe2remove.py          &  19                 &   x        &   T             &   T           &   x              &   x                 \\ \hline
-test\_schedules.py            &  2                  &   x        &   x             &   T           &   x              &   -                 \\ \hline
-test\_singleEdgeTest.py       &  1                  &   -        &   T             &   -           &   -              &   x                 \\ \hline
-test\_start\_stop\_abort.py   &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_switch.py               &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_unilac.py               &  3                  &   x        &   x             &   T           &   x              &   x                 \\ \hline
-test\_waitloop\_flush.py      &  1                  &   x        &   x             &   T           &   x              &   x                 \\ \hline
-test\_zzz\_finish.py          &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+Test                                            & \ry{count of tests} & \ry{Tools} & \ry{libcarpedm} & \ry{firmware} & \ry{uses Python} & \ry{checks result } \\ \hline
+dmPerformance                                   &                     &   x        &   T             &   x           &   -              &   -                 \\ \hline
+test\_addDownloadCompare.py                     &  199                &   T        &   T             &   T           &   x              &   -                 \\ \hline
+test\_altDestinations.py                        &  5                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_async.py                                  &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_basic.py                                  &  2                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_blink.py                                  &  2                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_booster\_startthread.py                   &  8                  &   x        &   T             &   T           &   x              &   x                 \\ \hline
+test\_bpcStart.py                               &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_coupling.py                               &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_dmThreads.py                              &  33                 &   x        &   x             &   T           &   x              &   x                 \\ \hline
+test\_dm\_cmd.py                                &  31                 &   T        &   x             &   x           &   x              &   x                 \\ \hline
+test\_dm\_cmd\_abort.py                         &  3                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_dm\_cmd\_asyncclear.py                    &  1                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_dm\_cmd\_clearCPUdiag.py                  &  1                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_dm\_cmd\_cursor.py                        &  1                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_dm\_cmd\_deadline\_preptime\_starttime.py &  18                 &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_dm\_cmd\_force.py                         &  1                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_dm\_cmd\_heap.py                          &  3                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_dm\_cmd\_noop.py                          &  1                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_dm\_cmd\_origin.py                        &  1                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_dm\_sched.py                              &  8                  &   T        &   x             &   x           &   x              &   x                 \\ \hline
+test\_dm\_testbench.py                          &  8                  &   T        &   x             &   x           &   x              &   x                 \\ \hline
+test\_environment.py                            &  3                  &   -        &   -             &   -           &   x              &   x                 \\ \hline
+test\_fid7.py                                   &  1                  &   x        &   x             &   T           &   x              &   x                 \\ \hline
+test\_flow.py                                   &  5                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_flowpattern.py                            &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_flush.py                                  &  24                 &   x        &   T             &   T           &   x              &   x                 \\ \hline
+\end{tabular}
+\end{table}
+
+\begin{table}
+\begin{tabular}[t]{|l|r|c|c|c|c|c|c|c|c|}
+\hline
+Test                                            & \ry{count of tests} & \ry{Tools} & \ry{libcarpedm} & \ry{firmware} & \ry{uses Python} & \ry{checks result } \\ \hline
+test\_loop.py                                   &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_lzma.py                                   &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_memory.py                                 &  15                 &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_origin\_startthread.py                    &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_origin\_twothreads.py                     &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_parallelBranch.py                         &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_pps.py                                    &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_pps10Hz.py                                &  3                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_prio\_and\_type.py                        &  2                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_run\_all\_single.py                       &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_run\_CPU0\_single.py                      &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_safe2remove.py                            &  19                 &   x        &   T             &   T           &   x              &   x                 \\ \hline
+test\_schedules.py                              &  2                  &   x        &   x             &   T           &   x              &   -                 \\ \hline
+test\_singleEdgeTest.py                         &  1                  &   -        &   T             &   -           &   -              &   x                 \\ \hline
+test\_start\_stop\_abort.py                     &  2                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_switch.py                                 &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_unilac.py                                 &  3                  &   x        &   x             &   T           &   x              &   x                 \\ \hline
+test\_waitloop\_flush.py                        &  1                  &   x        &   x             &   T           &   x              &   x                 \\ \hline
+test\_zzz\_finish.py                            &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 \end{tabular}
 
 \end{table}
@@ -115,17 +132,17 @@ if all commands work. There is no check for this.
 to the schedule which is downloaded form the datamaster firmware.
 The test steps are: clear the datamaster, add a schedule, start all
 pattern, download the schedule, compare both schedules with
-\texttt{scheduleCompare}. There should be no difference with
-\texttt{scheduleCompare}. Each test case uses a different schedule.
+\texttt{scheduleCompare}. \texttt{scheduleCompare} should find no difference
+between the oroginal and the downloaded schedule. Each test case uses a
+different schedule.
 
 This test requires \texttt{scheduleCompare} to be installed. This tool
-checks that two dot-files represent the same schedule. For installation
-use branch origin/dm-analysis. The tool is build with make in folder
-modules/ftm/analysis/scheduleCompare/main/. It is installed with sudo
-make install in the same folder.
+checks that two dot-files represent the same schedule. The tool is build
+with make in folder modules/ftm/analysis/scheduleCompare/main/.
+It is installed with sudo make install in the same folder.
 
 \section{test\_altDestinations.py}
-\texttt{test\_altDestinations} tests the limit of 9 edges of type
+\texttt{test\_altDestinations} tests for 9 edges and 10 edges of type
 \texttt{altdst} for a block node.
 The schedule \texttt{altdst-flow-9.dot} has one block, nine flow commands
 and nine messages. each flow command changes flow to another message.
@@ -133,16 +150,16 @@ The test adds this schedule and starts the pattern in this schedule.
 The test checks that messages are produced.
 
 The schedule \texttt{altdst-flow-10.dot} is similar to the one obove,
-but with 10 flow nodes and 10 messages. Adding this schedule fails.
-The test checks for the correct error response.
+but with 10 flow nodes and 10 messages. Adding this schedule is OK.
+The test checks for the correct response.
 
 The schedule \texttt{altdst-9.dot} has one block and nine messages.
 The test switches through all messages and checks with snoop that the
 correct messages are send.
 
 The schedule \texttt{altdst-10.dot} has one block and 10 messages.
-This schedule cannot be added to the datamaster. The test checks for
-the correct error response.
+This schedule can be added to the datamaster. The test checks for
+the correct response.
 
 The schedule \texttt{test-altdst-missing-node.dot} has one block with 9
 altdst edges and one defdst edge. The test checks that a switch command
@@ -208,7 +225,7 @@ This test was \texttt{full\_test/static/basic}.
   \item Test Actions
 
   Start pattern \texttt{ping} for a single timing message which indicates the start of the test.
-  Set origin, preptime, starttime for threads 0, 1 of cpu 0. Read these values. Start thread 0, 1 of cpu 0
+  Set origin, preptime, starttime for threads 0, 1 of CPU 0. Read these values. Start thread 0, 1 of CPU 0
   with a single command. Snoop timing messages for 10 seconds and check the frequency of the messages.
     \begin{figure}
         \centering
@@ -386,13 +403,72 @@ There are five tests for the stop command. The test cases are
 There are tests for \texttt{dm-cmd reset} and for \texttt{dm-cmd reset all}. These two tests check for
 return code 0, but not the status of the datamaster.
 
+\section{test\_dm\_cmd\_abort.py}
+\texttt{test\_dm\_cmd\_abort.py} tests \texttt{dm-cmd $<$datamaster$>$ abort} for different CPUs and threads.
+Mainly tests the options \texttt{-c} and \texttt{-t}.
+\begin{enumerate}
+\item testAbortSingleThreadDecimal tests this for each CPU and each thread, given as decimal numbers.
+\item testAbortSingleThreadHex tests this for each CPU and each thread, given as hexadecimal numbers.
+\item testAbortRunningThreads runs schedules on all threads and \texttt{abort}s for CPU 0 and 1 the threads 2, 4, 6, 8.
+\end{enumerate}
+
+\section{test\_dm\_cmd\_asyncclear.py}
+\texttt{test\_dm\_cmd\_asyncclear.py} tests \texttt{dm-cmd $<$datamaster$>$ asyncclear} for different CPUs and threads.
+Send the command \texttt{noop} to Block0b. Since the schedules send a message every second, this command is in the queue
+for a second. The \texttt{asyncclear} clears this command in the queue. This is
+checked with \texttt{dm-cmd $<$datamaster$>$ queue Block0b}. Before
+\texttt{asyncclear} the command is in the queue, afterwards the queue is empty.
+
+\section{test\_dm\_cmd\_clearCPUdiag.py}
+\texttt{test\_dm\_cmd\_clearCPUdiag.py} tests \texttt{dm-cmd $<$datamaster$>$ clearCPUdiag} for different CPUs and threads.
+Run \texttt{clearCPUdiag} for CPU 0 and 1 the threads 2, 4, 6, 8. Check the result with
+\texttt{dm-cmd $<$datamaster$>$ diag}.
+
+\section{test\_dm\_cmd\_cursor.py}
+\texttt{test\_dm\_cmd\_cursor.py} tests \texttt{dm-cmd $<$datamaster$>$ cursor} for different CPUs and threads.
+Run \texttt{cursor} for CPU 0 and 1 the threads 2, 4, 6, 8. Check for the correct number
+of output lines.
+
+\section{test\_dm\_cmd\_deadline\_preptime\_startime.py}
+\texttt{test\_dm\_cmd\_deadline\_preptime\_startime.py.py} tests \texttt{dm-cmd $<$datamaster$>$ deadline},
+\texttt{dm-cmd $<$datamaster$>$ prepline}, and \texttt{dm-cmd $<$datamaster$>$ startline}
+for different CPUs and threads.
+Tests the commands \texttt{origin, cursor, starttime, preptime, deadline} for different combinations  of threads.
+With \texttt{preptime}, all combinations for the threadbits between 0 and 255 ist tested. This is every subset of a
+set of 8 threads. In addition, invalid thread masks and thread numbers out of range are tested.
+
+\section{test\_dm\_cmd\_force.py}
+\texttt{test\_dm\_cmd\_force.py} tests \texttt{dm-cmd $<$datamaster$>$ force} for different CPUs and threads.
+Run \texttt{force} for CPU 0 and 1 the threads 2, 4, 6, 8. Check for the correct number
+of output lines.
+
+\section{test\_dm\_cmd\_heap.py}
+\texttt{test\_dm\_cmd\_heap.py} tests \texttt{dm-cmd $<$datamaster$>$ heap} for different CPUs and threads.
+\begin{enumerate}
+\item testHeapSingleThreadDecimal tests this for each CPU and each thread, given as decimal numbers.
+\item testHeapSingleThreadHex tests this for each CPU and each thread, given as hexadecimal numbers.
+\item testInspectHeap run \texttt{heap} for CPU 0 and 1 the threads 2, 4, 6, 8. Check for the correct number
+of output lines. Run \texttt{heap} for each thread on each CPU.
+\end{enumerate}
+
+\section{test\_dm\_cmd\_noop.py}
+\texttt{test\_dm\_cmd\_noop.py} tests \texttt{dm-cmd $<$datamaster$>$ noop} for different CPUs and threads.
+Check with \texttt{dm-cmd $<$datamaster$>$ queue Block0b} that the queue of Block0b is empty.
+Send the command \texttt{noop} to Block0b. Check with \texttt{dm-cmd $<$datamaster$>$ queue Block0b}
+that the command \texttt{noop} is in the queue of Block0b.
+
+\section{test\_dm\_cmd\_origin.py}
+\texttt{test\_dm\_cmd\_origin.py} tests \texttt{dm-cmd $<$datamaster$>$ origin} for different CPUs and threads.
+Run \texttt{origin} for CPU 0 and 1 the threads 2, 4, 6, 8. Check for the correct number
+of output lines.
+
 \section{test\_dm\_sched.py}
 \texttt{test\_dm\_sched.py} contains 8 unit tests for the tool dm-sched. Each unit test calls dm-sched
 with commands and options and checks the result with the output on stdout and stderr.
 
 \begin{enumerate}
 \item \texttt{dm-sched $<$datamaster$>$ -h}: check for correct usage message.
-\item \texttt{dm-sched $<$datamaster$>$}: check for defualt operation (same as status).
+\item \texttt{dm-sched $<$datamaster$>$}: check for default operation (same as status).
 \item \texttt{dm-sched $<$datamaster$>$ status}: check for printig the datamaster status.
 \item \texttt{dm-sched $<$datamaster$>$ dump}: check that the current schedule is dumped to file download.dot (the default file name).
 \item \texttt{dm-sched $<$datamaster$>$ dump -0 dump.dot}: check that the current schedule is dumped to file dump.dot.
@@ -673,7 +749,7 @@ This test was \texttt{full\_test/dynamic/basics/run\_all\_single}.
 
   For each pattern the correct CPU is used.
 \end{enumerate}
-\section{test\_run\_cpu0\_single.py}
+\section{test\_run\_CPU0\_single.py}
 This test was \texttt{full\_test/dynamic/basics/run\_cpu0\_single}.
 \begin{enumerate}
   \item Purpose of Test
