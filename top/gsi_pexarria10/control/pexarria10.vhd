@@ -56,6 +56,7 @@ entity pexarria10 is
     -----------------------------------------------------------------------
     nuser_pb_i   : in  std_logic; -- User Button
     nres_out_o   : out std_logic; -- Reset MAX10
+    a_nsys_reset : in  std_logic; -- Reset
 
     -----------------------------------------------------------------------
     -- I2C
