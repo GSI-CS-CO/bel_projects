@@ -9,6 +9,6 @@ class UnitTestWaitloopFlush(dm_testbench.DmTestbench):
     # flush low prio queue with prio 1
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'A'), [0])
     self.delay(0.1)
-    self.check_queue_flushed(0, 'BLOCK_LOOP', 1, checkFlush=False)
+    self.checkQueueFlushed(0, 'BLOCK_LOOP', 1, checkFlush=False)
     self.delay(0.9)
-    self.check_queue_flushed(0x1, 'BLOCK_LOOP', 1)
+    self.checkQueueFlushed(0x1, 'BLOCK_LOOP', 1)

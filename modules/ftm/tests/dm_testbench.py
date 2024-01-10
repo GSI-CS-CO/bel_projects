@@ -198,6 +198,10 @@ class DmTestbench(unittest.TestCase):
     return snoop_command1
 
   def getEbResetCommand(self):
+    """Get the eb-reset command. If eb-reset exists in the repository or
+    workspace, this file name is returned. Otherwise 'eb-reset' is returned,
+    which assumes that eb-reset is installed.
+    """
     ebResetCommand1 = '../../../tools/eb-reset'
     if not os.path.isfile(ebResetCommand1):
       ebResetCommand1 = 'eb-reset'
@@ -375,7 +379,7 @@ class DmTestbench(unittest.TestCase):
       quantity = int(line[pos + len('Qty: '):pos1])
     return quantity
 
-  def check_queue_flushed(self, queuesToFlush, blockName, flushPrio, checkFlush=True):
+  def checkQueueFlushed(self, queuesToFlush, blockName, flushPrio, checkFlush=True):
     """ Check that a flush command is executed and the defined queues are flushed.
     queuesToFlush: binary value between 0 and 7 for the queues to flush.
     blockName: name of the block with the queues to check.
@@ -568,6 +572,9 @@ class DmTestbench(unittest.TestCase):
     return count
 
   def printStdOutStdErr(self, lines):
+    """Print the lines of stdout and stderr. This is given as a list of
+    two lists of lines.
+    """
     if len(lines[0]) > 0:
       print(f'{chr(10).join(lines[0])}')
     if len(lines[1]) > 0:
@@ -575,6 +582,10 @@ class DmTestbench(unittest.TestCase):
 
   @classmethod
   def getThreadQuantityFromFirmware(self) -> int:
+    """This class method uses 'eb-info -w' to get the thread quantity
+    from the lm32 firmware. This method is used once in the set up of
+    a class by setUpClass.
+    """
     # pass cmd and args to the function
     process = subprocess.Popen(('eb-info', '-w', self.datamaster), stderr=subprocess.PIPE, stdout=subprocess.PIPE)
     # get command output and error
@@ -591,6 +602,9 @@ class DmTestbench(unittest.TestCase):
 
   @classmethod
   def logToFile(self, text, fileName):
+    """This class method logs a text to a fileName. The text is prefixed
+    by the current test name. This is appended to the file.
+    """
     testName = os.environ['PYTEST_CURRENT_TEST']
     with open(fileName, 'a') as file1:
       file1.write(testName + ': ' + text + '\n')
