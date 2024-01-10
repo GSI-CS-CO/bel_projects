@@ -5,6 +5,7 @@
 \usepackage{changepage}
 \usepackage{xcolor}
 \usepackage{listings}
+\usepackage{tabulary}
 
 \lstdefinestyle{dotfiles}{
   escapeinside={(*@}{@*)}, % (*@\label{mylabel}@*)
@@ -29,6 +30,7 @@
 }
 
 \newcommand{\ry}{\rotatebox{90}}
+\newcolumntype{L}{>{\centering\arraybackslash}m{19mm}}
 \begin{document}
 
 \begin{titlepage}
@@ -38,7 +40,7 @@
 
 \Large{Martin Skorsky}
 
-\Large{Last change: 2024-01-09}
+\Large{Last change: 2024-01-10}
 \end{center}
 \vfill
 \end{titlepage}
@@ -56,13 +58,13 @@ All tests are on branch \texttt{dm-fallout-tests}. The tests run with \texttt{ma
 To compile \texttt{libcarpedm} use \texttt{make prepare}. This runs \texttt{make clean} and \texttt{make} in folder \texttt{modules/ftm/ftmx86}.
 
 \begin{table}
-\caption{Which test tests what \\ x means: this test uses the component, T means: this test tests this component.
+\caption{Which test tests what (Part 1)\\ x means: this test uses the component, T means: this test tests this component.
 For some tests the result is not checked.
 These are considered as OK if no exception occurs.}
 \centering
 \begin{tabular}[t]{|l|r|c|c|c|c|c|c|c|c|}
 \hline
-Test                                            & \ry{count of tests} & \ry{Tools} & \ry{libcarpedm} & \ry{firmware} & \ry{uses Python} & \ry{checks result } \\ \hline
+Test                                            & \ry{number of tests } & \ry{Tools} & \ry{libcarpedm} & \ry{firmware} & \ry{uses Python} & \ry{checks result } \\ \hline
 dmPerformance                                   &                     &   x        &   T             &   x           &   -              &   -                 \\ \hline
 test\_addDownloadCompare.py                     &  199                &   T        &   T             &   T           &   x              &   -                 \\ \hline
 test\_altDestinations.py                        &  5                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
@@ -94,9 +96,13 @@ test\_flush.py                                  &  24                 &   x     
 \end{table}
 
 \begin{table}
+\caption{Which test tests what (Part 2)\\ x means: this test uses the component, T means: this test tests this component.
+For some tests the result is not checked.
+These are considered as OK if no exception occurs.}
+\centering
 \begin{tabular}[t]{|l|r|c|c|c|c|c|c|c|c|}
 \hline
-Test                                            & \ry{count of tests} & \ry{Tools} & \ry{libcarpedm} & \ry{firmware} & \ry{uses Python} & \ry{checks result } \\ \hline
+Test                                            & \ry{number of tests } & \ry{Tools} & \ry{libcarpedm} & \ry{firmware} & \ry{uses Python} & \ry{checks result } \\ \hline
 test\_loop.py                                   &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_lzma.py                                   &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_memory.py                                 &  15                 &   T        &   T             &   T           &   x              &   x                 \\ \hline
@@ -117,8 +123,8 @@ test\_unilac.py                                 &  3                  &   x     
 test\_waitloop\_flush.py                        &  1                  &   x        &   x             &   T           &   x              &   x                 \\ \hline
 test\_zzz\_finish.py                            &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 \end{tabular}
-
 \end{table}
+
 \chapter{The Tests}
 \section{dmPerformance}
 \texttt{dmPerformance} tests the performance improvements in libcarpedm.
@@ -266,7 +272,7 @@ for two seconds. The result is checked for the event numbers
 0x0103 (exactly one), 0x0160 (at least one).
     \begin{figure}
         \centering
-        \includegraphics*[width=1.2\textwidth,keepaspectratio]{TestPattern/booster_startthread-1-s.pdf}
+        \includegraphics*[width=1.0\textwidth,keepaspectratio]{TestPattern/booster_startthread-1-s.pdf}
         \caption{Schedule for test of origin with thread 1}
         \label{fig:Schedule_booster_startthread-1}
     \end{figure}
@@ -279,7 +285,7 @@ for three seconds. The result is checked for the event numbers
 0x0103 (exactly one), 0x0160 (at least one).
     \begin{figure}
         \centering
-        \includegraphics*[width=1.2\textwidth,keepaspectratio]{TestPattern/booster_startthread-2-s.pdf}
+        \includegraphics*[width=1.0\textwidth,keepaspectratio]{TestPattern/booster_startthread-2-s.pdf}
         \caption{Schedule for test of origin with thread 1}
         \label{fig:Schedule_booster_startthread-2}
     \end{figure}
@@ -298,7 +304,7 @@ The delay of evtno=0x0002 with 1µs is defined by toffs=1000. The delay of evtno
 What is the effect of toffs and startoffs defined in the three startthread nodes?
     \begin{figure}
         \centering
-        \includegraphics*[width=1.2\textwidth,keepaspectratio]{TestPattern/booster_startthread-3-s.pdf}
+        \includegraphics*[width=1.0\textwidth,keepaspectratio]{TestPattern/booster_startthread-3-s.pdf}
         \caption{Schedule for test of origin and startthread}
         \label{fig:Schedule_booster_startthread-3}
     \end{figure}
@@ -348,7 +354,7 @@ for the messages of each thread. This is checked with a snoop for 2 seconds.
 Use schedule \\ \texttt{booster-8-loops.dot} (see~\ref{fig:Schedule_booster_8_loops}).
     \begin{figure}
         \centering
-        \includegraphics*[width=1.1\textwidth,keepaspectratio]{TestPattern/booster_8_loops.pdf}
+        \includegraphics*[width=1.0\textwidth,keepaspectratio]{TestPattern/booster_8_loops.pdf}
         \caption{Schedule for starting threads 0 to 7 in a main loop}
         \label{fig:Schedule_booster_8_loops}
     \end{figure}
@@ -404,7 +410,7 @@ There are tests for \texttt{dm-cmd reset} and for \texttt{dm-cmd reset all}. The
 return code 0, but not the status of the datamaster.
 
 \section{test\_dm\_cmd\_abort.py}
-\texttt{test\_dm\_cmd\_abort.py} tests \texttt{dm-cmd $<$datamaster$>$ abort} for different CPUs and threads.
+\texttt{test\_dm\_cmd\_abort.py} tests \texttt{dm-cmd $<$datamaster$>$ abort} for different \\ CPUs and threads.
 Mainly tests the options \texttt{-c} and \texttt{-t}.
 \begin{enumerate}
 \item testAbortSingleThreadDecimal tests this for each CPU and each thread, given as decimal numbers.
@@ -420,35 +426,45 @@ checked with \texttt{dm-cmd $<$datamaster$>$ queue Block0b}. Before
 \texttt{asyncclear} the command is in the queue, afterwards the queue is empty.
 
 \section{test\_dm\_cmd\_clearCPUdiag.py}
-\texttt{test\_dm\_cmd\_clearCPUdiag.py} tests \texttt{dm-cmd $<$datamaster$>$ clearCPUdiag} for different CPUs and threads.
-Run \texttt{clearCPUdiag} for CPU 0 and 1 the threads 2, 4, 6, 8. Check the result with
-\texttt{dm-cmd $<$datamaster$>$ diag}.
+\texttt{test\_dm\_cmd\_clearCPUdiag.py} tests the command \texttt{dm-cmd
+$<$datamaster$>$ clearcpudiag} for different CPUs and threads.
+Run \texttt{clearCPUdiag} for CPU 0 and 1 and for the threads 2, 4, 6, 8.
+Check the result with \texttt{dm-cmd $<$datamaster$>$ diag}.
 
 \section{test\_dm\_cmd\_cursor.py}
 \texttt{test\_dm\_cmd\_cursor.py} tests \texttt{dm-cmd $<$datamaster$>$ cursor} for different CPUs and threads.
-Run \texttt{cursor} for CPU 0 and 1 the threads 2, 4, 6, 8. Check for the correct number
-of output lines.
+Run \texttt{cursor} for CPU 0 and 1 and for the threads 2, 4, 6, 8.
+Check for the correct number of output lines.
 
 \section{test\_dm\_cmd\_deadline\_preptime\_startime.py}
-\texttt{test\_dm\_cmd\_deadline\_preptime\_startime.py.py} tests \texttt{dm-cmd $<$datamaster$>$ deadline},
-\texttt{dm-cmd $<$datamaster$>$ prepline}, and \texttt{dm-cmd $<$datamaster$>$ startline}
+\texttt{test\_dm\_cmd\_deadline\_preptime\_startime.py.py} tests the five commands
+\texttt{dm-cmd $<$datamaster$>$ origin},
+\texttt{dm-cmd $<$datamaster$>$ cursor},
+\texttt{dm-cmd $<$datamaster$>$ deadline},
+\texttt{dm-cmd $<$datamaster$>$ preptime}, and
+\texttt{dm-cmd $<$datamaster$>$ startline}
 for different CPUs and threads.
-Tests the commands \texttt{origin, cursor, starttime, preptime, deadline} for different combinations  of threads.
-With \texttt{preptime}, all combinations for the threadbits between 0 and 255 ist tested. This is every subset of a
-set of 8 threads. In addition, invalid thread masks and thread numbers out of range are tested.
+Tests the commands \texttt{origin, cursor, starttime, preptime}, and
+\texttt{deadline} for different combinations  of threads.
+With \texttt{preptime}, all combinations for the threadbits between 0
+and 255 ist tested. This is every subset of a
+set of 8 threads. In addition, invalid thread masks and thread numbers
+out of range are tested.
 
 \section{test\_dm\_cmd\_force.py}
-\texttt{test\_dm\_cmd\_force.py} tests \texttt{dm-cmd $<$datamaster$>$ force} for different CPUs and threads.
-Run \texttt{force} for CPU 0 and 1 the threads 2, 4, 6, 8. Check for the correct number
-of output lines.
+\texttt{test\_dm\_cmd\_force.py} tests the command \texttt{dm-cmd
+$<$datamaster$>$ force} for different CPUs and threads.
+Run \texttt{force} for CPU 0 and 1 and for the threads 2, 4, 6, 8.
+Check for the correct number of output lines.
 
 \section{test\_dm\_cmd\_heap.py}
 \texttt{test\_dm\_cmd\_heap.py} tests \texttt{dm-cmd $<$datamaster$>$ heap} for different CPUs and threads.
 \begin{enumerate}
 \item testHeapSingleThreadDecimal tests this for each CPU and each thread, given as decimal numbers.
 \item testHeapSingleThreadHex tests this for each CPU and each thread, given as hexadecimal numbers.
-\item testInspectHeap run \texttt{heap} for CPU 0 and 1 the threads 2, 4, 6, 8. Check for the correct number
-of output lines. Run \texttt{heap} for each thread on each CPU.
+\item testInspectHeap run \texttt{heap} for CPU 0 and 1 and for the
+threads 2, 4, 6, 8. Check for the correct number of output lines.
+Run \texttt{heap} for each thread on each CPU.
 \end{enumerate}
 
 \section{test\_dm\_cmd\_noop.py}
@@ -459,8 +475,8 @@ that the command \texttt{noop} is in the queue of Block0b.
 
 \section{test\_dm\_cmd\_origin.py}
 \texttt{test\_dm\_cmd\_origin.py} tests \texttt{dm-cmd $<$datamaster$>$ origin} for different CPUs and threads.
-Run \texttt{origin} for CPU 0 and 1 the threads 2, 4, 6, 8. Check for the correct number
-of output lines.
+Run \texttt{origin} for CPU 0 and 1 and for the threads 2, 4, 6, 8.
+Check for the correct number of output lines.
 
 \section{test\_dm\_sched.py}
 \texttt{test\_dm\_sched.py} contains 8 unit tests for the tool dm-sched. Each unit test calls dm-sched
@@ -480,14 +496,15 @@ with commands and options and checks the result with the output on stdout and st
 \section{test\_dm\_testbench.py}
 \begin{enumerate}
   \item Purpose of Test
+
+  Tests the method analyseFrequencyFromCsv from module dm\_testbench.py.
   \item Test Actions
-    \begin{figure}
-        \centering
-        % \includegraphics*[height=0.95\textheight,keepaspectratio]{TestPattern/???.pdf}
-        \caption{???}
-        \label{fig:dm_testbench}
-    \end{figure}
+
+  Run 8 tests for the different check syntax of this method with the
+  file \texttt{other/snoop\_test\_analyseFrequencyFromCsv.csv}.
   \item Success Criteria
+
+  Use the assertions in method analyseFrequencyFromCsv.
 \end{enumerate}
 
 \section{test\_dmThreads.py}
@@ -642,7 +659,8 @@ splits the timing messages into two loops when there are more than 1000 nodes.
 \\ \texttt{test\_memory\_full\_msg\_half} uses 900 timing messages for the test.
 \\ \texttt{test\_memory\_full\_msg\_ok} uses 1867 timing messages, which is the maximal number of nodes allowed.
 \\ \texttt{test\_memory\_full\_msg\_infinite\_loop\_ok} uses 1000 timing messages. This is added and started.
-\\ \texttt{test\_memory\_full\_msg\_infinite\_loop\_fail} uses 1001 timing messages. This schedule is rejected and not added.
+\\ \texttt{test\_memory\_full\_msg\_infinite\_loop\_fail} uses 1001 timing
+messages. \\ This schedule is rejected and not added.
 
 \section{test\_origin\_startthread.py}
 \begin{enumerate}
@@ -655,7 +673,7 @@ See Figure~\ref{fig:schedule_origin_startthreads} for the schedule.
     \begin{figure}
         \centering
         \includegraphics*[width=1.\textwidth,keepaspectratio]{TestPattern/threadsStartStop.pdf}
-        \caption{Schedule to start threads with origins}
+        \caption{Schedule to start threads with origins. This is used in test\_origin\_startthread.py}
         \label{fig:schedule_origin_startthreads}
     \end{figure}
 \item This test demonstrates that a node can exist in two threads.
@@ -667,7 +685,7 @@ See Figure~\ref{fig:schedule_nodeInTwoThreads} for the schedule.
     \begin{figure}
         \centering
         \includegraphics*[width=1.\textwidth,keepaspectratio]{TestPattern/nodeInTwoThreads.pdf}
-        \caption{Schedule with a node in two threads}
+        \caption{Schedule with a node in two threads. This is used in test\_origin\_startthread.py}
         \label{fig:schedule_nodeInTwoThreads}
     \end{figure}
 \end{enumerate}
@@ -675,14 +693,23 @@ See Figure~\ref{fig:schedule_nodeInTwoThreads} for the schedule.
 \section{test\_origin\_twothreads.py}
 \begin{enumerate}
   \item Purpose of Test
+
+  This test shows that an origin node and a startthread node work.
   \item Test Actions
+
+  Origin and Start are in pattern B.
+  Pattern B is started and produces with Tmsg1 events with parameter 1. Tmsg2 produces events with parameter 2.
+  The node Start starts thread 1 and is the origin for this thread. Thus, thread 1 is started every 50 ms by itself.
+  There is a snoop action for 1 s.
     \begin{figure}
         \centering
-        % \includegraphics*[height=0.95\textheight,keepaspectratio]{TestPattern/???.pdf}
-        \caption{???}
-        \label{fig:???}
+        \includegraphics*[width=0.65\textheight,keepaspectratio]{TestPattern/twothreads.pdf}
+        \caption{Schedule with two threads used in test\_origin\_twothreads.py}
+        \label{fig:schedule_twoThreads}
     \end{figure}
   \item Success Criteria
+
+  The result of the snoop should get at least 15 events with parameter 1 and one message with parameter 2.
 \end{enumerate}
 
 \section{test\_parallelBranch.py}
@@ -883,7 +910,7 @@ schedule which sends two timing messages every second. The test checks
 with 'saft-ctl snoop' the timing messages. This test should be the last
 in the whole test suite to leave the datamaster with a defined schedule.
 
-\chapter{Common Components}
+\chapter{Common Components - The Testbench}
 \section{dm\_testbench.py}
 \texttt{dm\_testbench.py} is a collection of Python functions for use
 in other test scripts.
@@ -908,6 +935,10 @@ Usually the binaries for dm-cmd and dm-sched together with the libcarpedm
 are used from the build of the test repository in folders \\
 \texttt{modules/ftm/bin} and \texttt{modules/ftm/lib}. This is
 configured in the Makefile.
+
+Set the thread quantity (read from the lm32 firmware with eb-info) and
+set the CPU quantity to 4.
+
 \item setUp(self)
 
 Call \texttt{self.initDatamaster()}.
@@ -1026,6 +1057,13 @@ from the current output. Assert that a unified diff has no lines.
 \item getSnoopCommand(self, duration)
 
 Get the snoop command with the duration given in seconds.
+
+\item getResetCommand(self)
+
+Get the eb-reset command. If eb-reset exists in the repository or
+workspace, this file name is returned. Otherwise 'eb-reset' is returned,
+which assumes that eb-reset is installed.
+
 \item snoopToCsv(self, csvFileName, duration=1)
 
 Run the snoop command for duration seconds and store the output in
@@ -1058,13 +1096,13 @@ If True, the occurrences of all values in 'column' are printed.
 
 checkValues is a dictionary of key-value pairs to check. Key is a value
 in the column and value is the required frequency.
-The value can be '>n', '<n', '=n', 'n' (which is the same as '=n'), '=0'.
-The syntax '<n' fails if there are no occurrences.
+The value can be '$>$n', '$<$n', '=n', 'n' (which is the same as '=n'), '=0'.
+The syntax '$<$n' fails if there are no occurrences.
 Checks for intevalls are not possible since checkValues is a dictionary
 and keys occur at most once.
 Example: column=8 and checkValues={('0x0001', 62)} checks that EVTNO 0x0001
 occurs in 62 lines of the file to analyse.
-Example: column=8 and checkValues={('0x0002', '>0')} checks that EVTNO 0x0002
+Example: column=8 and checkValues={('0x0002', '$>$0')} checks that EVTNO 0x0002
 occurs at least once in the file to analyse.
 Example: column=4 and checkValues={'0x7': '=0'} checks that FID 0x7 does
 NOT occur in the file to analyse.
@@ -1072,24 +1110,106 @@ NOT occur in the file to analyse.
 \item analyseDmCmdOutput(self, threadsToCheck=0)
 
 Run 'dm-cmd' with default action which shows the running threads and
-the message counts. threadsToCheck is an integer, where 32 bits are used
-as a bit mask. Each bit indicates a thread of 8 threads for 4 CPUs.
+the message counts. threadsToCheck is a string of 0 and 1.
+For 8 threads and 4 CPUs, the string is 32 chars long.
+For 32 threads and 4 CPUs, the string is 128 chars long.
 A thread is considered running if the output line for that thread contains 'yes'.
 A list of (key, message counts) is returned. Keys of this list are numbers xy,
 where x is the CPU number, y is the thread number, both single digits.
 If a thread hangs, dm-cmd may show 'yes' for this thread running, but the
 thread is in undefined status. To avoid this, use the method 'checkRunningThreadsCmd'.
+
 \item checkRunningThreadsCmd(self, messageInterval=1.0)
 
 Use analyseDmCmdOutput twice with a delay of messageInterval in between.
 Assert that the message counts increase with the second call and are greater
 than 0 on the first call.
+
+\item getQuantity(self, line)
+Get the quantity of command executions from the output line
+of 'dm-cmd $<$datamaster$>$ queue -v $<$block name$>$'.
+    Search for 'Qty: ' in the line and parse the number.
+
+\item checkQueueFlushed(self, queuesToFlush, blockName, flushPrio, checkFlush=True)
+Check that a flush command is executed and the defined queues are flushed.
+\begin{enumerate}
+\item queuesToFlush: binary value between 0 and 7 for the queues to flush.
+\item blockName: name of the block with the queues to check.
+\item flushPrio: priority of the flush command. Defines the queue where to look for the flush command.
+Priority queues higher than the flushPrio are not affected by the flush command since these
+queues are empty when a flush command with lower priority is executed. Therefore queuesToFlush is changed for
+\item flushprio = 0, 1.
+The check for the executed flush command and the checks for the flushed queues are independant. All checks
+are done in one parse run of the output of 'dm-cmd $<$datamaster$>$ -v queue $<$blockName$>$'. Flags and counters
+are used to signal the section inside the output.
+\item checkFlush = False means: check that no flush is executed.
+\end{enumerate}
+
 \item delay(self, duration)
 
 Sleep for 'duration' seconds. 'duration' is a float.
+
+\item runThreadXCommand(self, cpu, thread, command)
+
+Test for one CPU and one thread with 'command'.
+Check the return code of 0 for success and one line of output on stdout.
+
+\item prepareRunThreads(self, cpus=15):
+
+Check that no thread runs on the CPUs given by 'cpus' (bit mask).
+Load schedules (see \ref{fig:pps-cpu0}) into datamaster, one for each CPU and start all threads.
+Check that these are running. By default cpus=15, all CPUs are used.
+    \begin{figure}
+        \centering
+        \includegraphics*[width=0.95\textwidth,keepaspectratio]{TestPattern/pps-all-threads-cpu0.pdf}
+        \caption{Schedule with 8 PPS pattern to run 8 threads on one CPU used in method prepareRunThreads}
+        \label{fig:pps-cpu0}
+    \end{figure}
+
 \item deleteFile(self, fileName)
 
 Delete the file with name 'fileName'.
+
+\item resetAllCpus(self):
+
+Reset each CPU (loop over all lm32 CPUs). Use eb-reset $<$datamaster$>$ cpureset $<$cpu$>$.
+
+\item listFromBits(self, bits, quantity) $->$ list
+
+Convert 'bits', given as a string or an int, into a list of
+int items. quantity is the maximal int + 1.
+
+\item bitCount(self, bits, quantity) $->$ int
+
+Count how many bits are 1 in the number 'bits'.
+This is the number of items enabled in 'bits'.
+
+\item printStdOutStdErr(self, lines)
+
+Print the lines of stdout and stderr. This is given as a list of
+two lists of lines.
+
+\item getThreadQuantityFromFirmware(self) $->$ int
+
+This class method uses 'eb-info -w' to get the thread quantity
+from the lm32 firmware. This method is used once in the set up of
+a class by setUpClass.
+
+\item logToFile(self, text, fileName)
+
+This class method logs a text to a fileName. The text is prefixed
+by the current test name. This is appended to the file.
+
+\item checkRunningThreads(self, lines, masks) $->$ str
+
+Check the hex numbers describing the running threads.
+Since in some cases it is not determined which thread is used for a
+command, we have to check the lines against multiple masks.
+\begin{enumerate}
+\item lines is a list of lines, describes the running threads.
+\item masks is a list (not a set!) of hex numbers as strings.
+\end{enumerate}
+    Each number describes an allowed pattern of running threads.
 \end{enumerate}
 
 \section{Structure of Description}
