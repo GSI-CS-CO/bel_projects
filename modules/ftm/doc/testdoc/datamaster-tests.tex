@@ -5,7 +5,6 @@
 \usepackage{changepage}
 \usepackage{xcolor}
 \usepackage{listings}
-\usepackage{tabulary}
 
 \lstdefinestyle{dotfiles}{
   escapeinside={(*@}{@*)}, % (*@\label{mylabel}@*)
@@ -30,7 +29,6 @@
 }
 
 \newcommand{\ry}{\rotatebox{90}}
-\newcolumntype{L}{>{\centering\arraybackslash}m{19mm}}
 \begin{document}
 
 \begin{titlepage}
@@ -40,7 +38,7 @@
 
 \Large{Martin Skorsky}
 
-\Large{Last change: 2024-01-10}
+\Large{Last change: 2024-01-11}
 \end{center}
 \vfill
 \end{titlepage}
@@ -497,7 +495,8 @@ with commands and options and checks the result with the output on stdout and st
 \begin{enumerate}
   \item Purpose of Test
 
-  Tests the method analyseFrequencyFromCsv from module dm\_testbench.py.
+  Tests the method analyseFrequencyFromCsv which is in
+  the module dm\_testbench.py.
   \item Test Actions
 
   Run 8 tests for the different check syntax of this method with the
