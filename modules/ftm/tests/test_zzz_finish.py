@@ -8,7 +8,7 @@ class DmLastTest(dm_testbench.DmTestbench):
 
   def test_last_test(self):
     fileName = 'snoop_pps_last.csv'
-    self.startPattern('pps.dot')
+    self.startPattern('pps-zzz.dot')
     self.snoopToCsv(fileName, duration=2)
     # analyse column 8 which contains the evtno.
     # check that evtno 0x00d7 and 0x00cd occur.
