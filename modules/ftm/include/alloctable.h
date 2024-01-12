@@ -135,6 +135,7 @@ public:
   uint32_t getTotalSpace(uint8_t cpu)    const { return vPool[cpu].getTotalSpace(); }
   uint32_t getFreeSpace(uint8_t cpu)     const { return vPool[cpu].getFreeSpace(); }
   uint32_t getUsedSpace(uint8_t cpu)     const { return vPool[cpu].getUsedSpace(); }
+  uint32_t getStartOffs(uint8_t cpu)     const { return vPool[cpu].getStartOffs(); }
   
   uint32_t getFreeChunkQty(uint8_t cpu)  const { return vPool[cpu].getFreeChunkQty(); }
   uint32_t getTotalChunkQty(uint8_t cpu) const { return vPool[cpu].getTotalChunkQty(); }
