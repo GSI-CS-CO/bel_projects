@@ -330,13 +330,13 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
 
         if (filterMeta) {
           boost::write_graphviz(out, fg, make_vertex_writer(boost::get(&myVertex::np, fg)),
-                      make_edge_writer(boost::get(&myEdge::type, fg)), sample_graph_writer{DotStr::Graph::sDefName},
+                      make_edge_writer(boost::get(&myEdge::type, fg), boost::get(&myEdge::fhead, fg), boost::get(&myEdge::ftail, fg), boost::get(&myEdge::bwidth, fg)), sample_graph_writer{DotStr::Graph::sDefName},
                       boost::get(&myVertex::name, fg));
         }
         else {
 
           boost::write_graphviz(out, g, make_vertex_writer(boost::get(&myVertex::np, g)),
-                      make_edge_writer(boost::get(&myEdge::type, g)), sample_graph_writer{DotStr::Graph::sDefName},
+                      make_edge_writer(boost::get(&myEdge::type, fg), boost::get(&myEdge::fhead, fg), boost::get(&myEdge::ftail, fg), boost::get(&myEdge::bwidth, fg)), sample_graph_writer{DotStr::Graph::sDefName},
                       boost::get(&myVertex::name, g));
         }
       }

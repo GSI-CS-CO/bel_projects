@@ -42,6 +42,7 @@ class DestList;
     std::pair<uint8_t, AdrType> createCmd(const Command& el) const;
     std::pair<uint8_t, AdrType> createSwitch(const Switch& el) const;
     void setDefDst(void) const;
+    void setRefLinks() const;
     static const std::string exIntro;
 
   public:
