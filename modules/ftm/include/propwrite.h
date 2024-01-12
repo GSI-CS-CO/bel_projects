@@ -112,13 +112,10 @@ template <class Name>
 
 
 
-
-
-
-  template <class typeMap>
+  template <class typeMap, class fHeadMap, class fTailMap, class bWidthMap>
   class edge_writer {
   public:
-    edge_writer(typeMap type) : type(type) {}
+    edge_writer(typeMap type, fHeadMap fHead, fTailMap fTail, bWidthMap bWidth) : type(type), fHead(fHead), fTail(fTail), bWidth(bWidth) {}
     template <class Edge>
     void operator()(std::ostream& out, const Edge& v) const {
       out <<  "[" << dep::Base::sType << "=\"" << type[v] << "\", ";
@@ -131,6 +128,12 @@ template <class Name>
       else if (type[v] == det::sSwitchDst)   out << ec::Edge::sLookArgument;
       else if (type[v] == det::sCmdFlushOvr) out << ec::Edge::sLookArgument;
       else if (type[v] == det::sDynId)       out << ec::Edge::sLookArgument;
+      else if (type[v] == det::sRef) {
+        out << dep::Data::sFieldHead << "=\"" << fHead[v] << "\", ";
+        out << dep::Data::sFieldTail << "=\"" << fTail[v] << "\", ";
+        out << dep::Data::sBitWidth  << "=\"" << bWidth[v] << "\", ";
+        out << ec::Edge::sLookArgument;
+      }
       else if (type[v] == det::sDynPar0)     out << ec::Edge::sLookArgument;
       else if (type[v] == det::sDynPar1)     out << ec::Edge::sLookArgument;
       else if (type[v] == det::sDynTef)      out << ec::Edge::sLookArgument;
@@ -143,12 +146,15 @@ template <class Name>
     }
   private:
     typeMap type;
+    fHeadMap fHead;
+    fTailMap fTail;
+    bWidthMap bWidth;
   };
 
-  template <class typeMap>
-  inline edge_writer<typeMap>
-  make_edge_writer(typeMap type) {
-    return edge_writer<typeMap>(type);
+  template <class typeMap, class fHeadMap, class fTailMap, class bWidthMap>
+  inline edge_writer<typeMap, fHeadMap, fTailMap, bWidthMap>
+  make_edge_writer(typeMap type, fHeadMap fHead, fTailMap fTail, bWidthMap bWidth) {
+    return edge_writer<typeMap, fHeadMap, fTailMap, bWidthMap>(type, fHead, fTail, bWidth);
   }
 
 

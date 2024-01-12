@@ -90,6 +90,7 @@ public:
   uint32_t getTotalSpace()    const { return nodeQty * _MEM_BLOCK_SIZE; }
   uint32_t getFreeSpace()     const { return pool.size() * _MEM_BLOCK_SIZE; }
   uint32_t getUsedSpace()     const { return nodeQty - (pool.size() * _MEM_BLOCK_SIZE); }
+  uint32_t getStartOffs()     const { return startOffs; }
 
   bool acquireChunk(uint32_t &adr);
   bool freeChunk(uint32_t adr);
