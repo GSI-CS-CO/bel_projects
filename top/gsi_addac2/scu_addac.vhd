@@ -251,7 +251,6 @@ COMPONENT rrg_round is
   Port ( clk : in STD_LOGIC;
 			clk_slow : in STD_LOGIC;
          nReset : in STD_LOGIC;
-			timepulse : in STD_LOGIC;
 			
 			reg_control : in STD_LOGIC_VECTOR (15 downto 0);
          
@@ -266,8 +265,8 @@ COMPONENT rrg_round is
 			outreg_3 : out STD_LOGIC_VECTOR (15 downto 0);
 			
 			ext_dataset : in STD_LOGIC_VECTOR (7 downto 0);
-			DACStrobe : out STD_LOGIC;
-         Yis : out STD_LOGIC_VECTOR (15 downto 0));
+			dac_strobe : out STD_LOGIC;
+         dac_out : out STD_LOGIC_VECTOR (15 downto 0));
          -- Ris : out STD_LOGIC_VECTOR (63 downto 0));
 END COMPONENT rrg_round;
 
@@ -1003,7 +1002,6 @@ p_led_ena: div_n
           clk           => clk_sys,
           nReset        => rstn_sys,
 			 clk_slow		=> clk_update,
-			 timepulse     => Ena_Every_1us,
 			 reg_control   => rrgreg_control1,
           reg_0    		=> rrgreg_0,
           reg_1     		=> rrgreg_1,
@@ -1014,8 +1012,8 @@ p_led_ena: div_n
 			 outreg_2		=> rrgoutreg1_2,
 			 outreg_3		=> rrgoutreg1_3,
 			 ext_dataset	=> rrgreg_extdataset(7 downto 0),
-			 DACStrobe 		=> rrgDACStrobe1,
-          Yis    			=> rrgYis1
+			 dac_strobe		=> rrgDACStrobe1,
+          dac_out			=> rrgYis1
         );
 
 	rrg_round_inst2: rrg_round
@@ -1023,7 +1021,6 @@ p_led_ena: div_n
           clk           => clk_sys,
           nReset        => rstn_sys,
 			 clk_slow		=> clk_update,
-			 timepulse     => Ena_Every_1us,
 			 reg_control   => rrgreg_control2,
           reg_0    		=> rrgreg_0,
           reg_1     		=> rrgreg_1,
@@ -1034,8 +1031,8 @@ p_led_ena: div_n
 			 outreg_2		=> rrgoutreg2_2,
 			 outreg_3		=> rrgoutreg2_3,
 			 ext_dataset	=> rrgreg_extdataset(7 downto 0),
-			 DACStrobe 		=> rrgDACStrobe2,
-          Yis    			=> rrgYis2
+			 dac_strobe		=> rrgDACStrobe2,
+          dac_out			=> rrgYis2
         );
 		  
   -------------------------------------------------------------------------------

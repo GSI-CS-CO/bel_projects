@@ -19,6 +19,7 @@
 				0x04: capable of reading Yset, Rset, RIset, ROset
 				0x08: capable of reading the dataset information
 				0x10: capable of reading NUM_CYCLE
+		SLOWCLK_MHZ:	The slow clock frequency in MHz. It's used only for reporting it to the software.				
 
 	Module ports:
 		clk:		System clock, 125 MHz or so
@@ -38,7 +39,8 @@
 	RESOLUTION = 40,
 	DAC_WIDTH = 16, 
 	NR_DATASETS = 1,
-	READOUT = 1) 
+	READOUT = 1,
+	SLOWCLOCK_MHZ = 10) 
  (
 	input clk,
 	input clk_slow,
@@ -56,6 +58,11 @@
 	output reg 		       dac_strobe,
 	output reg signed [DAC_WIDTH-1:0] dac_out
 );
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	localparam VERSION			= 1;
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 	localparam CMD_IDLE			= 0;
 	localparam CMD_WRITE_YSET 		= 1;
@@ -78,7 +85,7 @@
 	localparam CMD_READ_YIS			= 24;
 	localparam CMD_READ_RIS			= 25;
 	
-	localparam CMD_READ_PARAMS		= 31;	//returns {{(8){1'b0}}, RESOLUTION[7:0], DAC_WIDTH[7:0], NR_DATASETS[7:0], READOUT[7:0]	};
+	localparam CMD_READ_PARAMS		= 31;	//returns {VERSION[7:0], {(16){1'b0}}, SLOWCLOCK_MHZ[7:0], RESOLUTION[7:0], DAC_WIDTH[7:0], NR_DATASETS[7:0], READOUT[7:0]	};
 	
 
 	localparam CAP_READ_YIS			= 1;
@@ -521,7 +528,7 @@
 						outreg <= {Ris, {(64-RESOLUTION){1'b0}} };
 						
 				CMD_READ_PARAMS:
-					outreg <= {{(8){1'b0}}, RESOLUTION[7:0], DAC_WIDTH[7:0], NR_DATASETS[7:0], READOUT[7:0]	};				
+					outreg <= {VERSION[7:0], {(16){1'b0}}, SLOWCLOCK_MHZ[7:0], RESOLUTION[7:0], DAC_WIDTH[7:0], NR_DATASETS[7:0], READOUT[7:0]	};				
 			endcase
 		end
 	end
