@@ -65,6 +65,7 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, configuration& c
     g[v1].tWait = "100";
   } else if (g[v1].type.compare(dnt::sStartThread) == 0) {
     g[v1].startOffs = "500";
+    g[v1].thread = "1";
   } else if (g[v1].type.compare(dnt::sBlock) == 0 || g[v1].type.compare(dnt::sBlockAlign) == 0) {
     flags=0x00100007;
     g[v1].tPeriod = "1000";
@@ -108,6 +109,7 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, configuration& c
     g[v2].tWait = "200";
   } else if (nodeT2.compare(dnt::sStartThread) == 0) {
     g[v2].startOffs = "500";
+    g[v2].thread = "1";
   } else if (nodeT2.compare(dnt::sBlock) == 0 || nodeT2.compare(dnt::sBlockAlign) == 0) {
     flags=0x00100007;
     g[v2].tPeriod = "1000";
@@ -305,7 +307,7 @@ void SingleEdgeGraph::setNodePointer(myVertex* vertex, std::string type, uint32_
       vertex->np = (node_ptr) new Origin(vertex->name, vertex->patName, vertex->bpName, hash, cpu, flags, s2u<uint64_t>(vertex->tOffs), 0);
       break;
     case NODE_TYPE_STARTTHREAD:
-      vertex->np = (node_ptr) new StartThread(vertex->name, vertex->patName, vertex->bpName, hash, cpu, flags, s2u<uint64_t>(vertex->tOffs), s2u<uint64_t>(vertex->startOffs), 0);
+      vertex->np = (node_ptr) new StartThread(vertex->name, vertex->patName, vertex->bpName, hash, cpu, flags, s2u<uint64_t>(vertex->tOffs), s2u<uint64_t>(vertex->startOffs), s2u<uint8_t>(vertex->thread));
       break;
     case NODE_TYPE_UNKNOWN:
       std::cerr << "not yet implemented " << vertex->type << std::endl;
