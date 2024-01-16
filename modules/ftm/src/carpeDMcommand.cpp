@@ -646,7 +646,9 @@ const vAdr CarpeDM::CarpeDMimpl::getCmdWrAdrs(uint32_t hash, uint8_t prio) {
   //Check if requested queue priority level exists
   uint32_t blAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&x->b[BLOCK_CMDQ_PTRS + prio * _PTR_SIZE_]);
   //sLog << "Block BListAdr 0x" << std::hex << blAdr << std::endl;
-  if(blAdr == LM32_NULL_PTR) {throw std::runtime_error( "Block node does not have requested queue of prio " + std::to_string((int)prio)); return ret; }
+  if(blAdr == LM32_NULL_PTR) {
+    throw std::runtime_error( "Block node does not have requested queue of prio " + std::to_string((int)prio));
+  }
 
     //get Write and Read indices
   uint8_t eWrIdx = ( writeBeBytesToLeNumber<uint32_t>((uint8_t*)&x->b[BLOCK_CMDQ_WR_IDXS]) >> (prio * 8)) & Q_IDX_MAX_OVF_MSK;
