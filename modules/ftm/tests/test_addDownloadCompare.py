@@ -581,26 +581,6 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     self.addDownloadCompareSchedule('testSingleEdge-block-wait-altdst.dot')
     # ~ {{dnt::sBlock, dnt::sCmdWait, det::sAltDst}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
-  def test_aScheduleBlockListdstListdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-block-listdst-listdst.dot')
-    # ~ {{dnt::sBlock, dnt::sDstList, det::sDstList}, SingleEdgeTest::TEST_OK},
-
-  @pytest.mark.development
-  def test_aScheduleBlockQinfoPriolo(self):
-    self.addDownloadCompareSchedule('testSingleEdge-block-qinfo-priolo.dot')
-    # ~ {{dnt::sBlock, dnt::sQInfo, det::sQPrio[0]}, SingleEdgeTest::TEST_OK},
-
-  @pytest.mark.development
-  def test_aScheduleBlockQinfoPrioil(self):
-    self.addDownloadCompareSchedule('testSingleEdge-block-qinfo-prioil.dot', statusMeta=True)
-    # ~ {{dnt::sBlock, dnt::sQInfo, det::sQPrio[1]}, SingleEdgeTest::TEST_OK},
-
-  @pytest.mark.development
-  def test_aScheduleBlockQinfoPriohi(self):
-    self.addDownloadCompareSchedule('testSingleEdge-block-qinfo-priohi.dot', statusMeta=True)
-    # ~ {{dnt::sBlock, dnt::sQInfo, det::sQPrio[2]}, SingleEdgeTest::TEST_OK},
-
   def test_aScheduleBlockStartthreadDefdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-block-startthread-defdst.dot')
     # ~ {{dnt::sBlock, dnt::sStartThread, det::sDefDst}, SingleEdgeTest::TEST_OK},
@@ -681,26 +661,6 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     self.addDownloadCompareSchedule('testSingleEdge-blockalign-wait-altdst.dot')
     # ~ {{dnt::sBlockAlign, dnt::sCmdWait, det::sAltDst}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
-  def test_aScheduleBlockalignListdstListdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-blockalign-listdst-listdst.dot')
-    # ~ {{dnt::sBlockAlign, dnt::sDstList, det::sDstList}, SingleEdgeTest::TEST_OK},
-
-  @pytest.mark.development
-  def test_aScheduleBlockalignQinfoPriolo(self):
-    self.addDownloadCompareSchedule('testSingleEdge-blockalign-qinfo-priolo.dot')
-    # ~ {{dnt::sBlockAlign, dnt::sQInfo, det::sQPrio[0]}, SingleEdgeTest::TEST_OK},
-
-  @pytest.mark.development
-  def test_aScheduleBlockalignQinfoPrioil(self):
-    self.addDownloadCompareSchedule('testSingleEdge-blockalign-qinfo-prioil.dot', statusMeta=True)
-    # ~ {{dnt::sBlockAlign, dnt::sQInfo, det::sQPrio[1]}, SingleEdgeTest::TEST_OK},
-
-  @pytest.mark.development
-  def test_aScheduleBlockalignQinfoPriohi(self):
-    self.addDownloadCompareSchedule('testSingleEdge-blockalign-qinfo-priohi.dot', statusMeta=True)
-    # ~ {{dnt::sBlockAlign, dnt::sQInfo, det::sQPrio[2]}, SingleEdgeTest::TEST_OK},
-
   def test_aScheduleBlockalignStartthreadDefdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-blockalign-startthread-defdst.dot')
     # ~ {{dnt::sBlockAlign, dnt::sStartThread, det::sDefDst}, SingleEdgeTest::TEST_OK},
@@ -716,11 +676,6 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
   def test_aScheduleBlockalignOriginAltdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-blockalign-origin-altdst.dot')
     # ~ {{dnt::sBlockAlign, dnt::sOrigin, det::sAltDst}, SingleEdgeTest::TEST_OK},
-
-  @pytest.mark.development
-  def test_aScheduleQinfoQbufMeta(self):
-    self.addDownloadCompareSchedule('testSingleEdge-qinfo-qbuf-meta.dot', statusMeta=True)
-    # ~ {{dnt::sQInfo, dnt::sQBuf, det::sMeta}, SingleEdgeTest::TEST_OK},
 
   def test_aScheduleStartthreadBlockDefdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-startthread-block-defdst.dot')

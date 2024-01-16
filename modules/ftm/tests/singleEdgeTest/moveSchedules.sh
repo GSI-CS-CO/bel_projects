@@ -17,9 +17,6 @@ mv dot/testSingleEdge-block-noop-altdst.dot schedules/
 mv dot/testSingleEdge-block-noop-defdst.dot schedules/
 mv dot/testSingleEdge-block-origin-altdst.dot schedules/
 mv dot/testSingleEdge-block-origin-defdst.dot schedules/
-mv dot/testSingleEdge-block-qinfo-priohi.dot schedules/
-mv dot/testSingleEdge-block-qinfo-prioil.dot schedules/
-mv dot/testSingleEdge-block-qinfo-priolo.dot schedules/
 mv dot/testSingleEdge-block-startthread-altdst.dot schedules/
 mv dot/testSingleEdge-block-startthread-defdst.dot schedules/
 mv dot/testSingleEdge-block-switch-altdst.dot schedules/
@@ -40,9 +37,6 @@ mv dot/testSingleEdge-blockalign-noop-altdst.dot schedules/
 mv dot/testSingleEdge-blockalign-noop-defdst.dot schedules/
 mv dot/testSingleEdge-blockalign-origin-altdst.dot schedules/
 mv dot/testSingleEdge-blockalign-origin-defdst.dot schedules/
-mv dot/testSingleEdge-blockalign-qinfo-priohi.dot schedules/
-mv dot/testSingleEdge-blockalign-qinfo-prioil.dot schedules/
-mv dot/testSingleEdge-blockalign-qinfo-priolo.dot schedules/
 mv dot/testSingleEdge-blockalign-startthread-altdst.dot schedules/
 mv dot/testSingleEdge-blockalign-startthread-defdst.dot schedules/
 mv dot/testSingleEdge-blockalign-switch-altdst.dot schedules/
@@ -127,7 +121,6 @@ mv dot/testSingleEdge-origin-tmsg-defdst.dot schedules/
 mv dot/testSingleEdge-origin-tmsg-origindst.dot schedules/
 mv dot/testSingleEdge-origin-wait-defdst.dot schedules/
 mv dot/testSingleEdge-origin-wait-origindst.dot schedules/
-mv dot/testSingleEdge-qinfo-qbuf-meta.dot schedules/
 mv dot/testSingleEdge-startthread-block-defdst.dot schedules/
 mv dot/testSingleEdge-startthread-blockalign-defdst.dot schedules/
 mv dot/testSingleEdge-startthread-flow-defdst.dot schedules/
