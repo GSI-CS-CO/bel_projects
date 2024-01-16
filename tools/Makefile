@@ -25,7 +25,6 @@ clean:  monitoring-clean
 install: monitoring-install
 	mkdir -p $(STAGING)$(PREFIX)/bin
 	cp $(TARGETS) $(STAGING)$(PREFIX)/bin
-	cp $(EXTRA_I) $(STAGING)$(PREFIX)/bin
 
 %:	%.c
 	$(CC) $(CFLAGS) -o $@ $< $(LIBS)
