@@ -169,8 +169,8 @@ class TestDmCmdStop(dm_testbench.DmTestbench):
     Test for the correct error message.
     """
     linesErr = self.startAndGetSubprocessOutput([self.binaryDmCmd, self.datamaster, 'stop', 'B_PPSx'],
-         expectedReturnCode=[0], linesCout=0, linesCerr=1)[1]
-    self.assertTrue("Block node 'B_PPSx' does not have a low prio queue" in linesErr[0])
+         expectedReturnCode=[255], linesCout=0, linesCerr=1)[1]
+    self.assertTrue("Block node 'B_PPSx' does not have a low prio queue." in linesErr[0])
 
   def test_dm_cmd_stop(self):
     """Start dm-cmd with the stop command, but no target name.
@@ -185,6 +185,6 @@ class TestDmCmdStop(dm_testbench.DmTestbench):
     Test for the correct error message.
     """
     linesErr = self.startAndGetSubprocessOutput([self.binaryDmCmd, self.datamaster, 'stop', 'EVT_PPS1'],
-         expectedReturnCode=[0], linesCout=0, linesCerr=1)[1]
+         expectedReturnCode=[255], linesCout=0, linesCerr=1)[1]
     self.assertTrue("Node 'EVT_PPS1' is not a block" in linesErr[0])
 
