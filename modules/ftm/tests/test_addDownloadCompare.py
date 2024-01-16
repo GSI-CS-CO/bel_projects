@@ -11,7 +11,7 @@ Compare original schedule with downloaded schedule
 """
 class AddDownloadCompare(dm_testbench.DmTestbench):
 
-  def addDownloadCompareSchedule(self, scheduleFile, statusMeta=False):
+  def addDownloadCompareSchedule(self, scheduleFile, statusMeta=False, abortPattern=False):
     status_file = 'status.dot'
     if self.threadQuantity == 32:
       scheduleFile32 = scheduleFile.replace('.dot', '-thread32.dot')
@@ -26,7 +26,9 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', options, status_file))
     self.startAndCheckSubprocess(('scheduleCompare', self.schedules_folder + scheduleFile, status_file))
     self.deleteFile(status_file)
-    # ~ self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'remove', self.schedules_folder + scheduleFile))
+    if abortPattern:
+      self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'abort'))
+    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'remove', self.schedules_folder + scheduleFile))
 
   def generateScript(self, scheduleFile):
     """Use this to write all names of schedule into a script.
@@ -334,11 +336,11 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     # ~ {{dnt::sSwitch, dnt::sBlockAlign, det::sSwitchTarget}, SingleEdgeTest::TEST_OK},
 
   def test_aScheduleSwitchBlockSwitchdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-switch-block-switchdst.dot')
+    self.addDownloadCompareSchedule('testSingleEdge-switch-block-switchdst.dot', abortPattern=True)
     # ~ {{dnt::sSwitch, dnt::sBlock, det::sSwitchDst}, SingleEdgeTest::TEST_OK},
 
   def test_aScheduleSwitchBlockalignSwitchdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-switch-blockalign-switchdst.dot')
+    self.addDownloadCompareSchedule('testSingleEdge-switch-blockalign-switchdst.dot', abortPattern=True)
     # ~ {{dnt::sSwitch, dnt::sBlockAlign, det::sSwitchDst}, SingleEdgeTest::TEST_OK},
 
   def test_aScheduleSwitchFlowSwitchdst(self):
@@ -354,11 +356,11 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     # ~ {{dnt::sSwitch, dnt::sCmdNoop, det::sSwitchDst}, SingleEdgeTest::TEST_OK},
 
   def test_aScheduleSwitchSwitchSwitchdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-switch-switch-switchdst.dot')
+    self.addDownloadCompareSchedule('testSingleEdge-switch-switch-switchdst.dot', abortPattern=True)
     # ~ {{dnt::sSwitch, dnt::sSwitch, det::sSwitchDst}, SingleEdgeTest::TEST_OK},
 
   def test_aScheduleSwitchTmsgSwitchdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-switch-tmsg-switchdst.dot')
+    self.addDownloadCompareSchedule('testSingleEdge-switch-tmsg-switchdst.dot', abortPattern=True)
     # ~ {{dnt::sSwitch, dnt::sTMsg, det::sSwitchDst}, SingleEdgeTest::TEST_OK},
 
   def test_aScheduleSwitchWaitSwitchdst(self):
@@ -374,11 +376,11 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     # ~ {{dnt::sSwitch, dnt::sOrigin, det::sDefDst}, SingleEdgeTest::TEST_OK},
 
   def test_aScheduleSwitchStartthreadSwitchdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-switch-startthread-switchdst.dot')
+    self.addDownloadCompareSchedule('testSingleEdge-switch-startthread-switchdst.dot', abortPattern=True)
     # ~ {{dnt::sSwitch, dnt::sStartThread, det::sSwitchDst}, SingleEdgeTest::TEST_OK},
 
   def test_aScheduleSwitchOriginSwitchdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-switch-origin-switchdst.dot')
+    self.addDownloadCompareSchedule('testSingleEdge-switch-origin-switchdst.dot', abortPattern=True)
     # ~ {{dnt::sSwitch, dnt::sOrigin, det::sSwitchDst}, SingleEdgeTest::TEST_OK},
 
   def test_aScheduleFlushBlockDefdst(self):
