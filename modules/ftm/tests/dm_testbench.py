@@ -216,7 +216,7 @@ class DmTestbench(unittest.TestCase):
       process = subprocess.run(self.getSnoopCommand(eventId, mask, duration), shell=True, check=True, stdout=file1)
       self.assertEqual(process.returncode, 0, f'Returncode: {process.returncode}')
 
-  def snoopToCsvWithAction(self, csvFileName, action, eventId='0', mask='0', duration=1):
+  def snoopToCsvWithAction(self, csvFileName, action, actionArgs=[], eventId='0', mask='0', duration=1):
     """Snoop timing messages with saft-ctl for <duration> seconds (default = 1).
     Write the messages to <csvFileName>.
     Details: start saft-ctl with Popen in its own thread, run it for <duration> seconds.
@@ -224,7 +224,10 @@ class DmTestbench(unittest.TestCase):
     """
     snoop = threading.Thread(target=self.snoopToCsv, args=(csvFileName, eventId, mask, duration))
     snoop.start()
-    action()
+    if len(actionArgs) == 0:
+      action()
+    else:
+      action(actionArgs)
     snoop.join()
 
   def analyseFrequencyFromCsv(self, csvFileName, column=20, printTable=True, checkValues=dict()):

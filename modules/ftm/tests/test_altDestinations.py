@@ -5,7 +5,7 @@ of altdst edges for a block.
 """
 class TestAltDestinationLists(dm_testbench.DmTestbench):
 
-  def generateScheduleAltdestinations(self, fileName, numDestinations, patternName):
+  def generateScheduleAltdestinations(self, fileName, numDestinations, patternName, period):
     """Generate a schedule with numDestinations altdst edges to a central block.
     These edges connect this central block with tmsg nodes. The tmsg nodes
     have a defdst edge to the central block.
@@ -13,6 +13,7 @@ class TestAltDestinationLists(dm_testbench.DmTestbench):
     :param fileName: the name of the schedule file
     :param patternName: the name of the pattern used for all nodes
     :param numDestinations: the number of timing message nodes, maximal maxNumberDestinations.
+    :param period: the time period for the central block
     :param cpu: the CPU to use (Default value = 0)
 
     """
@@ -20,8 +21,6 @@ class TestAltDestinationLists(dm_testbench.DmTestbench):
     cpu = 0
     self.assertGreater(maxNumberDestinations, numDestinations, f'Number of messages ({numDestinations}) should be less than {maxNumberDestinations}.')
     self.assertGreater(numDestinations, 1, f'Number of messages ({numDestinations}) should be greater than 1 (Pattern {patternName}).')
-    # time period for 10Hz
-    period = int(1000 * 1000 * 1000 / 10)
     offset = int(period / numDestinations)
     # ~ print(f'{period=:d} {numDestinations=:d} {offset=:d}')
     lines = []
@@ -43,8 +42,14 @@ class TestAltDestinationLists(dm_testbench.DmTestbench):
     with open(fileName, 'w') as file1:
       file1.write("\n".join(lines))
 
-  def switchAction(self):
-    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'flow', 'Block0_0', 'Msg0_0001'), [0], 0, 0)
+  def switchAction(self, argsList):
+    numDestinations = argsList[0]
+    frequency = argsList[1]
+    delay = 1 / frequency * 0.50
+    print(f'{numDestinations=}, {frequency=}, {delay=}')
+    for i in range(1, numDestinations):
+      self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'flow', 'Block0_0', f'Msg0_{i:04d}'), [0], 0, 0)
+      self.delay(delay)
 
   def runAltDestinationsX(self, numDestinations):
     """With a generated schedule test altdst. Use a loop over all tmsg
@@ -54,10 +59,17 @@ class TestAltDestinationLists(dm_testbench.DmTestbench):
     fileName = f'altDestinations-{numDestinations}.dot'
     fileCsv = f'altDestinations-{numDestinations}.csv'
     patternName = f'AltDest{numDestinations:04d}'
-    self.generateScheduleAltdestinations(self.schedules_folder + fileName, numDestinations, patternName)
+    # time period for 10Hz
+    frequency = 10
+    period = int(1000 * 1000 * 1000 / frequency)
+    self.generateScheduleAltdestinations(self.schedules_folder + fileName, numDestinations, patternName, period)
     self.startPattern(fileName, patternName)
-    self.snoopToCsvWithAction(fileCsv, self.switchAction, duration=2)
-    self.analyseFrequencyFromCsv(fileCsv, 20, checkValues={'0x0000000000000000': '>0', '0x0000000000000001': '>0', })
+    snoopTime = 1 + max(2, int(numDestinations / frequency))
+    self.snoopToCsvWithAction(fileCsv, self.switchAction, actionArgs=[numDestinations, frequency], duration=snoopTime)
+    keyList = {'0x0000000000000000': '>0', }
+    for i in range(1, numDestinations):
+      keyList[f'0x{i:016x}'] = '>0'
+    self.analyseFrequencyFromCsv(fileCsv, 20, checkValues=keyList)
     self.deleteFile(self.schedules_folder + fileName)
     self.deleteFile(fileCsv)
 
@@ -65,11 +77,26 @@ class TestAltDestinationLists(dm_testbench.DmTestbench):
     try:
       self.runAltDestinationsX(1000)
     except AssertionError as inst:
-      # ~ print(inst.args)
       self.assertEqual(inst.args[0], '1000 not greater than 1000 : Number of messages (1000) should be less than 1000.', 'wrong error')
 
   def test_altDestinations2(self):
     self.runAltDestinationsX(2)
+
+  def test_altDestinations5(self):
+    self.runAltDestinationsX(5)
+
+  def test_altDestinations50(self):
+    self.runAltDestinationsX(50)
+
+  def test_altDestinations111(self):
+    self.runAltDestinationsX(111)
+
+  def test_altDestinations112(self):
+    try:
+      self.runAltDestinationsX(112)
+    except AssertionError as inst:
+      self.deleteFile(self.schedules_folder + 'altDestinations-112.dot')
+      self.assertTrue('wrong return code 250' in inst.args[0], 'wrong error')
 
 """Class UnitTestAltDestinations tests the limit of 9 altdst edges per block.
 """
