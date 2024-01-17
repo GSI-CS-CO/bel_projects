@@ -1,5 +1,76 @@
 import dm_testbench
 
+"""Class TestAltDestinationLists tests the limit of the extended lists
+of altdst edges for a block.
+"""
+class TestAltDestinationLists(dm_testbench.DmTestbench):
+
+  def generateScheduleAltdestinations(self, fileName, numDestinations, patternName):
+    """Generate a schedule with numDestinations altdst edges to a central block.
+    These edges connect this central block with tmsg nodes. The tmsg nodes
+    have a defdst edge to the central block.
+
+    :param fileName: the name of the schedule file
+    :param patternName: the name of the pattern used for all nodes
+    :param numDestinations: the number of timing message nodes, maximal maxNumberDestinations.
+    :param cpu: the CPU to use (Default value = 0)
+
+    """
+    maxNumberDestinations = 1000
+    cpu = 0
+    self.assertGreater(maxNumberDestinations, numDestinations, f'Number of messages ({numDestinations}) should be less than {maxNumberDestinations}.')
+    self.assertGreater(numDestinations, 1, f'Number of messages ({numDestinations}) should be greater than 1 (Pattern {patternName}).')
+    # time period for 10Hz
+    period = int(1000 * 1000 * 1000 / 10)
+    offset = int(period / numDestinations)
+    # ~ print(f'{period=:d} {numDestinations=:d} {offset=:d}')
+    lines = []
+    lines.append(f'digraph AltDestLists{numDestinations}' + ' {')
+    lines.append(f'node [cpu={cpu} type=tmsg pattern={patternName} fid=1]')
+    lines.append(f'edge [type=defdst]')
+    # create the nodes
+    lines.append(f'Block{cpu}_0 [type=block patentry=1 patexit=1 qlo=1 tperiod={period:d}]')
+    for i in range(numDestinations):
+      lines.append(f'Msg{cpu}_{i:04d} [par={i} evtno={i} toffs={offset*i:d}]')
+    # create the edges
+    lines.append(f'Block{cpu}_0 -> Msg{cpu}_0000')
+    lines.append(f'Msg{cpu}_0000 -> Block{cpu}_0')
+    for i in range(1,numDestinations):
+      lines.append(f'Msg{cpu}_{i:04d} -> Block{cpu}_0')
+      lines.append(f'Block{cpu}_0 -> Msg{cpu}_{i:04d} [type=altdst]')
+    lines.append('}')
+    # write the file
+    with open(fileName, 'w') as file1:
+      file1.write("\n".join(lines))
+
+  def switchAction(self):
+    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'flow', 'Block0_0', 'Msg0_0001'), [0], 0, 0)
+
+  def runAltDestinationsX(self, numDestinations):
+    """With a generated schedule test altdst. Use a loop over all tmsg
+    nodes to switch the destinations such that the schedule flow from the
+    central block switches through all tmsg nodes.
+    """
+    fileName = f'altDestinations-{numDestinations}.dot'
+    fileCsv = f'altDestinations-{numDestinations}.csv'
+    patternName = f'AltDest{numDestinations:04d}'
+    self.generateScheduleAltdestinations(self.schedules_folder + fileName, numDestinations, patternName)
+    self.startPattern(fileName, patternName)
+    self.snoopToCsvWithAction(fileCsv, self.switchAction, duration=2)
+    self.analyseFrequencyFromCsv(fileCsv, 20, checkValues={'0x0000000000000000': '>0', '0x0000000000000001': '>0', })
+    self.deleteFile(self.schedules_folder + fileName)
+    self.deleteFile(fileCsv)
+
+  def test_altDestinations1000(self):
+    try:
+      self.runAltDestinationsX(1000)
+    except AssertionError as inst:
+      # ~ print(inst.args)
+      self.assertEqual(inst.args[0], '1000 not greater than 1000 : Number of messages (1000) should be less than 1000.', 'wrong error')
+
+  def test_altDestinations2(self):
+    self.runAltDestinationsX(2)
+
 """Class UnitTestAltDestinations tests the limit of 9 altdst edges per block.
 """
 class UnitTestAltDestinations(dm_testbench.DmTestbench):
