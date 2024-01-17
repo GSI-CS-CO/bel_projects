@@ -627,3 +627,8 @@ class DmTestbench(unittest.TestCase):
         remainingMasks.remove(threadState)
     # ~ self.assertEqual(0, len(remainingMasks),f'Remaining masks: {remainingMasks}')
     return threadState
+
+  def printTimestamp(self, text):
+    """Print the current timestamp with some preceeding text.
+    """
+    print(text, datetime.datetime.now().time())
