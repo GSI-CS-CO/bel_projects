@@ -11,7 +11,7 @@ class OverwriteBlocks(dm_testbench.DmTestbench):
     self.delay(2)
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'abort'), linesCout=1, linesCerr=0)
     # overwrite and start the second pattern with low prio queue
-    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'overwrite', self.schedules_folder + 'pps-qlo.dot'), linesCout=0, linesCerr=0)
+    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'overwrite', self.schedulesFolder + 'pps-qlo.dot'), linesCout=0, linesCerr=0)
     self.delay(0.1)
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'PPS_Q'), linesCout=1, linesCerr=0)
     self.delay(2)
@@ -19,7 +19,7 @@ class OverwriteBlocks(dm_testbench.DmTestbench):
     self.checkSchedule('pps-qlo-status.dot')
     # overwrite and start the second pattern with low and high prio queue
     self.delay(0.1)
-    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'overwrite', self.schedules_folder + 'pps-qhi.dot'), linesCout=0, linesCerr=0)
+    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'overwrite', self.schedulesFolder + 'pps-qhi.dot'), linesCout=0, linesCerr=0)
     self.delay(0.1)
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'PPS_Q'), linesCout=1, linesCerr=0)
     self.delay(2.5)
@@ -30,7 +30,7 @@ class OverwriteBlocks(dm_testbench.DmTestbench):
     statusFile = 'status.dot'
     options = '-so'
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', options, statusFile))
-    self.startAndCheckSubprocess(('scheduleCompare', self.schedules_folder + scheduleFile, statusFile))
+    self.startAndCheckSubprocess(('scheduleCompare', self.schedulesFolder + scheduleFile, statusFile))
     self.deleteFile(statusFile)
 
   def test_overwriteSchedules(self):

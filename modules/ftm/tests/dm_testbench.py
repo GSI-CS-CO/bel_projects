@@ -23,7 +23,7 @@ class DmTestbench(unittest.TestCase):
     self.binaryDmCmd = os.environ.get('TEST_BINARY_DM_CMD', 'dm-cmd')
     self.binaryDmSched = os.environ.get('TEST_BINARY_DM_SCHED', 'dm-sched')
     self.datamaster = os.environ['DATAMASTER']
-    self.schedules_folder = os.environ.get('TEST_SCHEDULES', 'schedules/')
+    self.schedulesFolder = os.environ.get('TEST_SCHEDULES', 'schedules/')
     self.snoop_command = os.environ.get('SNOOP_COMMAND', 'saft-ctl tr0 -xv snoop 0 0 0')
     self.patternStarted = False
     self.threadQuantity = self.getThreadQuantityFromFirmware()
@@ -65,7 +65,7 @@ class DmTestbench(unittest.TestCase):
     If start is False, do not start a pattern.
     """
     if len(scheduleFile) > 0:
-      scheduleFile = self.schedules_folder + scheduleFile
+      scheduleFile = self.schedulesFolder + scheduleFile
       # ~ print (f"Connect to device '{self.datamaster}', schedule file '{scheduleFile}'.   ", end='', flush=True)
       self.startAndGetSubprocessStdout([self.binaryDmSched, self.datamaster, 'add', scheduleFile])
     if start:

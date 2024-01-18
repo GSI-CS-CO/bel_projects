@@ -15,7 +15,7 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     status_file = 'status.dot'
     if self.threadQuantity == 32:
       scheduleFile32 = scheduleFile.replace('.dot', '-thread32.dot')
-      fileObj = pathlib.Path(self.schedules_folder + scheduleFile32)
+      fileObj = pathlib.Path(self.schedulesFolder + scheduleFile32)
       if fileObj.exists():
         scheduleFile = scheduleFile32
     self.startPattern(scheduleFile, 'patternA')
@@ -24,11 +24,11 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     else:
       options = '-o'
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', options, status_file))
-    self.startAndCheckSubprocess(('scheduleCompare', self.schedules_folder + scheduleFile, status_file))
+    self.startAndCheckSubprocess(('scheduleCompare', self.schedulesFolder + scheduleFile, status_file))
     self.deleteFile(status_file)
     if abortPattern:
       self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'abort'))
-    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'remove', self.schedules_folder + scheduleFile))
+    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'remove', self.schedulesFolder + scheduleFile))
 
   def generateScript(self, scheduleFile):
     """Use this to write all names of schedule into a script.
@@ -37,7 +37,7 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     """
     fileName = 'moveSchedules.sh'
     with open(fileName, 'a') as file1:
-      file1.write('mv dot/' + scheduleFile + ' ' + self.schedules_folder + '\n')
+      file1.write('mv dot/' + scheduleFile + ' ' + self.schedulesFolder + '\n')
 
   def test_aScheduleTmsgBlockDefdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-block-defdst.dot')

@@ -62,7 +62,7 @@ class TestAltDestinationLists(dm_testbench.DmTestbench):
     # time period for 10Hz
     frequency = 10
     period = int(1000 * 1000 * 1000 / frequency)
-    self.generateScheduleAltdestinations(self.schedules_folder + scheduleFile, numDestinations, patternName, period)
+    self.generateScheduleAltdestinations(self.schedulesFolder + scheduleFile, numDestinations, patternName, period)
     # add schedule and start pattern, snoop for some time
     self.startPattern(scheduleFile, patternName)
     snoopTime = 1 + max(2, int(numDestinations / frequency))
@@ -71,7 +71,7 @@ class TestAltDestinationLists(dm_testbench.DmTestbench):
     statusFile = 'status.dot'
     options = '-so'
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', options, statusFile))
-    self.startAndCheckSubprocess(('scheduleCompare', self.schedules_folder + scheduleFile.replace('.dot', '-status.dot'), statusFile))
+    self.startAndCheckSubprocess(('scheduleCompare', self.schedulesFolder + scheduleFile.replace('.dot', '-status.dot'), statusFile))
     self.deleteFile(statusFile)
     # analyze snoop file (csv)
     keyList = {'0x0000000000000000': '>0', }
@@ -79,7 +79,7 @@ class TestAltDestinationLists(dm_testbench.DmTestbench):
       keyList[f'0x{i:016x}'] = '>0'
     self.analyseFrequencyFromCsv(fileCsv, 20, checkValues=keyList)
     # cleanup
-    self.deleteFile(self.schedules_folder + scheduleFile)
+    self.deleteFile(self.schedulesFolder + scheduleFile)
     self.deleteFile(fileCsv)
 
   def test_altDestinations1000(self):
@@ -104,7 +104,7 @@ class TestAltDestinationLists(dm_testbench.DmTestbench):
     try:
       self.runAltDestinationsX(112)
     except AssertionError as inst:
-      self.deleteFile(self.schedules_folder + 'altDestinations-112.dot')
+      self.deleteFile(self.schedulesFolder + 'altDestinations-112.dot')
       self.assertTrue('wrong return code 250' in inst.args[0], 'wrong error')
 
 """Class UnitTestAltDestinations tests the limit of 9 altdst edges per block.
@@ -128,12 +128,12 @@ class UnitTestAltDestinations(dm_testbench.DmTestbench):
     self.deleteFile(file_name)
 
   def test_alt10DestinationsFlow(self):
-    fileName = self.schedules_folder + 'altdst-flow-10.dot'
+    fileName = self.schedulesFolder + 'altdst-flow-10.dot'
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [0], linesCout=0, linesCerr=0)
 
   def test_alt10Destinations(self):
-    fileName = self.schedules_folder + 'altdst-10.dot'
+    fileName = self.schedulesFolder + 'altdst-10.dot'
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [0], linesCout=0, linesCerr=0)
 
@@ -150,11 +150,11 @@ class UnitTestAltDestinations(dm_testbench.DmTestbench):
       $C -i cmd_test4missing_alt.dot
       $S dump
     """
-    fileName = self.schedules_folder + 'altdst-missing-node.dot'
+    fileName = self.schedulesFolder + 'altdst-missing-node.dot'
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [0], linesCout=0, linesCerr=0)
     self.delay(1.0)
-    cmdFileName = self.schedules_folder + 'altdst-missing-node-cmd.dot'
+    cmdFileName = self.schedulesFolder + 'altdst-missing-node-cmd.dot'
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, '-i',
         cmdFileName), [0], linesCout=1, linesCerr=0)
 
