@@ -56,21 +56,30 @@ class TestAltDestinationLists(dm_testbench.DmTestbench):
     nodes to switch the destinations such that the schedule flow from the
     central block switches through all tmsg nodes.
     """
-    fileName = f'altDestinations-{numDestinations}.dot'
+    scheduleFile = f'altDestinations-{numDestinations}.dot'
     fileCsv = f'altDestinations-{numDestinations}.csv'
     patternName = f'AltDest{numDestinations:04d}'
     # time period for 10Hz
     frequency = 10
     period = int(1000 * 1000 * 1000 / frequency)
-    self.generateScheduleAltdestinations(self.schedules_folder + fileName, numDestinations, patternName, period)
-    self.startPattern(fileName, patternName)
+    self.generateScheduleAltdestinations(self.schedules_folder + scheduleFile, numDestinations, patternName, period)
+    # add schedule and start pattern, snoop for some time
+    self.startPattern(scheduleFile, patternName)
     snoopTime = 1 + max(2, int(numDestinations / frequency))
     self.snoopToCsvWithAction(fileCsv, self.switchAction, actionArgs=[numDestinations, frequency], duration=snoopTime)
+    # check downloaded schedule
+    statusFile = 'status.dot'
+    options = '-so'
+    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', options, statusFile))
+    self.startAndCheckSubprocess(('scheduleCompare', self.schedules_folder + scheduleFile.replace('.dot', '-status.dot'), statusFile))
+    self.deleteFile(statusFile)
+    # analyze snoop file (csv)
     keyList = {'0x0000000000000000': '>0', }
     for i in range(1, numDestinations):
       keyList[f'0x{i:016x}'] = '>0'
     self.analyseFrequencyFromCsv(fileCsv, 20, checkValues=keyList)
-    self.deleteFile(self.schedules_folder + fileName)
+    # cleanup
+    self.deleteFile(self.schedules_folder + scheduleFile)
     self.deleteFile(fileCsv)
 
   def test_altDestinations1000(self):
