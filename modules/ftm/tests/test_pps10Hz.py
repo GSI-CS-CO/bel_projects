@@ -23,14 +23,14 @@ class DmPpsXHz(dm_testbench.DmTestbench):
     scheduleName = f'pps{numberOfMessages}Hz.dot'
     snoopFileName = f'snoop_pps{numberOfMessages}Hz.csv'
     patternName = f'PPS{numberOfMessages}Hz'
-    self.generate_schedule_msg(self.schedules_folder + scheduleName, patternName, numberOfMessages)
+    self.generate_schedule_msg(self.schedulesFolder + scheduleName, patternName, numberOfMessages)
     self.startPattern(scheduleName, patternName)
     self.snoopToCsv(snoopFileName, duration=2)
     keyList = {'0x0000000000000000': '>0', }
     for i in range(1, numberOfMessages):
       keyList[f'0x{i:016x}'] = '>0'
     self.analyseFrequencyFromCsv(snoopFileName, column=20, printTable=True, checkValues=keyList)
-    self.deleteFile(self.schedules_folder + scheduleName)
+    self.deleteFile(self.schedulesFolder + scheduleName)
     self.deleteFile(snoopFileName)
 
   def generate_schedule_msg(self, fileName, patternName, numberOfMsgs, cpu=0):

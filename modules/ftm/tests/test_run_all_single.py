@@ -12,11 +12,11 @@ class UnitTestRunAllSingle(dm_testbench.DmTestbench):
     """
     self.addSchedule('dynamic-basic-run_all_single-schedule.dot')
     stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmSched, self.datamaster, 'rawvisited'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-basic-run_all_single-expected-0-0.txt')
+    self.compareExpectedOutput(stdoutLines, self.schedulesFolder + 'dynamic-basic-run_all_single-expected-0-0.txt')
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'IN_C' + number))
     self.delay(0.1)
     stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmSched, self.datamaster, 'rawvisited'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-basic-run_all_single-expected-' + number + '-2.txt')
+    self.compareExpectedOutput(stdoutLines, self.schedulesFolder + 'dynamic-basic-run_all_single-expected-' + number + '-2.txt')
 
   def test_dynamic_run_cpu0(self):
     self.common_dynamic_run_all_single('0')

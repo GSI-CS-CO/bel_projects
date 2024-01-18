@@ -8,19 +8,19 @@ class UnitTestFlow(dm_testbench.DmTestbench):
   def common_dynamic_branch_single_tvalid(self, delay=0.0, options=[]):
     self.startPattern('dynamic-branch-single-schedule.dot', 'IN_C0')
     stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmSched, self.datamaster, 'rawvisited'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-branch-single-expected-0-0.txt')
+    self.compareExpectedOutput(stdoutLines, self.schedulesFolder + 'dynamic-branch-single-expected-0-0.txt')
     argumentList = [self.binaryDmCmd, self.datamaster, 'flow', 'BLOCK_IN0', 'BLOCK_B']
     argumentList.extend(options)
     self.startAndCheckSubprocess(argumentList)
     if delay > 0.0:
       self.delay(delay)
     stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, 'rawqueue', 'BLOCK_IN0'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-branch-single-expected-1-1.txt', excludeField='VTIME:')
+    self.compareExpectedOutput(stdoutLines, self.schedulesFolder + 'dynamic-branch-single-expected-1-1.txt', excludeField='VTIME:')
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'IN_C0'))
     stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmSched, self.datamaster, 'rawvisited'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-branch-single-expected-1-3.txt')
+    self.compareExpectedOutput(stdoutLines, self.schedulesFolder + 'dynamic-branch-single-expected-1-3.txt')
     stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, 'rawqueue', 'BLOCK_IN0'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'dynamic-branch-single-expected-1-4.txt', excludeField='VTIME:')
+    self.compareExpectedOutput(stdoutLines, self.schedulesFolder + 'dynamic-branch-single-expected-1-4.txt', excludeField='VTIME:')
 
   def test_flow_tvalid_rel_0(self):
     """Load the schedule dynamic-branch-single-schedule.dot and start pattern IN_C0.

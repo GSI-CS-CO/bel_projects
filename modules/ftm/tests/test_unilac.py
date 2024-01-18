@@ -12,7 +12,7 @@ class UnitTestUnilac(dm_testbench.DmTestbench):
 
   def unilacPerformance(self, numberOfMessages):
     """ Test performance of one CPU for UNILAC."""
-    scheduleName = self.schedules_folder + f'unilac{numberOfMessages}.dot'
+    scheduleName = self.schedulesFolder + f'unilac{numberOfMessages}.dot'
     snoopFileName = f'snoop-unilac{numberOfMessages}.csv'
     patternName = f'UNILAC{numberOfMessages}'
     self.generate_schedule_msg(scheduleName, patternName, numberOfMessages)
