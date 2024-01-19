@@ -137,6 +137,15 @@ tools-clean::
 tools-install::
 	$(MAKE) -C tools install
 
+simple-display::		etherbone
+	$(MAKE) -C tools/display all
+
+simple-display-clean::
+	$(MAKE) -C tools/display clean
+
+simple-display-install::
+	$(MAKE) -C tools/display install
+
 ecatools: 	etherbone eca tlu
 	$(MAKE) -C tools ecatools
 
