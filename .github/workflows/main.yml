@@ -44,6 +44,12 @@ jobs:
     - name: Install tools
       run: make tools-install
 
+    - name: Build simple-display
+      run: make simple-display
+
+    - name: Install simple-display
+      run: make simple-display-install
+
     - name: Build saftlib
       run: make saftlib -j$(nproc)
 
