@@ -145,16 +145,16 @@
 		//TODO: Maybe cheat it by calculating minus just as bit inversion. We introduce only 1 LSB error!
 
 	wire sgnYdiff;
-	wire [RESOLUTION-1 : 0] 	absYdiff;
-	wire [RESOLUTION-1 : 0] 	minusYdiff;
+	wire signed [RESOLUTION-1 : 0] 	absYdiff;
+	wire signed [RESOLUTION-1 : 0] 	minusYdiff;
 	//assign minusYdiff = -Ydiff;
 	assign minusYdiff = ~Ydiff;
 	assign sgnYdiff = Ydiff[RESOLUTION-1];
 	assign absYdiff = sgnYdiff ? minusYdiff : Ydiff;
 	
 	wire sgnRis;
-	wire [RESOLUTION-1 : 0] 	absRis;
-	wire [RESOLUTION-1 : 0] 	minusRis;
+	wire signed [RESOLUTION-1 : 0] 	absRis;
+	wire signed [RESOLUTION-1 : 0] 	minusRis;
 	//assign minusRis = -Ris;
 	assign minusRis = ~Ris;
 	assign sgnRis = Ris[RESOLUTION-1];
@@ -162,18 +162,18 @@
 	
 		//This construct is used for comparisons to decide if we are rounding in/out
 		
-	wire [RESOLUTION-1 : 0] 	roundComp;
+	wire signed [RESOLUTION-1 : 0] 	roundComp;
 	assign roundComp = (sgnYdiff ? ~Ris : Ris) + ~Rset;
 	
 		//Common multiplier
 		//Used for calculating the round-out condition
 		//to avoid additional buffering, here we mux needed values into mul_1 and mul_2
 		
-	wire  [RESOLUTION-1 : 0] mul_1;
-	wire  [RESOLUTION-1 : 0] mul_2;
-	reg 			mul_sel = 0;
-	wire [2*RESOLUTION-1 : 0] mul_result;
-	reg  [2*RESOLUTION-1 : 0] acc;
+	wire signed [RESOLUTION-1 : 0] 	mul_1;
+	wire signed [RESOLUTION-1 : 0] 	mul_2;
+	reg 				mul_sel = 0;
+	wire signed [2*RESOLUTION-1 : 0]mul_result;
+	reg signed [2*RESOLUTION-1 : 0]	acc;
 	assign mul_1 = mul_sel ? ROset : absRis;
 	assign mul_2 = mul_sel ? absYdiff : absRis;
 	assign mul_result = mul_1*mul_2;
@@ -274,7 +274,7 @@
 					begin
 							//Here we start calculation of round-out condition.
 							//According to Michal's maths, it should be:
-							//1/2 Ris > Roset * absYdiff
+							//1/2 Ris^2 > Roset * absYdiff
 						//mul_1 <= absRis;
 						//mul_2 <= absRis;
 						mul_sel <= 0;
@@ -313,19 +313,20 @@
 				STATE_ROUND_OUT:
 				begin
 					//Ris = Ris - (sgnRis ? -ROset : ROset);	
-					Ris = Ris + ~(sgnRis ? ~ROset : ROset);	
+					Ris 		<= Ris + ~(sgnRis ? ~ROset : ROset);	
 					state 		<= STATE_UPDATE_YIS;
 				end
 				
 				STATE_ROUND_IN:
 				begin
 					//Ris = Ris + (sgnYdiff ? -RIset : RIset);
-					Ris = Ris + (sgnYdiff ? ~RIset : RIset);
+					Ris 		<= Ris + (sgnYdiff ? ~RIset : RIset);
 					state 		<= STATE_UPDATE_YIS;
 				end
 				
 				STATE_RAMP:
 				begin
+					Ris 		<= (sgnYdiff ? ~Rset : Rset);
 					state 		<= STATE_UPDATE_YIS;
 				end
 				
