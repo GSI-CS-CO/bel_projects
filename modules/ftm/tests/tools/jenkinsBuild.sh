@@ -1,3 +1,9 @@
+#! /bin/bash -x
+
+# script for automated datamaster tests with jenkins, including make of test prerequisites
+# ./jenkinsBuild 8 for firmware with 8 threads
+# ./jenkinsBuild 32 for firmware with 32 threads
+
 # create links needed for Rocky-9 environment
 date
 export DATAMASTER=tcp/fel0069.acc.gsi.de
