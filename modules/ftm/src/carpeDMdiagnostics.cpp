@@ -445,7 +445,7 @@ void CarpeDM::CarpeDMimpl::dumpNode(const std::string& name) {
   if (hm.contains(name)) {
     auto it = atDown.lookupHash(hm.lookup(name));
     auto* x = (AllocMeta*)&(*it);
-    hexDump(g[x->v].name.c_str(), (const char*)x->b, _MEM_BLOCK_SIZE);
+    sLog << hexDump(g[x->v].name.c_str(), (const char*)x->b, _MEM_BLOCK_SIZE);
   }
 }
 
