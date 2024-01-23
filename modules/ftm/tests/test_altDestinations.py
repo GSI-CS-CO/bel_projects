@@ -45,7 +45,7 @@ class TestAltDestinationLists(dm_testbench.DmTestbench):
   def switchAction(self, argsList):
     numDestinations = argsList[0]
     frequency = argsList[1]
-    delay = 1 / frequency * 0.50
+    delay = 1 / frequency * 0.52
     print(f'{numDestinations=}, {frequency=}, {delay=}')
     for i in range(1, numDestinations):
       self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'flow', 'Block0_0', f'Msg0_{i:04d}'), [0], 0, 0)
