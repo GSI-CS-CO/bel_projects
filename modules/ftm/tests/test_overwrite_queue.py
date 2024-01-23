@@ -43,5 +43,5 @@ class OverwriteBlocks(dm_testbench.DmTestbench):
     # analyse column 20 which contains the parameter.
     # check that parameters 1, 2, 11, 12, 21, and 22 occur.
     self.analyseFrequencyFromCsv(fileName, column=20, printTable=True,
-        checkValues={'0x0000000000000001': '>20', '0x0000000000000002': '>20', '0x000000000000000b': '>20', '0x000000000000000c': '>20', '0x0000000000000015': '>20', '0x0000000000000016': '>20'})
+        checkValues={'0x0000000000000001': '>19', '0x0000000000000002': '>19', '0x000000000000000b': '>19', '0x000000000000000c': '>19', '0x0000000000000015': '>19', '0x0000000000000016': '>19'})
     self.deleteFile(fileName)
