@@ -933,15 +933,18 @@ int main(int argc, char* argv[]) {
         try {
           cdm.stopNodeOrigin(targetName);
         } catch (std::runtime_error const& err) {
-          std::size_t pos = std::string(err.what()).find("Block Node does not have requested queue");
+          std::size_t pos = std::string(err.what()).find("Block node does not have requested queue");
           if (pos != std::string::npos) {
-            std::cerr << program << ": Block node '" << targetName << "' does not have a low prio queue" << std::endl;
+            std::cerr << program << ": Block node '" << targetName << "' does not have a low prio queue." << std::endl;
           } else {
             pos = std::string(err.what()).find("carpeDMcommand: unknown cpu/adr combo");
             if (pos != std::string::npos) {
               std::cerr << program << ": Node '" << targetName << "' is not a block" << std::endl;
+            } else {
+              std::cerr << program << ": " << err.what() << "." << std::endl;
             }
           }
+          return -1;
         }
       }
       return 0;

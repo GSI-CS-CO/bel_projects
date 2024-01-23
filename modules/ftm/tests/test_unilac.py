@@ -1,5 +1,4 @@
 import dm_testbench
-import subprocess
 
 """Class tests the message performance for UNILAC
 saft-ctl tr0 -xv snoop 0x1000001000000000 0xFFFFFFFF00000000 0 1 | wc -l
@@ -12,7 +11,7 @@ class UnitTestUnilac(dm_testbench.DmTestbench):
 
   def unilacPerformance(self, numberOfMessages):
     """ Test performance of one CPU for UNILAC."""
-    scheduleName = self.schedules_folder + f'unilac{numberOfMessages}.dot'
+    scheduleName = self.schedulesFolder + f'unilac{numberOfMessages}.dot'
     snoopFileName = f'snoop-unilac{numberOfMessages}.csv'
     patternName = f'UNILAC{numberOfMessages}'
     self.generate_schedule_msg(scheduleName, patternName, numberOfMessages)

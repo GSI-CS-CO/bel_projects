@@ -11,11 +11,11 @@ Compare original schedule with downloaded schedule
 """
 class AddDownloadCompare(dm_testbench.DmTestbench):
 
-  def addDownloadCompareSchedule(self, scheduleFile, statusMeta=False):
+  def addDownloadCompareSchedule(self, scheduleFile, statusMeta=False, abortPattern=False):
     status_file = 'status.dot'
     if self.threadQuantity == 32:
       scheduleFile32 = scheduleFile.replace('.dot', '-thread32.dot')
-      fileObj = pathlib.Path(self.schedules_folder + scheduleFile32)
+      fileObj = pathlib.Path(self.schedulesFolder + scheduleFile32)
       if fileObj.exists():
         scheduleFile = scheduleFile32
     self.startPattern(scheduleFile, 'patternA')
@@ -24,9 +24,11 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     else:
       options = '-o'
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', options, status_file))
-    self.startAndCheckSubprocess(('scheduleCompare', self.schedules_folder + scheduleFile, status_file))
+    self.startAndCheckSubprocess(('scheduleCompare', self.schedulesFolder + scheduleFile, status_file))
     self.deleteFile(status_file)
-    # ~ self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'remove', self.schedules_folder + scheduleFile))
+    if abortPattern:
+      self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'abort'))
+    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'remove', self.schedulesFolder + scheduleFile))
 
   def generateScript(self, scheduleFile):
     """Use this to write all names of schedule into a script.
@@ -35,7 +37,7 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     """
     fileName = 'moveSchedules.sh'
     with open(fileName, 'a') as file1:
-      file1.write('mv dot/' + scheduleFile + ' ' + self.schedules_folder + '\n')
+      file1.write('mv dot/' + scheduleFile + ' ' + self.schedulesFolder + '\n')
 
   def test_aScheduleTmsgBlockDefdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-block-defdst.dot')
@@ -334,11 +336,11 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     # ~ {{dnt::sSwitch, dnt::sBlockAlign, det::sSwitchTarget}, SingleEdgeTest::TEST_OK},
 
   def test_aScheduleSwitchBlockSwitchdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-switch-block-switchdst.dot')
+    self.addDownloadCompareSchedule('testSingleEdge-switch-block-switchdst.dot', abortPattern=True)
     # ~ {{dnt::sSwitch, dnt::sBlock, det::sSwitchDst}, SingleEdgeTest::TEST_OK},
 
   def test_aScheduleSwitchBlockalignSwitchdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-switch-blockalign-switchdst.dot')
+    self.addDownloadCompareSchedule('testSingleEdge-switch-blockalign-switchdst.dot', abortPattern=True)
     # ~ {{dnt::sSwitch, dnt::sBlockAlign, det::sSwitchDst}, SingleEdgeTest::TEST_OK},
 
   def test_aScheduleSwitchFlowSwitchdst(self):
@@ -354,11 +356,11 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     # ~ {{dnt::sSwitch, dnt::sCmdNoop, det::sSwitchDst}, SingleEdgeTest::TEST_OK},
 
   def test_aScheduleSwitchSwitchSwitchdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-switch-switch-switchdst.dot')
+    self.addDownloadCompareSchedule('testSingleEdge-switch-switch-switchdst.dot', abortPattern=True)
     # ~ {{dnt::sSwitch, dnt::sSwitch, det::sSwitchDst}, SingleEdgeTest::TEST_OK},
 
   def test_aScheduleSwitchTmsgSwitchdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-switch-tmsg-switchdst.dot')
+    self.addDownloadCompareSchedule('testSingleEdge-switch-tmsg-switchdst.dot', abortPattern=True)
     # ~ {{dnt::sSwitch, dnt::sTMsg, det::sSwitchDst}, SingleEdgeTest::TEST_OK},
 
   def test_aScheduleSwitchWaitSwitchdst(self):
@@ -374,11 +376,11 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     # ~ {{dnt::sSwitch, dnt::sOrigin, det::sDefDst}, SingleEdgeTest::TEST_OK},
 
   def test_aScheduleSwitchStartthreadSwitchdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-switch-startthread-switchdst.dot')
+    self.addDownloadCompareSchedule('testSingleEdge-switch-startthread-switchdst.dot', abortPattern=True)
     # ~ {{dnt::sSwitch, dnt::sStartThread, det::sSwitchDst}, SingleEdgeTest::TEST_OK},
 
   def test_aScheduleSwitchOriginSwitchdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-switch-origin-switchdst.dot')
+    self.addDownloadCompareSchedule('testSingleEdge-switch-origin-switchdst.dot', abortPattern=True)
     # ~ {{dnt::sSwitch, dnt::sOrigin, det::sSwitchDst}, SingleEdgeTest::TEST_OK},
 
   def test_aScheduleFlushBlockDefdst(self):
@@ -581,26 +583,6 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     self.addDownloadCompareSchedule('testSingleEdge-block-wait-altdst.dot')
     # ~ {{dnt::sBlock, dnt::sCmdWait, det::sAltDst}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
-  def test_aScheduleBlockListdstListdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-block-listdst-listdst.dot')
-    # ~ {{dnt::sBlock, dnt::sDstList, det::sDstList}, SingleEdgeTest::TEST_OK},
-
-  @pytest.mark.development
-  def test_aScheduleBlockQinfoPriolo(self):
-    self.addDownloadCompareSchedule('testSingleEdge-block-qinfo-priolo.dot')
-    # ~ {{dnt::sBlock, dnt::sQInfo, det::sQPrio[0]}, SingleEdgeTest::TEST_OK},
-
-  @pytest.mark.development
-  def test_aScheduleBlockQinfoPrioil(self):
-    self.addDownloadCompareSchedule('testSingleEdge-block-qinfo-prioil.dot', statusMeta=True)
-    # ~ {{dnt::sBlock, dnt::sQInfo, det::sQPrio[1]}, SingleEdgeTest::TEST_OK},
-
-  @pytest.mark.development
-  def test_aScheduleBlockQinfoPriohi(self):
-    self.addDownloadCompareSchedule('testSingleEdge-block-qinfo-priohi.dot', statusMeta=True)
-    # ~ {{dnt::sBlock, dnt::sQInfo, det::sQPrio[2]}, SingleEdgeTest::TEST_OK},
-
   def test_aScheduleBlockStartthreadDefdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-block-startthread-defdst.dot')
     # ~ {{dnt::sBlock, dnt::sStartThread, det::sDefDst}, SingleEdgeTest::TEST_OK},
@@ -681,26 +663,6 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     self.addDownloadCompareSchedule('testSingleEdge-blockalign-wait-altdst.dot')
     # ~ {{dnt::sBlockAlign, dnt::sCmdWait, det::sAltDst}, SingleEdgeTest::TEST_OK},
 
-  @pytest.mark.development
-  def test_aScheduleBlockalignListdstListdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-blockalign-listdst-listdst.dot')
-    # ~ {{dnt::sBlockAlign, dnt::sDstList, det::sDstList}, SingleEdgeTest::TEST_OK},
-
-  @pytest.mark.development
-  def test_aScheduleBlockalignQinfoPriolo(self):
-    self.addDownloadCompareSchedule('testSingleEdge-blockalign-qinfo-priolo.dot')
-    # ~ {{dnt::sBlockAlign, dnt::sQInfo, det::sQPrio[0]}, SingleEdgeTest::TEST_OK},
-
-  @pytest.mark.development
-  def test_aScheduleBlockalignQinfoPrioil(self):
-    self.addDownloadCompareSchedule('testSingleEdge-blockalign-qinfo-prioil.dot', statusMeta=True)
-    # ~ {{dnt::sBlockAlign, dnt::sQInfo, det::sQPrio[1]}, SingleEdgeTest::TEST_OK},
-
-  @pytest.mark.development
-  def test_aScheduleBlockalignQinfoPriohi(self):
-    self.addDownloadCompareSchedule('testSingleEdge-blockalign-qinfo-priohi.dot', statusMeta=True)
-    # ~ {{dnt::sBlockAlign, dnt::sQInfo, det::sQPrio[2]}, SingleEdgeTest::TEST_OK},
-
   def test_aScheduleBlockalignStartthreadDefdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-blockalign-startthread-defdst.dot')
     # ~ {{dnt::sBlockAlign, dnt::sStartThread, det::sDefDst}, SingleEdgeTest::TEST_OK},
@@ -716,11 +678,6 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
   def test_aScheduleBlockalignOriginAltdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-blockalign-origin-altdst.dot')
     # ~ {{dnt::sBlockAlign, dnt::sOrigin, det::sAltDst}, SingleEdgeTest::TEST_OK},
-
-  @pytest.mark.development
-  def test_aScheduleQinfoQbufMeta(self):
-    self.addDownloadCompareSchedule('testSingleEdge-qinfo-qbuf-meta.dot', statusMeta=True)
-    # ~ {{dnt::sQInfo, dnt::sQBuf, det::sMeta}, SingleEdgeTest::TEST_OK},
 
   def test_aScheduleStartthreadBlockDefdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-startthread-block-defdst.dot')

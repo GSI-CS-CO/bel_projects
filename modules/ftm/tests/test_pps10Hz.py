@@ -20,17 +20,17 @@ class DmPpsXHz(dm_testbench.DmTestbench):
 
   def runXhz(self, numberOfMessages):
     """ Test with a loop pattern with x Hz event messages."""
-    scheduleName = self.schedules_folder + f'pps{numberOfMessages}Hz.dot'
-    snoopFileName = f'snoop-pps{numberOfMessages}Hz.csv'
+    scheduleName = f'pps{numberOfMessages}Hz.dot'
+    snoopFileName = f'snoop_pps{numberOfMessages}Hz.csv'
     patternName = f'PPS{numberOfMessages}Hz'
-    self.generate_schedule_msg(scheduleName, patternName, numberOfMessages)
-    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
-        scheduleName), [0], linesCout=0, linesCerr=0)
-    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern',
-        patternName), [0], linesCout=1, linesCerr=0)
-    self.snoopToCsv(snoopFileName)
-    self.analyseFrequencyFromCsv(snoopFileName, column=20, printTable=True, checkValues={'0x0000000000000001': '>0'})
-    self.deleteFile(scheduleName)
+    self.generate_schedule_msg(self.schedulesFolder + scheduleName, patternName, numberOfMessages)
+    self.startPattern(scheduleName, patternName)
+    self.snoopToCsv(snoopFileName, duration=2)
+    keyList = {'0x0000000000000000': '>0', }
+    for i in range(1, numberOfMessages):
+      keyList[f'0x{i:016x}'] = '>0'
+    self.analyseFrequencyFromCsv(snoopFileName, column=20, printTable=True, checkValues=keyList)
+    self.deleteFile(self.schedulesFolder + scheduleName)
     self.deleteFile(snoopFileName)
 
   def generate_schedule_msg(self, fileName, patternName, numberOfMsgs, cpu=0):

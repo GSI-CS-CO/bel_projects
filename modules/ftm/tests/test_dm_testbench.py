@@ -71,3 +71,6 @@ class DmTestTestbench(dm_testbench.DmTestbench):
     checkValues1 = {'0x1111': '<5'}
     with pytest.raises(AssertionError):
       self.analyseFrequencyFromCsv(fileName, column=8, printTable=True, checkValues=checkValues1)
+
+  def test_timestamp(self):
+    self.printTimestamp("Test Text")

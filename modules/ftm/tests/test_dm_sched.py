@@ -57,5 +57,5 @@ class TestDmSched(dm_testbench.DmTestbench):
          expectedReturnCode=[0], linesCout=0, linesCerr=0)
 
   def test_sched_add_pps(self):
-    self.startAndGetSubprocessOutput([self.binaryDmSched, self.datamaster, 'add', self.schedules_folder + 'pps.dot' ],
+    self.startAndGetSubprocessOutput([self.binaryDmSched, self.datamaster, 'add', self.schedulesFolder + 'pps.dot' ],
          expectedReturnCode=[0], linesCout=0, linesCerr=0)

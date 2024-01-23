@@ -20,7 +20,7 @@ class UnitTestMemory(dm_testbench.DmTestbench):
     self.addSchedule(self.file1)
     self.addSchedule(self.file2)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
-        self.schedules_folder + 'groups_1_nonDefaultPatterns_9_blocksPerPattern_10_cpu0.dot'), [250])
+        self.schedulesFolder + 'groups_1_nonDefaultPatterns_9_blocksPerPattern_10_cpu0.dot'), [250])
 
   def test_memory_cpu1(self):
     """Test for CPU 1. Add the schedule, add a second schedule: OK. When
@@ -29,7 +29,7 @@ class UnitTestMemory(dm_testbench.DmTestbench):
     self.addSchedule(self.file1)
     self.addSchedule(self.file2)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
-        self.schedules_folder + 'groups_1_nonDefaultPatterns_9_blocksPerPattern_10_cpu1.dot'), [250])
+        self.schedulesFolder + 'groups_1_nonDefaultPatterns_9_blocksPerPattern_10_cpu1.dot'), [250])
 
   def test_memory_cpu2(self):
     """Test for CPU 2. Add the schedule, add a second schedule: OK. When
@@ -38,7 +38,7 @@ class UnitTestMemory(dm_testbench.DmTestbench):
     self.addSchedule(self.file1)
     self.addSchedule(self.file2)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
-        self.schedules_folder + 'groups_1_nonDefaultPatterns_9_blocksPerPattern_10_cpu2.dot'), [250])
+        self.schedulesFolder + 'groups_1_nonDefaultPatterns_9_blocksPerPattern_10_cpu2.dot'), [250])
 
   def test_memory_cpu3(self):
     """Test for CPU 3. Add the schedule, add a second schedule: OK. When
@@ -47,7 +47,7 @@ class UnitTestMemory(dm_testbench.DmTestbench):
     self.addSchedule(self.file1)
     self.addSchedule(self.file2)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
-        self.schedules_folder + 'groups_1_nonDefaultPatterns_9_blocksPerPattern_10_cpu3.dot'), [250])
+        self.schedulesFolder + 'groups_1_nonDefaultPatterns_9_blocksPerPattern_10_cpu3.dot'), [250])
 
 """Class tests the memory limit for CPU 0 and for all 4 CPUs.
 
@@ -69,7 +69,7 @@ class UnitTestMemoryFull(dm_testbench.DmTestbench):
 
   def test_memory_full_bad(self):
     """ Test the memory for one CPU with more nodes than allowed. The add-operation should stop with a rollback. """
-    fileName = self.schedules_folder + 'memory_full.dot'
+    fileName = self.schedulesFolder + 'memory_full.dot'
     self.generate_schedule(fileName, self.maxNodes + 5)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [250], linesCout=2, linesCerr=2)
@@ -77,7 +77,7 @@ class UnitTestMemoryFull(dm_testbench.DmTestbench):
 
   def test_memory_full_bad1(self):
     """ Test the memory for one CPU with more nodes than allowed. The add-operation should stop with a rollback. """
-    fileName = self.schedules_folder + 'memory_full.dot'
+    fileName = self.schedulesFolder + 'memory_full.dot'
     self.generate_schedule(fileName, self.maxNodes + 1)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [250], linesCout=2, linesCerr=2)
@@ -85,7 +85,7 @@ class UnitTestMemoryFull(dm_testbench.DmTestbench):
 
   def test_memory_full_ok(self):
     """ Test the memory for one CPU with the maximum number of nodes."""
-    fileName = self.schedules_folder + 'memory_full_ok.dot'
+    fileName = self.schedulesFolder + 'memory_full_ok.dot'
     self.generate_schedule(fileName, self.maxNodes)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [0], linesCout=0, linesCerr=0)
@@ -93,7 +93,7 @@ class UnitTestMemoryFull(dm_testbench.DmTestbench):
 
   def test_memory_overfull(self):
     """ Test the memory for one CPU with more nodes than allowed. The add-operation should stop with a rollback."""
-    fileName = self.schedules_folder + 'memory_overfull.dot'
+    fileName = self.schedulesFolder + 'memory_overfull.dot'
     self.generate_schedule(fileName, self.maxNodes + 5)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [250], linesCout=2, linesCerr=2)
@@ -101,22 +101,22 @@ class UnitTestMemoryFull(dm_testbench.DmTestbench):
 
   def test_memory_full_4cpuOK(self):
     """Test the memory for all 4 CPUs with the maximum number of nodes allowed."""
-    fileName = self.schedules_folder + 'memory_full_4cpuOK_cpu0.dot'
+    fileName = self.schedulesFolder + 'memory_full_4cpuOK_cpu0.dot'
     self.generate_schedule(fileName, self.maxNodes, 0)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [0], linesCout=0, linesCerr=0)
     self.deleteFile(fileName)
-    fileName = self.schedules_folder + 'memory_full_4cpuOK_cpu1.dot'
+    fileName = self.schedulesFolder + 'memory_full_4cpuOK_cpu1.dot'
     self.generate_schedule(fileName, self.maxNodes, 1)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [0], linesCout=0, linesCerr=0)
     self.deleteFile(fileName)
-    fileName = self.schedules_folder + 'memory_full_4cpuOK_cpu2.dot'
+    fileName = self.schedulesFolder + 'memory_full_4cpuOK_cpu2.dot'
     self.generate_schedule(fileName, self.maxNodes, 2)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [0], linesCout=0, linesCerr=0)
     self.deleteFile(fileName)
-    fileName = self.schedules_folder + 'memory_full_4cpuOK_cpu3.dot'
+    fileName = self.schedulesFolder + 'memory_full_4cpuOK_cpu3.dot'
     self.generate_schedule(fileName, self.maxNodesCpu3, 3)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [0], linesCout=0, linesCerr=0)
@@ -124,22 +124,22 @@ class UnitTestMemoryFull(dm_testbench.DmTestbench):
 
   def test_memory_full_4cpuFail(self):
     """Test the memory for all 4 CPUs with exactly one node more than allowed."""
-    fileName = self.schedules_folder + 'memory_full_4cpuFail_cpu0.dot'
+    fileName = self.schedulesFolder + 'memory_full_4cpuFail_cpu0.dot'
     self.generate_schedule(fileName, self.maxNodes, 0)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [0], linesCout=0, linesCerr=0)
     self.deleteFile(fileName)
-    fileName = self.schedules_folder + 'memory_full_4cpuFail_cpu1.dot'
+    fileName = self.schedulesFolder + 'memory_full_4cpuFail_cpu1.dot'
     self.generate_schedule(fileName, self.maxNodes, 1)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [0], linesCout=0, linesCerr=0)
     self.deleteFile(fileName)
-    fileName = self.schedules_folder + 'memory_full_4cpuFail_cpu2.dot'
+    fileName = self.schedulesFolder + 'memory_full_4cpuFail_cpu2.dot'
     self.generate_schedule(fileName, self.maxNodes, 2)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [0], linesCout=0, linesCerr=0)
     self.deleteFile(fileName)
-    fileName = self.schedules_folder + 'memory_full_4cpuFail_cpu3.dot'
+    fileName = self.schedulesFolder + 'memory_full_4cpuFail_cpu3.dot'
     self.generate_schedule(fileName, self.maxNodesCpu3 + 1, 3)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [250], linesCout=2, linesCerr=3)
@@ -167,7 +167,7 @@ class UnitTestMemoryFull(dm_testbench.DmTestbench):
     """Test generates a schedule with one block and 10 timing messages in one loop.
     This test is a preparation for the larger test and checks the generated schedule file.
     """
-    fileName = self.schedules_folder + 'memory_full_msg_small.dot'
+    fileName = self.schedulesFolder + 'memory_full_msg_small.dot'
     patternName = 'PatternMsgSmall'
     self.generate_schedule_msg(fileName, patternName, 10)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
@@ -178,7 +178,7 @@ class UnitTestMemoryFull(dm_testbench.DmTestbench):
 
   def test_memory_full_msg_half(self):
     """ Test the memory with about half the number of allowed nodes."""
-    fileName = self.schedules_folder + 'memory_full_msg_half.dot'
+    fileName = self.schedulesFolder + 'memory_full_msg_half.dot'
     patternName = 'PatternMsgHalf'
     self.generate_schedule_msg(fileName, patternName, 900)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
@@ -191,7 +191,7 @@ class UnitTestMemoryFull(dm_testbench.DmTestbench):
     """ Test the memory with the maximum number of allowed nodes.
     Add the schedule and start the pattern.
     """
-    fileName = self.schedules_folder + 'memory_full_msg.dot'
+    fileName = self.schedulesFolder + 'memory_full_msg.dot'
     patternName = 'PatternMsgOk'
     self.generate_schedule_msg(fileName, patternName, self.maxNodes - 2)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
@@ -209,7 +209,7 @@ class UnitTestMemoryFull(dm_testbench.DmTestbench):
     965 nodes: return code -6, "terminate called after throwing an instance of 'boost::archive::archive_exception'", '  what():  input stream error'
     970 nodes: stderr: ['*** stack smashing detected ***: terminated']
     """
-    fileName = self.schedules_folder + 'memory_full_msg_infinte_loop_ok.dot'
+    fileName = self.schedulesFolder + 'memory_full_msg_infinte_loop_ok.dot'
     patternName = 'PatMsgInfiniteLoopOK'
     self.generate_schedule_msg(fileName, patternName, 1000, split=False)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
@@ -223,7 +223,7 @@ class UnitTestMemoryFull(dm_testbench.DmTestbench):
     dm-sched: Failed to execute <add. Cause: Validation of Event Sequence: Node 'Msg0_0000'
     of type 'tmsg' is probably part of an infinite loop (iteration cnt > 1000)
     """
-    fileName = self.schedules_folder + 'memory_full_msg_infinte_loop_Fail.dot'
+    fileName = self.schedulesFolder + 'memory_full_msg_infinte_loop_Fail.dot'
     patternName = 'PatternMsgInfiniteLoopFail'
     self.generate_schedule_msg(fileName, patternName, 1001, split=False)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',

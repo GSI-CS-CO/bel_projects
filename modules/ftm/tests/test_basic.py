@@ -9,14 +9,14 @@ class UnitTestBasic(dm_testbench.DmTestbench):
     """Load the schedule static-basic-schedule.dot.
     """
     if self.threadQuantity == 8:
-      fileName = self.schedules_folder + 'static-basic-expected-1-0.txt'
+      fileName = self.schedulesFolder + 'static-basic-expected-1-0.txt'
     else:
-      fileName = self.schedules_folder + 'static-basic-expected-1-0-thread32.txt'
+      fileName = self.schedulesFolder + 'static-basic-expected-1-0-thread32.txt'
     stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmSched, self.datamaster, 'status'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'static-basic-expected-0-0.txt')
+    self.compareExpectedOutput(stdoutLines, self.schedulesFolder + 'static-basic-expected-0-0.txt')
     self.addSchedule('static-basic-schedule.dot')
     stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmSched, self.datamaster, 'status'))
     self.compareExpectedOutput(stdoutLines, fileName)
-    stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmSched, self.datamaster, 'remove', self.schedules_folder + 'static-basic-schedule.dot'))
+    stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmSched, self.datamaster, 'remove', self.schedulesFolder + 'static-basic-schedule.dot'))
     stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmSched, self.datamaster, 'status'))
-    self.compareExpectedOutput(stdoutLines, self.schedules_folder + 'static-basic-expected-0-0.txt')
+    self.compareExpectedOutput(stdoutLines, self.schedulesFolder + 'static-basic-expected-0-0.txt')

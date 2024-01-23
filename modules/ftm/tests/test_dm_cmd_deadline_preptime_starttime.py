@@ -1,4 +1,3 @@
-import subprocess
 import pytest          # @pytest.mark.slow
 import dm_testbench    # contains super class
 import math            # contains log2()
