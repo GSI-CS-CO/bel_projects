@@ -1018,7 +1018,12 @@ int main(int argc, char* argv[]) {
       return 0;
     } else if (cmp == "hex")  {
       try {
-        cdm.dumpNode(targetName);
+        if((cdm.isInHashDict(targetName))) {
+          cdm.dumpNode(targetName);
+        } else {
+          std::cerr << program << ": Target node '" << targetName << "' not found on DM." << std::endl;
+          return -1;
+        }
       } catch (std::runtime_error const& err) {
         std::cerr << program << ": Node not found. Cause: " << err.what() << std::endl; return -21;
       }
