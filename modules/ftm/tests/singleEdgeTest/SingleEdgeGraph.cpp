@@ -148,6 +148,11 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, configuration& c
       edgeT.compare(det::sCmdFlushOvr) == 0) {
     boost::add_edge(v1, v2, myEdge(det::sCmdTarget), g);
   }
+  if (g[v1].type.compare(dnt::sSwitch) == 0 && g[v2].type.compare(dnt::sSwitch) == 0) {
+    if (edgeT.compare(det::sSwitchDst) == 0) {
+      boost::add_edge(v2, v1, myEdge(det::sSwitchDst), g);
+    }
+  }
   // add child vertex, blocks for a meta vertex, or a buffer vertex if necessary.
   g1 = g;
   extendWithChild(config, edgeT);
@@ -169,7 +174,12 @@ void SingleEdgeGraph::extendWithChild(configuration& config, std::string edgeT) 
     g1[v3].bpName = "beamA";
     if (g1[v3].type.compare(dnt::sBlock) == 0 || g1[v3].type.compare(dnt::sBlockAlign) == 0) {
       flags=0x00100007;
-      g1[v3].tPeriod = "2000";
+      if (g1[v1].type.compare(dnt::sSwitch) == 0 && g1[v2].type.compare(dnt::sSwitch) == 0 &&
+            edgeT.compare(det::sSwitchDst) == 0) {
+        g1[v3].tPeriod = "1000000000";
+      } else {
+        g1[v3].tPeriod = "2000";
+      }
       g1[v3].qLo = 1;
       cdm->completeId(v3, g1);
       if (config.generateMetaNodes) {
@@ -190,6 +200,12 @@ void SingleEdgeGraph::extendWithChild(configuration& config, std::string edgeT) 
     if (g1[v1].type.compare(dnt::sCmdFlow) == 0 && v3Type.compare(dnt::sBlock) == 0) {
       if (edgeT.compare(det::sCmdTarget) != 0) {
         boost::add_edge(v1, v3, myEdge(det::sCmdTarget), g1);
+      }
+    }
+    if (g1[v1].type.compare(dnt::sSwitch) == 0 && g1[v2].type.compare(dnt::sSwitch) == 0) {
+      if (edgeT.compare(det::sSwitchDst) == 0) {
+        boost::add_edge(v2, v3, myEdge(det::sSwitchTarget), g1);
+        boost::add_edge(v3, v1, myEdge(det::sAltDst), g1);
       }
     }
     if (g1[v2].type.compare(dnt::sCmdWait) == 0 || 
