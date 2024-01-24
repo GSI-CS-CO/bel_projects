@@ -12,7 +12,7 @@ Compare original schedule with downloaded schedule
 class AddDownloadCompare(dm_testbench.DmTestbench):
 
   def addDownloadCompareSchedule(self, scheduleFile, statusMeta=False, abortPattern=False):
-    status_file = 'status.dot'
+    statusFile = 'status.dot'
     if self.threadQuantity == 32:
       scheduleFile32 = scheduleFile.replace('.dot', '-thread32.dot')
       fileObj = pathlib.Path(self.schedulesFolder + scheduleFile32)
@@ -23,9 +23,17 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
       options = '-so'
     else:
       options = '-o'
-    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', options, status_file))
-    self.startAndCheckSubprocess(('scheduleCompare', self.schedulesFolder + scheduleFile, status_file))
-    self.deleteFile(status_file)
+    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', options, statusFile))
+    self.startAndCheckSubprocess(('scheduleCompare', self.schedulesFolder + scheduleFile, statusFile))
+    self.deleteFile(statusFile)
+    # ~ if abortPattern:
+      # ~ self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'abort'))
+    statusFile = 'statusKeep.dot'
+    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'keep', self.schedulesFolder + scheduleFile))
+    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', options, statusFile))
+    self.startAndCheckSubprocess(('scheduleCompare', self.schedulesFolder + scheduleFile, statusFile))
+    self.deleteFile(statusFile)
+    # remove the schedule
     if abortPattern:
       self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'abort'))
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'remove', self.schedulesFolder + scheduleFile))
