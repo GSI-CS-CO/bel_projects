@@ -26,8 +26,6 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', options, statusFile))
     self.startAndCheckSubprocess(('scheduleCompare', self.schedulesFolder + scheduleFile, statusFile))
     self.deleteFile(statusFile)
-    # ~ if abortPattern:
-      # ~ self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'abort'))
     statusFile = 'statusKeep.dot'
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'keep', self.schedulesFolder + scheduleFile))
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', options, statusFile))
@@ -364,6 +362,12 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     # ~ {{dnt::sSwitch, dnt::sCmdNoop, det::sSwitchDst}, SingleEdgeTest::TEST_OK},
 
   def test_aScheduleSwitchSwitchSwitchdst(self):
+    """This schedule has two switch nodes. These are switching between each
+    other. Since there is no tmsg node, it is only visible that the cursor
+    switches. The block C3 has a period of 1 second. Thus the pattern is
+    stable during the test and we have a defined state which we can compare
+    with the original schedule.
+    """
     self.addDownloadCompareSchedule('testSingleEdge-switch-switch-switchdst.dot', abortPattern=True)
     # ~ {{dnt::sSwitch, dnt::sSwitch, det::sSwitchDst}, SingleEdgeTest::TEST_OK},
 
