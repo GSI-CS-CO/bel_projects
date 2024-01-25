@@ -1,3 +1,12 @@
+#! /bin/bash -x
+
+# with set -e the script fails on the first failing command. This marks the jenkins job as failed.
+set -e
+
+# script for automated datamaster tests with jenkins, including make of test prerequisites
+# ./jenkinsBuild 8 for firmware with 8 threads
+# ./jenkinsBuild 32 for firmware with 32 threads
+
 # create links needed for Rocky-9 environment
 date
 export DATAMASTER=tcp/fel0069.acc.gsi.de
@@ -12,7 +21,7 @@ cd res/rocky-9
 export PATH=$PATH:$(pwd)
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)
 cd ../..
-./fix-git.sh
+# ./fix-git.sh
 # make all prerequisites: 1. hdlmake and lm32-toolchain, 2. etherbone, 3. eb-tools, 4. test-tools for ftm.
 make
 make etherbone
