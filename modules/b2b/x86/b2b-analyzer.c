@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 18-Oct-2023
+ *  version : 25-Jan-2024
  *
  * analyzes and publishes get values
  * 
@@ -36,7 +36,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_ANALYZER_VERSION 0x000702
+#define B2B_ANALYZER_VERSION 0x000800
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -763,7 +763,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
     
   } // if mode B2B_MODE_B2C
 
-  if (mode == B2B_MODE_B2B) {
+  if (mode == B2B_MODE_B2BFBEAT) {
 
     // match diagnostics; theoretical value is '0'
     if (!isnan(dicGetval[sid].inj_diagMatch) && !isnan(dicSetval[sid].cPhase) && !isnan(dicSetval[sid].inj_cTrig) && (dicSetval[sid].inj_T != -1)) { 

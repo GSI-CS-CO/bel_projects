@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 20-Nov-2023
+ *  version : 25-Jan-2024
  *
  * subscribes to and displays status of many b2b transfers
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_MON_VERSION 0x000702
+#define B2B_MON_VERSION 0x000800
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -293,11 +293,11 @@ void buildPrintLine(uint32_t idx)
 
   // destination
   switch (set_mode[idx]) {
-    case B2B_MODE_OFF : sprintf(dest, "---");      flagTCBS = 1; flagOther = 1; flagB2b = 0; flagExtTrig = 0; flagInjTrig = 0; pLevelExt = NULL; pLevelInj = NULL; break;
-    case B2B_MODE_BSE : sprintf(dest, "kicker");   flagTCBS = 1; flagOther = 1; flagB2b = 0; flagExtTrig = 1; flagInjTrig = 0; pLevelInj = NULL;                   break;
-    case B2B_MODE_B2E : sprintf(dest, "target");   flagTCBS = 1; flagOther = 1; flagB2b = 0; flagExtTrig = 1; flagInjTrig = 0; pLevelInj = NULL;                   break;
-    case B2B_MODE_B2C : sprintf(dest, "%s", tmp1); flagTCBS = 1; flagOther = 1; flagB2b = 0; flagExtTrig = 1; flagInjTrig = 1;                                     break;
-    case B2B_MODE_B2B : sprintf(dest, "%s", tmp1); flagTCBS = 1; flagOther = 1; flagB2b = 1; flagExtTrig = 1; flagInjTrig = 1;                                     break;
+    case B2B_MODE_OFF      : sprintf(dest, "---");      flagTCBS = 1; flagOther = 1; flagB2b = 0; flagExtTrig = 0; flagInjTrig = 0; pLevelExt = NULL; pLevelInj = NULL; break;
+    case B2B_MODE_BSE      : sprintf(dest, "kicker");   flagTCBS = 1; flagOther = 1; flagB2b = 0; flagExtTrig = 1; flagInjTrig = 0; pLevelInj = NULL;                   break;
+    case B2B_MODE_B2E      : sprintf(dest, "target");   flagTCBS = 1; flagOther = 1; flagB2b = 0; flagExtTrig = 1; flagInjTrig = 0; pLevelInj = NULL;                   break;
+    case B2B_MODE_B2C      : sprintf(dest, "%s", tmp1); flagTCBS = 1; flagOther = 1; flagB2b = 0; flagExtTrig = 1; flagInjTrig = 1;                                     break;
+    case B2B_MODE_B2BFBEAT : sprintf(dest, "%s", tmp1); flagTCBS = 1; flagOther = 1; flagB2b = 1; flagExtTrig = 1; flagInjTrig = 1;                                     break;
     default: sprintf(dest, TXTUNKWN);   flagTCBS = 0; flagOther = 0; flagB2b = 0; flagExtTrig = 0; flagInjTrig = 0; pLevelExt = NULL; pLevelInj = NULL; break;
   } // switch set_mode
 
