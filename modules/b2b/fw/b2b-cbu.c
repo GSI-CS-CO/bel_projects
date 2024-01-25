@@ -1131,6 +1131,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
           break;
       } // switch mode
 
+      mState      = getNextMState(mode, B2B_MFSM_S0);
       errorFlags  = 0x0;
       break;
 
