@@ -182,7 +182,7 @@ static void initSharedMem(uint32_t *sharedSize)
   DBPRINT2("fbas%d: SHARED_SENDERID 0x%8p\n", nodeType, (pSharedApp + (FBAS_SHARED_SENDERID >> 2)));
 
   // clear the summary statistics
-  measureClearAverage(DISABLE_VERBOSITY);
+  measureClearAverage(ENABLE_VERBOSITY);
 } // initSharedMem
 
 /**

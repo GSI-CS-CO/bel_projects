@@ -190,9 +190,8 @@ void measurePrintAverage(msrItem_t item, uint32_t* base, uint32_t offset) {
   uint64_t *pSharedReg64 = (uint64_t *)(base + (offset >> 2));
   msrSumStats_t* pStats = &sumStats[item];
 
-  DBPRINT2("%d @0x%8p avg=%llu min=%lli max=%llu cnt=%lu/%lu\n",
+  DBPRINT2("%d avg=%llu min=%lli max=%llu cnt=%lu/%lu\n",
     item,
-    pSharedReg64,
     pStats->avg, pStats->min, pStats->max, pStats->cntValid, pStats->cntTotal);
 
   wrSumStats(pStats, pSharedReg64);
@@ -212,8 +211,9 @@ void measureClearAverage(verbosity_t verbose) {
     memset(&sumStats[item], 0, sizeof(msrSumStats_t));
 
     if (verbose)
-      DBPRINT2("%d avg=%llu min=%lli max=%llu val=%lu all=%lu\n",
-        item,
+      // implement in 2 calls, otherwise 'max' has garbage
+      DBPRINT2("%d @0x%p ", item, &sumStats[item]);
+      DBPRINT2("avg=%llu min=%lli max=%llu val=%lu all=%lu\n",
         sumStats[item].avg, sumStats[item].min, sumStats[item].max,
         sumStats[item].cntValid, sumStats[item].cntTotal);
   }
