@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 25-Jan-2024
+ *  version : 26-Jan-2024
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  NB: units of variables are [ns] unless explicitely mentioned as suffix
@@ -152,6 +152,8 @@ uint32_t  nGExt;                        // geometric harmonic number of extracti
 uint32_t  nGInj;                        // geometric harmonic number of injections machine due to its circumference
 b2bt_t    pShiftExt;                    // phase shift value for extraction machine
 b2bt_t    pShiftInj;                    // phase shift value for injection machine
+uint64_t  tWantExt;                     // desired earliest time of extraction
+
 
 // copies for nice trigger messages
 uint32_t  flagsExt;                     // LSA flags extraction
@@ -334,8 +336,12 @@ uint32_t setSubmit()
   // diable 'valid' flag here so that the corresponding setting is disabled in case of erronous settings
   setFlagValid[sid]    = 0;
 
-  if (*pSharedSetMode >= B2B_MODE_B2C) flagInject = 1;
-  else                                 flagInject = 0;
+  if (*pSharedSetMode == B2B_MODE_B2C ||
+      *pSharedSetMode ==  B2B_MODE_B2BFBEAT ||
+      *pSharedSetMode ==  B2B_MODE_B2BPSHIFTE ||
+      *pSharedSetMode ==  B2B_MODE_B2BPSHIFTI
+      ) flagInject = 1;
+  else  flagInject = 0;
 
   // in case of injection to another ring, we need to check for correct SID of extraction ring
   if (flagInject && (*pSharedSetSidEInj != sid)) return B2B_STATUS_BADSETTING;
@@ -344,12 +350,14 @@ uint32_t setSubmit()
   // values required for extraction
   setMode[sid]         = *pSharedSetMode;    
   setGid[sid]          = *pSharedSetGidExt;
-  setTH1Ext_as[sid]     = (uint64_t)(*pSharedSetTH1ExtHi) << 32;
-  setTH1Ext_as[sid]    |= (uint64_t)(*pSharedSetTH1ExtLo);
+  setTH1Ext_as[sid]    = (uint64_t)(*pSharedSetTH1ExtHi) << 32;
+  setTH1Ext_as[sid]   |= (uint64_t)(*pSharedSetTH1ExtLo);
   setNHExt[sid]        = *pSharedSetNHExt;
-  setCTrigExt[sid]   = *pSharedSetCTrigExt;
+  setCTrigExt[sid]     = *pSharedSetCTrigExt;
   setNBuckExt[sid]     = (int32_t)(*pSharedSetNBuckExt);
   setFFinTune[sid]     = *pSharedSetFFinTune;
+  setCPhase[sid]       = *pSharedSetCPhase;
+
 
   // additional values required in case of injection into another ring
   if (flagInject) {
@@ -361,7 +369,6 @@ uint32_t setSubmit()
     setTH1Inj_as[sid]  = (uint64_t)(*pSharedSetTH1InjHi) << 32;
     setTH1Inj_as[sid] |= (uint64_t)(*pSharedSetTH1InjLo);
     setNHInj[sid]      = *pSharedSetNHInj;
-    setCPhase[sid]     = *pSharedSetCPhase;
     setCTrigInj[sid]   = *pSharedSetCTrigInj;
     setNBuckInj[sid]   = (int32_t)(*pSharedSetNBuckInj);
     setFMBTune[sid]    = *pSharedSetFMBTune;
@@ -372,7 +379,6 @@ uint32_t setSubmit()
     setLBpidInj[sid]   = 0;
     setLParamInj[sid]  = 0;
     setLParamInj[sid]  = 0;
-    setCPhase[sid]     = 0;
     setCTrigInj[sid]   = 0;
     setNBuckInj[sid]   = 0;
     setFMBTune[sid]    = 0;
@@ -956,7 +962,7 @@ uint32_t getNextMState(uint32_t mode, uint32_t actMState) {
       nextMState = B2B_MFSM_NOTHING;
   } // switch mode
 
-  //if (!nextMState) pp_printf("mode %x, actMState %x\n", mode, actMState);
+  // pp_printf("mode %x, actMState %x nxtMState %x\n", mode, actMState, nextMState);
 
   return nextMState;
 } // getNextMState
@@ -985,7 +991,6 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   uint32_t recBpid;                                           // BPID received
   uint32_t recRes;                                            // reserved bits received
   uint64_t tMatch;                                            // time when phases of injecion and extraction match
-  uint64_t tWantExt;                                          // approximate time of extraction
   uint64_t tTrig;                                             // time when kickers shall be triggered;
   uint64_t tTrigExt;                                          // time when extraction kicker shall be triggered; tTrigExt = tTrig + cTrigExt;
   uint64_t tTrigInj;                                          // time when injection kicker shall be triggered;  tTrigInj = tTrig + cTrigInj;
@@ -1144,8 +1149,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       recRes       = (uint32_t)(recId & 0x3f);                 // lowest 6 bit of EvtId
 
       // check, if received evtID is valid
-      if (recGid != gid)                                                   return COMMON_STATUS_OUTOFRANGE;   
-      if (recSid != sid)                                                   return COMMON_STATUS_OUTOFRANGE;
+      if (recGid != gid)                                                        return COMMON_STATUS_OUTOFRANGE;   
+      if (recSid != sid)                                                        return COMMON_STATUS_OUTOFRANGE;
       if ((mState != B2B_MFSM_EXT_PMEAS_R) && (mState != B2B_MFSM_ALL_PMEAS_R)) return COMMON_STATUS_OUTOFRANGE;
 
       // handling error bits
@@ -1239,9 +1244,9 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   if (mState == B2B_MFSM_EXT_PSHIFT_S) {
     // send command: phase shift at extraction machine
     sendEvtId      = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PSHIFTEXT, flagsExt, sidExt, bpidExt, 0);
-    // send param: low word: absolute phase shift value
+    // send param: low word: absolute phase shift value [degree, float]
     // chk: N.B. this only works if the absolute phase shift so far is '0'
-    tmp.f = fwlib_tps2tfns(pShiftExt) / (float)TH1Ext_as * 1000000000.0;        // phase shift [degree, float]
+    tmp.f = 360.0 * fwlib_tps2tfns(pShiftExt)/((float)TH1Ext_as / 1000000000.0);// phase shift [degree, float]
     sendParam      = (uint64_t)(tmp.data);
     tmp.f = (float)B2B_PHASESHIFTTIME;                                          // time for phase shift [ns, float]
     sendParam     |= (uint64_t)(tmp.data) << 32;
