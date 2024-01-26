@@ -37,6 +37,20 @@
 
 #include "measure.h"
 
+struct outlierStat_s {
+  uint32_t threshold; // threshold, ns
+  uint32_t cnt;       // counts
+};
+
+static struct outlierStat_s outlierStat[N_MSR_ITEMS] = {
+  {100000, 0},    // transmission delay, ns
+  {100000, 0},    // signalling latency, ns
+  {100000, 0},    // messaging delay, ns
+  {101000000, 0}, // TTL, ns
+  {100000, 0},    // transmit latency (not used), ns
+  {10000, 0}      // ECA event handling, ns
+};
+
 static msrSumStats_t sumStats[N_MSR_ITEMS];  // buffer for summary statistics
 static msrCnt_t      cnt[N_MSR_CNT];         // event and action counters
 
@@ -174,6 +188,10 @@ void measureAverage(msrItem_t item, uint64_t from, uint64_t now, verbosity_t ver
 
   // calculate and store the summed average
   calculateSumStats(period, pStats);
+
+  // count outliers
+  if (period > outlierStat[item].threshold)
+    ++outlierStat[item].cnt;
 }
 
 /**
@@ -194,6 +212,8 @@ void measurePrintAverage(msrItem_t item, uint32_t* base, uint32_t offset) {
     item,
     pStats->avg, pStats->min, pStats->max, pStats->cntValid, pStats->cntTotal);
 
+  DBPRINT2("lmt=%lu\n", outlierStat[item].cnt);
+
   wrSumStats(pStats, pSharedReg64);
 }
 
@@ -209,6 +229,7 @@ void measureClearAverage(verbosity_t verbose) {
 
   for (item = 0; item < N_MSR_ITEMS; ++item) {
     memset(&sumStats[item], 0, sizeof(msrSumStats_t));
+    outlierStat[item].cnt = 0;
 
     if (verbose)
       // implement in 2 calls, otherwise 'max' has garbage
