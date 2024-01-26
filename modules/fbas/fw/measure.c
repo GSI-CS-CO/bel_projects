@@ -170,7 +170,7 @@ void measureAverage(msrItem_t item, uint64_t from, uint64_t now, verbosity_t ver
   msrSumStats_t* pStats = &sumStats[item];
   int64_t period = now - from;  // calculate the time period
   if (verbose)
-    DBPRINT2("period=%lli\n", period);
+    DBPRINT2("%d: %lli\n", item, period);
 
   // calculate and store the summed average
   calculateSumStats(period, pStats);
@@ -190,7 +190,7 @@ void measurePrintAverage(msrItem_t item, uint32_t* base, uint32_t offset) {
   uint64_t *pSharedReg64 = (uint64_t *)(base + (offset >> 2));
   msrSumStats_t* pStats = &sumStats[item];
 
-  DBPRINT2("%d @0x%8p avg=%llu min=%lli max=%llu cnt=%d/%d\n",
+  DBPRINT2("%d @0x%8p avg=%llu min=%lli max=%llu cnt=%lu/%lu\n",
     item,
     pSharedReg64,
     pStats->avg, pStats->min, pStats->max, pStats->cntValid, pStats->cntTotal);
@@ -212,7 +212,7 @@ void measureClearAverage(verbosity_t verbose) {
     memset(&sumStats[item], 0, sizeof(msrSumStats_t));
 
     if (verbose)
-      DBPRINT2("%d avg=%llu min=%lli max=%llu val=%d all=%d\n",
+      DBPRINT2("%d avg=%llu min=%lli max=%llu val=%lu all=%lu\n",
         item,
         sumStats[item].avg, sumStats[item].min, sumStats[item].max,
         sumStats[item].cntValid, sumStats[item].cntTotal);

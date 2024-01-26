@@ -245,7 +245,7 @@ static void printSrcAddr()
   uint32_t octet2 = octet0 << 16;
   uint32_t octet3 = octet0 << 24;
 
-  DBPRINT1("fbas%d: MAC=%02x:%02x:%02x:%02x:%02x:%02x, IP=%d.%d.%d.%d\n", nodeType,
+  DBPRINT1("fbas%d: MAC=%02lx:%02lx:%02lx:%02lx:%02lx:%02lx, IP=%lu.%lu.%lu.%lu\n", nodeType,
       (*pSharedMacHi & octet1) >> 8, (*pSharedMacHi & octet0),
       (*pSharedMacLo & octet3) >> 24,(*pSharedMacLo & octet2) >> 16,
       (*pSharedMacLo & octet1) >> 8, (*pSharedMacLo & octet0),
@@ -711,7 +711,7 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd)
           *(pSharedApp + (FBAS_SHARED_GET_NODETYPE >> 2)) = nodeType;
           DBPRINT2("fbas%d: node type %x\n", nodeType, nodeType);
         } else {
-          DBPRINT2("fbas%d: invalid node type %x\n", nodeType, u32val);
+          DBPRINT2("fbas%d: invalid node type %lx\n", nodeType, u32val);
         }
         break;
       case FBAS_CMD_GET_SENDERID:
@@ -726,7 +726,7 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd)
       case FBAS_CMD_GET_IO_OE:
         u8val  = 0;  // index = 0, by default
         if (ioIsOutEnabled(u8val, &u32val) == COMMON_STATUS_OK)
-          DBPRINT2("fbas%d: OE: idx %x, val %x\n", nodeType, u8val, u32val);
+          DBPRINT2("fbas%d: OE: idx %x, val %lx\n", nodeType, u8val, u32val);
         else
           DBPRINT2("fbas%d: OE read failed: idx %x\n", nodeType, u8val);
         break;
@@ -735,20 +735,20 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd)
         outPort.type = outPortCfg.type;
         outPort.idx  = 0;
         driveOutPort(&outPort, u8val);
-        DBPRINT2("fbas%d: IO%d=%x\n", nodeType, u32val+1, u8val);
+        DBPRINT2("fbas%d: IO%lu=%x\n", nodeType, u32val+1, u8val);
         break;
       case FBAS_CMD_EN_MPS_FWD:
         mpsTask |= TSK_TX_MPS_FLAGS;  // enable transmission of the MPS flags
         mpsTask |= TSK_TX_MPS_EVENTS; // enable transmission of the MPS events
         mpsTask |= TSK_MONIT_MPS_TTL; // enable lifetime monitoring of the MPS flags
-        DBPRINT2("fbas%d: enabled MPS %x\n", nodeType, mpsTask);
+        DBPRINT2("fbas%d: enabled MPS %lx\n", nodeType, mpsTask);
         break;
       case FBAS_CMD_DIS_MPS_FWD:
         mpsTask &= ~TSK_TX_MPS_FLAGS;  // disable transmission of the MPS flags
         mpsTask &= ~TSK_TX_MPS_EVENTS; // disable transmission of the MPS events
         mpsTask &= ~TSK_MONIT_MPS_TTL; // disable lifetime monitoring of the MPS flags
         mpsTask &= ~TSK_REG_COMPLETE;  // reset the node registration
-        DBPRINT2("fbas%d: disabled MPS %x\n", nodeType, mpsTask);
+        DBPRINT2("fbas%d: disabled MPS %lx\n", nodeType, mpsTask);
         break;
       case FBAS_CMD_PRINT_NW_DLY:
         measurePrintAverage(MSR_TX_DLY, pSharedApp, FBAS_SHARED_GET_AVG);
@@ -774,7 +774,7 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd)
         ioPrintPortMap();
         break;
       default:
-        DBPRINT2("fbas%d: received unknown command '0x%08x'\n", nodeType, cmd);
+        DBPRINT2("fbas%d: received unknown command '0x%08lx'\n", nodeType, cmd);
         break;
     } // switch
   } // if command
