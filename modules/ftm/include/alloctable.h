@@ -100,12 +100,49 @@ typedef boost::multi_index_container<
 
 typedef MgmtMeta_set::iterator mmI;
 
+struct StaticMeta {
+  uint8_t     cpu;
+  uint32_t    adr;
+  uint32_t    hash;
+  uint32_t    size;
+  vertex_t    v;
 
+//ext int / global local statt CPU ? gefährlich (blockade) ?
+  StaticMeta(uint8_t cpu, uint32_t adr, uint32_t hash) : cpu(cpu), adr(adr), hash(hash), size(size), v(null_vertex) {}
+  StaticMeta(uint8_t cpu, uint32_t adr, uint32_t hash) : cpu(cpu), adr(adr), hash(hash), size(4), v(null_vertex) {}
+
+  // Multiindexed Elements are immutable, must use the modify function of the container to change attributes
+};
+
+
+
+
+
+typedef boost::multi_index_container<
+  StaticMeta,
+  indexed_by<
+    hashed_unique<
+      tag<Vertex>,  BOOST_MULTI_INDEX_MEMBER(StaticMeta,vertex_t,v)>,
+    hashed_unique<
+      tag<Hash>,  BOOST_MULTI_INDEX_MEMBER(StaticMeta,uint32_t,hash)>,
+    ordered_unique<
+      tag<CpuAdr>,
+      composite_key<
+        StaticMeta,
+        BOOST_MULTI_INDEX_MEMBER(StaticMeta,uint8_t,cpu),
+        BOOST_MULTI_INDEX_MEMBER(StaticMeta,uint32_t,adr)
+      >
+    >
+  >
+ > StaticMeta_set;
+
+typedef StaticMeta_set::iterator smI;
 
 class AllocTable {
 
   AllocMeta_set a;
   MgmtMeta_set  m;
+  StaticMeta_set  s;
   std::vector<MemPool> vPool;
   const size_t payloadPerChunk = _MEM_BLOCK_SIZE - 1 - _PTR_SIZE_;
   uint32_t mgmtStartAdr;
@@ -220,6 +257,7 @@ public:
   const MgmtMeta_set& getMgmtTable() const { return m; }
   const size_t getMgmtSize()          const { return m.size(); }
 
+  void updateStaticVertex(smI it, v) { s.modify(it, [](StaticMeta& e){e.v = v;}); }
 
 };
 
