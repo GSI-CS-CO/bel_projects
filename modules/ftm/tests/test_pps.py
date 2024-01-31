@@ -37,7 +37,40 @@ class DmPps(dm_testbench.DmTestbench):
     self.deleteFile(downloadFile)
 
   def testPpsAdd0(self):
-    self.runPpsAdd(0)
+    """Add two schedules. The first schedule contains two nodes and an edge.
+    The second adds some edges to the first schedule.
+    Start pattern A and use a flow command to trigger messages.
+    The status of the schedules is compared against known dot files.
+    The messages are snooped and checked.
+    """
+    snoopFile = 'snoop_test0.csv'
+    scheduleFile0 = 'pps-test0-0.dot'
+    self.scheduleFile1 = 'pps-test0-1.dot'
+    self.downloadFile0 = 'pps-test0-0-download.dot'
+    downloadFile1 = 'pps-test0-1-download.dot'
+    self.addSchedule(scheduleFile0)
+    self.snoopToCsvWithAction(snoopFile, self.actionPpsAdd0, duration=1)
+    self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', downloadFile1])
+    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + scheduleFile0, self.downloadFile0))
+    self.deleteFile(self.downloadFile0)
+    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + downloadFile1, downloadFile1))
+    self.deleteFile(downloadFile1)
+    self.analyseFrequencyFromCsv(snoopFile, column=8, printTable=True, checkValues={'0x0fff': '>10'})
+    self.deleteFile(snoopFile)
+
+  def actionPpsAdd0(self):
+    """During snoop start pattern A. This produces 1 message. Pattern A finishes.
+    Download the schedule for later compare.
+    Add a schedule which contains two edges.
+    Queue a flow command with quantity 10 to block B_A.
+    Again start pattern A. The flow command triggers the next messages.
+    At the end, 12 messages are produced and the pattern loops in block B_A.
+    """
+    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'A'), [0], 1, 0)
+    self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile0])
+    self.addSchedule(self.scheduleFile1)
+    self.startAndCheckSubprocess([self.binaryDmCmd, self.datamaster, 'flow', '-q', '10', 'B_A', 'Evt_A'])
+    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'A'), [0], 1, 0)
 
   def testPpsAdd1(self):
     number = 1
@@ -54,7 +87,7 @@ class DmPps(dm_testbench.DmTestbench):
     self.startPattern(scheduleFile1)
     # ~ self.snoopToCsv(snoopFile1, duration=2)
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', downloadFile1])
-    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + scheduleFile1.replace('.dot', '-download.dot'), downloadFile1))
+    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + downloadFile1, downloadFile1))
     self.deleteFile(downloadFile1)
     # ~ self.snoopToCsvWithAction(snoopFile1, self.actionPpsAdd0, duration=10)
     # ~ self.analyseFrequencyFromCsv(snoopFile1, column=8, printTable=True, checkValues={'0x0fff': '>8'})
@@ -75,7 +108,7 @@ class DmPps(dm_testbench.DmTestbench):
     self.startPattern(scheduleFile1)
     # ~ self.snoopToCsv(snoopFile1, duration=2)
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', downloadFile1])
-    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + scheduleFile1.replace('.dot', '-download.dot'), downloadFile1))
+    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + downloadFile1, downloadFile1))
     self.deleteFile(downloadFile1)
     # ~ self.snoopToCsvWithAction(snoopFile1, self.actionPpsAdd0, duration=10)
     # ~ self.analyseFrequencyFromCsv(snoopFile1, column=8, printTable=True, checkValues={'0x0fff': '>8'})
@@ -99,19 +132,19 @@ class DmPps(dm_testbench.DmTestbench):
     self.deleteFile(downloadFile0)
     self.startPattern(scheduleFile1)
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', downloadFile1])
-    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + scheduleFile1.replace('.dot', '-download.dot'), downloadFile1))
+    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + downloadFile1, downloadFile1))
     self.deleteFile(downloadFile1)
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'remove', self.schedulesFolder + scheduleFile2])
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', downloadFile2])
-    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + scheduleFile2.replace('.dot', '-download.dot'), downloadFile2))
+    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + downloadFile2, downloadFile2))
     self.deleteFile(downloadFile2)
     self.startPattern(scheduleFile3)
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', downloadFile3])
-    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + scheduleFile3.replace('.dot', '-download.dot'), downloadFile3))
+    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + downloadFile3, downloadFile3))
     self.deleteFile(downloadFile3)
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'remove', self.schedulesFolder + scheduleFile4])
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', downloadFile4])
-    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + scheduleFile4.replace('.dot', '-download.dot'), downloadFile4))
+    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + downloadFile4, downloadFile4))
     self.deleteFile(downloadFile4)
 
   def testPpsAdd4(self):
@@ -128,13 +161,13 @@ class DmPps(dm_testbench.DmTestbench):
     self.deleteFile(downloadFile0)
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'remove', self.schedulesFolder + scheduleFile1], expectedReturnCode=[250])
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', downloadFile1])
-    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + scheduleFile1.replace('.dot', '-download.dot'), downloadFile1))
+    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + downloadFile1, downloadFile1))
     self.deleteFile(downloadFile1)
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'stoppattern', 'A'))
     self.delay(0.5)
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'remove', self.schedulesFolder + scheduleFile2], expectedReturnCode=[0])
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', downloadFile2])
-    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + scheduleFile2.replace('.dot', '-download.dot'), downloadFile2))
+    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + downloadFile2, downloadFile2))
     self.deleteFile(downloadFile2)
 
   def testPpsAdd5(self):
@@ -149,45 +182,5 @@ class DmPps(dm_testbench.DmTestbench):
     self.deleteFile(downloadFile0)
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'remove', self.schedulesFolder + scheduleFile1], expectedReturnCode=[0])
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', downloadFile1])
-    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + scheduleFile1.replace('.dot', '-download.dot'), downloadFile1))
+    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + downloadFile1, downloadFile1))
     self.deleteFile(downloadFile1)
-
-  def runPpsAdd(self, number):
-    snoopFile0 = f'snoop_test{number}_0.csv'
-    snoopFile1 = f'snoop_test{number}_1.csv'
-    scheduleFile0 = f'pps-test{number}-0.dot'
-    scheduleFile1 = f'pps-test{number}-1.dot'
-    downloadFile0 = f'pps-test{number}-0-download.dot'
-    downloadFile1 = f'pps-test{number}-1-download.dot'
-    self.startPattern(scheduleFile0)
-    # ~ self.snoopToCsv(snoopFile0, duration=2)
-    # analyse column 8 which contains the evtno.
-    # check that evtno 0x0fff occur.
-    # ~ self.analyseFrequencyFromCsv(snoopFile0, column=8, printTable=True, checkValues={'0x0fff': '>1'})
-    # analyse column 20 which contains the parameter.
-    # check that parameter 0x400 occur.
-    # ~ self.analyseFrequencyFromCsv(snoopFile0, column=20, printTable=True, checkValues={'0x0000000000000400': '>1'})
-    # ~ self.deleteFile(snoopFile0)
-    self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', downloadFile0])
-    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + scheduleFile0, downloadFile0))
-    self.deleteFile(downloadFile0)
-    self.startPattern(scheduleFile1)
-    self.snoopToCsv(snoopFile1, duration=2)
-    # analyse column 8 which contains the evtno.
-    # check that evtno 0x0fff occur.
-    # ~ self.analyseFrequencyFromCsv(snoopFile1, column=8, printTable=True, checkValues={'0x0fff': '>1'})
-    # analyse column 20 which contains the parameter.
-    # check that parameter 0x400 occur.
-    # ~ self.analyseFrequencyFromCsv(snoopFile1, column=20, printTable=True, checkValues={'0x0000000000000400': '>1'})
-    # ~ self.deleteFile(snoopFile1)
-    self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', downloadFile1])
-    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + scheduleFile1.replace('.dot', '-download.dot'), downloadFile1))
-    self.deleteFile(downloadFile1)
-    self.snoopToCsvWithAction(snoopFile1, self.actionPpsAdd0, duration=10)
-    self.analyseFrequencyFromCsv(snoopFile1, column=8, printTable=True, checkValues={'0x0fff': '>8'})
-    self.deleteFile(snoopFile1)
-
-  def actionPpsAdd0(self):
-    for i in range(10):
-      self.startAndCheckSubprocess([self.binaryDmCmd, self.datamaster, 'flow', 'B_A', 'Evt_A'])
-      self.delay(0.9)
