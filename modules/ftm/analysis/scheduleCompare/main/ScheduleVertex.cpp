@@ -17,6 +17,10 @@ void ScheduleVertex::switchCompareNames(const bool flag){
   this->compareNames = flag;
 }
 
+void ScheduleVertex::switchUndefinedAsEmpty(const bool flag){
+  this->undefinedAsEmpty = flag;
+}
+
 int ScheduleVertex::compare(const ScheduleVertex& v1, const ScheduleVertex& v2) {
   //~ std::cout << "--V " << v1.name << ", " << v2.name << " | " << v1.protocol << std::endl;
   if (!v1.compareNames || v1.name == v2.name) {
@@ -479,8 +483,18 @@ int ScheduleVertex::compareValues(const std::string& value1, const std::string& 
     result = compareBoolean(value1, value2);
   } else if (type == valueType::HEX) {
     result = compareHex(value1, value2);
-  } else {
+  } else if (type == valueType::STRING) {
     result = value1.compare(value2);
+    if (result != 0 && this->undefinedAsEmpty) {
+      // when value1 and value2 are both "undefined", result == 0 and no further handling needed.
+      if (value1.compare("") && value2.compare("undefined")) {
+        result = 0;
+      } else if (value1.compare("undefined") && value2.compare("")) {
+        result = 0;
+      }
+    }
+  } else {
+    // unknown valueType
   }
   if (result != 0) {
     protocol += " compare: " + std::to_string(result) + ", key: " + key + ", value1: '" + value1 + "', value2: '" + value2 + "'.";
