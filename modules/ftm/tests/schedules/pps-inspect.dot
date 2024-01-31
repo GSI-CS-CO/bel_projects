@@ -1,4 +1,4 @@
-digraph G {
+digraph "pps-inspect" {
 graph [root="Demo",rankdir=TB, nodesep=0.6, mindist=1.0, ranksep=1.0, overlap=false]
 node [style="filled", fillcolor="white", color="black"]
 B_0[cpu="1", flags="7", type="block", tperiod="1000000000", shape="rectangle", color="black"];
