@@ -73,25 +73,35 @@ class DmPps(dm_testbench.DmTestbench):
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'A'), [0], 1, 0)
 
   def testPpsAdd1(self):
-    number = 1
-    # ~ snoopFile0 = f'snoop_test{number}_0.csv'
-    # ~ snoopFile1 = f'snoop_test{number}_1.csv'
-    scheduleFile0 = f'pps-test{number}-0.dot'
-    scheduleFile1 = f'pps-test{number}-1.dot'
-    downloadFile0 = f'pps-test{number}-0-download.dot'
-    downloadFile1 = f'pps-test{number}-1-download.dot'
-    self.startPattern(scheduleFile0)
-    self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', downloadFile0])
-    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + scheduleFile0, downloadFile0))
-    self.deleteFile(downloadFile0)
-    self.startPattern(scheduleFile1)
-    # ~ self.snoopToCsv(snoopFile1, duration=2)
+    """Add two schedules. The first schedule contains pattern A with two nodes and an edge.
+    The second adds a similar pattern B.
+    The messages are snooped and checked.
+    """
+    snoopFile = 'snoop_test1.csv'
+    scheduleFile0 = 'pps-test1-0.dot'
+    self.scheduleFile1 = 'pps-test1-1.dot'
+    self.downloadFile0 = 'pps-test1-0-download.dot'
+    downloadFile1 = 'pps-test1-1-download.dot'
+    self.addSchedule(scheduleFile0)
+    self.snoopToCsvWithAction(snoopFile, self.actionPpsAdd1, duration=1)
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', downloadFile1])
+    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + scheduleFile0, self.downloadFile0))
+    self.deleteFile(self.downloadFile0)
     self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + downloadFile1, downloadFile1))
     self.deleteFile(downloadFile1)
-    # ~ self.snoopToCsvWithAction(snoopFile1, self.actionPpsAdd0, duration=10)
-    # ~ self.analyseFrequencyFromCsv(snoopFile1, column=8, printTable=True, checkValues={'0x0fff': '>8'})
-    # ~ self.deleteFile(snoopFile1)
+    self.analyseFrequencyFromCsv(snoopFile, column=20, printTable=True, checkValues={'0x000000000000000f': '1', '0x00000000000000f0': '1'})
+    self.deleteFile(snoopFile)
+
+  def actionPpsAdd1(self):
+    """During snoop start pattern A. This produces 1 message. Pattern A finishes.
+    Download the schedule for later compare.
+    Add a schedule with pattern B which is similar to pattern B.
+    Start pattern B.
+    """
+    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'A'), [0], 1, 0)
+    self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile0])
+    self.addSchedule(self.scheduleFile1)
+    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'B'), [0], 1, 0)
 
   def testPpsAdd2(self):
     number = 2
