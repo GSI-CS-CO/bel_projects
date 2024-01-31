@@ -117,6 +117,9 @@ int scheduleIsomorphic(std::string dotFile1, std::string dotFile2, configuration
     // set the flag for comparing the names on all vertices of both graphs.
     switchCompareNames(graph1, config.compareNames);
     switchCompareNames(graph2, config.compareNames);
+    // set the flag for handling "undefined" as empty string on all vertices of both graphs.
+    switchUndefinedAsEmpty(graph1, config.undefinedAsEmpty);
+    switchUndefinedAsEmpty(graph2, config.undefinedAsEmpty);
     // Use the smaller graph as graph1.
     ScheduleGraph *ref1, *ref2;
     std::string *refName1, *refName2;
@@ -247,5 +250,12 @@ void switchCompareNames(ScheduleGraph& graph, const bool flag) {
   auto vertex_pair = vertices(graph);
   for (auto iter = vertex_pair.first; iter != vertex_pair.second; iter++) {
     graph[*iter].switchCompareNames(flag);
+  }
+}
+
+void switchUndefinedAsEmpty(ScheduleGraph& graph, const bool flag) {
+  auto vertex_pair = vertices(graph);
+  for (auto iter = vertex_pair.first; iter != vertex_pair.second; iter++) {
+    graph[*iter].switchUndefinedAsEmpty(flag);
   }
 }
