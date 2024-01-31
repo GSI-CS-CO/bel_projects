@@ -109,12 +109,12 @@ using namespace DotStr::Misc;
 
 
   void CarpeDM::CarpeDMimpl::generateDstLst(Graph& g, vertex_t v, unsigned multiDst) {
-    
+
     const std::string prefix = g[v].name;
     unsigned loops = (multiDst + 1 + DST_MAX -1) / DST_MAX; //add 1 to multidst. its the altdst count, but we need 1 more for a defdst.
     for (unsigned i=0; i<loops;i++) {
       const std::string name = prefix + dnm::sDstListSuffix + "_" + std::to_string(i);
-      log<DEBUG_LVL0>(L"generateDstLst: Accomodating %1% + 1 destinations. Loop %2%/%3%, generating %4% ") % multiDst % i % loops % name.c_str(); 
+      log<DEBUG_LVL0>(L"generateDstLst: Accomodating %1% + 1 destinations. Loop %2%/%3%, generating %4% ") % multiDst % i % loops % name.c_str();
       hm.add(name);
       vertex_t vD = boost::add_vertex(myVertex(name, g[v].cpu, hm.lookup(name), nullptr, dnt::sDstList, DotStr::Misc::sHexZero), g);
       //FIXME add to grouptable
@@ -243,14 +243,12 @@ using namespace DotStr::Misc;
 
   void CarpeDM::CarpeDMimpl::mergeUploadDuplicates(vertex_t borg, vertex_t victim) {
     Graph& g = gUp;
-
-    // add all of nod 'victim's edges to node 'borg'. Resistance is futile.
-    Graph::out_edge_iterator out_begin, out_end, out_cur;
-    boost::tie(out_begin, out_end) = out_edges(victim, g);
-
+    // add all of node 'victim's edges to node 'borg'. Resistance is futile.
     std::vector<edge_t> vEdges2remove;
 
     // out edges
+    Graph::out_edge_iterator out_begin, out_end, out_cur;
+    boost::tie(out_begin, out_end) = out_edges(victim, g);
     for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
       vEdges2remove.push_back(*out_cur);
       boost::add_edge(borg, target(*out_cur,g), (myEdge){boost::get(&myEdge::type, g, *out_cur)}, g);
@@ -261,11 +259,18 @@ using namespace DotStr::Misc;
     Graph::in_edge_iterator in_begin, in_end, in_cur;
     boost::tie(in_begin, in_end) = in_edges(victim, g);
     for (in_cur = in_begin; in_cur != in_end; ++in_cur) {
-      vEdges2remove.push_back(*in_cur);
+      // if source and target of the edge are equal (edge connects the node to itself),
+      // this edge is inserted into vEdges2remove above in the out edges section.
+      // removing an edge twice throws an exception in boost.
+      if (source(*in_cur, g) != target(*in_cur, g)) {
+        vEdges2remove.push_back(*in_cur);
+      }
       boost::add_edge(source(*in_cur,g), borg, (myEdge){boost::get(&myEdge::type, g, *in_cur)}, g);
     }
 
-    for (auto eRm : vEdges2remove) boost::remove_edge(eRm, g);
+    for (auto eRm : vEdges2remove) {
+      boost::remove_edge(eRm, g);
+    }
   }
 
   void CarpeDM::CarpeDMimpl::prepareUpload() {
@@ -453,14 +458,14 @@ using namespace DotStr::Misc;
     vertex_map_t vmap;
     updown_copy_graph(gDown, gUp, vmap, atUp, hm, gt);
     //copy_graph<Graph>(gDown, gUp, vmap);
-    
+
   }
 
   void CarpeDM::CarpeDMimpl::addition(Graph& gTmp) {
 
     vertex_map_t vertexMap, duplicates;
     log<VERBOSE>(L"addition: Generating Metadata");
-    
+
 
     //find and list all duplicates i.e. docking points between trees and Update hash dict
     BOOST_FOREACH( vertex_t w, vertices(gTmp) ) {
