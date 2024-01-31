@@ -11,4 +11,5 @@ int testSingleGraph(std::string dotFile1, configuration& config);
 void listVertexProtocols(ScheduleGraph& graph, const std::string prefix);
 void listEdgeProtocols(ScheduleGraph& graph, const std::string prefix);
 void switchCompareNames(ScheduleGraph& graph, const bool flag);
+void switchUndefinedAsEmpty(ScheduleGraph& graph, const bool flag);
 #endif

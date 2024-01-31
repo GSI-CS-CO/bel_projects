@@ -68,6 +68,7 @@ class ScheduleVertex {
   int compare(const ScheduleVertex& v1, const ScheduleVertex& v2);
   std::string printProtocol();
   void switchCompareNames(const bool flag);
+  void switchUndefinedAsEmpty(const bool flag);
   operator std::string();
   inline bool operator==(const ScheduleVertex& rhs) { return compare(*this, rhs) == 0; }
   inline bool operator!=(const ScheduleVertex& rhs) { return compare(*this, rhs) != 0; }
@@ -79,6 +80,7 @@ class ScheduleVertex {
  private:
   enum class valueType { STRING, BOOLEAN, HEX };
   bool compareNames = true;
+  bool undefinedAsEmpty = false;
   int compareBlock(const ScheduleVertex& v1, const ScheduleVertex& v2);
   int compareFlow(const ScheduleVertex& v1, const ScheduleVertex& v2);
   int compareFlush(const ScheduleVertex& v1, const ScheduleVertex& v2);

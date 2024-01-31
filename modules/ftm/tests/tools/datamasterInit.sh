@@ -1,4 +1,5 @@
 #! /bin/bash -x
+set -e
 #
 # Example: ./datamasterInit.sh $(hostname) $BEL_PROJECTS_PATH/syn/gsi_pexarria5/ftm/ftm.bin
 
