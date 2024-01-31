@@ -1,0 +1,22 @@
+digraph "pps-test3-2" {
+name="pps-test3-2"
+
+graph []
+edge  [type="defdst"]
+
+
+
+subgraph cpu0 {
+  node  [cpu="1", style="filled", fillcolor="red", color="black"];
+
+
+
+
+  Evt_B  [type=tmsg   toffs=0  fid=1, gid=5, evtno=205, sid=2, bpid=8, par="0x123", shape="oval"];
+  B_B     [type=block shape=rectangle  tperiod=1000000000];
+
+
+}
+
+
+}

@@ -1,0 +1,17 @@
+digraph "pps-test4-1" {
+name="pps-test4-1"
+
+graph []
+edge  [type="defdst"]
+node [];
+
+subgraph cpu0 {
+  node  [cpu="0" pattern=B];
+  Evt_A   [type=tmsg patentry=1   toffs=0 fid=1, gid=5, evtno=205, sid=2, bpid=8, par="0x123"];
+  B_A     [type=block shape=rectangle patexit=1  tperiod=100000000];
+  B_C     [type=block shape=rectangle patexit=1  tperiod=100000000];
+
+}
+
+
+}
