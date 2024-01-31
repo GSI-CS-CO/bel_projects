@@ -105,7 +105,9 @@ vertex_set_t VisitorUploadCrawler::getChildrenByEdgeType(vertex_t vStart, const 
   vertex_t ret = null_vertex;
 
   vertex_vec_t vs = getChildrenByEdgeType(vStart, edgeType);
-  if (vs.size()  > 1) throw std::runtime_error( exIntro + "Node " + g[vStart].name + "has more than one child of that edge type, result is ambiguous\n");
+  if (vs.size()  > 1) {
+    throw std::runtime_error( exIntro + "Node '" + g[vStart].name + "' has more than one child of edge type '" + edgeType + "', result is ambiguous\n");
+  }
   //if (vs.size() == 0) ret = null_vertex;
   if (vs.size() == 1) ret = *vs.begin();
 
