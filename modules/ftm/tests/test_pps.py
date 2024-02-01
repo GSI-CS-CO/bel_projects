@@ -98,6 +98,8 @@ class DmPps(dm_testbench.DmTestbench):
     Add a schedule with pattern B which is similar to pattern B.
     Start pattern B.
     """
+    # remote execution: small delay for snoop to start before the pattern is started.
+    self.delay(0.1)
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'A'), [0], 1, 0)
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile0])
     self.addSchedule(self.scheduleFile1)
