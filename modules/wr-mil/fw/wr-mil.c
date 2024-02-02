@@ -2,10 +2,13 @@
  *  wr-mil.c
  *
  *  created : 2024
- *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 01-feb-2024
+ *  author  : Dietrich Beck, Micheal Reese, Mathias Kreider GSI-Darmstadt
+ *  version : 02-feb-2024
  *
  *  firmware required for the White Rabbit -> MIL Gateways
+ *  
+ *  This firmware is a refactured fork of the original 'wr-mil-gw' developed for SIS18 and ESR
+ *  by Michael Reese and others. The fork was triggered by the need of a wr-mil-gateway at UNILAC. 
  *  
  * -------------------------------------------------------------------------------------------
  * License Agreement for this software:
@@ -73,6 +76,7 @@ volatile uint32_t *pSharedSetLatency;      // pointer to a "user defined" u32 re
 volatile uint32_t *pSharedSetUtcOffsHi;    // pointer to a "user defined" u32 register; here: delay [ms] between the TAI and the MIL-UTC, high word
 volatile uint32_t *pSharedSetUtcOffsLo;    // pointer to a "user defined" u32 register; here: delay [ms] between the TAI and the MIL-UTC, low word
 volatile uint32_t *pSharedSetReqFillEvt;   // pointer to a "user defined" u32 register; here: if this is written to 1, the gateway will send a fill event as soon as possible
+volatile uint32_t *pSharedSetMilDev;       // pointer to a "user defined" u32 register; here: wishbone address of MIL device; MIL device could be a MIL piggy or a SIO
 volatile uint32_t *pSharedGetNEvtsHi;      // pointer to a "user defined" u32 register; here: number of translated events, high word
 volatile uint32_t *pSharedGetNEvtsLo;      // pointer to a "user defined" u32 register; here: number of translated events, high word
 volatile uint32_t *pSharedGetNLateEvts;    // pointer to a "user defined" u32 register; here: number of late events
@@ -82,7 +86,8 @@ volatile uint32_t *pSharedGetNMilHisto;    // pointer to a "user defined" u32 re
 volatile uint32_t *pSharedGetMsiSlot;      // pointer to a "user defined" u32 register; here: MSI slot is stored here
 
 
-uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM            
+uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM
+uint32_t *milDev;                       // address of MIL device (piggy or SIO)
 
 uint64_t statusArray;                   // all status infos are ORed bit-wise into statusArray, statusArray is then published
 uint64_t nMessages;                     // # of sent messages
@@ -122,6 +127,7 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
   pSharedSetUtcOffsHi        = (uint32_t *)(pShared + (WRMIL_SHARED_SET_UTC_OFFSET_HI     >> 2));
   pSharedSetUtcOffsLo        = (uint32_t *)(pShared + (WRMIL_SHARED_SET_UTC_OFFSET_LO     >> 2));
   pSharedSetReqFillEvt       = (uint32_t *)(pShared + (WRMIL_SHARED_SET_REQUEST_FILL_EVT  >> 2));
+  pSharedSetMilDev           = (uint32_t *)(pShared + (WRMIL_SHARED_SET_MIL_DEV           >> 2));
   pSharedGetNEvtsHi          = (uint32_t *)(pShared + (WRMIL_SHARED_GET_NUM_EVENTS_HI     >> 2));
   pSharedGetNEvtsLo          = (uint32_t *)(pShared + (WRMIL_SHARED_GET_NUM_EVENTS_LO     >> 2));
   pSharedGetNLateEvts        = (uint32_t *)(pShared + (WRMIL_SHARED_GET_LATE_EVENTS       >> 2));
@@ -180,8 +186,12 @@ uint32_t extern_entryActionConfigured()
 {
   uint32_t status = COMMON_STATUS_OK;
 
+  // get address of MIL device on the Wishbone bus
+  milDev = *pSharedSetMilDev;
+  if (milDev == 0x0) return COMMON_STATUS_OUTOFRANGE;
+
   // get and publish NIC data
-  fwlib_publishNICData();
+  fwlib_publishNICData(); 
 
   return status;
 } // extern_entryActionConfigured
