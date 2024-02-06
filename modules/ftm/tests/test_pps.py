@@ -106,25 +106,45 @@ class DmPps(dm_testbench.DmTestbench):
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'B'), [0], 1, 0)
 
   def testPpsAdd2(self):
-    number = 2
-    # ~ snoopFile0 = f'snoop_test{number}_0.csv'
-    # ~ snoopFile1 = f'snoop_test{number}_1.csv'
-    scheduleFile0 = f'pps-test{number}-0.dot'
-    scheduleFile1 = f'pps-test{number}-1.dot'
-    downloadFile0 = f'pps-test{number}-0-download.dot'
-    downloadFile1 = f'pps-test{number}-1-download.dot'
-    self.startPattern(scheduleFile0)
-    self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', downloadFile0])
-    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + scheduleFile0, downloadFile0))
-    self.deleteFile(downloadFile0)
-    self.startPattern(scheduleFile1)
-    # ~ self.snoopToCsv(snoopFile1, duration=2)
-    self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', downloadFile1])
-    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + downloadFile1, downloadFile1))
-    self.deleteFile(downloadFile1)
-    # ~ self.snoopToCsvWithAction(snoopFile1, self.actionPpsAdd0, duration=10)
-    # ~ self.analyseFrequencyFromCsv(snoopFile1, column=8, printTable=True, checkValues={'0x0fff': '>8'})
-    # ~ self.deleteFile(snoopFile1)
+    """Test that the validation for nodes connected by defdst or altdst on
+    the same CPU works. Add a first schedule. Try to add a second schedule.
+    This fails due to an edge from CPU 0 to CPU 1.
+    Add a third schedule with a target edge from CPU 0 to CPU 1. This works.
+    """
+    snoopFile0 = 'snoop_test2_0.csv'
+    # ~ snoopFile1 = 'snoop_test2_1.csv'
+    # this is a pps-pattern with 10Hz. Pattern A
+    scheduleFile0 = 'pps-test2-0.dot'
+    # this is a pattern with an altdst edge from CPU 0 to CPU 1.
+    scheduleFile1 = 'pps-test2-1.dot'
+    # this is a pattern with a target edge from CPU 0 to CPU 1.
+    scheduleFile2 = 'pps-test2-2.dot'
+    self.downloadFile0 = 'pps-test2-0-download.dot'
+    self.downloadFile1 = 'pps-test2-1-download.dot'
+    self.downloadFile2 = 'pps-test2-2-download.dot'
+    self.addSchedule(scheduleFile0)
+    self.snoopToCsvWithAction(snoopFile0, self.actionPpsAdd2, duration=1)
+    self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'add', self.schedulesFolder + scheduleFile1], [250], 2, 2)
+    self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile1])
+    self.addSchedule(scheduleFile2)
+    self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile2])
+    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + scheduleFile0, self.downloadFile0))
+    self.deleteFile(self.downloadFile0)
+    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + self.downloadFile1, self.downloadFile1))
+    self.deleteFile(self.downloadFile1)
+    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + self.downloadFile2, self.downloadFile2))
+    self.deleteFile(self.downloadFile2)
+    self.analyseFrequencyFromCsv(snoopFile0, column=8, printTable=True, checkValues={'0x0fff': '>8'})
+    self.deleteFile(snoopFile0)
+
+  def actionPpsAdd2(self):
+    """During snoop start pattern A. This produces messages at 10Hz.
+    Download the schedule for later compare.
+    """
+    # remote execution: small delay for snoop to start before the pattern is started.
+    self.delay(0.1)
+    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'A'), [0], 1, 0)
+    self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile0])
 
   def testPpsAdd3(self):
     number = 3
