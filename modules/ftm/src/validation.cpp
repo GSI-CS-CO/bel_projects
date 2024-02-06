@@ -139,6 +139,20 @@ void init() {
     }
   }
 
+  void neighbourhoodCheckCpu(vertex_t v, Graph& g) {
+    Graph::out_edge_iterator out_begin, out_end, out_cur, out_chk;
+    boost::tie(out_begin, out_end) = out_edges(v,g);
+    std::string cpuSource = g[v].cpu;
+    for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
+      if (g[*out_cur].type == e::sDefDst || g[*out_cur].type == e::sAltDst) {
+        if (g[target(*out_cur,g)].cpu != cpuSource) {
+          throw std::runtime_error("Neighbourhood: Nodes '" + g[v].name + "' (CPU " + g[v].cpu + ") and '"
+            + g[target(*out_cur,g)].name + "' (CPU " + g[target(*out_cur,g)].cpu + ") must have the same CPU.");
+        }
+      }
+    }
+  }
+
   //check if event sequence is well behaved
   void eventSequenceCheck(vertex_t v, Graph& g, bool force) {
     Graph::out_edge_iterator out_begin, out_end, out_cur;

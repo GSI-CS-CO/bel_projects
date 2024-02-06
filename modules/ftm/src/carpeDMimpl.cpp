@@ -34,7 +34,7 @@
        atDown.removeMemories();
        gDown.clear();
        //sLog << "eb connect with" << en << std::endl;
-       return ebd.connect(en, atUp, atDown); 
+       return ebd.connect(en, atUp, atDown);
    } //Open connection to a DM via Etherbone
 
   bool CarpeDM::CarpeDMimpl::disconnect() {return ebd.disconnect();} //Close connection
@@ -73,12 +73,12 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
         id = 0;
         for(auto& it : vTmp) {  //for each format vector element
           //use dot property tag string as key to dp map (map of tags to (maps of vertex_indices to values))
-  
+
           uint64_t val = s2u<uint64_t>(boost::get(it.s, dp, v)); // use vertex index v as key in this property map to obtain value
           //sLog << ", " << std::dec << it.s << " = " << (val & ((1 << it.bits ) - 1) ) << ", (" << (int)it.pos << ",0x" << std::hex << ((1 << it.bits ) - 1) << ")";
           id |= ((val & ((1 << it.bits ) - 1) ) << it.pos); // OR the masked and shifted value to id
         }
-  
+
         ss.flush();
         ss << "0x" << std::hex << id;
         g[v].id = ss.str();
@@ -88,7 +88,7 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
         fid = ((id >> ID_FID_POS) & ID_FID_MSK);
         if (fid >= idFormats.size()) throw std::runtime_error("bad format id (FID) " + std::to_string(fid) + " within ID field of Node '" + g[v].name + "'");
         vPf& vTmp = idFormats[fid];
-  
+
         for(auto& it : vTmp) {
           ss.flush();
           ss << std::dec << ((id >> it.pos) &  ((1 << it.bits ) - 1) );
@@ -163,7 +163,7 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
     dp.property(dnp::Cmd::sDstPattern,          boost::get(&myVertex::cmdDestPat,  g));
     dp.property(dnp::Cmd::sDstBeamproc,         boost::get(&myVertex::cmdDestBp,   g));
     dp.property(dnp::Cmd::sDstThr,              boost::get(&myVertex::cmdDestThr,   g));
-    
+
     dp.property(dnp::Base::sThread,             boost::get(&myVertex::thread,      g));
 
     return (const boost::dynamic_properties)dp;
@@ -210,7 +210,7 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
         sLog << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalChunkQty(x) << std::setw(10) << atDown.getFreeChunkQty(x)  << std::setw(10) << atDown.getUsedChunkQty(x);
         sLog << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalBmpBits(x) << std::setw(10) << atDown.getFreeBmpBits(x)  << std::setw(10) << atDown.getUsedBmpBits(x);
         sLog << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalBmpSize(x);
-      }  
+      }
       sLog << std::endl;
     }
   }
@@ -357,12 +357,15 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
 
   bool CarpeDM::CarpeDMimpl::validate(Graph& g, AllocTable& at, bool force) {
     try {
-          BOOST_FOREACH( vertex_t v, vertices(g) ) { Validation::neighbourhoodCheck(v, g);  }
+          BOOST_FOREACH( vertex_t v, vertices(g) ) {
+            Validation::neighbourhoodCheck(v, g);
+            Validation::neighbourhoodCheckCpu(v, g);
+          }
 
           BOOST_FOREACH( vertex_t v, vertices(g) ) {
             if (g[v].np == nullptr) throw std::runtime_error("Validation of Sequence: Node '" + g[v].name + "' was not allocated" );
             g[v].np->accept(VisitorValidation(g, v, at, force));
-          }
+        }
     } catch (std::runtime_error const& err) { throw std::runtime_error("Validation of " + std::string(err.what()) ); }
     return true;
   }
@@ -370,17 +373,17 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
 
 
   //Transaction Management: If an upload preparation operation fails for any reason, we roll back the meta tables
-  
+
   template <typename R, typename ... As1, typename ... As2>
   R CarpeDM::CarpeDMimpl::safeguardTransaction(R(CarpeDMimpl::*func)(As1...), As2 ... args)
-  { 
+  {
     HashMap hmBak     = hm;
     GroupTable gtBak  = gt;
     CovenantTable ctBak = ct;
-    R ret;    
+    R ret;
 
     try {
-      ret = (*this.*func)(std::forward<As2>(args)...); 
+      ret = (*this.*func)(std::forward<As2>(args)...);
     } catch(...) {
       hm = hmBak;
       gt = gtBak;
@@ -397,7 +400,7 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
     //R test;
     //decltype(func)::foo = 1;
     vEbwrs ew;
-    ew = (*this.*func)(ew, std::forward<As2>(args)...); 
+    ew = (*this.*func)(ew, std::forward<As2>(args)...);
     send(ew);
     return ew.va.size();
   }
