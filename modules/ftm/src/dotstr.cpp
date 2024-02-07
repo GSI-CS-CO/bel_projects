@@ -30,6 +30,16 @@ namespace DotStr {
 
   }
 
+
+  namespace StaticAdr {
+    const std::string sExternal   = "extern";
+    const std::string sInbox      = "inbox";
+    const std::string sRegisters  = "register";
+    const std::string sThreadData = "thrdat";
+
+  }
+
+
  namespace Edge {
     // edge properties
     namespace Prop {
@@ -39,7 +49,7 @@ namespace DotStr {
       namespace Data {
         const std::string sFieldHead = "fieldhead";  // field in the node at the arrow head of edge (pointee)
         const std::string sFieldTail = "fieldtail";  // field in the node at the tail of the edge (pointing)
-        const std::string sBitWidth = "fieldwidth";
+        const std::string sBitWidth  = "fieldwidth";
       }
     }
 
@@ -52,8 +62,8 @@ namespace DotStr {
       const std::string sBadDefDst    = "baddefdst";  // Links to Bad Default Destination
       const std::string sCmdTarget    = "target";     // Links to Command's Target Block
       const std::string sSwitchTarget = "target";     // Links to Switch's Target
-      const std::string sSwitchDst    = "switchdst";     // Links to Switch Destination
-      const std::string sOriginDst    = "origindst";     // Links to Origin Destination
+      const std::string sSwitchDst    = "switchdst";  // Links to Switch Destination
+      const std::string sOriginDst    = "origindst";  // Links to Origin Destination
       const std::string sCmdFlowDst   = "flowdst";    // Links to Flow Command's destination node
       const std::string sCmdFlushOvr  = "flushovr";   // Links to Flush Command's destination overrride
       const std::string sDynId        = "dynid";      // Links to Source for dynamic ID field in Tmsg nodes

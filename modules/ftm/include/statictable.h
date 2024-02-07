@@ -1,5 +1,5 @@
-#ifndef _GROUP_TABLE_H_
-#define _GROUP_TABLE_H_
+#ifndef _STATIC_TABLE_H_
+#define _STATIC_TABLE_H_
 
 #include <stdint.h>
 #include <string>
@@ -27,76 +27,43 @@ using namespace boost::multi_index;
 using namespace DotStr::Misc;
 
 struct StaticMeta {
-  uint8_t     cpu;
+  std::string node;
+  int         cpu;
   uint32_t    adr;
-  uint32_t    hash;
   uint32_t    offs;
   uint32_t    size;
+  int         thread;
   vertex_t    v;
 
 //ext int / global local statt CPU ? gefährlich (blockade) ?
-  StaticMeta(uint8_t cpu, uint32_t adr, uint32_t hash) : cpu(cpu), adr(adr), hash(hash), size(size), v(null_vertex) {}
-  StaticMeta(uint8_t cpu, uint32_t adr, uint32_t hash) : cpu(cpu), adr(adr), hash(hash), size(4), v(null_vertex) {}
+  StaticMeta(const std::string& sNode, int cpu, uint32_t adr, uint32_t size, uint32_t offs, int thread, vertex_t v) : node(sNode), cpu(cpu), adr(adr), size(size), offs(offs), thread(thread), v(v) {}
+  StaticMeta(const std::string& sNode, int cpu, uint32_t adr, uint32_t size, uint32_t offs, int thread) : node(sNode), cpu(cpu), adr(adr), size(size), offs(offs), thread(thread), v(null_vertex) {}
+  StaticMeta(const std::string& sNode, int cpu, uint32_t adr, uint32_t size, uint32_t offs, int thread) : node(sNode), cpu(cpu), adr(adr), size(size), offs(offs), thread(0), v(null_vertex) {}
+  
+    // Multiindexed Elements are immutable, must use the modify function of the container to change attributes
 
-  // Multiindexed Elements are immutable, must use the modify function of the container to change attributes
-};
-
-
-
-
-
-typedef boost::multi_index_container<
-  StaticMeta,
-  indexed_by<
-    hashed_unique<
-      tag<Vertex>,  BOOST_MULTI_INDEX_MEMBER(StaticMeta,vertex_t,v)>,
-    hashed_unique<
-      tag<Hash>,  BOOST_MULTI_INDEX_MEMBER(StaticMeta,uint32_t,hash)>,
-    ordered_unique<
-      tag<CpuAdr>,
-      composite_key<
-        StaticMeta,
-        BOOST_MULTI_INDEX_MEMBER(StaticMeta,uint8_t,cpu),
-        BOOST_MULTI_INDEX_MEMBER(StaticMeta,uint32_t,adr)
-      >
-    >
-  >
- > StaticMeta_set;
-
-
-
-struct StaticMeta {
-  std::string node;  //name of pattern
-  std::string pattern;  //name of pattern
-  bool patternEntry, patternExit;
-  std::string beamproc; //name of entry node
-  bool beamprocEntry, beamprocExit;
-
-
-  StaticMeta(const std::string& node) : node(node), pattern(sUndefined),  patternEntry(false), patternExit(false), beamproc(sUndefined), beamprocEntry(false), beamprocExit(false) {}
-  StaticMeta() : node(sUndefined), pattern(sUndefined),  patternEntry(false), patternExit(false), beamproc(sUndefined), beamprocEntry(false), beamprocExit(false) {}
-
+  
   friend class boost::serialization::access;
   template<class Archive>
   void serialize(Archive & ar, const unsigned int version)
   {
       ar & node;
-      ar & pattern;
-      ar & patternEntry;
-      ar & patternExit;
-      ar & beamproc;
-      ar & beamprocEntry;
-      ar & beamprocExit;
-
+      ar & cpu;
+      ar & adr;
+      ar & offs;
+      ar & size;
+      ar & thread;
+      ar & v;
 
   }
-
 };
 
-//necessary to avoid confusion with classnames elsewhere
-namespace Statics {
 
-struct Hash{};
+
+//necessary to avoid confusion with classnames elsewhere
+namespace Static {
+
+struct Name{};
 struct Vertex{};
 struct CpuAdr{};
 
@@ -109,15 +76,27 @@ struct CpuAdr{};
 
 typedef boost::multi_index_container<
   StaticMeta,
+
   indexed_by<
     ordered_unique <
-      tag<Groups::Node>,  BOOST_MULTI_INDEX_MEMBER(StaticMeta, std::string, node)>,
-    ordered_non_unique <
-      tag<Groups::Pattern>,  BOOST_MULTI_INDEX_MEMBER(StaticMeta, std::string, pattern)>,
-    ordered_non_unique <
-      tag<Groups::Beamproc>,  BOOST_MULTI_INDEX_MEMBER(StaticMeta, std::string, beamproc)>
+      tag<Static::Name>,  BOOST_MULTI_INDEX_MEMBER(StaticMeta, std::string, node)>,
+    hashed_unique<
+      tag<Static::Vertex>,  BOOST_MULTI_INDEX_MEMBER(StaticMeta,vertex_t,v)>,
+    ordered_unique<
+      tag<Static::CpuAdr>,
+      composite_key<
+        StaticMeta,
+        BOOST_MULTI_INDEX_MEMBER(StaticMeta,uint8_t,cpu),
+        BOOST_MULTI_INDEX_MEMBER(StaticMeta,uint32_t,adr)
+      >
+    >
   >
  > StaticMeta_set;
+
+
+
+
+
 
 typedef StaticMeta_set::iterator pmI;
 

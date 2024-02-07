@@ -29,6 +29,14 @@ namespace DotStr {
 
   }
 
+  namespace StaticAdr {
+    extern const std::string sExternal;
+    extern const std::string sInbox;
+    extern const std::string sRegisters;
+    extern const std::string sThreadData;
+
+  }
+
  namespace Edge {
     // edge properties
     namespace Prop {
@@ -184,6 +192,7 @@ namespace DotStr {
       extern const std::string sDstList;
       extern const std::string sQBuf;
       extern const std::string sMeta;
+      extern const std::string sStatic;
       extern const bool bMetaNode;
       extern const bool bRealNode;
 
