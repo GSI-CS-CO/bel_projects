@@ -106,6 +106,7 @@ class DmSchedRemove(dm_testbench.DmTestbench):
     """Load and start pattern A, a loop of a message and a block.
     Stop the pattern and remove the pattern which is nearly the same, but
     the block has no type. The result is a schedule with only the block.
+    Thena add a node of type switch.
     """
     snoopFile = 'snoop_remove4.csv'
     self.scheduleFile0 = 'remove4-0.dot'
@@ -128,6 +129,7 @@ class DmSchedRemove(dm_testbench.DmTestbench):
     """During snoop start pattern A. This produces messages with 10Hz.
     Download the schedule for later compare.
     Stop the pattern and remove part of the schedule.
+    Add part of the schedule with a switch node instead of tmsg.
     """
     self.addSchedule(self.scheduleFile0)
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'A'), [0], 1, 0)
@@ -136,9 +138,7 @@ class DmSchedRemove(dm_testbench.DmTestbench):
     self.startAndCheckSubprocess([self.binaryDmCmd, self.datamaster, 'stoppattern', 'A'])
     self.delay(0.1)
     lines = self.startAndGetSubprocessOutput([self.binaryDmSched, self.datamaster, 'remove', self.schedulesFolder + self.scheduleFile1], [0], 0, 0)
-    # ~ self.assertEqual(lines[1][1], "../bin/dm-sched: Failed to execute <remove>. Cause: Validation of Neighbourhood: Node 'EvtA' of type 'tmsg' cannot be childless")
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile1])
     self.addSchedule(self.scheduleFile2)
-    # ~ self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'A'), [0], 1, 0)
-    self.delay(1.0)
+    self.delay(0.1)
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile2])
