@@ -244,6 +244,10 @@ class DmPps(dm_testbench.DmTestbench):
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile2])
 
   def testPpsAdd5(self):
+    """Test removing a pattern which is running. This is rejected as expected.
+    When pattern A has finished, remove it.
+    Check that the appropriate number of messages is produced.
+    """
     snoopFile0 = 'snoop_test5_0.csv'
     self.scheduleFile0 = 'pps-test5-0.dot'
     self.scheduleFile1 = 'pps-test5-1.dot'
@@ -264,6 +268,11 @@ class DmPps(dm_testbench.DmTestbench):
     self.deleteFile(snoopFile0)
 
   def actionPpsAdd5(self):
+    """During snoop start pattern A. This produces 2 messages.
+    While the pattern runs, try to remove part of the schedule.
+    This fails (return 250). Later the second try for remove
+    works. The status between the steps is saved for later compare.
+    """
     self.delay(0.1)
     self.startPattern(self.scheduleFile0, 'A')
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile0])
