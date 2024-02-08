@@ -63,3 +63,41 @@ eb-reset: eb-reset.c
 
 eb-asmi: eb-asmi.c
 	$(CC) $(CFLAGS) -I$(WBDIR) -o eb-asmi eb-asmi.c crc8.c crc32.c $(LIBS)
+
+# Yocto area
+
+BINDIR ?= /usr/bin
+
+WRPC_SW_BASE = "../ip_cores/wrpc-sw"
+WRPC_SW_INC = "${WRPC_SW_BASE}/include"
+WRPC_SW_DEV = "${WRPC_SW_BASE}/dev"
+
+EB_TOOLS_TO_BUILD := eb-flash eb-info eb-console eb-config-nv eb-time eb-sflash eb-iflash eb-reset eb-daq-dump eb-fwload eb-i2c-master eb-asmi eb-fg-statistic monitoring/eb-mon monitoring/eb-massmon
+EB_TOOLS_SOURCES  := wb_api.c ${WRPC_SW_DEV}/w1-hw.c ${WRPC_SW_DEV}/w1-temp.c ${WRPC_SW_DEV}/w1.c crc32.c
+DISPLAY_SOURCES   := display/main-x86.c display/disp.c display/disp-oled.c display/disp-lcd.c display/ssd1325_serial_driver.c
+
+eb-tools: eb-tools-compile-tools eb-tools-compile-simple-display
+
+eb-tools-compile-tools:
+	for ITEM in ${EB_TOOLS_TO_BUILD}; do \
+		$(CC) $(CFLAGS) $(LDFLAGS) $$ITEM.c $(EB_TOOLS_SOURCES) -o $$ITEM \
+		-letherbone \
+		-I ${WRPC_SW_INC} -I . -I ${WRPC_SW_BASE}/pp_printf; \
+	done
+
+eb-tools-compile-simple-display:
+	$(CC) $(CFLAGS) $(LDFLAGS) -DSSD1325_TARGET_EMBEDDED=0 -DPLATFORM=linux $(DISPLAY_SOURCES) -o simple-display \
+	-letherbone \
+	-I ./display -I ./../modules/oled_display \
+	-fcommon
+
+eb-tools-install: eb-tools-install-tools eb-tools-install-simple-display
+
+eb-tools-install-tools:
+	install -d $(DESTDIR)$(BINDIR)
+	for ITEM in $(EB_TOOLS_TO_BUILD); do \
+		install -m 0755 $$ITEM $(DESTDIR)$(BINDIR); \
+	done
+
+eb-tools-install-simple-display:
+	install -m 0755 simple-display $(DESTDIR)$(BINDIR)
