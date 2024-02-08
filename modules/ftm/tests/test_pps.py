@@ -201,26 +201,47 @@ class DmPps(dm_testbench.DmTestbench):
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile4])
 
   def testPpsAdd4(self):
-    scheduleFile0 = 'pps-test4-0.dot'
-    scheduleFile1 = 'pps-test4-1.dot'
-    scheduleFile2 = 'pps-test4-2.dot'
-    downloadFile0 = 'pps-test4-0-download.dot'
-    downloadFile1 = 'pps-test4-1-download.dot'
-    downloadFile2 = 'pps-test4-2-download.dot'
-    self.startPattern(scheduleFile0)
-    self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', downloadFile0])
-    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + scheduleFile0, downloadFile0))
-    self.deleteFile(downloadFile0)
-    self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'remove', self.schedulesFolder + scheduleFile1], expectedReturnCode=[250])
-    self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', downloadFile1])
-    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + downloadFile1, downloadFile1))
-    self.deleteFile(downloadFile1)
+    """Test removing a pattern which is running. This is rejected as expected.
+    Then stop the pattern A and remove it.
+    Check that the appropriate number of messages is produced.
+    """
+    snoopFile0 = 'snoop_test4_0.csv'
+    self.scheduleFile0 = 'pps-test4-0.dot'
+    self.scheduleFile1 = 'pps-test4-1.dot'
+    self.scheduleFile2 = 'pps-test4-2.dot'
+    self.downloadFile0 = 'pps-test4-0-download.dot'
+    self.downloadFile1 = 'pps-test4-1-download.dot'
+    self.downloadFile2 = 'pps-test4-2-download.dot'
+    self.snoopToCsvWithAction(snoopFile0, self.actionPpsAdd4, duration=3)
+    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + self.scheduleFile0, self.downloadFile0))
+    self.deleteFile(self.downloadFile0)
+    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + self.downloadFile1, self.downloadFile1))
+    self.deleteFile(self.downloadFile1)
+    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + self.downloadFile2, self.downloadFile2))
+    self.deleteFile(self.downloadFile2)
+    self.analyseFrequencyFromCsv(snoopFile0, column=20, printTable=True, checkValues={
+        '0x0000000000000001': '>10', '0x0000000000000002': '>10'})
+    self.analyseFrequencyFromCsv(snoopFile0, column=8, printTable=True, checkValues={
+        '0x000f': '>10', '0x00ff': '>10'})
+    self.deleteFile(snoopFile0)
+
+  def actionPpsAdd4(self):
+    """During snoop start pattern A. This produces messages at 10Hz.
+    Start the other pattern B, C, D. Each produces one message.
+    Pattern B is removed with self.scheduleFile2.
+    Download the four schedules for later compare.
+    """
+    # remote execution: small delay for snoop to start before the pattern is started.
+    self.delay(0.1)
+    self.startPattern(self.scheduleFile0, 'A')
+    self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile0])
+    self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'remove', self.schedulesFolder + self.scheduleFile1], expectedReturnCode=[250])
+    self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile1])
+    self.delay(2.0)
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'stoppattern', 'A'))
     self.delay(0.5)
-    self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'remove', self.schedulesFolder + scheduleFile2], expectedReturnCode=[0])
-    self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', downloadFile2])
-    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + downloadFile2, downloadFile2))
-    self.deleteFile(downloadFile2)
+    self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'remove', self.schedulesFolder + self.scheduleFile2], expectedReturnCode=[0])
+    self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile2])
 
   def testPpsAdd5(self):
     scheduleFile0 = 'pps-test5-0.dot'
