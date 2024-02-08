@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 14-Mar-2023
+ *  version : 08-Feb-2024
  *
  *  common functions used by various firmware projects
  *
@@ -76,7 +76,7 @@ volatile uint32_t *pWREp;               // WB address of WR Endpoint
 volatile uint32_t *pIOCtrl;             // WB address of IO Control
 volatile uint32_t *pMILPiggy;           // WB address of MIL device bus (MIL piggy)
 volatile uint32_t *pOLED;               // WB address of OLED (display)
-volatile uint16_t *pSbMaster;           // WB address of SCU bus master
+volatile uint32_t *pSbMaster;           // WB address of SCU bus master
 
 // global variables
 uint32_t *pSharedVersion;               // pointer to a "user defined" u32 register; here: publish version
@@ -206,7 +206,7 @@ uint32_t findSbMaster() //find WB address of SCU bus master
   pSbMaster = 0x0;
 
   // get Wishbone address for SCU bus master
-  pSbMaster = (uint16_t *)find_device_adr(GSI, SCU_BUS_MASTER);
+  pSbMaster = find_device_adr(GSI, SCU_BUS_MASTER);
 
   if (!pSbMaster) {DBPRINT1("common-fwlib: can't find SCU bus master\n"); return COMMON_STATUS_ERROR;}
   else                                                      return COMMON_STATUS_OK;
@@ -838,7 +838,7 @@ volatile uint32_t* fwlib_getOLED()
   return pOLED;
 } // fwlib_getMilOLED
 
-volatile uint16_t* fwlib_getSbMaster()
+volatile uint32_t* fwlib_getSbMaster()
 {
   return pSbMaster;
 } // fwlib_getSbMaster
