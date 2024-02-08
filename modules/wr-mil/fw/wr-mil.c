@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Micheal Reese, Mathias Kreider GSI-Darmstadt
- *  version : 02-feb-2024
+ *  version : 08-feb-2024
  *
  *  firmware required for the White Rabbit -> MIL Gateways
  *  
@@ -69,14 +69,14 @@ uint64_t SHARED  dummy = 0;
 // global variables 
 volatile uint32_t *pShared;                // pointer to begin of shared memory region
 volatile uint32_t *pSharedSetUtcTrigger;   // pointer to a "user defined" u32 register; here: the MIL event that triggers the generation of UTC events
-volatile uint32_t *pSharedSetUtcDelay;     // pointer to a "user defined" u32 register; here: delay [us] between the 5 generated UTC MIL events
+volatile uint32_t *pSharedSetUtcUtcDelay;  // pointer to a "user defined" u32 register; here: delay [us] between the 5 generated UTC MIL events
 volatile uint32_t *pSharedSetTrigUtcDelay; // pointer to a "user defined" u32 register; here: delay [us] between the trigger event and the first UTC (and other) generated events
 volatile uint32_t *pSharedSetGid;          // pointer to a "user defined" u32 register; here: GID the gateway will be using
 volatile uint32_t *pSharedSetLatency;      // pointer to a "user defined" u32 register; here: MIL event is generated xxx us+latency after the WR event. The value of latency can be negative
 volatile uint32_t *pSharedSetUtcOffsHi;    // pointer to a "user defined" u32 register; here: delay [ms] between the TAI and the MIL-UTC, high word
 volatile uint32_t *pSharedSetUtcOffsLo;    // pointer to a "user defined" u32 register; here: delay [ms] between the TAI and the MIL-UTC, low word
 volatile uint32_t *pSharedSetReqFillEvt;   // pointer to a "user defined" u32 register; here: if this is written to 1, the gateway will send a fill event as soon as possible
-volatile uint32_t *pSharedSetMilDev;       // pointer to a "user defined" u32 register; here: wishbone address of MIL device; MIL device could be a MIL piggy or a SIO
+volatile uint32_t *pSharedSetMilDev;       // pointer to a "user defined" u32 register; here: MIL device; 0: MIL Piggy; 1..: SIO in slot 1..
 volatile uint32_t *pSharedGetNEvtsHi;      // pointer to a "user defined" u32 register; here: number of translated events, high word
 volatile uint32_t *pSharedGetNEvtsLo;      // pointer to a "user defined" u32 register; here: number of translated events, high word
 volatile uint32_t *pSharedGetNLateEvts;    // pointer to a "user defined" u32 register; here: number of late events
@@ -120,7 +120,7 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
 
   // get address to data
   pSharedSetUtcTrigger       = (uint32_t *)(pShared + (WRMIL_SHARED_SET_UTC_TRIGGER       >> 2));
-  pSharedSetUtcDelay         = (uint32_t *)(pShared + (WRMIL_SHARED_SET_UTC_DELAY         >> 2));
+  pSharedSetUtcUtcDelay      = (uint32_t *)(pShared + (WRMIL_SHARED_SET_UTC_UTC_DELAY     >> 2));
   pSharedSetTrigUtcDelay     = (uint32_t *)(pShared + (WRMIL_SHARED_SET_TRIG_UTC_DELAY    >> 2));
   pSharedSetGid              = (uint32_t *)(pShared + (WRMIL_SHARED_SET_GID               >> 2));
   pSharedSetLatency          = (uint32_t *)(pShared + (WRMIL_SHARED_SET_LATENCY           >> 2));
@@ -132,9 +132,9 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
   pSharedGetNEvtsLo          = (uint32_t *)(pShared + (WRMIL_SHARED_GET_NUM_EVENTS_LO     >> 2));
   pSharedGetNLateEvts        = (uint32_t *)(pShared + (WRMIL_SHARED_GET_LATE_EVENTS       >> 2));
   pSharedGetComLatency       = (uint32_t *)(pShared + (WRMIL_SHARED_GET_COM_LATENCY       >> 2));
-  pSharedGetNLateHisto       = (uint32_t *)(pShared + (WRMIL_SHARED_GET_LATE_HISTOGRAM    >> 2));
-  pSharedGetNMilHisto        = (uint32_t *)(pShared + (WRMIL_SHARED_GET_MIL_HISTOGRAM     >> 2));
-  pSharedGetMsiSlot          = (uint32_t *)(pShared + (WRMIL_SHARED_GET_MSI_SLOT          >> 2));
+  //pSharedGetNLateHisto       = (uint32_t *)(pShared + (WRMIL_SHARED_GET_LATE_HISTOGRAM    >> 2));
+  //pSharedGetNMilHisto        = (uint32_t *)(pShared + (WRMIL_SHARED_GET_MIL_HISTOGRAM     >> 2));
+  //pSharedGetMsiSlot          = (uint32_t *)(pShared + (WRMIL_SHARED_GET_MSI_SLOT          >> 2));
 
   // find address of CPU from external perspective
   idx = 0;
@@ -263,7 +263,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
   switch (ecaAction) {
     // the following two cases handle h=1 group DDS phase measurement
-    case WRMIL_ECADO_BLA :
+    case WRMIL_ECADO_MIL_EVT:
       
       comLatency       = (int32_t)(getSysTime() - recDeadline);
       
@@ -291,7 +291,7 @@ int main(void) {
   uint32_t dummy1;                              // dummy parameter
   uint32_t sharedSize;                          // size of shared memory
   uint32_t *buildID;                            // build ID of lm32 firmware
- 
+
   // init local variables
   buildID        = (uint32_t *)(INT_BASE_ADR + BUILDID_OFFS);                 // required for 'stack check'  
 

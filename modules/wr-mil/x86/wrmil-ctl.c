@@ -49,15 +49,16 @@
 
 // wr-mil
 #include <common-lib.h>                  // COMMON
-//#include <wrmillib.h>                    // API
+#include <wrmillib.h>                    // API
 #include <wr-mil.h>                      // FW
 #include <wrmil_shared_mmap.h>           // LM32
 
 const char* program;
-static int getInfo    = 0;
-static int getVersion = 0;
-static int snoop      = 0;
-static int logLevel   = 0;
+static int getInfo     = 0;
+static int getRegister = 0;
+static int getVersion  = 0;
+static int snoop       = 0;
+static int logLevel    = 0;
 
 static void die(const char* where, eb_status_t status) {
   fprintf(stderr, "%s: %s failed: %s\n",
@@ -69,36 +70,41 @@ static void die(const char* where, eb_status_t status) {
 static void help(void) {
   uint32_t version;
   
-  fprintf(stderr, "Usage: %s [OPTION] <etherbone-device> <wb address MIL> [COMMAND]\n", program);
+  fprintf(stderr, "Usage: %s [OPTION] <etherbone-device> [COMMAND]\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "  -h                  display this help and exit\n"                                );
   fprintf(stderr, "  -e                  display version\n"                                           );
-  fprintf(stderr, "  -i                  show gateway information. Repeat the option"                 );
-  fprintf(stderr, "                      to get more detailed information, e.g. -iii"                 );
-  fprintf(stderr, "  -R                  read register content"                                       );
-  fprintf(stderr, "  -m                  start monitoring loop"                                       );
-  fprintf(stderr, "  -g                  show received MIL events in monitoring loop"                 );
-  fprintf(stderr, "  -b                  bugfix mode: show relevent WR-Events together"               );
-  fprintf(stderr, "                                   with events that trigger MIL-generation"        );
-  fprintf(stderr, "                                   together with snooped MIL events"               );
-  fprintf(stderr, "  -H                  show MIL-event histogram"                                    );
-  fprintf(stderr, "  -r                  Pause gateway for 1 s, and reset"                            );
-  fprintf(stderr, "  -s <MIL domain>     start WR-MIL gateway. 'MIL domain' can be"                   );
-  fprintf(stderr, "                      0: PZU-QR; UNILAC, Source Right"                             );
-  fprintf(stderr, "                      1: PZU-QL; UNILAC, Source Left"                              );     
-  fprintf(stderr, "                      2: PZU-QN; UNILAC, Source High Charge State Injector (HLI)"  );
-  fprintf(stderr, "                      3: PZU-UN; UNILAC, High Charge State Injector (HLI)"         );
-  fprintf(stderr, "                      4: PZU-UH; UNILAC, High Current Injector (HSI)"              );
-  fprintf(stderr, "                      5: PZU-AT; UNILAC, Alvarez Cavities"                         );
-  fprintf(stderr, "                      6: PZU-TK; UNILAC, Transfer Line"                            );
-  fprintf(stderr, "                      7: PZ-SIS18"                                                 );
-  fprintf(stderr, "                      8: PZ-ESR"                                                   );
-  fprintf(stderr, "  -t <trigger>        Set UTC-trigger event [0..255]"                              );
-  fprintf(stderr, "  -o <offset>         Set UTC-offset [s] (value is added to WR-time)"              );
-  fprintf(stderr, "  -d <delay>          Set Trigger-UTC delay [us]"                                  );
-  fprintf(stderr, "  -u <delay>          Set UTC-UTC delay [us]"                                      );
+  fprintf(stderr, "  -i                  show gateway information. Repeat the option\n"               );
+  fprintf(stderr, "                      to get more detailed information, e.g. -iii\n"               );
+  fprintf(stderr, "  -R                  read register content\n"                                     );
+  fprintf(stderr, "  -m                  start monitoring loop\n"                                     );
+  fprintf(stderr, "  -g                  show received MIL events in monitoring loop\n"               );
+  fprintf(stderr, "  -b                  bugfix mode: show relevent WR-Events together\n"             );
+  fprintf(stderr, "                                   with events that trigger MIL-generation\n"      );
+  fprintf(stderr, "                                   together with snooped MIL events\n"             );
+  fprintf(stderr, "  -H                  show MIL-event histogram\n"                                  );
+  fprintf(stderr, "  -r                  Pause gateway for 1 s, and reset\n"                          );
+  fprintf(stderr, "\n");
+  fprintf(stderr, "The following parameters are to be used with command 'configure' \n"               );
+  fprintf(stderr, "with command 'configure', parameters -w and -s are mandatory\n"                    );
+  fprintf(stderr, "  -w <MIL WB addr>    wishbone address of MIL device\n"                            );
+  fprintf(stderr, "  -s <MIL domain>     MIL domain; this can be\n"                                   );
+  fprintf(stderr, "                      0: PZU-QR; UNILAC, Source Right\n"                           );
+  fprintf(stderr, "                      1: PZU-QL; UNILAC, Source Left\n"                            );     
+  fprintf(stderr, "                      2: PZU-QN; UNILAC, Source High Charge State Injector (HLI)\n");
+  fprintf(stderr, "                      3: PZU-UN; UNILAC, High Charge State Injector (HLI)\n"       );
+  fprintf(stderr, "                      4: PZU-UH; UNILAC, High Current Injector (HSI)\n"            );
+  fprintf(stderr, "                      5: PZU-AT; UNILAC, Alvarez Cavities\n"                       );
+  fprintf(stderr, "                      6: PZU-TK; UNILAC, Transfer Line\n"                          );
+  fprintf(stderr, "                      7: PZ-SIS18\n"                                               );
+  fprintf(stderr, "                      8: PZ-ESR\n"                                                 );
+  fprintf(stderr, "  -t <trigger>        evtNo of UTC-trigger event [0..255], default 0xf6\n"         );
+  fprintf(stderr, "  -o <offset>         UTC-offset [s]                     , default yr 2008\n"      );
+  fprintf(stderr, "  -d <delay>          Set Trigger-UTC delay [us]         , default 0\n"            );
+  fprintf(stderr, "  -u <delay>          Set UTC-UTC delay [us]             , default 30\n"           );
   fprintf(stderr, "\n");
   fprintf(stderr, "  configure           command requests state change from IDLE or CONFIGURED -> CONFIGURED\n");
+  fprintf(stderr, "                      'configure' requires parameters -w, -s\n");
   fprintf(stderr, "  startop             command requests state change from CONFIGURED -> OPREADY\n");
   fprintf(stderr, "  stopop              command requests state change from OPREADY -> STOPPING -> CONFIGURED\n");
   fprintf(stderr, "  recover             command tries to recover from state ERROR and transit to state IDLE\n");
@@ -168,7 +174,19 @@ int main(int argc, char** argv) {
   uint32_t nBadStatus;
   uint32_t nBadState;
   uint32_t nTransfer;
-  int32_t  getcomLatency;                      // message latency from ECA
+  uint32_t getUtcTrigger;                      // the MIL event that triggers the generation of UTC events
+  uint32_t getUtcDelay;                        // delay [us] between the 5 generated UTC MIL events
+  uint32_t getTrigUtcDelay;                    // delay [us] between the trigger event and the first UTC (and other) generated events
+  uint32_t getGid;                             // timing group ID for which the gateway is generating MIL events (example: 0x12c is SIS18)
+  int32_t  getLatency;                         // MIL event is generated 100us+latency after the WR event. The value of latency can be negative
+  uint64_t getUtcOffset;                       // delay [ms] between the TAI and the MIL-UTC, high word   
+  uint32_t getRequestFill;                     // if this is written to 1, the gateway will send a fill event as soon as possible
+  uint32_t getMilDevAddr;                      // wishbone address of MIL device; MIL device could be a MIL piggy or a SIO
+  uint64_t getNumEvts;                         // number of translated events from WR to MIL
+  uint32_t getLateEvts;                        // number of translated events that could not be delivered in time
+  uint32_t getComLatency;                      // latency for messages received from via ECA (tDeadline - tNow)) [ns]
+                     
+
 
   uint32_t actState = COMMON_STATE_UNKNOWN;    // actual state of gateway
   uint32_t actNTransfer;                       // actual number of transfers
@@ -178,22 +196,23 @@ int main(int argc, char** argv) {
   uint32_t verFw;
 
   int      i;
+  int      tmp;
 
   uint64_t ebDevice;
   uint32_t cpu;
   uint32_t status;
 
-  int      mil_latency    = -1;
-  int      utc_trigger    = -1;
-  int      trig_utc_delay = -1;
-  
-    
-  
-
+  uint32_t  utc_trigger    = WRMIL_DFLT_UTC_TRIGGER;
+  int32_t   utc_utc_delay  = WRMIL_DFLT_UTC_UTC_DELAY;     
+  int32_t   trig_utc_delay = WRMIL_DFLT_TRIG_UTC_DELAY;
+  uint64_t  utc_offset     = WRMIL_DFLT_UTC_OFFSET;
+  uint32_t  mil_latency    = WRMIL_DFLT_LATENCY;
+  uint32_t  mil_domain     = -1;
+  uint32_t  mil_wb_addr    = -1;
 
   program = argv[0];    
 
-  while ((opt = getopt(argc, argv, "s:t:o:d:u:heiRmgbHr")) != -1) {
+  while ((opt = getopt(argc, argv, "s:t:o:d:u:w:heiRmgbHr")) != -1) {
     switch (opt) {
       case 'e':
         getVersion = 1;
@@ -221,23 +240,43 @@ int main(int argc, char** argv) {
         return 0;
       case 'l':
         mil_latency = strtoull(optarg, &tail, 0);
-        if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1);
+        if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1;}
         break;
       case 't':
         utc_trigger = strtoull(optarg, &tail, 0);
-        if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1);
+        if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1;}
         break;
       case 'o':
-        utc_offset = strtoull(optarg, &tail, 0);
-        if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1);
+        utc_offset = strtoull(optarg, &tail, 0) * 1000; // convert to ms
+        if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1;}
         break;
       case 'd':
         trig_utc_delay = strtoull(optarg, &tail, 0);
-        if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1);
+        if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1;}
         break;
       case 'u':
         utc_utc_delay = strtoull(optarg, &tail, 0);
-        if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1);
+        if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1;}
+        break;
+      case 'w':
+        mil_wb_addr   = strtoull(optarg, &tail, 0);
+        if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1;}
+        break;
+      case 's':
+        tmp           = strtoull(optarg, &tail, 0);
+        if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1;}
+        switch (tmp) {
+          case 0: mil_domain = 0x1c0; break;
+          case 1: mil_domain = 0x1c1; break;
+          case 2: mil_domain = 0x1c2; break;
+          case 3: mil_domain = 0x1c3; break;
+          case 4: mil_domain = 0x1c4; break;
+          case 5: mil_domain = 0x1c5; break;
+          case 6: mil_domain = 0x1c6; break;
+          case 7: mil_domain = 0x12c; break;
+          case 8: mil_domain = 0x154; break;
+          default: fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1; 
+        } // switch tmp
         break;
         /*      case 's':
         snoop = 1;
@@ -267,7 +306,7 @@ int main(int argc, char** argv) {
   }
   
   if (optind >= argc) {
-    fprintf(stderr, "%s: expecting one non-optional argument: <etherbone-device>\n", program);
+    fprintf(stderr, "%s: expecting non-optional argument: <etherbone-device>\n", program);
     fprintf(stderr, "\n");
     help();
     return 1;
@@ -278,98 +317,85 @@ int main(int argc, char** argv) {
   if (optind+1 < argc)  command = argv[++optind];
   else command = NULL;
 
-  if ((status =  b2b_firmware_open(&ebDevice, devName, 0, &cpu)) != COMMON_STATUS_OK) die("firmware open", status);
+  if ((status =  wrmil_firmware_open(&ebDevice, devName, 0, &cpu)) != COMMON_STATUS_OK) die("firmware open", status);
   
   if (getVersion) {
-    b2b_version_library(&verLib);
-    printf("b2b: library (firmware) version %s",  b2b_version_text(verLib));     
-    b2b_version_firmware(ebDevice, &verFw);
-    printf(" (%s)\n",  b2b_version_text(verFw));     
+    wrmil_version_library(&verLib);
+    printf("b2b: library (firmware) version %s",  wrmil_version_text(verLib));     
+    wrmil_version_firmware(ebDevice, &verFw);
+    printf(" (%s)\n",  wrmil_version_text(verFw));     
   } // if getVersion
 
   if (getInfo) {
     // status
-    b2b_info_read(ebDevice, &getsid, &getgid, &getmode, &getTH1Ext, &getnHExt, &getTH1Inj, &getnHInj, &getTBeat, &getcPhase, &getcTrigExt, &getcTrigInj, &getcomLatency, 0);
-    b2b_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
+    wrmil_info_read(ebDevice, &getUtcTrigger, &getUtcDelay, &getTrigUtcDelay, &getGid, &getLatency, &getUtcOffset, &getRequestFill, &getMilDevAddr, &getNumEvts, &getLateEvts, &getComLatency, 0);
+    wrmil_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
 
-    printTransferHeader();
-    printTransfer(nTransfer, getsid, getgid, getmode);
-    printf(", %s (%6u), ", b2b_state_text(state), nBadState);
-    if ((statusArray >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);
-    else                                         printf("NOTOK(%6u)\n", nBadStatus);
     // print set status bits (except OK)
     for (i = COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
-      if ((statusArray >> i) & 0x1)  printf("  ------ status bit is set : %s\n", b2b_status_text(i));
+      if ((statusArray >> i) & 0x1)  printf("  ------ status bit is set : %s\n", wrmil_status_text(i));
     } // for i
   } // if getInfo
 
   if (command) {
     // state required to give proper warnings
-    b2b_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
+    wrmil_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
 
     // request state changes
     if (!strcasecmp(command, "configure")) {
-      b2b_cmd_configure(ebDevice);
-      if ((state != COMMON_STATE_CONFIGURED) && (state != COMMON_STATE_IDLE)) printf("b2b: WARNING command has no effect (not in state CONFIGURED or IDLE)\n");
+      if (mil_domain  == -1) {fprintf(stderr, "parameter -s is non-optional\n"); return 1;}
+      if (mil_wb_addr == -1) {fprintf(stderr, "parameter -w is non-optional\n"); return 1;}
+      if ((state != COMMON_STATE_CONFIGURED) && (state != COMMON_STATE_IDLE)) printf("wr-mil: WARNING command has no effect (not in state CONFIGURED or IDLE)\n");
+      else {
+        wrmil_upload(ebDevice, utc_trigger, utc_utc_delay, trig_utc_delay, mil_domain, mil_latency, utc_offset, 0, mil_wb_addr);
+        wrmil_cmd_configure(ebDevice);
+      } // else state
     } // "configure"
 
     if (!strcasecmp(command, "startop")) {
-      b2b_cmd_startop(ebDevice);
+      wrmil_cmd_startop(ebDevice);
       if (state != COMMON_STATE_CONFIGURED) printf("b2b: WARNING command has no effect (not in state CONFIGURED)\n");
     } // "startop"
 
     if (!strcasecmp(command, "stopop")) {
-      b2b_cmd_stopop(ebDevice);
+      wrmil_cmd_stopop(ebDevice);
       if (state != COMMON_STATE_OPREADY) printf("b2b: WARNING command has no effect (not in state OPREADY)\n");
     } // "startop"
 
     if (!strcasecmp(command, "recover")) {
-      b2b_cmd_recover(ebDevice);
+      wrmil_cmd_recover(ebDevice);
       if (state != COMMON_STATE_ERROR) printf("b2b: WARNING command has no effect (not in state ERROR)\n");
     } // "recover"
 
     if (!strcasecmp(command, "idle")) {
-      b2b_cmd_idle(ebDevice);
+      wrmil_cmd_idle(ebDevice);
       if (state != COMMON_STATE_CONFIGURED) printf("b2b: WARNING command has no effect (not in state CONFIGURED)\n");
     } // "idle"
     // diagnostics
 
     if (!strcasecmp(command, "cleardiag")) {
-      b2b_cmd_cleardiag(ebDevice);
+      wrmil_cmd_cleardiag(ebDevice);
       if (state != COMMON_STATE_OPREADY) printf("b2b: WARNING command has no effect (not in state OPREADY)\n");
     } // "cleardiag"
 
     if (!strcasecmp(command, "diag")) {
-      b2b_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 1);
+      wrmil_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 1);
       for (i = COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
-        if ((statusArray >> i) & 0x1)  printf("    status bit is set : %s\n", b2b_status_text(i));
+        if ((statusArray >> i) & 0x1)  printf("    status bit is set : %s\n", wrmil_status_text(i));
       } // for i
-      b2b_info_read(ebDevice, &getsid, &getgid, &getmode, &getTH1Ext, &getnHExt, &getTH1Inj, &getnHInj, &getTBeat, &getcPhase, &getcTrigExt, &getcTrigInj, &getcomLatency, 0);
-      printDiags(getsid, getgid, getmode, getTH1Ext, getnHExt, getTH1Inj, getnHInj, getTBeat, getcPhase, getcTrigExt, getcTrigInj, getcomLatency);
+      wrmil_info_read(ebDevice, &getUtcTrigger, &getUtcDelay, &getTrigUtcDelay, &getGid, &getLatency, &getUtcOffset, &getRequestFill, &getMilDevAddr, &getNumEvts, &getLateEvts, &getComLatency, 1);
     } // "diag"
-
-    if (!strcasecmp(command, "submit")) {
-      b2b_cmd_submit(ebDevice);
-      if (state != COMMON_STATE_OPREADY) printf("b2b: WARNING command has no effect (not in state OPREADY)\n");
-    } // "submit"
-    
-    if (!strcasecmp(command, "clearconfig")) {
-      b2b_cmd_clearConfig(ebDevice);      
-      if (state != COMMON_STATE_OPREADY) printf("b2b: WARNING command has no effect (not in state OPREADY)\n");
-    } // "clearconfig"
   } //if command
 
 if (snoop) {
-    printf("b2b: continous monitoring of gateway, loglevel = %d\n", logLevel);
+    printf("wr-mil: continous monitoring of gateway, loglevel = %d\n", logLevel);
 
     actNTransfer   = 0;
     actState       = COMMON_STATE_UNKNOWN;
     actStatusArray = 0x1 << COMMON_STATUS_OK;
 
-    printTransferHeader();
-
     while (1) {
-      b2b_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
+      wrmil_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
       switch(state) {
       case COMMON_STATE_OPREADY :
         if (actNTransfer != nTransfer) sleepTime = COMMON_DEFAULT_TIMEOUT * 1000 * 2;        // ongoing transfer: reduce polling rate ...
@@ -387,14 +413,13 @@ if (snoop) {
       if ((actNTransfer   != nTransfer)    && (logLevel <= COMMON_LOGLEVEL_ONCE))    {printFlag = 1; actNTransfer   = nTransfer;}
 
       if (printFlag) {
-        b2b_info_read(ebDevice, &getsid, &getgid, &getmode, &getTH1Ext, &getnHExt, &getTH1Inj, &getnHInj, &getTBeat, &getcPhase, &getcTrigExt, &getcTrigInj, &getcomLatency, 0);
-        printTransfer(nTransfer, getsid, getgid, getmode); 
+        wrmil_info_read(ebDevice, &getUtcTrigger, &getUtcDelay, &getTrigUtcDelay, &getGid, &getLatency, &getUtcOffset, &getRequestFill, &getMilDevAddr, &getNumEvts, &getLateEvts, &getComLatency, 0);
         printf(", %s (%6u), ",  comlib_stateText(state), nBadState);
         if ((statusArray >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);
         else printf("NOTOK(%6u)\n", nBadStatus);
         // print set status bits (except OK)
         for (i= COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
-          if ((statusArray >> i) & 0x1)  printf("  ------ status bit is set : %s\n", b2b_status_text(i));
+          if ((statusArray >> i) & 0x1)  printf("  ------ status bit is set : %s\n", wrmil_status_text(i));
         } // for i
       } // if printFlag
 
@@ -406,7 +431,7 @@ if (snoop) {
   } // if snoop
 
   // close connection to firmware
-  if ((status = b2b_firmware_close(ebDevice)) != COMMON_STATUS_OK) die("device close", status);
+  if ((status = wrmil_firmware_close(ebDevice)) != COMMON_STATUS_OK) die("device close", status);
 
   return exitCode;
 }
