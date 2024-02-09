@@ -214,12 +214,18 @@ uint32_t extern_entryActionConfigured()
   // get address of MIL device sending MIL telegrams; 0 is MIL piggy
   if (*pSharedSetMilDev == 0){
     pMilSend = fwlib_getMilPiggy();
-    if (!pMilSend) return COMMON_STATUS_OUTOFRANGE;
+    if (!pMilSend) {
+      DBPRINT1("wr-mil: ERROR - can't find MIL device; sender\n");
+      return COMMON_STATUS_OUTOFRANGE;
+    } // if !pMilSend
   } // if SetMilDev
   else {
     // SCU slaves have offsets 0x20000, 0x40000... for slots 1, 2 ...
     pMilSend = fwlib_getSbMaster();
-    if (!pMilSend) return COMMON_STATUS_OUTOFRANGE;
+    if (!pMilSend) {
+      DBPRINT1("wr-mil: ERROR - can't find MIL device; sender\n");
+      return COMMON_STATUS_OUTOFRANGE;
+    } // if !pMilSend
     else pMilSend += *pSharedSetMilDev * 0x20000;
   } // else SetMilDev
 
@@ -232,14 +238,19 @@ uint32_t extern_entryActionConfigured()
   // get address of MIL device receiving MIL telegrams; only piggy is supported
   if (*pSharedSetMilMon){
     pMilRec = fwlib_getMilPiggy();
-    if (!pMilRec) return COMMON_STATUS_OUTOFRANGE;
+    if (!pMilRec) {
+      DBPRINT1("wr-mil: ERROR - can't find MIL device; receiver\n");
+      return COMMON_STATUS_OUTOFRANGE;
+    } // if !pMilRec
+    // reset MIL receiver and wait
+    if ((status = resetPiggyDevMil(pMilRec))  != MIL_STAT_OK) {
+      DBPRINT1("wr-mil: ERROR - can't reset MIL device; receiver\n");
+      return WRMIL_STATUS_MIL;
+    }  // if reset
   } // if SetMilMon
-  
-  // reset MIL receiver and wait
-  if ((status = resetPiggyDevMil(pMilRec))  != MIL_STAT_OK) {
-    DBPRINT1("wr-mil: ERROR - can't reset MIL device; receiver\n");
-    return WRMIL_STATUS_MIL;
-  }  // if reset
+
+  // if everything is ok, we must return with COMMON_STATUS_OK
+  if (status == MIL_STAT_OK) status = COMMON_STATUS_OK;
 
   return status;
 } // extern_entryActionConfigured
