@@ -3,7 +3,7 @@
  *
  *  created : 2014
  *  author  : Dietrich Beck, Michael Reese GSI-Darmstadt
- *  version : 02-Feb-2025
+ *  version : 09-Feb-2025
  *
  * Command-line interface for wr-mil
  *
@@ -181,7 +181,8 @@ int main(int argc, char** argv) {
   int32_t  getLatency;                         // MIL event is generated 100us+latency after the WR event. The value of latency can be negative
   uint64_t getUtcOffset;                       // delay [ms] between the TAI and the MIL-UTC, high word   
   uint32_t getRequestFill;                     // if this is written to 1, the gateway will send a fill event as soon as possible
-  uint32_t getMilDevAddr;                      // wishbone address of MIL device; MIL device could be a MIL piggy or a SIO
+  uint32_t getMilDev;                          // MIL device for sending MIL messages; 0: MIL Piggy; 1..: SIO in slot 1..
+  uint32_t getMilMon;                          // 1: monitor MIL events; 0; don't monitor MIL events
   uint64_t getNumEvts;                         // number of translated events from WR to MIL
   uint32_t getLateEvts;                        // number of translated events that could not be delivered in time
   uint32_t getComLatency;                      // latency for messages received from via ECA (tDeadline - tNow)) [ns]
@@ -208,7 +209,8 @@ int main(int argc, char** argv) {
   uint64_t  utc_offset     = WRMIL_DFLT_UTC_OFFSET;
   uint32_t  mil_latency    = WRMIL_DFLT_LATENCY;
   uint32_t  mil_domain     = -1;
-  uint32_t  mil_wb_addr    = -1;
+  uint32_t  mil_wb_dev     = -1;
+  uint32_t  mil_wb_mon     = 0;
 
   program = argv[0];    
 
@@ -259,7 +261,7 @@ int main(int argc, char** argv) {
         if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1;}
         break;
       case 'w':
-        mil_wb_addr   = strtoull(optarg, &tail, 0);
+        mil_wb_dev   = strtoull(optarg, &tail, 0);
         if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1;}
         break;
       case 's':
@@ -328,7 +330,7 @@ int main(int argc, char** argv) {
 
   if (getInfo) {
     // status
-    wrmil_info_read(ebDevice, &getUtcTrigger, &getUtcDelay, &getTrigUtcDelay, &getGid, &getLatency, &getUtcOffset, &getRequestFill, &getMilDevAddr, &getNumEvts, &getLateEvts, &getComLatency, 0);
+    wrmil_info_read(ebDevice, &getUtcTrigger, &getUtcDelay, &getTrigUtcDelay, &getGid, &getLatency, &getUtcOffset, &getRequestFill, &getMilDev, &getMilMon, &getNumEvts, &getLateEvts, &getComLatency, 0);
     wrmil_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
 
     // print set status bits (except OK)
@@ -344,10 +346,10 @@ int main(int argc, char** argv) {
     // request state changes
     if (!strcasecmp(command, "configure")) {
       if (mil_domain  == -1) {fprintf(stderr, "parameter -s is non-optional\n"); return 1;}
-      if (mil_wb_addr == -1) {fprintf(stderr, "parameter -w is non-optional\n"); return 1;}
+      if (mil_wb_dev  == -1) {fprintf(stderr, "parameter -w is non-optional\n"); return 1;}
       if ((state != COMMON_STATE_CONFIGURED) && (state != COMMON_STATE_IDLE)) printf("wr-mil: WARNING command has no effect (not in state CONFIGURED or IDLE)\n");
       else {
-        wrmil_upload(ebDevice, utc_trigger, utc_utc_delay, trig_utc_delay, mil_domain, mil_latency, utc_offset, 0, mil_wb_addr);
+        wrmil_upload(ebDevice, utc_trigger, utc_utc_delay, trig_utc_delay, mil_domain, mil_latency, utc_offset, 0, mil_wb_dev, mil_wb_mon);
         wrmil_cmd_configure(ebDevice);
       } // else state
     } // "configure"
@@ -383,7 +385,7 @@ int main(int argc, char** argv) {
       for (i = COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
         if ((statusArray >> i) & 0x1)  printf("    status bit is set : %s\n", wrmil_status_text(i));
       } // for i
-      wrmil_info_read(ebDevice, &getUtcTrigger, &getUtcDelay, &getTrigUtcDelay, &getGid, &getLatency, &getUtcOffset, &getRequestFill, &getMilDevAddr, &getNumEvts, &getLateEvts, &getComLatency, 1);
+      wrmil_info_read(ebDevice, &getUtcTrigger, &getUtcDelay, &getTrigUtcDelay, &getGid, &getLatency, &getUtcOffset, &getRequestFill, &getMilDev, &getMilMon, &getNumEvts, &getLateEvts, &getComLatency, 1);
     } // "diag"
   } //if command
 
@@ -413,7 +415,7 @@ if (snoop) {
       if ((actNTransfer   != nTransfer)    && (logLevel <= COMMON_LOGLEVEL_ONCE))    {printFlag = 1; actNTransfer   = nTransfer;}
 
       if (printFlag) {
-        wrmil_info_read(ebDevice, &getUtcTrigger, &getUtcDelay, &getTrigUtcDelay, &getGid, &getLatency, &getUtcOffset, &getRequestFill, &getMilDevAddr, &getNumEvts, &getLateEvts, &getComLatency, 0);
+        wrmil_info_read(ebDevice, &getUtcTrigger, &getUtcDelay, &getTrigUtcDelay, &getGid, &getLatency, &getUtcOffset, &getRequestFill, &getMilDev, &getMilMon, &getNumEvts, &getLateEvts, &getComLatency, 0);
         printf(", %s (%6u), ",  comlib_stateText(state), nBadState);
         if ((statusArray >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);
         else printf("NOTOK(%6u)\n", nBadStatus);

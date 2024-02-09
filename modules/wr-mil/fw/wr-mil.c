@@ -37,7 +37,18 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define WRMIL_FW_VERSION      0x000001                                  // make this consistent with makefile
+#define WRMIL_FW_VERSION      0x000001    // make this consistent with makefile
+
+#define MILSEND_LATENCY        25000      // nanoseconds from pushing to mil piggy/sio queue to last transition on the mil bus
+#define MICROSECONDS           1000       // so many nanoseconds per microsecond
+#define RESET_INHIBIT_COUNTER  1000       // count so many main loops before the inhibit for fill event sending is released
+#define N_UTC_EVENTS           5          // number of generated EVT_UTC events
+#define ECA_QUEUE_LM32_TAG     0x00000004 // the tag for ECA actions we (the LM32) want to receive
+#define WR_MIL_GATEWAY_LATENCY 70650      // additional latency in units of nanoseconds
+                                          // this value was determined by measuring the time difference
+                                          // of the MIL event rising edge and the ECA output rising edge (no offset)
+                                          // and tuning this time difference to 100.0(5)us
+
 
 // standard includes
 #include <stdio.h>
@@ -53,6 +64,7 @@
 #include "mini_sdb.h"                                                   // sdb stuff
 #include "aux.h"                                                        // cpu and IRQ
 #include "uart.h"                                                       // WR console
+#include "../../../top/gsi_scu/scu_mil.h"                               // register layout of 'MIL macro'
 
 // includes for this project 
 #include <common-defs.h>                                                // common defs for firmware
@@ -76,22 +88,31 @@ volatile uint32_t *pSharedSetLatency;      // pointer to a "user defined" u32 re
 volatile uint32_t *pSharedSetUtcOffsHi;    // pointer to a "user defined" u32 register; here: delay [ms] between the TAI and the MIL-UTC, high word
 volatile uint32_t *pSharedSetUtcOffsLo;    // pointer to a "user defined" u32 register; here: delay [ms] between the TAI and the MIL-UTC, low word
 volatile uint32_t *pSharedSetReqFillEvt;   // pointer to a "user defined" u32 register; here: if this is written to 1, the gateway will send a fill event as soon as possible
-volatile uint32_t *pSharedSetMilDev;       // pointer to a "user defined" u32 register; here: MIL device; 0: MIL Piggy; 1..: SIO in slot 1..
+volatile uint32_t *pSharedSetMilDev;       // pointer to a "user defined" u32 register; here: MIL device for sending MIL messages; 0: MIL Piggy; 1..: SIO in slot 1..
+volatile uint32_t *pSharedSetMilMon;       // pointer to a "user defined" u32 register; here: 1: monitor MIL events; 0; don't monitor MIL events
 volatile uint32_t *pSharedGetNEvtsHi;      // pointer to a "user defined" u32 register; here: number of translated events, high word
 volatile uint32_t *pSharedGetNEvtsLo;      // pointer to a "user defined" u32 register; here: number of translated events, high word
 volatile uint32_t *pSharedGetNLateEvts;    // pointer to a "user defined" u32 register; here: number of late events
-volatile uint32_t *pSharedGetComLatency;   // pointer to a "user defined" u32 register; here: 
-volatile uint32_t *pSharedGetNLateHisto;   // pointer to a "user defined" u32 register; here: dummy register to indicate position after the last valid register
-volatile uint32_t *pSharedGetNMilHisto;    // pointer to a "user defined" u32 register; here: dummy register to indicate position after the last valid register
-volatile uint32_t *pSharedGetMsiSlot;      // pointer to a "user defined" u32 register; here: MSI slot is stored here
+volatile uint32_t *pSharedGetComLatency;   // pointer to a "user defined" u32 register; here: communicatin latency for events received by ECA
+//volatile uint32_t *pSharedGetNLateHisto;   // pointer to a "user defined" u32 register; here: dummy register to indicate position after the last valid register
+//volatile uint32_t *pSharedGetNMilHisto;    // pointer to a "user defined" u32 register; here: dummy register to indicate position after the last valid register
+//volatile uint32_t *pSharedGetMsiSlot;      // pointer to a "user defined" u32 register; here: MSI slot is stored here
 
 
 uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM
-uint32_t *milDev;                       // address of MIL device (piggy or SIO)
+volatile uint32_t *pMilSend;            // address of MIL device sending timing messages, usually this will be a SIO
+volatile uint32_t *pMilRec;             // address of MIL device receiving timing messages, usually this will be a MIL piggy
 
 uint64_t statusArray;                   // all status infos are ORed bit-wise into statusArray, statusArray is then published
 uint64_t nMessages;                     // # of sent messages
 int32_t  comLatency;                    // latency for messages received via ECA
+
+uint32_t utc_trigger;
+int32_t  utc_utc_delay;
+int32_t  trig_utc_delay;
+uint64_t utc_offset;
+uint32_t mil_latency;
+uint32_t mil_domain;
 
 // debug 
 uint64_t t1, t2;
@@ -128,6 +149,7 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
   pSharedSetUtcOffsLo        = (uint32_t *)(pShared + (WRMIL_SHARED_SET_UTC_OFFSET_LO     >> 2));
   pSharedSetReqFillEvt       = (uint32_t *)(pShared + (WRMIL_SHARED_SET_REQUEST_FILL_EVT  >> 2));
   pSharedSetMilDev           = (uint32_t *)(pShared + (WRMIL_SHARED_SET_MIL_DEV           >> 2));
+  pSharedSetMilMon           = (uint32_t *)(pShared + (WRMIL_SHARED_SET_MIL_MON           >> 2));
   pSharedGetNEvtsHi          = (uint32_t *)(pShared + (WRMIL_SHARED_GET_NUM_EVENTS_HI     >> 2));
   pSharedGetNEvtsLo          = (uint32_t *)(pShared + (WRMIL_SHARED_GET_NUM_EVENTS_LO     >> 2));
   pSharedGetNLateEvts        = (uint32_t *)(pShared + (WRMIL_SHARED_GET_LATE_EVENTS       >> 2));
@@ -186,12 +208,38 @@ uint32_t extern_entryActionConfigured()
 {
   uint32_t status = COMMON_STATUS_OK;
 
-  // get address of MIL device on the Wishbone bus
-  milDev = *pSharedSetMilDev;
-  if (milDev == 0x0) return COMMON_STATUS_OUTOFRANGE;
-
   // get and publish NIC data
   fwlib_publishNICData(); 
+
+  // get address of MIL device sending MIL telegrams; 0 is MIL piggy
+  if (*pSharedSetMilDev == 0){
+    pMilSend = fwlib_getMilPiggy();
+    if (!pMilSend) return COMMON_STATUS_OUTOFRANGE;
+  } // if SetMilDev
+  else {
+    // SCU slaves have offsets 0x20000, 0x40000... for slots 1, 2 ...
+    pMilSend = fwlib_getSbMaster();
+    if (!pMilSend) return COMMON_STATUS_OUTOFRANGE;
+    else pMilSend += *pSharedSetMilDev * 0x20000;
+  } // else SetMilDev
+
+  // reset MIL sender and wait
+  if ((status = resetPiggyDevMil(pMilSend))  != MIL_STAT_OK) {
+    DBPRINT1("wr-mil: ERROR - can't reset MIL device; sender\n");
+    return WRMIL_STATUS_MIL;
+  }  // if reset
+
+  // get address of MIL device receiving MIL telegrams; only piggy is supported
+  if (*pSharedSetMilMon){
+    pMilRec = fwlib_getMilPiggy();
+    if (!pMilRec) return COMMON_STATUS_OUTOFRANGE;
+  } // if SetMilMon
+  
+  // reset MIL receiver and wait
+  if ((status = resetPiggyDevMil(pMilRec))  != MIL_STAT_OK) {
+    DBPRINT1("wr-mil: ERROR - can't reset MIL device; receiver\n");
+    return WRMIL_STATUS_MIL;
+  }  // if reset
 
   return status;
 } // extern_entryActionConfigured
@@ -214,15 +262,25 @@ uint32_t extern_entryActionOperation()
   i = 0;
   while (fwlib_wait4ECAEvent(1000, &tDummy, &eDummy, &pDummy, &fDummy, &flagDummy1, &flagDummy2, &flagDummy3, &flagDummy4) !=  COMMON_ECADO_TIMEOUT) {i++;}
   DBPRINT1("wr-mil: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
-
+  // init set values
+    
   // init get values
   *pSharedGetNEvtsHi        = 0x0;
   *pSharedGetNEvtsLo        = 0x0;
   *pSharedGetNLateEvts      = 0x0;
   *pSharedGetComLatency     = 0x0;
-  *pSharedGetNLateHisto     = 0x0;
-  *pSharedGetNMilHisto      = 0x0; 
-  *pSharedGetMsiSlot        = 0x0;   
+  //*pSharedGetNLateHisto     = 0x0;
+  //*pSharedGetNMilHisto      = 0x0; 
+  //*pSharedGetMsiSlot        = 0x0;
+
+  // int set values
+  utc_trigger    = *pSharedSetUtcTrigger;
+  utc_utc_delay  = *pSharedSetUtcUtcDelay;
+  trig_utc_delay = *pSharedSetTrigUtcDelay;
+  utc_offset     = (uint64_t)(*pSharedSetUtcOffsHi) << 32;
+  utc_offset    |= (uint64_t)(*pSharedSetUtcOffsLo);
+  mil_latency    = *pSharedSetLatency;
+  mil_domain     = *pSharedSetGid;
 
   return COMMON_STATUS_OK;
 } // extern_entryActionOperation
@@ -232,6 +290,75 @@ uint32_t extern_exitActionOperation()
 {
   return COMMON_STATUS_OK;
 } // extern_exitActionOperation
+
+
+// conversion of WR timing message from Data Master to MIL telegram; original code from wr-mil-gw (Michael Reese, Peter Kainberger)
+// note that the mapping has been changed
+uint32_t convert_WReventID_to_milTelegram(uint64_t evtId, uint32_t *milTelegram)
+{
+  // EventID 
+  // |---------------evtIdHi---------------|  |---------------evtIdLo---------------|
+  // FFFF GGGG GGGG GGGG EEEE EEEE EEEE FFFF  SSSS SSSS SSSS BBBB BBBB BBBB BBRR RRRR
+  //                          cccc cccc irrr  ssss ssss vvvv
+  //                                               xxxx xxxx
+  //                              
+  // F: FID(4)
+  // G: GID(12)
+  // E: EVTNO(12) = evtNo
+  // F: FLAGS(4)
+  // S: SID(12)
+  // B: BPID(14)
+  // R: Reserved(10)
+  // s: status bits
+  // v: virtAcc = virtual accellerator
+  // c: evtCode = MIL relevant part of the evtNo (only 0..255)
+  // i: InBeam(1)
+  // r: reserved(3)
+  // x: other content for special events like (code=200..208 command events)
+  //    or (code=200 beam status event) 
+
+  uint32_t evtNo;                         // 12 bit evtNo of WR message
+  uint32_t evtCode;
+  uint32_t tophalf;                       // the top half bits (15..8) of the mil telegram; the meaning depends on the evtCode.
+  uint32_t virtAcc;                       // # of virtual accelerator
+  uint32_t statusBits;                    // top bits (12..15) the the mil telegram
+  uint32_t pzKennung;                     // for beamtime only (SIS18, ESR)
+  uint32_t gid;                           // group ID, WR message
+
+  evtNo      = (evtId >> 36)       & 0x00000fff;       // 12 bits
+  evtCode    = evtNo               & 0x000000ff;       // mil telegram is limited to 0..255
+  statusBits = evtId               & 0x0000000f;       // lower 4 bits of evtIdReserved
+  virtAcc    = (evtId >> 20)       & 0x0000000f;       // lower 4 bits of SID
+  gid        = (evtId >> 48)       & 0x00000fff;       // GID
+
+  tophalf    = statusBits << 4;
+  tophalf   |= virtAcc;
+
+  // legacy code for the 2024 beam time - or maybe a special case for ring machines
+  if ((gid == SIS18_RING || gid == ESR_RING)) {
+    switch (gid) {
+      case SIS18_RING: pzKennung = 0x1; break;
+      case ESR_RING:   pzKennung = 0x2; break;
+      default :        pzKennung = 0x0; break;
+    } // switch gid
+    
+    // commands: top half of the MIL bits (15..8) are extracted from the status bits of EventID
+    if (evtCode >= 200 && evtCode <= 208) {
+      // tophalf = tophalf;  // no modification (just take all bits from the sequence-ID)
+    } // if evtCode
+    else if (evtCode == 255) { // command event: top half of the MIL bits (15..8) are pppp1111, p is pzKennung
+    tophalf = ( pzKennung << 4 ) | 0xf;          
+    } // evtCode 255
+    else {                                // all other events: top half of MIL bits (15..8) are ppppvvvv, p is pzKennung
+      tophalf = ( pzKennung << 4 ) | virtAcc;
+    } // else evtCode 255
+  } // if ring machine
+
+  *milTelegram = (tophalf << 8) | evtCode; 
+                                           
+  // For MIL events, the upper 4 bits ov evtNo are zero
+  return (evtNo & 0x00000f00) == 0; 
+} // convert_WReventID_to_milTelegram
 
 
 // do action of state operation: This is THE central code of this firmware
@@ -256,6 +383,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint64_t sendEvtId;                                         // evtid to send
   uint64_t sendParam;                                         // parameter to send
   uint32_t sendTEF;                                           // TEF to send
+  static uint64_t previous_time = 0;                          // protect for nonsense high frequency bursts
+  uint32_t milTelegram;                                       // telegram to be sent
   
   status    = actStatus;
 
@@ -264,10 +393,26 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   switch (ecaAction) {
     // the following two cases handle h=1 group DDS phase measurement
     case WRMIL_ECADO_MIL_EVT:
+      comLatency    = (int32_t)(getSysTime() - recDeadline);
+      convert_WReventID_to_milTelegram(recEvtId, &milTelegram);
+
+      // build timing message and inject into ECA
+
+      // deadline
+      sendDeadline  = recDeadline + mil_latency * MICROSECONDS - MILSEND_LATENCY;
+      // protect from nonsense hi-frequency bursts
+      if (sendDeadline < previous_time + MILSEND_LATENCY) sendDeadline = previous_time + MILSEND_LATENCY;
+      previous_time = sendDeadline;
+
+      // evtID
+      sendEvtId     = recEvtId;
+      sendEvtId    |= (uint64_t)0xfff << 48;  // overwrite GID with 0xfff to signal for local message
+
+      // param
+      sendParam     = (uint64_t)milTelegram & 0xffffffff;
+      fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0);
       
-      comLatency       = (int32_t)(getSysTime() - recDeadline);
-      
-      break; // case BLA
+      break; 
      
     default :                                                         // flush ECA queue
       flagIsLate = 0;                                                 // ingore late events

@@ -137,7 +137,8 @@ extern "C" {
                            int32_t  *latency,                    // MIL event is generated 100us+latency after the WR event. The value of latency can be negative
                            uint64_t *utcOffset,                  // delay [ms] between the TAI and the MIL-UTC, high word   
                            uint32_t *requestFill,                // if this is written to 1, the gateway will send a fill event as soon as possible
-                           uint32_t *milDevAddr,                 // wishbone address of MIL device; MIL device could be a MIL piggy or a SIO
+                           uint32_t *milDev,                     // wishbone address of MIL device; MIL device could be a MIL piggy or a SIO
+                           uint32_t *milMon,                     // 1: monitor MIL events; 0; don't monitor MIL events
                            uint64_t *numEvts,                    // number of translated events from WR to MIL
                            uint32_t *lateEvts,                   // number of translated events that could not be delivered in time
                            uint32_t *comLatency,                 // latency for messages received from via ECA (tDeadline - tNow)) [ns]
@@ -164,7 +165,8 @@ extern "C" {
                         int32_t  latency,                        // MIL event is generated 100us+latency after the WR event. The value of latency can be negative
                         uint64_t utcOffset,                      // delay [ms] between the TAI and the MIL-UTC, high word   
                         uint32_t requestFill,                    // if this is written to 1, the gateway will send a fill event as soon as possible
-                        uint32_t milDevAddr                      // wishbone address of MIL device; MIL device could be a MIL piggy or a SIO
+                        uint32_t milDev,                         // MIL device for sending MIL messages; 0: MIL Piggy; 1..: SIO in slot 1..
+                        uint32_t milMon                          // 1: monitor MIL events; 0; don't monitor MIL events          
                         );
 
   // commands requesting state transitions

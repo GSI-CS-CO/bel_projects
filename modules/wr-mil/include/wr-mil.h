@@ -15,6 +15,7 @@
 #define WRMIL_STATUS_LATEMESSAGE        16   // late timing message received
 #define WRMIL_STATUS_BADSETTING         17   // bad setting data
 #define WRMIL_STATUS_SAFETYMARGIN       18   // violation of safety margin for data master and timing network
+#define WRMIL_STATUS_MIL                19   // an error on MIL hardware occured (MIL piggy etc...)
 
 // activity requested by ECA Handler, the relevant codes are also used as "tags"
 #define WRMIL_ECADO_TIMEOUT    COMMON_ECADO_TIMEOUT
@@ -55,14 +56,15 @@
 #define WRMIL_SHARED_SET_UTC_UTC_DELAY     (WRMIL_SHARED_SET_UTC_TRIGGER      + _32b_SIZE_)  // delay [us] between the 5 generated UTC MIL events
 #define WRMIL_SHARED_SET_TRIG_UTC_DELAY    (WRMIL_SHARED_SET_UTC_UTC_DELAY    + _32b_SIZE_)  // delay [us] between the trigger event and the first UTC (and other) generated events
 #define WRMIL_SHARED_SET_GID               (WRMIL_SHARED_SET_TRIG_UTC_DELAY   + _32b_SIZE_)  // timing group ID for which the gateway is generating MIL events (example: 0x12c is SIS18)
-#define WRMIL_SHARED_SET_LATENCY           (WRMIL_SHARED_SET_GID              + _32b_SIZE_)  // MIL event is generated 100us+latency after the WR event. The value of latency can be negative
+#define WRMIL_SHARED_SET_LATENCY           (WRMIL_SHARED_SET_GID              + _32b_SIZE_)  // [us] MIL event is generated 100us+latency after the WR event. The value of latency can be negative
 #define WRMIL_SHARED_SET_UTC_OFFSET_HI     (WRMIL_SHARED_SET_LATENCY          + _32b_SIZE_)  // offset [ms] between the TAI and the MIL-UTC, high word 
 #define WRMIL_SHARED_SET_UTC_OFFSET_LO     (WRMIL_SHARED_SET_UTC_OFFSET_HI    + _32b_SIZE_)  // offset [ms] between the TAI and the MIL-UTC, low  word
 #define WRMIL_SHARED_SET_REQUEST_FILL_EVT  (WRMIL_SHARED_SET_UTC_OFFSET_LO    + _32b_SIZE_)  // if this is written to 1, the gateway will send a fill event as soon as possible
-#define WRMIL_SHARED_SET_MIL_DEV           (WRMIL_SHARED_SET_REQUEST_FILL_EVT + _32b_SIZE_)  // MIL device; 0: MIL Piggy; 1..: SIO in slot 1..
+#define WRMIL_SHARED_SET_MIL_DEV           (WRMIL_SHARED_SET_REQUEST_FILL_EVT + _32b_SIZE_)  // MIL device for sending MIL messages; 0: MIL Piggy; 1..: SIO in slot 1..
+#define WRMIL_SHARED_SET_MIL_MON           (WRMIL_SHARED_SET_MIL_DEV          + _32b_SIZE_)  // 1: monitor MIL events; 0; don't monitor MIL events
 
 // get values
-#define WRMIL_SHARED_GET_NUM_EVENTS_HI     (WRMIL_SHARED_SET_MIL_DEV          + _32b_SIZE_)  // number of translated events from WR to MIL, high word
+#define WRMIL_SHARED_GET_NUM_EVENTS_HI     (WRMIL_SHARED_SET_MIL_MON          + _32b_SIZE_)  // number of translated events from WR to MIL, high word
 #define WRMIL_SHARED_GET_NUM_EVENTS_LO     (WRMIL_SHARED_GET_NUM_EVENTS_HI    + _32b_SIZE_)  // number of translated events from WR to MIL, low word
 #define WRMIL_SHARED_GET_LATE_EVENTS       (WRMIL_SHARED_GET_NUM_EVENTS_LO    + _32b_SIZE_)  // number of translated events that could not be delivered in time
 #define WRMIL_SHARED_GET_COM_LATENCY       (WRMIL_SHARED_GET_LATE_EVENTS      + _32b_SIZE_)  // latency for messages received from via ECA (tDeadline - tNow)) [ns]
