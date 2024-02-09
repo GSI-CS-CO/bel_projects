@@ -24,6 +24,7 @@ class Wait;
 class CmdQMeta;
 class CmdQBuffer;
 class DestList;
+class Static;
 
 
 
@@ -74,6 +75,7 @@ class VisitorUploadCrawler {
     virtual void visit(const CmdQMeta& el) const;
     virtual void visit(const CmdQBuffer& el) const;
     virtual void visit(const DestList& el) const;
+    virtual void visit(const Static& el) const;
 
   };
 

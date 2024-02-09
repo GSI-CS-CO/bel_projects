@@ -26,6 +26,8 @@ class Wait;
 class CmdQMeta;
 class CmdQBuffer;
 class DestList;
+class Static;
+
 
 
 enum class FormatNum {DEC, HEX, HEX16, HEX32, HEX64, BIT, BOOL};
@@ -62,6 +64,7 @@ enum class FormatNum {DEC, HEX, HEX16, HEX32, HEX64, BIT, BOOL};
     virtual void visit(const CmdQMeta& el) const;
     virtual void visit(const CmdQBuffer& el) const;
     virtual void visit(const DestList& el) const;
+    virtual void visit(const Static& el) const;
 
   };
 

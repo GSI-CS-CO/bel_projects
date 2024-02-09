@@ -16,6 +16,8 @@ namespace Validation {
 
 
   const children_t cNonMeta = {n::sTMsg, n::sCmdNoop, n::sCmdFlow, n::sOrigin, n::sStartThread, n::sSwitch, n::sCmdFlush, n::sCmdWait, n::sBlockFixed, n::sBlockAlign};
+  const children_t cCanBeReferenced = {n::sStatic, n::sTMsg, n::sCmdNoop, n::sCmdFlow, n::sOrigin, n::sStartThread, n::sSwitch, n::sCmdFlush, n::sCmdWait, n::sBlockFixed, n::sBlockAlign};
+
 ConstellationRule_set cRules;
 
 
@@ -24,8 +26,8 @@ void init() {
         cRules.insert(ConstellationRule(n::sTMsg,        e::sDefDst,      cNonMeta,  1, 1  ));
         cRules.insert(ConstellationRule(n::sTMsg,        e::sDynPar0,     cNonMeta,  0, 1  ));
         cRules.insert(ConstellationRule(n::sTMsg,        e::sDynPar1,     cNonMeta,  0, 1  ));
-        cRules.insert(ConstellationRule(n::sTMsg,        e::sRef,         cNonMeta,  0, MaxOccurrance::REF  ));
-        cRules.insert(ConstellationRule(n::sTMsg,        e::sVal,         cNonMeta,  0, MaxOccurrance::REF  ));
+        cRules.insert(ConstellationRule(n::sTMsg,         e::sRef,         cCanBeReferenced,  0, MaxOccurrance::REF  ));
+        //cRules.insert(ConstellationRule(n::sTMsg,        e::sVal,         cNonMeta,  0, MaxOccurrance::REF  ));
         cRules.insert(ConstellationRule(n::sTMsg,        e::sWrite,       cNonMeta,  0, 1  ));
         cRules.insert(ConstellationRule(n::sCmdNoop,     e::sDefDst,      cNonMeta,  0, 1  ));
         cRules.insert(ConstellationRule(n::sCmdNoop,     e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},  0, 1  ));
@@ -58,6 +60,7 @@ void init() {
         cRules.insert(ConstellationRule(n::sQInfo,       e::sMeta,       {n::sQBuf},                                   MaxOccurrance::META, MaxOccurrance::META  ));
         cRules.insert(ConstellationRule(n::sDstList,     e::sDefDst,      {n::sBlock, n::sBlockFixed, n::sBlockAlign},   1, 1  ));
 
+
   }
 
   //check if all outedge (nodetype/edgetype/childtype) tupels are valid and occurrence count is within valid bounds
@@ -75,7 +78,7 @@ void init() {
     }
 
     boost::tie(in_begin, in_end) = in_edges(v,g);
-    if( (in_begin == in_end) && g[v].np->isMeta() && (g[v].type != n::sDstList)) { //found an orphan node. most meta nodes cannot exist like this
+    if( (in_begin == in_end) && g[v].np->isMeta() && (g[v].type != n::sDstList) && (g[v].type != n::sStatic)) { //found an orphan node. most meta nodes cannot exist like this
       throw std::runtime_error(exIntro + "' cannot be an orphan\n");
     }
 

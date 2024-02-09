@@ -34,6 +34,8 @@ namespace DotStr {
     extern const std::string sInbox;
     extern const std::string sRegisters;
     extern const std::string sThreadData;
+    extern const std::string sPatternAlias;
+    extern const std::string sBeamProcAlias;
 
   }
 
@@ -262,6 +264,7 @@ namespace DotStr {
 
       namespace Meta {
         extern const std::string sLookDef;
+        extern const std::string sLookStatic;
       }
     }
 

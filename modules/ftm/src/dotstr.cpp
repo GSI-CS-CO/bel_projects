@@ -36,6 +36,8 @@ namespace DotStr {
     const std::string sInbox      = "inbox";
     const std::string sRegisters  = "register";
     const std::string sThreadData = "thrdat";
+    const std::string sPatternAlias = "staticref";
+    const std::string sBeamProcAlias = "staticref";
 
   }
 
@@ -193,6 +195,7 @@ namespace DotStr {
       const std::string sDstList       = "listdst";     // destination list (carpeDM internal)
       const std::string sQBuf          = "qbuf";        // queue buffer (carpeDM internal)
       const std::string sMeta          = "meta";        // generic meta node (carpeDM internal)
+      const std::string sStatic        = "static";      // global nodes. This binds a graph node to a specific memory location, eg. WR time or a thread's overhead data
       const std::string sGlobal        = "global";      // global nodes. This binds a graph node to a specific memory location, eg. WR time or a thread's overhead data
       const bool bMetaNode             = true;          // as comparison against isMeta() Node class member function.
       const bool bRealNode             = false;         //yeah yeah, it's not a string. I know
@@ -261,6 +264,7 @@ namespace DotStr {
 
       namespace Meta {
         const std::string sLookDef       = "shape = \"rectangle\", color = \"gray\", style = \"dashed, filled\"";
+        const std::string sLookStatic    = "shape = \"triangle\", color = \"gray\", style = \"dashed, filled\"";;
       }
     }
 

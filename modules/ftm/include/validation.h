@@ -21,6 +21,7 @@ namespace Validation {
 typedef std::string edgeType_t;
 typedef std::string nodeType_t;
 typedef std::set<nodeType_t> children_t;
+typedef std::set<nodeType_t> parents_t;
 
 
 using boost::multi_index_container;

@@ -251,3 +251,10 @@ void VisitorVertexWriter::visit(const DestList& el) const {
   pushEnd();
 }
 
+void VisitorVertexWriter::visit(const Static& el) const {
+  pushNodeInfo((Node&)el);
+  pushPair(dnp::Base::sType, dnt::sStatic);
+  pushSingle(ec::Node::Meta::sLookStatic);
+  pushEnd();
+}
+

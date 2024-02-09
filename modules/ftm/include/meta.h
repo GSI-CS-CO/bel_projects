@@ -100,8 +100,18 @@ public:
 class Static : public Meta {
 
 public:
+
+
+  Static(const std::string& name, const std::string&  section, const std::string& offs, const uint32_t& hash, const uint8_t& cpu, uint8_t thread )
+  : Meta(name, DotStr::StaticAdr::sPatternAlias, DotStr::StaticAdr::sBeamProcAlias, hash, cpu, 0) {}
   Static(const std::string& name, const std::string&  pattern, const std::string&  beamproc,  const uint32_t& hash, const uint8_t& cpu, uint32_t flags)
   : Meta(name, pattern, beamproc, hash, cpu, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_ALTDST << NFLG_TYPE_POS))) {}
+  
+    // should this be where the entry in the reference table is created ?
+    // or rather when we use it via an edge?
+
+  
+
   ~Static()  {};
   Static(const Static& src) : Meta(src) {}
   node_ptr clone() const { return boost::make_shared<Static>(Static(*this)); }
@@ -114,7 +124,10 @@ public:
   void show(void)       const;
   void show(uint32_t cnt, const char* sPrefix)  const;
   void serialise(const mVal &m, uint8_t* b) const;
+    // should this be where the entry in the reference table is created ?
 
+
+  
 };
 
 

@@ -41,6 +41,11 @@ void DestList::serialise(const mVal &m, uint8_t* b) const {
 
 };
 
+void Static::serialise(const mVal &m, uint8_t* b) const {
+  log<DEBUG>(L"Serialiser Static: Doing nothing for now.");// Inserting Adr: %1$#x Val %2$#x ")  % myPair.first % myPair.second;
+
+};
+
 void CmdQMeta::show(void) const {
   CmdQMeta::show(0, "");
 };
@@ -68,6 +73,19 @@ void DestList::show(void) const {
 };
 
 void DestList::show(uint32_t cnt, const char* prefix) const {
+  char* p;
+  if (prefix == nullptr) p = (char*)"";
+  else p = (char*)prefix;
+  printf("%s***------- %3u -------\n", p, cnt);
+
+};
+
+
+void Static::show(void) const {
+  Static::show(0, "");
+};
+
+void Static::show(uint32_t cnt, const char* prefix) const {
   char* p;
   if (prefix == nullptr) p = (char*)"";
   else p = (char*)prefix;

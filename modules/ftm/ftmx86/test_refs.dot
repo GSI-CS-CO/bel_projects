@@ -11,5 +11,9 @@ T_PAT2[cpu="0", type="tmsg", toffs="0", pattern="PAT1", patentry="true", fid="1"
 T_PAT2->B_PAT2->T_PAT2 [type="defdst", color = "red"];
 
 
+S_REGS_0_2 [cpu="0", type="static", section="register", thread="1", tOffs="0x8" ];
+
 T_PAT2->T_PAT1 [type="reference", color = "blue", fieldtail="0x18", fieldhead="0x10", fieldwidth="32"];
+
+
 }

@@ -70,3 +70,7 @@ void VisitorValidation::visit(const CmdQBuffer& el) const {
 void VisitorValidation::visit(const DestList& el) const {
   //meta check unnecessary, not allowed to have children
 }
+
+void VisitorValidation::visit(const Static& el) const {
+  //meta check unnecessary, not allowed to have children
+}

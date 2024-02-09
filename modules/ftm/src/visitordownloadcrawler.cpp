@@ -271,6 +271,10 @@ void VisitorDownloadCrawler::visit(const DestList& el) const {
   }
 }
 
+void VisitorDownloadCrawler::visit(const Static& el) const {
+}
+
+
 void VisitorDownloadCrawler::setRefLinks() const {
   log<DEBUG_LVL0>(L"Entered Reflink recreation for Node %1%") % g[v].name.c_str();
 
