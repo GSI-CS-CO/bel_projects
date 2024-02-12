@@ -19,14 +19,14 @@ end BLM_gate_timing_seq_elem;
 
 architecture rtl of BLM_gate_timing_seq_elem is
 
-type   gate_state_t is   (idle, ready, timeout_state, check_state, gate_out_state);
+type   gate_state_t is   (idle, timeout_state, check_state, gate_out_state);
 signal gate_state:   gate_state_t:= idle;
 
 signal timeout_reset : unsigned(15 downto 0); 
 
-signal new_val_wait: std_logic :='0';
+signal last_val: std_logic;-- :='0';
 signal timeout : unsigned(15 downto 0);-- := timeout_reset;
-signal curr_val   :std_logic:='0';
+signal curr_val   :std_logic; --:='0';
 
 
 begin
@@ -40,58 +40,52 @@ gate_proc: process (clk_i, rstn_i, gate_in_ena)
 
   begin
 
-      if ((rstn_i= '0') or (gate_in_ena)='0' or ((prepare = '0' and recover ='0')) ) then
+      if ((rstn_i= '0') or (gate_in_ena)='0' ) then 
         timeout_error  <= '0';
-         gate_state <= idle;
-         new_val_wait   <= '0';
+   
          timeout <= timeout_reset;
 	      gate_state <= idle;
 	 
       elsif rising_edge(clk_i) then
-    
+        last_val <= curr_val;
           case gate_state is
 
               when idle =>
                       if prepare ='1' then
 
-                        new_val_wait <= gate_in;
+                   
+                      
 
-              	        if curr_val='0' then
-                          
-                          new_val_wait   <= '0';
-      			            else
-                        if (to_integer (timeout) >0) then
-                          if timeout = timeout_reset then
-                              new_val_wait <= gate_in ;
-                          end if;
+                        if curr_val='1' and last_val ='0' then
+                          --timeout <= timeout_reset;
+                          gate_state <= gate_out_state;
+                       else
                           timeout <= timeout - 1;
                         
                         end if;
                         if (to_integer (timeout) = 0) then
-                         -- timeout_error<= '0';
-                          gate_state <= ready;
+                         -- if curr_val='1' and last_val ='0' then 
+                      
+                         --   gate_state <= gate_out_state;
+                         -- else
+                            gate_state <= timeout_state;  
+                          end if;
+                         
                         end if;  
-                      end if;
-                    end if;
+                     --- end if;
+                    
                         
               	        
-              	        
-	            when ready =>
-	        
-                      if new_val_wait = curr_val then
-                      
-                          gate_state <= timeout_state;
-                      else
-                        gate_state <= gate_out_state;  
-                      end if;
-                      
+             
               when timeout_state => 
 
-                	 timeout_error <='1';
-                	 timeout <= timeout_reset;
+                   timeout_error <='1';
                    gate_out <= '0';
-                  gate_state <= check_state;
-                
+                   if recover ='1' then
+                	  timeout <= timeout_reset;
+                    timeout_error <='0';
+                    gate_state <= check_state;
+                  end if;
 
               when gate_out_state =>
                

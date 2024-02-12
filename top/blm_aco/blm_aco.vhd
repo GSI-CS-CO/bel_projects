@@ -366,18 +366,29 @@ port  (
 end component zeitbasis;
 
 
- component diob_debounce
-  generic (
-    DB_Tst_Cnt: integer := 3;
-    Test:       integer range 0 TO 1);
-  port (
-    DB_Cnt:     in  integer range 0 to 16383;
-    DB_In:      in  std_logic;
-    Reset:      in  std_logic;
-    Clk:        in  std_logic;
-    DB_Out:     out std_logic
-    );
-  end component diob_debounce;
+ --component diob_debounce
+--  generic (
+  --  DB_Tst_Cnt: integer := 3;
+--    Test:       integer range 0 TO 1);
+ -- port (
+  --  DB_Cnt:     in  integer range 0 to 16383;
+  --  DB_In:      in  std_logic;
+  --  Reset:      in  std_logic;
+  --  Clk:        in  std_logic;
+  --  DB_Out:     out std_logic
+  --  );
+ -- end component diob_debounce;
+component deglitcher 
+  generic	(nr_stages : integer := 2   --3
+);
+port	
+(
+    clock: in std_logic;          
+  reset: in std_logic;          
+  degl_in : in std_logic;
+  degl_out: out std_logic
+);
+end component deglitcher; 
 
   COMPONENT daq 
   generic (
@@ -436,11 +447,12 @@ port (
     --   when 1, the outputs in slot 12 are the values of AW_Output_Reg(6),  bit 15..3 free
     BLM_gate_seq_prep_ck_sel_Reg : in std_logic_vector(15 downto 0);
     BLM_gate_recover_Reg : in std_logic_vector(15 downto 0);
-    BLM_gate_seq_in_ena_Reg : in std_logic_vector(15 downto 0); --"00"& ena for gate board1 &"00" & ena for gate board2 
+    BLM_gate_seq_in_ena_Reg : in std_logic_vector(15 downto 0); --"00"& ena for gate board2 &"00" & ena for gate board1 
     BLM_in_sel_Reg          : in t_BLM_reg_Array; --128 x (4 bit for gate ena & 6 bit for up signal ena & 6 for down signal ena)
-   BLM_out_sel_reg : in t_BLM_out_sel_reg_Array;    -- 122 x 16 bits = Reg120 -0:  "0000" and 6 x (54 watchdog errors  + 12 gate errors + 256 counters overflows outputs) 
-                                                    --                 Reg121: counter outputs buffering enable (bit 15) and buffered output select (bit 7-0). Bits 14-8 not used                                         
-
+   BLM_out_sel_reg : in t_BLM_out_sel_reg_Array;    -- 122 x 16 bits = Reg120-0:  "0000" and 6 x (54 watchdog errors  + 12 gate errors + 256 counters overflows outputs) 
+                                                    -- + 4 more registers for 6 x 12 input gate (= 72 bits) to be send to the outputs.    
+                                                    --=> 126 registers             
+                                                    --   REg127             ex Reg121: counter outputs buffering enable (bit 15) and buffered output select (bit 7-0). Bits 14-8 not used     
     -- OUT register
     BLM_status_Reg    : out t_IO_Reg_0_to_23_Array ;
 
@@ -451,12 +463,14 @@ port (
   end component Beam_Loss_check;
  
 
-  component front_board_id is 
+component front_board_id is 
 
-Port ( clk : in STD_LOGIC;
+  Port 
+      ( clk : in STD_LOGIC;
        nReset : in STD_LOGIC;
        Deb_Sync : in STD_LOGIC_VECTOR(65 downto 0);
        Deb_out   :in STD_LOGIC_VECTOR(65 downto 0);
+
        IOBP_Masken_Reg1 : in STD_LOGIC_VECTOR(15 downto 0);
        IOBP_Masken_Reg2 : in STD_LOGIC_VECTOR(15 downto 0);
        IOBP_Masken_Reg3 : in STD_LOGIC_VECTOR(15 downto 0);
@@ -469,7 +483,7 @@ Port ( clk : in STD_LOGIC;
        AW_Output_Reg    : in std_logic_vector(5 downto 0);
        nBLM_out_ena      : in std_logic;
        AW_IOBP_Input_Reg     : out t_IO_Reg_1_to_7_Array;
-       IOBP_Output     : out std_logic_vector(5 downto 0);     
+       IOBP_Output     : out std_logic_vector (5 downto 0);     
        IOBP_Input     : out t_IOBP_array;
        IOBP_Aktiv_LED_i   : out t_led_array;
        OUT_SLOT         : out std_logic_vector(5 downto 0);
@@ -502,96 +516,98 @@ port (
 
   port(
     Powerup_Done		  : in std_logic;
-    signal_tap_clk_250mhz  : in std_logic;
-    A_SEL                  : in std_logic_vector(3 downto 0);
-    PIO_SYNC		  : in STD_LOGIC_VECTOR(150 DOWNTO 16); 
-    CLK_IO                 : in std_logic;                      -- Clock for user_I/0
-    DIOB_Config1           : in std_logic_vector(15 downto 0);
-    AW_Output_Reg          : in t_IO_Reg_1_to_7_Array;          -- Output-Register to the Piggys
-    UIO_SYNC		  : in STD_LOGIC_VECTOR(15 DOWNTO 0); 
-    hp_la_o                : in std_logic_vector(15 downto 0);
-    local_clk_is_running   : in std_logic; 
-    clk_blink              : in std_logic;
-    s_nLED_Sel             : in std_logic;   -- LED = Sel
-    s_nLED_Dtack           : in std_logic;   -- LED = Dtack
-    s_nLED_inR             : in std_logic;   -- LED = interrupt
-    s_nLED_User1_o         : in std_logic;   -- LED3 = User 1
-    s_nLED_User2_o         : in  std_logic;  -- LED2 = User 2
-    s_nLED_User3_o         : in std_logic;   -- LED1 = User 3
-    Tag_Sts                : in std_logic_vector(15 downto 0);  -- Tag-Status
-    Timing_Pattern_LA      : in std_logic_vector(31 downto 0);  --  latched timing pattern from SCU_Bus for external user functions
-    Tag_Aktiv              : in std_logic_vector( 7 downto 0);  -- Flag: Bit7 = Tag7 (active) --- Bit0 = Tag0 (active)       
-    IOBP_LED_ID_Bus_o      : in std_logic_vector(7 downto 0);   -- LED_ID_Bus_Out
-    IOBP_ID                : in t_id_array;                     -- IDs of the "Slave-Boards"
-    IOBP_LED_En            : in std_logic;                      -- Output-Enable für LED- ID-Bus 
-    IOBP_STR_rot_o         : in std_logic_vector(12 downto 1);  -- LED-Str Red for Slave 12-1
-    IOBP_STR_gruen_o       : in std_logic_vector(12 downto 1);  -- LED-Str Green for Slave 12-1
-    IOBP_STR_ID_o          : in std_logic_vector(12 downto 1);  -- ID-Str Green for Slave 12-1
-    IOBP_Output            : in std_logic_vector(5 downto 0);   -- Outputs "Slave-Boards 1-12" 
-    IOBP_Input             : in t_IOBP_array;                   -- Inputs "Slave-Boards 1-12"
-    Deb66_out              : in std_logic_vector(65 downto 0);
-    AW_IOBP_Input_Reg      : in t_IO_Reg_1_to_7_Array;  -- Input-Register of the Piggy's
-    PIO_ENA_SLOT_1         : in std_logic_vector(5 downto 0);
-    PIO_ENA_SLOT_2         : in std_logic_vector(5 downto 0);
-    PIO_ENA_SLOT_3         : in std_logic_vector(5 downto 0);
-    PIO_ENA_SLOT_4         : in std_logic_vector(5 downto 0);
-    PIO_ENA_SLOT_5         : in std_logic_vector(5 downto 0);
-    PIO_ENA_SLOT_6         : in std_logic_vector(5 downto 0);
-    PIO_ENA_SLOT_7         : in std_logic_vector(5 downto 0);
-    PIO_ENA_SLOT_8         : in std_logic_vector(5 downto 0);
-    PIO_ENA_SLOT_9         : in std_logic_vector(5 downto 0);
-    PIO_ENA_SLOT_10         : in std_logic_vector(5 downto 0);
-    PIO_ENA_SLOT_11         : in std_logic_vector(5 downto 0);
-    PIO_ENA_SLOT_12         : in std_logic_vector(5 downto 0);
-    PIO_OUT_SLOT_1         : in std_logic_vector(5 downto 0);
-    PIO_OUT_SLOT_2          : in std_logic_vector(5 downto 0);
-    PIO_OUT_SLOT_3          : in std_logic_vector(5 downto 0);
-    PIO_OUT_SLOT_4         : in std_logic_vector(5 downto 0);
-    PIO_OUT_SLOT_5       : in std_logic_vector(5 downto 0);
-    PIO_OUT_SLOT_6        : in std_logic_vector(5 downto 0);
-    PIO_OUT_SLOT_7       : in std_logic_vector(5 downto 0);
-    PIO_OUT_SLOT_8        : in std_logic_vector(5 downto 0);
-    PIO_OUT_SLOT_9      : in std_logic_vector(5 downto 0);
-    PIO_OUT_SLOT_10        : in std_logic_vector(5 downto 0);
-    PIO_OUT_SLOT_11       : in std_logic_vector(5 downto 0);
-    PIO_OUT_SLOT_12       : in std_logic_vector(5 downto 0);
-   
-    ---------------------------------------------------------------------------
+  signal_tap_clk_250mhz  : in std_logic;
+  A_SEL                  : in std_logic_vector(3 downto 0);
+  PIO_SYNC		           : in STD_LOGIC_VECTOR(150 DOWNTO 16); 
+  CLK_IO                 : in std_logic;                      -- Clock for user_I/0
+  DIOB_Config1           : in std_logic_vector(15 downto 0);
+  AW_Output_Reg          : in t_IO_Reg_1_to_7_Array;          -- Output-Register to the Piggys
+  UIO_SYNC		           : in STD_LOGIC_VECTOR(15 DOWNTO 0); 
+  hp_la_o                : in std_logic_vector(15 downto 0);
+  local_clk_is_running   : in std_logic; 
+  clk_blink              : in std_logic;
+  s_nLED_Sel             : in std_logic;   -- LED = Sel
+  s_nLED_Dtack           : in std_logic;   -- LED = Dtack
+  s_nLED_inR             : in std_logic;   -- LED = interrupt
+  s_nLED_User1_o         : in std_logic;   -- LED3 = User 1
+  s_nLED_User2_o         : in  std_logic;  -- LED2 = User 2
+  s_nLED_User3_o         : in std_logic;   -- LED1 = User 3
+  Tag_Sts                : in std_logic_vector(15 downto 0);  -- Tag-Status
+  Timing_Pattern_LA      : in std_logic_vector(31 downto 0);  --  latched timing pattern from SCU_Bus for external user functions
+  Tag_Aktiv              : in std_logic_vector( 7 downto 0);  -- Flag: Bit7 = Tag7 (active) --- Bit0 = Tag0 (active)       
+  IOBP_LED_ID_Bus_o      : in std_logic_vector(7 downto 0);   -- LED_ID_Bus_Out
+  IOBP_ID                : in t_id_array;                     -- IDs of the "Slave-Boards"
+  IOBP_LED_En            : in std_logic;                      -- Output-Enable für LED- ID-Bus 
+  IOBP_STR_rot_o         : in std_logic_vector(12 downto 1);  -- LED-Str Red for Slave 12-1
+  IOBP_STR_gruen_o       : in std_logic_vector(12 downto 1);  -- LED-Str Green for Slave 12-1
+  IOBP_STR_ID_o          : in std_logic_vector(12 downto 1);  -- ID-Str Green for Slave 12-1
+  IOBP_Output            : in std_logic_vector(5 downto 0);   -- Outputs "Slave-Boards 1-12" 
+  IOBP_Input             : in t_IOBP_array;                   -- Inputs "Slave-Boards 1-12"
+  Deb66_out              : in std_logic_vector(65 downto 0);
+  AW_IOBP_Input_Reg      : in t_IO_Reg_1_to_7_Array;  -- Input-Register of the Piggy's
+  PIO_ENA_SLOT_1         : in std_logic_vector(5 downto 0);
+  PIO_ENA_SLOT_2         : in std_logic_vector(5 downto 0);
+  PIO_ENA_SLOT_3         : in std_logic_vector(5 downto 0);
+  PIO_ENA_SLOT_4         : in std_logic_vector(5 downto 0);
+  PIO_ENA_SLOT_5         : in std_logic_vector(5 downto 0);
+  PIO_ENA_SLOT_6         : in std_logic_vector(5 downto 0);
+  PIO_ENA_SLOT_7         : in std_logic_vector(5 downto 0);
+  PIO_ENA_SLOT_8         : in std_logic_vector(5 downto 0);
+  PIO_ENA_SLOT_9         : in std_logic_vector(5 downto 0);
+  PIO_ENA_SLOT_10         : in std_logic_vector(5 downto 0);
+  PIO_ENA_SLOT_11         : in std_logic_vector(5 downto 0);
+  PIO_ENA_SLOT_12         : in std_logic_vector(5 downto 0);
+  PIO_OUT_SLOT_1         : in std_logic_vector(5 downto 0);
+  PIO_OUT_SLOT_3          : in std_logic_vector(5 downto 0);
+  PIO_OUT_SLOT_2          : in std_logic_vector(5 downto 0);
+  PIO_OUT_SLOT_4         : in std_logic_vector(5 downto 0);
+  PIO_OUT_SLOT_5       : in std_logic_vector(5 downto 0);
+  PIO_OUT_SLOT_6        : in std_logic_vector(5 downto 0);
+  PIO_OUT_SLOT_7       : in std_logic_vector(5 downto 0);
+  PIO_OUT_SLOT_8        : in std_logic_vector(5 downto 0);
+  PIO_OUT_SLOT_9      : in std_logic_vector(5 downto 0);
+  PIO_OUT_SLOT_10        : in std_logic_vector(5 downto 0);
+  PIO_OUT_SLOT_11       : in std_logic_vector(5 downto 0);
+  PIO_OUT_SLOT_12       : in std_logic_vector(5 downto 0);
 
-    A_TA                   : out std_logic_vector(15 downto 0); -- test port a
-    IOBP_LED_ID_Bus_i      : out   std_logic_vector(7 downto 0); 
-    PIO_OUT                : out   STD_LOGIC_VECTOR(150 DOWNTO 16); 
-    PIO_ENA                : out   STD_LOGIC_VECTOR(150 DOWNTO 16);   
-    UIO_OUT                : out   STD_LOGIC_VECTOR(15 DOWNTO 0); 
-    UIO_ENA                : out   STD_LOGIC_VECTOR(15 DOWNTO 0); 
-    AW_ID                  : out   std_logic_vector(7 downto 0);
-    AWIn_Deb_Time          : out   integer range 0 to 7;           -- Debounce-Time 2 High "AWIn_Deb_Time", value from DIOB-Config 1
-    Min_AWIn_Deb_Time      : out   integer range 0 to 7;           -- Minimal Debounce-Time 2 High"Min_AWIn_Deb_Time" 
-    Diob_Status1           : out   std_logic_vector(15 downto 0);
-    DIOB_Status2           : out   std_logic_vector(15 downto 0);
-    IOBP_Id_Reg1           : out std_logic_vector(15 downto 0);
-    IOBP_Id_Reg2           : out  std_logic_vector(15 downto 0);
-    IOBP_Id_Reg3           : out std_logic_vector(15 downto 0);
-    IOBP_Id_Reg4           : out  std_logic_vector(15 downto 0);
-    IOBP_Id_Reg5           : out  std_logic_vector(15 downto 0);
-    IOBP_Id_Reg6           : out    std_logic_vector(15 downto 0);
-    IOBP_Id_Reg7           : out   std_logic_vector(15 downto 0);
-    IOBP_Id_Reg8           : out    std_logic_vector(15 downto 0);
-    Deb66_in               : out     std_logic_vector(65 downto 0);
-    Syn66                  : out        std_logic_vector(65 downto 0);
-    AW_Input_Reg           : out   t_IO_Reg_1_to_8_Array;
-    A_Tclk                 : out std_logic;
-    extension_cid_group    : out  integer range 0 to 16#FFFF#;
-    extension_cid_system   : out integer range 0 to 16#FFFF#;
-    Max_AWOut_Reg_Nr       : out   integer range 0 to 7;
-    Max_AWIn_Reg_Nr        : out   integer range 0 to 7 ;
-    Debounce_cnt           : out   integer range 0 to 16383;
-    s_nLED_User1_i         : out std_logic;  -- LED3 = User 1
-    s_nLED_User2_i         : out std_logic;  -- LED2 = User 2
-    s_nLED_User3_i         : out std_logic;
-    Deb_Sync66             : out std_logic_vector(65 downto 0);
-    daq_dat                : out t_daq_dat;
-    daq_diob_ID            : out std_logic_vector(15 downto 0)
+  --------------------------------------------------------------------------------------
+  A_TA                   : out std_logic_vector(15 downto 0); -- test port a
+  IOBP_LED_ID_Bus_i      : out  std_logic_vector(7 downto 0); 
+  PIO_OUT                : out   STD_LOGIC_VECTOR(150 DOWNTO 16); 
+  PIO_ENA                : out   STD_LOGIC_VECTOR(150 DOWNTO 16);   
+  UIO_OUT                : out   STD_LOGIC_VECTOR(15 DOWNTO 0);
+  UIO_ENA                : out   STD_LOGIC_VECTOR(15 DOWNTO 0);
+  AW_ID                  : out   std_logic_vector(7 downto 0);
+  AWIn_Deb_Time          : out   integer range 0 to 7;           -- Debounce-Time 2 High "AWIn_Deb_Time", value from DIOB-Config 1
+  Min_AWIn_Deb_Time      : out   integer range 0 to 7;           -- Minimal Debounce-Time 2 High"Min_AWIn_Deb_Time" 
+  Diob_Status1           : out   std_logic_vector(15 downto 0);
+  DIOB_Status2           : out   std_logic_vector(15 downto 0);
+  IOBP_Id_Reg1           : out std_logic_vector(15 downto 0);
+  IOBP_Id_Reg2           : out  std_logic_vector(15 downto 0);
+  IOBP_Id_Reg3           : out std_logic_vector(15 downto 0);
+  IOBP_Id_Reg4           : out  std_logic_vector(15 downto 0);
+  IOBP_Id_Reg5           : out  std_logic_vector(15 downto 0);
+  IOBP_Id_Reg6           : out    std_logic_vector(15 downto 0);
+  IOBP_Id_Reg7           : out   std_logic_vector(15 downto 0);
+  IOBP_Id_Reg8           : out    std_logic_vector(15 downto 0);
+  Deb66_in               : out     std_logic_vector(65 downto 0);
+  Syn66                  : out        std_logic_vector(65 downto 0);
+  AW_Input_Reg           : out   t_IO_Reg_1_to_8_Array;
+  A_Tclk                 : out std_logic;
+  extension_cid_group    : out  integer range 0 to 16#FFFF#;
+  extension_cid_system   : out integer range 0 to 16#FFFF#;
+  Max_AWOut_Reg_Nr       : out integer range 0 to 7;
+  Max_AWIn_Reg_Nr        : out  integer range 0 to 7;
+  Debounce_cnt           : out  integer range 0 to 16383;
+  s_nLED_User1_i         : out std_logic;  -- LED3 = User 1
+  s_nLED_User2_i         : out std_logic;  -- LED2 = User 2
+  s_nLED_User3_i         : out std_logic;
+  --IOBP_Output_Readback   : out t_IO_Reg_0_to_7_Array;
+  --IOBP_Output_Readback   : out std_logic_vector(15 downto 0);
+  Deb_Sync66             : out std_logic_vector(65 downto 0);
+  daq_dat                : out t_daq_dat;
+  daq_diob_ID            : out std_logic_vector(15 downto 0)
+  
   
     );
     end component p_connector;
@@ -853,10 +869,13 @@ signal IOBP_Input:  t_IOBP_array;    -- Inputs "Slave-Karten 1-12"
   signal IOBP_Aktiv_LED_i:  t_led_array;    -- Aktiv-LED's der "Slave-Karten"
   signal IOBP_Aktiv_LED_o:  t_led_array;    -- Aktiv-LED's der "Slave-Karten"
 
-signal Syn66:        std_logic_vector(65 downto 0):= (OTHERS => '0');
-signal Deb_Sync66:   std_logic_vector(65 downto 0);
-signal  Deb66_in:     std_logic_vector(65 downto 0):= (OTHERS => '0');
-signal  Deb66_out:    std_logic_vector(65 downto 0);
+  signal Syn66:        std_logic_vector(65 downto 0):= (OTHERS => '0');
+ 
+  
+signal Deg_Sync66:   std_logic_vector(65 downto 0);
+  signal  Deb66_out:    std_logic_vector(65 downto 0);
+signal  Deg66_in:     std_logic_vector(65 downto 0):= (OTHERS => '0');
+signal  Deg66_out:    std_logic_vector(65 downto 0);
 
 signal IOBP_STR_rot_o:    std_logic_vector(12 downto 1);  -- LED-Str Rot  für Slave 12-1
 signal IOBP_STR_gruen_o:  std_logic_vector(12 downto 1);  -- LED-Str Grün für Slave 12-1
@@ -953,7 +972,7 @@ signal BLM_data_in: std_logic_vector(53 downto 0);
 signal INTL_Output: std_logic_vector(5 downto 0);     -- Output "Slave-Karten 12"  
 signal BLM_gate_in : std_logic_vector(11 downto 0);
 signal BLM_Out :  std_logic_vector(5 downto 0);
-
+signal BLM_deglitcher_data: std_logic_vector(65 downto 0);
 -----------------DAQ-Signale---------------------------------------------------------------------------------------------------
 
 constant daq_ch_num: integer := 16;
@@ -1003,7 +1022,7 @@ signal BLM_ctrl_Dtack:        std_logic_vector(2 downto 0);                  -- 
 ---------------------------------------
             -- Dtack to SCU Bus Macro
 -----for BLM out_sel 
-signal BLM_out_sel_Reg :       t_BLM_out_sel_reg_Array; --128 registers
+signal BLM_out_sel_Reg :       t_BLM_out_sel_reg_Array; --127 registers
 
 signal BLM_out_sel_rd_active:  std_logic_vector(15 downto 0);
 signal BLM_out_sel_Dtack: std_logic_vector(15 downto 0);
@@ -1609,7 +1628,7 @@ BLM_ctrl_Reg_1st_block: io_reg
 
           
 
-          BLM_o_sel_Reg_120_121: io_reg
+          BLM_o_sel_Reg_120_126: io_reg
           generic map(
                 Base_addr =>  c_BLM_out_sel_Base_Addr + 120
                 )
@@ -1626,11 +1645,11 @@ BLM_ctrl_Reg_1st_block: io_reg
           --
                 Reg_IO1            =>  BLM_out_sel_Reg(120),
                 Reg_IO2            =>  BLM_out_sel_Reg(121),
-                Reg_IO3            =>  open,
-                Reg_IO4            =>  open,
-                Reg_IO5            =>  open,
-                Reg_IO6            =>  open,
-                Reg_IO7            =>  open,
+                Reg_IO3            =>  BLM_out_sel_Reg(122),
+                Reg_IO4            =>  BLM_out_sel_Reg(123),
+                Reg_IO5            =>  BLM_out_sel_Reg(124),
+                Reg_IO6            =>  BLM_out_sel_Reg(125),
+                Reg_IO7            =>  BLM_out_sel_Reg(126),
                 Reg_IO8            =>  open,
           --
                 Reg_rd_active      =>  BLM_out_sel_rd_active(15),
@@ -2061,16 +2080,29 @@ end if;
 --  +============================================================================================================================+
 --  |            §§§                        Anwender-IO: IOBP (INLB12S1)  -- FG902_050                                           |
 --  +============================================================================================================================+
-Deb66:  for I in 0 to 65 generate
-DB_I:  diob_debounce
-GENERIC MAP (DB_Tst_Cnt   => 3,
-             Test         => 0)             --
-          port map(DB_Cnt => Debounce_cnt,     -- Debounce-Zeit in Clock's
-                   DB_in  => Deb66_in(I),   -- Signal-Input
-                   Reset  => not rstn_sys,  -- Powerup-Reset
-                   clk    => clk_sys,       -- Sys-Clock
-                   DB_Out => Deb66_out(I)); -- Debounce-Signal-Out
-end generate Deb66;
+--Deb66:  for I in 0 to 65 generate
+--DB_I:  diob_debounce
+--GENERIC MAP (DB_Tst_Cnt   => 3,
+--             Test         => 0)             --
+--          port map(DB_Cnt => Debounce_cnt,     -- Debounce-Zeit in Clock's
+--                   DB_in  => Deb66_in(I),   -- Signal-Input
+--                   Reset  => not rstn_sys,  -- Powerup-Reset
+--                   clk    => clk_sys,       -- Sys-Clock
+--                   DB_Out => Deb66_out(I)); -- Debounce-Signal-Out
+--end generate Deb66;
+
+Deg66:  for I in 0 to 65 generate
+DB_I: deglitcher 
+  generic	map (nr_stages => 1
+)
+port map 
+(
+    clock => clk_sys,        
+   reset=> not rstn_sys,           
+  degl_in => Deg66_in(I), 
+  degl_out => Deg66_out(I)
+);
+  end generate Deg66;
 --
 --         =========== Component's für die 72 "aktiv" Led's ===========
 --
@@ -2101,6 +2133,9 @@ BLM_gate_in <= AW_IOBP_Input_Reg(5)(11 downto 6) & AW_IOBP_Input_Reg(6)(5 downto
 BLM_tst_ck_sig <= blm_clk_100MHz & blm_clk_25MHz & blm_clk_24_9MHz & blm_clk_10MHz & blm_clk_1MHz & blm_clk_100kHz & blm_clk_10kHz & blm_clk_1kHz & blm_clk_9_9MHz & blm_clk_0_99MHz & blm_clk_99kHz;-- & blm_clk_9_9kHz& blm_clk_0_99kHz;
 BLM_wd_reset <= BLM_wd_reset_Reg(3)(5 downto 0)&BLM_wd_reset_Reg(2) & BLM_wd_reset_Reg(1) &BLM_wd_reset_Reg(0);
 
+--for tests
+BLM_deglitcher_data <= Deg66_out;
+
 BLM_Module : Beam_Loss_check 
 
   generic map (
@@ -2114,7 +2149,7 @@ BLM_Module : Beam_Loss_check
     rstn_sys       => rstn_sys,     -- Reset
 
  -- IN BLM 
-  BLM_data_in      => BLM_data_in,
+  BLM_data_in      => BLM_data_in,--BLM_deglitcher_data(53 downto 0), --BLM_data_in,
   BLM_gate_in      => BLM_gate_in,
   BLM_tst_ck_sig   => BLM_tst_ck_sig,
  
@@ -2140,28 +2175,30 @@ BLM_Module : Beam_Loss_check
 
 
 front_board_id_Module: front_board_id 
-port map ( clk               => clk_sys,
-           nReset            => rstn_sys,
-           Deb_Sync          => Deb_Sync66,
-           Deb_out           => Deb66_out,
-           IOBP_Masken_Reg1  => IOBP_Masken_Reg1,
-           IOBP_Masken_Reg2  => IOBP_Masken_Reg2,
-           IOBP_Masken_Reg3  => IOBP_Masken_Reg3,
-           IOBP_Masken_Reg4  => IOBP_Masken_Reg4,
-           IOBP_Masken_Reg5  => IOBP_Masken_Reg5,
-           IOBP_Masken_Reg6  => IOBP_Masken_Reg6,
-           PIO_SYNC          => PIO_SYNC(142 DOWNTO 20),
-           IOBP_ID           => IOBP_ID,
-           INTL_Output       =>  BLM_out, --INTL_Output,
-           AW_Output_Reg     => AW_Output_Reg(6)(11 downto  6),
-           nBLM_out_ena        => BLM_ctrl_Reg(1), -- 
-           AW_IOBP_Input_Reg => AW_IOBP_Input_Reg,
-           IOBP_Output       => IOBP_Output,
-           IOBP_Input        => IOBP_Input,
-           IOBP_Aktiv_LED_i    => IOBP_Aktiv_LED_i,
-           OUT_SLOT          => PIO_OUT_SLOT_12,
-           ENA_SLOT          => PIO_ENA_SLOT_12, 
-           IOBP_Sel_LED      => IOBP_Sel_LED
+port map   
+( clk               => clk_sys,
+nReset            => rstn_sys,
+Deb_Sync          => Deg_Sync66,
+Deb_out           => Deg66_out,
+IOBP_Masken_Reg1  => IOBP_Masken_Reg1,
+IOBP_Masken_Reg2  => IOBP_Masken_Reg2,
+IOBP_Masken_Reg3  => IOBP_Masken_Reg3,
+IOBP_Masken_Reg4  => IOBP_Masken_Reg4,
+IOBP_Masken_Reg5  => IOBP_Masken_Reg5,
+IOBP_Masken_Reg6  => IOBP_Masken_Reg6,
+PIO_SYNC          => PIO_SYNC(142 DOWNTO 20),
+IOBP_ID           => IOBP_ID,
+INTL_Output       =>  BLM_out, --INTL_Output,
+AW_Output_Reg     => AW_Output_Reg(6)(11 downto  6),
+nBLM_out_ena        => BLM_ctrl_Reg(1), -- 
+AW_IOBP_Input_Reg => AW_IOBP_Input_Reg,
+IOBP_Output       => IOBP_Output,
+IOBP_Input        => IOBP_Input,
+IOBP_Aktiv_LED_i    => IOBP_Aktiv_LED_i,
+OUT_SLOT          => PIO_OUT_SLOT_12,
+ENA_SLOT          => PIO_ENA_SLOT_12, 
+IOBP_Sel_LED      => IOBP_Sel_LED
+
 );
 
      -------------------------------------------------------------------------------------------------------
@@ -2282,7 +2319,7 @@ AW_B12s1_connection: p_connector
     IOBP_STR_ID_o          => IOBP_STR_ID_o,
     IOBP_Output            => IOBP_Output,
     IOBP_Input             => IOBP_Input,
-    Deb66_out              => Deb66_out,
+    Deb66_out              => Deg66_out,
     AW_IOBP_Input_Reg      => AW_IOBP_Input_Reg,
     A_TA                   => A_TA,
     PIO_ENA_SLOT_1         =>  PIO_ENA_SLOT_1,
@@ -2328,7 +2365,7 @@ AW_B12s1_connection: p_connector
     IOBP_Id_Reg6           => IOBP_Id_Reg6,
     IOBP_Id_Reg7           => IOBP_Id_Reg7,
     IOBP_Id_Reg8           => IOBP_Id_Reg8,
-    Deb66_in               => Deb66_in,
+    Deb66_in               => Deg66_in,
     Syn66                  => Syn66,
     AW_Input_Reg           => AW_Input_Reg,
     A_Tclk                 => A_Tclk,
@@ -2341,9 +2378,10 @@ AW_B12s1_connection: p_connector
     s_nLED_User2_i         => s_nLED_User2_i,
     s_nLED_User3_i         => s_nLED_User3_i,
     --IOBP_Output_Readback   =>  BLM_Status_Reg(0),
-    Deb_Sync66             => Deb_Sync66,
+    Deb_Sync66             => Deg_Sync66,
     daq_dat                => daq_dat,
     daq_diob_ID            => daq_diob_ID
+    
     );
 
 

@@ -2,7 +2,7 @@ files = [
    "blm_aco.vhd",
    "scu_diob_pkg.vhd",
    "scu_diob.sdc",
-   "diob_debounce.vhd",
+   #"diob_debounce.vhd",
    "diob_sync.vhd",
    "aw_io_reg.vhd",
    "io_reg.vhd",
@@ -26,13 +26,15 @@ files = [
    "Beam_Loss_check_v1.1.vhd",
    "front_board_id_v0.vhd",
    "BLM_counter_pool_el.vhd",
-   "BLM_out_el.vhd",
+   #"BLM_out_el.vhd",
+   "BLM_out_el_m.vhd",
    "IOBP_LED_ID_Module.vhd",
    "p_connector.vhd",
    "BLM_in_mux.vhd",
    "BLM_gate_timing_seq_elem.vhd",
    "BLM_ena_in_mux.vhd",
-   "blm_24_9_9_9pll.vhd"
+   "blm_24_9_9_9pll.vhd",
+   "deglitcher.v"
 ]
 
 modules = {
