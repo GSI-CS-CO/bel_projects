@@ -36,10 +36,12 @@ port (
     BLM_gate_recover_Reg : in std_logic_vector(15 downto 0); -- bit 15_12 free
                                                             -- bit 11-0 for gate_prepare signals
 
-    BLM_gate_seq_in_ena_Reg : in std_logic_vector(15 downto 0); --"00"& ena for gate board1 &"00" & ena for gate board2 
+    BLM_gate_seq_in_ena_Reg : in std_logic_vector(15 downto 0); --"00"& ena for gate board2 &"00" & ena for gate board1 
     BLM_in_sel_Reg          : in t_BLM_reg_Array; --128 x (4 bit for gate ena & 6 bit for up signal ena & 6 for down signal ena)
-    BLM_out_sel_reg : in t_BLM_out_sel_reg_Array;   --122 x 16 bits = Reg120-0:  "0000" and 6 x (54 watchdog errors  + 12 gate errors + 256 counters overflows outputs) 
-                                                    --                Reg121: counter outputs buffering enable (bit 15) and buffered output select (bit 7-0). Bits 14-8 not used              
+    BLM_out_sel_reg : in t_BLM_out_sel_reg_Array;   --- 122 x 16 bits = Reg120-0:  "0000" and 6 x (54 watchdog errors  + 12 gate errors + 256 counters overflows outputs) 
+                                                    -- + 4 more registers for 6 x 12 input gate (= 72 bits) to be send to the outputs.    
+                                                   --=> 126 registers             
+                                                    --   REg127  (ex Reg121): counter outputs buffering enable (bit 15) and buffered output select (bit 7-0). Bits 14-8 not used     
     -- OUT register
     BLM_status_Reg    : out t_IO_Reg_0_to_23_Array ;
 
@@ -58,6 +60,7 @@ architecture rtl of Beam_Loss_check is
   signal VALUE_IN:  std_logic_vector(63 downto 0);
  
   signal out_wd: std_logic_vector(53 downto 0);
+  signal out_1wd: std_logic_vector(53 downto 0);
 
   signal INT_out: std_logic_vector(53 downto 0);
   signal gate_error: std_logic_vector(11 downto 0);
@@ -80,10 +83,11 @@ architecture rtl of Beam_Loss_check is
   
     port(
         clk_i : in std_logic;     -- chip-internal pulsed clk signal
-        rstn_i : in std_logic;   -- reset signal
+        rst_i : in std_logic;   -- reset signal
+        wd_reset: in std_logic; -- watchdog reset signal
         hold: in std_logic_vector(15 downto 0);
         in_watchdog : in std_logic;     -- input signal
-        ena_i : in std_logic;     -- enable '1' for input connected to the counter
+       -- ena_i : in std_logic;     -- enable '1' for input connected to the counter
         INTL_out: out std_logic   -- interlock output for signal that doesn't change for a given time 
     
     );
@@ -178,9 +182,23 @@ BLM_gate_recover <= BLM_gate_recover_Reg(11 downto 0);
 BLM_gate_prepare <= BLM_gate_seq_prep_ck_sel_Reg(14 downto 3);
 BLM_gate_seq_clk_sel <= BLM_gate_seq_prep_ck_sel_Reg(2 downto 0);
 
+
+direct_output_proc: process (clk_sys, rstn_sys)
+
+    begin    
+         if (rstn_sys= '0')    then
+           out_wd <=(others =>'0');
+          
+               elsif rising_edge(clk_sys) then
+             
+          out_wd <= BLM_data_in;
+        end if;
+    end process;
+
   gate_timing_clock_sel_proc: process( BLM_gate_seq_clk_sel)
     begin
-    
+
+
      for i in 0 to 11 loop
        
       
@@ -246,7 +264,7 @@ end process direct_gate_operation;
       clk_i => g_clock,         --
       rstn_i => rstn_sys,         -- reset signal
       gate_in => BLM_gate_in,       -- gate input signals
-      gate_seq_ena => BLM_gate_seq_in_ena_Reg(13 downto 8) & BLM_gate_seq_in_ena_Reg(5 downto 0), --"00"& ena for gate board1 &"00" & ena for gate board2
+      gate_seq_ena => BLM_gate_seq_in_ena_Reg(13 downto 8) & BLM_gate_seq_in_ena_Reg(5 downto 0), --"00"& ena for gate board2 &"00" & ena for gate board1
       BLM_gate_recover => BLM_gate_recover,
       BLM_gate_prepare => BLM_gate_prepare,
       hold_time => BLM_gate_hold_time_Reg,
@@ -261,11 +279,13 @@ end process direct_gate_operation;
          
           port map(
             clk_i => clk_sys,  
-            rstn_i => rstn_sys or BLM_wd_reset(i),   -- reset signal
+            rst_i => rstn_sys,   -- reset signal
+            wd_reset=>  BLM_wd_reset(i), -- watchdog reset signal
             hold => BLM_wdog_hold_time_Reg,
             in_watchdog => BLM_data_in(i),
-            ena_i =>    '1',  -- enable for input connected to the counter
-            INTL_out =>   out_wd(i));
+          --  ena_i =>    '1',  -- enable for input connected to the counter
+            INTL_out =>   out_1wd(i));
+            --INTL_out =>   out_wd(i));
       end generate wd_elem_gen;
 
 
@@ -321,7 +341,7 @@ BLM_out_section: BLM_out_el
     --
     UP_OVERFLOW     => UP_OVERFLOW,
     DOWN_OVERFLOW   => DOWN_OVERFLOW,
-    wd_out           => out_wd,
+    wd_out           => out_1wd, --out_wd, --out_1wd,
     gate_in         => BLM_gate_in,
     gate_out        => gate_error,
     BLM_Output      => BLM_out,

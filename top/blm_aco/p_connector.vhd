@@ -1,4 +1,4 @@
-  LIBRARY IEEE;
+LIBRARY IEEE;
 USE IEEE.std_logic_1164.all;
 USE IEEE.numeric_std.all;
 use work.scu_diob_pkg.all;
@@ -489,5 +489,3 @@ else
   end process;
 
 end architecture;
-
-
