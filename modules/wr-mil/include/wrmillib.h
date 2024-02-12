@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 08-Feb-2024
+ *  version : 12-Feb-2024
  *
  * library for wr-mil
  *

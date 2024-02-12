@@ -77,12 +77,7 @@ static void help(void) {
   fprintf(stderr, "  -i                  show gateway information. Repeat the option\n"               );
   fprintf(stderr, "                      to get more detailed information, e.g. -iii\n"               );
   fprintf(stderr, "  -R                  read register content\n"                                     );
-  fprintf(stderr, "  -m                  start monitoring loop\n"                                     );
   fprintf(stderr, "  -g                  show received MIL events in monitoring loop\n"               );
-  fprintf(stderr, "  -b                  bugfix mode: show relevent WR-Events together\n"             );
-  fprintf(stderr, "                                   with events that trigger MIL-generation\n"      );
-  fprintf(stderr, "                                   together with snooped MIL events\n"             );
-  fprintf(stderr, "  -H                  show MIL-event histogram\n"                                  );
   fprintf(stderr, "  -r                  Pause gateway for 1 s, and reset\n"                          );
   fprintf(stderr, "\n");
   fprintf(stderr, "The following parameters are to be used with command 'configure' \n"               );
@@ -102,6 +97,7 @@ static void help(void) {
   fprintf(stderr, "  -o <offset>         UTC-offset [s]                     , default yr 2008\n"      );
   fprintf(stderr, "  -d <delay>          Set Trigger-UTC delay [us]         , default 0\n"            );
   fprintf(stderr, "  -u <delay>          Set UTC-UTC delay [us]             , default 30\n"           );
+  fprintf(stderr, "  -m <on>             enable monitoring [0..1]\n         , default 0\n"            );
   fprintf(stderr, "\n");
   fprintf(stderr, "  configure           command requests state change from IDLE or CONFIGURED -> CONFIGURED\n");
   fprintf(stderr, "                      'configure' requires parameters -w, -s\n");
@@ -203,18 +199,18 @@ int main(int argc, char** argv) {
   uint32_t cpu;
   uint32_t status;
 
-  uint32_t  utc_trigger    = WRMIL_DFLT_UTC_TRIGGER;
-  int32_t   utc_utc_delay  = WRMIL_DFLT_UTC_UTC_DELAY;     
-  int32_t   trig_utc_delay = WRMIL_DFLT_TRIG_UTC_DELAY;
-  uint64_t  utc_offset     = WRMIL_DFLT_UTC_OFFSET;
-  uint32_t  mil_latency    = WRMIL_DFLT_LATENCY;
-  uint32_t  mil_domain     = -1;
-  uint32_t  mil_wb_dev     = -1;
-  uint32_t  mil_wb_mon     = 0;
+  uint32_t  utc_trigger     = WRMIL_DFLT_UTC_TRIGGER;
+  int32_t   utc_utc_delay   = WRMIL_DFLT_UTC_UTC_DELAY;     
+  int32_t   trig_utc_delay  = WRMIL_DFLT_TRIG_UTC_DELAY;
+  uint64_t  utc_offset      = WRMIL_DFLT_UTC_OFFSET;
+  uint32_t  mil_latency     = WRMIL_DFLT_LATENCY;
+  uint32_t  mil_domain      = -1;
+  uint32_t  mil_wb_dev      = -1;
+  uint32_t  mil_wb_mon      = 0;
 
   program = argv[0];    
 
-  while ((opt = getopt(argc, argv, "s:t:o:d:u:w:heiRmgbHr")) != -1) {
+  while ((opt = getopt(argc, argv, "s:t:o:d:u:w:m:heiRr")) != -1) {
     switch (opt) {
       case 'e':
         getVersion = 1;
@@ -226,16 +222,7 @@ int main(int argc, char** argv) {
         getRegister = 1;
         break;
       case 'm':
-        printf("monitoring loop not yet implemented; use saft-ctl instead\n");
-        return 0;
-      case 'g':
-        printf("show received MIL events not yet implemented\n");
-        return 0;
-      case 'b':
-        printf("bugfix mode node yet implemented\n");
-        return 0;
-      case 'H':
-        printf("MIL-event histogram not yet implemented\n");
+        mil_wb_mon = 1;
         return 0;
       case 'r':
         printf("reset not yet implemented\n");

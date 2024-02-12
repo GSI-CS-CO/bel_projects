@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Micheal Reese, Mathias Kreider GSI-Darmstadt
- *  version : 08-feb-2024
+ *  version : 12-feb-2024
  *
  *  firmware required for the White Rabbit -> MIL Gateways
  *  
@@ -39,8 +39,6 @@
  ********************************************************************************************/
 #define WRMIL_FW_VERSION      0x000001    // make this consistent with makefile
 
-#define MILSEND_LATENCY        25000      // nanoseconds from pushing to mil piggy/sio queue to last transition on the mil bus
-#define MICROSECONDS           1000       // so many nanoseconds per microsecond
 #define RESET_INHIBIT_COUNTER  1000       // count so many main loops before the inhibit for fill event sending is released
 #define N_UTC_EVENTS           5          // number of generated EVT_UTC events
 #define ECA_QUEUE_LM32_TAG     0x00000004 // the tag for ECA actions we (the LM32) want to receive
@@ -105,6 +103,7 @@ volatile uint32_t *pMilRec;             // address of MIL device receiving timin
 
 uint64_t statusArray;                   // all status infos are ORed bit-wise into statusArray, statusArray is then published
 uint64_t nMessages;                     // # of sent messages
+uint32_t nLate;                         // # of late messages
 int32_t  comLatency;                    // latency for messages received via ECA
 
 uint32_t utc_trigger;
@@ -113,6 +112,10 @@ int32_t  trig_utc_delay;
 uint64_t utc_offset;
 uint32_t mil_latency;
 uint32_t mil_domain;
+uint32_t mil_mon;
+
+// constants (as variables to have a defined type)
+uint64_t  one_us_ns = 1000;
 
 // debug 
 uint64_t t1, t2;
@@ -200,8 +203,42 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
 // clear project specific diagnostics
 void extern_clearDiag()
 {
-} // extern_clearDiag
-  
+  statusArray  = 0x0;
+  nMessages    = 0x0;
+  nLate        = 0x0;
+  comLatency   = 0x0;
+} // extern_clearDiag 
+
+
+// configure SoC to receive events via MIL bus
+uint32_t configMILEvents(int enable)
+{
+  uint32_t i,j;
+
+  // initialize status and command register with initial values; disable event filtering; clear filter RAM
+  if (writeCtrlStatRegEvtMil(pMilRec, MIL_CTRL_STAT_ENDECODER_FPGA | MIL_CTRL_STAT_INTR_DEB_ON) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+
+  // clean up 
+  if (disableLemoEvtMil(pMilRec, 1) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+  if (disableLemoEvtMil(pMilRec, 2) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+  if (disableFilterEvtMil(pMilRec)  != MIL_STAT_OK) return COMMON_STATUS_ERROR; 
+  if (clearFilterEvtMil(pMilRec)    != MIL_STAT_OK) return COMMON_STATUS_ERROR; 
+
+  if (enable) {
+    for (i=0; i < (0xf+1); i++) {
+      for (j=0; j<(0xff+1); j++) {
+        // set filter (FIFO and LEMO1 pulsing) for all possible virtual accelerators
+        if (setFilterEvtMil(pMilRec, j, i, MIL_FILTER_EV_TO_FIFO | MIL_FILTER_EV_PULS1_S) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+      } // for j
+    } // for i
+  } // if enable
+
+  // configure LEMO1 for pulse generation
+  if (configLemoPulseEvtMil(pMilRec, 1) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+
+  return COMMON_STATUS_OK;
+} // configMILEvents
+
 
 // entry action 'configured' state
 uint32_t extern_entryActionConfigured()
@@ -242,12 +279,13 @@ uint32_t extern_entryActionConfigured()
       DBPRINT1("wr-mil: ERROR - can't find MIL device; receiver\n");
       return COMMON_STATUS_OUTOFRANGE;
     } // if !pMilRec
+
     // reset MIL receiver and wait
     if ((status = resetPiggyDevMil(pMilRec))  != MIL_STAT_OK) {
       DBPRINT1("wr-mil: ERROR - can't reset MIL device; receiver\n");
       return WRMIL_STATUS_MIL;
     }  // if reset
-  } // if SetMilMon
+  } // if receiver
 
   // if everything is ok, we must return with COMMON_STATUS_OK
   if (status == MIL_STAT_OK) status = COMMON_STATUS_OK;
@@ -267,7 +305,7 @@ uint32_t extern_entryActionOperation()
   uint32_t flagDummy1, flagDummy2, flagDummy3, flagDummy4;
 
   // clear diagnostics
-  fwlib_clearDiag();             
+  fwlib_clearDiag();
 
   // flush ECA queue for lm32
   i = 0;
@@ -292,6 +330,15 @@ uint32_t extern_entryActionOperation()
   utc_offset    |= (uint64_t)(*pSharedSetUtcOffsLo);
   mil_latency    = *pSharedSetLatency;
   mil_domain     = *pSharedSetGid;
+  mil_mon        = *pSharedSetMilMon;
+
+  nMessages      = 0;
+  nLate          = 0;
+
+  // configure MIL receiver for timing events for all 16 virtual accelerators
+  if (configMILEvents(mil_mon) != COMMON_STATUS_OK) {
+    DBPRINT1("wr-mil: ERROR - failed to configure MIL piggy for receiving timing events!\n");
+  }  // if configMILevents
 
   return COMMON_STATUS_OK;
 } // extern_entryActionOperation
@@ -404,25 +451,34 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   switch (ecaAction) {
     // the following two cases handle h=1 group DDS phase measurement
     case WRMIL_ECADO_MIL_EVT:
-      comLatency    = (int32_t)(getSysTime() - recDeadline);
+      comLatency   = (int32_t)(getSysTime() - recDeadline);
+      recGid       = (uint32_t)((recEvtId >> 48) & 0x0fff);
+      recSid       = (uint32_t)((recEvtId >> 20) & 0x0fff);
+
+      if (recGid != mil_domain) return WRMIL_STATUS_BADSETTING;
+      if (recSid  > 15)         return COMMON_STATUS_OUTOFRANGE;
+      
       convert_WReventID_to_milTelegram(recEvtId, &milTelegram);
 
       // build timing message and inject into ECA
 
       // deadline
-      sendDeadline  = recDeadline + mil_latency * MICROSECONDS - MILSEND_LATENCY;
+      sendDeadline  = recDeadline + mil_latency * one_us_ns - WRMIL_MILSEND_LATENCY;
       // protect from nonsense hi-frequency bursts
-      if (sendDeadline < previous_time + MILSEND_LATENCY) sendDeadline = previous_time + MILSEND_LATENCY;
+      if (sendDeadline < previous_time + WRMIL_MILSEND_LATENCY) sendDeadline = previous_time + WRMIL_MILSEND_LATENCY;
       previous_time = sendDeadline;
 
       // evtID
       sendEvtId     = recEvtId;
-      sendEvtId    |= (uint64_t)0xfff << 48;  // overwrite GID with 0xfff to signal for local message
+      sendEvtId    |= (uint64_t)0xff0 << 48;  // overwrite GID with 0xff0 to signal for local message generating a MIL telegram
 
       // param
       sendParam     = (uint64_t)milTelegram & 0xffffffff;
       fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0);
-      
+      if (getSysTime() > sendDeadline) nLate++;
+
+      nMessages++;
+
       break; 
      
     default :                                                         // flush ECA queue
@@ -496,6 +552,9 @@ int main(void) {
     pubState = actState;
     fwlib_publishState(pubState);
     *pSharedGetComLatency = comLatency;
+    *pSharedGetNEvtsHi    = (uint32_t)(nMessages >> 32);
+    *pSharedGetNEvtsLo    = (uint32_t)(nMessages & 0xffffffff);
+    *pSharedGetNLateEvts  = nLate;
   } // while
 
   return(1); // this should never happen ...

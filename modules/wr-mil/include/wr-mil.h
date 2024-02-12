@@ -39,6 +39,9 @@
 //#define WRMIL_GW_MSI_STATE_CHANGED      0x2
 //#define WRMIL_GW_MSI_EVENT              0x3  // ored with (mil_event_number << 8)
 
+// constants
+#define WRMIL_MILSEND_LATENCY         25000    // nanoseconds from pushing to mil piggy/sio queue to last transition on the mil bus
+
 // default values
 #define WRMIL_DFLT_UTC_TRIGGER         0xf6    // EVT_BEGIN_CMD_EXEC
 #define WRMIL_DFLT_UTC_UTC_DELAY         30    // [us]
