@@ -34,12 +34,13 @@ struct AllocMeta {
   vertex_t    v;
   uint8_t     b[_MEM_BLOCK_SIZE];
   bool        staged;
+  bool        global;
 
 
   AllocMeta(uint8_t cpu, uint32_t adr, uint32_t hash) : cpu(cpu), adr(adr), hash(hash) {std::memset(b, 0, sizeof b);}
   AllocMeta(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v) : cpu(cpu), adr(adr), hash(hash), v(v), staged(false) {std::memset(b, 0, sizeof b);}
   AllocMeta(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v, bool staged) : cpu(cpu), adr(adr), hash(hash), v(v), staged(staged) {std::memset(b, 0, sizeof b);}
-
+  AllocMeta(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v, bool staged, bool global) : cpu(cpu), adr(adr), hash(hash), v(v), staged(staged), global(global) {}
   // Multiindexed Elements are immutable, must use the modify function of the container to change attributes
 };
 
@@ -100,49 +101,11 @@ typedef boost::multi_index_container<
 
 typedef MgmtMeta_set::iterator mmI;
 
-struct StaticMeta {
-  uint8_t     cpu;
-  uint32_t    adr;
-  uint32_t    hash;
-  uint32_t    size;
-  vertex_t    v;
-
-//ext int / global local statt CPU ? gefährlich (blockade) ?
-  StaticMeta(uint8_t cpu, uint32_t adr, uint32_t hash) : cpu(cpu), adr(adr), hash(hash), size(size), v(null_vertex) {}
-  StaticMeta(uint8_t cpu, uint32_t adr, uint32_t hash) : cpu(cpu), adr(adr), hash(hash), size(4), v(null_vertex) {}
-
-  // Multiindexed Elements are immutable, must use the modify function of the container to change attributes
-};
-
-
-
-
-
-typedef boost::multi_index_container<
-  StaticMeta,
-  indexed_by<
-    hashed_unique<
-      tag<Vertex>,  BOOST_MULTI_INDEX_MEMBER(StaticMeta,vertex_t,v)>,
-    hashed_unique<
-      tag<Hash>,  BOOST_MULTI_INDEX_MEMBER(StaticMeta,uint32_t,hash)>,
-    ordered_unique<
-      tag<CpuAdr>,
-      composite_key<
-        StaticMeta,
-        BOOST_MULTI_INDEX_MEMBER(StaticMeta,uint8_t,cpu),
-        BOOST_MULTI_INDEX_MEMBER(StaticMeta,uint32_t,adr)
-      >
-    >
-  >
- > StaticMeta_set;
-
-typedef StaticMeta_set::iterator smI;
-
 class AllocTable {
 
   AllocMeta_set a;
   MgmtMeta_set  m;
-  StaticMeta_set  s;
+  //StaticMeta_set* s;
   std::vector<MemPool> vPool;
   const size_t payloadPerChunk = _MEM_BLOCK_SIZE - 1 - _PTR_SIZE_;
   uint32_t mgmtStartAdr;
@@ -195,17 +158,20 @@ public:
   void setStaged(amI it) { a.modify(it, [](AllocMeta& e){e.staged = true;}); }
   void clrStaged(amI it) { a.modify(it, [](AllocMeta& e){e.staged = false;}); }
   bool isStaged(amI it)  { return it->staged; }
+  bool isGlobal(amI it)  { return it->global; }
   void modV(amI it, vertex_t vNew) { a.modify(it, [vNew](AllocMeta& e){e.v = vNew;}); }
 
   //Allocation functions
 // TODO - Maybe better with pair <iterator, bool> to get a direct handle on the inserted/allocated element?
   int allocate(uint8_t cpu, uint32_t hash, vertex_t v, bool staged);
   int allocate(uint8_t cpu, uint32_t hash, vertex_t v) {return allocate(cpu, hash, v, true); }
-
+  int allocateGlobal(uint8_t cpu, uint32_t hash, vertex_t v);
 
   bool deallocate(uint32_t hash);
 
-  bool insert(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v, bool staged);
+
+  
+  bool insert(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v, bool staged, bool global=false);
   bool insert(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v) {return insert(cpu, adr, hash, v, true); }
 
   bool removeByVertex(vertex_t v);
@@ -257,7 +223,7 @@ public:
   const MgmtMeta_set& getMgmtTable() const { return m; }
   const size_t getMgmtSize()          const { return m.size(); }
 
-  void updateStaticVertex(smI it, v) { s.modify(it, [](StaticMeta& e){e.v = v;}); }
+  //void updateStaticVertex(smI it, v) { s.modify(it, [](StaticMeta& e){e.v = v;}); }
 
 };
 

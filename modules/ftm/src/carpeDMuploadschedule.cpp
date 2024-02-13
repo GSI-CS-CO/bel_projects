@@ -303,7 +303,12 @@ using namespace DotStr::Misc;
         amI it = atUp.lookupHashNoEx(hash); //if we already have a download entry, keep allocation, but update vertex index
         if (!atUp.isOk(it)) {
           //sLog << "Adding " << name << std::endl;
-          allocState = atUp.allocate(cpu, hash, v, true);
+          if (gUp[v].type != dnt::sStatic) {
+            allocState = atUp.allocate(cpu, hash, v, true);
+          } else {
+            allocState = atUp.allocateGlobal(cpu, hash, v);
+          }  
+
           if (allocState == ALLOC_NO_SPACE)         {throw std::runtime_error("Not enough space in CPU " + std::to_string(cpu) + " memory pool"); return; }
           if (allocState == ALLOC_ENTRY_EXISTS)     {throw std::runtime_error("Node '" + name + "' would be duplicate in graph."); return; }
           // getting here means alloc went okay
@@ -354,23 +359,27 @@ using namespace DotStr::Misc;
       gUp[v].np->accept(VisitorUploadCrawler(gUp, v, atUp, sLog, sErr));
 
       //Check if all mandatory fields were properly initialised
+      //No Check for Global locations, as they are not Nodes from the mempool
       auto x = atUp.lookupVertex(v);
-      std::string haystack(x->b, x->b + _MEM_BLOCK_SIZE);
-      std::size_t n = haystack.find(DotStr::Misc::needle);
+      if (!(x->global)) {
+        std::string haystack(x->b, x->b + _MEM_BLOCK_SIZE);
+        std::size_t n = haystack.find(DotStr::Misc::needle);
 
-      bool foundUninitialised = (n != std::string::npos);
+        bool foundUninitialised = (n != std::string::npos);
 
-      if(debug || foundUninitialised) {
-        log<DEBUG_LVL1>(L"prepareUpload: @ %1$#08x \n %2%") % atUp.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr) % hexDump(gUp[v].name.c_str(), haystack.c_str(), _MEM_BLOCK_SIZE).c_str();
+        if(debug || foundUninitialised) {
+          log<DEBUG_LVL1>(L"prepareUpload: @ %1$#08x \n %2%") % atUp.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr) % hexDump(gUp[v].name.c_str(), haystack.c_str(), _MEM_BLOCK_SIZE).c_str();
+        }
+
+        if(foundUninitialised) {
+          throw std::runtime_error("Node '" + gUp[v].name + "'contains uninitialised elements!\nMisspelled/forgot a mandatory property in .dot file ?");
+        }
+      } else {
+      log<VERBOSE>(L"prepareUpload: Node %1% is a global location, skipping init check\n") % gUp[x->v].name.c_str();
       }
 
-      if(foundUninitialised) {
-        throw std::runtime_error("Node '" + gUp[v].name + "'contains uninitialised elements!\nMisspelled/forgot a mandatory property in .dot file ?");
-      }
     }
-
   }
-
 
   int CarpeDM::CarpeDMimpl::upload( uint8_t opType, std::vector<QueueReport>& vQr) {
     updateModTime();

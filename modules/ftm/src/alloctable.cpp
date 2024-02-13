@@ -20,7 +20,7 @@
   }
 
 
-  bool AllocTable::insert(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v, bool staged) {
+  bool AllocTable::insert(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v, bool staged, bool global) {
    /*
     std::cout << "Problem: " << std::endl;
     if (lookupAdr(cpu, adr) != a.end()) std::cout << (int)cpu << " Adr 0x" << std::hex << adr << " exists already" << std::endl;
@@ -28,7 +28,7 @@
     if (lookupVertex(v) != a.end()) std::cout << "V 0x" << std::dec << v << " (hash 0x" << hash << ") exists already" << std::endl;
     */
     vPool[cpu].occupyChunk(adr);
-    auto x = a.insert({cpu, adr, hash, v, staged});
+    auto x = a.insert({cpu, adr, hash, v, staged, global});
 
     return x.second;
   }
@@ -110,6 +110,13 @@
     return ALLOC_OK;
   }
 
+  int AllocTable::allocateGlobal(uint8_t cpu, uint32_t hash, vertex_t v) {
+    uint32_t adr = 0xcafebabe;
+    //if (adr OOR) {return ALLOC_NO_SPACE;}
+    if (!(insert(cpu, adr, hash, v, false, true)))  return ALLOC_ENTRY_EXISTS;
+
+    return ALLOC_OK;  
+  }
 
   int AllocTable::allocateMgmt(vBuf& serialisedContainer) {
     vAdr ret;
