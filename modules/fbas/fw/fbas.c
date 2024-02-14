@@ -629,7 +629,7 @@ uint32_t extern_entryActionConfigured()
   DBPRINT2("fbas%d: pIOCtrl=0x%8p, pECAQ=0x%8p\n", nodeType, pIOCtrl, pECAQ);
 
   DBPRINT1("fbas%d: designated platform = %s\n", nodeType, MYPLATFORM);
-  if (MYPLATFORM == "pcicontrol") {         // re-set the default output port ( LVDS for Pexiara)
+  if (strcmp(MYPLATFORM, "pcicontrol") == 0) {   // re-set the default output port ( LVDS for Pexiara)
     outPortCfg.type = IO_CFG_CHANNEL_LVDS;
     outPortCfg.total= N_OUT_LEMO_PEXARIA;
   }
