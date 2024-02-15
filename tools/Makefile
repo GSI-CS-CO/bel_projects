@@ -64,13 +64,15 @@ eb-reset: eb-reset.c
 eb-asmi: eb-asmi.c
 	$(CC) $(CFLAGS) -I$(WBDIR) -o eb-asmi eb-asmi.c crc8.c crc32.c $(LIBS)
 
-# Yocto area
+###################################################################################################
+# Yocto area -> See https://git.acc.gsi.de/embedded/meta-timing
+###################################################################################################
 
 BINDIR ?= /usr/bin
 
-WRPC_SW_BASE = "../ip_cores/wrpc-sw"
-WRPC_SW_INC = "${WRPC_SW_BASE}/include"
-WRPC_SW_DEV = "${WRPC_SW_BASE}/dev"
+WRPC_SW_BASE = "../../recipe-sysroot/usr/include"
+WRPC_SW_INC = "${WRPC_SW_BASE}"
+WRPC_SW_DEV = "${WRPC_SW_BASE}/wrpc-sw"
 
 EB_TOOLS_TO_BUILD := eb-flash eb-info eb-console eb-config-nv eb-time eb-sflash eb-iflash eb-reset eb-daq-dump eb-fwload eb-i2c-master eb-asmi eb-fg-statistic monitoring/eb-mon monitoring/eb-massmon
 EB_TOOLS_SOURCES  := wb_api.c ${WRPC_SW_DEV}/w1-hw.c ${WRPC_SW_DEV}/w1-temp.c ${WRPC_SW_DEV}/w1.c crc32.c
@@ -80,9 +82,9 @@ eb-tools: eb-tools-compile-tools eb-tools-compile-simple-display
 
 eb-tools-compile-tools:
 	for ITEM in ${EB_TOOLS_TO_BUILD}; do \
-		$(CC) $(CFLAGS) $(LDFLAGS) $$ITEM.c $(EB_TOOLS_SOURCES) -o $$ITEM \
+		$(CC) $(CFLAGS) $(LDFLAGS) $$ITEM.c $(EB_TOOLS_SOURCES) -o $$ITEM -DMETA_TIMING\
 		-letherbone \
-		-I ${WRPC_SW_INC} -I . -I ${WRPC_SW_BASE}/pp_printf; \
+		-I ${WRPC_SW_INC} -I ${WRPC_SW_DEV} -I ${WRPC_SW_DEV}/wrpc-sw/hw -I ${WRPC_SW_INC}/wr-cores -I . -I ${WRPC_SW_BASE}/pp_printf; \
 	done
 
 eb-tools-compile-simple-display:
