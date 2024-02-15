@@ -67,6 +67,7 @@ class DmSchedOverwrite(dm_testbench.DmTestbench):
     Overwrite the schedule with the original one and save the status for later compare.
     """
     self.addSchedule(self.scheduleFile0)
+    self.delay(0.1)
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile0])
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'A'), [0], 1, 0)
     self.delay(0.5)
