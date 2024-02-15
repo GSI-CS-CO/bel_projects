@@ -320,7 +320,7 @@ class DmPps(dm_testbench.DmTestbench):
     # this schedule has no defined pattern (entry is missing). Thus, we cannot start a pattern.
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile1])
     self.startPattern(self.scheduleFile2, 'A')
-    # the additional node EvtB is pattern entry. Runn the pattern for a second.
+    # the additional node EvtB is pattern entry. Run the pattern for a second.
     self.delay(1.0)
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile2])
     self.startAndCheckSubprocess([self.binaryDmCmd, self.datamaster, 'stoppattern', 'A'], [0], 0, 0)
@@ -329,7 +329,7 @@ class DmPps(dm_testbench.DmTestbench):
     """Test adding a schedule with a node with name ending in ListDst_3. This fails,
     because this name is generated during upload and a collision happens.
     Second attempt is to add a similar schedule with the name Block0_0_ListDst_6.
-    This works.
+    This works. The generated nodes have the names Block0_0_ListDst_x with x from 0 to 5.
     """
     self.scheduleFile0 = 'pps-test8-0.dot'
     self.scheduleFile1 = 'pps-test8-1.dot'
