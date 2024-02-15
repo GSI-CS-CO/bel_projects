@@ -1,0 +1,10 @@
+digraph "pps-test6-1" {
+  name="pps-test6-1"
+  subgraph subgraph0 {
+    node [cpu=0 pattern=A tperiod=100000000 toffs=2000000 fid=1 gid=5 sid=2 bpid=8 style=filled color=black fillcolor=white penwidth=2 shape=oval]
+    EvtA [type=tmsg patentry=0 evtno=15 par=1 color=darkorange3]
+    BlockA [type=block patexit=1 qlo=1 shape=rectangle color=purple]
+    EvtA -> BlockA [type=defdst color=red]
+    BlockA -> EvtA [type=altdst color=black]
+  }
+}

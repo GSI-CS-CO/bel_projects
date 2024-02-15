@@ -281,3 +281,61 @@ class DmPps(dm_testbench.DmTestbench):
     # pattern has ended, try to remove a second time.
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'remove', self.schedulesFolder + self.scheduleFile1], expectedReturnCode=[0])
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile2])
+
+  def testPpsAdd6(self):
+    """Test adding a node which changes the pattern entry.
+    Check that the appropriate number of messages is produced.
+    """
+    snoopFile0 = 'snoop_test6.csv'
+    self.scheduleFile0 = 'pps-test6-0.dot'
+    self.scheduleFile1 = 'pps-test6-1.dot'
+    self.scheduleFile2 = 'pps-test6-2.dot'
+    self.downloadFile0 = 'pps-test6-0-download.dot'
+    self.downloadFile1 = 'pps-test6-1-download.dot'
+    self.downloadFile2 = 'pps-test6-2-download.dot'
+    self.snoopToCsvWithAction(snoopFile0, self.actionPpsAdd6, duration=3)
+    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + self.scheduleFile0, self.downloadFile0))
+    self.deleteFile(self.downloadFile0)
+    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + self.downloadFile1, self.downloadFile1))
+    self.deleteFile(self.downloadFile1)
+    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + self.downloadFile2, self.downloadFile2))
+    self.deleteFile(self.downloadFile2)
+    self.analyseFrequencyFromCsv(snoopFile0, column=20, printTable=True, checkValues={
+        '0x0000000000000001': '>10', '0x0000000000000002': '>8'})
+    self.deleteFile(snoopFile0)
+
+  def actionPpsAdd6(self):
+    """During snoop start pattern A. Stop pattern after a second.
+    Overwrite the schedule such that the edge from BlockA to EvtA changes to altdst.
+    Add a schedule with additional node EvtB and start pattern A again.
+    The status between the steps is saved for later compare.
+    """
+    self.delay(0.1)
+    self.startPattern(self.scheduleFile0, 'A')
+    self.delay(1.0)
+    self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile0])
+    self.startAndCheckSubprocess([self.binaryDmCmd, self.datamaster, 'stoppattern', 'A'], [0], 0, 0)
+    self.delay(0.5)
+    self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'overwrite', self.schedulesFolder + self.scheduleFile1], [0], 0, 0)
+    # this schedule has no defined pattern (entry is missing). Thus, we cannot start a pattern.
+    self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile1])
+    self.startPattern(self.scheduleFile2, 'A')
+    # the additional node EvtB is pattern entry. Runn the pattern for a second.
+    self.delay(1.0)
+    self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile2])
+    self.startAndCheckSubprocess([self.binaryDmCmd, self.datamaster, 'stoppattern', 'A'], [0], 0, 0)
+
+  def testPpsAdd8(self):
+    """Test adding a schedule with a node with name ending in ListDst_3. This fails,
+    because this name is generated during upload and a collision happens.
+    Second attempt is to add a similar schedule with the name Block0_0_ListDst_6.
+    This works.
+    """
+    self.scheduleFile0 = 'pps-test8-0.dot'
+    self.scheduleFile1 = 'pps-test8-1.dot'
+    self.downloadFile1 = 'pps-test8-1-download.dot'
+    self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'add', self.schedulesFolder + self.scheduleFile0], [250], 2, 2)
+    self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'add', self.schedulesFolder + self.scheduleFile1], [0], 0, 0)
+    self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-so', self.downloadFile1])
+    self.startAndCheckSubprocess(('scheduleCompare', '-u', self.schedulesFolder + self.downloadFile1, self.downloadFile1))
+    self.deleteFile(self.downloadFile1)
