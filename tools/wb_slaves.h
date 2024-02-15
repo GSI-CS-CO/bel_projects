@@ -68,7 +68,7 @@
 
 //-- Etherbone-Config --
 #ifdef META_TIMING
-#include "etherbone-config.h"
+#include "hw/etherbone-config.h"
 #else
 #include "../ip_cores/wrpc-sw/include/hw/etherbone-config.h"
 #endif
