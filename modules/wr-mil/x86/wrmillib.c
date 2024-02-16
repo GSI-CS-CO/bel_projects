@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-Feb-2024
+ *  version : 16-Feb-2024
  *
  * library for wr-mil
  *
@@ -76,9 +76,11 @@ eb_address_t wrmil_set_utcOffsetLo;       // delay [ms] between the TAI and the 
 eb_address_t wrmil_set_requestFill;       // if this is written to 1, the gateway will send a fill event as soon as possible
 eb_address_t wrmil_set_milDev;            // MIL device for sending MIL messages; 0: MIL Piggy; 1..: SIO in slot 1..
 eb_address_t wrmil_set_milMon;            // 1: monitor MIL events; 0; don't monitor MIL events
-eb_address_t wrmil_get_nEvtsHi;           // number of translated events from WR to MIL, high word
-eb_address_t wrmil_get_nEvtsLo;           // number of translated events from WR to MIL, low word
-eb_address_t wrmil_get_nLate;             // number of translated events that could not be delivered in time
+eb_address_t wrmil_get_nEvtsSndHi;        // number of sent MIL telegrams, high word
+eb_address_t wrmil_get_nEvtsSndLo;        // number of sent MIL telegrams, low word
+eb_address_t wrmil_get_nEvtsRecHi;        // number of received MIL telegrams, high word
+eb_address_t wrmil_get_nEvtsRecLo;        // number of received MIL telegrams, low word
+eb_address_t wrmil_get_nEvtsLate;         // number of translated events that could not be delivered in time
 eb_address_t wrmil_get_comLatency;        // latency for messages received from via ECA (tDeadline - tNow)) [ns]                             
 
 // get values
@@ -168,9 +170,11 @@ uint32_t wrmil_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t c
   wrmil_set_requestFill  = lm32_base + SHARED_OFFS + WRMIL_SHARED_SET_REQUEST_FILL_EVT;
   wrmil_set_milDev       = lm32_base + SHARED_OFFS + WRMIL_SHARED_SET_MIL_DEV;
   wrmil_set_milMon       = lm32_base + SHARED_OFFS + WRMIL_SHARED_SET_MIL_MON;
-  wrmil_get_nEvtsHi      = lm32_base + SHARED_OFFS + WRMIL_SHARED_GET_NUM_EVENTS_HI;       
-  wrmil_get_nEvtsLo      = lm32_base + SHARED_OFFS + WRMIL_SHARED_GET_NUM_EVENTS_LO;
-  wrmil_get_nLate        = lm32_base + SHARED_OFFS + WRMIL_SHARED_GET_LATE_EVENTS;         
+  wrmil_get_nEvtsSndHi   = lm32_base + SHARED_OFFS + WRMIL_SHARED_GET_N_EVTS_SND_HI;       
+  wrmil_get_nEvtsSndLo   = lm32_base + SHARED_OFFS + WRMIL_SHARED_GET_N_EVTS_SND_LO;
+  wrmil_get_nEvtsRecHi   = lm32_base + SHARED_OFFS + WRMIL_SHARED_GET_N_EVTS_REC_HI;       
+  wrmil_get_nEvtsRecLo   = lm32_base + SHARED_OFFS + WRMIL_SHARED_GET_N_EVTS_REC_LO;
+  wrmil_get_nEvtsLate    = lm32_base + SHARED_OFFS + WRMIL_SHARED_GET_N_EVTS_LATE;
   wrmil_get_comLatency   = lm32_base + SHARED_OFFS + WRMIL_SHARED_GET_COM_LATENCY;
 
   // do this just at the very end
@@ -221,7 +225,7 @@ uint32_t wrmil_version_library(uint32_t *version)
 } // wrmil_version_library
 
 
-void wrmil_printDiag(uint32_t utcTrigger, uint32_t utcDelay, uint32_t trigUtcDelay, uint32_t gid, int32_t latency, uint64_t utcOffset, uint32_t requestFill, uint32_t milDev, uint32_t milMon, uint64_t numEvts, uint32_t lateEvts, uint32_t comLatency)
+void wrmil_printDiag(uint32_t utcTrigger, uint32_t utcDelay, uint32_t trigUtcDelay, uint32_t gid, int32_t latency, uint64_t utcOffset, uint32_t requestFill, uint32_t milDev, uint32_t milMon, uint64_t nEvtsSnd, uint64_t nEvtsRec, uint32_t nEvtsLate, uint32_t comLatency)
 {
   printf("wrmil: info  ...\n\n");
 
@@ -233,15 +237,16 @@ void wrmil_printDiag(uint32_t utcTrigger, uint32_t utcDelay, uint32_t trigUtcDel
   printf("UTC offset [ms]              : 0d%015lu\n"    , utcOffset);
   printf("request fill event           : 0d%015u\n"     , requestFill);
   printf("MIL dev (0: piggy, 1.. :SIO) : 0x%015x\n"     , milDev);
-  printf("MIL monitoring               : 0d%015u\n"     , milMon);
-  printf("# transmitted events         : 0d%015lu\n"    , numEvts);
-  printf("# late events                : 0d%015u\n"     , lateEvts);
+  printf("MIL data monitoring          : 0d%015u\n"     , milMon);
+  printf("# MIL events sent            : 0d%015lu\n"    , nEvtsSnd);
+  printf("# MIL events received        : 0d%015lu\n"    , nEvtsRec);
+  printf("# late events                : 0d%015u\n"     , nEvtsLate);
   printf("communiation latency         : 0d%015u\n"     , comLatency);
 } // wrmil_printDiag
 
 
 uint32_t wrmil_info_read(uint64_t ebDevice, uint32_t *utcTrigger, uint32_t *utcUtcDelay, uint32_t *trigUtcDelay, uint32_t *gid, int32_t *latency, uint64_t *utcOffset, uint32_t *requestFill, uint32_t *milDev,
-                         uint32_t *milMon, uint64_t *numEvts, uint32_t *lateEvts, uint32_t *comLatency, int printFlag)
+                         uint32_t *milMon, uint64_t *nEvtsSnd, uint64_t *nEvtsRec, uint32_t *nEvtsLate, uint32_t *comLatency, int printFlag)
 {
   eb_cycle_t   eb_cycle;
   eb_status_t  eb_status;
@@ -262,10 +267,12 @@ uint32_t wrmil_info_read(uint64_t ebDevice, uint32_t *utcTrigger, uint32_t *utcU
   eb_cycle_read(eb_cycle, wrmil_set_requestFill , EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
   eb_cycle_read(eb_cycle, wrmil_set_milDev      , EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
   eb_cycle_read(eb_cycle, wrmil_set_milMon      , EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
-  eb_cycle_read(eb_cycle, wrmil_get_nEvtsHi     , EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
-  eb_cycle_read(eb_cycle, wrmil_get_nEvtsLo     , EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
-  eb_cycle_read(eb_cycle, wrmil_get_nLate       , EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
-  eb_cycle_read(eb_cycle, wrmil_get_comLatency  , EB_BIG_ENDIAN|EB_DATA32, &(data[13]));
+  eb_cycle_read(eb_cycle, wrmil_get_nEvtsSndHi  , EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
+  eb_cycle_read(eb_cycle, wrmil_get_nEvtsSndLo  , EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
+  eb_cycle_read(eb_cycle, wrmil_get_nEvtsRecHi  , EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
+  eb_cycle_read(eb_cycle, wrmil_get_nEvtsRecLo  , EB_BIG_ENDIAN|EB_DATA32, &(data[13]));
+  eb_cycle_read(eb_cycle, wrmil_get_nEvtsLate   , EB_BIG_ENDIAN|EB_DATA32, &(data[14]));
+  eb_cycle_read(eb_cycle, wrmil_get_comLatency  , EB_BIG_ENDIAN|EB_DATA32, &(data[15]));
   if ((eb_status = eb_cycle_close(eb_cycle)) != EB_OK) return COMMON_STATUS_EB;
 
   *utcTrigger    = data[0];
@@ -278,12 +285,14 @@ uint32_t wrmil_info_read(uint64_t ebDevice, uint32_t *utcTrigger, uint32_t *utcU
   *requestFill   = data[7];
   *milDev        = data[8];
   *milMon        = data[9];
-  *numEvts       = ((uint64_t)data[10] & 0xffffffff) << 32;
-  *numEvts      |= (uint64_t)data[11] & 0xffffffff;
-  *lateEvts      = data[12];
-  *comLatency    = data[13]; 
+  *nEvtsSnd      = ((uint64_t)data[10] & 0xffffffff) << 32;
+  *nEvtsSnd     |= (uint64_t)data[11] & 0xffffffff;
+  *nEvtsRec      = ((uint64_t)data[12] & 0xffffffff) << 32;
+  *nEvtsRec     |= (uint64_t)data[13] & 0xffffffff;
+  *nEvtsLate     = data[14];
+  *comLatency    = data[15]; 
 
-  if (printFlag) wrmil_printDiag(*utcTrigger, *utcUtcDelay, *trigUtcDelay, *gid, *latency, *utcOffset, *requestFill, *milDev, *milMon, *numEvts, *lateEvts, *comLatency);
+  if (printFlag) wrmil_printDiag(*utcTrigger, *utcUtcDelay, *trigUtcDelay, *gid, *latency, *utcOffset, *requestFill, *milDev, *milMon, *nEvtsSnd, *nEvtsRec, *nEvtsLate, *comLatency);
   
   return COMMON_STATUS_OK;
 } // wrmil_info_read

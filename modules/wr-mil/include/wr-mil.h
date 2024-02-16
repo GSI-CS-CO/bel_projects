@@ -19,8 +19,9 @@
 
 // activity requested by ECA Handler, the relevant codes are also used as "tags"
 #define WRMIL_ECADO_TIMEOUT    COMMON_ECADO_TIMEOUT
-#define WRMIL_ECADO_UNKOWN              1   // unkown activity requested (unexpected action by ECA)
-#define WRMIL_ECADO_MIL_EVT          0xff   // MIL event, evtno is 0x00..0xff
+#define WRMIL_ECADO_UNKOWN               1   // unkown activity requested (unexpected action by ECA)
+#define WRMIL_ECADO_MIL_EVT           0xff   // timing message "EVT_...." received, evtno is 0x00..0xff
+#define WRMIL_ECADO_MIL_TLU           0xa1   // timing message from TLU, evtno is 0xa01
 
 // commands from the outside
 
@@ -30,8 +31,18 @@
 // and has to be configured to one these; 
 // at startup it is unconfigured.
 #define GID_INVALID                     0x0   // invalid GID
-#define SIS18_RING                    0x12c   // LSA GID
-#define ESR_RING                      0x154   // LSA GID
+#define PZU_QR                        0x1c0   // LSA UNILAC Source Right
+#define PZU_QL                        0x1c1   // LSA UNILAC Source Left
+#define PZU_QN                        0x1c2   // LSA UNILAC Source High Charge State Injector (HLI)
+#define PZU_UN                        0x1c3   // LSA UNILAC High Charge State Injector (HLI)
+#define PZU_UH                        0x1c4   // LSA UNILAC High Current Injector (HSI)
+#define PZU_AT                        0x1c5   // LSA UNILAC Alvarez Cavities
+#define PZU_TK                        0x1c6   // LSA UNILAC Transfer Line
+#define SIS18_RING                    0x12c   // LSA SIS18 ring
+#define ESR_RING                      0x154   // LSA ESR ring
+#define LOC_MIL_SEND                  0xff0   // internal: MIL telegrams to be sent
+#define LOC_MIL_REC                   0xff1   // internal: MIL telegrams received (timestamp only)
+#define LOC_TLU                       0xfe1   // internal: MIL telegrams received (data, 100us delay)
 
 // specialities
 // interrupts
@@ -40,13 +51,22 @@
 //#define WRMIL_GW_MSI_EVENT              0x3  // ored with (mil_event_number << 8)
 
 // constants
-#define WRMIL_MILSEND_LATENCY         25000    // nanoseconds from pushing to mil piggy/sio queue to last transition on the mil bus
+#define WRMIL_MILSEND_LATENCY         25000    // latency [ns] from pushing to mil piggy/sio queue to last transition on the mil bus
+#define WRMIL_PRETRIGGER_DM          500000    // pretrigger [ns] for messages from the Data Master
+#define WRMIL_POSTTRIGGER_TLU         20000    // posttrigger [ns] for avoiding late messages from the TLU
+#define WRMIL_N_UTC_EVTS                  5    // number of generated EVT_UTC telegrams
+
 
 // default values
-#define WRMIL_DFLT_UTC_TRIGGER         0xf6    // EVT_BEGIN_CMD_EXEC
+#define WRMIL_DFLT_EVT_UTC_TRIGGER     0xf6    // EVT_BEGIN_CMD_EXEC
+#define WRMIL_DFLT_EVT_UTC_1           0xe0    // EVT_UTC_1
+#define WRMIL_DFLT_EVT_UTC_2           0xe1    // EVT_UTC_2
+#define WRMIL_DFLT_EVT_UTC_3           0xe2    // EVT_UTC_3
+#define WRMIL_DFLT_EVT_UTC_4           0xe3    // EVT_UTC_4
+#define WRMIL_DFLT_EVT_UTC_5           0xe4    // EVT_UTC_5
 #define WRMIL_DFLT_UTC_UTC_DELAY         30    // [us]
 #define WRMIL_DFLT_TRIG_UTC_DELAY         0    // [us]
-#define WRMIL_DFLT_LATENCY              100    // [us]
+#define WRMIL_DFLT_LATENCY                0    // [us], can be used for tuning
 #define WRMIL_DFLT_UTC_OFFSET 1199142000000    // [ms], year 2008
 
 // ****************************************************************************************
@@ -64,13 +84,15 @@
 #define WRMIL_SHARED_SET_UTC_OFFSET_LO     (WRMIL_SHARED_SET_UTC_OFFSET_HI    + _32b_SIZE_)  // offset [ms] between the TAI and the MIL-UTC, low  word
 #define WRMIL_SHARED_SET_REQUEST_FILL_EVT  (WRMIL_SHARED_SET_UTC_OFFSET_LO    + _32b_SIZE_)  // if this is written to 1, the gateway will send a fill event as soon as possible
 #define WRMIL_SHARED_SET_MIL_DEV           (WRMIL_SHARED_SET_REQUEST_FILL_EVT + _32b_SIZE_)  // MIL device for sending MIL messages; 0: MIL Piggy; 1..: SIO in slot 1..
-#define WRMIL_SHARED_SET_MIL_MON           (WRMIL_SHARED_SET_MIL_DEV          + _32b_SIZE_)  // 1: monitor MIL events; 0; don't monitor MIL events
+#define WRMIL_SHARED_SET_MIL_MON           (WRMIL_SHARED_SET_MIL_DEV          + _32b_SIZE_)  // 1: monitor MIL event data; 0; don't monitor MIL event data
 
 // get values
-#define WRMIL_SHARED_GET_NUM_EVENTS_HI     (WRMIL_SHARED_SET_MIL_MON          + _32b_SIZE_)  // number of translated events from WR to MIL, high word
-#define WRMIL_SHARED_GET_NUM_EVENTS_LO     (WRMIL_SHARED_GET_NUM_EVENTS_HI    + _32b_SIZE_)  // number of translated events from WR to MIL, low word
-#define WRMIL_SHARED_GET_LATE_EVENTS       (WRMIL_SHARED_GET_NUM_EVENTS_LO    + _32b_SIZE_)  // number of translated events that could not be delivered in time
-#define WRMIL_SHARED_GET_COM_LATENCY       (WRMIL_SHARED_GET_LATE_EVENTS      + _32b_SIZE_)  // latency for messages received from via ECA (tDeadline - tNow)) [ns]
+#define WRMIL_SHARED_GET_N_EVTS_SND_HI     (WRMIL_SHARED_SET_MIL_MON          + _32b_SIZE_)  // number of sent MIL telegrams, high word
+#define WRMIL_SHARED_GET_N_EVTS_SND_LO     (WRMIL_SHARED_GET_N_EVTS_SND_HI    + _32b_SIZE_)  // number of sent MIL telegrams, low word
+#define WRMIL_SHARED_GET_N_EVTS_REC_HI     (WRMIL_SHARED_GET_N_EVTS_SND_LO    + _32b_SIZE_)  // number of received MIL telegrams, high word
+#define WRMIL_SHARED_GET_N_EVTS_REC_LO     (WRMIL_SHARED_GET_N_EVTS_REC_HI    + _32b_SIZE_)  // number of received MIL telegrams, low word
+#define WRMIL_SHARED_GET_N_EVTS_LATE       (WRMIL_SHARED_GET_N_EVTS_REC_LO    + _32b_SIZE_)  // number of translated events that could not be delivered in time
+#define WRMIL_SHARED_GET_COM_LATENCY       (WRMIL_SHARED_GET_N_EVTS_LATE      + _32b_SIZE_)  // latency for messages received from via ECA (tDeadline - tNow)) [ns]
 //#define WRMIL_SHARED_GET_LATE_HISTOGRAM    (WRMIL_SHARED_GET_COM_LATENCY      + _32b_SIZE_)  // dummy register to indicate position after the last valid register
 //#define WRMIL_SHARED_GET_MIL_HISTOGRAM     (WRMIL_SHARED_GET_LATE_HISTOGRAM   + _32b_SIZE_)  // dummy register to indicate position after the last valid register
 //#define WRMIL_SHARED_GET_MSI_SLOT          (WRMIL_SHARED_GET_MIL_HISTOGRAM    + _32b_SIZE_)  // MSI slot is stored here

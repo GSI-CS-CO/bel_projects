@@ -3,7 +3,7 @@
  *
  *  created : 2014
  *  author  : Dietrich Beck, Michael Reese GSI-Darmstadt
- *  version : 09-Feb-2025
+ *  version : 16-Feb-2025
  *
  * Command-line interface for wr-mil
  *
@@ -55,7 +55,6 @@
 
 const char* program;
 static int getInfo     = 0;
-static int getRegister = 0;
 static int getVersion  = 0;
 static int snoop       = 0;
 static int logLevel    = 0;
@@ -72,32 +71,35 @@ static void help(void) {
   
   fprintf(stderr, "Usage: %s [OPTION] <etherbone-device> [COMMAND]\n", program);
   fprintf(stderr, "\n");
-  fprintf(stderr, "  -h                  display this help and exit\n"                                );
-  fprintf(stderr, "  -e                  display version\n"                                           );
-  fprintf(stderr, "  -i                  show gateway information. Repeat the option\n"               );
-  fprintf(stderr, "                      to get more detailed information, e.g. -iii\n"               );
-  fprintf(stderr, "  -R                  read register content\n"                                     );
-  fprintf(stderr, "  -g                  show received MIL events in monitoring loop\n"               );
-  fprintf(stderr, "  -r                  Pause gateway for 1 s, and reset\n"                          );
+  fprintf(stderr, "  -h                  display this help and exit\n"                                 );
+  fprintf(stderr, "  -e                  display version\n"                                            );
+  fprintf(stderr, "  -i                  show gateway information\n"                                   );
   fprintf(stderr, "\n");
-  fprintf(stderr, "The following parameters are to be used with command 'configure' \n"               );
-  fprintf(stderr, "with command 'configure', parameters -w and -s are mandatory\n"                    );
-  fprintf(stderr, "  -w <MIL WB addr>    wishbone address of MIL device\n"                            );
-  fprintf(stderr, "  -s <MIL domain>     MIL domain; this can be\n"                                   );
-  fprintf(stderr, "                      0: PZU-QR; UNILAC, Source Right\n"                           );
-  fprintf(stderr, "                      1: PZU-QL; UNILAC, Source Left\n"                            );     
-  fprintf(stderr, "                      2: PZU-QN; UNILAC, Source High Charge State Injector (HLI)\n");
-  fprintf(stderr, "                      3: PZU-UN; UNILAC, High Charge State Injector (HLI)\n"       );
-  fprintf(stderr, "                      4: PZU-UH; UNILAC, High Current Injector (HSI)\n"            );
-  fprintf(stderr, "                      5: PZU-AT; UNILAC, Alvarez Cavities\n"                       );
-  fprintf(stderr, "                      6: PZU-TK; UNILAC, Transfer Line\n"                          );
-  fprintf(stderr, "                      7: PZ-SIS18\n"                                               );
-  fprintf(stderr, "                      8: PZ-ESR\n"                                                 );
-  fprintf(stderr, "  -t <trigger>        evtNo of UTC-trigger event [0..255], default 0xf6\n"         );
-  fprintf(stderr, "  -o <offset>         UTC-offset [s]                     , default yr 2008\n"      );
-  fprintf(stderr, "  -d <delay>          Set Trigger-UTC delay [us]         , default 0\n"            );
-  fprintf(stderr, "  -u <delay>          Set UTC-UTC delay [us]             , default 30\n"           );
-  fprintf(stderr, "  -m <on>             enable monitoring [0..1]\n         , default 0\n"            );
+  fprintf(stderr, "All following parameters are to be used with command 'configure' \n"                );
+  fprintf(stderr, "parameters -w and -s are mandatory\n"                                               );
+  fprintf(stderr, "  -w <MIL device>     MIL device for sending MIL messages; 0: MIL Piggy; 1..: SIO\n");
+  fprintf(stderr, "  -s <MIL domain>     MIL domain; this can be\n"                                    );
+  fprintf(stderr, "                      0: PZU-QR; UNILAC, Source Right\n"                            );
+  fprintf(stderr, "                      1: PZU-QL; UNILAC, Source Left\n"                             );     
+  fprintf(stderr, "                      2: PZU-QN; UNILAC, Source High Charge State Injector (HLI)\n" );
+  fprintf(stderr, "                      3: PZU-UN; UNILAC, High Charge State Injector (HLI)\n"        );
+  fprintf(stderr, "                      4: PZU-UH; UNILAC, High Current Injector (HSI)\n"             );
+  fprintf(stderr, "                      5: PZU-AT; UNILAC, Alvarez Cavities\n"                        );
+  fprintf(stderr, "                      6: PZU-TK; UNILAC, Transfer Line\n"                           );
+  fprintf(stderr, "                      7: PZ-SIS18\n"                                                );
+  fprintf(stderr, "                      8: PZ-ESR\n"                                                  );
+  fprintf(stderr, "  -l <latency>        [ns] latency correction for all MIL telegrams, default 0\n   ");
+  fprintf(stderr, "  -g                  'latency' shall be negative\n"                                );
+  fprintf(stderr, "  -t <trigger>        UTC: evtNo of trigger event [0..255], default 0xf6\n"         );
+  fprintf(stderr, "  -o <offset>         UTC: offset [s]                     , default yr 2008\n"      );
+  fprintf(stderr, "  -d <delay>          UTC: delay after trigger event [us] , default 0\n"            );
+  fprintf(stderr, "  -u <delay>          UTC: delay between UTC events  [us] , default 30\n"           );
+  fprintf(stderr, "  -m <on>             monitoring of received MIL telegrams, default 0\n"            );
+  fprintf(stderr, "                      0: no monitoring\n"                                           );
+  fprintf(stderr, "                      1: number and timestamping of MIL telegrams    , GID 0xfe1\n" );
+  fprintf(stderr, "                      2: includes '1', adds decoding of MIL telegrams, GID 0xff1\n" );
+  fprintf(stderr, "                      monitoring is implemented via local messages to the ECA\n"    );
+  fprintf(stderr, "                      Tip: MIL telegrams to be sent are available too, GID 0xff0\n" );
   fprintf(stderr, "\n");
   fprintf(stderr, "  configure           command requests state change from IDLE or CONFIGURED -> CONFIGURED\n");
   fprintf(stderr, "                      'configure' requires parameters -w, -s\n");
@@ -113,7 +115,7 @@ static void help(void) {
   fprintf(stderr, "using the special argument '--' to terminate option scanning.\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to control the wr-mil gateway from the command line\n");
-  fprintf(stderr, "Example1: '%s dev/wbm0 0x4711 bla bla bla\n", program);
+  fprintf(stderr, "Example1: '%s dev/wbm0-s 0 -w 1 -m 1 -l 0  configure'\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
 
@@ -179,8 +181,9 @@ int main(int argc, char** argv) {
   uint32_t getRequestFill;                     // if this is written to 1, the gateway will send a fill event as soon as possible
   uint32_t getMilDev;                          // MIL device for sending MIL messages; 0: MIL Piggy; 1..: SIO in slot 1..
   uint32_t getMilMon;                          // 1: monitor MIL events; 0; don't monitor MIL events
-  uint64_t getNumEvts;                         // number of translated events from WR to MIL
-  uint32_t getLateEvts;                        // number of translated events that could not be delivered in time
+  uint64_t getNEvtsSnd;                        // number MIL telegrams sent
+  uint64_t getNEvtsRec;                        // number MIL telegrams received
+  uint32_t getNEvtsLate;                       // number of translated events that could not be delivered in time
   uint32_t getComLatency;                      // latency for messages received from via ECA (tDeadline - tNow)) [ns]
                      
 
@@ -203,14 +206,14 @@ int main(int argc, char** argv) {
   int32_t   utc_utc_delay   = WRMIL_DFLT_UTC_UTC_DELAY;     
   int32_t   trig_utc_delay  = WRMIL_DFLT_TRIG_UTC_DELAY;
   uint64_t  utc_offset      = WRMIL_DFLT_UTC_OFFSET;
-  uint32_t  mil_latency     = WRMIL_DFLT_LATENCY;
+  int32_t   mil_latency     = WRMIL_DFLT_LATENCY;
   uint32_t  mil_domain      = -1;
   uint32_t  mil_wb_dev      = -1;
   uint32_t  mil_wb_mon      = 0;
 
   program = argv[0];    
 
-  while ((opt = getopt(argc, argv, "s:t:o:d:u:w:m:heiRr")) != -1) {
+  while ((opt = getopt(argc, argv, "s:t:o:d:u:w:m:l:ghei")) != -1) {
     switch (opt) {
       case 'e':
         getVersion = 1;
@@ -218,18 +221,15 @@ int main(int argc, char** argv) {
       case 'i':
         getInfo = 1;
         break;
-      case 'R':
-        getRegister = 1;
-        break;
       case 'm':
-        mil_wb_mon = 1;
-        return 0;
-      case 'r':
-        printf("reset not yet implemented\n");
-        return 0;
+        mil_wb_mon = strtoull(optarg, &tail, 0);
+        break;
       case 'l':
         mil_latency = strtoull(optarg, &tail, 0);
         if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1;}
+        break;
+      case 'g':
+        mil_latency = -mil_latency;
         break;
       case 't':
         utc_trigger = strtoull(optarg, &tail, 0);
@@ -255,15 +255,15 @@ int main(int argc, char** argv) {
         tmp           = strtoull(optarg, &tail, 0);
         if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1;}
         switch (tmp) {
-          case 0: mil_domain = 0x1c0; break;
-          case 1: mil_domain = 0x1c1; break;
-          case 2: mil_domain = 0x1c2; break;
-          case 3: mil_domain = 0x1c3; break;
-          case 4: mil_domain = 0x1c4; break;
-          case 5: mil_domain = 0x1c5; break;
-          case 6: mil_domain = 0x1c6; break;
-          case 7: mil_domain = 0x12c; break;
-          case 8: mil_domain = 0x154; break;
+          case 0: mil_domain = PZU_QR;     break;
+          case 1: mil_domain = PZU_QL;     break;
+          case 2: mil_domain = PZU_QN;     break;
+          case 3: mil_domain = PZU_UN;     break;
+          case 4: mil_domain = PZU_UH;     break;
+          case 5: mil_domain = PZU_AT;     break;
+          case 6: mil_domain = PZU_TK;     break;
+          case 7: mil_domain = SIS18_RING; break;
+          case 8: mil_domain = ESR_RING;   break;
           default: fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1; 
         } // switch tmp
         break;
@@ -317,7 +317,7 @@ int main(int argc, char** argv) {
 
   if (getInfo) {
     // status
-    wrmil_info_read(ebDevice, &getUtcTrigger, &getUtcDelay, &getTrigUtcDelay, &getGid, &getLatency, &getUtcOffset, &getRequestFill, &getMilDev, &getMilMon, &getNumEvts, &getLateEvts, &getComLatency, 0);
+    wrmil_info_read(ebDevice, &getUtcTrigger, &getUtcDelay, &getTrigUtcDelay, &getGid, &getLatency, &getUtcOffset, &getRequestFill, &getMilDev, &getMilMon, &getNEvtsSnd, &getNEvtsRec, &getNEvtsLate, &getComLatency, 0);
     wrmil_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
 
     // print set status bits (except OK)
@@ -372,7 +372,7 @@ int main(int argc, char** argv) {
       for (i = COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
         if ((statusArray >> i) & 0x1)  printf("    status bit is set : %s\n", wrmil_status_text(i));
       } // for i
-      wrmil_info_read(ebDevice, &getUtcTrigger, &getUtcDelay, &getTrigUtcDelay, &getGid, &getLatency, &getUtcOffset, &getRequestFill, &getMilDev, &getMilMon, &getNumEvts, &getLateEvts, &getComLatency, 1);
+      wrmil_info_read(ebDevice, &getUtcTrigger, &getUtcDelay, &getTrigUtcDelay, &getGid, &getLatency, &getUtcOffset, &getRequestFill, &getMilDev, &getMilMon, &getNEvtsSnd, &getNEvtsRec, &getNEvtsLate, &getComLatency, 1);
     } // "diag"
   } //if command
 
@@ -402,7 +402,7 @@ if (snoop) {
       if ((actNTransfer   != nTransfer)    && (logLevel <= COMMON_LOGLEVEL_ONCE))    {printFlag = 1; actNTransfer   = nTransfer;}
 
       if (printFlag) {
-        wrmil_info_read(ebDevice, &getUtcTrigger, &getUtcDelay, &getTrigUtcDelay, &getGid, &getLatency, &getUtcOffset, &getRequestFill, &getMilDev, &getMilMon, &getNumEvts, &getLateEvts, &getComLatency, 0);
+        wrmil_info_read(ebDevice, &getUtcTrigger, &getUtcDelay, &getTrigUtcDelay, &getGid, &getLatency, &getUtcOffset, &getRequestFill, &getMilDev, &getMilMon, &getNEvtsSnd, &getNEvtsRec, &getNEvtsLate, &getComLatency, 0);
         printf(", %s (%6u), ",  comlib_stateText(state), nBadState);
         if ((statusArray >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);
         else printf("NOTOK(%6u)\n", nBadStatus);

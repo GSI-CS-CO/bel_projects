@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Micheal Reese, Mathias Kreider GSI-Darmstadt
- *  version : 12-feb-2024
+ *  version : 16-feb-2024
  *
  *  firmware required for the White Rabbit -> MIL Gateways
  *  
@@ -40,13 +40,10 @@
 #define WRMIL_FW_VERSION      0x000001    // make this consistent with makefile
 
 #define RESET_INHIBIT_COUNTER  1000       // count so many main loops before the inhibit for fill event sending is released
-#define N_UTC_EVENTS           5          // number of generated EVT_UTC events
-#define ECA_QUEUE_LM32_TAG     0x00000004 // the tag for ECA actions we (the LM32) want to receive
 #define WR_MIL_GATEWAY_LATENCY 70650      // additional latency in units of nanoseconds
                                           // this value was determined by measuring the time difference
                                           // of the MIL event rising edge and the ECA output rising edge (no offset)
                                           // and tuning this time difference to 100.0(5)us
-
 
 // standard includes
 #include <stdio.h>
@@ -88,9 +85,11 @@ volatile uint32_t *pSharedSetUtcOffsLo;    // pointer to a "user defined" u32 re
 volatile uint32_t *pSharedSetReqFillEvt;   // pointer to a "user defined" u32 register; here: if this is written to 1, the gateway will send a fill event as soon as possible
 volatile uint32_t *pSharedSetMilDev;       // pointer to a "user defined" u32 register; here: MIL device for sending MIL messages; 0: MIL Piggy; 1..: SIO in slot 1..
 volatile uint32_t *pSharedSetMilMon;       // pointer to a "user defined" u32 register; here: 1: monitor MIL events; 0; don't monitor MIL events
-volatile uint32_t *pSharedGetNEvtsHi;      // pointer to a "user defined" u32 register; here: number of translated events, high word
-volatile uint32_t *pSharedGetNEvtsLo;      // pointer to a "user defined" u32 register; here: number of translated events, high word
-volatile uint32_t *pSharedGetNLateEvts;    // pointer to a "user defined" u32 register; here: number of late events
+volatile uint32_t *pSharedGetNEvtsSndHi;   // pointer to a "user defined" u32 register; here: number of telegrams sent, high word
+volatile uint32_t *pSharedGetNEvtsSndLo;   // pointer to a "user defined" u32 register; here: number of telegrams sent, high word
+volatile uint32_t *pSharedGetNEvtsRecHi;   // pointer to a "user defined" u32 register; here: number of telegrams received, high word
+volatile uint32_t *pSharedGetNEvtsRecLo;   // pointer to a "user defined" u32 register; here: number of telegrams received, high word
+volatile uint32_t *pSharedGetNEvtsLate;    // pointer to a "user defined" u32 register; here: number of late events
 volatile uint32_t *pSharedGetComLatency;   // pointer to a "user defined" u32 register; here: communicatin latency for events received by ECA
 //volatile uint32_t *pSharedGetNLateHisto;   // pointer to a "user defined" u32 register; here: dummy register to indicate position after the last valid register
 //volatile uint32_t *pSharedGetNMilHisto;    // pointer to a "user defined" u32 register; here: dummy register to indicate position after the last valid register
@@ -102,15 +101,16 @@ volatile uint32_t *pMilSend;            // address of MIL device sending timing 
 volatile uint32_t *pMilRec;             // address of MIL device receiving timing messages, usually this will be a MIL piggy
 
 uint64_t statusArray;                   // all status infos are ORed bit-wise into statusArray, statusArray is then published
-uint64_t nMessages;                     // # of sent messages
-uint32_t nLate;                         // # of late messages
+uint64_t nEvtsSnd;                      // # of sent MIL telegrams
+uint64_t nEvtsRec;                      // # of received MIL telegrams
+uint32_t nEvtsLate;                     // # of late messages
 int32_t  comLatency;                    // latency for messages received via ECA
 
 uint32_t utc_trigger;
 int32_t  utc_utc_delay;
 int32_t  trig_utc_delay;
 uint64_t utc_offset;
-uint32_t mil_latency;
+int32_t  mil_latency;
 uint32_t mil_domain;
 uint32_t mil_mon;
 
@@ -153,9 +153,11 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
   pSharedSetReqFillEvt       = (uint32_t *)(pShared + (WRMIL_SHARED_SET_REQUEST_FILL_EVT  >> 2));
   pSharedSetMilDev           = (uint32_t *)(pShared + (WRMIL_SHARED_SET_MIL_DEV           >> 2));
   pSharedSetMilMon           = (uint32_t *)(pShared + (WRMIL_SHARED_SET_MIL_MON           >> 2));
-  pSharedGetNEvtsHi          = (uint32_t *)(pShared + (WRMIL_SHARED_GET_NUM_EVENTS_HI     >> 2));
-  pSharedGetNEvtsLo          = (uint32_t *)(pShared + (WRMIL_SHARED_GET_NUM_EVENTS_LO     >> 2));
-  pSharedGetNLateEvts        = (uint32_t *)(pShared + (WRMIL_SHARED_GET_LATE_EVENTS       >> 2));
+  pSharedGetNEvtsSndHi       = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_SND_HI     >> 2));
+  pSharedGetNEvtsSndLo       = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_SND_LO     >> 2));
+  pSharedGetNEvtsRecHi       = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_REC_HI     >> 2));
+  pSharedGetNEvtsRecLo       = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_REC_LO     >> 2));
+  pSharedGetNEvtsLate        = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_LATE       >> 2));
   pSharedGetComLatency       = (uint32_t *)(pShared + (WRMIL_SHARED_GET_COM_LATENCY       >> 2));
   //pSharedGetNLateHisto       = (uint32_t *)(pShared + (WRMIL_SHARED_GET_LATE_HISTOGRAM    >> 2));
   //pSharedGetNMilHisto        = (uint32_t *)(pShared + (WRMIL_SHARED_GET_MIL_HISTOGRAM     >> 2));
@@ -204,16 +206,18 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
 void extern_clearDiag()
 {
   statusArray  = 0x0;
-  nMessages    = 0x0;
-  nLate        = 0x0;
+  nEvtsSnd     = 0x0;
+  nEvtsRec     = 0x0;
+  nEvtsLate    = 0x0;
   comLatency   = 0x0;
 } // extern_clearDiag 
 
 
 // configure SoC to receive events via MIL bus
-uint32_t configMILEvents(int enable)
+uint32_t configMILEvents(int enable_fifo)
 {
   uint32_t i,j;
+  uint32_t fifo_mask;
 
   // initialize status and command register with initial values; disable event filtering; clear filter RAM
   if (writeCtrlStatRegEvtMil(pMilRec, MIL_CTRL_STAT_ENDECODER_FPGA | MIL_CTRL_STAT_INTR_DEB_ON) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
@@ -222,16 +226,16 @@ uint32_t configMILEvents(int enable)
   if (disableLemoEvtMil(pMilRec, 1) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
   if (disableLemoEvtMil(pMilRec, 2) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
   if (disableFilterEvtMil(pMilRec)  != MIL_STAT_OK) return COMMON_STATUS_ERROR; 
-  if (clearFilterEvtMil(pMilRec)    != MIL_STAT_OK) return COMMON_STATUS_ERROR; 
+  if (clearFilterEvtMil(pMilRec)    != MIL_STAT_OK) return COMMON_STATUS_ERROR;
 
-  if (enable) {
-    for (i=0; i < (0xf+1); i++) {
-      for (j=0; j<(0xff+1); j++) {
-        // set filter (FIFO and LEMO1 pulsing) for all possible virtual accelerators
-        if (setFilterEvtMil(pMilRec, j, i, MIL_FILTER_EV_TO_FIFO | MIL_FILTER_EV_PULS1_S) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
-      } // for j
-    } // for i
-  } // if enable
+  if (enable_fifo) fifo_mask = MIL_FILTER_EV_TO_FIFO;
+  else             fifo_mask = 0x0;
+
+  for (i=0; i<(0xf+1); i++) { 
+    for (j=0; j<(0xff+1); j++) {
+      if (setFilterEvtMil(pMilRec, j, i, fifo_mask | MIL_FILTER_EV_PULS1_S) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+    } // for j
+  } // for i
 
   // configure LEMO1 for pulse generation
   if (configLemoPulseEvtMil(pMilRec, 1) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
@@ -273,7 +277,8 @@ uint32_t extern_entryActionConfigured()
   }  // if reset
 
   // get address of MIL device receiving MIL telegrams; only piggy is supported
-  if (*pSharedSetMilMon){
+  //  if (*pSharedSetMilMon){
+  if (1) {
     pMilRec = fwlib_getMilPiggy();
     if (!pMilRec) {
       DBPRINT1("wr-mil: ERROR - can't find MIL device; receiver\n");
@@ -314,9 +319,11 @@ uint32_t extern_entryActionOperation()
   // init set values
     
   // init get values
-  *pSharedGetNEvtsHi        = 0x0;
-  *pSharedGetNEvtsLo        = 0x0;
-  *pSharedGetNLateEvts      = 0x0;
+  *pSharedGetNEvtsSndHi     = 0x0;
+  *pSharedGetNEvtsSndLo     = 0x0;
+  *pSharedGetNEvtsRecHi     = 0x0;
+  *pSharedGetNEvtsRecLo     = 0x0;
+  *pSharedGetNEvtsLate      = 0x0;
   *pSharedGetComLatency     = 0x0;
   //*pSharedGetNLateHisto     = 0x0;
   //*pSharedGetNMilHisto      = 0x0; 
@@ -332,22 +339,84 @@ uint32_t extern_entryActionOperation()
   mil_domain     = *pSharedSetGid;
   mil_mon        = *pSharedSetMilMon;
 
-  nMessages      = 0;
-  nLate          = 0;
+  nEvtsSnd       = 0;
+  nEvtsRec       = 0;
+  nEvtsLate      = 0;
 
   // configure MIL receiver for timing events for all 16 virtual accelerators
+  // if mil_mon == 0, the FIFO for event data monitoring is not enabled
   if (configMILEvents(mil_mon) != COMMON_STATUS_OK) {
+    pp_printf("config\n");
     DBPRINT1("wr-mil: ERROR - failed to configure MIL piggy for receiving timing events!\n");
   }  // if configMILevents
+
+  //---- arm MIL Piggy 
+  enableFilterEvtMil(pMilRec);                                               // enable filter @ MIL piggy
+  clearFifoEvtMil(pMilRec);                                                  // get rid of junk in FIFO @ MIL piggy
 
   return COMMON_STATUS_OK;
 } // extern_entryActionOperation
 
 
 uint32_t extern_exitActionOperation()
-{
+{ 
   return COMMON_STATUS_OK;
 } // extern_exitActionOperation
+
+
+// convert 64-bit TAI from WR into an array of five MIL events (EVT_UTC_1/2/3/4/5 events with evtNr 0xE0 - 0xE4)
+// arguments:
+//   TAI:     a 64-bit WR-TAI value
+//   EVT_UTC: points to an array of 5 uint32_t and will be filled 
+//            with valid special MIL events:
+//                            EVT_UTC_1 = EVT_UTC[0] =  ms[ 9: 2]          , code = 0xE0
+//                            EVT_UTC_2 = EVT_UTC[1] =  ms[ 1: 0] s[30:25] , code = 0xE1
+//                            EVT_UTC_3 = EVT_UTC[2] =   s[24:16]          , code = 0xE2
+//                            EVT_UTC_4 = EVT_UTC[3] =   s[15: 8]          , code = 0xE3
+//                            EVT_UTC_5 = EVT_UTC[4] =   s[ 7: 0]          , code = 0xE4
+//            where s is a 30 bit number (seconds since 2008) and ms is a 10 bit number
+//            containing the  milisecond fraction.
+void make_mil_timestamp(uint64_t tai, uint32_t *evt_utc, uint64_t UTC_offset_ms)
+{
+  uint64_t msNow  = tai / UINT64_C(1000000); // conversion from ns to ms (since 1970)
+  //uint64_t ms2008 = UINT64_C(1199142000000); // miliseconds at 01/01/2008  (since 1970)
+                                             // the number was caluclated using: date --date='01/01/2008' +%s
+  uint64_t mil_timestamp_ms = msNow - UTC_offset_ms;//ms2008;
+  uint32_t mil_ms           = mil_timestamp_ms % 1000;
+  uint32_t mil_sec          = mil_timestamp_ms / 1000;
+
+  // The following converion code for the UTC timestamps is based on 
+  // some sample code that was kindly provided by Peter Kainberger.
+  union UTCtime_t
+  {
+    uint8_t bytes[8];
+    struct {
+      uint32_t timeMs;
+      uint32_t timeS;
+    } bit;
+  } utc_time = { .bit.timeS  =  mil_sec & 0x3fffffff,
+                 .bit.timeMs = (mil_ms & 0x3ff) << 6 };
+
+  evt_utc[0] =  utc_time.bytes[2] *256 + WRMIL_DFLT_EVT_UTC_1;
+  evt_utc[1] = (utc_time.bytes[3] | 
+                utc_time.bytes[4])*256 + WRMIL_DFLT_EVT_UTC_2;
+  evt_utc[2] =  utc_time.bytes[5] *256 + WRMIL_DFLT_EVT_UTC_3;
+  evt_utc[3] =  utc_time.bytes[6] *256 + WRMIL_DFLT_EVT_UTC_4;
+  evt_utc[4] =  utc_time.bytes[7] *256 + WRMIL_DFLT_EVT_UTC_5;
+} // make_mil_timestamp
+
+
+// prepares evtId and param for sending a MIL telegram via the ECA
+void prepMilTelegramEca(uint32_t milTelegram, uint64_t *evtId, uint64_t *param)
+{
+  // evtId
+  *evtId    &= 0xf000ffffffffffff;            // remove all bits for GID
+  *evtId    |= (uint64_t)LOC_MIL_SEND << 48;  // set bit for GID to 'local message generating a MIL telegram'
+
+  // param
+  *param     = ((uint64_t)mil_domain) << 32;
+  *param    |= (uint64_t)milTelegram & 0xffffffff;
+} // void prepMilTelegramEca
 
 
 // conversion of WR timing message from Data Master to MIL telegram; original code from wr-mil-gw (Michael Reese, Peter Kainberger)
@@ -435,51 +504,102 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint64_t recParam;                                          // param received
   uint32_t recTEF;                                            // TEF received
   uint32_t recGid;                                            // GID received
+  uint32_t recEvtNo;                                          // event number received
   uint32_t recSid;                                            // SID received
   uint32_t recBpid;                                           // BPID received
+  uint32_t recMilEvtData;                                     // event data received from MIL
+  uint32_t recMilEvtCode;                                     // event code received from MIL
+  uint32_t recMilVAcc;                                        // event virt acc received from MIL
+  uint32_t recMilEvts[] = {0xffff};                           // list of MIL events we like to liste to (here: dummy)
   uint64_t sendDeadline;                                      // deadline to send
   uint64_t sendEvtId;                                         // evtid to send
   uint64_t sendParam;                                         // parameter to send
   uint32_t sendTEF;                                           // TEF to send
   static uint64_t previous_time = 0;                          // protect for nonsense high frequency bursts
   uint32_t milTelegram;                                       // telegram to be sent
+  uint32_t evt_utc[WRMIL_N_UTC_EVTS];                         // MIL telegrams for distributing UTC
+
+  int      i;
+  uint64_t one_us_ns = 1000;
   
   status    = actStatus;
 
   ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
 
   switch (ecaAction) {
-    // the following two cases handle h=1 group DDS phase measurement
+
+    // received WR timing message from Data Master that shall be sent as a MIL telegram
     case WRMIL_ECADO_MIL_EVT:
       comLatency   = (int32_t)(getSysTime() - recDeadline);
-      recGid       = (uint32_t)((recEvtId >> 48) & 0x0fff);
-      recSid       = (uint32_t)((recEvtId >> 20) & 0x0fff);
+      recGid       = (uint32_t)((recEvtId >> 48) & 0x00000fff);
+      recEvtNo     = (uint32_t)((recEvtId >> 36) & 0x00000fff);
+      recSid       = (uint32_t)((recEvtId >> 20) & 0x00000fff);
 
       if (recGid != mil_domain) return WRMIL_STATUS_BADSETTING;
       if (recSid  > 15)         return COMMON_STATUS_OUTOFRANGE;
+
+      // chk, hack due to different event formats
+      // the following lines can be removed once the wr-mil gateway has been changed to the new format
+      recEvtId &= 0xfffffffffffffff0;
+      recEvtId |= (recParam & 0xf);
       
       convert_WReventID_to_milTelegram(recEvtId, &milTelegram);
 
       // build timing message and inject into ECA
 
       // deadline
-      sendDeadline  = recDeadline + mil_latency * one_us_ns - WRMIL_MILSEND_LATENCY;
+      sendDeadline  = recDeadline + WRMIL_PRETRIGGER_DM + mil_latency - WRMIL_MILSEND_LATENCY;
       // protect from nonsense hi-frequency bursts
       if (sendDeadline < previous_time + WRMIL_MILSEND_LATENCY) sendDeadline = previous_time + WRMIL_MILSEND_LATENCY;
       previous_time = sendDeadline;
 
-      // evtID
+      // evtID + param
       sendEvtId     = recEvtId;
-      sendEvtId    |= (uint64_t)0xff0 << 48;  // overwrite GID with 0xff0 to signal for local message generating a MIL telegram
+      prepMilTelegramEca(milTelegram, &sendEvtId, &sendParam);
 
-      // param
-      sendParam     = (uint64_t)milTelegram & 0xffffffff;
-      fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0);
-      if (getSysTime() > sendDeadline) nLate++;
+      // clear MIL FIFO and write to ECA
+      if (mil_mon) clearFifoEvtMil(pMilRec);
+      fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 1);
 
-      nMessages++;
+      if (getSysTime() > sendDeadline) nEvtsLate++;
+      nEvtsSnd++;
 
-      break; 
+      // handle UTC events; here the UTC time (- offset) is distributed as a series of MIL telegrams
+      if (recEvtNo == utc_trigger) {
+        // send EVT_UTC_1/2/3/4/5 telegrams
+        make_mil_timestamp(sendDeadline, evt_utc, utc_offset);
+        for (i=0; i<WRMIL_N_UTC_EVTS; i++){
+          sendDeadline += utc_utc_delay * one_us_ns;
+          prepMilTelegramEca(evt_utc[i], &sendEvtId, &sendParam);
+          fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 1);
+          nEvtsSnd++;
+        } // for i
+      } // if utc_trigger
+
+      break;
+
+    // received timing message from TLU; this indicates a received MIL telegram on the MIL piggy
+    case WRMIL_ECADO_MIL_TLU:
+
+      // in case of data monitoring, read message from MIL piggy FIFO and re-send it locally via the ECA
+      if (mil_mon) {
+        if (fwlib_wait4MILEvent(50, &recMilEvtData, &recMilEvtCode, &recMilVAcc, recMilEvts, 0) == COMMON_STATUS_OK) {
+
+          // deadline
+          sendDeadline  = recDeadline - WRMIL_POSTTRIGGER_TLU; // time stamp when MIL telegram was decoded at MIL piggy
+          sendDeadline += 1000000;                             // advance to 1ms into the future to avoid late messages
+          // evtID
+          sendEvtId     = fwlib_buildEvtidV1(LOC_MIL_REC, recMilEvtCode, 0x0, recMilVAcc, 0x0, recMilEvtData);
+          // param
+          sendParam     = ((uint64_t)mil_domain) << 32;
+
+          fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 1);
+        } // if wait4Milevent
+      } // if mil_mon
+
+      nEvtsRec++;
+      
+      break;
      
     default :                                                         // flush ECA queue
       flagIsLate = 0;                                                 // ingore late events
@@ -511,7 +631,8 @@ int main(void) {
   actState       = COMMON_STATE_UNKNOWN;
   pubState       = COMMON_STATE_UNKNOWN;
   status         = COMMON_STATUS_OK;
-  nMessages      = 0;
+  nEvtsSnd       = 0;
+  nEvtsRec       = 0;
 
   init();                                                                     // initialize stuff for lm32
   initSharedMem(&reqState, &sharedSize);                                      // initialize shared memory
@@ -552,9 +673,11 @@ int main(void) {
     pubState = actState;
     fwlib_publishState(pubState);
     *pSharedGetComLatency = comLatency;
-    *pSharedGetNEvtsHi    = (uint32_t)(nMessages >> 32);
-    *pSharedGetNEvtsLo    = (uint32_t)(nMessages & 0xffffffff);
-    *pSharedGetNLateEvts  = nLate;
+    *pSharedGetNEvtsSndHi = (uint32_t)(nEvtsSnd >> 32);
+    *pSharedGetNEvtsSndLo = (uint32_t)(nEvtsSnd & 0xffffffff);
+    *pSharedGetNEvtsRecHi = (uint32_t)(nEvtsRec >> 32);
+    *pSharedGetNEvtsRecLo = (uint32_t)(nEvtsRec & 0xffffffff);
+    *pSharedGetNEvtsLate  = nEvtsLate;
   } // while
 
   return(1); // this should never happen ...
