@@ -71,7 +71,7 @@ uint32_t fwlib_wait4MILEvent(uint32_t usTimeout,      // timeout [us]
                              uint32_t *evtCode,       // event code (8 relevant bits)
                              uint32_t *virtAcc,       // virtual accelerator (4 relevant bits)
                              uint32_t *validEvtCodes, // array of valid event codes the routine will listen to
-                             uint32_t nValidEvtCodes  // # of valid event codes
+                             uint32_t nValidEvtCodes  // # of valid event codes; in case n==0, the routine will return with the first event received
                              );
 
 // pulse lemo for debugging with scope

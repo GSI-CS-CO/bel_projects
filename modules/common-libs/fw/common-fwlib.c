@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 08-Feb-2024
+ *  version : 15-Feb-2024
  *
  *  common functions used by various firmware projects
  *
@@ -743,7 +743,8 @@ uint32_t fwlib_wait4MILEvent(uint32_t usTimeout, uint32_t *evtData, uint32_t *ev
   *virtAcc    = 0xffff;
   *evtData    = 0xffff;
   *evtCode    = 0xffff;
-  valid       = 0;
+  if (nValidEvtCodes == 0) valid = 1;           // just return with the first element read from FIFO
+  else                     valid = 0;           // only return if element read from FIFO matches one of the validEvtcodes
 
   while(getSysTime() < timeoutT) {              // while not timed out...
     while (fifoNotemptyEvtMil(pMILPiggy)) {     // while fifo contains data
