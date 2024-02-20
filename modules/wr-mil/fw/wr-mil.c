@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Micheal Reese, Mathias Kreider GSI-Darmstadt
- *  version : 16-feb-2024
+ *  version : 20-feb-2024
  *
  *  firmware required for the White Rabbit -> MIL Gateways
  *  
@@ -40,7 +40,7 @@
 #define WRMIL_FW_VERSION      0x000001    // make this consistent with makefile
 
 #define RESET_INHIBIT_COUNTER  1000       // count so many main loops before the inhibit for fill event sending is released
-#define WR_MIL_GATEWAY_LATENCY 70650      // additional latency in units of nanoseconds
+//#define WR_MIL_GATEWAY_LATENCY 70650      // additional latency in units of nanoseconds
                                           // this value was determined by measuring the time difference
                                           // of the MIL event rising edge and the ECA output rising edge (no offset)
                                           // and tuning this time difference to 100.0(5)us
@@ -79,7 +79,7 @@ volatile uint32_t *pSharedSetUtcTrigger;   // pointer to a "user defined" u32 re
 volatile uint32_t *pSharedSetUtcUtcDelay;  // pointer to a "user defined" u32 register; here: delay [us] between the 5 generated UTC MIL events
 volatile uint32_t *pSharedSetTrigUtcDelay; // pointer to a "user defined" u32 register; here: delay [us] between the trigger event and the first UTC (and other) generated events
 volatile uint32_t *pSharedSetGid;          // pointer to a "user defined" u32 register; here: GID the gateway will be using
-volatile uint32_t *pSharedSetLatency;      // pointer to a "user defined" u32 register; here: MIL event is generated xxx us+latency after the WR event. The value of latency can be negative
+volatile int32_t  *pSharedSetLatency;      // pointer to a "user defined" u32 register; here: MIL event is generated xxx us+latency after the WR event. The value of latency can be negative
 volatile uint32_t *pSharedSetUtcOffsHi;    // pointer to a "user defined" u32 register; here: delay [ms] between the TAI and the MIL-UTC, high word
 volatile uint32_t *pSharedSetUtcOffsLo;    // pointer to a "user defined" u32 register; here: delay [ms] between the TAI and the MIL-UTC, low word
 volatile uint32_t *pSharedSetReqFillEvt;   // pointer to a "user defined" u32 register; here: if this is written to 1, the gateway will send a fill event as soon as possible
@@ -87,8 +87,10 @@ volatile uint32_t *pSharedSetMilDev;       // pointer to a "user defined" u32 re
 volatile uint32_t *pSharedSetMilMon;       // pointer to a "user defined" u32 register; here: 1: monitor MIL events; 0; don't monitor MIL events
 volatile uint32_t *pSharedGetNEvtsSndHi;   // pointer to a "user defined" u32 register; here: number of telegrams sent, high word
 volatile uint32_t *pSharedGetNEvtsSndLo;   // pointer to a "user defined" u32 register; here: number of telegrams sent, high word
-volatile uint32_t *pSharedGetNEvtsRecHi;   // pointer to a "user defined" u32 register; here: number of telegrams received, high word
-volatile uint32_t *pSharedGetNEvtsRecLo;   // pointer to a "user defined" u32 register; here: number of telegrams received, high word
+volatile uint32_t *pSharedGetNEvtsRecTHi;  // pointer to a "user defined" u32 register; here: number of telegrams received (TAI), high word
+volatile uint32_t *pSharedGetNEvtsRecTLo;  // pointer to a "user defined" u32 register; here: number of telegrams received (TAI), high word
+volatile uint32_t *pSharedGetNEvtsRecDHi;  // pointer to a "user defined" u32 register; here: number of telegrams received (data), high word
+volatile uint32_t *pSharedGetNEvtsRecDLo;  // pointer to a "user defined" u32 register; here: number of telegrams received (data), high word
 volatile uint32_t *pSharedGetNEvtsLate;    // pointer to a "user defined" u32 register; here: number of late events
 volatile uint32_t *pSharedGetComLatency;   // pointer to a "user defined" u32 register; here: communicatin latency for events received by ECA
 //volatile uint32_t *pSharedGetNLateHisto;   // pointer to a "user defined" u32 register; here: dummy register to indicate position after the last valid register
@@ -102,7 +104,8 @@ volatile uint32_t *pMilRec;             // address of MIL device receiving timin
 
 uint64_t statusArray;                   // all status infos are ORed bit-wise into statusArray, statusArray is then published
 uint64_t nEvtsSnd;                      // # of sent MIL telegrams
-uint64_t nEvtsRec;                      // # of received MIL telegrams
+uint64_t nEvtsRecT;                     // # of received MIL telegrams (TAI)
+uint64_t nEvtsRecD;                     // # of received MIL telegrams (data)
 uint32_t nEvtsLate;                     // # of late messages
 int32_t  comLatency;                    // latency for messages received via ECA
 
@@ -155,8 +158,10 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
   pSharedSetMilMon           = (uint32_t *)(pShared + (WRMIL_SHARED_SET_MIL_MON           >> 2));
   pSharedGetNEvtsSndHi       = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_SND_HI     >> 2));
   pSharedGetNEvtsSndLo       = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_SND_LO     >> 2));
-  pSharedGetNEvtsRecHi       = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_REC_HI     >> 2));
-  pSharedGetNEvtsRecLo       = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_REC_LO     >> 2));
+  pSharedGetNEvtsRecTHi      = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_RECT_HI    >> 2));
+  pSharedGetNEvtsRecTLo      = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_RECT_LO    >> 2));
+  pSharedGetNEvtsRecDHi      = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_RECD_HI    >> 2));
+  pSharedGetNEvtsRecDLo      = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_RECD_LO    >> 2));
   pSharedGetNEvtsLate        = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_LATE       >> 2));
   pSharedGetComLatency       = (uint32_t *)(pShared + (WRMIL_SHARED_GET_COM_LATENCY       >> 2));
   //pSharedGetNLateHisto       = (uint32_t *)(pShared + (WRMIL_SHARED_GET_LATE_HISTOGRAM    >> 2));
@@ -207,7 +212,8 @@ void extern_clearDiag()
 {
   statusArray  = 0x0;
   nEvtsSnd     = 0x0;
-  nEvtsRec     = 0x0;
+  nEvtsRecT    = 0x0;
+  nEvtsRecD    = 0x0;
   nEvtsLate    = 0x0;
   comLatency   = 0x0;
 } // extern_clearDiag 
@@ -308,6 +314,7 @@ uint32_t extern_entryActionOperation()
   uint64_t pDummy;
   uint32_t fDummy;
   uint32_t flagDummy1, flagDummy2, flagDummy3, flagDummy4;
+  int      enable_fifo;
 
   // clear diagnostics
   fwlib_clearDiag();
@@ -321,8 +328,10 @@ uint32_t extern_entryActionOperation()
   // init get values
   *pSharedGetNEvtsSndHi     = 0x0;
   *pSharedGetNEvtsSndLo     = 0x0;
-  *pSharedGetNEvtsRecHi     = 0x0;
-  *pSharedGetNEvtsRecLo     = 0x0;
+  *pSharedGetNEvtsRecTHi    = 0x0;
+  *pSharedGetNEvtsRecTLo    = 0x0;
+  *pSharedGetNEvtsRecDHi    = 0x0;
+  *pSharedGetNEvtsRecDLo    = 0x0;
   *pSharedGetNEvtsLate      = 0x0;
   *pSharedGetComLatency     = 0x0;
   //*pSharedGetNLateHisto     = 0x0;
@@ -336,23 +345,29 @@ uint32_t extern_entryActionOperation()
   utc_offset     = (uint64_t)(*pSharedSetUtcOffsHi) << 32;
   utc_offset    |= (uint64_t)(*pSharedSetUtcOffsLo);
   mil_latency    = *pSharedSetLatency;
+  pp_printf("latency %d\n", mil_latency);
   mil_domain     = *pSharedSetGid;
   mil_mon        = *pSharedSetMilMon;
 
   nEvtsSnd       = 0;
-  nEvtsRec       = 0;
+  nEvtsRecT      = 0;
+  nEvtsRecD      = 0;
   nEvtsLate      = 0;
 
   // configure MIL receiver for timing events for all 16 virtual accelerators
-  // if mil_mon == 0, the FIFO for event data monitoring is not enabled
-  if (configMILEvents(mil_mon) != COMMON_STATUS_OK) {
-    pp_printf("config\n");
-    DBPRINT1("wr-mil: ERROR - failed to configure MIL piggy for receiving timing events!\n");
-  }  // if configMILevents
+  // if mil_mon == 2, the FIFO for event data monitoring must be enabled
+  if (mil_mon) {
+    if (mil_mon == 2) enable_fifo = 1;
+    else              enable_fifo = 0;
+    if (configMILEvents(enable_fifo) != COMMON_STATUS_OK) {
+      pp_printf("config\n");
+      DBPRINT1("wr-mil: ERROR - failed to configure MIL piggy for receiving timing events!\n");
+    }  // if configMILevents
 
-  //---- arm MIL Piggy 
-  enableFilterEvtMil(pMilRec);                                               // enable filter @ MIL piggy
-  clearFifoEvtMil(pMilRec);                                                  // get rid of junk in FIFO @ MIL piggy
+    //---- arm MIL Piggy 
+    enableFilterEvtMil(pMilRec);                                             // enable filter @ MIL piggy
+    clearFifoEvtMil(pMilRec);                                                // get rid of junk in FIFO @ MIL piggy
+  } // if mil_mon
 
   return COMMON_STATUS_OK;
 } // extern_entryActionOperation
@@ -582,7 +597,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     case WRMIL_ECADO_MIL_TLU:
 
       // in case of data monitoring, read message from MIL piggy FIFO and re-send it locally via the ECA
-      if (mil_mon) {
+      if (mil_mon==2) {
         if (fwlib_wait4MILEvent(50, &recMilEvtData, &recMilEvtCode, &recMilVAcc, recMilEvts, 0) == COMMON_STATUS_OK) {
 
           // deadline
@@ -594,10 +609,11 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
           sendParam     = ((uint64_t)mil_domain) << 32;
 
           fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 1);
+          nEvtsRecD++;
         } // if wait4Milevent
       } // if mil_mon
 
-      nEvtsRec++;
+      nEvtsRecT++;
       
       break;
      
@@ -632,7 +648,8 @@ int main(void) {
   pubState       = COMMON_STATE_UNKNOWN;
   status         = COMMON_STATUS_OK;
   nEvtsSnd       = 0;
-  nEvtsRec       = 0;
+  nEvtsRecT      = 0;
+  nEvtsRecD      = 0;
 
   init();                                                                     // initialize stuff for lm32
   initSharedMem(&reqState, &sharedSize);                                      // initialize shared memory
@@ -672,12 +689,14 @@ int main(void) {
     fwlib_publishStatusArray(statusArray);
     pubState = actState;
     fwlib_publishState(pubState);
-    *pSharedGetComLatency = comLatency;
-    *pSharedGetNEvtsSndHi = (uint32_t)(nEvtsSnd >> 32);
-    *pSharedGetNEvtsSndLo = (uint32_t)(nEvtsSnd & 0xffffffff);
-    *pSharedGetNEvtsRecHi = (uint32_t)(nEvtsRec >> 32);
-    *pSharedGetNEvtsRecLo = (uint32_t)(nEvtsRec & 0xffffffff);
-    *pSharedGetNEvtsLate  = nEvtsLate;
+    *pSharedGetComLatency  = comLatency;
+    *pSharedGetNEvtsSndHi  = (uint32_t)(nEvtsSnd >> 32);
+    *pSharedGetNEvtsSndLo  = (uint32_t)(nEvtsSnd & 0xffffffff);
+    *pSharedGetNEvtsRecTHi = (uint32_t)(nEvtsRecT >> 32);
+    *pSharedGetNEvtsRecTLo = (uint32_t)(nEvtsRecT & 0xffffffff);
+    *pSharedGetNEvtsRecDHi = (uint32_t)(nEvtsRecD >> 32);
+    *pSharedGetNEvtsRecDLo = (uint32_t)(nEvtsRecD & 0xffffffff);
+    *pSharedGetNEvtsLate   = nEvtsLate;
   } // while
 
   return(1); // this should never happen ...

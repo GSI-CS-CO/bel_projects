@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 16-Feb-2024
+ *  version : 20-Feb-2024
  *
  * library for wr-mil
  *
@@ -78,8 +78,10 @@ eb_address_t wrmil_set_milDev;            // MIL device for sending MIL messages
 eb_address_t wrmil_set_milMon;            // 1: monitor MIL events; 0; don't monitor MIL events
 eb_address_t wrmil_get_nEvtsSndHi;        // number of sent MIL telegrams, high word
 eb_address_t wrmil_get_nEvtsSndLo;        // number of sent MIL telegrams, low word
-eb_address_t wrmil_get_nEvtsRecHi;        // number of received MIL telegrams, high word
-eb_address_t wrmil_get_nEvtsRecLo;        // number of received MIL telegrams, low word
+eb_address_t wrmil_get_nEvtsRecTHi;       // number of received MIL telegrams (TAI), high word
+eb_address_t wrmil_get_nEvtsRecTLo;       // number of received MIL telegrams (TAI), low word
+eb_address_t wrmil_get_nEvtsRecDHi;       // number of received MIL telegrams (data), high word
+eb_address_t wrmil_get_nEvtsRecDLo;       // number of received MIL telegrams (data), low word
 eb_address_t wrmil_get_nEvtsLate;         // number of translated events that could not be delivered in time
 eb_address_t wrmil_get_comLatency;        // latency for messages received from via ECA (tDeadline - tNow)) [ns]                             
 
@@ -172,8 +174,10 @@ uint32_t wrmil_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t c
   wrmil_set_milMon       = lm32_base + SHARED_OFFS + WRMIL_SHARED_SET_MIL_MON;
   wrmil_get_nEvtsSndHi   = lm32_base + SHARED_OFFS + WRMIL_SHARED_GET_N_EVTS_SND_HI;       
   wrmil_get_nEvtsSndLo   = lm32_base + SHARED_OFFS + WRMIL_SHARED_GET_N_EVTS_SND_LO;
-  wrmil_get_nEvtsRecHi   = lm32_base + SHARED_OFFS + WRMIL_SHARED_GET_N_EVTS_REC_HI;       
-  wrmil_get_nEvtsRecLo   = lm32_base + SHARED_OFFS + WRMIL_SHARED_GET_N_EVTS_REC_LO;
+  wrmil_get_nEvtsRecTHi  = lm32_base + SHARED_OFFS + WRMIL_SHARED_GET_N_EVTS_RECT_HI;       
+  wrmil_get_nEvtsRecTLo  = lm32_base + SHARED_OFFS + WRMIL_SHARED_GET_N_EVTS_RECT_LO;
+  wrmil_get_nEvtsRecDHi  = lm32_base + SHARED_OFFS + WRMIL_SHARED_GET_N_EVTS_RECD_HI;
+  wrmil_get_nEvtsRecDLo  = lm32_base + SHARED_OFFS + WRMIL_SHARED_GET_N_EVTS_RECD_LO;
   wrmil_get_nEvtsLate    = lm32_base + SHARED_OFFS + WRMIL_SHARED_GET_N_EVTS_LATE;
   wrmil_get_comLatency   = lm32_base + SHARED_OFFS + WRMIL_SHARED_GET_COM_LATENCY;
 
@@ -225,7 +229,7 @@ uint32_t wrmil_version_library(uint32_t *version)
 } // wrmil_version_library
 
 
-void wrmil_printDiag(uint32_t utcTrigger, uint32_t utcDelay, uint32_t trigUtcDelay, uint32_t gid, int32_t latency, uint64_t utcOffset, uint32_t requestFill, uint32_t milDev, uint32_t milMon, uint64_t nEvtsSnd, uint64_t nEvtsRec, uint32_t nEvtsLate, uint32_t comLatency)
+void wrmil_printDiag(uint32_t utcTrigger, uint32_t utcDelay, uint32_t trigUtcDelay, uint32_t gid, int32_t latency, uint64_t utcOffset, uint32_t requestFill, uint32_t milDev, uint32_t milMon, uint64_t nEvtsSnd, uint64_t nEvtsRecT, uint64_t nEvtsRecD, uint32_t nEvtsLate, uint32_t comLatency)
 {
   printf("wrmil: info  ...\n\n");
 
@@ -233,20 +237,21 @@ void wrmil_printDiag(uint32_t utcTrigger, uint32_t utcDelay, uint32_t trigUtcDel
   printf("UTC trigger evtid            : 0d%015u\n"     , utcTrigger);
   printf("UTC MIL delay [us]           : 0d%015u\n"     , utcDelay);
   printf("UTC trigger event ID         : 0d%015u\n"     , utcTrigger);
-  printf("MIL latency [ns]             : 0d%015u\n"     , latency);
+  printf("MIL latency [ns]             : 0d%015d\n"     , latency);
   printf("UTC offset [ms]              : 0d%015lu\n"    , utcOffset);
   printf("request fill event           : 0d%015u\n"     , requestFill);
   printf("MIL dev (0: piggy, 1.. :SIO) : 0x%015x\n"     , milDev);
   printf("MIL data monitoring          : 0d%015u\n"     , milMon);
   printf("# MIL events sent            : 0d%015lu\n"    , nEvtsSnd);
-  printf("# MIL events received        : 0d%015lu\n"    , nEvtsRec);
+  printf("# MIL events received (TAI)  : 0d%015lu\n"    , nEvtsRecT);
+  printf("# MIL events received (data) : 0d%015lu\n"    , nEvtsRecD);
   printf("# late events                : 0d%015u\n"     , nEvtsLate);
   printf("communiation latency         : 0d%015u\n"     , comLatency);
 } // wrmil_printDiag
 
 
 uint32_t wrmil_info_read(uint64_t ebDevice, uint32_t *utcTrigger, uint32_t *utcUtcDelay, uint32_t *trigUtcDelay, uint32_t *gid, int32_t *latency, uint64_t *utcOffset, uint32_t *requestFill, uint32_t *milDev,
-                         uint32_t *milMon, uint64_t *nEvtsSnd, uint64_t *nEvtsRec, uint32_t *nEvtsLate, uint32_t *comLatency, int printFlag)
+                         uint32_t *milMon, uint64_t *nEvtsSnd, uint64_t *nEvtsRecT, uint64_t *nEvtsRecD, uint32_t *nEvtsLate, uint32_t *comLatency, int printFlag)
 {
   eb_cycle_t   eb_cycle;
   eb_status_t  eb_status;
@@ -269,10 +274,12 @@ uint32_t wrmil_info_read(uint64_t ebDevice, uint32_t *utcTrigger, uint32_t *utcU
   eb_cycle_read(eb_cycle, wrmil_set_milMon      , EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
   eb_cycle_read(eb_cycle, wrmil_get_nEvtsSndHi  , EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
   eb_cycle_read(eb_cycle, wrmil_get_nEvtsSndLo  , EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
-  eb_cycle_read(eb_cycle, wrmil_get_nEvtsRecHi  , EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
-  eb_cycle_read(eb_cycle, wrmil_get_nEvtsRecLo  , EB_BIG_ENDIAN|EB_DATA32, &(data[13]));
-  eb_cycle_read(eb_cycle, wrmil_get_nEvtsLate   , EB_BIG_ENDIAN|EB_DATA32, &(data[14]));
-  eb_cycle_read(eb_cycle, wrmil_get_comLatency  , EB_BIG_ENDIAN|EB_DATA32, &(data[15]));
+  eb_cycle_read(eb_cycle, wrmil_get_nEvtsRecTHi , EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
+  eb_cycle_read(eb_cycle, wrmil_get_nEvtsRecTLo , EB_BIG_ENDIAN|EB_DATA32, &(data[13]));
+  eb_cycle_read(eb_cycle, wrmil_get_nEvtsRecDHi , EB_BIG_ENDIAN|EB_DATA32, &(data[14]));
+  eb_cycle_read(eb_cycle, wrmil_get_nEvtsRecDLo , EB_BIG_ENDIAN|EB_DATA32, &(data[15]));
+  eb_cycle_read(eb_cycle, wrmil_get_nEvtsLate   , EB_BIG_ENDIAN|EB_DATA32, &(data[16]));
+  eb_cycle_read(eb_cycle, wrmil_get_comLatency  , EB_BIG_ENDIAN|EB_DATA32, &(data[17]));
   if ((eb_status = eb_cycle_close(eb_cycle)) != EB_OK) return COMMON_STATUS_EB;
 
   *utcTrigger    = data[0];
@@ -287,12 +294,14 @@ uint32_t wrmil_info_read(uint64_t ebDevice, uint32_t *utcTrigger, uint32_t *utcU
   *milMon        = data[9];
   *nEvtsSnd      = ((uint64_t)data[10] & 0xffffffff) << 32;
   *nEvtsSnd     |= (uint64_t)data[11] & 0xffffffff;
-  *nEvtsRec      = ((uint64_t)data[12] & 0xffffffff) << 32;
-  *nEvtsRec     |= (uint64_t)data[13] & 0xffffffff;
-  *nEvtsLate     = data[14];
-  *comLatency    = data[15]; 
+  *nEvtsRecT      = ((uint64_t)data[12] & 0xffffffff) << 32;
+  *nEvtsRecT     |= (uint64_t)data[13] & 0xffffffff;
+  *nEvtsRecD      = ((uint64_t)data[14] & 0xffffffff) << 32;
+  *nEvtsRecD     |= (uint64_t)data[15] & 0xffffffff;
+  *nEvtsLate     = data[16];
+  *comLatency    = data[17];
 
-  if (printFlag) wrmil_printDiag(*utcTrigger, *utcUtcDelay, *trigUtcDelay, *gid, *latency, *utcOffset, *requestFill, *milDev, *milMon, *nEvtsSnd, *nEvtsRec, *nEvtsLate, *comLatency);
+  if (printFlag) wrmil_printDiag(*utcTrigger, *utcUtcDelay, *trigUtcDelay, *gid, *latency, *utcOffset, *requestFill, *milDev, *milMon, *nEvtsSnd, *nEvtsRecT, *nEvtsRecD, *nEvtsLate, *comLatency);
   
   return COMMON_STATUS_OK;
 } // wrmil_info_read
@@ -323,19 +332,20 @@ uint32_t wrmil_upload(uint64_t ebDevice, uint32_t utcTrigger, uint32_t utcUtcDel
 
   if (!ebDevice) return COMMON_STATUS_EB;
 
+
   // EB cycle
   if (eb_cycle_open(ebDevice, 0, eb_block, &eb_cycle) != EB_OK) return COMMON_STATUS_EB;
   eb_cycle_write(eb_cycle, wrmil_set_utcTrigger  , EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)utcTrigger);
   eb_cycle_write(eb_cycle, wrmil_set_utcUtcDelay , EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)utcUtcDelay);
   eb_cycle_write(eb_cycle, wrmil_set_trigUtcDelay, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)trigUtcDelay);
   eb_cycle_write(eb_cycle, wrmil_set_gid         , EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)gid);
-  eb_cycle_write(eb_cycle, wrmil_set_latency     , EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)latency);
+  eb_cycle_write(eb_cycle, wrmil_set_latency     , EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)latency);          // we must cast a signed integer to a 32bit prior casting to eb_data_t
   eb_cycle_write(eb_cycle, wrmil_set_utcOffsetHi , EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)((utcOffset >> 32) & 0xffffffff));
   eb_cycle_write(eb_cycle, wrmil_set_utcOffsetLo , EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(utcOffset & 0xffffffff));
   eb_cycle_write(eb_cycle, wrmil_set_requestFill , EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)requestFill);
   eb_cycle_write(eb_cycle, wrmil_set_milDev      , EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)milDev);
   eb_cycle_write(eb_cycle, wrmil_set_milMon      , EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)milMon);  
-  if ((eb_status = eb_cycle_close(eb_cycle)) != EB_OK) return COMMON_STATUS_EB;
+  if ((eb_status = eb_cycle_close(eb_cycle)) != EB_OK) {printf("aetsch! %d \n", eb_status); return eb_status;}
 
   return COMMON_STATUS_OK;
 } // wrmil_context_ext_upload

@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 15-Feb-2024
+ *  version : 20-Feb-2024
  *
  * library for wr-mil
  *
@@ -140,7 +140,8 @@ extern "C" {
                            uint32_t *milDev,                     // wishbone address of MIL device; MIL device could be a MIL piggy or a SIO
                            uint32_t *milMon,                     // 1: monitor MIL events; 0; don't monitor MIL events
                            uint64_t *nEvtsSnd,                   // number of MIL telegrams sent
-                           uint64_t *nEvtsRec,                   // number of MIL telegrams received
+                           uint64_t *nEvtsRecT,                  // number of MIL telegrams received (TAI)
+                           uint64_t *nEvtsRecD,                  // number of MIL telegrams received (data)
                            uint32_t *nEvtsLate,                  // number of translated events that could not be delivered in time
                            uint32_t *comLatency,                 // latency for messages received from via ECA (tDeadline - tNow)) [ns]
                            int      printFlag                    // print info to screen 
