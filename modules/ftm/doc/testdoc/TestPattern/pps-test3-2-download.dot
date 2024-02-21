@@ -1,0 +1,17 @@
+digraph "pps-test3-2-download" {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+B_0[cpu="1", flags="0x00108107", type="block", tperiod="100000000", pattern="A", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green", penwidth=2, color = "purple"];
+B_A[cpu="1", flags="0x00008107", type="block", tperiod="100000000", pattern="A", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green", penwidth=2, color = "purple"];
+B_C[cpu="1", flags="0x00008007", type="block", tperiod="100000000", pattern="C", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "purple"];
+Evt_0[cpu="1", flags="0x00002102", type="tmsg", toffs="0", pattern="A", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="5", evtno=0, beamin="0", bpcstart="0", sid="2", bpid="8", reqnobeam="0", vacc="0", id="0x1005000000200200", par="0x0000000000000001", tef="0", shape = "oval", fillcolor = "green", penwidth=2, color = "darkorange3"];
+Evt_A[cpu="1", flags="0x00002102", type="tmsg", toffs="0", pattern="A", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="5", evtno=15, beamin="0", bpcstart="0", sid="2", bpid="8", reqnobeam="0", vacc="0", id="0x100500f000200200", par="0x0000000000000002", tef="0", shape = "oval", fillcolor = "green", penwidth=2, color = "darkorange3"];
+Evt_C[cpu="1", flags="0x00002002", type="tmsg", toffs="0", pattern="C", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="5", evtno=4095, beamin="0", bpcstart="0", sid="2", bpid="8", reqnobeam="0", vacc="0", id="0x1005fff000200200", par="0x0000000000000021", tef="0", shape = "oval", fillcolor = "white", penwidth=2, color = "darkorange3"];
+Evt_0->B_0 [type="defdst", color = "red"];
+B_A->Evt_0 [type="defdst", color = "red"];
+B_C->Evt_0 [type="defdst", color = "red"];
+Evt_A->B_A [type="defdst", color = "red"];
+Evt_C->B_C [type="defdst", color = "red"];
+B_0->Evt_A [type="defdst", color = "red"];
+B_0->Evt_C [type="altdst", color = "black"];
+}

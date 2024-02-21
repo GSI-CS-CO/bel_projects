@@ -1,0 +1,9 @@
+digraph "pps-test3-2" {
+  name="pps-test3-2"
+  subgraph subgraph2 {
+    node [cpu=1 tperiod=100000000 toffs=0 fid=1 gid=5 sid=2 bpid=8 style=filled color=black fillcolor=white penwidth=2 shape=oval]
+    Evt_B [type=tmsg]
+    B_B [type=block shape=rectangle]
+    Evt_B -> B_B [type=altdst]
+  }
+}

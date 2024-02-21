@@ -1,0 +1,7 @@
+digraph G {
+node [style     = "filled", fillcolor = "white", color = "black"]
+EvtA[cpu="0", flags="0x00002102", type="tmsg", toffs="0", pattern="A", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="5", evtno="15", beamin="0", bpcstart="0", sid="2", bpid="8", reqnobeam="0", vacc="0", id="0x100500f000200200", par="0x0000000000000001", tef="0", shape     = "oval", fillcolor = "green", penwidth=2, color = "darkorange3"];
+BlockA[cpu="0", flags="0x00108107", type="block", tperiod="100000000", pattern="A", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green", penwidth=2, color = "purple"];
+BlockA->EvtA [type="defdst", color = "red"];
+EvtA->BlockA [type="defdst", color = "red"];
+}
