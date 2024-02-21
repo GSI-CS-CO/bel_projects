@@ -197,8 +197,7 @@ inline uint32_t hiW(uint64_t dword) {return (uint32_t)(dword >> 32);} ///< Retur
 inline uint32_t loW(uint64_t dword) {return (uint32_t)dword;} ///< Returns low word of 64b value
 
 inline uint8_t hasNodeDynamicFields(uint32_t* node) {
-  if (node == LM32_NULL_PTR) return 0;
-  return ( (node[NODE_FLAGS >> 2] >> NFLG_DYNAMIC_FIELDS_POS) & NFLG_DYNAMIC_FIELDS_MSK);
+  return (node[NODE_OPT_DYN  >> 2] > 0);
 }
 
 

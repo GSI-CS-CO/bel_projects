@@ -679,16 +679,28 @@ uint32_t* dynamicNodeStaging(uint32_t* node, uint32_t* thrData) {
       
   // tells us if its 32/64 and if a word is an immediate, value (dynamically generated at compile time, static now), reference, or a double reference
   uint32_t wordFormats = nodeTmp[NODE_OPT_DYN >> 2]; //load word description
-      
+  
+
   for(unsigned i = 0; i < 9; i++) { // a memory block has 13 words, not 9 - but last four (dyn, hash, flags, nextPtr) must not be changed.
     if ((wordFormats & DYN_MODE_MSK) >= DYN_MODE_REF) { // Is current word a kind of reference? yay, let's dynamically copy stuff in!
       uint64_t val;
-      if ((wordFormats & DYN_MODE_MSK) == DYN_MODE_REF2)  {val = **(uint64_t**)node[i];} //reference or reference 2 reference?
-      else                                                {val =  *(uint64_t*) node[i];}
+      if ((wordFormats & DYN_MODE_MSK) == DYN_MODE_REF2)  {
+        val = **(uint64_t**)node[i];
+        DBPRINT2("#%02u: REF2REF. Word %u is a ref2ref, adr is 0x%08x, ptr is 0x%08x, value is 0x%08x%08x\n", cpuId, i, &node[i], *(uint32_t*)node[i], (uint32_t)(val>>32), (uint32_t)val);
+      } //reference or reference 2 reference?
+      else                                                {
+        DBPRINT2("#%02u: REF. Word %u is a ref, adr is 0x%08x, value is 0x%08x%08x\n", cpuId, i, &node[i], (uint32_t)(val>>32), (uint32_t)val);
+        val =  *(uint64_t*) node[i];
+      }
+
       
-      nodeTmp[i] = (uint32_t)val;
-      if (wordFormats & DYN_WIDTH64_SMSK) nodeTmp[i+1] = (uint32_t)(val>>32); //low word is alway filled in. if it's 64b, fill in high word too.
-    
+      
+      nodeTmp[i] = (uint32_t)(val>>32);
+      //mprintf("#%02u: Current Wordformat is 0x%08x, Mask is 0x%08x\n", cpuId, wordFormats, DYN_WIDTH64_SMSK);
+      if (wordFormats & DYN_WIDTH64_SMSK) {
+        DBPRINT2("#%02u: Ref is a 64b word\n", cpuId);
+        nodeTmp[i+1] = (uint32_t)(val); //It's MSB first, so the adr can be 64b high word or 32b word. if its 64b, fill in low word at i+1
+      }
     } //ELSE - it's a IM or VAL, we leave the original value in, regardless if its 32 or 64b
     wordFormats >>= 3; //shift right by 3 bits to get next wordFormat
   }
