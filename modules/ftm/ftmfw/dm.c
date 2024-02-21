@@ -605,8 +605,12 @@ uint32_t* startThread(uint32_t* node, uint32_t* thrData) {
   //FIXME Loop this for all designated threads
   *thrStarttime = *((uint64_t*)&thrData[T_TD_CURRTIME >> 2]) + offset; // set time
   DBPRINT3("#%02u: Hello, StartThread function check. Thr %u, time 0x%08x%08x, ptr 0x%08x\n", cpuId, thr, (uint32_t)(*thrStarttime>>32), (uint32_t)*thrStarttime, &thrData[T_TD_CURRTIME >> 2]);
-  *start |= (1 << thr);  // set start bit
   
+  
+  //*start |= (1 << thr);  // set start bit
+  // Oh ffs, why?! let's cut the "I only want ONE thread" corner case and use a bitmask. Learn to bitshift, basta.
+
+  *start |= thr;  // set start bits
   return ret;
 }
 
