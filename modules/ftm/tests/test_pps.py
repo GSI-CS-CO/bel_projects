@@ -227,9 +227,9 @@ class DmPps(dm_testbench.DmTestbench):
 
   def actionPpsAdd4(self):
     """During snoop start pattern A. This produces messages at 10Hz.
-    Start the other pattern B, C, D. Each produces one message.
-    Pattern B is removed with self.scheduleFile2.
-    Download the four schedules for later compare.
+    Try to remove pattern A while running. This fails. Stop pattern A
+    and remove nodes Evt_A and B_A. Check status after this and
+    download the four schedules for later compare.
     """
     # remote execution: small delay for snoop to start before the pattern is started.
     self.delay(0.1)
