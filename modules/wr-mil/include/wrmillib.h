@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 20-Feb-2024
+ *  version : 21-Feb-2024
  *
  * library for wr-mil
  *
@@ -66,13 +66,24 @@ extern "C" {
 #define  WRMILLIB_STATE_ERROR               6            // in error -> IDLE ("recover")
 #define  WRMILLIB_STATE_FATAL               7            // in fatal error; RIP
 
-  // data type set values; data are in 'native units' used by the lm32 firmware; NAN of unsigned integers is signaled by all bits set
-  typedef struct{                                      
-  } setval_t;
-  
-  // data type get values; data are in 'native units' used by the lm32 firmware
-  typedef struct{                                      
-  } getval_t;
+  enum evtTag{tagStart, tagStop};
+  typedef enum evtTag evtTag_t;
+
+  // data type monitoring values; data are in 'native units' used by the lm32 firmware
+  typedef struct{
+    uint32_t  gid;                                       // GID for which the gateway is active
+    uint64_t  nFwSnd;                                    // firmware # of sent MIL telegrams
+    uint64_t  nFwRecD;                                   // firmware # of received MIL telegrams (TAI)
+    uint64_t  nFwRecT;                                   // firmware # of received MIL telegrams (data)
+    uint64_t  nSnd;                                      // host # of sent MIL telegram matches (seen via ECA)
+    uint64_t  nRec;                                      // host # of received MIL telegrams (seen via ECA)
+    uint64_t  nMatch;                                    // host # of matches (sent vs received MIL telegram)
+    double    tAct;                                      // actual deviation offset value, t_received - t_sent [us]
+    double    tMin;                                      // minimum offset value
+    double    tMax;                                      // maximum offset value
+    double    tAve;                                      // average offset value
+    double    tSdev;                                     // standard deviation offset value
+  } monval_t;
 
     
   // ---------------------------------
@@ -137,7 +148,7 @@ extern "C" {
                            int32_t  *latency,                    // MIL event is generated 100us+latency after the WR event. The value of latency can be negative
                            uint64_t *utcOffset,                  // delay [ms] between the TAI and the MIL-UTC, high word   
                            uint32_t *requestFill,                // if this is written to 1, the gateway will send a fill event as soon as possible
-                           uint32_t *milDev,                     // wishbone address of MIL device; MIL device could be a MIL piggy or a SIO
+                           uint32_t *milDev,                     // MIL device for sending MIL messages; 0: MIL Piggy; 1..: SIO in slot 1..
                            uint32_t *milMon,                     // 1: monitor MIL events; 0; don't monitor MIL events
                            uint64_t *nEvtsSnd,                   // number of MIL telegrams sent
                            uint64_t *nEvtsRecT,                  // number of MIL telegrams received (TAI)

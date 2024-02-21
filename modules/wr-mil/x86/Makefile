@@ -29,12 +29,16 @@ $(info compiling x86 binaries for $(SYSENV))
 $(info ours CCFLAGS for c code is $(CCFLAGS))
 $(info ours CXFLAGS for c++ code is $(CXFLAGS))
 
-TARGETS     := wrmil-ctl
+TARGETS     := wrmil-ctl wrmil-serv-mon
 
 all: lib $(TARGETS)
 
 wrmil-ctl: wrmil-ctl.c
 	$(CC) $(CFLAGS) $(CCFLAGS) -o wrmil-ctl wrmil-ctl.c $(LIBS)
+
+wrmil-serv-mon: wrmil-serv-mon.cpp
+	$(CXX) $(CFLAGS) $(CXFLAGS) ../../common-libs/x86/common-lib.c -o wrmil-serv-mon wrmil-serv-mon.cpp $(XLIBS) -ldim -lpthread
+
 
 lib: wrmillib.c
 	$(CC) $(CFLAGS) $(CCFLAGS) -fPIC -c wrmillib.c ../../common-libs/x86/common-lib.c $(LIBS)
