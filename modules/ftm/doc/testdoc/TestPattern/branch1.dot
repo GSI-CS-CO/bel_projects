@@ -1,0 +1,43 @@
+digraph G {
+node [style     = "filled", fillcolor = "white", color = "black"]
+A1[cpu="0", flags="0x00000102", type="tmsg", toffs="0", pattern="A", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="0", evtno="161", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x10000a1000000000", par="0x00000000000000a1", tef="0", shape     = "oval", fillcolor = "green"];
+A2[cpu="0", flags="0x00000002", type="tmsg", toffs="0", pattern="A", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="0", evtno="162", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x10000a2000000000", par="0x00000000000000a2", tef="0", shape     = "oval", fillcolor = "white"];
+A3[cpu="0", flags="0x00000002", type="tmsg", toffs="0", pattern="A", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="0", evtno="163", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x10000a3000000000", par="0x00000000000000a3", tef="0", shape     = "oval", fillcolor = "white"];
+BlockA[cpu="0", flags="0x0010a107", type="block", tperiod="1000000", pattern="A", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+B1[cpu="1", flags="0x00000102", type="tmsg", toffs="0", pattern="B", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="0", evtno="177", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x10000b1000000000", par="0x00000000000000b1", tef="0", shape     = "oval", fillcolor = "green"];
+B2[cpu="1", flags="0x00000002", type="tmsg", toffs="0", pattern="B", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="0", evtno="178", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x10000b2000000000", par="0x00000000000000b2", tef="0", shape     = "oval", fillcolor = "white"];
+B3[cpu="1", flags="0x00000002", type="tmsg", toffs="0", pattern="B", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="0", evtno="179", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x10000b3000000000", par="0x00000000000000b3", tef="0", shape     = "oval", fillcolor = "white"];
+BlockB[cpu="1", flags="0x0010a107", type="block", tperiod="1000000", pattern="B", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+C1[cpu="2", flags="0x00000102", type="tmsg", toffs="0", pattern="C", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="0", evtno="193", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x10000c1000000000", par="0x00000000000000c1", tef="0", shape     = "oval", fillcolor = "green"];
+C2[cpu="2", flags="0x00000002", type="tmsg", toffs="0", pattern="C", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="0", evtno="194", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x10000c2000000000", par="0x00000000000000c2", tef="0", shape     = "oval", fillcolor = "white"];
+C3[cpu="2", flags="0x00000002", type="tmsg", toffs="0", pattern="C", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="0", evtno="195", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x10000c3000000000", par="0x00000000000000c3", tef="0", shape     = "oval", fillcolor = "white"];
+BlockC[cpu="2", flags="0x0010a107", type="block", tperiod="1000000", pattern="C", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+D1[cpu="3", flags="0x00000102", type="tmsg", toffs="0", pattern="D", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="0", evtno="209", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x10000d1000000000", par="0x00000000000000d1", tef="0", shape     = "oval", fillcolor = "green"];
+D2[cpu="3", flags="0x00000002", type="tmsg", toffs="0", pattern="D", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="0", evtno="210", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x10000d2000000000", par="0x00000000000000d2", tef="0", shape     = "oval", fillcolor = "white"];
+D3[cpu="3", flags="0x00000002", type="tmsg", toffs="0", pattern="D", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="0", evtno="211", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x10000d3000000000", par="0x00000000000000d3", tef="0", shape     = "oval", fillcolor = "white"];
+BlockD[cpu="3", flags="0x0010a107", type="block", tperiod="1000000", pattern="D", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+A1->BlockA [type="defdst", color = "red"];
+A2->BlockA [type="defdst", color = "red"];
+A3->BlockA [type="defdst", color = "red"];
+BlockA->A1 [type="defdst", color = "red"];
+B1->BlockB [type="defdst", color = "red"];
+C2->BlockC [type="defdst", color = "red"];
+B2->BlockB [type="defdst", color = "red"];
+B3->BlockB [type="defdst", color = "red"];
+BlockB->B1 [type="defdst", color = "red"];
+BlockC->C1 [type="defdst", color = "red"];
+C1->BlockC [type="defdst", color = "red"];
+C3->BlockC [type="defdst", color = "red"];
+BlockD->D1 [type="defdst", color = "red"];
+D1->BlockD [type="defdst", color = "red"];
+D2->BlockD [type="defdst", color = "red"];
+D3->BlockD [type="defdst", color = "red"];
+BlockA->A3 [type="altdst", color = "black"];
+BlockA->A2 [type="altdst", color = "black"];
+BlockB->B3 [type="altdst", color = "black"];
+BlockB->B2 [type="altdst", color = "black"];
+BlockC->C3 [type="altdst", color = "black"];
+BlockC->C2 [type="altdst", color = "black"];
+BlockD->D3 [type="altdst", color = "black"];
+BlockD->D2 [type="altdst", color = "black"];
+}

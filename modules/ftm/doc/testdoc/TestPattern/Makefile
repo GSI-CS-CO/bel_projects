@@ -5,7 +5,19 @@ PDFs = static_basic.pdf static_coupling1.pdf static_coupling2.pdf static_prio_an
 	booster_all_threads-s.pdf booster_startthread-0-s.pdf booster_startthread-1-s.pdf booster_startthread-2-s.pdf \
 	booster_startthread-3-s.pdf booster_thread_0_loop-s.pdf booster_thread_0-s.pdf booster_8_loops.pdf \
 	pps-all-threads-cpu0.pdf twothreads.pdf \
-	threadsStartStop.pdf nodeInTwoThreads.pdf blink-download.pdf unilac100.pdf
+	threadsStartStop.pdf nodeInTwoThreads.pdf blink-download.pdf unilac100.pdf \
+	branch1.pdf pps-subgraph.pdf \
+	pps-test0-0.pdf pps-test0-1-download.pdf \
+	pps-test1-0.pdf pps-test1-1-download.pdf \
+	pps-test2-0.pdf pps-test2-1.pdf pps-test2-1-download.pdf pps-test2-2-download.pdf \
+	pps-test3-0.pdf pps-test3-1.pdf pps-test3-2.pdf pps-test3-3.pdf pps-test3-4.pdf \
+	pps-test3-1-download.pdf pps-test3-2-download.pdf pps-test3-3-download.pdf pps-test3-4-download.pdf \
+	pps-test4-0.pdf pps-test4-1.pdf pps-test4-2.pdf \
+	pps-test4-1-download.pdf pps-test4-2-download.pdf \
+	pps-test5-0.pdf pps-test5-1-download.pdf pps-test5-2-download.pdf \
+	pps-test6-0.pdf pps-test6-1.pdf pps-test6-2.pdf \
+	pps-test6-0-download.pdf pps-test6-1-download.pdf pps-test6-2-download.pdf \
+	pps-test8-0.pdf pps-test8-1.pdf pps-test8-1-download.pdf
 
 
 all: $(PDFs)

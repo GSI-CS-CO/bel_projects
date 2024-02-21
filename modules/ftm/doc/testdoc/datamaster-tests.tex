@@ -81,6 +81,7 @@ test\_dm\_cmd\_cursor.py                        &  1                  &   T     
 test\_dm\_cmd\_deadline\_preptime\_starttime.py &  18                 &   T        &   T             &   T           &   x              &   x                 \\ \hline
 test\_dm\_cmd\_force.py                         &  1                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
 test\_dm\_cmd\_heap.py                          &  3                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
+ test\_dm\_cmd\_hex.py                          &  3                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
 test\_dm\_cmd\_noop.py                          &  1                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
 test\_dm\_cmd\_origin.py                        &  1                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
 test\_dm\_sched.py                              &  8                  &   T        &   x             &   x           &   x              &   x                 \\ \hline
@@ -106,10 +107,14 @@ test\_lzma.py                                   &  4                  &   x     
 test\_memory.py                                 &  15                 &   T        &   T             &   T           &   x              &   x                 \\ \hline
 test\_origin\_startthread.py                    &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_origin\_twothreads.py                     &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+ test\_overwrite.py                         &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+ test\_overwrite\_queue.py                         &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_parallelBranch.py                         &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_pps.py                                    &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+ test\_pattern\_start\_stop.py                         &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_pps.py                                    &  10                 &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_pps10Hz.py                                &  3                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_prio\_and\_type.py                        &  2                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+ test\_remove.py                       &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_run\_all\_single.py                       &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_run\_CPU0\_single.py                      &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_safe2remove.py                            &  19                 &   x        &   T             &   T           &   x              &   x                 \\ \hline
@@ -465,6 +470,9 @@ threads 2, 4, 6, 8. Check for the correct number of output lines.
 Run \texttt{heap} for each thread on each CPU.
 \end{enumerate}
 
+\section{test\_dm\_cmd\_hex.py}
+\texttt{test\_dm\_cmd\_hex.py} tests \texttt{dm-cmd $<$datamaster$>$ hex} for ???.
+
 \section{test\_dm\_cmd\_noop.py}
 \texttt{test\_dm\_cmd\_noop.py} tests \texttt{dm-cmd $<$datamaster$>$ noop} for different CPUs and threads.
 Check with \texttt{dm-cmd $<$datamaster$>$ queue Block0b} that the queue of Block0b is empty.
@@ -711,15 +719,212 @@ See Figure~\ref{fig:schedule_nodeInTwoThreads} for the schedule.
   The result of the snoop should get at least 15 events with parameter 1 and one message with parameter 2.
 \end{enumerate}
 
+\section{test\_overwrite.py}
+
+\section{test\_overwrite\_queue.py}
+
 \section{test\_parallelBranch.py}
 Use schedule \texttt{branch1.dot} to test branching with flow commands
 with absolute time offset. The checks use snoop for specific event numbers.
 The four tests are for CPU 0, CPU 0 and 1, CPU 0, 1, and 2, all 4 CPUs.
+    \begin{figure}
+        \centering
+        \includegraphics*[width=\textwidth,keepaspectratio]{TestPattern/branch1.pdf}
+        \caption{Schedule for test\_parallelBranch.py.}
+        \label{fig:Pattern_for_test_parallelBranch}
+    \end{figure}
+    Each of these pattern A, B, C, D runs on a different CPU.
+
+\section{test\_pattern\_start\_stop.py}
 
 \section{test\_pps.py}
-\texttt{test\_pps.py} (pps: pulse per second) is a basic test with a
+\texttt{test\_pps.py} (pps: pulse per second) is a collection of tests based
+on schedules with a simple loop of a timing message and a block.
+
+\begin{enumerate}
+\item test\_pps is a basic test with a
 schedule which sends two timing messages every second. The test checks
-with 'saft-ctl snoop' the timing messages.
+with \texttt{saft-ctl snoop} the timing messages.
+
+\item test\_ppsAdd is a basic test with a schedule which sends one timing
+message every second. The test checks with \texttt{saft-ctl snoop} the timing
+messages. Download the schedule with \texttt{dm-sched status} and compare
+with the uploaded schedule with \texttt{scheduleCompare}. The two schedules
+should be isomorphic.
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.3\textheight,keepaspectratio]{TestPattern/pps-subgraph.pdf}
+        \caption{Pattern for test\_ppsAdd.}
+        \label{fig:Pattern_for_test_ppsAdd}
+    \end{figure}
+
+\item testPpsAdd0
+    Add two schedules. The first schedule contains two nodes and an edge.
+    The second adds some edges to the first schedule.
+    Start pattern A and use a flow command to trigger messages.
+    The status of the schedules is compared against known schedule files with
+    \texttt{scheduleCompare}. The messages are snooped and checked.
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.3\textheight,keepaspectratio]{TestPattern/pps-test0-0.pdf}
+        \includegraphics*[height=0.3\textheight,keepaspectratio]{TestPattern/pps-test0-1-download.pdf}
+        \caption{Schedules for testPpsAdd0 (test\_pps.py). The first produces
+        one timing message. The second is the result after adding more edges.}
+        \label{fig:Schedules_for_testPpsAdd0}
+    \end{figure}
+    During snoop start pattern A. This produces 1 message. Pattern A finishes.
+    Download the schedule for later compare.
+    Add a schedule which contains two edges.
+    Queue a flow command with quantity 10 to block B\_A.
+    Again start pattern A. The flow command triggers the next messages.
+    At the end, 12 messages are produced and the pattern loops in block B\_A.
+
+\item testPpsAdd1
+    Add two schedules. The first schedule contains pattern A with two nodes and an edge.
+    The second adds a similar pattern B.
+    The messages are snooped and checked.
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.3\textheight,keepaspectratio]{TestPattern/pps-test1-0.pdf}
+        \includegraphics*[height=0.3\textheight,keepaspectratio]{TestPattern/pps-test1-1-download.pdf}
+        \caption{Schedules for testPpsAdd1 (test\_pps.py).}
+        \label{fig:Schedules_for_testPpsAdd1-0}
+    \end{figure}
+
+\item testPpsAdd2
+    Test that the validation for nodes connected by defdst or altdst on
+    the same CPU works. Add a first schedule. Try to add a second schedule.
+    This fails due to an edge from CPU 0 to CPU 1.
+    Add a third schedule with a target edge from CPU 0 to CPU 1. This works.
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.3\textheight,keepaspectratio]{TestPattern/pps-test2-0.pdf}
+        \includegraphics*[height=0.3\textheight,keepaspectratio]{TestPattern/pps-test2-1.pdf}
+        \includegraphics*[height=0.3\textheight,keepaspectratio]{TestPattern/pps-test2-1-download.pdf}
+        \includegraphics*[height=0.3\textheight,keepaspectratio]{TestPattern/pps-test2-2-download.pdf}
+        \caption{Schedules for testPpsAdd2 (test\_pps.py). The upper part of the figure shows
+        the first schedule on the left. Try to add the middle schedule. This fails, since block B\_A is on CPU 0
+        but Evt\_B and B\_B are on CPU 1. The schedule on the right is the result. The lower part of the figure
+        shows the result after adding a wait node W\_A with two blocks B\_B and B\_C to the original
+        schedule of Evt\_A and B\_A.}
+        \label{fig:Schedules_for_testPpsAdd2-0}
+    \end{figure}
+
+\item testPpsAdd3
+    Test with five schedules.
+    Add two schedules, remove the third, add the fourth, remove the fifth.
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.45\textheight,keepaspectratio]{TestPattern/pps-test3-0.pdf}
+        \includegraphics*[height=0.45\textheight,keepaspectratio]{TestPattern/pps-test3-1.pdf}
+        \includegraphics*[height=0.45\textheight,keepaspectratio]{TestPattern/pps-test3-1-download.pdf}
+        \caption{Schedules for testPpsAdd3 (test\_pps.py), first step. Starting with the upper left schedule,
+        adding the upper right schedule results in the schedule in the lower part of the figure.}
+        \label{fig:Schedules_for_testPpsAdd3-0}
+    \end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.45\textheight,keepaspectratio]{TestPattern/pps-test3-2.pdf}
+        \includegraphics*[height=0.45\textheight,keepaspectratio]{TestPattern/pps-test3-2-download.pdf}
+        \caption{Schedules for testPpsAdd3 (test\_pps.py), second step. Remove the schedule with Evt\_B and B\_B results in the second schedule.}
+        \label{fig:Schedules_for_testPpsAdd3-1}
+    \end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.45\textheight,keepaspectratio]{TestPattern/pps-test3-3.pdf}
+        \includegraphics*[height=0.45\textheight,keepaspectratio]{TestPattern/pps-test3-3-download.pdf}
+        \caption{Schedules for testPpsAdd3 (test\_pps.py), third step. Add the schedule with Evt\_D and B\_D results in the second schedule.}
+        \label{fig:Schedules_for_testPpsAdd3-2}
+    \end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.45\textheight,keepaspectratio]{TestPattern/pps-test3-4.pdf}
+        \includegraphics*[height=0.45\textheight,keepaspectratio]{TestPattern/pps-test3-4-download.pdf}
+        \caption{Schedules for testPpsAdd3 (test\_pps.py), fourth step. Remove the first schedule results in the schedule with Evt\_D and B\_D.}
+        \label{fig:Schedules_for_testPpsAdd3-3}
+    \end{figure}
+
+\item testPpsAdd4
+    Test removing a pattern which is running. This is rejected as expected.
+    Then stop the pattern A and remove it.
+    Check that the appropriate number of messages is produced.
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.43\textheight,keepaspectratio]{TestPattern/pps-test4-0.pdf}
+        \includegraphics*[height=0.4\textheight,keepaspectratio]{TestPattern/pps-test4-1.pdf}
+        \includegraphics*[height=0.43\textheight,keepaspectratio]{TestPattern/pps-test4-1-download.pdf}
+        \caption{Schedules for testPpsAdd4 (test\_pps.py), first part. Removing the three nodes Evt\_A,
+        B\_A, and B\_C from the first schedule fails since pattern A is running. The resulting
+        schedule in the lower part is the same as the first schedule.}
+        \label{fig:Schedules_for_testPpsAdd4-0}
+    \end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.45\textheight,keepaspectratio]{TestPattern/pps-test4-2.pdf}
+        \includegraphics*[height=0.45\textheight,keepaspectratio]{TestPattern/pps-test4-2-download.pdf}
+        \caption{Schedules for testPpsAdd4 (test\_pps.py), second part. After stopping pattern A, nodes
+        Evt\_A and B\_A are removed and the result is the last schedule.}
+        \label{fig:Schedules_for_testPpsAdd4-1}
+    \end{figure}
+
+\item testPpsAdd5
+    Test removing a pattern which is running. This is rejected as expected.
+    When pattern A has finished, remove it.
+    Check that the appropriate number of messages is produced.
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.43\textheight,keepaspectratio]{TestPattern/pps-test5-0.pdf}
+        \includegraphics*[height=0.43\textheight,keepaspectratio]{TestPattern/pps-test5-1.pdf}
+        \includegraphics*[height=0.43\textheight,keepaspectratio]{TestPattern/pps-test5-1-download.pdf}
+        \includegraphics*[height=0.43\textheight,keepaspectratio]{TestPattern/pps-test5-2-download.pdf}
+        \caption{Schedules for testPpsAdd5 (test\_pps.py). From the left upper schedule remove nodes
+        Evt\_B and B\_B while pattern A is running. This fails with return code 250. Pattern A finishes.
+        Trying to remove Evt\_B and B\_B again results in the lower right schedule with nodes Evt\_A and B\_A.}
+        \label{fig:Schedules_for_testPpsAdd5-0}
+    \end{figure}
+
+\item testPpsAdd6
+    Test adding a node which changes the pattern entry.
+    Check that the appropriate number of messages is produced.
+    \begin{figure}
+        \centering
+        \includegraphics{TestPattern/pps-test6-0.pdf}
+        \includegraphics{TestPattern/pps-test6-0-download.pdf}
+        \includegraphics{TestPattern/pps-test6-1.pdf}
+        \includegraphics{TestPattern/pps-test6-1-download.pdf}
+        \caption{Schedules for testPpsAdd6 (test\_pps.py), first part. Start pattern A in the upper left schedule.
+        The result is the upper right schedule. Overwrite the schedule with an altdst edge from
+        BlockA to EvtA and no pattern entry. Result is the lower right schedule.
+        Cannot start pattern, because entry is missing.}
+        \label{fig:Schedules_for_testPpsAdd6-0}
+    \end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics{TestPattern/pps-test6-2.pdf}
+        \includegraphics{TestPattern/pps-test6-2-download.pdf}
+        \caption{Schedules for testPpsAdd6 (test\_pps.py), second part.
+        Add the left schedule with EvtB as pattern entry. Then start pattern A. This results in the right schedule.}
+        \label{fig:Schedules_for_testPpsAdd6-1}
+    \end{figure}
+
+\item testPpsAdd8
+    Test adding a schedule with a node with name ending in ListDst\_3. This fails,
+    because this name is generated during upload and a collision happens.
+    Second attempt is to add a similar schedule with the name Block0\_0\_ListDst\_6.
+    This works. The generated nodes have the names Block0\_0\_ListDst\_x with x from 0 to 5.
+    Download the schedule including meta nodes and compare it to the expected one with \texttt{scheduleCompare}.
+    \begin{figure}
+        \centering
+        \includegraphics*[width=1.0\textwidth,keepaspectratio]{TestPattern/pps-test8-0.pdf}
+        \includegraphics*[width=1.0\textwidth,keepaspectratio]{TestPattern/pps-test8-1.pdf}
+        \includegraphics*[width=1.0\textwidth,keepaspectratio]{TestPattern/pps-test8-1-download.pdf}
+        \caption{Schedules for testPpsAdd8 (test\_pps.py). The first one fails to load. The second
+        is added successfully. Compare it with the third schedule.}
+        \label{fig:Schedules_for_testPpsAdd8-0}
+    \end{figure}
+
+\end{enumerate}
+
 \section{test\_prio\_and\_type.py}
 This test was \texttt{full\_test/static/prio\_and\_type}.
 \begin{enumerate}
@@ -752,6 +957,9 @@ displaying the priority queues.
 
   Two checks of the time values with \texttt{dm-cmd rawqueue}.
 \end{enumerate}
+
+\section{test\_remove.py}
+
 \section{test\_run\_all\_single.py}
 This test was \texttt{full\_test/dynamic/basics/run\_all\_single}.
 \begin{enumerate}
@@ -775,6 +983,7 @@ This test was \texttt{full\_test/dynamic/basics/run\_all\_single}.
 
   For each pattern the correct CPU is used.
 \end{enumerate}
+
 \section{test\_run\_CPU0\_single.py}
 This test was \texttt{full\_test/dynamic/basics/run\_cpu0\_single}.
 \begin{enumerate}
