@@ -471,7 +471,10 @@ Run \texttt{heap} for each thread on each CPU.
 \end{enumerate}
 
 \section{test\_dm\_cmd\_hex.py}
-\texttt{test\_dm\_cmd\_hex.py} tests \texttt{dm-cmd $<$datamaster$>$ hex} for ???.
+\texttt{test\_dm\_cmd\_hex.py} tests \texttt{dm-cmd $<$datamaster$>$ hex}
+for the nodes \texttt{Block0a} and \texttt{Block0a\_ListDst\_0}. This
+is done on a pps pattern on CPU0. The output is different for 8 and 32 threads.
+The output is checked.
 
 \section{test\_dm\_cmd\_noop.py}
 \texttt{test\_dm\_cmd\_noop.py} tests \texttt{dm-cmd $<$datamaster$>$ noop} for different CPUs and threads.
