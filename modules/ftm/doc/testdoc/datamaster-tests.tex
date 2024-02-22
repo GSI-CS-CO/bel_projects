@@ -818,6 +818,13 @@ The four tests are for CPU 0, CPU 0 and 1, CPU 0, 1, and 2, all 4 CPUs.
     Each of these pattern A, B, C, D runs on a different CPU.
 
 \section{test\_pattern\_start\_stop.py}
+The test \texttt{test_startStopPattern} runs a pps pattern on all threads of CPU 0.
+    Stop pattern Block0b which should fail, since not a pattern name.
+    Stop pattern PPS0b which is OK. This pattern runs on threads 1, 9, 17, 25
+    (the last three for 32 threads). Check which thread is stopped.
+    Start pattern Block0b which should fail, since not a pattern name.
+    Start pattern PPS0b on the thread, which was stopped before. The start
+    is OK. Check that all threads (8 or 32) are running.
 
 \section{test\_pps.py}
 \texttt{test\_pps.py} (pps: pulse per second) is a collection of tests based
