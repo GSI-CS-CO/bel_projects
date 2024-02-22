@@ -818,7 +818,7 @@ The four tests are for CPU 0, CPU 0 and 1, CPU 0, 1, and 2, all 4 CPUs.
     Each of these pattern A, B, C, D runs on a different CPU.
 
 \section{test\_pattern\_start\_stop.py}
-The test \texttt{test_startStopPattern} runs a pps pattern on all threads of CPU 0.
+The test \texttt{test\_startStopPattern} runs a pps pattern on all threads of CPU 0.
     Stop pattern Block0b which should fail, since not a pattern name.
     Stop pattern PPS0b which is OK. This pattern runs on threads 1, 9, 17, 25
     (the last three for 32 threads). Check which thread is stopped.
@@ -1048,6 +1048,88 @@ displaying the priority queues.
 \end{enumerate}
 
 \section{test\_remove.py}
+\begin{enumerate}
+\item testRemove1
+    Load and during snoop start pattern A, a loop of a message and a
+    block. This produces messages with 10Hz.
+    Download the schedule for later compare.
+    Stop the pattern and remove the pattern which is nearly the same, but
+    the block has no type. The result is a schedule with only the block.
+    \begin{figure}
+        \centering
+        \includegraphics{TestPattern/remove1-0.pdf}
+        \includegraphics{TestPattern/remove1-1.pdf}
+        \includegraphics{TestPattern/remove1-1-download.pdf}
+        \caption{Schedules for testRemove1 (test\_remove.py). The first schedule
+        is the loop. The second schedule is removed from the first,
+        resulting in the third schedule.}
+        \label{fig:Schedules_for_testRemove1}
+    \end{figure}
+
+\item testRemove2
+    Load and start pattern A, a loop of a message and a block.
+    Stop the pattern and remove parts of the pattern which is nearly the same, but
+    the block has no type and a different event node EvtC. Remove fails,
+    because EvtC is unknown in the existing schedule.
+
+    The difference to testRemove1 is that the schedule for removal contains
+    EvtC instead of EvtA.
+    \begin{figure}
+        \centering
+        \includegraphics{TestPattern/remove2-0.pdf}
+        \includegraphics{TestPattern/remove2-1.pdf}
+        \includegraphics{TestPattern/remove2-1-download.pdf}
+        \caption{Schedules for testRemove2 (test\_remove.py). The first schedule
+        is the loop. The second schedule is removed from the first,
+        resulting in the third schedule.}
+        \label{fig:Schedules_for_testRemove2}
+    \end{figure}
+
+\item testRemove3
+    Load and start pattern A, a loop of message EvtA and block BlockA.
+    Stop the pattern and remove the pattern which is nearly the same, but
+    the block BlockA has no type. The remove command fails.
+
+    The difference to testRemove1 is that the schedule for removal contains
+    EvtA without a type. Thus, the remove command tries to remove BlockA,
+    which would leave EvtA childless.
+    \begin{figure}
+        \centering
+        \includegraphics{TestPattern/remove3-0.pdf}
+        \includegraphics{TestPattern/remove3-1.pdf}
+        \includegraphics{TestPattern/remove3-1-download.pdf}
+        \caption{Schedules for testRemove3 (test\_remove.py). The first schedule
+        is the loop. The second schedule is removed from the first,
+        resulting in the third schedule.}
+        \label{fig:Schedules_for_testRemove3}
+    \end{figure}
+
+\item testRemove4
+    Load and start pattern A, a loop of message EvtA and block BlockA.
+    Stop the pattern and remove EvtA. The result is a schedule with only
+    the block. Then add node EvtA of type switch and block BlockB. Thus,
+    EvtA changes the type.
+    \begin{figure}
+        \centering
+        \includegraphics{TestPattern/remove4-0.pdf}
+        \includegraphics{TestPattern/remove4-1.pdf}
+        \includegraphics{TestPattern/remove4-1-download.pdf}
+        \caption{Schedules for testRemove4 (test\_remove.py). First part.
+        First schedule consists of EvtA and BlockA. Remove the second schedule and get
+        the third schedule as result.}
+        \label{fig:Schedules_for_testRemove4-1}
+    \end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics{TestPattern/remove4-2.pdf}
+        \includegraphics{TestPattern/remove4-2-download.pdf}
+        \caption{Schedules for testRemove4 (test\_remove.py). Second part.
+        Add the first schedule with EvtA as a switch node. The result
+        is the second schedule.}
+        \label{fig:Schedules_for_testRemove4-2}
+    \end{figure}
+
+\end{enumerate}
 
 \section{test\_run\_all\_single.py}
 This test was \texttt{full\_test/dynamic/basics/run\_all\_single}.

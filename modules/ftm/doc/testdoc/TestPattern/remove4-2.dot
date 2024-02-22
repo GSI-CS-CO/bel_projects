@@ -1,0 +1,8 @@
+digraph "remove4-2" {
+  node [cpu=1 pattern=A tperiod=100000000 toffs=0 fid=1 gid=5 sid=2 bpid=8 style=filled color=black fillcolor=white penwidth=2]
+  EvtA [type=switch shape=pentagon]
+  BlockB [type=block shape=rectangle]
+  edge [type=defdst color=red]
+  EvtA -> BlockA
+  EvtA -> BlockB [type=target color=blue]
+}

@@ -37,9 +37,10 @@ class DmSchedRemove(dm_testbench.DmTestbench):
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile1])
 
   def testRemove2(self):
-    """Load and start pattern A, a loop of a message and a block.
+    """Load and start pattern A, a loop of a message EvtA and a block BlockA.
     Stop the pattern and remove parts of the pattern which is nearly the same, but
-    the block has no type. The result is a schedule with only the block.
+    the block has no type and a different event node EvtC. Remove fails,
+    because EvtC is unknown in the existing schedule.
     """
     snoopFile = 'snoop_remove2.csv'
     self.scheduleFile0 = 'remove2-0.dot'
@@ -57,7 +58,8 @@ class DmSchedRemove(dm_testbench.DmTestbench):
   def actionRemove2(self):
     """During snoop start pattern A. This produces messages with 10Hz.
     Download the schedule for later compare.
-    Stop the pattern and remove part of the schedule.
+    Stop the pattern and remove part of the schedule. This is an
+    expected failure.
     """
     self.addSchedule(self.scheduleFile0)
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'A'), [0], 1, 0)
@@ -65,14 +67,18 @@ class DmSchedRemove(dm_testbench.DmTestbench):
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile0])
     self.startAndCheckSubprocess([self.binaryDmCmd, self.datamaster, 'stoppattern', 'A'])
     self.delay(0.1)
-    self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'remove', self.schedulesFolder + self.scheduleFile1], [250], 2, 2)
+    lines = self.startAndGetSubprocessOutput([self.binaryDmSched, self.datamaster, 'remove', self.schedulesFolder + self.scheduleFile1], [250], 2, 2)
+    self.assertEqual(lines[1][1], "../bin/dm-sched: Failed to execute <remove>. Cause:  HashTable: Name EvtC not found")
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'A'), [0], 1, 0)
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile1])
 
   def testRemove3(self):
     """Load and start pattern A, a loop of a message and a block.
     Stop the pattern and remove the pattern which is nearly the same, but
-    the block has no type. The result is a schedule with only the block.
+    the block has no type.
+    The difference to testRemove1 is that the schedule for removal contains
+    EvtA without a type. Thus, the remove command tries to remove BlockA,
+    which would leave EvtA childless.
     """
     snoopFile = 'snoop_remove3.csv'
     self.scheduleFile0 = 'remove3-0.dot'
@@ -103,10 +109,10 @@ class DmSchedRemove(dm_testbench.DmTestbench):
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile1])
 
   def testRemove4(self):
-    """Load and start pattern A, a loop of a message and a block.
-    Stop the pattern and remove the pattern which is nearly the same, but
-    the block has no type. The result is a schedule with only the block.
-    Thena add a node of type switch.
+    """Load and start pattern A, a loop of message EvtA and block BlockA.
+    Stop the pattern and remove EvtA.
+    The result is a schedule with only block BlockA.
+    Then add node EvtA of type switch.
     """
     snoopFile = 'snoop_remove4.csv'
     self.scheduleFile0 = 'remove4-0.dot'
