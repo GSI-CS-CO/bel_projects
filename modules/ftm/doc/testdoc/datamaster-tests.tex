@@ -723,6 +723,67 @@ See Figure~\ref{fig:schedule_nodeInTwoThreads} for the schedule.
 \end{enumerate}
 
 \section{test\_overwrite.py}
+\begin{enumerate}
+\item testOverwrite1
+    Load and start pattern A, a loop of a message and a block.
+    Stop the pattern and overwrite the block with a blockalign.
+    Analyse the timing messages with the parameter field.
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.3\textheight,keepaspectratio]{TestPattern/overwrite1-0.pdf}
+        \includegraphics*[height=0.3\textheight,keepaspectratio]{TestPattern/overwrite1-1.pdf}
+        \includegraphics*[height=0.3\textheight,keepaspectratio]{TestPattern/overwrite1-1-download.pdf}
+        \caption{Schedules for testOverwrite1 (test\_overwrite.py). The first schedule
+        consists of a block and an event. The parameter of the messages is 1,
+        which is checked in the snooped messages. This pattern runs for a second.
+        It is overwritten with the second schedule containing a blockalign and an event.
+        This event sends parameter 2, which is also checked in the snooped messages.
+        The third schedule is the result.}
+        \label{fig:Schedules_for_testOverwrite1}
+    \end{figure}
+
+\item testOverwrite2
+    Load a schedule with a switch. Executing the switch interchanges
+    the defdst to EvtA with the altdst to EvtB. Then the schedule loops
+    over EvtB.
+    Overwrite the schedule with the original schedule changes the edges back
+    to defdst to EvtA and altdst to EvtB. Then the switch is executed again.
+    Analyse the timing messages with the parameter field.
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.3\textheight,keepaspectratio]{TestPattern/overwrite2-0.pdf}
+        \includegraphics*[height=0.3\textheight,keepaspectratio]{TestPattern/overwrite2-1-download.pdf}
+        \includegraphics*[height=0.3\textheight,keepaspectratio]{TestPattern/overwrite2-2-download.pdf}
+        \caption{Schedules for testOverwrite2 (test\_overwrite.py). The first
+        schedule shows the defdst to EvtA and the altdst to EvtB. After executing
+        the switch, the second schedule shows the defdst to EvtB and the altdst to EvtA.
+        Overwritting with the original scheulde results in the third schedule.}
+        \label{fig:Schedules_for_testOverwrite2}
+    \end{figure}
+
+\item testOverwrite3
+    Load a schedule with a switch. Executing the switch interchanges
+    the defdst to EvtA with the altdst to EvtB. Then the schedule loops
+    over EvtB.
+    Overwrite the schedule with a smiliar schedule which replaces the switch
+    with a flow and the switchdst edge with a flowdst edge.
+    Analyse the timing messages with the parameter field.
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.28\textheight,keepaspectratio]{TestPattern/overwrite3-0.pdf}
+        \includegraphics*[height=0.28\textheight,keepaspectratio]{TestPattern/overwrite3-0-download.pdf}
+        \includegraphics*[height=0.28\textheight,keepaspectratio]{TestPattern/overwrite3-1-download.pdf}
+        \includegraphics*[height=0.28\textheight,keepaspectratio]{TestPattern/overwrite3-1.pdf}
+        \includegraphics*[height=0.28\textheight,keepaspectratio]{TestPattern/overwrite3-2-download.pdf}
+        \caption{Schedules for testOverwrite3 (test\_overwrite.py). The first schedule
+        contains a switch. The second schedule is the check before executing the
+        switch. The third schedule is the check after executing the
+        switch. The fourth schedule overwrites the first
+        with a flow node. The fifth schedule is the result.}
+        \label{fig:Schedules_for_testOverwrite3}
+    \end{figure}
+
+\end{enumerate}
 
 \section{test\_overwrite\_queue.py}
 

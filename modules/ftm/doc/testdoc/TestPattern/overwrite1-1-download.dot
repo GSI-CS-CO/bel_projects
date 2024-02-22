@@ -1,0 +1,8 @@
+digraph G {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+BlockA[cpu="1", flags="0x00108108", type="blockalign", tperiod="100000000", pattern="A", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", style  = "dotted, filled", fillcolor = "green", penwidth=2, color = "purple"];
+EvtA[cpu="1", flags="0x00002102", type="tmsg", toffs="0", pattern="A", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="5", evtno="0", beamin="0", bpcstart="0", sid="2", bpid="8", reqnobeam="0", vacc="0", id="0x1005000000200200", par="0x0000000000000002", tef="0", shape     = "oval", fillcolor = "green", penwidth=2, color = "darkorange3"];
+BlockA->EvtA [type="defdst", color = "red"];
+EvtA->BlockA [type="defdst", color = "red"];
+}
