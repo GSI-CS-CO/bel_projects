@@ -6,9 +6,9 @@
 // ****************************************************************************************
 
 // set values for data supply
-#define FBAS_SHARED_SET_GID        (COMMON_SHARED_END          + _32b_SIZE_)       // GID of B2B Transfer ('EXTRING_B2B_...')
-#define FBAS_SHARED_SET_SID        (FBAS_SHARED_SET_GID        + _32b_SIZE_)       // sequence ID for B2B transfer
-#define FBAS_SHARED_SET_NODETYPE   (FBAS_SHARED_SET_SID        + _32b_SIZE_)       // FBAS node type
+#define FBAS_SHARED_BEGIN          (COMMON_SHARED_END          + _32b_SIZE_)       // begin of the app-spec region
+#define FBAS_SHARED_SET_ID         (FBAS_SHARED_BEGIN          + _32b_SIZE_)       // reserved
+#define FBAS_SHARED_SET_NODETYPE   (FBAS_SHARED_SET_ID         + _32b_SIZE_)       // FBAS node type
 #define FBAS_SHARED_SET_SBSLAVES   (FBAS_SHARED_SET_NODETYPE   + _32b_SIZE_)       // SCU bus slaves (bit1=slot1, 1-12)
 //get values
 #define FBAS_SHARED_GET_GID        (FBAS_SHARED_SET_SBSLAVES   + _32b_SIZE_)       // GID of B2B Transfer ('EXTRING_B2B_...')

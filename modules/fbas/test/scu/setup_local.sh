@@ -66,8 +66,8 @@ case $platform in
         export addr_set_node_type="0x04060820"      # user RAM range in Pexp/Pexaria
         export addr_get_node_type="0x04060830"
         export addr_cmd="0x04060508"     # shared memory location for command buffer
-        export addr_cnt1="0x04060934"    # shared memory location for transmitted message counter
-        export addr_msr1="0x04060968"    # shared memory location for measurement results
+        export addr_cnt="0x04060934"     # shared memory location for transmitted message counter
+        export addr_avg="0x04060968"     # shared memory location for measurement results
         export addr_eca_vld="0x04060990" # shared memory location of counter for valid actions
         export addr_eca_ovf="0x04060994" # shared memory location of counter for overflow actions
         export addr_senderid="0x04060998" # shared memory location of sender ID
@@ -75,14 +75,14 @@ case $platform in
         export mac_tx_node="0x00267b0004da" # sender ID of TX node
         ;;
     "SCU")
-        export addr_set_node_type="0x20140820"     # user RAM range in SCU
-        export addr_get_node_type="0x20140830"
+        export addr_set_node_type="0x20140694"     # user RAM range in SCU
+        export addr_get_node_type="0x201406a4"
         export addr_cmd="0x20140508"     # shared memory location for command buffer
-        export addr_cnt1="0x20140934"    # shared memory location for transmitted message counter
-        export addr_msr1="0x20140968"    # shared memory location for measurement results
-        export addr_eca_vld="0x20140990" # shared memory location of counter for valid actions
-        export addr_eca_ovf="0x20140994" # shared memory location of counter for overflow actions
-        export addr_senderid="0x20140998" # shared memory location of sender ID
+        export addr_cnt="0x201407a8"     # shared memory location for transmitted message counter
+        export addr_avg="0x201407dc"     # shared memory location for measurement results
+        export addr_eca_vld="0x20140804" # shared memory location of counter for valid actions
+        export addr_eca_ovf="0x20140808" # shared memory location of counter for overflow actions
+        export addr_senderid="0x2014080c" # shared memory location of sender ID
         ;;
 esac
 
@@ -362,8 +362,13 @@ set_senderid() {
         pos=$(( $i << 56 ))                               # position in RX buffer
         senderid=$(( $pos + $idx_mac ))                   # sender ID = position + (idx + MAC)
         senderid=$(printf "0x%x" $senderid)
-        eb-write -q $device $addr_senderid/8 $senderid
-        eb-read -q $device $addr_senderid/8
+        addr_id=$addr_senderid
+        id_32=$(($senderid >> 32))                        # high 32-bit of sender ID
+        eb-write $device $addr_id/4 $id_32
+        addr_id=$(($addr_id + 4))
+        id_32=$(($senderid & 0xffffffff))                 # low 32-bit of sender ID
+        eb-write $device $addr_id/4 $id_32
+
         eb-write $device $addr_cmd/4 $instr_load_senderid
         i=$(( $i + 1 ))
         sleep 0.2
@@ -519,7 +524,7 @@ read_counters() {
 
     device=$1
     verbose=$2
-    addr_val="$addr_cnt1 $addr_eca_vld $addr_eca_ovf" # reg addresses as string
+    addr_val="$addr_cnt $addr_eca_vld $addr_eca_ovf" # reg addresses as string
     unset counts
 
     for addr in $addr_val; do
@@ -607,7 +612,7 @@ result_tx_delay() {
     if [ -n "$2" ]; then
         echo -n "Transmit delay: "
     fi
-    read_measurement_results $1 $instr_st_tx_dly $addr_msr1 $2
+    read_measurement_results $1 $instr_st_tx_dly $addr_avg $2
 }
 
 result_sg_latency() {
@@ -617,7 +622,7 @@ result_sg_latency() {
     if [ -n "$2" ]; then
         echo -n "Signalling latency:   "
     fi
-    read_measurement_results $1 $instr_st_sg_lty $addr_msr1 $2
+    read_measurement_results $1 $instr_st_sg_lty $addr_avg $2
 }
 
 result_msg_delay() {
@@ -627,7 +632,7 @@ result_msg_delay() {
     if [ -n "$2" ]; then
         echo -n "Messaging delay:  "
     fi
-    read_measurement_results $1 $instr_st_msg_dly $addr_msr1 $2
+    read_measurement_results $1 $instr_st_msg_dly $addr_avg $2
 }
 
 result_ttl_ival() {
@@ -637,7 +642,7 @@ result_ttl_ival() {
     if [ -n "$2" ]; then
         echo -n "TTL interval:   "
     fi
-    read_measurement_results $1 $instr_st_ttl_ival $addr_msr1 $2
+    read_measurement_results $1 $instr_st_ttl_ival $addr_avg $2
 }
 
 result_tx_mps_handle() {
@@ -647,7 +652,7 @@ result_tx_mps_handle() {
     if [ -n "$2" ]; then
         echo -n "MPS handling: "
     fi
-    read_measurement_results $1 $instr_st_tx_mps_handle $addr_msr1 $2
+    read_measurement_results $1 $instr_st_tx_mps_handle $addr_avg $2
 }
 
 disable_mps() {
@@ -674,6 +679,21 @@ enable_mps_all() {
     enable_mps $tx_node_dev
 }
 
+eb_read_uint64() {
+    # $1 - device (dev/wbm0)
+    # $2 - address (0x2014000)
+
+    device=$1
+    addr=$2
+
+    val_hi="0x$(eb-read $device ${addr}/4)" # read and keep value as hex
+    addr=$(($addr + 4))
+    val_lo="0x$(eb-read $device ${addr}/4)"
+    val=$(($val_hi << 4))
+    val=$(($val + $val_lo))
+    echo "$val"
+}
+
 read_measurement_results() {
     # $1 - node device (dev/wbm0)
     # $2 - instruction code to store measurement results to a location in the shared memory
@@ -686,26 +706,24 @@ read_measurement_results() {
 
     eb-write $device $addr_cmd/4 $instr_msr
 
-    avg=$(eb-read -q $device ${addr_msr}/8)
-    avg_dec=$(printf "%d" 0x$avg)
-    #echo "avg= 0x$avg (${avg_dec})"
+    avg=$(eb_read_uint64 $device $addr_msr)  # average
 
     addr_msr=$(( $addr_msr + 8 ))
-    min=$(eb-read -q $device ${addr_msr}/8)
-    min_dec=$(printf "%lli" 0x$min)
+    min=$(eb_read_uint64 $device $addr_msr)
+    min=$(printf "%lli" $min)                # min might be negative
 
     addr_msr=$(( $addr_msr + 8 ))
-    max=$(eb-read -q $device ${addr_msr}/8)
-    max_dec=$(printf "%d" 0x$max)
+    max=$(eb_read_uint64 $device $addr_msr)  # max
 
     addr_msr=$(( $addr_msr + 8 ))
-    cnt_val=$(eb-read -q $device ${addr_msr}/4)
-    cnt_val_dec=$(printf "%d" 0x$cnt_val)
+    cnt_val=$(eb-read $device ${addr_msr}/4)
+    cnt_val=$(printf "%d" 0x$cnt_val)        # valid, converted to decimal
 
     addr_msr=$(( $addr_msr + 4 ))
-    cnt_all=$(eb-read -q $device ${addr_msr}/4)
-    cnt_all_dec=$(printf "%d" 0x$cnt_all)
-    echo -n "${avg_dec} ${min_dec} ${max_dec} ${cnt_val_dec} ${cnt_all_dec}"
+    cnt_all=$(eb-read $device ${addr_msr}/4)
+    cnt_all=$(printf "%d" 0x$cnt_all)        # all
+
+    echo -n "${avg} ${min} ${max} ${cnt_val} ${cnt_all}"
     if [ -n "$4" ]; then
         echo " (avg min max valid all)"
     else

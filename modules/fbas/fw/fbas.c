@@ -77,14 +77,14 @@ extern uint32_t *pSharedIp;             // pointer to a "user defined" u32 regis
 uint64_t myMac;                         // own MAC address
 
 // shared memory layout
-static uint32_t *pShared;               // pointer to begin of shared memory region
 static uint32_t *pCpuRamExternal;       // external address (seen from host bridge) of this CPU's RAM
-static uint32_t *pSharedApp;            // pointer to a "user defined" u32 register set; here: application-specific register set
+static uint32_t *pSharedExt;            // external address of shared memory reserved for the application
+static uint32_t *pSharedApp;            // internal address of shared memory reserved for the application
 
 // other global stuff
 static uint32_t statusArray;            // all status infos are ORed bit-wise into sum status, sum status is then published
 
-// application-specific variables
+// application-specific global variables
 static nodeType_t nodeType = FBAS_NODE_TX;  // default node type
 static opMode_t opMode = FBAS_OPMODE_DEF;   // default operation mode
 static uint32_t cntCmd = 0;                 // counter for user commands
@@ -95,7 +95,7 @@ static nw_addr_t dstNwAddr[N_DST_ADDR];     // valid destination addresses for t
 
 // application-specific function prototypes
 static void init();
-static void initSharedMem(uint32_t *sharedSize);
+static status_t initSharedMem(uint32_t *const sharedStart);
 static void initMpsData();
 static void initIrqTable();
 static void printSrcAddr();
@@ -129,61 +129,57 @@ static void init()
  * Set up user defined u32 register set in the shared memory
  *
  **/
-static void initSharedMem(uint32_t *sharedSize)
+static status_t initSharedMem(uint32_t *const sharedStart)
 {
-  uint32_t idx;
-  uint32_t *pSharedTemp;
-  int      i;
+  uint32_t idx, sharedSize;
+  uint32_t *pShared, *pSharedTemp;
   const uint32_t c_Max_Rams = 10;
   sdb_location found_sdb[c_Max_Rams];
   sdb_location found_clu;
 
   // get pointer to shared memory
-  pShared           = (uint32_t *)_startshared;
+  pSharedApp = sharedStart;
 
   // find address of CPU from external perspective
   idx = 0;
   find_device_multi(&found_clu, &idx, 1, GSI, LM32_CB_CLUSTER);
   idx = 0;
   find_device_multi_in_subtree(&found_clu, &found_sdb[0], &idx, c_Max_Rams, GSI, LM32_RAM_USER);
-  if(idx >= cpuId) pCpuRamExternal           = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
+  if (idx < cpuId)
+    return COMMON_STATUS_ERROR;
 
-  // print WB addresses (shared RAM, range reserved to user, command buffer etc) to WR console
-  pSharedTemp = pCpuRamExternal + (SHARED_OFFS >> 2) + (COMMON_SHARED_CMD >> 2);
-  DBPRINT2("fbas: CPU RAM External 0x%8p, begin shared 0x%08x, command 0x%8p\n",
-      pCpuRamExternal, SHARED_OFFS, pSharedTemp);
+  pCpuRamExternal = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
 
-  // clear shared mem
-  i = 0;
-  pSharedTemp        = (uint32_t *)(pShared + (COMMON_SHARED_BEGIN >> 2 ));
-  DBPRINT2("fbas: app specific shared begin 0x%8p\n", pSharedTemp);
-  while (pSharedTemp < (uint32_t *)(pShared + (FBAS_SHARED_END >> 2 ))) {
-    *pSharedTemp = 0x0;
-    pSharedTemp++;
-    i++;
-  }
+  // print WB addresses to WR console (shared RAM, begin of common shared region)
+  pSharedExt = pCpuRamExternal + ((SHARED_OFFS + COMMON_SHARED_BEGIN) >> 2);
+  DBPRINT2("fbas: CPU RAM: 0x%8p, common shared: 0x%8p\n", pCpuRamExternal, pSharedExt);
 
-  // get shared memory usage
-  *sharedSize = ((uint32_t)(pSharedTemp - pShared) << 2);
+  // init common shared region
+  pSharedTemp = (uint32_t *)(pSharedApp + (FBAS_SHARED_END >> 2 ));
+  sharedSize = ((uint32_t)(pSharedTemp - pSharedApp) << 2);
+  fwlib_init(pSharedApp, pCpuRamExternal, SHARED_OFFS, sharedSize, "fbas", FBAS_FW_VERSION);
 
   // print application-specific register set (in shared mem)
-  pSharedApp = (uint32_t *)(pShared + (FBAS_SHARED_SET_GID >> 2));
-  DBPRINT2("fbas%d: SHARED_SET_NODETYPE 0x%8p\n", nodeType, (pSharedApp + (FBAS_SHARED_SET_NODETYPE >> 2)));
-  DBPRINT2("fbas%d: SHARED_GET_NODETYPE 0x%8p\n", nodeType, (pSharedApp + (FBAS_SHARED_GET_NODETYPE >> 2)));
-  DBPRINT2("fbas%d: SHARED_GET_TS1 0x%8p\n", nodeType, (pSharedApp + (FBAS_SHARED_GET_TS1 >> 2)));
+  DBPRINT2("fbas%d: COMMON_CMD 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (COMMON_SHARED_CMD >> 2)), (pSharedExt + (COMMON_SHARED_CMD >> 2)));
+  DBPRINT2("fbas%d: FBAS_BEGIN 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_BEGIN >> 2)), (pSharedExt + (FBAS_SHARED_BEGIN >> 2)));
+  DBPRINT2("fbas%d: FBAS_SET_NODETYPE 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_SET_NODETYPE >> 2)), (pSharedExt + (FBAS_SHARED_SET_NODETYPE >> 2)));
+  DBPRINT2("fbas%d: FBAS_GET_NODETYPE 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_GET_NODETYPE >> 2)), (pSharedExt + (FBAS_SHARED_GET_NODETYPE >> 2)));
+  DBPRINT2("fbas%d: FBAS_GET_CNT 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_GET_CNT >> 2)), (pSharedExt + (FBAS_SHARED_GET_CNT >> 2)));
+  DBPRINT2("fbas%d: FBAS_GET_AVG 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_GET_AVG >> 2)), (pSharedExt + (FBAS_SHARED_GET_AVG >> 2)));
+  DBPRINT2("fbas%d: FBAS_ECA_VLD 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_ECA_VLD >> 2)), (pSharedExt + (FBAS_SHARED_ECA_VLD >> 2)));
+  DBPRINT2("fbas%d: FBAS_ECA_OVF 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_ECA_OVF >> 2)), (pSharedExt + (FBAS_SHARED_ECA_OVF >> 2)));
+  DBPRINT2("fbas%d: FBAS_SENDERID 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_SENDERID >> 2)), (pSharedExt + (FBAS_SHARED_SENDERID >> 2)));
 
-  // reset all event counters
-  *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = msrSetCnt(TX_EVT_CNT, 0);
-  *(pSharedApp + (FBAS_SHARED_ECA_VLD >> 2)) = msrSetCnt(ECA_VLD_ACT, 0);
-  *(pSharedApp + (FBAS_SHARED_ECA_OVF >> 2)) = msrSetCnt(ECA_OVF_ACT, 0);
-  DBPRINT2("fbas%d: SHARED_GET_CNT 0x%8p\n", nodeType, (pSharedApp + (FBAS_SHARED_GET_CNT >> 2)));
-  DBPRINT2("fbas%d: SHARED_CNT_VAL 0x%8p\n", nodeType, (pSharedApp + (FBAS_SHARED_ECA_VLD >> 2)));
-  DBPRINT2("fbas%d: SHARED_CNT_OVF 0x%8p\n", nodeType, (pSharedApp + (FBAS_SHARED_ECA_OVF >> 2)));
-  DBPRINT2("fbas%d: SHARED_SENDERID 0x%8p\n", nodeType, (pSharedApp + (FBAS_SHARED_SENDERID >> 2)));
+  // clear the app-spec region of the shared memory
+  pSharedTemp = (uint32_t *)(pSharedApp + (FBAS_SHARED_END >> 2 ));
+  pShared = pSharedApp;
+  while (pShared < pSharedTemp) {
+    *pShared = 0;
+    pShared++;
+  }
 
-  // clear the summary statistics
-  measureClearAverage(ENABLE_VERBOSITY);
-} // initSharedMem
+  return COMMON_STATUS_OK;
+}
 
 /**
  * \brief Initialize application specific data structures
@@ -602,7 +598,7 @@ static void wrConsolePeriodic(uint32_t seconds)
 
   // lm32 cpu time, timer interval and period
   if (tsCpu) {
-    DBPRINT2("cpu %llu [ns], ival %lli [ns], prd %lli [ns]\n", tsCpu, getElapsedTime(pSharedApp, FBAS_SHARED_GET_TS3, tsCpu), prdTimer);
+    DBPRINT2("cpu %llu, ival %lli, prd %lli\n", tsCpu, getElapsedTime(pSharedApp, FBAS_SHARED_GET_TS3, tsCpu), prdTimer);
     tsCpu = 0;
   }
 }
@@ -889,7 +885,6 @@ int main(void) {
   uint32_t pubState;                                          // value of published state
   uint32_t reqState;                                          // requested FSM state
   uint32_t *buildID;
-  uint32_t sharedSize;                                        // shared memory size
 
   // init local variables
   reqState       = COMMON_STATE_S0;
@@ -901,9 +896,9 @@ int main(void) {
   // init
   init();                                                              // initialize stuff for lm32
   fwlib_clearDiag();                                                   // clear common diagnostic data
-  initSharedMem(&sharedSize);                                          // initialize shared memory
-  fwlib_init((uint32_t *)_startshared, pCpuRamExternal, SHARED_OFFS, sharedSize, "fbas", FBAS_FW_VERSION); // init common stuff
-  //initMpsData();                                                       // initialize application specific data structure
+  status = initSharedMem((uint32_t *)_startshared);                    // initialize the shared memory
+  if (status == COMMON_STATUS_ERROR)
+    return 1;
 
   while (1) {
     check_stack_fwid(buildID);                                         // check for stack corruption
