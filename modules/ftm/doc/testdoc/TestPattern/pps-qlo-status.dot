@@ -1,0 +1,18 @@
+digraph "pps-qlo-status" {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+B_PPS[cpu="0", flags="0x00108107", type="block", tperiod="100000000", pattern="PPS_Q", patentry="false", patexit="true", beamproc="beam1", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green", penwidth=2, color = "purple"];
+EVT_PPS1[cpu="0", flags="0x00002102", type="tmsg", toffs="0", pattern="PPS_Q", patentry="true", patexit="false", beamproc="beam1", bpentry="false", bpexit="false", fid="1", gid="5", evtno="215", beamin="0", bpcstart="0", sid="2", bpid="8", reqnobeam="0", vacc="0", id="0x10050d7000200200", par="0x000000000000000b", tef="0", shape     = "oval", fillcolor = "green", penwidth=2, color = "darkorange3"];
+EVT_PPS2[cpu="0", flags="0x00000102", type="tmsg", toffs="50000000", pattern="PPS_Q", patentry="false", patexit="false", beamproc="beam1", bpentry="false", bpexit="false", fid="1", gid="5", evtno="205", beamin="0", bpcstart="0", sid="2", bpid="8", reqnobeam="0", vacc="0", id="0x10050cd000200200", par="0x000000000000000c", tef="0", shape     = "oval", fillcolor = "green"];
+B_PPS_QBl_Lo[cpu="0", flags="0x00000009", type="qinfo", shape = "rectangle", color = "gray", style = "dashed, filled"];
+B_PPS_Qb_Lo0[cpu="0", flags="0x0000000a", type="qbuf", shape = "rectangle", color = "gray", style = "dashed, filled"];
+B_PPS_Qb_Lo1[cpu="0", flags="0x0000000a", type="qbuf", shape = "rectangle", color = "gray", style = "dashed, filled"];
+B_PPS_ListDst_0[cpu="0", flags="0x0000000c", type="listdst", shape = "rectangle", color = "gray", style = "dashed, filled"];
+B_PPS->EVT_PPS1 [type="defdst", color = "red"];
+B_PPS->B_PPS_QBl_Lo [type="priolo", color = "gray"];
+EVT_PPS1->EVT_PPS2 [type="defdst", color = "red"];
+EVT_PPS2->B_PPS [type="defdst", color = "red"];
+B_PPS_QBl_Lo->B_PPS_Qb_Lo0 [type="meta", color = "gray"];
+B_PPS_QBl_Lo->B_PPS_Qb_Lo1 [type="meta", color = "gray"];
+B_PPS_ListDst_0->B_PPS [type="defdst", color = "red"];
+}

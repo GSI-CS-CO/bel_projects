@@ -1,0 +1,7 @@
+digraph "pps-no-queue" {
+node [cpu=0 pattern=PPS_Q type=tmsg toffs=0 tef=0 patentry=0 patexit=0 fid=1 beamproc=beam1]
+B_PPS [type=block tperiod=100000000 patexit=1 qlo=0 qhi=0]
+EVT_PPS1 [patentry=1 gid=5 evtno=215 beamin=0 sid=2 bpid=8 reqnobeam=0 vacc=0 par=1]
+EVT_PPS2 [gid=5 evtno=205 sid=2 bpid=8 par=2 toffs=50000000];
+B_PPS -> EVT_PPS1 -> EVT_PPS2 -> B_PPS [type=defdst]
+}

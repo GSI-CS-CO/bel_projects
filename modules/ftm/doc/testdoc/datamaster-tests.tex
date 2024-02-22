@@ -786,6 +786,24 @@ See Figure~\ref{fig:schedule_nodeInTwoThreads} for the schedule.
 \end{enumerate}
 
 \section{test\_overwrite\_queue.py}
+The test \texttt{test\_overwriteSchedules} overwrites a block with a low priority
+queue with a block that has a low and a high priority queue. The low priority
+queue is always needed to stop the pattern PPS\_Q. The test is successful when
+the downloaded schedules are isomorphic to the expected schedules with the
+meta nodes. The messages are checked for the appropriate number of messages.
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.28\textheight,keepaspectratio]{TestPattern/pps-no-queue.pdf}
+        \includegraphics*[height=0.28\textheight,keepaspectratio]{TestPattern/pps-qlo.pdf}
+        \includegraphics*[height=0.28\textheight,keepaspectratio]{TestPattern/pps-qlo-status.pdf}
+        \includegraphics*[height=0.28\textheight,keepaspectratio]{TestPattern/pps-qlo.pdf}
+        \includegraphics*[height=0.28\textheight,keepaspectratio]{TestPattern/pps-qlo-status.pdf}
+        \caption{Schedules for test\_overwriteSchedules (test\_overwrite\_queue.py). The first schedule
+        contains a block with no queue. The second overwrites this with a low priority queue.
+        The result is the third schedule. The fourth schedule overwrites this with a block with
+        two queues. The result is the fifth schedule.}
+        \label{fig:Schedules_for_test_overwriteSchedules}
+    \end{figure}
 
 \section{test\_parallelBranch.py}
 Use schedule \texttt{branch1.dot} to test branching with flow commands
