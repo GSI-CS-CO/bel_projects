@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-Feb-2024
+ *  version : 23-Feb-2024
  *
  * monitors WR-MIL gateway
  *
@@ -73,6 +73,7 @@ using namespace std;
 
 #define FID                0x1          // format ID of timing messages
 #define UPDATE_TIME_MS    1000          // time for status updates [ms]
+#define MATCH_WIN_US        20          // window for matching start and stop evts [us]
 
 static const char* program;
 
@@ -98,11 +99,28 @@ uint32_t  disMonDataId      = 0;
 monval_t  monData;                      // monitoring data
 double    tAveOld;                      // helper for stats
 double    tAveStreamOld;                // helper for stats
-uint32_t  gid;                          // gid for gateway
 int       flagClear;                    // flag for clearing diag data;
+uint32_t  matchWindow       = MATCH_WIN_US;
+
+
 
 uint64_t  one_us_ns = 1000;
 uint64_t  one_ms_ns = 1000000;
+
+/*uint32_t  nNotSnd           = 0;
+uint32_t  nBadEvt           = 0;
+uint32_t  badEvt            = 0xfff;
+uint64_t  tStartOld         = 0;
+uint64_t  dStartMin         = 1000000000;
+uint64_t  tStopOld          = 0;
+uint64_t  dStopMin          = 1000000000;
+#define   NMONI 400
+int       nMon              = 0;
+uint64_t  deadlineMon[NMONI];
+uint32_t  evtNoMon[NMONI];
+uint32_t  tagMon[NMONI];
+uint32_t  flagsMon[NMONI];
+*/
 
 
 // calc basic statistic properties
@@ -134,7 +152,7 @@ void calcStats(double *meanNew,         // new mean value, please remember for l
 // clear statistics
 void clearStats()
 {
-  monData.gid      = 0x0;
+  // monData.gid      = 0x0;
   monData.nFwSnd   = 0x0;
   monData.nFwRecD  = 0x0;
   monData.nFwRecT  = 0x0;
@@ -142,8 +160,8 @@ void clearStats()
   monData.nRec     = 0x0;
   monData.nMatch   = 0x0;
   monData.tAct     = NAN;
-  monData.tMin     = NAN;
-  monData.tMax     = NAN;
+  monData.tMin     = 1000000000;
+  monData.tMax     = -1000000000;
   monData.tAve     = NAN;
   monData.tSdev    = NAN;        
   tAveOld          = NAN;
@@ -156,52 +174,74 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
 {
   static int          flagMilSent;     // flag: marks that a MIL event has been sent
   static uint64_t     sndDeadline;     // deadline of MIL event sent
+  
   static uint32_t     sndEvtNo;        // evtNo of MIL event sent
   
-  uint32_t            fid;             // FID 
-  uint32_t            gid;             // GID
-  uint32_t            evtNo;           // event number
+  uint32_t            mFid;            // FID 
+  uint32_t            mGid;            // GID
+  uint32_t            mEvtNo;          // event number
 
   double              mean;            // mean value for statistics
   double              sdev;            // sdev for statistics
   double              stream;          // a stream value for statistics
   double              dummy;
 
-  fid         = ((evtId  & 0xf000000000000000) >> 60);
-  gid         = ((param  & 0x00000fff00000000) >> 32);
-  evtNo       = ((evtId  & 0x0000fff000000000) >> 36);
+  mFid        = ((evtId  & 0xf000000000000000) >> 60);
+  mGid        = ((evtId  & 0x0fff000000000000) >> 48);
+  mEvtNo      = ((evtId  & 0x0000fff000000000) >> 36);
 
   stream      = 0;
   sdev        = 0;
 
+  /*
+  deadlineMon[nMon] = deadline.getTAI();
+  evtNoMon[nMon]    = mEvtNo;
+  tagMon[nMon]      = tag;
+  flagsMon[nMon]    = flags;
+  nMon++;
+  if (nMon == NMONI) {
+    for (int i=0; i<NMONI; i++) 
+      printf("tag %d, evt %2x, deadline %lu, flags %u\n", tagMon[i], evtNoMon[i], deadlineMon[i], flagsMon[i]);
+    exit(1);
+  }
+  */
+  /*
+  printf("tag %d, evt %2x, deadline %lu, flags %u\n", tag, mEvtNo, deadline.getTAI(), flags);
+  */
+
   // check ranges
-  if (fid != FID)                         return;  // unexpected format of timing message
-  if (gid != disMonData.gid)              return;  // received GID does not match configuration
-  if (tag > tagStop)                      return;  // illegal tag
+  if (mFid != FID)                        return;  // unexpected format of timing message
+  if (tag   > tagStop)                    return;  // illegal tag
   //printf("tag %d\n", tag);
 
   
   switch (tag) {
     case tagStart   :
+      if (mGid != monData.gid)            return;  // received GID does not match configuration
       monData.nSnd++; 
       flagMilSent                  = 1;
       sndDeadline                  = deadline.getTAI();
-      sndEvtNo                     = evtNo;
+      /*if ((sndDeadline - tStartOld) < dStartMin) dStartMin = sndDeadline - tStartOld;
+        tStartOld = sndDeadline;*/
+      sndEvtNo                     = mEvtNo;
       monData.tAct                 = NAN;
-      monData.tMin                 = NAN;
-      monData.tMax                 = NAN;
-      monData.tAve                 = NAN;
-      monData.tSdev                = NAN;
+      //monData.tMin                 = NAN;
+      //monData.tMax                 = NAN;
+      //monData.tAve                 = NAN;
+      //monData.tSdev                = NAN;
       break;
     case tagStop    :
       monData.nRec++;
-      if (!flagMilSent)      return;               // a MIL telegram has been received although no MIL telegram has been sent: give up
+      /*if ((deadline.getTAI() - tStopOld) < dStopMin) dStopMin = deadline.getTAI() - tStopOld;
+        tStopOld = deadline.getTAI();*/
+
+      if (!flagMilSent)                   return;  // a MIL telegram has been received although no MIL telegram has been sent: give up
       flagMilSent                  = 0;            // we received a MIL telegram pair: after 'returning', we start waiting for a new pair
-      if (evtNo != sndEvtNo) return;               // evtNo of MIL received/sent telegrams do not match: give up
+      if (mEvtNo != sndEvtNo)             return;  // evtNo of MIL received/sent telegrams do not match: give up*/
 
       // assume we have a matching pair of sent and received MIL telegrams
       monData.nMatch++;
-      monData.tAct                  = (double)((int64_t)(deadline.getTAI() - sndDeadline)) / (double)one_us_ns;
+      monData.tAct                  = (double)((int64_t)(deadline.getTAI() - one_us_ns * matchWindow - sndDeadline)) / (double)one_us_ns;
       if (monData.tAct < monData.tMin) monData.tMin = monData.tAct;
       if (monData.tAct > monData.tMax) monData.tMax = monData.tAct;
 
@@ -276,9 +316,10 @@ static void help(void) {
   std::cerr << "  -e                   display version"                                             << std::endl;
   std::cerr << "  -f                   use the first attached device (and ignore <device name>)"    << std::endl;
   std::cerr << "  -d                   start server publishing data"                                << std::endl;
+  std::cerr << "  -m <match windows>   [us] windows for matching start/stop evts; default 20"       << std::endl;
   std::cerr << std::endl;
   std::cerr << "  The paremter -s is mandatory"                                                     << std::endl;
-  std::cerr << "  -s                   MIL domain; this can be"                                     << std::endl;
+  std::cerr << "  -s <MIL domain>      MIL domain; this can be"                                     << std::endl;
   std::cerr << "                       0: PZU-QR; UNILAC, Source Right\n"                           << std::endl;
   std::cerr << "                       1: PZU-QL; UNILAC, Source Left\n"                            << std::endl;     
   std::cerr << "                       2: PZU-QN; UNILAC, Source High Charge State Injector (HLI)\n"<< std::endl;
@@ -301,31 +342,40 @@ static void help(void) {
 int main(int argc, char** argv)
 {
   // variables and flags for command line parsing
-  int  opt;
-  bool useFirstDev    = false;
-  bool getVersion     = false;
-  bool startServer    = false;
-  char *tail;
+  int      opt;
+  bool     useFirstDev    = false;
+  bool     getVersion     = false;
+  bool     startServer    = false;
+  uint32_t gid=0xffffffff;                // gid for gateway
+
+  char    *tail;
 
 
   // variables snoop event
   uint64_t snoopID     = 0x0;
   int      nCondition  = 2;
 
-  char tmp[752];
-  int  tmpi;
-  int i;
+  char     tmp[752];
+  int      tmpi;
+  int      i;
 
   // variables attach, remove
   char    *deviceName = NULL;
 
-  char     domainName[NAMELEN];
-  char     prefix[NAMELEN*2];
-  char     disName[DIMMAXSIZE];
+  char     domainName[NAMELEN];          // name of MIL domain
+  char     prefix[NAMELEN*2];            // prefix DIM services
+  char     disName[DIMMAXSIZE];          // name of DIM server
+  uint32_t verLib;                       // library version
+  uint32_t verFw;                        // firmware version
+  
+  char     ebPath[1024];
+  uint64_t ebDevice;
+  uint32_t cpu;
+  uint32_t status;
 
   // parse for options
   program = argv[0];
-  while ((opt = getopt(argc, argv, "s:hefd")) != -1) {
+  while ((opt = getopt(argc, argv, "s:m:hefd")) != -1) {
     switch (opt) {
       case 'e' :
         getVersion  = true;
@@ -351,6 +401,10 @@ int main(int argc, char** argv)
           case 8: gid = ESR_RING;   sprintf(domainName, "%s", "ESR_RING");   break;
           default: {std::cerr << "Specify a proper number, not " << tmpi << "'%s'!" << std::endl; return 1;} break;
         } // case tmpi
+        break;
+      case 'm':
+        matchWindow = strtoull(optarg, &tail, 0);
+        break;
       case 'h':
         help();
         return 0;
@@ -362,10 +416,15 @@ int main(int argc, char** argv)
   }   // while opt
 
   if (optind >= argc) {
-    std::cerr << program << " expecting one non-optional arguments: <device name>" << std::endl;
+    std::cerr << program << ": expecting one non-optional arguments: <device name>" << std::endl;
     help();
     return 1;
   }
+
+  if (gid == 0xffffffff) {
+    std::cerr << program << ": parameter -s is non-optional\n";
+    return 1;
+  } // if gid
 
   // no parameters, no command: just display help and exit
   if ((optind == 1) && (argc == 1)) {
@@ -384,10 +443,10 @@ int main(int argc, char** argv)
 
     disAddServices(prefix);
     // uuuuhhhh, mixing c++ and c  
-    sprintf(tmp, "%s-raw_cmd_cleardiag", prefix);
+    sprintf(tmp, "%s-cmd_cleardiag", prefix);
     RecvCommand cmdClearDiag(tmp);
     
-    sprintf(disName, "%s-raw", prefix);
+    sprintf(disName, "%s", prefix);
     dis_start_serving(disName);
   } // if startServer
   
@@ -407,6 +466,21 @@ int main(int argc, char** argv)
       } // find device
       receiver = TimingReceiver_Proxy::create(devices[deviceName]);
     } //if(useFirstDevice);
+
+
+    sprintf(ebPath, "%s", receiver->getEtherbonePath().c_str());
+    if ((status =  wrmil_firmware_open(&ebDevice, ebPath, 0, &cpu)) != COMMON_STATUS_OK) {
+      std::cerr << program << ": can't open connection to lm32 firmware" << std::endl;
+      exit(1);
+    } // if status
+    
+    if (getVersion) {
+      wrmil_version_library(&verLib);
+      printf("wrmil: serv-sys / library / firmware /  version %s / %s",  wrmil_version_text(verLib), wrmil_version_text(WRMIL_SERV_MON_VERSION));     
+      wrmil_version_firmware(ebDevice, &verFw);
+      printf(" / %s\n",  wrmil_version_text(verFw));     
+    } // if getVersion
+
 
     // create software action sink
     std::shared_ptr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
@@ -434,8 +508,8 @@ int main(int argc, char** argv)
     // message that is injected locally by the lm32 firmware (triggering a rule on the ECA WB channel towards the MIL interface)
     // this message must be delayed by one ms to (hopefully) coincide with the received MIL telegram
     tmpTag        = tagStart;
-    snoopID       = ((uint64_t)FID << 60) | ((uint64_t)LOC_MIL_SEND << 48);
-    condition[0]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, one_ms_ns));
+    snoopID       = ((uint64_t)FID << 60) | ((uint64_t)gid << 48);
+    condition[0]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xffff000000000000, one_ms_ns));
     tag[0]        = tmpTag;
         
     // message that is injected locally by the lm32 firmware after detecting and decoding a receive MIL telegram
@@ -443,7 +517,7 @@ int main(int argc, char** argv)
     // (this assumes that the 'true' offset between both messages is always smaller than 20us)
     tmpTag        = tagStop;        
     snoopID       = ((uint64_t)FID << 60) | ((uint64_t)LOC_MIL_REC << 48);
-    condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, one_us_ns * 20));
+    condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xffff000000000000, one_us_ns * matchWindow));
     tag[1]        = tmpTag;
     
     // let's go!
@@ -457,10 +531,6 @@ int main(int argc, char** argv)
     } // for i
 
 
-    char          ebPath[1024];
-    uint64_t      ebDevice;
-    uint32_t      cpu;
-    uint32_t      status;
     saftlib::Time deadline_t;
     uint64_t      t_new, t_old;
     uint32_t      tmp32a, tmp32b, tmp32c, tmp32d, tmp32e, tmp32f, tmp32g, tmp32h, tmp32i;
@@ -468,12 +538,6 @@ int main(int argc, char** argv)
     uint64_t      tmp64a;
     uint32_t      fwGid, fwLate, fwState, fwVersion;
     uint64_t      fwEvtsSnd, fwEvtsRecT, fwEvtsRecD, fwStatus;
-
-    sprintf(ebPath, "%s", receiver->getEtherbonePath().c_str());
-    if ((status =  wrmil_firmware_open(&ebDevice, ebPath, 0, &cpu)) != COMMON_STATUS_OK) {
-      std::cerr << program << ": can't open connection to lm32 firmware" << std::endl;
-      exit(1);
-    } // if status
 
     t_old = comlib_getSysTime();
     while(true) {
@@ -490,13 +554,9 @@ int main(int argc, char** argv)
         timingMessage(recTag, deadline_t, evtId, param, tef, isLate, isEarly, isConflict, isDelayed);
         }*/
       // irgendwo hier periodisch DIM service aktualisieren bzw. update auf Bildschirm bzw. update MASP
+      monData.gid = gid;
       saftlib::wait_for_signal(UPDATE_TIME_MS / 10);
 
-      if (flagClear) {
-        clearStats();
-        flagClear = 0;
-      } // if flagclear
-      
       t_new = comlib_getSysTime();
       if (((t_new - t_old) / one_ms_ns) > UPDATE_TIME_MS) {
         t_old      = t_new;
@@ -524,8 +584,14 @@ int main(int argc, char** argv)
           dis_update_service(disMonDataId);
         } // if startServer
 
-        printf("wrmil-mon: %ld, %ld, %ld, %f, %f, %f, %f\n", monData.nFwSnd, monData.nFwRecT, monData.nFwRecT, monData.tAve, monData.tSdev, monData.tMin, monData.tMax);
+        //printf("wrmil-mon: fw snd %ld, recD %ld, recT %ld; mon snd %ld, rec %ld, match %ld, act %f, ave %f, sdev %f, min %f, max %f\n", monData.nFwSnd, monData.nFwRecT, monData.nFwRecT, monData.nSnd, monData.nRec, monData.nMatch, monData.tAct, monData.tAve, monData.tSdev, monData.tMin, monData.tMax);
       } // if update
+
+      // clear data
+      if (flagClear) {
+        clearStats();
+        flagClear = 0;
+      } // if flagclear
     } // while true
 
     wrmil_firmware_close(ebDevice);    
