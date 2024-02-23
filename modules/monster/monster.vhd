@@ -2079,13 +2079,11 @@ end generate;
     phy : wr_arria10_transceiver
       generic map (
         g_family               => g_family,
-        g_use_atx_pll          => false,
-        g_use_cmu_pll          => true,
-        g_use_simple_wa        => true,
+        g_use_atx_pll          => true,
+        g_use_cmu_pll          => false,
+        g_use_simple_wa        => false,
         g_use_det_phy          => true,
         g_use_sfp_los_rst      => true,
-        g_use_tx_lcr_dbg       => false,
-        g_use_rx_lcr_dbg       => false,
         g_use_ext_loop         => true,
         g_use_ext_rst          => true)
       port map (
@@ -2126,13 +2124,11 @@ end generate;
       phy_aux : wr_arria10_transceiver
         generic map (
           g_family               => g_family,
-          g_use_atx_pll          => false,
-          g_use_cmu_pll          => true,
-          g_use_simple_wa        => true,
+          g_use_atx_pll          => true,
+          g_use_cmu_pll          => false,
+          g_use_simple_wa        => false,
           g_use_det_phy          => true,
           g_use_sfp_los_rst      => true,
-          g_use_tx_lcr_dbg       => false,
-          g_use_rx_lcr_dbg       => false,
           g_use_ext_loop         => true,
           g_use_ext_rst          => true)
         port map (
