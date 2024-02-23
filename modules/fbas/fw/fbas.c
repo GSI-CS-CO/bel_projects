@@ -89,9 +89,15 @@ static nodeType_t nodeType = FBAS_NODE_TX;  // default node type
 static opMode_t opMode = FBAS_OPMODE_DEF;   // default operation mode
 static uint32_t cntCmd = 0;                 // counter for user commands
 static uint32_t mpsTask = 0;                // MPS-relevant tasks
-static volatile uint64_t tsCpu = 0;         // lm32 uptime
+
 static volatile int64_t  prdTimer;          // timer period
 static nw_addr_t dstNwAddr[N_DST_ADDR];     // valid destination addresses for the Endpoint WB device
+// timers
+static struct timer_s *pTimerMpsTtl;
+static struct timer_s *pTimerRegistr;
+static struct timer_s *pTimerConsole;
+// timer debug
+static struct timer_dbg_s timerDbg;
 
 // application-specific function prototypes
 static void init();
@@ -106,9 +112,9 @@ static status_t loadSenderId(uint32_t* base, uint32_t offset);
 static void clearError(size_t len, mpsMsg_t* buf);
 static void setOpMode(uint64_t mode);
 static void cmdHandler(uint32_t *reqState, uint32_t cmd);
-static void timerHandler();
+static void timerHandler(void);
 static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, mpsMsg_t** head);
-static void wrConsolePeriodic(uint32_t seconds);
+static void wrConsolePeriodic(void);
 
 /**
  * \brief init for lm32
@@ -225,6 +231,22 @@ static void initIrqTable()
   irq_set_mask(0x02);                            // only use timer
   irq_enable();                                  // enable IRQs
   DBPRINT2("Configured IRQ table.\n");
+}
+
+static status_t initTimers(void)
+{
+  // timers
+  pTimerMpsTtl  = timerRegister(1);       // 1 ms
+  pTimerRegistr = timerRegister(1000);    // 1 sec
+  pTimerConsole = timerRegister(60000);   // 60 sec
+
+  // timer debug
+  timerInitDbg(&timerDbg);
+
+  if (pTimerMpsTtl && pTimerRegistr && pTimerConsole)
+    return COMMON_STATUS_OK;
+  else
+    return COMMON_STATUS_ERROR;
 }
 
 /**
@@ -575,34 +597,20 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t
 }
 
 /**
- * \brief write a debug text to console
+ * \brief Output a debug message to WR console
  *
- * Write a debug text to the WR console in given period (seconds)
- *
- * \param seconds period in seconds
- *
- * \ret none
+ * Print timer period statistics and call period.
  **/
-static void wrConsolePeriodic(uint32_t seconds)
+static void wrConsolePeriodic(void)
 {
-  static uint64_t tsLast = 0;                 // timestamp of last call
+  static uint64_t lastSysTime = 0;
 
-  uint64_t period = seconds * TIM_1000_MS;    // period in system time
-  uint64_t soon = tsLast + period;            // next time point for the action
-  uint64_t now = getSysTime();                // get the current time
+  uint64_t now = getSysTime();
 
-  if (now >= soon) {                          // if the given period is over, then proceed
-    DBPRINT3("fbas%d: now %llu, elap %lli\n", nodeType, now, now - tsLast);
-    tsLast = now;
-  }
-
-  // lm32 cpu time, timer interval and period
-  if (tsCpu) {
-    DBPRINT2("cpu %llu, ival %lli, prd %lli\n", tsCpu, getElapsedTime(pSharedApp, FBAS_SHARED_GET_TS3, tsCpu), prdTimer);
-    tsCpu = 0;
-  }
+  DBPRINT1("timer avg: %lli min: %lli max: %lli, call %lli\n",
+            timerDbg.period.avg, timerDbg.period.min, timerDbg.period.max, (now - lastSysTime));
+  lastSysTime = now;
 }
-
 
 // clears all statistics
 void extern_clearDiag()
@@ -646,9 +654,10 @@ uint32_t extern_entryActionConfigured()
   if (status != COMMON_STATUS_OK) return status;
 
   if ((uint32_t)pCpuWbTimer != ERROR_NOT_FOUND) {
-    setupTimer(TIM_1_MS);
-    initIrqTable();
-    startTimer();
+    initTimers();           // set up SW Timers
+    timerSetupHw(TIM_1_MS); // set up the HW timer
+    initIrqTable();         // enable IRQ of HW timer
+    timerEnableHw();        // enable the HW timer
   }
 
   initMpsData();                    // initialize application specific data structure
@@ -737,6 +746,8 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd)
         mpsTask |= TSK_TX_MPS_FLAGS;  // enable transmission of the MPS flags
         mpsTask |= TSK_TX_MPS_EVENTS; // enable transmission of the MPS events
         mpsTask |= TSK_MONIT_MPS_TTL; // enable lifetime monitoring of the MPS flags
+        timerStart(pTimerMpsTtl);     // start timers
+        timerStart(pTimerRegistr);
         DBPRINT2("fbas%d: enabled MPS %lx\n", nodeType, mpsTask);
         break;
       case FBAS_CMD_DIS_MPS_FWD:
@@ -744,6 +755,7 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd)
         mpsTask &= ~TSK_TX_MPS_EVENTS; // disable transmission of the MPS events
         mpsTask &= ~TSK_MONIT_MPS_TTL; // disable lifetime monitoring of the MPS flags
         mpsTask &= ~TSK_REG_COMPLETE;  // reset the node registration
+        timerStart(pTimerConsole);     // start timer
         DBPRINT2("fbas%d: disabled MPS %lx\n", nodeType, mpsTask);
         break;
       case FBAS_CMD_PRINT_NW_DLY:
@@ -777,31 +789,22 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd)
 } // cmdHandler
 
 /**
- * \brief timer interrupt handler
+ * \brief Timer interrupt handler
  *
  * Callback routine for timer interrupt
  *
  * \param none
  *
- * \ret none
+ * \return none
  **/
-static void timerHandler()
+static void timerHandler(void)
 {
-  static uint32_t prescaler = 0;
+  // calculate (moving) average of the timer period
+  uint64_t now = getCpuTime();
+  timerUpdateDbg(&timerDbg, now);
 
-  uint64_t cputime = getCpuTime();
-  prdTimer = getElapsedTime(pSharedApp, FBAS_SHARED_GET_TS6, cputime);
-
-  // ready to evaluate the lifetime of the MPS protocols
-  if (mpsTask & TSK_MONIT_MPS_TTL)
-    mpsTask |= TSK_EVAL_MPS_TTL;
-
-  ++prescaler;
-  if (prescaler == PSCR_1S_TIM_1MS) {
-    prescaler = 0;
-    tsCpu = cputime;
-    mpsTask |= TSK_REG_PER_OVER;
-  }
+  // tick all registered timers
+  timerTickTimers();
 }
 
 // do action state 'op ready' - this is the main code of this FW
@@ -811,7 +814,6 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
                            uint32_t actStatus)          // actual status of firmware
 {
   uint32_t status;                                            // status returned by routines
-  uint32_t nSeconds = 15;                                     // time period in secondes
   uint32_t nUSeconds = 100;                                   // time period in microseconds
   uint32_t action;                                            // ECA action tag
   mpsMsg_t* buf = pBufMpsMsg;                                 // pointer to MPS message buffer
@@ -820,6 +822,18 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
 
   // action driven by ECA event, polls for nUSeconds [us]
   action = handleEcaEvent(nUSeconds, pMpsTask, pRdItr, &buf);   // handle ECA event
+
+  // check periodic timer events
+  if (mpsTask & TSK_MONIT_MPS_TTL)
+    if (timerIsExpired(pTimerMpsTtl)) {
+      mpsTask |= TSK_EVAL_MPS_TTL;
+      timerStart(pTimerMpsTtl);
+    }
+
+  if (timerIsExpired(pTimerRegistr)) {
+    mpsTask |= TSK_REG_PER_OVER;
+    timerStart(pTimerRegistr);
+  }
 
   switch (nodeType) {
 
@@ -851,8 +865,10 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
           DBPRINT1("Err - nothing sent! TODO: set failed status\n");
         }
       }
-      else
-        wrConsolePeriodic(nSeconds);   // periodic debug (level 3) output at console
+      else if (timerIsExpired(pTimerConsole)) {
+        wrConsolePeriodic();        // periodic output message to WR console
+        timerStart(pTimerConsole);
+      }
       break;
 
     case FBAS_NODE_RX:
