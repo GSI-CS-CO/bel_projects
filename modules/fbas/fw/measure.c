@@ -47,7 +47,6 @@ static struct outlierStat_s outlierStat[N_MSR_ITEMS] = {
   {100000, 0},    // signalling latency, ns
   {100000, 0},    // messaging delay, ns
   {101000000, 0}, // TTL, ns
-  {100000, 0},    // transmit latency (not used), ns
   {10000, 0}      // ECA event handling, ns
 };
 
@@ -129,11 +128,13 @@ uint32_t msrSetCnt(unsigned name, uint32_t value)
 /**
  * \brief calculate summary statistics
  *
+ * Calculate the moving average, minimum, and maximum values.
+ *
  * \param value  measured value for calculation
  * \param pStats pointer to summary statistics buffer
  * \ret   count  total number of measurements
  **/
-static uint32_t calculateSumStats(int64_t value, msrSumStats_t* pStats) {
+static uint32_t calculateSumStats(const int64_t value, msrSumStats_t *const pStats) {
 
     if (value > 0) {
       pStats->avg = (value + (pStats->cntValid * pStats->avg)) / (pStats->cntValid + 1);
@@ -150,15 +151,61 @@ static uint32_t calculateSumStats(int64_t value, msrSumStats_t* pStats) {
 }
 
 /**
- * \brief write a specified summary statistics to a given memory location
+ * \brief Summarize the measured item
  *
- * \param pStats       pointer to summary statistics (avg, min, max) buffer
- * \param pSharedReg64 address of the shared memory location (64-bit)
- * \ret none
- **/
-static void wrSumStats(msrSumStats_t* pStats, uint64_t* pSharedReg64) {
+ * Summarize the measured item (calculate moving averag, find the minimum,
+ * maximum, outlier values, and count measurements).
+ *
+ * \param item    measured item
+ * \param from    start timestamp
+ * \param now     actual timestamp (or system time)
+ * \param verbose verbosity flag
+*/
+void measureSummarize(msrItem_t item, uint64_t from, uint64_t now, verbosity_t verbose) {
 
+  int64_t period = now - from;  // calculate the time period
+  if (verbose)
+    DBPRINT2("%d: %lli\n", item, period);
+
+  // calculate and store the summed average
+  calculateSumStats(period, &sumStats[item]);
+
+  // count outliers
+  if (period > outlierStat[item].threshold)
+    ++outlierStat[item].cnt;
+}
+
+/**
+ * \brief Print the measurement statistics of the given item
+ *
+ * Print the measurement statistics of the given item to the WR console
+ *
+ * \param item    measured item
+*/
+void measurePrintSummary(msrItem_t item) {
+  msrSumStats_t* pStats = &sumStats[item];
+
+  DBPRINT2("%d avg=%llu min=%lli max=%llu cnt=%lu/%lu\n",
+    item,
+    pStats->avg, pStats->min, pStats->max, pStats->cntValid, pStats->cntTotal);
+
+  DBPRINT2("lmt=%lu\n", outlierStat[item].cnt);
+}
+
+/**
+ * \brief Export the measurement summary statistics to the shared memory
+ *
+ * Export the measurement summary statistics (avg, min, max) to the given
+ * location of the shared memory.
+ *
+ * \param item    measured item
+ * \param base    base memory address
+ * \param offset  offset memory address
+*/
+void measureExportSummary(msrItem_t item, uint32_t* base, uint32_t offset) {
+  uint64_t *pSharedReg64 = (uint64_t *)(base + (offset >> 2));
   uint32_t *pSharedReg32;
+  msrSumStats_t* pStats = &sumStats[item];
 
   *pSharedReg64 = pStats->avg;
   *(++pSharedReg64) = pStats->min;
@@ -171,60 +218,13 @@ static void wrSumStats(msrSumStats_t* pStats, uint64_t* pSharedReg64) {
 }
 
 /**
- * \brief measure the average of the given item
- *
- * Average time period of a specified item is measured.
- *
- * \param item    measured item
- * \param from    start timestamp
- * \param now     actual timestamp (or system time)
- * \param verbose verbosity flag
-*/
-void measureAverage(msrItem_t item, uint64_t from, uint64_t now, verbosity_t verbose) {
-  msrSumStats_t* pStats = &sumStats[item];
-  int64_t period = now - from;  // calculate the time period
-  if (verbose)
-    DBPRINT2("%d: %lli\n", item, period);
-
-  // calculate and store the summed average
-  calculateSumStats(period, pStats);
-
-  // count outliers
-  if (period > outlierStat[item].threshold)
-    ++outlierStat[item].cnt;
-}
-
-/**
- * \brief print the measured average of the given item
- *
- * Print the measured average of the given item
- * to the console and dedicated shared memory location
- *
- * \param item    measured item
- * \param base    base memory address
- * \param offset  offset memory address
-*/
-void measurePrintAverage(msrItem_t item, uint32_t* base, uint32_t offset) {
-  uint64_t *pSharedReg64 = (uint64_t *)(base + (offset >> 2));
-  msrSumStats_t* pStats = &sumStats[item];
-
-  DBPRINT2("%d avg=%llu min=%lli max=%llu cnt=%lu/%lu\n",
-    item,
-    pStats->avg, pStats->min, pStats->max, pStats->cntValid, pStats->cntTotal);
-
-  DBPRINT2("lmt=%lu\n", outlierStat[item].cnt);
-
-  wrSumStats(pStats, pSharedReg64);
-}
-
-/**
  * \brief Clear the summary statistics
  *
  * \param verbose verbosity
  *
  * \return none
 */
-void measureClearAverage(verbosity_t verbose) {
+void measureClearSummary(verbosity_t verbose) {
   msrItem_t item;
 
   for (item = 0; item < N_MSR_ITEMS; ++item) {

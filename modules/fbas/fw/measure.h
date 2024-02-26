@@ -39,16 +39,16 @@ typedef enum MSR_ITEMS {
   MSR_SG_LTY,  // signalling latency (requires feedback via LEMO cabling)
   MSR_MSG_DLY, // messaging delay
   MSR_TTL,     // TTL threshold/interval
-  MSR_TX_LTY,  // MPS transmit latency
   MSR_TX_MPS_HANDLE, // MPS event handling delay at TX node
   N_MSR_ITEMS,
 } msrItem_t;
 
 void storeTimestamp(uint32_t* reg, uint32_t offset, uint64_t ts);
 int64_t getElapsedTime(uint32_t* reg, uint32_t offset, uint64_t now);
-void measureClearAverage(verbosity_t verbose);
-void measureAverage(msrItem_t item, uint64_t from, uint64_t now, verbosity_t verbose);
-void measurePrintAverage(msrItem_t item, uint32_t* base, uint32_t offset);
+void measureClearSummary(verbosity_t verbose);
+void measureSummarize(msrItem_t item, uint64_t from, uint64_t now, verbosity_t verbose);
+void measureExportSummary(msrItem_t item, uint32_t* base, uint32_t offset);
+void measurePrintSummary(msrItem_t item);
 
 /**
  * \brief Count events

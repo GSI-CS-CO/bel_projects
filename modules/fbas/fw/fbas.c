@@ -517,7 +517,8 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t
             *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = msrCnt(TX_EVT_CNT, count);
 
             // measure MPS event handling period
-            measureAverage(MSR_TX_MPS_HANDLE, ecaDeadline, now, DISABLE_VERBOSITY);
+            measureSummarize(MSR_TX_MPS_HANDLE, ecaDeadline, now, DISABLE_VERBOSITY);
+            measureExportSummary(MSR_TX_MPS_HANDLE, pSharedApp, FBAS_SHARED_ECA_HNDL_AVG);
 
             // store timestamps to measure delays
             storeTimestamp(pSharedApp, FBAS_SHARED_GET_TS1, now);
@@ -532,13 +533,15 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t
         if (nodeType == FBAS_NODE_TX && *mpsTask & TSK_TX_MPS_EVENTS) {
           // measure transmission delay (from timing message transmission at TX to timing message reception at RX node)
           uint64_t *pTs = (uint64_t *)(pSharedApp + (FBAS_SHARED_GET_TS1 >> 2));
-          measureAverage(MSR_TX_DLY, *pTs, ecaDeadline, DISABLE_VERBOSITY);
+          measureSummarize(MSR_TX_DLY, *pTs, ecaDeadline, DISABLE_VERBOSITY);
+          measureExportSummary(MSR_TX_DLY, pSharedApp, FBAS_SHARED_TX_DLY_AVG);
 
           /* signaling latency
           Time period measured with the ECA timestamps between MPS event generation and
           associated feedback IO event at a TX node. */
           pTs = (uint64_t *)(pSharedApp + (FBAS_SHARED_GET_TS2 >> 2));
-          measureAverage(MSR_SG_LTY, *pTs, ecaDeadline, DISABLE_VERBOSITY);
+          measureSummarize(MSR_SG_LTY, *pTs, ecaDeadline, DISABLE_VERBOSITY);
+          measureExportSummary(MSR_SG_LTY, pSharedApp, FBAS_SHARED_SG_LTY_AVG);
         }
         break;
       case FBAS_WR_EVT:
@@ -550,7 +553,8 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t
             ioDriveOutput((mpsMsg_t*)(*head + offset), offset);
 
             // measure the average messaging delay
-            measureAverage(MSR_MSG_DLY, ecaDeadline, now, DISABLE_VERBOSITY);
+            measureSummarize(MSR_MSG_DLY, ecaDeadline, now, DISABLE_VERBOSITY);
+            measureExportSummary(MSR_MSG_DLY, pSharedApp, FBAS_SHARED_MSG_DLY_AVG);
           }
 
           // count received timing messages with MPS flag or MPS event
@@ -759,22 +763,27 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd)
         DBPRINT2("fbas%d: disabled MPS %lx\n", nodeType, mpsTask);
         break;
       case FBAS_CMD_PRINT_NW_DLY:
-        measurePrintAverage(MSR_TX_DLY, pSharedApp, FBAS_SHARED_GET_AVG);
+        measurePrintSummary(MSR_TX_DLY);
+        measureExportSummary(MSR_TX_DLY, pSharedApp, FBAS_SHARED_GET_AVG);
         break;
       case FBAS_CMD_PRINT_SG_LTY:
-        measurePrintAverage(MSR_SG_LTY, pSharedApp, FBAS_SHARED_GET_AVG);
+        measurePrintSummary(MSR_SG_LTY);
+        measureExportSummary(MSR_SG_LTY, pSharedApp, FBAS_SHARED_GET_AVG);
         break;
       case FBAS_CMD_PRINT_MSG_DLY:
-        measurePrintAverage(MSR_MSG_DLY, pSharedApp, FBAS_SHARED_GET_AVG);
+        measurePrintSummary(MSR_MSG_DLY);
+        measureExportSummary(MSR_MSG_DLY, pSharedApp, FBAS_SHARED_GET_AVG);
         break;
       case FBAS_CMD_PRINT_TTL:
-        measurePrintAverage(MSR_TTL, pSharedApp, FBAS_SHARED_GET_AVG);
+        measurePrintSummary(MSR_TTL);
+        measureExportSummary(MSR_TTL, pSharedApp, FBAS_SHARED_GET_AVG);
         break;
       case FBAS_CMD_PRINT_TX_MPS_HANDLE:
-        measurePrintAverage(MSR_TX_MPS_HANDLE, pSharedApp, FBAS_SHARED_GET_AVG);
+        measurePrintSummary(MSR_TX_MPS_HANDLE);
+        measureExportSummary(MSR_TX_MPS_HANDLE, pSharedApp, FBAS_SHARED_GET_AVG);
         break;
       case FBAS_CMD_CLR_SUM_STATS:
-        measureClearAverage(ENABLE_VERBOSITY);
+        measureClearSummary(ENABLE_VERBOSITY);
         break;
 
       case FBAS_CMD_PRINT_MPS_BUF:
@@ -880,8 +889,10 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
           buf = evalMpsMsgTtl(now, i);
           if (buf) {
             ioDriveOutput(buf, i);
-            if (!buf->ttl)
-              measureAverage(MSR_TTL, buf->tsRx, now, DISABLE_VERBOSITY);
+            if (!buf->ttl) {
+              measureSummarize(MSR_TTL, buf->tsRx, now, DISABLE_VERBOSITY);
+              measureExportSummary(MSR_TTL, pSharedApp, FBAS_SHARED_TTL_PRD_AVG);
+            }
           }
         }
       }
