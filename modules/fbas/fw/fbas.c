@@ -442,6 +442,7 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t
   uint32_t flagIsConflict;// flag indicates that received ECA event is 'conflict'
   uint32_t flagIsDelayed; // flag indicates that received ECA event is 'delayed'
   uint64_t now;           // actual timestamp of the system time
+  uint64_t ts;            // temporary timestamp
   uint32_t actions;
 
   nextAction = fwlib_wait4ECAEvent(usTimeout, &ecaDeadline, &ecaEvtId, &ecaParam, &ecaTef,
@@ -449,7 +450,6 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t
 
   if (nextAction != COMMON_ECADO_TIMEOUT) {
     now = getSysTime();
-    storeTimestamp(pSharedApp, FBAS_SHARED_GET_TS5, now);
 
     uint64_t nodeId;  // node ID (MAC address) is in the 'param' field (high 6 bytes)
     uint8_t  regCmd;  // node registration command
@@ -471,8 +471,8 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t
           // clear latched errors [MPS_FS_600]
           clearError(N_MPS_CHANNELS, *head);
         }
-        now = getSysTime();
-        DBPRINT2("%lli\n", getElapsedTime(pSharedApp, FBAS_SHARED_GET_TS5, now));
+        ts = getSysTime();
+        DBPRINT2("%lli\n", (ts - now));
         break;
 
       case FBAS_AUX_OPMODE:
@@ -488,8 +488,8 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t
           // invert output
           testOutput(N_MPS_CHANNELS, *head);
         }
-        now = getSysTime();
-        DBPRINT2("%lli\n", getElapsedTime(pSharedApp, FBAS_SHARED_GET_TS5, now));
+        ts = getSysTime();
+        DBPRINT2("%lli\n", (ts - now));
         break;
 
       case FBAS_GEN_EVT:
@@ -521,8 +521,8 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t
             measureExportSummary(MSR_TX_MPS_HANDLE, pSharedApp, FBAS_SHARED_ECA_HNDL_AVG);
 
             // store timestamps to measure delays
-            storeTimestamp(pSharedApp, FBAS_SHARED_GET_TS1, now);
-            storeTimestamp(pSharedApp, FBAS_SHARED_GET_TS2, ecaDeadline);
+            measurePutTimestamp(MSR_TX_DLY, now);
+            measurePutTimestamp(MSR_SG_LTY, ecaDeadline);
           }
         }
         break;
@@ -532,15 +532,15 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t
         by the RX node on reception of the timing messages with the MPS flag/event. */
         if (nodeType == FBAS_NODE_TX && *mpsTask & TSK_TX_MPS_EVENTS) {
           // measure transmission delay (from timing message transmission at TX to timing message reception at RX node)
-          uint64_t *pTs = (uint64_t *)(pSharedApp + (FBAS_SHARED_GET_TS1 >> 2));
-          measureSummarize(MSR_TX_DLY, *pTs, ecaDeadline, DISABLE_VERBOSITY);
+          ts = measureGetTimestamp(MSR_TX_DLY);
+          measureSummarize(MSR_TX_DLY, ts, ecaDeadline, DISABLE_VERBOSITY);
           measureExportSummary(MSR_TX_DLY, pSharedApp, FBAS_SHARED_TX_DLY_AVG);
 
           /* signaling latency
           Time period measured with the ECA timestamps between MPS event generation and
           associated feedback IO event at a TX node. */
-          pTs = (uint64_t *)(pSharedApp + (FBAS_SHARED_GET_TS2 >> 2));
-          measureSummarize(MSR_SG_LTY, *pTs, ecaDeadline, DISABLE_VERBOSITY);
+          ts = measureGetTimestamp(MSR_SG_LTY);
+          measureSummarize(MSR_SG_LTY, ts, ecaDeadline, DISABLE_VERBOSITY);
           measureExportSummary(MSR_SG_LTY, pSharedApp, FBAS_SHARED_SG_LTY_AVG);
         }
         break;

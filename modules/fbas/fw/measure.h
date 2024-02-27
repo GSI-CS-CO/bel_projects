@@ -24,6 +24,7 @@ struct msrCnt {
 
 typedef struct msrSumStats msrSumStats_t;
 struct msrSumStats {
+  uint64_t ts;           // start time of measurement
   uint64_t avg;          // cumulative moving average
   int64_t  min;          // minimum value
   uint64_t max;          // maximum value
@@ -43,8 +44,8 @@ typedef enum MSR_ITEMS {
   N_MSR_ITEMS,
 } msrItem_t;
 
-void storeTimestamp(uint32_t* reg, uint32_t offset, uint64_t ts);
-int64_t getElapsedTime(uint32_t* reg, uint32_t offset, uint64_t now);
+void measurePutTimestamp(msrItem_t item, uint64_t ts);
+uint64_t measureGetTimestamp(msrItem_t item);
 void measureClearSummary(verbosity_t verbose);
 void measureSummarize(msrItem_t item, uint64_t from, uint64_t now, verbosity_t verbose);
 void measureExportSummary(msrItem_t item, uint32_t* base, uint32_t offset);

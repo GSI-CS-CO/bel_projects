@@ -54,48 +54,6 @@ static msrSumStats_t sumStats[N_MSR_ITEMS];  // buffer for summary statistics
 static msrCnt_t      cnt[N_MSR_CNT];         // event and action counters
 
 /**
- * \brief store a timestamp
- *
- * Given timestamp is stored in shared memory location pointed by base + offset.
- *
- * \param base   base address of the user-defined u32 register set
- * \param offset offset in the register set that will store given timestamp
- * \param ts     timestamp
- *
- * \ret none
- **/
-void storeTimestamp(uint32_t* base, uint32_t offset, uint64_t ts)
-{
-  uint64_t* pSharedTs = (uint64_t *)(base + (offset >> 2));
-
-  *pSharedTs = ts;
-}
-
-/**
- * \brief get the elapsed time
- *
- * Return an elapsed time, which is the difference of given system time and
- * timestamp stored in shared memory (pointed by base + offset).
- * The timestamp is updated then with the given system time.
- *
- * \param base   base address of the user-defined u32 register set
- * \param offset offset in the register set that stores timestamp needed for calculation
- * \param now    actual system time
- *
- * \ret time     elapsed time in nanosecond since last timestamp
- **/
-int64_t getElapsedTime(uint32_t* base, uint32_t offset, uint64_t now)
-{
-  uint64_t* pSharedTs = (uint64_t *)(base + (offset >> 2));
-
-  int64_t elapsed = now - *pSharedTs;
-
-  *pSharedTs = now;
-
-  return elapsed;
-}
-
-/**
  * \brief Count events
  *
  * \param name   Counter name (listed in MSR_CNT)
@@ -148,6 +106,30 @@ static uint32_t calculateSumStats(const int64_t value, msrSumStats_t *const pSta
     }
 
     return ++pStats->cntTotal;
+}
+
+/**
+ * \brief Keep the start timestamp to measure the given item
+ *
+ * Given timestamp is kept to measure the elapsed time later.
+ *
+ * \param item   measured item
+ * \param ts     timestamp
+ **/
+void measurePutTimestamp(msrItem_t item, uint64_t ts)
+{
+  sumStats[item].ts = ts;
+}
+
+/**
+ * \brief Return the start timestamp to measure the given item
+ *
+ * \param item   measured item
+ * \return timestamp
+ **/
+uint64_t measureGetTimestamp(msrItem_t item)
+{
+  return sumStats[item].ts;
 }
 
 /**
