@@ -24,12 +24,12 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     else:
       options = '-o'
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', options, statusFile))
-    self.startAndCheckSubprocess(('scheduleCompare', self.schedulesFolder + scheduleFile, statusFile))
+    self.startAndCheckSubprocess(('scheduleCompare', '-s', self.schedulesFolder + scheduleFile, statusFile), [0], 0, 0)
     self.deleteFile(statusFile)
     statusFile = 'statusKeep.dot'
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'keep', self.schedulesFolder + scheduleFile))
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', options, statusFile))
-    self.startAndCheckSubprocess(('scheduleCompare', self.schedulesFolder + scheduleFile, statusFile))
+    self.startAndCheckSubprocess(('scheduleCompare', '-s', self.schedulesFolder + scheduleFile, statusFile), [0], 0, 0)
     self.deleteFile(statusFile)
     # remove the schedule
     if abortPattern:
