@@ -70,8 +70,8 @@ class TestAltDestinationLists(dm_testbench.DmTestbench):
     # check downloaded schedule
     statusFile = 'status.dot'
     options = '-so'
-    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', options, statusFile))
-    self.startAndCheckSubprocess(('scheduleCompare', self.schedulesFolder + scheduleFile.replace('.dot', '-status.dot'), statusFile))
+    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', options, statusFile), [0], 0, 0)
+    self.startAndCheckSubprocess(('scheduleCompare', '-s', self.schedulesFolder + scheduleFile.replace('.dot', '-status.dot'), statusFile), [0], 0, 0)
     self.deleteFile(statusFile)
     # analyze snoop file (csv)
     keyList = {'0x0000000000000000': '>0', }
