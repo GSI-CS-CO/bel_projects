@@ -201,7 +201,7 @@ void main(void) {
     mprintf("#%02u: Priority Queue Debugmode ON, timestamps will be written to 0x%08x on receivers", cpuId, DEBUGPRIOQDST);
   #endif
   //mprintf("Found MsgBox at 0x%08x. MSI Path is 0x%08x\n", (uint32_t)pCpuMsiBox, (uint32_t)pMyMsi);
-  mprintf("#%02u: This is %s DM FW %s \n", cpuId, DM_RELEASE, DM_VERSION);
+  mprintf("#%02u: This is %s DM FW %s, supporting %u threads \n", cpuId, DM_RELEASE, DM_VERSION, _THR_QTY_);
 
   atomic_off();
 
@@ -231,6 +231,7 @@ void main(void) {
 
       ///check if the node uses fields with references
       if (!hasNodeDynamicFields(pN(hp))) {
+
         //no dynamic fields. do go as normal on, nothing to see here
         //FIXME Why not pncN(hp) = nodeFuncs[ ...?
         *pncN(hp)   = (uint32_t)nodeFuncs[getNodeType(pN(hp))](pN(hp), pT(hp));       //process node and return thread's next node

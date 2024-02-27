@@ -193,7 +193,7 @@ void VisitorVertexWriter::visit(const StartThread& el) const  {
   pushPair(dnp::Base::sType, dnt::sStartThread);
   pushEventInfo((Event&)el);
   pushPair(dnp::StartThread::sStartOffs, el.getStartOffs(), FormatNum::DEC);
-  pushPair(dnp::Base::sThread, el.getThread(), FormatNum::DEC);
+  pushPair(dnp::Base::sThread, el.getThread(), FormatNum::HEX32);
   pushSingle(ec::Node::StartThread::sLookDef);
   //pushSingle(ec::Node::Cmd::sLookFlow);
   pushPaintedEyecandy((Node&)el);

@@ -150,13 +150,14 @@ void dmInit() {
   uint8_t i;
 
   for(i=0; i < _THR_QTY_; i++) {
+    mprintf("#%02u: Init thread %u values  \n", cpuId, i);
     //set thread times to infinity
     uint32_t* tp = (uint32_t*)(p + (( SHCTL_THR_DAT + i * _T_TD_SIZE_) >> 2));
     *(uint64_t*)&tp[T_TD_CURRTIME >> 2] = -1ULL;
     *(uint64_t*)&tp[T_TD_DEADLINE >> 2] = -1ULL;
     *(uint32_t*)&tp[T_TD_FLAGS >> 2]    = i;
-    *(uint64_t*)(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_PREPTIME  ) >> 2)) = PREPTIME_DEFAULT;
-    *(uint64_t*)(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_STARTTIME ) >> 2)) = 0ULL;
+    *(uint64_t*)&p[( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_PREPTIME ) >> 2] = PREPTIME_DEFAULT;
+    *(uint64_t*)&p[( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_STARTTIME ) >> 2] = 0ULL;
     //add thread to heap
     hp[i] = tp;
   }
@@ -601,10 +602,18 @@ uint32_t* startThread(uint32_t* node, uint32_t* thrData) {
 
 
   //FIXME This must go to the selected CPUs control area, not necessarily our own!
-  uint64_t* thrStarttime  = (uint64_t*)&p[( SHCTL_THR_STA + thr * _T_TS_SIZE_ + T_TS_STARTTIME) >> 2]; // thread Start time
-  //FIXME Loop this for all designated threads
-  *thrStarttime = *((uint64_t*)&thrData[T_TD_CURRTIME >> 2]) + offset; // set time
-  DBPRINT3("#%02u: Hello, StartThread function check. Thr %u, time 0x%08x%08x, ptr 0x%08x\n", cpuId, thr, (uint32_t)(*thrStarttime>>32), (uint32_t)*thrStarttime, &thrData[T_TD_CURRTIME >> 2]);
+  
+  
+  uint8_t i;
+  for(i=0;i<_THR_QTY_;i++) { //iterate all threads. Do we start one? then copy current time sum in.
+    if (!(thr & (1<<i))) {continue;} //more probable case of doing nothing goes to branch taken
+    else { //less probable case that we start a thread goes not taken
+      uint64_t* thrStarttime  = (uint64_t*)&p[( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_STARTTIME) >> 2]; // thread Start time
+      *thrStarttime = *((uint64_t*)&thrData[T_TD_CURRTIME >> 2]) + offset; // set time
+      DBPRINT3("#%02u: Hello, StartThread function check. Thr %u, time 0x%08x%08x, ptr 0x%08x\n", cpuId, i, (uint32_t)(*thrStarttime>>32), (uint32_t)*thrStarttime, &thrData[T_TD_CURRTIME >> 2]);
+    }  
+  }  
+//  DBPRINT3("#%02u: Hello, StartThread function check. Thr %u, time 0x%08x%08x, ptr 0x%08x\n", cpuId, i, (uint32_t)(*thrStarttime>>32), (uint32_t)*thrStarttime, &thrData[T_TD_CURRTIME >> 2]);
   
   
   //*start |= (1 << thr);  // set start bit
@@ -719,8 +728,12 @@ uint32_t* dynamicNodeStaging(uint32_t* node, uint32_t* thrData) {
     wordFormats >>= 3; //shift right by 3 bits to get next wordFormat
   }
 
-  //we must never return nodeTmp, as this is not threadsafe. if handler wants to return nodeTmp, return original node instead.
+  //we must never return nodeTmp, as this is not safe - nodeTmp could be overwritten by the time read is attempted.
+  //if someone wants to modify the node, ie. copy a value in, they gotta do that explicitly.
+  //if handler wants to return "this" node (loop, etc) and points to nodeTmp, return original node instead.
+
   if (ret != nodeTmp) return ret;
   else                return node;
 
-}  
+}
+

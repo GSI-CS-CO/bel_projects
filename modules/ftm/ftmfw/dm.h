@@ -93,8 +93,10 @@ extern nodeFuncPtr         nodeFuncs[_NODE_TYPE_END_];  ///< Function pointer ar
 extern actionFuncPtr      actionFuncs[_ACT_TYPE_END_];  ///< Function pointer array to command action handler functions
 //@}
 
-/** @name Compilation of nodes referencing fields from others during runtime.
- *  This is in fact not references but done by value copy, the node handler function is always given a 'static' node to work with. Thus, this is RO, changes will not propagate back.
+/** @name Staging nodes referencing fields from others during runtime
+ * If we used references in the handlers, we would need to programm all handler functions to work with an arbitrary combination of dereferenced pointers and immediate values
+   This would slow the whole process down considerable and make the code way more complex. Instead, we memcopy the source node, insert the values from all references, then pass this modified working copy to the handler.
+   Thus, a handler will never see pointers and the source node is read only
  */
 //@{ 
 extern uint32_t              nodeTmp[_MEM_BLOCK_SIZE / _32b_SIZE_]; ///< Staging area when a node is constructed from references
