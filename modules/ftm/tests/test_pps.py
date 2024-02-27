@@ -50,7 +50,6 @@ class DmPps(dm_testbench.DmTestbench):
     self.downloadFile1 = 'pps-test0-1-download.dot'
     self.addSchedule(self.scheduleFile0)
     self.snoopToCsvWithAction(snoopFile, self.actionPpsAdd0, duration=1)
-    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile1), [0], 0, 0)
     self.startAndCheckSubprocess(('scheduleCompare', '-s', '-u', self.schedulesFolder + self.scheduleFile0, self.downloadFile0), [0], 0, 0)
     self.deleteFile(self.downloadFile0)
     self.startAndCheckSubprocess(('scheduleCompare', '-s', '-u', self.schedulesFolder + self.downloadFile1, self.downloadFile1), [0], 0, 0)
@@ -71,6 +70,7 @@ class DmPps(dm_testbench.DmTestbench):
     self.addSchedule(self.scheduleFile1)
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'flow', '-q', '10', 'B_A', 'Evt_A'), [0], 0, 0)
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'A'), [0], 1, 0)
+    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile1), [0], 0, 0)
 
   def testPpsAdd1(self):
     """Add two schedules. The first schedule contains pattern A with two nodes and an edge.
