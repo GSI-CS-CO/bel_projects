@@ -197,6 +197,7 @@ class DmPps(dm_testbench.DmTestbench):
     self.delay(1)
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile3])
     self.startAndCheckSubprocess([self.binaryDmCmd, self.datamaster, 'stoppattern', 'A'])
+    self.delay(0.1)
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'remove', self.schedulesFolder + self.scheduleFile4])
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile4])
 
