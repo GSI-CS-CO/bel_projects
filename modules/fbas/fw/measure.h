@@ -51,24 +51,7 @@ void measureSummarize(msrItem_t item, uint64_t from, uint64_t now, verbosity_t v
 void measureExportSummary(msrItem_t item, uint32_t* base, uint32_t offset);
 void measurePrintSummary(msrItem_t item);
 
-/**
- * \brief Count events
- *
- * \param name   Counter name (listed in MSR_CNT)
- * \param value  Used to increment/initialize the counter
- *
- * \ret counter  Value
- **/
-uint32_t msrCnt(unsigned name, uint32_t value);
-
-/**
- * \brief Set event counter
- *
- * \param name   Counter name (listed in MSR_CNT)
- * \param value  Used to increment/initialize the counter
- *
- * \ret counter  Value
- **/
-uint32_t msrSetCnt(unsigned name, uint32_t value);
+uint32_t measureCountEvt(unsigned name, uint32_t value);
+uint32_t measureSetCounter(unsigned name, uint32_t value);
 
 #endif

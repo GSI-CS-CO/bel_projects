@@ -514,7 +514,7 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t
             // send MPS event
             uint32_t count = msgSendSpecificMps(itr, *head, FBAS_FLG_EID, N_EXTRA_MPS_NOK);
             // count sent timing messages with MPS event
-            *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = msrCnt(TX_EVT_CNT, count);
+            *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = measureCountEvt(TX_EVT_CNT, count);
 
             // measure MPS event handling period
             measureSummarize(MSR_TX_MPS_HANDLE, ecaDeadline, now, DISABLE_VERBOSITY);
@@ -559,10 +559,10 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t
 
           // count received timing messages with MPS flag or MPS event
           actions=1; // do not use fwlib_getEcaValidCnt() to get the ECA channel valid count => it returns zero value
-          *(pSharedApp + (FBAS_SHARED_ECA_VLD >> 2)) = msrCnt(ECA_VLD_ACT, actions);
+          *(pSharedApp + (FBAS_SHARED_ECA_VLD >> 2)) = measureCountEvt(ECA_VLD_ACT, actions);
 
           if (COMMON_STATUS_OK == fwlib_getEcaOverflowCnt(&actions)) // number of the overflow actions
-            *(pSharedApp + (FBAS_SHARED_ECA_OVF >> 2)) = msrCnt(ECA_OVF_ACT, actions);
+            *(pSharedApp + (FBAS_SHARED_ECA_OVF >> 2)) = measureCountEvt(ECA_OVF_ACT, actions);
         }
         break;
 
@@ -868,7 +868,7 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
         if (setEndpDstAddr(DST_ADDR_RXNODE) == COMMON_STATUS_OK) {
           uint32_t count = sendMpsMsgBlock(N_MPS_FLAGS, pRdItr, FBAS_FLG_EID);
             // count sent timing messages with MPS flag
-            *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = msrCnt(TX_EVT_CNT, count);
+            *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = measureCountEvt(TX_EVT_CNT, count);
         }
         else {
           DBPRINT1("Err - nothing sent! TODO: set failed status\n");
