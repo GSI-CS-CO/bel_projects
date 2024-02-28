@@ -34,7 +34,8 @@ files = [
    "BLM_gate_timing_seq_elem.vhd",
    "BLM_ena_in_mux.vhd",
    "blm_24_9_9_9pll.vhd",
-   "deglitcher.v"
+   "deglitcher.v",
+   "gate_deglitcher.v"
 ]
 
 modules = {
