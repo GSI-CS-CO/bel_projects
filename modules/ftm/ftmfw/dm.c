@@ -599,13 +599,17 @@ uint32_t* startThread(uint32_t* node, uint32_t* thrData) {
   //uint32_t cpu = *(uint32_t*)&node[STARTTHREAD_CPU >> 2];
   uint32_t thr = *(uint32_t*)&node[STARTTHREAD_THR >> 2];
 
-
   //FIXME This must go to the selected CPUs control area, not necessarily our own!
-  uint64_t* thrStarttime  = (uint64_t*)&p[( SHCTL_THR_STA + thr * _T_TS_SIZE_ + T_TS_STARTTIME) >> 2]; // thread Start time
-  //FIXME Loop this for all designated threads
-  *thrStarttime = *((uint64_t*)&thrData[T_TD_CURRTIME >> 2]) + offset; // set time
-  DBPRINT3("#%02u: Hello, StartThread function check. Thr %u, time 0x%08x%08x, ptr 0x%08x\n", cpuId, thr, (uint32_t)(*thrStarttime>>32), (uint32_t)*thrStarttime, &thrData[T_TD_CURRTIME >> 2]);
-  
+  uint8_t i;
+  //iterate all threads. All threads to be started get a copy of the spawners current time sum + desired offset as starttime.
+  for(i=0;i<_THR_QTY_;i++) { 
+    if (!(thr & (1<<i))) {continue;} //more probable case of not starting a thread goes to branch taken
+    else { //less probable case of starting goes to not taken
+      uint64_t* thrStarttime  = (uint64_t*)&p[( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_STARTTIME) >> 2]; // thread Start time
+      *thrStarttime = *((uint64_t*)&thrData[T_TD_CURRTIME >> 2]) + offset; // set time
+      DBPRINT3("#%02u: Hello, StartThread function check. Thr %u, time 0x%08x%08x, ptr 0x%08x\n", cpuId, i, (uint32_t)(*thrStarttime>>32), (uint32_t)*thrStarttime, &thrData[T_TD_CURRTIME >> 2]);
+    }  
+  } 
   
   //*start |= (1 << thr);  // set start bit
   // Oh ffs, why?! let's cut the "I only want ONE thread" corner case and use a bitmask. Learn to bitshift, basta.
