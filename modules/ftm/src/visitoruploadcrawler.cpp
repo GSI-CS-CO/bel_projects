@@ -195,7 +195,7 @@ mVal VisitorUploadCrawler::getRefLinks() const {
   mVal VisitorUploadCrawler::getValLinks() const {
     Graph::out_edge_iterator out_begin, out_end, out_cur;
     mVal t;
-    /*
+    
     boost::tie(out_begin, out_end) = out_edges(v,g);
 
     for (out_cur = out_begin; out_cur != out_end; ++out_cur)
@@ -212,7 +212,7 @@ mVal VisitorUploadCrawler::getRefLinks() const {
         t.insert(NODE_OPT_DYN, )
       }
     }
-    */
+    
     return t;
   }    
 */
