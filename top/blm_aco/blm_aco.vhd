@@ -390,6 +390,18 @@ port
 );
 end component deglitcher; 
 
+component gate_deglitcher 
+  generic	(nr_stages : integer := 10   --3
+);
+port	
+(
+    clock: in std_logic;          
+  reset: in std_logic;          
+  degl_in : in std_logic;
+  degl_out: out std_logic
+);
+end component gate_deglitcher; 
+
   COMPONENT daq 
   generic (
       Base_addr:          unsigned(15 downto 0);
@@ -447,7 +459,7 @@ port (
     --   when 1, the outputs in slot 12 are the values of AW_Output_Reg(6),  bit 15..3 free
     BLM_gate_seq_prep_ck_sel_Reg : in std_logic_vector(15 downto 0);
     BLM_gate_recover_Reg : in std_logic_vector(15 downto 0);
-    BLM_gate_seq_in_ena_Reg : in std_logic_vector(15 downto 0); --"00"& ena for gate board2 &"00" & ena for gate board1 
+  --  BLM_gate_seq_in_ena_Reg : in std_logic_vector(15 downto 0); --"00"& ena for gate board2 &"00" & ena for gate board1 
     BLM_in_sel_Reg          : in t_BLM_reg_Array; --128 x (4 bit for gate ena & 6 bit for up signal ena & 6 for down signal ena)
    BLM_out_sel_reg : in t_BLM_out_sel_reg_Array;    -- 122 x 16 bits = Reg120-0:  "0000" and 6 x (54 watchdog errors  + 12 gate errors + 256 counters overflows outputs) 
                                                     -- + 4 more registers for 6 x 12 input gate (= 72 bits) to be send to the outputs.    
@@ -973,6 +985,7 @@ signal INTL_Output: std_logic_vector(5 downto 0);     -- Output "Slave-Karten 12
 signal BLM_gate_in : std_logic_vector(11 downto 0);
 signal BLM_Out :  std_logic_vector(5 downto 0);
 signal BLM_deglitcher_data: std_logic_vector(65 downto 0);
+signal BLM_deg_gate_in: std_logic_vector(11 downto 0);
 -----------------DAQ-Signale---------------------------------------------------------------------------------------------------
 
 constant daq_ch_num: integer := 16;
@@ -1011,7 +1024,7 @@ signal BLM_wdog_hold_time_Reg :  std_logic_vector(15 downto 0);
 signal BLM_gate_hold_time_Reg :  t_BLM_gate_hold_Time_Array;
 signal BLM_gate_seq_prep_ck_sel_Reg: std_logic_vector(15 downto 0); 
 signal BLM_gate_recover_Reg : std_logic_vector(15 downto 0);
-signal BLM_gate_seq_in_ena_Reg :  std_logic_vector(15 downto 0);
+--signal BLM_gate_seq_in_ena_Reg :  std_logic_vector(15 downto 0);
 signal BLM_wd_reset_Reg: t_IO_Reg_0_to_3_Array;
 
 signal BLM_wd_reset: std_logic_vector(53 downto 0);
@@ -1584,7 +1597,7 @@ BLM_ctrl_Reg_1st_block: io_reg
           Reg_IO2            =>   BLM_wd_reset_Reg(1),
           Reg_IO3            =>   BLM_wd_reset_Reg(2),
           Reg_IO4            =>   BLM_wd_reset_Reg(3),
-          Reg_IO5            =>   BLM_gate_seq_in_ena_Reg,
+          Reg_IO5            =>   open,
           Reg_IO6            =>   open,
           Reg_IO7            =>   open,
           Reg_IO8            =>   open,
@@ -2091,7 +2104,7 @@ end if;
 --                   DB_Out => Deb66_out(I)); -- Debounce-Signal-Out
 --end generate Deb66;
 
-Deg66:  for I in 0 to 65 generate
+Deg_in_signals:  for I in 0 to 53 generate
 DB_I: deglitcher 
   generic	map (nr_stages => 1
 )
@@ -2102,7 +2115,21 @@ port map
   degl_in => Deg66_in(I), 
   degl_out => Deg66_out(I)
 );
-  end generate Deg66;
+  end generate Deg_in_signals;
+
+Deg_gate_signals: for I in 54 to 65 generate
+DB_I: gate_deglitcher 
+  generic	map (nr_stages => 10
+)
+port map 
+(
+    clock => clk_sys,        
+   reset=> not rstn_sys,           
+  degl_in => Deg66_in(I), 
+  degl_out => Deg66_out(I)
+);
+  end generate Deg_gate_signals;
+  
 --
 --         =========== Component's für die 72 "aktiv" Led's ===========
 --
@@ -2162,7 +2189,7 @@ BLM_Module : Beam_Loss_check
   BLM_ctrl_Reg             => BLM_ctrl_Reg,
   BLM_gate_seq_prep_ck_sel_Reg  => BLM_gate_seq_prep_ck_sel_Reg,
   BLM_gate_recover_Reg => BLM_gate_recover_Reg,
-  BLM_gate_seq_in_ena_Reg  => BLM_gate_seq_in_ena_Reg,
+  --BLM_gate_seq_in_ena_Reg  => BLM_gate_seq_in_ena_Reg,
   BLM_in_sel_Reg           => BLM_in_sel_Reg,
   BLM_out_sel_reg          => BLM_out_sel_Reg,
 

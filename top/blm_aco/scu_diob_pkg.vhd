@@ -37,4 +37,5 @@ TYPE  t_IO_Reg_0_to_23_Array is array(0 to 23) of std_logic_vector(15 downto 0);
  TYPE  t_IO_Reg_0_to_32_Array  is array (0 to 32)  of std_logic_vector(15 downto 0);
  TYPE    t_BLM_in_sel_Array           is array (0 to 15) of std_logic_vector(15 downto 0);
  TYPE    t_BLM_counter_Array           is array (0 to 127) of std_logic_vector(19 downto 0);
+ TYPE    t_gate_state_nr is array (0 to 11) of std_logic_vector(2 downto 0);
 end scu_diob_pkg;
