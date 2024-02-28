@@ -1,0 +1,11 @@
+digraph ppsSubgraph {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+name="pps-subgraph"
+edge [type=defdst style=filled color=red]
+  subgraph subgraph1 {
+    node [cpu=0 pattern=A style=filled]
+    EVT_01 [type=tmsg fid=1 gid="4095", evtno="4095", sid="4095", bpid="16383" par=1024 toffs=0 patentry=1 shape=oval fillcolor=green penwidth=2 color=darkorange3]
+    B_00 [type=block tperiod=1000000000 qlo=1 patexit=1 shape=rectangle fillcolor=green penwidth=2 color=purple]
+    EVT_01 -> B_00 -> EVT_01
+  }
+}

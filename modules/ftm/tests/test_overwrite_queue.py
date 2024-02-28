@@ -29,8 +29,8 @@ class OverwriteBlocks(dm_testbench.DmTestbench):
   def checkSchedule(self, scheduleFile):
     statusFile = 'status.dot'
     options = '-so'
-    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', options, statusFile))
-    self.startAndCheckSubprocess(('scheduleCompare', self.schedulesFolder + scheduleFile, statusFile))
+    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', options, statusFile), [0], 0, 0)
+    self.startAndCheckSubprocess(('scheduleCompare', '-s', self.schedulesFolder + scheduleFile, statusFile), [0], 0, 0)
     self.deleteFile(statusFile)
 
   def test_overwriteSchedules(self):

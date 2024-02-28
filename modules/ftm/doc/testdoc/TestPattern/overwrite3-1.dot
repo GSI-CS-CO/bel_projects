@@ -1,0 +1,14 @@
+digraph "overwrite3-1" {
+  node [cpu=0 pattern=A tperiod=100000000 toffs=0 fid=1 gid=5 sid=2 bpid=8 style=filled color=black fillcolor=white penwidth=2 shape=oval]
+  BlockA [type=block patexit=1 qlo=1 shape=rectangle color=purple]
+  EvtA [type=tmsg evtno=0 par=1]
+  EvtB [type=tmsg evtno=0 par=2]
+  FlowF [type=flow patentry=1 reps=5 shape=pentagon color=darkorange3]
+  edge [type=defdst color=red]
+  EvtA -> BlockA -> EvtA
+  FlowF -> EvtA
+  EvtB -> BlockA
+  FlowF -> BlockA [type=target color=blue]
+  FlowF -> EvtB [type=flowdst color=pink]
+  BlockA -> EvtB [type=altdst color=black]
+}

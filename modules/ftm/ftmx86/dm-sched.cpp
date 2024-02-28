@@ -187,7 +187,7 @@ int main(int argc, char* argv[]) {
       if(verbose || reqStatus) cdm.showDown(false);
 
     } catch (std::runtime_error const& err) {
-      std::cerr << std::endl << program << ": Failed to execute <status>. Cause: " << err.what() << std::endl;
+      std::cerr << std::endl << program << ": Failed to execute <" << cmdName << ">. Cause: " << err.what() << std::endl;
       return -7;
     }
   }

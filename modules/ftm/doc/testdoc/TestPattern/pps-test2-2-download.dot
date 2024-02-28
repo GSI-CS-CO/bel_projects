@@ -1,0 +1,13 @@
+digraph "pps-test2-2-download" {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+Evt_A[cpu="0", flags="0x00002002", type="tmsg", toffs="0", pattern="A", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="5", evtno="4095", beamin="0", bpcstart="0", sid="2", bpid="8", reqnobeam="0", vacc="0", id="0x1005fff000200200", par="0x0000000000000001", tef="0", shape     = "oval", fillcolor = "white", penwidth=2, color = "darkorange3"];
+B_A[cpu="0", flags="0x00108007", type="block", tperiod="100000000", pattern="A", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "purple"];
+W_A[cpu="0", flags="0x00002006", type="wait", prio="0", toffs="0", pattern="patternA", patentry="true", patexit="false", beamproc="beamA", bpentry="false", bpexit="false", tvalid="0", vabs="false", twait="100", shape     = "hexagon", fillcolor = "white", penwidth=2, color = "darkorange3"];
+B_C[cpu="0", flags="0x00108007", type="block", tperiod="1000", pattern="patternA", patentry="false", patexit="true", beamproc="beamA", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "purple"];
+B_B[cpu="1", flags="0x00108007", type="block", tperiod="1000", pattern="patternA", patentry="false", patexit="true", beamproc="beamA", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "purple"];
+B_A->Evt_A [type="defdst", color = "red"];
+Evt_A->B_A [type="defdst", color = "red"];
+W_A->B_C [type="defdst", color = "red"];
+W_A->B_B [type="target", color = "blue"];
+}
