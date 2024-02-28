@@ -418,7 +418,7 @@ Mainly tests the options \texttt{-c} and \texttt{-t}.
 \begin{enumerate}
 \item testAbortSingleThreadDecimal tests this for each CPU and each thread, given as decimal numbers.
 \item testAbortSingleThreadHex tests this for each CPU and each thread, given as hexadecimal numbers.
-\item testAbortRunningThreads runs schedules on all threads and \texttt{abort}s for CPU 0 and 1 the threads 2, 4, 6, 8.
+\item testAbortRunningThreads runs schedules on all threads and \texttt{abort}s for CPU 0 and 1 the threads 1, 3, 5, 7.
 \end{enumerate}
 
 \section{test\_dmCmdAsyncclear.py}
@@ -428,24 +428,25 @@ for a second. The \texttt{asyncclear} clears this command in the queue. This is
 checked with \texttt{dm-cmd $<$datamaster$>$ queue Block0b}. Before
 \texttt{asyncclear} the command is in the queue, afterwards the queue is empty.
 
-\section{test\_dmCmdCpudiag.py}
-\texttt{test\_dmCmdCpudiag.py} tests the command \texttt{dm-cmd
+\section{test\_dmCmdClearcpudiag.py}
+\texttt{test\_dmCmdClearcpudiag.py} tests the command \texttt{dm-cmd
 $<$datamaster$>$ clearcpudiag} for different CPUs and threads.
-Run \texttt{clearCPUdiag} for CPU 0 and 1 and for the threads 2, 4, 6, 8.
+Run \texttt{clearCPUdiag} for CPU 0 and 1 and for the threads 1, 3, 5, 7.
 Check the result with \texttt{dm-cmd $<$datamaster$>$ diag}.
 
 \section{test\_dmCmdCursor.py}
-\texttt{test\_dmCmdCursor.py} tests \texttt{dm-cmd $<$datamaster$>$ cursor} for different CPUs and threads.
-Run \texttt{cursor} for CPU 0 and 1 and for the threads 2, 4, 6, 8.
+\texttt{test\_dmCmdCursor.py} tests \texttt{dm-cmd $<$datamaster$>$ cursor}
+for two CPUs and four threads. Run \texttt{dm-cmd $<$datamaster$>$ cursor}
+for CPU 0 and 1 and for the threads 1, 3, 5, 7.
 Check for the correct number of output lines.
 
-\section{test\_dm\_cmd\_deadline\_preptime\_startime.py}
-\texttt{test\_dm\_cmd\_deadline\_preptime\_startime.py.py} tests the five commands
-\texttt{dm-cmd $<$datamaster$>$ origin},
-\texttt{dm-cmd $<$datamaster$>$ cursor},
-\texttt{dm-cmd $<$datamaster$>$ deadline},
-\texttt{dm-cmd $<$datamaster$>$ preptime}, and
-\texttt{dm-cmd $<$datamaster$>$ startline}
+\section{test\_dmCmdDeadlinePreptimeStarttime.py}
+\texttt{test\_dmCmdDeadlinePreptimeStarttime.py} tests the five commands \\
+\texttt{dm-cmd $<$datamaster$>$ origin}, \\
+\texttt{dm-cmd $<$datamaster$>$ cursor}, \\
+\texttt{dm-cmd $<$datamaster$>$ deadline}, \\
+\texttt{dm-cmd $<$datamaster$>$ preptime}, and \\
+\texttt{dm-cmd $<$datamaster$>$ startline} \\
 for different CPUs and threads.
 Tests the commands \texttt{origin, cursor, starttime, preptime}, and
 \texttt{deadline} for different combinations  of threads.
@@ -457,16 +458,19 @@ out of range are tested.
 \section{test\_dmCmdForce.py}
 \texttt{test\_dmCmdForce.py} tests the command \texttt{dm-cmd
 $<$datamaster$>$ force} for different CPUs and threads.
-Run \texttt{force} for CPU 0 and 1 and for the threads 2, 4, 6, 8.
+Run \texttt{force} for CPU 0 and 1 and for the threads 1, 3, 5, 7.
 Check for the correct number of output lines.
 
 \section{test\_dmCmdHeap.py}
-\texttt{test\_dmCmdHeap.py} tests \texttt{dm-cmd $<$datamaster$>$ heap} for different CPUs and threads.
+\texttt{test\_dmCmdHeap.py} tests \texttt{dm-cmd $<$datamaster$>$ heap}
+for different CPUs and threads.
 \begin{enumerate}
-\item testHeapSingleThreadDecimal tests this for each CPU and each thread, given as decimal numbers.
-\item testHeapSingleThreadHex tests this for each CPU and each thread, given as hexadecimal numbers.
+\item testHeapSingleThreadDecimal tests this for each CPU and each
+thread, given as decimal numbers.
+\item testHeapSingleThreadHex tests this for each CPU and each thread,
+given as hexadecimal numbers.
 \item testInspectHeap run \texttt{heap} for CPU 0 and 1 and for the
-threads 2, 4, 6, 8. Check for the correct number of output lines.
+threads 1, 3, 5, 7. Check for the correct number of output lines.
 Run \texttt{heap} for each thread on each CPU.
 \end{enumerate}
 
@@ -483,20 +487,23 @@ Send the command \texttt{noop} to Block0b. Check with \texttt{dm-cmd $<$datamast
 that the command \texttt{noop} is in the queue of Block0b.
 
 \section{test\_dmCmdOrigin.py}
-\texttt{test\_dmCmdOrigin.py} tests \texttt{dm-cmd $<$datamaster$>$ origin} for different CPUs and threads.
-Run \texttt{origin} for CPU 0 and 1 and for the threads 2, 4, 6, 8.
-Check for the correct number of output lines.
+\texttt{test\_dmCmdOrigin.py} tests \texttt{dm-cmd $<$datamaster$>$ origin}
+for two CPUs and four threads. Run \texttt{origin} for CPU 0 and 1 and for
+the threads 1, 3, 5, 7. Check for the correct number of output lines.
 
 \section{test\_dmSched.py}
-\texttt{test\_dmSched.py} contains 8 unit tests for the tool dm-sched. Each unit test calls dm-sched
-with commands and options and checks the result with the output on stdout and stderr.
+\texttt{test\_dmSched.py} contains 8 unit tests for the tool dm-sched.
+Each unit test calls dm-sched with commands and options and checks the
+result with the output on stdout and stderr.
 
 \begin{enumerate}
 \item \texttt{dm-sched $<$datamaster$>$ -h}: check for correct usage message.
 \item \texttt{dm-sched $<$datamaster$>$}: check for default operation (same as status).
 \item \texttt{dm-sched $<$datamaster$>$ status}: check for printig the datamaster status.
-\item \texttt{dm-sched $<$datamaster$>$ dump}: check that the current schedule is dumped to file download.dot (the default file name).
-\item \texttt{dm-sched $<$datamaster$>$ dump -0 dump.dot}: check that the current schedule is dumped to file dump.dot.
+\item \texttt{dm-sched $<$datamaster$>$ dump}: check that the current
+schedule is dumped to file download.dot (the default file name).
+\item \texttt{dm-sched $<$datamaster$>$ dump -o dump.dot}: check that
+the current schedule is dumped to file dump.dot.
 \item \texttt{dm-sched $<$datamaster$>$ clear}: check the clear command.
 \item \texttt{dm-sched $<$datamaster$>$ rawvisited}: check the rawvisited command.
 \item \texttt{dm-sched $<$datamaster$>$ add pps.dot}: check for adding a schedule.
@@ -674,19 +681,23 @@ messages. \\ This schedule is rejected and not added.
 
 \section{test\_originStartthread.py}
 \begin{enumerate}
-\item Thread 0 assigns Tmsg\{1,2,3\} and Block\{1,2,3\} to thread 1,2,3 and starts these.
-The test then starts pattern B (Tmsg4 and Block4) to show that this does not stop the other threads.
-The test stops pattern A1 which stops thread 1.
-The test stops pattern A which stops thread 3.
-The test stops node Block2 which stops thread 2 (there is no pattern on this thread).
-See Figure~\ref{fig:schedule_origin_startthreads} for the schedule.
+\item \texttt{test\_threadsStartStop} \\
+Thread 0 assigns Tmsg\{1,2,3\} and Block\{1,2,3\} to thread 1,2,3 and starts these threads.
+The test then starts pattern D (Tmsg4 and Block4) to show that this does not stop the other threads.
+The test stops pattern A which stops thread 1.
+The test stops pattern C which stops thread 3.
+The test stops node Block2 which stops thread 2.
+See Figure~\ref{fig:schedule_origin_startthreads} for the schedule. For the Tmsg and the Blocks the
+diagram shows the threads. There is no command to stop a thread.
     \begin{figure}
         \centering
         \includegraphics*[width=1.\textwidth,keepaspectratio]{TestPattern/threadsStartStop.pdf}
-        \caption{Schedule to start threads with origins. This is used in test\_originStartthread.py}
+        \caption{Schedule which assigns origins and then starts threads
+        with these origins. This is used in test\_originStartthread.py}
         \label{fig:schedule_origin_startthreads}
     \end{figure}
-\item This test demonstrates that a node can exist in two threads.
+\item \texttt{test\_nodeInTwoThreads} \\
+This test demonstrates that a node can exist in two threads.
 Tmsg1 ist in thread 1, Tmsg2 is in thread 2. Successor for both is Tmsg3.
 Thus we have a timing message from Tmsg3 for each timing message from Tmsg1 and Tmsg2.
 The loop in thread 0 (nodes Tmsg0, OriginN, StartthreadN, Block0) starts
@@ -698,6 +709,19 @@ See Figure~\ref{fig:schedule_nodeInTwoThreads} for the schedule.
         \caption{Schedule with a node in two threads. This is used in test\_originStartthread.py}
         \label{fig:schedule_nodeInTwoThreads}
     \end{figure}
+\item \texttt{test\_startStopAllThreads} \\
+    Run a pps pattern on all threads and all CPUs. Halt all threads and check this state.
+    Then start four threads 0,1,2,3 on all CPUs and check.
+    For more than 8 threads:
+    Then start four threads 8,9,10,11 on all CPUs and check.
+    Then start four threads 16,17,18,19 on all CPUs and check.
+    Then start four threads 24,25,26,27 on all CPUs and check.
+\item \texttt{test\_startStopBlocks} \\
+    Run a pps pattern on all threads of CPU 0.
+    Stop block Block0b four times and check the result. This block is on
+    thread 1, and for more than 8 threads also on thread 9, 17, 25.
+    Thus we check that one of these threads is stopped for more than
+    8 threads.
 \end{enumerate}
 
 \section{test\_originTwothreads.py}

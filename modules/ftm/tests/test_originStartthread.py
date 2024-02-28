@@ -7,29 +7,30 @@ Tests for node types origin and startthread.
 class TestOriginStartthread(dm_testbench.DmTestbench):
 
   def startStopPattern(self):
-    """
+    """Start and stop patterns on different threads.
+    Check that the correct threads are running-
     """
     self.delay(0.2)
     # ~ now = datetime.now().time() # time object
     # ~ print("start of startStopPattern ", now)
     # ~ line1 = self.startAndGetSubprocessOutput(('ssh', 'root@fel0069.acc', 'eb-mon', '-d', 'dev/wbm1'), [0], 1, 0)
     # ~ print(f'{line1}')
-    # start pattern A
-    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'A'), [0], 1, 0)
-    # check that thread 0 has 1 message, threads 1,2,3 are running
-    # TODO check messages
+    # start pattern X
+    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'X'), [0], 1, 0)
+    # check that thread 0 has 1 message, threads 1,2,3 are running.
+    # check message: done in main method with self.analyseFrequencyFromCsv, key 0x0000000000000000.
     self.analyseDmCmdOutput('01110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'[:self.cpuQuantity*self.threadQuantity])
     # start pattern B
-    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'B'), [0], 1, 0)
+    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'D'), [0], 1, 0)
     # check that thread 0 has 2 messages, threads 1,2,3 are running
-    # TODO check messages
+    # check message: done in main method with self.analyseFrequencyFromCsv, key 0x0000000000000004.
     self.analyseDmCmdOutput('01110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'[:self.cpuQuantity*self.threadQuantity])
-    # stop pattern A1
-    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'stoppattern', 'A1'), [0], 0, 0)
+    # stop pattern A
+    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'stoppattern', 'A'), [0], 0, 0)
     # check that thread 1 has stopped
     self.analyseDmCmdOutput('00110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'[:self.cpuQuantity*self.threadQuantity])
     # stop pattern A
-    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'stoppattern', 'A'), [0], 0, 0)
+    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'stoppattern', 'C'), [0], 0, 0)
     # check that thread 3 has stopped
     self.analyseDmCmdOutput('00100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'[:self.cpuQuantity*self.threadQuantity])
     # stop block2
@@ -39,11 +40,11 @@ class TestOriginStartthread(dm_testbench.DmTestbench):
 
 
   def test_threadsStartStop(self):
-    """Thread 0 assigns TmsgX and BlockX to thread 1,2,3 and starts these.
-    then start pattern B (Tmsg4 and Block4) to show that this does not stop the other threads.
-    Stop pattern A1 which stops thread 1
-    Stop pattern A which stops thread 3
-    Stop node Block2 which stops thread 2 (there is no pattern on this thread)
+    """Thread 0 assigns TmsgX and BlockX to thread X=1,2,3 and starts these threads.
+    Then start pattern D (Tmsg4 and Block4) to show that this does not stop the other threads.
+    Stop pattern A which stops thread 1.
+    Stop pattern C which stops thread 3.
+    Stop node Block2 which stops thread 2.
     """
     self.addSchedule('threadsStartStop.dot')
     fileName = 'snoop_threadsStartStop.csv'
@@ -60,7 +61,7 @@ class TestOriginStartthread(dm_testbench.DmTestbench):
     Tmsg1 ist in thread 1, Tmsg2 is in thread 2. Successor for both is Tmsg3.
     Thus we have a Tmsg3 for each Tmsg1 and Tmsg2.
     The loop in thread 0 (nodes Tmsg0, OriginN, StartthreadN, Block0) starts
-    the threads 1, 2 every 10ms. Thread 1, 2 end with Block3.
+    the threads 1 and 2 every 10ms. Thread 1 and 2 end with Block3.
     """
     self.startPattern('nodeInTwoThreads.dot', 'A')
     fileName = 'snoop_nodeInTwoThreads.csv'
