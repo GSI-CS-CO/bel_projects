@@ -287,23 +287,23 @@ void disAddServices(char *prefix)
   char name[DIMMAXSIZE];
 
   // 'generic' services
-  sprintf(name, "%s-mon_version_fw", prefix);
+  sprintf(name, "%s_version_fw", prefix);
   sprintf(disVersion, "%s",  wrmil_version_text(WRMIL_SERV_MON_VERSION));
   disVersionId   = dis_add_service(name, "C", disVersion, 8, 0 , 0);
 
-  sprintf(name, "%s-mon_state", prefix);
+  sprintf(name, "%s_state", prefix);
   sprintf(disState, "%s", wrmil_state_text(COMMON_STATE_OPREADY));
   disStateId      = dis_add_service(name, "C", disState, 10, 0 , 0);
 
-  sprintf(name, "%s-mon_hostname", prefix);
+  sprintf(name, "%s_hostname", prefix);
   disHostnameId   = dis_add_service(name, "C", disHostname, DIMCHARSIZE, 0 , 0);
 
-  sprintf(name, "%s-mon_status", prefix);
+  sprintf(name, "%s_status", prefix);
   disStatus       = 0x1;   
   disStatusId     = dis_add_service(name, "X", &disStatus, sizeof(disStatus), 0 , 0);
 
   // monitoring data service
-  sprintf(name, "%s-mon_data", prefix);
+  sprintf(name, "%s_data", prefix);
   disMonDataId  = dis_add_service(name, "I:1;X:6;D:5", &(disMonData), sizeof(monval_t), 0, 0);
 } // disAddServices
 
@@ -390,15 +390,15 @@ int main(int argc, char** argv)
         tmpi        = strtoull(optarg, &tail, 0);
         if (*tail != 0) {std::cerr << "Specify a proper number, not " << optarg << "'%s'!" << std::endl; return 1;}
         switch (tmpi) {
-          case 0: gid = PZU_QR;     sprintf(domainName, "%s", "PZU_QR");     break;
-          case 1: gid = PZU_QL;     sprintf(domainName, "%s", "PZU_QL");     break;
-          case 2: gid = PZU_QN;     sprintf(domainName, "%s", "PZU_QN");     break;
-          case 3: gid = PZU_UN;     sprintf(domainName, "%s", "PZU_UN");     break;
-          case 4: gid = PZU_UH;     sprintf(domainName, "%s", "PZU_UH");     break;
-          case 5: gid = PZU_AT;     sprintf(domainName, "%s", "PZU_AT");     break;
-          case 6: gid = PZU_TK;     sprintf(domainName, "%s", "PZU_TK");     break;
-          case 7: gid = SIS18_RING; sprintf(domainName, "%s", "SIS18_RING"); break;
-          case 8: gid = ESR_RING;   sprintf(domainName, "%s", "ESR_RING");   break;
+          case 0: gid = PZU_QR;     sprintf(domainName, "%s", "pzu_qr");     break;
+          case 1: gid = PZU_QL;     sprintf(domainName, "%s", "pzu_ql");     break;
+          case 2: gid = PZU_QN;     sprintf(domainName, "%s", "pzu_qn");     break;
+          case 3: gid = PZU_UN;     sprintf(domainName, "%s", "pzu_un");     break;
+          case 4: gid = PZU_UH;     sprintf(domainName, "%s", "pzu_ut");     break;
+          case 5: gid = PZU_AT;     sprintf(domainName, "%s", "pzu_at");     break;
+          case 6: gid = PZU_TK;     sprintf(domainName, "%s", "pzu_tk");     break;
+          case 7: gid = SIS18_RING; sprintf(domainName, "%s", "sis18_ring"); break;
+          case 8: gid = ESR_RING;   sprintf(domainName, "%s", "esr_ring");   break;
           default: {std::cerr << "Specify a proper number, not " << tmpi << "'%s'!" << std::endl; return 1;} break;
         } // case tmpi
         break;
@@ -435,8 +435,8 @@ int main(int argc, char** argv)
   deviceName = argv[optind];
   gethostname(disHostname, 32);
   
-  if (optind+1 < argc) sprintf(prefix, "wrmil_%s_%s", argv[++optind], domainName);
-  else                 sprintf(prefix, "wrmil_%s", domainName);
+  if (optind+1 < argc) sprintf(prefix, "wrmil_%s_%s-mon", argv[++optind], domainName);
+  else                 sprintf(prefix, "wrmil_%s-mon", domainName);
 
   if (startServer) {
     printf("%s: starting server using prefix %s\n", program, prefix);
