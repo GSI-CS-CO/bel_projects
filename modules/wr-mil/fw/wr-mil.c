@@ -498,7 +498,7 @@ uint32_t convert_WReventID_to_milTelegram(uint64_t evtId, uint32_t *milTelegram)
 
   *milTelegram = (tophalf << 8) | evtCode; 
                                            
-  // For MIL events, the upper 4 bits ov evtNo are zero
+  // For MIL events, the upper 4 bits of evtNo are zero
   return (evtNo & 0x00000f00) == 0; 
 } // convert_WReventID_to_milTelegram
 
