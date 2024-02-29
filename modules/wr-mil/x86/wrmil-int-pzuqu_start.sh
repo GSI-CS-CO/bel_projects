@@ -8,8 +8,8 @@
 # gateway : dev/wbm0, tr0
 export TRGW=dev/wbm0         # EB device 
 export SDGW=tr0              # saftlib device
-export NGW=0                 # of GW; pzu_qr, pzu_ql ...
-export SIDGW=1c0             # SID of puz_qr, pzu_ql ...
+export NGW=2                 # of GW; pzu_qr, pzu_ql ...
+export SIDGW=1c2             # SID of puz_qr, pzu_ql ...
 export MILDEV=1              # MIL device, piggy(0), sio slot 1 (1) ...
 export MILADDR=0x420800      # address of MIL device to which MIL telegram is written
 # piggy: Wishbone address of 'GSI_MIL_SCU'
@@ -50,7 +50,7 @@ eb-fwload $TRGW u 0x0 wrmil.bin
 
 echo -e WRMIL: configure firmware for gateway $NGW
 sleep 2
-wrmil-ctl $TRGW -s$NGW -w1 -m2 -l1375 configure
+wrmil-ctl $TRGW -s$NGW -w1 -m2 -l1375 -t255 configure
 sleep 2
 wrmil-ctl $TRGW startop
 
