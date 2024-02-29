@@ -234,9 +234,9 @@ void wrmil_printDiag(uint32_t utcTrigger, uint32_t utcDelay, uint32_t trigUtcDel
   printf("wrmil: info  ...\n\n");
 
   printf("GID                          : 0x%015x\n"     , gid);
-  printf("UTC trigger evtid            : 0d%015u\n"     , utcTrigger);
+  printf("UTC trigger evt ID           : 0x%015x\n"     , utcTrigger);
   printf("UTC MIL delay [us]           : 0d%015u\n"     , utcDelay);
-  printf("UTC trigger event ID         : 0d%015u\n"     , utcTrigger);
+  printf("UTC trigger delay [us]       : 0d%015u\n"     , trigUtcDelay);
   printf("MIL latency [ns]             : 0d%015d\n"     , latency);
   printf("UTC offset [ms]              : 0d%015lu\n"    , utcOffset);
   printf("request fill event           : 0d%015u\n"     , requestFill);
