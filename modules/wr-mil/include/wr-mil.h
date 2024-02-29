@@ -41,8 +41,8 @@
 #define SIS18_RING                    0x12c   // LSA SIS18 ring
 #define ESR_RING                      0x154   // LSA ESR ring
 #define LOC_MIL_SEND                  0xff0   // internal: MIL telegrams to be sent
-#define LOC_MIL_REC                   0xff1   // internal: MIL telegrams received (timestamp only)
-#define LOC_TLU                       0xfe1   // internal: MIL telegrams received (data, 100us delay)
+#define LOC_MIL_REC                   0xff1   // internal: MIL telegrams received (data)
+#define LOC_TLU                       0xfe1   // internal: MIL telegrams received (timestamp only)
 
 // specialities
 // interrupts
