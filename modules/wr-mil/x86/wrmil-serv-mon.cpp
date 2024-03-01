@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-Feb-2024
+ *  version : 01-Mar-2024
  *
  * monitors WR-MIL gateway
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define WRMIL_SERV_MON_VERSION 0x000001
+#define WRMIL_SERV_MON_VERSION 0x000002
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -394,7 +394,7 @@ int main(int argc, char** argv)
           case 1: gid = PZU_QL;     sprintf(domainName, "%s", "pzu_ql");     break;
           case 2: gid = PZU_QN;     sprintf(domainName, "%s", "pzu_qn");     break;
           case 3: gid = PZU_UN;     sprintf(domainName, "%s", "pzu_un");     break;
-          case 4: gid = PZU_UH;     sprintf(domainName, "%s", "pzu_ut");     break;
+          case 4: gid = PZU_UH;     sprintf(domainName, "%s", "pzu_uh");     break;
           case 5: gid = PZU_AT;     sprintf(domainName, "%s", "pzu_at");     break;
           case 6: gid = PZU_TK;     sprintf(domainName, "%s", "pzu_tk");     break;
           case 7: gid = SIS18_RING; sprintf(domainName, "%s", "sis18_ring"); break;
