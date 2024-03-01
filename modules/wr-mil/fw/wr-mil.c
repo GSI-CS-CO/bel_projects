@@ -583,9 +583,13 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       if (recEvtNo == utc_trigger) {
         // send EVT_UTC_1/2/3/4/5 telegrams
         make_mil_timestamp(sendDeadline, evt_utc, utc_offset);
+        sendDeadline += trig_utc_delay * one_us_ns;
         for (i=0; i<WRMIL_N_UTC_EVTS; i++){
           sendDeadline += utc_utc_delay * one_us_ns;
           prepMilTelegramEca(evt_utc[i], &sendEvtId, &sendParam);
+          // nicer evtId for debugging only
+          sendEvtId &= 0xffff000fffffffff;
+          sendEvtId |= (uint64_t)(0x0e0 + i) << 36;
           fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 1);
           nEvtsSnd++;
         } // for i
