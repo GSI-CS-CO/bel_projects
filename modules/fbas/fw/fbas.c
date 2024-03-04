@@ -826,6 +826,7 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
   uint32_t nUSeconds = 100;                                   // time period in microseconds
   uint32_t action;                                            // ECA action tag
   mpsMsg_t* buf = pBufMpsMsg;                                 // pointer to MPS message buffer
+  uint64_t now, last;                                         // used to measure the period of the main loop
 
   status = actStatus;
 
@@ -902,8 +903,17 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
       break;
   }
 
+  // measure the period of the main loop
+  now = getSysTime();
+  last = measureGetTimestamp(MSR_MAIN_LOOP_PRD);
+  if (last) {
+    measureSummarize(MSR_MAIN_LOOP_PRD, last, now, DISABLE_VERBOSITY);
+    measureExportSummary(MSR_MAIN_LOOP_PRD, pSharedApp, FBAS_SHARED_ML_PRD_AVG);
+  }
+  measurePutTimestamp(MSR_MAIN_LOOP_PRD, now);
+
   return status;
-} // doActionOperation
+}
 
 int main(void) {
   uint32_t status;                                            // (error) status

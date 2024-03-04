@@ -77,7 +77,7 @@ struct shared_reg_s {
   // set (write-only)
   uint32_t cmd;             // user command
   uint32_t set_node;        // set node type (TX or RX)
-  uint64_t set_senderid;    // set sender ID
+  uint32_t set_senderid;    // set sender ID
 
   // get
   uint32_t node;            // get node type
@@ -102,6 +102,7 @@ struct shared_reg_s {
   struct stats_s msg_dly;   // messaging delay, 64-bit
   struct stats_s ttl_prd;   // TTL period, 64-bit
   struct stats_s eca_hndl;  // ECA handling, 64-bit
+  struct stats_s ml_prd;    // main loop period, 64-bit
 
 } fbas_reg;
 
@@ -248,8 +249,8 @@ void printStatsData(int snoopInterval, int snoopLockFlag, int64_t contMaxPosDT, 
 */
 static void printDelayMeasureHeader(void)
 {
-  fprintf(stdout, " WR  | ECA [n(Hz)]                  |    ECA dl-ts [us]      | Delay measure [us]\n");
-  fprintf(stdout, "lock | nMessages ( rate )      late |    max    avg    (act) | TX : Sig : Msg\n");
+  fprintf(stdout, " WR  | ECA [n(Hz)]                  |    ECA dl-ts [us]      | Delay [us]\n");
+  fprintf(stdout, "lock | nMessages ( rate )      late |    max    avg    (act) | TX : Msg : Sig : ML\n");
 }
 
 /**
@@ -257,7 +258,7 @@ static void printDelayMeasureHeader(void)
  *
 */
 static void printDelayMeasureData(int snoopInterval, int snoopLockFlag, uint64_t ecaNMessage, int64_t ecaMax, int64_t ecaDtSum, int ecaLate,
-                                  uint64_t avgTxDly, uint64_t avgSgLty, uint64_t avgMsgDly)
+                                  uint64_t avgTxDly, uint64_t avgSgLty, uint64_t avgMsgDly, uint64_t avgMlPrd)
 {
   int average;                        // total average (dl-ts)
   int averageAct;                     // actual average (dl-ts)
@@ -278,13 +279,54 @@ static void printDelayMeasureData(int snoopInterval, int snoopLockFlag, uint64_t
 
   fprintf(stdout, "%4d ", snoopLockFlag);
   if (ecaNMessage == 0)
-    fprintf(stdout, "| %9"PRIu64" (%6.1f) %9d | %6d %6d (%6d) | %d : %d : %d", (uint64_t)0, 0.0, 0, 0, 0, 0, 0, 0, 0);
+    fprintf(stdout, "| %9"PRIu64" (%6.1f) %9d | %6d %6d (%6d) | %ld : %ld : %ld : %ld", (uint64_t)0, 0.0, 0, 0, 0, 0, avgTxDly, avgMsgDly, avgSgLty, avgMlPrd);
   else
-    fprintf(stdout, "| %9"PRIu64" (%6.1f) %9d | %6d %6d (%6d) | %ld : %ld : %ld", ecaNMessage, (double)nMessageAct/(double)snoopInterval,
-            ecaLate, (int)(ecaMax/1000), average, averageAct, avgTxDly, avgSgLty, avgMsgDly);
+    fprintf(stdout, "| %9"PRIu64" (%6.1f) %9d | %6d %6d (%6d) | %ld : %ld : %ld : %ld", ecaNMessage, (double)nMessageAct/(double)snoopInterval,
+            ecaLate, (int)(ecaMax/1000), average, averageAct, avgTxDly, avgMsgDly, avgSgLty, avgMlPrd);
   fprintf(stdout, "\n");
   fflush(stdout);
 
+}
+
+/**
+ * @brief Print memory address of the shared registers
+ *
+ * @param reg Pointer to the registers
+*/
+static void printSharedRegs(struct shared_reg_s *reg)
+{
+  fprintf(stdout, "Register:      address (hex)\n");
+  fprintf(stdout, "Base:          0x%x\n", reg->base);
+  fprintf(stdout, "State:         0x%x\n", reg->state);
+
+  fprintf(stdout, "Command:       0x%x\n", reg->cmd);
+  fprintf(stdout, "Set node type: 0x%x\n", reg->set_node);
+  fprintf(stdout, "Set sender ID: 0x%x\n", reg->set_senderid);
+
+  fprintf(stdout, "Get node type: 0x%x\n", reg->node);
+  fprintf(stdout, "SCU bus slave: 0x%x\n", reg->sb_slaves);
+  fprintf(stdout, "Count:         0x%x\n", reg->cnt);
+  fprintf(stdout, "Timestamp 1:   0x%x\n", reg->ts1);
+  fprintf(stdout, "Timestamp 2:   0x%x\n", reg->ts2);
+  fprintf(stdout, "Timestamp 3:   0x%x\n", reg->ts3);
+  fprintf(stdout, "Timestamp 4:   0x%x\n", reg->ts4);
+  fprintf(stdout, "Timestamp 5:   0x%x\n", reg->ts5);
+  fprintf(stdout, "Timestamp 6:   0x%x\n", reg->ts6);
+  fprintf(stdout, "Summary statistics:\n");
+  fprintf(stdout, "Average:       0x%x\n", reg->avg);
+  fprintf(stdout, "Minimum:       0x%x\n", reg->min);
+  fprintf(stdout, "Maximum:       0x%x\n", reg->max);
+  fprintf(stdout, "Valid:         0x%x\n", reg->vld);
+  fprintf(stdout, "All:           0x%x\n", reg->all);
+  fprintf(stdout, "ECA valid:     0x%x\n", reg->eca_vld);
+  fprintf(stdout, "ECA ovflw:     0x%x\n", reg->eca_ovf);
+  fprintf(stdout, "Delay measurements:\n");
+  fprintf(stdout, "Transmit delay:    0x%x\n", reg->tx_dly.avg);
+  fprintf(stdout, "Signaling latency: 0x%x\n", reg->sg_lty.avg);
+  fprintf(stdout, "Messaging delay:   0x%x\n", reg->msg_dly.avg);
+  fprintf(stdout, "TTL period:        0x%x\n", reg->ttl_prd.avg);
+  fprintf(stdout, "ECA handle delay:  0x%x\n", reg->eca_hndl.avg);
+  fprintf(stdout, "Main loop period:  0x%x\n", reg->ml_prd.avg);
 }
 
 /**
@@ -333,6 +375,7 @@ uint32_t wb_init_shared_regs(const eb_device_t device, struct shared_reg_s *reg)
   reg->msg_dly.avg  = reg->base + SHARED_OFFS + FBAS_SHARED_MSG_DLY_AVG;
   reg->ttl_prd.avg  = reg->base + SHARED_OFFS + FBAS_SHARED_TTL_PRD_AVG;
   reg->eca_hndl.avg = reg->base + SHARED_OFFS + FBAS_SHARED_ECA_HNDL_AVG;
+  reg->ml_prd.avg   = reg->base + SHARED_OFFS + FBAS_SHARED_ML_PRD_AVG;
 
   return COMMON_STATUS_OK;
 }
@@ -354,9 +397,11 @@ static uint32_t wb_read_shared(const eb_device_t device, const eb_width_t width,
 {
   eb_cycle_t   eb_cycle;
   eb_status_t  eb_status;
-  
-  if (!device)
+
+  if (!device) {
+    fprintf(stderr, "Null WB target.\n");
     return COMMON_STATUS_EB;
+  }
 
   if (width > sizeof(eb_data_t)) {
     fprintf(stderr, "local Etherbone library only supports %s-bit operations.\n",
@@ -483,6 +528,7 @@ int main(int argc, char** argv) {
   uint64_t    avgTxDly=0;
   uint64_t    avgSgLty=0;
   uint64_t    avgMsgDly=0;
+  uint64_t    avgMlPrd=0;
 
   int         link;
   uint32_t    uptime;
@@ -683,19 +729,18 @@ int main(int argc, char** argv) {
     wb_eca_stats_enable(device, devIndex, 0x1);
     wb_wr_stats_reset(device, devIndex, WRTOBS, STALLTOBS);
 
-    // init shared registers
-    if (wb_init_shared_regs(device, &fbas_reg) == COMMON_STATUS_OK)
-      fprintf(stdout, "FBAS_CMD: 0x%x\nFBAS_STATE: 0x%x\nFBAS_ECA_HNDL_AVG: 0x%x\nFBAS_TS1: 0x%x\n",
-              fbas_reg.cmd, fbas_reg.state, fbas_reg.eca_hndl.avg, fbas_reg.ts1);
-
     fprintf(stdout, "local Etherbone library supports %s-bit operations.\n",
             eb_width_data((sizeof(eb_data_t) << 1) -1));
 
     nSecs           = snoopSecs;
     ecaSumEarly     = 0;
 
-    if (snoopDelayStats)
+    if (snoopDelayStats) {
+      // init shared registers
+      if (wb_init_shared_regs(device, &fbas_reg) == COMMON_STATUS_OK)
+        printSharedRegs(&fbas_reg);
       printDelayMeasureHeader();
+    }
     else
       printStatsHeader();
 
@@ -751,8 +796,12 @@ int main(int argc, char** argv) {
           if (wb_read_32(device, fbas_reg.msg_dly.avg, (uint32_t *)sumStat, 2) == COMMON_STATUS_OK)
             avgMsgDly = (sumStat[1] + (sumStat[0] << 32))/1000;    // ns->us
 
+          // read average period of the main loop
+          if (wb_read_32(device, fbas_reg.ml_prd.avg, (uint32_t *)sumStat, 2) == COMMON_STATUS_OK)
+            avgMlPrd = (sumStat[1] + (sumStat[0] << 32))/1000;    // ns->us
+
           printDelayMeasureData(snoopSecs, snoopLockFlag, ecaNMessage, ecaDtMax, ecaDtSum, ecaNLate,
-                                avgTxDly, avgSgLty, avgMsgDly);
+                                avgTxDly, avgSgLty, avgMsgDly, avgMlPrd);
         }
         else
           printStatsData(snoopSecs, snoopLockFlag, contMaxPosDT, contMaxNegDT, snoopStallMax, snoopStallAct,

@@ -63,7 +63,12 @@
 #define FBAS_SHARED_ECA_HNDL_MAX   (FBAS_SHARED_ECA_HNDL_MIN   + 2 * _32b_SIZE_)   // max
 #define FBAS_SHARED_ECA_HNDL_VLD   (FBAS_SHARED_ECA_HNDL_MAX   + 2 * _32b_SIZE_)   // valid count
 #define FBAS_SHARED_ECA_HNDL_ALL   (FBAS_SHARED_ECA_HNDL_VLD   + _32b_SIZE_)       // all/total count
-#define FBAS_SHARED_END            (FBAS_SHARED_ECA_HNDL_ALL   + _32b_SIZE_)       // end of the app-spec region
+#define FBAS_SHARED_ML_PRD_AVG     (FBAS_SHARED_ECA_HNDL_ALL   + _32b_SIZE_)       // main loop period, avg
+#define FBAS_SHARED_ML_PRD_MIN     (FBAS_SHARED_ML_PRD_AVG     + 2 * _32b_SIZE_)   // min
+#define FBAS_SHARED_ML_PRD_MAX     (FBAS_SHARED_ML_PRD_MIN     + 2 * _32b_SIZE_)   // max
+#define FBAS_SHARED_ML_PRD_VLD     (FBAS_SHARED_ML_PRD_MAX     + 2 * _32b_SIZE_)   // valid count
+#define FBAS_SHARED_ML_PRD_ALL     (FBAS_SHARED_ML_PRD_VLD     + _32b_SIZE_)       // all/total count
+#define FBAS_SHARED_END            (FBAS_SHARED_ML_PRD_ALL     + _32b_SIZE_)       // end of the app-spec region
 
 // valid value for data fields in the MPS payload
 #define MPS_VID_FBAS     105   // VLAN ID for FBAS
