@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 01-Mar-2024
+ *  version : 06-Mar-2024
  *
  * monitors WR-MIL gateway
  *
@@ -101,6 +101,7 @@ double    tAveOld;                      // helper for stats
 double    tAveStreamOld;                // helper for stats
 int       flagClear;                    // flag for clearing diag data;
 uint32_t  matchWindow       = MATCH_WIN_US;
+uint32_t  modeCompare       = 0;
 
 
 
@@ -217,7 +218,7 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
   
   switch (tag) {
     case tagStart   :
-      if (mGid != monData.gid)            return;  // received GID does not match configuration
+      //if (mGid != monData.gid)            return;  // received GID does not match configuration
       monData.nSnd++; 
       flagMilSent                  = 1;
       sndDeadline                  = deadline.getTAI();
@@ -316,6 +317,9 @@ static void help(void) {
   std::cerr << "  -e                   display version"                                             << std::endl;
   std::cerr << "  -f                   use the first attached device (and ignore <device name>)"    << std::endl;
   std::cerr << "  -d                   start server publishing data"                                << std::endl;
+  std::cerr << "  -c <mode>            type of comparison; default 0; this can be"                  << std::endl;
+  std::cerr << "                       0: compare received MIL telegrams with WR timing messages"   << std::endl;
+  std::cerr << "                       1: compare received MIL telegrams with send MIL telegrams"   << std::endl;
   std::cerr << "  -m <match windows>   [us] windows for matching start/stop evts; default 20"       << std::endl;
   std::cerr << std::endl;
   std::cerr << "  The paremter -s is mandatory"                                                     << std::endl;
@@ -347,6 +351,8 @@ int main(int argc, char** argv)
   bool     getVersion     = false;
   bool     startServer    = false;
   uint32_t gid=0xffffffff;                // gid for gateway
+  uint32_t gidStart;                      // relevant to select the type of messages used as a start
+  uint64_t offsetStart;                   // correction to be used for different monitoring types
 
   char    *tail;
 
@@ -375,7 +381,7 @@ int main(int argc, char** argv)
 
   // parse for options
   program = argv[0];
-  while ((opt = getopt(argc, argv, "s:m:hefd")) != -1) {
+  while ((opt = getopt(argc, argv, "s:m:c:hefd")) != -1) {
     switch (opt) {
       case 'e' :
         getVersion  = true;
@@ -404,6 +410,9 @@ int main(int argc, char** argv)
         break;
       case 'm':
         matchWindow = strtoull(optarg, &tail, 0);
+        break;
+      case 'c':
+        modeCompare = strtoull(optarg, &tail, 0);
         break;
       case 'h':
         help();
@@ -505,19 +514,35 @@ int main(int argc, char** argv)
 
     // define conditions (ECA filter rules)
 
+    // select if we use the received White Rabbit timing messages or the sent MIL telegrams as start
+    switch (modeCompare) {
+      case 0:
+        gidStart    = gid;
+        offsetStart = 0;
+        break;
+      case 1:
+        gidStart    = LOC_MIL_SEND;
+        offsetStart = WRMIL_MILSEND_LATENCY;
+        break;
+      default:
+        gidStart = gid;
+    } // switch modeCompare
+
     // message that is injected locally by the lm32 firmware (triggering a rule on the ECA WB channel towards the MIL interface)
     // this message must be delayed by one ms to (hopefully) coincide with the received MIL telegram
+    // we also do prefix machting of the first four bits of the evtNo (should be '0x0')
     tmpTag        = tagStart;
-    snoopID       = ((uint64_t)FID << 60) | ((uint64_t)gid << 48);
-    condition[0]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xffff000000000000, one_ms_ns));
+    snoopID       = ((uint64_t)FID << 60) | ((uint64_t)gidStart << 48);
+    condition[0]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffff00000000000, one_ms_ns + offsetStart));
     tag[0]        = tmpTag;
         
     // message that is injected locally by the lm32 firmware after detecting and decoding a receive MIL telegram
     // this message is delayed by 20us to avoid a) a collision b) to have a defined order of both messages
     // (this assumes that the 'true' offset between both messages is always smaller than 20us)
+    // we also do prefix machting of the first four bits of the evtNo (should be '0x0')
     tmpTag        = tagStop;        
     snoopID       = ((uint64_t)FID << 60) | ((uint64_t)LOC_MIL_REC << 48);
-    condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xffff000000000000, one_us_ns * matchWindow));
+    condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffff00000000000, one_us_ns * matchWindow));
     tag[1]        = tmpTag;
     
     // let's go!

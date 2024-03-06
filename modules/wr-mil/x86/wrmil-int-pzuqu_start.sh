@@ -50,7 +50,7 @@ eb-fwload $TRGW u 0x0 wrmil.bin
 
 echo -e WRMIL: configure firmware for gateway $NGW
 sleep 2
-wrmil-ctl $TRGW -s$NGW -w1 -m2 -l1375 -t255 configure
+wrmil-ctl $TRGW -s$NGW -w1 -m2 -l1375 -t255 -d650 -u56 configure
 sleep 2
 wrmil-ctl $TRGW startop
 

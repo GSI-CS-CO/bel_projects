@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Micheal Reese, Mathias Kreider GSI-Darmstadt
- *  version : 20-feb-2024
+ *  version : 06-Mar-2024
  *
  *  firmware required for the White Rabbit -> MIL Gateways
  *  
