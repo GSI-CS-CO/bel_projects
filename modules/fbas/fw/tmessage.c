@@ -130,8 +130,9 @@ uint32_t sendMpsMsgBlock(size_t len, timedItr_t* itr, uint64_t evtId)
     idLo       = (uint32_t)(evtId            & 0xffffffff);
     tef        = 0x00000000;
     res        = 0x00000000;
-    deadlineHi = (uint32_t)((now >> 32) & 0xffffffff);
-    deadlineLo = (uint32_t)(now         & 0xffffffff);
+    deadline   = now + FBAS_AHEAD_TIME;
+    deadlineHi = (uint32_t)((deadline >> 32) & 0xffffffff);
+    deadlineLo = (uint32_t)(deadline         & 0xffffffff);
 
     // start EB operation
     ebm_hi(COMMON_ECA_ADDRESS);
@@ -190,8 +191,9 @@ uint32_t msgSendPeriodicMps(timedItr_t* itr, const uint64_t evtid)
 
   // send next MPS message if deadline is over
   if (deadline <= now) {
-    // send MPS message with current timestamp, which varies around deadline
-    if (fwlib_ebmWriteTM(now, evtid, bufMpsMsg[itr->idx].param, tef, 1) == COMMON_STATUS_OK)
+    // send MPS message with ahead timestamp
+    deadline = now + FBAS_AHEAD_TIME;
+    if (fwlib_ebmWriteTM(deadline, evtid, bufMpsMsg[itr->idx].param, tef, 1) == COMMON_STATUS_OK)
       ++count;
 
     // update iterator with deadline
@@ -223,14 +225,15 @@ uint32_t msgSendSpecificMps(const timedItr_t* itr, mpsMsg_t *const buf, const ui
   if (itr->last >= now) // delayed by a new cycle
     return count;
 
-  // send specified MPS event
-  if (fwlib_ebmWriteTM(now, evtid, buf->param, tef, 1) == COMMON_STATUS_OK)
+  // send a specified MPS event with ahead timestamp
+  uint64_t deadline = now + FBAS_AHEAD_TIME;
+  if (fwlib_ebmWriteTM(deadline, evtid, buf->param, tef, 1) == COMMON_STATUS_OK)
     ++count;
 
   // NOK flag shall be sent as extra events
   if (buf->prot.flag == MPS_FLAG_NOK) {
     for (uint8_t i = 0; i < extra; ++i) {
-      if (fwlib_ebmWriteTM(now, evtid, buf->param, tef, 1) == COMMON_STATUS_OK)
+      if (fwlib_ebmWriteTM(deadline, evtid, buf->param, tef, 1) == COMMON_STATUS_OK)
         ++count;
     }
   }
@@ -432,9 +435,9 @@ status_t msgRegisterNode(const uint64_t id, const regCmd_t cmd)
   uint32_t tef = 0;
   uint32_t forceLate = 1;
   uint64_t param = (id << 16) | (cmd << 8);
-  uint64_t now = getSysTime();
+  uint64_t deadline = getSysTime() + FBAS_AHEAD_TIME;
 
-  status_t status = fwlib_ebmWriteTM(now, FBAS_REG_EID, param, tef, forceLate);
+  status_t status = fwlib_ebmWriteTM(deadline, FBAS_REG_EID, param, tef, forceLate);
   if (status != COMMON_STATUS_OK)
     DBPRINT1("Err - failed to send reg.rsp!\n");
 

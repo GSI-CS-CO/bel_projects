@@ -13,6 +13,9 @@
 #include "common-defs.h"
 #include "fbas_common.h"
 
+// Ahead time
+#define FBAS_AHEAD_TIME    100000ULL // ahead time for deadline, 100 us
+
 // FBAS timing messages
 #define FBAS_FLG_FID       0x1ULL    // format ID, 2-bit
 #define FBAS_FLG_GID       0xfcbULL  // group ID = 4043, 12-bit
