@@ -707,13 +707,16 @@ read_measurement_results() {
     eb-write $device $addr_cmd/4 $instr_msr
 
     avg=$(eb_read_uint64 $device $addr_msr)  # average
+    avg=$(($avg / 1000))                     # ns->us
 
     addr_msr=$(( $addr_msr + 8 ))
     min=$(eb_read_uint64 $device $addr_msr)
     min=$(printf "%lli" $min)                # min might be negative
+    min=$(($min / 1000))                     # ns->us
 
     addr_msr=$(( $addr_msr + 8 ))
     max=$(eb_read_uint64 $device $addr_msr)  # max
+    max=$(($max / 1000))                     # ns->us
 
     addr_msr=$(( $addr_msr + 8 ))
     cnt_val=$(eb-read $device ${addr_msr}/4)
@@ -725,7 +728,7 @@ read_measurement_results() {
 
     echo -n "${avg} ${min} ${max} ${cnt_val} ${cnt_all}"
     if [ -n "$4" ]; then
-        echo " (avg min max valid all)"
+        echo " (avg min max [us] valid all)"
     else
         echo
     fi
