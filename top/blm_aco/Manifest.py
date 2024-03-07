@@ -2,7 +2,7 @@ files = [
    "blm_aco.vhd",
    "scu_diob_pkg.vhd",
    "scu_diob.sdc",
-   #"diob_debounce.vhd",
+   "diob_debounce.vhd",
    "diob_sync.vhd",
    "aw_io_reg.vhd",
    "io_reg.vhd",
@@ -34,8 +34,9 @@ files = [
    "BLM_gate_timing_seq_elem.vhd",
    "BLM_ena_in_mux.vhd",
    "blm_24_9_9_9pll.vhd",
-   "deglitcher.v",
-   "gate_deglitcher.v"
+   "deglitcher.v"
+  # "gate_deglitcher.v",
+   #"deglitcher_v1.vhd"
 ]
 
 modules = {

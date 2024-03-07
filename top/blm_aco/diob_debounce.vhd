@@ -17,7 +17,7 @@ use ieee.math_real.all;
 entity diob_debounce is
 generic
     (
-    DB_Tst_Cnt: integer := 3;
+    DB_Tst_Cnt: integer := 20; --3;
     Test:       integer range 0 TO 1 := 0
     );
 port(

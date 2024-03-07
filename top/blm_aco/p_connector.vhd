@@ -443,9 +443,10 @@ Syn66(53 DOWNTO 48)   <=  not IOBP_Input( 9);
 Syn66(59 DOWNTO 54)   <=  not IOBP_Input( 10);
 Syn66(65 DOWNTO 60)   <=  not IOBP_Input( 11);
 
-IF  (Diob_Config1(11) = '1')  THEN Deb_Sync66 <=  Syn66;         -- Dobounce = Abgeschaltet ==> nur Synchronisation
-                         ELSE Deb_Sync66 <=  Deb66_out;     -- Debounce und Synchronisation
-END IF;
+--IF  (Diob_Config1(11) = '1')  THEN Deb_Sync66 <=  Syn66;         -- Dobounce = Abgeschaltet ==> nur Synchronisation
+                         --ELSE 
+                         Deb_Sync66 <=  Deb66_out;     -- Debounce und Synchronisation
+--END IF;
 
 ---------------------------------------------------------------------------------------------------------
   --################################      daq_channels assignments     ##################################
