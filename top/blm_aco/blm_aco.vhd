@@ -366,18 +366,18 @@ port  (
 end component zeitbasis;
 
 
- --component diob_debounce
---  generic (
-  --  DB_Tst_Cnt: integer := 3;
---    Test:       integer range 0 TO 1);
- -- port (
-  --  DB_Cnt:     in  integer range 0 to 16383;
-  --  DB_In:      in  std_logic;
-  --  Reset:      in  std_logic;
-  --  Clk:        in  std_logic;
-  --  DB_Out:     out std_logic
-  --  );
- -- end component diob_debounce;
+ component diob_debounce
+  generic (
+    DB_Tst_Cnt: integer := 3;
+    Test:       integer range 0 TO 1);
+  port (
+    DB_Cnt:     in  integer range 0 to 16383;
+    DB_In:      in  std_logic;
+    Reset:      in  std_logic;
+    Clk:        in  std_logic;
+    DB_Out:     out std_logic
+    );
+  end component diob_debounce;
 component deglitcher 
   generic	(nr_stages : integer := 2   --3
 );
@@ -2117,19 +2117,41 @@ port map
 );
   end generate Deg_in_signals;
 
-Deg_gate_signals: for I in 54 to 65 generate
-DB_I: gate_deglitcher 
-  generic	map (nr_stages => 10
-)
-port map 
-(
-    clock => clk_sys,        
-   reset=> not rstn_sys,           
-  degl_in => Deg66_in(I), 
-  degl_out => Deg66_out(I)
-);
-  end generate Deg_gate_signals;
-  
+--Deg_gate_signals: for I in 54 to 65 generate
+--DB_I: gate_deglitcher 
+--  generic	map (nr_stages => 10
+--)
+--port map 
+--(
+  --  clock => clk_sys,        
+  -- reset=> not rstn_sys,           
+  --degl_in => Deg66_in(I), 
+  --degl_out => Deg66_out(I)
+--);
+  -- end generate Deg_gate_signals;
+--  Deg_gate_signals: for I in 0 to 11 generate
+--DB_GI: gate_deglitcher 
+--  generic	map (nr_stages => 10
+--)
+--port map 
+--(
+ --   clock => clk_sys,        
+--   reset=> not rstn_sys,           
+--  degl_in => Deg66_in(I+54), 
+--  degl_out => Deg66_out(I+54)
+--);
+--  end generate Deg_gate_signals;
+
+  Deb_GI:  for I in 0 to 11 generate
+ DB_GI:  diob_debounce
+GENERIC MAP (DB_Tst_Cnt   => 20, --3,
+            Test         => 0)             --
+          port map(DB_Cnt => Debounce_cnt,     -- Debounce-Zeit in Clock's
+                   DB_in  => Deg66_in(I+54),   -- Signal-Input
+                  Reset  => not rstn_sys,  -- Powerup-Reset
+                  clk    => clk_sys,       -- Sys-Clock
+                  DB_Out => Deg66_out(I+54)); -- Debounce-Signal-Out
+end generate Deb_GI;
 --
 --         =========== Component's für die 72 "aktiv" Led's ===========
 --

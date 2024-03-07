@@ -24,19 +24,22 @@ type   gate_state_t is   (idle,prepare_state, gate, waiting, error, recover_stat
 signal gate_state:   gate_state_t;
 signal gate_state_sn:   gate_state_t:= idle;
 signal gate_er: std_logic;
-signal timeout_reset : unsigned(15 downto 0); 
+signal timeout_reset : unsigned(16 downto 0); 
 signal gate_out_sm: std_logic;
 
 --signal last_val: std_logic;-- :='0';
-signal timeout : unsigned(15 downto 0);-- := timeout_reset;
+signal timeout : unsigned(16 downto 0);-- := timeout_reset;
 signal curr_val   :std_logic; --:='0';
 signal state_sm: integer range 0 to 5:= 0;
 signal state_nr: std_logic_vector (2 downto 0);
 
 begin
 
-  state_sm_proc: process(gate_state)
+  state_sm_proc: process(clk_i, rstn_i)--(gate_state)
   begin
+  if ((rstn_i= '0')) then 
+    state_sm <= 0;
+  elsif rising_edge(clk_i) then
     case gate_state is
       when idle           => state_sm <= 0;
       when prepare_state  => state_sm <= 1;
@@ -46,12 +49,13 @@ begin
       when recover_state  => state_sm <= 5;
       when others         => null;
     end case;
+  end if;
   end process;
 
 -- gate_state_nr <=  std_logic_vector(to_unsigned(state_sm, gate_state_nr'length));
 
 
-timeout_reset <=unsigned(hold); -- to be checked
+timeout_reset <=unsigned(hold&'0'); -- to be checked
 
 gate_proc: process (clk_i, rstn_i)
 
@@ -94,9 +98,15 @@ gate_proc: process (clk_i, rstn_i)
                      if curr_val ='1' then
                        gate_state <= gate;
                        gate_out_sm <= '1';
-                  
-                      end if;
-
+                     --  timeout <= timeout_reset;
+                    --else
+                    --    timeout <= timeout -1;
+                    --if (to_integer(timeout )=0) then
+                    --         gate_state <= error;
+                    -- end if;
+                       end if;
+ 
+ 
               when gate => --2
                     
                         if curr_val ='0' then
@@ -141,4 +151,3 @@ gate_proc: process (clk_i, rstn_i)
          	    
  end rtl;          		 
 	
-
