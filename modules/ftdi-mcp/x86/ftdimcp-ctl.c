@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 24-October-2023
+ *  version : 07-Mar-2024
  *
  *  command line program for MCP4725 connected via FT232H
  *
@@ -80,7 +80,10 @@ uint32_t  disCmdLevelId     = 0;
 // public variables
 const char* program;
 FT_HANDLE   cHandle;                     // handle to channel
-int         flagBlink; 
+uint32_t    dacAddr;                     // I2C address of DAC
+int         flagBlink;
+uint32_t    deviceID;                    // USB device ID
+char        deviceSerial[32];            // device serial 
 
 
 static void die(const char* what) {
@@ -94,6 +97,7 @@ static void help(void) {
   fprintf(stderr, "  -h                  display this help and exit\n");
   fprintf(stderr, "  -e                  display version\n");
   fprintf(stderr, "  -i                  display information on ftdi module connected via USB\n");
+  fprintf(stderr, "  -a <addr>           I2C address of DAC\n");  
   fprintf(stderr, "  -l <level>          set level of DAC [%%]\n");
   fprintf(stderr, "  -o                  get actual state of comparator output\n");
   fprintf(stderr, "  -s                  get 'stretched' state of comparator output\n");
@@ -114,7 +118,7 @@ FT_STATUS setLevel(double level)
 {
   FT_STATUS ftStatus;
 
-  ftStatus =  ftdimcp_setLevel(cHandle, level, 0, 1);
+  ftStatus =  ftdimcp_setLevel(cHandle, dacAddr, level, 0, 1);
 #ifdef USEDIM
   if (ftStatus == FT_OK) {
     disSetLevel = level;
@@ -223,18 +227,22 @@ int main(int argc, char** argv) {
   program      = argv[0];
   blinkTime_us = FTDIMCP_POLLINTERVAL_US;
   cHandle      = NULL;
+  dacAddr      = FTDIMCP_I2CADDR;
   sprintf(prefix, "%s", "na");
 
-  while ((opt = getopt(argc, argv, "l:d:oseih")) != -1) {
+  while ((opt = getopt(argc, argv, "l:d:a:oseih")) != -1) {
     switch (opt) {
-    case 'e':
-      getVersion = 1;
-      break;
-    case 'i':
-      getInfo = 1;
-      break;
-    case 'l':
-      setDac = 1;
+      case 'e':
+        getVersion = 1;
+        break;
+      case 'i':
+        getInfo = 1;
+        break;
+      case 'a':
+        dacAddr = strtod(optarg, &tail);
+        break;
+      case 'l':
+        setDac = 1;
         dacLevel = strtod(optarg, &tail);
         if (*tail != 0) {
           fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg);
@@ -244,26 +252,26 @@ int main(int argc, char** argv) {
           fprintf(stderr, "value must be within 0..100, not %f!\n", dacLevel);
           exit(1);
         } // if dacLevel
-      break;
-    case 'd':
-      daemon = 1;
-      sprintf(prefix, "%s", optarg);
-      break;
-    case 'o':
-      getOutAct = 1;
-      break;
-    case 's':
-      getOutStretch = 1;
-      break;
-    case 'h':
-      help();
-      return 0;
-    case ':':
-    case '?':
-      error = 1;
-      break;
-    default:
-      fprintf(stderr, "%s: bad getopt result\n", program);
+        break;
+      case 'd':
+        daemon = 1;
+        sprintf(prefix, "%s", optarg);
+        break;
+      case 'o':
+        getOutAct = 1;
+        break;
+      case 's':
+        getOutStretch = 1;
+        break;
+      case 'h':
+        help();
+        return 0;
+      case ':':
+      case '?':
+        error = 1;
+        break;
+      default:
+        fprintf(stderr, "%s: bad getopt result\n", program);
       return 1;
     } /* switch opt */
   } /* while opt */
@@ -328,14 +336,23 @@ int main(int argc, char** argv) {
   // open, init
 
   if ((ftStatus   = ftdimcp_open(cIdx, &cHandle, 1)) != FT_OK) {
-    if (daemon)  sprintf(disStatus, "%s", "device not found");
+    
+    if (daemon) {
+#ifdef USEDIM
+    sprintf(disStatus, "%s", "device not found");
+#endif
+    } // if daemon
     else         die("can't open connection to FTDI channel");
     flagOk = 0;
   } // if ftStatus
 
   if (flagOk) {
     if ((ftStatus   = ftdimcp_init(cHandle)) != FT_OK) {
-      if (daemon)  sprintf(disStatus, "%s", "can't init channel");
+      if (daemon) {
+#ifdef USEDIM
+        sprintf(disStatus, "%s", "can't init channel");
+#endif
+      } // if daemon
       else         die("can't init channel");
       flagOk = 0;
     } // if ftStatus
@@ -343,7 +360,12 @@ int main(int argc, char** argv) {
   
   // info    
   if (getInfo) {
-    if ((ftStatus = ftdimcp_info(cIdx, &disDevice, disSerial, 1)) != FT_OK) die("can't get info on FTDI channel");
+    if ((ftStatus = ftdimcp_info(cIdx, &deviceID, deviceSerial, 1)) != FT_OK) die("can't get info on FTDI channel");
+#ifdef USEDIM
+    disDevice = deviceID;
+    sprintf(disSerial, "%s", deviceSerial);
+#endif
+    
   } // if getInfo
 
   if (setDac) {
@@ -379,8 +401,7 @@ int main(int argc, char** argv) {
     ftStatus        = FT_OK;
     ftStatusOld     = FT_OK;
     flagBlink       = 0;
-
-    
+   
           
     while (1) {
       if (flagOk) {

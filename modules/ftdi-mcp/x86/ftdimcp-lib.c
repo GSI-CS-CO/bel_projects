@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 24-Oct-2023
+ *  version : 07-Mar-2024
  *
  *  x86 routines for MCP4725 connected via FT232H
  * 
@@ -116,7 +116,7 @@ FT_STATUS ftdimcp_init(FT_HANDLE cHandle)
 
 
 // sets level of comparator
-FT_STATUS ftdimcp_setLevel(FT_HANDLE cHandle, double dacLevel, int flagEeprom, int flagDebug)
+FT_STATUS ftdimcp_setLevel(FT_HANDLE cHandle, uint32_t dacAddr, double dacLevel, int flagEeprom, int flagDebug)
 {
   FT_STATUS ftStatus;
   uint32_t  i2cAddr;
@@ -149,7 +149,7 @@ FT_STATUS ftdimcp_setLevel(FT_HANDLE cHandle, double dacLevel, int flagEeprom, i
   else            cmdByte = 0x40;  // write to DAC only
   
   nTx      = 3;
-  i2cAddr  = FTDIMCP_I2CADDR;
+  i2cAddr  = dacAddr;;
 
   
   // command register
@@ -169,7 +169,7 @@ FT_STATUS ftdimcp_setLevel(FT_HANDLE cHandle, double dacLevel, int flagEeprom, i
 
 
 // gets level of comparator
-FT_STATUS ftdimcp_getLevel(FT_HANDLE cHandle)
+FT_STATUS ftdimcp_getLevel(FT_HANDLE cHandle, uint32_t dacAddr)
 {
   FT_STATUS ftStatus;
   uint32_t  nRx;                   // number of bytes to write
@@ -184,7 +184,7 @@ FT_STATUS ftdimcp_getLevel(FT_HANDLE cHandle)
   // data transfer options
   transOpt = 0x3;
   nRx      = 5;
-  i2cAddr  = FTDIMCP_I2CADDR;
+  i2cAddr  = dacAddr;
 
   printf("try reading from DAC\n");
   data[0] = data[1] = data[2] = data[3] = data[4] = 0x0;
