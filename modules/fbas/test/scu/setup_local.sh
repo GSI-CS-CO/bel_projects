@@ -618,7 +618,7 @@ result_tx_delay() {
     # $2 - verbosity
 
     if [ -n "$2" ]; then
-        echo -n "Transmit delay: "
+        echo -n "TX dly: "
     fi
     read_measurement_results $1 $instr_st_tx_dly $addr_avg $2
 }
@@ -628,7 +628,7 @@ result_sg_latency() {
     # $2 - verbosity
 
     if [ -n "$2" ]; then
-        echo -n "Signalling latency:   "
+        echo -n "MSP lty: "
     fi
     read_measurement_results $1 $instr_st_sg_lty $addr_avg $2
 }
@@ -638,7 +638,7 @@ result_msg_delay() {
     # $2 - verbosity
 
     if [ -n "$2" ]; then
-        echo -n "Messaging delay:  "
+        echo -n "Msg dly: "
     fi
     read_measurement_results $1 $instr_st_msg_dly $addr_avg $2
 }
@@ -648,7 +648,7 @@ result_ttl_ival() {
     # $2 - verbosity
 
     if [ -n "$2" ]; then
-        echo -n "TTL interval:   "
+        echo -n "TTL ivl: "
     fi
     read_measurement_results $1 $instr_st_ttl_ival $addr_avg $2
 }
@@ -658,7 +658,7 @@ result_tx_mps_handle() {
     # $2 - verbosity
 
     if [ -n "$2" ]; then
-        echo -n "MPS handling: "
+        echo -n "MPS hdl: "
     fi
     read_measurement_results $1 $instr_st_tx_mps_handle $addr_avg $2
 }

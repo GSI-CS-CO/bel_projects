@@ -152,7 +152,12 @@ measure_nw_perf() {
     output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && disable_mps \$rx_node_dev")
 
     # report test result
-    echo -e "measurement stats: MPS signaling\n"
+    echo "measurement stats of MPS signaling"
+    if [ -z "$verbose" ]; then
+        echo -e "MPS node:       tx_cnt rx_vld rx_ovf\n"
+    else
+        echo
+    fi
 
     sum_tx_cnt=0
     for scu in ${txscu[@]}; do
@@ -174,25 +179,53 @@ measure_nw_perf() {
 
     result="received $rx_cnt of $sum_tx_cnt"
     if [ $rx_cnt -eq $sum_tx_cnt ]; then
-	echo PASS: $result
+	echo -e "PASS: $result\n"
     else
-	echo FAIL: $result
+	echo -e "FAIL: $result\n"
     fi
 
+    # print measurement header
+    if [ -z "$verbose" ]; then
+        echo -e "Delay:  avg min max [us] vld all [])\n"
+        # declare measurement entries
+        tx_delay_entries=("sig lty" "tx  dly" "mps hdl")
+        rx_delay_entries=("msg dly" "ttl    ")
+    fi
+
+    i=0
     for scu in ${txscu[@]}; do
         echo "TX (${scu%%.*}):"
+
+        # read command output line by line
         sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" \
             "source setup_local.sh && \
             result_sg_latency \$tx_node_dev $verbose && \
             result_tx_delay \$tx_node_dev $verbose && \
-            result_tx_mps_handle \$tx_node_dev $verbose"
+            result_tx_mps_handle \$tx_node_dev $verbose" |
+        while IFS= read -r line; do
+            delay_entry="${tx_delay_entries[$i]}"
+            if [ -n "$delay_entry" ]; then
+                delay_entry=" $delay_entry:"
+            fi
+            echo "$delay_entry $line"
+            i=$((i + 1))
+        done
     done
 
+    i=0
     echo "RX (${rxscu%%.*}):"
     sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" \
         "source setup_local.sh && \
         result_msg_delay \$rx_node_dev $verbose && \
-        result_ttl_ival \$rx_node_dev $verbose"
+        result_ttl_ival \$rx_node_dev $verbose" |
+    while IFS= read -r line; do
+        delay_entry="${rx_delay_entries[$i]}"
+        if [ -n "$delay_entry" ]; then
+            delay_entry=" $delay_entry:"
+        fi
+        echo "$delay_entry $line"
+        i=$((i +  1))
+    done
 }
 
 measure_ttl() {
