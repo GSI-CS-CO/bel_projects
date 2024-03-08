@@ -157,8 +157,8 @@ void clearStats()
   monData.nFwSnd   = 0x0;
   monData.nFwRecD  = 0x0;
   monData.nFwRecT  = 0x0;
-  monData.nSnd     = 0x0;
-  monData.nRec     = 0x0;
+  monData.nStart   = 0x0;
+  monData.nStop    = 0x0;
   monData.nMatch   = 0x0;
   monData.tAct     = NAN;
   monData.tMin     = 1000000000;
@@ -219,7 +219,7 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
   switch (tag) {
     case tagStart   :
       //if (mGid != monData.gid)            return;  // received GID does not match configuration
-      monData.nSnd++; 
+      monData.nStart++; 
       flagMilSent                  = 1;
       sndDeadline                  = deadline.getTAI();
       /*if ((sndDeadline - tStartOld) < dStartMin) dStartMin = sndDeadline - tStartOld;
@@ -232,7 +232,7 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
       //monData.tSdev                = NAN;
       break;
     case tagStop    :
-      monData.nRec++;
+      monData.nStop++;
       /*if ((deadline.getTAI() - tStopOld) < dStopMin) dStopMin = deadline.getTAI() - tStopOld;
         tStopOld = deadline.getTAI();*/
 
@@ -517,10 +517,12 @@ int main(int argc, char** argv)
     // select if we use the received White Rabbit timing messages or the sent MIL telegrams as start
     switch (modeCompare) {
       case 0:
+        // compare received MIL telegrams to received WR Timing messags
         gidStart    = gid;
         offsetStart = 0;
         break;
       case 1:
+        // compare received MIL telegrams to sent MIL telegrams
         gidStart    = LOC_MIL_SEND;
         offsetStart = WRMIL_MILSEND_LATENCY;
         break;
@@ -609,7 +611,7 @@ int main(int argc, char** argv)
           dis_update_service(disMonDataId);
         } // if startServer
 
-        //printf("wrmil-mon: fw snd %ld, recD %ld, recT %ld; mon snd %ld, rec %ld, match %ld, act %f, ave %f, sdev %f, min %f, max %f\n", monData.nFwSnd, monData.nFwRecT, monData.nFwRecT, monData.nSnd, monData.nRec, monData.nMatch, monData.tAct, monData.tAve, monData.tSdev, monData.tMin, monData.tMax);
+        //printf("wrmil-mon: fw snd %ld, recD %ld, recT %ld; mon snd %ld, rec %ld, match %ld, act %f, ave %f, sdev %f, min %f, max %f\n", monData.nFwSnd, monData.nFwRecT, monData.nFwRecT, monData.nStart, monData.nStop, monData.nMatch, monData.tAct, monData.tAve, monData.tSdev, monData.tMin, monData.tMax);
       } // if update
 
       // clear data

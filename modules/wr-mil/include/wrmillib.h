@@ -72,17 +72,18 @@ extern "C" {
   // data type monitoring values; data are in 'native units' used by the lm32 firmware
   typedef struct{
     uint32_t  gid;                                       // GID for which the gateway is active
+    uint32_t  cMode;                                     // comparison mode; server option '-c'
     uint64_t  nFwSnd;                                    // firmware # of sent MIL telegrams
     uint64_t  nFwRecD;                                   // firmware # of received MIL telegrams (TAI)
     uint64_t  nFwRecT;                                   // firmware # of received MIL telegrams (data)
-    uint64_t  nSnd;                                      // host # of sent MIL telegram matches (seen via ECA)
-    uint64_t  nRec;                                      // host # of received MIL telegrams (seen via ECA)
-    uint64_t  nMatch;                                    // host # of matches (sent vs received MIL telegram)
-    double    tAct;                                      // actual deviation offset value, t_received - t_sent [us]
-    double    tMin;                                      // minimum offset value
-    double    tMax;                                      // maximum offset value
-    double    tAve;                                      // average offset value
-    double    tSdev;                                     // standard deviation offset value
+    uint64_t  nStart;                                    // host # of start messages (type depends on comparison mode)
+    uint64_t  nStop;                                     // host # of stop messages (type depends on comparison mode)
+    uint64_t  nMatch;                                    // host # of matches (start vs stop messages)
+    double    tAct;                                      // actual deviation offset value, t_stop - t_start [us]
+    double    tMin;                                      // minimum offset value [us]
+    double    tMax;                                      // maximum offset value [us]
+    double    tAve;                                      // average offset value [us]
+    double    tSdev;                                     // standard deviation offset value [us]
   } monval_t;
 
     

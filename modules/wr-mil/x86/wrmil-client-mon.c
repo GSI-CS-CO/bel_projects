@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 28-Feb-2024
+ *  version : 08-Mar-2024
  *
  * subscribes to and displays status of a wr-mil gateway
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define WRMIL_CLIENT_MON_VERSION 0x000001
+#define WRMIL_CLIENT_MON_VERSION 0x000002
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -118,8 +118,8 @@ static void help(void) {
 
 void buildHeader(char * environment)
 {
-  sprintf(title, "\033[7m WRMIL System Status %3s ------------------------------- (units [us] unless explicitly given) -  v%8s\033[0m", environment, wrmil_version_text(WRMIL_CLIENT_MON_VERSION));
-  sprintf(header, "  # MIL domain  version      state        status        #sent     ave    sdev     min     max         node");    
+  sprintf(title, "\033[7m WRMIL System Status %3s -------------------------------------------- (units [us] unless explicitly given) -  v%8s\033[0m", environment, wrmil_version_text(WRMIL_CLIENT_MON_VERSION));
+  sprintf(header, "  # MIL domain  version      state        status        #sent       #match     ave    sdev     min     max         node");    
   sprintf(empty , "                                                                                                          ");
   //       printf("1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456\n");  
 } // buildHeader
@@ -165,8 +165,9 @@ void printServices()
   char     cVersion[9];
   char     cState[11];
   char     cHost[19];
-  char     cData[128];
-  char     cNSnd[24];
+  char     cData[256];
+  char     cNFwSnd[24];
+  char     cNMatch[24];
   char     cTAve[24];
   char     cTSdev[24];
   char     cTMin[24];
@@ -201,8 +202,10 @@ void printServices()
     tmp = (uint32_t *)(&(dicSystem[i].monData));
     if (*tmp == no_link_32)                      sprintf(cData,   "%32s",          no_link_str);
     else  {
-      if (dicSystem[i].monData.nSnd == -1)       sprintf(cNSnd,   "%12s" , "nan");        
-      else                                       sprintf(cNSnd,   "%12lu", dicSystem[i].monData.nSnd);
+      if (dicSystem[i].monData.nFwSnd == -1)     sprintf(cNFwSnd, "%12s" , "nan");        
+      else                                       sprintf(cNFwSnd, "%12lu", dicSystem[i].monData.nFwSnd);
+      if (dicSystem[i].monData.nMatch == -1)     sprintf(cNMatch, "%12s" , "nan");        
+      else                                       sprintf(cNMatch, "%12lu", dicSystem[i].monData.nMatch);
       if (isnan(dicSystem[i].monData.tAve))      sprintf(cTAve,   "%7s"  , "nan");        
       else                                       sprintf(cTAve,   "%7.3f", dicSystem[i].monData.tAve);
       if (isnan(dicSystem[i].monData.tSdev))     sprintf(cTSdev,  "%7s"  , "nan");        
@@ -211,9 +214,9 @@ void printServices()
       else                                       sprintf(cTMin,   "%7.3f", dicSystem[i].monData.tMin);
       if (isnan(dicSystem[i].monData.tMax))      sprintf(cTMax,   "%7s"  , "nan");        
       else                                       sprintf(cTMax,   "%7.3f", dicSystem[i].monData.tMax);
-      sprintf(cData, "%12s %7s %7s %7s %7s",  cNSnd, cTAve, cTSdev, cTMin, cTMax);
+      sprintf(cData, "%12s %12s %7s %7s %7s %7s",  cNFwSnd, cNMatch, cTAve, cTSdev, cTMin, cTMax);
     } // else nolink
-    printf(" %2x %10s %8s %10s %13s %44s %12s\n", i, sysShortNames[i], cVersion, cState, cStatus, cData, cHost);
+    printf(" %2x %10s %8s %10s %13s %57s %12s\n", i, sysShortNames[i], cVersion, cState, cStatus, cData, cHost);
   } // for i
 
   for (i=0; i<12; i++) printf("%s\n", empty);
