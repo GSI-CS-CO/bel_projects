@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 06-Mar-2024
+ *  version : 08-Mar-2024
  *
  * monitors WR-MIL gateway
  *
@@ -175,13 +175,13 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
 {
   static int          flagMilSent;     // flag: marks that a MIL event has been sent
   static uint64_t     sndDeadline;     // deadline of MIL event sent
-  
   static uint32_t     sndEvtNo;        // evtNo of MIL event sent
   
   uint32_t            mFid;            // FID 
   uint32_t            mGid;            // GID
   uint32_t            mEvtNo;          // event number
 
+  double              tDiff;           // time difference between stop and start; must be smaller than match window
   double              mean;            // mean value for statistics
   double              sdev;            // sdev for statistics
   double              stream;          // a stream value for statistics
@@ -213,6 +213,7 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
   // check ranges
   if (mFid != FID)                        return;  // unexpected format of timing message
   if (tag   > tagStop)                    return;  // illegal tag
+  if ((modeCompare == 2) && ((mEvtNo >= 0x0e0) && (mEvtNo <= 0x0e4))) return; // exclude UTC telegrams
   //printf("tag %d\n", tag);
 
   
@@ -241,8 +242,10 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
       if (mEvtNo != sndEvtNo)             return;  // evtNo of MIL received/sent telegrams do not match: give up*/
 
       // assume we have a matching pair of sent and received MIL telegrams
+      tDiff                         = (double)((int64_t)(deadline.getTAI() - one_us_ns * matchWindow - sndDeadline)) / (double)one_us_ns;
+      if (tDiff < -1.0 * matchWindow)     return;  // check causality; 
       monData.nMatch++;
-      monData.tAct                  = (double)((int64_t)(deadline.getTAI() - one_us_ns * matchWindow - sndDeadline)) / (double)one_us_ns;
+      monData.tAct                  = tDiff;
       if (monData.tAct < monData.tMin) monData.tMin = monData.tAct;
       if (monData.tAct > monData.tMax) monData.tMax = monData.tAct;
 
@@ -305,7 +308,7 @@ void disAddServices(char *prefix)
 
   // monitoring data service
   sprintf(name, "%s_data", prefix);
-  disMonDataId  = dis_add_service(name, "I:1;X:6;D:5", &(disMonData), sizeof(monval_t), 0, 0);
+  disMonDataId  = dis_add_service(name, "I:2;X:6;D:5", &(disMonData), sizeof(monval_t), 0, 0);
 } // disAddServices
 
                         
@@ -320,6 +323,7 @@ static void help(void) {
   std::cerr << "  -c <mode>            type of comparison; default 0; this can be"                  << std::endl;
   std::cerr << "                       0: compare received MIL telegrams with WR timing messages"   << std::endl;
   std::cerr << "                       1: compare received MIL telegrams with send MIL telegrams"   << std::endl;
+  std::cerr << "                       2: as mode '1' but excludes UTC telegrams"                   << std::endl;
   std::cerr << "  -m <match windows>   [us] windows for matching start/stop evts; default 20"       << std::endl;
   std::cerr << std::endl;
   std::cerr << "  The paremter -s is mandatory"                                                     << std::endl;
@@ -521,7 +525,7 @@ int main(int argc, char** argv)
         gidStart    = gid;
         offsetStart = 0;
         break;
-      case 1:
+      case 1 ... 2:
         // compare received MIL telegrams to sent MIL telegrams
         gidStart    = LOC_MIL_SEND;
         offsetStart = WRMIL_MILSEND_LATENCY;
@@ -581,7 +585,8 @@ int main(int argc, char** argv)
         timingMessage(recTag, deadline_t, evtId, param, tef, isLate, isEarly, isConflict, isDelayed);
         }*/
       // irgendwo hier periodisch DIM service aktualisieren bzw. update auf Bildschirm bzw. update MASP
-      monData.gid = gid;
+      monData.gid   = gid;
+      monData.cMode = modeCompare;
       saftlib::wait_for_signal(UPDATE_TIME_MS / 10);
 
       t_new = comlib_getSysTime();
