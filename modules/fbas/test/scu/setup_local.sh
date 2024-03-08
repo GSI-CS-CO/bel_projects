@@ -555,6 +555,17 @@ stop_test4() {
     disable_mps $1
 }
 
+info_nw_perf() {
+    # $1 - number of iterations
+
+    n=$1
+
+    echo "TX: generating the MPS events locally ..."
+    echo "TX: $n events ($evt_mps_flag_nok, flag=NOK(2), $((3 * n)) transmissions)"
+    echo "TX: $n events ($evt_mps_flag_ok, flag=OK(1), $n transmissions)"
+    echo -e "TX: $(( n * 2 - 1))x IO events must be snooped by 'saft-ctl tr0 -vx snoop $evt_tlu $evt_id_mask 0'\n"
+}
+
 ##########################################################
 # Test 3: measure network performance
 # TX SCU sends MPS flag periodically in timing msg with event ID=0x1fcbfcb00 and
@@ -573,10 +584,7 @@ start_nw_perf() {
         n=$1
     fi
 
-    echo "TX: generating the MPS events locally ..."
-    echo "TX: $n events ($evt_mps_flag_nok, flag=NOK(2), $(( $n * 3)) transmissions)"
-    echo "TX: $n events ($evt_mps_flag_ok, flag=OK(1), $n transmissions)"
-    echo -e "TX: $(( $n * 2 - 1))x IO events must be snooped by 'saft-ctl tr0 -vx snoop $evt_tlu $evt_id_mask 0'\n"
+    # info_nw_perf $n
 
     for i in $(seq $n); do
 

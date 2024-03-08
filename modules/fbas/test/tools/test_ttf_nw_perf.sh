@@ -122,10 +122,14 @@ measure_nw_perf() {
     echo -e "start the measurements\n"
     output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && enable_mps \$rx_node_dev")
 
+    # use local script to print info
+    output=$(source $dir_name/../scu/setup_local.sh && info_nw_perf $events)
+    echo -e "$output\n"
+
     # enable simultaneous operation of TX nodes
     pids=()
     for i in ${!txscu[@]}; do
-        echo ${txscu[$i]}:
+        echo ${txscu[$i]}
 
         # enable MPS operation, start test => keep process ID
         output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@${txscu[$i]}" "source setup_local.sh && enable_mps \$tx_node_dev")
@@ -252,6 +256,11 @@ fi
 if [ ${#txscu_name[@]} -eq 0 ]; then
     txscu_name+=("$def_txscu_name")
     txscu+=("$def_txscu_name.$domain")
+fi
+
+# set the number of events
+if [ -z "$events" ]; then
+    events=10
 fi
 
 echo -e "\n--- Step 1: set up nodes (RX=$rxscu_name, TX=${txscu_name[@]}) ---\n"
