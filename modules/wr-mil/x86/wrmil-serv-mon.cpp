@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 08-Mar-2024
+ *  version : 11-Mar-2024
  *
  * monitors WR-MIL gateway
  *
@@ -454,6 +454,7 @@ int main(int argc, char** argv)
   if (startServer) {
     printf("%s: starting server using prefix %s\n", program, prefix);
 
+    clearStats();
     disAddServices(prefix);
     // uuuuhhhh, mixing c++ and c  
     sprintf(tmp, "%s-cmd_cleardiag", prefix);
@@ -528,10 +529,13 @@ int main(int argc, char** argv)
       case 1 ... 2:
         // compare received MIL telegrams to sent MIL telegrams
         gidStart    = LOC_MIL_SEND;
-        offsetStart = WRMIL_MILSEND_LATENCY;
+        //        offsetStart = WRMIL_MILSEND_LATENCY;
+        offsetStart = 0;
         break;
       default:
-        gidStart = gid;
+        gidStart    = gid;
+        offsetStart = 0;
+        break;
     } // switch modeCompare
 
     // message that is injected locally by the lm32 firmware (triggering a rule on the ECA WB channel towards the MIL interface)

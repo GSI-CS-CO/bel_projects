@@ -51,7 +51,7 @@
 //#define WRMIL_GW_MSI_EVENT              0x3  // ored with (mil_event_number << 8)
 
 // constants
-#define WRMIL_MILSEND_LATENCY         25000    // latency [ns] from pushing to mil piggy/sio queue to last transition on the mil bus
+#define WRMIL_MILSEND_LATENCY         23530    // latency [ns] from pushing to mil piggy/sio queue to last transition on the mil bus
 #define WRMIL_PRETRIGGER_DM          500000    // pretrigger [ns] for messages from the Data Master
 #define WRMIL_POSTTRIGGER_TLU         20000    // posttrigger [ns] for avoiding late messages from the TLU
 #define WRMIL_N_UTC_EVTS                  5    // number of generated EVT_UTC telegrams
