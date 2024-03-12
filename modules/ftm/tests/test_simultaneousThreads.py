@@ -4,19 +4,20 @@ import pytest
 """
 Test cases for edges of type reference.
 These edges have the additional attributes
-fieldtail: offset into the source node, fieldhead: offset into 
+fieldtail: offset into the source node, fieldhead: offset into
 the target node, fieldwidth: width of the referenced field.
 """
 class SimultaneousThreads(dm_testbench.DmTestbench):
-  
-  @pytest.mark.development
+
   def testSimultaneousThreadsAll(self):
     self.runSimultaneousThreads(self.threadQuantity)
-  
-  @pytest.mark.development
+
+  def testSimultaneousThreads4(self):
+    self.runSimultaneousThreads(4)
+
   def testSimultaneousThreads2(self):
     self.runSimultaneousThreads(2)
-  
+
   def runSimultaneousThreads(self, threads):
     """Use a schedule with an edge of type reference between two loops
     (a block and a tmsg). The loops run with 10Hz.
@@ -37,7 +38,7 @@ class SimultaneousThreads(dm_testbench.DmTestbench):
     self.deleteFile(self.schedulesFolder + self.scheduleFile0)
 
   def actionSimultaneousThreads(self):
-    """During snoop start pattern MAIN. 
+    """During snoop start pattern MAIN.
     Download the schedule for later compare.
     """
     self.startPattern(self.scheduleFile0, 'MAIN')
@@ -46,7 +47,7 @@ class SimultaneousThreads(dm_testbench.DmTestbench):
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'stoppattern', 'MAIN'), [0], 0, 0)
 
   def generateSchedule(self, fileName, threadQuantity):
-    """Generate a schedule and write it to a file. 
+    """Generate a schedule and write it to a file.
 
     :param fileName: the name of the schedule file.
     :param threadQuantity: the number of threads to start simultaneously.

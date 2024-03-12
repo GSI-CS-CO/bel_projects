@@ -4,12 +4,11 @@ import pytest
 """
 Test cases for edges of type reference.
 These edges have the additional attributes
-fieldtail: offset into the source node, fieldhead: offset into 
+fieldtail: offset into the source node, fieldhead: offset into
 the target node, fieldwidth: width of the referenced field.
 """
 class ReferenceEdge(dm_testbench.DmTestbench):
-  
-  @pytest.mark.development
+
   def testReferenceEdgeSimple(self):
     """Use a schedule with an edge of type reference between two loops
     (a block and a tmsg). The loops run with 10Hz.
