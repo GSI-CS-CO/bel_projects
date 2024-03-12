@@ -102,6 +102,7 @@ double    tAveStreamOld;                // helper for stats
 int       flagClear;                    // flag for clearing diag data;
 uint32_t  matchWindow       = MATCH_WIN_US;
 uint32_t  modeCompare       = 0;
+uint64_t  offsetStart;                  // correction to be used for different monitoring types
 
 
 
@@ -245,7 +246,6 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
         monData.nFailSnd++;
         return;
       } // if !flagMilSent
-      flagMilSent                  = 0;            // we received a MIL telegram pair: after 'returning', we start waiting for a new pair
 
       // evtNo of MIL received/sent telegrams do not match: give up
       if (mEvtNo != sndEvtNo){
@@ -253,6 +253,7 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
         return;  
       } // if !evtNo
       // assume we have a matching pair of sent and received MIL telegrams
+      flagMilSent                   = 0;
       tDiff                         = (double)((int64_t)(deadline.getTAI() - one_us_ns * matchWindow - sndDeadline)) / (double)one_us_ns;
 
       // check causality
@@ -260,6 +261,7 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
         monData.nFailOrder++;
         return;
       } // if tDiff
+      tDiff                        += (double)offsetStart / (double)one_us_ns;  // feature: display delays for calibration purposes and illustration
       monData.nMatch++;
       monData.tAct                  = tDiff;
       if (monData.tAct < monData.tMin) monData.tMin = monData.tAct;
@@ -372,7 +374,6 @@ int main(int argc, char** argv)
   bool     startServer    = false;
   uint32_t gid=0xffffffff;                // gid for gateway
   uint32_t gidStart;                      // relevant to select the type of messages used as a start
-  uint64_t offsetStart;                   // correction to be used for different monitoring types
 
   char    *tail;
 
@@ -545,8 +546,8 @@ int main(int argc, char** argv)
       case 1 ... 2:
         // compare received MIL telegrams to sent MIL telegrams
         gidStart    = LOC_MIL_SEND;
-        //        offsetStart = WRMIL_MILSEND_LATENCY;
-        offsetStart = 0;
+        offsetStart = WRMIL_MILSEND_LATENCY;
+        //offsetStart = 0;
         break;
       default:
         gidStart    = gid;
