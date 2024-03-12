@@ -20,13 +20,11 @@ const std::string VisitorUploadCrawler::exIntro = "VisitorUploadCrawler: ";
 //FIXME Dear future self, the code duplication in here is appalling. Create some proper helper functions for crying out loud !
 
 void VisitorUploadCrawler::visit(const Block& el) const {
-  el.serialise(getDefDst() + getQInfo(), b);
-  getRefLinks();
+  el.serialise(getDefDst() + getQInfo() + getRefLinks(), b);
 }
 
 void VisitorUploadCrawler::visit(const TimingMsg& el) const  {
-  el.serialise(getDefDst() + getDynSrc(), b);
-  getRefLinks();
+  el.serialise(getDefDst() + getDynSrc() + getRefLinks(), b);
 }
 
 void VisitorUploadCrawler::visit(const Flow& el) const  {
@@ -149,50 +147,55 @@ vAdr& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, vAdr& ret, const unsig
     const vertex_t vc = getOnlyChildByEdgeType(v, det::sDefDst);
     const uint32_t a = getEdgeTargetAdr(v, vc);
 
-    ret.insert(
-      { NODE_DEF_DEST_PTR, a}
-    );
-    return ret;
-  }
+  ret.insert( { NODE_DEF_DEST_PTR, a} );
+  return ret;
+}
 
+mVal VisitorUploadCrawler::getRefLinks() const {
+  Graph::out_edge_iterator out_begin, out_end, out_cur;
+  mVal t;
+  uint32_t dynOps = 0;
 
+  log<DEBUG_LVL0>(L"Entered Reflink handling for Node %1%") % g[v].name.c_str();
 
-  mVal VisitorUploadCrawler::getRefLinks() const {
-    Graph::out_edge_iterator out_begin, out_end, out_cur;
-    mVal t;
-    log<DEBUG_LVL0>(L"Entered Reflink handling for Node %1%") % g[v].name.c_str();
+  boost::tie(out_begin, out_end) = out_edges(v,g);
 
-    boost::tie(out_begin, out_end) = out_edges(v,g);
+  for (out_cur = out_begin; out_cur != out_end; ++out_cur)
+  {
+    if (g[*out_cur].type == det::sRef) {
+      log<DEBUG_LVL2>(L"Found Reflink to TargetNode %1%. Offset Source: %3% Offset Target: %2% Width: %4%") % g[target(*out_cur,g)].name.c_str() % g[*out_cur].fhead.c_str() % g[*out_cur].ftail.c_str() % g[*out_cur].bwidth.c_str();
+      uint32_t oTarget  = s2u<uint32_t>(g[*out_cur].fhead);
+      uint32_t oSource  = s2u<uint32_t>(g[*out_cur].ftail);
+      uint32_t width    = s2u<uint32_t>(g[*out_cur].bwidth) == 64 ? 1 : 0;
+      
 
-    for (out_cur = out_begin; out_cur != out_end; ++out_cur)
-    {
-      if (g[*out_cur].type == det::sRef) {
-        log<DEBUG_LVL2>(L"Found Reflink to TargetNode %1%. Offset Source: %2% Offset Target: %3% Width: %4%") % g[target(*out_cur,g)].name.c_str() % g[*out_cur].fhead.c_str() % g[*out_cur].ftail.c_str() % g[*out_cur].bwidth.c_str();
-        uint32_t oTarget  = s2u<uint32_t>(g[*out_cur].fhead);
-        uint32_t oSource  = s2u<uint32_t>(g[*out_cur].ftail);
-        uint32_t width    = s2u<uint32_t>(g[*out_cur].bwidth) == 64 ? 1 : 0;
-        //we create a map entry, adress offset to adress, that will contain our refPtr
-        //key is offset oSource (e.g. TMSG_RES)
-        //value is the address of the target node + offset oTarget
+      unsigned bIdx = oSource / 4 * 3; //idx of descriptor
+      uint32_t bDesc = ((width & DYN_WIDTH64_MSK) << DYN_WIDTH64_POS) | ((DYN_MODE_REF & DYN_MODE_MSK) << DYN_MODE_POS); //descriptor bits for this ref
+      dynOps |= bDesc << bIdx; // add to dynops
+      log<DEBUG_LVL2>(L"Descriptor: idx %1% bshift %2% dynOps Slice %3$#02x shifted slice %4$#08x") % (oSource>>2) % bIdx % bDesc % (bDesc << bIdx);
 
-        //log<DEBUG_LVL2>(L"Found Reflink to TargetNode %1%. Offset Source: %2$#02x Offset Target: %3$#02x Width: %4%") % g[target(*out_cur,g)].name.c_str() % oTarget % oSource % width;
-        /*
-        t.insert(oSource, getEdgeTargetAdr(v, target(*out_cur, g)) );
-        if (oTarget / )
-        t.insert(NODE_OPT_DYN, )
-        */
-      }
+      //we create a map entry, adress offset to adress, that will contain our refPtr
+      //key is offset oSource (e.g. TMSG_RES)
+      //value is the address of the target node + offset oTarget
+      
+      if (oTarget % 4 || oSource % 4) {throw std::runtime_error( exIntro + "Reflink Offsets are not 4B aligned: Offset Source " + std::to_string((unsigned)oSource) + " Offset Target " + std::to_string((unsigned)oTarget) + "\n");} // check if adress is 32b aligned. if not, throw ex
+      uint32_t tmpAdr = getEdgeTargetAdr(v, target(*out_cur, g));
+      log<DEBUG_LVL2>(L"Inserting: @Offset Source: %1$#02x edge target Adr %2$#08x + Offset Target %3$#02x = %4$#08x") % oSource % tmpAdr % oTarget % (tmpAdr + oTarget);
+      t.insert({oSource, tmpAdr + oTarget});
     }
-
-    return t;
   }
+  
+  t.insert({NODE_OPT_DYN, dynOps});
+  log<DEBUG_LVL2>(L"Passing Dynops to Offs %1$#08x Value: %2$#08x") % NODE_OPT_DYN % dynOps;
+  return t;
+}
 
 
-
+/*
   mVal VisitorUploadCrawler::getValLinks() const {
     Graph::out_edge_iterator out_begin, out_end, out_cur;
     mVal t;
-    /*
+    
     boost::tie(out_begin, out_end) = out_edges(v,g);
 
     for (out_cur = out_begin; out_cur != out_end; ++out_cur)
@@ -209,10 +212,10 @@ vAdr& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, vAdr& ret, const unsig
         t.insert(NODE_OPT_DYN, )
       }
     }
-    */
+    
     return t;
-  }
-
+  }    
+*/
 
   mVal VisitorUploadCrawler::getDynSrc() const {
 
@@ -380,7 +383,7 @@ mVal VisitorUploadCrawler::getOriginDst() const {
   mVal ret;
 
   vertex_vec_t vsDst = getChildrenByEdgeType(v, det::sOriginDst);
-
+  //TODO: does it matter if the CPU is the one of v or can it be arbitrary in case of null?
   if(vsDst.size() == 0) {
     ret.insert({(unsigned)ORIGIN_DEST, LM32_NULL_PTR});
     ret.insert({(unsigned)ORIGIN_CPU , (unsigned)0});

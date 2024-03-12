@@ -28,9 +28,9 @@ Block2 [type=block tperiod=10000000 pattern=B patexit=1 qlo=1 shape=rectangle co
 Block3 [type=block tperiod=10000000 pattern=C patexit=1 qlo=1 shape=rectangle color=purple]
 Block4 [type=block tperiod=10000000 pattern=D patexit=1 qlo=1 shape=rectangle color=purple]
 
-Startthread1 [type=startthread thread=1 startoffs=0 pattern=A shape=triangle color=cyan]
-Startthread2 [type=startthread thread=2 startoffs=0 pattern=B shape=triangle color=cyan]
-Startthread3 [type=startthread thread=3 startoffs=0 pattern=C shape=triangle color=cyan]
+Startthread1 [type=startthread thread="0x2" startoffs=0 pattern=A shape=triangle color=cyan]
+Startthread2 [type=startthread thread="0x4" startoffs=0 pattern=B shape=triangle color=cyan]
+Startthread3 [type=startthread thread="0x8" startoffs=0 pattern=C shape=triangle color=cyan]
 
 edge [type=defdst color=red]
 // sequence to start threads 1,2,3
