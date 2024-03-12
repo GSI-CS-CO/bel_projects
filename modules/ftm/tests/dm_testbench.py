@@ -250,6 +250,7 @@ class DmTestbench(unittest.TestCase):
     with open(csvFileName) as csv_file:
       csv_reader = csv.reader(csv_file, delimiter=' ')
       for row in csv_reader:
+        self.assertGreater(len(row), column, f'Column {column} does not exist. Maximal column {len(row)}. May be fid=1 should be used in schedule.')
         line_count += 1
         time1 = datetime.datetime.strptime(row[1] + ' ' + row[2][:-3], '%Y-%m-%d %H:%M:%S.%f')
         if minTime > time1:
