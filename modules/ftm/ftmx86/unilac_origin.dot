@@ -42,22 +42,22 @@ subgraph cpu1 {
   
   
 
-  StThr   [type="startthread",  pattern="MAIN", patentry="0", toffs=0, startoffs=0;  thread="0x1e"];
+  StThr   [type="startthread",  pattern="MAIN", patentry="0", toffs=0, startoffs=0;  thread="0xfffffffe"];
   
   
   Evt_MAIN  [type="tmsg",         pattern="MAIN", patentry="0", toffs=0,   fid=1, evtno=1, par="0x00"];
   B_MAIN    [type="block",        pattern="MAIN", patexit="1",  tperiod=19800000, qlo="1"];
   B_VARI    [type="block",        pattern="MAIN", patexit="0",  tperiod=200000];
 
-  Evt_01      [type="tmsg",         pattern="01", patentry="1", toffs=10001,   fid=1, evtno=2, par=01];
-  Evt_02      [type="tmsg",         pattern="02", patentry="1", toffs=10002,   fid=1, evtno=2, par=02];
-  Evt_03      [type="tmsg",         pattern="03", patentry="1", toffs=10003,   fid=1, evtno=2, par=03];
-  Evt_04      [type="tmsg",         pattern="04", patentry="1", toffs=10004,   fid=1, evtno=2, par=04];
-  Evt_05      [type="tmsg",         pattern="05", patentry="1", toffs=10005,   fid=1, evtno=2, par=05];
-  Evt_06      [type="tmsg",         pattern="06", patentry="1", toffs=10006,   fid=1, evtno=2, par=06];
-  Evt_07      [type="tmsg",         pattern="07", patentry="1", toffs=10007,   fid=1, evtno=2, par=07];
-  Evt_08      [type="tmsg",         pattern="08", patentry="1", toffs=10008,   fid=1, evtno=2, par=08];
-  Evt_09      [type="tmsg",         pattern="09", patentry="1", toffs=10009,   fid=1, evtno=2, par=09];
+  Evt_01      [type="tmsg",         pattern="01", patentry="1", toffs=10001,   fid=1, evtno=2, par=1];
+  Evt_02      [type="tmsg",         pattern="02", patentry="1", toffs=10002,   fid=1, evtno=2, par=2];
+  Evt_03      [type="tmsg",         pattern="03", patentry="1", toffs=10003,   fid=1, evtno=2, par=3];
+  Evt_04      [type="tmsg",         pattern="04", patentry="1", toffs=10004,   fid=1, evtno=2, par=4];
+  Evt_05      [type="tmsg",         pattern="05", patentry="1", toffs=10005,   fid=1, evtno=2, par=5];
+  Evt_06      [type="tmsg",         pattern="06", patentry="1", toffs=10006,   fid=1, evtno=2, par=6];
+  Evt_07      [type="tmsg",         pattern="07", patentry="1", toffs=10007,   fid=1, evtno=2, par=7];
+  Evt_08      [type="tmsg",         pattern="08", patentry="1", toffs=10008,   fid=1, evtno=2, par=8];
+  Evt_09      [type="tmsg",         pattern="09", patentry="1", toffs=10009,   fid=1, evtno=2, par=9];
   Evt_10      [type="tmsg",         pattern="10", patentry="1", toffs=10010,   fid=1, evtno=2, par=10];
   Evt_11      [type="tmsg",         pattern="11", patentry="1", toffs=10011,   fid=1, evtno=2, par=11];
   Evt_12      [type="tmsg",         pattern="12", patentry="1", toffs=10012,   fid=1, evtno=2, par=12];

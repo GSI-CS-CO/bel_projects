@@ -16,6 +16,8 @@ class ReferenceEdge(dm_testbench.DmTestbench):
     """
     snoopFile = 'snoop_reference1.csv'
     self.scheduleFile0 = 'reference1.dot'
+    if self.threadQuantity == 32:
+      self.scheduleFile0 = self.scheduleFile0.replace('.dot', '-thread32.dot')
     self.downloadFile0 = self.scheduleFile0.replace('.dot', '-download.dot')
     self.snoopToCsvWithAction(snoopFile, self.actionReference1, duration=2)
     self.startAndCheckSubprocess(('scheduleCompare', '-s', '-u', self.schedulesFolder + self.scheduleFile0, self.downloadFile0), [0], 0, 0)

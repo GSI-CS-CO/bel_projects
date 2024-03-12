@@ -309,11 +309,16 @@ class DmTestbench(unittest.TestCase):
           else:
             self.assertTrue(item in listCounter.keys(), f'Key {item} not found, but expected.')
 
-  def analyseDmCmdOutput(self, threadsToCheck=''):
+  def analyseDmCmdOutput(self, threadsToCheck='', useVerbose=False) -> dict:
     """Collect the message counts for all threads. Use dm-cmd to get the
     status with the message counts.
     """
-    outputStdoutStderr = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster), [0])
+    if useVerbose:
+      outputStdoutStderr = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-v'), [0])
+      offsetLines = 11 + 16
+    else:
+      outputStdoutStderr = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster), [0])
+      offsetLines = 11
     output = outputStdoutStderr[0]
     msgCounts = {}
     threadsCheck = '0' * (self.threadQuantity * self.cpuQuantity)
@@ -325,7 +330,7 @@ class DmTestbench(unittest.TestCase):
     thread = 0
     running = ''
     for line in output:
-      if index > 11 and index < (countLines - 1):
+      if index > offsetLines and index < (countLines - 1):
         try:
           cpu = int(line[3 + offset1])
           if line[8 + offset1] == ' ':
@@ -334,7 +339,7 @@ class DmTestbench(unittest.TestCase):
             thread = int(line[8 + offset1:10 + offset1])
           running = line[21 + offset1:24 + offset1]
           count = int(line[32 + offset:42 + offset])
-          msgCounts[str(10*cpu) + str(thread)] = str(count)
+          msgCounts[f'{10*cpu:02d}{thread:02d}'] = str(count)
           if running == 'yes':
             threadsCheck = threadsCheck[:self.threadQuantity * cpu + thread] + '1' + threadsCheck[self.threadQuantity * cpu + thread + 1:]
           # ~ print(f'threadsCheck: {threadsCheck}, threadsToCheck: {threadsToCheck}, running:{running} {cpu} {thread} "{line[8 + offset1:10 + offset1]}"')
@@ -347,7 +352,7 @@ class DmTestbench(unittest.TestCase):
           offset = 0
           offset1 = 0
       index = index + 1
-    self.assertEqual(countLines-13, len(msgCounts), f'Output has {countLines} lines, messages: {len(msgCounts)}')
+    self.assertEqual(countLines - offsetLines - 2, len(msgCounts), f'Output has {countLines} lines, messages: {len(msgCounts)}')
     if threadsToCheck != '':
       self.assertEqual(threadsCheck, threadsToCheck, f'threads running: {threadsCheck}, expected: {threadsToCheck}')
     return msgCounts
