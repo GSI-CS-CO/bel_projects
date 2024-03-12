@@ -19,4 +19,4 @@ b2b-serv-raw tr1 -e1 pro &
 b2b-jitter-check tr1 tr0 -p3 -t5 pro_esr-kdx &
 b2b-analyzer pro_esr &
 b2b-serv-kickdiag tr0 -r1 -m0 -i1 pro &
-b2b-serv-kickdiag tr0 -r1 -m1 -i4 pro &
+b2b-serv-kickdiag tr0 -r1 -m1 -i1 pro &
