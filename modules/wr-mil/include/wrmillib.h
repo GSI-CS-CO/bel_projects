@@ -79,6 +79,9 @@ extern "C" {
     uint64_t  nStart;                                    // host # of start messages (type depends on comparison mode)
     uint64_t  nStop;                                     // host # of stop messages (type depends on comparison mode)
     uint64_t  nMatch;                                    // host # of matches (start vs stop messages)
+    uint32_t  nFailSnd;                                  // host # of mismatches due to start event
+    uint32_t  nFailEvt;                                  // host # of mismatches due to event number
+    uint32_t  nFailOrder;                                // host # of mismatches due to event order
     double    tAct;                                      // actual deviation offset value, t_stop - t_start [us]
     double    tMin;                                      // minimum offset value [us]
     double    tMax;                                      // maximum offset value [us]

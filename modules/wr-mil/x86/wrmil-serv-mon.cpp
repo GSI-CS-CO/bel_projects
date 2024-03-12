@@ -154,19 +154,22 @@ void calcStats(double *meanNew,         // new mean value, please remember for l
 void clearStats()
 {
   // monData.gid      = 0x0;
-  monData.nFwSnd   = 0x0;
-  monData.nFwRecD  = 0x0;
-  monData.nFwRecT  = 0x0;
-  monData.nStart   = 0x0;
-  monData.nStop    = 0x0;
-  monData.nMatch   = 0x0;
-  monData.tAct     = NAN;
-  monData.tMin     = 1000000000;
-  monData.tMax     = -1000000000;
-  monData.tAve     = NAN;
-  monData.tSdev    = NAN;        
-  tAveOld          = NAN;
-  tAveStreamOld    = NAN;
+  monData.nFwSnd     = 0x0;
+  monData.nFwRecD    = 0x0;
+  monData.nFwRecT    = 0x0;
+  monData.nStart     = 0x0;
+  monData.nStop      = 0x0;
+  monData.nMatch     = 0x0;
+  monData.nFailSnd   = 0x0;
+  monData.nFailEvt   = 0x0;
+  monData.nFailOrder = 0x0;
+  monData.tAct       = NAN;
+  monData.tMin       = 1000000000;
+  monData.tMax       = -1000000000;
+  monData.tAve       = NAN;
+  monData.tSdev      = NAN;        
+  tAveOld            = NAN;
+  tAveStreamOld      = NAN;
 } // clearStats
 
 
@@ -237,13 +240,26 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
       /*if ((deadline.getTAI() - tStopOld) < dStopMin) dStopMin = deadline.getTAI() - tStopOld;
         tStopOld = deadline.getTAI();*/
 
-      if (!flagMilSent)                   return;  // a MIL telegram has been received although no MIL telegram has been sent: give up
+      // a MIL telegram has been received although no MIL telegram has been sent: give up
+      if (!flagMilSent){
+        monData.nFailSnd++;
+        return;
+      } // if !flagMilSent
       flagMilSent                  = 0;            // we received a MIL telegram pair: after 'returning', we start waiting for a new pair
-      if (mEvtNo != sndEvtNo)             return;  // evtNo of MIL received/sent telegrams do not match: give up*/
 
+      // evtNo of MIL received/sent telegrams do not match: give up
+      if (mEvtNo != sndEvtNo){
+        monData.nFailEvt++;
+        return;  
+      } // if !evtNo
       // assume we have a matching pair of sent and received MIL telegrams
       tDiff                         = (double)((int64_t)(deadline.getTAI() - one_us_ns * matchWindow - sndDeadline)) / (double)one_us_ns;
-      if (tDiff < -1.0 * matchWindow)     return;  // check causality; 
+
+      // check causality
+      if (tDiff < -1.0 * matchWindow){
+        monData.nFailOrder++;
+        return;
+      } // if tDiff
       monData.nMatch++;
       monData.tAct                  = tDiff;
       if (monData.tAct < monData.tMin) monData.tMin = monData.tAct;
@@ -308,7 +324,7 @@ void disAddServices(char *prefix)
 
   // monitoring data service
   sprintf(name, "%s_data", prefix);
-  disMonDataId  = dis_add_service(name, "I:2;X:6;D:5", &(disMonData), sizeof(monval_t), 0, 0);
+  disMonDataId  = dis_add_service(name, "I:2;X:6;I:3;D:5", &(disMonData), sizeof(monval_t), 0, 0);
 } // disAddServices
 
                         
@@ -322,7 +338,7 @@ static void help(void) {
   std::cerr << "  -d                   start server publishing data"                                << std::endl;
   std::cerr << "  -c <mode>            type of comparison; default 0; this can be"                  << std::endl;
   std::cerr << "                       0: compare received MIL telegrams with WR timing messages"   << std::endl;
-  std::cerr << "                       1: compare received MIL telegrams with send MIL telegrams"   << std::endl;
+  std::cerr << "                       1: compare received MIL telegrams with sent MIL telegrams"   << std::endl;
   std::cerr << "                       2: as mode '1' but excludes UTC telegrams"                   << std::endl;
   std::cerr << "  -m <match windows>   [us] windows for matching start/stop evts; default 20"       << std::endl;
   std::cerr << std::endl;
