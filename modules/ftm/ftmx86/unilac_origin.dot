@@ -8,15 +8,15 @@ subgraph cpu1 {
   node  [cpu="1"];
 
   
-  Ori_T01  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=01];
-  Ori_T02  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=02];
-  Ori_T03  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=03];
-  Ori_T04  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=04];
-  Ori_T05  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=05];
-  Ori_T06  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=06];
-  Ori_T07  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=07];
-  Ori_T08  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=08];
-  Ori_T09  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=09];
+  Ori_T01  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=1];
+  Ori_T02  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=2];
+  Ori_T03  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=3];
+  Ori_T04  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=4];
+  Ori_T05  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=5];
+  Ori_T06  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=6];
+  Ori_T07  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=7];
+  Ori_T08  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=8];
+  Ori_T09  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=9];
   Ori_T10  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=10];
   Ori_T11  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=11];
   Ori_T12  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=12];
