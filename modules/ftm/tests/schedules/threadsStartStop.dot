@@ -29,9 +29,9 @@ Block2 [type=block tperiod=10000000 pattern=C patexit=1 qlo=1]
 Block3 [type=block tperiod=10000000 pattern=A patexit=1 qlo=1]
 Block4 [type=block tperiod=10000000 pattern=B patexit=1 qlo=1]
 
-Startthread1 [type=startthread thread=1 startoffs=0]
-Startthread2 [type=startthread thread=2 startoffs=0]
-Startthread3 [type=startthread thread=3 startoffs=0]
+Startthread1 [type=startthread thread="0x2" startoffs=0]
+Startthread2 [type=startthread thread="0x4" startoffs=0]
+Startthread3 [type=startthread thread="0x8" startoffs=0]
 
 // sequence to start threads 1,2,3
 Tmsg0 -> Origin1 -> Startthread1 -> Origin2 -> Startthread2 -> Origin3 -> Startthread3 -> Block0

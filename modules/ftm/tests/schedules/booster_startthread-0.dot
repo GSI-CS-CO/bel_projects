@@ -20,9 +20,9 @@ subgraph cpu1 {
   Ori_T2_A [type=origin thread=2]
   Ori_T3_B [type=origin thread=3]
 
-  StThrT1 [type=startthread toffs=235 startoffs=0 thread=1]
-  StThrT2 [type=startthread toffs=235 startoffs=10000000 thread=2]
-  StThrT3 [type=startthread toffs=10000 startoffs=0 thread=3]
+  StThrT1 [type=startthread toffs=235 startoffs=0 thread="0x2"]
+  StThrT2 [type=startthread toffs=235 startoffs=10000000 thread="0x4"]
+  StThrT3 [type=startthread toffs=10000 startoffs=0 thread="0x8"]
 
   Evt_MAIN [type=tmsg toffs=20000 fid=1 evtno=0 par=0]
   B_MAIN [type=block patexit=1 tperiod=100000000]
