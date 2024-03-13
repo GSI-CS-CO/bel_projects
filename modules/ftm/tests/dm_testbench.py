@@ -230,7 +230,7 @@ class DmTestbench(unittest.TestCase):
       action(actionArgs)
     snoop.join()
 
-  def analyseFrequencyFromCsv(self, csvFileName, column=20, printTable=True, checkValues=dict()):
+  def analyseFrequencyFromCsv(self, csvFileName, column=20, printTable=True, checkValues=dict(), addDelayed=False):
     """Analyse the frequency of the values in the specified column. Default column is 20 (parameter of the timing message).
     Prints (if printTable=True) the table of values, counters, and frequency over the whole time span.
     Column for EVTNO is 8. Timing messages should have 'fid=1' otherwise column numbers are different.
@@ -299,13 +299,25 @@ class DmTestbench(unittest.TestCase):
             self.assertFalse(item in listCounter.keys(), f'Key {item} found, should not occur')
           elif item in listCounter.keys():
             if str(checkValues[item])[0] == '>':
-              self.assertGreater(listCounter[item], int(checkValues[item][1:]), f'assertGreater for {item}: is:{listCounter[item]} expected:{checkValues[item]}')
+              if addDelayed and (item + '!delayed') in listCounter.keys():
+                self.assertGreater(listCounter[item] + listCounter[item + '!delayed'], int(checkValues[item][1:]), f'assertGreater for {item}: is:{listCounter[item]} + { + listCounter[item + "!delayed"]} expected:{checkValues[item]}')
+              else:
+                self.assertGreater(listCounter[item], int(checkValues[item][1:]), f'assertGreater for {item}: is:{listCounter[item]} expected:{checkValues[item]}')
             elif str(checkValues[item])[0] == '<':
-              self.assertGreater(int(checkValues[item][1:]), listCounter[item], f'assertSmaller for {item}: is:{listCounter[item]} expected:{checkValues[item]}')
+              if addDelayed and (item + '!delayed') in listCounter.keys():
+                self.assertGreater(int(checkValues[item][1:]), listCounter[item] + listCounter[item + '!delayed'], f'assertSmaller for {item}: is:{listCounter[item]} + { + listCounter[item + "!delayed"]} expected:{checkValues[item]}')
+              else:
+                self.assertGreater(int(checkValues[item][1:]), listCounter[item], f'assertSmaller for {item}: is:{listCounter[item]} expected:{checkValues[item]}')
             elif str(checkValues[item])[0] == '=':
-              self.assertEqual(listCounter[item], int(checkValues[item][1:]), f'assertEqual for {item}: is:{listCounter[item]} expected:{checkValues[item]}')
+              if addDelayed and (item + '!delayed') in listCounter.keys():
+                self.assertEqual(listCounter[item] + listCounter[item + '!delayed'], int(checkValues[item][1:]), f'assertEqual for {item}: is:{listCounter[item]} + { + listCounter[item + "!delayed"]} expected:{checkValues[item]}')
+              else:
+                self.assertEqual(listCounter[item], int(checkValues[item][1:]), f'assertEqual for {item}: is:{listCounter[item]} expected:{checkValues[item]}')
             else:
-              self.assertEqual(listCounter[item], int(checkValues[item]), f'assertEqual for {item}: is:{listCounter[item]} expected:{checkValues[item]}')
+              if addDelayed and (item + '!delayed') in listCounter.keys():
+                self.assertEqual(listCounter[item] + listCounter[item + '!delayed'], int(checkValues[item]), f'assertEqual for {item}: is:{listCounter[item]} + { + listCounter[item + "!delayed"]} expected:{checkValues[item]}')
+              else:
+                self.assertEqual(listCounter[item], int(checkValues[item]), f'assertEqual for {item}: is:{listCounter[item]} expected:{checkValues[item]}')
           else:
             self.assertTrue(item in listCounter.keys(), f'Key {item} not found, but expected.')
 
