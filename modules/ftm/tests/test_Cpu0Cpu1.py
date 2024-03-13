@@ -45,7 +45,8 @@ class ConnectCpus(dm_testbench.DmTestbench):
     Download the schedule for later compare.
     """
     self.addSchedule(self.scheduleFile0)
-    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'X'), [0], 1, 0)
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'A'), [0], 1, 0)
+    self.delay(0.1)
+    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'X'), [0], 1, 0)
     self.delay(1.0)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile0), [0], 0, 0)
