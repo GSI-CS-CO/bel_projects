@@ -13,7 +13,7 @@ class AbortTests(dm_testbench.DmTestbench):
     self.prepareRunThreads()
     # Abort some threads on CPUs 0 and 1
     cpu = '0x3' # CPUs 0 and 1
-    thread = '0xaa' # Threads 2, 4, 6, 8
+    thread = '0xaa' # Threads 1, 3, 5, 7
     threadCount = self.bitCount(thread, self.threadQuantity)
     cpuCount = self.bitCount(cpu, self.cpuQuantity)
     lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', f'{cpu}', '-t', f'{thread}', 'abort'), [0], threadCount * cpuCount, 0)
