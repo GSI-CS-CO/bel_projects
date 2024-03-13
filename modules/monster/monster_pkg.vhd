@@ -149,6 +149,7 @@ package monster_pkg is
       core_clk_sys_o         : out   std_logic;
       core_clk_200m_o        : out   std_logic;
       core_clk_20m_o         : out   std_logic;
+      core_clk_25m_o         : out   std_logic;
       core_debug_o           : out   std_logic_vector(15 downto 0);
       core_clk_debug_i       : in    std_logic := '0';
       -- Required: white rabbit pins

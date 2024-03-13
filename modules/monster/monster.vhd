@@ -141,6 +141,7 @@ entity monster is
     core_rstn_butis_o      : out   std_logic;
     core_clk_200m_o        : out   std_logic;
     core_clk_20m_o         : out   std_logic;
+    core_clk_25m_o         : out   std_logic;
     core_debug_o           : out   std_logic_vector(15 downto 0) := (others => 'Z');
     core_clk_debug_i       : in    std_logic;
     -- Required: white rabbit pins
@@ -1246,6 +1247,7 @@ begin
   core_clk_sys_o     <= clk_sys;
   core_clk_200m_o    <= clk_200m;
   core_clk_20m_o     <= clk_20m;
+  core_clk_25m_o     <= clk_ref2;
 
   -- END OF Reset and PLLs
   ----------------------------------------------------------------------------------
