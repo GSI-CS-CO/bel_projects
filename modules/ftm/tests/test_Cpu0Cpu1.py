@@ -14,7 +14,7 @@ class ConnectCpus(dm_testbench.DmTestbench):
     self.snoopToCsvWithAction(snoopFile, self.actionTwoCpusFlow, duration=1)
     self.startAndCheckSubprocess(('scheduleCompare', '-s', '-u', self.schedulesFolder + self.scheduleFile0, self.downloadFile0), [0], 0, 0)
     self.deleteFile(self.downloadFile0)
-    self.analyseFrequencyFromCsv(snoopFile, column=20, printTable=True, checkValues={'0x0000000000000000': '>35', '0x0000000000000001': '>35', '0x0000000000000002': '>35'})
+    self.analyseFrequencyFromCsv(snoopFile, column=20, printTable=True, checkValues={'0x0000000000000000': '>35', '0x0000000000000001': '>35', '0x0000000000000002': '>35'}, addDelayed=True)
     self.deleteFile(snoopFile)
 
   def actionTwoCpusFlow(self):
@@ -37,7 +37,7 @@ class ConnectCpus(dm_testbench.DmTestbench):
     self.snoopToCsvWithAction(snoopFile, self.actionTwoCpusSwitch, duration=1)
     self.startAndCheckSubprocess(('scheduleCompare', '-s', '-u', self.schedulesFolder + self.downloadFile0, self.downloadFile0), [0], 0, 0)
     self.deleteFile(self.downloadFile0)
-    self.analyseFrequencyFromCsv(snoopFile, column=20, printTable=True, checkValues={'0x0000000000000000': '>35', '0x0000000000000001': '>0', '0x0000000000000002': '>35'})
+    self.analyseFrequencyFromCsv(snoopFile, column=20, printTable=True, checkValues={'0x0000000000000000': '>35', '0x0000000000000001': '>0', '0x0000000000000002': '>35'}, addDelayed=True)
     self.deleteFile(snoopFile)
 
   def actionTwoCpusSwitch(self):

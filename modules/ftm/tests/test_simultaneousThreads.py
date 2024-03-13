@@ -41,7 +41,7 @@ class SimultaneousThreads(dm_testbench.DmTestbench):
     keyList = {'0x0000000000000000': '>50', }
     for i in range(1, threads):
       keyList[f'0x{i:016x}'] = '>50'
-    self.analyseFrequencyFromCsv(snoopFile, column=20, printTable=True, checkValues=keyList)
+    self.analyseFrequencyFromCsv(snoopFile, column=20, printTable=True, checkValues=keyList, addDelayed=True)
     self.deleteFile(snoopFile)
     self.deleteFile(self.schedulesFolder + self.scheduleFile0)
 
