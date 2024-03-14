@@ -252,7 +252,7 @@ architecture rtl of uniftm is
   constant c_project      : string  := "uniftm";
   constant c_initf_name   : string  := c_project & ".mif";
   constant c_profile_name : string  := "medium_icache";
-  constant c_cores        : natural := 2;
+  constant c_cores        : natural := 1;
 
 begin
 
