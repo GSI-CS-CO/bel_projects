@@ -278,7 +278,8 @@ begin
       g_delay_diagnostics   => true,
       g_lm32_init_files     => f_string_list_repeat(c_initf_name, c_cores),
       g_lm32_profiles       => f_string_list_repeat(c_profile_name, c_cores),
-      g_en_eca              => false
+      g_en_eca              => true,
+      g_en_eca_io_channel   => false
     )
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
