@@ -24,11 +24,9 @@ type   gate_state_t is   (idle,prepare_state, gate, waiting, error, recover_stat
 signal gate_state:   gate_state_t;
 signal gate_state_sn:   gate_state_t:= idle;
 signal gate_er: std_logic;
-signal timeout_reset : unsigned(16 downto 0); 
+signal timeout_reset : unsigned(15 downto 0); 
 signal gate_out_sm: std_logic;
-
---signal last_val: std_logic;-- :='0';
-signal timeout : unsigned(16 downto 0);-- := timeout_reset;
+signal timeout : unsigned(15 downto 0);
 signal curr_val   :std_logic; --:='0';
 signal state_sm: integer range 0 to 5:= 0;
 signal state_nr: std_logic_vector (2 downto 0);
@@ -52,10 +50,8 @@ begin
   end if;
   end process;
 
--- gate_state_nr <=  std_logic_vector(to_unsigned(state_sm, gate_state_nr'length));
 
 
-timeout_reset <=unsigned(hold&'0'); -- to be checked
 
 gate_proc: process (clk_i, rstn_i)
 
@@ -67,23 +63,22 @@ gate_proc: process (clk_i, rstn_i)
         gate_error  <= '0';
         gate_out <='0';
         gate_er <='0';
-        timeout <= timeout_reset;
         gate_state <= idle;
         gate_state_nr <= "000";
         curr_val <='0';
-	 
+       
       elsif rising_edge(clk_i) then
-        
+
         curr_val <= gate_in ;
         gate_state_nr <=  std_logic_vector(to_unsigned(state_sm, gate_state_nr'length));
         gate_error <= gate_er;
         gate_out <= gate_out_sm;
-        
+        timeout_reset <=unsigned(hold); 
         
          case gate_state is
 
              when idle =>
-                 
+                    timeout <= timeout_reset;
 
                     if curr_val='1' then --0
                       gate_state <= error;    
@@ -94,17 +89,18 @@ gate_proc: process (clk_i, rstn_i)
                      end if;
 
              when prepare_state => --1
-                    
+                      
                      if curr_val ='1' then
+                       timeout <= timeout_reset;
                        gate_state <= gate;
                        gate_out_sm <= '1';
-                     --  timeout <= timeout_reset;
-                    --else
-                    --    timeout <= timeout -1;
-                    --if (to_integer(timeout )=0) then
-                    --         gate_state <= error;
-                    -- end if;
-                       end if;
+                     
+                     else
+                        timeout <= timeout -1;
+                    if (to_integer(timeout )=0) then
+                             gate_state <= error;
+                     end if;
+                    end if;
  
  
               when gate => --2
@@ -128,7 +124,7 @@ gate_proc: process (clk_i, rstn_i)
                           end if;
                 
               when error => --4
-                   
+                            
                             if recover ='1' then
                               gate_state <= recover_state;
                              

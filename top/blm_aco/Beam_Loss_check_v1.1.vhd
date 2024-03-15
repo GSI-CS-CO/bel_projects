@@ -6,7 +6,7 @@ use work.scu_diob_pkg.all;
 entity Beam_Loss_check is
     generic (
     
-    WIDTH        : integer := 20     -- Counter width
+    WIDTH        : integer := 25     -- Counter width
        
 );
 port (
@@ -135,7 +135,7 @@ component BLM_gate_timing_seq is
  component BLM_counter_pool_el is
 
     generic (      
-        WIDTH        : integer := 20      -- Counter width
+        WIDTH        : integer := 24      -- Counter width
             
     );
     port (
@@ -340,7 +340,7 @@ BLM_counter_pool: for i in 0 to 127 generate
 
 BLM_counter_pool_elem: BLM_counter_pool_el
 generic map (      
-      WIDTH  => 20)
+      WIDTH  => 24)
 port map (
   CLK            => clk_sys,  
   nRST           => rstn_sys,
