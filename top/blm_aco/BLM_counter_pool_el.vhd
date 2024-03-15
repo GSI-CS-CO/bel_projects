@@ -5,7 +5,7 @@ use work.scu_diob_pkg.all;
  
 entity BLM_counter_pool_el is
     generic (      
-        WIDTH        : integer := 20      -- Counter width
+        WIDTH        : integer := 24      -- Counter width
             
     );
     port (
@@ -45,7 +45,7 @@ signal cnt_up, cnt_down: std_logic;
     component up_down_counter is
         generic (
 
-            WIDTH        : integer := 20      -- Counter width
+            WIDTH        : integer := 24     -- Counter width
           
         );
         port (
@@ -120,7 +120,7 @@ end process;
     Counter_module: up_down_counter 
      generic map
         (   
-            WIDTH         => WIDTH   -- Counter width
+            WIDTH         => 24 --WIDTH   -- Counter width
                      
         )
     port map
