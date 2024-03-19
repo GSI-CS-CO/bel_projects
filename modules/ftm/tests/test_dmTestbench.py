@@ -141,5 +141,26 @@ class DmTestTestbench(dm_testbench.DmTestbench):
     with self.assertRaises(AssertionError, msg='AssertionError: 52 not greater than 60 : assertGreater for 0x0000000000000002: is:52 expected:>60'):
       self.analyseFrequencyFromCsv(fileName, column=20, printTable=True, checkValues=checkValues1, addDelayed=True)
 
+  def test_analyseFrequencyFromCsvAllDelayed(self):
+    """Test handling of 'delayed' in snoop file with addDelayed=False.
+    This snoop file has ony 0x0000000000000000!delayed, not
+    0x0000000000000000 as key. So we get the expected AssertionError.
+    """
+    snoopFile = 'other/snoop_TwoCpusSwitch.csv'
+    checkValues1 = {'0x0000000000000000': '>35', '0x0000000000000001': '>0', '0x0000000000000002': '>35'}
+    with self.assertRaises(AssertionError):
+      self.analyseFrequencyFromCsv(snoopFile, column=20, printTable=True, checkValues=checkValues1, addDelayed=False)
+
+  def test_analyseFrequencyFromCsvAllDelayedTrue(self):
+    """Test handling of 'delayed' in snoop file with addDelayed=True.
+    This snoop file has ony 0x0000000000000000!delayed, not
+    0x0000000000000000 as key. Thus, listCounters[item] raises a KeyError
+    for item = 0x0000000000000000. This test tests the coding for only
+    delayed messages for one key.
+    """
+    snoopFile = 'other/snoop_TwoCpusSwitch.csv'
+    checkValues1 = {'0x0000000000000000': '=45', '0x0000000000000001': '>10', '0x0000000000000002': '>89'}
+    self.analyseFrequencyFromCsv(snoopFile, column=20, printTable=True, checkValues=checkValues1, addDelayed=True)
+
   def test_timestamp(self):
     self.printTimestamp("Test Text")
