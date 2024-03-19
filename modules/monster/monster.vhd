@@ -2679,6 +2679,10 @@ end generate;
           i_master_o  => dev_msi_slave_i(dev_slaves'pos(devs_eca_ctl)));
     end generate;
 
+    eca_io_channel_wb_n : if not g_en_eca_io_channel generate
+      s_eca_io <= (others => (others => '0'));
+    end generate;
+
       -- Legacy 8ns time
       ref_tai8ns <= "000" & s_time(63 downto 3);
 
