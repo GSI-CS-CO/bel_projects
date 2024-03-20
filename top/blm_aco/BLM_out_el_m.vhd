@@ -49,7 +49,7 @@ signal OVERFLOW : std_logic_vector(333 downto 0);
 --signal gate_input: std_logic_vector(11 downto 0);
 signal out_cnt_wr : std_logic; 
 signal up_down_counter_val: t_BLM_counter_Array;
-signal cnt_readback: std_logic_vector(23 downto 0):=(others =>'0');
+signal cnt_readback: std_logic_vector(29 downto 0):=(others =>'0');
 TYPE    t_cnt     is array (0 to 5)  of integer;
 --signal read_cnt: integer range 0 to 127;
 
@@ -171,7 +171,7 @@ end process;
     BLM_status_reg(21)(5 downto 0) <= BLM_out_signal; -- physical outputs
     BLM_status_reg(21)(15 downto 6)  <= (others =>'0');    
     BLM_status_reg(22)<= cnt_readback(15 downto 0);
-    BLM_status_reg(23) <= "00000000"& cnt_readback(23 downto 16);
+    BLM_status_reg(23) <= "00"& cnt_readback(29 downto 16);
 
 
  BLM_Output <= BLM_out_signal;

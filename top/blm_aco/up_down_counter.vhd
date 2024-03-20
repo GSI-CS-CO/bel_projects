@@ -6,7 +6,7 @@ USE IEEE.numeric_std.all;
 entity up_down_counter is
     generic (
     	--c            : integer :=1;        -- Counter_input width
-        WIDTH        : integer := 20      -- Counter width
+        WIDTH        : integer := 30      -- Counter width
 
         
     );
