@@ -22,6 +22,9 @@ architecture rtl of a10ts is
   signal r_dat       : std_logic_vector(31 downto 0) := (others => '0');
   signal r_temp      : std_logic_vector(31 downto 0) := (others => '0');
   signal s_clk_1m    : std_logic := '0';
+  signal s_eoc       : std_logic := '0';
+  signal s_eoc_latch : std_logic := '0';
+  signal s_temp_out  : std_logic_vector(9 downto 0) := (others => '0');
 begin
 
   slave_o.dat        <= r_dat;
@@ -29,6 +32,14 @@ begin
   slave_o.err        <= '0';
   slave_o.stall      <= '0';
   slave_o.rty        <= '0';
+
+  a10ts_ip : a10ts_ip
+  port map (
+    corectl <= '1',
+    eoc     <= s_eoc,
+    reset   <= not(rst_n_i),
+    tempout <= s_temp_out
+  );
 
   main : process(clk_i, rst_n_i) is
   begin
@@ -47,9 +58,13 @@ begin
   update_temp : process(clk_i, rst_n_i) is
   begin
     if rst_n_i = '0' then
-      r_temp <= (others => '0');
+      r_temp      <= (others => '0');
+      s_eoc_latch <= '0';
     elsif rising_edge(clk_i) then
-      r_temp <= (others => '1');
+      s_eoc_latch <= s_eoc;
+      if (s_eoc_latch = '1' and s_eoc = '0')
+        r_temp(9 downto 0) <= s_temp_out;
+      end if
     end if;
   end process;
 
