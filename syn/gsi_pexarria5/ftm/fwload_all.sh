@@ -5,8 +5,8 @@
 # load firmware to lm32
 ###########################################
 echo -e DM - start: load firmware
-if [ "$#" -ne 2 ]; then
-  echo "Usage: $0 <device> <bin file>" >&2
+if [ "$#" -lt 2 ]; then
+  echo "Usage: $0 <device> <bin file> [<number CPUs>]" >&2
   exit 1
 fi
 if ! [ -e "$2" ]; then
@@ -21,14 +21,21 @@ fi
 DEV=$1
 FILE=$2
 
-echo -e DM - start $DEV $FILE
+if [ "$#" -eq 3 ]; then
+  CPU=$3
+else
+  CPU=$(eb-ls $DEV | grep 'LM32-RAM-User' -c)
+fi
+
+echo -e DM - start $DEV $FILE for $CPU CPUs
 
 eb-reset $DEV cpuhalt 0xff
 sleep 0.5
-eb-fwload $DEV u0 0 $FILE
-eb-fwload $DEV u1 0 $FILE
-eb-fwload $DEV u2 0 $FILE
-eb-fwload $DEV u3 0 $FILE
+count=0
+while [ $count -lt $CPU ]; do
+  eb-fwload $DEV u$count 0 $FILE
+  count=$(( $count + 1 ))
+done
 sleep 0.5
 eb-reset $DEV cpureset 0xff
 sleep 5
