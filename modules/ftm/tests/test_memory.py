@@ -6,12 +6,18 @@ class UnitTestMemory(dm_testbench.DmTestbench):
 
   def setUp(self):
     super().setUp()
-    if self.threadQuantity == 8:
-      self.file1 = 'groups_4_nonDefaultPatterns_9_blocksPerPattern_150.dot'
-      self.file2 = 'groups_4_nonDefaultPatterns_9_blocksPerPattern_10b.dot'
+    if self.cpuQuantity == 3:
+      self.file1 = 'groups_3_nonDefaultPatterns_9_blocksPerPattern_150.dot'
+      if self.threadQuantity == 8:
+        self.file2 = 'groups_3_nonDefaultPatterns_9_blocksPerPattern_10b.dot'
+      else:
+        self.file2 = 'groups_3_nonDefaultPatterns_9_blocksPerPattern_10c.dot'
     else:
       self.file1 = 'groups_4_nonDefaultPatterns_9_blocksPerPattern_150.dot'
-      self.file2 = 'groups_4_nonDefaultPatterns_9_blocksPerPattern_10c.dot'
+      if self.threadQuantity == 8:
+        self.file2 = 'groups_4_nonDefaultPatterns_9_blocksPerPattern_10b.dot'
+      else:
+        self.file2 = 'groups_4_nonDefaultPatterns_9_blocksPerPattern_10c.dot'
 
   def test_memory_cpu0(self):
     """Test for CPU 0. Add the schedule, add a second schedule: OK. When
