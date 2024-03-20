@@ -1,12 +1,13 @@
 LIBRARY IEEE;
 USE IEEE.std_logic_1164.all;
 USE IEEE.numeric_std.all;
+use IEEE.std_logic_misc.all;
 use work.scu_diob_pkg.all;
 
 entity Beam_Loss_check is
     generic (
     
-    WIDTH        : integer := 25     -- Counter width
+    WIDTH        : integer := 30     -- Counter width
        
 );
 port (
@@ -85,6 +86,8 @@ signal gate_prepare: std_logic_vector(11 downto 0);
 signal gate_hold_time: t_BLM_gate_hold_Time_Array;
 signal gate_state: std_logic_vector(47 downto 0);
 signal gate_sm_state :t_gate_state_nr;
+signal all_thres_ready: std_logic; -- to allow gate prepare only after writing all thresholds
+signal or_thres: std_logic_vector(127 downto 0);
 
   component BLM_watchdog is
   
@@ -115,6 +118,7 @@ component BLM_gate_timing_seq is
       BLM_gate_recover: in std_logic_vector(11 downto 0); 
       BLM_gate_prepare : in std_logic_vector(11 downto 0); 
       hold_time : in  t_BLM_gate_hold_Time_Array;
+      all_thres_ready: in std_logic;
       gate_error : out std_logic_vector(n-1 downto 0); -- gate doesn't start within the given timeout
       state_nr: out t_gate_state_nr;
       gate_out: out std_logic_vector(n-1 downto 0)        -- out gate signal
@@ -135,7 +139,7 @@ component BLM_gate_timing_seq is
  component BLM_counter_pool_el is
 
     generic (      
-        WIDTH        : integer := 24      -- Counter width
+        WIDTH        : integer := 30      -- Counter width
             
     );
     port (
@@ -239,14 +243,7 @@ BLM_test_signal <=  BLM_tst_ck_sig(9) & -- 25 MHz
 direct_gate_operation: process(BLM_ctrl_Reg, BLM_gate_in, gate_output)
 
 begin
---  for i in 0 to 11 loop
-    
- --   if BLM_ctrl_Reg(i+2) = '0' then   --when '0', gate signals are directly sent to the 12 to 256 multiplexer for the counter enables assignments
- --     gate_In_Mtx(i)<= BLM_gate_in(i);
---    else 
- --     gate_IN_Mtx(i) <= gate_output(i);
- --   end if;
- -- end loop;
+
   for i in 0 to 5 loop
     
     if BLM_ctrl_Reg(i+2) = '0' then   --when '0', gate signals are directly sent to the 12 to 256 multiplexer for the counter enables assignments
@@ -265,6 +262,7 @@ begin
   end loop;
 end process direct_gate_operation;
 
+
   gate_board: BLM_gate_timing_seq
 
     generic map (
@@ -274,12 +272,11 @@ end process direct_gate_operation;
       clk_i => clk_sys,         --
       rstn_i => rstn_sys,         -- reset signal
       gate_in => BLM_gate_in,       -- gate input signals
-     -- BLM_gate_recover => BLM_gate_recover,
-     -- BLM_gate_prepare => BLM_gate_prepare,
-     -- hold_time => BLM_gate_hold_time_Reg,
+
       BLM_gate_recover => BLM_gate_recover(5 downto 0)&BLM_gate_recover(11 downto 6),
       BLM_gate_prepare => BLM_gate_prepare(5 downto 0)&BLM_gate_prepare(11 downto 6),
       hold_time => gate_hold_time,
+      all_thres_ready => all_thres_ready,
       gate_error => gate_sm_error, -- gate error
       state_nr => gate_sm_state,
       gate_out => gate_sm_output --gate_output
@@ -287,8 +284,7 @@ end process direct_gate_operation;
 
   gate_error <= gate_sm_error;
   gate_output <= gate_sm_output;
- -- gate_recover <= BLM_gate_recover(5 downto 0)&BLM_gate_recover(11 downto 6);
- -- gate_prepare <= BLM_gate_prepare(5 downto 0)&BLM_gate_prepare(11 downto 6);
+
   gate_state <= '0'& gate_sm_state(5) & '0'& gate_sm_state(4)& '0'& gate_sm_state(3)&'0'& gate_sm_state(2) & '0'& gate_sm_state(1)&'0'& gate_sm_state(0)&
   '0'& gate_sm_state(11) & '0'& gate_sm_state(10)& '0'& gate_sm_state(9)&'0'& gate_sm_state(8) & '0'& gate_sm_state(7)&'0'& gate_sm_state(6);
 
@@ -340,7 +336,7 @@ BLM_counter_pool: for i in 0 to 127 generate
 
 BLM_counter_pool_elem: BLM_counter_pool_el
 generic map (      
-      WIDTH  => 24)
+      WIDTH  => 30)
 port map (
   CLK            => clk_sys,  
   nRST           => rstn_sys,
@@ -360,7 +356,15 @@ port map (
 -----------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------
 -- out section
-
+all_thres_ready_proc: process(pos_threshold, neg_threshold)
+begin
+  for i in 0 to 127 loop
+    for j in 0 to 31 loop
+      or_thres(i)<= pos_threshold(i)(j) or neg_threshold(i)(j);
+    end loop;
+  end loop;
+  all_thres_ready <= and_reduce(or_thres);
+end process;
 
     
 BLM_out_section: BLM_out_el 

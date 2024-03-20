@@ -438,7 +438,7 @@ end component gate_deglitcher;
 component Beam_Loss_check is
   generic (
     
-    WIDTH        : integer := 24     -- Counter width
+    WIDTH        : integer := 30     -- Counter width
        
 );
 port (
@@ -2189,7 +2189,7 @@ BLM_Module : Beam_Loss_check
 
   generic map (
 
-  WIDTH => 24     -- Counter width
+  WIDTH => 32     -- Counter width
      
 )
 
