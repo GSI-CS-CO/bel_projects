@@ -1,4 +1,5 @@
 import dm_testbench
+import pytest
 
 """Test a bunch of cases where an edge connects nodes on two CPUs.
 """
@@ -75,6 +76,7 @@ class ConnectCpus(dm_testbench.DmTestbench):
     self.delay(1.0)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile0), [0], 0, 0)
 
+  @pytest.mark.development
   def testTwoCpusOrigin(self):
     """Load a schedule with a origindst edge that connects a node on CPU 0
     with a node on CPU 1.
