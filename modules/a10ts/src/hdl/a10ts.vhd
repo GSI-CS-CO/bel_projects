@@ -62,7 +62,7 @@ begin
       s_eoc_latch <= '0';
     elsif rising_edge(clk_i) then
       s_eoc_latch <= s_eoc;
-      if (s_eoc_latch = '1' and s_eoc = '0')
+      if (s_eoc_latch = '1' and s_eoc = '0') -- TBD: This is not save
         r_temp(9 downto 0) <= s_temp_out;
       end if
     end if;
