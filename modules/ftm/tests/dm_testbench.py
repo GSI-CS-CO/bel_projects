@@ -26,8 +26,7 @@ class DmTestbench(unittest.TestCase):
     self.schedulesFolder = os.environ.get('TEST_SCHEDULES', 'schedules/')
     self.snoop_command = os.environ.get('SNOOP_COMMAND', 'saft-ctl tr0 -xv snoop 0 0 0')
     self.patternStarted = False
-    self.threadQuantity = self.getThreadQuantityFromFirmware()
-    self.cpuQuantity = 4
+    self.cpuQuantity, self.threadQuantity = self.getThreadQuantityFromFirmware()
 
   def setUp(self):
     self.initDatamaster()
@@ -336,10 +335,10 @@ class DmTestbench(unittest.TestCase):
     """
     if useVerbose:
       outputStdoutStderr = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-v'), [0])
-      offsetLines = 11 + 16
+      offsetLines = 7 + 16 + self.cpuQuantity
     else:
       outputStdoutStderr = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster), [0])
-      offsetLines = 11
+      offsetLines = 7 + self.cpuQuantity
     output = outputStdoutStderr[0]
     msgCounts = {}
     threadsCheck = '0' * (self.threadQuantity * self.cpuQuantity)
@@ -526,14 +525,15 @@ class DmTestbench(unittest.TestCase):
     Check that these are running.
     """
     cpuList = self.listFromBits(cpus, self.cpuQuantity)
+    cpuMask = self.maskFromList(cpuList, self.cpuQuantity)
     # Add schedules for all CPUs and start pattern on all threads.
     for cpu in cpuList:
       self.addSchedule(f'pps-all-threads-cpu{cpu}.dot')
     # Check all CPUs that no thread is running.
     self.delay(0.2)
-    lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', '0xf', 'running'), [0], self.cpuQuantity, 0)
+    lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', cpuMask, 'running'), [0], len(cpuList), 0)
     # ~ self.printStdOutStdErr(lines)
-    for i in range(self.cpuQuantity):
+    for i in range(len(cpuList)):
       expectedText = 'CPU {variable} Running Threads: 0x0'.format(variable=i)
       self.assertEqual(lines[0][i], expectedText, 'wrong output, expected: ' + expectedText)
     # Start pattern for all CPUs and all threads
@@ -546,7 +546,7 @@ class DmTestbench(unittest.TestCase):
         self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', f'PPS{cpu}' + x, '-t', y), [0])
     self.checkRunningThreadsCmd()
     # Check all CPUs that all threads are running.
-    lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', '0xf', 'running'), [0], self.cpuQuantity, 0)
+    lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', cpuMask, 'running'), [0], len(cpuList), 0)
     # ~ self.printStdOutStdErr(lines)
     if self.threadQuantity == 32:
       threadMask = '0xffffffff'
@@ -554,7 +554,7 @@ class DmTestbench(unittest.TestCase):
       threadMask = '0xff'
     else:
       self.assertFalse(True, f'threadQuantity is {self.threadQuantity}, allowed: 8 or 32')
-    for i in range(self.cpuQuantity):
+    for i in range(len(cpuList)):
       if i in cpuList:
         expectedText = 'CPU {variable} Running Threads: {mask}'.format(variable=i, mask=threadMask)
         self.assertEqual(lines[0][i], expectedText, 'wrong output, expected: ' + expectedText)
@@ -572,9 +572,16 @@ class DmTestbench(unittest.TestCase):
   def resetAllCpus(self):
     """Reset each CPU (loop over all lm32 CPUs).
     """
-    for cpu in ['0', '1', '2', '3']:
-      self.startAndCheckSubprocess((self.getEbResetCommand(), self.datamaster, 'cpureset', cpu), [0])
+    for cpu in range(self.cpuQuantity):
+      self.startAndCheckSubprocess((self.getEbResetCommand(), self.datamaster, 'cpureset', str(cpu)), [0])
     self.delay(2.0)
+
+  def maskFromList(self, itemList, quantity) -> str:
+    mask = 0
+    for item in itemList:
+      if isinstance(item, int) and item < quantity:
+        mask = (1 << item) | mask
+    return f'0x{mask:0x}'
 
   def listFromBits(self, bits, quantity) -> list:
     """Convert a 'bits', given as a string or an int, into a list of
@@ -612,11 +619,13 @@ class DmTestbench(unittest.TestCase):
       print(f'{chr(10).join(lines[1])}')
 
   @classmethod
-  def getThreadQuantityFromFirmware(self) -> int:
+  def getThreadQuantityFromFirmware(self) -> [int, int]:
     """This class method uses 'eb-info -w' to get the thread quantity
-    from the lm32 firmware. This method is used once in the set up of
-    a class by setUpClass.
+    and the CPU quantity from the lm32 firmware.
+    This method is used once in the set up of a class by setUpClass.
     """
+    threads = 8
+    cpus = 4
     # pass cmd and args to the function
     process = subprocess.Popen(('eb-info', '-w', self.datamaster), stderr=subprocess.PIPE, stdout=subprocess.PIPE)
     # get command output and error
@@ -626,10 +635,10 @@ class DmTestbench(unittest.TestCase):
     lines = stdout.decode("utf-8").splitlines()
     for line in lines:
       if 'ThreadQty   : 32' in line:
-        # ~ self.logToFile('getThreadQuantityFromFirmware: 32', 'threadQuantity.txt')
-        return 32
-    # ~ self.logToFile('getThreadQuantityFromFirmware: 8', 'threadQuantity.txt')
-    return 8
+        threads = 32
+      if 'holding a Firmware ID' in line:
+        cpus = int(line[14])
+    return cpus, threads
 
   @classmethod
   def logToFile(self, text, fileName):
