@@ -5,6 +5,7 @@ use ieee.numeric_std.all;
 library work;
 use work.wishbone_pkg.all;
 use work.monster_pkg.all;
+use work.a10ts_pkg.all;
 
 entity a10ts is
   port(
@@ -12,7 +13,7 @@ entity a10ts is
     rst_n_i                : in  std_logic := '1';
     clk_20m_i              : in  std_logic := '0';
     slave_i                : in  t_wishbone_slave_in;
-    slave_o                : out t_wishbone_slave_out;
+    slave_o                : out t_wishbone_slave_out);
 end a10ts;
 
 architecture rtl of a10ts is
@@ -33,12 +34,12 @@ begin
   slave_o.stall      <= '0';
   slave_o.rty        <= '0';
 
-  a10ts_ip : a10ts_ip
+  core_a10ts_ip : a10ts_ip
   port map (
-    corectl <= '1',
-    eoc     <= s_eoc,
-    reset   <= not(rst_n_i),
-    tempout <= s_temp_out
+    corectl => '1',
+    eoc     => s_eoc,
+    reset   => not(rst_n_i),
+    tempout => s_temp_out
   );
 
   main : process(clk_i, rst_n_i) is
@@ -62,9 +63,9 @@ begin
       s_eoc_latch <= '0';
     elsif rising_edge(clk_i) then
       s_eoc_latch <= s_eoc;
-      if (s_eoc_latch = '1' and s_eoc = '0') -- TBD: This is not save
+      if (s_eoc_latch = '1' and s_eoc = '0') then -- TBD: This is not save
         r_temp(9 downto 0) <= s_temp_out;
-      end if
+      end if;
     end if;
   end process;
 
@@ -74,7 +75,7 @@ begin
       s_counter <= 0;
       s_clk_1m  <= '0';
     elsif rising_edge(clk_20m_i) then
-      if counter = DIVIDER_VALUE - 1 then
+      if s_counter = c_divider - 1 then
         s_counter <= 0;
         s_clk_1m  <= not s_clk_1m;
       else

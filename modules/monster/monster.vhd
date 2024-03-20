@@ -65,6 +65,7 @@ use work.wb_serdes_clk_gen_pkg.all;
 use work.io_control_pkg.all;
 use work.wb_pmc_host_bridge_pkg.all;
 use work.wb_temp_sense_pkg.all;
+use work.a10ts_pkg.all;
 use work.ddr3_wrapper_pkg.all;
 use work.endpoint_pkg.all;
 use work.cpri_phy_reconf_pkg.all;
@@ -119,6 +120,7 @@ entity monster is
     g_lm32_profiles        : string;
     g_lm32_are_ftm         : boolean;
     g_en_tempsens          : boolean;
+    g_en_a10ts             : boolean;
     g_delay_diagnostics    : boolean;
     g_en_eca               : boolean;
     g_en_wd_tmr            : boolean;
@@ -505,6 +507,7 @@ architecture rtl of monster is
     devs_DDR3_if2,
     devs_DDR3_ctrl,
     devs_tempsens,
+    devs_a10ts,
     devs_a10_phy_reconf,
     devs_i2c_wrapper,
     devs_eca_tap,
@@ -547,6 +550,7 @@ architecture rtl of monster is
     dev_slaves'pos(devs_DDR3_if2)       => f_sdb_auto_device(c_wb_DDR3_if2_sdb,                g_en_ddr3),
     dev_slaves'pos(devs_DDR3_ctrl)      => f_sdb_auto_device(c_irq_master_ctrl_sdb,            g_en_ddr3),
     dev_slaves'pos(devs_tempsens)       => f_sdb_auto_device(c_temp_sense_sdb,                 g_en_tempsens),
+    dev_slaves'pos(devs_a10ts)          => f_sdb_auto_device(c_a10ts_sdb,                      g_en_a10ts),
     dev_slaves'pos(devs_a10_phy_reconf) => f_sdb_auto_device(c_cpri_phy_reconf_sdb,            g_a10_en_phy_reconf),
     dev_slaves'pos(devs_i2c_wrapper)    => f_sdb_auto_device(c_i2c_wrapper_sdb,                g_en_i2c_wrapper),
     dev_slaves'pos(devs_eca_tap)        => f_sdb_auto_device(c_eca_tap_sdb,                    g_en_eca_tap),
@@ -3152,7 +3156,6 @@ end generate;
   tempsens_n : if not g_en_tempsens generate
     dev_bus_master_i(dev_slaves'pos(devs_tempsens)) <= cc_dummy_slave_out;
   end generate;
-
   tempsens_y : if g_en_tempsens generate
     tempsens_display : wb_temp_sense
       port map (
@@ -3161,6 +3164,19 @@ end generate;
         slave_i    => dev_bus_master_o(dev_slaves'pos(devs_tempsens)),
         slave_o    => dev_bus_master_i(dev_slaves'pos(devs_tempsens)),
         clr_o      => tempsens_clr_out);
+  end generate;
+
+  a10ts_n : if not g_en_a10ts generate
+    dev_bus_master_i(dev_slaves'pos(devs_a10ts)) <= cc_dummy_slave_out;
+  end generate;
+  a10ts_y : if g_en_a10ts generate
+    a10ts_inst : a10ts
+      port map (
+        clk_i      => clk_sys,
+        rst_n_i    => rstn_sys,
+        clk_20m_i  => clk_20m,
+        slave_i    => dev_bus_master_o(dev_slaves'pos(devs_a10ts)),
+        slave_o    => dev_bus_master_i(dev_slaves'pos(devs_a10ts)));
   end generate;
 
   i2c_wrapper_n : if not g_en_i2c_wrapper generate

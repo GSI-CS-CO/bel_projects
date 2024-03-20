@@ -46,6 +46,7 @@ modules = {
     "prioq2",
     "stub_pll",
     "temp_sens",
+    "a10ts",
     "eca_tap",
     "beam_dump",
     "daq",

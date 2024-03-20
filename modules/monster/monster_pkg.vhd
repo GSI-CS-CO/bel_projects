@@ -125,13 +125,13 @@ package monster_pkg is
       g_lm32_profiles        : string; -- multiple profiles must be seperated by a semicolon ';'
       g_lm32_are_ftm         : boolean := false;
       g_en_tempsens          : boolean := false;
+      g_en_a10ts             : boolean := false;
       g_delay_diagnostics    : boolean := false;
       g_en_eca               : boolean := true;
       g_en_wd_tmr            : boolean := false;
       g_en_timer             : boolean := false;
       g_en_eca_tap           : boolean := false;
       g_en_asmi              : boolean := false
-
     );
     port(
       -- Required: core signals
