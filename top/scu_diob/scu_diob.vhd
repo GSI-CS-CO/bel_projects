@@ -1599,8 +1599,8 @@ signal    Deb72_out:    std_logic_vector(71 downto 0);
 
 signal    Syn72:        std_logic_vector(71 downto 0);
 signal    Deb_Sync72:   std_logic_vector(71 downto 0);
-type   IOBP_slot_state_t is   (IOBP_slot_idle, IOBP_slot1, IOBP_slot2,IOBP_slot3,IOBP_slot4,IOBP_slot5,IOBP_slot6,IOBP_slot7,IOBP_slot8,IOBP_slot9,IOBP_slot10,IOBP_slot11,IOBP_slot12);
-signal IOBP_slot_state:   IOBP_slot_state_t:= IOBP_slot_idle;
+--type   IOBP_slot_state_t is   (IOBP_slot_idle, IOBP_slot1, IOBP_slot2,IOBP_slot3,IOBP_slot4,IOBP_slot5,IOBP_slot6,IOBP_slot7,IOBP_slot8,IOBP_slot9,IOBP_slot10,IOBP_slot11,IOBP_slot12);
+--signal IOBP_slot_state:   IOBP_slot_state_t:= IOBP_slot_idle;
 type   t_reg_array         is array (1 to 12) of std_logic_vector(7 downto 0);
 signal conf_reg:           t_reg_array;
 signal AW_SK_Input_Reg:            t_IO_Reg_1_to_7_Array;  -- Input-Register von den Piggy's
@@ -4144,16 +4144,17 @@ end generate Quench_Matrix_Gen;
               conf_reg(i)<= (others => '0' );
           end loop;
 
-          IOBP_slot_state <= IOBP_slot_idle;
+          --IOBP_slot_state <= IOBP_slot_idle;
 
       elsif (clk_sys'EVENT AND clk_sys = '1') then
 
-          case IOBP_slot_state is
+         -- case IOBP_slot_state is
 
-              when IOBP_slot_idle	=>
-                                              IOBP_slot_state <= IOBP_slot1;
-
-              when IOBP_slot1=>			    conf_reg(1)<= IOBP_ID(1);
+          --    when IOBP_slot_idle	=>
+                                           --   IOBP_slot_state <= IOBP_slot1;
+--
+           --   when IOBP_slot1=>			    
+           conf_reg(1)<= IOBP_ID(1);
                                               case conf_reg(1) is
                                                   when "00000011"  => -- 6 LEMO Input Modul FG902.130in slot 1
                                                       AW_SK_Input_Reg(1)( 5 downto  0) <=   (Deb_Sync72( 5 downto  0)   AND not IOBP_Masken_Reg1( 5 downto  0));
@@ -4209,9 +4210,10 @@ end generate Quench_Matrix_Gen;
                                                   when others     =>  NULL;
                                               end case;
 
-                                              IOBP_slot_state <= IOBP_slot2;
+                                         --     IOBP_slot_state <= IOBP_slot2;
 
-              when IOBP_slot2=>			    conf_reg(2)<= IOBP_ID(2);
+              --when IOBP_slot2=>			    
+              conf_reg(2)<= IOBP_ID(2);
                                         case conf_reg(2) is
                                                   when "00000011"   => -- 6 LEMO Input Modul FG902.130 in slot 2
                                                       AW_SK_Input_Reg(1)( 11 downto  6)<=   (Deb_Sync72( 11 downto  6)  AND not IOBP_Masken_Reg1( 11 downto  6));
@@ -4269,9 +4271,10 @@ end generate Quench_Matrix_Gen;
                                                   when others     =>  NULL;
                                               end case;
 
-                                              IOBP_slot_state <= IOBP_slot3;
+                                          --    IOBP_slot_state <= IOBP_slot3;
 
-              when IOBP_slot3=>			    conf_reg(3)<= IOBP_ID(3);
+           --   when IOBP_slot3=>			    
+           conf_reg(3)<= IOBP_ID(3);
                                             case conf_reg(3) is
                                                 when "00000011"    => -- 6 LEMO Input Modul FG902.130  in slot 3
                                                       AW_SK_Input_Reg(2)( 5 downto  0) <=   (Deb_Sync72( 17 downto  12) AND not IOBP_Masken_Reg2( 5 downto  0));
@@ -4327,9 +4330,10 @@ end generate Quench_Matrix_Gen;
                                                 when others     =>   NULL;
                                             end case;
 
-                                              IOBP_slot_state <= IOBP_slot4;
+                                             -- IOBP_slot_state <= IOBP_slot4;
 
-               when IOBP_slot4=>			    conf_reg(4)<= IOBP_ID(4);
+               --when IOBP_slot4=>			    
+               conf_reg(4)<= IOBP_ID(4);
                                             case conf_reg(4) is
                                                 when "00000011"    => -- 6 LEMO Input Modul FG902.130 in slot 4
                                                       AW_SK_Input_Reg(2)( 11 downto  6)<=   (Deb_Sync72( 23 downto  18) AND not IOBP_Masken_Reg2( 11 downto  6));
@@ -4384,9 +4388,10 @@ end generate Quench_Matrix_Gen;
                                                   when others     =>   NULL;
                                             end case;
 
-                                              IOBP_slot_state <= IOBP_slot5;
+                                             -- IOBP_slot_state <= IOBP_slot5;
 
-              when IOBP_slot5=>			    conf_reg(5)<= IOBP_ID(5);
+            --  when IOBP_slot5=>			    
+            conf_reg(5)<= IOBP_ID(5);
                                               case conf_reg(5) is
                                                   when "00000011"    => -- 6 LEMO Input Modul FG902.130 in slot 5
                                                       AW_SK_Input_Reg(3)( 5 downto  0) <=   (Deb_Sync72( 29 downto  24) AND not IOBP_Masken_Reg3( 5 downto  0));
@@ -4444,9 +4449,10 @@ end generate Quench_Matrix_Gen;
                                               when others     =>  NULL;
                                           end case;
 
-                                              IOBP_slot_state <= IOBP_slot6;
+                                          --    IOBP_slot_state <= IOBP_slot6;
 
-              when IOBP_slot6=>			    conf_reg(6)<= IOBP_ID(6);
+            --  when IOBP_slot6=>			    
+            conf_reg(6)<= IOBP_ID(6);
                                               case conf_reg(6) is
                                                   when "00000011"   => -- 6 LEMO Input Modul FG902.130  in slot 6
                                                       AW_SK_Input_Reg(3)( 11 downto  6)<=   (Deb_Sync72( 35 downto  30) AND not IOBP_Masken_Reg3( 11 downto  6));
@@ -4501,9 +4507,10 @@ end generate Quench_Matrix_Gen;
                                                   when others     =>  NULL;
                                       end case;
 
-                                              IOBP_slot_state <= IOBP_slot7;
+                                           --   IOBP_slot_state <= IOBP_slot7;
 
-              when IOBP_slot7=>			    conf_reg(7)<= IOBP_ID(7);
+              --when IOBP_slot7=>			    
+              conf_reg(7)<= IOBP_ID(7);
                                               case conf_reg(7) is
                                                   when "00000011"  => -- 6 LEMO Input Modul FG902.130 in slot 7
                                                       AW_SK_Input_Reg(4)( 5 downto  0) <=   (Deb_Sync72( 41 downto  36) AND not IOBP_Masken_Reg4( 5 downto  0));
@@ -4559,9 +4566,10 @@ end generate Quench_Matrix_Gen;
                                                   when others     =>  NULL;
                                       end case;
 
-                                              IOBP_slot_state <= IOBP_slot8;
+                                         --     IOBP_slot_state <= IOBP_slot8;
 
-              when IOBP_slot8=>			    conf_reg(8)<= IOBP_ID(8);
+            --  when IOBP_slot8=>			    
+            conf_reg(8)<= IOBP_ID(8);
                                               case conf_reg(8) is
                                                   when "00000011"  => -- 6 LEMO Input Modul FG902.130 in slot 8
                                                       AW_SK_Input_Reg(4)( 11 downto  6)<=   (Deb_Sync72( 47 downto  42) AND not IOBP_Masken_Reg4( 11 downto  6));
@@ -4617,9 +4625,10 @@ end generate Quench_Matrix_Gen;
                                                   when others     =>  NULL;
                                               end case;
 
-                                              IOBP_slot_state <= IOBP_slot9;
+                                          --    IOBP_slot_state <= IOBP_slot9;
 
-              when IOBP_slot9=>			    conf_reg(9)<= IOBP_ID(9);
+            --  when IOBP_slot9=>			    
+            conf_reg(9)<= IOBP_ID(9);
                                               case conf_reg(9) is
                                                   when "00000011"   => -- 6 LEMO Input Modul FG902.130  in slot 9
                                                       AW_SK_Input_Reg(5)( 5 downto  0) <=   (Deb_Sync72(53 DOWNTO 48) AND not IOBP_Masken_Reg5( 5 downto  0));
@@ -4676,9 +4685,10 @@ end generate Quench_Matrix_Gen;
                                                   when others     =>  NULL;
                                               end case;
   ---
-                                              IOBP_slot_state <= IOBP_slot10;
+                                         --     IOBP_slot_state <= IOBP_slot10;
 
-              when IOBP_slot10=>			    conf_reg(10)<= IOBP_ID(10);
+            --  when IOBP_slot10=>			    
+            conf_reg(10)<= IOBP_ID(10);
                                               case conf_reg(10) is
                                                   when "00000011"    => -- 6 LEMO Input Modul FG902.130 in slot 10
                                                       AW_SK_Input_Reg(5)( 11 downto  6) <=   (Deb_Sync72(59 DOWNTO 54) AND not IOBP_Masken_Reg5( 11 downto  6));
@@ -4732,9 +4742,10 @@ end generate Quench_Matrix_Gen;
                                                   when others     =>  NULL;
                                               end case;
 
-                                              IOBP_slot_state <= IOBP_slot11;
+                                             -- IOBP_slot_state <= IOBP_slot11;
 
-              when IOBP_slot11=>			    conf_reg(11)<= IOBP_ID(11);
+        --      when IOBP_slot11=>			    
+        conf_reg(11)<= IOBP_ID(11);
                                               case conf_reg(11) is
                                                   when "00000011"   => -- 6 LEMO Input Modul FG902.130  in slot 11
                                                       AW_SK_Input_Reg(6)( 5 downto  0) <=   (Deb_Sync72(65 DOWNTO 60) AND not IOBP_Masken_Reg6( 5 downto  0));
@@ -4789,9 +4800,10 @@ end generate Quench_Matrix_Gen;
                                                   when others     =>  NULL;
                                               end case;
 
-                                              IOBP_slot_state <= IOBP_slot12;
+                                             -- IOBP_slot_state <= IOBP_slot12;
 
-              when IOBP_slot12=>			    conf_reg(12)<= IOBP_ID(12);
+            --  when IOBP_slot12=>			    
+            conf_reg(12)<= IOBP_ID(12);
                                               case conf_reg(12) is
                                                   when "00000011"   => -- 6 LEMO Input Modul FG902.130  in slot 12
                                                       AW_SK_Input_Reg(6)( 11 downto  6) <=   (Deb_Sync72(71 DOWNTO 66) AND not IOBP_Masken_Reg6( 11 downto  6));
@@ -4847,10 +4859,10 @@ end generate Quench_Matrix_Gen;
                                                   when others     =>  NULL;
                                               end case;
 
-                                              IOBP_slot_state <= IOBP_slot_idle;
+                                           --   IOBP_slot_state <= IOBP_slot_idle;
 
-                   when others =>           IOBP_slot_state <= IOBP_slot_idle;
-          end case;
+           --        when others =>           IOBP_slot_state <= IOBP_slot_idle;
+         -- end case;
 
     end if;
    end process ID_Front_Board_proc;
@@ -7946,10 +7958,10 @@ case AW_Config2 is
 IOBP_Sel_Led(i) <= IOBP_SK_Sel_Led(i);
  end loop;
 
-IOBP_Sel_Led(9)<= quench_sk_out(23 downto 18);
-IOBP_Sel_Led(10)<= quench_sk_out(17 downto 12);
-IOBP_Sel_Led(11)<= quench_sk_out(11 downto 6);
-IOBP_Sel_Led(12)<= quench_sk_out(5 downto 0);
+IOBP_Sel_Led(9)<= not quench_sk_out(23 downto 18);
+IOBP_Sel_Led(10)<= not quench_sk_out(17 downto 12);
+IOBP_Sel_Led(11)<= not quench_sk_out(11 downto 6);
+IOBP_Sel_Led(12)<= not quench_sk_out(5 downto 0);
 
    when OTHERS =>
    
