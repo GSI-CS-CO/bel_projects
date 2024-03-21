@@ -7,6 +7,7 @@ use IEEE.NUMERIC_STD.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 library work;
 use work.qud_pkg.all;
+use IEEE.std_logic_misc.all;
 
 entity TM_quench_detection is
     Port ( clk : in STD_LOGIC;
@@ -55,9 +56,9 @@ signal combi : std_logic_vector(23 downto 0):=(others =>'0');
 
 signal QuD_data: STD_LOGIC_VECTOR (23 downto 0);
 
-signal in_count:t_qud_cnt;
 signal QuD_mask_reg :t_qud_mask;
-signal flag:t_qud_cnt;
+
+signal product: t_qud_mask;
 
 begin
 
@@ -87,54 +88,35 @@ end generate del_quench_det;
 data_quench_process: process (clk, nReset)
 begin
     if (nReset = '0' ) then
-         
-        for i in 0 to 23 loop
-        flag(i) <= 0;
-        in_count (i) <=0;
-        end loop;
         
         combi <= (others =>'0');
 
     elsif rising_edge (clk) then
         if qud_reset = '1' then 
-        for i in 0 to 23 loop
-            flag(i) <= 0;
-            in_count (i) <=0;
-            end loop;
             combi <=(others =>'0');
         else
+            for j in 0 to 23 loop
 
-  
-  
-        for i in 0 to 23 loop
-            flag(i) <= 0;
-            in_count (i) <=0;
-            end loop;
-            
-    for j in 0 to 23 loop
-    for i in 0 to 53 loop
-      if QuD_mask_reg(j)(i) = '1' then
-        if QUDin(i) ='0'then
-            flag(j) <= flag(j) + 1;
-        else
-            if QUDin(i) ='1'then
-                in_count(j) <= in_count(j) +1;  
-            end if;
-        end if; 
-   
-      end if;
 
-      end loop;
-      if (in_count(j) > 0) and (flag (j)= 0) then 
-      combi(j) <='1';
-    else 
-        combi(j) <= '0';
-    end if;  
-      
- 
-  end loop;
-
-  end if;
+                for i in 0 to 53 loop
+                    if (QuD_mask_reg(j)(i) = '1') then
+                  --      if (QuDIn(i) ='1') then
+                        
+                            product(j)(i) <= QuD_mask_reg(j)(i) and QUDIn(i);
+                     --  else 
+                      --      product(j)(i) <= '0';
+                        
+                      
+                    else 
+                            product(j)(i) <= '1';
+                    end if;
+                end loop;   
+			    combi(j) <= and_reduce (product(j));
+        
+				end loop;
+				
+        
+         end if;
   end if;
 
 end process;
