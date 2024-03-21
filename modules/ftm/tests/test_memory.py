@@ -66,9 +66,12 @@ class UnitTestMemoryFull(dm_testbench.DmTestbench):
 
   def setUp(self):
     super().setUp();
+    self.lastCpu = self.cpuQuantity - 1
     if self.threadQuantity == 8:
       self.maxNodes = 1868
       self.maxNodesCpu3 = 1667
+      if self.cpuQuantity == 3:
+        self.maxNodesCpu3 = 1719
     else:
       self.maxNodes = 1839
       self.maxNodesCpu3 = 1634
@@ -117,13 +120,14 @@ class UnitTestMemoryFull(dm_testbench.DmTestbench):
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [0], linesCout=0, linesCerr=0)
     self.deleteFile(fileName)
-    fileName = self.schedulesFolder + 'memory_full_4cpuOK_cpu2.dot'
-    self.generate_schedule(fileName, self.maxNodes, 2)
-    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
-        fileName), [0], linesCout=0, linesCerr=0)
-    self.deleteFile(fileName)
+    if self.cpuQuantity == 4:
+      fileName = self.schedulesFolder + 'memory_full_4cpuOK_cpu2.dot'
+      self.generate_schedule(fileName, self.maxNodes, 2)
+      self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
+          fileName), [0], linesCout=0, linesCerr=0)
+      self.deleteFile(fileName)
     fileName = self.schedulesFolder + 'memory_full_4cpuOK_cpu3.dot'
-    self.generate_schedule(fileName, self.maxNodesCpu3, 3)
+    self.generate_schedule(fileName, self.maxNodesCpu3, self.lastCpu)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [0], linesCout=0, linesCerr=0)
     self.deleteFile(fileName)
@@ -140,13 +144,14 @@ class UnitTestMemoryFull(dm_testbench.DmTestbench):
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [0], linesCout=0, linesCerr=0)
     self.deleteFile(fileName)
-    fileName = self.schedulesFolder + 'memory_full_4cpuFail_cpu2.dot'
-    self.generate_schedule(fileName, self.maxNodes, 2)
-    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
-        fileName), [0], linesCout=0, linesCerr=0)
-    self.deleteFile(fileName)
+    if self.cpuQuantity == 4:
+      fileName = self.schedulesFolder + 'memory_full_4cpuFail_cpu2.dot'
+      self.generate_schedule(fileName, self.maxNodes, 2)
+      self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
+          fileName), [0], linesCout=0, linesCerr=0)
+      self.deleteFile(fileName)
     fileName = self.schedulesFolder + 'memory_full_4cpuFail_cpu3.dot'
-    self.generate_schedule(fileName, self.maxNodesCpu3 + 1, 3)
+    self.generate_schedule(fileName, self.maxNodesCpu3 + 1, self.lastCpu)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [250], linesCout=2, linesCerr=3)
     self.deleteFile(fileName)
