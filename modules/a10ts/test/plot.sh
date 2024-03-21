@@ -1,8 +1,13 @@
 #!/bin/bash
 dev=$1
+fpga_type=$2
 vendor_id="0x00000651"
-device_id="0x7e3d5e25"
-ext_1w_id="0x28"
+a5_device_id="0x7e3d5e25"
+a5_ext_1w_id="0x28"
+a10_device_id="0xa1075000"
+a10_ext_1w_id="0x42"
+device_id="NULL"
+ext_1w_id="NULL"
 addr="NULL"
 addr_deg="NULL"
 deg_offset="0x4"
@@ -20,24 +25,46 @@ function sample_data()
   uptime=$(eb-mon $dev -v | grep "FPGA uptime" | awk {'print $4'})
   # Get temperatures
   temp_int=$(printf "%d\n" 0x$(eb-read $dev $addr_deg/4))
+  # Convert value is necessary
+  if [ $fpga_type == a10 ]; then
+    temp_int=$(echo "scale=2; (693 * $temp_int) / 1024" | bc)
+  fi
   echo "$uptime $temp_int" >> gnuplot_int.pipe
   temp_ext=$(eb-mon $dev -w0 -t0 -f $ext_1w_id)
-  echo "$uptime $temp_ext" >> gnuplot_ext.pipe
+  # Sometimes eb-mon will accidentally get a value like -0.0625 (less than zero). This is a bug, so we ignore this value.
+  if [ $(echo "$temp_ext > 0" | bc) -eq 1 ]; then
+    echo "$uptime $temp_ext" >> gnuplot_ext.pipe
+  fi
 }
 
 function check_arguments()
 {
   # check number of arguments
-  if [ $# -eq 1 ]; then
+  if [ $# -eq 2 ]; then
     echo "Info: Checking device $dev ..."
   else
-    echo "Error: Please provide a device name!"
+    echo "Error: Please provide a device name and a FPGA type!"
+    echo "Example usage #1: $0 dev/ttyUSB0 a5"
+    echo "Example usage #2: $0 dev/wbm0 a10"
     exit 1
   fi
   # Check if device is available
   test -e /$dev
   if [ $? -ne 0 ]; then
     echo "Error: Device $dev does not exist!"
+    exit 1
+  fi
+  # Check if FPGA type is supported
+  if [ $fpga_type == a5 ]; then
+    echo "Info: Using ArriaV profile ($fpga_type) ..."
+    device_id=$a5_device_id
+    ext_1w_id=$a5_ext_1w_id
+  elif [ $fpga_type == a10 ]; then
+    echo "Info: Using Arria10 profile ($fpga_type) ..."
+    device_id=$a10_device_id
+    ext_1w_id=$a10_ext_1w_id
+  else
+    echo "Error: FPGA type unknown!"
     exit 1
   fi
 }
@@ -51,8 +78,11 @@ function get_sensor_address()
     exit 1
   else
     echo "Info: Found device at $addr ..."
-    # This line was added to support the ArriaV sensor
-    addr_deg=$(( $addr + deg_offset ))
+    if [ $fpga_type == a5 ]; then
+      addr_deg=$(( $addr + deg_offset ))
+    else
+      addr_deg=$addr
+    fi
   fi
 }
 
