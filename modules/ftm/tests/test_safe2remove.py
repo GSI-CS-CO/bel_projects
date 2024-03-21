@@ -108,15 +108,18 @@ class UnitTestSafe2Remove(dm_testbench.DmTestbench):
 
   @pytest.mark.slow
   def test_safe2remove_group_4_9_1(self):
-    self.safe2removeTestcasePerformance('groups_4_nonDefaultPatterns_9_blocksPerPattern_1', delta(seconds=15))
+    if self.cpuQuantity > 3:
+      self.safe2removeTestcasePerformance('groups_4_nonDefaultPatterns_9_blocksPerPattern_1', delta(seconds=15))
 
   @pytest.mark.slow
   def test_safe2remove_group_4_9_10(self):
-    self.safe2removeTestcasePerformance('groups_4_nonDefaultPatterns_9_blocksPerPattern_10', delta(seconds=20))
+    if self.cpuQuantity > 3:
+      self.safe2removeTestcasePerformance('groups_4_nonDefaultPatterns_9_blocksPerPattern_10', delta(seconds=20))
 
   @pytest.mark.slow
   def test_safe2remove_group_4_9_150(self):
-    self.safe2removeTestcasePerformance('groups_4_nonDefaultPatterns_9_blocksPerPattern_150', delta(seconds=95))
+    if self.cpuQuantity > 3:
+      self.safe2removeTestcasePerformance('groups_4_nonDefaultPatterns_9_blocksPerPattern_150', delta(seconds=95))
 
   def test_safe2remove_blockflow1(self):
     self.startAllPattern('block-flow1.dot')
