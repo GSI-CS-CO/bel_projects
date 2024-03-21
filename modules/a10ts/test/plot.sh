@@ -9,7 +9,7 @@ uptime="NULL"
 temp="NULL"
 plot_started=0
 gnuplot_pid=0
-sleep_time_sec=30
+sleep_time_sec=5
 
 # Trap SIGINT signal (Ctrl+C)
 trap 'break' SIGINT
@@ -51,13 +51,13 @@ do
   uptime=$(eb-mon $dev -v | grep "FPGA uptime" | awk {'print $4'})
   temp=$(printf "%d\n" 0x$(eb-read $dev $addr_deg/4))
   echo "$uptime $temp" >> gnuplot.pipe
-  sleep $sleep_time_sec
   if [ $plot_started -eq 0 ]; then
-    gnuplot -p -e 'plot "gnuplot.pipe"; while (1) { pause 1; replot; };' 2>>/dev/null &
+    gnuplot -p -e 'set title "FPGA Temperature"; set grid; set xlabel "FPGA Uptime [Decimal Hours]"; set ylabel "Temperature [Degree Celsius]"; set yrange [0:100]; plot "gnuplot.pipe" with lines linecolor rgb "blue" title "Temperature"; while (1) { pause 1; replot; };' 2>>/dev/null &
     gnuplot_pid=$!
     plot_started=1
     echo "Info: Press Ctrl+C to end the script, then close gnuplot ..."
   fi
+  sleep $sleep_time_sec
 done
 
 kill $gnuplot_pid
