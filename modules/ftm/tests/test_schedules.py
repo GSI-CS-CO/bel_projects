@@ -1,7 +1,7 @@
 import dm_testbench
 
 """
-Start all pattern in a schedule and analyse the frequency of timing messages for 5 seconds.
+Start all pattern in a schedule and analyse the frequency of timing messages for 6 seconds.
 """
 class Schedules(dm_testbench.DmTestbench):
 
@@ -14,12 +14,13 @@ class Schedules(dm_testbench.DmTestbench):
     self.deleteFile(file_name)
 
   def test_frequency_schedule2(self):
-    self.startAllPattern('schedule2.dot')
-    file_name = 'snoop_schedule2.csv'
-    parameter_column = 8 #20
-    self.snoopToCsv(file_name, duration=6)
-    self.analyseFrequencyFromCsv(file_name, parameter_column)
-    self.deleteFile(file_name)
+    if self.cpuQuantity > 3:
+      self.startAllPattern('schedule2.dot')
+      file_name = 'snoop_schedule2.csv'
+      parameter_column = 8 #20
+      self.snoopToCsv(file_name, duration=6)
+      self.analyseFrequencyFromCsv(file_name, parameter_column)
+      self.deleteFile(file_name)
 
   def t1est_frequency_schedule1_0060(self):
     self.startAllPattern('schedule1.dot')
