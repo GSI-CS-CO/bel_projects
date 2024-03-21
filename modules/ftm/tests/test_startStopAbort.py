@@ -31,6 +31,10 @@ class UnitTestStartStopAbort(dm_testbench.DmTestbench):
     self.compareExpectedOutput(stdoutLines, fileName5)
     stdoutLines = self.startAndGetSubprocessStdout((self.binaryDmSched, self.datamaster, 'rawvisited'))
     self.compareExpectedOutput(stdoutLines, self.schedulesFolder + 'dynamic-basic-start_stop_abort-expected-0-6.txt')
+    self.deleteFile(fileName1)
+    self.deleteFile(fileName3)
+    self.deleteFile(fileName5)
+
 
   def testDynamicStartStop(self):
     """Load the schedule dynamic-basic-start_stop_abort-schedule.dot and start pattern *.
