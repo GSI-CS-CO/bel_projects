@@ -4,80 +4,97 @@ use ieee.numeric_std.all;
 
 library work;
 use work.wishbone_pkg.all;
+use work.gencores_pkg.all;
 use work.monster_pkg.all;
 use work.a10ts_pkg.all;
 
 entity a10ts is
   port(
-    clk_i                  : in  std_logic := '0';
-    rst_n_i                : in  std_logic := '1';
-    clk_20m_i              : in  std_logic := '0';
-    slave_i                : in  t_wishbone_slave_in;
-    slave_o                : out t_wishbone_slave_out);
+    clk_i     : in  std_logic := '0';
+    rst_n_i   : in  std_logic := '1';
+    clk_20m_i : in  std_logic := '0';
+    slave_i   : in  t_wishbone_slave_in;
+    slave_o   : out t_wishbone_slave_out);
 end a10ts;
 
 architecture rtl of a10ts is
-  constant c_divider : integer := 20;
-  signal s_counter   : integer range 0 to c_divider - 1 := 0;
-  signal r_ack       : std_logic := '0';
-  signal r_dat       : std_logic_vector(31 downto 0) := (others => '0');
-  signal r_temp      : std_logic_vector(31 downto 0) := (others => '0');
-  signal s_clk_1m    : std_logic := '0';
-  signal s_eoc       : std_logic := '0';
-  signal s_eoc_latch : std_logic := '0';
-  signal s_temp_out  : std_logic_vector(9 downto 0) := (others => '0');
+  constant c_divider      : integer := 200000;
+  signal s_counter        : integer range 0 to c_divider - 1 := 0;
+
+  signal s_temp_out       : std_logic_vector(9 downto 0) := (others => '0');
+  signal s_temp_sync      : std_logic_vector(9 downto 0) := (others => '0');
+
+  signal s_clk_100hz      : std_logic := '0';
+
+  signal s_eoc            : std_logic := '0';
+  signal s_eoc_sync       : std_logic := '0';
+  signal s_eoc_sync_latch : std_logic := '0';
+
 begin
 
-  slave_o.dat        <= r_dat;
-  slave_o.ack        <= r_ack;
-  slave_o.err        <= '0';
-  slave_o.stall      <= '0';
-  slave_o.rty        <= '0';
+  -- Fixed assignments
+  slave_o.err   <= '0';
+  slave_o.stall <= '0';
+  slave_o.rty   <= '0';
 
+  -- Instantiate the ADC/temperature sensor
   core_a10ts_ip : a10ts_ip
   port map (
-    corectl => '1',
+    corectl => s_clk_100hz,
     eoc     => s_eoc,
-    reset   => not(rst_n_i),
+    reset   => rst_n_i,
     tempout => s_temp_out
   );
 
-  main : process(clk_i, rst_n_i) is
+  -- Sync the EOC signal from the ADC into the Wishbone clock domain
+  sync_eoc : gc_sync_ffs
+  port map (
+    clk_i    => clk_i,
+    rst_n_i  => rst_n_i,
+    data_i   => s_eoc,
+    synced_o => s_eoc_sync
+  );
+
+  -- Handle all Wishbone requests
+  wb_handler : process(clk_i, rst_n_i) is
   begin
     if rst_n_i = '0' then
-      r_ack <= '0';
-      r_dat <= (others => '0');
+      slave_o.ack <= '0';
+      slave_o.dat <= (others => '0');
     elsif rising_edge(clk_i) then
-      r_ack <= slave_i.cyc and slave_i.stb;
-      r_dat <= (others => '0');
+      slave_o.ack <= slave_i.cyc and slave_i.stb;
+      slave_o.dat <= (others => '0');
       if (slave_i.cyc and slave_i.stb) = '1' then
-        r_dat <= r_temp;
+        slave_o.dat (9 downto 0)   <= s_temp_sync;
+        slave_o.dat (31 downto 10) <= (others => '0');
       end if;
     end if;
   end process;
 
-  update_temp : process(clk_i, rst_n_i) is
+  -- Detect new ADC/temperature sensor values (EOC goes zero)
+  eoc_detector : process(clk_i, rst_n_i) is
   begin
     if rst_n_i = '0' then
-      r_temp      <= (others => '0');
-      s_eoc_latch <= '0';
+      s_eoc_sync_latch <= '0';
+      s_temp_sync      <= (others => '0');
     elsif rising_edge(clk_i) then
-      s_eoc_latch <= s_eoc;
-      if (s_eoc_latch = '1' and s_eoc = '0') then -- TBD: This is not save
-        r_temp(9 downto 0) <= s_temp_out;
+      s_eoc_sync_latch <= s_eoc_sync;
+      if (s_eoc_sync_latch = '1' and s_eoc_sync = '0') then
+        s_temp_sync <= s_temp_out;
       end if;
     end if;
   end process;
 
-  gen_1m_clk : process(clk_20m_i, rst_n_i) is
+  -- Generate 1MHz to trigger the ADC
+  gen_adc_trigger : process(clk_20m_i, rst_n_i) is
   begin
     if rst_n_i = '0' then
-      s_counter <= 0;
-      s_clk_1m  <= '0';
+      s_counter   <= 0;
+      s_clk_100hz <= '0';
     elsif rising_edge(clk_20m_i) then
       if s_counter = c_divider - 1 then
         s_counter <= 0;
-        s_clk_1m  <= not s_clk_1m;
+        s_clk_100hz  <= not s_clk_100hz;
       else
         s_counter <= s_counter + 1;
       end if;
