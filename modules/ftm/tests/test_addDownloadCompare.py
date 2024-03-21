@@ -12,7 +12,15 @@ Compare original schedule with downloaded schedule
 class AddDownloadCompare(dm_testbench.DmTestbench):
 
   def addDownloadCompareSchedule(self, scheduleFile, statusMeta=False, abortPattern=False):
-    statusFile = 'status.dot'
+    # modify the schedule file name when we have 3 CPUs or 32 threads.
+    # This is needed for dynpar edges where memory addresses are stored
+    # in the parameter values.
+    statusFile = scheduleFile.replace('.dot', '-download.dot')
+    if self.cpuQuantity == 3:
+      scheduleFile3cpu = scheduleFile.replace('.dot', '-3cpu.dot')
+      fileObj = pathlib.Path(self.schedulesFolder + scheduleFile3cpu)
+      if fileObj.exists():
+        scheduleFile = scheduleFile3cpu
     if self.threadQuantity == 32:
       scheduleFile32 = scheduleFile.replace('.dot', '-thread32.dot')
       fileObj = pathlib.Path(self.schedulesFolder + scheduleFile32)
