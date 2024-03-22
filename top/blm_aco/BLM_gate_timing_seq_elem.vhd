@@ -12,7 +12,7 @@ port(
   prepare : in std_logic;
   recover : in std_logic;
   hold: in std_logic_vector(15 downto 0);
-  all_thres_ready: in std_logic;
+  --all_thres_ready: in std_logic;
   gate_error : out std_logic;  -- gate doesn't start within the given timeout
   gate_state_nr : out std_logic_vector (2 downto 0); --for tests
   gate_out: out std_logic        -- out gate signal
@@ -31,7 +31,7 @@ signal timeout : unsigned(15 downto 0);
 signal curr_val   :std_logic; --:='0';
 signal state_sm: integer range 0 to 5:= 0;
 signal state_nr: std_logic_vector (2 downto 0);
-signal ready: std_logic;
+--signal ready: std_logic;
 begin
 
   state_sm_proc: process(clk_i, rstn_i)--(gate_state)
@@ -67,7 +67,7 @@ gate_proc: process (clk_i, rstn_i)
         gate_state <= idle;
         gate_state_nr <= "000";
         curr_val <='0';
-        ready <= '0';
+      --  ready <= '0';
       elsif rising_edge(clk_i) then
 
         curr_val <= gate_in ;
@@ -75,7 +75,7 @@ gate_proc: process (clk_i, rstn_i)
         gate_error <= gate_er;
         gate_out <= gate_out_sm;
         timeout_reset <=unsigned(hold); 
-        ready <= all_thres_ready;
+      --  ready <= all_thres_ready;
 
          case gate_state is
 
@@ -97,12 +97,12 @@ gate_proc: process (clk_i, rstn_i)
                        gate_out_sm <= '1';
                      
                      else
-                        if ready ='1' then 
+                    --    if ready ='1' then 
                             timeout <= timeout -1;
                             if (to_integer(timeout )=0) then
                                 gate_state <= error;
                             end if;  
-                        end if;
+                      --  end if;
                     end if;
  
  

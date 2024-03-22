@@ -86,8 +86,8 @@ signal gate_prepare: std_logic_vector(11 downto 0);
 signal gate_hold_time: t_BLM_gate_hold_Time_Array;
 signal gate_state: std_logic_vector(47 downto 0);
 signal gate_sm_state :t_gate_state_nr;
-signal all_thres_ready: std_logic; -- to allow gate prepare only after writing all thresholds
-signal or_thres: std_logic_vector(127 downto 0);
+--signal all_thres_ready: std_logic; -- to allow gate prepare only after writing all thresholds
+--signal or_thres: std_logic_vector(127 downto 0);
 
   component BLM_watchdog is
   
@@ -118,7 +118,7 @@ component BLM_gate_timing_seq is
       BLM_gate_recover: in std_logic_vector(11 downto 0); 
       BLM_gate_prepare : in std_logic_vector(11 downto 0); 
       hold_time : in  t_BLM_gate_hold_Time_Array;
-      all_thres_ready: in std_logic;
+     -- all_thres_ready: in std_logic;
       gate_error : out std_logic_vector(n-1 downto 0); -- gate doesn't start within the given timeout
       state_nr: out t_gate_state_nr;
       gate_out: out std_logic_vector(n-1 downto 0)        -- out gate signal
@@ -276,7 +276,7 @@ end process direct_gate_operation;
       BLM_gate_recover => BLM_gate_recover(5 downto 0)&BLM_gate_recover(11 downto 6),
       BLM_gate_prepare => BLM_gate_prepare(5 downto 0)&BLM_gate_prepare(11 downto 6),
       hold_time => gate_hold_time,
-      all_thres_ready => all_thres_ready,
+   --   all_thres_ready => all_thres_ready,
       gate_error => gate_sm_error, -- gate error
       state_nr => gate_sm_state,
       gate_out => gate_sm_output --gate_output
@@ -356,15 +356,15 @@ port map (
 -----------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------
 -- out section
-all_thres_ready_proc: process(pos_threshold, neg_threshold)
-begin
-  for i in 0 to 127 loop
-    for j in 0 to 31 loop
-      or_thres(i)<= pos_threshold(i)(j) or neg_threshold(i)(j);
-    end loop;
-  end loop;
-  all_thres_ready <= and_reduce(or_thres);
-end process;
+--all_thres_ready_proc: process(pos_threshold, neg_threshold)
+--begin
+ -- for i in 0 to 127 loop
+  --  for j in 0 to 31 loop
+  --    or_thres(i)<= pos_threshold(i)(j) or neg_threshold(i)(j);
+  --  end loop;
+  --end loop;
+ -- all_thres_ready <= and_reduce(or_thres);
+--end process;
 
     
 BLM_out_section: BLM_out_el 
