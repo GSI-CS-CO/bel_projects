@@ -21,10 +21,6 @@ create_clock -period 125Mhz -name clk_125m_tcb_local_in  [get_ports {clk_125m_lo
 create_clock -period 125Mhz -name clk_125m_tcb_pllref_in [get_ports {clk_125m_pllref_i}]
 create_clock -period 125Mhz -name clk_125m_tcb_sfpref_in [get_ports {clk_125m_sfpref_i}]
 
-# Cut temperature sensor
-set_false_path -from [get_clocks {altera_ts_clk}] -to [get_clocks {main|\sys_a10:sys_inst|iopll_0|outclk0}]
-set_false_path -from [get_clocks {main|\sys_a10:sys_inst|iopll_0|outclk0}] -to [get_clocks {main|\sys_a10:sys_inst|iopll_0|outclk2}]
-
 # Cut the clock domains from each other
 set_clock_groups -asynchronous \
 -group [get_clocks {altera_reserved_tck}] \
@@ -37,6 +33,7 @@ set_clock_groups -asynchronous \
 -group [get_clocks {clk_125m_sfpref_i}] \
 -group [get_clocks {~ALTERA_CLKUSR~}] \
 -group [get_clocks {pcie_refclk_i}] \
+-group [get_clocks {altera_ts_clk}] \
 -group [get_clocks {main|\pcie_y:pcie|pcie_phy|\arria10gx_scu4:hip|pcie_a10_hip_0|coreclkout \
                     main|\pcie_y:pcie|pcie_phy|\arria10gx_scu4:hip|pcie_a10_hip_0|g_xcvr_native_insts[0]|pma_hclk_by2 \
                     main|\pcie_y:pcie|pcie_phy|\arria10gx_scu4:hip|pcie_a10_hip_0|g_xcvr_native_insts[0]|rx_clk \
