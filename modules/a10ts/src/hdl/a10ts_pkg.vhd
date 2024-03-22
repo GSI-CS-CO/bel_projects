@@ -26,13 +26,14 @@ package a10ts_pkg is
   );
 
   component a10ts is
+    generic (
+      g_use_ext_trigger : boolean := false);
     port (
-      clk_i                  : in  std_logic := '0';
-      rst_n_i                : in  std_logic := '1';
-      clk_20m_i              : in  std_logic := '0';
-      slave_i                : in  t_wishbone_slave_in;
-      slave_o                : out t_wishbone_slave_out
-    );
+      clk_i     : in  std_logic := '0';
+      rst_n_i   : in  std_logic := '1';
+      clk_20m_i : in  std_logic := '0';
+      slave_i   : in  t_wishbone_slave_in;
+      slave_o   : out t_wishbone_slave_out);
   end component;
 
   component a10ts_ip is
