@@ -21,11 +21,6 @@ create_clock -period 125Mhz -name clk_125m_tcb_local_in  [get_ports {clk_125m_lo
 create_clock -period 125Mhz -name clk_125m_tcb_pllref_in [get_ports {clk_125m_pllref_i}]
 create_clock -period 125Mhz -name clk_125m_tcb_sfpref_in [get_ports {clk_125m_sfpref_i}]
 
-# Cut asynchronous reset paths (launch and latch clock sys to psram)
-set_false_path -from {monster:main|altera_reset:reset|nresets[1][0]} -to {monster:main|psram:\psram_y:ram|*}
-set_false_path -from {monster:main|altera_reset:reset|nresets[1][1]} -to {monster:main|psram:\psram_y:ram|*}
-set_false_path -from {monster:main|altera_reset:reset|nresets[1][2]} -to {monster:main|psram:\psram_y:ram|*}
-
 # Cut temperature sensor
 set_false_path -from [get_clocks {altera_ts_clk}] -to [get_clocks {main|\sys_a10:sys_inst|iopll_0|outclk0}]
 set_false_path -from [get_clocks {main|\sys_a10:sys_inst|iopll_0|outclk0}] -to [get_clocks {main|\sys_a10:sys_inst|iopll_0|outclk2}]
