@@ -6,11 +6,11 @@ a5_device_id="0x7e3d5e25"
 a5_ext_1w_id="0x28"
 a10_device_id="0xa1075000"
 a10_ext_1w_id="0x42"
+deg_offset="0x4"
 device_id="NULL"
 ext_1w_id="NULL"
 addr="NULL"
 addr_deg="NULL"
-deg_offset="0x4"
 uptime="NULL"
 temp_int="NULL"
 temp_ext="NULL"
@@ -25,9 +25,9 @@ function sample_data()
   uptime=$(eb-mon $dev -v | grep "FPGA uptime" | awk {'print $4'})
   # Get temperatures
   temp_int=$(printf "%d\n" 0x$(eb-read $dev $addr_deg/4))
-  # Convert value is necessary
+  # Convert value is necessary, magic values taken from: https://www.intel.com/content/www/us/en/docs/programmable/683585/current/transfer-function-for-internal-tsd.html
   if [ $fpga_type == a10 ]; then
-    temp_int=$(echo "scale=2; (693 * $temp_int) / 1024" | bc)
+    temp_int=$(echo "scale=2; ((693 * $temp_int) / 1024)-265)" | bc)
   fi
   echo "$uptime $temp_int" >> gnuplot_int.pipe
   temp_ext=$(eb-mon $dev -w0 -t0 -f $ext_1w_id)
@@ -86,24 +86,27 @@ function get_sensor_address()
   fi
 }
 
+function clean_up_log_files()
+{
+  # Clean up log files
+  for file in "${plot_files[@]}"; do
+    if [ -f $file ]; then
+      rm $file
+    fi
+    touch $file
+  done
+}
+
 # Trap SIGINT signal (Ctrl+C)
 trap 'break' SIGINT
 
 # Prepare everything
 check_arguments $@
 get_sensor_address
-
-# Clean up log files
-for file in "${plot_files[@]}"; do
-  if [ -f $file ]; then
-    rm $file
-  fi
-  touch $file
-done
+clean_up_log_files
 
 # Read time and temperature
-while true
-do
+while true; do
   sample_data
   if [ $plot_started -eq 0 ]; then
     gnuplot -p -e 'set title "Temperature Measurements"; set grid; set xlabel "FPGA Uptime [Decimal Hours]"; set ylabel "Temperature [Degree Celsius]"; set yrange [0:100]; plot "gnuplot_int.pipe" smooth bezier lt 2 lw 2 linecolor rgb "orange" title "FPGA (Internal) Temperature", "gnuplot_ext.pipe" smooth bezier lt 2 lw 2 linecolor rgb "blue" title "Board (External) Temperature"; while (1) { pause 1; replot; };' 2>>/dev/null &
@@ -114,3 +117,4 @@ do
   sleep $sleep_time_sec
 done
 kill $gnuplot_pid
+echo "Info: Finished sampling ..."
