@@ -27,7 +27,8 @@ function sample_data()
   temp_int=$(printf "%d\n" 0x$(eb-read $dev $addr_deg/4))
   # Convert value is necessary, magic values taken from: https://www.intel.com/content/www/us/en/docs/programmable/683585/current/transfer-function-for-internal-tsd.html
   if [ $fpga_type == a10 ]; then
-    temp_int=$(echo "scale=2; ((693 * $temp_int) / 1024)-265)" | bc)
+    temp_int_dec=$(printf "%d" "$temp_int") # Hex to dec
+    temp_int=$(echo "scale=2; ((693 * $temp_int_dec) / 1024)-265" | bc)
   fi
   echo "$uptime $temp_int" >> gnuplot_int.pipe
   temp_ext=$(eb-mon $dev -w0 -t0 -f $ext_1w_id)
@@ -45,14 +46,18 @@ function check_arguments()
   else
     echo "Error: Please provide a device name and a FPGA type!"
     echo "Example usage #1: $0 dev/ttyUSB0 a5"
-    echo "Example usage #2: $0 dev/wbm0 a10"
+    echo "Example usage #2: $0 tcp/scuxl1001.acc.gsi.de a10"
     exit 1
   fi
   # Check if device is available
-  test -e /$dev
-  if [ $? -ne 0 ]; then
-    echo "Error: Device $dev does not exist!"
-    exit 1
+  if [[ "${dev:0:3}" == "dev" ]]; then
+    test -e /$dev
+    if [ $? -ne 0 ]; then
+      echo "Error: Device $dev does not exist!"
+      exit 1
+    fi
+  else
+    eb-ls $dev 2>&1 >> /dev/null
   fi
   # Check if FPGA type is supported
   if [ $fpga_type == a5 ]; then
@@ -109,7 +114,7 @@ clean_up_log_files
 while true; do
   sample_data
   if [ $plot_started -eq 0 ]; then
-    gnuplot -p -e 'set title "Temperature Measurements"; set grid; set xlabel "FPGA Uptime [Decimal Hours]"; set ylabel "Temperature [Degree Celsius]"; set yrange [0:100]; plot "gnuplot_int.pipe" smooth bezier lt 2 lw 2 linecolor rgb "orange" title "FPGA (Internal) Temperature", "gnuplot_ext.pipe" smooth bezier lt 2 lw 2 linecolor rgb "blue" title "Board (External) Temperature"; while (1) { pause 1; replot; };' 2>>/dev/null &
+    gnuplot -p -e 'set title "Temperature Measurements"; set key top left box; set grid; set xlabel "FPGA Uptime [Decimal Hours]"; set ylabel "Temperature [Degree Celsius]"; set yrange [0:140]; plot "gnuplot_int.pipe" smooth bezier lt 2 lw 2 linecolor rgb "orange" title "FPGA (Internal) Temperature", "gnuplot_ext.pipe" smooth bezier lt 2 lw 2 linecolor rgb "blue" title "Board (External) Temperature"; while (1) { pause 1; replot; };' 2>>/dev/null &
     gnuplot_pid=$!
     plot_started=1
     echo "Info: Press Ctrl+C to end the script, then close gnuplot ($gnuplot_pid) ..."
