@@ -26,6 +26,10 @@ set_false_path -from {monster:main|altera_reset:reset|nresets[1][0]} -to {monste
 set_false_path -from {monster:main|altera_reset:reset|nresets[1][1]} -to {monster:main|psram:\psram_y:ram|*}
 set_false_path -from {monster:main|altera_reset:reset|nresets[1][2]} -to {monster:main|psram:\psram_y:ram|*}
 
+# Cut temperature sensor
+set_false_path -from [get_clocks {altera_ts_clk}] -to [get_clocks {main|\sys_a10:sys_inst|iopll_0|outclk0}]
+set_false_path -from [get_clocks {main|\sys_a10:sys_inst|iopll_0|outclk0}] -to [get_clocks {main|\sys_a10:sys_inst|iopll_0|outclk2}]
+
 # Cut the clock domains from each other
 set_clock_groups -asynchronous \
 -group [get_clocks {altera_reserved_tck}] \
