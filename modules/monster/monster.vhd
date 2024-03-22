@@ -3171,6 +3171,8 @@ end generate;
   end generate;
   a10ts_y : if g_en_a10ts generate
     a10ts_inst : a10ts
+      generic map (
+        g_use_ext_trigger => false)
       port map (
         clk_i      => clk_sys,
         rst_n_i    => rstn_sys,
