@@ -21,6 +21,9 @@ create_clock -period 125Mhz -name clk_125m_tcb_local_in  [get_ports {clk_125m_lo
 create_clock -period 125Mhz -name clk_125m_tcb_pllref_in [get_ports {clk_125m_pllref_i}]
 create_clock -period 125Mhz -name clk_125m_tcb_sfpref_in [get_ports {clk_125m_sfpref_i}]
 
+# Cut temperature sensor
+set_false_path -from {monster:main|a10ts:\a10ts_y:a10ts_inst|a10ts_ip:\ext_trigger_n:core_a10ts_ip|altera_temp_sense:temp_sense_0|*} -to {monster:main|a10ts:\a10ts_y:a10ts_inst|*}
+
 # Cut the clock domains from each other
 set_clock_groups -asynchronous \
 -group [get_clocks {altera_reserved_tck}] \
