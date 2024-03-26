@@ -1,0 +1,16 @@
+digraph G {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+Pattern_A_ALIGN_V1[cpu="1", flags="0x00000007", type="block", tperiod="0", pattern="Pattern_A", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white"];
+Pattern_A_BLOCK0_V1[cpu="1", flags="0x00000007", type="block", tperiod="100000000", pattern="Pattern_A", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white"];
+Pattern_A_BLOCK1_V1[cpu="1", flags="0x00000007", type="block", tperiod="100000000", pattern="Pattern_A", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white"];
+Pattern_A_ENTRY[cpu="1", flags="0x00002007", type="block", tperiod="100000000", pattern="Pattern_A", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "darkorange3"];
+Pattern_A_EXIT[cpu="1", flags="0x00708007", type="block", tperiod="100000000", pattern="Pattern_A", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="true", qil="true", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "purple"];
+Pattern_A_REPCOUNT_BLOCK_V1[cpu="1", flags="0x00100007", type="block", tperiod="0", pattern="Pattern_A", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white"];
+Pattern_A_ALIGN_V1->Pattern_A_BLOCK0_V1 [type="defdst", color = "red"];
+Pattern_A_BLOCK0_V1->Pattern_A_BLOCK1_V1 [type="defdst", color = "red"];
+Pattern_A_BLOCK1_V1->Pattern_A_REPCOUNT_BLOCK_V1 [type="defdst", color = "red"];
+Pattern_A_ENTRY->Pattern_A_ALIGN_V1 [type="defdst", color = "red"];
+Pattern_A_EXIT->Pattern_A_ENTRY [type="defdst", color = "red"];
+Pattern_A_REPCOUNT_BLOCK_V1->Pattern_A_EXIT [type="defdst", color = "red"];
+}
