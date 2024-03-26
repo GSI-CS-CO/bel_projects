@@ -173,7 +173,7 @@ architecture rtl of scu_control is
   signal s_led_pps      : std_logic;
   signal s_lemo_led     : std_logic_vector (5 downto 0);
 
-  signal s_gpio_o    : std_logic_vector(10 downto 0);
+  signal s_gpio_o    : std_logic_vector(6 downto 0);
   signal s_lvds_p_i  : std_logic_vector(2 downto 0);
   signal s_lvds_n_i  : std_logic_vector(2 downto 0);
   signal s_lvds_p_o  : std_logic_vector(2 downto 0);
@@ -197,12 +197,13 @@ architecture rtl of scu_control is
   signal s_core_clk_25m     : std_logic;
 
   signal s_psram_cen        : std_logic;
+  signal s_psram_sel        : std_logic_vector(3 downto 0);
 
-  signal rstn_ref              : std_logic;
-  signal clk_ref               : std_logic;
+  signal rstn_ref           : std_logic;
+  signal clk_ref            : std_logic;
 
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 18) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 14) :=
   (
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
     ("LEMO_IN_0  ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
@@ -214,10 +215,6 @@ architecture rtl of scu_control is
     ("LEMO_OUT_1 ",  IO_NONE,         false,   false,  4,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LEMO_OUT_2 ",  IO_NONE,         false,   false,  5,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LEMO_OUT_3 ",  IO_NONE,         false,   false,  6,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("PSRAM_SEL_0",  IO_NONE,         false,   false,  7,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("PSRAM_SEL_1",  IO_NONE,         false,   false,  8,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("PSRAM_SEL_2",  IO_NONE,         false,   false,  9,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("PSRAM_SEL_3",  IO_NONE,         false,   false, 10,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("FAST_IN_0  ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
     ("FAST_IN_1  ",  IO_NONE,         false,   false,  1,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
     ("FAST_IN_2  ",  IO_NONE,         false,   false,  2,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
@@ -242,7 +239,7 @@ begin
       g_flash_bits         => 25, -- !!! TODO: Check this
       g_psram_bits         => c_psram_bits,
       g_gpio_in            => 2,
-      g_gpio_out           => 11,
+      g_gpio_out           => 7,
       g_lvds_in            => 3,
       g_lvds_out           => 3,
       g_en_user_ow         => true,
@@ -289,7 +286,7 @@ begin
       sfp_tx_fault_i          => sfp_tx_fault_i,
       sfp_los_i               => sfp_los_i,
       gpio_i                  => lemo_in,
-      gpio_o(10 downto 0)     => s_gpio_o(10 downto 0),
+      gpio_o(6 downto 0)      => s_gpio_o(6 downto 0),
       lvds_p_i                => s_lvds_p_i,
       lvds_n_i                => s_lvds_n_i,
       lvds_p_o                => s_lvds_p_o,
@@ -346,12 +343,14 @@ begin
       ps_cre                  => psram_cre,
       ps_advn                 => psram_advn,
       ps_wait                 => psram_wait,
+      ps_chip_selector        => s_psram_sel,
       hw_version              => x"0000000" & not scu_cb_version);
 
-  psram_cen(0) <= s_psram_cen when (s_gpio_o(7) = '1')  else '1';
-  psram_cen(1) <= s_psram_cen when (s_gpio_o(8) = '1')  else '1';
-  psram_cen(2) <= s_psram_cen when (s_gpio_o(9) = '1')  else '1';
-  psram_cen(3) <= s_psram_cen when (s_gpio_o(10) = '1') else '1';
+  -- PSRAM -> This needs to be changed on the next revision
+  psram_cen(0) <= s_psram_cen when (s_psram_sel(0) = '1') else '1';
+  psram_cen(1) <= s_psram_cen when (s_psram_sel(1) = '1') else '1';
+  psram_cen(2) <= s_psram_cen when (s_psram_sel(2) = '1') else '1';
+  psram_cen(3) <= s_psram_cen when (s_psram_sel(3) = '1') else '1';
 
   -- LEDs
   wr_led_pps    <= s_led_pps;                                             -- white = PPS
