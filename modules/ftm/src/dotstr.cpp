@@ -2,6 +2,23 @@
 
 namespace DotStr {
 
+  namespace Locations {
+    namespace base {
+      const std::string sStatus     = "status";
+      const std::string sCurThr     = "currentThread";
+      const std::string sCurNode    = "currentNode";
+      const std::string sRegisters  = "registers";
+    }
+    namespace fields {
+      const std::string sThrTB      = "threadTimebase";
+      const std::string sThrDL      = "threadDeadline";
+      const std::string sThrID      = "threadId";
+      const std::string sNodeHash   = "nodeHash";
+      const std::string sNodeFlags  = "nodeFlags";
+      const std::string sNodeDefDst = "nodeDefDst";
+    }
+  }
+
   namespace Misc { //mostly stuff to mark uninitialised props and some generic tags for nodes and edges alike
 
     const unsigned char deadbeef[4] = {0xDE, 0xAD, 0xBE, 0xEF};
@@ -77,6 +94,7 @@ namespace DotStr {
   namespace Node {
     namespace Special {
       const std::string sIdle         = "idle"; // the 'idle' target means safely stopping a thread/pattern
+
     }
     // node properties
     namespace Prop {
