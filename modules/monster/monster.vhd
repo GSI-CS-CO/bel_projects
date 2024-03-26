@@ -360,6 +360,7 @@ entity monster is
     ps_cre                 : out   std_logic := 'Z';
     ps_advn                : out   std_logic := 'Z';
     ps_wait                : in    std_logic;
+    ps_chip_selector       : out   std_logic_vector(3 downto 0);
     -- i2c
     i2c_scl_pad_i          : in  std_logic_vector(g_num_i2c_interfaces-1 downto 0);
     i2c_scl_pad_o          : out std_logic_vector(g_num_i2c_interfaces-1 downto 0) := (others => 'Z');
@@ -2311,6 +2312,7 @@ end generate;
       phy_aux_rst_o => wbar_phy_aux_rst,
       phy_dis_o     => wbar_phy_dis,
       phy_aux_dis_o => wbar_phy_aux_dis,
+      psram_sel_o   => ps_chip_selector,
       rstn_o        => s_lm32_rstn);
 
       wbar_phy_dis_o     <= wbar_phy_dis;

@@ -373,6 +373,7 @@ package monster_pkg is
       ps_cre                 : out   std_logic;
       ps_advn                : out   std_logic;
       ps_wait                : in    std_logic := '0';
+      ps_chip_selector       : out   std_logic_vector(3 downto 0);
       -- i2c
       i2c_scl_pad_i          : in    std_logic_vector(g_num_i2c_interfaces-1 downto 0) := (others => '0');
       i2c_scl_pad_o          : out   std_logic_vector(g_num_i2c_interfaces-1 downto 0);
