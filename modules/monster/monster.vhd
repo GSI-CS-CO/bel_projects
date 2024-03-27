@@ -142,8 +142,9 @@ entity monster is
     core_rstn_wr_ref_o     : out   std_logic;
     core_rstn_butis_o      : out   std_logic;
     core_clk_200m_o        : out   std_logic;
-    core_clk_20m_o         : out   std_logic;
     core_clk_25m_o         : out   std_logic;
+    core_clk_20m_o         : out   std_logic;
+    core_clk_10m_o         : out   std_logic;
     core_debug_o           : out   std_logic_vector(15 downto 0) := (others => 'Z');
     core_clk_debug_i       : in    std_logic;
     -- Required: white rabbit pins
@@ -633,6 +634,7 @@ architecture rtl of monster is
   signal rstn_sys         : std_logic;
   signal rstn_update      : std_logic;
   signal clk_200m         : std_logic;
+  signal clk_10m          : std_logic;
 
   -- Ref PLL from clk_125m_pllref_i
   signal ref_locked       : std_logic;
@@ -1204,7 +1206,6 @@ begin
     inclk  => clk_ref1,
     outclk => clk_200m);
 
-
   clk_div: process(clk_ref0)
     variable cnt: integer := 0;
   begin
@@ -1217,6 +1218,22 @@ begin
       end if;
     end if;
   end process;
+
+  clk_div_200m_in_10m_out: process(rstn_ref, clk_200m)
+    variable cnt: integer := 0;
+  begin
+    if rstn_ref = '0' then
+      clk_10m <= '0';
+    elsif rising_edge(clk_200m) then
+      if cnt < 20 then
+        cnt := cnt + 1;
+      else
+        cnt := 0;
+        clk_10m <= not clk_10m;
+      end if;
+    end if;
+  end process;
+  core_clk_10m_o <= clk_10m;
 
   phase_clk : global_region port map( -- skew must match ref_clk
     inclk  => clk_ref2,
