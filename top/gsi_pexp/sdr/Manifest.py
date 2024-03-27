@@ -1,5 +1,5 @@
 files = [
-   "pexp_control.vhd",
+   "pexp_control_sdr.vhd",
    "../../common/arria5.sdc",
    "ramsize_pkg.vhd"
 ]
