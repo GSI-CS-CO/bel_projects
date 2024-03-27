@@ -34,10 +34,12 @@ CHECK_SCU3             = ./syn/gsi_scu/control3/scu_control
 CHECK_VETAR2A          = ./syn/gsi_vetar2a/wr_core_demo/vetar2a
 CHECK_VETAR2A_EE_BUTIS = ./syn/gsi_vetar2a/ee_butis/vetar2a
 CHECK_PEXARRIA5        = ./syn/gsi_pexarria5/control/pci_control
+CHECK_PEXARRIA5_SDR    = ./syn/gsi_pexarria5/sdr/pci_control
 CHECK_EXPLODER5        = ./syn/gsi_exploder5/exploder5_csco_tr/exploder5_csco_tr
 CHECK_PMC              = ./syn/gsi_pmc/control/pci_pmc
 CHECK_MICROTCA         = ./syn/gsi_microtca/control/microtca_control
 CHECK_PEXP             = ./syn/gsi_pexp/control/pexp_control
+CHECK_PEXP_SDR         = ./syn/gsi_pexp/sdr/pexp_control
 CHECK_SCU4             = ./syn/gsi_scu/control4/scu_control
 CHECK_FTM4             = ./syn/gsi_scu/ftm4/ftm4
 CHECK_FTM4DP           = ./syn/gsi_scu/ftm4dp/ftm4dp
@@ -53,10 +55,12 @@ PATH_SCU3              = syn/gsi_scu/control3
 PATH_VETAR2A           = syn/gsi_vetar2a/wr_core_demo
 PATH_VETAR2A_EE_BUTIS  = syn/gsi_vetar2a/ee_butis
 PATH_PEXARRIA5         = syn/gsi_pexarria5/control
+PATH_PEXARRIA5_SDR     = syn/gsi_pexarria5/sdr
 PATH_EXPLODER5         = syn/gsi_exploder5/exploder5_csco_tr
 PATH_PMC               = syn/gsi_pmc/control
 PATH_MICROTCA          = syn/gsi_microtca/control
 PATH_PEXP              = syn/gsi_pexp/control
+PATH_PEXP_SDR          = syn/gsi_pexp/sdr
 PATH_SCU4              = syn/gsi_scu/control4
 PATH_FTM4              = syn/gsi_scu/ftm4
 PATH_FTM4DP            = syn/gsi_scu/ftm4dp
@@ -474,6 +478,30 @@ bg-clean::
 # #################################################################################################
 # Legacy and unmaintained devices
 # #################################################################################################
+
+pexarria5-sdr:	firmware
+	$(MAKE) -C $(PATH_PEXARRIA5_SDR) all
+
+pexarria5-sdr-clean::
+	$(MAKE) -C $(PATH_PEXARRIA5_SDR) clean
+
+pexarria5-sdr-sort:
+	$(call sort_file, $(CHECK_PEXARRIA5_SDR))
+
+pexarria5-sdr-check:
+	$(call check_timing, $(CHECK_PEXARRIA5_SDR))
+
+pexp-sdr:	firmware
+	$(MAKE) -C $(PATH_PEXP_SDR) all
+
+pexp-sdr-clean::
+	$(MAKE) -C $(PATH_PEXP_SDR) clean
+
+pexp-sdr-sort:
+	$(call sort_file, $(CHECK_PEXP_SDR))
+
+pexp-sdr-check:
+	$(call check_timing, $(CHECK_PEXP_SDR))
 
 avsoc:		firmware
 	$(MAKE) -C syn/gsi_avsoc/av_rocket_board all
