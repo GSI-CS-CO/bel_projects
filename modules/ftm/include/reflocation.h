@@ -16,45 +16,58 @@ using namespace boost::multi_index;
 typedef boost::bimap< const std::string, uint32_t > memLocMap;
 typedef boost::bimap< const std::string, uint32_t > memFieldMap;
 
-
-struct memoryArea {
+//we ha
+struct memoryLoc {
   const std::string& name;
   const uint32_t&    adr;
   const uint32_t&    size;
-  vertex_t    v;
 };  
 
-
-  AllocMeta(uint8_t cpu, uint32_t adr, uint32_t hash) : cpu(cpu), adr(adr), hash(hash) {std::memset(b, 0, sizeof b);}
-  AllocMeta(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v) : cpu(cpu), adr(adr), hash(hash), v(v), staged(false) {std::memset(b, 0, sizeof b);}
-  AllocMeta(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v, bool staged) : cpu(cpu), adr(adr), hash(hash), v(v), staged(staged) {std::memset(b, 0, sizeof b);}
-
-  // Multiindexed Elements are immutable, must use the modify function of the container to change attributes
+struct memoryLoc {
+  const std::string& regien;
+  const uint32_t&    adr;
+  const uint32_t&    size;
 };
 
+// Define the inner struct loc
+struct loc {
+    std::string name;
+    unsigned int adr;
+    unsigned int off;
 
-struct Hash{};
-struct Vertex{};
-struct CpuAdr{};
+    loc(const std::string& name, unsigned int adr, unsigned int offs) : name(name), adr(adr), off(off), {}
 
+    // Operator overload for printing loc
+    friend std::ostream& operator<<(std::ostream& os, const loc& l) {
+        os << "Name: " << l.name << ", Address: " << l.adr;
+        return os;
+    }
+};
 
-typedef boost::multi_index_container<
-  AllocMeta,
-  indexed_by<
-    hashed_unique<
-      tag<Vertex>,  BOOST_MULTI_INDEX_MEMBER(AllocMeta,vertex_t,v)>,
-    hashed_unique<
-      tag<Hash>,  BOOST_MULTI_INDEX_MEMBER(AllocMeta,uint32_t,hash)>,
-    ordered_unique<
-      tag<CpuAdr>,
-      composite_key<
-        AllocMeta,
-        BOOST_MULTI_INDEX_MEMBER(AllocMeta,uint8_t,cpu),
-        BOOST_MULTI_INDEX_MEMBER(AllocMeta,uint32_t,adr)
-      >
+// Define the outer struct aml
+struct aml {
+    unsigned int v;
+    loc l;
+
+    aml(unsigned int v, const std::string& name, unsigned int adr, unsigned int offs) : v(v), l(name, adr, off) {}
+    aml(unsigned int v, const &loc l) : v(v), l(l) {}
+
+    // Operator overload for printing aml
+    friend std::ostream& operator<<(std::ostream& os, const aml& a) {
+        os << "Value: " << a.v << ", " << a.l;
+        return os;
+    }
+};
+
+// Define a multi-index container with two indices: by 'v' and by 'adr'
+typedef multi_index_container<
+    aml,
+    indexed_by<
+        ordered_non_unique<member<aml, unsigned int, &aml::v>>,
+        ordered_non_unique<member<loc, unsigned int, &loc::adr>>
     >
-  >
- > AllocMeta_set;
+> aml_multi_index_container;
+
 
 
 int main() {
