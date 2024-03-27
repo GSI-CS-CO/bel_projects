@@ -8,7 +8,7 @@ use work.altera_lvds_pkg.all;
 use work.ramsize_pkg.c_lm32_ramsizes;
 use work.altera_networks_pkg.all;
 
-entity pci_control is
+entity pci_control_sdr is
   port(
     clk_20m_vcxo_i    : in std_logic;  -- 20MHz VCXO clock
     clk_125m_pllref_i : in std_logic;  -- 125 MHz PLL reference
@@ -207,9 +207,9 @@ entity pci_control is
     sfp4_mod0         : in    std_logic; -- grounded by module
     sfp4_mod1         : inout std_logic; -- SCL
     sfp4_mod2         : inout std_logic); -- SDA
-end pci_control;
+end pci_control_sdr;
 
-architecture rtl of pci_control is
+architecture rtl of pci_control_sdr is
 
   signal led_link_up   : std_logic;
   signal led_link_act  : std_logic;
@@ -252,7 +252,7 @@ architecture rtl of pci_control is
     ("IO3_10MHZ  ", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_LVTTL)
   );
   constant c_family       : string := "Arria V";
-  constant c_project      : string := "pci_control";
+  constant c_project      : string := "pci_control_sdr";
   constant c_initf_name   : string := c_project & "_stub.mif";
   constant c_profile_name : string := "medium_icache_debug";
   constant c_cores        : natural := 1;

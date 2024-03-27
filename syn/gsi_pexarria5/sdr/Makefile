@@ -1,4 +1,4 @@
-TARGET		= pci_control
+TARGET		= pci_control_sdr
 DEVICE		= 5AGXMA3D4
 FLASH		= EPCQ256
 SPI_LANES	= ASx4
