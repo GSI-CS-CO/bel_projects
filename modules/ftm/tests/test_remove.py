@@ -149,7 +149,7 @@ class DmSchedRemove(dm_testbench.DmTestbench):
     self.delay(0.1)
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile2])
 
-  def testSchedRemove(self):
+  def testSchedRemovePatternA(self):
     scheduleFile1 = 'patternA-repcount.dot'
     scheduleFile2 = 'patternA-remove.dot'
     downloadFile0 = 'patternA-download.dot'
@@ -159,6 +159,20 @@ class DmSchedRemove(dm_testbench.DmTestbench):
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'stoppattern', 'Pattern_A'), [0], 0, 0)
     self.delay(1.0)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'remove', self.schedulesFolder + scheduleFile2), [0], 0, 0)
+    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', '-o', downloadFile0), [0], 0, 0)
+    self.startAndCheckSubprocess(('scheduleCompare', '-s', '-u', self.schedulesFolder + downloadFile0, downloadFile0), [0], 0, 0)
+    self.deleteFile(downloadFile0)
+
+  def testSchedRemoveTwoPattern(self):
+    scheduleFile0 = 'patternApatternB.dot'
+    scheduleFile1 = 'patternAremoveB.dot'
+    downloadFile0 = scheduleFile0.replace('.dot', '-download.dot')
+    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add', self.schedulesFolder + scheduleFile0), [0], 0, 0)
+    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'A'), [0], 1, 0)
+    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'remove', self.schedulesFolder + scheduleFile1), [0], 0, 0)
+    # ~ self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'stoppattern', 'Pattern_A'), [0], 0, 0)
+    # ~ self.delay(1.0)
+    # ~ self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'remove', self.schedulesFolder + scheduleFile2), [0], 0, 0)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', '-o', downloadFile0), [0], 0, 0)
     self.startAndCheckSubprocess(('scheduleCompare', '-s', '-u', self.schedulesFolder + downloadFile0, downloadFile0), [0], 0, 0)
     self.deleteFile(downloadFile0)
