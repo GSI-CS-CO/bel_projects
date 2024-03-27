@@ -8,7 +8,7 @@ use work.altera_lvds_pkg.all;
 use work.ramsize_pkg.c_lm32_ramsizes;
 use work.altera_networks_pkg.all;
 
-entity pexp_control is
+entity pexp_control_sdr is
   generic(
     g_LOAD_SHIFT_REG_EN : boolean := false
   );
@@ -147,9 +147,9 @@ entity pexp_control is
     pe_waken        : out std_logic
 
     );
-end pexp_control;
+end pexp_control_sdr;
 
-architecture rtl of pexp_control is
+architecture rtl of pexp_control_sdr is
 
   constant c_HWT_EN_BIT : natural := 8;
 
@@ -236,7 +236,7 @@ architecture rtl of pexp_control is
 
 
   constant c_family     : string := "Arria V";
-  constant c_project    : string := "pexp_control";
+  constant c_project    : string := "pexp_control_sdr";
   constant c_cores      : natural:= 1;
   constant c_initf_name : string := c_project & "_stub.mif";
   constant c_profile_name : string := "medium_icache_debug";
