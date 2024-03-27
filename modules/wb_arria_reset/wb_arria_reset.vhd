@@ -54,12 +54,12 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use ieee.math_real.all;
 
-
 library work;
 use work.wishbone_pkg.all;
 use work.wb_arria_reset_pkg.all;
 use work.aux_functions_pkg.all;
 use work.monster_pkg.all;
+use work.gencores_pkg.all;
 
 library arria10_reset_altera_remote_update_181;
 use arria10_reset_altera_remote_update_181.arria10_reset_pkg.all;
@@ -106,6 +106,11 @@ architecture wb_arria_reset_arch of wb_arria_reset is
   signal phy_dis          : std_logic;
   signal phy_aux_dis      : std_logic;
   signal s_psram_sel      : std_logic_vector(3 downto 0);
+  signal phy_rst_sync     : std_logic;
+  signal phy_aux_rst_sync : std_logic;
+  signal phy_dis_sync     : std_logic;
+  signal phy_aux_dis_sync : std_logic;
+  signal s_psram_sel_sync : std_logic_vector(3 downto 0);
   constant cnt_value      : integer := 1000 * 60 * 10; -- 10 min with 1ms granularity
   constant cnt_width      : integer := integer(ceil(log2(real(cnt_value)))) + 1;
 begin
@@ -189,12 +194,12 @@ begin
   slave_o.err   <= '0';
   slave_o.stall <= '0';
 
-  phy_rst_o     <= phy_rst;
-  phy_aux_rst_o <= phy_aux_rst;
-  phy_dis_o     <= phy_dis;
-  phy_aux_dis_o <= phy_aux_dis;
+  phy_rst_o     <= phy_rst_sync;
+  phy_aux_rst_o <= phy_aux_rst_sync;
+  phy_dis_o     <= phy_dis_sync;
+  phy_aux_dis_o <= phy_aux_dis_sync;
 
-  psram_sel_o   <= s_psram_sel;
+  psram_sel_o   <= s_psram_sel_sync;
 
   wb_reg: process(clk_sys_i)
   begin
@@ -260,4 +265,48 @@ begin
       end if; -- of sync reset
     end if; -- of rising_edge
   end process;
+
+  -- Try to avoid timing violations, these signals are used as outputs.
+  relax_phy_rst : gc_sync_ffs
+  port map (
+    clk_i    => clk_sys_i,
+    rst_n_i  => rstn_sys_i,
+    data_i   => phy_rst,
+    synced_o => phy_rst_sync
+  );
+
+  relax_aux_phy_rst : gc_sync_ffs
+  port map (
+    clk_i    => clk_sys_i,
+    rst_n_i  => rstn_sys_i,
+    data_i   => phy_aux_rst,
+    synced_o => phy_aux_rst_sync
+  );
+
+  relax_phy_dis : gc_sync_ffs
+  port map (
+    clk_i    => clk_sys_i,
+    rst_n_i  => rstn_sys_i,
+    data_i   => phy_dis,
+    synced_o => phy_dis_sync
+  );
+
+  relax_aux_phy_dis : gc_sync_ffs
+  port map (
+    clk_i    => clk_sys_i,
+    rst_n_i  => rstn_sys_i,
+    data_i   => phy_aux_dis,
+    synced_o => phy_aux_dis_sync
+  );
+
+  ps_ram_sel_generate : for index in 0 to 3 generate
+    ps_ram_sel_sync : gc_sync_ffs
+    port map (
+      clk_i    => clk_sys_i,
+      rst_n_i  => rstn_sys_i,
+      data_i   => s_psram_sel(index),
+      synced_o => s_psram_sel_sync(index)
+    );
+  end generate;
+
 end architecture;
