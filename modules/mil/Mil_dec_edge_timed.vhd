@@ -1,7 +1,8 @@
-library IEEE;
-use IEEE.STD_LOGIC_1164.all;
-use IEEE.STD_LOGIC_arith.all;
-use IEEE.STD_LOGIC_unsigned.all;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+use ieee.math_real.all;
+
 
 entity Mil_dec_edge_timed is
 --+-------------------------------------------------------------------------------------------------------------------------------------+
@@ -116,7 +117,7 @@ architecture Arch_Mil_dec_edge_timed of Mil_dec_edge_timed is
   --------------------------------------------------
   -- Zaehler misst die Zeit zwischen zwei Flanken --
   --------------------------------------------------
-  signal  S_Time_between_2_Edges_cnt  : std_logic_vector(C_Time_between_2_Edges_cnt_width-1 downto 0);
+  signal  S_Time_between_2_Edges_cnt  : unsigned(C_Time_between_2_Edges_cnt_width-1 downto 0);
 
   signal  S_Is_Sync:              std_logic;
   signal  S_Clr_Is_Sync:          std_logic;
@@ -322,7 +323,7 @@ P_Mil_Rcv_Shift_Reg:  process (clk)
     if rising_edge(clk) then
       if RCV_SM = RCV_Idle then
         S_Mil_Parity_Tst <= '0';
-        S_Mil_Rcv_Shift_Reg <= conv_std_logic_vector(1, S_Mil_Rcv_Shift_Reg'length); 
+        S_Mil_Rcv_Shift_Reg <= std_logic_vector(to_unsigned(1, S_Mil_Rcv_Shift_Reg'length)); 
       elsif S_Shift_Ena = '1' then
         if Receive_pos_lane = 1 then
           S_Mil_Rcv_Shift_Reg <= (S_Mil_Rcv_Shift_Reg(S_Mil_Rcv_Shift_Reg'high-1 downto 0) & S_Manchester_Sync(2));
