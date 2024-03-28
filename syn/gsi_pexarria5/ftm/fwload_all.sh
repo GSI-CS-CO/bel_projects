@@ -4,7 +4,8 @@
 ###########################################
 # load firmware to lm32
 ###########################################
-echo -e DM - start: load firmware
+PREFIX="DM - start:"
+echo $PREFIX load firmware
 if [ "$#" -lt 2 ]; then
   echo "Usage: $0 <device> <bin file> [<number CPUs>]" >&2
   exit 1
@@ -24,10 +25,16 @@ FILE=$2
 if [ "$#" -eq 3 ]; then
   CPU=$3
 else
-  CPU=$(eb-ls $DEV | grep 'LM32-RAM-User' -c)
+  if $(command -v eb-ls > /dev/null); then
+    CPU=$(eb-ls $DEV | grep 'LM32-RAM-User' -c)
+    # echo $PREFIX Found $CPU CPUs with eb-ls at $(command -v eb-ls)
+  else
+    CPU=4
+    # echo $PREFIX Set $CPU CPUs, eb-ls not found
+  fi
 fi
 
-echo -e DM - start $DEV $FILE for $CPU CPUs
+echo $PREFIX load $FILE to device $DEV for $CPU CPUs
 
 eb-reset $DEV cpuhalt 0xff
 sleep 0.5
@@ -40,8 +47,6 @@ sleep 0.5
 eb-reset $DEV cpureset 0xff
 sleep 5
 
-echo -e DM - start: clear hw diagnostics
+echo $PREFIX clear hw diagnostics
 dm-cmd $DEV cleardiag
-echo -e DM - start: startup script finished
-
-
+echo $PREFIX load firmware finished
