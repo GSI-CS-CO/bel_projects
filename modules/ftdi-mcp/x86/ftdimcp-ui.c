@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 24-Oct-2023
+ *  version : 28-Mar-2024
  *
  * user interface that connects to a ftdimcp-ctl instance (started as daemon) via DIM
  *
@@ -145,7 +145,7 @@ void dicSubscribeServices(char *prefix)
   disSetLevelId = dic_info_service(name, MONITORED, 0, disHostname, DIMCHARSIZE, 0, 0, &no_link_32,  sizeof(no_link_32));
 
   sprintf(name, "%s_status", prefix);
-  disStatusId = dic_info_service(name, MONITORED, 0, &disStatus, DIMCHARSIZE, 0, 0, &no_link_32, sizeof(no_link_dbl));
+  disStatusId = dic_info_service(name, MONITORED, 0, disStatus, DIMCHARSIZE, 0, 0, &no_link_32, sizeof(no_link_dbl));
 
   sprintf(name, "%s_serial", prefix);
   disSerialId = dic_info_service(name, MONITORED, 0, disSerial, DIMCHARSIZE, 0, 0, &no_link_32,  sizeof(no_link_32));
