@@ -254,6 +254,8 @@ architecture rtl of pexp_control_sdr is
   signal s_dis_led_red   : std_logic;
   signal s_dis_led_blue  : std_logic;
 
+  signal s_real_wr_pps   : std_logic;
+
   signal s_blink_counter       : unsigned(27 downto 0);
   signal s_reg_blink_counter   : unsigned(27 downto 0);
 
@@ -322,6 +324,7 @@ begin
       wr_dac_din_o           => wr_dac_din_o,
       wr_ndac_cs_o           => wr_ndac_cs_o,
       wr_ext_clk_i           => clk_lvtio_i,
+      wr_pps_out_o           => s_real_wr_pps,
 
       sfp_tx_fault_i         => sfp_tx_fault_i,
       sfp_los_i              => sfp_los_i,
@@ -386,7 +389,7 @@ begin
     generic map(
       g_family  => c_family)
     port map(
-      datain    => s_led_pps,
+      datain    => s_real_wr_pps,
       dataout   => s_lvds_p_o(3),
       dataout_b => s_lvds_n_o(3)
     );
