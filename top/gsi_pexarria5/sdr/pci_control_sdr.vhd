@@ -452,8 +452,8 @@ begin
   n29 <= '0' when lvds_i_led(0)='1' else 'Z'; -- FPLED2/TTLIO1 blue
   --n26 <= '0' when lvds_i_led(1)='1' else 'Z'; -- FPLED4/TTLIO2 blue
   --n16 <= '0' when lvds_i_led(2)='1' else 'Z'; -- FPLED6/TTLIO3 blue
-  n26 <= led_pps;
-  n16 <= led_track;
+  n26 <= not(led_pps);
+  n16 <= not(led_track);
   p5  <= '0' when lvds_i_led(3)='1' else 'Z'; -- LED1 (near HDMI = SYIN  / LVDS1)
   n5  <= '0' when lvds_i_led(4)='1' else 'Z'; -- LED2 (near HDMI = TRIN  / LVDS2)
   --p6  <= '0' when lvds_o_led(3)='1' else 'Z'; -- LED3 (near HDMI = CK200 / LVDS3) -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
