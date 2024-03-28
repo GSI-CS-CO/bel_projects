@@ -488,7 +488,8 @@ begin
   lvtio_oe_n_o <= not s_lvds_oe(4 downto 0);
 
   -- LEMO activity LEDs (active HI)
-  s_lvds_led(4 downto 0) <= s_lvds_i_led(4 downto 0) or s_lvds_o_led(4 downto 0);
+  s_lvds_led(2 downto 0) <= s_lvds_i_led(2 downto 0) or s_lvds_o_led(2 downto 0);
+  s_lvds_led(4 downto 3) <= s_lvds_o_led(4 downto 3);
 
   -- LVDS termination pins (active hi)
   with s_test_sel select
