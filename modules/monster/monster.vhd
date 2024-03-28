@@ -1226,7 +1226,7 @@ begin
     if rstn_ref = '0' then
       clk_10m <= '0';
     elsif rising_edge(clk_200m) then
-      if cnt < 10 then
+      if cnt < 9 then
         cnt := cnt + 1;
       else
         cnt := 0;
