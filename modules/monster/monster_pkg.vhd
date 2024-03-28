@@ -175,6 +175,7 @@ package monster_pkg is
       wr_ext_pps_i           : in    std_logic := '0';
       wr_uart_o              : out   std_logic;
       wr_uart_i              : in    std_logic := '1';
+      wr_pps_out_o           : out   std_logic;
       -- SFP
       sfp_tx_disable_o       : out   std_logic := '0';
       sfp_tx_fault_i         : in    std_logic;

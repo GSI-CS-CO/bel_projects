@@ -170,6 +170,7 @@ entity monster is
     wr_ext_pps_i           : in    std_logic;
     wr_uart_o              : out   std_logic;
     wr_uart_i              : in    std_logic;
+    wr_pps_out_o           : out   std_logic;
     -- SFP
     sfp_tx_disable_o       : out   std_logic;
     sfp_tx_fault_i         : in    std_logic;
@@ -1270,6 +1271,7 @@ begin
   core_clk_200m_o    <= clk_200m;
   core_clk_20m_o     <= clk_20m;
   core_clk_25m_o     <= clk_ref2;
+  wr_pps_out_o       <= pps;
 
   -- END OF Reset and PLLs
   ----------------------------------------------------------------------------------
