@@ -216,6 +216,8 @@ architecture rtl of pci_control_sdr is
   signal led_track     : std_logic;
   signal led_pps       : std_logic;
 
+  signal s_real_wr_pps : std_logic;
+
   signal gpio_o        : std_logic_vector(7 downto 0);
   signal lvds_p_i      : std_logic_vector(4 downto 0);
   signal lvds_n_i      : std_logic_vector(4 downto 0);
@@ -304,6 +306,7 @@ begin
       wr_dac_sclk_o           => dac_sclk,
       wr_dac_din_o            => dac_din,
       wr_ndac_cs_o            => ndac_cs,
+      wr_pps_out_o            => s_real_wr_pps,
       sfp_tx_disable_o        => open,
       sfp_tx_fault_i          => sfp4_tx_fault,
       sfp_los_i               => sfp4_los,
@@ -433,8 +436,8 @@ begin
     generic map(
       g_family  => c_family)
     port map(
-      datain    => led_pps,
-      dataout   => p27 ,
+      datain    => not(s_real_wr_pps),
+      dataout   => p27,
       dataout_b => n27
     );
 
