@@ -212,13 +212,16 @@ class DmTestbench(unittest.TestCase):
     Details: start saft-ctl with Popen, run it for <duration> seconds.
     """
     with open(csvFileName, 'wb') as file1:
-      if not resource is None:
-        print('snoopToCsv: Start Thread ', datetime.datetime.now().time())
-        resource.release()
-      process = subprocess.run(self.getSnoopCommand(eventId, mask, duration), shell=True, check=False, stdout=file1)
-      if not resource is None:
-        print(f'snoopToCsv: Return: {process.returncode:3d}   {datetime.datetime.now().time()}')
-      self.assertEqual(process.returncode, 0, f'Returncode: {process.returncode}')
+      try:
+        if not resource is None:
+          print('snoopToCsv: Start Thread ', datetime.datetime.now().time())
+          resource.release()
+        process = subprocess.run(self.getSnoopCommand(eventId, mask, duration), shell=True, check=True, stdout=file1)
+        if not resource is None:
+          print(f'snoopToCsv: Return: {process.returncode:3d}   {datetime.datetime.now().time()}')
+        self.assertEqual(process.returncode, 0, f'Returncode: {process.returncode}')
+      except Exception:
+        self.exc_info = sys.exc_info()
 
   def snoopToCsvWithAction(self, csvFileName, action, actionArgs=[], eventId='0', mask='0', duration=1):
     """Snoop timing messages with saft-ctl for <duration> seconds (default = 1).
@@ -226,6 +229,7 @@ class DmTestbench(unittest.TestCase):
     Details: start saft-ctl with Popen in its own thread, run it for <duration> seconds.
     action should end before snoop.
     """
+    self.exc_info = None
     print('snoopToCsv: acquire lock ', datetime.datetime.now().time())
     resource = threading.Lock()
     # wait at most 10 seconds for the thread to start.
@@ -242,6 +246,9 @@ class DmTestbench(unittest.TestCase):
     snoop.join()
     resource.release()
     print('snoopToCsv: release lock ', datetime.datetime.now().time())
+    if not self.exc_info is None:
+      # ~ print(f'{self.exc_info=}')
+      raise self.exc_info[1].with_traceback(self.exc_info[2])
 
   def analyseFrequencyFromCsv(self, csvFileName, column=20, printTable=True, checkValues=dict(), addDelayed=False):
     """Analyse the frequency of the values in the specified column. Default column is 20 (parameter of the timing message).
