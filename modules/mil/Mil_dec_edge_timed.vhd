@@ -46,7 +46,8 @@ entity Mil_dec_edge_timed is
     Rcv_Rdy:            out std_logic;    -- '1' es wurde ein Kommand oder Datum empfangen.
                                           -- Wenn Rcv_Cmd = '0' => Datum. Wenn Rcv_Cmd = '1' => Kommando
     Mil_Rcv_Data:       out std_logic_vector(15 downto 0);  -- Empfangenes Datum oder Komando
-    Mil_Decoder_Diag:   out std_logic_vector(15 downto 0)   -- Diagnoseausgaenge fuer Logikanalysator
+    Mil_Decoder_Diag:   out std_logic_vector(15 downto 0);   -- Diagnoseausgaenge fuer Logikanalysator
+    mil_err_cnt:        out std_logic_vector(31 downto 0)
     );
 
 end Mil_dec_edge_timed;
@@ -157,6 +158,9 @@ architecture Arch_Mil_dec_edge_timed of Mil_dec_edge_timed is
   signal  S_Parity_Ok:            std_logic;
 
   signal  S_Rcv_Error:            std_logic;
+
+  -- error counter for the state "err"
+  signal  s_err_count: unsigned(31 downto 0);
   
 
 --+-----------------------------------------------------+
@@ -368,6 +372,8 @@ P_RCV_SM: process (clk, Res, S_Is_Timeout)
       S_Clr_Is_Bit_Long <= '1';
       S_Clr_Is_Bit_Short <= '1';
       S_Is_Cmd <= '0';
+    elsif Res = '1' then
+      s_err_count <= (others => '0');
 
     elsif rising_edge(clk) then
       S_Shift_Ena <= '0';
@@ -437,9 +443,11 @@ P_RCV_SM: process (clk, Res, S_Is_Timeout)
                 RCV_SM <= Data;
               elsif S_Is_Bit_long = '1' and S_Next_Short = '1' then
                 S_Clr_Is_Bit_Long <= '1';
+                s_err_count <= s_err_count + 1;
                 RCV_SM <= Err;
               else
                 S_Clr_Is_Bit_Long <= '1';
+                s_err_count <= s_err_count + 1;
                 RCV_SM <= Err;
               end if;
             else
@@ -586,5 +594,8 @@ P_Diag: process (
     Mil_Decoder_Diag(1)   <=  S_Is_Bit_long;
     Mil_Decoder_Diag(0)   <=  S_Is_Bit_short;
   end process P_Diag;
+
+mil_err_cnt <= std_logic_vector(s_err_count);
+
   
 end Arch_Mil_dec_edge_timed;

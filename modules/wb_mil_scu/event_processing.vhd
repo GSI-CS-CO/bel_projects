@@ -36,7 +36,8 @@ entity event_processing is
     ev_timer_res:     out     std_logic;
     ev_puls1:         out     std_logic;
     ev_puls2:         out     std_logic;
-    timing_received:  buffer  std_logic
+    timing_received:  buffer  std_logic;
+    mil_err_cnt:      out     std_logic_vector(31 downto 0)
   );
 end event_processing;
 
@@ -148,7 +149,8 @@ Serial_Timing:  mil_dec_edge_timed
     Rcv_Rdy           => timing_rcv,    -- '1' es wurde ein Kommand oder Datum empfangen.
                                         -- Wenn Rcv_Cmd = '0' => Datum. Wenn Rcv_Cmd = '1' => Kommando
     Mil_Rcv_Data      => event_d,       -- Empfangenes Datum oder Komando
-    Mil_Decoder_Diag  => open           -- Diagnoseausgänge für Logikanalysator
+    Mil_Decoder_Diag  => open,          -- Diagnoseausgänge für Logikanalysator
+    mil_err_cnt       => mil_err_cnt    -- number of messages with a receive err
     );
 
 timing_received <= timing_rcv and timing_cmd;
