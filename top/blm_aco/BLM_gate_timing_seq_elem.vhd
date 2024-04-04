@@ -25,13 +25,17 @@ type   gate_state_t is   (idle,prepare_state, gate, waiting, error, recover_stat
 signal gate_state:   gate_state_t;
 signal gate_state_sn:   gate_state_t:= idle;
 signal gate_er: std_logic;
-signal timeout_reset : unsigned(15 downto 0); 
+--signal timeout_reset : unsigned(15 downto 0); 
 signal gate_out_sm: std_logic;
-signal timeout : unsigned(15 downto 0);
+--signal timeout : unsigned(15 downto 0);
 signal curr_val   :std_logic; --:='0';
 signal state_sm: integer range 0 to 5:= 0;
 signal state_nr: std_logic_vector (2 downto 0);
 --signal ready: std_logic;
+signal timeout_reset : unsigned(29 downto 0); 
+signal timeout : unsigned(29 downto 0);
+signal hold_time: unsigned(15 downto 0);
+
 begin
 
   state_sm_proc: process(clk_i, rstn_i)--(gate_state)
@@ -74,13 +78,14 @@ gate_proc: process (clk_i, rstn_i)
         gate_state_nr <=  std_logic_vector(to_unsigned(state_sm, gate_state_nr'length));
         gate_error <= gate_er;
         gate_out <= gate_out_sm;
-        timeout_reset <=unsigned(hold); 
+       -- timeout_reset <=unsigned(hold); 
       --  ready <= all_thres_ready;
-
+     hold_time <=unsigned(hold); 
+     timeout_reset <= hold_time &"00000000000000";
          case gate_state is
 
              when idle =>
-                    timeout <= timeout_reset;
+                   timeout <= timeout_reset;
 
                     if curr_val='1' then --0
                       gate_state <= error;    
@@ -91,18 +96,19 @@ gate_proc: process (clk_i, rstn_i)
                      end if;
 
              when prepare_state => --1
-                      
+                    
                      if curr_val ='1' then
                        gate_state <= gate;
-                       gate_out_sm <= '1';
+                      gate_out_sm <= '1';
                      
                      else
                     --    if ready ='1' then 
+           
                             timeout <= timeout -1;
                             if (to_integer(timeout )=0) then
                                 gate_state <= error;
-                            end if;  
-                      --  end if;
+                            end if;
+
                     end if;
  
  

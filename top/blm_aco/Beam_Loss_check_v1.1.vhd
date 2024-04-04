@@ -246,7 +246,7 @@ begin
 
   for i in 0 to 5 loop
     
-    if BLM_ctrl_Reg(i+2) = '0' then   --when '0', gate signals are directly sent to the 12 to 256 multiplexer for the counter enables assignments
+    if BLM_ctrl_Reg(i+2) = '0' then   --when '0', gate signals are directly sent to the 12 to 126 multiplexer for the counter enables assignments
       gate_In_Mtx(i)<= BLM_gate_in(i+6);
     else 
       gate_IN_Mtx(i) <= gate_output(i+6);
@@ -254,7 +254,7 @@ begin
   end loop;
   for i in 6 to 11 loop
     
-    if BLM_ctrl_Reg(i+2) = '0' then   --when '0', gate signals are directly sent to the 12 to 256 multiplexer for the counter enables assignments
+    if BLM_ctrl_Reg(i+2) = '0' then   --when '0', gate signals are directly sent to the 12 to 128 multiplexer for the counter enables assignments
       gate_In_Mtx(i)<= BLM_gate_in(i-6);
     else 
       gate_IN_Mtx(i) <= gate_output(i-6);
