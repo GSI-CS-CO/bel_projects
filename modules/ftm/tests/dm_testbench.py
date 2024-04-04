@@ -207,12 +207,17 @@ class DmTestbench(unittest.TestCase):
     # ~ print(f'getEbResetCommand: {ebResetCommand1}')
     return ebResetCommand1
 
-  def snoopToCsv(self, csvFileName, eventId='0', mask='0', duration=1):
+  def snoopToCsv(self, csvFileName, eventId='0', mask='0', duration=1, resource=None):
     """Snoop timing messages with saft-ctl for <duration> seconds (default = 1) and write the messages to <csvFileName>.
     Details: start saft-ctl with Popen, run it for <duration> seconds.
     """
     with open(csvFileName, 'wb') as file1:
-      process = subprocess.run(self.getSnoopCommand(eventId, mask, duration), shell=True, check=True, stdout=file1)
+      if not resource is None:
+        print('snoopToCsv: Start Thread ', datetime.datetime.now().time())
+        resource.release()
+      process = subprocess.run(self.getSnoopCommand(eventId, mask, duration), shell=True, check=False, stdout=file1)
+      if not resource is None:
+        print(f'snoopToCsv: Return: {process.returncode:3d}   {datetime.datetime.now().time()}')
       self.assertEqual(process.returncode, 0, f'Returncode: {process.returncode}')
 
   def snoopToCsvWithAction(self, csvFileName, action, actionArgs=[], eventId='0', mask='0', duration=1):
@@ -221,13 +226,22 @@ class DmTestbench(unittest.TestCase):
     Details: start saft-ctl with Popen in its own thread, run it for <duration> seconds.
     action should end before snoop.
     """
-    snoop = threading.Thread(target=self.snoopToCsv, args=(csvFileName, eventId, mask, duration))
+    print('snoopToCsv: acquire lock ', datetime.datetime.now().time())
+    resource = threading.Lock()
+    # wait at most 10 seconds for the thread to start.
+    # Lock is released before the main action of the thread starts.
+    resource.acquire(timeout=10.0)
+    snoop = threading.Thread(target=self.snoopToCsv, args=(csvFileName, eventId, mask, duration, resource))
     snoop.start()
+    resource.acquire(timeout=10.0)
+    print('snoopToCsv: call action  ', datetime.datetime.now().time())
     if len(actionArgs) == 0:
       action()
     else:
       action(actionArgs)
     snoop.join()
+    resource.release()
+    print('snoopToCsv: release lock ', datetime.datetime.now().time())
 
   def analyseFrequencyFromCsv(self, csvFileName, column=20, printTable=True, checkValues=dict(), addDelayed=False):
     """Analyse the frequency of the values in the specified column. Default column is 20 (parameter of the timing message).
