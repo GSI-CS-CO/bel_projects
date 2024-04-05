@@ -348,7 +348,8 @@ component event_processing is
     ev_puls1:         out   std_logic;
     ev_puls2:         out   std_logic;
     timing_received:  out   std_logic;
-    mil_err_cnt:      out   std_logic_vector(31 downto 0)
+    mil_err_cnt:      out   std_logic_vector(31 downto 0);
+    clr_mil_err_cnt:  in    std_logic
     );
 end component event_processing;
 

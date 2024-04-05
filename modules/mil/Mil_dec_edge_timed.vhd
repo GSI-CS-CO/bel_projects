@@ -47,7 +47,8 @@ entity Mil_dec_edge_timed is
                                           -- Wenn Rcv_Cmd = '0' => Datum. Wenn Rcv_Cmd = '1' => Kommando
     Mil_Rcv_Data:       out std_logic_vector(15 downto 0);  -- Empfangenes Datum oder Komando
     Mil_Decoder_Diag:   out std_logic_vector(15 downto 0);   -- Diagnoseausgaenge fuer Logikanalysator
-    mil_err_cnt:        out std_logic_vector(31 downto 0)
+    mil_err_cnt:        out std_logic_vector(31 downto 0);
+    clr_mil_err_cnt:    in  std_logic
     );
 
 end Mil_dec_edge_timed;
@@ -372,7 +373,7 @@ P_RCV_SM: process (clk, Res, S_Is_Timeout)
       S_Clr_Is_Bit_Long <= '1';
       S_Clr_Is_Bit_Short <= '1';
       S_Is_Cmd <= '0';
-    elsif Res = '1' then
+    elsif Res = '1' or clr_mil_err_cnt = '1' then
       s_err_count <= (others => '0');
 
     elsif rising_edge(clk) then

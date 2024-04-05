@@ -45,7 +45,8 @@ component Mil_dec_edge_timed is
                                           -- Wenn Rcv_Cmd = '0' => Datum. Wenn Rcv_Cmd = '1' => Kommando
     Mil_Rcv_Data:       out std_logic_vector(15 downto 0);  -- Empfangenes Datum oder Komando
     Mil_Decoder_Diag:   out std_logic_vector(15 downto 0);   -- Diagnoseausgaenge fuer Logikanalysator
-    mil_err_cnt:        out std_logic_vector(31 downto 0)
+    mil_err_cnt:        out std_logic_vector(31 downto 0);
+    clr_mil_err_cnt:    in std_logic
     );
 end component;
 

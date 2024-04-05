@@ -37,7 +37,8 @@ entity event_processing is
     ev_puls1:         out     std_logic;
     ev_puls2:         out     std_logic;
     timing_received:  buffer  std_logic;
-    mil_err_cnt:      out     std_logic_vector(31 downto 0)
+    mil_err_cnt:      out     std_logic_vector(31 downto 0);
+    clr_mil_err_cnt:  in      std_logic
   );
 end event_processing;
 
@@ -131,26 +132,27 @@ filt_wr <= '1' when filt_cntrl_sm = fi_wr else '0'; -- vielleicht besser getakte
 
 Serial_Timing:  mil_dec_edge_timed
   generic map (
-    CLK_in_Hz         => clk_in_Hz,     -- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu koennen 
-                                        -- (kuerzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden.
-                                        -- Die tatsaechlich angelegte Frequenz, muss vor der Synthese in "CLK_in_Hz"
-                                        -- in Hertz beschrieben werden.
-    Receive_pos_lane  => 0              -- '1' => der positive Signalstrom ist an Manchester_In angeschlossen
-                                        -- '0' => der negative Signalstrom ist an Manchester_In angeschlossen.
-    )
+    CLK_in_Hz         => clk_in_Hz,      -- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu koennen 
+                                         -- (kuerzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden.
+                                         -- Die tatsaechlich angelegte Frequenz, muss vor der Synthese in "CLK_in_Hz"
+                                         -- in Hertz beschrieben werden.
+    Receive_pos_lane  => 0               -- '1' => der positive Signalstrom ist an Manchester_In angeschlossen
+                                         -- '0' => der negative Signalstrom ist an Manchester_In angeschlossen.
+     )
   port map (
-    Manchester_In     => timing_i,      -- Eingangsdatenstrom MIL-1553B
-    RD_MIL            => event_fin,     -- setzt Rvc_Cmd, Rcv_Rdy und Rcv_Error zurück. Muss synchron zur Clock 'clk' und 
-                                        -- mindesten eine Periode lang aktiv sein!
-    Res               => not nRst_i,    -- Muss mindestens einmal für eine Periode von 'clk' aktiv ('1') gewesen sein.
-    clk               => clk_i,
-    Rcv_Cmd           => timing_cmd,    -- '1' es wurde ein Kommando empfangen.
-    Rcv_Error         => open,          -- ist bei einem Fehler für einen Takt aktiv '1'.
-    Rcv_Rdy           => timing_rcv,    -- '1' es wurde ein Kommand oder Datum empfangen.
-                                        -- Wenn Rcv_Cmd = '0' => Datum. Wenn Rcv_Cmd = '1' => Kommando
-    Mil_Rcv_Data      => event_d,       -- Empfangenes Datum oder Komando
-    Mil_Decoder_Diag  => open,          -- Diagnoseausgänge für Logikanalysator
-    mil_err_cnt       => mil_err_cnt    -- number of messages with a receive err
+    Manchester_In     => timing_i,       -- Eingangsdatenstrom MIL-1553B
+    RD_MIL            => event_fin,      -- setzt Rvc_Cmd, Rcv_Rdy und Rcv_Error zurück. Muss synchron zur Clock 'clk' und 
+                                         -- mindesten eine Periode lang aktiv sein!
+    Res               => not nRst_i,     -- Muss mindestens einmal für eine Periode von 'clk' aktiv ('1') gewesen sein.
+    clk               => clk_i ,
+    Rcv_Cmd           => timing_cmd,     -- '1' es wurde ein Kommando empfangen.
+    Rcv_Error         => open,           -- ist bei einem Fehler für einen Takt aktiv '1'.
+    Rcv_Rdy           => timing_rcv,     -- '1' es wurde ein Kommand oder Datum empfangen.
+                                         -- Wenn Rcv_Cmd = '0' => Datum. Wenn Rcv_Cmd = '1' => Kommando
+    Mil_Rcv_Data      => event_d,        -- Empfangenes Datum oder Komando
+    Mil_Decoder_Diag  => open,           -- Diagnoseausgänge für Logikanalysator
+    mil_err_cnt       => mil_err_cnt,    -- number of messages with a receive err
+    clr_mil_err_cnt   => clr_mil_err_cnt -- clears the message error counter
     );
 
 timing_received <= timing_rcv and timing_cmd;
