@@ -1,0 +1,603 @@
+<session sof_file="">
+  <display_tree gui_logging_enabled="0">
+    <display_branch instance="auto_signaltap_0" signal_set="USE_GLOBAL_TEMP" trigger="USE_GLOBAL_TEMP"/>
+  </display_tree>
+  <global_info>
+    <multi attribute="column width" size="23" value="34,34,470,74,68,78,95,96,98,98,88,88,110,101,101,101,101,101,101,101,101,107,78"/>
+    <single attribute="active instance" value="0"/>
+    <single attribute="lock mode" value="0"/>
+    <multi attribute="frame size" size="2" value="1787,1278"/>
+    <single attribute="jtag widget visible" value="1"/>
+    <multi attribute="jtag widget size" size="2" value="351,149"/>
+    <single attribute="instance widget visible" value="1"/>
+    <single attribute="config widget visible" value="1"/>
+    <single attribute="hierarchy widget visible" value="1"/>
+    <single attribute="data log widget visible" value="1"/>
+  </global_info>
+  <instance enabled="true" entity_name="sld_signaltap" is_auto_node="yes" name="auto_signaltap_0" source_file="sld_signaltap.vhd">
+    <node_ip_info instance_id="0" mfg_id="110" node_id="0" version="6"/>
+    <position_info>
+      <single attribute="active tab" value="1"/>
+      <single attribute="setup vertical scroll position" value="0"/>
+      <single attribute="setup horizontal scroll position" value="0"/>
+    </position_info>
+    <signal_set global_temp="1" name="signal_set: 2024/04/09 15:24:19  #0">
+      <clock name="monster:main|sys_pll10:\sys_a10:sys_inst|outclk_0" polarity="posedge" tap_mode="classic"/>
+      <config pipeline_level="0" ram_type="AUTO" reserved_data_nodes="0" reserved_storage_qualifier_nodes="0" reserved_trigger_nodes="0" sample_depth="256" trigger_in_enable="no" trigger_out_enable="no"/>
+      <top_entity/>
+      <signal_vec>
+        <trigger_input_vec>
+          <wire name="a_nsys_reset" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|locked[0]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|locked[1]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|locked[2]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[0][0]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[0][1]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[0][2]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[1][0]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[1][1]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[1][2]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[2][0]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[2][1]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[2][2]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[3][0]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[3][1]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[3][2]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|rstn_i" tap_mode="classic"/>
+          <wire name="monster:main|dmtd_pll10:\dmtd_a10:dmtd_inst|locked" tap_mode="classic"/>
+          <wire name="monster:main|ref_pll10:\ref_a10:ref_inst|locked" tap_mode="classic"/>
+          <wire name="monster:main|sys_pll10:\sys_a10:sys_inst|locked" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|ready_o" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|rx_enc_err_o" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|rx_ready_o" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_cal_busy[0]" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_cal_busy[0]" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_disperr[0]" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_errdetect[0]" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_is_lockedtodata[0]" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_is_lockedtoref[0]" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_tx_cal_busy[0]" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|tx_disparity_o" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|tx_enc_err_o" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|tx_ready_o" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[0]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[1]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[2]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[3]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[4]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[5]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[6]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[7]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[0]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[1]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[2]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[3]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[4]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[5]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[6]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[7]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_link_up_o" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[0]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[10]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[1]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[2]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[3]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[4]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[5]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[6]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[7]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[8]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[9]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_time_valid_o" tap_mode="classic"/>
+          <wire name="nPCI_RESET_i" tap_mode="classic"/>
+          <wire name="nres_out_o" tap_mode="classic"/>
+          <wire name="sfp_los_i" tap_mode="classic"/>
+          <wire name="sfp_mod0_i" tap_mode="classic"/>
+          <wire name="sfp_mod1_io" tap_mode="classic"/>
+          <wire name="sfp_mod2_io" tap_mode="classic"/>
+          <wire name="sfp_tx_disable_o" tap_mode="classic"/>
+          <wire name="sfp_tx_fault_i" tap_mode="classic"/>
+          <wire name="wr_leds_o[0]" tap_mode="classic"/>
+          <wire name="wr_leds_o[1]" tap_mode="classic"/>
+          <wire name="wr_leds_o[2]" tap_mode="classic"/>
+          <wire name="wr_leds_o[3]" tap_mode="classic"/>
+        </trigger_input_vec>
+        <data_input_vec>
+          <wire name="a_nsys_reset" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|locked[0]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|locked[1]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|locked[2]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[0][0]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[0][1]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[0][2]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[1][0]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[1][1]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[1][2]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[2][0]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[2][1]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[2][2]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[3][0]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[3][1]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[3][2]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|rstn_i" tap_mode="classic"/>
+          <wire name="monster:main|dmtd_pll10:\dmtd_a10:dmtd_inst|locked" tap_mode="classic"/>
+          <wire name="monster:main|ref_pll10:\ref_a10:ref_inst|locked" tap_mode="classic"/>
+          <wire name="monster:main|sys_pll10:\sys_a10:sys_inst|locked" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|ready_o" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|rx_enc_err_o" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|rx_ready_o" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_cal_busy[0]" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_cal_busy[0]" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_disperr[0]" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_errdetect[0]" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_is_lockedtodata[0]" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_is_lockedtoref[0]" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_tx_cal_busy[0]" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|tx_disparity_o" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|tx_enc_err_o" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|tx_ready_o" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[0]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[1]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[2]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[3]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[4]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[5]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[6]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[7]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[0]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[1]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[2]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[3]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[4]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[5]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[6]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[7]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_link_up_o" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[0]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[10]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[1]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[2]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[3]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[4]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[5]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[6]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[7]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[8]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[9]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_time_valid_o" tap_mode="classic"/>
+          <wire name="nPCI_RESET_i" tap_mode="classic"/>
+          <wire name="nres_out_o" tap_mode="classic"/>
+          <wire name="sfp_los_i" tap_mode="classic"/>
+          <wire name="sfp_mod0_i" tap_mode="classic"/>
+          <wire name="sfp_mod1_io" tap_mode="classic"/>
+          <wire name="sfp_mod2_io" tap_mode="classic"/>
+          <wire name="sfp_tx_disable_o" tap_mode="classic"/>
+          <wire name="sfp_tx_fault_i" tap_mode="classic"/>
+          <wire name="wr_leds_o[0]" tap_mode="classic"/>
+          <wire name="wr_leds_o[1]" tap_mode="classic"/>
+          <wire name="wr_leds_o[2]" tap_mode="classic"/>
+          <wire name="wr_leds_o[3]" tap_mode="classic"/>
+        </data_input_vec>
+        <storage_qualifier_input_vec>
+          <wire name="a_nsys_reset" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|locked[0]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|locked[1]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|locked[2]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[0][0]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[0][1]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[0][2]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[1][0]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[1][1]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[1][2]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[2][0]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[2][1]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[2][2]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[3][0]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[3][1]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[3][2]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|rstn_i" tap_mode="classic"/>
+          <wire name="monster:main|dmtd_pll10:\dmtd_a10:dmtd_inst|locked" tap_mode="classic"/>
+          <wire name="monster:main|ref_pll10:\ref_a10:ref_inst|locked" tap_mode="classic"/>
+          <wire name="monster:main|sys_pll10:\sys_a10:sys_inst|locked" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|ready_o" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|rx_enc_err_o" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|rx_ready_o" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_cal_busy[0]" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_cal_busy[0]" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_disperr[0]" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_errdetect[0]" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_is_lockedtodata[0]" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_is_lockedtoref[0]" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_tx_cal_busy[0]" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|tx_disparity_o" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|tx_enc_err_o" tap_mode="classic"/>
+          <wire name="monster:main|wr_arria10_transceiver:\phy_a10:phy|tx_ready_o" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[0]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[1]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[2]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[3]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[4]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[5]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[6]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[7]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[0]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[1]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[2]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[3]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[4]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[5]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[6]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[7]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_link_up_o" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[0]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[10]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[1]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[2]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[3]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[4]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[5]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[6]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[7]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[8]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[9]" tap_mode="classic"/>
+          <wire name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_time_valid_o" tap_mode="classic"/>
+          <wire name="nPCI_RESET_i" tap_mode="classic"/>
+          <wire name="nres_out_o" tap_mode="classic"/>
+          <wire name="sfp_los_i" tap_mode="classic"/>
+          <wire name="sfp_mod0_i" tap_mode="classic"/>
+          <wire name="sfp_mod1_io" tap_mode="classic"/>
+          <wire name="sfp_mod2_io" tap_mode="classic"/>
+          <wire name="sfp_tx_disable_o" tap_mode="classic"/>
+          <wire name="sfp_tx_fault_i" tap_mode="classic"/>
+          <wire name="wr_leds_o[0]" tap_mode="classic"/>
+          <wire name="wr_leds_o[1]" tap_mode="classic"/>
+          <wire name="wr_leds_o[2]" tap_mode="classic"/>
+          <wire name="wr_leds_o[3]" tap_mode="classic"/>
+        </storage_qualifier_input_vec>
+      </signal_vec>
+      <presentation>
+        <unified_setup_data_view>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="sfp_los_i" tap_mode="classic" type="input pin"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="sfp_mod0_i" tap_mode="classic" type="input pin"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="sfp_mod1_io" tap_mode="classic" type="bidir pin"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="sfp_mod2_io" tap_mode="classic" type="bidir pin"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="sfp_tx_disable_o" tap_mode="classic" type="output pin"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="sfp_tx_fault_i" tap_mode="classic" type="input pin"/>
+          <node is_selected="false" level-0="alt_or" name="wr_leds_o[3..0]" order="msb_to_lsb" state="expand" type="output pin">
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="wr_leds_o[3]" tap_mode="classic" type="output pin"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="wr_leds_o[2]" tap_mode="classic" type="output pin"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="wr_leds_o[1]" tap_mode="classic" type="output pin"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="wr_leds_o[0]" tap_mode="classic" type="output pin"/>
+          </node>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|sys_pll10:\sys_a10:sys_inst|locked" tap_mode="classic" type="combinatorial"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|ref_pll10:\ref_a10:ref_inst|locked" tap_mode="classic" type="combinatorial"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_link_up_o" tap_mode="classic" type="combinatorial"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_time_valid_o" tap_mode="classic" type="combinatorial"/>
+          <node is_selected="false" level-0="alt_or" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[7..0]" order="msb_to_lsb" type="combinatorial">
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[7]" tap_mode="classic" type="combinatorial"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[6]" tap_mode="classic" type="combinatorial"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[5]" tap_mode="classic" type="combinatorial"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[4]" tap_mode="classic" type="combinatorial"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[3]" tap_mode="classic" type="combinatorial"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[2]" tap_mode="classic" type="combinatorial"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[1]" tap_mode="classic" type="combinatorial"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[0]" tap_mode="classic" type="combinatorial"/>
+          </node>
+          <node is_selected="false" level-0="alt_or" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[7..0]" order="msb_to_lsb" type="combinatorial">
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[7]" tap_mode="classic" type="combinatorial"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[6]" tap_mode="classic" type="combinatorial"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[5]" tap_mode="classic" type="combinatorial"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[4]" tap_mode="classic" type="combinatorial"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[3]" tap_mode="classic" type="combinatorial"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[2]" tap_mode="classic" type="combinatorial"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[1]" tap_mode="classic" type="combinatorial"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[0]" tap_mode="classic" type="combinatorial"/>
+          </node>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[0]" tap_mode="classic" type="combinatorial"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[1]" tap_mode="classic" type="combinatorial"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[2]" tap_mode="classic" type="combinatorial"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[3]" tap_mode="classic" type="combinatorial"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[4]" tap_mode="classic" type="combinatorial"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[5]" tap_mode="classic" type="combinatorial"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[6]" tap_mode="classic" type="combinatorial"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[7]" tap_mode="classic" type="combinatorial"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[8]" tap_mode="classic" type="combinatorial"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[9]" tap_mode="classic" type="combinatorial"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[10]" tap_mode="classic" type="combinatorial"/>
+          <node is_selected="false" level-0="alt_or" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_cal_busy[0..0]" order="msb_to_lsb" type="combinatorial">
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="false" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_cal_busy[0]" tap_mode="classic" type="combinatorial"/>
+          </node>
+          <node is_selected="false" level-0="alt_or" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_cal_busy[0..0]" order="msb_to_lsb" type="combinatorial">
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="false" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_cal_busy[0]" tap_mode="classic" type="combinatorial"/>
+          </node>
+          <node is_selected="false" level-0="alt_or" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_disperr[0..0]" order="msb_to_lsb" type="combinatorial">
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="false" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_disperr[0]" tap_mode="classic" type="combinatorial"/>
+          </node>
+          <node is_selected="false" level-0="alt_or" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_errdetect[0..0]" order="msb_to_lsb" type="combinatorial">
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="false" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_errdetect[0]" tap_mode="classic" type="combinatorial"/>
+          </node>
+          <node is_selected="false" level-0="alt_or" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_is_lockedtoref[0..0]" order="msb_to_lsb" type="combinatorial">
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="false" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_is_lockedtoref[0]" tap_mode="classic" type="combinatorial"/>
+          </node>
+          <node is_selected="false" level-0="alt_or" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_is_lockedtodata[0..0]" order="msb_to_lsb" type="combinatorial">
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="false" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_is_lockedtodata[0]" tap_mode="classic" type="combinatorial"/>
+          </node>
+          <node is_selected="false" level-0="alt_or" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_tx_cal_busy[0..0]" order="msb_to_lsb" type="combinatorial">
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="false" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_tx_cal_busy[0]" tap_mode="classic" type="combinatorial"/>
+          </node>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|rx_ready_o" tap_mode="classic" type="combinatorial"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|rx_enc_err_o" tap_mode="classic" type="combinatorial"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|ready_o" tap_mode="classic" type="combinatorial"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|tx_ready_o" tap_mode="classic" type="combinatorial"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|tx_enc_err_o" tap_mode="classic" type="combinatorial"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|tx_disparity_o" tap_mode="classic" type="combinatorial"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|dmtd_pll10:\dmtd_a10:dmtd_inst|locked" tap_mode="classic" type="combinatorial"/>
+          <node is_selected="false" level-0="alt_or" name="monster:main|altera_reset:reset|locked[2..0]" order="msb_to_lsb" type="register">
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|locked[2]" tap_mode="classic" type="register"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|locked[1]" tap_mode="classic" type="register"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|locked[0]" tap_mode="classic" type="register"/>
+          </node>
+          <node is_selected="false" level-0="alt_or" name="monster:main|altera_reset:reset|nresets[3..0][2..0]" order="lsb_to_msb" state="expand" storage-0="alt_or" type="register">
+            <node is_selected="false" level-0="alt_or" name="monster:main|altera_reset:reset|nresets[3][2..0]" order="msb_to_lsb" type="register">
+              <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[3][2]" tap_mode="classic" type="register"/>
+              <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[3][1]" tap_mode="classic" type="register"/>
+              <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[3][0]" tap_mode="classic" type="register"/>
+            </node>
+            <node is_selected="false" level-0="alt_or" name="monster:main|altera_reset:reset|nresets[2][2..0]" order="msb_to_lsb" type="register">
+              <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[2][2]" tap_mode="classic" type="register"/>
+              <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[2][1]" tap_mode="classic" type="register"/>
+              <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[2][0]" tap_mode="classic" type="register"/>
+            </node>
+            <node is_selected="false" level-0="alt_or" name="monster:main|altera_reset:reset|nresets[1][2..0]" order="msb_to_lsb" type="register">
+              <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[1][2]" tap_mode="classic" type="register"/>
+              <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[1][1]" tap_mode="classic" type="register"/>
+              <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[1][0]" tap_mode="classic" type="register"/>
+            </node>
+            <node is_selected="false" level-0="alt_or" name="monster:main|altera_reset:reset|nresets[0][2..0]" order="msb_to_lsb" type="register">
+              <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[0][2]" tap_mode="classic" type="register"/>
+              <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[0][1]" tap_mode="classic" type="register"/>
+              <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[0][0]" tap_mode="classic" type="register"/>
+            </node>
+          </node>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|rstn_i" tap_mode="classic" type="combinatorial"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_storage_input="true" is_trigger_input="true" name="a_nsys_reset" tap_mode="classic" type="input pin"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_storage_input="true" is_trigger_input="true" name="nres_out_o" tap_mode="classic" type="output pin"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_storage_input="true" is_trigger_input="true" name="nPCI_RESET_i" tap_mode="classic" type="input pin"/>
+        </unified_setup_data_view>
+        <data_view>
+          <net data_index="64" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="sfp_los_i" storage_index="64" tap_mode="classic" trigger_index="64" type="unknown"/>
+          <net data_index="65" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="sfp_mod0_i" storage_index="65" tap_mode="classic" trigger_index="65" type="unknown"/>
+          <net data_index="66" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="sfp_mod1_io" storage_index="66" tap_mode="classic" trigger_index="66" type="unknown"/>
+          <net data_index="67" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="sfp_mod2_io" storage_index="67" tap_mode="classic" trigger_index="67" type="unknown"/>
+          <net data_index="68" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="sfp_tx_disable_o" storage_index="68" tap_mode="classic" trigger_index="68" type="unknown"/>
+          <net data_index="69" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="sfp_tx_fault_i" storage_index="69" tap_mode="classic" trigger_index="69" type="unknown"/>
+          <bus is_selected="false" level-0="alt_or" name="wr_leds_o[3..0]" order="msb_to_lsb" state="expand" type="output pin">
+            <net data_index="73" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="wr_leds_o[3]" storage_index="73" tap_mode="classic" trigger_index="73" type="unknown"/>
+            <net data_index="72" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="wr_leds_o[2]" storage_index="72" tap_mode="classic" trigger_index="72" type="unknown"/>
+            <net data_index="71" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="wr_leds_o[1]" storage_index="71" tap_mode="classic" trigger_index="71" type="unknown"/>
+            <net data_index="70" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="wr_leds_o[0]" storage_index="70" tap_mode="classic" trigger_index="70" type="unknown"/>
+          </bus>
+          <net data_index="19" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|sys_pll10:\sys_a10:sys_inst|locked" storage_index="19" tap_mode="classic" trigger_index="19" type="unknown"/>
+          <net data_index="18" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|ref_pll10:\ref_a10:ref_inst|locked" storage_index="18" tap_mode="classic" trigger_index="18" type="unknown"/>
+          <net data_index="49" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_link_up_o" storage_index="49" tap_mode="classic" trigger_index="49" type="unknown"/>
+          <net data_index="61" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_time_valid_o" storage_index="61" tap_mode="classic" trigger_index="61" type="unknown"/>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[7..0]" order="msb_to_lsb" type="combinatorial">
+            <net data_index="40" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[7]" storage_index="40" tap_mode="classic" trigger_index="40" type="unknown"/>
+            <net data_index="39" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[6]" storage_index="39" tap_mode="classic" trigger_index="39" type="unknown"/>
+            <net data_index="38" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[5]" storage_index="38" tap_mode="classic" trigger_index="38" type="unknown"/>
+            <net data_index="37" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[4]" storage_index="37" tap_mode="classic" trigger_index="37" type="unknown"/>
+            <net data_index="36" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[3]" storage_index="36" tap_mode="classic" trigger_index="36" type="unknown"/>
+            <net data_index="35" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[2]" storage_index="35" tap_mode="classic" trigger_index="35" type="unknown"/>
+            <net data_index="34" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[1]" storage_index="34" tap_mode="classic" trigger_index="34" type="unknown"/>
+            <net data_index="33" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[0]" storage_index="33" tap_mode="classic" trigger_index="33" type="unknown"/>
+          </bus>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[7..0]" order="msb_to_lsb" type="combinatorial">
+            <net data_index="48" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[7]" storage_index="48" tap_mode="classic" trigger_index="48" type="unknown"/>
+            <net data_index="47" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[6]" storage_index="47" tap_mode="classic" trigger_index="47" type="unknown"/>
+            <net data_index="46" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[5]" storage_index="46" tap_mode="classic" trigger_index="46" type="unknown"/>
+            <net data_index="45" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[4]" storage_index="45" tap_mode="classic" trigger_index="45" type="unknown"/>
+            <net data_index="44" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[3]" storage_index="44" tap_mode="classic" trigger_index="44" type="unknown"/>
+            <net data_index="43" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[2]" storage_index="43" tap_mode="classic" trigger_index="43" type="unknown"/>
+            <net data_index="42" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[1]" storage_index="42" tap_mode="classic" trigger_index="42" type="unknown"/>
+            <net data_index="41" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[0]" storage_index="41" tap_mode="classic" trigger_index="41" type="unknown"/>
+          </bus>
+          <net data_index="50" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[0]" storage_index="50" tap_mode="classic" trigger_index="50" type="unknown"/>
+          <net data_index="52" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[1]" storage_index="52" tap_mode="classic" trigger_index="52" type="unknown"/>
+          <net data_index="53" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[2]" storage_index="53" tap_mode="classic" trigger_index="53" type="unknown"/>
+          <net data_index="54" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[3]" storage_index="54" tap_mode="classic" trigger_index="54" type="unknown"/>
+          <net data_index="55" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[4]" storage_index="55" tap_mode="classic" trigger_index="55" type="unknown"/>
+          <net data_index="56" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[5]" storage_index="56" tap_mode="classic" trigger_index="56" type="unknown"/>
+          <net data_index="57" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[6]" storage_index="57" tap_mode="classic" trigger_index="57" type="unknown"/>
+          <net data_index="58" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[7]" storage_index="58" tap_mode="classic" trigger_index="58" type="unknown"/>
+          <net data_index="59" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[8]" storage_index="59" tap_mode="classic" trigger_index="59" type="unknown"/>
+          <net data_index="60" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[9]" storage_index="60" tap_mode="classic" trigger_index="60" type="unknown"/>
+          <net data_index="51" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[10]" storage_index="51" tap_mode="classic" trigger_index="51" type="unknown"/>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_cal_busy[0..0]" order="msb_to_lsb" type="combinatorial">
+            <net data_index="23" duplicate_name_allowed="false" is_data_input="true" is_node_valid="false" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_cal_busy[0]" storage_index="23" tap_mode="classic" trigger_index="23" type="unknown"/>
+          </bus>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_cal_busy[0..0]" order="msb_to_lsb" type="combinatorial">
+            <net data_index="24" duplicate_name_allowed="false" is_data_input="true" is_node_valid="false" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_cal_busy[0]" storage_index="24" tap_mode="classic" trigger_index="24" type="unknown"/>
+          </bus>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_disperr[0..0]" order="msb_to_lsb" type="combinatorial">
+            <net data_index="25" duplicate_name_allowed="false" is_data_input="true" is_node_valid="false" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_disperr[0]" storage_index="25" tap_mode="classic" trigger_index="25" type="unknown"/>
+          </bus>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_errdetect[0..0]" order="msb_to_lsb" type="combinatorial">
+            <net data_index="26" duplicate_name_allowed="false" is_data_input="true" is_node_valid="false" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_errdetect[0]" storage_index="26" tap_mode="classic" trigger_index="26" type="unknown"/>
+          </bus>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_is_lockedtoref[0..0]" order="msb_to_lsb" type="combinatorial">
+            <net data_index="28" duplicate_name_allowed="false" is_data_input="true" is_node_valid="false" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_is_lockedtoref[0]" storage_index="28" tap_mode="classic" trigger_index="28" type="unknown"/>
+          </bus>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_is_lockedtodata[0..0]" order="msb_to_lsb" type="combinatorial">
+            <net data_index="27" duplicate_name_allowed="false" is_data_input="true" is_node_valid="false" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_is_lockedtodata[0]" storage_index="27" tap_mode="classic" trigger_index="27" type="unknown"/>
+          </bus>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_tx_cal_busy[0..0]" order="msb_to_lsb" type="combinatorial">
+            <net data_index="29" duplicate_name_allowed="false" is_data_input="true" is_node_valid="false" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_tx_cal_busy[0]" storage_index="29" tap_mode="classic" trigger_index="29" type="unknown"/>
+          </bus>
+          <net data_index="22" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|rx_ready_o" storage_index="22" tap_mode="classic" trigger_index="22" type="unknown"/>
+          <net data_index="21" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|rx_enc_err_o" storage_index="21" tap_mode="classic" trigger_index="21" type="unknown"/>
+          <net data_index="20" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|ready_o" storage_index="20" tap_mode="classic" trigger_index="20" type="unknown"/>
+          <net data_index="32" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|tx_ready_o" storage_index="32" tap_mode="classic" trigger_index="32" type="unknown"/>
+          <net data_index="31" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|tx_enc_err_o" storage_index="31" tap_mode="classic" trigger_index="31" type="unknown"/>
+          <net data_index="30" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|tx_disparity_o" storage_index="30" tap_mode="classic" trigger_index="30" type="unknown"/>
+          <net data_index="17" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|dmtd_pll10:\dmtd_a10:dmtd_inst|locked" storage_index="17" tap_mode="classic" trigger_index="17" type="unknown"/>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|altera_reset:reset|locked[2..0]" order="msb_to_lsb" type="register">
+            <net data_index="3" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|locked[2]" storage_index="3" tap_mode="classic" trigger_index="3" type="unknown"/>
+            <net data_index="2" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|locked[1]" storage_index="2" tap_mode="classic" trigger_index="2" type="unknown"/>
+            <net data_index="1" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|locked[0]" storage_index="1" tap_mode="classic" trigger_index="1" type="unknown"/>
+          </bus>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|altera_reset:reset|nresets[3..0][2..0]" order="lsb_to_msb" state="expand" storage-0="alt_or" type="register">
+            <net data_index="15" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[3][2]" storage_index="15" tap_mode="classic" trigger_index="15" type="unknown"/>
+            <net data_index="14" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[3][1]" storage_index="14" tap_mode="classic" trigger_index="14" type="unknown"/>
+            <net data_index="13" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[3][0]" storage_index="13" tap_mode="classic" trigger_index="13" type="unknown"/>
+            <net data_index="12" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[2][2]" storage_index="12" tap_mode="classic" trigger_index="12" type="unknown"/>
+            <net data_index="11" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[2][1]" storage_index="11" tap_mode="classic" trigger_index="11" type="unknown"/>
+            <net data_index="10" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[2][0]" storage_index="10" tap_mode="classic" trigger_index="10" type="unknown"/>
+            <net data_index="9" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[1][2]" storage_index="9" tap_mode="classic" trigger_index="9" type="unknown"/>
+            <net data_index="8" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[1][1]" storage_index="8" tap_mode="classic" trigger_index="8" type="unknown"/>
+            <net data_index="7" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[1][0]" storage_index="7" tap_mode="classic" trigger_index="7" type="unknown"/>
+            <net data_index="6" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[0][2]" storage_index="6" tap_mode="classic" trigger_index="6" type="unknown"/>
+            <net data_index="5" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[0][1]" storage_index="5" tap_mode="classic" trigger_index="5" type="unknown"/>
+            <net data_index="4" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[0][0]" storage_index="4" tap_mode="classic" trigger_index="4" type="unknown"/>
+          </bus>
+          <net data_index="16" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|rstn_i" storage_index="16" tap_mode="classic" trigger_index="16" type="unknown"/>
+          <net data_index="0" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_storage_input="true" is_trigger_input="true" name="a_nsys_reset" storage_index="0" tap_mode="classic" trigger_index="0" type="unknown"/>
+          <net data_index="63" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_storage_input="true" is_trigger_input="true" name="nres_out_o" storage_index="63" tap_mode="classic" trigger_index="63" type="unknown"/>
+          <net data_index="62" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_storage_input="true" is_trigger_input="true" name="nPCI_RESET_i" storage_index="62" tap_mode="classic" trigger_index="62" type="unknown"/>
+        </data_view>
+        <setup_view>
+          <net data_index="64" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="sfp_los_i" storage_index="64" tap_mode="classic" trigger_index="64" type="unknown"/>
+          <net data_index="65" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="sfp_mod0_i" storage_index="65" tap_mode="classic" trigger_index="65" type="unknown"/>
+          <net data_index="66" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="sfp_mod1_io" storage_index="66" tap_mode="classic" trigger_index="66" type="unknown"/>
+          <net data_index="67" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="sfp_mod2_io" storage_index="67" tap_mode="classic" trigger_index="67" type="unknown"/>
+          <net data_index="68" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="sfp_tx_disable_o" storage_index="68" tap_mode="classic" trigger_index="68" type="unknown"/>
+          <net data_index="69" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="sfp_tx_fault_i" storage_index="69" tap_mode="classic" trigger_index="69" type="unknown"/>
+          <bus is_selected="false" level-0="alt_or" name="wr_leds_o[3..0]" order="msb_to_lsb" state="expand" type="output pin">
+            <net data_index="73" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="wr_leds_o[3]" storage_index="73" tap_mode="classic" trigger_index="73" type="unknown"/>
+            <net data_index="72" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="wr_leds_o[2]" storage_index="72" tap_mode="classic" trigger_index="72" type="unknown"/>
+            <net data_index="71" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="wr_leds_o[1]" storage_index="71" tap_mode="classic" trigger_index="71" type="unknown"/>
+            <net data_index="70" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="wr_leds_o[0]" storage_index="70" tap_mode="classic" trigger_index="70" type="unknown"/>
+          </bus>
+          <net data_index="19" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|sys_pll10:\sys_a10:sys_inst|locked" storage_index="19" tap_mode="classic" trigger_index="19" type="unknown"/>
+          <net data_index="18" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|ref_pll10:\ref_a10:ref_inst|locked" storage_index="18" tap_mode="classic" trigger_index="18" type="unknown"/>
+          <net data_index="49" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_link_up_o" storage_index="49" tap_mode="classic" trigger_index="49" type="unknown"/>
+          <net data_index="61" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_time_valid_o" storage_index="61" tap_mode="classic" trigger_index="61" type="unknown"/>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[7..0]" order="msb_to_lsb" type="combinatorial">
+            <net data_index="40" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[7]" storage_index="40" tap_mode="classic" trigger_index="40" type="unknown"/>
+            <net data_index="39" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[6]" storage_index="39" tap_mode="classic" trigger_index="39" type="unknown"/>
+            <net data_index="38" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[5]" storage_index="38" tap_mode="classic" trigger_index="38" type="unknown"/>
+            <net data_index="37" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[4]" storage_index="37" tap_mode="classic" trigger_index="37" type="unknown"/>
+            <net data_index="36" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[3]" storage_index="36" tap_mode="classic" trigger_index="36" type="unknown"/>
+            <net data_index="35" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[2]" storage_index="35" tap_mode="classic" trigger_index="35" type="unknown"/>
+            <net data_index="34" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[1]" storage_index="34" tap_mode="classic" trigger_index="34" type="unknown"/>
+            <net data_index="33" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_rx_data_i[0]" storage_index="33" tap_mode="classic" trigger_index="33" type="unknown"/>
+          </bus>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[7..0]" order="msb_to_lsb" type="combinatorial">
+            <net data_index="48" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[7]" storage_index="48" tap_mode="classic" trigger_index="48" type="unknown"/>
+            <net data_index="47" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[6]" storage_index="47" tap_mode="classic" trigger_index="47" type="unknown"/>
+            <net data_index="46" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[5]" storage_index="46" tap_mode="classic" trigger_index="46" type="unknown"/>
+            <net data_index="45" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[4]" storage_index="45" tap_mode="classic" trigger_index="45" type="unknown"/>
+            <net data_index="44" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[3]" storage_index="44" tap_mode="classic" trigger_index="44" type="unknown"/>
+            <net data_index="43" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[2]" storage_index="43" tap_mode="classic" trigger_index="43" type="unknown"/>
+            <net data_index="42" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[1]" storage_index="42" tap_mode="classic" trigger_index="42" type="unknown"/>
+            <net data_index="41" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|phy_tx_data_o[0]" storage_index="41" tap_mode="classic" trigger_index="41" type="unknown"/>
+          </bus>
+          <net data_index="50" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[0]" storage_index="50" tap_mode="classic" trigger_index="50" type="unknown"/>
+          <net data_index="52" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[1]" storage_index="52" tap_mode="classic" trigger_index="52" type="unknown"/>
+          <net data_index="53" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[2]" storage_index="53" tap_mode="classic" trigger_index="53" type="unknown"/>
+          <net data_index="54" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[3]" storage_index="54" tap_mode="classic" trigger_index="54" type="unknown"/>
+          <net data_index="55" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[4]" storage_index="55" tap_mode="classic" trigger_index="55" type="unknown"/>
+          <net data_index="56" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[5]" storage_index="56" tap_mode="classic" trigger_index="56" type="unknown"/>
+          <net data_index="57" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[6]" storage_index="57" tap_mode="classic" trigger_index="57" type="unknown"/>
+          <net data_index="58" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[7]" storage_index="58" tap_mode="classic" trigger_index="58" type="unknown"/>
+          <net data_index="59" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[8]" storage_index="59" tap_mode="classic" trigger_index="59" type="unknown"/>
+          <net data_index="60" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[9]" storage_index="60" tap_mode="classic" trigger_index="60" type="unknown"/>
+          <net data_index="51" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|xwr_core:\wr_a10:U_WR_CORE|tm_tai_o[10]" storage_index="51" tap_mode="classic" trigger_index="51" type="unknown"/>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_cal_busy[0..0]" order="msb_to_lsb" type="combinatorial">
+            <net data_index="23" duplicate_name_allowed="false" is_data_input="true" is_node_valid="false" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_cal_busy[0]" storage_index="23" tap_mode="classic" trigger_index="23" type="unknown"/>
+          </bus>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_cal_busy[0..0]" order="msb_to_lsb" type="combinatorial">
+            <net data_index="24" duplicate_name_allowed="false" is_data_input="true" is_node_valid="false" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_cal_busy[0]" storage_index="24" tap_mode="classic" trigger_index="24" type="unknown"/>
+          </bus>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_disperr[0..0]" order="msb_to_lsb" type="combinatorial">
+            <net data_index="25" duplicate_name_allowed="false" is_data_input="true" is_node_valid="false" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_disperr[0]" storage_index="25" tap_mode="classic" trigger_index="25" type="unknown"/>
+          </bus>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_errdetect[0..0]" order="msb_to_lsb" type="combinatorial">
+            <net data_index="26" duplicate_name_allowed="false" is_data_input="true" is_node_valid="false" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_errdetect[0]" storage_index="26" tap_mode="classic" trigger_index="26" type="unknown"/>
+          </bus>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_is_lockedtoref[0..0]" order="msb_to_lsb" type="combinatorial">
+            <net data_index="28" duplicate_name_allowed="false" is_data_input="true" is_node_valid="false" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_is_lockedtoref[0]" storage_index="28" tap_mode="classic" trigger_index="28" type="unknown"/>
+          </bus>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_is_lockedtodata[0..0]" order="msb_to_lsb" type="combinatorial">
+            <net data_index="27" duplicate_name_allowed="false" is_data_input="true" is_node_valid="false" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_rx_is_lockedtodata[0]" storage_index="27" tap_mode="classic" trigger_index="27" type="unknown"/>
+          </bus>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_tx_cal_busy[0..0]" order="msb_to_lsb" type="combinatorial">
+            <net data_index="29" duplicate_name_allowed="false" is_data_input="true" is_node_valid="false" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|s_phy_tx_cal_busy[0]" storage_index="29" tap_mode="classic" trigger_index="29" type="unknown"/>
+          </bus>
+          <net data_index="22" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|rx_ready_o" storage_index="22" tap_mode="classic" trigger_index="22" type="unknown"/>
+          <net data_index="21" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|rx_enc_err_o" storage_index="21" tap_mode="classic" trigger_index="21" type="unknown"/>
+          <net data_index="20" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|ready_o" storage_index="20" tap_mode="classic" trigger_index="20" type="unknown"/>
+          <net data_index="32" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|tx_ready_o" storage_index="32" tap_mode="classic" trigger_index="32" type="unknown"/>
+          <net data_index="31" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|tx_enc_err_o" storage_index="31" tap_mode="classic" trigger_index="31" type="unknown"/>
+          <net data_index="30" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|wr_arria10_transceiver:\phy_a10:phy|tx_disparity_o" storage_index="30" tap_mode="classic" trigger_index="30" type="unknown"/>
+          <net data_index="17" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|dmtd_pll10:\dmtd_a10:dmtd_inst|locked" storage_index="17" tap_mode="classic" trigger_index="17" type="unknown"/>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|altera_reset:reset|locked[2..0]" order="msb_to_lsb" type="register">
+            <net data_index="3" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|locked[2]" storage_index="3" tap_mode="classic" trigger_index="3" type="unknown"/>
+            <net data_index="2" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|locked[1]" storage_index="2" tap_mode="classic" trigger_index="2" type="unknown"/>
+            <net data_index="1" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|locked[0]" storage_index="1" tap_mode="classic" trigger_index="1" type="unknown"/>
+          </bus>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|altera_reset:reset|nresets[3..0][2..0]" order="lsb_to_msb" state="expand" storage-0="alt_or" type="register">
+            <net data_index="15" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[3][2]" storage_index="15" tap_mode="classic" trigger_index="15" type="unknown"/>
+            <net data_index="14" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[3][1]" storage_index="14" tap_mode="classic" trigger_index="14" type="unknown"/>
+            <net data_index="13" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[3][0]" storage_index="13" tap_mode="classic" trigger_index="13" type="unknown"/>
+            <net data_index="12" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[2][2]" storage_index="12" tap_mode="classic" trigger_index="12" type="unknown"/>
+            <net data_index="11" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[2][1]" storage_index="11" tap_mode="classic" trigger_index="11" type="unknown"/>
+            <net data_index="10" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[2][0]" storage_index="10" tap_mode="classic" trigger_index="10" type="unknown"/>
+            <net data_index="9" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[1][2]" storage_index="9" tap_mode="classic" trigger_index="9" type="unknown"/>
+            <net data_index="8" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[1][1]" storage_index="8" tap_mode="classic" trigger_index="8" type="unknown"/>
+            <net data_index="7" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[1][0]" storage_index="7" tap_mode="classic" trigger_index="7" type="unknown"/>
+            <net data_index="6" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[0][2]" storage_index="6" tap_mode="classic" trigger_index="6" type="unknown"/>
+            <net data_index="5" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[0][1]" storage_index="5" tap_mode="classic" trigger_index="5" type="unknown"/>
+            <net data_index="4" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[0][0]" storage_index="4" tap_mode="classic" trigger_index="4" type="unknown"/>
+          </bus>
+          <net data_index="16" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|rstn_i" storage_index="16" tap_mode="classic" trigger_index="16" type="unknown"/>
+          <net data_index="0" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_storage_input="true" is_trigger_input="true" name="a_nsys_reset" storage_index="0" tap_mode="classic" trigger_index="0" type="unknown"/>
+          <net data_index="63" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_storage_input="true" is_trigger_input="true" name="nres_out_o" storage_index="63" tap_mode="classic" trigger_index="63" type="unknown"/>
+          <net data_index="62" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_storage_input="true" is_trigger_input="true" name="nPCI_RESET_i" storage_index="62" tap_mode="classic" trigger_index="62" type="unknown"/>
+        </setup_view>
+        <trigger_in_editor/>
+        <trigger_out_editor/>
+      </presentation>
+      <trigger attribute_mem_mode="false" gap_record="true" global_temp="1" name="trigger: 2024/04/09 15:24:19  #1" position="pre" power_up_trigger_mode="false" record_data_gap="true" segment_size="64" storage_mode="off" storage_qualifier_disabled="no" storage_qualifier_port_is_pin="true" storage_qualifier_port_name="auto_stp_external_storage_qualifier" storage_qualifier_port_tap_mode="classic" trigger_type="circular">
+        <power_up_trigger position="pre" storage_qualifier_disabled="no"/>
+        <events use_custom_flow_control="no">
+          <level enabled="yes" name="condition1" type="basic">
+            <power_up enabled="yes">
+            </power_up>
+            <op_node/>
+          </level>
+        </events>
+        <storage_qualifier_events>
+          <transitional>11111111111111111111111111111111111111111111111111111111111111111111111111
+            <pwr_up_transitional>11111111111111111111111111111111111111111111111111111111111111111111111111</pwr_up_transitional>
+          </transitional>
+          <storage_qualifier_level type="basic">
+            <power_up>
+            </power_up>
+            <op_node/>
+          </storage_qualifier_level>
+          <storage_qualifier_level type="basic">
+            <power_up>
+            </power_up>
+            <op_node/>
+          </storage_qualifier_level>
+          <storage_qualifier_level type="basic">
+            <power_up>
+            </power_up>
+            <op_node/>
+          </storage_qualifier_level>
+        </storage_qualifier_events>
+      </trigger>
+    </signal_set>
+  </instance>
+  <mnemonics/>
+</session>
