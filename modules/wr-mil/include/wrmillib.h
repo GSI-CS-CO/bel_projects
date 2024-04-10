@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 28-Feb-2024
+ *  version : 10-Apr-2024
  *
  * library for wr-mil
  *
@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define WRMILLIB_VERSION 0x000001
+#define WRMILLIB_VERSION 0x000002
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  WRMILLIB_STATUS_OK                 0            // OK
@@ -74,8 +74,9 @@ extern "C" {
     uint32_t  gid;                                       // GID for which the gateway is active
     uint32_t  cMode;                                     // comparison mode; server option '-c'
     uint64_t  nFwSnd;                                    // firmware # of sent MIL telegrams
-    uint64_t  nFwRecD;                                   // firmware # of received MIL telegrams (TAI)
-    uint64_t  nFwRecT;                                   // firmware # of received MIL telegrams (data)
+    uint64_t  nFwRecD;                                   // firmware # of received MIL telegrams (data)
+    uint64_t  nFwRecT;                                   // firmware # of received MIL telegrams (TAI)
+    uint32_t  nFwRecErr;                                 // firmware # of received 'broken' MIL telegrams detected by VHDL Manchester decoder
     uint64_t  nStart;                                    // host # of start messages (type depends on comparison mode)
     uint64_t  nStop;                                     // host # of stop messages (type depends on comparison mode)
     uint64_t  nMatch;                                    // host # of matches (start vs stop messages)
@@ -157,6 +158,7 @@ extern "C" {
                            uint64_t *nEvtsSnd,                   // number of MIL telegrams sent
                            uint64_t *nEvtsRecT,                  // number of MIL telegrams received (TAI)
                            uint64_t *nEvtsRecD,                  // number of MIL telegrams received (data)
+                           uint32_t *nEvtsRecErr,                // number of 'broken' MIL telegrams received by VHDL Manchester decoder
                            uint32_t *nEvtsLate,                  // number of translated events that could not be delivered in time
                            uint32_t *comLatency,                 // latency for messages received from via ECA (tDeadline - tNow)) [ns]
                            int      printFlag                    // print info to screen 

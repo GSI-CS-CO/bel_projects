@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 08-Mar-2024
+ *  version : 10-Apr-2024
  *
  * subscribes to and displays status of a wr-mil gateway
  *
@@ -118,8 +118,8 @@ static void help(void) {
 
 void buildHeader(char * environment)
 {
-  sprintf(title, "\033[7m WRMIL System Status %3s -------------------------------------------------------- (units [us] unless explicitly given) -  v%8s\033[0m", environment, wrmil_version_text(WRMIL_CLIENT_MON_VERSION));
-  sprintf(header, "  # MIL domain  version      state        status        #sent       #match r[%%] mode     ave    sdev      min      max         node");    
+  sprintf(title, "\033[7m WRMIL System Status %3s --------------------------------------------------------------------- (units [us] unless explicitly given) -  v%8s\033[0m", environment, wrmil_version_text(WRMIL_CLIENT_MON_VERSION));
+  sprintf(header, "  # MIL domain  version      state        status     #sent/fw    #missd/fw   #match/x86 r[%%] mode     ave    sdev      min      max         node");    
   sprintf(empty , "                                                                                                          ");
   //       printf("1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456\n");  
 } // buildHeader
@@ -133,9 +133,9 @@ void dicSubscribeServices(char *prefix)
 
   for (i=0; i<WRMILNSYS; i++) {
     sprintf(name, "%s_%s-mon_version_fw", prefix, sysShortNames[i]);
-    dicSystem[i].versionId   = dic_info_service(name, MONITORED, 0, (dicSystem[i].version), 8, 0, 0, &no_link_32, sizeof(no_link_32));
+    dicSystem[i].versionId   = dic_info_service(name, MONITORED, 0, (dicSystem[i].version), DIMCHARSIZE, 0, 0, &no_link_32, sizeof(no_link_32));
     sprintf(name, "%s_%s-mon_state", prefix, sysShortNames[i]);
-    dicSystem[i].stateId     = dic_info_service(name, MONITORED, 0, (dicSystem[i].state), 10, 0, 0, &no_link_32, sizeof(no_link_32));
+    dicSystem[i].stateId     = dic_info_service(name, MONITORED, 0, (dicSystem[i].state), DIMCHARSIZE, 0, 0, &no_link_32, sizeof(no_link_32));
     sprintf(name, "%s_%s-mon_hostname", prefix, sysShortNames[i]);
     dicSystem[i].hostnameId  = dic_info_service(name, MONITORED, 0, (dicSystem[i].hostname), DIMCHARSIZE, 0, 0, &no_link_32, sizeof(no_link_32));
     sprintf(name, "%s_%s-mon_status", prefix, sysShortNames[i]);
@@ -167,6 +167,7 @@ void printServices()
   char     cHost[19];
   char     cData[256];
   char     cNFwSnd[24];
+  char     cNFwMssd[24];
   char     cNMatch[24];
   char     cRMatch[24];
   char     cMMatch[24];
@@ -183,7 +184,7 @@ void printServices()
   // footer with date and time
   time_date = time(0);
   strftime(buff,50,"%d-%b-%y %H:%M",localtime(&time_date));
-  sprintf(footer, "\033[7m exit <q> | clear status <digit> | print status <s> | help <h>                                                      %s\033[0m", buff);
+  sprintf(footer, "\033[7m exit <q> | clear status <digit> | print status <s> | help <h>                                                                   %s\033[0m", buff);
   
   comlib_term_curpos(1,1);
   
@@ -192,21 +193,23 @@ void printServices()
   for (i=0; i<WRMILNSYS; i++) {
     if (dicSystem[i].status    == no_link_64)    sprintf(cStatus,  "%13s",         no_link_str);
     else                                         sprintf(cStatus,  "%13"PRIx64"",  dicSystem[i].status);
-    tmp = (uint32_t *)(&(dicSystem[i].state));
+    tmp = (uint32_t *)(dicSystem[i].state);
     if (*tmp == no_link_32)                      sprintf(cState,   "%10s",         no_link_str);
     else                                         sprintf(cState,   "%10s",         dicSystem[i].state); 
-    tmp = (uint32_t *)(&(dicSystem[i].version));
+    tmp = (uint32_t *)(dicSystem[i].version);
     if (*tmp == no_link_32)                      sprintf(cVersion, "%8s",          no_link_str);
     else                                         sprintf(cVersion, "%8s",          dicSystem[i].version); 
-    tmp = (uint32_t *)(&(dicSystem[i].hostname));
+    tmp = (uint32_t *)(dicSystem[i].hostname);
     if (*tmp == no_link_32)                      sprintf(cHost,   "%12s",          no_link_str);
     else                                         sprintf(cHost,   "%12s",          dicSystem[i].hostname);
     tmp = (uint32_t *)(&(dicSystem[i].monData));
-    if (*tmp == no_link_32)                      sprintf(cData,   "%32s",          no_link_str);
+    if (*tmp == no_link_32)                      sprintf(cData,   "%82s",          no_link_str);
     else  {
-      if (dicSystem[i].monData.nFwSnd == -1)     sprintf(cNFwSnd, "%12s" , "nan");        
+      if (dicSystem[i].monData.nFwSnd  == -1)    sprintf(cNFwSnd, "%12s" , "nan");
       else                                       sprintf(cNFwSnd, "%12lu", dicSystem[i].monData.nFwSnd);
-      if (dicSystem[i].monData.nMatch == -1)     sprintf(cNMatch, "%12s" , "nan");        
+      if (dicSystem[i].monData.nFwRecT == -1)    sprintf(cNFwMssd,"%12s" , "nan");
+      else                                       sprintf(cNFwMssd,"%12lu", dicSystem[i].monData.nFwSnd - dicSystem[i].monData.nFwRecT);
+      if (dicSystem[i].monData.nMatch  == -1)    sprintf(cNMatch, "%12s" , "nan");        
       else                                       sprintf(cNMatch, "%12lu", dicSystem[i].monData.nMatch);
       sprintf(cRMatch, "%4.1f",  100.0 * dicSystem[i].monData.nMatch / dicSystem[i].monData.nStart);
       sprintf(cMMatch, "%4d"   ,  dicSystem[i].monData.cMode);
@@ -218,9 +221,9 @@ void printServices()
       else                                       sprintf(cTMin,   "%8.3f", dicSystem[i].monData.tMin);
       if (isnan(dicSystem[i].monData.tMax))      sprintf(cTMax,   "%7s"  , "nan");        
       else                                       sprintf(cTMax,   "%8.3f", dicSystem[i].monData.tMax);
-      sprintf(cData, "%12s %12s %4s %4s %7s %7s %8s %8s",  cNFwSnd, cNMatch, cRMatch, cMMatch, cTAve, cTSdev, cTMin, cTMax);
+      sprintf(cData, "%12s %12s %12s %4s %4s %7s %7s %8s %8s",  cNFwSnd, cNFwMssd, cNMatch, cRMatch, cMMatch, cTAve, cTSdev, cTMin, cTMax);
     } // else nolink
-    printf(" %2x %10s %8s %10s %13s %59s %12s\n", i, sysShortNames[i], cVersion, cState, cStatus, cData, cHost);
+    printf(" %2x %10s %8s %10s %13s %82s %12s\n", i, sysShortNames[i], cVersion, cState, cStatus, cData, cHost);
   } // for i
 
   for (i=0; i<12; i++) printf("%s\n", empty);
