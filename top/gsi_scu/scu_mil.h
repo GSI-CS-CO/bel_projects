@@ -114,7 +114,8 @@ int reset_mil(volatile unsigned *base);
 #define   RD_CLR_WAIT_TIMER   0x0008    // read => wait timer; write => clear wait timer.
 #define   MIL_WR_RD_LEMO_CONF 0x0009    // read/write lemo config register
 #define   MIL_WR_RD_LEMO_DAT  0x000A    // read/write lemo output data register
-#define   MIL_RD_LEMO_INP     0x000B    // read pin status at lemo pins        
+#define   MIL_RD_LEMO_INP     0x000B    // read pin status at lemo pins
+#define   MIL_WR_EVT_ERR_CNT  0x0415    // read 'broken' event error counter; writing to this register will reset the error counter
 #define   EV_FILT_FIRST       0x1000    // first event filter (ram) address.
 #define   EV_FILT_LAST        0x1FFF    // last event filter (ram) addres.
 
@@ -286,8 +287,8 @@ int16_t popFifoEvtMil(volatile uint32_t *base,          // Wishbone address seen
                       );
 
 /*configure a single ended LEMO for pulse generation, remember to set a filter too; returns error code */
-int16_t configLemoPulseEvtMil(volatile uint32_t *base, // Wishbone address seen from the CPUs perspective 
-                              uint32_t lemo            // select LEMO 1..4                                
+int16_t configLemoPulseEvtMil(volatile uint32_t *base,  // Wishbone address seen from the CPUs perspective 
+                              uint32_t lemo             // select LEMO 1..4                                
                               );
 
 /* configure a single ended LEMO for gate generation, remember to set a filter too; returns error code */
@@ -296,21 +297,30 @@ int16_t configLemoGateEvtMil(volatile uint32_t *base,   // Wishbone address seen
                              );
 
 /* configure a single ended LEMO for programmable output (not controlled via event) */
-int16_t configLemoOutputEvtMil(volatile uint32_t *base,   // Wishbone address seen from the CPUs perspective 
-                               uint32_t lemo              // select LEMO 1..4                                
+int16_t configLemoOutputEvtMil(volatile uint32_t *base, // Wishbone address seen from the CPUs perspective 
+                               uint32_t lemo            // select LEMO 1..4                                
                                );
 
 
 /* set the output value of a single ended LEMO programmatically (not controlled via event) */
-int16_t setLemoOutputEvtMil(volatile uint32_t *base,   // Wishbone address seen from the CPUs perspective 
-                            uint32_t lemo,             // select LEMO 1..4
-                            uint32_t on                // 1: on, 0: off
+int16_t setLemoOutputEvtMil(volatile uint32_t *base,    // Wishbone address seen from the CPUs perspective 
+                            uint32_t lemo,              // select LEMO 1..4
+                            uint32_t on                 // 1: on, 0: off
                             );
 
 /* disable a single ended LEMO output; returns error code */
 int16_t disableLemoEvtMil(volatile uint32_t *base,      // Wishbone address seen from the CPUs perspective 
                           uint32_t lemo                 // select LEMO 1..4                                
                           );
+
+/* read error counter for 'broken' received MIL telegrams  */
+int16_t readEventErrCntMil(volatile uint32_t *base,     // Wishbone address seen from the CPUs perspective 
+                        uint32_t *errWordCnt            // error counter for 
+                        );
+
+/* reset error counter for 'broken' received MIL telegrams  */
+int16_t resetEventErrCntMil(volatile uint32_t *base     // Wishbone address seen from the CPUs perspective 
+                         );
 
 
 /***********************************************************
@@ -333,6 +343,9 @@ int16_t disableLemoEvtMil(volatile uint32_t *base,      // Wishbone address seen
 #define   MIL_REG_WR_RF_LEMO_CONF    (MIL_SIO3_OFFSET + MIL_WR_RD_LEMO_CONF) << 2 // read/write lemo config register     
 #define   MIL_REG_WR_RD_LEMO_DAT     (MIL_SIO3_OFFSET + MIL_WR_RD_LEMO_DAT) << 2  // read/write lemo output data register
 #define   MIL_REG_RD_LEMO_INP_A      (MIL_SIO3_OFFSET + MIL_RD_LEMO_INP) << 2     // read pin status at lemo pins        
+
+#define   MIL_REG_WR_EVT_ERR_CNT     (MIL_SIO3_OFFSET + MIL_WR_EVT_ERR_CNT) << 2  // read 'broken' event error counter; writing to this register will reset the error counter
+
 #define   MIL_REG_EV_FILT_FIRST      EV_FILT_FIRST << 2                           // first event filter (ram) address.
 #define   MIL_REG_EV_FILT_LAST       EV_FILT_LAST  << 2                           // last event filter (ram) addres.
                                                                                   // the filter RAM has a size of 4096 elements
