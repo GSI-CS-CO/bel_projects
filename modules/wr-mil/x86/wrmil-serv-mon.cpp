@@ -625,10 +625,11 @@ int main(int argc, char** argv)
         sprintf(disVersion, "%s", wrmil_version_text(fwVersion));
                
         // update monitoring data
-        monData.nFwSnd  = fwEvtsSnd;
-        monData.nFwRecT = fwEvtsRecT;
-        monData.nFwRecD = fwEvtsRecD;
-        disMonData      = monData;
+        monData.nFwSnd    = fwEvtsSnd;
+        monData.nFwRecT   = fwEvtsRecT;
+        monData.nFwRecErr = fwEvtsRecErr;
+        monData.nFwRecD   = fwEvtsRecD;
+        disMonData        = monData;
 
         if (startServer) {
           // update service data

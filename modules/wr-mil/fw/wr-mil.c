@@ -220,6 +220,7 @@ void extern_clearDiag()
   nEvtsErr     = 0x0;
   nEvtsLate    = 0x0;
   comLatency   = 0x0;
+  resetEventErrCntMil(pMilRec);
 } // extern_clearDiag 
 
 

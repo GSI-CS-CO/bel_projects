@@ -115,7 +115,7 @@ int reset_mil(volatile unsigned *base);
 #define   MIL_WR_RD_LEMO_CONF 0x0009    // read/write lemo config register
 #define   MIL_WR_RD_LEMO_DAT  0x000A    // read/write lemo output data register
 #define   MIL_RD_LEMO_INP     0x000B    // read pin status at lemo pins
-#define   MIL_WR_EVT_ERR_CNT  0x0415    // read 'broken' event error counter; writing to this register will reset the error counter
+#define   MIL_WR_EVT_ERR_CNT  0x0015    // read 'broken' event error counter; writing to this register will reset the error counter
 #define   EV_FILT_FIRST       0x1000    // first event filter (ram) address.
 #define   EV_FILT_LAST        0x1FFF    // last event filter (ram) addres.
 
