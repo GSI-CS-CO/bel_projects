@@ -34,11 +34,12 @@ struct AllocMeta {
   vertex_t    v;
   uint8_t     b[_MEM_BLOCK_SIZE];
   bool        staged;
-
+  bool        global;
 
   AllocMeta(uint8_t cpu, uint32_t adr, uint32_t hash) : cpu(cpu), adr(adr), hash(hash) {std::memset(b, 0, sizeof b);}
-  AllocMeta(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v) : cpu(cpu), adr(adr), hash(hash), v(v), staged(false) {std::memset(b, 0, sizeof b);}
+  AllocMeta(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v) : cpu(cpu), adr(adr), hash(hash), v(v) {std::memset(b, 0, sizeof b);}
   AllocMeta(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v, bool staged) : cpu(cpu), adr(adr), hash(hash), v(v), staged(staged) {std::memset(b, 0, sizeof b);}
+  AllocMeta(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v, bool staged, bool global) : cpu(cpu), adr(adr), hash(hash), v(v), staged(staged), global(global) {std::memset(b, 0, sizeof b);}
 
   // Multiindexed Elements are immutable, must use the modify function of the container to change attributes
 };
@@ -162,9 +163,8 @@ public:
 
   //Allocation functions
 // TODO - Maybe better with pair <iterator, bool> to get a direct handle on the inserted/allocated element?
-  int allocate(uint8_t cpu, uint32_t hash, vertex_t v, bool staged);
-  int allocate(uint8_t cpu, uint32_t hash, vertex_t v) {return allocate(cpu, hash, v, true); }
-
+  int allocate(uint8_t cpu, uint32_t hash, vertex_t v, vertex_it vit, bool staged);
+  int allocate(uint8_t cpu, uint32_t hash, vertex_t v, vertex_it vit) {return allocate(cpu, hash, v, vit, true);
 
   bool deallocate(uint32_t hash);
 

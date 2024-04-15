@@ -57,7 +57,7 @@ using namespace DotStr::Misc;
     //add all Nodes to return vector
     for (auto& it : atUp.getTable().get<CpuAdr>()) {
       //generate address range for all nodes staged for upload
-      if(it.staged) {
+      if(it.staged && !it.global) {
         moddedCpus.insert(it.cpu); // mark cpu as modified if a node is staged
         //Address and cycle start
         for (adr = atUp.adrConv(AdrType::MGMT, AdrType::EXT,it.cpu, it.adr); adr < atUp.adrConv(AdrType::MGMT, AdrType::EXT,it.cpu, it.adr + _MEM_BLOCK_SIZE); adr += _32b_SIZE_ ) {
@@ -308,7 +308,7 @@ using namespace DotStr::Misc;
         amI it = atUp.lookupHashNoEx(hash); //if we already have a download entry, keep allocation, but update vertex index
         if (!atUp.isOk(it)) {
           //sLog << "Adding " << name << std::endl;
-          allocState = atUp.allocate(cpu, hash, v, true);
+          allocState = atUp.allocate(cpu, hash, v, vertex_it(gUp[v]), true);
           if (allocState == ALLOC_NO_SPACE)         {throw std::runtime_error("Not enough space in CPU " + std::to_string(cpu) + " memory pool"); return; }
           if (allocState == ALLOC_ENTRY_EXISTS)     {throw std::runtime_error("Node '" + name + "' would be duplicate in graph."); return; }
           // getting here means alloc went okay
@@ -343,6 +343,7 @@ using namespace DotStr::Misc;
           else if (cmp == dnt::sQInfo)       {gUp[v].np = (node_ptr) new   CmdQMeta(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags);}
           else if (cmp == dnt::sDstList)     {gUp[v].np = (node_ptr) new   DestList(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags);}
           else if (cmp == dnt::sQBuf)        {gUp[v].np = (node_ptr) new CmdQBuffer(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags);}
+          else if (cmp == dnt::sGlobal)      {gUp[v].np = (node_ptr) new     Global(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, section);}
           else if (cmp == dnt::sMeta)        {throw std::runtime_error("Pure meta type not yet implemented"); return;}
           //FIXME try to get info from download
           else                        {throw std::runtime_error("Node <" + gUp[v].name + ">'s type <" + cmp + "> is not supported!\nMost likely you forgot to set the type attribute or accidentally created the node by a typo in an edge definition."); return;}

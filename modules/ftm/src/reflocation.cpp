@@ -1,20 +1,21 @@
 
-#include "reflocation.h"
 #include <boost/assign.hpp>
 #include <iostream>
+#include "reflocation.h"
+#include "dotstr.h"
+
+using namespace DotStr::Misc;
+namespace dmv   = DotStr::Misc;
+namespace dloc  = DotStr::Locations::base;
+namespace dfld  = DotStr::Locations::fields;
 
 MemLocMap mlm = boost::assign::list_of< MemLocMap::relation >
-( "VOID"  , 0x0 )
-( "one"  , 0x100 )
-( "two"  , 0x200 )
-( "three", 0x300 )
-( "OOB", 0x400 );
+( dmv::sZero, 0x0 )
+( dloc::sRegisters, SHCTL_REGS );
+
 
 MemFieldMap mfm = boost::assign::list_of< MemFieldMap::relation >
-( "fieldZero" , 0x00 )
-( "fieldOne"  , 0x10 )
-( "fieldTwo"  , 0x20 )
-( "fieldThree", 0x30 );
+( dmv::sZero, 0x0 );
 
 
 template<typename LeftType, typename RightType>

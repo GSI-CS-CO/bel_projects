@@ -28,10 +28,17 @@
     if (lookupVertex(v) != a.end()) std::cout << "V 0x" << std::dec << v << " (hash 0x" << hash << ") exists already" << std::endl;
     */
     vPool[cpu].occupyChunk(adr);
-    auto x = a.insert({cpu, adr, hash, v, staged});
+    auto x = a.insert({cpu, adr, hash, v, staged, false});
 
     return x.second;
   }
+/*
+  bool AllocTable::insertGlobal(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v) {
+    auto x = a.insert({cpu, adr, hash, v, false, false});
+
+    return x.second;
+  }
+*/
 
   bool AllocTable::removeByVertex(vertex_t v) {
     auto it = a.get<Vertex>().erase(v);
@@ -94,21 +101,29 @@
 
   }
 
-  
-
   //Allocation functions
-  int AllocTable::allocate(uint8_t cpu, uint32_t hash, vertex_t v, bool staged) {
-    uint32_t chunkAdr;
-    //std::cout << "Cpu " << (int)cpu << " mempools " << vPool.size() << std::endl;
-    if (cpu >= vPool.size()) {
-      //std::cout << "cpu idx out of range" << std::endl;
-      return ALLOC_NO_SPACE;}
-
-    if (!(vPool[cpu].acquireChunk(chunkAdr)))       return ALLOC_NO_SPACE;
-    if (!(insert(cpu, chunkAdr, hash, v, staged)))  return ALLOC_ENTRY_EXISTS;
-
+  int AllocTable::allocate(uint8_t cpu, uint32_t hash, vertex_t v, vertex_it vit, bool staged) {
+          uint32_t chunkAdr;
+      if (cpu >= vPool.size()) { return ALLOC_NO_SPACE; }
+  
+      if (!(vPool[cpu].acquireChunk(chunkAdr)))                     return ALLOC_NO_SPACE;
+      if (!(insert(cpu, chunkAdr, hash, v, staged)))           return ALLOC_ENTRY_EXISTS;
+    /*  
+    if(vit.type == dnt::sGlobal) {
+      rl = RefLocation(vit.section, DotStr::Misc::sZero); 
+      uint32_t baseAdr = getMemories()[cpu].sharedOffs;
+      if (!(insertGlobal(cpu, baseAdr + rl.getLocVal(), hash, v)))  return ALLOC_ENTRY_EXISTS;
+    } else {
+      uint32_t chunkAdr;
+      if (cpu >= vPool.size()) { return ALLOC_NO_SPACE; }
+  
+      if (!(vPool[cpu].acquireChunk(chunkAdr)))                     return ALLOC_NO_SPACE;
+      if (!(insertLocal(cpu, chunkAdr, hash, v, staged)))           return ALLOC_ENTRY_EXISTS;
+    }
+    */
     return ALLOC_OK;
   }
+
 
 
   int AllocTable::allocateMgmt(vBuf& serialisedContainer) {

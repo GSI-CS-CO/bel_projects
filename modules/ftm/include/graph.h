@@ -139,6 +139,7 @@ public:
 typedef boost::property<boost::graph_name_t, std::string > graph_p;
 typedef boost::adjacency_list< boost::vecS, boost::vecS, boost::bidirectionalS, myVertex, myEdge, graph_p  > Graph;
 typedef boost::graph_traits<Graph>::vertex_descriptor vertex_t;
+typedef boost::graph_traits<Graph>::vertex_iterator vertex_it;
 const vertex_t null_vertex = boost::graph_traits<Graph>::null_vertex();
 typedef boost::graph_traits<Graph>::edge_descriptor edge_t;
 typedef boost::container::vector<vertex_t> vVertices;
