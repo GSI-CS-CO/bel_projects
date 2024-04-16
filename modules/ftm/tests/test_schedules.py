@@ -11,7 +11,7 @@ class Schedules(dm_testbench.DmTestbench):
     file_name = 'snoop_schedule1.csv'
     parameter_column = 8
     self.snoopToCsv(file_name, duration=6)
-    self.analyseFrequencyFromCsv(file_name, parameter_column)
+    self.analyseFrequencyFromCsv(file_name, parameter_column, checkValues={'0x0100': '>30', '0x021b': '>0'})
     self.deleteFile(file_name)
 
   def test_frequency_schedule2(self):
@@ -20,7 +20,7 @@ class Schedules(dm_testbench.DmTestbench):
       file_name = 'snoop_schedule2.csv'
       parameter_column = 8
       self.snoopToCsv(file_name, duration=6)
-      self.analyseFrequencyFromCsv(file_name, parameter_column)
+      self.analyseFrequencyFromCsv(file_name, parameter_column, checkValues={'0x0100': '>15', '0x021b': '>0'})
       self.deleteFile(file_name)
 
   # ~ @pytest.mark.development

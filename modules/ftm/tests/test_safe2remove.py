@@ -123,8 +123,7 @@ class UnitTestSafe2Remove(dm_testbench.DmTestbench):
 
   def test_safe2remove_blockflow1(self):
     self.startAllPattern('block-flow1.dot')
-    file_name = 'snoop_block-flow1.csv'
-    parameter_column = 20
-    self.snoopToCsv(file_name, duration=5)
-    self.analyseFrequencyFromCsv(file_name, parameter_column)
-    self.deleteFile(file_name)
+    fileName = 'snoop_block-flow1.csv'
+    self.snoopToCsv(fileName, duration=5)
+    self.analyseFrequencyFromCsv(fileName, 20, checkValues={'0x00000000000000a1': '>100', '0x00000000000000a2': '>100', '0x00000000000000b1': '>300', '0x00000000000000b2': '>300'})
+    self.deleteFile(fileName)
