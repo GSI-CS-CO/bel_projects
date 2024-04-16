@@ -210,6 +210,10 @@ class DmTestbench(unittest.TestCase):
   def snoopToCsv(self, csvFileName, eventId='0', mask='0', duration=1, resource=None):
     """Snoop timing messages with saft-ctl for <duration> seconds (default = 1) and write the messages to <csvFileName>.
     Details: start saft-ctl with Popen, run it for <duration> seconds.
+    Use 'resource is None' as an indicator that this method is called in the main thread.
+    If resource is not None, it is a threading.Lock() object which indicates that
+    the method started in a separate thread. It has to be released
+    before the snoop command is started.
     """
     with open(csvFileName, 'wb') as file1:
       try:
@@ -220,8 +224,11 @@ class DmTestbench(unittest.TestCase):
         if not resource is None:
           print(f'snoopToCsv: Return: {process.returncode:3d}   {datetime.datetime.now().time()}')
         self.assertEqual(process.returncode, 0, f'Returncode: {process.returncode}')
-      except Exception:
-        self.exc_info = sys.exc_info()
+      except Exception as exception:
+        if resource is None:
+          raise exception
+        else:
+          self.exc_info = sys.exc_info()
 
   def snoopToCsvWithAction(self, csvFileName, action, actionArgs=[], eventId='0', mask='0', duration=1):
     """Snoop timing messages with saft-ctl for <duration> seconds (default = 1).
