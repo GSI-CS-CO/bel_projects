@@ -201,6 +201,7 @@ namespace DotStr {
       extern const std::string sDstList;
       extern const std::string sQBuf;
       extern const std::string sMeta;
+      extern const std::string sGlobal;
       extern const bool bMetaNode;
       extern const bool bRealNode;
 

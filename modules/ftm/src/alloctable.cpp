@@ -1,9 +1,13 @@
 #include "alloctable.h"
+#include "reflocation.h"
+#include "dotstr.h"
+
+namespace dnt = DotStr::Node::TypeVal;
 
   AllocTable::AllocTable(AllocTable const &src) {
     a = src.a;
     m = src.m;
-
+    rl = src.rl;
     recreatePools(AllocPoolMode::WITH_MGMT);
     syncBmpsToPools();
   }
@@ -12,7 +16,7 @@
   {
     a = src.a;
     m = src.m;
-
+    rl = src.rl;
     recreatePools(AllocPoolMode::WITH_MGMT);
     syncBmpsToPools();
 
@@ -20,15 +24,15 @@
   }
 
 
-  bool AllocTable::insert(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v, bool staged) {
+  bool AllocTable::insert(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v, bool staged, bool global) {
    /*
     std::cout << "Problem: " << std::endl;
     if (lookupAdr(cpu, adr) != a.end()) std::cout << (int)cpu << " Adr 0x" << std::hex << adr << " exists already" << std::endl;
     if (lookupHash(hash) != a.end()) std::cout << "Hash 0x" << std::hex << hash << " exists already" << std::endl;
     if (lookupVertex(v) != a.end()) std::cout << "V 0x" << std::dec << v << " (hash 0x" << hash << ") exists already" << std::endl;
     */
-    vPool[cpu].occupyChunk(adr);
-    auto x = a.insert({cpu, adr, hash, v, staged});
+    if(!global) { vPool[cpu].occupyChunk(adr); }
+    auto x = a.insert({cpu, adr, hash, v, staged, global});
 
     return x.second;
   }
@@ -97,16 +101,19 @@
   
 
   //Allocation functions
-  int AllocTable::allocate(uint8_t cpu, uint32_t hash, vertex_t v, bool staged) {
-    uint32_t chunkAdr;
-    //std::cout << "Cpu " << (int)cpu << " mempools " << vPool.size() << std::endl;
-    if (cpu >= vPool.size()) {
-      //std::cout << "cpu idx out of range" << std::endl;
-      return ALLOC_NO_SPACE;}
-
-    if (!(vPool[cpu].acquireChunk(chunkAdr)))       return ALLOC_NO_SPACE;
-    if (!(insert(cpu, chunkAdr, hash, v, staged)))  return ALLOC_ENTRY_EXISTS;
-
+  int AllocTable::allocate(uint8_t cpu, uint32_t hash, vertex_t v, Graph& g, bool staged) {
+    if(g[v].type == dnt::sGlobal) {
+      RefLocationSearch rls = rl->getSearch(g[v].section, DotStr::Misc::sZero); 
+      uint32_t baseAdr = getMemories()[cpu].sharedOffs;
+      if (!(insert(cpu, baseAdr + rls.getLocVal(), hash, v, false, true)))  return ALLOC_ENTRY_EXISTS;
+    } else {
+      uint32_t chunkAdr;
+      if (cpu >= vPool.size()) { return ALLOC_NO_SPACE; }
+  
+      if (!(vPool[cpu].acquireChunk(chunkAdr)))                     return ALLOC_NO_SPACE;
+      if (!(insert(cpu, chunkAdr, hash, v, staged, false)))           return ALLOC_ENTRY_EXISTS;
+    }
+    
     return ALLOC_OK;
   }
 

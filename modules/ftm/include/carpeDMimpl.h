@@ -15,6 +15,7 @@
 #include "covenanttable.h"
 #include "validation.h"
 #include "lockmanager.h"
+#include "reflocation.h"
 
 
 
@@ -36,9 +37,10 @@ private:
   HashMap hm;
   GroupTable gt;
   CovenantTable ct;
-  AllocTable atUp;
+  RefLocation rl;
+  AllocTable atUp = AllocTable(rl);
   Graph gUp;
-  AllocTable atDown;
+  AllocTable atDown = AllocTable(rl);
   Graph gDown;
 
   uint64_t modTime;
@@ -52,7 +54,10 @@ private:
   std::ostream& sLog;
   std::ostream& sErr;
 
+
+
   EbWrapper ebd = EbWrapper(sLog, sErr, verbose, debug);
+
   LockManager lm = LockManager(ebd, hm, ct, atDown); //get us an instance of the lock manager
 
   void updateListDstStaging(vertex_t v);

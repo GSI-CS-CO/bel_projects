@@ -196,7 +196,7 @@ namespace dnt = DotStr::Node::TypeVal;
           //vHexDump("TEST ****", test);
 
 
-          if (!(at.insert(cpu, adr, hash, v, false))) {
+          if (!(at.insert(cpu, adr, hash, v, false, false))) {
             sLog << "Offending Node at: CPU " << (int)cpu << " 0x" << std::hex << adr << std::endl;
             hexDump("Dump", (char*)&downloadData[localAdr], _MEM_BLOCK_SIZE );
             throw std::runtime_error( std::string("Hash or address collision when adding node ") + name);
