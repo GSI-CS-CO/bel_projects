@@ -7,54 +7,64 @@
 
 typedef boost::bimap< std::string, uint32_t > MemLocMap;
 typedef boost::bimap< std::string, uint32_t > MemFieldMap;
-extern MemLocMap mlm;
-extern MemFieldMap mfm;
 
-template<typename LeftType, typename RightType>
-void printBimap(const boost::bimap<LeftType, RightType>& bm);
-void showMemLocMap();
-void showMemFieldMap();
 
-struct SearchResult {
+
+
+typedef uint32_t (*lutPtr)  ( uint32_t );
+
+class RefLocationSearch;
+class EbWrapper;
+
+
+
+class RefLocation {
+  MemLocMap mlm;
+  MemFieldMap mfm;
+
+  public:
+    RefLocation() {};
+    ~RefLocation(){};
+
+    void init(EbWrapper* ebd);
+
+    RefLocationSearch getSearch(const std::string& sLoc, const std::string& sField) const;
+    RefLocationSearch getSearch(uint32_t searchAdr) const;
+
+    template<typename LeftType, typename RightType>
+    void printBimap(const boost::bimap<LeftType, RightType>& bm);
+    
+    void showMemLocMap();
+    
+    void showMemFieldMap();
+
+    MemLocMap getMlm() const { return mlm;}
+    MemFieldMap getMfm() const { return mfm;}
+};
+
+class RefLocationSearch {
   MemLocMap::iterator itL;
   MemFieldMap::iterator itF;
+  const RefLocation& rl;
 
-  SearchResult(const std::string& sLoc, const std::string& sField) {
-    MemLocMap::left_iterator itL    = mlm.left.find(sLoc);
-    MemFieldMap::left_iterator itF  = mfm.left.find(sField);
+  public:
 
-    this->itL = mlm.project_up(itL);
-    this->itF = mlm.project_up(itF);
-  };
-
-  SearchResult(uint32_t searchAdr) {
-    MemLocMap::right_iterator itL = mlm.right.upper_bound(searchAdr);
-    --itL;
-    MemFieldMap::right_iterator itF = mfm.right.upper_bound(searchAdr - itL->first);
-    --itF;
-
-    this->itL = mlm.project_up(itL);
-    this->itF = mlm.project_up(itF);
-  };
-
-  SearchResult(MemLocMap::iterator itL, MemFieldMap::iterator itF) : itL(itL), itF(itF) {};
-
-  std::string getLocName() {
-    return itL->left;
-  }
-
-  std::string getFieldName() {
-    return itF->left;
-  }
-
-  uint32_t getLocVal() {
-    return itL->right;
-  }
-
-  uint32_t getFieldVal() {
-    return itF->right;
-  }
+    RefLocationSearch(const RefLocation& rl, const std::string& sLoc, const std::string& sField);
+  
+    RefLocationSearch(const RefLocation& rl, uint32_t searchAdr);
+  
+    RefLocationSearch(const RefLocation& rl, MemLocMap::iterator itL, MemFieldMap::iterator itF);
+  
+    std::string getLocName();
+  
+    std::string getFieldName();
+  
+    uint32_t getLocVal();
+  
+    uint32_t getFieldVal();
 
 };
+
+
 
 #endif

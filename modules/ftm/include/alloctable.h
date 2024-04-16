@@ -13,6 +13,7 @@
 #include "graph.h"
 #include "common.h"
 #include "mempool.h"
+#include "reflocation.h"
 
 #define ALLOC_OK             (0)
 #define ALLOC_NO_SPACE      (-1)
@@ -27,6 +28,8 @@ using namespace boost::multi_index;
 
 enum class AllocPoolMode {WITHOUT_MGMT = 0, WITH_MGMT = 1};
 
+
+
 struct AllocMeta {
   uint8_t     cpu;
   uint32_t    adr;
@@ -34,12 +37,12 @@ struct AllocMeta {
   vertex_t    v;
   uint8_t     b[_MEM_BLOCK_SIZE];
   bool        staged;
-
+  bool        global;
 
   AllocMeta(uint8_t cpu, uint32_t adr, uint32_t hash) : cpu(cpu), adr(adr), hash(hash) {std::memset(b, 0, sizeof b);}
   AllocMeta(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v) : cpu(cpu), adr(adr), hash(hash), v(v), staged(false) {std::memset(b, 0, sizeof b);}
   AllocMeta(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v, bool staged) : cpu(cpu), adr(adr), hash(hash), v(v), staged(staged) {std::memset(b, 0, sizeof b);}
-
+  AllocMeta(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v, bool staged, bool global) : cpu(cpu), adr(adr), hash(hash), v(v), staged(staged), global(global) {std::memset(b, 0, sizeof b);}
   // Multiindexed Elements are immutable, must use the modify function of the container to change attributes
 };
 
@@ -100,12 +103,12 @@ typedef boost::multi_index_container<
 
 typedef MgmtMeta_set::iterator mmI;
 
-
-
 class AllocTable {
 
   AllocMeta_set a;
   MgmtMeta_set  m;
+  const RefLocation* rl;
+
   std::vector<MemPool> vPool;
   const size_t payloadPerChunk = _MEM_BLOCK_SIZE - 1 - _PTR_SIZE_;
   uint32_t mgmtStartAdr;
@@ -116,9 +119,11 @@ class AllocTable {
 
 
 
+
+
 public:
 
-  AllocTable(){};
+  AllocTable(const RefLocation& rl) : rl(&rl) {};
   ~AllocTable(){};
 
    //deep copy
@@ -162,14 +167,14 @@ public:
 
   //Allocation functions
 // TODO - Maybe better with pair <iterator, bool> to get a direct handle on the inserted/allocated element?
-  int allocate(uint8_t cpu, uint32_t hash, vertex_t v, bool staged);
-  int allocate(uint8_t cpu, uint32_t hash, vertex_t v) {return allocate(cpu, hash, v, true); }
+  int allocate(uint8_t cpu, uint32_t hash, vertex_t v, Graph& g, bool staged);
+  int allocate(uint8_t cpu, uint32_t hash, vertex_t v, Graph& g) {return allocate(cpu, hash, v, g, true);}
 
 
   bool deallocate(uint32_t hash);
 
-  bool insert(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v, bool staged);
-  bool insert(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v) {return insert(cpu, adr, hash, v, true); }
+  bool insert(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v, bool staged, bool global);
+  bool insert(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v) {return insert(cpu, adr, hash, v, true, false); }
 
   bool removeByVertex(vertex_t v);
   bool removeByAdr(uint8_t cpu, uint32_t adr);

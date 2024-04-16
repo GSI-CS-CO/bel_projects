@@ -285,6 +285,10 @@ using namespace DotStr::Misc;
     //allocate and init all new vertices
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
 
+      myVertex* vt = (myVertex*)&gUp[v];
+
+      sLog << "Testing " << vt->name << std::endl;
+
       std::string name = gUp[v].name;
       //try{
         //if (!(hm.lookup(name)))                   {throw std::runtime_error("Node '" + name + "' was unknown to the hashmap"); return;}
@@ -308,7 +312,7 @@ using namespace DotStr::Misc;
         amI it = atUp.lookupHashNoEx(hash); //if we already have a download entry, keep allocation, but update vertex index
         if (!atUp.isOk(it)) {
           //sLog << "Adding " << name << std::endl;
-          allocState = atUp.allocate(cpu, hash, v, true);
+          allocState = atUp.allocate(cpu, hash, v, gUp, true);
           if (allocState == ALLOC_NO_SPACE)         {throw std::runtime_error("Not enough space in CPU " + std::to_string(cpu) + " memory pool"); return; }
           if (allocState == ALLOC_ENTRY_EXISTS)     {throw std::runtime_error("Node '" + name + "' would be duplicate in graph."); return; }
           // getting here means alloc went okay

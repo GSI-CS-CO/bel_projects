@@ -160,7 +160,7 @@ int EbWrapper::readAdrLUT(uint32_t extBaseAdr, uint32_t sharedOffs, uint32_t* lu
 
 
 
-bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atDown) {
+bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atDown, RefLocation& rl) {
   
     bool  ret = false;
     ebdevname = en;
@@ -215,9 +215,12 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
             //sLog << "Reading LUT" << std::endl;                                    
             uint32_t ctlSize      = getCtlAdr(ADRLUT_SHCTL_END);
             uint32_t space        = parseSharedSize(vFwIdROM[cpuIdx]) - ctlSize;
-                     
+              
+
+
               atUp.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize, ctlSize );
             atDown.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize, ctlSize );
+                rl.init(this);
             mappedIdx++;
             
           }
@@ -227,6 +230,8 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
         ret = true;
       }
       
+      
+
     } catch (etherbone::exception_t const& ex) {
       throw std::runtime_error("Etherbone " + std::string(ex.method) + " returned " + std::string(eb_status(ex.status)) + "\n" );
     } catch(...) {

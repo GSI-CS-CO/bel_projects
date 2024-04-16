@@ -34,7 +34,7 @@
        atDown.removeMemories();
        gDown.clear();
        //sLog << "eb connect with" << en << std::endl;
-       return ebd.connect(en, atUp, atDown);
+       return ebd.connect(en, atUp, atDown, rl);
    } //Open connection to a DM via Etherbone
 
   bool CarpeDM::CarpeDMimpl::disconnect() {return ebd.disconnect();} //Close connection
