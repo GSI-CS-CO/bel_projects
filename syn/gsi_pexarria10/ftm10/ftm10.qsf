@@ -1205,8 +1205,8 @@ set_location_assignment PIN_L23 -to psram_advn[1]
 set_location_assignment PIN_L3 -to usbc_rx1_p[2]
 set_location_assignment PIN_L4 -to usbc_rx1_p[1]
 #set_location_assignment PIN_L6 -to "clk_125m_pllref_alt_i(n)"
-set_location_assignment PIN_M17 -to OneWire_CB
-set_location_assignment PIN_M18 -to OneWire_CB_splz
+set_location_assignment PIN_M18 -to OneWire_CB
+set_location_assignment PIN_M17 -to OneWire_CB_splz
 set_location_assignment PIN_M1 -to usbc_rx2_p[5]
 set_location_assignment PIN_M20 -to OneWire_aux_CB
 set_location_assignment PIN_M21 -to OneWire_aux_CB_splz
