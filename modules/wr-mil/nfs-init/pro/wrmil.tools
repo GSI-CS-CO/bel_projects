@@ -6,4 +6,5 @@ cp -a $MOUNTPOINT/$ARCH/usr/bin/wrmil-ctl /usr/bin/
 cp -a $MOUNTPOINT/$ARCH/usr/bin/wrmil-serv-mon /usr/bin/
 cp -a $MOUNTPOINT/$ARCH/usr/bin/wrmil-client-mon /usr/bin/
 # firmware
+cp -a $MOUNTPOINT/firmware/* /
 
