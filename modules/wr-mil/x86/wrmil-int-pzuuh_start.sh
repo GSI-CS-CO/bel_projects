@@ -11,11 +11,13 @@ export SDGW=tr0              # saftlib device
 export NGW=4                 # of GW; pzu_qr, pzu_ql ...
 export SIDGW=1c4             # SID of puz_qr, pzu_ql ...
 export MILDEV=0              # MIL device, piggy(0), sio slot 1 (1) ...
-export MILADDR=0x8800        # address of MIL device to which MIL telegram is written
+export MILADDR=0x9004        # address of MIL device to which MIL telegram is written
 # piggy: Wishbone address of 'GSI_MIL_SCU'
+#        the register 0x1004 needs to be added
+#        exammple piggy: 0x9004
 # SIO  : Wishbone address of 'SCU-BUS-Master' + (slot number) * 0x20000
-# finally the register 0x800 needs to be added
-# example SIO slot #1: 0x420800
+#        the register 0x800 needs to be added
+#        example SIO slot #1: 0x420800
 ###########################################
 # setting for development
 # gateway: N/A

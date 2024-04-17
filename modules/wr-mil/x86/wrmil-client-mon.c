@@ -209,7 +209,7 @@ void printServices()
       if (dicSystem[i].monData.nFwSnd  == -1)    sprintf(cNFwSnd, "%12s" , "nan");
       else                                       sprintf(cNFwSnd, "%12lu", dicSystem[i].monData.nFwSnd);
       if (dicSystem[i].monData.nFwRecT == -1)    sprintf(cNFwMssd,"%12s" , "nan");
-      else                                       sprintf(cNFwMssd,"%12lu", dicSystem[i].monData.nFwSnd - dicSystem[i].monData.nFwRecT);
+      else                                       sprintf(cNFwMssd,"%12ld", (int64_t)(dicSystem[i].monData.nFwSnd - dicSystem[i].monData.nFwRecT));
       if (dicSystem[i].monData.nFwRecErr == -1)  sprintf(cNFwErr, "%12s" , "nan");
       else                                       sprintf(cNFwErr, "%12u" , dicSystem[i].monData.nFwRecErr);
       if (dicSystem[i].monData.nMatch  == -1)    sprintf(cNMatch, "%12s" , "nan");        
@@ -226,7 +226,7 @@ void printServices()
       else                                       sprintf(cTMax,   "%8.3f", dicSystem[i].monData.tMax);
       sprintf(cData, "%12s %12s %12s %12s %4s %4s %7s %7s %8s %8s",  cNFwSnd, cNFwMssd, cNFwErr, cNMatch, cRMatch, cMMatch, cTAve, cTSdev, cTMin, cTMax);
     } // else nolink
-    printf(" %2x %10s %8s %10s %13s %94s %12s\n", i, sysShortNames[i], cVersion, cState, cStatus, cData, cHost);
+    printf(" %2x %10s %8s %10s %13s %95s %12s\n", i, sysShortNames[i], cVersion, cState, cStatus, cData, cHost);
   } // for i
 
   for (i=0; i<12; i++) printf("%s\n", empty);
