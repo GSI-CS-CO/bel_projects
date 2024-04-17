@@ -59,6 +59,7 @@ class TestAltDestinationLists(dm_testbench.DmTestbench):
     scheduleFile = f'altDestinations-{numDestinations}.dot'
     fileCsv = f'altDestinations-{numDestinations}.csv'
     patternName = f'AltDest{numDestinations:04d}'
+    downloadFile = scheduleFile.replace('.dot', '-download.dot')
     # time period for 10Hz
     frequency = 10
     period = int(1000 * 1000 * 1000 / frequency)
@@ -66,13 +67,13 @@ class TestAltDestinationLists(dm_testbench.DmTestbench):
     # add schedule and start pattern, snoop for some time
     self.startPattern(scheduleFile, patternName)
     snoopTime = 1 + max(2, int(numDestinations / frequency))
+    print(f'{numDestinations=}, {frequency=}, {period=}, {snoopTime=}')
     self.snoopToCsvWithAction(fileCsv, self.switchAction, actionArgs=[numDestinations, frequency], duration=snoopTime)
     # check downloaded schedule
-    statusFile = 'status.dot'
     options = '-so'
-    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', options, statusFile), [0], 0, 0)
-    self.startAndCheckSubprocess(('scheduleCompare', '-s', self.schedulesFolder + scheduleFile.replace('.dot', '-status.dot'), statusFile), [0], 0, 0)
-    self.deleteFile(statusFile)
+    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', options, downloadFile), [0], 0, 0)
+    self.startAndCheckSubprocess(('scheduleCompare', '-s', self.schedulesFolder + downloadFile, downloadFile), [0], 0, 0)
+    self.deleteFile(downloadFile)
     # analyze snoop file (csv)
     keyList = {'0x0000000000000000': '>0', }
     for i in range(1, numDestinations):
@@ -94,8 +95,35 @@ class TestAltDestinationLists(dm_testbench.DmTestbench):
   def test_altDestinations5(self):
     self.runAltDestinationsX(5)
 
+  def test_altDestinations10(self):
+    self.runAltDestinationsX(10)
+
+  def test_altDestinations20(self):
+    self.runAltDestinationsX(20)
+
+  def test_altDestinations30(self):
+    self.runAltDestinationsX(30)
+
+  def test_altDestinations40(self):
+    self.runAltDestinationsX(40)
+
   def test_altDestinations50(self):
     self.runAltDestinationsX(50)
+
+  def test_altDestinations60(self):
+    self.runAltDestinationsX(60)
+
+  def test_altDestinations70(self):
+    self.runAltDestinationsX(70)
+
+  def test_altDestinations80(self):
+    self.runAltDestinationsX(80)
+
+  def test_altDestinations90(self):
+    self.runAltDestinationsX(90)
+
+  def test_altDestinations100(self):
+    self.runAltDestinationsX(100)
 
   def test_altDestinations111(self):
     self.runAltDestinationsX(111)
