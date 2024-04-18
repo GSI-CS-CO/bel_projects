@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Micheal Reese, Mathias Kreider GSI-Darmstadt
- *  version : 10-Apr-2024
+ *  version : 18-Apr-2024
  *
  *  firmware required for the White Rabbit -> MIL Gateways
  *  
@@ -39,7 +39,7 @@
  ********************************************************************************************/
 #define WRMIL_FW_VERSION      0x000002    // make this consistent with makefile
 
-#define RESET_INHIBIT_COUNTER  1000       // count so many main ECA timemouts, prior sending fill event
+#define RESET_INHIBIT_COUNTER  10000      // count so many main ECA timemouts, prior sending fill event
 //#define WR_MIL_GATEWAY_LATENCY 70650    // additional latency in units of nanoseconds
                                           // this value was determined by measuring the time difference
                                           // of the MIL event rising edge and the ECA output rising edge (no offset)
@@ -554,9 +554,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
 
   switch (ecaAction) {
-    // reset inhibit counter for fill events
-    inhibit_fill_events = RESET_INHIBIT_COUNTER;
-
     // received WR timing message from Data Master that shall be sent as a MIL telegram
     case WRMIL_ECADO_MIL_EVT:
       comLatency   = (int32_t)(getSysTime() - recDeadline);
@@ -609,6 +606,9 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         } // for i
       } // if utc_trigger
 
+      // reset inhibit counter for fill events
+      inhibit_fill_events = RESET_INHIBIT_COUNTER;
+
       break;
 
     // received timing message from TLU; this indicates a received MIL telegram on the MIL piggy
@@ -638,14 +638,12 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       
       break;
 
-    case COMMON_ECADO_TIMEOUT:
-      // decrease inhibit counter
-      inhibit_fill_events--;
-      break;
-     
     default :                                                         // flush ECA Queue
       flagIsLate = 0;                                                 // ignore late events
   } // switch ecaAction
+
+  // decrease inhibit counter
+  inhibit_fill_events--;
 
   // check for fill event
   if (!inhibit_fill_events) {
@@ -659,6 +657,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     convert_WReventID_to_milTelegram(sendEvtId, &milTelegram);                                   // --> MIL format
     prepMilTelegramEca(milTelegram, &sendEvtId, &sendParam);                                     // --> EvtId for internal use
     fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0);                                // --> ECA
+    nEvtsSnd++;
     inhibit_fill_events = RESET_INHIBIT_COUNTER;
   } // if not inhibit fill events
  

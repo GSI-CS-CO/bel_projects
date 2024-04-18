@@ -231,6 +231,7 @@ int main(int argc, char** argv) {
         break;
       case 'f':
         request_fill = 1;
+        break;
       case 'l':
         mil_latency = strtoull(optarg, &tail, 0);
         if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1;}
