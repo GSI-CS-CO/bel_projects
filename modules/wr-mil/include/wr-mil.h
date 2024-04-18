@@ -64,6 +64,7 @@
 #define WRMIL_DFLT_EVT_UTC_3           0xe2    // EVT_UTC_3
 #define WRMIL_DFLT_EVT_UTC_4           0xe3    // EVT_UTC_4
 #define WRMIL_DFLT_EVT_UTC_5           0xe4    // EVT_UTC_5
+#define WRMIL_DFLT_MIL_EVT_FILL        0xc7    // EVT_INTERNAL_FILL
 #define WRMIL_DFLT_UTC_UTC_DELAY         30    // [us]
 #define WRMIL_DFLT_TRIG_UTC_DELAY         0    // [us]
 #define WRMIL_DFLT_LATENCY                0    // [us], can be used for tuning

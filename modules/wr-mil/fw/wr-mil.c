@@ -39,8 +39,8 @@
  ********************************************************************************************/
 #define WRMIL_FW_VERSION      0x000002    // make this consistent with makefile
 
-#define RESET_INHIBIT_COUNTER  1000       // count so many main loops before the inhibit for fill event sending is released
-//#define WR_MIL_GATEWAY_LATENCY 70650      // additional latency in units of nanoseconds
+#define RESET_INHIBIT_COUNTER  1000       // count so many main ECA timemouts, prior sending fill event
+//#define WR_MIL_GATEWAY_LATENCY 70650    // additional latency in units of nanoseconds
                                           // this value was determined by measuring the time difference
                                           // of the MIL event rising edge and the ECA output rising edge (no offset)
                                           // and tuning this time difference to 100.0(5)us
@@ -115,9 +115,12 @@ uint32_t utc_trigger;
 int32_t  utc_utc_delay;
 int32_t  trig_utc_delay;
 uint64_t utc_offset;
+uint32_t request_fill_evt;
 int32_t  mil_latency;
 uint32_t mil_domain;
 uint32_t mil_mon;
+
+uint32_t inhibit_fill_events = 0;       // this is a counter to block any sending of fill events for some cycles after a real event was sent
 
 // constants (as variables to have a defined type)
 uint64_t  one_us_ns = 1000;
@@ -345,21 +348,23 @@ uint32_t extern_entryActionOperation()
   //*pSharedGetMsiSlot        = 0x0;
 
   // int set values
-  utc_trigger    = *pSharedSetUtcTrigger;
-  utc_utc_delay  = *pSharedSetUtcUtcDelay;
-  trig_utc_delay = *pSharedSetTrigUtcDelay;
-  utc_offset     = (uint64_t)(*pSharedSetUtcOffsHi) << 32;
-  utc_offset    |= (uint64_t)(*pSharedSetUtcOffsLo);
-  mil_latency    = *pSharedSetLatency;
+  utc_trigger          = *pSharedSetUtcTrigger;
+  utc_utc_delay        = *pSharedSetUtcUtcDelay;
+  trig_utc_delay       = *pSharedSetTrigUtcDelay;
+  utc_offset           = (uint64_t)(*pSharedSetUtcOffsHi) << 32;
+  utc_offset          |= (uint64_t)(*pSharedSetUtcOffsLo);
+  request_fill_evt     = *pSharedSetReqFillEvt;
+  inhibit_fill_events  = RESET_INHIBIT_COUNTER;
+  mil_latency          = *pSharedSetLatency;
   pp_printf("latency %d\n", mil_latency);
-  mil_domain     = *pSharedSetGid;
-  mil_mon        = *pSharedSetMilMon;
+  mil_domain           = *pSharedSetGid;
+  mil_mon              = *pSharedSetMilMon;
 
-  nEvtsSnd       = 0;
-  nEvtsRecT      = 0;
-  nEvtsRecD      = 0;
-  nEvtsErr       = 0;
-  nEvtsLate      = 0;
+  nEvtsSnd             = 0;
+  nEvtsRecT            = 0;
+  nEvtsRecD            = 0;
+  nEvtsErr             = 0;
+  nEvtsLate            = 0;
 
   // configure MIL receiver for timing events for all 16 virtual accelerators
   // if mil_mon == 2, the FIFO for event data monitoring must be enabled
@@ -549,6 +554,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
 
   switch (ecaAction) {
+    // reset inhibit counter for fill events
+    inhibit_fill_events = RESET_INHIBIT_COUNTER;
 
     // received WR timing message from Data Master that shall be sent as a MIL telegram
     case WRMIL_ECADO_MIL_EVT:
@@ -571,7 +578,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
       // deadline
       sendDeadline  = recDeadline + WRMIL_PRETRIGGER_DM + mil_latency - WRMIL_MILSEND_LATENCY;
-      // protect from nonsense hi-frequency bursts
+       // protect from nonsense hi-frequency bursts
       if (sendDeadline < previous_time + WRMIL_MILSEND_LATENCY) sendDeadline = previous_time + WRMIL_MILSEND_LATENCY;
       previous_time = sendDeadline;
 
@@ -630,10 +637,30 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       nEvtsRecT++;
       
       break;
+
+    case COMMON_ECADO_TIMEOUT:
+      // decrease inhibit counter
+      inhibit_fill_events--;
+      break;
      
-    default :                                                         // flush ECA queue
-      flagIsLate = 0;                                                 // ingore late events
+    default :                                                         // flush ECA Queue
+      flagIsLate = 0;                                                 // ignore late events
   } // switch ecaAction
+
+  // check for fill event
+  if (!inhibit_fill_events) {
+    // the last mil event is so far in the past that the inhibit counter is zero
+    // so lets send the fill event and reset inhibit counter
+    // deadline
+    sendDeadline  = getSysTime();
+    sendDeadline += COMMON_AHEADT;
+    // evtID
+    sendEvtId     = fwlib_buildEvtidV1(mil_domain, WRMIL_DFLT_MIL_EVT_FILL, 0x0, 0x0, 0x0, 0x0); // chk
+    convert_WReventID_to_milTelegram(sendEvtId, &milTelegram);                                   // --> MIL format
+    prepMilTelegramEca(milTelegram, &sendEvtId, &sendParam);                                     // --> EvtId for internal use
+    fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0);                                // --> ECA
+    inhibit_fill_events = RESET_INHIBIT_COUNTER;
+  } // if not inhibit fill events
  
   // check for late event
   if ((status == COMMON_STATUS_OK) && flagIsLate) status = WRMIL_STATUS_LATEMESSAGE;
