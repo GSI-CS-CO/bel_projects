@@ -191,6 +191,7 @@ architecture rtl of pexarria10 is
   signal s_psram_cre     : std_logic;
   signal s_psram_advn    : std_logic;
   signal s_psram_wait    : std_logic;
+  signal s_psram_sel     : std_logic_vector(3 downto 0);
   signal s_psram_wait_or : std_logic; -- Remove this later
 
   constant io_mapping_table : t_io_mapping_table_arg_array(0 to 39) :=
@@ -331,6 +332,7 @@ begin
       ps_clk                  => psram_clk,
       ps_addr                 => psram_a,
       ps_data                 => psram_dq,
+      ps_chip_selector        => s_psram_sel,
       ps_seln(0)              => s_psram_ubn,
       ps_seln(1)              => s_psram_lbn,
       ps_cen                  => s_psram_cen,
@@ -341,15 +343,24 @@ begin
       ps_wait                 => s_psram_wait_or);
 
   -- PSRAM test connection, add selector later (psram0/1/2/3)
-  s_psram_wait_or <= psram_wait(0) or psram_wait(1) or psram_wait(2) or psram_wait(3);
-  psram_test : for i in 0 to 3 generate
-    psram_advn(i) <= s_psram_advn;
-    psram_cre(i)  <= s_psram_cre;
-    psram_cen(i)  <= s_psram_cen;
-    psram_oen(i)  <= s_psram_oen;
-    psram_ubn(i)  <= s_psram_ubn;
-    psram_wen(i)  <= s_psram_wen;
-    psram_lbn(i)  <= s_psram_lbn;
+  --s_psram_wait_or <= psram_wait(0) or psram_wait(1) or psram_wait(2) or psram_wait(3);
+  s_psram_wait_or <= psram_wait(0);
+  psram_advn(0)   <= s_psram_advn;
+  psram_cre(0)    <= s_psram_cre;
+  psram_cen(0)    <= s_psram_cen;
+  psram_oen(0)    <= s_psram_oen;
+  psram_ubn(0)    <= s_psram_ubn;
+  psram_wen(0)    <= s_psram_wen;
+  psram_lbn(0)    <= s_psram_lbn;
+
+  psram_disconnect : for i in 1 to 3 generate
+    psram_advn(i) <= '0';
+    psram_cre(i)  <= '0';
+    psram_cen(i)  <= '1';
+    psram_oen(i)  <= '1';
+    psram_ubn(i)  <= '0';
+    psram_wen(i)  <= '1';
+    psram_lbn(i)  <= '0';
   end generate;
 
   -- LEDs
