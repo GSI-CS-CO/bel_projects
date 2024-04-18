@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Michael Reese GSI-Darmstadt
- *  version : 10-April-2024
+ *  version : 18-April-2024
  *
  * Command-line interface for wr-mil
  *
@@ -100,6 +100,7 @@ static void help(void) {
   fprintf(stderr, "                      2: includes '1', adds decoding of MIL telegrams, GID 0xff1\n" );
   fprintf(stderr, "                      monitoring is implemented via local messages to the ECA\n"    );
   fprintf(stderr, "                      Tip: MIL telegrams to be sent are available too, GID 0xff0\n" );
+  fprintf(stderr, "  -f                  request sending of fill events if no events > 10 seconds\n"   );
   fprintf(stderr, "\n");
   fprintf(stderr, "  configure           command requests state change from IDLE or CONFIGURED -> CONFIGURED\n");
   fprintf(stderr, "                      'configure' requires parameters -w, -s\n");
@@ -212,11 +213,12 @@ int main(int argc, char** argv) {
   uint32_t  mil_domain      = -1;
   uint32_t  mil_wb_dev      = -1;
   uint32_t  mil_wb_mon      = 0;
+  uint32_t  request_fill    = 0;
   int       negative        = 0;
 
   program = argv[0];    
 
-  while ((opt = getopt(argc, argv, "s:t:o:d:u:w:m:l:ghei")) != -1) {
+  while ((opt = getopt(argc, argv, "s:t:o:d:u:w:m:l:gheif")) != -1) {
     switch (opt) {
       case 'e':
         getVersion = 1;
@@ -227,6 +229,8 @@ int main(int argc, char** argv) {
       case 'm':
         mil_wb_mon = strtoull(optarg, &tail, 0);
         break;
+      case 'f':
+        request_fill = 1;
       case 'l':
         mil_latency = strtoull(optarg, &tail, 0);
         if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1;}
@@ -341,7 +345,7 @@ int main(int argc, char** argv) {
       if (mil_wb_dev  == -1) {fprintf(stderr, "parameter -w is non-optional\n"); return 1;}
       if ((state != COMMON_STATE_CONFIGURED) && (state != COMMON_STATE_IDLE)) printf("wr-mil: WARNING command has no effect (not in state CONFIGURED or IDLE)\n");
       else {
-        if (wrmil_upload(ebDevice, utc_trigger, utc_utc_delay, trig_utc_delay, mil_domain, mil_latency, utc_offset, 0, mil_wb_dev, mil_wb_mon) != COMMON_STATUS_OK) die("wrmil upload", status);  ;
+        if (wrmil_upload(ebDevice, utc_trigger, utc_utc_delay, trig_utc_delay, mil_domain, mil_latency, utc_offset, request_fill, mil_wb_dev, mil_wb_mon) != COMMON_STATUS_OK) die("wrmil upload", status);  ;
         wrmil_cmd_configure(ebDevice);
       } // else state
     } // "configure"
