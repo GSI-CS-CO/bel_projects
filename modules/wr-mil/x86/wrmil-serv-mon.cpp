@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 10-Apr-2024
+ *  version : 18-Apr-2024
  *
  * monitors WR-MIL gateway
  *
@@ -74,6 +74,7 @@ using namespace std;
 #define FID                0x1          // format ID of timing messages
 #define UPDATE_TIME_MS    1000          // time for status updates [ms]
 #define MATCH_WIN_US        20          // window for matching start and stop evts [us]
+#define INITMINMAX 10000000000          // init value for min/max
 
 static const char* program;
 
@@ -166,8 +167,8 @@ void clearStats()
   monData.nFailEvt   = 0x0;
   monData.nFailOrder = 0x0;
   monData.tAct       = NAN;
-  monData.tMin       = 1000000000;
-  monData.tMax       = -1000000000;
+  monData.tMin       =  INITMINMAX;
+  monData.tMax       = -INITMINMAX;
   monData.tAve       = NAN;
   monData.tSdev      = NAN;        
   tAveOld            = NAN;
@@ -630,6 +631,8 @@ int main(int argc, char** argv)
         monData.nFwRecErr = fwEvtsRecErr;
         monData.nFwRecD   = fwEvtsRecD;
         disMonData        = monData;
+        if (disMonData.tMin ==  INITMINMAX) disMonData.tMin = NAN;
+        if (disMonData.tMax == -INITMINMAX) disMonData.tMax = NAN;
 
         if (startServer) {
           // update service data
