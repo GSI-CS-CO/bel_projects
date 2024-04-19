@@ -381,7 +381,7 @@ static status_t loadSenderId(uint32_t* base, uint32_t offset)
   // app-specific IO setup (RX: enable IO output for signaling latency)
   // set up the direct mapping between the MPS message buffer and output ports
   if (ioSetOutEnable(pos, true) == COMMON_STATUS_OK)  // enable output
-    ioMapOutput(pos, pos);  // direct mapping (MSP buffer[pos] -> out_port[pos])
+    ioMapOutput(pos, pos);  // direct mapping (MPS buffer[pos] -> out_port[pos])
 
   return COMMON_STATUS_OK;
 }

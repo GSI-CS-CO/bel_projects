@@ -628,7 +628,7 @@ result_sg_latency() {
     # $2 - verbosity
 
     if [ -n "$2" ]; then
-        echo -n "MSP lty: "
+        echo -n "MPS lty: "
     fi
     read_measurement_results $1 $instr_st_sg_lty $addr_avg $2
 }
