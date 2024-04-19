@@ -201,7 +201,7 @@ measure_nw_perf() {
             "source setup_local.sh && \
             result_sg_latency \$tx_node_dev $verbose && \
             result_tx_delay \$tx_node_dev $verbose && \
-            result_tx_mps_handle \$tx_node_dev $verbose" |
+            result_eca_handle \$tx_node_dev $verbose" |
         while IFS= read -r line; do
             delay_entry="${tx_delay_entries[$i]}"
             if [ -n "$delay_entry" ]; then

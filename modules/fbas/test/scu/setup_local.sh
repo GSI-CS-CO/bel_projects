@@ -106,7 +106,7 @@ export instr_st_tx_dly=0x32     # store the transmission delay measurement resul
 export instr_st_msg_dly=0x33    # store the measurement results of the messaging delay
 export instr_st_sg_lty=0x34     # store the signalling latency measurement results to shared memory
 export instr_st_ttl_ival=0x35   # store the TTL interval measurement results to shared memory
-export instr_st_tx_mps_handle=0x37    # store the measurement result of the MPS event handling
+export instr_st_eca_handle=0x37 # store the measurement result of the ECA handling delay
 
 export     mac_any_node="0xffffffffffff"      # MAC address of any node
 export evt_mps_flag_any="0xffffeeee00000000"  # generator event for MPS flags
@@ -653,14 +653,14 @@ result_ttl_ival() {
     read_measurement_results $1 $instr_st_ttl_ival $addr_avg $2
 }
 
-result_tx_mps_handle() {
+result_eca_handle() {
     # $1 - dev/wbmo
     # $2 - verbosity
 
     if [ -n "$2" ]; then
-        echo -n "MPS hdl: "
+        echo -n "ECA hdl: "
     fi
-    read_measurement_results $1 $instr_st_tx_mps_handle $addr_avg $2
+    read_measurement_results $1 $instr_st_eca_handle $addr_avg $2
 }
 
 disable_mps() {

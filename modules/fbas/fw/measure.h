@@ -40,7 +40,7 @@ typedef enum MSR_ITEMS {
   MSR_SG_LTY,  // signalling latency (requires feedback via LEMO cabling)
   MSR_MSG_DLY, // messaging delay
   MSR_TTL,     // TTL threshold/interval
-  MSR_TX_MPS_HANDLE, // MPS event handling delay at TX node
+  MSR_ECA_HANDLE,    // ECA handling delay
   MSR_MAIN_LOOP_PRD, // period of the main loop
   N_MSR_ITEMS,
 } msrItem_t;

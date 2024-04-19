@@ -516,9 +516,9 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t
             // count sent timing messages with MPS event
             *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = measureCountEvt(TX_EVT_CNT, count);
 
-            // measure MPS event handling period
-            measureSummarize(MSR_TX_MPS_HANDLE, ecaDeadline, now, DISABLE_VERBOSITY);
-            measureExportSummary(MSR_TX_MPS_HANDLE, pSharedApp, FBAS_SHARED_ECA_HNDL_AVG);
+            // measure ECA handling delay
+            measureSummarize(MSR_ECA_HANDLE, ecaDeadline, now, DISABLE_VERBOSITY);
+            measureExportSummary(MSR_ECA_HANDLE, pSharedApp, FBAS_SHARED_ECA_HNDL_AVG);
 
             // store timestamps to measure delays
             measurePutTimestamp(MSR_TX_DLY, now);
@@ -778,9 +778,9 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd)
         measurePrintSummary(MSR_TTL);
         measureExportSummary(MSR_TTL, pSharedApp, FBAS_SHARED_GET_AVG);
         break;
-      case FBAS_CMD_PRINT_TX_MPS_HANDLE:
-        measurePrintSummary(MSR_TX_MPS_HANDLE);
-        measureExportSummary(MSR_TX_MPS_HANDLE, pSharedApp, FBAS_SHARED_GET_AVG);
+      case FBAS_CMD_PRINT_ECA_HANDLE:
+        measurePrintSummary(MSR_ECA_HANDLE);
+        measureExportSummary(MSR_ECA_HANDLE, pSharedApp, FBAS_SHARED_GET_AVG);
         break;
       case FBAS_CMD_CLR_SUM_STATS:
         measureClearSummary(ENABLE_VERBOSITY);
