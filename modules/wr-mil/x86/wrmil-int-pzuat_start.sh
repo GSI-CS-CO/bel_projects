@@ -13,9 +13,11 @@ export SIDGW=1c5             # SID of puz_qr, pzu_ql ...
 export MILDEV=1              # MIL device, piggy(0), sio slot 1 (1) ...
 export MILADDR=0x420800      # address of MIL device to which MIL telegram is written
 # piggy: Wishbone address of 'GSI_MIL_SCU'
+#        the register 0x1004 needs to be added
+#        exammple piggy: 0x9004
 # SIO  : Wishbone address of 'SCU-BUS-Master' + (slot number) * 0x20000
-# finally the register 0x800 needs to be added
-# example SIO slot #1: 0x420800
+#        the register 0x800 needs to be added
+#        example SIO slot #1: 0x420800
 ###########################################
 # setting for development
 # gateway: N/A
@@ -73,3 +75,8 @@ saft-wbm-ctl $SDGW -r 1 0x420800 0 0x5f
 # lm32 listens to timing messages for EVTNO 0x000..0x0ff
 saft-ecpu-ctl $SDGW -c 0x1${SIDGW}000000000000 0xfffff00000000000 500000 0xff -g -d
 
+###########################################
+# reset diagnostics
+###########################################
+sleep 1
+wrmil-ctl $TRGW cleardiag

@@ -75,3 +75,8 @@ saft-wbm-ctl $SDGW -r 1 $MILADDR 0 0x5f
 # lm32 listens to timing messages for EVTNO 0x000..0x0ff
 saft-ecpu-ctl $SDGW -c 0x1${SIDGW}000000000000 0xfffff00000000000 500000 0xff -g -d
 
+###########################################
+# reset diagnostics
+###########################################
+sleep 1
+wrmil-ctl $TRGW cleardiag
