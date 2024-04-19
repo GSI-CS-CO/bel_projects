@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 18-Apr-2024
+ *  version : 19-Apr-2024
  *
  * monitors WR-MIL gateway
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define WRMIL_SERV_MON_VERSION 0x000002
+#define WRMIL_SERV_MON_VERSION 0x000003
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -703,7 +703,7 @@ int main(int argc, char** argv)
         //printf("wrmil-mon: fw snd %ld, recD %ld, recT %ld; mon snd %ld, rec %ld, match %ld, act %f, ave %f, sdev %f, min %f, max %f\n", monData.nFwSnd, monData.nFwRecT, monData.nFwRecT, monData.nStart, monData.nStop, monData.nMatch, monData.tAct, monData.tAve, monData.tSdev, monData.tMin, monData.tMax);
 
 #ifdef USEMASP
-      if (actState  == COMMON_STATE_OPREADY) maspSigOpReady  = true;
+      if (fwState  == COMMON_STATE_OPREADY) maspSigOpReady  = true;
       else                                   maspSigOpReady  = false;
 
       maspSigTransfer = true;   // ok, this is dummy for now, e.g. in case of MIL troubles or so

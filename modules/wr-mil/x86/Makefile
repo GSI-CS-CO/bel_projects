@@ -56,7 +56,7 @@ CCFLAGS     ?= $(EXTRA_FLAGS) -I$(EB) -I$(USRPATH)/include -I$(FW) -I../include 
 LIBS        ?= -L. -L$(EB)/.libs -L$(USRPATH)/lib -Wl,-rpath,$(PREFIX)/lib -letherbone -lm -lwrmillib 
 # the following is for c++ code
 CXFLAGS     ?= `pkg-config  saftlib --cflags` -I$(ASLINC) $(CCFLAGS) $(BOOST_INCL) $(MASP_INCL) 
-XLIBS       ?= `pkg-config  saftlib --libs` -L$(ASLLIB) $(LIBS) $(MASP_LIBS) $(GENERAL_LIBS) $(BOOST_LIBS) 
+XLIBS       ?= `pkg-config  saftlib --libs` -L$(ASLLIB) $(BOOST_LIBPATH) $(MASP_LIBPATH) $(LIBS) $(MASP_LIBS) $(GENERAL_LIBS) $(BOOST_LIBS) 
 
 $(info PRO is $(PRO))
 $(info PRODUCTIVE is $(PRODUCTIVE))
