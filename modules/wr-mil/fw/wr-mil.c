@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Micheal Reese, Mathias Kreider GSI-Darmstadt
- *  version : 18-Apr-2024
+ *  version : 19-Apr-2024
  *
  *  firmware required for the White Rabbit -> MIL Gateways
  *  
@@ -37,9 +37,9 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define WRMIL_FW_VERSION      0x000002    // make this consistent with makefile
+#define WRMIL_FW_VERSION      0x000003    // make this consistent with makefile
 
-#define RESET_INHIBIT_COUNTER  10000      // count so many main ECA timemouts, prior sending fill event
+#define RESET_INHIBIT_COUNTER    10000    // count so many main ECA timemouts, prior sending fill event
 //#define WR_MIL_GATEWAY_LATENCY 70650    // additional latency in units of nanoseconds
                                           // this value was determined by measuring the time difference
                                           // of the MIL event rising edge and the ECA output rising edge (no offset)
@@ -642,25 +642,28 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       flagIsLate = 0;                                                 // ignore late events
   } // switch ecaAction
 
-  // decrease inhibit counter
-  inhibit_fill_events--;
+  // send fill events if inactive for a long time
+  if (request_fill_evt) {
+    // decrease inhibit counter
+    inhibit_fill_events--;
 
-  // check for fill event
-  if (!inhibit_fill_events) {
-    // the last mil event is so far in the past that the inhibit counter is zero
-    // so lets send the fill event and reset inhibit counter
-    // deadline
-    sendDeadline  = getSysTime();
-    sendDeadline += COMMON_AHEADT;
-    // evtID
-    sendEvtId     = fwlib_buildEvtidV1(mil_domain, WRMIL_DFLT_MIL_EVT_FILL, 0x0, 0x0, 0x0, 0x0); // chk
-    convert_WReventID_to_milTelegram(sendEvtId, &milTelegram);                                   // --> MIL format
-    prepMilTelegramEca(milTelegram, &sendEvtId, &sendParam);                                     // --> EvtId for internal use
-    fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0);                                // --> ECA
-    nEvtsSnd++;
-    inhibit_fill_events = RESET_INHIBIT_COUNTER;
-  } // if not inhibit fill events
- 
+    // check for fill event
+    if (!inhibit_fill_events) {
+      // the last mil event is so far in the past that the inhibit counter is zero
+      // so lets send the fill event and reset inhibit counter
+      // deadline
+      sendDeadline  = getSysTime();
+      sendDeadline += COMMON_AHEADT;
+      // evtID
+      sendEvtId     = fwlib_buildEvtidV1(mil_domain, WRMIL_DFLT_MIL_EVT_FILL, 0x0, 0x0, 0x0, 0x0); // chk
+      convert_WReventID_to_milTelegram(sendEvtId, &milTelegram);                                   // --> MIL format
+      prepMilTelegramEca(milTelegram, &sendEvtId, &sendParam);                                     // --> EvtId for internal use
+      fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0);                                // --> ECA
+      nEvtsSnd++;
+      inhibit_fill_events = RESET_INHIBIT_COUNTER;
+    } // if not inhibit fill events
+  } // if request_fill_evt
+    
   // check for late event
   if ((status == COMMON_STATUS_OK) && flagIsLate) status = WRMIL_STATUS_LATEMESSAGE;
   
