@@ -674,6 +674,14 @@ uint32_t extern_entryActionOperation()
 {
   uint32_t status = COMMON_STATUS_OK;
 
+  // flush ECA queue for eCPU
+  uint64_t t64;
+  uint32_t t32;
+  int i = 0;
+  while (fwlib_wait4ECAEvent(1000, &t64, &t64, &t64, &t32, &t32, &t32, &t32, &t32) != COMMON_ECADO_TIMEOUT)
+    {i++;}
+  DBPRINT1("ECA eCPU queue flushed - cleared %d pending actions\n", i);
+
   // initiate node registry
   if (nodeType == FBAS_NODE_TX) {
     if (!(mpsTask & TSK_REG_COMPLETE)) {
@@ -750,6 +758,7 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd)
         mpsTask |= TSK_TX_MPS_FLAGS;  // enable transmission of the MPS flags
         mpsTask |= TSK_TX_MPS_EVENTS; // enable transmission of the MPS events
         mpsTask |= TSK_MONIT_MPS_TTL; // enable lifetime monitoring of the MPS flags
+        // clear ECA queue by polling it => done in extern_entryActionOperation()
         timerStart(pTimerMpsTtl);     // start timers
         timerStart(pTimerRegistr);
         DBPRINT2("fbas%d: enabled MPS %lx\n", nodeType, mpsTask);
