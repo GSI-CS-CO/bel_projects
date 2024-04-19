@@ -16,14 +16,51 @@ WRMILLIB    := libwrmillib.so
 # include common Makefile stuff
 include targetsysbuild.db
 
-EXTRA_FLAGS ?=
+# special
+# set MASP to YES, if dmunipz-ctl should function as status emitter to MASP (when in monitoring mode)
+MASP        ?= NO              
+# set PRO to YES, if dmunipz-ctl should function as status emitter to MASP PRO(otherwise: MASP DEV)
+PRO         ?= NO
+
+# stuff below required for MASP support
+ifeq ($(MASP), YES)
+GENERAL_LIBPATH = -L$(PREFIX)/$(ARCH) 
+GENERAL_LIBS    = -lrt -lpthread
+
+GSI_3RDPARTY_LOCATION ?= /opt/gsi/3rdparty
+BOOST_VERSION  = 1.54.0
+BOOST_HOME    ?= $(GSI_3RDPARTY_LOCATION)/boost/$(BOOST_VERSION)
+BOOST_INCL     = -isystem$(BOOST_HOME)/include
+BOOST_LIBPATH  = -L $(BOOST_HOME)/lib/$(ARCH)
+BOOST_LIBS     = -lboost_thread -lboost_system -lboost_atomic -lboost_chrono -lboost_filesystem -lboost_program_options
+
+
+MASP_VERSION   = 1.0.5
+MASP_DIR       = /common/usr/cscofe/opt/MASP/$(MASP_VERSION)
+MASP_INCL      = -I $(MASP_DIR)/include
+MASP_LIBPATH   = -L $(MASP_DIR)/lib/$(ARCH) 
+MASP_LIBS      = -lmasp_emitter -lmasp_status -lmasp_core
+
+USEMASP        = -D USEMASP
+
+ifeq ($(PRO), YES)
+PRODUCTIVE     = -D PRODUCTIVE
+endif
+
+endif
+# stuff above required for MASP support
+
+EXTRA_FLAGS ?= $(USEMASP) $(PRODUCTIVE)
 # the following is for c code
-CCFLAGS     ?= $(EXTRA_FLAGS) -I$(EB) -I$(USRPATH)/include -I$(FW) -I../include -I../../common-libs/include
+CCFLAGS     ?= $(EXTRA_FLAGS) -I$(EB) -I$(USRPATH)/include -I$(FW) -I../include -I../../common-libs/include 
 LIBS        ?= -L. -L$(EB)/.libs -L$(USRPATH)/lib -Wl,-rpath,$(PREFIX)/lib -letherbone -lm -lwrmillib 
 # the following is for c++ code
-CXFLAGS     ?= `pkg-config  saftlib --cflags` -I$(ASLINC) $(CCFLAGS)
-XLIBS       ?= `pkg-config  saftlib --libs` -L$(ASLLIB) $(LIBS)
+CXFLAGS     ?= `pkg-config  saftlib --cflags` -I$(ASLINC) $(CCFLAGS) $(BOOST_INCL) $(MASP_INCL) 
+XLIBS       ?= `pkg-config  saftlib --libs` -L$(ASLLIB) $(LIBS) $(MASP_LIBS) $(GENERAL_LIBS) $(BOOST_LIBS) 
 
+$(info PRO is $(PRO))
+$(info PRODUCTIVE is $(PRODUCTIVE))
+$(info MASP is $(MASP))
 $(info ours/theirs CFLAGS is $(CFLAGS))
 $(info compiling x86 binaries for $(SYSENV))
 $(info ours CCFLAGS for c code is $(CCFLAGS))

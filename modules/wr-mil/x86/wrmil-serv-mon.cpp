@@ -68,6 +68,43 @@
 #include <wrmillib.h>                   // API
 #include <wr-mil.h>                     // FW
 
+// USE MASP
+#ifdef USEMASP
+// includes for MASP
+#include "MASP/Emitter/End_of_scope_status_emitter.h"
+#include "MASP/StatusDefinition/DeviceStatus.h"
+#include "MASP/Util/Logger.h"
+#include "MASP/Common/StatusNames.h"
+#include <boost/thread/thread.hpp> // (sleep)
+#include <iostream>
+#include <string>
+#include <limits.h>
+
+std::string   maspNomen;
+std::string   maspSourceId; 
+bool          maspProductive;     // send to pro/dev masp
+bool          maspSigOpReady;     // value for MASP signal OP_READY
+bool          maspSigTransfer;    // value for MASP signal TRANSFER (custom emitter)
+
+MASP::StatusEmitterConfig get_config() {
+  char   hostname[HOST_NAME_MAX];
+
+  gethostname(hostname, HOST_NAME_MAX);
+  maspSourceId   = maspNomen + "." + std::string(hostname);
+
+#ifdef PRODUCTIVE
+  maspProductive = true;
+#else
+  maspProductive = false;
+#endif
+
+  MASP::StatusEmitterConfig config = MASP::StatusEmitterConfig(MASP::StatusEmitterConfig::CUSTOM_EMITTER_DEFAULT(), maspSourceId, maspProductive);
+
+  return config;
+}
+#endif
+
+
 using namespace saftlib;
 using namespace std;
 
@@ -429,7 +466,20 @@ int main(int argc, char** argv)
           case 7: gid = SIS18_RING; sprintf(domainName, "%s", "sis18_ring"); break;
           case 8: gid = ESR_RING;   sprintf(domainName, "%s", "esr_ring");   break;
           default: {std::cerr << "Specify a proper number, not " << tmpi << "'%s'!" << std::endl; return 1;} break;
-        } // case tmpi
+        } // switch tmpi
+#ifdef USEMASP
+        switch (tmpi) {
+          case 0: maspNomen = std::string("U_WR2MIL_PZUQR");    break;
+          case 1: maspNomen = std::string("U_WR2MIL_PZUQL");    break;
+          case 2: maspNomen = std::string("U_WR2MIL_PZUQN");    break;
+          case 3: maspNomen = std::string("U_WR2MIL_PZUUN");    break;
+          case 4: maspNomen = std::string("U_WR2MIL_PZUUH");    break;
+          case 5: maspNomen = std::string("U_WR2MIL_PZUAT");    break;
+          case 6: maspNomen = std::string("U_WR2MIL_PZUTK");    break;
+          case 7: maspNomen = std::string("U_WR2MIL_SIS18");    break;
+          case 8: maspNomen = std::string("U_WR2MIL_ESR");      break;
+        } // switch tmpi
+#endif
         break;
       case 'm':
         matchWindow = strtoull(optarg, &tail, 0);
@@ -514,6 +564,14 @@ int main(int argc, char** argv)
       printf(" / %s\n",  wrmil_version_text(verFw));     
     } // if getVersion
 
+#ifdef USEMASP 
+    // optional: disable masp logging (default: log to stdout, can be customized)
+    MASP::no_logger no_log;
+    MASP::Logger::middleware_logger = &no_log;
+
+    MASP::StatusEmitter emitter(get_config());
+    std::cout << "wr-mil: emmitting to MASP as sourceId: " << maspSourceId << ", using nomen: " << maspNomen << ", environment pro: " << maspProductive << std::endl;
+#endif // USEMASP
 
     // create software action sink
     std::shared_ptr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
@@ -643,6 +701,21 @@ int main(int argc, char** argv)
         } // if startServer
 
         //printf("wrmil-mon: fw snd %ld, recD %ld, recT %ld; mon snd %ld, rec %ld, match %ld, act %f, ave %f, sdev %f, min %f, max %f\n", monData.nFwSnd, monData.nFwRecT, monData.nFwRecT, monData.nStart, monData.nStop, monData.nMatch, monData.tAct, monData.tAve, monData.tSdev, monData.tMin, monData.tMax);
+
+#ifdef USEMASP
+      if (actState  == COMMON_STATE_OPREADY) maspSigOpReady  = true;
+      else                                   maspSigOpReady  = false;
+
+      maspSigTransfer = true;   // ok, this is dummy for now, e.g. in case of MIL troubles or so
+      
+      // use masp end of scope emitter
+      {  
+        MASP::End_of_scope_status_emitter scoped_emitter(maspNomen, emitter);
+        scoped_emitter.set_OP_READY(maspSigOpReady);
+        // scoped_emitter.set_custom_status(DMUNIPZ_MASP_CUSTOMSIG, maspSigTransfer); disabled as our boss did not like it
+      } // <--- status is send when the End_of_scope_emitter goes out of scope  
+#endif
+       
       } // if update
 
       // clear data
