@@ -189,7 +189,7 @@ measure_nw_perf() {
         echo -e "Delay:  avg min max [us] vld all [])\n"
         # declare measurement entries
         tx_delay_entries=("sig lty" "tx  dly" "mps hdl")
-        rx_delay_entries=("msg dly" "ttl    ")
+        rx_delay_entries=("msg dly" "ttl    " "eca hdl")
     fi
 
     i=0
@@ -217,7 +217,8 @@ measure_nw_perf() {
     sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" \
         "source setup_local.sh && \
         result_msg_delay \$rx_node_dev $verbose && \
-        result_ttl_ival \$rx_node_dev $verbose" |
+        result_ttl_ival \$rx_node_dev $verbose && \
+        result_eca_handle \$rx_node_dev $verbose" |
     while IFS= read -r line; do
         delay_entry="${rx_delay_entries[$i]}"
         if [ -n "$delay_entry" ]; then
