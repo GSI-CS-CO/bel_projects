@@ -270,6 +270,10 @@ namespace DotStr {
       namespace Meta {
         const std::string sLookDef       = "shape = \"rectangle\", color = \"gray\", style = \"dashed, filled\"";
       }
+
+      namespace Global {
+        const std::string sLookDef       = "shape = \"rectangle\", color = \"orange\", style = \"dashed, filled\"";
+      }
     }
 
     namespace Edge {
@@ -283,6 +287,7 @@ namespace DotStr {
       const std::string sLookDebug1    = "color = \"maroon4\"";
       const std::string sLookDebug2    = "color = \"cyan\"";
       const std::string sLookbad       = "color = \"orange\", style = \"dashed, filled\"";
+      const std::string sLookRef       = "color = \"pink\", style = \"dashed, filled\"";
 
     }
   }

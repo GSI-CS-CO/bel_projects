@@ -67,6 +67,12 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
   el.serialise(getListDst(), b);
 }
 
+void VisitorUploadCrawler::visit(const Global& el) const {
+  mVal emptyM;
+
+  el.serialise(emptyM, b);
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // private helper functions

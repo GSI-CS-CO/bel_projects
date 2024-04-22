@@ -308,3 +308,6 @@ void VisitorDownloadCrawler::setRefLinks() const {
 
 }
 
+void VisitorDownloadCrawler::visit(const Global& el) const {
+}
+
