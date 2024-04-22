@@ -121,6 +121,12 @@ namespace dnt = DotStr::Node::TypeVal;
       std::string tmpStrCovtab = std::string(tmpMgmtRecovery.begin() + atDown.getMgmtGrpSize(), tmpMgmtRecovery.end());
       if (tmpStrCovtab.size()) ctTmp.load(tmpStrCovtab);
       ct = ctTmp;
+
+      // Rebuild Reftable
+      GlobalRefTable rtTmp;
+      std::string tmpStrReftab = std::string(tmpMgmtRecovery.begin() + atDown.getMgmtRefSize(), tmpMgmtRecovery.end());
+      if (tmpStrReftab.size()) rtTmp.load(tmpStrReftab);
+      rt = rtTmp;
     } else {
       if(verbose) sLog << "Management recovery returned empty, this happens when accessing a virgin DM FW memory. Skip Grouptable and Covenant Table creation" << std::endl;
     }
@@ -278,16 +284,18 @@ namespace dnt = DotStr::Node::TypeVal;
     er.va.push_back(modAdrBase + T_META_CON_SIZE);
     er.va.push_back(modAdrBase + T_META_GRPTAB_SIZE);
     er.va.push_back(modAdrBase + T_META_COVTAB_SIZE);
+    er.va.push_back(modAdrBase + T_META_REFTAB_SIZE);
     er.vcs += leadingOne(4);
 
     vDl = ebd.readCycle(er.va, er.vcs);
     atDown.setMgmtLLstartAdr(writeBeBytesToLeNumber<uint32_t>((uint8_t*)&vDl[T_META_START_PTR]));
 
-    uint32_t grp, cov;
+    uint32_t grp, cov, ref;
     atDown.setMgmtTotalSize(writeBeBytesToLeNumber<uint32_t>((uint8_t*)&vDl[T_META_CON_SIZE]));
     grp = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&vDl[T_META_GRPTAB_SIZE]);
     cov = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&vDl[T_META_COVTAB_SIZE]);
-    atDown.setMgmtLLSizes(grp, cov);
+    ref = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&vDl[T_META_REFTAB_SIZE]);
+    atDown.setMgmtLLSizes(grp, cov, ref);
 
 
 

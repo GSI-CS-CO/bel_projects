@@ -172,7 +172,8 @@
 #define T_META_CON_SIZE     (T_META_START_PTR   + _PTR_SIZE_) ///< table container size in byte ( is groupsTable + covenantTable size)
 #define T_META_GRPTAB_SIZE  (T_META_CON_SIZE    + _32b_SIZE_) ///< groupsTable size in byte
 #define T_META_COVTAB_SIZE  (T_META_GRPTAB_SIZE + _32b_SIZE_) ///< covenantTable size in byte
-#define T_META_FLAGS        (T_META_COVTAB_SIZE + _32b_SIZE_) ///< flags field
+#define T_META_REFTAB_SIZE  (T_META_COVTAB_SIZE + _32b_SIZE_) ///< globalRefTable size in byte
+#define T_META_FLAGS        (T_META_REFTAB_SIZE + _32b_SIZE_) ///< flags field
 #define _T_META_SIZE_       (T_META_FLAGS       + _32b_SIZE_) ///< Size of Name/Group table meta data
 //@}
 

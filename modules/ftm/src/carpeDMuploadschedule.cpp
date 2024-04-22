@@ -628,8 +628,10 @@ using namespace DotStr::Misc;
   void CarpeDM::CarpeDMimpl::generateMgmtData() {
     std::string tmpStrBufGrp = gt.store();
     std::string tmpStrBufCov = ct.store();
-    atUp.setMgmtLLSizes(tmpStrBufGrp.size(), tmpStrBufCov.size());
-    std::string tmpStrBuf = tmpStrBufGrp + tmpStrBufCov;
+    std::string tmpStrBufRef = rt.store();
+
+    atUp.setMgmtLLSizes(tmpStrBufGrp.size(), tmpStrBufCov.size(), tmpStrBufRef.size());
+    std::string tmpStrBuf = tmpStrBufGrp + tmpStrBufCov + tmpStrBufRef;
 
     vBuf tmpBuf(tmpStrBuf.begin(), tmpStrBuf.end());
     vBuf mgmtBinary = compress(tmpBuf);

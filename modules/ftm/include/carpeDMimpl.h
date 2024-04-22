@@ -16,6 +16,7 @@
 #include "validation.h"
 #include "lockmanager.h"
 #include "reflocation.h"
+#include "globalreftable.h"
 
 
 
@@ -37,6 +38,7 @@ private:
   HashMap hm;
   GroupTable gt;
   CovenantTable ct;
+  GlobalRefTable rt;
   RefLocation rl;
   AllocTable atUp = AllocTable(rl);
   Graph gUp;
