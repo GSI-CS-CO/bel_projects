@@ -272,6 +272,10 @@ namespace DotStr {
       namespace Meta {
         extern const std::string sLookDef;
       }
+
+      namespace Global {
+        extern const std::string sLookDef;
+      }
     }
 
     namespace Edge {
@@ -285,6 +289,7 @@ namespace DotStr {
       extern const std::string sLookDebug1;
       extern const std::string sLookDebug2;
       extern const std::string sLookbad;
+      extern const std::string sLookRef;
 
     }
   }
