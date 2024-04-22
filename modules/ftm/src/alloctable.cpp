@@ -97,9 +97,23 @@ namespace dnt = DotStr::Node::TypeVal;
     return ret;
 
   }
+/*  amI AllocTable::handleGlobals(uint8_t cpu, uint32_t adr, const std::string& exMsg) {
+    amI ret;
+    uint32_t baseAdr;
+    if (cpu > getMemories().size()) baseAdr = 0;
+    else                            baseAdr = getMemories()[cpu].sharedOffs;
 
-  
-
+    RefLocationSearch rls = rl->getSearch(adr - baseadr); // search for it
+    
+    if(rls.getLocVal() == adr - baseadr) { // we got a match
+      auto x = a.insert({cpu, adr, 0x0, null_vertex, false, true});
+      if (x.second) {ret = a.iterator_to( *x.first );} // if it went okay, return iterator
+      else          {throw std::runtime_error(exMsg + " Got a global table match, but couldnt insert into alloctable\n");}
+    } throw std::runtime_error(exMsg  + " Not in alloctable and no match in global table\n");
+    
+    return ret;
+  }   
+*/
   //Allocation functions
   int AllocTable::allocate(uint8_t cpu, uint32_t hash, vertex_t v, Graph& g, bool staged) {
     if(g[v].type == dnt::sGlobal) {
@@ -400,7 +414,7 @@ namespace dnt = DotStr::Node::TypeVal;
     os << "Mgmt StartAdr: 0x" << std::hex << mgmtStartAdr << " , Size: " << std::dec << mgmtTotalSize << std::endl;
     os << "Grp  StartAdr: 0x" << std::hex << 0 << " , Size: " << std::dec << mgmtGrpSize << std::endl;
     os << "Cov  StartAdr: 0x" << std::hex << mgmtGrpSize << " , Size: " << std::dec << mgmtCovSize << std::endl;
-
+    os << "Ref  StartAdr: 0x" << std::hex << mgmtCovSize << " , Size: " << std::dec << mgmtRefSize << std::endl;
 
     for (mmI x = m.begin(); x != m.end(); x++) {
 

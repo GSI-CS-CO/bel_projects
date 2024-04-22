@@ -28,7 +28,7 @@ using namespace boost::multi_index;
 
 enum class AllocPoolMode {WITHOUT_MGMT = 0, WITH_MGMT = 1};
 
-
+typedef std::map<uint32_t, uint32_t> GlobalRefMap;
 
 struct AllocMeta {
   uint8_t     cpu;
@@ -107,6 +107,8 @@ class AllocTable {
 
   AllocMeta_set a;
   MgmtMeta_set  m;
+  GlobalRefMap  r;
+
   const RefLocation* rl;
 
   std::vector<MemPool> vPool;
@@ -115,6 +117,7 @@ class AllocTable {
   uint32_t mgmtTotalSize;
   uint32_t mgmtGrpSize;
   uint32_t mgmtCovSize;
+  uint32_t mgmtRefSize;
 
 
 
@@ -215,12 +218,13 @@ public:
   vBuf recoverMgmt();
 
   void setMgmtLLstartAdr(uint32_t startAdr) {mgmtStartAdr = startAdr;}
-  void setMgmtLLSizes(uint32_t grpSize, uint32_t covSize) {mgmtGrpSize = grpSize; mgmtCovSize = covSize;}
+  void setMgmtLLSizes(uint32_t grpSize, uint32_t covSize, uint32_t refSize) {mgmtGrpSize = grpSize; mgmtCovSize = covSize; mgmtRefSize = refSize;}
   uint32_t getMgmtLLstartAdr()  {return mgmtStartAdr;}
   void setMgmtTotalSize(uint32_t totSize)      {mgmtTotalSize = totSize;}
   uint32_t getMgmtTotalSize()      {return mgmtTotalSize;}
   uint32_t getMgmtGrpSize()      {return mgmtGrpSize;}
   uint32_t getMgmtCovSize()      {return mgmtCovSize;}
+  uint32_t getMgmtRefSize()      {return mgmtRefSize;}
   void debugMgmt(std::ostream& os);
   const MgmtMeta_set& getMgmtTable() const { return m; }
   const size_t getMgmtSize()          const { return m.size(); }
