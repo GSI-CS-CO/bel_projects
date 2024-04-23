@@ -3,6 +3,7 @@ import contextlib
 import csv         # used in analyseFrequencyFromCsv
 import datetime    # used in analyseFrequencyFromCsv
 import difflib     # used in compareExpectedResult
+import logging
 import os
 import pathlib
 import subprocess  # used in startAllPatterns
@@ -215,6 +216,8 @@ class DmTestbench(unittest.TestCase):
     the method started in a separate thread. It has to be released
     before the snoop command is started.
     """
+    testName = os.environ['PYTEST_CURRENT_TEST']
+    logging.getLogger().info(f'{testName}, snoopToCsv: {csvFileName=}, {eventId=}, {mask=}, {duration=}, {resource=}')
     with open(csvFileName, 'wb') as file1:
       try:
         if not resource is None:
@@ -236,6 +239,8 @@ class DmTestbench(unittest.TestCase):
     Details: start saft-ctl with Popen in its own thread, run it for <duration> seconds.
     action should end before snoop.
     """
+    testName = os.environ['PYTEST_CURRENT_TEST']
+    logging.getLogger().info(f'{testName}, snoopToCsvWithAction: {csvFileName=}, {eventId=}, {mask=}, {duration=}, {action=}, {actionArgs=}')
     self.exc_info = None
     print('snoopToCsv: acquire lock ', datetime.datetime.now().time())
     resource = threading.Lock()
