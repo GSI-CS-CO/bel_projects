@@ -147,15 +147,21 @@ class UnitTestAltDestinations(dm_testbench.DmTestbench):
 
   def test_altDestinationsOkSwitch(self):
     self.startPattern('altdst-9.dot')
-    file_name = 'snoop_altDestinationsOkSwitch.csv'
+    fileName = 'snoop_altDestinationsOkSwitch.csv'
     column_EVTNO = 8
     listSwitch = [(0, '0a'), (1, '0b'), (2, '0c'), (3, '0d'), (4, '0e'), (5, '0f'), (6, '10'), (7, '11'), (8, '12')]
+    self.snoopToCsvWithAction(fileName, self.switchAction, actionArgs=[listSwitch], duration=len(listSwitch))
+    checkList = {}
+    for x, y in listSwitch:
+      checkList['0x00' + y] = '>0'
+    self.analyseFrequencyFromCsv(fileName, column_EVTNO, checkValues=checkList)
+    self.deleteFile(fileName)
+
+  def switchAction(self, argsList):
+    listSwitch = argsList[0]
     for x, y in listSwitch:
       self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'switch', 'Block', 'Msg0' + str(x)), [0], 0, 0)
       self.checkRunningThreadsCmd(0.1)
-      self.snoopToCsv(file_name, duration=1)
-      self.analyseFrequencyFromCsv(file_name, column_EVTNO, checkValues={'0x00' + y: '>0'})
-    self.deleteFile(file_name)
 
   def test_alt10DestinationsFlow(self):
     fileName = self.schedulesFolder + 'altdst-flow-10.dot'
