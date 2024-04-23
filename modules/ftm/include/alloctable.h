@@ -14,6 +14,7 @@
 #include "common.h"
 #include "mempool.h"
 #include "reflocation.h"
+#include "globalreftable.h"
 
 #define ALLOC_OK             (0)
 #define ALLOC_NO_SPACE      (-1)
@@ -107,9 +108,9 @@ class AllocTable {
 
   AllocMeta_set a;
   MgmtMeta_set  m;
-  GlobalRefMap  r;
 
   const RefLocation* rl;
+  GlobalRefTable* rt;
 
   std::vector<MemPool> vPool;
   const size_t payloadPerChunk = _MEM_BLOCK_SIZE - 1 - _PTR_SIZE_;
@@ -126,7 +127,7 @@ class AllocTable {
 
 public:
 
-  AllocTable(const RefLocation& rl) : rl(&rl) {};
+  AllocTable(const RefLocation& rl, GlobalRefTable& rt) : rl(&rl), rt(&rt) {};
   ~AllocTable(){};
 
    //deep copy

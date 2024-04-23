@@ -86,20 +86,25 @@ using namespace DotStr::Misc;
     // save modification infos
     for (auto& itMod : moddedCpus) { createSchedModInfo(ew, itMod, modCnt, opType); }
 
+    //FIXME This should not be hardcoded to the number of elements and not repeated. Loop it,be clean  
+
     // save global meta info for management linked list
-    uint8_t b[4 * _32b_SIZE_];
+    uint8_t b[5 * _32b_SIZE_];
     //enough to write it to cpu 0
     modAdrBase = atUp.getMemories()[0].extBaseAdr + atUp.getMemories()[0].sharedOffs + SHCTL_META;
     writeLeNumberToBeBytes<uint32_t>((uint8_t*)&b[T_META_START_PTR], atUp.getMgmtLLstartAdr());
     writeLeNumberToBeBytes<uint32_t>((uint8_t*)&b[T_META_CON_SIZE],  atUp.getMgmtTotalSize());
     writeLeNumberToBeBytes<uint32_t>((uint8_t*)&b[T_META_GRPTAB_SIZE],  atUp.getMgmtGrpSize());
     writeLeNumberToBeBytes<uint32_t>((uint8_t*)&b[T_META_COVTAB_SIZE],  atUp.getMgmtCovSize());
-    ew.vcs += leadingOne(4);
+    writeLeNumberToBeBytes<uint32_t>((uint8_t*)&b[T_META_REFTAB_SIZE],  atUp.getMgmtRefSize());
+    
     ew.va.push_back(modAdrBase + T_META_START_PTR);
     ew.va.push_back(modAdrBase + T_META_CON_SIZE);
     ew.va.push_back(modAdrBase + T_META_GRPTAB_SIZE);
     ew.va.push_back(modAdrBase + T_META_COVTAB_SIZE);
-    ew.vb.insert( ew.vb.end(), b, b + 4 * _32b_SIZE_ );
+    ew.va.push_back(modAdrBase + T_META_REFTAB_SIZE);
+    ew.vcs += leadingOne(va.size());
+    ew.vb.insert( ew.vb.end(), b, b + 5 * _32b_SIZE_ );
 
 
 
@@ -287,7 +292,7 @@ using namespace DotStr::Misc;
 
       myVertex* vt = (myVertex*)&gUp[v];
 
-      sLog << "Testing " << vt->name << std::endl;
+      //sLog << "Testing " << vt->name << std::endl;
 
       std::string name = gUp[v].name;
       //try{
@@ -628,7 +633,10 @@ using namespace DotStr::Misc;
   void CarpeDM::CarpeDMimpl::generateMgmtData() {
     std::string tmpStrBufGrp = gt.store();
     std::string tmpStrBufCov = ct.store();
+    std::cout << "Upload: GlobalRefTable" << std::endl; rt.debug(sLog);
     std::string tmpStrBufRef = rt.store();
+
+    std::cout << "STR GlobalRefTable" << tmpStrBufRef << std::endl;
 
     atUp.setMgmtLLSizes(tmpStrBufGrp.size(), tmpStrBufCov.size(), tmpStrBufRef.size());
     std::string tmpStrBuf = tmpStrBufGrp + tmpStrBufCov + tmpStrBufRef;
@@ -648,6 +656,7 @@ using namespace DotStr::Misc;
     atDown.clear();
     gt.clear();
     ct.clear();
+    rt.clear();
     hm.clear();
   }
 

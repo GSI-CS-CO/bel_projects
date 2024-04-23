@@ -32,6 +32,7 @@ namespace dnt = DotStr::Node::TypeVal;
     if (lookupVertex(v) != a.end()) std::cout << "V 0x" << std::dec << v << " (hash 0x" << hash << ") exists already" << std::endl;
     */
     if(!global) { vPool[cpu].occupyChunk(adr); }
+    else { std::cout << "Global for adr 0x" << std::hex << adr << std::endl; rt->insert(adr, hash);}
     auto x = a.insert({cpu, adr, hash, v, staged, global});
 
     return x.second;
