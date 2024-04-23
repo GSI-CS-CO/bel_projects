@@ -40,9 +40,9 @@ private:
   CovenantTable ct;
   GlobalRefTable rt;
   RefLocation rl;
-  AllocTable atUp = AllocTable(rl);
+  AllocTable atUp = AllocTable(rl, rt);
   Graph gUp;
-  AllocTable atDown = AllocTable(rl);
+  AllocTable atDown = AllocTable(rl, rt);
   Graph gDown;
 
   uint64_t modTime;

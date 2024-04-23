@@ -107,26 +107,36 @@ namespace dnt = DotStr::Node::TypeVal;
     if (tmpMgmtRecovery.size()) {
       // Rebuild Grouptable
 
+      //FIXME: Code quality is horrible in this, why the hell did my younger self write such dross? Clean. this. up.
+
+      auto strBegin = tmpMgmtRecovery.begin();
+
       GroupTable gtTmp;
-      std::string tmpStrGrouptab = std::string(tmpMgmtRecovery.begin(), tmpMgmtRecovery.begin() + atDown.getMgmtGrpSize());
-      if (tmpStrGrouptab.size()) gtTmp.load(tmpStrGrouptab);
-      gt = gtTmp;
+      std::string tmpStrGrouptab = std::string(strBegin, strBegin + atDown.getMgmtGrpSize());
+      if (tmpStrGrouptab.size()) { gtTmp.load(tmpStrGrouptab); gt = gtTmp;}
       // Rebuild HashMap from Grouptable
       hm.clear();
       for(auto& it : gt.getTable()) {
         hm.add(it.node);
       }
+      strBegin += atDown.getMgmtGrpSize();
+
       // Rebuild Covenanttable
+
       CovenantTable ctTmp;
-      std::string tmpStrCovtab = std::string(tmpMgmtRecovery.begin() + atDown.getMgmtGrpSize(), tmpMgmtRecovery.end());
-      if (tmpStrCovtab.size()) ctTmp.load(tmpStrCovtab);
-      ct = ctTmp;
+      std::string tmpStrCovtab = std::string(strBegin, strBegin + atDown.getMgmtCovSize());
+      if (tmpStrCovtab.size()) {ctTmp.load(tmpStrCovtab); ct = ctTmp;}
+      strBegin += atDown.getMgmtCovSize();
 
       // Rebuild Reftable
       GlobalRefTable rtTmp;
-      std::string tmpStrReftab = std::string(tmpMgmtRecovery.begin() + atDown.getMgmtRefSize(), tmpMgmtRecovery.end());
-      if (tmpStrReftab.size()) rtTmp.load(tmpStrReftab);
-      rt = rtTmp;
+      std::string tmpStrReftab = std::string(strBegin, strBegin + atDown.getMgmtRefSize());
+      if (tmpStrReftab.size()) {rtTmp.load(tmpStrReftab); rt = rtTmp; }  
+
+      
+
+
+      rt.debug(sLog);
     } else {
       if(verbose) sLog << "Management recovery returned empty, this happens when accessing a virgin DM FW memory. Skip Grouptable and Covenant Table creation" << std::endl;
     }
@@ -285,7 +295,7 @@ namespace dnt = DotStr::Node::TypeVal;
     er.va.push_back(modAdrBase + T_META_GRPTAB_SIZE);
     er.va.push_back(modAdrBase + T_META_COVTAB_SIZE);
     er.va.push_back(modAdrBase + T_META_REFTAB_SIZE);
-    er.vcs += leadingOne(4);
+    er.vcs += leadingOne(va.size());
 
     vDl = ebd.readCycle(er.va, er.vcs);
     atDown.setMgmtLLstartAdr(writeBeBytesToLeNumber<uint32_t>((uint8_t*)&vDl[T_META_START_PTR]));

@@ -15,7 +15,7 @@ namespace Validation {
 
 
 
-  const children_t cNonMeta = {n::sTMsg, n::sCmdNoop, n::sCmdFlow, n::sOrigin, n::sStartThread, n::sSwitch, n::sCmdFlush, n::sCmdWait, n::sBlockFixed, n::sBlockAlign};
+  const children_t cNonMeta = {n::sTMsg, n::sCmdNoop, n::sCmdFlow, n::sOrigin, n::sStartThread, n::sSwitch, n::sCmdFlush, n::sCmdWait, n::sBlockFixed, n::sBlockAlign, n::sGlobal};
 ConstellationRule_set cRules;
 
 
