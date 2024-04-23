@@ -31,7 +31,7 @@ class TestAltDestinationLists(dm_testbench.DmTestbench):
     # create the nodes
     lines.append(f'Block{cpu}_0 [type=block patentry=1 patexit=1 qlo=1 tperiod={period:d}]')
     for i in range(numDestinations):
-      lines.append(f'Msg{cpu}_{i:04d} [par={i} evtno={i} toffs={offset*i:d}]')
+      lines.append(f'Msg{cpu}_{i:04d} [par={i} gid={numDestinations} evtno={i} toffs={offset*i:d}]')
     # create the edges
     lines.append(f'Block{cpu}_0 -> Msg{cpu}_0000')
     lines.append(f'Msg{cpu}_0000 -> Block{cpu}_0')
