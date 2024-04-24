@@ -61,16 +61,6 @@ elif [ "$DM_HOST" = "fel0069" ]
 then
   # echo 'Check kernel modules and CERN pci devices.'
   # sudo lspci -nn -vkd 10dc:
-  if  ssh root@fel0069.acc.gsi.de "grep -q jenkins@tsl021 .ssh/authorized_keys"
-  then
-    echo 'ssh ids already present.'
-  else
-    echo 'Copy ssh ids.'
-    ssh root@fel0069.acc.gsi.de "mkdir -p ~/.ssh/"
-    ssh root@fel0069.acc.gsi.de "tee -a ~/.ssh/authorized_keys" < ~/.ssh/id_ecdsa.pub
-    ssh root@fel0069.acc.gsi.de "tee -a ~/.ssh/authorized_keys" < ~/.ssh/id_ecdsa_521_jenkins_vmlb010.pub
-    ssh root@fel0069.acc.gsi.de "tee -a ~/.ssh/authorized_keys" < ~/.ssh/id_ecdsa_521_jenkins_tsl021.pub
-  fi
   if  ssh root@fel0069.acc.gsi.de "saft-ctl tr1 -j"
   then
     echo 'saft daemon for tr1 started.'

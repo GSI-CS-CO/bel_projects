@@ -16,7 +16,7 @@ class UnitTestDatamasterThreads(dm_testbench.DmTestbench):
       self.assertIn(count, range(1,len(self.patternNames)+1), f'Number of threads is {count}, not in {range(1,len(self.patternNames)+1)}')
       for i in range(count):
         self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'Pattern0_' + chr(self.patternNames[i]), '-t', str(i)), [0])
-      self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster), [0], 13 + count)
+      self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster), [0], 9 + self.cpuQuantity + count)
       self.checkRunningThreadsCmd()
       self.deleteFile(scheduleFile)
     else:

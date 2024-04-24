@@ -1,0 +1,7 @@
+digraph "patternA-remove" {
+  name="patternA-remove"
+  node [type=block cpu=1 pattern=Pattern_A style=filled fillcolor=white color=black]
+  "Pattern_A_BLOCK0_V0" [tperiod=100000000]
+  "Pattern_A_ALIGN_V0" [tperiod=0]
+  "Pattern_A_REPCOUNT_BLOCK_V0" [qlo=1]
+}

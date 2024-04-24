@@ -20,11 +20,12 @@ class AbortTests(dm_testbench.DmTestbench):
     # ~ self.printStdOutStdErr(lines)
     threads = self.listFromBits(thread, self.threadQuantity)
     cpus = self.listFromBits(cpu, self.cpuQuantity)
+    allCpuMask = self.maskFromList(range(self.cpuQuantity), self.cpuQuantity)
     for i in range(cpuCount):
       for j in range(threadCount):
         self.assertEqual(lines[0][i*threadCount+j], f'CPU {cpus[i]} Thread {threads[j]} aborted.', 'wrong output')
     # Check that the remaining threads are running
-    lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', '0xf', 'running'), [0], 4, 0)
+    lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', allCpuMask, 'running'), [0], self.cpuQuantity, 0)
     # ~ self.printStdOutStdErr(lines)
     # define the thread masks for 32 and 8 threads.
     if self.threadQuantity == 32:

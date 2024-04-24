@@ -16,10 +16,10 @@ class ClearCpuDiagTests(dm_testbench.DmTestbench):
     cpu = '0x3'
     thread = '0xaa'
     self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', f'{cpu}', '-t', f'{thread}', 'clearcpudiag'), [0], 0, 0)
-    lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', f'{cpu}', '-t', f'{thread}', 'diag'), [0], 56, 0)
+    lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', f'{cpu}', '-t', f'{thread}', 'diag'), [0], 32 + 6 * self.cpuQuantity, 0)
     expectedText = ['║   0 │ 1970-01-01 00:00:00.000000000   │          │          │                ? ║',
                     '║   1 │ 1970-01-01 00:00:00.000000000   │          │          │                ? ║']
-    for i in [15, 22]:
-      self.assertEqual(lines[0][i], expectedText[0], f'{i} wrong output, expected: ' + expectedText[0])
-      self.assertEqual(lines[0][i+1], expectedText[1], f'{i+1} wrong output, expected: ' + expectedText[1])
+    for i in [11 + self.cpuQuantity, 14 + 2 * self.cpuQuantity]:
+      self.assertEqual(lines[0][i], expectedText[0], f'line {i} wrong output, expected: ' + expectedText[0])
+      self.assertEqual(lines[0][i+1], expectedText[1], f'line {i+1} wrong output, expected: ' + expectedText[1])
     # ~ self.printStdOutStdErr(lines)

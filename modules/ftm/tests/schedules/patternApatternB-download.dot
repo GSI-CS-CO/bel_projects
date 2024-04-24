@@ -1,0 +1,16 @@
+digraph G {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+EXIT[cpu="1", flags="0x00708107", type="block", tperiod="100000000", pattern="A", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="true", qil="true", shape     = "rectangle", fillcolor = "green", penwidth=2, color = "purple"];
+ALIGN_V1[cpu="1", flags="0x00000107", type="block", tperiod="0", pattern="A", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green"];
+BLOCK0_V1[cpu="1", flags="0x00000107", type="block", tperiod="100000000", pattern="A", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green"];
+BLOCK1_V1[cpu="1", flags="0x00000107", type="block", tperiod="100000000", pattern="A", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green"];
+ENTRY[cpu="1", flags="0x00002107", type="block", tperiod="100000000", pattern="A", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green", penwidth=2, color = "darkorange3"];
+REPCOUNT_BLOCK_V1[cpu="1", flags="0x00100107", type="block", tperiod="0", pattern="A", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green"];
+ALIGN_V1->BLOCK0_V1 [type="defdst", color = "red"];
+BLOCK0_V1->BLOCK1_V1 [type="defdst", color = "red"];
+BLOCK1_V1->REPCOUNT_BLOCK_V1 [type="defdst", color = "red"];
+ENTRY->ALIGN_V1 [type="defdst", color = "red"];
+EXIT->ENTRY [type="defdst", color = "red"];
+REPCOUNT_BLOCK_V1->EXIT [type="defdst", color = "red"];
+}

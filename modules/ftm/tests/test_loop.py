@@ -17,6 +17,9 @@ class UnitTestLoop(dm_testbench.DmTestbench):
     if self.threadQuantity == 8:
       fileName0 = self.schedulesFolder + 'dynamic-loop-expected-0-1.txt'
       fileName1 = self.schedulesFolder + 'dynamic-loop-expected-1-1.txt'
+      if self.cpuQuantity == 3:
+        fileName0 = fileName0.replace('.txt', '-3cpu.txt')
+        fileName1 = fileName1.replace('.txt', '-3cpu.txt')
     else:
       fileName0 = self.schedulesFolder + 'dynamic-loop-expected-0-1-thread32.txt'
       fileName1 = self.schedulesFolder + 'dynamic-loop-expected-1-1-thread32.txt'
