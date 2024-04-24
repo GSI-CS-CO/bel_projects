@@ -265,11 +265,16 @@ mpsMsg_t* msgFetchMps(const uint64_t evt)
 /**
  * \brief store recieved MPS message
  *
+ * Store a received MPS message only if its timestamp is actual.
+ * The reason is that the NOK flag is transmitted 3 times
+ * with the same timestamp.
+ *
  * \param raw Raw MPS protocol (bits 63-16 = node ID, 15-8 = index, 7-0 = flag)
  * \param ts  Timestamp of the MPS protocol
  * \param itr Read-access iterator
  *
- * \return Offset to the MPS msg buffer if the received MPS msg is stored, otherwise negative integer
+ * \return Offset to the MPS msg buffer on reception of an actual MPS msg,
+ * or N_MPS_CHANNELS on reception of a repeated MPS msg, otherwise negative integer.
  **/
 int msgStoreMpsMsg(const uint64_t *raw, const uint64_t *ts, const timedItr_t* itr)
 {
@@ -281,11 +286,18 @@ int msgStoreMpsMsg(const uint64_t *raw, const uint64_t *ts, const timedItr_t* it
       idx = (uint8_t)(*raw >> 8);
       // MPS channel match
       if ((headBufMps+i)->prot.idx == idx) {
-        flag = (uint8_t)*raw;
-        (headBufMps+i)->pending = (headBufMps+i)->prot.flag ^ flag;
-        (headBufMps+i)->prot.flag = flag;
-        (headBufMps+i)->ttl = itr->ttl;
-        (headBufMps+i)->tsRx = *ts;
+        // new MPS msg
+        if (*ts != (headBufMps+i)->tsRx) {
+          flag = (uint8_t)*raw;
+          (headBufMps+i)->pending = (headBufMps+i)->prot.flag ^ flag;
+          (headBufMps+i)->prot.flag = flag;
+          (headBufMps+i)->ttl = itr->ttl;
+          (headBufMps+i)->tsRx = *ts;
+        }
+        else {
+          // repeated MPS msg
+          return N_MPS_CHANNELS;
+        }
         return i;
       }
     }

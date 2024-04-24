@@ -548,13 +548,21 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t
       case FBAS_WR_FLG:
         if (nodeType == FBAS_NODE_RX) { // FBAS RX generates MPS class 2 signals
           // store and handle received MPS flag
-          if ((offset = msgStoreMpsMsg(&ecaParam, &ecaDeadline, itr)) >= 0) {
-            // drive the assigned output port
-            ioDriveOutput((mpsMsg_t*)(*head + offset), offset);
+          offset = msgStoreMpsMsg(&ecaParam, &ecaDeadline, itr);
+          if (offset >= 0) {
+            // new MPS msg
+            if (offset < N_MPS_CHANNELS) {
+              // drive the assigned output port
+              if (ioDriveOutput((mpsMsg_t*)(*head + offset), offset) == COMMON_STATUS_OK) {
+                // measure the ECA handling delay
+                measureSummarize(MSR_ECA_HANDLE, ecaDeadline, now, DISABLE_VERBOSITY);
+                measureExportSummary(MSR_ECA_HANDLE, pSharedApp, FBAS_SHARED_MSG_DLY_AVG);
+              }
 
-            // measure the average messaging delay
-            measureSummarize(MSR_MSG_DLY, ecaDeadline, now, DISABLE_VERBOSITY);
-            measureExportSummary(MSR_MSG_DLY, pSharedApp, FBAS_SHARED_MSG_DLY_AVG);
+              // measure the average messaging delay
+              measureSummarize(MSR_MSG_DLY, ecaDeadline, now, DISABLE_VERBOSITY);
+              measureExportSummary(MSR_MSG_DLY, pSharedApp, FBAS_SHARED_MSG_DLY_AVG);
+            }
           }
 
           // count received timing messages with MPS flag or MPS event
