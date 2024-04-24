@@ -27,6 +27,7 @@ std::list<std::string> edgeTypes = {
     det::sCmdTarget,    det::sCmdFlowDst,
     det::sSwitchDst,  // Links to Switch's Target Block
     det::sCmdFlushOvr,  det::sMeta,           det::sAltDst,         det::sDefDst,         det::sBadDefDst, det::sOriginDst,
+    det::sRef,
 };
 
 int doTest(configuration& config) {
@@ -127,11 +128,11 @@ int doTest(configuration& config) {
 
 void usage(char* program) {
   std::cerr << "Usage: " << program << " [options]" << std::endl;
-  std::cerr << "Generate compinations of two nodes and an edge." << std::endl;
+  std::cerr << "Generate combinations of two nodes and an edge." << std::endl;
   std::cerr << "Options: " << std::endl;
   std::cerr << "        -h: help and usage." << std::endl;
   std::cerr << "        -s: do not generate meta nodes for priority queues." << std::endl;
-  std::cerr << "        -q: silent mode, no output, only return code. Usefull for automated tests." << std::endl;
+  std::cerr << "        -q: silent mode, no output, only return code. Useful for automated tests." << std::endl;
   std::cerr << "        -v: verbose output." << std::endl;
   std::cerr << "        -vv: super verbose, more output than verbose." << std::endl;
   std::cerr << "        -V: print version and exit." << std::endl;
@@ -144,7 +145,10 @@ void usage(char* program) {
 }
 
 void version(char* program) {
-  std::cerr << program << ", version 1.0.0" << std::endl;
+  std::cerr << program << ", version 1.1.0" << std::endl;
+  /* Version 1.0.0: 209 OK tests.
+   * Version 1.1.0: 219 OK tests, new: edge type 'reference'.
+   */
 }
 
 int main(int argc, char* argv[]) {

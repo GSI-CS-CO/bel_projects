@@ -53,6 +53,8 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, configuration& c
       g[v1].par = "0x0412099c00000000";
       g[v1].tef = "2068673551";
       flags = NFLG_TMSG_DYN_PAR1_SMSK;
+    } else if (edgeT.compare(det::sRef) == 0) {
+      g[v1].par = "0x00000000100009ac";
     } else {
       g[v1].par = "1";
       g[v1].tef = "0";
@@ -65,7 +67,7 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, configuration& c
     g[v1].tWait = "100";
   } else if (g[v1].type.compare(dnt::sStartThread) == 0) {
     g[v1].startOffs = "500";
-    g[v1].thread = "1";
+    g[v1].thread = "0x2";
   } else if (g[v1].type.compare(dnt::sBlock) == 0 || g[v1].type.compare(dnt::sBlockAlign) == 0) {
     flags=0x00100007;
     g[v1].tPeriod = "1000";
@@ -109,7 +111,7 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, configuration& c
     g[v2].tWait = "200";
   } else if (nodeT2.compare(dnt::sStartThread) == 0) {
     g[v2].startOffs = "500";
-    g[v2].thread = "1";
+    g[v2].thread = "0x2";
   } else if (nodeT2.compare(dnt::sBlock) == 0 || nodeT2.compare(dnt::sBlockAlign) == 0) {
     flags=0x00100007;
     g[v2].tPeriod = "1000";
@@ -122,7 +124,13 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, configuration& c
   flags |= NFLG_PAT_EXIT_LM32_SMSK;
   setNodePointer(&g[v2], nodeT2, flags);
   // connect v1 and v2 by an edge of type edgeT
-  boost::add_edge(v1, v2, myEdge(edgeT), g);
+  myEdge newEdge = myEdge(edgeT);
+  if (edgeT.compare(det::sRef) == 0) {
+    newEdge.fhead = "0x10";
+    newEdge.ftail = "0x14";
+    newEdge.bwidth = "64";
+  }
+  boost::add_edge(v1, v2, newEdge, g);
   // connect v1 and v2 by an edge of type defdst in some cases
   if ((g[v1].type.compare(dnt::sCmdFlow) == 0 || g[v1].type.compare(dnt::sTMsg) == 0) && 
       (g[v2].type.compare(dnt::sBlock) == 0 || g[v2].type.compare(dnt::sBlockAlign) == 0) && 

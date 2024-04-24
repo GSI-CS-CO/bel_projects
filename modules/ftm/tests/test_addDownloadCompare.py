@@ -173,6 +173,46 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-origin-dynpar1.dot')
     # ~ {{dnt::sTMsg, dnt::sOrigin, det::sDynPar1}, SingleEdgeTest::TEST_OK},
 
+  def test_aScheduleTmsgBlockReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-tmsg-block-reference.dot')
+    # ~ {{dnt::sTMsg, dnt::sBlock, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleTmsgBlockalignReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-tmsg-blockalign-reference.dot')
+    # ~ {{dnt::sTMsg, dnt::sBlockAlign, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleTmsgFlowReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-tmsg-flow-reference.dot')
+    # ~ {{dnt::sTMsg, dnt::sCmdFlow, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleTmsgFlushReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-tmsg-flush-reference.dot')
+    # ~ {{dnt::sTMsg, dnt::sCmdFlush, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleTmsgNoopReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-tmsg-noop-reference.dot')
+    # ~ {{dnt::sTMsg, dnt::sCmdNoop, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleTmsgOriginReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-tmsg-origin-reference.dot')
+    # ~ {{dnt::sTMsg, dnt::sOrigin, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleTmsgStartthreadReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-tmsg-startthread-reference.dot')
+    # ~ {{dnt::sTMsg, dnt::sStartThread, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleTmsgSwitchReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-tmsg-switch-reference.dot')
+    # ~ {{dnt::sTMsg, dnt::sSwitch, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleTmsgTmsgReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-tmsg-tmsg-reference.dot')
+    # ~ {{dnt::sTMsg, dnt::sTMsg, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleTmsgWaitReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-tmsg-wait-reference.dot')
+    # ~ {{dnt::sTMsg, dnt::sCmdWait, det::sRef}, SingleEdgeTest::TEST_OK},
+
   def test_aScheduleNoopBlockDefdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-noop-block-defdst.dot')
     # ~ {{dnt::sCmdNoop, dnt::sBlock, det::sDefDst}, SingleEdgeTest::TEST_OK},
