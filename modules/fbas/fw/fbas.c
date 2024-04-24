@@ -840,15 +840,15 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
                            uint32_t actStatus)          // actual status of firmware
 {
   uint32_t status;                                            // status returned by routines
-  uint32_t nUSeconds = 100;                                   // time period in microseconds
+  uint32_t usTimeout = 0;                                     // time-out in microseconds
   uint32_t action;                                            // ECA action tag
   mpsMsg_t* buf = pBufMpsMsg;                                 // pointer to MPS message buffer
   uint64_t now, last;                                         // used to measure the period of the main loop
 
   status = actStatus;
 
-  // action driven by ECA event, polls for nUSeconds [us]
-  action = handleEcaEvent(nUSeconds, pMpsTask, pRdItr, &buf);   // handle ECA event
+  // action driven by ECA event, blocking poll up to usTimeout [us]
+  action = handleEcaEvent(usTimeout, pMpsTask, pRdItr, &buf);   // handle ECA event
 
   // check periodic timer events
   if (mpsTask & TSK_MONIT_MPS_TTL)
@@ -866,7 +866,7 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
 
     case FBAS_NODE_TX:
       // transmit MPS flags (flags are sent in specified period, but events immediately)
-      // tx_period=1000000/(N_MPS_CHANNELS * F_MPS_BCAST) [us], tx_period(max) < nUSeconds
+      // tx_period=1000000/(N_MPS_CHANNELS * F_MPS_BCAST) [us], tx_period(max) < usTimeout
       if (*pMpsTask & TSK_TX_MPS_FLAGS) {
 
         // registration incomplete
