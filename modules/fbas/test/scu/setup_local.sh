@@ -586,13 +586,15 @@ start_nw_perf() {
 
     # info_nw_perf $n
 
+    param=0
+    offset_ns=0
     for i in $(seq $n); do
 
-        saft-ctl tr0 -p inject $evt_mps_flag_nok 0x0 0
+        saft-ctl tr0 inject $evt_mps_flag_nok $param $offset_ns
         echo -en " $i: NOK\r"
         sleep 1
 
-        saft-ctl tr0 -p inject $evt_mps_flag_ok 0x0 0
+        saft-ctl tr0 inject $evt_mps_flag_ok $param $offset_ns
         echo -en " $i:  OK\r"
         sleep 1
     done
