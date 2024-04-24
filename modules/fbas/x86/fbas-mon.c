@@ -63,7 +63,7 @@ eb_device_t device;
 eb_socket_t ebSocket;
 
 // statistics
-struct stats_s {
+struct stats_addr_s {
   uint32_t avg;             // location of the average value
   uint32_t min;             // location of the minimum value
   uint32_t max;             // location of the maximum value
@@ -97,14 +97,29 @@ struct shared_reg_s {
   uint32_t eca_vld;         // ECA valid counter
   uint32_t eca_ovf;         // ECA overflow counter
 
-  struct stats_s tx_dly;    // transmission delay (LEMO feedback), 64-bit
-  struct stats_s sg_lty;    // signalling latency (LEMO feedback), 64-bit
-  struct stats_s msg_dly;   // messaging delay, 64-bit
-  struct stats_s ttl_prd;   // TTL period, 64-bit
-  struct stats_s eca_hndl;  // ECA handling, 64-bit
-  struct stats_s ml_prd;    // main loop period, 64-bit
+  struct stats_addr_s tx_dly;    // transmission delay (LEMO feedback), 64-bit
+  struct stats_addr_s sg_lty;    // signalling latency (LEMO feedback), 64-bit
+  struct stats_addr_s msg_dly;   // messaging delay, 64-bit
+  struct stats_addr_s ttl_prd;   // TTL period, 64-bit
+  struct stats_addr_s eca_hndl;  // ECA handling, 64-bit
+  struct stats_addr_s ml_prd;    // main loop period, 64-bit
 
 } fbas_reg;
+
+struct stats_val_s {
+  uint64_t avg;             // average value
+  uint64_t min;             // minimum value
+  uint64_t max;             // maximum value
+};
+
+struct msr_s {
+  struct stats_val_s tx_dly;    // transmission delay (LEMO feedback), 64-bit
+  struct stats_val_s sg_lty;    // signalling latency (LEMO feedback), 64-bit
+  struct stats_val_s msg_dly;   // messaging delay, 64-bit
+  struct stats_val_s ttl_prd;   // TTL period, 64-bit
+  struct stats_val_s eca_hndl;  // ECA handling, 64-bit
+  struct stats_val_s ml_prd;    // main loop period, 64-bit
+} msr;                          // global for delay measurement statistics
 
 /**
  * @brief Exit on error
@@ -184,13 +199,13 @@ static void help(void)
   fprintf(stdout, "     '- WR lock: '1' signals 'TRACK_PHASE'\n");
   fprintf(stdout, "\n");
   fprintf(stdout, "Option '-r' is for snoopping the delay measurement and used together with '-s'.\n");
-  fprintf(stdout, " WR  | ECA [n(Hz)]                  |    ECA dl-ts [us]      | Delay measure [us]\n");
-  fprintf(stdout, "lock | nMessages ( rate )      late |    max    avg    (act) | TX : Sig : Msg\n");
-  fprintf(stdout, "   1 |        20 (   1.0)         1 | 723596 408577 (154601) | 32 : 35 : 0\n");
-  fprintf(stdout, "                                                               '    '    '\n");
-  fprintf(stdout, "                                                               '    '    '- avg messaging delay\n");
-  fprintf(stdout, "                                                               '    '- avg signalling latency\n");
-  fprintf(stdout, "                                                               '- avg transmission delay\n");
+  fprintf(stdout, " WR  | ECA [n(Hz)]                  |    ECA dl-ts [us]      | Delay avg/max [us]\n");
+  fprintf(stdout, "lock | nMessages ( rate )      late |    max    avg    (act) | TX : Msg : Sig : ML\n");
+  fprintf(stdout, "   1 |        20 (   1.0)         1 | 723596 408577 (154601) | 1/10 : 2/20 : 3/30: 4/40\n");
+  fprintf(stdout, "                                                               '      '      '     '- main loop\n");
+  fprintf(stdout, "                                                               '      '      '- signalling latency\n");
+  fprintf(stdout, "                                                               '      '- messaging delay\n");
+  fprintf(stdout, "                                                               '- transmission delay\n");
   fprintf(stdout, "\n");
   fprintf(stdout, "Report software bugs to <d.beck@gsi.de>\n");
   fprintf(stdout, "Version %s. Licensed under the LGPL v3.\n", FBASMON_VERSION);
@@ -249,7 +264,7 @@ void printStatsData(int snoopInterval, int snoopLockFlag, int64_t contMaxPosDT, 
 */
 static void printDelayMeasureHeader(void)
 {
-  fprintf(stdout, " WR  | ECA [n(Hz)]                  |    ECA dl-ts [us]      | Delay [us]\n");
+  fprintf(stdout, " WR  | ECA [n(Hz)]                  |    ECA dl-ts [us]      | Delay avg/max [us]\n");
   fprintf(stdout, "lock | nMessages ( rate )      late |    max    avg    (act) | TX : Msg : Sig : ML\n");
 }
 
@@ -258,7 +273,7 @@ static void printDelayMeasureHeader(void)
  *
 */
 static void printDelayMeasureData(int snoopInterval, int snoopLockFlag, uint64_t ecaNMessage, int64_t ecaMax, int64_t ecaDtSum, int ecaLate,
-                                  uint64_t avgTxDly, uint64_t avgSgLty, uint64_t avgMsgDly, uint64_t avgMlPrd)
+                                  const struct msr_s *msr)
 {
   int average;                        // total average (dl-ts)
   int averageAct;                     // actual average (dl-ts)
@@ -279,10 +294,12 @@ static void printDelayMeasureData(int snoopInterval, int snoopLockFlag, uint64_t
 
   fprintf(stdout, "%4d ", snoopLockFlag);
   if (ecaNMessage == 0)
-    fprintf(stdout, "| %9"PRIu64" (%6.1f) %9d | %6d %6d (%6d) | %ld : %ld : %ld : %ld", (uint64_t)0, 0.0, 0, 0, 0, 0, avgTxDly, avgMsgDly, avgSgLty, avgMlPrd);
+    fprintf(stdout, "| %9"PRIu64" (%6.1f) %9d | %6d %6d (%6d) | %ld/%ld : %ld/%ld : %ld/%ld : %ld/%ld", (uint64_t)0, 0.0, 0, 0, 0, 0,
+            msr->tx_dly.avg, msr->tx_dly.max, msr->msg_dly.avg, msr->msg_dly.max, msr->sg_lty.avg, msr->sg_lty.max, msr->ml_prd.avg, msr->ml_prd.max);
   else
-    fprintf(stdout, "| %9"PRIu64" (%6.1f) %9d | %6d %6d (%6d) | %ld : %ld : %ld : %ld", ecaNMessage, (double)nMessageAct/(double)snoopInterval,
-            ecaLate, (int)(ecaMax/1000), average, averageAct, avgTxDly, avgMsgDly, avgSgLty, avgMlPrd);
+    fprintf(stdout, "| %9"PRIu64" (%6.1f) %9d | %6d %6d (%6d) | %ld/%ld : %ld/%ld : %ld/%ld : %ld/%ld", ecaNMessage, (double)nMessageAct/(double)snoopInterval,
+            ecaLate, (int)(ecaMax/1000), average, averageAct,
+            msr->tx_dly.avg, msr->tx_dly.max, msr->msg_dly.avg, msr->msg_dly.max, msr->sg_lty.avg, msr->sg_lty.max, msr->ml_prd.avg, msr->ml_prd.max);
   fprintf(stdout, "\n");
   fflush(stdout);
 
@@ -376,6 +393,18 @@ uint32_t wb_init_shared_regs(const eb_device_t device, struct shared_reg_s *reg)
   reg->ttl_prd.avg  = reg->base + SHARED_OFFS + FBAS_SHARED_TTL_PRD_AVG;
   reg->eca_hndl.avg = reg->base + SHARED_OFFS + FBAS_SHARED_ECA_HNDL_AVG;
   reg->ml_prd.avg   = reg->base + SHARED_OFFS + FBAS_SHARED_ML_PRD_AVG;
+  reg->tx_dly.min   = reg->base + SHARED_OFFS + FBAS_SHARED_TX_DLY_MIN;
+  reg->sg_lty.min   = reg->base + SHARED_OFFS + FBAS_SHARED_SG_LTY_MIN;
+  reg->msg_dly.min  = reg->base + SHARED_OFFS + FBAS_SHARED_MSG_DLY_MIN;
+  reg->ttl_prd.min  = reg->base + SHARED_OFFS + FBAS_SHARED_TTL_PRD_MIN;
+  reg->eca_hndl.min = reg->base + SHARED_OFFS + FBAS_SHARED_ECA_HNDL_MIN;
+  reg->ml_prd.min   = reg->base + SHARED_OFFS + FBAS_SHARED_ML_PRD_MIN;
+  reg->tx_dly.max   = reg->base + SHARED_OFFS + FBAS_SHARED_TX_DLY_MAX;
+  reg->sg_lty.max   = reg->base + SHARED_OFFS + FBAS_SHARED_SG_LTY_MAX;
+  reg->msg_dly.max  = reg->base + SHARED_OFFS + FBAS_SHARED_MSG_DLY_MAX;
+  reg->ttl_prd.max  = reg->base + SHARED_OFFS + FBAS_SHARED_TTL_PRD_MAX;
+  reg->eca_hndl.max = reg->base + SHARED_OFFS + FBAS_SHARED_ECA_HNDL_MAX;
+  reg->ml_prd.max   = reg->base + SHARED_OFFS + FBAS_SHARED_ML_PRD_MAX;
 
   return COMMON_STATUS_OK;
 }
@@ -525,11 +554,6 @@ int main(int argc, char** argv) {
   uint32_t    ecaNLate;
   int32_t     ecaLateOffset;
   int         ecaSumEarly;
-  uint64_t    avgTxDly=0;
-  uint64_t    avgSgLty=0;
-  uint64_t    avgMsgDly=0;
-  uint64_t    avgMlPrd=0;
-
   int         link;
   uint32_t    uptime;
   int         syncState;
@@ -786,22 +810,29 @@ int main(int argc, char** argv) {
 
           // read average transmission delay, 32-bit data access
           if (wb_read_32(device, fbas_reg.tx_dly.avg, (uint32_t *)sumStat, 2) == COMMON_STATUS_OK)
-            avgTxDly = (sumStat[1] + (sumStat[0] << 32))/1000;    // ns->us
+            msr.tx_dly.avg = (sumStat[1] + (sumStat[0] << 32))/1000;    // ns->us
+          if (wb_read_32(device, fbas_reg.tx_dly.max, (uint32_t *)sumStat, 2) == COMMON_STATUS_OK)
+            msr.tx_dly.max = (sumStat[1] + (sumStat[0] << 32))/1000;    // ns->us
 
           // read average signalling latency
           if (wb_read_32(device, fbas_reg.sg_lty.avg, (uint32_t *)sumStat, 2) == COMMON_STATUS_OK)
-            avgSgLty = (sumStat[1] + (sumStat[0] << 32))/1000;    // ns->us
+            msr.sg_lty.avg = (sumStat[1] + (sumStat[0] << 32))/1000;    // ns->us
+          if (wb_read_32(device, fbas_reg.sg_lty.max, (uint32_t *)sumStat, 2) == COMMON_STATUS_OK)
+            msr.sg_lty.max = (sumStat[1] + (sumStat[0] << 32))/1000;    // ns->us
 
           // read average messaging delay
           if (wb_read_32(device, fbas_reg.msg_dly.avg, (uint32_t *)sumStat, 2) == COMMON_STATUS_OK)
-            avgMsgDly = (sumStat[1] + (sumStat[0] << 32))/1000;    // ns->us
+            msr.msg_dly.avg = (sumStat[1] + (sumStat[0] << 32))/1000;    // ns->us
+          if (wb_read_32(device, fbas_reg.msg_dly.max, (uint32_t *)sumStat, 2) == COMMON_STATUS_OK)
+            msr.msg_dly.max = (sumStat[1] + (sumStat[0] << 32))/1000;    // ns->us
 
           // read average period of the main loop
           if (wb_read_32(device, fbas_reg.ml_prd.avg, (uint32_t *)sumStat, 2) == COMMON_STATUS_OK)
-            avgMlPrd = (sumStat[1] + (sumStat[0] << 32))/1000;    // ns->us
+            msr.ml_prd.avg = (sumStat[1] + (sumStat[0] << 32))/1000;    // ns->us
+          if (wb_read_32(device, fbas_reg.ml_prd.max, (uint32_t *)sumStat, 2) == COMMON_STATUS_OK)
+            msr.ml_prd.max = (sumStat[1] + (sumStat[0] << 32))/1000;    // ns->us
 
-          printDelayMeasureData(snoopSecs, snoopLockFlag, ecaNMessage, ecaDtMax, ecaDtSum, ecaNLate,
-                                avgTxDly, avgSgLty, avgMsgDly, avgMlPrd);
+          printDelayMeasureData(snoopSecs, snoopLockFlag, ecaNMessage, ecaDtMax, ecaDtSum, ecaNLate, &msr);
         }
         else
           printStatsData(snoopSecs, snoopLockFlag, contMaxPosDT, contMaxNegDT, snoopStallMax, snoopStallAct,
