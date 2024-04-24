@@ -131,7 +131,8 @@ package monster_pkg is
       g_en_wd_tmr            : boolean := false;
       g_en_timer             : boolean := false;
       g_en_eca_tap           : boolean := false;
-      g_en_asmi              : boolean := false
+      g_en_asmi              : boolean := false;
+      g_en_psram_delay       : boolean := false
     );
     port(
       -- Required: core signals

@@ -126,7 +126,8 @@ entity monster is
     g_en_wd_tmr            : boolean;
     g_en_timer             : boolean;
     g_en_eca_tap           : boolean;
-    g_en_asmi              : boolean);
+    g_en_asmi              : boolean;
+    g_en_psram_delay       : boolean);
   port(
     -- Required: core signals
     core_clk_20m_vcxo_i    : in    std_logic;
@@ -696,6 +697,9 @@ architecture rtl of monster is
   signal wrc_master_o    : t_wishbone_master_out;
   signal s_eca_evt_m_i   : t_wishbone_master_in;
   signal s_eca_evt_m_o   : t_wishbone_master_out;
+
+  signal psram_slave_i   : t_wishbone_slave_in;
+  signal psram_slave_o   : t_wishbone_slave_out;
 
   signal eb_src_out    : t_wrf_source_out;
   signal eb_src_in     : t_wrf_source_in;
@@ -3142,24 +3146,58 @@ end generate;
     dev_bus_master_i(dev_slaves'pos(devs_psram)) <= cc_dummy_slave_out;
   end generate;
   psram_y : if g_en_psram generate
-    ram : psram
-      generic map(
-        g_bits => g_psram_bits)
-      port map(
-      clk_i     => clk_sys,
-      rstn_i    => rstn_sys,
-      slave_i   => dev_bus_master_o(dev_slaves'pos(devs_psram)),
-      slave_o   => dev_bus_master_i(dev_slaves'pos(devs_psram)),
-      ps_clk    => ps_clk,
-      ps_addr   => ps_addr,
-      ps_data   => ps_data,
-      ps_seln   => ps_seln,
-      ps_cen    => ps_cen,
-      ps_oen    => ps_oen,
-      ps_wen    => ps_wen,
-      ps_cre    => ps_cre,
-      ps_advn   => ps_advn,
-      ps_wait   => ps_wait);
+    no_psram_delay : if not g_en_psram_delay generate
+      ram : psram
+        generic map(
+          g_bits => g_psram_bits)
+        port map(
+        clk_i     => clk_sys,
+        rstn_i    => rstn_sys,
+        slave_i   => dev_bus_master_o(dev_slaves'pos(devs_psram)),
+        slave_o   => dev_bus_master_i(dev_slaves'pos(devs_psram)),
+        ps_clk    => ps_clk,
+        ps_addr   => ps_addr,
+        ps_data   => ps_data,
+        ps_seln   => ps_seln,
+        ps_cen    => ps_cen,
+        ps_oen    => ps_oen,
+        ps_wen    => ps_wen,
+        ps_cre    => ps_cre,
+        ps_advn   => ps_advn,
+        ps_wait   => ps_wait);
+      end generate;
+
+    extra_psram_delay : if g_en_psram_delay generate
+      psram_delay : xwb_register_link
+        generic map(
+          g_wb_adapter  => false)
+        port map(
+          clk_sys_i     => clk_sys,
+          rst_n_i       => rstn_sys,
+          slave_i       => dev_bus_master_o(dev_slaves'pos(devs_psram)),
+          slave_o       => dev_bus_master_i(dev_slaves'pos(devs_psram)),
+          master_i      => psram_slave_o,
+          master_o      => psram_slave_i);
+
+      ram : psram
+        generic map(
+          g_bits => g_psram_bits)
+        port map(
+        clk_i     => clk_sys,
+        rstn_i    => rstn_sys,
+        slave_i   => psram_slave_i,
+        slave_o   => psram_slave_o,
+        ps_clk    => ps_clk,
+        ps_addr   => ps_addr,
+        ps_data   => ps_data,
+        ps_seln   => ps_seln,
+        ps_cen    => ps_cen,
+        ps_oen    => ps_oen,
+        ps_wen    => ps_wen,
+        ps_cre    => ps_cre,
+        ps_advn   => ps_advn,
+        ps_wait   => ps_wait);
+      end generate;
   end generate;
 
   beam_dump_n : if not g_en_beam_dump generate
