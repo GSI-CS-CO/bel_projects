@@ -108,10 +108,6 @@ class AllocTable {
 
   AllocMeta_set a;
   MgmtMeta_set  m;
-
-  const RefLocation* rl;
-  GlobalRefTable* rt;
-
   std::vector<MemPool> vPool;
   const size_t payloadPerChunk = _MEM_BLOCK_SIZE - 1 - _PTR_SIZE_;
   uint32_t mgmtStartAdr;
@@ -136,6 +132,10 @@ public:
   AllocTable &operator=(const AllocTable &src);
 
   void cpyWithoutMgmt(AllocTable const &src);
+
+  const RefLocation* rl;
+  GlobalRefTable* rt;
+
 
   std::vector<MemPool>& getMemories() {return vPool;}
   void addMemory(uint8_t cpu, uint32_t extBaseAdr, uint32_t intBaseAdr, uint32_t peerBaseAdr, uint32_t sharedOffs, uint32_t space, uint32_t rawSize, uint32_t ctlSize) {vPool.push_back(MemPool(cpu, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize, ctlSize)); }

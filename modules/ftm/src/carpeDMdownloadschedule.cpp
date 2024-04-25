@@ -284,7 +284,60 @@ namespace dnt = DotStr::Node::TypeVal;
 
   }
 
-    //TODO assign to CPUs/threads
+  unsigned CarpeDM::CarpeDMimpl::recreateGlobalRefs() {
+    Graph& g = gDown;
+    AllocTable& at = atDown;
+
+    //we already recreated the reftable from the mamagement nodes we downloaded, Now, for each entry in rt, we create the global node and insert into atDown.
+    auto [rtBegin, rtEnd] = at.rt->getMapRange();
+    
+    for (auto it = rtBegin; it != rtEnd; it++) {
+      uint32_t tmpAdr, hash;
+      std::tie(tmpAdr, hash) = *it;
+      //We do not know the CPU yet. Analyse the address to get it.
+      auto [cpu, adrType] = at.adrClassification(tmpAdr);
+      //TODO this does not cover all possible address types
+      //If it is not an adress inside a CPUs shared space, throw an ex for now
+      if (adrType != AdrType::INT) {throw std::runtime_error( std::string("Error. GlobalReftable entry contains an address not part of the AdrType::INT"));}
+      
+      uint32_t adr = at.adrConv(adrType, AdrType::MGMT, cpu, tmpAdr);
+      RefLocationSearch rls = at.rl->getSearch(adr);
+      std::string section = rls.getLocName();
+
+      //To create the node, we need a few things from the group table. The hashmap has already been recreated.
+      //This is the same as for the normal nodes, but since globals are not part of the occupation bitmaps, we need to do it here
+      
+      std::string name  = hm.contains(hash) ? hm.lookup(hash) : DotStr::Misc::sHashType + stream.str();
+      auto xPat  = gt.getTable().get<Groups::Node>().equal_range(name);
+      std::string pattern   = (xPat.first != xPat.second ? xPat.first->pattern : DotStr::Misc::sUndefined);
+      auto xBp  = gt.getTable().get<Groups::Node>().equal_range(name);
+      std::string beamproc  = (xBp.first != xBp.second ? xPat.first->beamproc : DotStr::Misc::sUndefined);
+
+      //create node  
+      vertex_t v = boost::add_vertex(myVertex(name, pattern, beamproc, std::to_string(cpu), hash, nullptr, "", DotStr::Misc::sZero), g);
+      g[v].type     = dnt::sGlobal;
+      g[v].section  = rls->getLocName();    
+      g[v].bpEntry  = std::to_string(false);
+      g[v].bpExit   = std::to_string(false);
+      g[v].patEntry = std::to_string(false);
+      g[v].patExit  = std::to_string(false);
+
+      //allocate node
+       if (!(at.insert(cpu, adr, hash, v, false, true))) {
+        sLog << "Offending Global Node at: CPU " << (int)cpu << " 0x" << std::hex << adr << std::endl;
+        throw std::runtime_error( std::string("Hash or address collision when adding node ") + name);
+      };
+      
+      //add object
+      g[v].np = (node_ptr) new Global(g[v].name, g[v].patName, g[v].bpName, hash, cpu, 0, rls->getLocVal());
+
+      sLog << "Added Global Node " << name << " @ CPU #" << (int)cpu << " 0x" << std::hex << adr << std::endl;
+    }
+
+
+  }
+
+
 
   void CarpeDM::CarpeDMimpl::readMgmtLLMeta() {
     vEbrds er;
@@ -295,7 +348,7 @@ namespace dnt = DotStr::Node::TypeVal;
     er.va.push_back(modAdrBase + T_META_GRPTAB_SIZE);
     er.va.push_back(modAdrBase + T_META_COVTAB_SIZE);
     er.va.push_back(modAdrBase + T_META_REFTAB_SIZE);
-    er.vcs += leadingOne(va.size());
+    er.vcs += leadingOne(er.va.size());
 
     vDl = ebd.readCycle(er.va, er.vcs);
     atDown.setMgmtLLstartAdr(writeBeBytesToLeNumber<uint32_t>((uint8_t*)&vDl[T_META_START_PTR]));
@@ -344,9 +397,15 @@ namespace dnt = DotStr::Node::TypeVal;
 
     if(verbose) sLog << "Done." << std::endl << "Calling parser for Mgmt Meta" << std::endl ;
     readMgmtLLMeta(); // we have to do this before parsing
+      
+    
+
     if(verbose) sLog << "returned." << std::endl << "Calling parser for Mgmt Data" << std::endl ;
     parseDownloadMgmt(vDlD);
     if(verbose) sLog << "returned." << std::endl << "Calling parser for Download Meta" << std::endl ;
+
+    recreateGlobalRefs();
+
     parseDownloadData(vDlD);
     if(verbose) sLog << "returned." << std::endl;
 
