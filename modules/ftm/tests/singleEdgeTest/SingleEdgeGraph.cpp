@@ -7,7 +7,16 @@
 #include "graph.h"
 #include "meta.h"
 
-
+/*
+ * Add a new edge type - necessary modifications.
+ * 1. SingleEdgeTest.cpp: add the new edge type to std::list<std::string> edgeTypes
+ * 2. SingleEdgeTest.cpp: increase version number
+ * 3. SingleEdgeTables.cpp: add the good schedules to the map CategoryTestOkMap
+ * 4. SingleEdgeGraph.cpp: add attributes for the new edge type if needed
+ * 5. expected-result.txt: modify expected numbers
+ * 6. moveSchedules.sh: add new schedules
+ * 7. test_addDownloadCompare.py: add new tests and schedules for 32 threads
+ */
 
 std::map<std::string, int> nodeMap = {
     {dnt::sTMsg, NODE_TYPE_TMSG},
