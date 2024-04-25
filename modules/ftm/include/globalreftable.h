@@ -42,6 +42,8 @@ public:
 
     void clear() { m.clear(); }
 
+    std::pair<refIt, refIt> getMapRange() { return std::make_pair(m.begin(), m.end());}
+
     bool isOk(refIt it) const {return (it != m.end()); }
 
     void debug(std::ostream& os) {

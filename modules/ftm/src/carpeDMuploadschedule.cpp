@@ -103,7 +103,7 @@ using namespace DotStr::Misc;
     ew.va.push_back(modAdrBase + T_META_GRPTAB_SIZE);
     ew.va.push_back(modAdrBase + T_META_COVTAB_SIZE);
     ew.va.push_back(modAdrBase + T_META_REFTAB_SIZE);
-    ew.vcs += leadingOne(va.size());
+    ew.vcs += leadingOne(ew.va.size());
     ew.vb.insert( ew.vb.end(), b, b + 5 * _32b_SIZE_ );
 
 

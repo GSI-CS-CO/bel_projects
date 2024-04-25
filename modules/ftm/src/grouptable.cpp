@@ -41,6 +41,7 @@
     return x.first;
   }
 
+  //Todo Why all this mucking around? can't we unpack that stuff directly?
   vStrC GroupTable::getAllPatterns() {
     std::set<std::string> st;
     vStrC ret; // bad type really, but a little workaround with a set does it
@@ -52,4 +53,16 @@
     return ret;
 
   }
+
+  vStrC GroupTable::getAllNodes() {
+    vStrC ret;
+   
+    for (auto& it : a.get<Groups::Node>()) {
+      ret.push_back(it.pattern);
+    }
+    
+    return ret;
+
+  }
+
 

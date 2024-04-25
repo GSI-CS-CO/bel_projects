@@ -146,6 +146,7 @@ private:
   vBuf decompress(const vBuf& in);
 
   void readMgmtLLMeta();
+  unsigned recreateGlobalRefs();
 
 
   vEbwrs& setThrDeadline(vEbwrs& ew, uint8_t cpuIdx, uint8_t thrIdx, uint64_t t);
