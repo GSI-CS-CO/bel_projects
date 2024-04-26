@@ -37,19 +37,189 @@
 
 #include "timer.h"
 
-volatile uint32_t *wb_timer_preset;     // preset register of timer
-volatile uint32_t *wb_timer_config;     // config register of time
-volatile uint32_t *wb_timer_counter;    // counter of timer
-volatile uint32_t *wb_timer_ticklen;    // period of a counter tick
+static volatile uint32_t *wb_timer_preset;     // preset register (reload value on counter overflow)
+static volatile uint32_t *wb_timer_config;     // config register (bit0=1 count-down timer)
+static volatile uint32_t *wb_timer_counter;    // counter register
+static volatile uint32_t *wb_timer_ticklen;    // tick length register (ticklen = 1000/62.5 = 16 ns, 1 tick every 16 ns)
+static volatile uint32_t *wb_timer_ts_lo;      // timestamp low 32-bit (since timer start)
+static volatile uint32_t *wb_timer_ts_hi;      // timestamp high 32-bit
+
+static struct timer_s timers[N_TIMERS];        // software timers
+
+void timerInitTimers(void);
+void timerTickTimers(void);
+static void timerInit(struct timer_s *t, uint64_t period_ms);
+void timerStart(struct timer_s *t);
+void timerStop(struct timer_s *t);
+void timerUnregister(struct timer_s *t);
+struct timer_s * timerRegister(uint32_t period_ms);
+uint8_t timerIsExpired(struct timer_s *t);
 
 /**
- * \brief set up the timer
+ * \brief Initialize all timers
+*/
+void timerInitTimers(void)
+{
+  struct timer_s *t;
+
+  for (t = timers; t < &timers[N_TIMERS]; t++)
+  {
+    t->in_use = TIMER_UNREG;
+    t->running = TIMER_OFF;
+  };
+}
+
+/**
+ * \brief Tick all timers
+*/
+void timerTickTimers(void)
+{
+  struct timer_s *t;
+
+  for (t = timers; t < &timers[N_TIMERS]; t++)
+    if (t->running)
+      t->elapsed_ms++;
+}
+
+/**
+ * \brief Initialize a given timer
  *
- * \param preset timer interval in nanoseconds
+ * \param t  Target timer
+ * \param period_ms  Timer period, [ms]
+*/
+static void timerInit(struct timer_s *t, uint64_t period_ms)
+{
+  t->period_ms = period_ms;
+  t->elapsed_ms = 0;
+  t->running = TIMER_OFF;
+  t->in_use  = TIMER_UNREG;
+}
+
+/**
+ * \brief Start a given timer
  *
- * \ret status
+ * \param t Target timer
+*/
+void timerStart(struct timer_s *t)
+{
+  if (!t->in_use)
+    return;
+
+  t->elapsed_ms = 0;
+  t->running = TIMER_ON;
+}
+
+/**
+ * \brief Stop a given timer
+ *
+ * \param t Target timer
+*/
+void timerStop(struct timer_s *t)
+{
+  if (!t->in_use)
+    return;
+
+  t->running = TIMER_OFF;
+}
+
+/**
+ * \brief Release an active timer
+ *
+ * \param t Target timer
+*/
+void timerUnregister(struct timer_s *t)
+{
+  if (!t->in_use)
+    return;
+
+  t->in_use  = TIMER_UNREG;
+  t->running = TIMER_OFF;
+}
+
+/**
+ * \brief Declare new timer
+ *
+ * \param period_ms Timer period, [ms]
+*/
+struct timer_s * timerRegister(uint32_t period_ms)
+{
+  struct timer_s *t;
+
+  for (t=timers; t<&timers[N_TIMERS]; t++) {
+    if (!t->in_use)
+      break;
+  }
+
+  // no timer is available
+  if (t == &timers[N_TIMERS]) {
+    return NULL;
+  }
+
+  timerInit(t, period_ms);
+  t->in_use = TIMER_REG;
+  return t;
+}
+
+/**
+ * \brief Check if a given timer expired
+ *
+ * \param t Target timer
+ * \return Non-zero if expired, otherwise zero
+*/
+uint8_t timerIsExpired(struct timer_s *t)
+{
+  if (t->running && (t->elapsed_ms >= t->period_ms)) {
+    t->running = TIMER_OFF;
+    return TIMER_EXPIRED;
+  }
+
+  return 0;
+}
+
+/**
+ * \brief Initialize the timer debug
+*/
+void timerInitDbg(struct timer_dbg_s *d)
+{
+  d->period.avg = 0;
+  d->period.min = 0;
+  d->period.max = 0;
+  d->last = 0;
+  d->cnt  = 0;
+}
+
+/**
+ * \brief Update the timer debug
+ *
+ * \param d Target timer debug
+ * \param now Actual syste time
+*/
+void timerUpdateDbg(struct timer_dbg_s *d, uint64_t now)
+{
+  int64_t elapsed;
+
+  if (d->last) {
+    elapsed = now - d->last;
+    d->period.avg = (elapsed + (d->cnt * d->period.avg)) / (d->cnt + 1);
+    d->cnt++;
+
+    if (elapsed > d->period.max)
+      d->period.max = elapsed;
+
+    if (elapsed < d->period.min || !d->period.min)
+      d->period.min = elapsed;
+  }
+
+  d->last = now;
+}
+
+/**
+ * \brief Set up the hardware timer
+ *
+ * \param interval_ns Timer interval, [ns]
+ * \return status OK on success, otherwise ERROR
  **/
-status_t setupTimer(uint32_t preset)
+status_t timerSetupHw(uint32_t interval_ns)
 {
   status_t status = COMMON_STATUS_OK;
 
@@ -60,8 +230,11 @@ status_t setupTimer(uint32_t preset)
     wb_timer_preset  = pCpuWbTimer + (WB_TIMER_PRESET >> 2);
     wb_timer_counter = pCpuWbTimer + (WB_TIMER_COUNTER >> 2);
     wb_timer_ticklen = pCpuWbTimer + (WB_TIMER_TICKLEN >> 2);
+    wb_timer_ts_lo   = pCpuWbTimer + (WB_TIMER_TIMESTAMP_LO >> 2);
+    wb_timer_ts_hi   = pCpuWbTimer + (WB_TIMER_TIMESTAMP_HI >> 2);
 
-    *wb_timer_preset = preset / *wb_timer_ticklen;
+    // set the preset value
+    *wb_timer_preset = interval_ns / *wb_timer_ticklen;
     DBPRINT3("WB timer preset %d\n", preset);
   }
   else {
@@ -73,13 +246,11 @@ status_t setupTimer(uint32_t preset)
 }
 
 /**
- * \brief start the timer
+ * \brief Enable the HW timer
  *
- * \param none
- *
- * \ret status
+ * \return OK on success, otherwise ERROR
  **/
-status_t startTimer()
+status_t timerEnableHw(void)
 {
   status_t status = COMMON_STATUS_OK;
 
@@ -96,13 +267,11 @@ status_t startTimer()
 }
 
 /**
- * \brief stop the timer
+ * \brief Disable the HW timer
  *
- * \param none
- *
- * \ret status
+ * \return OK on success, otherwise ERROR
  **/
-status_t stopTimer()
+status_t timerDisableHw(void)
 {
   status_t status = COMMON_STATUS_OK;
 
@@ -123,16 +292,13 @@ status_t stopTimer()
  *
  * Calculate time delay in handling the timer interrupt
  *
- * \param none
- *
- * \ret delay time delay in nanoseconds
+ * \return delay time delay in nanoseconds
  **/
-uint64_t getTimerIrqDelay()
+static uint64_t getTimerIrqDelay()
 {
   static uint32_t len    = 0x0;
   static uint32_t preset = 0x0;
 
-  uint64_t ts;
   uint64_t irqDelay;
 
   if (!len)    len    = *wb_timer_ticklen;         // read tick length [ns] of counter upon first run

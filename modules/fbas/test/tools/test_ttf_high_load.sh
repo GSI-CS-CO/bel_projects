@@ -68,4 +68,4 @@ sleep $sleep_sec  # wait for given seconds
 
 # disable MPX task of rxscu"
 timeout 20 sshpass -p "$userpasswd" ssh $username@$rxscu "source setup_local.sh && stop_test4 \$rx_node_dev && \
-    read_counters \$rx_node_dev $verbose && result_ow_delay \$rx_node_dev $verbose"
+    read_counters \$rx_node_dev $verbose && result_msg_delay \$rx_node_dev $verbose"

@@ -13,6 +13,7 @@ txscu=()                              # array with transmitter domain names
 fw_scu_def="fbas.scucontrol.bin"      # default LM32 FW for TX/RX SCUs
 fw_scu_multi="fbas16.scucontrol.bin"  # supports up to 16 MPS channels
 ssh_opts="-o StrictHostKeyChecking=no"   # no hostkey checking
+getopt_opts="u:p:t:r:n:eyvh"          # user options
 
 usage() {
 
@@ -26,6 +27,8 @@ usage() {
     echo "  -p <userpassd>         user password"
     echo "  -t <TX SCU>            transmitter SCU, by default $def_txscu_name"
     echo "  -r <RX SCU>            receiver SCU, by default $rxscu_name"
+    echo "  -n <MPS events>        number of MPS events, 10 by default"
+    echo "  -e                     exclude TTL measurement"
     echo "  -y                     'yes' to all prompts"
     echo "  -v                     verbosity for the measurement results"
     echo "  -h                     display this help and exit"
@@ -119,16 +122,20 @@ measure_nw_perf() {
     echo -e "start the measurements\n"
     output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && enable_mps \$rx_node_dev")
 
+    # use local script to print info
+    output=$(source $dir_name/../scu/setup_local.sh && info_nw_perf $events)
+    echo -e "$output\n"
+
     # enable simultaneous operation of TX nodes
     pids=()
     for i in ${!txscu[@]}; do
-        echo ${txscu[$i]}:
+        echo ${txscu[$i]}
 
         # enable MPS operation, start test => keep process ID
         output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@${txscu[$i]}" "source setup_local.sh && enable_mps \$tx_node_dev")
 
         # start test sub-process and keep its process ID
-        sshpass -p "$userpasswd" ssh $ssh_opts "$username@${txscu[$i]}" "source setup_local.sh && start_nw_perf" &
+        sshpass -p "$userpasswd" ssh $ssh_opts "$username@${txscu[$i]}" "source setup_local.sh && start_nw_perf $events" &
         pids[$i]=$!
     done
 
@@ -145,7 +152,12 @@ measure_nw_perf() {
     output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && disable_mps \$rx_node_dev")
 
     # report test result
-    echo -e "measurement stats: MPS signaling\n"
+    echo "measurement stats of MPS signaling"
+    if [ -z "$verbose" ]; then
+        echo -e "MPS node:       tx_cnt rx_vld rx_ovf\n"
+    else
+        echo
+    fi
 
     sum_tx_cnt=0
     for scu in ${txscu[@]}; do
@@ -167,24 +179,54 @@ measure_nw_perf() {
 
     result="received $rx_cnt of $sum_tx_cnt"
     if [ $rx_cnt -eq $sum_tx_cnt ]; then
-	echo PASS: $result
+	echo -e "PASS: $result\n"
     else
-	echo FAIL: $result
+	echo -e "FAIL: $result\n"
     fi
 
+    # print measurement header
+    if [ -z "$verbose" ]; then
+        echo -e "Delay:  avg min max [us] vld all [])\n"
+        # declare measurement entries
+        tx_delay_entries=("sig lty" "tx  dly" "mps hdl")
+        rx_delay_entries=("msg dly" "ttl    " "eca hdl")
+    fi
+
+    i=0
     for scu in ${txscu[@]}; do
         echo "TX (${scu%%.*}):"
+
+        # read command output line by line
         sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" \
             "source setup_local.sh && \
             result_sg_latency \$tx_node_dev $verbose && \
-            result_tx_delay \$tx_node_dev $verbose"
+            result_tx_delay \$tx_node_dev $verbose && \
+            result_eca_handle \$tx_node_dev $verbose" |
+        while IFS= read -r line; do
+            delay_entry="${tx_delay_entries[$i]}"
+            if [ -n "$delay_entry" ]; then
+                delay_entry=" $delay_entry:"
+            fi
+            echo "$delay_entry $line"
+            i=$((i + 1))
+        done
     done
 
+    i=0
     echo "RX (${rxscu%%.*}):"
     sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" \
         "source setup_local.sh && \
-        result_ow_delay \$rx_node_dev $verbose && \
-        result_ttl_ival \$rx_node_dev $verbose"
+        result_msg_delay \$rx_node_dev $verbose && \
+        result_ttl_ival \$rx_node_dev $verbose && \
+        result_eca_handle \$rx_node_dev $verbose" |
+    while IFS= read -r line; do
+        delay_entry="${rx_delay_entries[$i]}"
+        if [ -n "$delay_entry" ]; then
+            delay_entry=" $delay_entry:"
+        fi
+        echo "$delay_entry $line"
+        i=$((i +  1))
+    done
 }
 
 measure_ttl() {
@@ -217,18 +259,20 @@ measure_ttl() {
     sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && result_ttl_ival \$rx_node_dev \$addr_cnt1 $verbose"
 }
 
-unset username userpasswd option verbose
+unset username userpasswd events exclude_ttl auto verbose
 unset OPTIND
 
-while getopts 'hyu:p:vt:r:' c; do
+while getopts $getopt_opts c; do
     case $c in
-        h) usage; exit 0 ;;
         u) username=$OPTARG ;;
         p) userpasswd=$OPTARG ;;
-        y) option="auto" ;;
-        v) verbose="yes" ;;
         t) txscu_name+=("$OPTARG"); txscu+=("$OPTARG.$domain") ;;
         r) rxscu_name=$OPTARG; rxscu=$OPTARG.$domain ;;
+        n) events=$OPTARG ;;
+        e) exclude_ttl="exclude_ttl" ;;
+        y) auto="auto" ;;
+        v) verbose="yes" ;;
+        h) usage; exit 0 ;;
         *) usage; exit 1 ;;
     esac
 done
@@ -248,6 +292,11 @@ if [ ${#txscu_name[@]} -eq 0 ]; then
     txscu+=("$def_txscu_name.$domain")
 fi
 
+# set the number of events
+if [ -z "$events" ]; then
+    events=10
+fi
+
 echo -e "\n--- Step 1: set up nodes (RX=$rxscu_name, TX=${txscu_name[@]}) ---\n"
 setup_nodes
 
@@ -255,12 +304,16 @@ setup_nodes
 echo -e "\n--- Step 2: pre-check (RX=$rxscu_name, TX=${txscu_name[@]}) ---\n"
 pre_check
 
-if [ "$option" != "auto" ]; then
+if [ -z "$auto" ]; then
     user_approval
 fi
 
 echo -e "\n--- Step 3: measure network performance (RX=$rxscu_name, TX=${txscu_name[@]}) ---\n"
 measure_nw_perf
+
+if [ -n "$exclude_ttl" ]; then
+    exit 0
+fi
 
 # TTL measurement
 echo -e "\n--- Step 4: measure TTL (RX=$rxscu_name, TX=${txscu_name[@]}) ---\n"

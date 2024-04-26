@@ -98,7 +98,7 @@ main() {
         read_counters \$tx_node_dev $verbose"
     echo -n "RX: "
     timeout 20 sshpass -p "$userpasswd" ssh $username@$rxscu "source setup_local.sh && stop_test4 \$rx_node_dev && \
-        read_counters \$rx_node_dev $verbose && result_ow_delay \$rx_node_dev $verbose"
+        read_counters \$rx_node_dev $verbose && result_msg_delay \$rx_node_dev $verbose"
 }
 
 export -f report_check

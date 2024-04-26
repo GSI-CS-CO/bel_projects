@@ -37,166 +37,21 @@
 
 #include "measure.h"
 
-msrSumStats_t sumStats[msr_all] = {0};  // buffer for summary statistics
-msrCnt_t cnt[N_MSR_CNT] = {0};          // event and action counters
+struct outlierStat_s {
+  uint32_t threshold; // threshold, ns
+  uint32_t cnt;       // counts
+};
 
-/**
- * \brief store a timestamp
- *
- * Given timestamp is stored in shared memory location pointed by base + offset.
- *
- * \param base   base address of the user-defined u32 register set
- * \param offset offset in the register set that will store given timestamp
- * \param ts     timestamp
- *
- * \ret none
- **/
-void storeTimestamp(uint32_t* base, uint32_t offset, uint64_t ts)
-{
-  uint64_t* pSharedTs = (uint64_t *)(base + (offset >> 2));
+static struct outlierStat_s outlierStat[N_MSR_ITEMS] = {
+  {100000, 0},    // transmission delay, ns
+  {100000, 0},    // signalling latency, ns
+  {100000, 0},    // messaging delay, ns
+  {101000000, 0}, // TTL, ns
+  {10000, 0}      // ECA event handling, ns
+};
 
-  *pSharedTs = ts;
-}
-
-/**
- * \brief get the elapsed time
- *
- * Return an elapsed time, which is the difference of given system time and
- * timestamp stored in shared memory (pointed by base + offset).
- * The timestamp is updated then with the given system time.
- *
- * \param base   base address of the user-defined u32 register set
- * \param offset offset in the register set that stores timestamp needed for calculation
- * \param now    actual system time
- *
- * \ret time     elapsed time in nanosecond since last timestamp
- **/
-int64_t getElapsedTime(uint32_t* base, uint32_t offset, uint64_t now)
-{
-  uint64_t* pSharedTs = (uint64_t *)(base + (offset >> 2));
-
-  int64_t elapsed = now - *pSharedTs;
-
-  *pSharedTs = now;
-
-  return elapsed;
-}
-
-/**
- * \brief store timestamps to measure delays
- *
- * Store time points, at which an MPS event was detected and forwarded, in
- * shared memory:
- * - timestamp of MPS event detection is stored in a location pointed by base + offset
- * - timestamp of MPS event transmission is stored in next location.
- *
- * \param base   base address of the user-defined u32 register set
- * \param offset offset in the register set that will store given timestamps
- * \param now    timestamp of MPS event transmission (actual system time)
- * \param tsEca  timestamp of MPS event detection (ECA event deadline)
- *
- * \ret none
- **/
-void storeTsMeasureDelays(uint32_t* base, uint32_t offset, uint64_t now, uint64_t tsEca)
-{
-  uint32_t next = offset + _64b_SIZE;
-  uint64_t *pSharedTs = (uint64_t *)(base + (offset >> 2));
-  *pSharedTs = now;
-  *(pSharedTs + (next >> 2)) = tsEca;
-}
-
-/**
- * \brief measure network performance
- *
- * Transmission delay is defined by time-span that points the start of
- * transmission on TX node and completion of reception on RX node.
- * Signalling latency is determined by time-span that points the detection of
- * the MPS event on TX node and completion of signalling it back to the same TX node.
- *
- * The timestamps required to calculate time-spans are stored in shared memory:
- * - timestamp of MPS event transmission is stored in a location pointed by base + offset
- * - timestamp of MPS event detection is stored in next location
- *
- * \param base   base address of the user-defined u32 register set
- * \param offset offset in register set that stores timestamps
- * \param tag    ECA condition tag
- * \param flag   ECA late event flag
- * \param now    actual system time
- * \param tsEca  timestamp of TLU event detection (signalling MPS event back to generator)
- *
- * \ret none
- **/
-void measureNwPerf(uint32_t* base, uint32_t offset, uint32_t tag, uint32_t flag, uint64_t now, uint64_t tsEca, bool verbose)
-{
-  uint64_t *pSharedTs = (uint64_t *)(base + (offset >> 2));    // timestamp of MPS event transmission
-  uint64_t tmp64 = *(pSharedTs + ((offset + _64b_SIZE) >> 2)); // timestamp of MPS event detection
-
-  int64_t txDelay = tsEca - *pSharedTs;  // transmission delay
-  int64_t sgLatency = now - tmp64;       // signal latency
-  msrSumStats_t* pStats;
-
-  if (verbose)
-    DBPRINT2("txDly=%lli, sgLty=%lli\n", txDelay, sgLatency);
-
-  pStats = &sumStats[msr_tx_dly];
-  calculateSumStats(txDelay, pStats);
-
-  pStats = &sumStats[msr_sg_lty];
-  calculateSumStats(sgLatency, pStats);
-
-  // for details, elapsed time of other actions are also calculated
-  int64_t poll = now - tsEca;      // elapsed time to detect IO (TLU) event (RX->TX)
-  DBPRINT3("IO evt (tag %x, flag %x, ts %llu, now %llu, poll %lli)\n",
-      tag, flag, tsEca, now, poll);
-
-  poll = tmp64 - *pSharedTs;       // elapsed time to send MPS event (TX->RX)
-  DBPRINT3("MSP evt (detect %llu, send %llu, poll %lli)\n",
-      *pSharedTs, tmp64, poll);
-}
-
-/**
- * \brief print result of network performance measurement - transmission delay
- *
- * Average, minimum and maximum values of transmission delay are
- * printed to debug output (invoke eb-console $dev to get the debug output) and
- * written to a given location of the shared memory.
- *
- * \param base   base address of the shared memory
- * \param offset offset to the given location
- * \ret none
- **/
-void printMeasureTxDelay(uint32_t* base, uint32_t offset) {
-
-  uint64_t *pSharedReg64 = (uint64_t *)(base + (offset >> 2));
-  msrSumStats_t* pStats = &sumStats[msr_tx_dly];
-
-  DBPRINT2("txd @0x%08x avg=%llu min=%lli max=%llu cnt=%d/%d\n",
-      pSharedReg64,
-      pStats->avg, pStats->min, pStats->max,pStats->cntValid, pStats->cntTotal);
-
-  wrSumStats(pStats, pSharedReg64);
-}
-
-/**
- * \brief print result of network performance measurement - signalling latency
- *
- * Average, minimum and maximum of signalling latency are
- * printed to debug output (invoke eb-console $dev to get the debug output)
- *
- * \param none
- * \ret none
- **/
-void printMeasureSgLatency(uint32_t* base, uint32_t offset) {
-
-  uint64_t *pSharedReg64 = (uint64_t *)(base + (offset >> 2));
-  msrSumStats_t* pStats = &sumStats[msr_sg_lty];
-
-  DBPRINT2("sgl @0x%08x avg=%llu min=%lli max=%llu cnt=%d/%d\n",
-      pSharedReg64,
-      pStats->avg, pStats->min, pStats->max, pStats->cntValid, pStats->cntTotal);
-
-  wrSumStats(pStats, pSharedReg64);
-}
+static msrSumStats_t sumStats[N_MSR_ITEMS];  // buffer for summary statistics
+static msrCnt_t      cnt[N_MSR_CNT];         // event and action counters
 
 /**
  * \brief Count events
@@ -204,9 +59,9 @@ void printMeasureSgLatency(uint32_t* base, uint32_t offset) {
  * \param name   Counter name (listed in MSR_CNT)
  * \param value  Used to increment/initialize the counter
  *
- * \ret counter  Value
+ * \return Counter value
  **/
-uint32_t msrCnt(unsigned name, uint32_t value)
+uint32_t measureCountEvt(unsigned name, uint32_t value)
 {
   cnt[name].val += value;
 
@@ -214,14 +69,14 @@ uint32_t msrCnt(unsigned name, uint32_t value)
 }
 
 /**
- * \brief Set event counter
+ * \brief Set the specified event counter
  *
  * \param name   Counter name (listed in MSR_CNT)
  * \param value  Used to increment/initialize the counter
  *
- * \ret counter  Value
+ * \return Counter value
  **/
-uint32_t msrSetCnt(unsigned name, uint32_t value)
+uint32_t measureSetCounter(unsigned name, uint32_t value)
 {
   cnt[name].val = value;
 
@@ -229,96 +84,15 @@ uint32_t msrSetCnt(unsigned name, uint32_t value)
 }
 
 /**
- * \brief measure one-way delay
- *
- * The one-way delay (or end-to-end) is the time taken for a timing message
- * (with a MPS flag) to be transmitted across a network (a WRS switch) from
- * a TX node to a RX node.
- *
- * \param now   actual system time
- * \param ts    timestamp of MPS flag
- *
- * \ret none
- **/
-void measureOwDelay(uint64_t now, uint64_t ts, bool verbose)
-{
-  msrSumStats_t* pStats = &sumStats[msr_ow_dly];
-  int64_t owd = now - ts;  // one-way (end-to-end) delay
-  if (verbose)
-    DBPRINT2("owd=%lli\n", owd);
-
-  calculateSumStats(owd, pStats);
-}
-
-/**
- * \brief Measure the TTL period
- *
- * The TTL period is 101 ms, which corresponds for two lost timing messages.
- *
- * \param buf   Pointer to MPS message buffer
- *
- * \ret none
- **/
-void measureTtlInterval(mpsMsg_t* buf)
-{
-  int64_t interval;
-  uint64_t now = getSysTime();
-  msrSumStats_t* pStats = &sumStats[msr_ttl];
-
-  // measure time interval
-  if (!buf->ttl) {
-    interval = now - buf->tsRx;
-
-    calculateSumStats(interval, pStats);
-  }
-}
-
-/**
- * \brief print result of the one-way delay measurement
- *
- * \param base   base address of the shared memory
- * \param offset offset to the memory location
- * \ret none
- **/
-void printMeasureOwDelay(uint32_t* base, uint32_t offset) {
-
-  uint64_t *pSharedReg64 = (uint64_t *)(base + (offset >> 2));
-  msrSumStats_t* pStats = &sumStats[msr_ow_dly];
-
-  DBPRINT2("owd @0x%08x avg=%llu min=%lli max=%llu cnt=%d/%d\n",
-      pSharedReg64,
-      pStats->avg, pStats->min, pStats->max, pStats->cntValid, pStats->cntTotal);
-
-  wrSumStats(pStats, pSharedReg64);
-}
-
-/**
- * \brief print result of the TTL measurement
- *
- * \param base   base address of the shared memory
- * \param offset offset to the memory location
- * \ret none
- **/
-void printMeasureTtl(uint32_t* base, uint32_t offset) {
-
-  uint64_t *pSharedReg64 = (uint64_t *)(base + (offset >> 2));
-  msrSumStats_t* pStats = &sumStats[msr_ttl];
-
-  DBPRINT2("ttl @0x%08x avg=%llu min=%lli max=%llu cnt=%d/%d\n",
-      pSharedReg64,
-      pStats->avg, pStats->min, pStats->max, pStats->cntValid, pStats->cntTotal);
-
-  wrSumStats(pStats, pSharedReg64);
-}
-
-/**
  * \brief calculate summary statistics
+ *
+ * Calculate the moving average, minimum, and maximum values.
  *
  * \param value  measured value for calculation
  * \param pStats pointer to summary statistics buffer
  * \ret   count  total number of measurements
  **/
-uint32_t calculateSumStats(int64_t value, msrSumStats_t* pStats) {
+static uint32_t calculateSumStats(const int64_t value, msrSumStats_t *const pStats) {
 
     if (value > 0) {
       pStats->avg = (value + (pStats->cntValid * pStats->avg)) / (pStats->cntValid + 1);
@@ -335,15 +109,85 @@ uint32_t calculateSumStats(int64_t value, msrSumStats_t* pStats) {
 }
 
 /**
- * \brief write a specified summary statistics to a given memory location
+ * \brief Keep the start timestamp to measure the given item
  *
- * \param pStats       pointer to summary statistics (avg, min, max) buffer
- * \param pSharedReg64 address of the shared memory location (64-bit)
- * \ret none
+ * Given timestamp is kept to measure the elapsed time later.
+ *
+ * \param item   measured item
+ * \param ts     timestamp
  **/
-void wrSumStats(msrSumStats_t* pStats, uint64_t* pSharedReg64) {
+void measurePutTimestamp(msrItem_t item, uint64_t ts)
+{
+  sumStats[item].ts = ts;
+}
 
+/**
+ * \brief Return the start timestamp to measure the given item
+ *
+ * \param item   measured item
+ * \return timestamp
+ **/
+uint64_t measureGetTimestamp(msrItem_t item)
+{
+  return sumStats[item].ts;
+}
+
+/**
+ * \brief Summarize the measured item
+ *
+ * Summarize the measured item (calculate moving averag, find the minimum,
+ * maximum, outlier values, and count measurements).
+ *
+ * \param item    measured item
+ * \param from    start timestamp
+ * \param now     actual timestamp (or system time)
+ * \param verbose verbosity flag
+*/
+void measureSummarize(msrItem_t item, uint64_t from, uint64_t now, verbosity_t verbose) {
+
+  int64_t period = now - from;  // calculate the time period
+  if (verbose)
+    DBPRINT2("%d: %lli\n", item, period);
+
+  // calculate and store the summed average
+  calculateSumStats(period, &sumStats[item]);
+
+  // count outliers
+  if (period > outlierStat[item].threshold)
+    ++outlierStat[item].cnt;
+}
+
+/**
+ * \brief Print the measurement statistics of the given item
+ *
+ * Print the measurement statistics of the given item to the WR console
+ *
+ * \param item    measured item
+*/
+void measurePrintSummary(msrItem_t item) {
+  msrSumStats_t* pStats = &sumStats[item];
+
+  DBPRINT2("%d avg=%llu min=%lli max=%llu cnt=%lu/%lu\n",
+    item,
+    pStats->avg, pStats->min, pStats->max, pStats->cntValid, pStats->cntTotal);
+
+  DBPRINT2("lmt=%lu\n", outlierStat[item].cnt);
+}
+
+/**
+ * \brief Export the measurement summary statistics to the shared memory
+ *
+ * Export the measurement summary statistics (avg, min, max) to the given
+ * location of the shared memory.
+ *
+ * \param item    measured item
+ * \param base    base memory address
+ * \param offset  offset memory address
+*/
+void measureExportSummary(msrItem_t item, uint32_t* base, uint32_t offset) {
+  uint64_t *pSharedReg64 = (uint64_t *)(base + (offset >> 2));
   uint32_t *pSharedReg32;
+  msrSumStats_t* pStats = &sumStats[item];
 
   *pSharedReg64 = pStats->avg;
   *(++pSharedReg64) = pStats->min;
@@ -353,4 +197,27 @@ void wrSumStats(msrSumStats_t* pStats, uint64_t* pSharedReg64) {
   pSharedReg32 = (uint32_t *)pSharedReg64;
   *pSharedReg32 = pStats->cntValid;
   *(++pSharedReg32) = pStats->cntTotal;
+}
+
+/**
+ * \brief Clear the summary statistics
+ *
+ * \param verbose verbosity
+ *
+ * \return none
+*/
+void measureClearSummary(verbosity_t verbose) {
+  msrItem_t item;
+
+  for (item = 0; item < N_MSR_ITEMS; ++item) {
+    memset(&sumStats[item], 0, sizeof(msrSumStats_t));
+    outlierStat[item].cnt = 0;
+
+    if (verbose)
+      // implement in 2 calls, otherwise 'max' has garbage
+      DBPRINT2("%d @0x%p ", item, &sumStats[item]);
+      DBPRINT2("avg=%llu min=%lli max=%llu val=%lu all=%lu\n",
+        sumStats[item].avg, sumStats[item].min, sumStats[item].max,
+        sumStats[item].cntValid, sumStats[item].cntTotal);
+  }
 }

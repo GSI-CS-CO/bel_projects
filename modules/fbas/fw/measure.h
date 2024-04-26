@@ -9,8 +9,6 @@
 #include "fbas.h"
 #include "fbas_common.h"
 
-#define _64b_SIZE  8
-
 enum MSR_CNT {
   RX_EVT_CNT,
   TX_EVT_CNT,
@@ -26,6 +24,7 @@ struct msrCnt {
 
 typedef struct msrSumStats msrSumStats_t;
 struct msrSumStats {
+  uint64_t ts;           // start time of measurement
   uint64_t avg;          // cumulative moving average
   int64_t  min;          // minimum value
   uint64_t max;          // maximum value
@@ -33,45 +32,27 @@ struct msrSumStats {
   uint32_t cntTotal;     // number of total measurement
 };
 
-enum {
-  msr_tx_dly,  // transmission delay
-  msr_sg_lty,  // signalling latency
-  msr_ow_dly,  // one-way delay
-  msr_ttl,     // TTL threshold/interval
-  msr_all,
-};
-
-void storeTimestamp(uint32_t* reg, uint32_t offset, uint64_t ts);
-int64_t getElapsedTime(uint32_t* reg, uint32_t offset, uint64_t now);
-void storeTsMeasureDelays(uint32_t* base, uint32_t offset, uint64_t tsEca, uint64_t tsTx);
-void measureNwPerf(uint32_t* base, uint32_t offset, uint32_t tag, uint32_t flag, uint64_t now, uint64_t tsEca, bool verbose);
-void printMeasureTxDelay(uint32_t* base, uint32_t offset);
-void printMeasureSgLatency(uint32_t* base, uint32_t offset);
-void measureOwDelay(uint64_t now, uint64_t ts, bool verbose);
-void printMeasureOwDelay(uint32_t* base, uint32_t offset);
-void measureTtlInterval(mpsMsg_t* buf);
-void printMeasureTtl(uint32_t* base, uint32_t offset);
-uint32_t calculateSumStats(int64_t value, msrSumStats_t* pStats);
-void wrSumStats(msrSumStats_t* pStats, uint64_t* pSharedReg64);
-
 /**
- * \brief Count events
- *
- * \param name   Counter name (listed in MSR_CNT)
- * \param value  Used to increment/initialize the counter
- *
- * \ret counter  Value
- **/
-uint32_t msrCnt(unsigned name, uint32_t value);
+ * \brief List of measured items
+*/
+typedef enum MSR_ITEMS {
+  MSR_TX_DLY,  // transmission delay (requires feedback via LEMO cabling)
+  MSR_SG_LTY,  // signalling latency (requires feedback via LEMO cabling)
+  MSR_MSG_DLY, // messaging delay
+  MSR_TTL,     // TTL threshold/interval
+  MSR_ECA_HANDLE,    // ECA handling delay
+  MSR_MAIN_LOOP_PRD, // period of the main loop
+  N_MSR_ITEMS,
+} msrItem_t;
 
-/**
- * \brief Set event counter
- *
- * \param name   Counter name (listed in MSR_CNT)
- * \param value  Used to increment/initialize the counter
- *
- * \ret counter  Value
- **/
-uint32_t msrSetCnt(unsigned name, uint32_t value);
+void measurePutTimestamp(msrItem_t item, uint64_t ts);
+uint64_t measureGetTimestamp(msrItem_t item);
+void measureClearSummary(verbosity_t verbose);
+void measureSummarize(msrItem_t item, uint64_t from, uint64_t now, verbosity_t verbose);
+void measureExportSummary(msrItem_t item, uint32_t* base, uint32_t offset);
+void measurePrintSummary(msrItem_t item);
+
+uint32_t measureCountEvt(unsigned name, uint32_t value);
+uint32_t measureSetCounter(unsigned name, uint32_t value);
 
 #endif

@@ -113,6 +113,9 @@ start_test3() {
     cnt_dec=$(printf "%d" 0x$cnt)
     echo "MPS overflow msgs (RX): $cnt ($cnt_dec)"
 
+    echo -n "MPS event handling: "
+    read_measurement_results $tx_node_dev $instr_st_tx_mps_handle $addr_msr1 $verbosity
+
     echo -n "Transmission delay: "
     read_measurement_results $tx_node_dev $instr_st_tx_dly $addr_msr1 $verbosity
 

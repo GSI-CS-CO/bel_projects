@@ -52,21 +52,25 @@ enum DST_ADDR {
 typedef struct mpsProtocol mpsProtocol_t;
 struct mpsProtocol {
   uint8_t  addr[ETH_ALEN];  // Ethernet MAC addr
-  uint8_t  idx;             // index (0-127: MPS flag, 128-255: refer to index_t)
+  uint8_t  idx;             // index (0-127: MPS flag, 128-255: refer to regCmd_t)
   uint8_t  flag;            // MPS flag
 };
 
 // index field in the MPS protocol (for intern usage)
 typedef enum {
-  IDX_REG_REQ  = 128,       // registration request (by TX)
-  IDX_REG_RSP  = 129,       // registration response (by RX)
-  IDX_REG_EREQ = 192,       // extended registration request (with sender ID)
-  IDX_UNDEF                 // undefined
-} index_t;
+  REG_REQ  = 128,       // registration request (by TX)
+  REG_RSP  = 129,       // registration response (by RX)
+  REG_EREQ = 192,       // extended registration request (with sender ID)
+  REG_UNDEF             // undefined
+} regCmd_t;
 
 typedef struct mpsMsg mpsMsg_t;
 struct mpsMsg {
-  mpsProtocol_t prot;       // MPS protocol
+  union {
+    uint64_t      param;    // 'param' field of timing message
+    mpsProtocol_t prot;     // MPS protocol
+  };
+
   uint64_t tsRx;            // reception timestamp (RX)
   uint8_t  ttl;             // time-to-live (RX)
   uint8_t  pending;         // flag change indicator (RX)
@@ -81,5 +85,10 @@ struct timedItr {
   uint64_t period;   // time period between accesses
   uint8_t  ttl;      // TTL value used to evaluate validity
 };
+
+typedef enum VERBOSITY {
+  DISABLE_VERBOSITY = 0,
+  ENABLE_VERBOSITY
+} verbosity_t;
 
 #endif

@@ -6,9 +6,9 @@
 // ****************************************************************************************
 
 // set values for data supply
-#define FBAS_SHARED_SET_GID        (COMMON_SHARED_END          + _32b_SIZE_)       // GID of B2B Transfer ('EXTRING_B2B_...')
-#define FBAS_SHARED_SET_SID        (FBAS_SHARED_SET_GID        + _32b_SIZE_)       // sequence ID for B2B transfer
-#define FBAS_SHARED_SET_NODETYPE   (FBAS_SHARED_SET_SID        + _32b_SIZE_)       // FBAS node type
+#define FBAS_SHARED_BEGIN          (COMMON_SHARED_END          + _32b_SIZE_)       // begin of the app-spec region
+#define FBAS_SHARED_SET_ID         (FBAS_SHARED_BEGIN          + _32b_SIZE_)       // reserved
+#define FBAS_SHARED_SET_NODETYPE   (FBAS_SHARED_SET_ID         + _32b_SIZE_)       // FBAS node type
 #define FBAS_SHARED_SET_SBSLAVES   (FBAS_SHARED_SET_NODETYPE   + _32b_SIZE_)       // SCU bus slaves (bit1=slot1, 1-12)
 //get values
 #define FBAS_SHARED_GET_GID        (FBAS_SHARED_SET_SBSLAVES   + _32b_SIZE_)       // GID of B2B Transfer ('EXTRING_B2B_...')
@@ -33,15 +33,42 @@
 #define FBAS_SHARED_GET_AVG        (FBAS_SHARED_GET_TS6        + 2 * _32b_SIZE_)   // average (performance, delay measurements)
 #define FBAS_SHARED_GET_MIN        (FBAS_SHARED_GET_AVG        + 2 * _32b_SIZE_)   // min
 #define FBAS_SHARED_GET_MAX        (FBAS_SHARED_GET_MIN        + 2 * _32b_SIZE_)   // max
-#define FBAS_SHARED_GET_VAL        (FBAS_SHARED_GET_MAX        + 2 * _32b_SIZE_)   // valid counts
-#define FBAS_SHARED_GET_ALL        (FBAS_SHARED_GET_VAL        + 2 * _32b_SIZE_)   // all/total counts
+#define FBAS_SHARED_GET_VLD        (FBAS_SHARED_GET_MAX        + 2 * _32b_SIZE_)   // valid counts
+#define FBAS_SHARED_GET_ALL        (FBAS_SHARED_GET_VLD        + 2 * _32b_SIZE_)   // all/total counts
 #define FBAS_SHARED_ECA_VLD        (FBAS_SHARED_GET_ALL        + 2 * _32b_SIZE_)   // number of the valid actions output by ECA
 #define FBAS_SHARED_ECA_OVF        (FBAS_SHARED_ECA_VLD        + _32b_SIZE_)       // number of the overflow actions output by ECA
 #define FBAS_SHARED_SENDERID       (FBAS_SHARED_ECA_OVF        + _32b_SIZE_)       // location of valid sender ID that is passed to RX node
-#define FBAS_SHARED_GET_END        (FBAS_SHARED_SENDERID       + 2 * _32b_SIZE_)   // end of the 'get' region
-
-// diagnosis: end of used shared memory
-#define FBAS_SHARED_END            (FBAS_SHARED_GET_END)
+#define FBAS_SHARED_TX_DLY_AVG     (FBAS_SHARED_SENDERID       + 2 * _32b_SIZE_)   // transmission delay (LEMO feedback), avg
+#define FBAS_SHARED_TX_DLY_MIN     (FBAS_SHARED_TX_DLY_AVG     + 2 * _32b_SIZE_)   // min
+#define FBAS_SHARED_TX_DLY_MAX     (FBAS_SHARED_TX_DLY_MIN     + 2 * _32b_SIZE_)   // max
+#define FBAS_SHARED_TX_DLY_VLD     (FBAS_SHARED_TX_DLY_MAX     + 2 * _32b_SIZE_)   // valid count
+#define FBAS_SHARED_TX_DLY_ALL     (FBAS_SHARED_TX_DLY_VLD     + _32b_SIZE_)       // all/total count
+#define FBAS_SHARED_SG_LTY_AVG     (FBAS_SHARED_TX_DLY_ALL     + _32b_SIZE_)       // signalling latency (LEMO feedback), avg
+#define FBAS_SHARED_SG_LTY_MIN     (FBAS_SHARED_SG_LTY_AVG     + 2 * _32b_SIZE_)   // min
+#define FBAS_SHARED_SG_LTY_MAX     (FBAS_SHARED_SG_LTY_MIN     + 2 * _32b_SIZE_)   // max
+#define FBAS_SHARED_SG_LTY_VLD     (FBAS_SHARED_SG_LTY_MAX     + 2 * _32b_SIZE_)   // valid count
+#define FBAS_SHARED_SG_LTY_ALL     (FBAS_SHARED_SG_LTY_VLD     + _32b_SIZE_)       // all/total count
+#define FBAS_SHARED_MSG_DLY_AVG    (FBAS_SHARED_SG_LTY_ALL     + _32b_SIZE_)       // messaging delay, avg
+#define FBAS_SHARED_MSG_DLY_MIN    (FBAS_SHARED_MSG_DLY_AVG    + 2 * _32b_SIZE_)   // min
+#define FBAS_SHARED_MSG_DLY_MAX    (FBAS_SHARED_MSG_DLY_MIN    + 2 * _32b_SIZE_)   // max
+#define FBAS_SHARED_MSG_DLY_VLD    (FBAS_SHARED_MSG_DLY_MAX    + 2 * _32b_SIZE_)   // valid count
+#define FBAS_SHARED_MSG_DLY_ALL    (FBAS_SHARED_MSG_DLY_VLD    + _32b_SIZE_)       // all/total count
+#define FBAS_SHARED_TTL_PRD_AVG    (FBAS_SHARED_MSG_DLY_ALL    + _32b_SIZE_)       // TTL, avg
+#define FBAS_SHARED_TTL_PRD_MIN    (FBAS_SHARED_TTL_PRD_AVG    + 2 * _32b_SIZE_)   // min
+#define FBAS_SHARED_TTL_PRD_MAX    (FBAS_SHARED_TTL_PRD_MIN    + 2 * _32b_SIZE_)   // max
+#define FBAS_SHARED_TTL_PRD_VLD    (FBAS_SHARED_TTL_PRD_MAX    + 2 * _32b_SIZE_)   // valid count
+#define FBAS_SHARED_TTL_PRD_ALL    (FBAS_SHARED_TTL_PRD_VLD    + _32b_SIZE_)       // all/total count
+#define FBAS_SHARED_ECA_HNDL_AVG   (FBAS_SHARED_TTL_PRD_ALL    + _32b_SIZE_)       // ECA event handling, avg
+#define FBAS_SHARED_ECA_HNDL_MIN   (FBAS_SHARED_ECA_HNDL_AVG   + 2 * _32b_SIZE_)   // min
+#define FBAS_SHARED_ECA_HNDL_MAX   (FBAS_SHARED_ECA_HNDL_MIN   + 2 * _32b_SIZE_)   // max
+#define FBAS_SHARED_ECA_HNDL_VLD   (FBAS_SHARED_ECA_HNDL_MAX   + 2 * _32b_SIZE_)   // valid count
+#define FBAS_SHARED_ECA_HNDL_ALL   (FBAS_SHARED_ECA_HNDL_VLD   + _32b_SIZE_)       // all/total count
+#define FBAS_SHARED_ML_PRD_AVG     (FBAS_SHARED_ECA_HNDL_ALL   + _32b_SIZE_)       // main loop period, avg
+#define FBAS_SHARED_ML_PRD_MIN     (FBAS_SHARED_ML_PRD_AVG     + 2 * _32b_SIZE_)   // min
+#define FBAS_SHARED_ML_PRD_MAX     (FBAS_SHARED_ML_PRD_MIN     + 2 * _32b_SIZE_)   // max
+#define FBAS_SHARED_ML_PRD_VLD     (FBAS_SHARED_ML_PRD_MAX     + 2 * _32b_SIZE_)   // valid count
+#define FBAS_SHARED_ML_PRD_ALL     (FBAS_SHARED_ML_PRD_VLD     + _32b_SIZE_)       // all/total count
+#define FBAS_SHARED_END            (FBAS_SHARED_ML_PRD_ALL     + _32b_SIZE_)       // end of the app-spec region
 
 // valid value for data fields in the MPS payload
 #define MPS_VID_FBAS     105   // VLAN ID for FBAS
@@ -85,10 +112,12 @@ typedef enum {
 #define FBAS_CMD_EN_MPS_FWD     0x30   // enable MPS signal forwarding
 #define FBAS_CMD_DIS_MPS_FWD    0x31   // disable MPS signal forwarding
 #define FBAS_CMD_PRINT_NW_DLY   0x32   // print result of network delay measurement
-#define FBAS_CMD_PRINT_OWD      0x33   // print result of one-way delay measurement
-#define FBAS_CMD_PRINT_SG_LTY   0x34   // print result of MSP signalling latency measurement
+#define FBAS_CMD_PRINT_MSG_DLY  0x33   // print the measurement result of messaging delay
+#define FBAS_CMD_PRINT_SG_LTY   0x34   // print result of MPS signalling latency measurement
 #define FBAS_CMD_PRINT_TTL      0x35   // print result of TTL interval measurement
-#define FBAS_CMD_PRINT_MPS_BUF  0x36   // print all MSP message relevant buffers
+#define FBAS_CMD_PRINT_MPS_BUF  0x36   // print all MPS message relevant buffers
+#define FBAS_CMD_PRINT_ECA_HANDLE  0x37   // print the measurement result of the ECA handling delay
+#define FBAS_CMD_CLR_SUM_STATS  0x38   // clear the summar statistics
 
 // mask bit for MPS-relevant tasks (up to 31)
 #define TSK_TX_MPS_FLAGS        0x10000000 // transmit MPS flags

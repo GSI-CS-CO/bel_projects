@@ -48,7 +48,7 @@ if scp -O $0 /dev/null &>/dev/null; then
     scp_opts+=" -O"
 fi
 
-res_header_wiki="| *msg period, [us]* | *msg rate, [KHz]* | *data rate, [Mbps]* | *valid msg* | *overflow msg* | *average one-way delay, [ns]* | *min one-way delay, [ns]* | *max one-way delay, [ns]* | *valid msr* | *total msr* | *overflow* |"
+res_header_wiki="| *msg period, [us]* | *msg rate, [KHz]* | *data rate, [Mbps]* | *valid msg* | *overflow msg* | *avg messaging delay, [ns]* | *min messaging delay, [ns]* | *max messaging delay, [ns]* | *valid msr* | *total msr* | *overflow* |"
 res_header_console="| t_period | msg rate | data rate | valid msg | ovf msg | average | min | max | valid msr | total msr | ovf |"
 
 # timing message rates that should be measured
@@ -276,7 +276,7 @@ for rate in ${all_msg_rates[*]}; do
     counts=$(timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" \
         "source setup_local.sh && \
         read_counters \$rx_node_dev && \
-        result_ow_delay \$rx_node_dev")
+        result_msg_delay \$rx_node_dev")
     ret_code=$?
     report_code $ret_code
     exit_on_fail $ret_code
@@ -316,7 +316,7 @@ for rate in ${all_msg_rates[*]}; do
         break
     fi
 
-    # break loop if the 'average one-way delay' is higher than 1 ms
+    # break loop if the 'average messaging delay' is higher than 1 ms
     avg_owd=$(echo "$counts" | cut -d' ' -f4)
     avg_owd=$(( 10#$avg_owd ))     # convert a string to integer
     if [ $avg_owd -gt 1000000 ]; then
