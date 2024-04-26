@@ -306,7 +306,9 @@ namespace dnt = DotStr::Node::TypeVal;
 
       //To create the node, we need a few things from the group table. The hashmap has already been recreated.
       //This is the same as for the normal nodes, but since globals are not part of the occupation bitmaps, we need to do it here
-      
+      std::stringstream stream;
+      stream.str(""); stream.clear();
+      stream << "0x" << std::setfill ('0') << std::setw(sizeof(uint32_t)*2) << std::hex << hash;
       std::string name  = hm.contains(hash) ? hm.lookup(hash) : DotStr::Misc::sHashType + stream.str();
       auto xPat  = gt.getTable().get<Groups::Node>().equal_range(name);
       std::string pattern   = (xPat.first != xPat.second ? xPat.first->pattern : DotStr::Misc::sUndefined);
@@ -316,7 +318,7 @@ namespace dnt = DotStr::Node::TypeVal;
       //create node  
       vertex_t v = boost::add_vertex(myVertex(name, pattern, beamproc, std::to_string(cpu), hash, nullptr, "", DotStr::Misc::sZero), g);
       g[v].type     = dnt::sGlobal;
-      g[v].section  = rls->getLocName();    
+      g[v].section  = rls.getLocName();    
       g[v].bpEntry  = std::to_string(false);
       g[v].bpExit   = std::to_string(false);
       g[v].patEntry = std::to_string(false);
@@ -329,7 +331,7 @@ namespace dnt = DotStr::Node::TypeVal;
       };
       
       //add object
-      g[v].np = (node_ptr) new Global(g[v].name, g[v].patName, g[v].bpName, hash, cpu, 0, rls->getLocVal());
+      g[v].np = (node_ptr) new Global(g[v].name, g[v].patName, g[v].bpName, hash, cpu, 0, g[v].section);
 
       sLog << "Added Global Node " << name << " @ CPU #" << (int)cpu << " 0x" << std::hex << adr << std::endl;
     }
