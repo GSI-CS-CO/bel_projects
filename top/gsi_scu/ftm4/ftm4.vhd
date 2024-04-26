@@ -231,6 +231,7 @@ begin
       g_lm32_are_ftm       => true,
       g_lm32_MSIs          => 1,
       g_en_tempsens        => false,
+      g_en_a10ts           => true,
       g_a10_use_sys_fpll   => false,
       g_a10_use_ref_fpll   => false,
       g_lm32_cores         => c_cores,

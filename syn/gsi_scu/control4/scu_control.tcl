@@ -8,3 +8,4 @@ source ../../../ip_cores/wr-cores/platform/altera/wr_arria10_phy/wr_arria10_scu4
 source ../../../modules/lvds/arria10_scu4/arria10_scu4_lvds.tcl
 source ../../../modules/remote_update/asmi10.tcl
 source ../../../modules/wb_arria_reset/arria10_reset.tcl
+source ../../../modules/a10ts/src/hdl/a10ts_generate.tcl

@@ -140,7 +140,7 @@ ARCHITECTURE arch_scu_sio3 OF scu_sio3 IS
 
 constant clk_sys_in_Hz: integer := 125_000_000;
 
-CONSTANT  c_Firmware_Version:            integer                   := 7;         -- important: => Firmware_Version
+CONSTANT  c_Firmware_Version:            integer                   := 8;         -- important: => Firmware_Version
 CONSTANT  c_Firmware_Release:            integer                   := 0;         -- important: => Firmware_Release
 CONSTANT  SCU_SIO2_ID:                   integer range 16#0200# to 16#020F# := 16#0200#;
 CONSTANT  stretch_cnt:                   integer                   := 5;

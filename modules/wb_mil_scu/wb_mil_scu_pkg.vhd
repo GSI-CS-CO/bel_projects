@@ -25,8 +25,8 @@ constant c_xwb_gsi_mil_scu : t_sdb_device := (
   product => (
   vendor_id     => x"0000000000000651", -- GSI
   device_id     => x"35aa6b96",
-  version       => x"00000002",
-  date          => x"20170907",
+  version       => x"00000003",
+  date          => x"20231211",
   name          => "GSI_MIL_SCU        ")));  -- should be 19 Char
 
 
@@ -74,8 +74,10 @@ constant  rd_wr_dly_timer_HW_a:     unsigned(15 downto 0)  := x"0011";  -- read 
                                                                         -- write event timer latch HW   wb_mil_scu_offset + 16#44#. 
 constant  wr_soft_reset_a:          unsigned(15 downto 0)  := x"0012";  -- wr softreset to wb_mil_scu   wb_mil_scu_offset + 16#48#.
 
-                                                        
-CONSTANT  ram_count:                integer                :=  254;     -- max 254: aktuelle Version, max 255 zukünftig bei Strahlendiagnosemode.
+constant  wr_rd_blk_length_a:       unsigned(15 downto 0)  := x"0013";  -- wr/rd block mode data0       wb_mil_scu_offset + 16#4C#.
+constant  rd_blk_fifo_cnt_a:        unsigned(15 downto 0)  := x"0014";  -- rd block mode fifo fill cnt  wb_mil_scu_offset + 16#50#.
+                                                      
+CONSTANT  ram_count:                integer                :=  255;     -- max 254: aktuelle Version, max 255 zukünftig bei Strahlendiagnosemode.
 CONSTANT  sio_mil_first_reg_a:      unsigned(15 downto 0)  :=  x"0400";
 CONSTANT  sio_mil_last_reg_a:       unsigned(15 downto 0)  :=  x"0440";
 CONSTANT  tx_taskram_first_adr:     unsigned(15 downto 0)  :=  x"0C01";

@@ -65,6 +65,7 @@ use work.wb_serdes_clk_gen_pkg.all;
 use work.io_control_pkg.all;
 use work.wb_pmc_host_bridge_pkg.all;
 use work.wb_temp_sense_pkg.all;
+use work.a10ts_pkg.all;
 use work.ddr3_wrapper_pkg.all;
 use work.endpoint_pkg.all;
 use work.cpri_phy_reconf_pkg.all;
@@ -119,12 +120,14 @@ entity monster is
     g_lm32_profiles        : string;
     g_lm32_are_ftm         : boolean;
     g_en_tempsens          : boolean;
+    g_en_a10ts             : boolean;
     g_delay_diagnostics    : boolean;
     g_en_eca               : boolean;
     g_en_wd_tmr            : boolean;
     g_en_timer             : boolean;
     g_en_eca_tap           : boolean;
-    g_en_asmi              : boolean);
+    g_en_asmi              : boolean;
+    g_en_psram_delay       : boolean);
   port(
     -- Required: core signals
     core_clk_20m_vcxo_i    : in    std_logic;
@@ -140,7 +143,9 @@ entity monster is
     core_rstn_wr_ref_o     : out   std_logic;
     core_rstn_butis_o      : out   std_logic;
     core_clk_200m_o        : out   std_logic;
+    core_clk_25m_o         : out   std_logic;
     core_clk_20m_o         : out   std_logic;
+    core_clk_10m_o         : out   std_logic;
     core_debug_o           : out   std_logic_vector(15 downto 0) := (others => 'Z');
     core_clk_debug_i       : in    std_logic;
     -- Required: white rabbit pins
@@ -166,6 +171,7 @@ entity monster is
     wr_ext_pps_i           : in    std_logic;
     wr_uart_o              : out   std_logic;
     wr_uart_i              : in    std_logic;
+    wr_pps_out_o           : out   std_logic;
     -- SFP
     sfp_tx_disable_o       : out   std_logic;
     sfp_tx_fault_i         : in    std_logic;
@@ -357,6 +363,7 @@ entity monster is
     ps_cre                 : out   std_logic := 'Z';
     ps_advn                : out   std_logic := 'Z';
     ps_wait                : in    std_logic;
+    ps_chip_selector       : out   std_logic_vector(3 downto 0);
     -- i2c
     i2c_scl_pad_i          : in  std_logic_vector(g_num_i2c_interfaces-1 downto 0);
     i2c_scl_pad_o          : out std_logic_vector(g_num_i2c_interfaces-1 downto 0) := (others => 'Z');
@@ -504,6 +511,7 @@ architecture rtl of monster is
     devs_DDR3_if2,
     devs_DDR3_ctrl,
     devs_tempsens,
+    devs_a10ts,
     devs_a10_phy_reconf,
     devs_i2c_wrapper,
     devs_eca_tap,
@@ -546,6 +554,7 @@ architecture rtl of monster is
     dev_slaves'pos(devs_DDR3_if2)       => f_sdb_auto_device(c_wb_DDR3_if2_sdb,                g_en_ddr3),
     dev_slaves'pos(devs_DDR3_ctrl)      => f_sdb_auto_device(c_irq_master_ctrl_sdb,            g_en_ddr3),
     dev_slaves'pos(devs_tempsens)       => f_sdb_auto_device(c_temp_sense_sdb,                 g_en_tempsens),
+    dev_slaves'pos(devs_a10ts)          => f_sdb_auto_device(c_a10ts_sdb,                      g_en_a10ts),
     dev_slaves'pos(devs_a10_phy_reconf) => f_sdb_auto_device(c_cpri_phy_reconf_sdb,            g_a10_en_phy_reconf),
     dev_slaves'pos(devs_i2c_wrapper)    => f_sdb_auto_device(c_i2c_wrapper_sdb,                g_en_i2c_wrapper),
     dev_slaves'pos(devs_eca_tap)        => f_sdb_auto_device(c_eca_tap_sdb,                    g_en_eca_tap),
@@ -627,6 +636,7 @@ architecture rtl of monster is
   signal rstn_sys         : std_logic;
   signal rstn_update      : std_logic;
   signal clk_200m         : std_logic;
+  signal clk_10m          : std_logic;
 
   -- Ref PLL from clk_125m_pllref_i
   signal ref_locked       : std_logic;
@@ -687,6 +697,9 @@ architecture rtl of monster is
   signal wrc_master_o    : t_wishbone_master_out;
   signal s_eca_evt_m_i   : t_wishbone_master_in;
   signal s_eca_evt_m_o   : t_wishbone_master_out;
+
+  signal psram_slave_i   : t_wishbone_slave_in;
+  signal psram_slave_o   : t_wishbone_slave_out;
 
   signal eb_src_out    : t_wrf_source_out;
   signal eb_src_in     : t_wrf_source_in;
@@ -1198,7 +1211,6 @@ begin
     inclk  => clk_ref1,
     outclk => clk_200m);
 
-
   clk_div: process(clk_ref0)
     variable cnt: integer := 0;
   begin
@@ -1211,6 +1223,22 @@ begin
       end if;
     end if;
   end process;
+
+  clk_div_200m_in_10m_out: process(rstn_ref, clk_200m)
+    variable cnt: integer := 0;
+  begin
+    if rstn_ref = '0' then
+      clk_10m <= '0';
+    elsif rising_edge(clk_200m) then
+      if cnt < 9 then
+        cnt := cnt + 1;
+      else
+        cnt := 0;
+        clk_10m <= not clk_10m;
+      end if;
+    end if;
+  end process;
+  core_clk_10m_o <= clk_10m;
 
   phase_clk : global_region port map( -- skew must match ref_clk
     inclk  => clk_ref2,
@@ -1246,6 +1274,8 @@ begin
   core_clk_sys_o     <= clk_sys;
   core_clk_200m_o    <= clk_200m;
   core_clk_20m_o     <= clk_20m;
+  core_clk_25m_o     <= clk_ref2;
+  wr_pps_out_o       <= pps;
 
   -- END OF Reset and PLLs
   ----------------------------------------------------------------------------------
@@ -2079,13 +2109,11 @@ end generate;
     phy : wr_arria10_transceiver
       generic map (
         g_family               => g_family,
-        g_use_atx_pll          => false,
-        g_use_cmu_pll          => true,
-        g_use_simple_wa        => true,
+        g_use_atx_pll          => true,
+        g_use_cmu_pll          => false,
+        g_use_simple_wa        => false,
         g_use_det_phy          => true,
         g_use_sfp_los_rst      => true,
-        g_use_tx_lcr_dbg       => false,
-        g_use_rx_lcr_dbg       => false,
         g_use_ext_loop         => true,
         g_use_ext_rst          => true)
       port map (
@@ -2126,13 +2154,11 @@ end generate;
       phy_aux : wr_arria10_transceiver
         generic map (
           g_family               => g_family,
-          g_use_atx_pll          => false,
-          g_use_cmu_pll          => true,
-          g_use_simple_wa        => true,
+          g_use_atx_pll          => true,
+          g_use_cmu_pll          => false,
+          g_use_simple_wa        => false,
           g_use_det_phy          => true,
           g_use_sfp_los_rst      => true,
-          g_use_tx_lcr_dbg       => false,
-          g_use_rx_lcr_dbg       => false,
           g_use_ext_loop         => true,
           g_use_ext_rst          => true)
         port map (
@@ -2309,6 +2335,7 @@ end generate;
       phy_aux_rst_o => wbar_phy_aux_rst,
       phy_dis_o     => wbar_phy_dis,
       phy_aux_dis_o => wbar_phy_aux_dis,
+      psram_sel_o   => ps_chip_selector,
       rstn_o        => s_lm32_rstn);
 
       wbar_phy_dis_o     <= wbar_phy_dis;
@@ -3119,24 +3146,58 @@ end generate;
     dev_bus_master_i(dev_slaves'pos(devs_psram)) <= cc_dummy_slave_out;
   end generate;
   psram_y : if g_en_psram generate
-    ram : psram
-      generic map(
-        g_bits => g_psram_bits)
-      port map(
-      clk_i     => clk_sys,
-      rstn_i    => rstn_sys,
-      slave_i   => dev_bus_master_o(dev_slaves'pos(devs_psram)),
-      slave_o   => dev_bus_master_i(dev_slaves'pos(devs_psram)),
-      ps_clk    => ps_clk,
-      ps_addr   => ps_addr,
-      ps_data   => ps_data,
-      ps_seln   => ps_seln,
-      ps_cen    => ps_cen,
-      ps_oen    => ps_oen,
-      ps_wen    => ps_wen,
-      ps_cre    => ps_cre,
-      ps_advn   => ps_advn,
-      ps_wait   => ps_wait);
+    no_psram_delay : if not g_en_psram_delay generate
+      ram : psram
+        generic map(
+          g_bits => g_psram_bits)
+        port map(
+        clk_i     => clk_sys,
+        rstn_i    => rstn_sys,
+        slave_i   => dev_bus_master_o(dev_slaves'pos(devs_psram)),
+        slave_o   => dev_bus_master_i(dev_slaves'pos(devs_psram)),
+        ps_clk    => ps_clk,
+        ps_addr   => ps_addr,
+        ps_data   => ps_data,
+        ps_seln   => ps_seln,
+        ps_cen    => ps_cen,
+        ps_oen    => ps_oen,
+        ps_wen    => ps_wen,
+        ps_cre    => ps_cre,
+        ps_advn   => ps_advn,
+        ps_wait   => ps_wait);
+      end generate;
+
+    extra_psram_delay : if g_en_psram_delay generate
+      psram_delay : xwb_register_link
+        generic map(
+          g_wb_adapter  => false)
+        port map(
+          clk_sys_i     => clk_sys,
+          rst_n_i       => rstn_sys,
+          slave_i       => dev_bus_master_o(dev_slaves'pos(devs_psram)),
+          slave_o       => dev_bus_master_i(dev_slaves'pos(devs_psram)),
+          master_i      => psram_slave_o,
+          master_o      => psram_slave_i);
+
+      ram : psram
+        generic map(
+          g_bits => g_psram_bits)
+        port map(
+        clk_i     => clk_sys,
+        rstn_i    => rstn_sys,
+        slave_i   => psram_slave_i,
+        slave_o   => psram_slave_o,
+        ps_clk    => ps_clk,
+        ps_addr   => ps_addr,
+        ps_data   => ps_data,
+        ps_seln   => ps_seln,
+        ps_cen    => ps_cen,
+        ps_oen    => ps_oen,
+        ps_wen    => ps_wen,
+        ps_cre    => ps_cre,
+        ps_advn   => ps_advn,
+        ps_wait   => ps_wait);
+      end generate;
   end generate;
 
   beam_dump_n : if not g_en_beam_dump generate
@@ -3154,7 +3215,6 @@ end generate;
   tempsens_n : if not g_en_tempsens generate
     dev_bus_master_i(dev_slaves'pos(devs_tempsens)) <= cc_dummy_slave_out;
   end generate;
-
   tempsens_y : if g_en_tempsens generate
     tempsens_display : wb_temp_sense
       port map (
@@ -3163,6 +3223,21 @@ end generate;
         slave_i    => dev_bus_master_o(dev_slaves'pos(devs_tempsens)),
         slave_o    => dev_bus_master_i(dev_slaves'pos(devs_tempsens)),
         clr_o      => tempsens_clr_out);
+  end generate;
+
+  a10ts_n : if not g_en_a10ts generate
+    dev_bus_master_i(dev_slaves'pos(devs_a10ts)) <= cc_dummy_slave_out;
+  end generate;
+  a10ts_y : if g_en_a10ts generate
+    a10ts_inst : a10ts
+      generic map (
+        g_use_ext_trigger => false)
+      port map (
+        clk_i      => clk_sys,
+        rst_n_i    => rstn_sys,
+        clk_20m_i  => clk_20m,
+        slave_i    => dev_bus_master_o(dev_slaves'pos(devs_a10ts)),
+        slave_o    => dev_bus_master_i(dev_slaves'pos(devs_a10ts)));
   end generate;
 
   i2c_wrapper_n : if not g_en_i2c_wrapper generate

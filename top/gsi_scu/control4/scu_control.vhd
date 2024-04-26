@@ -54,7 +54,7 @@ entity scu_control is
     ser1_txd          : in  std_logic;  -- RX/TX view from ComX
     nTHRMTRIP         : in  std_logic;
     WDT               : in  std_logic;
-    fpga_res_i        : in  std_logic; 
+    fpga_res_i        : in  std_logic;
     nSys_Reset        : in    std_logic;  -- Reset From ComX
 
     -----------------------------------------------------------------------
@@ -79,7 +79,7 @@ entity scu_control is
     -----------------------------------------------------------------------
     -- Misc.
     -----------------------------------------------------------------------
-    nFPGA_Res_Out     : out std_logic;  --Reset  Output
+    nFPGA_Res_Out : out std_logic;  --Reset  Output
     user_btn      : in    std_logic;  -- User Button
     avr_sda       : inout std_logic;  -- I2C Connection to AVR MCU
     avr_scl       : inout std_logic;  -- I2C Connection to AVR MCU
@@ -173,7 +173,7 @@ architecture rtl of scu_control is
   signal s_led_pps      : std_logic;
   signal s_lemo_led     : std_logic_vector (5 downto 0);
 
-  signal s_gpio_o    : std_logic_vector(10 downto 0);
+  signal s_gpio_o    : std_logic_vector(6 downto 0);
   signal s_lvds_p_i  : std_logic_vector(2 downto 0);
   signal s_lvds_n_i  : std_logic_vector(2 downto 0);
   signal s_lvds_p_o  : std_logic_vector(2 downto 0);
@@ -194,13 +194,16 @@ architecture rtl of scu_control is
   signal s_i2c_sda_pad_in   : std_logic_vector(1 downto 1);
   signal s_i2c_sda_padoen   : std_logic_vector(1 downto 1);
 
+  signal s_core_clk_25m     : std_logic;
+
   signal s_psram_cen        : std_logic;
+  signal s_psram_sel        : std_logic_vector(3 downto 0);
 
-  signal rstn_ref              : std_logic;
-  signal clk_ref               : std_logic;
+  signal rstn_ref           : std_logic;
+  signal clk_ref            : std_logic;
 
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 18) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 14) :=
   (
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
     ("LEMO_IN_0  ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
@@ -212,16 +215,12 @@ architecture rtl of scu_control is
     ("LEMO_OUT_1 ",  IO_NONE,         false,   false,  4,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LEMO_OUT_2 ",  IO_NONE,         false,   false,  5,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LEMO_OUT_3 ",  IO_NONE,         false,   false,  6,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("PSRAM_SEL_0",  IO_NONE,         false,   false,  7,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("PSRAM_SEL_1",  IO_NONE,         false,   false,  8,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("PSRAM_SEL_2",  IO_NONE,         false,   false,  9,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("PSRAM_SEL_3",  IO_NONE,         false,   false, 10,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("FAST_IN_0  ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
     ("FAST_IN_1  ",  IO_NONE,         false,   false,  1,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
     ("FAST_IN_2  ",  IO_NONE,         false,   false,  2,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
-    ("FAST_OUT_0 ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_LVDS,  false,        true,        IO_LVDS),
-    ("FAST_OUT_1 ",  IO_NONE,         false,   false,  1,     IO_OUTPUT,   IO_LVDS,  false,        true,        IO_LVDS),
-    ("FAST_OUT_2 ",  IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_LVDS,  false,        true,        IO_LVDS)
+    ("FAST_OUT_0 ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_LVDS,  false,        false,       IO_LVDS),
+    ("FAST_OUT_1 ",  IO_NONE,         false,   false,  1,     IO_OUTPUT,   IO_LVDS,  false,        false,       IO_LVDS),
+    ("FAST_OUT_2 ",  IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_LVDS,  false,        false,       IO_LVDS)
   );
 
   constant c_family       : string := "Arria 10 GX SCU4";
@@ -240,7 +239,7 @@ begin
       g_flash_bits         => 25, -- !!! TODO: Check this
       g_psram_bits         => c_psram_bits,
       g_gpio_in            => 2,
-      g_gpio_out           => 11,
+      g_gpio_out           => 7,
       g_lvds_in            => 3,
       g_lvds_out           => 3,
       g_en_user_ow         => true,
@@ -255,6 +254,7 @@ begin
       g_en_psram           => true,
       g_io_table           => io_mapping_table,
       g_en_tempsens        => false,
+      g_en_a10ts           => true,
       g_a10_use_sys_fpll   => false,
       g_a10_use_ref_fpll   => false,
       g_lm32_cores         => c_cores,
@@ -268,7 +268,8 @@ begin
       core_clk_125m_pllref_i  => clk_125m_tcb_pllref_i,
       core_clk_125m_local_i   => clk_125m_tcb_local_i,
       core_clk_125m_sfpref_i  => clk_125m_tcb_pllref_i,
-      core_clk_wr_ref_o      => clk_ref,
+      core_clk_25m_o          => s_core_clk_25m,
+      core_clk_wr_ref_o       => clk_ref,
       core_rstn_wr_ref_o      => rstn_ref,
       wr_onewire_io           => OneWire_CB,
       wr_sfp_sda_io           => sfp_mod2_io,
@@ -285,11 +286,10 @@ begin
       sfp_tx_fault_i          => sfp_tx_fault_i,
       sfp_los_i               => sfp_los_i,
       gpio_i                  => lemo_in,
-      gpio_o(10 downto 0)     => s_gpio_o(10 downto 0),
+      gpio_o(6 downto 0)      => s_gpio_o(6 downto 0),
       lvds_p_i                => s_lvds_p_i,
       lvds_n_i                => s_lvds_n_i,
       lvds_p_o                => s_lvds_p_o,
-      lvds_term_o             => s_lvds_term,
       led_link_up_o           => s_led_link_up,
       led_link_act_o          => s_led_link_act,
       led_track_o             => s_led_track,
@@ -311,12 +311,12 @@ begin
       pcie_rx_i               => pcie_rx_i,
       pcie_tx_o               => pcie_tx_o,
       -- I2C
-      i2c_scl_pad_i            => s_i2c_scl_pad_in,
-      i2c_scl_pad_o            => s_i2c_scl_pad_out,
-      i2c_scl_padoen_o         => s_i2c_scl_padoen,
-      i2c_sda_pad_i            => s_i2c_sda_pad_in,
-      i2c_sda_pad_o            => s_i2c_sda_pad_out,
-      i2c_sda_padoen_o         => s_i2c_sda_padoen,
+      i2c_scl_pad_i           => s_i2c_scl_pad_in,
+      i2c_scl_pad_o           => s_i2c_scl_pad_out,
+      i2c_scl_padoen_o        => s_i2c_scl_padoen,
+      i2c_sda_pad_i           => s_i2c_sda_pad_in,
+      i2c_sda_pad_o           => s_i2c_sda_pad_out,
+      i2c_sda_padoen_o        => s_i2c_sda_padoen,
       -- FX2 USB
       usb_rstn_o              => ures,
       usb_ebcyc_i             => pa(3),
@@ -332,24 +332,26 @@ begin
       usb_pktendn_o           => pa(6),
       usb_fd_io               => fd,
       -- PSRAM TODO: Multi Chip
-      ps_clk                 => psram_clk,
-      ps_addr                => psram_a,
-      ps_data                => psram_dq,
-      ps_seln(0)             => psram_lbn,
-      ps_seln(1)             => psram_ubn,
-      ps_cen                 => s_psram_cen,
-      ps_oen                 => psram_oen,
-      ps_wen                 => psram_wen,
-      ps_cre                 => psram_cre,
-      ps_advn                => psram_advn,
-      ps_wait                => psram_wait,
-      hw_version             => x"0000000" & not scu_cb_version);
+      ps_clk                  => psram_clk,
+      ps_addr                 => psram_a,
+      ps_data                 => psram_dq,
+      ps_seln(0)              => psram_lbn,
+      ps_seln(1)              => psram_ubn,
+      ps_cen                  => s_psram_cen,
+      ps_oen                  => psram_oen,
+      ps_wen                  => psram_wen,
+      ps_cre                  => psram_cre,
+      ps_advn                 => psram_advn,
+      ps_wait                 => psram_wait,
+      ps_chip_selector        => s_psram_sel,
+      hw_version              => x"0000000" & not scu_cb_version);
 
-  psram_cen(0) <= s_psram_cen when (s_gpio_o(7) = '1')  else '1';
-  psram_cen(1) <= s_psram_cen when (s_gpio_o(8) = '1')  else '1'; 
-  psram_cen(2) <= s_psram_cen when (s_gpio_o(9) = '1')  else '1'; 
-  psram_cen(3) <= s_psram_cen when (s_gpio_o(10) = '1') else '1'; 
- 
+  -- PSRAM -> This needs to be changed on the next revision
+  psram_cen(0) <= s_psram_cen when (s_psram_sel(0) = '1') else '1';
+  psram_cen(1) <= s_psram_cen when (s_psram_sel(1) = '1') else '1';
+  psram_cen(2) <= s_psram_cen when (s_psram_sel(2) = '1') else '1';
+  psram_cen(3) <= s_psram_cen when (s_psram_sel(3) = '1') else '1';
+
   -- LEDs
   wr_led_pps    <= s_led_pps;                                             -- white = PPS
   wr_rgb_led(0) <= s_led_link_act;                                        -- WR-RGB Red
@@ -386,7 +388,9 @@ begin
   OneWire_CB_splz   <= '1';  --Strong Pull-Up disabled
 
   --Extension Piggy
-  ext_ch(21 downto 19) <= s_lvds_term;
+  ext_ch(0) <= s_led_pps;
+  ext_ch(1) <= s_core_clk_25m;
+  ext_ch(21 downto 2) <= (others => 'Z');
 
   -- I2C to ATXMEGA
   avr_scl             <= s_i2c_scl_pad_out(1) when (s_i2c_scl_padoen(1) = '0') else 'Z';
@@ -397,10 +401,10 @@ begin
   -- Resets
   A_nReset    <= rstn_ref;
 
-    -- fixed scubus signals
-    ADR_TO_SCUB <= '1';
-    nADR_EN     <= '0';
-    A_Spare     <= (others => 'Z');
-    --A_OneWire   <= 'Z';
+  -- fixed scubus signals
+  ADR_TO_SCUB <= '1';
+  nADR_EN     <= '0';
+  A_Spare     <= (others => 'Z');
+  --A_OneWire   <= 'Z';
 
 end rtl;

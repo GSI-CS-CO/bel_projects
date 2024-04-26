@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<system name="$${FILENAME}">
+ <component
+   name="$${FILENAME}"
+   displayName="$${FILENAME}"
+   version="1.0"
+   description=""
+   tags="INTERNAL_COMPONENT=true"
+   categories="" />
+ <parameter name="bonusData"><![CDATA[bonusData 
+{
+   element temp_sense_0
+   {
+      datum _sortIndex
+      {
+         value = "0";
+         type = "int";
+      }
+   }
+}
+]]></parameter>
+ <parameter name="clockCrossingAdapter" value="HANDSHAKE" />
+ <parameter name="device" value="10AX027E3F29E2SG" />
+ <parameter name="deviceFamily" value="Arria 10" />
+ <parameter name="deviceSpeedGrade" value="2" />
+ <parameter name="fabricMode" value="QSYS" />
+ <parameter name="generateLegacySim" value="false" />
+ <parameter name="generationId" value="0" />
+ <parameter name="globalResetBus" value="false" />
+ <parameter name="hdlLanguage" value="VERILOG" />
+ <parameter name="hideFromIPCatalog" value="true" />
+ <parameter name="lockedInterfaceDefinition" value="" />
+ <parameter name="maxAdditionalLatency" value="1" />
+ <parameter name="projectName" value="" />
+ <parameter name="sopcBorderPoints" value="false" />
+ <parameter name="systemHash" value="0" />
+ <parameter name="testBenchDutName" value="" />
+ <parameter name="timeStamp" value="0" />
+ <parameter name="useTestBenchNamingPattern" value="false" />
+ <instanceScript></instanceScript>
+ <interface
+   name="corectl"
+   internal="temp_sense_0.corectl"
+   type="conduit"
+   dir="end">
+  <port name="corectl" internal="corectl" />
+ </interface>
+ <interface name="eoc" internal="temp_sense_0.eoc" type="conduit" dir="end">
+  <port name="eoc" internal="eoc" />
+ </interface>
+ <interface name="reset" internal="temp_sense_0.reset" type="conduit" dir="end">
+  <port name="reset" internal="reset" />
+ </interface>
+ <interface
+   name="tempout"
+   internal="temp_sense_0.tempout"
+   type="conduit"
+   dir="end">
+  <port name="tempout" internal="tempout" />
+ </interface>
+ <module
+   name="temp_sense_0"
+   kind="altera_temp_sense"
+   version="18.1"
+   enabled="1"
+   autoexport="1">
+  <parameter name="CBX_AUTO_BLACKBOX" value="ALL" />
+  <parameter name="CE_CHECK" value="false" />
+  <parameter name="CLK_FREQUENCY" value="1.0" />
+  <parameter name="CLOCK_DIVIDER_VALUE" value="40" />
+  <parameter name="CLR_CHECK" value="false" />
+  <parameter name="DEVICE_FAMILY" value="Arria 10" />
+  <parameter name="NUMBER_OF_SAMPLES" value="128" />
+  <parameter name="POI_CAL_TEMPERATURE" value="85" />
+  <parameter name="SIM_TSDCALO" value="0" />
+  <parameter name="USER_OFFSET_ENABLE" value="off" />
+  <parameter name="USE_WYS" value="on" />
+ </module>
+ <interconnectRequirement for="$system" name="qsys_mm.clockCrossingAdapter" value="HANDSHAKE" />
+ <interconnectRequirement for="$system" name="qsys_mm.enableEccProtection" value="FALSE" />
+ <interconnectRequirement for="$system" name="qsys_mm.insertDefaultSlave" value="FALSE" />
+ <interconnectRequirement for="$system" name="qsys_mm.maxAdditionalLatency" value="1" />
+</system>

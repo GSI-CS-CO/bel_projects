@@ -1,7 +1,6 @@
 #ifndef _DISP_H_
 #define _DISP_H_
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -67,7 +67,11 @@
 
 
 //-- Etherbone-Config --
+#ifdef META_TIMING
+#include "hw/etherbone-config.h"
+#else
 #include "../ip_cores/wrpc-sw/include/hw/etherbone-config.h"
+#endif
 // device ID
 #define ETHERBONE_CONFIG_VENDOR       	 WB_GSI      // vendor ID
 #define ETHERBONE_CONFIG_PRODUCT       	 0x68202b22  // product ID
@@ -140,7 +144,11 @@
 
 
 //-- ECA  --
+#ifdef META_TIMING
+#include "eca_regs.h"
+#else
 #include "../ip_cores/wr-cores/modules/wr_eca/eca_regs.h"
+#endif
 // device ID
 #define ECA_CTRL_VENDOR              WB_GSI              // vendor ID
 #define ECA_CTRL_PRODUCT             ECA_SDB_DEVICE_ID   // product ID

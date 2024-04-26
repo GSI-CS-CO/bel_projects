@@ -21,10 +21,8 @@ create_clock -period 125Mhz -name clk_125m_tcb_local_in  [get_ports {clk_125m_lo
 create_clock -period 125Mhz -name clk_125m_tcb_pllref_in [get_ports {clk_125m_pllref_i}]
 create_clock -period 125Mhz -name clk_125m_tcb_sfpref_in [get_ports {clk_125m_sfpref_i}]
 
-# Cut asynchronous reset paths (launch and latch clock sys to psram)
-set_false_path -from {monster:main|altera_reset:reset|nresets[1][0]} -to {monster:main|psram:\psram_y:ram|*}
-set_false_path -from {monster:main|altera_reset:reset|nresets[1][1]} -to {monster:main|psram:\psram_y:ram|*}
-set_false_path -from {monster:main|altera_reset:reset|nresets[1][2]} -to {monster:main|psram:\psram_y:ram|*}
+# Cut temperature sensor
+set_false_path -from {monster:main|a10ts:\a10ts_y:a10ts_inst|a10ts_ip:\ext_trigger_n:core_a10ts_ip|altera_temp_sense:temp_sense_0|*} -to {monster:main|a10ts:\a10ts_y:a10ts_inst|*}
 
 # Cut the clock domains from each other
 set_clock_groups -asynchronous \
@@ -38,6 +36,7 @@ set_clock_groups -asynchronous \
 -group [get_clocks {clk_125m_sfpref_i}] \
 -group [get_clocks {~ALTERA_CLKUSR~}] \
 -group [get_clocks {pcie_refclk_i}] \
+-group [get_clocks {altera_ts_clk}] \
 -group [get_clocks {main|\pcie_y:pcie|pcie_phy|\arria10gx_scu4:hip|pcie_a10_hip_0|coreclkout \
                     main|\pcie_y:pcie|pcie_phy|\arria10gx_scu4:hip|pcie_a10_hip_0|g_xcvr_native_insts[0]|pma_hclk_by2 \
                     main|\pcie_y:pcie|pcie_phy|\arria10gx_scu4:hip|pcie_a10_hip_0|g_xcvr_native_insts[0]|rx_clk \

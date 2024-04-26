@@ -54,12 +54,12 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use ieee.math_real.all;
 
-
 library work;
 use work.wishbone_pkg.all;
 use work.wb_arria_reset_pkg.all;
 use work.aux_functions_pkg.all;
 use work.monster_pkg.all;
+use work.gencores_pkg.all;
 
 library arria10_reset_altera_remote_update_181;
 use arria10_reset_altera_remote_update_181.arria10_reset_pkg.all;
@@ -80,12 +80,14 @@ entity wb_arria_reset is
     hw_version    : in std_logic_vector(31 downto 0);
 
     slave_o       : out t_wishbone_slave_out;
-    slave_i       : in t_wishbone_slave_in;
+    slave_i       : in  t_wishbone_slave_in;
 
     phy_rst_o     : out std_logic;
     phy_aux_rst_o : out std_logic;
     phy_dis_o     : out std_logic;
     phy_aux_dis_o : out std_logic;
+
+    psram_sel_o   : out std_logic_vector(3 downto 0);
 
     rstn_o        : out std_logic_vector(rst_channels-1 downto 0)
   );
@@ -103,6 +105,12 @@ architecture wb_arria_reset_arch of wb_arria_reset is
   signal phy_aux_rst      : std_logic;
   signal phy_dis          : std_logic;
   signal phy_aux_dis      : std_logic;
+  signal s_psram_sel      : std_logic_vector(3 downto 0);
+  signal phy_rst_sync     : std_logic;
+  signal phy_aux_rst_sync : std_logic;
+  signal phy_dis_sync     : std_logic;
+  signal phy_aux_dis_sync : std_logic;
+  signal s_psram_sel_sync : std_logic_vector(3 downto 0);
   constant cnt_value      : integer := 1000 * 60 * 10; -- 10 min with 1ms granularity
   constant cnt_width      : integer := integer(ceil(log2(real(cnt_value)))) + 1;
 begin
@@ -186,10 +194,12 @@ begin
   slave_o.err   <= '0';
   slave_o.stall <= '0';
 
-  phy_rst_o     <= phy_rst;
-  phy_aux_rst_o <= phy_aux_rst;
-  phy_dis_o     <= phy_dis;
-  phy_aux_dis_o <= phy_aux_dis;
+  phy_rst_o     <= phy_rst_sync;
+  phy_aux_rst_o <= phy_aux_rst_sync;
+  phy_dis_o     <= phy_dis_sync;
+  phy_aux_dis_o <= phy_aux_dis_sync;
+
+  psram_sel_o   <= s_psram_sel_sync;
 
   wb_reg: process(clk_sys_i)
   begin
@@ -204,6 +214,7 @@ begin
         phy_aux_rst <= '0';
         phy_dis     <= '0';
         phy_aux_dis <= '0';
+        s_psram_sel <= "0001";
         reset_reg   <= (others => '0');
       else
         retrg_wd <= '0';
@@ -235,6 +246,8 @@ begin
                 phy_aux_rst <= slave_i.dat(1);
                 phy_dis     <= slave_i.dat(2);
                 phy_aux_dis <= slave_i.dat(3);
+              when 6 =>
+                s_psram_sel <= slave_i.dat(3 downto 0);
               when others => null;
             end case;
           else -- read
@@ -243,6 +256,7 @@ begin
               when 2 => slave_o.dat <= hw_version;
               when 3 => slave_o.dat <= x"0000000" & "000" & not disable_wd;
               when 5 => slave_o.dat <= x"0000000" & phy_aux_dis & phy_dis & phy_aux_rst & phy_rst;
+              when 6 => slave_o.dat <= x"0000000" & s_psram_sel;
               when others => null;
             end case;
           end if;
@@ -251,4 +265,48 @@ begin
       end if; -- of sync reset
     end if; -- of rising_edge
   end process;
+
+  -- Try to avoid timing violations, these signals are used as outputs.
+  relax_phy_rst : gc_sync_ffs
+  port map (
+    clk_i    => clk_sys_i,
+    rst_n_i  => rstn_sys_i,
+    data_i   => phy_rst,
+    synced_o => phy_rst_sync
+  );
+
+  relax_aux_phy_rst : gc_sync_ffs
+  port map (
+    clk_i    => clk_sys_i,
+    rst_n_i  => rstn_sys_i,
+    data_i   => phy_aux_rst,
+    synced_o => phy_aux_rst_sync
+  );
+
+  relax_phy_dis : gc_sync_ffs
+  port map (
+    clk_i    => clk_sys_i,
+    rst_n_i  => rstn_sys_i,
+    data_i   => phy_dis,
+    synced_o => phy_dis_sync
+  );
+
+  relax_aux_phy_dis : gc_sync_ffs
+  port map (
+    clk_i    => clk_sys_i,
+    rst_n_i  => rstn_sys_i,
+    data_i   => phy_aux_dis,
+    synced_o => phy_aux_dis_sync
+  );
+
+  ps_ram_sel_generate : for index in 0 to 3 generate
+    ps_ram_sel_sync : gc_sync_ffs
+    port map (
+      clk_i    => clk_sys_i,
+      rst_n_i  => rstn_sys_i,
+      data_i   => s_psram_sel(index),
+      synced_o => s_psram_sel_sync(index)
+    );
+  end generate;
+
 end architecture;
