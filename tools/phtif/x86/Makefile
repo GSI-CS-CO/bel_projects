@@ -3,7 +3,7 @@
 # Example usage:
 #   'make PREFIX= all'                                                  (hack: leave PREFIX empty for SCU path)
 # Example deploy:
-#   'make PREFIX= STAGING=/common/export/timing-rte/XYZ deploy'         (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= STAGING=/whateverPath deploy'                         (hack: leave PREFIX empty for SCU path)
 PREFIX      ?= /usr/local
 STAGING     ?=
 ARCH        ?= x86_64
