@@ -26,17 +26,17 @@ class RefLocation {
     RefLocation() {};
     ~RefLocation(){};
 
-    void init(EbWrapper* ebd);
+    void init(EbWrapper* ebd, const uint32_t sharedOffs);
 
     RefLocationSearch getSearch(const std::string& sLoc, const std::string& sField) const;
     RefLocationSearch getSearch(uint32_t searchAdr) const;
 
     template<typename LeftType, typename RightType>
-    void printBimap(const boost::bimap<LeftType, RightType>& bm);
+    void printBimap(const boost::bimap<LeftType, RightType>& bm) const;
     
-    void showMemLocMap();
+    void showMemLocMap() const;
     
-    void showMemFieldMap();
+    void showMemFieldMap() const;
 
     MemLocMap getMlm() const { return mlm;}
     MemFieldMap getMfm() const { return mfm;}
