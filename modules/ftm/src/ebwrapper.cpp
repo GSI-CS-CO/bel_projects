@@ -220,7 +220,7 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
 
               atUp.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize, ctlSize );
             atDown.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize, ctlSize );
-                rl.init(this); //init a reflocation lookup table
+                rl.init(this, sharedOffs); //init a reflocation lookup table
             mappedIdx++;
             
           }

@@ -119,8 +119,10 @@ namespace dnt = DotStr::Node::TypeVal;
   int AllocTable::allocate(uint8_t cpu, uint32_t hash, vertex_t v, Graph& g, bool staged) {
     if(g[v].type == dnt::sGlobal) {
       RefLocationSearch rls = rl->getSearch(g[v].section, DotStr::Misc::sZero); 
-      uint32_t baseAdr = getMemories()[cpu].sharedOffs;
-      if (!(insert(cpu, baseAdr + rls.getLocVal(), hash, v, false, true)))  return ALLOC_ENTRY_EXISTS;
+      uint32_t tmpAdr = rls.getLocVal();
+      uint32_t adr = adrConv(AdrType::MGMT, AdrType::INT, cpu, tmpAdr);
+      
+      if (!(insert(cpu, adr, hash, v, false, true)))  return ALLOC_ENTRY_EXISTS;
     } else {
       uint32_t chunkAdr;
       if (cpu >= vPool.size()) { return ALLOC_NO_SPACE; }

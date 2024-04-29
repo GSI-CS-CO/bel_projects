@@ -100,10 +100,10 @@ namespace dnt = DotStr::Node::TypeVal;
     if(verbose) sLog << "Mgmt found " << std::dec << found << " data chunks. Total " << nodeCnt << " nodes scanned. Trying to recover GroupTable ..." << std::endl;
 
     // recover container
-    vBuf aux = atDown.recoverMgmt();
+    vBuf aux = at.recoverMgmt();
     vBuf tmpMgmtRecovery = decompress(aux);
 
-    if(verbose) sLog << "Bytes expected: " << std::dec << atDown.getMgmtTotalSize() << ", recovered: " << std::dec << aux.size() << std::endl << std::endl;
+    if(verbose) sLog << "Bytes expected: " << std::dec << at.getMgmtTotalSize() << ", recovered: " << std::dec << aux.size() << std::endl << std::endl;
     if (tmpMgmtRecovery.size()) {
       // Rebuild Grouptable
 
@@ -112,25 +112,26 @@ namespace dnt = DotStr::Node::TypeVal;
       auto strBegin = tmpMgmtRecovery.begin();
 
       GroupTable gtTmp;
-      std::string tmpStrGrouptab = std::string(strBegin, strBegin + atDown.getMgmtGrpSize());
+      std::string tmpStrGrouptab = std::string(strBegin, strBegin + at.getMgmtGrpSize());
       if (tmpStrGrouptab.size()) { gtTmp.load(tmpStrGrouptab); gt = gtTmp;}
       // Rebuild HashMap from Grouptable
       hm.clear();
       for(auto& it : gt.getTable()) {
         hm.add(it.node);
       }
-      strBegin += atDown.getMgmtGrpSize();
+      strBegin += at.getMgmtGrpSize();
 
       // Rebuild Covenanttable
 
       CovenantTable ctTmp;
-      std::string tmpStrCovtab = std::string(strBegin, strBegin + atDown.getMgmtCovSize());
+      std::string tmpStrCovtab = std::string(strBegin, strBegin + at.getMgmtCovSize());
       if (tmpStrCovtab.size()) {ctTmp.load(tmpStrCovtab); ct = ctTmp;}
-      strBegin += atDown.getMgmtCovSize();
+      strBegin += at.getMgmtCovSize();
 
       // Rebuild Reftable
       GlobalRefTable rtTmp;
-      std::string tmpStrReftab = std::string(strBegin, strBegin + atDown.getMgmtRefSize());
+      std::string tmpStrReftab = std::string(strBegin, strBegin + at.getMgmtRefSize());
+
       if (tmpStrReftab.size()) {rtTmp.load(tmpStrReftab); rt = rtTmp; }  
 
       
@@ -141,7 +142,7 @@ namespace dnt = DotStr::Node::TypeVal;
       if(verbose) sLog << "Management recovery returned empty, this happens when accessing a virgin DM FW memory. Skip Grouptable and Covenant Table creation" << std::endl;
     }
     // clean up - remove now obsolete management data (we need a fresh set anyway once upload data is set)
-    atDown.deallocateAllMgmt();
+    at.deallocateAllMgmt();
     // Tables and Pools match Bitmap again. As far as parseDownloadData is concerned, we were never here.
 
   }
@@ -289,20 +290,28 @@ namespace dnt = DotStr::Node::TypeVal;
     AllocTable& at = atDown;
 
     //we already recreated the reftable from the mamagement nodes we downloaded, Now, for each entry in rt, we create the global node and insert into atDown.
-    auto [rtBegin, rtEnd] = at.rt->getMapRange();
+    refIt rtBegin, rtEnd;
+    std::tie(rtBegin, rtEnd) = at.rt->getMapRange();
     
     for (auto it = rtBegin; it != rtEnd; it++) {
       uint32_t tmpAdr, hash;
       std::tie(tmpAdr, hash) = *it;
       //We do not know the CPU yet. Analyse the address to get it.
-      auto [cpu, adrType] = at.adrClassification(tmpAdr);
+      uint8_t cpu;
+      AdrType adrType;
+      std::tie(cpu, adrType) = at.adrClassification(tmpAdr);
       //TODO this does not cover all possible address types
       //If it is not an adress inside a CPUs shared space, throw an ex for now
+      sLog << "Global Node at: CPU " << (int)cpu << " 0x" << std::hex << tmpAdr << std::endl;
       if (adrType != AdrType::INT) {throw std::runtime_error( std::string("Error. GlobalReftable entry contains an address not part of the AdrType::INT"));}
       
       uint32_t adr = at.adrConv(adrType, AdrType::MGMT, cpu, tmpAdr);
-      RefLocationSearch rls = at.rl->getSearch(adr);
-      std::string section = rls.getLocName();
+      sLog << "Global Node converted Adr at: CPU " << (int)cpu << " 0x" << std::hex << adr << std::endl;
+      at.rl->showMemLocMap();
+      
+      std::string section = at.rl->getSearch(adr).getLocName();
+
+      sLog << "RLSearch: section " << section << std::endl;
 
       //To create the node, we need a few things from the group table. The hashmap has already been recreated.
       //This is the same as for the normal nodes, but since globals are not part of the occupation bitmaps, we need to do it here
@@ -315,10 +324,12 @@ namespace dnt = DotStr::Node::TypeVal;
       auto xBp  = gt.getTable().get<Groups::Node>().equal_range(name);
       std::string beamproc  = (xBp.first != xBp.second ? xPat.first->beamproc : DotStr::Misc::sUndefined);
 
+      sLog << "Found the following from hm and gt: name " << name << " pattern " << pattern << " beamprocs " << beamproc << std::endl;
+
       //create node  
       vertex_t v = boost::add_vertex(myVertex(name, pattern, beamproc, std::to_string(cpu), hash, nullptr, "", DotStr::Misc::sZero), g);
       g[v].type     = dnt::sGlobal;
-      g[v].section  = rls.getLocName();    
+      g[v].section  = section;    
       g[v].bpEntry  = std::to_string(false);
       g[v].bpExit   = std::to_string(false);
       g[v].patEntry = std::to_string(false);
