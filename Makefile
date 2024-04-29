@@ -239,6 +239,12 @@ ifeq ($(UNAME), x86_64)
 	$(MAKE) -C ip_cores/wrpc-sw SDBFS=$(PWD)/ip_cores/fpga-config-space/sdbfs/userspace clean
 endif
 
+phtif:
+	$(MAKE) -C tools/phtif
+
+phtif-clean:
+	$(MAKE) -C tools/phtif clean
+
 # #################################################################################################
 # Arria 2 devices
 # #################################################################################################
