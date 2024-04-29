@@ -55,3 +55,6 @@ jobs:
 
     - name: Install saftlib
       run: sudo make saftlib-install
+
+    - name: Build phtif
+      run: make phtif
