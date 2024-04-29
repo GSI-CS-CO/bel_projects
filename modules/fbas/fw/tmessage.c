@@ -258,7 +258,13 @@ mpsMsg_t* msgFetchMps(const uint64_t evt)
 
   // store MPS channel and MPS flag
   headBufMps->prot.idx = idx;
-  headBufMps->prot.flag = flag;
+
+  // map IO event to MPS event: 0->OK, 1->NOK
+  if (!flag)
+    headBufMps->prot.flag = MPS_FLAG_OK;
+  else
+    headBufMps->prot.flag = MPS_FLAG_NOK;
+
   return headBufMps;
 }
 

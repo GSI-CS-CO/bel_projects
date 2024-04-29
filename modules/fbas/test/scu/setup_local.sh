@@ -36,6 +36,7 @@ fi
 # Declare platform-specific variables
 case $platform in
     "PC")
+        export node_mps_input="IO1"
         export node_tlu_input="IO2"
         export tx_node_dev="dev/wbm0"  # label for node device
         export rx_node_dev="dev/wbm2"
@@ -48,6 +49,7 @@ case $platform in
         export fw_rx="fbas.pcicontrol.bin"
         ;;
     "SCU")
+        export node_mps_input="B1"
         export node_tlu_input="B2"
         export tx_node_dev="dev/wbm0"
         export rx_node_dev="dev/wbm0"
@@ -425,6 +427,10 @@ set_eca_rules() {
     if [ "$1" == "tx_node_dev" ]; then
         echo "configure ECA ($node_name): set FBAS_GEN_EVT ($evt_mps_flag_any) for LM32 channel, tag 0x42"
         saft-ecpu-ctl $node_name -c $evt_mps_flag_any $evt_id_mask 0 0x42 -d
+
+        # enable input as event source for TLU and re-direct its event (tag 0x42) to eCPU action channel
+        echo "configure TLU ($node_name): event '$evt_mps_flag_any' is generated on signal transition at $node_mps_input input"
+        saft-io-ctl $node_name -n $node_mps_input -b $evt_mps_flag_any
 
         echo "configure ECA ($node_name): listen for TLU event ($evt_tlu), tag 0x43"
         saft-ecpu-ctl $node_name -c $evt_tlu $evt_id_mask 0 0x43 -d
