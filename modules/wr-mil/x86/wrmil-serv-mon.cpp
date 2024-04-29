@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 19-Apr-2024
+ *  version : 24-Apr-2024
  *
  * monitors WR-MIL gateway
  *
@@ -571,6 +571,8 @@ int main(int argc, char** argv)
 
     MASP::StatusEmitter emitter(get_config());
     std::cout << "wr-mil: emmitting to MASP as sourceId: " << maspSourceId << ", using nomen: " << maspNomen << ", environment pro: " << maspProductive << std::endl;
+#else
+    std::cout << "wr-mil: no MASP emitter!" << std::endl;
 #endif // USEMASP
 
     // create software action sink

@@ -17,9 +17,9 @@ WRMILLIB    := libwrmillib.so
 include targetsysbuild.db
 
 # special
-# set MASP to YES, if dmunipz-ctl should function as status emitter to MASP (when in monitoring mode)
+# set MASP to YES, if wrmil-serv-mon should function as status emitter to MASP (when in monitoring mode)
 MASP        ?= NO              
-# set PRO to YES, if dmunipz-ctl should function as status emitter to MASP PRO(otherwise: MASP DEV)
+# set PRO to YES, if wrmil-servi-mon should function as status emitter to MASP PRO(otherwise: MASP DEV)
 PRO         ?= NO
 
 # stuff below required for MASP support
@@ -31,14 +31,14 @@ GSI_3RDPARTY_LOCATION ?= /opt/gsi/3rdparty
 BOOST_VERSION  = 1.54.0
 BOOST_HOME    ?= $(GSI_3RDPARTY_LOCATION)/boost/$(BOOST_VERSION)
 BOOST_INCL     = -isystem$(BOOST_HOME)/include
-BOOST_LIBPATH  = -L $(BOOST_HOME)/lib/$(ARCH)
+BOOST_LIBPATH  = -L$(BOOST_HOME)/lib$(ARCH)
 BOOST_LIBS     = -lboost_thread -lboost_system -lboost_atomic -lboost_chrono -lboost_filesystem -lboost_program_options
 
 
 MASP_VERSION   = 1.0.5
 MASP_DIR       = /common/usr/cscofe/opt/MASP/$(MASP_VERSION)
 MASP_INCL      = -I $(MASP_DIR)/include
-MASP_LIBPATH   = -L $(MASP_DIR)/lib/$(ARCH) 
+MASP_LIBPATH   = -L$(MASP_DIR)/lib$(ARCH) 
 MASP_LIBS      = -lmasp_emitter -lmasp_status -lmasp_core
 
 USEMASP        = -D USEMASP
@@ -68,7 +68,7 @@ $(info ours CXFLAGS for c++ code is $(CXFLAGS))
 
 TARGETS     := wrmil-ctl wrmil-serv-mon wrmil-client-mon
 
-all: lib $(TARGETS)
+all: $(TARGETS)
 
 wrmil-ctl: wrmil-ctl.c
 	$(CC) $(CFLAGS) $(CCFLAGS) -o wrmil-ctl wrmil-ctl.c $(LIBS)
