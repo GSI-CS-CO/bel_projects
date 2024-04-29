@@ -74,7 +74,8 @@ static void help(void)
   fprintf(stderr, "Usage: %s [OPTION]\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "  -h                  display this help and exit\n");
-  fprintf(stderr, "  -p <path>           specify alternative location for menu settings\n");  
+  fprintf(stderr, "  -p <path>           specify alternative location for menu settings\n");
+  fprintf(stderr, "  -s                  target is an SCU; default is non-SCU\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool as quick and dirty hack to configure IOs \n");
   fprintf(stderr, "\n");
