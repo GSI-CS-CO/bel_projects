@@ -81,8 +81,9 @@ void      msgInitMpsMsgBuf(uint64_t *const pId);
 void      resetMpsMsg(const size_t len, mpsMsg_t *const buf);
 void      msgSetSenderId(const int offset, uint64_t *const pId, uint8_t verbose);
 
-status_t  msgRegisterNode(const uint64_t id, const regCmd_t cmd);
+status_t  msgRegisterNode(const uint64_t id, const regCmd_t cmd, const uint8_t info);
 bool      msgIsSenderIdKnown(uint64_t *const pId);
+int8_t    msgGetNodeIndex(uint64_t *const pId);
 
 void      ioPrintMpsBuf(void);
 

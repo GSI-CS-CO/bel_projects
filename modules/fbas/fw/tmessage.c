@@ -38,6 +38,7 @@
 #include "tmessage.h"
 
 // application-specific variables
+uint8_t    nodeIds[N_MAX_TX_NODES][ETH_ALEN];   // sender node ID list
 mpsMsg_t   bufMpsMsg[N_MPS_CHANNELS];       // buffer for MPS timing messages
 mpsMsg_t *const headBufMps = &bufMpsMsg[0]; // head of the MPS message buffer
 timedItr_t rdItr;                           // read-access iterator for MPS flags
@@ -375,13 +376,13 @@ void resetMpsMsg(const size_t len, mpsMsg_t *const buf)
 /**
  * \brief Set the sender ID to the MPS message buffer
  *
- * RX node evaluates sender ID of the received MPS message.
+ * RX node checks the sender ID of the received MPS message.
  *
- * \param offset  offset of the MPS message buffer
+ * \param offset  Offset of the MPS message buffer
  * \param pId     Pointer to the sender node ID (MAC address)
  * \param verbose Non-zero enables verbosity
  *
- * \ret none
+ * \return none
  **/
 void msgSetSenderId(const int offset, uint64_t *const pId, uint8_t verbose)
 {
@@ -434,19 +435,24 @@ static uint8_t *addr_copy(uint8_t dst[ETH_ALEN], uint8_t src[ETH_ALEN])
  * TX nodes send the registration request (in form of the MPS protocol) to
  * register them to the designated RX node. The transmission type should be broadcast.
  *
- * RX nodes respond a special MPS message on reception of the registration
- * request from the RX nodes.
+ * RX node responds with a special MPS message on reception of the registration
+ * request from the TX nodes.
  *
- * \param id  node ID
- * \param cmd registration command
+ * The info field contains additional information regarding the MPS channels:
+ * - TX node delivers the number of the MPS channels that are managed by itself
+ * - RX node informs the position index that is reserved to a target TX node
+ *
+ * \param id   Node ID
+ * \param cmd  Registration command
+ * \param info Additional information (TX: number of MPS channels, RX: position index)
  *
  * \return status   Returns zero on success, otherwise non-zero
  **/
-status_t msgRegisterNode(const uint64_t id, const regCmd_t cmd)
+status_t msgRegisterNode(const uint64_t id, const regCmd_t cmd, const uint8_t info)
 {
   uint32_t tef = 0;
   uint32_t forceLate = 1;
-  uint64_t param = (id << 16) | (cmd << 8);
+  uint64_t param = (id << 16) | (cmd << 8) | info;
   uint64_t deadline = getSysTime() + FBAS_AHEAD_TIME;
 
   status_t status = fwlib_ebmWriteTM(deadline, FBAS_REG_EID, param, tef, forceLate);
@@ -483,6 +489,41 @@ bool msgIsSenderIdKnown(uint64_t *const pId)
   }
 
   return (unknown?false:true);
+}
+
+/**
+ * \brief Get the list index of the given sender ID
+ *
+ * A list of TX nodes is provided to the RX node during setup.
+ * This function searches the ID of a given sender node within
+ * that list and returns its list index if the ID is found.
+ *
+ * \param pId   Pointer to the sender node ID (MAC address)
+ *
+ * \return  Returns the list index, otherwise negative value
+ **/
+int8_t msgGetNodeIndex(uint64_t *const pId)
+{
+  uint8_t *p = (uint8_t*)pId; // lower 6 bytes hold the sender ID
+  p+=2;                       // seek the start of the sender ID
+
+  int i = 0;
+  int unknown = true;
+
+  while (unknown && i < N_MAX_TX_NODES) {
+    unknown = memcmp(&nodeIds[i][0], p, ETH_ALEN);
+    DBPRINT3("cmp: %d: %x%x%x%x%x%x - %x%x%x%x%x%x\n",
+        unknown,
+        nodeIds[i][0], nodeIds[i][1], nodeIds[i][2],
+        nodeIds[i][3], nodeIds[i][4], nodeIds[i][5],
+        *p, *(p+1), *(p+2), *(p+3), *(p+4), *(p+5));
+    ++i;
+  }
+
+  if (unknown)
+    return -1;
+  else
+    --i;
 }
 
 /**

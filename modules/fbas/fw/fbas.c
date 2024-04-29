@@ -453,6 +453,7 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t
 
     uint64_t nodeId;  // node ID (MAC address) is in the 'param' field (high 6 bytes)
     uint8_t  regCmd;  // node registration command
+    uint8_t  info;    // additional info (# of MPS channels)
     int      offset;  // offset to the MPS msg buffer, where received MPS message will be stored
 
     switch (nextAction) {
@@ -577,13 +578,18 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t
       case FBAS_NODE_REG:
         nodeId = ecaParam >> 16; // node ID (MAC address) is in the 'param' field (high 6 bytes)
         regCmd = (uint8_t)(ecaParam >> 8);  // node registration command
+        info   = ecaParam;       // info: number of the MPS channels managed by TX node
 
         if (nodeType == FBAS_NODE_RX) {  // registration request from TX
           if (regCmd == REG_REQ) {
             if (msgIsSenderIdKnown(&nodeId)) {
+              // find the given node in the list of sender nodes and return the position index
+              uint8_t idx = msgGetNodeIndex(&nodeId);
+              // TODO: reserve the MPS buffer for this sender node
+              // TODO: idx=reserveBuffer(pos, nodeId);
               // unicast the reg. response
               fwlib_setEbmDstAddr(nodeId, BROADCAST_IP);
-              msgRegisterNode(myMac, REG_RSP);
+              msgRegisterNode(myMac, REG_RSP, idx);
               DBPRINT1("reg OK: MAC=%llx\n", nodeId);
             }
           }
@@ -694,7 +700,7 @@ uint32_t extern_entryActionOperation()
   if (nodeType == FBAS_NODE_TX) {
     if (!(mpsTask & TSK_REG_COMPLETE)) {
       if (setEndpDstAddr(DST_ADDR_BROADCAST) == COMMON_STATUS_OK)
-        msgRegisterNode(myMac, REG_REQ);
+        msgRegisterNode(myMac, REG_REQ, N_MPS_CHANNELS);
       else
         DBPRINT1("Err - nothing sent! TODO: set failed status\n");
     }
@@ -875,7 +881,7 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
           if (*pMpsTask & TSK_REG_PER_OVER) {
             *pMpsTask &= ~TSK_REG_PER_OVER;
             if (setEndpDstAddr(DST_ADDR_BROADCAST) == COMMON_STATUS_OK)
-              msgRegisterNode(myMac, REG_REQ);
+              msgRegisterNode(myMac, REG_REQ, N_MPS_CHANNELS);
             else
               DBPRINT1("Err - nothing sent! TODO: set failed status\n");
           }
