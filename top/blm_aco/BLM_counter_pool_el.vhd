@@ -74,11 +74,11 @@ begin
 
 
  clear_and_cnt_enable_process: process (clk, nRST)
-    begin
+   begin
         if not nRST='1' then 
           
          
-             cnt_enable <='0';
+           cnt_enable <='0';
              CLEAR <='1';
               
         elsif (clk'EVENT AND clk= '1') then 
@@ -88,12 +88,14 @@ begin
                 cnt_enable <='0';
                 CLEAR <='1';
 
-            elsif ENABLE = '1' then 
+            --elsif ENABLE = '1' then 
+
+            else
+                
                 cnt_enable <= ENABLE;
                 if  gate_reset_ena = '0' then
                     CLEAR <='0';   
                 else 
-                    --CLEAR<='1';
                     CLEAR <= ENABLE;
                 end if;
                 

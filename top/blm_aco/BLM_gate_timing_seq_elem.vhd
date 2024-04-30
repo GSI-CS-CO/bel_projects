@@ -8,11 +8,11 @@ port(
   clk_i : in std_logic;          -- 
   rstn_i : in std_logic;        -- reset signal
   gate_in : in std_logic;        -- input signal
- -- gate_in_ena : in std_logic;     -- enable '1' for input connected to the counter
+
   prepare : in std_logic;
   recover : in std_logic;
   hold: in std_logic_vector(15 downto 0);
-  --all_thres_ready: in std_logic;
+
   gate_error : out std_logic;  -- gate doesn't start within the given timeout
   gate_state_nr : out std_logic_vector (2 downto 0); --for tests
   gate_out: out std_logic        -- out gate signal
@@ -25,13 +25,12 @@ type   gate_state_t is   (idle,prepare_state, gate, waiting, error, recover_stat
 signal gate_state:   gate_state_t;
 signal gate_state_sn:   gate_state_t:= idle;
 signal gate_er: std_logic;
---signal timeout_reset : unsigned(15 downto 0); 
+
 signal gate_out_sm: std_logic;
---signal timeout : unsigned(15 downto 0);
+
 signal curr_val   :std_logic; --:='0';
 signal state_sm: integer range 0 to 5:= 0;
-signal state_nr: std_logic_vector (2 downto 0);
---signal ready: std_logic;
+
 signal timeout_reset : unsigned(29 downto 0); 
 signal timeout : unsigned(29 downto 0);
 signal hold_time: unsigned(15 downto 0);
@@ -62,8 +61,6 @@ gate_proc: process (clk_i, rstn_i)
 
   begin
 
---curr_val <= gate_in ;
-
       if ((rstn_i= '0')) then 
         gate_error  <= '0';
         gate_out <='0';
@@ -78,8 +75,7 @@ gate_proc: process (clk_i, rstn_i)
         gate_state_nr <=  std_logic_vector(to_unsigned(state_sm, gate_state_nr'length));
         gate_error <= gate_er;
         gate_out <= gate_out_sm;
-       -- timeout_reset <=unsigned(hold); 
-      --  ready <= all_thres_ready;
+
      hold_time <=unsigned(hold); 
      timeout_reset <= hold_time &"00000000000000";
          case gate_state is
@@ -102,7 +98,7 @@ gate_proc: process (clk_i, rstn_i)
                       gate_out_sm <= '1';
                      
                      else
-                    --    if ready ='1' then 
+         
            
                             timeout <= timeout -1;
                             if (to_integer(timeout )=0) then

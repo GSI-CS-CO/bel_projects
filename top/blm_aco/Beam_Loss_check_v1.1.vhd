@@ -76,7 +76,7 @@ architecture rtl of Beam_Loss_check is
   signal BLM_gate_recover: std_logic_vector(11 downto 0);
   signal BLM_gate_seq_clk_sel: std_logic_vector(2 downto 0);
   signal BLM_gate_prepare : std_logic_vector(11 downto 0);
---TYPE    t_BLM_counter_Array           is array (0 to 127) of std_logic_vector(19 downto 0);
+--TYPE    t_BLM_counter_Array           is array (0 to 127) of std_logic_vector(29 downto 0);
   signal counter_value: t_BLM_counter_Array;
 signal gate_test_value: std_logic_vector(11 downto 0);
 signal gate_sm_error: std_logic_vector(11 downto 0);
@@ -88,6 +88,7 @@ signal gate_state: std_logic_vector(47 downto 0);
 signal gate_sm_state :t_gate_state_nr;
 --signal all_thres_ready: std_logic; -- to allow gate prepare only after writing all thresholds
 --signal or_thres: std_logic_vector(127 downto 0);
+signal UP_OVERFLOW_OUT: std_logic_vector(127 downto 0);
 
   component BLM_watchdog is
   
@@ -194,35 +195,35 @@ BLM_gate_recover <= BLM_gate_recover_Reg(11 downto 0);
 BLM_gate_prepare <= BLM_gate_seq_prep_ck_sel_Reg(14 downto 3);
 BLM_gate_seq_clk_sel <= BLM_gate_seq_prep_ck_sel_Reg(2 downto 0);
 
-  gate_timing_clock_sel_proc: process( BLM_gate_seq_clk_sel)
-    begin
+ -- gate_timing_clock_sel_proc: process( BLM_gate_seq_clk_sel)
+ --   begin
 
 
-     for i in 0 to 11 loop
+ --    for i in 0 to 11 loop
        
       
 
-        case BLM_gate_seq_clk_sel is
+ --       case BLM_gate_seq_clk_sel is
 
-          when "000" 
-           =>  gate_clock(i) <= BLM_tst_ck_sig(10);  --100 MHz
-          when "001" 
-           =>  gate_clock(i)<= BLM_tst_ck_sig(7);   --10 MHz
-          when "010" 
-          =>  gate_clock(i) <= BLM_tst_ck_sig(6);   --1 MHz
-          when "011" 
-           =>  gate_clock (i)<= BLM_tst_ck_sig(5);   --100 kHz  
-          when "100" 
-           =>  gate_clock(i) <= BLM_tst_ck_sig(4);   --10 kHz
-          when "101" 
-           =>  gate_clock (i)<= BLM_tst_ck_sig(3);  --1 kHz
-          when others 
-           =>  gate_clock (i) <= NULL;
-        end case;
+ --         when "000" 
+  --         =>  gate_clock(i) <= BLM_tst_ck_sig(10);  --100 MHz
+  --        when "001" 
+   --        =>  gate_clock(i)<= BLM_tst_ck_sig(7);   --10 MHz
+   --       when "010" 
+   --       =>  gate_clock(i) <= BLM_tst_ck_sig(6);   --1 MHz
+   --       when "011" 
+   --        =>  gate_clock (i)<= BLM_tst_ck_sig(5);   --100 kHz  
+  --        when "100" 
+   --        =>  gate_clock(i) <= BLM_tst_ck_sig(4);   --10 kHz
+   --       when "101" 
+  --         =>  gate_clock (i)<= BLM_tst_ck_sig(3);  --1 kHz
+   --       when others 
+   --        =>  gate_clock (i) <= NULL;
+   --     end case;
       
  
-        end loop;
-    end process;
+   --     end loop;
+  --  end process;
 
 g_clock <= gate_clock;
 
@@ -366,7 +367,16 @@ port map (
  -- all_thres_ready <= and_reduce(or_thres);
 --end process;
 
-    
+TEST_PROCESS: process (BLM_ctrl_reg(15))
+begin
+  if BLM_ctrl_reg(15) ='0' then 
+    UP_OVERFLOW_OUT <= UP_OVERFLOW;
+  else
+    UP_OVERFLOW_OUT <= UP_OVERFLOW(127 downto 80)& gate_state & "0000"& BLM_gate_in(5 downto 0) & BLM_gate_in(11 downto 6)& "0000"& gate_output(5 downto 0) & gate_output(11 downto 6); -- UP_OVERFLOW & gate_in & gate_out
+  end if;
+  end process;
+
+
 BLM_out_section: BLM_out_el 
      
   port map(
@@ -375,9 +385,8 @@ BLM_out_section: BLM_out_el
     -- +++
     BLM_out_sel_reg => BLM_out_sel_reg, 
     --
--- =>UP_OVERFLOW(127 downto 12) & gate_output(5 downto 0) & gate_output(11 downto 6),--gate_test_value, -- UP_OVERFLOW,
-   -- UP_OVERFLOW     =>UP_OVERFLOW(127 downto 12) & BLM_gate_in(5 downto 0) & BLM_gate_in(11 downto 6),--gate_test_value, -- UP_OVERFLOW, -- ONLY FOR TESTS I sent gate in to UP_OVERFLOW(11..0)
-   UP_OVERFLOW     =>UP_OVERFLOW(127 downto 80)& gate_state & "0000"& BLM_gate_in(5 downto 0) & BLM_gate_in(11 downto 6)& "0000"& gate_output(5 downto 0) & gate_output(11 downto 6), -- UP_OVERFLOW & gate_in & gate_out , -- ONLY FOR TESTS 
+  -- UP_OVERFLOW  =>UP_OVERFLOW,
+   UP_OVERFLOW     =>UP_OVERFLOW_OUT, --UP_OVERFLOW(127 downto 80)& gate_state & "0000"& BLM_gate_in(5 downto 0) & BLM_gate_in(11 downto 6)& "0000"& gate_output(5 downto 0) & gate_output(11 downto 6), -- UP_OVERFLOW & gate_in & gate_out , -- ONLY FOR TESTS 
    DOWN_OVERFLOW   => DOWN_OVERFLOW,
     wd_out           => out_1wd, --out_wd, --out_1wd,
     gate_in         => BLM_gate_in(5 downto 0) & BLM_gate_in(11 downto 6),--BLM_gate_in,
