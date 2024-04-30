@@ -288,12 +288,14 @@ namespace dnt = DotStr::Node::TypeVal;
   unsigned CarpeDM::CarpeDMimpl::recreateGlobalRefs() {
     Graph& g = gDown;
     AllocTable& at = atDown;
+    unsigned count = 0;
 
     //we already recreated the reftable from the mamagement nodes we downloaded, Now, for each entry in rt, we create the global node and insert into atDown.
     refIt rtBegin, rtEnd;
     std::tie(rtBegin, rtEnd) = at.rt->getMapRange();
     
     for (auto it = rtBegin; it != rtEnd; it++) {
+
       uint32_t tmpAdr, hash;
       std::tie(tmpAdr, hash) = *it;
       //We do not know the CPU yet. Analyse the address to get it.
@@ -308,11 +310,11 @@ namespace dnt = DotStr::Node::TypeVal;
       uint32_t adr = at.adrConv(adrType, AdrType::MGMT, cpu, tmpAdr);
       sLog << "Global Node converted Adr at: CPU " << (int)cpu << " 0x" << std::hex << adr << std::endl;
       at.rl->showMemLocMap();
-      
-      std::string section = at.rl->getSearch(adr).getLocName();
+      at.rt->debug(sLog);
+      std::string section = at.rl->getLocName(adr);
 
       sLog << "RLSearch: section " << section << std::endl;
-
+      //throw std::runtime_error( std::string("HALT after lookup"));
       //To create the node, we need a few things from the group table. The hashmap has already been recreated.
       //This is the same as for the normal nodes, but since globals are not part of the occupation bitmaps, we need to do it here
       std::stringstream stream;
@@ -345,9 +347,10 @@ namespace dnt = DotStr::Node::TypeVal;
       g[v].np = (node_ptr) new Global(g[v].name, g[v].patName, g[v].bpName, hash, cpu, 0, g[v].section);
 
       sLog << "Added Global Node " << name << " @ CPU #" << (int)cpu << " 0x" << std::hex << adr << std::endl;
+      count++;
     }
 
-
+    return count;
   }
 
 

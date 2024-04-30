@@ -383,6 +383,9 @@ using namespace DotStr::Misc;
       }
     }
 
+    atUp.rl->showMemLocMap();
+    atUp.rl->showMemFieldMap();
+
   }
 
 

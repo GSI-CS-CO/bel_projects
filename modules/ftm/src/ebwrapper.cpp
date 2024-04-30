@@ -167,6 +167,7 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
     
     uint8_t mappedIdx = 0;
     int foundVersionMax = -1;
+    uint32_t sharedOffs4refs;
     
     cpuIdxMap.clear();
     cpuDevs.clear();
@@ -220,9 +221,9 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
 
               atUp.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize, ctlSize );
             atDown.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize, ctlSize );
-                rl.init(this, sharedOffs); //init a reflocation lookup table
+                
             mappedIdx++;
-            
+            sharedOffs4refs = sharedOffs; // test purposes, we need to have one rl instance per cpu, it seems ...
           }
           
        
@@ -244,6 +245,7 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
     std::string fwCause = foundVersionMax == -1 ? "" : "Requires FW v" + createFwVersionString(expVersionMin) + ", found " + createFwVersionString(foundVersionMax);
     if (cpuIdxMap.size() == 0) {throw std::runtime_error("No CPUs running a valid DM firmware found. " + fwCause);}
 
+    rl.init(this, sharedOffs4refs); //init a reflocation lookup table
 
     return ret;
 
