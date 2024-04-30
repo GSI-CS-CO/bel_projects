@@ -23,6 +23,7 @@
 # node form-factor=SCU|Pexaria|Pexp
 # node TR device=wbm[0|1|2]
 # node TR name=tr0|fbastx|fbasrx
+# node MPS input=B1|IO1
 # node TLU input=B2|IO2
 # node type=[RX|TX]_NODE
 
@@ -592,18 +593,15 @@ start_nw_perf() {
 
     # info_nw_perf $n
 
-    param=0
-    offset_ns=0
+    saft-io-ctl tr0 -n $node_mps_input -j 1
+
     for i in $(seq $n); do
 
-        saft-ctl tr0 inject $evt_mps_flag_nok $param $offset_ns
-        echo -en " $i: NOK\r"
-        sleep 1
-
-        saft-ctl tr0 inject $evt_mps_flag_ok $param $offset_ns
-        echo -en " $i:  OK\r"
+        printf "%6d\r" $i
         sleep 1
     done
+
+    saft-io-ctl tr0 -n $node_mps_input -j 0
 }
 
 result_event_count() {
