@@ -287,10 +287,19 @@ void VisitorDownloadCrawler::setRefLinks() const {
       log<DEBUG_LVL2>(L"Descriptor: idx %1% dynOps Slice %2$#02x Osource %3$#08x") % idx % (ds & 0x7) % oSource;
       //This is an adress with offset to a word inside a node. To create an edge, we need the address of the node.
       //get the tmpAdr from the indexed 32b word
-      uint32_t tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT, cpu, writeBeBytesToLeNumber<uint32_t>(b + (idx << 2)));
+      uint32_t dbgAdr = writeBeBytesToLeNumber<uint32_t>(b + (idx << 2));
+      log<DEBUG_LVL2>(L"Got Adr %1$#08x") % dbgAdr;
+      uint32_t tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT, cpu, dbgAdr);
       log<DEBUG_LVL2>(L"Found tmpAdr %1$#08x at Source offset %2$#08x, Startoffs %3$#08x, diff %4$#08x") % tmpAdr % oSource % at.getStartOffs(cpu) % (tmpAdr - at.getStartOffs(cpu));
       //Subtract the beginning of the mem pool. The result modulo nodesize gives us the target word offset in Byte (we need it later)
-      uint32_t oTarget = (tmpAdr - at.getStartOffs(cpu)) % _MEM_BLOCK_SIZE;
+      uint32_t oTarget;
+      if((tmpAdr < at.getStartOffs(cpu)) || (tmpAdr > at.getEndOffs(cpu))) { // this is a global. 
+        
+        oTarget = 0: //tmpAdr - at.rl->getLocVal(at.rl->getLocName(tmpAdr));
+
+      } else {
+        oTarget = (tmpAdr - at.getStartOffs(cpu)) % _MEM_BLOCK_SIZE;
+      }
       if (oTarget % 4) {throw std::runtime_error( exIntro + "Reflink Offset is not 4B aligned: Offset Target " + std::to_string((unsigned)oTarget) + "\n");} // check if adress is 32b aligned. if not, throw ex
       
       try {

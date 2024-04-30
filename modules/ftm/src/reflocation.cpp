@@ -14,13 +14,16 @@ namespace dfld  = DotStr::Locations::fields;
 
 
 void RefLocation::init(EbWrapper* ebd, const uint32_t sharedOffs) {
-  mlm.clear();
-  mfm.clear();
+  ml.clear();
+  mf.clear();
+  std::cout << "Init RefMaps" << std::hex << sharedOffs << std::endl;
   std::cout << "Shared Offs: 0x" << std::hex << sharedOffs << std::endl;
-  mlm.insert({dmv::sZero, 0x0 });
-  mlm.insert({dloc::sRegisters, ebd->getCtlAdr(ADRLUT_SHCTL_REGS) + sharedOffs});
-
-  mfm.insert({dmv::sZero, 0x0 });
+  ml.insert({dmv::sZero, 0x0 });
+  ml.insert({dloc::sRegisters, ebd->getCtlAdr(ADRLUT_SHCTL_REGS) + sharedOffs});
+  ml.insert({dmv::sOne, 0x1 });
+  ml.insert({"ZERO", 0x666 });
+  mf.insert({dmv::sZero, 0x0 });
+  mf.insert({dmv::sOne, 0x1 });
 
 }
 
@@ -33,79 +36,41 @@ void RefLocation::printBimap(const boost::bimap<LeftType, RightType>& bm) const 
 
 void RefLocation::showMemLocMap() const {
   std::cout << "Memory Location Map:" << std:: endl;
-  printBimap(mlm);
+  printBimap(ml);
 }
 
 void RefLocation::showMemFieldMap() const {
   std::cout << "Memory Field Map:" << std:: endl;
-  printBimap(mfm);
+  printBimap(mf);
 }
 
-RefLocationSearch RefLocation::getSearch(const std::string& sLoc, const std::string& sField) const {
-  RefLocationSearch rls = RefLocationSearch(*this, sLoc, sField);
-  return rls;
+uint32_t RefLocation::getLocVal(const std::string& s) const {
+  auto it = ml.left.find(s);
+  return it->second;
 }
 
-RefLocationSearch RefLocation::getSearch(uint32_t searchAdr) const {
-  RefLocationSearch rls = RefLocationSearch(*this, searchAdr); 
-  return rls;
-  
+uint32_t RefLocation::getFieldVal(const std::string& s) const {
+  auto it = ml.left.find(s);
+  return it->second;
 }
 
-RefLocationSearch::RefLocationSearch(const RefLocation& rl, const std::string& sLoc, const std::string& sField) : rl(rl) {
-  MemLocMap::left_iterator itL    = rl.getMlm().left.find(sLoc);
-  if(itL == rl.getMlm().left.end()) {throw std::runtime_error("ERROR: Reference Location lookup for '" + sLoc + "' failed");}
-  MemFieldMap::left_iterator itF  = rl.getMfm().left.find(sField);
-  if(itF == rl.getMfm().left.end()) {throw std::runtime_error("ERROR: Reference Field lookup for '" + sField + "' failed");}
-
-  this->itL = rl.getMlm().project_up(itL);
-  this->itF = rl.getMlm().project_up(itF);
-};
-
-RefLocationSearch::RefLocationSearch(const RefLocation& rl, uint32_t searchAdr) : rl(rl) {
-  std::cout << "I am a Reflocsearch" << std:: endl;
-  MemLocMap::right_iterator itL = rl.getMlm().right.upper_bound(searchAdr);
-  if (itL == rl.getMlm().right.begin()) {
-    throw std::out_of_range("Invalid upper_bound operation");
-  }
-  --itL;
-  std::cout << "wtf... " << itL->second << std:: endl;
-  std::cout << "Is this a bad alloc? " << itL->second << std:: endl;
-  auto projectedL = rl.getMlm().project_up(itL);
-
-  MemFieldMap::right_iterator itF = rl.getMfm().right.upper_bound(searchAdr - itL->first);
-  if (itF == rl.getMfm().right.begin()) {
-    throw std::out_of_range("Invalid upper_bound for MemFieldMap");
-  }
-  --itF;
-  auto projectedF = rl.getMfm().project_up(itF); 
-
-/*
-  if (projectedL == rl.getMlm().left.end() || projectedF == rl.getMfm().left.end()) {
-    throw std::runtime_error("Invalid iterator after projection");
-  }
-*/
-  this->itL = projectedL;
-  this->itF = projectedF;
-
-
-  std::cout << "Is this a bad alloc? " << this->itL->left << std:: endl;
-};
-
-RefLocationSearch::RefLocationSearch(const RefLocation& rl, MemLocMap::iterator itL, MemFieldMap::iterator itF) : rl(rl), itL(itL), itF(itF) {};
-
-std::string RefLocationSearch::getLocName() {
-  return this->itL->left;
+std::string RefLocation::getLocName(const uint32_t a) const {
+  auto it = ml.right.upper_bound(a);
+  if(it == ml.right.begin()) throw std::out_of_range("Invalid upper_bound for MemLoc");
+  it--;
+  return it->second;
 }
 
-std::string RefLocationSearch::getFieldName() {
-  return this->itF->left;
+std::string RefLocation::getFieldName(const uint32_t a) const {
+  auto itL = ml.right.upper_bound(a);
+  if(itL == ml.right.begin()) throw std::out_of_range("Invalid upper_bound for MemLoc");
+  itL--;
+
+  auto itF = mf.right.upper_bound(a - itL->first);
+  if(itF == mf.right.begin()) throw std::out_of_range("Invalid upper_bound for MemFieldc");
+  itF--;
+  return itF->second;
 }
 
-uint32_t RefLocationSearch::getLocVal() {
-  return this->itL->right;
-}
 
-uint32_t RefLocationSearch::getFieldVal() {
-  return this->itF->right;
-}
+
