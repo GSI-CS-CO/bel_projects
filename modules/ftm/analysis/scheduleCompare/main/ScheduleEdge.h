@@ -13,6 +13,9 @@ class ScheduleEdge {
   std::string _hdraw_ = std::string("");
   std::string pos = std::string("");
   std::string color = std::string("");
+  std::string fieldhead = std::string("");
+  std::string fieldtail = std::string("");
+  std::string fieldwidth = std::string("");
   ScheduleVertex& vertex_source = *(new ScheduleVertex());
   ScheduleVertex& vertex_target = *(new ScheduleVertex());
 

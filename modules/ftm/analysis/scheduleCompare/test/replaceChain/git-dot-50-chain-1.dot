@@ -1,7 +1,5 @@
 digraph G {
-graph [
-name="git-dot-50-compact"
-]
+  graph [name="git-dot-50-compact"]
 "3ecd1638dc08327d1cbe42ec129e83264ec1e75e" [label="3ecd1638 "];
 "658dda953725885ed1087cf9553dbb98af10eadf" [label="658dda95 "];
 "92e2244f73efdb31b2cf81c50073338cd22d6357" [label="92e2244f "];

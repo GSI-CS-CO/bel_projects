@@ -1,7 +1,5 @@
 digraph G {
-graph [
-name="chains1234r-compact-compact"
-]
+  graph [name="chains1234r-compact-compact"]
 a11;
 "a22
 a21";

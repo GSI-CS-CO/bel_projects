@@ -92,7 +92,7 @@ int compactSingleGraph(std::string dotFile1, configuration& config) {
     parse1 = parseSchedule(dotFile1, graph1, dp1, config);
     printScheduleIndex("Graph:", graph1, config);
   } catch (boost::property_not_found &excep) {
-    std::cerr << "Parsing graph: Property not found" << excep.what() << std::endl;
+    std::cerr << "Parsing graph: Property not found " << excep.what() << std::endl;
     result = PARSE_ERROR;
   } catch (boost::bad_graphviz_syntax &excep) {
     std::cerr << "Parsing graph: Bad Graphviz syntax: " << excep.what() << std::endl;

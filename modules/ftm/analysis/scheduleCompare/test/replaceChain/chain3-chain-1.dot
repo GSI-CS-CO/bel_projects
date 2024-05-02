@@ -1,7 +1,5 @@
 digraph G {
-graph [
-name="chain3-compact"
-]
+  graph [name="chain3-compact"]
 "node1
 node2
 node3" [label="node1
