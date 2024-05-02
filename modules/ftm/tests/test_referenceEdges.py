@@ -75,9 +75,24 @@ class ReferenceEdge(dm_testbench.DmTestbench):
     self.snoopToCsvWithAction(snoopFile, self.actionReferenceLoop3, duration=2)
     self.startAndCheckSubprocess(('scheduleCompare', '-s', '-u', self.schedulesFolder + self.downloadFile0, self.downloadFile0), [0], 0, 0)
     self.deleteFile(self.downloadFile0)
-    self.analyseFrequencyFromCsv(snoopFile, column=6, printTable=True, checkValues={'0x0001': '>1', '0x0002': '>1', '0x0003': '>1', '0x0004': '>1'})
-    self.analyseFrequencyFromCsv(snoopFile, column=20, printTable=True, checkValues={'0x0000000000225002': '>3', '0x0000000000225003': '>1', '0x0000000000225004': '>1'})
+    self.analyseFrequencyFromCsv(snoopFile, column=6, printTable=True, checkValues={'0x0002': '>3', '0x0003': '>1', '0x0004': '>1'})
+    self.analyseFrequencyFromCsv(snoopFile, column=20, printTable=True, checkValues={'0x0000000000225002': '>1', '0x0000000000225003': '>3', '0x0000000000225004': '>1'})
     self.deleteFile(snoopFile)
+    # setup the expected output for 8 and 32 threads.
+    expectedLinesMsg1 = [
+      'Msg1:',
+      '  0000  00 00 00 00 00 00 00 00 10 00 09 d8 00 00 00 00  ................',
+      '  0010  10 00 0a 14 00 22 50 03 10 00 0a 4c 00 00 00 00  ....."P....L....',
+      '  0020  00 00 00 00 00 08 61 80 a4 66 41 4b 00 00 20 02  ......a..fAK.. .',
+      '  0030  10 00 09 d0',
+    ]
+    if self.threadQuantity == 32:
+      expectedLinesMsg1[1] = "  0000  00 00 00 00 3b 9a ca 00 00 00 00 00 10 00 12 a8  ....;..........."
+      expectedLinesMsg1[4] = "  0030  10 00 11 08"
+    # check the node Msg1
+    lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, 'hex', 'Msg1'), [0], 5, 0)
+    for i in range(len(lines[0])):
+      self.assertEqual(expectedLinesMsg1[i], lines[0][i])
 
   def actionReferenceLoop3(self):
     """During snoop start pattern ref1. This produces messages with 1Hz.
