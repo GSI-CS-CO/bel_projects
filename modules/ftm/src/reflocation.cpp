@@ -16,14 +16,12 @@ namespace dfld  = DotStr::Locations::fields;
 void RefLocation::init(EbWrapper* ebd, const uint32_t sharedOffs) {
   ml.clear();
   mf.clear();
-  std::cout << "Init RefMaps" << std::hex << sharedOffs << std::endl;
-  std::cout << "Shared Offs: 0x" << std::hex << sharedOffs << std::endl;
+  //std::cout << "Init RefMaps" << std::hex << sharedOffs << std::endl;
+  //std::cout << "Shared Offs: 0x" << std::hex << sharedOffs << std::endl;
   ml.insert({dmv::sZero, 0x0 });
   ml.insert({dloc::sRegisters, ebd->getCtlAdr(ADRLUT_SHCTL_REGS) + sharedOffs});
-  ml.insert({dmv::sOne, 0x1 });
-  ml.insert({"ZERO", 0x666 });
   mf.insert({dmv::sZero, 0x0 });
-  mf.insert({dmv::sOne, 0x1 });
+  //add more locations that should be commonly known here. Could even add one per thread with a loop etc
 
 }
 

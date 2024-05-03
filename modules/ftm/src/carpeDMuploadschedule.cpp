@@ -383,8 +383,8 @@ using namespace DotStr::Misc;
       }
     }
 
-    atUp.rl->showMemLocMap();
-    atUp.rl->showMemFieldMap();
+    //atUp.rl->showMemLocMap();
+    //atUp.rl->showMemFieldMap();
 
   }
 
@@ -636,10 +636,7 @@ using namespace DotStr::Misc;
   void CarpeDM::CarpeDMimpl::generateMgmtData() {
     std::string tmpStrBufGrp = gt.store();
     std::string tmpStrBufCov = ct.store();
-    std::cout << "Upload: GlobalRefTable" << std::endl; rt.debug(sLog);
     std::string tmpStrBufRef = rt.store();
-
-    std::cout << "STR GlobalRefTable" << tmpStrBufRef << std::endl;
 
     atUp.setMgmtLLSizes(tmpStrBufGrp.size(), tmpStrBufCov.size(), tmpStrBufRef.size());
     std::string tmpStrBuf = tmpStrBufGrp + tmpStrBufCov + tmpStrBufRef;

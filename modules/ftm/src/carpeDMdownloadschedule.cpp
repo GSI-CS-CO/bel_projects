@@ -137,7 +137,7 @@ namespace dnt = DotStr::Node::TypeVal;
       
 
 
-      rt.debug(sLog);
+      //rt.debug(sLog);
     } else {
       if(verbose) sLog << "Management recovery returned empty, this happens when accessing a virgin DM FW memory. Skip Grouptable and Covenant Table creation" << std::endl;
     }
@@ -242,6 +242,7 @@ namespace dnt = DotStr::Node::TypeVal;
             case NODE_TYPE_QUEUE        : g[v].np = (node_ptr) new   CmdQMeta(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sQInfo;      g[v].np->deserialise((uint8_t*)x->b); break;
             case NODE_TYPE_ALTDST       : g[v].np = (node_ptr) new   DestList(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sDstList;    g[v].np->deserialise((uint8_t*)x->b); break;
             case NODE_TYPE_QBUF         : g[v].np = (node_ptr) new CmdQBuffer(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sQBuf; break;
+            //   NODE_TYPE_GLOBAL can never occur here, similar to management nodes. Don't list it. 
             case NODE_TYPE_UNKNOWN      : sErr << "not yet implemented " << g[v].type << std::endl; break;
             default                     : sErr << "Node type 0x" << std::hex << type << " not supported! " << std::endl;
           }
@@ -304,16 +305,18 @@ namespace dnt = DotStr::Node::TypeVal;
       std::tie(cpu, adrType) = at.adrClassification(tmpAdr);
       //TODO this does not cover all possible address types
       //If it is not an adress inside a CPUs shared space, throw an ex for now
-      sLog << "Global Node at: CPU " << (int)cpu << " 0x" << std::hex << tmpAdr << std::endl;
+      //sLog << "Global Node at: CPU " << (int)cpu << " 0x" << std::hex << tmpAdr << std::endl;
       if (adrType != AdrType::INT) {throw std::runtime_error( std::string("Error. GlobalReftable entry contains an address not part of the AdrType::INT"));}
       
       uint32_t adr = at.adrConv(adrType, AdrType::MGMT, cpu, tmpAdr);
+      /*
       sLog << "Global Node converted Adr at: CPU " << (int)cpu << " 0x" << std::hex << adr << std::endl;
       at.rl->showMemLocMap();
       at.rt->debug(sLog);
+      */
       std::string section = at.rl->getLocName(adr);
 
-      sLog << "RLSearch: section " << section << std::endl;
+      //sLog << "RLSearch: section " << section << std::endl;
       //throw std::runtime_error( std::string("HALT after lookup"));
       //To create the node, we need a few things from the group table. The hashmap has already been recreated.
       //This is the same as for the normal nodes, but since globals are not part of the occupation bitmaps, we need to do it here
@@ -326,7 +329,7 @@ namespace dnt = DotStr::Node::TypeVal;
       auto xBp  = gt.getTable().get<Groups::Node>().equal_range(name);
       std::string beamproc  = (xBp.first != xBp.second ? xPat.first->beamproc : DotStr::Misc::sUndefined);
 
-      sLog << "Found the following from hm and gt: name " << name << " pattern " << pattern << " beamprocs " << beamproc << std::endl;
+      //sLog << "Found the following from hm and gt: name " << name << " pattern " << pattern << " beamprocs " << beamproc << std::endl;
 
       //create node  
       vertex_t v = boost::add_vertex(myVertex(name, pattern, beamproc, std::to_string(cpu), hash, nullptr, "", DotStr::Misc::sZero), g);
@@ -346,7 +349,7 @@ namespace dnt = DotStr::Node::TypeVal;
       //add object
       g[v].np = (node_ptr) new Global(g[v].name, g[v].patName, g[v].bpName, hash, cpu, 0, g[v].section);
 
-      sLog << "Added Global Node " << name << " @ CPU #" << (int)cpu << " 0x" << std::hex << adr << std::endl;
+      //sLog << "Added Global Node " << name << " @ CPU #" << (int)cpu << " 0x" << std::hex << adr << std::endl;
       count++;
     }
 
