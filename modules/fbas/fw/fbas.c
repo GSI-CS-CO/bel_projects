@@ -585,6 +585,10 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t
         break;
 
       case FBAS_NODE_REG:
+        // tie registration to MPS operation -> otherwise RX node registers TX nodes any time (in OpReady)
+        if (!(*mpsTask & TSK_TX_MPS_EVENTS))
+          break;
+
         nodeId = ecaParam >> 16; // node ID (MAC address) is in the 'param' field (high 6 bytes)
         regCmd = (uint8_t)(ecaParam >> 8);  // node registration command
         info   = ecaParam;       // info: number of the MPS channels managed by TX node
