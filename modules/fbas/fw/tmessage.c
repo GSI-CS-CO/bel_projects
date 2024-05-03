@@ -247,18 +247,19 @@ uint32_t msgSendSpecificMps(const timedItr_t* itr, mpsMsg_t *const buf, const ui
  *
  * MPS event is fetched from ECA and stored in the dedicated buffer.
  *
- * \param evt Raw event data (bits 63-16 = node ID, 15-8 = index, 7-0 = flag)
+ * \param idx Base index for TX node
+ * \param evt Raw event data (bits 63-16 = node ID, 15-8 = channel, 7-0 = flag)
  *
- * \return pointer to the MPS message buffer location
+ * \return Pointer to the message buffer with the MPS event/flag
  **/
-mpsMsg_t* msgFetchMps(const uint64_t evt)
+mpsMsg_t* msgFetchMps(const uint8_t idx, uint64_t evt)
 {
   // evaluate MPS channel and MPS flag
-  uint8_t idx = evt >> 8;
+  uint8_t ch = evt >> 8;
   uint8_t flag = evt;
 
   // store MPS channel and MPS flag
-  headBufMps->prot.idx = idx;
+  headBufMps->prot.idx = idx + ch;
   headBufMps->prot.flag = flag;
   return headBufMps;
 }
@@ -330,21 +331,20 @@ mpsMsg_t* evalMpsMsgTtl(uint64_t now, int idx) {
 }
 
 /**
- * \brief initialize MPS message buffer
+ * \brief Initialize MPS message buffer
  *
- * \param id node ID (MAC address)
+ * \param id Pointer to node ID (MAC address)
  *
  * \return none
 */
-void msgInitMpsMsgBuf(uint64_t *const pId)
+void msgInitMpsMsg(const uint64_t *id)
 {
+  uint8_t *mac = (uint8_t *)id;
+  mac+=2;
+
   for (int i = 0; i < N_MPS_CHANNELS; ++i)
   {
-    msgSetSenderId(i, pId, ENABLE_VERBOSITY);
-    bufMpsMsg[i].prot.flag = MPS_FLAG_TEST;
-    bufMpsMsg[i].prot.idx = 0;
-    bufMpsMsg[i].ttl = 0;
-    bufMpsMsg[i].tsRx = 0;
+    msgResetMpsBuf(i, mac, MPS_FLAG_TEST);
     DBPRINT1("%x: mac=%x:%x:%x:%x:%x:%x idx=%x flag=%x @0x%8p\n",
              i, bufMpsMsg[i].prot.addr[0], bufMpsMsg[i].prot.addr[1], bufMpsMsg[i].prot.addr[2],
              bufMpsMsg[i].prot.addr[3], bufMpsMsg[i].prot.addr[4], bufMpsMsg[i].prot.addr[5],
@@ -353,19 +353,19 @@ void msgInitMpsMsgBuf(uint64_t *const pId)
 }
 
 /**
- * \brief reset MPS message buffer
+ * \brief Force input virtually to high
  *
- * It is used to reset the CMOS input virtually to high voltage in TX [MPS_FS_620] or
- * reset effective logic input to HIGH bit in RX [MPS_FS_630].
+ * It is used to set the CMOS input virtually to high voltage in TX [MPS_FS_620] or
+ * set effective logic input to HIGH bit in RX [MPS_FS_630].
  *
  * \param buf Pointer to MPS message buffer
  *
  **/
-void resetMpsMsg(const size_t len, mpsMsg_t *const buf)
+void msgForceHigh(mpsMsg_t *const buf)
 {
   uint8_t flag = MPS_FLAG_OK;
 
-  for (size_t i = 0; i < len; ++i) {
+  for (int i = 0; i < N_MAX_TX_NODES; ++i) {
     (buf + i)->pending = (buf + i)->prot.flag ^ flag;
     (buf + i)->prot.flag  = flag;
     (buf + i)->ttl = 0;
@@ -374,31 +374,62 @@ void resetMpsMsg(const size_t len, mpsMsg_t *const buf)
 }
 
 /**
- * \brief Set the sender ID to the MPS message buffer
+ * \brief reset MPS message buffer
  *
- * RX node checks the sender ID of the received MPS message.
+ * \param idx  Index of the MPS message buffer
+ * \param flag MPS flag
  *
- * \param offset  Offset of the MPS message buffer
- * \param pId     Pointer to the sender node ID (MAC address)
- * \param verbose Non-zero enables verbosity
+ * \return None
  *
- * \return none
  **/
-void msgSetSenderId(const int offset, uint64_t *const pId, uint8_t verbose)
+void msgResetMpsBuf(const uint8_t idx, const uint8_t *pId, const uint8_t flag)
 {
-  uint8_t *p = (uint8_t*)pId; // lower 6 bytes hold the sender node ID
-  p+=2;                       // seek the start of the sender node ID
+  if (pId)
+    memcpy(bufMpsMsg[idx].prot.addr, pId, ETH_ALEN);
+  else
+    memset(bufMpsMsg[idx].prot.addr, 0, ETH_ALEN);
 
-  // store the sender node ID
-  memcpy(bufMpsMsg[offset].prot.addr, p, ETH_ALEN);
+  bufMpsMsg[idx].prot.flag = flag;
+  bufMpsMsg[idx].prot.idx = 0;
+  bufMpsMsg[idx].ttl = 0;
+  bufMpsMsg[idx].tsRx = 0;
+}
 
-  // store the MPS channel index
-  bufMpsMsg[offset].prot.idx = (uint8_t)(*pId >> 48);
+/**
+ * \brief Update the node ID array and MPS message buffer
+ *
+ * \param pId  Pointer to the full node ID (idx + reserved + MAC address)
+ *
+ * \return None
+ **/
+void msgUpdateMpsBuf(const uint64_t *pId)
+{
+  uint8_t idx = (uint8_t)(*pId >> 56);  // index
+  uint8_t *id = (uint8_t*)pId;          // point to sender node ID (lower 6 bytes)
+  id+=2;
 
-  if (verbose) {
-    DBPRINT1("tmessage: sender ID: ");
+  // if the same ID exists, remove it from the node ID array and MPS message buffer
+  for (int i = 0; i < N_MAX_TX_NODES; ++i) {
+    if (!(memcmp(&nodeIds[i][0], id, ETH_ALEN))) {
+      memset(&nodeIds[i][0], 0, ETH_ALEN);
+    }
+
+    if (!(memcmp(bufMpsMsg[i].prot.addr, id, ETH_ALEN))) {
+      msgResetMpsBuf(i, 0, MPS_FLAG_TEST);
+    }
+  }
+
+  // update the node ID array and MPS message buffer
+  memcpy(&nodeIds[idx][0], id, ETH_ALEN);
+
+  msgResetMpsBuf(idx, id, MPS_FLAG_OK);
+  bufMpsMsg[idx].prot.idx = idx;
+
+  // node ID array and MPS message buffer must match
+  if (!(memcmp(&nodeIds[idx][0], &bufMpsMsg[idx].prot.addr[0], ETH_ALEN))) {
+    DBPRINT1("tmessage: sender %x: ", idx);
     for (int i = 0; i < ETH_ALEN; i++)
-      DBPRINT1("%02x", bufMpsMsg[offset].prot.addr[i]);
+      DBPRINT1("%02x", bufMpsMsg[idx].prot.addr[i]);
     DBPRINT1(" (id: %016llx)\n", *pId);
   }
 }
@@ -463,46 +494,17 @@ status_t msgRegisterNode(const uint64_t id, const regCmd_t cmd, const uint8_t in
 }
 
 /**
- * \brief Check if the given sender ID is known to the RX node
+ * \brief Get the index of the given sender node ID
  *
- * \param pId   Pointer to the sender node ID (MAC address)
- *
- * \return  Returns true on success, otherwise false
- **/
-bool msgIsSenderIdKnown(uint64_t *const pId)
-{
-  uint8_t *p = (uint8_t*)pId; // lower 6 bytes hold the sender ID
-  p+=2;                       // seek the start of the sender ID
-
-  int i = 0;
-  int unknown = true;
-
-  while (unknown && i < N_MPS_CHANNELS) {
-    unknown = memcmp(bufMpsMsg[i].prot.addr, p, ETH_ALEN);
-    DBPRINT3("cmp: %d: %x%x%x%x%x%x - %x%x%x%x%x%x\n",
-        unknown,
-        bufMpsMsg[i].prot.addr[0], bufMpsMsg[i].prot.addr[1],
-        bufMpsMsg[i].prot.addr[2], bufMpsMsg[i].prot.addr[3],
-        bufMpsMsg[i].prot.addr[4], bufMpsMsg[i].prot.addr[5],
-        *p, *(p+1), *(p+2), *(p+3), *(p+4), *(p+5));
-    ++i;
-  }
-
-  return (unknown?false:true);
-}
-
-/**
- * \brief Get the list index of the given sender ID
- *
- * A list of TX nodes is provided to the RX node during setup.
- * This function searches the ID of a given sender node within
- * that list and returns its list index if the ID is found.
+ * An array of TX node IDs is provided to the RX node during setup.
+ * This function searches the ID of a given sender node in
+ * that array and returns its index if the ID is found.
  *
  * \param pId   Pointer to the sender node ID (MAC address)
  *
  * \return  Returns the list index, otherwise negative value
  **/
-int8_t msgGetNodeIndex(uint64_t *const pId)
+int8_t msgGetNodeIndex(const uint64_t *pId)
 {
   uint8_t *p = (uint8_t*)pId; // lower 6 bytes hold the sender ID
   p+=2;                       // seek the start of the sender ID
@@ -512,8 +514,8 @@ int8_t msgGetNodeIndex(uint64_t *const pId)
 
   while (unknown && i < N_MAX_TX_NODES) {
     unknown = memcmp(&nodeIds[i][0], p, ETH_ALEN);
-    DBPRINT3("cmp: %d: %x%x%x%x%x%x - %x%x%x%x%x%x\n",
-        unknown,
+    if (unknown)
+      DBPRINT3("cmp: %x%x%x%x%x%x - %x%x%x%x%x%x\n",
         nodeIds[i][0], nodeIds[i][1], nodeIds[i][2],
         nodeIds[i][3], nodeIds[i][4], nodeIds[i][5],
         *p, *(p+1), *(p+2), *(p+3), *(p+4), *(p+5));
@@ -523,7 +525,7 @@ int8_t msgGetNodeIndex(uint64_t *const pId)
   if (unknown)
     return -1;
   else
-    --i;
+    return --i;
 }
 
 /**

@@ -74,16 +74,16 @@ void      resetItr(timedItr_t* itr, const uint64_t now);
 uint32_t  msgSendPeriodicMps(timedItr_t* itr, const uint64_t evtid);
 uint32_t  msgSendSpecificMps(const timedItr_t* itr, mpsMsg_t *const buf, const uint64_t evtid, const uint8_t extra);
 uint32_t  sendMpsMsgBlock(size_t len, timedItr_t* itr, uint64_t evtId);
-mpsMsg_t* msgFetchMps(const uint64_t evt);
+mpsMsg_t* msgFetchMps(const uint8_t idx, uint64_t evt);
 int       msgStoreMpsMsg(const uint64_t *raw, const uint64_t *ts, const timedItr_t* itr);
 mpsMsg_t* evalMpsMsgTtl(uint64_t now, int idx);
-void      msgInitMpsMsgBuf(uint64_t *const pId);
-void      resetMpsMsg(const size_t len, mpsMsg_t *const buf);
-void      msgSetSenderId(const int offset, uint64_t *const pId, uint8_t verbose);
+void      msgInitMpsMsg(const uint64_t *id);
+void      msgResetMpsBuf(const uint8_t idx, const uint8_t *pId, const uint8_t flag);
+void      msgForceHigh(mpsMsg_t *const buf);
+void      msgUpdateMpsBuf(const uint64_t *pId);
 
 status_t  msgRegisterNode(const uint64_t id, const regCmd_t cmd, const uint8_t info);
-bool      msgIsSenderIdKnown(uint64_t *const pId);
-int8_t    msgGetNodeIndex(uint64_t *const pId);
+int8_t    msgGetNodeIndex(const uint64_t *pId);
 
 void      ioPrintMpsBuf(void);
 

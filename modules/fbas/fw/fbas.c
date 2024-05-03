@@ -75,6 +75,7 @@ extern uint32_t *pSharedMacLo;          // pointer to a "user defined" u32 regis
 extern uint32_t *pSharedIp;             // pointer to a "user defined" u32 register; here: IP
 
 uint64_t myMac;                         // own MAC address
+uint8_t  myIdx;                         // base index of TX node (used for MPS messaging)
 
 // shared memory layout
 static uint32_t *pCpuRamExternal;       // external address (seen from host bridge) of this CPU's RAM
@@ -108,7 +109,7 @@ static void printSrcAddr();
 static status_t convertMacToU8(uint8_t buf[ETH_ALEN], uint32_t* hi, uint32_t* lo);
 static status_t convertMacToU64(uint64_t* buf, uint32_t* hi, uint32_t* lo);
 static status_t setEndpDstAddr(int idx);
-static status_t loadSenderId(uint32_t* base, uint32_t offset);
+static status_t readNodeId(uint32_t* base, uint32_t offset);
 static void clearError(size_t len, mpsMsg_t* buf);
 static void setOpMode(uint64_t mode);
 static void cmdHandler(uint32_t *reqState, uint32_t cmd);
@@ -203,7 +204,7 @@ static void initMpsData()
   convertMacToU64(&myMac, pSharedMacHi, pSharedMacLo);
 
   // initialize the MPS message buffer
-  msgInitMpsMsgBuf(&myMac);
+  msgInitMpsMsg(&myMac);
 
   // initialize the read iterator for MPS flags
   initItr(&rdItr, N_MPS_CHANNELS, 0, F_MPS_BCAST);
@@ -355,33 +356,41 @@ static status_t setEndpDstAddr(int idx)
 }
 
 /**
- * \brief Load sender ID
+ * \brief Read a node ID
  *
- * Read the raw sender ID and sets it to designated MPS message buffer.
- * Raw data contains: position + index + MAC
- * where, position specifies a concrete MPS message buffer.
+ * RX node accepts the timing messages only from valid sender nodes.
+ * The node ID is normally same as its MAC address.
+ *
+ * This function allows RX node to read a node ID from the given location
+ * in the shared memory. The number of sender nodes for each RX node is
+ * limited to N_MAX_TX_NODES (eg., 16). Hence, node ID is prepended with
+ * a 8-bit index (index < N_MAX_TX_NODES).
+ *
+ * Full node ID format in shared memory: index + reserved + ID (MAC)
+ * where, index and reserved are each 8-bit value.
  *
  * \param base   Base address of shared memory
  * \param offset Offset to a location with a valid sender ID
  *
- * \ret status   Zero on success
+ * \return status   Zero on success, otherwise non-zero
  **/
-static status_t loadSenderId(uint32_t* base, uint32_t offset)
+static status_t readNodeId(uint32_t* base, uint32_t offset)
 {
-  uint64_t* pSenderId = (uint64_t *)(base + (offset >> 2));
-  uint8_t pos = *pSenderId >> 56;         // position of MPS message buffer
+  uint64_t* pId = (uint64_t *)(base + (offset >> 2)); // point to a node ID
+  uint8_t idx = *pId >> 56;                           // index of the node ID
 
-  if (pos >= N_MPS_CHANNELS) {
-    DBPRINT1("fbas%d: pos %d in %llx is out of range!\n", nodeType, pos, *pSenderId);
+  if (!(idx < N_MAX_TX_NODES)) {
+    DBPRINT1("fbas%d: index %d in %llx is out of range!\n", nodeType, idx, *pId);
     return COMMON_STATUS_ERROR;
   }
 
-  msgSetSenderId(pos, pSenderId, ENABLE_VERBOSITY);
+  // update the MPS message buffer
+  msgUpdateMpsBuf(pId);
 
   // app-specific IO setup (RX: enable IO output for signaling latency)
   // set up the direct mapping between the MPS message buffer and output ports
-  if (ioSetOutEnable(pos, true) == COMMON_STATUS_OK)  // enable output
-    ioMapOutput(pos, pos);  // direct mapping (MPS buffer[pos] -> out_port[pos])
+  if (ioSetOutEnable(idx, true) == COMMON_STATUS_OK)  // enable output
+    ioMapOutput(idx, idx);  // direct mapping (MPS buffer[idx] -> out_port[idx])
 
   return COMMON_STATUS_OK;
 }
@@ -459,16 +468,16 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t
     switch (nextAction) {
       case FBAS_AUX_NEWCYCLE:
         if (nodeType == FBAS_NODE_TX) { // it takes 1848/6328 ns for 2/32 MPS channels
-          // reset MPS msgs
-          resetMpsMsg(N_MPS_CHANNELS, *head);
+          // force the CMOS input virtually to high voltage [MPS_FS_620]
+          msgForceHigh(*head);
 
           // init the read iterator for MPS flags, so that iteration is delayed for 52 ms [MPS_FS_630]
           now += TIM_52_MS;
           initItr(itr, N_MPS_CHANNELS, now, F_MPS_BCAST);
 
         } else if (nodeType == FBAS_NODE_RX) { // it takes 2480/31048 ns for 2/32 MPS channels
-          // reset effective logic input to HIGH bit (delay for 52 ms) [MPS_FS_630]
-          resetMpsMsg(N_MPS_CHANNELS, *head);
+          // force effective logic input to HIGH bit (delay for 52 ms) [MPS_FS_630]
+          msgForceHigh(*head);
           // clear latched errors [MPS_FS_600]
           clearError(N_MPS_CHANNELS, *head);
         }
@@ -496,7 +505,7 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t
       case FBAS_GEN_EVT:
         if (nodeType == FBAS_NODE_TX) {// only FBAS TX node handles the MPS events
           // fetch the detected MPS event
-          *head = msgFetchMps(ecaEvtId);
+          *head = msgFetchMps(myIdx, ecaEvtId);
 
           // forward the fetched MPS event
           if (*head && (*mpsTask & TSK_TX_MPS_EVENTS)) {
@@ -582,9 +591,9 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t
 
         if (nodeType == FBAS_NODE_RX) {  // registration request from TX
           if (regCmd == REG_REQ) {
-            if (msgIsSenderIdKnown(&nodeId)) {
-              // find the given node in the list of sender nodes and return the position index
-              uint8_t idx = msgGetNodeIndex(&nodeId);
+            // find the given sender node in the dedicated array and return the index
+            int8_t idx = msgGetNodeIndex(&nodeId);
+            if ((0 <= idx) && (idx < N_MAX_TX_NODES)) {
               // TODO: reserve the MPS buffer for this sender node
               // TODO: idx=reserveBuffer(pos, nodeId);
               // unicast the reg. response
@@ -597,6 +606,7 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t
         else if (nodeType == FBAS_NODE_TX) { // registration response from RX
           if (regCmd == REG_RSP) {
             dstNwAddr[DST_ADDR_RXNODE].mac = nodeId;
+            myIdx = info;
             DBPRINT3("reg.rsp: RX MAC=%llx\n", dstNwAddr[DST_ADDR_RXNODE].mac);
             *mpsTask |= TSK_REG_COMPLETE;
           }
@@ -746,9 +756,9 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd)
         }
         break;
       case FBAS_CMD_GET_SENDERID:
-        // read valid sender ID (MAC, idx) from the shared memory and
+        // read sender node ID (MAC, idx) from the shared memory and
         // assign output port for signaling latency measurement
-        loadSenderId(pSharedApp, FBAS_SHARED_SENDERID);
+        readNodeId(pSharedApp, FBAS_SHARED_SENDERID);
         break;
       case FBAS_CMD_SET_IO_OE:
         u8val = 0;   // index = 0, by default
