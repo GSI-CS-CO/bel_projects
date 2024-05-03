@@ -32,7 +32,10 @@ namespace dnt = DotStr::Node::TypeVal;
     if (lookupVertex(v) != a.end()) std::cout << "V 0x" << std::dec << v << " (hash 0x" << hash << ") exists already" << std::endl;
     */
     if(!global) { vPool[cpu].occupyChunk(adr); }
-    else { std::cout << "Global for adr 0x" << std::hex << adr << std::endl; rt->insert(adr, hash);}
+    else { 
+      uint32_t rtAdr = adrConv(AdrType::MGMT, AdrType::INT, cpu, adr);
+      //std::cout << "Global for adr 0x" << std::hex << adr << " goes down to rt as 0x" << std::hex << rtAdr << std::endl;
+      rt->insert(rtAdr, hash);}
     auto x = a.insert({cpu, adr, hash, v, staged, global});
 
     return x.second;
@@ -119,9 +122,8 @@ namespace dnt = DotStr::Node::TypeVal;
   int AllocTable::allocate(uint8_t cpu, uint32_t hash, vertex_t v, Graph& g, bool staged) {
     if(g[v].type == dnt::sGlobal) {
       //uint32_t tmpAdr = rl->getSearch(g[v].section, DotStr::Misc::sZero).getLocVal();       
-      uint32_t tmpAdr = rl->getLocVal(g[v].section); 
-       
-      uint32_t adr = adrConv(AdrType::MGMT, AdrType::INT, cpu, tmpAdr);
+      uint32_t adr = rl->getLocVal(g[v].section); 
+     
       
       if (!(insert(cpu, adr, hash, v, false, true)))  return ALLOC_ENTRY_EXISTS;
     } else {
