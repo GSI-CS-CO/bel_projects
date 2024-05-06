@@ -61,5 +61,6 @@ include ../../../syn/build.mk
 
 fwbin: $(TARGET).bin
 	@mv $^ $(TARGET)$(N_MPS_CH).$(PLATFORM).bin
+	$(CROSS_COMPILE)size $(TARGET).elf
 
 $(TARGET).elf: $(SRC_FILES)
