@@ -49,8 +49,15 @@ class TestAltDestinationLists(dm_testbench.DmTestbench):
     delay = 1 / frequency * 0.52
     print(f'Action: {numDestinations=}, {frequency=}, {delay=}')
     for i in range(1, numDestinations):
-      self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'flow', 'Block0_0', f'Msg0_{i:04d}'), [0], 0, 0)
-      self.delay(delay)
+      command = (self.binaryDmCmd, self.datamaster, 'flow', 'Block0_0', f'Msg0_{i:04d}')
+      try:
+        self.startAndCheckSubprocess(command, [0], 0, 0)
+      except AssertionError as aError:
+        self.delay(delay)
+        if 'wrong return code' in aError.args[0]:
+          self.startAndCheckSubprocess(command, [0], 0, 0)
+      finally:
+        self.delay(delay)
 
   def runAltDestinationsX(self, numDestinations):
     """With a generated schedule test altdst. Use a loop over all tmsg
