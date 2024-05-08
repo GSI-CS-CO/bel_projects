@@ -68,7 +68,7 @@ $(info ours CXFLAGS for c++ code is $(CXFLAGS))
 
 TARGETS     := wrmil-ctl wrmil-serv-mon wrmil-client-mon
 
-all: $(TARGETS)
+all: lib $(TARGETS)
 
 wrmil-ctl: wrmil-ctl.c
 	$(CC) $(CFLAGS) $(CCFLAGS) -o wrmil-ctl wrmil-ctl.c $(LIBS)
