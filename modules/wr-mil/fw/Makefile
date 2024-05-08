@@ -41,6 +41,7 @@ include ../../../syn/build.mk
 fwbin: $(TARGET).bin 
 
 wrmil.elf:     $(PATHFW)/wr-mil.c  $(PATHFW)/../../../top/gsi_scu/scu_mil.c $(PATHFW)/../../common-libs/fw/common-fwlib.c
+wrf50.elf:     $(PATHFW)/wr-f50.c  $(PATHFW)/../../common-libs/fw/common-fwlib.c
 
 clean::
 	rm -f $(PATHFW)/*.o $(PATHFW)/*.a $(PATHFW)/*.elf $(PATHFW)/*.bin $(PATHFW)/*_shared_mmap.h
