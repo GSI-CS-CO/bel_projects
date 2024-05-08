@@ -39,7 +39,7 @@
 
 out_port_config_t outPortCfg =
   {IO_CFG_CHANNEL_GPIO, N_OUT_LEMO_SCU};    // default output port configuration for SCU3
-static io_port_t EffLogOut[N_MPS_CHANNELS]; // mapping between MPS message buffer and IO output port
+static io_port_t EffLogOut[N_MAX_TX_NODES]; // mapping between MPS message buffer and IO output port
 
 status_t findOutPort(const uint8_t bufIdx, io_port_t* port);
 
@@ -50,8 +50,8 @@ status_t findOutPort(const uint8_t bufIdx, io_port_t* port);
 */
 void ioInitPortMap(void)
 {
-  for (uint8_t i = 0; i < N_MPS_CHANNELS; ++i)
-    EffLogOut[i].idx = N_MPS_CHANNELS;
+  for (uint8_t i = 0; i < N_MAX_TX_NODES; ++i)
+    EffLogOut[i].idx = N_MAX_TX_NODES;
 }
 
 /**
@@ -208,7 +208,7 @@ status_t ioDriveOutput(mpsMsg_t *const pBuf, const uint8_t bufIdx)
  **/
 status_t ioMapOutput(const uint8_t bufIdx, const uint8_t portIdx)
 {
-  if (bufIdx >= N_MPS_CHANNELS)
+  if (bufIdx >= N_MAX_TX_NODES)
     return COMMON_STATUS_ERROR;
 
   if (portIdx >= outPortCfg.total)
@@ -230,7 +230,7 @@ status_t ioMapOutput(const uint8_t bufIdx, const uint8_t portIdx)
  **/
 status_t findOutPort(const uint8_t bufIdx, io_port_t* port)
 {
-  if (bufIdx > N_MPS_CHANNELS)
+  if (bufIdx > N_MAX_TX_NODES)
     return COMMON_STATUS_ERROR;
 
   switch (EffLogOut[bufIdx].type) {
@@ -258,7 +258,7 @@ void ioPrintPortMap(void)
   DBPRINT2("EffLogOut\n");
   DBPRINT2("buf_idx: IO port (type - idx)\n");
 
-  for (int i = 0; i < N_MPS_CHANNELS; ++i)
+  for (int i = 0; i < N_MAX_TX_NODES; ++i)
     DBPRINT2("%x: %x - %x\n",
         i,
         EffLogOut[i].type,

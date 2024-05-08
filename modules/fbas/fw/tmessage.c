@@ -39,7 +39,7 @@
 
 // application-specific variables
 uint8_t    nodeIds[N_MAX_TX_NODES][ETH_ALEN];   // sender node ID list
-mpsMsg_t   bufMpsMsg[N_MPS_CHANNELS];       // buffer for MPS timing messages
+mpsMsg_t   bufMpsMsg[N_MAX_MPS_CHANNELS];       // buffer for MPS timing messages
 mpsMsg_t *const headBufMps = &bufMpsMsg[0]; // head of the MPS message buffer
 timedItr_t rdItr;                           // read-access iterator for MPS flags
 
@@ -276,32 +276,30 @@ mpsMsg_t* msgFetchMps(const uint8_t idx, uint64_t evt)
  * \param itr Read-access iterator
  *
  * \return Offset to the MPS msg buffer on reception of an actual MPS msg,
- * or N_MPS_CHANNELS on reception of a repeated MPS msg, otherwise negative integer.
+ * or N_MAX_MPS_CHANNELS on reception of a repeated MPS msg, otherwise negative integer.
  **/
 int msgStoreMpsMsg(const uint64_t *raw, const uint64_t *ts, const timedItr_t* itr)
 {
-  uint8_t idx, flag;
+  uint8_t idx  = (uint8_t)(*raw >> 8);
+  uint8_t flag = (uint8_t)*raw;
 
-  for (int i = 0; i < N_MPS_CHANNELS; ++i) {
-    // node ID match
-    if (!memcmp(raw, (headBufMps+i)->prot.addr, ETH_ALEN)) {
-      idx = (uint8_t)(*raw >> 8);
-      // MPS channel match
-      if ((headBufMps+i)->prot.idx == idx) {
-        // new MPS msg
-        if (*ts != (headBufMps+i)->tsRx) {
-          flag = (uint8_t)*raw;
-          (headBufMps+i)->pending = (headBufMps+i)->prot.flag ^ flag;
-          (headBufMps+i)->prot.flag = flag;
-          (headBufMps+i)->ttl = itr->ttl;
-          (headBufMps+i)->tsRx = *ts;
-        }
-        else {
-          // repeated MPS msg
-          return N_MPS_CHANNELS;
-        }
-        return i;
+  // node ID match
+  if (!memcmp(raw, (headBufMps+idx)->prot.addr, ETH_ALEN)) {
+    // MPS channel match
+    if ((headBufMps+idx)->prot.idx == idx) {
+      // new MPS msg
+      if (*ts != (headBufMps+idx)->tsRx) {
+        flag = (uint8_t)*raw;
+        (headBufMps+idx)->pending = (headBufMps+idx)->prot.flag ^ flag;
+        (headBufMps+idx)->prot.flag = flag;
+        (headBufMps+idx)->ttl = itr->ttl;
+        (headBufMps+idx)->tsRx = *ts;
       }
+      else {
+        // repeated MPS msg
+        return N_MAX_MPS_CHANNELS;
+      }
+      return idx;
     }
   }
 
@@ -342,7 +340,7 @@ void msgInitMpsMsg(const uint64_t *id)
   uint8_t *mac = (uint8_t *)id;
   mac+=2;
 
-  for (int i = 0; i < N_MPS_CHANNELS; ++i)
+  for (int i = 0; i < N_MAX_MPS_CHANNELS; ++i)
   {
     msgResetMpsBuf(i, mac, MPS_FLAG_TEST);
     DBPRINT1("%x: mac=%x:%x:%x:%x:%x:%x idx=%x flag=%x @0x%8p\n",
@@ -377,6 +375,7 @@ void msgForceHigh(mpsMsg_t *const buf)
  * \brief reset MPS message buffer
  *
  * \param idx  Index of the MPS message buffer
+ * \param pId  Pointer to the sender node ID (MAC address)
  * \param flag MPS flag
  *
  * \return None
@@ -539,7 +538,7 @@ void ioPrintMpsBuf(void)
   DBPRINT2("bufMpsMsg\n");
   DBPRINT2("buf_idx: protocol (MAC - idx - flag), msg (tsRx - ttl - pending)\n");
 
-  for (int i = 0; i < N_MPS_CHANNELS; ++i)
+  for (int i = 0; i < N_MAX_MPS_CHANNELS; ++i)
      DBPRINT2("%x: %02x%02x%02x%02x%02x%02x - %x - %x, %llx - %x - %x\n",
         i,
         bufMpsMsg[i].prot.addr[0], bufMpsMsg[i].prot.addr[1],

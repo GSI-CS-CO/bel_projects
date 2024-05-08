@@ -66,7 +66,7 @@ struct nw_addr {
   uint32_t ip;
 };
 
-extern mpsMsg_t bufMpsMsg[N_MPS_CHANNELS];         // buffer for MPS messages
+extern mpsMsg_t bufMpsMsg[N_MAX_MPS_CHANNELS];     // buffer for MPS messages
 extern timedItr_t rdItr;                           // read-access iterator for MPS flags
 
 void      initItr(timedItr_t *const itr, const uint8_t total, const uint64_t now, const uint32_t freq);

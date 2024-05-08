@@ -25,12 +25,12 @@ typedef uint32_t status_t;
 #define N_MAX_TX_NODES     16  // maximum number of the TX nodes
 
 #ifdef MULTI_MPS_CH
-  #define N_MPS_FLAGS      8   // MPS flags in an Ethernet frame
+  #define N_MPS_CHANNELS   8   // MPS channels supported by a single TX node
 #else
-  #define N_MPS_FLAGS      1   // MPS flags in an Ethernet frame
+  #define N_MPS_CHANNELS   1
 #endif
 
-#define N_MPS_CHANNELS     ((N_MAX_TX_NODES) * (N_MPS_FLAGS))   // total number of MPS channels
+#define N_MAX_MPS_CHANNELS ((N_MAX_TX_NODES) * (N_MPS_CHANNELS))   // total number of MPS channels
 #define N_EXTRA_MPS_NOK    2   // extra transmissions of MPS NOK event
 #define F_MPS_BCAST        30  // frequency to broadcast MPS flags [MPS_FS_530]
 

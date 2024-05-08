@@ -479,7 +479,7 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t
           // force effective logic input to HIGH bit (delay for 52 ms) [MPS_FS_630]
           msgForceHigh(*head);
           // clear latched errors [MPS_FS_600]
-          clearError(N_MPS_CHANNELS, *head);
+          clearError(N_MAX_MPS_CHANNELS, *head);
         }
         ts = getSysTime();
         DBPRINT2("%lli\n", (ts - now));
@@ -496,7 +496,7 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t
 
         } else if (nodeType == FBAS_NODE_RX) {
           // invert output
-          testOutput(N_MPS_CHANNELS, *head);
+          testOutput(N_MAX_MPS_CHANNELS, *head);
         }
         ts = getSysTime();
         DBPRINT2("%lli\n", (ts - now));
@@ -561,7 +561,7 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t
           offset = msgStoreMpsMsg(&ecaParam, &ecaDeadline, itr);
           if (offset >= 0) {
             // new MPS msg
-            if (offset < N_MPS_CHANNELS) {
+            if (offset < N_MAX_MPS_CHANNELS) {
               // drive the assigned output port
               if (ioDriveOutput((mpsMsg_t*)(*head + offset), offset) == COMMON_STATUS_OK) {
                 // measure the ECA handling delay
@@ -904,7 +904,7 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
 
         // periodic, unicast transmission of the MPS flag
         if (setEndpDstAddr(DST_ADDR_RXNODE) == COMMON_STATUS_OK) {
-          uint32_t count = sendMpsMsgBlock(N_MPS_FLAGS, pRdItr, FBAS_FLG_EID);
+          uint32_t count = sendMpsMsgBlock(N_MPS_CHANNELS, pRdItr, FBAS_FLG_EID);
             // count sent timing messages with MPS flag
             *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = measureCountEvt(TX_EVT_CNT, count);
         }
@@ -923,7 +923,7 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
         // evaluate lifetime of the MPS protocols and handle expired MPS protocols
         *pMpsTask &= ~TSK_EVAL_MPS_TTL;
         uint64_t now = getSysTime();
-        for (int i = 0; i < N_MPS_CHANNELS; i++) {
+        for (int i = 0; i < N_MAX_MPS_CHANNELS; i++) {
           buf = evalMpsMsgTtl(now, i);
           if (buf) {
             ioDriveOutput(buf, i);

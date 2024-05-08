@@ -17,10 +17,10 @@ endif
 N_MAX_TX_NODES := $(shell $(CC) $(CC_FLAGS) $(CC_SRC) | sed -n 's|.*\sN_MAX_TX_NODES\s*||p')
 $(if $(N_MAX_TX_NODES),,$(error failed to evaluate $(CC_SRC)))
 
-N_MPS_FLAGS    := $(shell $(CC) $(CC_FLAGS) $(CC_SRC) | sed -n 's|.*\sN_MPS_FLAGS\s*||p')
-$(if $(N_MPS_FLAGS),,$(error failed to evaluate $(CC_SRC)))
+N_MPS_CHANNELS := $(shell $(CC) $(CC_FLAGS) $(CC_SRC) | sed -n 's|.*\sN_MPS_CHANNELS\s*||p')
+$(if $(N_MPS_CHANNELS),,$(error failed to evaluate $(CC_SRC)))
 
-N_MPS_CH    := $(shell echo $$(( $(N_MAX_TX_NODES) * $(N_MPS_FLAGS) )))
+N_MAX_MPS_CH   := $(shell echo $$(( $(N_MAX_TX_NODES) * $(N_MPS_CHANNELS) )))
 
 CFLAGS        = -I../include -I../../common-libs/include -I../../wb_timer -I../../../ip_cores/saftlib/src -I$(PATHFW) \
                 -DPLATFORM=$(PLATFORM) -DDEBUGLEVEL=$(DEBUGLVL) $(EXTRA_FLAGS)
@@ -50,14 +50,14 @@ $(info    USRCPUCLK   is $(USRCPUCLK))
 $(info    VERSION     is $(VERSION))
 $(info    CFLAGS      is $(CFLAGS))
 $(info    SRC_FILES   is $(SRC_FILES))
-$(info    N_MPS_CH    is $(N_MPS_CH))
+$(info    N_MAX_MPS_CH is $(N_MAX_MPS_CH))
 $(info    <<<<)
 
 include ../../../syn/build.mk
 
 fwbin: $(TARGET).bin
-	@mv $^ $(TARGET)$(N_MPS_CH).$(PLATFORM).bin
+	@mv $^ $(TARGET)$(N_MAX_MPS_CH).$(PLATFORM).bin
 	$(CROSS_COMPILE)size $(TARGET).elf
-	@md5sum $(TARGET)$(N_MPS_CH).$(PLATFORM).bin
+	@md5sum $(TARGET)$(N_MAX_MPS_CH).$(PLATFORM).bin
 
 $(TARGET).elf: $(SRC_FILES)
