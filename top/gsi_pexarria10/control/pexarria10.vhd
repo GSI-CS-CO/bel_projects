@@ -7,6 +7,10 @@ use work.monster_pkg.all;
 use work.ramsize_pkg.c_lm32_ramsizes;
 
 entity pexarria10 is
+  generic(
+    g_quad_mode_psram : boolean := false; -- True: Connect all PSRAMs; False: connect only $g_default_psram PSRAM
+    g_default_psram   : natural := 0 -- Possible values: 0, 1, 2, 3
+  );
   port(
     ------------------------------------------------------------------------
     -- Input clocks
@@ -342,26 +346,43 @@ begin
       ps_advn                 => s_psram_advn,
       ps_wait                 => s_psram_wait_or);
 
-  -- PSRAM test connection, add selector later (psram0/1/2/3)
-  --s_psram_wait_or <= psram_wait(0) or psram_wait(1) or psram_wait(2) or psram_wait(3);
-  s_psram_wait_or <= psram_wait(0);
-  psram_advn(0)   <= s_psram_advn;
-  psram_cre(0)    <= s_psram_cre;
-  psram_cen(0)    <= s_psram_cen;
-  psram_oen(0)    <= s_psram_oen;
-  psram_ubn(0)    <= s_psram_ubn;
-  psram_wen(0)    <= s_psram_wen;
-  psram_lbn(0)    <= s_psram_lbn;
+  -- Use only one PSRAM (TBD: Multichip support)
+  psram_single : if not(g_quad_mode_psram) generate
+    psram_gen : for i in 0 to 3 generate
+      psram_enable : if (g_default_psram = i) generate
+        s_psram_wait_or <= psram_wait(i);
+        psram_advn(i)   <= s_psram_advn;
+        psram_cre(i)    <= s_psram_cre;
+        psram_cen(i)    <= s_psram_cen;
+        psram_oen(i)    <= s_psram_oen;
+        psram_ubn(i)    <= s_psram_ubn;
+        psram_wen(i)    <= s_psram_wen;
+        psram_lbn(i)    <= s_psram_lbn;
+      end generate; -- psram_enable
+      psram_disable : if not(g_default_psram = i) generate
+        psram_advn(i) <= '0';
+        psram_cre(i)  <= '0';
+        psram_cen(i)  <= '1';
+        psram_oen(i)  <= '1';
+        psram_ubn(i)  <= '0';
+        psram_wen(i)  <= '1';
+        psram_lbn(i)  <= '0';
+      end generate; -- psram_disable
+    end generate; -- psram_gen
+  end generate; -- psram_single
 
-  psram_disconnect : for i in 1 to 3 generate
-    psram_advn(i) <= '0';
-    psram_cre(i)  <= '0';
-    psram_cen(i)  <= '1';
-    psram_oen(i)  <= '1';
-    psram_ubn(i)  <= '0';
-    psram_wen(i)  <= '1';
-    psram_lbn(i)  <= '0';
-  end generate;
+  psram_quad : if (g_quad_mode_psram) generate
+    s_psram_wait_or <= psram_wait(0) or psram_wait(1) or psram_wait(2) or psram_wait(3);
+    psram_quad_gen : for i in 0 to 3 generate
+      psram_advn(i)   <= s_psram_advn;
+      psram_cre(i)    <= s_psram_cre;
+      psram_cen(i)    <= s_psram_cen;
+      psram_oen(i)    <= s_psram_oen;
+      psram_ubn(i)    <= s_psram_ubn;
+      psram_wen(i)    <= s_psram_wen;
+      psram_lbn(i)    <= s_psram_lbn;
+    end generate; -- psram_quad_gen
+  end generate; -- psram_quad
 
   -- LEDs
   wr_leds_o(0)                  <= not (s_led_link_act and s_led_link_up); -- red   = traffic/no-link
