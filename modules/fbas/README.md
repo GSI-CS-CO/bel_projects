@@ -33,7 +33,7 @@ Directory structure:
 Makefile is used to build the firmware binaries (.bin, .elf). Invoke a command given below:
 
 ```
-$ make           # it will build firmware, fbas16/fbas.scucontrol.bin
+$ make           # it will build firmware, fbas*.scucontrol.bin
 $ make clean     # deletes all artifacts
 ```
 

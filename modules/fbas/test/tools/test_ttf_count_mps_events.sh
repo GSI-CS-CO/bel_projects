@@ -8,8 +8,8 @@ domain=$(hostname -d)
 rxscu_name="scuxl0411"
 rxscu="$rxscu_name.$domain"
 
-fw_scu_def="fbas.scucontrol.bin"      # default LM32 FW for TX/RX SCUs
-fw_scu_multi="fbas16.scucontrol.bin"  # supports up to 16 MPS channels
+fw_scu_def="fbas16.scucontrol.bin"    # default FW that supports up to 16 TX nodes, each has 1 MPS channel
+fw_scu_multi="fbas16.scucontrol.bin"
 fn_mps_events="simple_mps_events.sched" # filename with schedule for the MPS events
 n_repeat=1                            # number of repeatations of the schedule
 

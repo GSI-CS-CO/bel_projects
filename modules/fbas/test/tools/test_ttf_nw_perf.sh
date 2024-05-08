@@ -10,8 +10,8 @@ def_txscu_name="scuxl0396"
 txscu_name=()                         # array with transmitter names
 rxscu="scuxl0497.$domain"
 txscu=()                              # array with transmitter domain names
-fw_scu_def="fbas.scucontrol.bin"      # default LM32 FW for TX/RX SCUs
-fw_scu_multi="fbas16.scucontrol.bin"  # supports up to 16 MPS channels
+fw_scu_def="fbas16.scucontrol.bin"    # default FW that supports up to 16 TX nodes, each hase 1 MPS channel
+fw_scu_multi="fbas16.scucontrol.bin"
 ssh_opts="-o StrictHostKeyChecking=no"   # no hostkey checking
 getopt_opts="u:p:t:r:n:eyvh"          # user options
 
