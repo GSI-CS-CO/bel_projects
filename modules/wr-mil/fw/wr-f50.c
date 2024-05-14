@@ -43,11 +43,6 @@
  ********************************************************************************************/
 #define WRF50_FW_VERSION      0x000001    // make this consistent with makefile
 
-#define RESET_INHIBIT_COUNTER    10000    // count so many main ECA timemouts, prior sending fill event
-//#define WR_MIL_GATEWAY_LATENCY 70650    // additional latency in units of nanoseconds
-                                          // this value was determined by measuring the time difference
-                                          // of the MIL event rising edge and the ECA output rising edge (no offset)
-                                          // and tuning this time difference to 100.0(5)us
 
 // standard includes
 #include <stdio.h>
@@ -63,7 +58,6 @@
 #include "mini_sdb.h"                                                   // sdb stuff
 #include "aux.h"                                                        // cpu and IRQ
 #include "uart.h"                                                       // WR console
-#include "../../../top/gsi_scu/scu_mil.h"                               // register layout of 'MIL macro'
 
 // includes for this project 
 #include <common-defs.h>                                                // common defs for firmware
@@ -79,52 +73,48 @@ uint64_t SHARED  dummy = 0;
 
 // global variables 
 volatile uint32_t *pShared;                // pointer to begin of shared memory region
-volatile uint32_t *pSharedSetUtcTrigger;   // pointer to a "user defined" u32 register; here: the MIL event that triggers the generation of UTC events
-volatile uint32_t *pSharedSetUtcUtcDelay;  // pointer to a "user defined" u32 register; here: delay [us] between the 5 generated UTC MIL events
-volatile uint32_t *pSharedSetTrigUtcDelay; // pointer to a "user defined" u32 register; here: delay [us] between the trigger event and the first UTC (and other) generated events
-volatile uint32_t *pSharedSetGid;          // pointer to a "user defined" u32 register; here: GID the gateway will be using
-volatile int32_t  *pSharedSetLatency;      // pointer to a "user defined" u32 register; here: MIL event is generated xxx us+latency after the WR event. The value of latency can be negative
-volatile uint32_t *pSharedSetUtcOffsHi;    // pointer to a "user defined" u32 register; here: delay [ms] between the TAI and the MIL-UTC, high word
-volatile uint32_t *pSharedSetUtcOffsLo;    // pointer to a "user defined" u32 register; here: delay [ms] between the TAI and the MIL-UTC, low word
-volatile uint32_t *pSharedSetReqFillEvt;   // pointer to a "user defined" u32 register; here: if this is written to 1, the gateway will send a fill event as soon as possible
-volatile uint32_t *pSharedSetMilDev;       // pointer to a "user defined" u32 register; here: MIL device for sending MIL messages; 0: MIL Piggy; 1..: SIO in slot 1..
-volatile uint32_t *pSharedSetMilMon;       // pointer to a "user defined" u32 register; here: 1: monitor MIL events; 0; don't monitor MIL events
-volatile uint32_t *pSharedGetNEvtsSndHi;   // pointer to a "user defined" u32 register; here: number of telegrams sent, high word
-volatile uint32_t *pSharedGetNEvtsSndLo;   // pointer to a "user defined" u32 register; here: number of telegrams sent, high word
-volatile uint32_t *pSharedGetNEvtsRecTHi;  // pointer to a "user defined" u32 register; here: number of telegrams received (TAI), high word
-volatile uint32_t *pSharedGetNEvtsRecTLo;  // pointer to a "user defined" u32 register; here: number of telegrams received (TAI), high word
-volatile uint32_t *pSharedGetNEvtsRecDHi;  // pointer to a "user defined" u32 register; here: number of telegrams received (data), high word
-volatile uint32_t *pSharedGetNEvtsRecDLo;  // pointer to a "user defined" u32 register; here: number of telegrams received (data), high word
-volatile uint32_t *pSharedGetNEvtsErr;     // pointer to a "user defined" u32 register; here: number of received MIL telegrams with errors, detected by VHDL manchester decoder
-volatile uint32_t *pSharedGetNEvtsLate;    // pointer to a "user defined" u32 register; here: number of late events
-volatile uint32_t *pSharedGetComLatency;   // pointer to a "user defined" u32 register; here: communicatin latency for events received by ECA
-//volatile uint32_t *pSharedGetNLateHisto;   // pointer to a "user defined" u32 register; here: dummy register to indicate position after the last valid register
-//volatile uint32_t *pSharedGetNMilHisto;    // pointer to a "user defined" u32 register; here: dummy register to indicate position after the last valid register
-//volatile uint32_t *pSharedGetMsiSlot;      // pointer to a "user defined" u32 register; here: MSI slot is stored here
+volatile uint32_t *pSharedSetF50Offset;    // pointer to a "user defined" u32 register; here: offset to TLU signal         
+volatile uint32_t *pSharedSetMode;         // pointer to a "user defined" u32 register; here: mode of 50 Hz synchronization
+volatile uint32_t *pSharedGetTMainsAct;    // pointer to a "user defined" u32 register; here: period of mains cycle [ns], actual value                           
+volatile uint32_t *pSharedGetTDMAct;       // pointer to a "user defined" u32 register; here: period of Data Master cycle [ns], actual value                     
+volatile uint32_t *pSharedGetTDMSet;       // pointer to a "user defined" u32 register; here: period of Data Master cycle [ns], actual value                     
+volatile uint32_t *pSharedGetOffsDMAct;    // pointer to a "user defined" u32 register; here: offset of cycle start: t_DM - t_mains; actual value                
+volatile uint32_t *pSharedGetOffsDMMin;    // pointer to a "user defined" u32 register; here: offset of cycle start: t_DM - t_mains; min value                   
+volatile uint32_t *pSharedGetOffsDMMax;    // pointer to a "user defined" u32 register; here: offset of cycle start: t_DM - t_mains; max value                   
+volatile uint32_t *pSharedGetOffsMainsAct; // pointer to a "user defined" u32 register; here: offset of cycle start: t_mains_predict - t_mains; actual value     
+volatile uint32_t *pSharedGetOffsMainsMin; // pointer to a "user defined" u32 register; here: offset of cycle start: t_mains_predict - t_mains; min value        
+volatile uint32_t *pSharedGetOffsMainsMax; // pointer to a "user defined" u32 register; here: offset of cycle start: t_mains_predict - t_mains; max value        
+volatile uint32_t *pSharedGetLockState;    // pointer to a "user defined" u32 register; here: lock state; how DM is locked to mains                              
+volatile uint32_t *pSharedGetLockDateHi;   // pointer to a "user defined" u32 register; here: time when lock has been achieve [ns], high bits                    
+volatile uint32_t *pSharedGetLockDateLo;   // pointer to a "user defined" u32 register; here: time when lock has been achieve [ns], low bits                     
+volatile uint32_t *pSharedGetNLocked;      // pointer to a "user defined" u32 register; here: counts how many locks have been achieved                           
+volatile uint32_t *pSharedGetNCycles;      // pointer to a "user defined" u32 register; here: number of UNILAC cycles                                            
+volatile uint32_t *pSharedGetNEvtsLate;    // pointer to a "user defined" u32 register; here: number of translated events that could not be delivered in time    
+volatile uint32_t *pSharedGetComLatency;   // pointer to a "user defined" u32 register; here: latency for messages received from via ECA (tDeadline - tNow)) [ns]
 
+uint32_t *cpuRamExternal;                  // external address (seen from host bridge) of this CPU's RAM
 
-uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM
-volatile uint32_t *pMilSend;            // address of MIL device sending timing messages, usually this will be a SIO
-volatile uint32_t *pMilRec;             // address of MIL device receiving timing messages, usually this will be a MIL piggy
+uint32_t setF50Offset;  
+uint32_t setMode;        
+uint32_t getTMainsAct;   
+uint32_t getTDMAct;      
+uint32_t getTDMSet;      
+uint32_t getOffsDMAct;   
+uint32_t getOffsDMMin;   
+uint32_t getOffsDMMax;   
+uint32_t getOffsMainsAct;
+uint32_t getOffsMainsMin;
+uint32_t getOffsMainsMax;
+uint32_t getLockState;   
+uint64_t getLockDate;  
+uint32_t getNLocked;     
+uint32_t getNCycles;     
+uint32_t getNEvtsLate;   
+uint32_t getComLatency;  
 
 uint64_t statusArray;                   // all status infos are ORed bit-wise into statusArray, statusArray is then published
-uint64_t nEvtsSnd;                      // # of sent MIL telegrams
-uint64_t nEvtsRecT;                     // # of received MIL telegrams (TAI)
-uint64_t nEvtsRecD;                     // # of received MIL telegrams (data)
-uint32_t nEvtsErr ;                     // # of late messages with errors
 uint32_t nEvtsLate;                     // # of late messages
 int32_t  comLatency;                    // latency for messages received via ECA
-
-uint32_t utc_trigger;
-int32_t  utc_utc_delay;
-int32_t  trig_utc_delay;
-uint64_t utc_offset;
-uint32_t request_fill_evt;
-int32_t  mil_latency;
-uint32_t mil_domain;
-uint32_t mil_mon;
-
-uint32_t inhibit_fill_events = 0;       // this is a counter to block any sending of fill events for some cycles after a real event was sent
 
 // constants (as variables to have a defined type)
 uint64_t  one_us_ns = 1000;
@@ -152,31 +142,27 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
   sdb_location   found_clu;
   
   // get pointer to shared memory
-  pShared                    = (uint32_t *)_startshared;
+  pShared                 = (uint32_t *)_startshared;
 
   // get address to data
-  pSharedSetUtcTrigger       = (uint32_t *)(pShared + (WRF50_SHARED_SET_UTC_TRIGGER       >> 2));
-  pSharedSetUtcUtcDelay      = (uint32_t *)(pShared + (WRF50_SHARED_SET_UTC_UTC_DELAY     >> 2));
-  pSharedSetTrigUtcDelay     = (uint32_t *)(pShared + (WRF50_SHARED_SET_TRIG_UTC_DELAY    >> 2));
-  pSharedSetGid              = (uint32_t *)(pShared + (WRF50_SHARED_SET_GID               >> 2));
-  pSharedSetLatency          = (uint32_t *)(pShared + (WRF50_SHARED_SET_LATENCY           >> 2));
-  pSharedSetUtcOffsHi        = (uint32_t *)(pShared + (WRF50_SHARED_SET_UTC_OFFSET_HI     >> 2));
-  pSharedSetUtcOffsLo        = (uint32_t *)(pShared + (WRF50_SHARED_SET_UTC_OFFSET_LO     >> 2));
-  pSharedSetReqFillEvt       = (uint32_t *)(pShared + (WRF50_SHARED_SET_REQUEST_FILL_EVT  >> 2));
-  pSharedSetMilDev           = (uint32_t *)(pShared + (WRF50_SHARED_SET_MIL_DEV           >> 2));
-  pSharedSetMilMon           = (uint32_t *)(pShared + (WRF50_SHARED_SET_MIL_MON           >> 2));
-  pSharedGetNEvtsSndHi       = (uint32_t *)(pShared + (WRF50_SHARED_GET_N_EVTS_SND_HI     >> 2));
-  pSharedGetNEvtsSndLo       = (uint32_t *)(pShared + (WRF50_SHARED_GET_N_EVTS_SND_LO     >> 2));
-  pSharedGetNEvtsRecTHi      = (uint32_t *)(pShared + (WRF50_SHARED_GET_N_EVTS_RECT_HI    >> 2));
-  pSharedGetNEvtsRecTLo      = (uint32_t *)(pShared + (WRF50_SHARED_GET_N_EVTS_RECT_LO    >> 2));
-  pSharedGetNEvtsRecDHi      = (uint32_t *)(pShared + (WRF50_SHARED_GET_N_EVTS_RECD_HI    >> 2));
-  pSharedGetNEvtsRecDLo      = (uint32_t *)(pShared + (WRF50_SHARED_GET_N_EVTS_RECD_LO    >> 2));
-  pSharedGetNEvtsErr         = (uint32_t *)(pShared + (WRF50_SHARED_GET_N_EVTS_ERR        >> 2));
-  pSharedGetNEvtsLate        = (uint32_t *)(pShared + (WRF50_SHARED_GET_N_EVTS_LATE       >> 2));
-  pSharedGetComLatency       = (uint32_t *)(pShared + (WRF50_SHARED_GET_COM_LATENCY       >> 2));
-  //pSharedGetNLateHisto       = (uint32_t *)(pShared + (WRF50_SHARED_GET_LATE_HISTOGRAM    >> 2));
-  //pSharedGetNMilHisto        = (uint32_t *)(pShared + (WRF50_SHARED_GET_MIL_HISTOGRAM     >> 2));
-  //pSharedGetMsiSlot          = (uint32_t *)(pShared + (WRF50_SHARED_GET_MSI_SLOT          >> 2));
+  pSharedSetF50Offset     = (uint32_t *)(pShared + (WRF50_SHARED_SET_F50OFFSET       >> 2));
+  pSharedSetMode          = (uint32_t *)(pShared + (WRF50_SHARED_SET_MODE            >> 2));
+  pSharedGetTMainsAct     = (uint32_t *)(pShared + (WRF50_SHARED_GET_T_MAINS_ACT     >> 2));
+  pSharedGetTDMAct        = (uint32_t *)(pShared + (WRF50_SHARED_GET_T_DM_ACT        >> 2));
+  pSharedGetTDMSet        = (uint32_t *)(pShared + (WRF50_SHARED_GET_T_DM_SET        >> 2));
+  pSharedGetOffsDMAct     = (uint32_t *)(pShared + (WRF50_SHARED_GET_OFFS_DM_ACT     >> 2));
+  pSharedGetOffsDMMin     = (uint32_t *)(pShared + (WRF50_SHARED_GET_OFFS_DM_MIN     >> 2));
+  pSharedGetOffsDMMax     = (uint32_t *)(pShared + (WRF50_SHARED_GET_OFFS_DM_MAX     >> 2));
+  pSharedGetOffsMainsAct  = (uint32_t *)(pShared + (WRF50_SHARED_GET_OFFS_MAINS_ACT  >> 2));
+  pSharedGetOffsMainsMin  = (uint32_t *)(pShared + (WRF50_SHARED_GET_OFFS_MAINS_MIN  >> 2));
+  pSharedGetOffsMainsMax  = (uint32_t *)(pShared + (WRF50_SHARED_GET_OFFS_MAINS_MAX  >> 2));
+  pSharedGetLockState     = (uint32_t *)(pShared + (WRF50_SHARED_GET_LOCK_STATE      >> 2));
+  pSharedGetLockDateHi    = (uint32_t *)(pShared + (WRF50_SHARED_GET_LOCK_DATE_HIGH  >> 2));
+  pSharedGetLockDateLo    = (uint32_t *)(pShared + (WRF50_SHARED_GET_LOCK_DATE_LOW   >> 2));
+  pSharedGetNLocked       = (uint32_t *)(pShared + (WRF50_SHARED_GET_N_LOCKED        >> 2));
+  pSharedGetNCycles       = (uint32_t *)(pShared + (WRF50_SHARED_GET_N_CYCLES        >> 2));
+  pSharedGetNEvtsLate     = (uint32_t *)(pShared + (WRF50_SHARED_GET_N_EVTS_LATE     >> 2));
+  pSharedGetComLatency    = (uint32_t *)(pShared + (WRF50_SHARED_GET_COM_LATENCY     >> 2));
 
   // find address of CPU from external perspective
   idx = 0;
@@ -227,7 +213,6 @@ void extern_clearDiag()
   nEvtsErr     = 0x0;
   nEvtsLate    = 0x0;
   comLatency   = 0x0;
-  resetEventErrCntMil(pMilRec);
 } // extern_clearDiag 
 
 

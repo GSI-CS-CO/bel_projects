@@ -28,10 +28,26 @@
 // WR-F50 error flags (in EvtId)
 
 // WR-F50 group ID; relevant messages are sent in this group
-#define PZU_F50                       0x4c0    // information related to UNILAC 50 Hz synchronization 
+#define PZU_F50                       0x4c0    // information related to UNILAC 50 Hz synchronization
+
+// WR-F50 lock states
+#define WRF50_SLOCK_UNKWN               0x0    // state: unknonwn
+#define WRF50_SLOCK_UNLOCKED            0x1    // state: not locked
+#define WRF50_SLOCK_LOCKING             0x2    // state: locking
+#define WRF50_SLOCK_LOCKED              0x3    // state: locked
+
+// WR-F50 modes
+#define WRF50_MODE_OFF                  0x0    // mode: off
+#define WRF50_MODE_LOCK_SIM             0x1    // mode: lock to 50 Hz mains, simulation
+#define WRF50_MODE_LOCK_DM              0x2    // mode: lock to 50 Hz mains, Data Master
 
 // constants
 #define WRF50_POSTTRIGGER_TLU         20000    // posttrigger [ns] for avoiding late messages from the TLU
+#define WRF50_CYCLELEN_MIN         19800000    // minimum cycle length [ns]
+#define WRF50_CYCLELEN_MAX         20400000    // maximum cycle length [ns]
+#define WRF50_CYCLEDIFF_MAX            1000    // maximum difference between cycle length of Data Master und mains [ns], used for set-value
+#define WRF50_LOCK_DIFFCYCLE           2000    // maximum difference between cycle length of Data Master und mains [ns], criterium for lock state
+#define WRF50_LOCK_DIFFT              20000    // maximum difference between time of cycle start between Data Master and mains [ns], criterium for lock state
 
 // default values
 #define WR50_DFLT_F50OFFSET               0    // default value [ns] for offset from 50 Hz signal
@@ -44,25 +60,24 @@
 // offsets
 // set values
 #define WRF50_SHARED_SET_F50OFFSET         (COMMON_SHARED_END                 + _32b_SIZE_)  // offset to TLU signal
-#define WRF50_SHARED_SET_UTC_UTC_DELAY     (WRF50_SHARED_SET_UTC_TRIGGER      + _32b_SIZE_)  // delay [us] between the 5 generated UTC MIL events
-#define WRF50_SHARED_SET_TRIG_UTC_DELAY    (WRF50_SHARED_SET_UTC_UTC_DELAY    + _32b_SIZE_)  // delay [us] between the trigger event and the first UTC (and other) generated events
-#define WRF50_SHARED_SET_GID               (WRF50_SHARED_SET_TRIG_UTC_DELAY   + _32b_SIZE_)  // timing group ID for which the gateway is generating MIL events (example: 0x12c is SIS18)
-#define WRF50_SHARED_SET_LATENCY           (WRF50_SHARED_SET_GID              + _32b_SIZE_)  // [us] MIL event is generated 100us+latency after the WR event. The value of latency can be negative
-#define WRF50_SHARED_SET_UTC_OFFSET_HI     (WRF50_SHARED_SET_LATENCY          + _32b_SIZE_)  // offset [ms] between the TAI and the MIL-UTC, high word 
-#define WRF50_SHARED_SET_UTC_OFFSET_LO     (WRF50_SHARED_SET_UTC_OFFSET_HI    + _32b_SIZE_)  // offset [ms] between the TAI and the MIL-UTC, low  word
-#define WRF50_SHARED_SET_REQUEST_FILL_EVT  (WRF50_SHARED_SET_UTC_OFFSET_LO    + _32b_SIZE_)  // if this is written to 1, the gateway will send a fill event as soon as possible
-#define WRF50_SHARED_SET_MIL_DEV           (WRF50_SHARED_SET_REQUEST_FILL_EVT + _32b_SIZE_)  // MIL device for sending MIL messages; 0: MIL Piggy; 1..: SIO in slot 1..
-#define WRF50_SHARED_SET_MIL_MON           (WRF50_SHARED_SET_MIL_DEV          + _32b_SIZE_)  // 1: monitor MIL event data; 0; don't monitor MIL event data
+#define WRF50_SHARED_SET_MODE              (WRF50_SHARED_SET_F50OFFSET        + _32b_SIZE_)  // mode of 50 Hz synchronization
 
 // get values
-#define WRF50_SHARED_GET_N_EVTS_SND_HI     (WRF50_SHARED_SET_MIL_MON          + _32b_SIZE_)  // number of sent MIL telegrams, high word
-#define WRF50_SHARED_GET_N_EVTS_SND_LO     (WRF50_SHARED_GET_N_EVTS_SND_HI    + _32b_SIZE_)  // number of sent MIL telegrams, low word
-#define WRF50_SHARED_GET_N_EVTS_RECT_HI    (WRF50_SHARED_GET_N_EVTS_SND_LO    + _32b_SIZE_)  // number of received MIL telegrams (TAI), high word
-#define WRF50_SHARED_GET_N_EVTS_RECT_LO    (WRF50_SHARED_GET_N_EVTS_RECT_HI   + _32b_SIZE_)  // number of received MIL telegrams (TAI), low word
-#define WRF50_SHARED_GET_N_EVTS_RECD_HI    (WRF50_SHARED_GET_N_EVTS_RECT_LO   + _32b_SIZE_)  // number of received MIL telegrams (data), high word
-#define WRF50_SHARED_GET_N_EVTS_RECD_LO    (WRF50_SHARED_GET_N_EVTS_RECD_HI   + _32b_SIZE_)  // number of received MIL telegrams (data), low word
-#define WRF50_SHARED_GET_N_EVTS_ERR        (WRF50_SHARED_GET_N_EVTS_RECD_LO   + _32b_SIZE_)  // number of received MIL telegrams with errors, detected by VHDL manchester decoder
-#define WRF50_SHARED_GET_N_EVTS_LATE       (WRF50_SHARED_GET_N_EVTS_ERR       + _32b_SIZE_)  // number of translated events that could not be delivered in time
+#define WRF50_SHARED_GET_T_MAINS_ACT       (WRF50_SHARED_SET_MODE             + _32b_SIZE_)  // period of mains cycle [ns], actual value
+#define WRF50_SHARED_GET_T_DM_ACT          (WRF50_SHARED_GET_T_MAINS_ACT      + _32b_SIZE_)  // period of Data Master cycle [ns], actual value
+#define WRF50_SHARED_GET_T_DM_SET          (WRF50_SHARED_GET_T_DM_ACT         + _32b_SIZE_)  // period of Data Master cycle [ns], actual value
+#define WRF50_SHARED_GET_OFFS_DM_ACT       (WRF50_SHARED_GET_T_DM_SET         + _32b_SIZE_)  // offset of cycle start: t_DM - t_mains; actual value
+#define WRF50_SHARED_GET_OFFS_DM_MIN       (WRF50_SHARED_GET_OFFS_CYCLE_ACT   + _32b_SIZE_)  // offset of cycle start: t_DM - t_mains; min value
+#define WRF50_SHARED_GET_OFFS_DM_MAX       (WRF50_SHARED_GET_OFFS_CYCLE_MIN   + _32b_SIZE_)  // offset of cycle start: t_DM - t_mains; max value
+#define WRF50_SHARED_GET_OFFS_MAINS_ACT    (WRF50_SHARED_GET_OFFS_CYCLE_MAX   + _32b_SIZE_)  // offset of cycle start: t_mains_predict - t_mains; actual value
+#define WRF50_SHARED_GET_OFFS_MAINS_MIN    (WRF50_SHARED_GET_OFFS_MATCH_ACT   + _32b_SIZE_)  // offset of cycle start: t_mains_predict - t_mains; min value
+#define WRF50_SHARED_GET_OFFS_MAINS_MAX    (WRF50_SHARED_GET_OFFS_MATCH_MIN   + _32b_SIZE_)  // offset of cycle start: t_mains_predict - t_mains; max value
+#define WRF50_SHARED_GET_LOCK_STATE        (WRF50_SHARED_GET_OFFS_MATCH_MAX   + _32b_SIZE_)  // lock state; how DM is locked to mains
+#define WRF50_SHARED_GET_LOCK_DATE_HIGH    (WRF50_SHARED_GET_LOCK_STATE       + _32b_SIZE_)  // time when lock has been achieve [ns], high bits
+#define WRF50_SHARED_GET_LOCK_DATE_LOW     (WRF50_SHARED_GET_LOCK_DATE_HIGH   + _32b_SIZE_)  // time when lock has been achieve [ns], low bits
+#define WRF50_SHARED_GET_N_LOCKED          (WRF50_SHARED_GET_LOCK_DATE_LOW    + _32b_SIZE_)  // counts how many locks have been achieved
+#define WRF50_SHARED_GET_N_CYCLES          (WRF50_SHARED_GET_N_LOCKED         + _32b_SIZE_)  // number of UNILAC cycles
+#define WRF50_SHARED_GET_N_EVTS_LATE       (WRF50_SHARED_GET_N_CYCLES         + _32b_SIZE_)  // number of translated events that could not be delivered in time
 #define WRF50_SHARED_GET_COM_LATENCY       (WRF50_SHARED_GET_N_EVTS_LATE      + _32b_SIZE_)  // latency for messages received from via ECA (tDeadline - tNow)) [ns]
 
 // diagnosis: end of used shared memory
