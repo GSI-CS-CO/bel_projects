@@ -42,12 +42,13 @@
 #define WRF50_MODE_LOCK_DM              0x2    // mode: lock to 50 Hz mains, Data Master
 
 // constants
-#define WRF50_POSTTRIGGER_TLU         20000    // posttrigger [ns] for avoiding late messages from the TLU
+#define WRF50_POSTTRIGGER_TLU       1000000    // posttrigger [ns] for avoiding late messages from the TLU and defining an order (DM vs mains)x
 #define WRF50_CYCLELEN_MIN         19800000    // minimum cycle length [ns]
 #define WRF50_CYCLELEN_MAX         20400000    // maximum cycle length [ns]
 #define WRF50_CYCLEDIFF_MAX            1000    // maximum difference between cycle length of Data Master und mains [ns], used for set-value
 #define WRF50_LOCK_DIFFCYCLE           2000    // maximum difference between cycle length of Data Master und mains [ns], criterium for lock state
 #define WRF50_LOCK_DIFFT              20000    // maximum difference between time of cycle start between Data Master and mains [ns], criterium for lock state
+#define WRF50_N_STAMPS                    5    // number of timestamps used for averaging
 
 // default values
 #define WR50_DFLT_F50OFFSET               0    // default value [ns] for offset from 50 Hz signal
