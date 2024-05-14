@@ -1,0 +1,153 @@
+\documentclass[12pt,a4paper]{report}
+% Language: English
+\pdfminorversion=7
+\usepackage[pdftex]{graphicx}
+\usepackage{changepage}
+\usepackage{xcolor}
+\usepackage{listings}
+
+\lstdefinestyle{dotfiles}{
+  escapeinside={(*@}{@*)}, % (*@\label{mylabel}@*)
+  numbers=left,
+  stepnumber=1,
+  numberstyle=\tiny,
+  numbersep=10pt,
+  captionpos=b,
+  belowcaptionskip=1\baselineskip,
+  breaklines=true,
+  keepspaces=true,
+  columns=flexible,
+  language=C,
+  showstringspaces=false,
+  basicstyle=\scriptsize\ttfamily,
+  keywordstyle=\color{green!40!black},
+  commentstyle=\itshape\color{purple!40!black},
+  identifierstyle=\color{blue},
+  stringstyle=\color{red},
+  tabsize=2,
+  morekeywords={digraph, graph, subgraph, edge, node, color, style, shape, fillcolor},
+}
+
+\newcommand{\ry}{\rotatebox{90}}
+\begin{document}
+
+\begin{titlepage}
+\vspace{2cm}
+\begin{center}
+\Huge{Details about Reference Edges}
+
+\Large{Martin Skorsky}
+
+\Large{Last change: 2024-05-07}
+\end{center}
+\vfill
+\end{titlepage}
+
+\tableofcontents
+
+\chapter{Schedule}
+The schedule used for the test contains a block with 1 second period and 4 timing messages in a loop.
+The first timing message points to the other tree messages for a reference.
+
+\lstinputlisting[style=dotfiles, caption={Schedule: Timing Message with 3 References}, label={lst:reference-loop3.dot}]{TestPattern/reference-loop3.dot}
+
+%~ digraph "reference-loop3" {
+  %~ node [cpu=0 pattern=ref1 type=tmsg toffs=0 tef=0 patentry=0 patexit=0 fid=1 style=filled color=black fillcolor=white shape=oval]
+  %~ Block0 [type=block tperiod=1000000000 patexit=1 qlo=1 color=purple shape=rectangle]
+  %~ Msg1 [patentry=1 gid=1 evtno=1 par="0x100009e4" color=darkorange3]
+  %~ Msg2 [gid=2 evtno=2 par="0x225002" toffs=200000000]
+  %~ Msg3 [gid=3 evtno=3 par="0x225003" toffs=300000000]
+  %~ Msg4 [gid=4 evtno=4 par="0x225004" toffs=400000000]
+  %~ Block0 -> Msg1 -> Msg2 -> Msg3 -> Msg4 -> Block0 [type=defdst color=red]
+  %~ Msg1 -> Msg2 [type=reference fieldhead="0x8" fieldtail=8 fieldwidth=64 color=pink]
+  %~ Msg1 -> Msg3 [type=reference fieldhead="0x10" fieldtail="0x10" fieldwidth=64 color=pink]
+  %~ Msg1 -> Msg4 [type=reference fieldhead="0x14" fieldtail="0x18" fieldwidth=32 color=pink]
+%~ }
+
+\chapter{Hex Dumps of Nodes with Reference Edges}
+\begin{enumerate}
+\item
+\begin{verbatim}
+dm-cmd <datamaster> hex Block0
+Block0:
+  0000  00 00 00 00 3b 9a ca 00 00 00 00 00 10 00 0a 6c
+  0010  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0020  00 00 00 00 00 00 00 00 e8 f5 28 82 00 10 81 07
+  0030  10 00 09 9c
+\end{verbatim}
+\item
+\begin{verbatim}
+dm-cmd <datamaster> hex Msg1
+Msg1:
+  0000  00 00 00 00 00 00 00 00 10 00 09 d8 00 00 00 00
+                                | from Msg2  +8       |
+  0010  10 00 0a 14 00 22 50 03 10 00 0a 4c 00 00 00 00
+        | from Msg3  +16        | from Msg4  +24      |
+  0020  00 00 00 00 00 08 61 80 a4 66 41 4b 00 00 20 02
+        |           | ref / im  | hash      | n flags |
+  0030  10 00 09 d0
+        | next ptr|
+\end{verbatim}
+Msg2 0x100009d0 + 8 = 0x100009d8\\
+Msg3 0x10000a04 + 16 = 0x10000a14\\
+Msg4 0x10000a38 + 24 = 0x10000a50, -4 because of 32 bit field width \\
+ref / im: flags to indicate a reference or immediate execution. 0x086180 = 0000 1000 0110 0001 1000\\
+hash: hash of the name of the node\\
+n flags: node flags
+\item
+\begin{verbatim}
+dm-cmd <datamaster> hex Msg2
+Msg2:
+  0000  00 00 00 00 0b eb c2 00 10 02 00 20 00 00 00 00
+                                | to Msg1             |
+  0010  00 00 00 00 00 22 50 02 00 00 00 00 00 00 00 00
+  0020  00 00 00 00 00 00 00 00 32 5e d2 10 00 00 01 02
+        |           | ref / im  | hash      | n flags |
+  0030  10 00 0a 04
+\end{verbatim}
+\item
+\begin{verbatim}
+dm-cmd <datamaster> hex Msg3
+Msg3:
+  0000  00 00 00 00 11 e1 a3 00 10 03 00 30 00 00 00 00
+  0010  00 00 00 00 00 22 50 03 00 00 00 00 00 00 00 00
+        | to Msg1             |
+  0020  00 00 00 00 00 00 00 00 58 61 4c 79 00 00 01 02
+        |           | ref / im  | hash      | n flags |
+  0030  10 00 0a 38
+\end{verbatim}
+\item
+\begin{verbatim}
+dm-cmd <datamaster> hex Msg4
+Msg4:
+  0000  00 00 00 00 17 d7 84 00 10 04 00 40 00 00 00 00
+  0010  00 00 00 00 00 22 50 04 00 00 00 00 00 00 00 00
+                    | to Msg1             |
+  0020  00 00 00 00 00 00 00 00 16 6d b0 86 00 00 01 02
+        |           | ref / im  | hash      | n flags |
+  0030  10 00 09 68
+\end{verbatim}
+\end{enumerate}
+Get the internal addresses of the nodes. This is the fourth column of the
+following table, generated with \texttt{dm-sched $<$datamaster$>$}.
+The columns S/R and CPU of the original output are dropped to get a smaller table.
+\begin{verbatim}
+Download Table
+
+Idx   Name               Hash         Int. Adr     Ext. Adr
+   0  Block0             0xe8f52882   0x10000968   0x04120968
+   1  Msg1               0xa466414b   0x1000099c   0x0412099c
+   2  Msg2               0x325ed210   0x100009d0   0x041209d0
+   3  Msg3               0x58614c79   0x10000a04   0x04120a04
+   4  Msg4               0x166db086   0x10000a38   0x04120a38
+   5  Block0_QBl_Lo      0x467b6404   0x10000a6c   0x04120a6c
+   6  Block0_Qb_Lo0      0xc35eff58   0x10000aa0   0x04120aa0
+   7  Block0_Qb_Lo1      0xe96179c1   0x10000ad4   0x04120ad4
+   8  Block0_ListDst_0   0xb6afd35f   0x10000b08   0x04120b08
+
+
+Patterns Entry Exit
+ref1     Msg1  Block0
+\end{verbatim}
+
+\end{document}

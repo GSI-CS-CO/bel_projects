@@ -251,16 +251,18 @@ class DmTestbench(unittest.TestCase):
     snoop.start()
     resource.acquire(timeout=10.0)
     print('snoopToCsv: call action  ', datetime.datetime.now().time())
-    if len(actionArgs) == 0:
-      action()
-    else:
-      action(actionArgs)
-    snoop.join()
-    resource.release()
-    print('snoopToCsv: release lock ', datetime.datetime.now().time())
-    if not self.exc_info is None:
-      # ~ print(f'{self.exc_info=}')
-      raise self.exc_info[1].with_traceback(self.exc_info[2])
+    try:
+      if len(actionArgs) == 0:
+        action()
+      else:
+        action(actionArgs)
+    finally:
+      snoop.join()
+      resource.release()
+      print('snoopToCsv: release lock ', datetime.datetime.now().time())
+      if not self.exc_info is None:
+        # ~ print(f'{self.exc_info=}')
+        raise self.exc_info[1].with_traceback(self.exc_info[2])
 
   def analyseFrequencyFromCsv(self, csvFileName, column=20, printTable=True, checkValues=dict(), addDelayed=False):
     """Analyse the frequency of the values in the specified column. Default column is 20 (parameter of the timing message).
