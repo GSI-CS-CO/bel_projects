@@ -41,87 +41,61 @@
 uint8_t    nodeIds[N_MAX_TX_NODES][ETH_ALEN];   // sender node ID list
 mpsMsg_t   bufMpsMsg[N_MAX_MPS_CHANNELS];       // buffer for MPS timing messages
 mpsMsg_t *const headBufMps = &bufMpsMsg[0]; // head of the MPS message buffer
-timedItr_t rdItr;                           // read-access iterator for MPS flags
+msgCtrl_t  mpsMsgCtrl;                          // MPS messaging control structure
 
 static int addr_equal(uint8_t a[ETH_ALEN], uint8_t b[ETH_ALEN]); // wr-switch-sw/userspace/libwr
 static uint8_t *addr_copy(uint8_t dst[ETH_ALEN], uint8_t src[ETH_ALEN]);
 
 /**
- * \brief initialize iterator
+ * \brief Initialize the MPS messaging controller
  *
- * Initialize an iterator that is used to specify a next MPS flag to send.
+ * In TX nodes, MPS flags are sent to RX node in
+ * the given interval. A dedicated control structure
+ * is used to manage such periodic messaging.
  *
- * \param itr   pointer to an iterator
- * \param total max. number of iterator indices
- * \param now   timestamp of latest iterator access
- * \param freq  iteration period
+ * \param ctrl  Pointer to the MPS messaging controller
+ * \param total Total number of the MPS channels
+ * \param now   Timestamp of access
+ * \param freq  Messaging frequency, [Hz]
  *
- * \ret none
+ * \return None
  **/
-void initItr(timedItr_t *const itr, const uint8_t total, const uint64_t now, const uint32_t freq)
+void msgInitMsgCtrl(msgCtrl_t *const ctrl, const uint8_t total, const uint64_t now, const uint32_t freq)
 {
-  itr->idx = 0;
-  itr->total = total;
-  itr->last = now;
-  itr->period = TIM_1000_MS;
+  ctrl->total = total;
+  ctrl->last = now;
+  ctrl->period = TIM_1000_MS;
 
   // set the iteration period
-  if (freq && itr->total) {
-    itr->period /=(freq * itr->total); // for 30Hz it's 33312 us (30.0192 Hz)
+  if (freq && ctrl->total) {
+    ctrl->period /=freq;                 // eg., 33312 us for 30 Hz (30.0192 Hz)
 
-    itr->ttl = TIM_100_MS/TIM_1_MS + 1; // TTL value = 101 milliseconds
-
-    //itr->period /= 1000ULL; // granularity in 1 us
-    //itr->period *= 1000ULL;
+    ctrl->ttl = TIM_100_MS/TIM_1_MS + 1; // TTL value = 101 milliseconds
   }
 }
 
 /**
- * \brief reset iterator
+ * \brief Send stored MPS flags
  *
- * Reset an iterator that is used to specify a next MPS flag to send.
+ * Send all MPS flags stored in the MPS message buffer
  *
- * \param itr pointer to an iterator
- * \param now timestamp of last iterator access
- *
- * \ret none
- **/
-void resetItr(timedItr_t* itr, const uint64_t now)
-{
-  itr->last = now;
-
-  ++itr->idx;
-  if (itr->idx >= itr->total)
-    itr->idx = 0;
-}
-
-/**
- * \brief Send a block of MPS messages
- *
- * Send a specified number of the MPS messages
- *
- * \param len   Block length
- * \param itr   Read-access iterator that specifies next MPS flag to send
+ * \param ctrl  Pointer to the MPS messaging controller
  * \param evtId Event ID for timing messages
  *
- * \ret count   Number of sent messages
+ * \return Number of sent messages
  **/
-uint32_t sendMpsMsgBlock(size_t len, timedItr_t* itr, uint64_t evtId)
+uint32_t msgSendMpsFlag(msgCtrl_t* ctrl, uint64_t evtId)
 {
   uint32_t count = 0;
   uint32_t res, tef;                // temporary variables for bit shifting etc
   uint32_t deadlineLo, deadlineHi;
   uint32_t idLo, idHi;
   uint32_t paramLo, paramHi;
-  uint64_t param;
 
   uint64_t now = getSysTime();
-  uint64_t deadline = itr->last + itr->period;
+  uint64_t deadline = ctrl->last + ctrl->period;
 
-  if (len > N_MAX_TIMMSG)
-    return COMMON_STATUS_OUTOFRANGE;
-
-  if (!itr->last)
+  if (!ctrl->last)
     deadline = now;  // initial transmission
 
   // send timing messages if deadline is over
@@ -140,14 +114,14 @@ uint32_t sendMpsMsgBlock(size_t len, timedItr_t* itr, uint64_t evtId)
 
     // send a block of MPS flags
     atomic_on();
-    for (size_t i = 0; i < len; ++i) {
-      // get MPS protocol
-      memcpy(&param, &bufMpsMsg[itr->idx].prot, sizeof(uint64_t));
-      paramHi  = (uint32_t)((param >> 32) & 0xffffffff);
-      paramLo  = (uint32_t)(param         & 0xffffffff);
+    for (uint8_t i = 0; i < N_MPS_CHANNELS; ++i) {
+      // ignore invalid MPS protocol (check its timestamp)
+      if (!(bufMpsMsg[i].tsRx))
+        continue;
 
-      // update iterator
-      resetItr(itr, now);
+      // get MPS protocol
+      paramHi  = (uint32_t)((bufMpsMsg[i].param >> 32) & 0xffffffff);
+      paramLo  = (uint32_t)(bufMpsMsg[i].param         & 0xffffffff);
 
       // build a timing message
       ebm_op(COMMON_ECA_ADDRESS, idHi,       EBM_WRITE);
@@ -159,71 +133,40 @@ uint32_t sendMpsMsgBlock(size_t len, timedItr_t* itr, uint64_t evtId)
       ebm_op(COMMON_ECA_ADDRESS, deadlineHi, EBM_WRITE);
       ebm_op(COMMON_ECA_ADDRESS, deadlineLo, EBM_WRITE);
 
+      ++count;
     }
     atomic_off();
 
     // send timing messages
     ebm_flush();
-    ++count;
+
+    // update the messaging controller
+    ctrl->last = now;
   }
 
   return count;
 }
 
 /**
- * \brief Send MPS messages periodically
- *
- * MPS flags are sent at specified period. [MPS_FS_530]
- *
- * \param itr   Read-access iterator that specifies next MPS message to send
- * \param evtid Event ID used to send a timing message
- *
- * \ret count   Number of sent messages
- **/
-uint32_t msgSendPeriodicMps(timedItr_t* itr, const uint64_t evtid)
-{
-  uint32_t count = 0;
-  uint32_t tef = 0;
-  uint64_t deadline = itr->last + itr->period;
-  uint64_t now = getSysTime();
-
-  if (!itr->last)
-    deadline = now;       // initial transmission
-
-  // send next MPS message if deadline is over
-  if (deadline <= now) {
-    // send MPS message with ahead timestamp
-    deadline = now + FBAS_AHEAD_TIME;
-    if (fwlib_ebmWriteTM(deadline, evtid, bufMpsMsg[itr->idx].param, tef, 1) == COMMON_STATUS_OK)
-      ++count;
-
-    // update iterator with deadline
-    resetItr(itr, now);
-  }
-
-  return count;
-}
-
-/**
- * \brief Send a specific MPS message
+ * \brief Signal a new MPS event
  *
  * Upon flag change to NOK, there shall be 2 extra events within 50 us. [MPS_FS_530]
- * If the read iterator is blocked by new cycle, then do not send any MPS event. [MPS_FS_630]
+ * In case of new cycle, do not signal any MPS event. [MPS_FS_630]
  *
- * \param itr   Read-access iterator that points to MPS message buffer
+ * \param ctrl  Pointer to the MPS messaging controller
  * \param buf   Pointer to a specific MPS message
  * \param evtid Event ID used to send a timing message
  * \param extra Number of extra messages
  *
- * \ret count   Number of sent messages
+ * \return   Number of sent messages
  **/
-uint32_t msgSendSpecificMps(const timedItr_t* itr, mpsMsg_t *const buf, const uint64_t evtid, const uint8_t extra)
+uint32_t msgSignalMpsEvent(const msgCtrl_t* ctrl, mpsMsg_t *const buf, const uint64_t evtid, const uint8_t extra)
 {
   uint32_t count = 0;
   uint32_t tef = 0;
   uint64_t now = getSysTime();
 
-  if (itr->last >= now) // delayed by a new cycle
+  if (ctrl->last >= now) // delayed by a new cycle
     return count;
 
   // send a specified MPS event with ahead timestamp
@@ -248,20 +191,23 @@ uint32_t msgSendSpecificMps(const timedItr_t* itr, mpsMsg_t *const buf, const ui
  * MPS event is fetched from ECA and stored in the dedicated buffer.
  *
  * \param idx Base index for TX node
- * \param evt Raw event data (bits 63-16 = node ID, 15-8 = channel, 7-0 = flag)
+ * \param evt Raw event data (bits 63-16 = event ID, 15-8 = channel, 7-0 = flag)
+ * \param dl  Event timestamp
  *
  * \return Pointer to the message buffer with the MPS event/flag
  **/
-mpsMsg_t* msgFetchMps(const uint8_t idx, uint64_t evt)
+mpsMsg_t* msgFetchMps(const uint8_t idx, const uint64_t evt, const uint64_t ts)
 {
   // evaluate MPS channel and MPS flag
-  uint8_t ch = evt >> 8;
-  uint8_t flag = evt;
+  uint8_t ch = (uint8_t)(evt >> 8);
+  uint8_t flag = (uint8_t)evt;
 
-  // store MPS channel and MPS flag
-  headBufMps->prot.idx = idx + ch;
-  headBufMps->prot.flag = flag;
-  return headBufMps;
+  // keep the MPS flag and deadline(timestamp)
+  (headBufMps+ch)->prot.flag = flag;
+  (headBufMps+ch)->tsRx = ts;
+
+  // return the message buffer
+  return (headBufMps+ch);
 }
 
 /**
@@ -273,12 +219,12 @@ mpsMsg_t* msgFetchMps(const uint8_t idx, uint64_t evt)
  *
  * \param raw Raw MPS protocol (bits 63-16 = node ID, 15-8 = index, 7-0 = flag)
  * \param ts  Timestamp of the MPS protocol
- * \param itr Read-access iterator
+ * \param ctrl Read-access iterator
  *
  * \return Offset to the MPS msg buffer on reception of an actual MPS msg,
  * or N_MAX_MPS_CHANNELS on reception of a repeated MPS msg, otherwise negative integer.
  **/
-int msgStoreMpsMsg(const uint64_t *raw, const uint64_t *ts, const timedItr_t* itr)
+int msgStoreMpsMsg(const uint64_t *raw, const uint64_t *ts, const msgCtrl_t* ctrl)
 {
   uint8_t idx  = (uint8_t)(*raw >> 8);
   uint8_t flag = (uint8_t)*raw;
@@ -292,7 +238,7 @@ int msgStoreMpsMsg(const uint64_t *raw, const uint64_t *ts, const timedItr_t* it
         flag = (uint8_t)*raw;
         (headBufMps+idx)->pending = (headBufMps+idx)->prot.flag ^ flag;
         (headBufMps+idx)->prot.flag = flag;
-        (headBufMps+idx)->ttl = itr->ttl;
+        (headBufMps+idx)->ttl = ctrl->ttl;
         (headBufMps+idx)->tsRx = *ts;
       }
       else {

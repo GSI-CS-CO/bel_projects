@@ -79,11 +79,10 @@ struct mpsMsg {
   uint8_t  pending;         // flag change indicator (RX)
 };
 
-// iterator used to access available MPS flags
-typedef struct timedItr timedItr_t;
-struct timedItr {
-  uint8_t idx;       // index of current element
-  uint8_t total;     // total number of elements
+// control structure for MPS messaging
+typedef struct msgCtrl msgCtrl_t;
+struct msgCtrl {
+  uint8_t  total;    // total number of elements
   uint64_t last;     // timestamp of last access
   uint64_t period;   // time period between accesses
   uint8_t  ttl;      // TTL value used to evaluate validity

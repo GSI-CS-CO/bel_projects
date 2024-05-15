@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define FBAS_FW_VERSION 0x010200        // make this consistent with makefile
+#define FBAS_FW_VERSION 0x010300        // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -114,7 +114,7 @@ static void clearError(size_t len, mpsMsg_t* buf);
 static void setOpMode(uint64_t mode);
 static void cmdHandler(uint32_t *reqState, uint32_t cmd);
 static void timerHandler(void);
-static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, mpsMsg_t** head);
+static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, msgCtrl_t* pMsgCtrl, mpsMsg_t** head);
 static void wrConsolePeriodic(void);
 
 /**
@@ -206,8 +206,8 @@ static void initMpsData()
   // initialize the MPS message buffer
   msgInitMpsMsg(&myMac);
 
-  // initialize the read iterator for MPS flags
-  initItr(&rdItr, N_MPS_CHANNELS, 0, F_MPS_BCAST);
+  // initialize the MPS messaging controller
+  msgInitMsgCtrl(&mpsMsgCtrl, N_MPS_CHANNELS, 0, F_MPS_BCAST);
 
   //TODO: include function call below in fwlib_doActionS0()
   // if (findEcaCtl() != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
@@ -434,12 +434,12 @@ static void setOpMode(uint64_t mode) {
  *
  * \param usTimeout Maximum interval in microseconds to poll ECA
  * \param mpsTask   Pointer to MPS-relevant task flag
- * \param itr       Pointer to the read iterator for MPS flags
+ * \param pMsgCtrl  Pointer to the MPS messaging controller
  * \param head      Pointer to pointer to the head of the MPS message buffer
  *
  * \return ECA action tag (COMMON_ECADO_TIMEOUT on timeout, otherwise non-zero tag)
  **/
-static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t* itr, mpsMsg_t** head)
+static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, msgCtrl_t* pMsgCtrl, mpsMsg_t** head)
 {
   uint32_t nextAction;    // action triggered by received ECA event
   uint64_t ecaDeadline;   // deadline of received ECA event
@@ -471,9 +471,9 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t
           // force the CMOS input virtually to high voltage [MPS_FS_620]
           msgForceHigh(*head);
 
-          // init the read iterator for MPS flags, so that iteration is delayed for 52 ms [MPS_FS_630]
+          // init the MPS messaging controller so that next messaging is delayed for 52 ms [MPS_FS_630]
           now += TIM_52_MS;
-          initItr(itr, N_MPS_CHANNELS, now, F_MPS_BCAST);
+          msgInitMsgCtrl(pMsgCtrl, N_MPS_CHANNELS, now, F_MPS_BCAST);
 
         } else if (nodeType == FBAS_NODE_RX) { // it takes 2480/31048 ns for 2/32 MPS channels
           // force effective logic input to HIGH bit (delay for 52 ms) [MPS_FS_630]
@@ -505,7 +505,7 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t
       case FBAS_GEN_EVT:
         if (nodeType == FBAS_NODE_TX) {// only FBAS TX node handles the MPS events
           // fetch the detected MPS event
-          *head = msgFetchMps(myIdx, ecaEvtId);
+          *head = msgFetchMps(myIdx, ecaEvtId, ecaDeadline);
 
           // forward the fetched MPS event
           if (*head && (*mpsTask & TSK_TX_MPS_EVENTS)) {
@@ -522,7 +522,7 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t
             }
 
             // send MPS event
-            uint32_t count = msgSendSpecificMps(itr, *head, FBAS_FLG_EID, N_EXTRA_MPS_NOK);
+            uint32_t count = msgSignalMpsEvent(pMsgCtrl, *head, FBAS_FLG_EID, N_EXTRA_MPS_NOK);
             // count sent timing messages with MPS event
             *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = measureCountEvt(TX_EVT_CNT, count);
 
@@ -558,7 +558,7 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, timedItr_t
       case FBAS_WR_FLG:
         if (nodeType == FBAS_NODE_RX) { // FBAS RX generates MPS class 2 signals
           // store and handle received MPS flag
-          offset = msgStoreMpsMsg(&ecaParam, &ecaDeadline, itr);
+          offset = msgStoreMpsMsg(&ecaParam, &ecaDeadline, pMsgCtrl);
           if (offset >= 0) {
             // new MPS msg
             if (offset < N_MAX_MPS_CHANNELS) {
@@ -856,7 +856,7 @@ static void timerHandler(void)
 // do action state 'op ready' - this is the main code of this FW
 uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
                            mpsMsg_t* pBufMpsMsg,        // pointer to MPS message buffer
-                           timedItr_t* pRdItr,          // iterator used to read MPS flags buffer
+                           msgCtrl_t* pMsgCtrl,         // pointer to the messaging controller
                            uint32_t actStatus)          // actual status of firmware
 {
   uint32_t status;                                            // status returned by routines
@@ -868,7 +868,7 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
   status = actStatus;
 
   // action driven by ECA event, blocking poll up to usTimeout [us]
-  action = handleEcaEvent(usTimeout, pMpsTask, pRdItr, &buf);   // handle ECA event
+  action = handleEcaEvent(usTimeout, pMpsTask, pMsgCtrl, &buf);   // handle ECA event
 
   // check periodic timer events
   if (mpsTask & TSK_MONIT_MPS_TTL)
@@ -886,7 +886,6 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
 
     case FBAS_NODE_TX:
       // transmit MPS flags (flags are sent in specified period, but events immediately)
-      // tx_period=1000000/(N_MPS_CHANNELS * F_MPS_BCAST) [us], tx_period(max) < usTimeout
       if (*pMpsTask & TSK_TX_MPS_FLAGS) {
 
         // registration incomplete
@@ -902,10 +901,10 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
           break;
         }
 
-        // periodic, unicast transmission of the MPS flag
+        // periodic messaging of the MPS flags (unicast transmission)
         if (setEndpDstAddr(DST_ADDR_RXNODE) == COMMON_STATUS_OK) {
-          uint32_t count = sendMpsMsgBlock(N_MPS_CHANNELS, pRdItr, FBAS_FLG_EID);
-            // count sent timing messages with MPS flag
+          uint32_t count = msgSendMpsFlag(pMsgCtrl, FBAS_FLG_EID);
+            // count sent timing messages
             *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = measureCountEvt(TX_EVT_CNT, count);
         }
         else {
@@ -982,7 +981,7 @@ int main(void) {
     status = fwlib_changeState(&actState, &reqState, status);          // handle requested state changes
     switch(actState) {                                                 // state specific do actions
       case COMMON_STATE_OPREADY :
-        status = doActionOperation(&mpsTask, bufMpsMsg, &rdItr, status);
+        status = doActionOperation(&mpsTask, bufMpsMsg, &mpsMsgCtrl, status);
         if (status == COMMON_STATUS_WRBADSYNC) reqState = COMMON_STATE_ERROR;
         if (status == COMMON_STATUS_ERROR)     reqState = COMMON_STATE_ERROR;
         break;
