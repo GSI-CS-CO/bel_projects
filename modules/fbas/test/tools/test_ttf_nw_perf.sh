@@ -10,8 +10,8 @@ def_txscu_name="scuxl0396"
 txscu_name=()                         # array with transmitter names
 rxscu="scuxl0497.$domain"
 txscu=()                              # array with transmitter domain names
-fw_scu_def="fbas16.scucontrol.bin"    # default FW that supports up to 16 TX nodes, each hase 1 MPS channel
-fw_scu_multi="fbas16.scucontrol.bin"
+fw_scu_def="fbas128.scucontrol.bin"   # FW that supports up to 16 TX nodes, each has 8 MPS channels
+fw_scu_multi="fbas128.scucontrol.bin"
 ssh_opts="-o StrictHostKeyChecking=no"   # no hostkey checking
 getopt_opts="u:p:t:r:n:eyvh"          # user options
 
@@ -128,6 +128,7 @@ measure_nw_perf() {
 
     # enable simultaneous operation of TX nodes
     pids=()
+
     for i in ${!txscu[@]}; do
         echo ${txscu[$i]}
 
@@ -139,12 +140,20 @@ measure_nw_perf() {
         pids[$i]=$!
     done
 
+    # notice the start time (after calling sub-process in the last device)
+    start=$(date +%s)
+
     # wait until all sub-processes are complete
     for pid in ${pids[@]}; do
         wait $pid
     done
 
-    echo -e "stop the measurements\n"
+    # notice the end time (sub-process is finished in the last device)
+    end=$(date +%s)
+    # calculate the runtime
+    runtime=$((end - start))
+
+    echo -e "stop the measurements, runtime $runtime seconds\n"
     for scu in ${txscu[@]}; do
         output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" "source setup_local.sh && disable_mps \$tx_node_dev")
     done

@@ -44,8 +44,8 @@ case $platform in
 
         export module_dir="${PWD/fbas*/fbas}"
         export fw_dir="$module_dir/fw"
-        export fw_tx="fbas16.pcicontrol.bin"
-        export fw_rx="fbas16.pcicontrol.bin"
+        export fw_tx="fbas128.pcicontrol.bin"
+        export fw_rx="fbas128.pcicontrol.bin"
         ;;
     "SCU")
         export node_tlu_input="B2"
@@ -55,8 +55,8 @@ case $platform in
         export rx_node_name="tr0"
 
         export fw_dir="."
-        export fw_tx="fbas16.scucontrol.bin"
-        export fw_rx="fbas16.scucontrol.bin"
+        export fw_tx="fbas128.scucontrol.bin"
+        export fw_rx="fbas128.scucontrol.bin"
         ;;
 esac
 
@@ -109,10 +109,14 @@ export instr_st_ttl_ival=0x35   # store the TTL interval measurement results to 
 export instr_st_eca_handle=0x37 # store the measurement result of the ECA handling delay
 
 export     mac_any_node="0xffffffffffff"      # MAC address of any node
+# Raw event data (bits 63-16 = event ID, 15-8 = channel, 7-0 = flag)
 export evt_mps_flag_any="0xffffeeee00000000"  # generator event for MPS flags
-export  evt_mps_flag_ok="0xffffeeee00000001"  # event to generate the MPS OK flag
-export evt_mps_flag_nok="0xffffeeee00000002"  # event to generate the MPS NOK flag
-export evt_mps_flag_tst="0xffffeeee00000003"  # event to generate the MPS TEST flag
+export     evt_mps_1_ok="0xffffeeee00000001"  # event to generate the MPS OK flag (1st channel)
+export    evt_mps_1_nok="0xffffeeee00000002"  # event to generate the MPS NOK flag (1st channel)
+export    evt_mps_1_tst="0xffffeeee00000003"  # event to generate the MPS TEST flag (1st channel)
+export     evt_mps_2_ok="0xffffeeee00000101"  # event to generate the MPS OK flag (2nd channel)
+export    evt_mps_2_nok="0xffffeeee00000102"  # event to generate the MPS NOK flag (2nd channel)
+export    evt_mps_2_tst="0xffffeeee00000103"  # event to generate the MPS TEST flag (2nd channel)
 export evt_mps_prot_std="0x1fcbfcb000000000"  # event with MPS protocol (regular)
 export evt_mps_prot_chg="0x1fccfcc000000000"  # event with MPS protocol (change in flag)
 export          evt_tlu="0xffff100000000000"  # TLU event (used to catch the signal change at IO port)
@@ -501,7 +505,7 @@ setup_mpsrx() {
 
 do_inject_fbas_event() {
 
-    saft-ctl tr0 -p inject $evt_mps_flag_tst 0 1000000
+    saft-ctl tr0 -p inject $evt_mps_1_tst 0 1000000
 }
 
 ##########################################################
@@ -561,9 +565,11 @@ info_nw_perf() {
     n=$1
 
     echo "TX: generating the MPS events locally ..."
-    echo "TX: $n events ($evt_mps_flag_nok, flag=NOK(2), $((3 * n)) transmissions)"
-    echo "TX: $n events ($evt_mps_flag_ok, flag=OK(1), $n transmissions)"
-    echo -e "TX: $(( n * 2 - 1))x IO events must be snooped by 'saft-ctl tr0 -vx snoop $evt_tlu $evt_id_mask 0'\n"
+    echo "TX: $n events ($evt_mps_1_nok, flag=NOK(2), $((3 * n)) MPS msgs)"
+    echo "TX: $n events ($evt_mps_2_nok, flag=NOK(2), $((3 * n)) MPS msgs)"
+    echo "TX: $n events ($evt_mps_1_ok, flag=OK(1), $n msgs)"
+    echo "TX: $n events ($evt_mps_2_ok, flag=OK(1), $n msgs)"
+    echo -e "TX: $(( n * 4 - 2 ))x IO events must be snooped by 'saft-ctl tr0 -vx snoop $evt_tlu $evt_id_mask 0'\n"
 }
 
 ##########################################################
@@ -590,13 +596,17 @@ start_nw_perf() {
     offset_ns=0
     for i in $(seq $n); do
 
-        saft-ctl tr0 inject $evt_mps_flag_nok $param $offset_ns
         echo -en " $i: NOK\r"
-        sleep 1
+        saft-ctl tr0 inject $evt_mps_1_nok $param $offset_ns
+        sleep 0.5
+        saft-ctl tr0 inject $evt_mps_2_nok $param $offset_ns
+        sleep 0.5
 
-        saft-ctl tr0 inject $evt_mps_flag_ok $param $offset_ns
         echo -en " $i:  OK\r"
-        sleep 1
+        saft-ctl tr0 inject $evt_mps_1_ok $param $offset_ns
+        sleep 0.5
+        saft-ctl tr0 inject $evt_mps_2_ok $param $offset_ns
+        sleep 0.5
     done
 }
 
@@ -752,7 +762,7 @@ read_measurement_results() {
 
 do_test2() {
     echo "injectg timing messages to tx_node_dev that simulate the FBAS class 2 signals"
-    saft-ctl $tx_node_name -p inject $evt_mps_flag_tst 0x0 1000000
+    saft-ctl $tx_node_name -p inject $evt_mps_1_tst 0x0 1000000
 
     # Case 1: consider the ahead time of 500 us (flagForceLate=0)
     # wrc output (TX)
