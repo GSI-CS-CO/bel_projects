@@ -115,8 +115,8 @@ uint32_t msgSendMpsFlag(msgCtrl_t* ctrl, uint64_t evtId)
     // send a block of MPS flags
     atomic_on();
     for (uint8_t i = 0; i < N_MPS_CHANNELS; ++i) {
-      // ignore invalid MPS protocol (check its timestamp)
-      if (!(bufMpsMsg[i].tsRx))
+      // always send the first MPS protocol, check the rest => ignore MPS protocol if its timestamp is zero
+      if (i && (!(bufMpsMsg[i].tsRx)))
         continue;
 
       // get MPS protocol

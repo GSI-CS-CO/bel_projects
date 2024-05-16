@@ -904,8 +904,8 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
         // periodic messaging of the MPS flags (unicast transmission)
         if (setEndpDstAddr(DST_ADDR_RXNODE) == COMMON_STATUS_OK) {
           uint32_t count = msgSendMpsFlag(pMsgCtrl, FBAS_FLG_EID);
-            // count sent timing messages
-            *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = measureCountEvt(TX_EVT_CNT, count);
+          // export the counter of sent timing messages
+          *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = measureCountEvt(TX_EVT_CNT, count);
         }
         else {
           DBPRINT1("Err - nothing sent! TODO: set failed status\n");
