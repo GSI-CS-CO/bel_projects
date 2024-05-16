@@ -172,7 +172,8 @@
 #define T_META_CON_SIZE     (T_META_START_PTR   + _PTR_SIZE_) ///< table container size in byte ( is groupsTable + covenantTable size)
 #define T_META_GRPTAB_SIZE  (T_META_CON_SIZE    + _32b_SIZE_) ///< groupsTable size in byte
 #define T_META_COVTAB_SIZE  (T_META_GRPTAB_SIZE + _32b_SIZE_) ///< covenantTable size in byte
-#define T_META_FLAGS        (T_META_COVTAB_SIZE + _32b_SIZE_) ///< flags field
+#define T_META_REFTAB_SIZE  (T_META_COVTAB_SIZE + _32b_SIZE_) ///< globalRefTable size in byte
+#define T_META_FLAGS        (T_META_REFTAB_SIZE + _32b_SIZE_) ///< flags field
 #define _T_META_SIZE_       (T_META_FLAGS       + _32b_SIZE_) ///< Size of Name/Group table meta data
 //@}
 
@@ -623,7 +624,8 @@
 #define NODE_TYPE_COVENANT      (NODE_TYPE_MGMT         +1)	///< contain the addresses of commands (in queues) which the user agrees not to preempt if optimised safe2remove is to work
 #define NODE_TYPE_NULL          (NODE_TYPE_COVENANT     +1)	///< type returned by getNodeType if the node ptr was NULL. Intentionally not 0x000...
 #define NODE_TYPE_CSWITCH       (NODE_TYPE_NULL         +1)	///< instantaneously switch defdest of a block. Like permanent flow with no queue
-#define _NODE_TYPE_END_         (NODE_TYPE_CSWITCH      +1)	///< Node type Quantity
+#define NODE_TYPE_GLOBAL        (NODE_TYPE_CSWITCH      +1) ///< A node symbolizing a global memory location. This is just for sake of completeness as we will never write node structures for this to firmware
+#define _NODE_TYPE_END_         (NODE_TYPE_GLOBAL       +1)	///< Node type Quantity
 //@}
 
 /** @name Node flag field bit defs - Type field. Contains node type enum. Sparsity allows using array of handler function in LM32 */

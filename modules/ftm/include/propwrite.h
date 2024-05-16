@@ -132,7 +132,7 @@ template <class Name>
         out << dep::Data::sFieldHead << "=\"" << fHead[v] << "\", ";
         out << dep::Data::sFieldTail << "=\"" << fTail[v] << "\", ";
         out << dep::Data::sBitWidth  << "=\"" << bWidth[v] << "\", ";
-        out << ec::Edge::sLookArgument;
+        out << ec::Edge::sLookRef;
       }
       else if (type[v] == det::sDynPar0)     out << ec::Edge::sLookArgument;
       else if (type[v] == det::sDynPar1)     out << ec::Edge::sLookArgument;

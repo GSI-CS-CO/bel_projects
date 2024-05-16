@@ -15,6 +15,8 @@
 #include "covenanttable.h"
 #include "validation.h"
 #include "lockmanager.h"
+#include "reflocation.h"
+#include "globalreftable.h"
 
 
 
@@ -36,9 +38,11 @@ private:
   HashMap hm;
   GroupTable gt;
   CovenantTable ct;
-  AllocTable atUp;
+  GlobalRefTable rt;
+  RefLocation rl;
+  AllocTable atUp = AllocTable(rl, rt);
   Graph gUp;
-  AllocTable atDown;
+  AllocTable atDown = AllocTable(rl, rt);
   Graph gDown;
 
   uint64_t modTime;
@@ -52,7 +56,10 @@ private:
   std::ostream& sLog;
   std::ostream& sErr;
 
+
+
   EbWrapper ebd = EbWrapper(sLog, sErr, verbose, debug);
+
   LockManager lm = LockManager(ebd, hm, ct, atDown); //get us an instance of the lock manager
 
   void updateListDstStaging(vertex_t v);
@@ -139,6 +146,7 @@ private:
   vBuf decompress(const vBuf& in);
 
   void readMgmtLLMeta();
+  unsigned recreateGlobalRefs();
 
 
   vEbwrs& setThrDeadline(vEbwrs& ew, uint8_t cpuIdx, uint8_t thrIdx, uint64_t t);

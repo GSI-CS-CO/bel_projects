@@ -160,13 +160,14 @@ int EbWrapper::readAdrLUT(uint32_t extBaseAdr, uint32_t sharedOffs, uint32_t* lu
 
 
 
-bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atDown) {
+bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atDown, RefLocation& rl) {
   
     bool  ret = false;
     ebdevname = en;
     
     uint8_t mappedIdx = 0;
     int foundVersionMax = -1;
+    uint32_t sharedOffs4refs;
     
     cpuIdxMap.clear();
     cpuDevs.clear();
@@ -215,11 +216,14 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
             //sLog << "Reading LUT" << std::endl;                                    
             uint32_t ctlSize      = getCtlAdr(ADRLUT_SHCTL_END);
             uint32_t space        = parseSharedSize(vFwIdROM[cpuIdx]) - ctlSize;
-                     
+              
+
+
               atUp.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize, ctlSize );
             atDown.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize, ctlSize );
+                
             mappedIdx++;
-            
+            sharedOffs4refs = sharedOffs; // test purposes, we need to have one rl instance per cpu, it seems ...
           }
           
        
@@ -227,6 +231,8 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
         ret = true;
       }
       
+      
+
     } catch (etherbone::exception_t const& ex) {
       throw std::runtime_error("Etherbone " + std::string(ex.method) + " returned " + std::string(eb_status(ex.status)) + "\n" );
     } catch(...) {
@@ -239,6 +245,7 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
     std::string fwCause = foundVersionMax == -1 ? "" : "Requires FW v" + createFwVersionString(expVersionMin) + ", found " + createFwVersionString(foundVersionMax);
     if (cpuIdxMap.size() == 0) {throw std::runtime_error("No CPUs running a valid DM firmware found. " + fwCause);}
 
+    rl.init(this, sharedOffs4refs); //init a reflocation lookup table
 
     return ret;
 

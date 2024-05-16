@@ -96,6 +96,27 @@ public:
 
 };
 
+class Global : public Meta {
 
+const std::string& section;
+
+public:
+  Global(const std::string& name, const std::string&  pattern, const std::string&  beamproc,  const uint32_t& hash, const uint8_t& cpu, uint32_t flags, const std::string& section)
+  : Meta(name, pattern, beamproc, hash, cpu, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_GLOBAL << NFLG_TYPE_POS))), section(section) {}
+  Global(const Global& src) : Meta(src), section(src.section) {}
+  ~Global()  {};
+  node_ptr clone() const { return boost::make_shared<Global>(Global(*this)); }
+
+
+  virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
+  virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
+  virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
+  virtual void accept(const VisitorValidation& v)       const override { v.visit(*this); }
+
+  void show(void)       const;
+  void show(uint32_t cnt, const char* sPrefix) const;
+  void serialise(const mVal &m, uint8_t* b) const;
+
+};
 
 #endif

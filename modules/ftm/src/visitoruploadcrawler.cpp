@@ -67,6 +67,12 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
   el.serialise(getListDst(), b);
 }
 
+void VisitorUploadCrawler::visit(const Global& el) const {
+  mVal emptyM;
+
+  el.serialise(emptyM, b);
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // private helper functions
@@ -118,6 +124,7 @@ vertex_set_t VisitorUploadCrawler::getChildrenByEdgeType(vertex_t vStart, const 
     if (vSrc != null_vertex && vDst != null_vertex) {
       auto src = at.lookupVertex(vSrc);
       auto dst = at.lookupVertex(vDst);
+      log<DEBUG_LVL2>(L"edgeTargetAdr %1% -> %2%, dst adr b4 conv %3$#08x") % g[src->v].name.c_str() % g[dst->v].name.c_str() % dst->adr;
       ret = at.adrConv(AdrType::MGMT, (dst->cpu == src->cpu ? AdrType::INT : AdrType::PEER), dst->cpu, dst->adr);
     }
     return ret;

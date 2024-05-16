@@ -5,6 +5,23 @@
 
 namespace DotStr {
 
+  namespace Locations {
+    namespace base {
+      extern const std::string sStatus;
+      extern const std::string sCurThr;
+      extern const std::string sCurNode;
+      extern const std::string sRegisters;
+    }
+    namespace fields {
+      extern const std::string sThrTB;
+      extern const std::string sThrDL;
+      extern const std::string sThrID;
+      extern const std::string sNodeHash;
+      extern const std::string sNodeFlags;
+      extern const std::string sNodeDefDst;
+    }  
+  }
+
   namespace Misc {
     //pattern for uninitialised properties and their detection
     extern const unsigned char deadbeef[4];
@@ -184,6 +201,7 @@ namespace DotStr {
       extern const std::string sDstList;
       extern const std::string sQBuf;
       extern const std::string sMeta;
+      extern const std::string sGlobal;
       extern const bool bMetaNode;
       extern const bool bRealNode;
 
@@ -254,6 +272,10 @@ namespace DotStr {
       namespace Meta {
         extern const std::string sLookDef;
       }
+
+      namespace Global {
+        extern const std::string sLookDef;
+      }
     }
 
     namespace Edge {
@@ -267,6 +289,7 @@ namespace DotStr {
       extern const std::string sLookDebug1;
       extern const std::string sLookDebug2;
       extern const std::string sLookbad;
+      extern const std::string sLookRef;
 
     }
   }
