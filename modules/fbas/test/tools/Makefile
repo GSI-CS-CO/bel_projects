@@ -81,8 +81,7 @@ MAKEFLAGS += --no-print-directory
 
 SHELL=/bin/bash
 sleep_period=20                        # seconds
-fw_rxpci="fbas.pcicontrol.bin"         # default LM32 FW for RX node
-fw_rx16pci="fbas16.pcicontrol.bin"     # default LM32 FW for RX node
+fw_rxpci="fbas128.pcicontrol.bin"      # default LM32 FW for RX node
 sched_filename="my_mps_rx_rate_1.dot"  # default DM schedule
 
 mytest:
@@ -187,7 +186,7 @@ repeat_test3:
 	@source setup.sh && start_test3
 
 restart_fbasdm_finite:
-	@source setup.sh && setup_fbasrx ${fw_rx16pci} SENDER_TX 00267b0004dc # dev/wbm1 (DM)
+	@source setup.sh && setup_fbasrx ${fw_rxpci} SENDER_TX 00267b0004dc # dev/wbm1 (DM)
 	@source setup.sh && enable_mps $$rx_node_dev
 	@$(MAKE) clear_fbasdm
 	@source dm.sh && load_dm_patt my_mps_finite.dot && start_dm_patt PatA
@@ -197,7 +196,7 @@ restart_fbasdm_finite:
 	@$(MAKE) show_fbasdm_result
 
 restart_fbasdm_loop:
-	@source setup.sh && setup_fbasrx ${fw_rx16pci} SENDER_TX 00267b0004dc # dev/wbm1 (DM)
+	@source setup.sh && setup_fbasrx ${fw_rxpci} SENDER_TX 00267b0004dc # dev/wbm1 (DM)
 	@source setup.sh && enable_mps $$rx_node_dev
 	@$(MAKE) clear_fbasdm
 	@source dm.sh && load_dm_patt my_mps_loop.dot && start_dm_patt PatLoop
@@ -210,7 +209,7 @@ restart_fbasdm_loop:
 # Datamaster sends a set of patterns (timing messages) with the same deadline.
 # Arbitrary number of patterns are sent.
 restart_fbasdm_multi_loop:
-	@source setup.sh && setup_fbasrx ${fw_rx16pci} SENDER_TX 00267b0004dc # dev/wbm1 (DM)
+	@source setup.sh && setup_fbasrx ${fw_rxpci} SENDER_TX 00267b0004dc # dev/wbm1 (DM)
 	@source setup.sh && enable_mps $$rx_node_dev
 	@$(MAKE) clear_fbasdm
 	@$(MAKE) load_fbasdm_loop_patterns
@@ -224,7 +223,7 @@ restart_fbasdm_multi_loop:
 # Datamaster sends a set of patterns (timing messages) with the same deadline.
 # Finite number of patterns are sent.
 restart_fbasdm_multi_finite:
-	@source setup.sh && setup_fbasrx ${fw_rx16pci} SENDER_TX 00267b0004dc # dev/wbm1 (DM)
+	@source setup.sh && setup_fbasrx ${fw_rxpci} SENDER_TX 00267b0004dc # dev/wbm1 (DM)
 	@source setup.sh && enable_mps $$rx_node_dev
 	@$(MAKE) clear_fbasdm
 	@$(MAKE) load_fbasdm_finite_patterns
@@ -255,7 +254,7 @@ restart_fbasdm_multi_max_loop_msg:
 
 # Datamaster sends a single timing message
 restart_fbasdm_single_msg:
-	@source setup.sh && setup_fbasrx ${fw_rx16pci} SENDER_TX 00267b0004dc # dev/wbm1 (DM)
+	@source setup.sh && setup_fbasrx ${fw_rxpci} SENDER_TX 00267b0004dc # dev/wbm1 (DM)
 	@$(MAKE) clear_fbasdm
 	@source dm.sh && load_dm_patt my_single_msg.dot
 	@$(MAKE) continue_fbasdm_single_msg
@@ -274,7 +273,7 @@ continue_fbasdm_single_msg:
 # the number of messages received by rx_node_dev (last hexadecimal output).
 # If they match, then test is passed, otherwise test is failed.
 restart_two_senders_loop: clear_fbasdm set_single_msg_per_frame
-	@source setup.sh && setup_fbastx && setup_fbasrx ${fw_rx16pci} SENDER_TX 00267b0004da 00267b0004dc # dev/wbm0 (TX), dev/wbm1 (DM)
+	@source setup.sh && setup_fbastx && setup_fbasrx ${fw_rxpci} SENDER_TX 00267b0004da 00267b0004dc # dev/wbm0 (TX), dev/wbm1 (DM)
 	@source setup.sh && enable_mps_all
 	@source dm.sh && load_dm_patt my_mps_loop3.dot
 	@source dm.sh && start_dm_patt PatLoop3
@@ -289,7 +288,7 @@ restart_two_senders_loop: clear_fbasdm set_single_msg_per_frame
 # datamaster sends EB frame with multiple timing messages
 # rx_node_dev is getting started to loose timing messages at transmission period of 180us
 restart_two_senders_multi_loop: clear_fbasdm set_multi_msgs_per_frame
-	@source setup.sh && setup_fbastx && setup_fbasrx ${fw_rx16pci} SENDER_TX 00267b0004da 00267b0004dc # dev/wbm0 (TX), dev/wbm1 (DM)
+	@source setup.sh && setup_fbastx && setup_fbasrx ${fw_rxpci} SENDER_TX 00267b0004da 00267b0004dc # dev/wbm0 (TX), dev/wbm1 (DM)
 	@source setup.sh && enable_mps_all
 	@$(MAKE) load_fbasdm_loop_patterns
 	@source dm.sh && start_dm_synchron $$cmd_file_start_loop
@@ -302,7 +301,7 @@ restart_two_senders_multi_loop: clear_fbasdm set_multi_msgs_per_frame
 	@$(MAKE) show_two_senders_result
 
 restart_two_senders_multi_finite: clear_fbasdm set_multi_msgs_per_frame
-	@source setup.sh && setup_fbastx && setup_fbasrx ${fw_rx16pci} SENDER_TX 00267b0004da 00267b0004dc # dev/wbm0 (TX), dev/wbm1 (DM)
+	@source setup.sh && setup_fbastx && setup_fbasrx ${fw_rxpci} SENDER_TX 00267b0004da 00267b0004dc # dev/wbm0 (TX), dev/wbm1 (DM)
 	@source setup.sh && enable_mps_all
 	@$(MAKE) load_fbasdm_finite_patterns
 	@source dm.sh && start_dm_synchron $$cmd_file_start_finite
@@ -315,7 +314,7 @@ restart_two_senders_multi_finite: clear_fbasdm set_multi_msgs_per_frame
 
 restart_test_rx_rate:
 	@$(MAKE) clear_fbasdm
-	@source setup.sh && setup_fbasrx ${fw_rx16pci} SENDER_TX 00267b0004dc # dev/wbm1 (DM)
+	@source setup.sh && setup_fbasrx ${fw_rxpci} SENDER_TX 00267b0004dc # dev/wbm1 (DM)
 	@echo "start DM broadcast from '${sched_filename}'"
 	@source dm.sh && run_pattern ${sched_filename}
 	@source setup.sh && read_counters $$rx_node_dev verbose

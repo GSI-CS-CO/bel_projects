@@ -63,14 +63,14 @@ esac
 # Declare platform-specific user RAM ranges of TR
 case $platform in
     "PC")
-        export addr_set_node_type="0x04060820"      # user RAM range in Pexp/Pexaria
-        export addr_get_node_type="0x04060830"
+        export addr_set_node_type="0x04060694"      # user RAM range in Pexp/Pexaria
+        export addr_get_node_type="0x040606a4"
         export addr_cmd="0x04060508"     # shared memory location for command buffer
-        export addr_cnt="0x04060934"     # shared memory location for transmitted message counter
-        export addr_avg="0x04060968"     # shared memory location for measurement results
-        export addr_eca_vld="0x04060990" # shared memory location of counter for valid actions
-        export addr_eca_ovf="0x04060994" # shared memory location of counter for overflow actions
-        export addr_senderid="0x04060998" # shared memory location of sender ID
+        export addr_cnt="0x040607a8"     # shared memory location for transmitted message counter
+        export addr_avg="0x040607dc"     # shared memory location for measurement results
+        export addr_eca_vld="0x04060804" # shared memory location of counter for valid actions
+        export addr_eca_ovf="0x04060808" # shared memory location of counter for overflow actions
+        export addr_senderid="0x0406080c" # shared memory location of sender ID
 
         export mac_tx_node="0x00267b0004da" # sender ID of TX node
         ;;
@@ -808,7 +808,7 @@ do_test2() {
 
 reset_node() {
     # $1 - node device label
-    # $2 - sender node groups
+    # $[2:] - sender node groups
 
     check_node "$1"
 
@@ -819,7 +819,7 @@ reset_node() {
     sleep 1
 
     echo "CONFIGURE state "
-    configure_node "$1" "$2"
+    configure_node "$@"
 
     echo "OPREADY state "
     make_node_ready "$1"
