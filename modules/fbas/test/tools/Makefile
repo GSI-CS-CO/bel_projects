@@ -92,16 +92,16 @@ setup_nodes:
 
 disable_mps_tx:
 	@source setup.sh && disable_mps $$tx_node_dev
-	@source setup.sh && read_shared_mem $$tx_node_dev $$addr_cnt1
+	@source setup.sh && eb-read $$tx_node_dev $$addr_cnt/4
 
 disable_mps_rx:
 	@source setup.sh && disable_mps $$rx_node_dev
-	@source setup.sh && read_shared_mem $$rx_node_dev $$addr_eca_vld
+	@source setup.sh && eb-read $$rx_node_dev $$addr_eca_vld/4
 
 disable_mps_all:
 	@source setup.sh && disable_mps_all
-	@source setup.sh && read_shared_mem $$rx_node_dev $$addr_eca_vld
-	@source setup.sh && read_shared_mem $$tx_node_dev $$addr_cnt1
+	@source setup.sh && eb-read $$rx_node_dev $$addr_eca_vld/4
+	@source setup.sh && eb-read $$tx_node_dev $$addr_cnt/4
 
 enable_mps_all:
 	@source setup.sh && enable_mps_all; sleep 2
@@ -145,27 +145,27 @@ load_fbasdm_finite_patterns:
 
 show_rx_stats:
 	@echo "RX stats"
-	@echo -n "ECA valid cnt:    "; source setup.sh && read_shared_mem $$rx_node_dev $$addr_eca_vld
-	@echo -n "ECA overflow cnt: "; source setup.sh && read_shared_mem $$rx_node_dev $$addr_eca_ovf
+	@echo -n "ECA valid cnt:    "; source setup.sh && eb-read $$rx_node_dev $$addr_eca_vld/4
+	@echo -n "ECA overflow cnt: "; source setup.sh && eb-read $$rx_node_dev $$addr_eca_ovf/4
 	@echo
 
 show_tx_stats:
 	@echo "TX stats"
-	@echo -n "msg sent by TX: "; source setup.sh && read_shared_mem $$tx_node_dev $$addr_cnt1
+	@echo -n "msg sent by TX: "; source setup.sh && eb-read $$tx_node_dev $$addr_cnt/4
 	@echo -n "msg sent by DM: "; source dm.sh && cnt_dm_msg
 	@echo
 
 show_two_senders_result:
-	@$(eval rx_msg=$(shell source setup.sh && read_shared_mem $$rx_node_dev $$addr_eca_vld))
-	@$(eval tx_msg=$(shell source setup.sh && read_shared_mem $$tx_node_dev $$addr_cnt1))
+	@$(eval rx_msg=$(shell source setup.sh && eb-read $$rx_node_dev $$addr_eca_vld/4))
+	@$(eval tx_msg=$(shell source setup.sh && eb-read $$tx_node_dev $$addr_cnt/4))
 	@$(eval dm_msg=$(shell source dm.sh && cnt_dm_msg))
 	@source setup.sh && report_two_senders_result ${rx_msg} ${tx_msg} ${dm_msg}
 
 show_fbasdm_result:
-	@echo -n "msg got by RX:  "; source setup.sh && read_shared_mem $$rx_node_dev $$addr_eca_vld
+	@echo -n "msg got by RX:  "; source setup.sh && eb-read $$rx_node_dev $$addr_eca_vld/4
 	@echo -n "msg sent by DM: "; source dm.sh && cnt_dm_msg
 	@echo
-	@$(eval rx_msg=$(shell source setup.sh && read_shared_mem $$rx_node_dev $$addr_eca_vld))
+	@$(eval rx_msg=$(shell source setup.sh && eb-read $$rx_node_dev $$addr_eca_vld/4))
 	@$(eval dm_msg=$(shell source dm.sh && cnt_dm_msg))
 	@source setup.sh && report_two_senders_result ${rx_msg} 0 ${dm_msg}
 

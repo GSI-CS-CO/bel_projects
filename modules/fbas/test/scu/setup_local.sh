@@ -169,21 +169,6 @@ list_dev_ram() {
     # 12.14.5        0000000000000651:54111351           4060000  LM32-RAM-User
 }
 
-read_shared_mem() {
-    # $1 - device
-    # $2 - memory address
-
-    eb-read $1 $2/4
-}
-
-write_shared_mem() {
-    # $1 - device
-    # $2 - memory address
-    # $3 - value
-
-    eb-write $1 $2/4 $3
-}
-
 start_saftd() {
     echo "terminate SAFT daemon if it's running"
     sudo killall saftd
