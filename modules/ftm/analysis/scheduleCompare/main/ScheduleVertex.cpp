@@ -202,6 +202,19 @@ int ScheduleVertex::compareFlush(const ScheduleVertex& v1, const ScheduleVertex&
   return result;
 }
 
+int ScheduleVertex::compareGlobal(const ScheduleVertex& v1, const ScheduleVertex& v2) {
+  int result = compareValues(v1.pattern, v2.pattern, "pattern", valueType::STRING);
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.cpu, v2.cpu, "cpu", valueType::STRING);
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.section, v2.section, "section", valueType::STRING);
+  return result;
+}
+
 int ScheduleVertex::compareListdst(const ScheduleVertex& v1, const ScheduleVertex& v2) {
   int result = compareValues(v1.pattern, v2.pattern, "pattern", valueType::STRING);
   if (result != 0) {
