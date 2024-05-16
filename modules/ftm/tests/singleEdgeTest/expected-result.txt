@@ -1,7 +1,7 @@
 Test Status:
-            All cases: 3042
-           Exceptions: 2823
- Forbidden child type:  262
-  Forbidden edge type: 2561
-     Known exceptions: 2823
-              Test ok:  219
+            All cases: 3528
+           Exceptions: 3293
+ Forbidden child type:  280
+  Forbidden edge type: 3013
+     Known exceptions: 3293
+              Test ok:  235

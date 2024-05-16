@@ -69,6 +69,11 @@ int doTest(configuration& config) {
             status.increment("Forbidden edge type");
             knownException = true;
           }
+          if (std::string(e.what()).find("Node 'B2' of type '" + nodeT2 + "' must not have edge of type") != std::string::npos) {
+            status.increment("Known exceptions");
+            status.increment("Forbidden edge type");
+            knownException = true;
+          }
           if (std::string(e.what()).find("Node 'A1' of type '" + nodeT1 + "' with edge of type '" + edgeT + "' must not have children of type") != std::string::npos) {
             status.increment("Known exceptions");
             status.increment("Forbidden child type");

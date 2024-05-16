@@ -32,6 +32,7 @@ std::map<std::string, int> nodeMap = {
     {dnt::sQBuf, NODE_TYPE_QBUF},
     {dnt::sOrigin, NODE_TYPE_ORIGIN},
     {dnt::sStartThread, NODE_TYPE_STARTTHREAD},
+    {dnt::sGlobal, NODE_TYPE_GLOBAL},
 };
 
 namespace det = DotStr::Edge::TypeVal;
@@ -341,6 +342,9 @@ void SingleEdgeGraph::setNodePointer(myVertex* vertex, std::string type, uint32_
       break;
     case NODE_TYPE_STARTTHREAD:
       vertex->np = (node_ptr) new StartThread(vertex->name, vertex->patName, vertex->bpName, hash, cpu, flags, s2u<uint64_t>(vertex->tOffs), s2u<uint64_t>(vertex->startOffs), s2u<uint8_t>(vertex->thread));
+      break;
+    case NODE_TYPE_GLOBAL:
+      vertex->np = (node_ptr) new Global(vertex->name, vertex->patName, vertex->bpName, hash, cpu, 0, vertex->section);
       break;
     case NODE_TYPE_UNKNOWN:
       std::cerr << "not yet implemented " << vertex->type << std::endl;
