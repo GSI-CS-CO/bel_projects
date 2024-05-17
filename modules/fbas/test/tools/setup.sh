@@ -35,16 +35,16 @@ setup_fbasrx() {
 }
 
 ##########################################################
-# Test 3:
-# TX SCU sends MPS flag periodically in timing msg with event ID=0x1fcbfcb00 and
-# sends MPS event immediately in timing msg with event ID=0x1fccfcc00.
+# Basic test:
+# TX SCU sends MPS flag periodically in timing msg with event ID=0x1fcbfcb0 and
+# sends MPS event immediately in timing msg with event ID=0x1fccfcc0.
 #
 # RX SCU drive its IO1 output according to MPS flag or on time-out.
 #
 # IO connection with LEMO: RX:IO1 -> TX:IO2
 ##########################################################
 
-precheck_test3() {
+precheck_basic() {
     echo "Step 1: test TLU action for TX"
     echo "Snoop TLU event (for IO action) on 1st terminal invoke command given below:"
     echo "saft-ctl fbastx -xv snoop $evt_tlu $evt_id_mask 0"
@@ -60,7 +60,7 @@ precheck_test3() {
     echo "if on 1st terminal some events like 'tDeadline: 2020-11-02 17:24:49.591537414 FID: 0xf GID: 0x0fff EVTNO: 0x0100 Other: 0x000000001 Param: 0x0000000000000000!late (by 8186 ns)' is displayed, then it's ready for next step"
 }
 
-start_test3() {
+start_basic() {
 
     verbosity="verbose"
 
