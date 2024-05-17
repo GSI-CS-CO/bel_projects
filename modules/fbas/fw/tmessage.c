@@ -206,6 +206,9 @@ mpsMsg_t* msgFetchMps(const uint8_t idx, const uint64_t evt, const uint64_t ts)
   (headBufMps+ch)->prot.flag = flag;
   (headBufMps+ch)->tsRx = ts;
 
+  // set the MPS msg index
+  (headBufMps+ch)->prot.idx = idx + ch;
+
   // return the message buffer
   return (headBufMps+ch);
 }
