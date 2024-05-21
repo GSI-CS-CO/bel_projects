@@ -7,7 +7,7 @@ digraph "reference1" {
   T_PAT1 -> B_PAT1 -> T_PAT1 [type=defdst color=red]
 
   B_PAT2 [type=block tperiod=100000000 pattern=PAT2 patexit=1 qlo=1 shape=rectangle color=purple]
-  T_PAT2 [type=tmsg pattern=PAT2 patentry=1 evtno=260 par="0x10000fe400000000" color=darkorange3]
+  T_PAT2 [type=tmsg pattern=PAT2 patentry=1 evtno=260 par="0x10000fe800000000" color=darkorange3]
   T_PAT2 -> B_PAT2->T_PAT2 [type=defdst color=red]
   T_PAT2 -> T_PAT1 [type=reference color=pink fieldtail="0x10" fieldhead="0x14" fieldwidth=64]
 }

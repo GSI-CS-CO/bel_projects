@@ -213,18 +213,22 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-wait-reference.dot')
     # ~ {{dnt::sTMsg, dnt::sCmdWait, det::sRef}, SingleEdgeTest::TEST_OK},
 
+  @pytest.mark.development
   def test_aScheduleTmsgGlobalDefdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-global-defdst.dot')
     # ~ {{dnt::sTMsg, dnt::sGlobal, det::sDefDst}, SingleEdgeTest::TEST_OK},
 
+  @pytest.mark.development
   def test_aScheduleTmsgGlobalDynpar0(self):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-global-dynpar0.dot')
     # ~ {{dnt::sTMsg, dnt::sGlobal, det::sDynPar0}, SingleEdgeTest::TEST_OK},
 
+  @pytest.mark.development
   def test_aScheduleTmsgGlobalDynpar1(self):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-global-dynpar1.dot')
     # ~ {{dnt::sTMsg, dnt::sGlobal, det::sDynPar1}, SingleEdgeTest::TEST_OK},
 
+  @pytest.mark.development
   def test_aScheduleTmsgGlobalReference(self):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-global-reference.dot')
     # ~ {{dnt::sTMsg, dnt::sGlobal, det::sRef}, SingleEdgeTest::TEST_OK},
@@ -459,10 +463,12 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     self.addDownloadCompareSchedule('testSingleEdge-switch-origin-switchdst.dot', abortPattern=True)
     # ~ {{dnt::sSwitch, dnt::sOrigin, det::sSwitchDst}, SingleEdgeTest::TEST_OK},
 
+  @pytest.mark.development
   def test_aScheduleSwitchGlobalDefdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-switch-global-defdst.dot')
     # ~ {{dnt::sSwitch, dnt::sGlobal, det::sDefDst}, SingleEdgeTest::TEST_OK},
 
+  @pytest.mark.development
   def test_aScheduleSwitchGlobalSwitchdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-switch-global-switchdst.dot')
     # ~ {{dnt::sSwitch, dnt::sGlobal, det::sSwitchDst}, SingleEdgeTest::TEST_OK},
@@ -555,10 +561,12 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     self.addDownloadCompareSchedule('testSingleEdge-flush-origin-flushovr.dot')
     # ~ {{dnt::sCmdFlush, dnt::sOrigin, det::sCmdFlushOvr}, SingleEdgeTest::TEST_OK},
 
+  @pytest.mark.development
   def test_aScheduleFlushGlobalDefdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-flush-global-defdst.dot')
     # ~ {{dnt::sCmdFlush, dnt::sGlobal, det::sDefDst}, SingleEdgeTest::TEST_OK},
 
+  @pytest.mark.development
   def test_aScheduleFlushGlobalFlushovr(self):
     self.addDownloadCompareSchedule('testSingleEdge-flush-global-flushovr.dot')
     # ~ {{dnt::sCmdFlush, dnt::sGlobal, det::sCmdFlushOvr}, SingleEdgeTest::TEST_OK},
@@ -611,6 +619,7 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     self.addDownloadCompareSchedule('testSingleEdge-wait-origin-defdst.dot')
     # ~ {{dnt::sCmdWait, dnt::sOrigin, det::sDefDst}, SingleEdgeTest::TEST_OK},
 
+  @pytest.mark.development
   def test_aScheduleWaitGlobalDefdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-wait-global-defdst.dot')
     # ~ {{dnt::sCmdWait, dnt::sGlobal, det::sDefDst}, SingleEdgeTest::TEST_OK},
@@ -695,10 +704,12 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     self.addDownloadCompareSchedule('testSingleEdge-block-origin-altdst.dot')
     # ~ {{dnt::sBlock, dnt::sOrigin, det::sAltDst}, SingleEdgeTest::TEST_OK},
 
+  @pytest.mark.development
   def test_aScheduleBlockGlobalDefdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-block-global-defdst.dot')
     # ~ {{dnt::sBlock, dnt::sGlobal, det::sDefDst}, SingleEdgeTest::TEST_OK},
 
+  @pytest.mark.development
   def test_aScheduleBlockGlobalAltdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-block-global-altdst.dot')
     # ~ {{dnt::sBlock, dnt::sGlobal, det::sAltDst}, SingleEdgeTest::TEST_OK},
@@ -783,10 +794,12 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     self.addDownloadCompareSchedule('testSingleEdge-blockalign-origin-altdst.dot')
     # ~ {{dnt::sBlockAlign, dnt::sOrigin, det::sAltDst}, SingleEdgeTest::TEST_OK},
 
+  @pytest.mark.development
   def test_aScheduleBlockalignGlobalDefdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-blockalign-global-defdst.dot')
     # ~ {{dnt::sBlockAlign, dnt::sGlobal, det::sDefDst}, SingleEdgeTest::TEST_OK},
 
+  @pytest.mark.development
   def test_aScheduleBlockalignGlobalAltdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-blockalign-global-altdst.dot')
     # ~ {{dnt::sBlockAlign, dnt::sGlobal, det::sAltDst}, SingleEdgeTest::TEST_OK},
@@ -831,6 +844,7 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     self.addDownloadCompareSchedule('testSingleEdge-startthread-tmsg-defdst.dot')
     # ~ {{dnt::sStartThread, dnt::sTMsg, det::sDefDst}, SingleEdgeTest::TEST_OK},
 
+  @pytest.mark.development
   def test_aScheduleStartthreadGlobalDefdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-startthread-global-defdst.dot')
     # ~ {{dnt::sStartThread, dnt::sGlobal, det::sDefDst}, SingleEdgeTest::TEST_OK},
@@ -915,10 +929,12 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     self.addDownloadCompareSchedule('testSingleEdge-origin-tmsg-origindst.dot')
     # ~ {{dnt::sOrigin, dnt::sTMsg, det::sOriginDst}, SingleEdgeTest::TEST_OK},
 
+  @pytest.mark.development
   def test_aScheduleOriginGlobalDefdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-origin-global-defdst.dot')
     # ~ {{dnt::sOrigin, dnt::sGlobal, det::sDefDst}, SingleEdgeTest::TEST_OK},
 
+  @pytest.mark.development
   def test_aScheduleOriginGlobalOrigindst(self):
     self.addDownloadCompareSchedule('testSingleEdge-origin-global-origindst.dot')
     # ~ {{dnt::sOrigin, dnt::sGlobal, det::sOriginDst}, SingleEdgeTest::TEST_OK},
