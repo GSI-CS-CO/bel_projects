@@ -11,6 +11,8 @@ mv dot/testSingleEdge-block-flow-altdst.dot schedules/
 mv dot/testSingleEdge-block-flow-defdst.dot schedules/
 mv dot/testSingleEdge-block-flush-altdst.dot schedules/
 mv dot/testSingleEdge-block-flush-defdst.dot schedules/
+mv dot/testSingleEdge-block-global-altdst.dot schedules/
+mv dot/testSingleEdge-block-global-defdst.dot schedules/
 mv dot/testSingleEdge-block-noop-altdst.dot schedules/
 mv dot/testSingleEdge-block-noop-defdst.dot schedules/
 mv dot/testSingleEdge-block-origin-altdst.dot schedules/
@@ -31,6 +33,8 @@ mv dot/testSingleEdge-blockalign-flow-altdst.dot schedules/
 mv dot/testSingleEdge-blockalign-flow-defdst.dot schedules/
 mv dot/testSingleEdge-blockalign-flush-altdst.dot schedules/
 mv dot/testSingleEdge-blockalign-flush-defdst.dot schedules/
+mv dot/testSingleEdge-blockalign-global-altdst.dot schedules/
+mv dot/testSingleEdge-blockalign-global-defdst.dot schedules/
 mv dot/testSingleEdge-blockalign-noop-altdst.dot schedules/
 mv dot/testSingleEdge-blockalign-noop-defdst.dot schedules/
 mv dot/testSingleEdge-blockalign-origin-altdst.dot schedules/
@@ -75,6 +79,8 @@ mv dot/testSingleEdge-flush-flow-defdst.dot schedules/
 mv dot/testSingleEdge-flush-flow-flushovr.dot schedules/
 mv dot/testSingleEdge-flush-flush-defdst.dot schedules/
 mv dot/testSingleEdge-flush-flush-flushovr.dot schedules/
+mv dot/testSingleEdge-flush-global-defdst.dot schedules/
+mv dot/testSingleEdge-flush-global-flushovr.dot schedules/
 mv dot/testSingleEdge-flush-noop-defdst.dot schedules/
 mv dot/testSingleEdge-flush-noop-flushovr.dot schedules/
 mv dot/testSingleEdge-flush-origin-defdst.dot schedules/
@@ -107,6 +113,8 @@ mv dot/testSingleEdge-origin-flow-defdst.dot schedules/
 mv dot/testSingleEdge-origin-flow-origindst.dot schedules/
 mv dot/testSingleEdge-origin-flush-defdst.dot schedules/
 mv dot/testSingleEdge-origin-flush-origindst.dot schedules/
+mv dot/testSingleEdge-origin-global-defdst.dot schedules/
+mv dot/testSingleEdge-origin-global-origindst.dot schedules/
 mv dot/testSingleEdge-origin-noop-defdst.dot schedules/
 mv dot/testSingleEdge-origin-noop-origindst.dot schedules/
 mv dot/testSingleEdge-origin-origin-defdst.dot schedules/
@@ -123,6 +131,7 @@ mv dot/testSingleEdge-startthread-block-defdst.dot schedules/
 mv dot/testSingleEdge-startthread-blockalign-defdst.dot schedules/
 mv dot/testSingleEdge-startthread-flow-defdst.dot schedules/
 mv dot/testSingleEdge-startthread-flush-defdst.dot schedules/
+mv dot/testSingleEdge-startthread-global-defdst.dot schedules/
 mv dot/testSingleEdge-startthread-noop-defdst.dot schedules/
 mv dot/testSingleEdge-startthread-origin-defdst.dot schedules/
 mv dot/testSingleEdge-startthread-startthread-defdst.dot schedules/
@@ -139,6 +148,8 @@ mv dot/testSingleEdge-switch-flow-defdst.dot schedules/
 mv dot/testSingleEdge-switch-flow-switchdst.dot schedules/
 mv dot/testSingleEdge-switch-flush-defdst.dot schedules/
 mv dot/testSingleEdge-switch-flush-switchdst.dot schedules/
+mv dot/testSingleEdge-switch-global-defdst.dot schedules/
+mv dot/testSingleEdge-switch-global-switchdst.dot schedules/
 mv dot/testSingleEdge-switch-noop-defdst.dot schedules/
 mv dot/testSingleEdge-switch-noop-switchdst.dot schedules/
 mv dot/testSingleEdge-switch-origin-defdst.dot schedules/
@@ -167,6 +178,10 @@ mv dot/testSingleEdge-tmsg-flush-defdst.dot schedules/
 mv dot/testSingleEdge-tmsg-flush-dynpar0.dot schedules/
 mv dot/testSingleEdge-tmsg-flush-dynpar1.dot schedules/
 mv dot/testSingleEdge-tmsg-flush-reference.dot schedules/
+mv dot/testSingleEdge-tmsg-global-defdst.dot schedules/
+mv dot/testSingleEdge-tmsg-global-dynpar0.dot schedules/
+mv dot/testSingleEdge-tmsg-global-dynpar1.dot schedules/
+mv dot/testSingleEdge-tmsg-global-reference.dot schedules/
 mv dot/testSingleEdge-tmsg-noop-defdst.dot schedules/
 mv dot/testSingleEdge-tmsg-noop-dynpar0.dot schedules/
 mv dot/testSingleEdge-tmsg-noop-dynpar1.dot schedules/
@@ -197,6 +212,7 @@ mv dot/testSingleEdge-wait-blockalign-defdst.dot schedules/
 mv dot/testSingleEdge-wait-blockalign-target.dot schedules/
 mv dot/testSingleEdge-wait-flow-defdst.dot schedules/
 mv dot/testSingleEdge-wait-flush-defdst.dot schedules/
+mv dot/testSingleEdge-wait-global-defdst.dot schedules/
 mv dot/testSingleEdge-wait-noop-defdst.dot schedules/
 mv dot/testSingleEdge-wait-origin-defdst.dot schedules/
 mv dot/testSingleEdge-wait-startthread-defdst.dot schedules/
