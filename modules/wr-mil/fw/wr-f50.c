@@ -407,106 +407,18 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       getLockState = WRF50_SLOCK_UNKWN;
       
       if (getNLocked > 50) {        // wait for one second prior we do s.th. useful
-        if ((dmValid && f50Valid) { // data is valid?
-            
-        
-
-        
-        
-      
-      // deadline
-      sendDeadline  = recDeadline + WRF50_PRETRIGGER_DM + mil_latency - WRF50_MILSEND_LATENCY;
-       // protect from nonsense hi-frequency bursts
-      if (sendDeadline < previous_time + WRF50_MILSEND_LATENCY) sendDeadline = previous_time + WRF50_MILSEND_LATENCY;
-      previous_time = sendDeadline;
-
-      // evtID + param
-      sendEvtId     = recEvtId;
-      prepMilTelegramEca(milTelegram, &sendEvtId, &sendParam);
-
-      // clear MIL FIFO and write to ECA
-      if (mil_mon) clearFifoEvtMil(pMilRec);
-      fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 1);
-
-      if (getSysTime() > sendDeadline) nEvtsLate++;
-      nEvtsSnd++;
-
-      // handle UTC events; here the UTC time (- offset) is distributed as a series of MIL telegrams
-      if (recEvtNo == utc_trigger) {
-        // send EVT_UTC_1/2/3/4/5 telegrams
-        make_mil_timestamp(sendDeadline, evt_utc, utc_offset);
-        sendDeadline += trig_utc_delay * one_us_ns;
-        for (i=0; i<WRF50_N_UTC_EVTS; i++){
-          sendDeadline += utc_utc_delay * one_us_ns;
-          prepMilTelegramEca(evt_utc[i], &sendEvtId, &sendParam);
-          // nicer evtId for debugging only
-          sendEvtId &= 0xffff000fffffffff;
-          sendEvtId |= (uint64_t)(0x0e0 + i) << 36;
-          fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 1);
-          nEvtsSnd++;
-        } // for i
-      } // if utc_trigger
-
-      // reset inhibit counter for fill events
-      inhibit_fill_events = RESET_INHIBIT_COUNTER;
+        if (dmValid && f50Valid)  { // data is valid?
+          //bla   
         } // if dmValid ...
-      } // if getNLocked
+      } // if getNLocked ...
+
+      // irgendwas machen und Daten ins WR-Netz und auf eigene ECA schreiben
 
       break;
-
-    // received timing message from TLU; this indicates a received MIL telegram on the MIL piggy
-    case WRF50_ECADO_MIL_TLU:
-
-      // in case of data monitoring, read message from MIL piggy FIFO and re-send it locally via the ECA
-      if (mil_mon==2) {
-        if (fwlib_wait4MILEvent(50, &recMilEvtData, &recMilEvtCode, &recMilVAcc, recMilEvts, 0) == COMMON_STATUS_OK) {
-
-          // deadline
-          sendDeadline  = recDeadline - WRF50_POSTTRIGGER_TLU; // time stamp when MIL telegram was decoded at MIL piggy
-          sendDeadline += 1000000;                             // advance to 1ms into the future to avoid late messages
-          // evtID
-          sendEvtId     = fwlib_buildEvtidV1(LOC_MIL_REC, recMilEvtCode, 0x0, recMilVAcc, 0x0, recMilEvtData);
-          // param
-          sendParam     = ((uint64_t)mil_domain) << 32;
-
-          fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 1);
-          nEvtsRecD++;
-        } // if wait4Milevent
-      } // if mil_mon
-
-      // read number of received 'broken' MIL telegrams
-      readEventErrCntMil(pMilRec, &nEvtsErr);
-
-      nEvtsRecT++;
-      
-      break;
-
     default :                                                         // flush ECA Queue
       flagIsLate = 0;                                                 // ignore late events
   } // switch ecaAction
 
-  // send fill events if inactive for a long time
-  if (request_fill_evt) {
-    // decrease inhibit counter
-    inhibit_fill_events--;
-
-    // check for fill event
-    if (!inhibit_fill_events) {
-      // the last mil event is so far in the past that the inhibit counter is zero
-      // so lets send the fill event and reset inhibit counter
-      // deadline
-      sendDeadline  = getSysTime();
-      sendDeadline += COMMON_AHEADT;
-      // evtID
-      sendEvtId     = fwlib_buildEvtidV1(mil_domain, WRF50_DFLT_MIL_EVT_FILL, 0x0, 0x0, 0x0, 0x0); // chk
-      convert_WReventID_to_milTelegram(sendEvtId, &milTelegram);                                   // --> MIL format
-      prepMilTelegramEca(milTelegram, &sendEvtId, &sendParam);                                     // --> EvtId for internal use
-      fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0);                                // --> ECA
-      nEvtsSnd++;
-      inhibit_fill_events = RESET_INHIBIT_COUNTER;
-    } // if not inhibit fill events
-  } // if request_fill_evt
-    
   // check for late event
   if ((status == COMMON_STATUS_OK) && flagIsLate) status = WRF50_STATUS_LATEMESSAGE;
   

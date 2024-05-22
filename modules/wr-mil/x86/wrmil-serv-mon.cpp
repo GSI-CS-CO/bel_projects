@@ -1,9 +1,9 @@
 /*******************************************************************************************
- *  wrmil-serv-mon.c
+ *  wrmil-serv-mon.cpp
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 24-Apr-2024
+ *  version : 22-May-2024
  *
  * monitors WR-MIL gateway
  *
@@ -385,15 +385,15 @@ static void help(void) {
   std::cerr << std::endl;
   std::cerr << "  The paremter -s is mandatory"                                                     << std::endl;
   std::cerr << "  -s <MIL domain>      MIL domain; this can be"                                     << std::endl;
-  std::cerr << "                       0: PZU-QR; UNILAC, Source Right"                             << std::endl;
-  std::cerr << "                       1: PZU-QL; UNILAC, Source Left"                              << std::endl;     
-  std::cerr << "                       2: PZU-QN; UNILAC, Source High Charge State Injector (HLI)"  << std::endl;
-  std::cerr << "                       3: PZU-UN; UNILAC, High Charge State Injector (HLI)"         << std::endl;
-  std::cerr << "                       4: PZU-UH; UNILAC, High Current Injector (HSI)"              << std::endl;
-  std::cerr << "                       5: PZU-AT; UNILAC, Alvarez Cavities"                         << std::endl;
-  std::cerr << "                       6: PZU-TK; UNILAC, Transfer Line"                            << std::endl;
-  std::cerr << "                       7: PZ-SIS18"                                                 << std::endl;
-  std::cerr << "                       8: PZ-ESR"                                                   << std::endl;
+  std::cerr << "                       0: PZU_QR; UNILAC, Source Right"                             << std::endl;
+  std::cerr << "                       1: PZU_QL; UNILAC, Source Left"                              << std::endl;     
+  std::cerr << "                       2: PZU_QN; UNILAC, Source High Charge State Injector (HLI)"  << std::endl;
+  std::cerr << "                       3: PZU_UN; UNILAC, High Charge State Injector (HLI)"         << std::endl;
+  std::cerr << "                       4: PZU_UH; UNILAC, High Current Injector (HSI)"              << std::endl;
+  std::cerr << "                       5: PZU_AT; UNILAC, Alvarez Cavities"                         << std::endl;
+  std::cerr << "                       6: PZU_TK; UNILAC, Transfer Line"                            << std::endl;
+  std::cerr << "                       8: SIS18_RING"                                               << std::endl;
+  std::cerr << "                       9: ESR_RING"                                                 << std::endl;
   std::cerr << std::endl;
   std::cerr << "This tool monitors a White Rabbit -> MIL gateway."                                  << std::endl;
   std::cerr << std::endl;
@@ -619,7 +619,7 @@ int main(int argc, char** argv)
 
     // message that is injected locally by the lm32 firmware (triggering a rule on the ECA WB channel towards the MIL interface)
     // this message must be delayed by one ms to (hopefully) coincide with the received MIL telegram
-    // we also do prefix machting of the first four bits of the evtNo (should be '0x0')
+    // we also do prefix matching of the first four bits of the evtNo (should be '0x0')
     tmpTag        = tagStart;
     snoopID       = ((uint64_t)FID << 60) | ((uint64_t)gidStart << 48);
     condition[0]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffff00000000000, one_ms_ns + offsetStart));
@@ -706,7 +706,7 @@ int main(int argc, char** argv)
 
 #ifdef USEMASP
       if (fwState  == COMMON_STATE_OPREADY) maspSigOpReady  = true;
-      else                                   maspSigOpReady  = false;
+      else                                  maspSigOpReady  = false;
 
       maspSigTransfer = true;   // ok, this is dummy for now, e.g. in case of MIL troubles or so
       

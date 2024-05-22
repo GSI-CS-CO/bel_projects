@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 10-Apr-2024
+ *  version : 22-May-2024
  *
  * subscribes to and displays status of a wr-mil gateway
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define WRMIL_CLIENT_MON_VERSION 0x000002
+#define WRMIL_CLIENT_MON_VERSION 0x000003
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -55,7 +55,7 @@
 
 const char* program;
 
-#define WRMILNSYS   9                    // number of WRMIL systems
+#define WRMILNSYS   10                   // number of WRMIL systems
 
 #define DIMCHARSIZE 32                   // standard size for char services
 #define DIMMAXSIZE  1024                 // max size for service names
@@ -80,6 +80,7 @@ const char * sysShortNames[] = {
   "pzu_uh",
   "pzu_at",
   "pzu_tk",
+  "pzu_f50",
   "sis18_ring",
   "esr_ring"
 };
@@ -118,7 +119,7 @@ static void help(void) {
 
 void buildHeader(char * environment)
 {
-  sprintf(title, "\033[7m WRMIL System Status %3s ----------------------------------------------------------------------------------- (units [us] unless explicitly given) -  v%8s\033[0m", environment, wrmil_version_text(WRMIL_CLIENT_MON_VERSION));
+  sprintf(title, "\033[7m WRMIL System Status %3s ---------------------------------------------------------------------------------- (units [us] unless explicitly given) -  v%8s\033[0m", environment, wrmil_version_text(WRMIL_CLIENT_MON_VERSION));
   sprintf(header, "  # MIL domain  version      state        status     #sent/fw    #missd/fw      #err/fw   #match/x86 r[%%] mode     ave    sdev      min      max         node");    
   sprintf(empty , "                                                                                                          ");
   //       printf("1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456\n");  
@@ -185,7 +186,7 @@ void printServices()
   // footer with date and time
   time_date = time(0);
   strftime(buff,50,"%d-%b-%y %H:%M",localtime(&time_date));
-  sprintf(footer, "\033[7m exit <q> | clear status <digit> | print status <s> | help <h>                                                                                 %s\033[0m", buff);
+  sprintf(footer, "\033[7m exit <q> | clear status <digit> | print status <s> | help <h>                                                                                %s\033[0m", buff);
   
   comlib_term_curpos(1,1);
   

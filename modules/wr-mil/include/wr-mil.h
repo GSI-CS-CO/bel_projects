@@ -38,6 +38,7 @@
 #define PZU_UH                        0x1c4   // LSA UNILAC High Current Injector (HSI)
 #define PZU_AT                        0x1c5   // LSA UNILAC Alvarez Cavities
 #define PZU_TK                        0x1c6   // LSA UNILAC Transfer Line
+#define PZU_F50                       0x4c0   // TOS internal: UNILAC 50 Hz synchronization
 #define SIS18_RING                    0x12c   // LSA SIS18 ring
 #define ESR_RING                      0x154   // LSA ESR ring
 #define LOC_MIL_SEND                  0xff0   // internal: MIL telegrams to be sent
