@@ -52,7 +52,7 @@ eb-fwload $TRGW u 0x0 wrmil.bin
 
 echo -e WRMIL: configure firmware for gateway $NGW
 sleep 2
-wrmil-ctl $TRGW -s$NGW -w$MILDEV -m1 -l0 -t255 -d650 -u56 configure
+wrmil-ctl $TRGW -s$NGW -w$MILDEV -m2 -l0 -t255 -d650 -u56 configure
 sleep 2
 wrmil-ctl $TRGW startop
 
@@ -78,6 +78,6 @@ saft-ecpu-ctl $SDGW -c 0x1${SIDGW}000000000000 0xfffff00000000000 500000 0xff -g
 ###########################################
 # reset diagnostics
 ###########################################
-sleep 1
+sleep 2
 wrmil-ctl $TRGW cleardiag
 
