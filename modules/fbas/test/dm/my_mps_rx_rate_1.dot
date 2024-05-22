@@ -10,16 +10,17 @@ digraph G {
 // A bunch of timing messages are generated and sent by DM with different data rate and
 // allowed maximum data rate is determined by counting lost messages on SCU.
 
-// Each timing message with event ID 4043 (0xfcb) contains a pseudo MPS protocol in its parameter field:
+// Timing message with event ID 4043 (0xfcb) contains a pseudo MPS protocol in its parameter field:
 // - parameter (8-byte): sender ID (6) + index (1) + MPS_flag (1)
 // where:
 // - sender ID: MAC address
 // - index: MPS channel index
 // - MPS_flag: OK (=1), NOK (=2), TEST (=3)
 
-// 1 timing message (M_A1) will be sent in a period of 'tperiod' [ns] and it is repeated 'qty' + 1 times.
-// To send 6000 timing msgs, the valud of 5999 should be set to 'qty'
-// To send msgs at rates 300/600/1000/1200/1500 Hz (264/528/880/1056/1320 Kbps), the value of 'tperiod' should vary between 33333/16666/10000/8333/6666 us
+// Timing message (M_A1) is sent in a period of 'tperiod' [ns] and 'qty' + 1 times.
+// To send 6000 timing msgs, the valud of 5999 should be set to 'qty'.
+// To send msgs at rates 300/600/1000/1200/1500 Hz (264/528/880/1056/1320 Kbps),
+// the value of 'tperiod' should vary between 33333/16666/10000/8333/6666 us
 
 name="pseudo_MPS"
 graph [rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]

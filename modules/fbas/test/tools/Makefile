@@ -72,7 +72,7 @@
 	restart_fbasdm_single_msg continue_fbasdm_single_msg \
 	restart_two_senders_loop restart_two_senders_multi_finite restart_two_senders_multi_loop \
 	show_two_senders_result show_rx_tx_stats \
-	restart_test_rx_rate restart_test_rx_rate_bad restart_fbasdm_run_pattern \
+	restart_test_rx_rate restart_fbasdm_run_pattern \
 	test_ttf_traffic
 
 .SILENT: test_ttf_traffic
@@ -319,15 +319,13 @@ restart_two_senders_multi_finite: clear_fbasdm set_multi_msgs_per_frame
 
 restart_test_rx_rate:
 	@$(MAKE) prepare_fbasdm_broadcast
-	@echo "start DM broadcast from '${sched_def}'"
-	@source dm.sh && run_pattern ${sched_def}
-	@source setup.sh && read_counters $$rx_node_dev verbose
-	@source setup.sh && result_msg_delay $$rx_node_dev
+	@source dm.sh && run_pattern ${sched_def} && echo
+	@$(MAKE) show_fbasdm_result
+	@echo -n "Msg delay: " && source setup.sh && result_msg_delay $$rx_node_dev
 
 restart_fbasdm_run_pattern:
 	@$(MAKE) clear_fbasdm
-	@echo "start DM broadcast from '${sched_def}'"
-	@source dm.sh && run_pattern ${sched_def}
+	@source dm.sh && run_pattern ${sched_def} && echo
 
 test_ttf_traffic:
 	./test_ttf_rx_rate.sh -s my_mps_rx_rate_1.dot -f ${fw_rxpci} -m
