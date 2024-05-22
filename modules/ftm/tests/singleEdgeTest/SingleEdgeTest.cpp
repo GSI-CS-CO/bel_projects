@@ -150,9 +150,10 @@ void usage(char* program) {
 }
 
 void version(char* program) {
-  std::cerr << program << ", version 1.1.0" << std::endl;
+  std::cerr << program << ", version 1.2.0" << std::endl;
   /* Version 1.0.0: 209 OK tests.
    * Version 1.1.0: 219 OK tests, new: edge type 'reference'.
+   * Version 1.2.0: 219 OK tests, new: node type 'global'.
    */
 }
 

@@ -99,7 +99,7 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, configuration& c
   }
   cdm->completeId(v1, g);
   flags |= NFLG_PAT_ENTRY_LM32_SMSK;
-  setNodePointer(&g[v1], nodeT1, flags);
+  setNodePointer(config, &g[v1], nodeT1, flags);
   flags = 0;
   // compose the second vertex
   v2 = boost::add_vertex(g);
@@ -136,7 +136,7 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, configuration& c
     }
   }
   flags |= NFLG_PAT_EXIT_LM32_SMSK;
-  setNodePointer(&g[v2], nodeT2, flags);
+  setNodePointer(config, &g[v2], nodeT2, flags);
   // connect v1 and v2 by an edge of type edgeT
   myEdge newEdge = myEdge(edgeT);
   if (edgeT.compare(det::sRef) == 0) {
@@ -176,10 +176,13 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, configuration& c
     }
   }
   // add child vertex, blocks for a meta vertex, or a buffer vertex if necessary.
+  //~ if (config.verbose) {
+    //~ std::cout << "Extend schedule" << std::endl;
+  //~ }
   g1 = g;
   extendWithChild(config, edgeT);
-  extendOrphanNode();
-  extendSecondQbuf();
+  extendOrphanNode(config);
+  extendSecondQbuf(config);
 }
 
 void SingleEdgeGraph::extendWithChild(configuration& config, std::string edgeT) {
@@ -208,7 +211,7 @@ void SingleEdgeGraph::extendWithChild(configuration& config, std::string edgeT) 
         generateQmeta(config, g1, v3, 0);
       }
     }
-    setNodePointer(&g1[v3], v3Type, flags);
+    setNodePointer(config, &g1[v3], v3Type, flags);
     boost::add_edge(v2, v3, myEdge(v3Edge), g1);
     if (g1[v1].type.compare(dnt::sSwitch) == 0 && v3Type.compare(dnt::sBlock) == 0) {
       boost::add_edge(v1, v3, myEdge(det::sCmdTarget), g1);
@@ -249,13 +252,13 @@ void SingleEdgeGraph::extendWithChild(configuration& config, std::string edgeT) 
       g1[v4].type = v3Type;
       g1[v4].patName = "patternA";
       g1[v4].bpName = "beamA";
-      setNodePointer(&g1[v4], v3Type, 0);
+      setNodePointer(config, &g1[v4], v3Type, 0);
       boost::add_edge(v2, v4, myEdge(v3Edge), g1);
     }
   }
 }
 
-void SingleEdgeGraph::extendOrphanNode() {
+void SingleEdgeGraph::extendOrphanNode(configuration& config) {
   if (g1[v1].np->isMeta() && g1[v1].type.compare(dnt::sDstList) != 0) {
     v5 = boost::add_vertex(g1);
     g1[v5].name = "E5";
@@ -267,19 +270,19 @@ void SingleEdgeGraph::extendOrphanNode() {
     uint32_t flags=0x00100007;
     flags |= NFLG_PAT_ENTRY_LM32_SMSK;
     flags |= NFLG_PAT_EXIT_LM32_SMSK;
-    setNodePointer(&g1[v5], dnt::sBlock, flags);
+    setNodePointer(config, &g1[v5], dnt::sBlock, flags);
     boost::add_edge(v5, v1, myEdge(det::sQPrio[0]), g1);
     v6 = boost::add_vertex(g1);
     g1[v6].name = "E5_ListDst_0";
     g1[v6].type = dnt::sDstList;
     g1[v6].patName = "patternA";
     g1[v6].bpName = "beamA";
-    setNodePointer(&g1[v6], dnt::sDstList, 0);
+    setNodePointer(config, &g1[v6], dnt::sDstList, 0);
     boost::add_edge(v6, v5, myEdge(det::sDefDst), g1);
   }
 }
 
-void SingleEdgeGraph::extendSecondQbuf() {
+void SingleEdgeGraph::extendSecondQbuf(configuration& config) {
   if (g1[v1].type.compare(dnt::sQInfo) == 0 && g1[v2].type.compare(dnt::sQBuf) == 0) {
     Graph::out_edge_iterator out_begin, out_end, out_cur;
     boost::tie(out_begin, out_end) = out_edges(v1, g1);
@@ -290,7 +293,7 @@ void SingleEdgeGraph::extendSecondQbuf() {
         g1[v3].type = dnt::sQBuf;
         g1[v3].patName = "patternA";
         g1[v3].bpName = "beamA";
-        setNodePointer(&g1[v3], dnt::sQBuf, 0);
+        setNodePointer(config, &g1[v3], dnt::sQBuf, 0);
         boost::add_edge(v1, v3, myEdge(det::sMeta), g1);
         break;
       }
@@ -298,7 +301,7 @@ void SingleEdgeGraph::extendSecondQbuf() {
   }
 }
 
-void SingleEdgeGraph::setNodePointer(myVertex* vertex, std::string type, uint32_t flags) {
+void SingleEdgeGraph::setNodePointer(configuration& config, myVertex* vertex, std::string type, uint32_t flags) {
   uint32_t hash = 0;
   uint8_t cpu = 0;
   switch (nodeMap[type]) {
@@ -348,7 +351,9 @@ void SingleEdgeGraph::setNodePointer(myVertex* vertex, std::string type, uint32_
       vertex->np = (node_ptr) new StartThread(vertex->name, vertex->patName, vertex->bpName, hash, cpu, flags, s2u<uint64_t>(vertex->tOffs), s2u<uint64_t>(vertex->startOffs), s2u<uint8_t>(vertex->thread));
       break;
     case NODE_TYPE_GLOBAL:
-      //~ std::cout << "setNodePointer: NODE_TYPE_GLOBAL, " << vertex->name << " " << vertex->section << std::endl;
+      if (config.superverbose) {
+        std::cout << "setNodePointer: NODE_TYPE_GLOBAL, " << vertex->name << " " << vertex->section << std::endl;
+      }
       vertex->np = (node_ptr) new Global(vertex->name, vertex->patName, vertex->bpName, hash, cpu, 0, vertex->section);
       break;
     case NODE_TYPE_UNKNOWN:
@@ -386,7 +391,7 @@ void SingleEdgeGraph::writeDotFile(std::string fileNamePart) {
 
 void SingleEdgeGraph::generateQmeta(configuration& config, Graph& g, vertex_t v, int prio) {
   if (config.verbose) {
-    std::cout << "generateQmeta: " << g[v].name << std::endl;
+    std::cout << "generateQmeta: " << g[v].name << ", " << prio << std::endl;
   }
   const std::string nameBl = g[v].name + dnm::sQBufListTag + dnm::sQPrioPrefix[prio];
   const std::string nameB0 = g[v].name + dnm::sQBufTag     + dnm::sQPrioPrefix[prio] + dnm::s1stQBufSuffix;
@@ -399,9 +404,9 @@ void SingleEdgeGraph::generateQmeta(configuration& config, Graph& g, vertex_t v,
   g[vBl].patName = g[v].patName;
   g[vB0].patName = g[v].patName;
   g[vB1].patName = g[v].patName;
-  setNodePointer(&g[vBl], dnt::sQInfo, 0);
-  setNodePointer(&g[vB0], dnt::sQBuf, 0);
-  setNodePointer(&g[vB1], dnt::sQBuf, 0);
+  setNodePointer(config, &g[vBl], dnt::sQInfo, 0);
+  setNodePointer(config, &g[vB0], dnt::sQBuf, 0);
+  setNodePointer(config, &g[vB1], dnt::sQBuf, 0);
 
   boost::add_edge(v,   vBl, myEdge(det::sQPrio[prio]), g);
   boost::add_edge(vBl, vB0, myEdge(det::sMeta), g);
