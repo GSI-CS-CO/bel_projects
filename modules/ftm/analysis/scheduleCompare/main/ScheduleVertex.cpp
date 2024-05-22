@@ -52,6 +52,8 @@ int ScheduleVertex::compare(const ScheduleVertex& v1, const ScheduleVertex& v2) 
         return compareTmsg(v1, v2);
       } else if ("wait" == v1.type) {
         return compareWait(v1, v2);
+      } else if ("global" == v1.type) {
+        return compareGlobal(v1, v2);
       } else {
         return -1;
       }
