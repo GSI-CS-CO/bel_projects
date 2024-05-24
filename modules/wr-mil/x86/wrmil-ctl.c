@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Michael Reese GSI-Darmstadt
- *  version : 18-April-2024
+ *  version : 24-May-2024
  *
  * Command-line interface for wr-mil
  *
@@ -127,22 +127,22 @@ static void help(void) {
 /*
 void printTransferHeader()
 {
-  printf("b2b:        nTrans |      DIAG       |                 INFO                  \n");
-  printf("b2b: STATUS      n |  gid  sid  mode |   state      nchng     stat      nchng\n");
+  printf("wr-f50:        nTrans |      DIAG       |                 INFO                  \n");
+  printf("wr-f50: STATUS      n |  gid  sid  mode |   state      nchng     stat      nchng\n");
 } // printTransferHeader
 
 
 void printTransfer(uint32_t nTransfer, uint32_t sid, uint32_t gid, uint32_t mode)
 {
   // diag
-  printf("b2b:    %010u | %4x   %2u     %1u |", nTransfer, gid, sid, mode);
+  printf("wr-f50:    %010u | %4x   %2u     %1u |", nTransfer, gid, sid, mode);
 } // printTransfer
 
 
 void printDiags(uint32_t sid, uint32_t gid, uint32_t mode, uint64_t TH1Ext, uint32_t nHExt, uint64_t TH1Inj, uint32_t nHInj, uint64_t TBeat, double cPhase, double cTrigExt, double cTrigInj, int32_t comLatency)
 {
   printf("\n\n");
-  printf("b2b: statistics ...\n\n");
+  printf("wr-f50: statistics ...\n\n");
 
   printf("GID                   : %012u\n"     , gid);
   printf("SID                   : %012u\n"     , sid);
@@ -320,7 +320,7 @@ int main(int argc, char** argv) {
   
   if (getVersion) {
     wrmil_version_library(&verLib);
-    printf("b2b: library (firmware) version %s",  wrmil_version_text(verLib));     
+    printf("wr-mil: library (firmware) version %s",  wrmil_version_text(verLib));     
     wrmil_version_firmware(ebDevice, &verFw);
     printf(" (%s)\n",  wrmil_version_text(verFw));     
   } // if getVersion
@@ -353,28 +353,28 @@ int main(int argc, char** argv) {
 
     if (!strcasecmp(command, "startop")) {
       wrmil_cmd_startop(ebDevice);
-      if (state != COMMON_STATE_CONFIGURED) printf("b2b: WARNING command has no effect (not in state CONFIGURED)\n");
+      if (state != COMMON_STATE_CONFIGURED) printf("wr-f50: WARNING command has no effect (not in state CONFIGURED)\n");
     } // "startop"
 
     if (!strcasecmp(command, "stopop")) {
       wrmil_cmd_stopop(ebDevice);
-      if (state != COMMON_STATE_OPREADY) printf("b2b: WARNING command has no effect (not in state OPREADY)\n");
+      if (state != COMMON_STATE_OPREADY) printf("wr-f50: WARNING command has no effect (not in state OPREADY)\n");
     } // "startop"
 
     if (!strcasecmp(command, "recover")) {
       wrmil_cmd_recover(ebDevice);
-      if (state != COMMON_STATE_ERROR) printf("b2b: WARNING command has no effect (not in state ERROR)\n");
+      if (state != COMMON_STATE_ERROR) printf("wr-f50: WARNING command has no effect (not in state ERROR)\n");
     } // "recover"
 
     if (!strcasecmp(command, "idle")) {
       wrmil_cmd_idle(ebDevice);
-      if (state != COMMON_STATE_CONFIGURED) printf("b2b: WARNING command has no effect (not in state CONFIGURED)\n");
+      if (state != COMMON_STATE_CONFIGURED) printf("wr-f50: WARNING command has no effect (not in state CONFIGURED)\n");
     } // "idle"
     // diagnostics
 
     if (!strcasecmp(command, "cleardiag")) {
       wrmil_cmd_cleardiag(ebDevice);
-      if (state != COMMON_STATE_OPREADY) printf("b2b: WARNING command has no effect (not in state OPREADY)\n");
+      if (state != COMMON_STATE_OPREADY) printf("wr-f50: WARNING command has no effect (not in state OPREADY)\n");
     } // "cleardiag"
 
     if (!strcasecmp(command, "diag")) {
