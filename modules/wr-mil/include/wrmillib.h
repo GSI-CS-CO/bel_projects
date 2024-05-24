@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 10-Apr-2024
+ *  version : 24-May-2024
  *
  * library for wr-mil
  *
@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define WRMILLIB_VERSION 0x000003
+#define WRMILLIB_VERSION 0x000004
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  WRMILLIB_STATUS_OK                 0            // OK
@@ -164,6 +164,12 @@ extern "C" {
                            int      printFlag                    // print info to screen 
                            );
 
+  // get info from firmware, returns error code
+  uint32_t wrf50_info_read(uint64_t ebDevice,                    // EB device
+                           
+                           int      printFlag                    // print info to screen 
+                           );
+ 
   // get common properties from firmware, returns error code
   uint32_t wrmil_common_read(uint64_t ebDevice,                  // EB device
                              uint64_t *statusArray,              // array with status bits
@@ -186,6 +192,13 @@ extern "C" {
                         uint32_t requestFill,                    // if this is written to 1, the gateway will send a fill event as soon as possible
                         uint32_t milDev,                         // MIL device for sending MIL messages; 0: MIL Piggy; 1..: SIO in slot 1..
                         uint32_t milMon                          // 1: monitor MIL events; 0; don't monitor MIL events          
+                        );
+
+
+  // uploads configuration, returns error code
+  uint32_t wrf50_upload(uint64_t ebDevice,                       // EB device
+                        int32_t  phaseOffset,                    // offset [us] to the zero transition of the 50 Hz mains signal
+                        uint32_t mode                            // see WRF50_MODE_...
                         );
 
   // commands requesting state transitions

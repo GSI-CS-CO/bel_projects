@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 2024-may-14
+ *  version : 2024-may-24
  *
  *  firmware required for the 50 Hz mains -> WR gateway
  *  
@@ -56,6 +56,7 @@
 #include <stack.h>                                                      // stack check
 #include "pp-printf.h"                                                  // print
 #include "mini_sdb.h"                                                   // sdb stuff
+#include "ebm.h"                                                        // EB master
 #include "aux.h"                                                        // cpu and IRQ
 #include "uart.h"                                                       // WR console
 
@@ -125,10 +126,15 @@ uint64_t t1, t2;
 int32_t  tmp1;
 
 // important local variables
-uint64_t f50Stamps[WRF50_N_STAMPS];        // previous timestamps of 50 Hz signal   (most recent is n = WR50_N_STAMPS)
-uint64_t dmStamps[WRF50_N_STAMPS];         // previous timestamps of DM cycle start (most recent is n = WR50_N_STAMPS)
-int      f50Valid;                         // mains timestamps are valid
-int      dmValid;                          // Data Master timestamps are valid
+uint64_t stampsF50[WRF50_N_STAMPS];        // previous timestamps of 50 Hz signal   (most recent is n = WR50_N_STAMPS)
+uint64_t stampsDM[WRF50_N_STAMPS];         // previous timestamps of DM cycle start (most recent is n = WR50_N_STAMPS)
+uint64_t cyclenF50;                        // actual cycle length of 50 Hz mains
+uint64_t cyclenDM;                         // actual cycle length of Data Master
+uint64_t nxtStampF50;                      // predicted start of next cycle, 50 Hz mains
+uint64_t nxtStampDM;                       // predicted start of next cycle, 50 Hz mains
+int      validF50;                         // mains timestamps are valid
+int      validDM;                          // Data Master timestamps are valid
+
 
 void init() // typical init for lm32
 {
@@ -240,6 +246,12 @@ uint32_t extern_entryActionConfigured()
 {
   uint32_t status = COMMON_STATUS_OK;
 
+  // configure EB master (SRC and DST MAC/IP are set from host)
+  if ((status = fwlib_ebmInit(2000, 0xffffffffffff, 0xffffffff, EBM_NOREPLY)) != COMMON_STATUS_OK) {
+    DBPRINT1("wr-f50: ERROR - init of EB master failed! %u\n", (unsigned int)status);
+    return status;
+  } 
+
   // get and publish NIC data
   fwlib_publishNICData(); 
 
@@ -248,7 +260,7 @@ uint32_t extern_entryActionConfigured()
   getNCycles = 0x0;
   
   // if everything is ok, we must return with COMMON_STATUS_OK
-  if (status == MIL_STAT_OK) status = COMMON_STATUS_OK;
+  if (status == COMMON_STATUS_OK) status = COMMON_STATUS_OK;
 
   return status;
 } // extern_entryActionConfigured
@@ -306,39 +318,26 @@ uint32_t extern_exitActionOperation()
 } // extern_exitActionOperation
 
 
-// prepares evtId and param for sending a MIL telegram via the ECA /* chk */
-void prepMilTelegramEca(uint32_t milTelegram, uint64_t *evtId, uint64_t *param)
-{
-  // evtId
-  *evtId    &= 0xf000ffffffffffff;            // remove all bits for GID
-  *evtId    |= (uint64_t)LOC_MIL_SEND << 48;  // set bit for GID to 'local message generating a MIL telegram'
-
-  // param
-  *param     = ((uint64_t)mil_domain) << 32;
-  *param    |= (uint64_t)milTelegram & 0xffffffff;
-} // void prepMilTelegramEca
-
-
 // insert (and shift) tstamps
 void manageStamps(uint64_t newStamp,               // new timestamp
                   uint64_t stamps[],               // all timestamps
-                  uint32_t *actT,                  // actual cycle length
-                  int      flagValid               // return values are valid
+                  uint64_t *actT,                  // actual cycle length
+                  int      *flagValid              // flags (or not) return values are valid
                   )
 {
   int i;
-  uint32_t cycLen;
+  uint64_t cyclen;                                 // actual cycle length
   
   // timestamps: pop oldest, shift (not very clever, shame on me) and add new
   for (i=1; i<WRF50_N_STAMPS; i++) stamps[i-1] = stamps[i];
   stamps[WRF50_N_STAMPS - 1] = newStamp;
 
-  cyclen = (uint32_t)((stamps[WRF50_N_STAMPS - 1] - stamps[0]) / WRF50_N_STAMPS - 1);
+  cyclen       = (stamps[WRF50_N_STAMPS - 1] - stamps[0]) / (WRF50_N_STAMPS - 1);
 
-  if ((cyclen < (uint32_t)WRF50_CYCLELEN_MAX) && (cyclen > (uint32_t)WRF50_CYCLELEN_MIN)) flagValid = 1;
-  else                                                                                    flagValid = 0;
+  if ((cyclen < (uint64_t)WRF50_CYCLELEN_MAX) && (cyclen > (uint64_t)WRF50_CYCLELEN_MIN)) *flagValid = 1;
+  else                                                                                    *flagValid = 0;
 
-  *actT = cyclen;
+  *actT     = cyclen;
 } // managestamps
 
 
@@ -366,7 +365,9 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint64_t sendParam;                                         // parameter to send
   uint32_t sendTEF;                                           // TEF to send
 
-  uint32_t cycLen;                                            // help variable, cycle length [ns]
+  int64_t  diffStartAct;                                      // actual difference between DM and mains cycle start
+  uint64_t tmpEvtNo; 
+  
   
   status    = actStatus;
 
@@ -382,13 +383,13 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       if (recGid != PZU_F50) return WRF50_STATUS_BADSETTING;
       
       // update timestamps
-      manageStamps(recDeadline, dmStamps, &cycLen, &dmValid);
-      if (dmValid) getTDMAct = cycLen;
+      manageStamps(recDeadline, stampsDM, &cyclenDM, &validDM);
+      if (validDM) getTDMAct = cyclenDM;
       
       break;
       
     // received WR timing message from TLU (50 Hz signal)
-    // as this happens with a posttrigger of 100us, this should always (chk ?) happen after receiving the WR timing message from Data Master  
+    // as this happens with a posttrigger of 500us, this should always (chk ?) happen after receiving the WR timing message from Data Master  
     case WRF50_ECADO_F50_TLU:
       comLatency   = (int32_t)(getSysTime() - recDeadline);
       recGid       = (uint32_t)((recEvtId >> 48) & 0x00000fff);
@@ -400,19 +401,43 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       getNCycles++;
 
       // update timestamps
-      manageStamps(recDeadline - (uint64_t)WRF50_POSTTRIGGER_TLU, f50Stamps, &cycLen, &f50Valid);
-      if (f50Valid) getTMainsAct = cycLen;
+      manageStamps(recDeadline - (uint64_t)WRF50_POSTTRIGGER_TLU, stampsF50, &cyclenF50, &validF50);
+      if (validF50) getTMainsAct = cyclenF50;
 
       // assume worst case and see how far we get
       getLockState = WRF50_SLOCK_UNKWN;
       
-      if (getNLocked > 50) {        // wait for one second prior we do s.th. useful
-        if (dmValid && f50Valid)  { // data is valid?
-          //bla   
-        } // if dmValid ...
+      if (getNLocked > 50) {                                          // wait for one second prior we do s.th. useful
+        if (validDM && validF50)  {                                   // data is valid?
+          if (setMode & WRF50_MASK_LOCK_SMOOTH) {                     // smooth locking; should be default
+          } // if smooth lock
+          else {
+            // this is 'hard' lock !!!
+            // estimate next 50 Hz mains cycle start
+            nxtStampF50 = stampsF50[WRF50_N_STAMPS - 1] + cyclenF50;
+            // hard set DM cycle to match next estimated 50 Hz mains cycle start
+            nxtStampDM  = nxtStampF50;
+            getTDMSet   = nxtStampDM - stampsDM[WRF50_N_STAMPS - 1];
+
+            getLockState = WRF50_SLOCK_LOCKED;
+          } // else smooth lock
+
+          // respect hard limits
+          if (getTDMSet < WRF50_CYCLELEN_MIN) getTDMSet = WRF50_CYCLELEN_MIN;
+          if (getTDMSet > WRF50_CYCLELEN_MAX) getTDMSet = WRF50_CYCLELEN_MAX;
+
+          // construct timing message
+          if (setMode & WRF50_MASK_LOCK_SIM) tmpEvtNo = WRF50_ECADO_F50_DM;                                  // simulation mode: mimic message from DM
+          else                               tmpEvtNo = WRF50_ECADO_F50_TUNE;                                // operational momde: write to DM
+          sendEvtId    = fwlib_buildEvtidV1(PZU_F50, tmpEvtNo, 0x0, 0x0, 0x0, 0x0);
+          sendParam    = (uint64_t)getTDMSet & 0xffffffff;
+          sendDeadline = stampsF50[WRF50_N_STAMPS - 1] + (uint64_t)(one_us_ns * 1000);                       // send message exactly 1ms after most recent mains cycle start
+        
+          if (setMode & WRF50_MASK_LOCK_SIM) fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0);   // write to own eca
+          else                               fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0);   // write to DM
+        } // if validDM ...
       } // if getNLocked ...
 
-      // irgendwas machen und Daten ins WR-Netz und auf eigene ECA schreiben
 
       break;
     default :                                                         // flush ECA Queue
@@ -445,9 +470,7 @@ int main(void) {
   actState       = COMMON_STATE_UNKNOWN;
   pubState       = COMMON_STATE_UNKNOWN;
   status         = COMMON_STATUS_OK;
-  nEvtsSnd       = 0;
-  nEvtsRecT      = 0;
-  nEvtsRecD      = 0;
+  /* chk init some variables maybe ? */
 
   init();                                                                     // initialize stuff for lm32
   initSharedMem(&reqState, &sharedSize);                                      // initialize shared memory

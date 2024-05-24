@@ -38,11 +38,18 @@
 
 // WR-F50 modes
 #define WRF50_MODE_OFF                  0x0    // mode: off
-#define WRF50_MODE_LOCK_SIM             0x1    // mode: lock to 50 Hz mains, simulation
-#define WRF50_MODE_LOCK_DM              0x2    // mode: lock to 50 Hz mains, Data Master
+#define WRF50_MODE_LOCK_HARD_SIM        0x2    // mode: lock to 50 Hz mains, follow mains without smoothing, simulation
+#define WRF50_MODE_LOCK_SMOOTH_SIM      0x3    // mode: lock to 50 Hz mains, follow mains with smoothing, simulation
+#define WRF50_MODE_LOCK_HARD_DM         0x4    // mode: lock to 50 Hz mains, follow mains without smoothing, Data Master
+#define WRF50_MODE_LOCK_SMOOTH_DM       0x5    // mode: lock to 50 Hz mains, follow mains with smoothing, Data Master
+#define WRF50_MASK_LOCK_SMOOTH          0x1    // mode is 'smooth' locking
+#define WRF50_MASK_LOCK_SIM             0x2    // mode is simulation
+#define WRF50_MASK_LOCK_DM              0x4    // mode is Data Master
+
+
 
 // constants
-#define WRF50_POSTTRIGGER_TLU       1000000    // posttrigger [ns] for avoiding late messages from the TLU and defining an order (DM vs mains)x
+#define WRF50_POSTTRIGGER_TLU       5000000    // posttrigger [ns] for avoiding late messages from the TLU and defining an order (DM vs mains)x
 #define WRF50_CYCLELEN_MIN         19800000    // minimum cycle length [ns]
 #define WRF50_CYCLELEN_MAX         20400000    // maximum cycle length [ns]
 #define WRF50_CYCLEDIFF_MAX            1000    // maximum difference between cycle length of Data Master und mains [ns], used for set-value
@@ -66,16 +73,16 @@
 // get values
 #define WRF50_SHARED_GET_T_MAINS_ACT       (WRF50_SHARED_SET_MODE             + _32b_SIZE_)  // period of mains cycle [ns], actual value
 #define WRF50_SHARED_GET_T_DM_ACT          (WRF50_SHARED_GET_T_MAINS_ACT      + _32b_SIZE_)  // period of Data Master cycle [ns], actual value
-#define WRF50_SHARED_GET_T_DM_SET          (WRF50_SHARED_GET_T_DM_ACT         + _32b_SIZE_)  // period of Data Master cycle [ns], actual value
+#define WRF50_SHARED_GET_T_DM_SET          (WRF50_SHARED_GET_T_DM_ACT         + _32b_SIZE_)  // period of Data Master cycle [ns], set value calculated by fw for next DM cycle
 #define WRF50_SHARED_GET_OFFS_DM_ACT       (WRF50_SHARED_GET_T_DM_SET         + _32b_SIZE_)  // offset of cycle start: t_DM - t_mains; actual value
-#define WRF50_SHARED_GET_OFFS_DM_MIN       (WRF50_SHARED_GET_OFFS_CYCLE_ACT   + _32b_SIZE_)  // offset of cycle start: t_DM - t_mains; min value
-#define WRF50_SHARED_GET_OFFS_DM_MAX       (WRF50_SHARED_GET_OFFS_CYCLE_MIN   + _32b_SIZE_)  // offset of cycle start: t_DM - t_mains; max value
-#define WRF50_SHARED_GET_OFFS_MAINS_ACT    (WRF50_SHARED_GET_OFFS_CYCLE_MAX   + _32b_SIZE_)  // offset of cycle start: t_mains_predict - t_mains; actual value
-#define WRF50_SHARED_GET_OFFS_MAINS_MIN    (WRF50_SHARED_GET_OFFS_MATCH_ACT   + _32b_SIZE_)  // offset of cycle start: t_mains_predict - t_mains; min value
-#define WRF50_SHARED_GET_OFFS_MAINS_MAX    (WRF50_SHARED_GET_OFFS_MATCH_MIN   + _32b_SIZE_)  // offset of cycle start: t_mains_predict - t_mains; max value
-#define WRF50_SHARED_GET_LOCK_STATE        (WRF50_SHARED_GET_OFFS_MATCH_MAX   + _32b_SIZE_)  // lock state; how DM is locked to mains
-#define WRF50_SHARED_GET_LOCK_DATE_HIGH    (WRF50_SHARED_GET_LOCK_STATE       + _32b_SIZE_)  // time when lock has been achieve [ns], high bits
-#define WRF50_SHARED_GET_LOCK_DATE_LOW     (WRF50_SHARED_GET_LOCK_DATE_HIGH   + _32b_SIZE_)  // time when lock has been achieve [ns], low bits
+#define WRF50_SHARED_GET_OFFS_DM_MIN       (WRF50_SHARED_GET_OFFS_DM_ACT      + _32b_SIZE_)  // offset of cycle start: t_DM - t_mains; min value
+#define WRF50_SHARED_GET_OFFS_DM_MAX       (WRF50_SHARED_GET_OFFS_DM_MIN      + _32b_SIZE_)  // offset of cycle start: t_DM - t_mains; max value
+#define WRF50_SHARED_GET_OFFS_MAINS_ACT    (WRF50_SHARED_GET_OFFS_DM_MAX      + _32b_SIZE_)  // offset of cycle start: t_mains_predict - t_mains; actual value
+#define WRF50_SHARED_GET_OFFS_MAINS_MIN    (WRF50_SHARED_GET_OFFS_MAINS_ACT   + _32b_SIZE_)  // offset of cycle start: t_mains_predict - t_mains; min value
+#define WRF50_SHARED_GET_OFFS_MAINS_MAX    (WRF50_SHARED_GET_OFFS_MAINS_MIN   + _32b_SIZE_)  // offset of cycle start: t_mains_predict - t_mains; max value
+#define WRF50_SHARED_GET_LOCK_STATE        (WRF50_SHARED_GET_OFFS_MAINS_MAX   + _32b_SIZE_)  // lock state; how DM is locked to mains
+#define WRF50_SHARED_GET_LOCK_DATE_HIGH    (WRF50_SHARED_GET_LOCK_STATE       + _32b_SIZE_)  // time when lock has been achieved [ns], high bits
+#define WRF50_SHARED_GET_LOCK_DATE_LOW     (WRF50_SHARED_GET_LOCK_DATE_HIGH   + _32b_SIZE_)  // time when lock has been achieved [ns], low bits
 #define WRF50_SHARED_GET_N_LOCKED          (WRF50_SHARED_GET_LOCK_DATE_LOW    + _32b_SIZE_)  // counts how many locks have been achieved
 #define WRF50_SHARED_GET_N_CYCLES          (WRF50_SHARED_GET_N_LOCKED         + _32b_SIZE_)  // number of UNILAC cycles
 #define WRF50_SHARED_GET_N_EVTS_LATE       (WRF50_SHARED_GET_N_CYCLES         + _32b_SIZE_)  // number of translated events that could not be delivered in time

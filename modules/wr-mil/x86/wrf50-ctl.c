@@ -1,0 +1,319 @@
+/*******************************************************************************************
+ *  wrf50-ctl.c
+ *
+ *  created : 2024
+ *  author  : Dietrich Beck, Michael Reese GSI-Darmstadt
+ *  version : 24-May-2024
+ *
+ * Command-line interface for wr-f50
+ *
+ * ------------------------------------------------------------------------------------------
+ * License Agreement for this software:
+ *
+ * Copyright (C) 2013  Dietrich Beck
+ * GSI Helmholtzzentrum für Schwerionenforschung GmbH
+ * Planckstraße 1
+ * D-64291 Darmstadt
+ * Germany
+ *
+ * Contact: d.beck@gsi.de
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *  
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * For all questions and ideas contact: d.beck@gsi.de
+ * Last update: 15-April-2019
+ *********************************************************************************************/
+
+// standard includes 
+#include <unistd.h> // getopt
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+#include <math.h>
+#include <time.h>
+
+// Etherbone
+#include <etherbone.h>
+
+// wr-mil
+#include <common-lib.h>                  // COMMON
+#include <wrmillib.h>                    // API
+#include <wr-mil.h>                      // FW
+#include <wrmil_shared_mmap.h>           // LM32
+
+const char* program;
+static int getInfo     = 0;
+static int getVersion  = 0;
+static int snoop       = 0;
+static int logLevel    = 0;
+
+static void die(const char* where, eb_status_t status) {
+  fprintf(stderr, "%s: %s failed: %s\n",
+          program, where, eb_status(status));
+  exit(1);
+} //die
+
+
+static void help(void) {
+  uint32_t version;
+  
+  fprintf(stderr, "Usage: %s [OPTION] <etherbone-device> [COMMAND]\n", program);
+  fprintf(stderr, "\n");
+  fprintf(stderr, "  -h                  display this help and exit\n"                                 );
+  fprintf(stderr, "  -e                  display version\n"                                            );
+  fprintf(stderr, "  -i                  show 50 Hz sync information\n"                                );
+  fprintf(stderr, "\n");
+  fprintf(stderr, "All following parameters are to be used with command 'configure' \n"                );
+  fprintf(stderr, "  -o <offset>         offset [us] to zero transition of 50 Hz mains, default 0\n"   );
+  fprintf(stderr, "  -g                  'offset' shall be negative\n"                                 );
+  fprintf(stderr, "  -m <mode>           mode selection, default 1 \n"                                 );
+  fprintf(stderr, "                      0: off\n"                                                     );
+  fprintf(stderr, "                      1: hard locking, internal simulation mode\n"                  );
+  fprintf(stderr, "                      2: smooth locking, internal simulation mode\n"                );
+  fprintf(stderr, "                      3: hard locking of Data Master\n"                             );
+  fprintf(stderr, "                      2: smooth locking of Data Master\n"                           );
+  fprintf(stderr, "  configure           command requests state change from IDLE or CONFIGURED -> CONFIGURED\n");
+  fprintf(stderr, "                      'configure' requires parameters -w, -s\n");
+  fprintf(stderr, "  startop             command requests state change from CONFIGURED -> OPREADY\n");
+  fprintf(stderr, "  stopop              command requests state change from OPREADY -> STOPPING -> CONFIGURED\n");
+  fprintf(stderr, "  recover             command tries to recover from state ERROR and transit to state IDLE\n");
+  fprintf(stderr, "  idle                command requests state change to IDLE\n");
+  fprintf(stderr, "\n");
+  fprintf(stderr, "  diag                shows statistics and detailed information\n");
+  fprintf(stderr, "  cleardiag           command clears FW statistics\n");
+  fprintf(stderr, "\n");
+  fprintf(stderr, "Tip: For using negative values with commands such as 'snoop', consider\n");
+  fprintf(stderr, "using the special argument '--' to terminate option scanning.\n");
+  fprintf(stderr, "\n");
+  fprintf(stderr, "Use this tool to control the wr-f50 50 Hz synchronization unit at UNILAC from the command line\n");
+  fprintf(stderr, "Example1: '%s dev/wbm0 configure'\n", program);
+  fprintf(stderr, "\n");
+  fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
+
+  wrmil_version_library(&version);
+  fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", wrmil_version_text(version));
+} //help
+
+int main(int argc, char** argv) {
+  const char* devName;
+  const char* command;
+
+  int opt, error = 0;
+  int exitCode   = 0;
+  char *tail;
+
+  uint64_t statusArray;
+  uint64_t actStatusArray;
+  uint32_t state;
+  uint32_t nBadStatus;
+  uint32_t nBadState;
+  uint32_t nTransfer;
+  uint32_t getUtcTrigger...;                      // the MIL event that triggers the generation of UTC events
+              
+  uint32_t actState = COMMON_STATE_UNKNOWN;    // actual state of gateway
+  uint32_t actNTransfer;                       // actual number of transfers
+  uint32_t sleepTime;                          // time to sleep [us]
+  uint32_t printFlag;                          // flag for printing
+  uint32_t verLib;
+  uint32_t verFw;
+
+  int      i;
+  int      tmp;
+
+  uint64_t ebDevice;
+  uint32_t cpu;
+  uint32_t status;
+
+  int32_t  offset           = WR50_DFLT_F50OFFSET;
+  uint32_t mode             = WRF50_MODE_LOCK_SMOOTH_SIM;
+  int      negative         = 0;
+
+  program = argv[0];    
+
+  while ((opt = getopt(argc, argv, "s:o:ghei")) != -1) {
+    switch (opt) {
+      case 'e':
+        getVersion = 1;
+        break;
+      case 'i':
+        getInfo = 1;
+        break;
+      case 'g':
+        negative = 1;
+        break;
+      case 'o':
+        offset = strtod(optarg, &tail, 0);
+        if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1;}
+        break;
+      case 'm':
+        tmp           = strtod(optarg, &tail, 0);
+        if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1;}
+        switch (tmp) {
+          case 0: mode = WRF50_MODE_OFF;               break;
+          case 1: mode = WRF50_MODE_LOCK_HARD_SIM;     break;
+          case 2: mode = WRF50_MODE_LOCK_SMOOTH_SIM;   break;
+          case 3: mode = WRF50_MODE_LOCK_HARD_DM;      break;
+          case 4: mode = WRF50_MODE_LOCK_SMOOTH_DM;    break;
+          default: fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1; 
+        } // switch tmp
+        break;
+      case 'h':
+        help();
+        return 0;
+      case ':':
+      case '?':
+        error = 1;
+        break;
+      default:
+        fprintf(stderr, "%s: bad getopt result\n", program);
+        return 1;
+    } /* switch opt */
+  } /* while opt */
+
+  if (error) {
+    help();
+    return 1;
+  }
+  
+  if (optind >= argc) {
+    fprintf(stderr, "%s: expecting non-optional argument: <etherbone-device>\n", program);
+    fprintf(stderr, "\n");
+    help();
+    return 1;
+  }
+
+  devName = argv[optind];
+
+  if (optind+1 < argc)  command = argv[++optind];
+  else command = NULL;
+
+  if ((status =  wrmil_firmware_open(&ebDevice, devName, 0, &cpu)) != COMMON_STATUS_OK) die("firmware open", status);
+
+  if (negative) offset = - offset;
+  
+  if (getVersion) {
+    wrmil_version_library(&verLib);
+    printf("wr-f50: library (firmware) version %s",  wrmil_version_text(verLib));     
+    wrmil_version_firmware(ebDevice, &verFw);
+    printf(" (%s)\n",  wrmil_version_text(verFw));     
+  } // if getVersion
+
+  if (getInfo) {
+    // status
+    wrmil_info_read(ebDevice, &getUtcTrigger, &getUtcDelay, &getTrigUtcDelay, &getGid, &getLatency, &getUtcOffset, &getRequestFill, &getMilDev, &getMilMon, &getNEvtsSnd, &getNEvtsRecT,  &getNEvtsRecD, &getNEvtsErr, &getNEvtsLate, &getComLatency, 0);
+    wrmil_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
+
+    // print set status bits (except OK)
+    for (i = COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
+      if ((statusArray >> i) & 0x1)  printf("  ------ status bit is set : %s\n", wrmil_status_text(i));
+    } // for i
+  } // if getInfo
+
+  if (command) {
+    // state required to give proper warnings
+    wrmil_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
+
+    // request state changes
+    if (!strcasecmp(command, "configure")) {
+      if ((state != COMMON_STATE_CONFIGURED) && (state != COMMON_STATE_IDLE)) printf("wr-f50: WARNING command has no effect (not in state CONFIGURED or IDLE)\n");
+      else {
+        if (wrmil_upload(ebDevice, utc_trigger, utc_utc_delay, trig_utc_delay, mil_domain, mil_latency, utc_offset, request_fill, mil_wb_dev, mil_wb_mon) != COMMON_STATUS_OK) die("wr-f50 upload", status);  ;
+        wrmil_cmd_configure(ebDevice);
+      } // else state
+    } // "configure"
+
+    if (!strcasecmp(command, "startop")) {
+      wrmil_cmd_startop(ebDevice);
+      if (state != COMMON_STATE_CONFIGURED) printf("wr-f50: WARNING command has no effect (not in state CONFIGURED)\n");
+    } // "startop"
+
+    if (!strcasecmp(command, "stopop")) {
+      wrmil_cmd_stopop(ebDevice);
+      if (state != COMMON_STATE_OPREADY) printf("wr-f50: WARNING command has no effect (not in state OPREADY)\n");
+    } // "startop"
+
+    if (!strcasecmp(command, "recover")) {
+      wrmil_cmd_recover(ebDevice);
+      if (state != COMMON_STATE_ERROR) printf("wr-f50: WARNING command has no effect (not in state ERROR)\n");
+    } // "recover"
+
+    if (!strcasecmp(command, "idle")) {
+      wrmil_cmd_idle(ebDevice);
+      if (state != COMMON_STATE_CONFIGURED) printf("wr-f50: WARNING command has no effect (not in state CONFIGURED)\n");
+    } // "idle"
+    // diagnostics
+
+    if (!strcasecmp(command, "cleardiag")) {
+      wrmil_cmd_cleardiag(ebDevice);
+      if (state != COMMON_STATE_OPREADY) printf("wr-f50: WARNING command has no effect (not in state OPREADY)\n");
+    } // "cleardiag"
+
+    if (!strcasecmp(command, "diag")) {
+      wrmil_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 1);
+      for (i = COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
+        if ((statusArray >> i) & 0x1)  printf("    status bit is set : %s\n", wrmil_status_text(i));
+      } // for i
+      wrmil_info_read(ebDevice, &getUtcTrigger, &getUtcDelay, &getTrigUtcDelay, &getGid, &getLatency, &getUtcOffset, &getRequestFill, &getMilDev, &getMilMon, &getNEvtsSnd, &getNEvtsRecT, &getNEvtsRecD, &getNEvtsErr, &getNEvtsLate, &getComLatency, 1);
+    } // "diag"
+  } //if command
+
+if (snoop) {
+    printf("wr-f50: continous monitoring of gateway, loglevel = %d\n", logLevel);
+
+    actNTransfer   = 0;
+    actState       = COMMON_STATE_UNKNOWN;
+    actStatusArray = 0x1 << COMMON_STATUS_OK;
+
+    while (1) {
+      wrmil_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
+      switch(state) {
+      case COMMON_STATE_OPREADY :
+        if (actNTransfer != nTransfer) sleepTime = COMMON_DEFAULT_TIMEOUT * 1000 * 2;        // ongoing transfer: reduce polling rate ...
+        else                           sleepTime = COMMON_DEFAULT_TIMEOUT * 1000;            // sleep for default timeout to catch next REQ_TK
+        break;
+      default:
+        sleepTime = COMMON_DEFAULT_TIMEOUT * 1000;                          
+      } // switch actState
+      
+      // determine when to print info
+      printFlag = 0;
+
+      if ((actState       != state)        && (logLevel <= COMMON_LOGLEVEL_STATE))   {printFlag = 1; actState       = state;}
+      if ((actStatusArray != statusArray)  && (logLevel <= COMMON_LOGLEVEL_STATUS))  {printFlag = 1; actStatusArray = statusArray;}
+      if ((actNTransfer   != nTransfer)    && (logLevel <= COMMON_LOGLEVEL_ONCE))    {printFlag = 1; actNTransfer   = nTransfer;}
+
+      if (printFlag) {
+        wrmil_info_read(ebDevice, &getUtcTrigger, &getUtcDelay, &getTrigUtcDelay, &getGid, &getLatency, &getUtcOffset, &getRequestFill, &getMilDev, &getMilMon, &getNEvtsSnd, &getNEvtsRecT, &getNEvtsRecD, &getNEvtsErr, &getNEvtsLate, &getComLatency, 0);
+        printf(", %s (%6u), ",  comlib_stateText(state), nBadState);
+        if ((statusArray >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);
+        else printf("NOTOK(%6u)\n", nBadStatus);
+        // print set status bits (except OK)
+        for (i= COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
+          if ((statusArray >> i) & 0x1)  printf("  ------ status bit is set : %s\n", wrmil_status_text(i));
+        } // for i
+      } // if printFlag
+
+      fflush(stdout);                                                                         // required for immediate writing (if stdout is piped to syslog)
+
+      //sleep 
+      usleep(sleepTime);
+    } // while
+  } // if snoop
+
+  // close connection to firmware
+  if ((status = wrmil_firmware_close(ebDevice)) != COMMON_STATUS_OK) die("device close", status);
+
+  return exitCode;
+}
