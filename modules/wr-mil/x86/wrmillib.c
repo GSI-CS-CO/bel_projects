@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 20-Feb-2024
+ *  version : 27-May-2024
  *
  * library for wr-mil
  *
@@ -51,15 +51,16 @@
 #include <common-core.h>                 // common core
 #include <wrmil_shared_mmap.h>           // FW shared def
 #include <wr-mil.h>                      // FW defs
+#include <wr-f50.h>                      // FW defs
 #include <wrmillib.h>                    // x86 library
 
 // lm32 sdb
 #define GSI           0x00000651
 #define LM32_RAM_USER 0x54111351
 
-// public variables
+// public variables; chk: do we need a separate set of variables for wr-f50? Just in case we use two cores from the same application?
 eb_socket_t  eb_socket;                   // EB socket
-eb_address_t lm32_base;                   // lm32
+eb_address_t lm32_base;                   // lm32                  
 eb_address_t wrmil_cmd;                   // command, write
 eb_address_t wrmil_state;                 // state of state machine
 uint32_t     wrmil_flagDebug = 0;         // flag debug
@@ -76,6 +77,12 @@ eb_address_t wrmil_set_utcOffsetLo;       // delay [ms] between the TAI and the 
 eb_address_t wrmil_set_requestFill;       // if this is written to 1, the gateway will send a fill event as soon as possible
 eb_address_t wrmil_set_milDev;            // MIL device for sending MIL messages; 0: MIL Piggy; 1..: SIO in slot 1..
 eb_address_t wrmil_set_milMon;            // 1: monitor MIL events; 0; don't monitor MIL events
+
+eb_address_t wrf50_set_f50Offset;         // here: offset to TLU signal         
+eb_address_t wrf50_set_mode;              // here: mode of 50 Hz synchronization
+
+// get values
+eb_address_t wrmil_get_gid;               // GID for transfer
 eb_address_t wrmil_get_nEvtsSndHi;        // number of sent MIL telegrams, high word
 eb_address_t wrmil_get_nEvtsSndLo;        // number of sent MIL telegrams, low word
 eb_address_t wrmil_get_nEvtsRecTHi;       // number of received MIL telegrams (TAI), high word
@@ -86,8 +93,23 @@ eb_address_t wrmil_get_nEvtsErr;          // number of received MIL 'broken' MIL
 eb_address_t wrmil_get_nEvtsLate;         // number of translated events that could not be delivered in time
 eb_address_t wrmil_get_comLatency;        // latency for messages received from via ECA (tDeadline - tNow)) [ns]                             
 
-// get values
-eb_address_t wrmil_get_gid;               // GID for transfer
+eb_address_t wrf50_get_TMainsAct;         // period of mains cycle [ns], actual value                           
+eb_address_t wrf50_get_TDMAct;            // period of Data Master cycle [ns], actual value                     
+eb_address_t wrf50_get_TDMSet;            // period of Data Master cycle [ns], actual value                     
+eb_address_t wrf50_get_offsDMAct;         // offset of cycle start: t_DM - t_mains; actual value                
+eb_address_t wrf50_get_offsDMMin;         // offset of cycle start: t_DM - t_mains; min value                   
+eb_address_t wrf50_get_offsDMMax;         // offset of cycle start: t_DM - t_mains; max value                   
+eb_address_t wrf50_get_offsMainsAct;      // offset of cycle start: t_mains_predict - t_mains; actual value     
+eb_address_t wrf50_get_offsMainsMin;      // offset of cycle start: t_mains_predict - t_mains; min value        
+eb_address_t wrf50_get_offsMainsMax;      // offset of cycle start: t_mains_predict - t_mains; max value        
+eb_address_t wrf50_get_lockState;         // lock state; how DM is locked to mains                              
+eb_address_t wrf50_get_lockDateHi;        // time when lock has been achieve [ns], high bits                    
+eb_address_t wrf50_get_lockDateLo;        // time when lock has been achieve [ns], low bits                     
+eb_address_t wrf50_get_nLocked;           // counts how many locks have been achieved                           
+eb_address_t wrf50_get_nCycles;           // number of UNILAC cycles                                            
+eb_address_t wrf50_get_nEvtsLate;         // number of translated events that could not be delivered in time    
+eb_address_t wrf50_get_comLatency;        // latency for messages received from via ECA (tDeadline - tNow)) [ns]
+
 
 #define WAITCMDDONE COMMON_DEFAULT_TIMEOUT * 1000 // use default timeout and convert to us to be sure the command is processed
 
@@ -190,6 +212,54 @@ uint32_t wrmil_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t c
 } // wrmil_firmware_open
 
 
+uint32_t wrf50_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t cpu, uint32_t *address)
+{
+  eb_status_t         status;
+  eb_device_t         eb_device;  
+  struct sdb_device   sdbDevice;                           // instantiated lm32 core
+  int                 nDevices;                            // number of instantiated cores
+
+  *ebDevice = 0x0;
+  if (cpu != 0) return COMMON_STATUS_OUTOFRANGE;           // chk, only support 1st core (this is a quick hack)
+  nDevices = 1;
+
+  // open Etherbone device and socket 
+  if ((status = eb_socket_open(EB_ABI_CODE, 0, EB_ADDRX|EB_DATAX, &eb_socket)) != EB_OK) return COMMON_STATUS_EB;
+  if ((status = eb_device_open(eb_socket, devName, EB_ADDRX|EB_DATAX, 3, &eb_device)) != EB_OK) return COMMON_STATUS_EB;
+
+  //  get Wishbone address of lm32 
+  if ((status = eb_sdb_find_by_identity(eb_device, GSI, LM32_RAM_USER, &sdbDevice, &nDevices)) != EB_OK) return COMMON_STATUS_EB;
+
+  lm32_base            = sdbDevice.sdb_component.addr_first;
+
+  comlib_initShared(lm32_base, SHARED_OFFS);
+  wrmil_cmd              = lm32_base + SHARED_OFFS + COMMON_SHARED_CMD;
+  wrf50_set_f50Offset    = lm32_base + SHARED_OFFS + WRF50_SHARED_SET_F50OFFSET;
+  wrf50_set_mode         = lm32_base + SHARED_OFFS + WRF50_SHARED_SET_MODE;
+  wrf50_get_TMainsAct    = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_T_MAINS_ACT;
+  wrf50_get_TDMAct       = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_T_DM_ACT;
+  wrf50_get_TDMSet       = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_T_DM_SET;
+  wrf50_get_offsDMAct    = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_OFFS_DM_ACT;
+  wrf50_get_offsDMMin    = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_OFFS_DM_MIN;
+  wrf50_get_offsDMMax    = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_OFFS_DM_MAX;
+  wrf50_get_offsMainsAct = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_OFFS_MAINS_ACT;
+  wrf50_get_offsMainsMin = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_OFFS_MAINS_MIN;
+  wrf50_get_offsMainsMax = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_OFFS_MAINS_MAX;
+  wrf50_get_lockState    = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_LOCK_STATE;
+  wrf50_get_lockDateHi   = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_LOCK_DATE_HIGH;
+  wrf50_get_lockDateLo   = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_LOCK_DATE_LOW;
+  wrf50_get_nLocked      = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_N_LOCKED;
+  wrf50_get_nCycles      = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_N_CYCLES;
+  wrf50_get_nEvtsLate    = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_N_EVTS_LATE;
+  wrf50_get_comLatency   = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_COM_LATENCY;
+
+  // do this just at the very end
+  *ebDevice = (uint64_t)eb_device;
+
+  return COMMON_STATUS_OK;
+} // wrf50_firmware_open
+
+
 uint32_t wrmil_firmware_close(uint64_t ebDevice)
 {
   eb_status_t status;
@@ -206,6 +276,24 @@ uint32_t wrmil_firmware_close(uint64_t ebDevice)
 
   return COMMON_STATUS_OK;
 } // wrmil_firmware_close
+
+
+uint32_t wrf50_firmware_close(uint64_t ebDevice)
+{
+  eb_status_t status;
+  eb_device_t eb_device;
+
+  if (!ebDevice) return COMMON_STATUS_EB;
+  eb_device = (eb_device_t)ebDevice;
+  
+  // close Etherbone device and socket
+  if ((status = eb_device_close(eb_device)) != EB_OK) return COMMON_STATUS_EB;
+  if ((status = eb_socket_close(eb_socket)) != EB_OK) return COMMON_STATUS_EB;
+
+  wrmil_debug(0);
+
+  return COMMON_STATUS_OK;
+} // wrf50_firmware_close
 
 
 uint32_t wrmil_version_firmware(uint64_t ebDevice, uint32_t *version)
@@ -251,6 +339,31 @@ void wrmil_printDiag(uint32_t utcTrigger, uint32_t utcDelay, uint32_t trigUtcDel
   printf("# late events                : 0d%015u\n"     , nEvtsLate);
   printf("communiation latency         : 0d%015u\n"     , comLatency);
 } // wrmil_printDiag
+
+
+void wrf50_printDiag(int32_t f50Offs, uint32_t mode, uint32_t TMainsAct, uint32_t TDmAct, uint32_t TDmSet, int32_t offsDmAct, int32_t offsDmMin, int32_t offsDmMax, int32_t offsMainsAct,
+                     int32_t offsMainsMin, int32_t offsMainsMax, uint32_t lockState, uint64_t lockDate, uint32_t nLocked, uint32_t nCycles, uint32_t nEvtsLate, uint32_t comLatency)
+{
+  printf("wrf50: info  ...\n\n");
+  
+  printf("offset to 50 Hz mains [us]          : %15d\n"        , f50Offs);
+  printf("mode                                : %15u\n"        , mode);
+  printf("act period of mains [us]            : %15f.3\n"      , (double)TMainsAct/1000.0);
+  printf("act period of DM [us]               : %15f.3\n"      , (double)TDmAct/1000.0);
+  printf("set period of DM [us]               : %15f.3\n"      , (double)TDmSet/1000.0);
+  printf("act offset(DM - mains) [us]         : %15f.3\n"      , (double)offsDmAct/1000.0);
+  printf("min offset(DM - mains) [us]         : %15f.3\n"      , (double)offsDmMin/1000.0);
+  printf("max offset(DM - mains) [us]         : %15f.3\n"      , (double)offsDmMax/1000.0);
+  printf("act offset mains(predict - get) [us]: %15f.3\n"      , (double)offsMainsAct/1000.0);
+  printf("min offset mains(predict - get) [us]: %15f.3\n"      , (double)offsMainsMin/1000.0);
+  printf("max offset mains(predict - get) [us]: %15f.3\n"      , (double)offsMainsMax/1000.0);
+  printf("lock state                          : %15u\n"        , lockState);
+  printf("lock date                           : %15lu\n"        , lockDate);
+  printf("# locks                             : %15u\n"        , nLocked);
+  printf("# cycles                            : %15u\n"        , nCycles);
+  printf("# late events                       : %15u\n"        , nEvtsLate);
+  printf("communication latency               : %15u\n"        , comLatency);
+} // wrf50_printDiag
 
 
 uint32_t wrmil_info_read(uint64_t ebDevice, uint32_t *utcTrigger, uint32_t *utcUtcDelay, uint32_t *trigUtcDelay, uint32_t *gid, int32_t *latency, uint64_t *utcOffset, uint32_t *requestFill, uint32_t *milDev,
@@ -312,6 +425,65 @@ uint32_t wrmil_info_read(uint64_t ebDevice, uint32_t *utcTrigger, uint32_t *utcU
 } // wrmil_info_read
 
 
+uint32_t wrf50_info_read(uint64_t ebDevice, int32_t  *f50Offs, uint32_t *mode, uint32_t *TMainsAct, uint32_t *TDmAct, uint32_t *TDmSet, int32_t *offsDmAct, int32_t *offsDmMin,
+                         int32_t *offsDmMax, int32_t *offsMainsAct, int32_t *offsMainsMin, int32_t *offsMainsMax, uint32_t *lockState, uint64_t *lockDate, uint32_t *nLocked,
+                         uint32_t *nCycles, uint32_t *nEvtsLate, uint32_t *comLatency, int printFlag)
+{
+  eb_cycle_t   eb_cycle;
+  eb_status_t  eb_status;
+  eb_device_t  eb_device;
+  eb_data_t    data[30];
+
+  if (!ebDevice) return COMMON_STATUS_EB;
+  eb_device = (eb_device_t)ebDevice;
+
+  if ((eb_status = eb_cycle_open(eb_device, 0, eb_block, &eb_cycle)) != EB_OK) return COMMON_STATUS_EB;
+  eb_cycle_read(eb_cycle, wrf50_set_f50Offset   , EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
+  eb_cycle_read(eb_cycle, wrf50_set_mode        , EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
+  eb_cycle_read(eb_cycle, wrf50_get_TMainsAct   , EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
+  eb_cycle_read(eb_cycle, wrf50_get_TDMAct      , EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
+  eb_cycle_read(eb_cycle, wrf50_get_TDMSet      , EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
+  eb_cycle_read(eb_cycle, wrf50_get_offsDMAct   , EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
+  eb_cycle_read(eb_cycle, wrf50_get_offsDMMin   , EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
+  eb_cycle_read(eb_cycle, wrf50_get_offsDMMax   , EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
+  eb_cycle_read(eb_cycle, wrf50_get_offsMainsAct, EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
+  eb_cycle_read(eb_cycle, wrf50_get_offsMainsMin, EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
+  eb_cycle_read(eb_cycle, wrf50_get_offsMainsMax, EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
+  eb_cycle_read(eb_cycle, wrf50_get_lockState   , EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
+  eb_cycle_read(eb_cycle, wrf50_get_lockDateHi  , EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
+  eb_cycle_read(eb_cycle, wrf50_get_lockDateLo  , EB_BIG_ENDIAN|EB_DATA32, &(data[13]));
+  eb_cycle_read(eb_cycle, wrf50_get_nLocked     , EB_BIG_ENDIAN|EB_DATA32, &(data[14]));
+  eb_cycle_read(eb_cycle, wrf50_get_nCycles     , EB_BIG_ENDIAN|EB_DATA32, &(data[15]));
+  eb_cycle_read(eb_cycle, wrf50_get_nEvtsLate   , EB_BIG_ENDIAN|EB_DATA32, &(data[16]));
+  eb_cycle_read(eb_cycle, wrf50_get_comLatency  , EB_BIG_ENDIAN|EB_DATA32, &(data[17]));
+  if ((eb_status = eb_cycle_close(eb_cycle)) != EB_OK) return COMMON_STATUS_EB;
+
+ *f50Offs       = data[0];
+ *mode          = data[1];
+ *TMainsAct     = data[2];
+ *TDmAct        = data[3];
+ *TDmSet        = data[4];
+ *offsDmAct     = data[5];
+ *offsDmMin     = data[6];
+ *offsDmMax     = data[7];
+ *offsMainsAct  = data[8];
+ *offsMainsMin  = data[9];
+ *offsMainsMax  = data[10];
+ *lockState     = data[10];
+ *lockDate      = ((uint64_t)data[11] & 0xffffffff) << 32;
+ *lockDate     |= (uint64_t)data[12] & 0xffffffff;
+ *nLocked       = data[13];
+ *nCycles       = data[14];
+ *nEvtsLate     = data[15];
+ *comLatency    = data[16];          
+
+  if (printFlag) wrf50_printDiag(*f50Offs, *mode, *TMainsAct, *TDmAct, *TDmSet, *offsDmAct, *offsDmMin, *offsDmMax, *offsMainsAct, *offsMainsMin,
+                                 *offsMainsMax, *lockState, *lockDate, *nLocked, *nCycles, *nEvtsLate, *comLatency);
+
+  return COMMON_STATUS_OK;
+} // wrf50_info_read
+
+
 uint32_t wrmil_common_read(uint64_t ebDevice, uint64_t *statusArray, uint32_t *state, uint32_t *nBadStatus, uint32_t *nBadState, uint32_t *version, uint32_t *nTransfer, int printDiag)
 {
   eb_status_t eb_status;
@@ -350,10 +522,27 @@ uint32_t wrmil_upload(uint64_t ebDevice, uint32_t utcTrigger, uint32_t utcUtcDel
   eb_cycle_write(eb_cycle, wrmil_set_requestFill , EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)requestFill);
   eb_cycle_write(eb_cycle, wrmil_set_milDev      , EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)milDev);
   eb_cycle_write(eb_cycle, wrmil_set_milMon      , EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)milMon);  
-  if ((eb_status = eb_cycle_close(eb_cycle)) != EB_OK) {printf("aetsch! %d \n", eb_status); return eb_status;}
+  if ((eb_status = eb_cycle_close(eb_cycle)) != EB_OK) {printf("wr-mil: upload failed %d \n", eb_status); return eb_status;}
 
   return COMMON_STATUS_OK;
 } // wrmil_context_ext_upload
+
+
+uint32_t wrf50_upload(uint64_t ebDevice, int32_t  phaseOffset, uint32_t mode)
+{
+  eb_cycle_t   eb_cycle;     // eb cycle
+  eb_status_t  eb_status;    // eb status
+
+  if (!ebDevice) return COMMON_STATUS_EB;
+
+  // EB cycle
+  if (eb_cycle_open(ebDevice, 0, eb_block, &eb_cycle) != EB_OK) return COMMON_STATUS_EB;
+  eb_cycle_write(eb_cycle, wrmil_set_utcTrigger  , EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)phaseOffset);
+  eb_cycle_write(eb_cycle, wrmil_set_utcUtcDelay , EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)mode);
+  if ((eb_status = eb_cycle_close(eb_cycle)) != EB_OK) {printf("wr-f50: upload failed %d \n", eb_status); return eb_status;}
+
+  return COMMON_STATUS_OK;
+} // wrf50_upload
 
 
 void wrmil_cmd_configure(uint64_t ebDevice)

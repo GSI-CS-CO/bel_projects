@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 24-May-2024
+ *  version : 27-May-2024
  *
  * library for wr-mil
  *
@@ -135,6 +135,17 @@ extern "C" {
   uint32_t wrmil_firmware_close(uint64_t ebDevice                // EB device
                                 );
   
+  // open connection to firmware, returns error code
+  uint32_t wrf50_firmware_open(uint64_t       *ebDevice,         // EB device
+                               const char*    device,            // EB device such as 'dev/wbm0'
+                               uint32_t       cpu,               // # of CPU, 0..0xff
+                               uint32_t       *wbAddr            // WB address of firmware
+                               );
+  
+  // close connection to firmware, returns error code
+  uint32_t wrf50_firmware_close(uint64_t ebDevice                // EB device
+                                );
+
   // get version of firmware, returns error code
   uint32_t wrmil_version_firmware(uint64_t ebDevice,             // EB device
                                   uint32_t *version              // version number
@@ -166,8 +177,24 @@ extern "C" {
 
   // get info from firmware, returns error code
   uint32_t wrf50_info_read(uint64_t ebDevice,                    // EB device
-                           
-                           int      printFlag                    // print info to screen 
+                           int32_t  *f50Offs,                    // offset to TLU signal
+                           uint32_t *mode,                       // mode of 50 Hz synchronization
+                           uint32_t *TMainsAct,                  // period of mains cycle [ns], actual value                           
+                           uint32_t *TDmAct,                     // period of Data Master cycle [ns], actual value                     
+                           uint32_t *TDmSet,                     // period of Data Master cycle [ns], set value calculated by fw for next DM cycle
+                           int32_t  *offsDmAct,                  // offset of cycle start: t_DM - t_mains; actual value                
+                           int32_t  *offsDmMin,                  // offset of cycle start: t_DM - t_mains; min value                   
+                           int32_t  *offsDmMax,                  // offset of cycle start: t_DM - t_mains; max value                   
+                           int32_t  *offsMainsAct,               // offset of cycle start: t_mains_predict - t_mains; actual value     
+                           int32_t  *offsMainsMin,               // offset of cycle start: t_mains_predict - t_mains; min value        
+                           int32_t  *offsMainsMax,               // offset of cycle start: t_mains_predict - t_mains; max value        
+                           uint32_t *lockState,                  // lock state; how DM is locked to mains                              
+                           uint64_t *lockDate,                   // time when lock has been achieved [ns]
+                           uint32_t *nLocked,                    // counts how many locks have been achieved                           
+                           uint32_t *nCycles,                    // number of UNILAC cycles                                            
+                           uint32_t *nEvtsLate,                  // number of translated events that could not be delivered in time    
+                           uint32_t *comLatency,                 // latency for messages received from via ECA (tDeadline - tNow)) [ns]// print info to screen 
+                           int      printFlag                    // prints info on common firmware properties to stdout
                            );
  
   // get common properties from firmware, returns error code

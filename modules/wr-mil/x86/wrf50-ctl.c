@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Michael Reese GSI-Darmstadt
- *  version : 24-May-2024
+ *  version : 27-May-2024
  *
  * Command-line interface for wr-f50
  *
@@ -265,7 +265,8 @@ int main(int argc, char** argv) {
       for (i = COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
         if ((statusArray >> i) & 0x1)  printf("    status bit is set : %s\n", wrmil_status_text(i));
       } // for i
-      wrmil_info_read(ebDevice, &getUtcTrigger, &getUtcDelay, &getTrigUtcDelay, &getGid, &getLatency, &getUtcOffset, &getRequestFill, &getMilDev, &getMilMon, &getNEvtsSnd, &getNEvtsRecT, &getNEvtsRecD, &getNEvtsErr, &getNEvtsLate, &getComLatency, 1);
+      wrf50_info_read(ebDevice, &f50Offs, &mode, &TMainsAct, &TDmAct, &TDmSet, &offsDmAct, &offsDmMin, &offsDmMax, &offsMainsAct,
+                      &offsMainsMin, &offsMainsMax, &lockState, &lockDate, &nLocked, &nCycles, &nEvtsLate, &comLatency, 1);
     } // "diag"
   } //if command
 

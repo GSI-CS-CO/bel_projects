@@ -101,12 +101,12 @@ uint32_t setMode;
 uint32_t getTMainsAct;   
 uint32_t getTDMAct;      
 uint32_t getTDMSet;      
-uint32_t getOffsDMAct;   
-uint32_t getOffsDMMin;   
-uint32_t getOffsDMMax;   
-uint32_t getOffsMainsAct;
-uint32_t getOffsMainsMin;
-uint32_t getOffsMainsMax;
+int32_t  getOffsDMAct;   
+int32_t  getOffsDMMin;   
+int32_t  getOffsDMMax;   
+int32_t  getOffsMainsAct;
+int32_t  getOffsMainsMin;
+int32_t  getOffsMainsMax;
 uint32_t getLockState;   
 uint64_t getLockDate;  
 uint32_t getNLocked;     
@@ -433,11 +433,10 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
           sendParam    = (uint64_t)getTDMSet & 0xffffffff;
           sendDeadline = stampsF50[WRF50_N_STAMPS - 1] + (uint64_t)(one_us_ns * 1000);                       // send message exactly 1ms after most recent mains cycle start
         
-          if (setMode & WRF50_MASK_LOCK_SIM) fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0);   // write to own eca
-          else                               fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0);   // write to DM
+          if (setMode & WRF50_MASK_LOCK_DM) fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0);    // write to DM
+          else                              fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0);    // write to own ECA
         } // if validDM ...
       } // if getNLocked ...
-
 
       break;
     default :                                                         // flush ECA Queue
