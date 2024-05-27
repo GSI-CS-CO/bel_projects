@@ -50,7 +50,7 @@
 // wr-mil
 #include <common-lib.h>                  // COMMON
 #include <wrmillib.h>                    // API
-#include <wr-mil.h>                      // FW
+#include <wr-f50.h>                      // FW
 #include <wrmil_shared_mmap.h>           // LM32
 
 const char* program;
@@ -120,8 +120,7 @@ int main(int argc, char** argv) {
   uint32_t nBadStatus;
   uint32_t nBadState;
   uint32_t nTransfer;
-  uint32_t getUtcTrigger...;                      // the MIL event that triggers the generation of UTC events
-              
+          
   uint32_t actState = COMMON_STATE_UNKNOWN;    // actual state of gateway
   uint32_t actNTransfer;                       // actual number of transfers
   uint32_t sleepTime;                          // time to sleep [us]
@@ -136,8 +135,26 @@ int main(int argc, char** argv) {
   uint32_t cpu;
   uint32_t status;
 
-  int32_t  offset           = WR50_DFLT_F50OFFSET;
+  int32_t  f50Offset        = WR50_DFLT_F50OFFSET;
   uint32_t mode             = WRF50_MODE_LOCK_SMOOTH_SIM;
+  uint32_t TMainsAct;
+  uint32_t TDmAct;
+  uint32_t TDmSet;
+  int32_t  offsDmAct;
+  int32_t  offsDmMin;
+  int32_t  offsDmMax;
+  int32_t  offsMainsAct;
+  int32_t  offsMainsMin;
+  int32_t  offsMainsMax;
+  uint32_t lockState;
+  uint64_t lockDate;
+  uint32_t nLocked;
+  uint32_t nCycles;
+  uint32_t nEvtsLate;
+  uint32_t comLatency;
+ 
+
+  
   int      negative         = 0;
 
   program = argv[0];    
@@ -154,11 +171,11 @@ int main(int argc, char** argv) {
         negative = 1;
         break;
       case 'o':
-        offset = strtod(optarg, &tail, 0);
+        f50Offset = strtol(optarg, &tail, 0);
         if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1;}
         break;
       case 'm':
-        tmp           = strtod(optarg, &tail, 0);
+        tmp           = strtol(optarg, &tail, 0);
         if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1;}
         switch (tmp) {
           case 0: mode = WRF50_MODE_OFF;               break;
@@ -199,9 +216,9 @@ int main(int argc, char** argv) {
   if (optind+1 < argc)  command = argv[++optind];
   else command = NULL;
 
-  if ((status =  wrmil_firmware_open(&ebDevice, devName, 0, &cpu)) != COMMON_STATUS_OK) die("firmware open", status);
+  if ((status =  wrf50_firmware_open(&ebDevice, devName, 0, &cpu)) != COMMON_STATUS_OK) die("firmware open", status);
 
-  if (negative) offset = - offset;
+  if (negative) f50Offset = - f50Offset;
   
   if (getVersion) {
     wrmil_version_library(&verLib);
@@ -212,8 +229,10 @@ int main(int argc, char** argv) {
 
   if (getInfo) {
     // status
-    wrmil_info_read(ebDevice, &getUtcTrigger, &getUtcDelay, &getTrigUtcDelay, &getGid, &getLatency, &getUtcOffset, &getRequestFill, &getMilDev, &getMilMon, &getNEvtsSnd, &getNEvtsRecT,  &getNEvtsRecD, &getNEvtsErr, &getNEvtsLate, &getComLatency, 0);
+
     wrmil_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
+    wrf50_info_read(ebDevice, &f50Offset, &mode, &TMainsAct, &TDmAct, &TDmSet, &offsDmAct, &offsDmMin, &offsDmMax, &offsMainsAct,
+                    &offsMainsMin, &offsMainsMax, &lockState, &lockDate, &nLocked, &nCycles, &nEvtsLate, &comLatency, 0);
 
     // print set status bits (except OK)
     for (i = COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
@@ -229,8 +248,7 @@ int main(int argc, char** argv) {
     if (!strcasecmp(command, "configure")) {
       if ((state != COMMON_STATE_CONFIGURED) && (state != COMMON_STATE_IDLE)) printf("wr-f50: WARNING command has no effect (not in state CONFIGURED or IDLE)\n");
       else {
-        if (wrmil_upload(ebDevice, utc_trigger, utc_utc_delay, trig_utc_delay, mil_domain, mil_latency, utc_offset, request_fill, mil_wb_dev, mil_wb_mon) != COMMON_STATUS_OK) die("wr-f50 upload", status);  ;
-        wrmil_cmd_configure(ebDevice);
+        if (wrf50_upload(ebDevice, f50Offset, mode)) wrmil_cmd_configure(ebDevice);
       } // else state
     } // "configure"
 
@@ -265,7 +283,7 @@ int main(int argc, char** argv) {
       for (i = COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
         if ((statusArray >> i) & 0x1)  printf("    status bit is set : %s\n", wrmil_status_text(i));
       } // for i
-      wrf50_info_read(ebDevice, &f50Offs, &mode, &TMainsAct, &TDmAct, &TDmSet, &offsDmAct, &offsDmMin, &offsDmMax, &offsMainsAct,
+      wrf50_info_read(ebDevice, &f50Offset, &mode, &TMainsAct, &TDmAct, &TDmSet, &offsDmAct, &offsDmMin, &offsDmMax, &offsMainsAct,
                       &offsMainsMin, &offsMainsMax, &lockState, &lockDate, &nLocked, &nCycles, &nEvtsLate, &comLatency, 1);
     } // "diag"
   } //if command
@@ -296,7 +314,8 @@ if (snoop) {
       if ((actNTransfer   != nTransfer)    && (logLevel <= COMMON_LOGLEVEL_ONCE))    {printFlag = 1; actNTransfer   = nTransfer;}
 
       if (printFlag) {
-        wrmil_info_read(ebDevice, &getUtcTrigger, &getUtcDelay, &getTrigUtcDelay, &getGid, &getLatency, &getUtcOffset, &getRequestFill, &getMilDev, &getMilMon, &getNEvtsSnd, &getNEvtsRecT, &getNEvtsRecD, &getNEvtsErr, &getNEvtsLate, &getComLatency, 0);
+        wrf50_info_read(ebDevice, &f50Offset, &mode, &TMainsAct, &TDmAct, &TDmSet, &offsDmAct, &offsDmMin, &offsDmMax, &offsMainsAct,
+                      &offsMainsMin, &offsMainsMax, &lockState, &lockDate, &nLocked, &nCycles, &nEvtsLate, &comLatency, 0);
         printf(", %s (%6u), ",  comlib_stateText(state), nBadState);
         if ((statusArray >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);
         else printf("NOTOK(%6u)\n", nBadStatus);
@@ -314,7 +333,7 @@ if (snoop) {
   } // if snoop
 
   // close connection to firmware
-  if ((status = wrmil_firmware_close(ebDevice)) != COMMON_STATUS_OK) die("device close", status);
+  if ((status = wrf50_firmware_close(ebDevice)) != COMMON_STATUS_OK) die("device close", status);
 
   return exitCode;
 }
