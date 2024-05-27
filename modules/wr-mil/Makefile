@@ -55,6 +55,7 @@ software::
 
 firmware:
 	$(MAKE) TARGET=wrmil -C $(FW)
+	$(MAKE) TARGET=wrf50 -C $(FW)
 
 nfsinit:
 	echo $(shell cd $(NFSINIT); $(GENNFSINIT)/generate-main.sh $(ENV); cd ..)
@@ -79,6 +80,7 @@ deploy:
 
 # tools
 	cp $(SW)/wrmil-ctl $(STAGING)$(ARCH)$(PREFIX)/usr/bin               # '/usr' is a hack
+	cp $(SW)/wrf50-ctl $(STAGING)$(ARCH)$(PREFIX)/usr/bin               # '/usr' is a hack
 	cp -a $(SW)/*.so.* $(STAGING)$(ARCH)$(PREFIX)/usr/lib               # '/usr' is a hack
 	cp -a $(SW)/*.so $(STAGING)$(ARCH)$(PREFIX)/usr/lib                 # '/usr' is a hack
 	cp $(USRPATH)/lib/libdim.so $(STAGING)$(ARCH)$(PREFIX)/usr/lib      # '/usr' is a hack
