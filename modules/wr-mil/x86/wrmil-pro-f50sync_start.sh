@@ -52,18 +52,13 @@ wrf50-ctl $TRGW startop
 echo -e WRF50: configure $SDGW for timestamping, needed for monitoring
 #  configured as TLU input (Lemo cable from MIL piggy)
 saft-io-ctl $SDGW -n B1 -o 0 
-saft-io-ctl $SDGW -n B1 -b 0x1fe1a01000000000
+saft-io-ctl $SDGW -n B1 -b 0x14c0a01000000000
 
 # lm32 listens to TLU
-saft-ecpu-ctl $SDGW -c 0x1fe1a01000000001 0xffffffffffffffff 20000 0xa1 -d
+saft-ecpu-ctl $SDGW -c 0x14c0a01000000001 0xffffffffffffffff 500000 0xa01 -d
 
-# lm32 writes to MIL device via ECA wishbone channel
-echo -e WRF50: configure $DGW wishbone channel, needed for writing telegrams to the MIL device
-saft-wbm-ctl $SDGW -c 0x1ff0000000000000 0xffff000000000000 0 1 -d
-saft-wbm-ctl $SDGW -r 1 $MILADDR 0 0x5f
-
-# lm32 listens to timing messages for EVTNO 0x000..0x0ff
-saft-ecpu-ctl $SDGW -c 0x1${SIDGW}000000000000 0xfffff00000000000 500000 0xff -g -d
+# lm32 listens to timing messages from Data Master
+saft-ecpu-ctl $SDGW -c 0x14c0fc0000000000 0xfffffff000000000 0 0xfc0  -d
 
 ###########################################
 # reset diagnostics

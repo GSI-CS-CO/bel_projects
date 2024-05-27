@@ -136,7 +136,7 @@ int main(int argc, char** argv) {
   uint32_t status;
 
   int32_t  f50Offset        = WR50_DFLT_F50OFFSET;
-  uint32_t mode             = WRF50_MODE_LOCK_SMOOTH_SIM;
+  uint32_t mode             = WRF50_MODE_LOCK_HARD_SIM;
   uint32_t TMainsAct;
   uint32_t TDmAct;
   uint32_t TDmSet;
@@ -159,7 +159,7 @@ int main(int argc, char** argv) {
 
   program = argv[0];    
 
-  while ((opt = getopt(argc, argv, "s:o:ghei")) != -1) {
+  while ((opt = getopt(argc, argv, "s:o:m:ghei")) != -1) {
     switch (opt) {
       case 'e':
         getVersion = 1;

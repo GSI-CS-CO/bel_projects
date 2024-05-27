@@ -469,13 +469,13 @@ uint32_t wrf50_info_read(uint64_t ebDevice, int32_t  *f50Offs, uint32_t *mode, u
  *offsMainsAct  = data[8];
  *offsMainsMin  = data[9];
  *offsMainsMax  = data[10];
- *lockState     = data[10];
- *lockDate      = ((uint64_t)data[11] & 0xffffffff) << 32;
- *lockDate     |= (uint64_t)data[12] & 0xffffffff;
- *nLocked       = data[13];
- *nCycles       = data[14];
- *nEvtsLate     = data[15];
- *comLatency    = data[16];          
+ *lockState     = data[11];
+ *lockDate      = ((uint64_t)data[12] & 0xffffffff) << 32;
+ *lockDate     |= (uint64_t)data[13] & 0xffffffff;
+ *nLocked       = data[14];
+ *nCycles       = data[15];
+ *nEvtsLate     = data[16];
+ *comLatency    = data[17];          
 
   if (printFlag) wrf50_printDiag(*f50Offs, *mode, *TMainsAct, *TDmAct, *TDmSet, *offsDmAct, *offsDmMin, *offsDmMax, *offsMainsAct, *offsMainsMin,
                                  *offsMainsMax, *lockState, *lockDate, *nLocked, *nCycles, *nEvtsLate, *comLatency);
@@ -537,8 +537,8 @@ uint32_t wrf50_upload(uint64_t ebDevice, int32_t  phaseOffset, uint32_t mode)
 
   // EB cycle
   if (eb_cycle_open(ebDevice, 0, eb_block, &eb_cycle) != EB_OK) return COMMON_STATUS_EB;
-  eb_cycle_write(eb_cycle, wrmil_set_utcTrigger  , EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)phaseOffset);
-  eb_cycle_write(eb_cycle, wrmil_set_utcUtcDelay , EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)mode);
+  eb_cycle_write(eb_cycle, wrf50_set_f50Offset, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)phaseOffset);
+  eb_cycle_write(eb_cycle, wrf50_set_mode     , EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)mode);
   if ((eb_status = eb_cycle_close(eb_cycle)) != EB_OK) {printf("wr-f50: upload failed %d \n", eb_status); return eb_status;}
 
   return COMMON_STATUS_OK;
