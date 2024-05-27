@@ -89,7 +89,7 @@ lib: wrmillib.c
 	ln -sf $(WRMILLIB).1 $(WRMILLIB)
 
 clean:
-	rm -f *.o wrmil-ctl wrmil-serv-mon wrmil-client-mon libwrmillib.so*
+	rm -f *.o wrmil-ctl wrf50-ctl wrmil-serv-mon wrmil-client-mon libwrmillib.so*
 
 install:
 	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/bin	

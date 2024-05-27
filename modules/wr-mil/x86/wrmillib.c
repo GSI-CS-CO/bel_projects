@@ -348,15 +348,15 @@ void wrf50_printDiag(int32_t f50Offs, uint32_t mode, uint32_t TMainsAct, uint32_
   
   printf("offset to 50 Hz mains [us]          : %15d\n"        , f50Offs);
   printf("mode                                : %15u\n"        , mode);
-  printf("act period of mains [us]            : %15f.3\n"      , (double)TMainsAct/1000.0);
-  printf("act period of DM [us]               : %15f.3\n"      , (double)TDmAct/1000.0);
-  printf("set period of DM [us]               : %15f.3\n"      , (double)TDmSet/1000.0);
-  printf("act offset(DM - mains) [us]         : %15f.3\n"      , (double)offsDmAct/1000.0);
-  printf("min offset(DM - mains) [us]         : %15f.3\n"      , (double)offsDmMin/1000.0);
-  printf("max offset(DM - mains) [us]         : %15f.3\n"      , (double)offsDmMax/1000.0);
-  printf("act offset mains(predict - get) [us]: %15f.3\n"      , (double)offsMainsAct/1000.0);
-  printf("min offset mains(predict - get) [us]: %15f.3\n"      , (double)offsMainsMin/1000.0);
-  printf("max offset mains(predict - get) [us]: %15f.3\n"      , (double)offsMainsMax/1000.0);
+  printf("act period of mains [us]            : %15.3f\n"      , (double)TMainsAct/1000.0);
+  printf("act period of DM [us]               : %15.3f\n"      , (double)TDmAct/1000.0);
+  printf("set period of DM [us]               : %15.3f\n"      , (double)TDmSet/1000.0);
+  printf("act offset(DM - mains) [us]         : %15.3f\n"      , (double)offsDmAct/1000.0);
+  printf("min offset(DM - mains) [us]         : %15.3f\n"      , (double)offsDmMin/1000.0);
+  printf("max offset(DM - mains) [us]         : %15.3f\n"      , (double)offsDmMax/1000.0);
+  printf("act offset mains(predict - get) [us]: %15.3f\n"      , (double)offsMainsAct/1000.0);
+  printf("min offset mains(predict - get) [us]: %15.3f\n"      , (double)offsMainsMin/1000.0);
+  printf("max offset mains(predict - get) [us]: %15.3f\n"      , (double)offsMainsMax/1000.0);
   printf("lock state                          : %15u\n"        , lockState);
   printf("lock date                           : %15lu\n"        , lockDate);
   printf("# locks                             : %15u\n"        , nLocked);

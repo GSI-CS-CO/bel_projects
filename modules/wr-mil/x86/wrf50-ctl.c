@@ -248,7 +248,8 @@ int main(int argc, char** argv) {
     if (!strcasecmp(command, "configure")) {
       if ((state != COMMON_STATE_CONFIGURED) && (state != COMMON_STATE_IDLE)) printf("wr-f50: WARNING command has no effect (not in state CONFIGURED or IDLE)\n");
       else {
-        if (wrf50_upload(ebDevice, f50Offset, mode)) wrmil_cmd_configure(ebDevice);
+        if (wrf50_upload(ebDevice, f50Offset, mode) != COMMON_STATUS_OK) die("wr-f50 upload", status);
+        wrmil_cmd_configure(ebDevice);
       } // else state
     } // "configure"
 
