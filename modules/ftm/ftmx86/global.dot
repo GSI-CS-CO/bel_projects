@@ -15,7 +15,7 @@ subgraph cpu0 {
   GLOBAL_TEST [type="global", section="registers", pattern="EXTERN" ];
   
 
-  T_PAT1->GLOBAL_TEST [type="reference", fieldtail="0x10", fieldhead="0x00", fieldwidth="64"];
+  B_PAT1->GLOBAL_TEST [type="reference", fieldtail="0x04", fieldhead="0x00", fieldwidth="32"];
 }
 
 
