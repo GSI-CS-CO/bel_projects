@@ -41,6 +41,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <math.h>
+#include <time.h>
 
 // etherbone
 #include <etherbone.h>
@@ -96,12 +97,12 @@ eb_address_t wrmil_get_comLatency;        // latency for messages received from 
 eb_address_t wrf50_get_TMainsAct;         // period of mains cycle [ns], actual value                           
 eb_address_t wrf50_get_TDMAct;            // period of Data Master cycle [ns], actual value                     
 eb_address_t wrf50_get_TDMSet;            // period of Data Master cycle [ns], actual value                     
-eb_address_t wrf50_get_offsDMAct;         // offset of cycle start: t_DM - t_mains; actual value                
-eb_address_t wrf50_get_offsDMMin;         // offset of cycle start: t_DM - t_mains; min value                   
-eb_address_t wrf50_get_offsDMMax;         // offset of cycle start: t_DM - t_mains; max value                   
-eb_address_t wrf50_get_offsMainsAct;      // offset of cycle start: t_mains_predict - t_mains; actual value     
-eb_address_t wrf50_get_offsMainsMin;      // offset of cycle start: t_mains_predict - t_mains; min value        
-eb_address_t wrf50_get_offsMainsMax;      // offset of cycle start: t_mains_predict - t_mains; max value        
+eb_address_t wrf50_get_offsDMAct;         // offset of cycle start: t_DM_act - t_DM_set; actual value                
+eb_address_t wrf50_get_offsDMMin;         // offset of cycle start: t_DM_act - t_DM_set; min value                   
+eb_address_t wrf50_get_offsDMMax;         // offset of cycle start: t_DM_act - t_DM_set; max value                   
+eb_address_t wrf50_get_offsMainsAct;      // offset of cycle start: t_mains_act - t_mains_predict; actual value     
+eb_address_t wrf50_get_offsMainsMin;      // offset of cycle start: t_mains_act - t_mains_predict; min value        
+eb_address_t wrf50_get_offsMainsMax;      // offset of cycle start: t_mains_act - t_mains_predict; max value        
 eb_address_t wrf50_get_lockState;         // lock state; how DM is locked to mains                              
 eb_address_t wrf50_get_lockDateHi;        // time when lock has been achieve [ns], high bits                    
 eb_address_t wrf50_get_lockDateLo;        // time when lock has been achieve [ns], low bits                     
@@ -344,6 +345,14 @@ void wrmil_printDiag(uint32_t utcTrigger, uint32_t utcDelay, uint32_t trigUtcDel
 void wrf50_printDiag(int32_t f50Offs, uint32_t mode, uint32_t TMainsAct, uint32_t TDmAct, uint32_t TDmSet, int32_t offsDmAct, int32_t offsDmMin, int32_t offsDmMax, int32_t offsMainsAct,
                      int32_t offsMainsMin, int32_t offsMainsMax, uint32_t lockState, uint64_t lockDate, uint32_t nLocked, uint32_t nCycles, uint32_t nEvtsLate, uint32_t comLatency)
 {
+  const struct tm* tm;
+  char             timestr[60];
+  time_t           secs;
+
+  secs     = (unsigned long)((double)lockDate / 1000000000.0);
+  tm = gmtime(&secs);
+  strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S TAI", tm);
+  
   printf("wrf50: info  ...\n\n");
   
   printf("offset to 50 Hz mains [us]          : %15d\n"        , f50Offs);
@@ -351,14 +360,14 @@ void wrf50_printDiag(int32_t f50Offs, uint32_t mode, uint32_t TMainsAct, uint32_
   printf("act period of mains [us]            : %15.3f\n"      , (double)TMainsAct/1000.0);
   printf("act period of DM [us]               : %15.3f\n"      , (double)TDmAct/1000.0);
   printf("set period of DM [us]               : %15.3f\n"      , (double)TDmSet/1000.0);
-  printf("act offset(DM - mains) [us]         : %15.3f\n"      , (double)offsDmAct/1000.0);
-  printf("min offset(DM - mains) [us]         : %15.3f\n"      , (double)offsDmMin/1000.0);
-  printf("max offset(DM - mains) [us]         : %15.3f\n"      , (double)offsDmMax/1000.0);
-  printf("act offset mains(predict - get) [us]: %15.3f\n"      , (double)offsMainsAct/1000.0);
-  printf("min offset mains(predict - get) [us]: %15.3f\n"      , (double)offsMainsMin/1000.0);
-  printf("max offset mains(predict - get) [us]: %15.3f\n"      , (double)offsMainsMax/1000.0);
+  printf("act offset DM: act - set [us]       : %15.3f\n"      , (double)offsDmAct/1000.0);
+  printf("min offset DM: act - set [us]       : %15.3f\n"      , (double)offsDmMin/1000.0);
+  printf("max offset DM: act - set [us]       : %15.3f\n"      , (double)offsDmMax/1000.0);
+  printf("act offset mains: act - predict [us]: %15.3f\n"      , (double)offsMainsAct/1000.0);
+  printf("min offset mains: act - predict [us]: %15.3f\n"      , (double)offsMainsMin/1000.0);
+  printf("max offset mains: act - predict [us]: %15.3f\n"      , (double)offsMainsMax/1000.0);
   printf("lock state                          : %15u\n"        , lockState);
-  printf("lock date                           : %15lu\n"        , lockDate);
+  printf("lock date                           : %s\n"          , timestr);
   printf("# locks                             : %15u\n"        , nLocked);
   printf("# cycles                            : %15u\n"        , nCycles);
   printf("# late events                       : %15u\n"        , nEvtsLate);

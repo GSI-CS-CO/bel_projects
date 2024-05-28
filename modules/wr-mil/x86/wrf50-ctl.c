@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Michael Reese GSI-Darmstadt
- *  version : 27-May-2024
+ *  version : 28-May-2024
  *
  * Command-line interface for wr-f50
  *
@@ -83,7 +83,7 @@ static void help(void) {
   fprintf(stderr, "                      1: hard locking, internal simulation mode\n"                  );
   fprintf(stderr, "                      2: smooth locking, internal simulation mode\n"                );
   fprintf(stderr, "                      3: hard locking of Data Master\n"                             );
-  fprintf(stderr, "                      2: smooth locking of Data Master\n"                           );
+  fprintf(stderr, "                      4: smooth locking of Data Master\n"                           );
   fprintf(stderr, "  configure           command requests state change from IDLE or CONFIGURED -> CONFIGURED\n");
   fprintf(stderr, "                      'configure' requires parameters -w, -s\n");
   fprintf(stderr, "  startop             command requests state change from CONFIGURED -> OPREADY\n");

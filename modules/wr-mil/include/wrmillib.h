@@ -185,9 +185,9 @@ extern "C" {
                            int32_t  *offsDmAct,                  // offset of cycle start: t_DM_act - t_DM_set; actual value                
                            int32_t  *offsDmMin,                  // offset of cycle start: t_DM_act - t_DM_set; min value                   
                            int32_t  *offsDmMax,                  // offset of cycle start: t_DM_act - t_DM_set; max value                   
-                           int32_t  *offsMainsAct,               // offset of cycle start: t_mains_predict - t_mains; actual value     
-                           int32_t  *offsMainsMin,               // offset of cycle start: t_mains_predict - t_mains; min value        
-                           int32_t  *offsMainsMax,               // offset of cycle start: t_mains_predict - t_mains; max value        
+                           int32_t  *offsMainsAct,               // offset of cycle start: t_mains_act - t_mains_predict; actual value     
+                           int32_t  *offsMainsMin,               // offset of cycle start: t_mains_act - t_mains_predict; min value        
+                           int32_t  *offsMainsMax,               // offset of cycle start: t_mains_act - t_mains_predict; max value        
                            uint32_t *lockState,                  // lock state; how DM is locked to mains                              
                            uint64_t *lockDate,                   // time when lock has been achieved [ns]
                            uint32_t *nLocked,                    // counts how many locks have been achieved                           

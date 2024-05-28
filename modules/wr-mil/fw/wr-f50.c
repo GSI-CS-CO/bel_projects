@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 2024-may-24
+ *  version : 2024-May-28
  *
  *  firmware required for the 50 Hz mains -> WR gateway
  *  
@@ -82,9 +82,9 @@ volatile uint32_t *pSharedGetTDMSet;       // pointer to a "user defined" u32 re
 volatile uint32_t *pSharedGetOffsDMAct;    // pointer to a "user defined" u32 register; here: offset of cycle start: t_DM_act - t_DM_set; actual value                
 volatile uint32_t *pSharedGetOffsDMMin;    // pointer to a "user defined" u32 register; here: offset of cycle start: t_DM_act - t_DM_set; min value                   
 volatile uint32_t *pSharedGetOffsDMMax;    // pointer to a "user defined" u32 register; here: offset of cycle start: t_DM_act - t_DM_set; max value                   
-volatile uint32_t *pSharedGetOffsMainsAct; // pointer to a "user defined" u32 register; here: offset of cycle start: t_mains_predict - t_mains; actual value     
-volatile uint32_t *pSharedGetOffsMainsMin; // pointer to a "user defined" u32 register; here: offset of cycle start: t_mains_predict - t_mains; min value        
-volatile uint32_t *pSharedGetOffsMainsMax; // pointer to a "user defined" u32 register; here: offset of cycle start: t_mains_predict - t_mains; max value        
+volatile uint32_t *pSharedGetOffsMainsAct; // pointer to a "user defined" u32 register; here: offset of cycle start: t_mains_act - t_mains_predict; actual value     
+volatile uint32_t *pSharedGetOffsMainsMin; // pointer to a "user defined" u32 register; here: offset of cycle start: t_mains_act - t_mains_predict; min value        
+volatile uint32_t *pSharedGetOffsMainsMax; // pointer to a "user defined" u32 register; here: offset of cycle start: t_mains_act - t_mains_predict; max value        
 volatile uint32_t *pSharedGetLockState;    // pointer to a "user defined" u32 register; here: lock state; how DM is locked to mains                              
 volatile uint32_t *pSharedGetLockDateHi;   // pointer to a "user defined" u32 register; here: time when lock has been achieve [ns], high bits                    
 volatile uint32_t *pSharedGetLockDateLo;   // pointer to a "user defined" u32 register; here: time when lock has been achieve [ns], low bits                     
@@ -319,9 +319,12 @@ uint32_t extern_exitActionOperation()
 
 
 // insert (and shift) tstamps
-void manageStamps(uint64_t newStamp,               // new timestamp
+// - pop oldest timeststamp
+// - insert newest timetamp at index WRF50_N_STAMPS - 1
+// - calculate actual cycle length
+void updateStamps(uint64_t newStamp,               // new timestamp
                   uint64_t stamps[],               // all timestamps
-                  uint64_t *actT,                  // actual cycle length
+                  uint64_t *actT,                  // actual cycle length averaged over all timestamps
                   int      *flagValid              // flags (or not) return values are valid
                   )
 {
@@ -330,15 +333,112 @@ void manageStamps(uint64_t newStamp,               // new timestamp
   
   // timestamps: pop oldest, shift (not very clever, shame on me) and add new
   for (i=1; i<WRF50_N_STAMPS; i++) stamps[i-1] = stamps[i];
-  stamps[WRF50_N_STAMPS - 1] = newStamp;
+  stamps[WRF50_N_STAMPS-1] = newStamp;
 
-  cyclen       = (stamps[WRF50_N_STAMPS - 1] - stamps[0]) / (WRF50_N_STAMPS - 1);
-
+  // calculate average cycle length
+  cyclen    = 0;
+  for (i=1; i<WRF50_N_STAMPS; i++)
+    cyclen  = cyclen + stamps[i] - stamps[i-1];
+  cyclen    = cyclen / (WRF50_N_STAMPS - 1);
+  // check limits
   if ((cyclen < (uint64_t)WRF50_CYCLELEN_MAX) && (cyclen > (uint64_t)WRF50_CYCLELEN_MIN)) *flagValid = 1;
   else                                                                                    *flagValid = 0;
 
+  //pp_printf("wr-f50, update: %u\n", (uint32_t)cyclen);
+
   *actT     = cyclen;
-} // managestamps
+} // updateStamps
+
+
+// calculates next timestamp
+uint64_t nextStamp(uint64_t stamps[]               // all timestamps
+                   )
+{
+  // calc timestamp via linear regression t = a + b*x
+  // a: value of oldest timestamp
+  // b: slope
+  // linear regression with 11 timestamps takes about 35us   
+
+  
+  uint64_t   a;
+  uint64_t   b;
+  uint64_t   nxtStamp;
+  uint64_t   actStamp;
+
+  // linear regression 
+  // x: index
+  // y: timestamp
+  int        i;
+  int64_t    num;                                  // numerator 
+  int64_t    denom;                                // denominator
+  int64_t    x0;                                   // rescale offset to avoid overflow
+  int64_t    x_mean;                               // mean of x values
+  int64_t    y_mean;                               // mean of y values
+  int64_t    n;                                    // number of measurements
+
+  //uint64_t   t1, t2;
+  //uint32_t   dt;
+  //int32_t    tmp;
+  //t1 = getSysTime();
+  
+  // basic check
+  if (WRF50_N_STAMPS < 2) return getSysTime() + WRF50_CYCLELEN_MIN;
+
+  x0        = stamps[0] - 1000000;
+  x_mean    = 0;
+  y_mean    = 0;
+  num       = 0;
+  denom     = 0;
+  n         = WRF50_N_STAMPS;
+
+  // calc mean values
+  for (i=0; i<n; i++) {
+    x_mean += i;
+    y_mean += (stamps[i] - x0);
+  } // for i
+  x_mean = x_mean / n;
+  y_mean = y_mean / n;
+
+  //tmp = (uint32_t)x_mean;
+  //pp_printf("wr-f50: x_mean %d\n", tmp);
+  //tmp = (uint32_t)y_mean;
+  //pp_printf("wr-f50: y_mean %d\n", tmp);
+
+  
+  
+  
+  // linear regression through coordinate system origin; use oldest timestamp as origin
+  for (i=0; i<n; i++) {
+    num    += i * (stamps[i] - x0);
+    denom  += i * i;
+  } // for i
+  num    = num   - n * x_mean * y_mean;
+  denom  = denom - n * x_mean * x_mean;
+
+  b      = num / denom;
+  a      = y_mean - b * x_mean;
+
+  //tmp    = (uint32_t)b;
+  //pp_printf("wr-f50: b %d\n", tmp);
+  //tmp    = (uint32_t)a;
+  //pp_printf("wr-f50: a %d\n", tmp);
+
+  // next timestamp
+  nxtStamp = x0 + a + b * (n + 1 - 1);
+
+  // respect hard limits
+  actStamp = stamps[WRF50_N_STAMPS - 1];
+  if ((nxtStamp - actStamp) < WRF50_CYCLELEN_MIN) nxtStamp = actStamp + WRF50_CYCLELEN_MIN;
+  if ((nxtStamp - actStamp) > WRF50_CYCLELEN_MAX) nxtStamp = actStamp + WRF50_CYCLELEN_MAX;
+
+  //t2 = getSysTime();
+  //dt = (uint32_t)(t2 - t1);
+  //pp_printf("wr-f50: elapsed time for regression %u\n", dt);
+  //dt = (uint32_t)(nxtStamp - actStamp);
+  //pp_printf("wr-f50: estimated next cycle time %u\n", dt);
+
+  return nxtStamp;
+} // calcNextStamp
 
 
 // do action of state operation: This is THE central code of this firmware
@@ -382,87 +482,105 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       recEvtNo     = (uint32_t)((recEvtId >> 36) & 0x00000fff);
       
       if (recGid != PZU_F50) return WRF50_STATUS_BADSETTING;
-      
+
       // update timestamps
-      manageStamps(recDeadline, stampsDM, &cyclenDM, &validDM);
-      if (validDM) getTDMAct = cyclenDM;
-      
+      updateStamps(recDeadline, stampsDM, &cyclenDM, &validDM);
+      if (validDM) {
+        getTDMAct = cyclenDM;
+ 
+        // statistics Data Master, comparing actual and set value
+        getOffsDMAct = recDeadline - nxtStampDM;
+        if (getOffsDMAct > getOffsDMMax) getOffsDMMax = getOffsDMAct;
+        if (getOffsDMAct < getOffsDMMin) getOffsDMMin = getOffsDMAct;
+      } // if validDM
+
       break;
       
     // received WR timing message from TLU (50 Hz signal)
     // as this happens with a posttrigger of 500us, this should always (chk ?) happen after receiving the WR timing message from Data Master  
     case WRF50_ECADO_F50_TLU:
+      // basic checks
       comLatency   = (int32_t)(getSysTime() - recDeadline);
       recGid       = (uint32_t)((recEvtId >> 48) & 0x00000fff);
       recEvtNo     = (uint32_t)((recEvtId >> 36) & 0x00000fff);
-
       if (recGid != PZU_F50) return WRF50_STATUS_BADSETTING;
 
-      // count number of received signals and check if we have sufficient data
-      getNCycles++;
+      // correct received deadline for post trigger
+      tluStamp     = recDeadline - (uint64_t)WRF50_POSTTRIGGER_TLU;
 
-      // fix missing DM messages for simulation mode
+      // update time stamps
+      updateStamps(tluStamp, stampsF50, &cyclenF50, &validF50);
+      if (validF50) {
+        getTMainsAct = cyclenF50;
+        
+        // statistics 50 Hz mains, comparing actual and predicted value
+        getOffsMainsAct = tluStamp - nxtStampF50;
+        if (getOffsMainsAct > getOffsMainsMax) getOffsMainsMax = getOffsMainsAct;
+        if (getOffsMainsAct < getOffsMainsMin) getOffsMainsMin = getOffsMainsAct;
+      }
+
+      // we don't know the current situation, set to lock state 'unknown'
+      // getLockState = WRF50_SLOCK_UNKWN;
+      
+      // count number of received signals and continue only if we have sufficient data
+      getNCycles++;
+      if (getNCycles < WRF50_N_STAMPS) {
+        getLockState = WRF50_SLOCK_UNKWN;
+        break;
+      } // if getNCycles
+    
+      // ignore missing DM messages for simulation mode
       if (setMode & WRF50_MASK_LOCK_SIM) validDM = 1;
 
-      // update TLU timestamps
-      tluStamp        = recDeadline - (uint64_t)WRF50_POSTTRIGGER_TLU;
-      // statistics for 50 Hz mains
-      getOffsMainsAct = (int32_t)(stampsF50[WRF50_N_STAMPS - 1] - tluStamp) + cyclenF50;
-      if (getOffsMainsAct > getOffsMainsMax) getOffsMainsMax = getOffsMainsAct;
-      if (getOffsMainsAct < getOffsMainsMin) getOffsMainsMin = getOffsMainsAct;
+      // continue only if we have valid information from Data Master and 50 Hz mains
+      if (!(validDM && validF50)) {
+        getLockState = WRF50_SLOCK_UNKWN;
+        break;
+      } // if not valid
 
-      // statistics comparing DM and 50 Hz mains
-      dmStamp        = stampsDM[WRF50_N_STAMPS - 1];
-      getOffsDMAct   = (int32_t)(stampsF50[WRF50_N_STAMPS - 1] - dmStamp) + cyclenF50;
-      if (getOffsDMAct > getOffsDMMax) getOffsDMMax = getOffsDMAct;
-      if (getOffsDMAct < getOffsDMMin) getOffsDMMin = getOffsDMAct;
+      // set lock state
+      if ((abs(getOffsDMAct) < WRF50_LOCK_DIFFDM) && (abs(getOffsMainsAct) < WRF50_LOCK_DIFFMAINS)) {
+        if (getLockState != WRF50_SLOCK_LOCKED) {
+          getLockDate = tluStamp;
+          pp_printf("wr-f50: entering 'locked' state\n");
+        }
+        getLockState = WRF50_SLOCK_LOCKED;
+      } // if abs ...
+      else
+        getLockState =  WRF50_SLOCK_LOCKING;
 
-      // manage time stamps and predict next cycle
-      manageStamps(tluStamp, stampsF50, &cyclenF50, &validF50);
-      if (validF50) getTMainsAct = cyclenF50;
+      // recap:
+      // - we have valid TLU (mains) and DM timestamps
+      // - we have done the essential statistics
+      // - we have set the lock state
+      // todo:
+      // - estimate start of next 50 Hz mains cycle and set new period of Data Master
+      // - send messages to own ECA and WR network
 
-      // assume worst case and see how far we get
-      getLockState = WRF50_SLOCK_UNKWN;
+      // estimate next cycle start
+      nxtStampF50 = nextStamp(stampsF50);
+
+      // calc set-value of period for next DM cycle and respect hard limits
+      getTDMSet      = nxtStampF50 - stampsDM[WRF50_N_STAMPS - 1];
+      if (getTDMSet < WRF50_CYCLELEN_MIN) getTDMSet = WRF50_CYCLELEN_MIN;
+      if (getTDMSet > WRF50_CYCLELEN_MAX) getTDMSet = WRF50_CYCLELEN_MAX;
+      nxtStampDM     = stampsDM[WRF50_N_STAMPS - 1] + getTDMSet;        // only needed for statistics
+
+      // timing message for Data Master
+      sendEvtId      = fwlib_buildEvtidV1(PZU_F50, WRF50_ECADO_F50_TUNE, 0x0, 0x0, 0x0, 0x0);
+      sendParam      = (uint64_t)getTDMSet & 0xffffffff;
+      sendDeadline   = tluStamp + (uint64_t)(one_us_ns * 1000);                                            // send message exactly 1ms after most recent mains cycle start
       
-      if (getNCycles > 50) {                                          // wait for one second prior we do s.th. useful
-        if (validDM && validF50)  {                                   // data is valid?
-          if (setMode & WRF50_MASK_LOCK_SMOOTH) {                     // smooth locking; should be default
-          } // if smooth lock
-          else {
-            // this is 'hard' lock !!!
-            // estimate next 50 Hz mains cycle start
-            nxtStampF50 = stampsF50[WRF50_N_STAMPS - 1] + cyclenF50;
-            // hard set DM cycle to match next estimated 50 Hz mains cycle start
-            nxtStampDM  = nxtStampF50;
-            getTDMSet   = nxtStampDM - stampsDM[WRF50_N_STAMPS - 1];
+      fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0);                                        // write DM set value to own ECA for monitoring
+      // fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0);                                     // broadcast to network (Data Master)
 
-            getLockState = WRF50_SLOCK_LOCKED;
-          } // else smooth lock
-
-          // respect hard limits
-          if (getTDMSet < WRF50_CYCLELEN_MIN) getTDMSet = WRF50_CYCLELEN_MIN;
-          if (getTDMSet > WRF50_CYCLELEN_MAX) getTDMSet = WRF50_CYCLELEN_MAX;
-
-          // construct timing message for DM
-          //if (setMode & WRF50_MASK_LOCK_SIM) tmpEvtNo = WRF50_ECADO_F50_DM;                                  // simulation mode: mimic message from DM
-          //else                               tmpEvtNo = WRF50_ECADO_F50_TUNE;                                // operational momde: write to DM
-          
-          sendEvtId    = fwlib_buildEvtidV1(PZU_F50, WRF50_ECADO_F50_TUNE, 0x0, 0x0, 0x0, 0x0);
-          sendParam    = (uint64_t)getTDMSet & 0xffffffff;
-          sendDeadline = tluStamp + (uint64_t)(one_us_ns * 1000);                                              // send message exactly 1ms after most recent mains cycle start
-
-          fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0);                                        // debug, write DM set value to own ECA for monitoring
-          //          fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0);                                      // broadcast to network, but only if no simulation is ongoing
-          if (!(setMode & WRF50_MASK_LOCK_DM)) {                                                               // mimic 50 Hz message from Data Master
-            sendEvtId    = fwlib_buildEvtidV1(PZU_F50, WRF50_ECADO_F50_DM, 0x0, 0x0, 0x0, 0x0);
-            sendParam    = 0x0;
-            sendDeadline = stampsDM[WRF50_N_STAMPS - 1] + (uint64_t)getTDMSet;
-            fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0);                                      
-          } // else LOCK_DM
+      if (!(setMode & WRF50_MASK_LOCK_DM)) {                                                               // mimic 50 Hz message from Data Master
+        sendEvtId    = fwlib_buildEvtidV1(PZU_F50, WRF50_ECADO_F50_DM, 0x0, 0x0, 0x0, 0x0);
+        sendParam    = 0x0;
+        sendDeadline = stampsDM[WRF50_N_STAMPS - 1] + (uint64_t)getTDMSet;
+        fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0);                                      
+      } // else LOCK_DM
                                             
-        } // if validDM ...
-      } // if getNLocked ...
-
       break;
     default :                                                         // flush ECA Queue
       flagIsLate = 0;                                                 // ignore late events
