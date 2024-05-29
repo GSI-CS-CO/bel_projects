@@ -167,7 +167,7 @@ int main(int argc, char** argv) {
       case 'o':
         f50Offset = strtol(optarg, &tail, 0);
         if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1;}
-        if (f50Offset > WRF50_CYCLELEN_MIN) {"Parameter o: %d out of range\n", f50Offset); return 1;}
+        if (f50Offset > WRF50_CYCLELEN_MIN) {fprintf(stderr, "Parameter o: %d out of range\n", f50Offset); return 1;}
         break;
       case 'm':
         tmp           = strtol(optarg, &tail, 0);
@@ -213,8 +213,6 @@ int main(int argc, char** argv) {
 
   if ((status =  wrf50_firmware_open(&ebDevice, devName, 0, &cpu)) != COMMON_STATUS_OK) die("firmware open", status);
 
-  if (negative) f50Offset = - f50Offset;
-  
   if (getVersion) {
     wrmil_version_library(&verLib);
     printf("wr-f50: library (firmware) version %s",  wrmil_version_text(verLib));     
