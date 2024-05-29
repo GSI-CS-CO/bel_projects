@@ -338,7 +338,7 @@ void wrmil_printDiag(uint32_t utcTrigger, uint32_t utcDelay, uint32_t trigUtcDel
   printf("# MIL events received (data) : 0d%015lu\n"    , nEvtsRecD);
   printf("# MIL events received (error): 0d%015u\n"     , nEvtsErr);
   printf("# late events                : 0d%015u\n"     , nEvtsLate);
-  printf("communiation latency         : 0d%015u\n"     , comLatency);
+  printf("communiation latency [ns]    : 0d%015u\n"     , comLatency);
 } // wrmil_printDiag
 
 
@@ -366,12 +366,15 @@ void wrf50_printDiag(int32_t f50Offs, uint32_t mode, uint32_t TMainsAct, uint32_
   printf("act offset mains: act - predict [us]: %15.3f\n"      , (double)offsMainsAct/1000.0);
   printf("min offset mains: act - predict [us]: %15.3f\n"      , (double)offsMainsMin/1000.0);
   printf("max offset mains: act - predict [us]: %15.3f\n"      , (double)offsMainsMax/1000.0);
+  printf("~act offset DM - mains: act [us]    : %15.3f\n"      , (double)(offsDMAct - offsMainsAct)/1000.0);
+  printf("~min offset DM - mains: act [us]    : %15.3f\n"      , (double)(offsDMMin - offsMainsMin)/1000.0);
+  printf("~max offset DM - mains: act [us]    : %15.3f\n"      , (double)(offsDMMax - offsMainsMax)/1000.0);
   printf("lock state                          : %15u\n"        , lockState);
   printf("lock date                           : %s\n"          , timestr);
   printf("# locks                             : %15u\n"        , nLocked);
   printf("# cycles                            : %15u\n"        , nCycles);
   printf("# late events                       : %15u\n"        , nEvtsLate);
-  printf("communication latency               : %15u\n"        , comLatency);
+  printf("communication latency [us]          : %15.3f\n"      , (double)comLatency/1000.0);
 } // wrf50_printDiag
 
 

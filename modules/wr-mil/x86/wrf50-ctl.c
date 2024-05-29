@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Michael Reese GSI-Darmstadt
- *  version : 28-May-2024
+ *  version : 29-May-2024
  *
  * Command-line interface for wr-f50
  *
@@ -77,28 +77,29 @@ static void help(void) {
   fprintf(stderr, "\n");
   fprintf(stderr, "All following parameters are to be used with command 'configure' \n"                );
   fprintf(stderr, "  -o <offset>         offset [us] to zero transition of 50 Hz mains, default 0\n"   );
-  fprintf(stderr, "  -g                  'offset' shall be negative\n"                                 );
+  fprintf(stderr, "                      'offset': t_cycle_mains - t_cycle_DM and must be positive\n"  );
   fprintf(stderr, "  -m <mode>           mode selection, default 1 \n"                                 );
   fprintf(stderr, "                      0: off\n"                                                     );
-  fprintf(stderr, "                      1: hard locking, internal simulation mode\n"                  );
-  fprintf(stderr, "                      2: smooth locking, internal simulation mode\n"                );
+  fprintf(stderr, "                      1: hard locking, Data Master simulation mode\n"               );
+  fprintf(stderr, "                      2: (not yet implemented)\n"                                   );
   fprintf(stderr, "                      3: hard locking of Data Master\n"                             );
-  fprintf(stderr, "                      4: smooth locking of Data Master\n"                           );
+  fprintf(stderr, "                      4: (not yet implemented)\n"                                   );
   fprintf(stderr, "  configure           command requests state change from IDLE or CONFIGURED -> CONFIGURED\n");
-  fprintf(stderr, "                      'configure' requires parameters -w, -s\n");
-  fprintf(stderr, "  startop             command requests state change from CONFIGURED -> OPREADY\n");
+  fprintf(stderr, "  startop             command requests state change from CONFIGURED -> OPREADY\n"   );
   fprintf(stderr, "  stopop              command requests state change from OPREADY -> STOPPING -> CONFIGURED\n");
   fprintf(stderr, "  recover             command tries to recover from state ERROR and transit to state IDLE\n");
-  fprintf(stderr, "  idle                command requests state change to IDLE\n");
+  fprintf(stderr, "  idle                command requests state change to IDLE\n"                      );
   fprintf(stderr, "\n");
-  fprintf(stderr, "  diag                shows statistics and detailed information\n");
-  fprintf(stderr, "  cleardiag           command clears FW statistics\n");
+  fprintf(stderr, "  diag                shows statistics and detailed information\n"                  );
+  fprintf(stderr, "  cleardiag           command clears FW statistics\n"                               );
   fprintf(stderr, "\n");
-  fprintf(stderr, "Tip: For using negative values with commands such as 'snoop', consider\n");
-  fprintf(stderr, "using the special argument '--' to terminate option scanning.\n");
+  fprintf(stderr, "Use this tool to control the UNILAC 50 Hz synchronization from the command line\n"  );
+  fprintf(stderr, "Example1: '%s dev/wbm0 -m 3 configure'\n", program                                  );
   fprintf(stderr, "\n");
-  fprintf(stderr, "Use this tool to control the wr-f50 50 Hz synchronization unit at UNILAC from the command line\n");
-  fprintf(stderr, "Example1: '%s dev/wbm0 configure'\n", program);
+  fprintf(stderr, "For debugging, some messages are available via the ECA with gid 0xfc0. EvtNo:\n"    );
+  fprintf(stderr, "    0xa01: rising and falling edge of HW signal from 50 Hz module\n"                );
+  fprintf(stderr, "    0xfc0: start of Data Master cycle\n"                                            );
+  fprintf(stderr, "    0xfc1: message to Data Master; set-value of cycle length param field\n"         );
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
 
@@ -153,10 +154,6 @@ int main(int argc, char** argv) {
   uint32_t nEvtsLate;
   uint32_t comLatency;
  
-
-  
-  int      negative         = 0;
-
   program = argv[0];    
 
   while ((opt = getopt(argc, argv, "s:o:m:ghei")) != -1) {
@@ -167,12 +164,10 @@ int main(int argc, char** argv) {
       case 'i':
         getInfo = 1;
         break;
-      case 'g':
-        negative = 1;
-        break;
       case 'o':
         f50Offset = strtol(optarg, &tail, 0);
         if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1;}
+        if (f50Offset > WRF50_CYCLELEN_MIN) {"Parameter o: %d out of range\n", f50Offset); return 1;}
         break;
       case 'm':
         tmp           = strtol(optarg, &tail, 0);
@@ -180,9 +175,9 @@ int main(int argc, char** argv) {
         switch (tmp) {
           case 0: mode = WRF50_MODE_OFF;               break;
           case 1: mode = WRF50_MODE_LOCK_HARD_SIM;     break;
-          case 2: mode = WRF50_MODE_LOCK_SMOOTH_SIM;   break;
+          case 2: fprintf(stderr, "option 'm2' not yet implemented\n"); return 1;
           case 3: mode = WRF50_MODE_LOCK_HARD_DM;      break;
-          case 4: mode = WRF50_MODE_LOCK_SMOOTH_DM;    break;
+          case 4: fprintf(stderr, "option 'm4' not yet implemented\n"); return 1;
           default: fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1; 
         } // switch tmp
         break;

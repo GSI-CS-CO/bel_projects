@@ -112,11 +112,10 @@ uint64_t getLockDate;
 uint32_t getNLocked;     
 uint32_t getNCycles;     
 uint32_t getNEvtsLate;   
-uint32_t getComLatency;  
+int32_t  getComLatency;  
 
 uint64_t statusArray;                      // all status infos are ORed bit-wise into statusArray, statusArray is then published
 uint32_t nEvtsLate;                        // # of late messages
-int32_t  comLatency;                       // latency for messages received via ECA
 
 // constants (as variables to have a defined type)
 uint64_t  one_us_ns = 1000;
@@ -237,7 +236,6 @@ void extern_clearDiag()
 
   statusArray     = 0x0;
   nEvtsLate       = 0x0;
-  comLatency      = 0x0;
 } // extern_clearDiag 
 
 
@@ -306,6 +304,7 @@ uint32_t extern_entryActionOperation()
 
   // init set values
   setF50Offset              = *pSharedSetF50Offset;
+  if (setF50Offset > WRF50_CYCLELEN_MIN) setF50Offset = WRF50_CYCLELEN_MIN;
   setMode                   = *pSharedSetMode;
 
   return COMMON_STATUS_OK;
@@ -357,7 +356,10 @@ uint64_t nextStamp(uint64_t stamps[]               // all timestamps
   // calc timestamp via linear regression t = a + b*x
   // a: value of oldest timestamp
   // b: slope
-  // linear regression with 11 timestamps takes about 35us   
+  // linear regression with 11 timestamps takes about 35us
+  // important: the linear regression uses integer instead of floating point values
+  //            thus, the number of data of data points must be an odd number
+  //            to avoid rounding errors
 
   
   uint64_t   a;
@@ -477,16 +479,16 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   switch (ecaAction) {
     // received WR timing message from Data Master (cycle start)
     case WRF50_ECADO_F50_DM:
-      comLatency   = (int32_t)(getSysTime() - recDeadline);
-      recGid       = (uint32_t)((recEvtId >> 48) & 0x00000fff);
-      recEvtNo     = (uint32_t)((recEvtId >> 36) & 0x00000fff);
+      getComLatency = (int32_t)(getSysTime() - recDeadline);
+      recGid        = (uint32_t)((recEvtId >> 48) & 0x00000fff);
+      recEvtNo      = (uint32_t)((recEvtId >> 36) & 0x00000fff);
       
       if (recGid != PZU_F50) return WRF50_STATUS_BADSETTING;
 
       // update timestamps
       updateStamps(recDeadline, stampsDM, &cyclenDM, &validDM);
       if (validDM) {
-        getTDMAct = cyclenDM;
+        getTDMAct  = cyclenDM;
  
         // statistics Data Master, comparing actual and set value
         getOffsDMAct = recDeadline - nxtStampDM;
@@ -500,13 +502,13 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     // as this happens with a posttrigger of 500us, this should always (chk ?) happen after receiving the WR timing message from Data Master  
     case WRF50_ECADO_F50_TLU:
       // basic checks
-      comLatency   = (int32_t)(getSysTime() - recDeadline);
-      recGid       = (uint32_t)((recEvtId >> 48) & 0x00000fff);
-      recEvtNo     = (uint32_t)((recEvtId >> 36) & 0x00000fff);
+      getComLatency = (int32_t)(getSysTime() - recDeadline);
+      recGid        = (uint32_t)((recEvtId >> 48) & 0x00000fff);
+      recEvtNo      = (uint32_t)((recEvtId >> 36) & 0x00000fff);
       if (recGid != PZU_F50) return WRF50_STATUS_BADSETTING;
 
       // correct received deadline for post trigger
-      tluStamp     = recDeadline - (uint64_t)WRF50_POSTTRIGGER_TLU;
+      tluStamp      = recDeadline - (uint64_t)WRF50_POSTTRIGGER_TLU;
 
       // update time stamps
       updateStamps(tluStamp, stampsF50, &cyclenF50, &validF50);
@@ -542,7 +544,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       if ((abs(getOffsDMAct) < WRF50_LOCK_DIFFDM) && (abs(getOffsMainsAct) < WRF50_LOCK_DIFFMAINS)) {
         if (getLockState != WRF50_SLOCK_LOCKED) {
           getLockDate = tluStamp;
-          pp_printf("wr-f50: entering 'locked' state\n");
+          getNLocked++;
         }
         getLockState = WRF50_SLOCK_LOCKED;
       } // if abs ...
@@ -562,6 +564,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
       // calc set-value of period for next DM cycle and respect hard limits
       getTDMSet      = nxtStampF50 - stampsDM[WRF50_N_STAMPS - 1];
+      getTDMSet     -= setF50Offset;                                    // add desired phase offset
       if (getTDMSet < WRF50_CYCLELEN_MIN) getTDMSet = WRF50_CYCLELEN_MIN;
       if (getTDMSet > WRF50_CYCLELEN_MAX) getTDMSet = WRF50_CYCLELEN_MAX;
       nxtStampDM     = stampsDM[WRF50_N_STAMPS - 1] + getTDMSet;        // only needed for statistics
@@ -571,10 +574,14 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       sendParam      = (uint64_t)getTDMSet & 0xffffffff;
       sendDeadline   = tluStamp + (uint64_t)(one_us_ns * 1000);                                            // send message exactly 1ms after most recent mains cycle start
       
-      fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0);                                        // write DM set value to own ECA for monitoring
-      // fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0);                                     // broadcast to network (Data Master)
+      fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0);                                        // write DM set-value of cycle length to local ECA; helpful for debugging
 
-      if (!(setMode & WRF50_MASK_LOCK_DM)) {                                                               // mimic 50 Hz message from Data Master
+      if (setMode & WRF50_MASK_LOCK_DM) {
+        fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0);                                      // broadcast set-value of cycle length to network (Data Master)
+      } // if LOCK_DM
+      else {
+        // else: not locking to DM, thus we are in 'simulation mode'
+        // mimic 'cycle start' message from DM
         sendEvtId    = fwlib_buildEvtidV1(PZU_F50, WRF50_ECADO_F50_DM, 0x0, 0x0, 0x0, 0x0);
         sendParam    = 0x0;
         sendDeadline = stampsDM[WRF50_N_STAMPS - 1] + (uint64_t)getTDMSet;
