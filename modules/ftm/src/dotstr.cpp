@@ -80,8 +80,12 @@ namespace DotStr {
       const std::string sDynRes       = "dynres";     // Links to Source for dynamic reserved field in Tmsg nodes
       const std::string sMeta         = "meta";       // Links to Source for dynamic reserved field in Tmsg nodes
       
+      const std::string sIm           = "immediate";  // Not used
       const std::string sRef          = "reference";  // References a field on the pointee node as a field inside the pointing node
-      const std::string sVal          = "valuecopy";  // Copies a value from a field on the pointee node to a field inside the pointing node
+      const std::string sRef2         = "reference2"; // References a field on the pointee node as a Reference inside the pointing node (ptr2ptr)
+      const std::string sAdr          = "address";    // References the address of a field on the pointee node as a field inside the pointing node
+      
+      const std::string sDyn[]        = {sIm, sAdr, sRef, sRef2}; // array of dynamic edge types
       const std::string sWrite        = "write";      // Writes a value from a field inside the pointing node to a field inside the pointee node
       
       const std::string sAny          = "";           // Wildcard type (carpeDM internal)
