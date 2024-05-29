@@ -719,10 +719,10 @@
 
 
 
-#define DYN_MODE_IM        0  ///< Tmsg - Address of dynamic ID source
-#define DYN_MODE_VAL       1  ///< Tmsg - Address of dynamic PAR high word source (node)  
-#define DYN_MODE_REF       2  ///< Tmsg - Address of dynamic PAR high word source (node)
-#define DYN_MODE_REF2      3  ///< Tmsg - Address of dynamic TEF source
+#define DYN_MODE_IM        0  ///< The field is used as is (immediate)
+#define DYN_MODE_ADR       1  ///< The field is filled adr the reference edge points to, but FW will use as is
+#define DYN_MODE_REF       2  ///< The field is filled adr the reference edge points to, FW will deref pointer
+#define DYN_MODE_REF2      3  ///< The field is filled adr the reference edge points to, FW will deref pointer twice (ptr2ptr)
 
 //
 /** @name Node flag field bit defs - interprete ID word as 64b word */

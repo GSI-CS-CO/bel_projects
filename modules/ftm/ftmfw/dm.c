@@ -709,7 +709,7 @@ uint32_t* dynamicNodeStaging(uint32_t* node, uint32_t* thrData) {
         DBPRINT2("#%02u: Ref is a 64b word\n", cpuId);
         nodeTmp[i+1] = (uint32_t)(val); //It's MSB first, so the adr can be 64b high word or 32b word. if its 64b, fill in low word at i+1
       }
-    } //ELSE - it's a IM or VAL, we leave the original value in, regardless if its 32 or 64b
+    } //ELSE - it's a IM or ADR, we leave the original value in, regardless if its 32 or 64b
     wordFormats >>= 3; //shift right by 3 bits to get next wordFormat
   }
   
@@ -719,7 +719,7 @@ uint32_t* dynamicNodeStaging(uint32_t* node, uint32_t* thrData) {
   //copy back all changes to immediate/val fields
   wordFormats = nodeTmp[NODE_OPT_DYN >> 2]; //reload description
   for(unsigned i = 0; i < 9; i++) {
-    if ((wordFormats & DYN_MODE_MSK) < DYN_MODE_REF) { node[i] = nodeTmp[i]; } // immediate/val ?
+    if ((wordFormats & DYN_MODE_MSK) < DYN_MODE_REF) { node[i] = nodeTmp[i]; } // immediate/adr ?
     wordFormats >>= 3; //shift right by 3 bits to get next wordFormat
   }
 

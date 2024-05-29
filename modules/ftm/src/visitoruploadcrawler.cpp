@@ -169,7 +169,9 @@ mVal VisitorUploadCrawler::getRefLinks() const {
 
   for (out_cur = out_begin; out_cur != out_end; ++out_cur)
   {
-    if (g[*out_cur].type == det::sRef) {
+
+
+    if ((g[*out_cur].type == det::sAdr) || (g[*out_cur].type == det::sRef) || (g[*out_cur].type == det::sRef2)) {
       log<DEBUG_LVL2>(L"Found Reflink to TargetNode %1%. Offset Source: %3% Offset Target: %2% Width: %4%") % g[target(*out_cur,g)].name.c_str() % g[*out_cur].fhead.c_str() % g[*out_cur].ftail.c_str() % g[*out_cur].bwidth.c_str();
       uint32_t oTarget  = s2u<uint32_t>(g[*out_cur].fhead);
       uint32_t oSource  = s2u<uint32_t>(g[*out_cur].ftail);
@@ -177,7 +179,11 @@ mVal VisitorUploadCrawler::getRefLinks() const {
       
 
       unsigned bIdx = oSource / 4 * 3; //idx of descriptor
-      uint32_t bDesc = ((width & DYN_WIDTH64_MSK) << DYN_WIDTH64_POS) | ((DYN_MODE_REF & DYN_MODE_MSK) << DYN_MODE_POS); //descriptor bits for this ref
+      uint32_t dynMode = DYN_MODE_REF2;
+      if (g[*out_cur].type == det::sRef)      { dynMode = DYN_MODE_REF; }
+      else { if (g[*out_cur].type == det::sAdr) dynMode = DYN_MODE_ADR; }
+
+      uint32_t bDesc = ((width & DYN_WIDTH64_MSK) << DYN_WIDTH64_POS) | ((dynMode & DYN_MODE_MSK) << DYN_MODE_POS); //descriptor bits for this ref
       dynOps |= bDesc << bIdx; // add to dynops
       log<DEBUG_LVL2>(L"Descriptor: idx %1% bshift %2% dynOps Slice %3$#02x shifted slice %4$#08x") % (oSource>>2) % bIdx % bDesc % (bDesc << bIdx);
 

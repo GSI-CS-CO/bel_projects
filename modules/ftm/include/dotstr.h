@@ -79,9 +79,12 @@ namespace DotStr {
       extern const std::string sDynRes;
       extern const std::string sMeta;
 
+      extern const std::string sIm;
+      extern const std::string sAdr;
       extern const std::string sRef;
-      extern const std::string sVal;
+      extern const std::string sRef2;
       extern const std::string sWrite;
+      extern const std::string sDyn[];
 
       extern const std::string sAny;
       extern const std::string sDynFlowDst;
