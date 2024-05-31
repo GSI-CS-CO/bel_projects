@@ -50,6 +50,7 @@
 #define WRF50_POSTTRIGGER_TLU        500000    // posttrigger [ns] for avoiding late messages from the TLU and defining an order (DM vs mains)x
 #define WRF50_CYCLELEN_MIN         19800000    // minimum cycle length [ns]
 #define WRF50_CYCLELEN_MAX         20400000    // maximum cycle length [ns]
+#define WRF50_TUNE_MSG_DELAY        1000000    // delay for deadline for sending WRF50_ECADO_F50_TUNE message
 //#define WRF50_CYCLEDIFF_MAX            1000    // maximum difference between cycle length of Data Master und mains [ns], used for set-value
 //#define WRF50_LOCK_DIFFCYCLE           2000    // maximum difference between cycle length of Data Master und mains [ns], criterium for lock state
 #define WRF50_LOCK_DIFFDM             20000    // maximum difference of WRF50_SHARED_GET_OFFS_DM_ACT, criterium for lock state

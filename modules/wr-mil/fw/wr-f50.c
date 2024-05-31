@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 2024-May-28
+ *  version : 2024-May-31
  *
  *  firmware required for the 50 Hz mains -> WR gateway
  *  
@@ -41,7 +41,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define WRF50_FW_VERSION      0x000003    // make this consistent with makefile
+#define WRF50_FW_VERSION      0x000004    // make this consistent with makefile
 
 
 // standard includes
@@ -572,7 +572,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       // timing message for Data Master
       sendEvtId      = fwlib_buildEvtidV1(PZU_F50, WRF50_ECADO_F50_TUNE, 0x0, 0x0, 0x0, 0x0);
       sendParam      = (uint64_t)getTDMSet & 0xffffffff;
-      sendDeadline   = tluStamp + (uint64_t)(one_us_ns * 1000);                                            // send message exactly 1ms after most recent mains cycle start
+      sendDeadline   = tluStamp + (uint64_t)WRF50_TUNE_MSG_DELAY;                                          // send message with a defined offset to 50 Hz mains signal
       
       fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0);                                        // write DM set-value of cycle length to local ECA; helpful for debugging
 

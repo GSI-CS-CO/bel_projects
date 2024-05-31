@@ -66,7 +66,7 @@ $(info compiling x86 binaries for $(SYSENV))
 $(info ours CCFLAGS for c code is $(CCFLAGS))
 $(info ours CXFLAGS for c++ code is $(CXFLAGS))
 
-TARGETS     := wrmil-ctl wrmil-serv-mon wrmil-client-mon wrf50-ctl
+TARGETS     := wrmil-ctl wrmil-serv-mon wrmil-client-mon wrf50-ctl wrf50-serv-mon 
 
 all: lib $(TARGETS)
 
@@ -82,6 +82,9 @@ wrmil-client-mon: wrmil-client-mon.c
 wrmil-serv-mon: wrmil-serv-mon.cpp
 	$(CXX) $(CFLAGS) $(CXFLAGS) ../../common-libs/x86/common-lib.c -o wrmil-serv-mon wrmil-serv-mon.cpp $(XLIBS) -ldim -lpthread
 
+wrf50-serv-mon: wrf50-serv-mon.cpp
+	$(CXX) $(CFLAGS) $(CXFLAGS) ../../common-libs/x86/common-lib.c -o wrf50-serv-mon wrf50-serv-mon.cpp $(XLIBS) -ldim -lpthread
+
 lib: wrmillib.c
 	$(CC) $(CFLAGS) $(CCFLAGS) -fPIC -c wrmillib.c ../../common-libs/x86/common-lib.c $(LIBS)
 	$(CC) -shared -Wl,-soname,$(WRMILLIB).1 -o $(WRMILLIB).1.0 wrmillib.o common-lib.o -L $(EB)/.libs -letherbone -lm
@@ -89,7 +92,7 @@ lib: wrmillib.c
 	ln -sf $(WRMILLIB).1 $(WRMILLIB)
 
 clean:
-	rm -f *.o wrmil-ctl wrf50-ctl wrmil-serv-mon wrmil-client-mon libwrmillib.so*
+	rm -f *.o wrmil-ctl wrf50-ctl wrmil-serv-mon wrmil-client-mon wrf50-serv-mon libwrmillib.so*
 
 install:
 	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/bin	
