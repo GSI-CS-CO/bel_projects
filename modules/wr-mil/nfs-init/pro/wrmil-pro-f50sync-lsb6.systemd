@@ -7,5 +7,6 @@
 
 # hack for acc7
 export DIM_DNS_NODE=asl105
-#wrmil-serv-mon tr0 -s0 -m25 -d pro -c2 &
+wrf50-serv-mon tr0 -d pro | logger -t wr-f50 -sp local0.info &
+
 

@@ -86,6 +86,7 @@ deploy:
 	cp $(USRPATH)/lib/libdim.so $(STAGING)$(ARCH)$(PREFIX)/usr/lib      # '/usr' is a hack
 	cp $(SW)/wrmil-serv-mon $(STAGING)$(ARCH)$(PREFIX)/usr/bin          # '/usr' is a hack
 	cp $(SW)/wrmil-client-mon $(STAGING)$(ARCH)$(PREFIX)/usr/bin        # '/usr' is a hack
+	cp $(SW)/wrf50-serv-mon $(STAGING)$(ARCH)$(PREFIX)/usr/bin          # '/usr' is a hack
 	cp $(FW)/*.bin $(STAGING)/firmware                   
 
 # configuration; the format is 'wrmil-<environment>-<machine>-<room>-<function>_start.sh'

@@ -175,7 +175,6 @@ void calcStats(double *meanNew,         // new mean value, please remember for l
 // clear statistics
 void clearStats()
 {
-  // monData.gid      = 0x0;
   monData.nFwSnd     = 0x0;
   monData.nFwRecD    = 0x0;
   monData.nFwRecT    = 0x0;
@@ -235,18 +234,20 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
       // cycle start message from Data Master has been received
       monData.nStart++; 
       deadlineDmMsgAct             = deadline.getTAI();
+
       if (monData.nStart > WRF50_N_STAMPS) {
         // assume we are in a valid regime
         flagDmMsg                  = 1;
         cyclenDmAct                = (int32_t)(deadlineDmMsgAct - deadlineDmMsgPrev);
 
         // check if DM is within limits
-        if (cyclenDmAct > WRF50_CYCLELEN_MAX)                  printf("wrf50: Data Master - actual cycle length exceeds maximum value : %10.3f us\ns", (double)cyclenDmAct/1000.0);
-        if (cyclenDmAct < WRF50_CYCLELEN_MIN)                  printf("wrf50: Data Master - actual cycle length below minimum value   : %10.3f us\ns", (double)cyclenDmAct/1000.0);
+        if (cyclenDmAct > WRF50_CYCLELEN_MAX)                  printf("wr-f50: Data Master - actual cycle length exceeds maximum value : %10.3f us\n", (double)cyclenDmAct/1000.0);
+        if (cyclenDmAct < WRF50_CYCLELEN_MIN)                  printf("wr-f50: Data Master - actual cycle length below minimum value   : %10.3f us\n", (double)cyclenDmAct/1000.0);
         tmp                        = (int32_t)(cyclenDmAct - cyclenDmPrev);
-        if (abs(tmp)    > WRF50_LOCK_DIFFDM)                   printf("wrf50: Data Master - actual and previous cycle length differ by: %10.3f us\n", (double)tmp/1000.0);
-        cyclenDmPrev               = cyclenDmPrev;
+        if (abs(tmp)    > WRF50_LOCK_DIFFDM)                  printf("wr-f50: Data Master - actual and previous cycle length differ by: %10.3f us\n", (double)tmp/1000.0);
+        cyclenDmPrev               = cyclenDmAct;
       }  // if nStart
+      cyclenDmPrev                 = deadlineDmMsgAct -  deadlineDmMsgPrev;
       deadlineDmMsgPrev            = deadlineDmMsgAct;
       
       break;
@@ -255,39 +256,41 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
       monData.nStop++;
       deadlineF50Act               = deadline.getTAI() - (uint64_t)WRF50_POSTTRIGGER_TLU;
 
-      if (monData.nStop >  WRF50_N_STAMPS) {
+      if (monData.nStop >  WRF50_N_STAMPS + 1) {
         // assume we are in a valid regime
 
         // check if mains is wihin limits
         cyclenF50Act               = (int32_t)(deadlineF50Act - deadlineF50Prev);
-        if (cyclenF50Act > WRF50_CYCLELEN_MAX)                 printf("wrf50: 50 Hz mains - actual cycle length exceeds maximum value : %10.3f us\ns", (double)cyclenF50Act/1000.0);
-        if (cyclenF50Act < WRF50_CYCLELEN_MIN)                 printf("wrf50: 50 Hz mains - actual cycle length exceeds minimum value : %10.3f us\ns", (double)cyclenF50Act/1000.0);
+        if (cyclenF50Act > WRF50_CYCLELEN_MAX)                 printf("wr-f50: 50 Hz mains - actual cycle length exceeds maximum value : %10.3f us\n", (double)cyclenF50Act/1000.0);
+        if (cyclenF50Act < WRF50_CYCLELEN_MIN)                 printf("wr-f50: 50 Hz mains - actual cycle length exceeds minimum value : %10.3f us\n", (double)cyclenF50Act/1000.0);
         tmp                        = cyclenF50Act - cyclenF50Prev;
-        if (abs(tmp) > WRF50_LOCK_DIFFMAINS)                   printf("wrf50: 50 Hz mains - actual and previous cycle length differ by: %10.3f us\ns", (double)tmp/1000.0);
-        cyclenF50Prev              = cyclenF50Act;
+        if (abs(tmp) > WRF50_LOCK_DIFFMAINS)                   printf("wr-f50: 50 Hz mains - actual and previous cycle length differ by: %10.3f us\n", (double)tmp/1000.0);
+        // cyclenF50Prev              = cyclenF50Act;
 
         // check if we Data Master is locked
-        if (!flagDmMsg)                                        printf("wrf50: missing cycle start message from Data Master\n");
+        if (!flagDmMsg)                                        printf("wr-f50: missing cycle start message from Data Master\n");
         else {
           // we have a message from Data Master, check if Data Master is locked
           tmp                      = (int32_t)(deadlineDmMsgAct - deadlineF50Act);
-          if (abs(tmp) > WRF50_LOCK_DIFFDM)                    printf("wrf50: Data Master not synched to 50 Hz mains, current offset  : %10.3f us\ns", (double)tmp/1000.0);
-
-          // calc stats
-          monData.nMatch++;
-          monData.tAct                  = (double)tmp;
-          if (monData.tAct < monData.tMin) monData.tMin = monData.tAct;
-          if (monData.tAct > monData.tMax) monData.tMax = monData.tAct;
+          if (abs(tmp) > WRF50_LOCK_DIFFDM)                    printf("wr-f50: Data Master not synched to 50 Hz mains, current offset  : %10.3f us\n", (double)tmp/1000.0);
+          else {
+            // calc stats
+            monData.tAct                  = (double)tmp / 1000.0;
+            monData.nMatch++;
+            if (monData.tAct < monData.tMin) monData.tMin = monData.tAct;
+            if (monData.tAct > monData.tMax) monData.tMax = monData.tAct;
           
-          calcStats(&mean, tAveOld, &stream, tAveStreamOld, monData.tAct, monData.nMatch , &dummy, &sdev);
-          tAveOld       = mean;
-          tAveStreamOld = stream;
-          monData.tAve  = mean;
-          monData.tSdev = sdev;
+            calcStats(&mean, tAveOld, &stream, tAveStreamOld, monData.tAct, monData.nMatch , &dummy, &sdev);
+            tAveOld       = mean;
+            tAveStreamOld = stream;
+            monData.tAve  = mean;
+            monData.tSdev = sdev;
+          } // else abs
 
           flagDmMsg                = 0;
         } // else flagDmMsg
       } // if nStop
+      cyclenF50Prev                = deadlineF50Act - deadlineF50Prev;
       deadlineF50Prev              = deadlineF50Act;
 
       break;
@@ -373,7 +376,6 @@ int main(int argc, char** argv)
   bool     useFirstDev    = false;
   bool     getVersion     = false;
   bool     startServer    = false;
-  uint32_t gid=0xffffffff;                // gid for gateway
 
   char    *tail;
 
@@ -432,11 +434,6 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  if (gid == 0xffffffff) {
-    std::cerr << program << ": parameter -s is non-optional\n";
-    return 1;
-  } // if gid
-
   // no parameters, no command: just display help and exit
   if ((optind == 1) && (argc == 1)) {
     help();
@@ -445,9 +442,10 @@ int main(int argc, char** argv)
 
   deviceName = argv[optind];
   gethostname(disHostname, 32);
+  sprintf(domainName,"%s", "pzu_f50");
   
-  if (optind+1 < argc) sprintf(prefix, "wrf50_%s_%s-mon", argv[++optind], domainName);
-  else                 sprintf(prefix, "wrf50_%s-mon", domainName);
+  if (optind+1 < argc) sprintf(prefix, "wrmil_%s_%s-mon", argv[++optind], domainName);
+  else                 sprintf(prefix, "wrmil_%s-mon", domainName);
 
   if (startServer) {
     printf("%s: starting server using prefix %s\n", program, prefix);
@@ -488,7 +486,7 @@ int main(int argc, char** argv)
     
     if (getVersion) {
       wrmil_version_library(&verLib);
-      printf("wrf50: serv-sys / library / firmware /  version %s / %s",  wrmil_version_text(verLib), wrmil_version_text(WRF50_SERV_MON_VERSION));     
+      printf("wr-f50: serv-sys / library / firmware /  version %s / %s",  wrmil_version_text(verLib), wrmil_version_text(WRF50_SERV_MON_VERSION));     
       wrmil_version_firmware(ebDevice, &verFw);
       printf(" / %s\n",  wrmil_version_text(verFw));     
     } // if getVersion
@@ -499,9 +497,9 @@ int main(int argc, char** argv)
     MASP::Logger::middleware_logger = &no_log;
 
     MASP::StatusEmitter emitter(get_config());
-    std::cout << "wr-mil: emmitting to MASP as sourceId: " << maspSourceId << ", using nomen: " << maspNomen << ", environment pro: " << maspProductive << std::endl;
+    std::cout << "wr-f50: emmitting to MASP as sourceId: " << maspSourceId << ", using nomen: " << maspNomen << ", environment pro: " << maspProductive << std::endl;
 #else
-    std::cout << "wr-mil: no MASP emitter!" << std::endl;
+    std::cout << "wr-f50: no MASP emitter!" << std::endl;
 #endif // USEMASP
 
     // create software action sink
@@ -517,13 +515,13 @@ int main(int argc, char** argv)
     // have the same deadline as the 50 Hz mains TTL signal 
     tmpTag        = tagStart;
     snoopID       = ((uint64_t)FID << 60) | ((uint64_t)PZU_F50 << 48) | ((uint64_t)WRF50_ECADO_F50_DM << 36);
-    condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xffffffff00000000, 0));
+    condition[0]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xffffffff00000000, 0));
     tag[0]        = tmpTag;
 
     // message that is injected locally by the ECA TLU when receiving a 50 Hz mains TTL signal
     tmpTag        = tagStop;
     snoopID       = ((uint64_t)FID << 60) | ((uint64_t)PZU_F50 << 48) | ((uint64_t)WRF50_ECADO_F50_TLU  << 36) | (uint64_t)RISING_EDGE_ID;
-    condition[0]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xffffffffffffffff, WRF50_POSTTRIGGER_TLU));
+    condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xffffffffffffffff, WRF50_POSTTRIGGER_TLU));
     tag[1]        = tmpTag;
 
     // let's go!
@@ -541,24 +539,31 @@ int main(int argc, char** argv)
     uint64_t      t_new, t_old;
     uint32_t      tmp32a, tmp32b, tmp32c, tmp32d;
     int32_t       stmp32a, stmp32b, stmp32c, stmp32d, stmp32e, stmp32f;
-    uint32_t      fwEvtsLate, fwState, fwVersion, fwLockState, fwNLocked, fwNCycles, fwMode;
+    uint32_t      fwTMainsAct, fwEvtsLate, fwState, fwVersion, fwLockState, fwNLocked, fwNCycles, fwMode;
     uint64_t      fwStatus, fwLockDate;
     int32_t       fwF50Offs;
+    int           nUpdate = 0;
 
     t_old = comlib_getSysTime();
     while(true) {
       // irgendwo hier periodisch DIM service aktualisieren bzw. update auf Bildschirm bzw. update MASP
-      monData.gid   = gid;
+      monData.gid   = PZU_F50;
       monData.cMode = modeCompare;
       saftlib::wait_for_signal(UPDATE_TIME_MS / 10);
 
       t_new = comlib_getSysTime();
       if (((t_new - t_old) / one_ms_ns) > UPDATE_TIME_MS) {
         t_old      = t_new;
+        nUpdate++;
+        if (nUpdate > 10) {
+           printf("wr-f50: act mains frequency                                     : %10.3f Hz\n", 1000000000.0/(double)fwTMainsAct);
+           fflush(stdout);                                                                         // required for immediate writing (if stdout is piped to syslog)
+           nUpdate = 0;
+        } // argh ...
 
         // update firmware data
         wrmil_common_read(ebDevice, &fwStatus, &fwState, &tmp32a, &tmp32b, &fwVersion, &tmp32c, 0);
-        wrf50_info_read(ebDevice, &fwF50Offs, &fwMode , &tmp32a, &tmp32b, &tmp32c, &stmp32a, &stmp32b, &stmp32c, &stmp32d, &stmp32e, &stmp32f, &fwLockState, &fwLockDate, &fwNLocked,
+        wrf50_info_read(ebDevice, &fwF50Offs, &fwMode , &fwTMainsAct, &tmp32b, &tmp32c, &stmp32a, &stmp32b, &stmp32c, &stmp32d, &stmp32e, &stmp32f, &fwLockState, &fwLockDate, &fwNLocked,
                         &fwNCycles, &fwEvtsLate, &tmp32d, 0);
 
         disStatus  = fwStatus;
@@ -567,7 +572,7 @@ int main(int argc, char** argv)
                
         // update monitoring data
         monData.nFwSnd    = fwNCycles;
-        monData.nFwRecT   = 0;
+        monData.nFwRecT   = fwNCycles;
         monData.nFwRecErr = 0;
         monData.nFwRecD   = 0;
         disMonData        = monData;
