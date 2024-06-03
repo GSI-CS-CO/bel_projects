@@ -127,10 +127,14 @@ int32_t  tmp1;
 // important local variables
 uint64_t stampsF50[WRF50_N_STAMPS];        // previous timestamps of 50 Hz signal   (most recent is n = WR50_N_STAMPS)
 uint64_t stampsDM[WRF50_N_STAMPS];         // previous timestamps of DM cycle start (most recent is n = WR50_N_STAMPS)
-uint64_t cyclenF50;                        // actual cycle length of 50 Hz mains
-uint64_t cyclenDM;                         // actual cycle length of Data Master
-uint64_t nxtStampF50;                      // predicted start of next cycle, 50 Hz mains
-uint64_t nxtStampDM;                       // predicted start of next cycle, 50 Hz mains
+
+uint64_t t0F50;                            // timestamp of actual cycle,                 50 Hz mains
+uint64_t t1F50;                            // timestamp of actual cycle + 1 (predicted), 50 Hz mains
+uint64_t t2F50;                            // timestamp of actual cycle + 2 (predicted), 50 Hz mains
+uint64_t t0DM;                             // timestamp of actual cycle,                 Data Master
+uint64_t t1DM;                             // timestamp of actual cycle + 1 (predicted), Data Master
+uint64_t t2DM;                             // timestamp of actual cycle + 2 (predicted), Data Master
+
 int      validF50;                         // mains timestamps are valid
 int      validDM;                          // Data Master timestamps are valid
 
@@ -323,7 +327,6 @@ uint32_t extern_exitActionOperation()
 // - calculate actual cycle length
 void updateStamps(uint64_t newStamp,               // new timestamp
                   uint64_t stamps[],               // all timestamps
-                  uint64_t *actT,                  // actual cycle length averaged over all timestamps
                   int      *flagValid              // flags (or not) return values are valid
                   )
 {
@@ -345,12 +348,13 @@ void updateStamps(uint64_t newStamp,               // new timestamp
 
   //pp_printf("wr-f50, update: %u\n", (uint32_t)cyclen);
 
-  *actT     = cyclen;
 } // updateStamps
 
 
 // calculates next timestamp
-uint64_t nextStamp(uint64_t stamps[]               // all timestamps
+uint64_t nextStamp(uint64_t stamps[],              // all timestamps
+                   uint64_t *t1,                   // time stamp of actual cycle + 1 (predicted) 
+                   uint64_t *t2                    // time stamp of actual cycle + 2 (predicted) 
                    )
 {
   // calc timestamp via linear regression t = a + b*x
@@ -378,11 +382,6 @@ uint64_t nextStamp(uint64_t stamps[]               // all timestamps
   int64_t    y_mean;                               // mean of y values
   int64_t    n;                                    // number of measurements
 
-  //uint64_t   t1, t2;
-  //uint32_t   dt;
-  //int32_t    tmp;
-  //t1 = getSysTime();
-  
   // basic check
   if (WRF50_N_STAMPS < 2) return getSysTime() + WRF50_CYCLELEN_MIN;
 
@@ -406,9 +405,6 @@ uint64_t nextStamp(uint64_t stamps[]               // all timestamps
   //tmp = (uint32_t)y_mean;
   //pp_printf("wr-f50: y_mean %d\n", tmp);
 
-  
-  
-  
   // linear regression through coordinate system origin; use oldest timestamp as origin
   for (i=0; i<n; i++) {
     num    += i * (stamps[i] - x0);
@@ -425,21 +421,25 @@ uint64_t nextStamp(uint64_t stamps[]               // all timestamps
   //tmp    = (uint32_t)a;
   //pp_printf("wr-f50: a %d\n", tmp);
 
-  // next timestamp
-  nxtStamp = x0 + a + b * (n + 1 - 1);
+  // timestamp of actual cycle + 1
+  nxtStamp = x0 + a + b * (n - 1 + 1);
 
   // respect hard limits
   actStamp = stamps[WRF50_N_STAMPS - 1];
   if ((nxtStamp - actStamp) < WRF50_CYCLELEN_MIN) nxtStamp = actStamp + WRF50_CYCLELEN_MIN;
   if ((nxtStamp - actStamp) > WRF50_CYCLELEN_MAX) nxtStamp = actStamp + WRF50_CYCLELEN_MAX;
 
-  //t2 = getSysTime();
-  //dt = (uint32_t)(t2 - t1);
-  //pp_printf("wr-f50: elapsed time for regression %u\n", dt);
-  //dt = (uint32_t)(nxtStamp - actStamp);
-  //pp_printf("wr-f50: estimated next cycle time %u\n", dt);
+  *t1 = nxtStamp;
 
-  return nxtStamp;
+  // timestamp of actual cycle + 2
+  nxtStamp = x0 + a + b * (n - 1 + 2);
+
+  // respect hard limits
+  actStamp = *t1;
+  if ((nxtStamp - actStamp) < WRF50_CYCLELEN_MIN) nxtStamp = actStamp + WRF50_CYCLELEN_MIN;
+  if ((nxtStamp - actStamp) > WRF50_CYCLELEN_MAX) nxtStamp = actStamp + WRF50_CYCLELEN_MAX;
+
+  *t2 = nxtStamp;
 } // calcNextStamp
 
 
@@ -469,6 +469,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
   uint64_t tluStamp;                                          // timestamp of TLU (50 Hz mains)
   uint64_t dmStamp;                                           // timestamp from DM
+  uint64_t dmStampNxt;                                        // next timestamp for DM
   uint64_t tmpEvtNo; 
   
   
@@ -486,14 +487,21 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       if (recGid != PZU_F50) return WRF50_STATUS_BADSETTING;
 
       // update timestamps
-      updateStamps(recDeadline, stampsDM, &cyclenDM, &validDM);
+      updateStamps(recDeadline, stampsDM, &validDM);
       if (validDM) {
-        getTDMAct  = cyclenDM;
+        // in an ideal world, getTDMAct will equal getTDMSet
+        t0DM       = stampsDM[WRF50_N_STAMPS - 1];
+        getTDMAct  = t0DM - stampsDM[WRF50_N_STAMPS - 2];
  
-        // statistics Data Master, comparing actual and set value
-        getOffsDMAct = recDeadline - nxtStampDM;
+        // statistics Data Master, comparing actual and predicted value
+        // in an ideal world, the offset should be zero
+        getOffsDMAct = t0DM - t1DM;     // t1DM from previous cycle
         if (getOffsDMAct > getOffsDMMax) getOffsDMMax = getOffsDMAct;
         if (getOffsDMAct < getOffsDMMin) getOffsDMMin = getOffsDMAct;
+
+        // calculate next cycle Start of Data Master
+        // we know getTDMSet from the previous cycle
+        t1DM = t0DM + getTDMSet;
       } // if validDM
 
       break;
@@ -511,12 +519,13 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       tluStamp      = recDeadline - (uint64_t)WRF50_POSTTRIGGER_TLU;
 
       // update time stamps
-      updateStamps(tluStamp, stampsF50, &cyclenF50, &validF50);
+      updateStamps(tluStamp, stampsF50, &validF50);
       if (validF50) {
-        getTMainsAct = cyclenF50;
+        t0F50        = stampsF50[WRF50_N_STAMPS - 1];
+        getTMainsAct = t0F50 - stampsF50[WRF50_N_STAMPS - 2];
         
         // statistics 50 Hz mains, comparing actual and predicted value
-        getOffsMainsAct = tluStamp - nxtStampF50;
+        getOffsMainsAct = t0F50 - t1F50;
         if (getOffsMainsAct > getOffsMainsMax) getOffsMainsMax = getOffsMainsAct;
         if (getOffsMainsAct < getOffsMainsMin) getOffsMainsMin = getOffsMainsAct;
       }
@@ -556,18 +565,17 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       // - we have done the essential statistics
       // - we have set the lock state
       // todo:
-      // - estimate start of next 50 Hz mains cycle and set new period of Data Master
+      // - estimate start of next 50 Hz mains cycles and set new period of Data Master
       // - send messages to own ECA and WR network
 
-      // estimate next cycle start
-      nxtStampF50 = nextStamp(stampsF50);
+      // estimate cycle start of next and following cycle 
+      nextStamp(stampsF50, &t1F50, &t2F50);
 
       // calc set-value of period for next DM cycle and respect hard limits
-      getTDMSet      = nxtStampF50 - stampsDM[WRF50_N_STAMPS - 1];
+      getTDMSet      = t2F50 - t1DM;
       getTDMSet     -= setF50Offset;                                    // add desired phase offset
       if (getTDMSet < WRF50_CYCLELEN_MIN) getTDMSet = WRF50_CYCLELEN_MIN;
       if (getTDMSet > WRF50_CYCLELEN_MAX) getTDMSet = WRF50_CYCLELEN_MAX;
-      nxtStampDM     = stampsDM[WRF50_N_STAMPS - 1] + getTDMSet;        // only needed for statistics
 
       // timing message for Data Master
       sendEvtId      = fwlib_buildEvtidV1(PZU_F50, WRF50_ECADO_F50_TUNE, 0x0, 0x0, 0x0, 0x0);

@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 27-May-2024
+ *  version : 03-June-2024
  *
  * library for wr-mil
  *
@@ -366,9 +366,6 @@ void wrf50_printDiag(int32_t f50Offs, uint32_t mode, uint32_t TMainsAct, uint32_
   printf("act offset mains: act - predict [us]: %15.3f\n"      , (double)offsMainsAct/1000.0);
   printf("min offset mains: act - predict [us]: %15.3f\n"      , (double)offsMainsMin/1000.0);
   printf("max offset mains: act - predict [us]: %15.3f\n"      , (double)offsMainsMax/1000.0);
-  printf("~act offset DM - mains: act [us]    : %15.3f\n"      , (double)(offsDmAct - offsMainsAct)/1000.0);
-  printf("~min offset DM - mains: act [us]    : %15.3f\n"      , (double)(offsDmMin - offsMainsMin)/1000.0);
-  printf("~max offset DM - mains: act [us]    : %15.3f\n"      , (double)(offsDmMax - offsMainsMax)/1000.0);
   printf("lock state                          : %15u\n"        , lockState);
   printf("lock date                           : %s\n"          , timestr);
   printf("# locks                             : %15u\n"        , nLocked);

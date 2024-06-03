@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 27-May-2024
+ *  version : 03-Jun-2024
  *
  * library for wr-mil
  *
@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define WRMILLIB_VERSION 0x000005
+#define WRMILLIB_VERSION 0x000006
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  WRMILLIB_STATUS_OK                 0            // OK
