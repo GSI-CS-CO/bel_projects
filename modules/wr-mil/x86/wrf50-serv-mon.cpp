@@ -244,7 +244,7 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
         if (cyclenDmAct > WRF50_CYCLELEN_MAX)                  printf("wr-f50: Data Master - actual cycle length exceeds maximum value : %10.3f us\n", (double)cyclenDmAct/1000.0);
         if (cyclenDmAct < WRF50_CYCLELEN_MIN)                  printf("wr-f50: Data Master - actual cycle length below minimum value   : %10.3f us\n", (double)cyclenDmAct/1000.0);
         tmp                        = (int32_t)(cyclenDmAct - cyclenDmPrev);
-        if (abs(tmp)    > WRF50_LOCK_DIFFDM)                  printf("wr-f50: Data Master - actual and previous cycle length differ by: %10.3f us\n", (double)tmp/1000.0);
+        if (abs(tmp)    > WRF50_LOCK_DIFFDM)                   printf("wr-f50: Data Master - actual and previous cycle length differ by: %10.3f us\n", (double)tmp/1000.0);
         cyclenDmPrev               = cyclenDmAct;
       }  // if nStart
       cyclenDmPrev                 = deadlineDmMsgAct -  deadlineDmMsgPrev;
@@ -272,7 +272,7 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
         else {
           // we have a message from Data Master, check if Data Master is locked
           tmp                      = (int32_t)(deadlineDmMsgAct - deadlineF50Act);
-          if (abs(tmp) > WRF50_LOCK_DIFFDM)                    printf("wr-f50: Data Master not synched to 50 Hz mains, current offset  : %10.3f us\n", (double)tmp/1000.0);
+          if (abs(tmp) > (WRF50_CYCLELEN_MIN / 360))           printf("wr-f50: Data Master not synched to 50 Hz mains, current offset  : %10.3f us\n", (double)tmp/1000.0);
           else {
             // calc stats
             monData.tAct                  = (double)tmp / 1000.0;
