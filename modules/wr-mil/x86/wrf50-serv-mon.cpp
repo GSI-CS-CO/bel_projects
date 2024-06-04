@@ -538,7 +538,7 @@ int main(int argc, char** argv)
     saftlib::Time deadline_t;
     uint64_t      t_new, t_old;
     uint32_t      tmp32a, tmp32b, tmp32c, tmp32d;
-    int32_t       stmp32a, stmp32b, stmp32c, stmp32d, stmp32e, stmp32f;
+    int32_t       stmp32a, stmp32b, stmp32c, stmp32d, stmp32e, stmp32f, stmp32g, stmp32h, stmp32i;
     uint32_t      fwTMainsAct, fwEvtsLate, fwState, fwVersion, fwLockState, fwNLocked, fwNCycles, fwMode, fwOffsDone;
     uint64_t      fwStatus, fwLockDate;
     int32_t       fwF50Offs;
@@ -563,7 +563,7 @@ int main(int argc, char** argv)
 
         // update firmware data
         wrmil_common_read(ebDevice, &fwStatus, &fwState, &tmp32a, &tmp32b, &fwVersion, &tmp32c, 0);
-        wrf50_info_read(ebDevice, &fwF50Offs, &fwMode , &fwTMainsAct, &tmp32b, &tmp32c, &stmp32a, &stmp32b, &stmp32c, &stmp32d, &stmp32e, &stmp32f, &fwLockState, &fwLockDate, &fwNLocked,
+        wrf50_info_read(ebDevice, &fwF50Offs, &fwMode , &fwTMainsAct, &tmp32b, &tmp32c, &stmp32a, &stmp32b, &stmp32c, &stmp32g, &stmp32h, &stmp32i, &stmp32d, &stmp32e, &stmp32f, &fwLockState, &fwLockDate, &fwNLocked,
                         &fwNCycles, &fwEvtsLate, &fwOffsDone, &tmp32d, 0);
 
         disStatus  = fwStatus;

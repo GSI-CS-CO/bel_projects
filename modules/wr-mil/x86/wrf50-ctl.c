@@ -144,6 +144,9 @@ int main(int argc, char** argv) {
   int32_t  offsDmAct;
   int32_t  offsDmMin;
   int32_t  offsDmMax;
+  int32_t  dTDMAct;
+  int32_t  dTDMMin;
+  int32_t  dTDMMax;
   int32_t  offsMainsAct;
   int32_t  offsMainsMin;
   int32_t  offsMainsMax;
@@ -229,8 +232,8 @@ int main(int argc, char** argv) {
     // status
 
     wrmil_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
-    wrf50_info_read(ebDevice, &f50Offset, &mode, &TMainsAct, &TDmAct, &TDmSet, &offsDmAct, &offsDmMin, &offsDmMax, &offsMainsAct,
-                    &offsMainsMin, &offsMainsMax, &lockState, &lockDate, &nLocked, &nCycles, &nEvtsLate, &offsDone, &comLatency, 0);
+    wrf50_info_read(ebDevice, &f50Offset, &mode, &TMainsAct, &TDmAct, &TDmSet, &offsDmAct, &offsDmMin, &offsDmMax, &dTDMAct, &dTDMMin, &dTDMMax,
+                    &offsMainsAct, &offsMainsMin, &offsMainsMax, &lockState, &lockDate, &nLocked, &nCycles, &nEvtsLate, &offsDone, &comLatency, 0);
 
     // print set status bits (except OK)
     for (i = COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
@@ -282,8 +285,8 @@ int main(int argc, char** argv) {
       for (i = COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
         if ((statusArray >> i) & 0x1)  printf("    status bit is set : %s\n", wrmil_status_text(i));
       } // for i
-      wrf50_info_read(ebDevice, &f50Offset, &mode, &TMainsAct, &TDmAct, &TDmSet, &offsDmAct, &offsDmMin, &offsDmMax, &offsMainsAct,
-                      &offsMainsMin, &offsMainsMax, &lockState, &lockDate, &nLocked, &nCycles, &nEvtsLate, &offsDone, &comLatency, 1);
+      wrf50_info_read(ebDevice, &f50Offset, &mode, &TMainsAct, &TDmAct, &TDmSet, &offsDmAct, &offsDmMin, &offsDmMax, &dTDMAct, &dTDMMin, &dTDMMax,
+                      &offsMainsAct, &offsMainsMin, &offsMainsMax, &lockState, &lockDate, &nLocked, &nCycles, &nEvtsLate, &offsDone, &comLatency, 1);
     } // "diag"
   } //if command
 
@@ -313,8 +316,8 @@ if (snoop) {
       if ((actNTransfer   != nTransfer)    && (logLevel <= COMMON_LOGLEVEL_ONCE))    {printFlag = 1; actNTransfer   = nTransfer;}
 
       if (printFlag) {
-        wrf50_info_read(ebDevice, &f50Offset, &mode, &TMainsAct, &TDmAct, &TDmSet, &offsDmAct, &offsDmMin, &offsDmMax, &offsMainsAct,
-                        &offsMainsMin, &offsMainsMax, &lockState, &lockDate, &nLocked, &nCycles, &nEvtsLate, &offsDone, &comLatency, 0);
+        wrf50_info_read(ebDevice, &f50Offset, &mode, &TMainsAct, &TDmAct, &TDmSet, &offsDmAct, &offsDmMin, &offsDmMax, &dTDMAct, &dTDMMin, &dTDMMax,
+                        &offsMainsAct, &offsMainsMin, &offsMainsMax, &lockState, &lockDate, &nLocked, &nCycles, &nEvtsLate, &offsDone, &comLatency, 0);
         printf(", %s (%6u), ",  comlib_stateText(state), nBadState);
         if ((statusArray >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);
         else printf("NOTOK(%6u)\n", nBadStatus);

@@ -82,6 +82,9 @@ volatile uint32_t *pSharedGetTDMSet;       // pointer to a "user defined" u32 re
 volatile uint32_t *pSharedGetOffsDMAct;    // pointer to a "user defined" u32 register; here: offset of cycle start: t_DM_act - t_mains_act; actual value
 volatile uint32_t *pSharedGetOffsDMMin;    // pointer to a "user defined" u32 register; here: offset of cycle start: t_DM_act - t_mains_act; min value
 volatile uint32_t *pSharedGetOffsDMMax;    // pointer to a "user defined" u32 register; here: offset of cycle start: t_DM_act - t_mains_act; max value
+volatile uint32_t *pSharedGetDTDMAct;      // pointer to a "user defined" u32 register; here: change of period: DM_act - DM_previous; actual value
+volatile uint32_t *pSharedGetDTDMMin;      // pointer to a "user defined" u32 register; here: change of period: DM_act - DM_previous; min value   
+volatile uint32_t *pSharedGetDTDMMax;      // pointer to a "user defined" u32 register; here: change of period: DM_act - DM_previous; max value    
 volatile uint32_t *pSharedGetOffsMainsAct; // pointer to a "user defined" u32 register; here: offset of cycle start: t_mains_act - t_mains_predict; actual value
 volatile uint32_t *pSharedGetOffsMainsMin; // pointer to a "user defined" u32 register; here: offset of cycle start: t_mains_act - t_mains_predict; min value        
 volatile uint32_t *pSharedGetOffsMainsMax; // pointer to a "user defined" u32 register; here: offset of cycle start: t_mains_act - t_mains_predict; max value        
@@ -105,6 +108,9 @@ uint32_t getTDMSet;
 int32_t  getOffsDMAct;   
 int32_t  getOffsDMMin;   
 int32_t  getOffsDMMax;   
+int32_t  getDTDMAct;
+int32_t  getDTDMMin;
+int32_t  getDTDMMax;
 int32_t  getOffsMainsAct;
 int32_t  getOffsMainsMin;
 int32_t  getOffsMainsMax;
@@ -171,6 +177,9 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
   pSharedGetOffsDMAct     = (uint32_t *)(pShared + (WRF50_SHARED_GET_OFFS_DM_ACT     >> 2));
   pSharedGetOffsDMMin     = (uint32_t *)(pShared + (WRF50_SHARED_GET_OFFS_DM_MIN     >> 2));
   pSharedGetOffsDMMax     = (uint32_t *)(pShared + (WRF50_SHARED_GET_OFFS_DM_MAX     >> 2));
+  pSharedGetDTDMAct       = (uint32_t *)(pShared + (WRF50_SHARED_GET_DT_DM_ACT       >> 2));
+  pSharedGetDTDMMin       = (uint32_t *)(pShared + (WRF50_SHARED_GET_DT_DM_MIN       >> 2));
+  pSharedGetDTDMMax       = (uint32_t *)(pShared + (WRF50_SHARED_GET_DT_DM_MAX       >> 2));
   pSharedGetOffsMainsAct  = (uint32_t *)(pShared + (WRF50_SHARED_GET_OFFS_MAINS_ACT  >> 2));
   pSharedGetOffsMainsMin  = (uint32_t *)(pShared + (WRF50_SHARED_GET_OFFS_MAINS_MIN  >> 2));
   pSharedGetOffsMainsMax  = (uint32_t *)(pShared + (WRF50_SHARED_GET_OFFS_MAINS_MAX  >> 2));
@@ -231,6 +240,9 @@ void extern_clearDiag()
   getOffsDMAct    = 0x0;    
   getOffsDMMin    = 0x7fffffff;
   getOffsDMMax    = 0x80000000;
+  getDTDMAct      = 0x00000000;
+  getDTDMMin      = 0x00000000;
+  getDTDMMax      = 0x00000000;
   getOffsMainsAct = 0x0; 
   getOffsMainsMin = 0x7fffffff;
   getOffsMainsMax = 0x80000000;
@@ -298,7 +310,10 @@ uint32_t extern_entryActionOperation()
   *pSharedGetTDMSet         = 0x0;      
   *pSharedGetOffsDMAct      = 0x0;   
   *pSharedGetOffsDMMin      = 0x0;   
-  *pSharedGetOffsDMMax      = 0x0;   
+  *pSharedGetOffsDMMax      = 0x0;
+  *pSharedGetDTDMAct        = 0x0;
+  *pSharedGetDTDMMin        = 0x0;
+  *pSharedGetDTDMMax        = 0x0;
   *pSharedGetOffsMainsAct   = 0x0;
   *pSharedGetOffsMainsMin   = 0x0;
   *pSharedGetOffsMainsMax   = 0x0;
@@ -348,10 +363,8 @@ void updateStamps(uint64_t newStamp,               // new timestamp
     cyclen  = cyclen + stamps[i] - stamps[i-1];
   cyclen    = cyclen / (WRF50_N_STAMPS - 1);
   // check limits
-  if ((cyclen < (uint64_t)WRF50_CYCLELEN_MAX) && (cyclen > (uint64_t)WRF50_CYCLELEN_MIN)) *flagValid = 1;
-  else                                                                                    *flagValid = 0;
-
-  //pp_printf("wr-f50, update: %u\n", (uint32_t)cyclen);
+  if ((cyclen <= (uint64_t)WRF50_CYCLELEN_MAX) && (cyclen >= (uint64_t)WRF50_CYCLELEN_MIN)) *flagValid = 1;
+  else                                                                                      *flagValid = 0;
 
 } // updateStamps
 
@@ -493,13 +506,16 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
       // update timestamps
       updateStamps(recDeadline, stampsDM, &validDM);
+
       if (validDM) {
         // in an ideal world, getTDMAct will equal getTDMSet
         t0DM       = stampsDM[WRF50_N_STAMPS - 1];
         getTDMAct  = t0DM - stampsDM[WRF50_N_STAMPS - 2];
  
         // calculate next cycle Start of Data Master
-        // we know getTDMSet from the previous cycle
+        // - we know getTDMSet from the previous cycle
+        // - if not, set to a actual value
+        if (!getTDMSet) getTDMSet = getTDMAct;
         t1DM = t0DM + getTDMSet;
       } // if validDM
 
@@ -519,6 +535,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
       // update time stamps
       updateStamps(tluStamp, stampsF50, &validF50);
+
       if (validF50) {
         t0F50        = stampsF50[WRF50_N_STAMPS - 1];
         getTMainsAct = t0F50 - stampsF50[WRF50_N_STAMPS - 2];
@@ -533,7 +550,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         getOffsDMAct = t0DM - t0F50;
         if (getOffsDMAct > getOffsDMMax) getOffsDMMax = getOffsDMAct;
         if (getOffsDMAct < getOffsDMMin) getOffsDMMin = getOffsDMAct;
-
       }
 
       // we don't know the current situation, set to lock state 'unknown'
@@ -598,11 +614,11 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         // mimic 'cycle start' message from DM
         sendEvtId    = fwlib_buildEvtidV1(PZU_F50, WRF50_ECADO_F50_DM, 0x0, 0x0, 0x0, 0x0);
         sendParam    = 0x0;
-        sendDeadline = stampsDM[WRF50_N_STAMPS - 1] + (uint64_t)getTDMSet;
+        sendDeadline = t1DM + (uint64_t)getTDMSet;
         fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0);                                      
       } // else LOCK_DM
 
-      getOffsDone    = getSysTime() - tluStamp;
+      getOffsDone    = (uint32_t)(getSysTime() - tluStamp);
                                             
       break;
     default :                                                         // flush ECA Queue
@@ -682,6 +698,9 @@ int main(void) {
     *pSharedGetOffsDMAct      = getOffsDMAct;
     *pSharedGetOffsDMMin      = getOffsDMMin;
     *pSharedGetOffsDMMax      = getOffsDMMax;
+    *pSharedGetDTDMAct        = getDTDMAct;
+    *pSharedGetDTDMMin        = getDTDMMin;
+    *pSharedGetDTDMMax        = getDTDMMax;
     *pSharedGetOffsMainsAct   = getOffsMainsAct;
     *pSharedGetOffsMainsMin   = getOffsMainsMin;
     *pSharedGetOffsMainsMax   = getOffsMainsMax;

@@ -50,12 +50,13 @@
 #define WRF50_POSTTRIGGER_TLU        500000    // posttrigger [ns] for avoiding late messages from the TLU and defining an order (DM vs mains)x
 #define WRF50_CYCLELEN_MIN         19800000    // minimum cycle length [ns]
 #define WRF50_CYCLELEN_MAX         20400000    // maximum cycle length [ns]
+
 #define WRF50_TUNE_MSG_DELAY        1000000    // delay for deadline for sending WRF50_ECADO_F50_TUNE message
 //#define WRF50_CYCLEDIFF_MAX            1000    // maximum difference between cycle length of Data Master und mains [ns], used for set-value
 //#define WRF50_LOCK_DIFFCYCLE           2000    // maximum difference between cycle length of Data Master und mains [ns], criterium for lock state
-#define WRF50_LOCK_DIFFDM              5000    // maximum difference of WRF50_SHARED_GET_OFFS_DM_ACT, criterium for lock state
+#define WRF50_LOCK_DIFFDM             20000    // maximum difference of WRF50_SHARED_GET_OFFS_DM_ACT, criterium for lock state
 #define WRF50_LOCK_DIFFMAINS          20000    // maximum difference of WRF50_SHARED_GET_OFFS_MAINS_ACT, criterium for lock state
-#define WRF50_N_STAMPS                   51    // number of timestamps used for averaging; THIS MUST BE AN ODD NUMBER to avoid floating point calculation
+#define WRF50_N_STAMPS                  101    // number of timestamps used for averaging; THIS MUST BE AN ODD NUMBER to avoid floating point calculation
 
 // default values
 #define WR50_DFLT_F50OFFSET               0    // default value [ns] for offset from 50 Hz signal
@@ -77,7 +78,10 @@
 #define WRF50_SHARED_GET_OFFS_DM_ACT       (WRF50_SHARED_GET_T_DM_SET         + _32b_SIZE_)  // offset of cycle start: t_DM_act - t_main_act; actual value
 #define WRF50_SHARED_GET_OFFS_DM_MIN       (WRF50_SHARED_GET_OFFS_DM_ACT      + _32b_SIZE_)  // offset of cycle start: t_DM_act - t_main_act; min value
 #define WRF50_SHARED_GET_OFFS_DM_MAX       (WRF50_SHARED_GET_OFFS_DM_MIN      + _32b_SIZE_)  // offset of cycle start: t_DM_act - t_main_act; max value
-#define WRF50_SHARED_GET_OFFS_MAINS_ACT    (WRF50_SHARED_GET_OFFS_DM_MAX      + _32b_SIZE_)  // offset of cycle start: t_mains_act - t_mains_predict; actual value
+#define WRF50_SHARED_GET_DT_DM_ACT         (WRF50_SHARED_GET_OFFS_DM_MAX      + _32b_SIZE_)  // change of period: DM_act - DM_previous; actual value
+#define WRF50_SHARED_GET_DT_DM_MIN         (WRF50_SHARED_GET_DT_DM_ACT        + _32b_SIZE_)  // change of period: DM_act - DM_previous; min value
+#define WRF50_SHARED_GET_DT_DM_MAX         (WRF50_SHARED_GET_DT_DM_MIN        + _32b_SIZE_)  // change of period: DM_act - DM_previous; max value   
+#define WRF50_SHARED_GET_OFFS_MAINS_ACT    (WRF50_SHARED_GET_DT_DM_MAX        + _32b_SIZE_)  // offset of cycle start: t_mains_act - t_mains_predict; actual value
 #define WRF50_SHARED_GET_OFFS_MAINS_MIN    (WRF50_SHARED_GET_OFFS_MAINS_ACT   + _32b_SIZE_)  // offset of cycle start: t_mains_act - t_mains_predict; min value
 #define WRF50_SHARED_GET_OFFS_MAINS_MAX    (WRF50_SHARED_GET_OFFS_MAINS_MIN   + _32b_SIZE_)  // offset of cycle start: t_mains_act - t_mains_predict; max value
 #define WRF50_SHARED_GET_LOCK_STATE        (WRF50_SHARED_GET_OFFS_MAINS_MAX   + _32b_SIZE_)  // lock state; how DM is locked to mains

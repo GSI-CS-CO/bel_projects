@@ -100,6 +100,9 @@ eb_address_t wrf50_get_TDMSet;            // period of Data Master cycle [ns], a
 eb_address_t wrf50_get_offsDMAct;         // offset of cycle start: t_DM_act - t_mains_act; actual value                
 eb_address_t wrf50_get_offsDMMin;         // offset of cycle start: t_DM_act - t_mains_act; min value                   
 eb_address_t wrf50_get_offsDMMax;         // offset of cycle start: t_DM_act - t_mains_act; max value                   
+eb_address_t wrf50_get_dTDMAct;           // change of period: DM_act - DM_previous; actual value
+eb_address_t wrf50_get_dTDMMin;           // change of period: DM_act - DM_previous; min value   
+eb_address_t wrf50_get_dTDMMax;           // change of period: DM_act - DM_previous; max value   
 eb_address_t wrf50_get_offsMainsAct;      // offset of cycle start: t_mains_act - t_mains_predict; actual value     
 eb_address_t wrf50_get_offsMainsMin;      // offset of cycle start: t_mains_act - t_mains_predict; min value        
 eb_address_t wrf50_get_offsMainsMax;      // offset of cycle start: t_mains_act - t_mains_predict; max value        
@@ -244,6 +247,9 @@ uint32_t wrf50_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t c
   wrf50_get_offsDMAct    = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_OFFS_DM_ACT;
   wrf50_get_offsDMMin    = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_OFFS_DM_MIN;
   wrf50_get_offsDMMax    = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_OFFS_DM_MAX;
+  wrf50_get_dTDMAct      = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_DT_DM_ACT;
+  wrf50_get_dTDMMin      = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_DT_DM_MIN;
+  wrf50_get_dTDMMax      = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_DT_DM_MAX;
   wrf50_get_offsMainsAct = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_OFFS_MAINS_ACT;
   wrf50_get_offsMainsMin = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_OFFS_MAINS_MIN;
   wrf50_get_offsMainsMax = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_OFFS_MAINS_MAX;
@@ -253,6 +259,7 @@ uint32_t wrf50_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t c
   wrf50_get_nLocked      = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_N_LOCKED;
   wrf50_get_nCycles      = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_N_CYCLES;
   wrf50_get_nEvtsLate    = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_N_EVTS_LATE;
+  wrf50_get_offsDone     = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_OFFS_DONE;
   wrf50_get_comLatency   = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_COM_LATENCY;
 
   // do this just at the very end
@@ -343,8 +350,9 @@ void wrmil_printDiag(uint32_t utcTrigger, uint32_t utcDelay, uint32_t trigUtcDel
 } // wrmil_printDiag
 
 
-void wrf50_printDiag(int32_t f50Offs, uint32_t mode, uint32_t TMainsAct, uint32_t TDmAct, uint32_t TDmSet, int32_t offsDmAct, int32_t offsDmMin, int32_t offsDmMax, int32_t offsMainsAct,
-                     int32_t offsMainsMin, int32_t offsMainsMax, uint32_t lockState, uint64_t lockDate, uint32_t nLocked, uint32_t nCycles, uint32_t nEvtsLate, uint32_t offsDone,  uint32_t comLatency)
+void wrf50_printDiag(int32_t f50Offs, uint32_t mode, uint32_t TMainsAct, uint32_t TDmAct, uint32_t TDmSet, int32_t offsDmAct, int32_t offsDmMin, int32_t offsDmMax, int32_t dTDMAct,
+                     int32_t dTDMMin, int32_t dTDMMax,  int32_t offsMainsAct, int32_t offsMainsMin, int32_t offsMainsMax, uint32_t lockState, uint64_t lockDate, uint32_t nLocked,
+                     uint32_t nCycles, uint32_t nEvtsLate, uint32_t offsDone,  uint32_t comLatency)
 {
   const struct tm* tm;
   char             timestr[60];
@@ -364,6 +372,9 @@ void wrf50_printDiag(int32_t f50Offs, uint32_t mode, uint32_t TMainsAct, uint32_
   printf("act offset DM: DM - mains [Hz]      : %15.3f\n"      , (double)offsDmAct/1000.0);
   printf("min offset DM: DM - mains [Hz]      : %15.3f\n"      , (double)offsDmMin/1000.0);
   printf("max offset DM: DM - mains [Hz]      : %15.3f\n"      , (double)offsDmMax/1000.0);
+  printf("period change DM: act - prev [us]   : %15.3f\n"      , (double)dTDMAct/1000.0);
+  printf("period change DM: act - prev [us]   : %15.3f\n"      , (double)dTDMMin/1000.0);
+  printf("period change DM: act - prev [us]   : %15.3f\n"      , (double)dTDMMax/1000.0);
   printf("act offset mains: act - predict [us]: %15.3f\n"      , (double)offsMainsAct/1000.0);
   printf("min offset mains: act - predict [us]: %15.3f\n"      , (double)offsMainsMin/1000.0);
   printf("max offset mains: act - predict [us]: %15.3f\n"      , (double)offsMainsMax/1000.0);
@@ -437,8 +448,8 @@ uint32_t wrmil_info_read(uint64_t ebDevice, uint32_t *utcTrigger, uint32_t *utcU
 
 
 uint32_t wrf50_info_read(uint64_t ebDevice, int32_t  *f50Offs, uint32_t *mode, uint32_t *TMainsAct, uint32_t *TDmAct, uint32_t *TDmSet, int32_t *offsDmAct, int32_t *offsDmMin,
-                         int32_t *offsDmMax, int32_t *offsMainsAct, int32_t *offsMainsMin, int32_t *offsMainsMax, uint32_t *lockState, uint64_t *lockDate, uint32_t *nLocked,
-                         uint32_t *nCycles, uint32_t *nEvtsLate, uint32_t *comLatency, uint32_t *offsDone, int printFlag)
+                         int32_t *offsDmMax, int32_t *dTDMAct, int32_t *dTDMMin, int32_t *dTDMMax, int32_t *offsMainsAct, int32_t *offsMainsMin, int32_t *offsMainsMax,
+                         uint32_t *lockState, uint64_t *lockDate, uint32_t *nLocked, uint32_t *nCycles, uint32_t *nEvtsLate, uint32_t *comLatency, uint32_t *offsDone, int printFlag)
 {
   eb_cycle_t   eb_cycle;
   eb_status_t  eb_status;
@@ -457,17 +468,20 @@ uint32_t wrf50_info_read(uint64_t ebDevice, int32_t  *f50Offs, uint32_t *mode, u
   eb_cycle_read(eb_cycle, wrf50_get_offsDMAct   , EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
   eb_cycle_read(eb_cycle, wrf50_get_offsDMMin   , EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
   eb_cycle_read(eb_cycle, wrf50_get_offsDMMax   , EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
-  eb_cycle_read(eb_cycle, wrf50_get_offsMainsAct, EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
-  eb_cycle_read(eb_cycle, wrf50_get_offsMainsMin, EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
-  eb_cycle_read(eb_cycle, wrf50_get_offsMainsMax, EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
-  eb_cycle_read(eb_cycle, wrf50_get_lockState   , EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
-  eb_cycle_read(eb_cycle, wrf50_get_lockDateHi  , EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
-  eb_cycle_read(eb_cycle, wrf50_get_lockDateLo  , EB_BIG_ENDIAN|EB_DATA32, &(data[13]));
-  eb_cycle_read(eb_cycle, wrf50_get_nLocked     , EB_BIG_ENDIAN|EB_DATA32, &(data[14]));
-  eb_cycle_read(eb_cycle, wrf50_get_nCycles     , EB_BIG_ENDIAN|EB_DATA32, &(data[15]));
-  eb_cycle_read(eb_cycle, wrf50_get_nEvtsLate   , EB_BIG_ENDIAN|EB_DATA32, &(data[16]));
-  eb_cycle_read(eb_cycle, wrf50_get_offsDone    , EB_BIG_ENDIAN|EB_DATA32, &(data[17]));
-  eb_cycle_read(eb_cycle, wrf50_get_comLatency  , EB_BIG_ENDIAN|EB_DATA32, &(data[18]));
+  eb_cycle_read(eb_cycle, wrf50_get_dTDMAct     , EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
+  eb_cycle_read(eb_cycle, wrf50_get_dTDMMin     , EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
+  eb_cycle_read(eb_cycle, wrf50_get_dTDMMax     , EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
+  eb_cycle_read(eb_cycle, wrf50_get_offsMainsAct, EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
+  eb_cycle_read(eb_cycle, wrf50_get_offsMainsMin, EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
+  eb_cycle_read(eb_cycle, wrf50_get_offsMainsMax, EB_BIG_ENDIAN|EB_DATA32, &(data[13]));
+  eb_cycle_read(eb_cycle, wrf50_get_lockState   , EB_BIG_ENDIAN|EB_DATA32, &(data[14]));
+  eb_cycle_read(eb_cycle, wrf50_get_lockDateHi  , EB_BIG_ENDIAN|EB_DATA32, &(data[15]));
+  eb_cycle_read(eb_cycle, wrf50_get_lockDateLo  , EB_BIG_ENDIAN|EB_DATA32, &(data[16]));
+  eb_cycle_read(eb_cycle, wrf50_get_nLocked     , EB_BIG_ENDIAN|EB_DATA32, &(data[17]));
+  eb_cycle_read(eb_cycle, wrf50_get_nCycles     , EB_BIG_ENDIAN|EB_DATA32, &(data[18]));
+  eb_cycle_read(eb_cycle, wrf50_get_nEvtsLate   , EB_BIG_ENDIAN|EB_DATA32, &(data[19]));
+  eb_cycle_read(eb_cycle, wrf50_get_offsDone    , EB_BIG_ENDIAN|EB_DATA32, &(data[20]));
+  eb_cycle_read(eb_cycle, wrf50_get_comLatency  , EB_BIG_ENDIAN|EB_DATA32, &(data[21]));
   if ((eb_status = eb_cycle_close(eb_cycle)) != EB_OK) return COMMON_STATUS_EB;
 
  *f50Offs       = data[0];
@@ -478,19 +492,22 @@ uint32_t wrf50_info_read(uint64_t ebDevice, int32_t  *f50Offs, uint32_t *mode, u
  *offsDmAct     = data[5];
  *offsDmMin     = data[6];
  *offsDmMax     = data[7];
- *offsMainsAct  = data[8];
- *offsMainsMin  = data[9];
- *offsMainsMax  = data[10];
- *lockState     = data[11];
- *lockDate      = ((uint64_t)data[12] & 0xffffffff) << 32;
- *lockDate     |= (uint64_t)data[13] & 0xffffffff;
- *nLocked       = data[14];
- *nCycles       = data[15];
- *nEvtsLate     = data[16];
- *offsDone      = data[17];
- *comLatency    = data[18];          
+ *dTDMAct       = data[8];
+ *dTDMMin       = data[9];
+ *dTDMMax       = data[10];
+ *offsMainsAct  = data[11];
+ *offsMainsMin  = data[12];
+ *offsMainsMax  = data[13];
+ *lockState     = data[14];
+ *lockDate      = ((uint64_t)data[15] & 0xffffffff) << 32;
+ *lockDate     |= (uint64_t)data[16] & 0xffffffff;
+ *nLocked       = data[17];
+ *nCycles       = data[18];
+ *nEvtsLate     = data[19];
+ *offsDone      = data[20];
+ *comLatency    = data[21];
 
-  if (printFlag) wrf50_printDiag(*f50Offs, *mode, *TMainsAct, *TDmAct, *TDmSet, *offsDmAct, *offsDmMin, *offsDmMax, *offsMainsAct, *offsMainsMin,
+ if (printFlag) wrf50_printDiag(*f50Offs, *mode, *TMainsAct, *TDmAct, *TDmSet, *offsDmAct, *offsDmMin, *offsDmMax, *dTDMAct, *dTDMMin, *dTDMMax, *offsMainsAct, *offsMainsMin,
                                  *offsMainsMax, *lockState, *lockDate, *nLocked, *nCycles, *nEvtsLate, *offsDone, *comLatency);
 
   return COMMON_STATUS_OK;

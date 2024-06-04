@@ -184,7 +184,10 @@ extern "C" {
                            uint32_t *TDmSet,                     // period of Data Master cycle [ns], set value calculated by fw for next DM cycle
                            int32_t  *offsDmAct,                  // offset of cycle start: t_DM_act - t_mains_act; actual value                
                            int32_t  *offsDmMin,                  // offset of cycle start: t_DM_act - t_mains_act; min value                   
-                           int32_t  *offsDmMax,                  // offset of cycle start: t_DM_act - t_mains_act; max value                   
+                           int32_t  *offsDmMax,                  // offset of cycle start: t_DM_act - t_mains_act; max value
+                           int32_t  *DTDMAct,                   // change of period: DM_act - DM_previous; actual value 
+                           int32_t  *DTDMMin,                   // change of period: DM_act - DM_previous; min value   
+                           int32_t  *DTDMMax,                   // change of period: DM_act - DM_previous; max value   
                            int32_t  *offsMainsAct,               // offset of cycle start: t_mains_act - t_mains_predict; actual value     
                            int32_t  *offsMainsMin,               // offset of cycle start: t_mains_act - t_mains_predict; min value        
                            int32_t  *offsMainsMax,               // offset of cycle start: t_mains_act - t_mains_predict; max value        
