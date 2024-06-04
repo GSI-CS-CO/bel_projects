@@ -42,7 +42,7 @@ eb-fwload $TRGW u 0x0 wrf50.bin
 
 echo -e WRF50: configure firmware for gateway $NGW
 sleep 2
-wrf50-ctl $TRGW configure
+wrf50-ctl -m3 $TRGW configure
 sleep 2
 wrf50-ctl $TRGW startop
 
@@ -63,6 +63,6 @@ saft-ecpu-ctl $SDGW -c 0x14c0fc0000000000 0xfffffff000000000 0 0xfc0  -d
 ###########################################
 # reset diagnostics
 ###########################################
-sleep 2
+sleep 5
 wrf50-ctl $TRGW cleardiag
 
