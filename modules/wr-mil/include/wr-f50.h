@@ -86,8 +86,8 @@
 #define WRF50_SHARED_GET_N_LOCKED          (WRF50_SHARED_GET_LOCK_DATE_LOW    + _32b_SIZE_)  // counts how many locks have been achieved
 #define WRF50_SHARED_GET_N_CYCLES          (WRF50_SHARED_GET_N_LOCKED         + _32b_SIZE_)  // number of UNILAC cycles
 #define WRF50_SHARED_GET_N_EVTS_LATE       (WRF50_SHARED_GET_N_CYCLES         + _32b_SIZE_)  // number of translated events that could not be delivered in time
-#define WRF50_SHARED_GET_OFFS_DONE         (WRF50_SHARED_GET_N_LATE           + _32b_SIZE_)  // offset t_mains_act to time when we are done
-#define WRF50_SHARED_GET_COM_LATENCY       (WRF50_SHARED_GET_N_EVTS_LATE      + _32b_SIZE_)  // latency for messages received from via ECA (tDeadline - tNow)) [ns]
+#define WRF50_SHARED_GET_OFFS_DONE         (WRF50_SHARED_GET_N_EVTS_LATE      + _32b_SIZE_)  // offset t_mains_act to time when we are done
+#define WRF50_SHARED_GET_COM_LATENCY       (WRF50_SHARED_GET_OFFS_DONE        + _32b_SIZE_)  // latency for messages received from via ECA (tDeadline - tNow)) [ns]
 
 // diagnosis: end of used shared memory
 #define WRF50_SHARED_END                   (WRF50_SHARED_GET_COM_LATENCY      + _32b_SIZE_) 

@@ -179,7 +179,7 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
   pSharedGetLockDateLo    = (uint32_t *)(pShared + (WRF50_SHARED_GET_LOCK_DATE_LOW   >> 2));
   pSharedGetNLocked       = (uint32_t *)(pShared + (WRF50_SHARED_GET_N_LOCKED        >> 2));
   pSharedGetNCycles       = (uint32_t *)(pShared + (WRF50_SHARED_GET_N_CYCLES        >> 2));
-  pSharedGetNEvtsLate     = (uint32_t *)(pShared + (WRF50_SHARED_GET_N_LATE          >> 2));
+  pSharedGetNEvtsLate     = (uint32_t *)(pShared + (WRF50_SHARED_GET_N_EVTS_LATE     >> 2));
   pSharedGetOffsDone      = (uint32_t *)(pShared + (WRF50_SHARED_GET_OFFS_DONE       >> 2));
   pSharedGetComLatency    = (uint32_t *)(pShared + (WRF50_SHARED_GET_COM_LATENCY     >> 2));
 
