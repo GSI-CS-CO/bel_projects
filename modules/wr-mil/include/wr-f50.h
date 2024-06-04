@@ -74,9 +74,9 @@
 #define WRF50_SHARED_GET_T_MAINS_ACT       (WRF50_SHARED_SET_MODE             + _32b_SIZE_)  // period of mains cycle [ns], actual value
 #define WRF50_SHARED_GET_T_DM_ACT          (WRF50_SHARED_GET_T_MAINS_ACT      + _32b_SIZE_)  // period of Data Master cycle [ns], actual value
 #define WRF50_SHARED_GET_T_DM_SET          (WRF50_SHARED_GET_T_DM_ACT         + _32b_SIZE_)  // period of Data Master cycle [ns], set value calculated by fw for next DM cycle
-#define WRF50_SHARED_GET_OFFS_DM_ACT       (WRF50_SHARED_GET_T_DM_SET         + _32b_SIZE_)  // offset of cycle start: t_DM_act - t_DM_set; actual value
-#define WRF50_SHARED_GET_OFFS_DM_MIN       (WRF50_SHARED_GET_OFFS_DM_ACT      + _32b_SIZE_)  // offset of cycle start: t_DM_act - t_DM_set; min value
-#define WRF50_SHARED_GET_OFFS_DM_MAX       (WRF50_SHARED_GET_OFFS_DM_MIN      + _32b_SIZE_)  // offset of cycle start: t_DM_act - t_DM_set; max value
+#define WRF50_SHARED_GET_OFFS_DM_ACT       (WRF50_SHARED_GET_T_DM_SET         + _32b_SIZE_)  // offset of cycle start: t_DM_act - t_main_act; actual value
+#define WRF50_SHARED_GET_OFFS_DM_MIN       (WRF50_SHARED_GET_OFFS_DM_ACT      + _32b_SIZE_)  // offset of cycle start: t_DM_act - t_main_act; min value
+#define WRF50_SHARED_GET_OFFS_DM_MAX       (WRF50_SHARED_GET_OFFS_DM_MIN      + _32b_SIZE_)  // offset of cycle start: t_DM_act - t_main_act; max value
 #define WRF50_SHARED_GET_OFFS_MAINS_ACT    (WRF50_SHARED_GET_OFFS_DM_MAX      + _32b_SIZE_)  // offset of cycle start: t_mains_act - t_mains_predict; actual value
 #define WRF50_SHARED_GET_OFFS_MAINS_MIN    (WRF50_SHARED_GET_OFFS_MAINS_ACT   + _32b_SIZE_)  // offset of cycle start: t_mains_act - t_mains_predict; min value
 #define WRF50_SHARED_GET_OFFS_MAINS_MAX    (WRF50_SHARED_GET_OFFS_MAINS_MIN   + _32b_SIZE_)  // offset of cycle start: t_mains_act - t_mains_predict; max value
@@ -86,6 +86,7 @@
 #define WRF50_SHARED_GET_N_LOCKED          (WRF50_SHARED_GET_LOCK_DATE_LOW    + _32b_SIZE_)  // counts how many locks have been achieved
 #define WRF50_SHARED_GET_N_CYCLES          (WRF50_SHARED_GET_N_LOCKED         + _32b_SIZE_)  // number of UNILAC cycles
 #define WRF50_SHARED_GET_N_EVTS_LATE       (WRF50_SHARED_GET_N_CYCLES         + _32b_SIZE_)  // number of translated events that could not be delivered in time
+#define WRF50_SHARED_GET_OFFS_DONE         (WRF50_SHARED_GET_N_LATE           + _32b_SIZE_)  // offset t_mains_act to time when we are done
 #define WRF50_SHARED_GET_COM_LATENCY       (WRF50_SHARED_GET_N_EVTS_LATE      + _32b_SIZE_)  // latency for messages received from via ECA (tDeadline - tNow)) [ns]
 
 // diagnosis: end of used shared memory

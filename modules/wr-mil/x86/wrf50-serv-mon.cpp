@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 31-May-2024
+ *  version : 04-Jun-2024
  *
  * monitors WR-MIL gateway
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define WRF50_SERV_MON_VERSION 0x000003
+#define WRF50_SERV_MON_VERSION 0x000004
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -539,7 +539,7 @@ int main(int argc, char** argv)
     uint64_t      t_new, t_old;
     uint32_t      tmp32a, tmp32b, tmp32c, tmp32d;
     int32_t       stmp32a, stmp32b, stmp32c, stmp32d, stmp32e, stmp32f;
-    uint32_t      fwTMainsAct, fwEvtsLate, fwState, fwVersion, fwLockState, fwNLocked, fwNCycles, fwMode;
+    uint32_t      fwTMainsAct, fwEvtsLate, fwState, fwVersion, fwLockState, fwNLocked, fwNCycles, fwMode, fwOffsDone;
     uint64_t      fwStatus, fwLockDate;
     int32_t       fwF50Offs;
     int           nUpdate = 0;
@@ -564,7 +564,7 @@ int main(int argc, char** argv)
         // update firmware data
         wrmil_common_read(ebDevice, &fwStatus, &fwState, &tmp32a, &tmp32b, &fwVersion, &tmp32c, 0);
         wrf50_info_read(ebDevice, &fwF50Offs, &fwMode , &fwTMainsAct, &tmp32b, &tmp32c, &stmp32a, &stmp32b, &stmp32c, &stmp32d, &stmp32e, &stmp32f, &fwLockState, &fwLockDate, &fwNLocked,
-                        &fwNCycles, &fwEvtsLate, &tmp32d, 0);
+                        &fwNCycles, &fwEvtsLate, &fwOffsDone, &tmp32d, 0);
 
         disStatus  = fwStatus;
         sprintf(disState  , "%s", wrmil_state_text(fwState));

@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 03-Jun-2024
+ *  version : 04-Jun-2024
  *
  * library for wr-mil
  *
@@ -182,9 +182,9 @@ extern "C" {
                            uint32_t *TMainsAct,                  // period of mains cycle [ns], actual value                           
                            uint32_t *TDmAct,                     // period of Data Master cycle [ns], actual value                     
                            uint32_t *TDmSet,                     // period of Data Master cycle [ns], set value calculated by fw for next DM cycle
-                           int32_t  *offsDmAct,                  // offset of cycle start: t_DM_act - t_DM_set; actual value                
-                           int32_t  *offsDmMin,                  // offset of cycle start: t_DM_act - t_DM_set; min value                   
-                           int32_t  *offsDmMax,                  // offset of cycle start: t_DM_act - t_DM_set; max value                   
+                           int32_t  *offsDmAct,                  // offset of cycle start: t_DM_act - t_mains_act; actual value                
+                           int32_t  *offsDmMin,                  // offset of cycle start: t_DM_act - t_mains_act; min value                   
+                           int32_t  *offsDmMax,                  // offset of cycle start: t_DM_act - t_mains_act; max value                   
                            int32_t  *offsMainsAct,               // offset of cycle start: t_mains_act - t_mains_predict; actual value     
                            int32_t  *offsMainsMin,               // offset of cycle start: t_mains_act - t_mains_predict; min value        
                            int32_t  *offsMainsMax,               // offset of cycle start: t_mains_act - t_mains_predict; max value        
@@ -193,7 +193,8 @@ extern "C" {
                            uint32_t *nLocked,                    // counts how many locks have been achieved                           
                            uint32_t *nCycles,                    // number of UNILAC cycles                                            
                            uint32_t *nEvtsLate,                  // number of translated events that could not be delivered in time    
-                           uint32_t *comLatency,                 // latency for messages received from via ECA (tDeadline - tNow)) [ns]// print info to screen 
+                           uint32_t *comLatency,                 // latency for messages received from via ECA (tDeadline - tNow)) [ns]// print info to screen
+                           uint32_t *offsDone,                   // offset t_mains_act to time when we are done
                            int      printFlag                    // prints info on common firmware properties to stdout
                            );
  

@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 2024-May-31
+ *  version : 2024-Jun-04
  *
  *  firmware required for the 50 Hz mains -> WR gateway
  *  
@@ -76,13 +76,13 @@ uint64_t SHARED  dummy = 0;
 volatile uint32_t *pShared;                // pointer to begin of shared memory region
 volatile uint32_t *pSharedSetF50Offset;    // pointer to a "user defined" u32 register; here: offset to TLU signal         
 volatile uint32_t *pSharedSetMode;         // pointer to a "user defined" u32 register; here: mode of 50 Hz synchronization
-volatile uint32_t *pSharedGetTMainsAct;    // pointer to a "user defined" u32 register; here: period of mains cycle [ns], actual value                           
-volatile uint32_t *pSharedGetTDMAct;       // pointer to a "user defined" u32 register; here: period of Data Master cycle [ns], actual value                     
-volatile uint32_t *pSharedGetTDMSet;       // pointer to a "user defined" u32 register; here: period of Data Master cycle [ns], actual value                     
-volatile uint32_t *pSharedGetOffsDMAct;    // pointer to a "user defined" u32 register; here: offset of cycle start: t_DM_act - t_DM_set; actual value                
-volatile uint32_t *pSharedGetOffsDMMin;    // pointer to a "user defined" u32 register; here: offset of cycle start: t_DM_act - t_DM_set; min value                   
-volatile uint32_t *pSharedGetOffsDMMax;    // pointer to a "user defined" u32 register; here: offset of cycle start: t_DM_act - t_DM_set; max value                   
-volatile uint32_t *pSharedGetOffsMainsAct; // pointer to a "user defined" u32 register; here: offset of cycle start: t_mains_act - t_mains_predict; actual value     
+volatile uint32_t *pSharedGetTMainsAct;    // pointer to a "user defined" u32 register; here: period of mains cycle [ns], actual value
+volatile uint32_t *pSharedGetTDMAct;       // pointer to a "user defined" u32 register; here: period of Data Master cycle [ns], actual value
+volatile uint32_t *pSharedGetTDMSet;       // pointer to a "user defined" u32 register; here: period of Data Master cycle [ns], actual value
+volatile uint32_t *pSharedGetOffsDMAct;    // pointer to a "user defined" u32 register; here: offset of cycle start: t_DM_act - t_mains_act; actual value
+volatile uint32_t *pSharedGetOffsDMMin;    // pointer to a "user defined" u32 register; here: offset of cycle start: t_DM_act - t_mains_act; min value
+volatile uint32_t *pSharedGetOffsDMMax;    // pointer to a "user defined" u32 register; here: offset of cycle start: t_DM_act - t_mains_act; max value
+volatile uint32_t *pSharedGetOffsMainsAct; // pointer to a "user defined" u32 register; here: offset of cycle start: t_mains_act - t_mains_predict; actual value
 volatile uint32_t *pSharedGetOffsMainsMin; // pointer to a "user defined" u32 register; here: offset of cycle start: t_mains_act - t_mains_predict; min value        
 volatile uint32_t *pSharedGetOffsMainsMax; // pointer to a "user defined" u32 register; here: offset of cycle start: t_mains_act - t_mains_predict; max value        
 volatile uint32_t *pSharedGetLockState;    // pointer to a "user defined" u32 register; here: lock state; how DM is locked to mains                              
@@ -90,7 +90,8 @@ volatile uint32_t *pSharedGetLockDateHi;   // pointer to a "user defined" u32 re
 volatile uint32_t *pSharedGetLockDateLo;   // pointer to a "user defined" u32 register; here: time when lock has been achieve [ns], low bits                     
 volatile uint32_t *pSharedGetNLocked;      // pointer to a "user defined" u32 register; here: counts how many locks have been achieved                           
 volatile uint32_t *pSharedGetNCycles;      // pointer to a "user defined" u32 register; here: number of UNILAC cycles                                            
-volatile uint32_t *pSharedGetNEvtsLate;    // pointer to a "user defined" u32 register; here: number of translated events that could not be delivered in time    
+volatile uint32_t *pSharedGetNEvtsLate;    // pointer to a "user defined" u32 register; here: number of translated events that could not be delivered in time
+volatile uint32_t *pSharedGetOffsDone;     // offset t_mains_act to time when we are done
 volatile uint32_t *pSharedGetComLatency;   // pointer to a "user defined" u32 register; here: latency for messages received from via ECA (tDeadline - tNow)) [ns]
 
 uint32_t *cpuRamExternal;                  // external address (seen from host bridge) of this CPU's RAM
@@ -111,7 +112,8 @@ uint32_t getLockState;
 uint64_t getLockDate;  
 uint32_t getNLocked;     
 uint32_t getNCycles;     
-uint32_t getNEvtsLate;   
+uint32_t getNEvtsLate;
+uint32_t getOffsDone;
 int32_t  getComLatency;  
 
 uint64_t statusArray;                      // all status infos are ORed bit-wise into statusArray, statusArray is then published
@@ -177,7 +179,8 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
   pSharedGetLockDateLo    = (uint32_t *)(pShared + (WRF50_SHARED_GET_LOCK_DATE_LOW   >> 2));
   pSharedGetNLocked       = (uint32_t *)(pShared + (WRF50_SHARED_GET_N_LOCKED        >> 2));
   pSharedGetNCycles       = (uint32_t *)(pShared + (WRF50_SHARED_GET_N_CYCLES        >> 2));
-  pSharedGetNEvtsLate     = (uint32_t *)(pShared + (WRF50_SHARED_GET_N_EVTS_LATE     >> 2));
+  pSharedGetNEvtsLate     = (uint32_t *)(pShared + (WRF50_SHARED_GET_N_LATE          >> 2));
+  pSharedGetOffsDone      = (uint32_t *)(pShared + (WRF50_SHARED_GET_OFFS_DONE       >> 2));
   pSharedGetComLatency    = (uint32_t *)(pShared + (WRF50_SHARED_GET_COM_LATENCY     >> 2));
 
   // find address of CPU from external perspective
@@ -235,7 +238,8 @@ void extern_clearDiag()
   getLockDate     = 0x0;     
   getNLocked      = 0x0;      
   // getNCycles      = 0x0;  don't reset as this variable is important for the regulation    
-  getNEvtsLate    = 0x0;    
+  getNEvtsLate    = 0x0;
+  getOffsDone     = 0x0;
   getComLatency   = 0x0;   
 
   statusArray     = 0x0;
@@ -304,6 +308,7 @@ uint32_t extern_entryActionOperation()
   *pSharedGetNLocked        = 0x0;     
   *pSharedGetNCycles        = 0x0;     
   *pSharedGetNEvtsLate      = 0x0;   
+  *pSharedGetOffsDone       = 0x0;   
   *pSharedGetComLatency     = 0x0;
 
   // init set values
@@ -493,12 +498,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         t0DM       = stampsDM[WRF50_N_STAMPS - 1];
         getTDMAct  = t0DM - stampsDM[WRF50_N_STAMPS - 2];
  
-        // statistics Data Master, comparing actual and predicted value
-        // in an ideal world, the offset should be zero
-        getOffsDMAct = t0DM - t1DM;     // t1DM from previous cycle
-        if (getOffsDMAct > getOffsDMMax) getOffsDMMax = getOffsDMAct;
-        if (getOffsDMAct < getOffsDMMin) getOffsDMMin = getOffsDMAct;
-
         // calculate next cycle Start of Data Master
         // we know getTDMSet from the previous cycle
         t1DM = t0DM + getTDMSet;
@@ -524,10 +523,17 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         t0F50        = stampsF50[WRF50_N_STAMPS - 1];
         getTMainsAct = t0F50 - stampsF50[WRF50_N_STAMPS - 2];
         
-        // statistics 50 Hz mains, comparing actual and predicted value
+        // statistics 50 Hz mains, comparing actual and predicted value (from previous cycle)
         getOffsMainsAct = t0F50 - t1F50;
         if (getOffsMainsAct > getOffsMainsMax) getOffsMainsMax = getOffsMainsAct;
         if (getOffsMainsAct < getOffsMainsMin) getOffsMainsMin = getOffsMainsAct;
+
+        // statistics Data Master, comparing actual value of DM and 50 Hz mains
+        // in an ideal world, the offset should be zero
+        getOffsDMAct = t0DM - t0F50;
+        if (getOffsDMAct > getOffsDMMax) getOffsDMMax = getOffsDMAct;
+        if (getOffsDMAct < getOffsDMMin) getOffsDMMin = getOffsDMAct;
+
       }
 
       // we don't know the current situation, set to lock state 'unknown'
@@ -595,6 +601,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         sendDeadline = stampsDM[WRF50_N_STAMPS - 1] + (uint64_t)getTDMSet;
         fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0);                                      
       } // else LOCK_DM
+
+      getOffsDone    = getSysTime() - tluStamp;
                                             
       break;
     default :                                                         // flush ECA Queue
@@ -683,6 +691,7 @@ int main(void) {
     *pSharedGetNLocked        = getNLocked;
     *pSharedGetNCycles        = getNCycles;
     *pSharedGetNEvtsLate      = getNEvtsLate;
+    *pSharedGetOffsDone       = getOffsDone;
     *pSharedGetComLatency     = getComLatency;
   } // while
 
