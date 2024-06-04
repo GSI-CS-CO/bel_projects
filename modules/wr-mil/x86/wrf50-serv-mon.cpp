@@ -140,7 +140,7 @@ double    tAveStreamOld;                // helper for stats
 int       flagClear;                    // flag for clearing diag data;
 uint32_t  matchWindow       = WRF50_POSTTRIGGER_TLU;
 uint32_t  modeCompare       = 0;
-uint64_t  offsetStart;                  // correction to be used for different monitoring types
+int32_t   offsetMains;                  // offset of wr-f50 to mains (set-value)
 
 uint64_t  one_us_ns = 1000;
 uint64_t  one_ms_ns = 1000000;
@@ -272,7 +272,7 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
         else {
           // we have a message from Data Master, check if Data Master is locked
           tmp                      = (int32_t)(deadlineDmMsgAct - deadlineF50Act);
-          if (abs(tmp) > (WRF50_CYCLELEN_MIN / 360))           printf("wr-f50: Data Master not synched to 50 Hz mains, current offset  : %10.3f us\n", (double)tmp/1000.0);
+          if (abs(tmp + offsetMains) > WRF50_LOCK_DIFFDM)      printf("wr-f50: Data Master not synched to 50 Hz mains, current offset  : %10.3f us\n", (double)tmp/1000.0);
           else {
             // calc stats
             monData.tAct                  = (double)tmp / 1000.0;
@@ -448,7 +448,7 @@ int main(int argc, char** argv)
   else                 sprintf(prefix, "wrmil_%s-mon", domainName);
 
   if (startServer) {
-    printf("%s: starting server using prefix %s\n", program, prefix);
+    printf("wr-f50: starting server %s using prefix %s\n", program, prefix);
 
     clearStats();
     disAddServices(prefix);
@@ -541,7 +541,6 @@ int main(int argc, char** argv)
     int32_t       stmp32a, stmp32b, stmp32c, stmp32d, stmp32e, stmp32f, stmp32g, stmp32h, stmp32i;
     uint32_t      fwTMainsAct, fwEvtsLate, fwState, fwVersion, fwLockState, fwNLocked, fwNCycles, fwMode, fwOffsDone;
     uint64_t      fwStatus, fwLockDate;
-    int32_t       fwF50Offs;
     int           nUpdate = 0;
 
     t_old = comlib_getSysTime();
@@ -563,7 +562,7 @@ int main(int argc, char** argv)
 
         // update firmware data
         wrmil_common_read(ebDevice, &fwStatus, &fwState, &tmp32a, &tmp32b, &fwVersion, &tmp32c, 0);
-        wrf50_info_read(ebDevice, &fwF50Offs, &fwMode , &fwTMainsAct, &tmp32b, &tmp32c, &stmp32a, &stmp32b, &stmp32c, &stmp32g, &stmp32h, &stmp32i, &stmp32d, &stmp32e, &stmp32f, &fwLockState, &fwLockDate, &fwNLocked,
+        wrf50_info_read(ebDevice, &offsetMains, &fwMode , &fwTMainsAct, &tmp32b, &tmp32c, &stmp32a, &stmp32b, &stmp32c, &stmp32g, &stmp32h, &stmp32i, &stmp32d, &stmp32e, &stmp32f, &fwLockState, &fwLockDate, &fwNLocked,
                         &fwNCycles, &fwEvtsLate, &fwOffsDone, &tmp32d, 0);
 
         disStatus  = fwStatus;
