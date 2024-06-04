@@ -241,8 +241,8 @@ void extern_clearDiag()
   getOffsDMMin    = 0x7fffffff;
   getOffsDMMax    = 0x80000000;
   getDTDMAct      = 0x00000000;
-  getDTDMMin      = 0x00000000;
-  getDTDMMax      = 0x00000000;
+  getDTDMMin      = 0x7fffffff;
+  getDTDMMax      = 0x80000000;
   getOffsMainsAct = 0x0; 
   getOffsMainsMin = 0x7fffffff;
   getOffsMainsMax = 0x80000000;
@@ -517,6 +517,12 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         // - if not, set to a actual value
         if (!getTDMSet) getTDMSet = getTDMAct;
         t1DM = t0DM + getTDMSet;
+
+        // statistics for Data Master
+        // comparing length of actual cycle with previous cycle; in ideal world, the offset difference should be zero
+        getDTDMAct = getTDMAct - (stampsDM[WRF50_N_STAMPS - 2] - stampsDM[WRF50_N_STAMPS - 3]);
+        if (getDTDMAct > getDTDMMax) getDTDMMax = getDTDMAct;
+        if (getDTDMAct < getDTDMMin) getDTDMMin = getDTDMAct;
       } // if validDM
 
       break;
@@ -545,11 +551,12 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         if (getOffsMainsAct > getOffsMainsMax) getOffsMainsMax = getOffsMainsAct;
         if (getOffsMainsAct < getOffsMainsMin) getOffsMainsMin = getOffsMainsAct;
 
-        // statistics Data Master, comparing actual value of DM and 50 Hz mains
-        // in an ideal world, the offset should be zero
+        // statistics Data Master
+        // comparing actual value of DM and 50 Hz mains; in an ideal world, the offset should be zero
         getOffsDMAct = t0DM - t0F50;
         if (getOffsDMAct > getOffsDMMax) getOffsDMMax = getOffsDMAct;
         if (getOffsDMAct < getOffsDMMin) getOffsDMMin = getOffsDMAct;
+       
       }
 
       // we don't know the current situation, set to lock state 'unknown'
@@ -572,7 +579,9 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       } // if not valid
 
       // set lock state
-      if ((abs(getOffsDMAct) < WRF50_LOCK_DIFFDM) && (abs(getOffsMainsAct) < WRF50_LOCK_DIFFMAINS)) {
+      if ((abs(getOffsDMAct)    < WRF50_LOCK_DIFFDM)    &&
+          (abs(getOffsMainsAct) < WRF50_LOCK_DIFFMAINS) &&
+          (abs(getDTDMAct)      < WRF50_LOCK_DIFFDTDM)    ) {
         if (getLockState != WRF50_SLOCK_LOCKED) {
           getLockDate = tluStamp;
           getNLocked++;

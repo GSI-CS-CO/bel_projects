@@ -138,6 +138,7 @@ int main(int argc, char** argv) {
 
   int32_t  f50Offset        = WR50_DFLT_F50OFFSET;
   uint32_t mode             = WRF50_MODE_LOCK_HARD_SIM;
+
   uint32_t TMainsAct;
   uint32_t TDmAct;
   uint32_t TDmSet;
@@ -287,7 +288,7 @@ int main(int argc, char** argv) {
       } // for i
       wrf50_info_read(ebDevice, &f50Offset, &mode, &TMainsAct, &TDmAct, &TDmSet, &offsDmAct, &offsDmMin, &offsDmMax, &dTDMAct, &dTDMMin, &dTDMMax,
                       &offsMainsAct, &offsMainsMin, &offsMainsMax, &lockState, &lockDate, &nLocked, &nCycles, &nEvtsLate, &offsDone, &comLatency, 1);
-    } // "diag"
+    } // "diag"    
   } //if command
 
 if (snoop) {
