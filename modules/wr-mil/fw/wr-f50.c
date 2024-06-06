@@ -580,7 +580,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
       // set lock state
       if ((abs(getOffsDMAct)    < WRF50_LOCK_DIFFDM)    &&
-          (abs(getOffsMainsAct) < WRF50_LOCK_DIFFMAINS) &&
           (abs(getDTDMAct)      < WRF50_LOCK_DIFFDTDM)    ) {
         if (getLockState != WRF50_SLOCK_LOCKED) {
           getLockDate = tluStamp;

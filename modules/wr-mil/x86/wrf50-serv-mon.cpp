@@ -112,6 +112,8 @@ using namespace std;
 #define RISING_EDGE_ID     0x1          // last 4 bits of EvtId when a rising edge is detected for ECA/TLU input
 #define UPDATE_TIME_MS    1000          // time for status updates [ms]
 #define INITMINMAX 10000000000          // init value for min/max
+#define ERRMAXN             60          // maximum number of error messages
+#define ERRMAXT    60000000000          // interval in which the max number of error message must not be exceeded
 
 static const char* program;
 
@@ -144,6 +146,41 @@ int32_t   offsetMains;                  // offset of wr-f50 to mains (set-value)
 
 uint64_t  one_us_ns = 1000;
 uint64_t  one_ms_ns = 1000000;
+
+// error handling
+uint64_t  deadlineDmMsgAct;             // deadline of act DM message
+uint64_t  deadlineDmMsgPrev;            // deadline of previous DM message
+int32_t   cyclenDmAct;                  // length of act DM cycle
+int32_t   cyclenDmPrev;                 // length of previous DM cycle
+uint64_t  deadlineF50Act;               // deadline of act mains cycle
+uint64_t  deadlineF50Prev;              // deadline of previous mains cycle
+int32_t   cyclenF50Act;                 // length of act mains cycle
+int32_t   cyclenF50Prev;                // length of previous mains cycle
+
+int       flagErrDmCyclen;              // flag, DM: cycle length exceeds limits
+int       flagErrDmCycdiff;             // flag, DM: change of cycle length exceeds limits
+int       flagErrDmLock;                // flag, DM: not locked to mains
+int       flagErrDmMissing;             // flag, DM: missing cycle start message from Data Master
+int       flagErrF50Cyclen;             // flag, mains: cycle length exceeds limits
+int       flagErrF50Cycdiff;            // flag, mains: change of cycle length exceeds limits
+
+uint32_t  nErrDmCyclen;                 // # of errors ...
+uint32_t  nErrDmCycdiff;
+uint32_t  nErrDmLock;
+uint32_t  nErrDmMissing;
+uint32_t  nErrF50Cyclen;
+uint32_t  nErrF50Cycdiff;
+
+uint64_t  tErrDmCyclen;                 // deadline of 1st occurence
+uint64_t  tErrDmCycdiff;
+uint64_t  tErrDmLock;
+uint64_t  tErrDmMissing;
+uint64_t  tErrF50Cyclen;
+uint64_t  tErrF50Cycdiff;
+
+int32_t   dmCycdiff;                    // DM: change of cycle length
+int32_t   f50Cycdiff;                   // mains: change of cycle length
+int32_t   dmOffset;                     // difference t_cycle_DM - t_cycle_mains
 
 
 // calc basic statistic properties
@@ -199,14 +236,6 @@ void clearStats()
 static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags, uint32_t tag)
 {
   static int          flagDmMsg;          // flag: marks that the 'start' message from Data Master has been received
-  static uint64_t     deadlineDmMsgAct;   // deadline of act DM message
-  static uint64_t     deadlineDmMsgPrev;  // deadline of previous DM message
-  static int32_t      cyclenDmAct;        // length of act DM cycle
-  static int32_t      cyclenDmPrev;       // length of previous DM cycle
-  static uint64_t     deadlineF50Act;     // deadline of act mains cycle
-  static uint64_t     deadlineF50Prev;    // deadline of previous mains cycle
-  static int32_t      cyclenF50Act;       // length of act mains cycle
-  static int32_t      cyclenF50Prev;      // length of previous mains cycle
   
   uint32_t            mFid;            // FID 
   uint32_t            mGid;            // GID
@@ -216,8 +245,8 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
   double              stream;          // a stream value for statistics
   double              dummy;
   
-  int32_t             tmp;
-
+  uint64_t            tSys;            // actual host system time
+  
   mFid        = ((evtId  & 0xf000000000000000) >> 60);
   mGid        = ((evtId  & 0x0fff000000000000) >> 48);
 
@@ -228,6 +257,8 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
   if (mFid != FID)                        return;  // unexpected format of timing message
   if (mGid != PZU_F50)                    return;  // unexpected GID
   if (tag   > tagStop)                    return;  // illegal tag
+
+  tSys = comlib_getSysTime();
   
   switch (tag) {
     case tagStart   :
@@ -241,12 +272,26 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
         cyclenDmAct                = (int32_t)(deadlineDmMsgAct - deadlineDmMsgPrev);
 
         // check if DM is within limits
-        if (cyclenDmAct > WRF50_CYCLELEN_MAX)                  printf("wr-f50: Data Master - actual cycle length exceeds maximum value : %10.3f us\n", (double)cyclenDmAct/1000.0);
-        if (cyclenDmAct < WRF50_CYCLELEN_MIN)                  printf("wr-f50: Data Master - actual cycle length below minimum value   : %10.3f us\n", (double)cyclenDmAct/1000.0);
-        tmp                        = (int32_t)(cyclenDmAct - cyclenDmPrev);
-        if (abs(tmp)    > WRF50_LOCK_DIFFDM)                   printf("wr-f50: Data Master - actual and previous cycle length differ by: %10.3f us\n", (double)tmp/1000.0);
-        cyclenDmPrev               = cyclenDmAct;
+        // cyclen
+        if ((cyclenDmAct > WRF50_CYCLELEN_MAX) || (cyclenDmAct < WRF50_CYCLELEN_MIN)) {
+          if (!tErrDmCyclen) tErrDmCyclen  = tSys;
+          flagErrDmCyclen          = 1;
+        } // if cyclen
+        else
+          flagErrDmCyclen          = 0;
+
+        // difference of cyclen
+        dmCycdiff                  = (int32_t)(cyclenDmAct - cyclenDmPrev);
+        if (abs(dmCycdiff) > WRF50_LOCK_DIFFDTDM) {
+          if (!tErrDmCycdiff) tErrDmCycdiff = tSys;
+          flagErrDmCycdiff         = 1;
+        } // if cycdiff
+        else
+          flagErrDmCycdiff         = 0;
+
       }  // if nStart
+
+      // remember for next cycle
       cyclenDmPrev                 = deadlineDmMsgAct -  deadlineDmMsgPrev;
       deadlineDmMsgPrev            = deadlineDmMsgAct;
       
@@ -258,24 +303,45 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
 
       if (monData.nStop >  WRF50_N_STAMPS + 1) {
         // assume we are in a valid regime
-
-        // check if mains is wihin limits
         cyclenF50Act               = (int32_t)(deadlineF50Act - deadlineF50Prev);
-        if (cyclenF50Act > WRF50_CYCLELEN_MAX)                 printf("wr-f50: 50 Hz mains - actual cycle length exceeds maximum value : %10.3f us\n", (double)cyclenF50Act/1000.0);
-        if (cyclenF50Act < WRF50_CYCLELEN_MIN)                 printf("wr-f50: 50 Hz mains - actual cycle length exceeds minimum value : %10.3f us\n", (double)cyclenF50Act/1000.0);
-        tmp                        = cyclenF50Act - cyclenF50Prev;
-        if (abs(tmp) > WRF50_LOCK_DIFFMAINS)                   printf("wr-f50: 50 Hz mains - actual and previous cycle length differ by: %10.3f us\n", (double)tmp/1000.0);
-        // cyclenF50Prev              = cyclenF50Act;
+        
+        // check if mains is wihin limits
+        // cyclen
+        if ((cyclenF50Act > WRF50_CYCLELEN_MAX) || (cyclenF50Act < WRF50_CYCLELEN_MIN)) {
+          if (!tErrF50Cyclen) tErrF50Cyclen =  tSys;
+          flagErrF50Cyclen         = 1;
+        } // if cyclen
+        else
+          flagErrF50Cyclen         = 0;
+
+        // difference of cyclen
+        f50Cycdiff                 = cyclenF50Act - cyclenF50Prev;
+        if (abs(f50Cycdiff) > WRF50_LOCK_DIFFMAINS) {
+          if (!tErrF50Cycdiff) tErrF50Cycdiff = tSys;
+          flagErrF50Cycdiff        = 1;
+        } // if cycdiff
+        else
+          flagErrF50Cycdiff        = 0;
 
         // check if we Data Master is locked
-        if (!flagDmMsg)                                        printf("wr-f50: missing cycle start message from Data Master\n");
+        if (!flagDmMsg) {
+          if (!tErrDmMissing) tErrDmMissing = tSys;;
+          flagErrDmMissing         = 1;
+        } // no DM message
         else {
+          flagErrDmMissing         = 0;
+          
           // we have a message from Data Master, check if Data Master is locked
-          tmp                      = (int32_t)(deadlineDmMsgAct - deadlineF50Act);
-          if (abs(tmp + offsetMains) > WRF50_LOCK_DIFFDM)      printf("wr-f50: Data Master not synched to 50 Hz mains, current offset  : %10.3f us\n", (double)tmp/1000.0);
+          dmOffset                 = (int32_t)(deadlineDmMsgAct - deadlineF50Act);
+          if (abs(dmOffset + offsetMains) > WRF50_LOCK_DIFFDM) {
+            if (!tErrDmLock) tErrDmLock =  tSys;
+            flagErrDmLock          = 1;
+          } // if dmOffset
           else {
+            flagErrDmLock          = 0;
+
             // calc stats
-            monData.tAct                  = (double)tmp / 1000.0;
+            monData.tAct                  = (double)dmOffset / 1000.0;
             monData.nMatch++;
             if (monData.tAct < monData.tMin) monData.tMin = monData.tAct;
             if (monData.tAct > monData.tMax) monData.tMax = monData.tAct;
@@ -551,19 +617,60 @@ int main(int argc, char** argv)
       saftlib::wait_for_signal(UPDATE_TIME_MS / 10);
 
       t_new = comlib_getSysTime();
-      if (((t_new - t_old) / one_ms_ns) > UPDATE_TIME_MS) {
-        t_old      = t_new;
-        nUpdate++;
-        if (nUpdate > 10) {
-           printf("wr-f50: act mains frequency                                     : %10.3f Hz\n", 1000000000.0/(double)fwTMainsAct);
-           fflush(stdout);                                                                         // required for immediate writing (if stdout is piped to syslog)
-           nUpdate = 0;
-        } // argh ...
 
+      if (flagErrDmCyclen) {
+        nErrDmCyclen++;
+        // possibly reset error counter
+        if (nErrDmCyclen   >= ERRMAXN) if ((t_new - tErrDmCyclen)   > ERRMAXT) {tErrDmCyclen = 0; nErrDmCyclen = 1;}
+        if (nErrDmCyclen   <  ERRMAXN) printf("wr-f50: Data Master - actual cycle length exceeds bounds        : %10.3f us\n", (double)cyclenDmAct/1000.0);
+      } // error DM cycle len
+
+      if (flagErrDmCycdiff) {
+        nErrDmCycdiff++;
+        // possibly reset error counter
+        if (nErrDmCycdiff  >= ERRMAXN) if ((t_new - tErrDmCycdiff)  > ERRMAXT) {tErrDmCycdiff = 0; nErrDmCycdiff = 1;}
+        if (nErrDmCycdiff  <  ERRMAXN) printf("wr-f50: Data Master - actual and previous cycle length differ by: %10.3f us\n", (double)dmCycdiff/1000.0);
+      } // error DM cyclen difference
+
+      if (flagErrDmLock) {
+        nErrDmLock++;
+        if (nErrDmLock     >= ERRMAXN) if ((t_new - tErrDmLock)     > ERRMAXT) {tErrDmLock = 0; nErrDmLock = 1;}
+        if (nErrDmLock     <  ERRMAXN) printf("wr-f50: Data Master not synched to 50 Hz mains, current offset  : %10.3f us\n", (double)dmOffset/1000.0);
+      } // error DM not locked
+
+      if (flagErrDmMissing) {
+        nErrDmMissing++;
+        if (nErrDmMissing  >= ERRMAXN) if ((t_new - tErrDmMissing)  > ERRMAXT) {tErrDmMissing = 0; nErrDmMissing  = 1;}
+        if (nErrDmMissing  <  ERRMAXN) printf("wr-f50: missing cycle start message from Data Master\n");
+      } // no messages from Data Master
+
+      if (flagErrF50Cyclen) {
+        nErrF50Cyclen++;
+        if (nErrF50Cyclen  >= ERRMAXN) if ((t_new - tErrF50Cyclen)  > ERRMAXT) {tErrF50Cyclen = 0; nErrF50Cyclen  = 1;}
+        if (nErrF50Cyclen  <  ERRMAXN) printf("wr-f50: 50 Hz mains - actual cycle length exceeds bounds        : %10.3f us\n", (double)cyclenF50Act/1000.0);
+      } // error mains cycle len
+
+      if (flagErrF50Cycdiff) {
+        nErrF50Cycdiff++;
+        if (nErrF50Cycdiff >= ERRMAXN) if ((t_new - tErrF50Cycdiff) > ERRMAXT) {tErrF50Cycdiff = 0; nErrF50Cycdiff = 1;}
+        if (nErrF50Cycdiff <  ERRMAXN) printf("wr-f50: 50 Hz mains - actual and previous cycle length differ by: %10.3f us\n", (double)cyclenF50Act/1000.0);
+      } // error mains cyclen difference
+
+      // do periodic stuff every UPDATE_TIME
+      if (((t_new - t_old) / one_ms_ns) > UPDATE_TIME_MS) {
         // update firmware data
         wrmil_common_read(ebDevice, &fwStatus, &fwState, &tmp32a, &tmp32b, &fwVersion, &tmp32c, 0);
         wrf50_info_read(ebDevice, &offsetMains, &fwMode , &fwTMainsAct, &tmp32b, &tmp32c, &stmp32a, &stmp32b, &stmp32c, &stmp32g, &stmp32h, &stmp32i, &stmp32d, &stmp32e, &stmp32f, &fwLockState, &fwLockDate, &fwNLocked,
                         &fwNCycles, &fwEvtsLate, &fwOffsDone, &tmp32d, 0);
+        
+        t_old      = t_new;
+        nUpdate++;
+        if (nUpdate > 10) {
+          if (fwState != COMMON_STATE_OPREADY) printf("wr-f50: not OP_READY\n");
+          else                                 printf("wr-f50: OP_READY, lock state %d, act mains frequency             : %10.3f Hz\n", fwLockState, 1000000000.0/(double)fwTMainsAct);
+          fflush(stdout);                                                                       // required for immediate writing (if stdout is piped to syslog)
+          nUpdate = 0;
+        } // argh ...
 
         disStatus  = fwStatus;
         sprintf(disState  , "%s", wrmil_state_text(fwState));

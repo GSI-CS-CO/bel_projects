@@ -54,8 +54,8 @@
 #define WRF50_TUNE_MSG_DELAY        1000000    // delay for deadline for sending WRF50_ECADO_F50_TUNE message
 #define WRF50_LOCK_DIFFDTDM            5000    // maximum difference of WRF50_SHARED_GET_DT_DM_ACT, criterium for lock state
 #define WRF50_LOCK_DIFFDM             50000    // maximum difference of WRF50_SHARED_GET_OFFS_DM_ACT, criterium for lock state
-#define WRF50_LOCK_DIFFMAINS          25000    // maximum difference of WRF50_SHARED_GET_OFFS_MAINS_ACT, criterium for lock state
-#define WRF50_N_STAMPS                  101    // number of timestamps used for averaging; THIS MUST BE AN ODD NUMBER to avoid floating point calculation
+#define WRF50_LOCK_DIFFMAINS          25000    // maximum difference of WRF50_SHARED_GET_OFFS_MAINS_ACT
+#define WRF50_N_STAMPS                   21    // number of timestamps used for averaging; THIS MUST BE AN ODD NUMBER to avoid floating point calculation
 
 // default values
 #define WR50_DFLT_F50OFFSET               0    // default value [ns] for offset from 50 Hz signal

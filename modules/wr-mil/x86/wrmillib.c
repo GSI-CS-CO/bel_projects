@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 04-June-2024
+ *  version : 06-June-2024
  *
  * library for wr-mil
  *
@@ -364,27 +364,27 @@ void wrf50_printDiag(int32_t f50Offs, uint32_t mode, uint32_t TMainsAct, uint32_
   
   printf("wrf50: info  ...\n\n");
   
-  printf("offset to 50 Hz mains [us]          : %15d\n"        , f50Offs);
-  printf("mode                                : %15u\n"        , mode);
-  printf("act period of mains [us]            : %15.3f\n"      , (double)TMainsAct/1000.0);
-  printf("act period of DM [us]               : %15.3f\n"      , (double)TDmAct/1000.0);
-  printf("set period of DM [us]               : %15.3f\n"      , (double)TDmSet/1000.0);
-  printf("act offset DM: DM - mains [Hz]      : %15.3f\n"      , (double)offsDmAct/1000.0);
-  printf("min offset DM: DM - mains [Hz]      : %15.3f\n"      , (double)offsDmMin/1000.0);
-  printf("max offset DM: DM - mains [Hz]      : %15.3f\n"      , (double)offsDmMax/1000.0);
-  printf("period change DM: act - prev [us]   : %15.3f\n"      , (double)dTDMAct/1000.0);
-  printf("period change DM: act - prev [us]   : %15.3f\n"      , (double)dTDMMin/1000.0);
-  printf("period change DM: act - prev [us]   : %15.3f\n"      , (double)dTDMMax/1000.0);
-  printf("act offset mains: act - predict [us]: %15.3f\n"      , (double)offsMainsAct/1000.0);
-  printf("min offset mains: act - predict [us]: %15.3f\n"      , (double)offsMainsMin/1000.0);
-  printf("max offset mains: act - predict [us]: %15.3f\n"      , (double)offsMainsMax/1000.0);
-  printf("lock state                          : %15u\n"        , lockState);
-  printf("lock date                           : %s\n"          , timestr);
-  printf("# locks                             : %15u\n"        , nLocked);
-  printf("# cycles                            : %15u\n"        , nCycles);
-  printf("# late events                       : %15u\n"        , nEvtsLate);
-  printf("'offset done' (processing time) [us]: %15.3f\n"      , (double)offsDone/1000.0);
-  printf("communication latency [us]          : %15.3f\n"      , (double)comLatency/1000.0);
+  printf("offset to 50 Hz mains [us]           : %15d\n"        , f50Offs);
+  printf("mode                                 : %15u\n"        , mode);
+  printf("act period of mains [us]             : %15.3f\n"      , (double)TMainsAct/1000.0);
+  printf("act period of DM [us]                : %15.3f\n"      , (double)TDmAct/1000.0);
+  printf("set period of DM [us]                : %15.3f\n"      , (double)TDmSet/1000.0);
+  printf("act offset DM: DM - mains [Hz]       : %15.3f\n"      , (double)offsDmAct/1000.0);
+  printf("min offset DM: DM - mains [Hz]       : %15.3f\n"      , (double)offsDmMin/1000.0);
+  printf("max offset DM: DM - mains [Hz]       : %15.3f\n"      , (double)offsDmMax/1000.0);
+  printf("act period change DM: act - prev [us]: %15.3f\n"      , (double)dTDMAct/1000.0);
+  printf("min period change DM: act - prev [us]: %15.3f\n"      , (double)dTDMMin/1000.0);
+  printf("max period change DM: act - prev [us]: %15.3f\n"      , (double)dTDMMax/1000.0);
+  printf("act offset mains: act - predict [us] : %15.3f\n"      , (double)offsMainsAct/1000.0);
+  printf("min offset mains: act - predict [us] : %15.3f\n"      , (double)offsMainsMin/1000.0);
+  printf("max offset mains: act - predict [us] : %15.3f\n"      , (double)offsMainsMax/1000.0);
+  printf("lock state                           : %15u\n"        , lockState);
+  printf("lock date                            : %s\n"          , timestr);
+  printf("# locks                              : %15u\n"        , nLocked);
+  printf("# cycles                             : %15u\n"        , nCycles);
+  printf("# late events                        : %15u\n"        , nEvtsLate);
+  printf("'offset done' (processing time) [us] : %15.3f\n"      , (double)offsDone/1000.0);
+  printf("communication latency [us]           : %15.3f\n"      , (double)comLatency/1000.0);
 } // wrf50_printDiag
 
 
