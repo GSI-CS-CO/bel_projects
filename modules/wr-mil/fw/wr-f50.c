@@ -331,6 +331,16 @@ uint32_t extern_entryActionOperation()
   if (setF50Offset > WRF50_CYCLELEN_MIN) setF50Offset = WRF50_CYCLELEN_MIN;
   setMode                   = *pSharedSetMode;
 
+  t0F50                     = 0;
+  t1F50                     = 0;
+  t2F50                     = 0;
+  t0DM                      = 0;
+  t1DM                      = 0;
+  t2DM                      = 0;
+
+  validF50                  = 0;
+  validDM                   = 0;
+
   return COMMON_STATUS_OK;
 } // extern_entryActionOperation
 
@@ -556,8 +566,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         getOffsDMAct = t0DM - t0F50;
         if (getOffsDMAct > getOffsDMMax) getOffsDMMax = getOffsDMAct;
         if (getOffsDMAct < getOffsDMMin) getOffsDMMin = getOffsDMAct;
-       
-      }
+      } // if validF50
 
       // we don't know the current situation, set to lock state 'unknown'
       // getLockState = WRF50_SLOCK_UNKWN;
@@ -569,8 +578,14 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         break;
       } // if getNCycles
     
-      // ignore missing DM messages for simulation mode
-      if (setMode & WRF50_MASK_LOCK_SIM) validDM = 1;
+      // fix missing DM messages for simulation mode
+      if (setMode & WRF50_MASK_LOCK_SIM) {
+        // fix zero value upon startup
+        if (!validDM) {
+          t1DM       = t1F50;
+          validDM    = 1;
+        } // if validDM
+      } // if MASK_LOCK_SIM
 
       // continue only if we have valid information from Data Master and 50 Hz mains
       if (!(validDM && validF50)) {
@@ -622,7 +637,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         // mimic 'cycle start' message from DM
         sendEvtId    = fwlib_buildEvtidV1(PZU_F50, WRF50_ECADO_F50_DM, 0x0, 0x0, 0x0, 0x0);
         sendParam    = 0x0;
-        sendDeadline = t1DM + (uint64_t)getTDMSet;
+        sendDeadline = t2F50;
         fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0);                                      
       } // else LOCK_DM
 
