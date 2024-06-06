@@ -55,7 +55,8 @@ TYPE    t_cnt     is array (0 to 5)  of integer;
 
 signal read_cnt: t_cnt:= (others => 0);
 --signal flag_cnt: t_cnt;
-signal read_counters: integer range 0 to 255;
+--signal read_counters: integer range 0 to 255;
+signal read_counters: integer range 0 to 127;
 
 signal ena_out: std_logic_vector(5 downto 0);
 
@@ -149,7 +150,7 @@ end process;
     status_reg_counter_value_process: process (up_down_counter_val,  BLM_out_sel_reg(121))
         begin
 
-            read_counters <= to_integer(unsigned(BLM_out_sel_Reg(126)(7 downto 0)));
+            read_counters <= to_integer(unsigned(BLM_out_sel_Reg(126)(6 downto 0)));
             cnt_readback <= up_down_counter_val(read_counters);
       
 
