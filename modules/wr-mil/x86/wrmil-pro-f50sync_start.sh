@@ -63,6 +63,6 @@ saft-ecpu-ctl $SDGW -c 0x14c0fc0000000000 0xfffffff000000000 0 0xfc0  -d
 ###########################################
 # reset diagnostics
 ###########################################
-sleep 2
+sleep 5
 wrf50-ctl $TRGW cleardiag
 

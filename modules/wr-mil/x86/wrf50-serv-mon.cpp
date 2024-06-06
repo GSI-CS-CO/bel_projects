@@ -653,7 +653,7 @@ int main(int argc, char** argv)
       if (flagErrF50Cycdiff) {
         nErrF50Cycdiff++;
         if (nErrF50Cycdiff >= ERRMAXN) if ((t_new - tErrF50Cycdiff) > ERRMAXT) {tErrF50Cycdiff = 0; nErrF50Cycdiff = 1;}
-        if (nErrF50Cycdiff <  ERRMAXN) printf("wr-f50: 50 Hz mains - actual and previous cycle length differ by: %10.3f us\n", (double)cyclenF50Act/1000.0);
+        if (nErrF50Cycdiff <  ERRMAXN) printf("wr-f50: 50 Hz mains - actual and previous cycle length differ by: %10.3f us\n", (double)f50Cycdiff/1000.0);
       } // error mains cyclen difference
 
       // do periodic stuff every UPDATE_TIME
