@@ -3,8 +3,8 @@
 ############################
 
 VERSION_FW     = 9.0.0
-VERSION_TOOL   = 0.38.0
-VERSION_CARPEDM= 1.0.0
+VERSION_TOOL   = 0.39.0
+VERSION_CARPEDM= 1.1.0
 
 ifeq ($(findstring asl75,$(shell hostname)),asl75)
   # ASL build paths for asl75x
