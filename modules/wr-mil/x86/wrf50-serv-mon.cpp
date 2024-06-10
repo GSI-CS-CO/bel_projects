@@ -711,7 +711,10 @@ int main(int argc, char** argv)
 
       // clear data
       if (flagClear) {
-        clearStats();
+        clearStats();                           // clear server
+        wrmil_cmd_cleardiag(ebDevice);          // clear fw diags
+        printf("huhu\n");
+
         flagClear = 0;
       } // if flagclear
     } // while true
