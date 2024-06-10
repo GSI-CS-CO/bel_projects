@@ -70,19 +70,24 @@ extern "C" {
   typedef enum evtTag evtTag_t;
 
   // data type monitoring values; data are in 'native units' used by the lm32 firmware
+  // added 'dummies' to avoid odd-numbered data types for better compatibility 
   typedef struct{
     uint32_t  gid;                                       // GID for which the gateway is active
     uint32_t  cMode;                                     // comparison mode; server option '-c'
     uint64_t  nFwSnd;                                    // firmware # of sent MIL telegrams
     uint64_t  nFwRecD;                                   // firmware # of received MIL telegrams (data)
     uint64_t  nFwRecT;                                   // firmware # of received MIL telegrams (TAI)
+    uint64_t  dummy1;
     uint32_t  nFwRecErr;                                 // firmware # of received 'broken' MIL telegrams detected by VHDL Manchester decoder
+    uint32_t  dummy2;
     uint64_t  nStart;                                    // host # of start messages (type depends on comparison mode)
     uint64_t  nStop;                                     // host # of stop messages (type depends on comparison mode)
     uint64_t  nMatch;                                    // host # of matches (start vs stop messages)
+    uint64_t  dummy3;
     uint32_t  nFailSnd;                                  // host # of mismatches due to start event
     uint32_t  nFailEvt;                                  // host # of mismatches due to event number
     uint32_t  nFailOrder;                                // host # of mismatches due to event order
+    uint32_t  dummy4;
     double    tAct;                                      // actual deviation offset value, t_stop - t_start [us]
     double    tMin;                                      // minimum offset value [us]
     double    tMax;                                      // maximum offset value [us]

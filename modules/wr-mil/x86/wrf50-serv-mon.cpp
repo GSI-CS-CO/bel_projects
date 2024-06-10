@@ -387,12 +387,23 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
 
 
 // call back for command
+/*
 class RecvCommand : public DimCommand
 {
   int  reset;
   void commandHandler() {flagClear = 1;}
 public :
   RecvCommand(const char *name) : DimCommand(name,"C"){}
+};*/
+
+class Command: public DimCommand
+{
+    void commandHandler()
+    {
+        cout << "Received : " << getString() << endl;
+    }
+    public:
+        Command() : DimCommand("DELPHI/TEST/CMND","C") {};
 }; 
 
 
@@ -419,7 +430,7 @@ void disAddServices(char *prefix)
 
   // monitoring data service
   sprintf(name, "%s_data", prefix);
-  disMonDataId  = dis_add_service(name, "I:2;X:3;I:1;X:3;I:3;D:5", &(disMonData), sizeof(monval_t), 0, 0);
+  disMonDataId  = dis_add_service(name, "I:2;X:4;I:2;X:4;I:4;D:5", &(disMonData), sizeof(monval_t), 0, 0);
 } // disAddServices
 
                         
@@ -534,12 +545,13 @@ int main(int argc, char** argv)
     disAddServices(prefix);
     // uuuuhhhh, mixing c++ and c  
     sprintf(tmp, "%s-cmd_cleardiag", prefix);
-    RecvCommand cmdClearDiag(tmp);
+    /*    RecvCommand cmdClearDiag(tmp);*/
+        Command cmnd; 
     
     sprintf(disName, "%s", prefix);
     dis_start_serving(disName);
   } // if startServer
-  
+
   try {
     // basic saftd stuff
     std::shared_ptr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
@@ -657,7 +669,8 @@ int main(int argc, char** argv)
         // update monitoring data
         monData.nFwSnd    = fwNCycles;
         monData.nFwRecT   = fwNCycles;
-        monData.nFwRecErr = 0;
+        if (!fwLockState) monData.nFwRecErr++;
+        monData.cMode     = fwMode;
         monData.nFwRecD   = 0;
         disMonData        = monData;
         if (disMonData.tMin ==  INITMINMAX) disMonData.tMin = NAN;
@@ -702,7 +715,7 @@ int main(int argc, char** argv)
   catch (const saftbus::Error& error) {
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
   }
-  
+
   return 0;
 } // main
 
