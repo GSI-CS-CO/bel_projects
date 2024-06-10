@@ -143,7 +143,7 @@ typedef struct {
   uint64_t    printT0;                  // time of printing 1st occurence message [ns]; '0' indicates 'not yet printed'
   uint32_t    printN;                   // # of printed occurence messages
   uint32_t    printMaxN;                // max number of printed occurence messages within interval
-  uint64_t    printInterval;            // lenght of interval for printing 'max' messages
+  uint64_t    printInterval;            // length of interval for printing 'max' messages
   void       (*print_user_routine)(double x);       // routine that prints text; 'void print_user_routine(double value);'
  } iLimit_t;
 
@@ -188,19 +188,19 @@ void iLimit_check(iLimit_t *limit, int32_t value)
     limit->flag = 0;
 } // iLimit_set
 
-void iLimit_print(iLimit_t *limit)
+void iLimit_print(iLimit_t *limit, uint64_t sysTime)
 {
   if (limit->flag) {
 
     // timestamp printing of first occurence
-    if (limit->printT0 == 0x0) limit->printT0 = comlib_getSysTime();
+    if (limit->printT0 == 0x0) limit->printT0 = sysTime;
     
 
     // increment print counter
     limit->printN++;
 
     // possibly reset limit counter
-    if (limit->printN >= limit->printMaxN) if ((comlib_getSysTime() - limit->printT0)   > limit->printInterval) {limit->printT0 = 0; limit->printN = 1;}
+    if (limit->printN >= limit->printMaxN) if ((sysTime - limit->printT0)   > limit->printInterval) {limit->printT0 = 0; limit->printN = 1;}
     if (limit->printN <  limit->printMaxN) (limit->print_user_routine)((double)(limit->value));
   } // if limit flag
 } // iLimit_print
@@ -632,7 +632,7 @@ int main(int argc, char** argv)
 
       t_new = comlib_getSysTime();
 
-      for (i=0; i<iLimitArraySize; i++) iLimit_print(&(limits[i]));
+      for (i=0; i<iLimitArraySize; i++) iLimit_print(&(limits[i]), comlib_getSysTime());
 
       // do periodic stuff every UPDATE_TIME
       if (((t_new - t_old) / one_ms_ns) > UPDATE_TIME_MS) {
