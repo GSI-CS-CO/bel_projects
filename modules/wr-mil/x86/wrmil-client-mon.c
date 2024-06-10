@@ -152,7 +152,7 @@ void dicCmdClearDiag(char *prefix, uint32_t indexServer)
 {
   char name[DIMMAXSIZE];
 
-  sprintf(name, "%s_%s_cmd_cleardiag", prefix, sysShortNames[indexServer]);
+  sprintf(name, "%s_%s-mon_cmd_cleardiag", prefix, sysShortNames[indexServer]);
   dic_cmnd_service(name, 0, 0);
 } // dicCmdClearDiag
 

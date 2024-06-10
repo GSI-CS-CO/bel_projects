@@ -41,7 +41,7 @@
 
 // dim includes
 #include <dis.h>
-#include <dis.hxx>
+//#include <dis.hxx>
 
 // standard includes
 #include <iostream>
@@ -134,6 +134,7 @@ uint32_t  disStateId        = 0;
 uint32_t  disStatusId       = 0;
 uint32_t  disHostnameId     = 0;
 uint32_t  disMonDataId      = 0;
+uint32_t  disCmdClear       = 0;
 
 typedef struct {
   int32_t     flag;                     // flag: a limit has been exceeded
@@ -396,7 +397,7 @@ public :
   RecvCommand(const char *name) : DimCommand(name,"C"){}
 };*/
 
-class Command: public DimCommand
+/*class Command: public DimCommand
 {
     void commandHandler()
     {
@@ -404,10 +405,15 @@ class Command: public DimCommand
     }
     public:
         Command() : DimCommand("DELPHI/TEST/CMND","C") {};
-}; 
-
+        };*/ 
 
 // add all dim services
+
+void dis_cmd_clear(void *tag, void *buffer, int *size)
+{
+  flagClear = 1;
+} // dis_cmd_clear
+
 void disAddServices(char *prefix)
 {
   char name[DIMMAXSIZE];
@@ -430,7 +436,12 @@ void disAddServices(char *prefix)
 
   // monitoring data service
   sprintf(name, "%s_data", prefix);
-  disMonDataId  = dis_add_service(name, "I:2;X:4;I:2;X:4;I:4;D:5", &(disMonData), sizeof(monval_t), 0, 0);
+  disMonDataId  = dis_add_service(name, "I:2;X:3;I:1;X:3;I:3;D:5", &(disMonData), sizeof(monval_t), 0, 0);
+
+  // command server clear
+  sprintf(name, "%s_cmd_cleardiag", prefix);
+  disCmdClear = dis_add_cmnd(name, 0, dis_cmd_clear, 17);
+
 } // disAddServices
 
                         
@@ -543,10 +554,6 @@ int main(int argc, char** argv)
 
     clearStats();
     disAddServices(prefix);
-    // uuuuhhhh, mixing c++ and c  
-    sprintf(tmp, "%s-cmd_cleardiag", prefix);
-    /*    RecvCommand cmdClearDiag(tmp);*/
-        Command cmnd; 
     
     sprintf(disName, "%s", prefix);
     dis_start_serving(disName);
@@ -714,7 +721,7 @@ int main(int argc, char** argv)
   } // try
   catch (const saftbus::Error& error) {
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
-  }
+    }
 
   return 0;
 } // main
