@@ -348,7 +348,7 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
           iLimit_check(&(limits[dmOffset]), offsetDm);
 
           // calc stats
-          monData.tAct                  = (double)dmOffset / 1000.0;
+          monData.tAct                  = (double)offsetDm / 1000.0;
           monData.nMatch++;
           if (monData.tAct < monData.tMin) monData.tMin = monData.tAct;
           if (monData.tAct > monData.tMax) monData.tMax = monData.tAct;
@@ -434,7 +434,7 @@ static void help(void) {
   std::cerr << std::endl;
   std::cerr << "This tool monitors a UNILAC 50 Hz synchronisation unit (wrf50)"                     << std::endl;
   std::cerr << std::endl;
-  std::cerr << "Example1: '" << program << " -d pro'"                                               << std::endl;
+  std::cerr << "Example1: '" << program << " tr0 -d pro'"                                           << std::endl;
   std::cerr << std::endl;
   std::cerr << "Report bugs to <d.beck@gsi.de> !!!" << std::endl;
   std::cerr << "Version " << wrmil_version_text(WRF50_SERV_MON_VERSION) << ". Licensed under the GPL v3." << std::endl;
@@ -648,7 +648,7 @@ int main(int argc, char** argv)
           else                                 printf("wr-f50: OP_READY, lock state %d, act mains frequency             : %10.3f Hz\n", fwLockState, 1000000000.0/(double)fwTMainsAct);
           fflush(stdout);                                                                       // required for immediate writing (if stdout is piped to syslog)
           nUpdate = 0;
-        } // argh ...
+        } // argh - super primitive ...
 
         disStatus  = fwStatus;
         sprintf(disState  , "%s", wrmil_state_text(fwState));
