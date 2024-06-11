@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 03-June-2024
+ *  version :113-Jun-2024
  *
  * subscribes to and displays status of a wr-mil gateway
  *
@@ -205,7 +205,7 @@ void printServices()
     if (*tmp == no_link_32)                      sprintf(cHost,   "%12s",          no_link_str);
     else                                         sprintf(cHost,   "%12s",          dicSystem[i].hostname);
     tmp = (uint32_t *)(&(dicSystem[i].monData));
-    if (*tmp == no_link_32)                      sprintf(cData,   "%82s",          no_link_str);
+    if (*tmp == no_link_32)                      sprintf(cData,   "%96s",          no_link_str);
     else  {
       if (dicSystem[i].monData.nFwSnd  == -1)    sprintf(cNFwSnd, "%12s" , "nan");
       else                                       sprintf(cNFwSnd, "%12lu", dicSystem[i].monData.nFwSnd);
@@ -227,7 +227,7 @@ void printServices()
       else                                       sprintf(cTMax,   "%8.3f", dicSystem[i].monData.tMax);
       sprintf(cData, "%12s %12s %12s %12s %5s %4s %7s %7s %8s %8s",  cNFwSnd, cNFwMssd, cNFwErr, cNMatch, cRMatch, cMMatch, cTAve, cTSdev, cTMin, cTMax);
     } // else nolink
-    printf(" %2x %10s %8s %10s %13s %95s %12s\n", i, sysShortNames[i], cVersion, cState, cStatus, cData, cHost);
+    printf(" %2x %10s %8s %10s %13s %96s %12s\n", i, sysShortNames[i], cVersion, cState, cStatus, cData, cHost);
   } // for i
 
   for (i=0; i<12; i++) printf("%s\n", empty);
