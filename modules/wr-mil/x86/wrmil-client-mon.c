@@ -230,7 +230,7 @@ void printServices()
     printf(" %2x %10s %8s %10s %13s %96s %12s\n", i, sysShortNames[i], cVersion, cState, cStatus, cData, cHost);
   } // for i
 
-  for (i=0; i<12; i++) printf("%s\n", empty);
+  for (i=0; i<10; i++) printf("%s\n", empty);
   printf("%s\n", footer);
 } // printServices
 
