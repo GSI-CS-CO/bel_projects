@@ -42,7 +42,7 @@ eb-fwload $TRGW u 0x0 wrf50.bin
 
 echo -e WRF50: configure firmware for gateway $NGW
 sleep 2
-wrf50-ctl -m3 $TRGW configure
+wrf50-ctl -m2 $TRGW configure
 sleep 2
 wrf50-ctl $TRGW startop
 

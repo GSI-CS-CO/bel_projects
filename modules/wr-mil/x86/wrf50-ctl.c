@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Michael Reese GSI-Darmstadt
- *  version : 04-Jun-2024
+ *  version : 11-Jun-2024
  *
  * Command-line interface for wr-f50
  *
@@ -80,10 +80,8 @@ static void help(void) {
   fprintf(stderr, "                      'offset': t_cycle_mains - t_cycle_DM and must be positive\n"  );
   fprintf(stderr, "  -m <mode>           mode selection, default 1 \n"                                 );
   fprintf(stderr, "                      0: off\n"                                                     );
-  fprintf(stderr, "                      1: hard locking, Data Master simulation mode\n"               );
-  fprintf(stderr, "                      2: (not yet implemented)\n"                                   );
-  fprintf(stderr, "                      3: hard locking of Data Master\n"                             );
-  fprintf(stderr, "                      4: (not yet implemented)\n"                                   );
+  fprintf(stderr, "                      2: hard locking, Data Master simulation mode\n"               );
+  fprintf(stderr, "                      4: hard locking of Data Master\n"                             );
   fprintf(stderr, "  configure           command requests state change from IDLE or CONFIGURED -> CONFIGURED\n");
   fprintf(stderr, "  startop             command requests state change from CONFIGURED -> OPREADY\n"   );
   fprintf(stderr, "  stopop              command requests state change from OPREADY -> STOPPING -> CONFIGURED\n");
@@ -183,10 +181,11 @@ int main(int argc, char** argv) {
         if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1;}
         switch (tmp) {
           case 0: mode = WRF50_MODE_OFF;               break;
-          case 1: mode = WRF50_MODE_LOCK_HARD_SIM;     break;
-          case 2: fprintf(stderr, "option 'm2' not yet implemented\n"); return 1;
-          case 3: mode = WRF50_MODE_LOCK_HARD_DM;      break;
-          case 4: fprintf(stderr, "option 'm4' not yet implemented\n"); return 1;
+          case 1: fprintf(stderr, "option not implemented\n"); return 1;
+          case 2: mode = WRF50_MODE_LOCK_HARD_SIM;     break;
+          case 3: fprintf(stderr, "option not implemented\n"); return 1;
+          case 4: mode = WRF50_MODE_LOCK_HARD_DM;      break;
+          case 5: fprintf(stderr, "option not implemented\n"); return 1;
           default: fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1; 
         } // switch tmp
         break;
