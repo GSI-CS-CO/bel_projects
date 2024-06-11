@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-May-2024
+ *  version : 11-Jun-2024
  *
  * monitors WR-MIL gateway
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define WRMIL_SERV_MON_VERSION 0x000003
+#define WRMIL_SERV_MON_VERSION 0x000005
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -132,6 +132,8 @@ uint32_t  disStateId        = 0;
 uint32_t  disStatusId       = 0;
 uint32_t  disHostnameId     = 0;
 uint32_t  disMonDataId      = 0;
+uint32_t  disCmdClearId     = 0;
+
 
 // local variables
 monval_t  monData;                      // monitoring data
@@ -332,14 +334,11 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
 } // recTimingMessag*/
 
 
-// call back for command
-class RecvCommand : public DimCommand
+// callback for command
+void dis_cmd_clear(void *tag, void *buffer, int *size)
 {
-  int  reset;
-  void commandHandler() {flagClear = 1;}
-public :
-  RecvCommand(const char *name) : DimCommand(name,"C"){}
-}; 
+  flagClear = 1;
+} // dis_cmd_clear
 
 
 // add all dim services
@@ -366,6 +365,10 @@ void disAddServices(char *prefix)
   // monitoring data service
   sprintf(name, "%s_data", prefix);
   disMonDataId  = dis_add_service(name, "I:2;X:3;I:1;X:3;I:3;D:5", &(disMonData), sizeof(monval_t), 0, 0);
+
+  // command clear
+  sprintf(name, "%s_cmd_cleardiag", prefix);
+  disCmdClearId = dis_add_cmnd(name, 0, dis_cmd_clear, 17);
 } // disAddServices
 
                         
@@ -525,9 +528,6 @@ int main(int argc, char** argv)
 
     clearStats();
     disAddServices(prefix);
-    // uuuuhhhh, mixing c++ and c  
-    sprintf(tmp, "%s-cmd_cleardiag", prefix);
-    RecvCommand cmdClearDiag(tmp);
     
     sprintf(disName, "%s", prefix);
     dis_start_serving(disName);
@@ -722,7 +722,9 @@ int main(int argc, char** argv)
 
       // clear data
       if (flagClear) {
-        clearStats();
+        clearStats();                           // clear server
+        wrmil_cmd_cleardiag(ebDevice);          // clear fw diags
+        
         flagClear = 0;
       } // if flagclear
     } // while true

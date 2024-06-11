@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 10-Jun-2024
+ *  version : 11-Jun-2024
  *
  * monitors WR-MIL gateway
  *
@@ -134,7 +134,7 @@ uint32_t  disStateId        = 0;
 uint32_t  disStatusId       = 0;
 uint32_t  disHostnameId     = 0;
 uint32_t  disMonDataId      = 0;
-uint32_t  disCmdClear       = 0;
+uint32_t  disCmdClearId     = 0;
 
 typedef struct {
   int32_t     flag;                     // flag: a limit has been exceeded
@@ -387,7 +387,7 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
 } // recTimingMessage */
 
 
-// call back for command
+// call back for command, C++ interface
 /*
 class RecvCommand : public DimCommand
 {
@@ -405,10 +405,9 @@ public :
     }
     public:
         Command() : DimCommand("DELPHI/TEST/CMND","C") {};
-        };*/ 
+};*/ 
 
-// add all dim services
-
+// callback for command
 void dis_cmd_clear(void *tag, void *buffer, int *size)
 {
   flagClear = 1;
@@ -438,9 +437,9 @@ void disAddServices(char *prefix)
   sprintf(name, "%s_data", prefix);
   disMonDataId  = dis_add_service(name, "I:2;X:3;I:1;X:3;I:3;D:5", &(disMonData), sizeof(monval_t), 0, 0);
 
-  // command server clear
+  // command clear
   sprintf(name, "%s_cmd_cleardiag", prefix);
-  disCmdClear = dis_add_cmnd(name, 0, dis_cmd_clear, 17);
+  disCmdClearId = dis_add_cmnd(name, 0, dis_cmd_clear, 17);
 
 } // disAddServices
 
@@ -713,7 +712,6 @@ int main(int argc, char** argv)
       if (flagClear) {
         clearStats();                           // clear server
         wrmil_cmd_cleardiag(ebDevice);          // clear fw diags
-        printf("huhu\n");
 
         flagClear = 0;
       } // if flagclear

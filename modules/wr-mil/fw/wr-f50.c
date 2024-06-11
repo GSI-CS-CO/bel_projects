@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 2024-Jun-04
+ *  version : 2024-Jun-11
  *
  *  firmware required for the 50 Hz mains -> WR gateway
  *  
@@ -41,8 +41,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define WRF50_FW_VERSION      0x000004    // make this consistent with makefile
-
+#define WRF50_FW_VERSION      0x000005                                  // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -247,9 +246,9 @@ void extern_clearDiag()
   getOffsMainsMin = 0x7fffffff;
   getOffsMainsMax = 0x80000000;
   getLockState    = WRF50_SLOCK_UNKWN;
-  getLockDate     = 0x0;     
-  getNLocked      = 0x0;      
-  // getNCycles      = 0x0;  don't reset as this variable is important for the regulation    
+  getLockDate     = 0x0;
+  getNLocked      = 0x0;
+  if (getNCycles > WRF50_N_STAMPS) getNCycles = WRF50_N_STAMPS;
   getNEvtsLate    = 0x0;
   getOffsDone     = 0x0;
   getComLatency   = 0x0;   
