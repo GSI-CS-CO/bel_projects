@@ -122,7 +122,7 @@ component BLM_gate_timing_seq is
       hold_time : in  t_BLM_gate_hold_Time_Array;
      -- all_thres_ready: in std_logic;
       gate_error : out std_logic_vector(n-1 downto 0); -- gate doesn't start within the given timeout
-      state_nr: out t_gate_state_nr;
+    --  state_nr: out t_gate_state_nr;
       gate_out: out std_logic_vector(n-1 downto 0)        -- out gate signal
     );
     end component BLM_gate_timing_seq;
@@ -280,15 +280,15 @@ end process direct_gate_operation;
       hold_time => gate_hold_time,
    --   all_thres_ready => all_thres_ready,
       gate_error => gate_sm_error, -- gate error
-      state_nr => gate_sm_state,
+      --state_nr => gate_sm_state,
       gate_out => gate_sm_output --gate_output
     );
 
   gate_error <= gate_sm_error;
   gate_output <= gate_sm_output;
 
-  gate_state <= '0'& gate_sm_state(5) & '0'& gate_sm_state(4)& '0'& gate_sm_state(3)&'0'& gate_sm_state(2) & '0'& gate_sm_state(1)&'0'& gate_sm_state(0)&
-  '0'& gate_sm_state(11) & '0'& gate_sm_state(10)& '0'& gate_sm_state(9)&'0'& gate_sm_state(8) & '0'& gate_sm_state(7)&'0'& gate_sm_state(6);
+  --gate_state <= '0'& gate_sm_state(5) & '0'& gate_sm_state(4)& '0'& gate_sm_state(3)&'0'& gate_sm_state(2) & '0'& gate_sm_state(1)&'0'& gate_sm_state(0)&
+ -- '0'& gate_sm_state(11) & '0'& gate_sm_state(10)& '0'& gate_sm_state(9)&'0'& gate_sm_state(8) & '0'& gate_sm_state(7)&'0'& gate_sm_state(6);
 
 
   gate_hold_time_proc: process(BLM_gate_hold_time_Reg)
@@ -357,35 +357,25 @@ port map (
       end generate BLM_counter_pool;
 -----------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------
--- out section
---all_thres_ready_proc: process(pos_threshold, neg_threshold)
---begin
- -- for i in 0 to 127 loop
-  --  for j in 0 to 31 loop
-  --    or_thres(i)<= pos_threshold(i)(j) or neg_threshold(i)(j);
-  --  end loop;
-  --end loop;
- -- all_thres_ready <= and_reduce(or_thres);
---end process;
-TEST_PROCESS: process (clk_sys,rstn_sys)
-begin
-    if rstn_sys='1' then 
-  
-     UP_OVERFLOW_OUT <= (others => '0');
-     DOWN_OVERFLOW_OUT <= (others =>'0');
-      
-elsif (clk_sys'EVENT AND clk_sys= '1') then 
-  DOWN_OVERFLOW_OUT <= DOWN_OVERFLOW;
 
---TEST_PROCESS: process (BLM_ctrl_reg(15))
+
+--TEST_PROCESS: process (clk_sys,rstn_sys)
 --begin
-  if BLM_ctrl_reg(15) ='0' then 
-    UP_OVERFLOW_OUT <= UP_OVERFLOW;
-  else
-    UP_OVERFLOW_OUT <= UP_OVERFLOW(127 downto 80)& gate_state & "0000"& BLM_gate_in(5 downto 0) & BLM_gate_in(11 downto 6)& "0000"& gate_output(5 downto 0) & gate_output(11 downto 6); -- UP_OVERFLOW & gate_in & gate_out
-  end if;
-end if;
-  end process;
+ --   if rstn_sys='1' then 
+  
+  --   UP_OVERFLOW_OUT <= (others => '0');
+  --   DOWN_OVERFLOW_OUT <= (others =>'0');
+      
+--elsif (clk_sys'EVENT AND clk_sys= '1') then 
+ -- DOWN_OVERFLOW_OUT <= DOWN_OVERFLOW;
+
+ -- if BLM_ctrl_reg(15) ='0' then 
+ --   UP_OVERFLOW_OUT <= UP_OVERFLOW;
+ -- else
+ --   UP_OVERFLOW_OUT <= UP_OVERFLOW(127 downto 80)& gate_state & "0000"& BLM_gate_in(5 downto 0) & BLM_gate_in(11 downto 6)& "0000"& gate_output(5 downto 0) & gate_output(11 downto 6); -- UP_OVERFLOW & gate_in & gate_out
+  --end if;
+--end if;
+ -- end process;
 
 
 BLM_out_section: BLM_out_el 
@@ -396,9 +386,11 @@ BLM_out_section: BLM_out_el
     -- +++
     BLM_out_sel_reg => BLM_out_sel_reg, 
     --
-  -- UP_OVERFLOW  =>UP_OVERFLOW,
-   UP_OVERFLOW     =>UP_OVERFLOW_OUT, --UP_OVERFLOW(127 downto 80)& gate_state & "0000"& BLM_gate_in(5 downto 0) & BLM_gate_in(11 downto 6)& "0000"& gate_output(5 downto 0) & gate_output(11 downto 6), -- UP_OVERFLOW & gate_in & gate_out , -- ONLY FOR TESTS 
-   DOWN_OVERFLOW   => DOWN_OVERFLOW_OUT,
+  --UP_OVERFLOW  =>UP_OVERFLOW,
+    UP_OVERFLOW => neg_threshold(0) & pos_threshold(0)&UP_OVERFLOW(63 downto 0),
+   --UP_OVERFLOW     => UP_OVERFLOW(127 downto 80)& gate_state & "0000"& BLM_gate_in(5 downto 0) & BLM_gate_in(11 downto 6)& "0000"& gate_output(5 downto 0) & gate_output(11 downto 6), -- UP_OVERFLOW & gate_in & gate_out , -- ONLY FOR TESTS 
+   --DOWN_OVERFLOW   => DOWN_OVERFLOW_OUT,
+   DOWN_OVERFLOW   => DOWN_OVERFLOW,
     wd_out           => out_1wd, --out_wd, --out_1wd,
     gate_in         => BLM_gate_in(5 downto 0) & BLM_gate_in(11 downto 6),--BLM_gate_in,
     gate_out        => gate_error(5 downto 0) & gate_error(11 downto 6),
@@ -407,7 +399,6 @@ BLM_out_section: BLM_out_el
     BLM_status_Reg  => BLM_status_Reg 
     );
 
-   
 
   end architecture;
 

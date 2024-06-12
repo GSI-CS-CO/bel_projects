@@ -14,7 +14,7 @@ port(
   hold: in std_logic_vector(15 downto 0);
 
   gate_error : out std_logic;  -- gate doesn't start within the given timeout
-  gate_state_nr : out std_logic_vector (2 downto 0); --for tests
+ -- gate_state_nr : out std_logic_vector (2 downto 0); --for tests
   gate_out: out std_logic        -- out gate signal
 );
 end BLM_gate_timing_seq_elem;
@@ -29,7 +29,7 @@ signal gate_er: std_logic;
 signal gate_out_sm: std_logic;
 
 signal curr_val   :std_logic; --:='0';
-signal state_sm: integer range 0 to 5:= 0;
+--signal state_sm: integer range 0 to 5:= 0;
 
 signal timeout_reset : unsigned(29 downto 0); 
 signal timeout : unsigned(29 downto 0);
@@ -37,22 +37,22 @@ signal hold_time: unsigned(15 downto 0);
 
 begin
 
-  state_sm_proc: process(clk_i, rstn_i)--(gate_state)
-  begin
-  if ((rstn_i= '0')) then 
-    state_sm <= 0;
-  elsif rising_edge(clk_i) then
-    case gate_state is
-      when idle           => state_sm <= 0;
-      when prepare_state  => state_sm <= 1;
-      when gate           => state_sm <= 2;
-      when waiting        => state_sm <= 3;
-      when error          => state_sm <= 4;
-      when recover_state  => state_sm <= 5;
-      when others         => null;
-    end case;
-  end if;
-  end process;
+  --state_sm_proc: process(clk_i, rstn_i)--(gate_state)
+ -- begin
+ -- if ((rstn_i= '0')) then 
+ --   state_sm <= 0;
+ -- elsif rising_edge(clk_i) then
+ --   case gate_state is
+  --    when idle           => state_sm <= 0;
+  --    when prepare_state  => state_sm <= 1;
+   --   when gate           => state_sm <= 2;
+  --    when waiting        => state_sm <= 3;
+  --   when error          => state_sm <= 4;
+  --    when recover_state  => state_sm <= 5;
+  --    when others         => null;
+ --   end case;
+ -- end if;
+ -- end process;
 
 
 
@@ -65,14 +65,14 @@ gate_proc: process (clk_i, rstn_i)
         gate_error  <= '0';
         gate_out <='0';
         gate_er <='0';
-        gate_state <= idle;
-        gate_state_nr <= "000";
+       gate_state <= idle;
+      --  gate_state_nr <= "000";
         curr_val <='0';
-      --  ready <= '0';
+     
       elsif rising_edge(clk_i) then
 
         curr_val <= gate_in ;
-        gate_state_nr <=  std_logic_vector(to_unsigned(state_sm, gate_state_nr'length));
+       -- gate_state_nr <=  std_logic_vector(to_unsigned(state_sm, gate_state_nr'length));
         gate_error <= gate_er;
         gate_out <= gate_out_sm;
 
