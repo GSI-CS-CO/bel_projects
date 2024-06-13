@@ -93,11 +93,11 @@ begin
             else
                 
                 cnt_enable <= ENABLE;
-                if  gate_reset_ena = '0' then
+          --      if  gate_reset_ena = '0' then
                     CLEAR <='0';   
-                else 
-                    CLEAR <= ENABLE;
-                end if;
+          --      else 
+          --          CLEAR <= ENABLE;
+           --     end if;
                 
             end if;
         end if;

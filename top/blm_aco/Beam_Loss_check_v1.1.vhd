@@ -386,8 +386,8 @@ BLM_out_section: BLM_out_el
     -- +++
     BLM_out_sel_reg => BLM_out_sel_reg, 
     --
-  --UP_OVERFLOW  =>UP_OVERFLOW,
-    UP_OVERFLOW => neg_threshold(0) & pos_threshold(0)&UP_OVERFLOW(63 downto 0),
+  UP_OVERFLOW  =>UP_OVERFLOW,
+   -- UP_OVERFLOW => neg_threshold(0) & pos_threshold(0)&UP_OVERFLOW(63 downto 0),
    --UP_OVERFLOW     => UP_OVERFLOW(127 downto 80)& gate_state & "0000"& BLM_gate_in(5 downto 0) & BLM_gate_in(11 downto 6)& "0000"& gate_output(5 downto 0) & gate_output(11 downto 6), -- UP_OVERFLOW & gate_in & gate_out , -- ONLY FOR TESTS 
    --DOWN_OVERFLOW   => DOWN_OVERFLOW_OUT,
    DOWN_OVERFLOW   => DOWN_OVERFLOW,
