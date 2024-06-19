@@ -365,14 +365,14 @@ begin
   end generate;
 
   -- LEDs
-  wr_leds_o(0)                  <= not (s_led_link_act and s_led_link_up);         -- red   = traffic/no-link
-  wr_leds_o(1)                  <= not s_led_link_up;                              -- blue  = link
-  wr_leds_o(2)                  <= not s_led_track;                                -- green = timing valid
-  wr_leds_o(3)                  <= not s_led_pps;                                  -- white = PPS
-  wr_aux_leds_or_node_leds_o(0) <= not (s_led_aux_link_act and s_led_aux_link_up); -- red   = traffic/no-link
-  wr_aux_leds_or_node_leds_o(1) <= not s_led_aux_link_up;                          -- blue  = link
-  wr_aux_leds_or_node_leds_o(2) <= not s_led_aux_track;                            -- green = timing valid
-  wr_aux_leds_or_node_leds_o(3) <= not s_led_aux_pps;                              -- white = PPS
+  wr_leds_o(0)                  <= not (s_led_link_act and s_led_link_up);          -- red   = traffic/no-link
+  wr_leds_o(1)                  <= not s_led_track;                                 -- green = timing valid
+  wr_leds_o(2)                  <= not (s_led_link_up and not(s_led_track));        -- blue  = link
+  wr_leds_o(3)                  <= not s_led_pps;                                   -- white = PPS
+  wr_aux_leds_or_node_leds_o(0) <= not (s_led_aux_link_act and s_led_aux_link_up);  -- red   = traffic/no-link
+  wr_aux_leds_or_node_leds_o(1) <= not s_led_aux_track;                             -- green = timing valid
+  wr_aux_leds_or_node_leds_o(2) <= not (s_led_aux_link_up and not(s_led_aux_track));-- blue  = link
+  wr_aux_leds_or_node_leds_o(3) <= not s_led_aux_pps;                               -- white = PPS
 
   -- Unused
   sfp_aux_gpio_extra(0) <= 'Z';
