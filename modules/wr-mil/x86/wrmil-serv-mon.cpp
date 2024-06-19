@@ -395,8 +395,8 @@ static void help(void) {
   std::cerr << "                       4: PZU_UH; UNILAC, High Current Injector (HSI)"              << std::endl;
   std::cerr << "                       5: PZU_AT; UNILAC, Alvarez Cavities"                         << std::endl;
   std::cerr << "                       6: PZU_TK; UNILAC, Transfer Line"                            << std::endl;
-  std::cerr << "                       8: SIS18_RING"                                               << std::endl;
-  std::cerr << "                       9: ESR_RING"                                                 << std::endl;
+  std::cerr << "                       7: SIS18_RING"                                               << std::endl;
+  std::cerr << "                       8: ESR_RING"                                                 << std::endl;
   std::cerr << std::endl;
   std::cerr << "This tool monitors a White Rabbit -> MIL gateway."                                  << std::endl;
   std::cerr << std::endl;
