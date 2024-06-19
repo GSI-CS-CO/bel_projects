@@ -385,14 +385,14 @@ begin
   end generate; -- psram_quad
 
   -- LEDs
-  wr_leds_o(0)                  <= not (s_led_link_act and s_led_link_up); -- red   = traffic/no-link
-  wr_leds_o(1)                  <= not s_led_link_up;                      -- blue  = link
-  wr_leds_o(2)                  <= not s_led_track;                        -- green = timing valid
-  wr_leds_o(3)                  <= not s_led_pps;                          -- white = PPS
-  wr_aux_leds_or_node_leds_o(0) <= s_gpio_o(16);                           -- red
-  wr_aux_leds_or_node_leds_o(1) <= s_gpio_o(17);                           -- blue
-  wr_aux_leds_or_node_leds_o(2) <= s_gpio_o(18);                           -- green
-  wr_aux_leds_or_node_leds_o(3) <= s_gpio_o(19);                           -- white
+  wr_leds_o(0)                  <= not (s_led_link_act and s_led_link_up);   -- red   = traffic/no-link
+  wr_leds_o(1)                  <= not s_led_track;                          -- green = timing valid
+  wr_leds_o(2)                  <= not (s_led_link_up and not(s_led_track)); --blue  = link
+  wr_leds_o(3)                  <= not s_led_pps;                            -- white = PPS
+  wr_aux_leds_or_node_leds_o(0) <= s_gpio_o(16);                             -- red
+  wr_aux_leds_or_node_leds_o(1) <= s_gpio_o(17);                             -- red
+  wr_aux_leds_or_node_leds_o(2) <= s_gpio_o(18);                             -- orange
+  wr_aux_leds_or_node_leds_o(3) <= s_gpio_o(19);                             -- orange
 
   -- Additional GPIOs (USBC5)
   sfp_aux_tx_disable_io_nc <= s_gpio_o(6)  when s_gpio_o(6)='0'  else 'Z';
