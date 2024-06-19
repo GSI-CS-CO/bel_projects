@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Michael Reese GSI-Darmstadt
- *  version : 24-May-2024
+ *  version : 19-Jun-2024
  *
  * Command-line interface for wr-mil
  *
@@ -88,9 +88,10 @@ static void help(void) {
   fprintf(stderr, "                      6: PZU-TK; UNILAC, Transfer Line\n"                           );
   fprintf(stderr, "                      7: PZ-SIS18\n"                                                );
   fprintf(stderr, "                      8: PZ-ESR\n"                                                  );
-  fprintf(stderr, "  -l <latency corr>   [ns] latency correction for all MIL telegrams, default 0\n   ");
+  fprintf(stderr, "  -l <latency corr>   [ns] latency correction for all MIL telegrams, default 0\n"   );
   fprintf(stderr, "  -g                  'latency' shall be negative\n"                                );
   fprintf(stderr, "  -t <trigger>        UTC: evtNo of trigger event [0..255], default 0xf6\n"         );
+  fprintf(stderr, "                      (UNILAC requires 0xff\n"                                      );
   fprintf(stderr, "  -o <offset>         UTC: offset [s]                     , default yr 2008\n"      );
   fprintf(stderr, "  -d <delay>          UTC: delay after trigger event [us] , default 0\n"            );
   fprintf(stderr, "  -u <delay>          UTC: delay between UTC events  [us] , default 30\n"           );
