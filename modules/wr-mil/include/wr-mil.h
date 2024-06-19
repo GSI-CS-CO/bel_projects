@@ -21,7 +21,7 @@
 #define WRMIL_ECADO_TIMEOUT    COMMON_ECADO_TIMEOUT
 #define WRMIL_ECADO_UNKOWN               1   // unkown activity requested (unexpected action by ECA)
 #define WRMIL_ECADO_MIL_EVT           0xff   // timing message "EVT_...." received, evtno is 0x00..0xff
-#define WRMIL_ECADO_MIL_TLU           0xa1   // timing message from TLU, evtno is 0xa01
+#define WRMIL_ECADO_MIL_TLU          0xa01   // timing message from TLU, evtno is 0xa01
 
 // commands from the outside
 

@@ -289,7 +289,7 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
       } // if !flagMilSent
 
       // evtNo of MIL received/sent telegrams do not match: give up
-      if (mEvtNo != sndEvtNo){
+      if ((mEvtNo != sndEvtNo) && (modeCompare != 4)) {
         monData.nFailEvt++;
         return;  
       } // if !evtNo
@@ -384,7 +384,8 @@ static void help(void) {
   std::cerr << "                       0: don't compare                                         "   << std::endl;
   std::cerr << "                       1: compare received MIL telegrams with WR timing messages"   << std::endl;
   std::cerr << "                       2: compare received MIL telegrams with sent MIL telegrams"   << std::endl;
-  std::cerr << "                       3: as mode '1' but excludes UTC telegrams"                   << std::endl;
+  std::cerr << "                       3: as mode '2' but excludes UTC telegrams"                   << std::endl;
+  std::cerr << "                       4: compare timesamps of received MIL telegrams WR messages"  << std::endl;
   std::cerr << "  -m <match windows>   [us] windows for matching start/stop evts; default 20"       << std::endl;
   std::cerr << std::endl;
   std::cerr << "  The paremter -s is mandatory"                                                     << std::endl;
@@ -417,6 +418,9 @@ int main(int argc, char** argv)
   bool     startServer    = false;
   uint32_t gid=0xffffffff;                // gid for gateway
   uint32_t gidStart;                      // relevant to select the type of messages used as a start
+  uint64_t idStop;                        // relevant to select the type of messages used as a stop
+  uint64_t maskStop;                      // relevant to select the type of messages used as a stop
+  
 
   char    *tail;
 
@@ -605,16 +609,30 @@ int main(int argc, char** argv)
         case 1:
           // compare received MIL telegrams to received WR Timing messags
           gidStart    = gid;
-          offsetStart = 0;
+          idStop      = ((uint64_t)LOC_MIL_REC << 48);
+          maskStop    = 0xfffff00000000000;
+          offsetStart = one_ms_ns;
           break;
         case 2 ... 3:
           // compare received MIL telegrams to sent MIL telegrams
           gidStart    = LOC_MIL_SEND;
-          offsetStart = WRMIL_MILSEND_LATENCY;
+          idStop      = ((uint64_t)LOC_MIL_REC << 48);
+          maskStop    = 0xfffff00000000000;
+          offsetStart = one_ms_ns + WRMIL_MILSEND_LATENCY;
           //offsetStart = 0;
+          break;
+        case 4:
+          // compare timestamps of received MIL telegrams to received WR Timing messags
+          // this might be less precise as we can't check the event number of received MIL telegrams
+          gidStart    = gid;
+          idStop      = ((uint64_t)LOC_TLU << 48) | ((uint64_t)WRMIL_ECADO_MIL_TLU << 36) | 0x1;
+          maskStop    = 0xffffffffffffffff;
+          offsetStart = 0;
           break;
         default:
           gidStart    = gid;
+          idStop      = LOC_MIL_REC;
+          maskStop    = 0xfffff00000000000;
           offsetStart = 0;
           break;
       } // switch modeCompare
@@ -624,7 +642,7 @@ int main(int argc, char** argv)
       // we also do prefix matching of the first four bits of the evtNo (should be '0x0')
       tmpTag        = tagStart;
       snoopID       = ((uint64_t)FID << 60) | ((uint64_t)gidStart << 48);
-      condition[0]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffff00000000000, one_ms_ns + offsetStart));
+      condition[0]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffff00000000000, offsetStart));
       tag[0]        = tmpTag;
         
       // message that is injected locally by the lm32 firmware after detecting and decoding a receive MIL telegram
@@ -632,8 +650,8 @@ int main(int argc, char** argv)
       // (this assumes that the 'true' offset between both messages is always smaller than 20us)
       // we also do prefix machting of the first four bits of the evtNo (should be '0x0')
       tmpTag        = tagStop;        
-      snoopID       = ((uint64_t)FID << 60) | ((uint64_t)LOC_MIL_REC << 48);
-      condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffff00000000000, one_us_ns * matchWindow));
+      snoopID       = ((uint64_t)FID << 60) | idStop;
+      condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, maskStop, one_us_ns * matchWindow));
       tag[1]        = tmpTag;
     
       // let's go!
