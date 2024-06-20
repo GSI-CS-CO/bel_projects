@@ -171,6 +171,7 @@ extern "C" {
                            uint64_t *nEvtsRecT,                  // number of MIL telegrams received (TAI)
                            uint64_t *nEvtsRecD,                  // number of MIL telegrams received (data)
                            uint32_t *nEvtsRecErr,                // number of 'broken' MIL telegrams received by VHDL Manchester decoder
+                           uint32_t *nEvtsBurst,                 // number of detected high frequency bursts
                            uint32_t *nEvtsLate,                  // number of translated events that could not be delivered in time
                            uint32_t *comLatency,                 // latency for messages received from via ECA (tDeadline - tNow)) [ns]
                            int      printFlag                    // print info to screen 

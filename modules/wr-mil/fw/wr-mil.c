@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Micheal Reese, Mathias Kreider GSI-Darmstadt
- *  version : 19-Apr-2024
+ *  version : 20-Jun-2024
  *
  *  firmware required for the White Rabbit -> MIL Gateways
  *  
@@ -37,7 +37,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define WRMIL_FW_VERSION      0x000006    // make this consistent with makefile
+#define WRMIL_FW_VERSION      0x000007    // make this consistent with makefile
 
 #define RESET_INHIBIT_COUNTER    10000    // count so many main ECA timemouts, prior sending fill event
 //#define WR_MIL_GATEWAY_LATENCY 70650    // additional latency in units of nanoseconds
@@ -92,6 +92,7 @@ volatile uint32_t *pSharedGetNEvtsRecTLo;  // pointer to a "user defined" u32 re
 volatile uint32_t *pSharedGetNEvtsRecDHi;  // pointer to a "user defined" u32 register; here: number of telegrams received (data), high word
 volatile uint32_t *pSharedGetNEvtsRecDLo;  // pointer to a "user defined" u32 register; here: number of telegrams received (data), high word
 volatile uint32_t *pSharedGetNEvtsErr;     // pointer to a "user defined" u32 register; here: number of received MIL telegrams with errors, detected by VHDL manchester decoder
+volatile uint32_t *pSharedGetNEvtsBurst;   // pointer to a "user defined" u32 register; here: number of occurences of 'nonsense high frequency bursts' 
 volatile uint32_t *pSharedGetNEvtsLate;    // pointer to a "user defined" u32 register; here: number of late events
 volatile uint32_t *pSharedGetComLatency;   // pointer to a "user defined" u32 register; here: communicatin latency for events received by ECA
 //volatile uint32_t *pSharedGetNLateHisto;   // pointer to a "user defined" u32 register; here: dummy register to indicate position after the last valid register
@@ -107,7 +108,8 @@ uint64_t statusArray;                   // all status infos are ORed bit-wise in
 uint64_t nEvtsSnd;                      // # of sent MIL telegrams
 uint64_t nEvtsRecT;                     // # of received MIL telegrams (TAI)
 uint64_t nEvtsRecD;                     // # of received MIL telegrams (data)
-uint32_t nEvtsErr ;                     // # of late messages with errors
+uint32_t nEvtsErr;                      // # of late messages with errors
+uint32_t nEvtsBurst;                    // # of detected 'high frequency bursts'
 uint32_t nEvtsLate;                     // # of late messages
 int32_t  comLatency;                    // latency for messages received via ECA
 
@@ -168,6 +170,7 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
   pSharedGetNEvtsRecDHi      = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_RECD_HI    >> 2));
   pSharedGetNEvtsRecDLo      = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_RECD_LO    >> 2));
   pSharedGetNEvtsErr         = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_ERR        >> 2));
+  pSharedGetNEvtsBurst       = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_BURST      >> 2));
   pSharedGetNEvtsLate        = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_LATE       >> 2));
   pSharedGetComLatency       = (uint32_t *)(pShared + (WRMIL_SHARED_GET_COM_LATENCY       >> 2));
   //pSharedGetNLateHisto       = (uint32_t *)(pShared + (WRMIL_SHARED_GET_LATE_HISTOGRAM    >> 2));
@@ -221,6 +224,7 @@ void extern_clearDiag()
   nEvtsRecT    = 0x0;
   nEvtsRecD    = 0x0;
   nEvtsErr     = 0x0;
+  nEvtsBurst   = 0x0;
   nEvtsLate    = 0x0;
   comLatency   = 0x0;
   resetEventErrCntMil(pMilRec);
@@ -340,7 +344,8 @@ uint32_t extern_entryActionOperation()
   *pSharedGetNEvtsRecTLo    = 0x0;
   *pSharedGetNEvtsRecDHi    = 0x0;
   *pSharedGetNEvtsRecDLo    = 0x0;
-  *pSharedGetNEvtsErr       = 0x0;  
+  *pSharedGetNEvtsErr       = 0x0;
+  *pSharedGetNEvtsBurst     = 0x0;
   *pSharedGetNEvtsLate      = 0x0;
   *pSharedGetComLatency     = 0x0;
   //*pSharedGetNLateHisto     = 0x0;
@@ -364,6 +369,7 @@ uint32_t extern_entryActionOperation()
   nEvtsRecT            = 0;
   nEvtsRecD            = 0;
   nEvtsErr             = 0;
+  nEvtsBurst           = 0;
   nEvtsLate            = 0;
 
   // configure MIL receiver for timing events for all 16 virtual accelerators
@@ -576,7 +582,10 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       // deadline
       sendDeadline  = recDeadline + WRMIL_PRETRIGGER_DM + mil_latency - WRMIL_MILSEND_LATENCY;
        // protect from nonsense hi-frequency bursts
-      if (sendDeadline < previous_time + WRMIL_MILSEND_LATENCY) sendDeadline = previous_time + WRMIL_MILSEND_LATENCY;
+      if (sendDeadline < previous_time + WRMIL_MILSEND_MININTERVAL) {
+        sendDeadline = previous_time + WRMIL_MILSEND_MININTERVAL;
+        nEvtsBurst++;
+      } // if sendDeadline
       previous_time = sendDeadline;
 
       // evtID + param
@@ -665,7 +674,10 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   } // if request_fill_evt
     
   // check for late event
-  if ((status == COMMON_STATUS_OK) && flagIsLate) status = WRMIL_STATUS_LATEMESSAGE;
+  if ((status == COMMON_STATUS_OK) && flagIsLate) {
+    status = WRMIL_STATUS_LATEMESSAGE;
+    nEvtsLate++;
+  } // if flagIslate
   
   // check WR sync state
   if (fwlib_wrCheckSyncState() == COMMON_STATUS_WRBADSYNC) return COMMON_STATUS_WRBADSYNC;
@@ -740,6 +752,7 @@ int main(void) {
     *pSharedGetNEvtsRecDHi = (uint32_t)(nEvtsRecD >> 32);
     *pSharedGetNEvtsRecDLo = (uint32_t)(nEvtsRecD & 0xffffffff);
     *pSharedGetNEvtsErr    = nEvtsErr;
+    *pSharedGetNEvtsBurst  = nEvtsBurst;
     *pSharedGetNEvtsLate   = nEvtsLate;
   } // while
 

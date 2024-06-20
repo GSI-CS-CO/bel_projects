@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 19-Jun-2024
+ *  version : 20-Jun-2024
  *
  * monitors WR-MIL gateway
  *
@@ -143,6 +143,7 @@ int       flagClear;                    // flag for clearing diag data;
 uint32_t  matchWindow       = MATCH_WIN_US;
 uint32_t  modeCompare       = 0;
 uint64_t  offsetStart;                  // correction to be used for different monitoring types
+uint64_t  offsetStop;                   // correction to be used for different monitoring types
 
 
 
@@ -218,8 +219,8 @@ void clearStats()
 // handle received timing message
 static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags, uint32_t tag)
 {
-  static int          flagMilSent;     // flag: marks that a MIL event has been sent
-  static uint64_t     sndDeadline;     // deadline of MIL event sent
+  static int          flagMsgStart;    // flag: marks that a start message has been received
+  static uint64_t     deadlineStart;     // deadline of MIL event sent
   static uint32_t     sndEvtNo;        // evtNo of MIL event sent
   
   uint32_t            mFid;            // FID 
@@ -266,10 +267,10 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
     case tagStart   :
       //if (mGid != monData.gid)            return;  // received GID does not match configuration
       monData.nStart++; 
-      flagMilSent                  = 1;
-      sndDeadline                  = deadline.getTAI();
-      /*if ((sndDeadline - tStartOld) < dStartMin) dStartMin = sndDeadline - tStartOld;
-        tStartOld = sndDeadline;*/
+      flagMsgStart                 = 1;
+      deadlineStart                = deadline.getTAI();
+      /*if ((deadlineStart - tStartOld) < dStartMin) dStartMin = deadlineStart - tStartOld;
+        tStartOld = deadlineStart;*/
       sndEvtNo                     = mEvtNo;
       monData.tAct                 = NAN;
       //monData.tMin                 = NAN;
@@ -283,10 +284,10 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
         tStopOld = deadline.getTAI();*/
 
       // a MIL telegram has been received although no MIL telegram has been sent: give up
-      if (!flagMilSent){
+      if (!flagMsgStart){
         monData.nFailSnd++;
         return;
-      } // if !flagMilSent
+      } // if !flagMsgStart
 
       // evtNo of MIL received/sent telegrams do not match: give up
       if ((mEvtNo != sndEvtNo) && (modeCompare != 4)) {
@@ -294,15 +295,15 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
         return;  
       } // if !evtNo
       // assume we have a matching pair of sent and received MIL telegrams
-      flagMilSent                   = 0;
-      tDiff                         = (double)((int64_t)(deadline.getTAI() - one_us_ns * matchWindow - sndDeadline)) / (double)one_us_ns;
+      flagMsgStart                  = 0;
+      tDiff                         = (double)((int64_t)(deadline.getTAI() - offsetStop - deadlineStart)) / (double)one_us_ns;
 
       // check causality
       if (tDiff < -1.0 * matchWindow){
         monData.nFailOrder++;
         return;
       } // if tDiff
-      tDiff                        += (double)offsetStart / (double)one_us_ns;  // feature: display delays for calibration purposes and illustration
+      if (modeCompare == 4) tDiff  += (double)offsetStart / (double)one_us_ns;  // hacky
       monData.nMatch++;
       monData.tAct                  = tDiff;
       if (monData.tAct < monData.tMin) monData.tMin = monData.tAct;
@@ -385,7 +386,8 @@ static void help(void) {
   std::cerr << "                       1: compare received MIL telegrams with WR timing messages"   << std::endl;
   std::cerr << "                       2: compare received MIL telegrams with sent MIL telegrams"   << std::endl;
   std::cerr << "                       3: as mode '2' but excludes UTC telegrams"                   << std::endl;
-  std::cerr << "                       4: compare timesamps of received MIL telegrams WR messages"  << std::endl;
+  std::cerr << "                       4: as mode '1' but discarding data from MIL piggy"           << std::endl;
+  std::cerr << "                       5: compare sent MIL telegrams with WR timing messages"       << std::endl;
   std::cerr << "  -m <match windows>   [us] windows for matching start/stop evts; default 20"       << std::endl;
   std::cerr << std::endl;
   std::cerr << "  The paremter -s is mandatory"                                                     << std::endl;
@@ -607,33 +609,50 @@ int main(int argc, char** argv)
       // select if we use the received White Rabbit timing messages or the sent MIL telegrams as start
       switch (modeCompare) {
         case 1:
-          // compare received MIL telegrams to received WR Timing messags
+          // compare received MIL telegrams (stop) to received WR Timing messages (start)
+          // received MIL telegrams have a deadline 1ms after timestamp,
+          // thus we must add 1ms to the start action for matching
           gidStart    = gid;
           idStop      = ((uint64_t)LOC_MIL_REC << 48);
           maskStop    = 0xfffff00000000000;
           offsetStart = one_ms_ns;
+          offsetStop  = one_us_ns * matchWindow;
           break;
         case 2 ... 3:
-          // compare received MIL telegrams to sent MIL telegrams
+          // compare received MIL telegrams (stop) to sent MIL telegrams (start)
+          // received MIL telegrams have a deadline 1ms after timestamp,
+          // thus we must add 1ms to the start action for matching
           gidStart    = LOC_MIL_SEND;
           idStop      = ((uint64_t)LOC_MIL_REC << 48);
           maskStop    = 0xfffff00000000000;
           offsetStart = one_ms_ns + WRMIL_MILSEND_LATENCY;
-          //offsetStart = 0;
+          offsetStop  = one_us_ns * matchWindow;
           break;
         case 4:
-          // compare timestamps of received MIL telegrams to received WR Timing messags
+          // compare timestamps of received MIL telegrams (stop) to received WR Timing messags (start)
           // this might be less precise as we can't check the event number of received MIL telegrams
+          // we post-trigger the messages, to avoid late messages at the TLU
           gidStart    = gid;
           idStop      = ((uint64_t)LOC_TLU << 48) | ((uint64_t)WRMIL_ECADO_MIL_TLU << 36) | 0x1;
           maskStop    = 0xffffffffffffffff;
-          offsetStart = 0;
+          offsetStart = WRMIL_POSTTRIGGER_TLU;
+          offsetStop  = WRMIL_POSTTRIGGER_TLU + one_us_ns * matchWindow;
+          break;
+        case 5:
+          // compare sent MIL telegrams (stop) to received WR Timing messags (start)
+          gidStart    = gid;
+          idStop      = ((uint64_t)LOC_MIL_SEND << 48);
+          maskStop    = 0xfffff00000000000;
+          offsetStart = -WRMIL_MILSEND_LATENCY;
+          offsetStop  = one_us_ns * matchWindow;
           break;
         default:
-          gidStart    = gid;
-          idStop      = LOC_MIL_REC;
-          maskStop    = 0xfffff00000000000;
+          // bogus; unused
+          gidStart    = 0;
+          idStop      = 0;
+          maskStop    = 0;
           offsetStart = 0;
+          offsetStop  = 0;
           break;
       } // switch modeCompare
 
@@ -651,7 +670,7 @@ int main(int argc, char** argv)
       // we also do prefix machting of the first four bits of the evtNo (should be '0x0')
       tmpTag        = tagStop;        
       snoopID       = ((uint64_t)FID << 60) | idStop;
-      condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, maskStop, one_us_ns * matchWindow));
+      condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, maskStop, offsetStop));
       tag[1]        = tmpTag;
     
       // let's go!
@@ -670,7 +689,7 @@ int main(int argc, char** argv)
     uint32_t      tmp32a, tmp32b, tmp32c, tmp32d, tmp32e, tmp32f, tmp32g, tmp32h, tmp32i;
     int32_t       stmp32a;
     uint64_t      tmp64a;
-    uint32_t      fwGid, fwEvtsLate, fwEvtsRecErr, fwState, fwVersion;
+    uint32_t      fwGid, fwEvtsLate, fwEvtsRecErr, fwEvtsRecBurst, fwState, fwVersion;
     uint64_t      fwEvtsSnd, fwEvtsRecT, fwEvtsRecD, fwStatus;
 
     t_old = comlib_getSysTime();
@@ -698,7 +717,7 @@ int main(int argc, char** argv)
 
         // update firmware data
         wrmil_common_read(ebDevice, &fwStatus, &fwState, &tmp32a, &tmp32b, &fwVersion, &tmp32c, 0);
-        wrmil_info_read(ebDevice, &tmp32a, &tmp32b, &tmp32c, &fwGid, &stmp32a, &tmp64a, &tmp32f, &tmp32g, &tmp32h, &fwEvtsSnd, &fwEvtsRecT, &fwEvtsRecD, &fwEvtsRecErr, &fwEvtsLate, &tmp32i, 0);
+        wrmil_info_read(ebDevice, &tmp32a, &tmp32b, &tmp32c, &fwGid, &stmp32a, &tmp64a, &tmp32f, &tmp32g, &tmp32h, &fwEvtsSnd, &fwEvtsRecT, &fwEvtsRecD, &fwEvtsRecErr, &fwEvtsRecBurst, &fwEvtsLate, &tmp32i, 0);
         if (fwGid != gid) fwStatus |= COMMON_STATUS_OUTOFRANGE; // signal an error
 
         disStatus  = fwStatus;

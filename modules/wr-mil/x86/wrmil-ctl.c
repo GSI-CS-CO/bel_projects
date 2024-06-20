@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Michael Reese GSI-Darmstadt
- *  version : 19-Jun-2024
+ *  version : 20-Jun-2024
  *
  * Command-line interface for wr-mil
  *
@@ -99,6 +99,7 @@ static void help(void) {
   fprintf(stderr, "                      0: no monitoring\n"                                           );
   fprintf(stderr, "                      1: number and timestamping of MIL telegrams    , GID 0xfe1\n" );
   fprintf(stderr, "                      2: includes '1', adds decoding of MIL telegrams, GID 0xff1\n" );
+  fprintf(stderr, "                      (deadline of decoded MIL telegrams is t0 + 1ms)\n"            );
   fprintf(stderr, "                      monitoring is implemented via local messages to the ECA\n"    );
   fprintf(stderr, "                      Tip: MIL telegrams to be sent are available too, GID 0xff0\n" );
   fprintf(stderr, "  -f                  request sending of fill events if no events > 10 seconds\n"   );
@@ -187,6 +188,7 @@ int main(int argc, char** argv) {
   uint64_t getNEvtsRecT;                       // number MIL telegrams received (TAI)
   uint64_t getNEvtsRecD;                       // number MIL telegrams received (data)
   uint32_t getNEvtsErr;                        // number 'broken' MIL telegrams received, detected by VHDL Manchester decoder
+  uint32_t getNEvtsBurst;                      // number of detected 'high frequency bursts'
   uint32_t getNEvtsLate;                       // number of translated events that could not be delivered in time
   uint32_t getComLatency;                      // latency for messages received from via ECA (tDeadline - tNow)) [ns]
                      
@@ -328,7 +330,8 @@ int main(int argc, char** argv) {
 
   if (getInfo) {
     // status
-    wrmil_info_read(ebDevice, &getUtcTrigger, &getUtcDelay, &getTrigUtcDelay, &getGid, &getLatency, &getUtcOffset, &getRequestFill, &getMilDev, &getMilMon, &getNEvtsSnd, &getNEvtsRecT,  &getNEvtsRecD, &getNEvtsErr, &getNEvtsLate, &getComLatency, 0);
+    wrmil_info_read(ebDevice, &getUtcTrigger, &getUtcDelay, &getTrigUtcDelay, &getGid, &getLatency, &getUtcOffset, &getRequestFill, &getMilDev, &getMilMon,
+                    &getNEvtsSnd, &getNEvtsRecT,  &getNEvtsRecD, &getNEvtsErr, &getNEvtsBurst, &getNEvtsLate, &getComLatency, 0);
     wrmil_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
 
     // print set status bits (except OK)
@@ -383,7 +386,8 @@ int main(int argc, char** argv) {
       for (i = COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
         if ((statusArray >> i) & 0x1)  printf("    status bit is set : %s\n", wrmil_status_text(i));
       } // for i
-      wrmil_info_read(ebDevice, &getUtcTrigger, &getUtcDelay, &getTrigUtcDelay, &getGid, &getLatency, &getUtcOffset, &getRequestFill, &getMilDev, &getMilMon, &getNEvtsSnd, &getNEvtsRecT, &getNEvtsRecD, &getNEvtsErr, &getNEvtsLate, &getComLatency, 1);
+      wrmil_info_read(ebDevice, &getUtcTrigger, &getUtcDelay, &getTrigUtcDelay, &getGid, &getLatency, &getUtcOffset, &getRequestFill, &getMilDev,
+                      &getMilMon, &getNEvtsSnd, &getNEvtsRecT, &getNEvtsRecD, &getNEvtsErr, &getNEvtsBurst, &getNEvtsLate, &getComLatency, 1);
     } // "diag"
   } //if command
 
@@ -413,7 +417,8 @@ if (snoop) {
       if ((actNTransfer   != nTransfer)    && (logLevel <= COMMON_LOGLEVEL_ONCE))    {printFlag = 1; actNTransfer   = nTransfer;}
 
       if (printFlag) {
-        wrmil_info_read(ebDevice, &getUtcTrigger, &getUtcDelay, &getTrigUtcDelay, &getGid, &getLatency, &getUtcOffset, &getRequestFill, &getMilDev, &getMilMon, &getNEvtsSnd, &getNEvtsRecT, &getNEvtsRecD, &getNEvtsErr, &getNEvtsLate, &getComLatency, 0);
+        wrmil_info_read(ebDevice, &getUtcTrigger, &getUtcDelay, &getTrigUtcDelay, &getGid, &getLatency, &getUtcOffset, &getRequestFill, &getMilDev,
+                        &getMilMon, &getNEvtsSnd, &getNEvtsRecT, &getNEvtsRecD, &getNEvtsErr, &getNEvtsBurst, &getNEvtsLate, &getComLatency, 0);
         printf(", %s (%6u), ",  comlib_stateText(state), nBadState);
         if ((statusArray >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);
         else printf("NOTOK(%6u)\n", nBadStatus);
