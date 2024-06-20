@@ -31,7 +31,10 @@ void TimingMsg::serialise(const mVal &m, uint8_t* b) const {
 
   /* DynLinks - Legacy support. This will be removed in favour of Ref and Val Links */
   //Overwrite the buffer with the dyn map pairs we got is cheaper than checking first
-  for (auto it = m.begin(); it != m.end(); it++) { writeLeNumberToBeBytes(b + (ptrdiff_t)it->first, it->second); }
+  
+  for (auto it = m.begin(); it != m.end(); it++) { 
+    writeLeNumberToBeBytes(b + (ptrdiff_t)it->first, it->second); 
+  }
 
 }
 

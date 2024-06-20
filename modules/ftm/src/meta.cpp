@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "meta.h"
+#include "global.h"
 #include "ftm_common.h"
 #include "log.h"
 
@@ -41,10 +42,6 @@ void DestList::serialise(const mVal &m, uint8_t* b) const {
 
 };
 
-void Global::serialise(const mVal &m, uint8_t* b) const {
-  //dont't do thing - a global location is just an adress in the alloctable, the buffer is not used.
-};
-
 void CmdQMeta::show(void) const {
   CmdQMeta::show(0, "");
 };
@@ -71,10 +68,6 @@ void DestList::show(void) const {
   DestList::show(0, "");
 };
 
-void Global::show(void) const {
-  Global::show(0, "");
-};
-
 void DestList::show(uint32_t cnt, const char* prefix) const {
   char* p;
   if (prefix == nullptr) p = (char*)"";
@@ -83,12 +76,5 @@ void DestList::show(uint32_t cnt, const char* prefix) const {
 
 };
 
-void Global::show(uint32_t cnt, const char* prefix) const {
-  char* p;
-  if (prefix == nullptr) p = (char*)"";
-  else p = (char*)prefix;
-  printf("%s***------- %3u -------\n", p, cnt);
-
-};
 
 

@@ -19,6 +19,7 @@
 #include "node.h"
 #include "block.h"
 #include "meta.h"
+#include "global.h"
 #include "event.h"
 #include "dotstr.h"
 
