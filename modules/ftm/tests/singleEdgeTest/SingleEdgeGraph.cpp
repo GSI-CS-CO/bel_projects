@@ -6,6 +6,7 @@
 #include "event.h"
 #include "graph.h"
 #include "meta.h"
+#include "global.h"
 
 
 

@@ -17,6 +17,7 @@
 #include "event.h"
 #include "graph.h"
 #include "meta.h"
+#include "global.h"
 #include "configuration.h"
 
 namespace det = DotStr::Edge::TypeVal;
