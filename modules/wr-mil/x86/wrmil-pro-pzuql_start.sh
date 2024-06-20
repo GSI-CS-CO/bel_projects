@@ -65,7 +65,7 @@ saft-io-ctl $SDGW -n B1 -o 0
 saft-io-ctl $SDGW -n B1 -b 0x1fe1a01000000000
 
 # lm32 listens to TLU
-saft-ecpu-ctl $SDGW -c 0x1fe1a01000000001 0xffffffffffffffff 20000 0xa1 -d
+saft-ecpu-ctl $SDGW -c 0x1fe1a01000000001 0xffffffffffffffff 20000 0xa01 -d
 
 # lm32 writes to MIL device via ECA wishbone channel
 echo -e WRMIL: configure $DGW wishbone channel, needed for writing telegrams to the MIL device
