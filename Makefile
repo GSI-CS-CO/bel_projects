@@ -48,6 +48,7 @@ CHECK_PEXARRIA10       = ./syn/gsi_pexarria10/control/pexarria10
 CHECK_FTM10            = ./syn/gsi_pexarria10/ftm10/ftm10
 CHECK_A10GX            = ./syn/gsi_a10gx_pcie/control/pci_control
 CHECK_IDROGEN          = ./syn/in2p3_idrogen/control/idrogen
+CHECK_SCU4SLIM         = ./syn/gsi_scu/slim4/scu4slim
 
 # Project paths
 PATH_SCU2              = syn/gsi_scu/control2
@@ -69,6 +70,7 @@ PATH_PEXARRIA10        = syn/gsi_pexarria10/control
 PATH_FTM10             = syn/gsi_pexarria10/ftm10
 PATH_A10GX             = syn/gsi_a10gx_pcie/control
 PATH_IDROGEN           = syn/in2p3_idrogen/control
+PATH_SCU4SLIM          = syn/gsi_scu/slim4
 
 define sort_file
 	sort $(1).qsf >> temp_sorted
@@ -437,6 +439,18 @@ ftm10-sort:
 ftm10-check:
 	$(call check_timing, $(CHECK_FTM10))
 
+scu4slim:		firmware
+	$(MAKE) -C $(PATH_SCU4SLIM) all
+
+scu4slim-sort:
+	$(call sort_file, $(CHECK_SCU4SLIM))
+
+scu4slim-check:
+	$(call check_timing, $(CHECK_SCU4SLIM))
+
+scu4slim-clean::
+	$(MAKE) -C $(PATH_SCU4SLIM) clean
+
 # #################################################################################################
 # SCU slaves
 # #################################################################################################
@@ -476,7 +490,7 @@ blm:		firmware
 
 blm-clean::
 	$(MAKE) -C syn/blm_aco clean
-	
+
 # #################################################################################################
 # LM32 firmware
 # #################################################################################################
