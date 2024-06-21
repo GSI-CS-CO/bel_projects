@@ -11,4 +11,4 @@ BASEDIR=$(cd "${SCRIPTDIR}/.." >/dev/null; pwd)
 # script for starting the wrmil system viewer on INT
 export DIM_DNS_NODE=asl105
 export LD_LIBRARY_PATH=${BASEDIR}/lib
-xterm -T 'wrmil system status' -fa monaco -fs 10 -geometry 160x24 -e ${BASEDIR}/bin/wrmil-client-mon int
+xterm -T 'wrmil system status' -fa monaco -fs 10 -geometry 173x24 -e ${BASEDIR}/bin/wrmil-client-mon int
