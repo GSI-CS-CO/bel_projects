@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 11-Jun-2024
+ *  version : 21-Jun-2024
  *
  * monitors WR-MIL gateway
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define WRF50_SERV_MON_VERSION 0x000006
+#define WRF50_SERV_MON_VERSION 0x000007
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -435,7 +435,7 @@ void disAddServices(char *prefix)
 
   // monitoring data service
   sprintf(name, "%s_data", prefix);
-  disMonDataId  = dis_add_service(name, "I:2;X:3;I:1;X:3;I:3;D:5", &(disMonData), sizeof(monval_t), 0, 0);
+  disMonDataId  = dis_add_service(name, "I:2;X:3;I:2;X:3;I:3;D:5", &(disMonData), sizeof(monval_t), 0, 0);
 
   // command clear
   sprintf(name, "%s_cmd_cleardiag", prefix);
@@ -637,7 +637,7 @@ int main(int argc, char** argv)
     uint64_t      t_new, t_old;
     uint32_t      tmp32a, tmp32b, tmp32c, tmp32d;
     int32_t       stmp32a, stmp32b, stmp32c, stmp32d, stmp32e, stmp32f, stmp32g, stmp32h, stmp32i;
-    uint32_t      fwTMainsAct, fwEvtsLate, fwState, fwVersion, fwLockState, fwNLocked, fwNCycles, fwMode, fwOffsDone;
+    uint32_t      fwTMainsAct, fwEvtsLate, fwState, fwVersion, fwLockState, fwNLocked, fwNCycles, fwNSent, fwMode, fwOffsDone;
     uint64_t      fwStatus, fwLockDate;
     int           nUpdate = 0;
 
@@ -657,7 +657,7 @@ int main(int argc, char** argv)
         // update firmware data
         wrmil_common_read(ebDevice, &fwStatus, &fwState, &tmp32a, &tmp32b, &fwVersion, &tmp32c, 0);
         wrf50_info_read(ebDevice, &offsetMains, &fwMode , &fwTMainsAct, &tmp32b, &tmp32c, &stmp32a, &stmp32b, &stmp32c, &stmp32g, &stmp32h, &stmp32i, &stmp32d, &stmp32e, &stmp32f, &fwLockState, &fwLockDate, &fwNLocked,
-                        &fwNCycles, &fwEvtsLate, &fwOffsDone, &tmp32d, 0);
+                        &fwNCycles, &fwNSent, &fwEvtsLate, &fwOffsDone, &tmp32d, 0);
         
         t_old      = t_new;
         nUpdate++;
@@ -673,7 +673,7 @@ int main(int argc, char** argv)
         sprintf(disVersion, "%s", wrmil_version_text(fwVersion));
                
         // update monitoring data
-        monData.nFwSnd    = fwNCycles;
+        monData.nFwSnd    = fwNSent;
         monData.nFwRecT   = fwNCycles;
         if (!fwLockState) monData.nFwRecErr++;
         monData.cMode     = fwMode;

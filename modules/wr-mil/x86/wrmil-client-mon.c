@@ -166,7 +166,7 @@ void printServices()
   char     cVersion[9];
   char     cState[11];
   char     cHost[19];
-  char     cData[256];
+  char     cData[512];
   char     cNFwSnd[24];
   char     cNFwMssd[24];
   char     cNFwErr[24];
@@ -215,7 +215,7 @@ void printServices()
       if (dicSystem[i].monData.nFwRecErr == -1)  sprintf(cNFwErr, "%12s" , "nan");
       else                                       sprintf(cNFwErr, "%12u" , dicSystem[i].monData.nFwRecErr);
       if (dicSystem[i].monData.nFwBurst  == -1)  sprintf(cNFwBrst,"%12s" , "nan");
-      else                                       sprintf(cNFwBrst,"%12u" , dicSystem[i].monData.nFwRecErr);
+      else                                       sprintf(cNFwBrst,"%12u" , dicSystem[i].monData.nFwBurst);
       if (dicSystem[i].monData.nMatch  == -1)    sprintf(cNMatch, "%12s" , "nan");        
       else                                       sprintf(cNMatch, "%12lu", dicSystem[i].monData.nMatch);
       sprintf(cRMatch, "%5.1f",  100.0 * dicSystem[i].monData.nMatch / dicSystem[i].monData.nStart);

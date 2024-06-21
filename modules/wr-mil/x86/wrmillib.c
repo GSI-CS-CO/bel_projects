@@ -111,7 +111,8 @@ eb_address_t wrf50_get_lockState;         // lock state; how DM is locked to mai
 eb_address_t wrf50_get_lockDateHi;        // time when lock has been achieve [ns], high bits                    
 eb_address_t wrf50_get_lockDateLo;        // time when lock has been achieve [ns], low bits                     
 eb_address_t wrf50_get_nLocked;           // counts how many locks have been achieved                           
-eb_address_t wrf50_get_nCycles;           // number of UNILAC cycles                                            
+eb_address_t wrf50_get_nCycles;           // number of UNILAC cycles
+eb_address_t wrf50_get_nSent;             // number of messages sent to the Data Master (as broadcast)
 eb_address_t wrf50_get_nEvtsLate;         // number of translated events that could not be delivered in time
 eb_address_t wrf50_get_offsDone;          // offset t_mains_act to time when we are done
 eb_address_t wrf50_get_comLatency;        // latency for messages received from via ECA (tDeadline - tNow)) [ns]
@@ -260,6 +261,7 @@ uint32_t wrf50_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t c
   wrf50_get_lockDateLo   = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_LOCK_DATE_LOW;
   wrf50_get_nLocked      = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_N_LOCKED;
   wrf50_get_nCycles      = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_N_CYCLES;
+  wrf50_get_nSent        = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_N_SENT;
   wrf50_get_nEvtsLate    = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_N_EVTS_LATE;
   wrf50_get_offsDone     = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_OFFS_DONE;
   wrf50_get_comLatency   = lm32_base + SHARED_OFFS + WRF50_SHARED_GET_COM_LATENCY;
@@ -355,7 +357,7 @@ void wrmil_printDiag(uint32_t utcTrigger, uint32_t utcDelay, uint32_t trigUtcDel
 
 void wrf50_printDiag(int32_t f50Offs, uint32_t mode, uint32_t TMainsAct, uint32_t TDmAct, uint32_t TDmSet, int32_t offsDmAct, int32_t offsDmMin, int32_t offsDmMax, int32_t dTDMAct,
                      int32_t dTDMMin, int32_t dTDMMax,  int32_t offsMainsAct, int32_t offsMainsMin, int32_t offsMainsMax, uint32_t lockState, uint64_t lockDate, uint32_t nLocked,
-                     uint32_t nCycles, uint32_t nEvtsLate, uint32_t offsDone,  uint32_t comLatency)
+                     uint32_t nCycles, uint32_t nSent, uint32_t nEvtsLate, uint32_t offsDone,  uint32_t comLatency)
 {
   const struct tm* tm;
   char             timestr[60];
@@ -385,6 +387,7 @@ void wrf50_printDiag(int32_t f50Offs, uint32_t mode, uint32_t TMainsAct, uint32_
   printf("lock date                            : %s\n"          , timestr);
   printf("# locks                              : %15u\n"        , nLocked);
   printf("# cycles                             : %15u\n"        , nCycles);
+  printf("# sent phase words                   : %15u\n"        , nSent);
   printf("# late events                        : %15u\n"        , nEvtsLate);
   printf("'offset done' (processing time) [us] : %15.3f\n"      , (double)offsDone/1000.0);
   printf("communication latency [us]           : %15.3f\n"      , (double)comLatency/1000.0);
@@ -453,8 +456,8 @@ uint32_t wrmil_info_read(uint64_t ebDevice, uint32_t *utcTrigger, uint32_t *utcU
 
 
 uint32_t wrf50_info_read(uint64_t ebDevice, int32_t  *f50Offs, uint32_t *mode, uint32_t *TMainsAct, uint32_t *TDmAct, uint32_t *TDmSet, int32_t *offsDmAct, int32_t *offsDmMin,
-                         int32_t *offsDmMax, int32_t *dTDMAct, int32_t *dTDMMin, int32_t *dTDMMax, int32_t *offsMainsAct, int32_t *offsMainsMin, int32_t *offsMainsMax,
-                         uint32_t *lockState, uint64_t *lockDate, uint32_t *nLocked, uint32_t *nCycles, uint32_t *nEvtsLate, uint32_t *comLatency, uint32_t *offsDone, int printFlag)
+                         int32_t *offsDmMax, int32_t *dTDMAct, int32_t *dTDMMin, int32_t *dTDMMax, int32_t *offsMainsAct, int32_t *offsMainsMin, int32_t *offsMainsMax, uint32_t *lockState,
+                         uint64_t *lockDate, uint32_t *nLocked, uint32_t *nCycles, uint32_t *nSent, uint32_t *nEvtsLate, uint32_t *comLatency, uint32_t *offsDone, int printFlag)
 {
   eb_cycle_t   eb_cycle;
   eb_status_t  eb_status;
@@ -484,9 +487,10 @@ uint32_t wrf50_info_read(uint64_t ebDevice, int32_t  *f50Offs, uint32_t *mode, u
   eb_cycle_read(eb_cycle, wrf50_get_lockDateLo  , EB_BIG_ENDIAN|EB_DATA32, &(data[16]));
   eb_cycle_read(eb_cycle, wrf50_get_nLocked     , EB_BIG_ENDIAN|EB_DATA32, &(data[17]));
   eb_cycle_read(eb_cycle, wrf50_get_nCycles     , EB_BIG_ENDIAN|EB_DATA32, &(data[18]));
-  eb_cycle_read(eb_cycle, wrf50_get_nEvtsLate   , EB_BIG_ENDIAN|EB_DATA32, &(data[19]));
-  eb_cycle_read(eb_cycle, wrf50_get_offsDone    , EB_BIG_ENDIAN|EB_DATA32, &(data[20]));
-  eb_cycle_read(eb_cycle, wrf50_get_comLatency  , EB_BIG_ENDIAN|EB_DATA32, &(data[21]));
+  eb_cycle_read(eb_cycle, wrf50_get_nSent       , EB_BIG_ENDIAN|EB_DATA32, &(data[19]));
+  eb_cycle_read(eb_cycle, wrf50_get_nEvtsLate   , EB_BIG_ENDIAN|EB_DATA32, &(data[20]));
+  eb_cycle_read(eb_cycle, wrf50_get_offsDone    , EB_BIG_ENDIAN|EB_DATA32, &(data[21]));
+  eb_cycle_read(eb_cycle, wrf50_get_comLatency  , EB_BIG_ENDIAN|EB_DATA32, &(data[22]));
   if ((eb_status = eb_cycle_close(eb_cycle)) != EB_OK) return COMMON_STATUS_EB;
 
  *f50Offs       = data[0];
@@ -508,12 +512,13 @@ uint32_t wrf50_info_read(uint64_t ebDevice, int32_t  *f50Offs, uint32_t *mode, u
  *lockDate     |= (uint64_t)data[16] & 0xffffffff;
  *nLocked       = data[17];
  *nCycles       = data[18];
- *nEvtsLate     = data[19];
- *offsDone      = data[20];
- *comLatency    = data[21];
+ *nSent         = data[19];
+ *nEvtsLate     = data[20];
+ *offsDone      = data[21];
+ *comLatency    = data[22];
 
  if (printFlag) wrf50_printDiag(*f50Offs, *mode, *TMainsAct, *TDmAct, *TDmSet, *offsDmAct, *offsDmMin, *offsDmMax, *dTDMAct, *dTDMMin, *dTDMMax, *offsMainsAct, *offsMainsMin,
-                                 *offsMainsMax, *lockState, *lockDate, *nLocked, *nCycles, *nEvtsLate, *offsDone, *comLatency);
+                                *offsMainsMax, *lockState, *lockDate, *nLocked, *nCycles, *nSent, *nEvtsLate, *offsDone, *comLatency);
 
   return COMMON_STATUS_OK;
 } // wrf50_info_read

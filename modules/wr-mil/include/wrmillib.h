@@ -197,7 +197,8 @@ extern "C" {
                            uint32_t *lockState,                  // lock state; how DM is locked to mains                              
                            uint64_t *lockDate,                   // time when lock has been achieved [ns]
                            uint32_t *nLocked,                    // counts how many locks have been achieved                           
-                           uint32_t *nCycles,                    // number of UNILAC cycles                                            
+                           uint32_t *nCycles,                    // number of UNILAC cycles
+                           uint32_t *nSent,                      // number of messages sent to the Data Master (as broadcast)
                            uint32_t *nEvtsLate,                  // number of translated events that could not be delivered in time    
                            uint32_t *comLatency,                 // latency for messages received from via ECA (tDeadline - tNow)) [ns]// print info to screen
                            uint32_t *offsDone,                   // offset t_mains_act to time when we are done
