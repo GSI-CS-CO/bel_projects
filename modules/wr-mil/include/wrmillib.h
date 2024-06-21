@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 04-Jun-2024
+ *  version : 20-Jun-2024
  *
  * library for wr-mil
  *
@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define WRMILLIB_VERSION 0x000006
+#define WRMILLIB_VERSION 0x000007
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  WRMILLIB_STATUS_OK                 0            // OK
@@ -78,6 +78,7 @@ extern "C" {
     uint64_t  nFwRecD;                                   // firmware # of received MIL telegrams (data)
     uint64_t  nFwRecT;                                   // firmware # of received MIL telegrams (TAI)
     uint32_t  nFwRecErr;                                 // firmware # of received 'broken' MIL telegrams detected by VHDL Manchester decoder
+    uint32_t  nFwBurst;                                  // firmware # of detected high frequency bursts
     uint64_t  nStart;                                    // host # of start messages (type depends on comparison mode)
     uint64_t  nStop;                                     // host # of stop messages (type depends on comparison mode)
     uint64_t  nMatch;                                    // host # of matches (start vs stop messages)

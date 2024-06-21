@@ -200,6 +200,7 @@ void clearStats()
   monData.nFwRecD    = 0x0;
   monData.nFwRecT    = 0x0;
   monData.nFwRecErr  = 0x0;
+  monData.nFwBurst   = 0x0;
   monData.nStart     = 0x0;
   monData.nStop      = 0x0;
   monData.nMatch     = 0x0;
@@ -365,7 +366,7 @@ void disAddServices(char *prefix)
 
   // monitoring data service
   sprintf(name, "%s_data", prefix);
-  disMonDataId  = dis_add_service(name, "I:2;X:3;I:1;X:3;I:3;D:5", &(disMonData), sizeof(monval_t), 0, 0);
+  disMonDataId  = dis_add_service(name, "I:2;X:3;I:2;X:3;I:3;D:5", &(disMonData), sizeof(monval_t), 0, 0);
 
   // command clear
   sprintf(name, "%s_cmd_cleardiag", prefix);
@@ -689,7 +690,7 @@ int main(int argc, char** argv)
     uint32_t      tmp32a, tmp32b, tmp32c, tmp32d, tmp32e, tmp32f, tmp32g, tmp32h, tmp32i;
     int32_t       stmp32a;
     uint64_t      tmp64a;
-    uint32_t      fwGid, fwEvtsLate, fwEvtsRecErr, fwEvtsRecBurst, fwState, fwVersion;
+    uint32_t      fwGid, fwEvtsLate, fwEvtsRecErr, fwEvtsBurst, fwState, fwVersion;
     uint64_t      fwEvtsSnd, fwEvtsRecT, fwEvtsRecD, fwStatus;
 
     t_old = comlib_getSysTime();
@@ -717,7 +718,7 @@ int main(int argc, char** argv)
 
         // update firmware data
         wrmil_common_read(ebDevice, &fwStatus, &fwState, &tmp32a, &tmp32b, &fwVersion, &tmp32c, 0);
-        wrmil_info_read(ebDevice, &tmp32a, &tmp32b, &tmp32c, &fwGid, &stmp32a, &tmp64a, &tmp32f, &tmp32g, &tmp32h, &fwEvtsSnd, &fwEvtsRecT, &fwEvtsRecD, &fwEvtsRecErr, &fwEvtsRecBurst, &fwEvtsLate, &tmp32i, 0);
+        wrmil_info_read(ebDevice, &tmp32a, &tmp32b, &tmp32c, &fwGid, &stmp32a, &tmp64a, &tmp32f, &tmp32g, &tmp32h, &fwEvtsSnd, &fwEvtsRecT, &fwEvtsRecD, &fwEvtsRecErr, &fwEvtsBurst, &fwEvtsLate, &tmp32i, 0);
         if (fwGid != gid) fwStatus |= COMMON_STATUS_OUTOFRANGE; // signal an error
 
         disStatus  = fwStatus;
@@ -728,6 +729,7 @@ int main(int argc, char** argv)
         monData.nFwSnd    = fwEvtsSnd;
         monData.nFwRecT   = fwEvtsRecT;
         monData.nFwRecErr = fwEvtsRecErr;
+        monData.nFwBurst  = fwEvtsBurst;
         monData.nFwRecD   = fwEvtsRecD;
         disMonData        = monData;
         if (disMonData.tMin ==  INITMINMAX) disMonData.tMin = NAN;
