@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-Jan-2023
+ *  version : 25-Jun-2024
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
@@ -63,7 +63,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define WRUNIPZ_FW_VERSION 0x000214                                     // make this consistent with makefile
+#define WRUNIPZ_FW_VERSION 0x000215                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -195,7 +195,7 @@ uint64_t writeTM(uint32_t uniEvt, uint64_t tStart, uint32_t pz, uint32_t virtAcc
              ((uint64_t)evtData        );              // parameter field low bits
   
   // calc deadline
-  offset   = (uint64_t)t * 1000;                       // convert offset -> ns
+  offset   = (uint64_t)t * 1000;                       // convert offset us -> ns
   deadline = tStart + (uint64_t)offset + (uint64_t)WRUNIPZ_MILCALIBOFFSET; 
 
   // send message
@@ -726,13 +726,14 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       } // if !SERVICE
       else {                                                    // B: super PZ has sent info on a service event: bits 12..15 encode event type
         DBPRINT3("wr-unipz: service event for pz %d, vacc %d\n", ipz, virtAcc);
-        servOffs = getVaccLen(bigData[ipz][actChan[ipz] * WRUNIPZ_NVACC + actVacc[ipz]]) & 0xffff;     // when to play service event relative to start of cycle [us]
-        tmpOffs  = (getSysTime() - syncPrevT4 + (uint64_t)COMMON_LATELIMIT) / 1000;                    // last possibility to play service event without risking of a late message [us]
+        servOffs  = getVaccLen(bigData[ipz][actChan[ipz] * WRUNIPZ_NVACC + actVacc[ipz]]) & 0xffff;    // when to play service event relative to start of cycle [us]
+        servOffs += (uint32_t)WRUNIPZ_TDIFFMIL;                                                        // add minimum time difference between sending transmission of MIL telegrams [us]
+        tmpOffs   = (getSysTime() - syncPrevT4 + (uint64_t)COMMON_LATELIMIT) / 1000;                   // last possibility to play service event without risking of a late message [us]
         if (servOffs < tmpOffs) {
           servOffs = tmpOffs; 
           /* pp_printf("wr-unipz: prevent late service message\n"); */
         } // if tmpOffs
-        servEvt  = 0x0;
+        servEvt   = 0x0;
         if (evtData == WRUNIPZ_EVTDATA_PREPACC) {
           servEvt = EVT_AUX_PRP_NXT_ACC | ((virtAcc & 0xf) << 8) | ((servOffs & 0xffff)        << 16); // send after last event of current PZ cycle
           writeTM(servEvt, syncPrevT4, ipz, virtAcc, 0, 0);                                            // send message

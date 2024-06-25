@@ -27,6 +27,7 @@
 #define WRUNIPZ_MILCALIBOFFSET       29000    // calibration offset to MIL event bus [ns]; MIL events are always 'late' due its protocol; this offset must be added to WR deadlines
 #define WRUNIPZ_QQOFFSET               500    // offset for sending special service event for QQ [us] /* chk: QQ is breaking the concept of WR */
 #define WRUNIPZ_A4OFFSET               500    // offset for sending special service event for A4 [us] /* chk: A4 is breaking the concept of WR */
+#define WRUNIPZ_TDIFFMIL                25    // minimmum time difference [us] between sending telegrams to the MIL bus
 
 // numbers for UNIPZ
 #define WRUNIPZ_NEVT                    20    // # of events per virt acc
