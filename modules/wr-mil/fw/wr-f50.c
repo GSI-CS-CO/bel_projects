@@ -91,7 +91,8 @@ volatile uint32_t *pSharedGetLockState;    // pointer to a "user defined" u32 re
 volatile uint32_t *pSharedGetLockDateHi;   // pointer to a "user defined" u32 register; here: time when lock has been achieve [ns], high bits                    
 volatile uint32_t *pSharedGetLockDateLo;   // pointer to a "user defined" u32 register; here: time when lock has been achieve [ns], low bits                     
 volatile uint32_t *pSharedGetNLocked;      // pointer to a "user defined" u32 register; here: counts how many locks have been achieved                           
-volatile uint32_t *pSharedGetNCycles;      // pointer to a "user defined" u32 register; here: number of UNILAC cycles                                            
+volatile uint32_t *pSharedGetNCycles;      // pointer to a "user defined" u32 register; here: number of UNILAC cycles
+volatile uint32_t *pSharedGetNSent;        // pointer to a "user defined" u32 register; here: number of messages sent to the Data Master (as broadcast)
 volatile uint32_t *pSharedGetNEvtsLate;    // pointer to a "user defined" u32 register; here: number of translated events that could not be delivered in time
 volatile uint32_t *pSharedGetOffsDone;     // offset t_mains_act to time when we are done
 volatile uint32_t *pSharedGetComLatency;   // pointer to a "user defined" u32 register; here: latency for messages received from via ECA (tDeadline - tNow)) [ns]
@@ -116,7 +117,8 @@ int32_t  getOffsMainsMax;
 uint32_t getLockState;   
 uint64_t getLockDate;  
 uint32_t getNLocked;     
-uint32_t getNCycles;     
+uint32_t getNCycles;
+uint32_t getNSent;
 uint32_t getNEvtsLate;
 uint32_t getOffsDone;
 int32_t  getComLatency;  
@@ -187,6 +189,7 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
   pSharedGetLockDateLo    = (uint32_t *)(pShared + (WRF50_SHARED_GET_LOCK_DATE_LOW   >> 2));
   pSharedGetNLocked       = (uint32_t *)(pShared + (WRF50_SHARED_GET_N_LOCKED        >> 2));
   pSharedGetNCycles       = (uint32_t *)(pShared + (WRF50_SHARED_GET_N_CYCLES        >> 2));
+  pSharedGetNSent         = (uint32_t *)(pShared + (WRF50_SHARED_GET_N_SENT          >> 2));
   pSharedGetNEvtsLate     = (uint32_t *)(pShared + (WRF50_SHARED_GET_N_EVTS_LATE     >> 2));
   pSharedGetOffsDone      = (uint32_t *)(pShared + (WRF50_SHARED_GET_OFFS_DONE       >> 2));
   pSharedGetComLatency    = (uint32_t *)(pShared + (WRF50_SHARED_GET_COM_LATENCY     >> 2));
@@ -249,6 +252,7 @@ void extern_clearDiag()
   getLockDate     = 0x0;
   getNLocked      = 0x0;
   if (getNCycles > WRF50_N_STAMPS) getNCycles = WRF50_N_STAMPS;
+  getNSent        = 0x0;
   getNEvtsLate    = 0x0;
   getOffsDone     = 0x0;
   getComLatency   = 0x0;   
@@ -319,8 +323,9 @@ uint32_t extern_entryActionOperation()
   *pSharedGetLockState      = 0x0;   
   *pSharedGetLockDateHi     = 0x0;  
   *pSharedGetLockDateLo     = 0x0;  
-  *pSharedGetNLocked        = 0x0;     
-  *pSharedGetNCycles        = 0x0;     
+  *pSharedGetNLocked        = 0x0;
+  *pSharedGetNCycles        = 0x0;
+  *pSharedGetNSent          = 0x0;
   *pSharedGetNEvtsLate      = 0x0;   
   *pSharedGetOffsDone       = 0x0;   
   *pSharedGetComLatency     = 0x0;
@@ -640,6 +645,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0);                                      
       } // else LOCK_DM
 
+      
+      getNSent++;
       getOffsDone    = (uint32_t)(getSysTime() - tluStamp);
                                             
       break;
@@ -731,6 +738,7 @@ int main(void) {
     *pSharedGetLockDateLo     = (uint32_t)(getLockDate && 0xffffffff);
     *pSharedGetNLocked        = getNLocked;
     *pSharedGetNCycles        = getNCycles;
+    *pSharedGetNSent          = getNSent;
     *pSharedGetNEvtsLate      = getNEvtsLate;
     *pSharedGetOffsDone       = getOffsDone;
     *pSharedGetComLatency     = getComLatency;
