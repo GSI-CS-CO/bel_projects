@@ -256,7 +256,7 @@ using namespace DotStr::Misc;
     boost::tie(out_begin, out_end) = out_edges(victim, g);
     for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
       vEdges2remove.push_back(*out_cur);
-      boost::add_edge(borg, target(*out_cur,g), (myEdge){boost::get(&myEdge::type, g, *out_cur)}, g);
+      boost::add_edge(borg, target(*out_cur,g), myEdge(g[*out_cur]), g);
       updateStaging(borg, *out_cur);
     }
 
@@ -270,7 +270,8 @@ using namespace DotStr::Misc;
       if (source(*in_cur, g) != target(*in_cur, g)) {
         vEdges2remove.push_back(*in_cur);
       }
-      boost::add_edge(source(*in_cur,g), borg, (myEdge){boost::get(&myEdge::type, g, *in_cur)}, g);
+
+      boost::add_edge(source(*in_cur,g), borg, myEdge(g[*in_cur]), g);
     }
 
     for (auto eRm : vEdges2remove) {
