@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Michael Reese GSI-Darmstadt
- *  version : 20-Jun-2024
+ *  version : 26-Jun-2024
  *
  * Command-line interface for wr-mil
  *
@@ -190,9 +190,8 @@ int main(int argc, char** argv) {
   uint32_t getNEvtsErr;                        // number 'broken' MIL telegrams received, detected by VHDL Manchester decoder
   uint32_t getNEvtsBurst;                      // number of detected 'high frequency bursts'
   uint32_t getNEvtsLate;                       // number of translated events that could not be delivered in time
+  uint32_t getOffsDone;                        // offset deadline WR message to time when we are done [ns]
   uint32_t getComLatency;                      // latency for messages received from via ECA (tDeadline - tNow)) [ns]
-                     
-
 
   uint32_t actState = COMMON_STATE_UNKNOWN;    // actual state of gateway
   uint32_t actNTransfer;                       // actual number of transfers
@@ -331,7 +330,7 @@ int main(int argc, char** argv) {
   if (getInfo) {
     // status
     wrmil_info_read(ebDevice, &getUtcTrigger, &getUtcDelay, &getTrigUtcDelay, &getGid, &getLatency, &getUtcOffset, &getRequestFill, &getMilDev, &getMilMon,
-                    &getNEvtsSnd, &getNEvtsRecT,  &getNEvtsRecD, &getNEvtsErr, &getNEvtsBurst, &getNEvtsLate, &getComLatency, 0);
+                    &getNEvtsSnd, &getNEvtsRecT,  &getNEvtsRecD, &getNEvtsErr, &getNEvtsBurst, &getNEvtsLate, &getOffsDone, &getComLatency, 0);
     wrmil_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
 
     // print set status bits (except OK)
@@ -387,7 +386,7 @@ int main(int argc, char** argv) {
         if ((statusArray >> i) & 0x1)  printf("    status bit is set : %s\n", wrmil_status_text(i));
       } // for i
       wrmil_info_read(ebDevice, &getUtcTrigger, &getUtcDelay, &getTrigUtcDelay, &getGid, &getLatency, &getUtcOffset, &getRequestFill, &getMilDev,
-                      &getMilMon, &getNEvtsSnd, &getNEvtsRecT, &getNEvtsRecD, &getNEvtsErr, &getNEvtsBurst, &getNEvtsLate, &getComLatency, 1);
+                      &getMilMon, &getNEvtsSnd, &getNEvtsRecT, &getNEvtsRecD, &getNEvtsErr, &getNEvtsBurst, &getNEvtsLate, &getOffsDone, &getComLatency, 1);
     } // "diag"
   } //if command
 
@@ -418,7 +417,7 @@ if (snoop) {
 
       if (printFlag) {
         wrmil_info_read(ebDevice, &getUtcTrigger, &getUtcDelay, &getTrigUtcDelay, &getGid, &getLatency, &getUtcOffset, &getRequestFill, &getMilDev,
-                        &getMilMon, &getNEvtsSnd, &getNEvtsRecT, &getNEvtsRecD, &getNEvtsErr, &getNEvtsBurst, &getNEvtsLate, &getComLatency, 0);
+                        &getMilMon, &getNEvtsSnd, &getNEvtsRecT, &getNEvtsRecD, &getNEvtsErr, &getNEvtsBurst, &getNEvtsLate, &getOffsDone, &getComLatency, 0);
         printf(", %s (%6u), ",  comlib_stateText(state), nBadState);
         if ((statusArray >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);
         else printf("NOTOK(%6u)\n", nBadStatus);

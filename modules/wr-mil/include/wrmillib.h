@@ -174,6 +174,7 @@ extern "C" {
                            uint32_t *nEvtsRecErr,                // number of 'broken' MIL telegrams received by VHDL Manchester decoder
                            uint32_t *nEvtsBurst,                 // number of detected high frequency bursts
                            uint32_t *nEvtsLate,                  // number of translated events that could not be delivered in time
+                           uint32_t *offsDone,                   // offset deadline WR message to time when we are done [ns]
                            uint32_t *comLatency,                 // latency for messages received from via ECA (tDeadline - tNow)) [ns]
                            int      printFlag                    // print info to screen 
                            );

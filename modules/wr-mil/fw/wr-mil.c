@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Micheal Reese, Mathias Kreider GSI-Darmstadt
- *  version : 20-Jun-2024
+ *  version : 26-Jun-2024
  *
  *  firmware required for the White Rabbit -> MIL Gateways
  *  
@@ -37,7 +37,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define WRMIL_FW_VERSION      0x000007    // make this consistent with makefile
+#define WRMIL_FW_VERSION      0x000008    // make this consistent with makefile
 
 #define RESET_INHIBIT_COUNTER    10000    // count so many main ECA timemouts, prior sending fill event
 //#define WR_MIL_GATEWAY_LATENCY 70650    // additional latency in units of nanoseconds
@@ -94,6 +94,7 @@ volatile uint32_t *pSharedGetNEvtsRecDLo;  // pointer to a "user defined" u32 re
 volatile uint32_t *pSharedGetNEvtsErr;     // pointer to a "user defined" u32 register; here: number of received MIL telegrams with errors, detected by VHDL manchester decoder
 volatile uint32_t *pSharedGetNEvtsBurst;   // pointer to a "user defined" u32 register; here: number of occurences of 'nonsense high frequency bursts' 
 volatile uint32_t *pSharedGetNEvtsLate;    // pointer to a "user defined" u32 register; here: number of late events
+volatile uint32_t *pSharedGetOffsDone;     // pointer to a "user defined" u32 register; here: offset deadline WR message to time when we are done
 volatile uint32_t *pSharedGetComLatency;   // pointer to a "user defined" u32 register; here: communicatin latency for events received by ECA
 //volatile uint32_t *pSharedGetNLateHisto;   // pointer to a "user defined" u32 register; here: dummy register to indicate position after the last valid register
 //volatile uint32_t *pSharedGetNMilHisto;    // pointer to a "user defined" u32 register; here: dummy register to indicate position after the last valid register
@@ -111,6 +112,7 @@ uint64_t nEvtsRecD;                     // # of received MIL telegrams (data)
 uint32_t nEvtsErr;                      // # of late messages with errors
 uint32_t nEvtsBurst;                    // # of detected 'high frequency bursts'
 uint32_t nEvtsLate;                     // # of late messages
+uint32_t offsDone;                      // offset deadline WR message to time when we are done [ns]
 int32_t  comLatency;                    // latency for messages received via ECA
 
 uint32_t utc_trigger;
@@ -172,6 +174,7 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
   pSharedGetNEvtsErr         = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_ERR        >> 2));
   pSharedGetNEvtsBurst       = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_BURST      >> 2));
   pSharedGetNEvtsLate        = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_LATE       >> 2));
+  pSharedGetOffsDone         = (uint32_t *)(pShared + (WRMIL_SHARED_GET_OFFS_DONE         >> 2));  
   pSharedGetComLatency       = (uint32_t *)(pShared + (WRMIL_SHARED_GET_COM_LATENCY       >> 2));
   //pSharedGetNLateHisto       = (uint32_t *)(pShared + (WRMIL_SHARED_GET_LATE_HISTOGRAM    >> 2));
   //pSharedGetNMilHisto        = (uint32_t *)(pShared + (WRMIL_SHARED_GET_MIL_HISTOGRAM     >> 2));
@@ -226,6 +229,7 @@ void extern_clearDiag()
   nEvtsErr     = 0x0;
   nEvtsBurst   = 0x0;
   nEvtsLate    = 0x0;
+  offsDone     = 0x0;
   comLatency   = 0x0;
   resetEventErrCntMil(pMilRec);
 } // extern_clearDiag 
@@ -346,7 +350,8 @@ uint32_t extern_entryActionOperation()
   *pSharedGetNEvtsRecDLo    = 0x0;
   *pSharedGetNEvtsErr       = 0x0;
   *pSharedGetNEvtsBurst     = 0x0;
-  *pSharedGetNEvtsLate      = 0x0;
+  *pSharedGetNEvtsLate      = 0x0;  
+  *pSharedGetOffsDone       = 0x0;  
   *pSharedGetComLatency     = 0x0;
   //*pSharedGetNLateHisto     = 0x0;
   //*pSharedGetNMilHisto      = 0x0; 
@@ -371,6 +376,7 @@ uint32_t extern_entryActionOperation()
   nEvtsErr             = 0;
   nEvtsBurst           = 0;
   nEvtsLate            = 0;
+  offsDone             = 0;
 
   // configure MIL receiver for timing events for all 16 virtual accelerators
   // if mil_mon == 2, the FIFO for event data monitoring must be enabled
@@ -554,6 +560,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
   int      i;
   uint64_t one_us_ns = 1000;
+  uint64_t sysTime; 
   
   status    = actStatus;
 
@@ -596,8 +603,11 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       if (mil_mon) clearFifoEvtMil(pMilRec);
       fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 1);
 
-      if (getSysTime() > sendDeadline) nEvtsLate++;
+      sysTime = getSysTime();
+
+      if (sysTime > sendDeadline) nEvtsLate++;
       nEvtsSnd++;
+      offsDone = sysTime - recDeadline;
 
       // handle UTC events; here the UTC time (- offset) is distributed as a series of MIL telegrams
       if (recEvtNo == utc_trigger) {
@@ -754,6 +764,7 @@ int main(void) {
     *pSharedGetNEvtsErr    = nEvtsErr;
     *pSharedGetNEvtsBurst  = nEvtsBurst;
     *pSharedGetNEvtsLate   = nEvtsLate;
+    *pSharedGetOffsDone    = offsDone;
   } // while
 
   return(1); // this should never happen ...

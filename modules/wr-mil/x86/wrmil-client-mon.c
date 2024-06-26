@@ -121,7 +121,7 @@ void buildHeader(char * environment)
 {
   sprintf(title, "\033[7m WRMIL System Status %3s ------------------------------------------------------------------------------------------------ (units [us] unless explicitly given) -  v%8s\033[0m", environment, wrmil_version_text(WRMIL_CLIENT_MON_VERSION));
   sprintf(header, "  # MIL domain  version      state        status     #sent/fw    #missd/fw      #err/fw    #burst/fw   #match/x86  r[%%] mode     ave    sdev      min      max         node");    
-  sprintf(empty , "                                                                                                                                                              ");
+  sprintf(empty , "                                                                                                                                                                            ");
   //       printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234\n");  
 } // buildHeader
 
@@ -166,7 +166,7 @@ void printServices()
   char     cVersion[9];
   char     cState[11];
   char     cHost[19];
-  char     cData[256];
+  char     cData[512];
   char     cNFwSnd[24];
   char     cNFwMssd[24];
   char     cNFwErr[24];
@@ -215,7 +215,7 @@ void printServices()
       if (dicSystem[i].monData.nFwRecErr == -1)  sprintf(cNFwErr, "%12s" , "nan");
       else                                       sprintf(cNFwErr, "%12u" , dicSystem[i].monData.nFwRecErr);
       if (dicSystem[i].monData.nFwBurst  == -1)  sprintf(cNFwBrst,"%12s" , "nan");
-      else                                       sprintf(cNFwBrst,"%12u" , dicSystem[i].monData.nFwRecErr);
+      else                                       sprintf(cNFwBrst,"%12u" , dicSystem[i].monData.nFwBurst);
       if (dicSystem[i].monData.nMatch  == -1)    sprintf(cNMatch, "%12s" , "nan");        
       else                                       sprintf(cNMatch, "%12lu", dicSystem[i].monData.nMatch);
       sprintf(cRMatch, "%5.1f",  100.0 * dicSystem[i].monData.nMatch / dicSystem[i].monData.nStart);

@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 06-June-2024
+ *  version : 26-June-2024
  *
  * library for wr-mil
  *
@@ -93,6 +93,7 @@ eb_address_t wrmil_get_nEvtsRecDLo;       // number of received MIL telegrams (d
 eb_address_t wrmil_get_nEvtsErr;          // number of received MIL 'broken' MIL telegrams detected by VHDL Manchester decoder
 eb_address_t wrmil_get_nEvtsBurst;        // number of detected 'high frequency bursts'
 eb_address_t wrmil_get_nEvtsLate;         // number of translated events that could not be delivered in time
+eb_address_t wrmil_get_offsDone;          // offset deadline WR message to time when we are done [ns]
 eb_address_t wrmil_get_comLatency;        // latency for messages received from via ECA (tDeadline - tNow)) [ns]                             
 
 eb_address_t wrf50_get_TMainsAct;         // period of mains cycle [ns], actual value                           
@@ -210,6 +211,7 @@ uint32_t wrmil_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t c
   wrmil_get_nEvtsErr     = lm32_base + SHARED_OFFS + WRMIL_SHARED_GET_N_EVTS_ERR;
   wrmil_get_nEvtsBurst   = lm32_base + SHARED_OFFS + WRMIL_SHARED_GET_N_EVTS_BURST;
   wrmil_get_nEvtsLate    = lm32_base + SHARED_OFFS + WRMIL_SHARED_GET_N_EVTS_LATE;
+  wrmil_get_offsDone     = lm32_base + SHARED_OFFS + WRMIL_SHARED_GET_OFFS_DONE;;
   wrmil_get_comLatency   = lm32_base + SHARED_OFFS + WRMIL_SHARED_GET_COM_LATENCY;
 
   // do this just at the very end
@@ -330,26 +332,27 @@ uint32_t wrmil_version_library(uint32_t *version)
 } // wrmil_version_library
 
 
-void wrmil_printDiag(uint32_t utcTrigger, uint32_t utcDelay, uint32_t trigUtcDelay, uint32_t gid, int32_t latency, uint64_t utcOffset, uint32_t requestFill, uint32_t milDev, uint32_t milMon, uint64_t nEvtsSnd, uint64_t nEvtsRecT, uint64_t nEvtsRecD, uint32_t nEvtsErr, uint32_t nEvtsBurst, uint32_t nEvtsLate, uint32_t comLatency)
+void wrmil_printDiag(uint32_t utcTrigger, uint32_t utcDelay, uint32_t trigUtcDelay, uint32_t gid, int32_t latency, uint64_t utcOffset, uint32_t requestFill, uint32_t milDev, uint32_t milMon, uint64_t nEvtsSnd, uint64_t nEvtsRecT, uint64_t nEvtsRecD, uint32_t nEvtsErr, uint32_t nEvtsBurst, uint32_t nEvtsLate, uint32_t offsDone, uint32_t comLatency)
 {
   printf("wrmil: info  ...\n\n");
 
-  printf("GID                          : 0x%015x\n"     , gid);
-  printf("UTC trigger evt ID           : 0x%015x\n"     , utcTrigger);
-  printf("UTC MIL delay [us]           : 0d%015u\n"     , utcDelay);
-  printf("UTC trigger delay [us]       : 0d%015u\n"     , trigUtcDelay);
-  printf("MIL latency [ns]             : 0d%015d\n"     , latency);
-  printf("UTC offset [ms]              : 0d%015lu\n"    , utcOffset);
-  printf("request fill event           : 0d%015u\n"     , requestFill);
-  printf("MIL dev (0: piggy, 1.. :SIO) : 0x%015x\n"     , milDev);
-  printf("MIL data monitoring          : 0d%015u\n"     , milMon);
-  printf("# MIL events sent            : 0d%015lu\n"    , nEvtsSnd);
-  printf("# MIL events received (TAI)  : 0d%015lu\n"    , nEvtsRecT);
-  printf("# MIL events received (data) : 0d%015lu\n"    , nEvtsRecD);
-  printf("# MIL events received (error): 0d%015u\n"     , nEvtsErr);
-  printf("# high frequency bursts      : 0d%015u\n"     , nEvtsBurst);
-  printf("# late events                : 0d%015u\n"     , nEvtsLate);
-  printf("communiation latency [ns]    : 0d%015u\n"     , comLatency);
+  printf("GID                                  : 0x%015x\n"     , gid);
+  printf("UTC trigger evt ID                   : 0x%015x\n"     , utcTrigger);
+  printf("UTC MIL delay [us]                   : 0d%015u\n"     , utcDelay);
+  printf("UTC trigger delay [us]               : 0d%015u\n"     , trigUtcDelay);
+  printf("MIL latency [ns]                     : 0d%015d\n"     , latency);
+  printf("UTC offset [ms]                      : 0d%015lu\n"    , utcOffset);
+  printf("request fill event                   : 0d%015u\n"     , requestFill);
+  printf("MIL dev (0: piggy, 1.. :SIO)         : 0x%015x\n"     , milDev);
+  printf("MIL data monitoring                  : 0d%015u\n"     , milMon);
+  printf("# MIL events sent                    : 0d%015lu\n"    , nEvtsSnd);
+  printf("# MIL events received (TAI)          : 0d%015lu\n"    , nEvtsRecT);
+  printf("# MIL events received (data)         : 0d%015lu\n"    , nEvtsRecD);
+  printf("# MIL events received (error)        : 0d%015u\n"     , nEvtsErr);
+  printf("# high frequency bursts              : 0d%015u\n"     , nEvtsBurst);
+  printf("# late events                        : 0d%015u\n"     , nEvtsLate);
+  printf("'offset done' (processing time) [us] : %15.3f\n", (double)offsDone/1000.0);
+  printf("communiation latency [ns]            : 0d%015u\n"     , comLatency);
 } // wrmil_printDiag
 
 
@@ -392,7 +395,7 @@ void wrf50_printDiag(int32_t f50Offs, uint32_t mode, uint32_t TMainsAct, uint32_
 
 
 uint32_t wrmil_info_read(uint64_t ebDevice, uint32_t *utcTrigger, uint32_t *utcUtcDelay, uint32_t *trigUtcDelay, uint32_t *gid, int32_t *latency, uint64_t *utcOffset, uint32_t *requestFill, uint32_t *milDev,
-                         uint32_t *milMon, uint64_t *nEvtsSnd, uint64_t *nEvtsRecT, uint64_t *nEvtsRecD, uint32_t *nEvtsErr, uint32_t *nEvtsBurst, uint32_t *nEvtsLate, uint32_t *comLatency, int printFlag)
+                         uint32_t *milMon, uint64_t *nEvtsSnd, uint64_t *nEvtsRecT, uint64_t *nEvtsRecD, uint32_t *nEvtsErr, uint32_t *nEvtsBurst, uint32_t *nEvtsLate, uint32_t *offsDone, uint32_t *comLatency, int printFlag)
 {
   eb_cycle_t   eb_cycle;
   eb_status_t  eb_status;
@@ -422,7 +425,8 @@ uint32_t wrmil_info_read(uint64_t ebDevice, uint32_t *utcTrigger, uint32_t *utcU
   eb_cycle_read(eb_cycle, wrmil_get_nEvtsErr    , EB_BIG_ENDIAN|EB_DATA32, &(data[16]));
   eb_cycle_read(eb_cycle, wrmil_get_nEvtsBurst  , EB_BIG_ENDIAN|EB_DATA32, &(data[17]));
   eb_cycle_read(eb_cycle, wrmil_get_nEvtsLate   , EB_BIG_ENDIAN|EB_DATA32, &(data[18]));
-  eb_cycle_read(eb_cycle, wrmil_get_comLatency  , EB_BIG_ENDIAN|EB_DATA32, &(data[19]));
+  eb_cycle_read(eb_cycle, wrmil_get_offsDone    , EB_BIG_ENDIAN|EB_DATA32, &(data[19]));
+  eb_cycle_read(eb_cycle, wrmil_get_comLatency  , EB_BIG_ENDIAN|EB_DATA32, &(data[20]));
   if ((eb_status = eb_cycle_close(eb_cycle)) != EB_OK) return COMMON_STATUS_EB;
 
   *utcTrigger    = data[0];
@@ -444,9 +448,10 @@ uint32_t wrmil_info_read(uint64_t ebDevice, uint32_t *utcTrigger, uint32_t *utcU
   *nEvtsErr      = data[16];
   *nEvtsBurst    = data[17];
   *nEvtsLate     = data[18];
-  *comLatency    = data[19];
+  *offsDone      = data[19];
+  *comLatency    = data[20];
 
-  if (printFlag) wrmil_printDiag(*utcTrigger, *utcUtcDelay, *trigUtcDelay, *gid, *latency, *utcOffset, *requestFill, *milDev, *milMon, *nEvtsSnd, *nEvtsRecT, *nEvtsRecD, *nEvtsErr, *nEvtsBurst, *nEvtsLate, *comLatency);
+  if (printFlag) wrmil_printDiag(*utcTrigger, *utcUtcDelay, *trigUtcDelay, *gid, *latency, *utcOffset, *requestFill, *milDev, *milMon, *nEvtsSnd, *nEvtsRecT, *nEvtsRecD, *nEvtsErr, *nEvtsBurst, *nEvtsLate, *offsDone, *comLatency);
   
   return COMMON_STATUS_OK;
 } // wrmil_info_read
