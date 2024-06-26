@@ -63,7 +63,7 @@ remoteDatamasterInfo() {
     echo
     echo
     echo "Datamaster Gateware Image:" ; ssh root@$DM_HOST "eb-info $DM"
-    echo "$DM datamaster host time: "; ssh root@$DM_HOST 'date -Iseconds'
+    echo "$DM datamaster host time: "; ssh root@$DM_HOST 'date +"%Y-%m-%dT%H:%M:%s%z"'
     echo "$DM datamaster IP: "; ssh root@$DM_HOST "eb-mon -i $DM"
     echo "$DM datamaster WR sync status: "; ssh root@$DM_HOST "eb-mon -y $DM"
     echo "$DM datamaster link status: "; ssh root@$DM_HOST "eb-mon -l $DM"
