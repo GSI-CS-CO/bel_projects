@@ -560,7 +560,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
   int      i;
   uint64_t one_us_ns = 1000;
-  uint64_t sysTime; 
+  uint64_t sysTime;
+  uint32_t tmp32;
   
   status    = actStatus;
 
@@ -607,7 +608,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
       if (sysTime > sendDeadline) nEvtsLate++;
       nEvtsSnd++;
-      offsDone = sysTime - recDeadline;
+      tmp32    = sysTime - recDeadline;
+      if (tmp32 > offsDone) offsDone = tmp32;
 
       // handle UTC events; here the UTC time (- offset) is distributed as a series of MIL telegrams
       if (recEvtNo == utc_trigger) {

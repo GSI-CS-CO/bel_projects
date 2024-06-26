@@ -353,7 +353,7 @@ void wrmil_printDiag(uint32_t utcTrigger, uint32_t utcDelay, uint32_t trigUtcDel
   printf("# MIL events received (error)        : 0d%015u\n"     , nEvtsErr);
   printf("# high frequency bursts              : 0d%015u\n"     , nEvtsBurst);
   printf("# late events                        : 0d%015u\n"     , nEvtsLate);
-  printf("'offset done' (processing time) [us] : %15.3f\n", (double)offsDone/1000.0);
+  printf("'offset done' (processing time) [us] :   %15.3f\n"    , (double)offsDone/1000.0);
   printf("communiation latency [ns]            : 0d%015u\n"     , comLatency);
 } // wrmil_printDiag
 
