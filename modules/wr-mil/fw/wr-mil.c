@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Micheal Reese, Mathias Kreider GSI-Darmstadt
- *  version : 26-Jun-2024
+ *  version : 27-Jun-2024
  *
  *  firmware required for the White Rabbit -> MIL Gateways
  *  
@@ -37,7 +37,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define WRMIL_FW_VERSION      0x000008    // make this consistent with makefile
+#define WRMIL_FW_VERSION      0x000009    // make this consistent with makefile
 
 #define RESET_INHIBIT_COUNTER    10000    // count so many main ECA timemouts, prior sending fill event
 //#define WR_MIL_GATEWAY_LATENCY 70650    // additional latency in units of nanoseconds
@@ -604,10 +604,24 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       if (mil_mon) clearFifoEvtMil(pMilRec);
       fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 1);
 
-      sysTime = getSysTime();
-
-      if (sysTime > sendDeadline) nEvtsLate++;
       nEvtsSnd++;
+      sysTime = getSysTime();
+      // note: we pretrigger 500us the WR-messages to have time to deliver the message
+      // however, some service events will come with an 'official' pretrigger of only 250us;
+      // thus, the ECA will report the WR-message as late. For us however, we only need write the
+      // MIL-message to the ECA 'in time'. Here, 'in time' means that we write the MIL-message
+      // to the ECA sooner than its deadline. Usually this will be the case even if we receive
+      // the WR-message late from the ECA. Thus the late info depends on if we manage to
+      // write the MIL message in time.
+      // note: we add 20us in the comparison taking into account the time it takes to write
+      // the message to the ECA and the time it takes the ECA to process that message
+      if (sysTime + 20000 > sendDeadline) {
+        nEvtsLate++;
+        flagIsLate    = 1;
+      } // if systime
+      else flagIsLate = 0;
+
+      // max value of offset done
       tmp32    = sysTime - recDeadline;
       if (tmp32 > offsDone) offsDone = tmp32;
 
