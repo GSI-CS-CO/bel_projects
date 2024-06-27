@@ -3,7 +3,7 @@
 # Set SYSENV to the target system environment (YOCTO, ACC7, ACC9, OPT)
 # Example build:
 #   'make clean'                                                 
-#   'make MASP=YES ENV=int SYSENV=ACC7 PREFIX= all'                                    (hack: leave PREFIX empty for SCU path)
+#   'make MASP=NO ENV=int SYSENV=ACC7 PREFIX= all'                                    (hack: leave PREFIX empty for SCU path)
 # Example deploy (for ASL only):
 #   'make PREFIX= SYSENV=ACC7 STAGING=/common/export/timing-rte/wrmil-dev deploy'      (hack: leave PREFIX empty for SCU path)
 #   'make PREFIX= SYSENV=ACC7 STAGING=/common/export/timing-rte/wrmil deploy'          (hack: leave PREFIX empty for SCU path)
