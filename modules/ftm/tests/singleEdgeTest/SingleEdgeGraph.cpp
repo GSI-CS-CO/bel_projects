@@ -57,15 +57,15 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, configuration& c
     g[v1].id_fid = "1";
     g[v1].id_gid = "33";
     if (edgeT.compare(det::sDynPar0) == 0) {
-      g[v1].par = "0x000000000412099c";
+      g[v1].par = "0x00000000041209a0";
       g[v1].tef = "2068673551";
       flags = NFLG_TMSG_DYN_PAR0_SMSK;
     } else if (edgeT.compare(det::sDynPar1) == 0) {
-      g[v1].par = "0x0412099c00000000";
+      g[v1].par = "0x041209a000000000";
       g[v1].tef = "2068673551";
       flags = NFLG_TMSG_DYN_PAR1_SMSK;
     } else if (edgeT.compare(det::sRef) == 0) {
-      g[v1].par = "0x00000000100009ac";
+      g[v1].par = "0x00000000100009b0";
     } else {
       g[v1].par = "1";
       g[v1].tef = "0";
@@ -83,7 +83,11 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, configuration& c
     g[v1].section = "registers";
   } else if (g[v1].type.compare(dnt::sBlock) == 0 || g[v1].type.compare(dnt::sBlockAlign) == 0) {
     flags=0x00100007;
-    g[v1].tPeriod = "1000";
+    if (edgeT.compare(det::sRef) == 0) {
+      g[v1].tPeriod = (nodeT2.compare(dnt::sGlobal) != 0) ? "1152932156125741056" : "0x1000085810000858";
+    } else {
+      g[v1].tPeriod = "1000";
+    }
     g[v1].qLo = "1";
     if (edgeT.compare(det::sQPrio[1]) == 0) {
       g[v1].qHi = "1";
@@ -142,8 +146,8 @@ SingleEdgeGraph::SingleEdgeGraph(CarpeDM::CarpeDMimpl* carpeDM, configuration& c
   myEdge newEdge = myEdge(edgeT);
   if (edgeT.compare(det::sRef) == 0) {
     newEdge.fhead = "0x10";
-    newEdge.ftail = "0x14";
-    newEdge.bwidth = "64";
+    newEdge.ftail = (nodeT1.compare(dnt::sBlock) == 0 || nodeT1.compare(dnt::sBlockAlign) == 0) ? "0x0" : "0x14";
+    newEdge.bwidth = (nodeT1.compare(dnt::sBlock) == 0 || nodeT1.compare(dnt::sBlockAlign) == 0) ? "32" : "64";
   }
   boost::add_edge(v1, v2, newEdge, g);
   // connect v1 and v2 by an edge of type defdst in some cases
@@ -355,7 +359,7 @@ void SingleEdgeGraph::setNodePointer(configuration& config, myVertex* vertex, st
       if (config.superverbose) {
         std::cout << "setNodePointer: NODE_TYPE_GLOBAL, " << vertex->name << " " << vertex->section << std::endl;
       }
-      vertex->np = (node_ptr) new Global(vertex->name, vertex->patName, vertex->bpName, hash, cpu, 0, vertex->section);
+      vertex->np = (node_ptr) new Global(vertex->name, vertex->patName, vertex->bpName, hash, cpu, flags, vertex->section);
       break;
     case NODE_TYPE_UNKNOWN:
       std::cerr << "not yet implemented " << vertex->type << std::endl;

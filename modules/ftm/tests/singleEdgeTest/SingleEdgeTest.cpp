@@ -100,23 +100,23 @@ int doTest(configuration& config) {
             knownException = true;
           }
           if (!knownException) {
-            std::cout << std::setfill(' ') << std::setw(4) << status.get("All cases") << ", " << std::setw(4) << status.get("Exceptions") << ", " << std::setw(4)
+            std::cout << "Unknown exception   " << std::setfill(' ') << std::setw(4) << status.get("All cases") << ", " << std::setw(4) << status.get("Exceptions") << ", " << std::setw(4)
                       << status.get("Known exceptions") << ": " << std::setw(10) << nodeT1 << ", " << std::setw(10) << nodeT2 << ", " << std::setw(10) << edgeT << ", ("
                       << std::setw(2) << counterV1 << "," << std::setw(2) << counterV2 << "," << std::setw(2) << counterE << ") "
                       << getExpectedResult(make_tuple(nodeT1, nodeT2, edgeT)) << " " << e.what();
           }
         }
         if (!checkedException && getExpectedResult(make_tuple(nodeT1, nodeT2, edgeT)) == SingleEdgeTest::TEST_EXCEPTION) {
-          std::cout << std::setfill(' ') << std::setw(4) << status.get("All cases") << ", " << std::setw(4) << status.get("Exceptions") << ", " << std::setw(4)
+          std::cout << "Unchecked test case " << std::setfill(' ') << std::setw(4) << status.get("All cases") << ", " << std::setw(4) << status.get("Exceptions") << ", " << std::setw(4)
                     << status.get("Known exceptions") << ": " << std::setw(10) << nodeT1 << ", " << std::setw(10) << nodeT2 << ", " << std::setw(10) << edgeT << ", ("
                     << std::setw(2) << counterV1 << "," << std::setw(2) << counterV2 << "," << std::setw(2) << counterE << ") "
-                    << getExpectedResult(make_tuple(nodeT1, nodeT2, edgeT)) << std::endl;
+                    << getExpectedResult(make_tuple(nodeT1, nodeT2, edgeT)) << ", check that this is a good test case." << std::endl;
         }
         status.increment("All cases");
         try {
           singleEdgeGraph.writeDotFile(nodeT1 + "-" + nodeT2 + "-" + edgeT);
         } catch (std::runtime_error &e) {
-          std::cout << std::setfill(' ') << std::setw(4) << status.get("All cases") << ", " << std::setw(4) << status.get("Exceptions") << ", " << std::setw(4)
+          std::cout << "Exception writeDotFile " << std::setfill(' ') << std::setw(4) << status.get("All cases") << ", " << std::setw(4) << status.get("Exceptions") << ", " << std::setw(4)
                     << status.get("Known exceptions") << ": " << std::setw(10) << nodeT1 << ", " << std::setw(10) << nodeT2 << ", " << std::setw(10) << edgeT << ", ("
                     << std::setw(2) << counterV1 << "," << std::setw(2) << counterV2 << "," << std::setw(2) << counterE << ") "
                     << getExpectedResult(make_tuple(nodeT1, nodeT2, edgeT)) << " " << e.what() << std::endl;
@@ -143,7 +143,7 @@ void usage(char* program) {
   std::cerr << "        -vv: super verbose, more output than verbose." << std::endl;
   std::cerr << "        -V: print version and exit." << std::endl;
   std::cerr << "Return codes: " << std::endl;
-  std::cerr << EXIT_SUCCESS << " EXIT_SUCCESS, graphs are isomorphic." << std::endl;
+  std::cerr << EXIT_SUCCESS << " EXIT_SUCCESS, well done." << std::endl;
   std::cerr << BAD_ARGUMENTS << " BAD_ARGUMENTS, unknown arguments on command line." << std::endl;
   std::cerr << USAGE_MESSAGE << " USAGE_MESSAGE, usage message displayed." << std::endl;
   std::cerr << VERSION_MESSAGE << " VERSION_MESSAGE, version displayed." << std::endl;
