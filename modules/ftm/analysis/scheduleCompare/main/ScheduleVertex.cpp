@@ -502,9 +502,9 @@ int ScheduleVertex::compareValues(const std::string& value1, const std::string& 
     result = value1.compare(value2);
     if (result != 0 && this->undefinedAsEmpty) {
       // when value1 and value2 are both "undefined", result == 0 and no further handling needed.
-      if (value1.compare("") && value2.compare("undefined")) {
+      if (value1.compare("") == 0 && value2.compare("undefined") == 0) {
         result = 0;
-      } else if (value1.compare("undefined") && value2.compare("")) {
+      } else if (value1.compare("undefined") == 0 && value2.compare("") == 0) {
         result = 0;
       }
     }
