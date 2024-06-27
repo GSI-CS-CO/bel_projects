@@ -255,6 +255,7 @@ void VisitorVertexWriter::visit(const DestList& el) const {
 void VisitorVertexWriter::visit(const Global& el) const {
   pushNodeInfo((Node&)el);
   pushPair(dnp::Base::sType, dnt::sGlobal);
+  pushPair(dnp::Base::sSection, el.getSection());
   pushSingle(ec::Node::Global::sLookDef);
   pushEnd();
 }

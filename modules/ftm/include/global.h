@@ -6,7 +6,8 @@
 
 class Global : public Node {
 
-const std::string& section;
+protected:
+  const std::string section;
 
 public:
   Global(const std::string& name, const std::string&  pattern, const std::string&  beamproc,  const uint32_t& hash, const uint8_t& cpu, uint32_t flags, const std::string& section)
@@ -14,7 +15,6 @@ public:
   Global(const Global& src) : Node(src), section(src.section) {}
   ~Global()  {};
   node_ptr clone() const { return boost::make_shared<Global>(Global(*this)); }
-
 
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
@@ -26,7 +26,7 @@ public:
   void serialise(const mVal &m, uint8_t* b) const;
   void deserialise(uint8_t* b) {};
   bool isMeta(void) const {return false;}
-
+  std::string getSection() const {return std::string(this->section);}
 };
 
 #endif
