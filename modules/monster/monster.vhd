@@ -3168,22 +3168,25 @@ end generate;
       end generate;
 
     extra_psram_delay : if g_en_psram_delay generate
-      psram_delay : xwb_register_link
-        generic map(
-          g_wb_adapter  => false)
-        port map(
-          clk_sys_i     => clk_sys,
-          rst_n_i       => rstn_sys,
-          slave_i       => dev_bus_master_o(dev_slaves'pos(devs_psram)),
-          slave_o       => dev_bus_master_i(dev_slaves'pos(devs_psram)),
-          master_i      => psram_slave_o,
-          master_o      => psram_slave_i);
+     xwb_system_to_psram : xwb_clock_crossing
+      generic map (g_size => 128)
+      port map(
+        -- Slave control port
+        slave_clk_i    => clk_sys,
+        slave_rst_n_i  => rstn_sys,
+        slave_i        => dev_bus_master_o(dev_slaves'pos(devs_psram)),
+        slave_o        => dev_bus_master_i(dev_slaves'pos(devs_psram)),
+        -- Master reader port
+        master_clk_i   => clk_20m,
+        master_rst_n_i => rstn_sys,
+        master_i       => psram_slave_o,
+        master_o       => psram_slave_i);
 
       ram : psram
         generic map(
           g_bits => g_psram_bits)
         port map(
-        clk_i     => clk_sys,
+        clk_i     => clk_20m,
         rstn_i    => rstn_sys,
         slave_i   => psram_slave_i,
         slave_o   => psram_slave_o,
@@ -3309,3 +3312,4 @@ end generate;
   ----------------------------------------------------------------------------------
 
 end rtl;
+

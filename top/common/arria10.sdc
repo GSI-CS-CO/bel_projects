@@ -9,6 +9,7 @@ set clk_ref2_25m_phase_butis_clk       [get_clocks {main|\ref_a10:ref_inst|iopll
 set clk_ref3_1000m_clk_lvds            [get_clocks {main|\ref_a10:ref_inst|iopll_0|altera_iopll_i|twentynm_pll|lvds_clk[0]}]
 set clk_ref4_125m_clk_lvds_enable_18dc [get_clocks {main|\ref_a10:ref_inst|iopll_0|altera_iopll_i|twentynm_pll|iopll_inst|loaden[0]}]
 set clk_sys0_62_5_sys_clk              [get_clocks {main|\sys_a10:sys_inst|iopll_0|outclk0}]
+set clk_sys2_20_generic_clk            [get_clocks {main|\sys_a10:sys_inst|iopll_0|outclk2}]
 set clk_sys4_10_flash_clk              [get_clocks {main|\sys_a10:sys_inst|iopll_0|outclk4}]
 set clk_dmtd_62_5_clk                  [get_clocks {main|\dmtd_a10:dmtd_inst|iopll_0|outclk0}]
 
@@ -25,7 +26,7 @@ create_clock -period 125Mhz -name clk_125m_tcb_sfpref_in [get_ports {clk_125m_sf
 set_false_path -from {monster:main|a10ts:\a10ts_y:a10ts_inst|a10ts_ip:\ext_trigger_n:core_a10ts_ip|altera_temp_sense:temp_sense_0|*} -to {monster:main|a10ts:\a10ts_y:a10ts_inst|*}
 
 # PSRAM
-create_clock -name psram_clk -period 16.000 -waveform {0 8} [get_ports {psram_clk}]
+#create_clock -name psram_clk -period 16.000 -waveform {0 8} [get_ports {psram_clk}]
 
 # Cut the clock domains from each other
 set_clock_groups -asynchronous \
@@ -224,6 +225,7 @@ set_clock_groups -asynchronous \
                     main|\phy_a10:phy|\det_phy:ftm10_phy:inst_phy|xcvr_native_a10_0|tx_pma_clk}] \
 -group [get_clocks {main|\dmtd_a10:dmtd_inst|iopll_0|outclk0}] \
 -group [get_clocks {main|\sys_a10:sys_inst|iopll_0|outclk0}] \
+-group [get_clocks {main|\sys_a10:sys_inst|iopll_0|outclk2}] \
 -group [get_clocks {main|\sys_a10:sys_inst|iopll_0|outclk3}] \
 -group [get_clocks {main|\sys_a10:sys_inst|iopll_0|outclk4}] \
 -group [get_clocks {main|\ref_a10:ref_inst|iopll_0|outclk2 \
@@ -231,3 +233,4 @@ set_clock_groups -asynchronous \
                     main|\ref_a10:ref_inst|iopll_0|altera_iopll_i|twentynm_pll|iopll_inst|loaden[0]}] \
 -group [get_clocks {main|\ref_a10:ref_inst|iopll_0|outclk3 \
                     main|\ref_a10:ref_inst|iopll_0|outclk4}] \
+
