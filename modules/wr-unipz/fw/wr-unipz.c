@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 25-Jun-2024
+ *  version : 28-Jun-2024
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
@@ -63,7 +63,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define WRUNIPZ_FW_VERSION 0x000215                                     // make this consistent with makefile
+#define WRUNIPZ_FW_VERSION 0x000216                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -189,10 +189,10 @@ uint64_t writeTM(uint32_t uniEvt, uint64_t tStart, uint32_t pz, uint32_t virtAcc
              ((uint64_t)virtAcc   << 20)     |         // SID
              ((uint64_t)0x0       <<  6)     |         // BPID
              ((uint64_t)0x0       <<  5)     |         // reserved
-             ((uint64_t)0x0       <<  4)     |         // reqNoBeam
-             ((uint64_t)0x0            );              // virtAcc only for DM-UNIPZ gateway
+             ((uint64_t)0x0       <<  4)     |         // (reqNoBeam, not here)
+             ((uint64_t)evtData        );              // last four bits; see https://www-acc.gsi.de/wiki/ProjectMgmt/MappingWrMilSisEsrUnilac#A_5_Decision
   param    = ((uint64_t)flags     << 32)     |         // parameter field high bits
-             ((uint64_t)evtData        );              // parameter field low bits
+             ((uint64_t)0x0            );              // parameter field low bits
   
   // calc deadline
   offset   = (uint64_t)t * 1000;                       // convert offset us -> ns
