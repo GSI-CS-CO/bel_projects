@@ -581,7 +581,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       // chk, hack due to different event formats
       // the following lines can be removed once the wr-mil gateway has been changed to the new format
       recEvtId &= 0xfffffffffffffff0;
-      recEvtId |= (recParam & 0xf);
+      recEvtId |= ((recParam >> 32) & 0xf);
       
       convert_WReventID_to_milTelegram(recEvtId, &milTelegram);
 
