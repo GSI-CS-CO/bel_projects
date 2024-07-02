@@ -205,7 +205,7 @@ uint64_t writeTM(uint32_t uniEvt, uint64_t tStart, uint32_t pz, uint32_t virtAcc
               ((uint64_t)0x0       <<  4)     |         // (reqNoBeam, not here)
               ((uint64_t)evtData        );              // last four bits; see https://www-acc.gsi.de/wiki/ProjectMgmt/MappingWrMilSisEsrUnilac#A_5_Decision
   param     = ((uint64_t)flags     << 32)     |         // parameter field high bits, does carry flags
-              ((uint64_t)evtData        );              // parameter field low bits, compatibility to 'old' wr-unipz (to be removed)
+              ((uint64_t)0x0            );              // parameter field low bits, compatibility to 'old' wr-unipz (to be removed)
   
   // calc deadline
   offset    = (uint64_t)t * 1000;                       // convert offset us -> ns
