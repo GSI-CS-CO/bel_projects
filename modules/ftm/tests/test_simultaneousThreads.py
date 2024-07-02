@@ -80,7 +80,7 @@ class SimultaneousThreads(dm_testbench.DmTestbench):
     lines.append(f'  B_VARI [type=block shape=rectangle tperiod=200000]')
     # ~ lines.append(f'  StartThread [type=startthread shape=triangle color=cyan pattern=MAIN startoffs=0 thread="0x{threadMask}"]')
     lines.append(f'  StartThread [type=startthread shape=triangle color=cyan pattern=MAIN startoffs=0 thread="{threadMask}"]')
-    lines.append(f'  Evt_MAIN [type=tmsg shape=oval fid=1 evtno=1 par=0]')
+    lines.append(f'  Evt_MAIN [type=tmsg shape=oval fid=1 evtno=1 par=0 id="0x1000001000000000"]')
     lines.append(f'  B_MAIN [type=block shape=rectangle patexit=1 color=purple tperiod=20000000 qlo=1]')
     lines.append(f'  B_VARI -> StartThread -> Evt_MAIN -> B_MAIN -> B_VARI [type=defdst color=red]')
     # create the origin nodes
@@ -94,7 +94,7 @@ class SimultaneousThreads(dm_testbench.DmTestbench):
     # create the tmsg nodes
     lines.append(f'  node [type=tmsg shape=oval patentry=1 color=darkorange3 fid=1 evtno=2]')
     for i in range(1,threadQuantity):
-      lines.append(f'  Evt_{i:02d} [pattern={i:02d} toffs={i * 300000} par={i:d}]')
+      lines.append(f'  Evt_{i:02d} [pattern={i:02d} toffs={i * 300000} par={i:d} id="0x1000002000000000"]')
     # create the block nodes
     lines.append(f'  node [type=block shape=rectangle patentry=0 patexit=1 color=purple tperiod=10000000]')
     for i in range(1,threadQuantity):
