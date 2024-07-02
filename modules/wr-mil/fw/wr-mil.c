@@ -37,7 +37,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define WRMIL_FW_VERSION      0x000009    // make this consistent with makefile
+#define WRMIL_FW_VERSION      0x000010    // make this consistent with makefile
 
 #define RESET_INHIBIT_COUNTER    10000    // count so many main ECA timemouts, prior sending fill event
 //#define WR_MIL_GATEWAY_LATENCY 70650    // additional latency in units of nanoseconds
@@ -465,8 +465,9 @@ uint32_t convert_WReventID_to_milTelegram(uint64_t evtId, uint32_t *milTelegram)
   // EventID 
   // |---------------evtIdHi---------------|  |---------------evtIdLo---------------|
   // FFFF GGGG GGGG GGGG EEEE EEEE EEEE FFFF  SSSS SSSS SSSS BBBB BBBB BBBB BBRR RRRR
-  //                          cccc cccc irrr  ssss ssss vvvv
+  // till  June 2024          cccc cccc irrr  ssss ssss vvvv
   //                                               xxxx xxxx
+  // since June 2024          cccc cccc                 vvvv                     ssss
   //                              
   // F: FID(4)
   // G: GID(12)
@@ -500,27 +501,34 @@ uint32_t convert_WReventID_to_milTelegram(uint64_t evtId, uint32_t *milTelegram)
   tophalf    = statusBits << 4;
   tophalf   |= virtAcc;
 
-  // legacy code for the 2024 beam time - or maybe a special case for ring machines
-  if ((gid == SIS18_RING || gid == ESR_RING)) {
-    switch (gid) {
-      case SIS18_RING: pzKennung = 0x1; break;
-      case ESR_RING:   pzKennung = 0x2; break;
-      default :        pzKennung = 0x0; break;
-    } // switch gid
+  // Pulszentralenkennung
+  switch (gid) {
+    case SIS18_RING: pzKennung =  1; break;
+    case ESR_RING  : pzKennung =  2; break;
+    case PZU_QR    : pzKennung =  9; break;
+    case PZU_QL    : pzKennung = 10; break;
+    case PZU_QN    : pzKennung = 11; break;
+    case PZU_UN    : pzKennung = 12; break;
+    case PZU_UH    : pzKennung = 13; break;
+    case PZU_AT    : pzKennung = 14; break;
+    case PZU_TK    : pzKennung = 15; break;
+    default :        pzKennung =  0; break;
+  } // switch gid
     
-    // commands: top half of the MIL bits (15..8) are extracted from the status bits of EventID
-    if (evtCode >= 200 && evtCode <= 208) {
-      // tophalf = tophalf;  // no modification (just take all bits from the sequence-ID)
-    } // if evtCode
-    else if (evtCode == 255) { // command event: top half of the MIL bits (15..8) are pppp1111, p is pzKennung
-    tophalf = ( pzKennung << 4 ) | 0xf;          
-    } // evtCode 255
-    else {                                // all other events: top half of MIL bits (15..8) are ppppvvvv, p is pzKennung
-      tophalf = ( pzKennung << 4 ) | virtAcc;
-    } // else evtCode 255
-  } // if ring machine
+  // commands: top half of the MIL bits (15..8) are extracted from the status bits of EventID
+  // however, there are only 4 status bits, but here we need 8 bits
+  // thus we can not do s.th. useful and just write a bogus number of 0x0
+  if ((evtCode >= 200) && (evtCode <= 208)) {
+    tophalf = 0x0;                     
+  } // if evtCode
+  else if (evtCode == 255) { // command event: top half of the MIL bits (15..8) are ppppvvvv, p is pzKennung
+    tophalf = ( pzKennung  << 4 ) | virtAcc;
+  } // evtCode 255
+  else {                                // all other events: top half of MIL bits (15..8) are ssssvvvv
+    tophalf = ( statusBits << 4 ) | virtAcc;
+  } // all other event number
 
-  *milTelegram = (tophalf << 8) | evtCode; 
+  *milTelegram = (tophalf << 8)   | evtCode; 
                                            
   // For MIL events, the upper 4 bits of evtNo are zero
   return (evtNo & 0x00000f00) == 0; 
@@ -579,9 +587,9 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       if (recSid  > 15)         return COMMON_STATUS_OUTOFRANGE;
 
       // chk, hack due to different event formats
-      // the following lines can be removed once the wr-mil gateway has been changed to the new format
-      recEvtId &= 0xfffffffffffffff0;
-      recEvtId |= ((recParam >> 32) & 0xf);
+      // the following lines can be removed once the wr-unipz has been changed to the new format
+      // recEvtId &= 0xfffffffffffffff0;
+      // recEvtId |= ((recParam >> 32) & 0xf);
       
       convert_WReventID_to_milTelegram(recEvtId, &milTelegram);
 
