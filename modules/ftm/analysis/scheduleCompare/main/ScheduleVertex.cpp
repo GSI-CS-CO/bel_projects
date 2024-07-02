@@ -355,7 +355,7 @@ int ScheduleVertex::compareTmsg(const ScheduleVertex& v1, const ScheduleVertex& 
   if (result != 0) {
     return result;
   }
-  result = compareValues(v1.tef, v2.tef, "tef", valueType::STRING);
+  result = compareValues(v1.tef, v2.tef, "tef", valueType::HEX);
   if (result != 0) {
     return result;
   }
@@ -363,7 +363,7 @@ int ScheduleVertex::compareTmsg(const ScheduleVertex& v1, const ScheduleVertex& 
   if (result != 0) {
     return result;
   }
-  result = compareValues(v1.id, v2.id, "id", valueType::STRING);
+  result = compareValues(v1.id, v2.id, "id", valueType::HEX);
   if (result != 0) {
     return result;
   }
@@ -375,7 +375,7 @@ int ScheduleVertex::compareTmsg(const ScheduleVertex& v1, const ScheduleVertex& 
   if (result != 0) {
     return result;
   }
-  result = compareValues(v1.evtno, v2.evtno, "evtno", valueType::STRING);
+  result = compareValues(v1.evtno, v2.evtno, "evtno", valueType::HEX);
   if (result != 0) {
     return result;
   }
@@ -438,8 +438,11 @@ int ScheduleVertex::compareBoolean(const std::string& bool1, const std::string& 
   }
 }
 
-int ScheduleVertex::compareHex(const std::string& hex1, const std::string& hex2) {
+int ScheduleVertex::compareHex(const std::string& inHex1, const std::string& inHex2) {
+  std::string hex1 = (inHex1.empty()) ? "0" : inHex1;
+  std::string hex2 = (inHex2.empty()) ? "0" : inHex2;
   if (startsWith(hex1, "0x", false) && startsWith(hex2, "0X", false)) {
+    // hex1 and hex2 are hexadecimal numbers
     unsigned long x1;
     unsigned long x2;
     std::stringstream hexStream1;
@@ -456,6 +459,7 @@ int ScheduleVertex::compareHex(const std::string& hex1, const std::string& hex2)
       return 0;
     }
   } else if (startsWith(hex1, "0x", false) && !startsWith(hex2, "0X", false)) {
+    // hex1 is a hexadecimal number, hex2 is a decimal number
     unsigned long x1;
     unsigned long x2;
     std::stringstream hexStream1;
@@ -472,6 +476,7 @@ int ScheduleVertex::compareHex(const std::string& hex1, const std::string& hex2)
       return 0;
     }
   } else if (!startsWith(hex1, "0x", false) && startsWith(hex2, "0X", false)) {
+    // hex1 is a decimal number, hex2 is a hexadecimal number
     unsigned long x1;
     unsigned long x2;
     std::stringstream stream1;
@@ -506,13 +511,17 @@ int ScheduleVertex::compareValues(const std::string& value1, const std::string& 
         result = 0;
       } else if (value1.compare("undefined") == 0 && value2.compare("") == 0) {
         result = 0;
+      } else if (value1.compare("") == 0 && value2.compare("0") == 0) {
+        result = 0;
+      } else if (value1.compare("0") == 0 && value2.compare("") == 0) {
+        result = 0;
       }
     }
   } else {
     // unknown valueType
   }
   if (result != 0) {
-    protocol += " compare: " + std::to_string(result) + ", key: " + key + ", value1: '" + value1 + "', value2: '" + value2 + "'.";
+    protocol += " compare: " + std::to_string(result) + ", type: " + std::to_string(int(type)) + ", key: " + key + ", value1: '" + value1 + "', value2: '" + value2 + "'.";
   }
   return result;
 }
