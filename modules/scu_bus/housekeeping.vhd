@@ -277,11 +277,12 @@ begin
       slave_i => cc_dummy_slave_in,
       slave_o => open,
 
+      -- read only
       Adr_from_SCUB_LA  => ADR_from_SCUB_LA,
       Data_from_SCUB_LA => Data_from_SCUB_LA,
       Ext_Adr_Val       => Ext_Adr_Val,
       Ext_Rd_active     => Ext_Rd_active,
-      Ext_Wr_active     => Ext_Wr_active,
+      Ext_Wr_active     => '0',
       user_rd_active    => info_rom_rd_active,
       Data_to_SCUB      => info_rom_data,
       Dtack_to_SCUB     => info_rom_dtack);
