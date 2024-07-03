@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Micheal Reese, Mathias Kreider GSI-Darmstadt
- *  version : 27-Jun-2024
+ *  version : 03-Jul-2024
  *
  *  firmware required for the White Rabbit -> MIL Gateways
  *  
@@ -357,7 +357,7 @@ uint32_t extern_entryActionOperation()
   //*pSharedGetNMilHisto      = 0x0; 
   //*pSharedGetMsiSlot        = 0x0;
 
-  // int set values
+  // init set values
   utc_trigger          = *pSharedSetUtcTrigger;
   utc_utc_delay        = *pSharedSetUtcUtcDelay;
   trig_utc_delay       = *pSharedSetTrigUtcDelay;
