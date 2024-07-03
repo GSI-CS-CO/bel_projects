@@ -47,6 +47,7 @@ class TestAltDestinationLists(dm_testbench.DmTestbench):
     numDestinations = argsList[0]
     frequency = argsList[1]
     delay = 1 / frequency * 0.52
+    self.delay(0.5)
     print(f'Action: {numDestinations=}, {frequency=}, {delay=}')
     for i in range(1, numDestinations):
       command = (self.binaryDmCmd, self.datamaster, 'flow', 'Block0_0', f'Msg0_{i:04d}')
@@ -75,7 +76,7 @@ class TestAltDestinationLists(dm_testbench.DmTestbench):
     # add schedule and start pattern, snoop for some time
     self.startPattern(scheduleFile, patternName)
     # large numDestinations require more time for snoop. The last part handles this.
-    snoopTime = 1 + max(2, int(numDestinations / frequency)) + int(numDestinations / 50)
+    snoopTime = int((1 + max(2, int(numDestinations / frequency)) + int(numDestinations / 50)) * 1.5)
     print(f'Run: {numDestinations=}, {frequency=}, {period=}, {snoopTime=}')
     self.snoopToCsvWithAction(fileCsv, self.switchAction, actionArgs=[numDestinations, frequency], duration=snoopTime)
     # check downloaded schedule
