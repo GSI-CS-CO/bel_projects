@@ -117,6 +117,11 @@ void die(const char* where,eb_status_t status) {
 
 void read_asmi_id(int slave_nr, eb_data_t* epcsid) {
   eb_status_t status;
+  // clear the param and cmd register
+  for (int i = ASMI_PARAM; i <= ASMI_CMD; i+=2) {
+    if ((status = eb_device_write(device, scu_bus + slave_nr * (1<<17) + i, EB_BIG_ENDIAN|EB_DATA16, 0x0, 0, eb_block)) != EB_OK)
+      die("clear of param reg failed", status);
+  }
   
   if ((status = eb_device_write(device, scu_bus + slave_nr * (1<<17) + ASMI_CMD, EB_BIG_ENDIAN|EB_DATA16, ASMI_ID_CMD, 0, eb_block)) != EB_OK)
     die("writing to ASMI_CMD failed", status);
