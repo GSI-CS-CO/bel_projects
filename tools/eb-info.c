@@ -261,12 +261,11 @@ int main(int argc, char** argv) {
         printf("INFO_ROM read failed!\n");
         exit(1);
       }
+
     }
 
     for (i = 0; i < len; ++i) {
-      printf("%c%c%c%c", 
-        (char)(data[i] >> 24) & 0xff, 
-        (char)(data[i] >> 16) & 0xff, 
+      printf("%c%c", 
         (char)(data[i] >>  8) & 0xff,
         (char)(data[i]      ) & 0xff);
     }
