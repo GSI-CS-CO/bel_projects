@@ -9,6 +9,7 @@
 #include "common.h"
 #include <etherbone.h>
 #include "alloctable.h"
+#include "reflocation.h"
 #include "ftm_common.h"
 
 #define SDB_VENDOR_GSI      0x0000000000000651ULL
@@ -66,7 +67,7 @@ public:
   };
   ~EbWrapper() {};
   
-  bool connect(const std::string& ebdevname, AllocTable& atUp, AllocTable& atDown);
+  bool connect(const std::string& ebdevname, AllocTable& atUp, AllocTable& atDown, RefLocation& rl);
   bool disconnect(); //Close connection
   int writeCycle(const vEbwrs& ew) const;
   int writeCycle(const vAdr& va, const vBuf& vb, const vBl& vcs) const;

@@ -220,12 +220,14 @@ class DmTestbench(unittest.TestCase):
     logging.getLogger().info(f'{testName}, snoopToCsv: {csvFileName=}, {eventId=}, {mask=}, {duration=}, {resource=}')
     with open(csvFileName, 'wb') as file1:
       try:
+        startTime = datetime.datetime.now()
         if not resource is None:
-          print('snoopToCsv: Start Thread ', datetime.datetime.now().time())
+          print('snoopToCsv: Start Thread ', startTime.time())
           resource.release()
         process = subprocess.run(self.getSnoopCommand(eventId, mask, duration), shell=True, check=True, stdout=file1)
+        endTime = datetime.datetime.now()
         if not resource is None:
-          print(f'snoopToCsv: Return: {process.returncode:3d}   {datetime.datetime.now().time()}')
+          print(f'snoopToCsv: Return: {process.returncode:3d}   {endTime.time()}, duration: {endTime - startTime}')
         self.assertEqual(process.returncode, 0, f'Returncode: {process.returncode}')
       except Exception as exception:
         if resource is None:
@@ -257,6 +259,7 @@ class DmTestbench(unittest.TestCase):
       else:
         action(actionArgs)
     finally:
+      print('snoopToCsv: finish action', datetime.datetime.now().time())
       snoop.join()
       resource.release()
       print('snoopToCsv: release lock ', datetime.datetime.now().time())

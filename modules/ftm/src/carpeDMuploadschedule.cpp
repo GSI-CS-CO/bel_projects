@@ -86,20 +86,25 @@ using namespace DotStr::Misc;
     // save modification infos
     for (auto& itMod : moddedCpus) { createSchedModInfo(ew, itMod, modCnt, opType); }
 
+    //FIXME This should not be hardcoded to the number of elements and not repeated. Loop it,be clean  
+
     // save global meta info for management linked list
-    uint8_t b[4 * _32b_SIZE_];
+    uint8_t b[5 * _32b_SIZE_];
     //enough to write it to cpu 0
     modAdrBase = atUp.getMemories()[0].extBaseAdr + atUp.getMemories()[0].sharedOffs + SHCTL_META;
     writeLeNumberToBeBytes<uint32_t>((uint8_t*)&b[T_META_START_PTR], atUp.getMgmtLLstartAdr());
     writeLeNumberToBeBytes<uint32_t>((uint8_t*)&b[T_META_CON_SIZE],  atUp.getMgmtTotalSize());
     writeLeNumberToBeBytes<uint32_t>((uint8_t*)&b[T_META_GRPTAB_SIZE],  atUp.getMgmtGrpSize());
     writeLeNumberToBeBytes<uint32_t>((uint8_t*)&b[T_META_COVTAB_SIZE],  atUp.getMgmtCovSize());
-    ew.vcs += leadingOne(4);
+    writeLeNumberToBeBytes<uint32_t>((uint8_t*)&b[T_META_REFTAB_SIZE],  atUp.getMgmtRefSize());
+    
     ew.va.push_back(modAdrBase + T_META_START_PTR);
     ew.va.push_back(modAdrBase + T_META_CON_SIZE);
     ew.va.push_back(modAdrBase + T_META_GRPTAB_SIZE);
     ew.va.push_back(modAdrBase + T_META_COVTAB_SIZE);
-    ew.vb.insert( ew.vb.end(), b, b + 4 * _32b_SIZE_ );
+    ew.va.push_back(modAdrBase + T_META_REFTAB_SIZE);
+    ew.vcs += leadingOne(ew.va.size());
+    ew.vb.insert( ew.vb.end(), b, b + 5 * _32b_SIZE_ );
 
 
 
@@ -251,7 +256,7 @@ using namespace DotStr::Misc;
     boost::tie(out_begin, out_end) = out_edges(victim, g);
     for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
       vEdges2remove.push_back(*out_cur);
-      boost::add_edge(borg, target(*out_cur,g), (myEdge){boost::get(&myEdge::type, g, *out_cur)}, g);
+      boost::add_edge(borg, target(*out_cur,g), myEdge(g[*out_cur]), g);
       updateStaging(borg, *out_cur);
     }
 
@@ -265,7 +270,8 @@ using namespace DotStr::Misc;
       if (source(*in_cur, g) != target(*in_cur, g)) {
         vEdges2remove.push_back(*in_cur);
       }
-      boost::add_edge(source(*in_cur,g), borg, (myEdge){boost::get(&myEdge::type, g, *in_cur)}, g);
+
+      boost::add_edge(source(*in_cur,g), borg, myEdge(g[*in_cur]), g);
     }
 
     for (auto eRm : vEdges2remove) {
@@ -284,6 +290,10 @@ using namespace DotStr::Misc;
 
     //allocate and init all new vertices
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
+
+      myVertex* vt = (myVertex*)&gUp[v];
+
+      //sLog << "Testing " << vt->name << std::endl;
 
       std::string name = gUp[v].name;
       //try{
@@ -308,7 +318,7 @@ using namespace DotStr::Misc;
         amI it = atUp.lookupHashNoEx(hash); //if we already have a download entry, keep allocation, but update vertex index
         if (!atUp.isOk(it)) {
           //sLog << "Adding " << name << std::endl;
-          allocState = atUp.allocate(cpu, hash, v, true);
+          allocState = atUp.allocate(cpu, hash, v, gUp, true);
           if (allocState == ALLOC_NO_SPACE)         {throw std::runtime_error("Not enough space in CPU " + std::to_string(cpu) + " memory pool"); return; }
           if (allocState == ALLOC_ENTRY_EXISTS)     {throw std::runtime_error("Node '" + name + "' would be duplicate in graph."); return; }
           // getting here means alloc went okay
@@ -343,6 +353,7 @@ using namespace DotStr::Misc;
           else if (cmp == dnt::sQInfo)       {gUp[v].np = (node_ptr) new   CmdQMeta(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags);}
           else if (cmp == dnt::sDstList)     {gUp[v].np = (node_ptr) new   DestList(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags);}
           else if (cmp == dnt::sQBuf)        {gUp[v].np = (node_ptr) new CmdQBuffer(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags);}
+          else if (cmp == dnt::sGlobal)      {gUp[v].np = (node_ptr) new     Global(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, gUp[v].section);}
           else if (cmp == dnt::sMeta)        {throw std::runtime_error("Pure meta type not yet implemented"); return;}
           //FIXME try to get info from download
           else                        {throw std::runtime_error("Node <" + gUp[v].name + ">'s type <" + cmp + "> is not supported!\nMost likely you forgot to set the type attribute or accidentally created the node by a typo in an edge definition."); return;}
@@ -372,6 +383,9 @@ using namespace DotStr::Misc;
         throw std::runtime_error("Node '" + gUp[v].name + "'contains uninitialised elements!\nMisspelled/forgot a mandatory property in .dot file ?");
       }
     }
+
+    //atUp.rl->showMemLocMap();
+    //atUp.rl->showMemFieldMap();
 
   }
 
@@ -623,8 +637,10 @@ using namespace DotStr::Misc;
   void CarpeDM::CarpeDMimpl::generateMgmtData() {
     std::string tmpStrBufGrp = gt.store();
     std::string tmpStrBufCov = ct.store();
-    atUp.setMgmtLLSizes(tmpStrBufGrp.size(), tmpStrBufCov.size());
-    std::string tmpStrBuf = tmpStrBufGrp + tmpStrBufCov;
+    std::string tmpStrBufRef = rt.store();
+
+    atUp.setMgmtLLSizes(tmpStrBufGrp.size(), tmpStrBufCov.size(), tmpStrBufRef.size());
+    std::string tmpStrBuf = tmpStrBufGrp + tmpStrBufCov + tmpStrBufRef;
 
     vBuf tmpBuf(tmpStrBuf.begin(), tmpStrBuf.end());
     vBuf mgmtBinary = compress(tmpBuf);
@@ -641,6 +657,7 @@ using namespace DotStr::Misc;
     atDown.clear();
     gt.clear();
     ct.clear();
+    rt.clear();
     hm.clear();
   }
 

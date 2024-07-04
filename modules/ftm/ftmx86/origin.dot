@@ -5,29 +5,29 @@ graph []
 edge  [type="defdst"]
 
 subgraph cpu1 {
-  node  [cpu="1"];
+  node  [cpu="1" fid=1 pattern=MAIN]
 
-  Ori_T1_A  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=1];
-  Ori_T2_A  [type="origin",       pattern="MAIN", patentry="0", toffs=    0,   thread=2];
-  Ori_T3_B  [type="origin",       pattern="MAIN", patentry="0", toffs=    0,   thread=3];
+  Ori_T1_A  [type="origin",       patentry="1", toffs=0, thread=1];
+  Ori_T2_A  [type="origin",       patentry="0", toffs=0, thread=2];
+  Ori_T3_B  [type="origin",       patentry="0", toffs=0, thread=3];
   
-  StThrT1   [type="startthread",  pattern="MAIN", patentry="0", toffs=  235, startoffs=0;       thread=1];
-  StThrT2   [type="startthread",  pattern="MAIN", patentry="0", toffs=  235, startoffs=10000000;  thread=2];
-  StThrT3   [type="startthread",  pattern="MAIN", patentry="0", toffs=10000, startoffs=0;       thread=3];
+  StThrT1   [type="startthread",  patentry="0", toffs=  235, startoffs=0;       thread="0x2"];
+  StThrT2   [type="startthread",  patentry="0", toffs=  235, startoffs=10000000;  thread="0x4"];
+  StThrT3   [type="startthread",  patentry="0", toffs=10000, startoffs=0;       thread="0x8"];
   
-  Evt_MAIN  [type="tmsg",         pattern="MAIN", patentry="0", toffs=20000,   fid=1, evtno=1, par="0x01"];
-  B_MAIN    [type="block",        pattern="MAIN", patexit="1",  tperiod=1000000000, qlo="1"];
+  Evt_MAIN  [type="tmsg",         patentry="0", toffs=20000, evtno=1, par="0x01"];
+  B_MAIN    [type="block",        patexit="1",  tperiod=1000000000, qlo="1"];
   
-  Evt_A     [type="tmsg",         pattern="A", patentry="1", toffs=1000,   fid=1, evtno=2, par="0x02"];
-  B_A       [type="block",        pattern="A", patexit="1", tperiod=100000000, qlo="1"];
+  Evt_A     [type="tmsg",         pattern="A", patentry="1", toffs=1000, evtno=2, par="0x02"];
+  B_A       [type="block",        pattern="A", patexit="1", tperiod=300000000, qlo="1"];
   
-  Evt_B     [type="tmsg",         pattern="B", patentry="1", toffs=0,      fid=1, evtno=3, par="0x03"];
-  B_B       [type="block",        pattern="B", patexit="1", tperiod=100000000, qlo="1"];
+  Evt_B     [type="tmsg",         pattern="B", patentry="1", toffs=0, evtno=3, par="0x03"];
+  B_B       [type="block",        pattern="B", patexit="1", tperiod=200000000, qlo="1"];
   
-  Ori_T1_A -> Ori_T2_A -> Ori_T3_B -> StThrT1 -> StThrT2 -> StThrT3 -> Evt_MAIN   -> B_MAIN -> Ori_T1_A;
+  Ori_T1_A -> Ori_T2_A -> Ori_T3_B -> StThrT1 -> StThrT2 -> StThrT3 -> Evt_MAIN   -> B_MAIN -> Evt_MAIN
   
-  Evt_A -> B_A;
-  Evt_B -> B_B;
+  Evt_A -> B_A -> Evt_A
+  Evt_B -> B_B -> Evt_B
   
   Ori_T1_A -> Evt_A [type="origindst"];
   Ori_T2_A -> Evt_A [type="origindst"];

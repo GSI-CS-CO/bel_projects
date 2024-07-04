@@ -3,8 +3,8 @@
 ############################
 
 VERSION_FW     = 9.0.0
-VERSION_TOOL   = 0.38.0
-VERSION_CARPEDM= 1.0.0
+VERSION_TOOL   = 0.39.1
+VERSION_CARPEDM= 1.1.1
 
 ifeq ($(findstring asl75,$(shell hostname)),asl75)
   # ASL build paths for asl75x
@@ -71,7 +71,8 @@ LZMA_SRC_FILES   = LzmaEnc.c LzmaDec.c LzFind.c
 COMMON_SRC_FILES = event.cpp meta.cpp block.cpp visitoruploadcrawler.cpp visitordownloadcrawler.cpp visitorvertexwriter.cpp hashmap.cpp carpeDMimpl.cpp \
                    carpeDMcommand.cpp carpeDMuploadschedule.cpp carpeDMdownloadschedule.cpp carpeDMdiagnostics.cpp graph.cpp alloctable.cpp mempool.cpp \
                    dotstr.cpp idformat.cpp grouptable.cpp validation.cpp visitorvalidation.cpp common.cpp carpeDMsafe2remove.cpp lzmaCompression.cpp \
-                   delayDiagnostics.cpp lockmanager.cpp blocklock.cpp ebwrapper.cpp log.cpp
+                   delayDiagnostics.cpp lockmanager.cpp blocklock.cpp ebwrapper.cpp log.cpp reflocation.cpp globalreftable.cpp global.cpp
+
 CDM_SRC_FILES    = $(COMMON_SRC_FILES) carpeDM.cpp  
 TEST_SRC_FILES   = $(COMMON_SRC_FILES)
 

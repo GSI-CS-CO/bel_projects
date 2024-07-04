@@ -85,6 +85,7 @@ boost::dynamic_properties setDynamicProperties(ScheduleGraph& g, configuration& 
   dp.property("patexit", boost::get(&ScheduleVertex::patexit, g));
   dp.property("bpentry", boost::get(&ScheduleVertex::bpentry, g));
   dp.property("bpexit", boost::get(&ScheduleVertex::bpexit, g));
+  dp.property("section", boost::get(&ScheduleVertex::section, g));
   // attributes of edges
   dp.property("type", boost::get(&ScheduleEdge::type, g));
   dp.property("color", boost::get(&ScheduleEdge::color, g));

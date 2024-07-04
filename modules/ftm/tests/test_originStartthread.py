@@ -65,7 +65,7 @@ class TestOriginStartthread(dm_testbench.DmTestbench):
     """
     self.startPattern('nodeInTwoThreads.dot', 'A')
     fileName = 'snoop_nodeInTwoThreads.csv'
-    self.delay(0.1)
+    self.delay(0.3)
     self.snoopToCsv(fileName, duration=1)
     self.analyseFrequencyFromCsv(fileName, column=20, printTable=True,
         checkValues={'0x0000000000000000': '>99', '0x0000000000000001': '100', '0x0000000000000002': '100', '0x0000000000000003': '100', '0x0000000000000003!conflict': '100'})

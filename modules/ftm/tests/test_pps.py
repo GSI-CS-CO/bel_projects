@@ -77,7 +77,7 @@ class DmPps(dm_testbench.DmTestbench):
     The second adds a similar pattern B.
     The messages are snooped and checked.
     """
-    snoopFile = 'snoop_test1.csv'
+    snoopFile = 'snoop_PpsAdd1.csv'
     self.scheduleFile0 = 'pps-test1-0.dot'
     self.scheduleFile1 = 'pps-test1-1.dot'
     self.downloadFile0 = 'pps-test1-0-download.dot'
@@ -98,7 +98,7 @@ class DmPps(dm_testbench.DmTestbench):
     Start pattern B.
     """
     # remote execution: small delay for snoop to start before the pattern is started.
-    self.delay(0.1)
+    self.delay(0.5)
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'A'), [0], 1, 0)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile0), [0], 0, 0)
     self.addSchedule(self.scheduleFile1)
@@ -111,7 +111,7 @@ class DmPps(dm_testbench.DmTestbench):
     This fails due to an edge from CPU 0 to CPU 1.
     Add a third schedule with a target edge from CPU 0 to CPU 1. This works.
     """
-    snoopFile0 = 'snoop_test2_0.csv'
+    snoopFile0 = 'snoop_PpsAdd2.csv'
     # this is a pps-pattern with 10Hz. Pattern A
     self.scheduleFile0 = 'pps-test2-0.dot'
     # this is a pattern with an altdst edge from CPU 0 to CPU 1.

@@ -4,6 +4,7 @@
 #include "node.h"
 #include "block.h"
 #include "meta.h"
+#include "global.h"
 #include "event.h"
 
 
@@ -15,7 +16,7 @@ namespace Validation {
 
 
 
-  const children_t cNonMeta = {n::sTMsg, n::sCmdNoop, n::sCmdFlow, n::sOrigin, n::sStartThread, n::sSwitch, n::sCmdFlush, n::sCmdWait, n::sBlockFixed, n::sBlockAlign};
+  const children_t cNonMeta = {n::sTMsg, n::sCmdNoop, n::sCmdFlow, n::sOrigin, n::sStartThread, n::sSwitch, n::sCmdFlush, n::sCmdWait, n::sBlockFixed, n::sBlockAlign, n::sGlobal};
 ConstellationRule_set cRules;
 
 
@@ -24,8 +25,10 @@ void init() {
         cRules.insert(ConstellationRule(n::sTMsg,        e::sDefDst,      cNonMeta,  1, 1  ));
         cRules.insert(ConstellationRule(n::sTMsg,        e::sDynPar0,     cNonMeta,  0, 1  ));
         cRules.insert(ConstellationRule(n::sTMsg,        e::sDynPar1,     cNonMeta,  0, 1  ));
-        cRules.insert(ConstellationRule(n::sTMsg,        e::sRef,         cNonMeta,  0, MaxOccurrance::REF  ));
-        cRules.insert(ConstellationRule(n::sTMsg,        e::sVal,         cNonMeta,  0, MaxOccurrance::REF  ));
+        cRules.insert(ConstellationRule(n::sTMsg,        e::sDyn[DYN_MODE_ADR], cNonMeta,  0, MaxOccurrance::REF  ));
+        cRules.insert(ConstellationRule(n::sTMsg,        e::sDyn[DYN_MODE_REF], cNonMeta,  0, MaxOccurrance::REF  ));
+        cRules.insert(ConstellationRule(n::sTMsg,        e::sDyn[DYN_MODE_REF2], cNonMeta,  0, MaxOccurrance::REF  ));
+        cRules.insert(ConstellationRule(n::sTMsg,        e::sAdr,         cNonMeta,  0, MaxOccurrance::REF  ));
         cRules.insert(ConstellationRule(n::sTMsg,        e::sWrite,       cNonMeta,  0, 1  ));
         cRules.insert(ConstellationRule(n::sCmdNoop,     e::sDefDst,      cNonMeta,  0, 1  ));
         cRules.insert(ConstellationRule(n::sCmdNoop,     e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},  0, 1  ));
@@ -45,12 +48,18 @@ void init() {
         cRules.insert(ConstellationRule(n::sCmdWait,     e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},  0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockFixed,  e::sDefDst,      cNonMeta, 0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockFixed,  e::sAltDst,      cNonMeta, 0, MaxOccurrance::DST ));
+        cRules.insert(ConstellationRule(n::sBlockFixed,  e::sDyn[DYN_MODE_ADR], cNonMeta,  0, MaxOccurrance::REF  ));
+        cRules.insert(ConstellationRule(n::sBlockFixed,  e::sDyn[DYN_MODE_REF], cNonMeta,  0, MaxOccurrance::REF  ));
+        cRules.insert(ConstellationRule(n::sBlockFixed,  e::sDyn[DYN_MODE_REF2], cNonMeta,  0, MaxOccurrance::REF  ));
         //cRules.insert(ConstellationRule(n::sBlockFixed,  e::sDstList,    {n::sDstList},                                0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockFixed,  e::sQPrio[PRIO_IL],     {n::sQInfo},                          0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockFixed,  e::sQPrio[PRIO_HI],     {n::sQInfo},                          0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockFixed,  e::sQPrio[PRIO_LO],     {n::sQInfo},                          0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockAlign,  e::sDefDst,      cNonMeta,  0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockAlign,  e::sAltDst,      cNonMeta,  0, MaxOccurrance::DST ));
+        cRules.insert(ConstellationRule(n::sBlockAlign,  e::sDyn[DYN_MODE_ADR], cNonMeta,  0, MaxOccurrance::REF  ));
+        cRules.insert(ConstellationRule(n::sBlockAlign,  e::sDyn[DYN_MODE_REF], cNonMeta,  0, MaxOccurrance::REF  ));
+        cRules.insert(ConstellationRule(n::sBlockAlign,  e::sDyn[DYN_MODE_REF2], cNonMeta,  0, MaxOccurrance::REF  ));
         //cRules.insert(ConstellationRule(n::sBlockAlign,  e::sDstList,    {n::sDstList},                                0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockAlign,  e::sQPrio[PRIO_IL],     {n::sQInfo},                          0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockAlign,  e::sQPrio[PRIO_HI],     {n::sQInfo},                          0, 1  ));

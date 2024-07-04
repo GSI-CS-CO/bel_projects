@@ -3,6 +3,7 @@
 #include "node.h"
 #include "block.h"
 #include "meta.h"
+#include "global.h"
 #include "event.h"
 #include "dotstr.h"
 #include "validation.h"
@@ -24,7 +25,7 @@ void VisitorUploadCrawler::visit(const Block& el) const {
 }
 
 void VisitorUploadCrawler::visit(const TimingMsg& el) const  {
-  el.serialise(getDefDst() + getDynSrc() + getRefLinks(), b);
+  el.serialise(getDefDst() + getRefLinks() + getDynSrc(), b);
 }
 
 void VisitorUploadCrawler::visit(const Flow& el) const  {
@@ -65,6 +66,12 @@ void VisitorUploadCrawler::visit(const CmdQBuffer& el) const {
 
 void VisitorUploadCrawler::visit(const DestList& el) const {
   el.serialise(getListDst(), b);
+}
+
+void VisitorUploadCrawler::visit(const Global& el) const {
+  mVal emptyM;
+
+  el.serialise(emptyM, b);
 }
 
 
@@ -118,6 +125,7 @@ vertex_set_t VisitorUploadCrawler::getChildrenByEdgeType(vertex_t vStart, const 
     if (vSrc != null_vertex && vDst != null_vertex) {
       auto src = at.lookupVertex(vSrc);
       auto dst = at.lookupVertex(vDst);
+      log<DEBUG_LVL2>(L"edgeTargetAdr %1% -> %2%, dst adr b4 conv %3$#08x") % g[src->v].name.c_str() % g[dst->v].name.c_str() % dst->adr;
       ret = at.adrConv(AdrType::MGMT, (dst->cpu == src->cpu ? AdrType::INT : AdrType::PEER), dst->cpu, dst->adr);
     }
     return ret;
@@ -162,29 +170,35 @@ mVal VisitorUploadCrawler::getRefLinks() const {
 
   for (out_cur = out_begin; out_cur != out_end; ++out_cur)
   {
-    if (g[*out_cur].type == det::sRef) {
+
+
+    if ((g[*out_cur].type == det::sAdr) || (g[*out_cur].type == det::sRef) || (g[*out_cur].type == det::sRef2)) {
       log<DEBUG_LVL2>(L"Found Reflink to TargetNode %1%. Offset Source: %3% Offset Target: %2% Width: %4%") % g[target(*out_cur,g)].name.c_str() % g[*out_cur].fhead.c_str() % g[*out_cur].ftail.c_str() % g[*out_cur].bwidth.c_str();
       uint32_t oTarget  = s2u<uint32_t>(g[*out_cur].fhead);
       uint32_t oSource  = s2u<uint32_t>(g[*out_cur].ftail);
       uint32_t width    = s2u<uint32_t>(g[*out_cur].bwidth) == 64 ? 1 : 0;
-      
+
 
       unsigned bIdx = oSource / 4 * 3; //idx of descriptor
-      uint32_t bDesc = ((width & DYN_WIDTH64_MSK) << DYN_WIDTH64_POS) | ((DYN_MODE_REF & DYN_MODE_MSK) << DYN_MODE_POS); //descriptor bits for this ref
+      uint32_t dynMode = DYN_MODE_REF2;
+      if (g[*out_cur].type == det::sRef)      { dynMode = DYN_MODE_REF; }
+      else { if (g[*out_cur].type == det::sAdr) dynMode = DYN_MODE_ADR; }
+
+      uint32_t bDesc = ((width & DYN_WIDTH64_MSK) << DYN_WIDTH64_POS) | ((dynMode & DYN_MODE_MSK) << DYN_MODE_POS); //descriptor bits for this ref
       dynOps |= bDesc << bIdx; // add to dynops
       log<DEBUG_LVL2>(L"Descriptor: idx %1% bshift %2% dynOps Slice %3$#02x shifted slice %4$#08x") % (oSource>>2) % bIdx % bDesc % (bDesc << bIdx);
 
       //we create a map entry, adress offset to adress, that will contain our refPtr
       //key is offset oSource (e.g. TMSG_RES)
       //value is the address of the target node + offset oTarget
-      
+
       if (oTarget % 4 || oSource % 4) {throw std::runtime_error( exIntro + "Reflink Offsets are not 4B aligned: Offset Source " + std::to_string((unsigned)oSource) + " Offset Target " + std::to_string((unsigned)oTarget) + "\n");} // check if adress is 32b aligned. if not, throw ex
       uint32_t tmpAdr = getEdgeTargetAdr(v, target(*out_cur, g));
       log<DEBUG_LVL2>(L"Inserting: @Offset Source: %1$#02x edge target Adr %2$#08x + Offset Target %3$#02x = %4$#08x") % oSource % tmpAdr % oTarget % (tmpAdr + oTarget);
       t.insert({oSource, tmpAdr + oTarget});
     }
   }
-  
+
   t.insert({NODE_OPT_DYN, dynOps});
   log<DEBUG_LVL2>(L"Passing Dynops to Offs %1$#08x Value: %2$#08x") % NODE_OPT_DYN % dynOps;
   return t;
@@ -195,7 +209,7 @@ mVal VisitorUploadCrawler::getRefLinks() const {
   mVal VisitorUploadCrawler::getValLinks() const {
     Graph::out_edge_iterator out_begin, out_end, out_cur;
     mVal t;
-    
+
     boost::tie(out_begin, out_end) = out_edges(v,g);
 
     for (out_cur = out_begin; out_cur != out_end; ++out_cur)
@@ -212,9 +226,9 @@ mVal VisitorUploadCrawler::getRefLinks() const {
         t.insert(NODE_OPT_DYN, )
       }
     }
-    
+
     return t;
-  }    
+  }
 */
 
   mVal VisitorUploadCrawler::getDynSrc() const {

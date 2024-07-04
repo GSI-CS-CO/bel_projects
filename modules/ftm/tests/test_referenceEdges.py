@@ -81,15 +81,15 @@ class ReferenceEdge(dm_testbench.DmTestbench):
     # setup the expected output for 8 and 32 threads.
     expectedLinesMsg1 = [
       'Msg1:',
-      '  0000  00 00 00 00 00 00 00 00 10 00 09 d8 00 00 00 00  ................',
-      '  0010  10 00 0a 14 00 22 50 03 10 00 0a 4c 00 00 00 00  ....."P....L....',
+      '  0000  00 00 00 00 00 00 00 00 10 00 09 dc 00 00 00 00  ................',
+      '  0010  10 00 0a 18 00 22 50 03 10 00 0a 50 00 00 00 00  ....."P....P....',
       '  0020  00 00 00 00 00 08 61 80 a4 66 41 4b 00 00 20 02  ......a..fAK.. .',
-      '  0030  10 00 09 d0',
+      '  0030  10 00 09 d4',
     ]
     if self.threadQuantity == 32:
-      expectedLinesMsg1[1] = '  0000  00 00 00 00 00 00 00 00 10 00 0f d8 00 00 00 00  ................'
-      expectedLinesMsg1[2] = '  0010  10 00 10 14 00 22 50 03 10 00 10 4c 00 00 00 00  ....."P....L....'
-      expectedLinesMsg1[4] = '  0030  10 00 0f d0'
+      expectedLinesMsg1[1] = '  0000  00 00 00 00 00 00 00 00 10 00 0f dc 00 00 00 00  ................'
+      expectedLinesMsg1[2] = '  0010  10 00 10 18 00 22 50 03 10 00 10 50 00 00 00 00  ....."P....P....'
+      expectedLinesMsg1[4] = '  0030  10 00 0f d4'
     # check the node Msg1
     lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, 'hex', 'Msg1'), [0], 5, 0)
     for i in range(len(lines[0])):
