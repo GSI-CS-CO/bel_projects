@@ -4,6 +4,7 @@ on:
 
   push:
     branches: [ "master", "proposed_master", "fallout", "github-actions-development" ]
+
   pull_request:
     branches: [ "master", "proposed_master", "fallout", "github-actions-development" ]
 
