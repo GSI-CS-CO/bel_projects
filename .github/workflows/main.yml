@@ -3,9 +3,9 @@ name: CI Basic Build
 on:
 
   push:
-    branches: [ "master", "proposed_master", "fallout", "github_actions_development" ]
+    branches: [ "master", "proposed_master", "fallout", "github-actions-development" ]
   pull_request:
-    branches: [ "master", "proposed_master", "fallout", "github_actions_development" ]
+    branches: [ "master", "proposed_master", "fallout", "github-actions-development" ]
 
 jobs:
 
@@ -15,7 +15,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-22.04, ubuntu-20.04]
+        os: [ubuntu-24.04, ubuntu-22.04, ubuntu-20.04]
 
     steps:
     - uses: actions/checkout@v3
