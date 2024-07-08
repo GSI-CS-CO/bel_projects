@@ -140,7 +140,7 @@ entity scu_control is
     psram_wen  : out   std_logic := 'Z';
     psram_ubn  : out   std_logic := 'Z';
     psram_lbn  : out   std_logic := 'Z';
-    psram_wait : in    std_logic; -- DDR magic
+    psram_wait : in    std_logic_vector (3 downto 0); -- DDR magic
 
     -----------------------------------------------------------------------
     -- SPI Flash User Mode
@@ -344,7 +344,7 @@ begin
       ps_wen                  => psram_wen,
       ps_cre                  => psram_cre,
       ps_advn                 => psram_advn,
-      ps_wait                 => psram_wait,
+      ps_wait                 => psram_wait(0) or psram_wait(1) or psram_wait(2) or psram_wait(3),
       ps_chip_selector        => s_psram_sel,
       hw_version              => x"0000000" & not scu_cb_version);
 

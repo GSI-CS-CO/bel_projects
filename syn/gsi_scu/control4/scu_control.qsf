@@ -1116,6 +1116,7 @@ set_location_assignment PIN_F1 -to psram_a[1]
 set_location_assignment PIN_F21 -to A_D[8]
 set_location_assignment PIN_F22 -to A_nSEL[5]
 set_location_assignment PIN_F2 -to psram_advn
+set_location_assignment PIN_F3 -to psram_wait[1]
 set_location_assignment PIN_F4 -to psram_a[0]
 set_location_assignment PIN_F6 -to psram_cen[0]
 set_location_assignment PIN_F7 -to psram_dq[2]
@@ -1149,6 +1150,7 @@ set_location_assignment PIN_J20 -to A_D[9]
 set_location_assignment PIN_J22 -to A_D[11]
 set_location_assignment PIN_J2 -to scu_cb_version[1]
 set_location_assignment PIN_J5 -to psram_a[15]
+set_location_assignment PIN_J7 -to psram_wait[2]
 set_location_assignment PIN_J8 -to psram_dq[9]
 set_location_assignment PIN_J9 -to psram_dq[10]
 set_location_assignment PIN_K17 -to A_nTiming_Cycle
@@ -1163,6 +1165,7 @@ set_location_assignment PIN_K6 -to psram_a[13]
 set_location_assignment PIN_K9 -to psram_dq[0]
 set_location_assignment PIN_L1 -to sfp_los_i
 set_location_assignment PIN_L6 -to psram_a[19]
+set_location_assignment PIN_L7 -to psram_wait[3]
 set_location_assignment PIN_L8 -to psram_dq[13]
 set_location_assignment PIN_L9 -to psram_dq[14]
 set_location_assignment PIN_M25 -to "pcie_rx_i[3](n)"
@@ -1184,7 +1187,7 @@ set_location_assignment PIN_P2 -to scu_cb_version[0]
 set_location_assignment PIN_P3 -to fd[7]
 set_location_assignment PIN_P4 -to scu_cb_version[2]
 set_location_assignment PIN_P5 -to "clk_125m_sfpref_i(n)"
-set_location_assignment PIN_P7 -to psram_wait
+set_location_assignment PIN_P7 -to psram_wait[0]
 set_location_assignment PIN_P8 -to psram_a[5]
 set_location_assignment PIN_R23 -to "clk_125m_tcb_local_i(n)"
 set_location_assignment PIN_R24 -to clk_125m_tcb_local_i
