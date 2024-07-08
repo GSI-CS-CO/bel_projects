@@ -667,9 +667,13 @@ set_global_assignment -name VHDL_FILE ../../../modules/daq/daq.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/daq/Zeitbasis_daq.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/ddr3/ddr3_wrapper_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/ddr3/ddr3_wrapper.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/diob/del_quench_detection.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/diob/hw_interlock.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/diob/QuD_masken_reg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/diob/qud_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/diob/quench_detection.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/diob/spill_abort.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/diob/TM_quench_detection.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/dm_diag/dm_diag_auto_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/dm_diag/dm_diag_auto.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/dm_diag/dm_diag.vhd -library work
@@ -1187,6 +1191,7 @@ set_location_assignment PIN_R24 -to clk_125m_tcb_local_i
 set_location_assignment PIN_R27 -to "pcie_tx_o[2](n)"
 set_location_assignment PIN_R28 -to pcie_tx_o[2]
 set_location_assignment PIN_R4 -to sfp_mod0_i
+set_location_assignment PIN_R5 -to sfp_rate_sel_o
 set_location_assignment PIN_R6 -to psram_a[7]
 set_location_assignment PIN_R7 -to psram_a[20]
 set_location_assignment PIN_T1 -to fd[6]

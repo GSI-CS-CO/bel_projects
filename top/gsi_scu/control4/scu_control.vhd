@@ -161,7 +161,8 @@ entity scu_control is
     sfp_rxp_i        : in    std_logic;
     sfp_mod0_i       : in    std_logic;
     sfp_mod1_io      : inout std_logic;
-    sfp_mod2_io      : inout std_logic);
+    sfp_mod2_io      : inout std_logic;
+    sfp_rate_sel_o   : out   std_logic);
 
 end scu_control;
 
@@ -407,5 +408,7 @@ begin
   nADR_EN     <= '0';
   A_Spare     <= (others => 'Z');
   --A_OneWire   <= 'Z';
+
+  sfp_rate_sel_o <= '1'; --SFP rate full speed
 
 end rtl;
