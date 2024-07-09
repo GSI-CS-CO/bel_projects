@@ -126,6 +126,7 @@ entity scu_control is
     user_led_0 : out std_logic_vector(2 downto 0) := (others => '1');
     wr_rgb_led : out std_logic_vector(2 downto 0) := (others => '1');
     lemo_led   : out std_logic_vector(5 downto 0) := (others => '1');
+    debug_led  : out std_logic_vector(7 downto 0) := (others => '1');
 
     -----------------------------------------------------------------------
     -- Pseudo-SRAM (4x 256Mbit)
