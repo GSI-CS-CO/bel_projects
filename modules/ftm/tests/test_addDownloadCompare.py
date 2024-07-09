@@ -11,7 +11,7 @@ Compare original schedule with downloaded schedule
 """
 class AddDownloadCompare(dm_testbench.DmTestbench):
 
-  def addDownloadCompareSchedule(self, scheduleFile, statusMeta=False, abortPattern=False):
+  def addDownloadCompareSchedule(self, scheduleFile, statusMeta=False, abortPattern=False, compareStrict=True):
     # modify the schedule file name when we have 3 CPUs or 32 threads.
     # This is needed for dynpar edges where memory addresses are stored
     # in the parameter values.
@@ -33,13 +33,19 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     else:
       options = '-o'
       returnCode = 0
+    if compareStrict:
+      # compare in silent mode.
+      scheduleCompareOption = '-s'
+    else:
+      # compare in silent mode and interpret 'undefined' as empty string.
+      scheduleCompareOption = '-us'
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', options, statusFile))
-    self.startAndCheckSubprocess(('scheduleCompare', '-s', self.schedulesFolder + scheduleFile, statusFile), [returnCode], 0, 0)
+    self.startAndCheckSubprocess(('scheduleCompare', scheduleCompareOption, self.schedulesFolder + scheduleFile, statusFile), [returnCode], 0, 0)
     self.deleteFile(statusFile)
     statusFile = 'statusKeep.dot'
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'keep', self.schedulesFolder + scheduleFile))
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', options, statusFile))
-    self.startAndCheckSubprocess(('scheduleCompare', '-s', self.schedulesFolder + scheduleFile, statusFile), [returnCode], 0, 0)
+    self.startAndCheckSubprocess(('scheduleCompare', scheduleCompareOption, self.schedulesFolder + scheduleFile, statusFile), [returnCode], 0, 0)
     self.deleteFile(statusFile)
     # remove the schedule
     if abortPattern:
@@ -104,15 +110,15 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     # ~ {{dnt::sBlock, dnt::sCmdFlush, det::sRef}, SingleEdgeTest::TEST_OK},
 
   def test_aScheduleBlockGlobalAltdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-block-global-altdst.dot')
+    self.addDownloadCompareSchedule('testSingleEdge-block-global-altdst.dot', compareStrict=False)
     # ~ {{dnt::sBlock, dnt::sGlobal, det::sAltDst}, SingleEdgeTest::TEST_OK},
 
   def test_aScheduleBlockGlobalDefdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-block-global-defdst.dot', statusMeta=False)
+    self.addDownloadCompareSchedule('testSingleEdge-block-global-defdst.dot', compareStrict=False)
     # ~ {{dnt::sBlock, dnt::sGlobal, det::sDefDst}, SingleEdgeTest::TEST_OK},
 
   def test_aScheduleBlockGlobalReference(self):
-    self.addDownloadCompareSchedule('testSingleEdge-block-global-reference.dot', statusMeta=False)
+    self.addDownloadCompareSchedule('testSingleEdge-block-global-reference.dot', compareStrict=False)
     # ~ {{dnt::sBlock, dnt::sGlobal, det::sRef}, SingleEdgeTest::TEST_OK},
 
   def test_aScheduleBlockNoopAltdst(self):
@@ -236,15 +242,15 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     # ~ {{dnt::sBlockAlign, dnt::sCmdFlush, det::sRef}, SingleEdgeTest::TEST_OK},
 
   def test_aScheduleBlockalignGlobalAltdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-blockalign-global-altdst.dot')
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-global-altdst.dot', compareStrict=False)
     # ~ {{dnt::sBlockAlign, dnt::sGlobal, det::sAltDst}, SingleEdgeTest::TEST_OK},
 
   def test_aScheduleBlockalignGlobalDefdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-blockalign-global-defdst.dot')
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-global-defdst.dot', compareStrict=False)
     # ~ {{dnt::sBlockAlign, dnt::sGlobal, det::sDefDst}, SingleEdgeTest::TEST_OK},
 
   def test_aScheduleBlockalignGlobalReference(self):
-    self.addDownloadCompareSchedule('testSingleEdge-blockalign-global-reference.dot')
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-global-reference.dot', compareStrict=False)
     # ~ {{dnt::sBlockAlign, dnt::sGlobal, det::sRef}, SingleEdgeTest::TEST_OK},
 
   def test_aScheduleBlockalignNoopAltdst(self):
