@@ -3,6 +3,7 @@ import contextlib
 import csv         # used in analyseFrequencyFromCsv
 import datetime    # used in analyseFrequencyFromCsv
 import difflib     # used in compareExpectedResult
+import logging
 import os
 import pathlib
 import subprocess  # used in startAllPatterns
@@ -203,13 +204,32 @@ class DmTestbench(unittest.TestCase):
     # ~ print(f'getEbResetCommand: {ebResetCommand1}')
     return ebResetCommand1
 
-  def snoopToCsv(self, csvFileName, duration=1):
+  def snoopToCsv(self, csvFileName, duration=1, resource=None):
     """Snoop timing messages with saft-ctl for <duration> seconds (default = 1) and write the messages to <csvFileName>.
     Details: start saft-ctl with Popen, run it for <duration> seconds.
+    Use 'resource is None' as an indicator that this method is called in the main thread.
+    If resource is not None, it is a threading.Lock() object which indicates that
+    the method started in a separate thread. It has to be released
+    before the snoop command is started.
     """
+    testName = os.environ['PYTEST_CURRENT_TEST']
+    logging.getLogger().info(f'{testName}, snoopToCsv: {csvFileName=}, {duration=}, {resource=}')
     with open(csvFileName, 'wb') as file1:
-      process = subprocess.run(self.getSnoopCommand(duration), shell=True, check=True, stdout=file1)
-      self.assertEqual(process.returncode, 0, f'Returncode: {process.returncode}')
+      try:
+        startTime = datetime.datetime.now()
+        if not resource is None:
+          print('snoopToCsv: Start Thread ', startTime.time())
+          resource.release()
+        process = subprocess.run(self.getSnoopCommand(duration), shell=True, check=True, stdout=file1)
+        endTime = datetime.datetime.now()
+        if not resource is None:
+          print(f'snoopToCsv: Return: {process.returncode:3d}   {endTime.time()}, duration: {endTime - startTime}')
+        self.assertEqual(process.returncode, 0, f'Returncode: {process.returncode}')
+      except Exception as exception:
+        if resource is None:
+          raise exception
+        else:
+          self.exc_info = sys.exc_info()
 
   def snoopToCsvWithAction(self, csvFileName, action, duration=1):
     """Snoop timing messages with saft-ctl for <duration> seconds (default = 1).
@@ -217,10 +237,28 @@ class DmTestbench(unittest.TestCase):
     Details: start saft-ctl with Popen in its own thread, run it for <duration> seconds.
     action should end before snoop.
     """
-    snoop = threading.Thread(target=self.snoopToCsv, args=(csvFileName, duration))
+    testName = os.environ['PYTEST_CURRENT_TEST']
+    logging.getLogger().info(f'{testName}, snoopToCsvWithAction: {csvFileName=}, {duration=}')
+    self.exc_info = None
+    print('snoopToCsv: acquire lock ', datetime.datetime.now().time())
+    resource = threading.Lock()
+    # wait at most 10 seconds for the thread to start.
+    # Lock is released before the main action of the thread starts.
+    resource.acquire(timeout=10.0)
+    snoop = threading.Thread(target=self.snoopToCsv, args=(csvFileName, duration, resource))
     snoop.start()
-    action()
-    snoop.join()
+    resource.acquire(timeout=10.0)
+    print('snoopToCsv: call action  ', datetime.datetime.now().time())
+    try:
+      action()
+    finally:
+      print('snoopToCsv: finish action', datetime.datetime.now().time())
+      snoop.join()
+      resource.release()
+      print('snoopToCsv: release lock ', datetime.datetime.now().time())
+      if not self.exc_info is None:
+        # ~ print(f'{self.exc_info=}')
+        raise self.exc_info[1].with_traceback(self.exc_info[2])
 
   def analyseFrequencyFromCsv(self, csvFileName, column=20, printTable=True, checkValues=dict()):
     """Analyse the frequency of the values in the specified column. Default column is 20 (parameter of the timing message).
