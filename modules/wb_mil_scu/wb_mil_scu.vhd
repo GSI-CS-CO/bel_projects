@@ -208,6 +208,8 @@ constant wr_soft_reset_a_map:       unsigned (15 downto 0) := sio_mil_first_reg_
 constant wr_rd_blk_length_a_map:    unsigned (15 downto 0) := sio_mil_first_reg_a + wr_rd_blk_length_a;
 constant rd_blk_fifo_cnt_a_map:     unsigned (15 downto 0) := sio_mil_first_reg_a + rd_blk_fifo_cnt_a;
 
+constant rd_mil_err_cnt_a_map:      unsigned (15 downto 0) := sio_mil_first_reg_a + rd_mil_err_cnt;
+
 
 -- todo constant rd_status_avail_a_map:     unsigned (15 downto 0) := sio_mil_first_reg_a + rd_status_avail_a; --to read corresponding avail bits, bit[31..8] don't care
 
@@ -390,6 +392,10 @@ signal   rx_fifo_block_full:        std_logic;
 signal   rx_fifo_block_count:       std_logic_vector(12 downto 0);
 signal   SRff_rx_err_ps:            std_logic;
 
+-- mil error count signals
+signal   mil_err_cnt:               std_logic_vector(31 downto 0);
+signal   clr_mil_err_cnt:           std_logic;
+
 -----------------------------------------------------------------------
 
 signal Mil_Rcv_Rdy_latched: std_logic;
@@ -424,12 +430,12 @@ BEGIN
     slave_o.stall             <= ex_stall_res;
     slave_o.ack               <= ex_ack_res;
     slave_o.err               <= ex_err_res;
-	 ex_err_led                <= ex_err_res;
+    ex_err_led                <= ex_err_res;
   ELSE
     slave_o.stall             <= ex_stall;
     slave_o.ack               <= ex_ack;
     slave_o.err               <= ex_err;
-	 ex_err_led                <= ex_err;
+    ex_err_led                <= ex_err;
    END IF;
 END PROCESS p_mux_slave_o_ctrl;
 
@@ -777,7 +783,9 @@ event_processing_1: event_processing
     ev_timer_res      => ev_clr_ev_timer,
     ev_puls1          => io_1,
     ev_puls2          => io_2,
-    timing_received   => timing_received
+    timing_received   => timing_received,
+    mil_err_cnt       => mil_err_cnt,
+    clr_mil_err_cnt   => clr_mil_err_cnt
   );
 
 ev_fifo_ne_intr_o <= ev_fifo_ne;
@@ -1456,28 +1464,30 @@ BEGIN
 
   ELSIF RISING_EDGE(clk_i) THEN
 
-    ex_stall          <= '1';
-    ex_ack            <= '0';
-    ex_err            <= '0';
+    ex_stall              <= '1';
+    ex_ack                <= '0';
+    ex_err                <= '0';
 
-    rd_ev_fifo        <= '0';
-    clr_ev_fifo       <= '0';
-    wr_filt_ram       <= '0';
-    rd_filt_ram       <= '0';
+    rd_ev_fifo            <= '0';
+    clr_ev_fifo           <= '0';
+    wr_filt_ram           <= '0';
+    rd_filt_ram           <= '0';
 
-    clr_no_VW_cnt     <= '0';
-    clr_not_equal_cnt <= '0';
-    sw_clr_ev_timer   <= '0';
-    ld_dly_timer      <= '0';
-    clr_wait_timer    <= '0';
-    lemo_i_reg        <= lemo_inp;
+    clr_no_VW_cnt         <= '0';
+    clr_not_equal_cnt     <= '0';
+    sw_clr_ev_timer       <= '0';
+    ld_dly_timer          <= '0';
+    clr_wait_timer        <= '0';
+    lemo_i_reg            <= lemo_inp;
 
-    tx_fifo_write_en  <= '0';
-    tx_taskram_we     <= '0';
-    rx_taskram_re     <= '0';
-    slave_o.dat       <= (others => '0');
+    tx_fifo_write_en      <= '0';
+    tx_taskram_we         <= '0';
+    rx_taskram_re         <= '0';
+    slave_o.dat           <= (others => '0');
 
     rx_fifo_block_read_en <= '0';
+    clr_mil_err_cnt       <= '0';
+
 
     -- to clear selective request bits when tx_readout was done
     FOR I IN 1 TO 255 LOOP
@@ -1899,6 +1909,24 @@ BEGIN
            ex_err <= '1';
          end if;
 
+       ELSIF (LA_a_var = rd_mil_err_cnt_a_map)   THEN
+         if slave_i.sel = "1111" then -- only double word access allowed
+           if slave_i.we = '1' then
+             -- write access clears the mil event error counter
+             clr_mil_err_cnt <= '1';
+             ex_stall <= '0';
+             ex_ack <= '1';
+           else
+             -- read the mil event error counter
+             slave_o.dat(31 downto 0) <= mil_err_cnt;
+             ex_stall <= '0';
+             ex_ack <= '1';
+           end if;
+         else
+           -- no complete double word access
+           ex_stall <= '0';
+           ex_err <= '1';
+         end if;
 
        ELSIF (LA_a_var >= evt_filt_first_a)  AND   (LA_a_var <= evt_filt_last_a)  THEN -- read or write event filter ram
          if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed

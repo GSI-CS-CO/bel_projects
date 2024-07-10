@@ -67,15 +67,17 @@ constant  mil_rd_lemo_inp_a:        unsigned(15 downto 0)  := x"000B";  -- read 
 constant  rd_ev_timer_LW_a:         unsigned(15 downto 0)  := x"000C";  -- read event timer lower Word  wb_mil_scu_offset + 16#30#.
                                                                         -- reserved                     wb_mil_scu_offset + 16#34#.
 constant  rd_wait_timer_LW_a:       unsigned(15 downto 0)  := x"000E";  -- read wait timer lower Word   wb_mil_scu_offset + 16#38#.
-                                                                        -- reserved                     wb_mil_scu_offset + 16#3c#..   
+                                                                        -- reserved                     wb_mil_scu_offset + 16#3c#.
 constant  rd_wr_dly_timer_LW_a:     unsigned(15 downto 0)  := x"0010";  -- read event timer latch LW    wb_mil_scu_offset + 16#40#.
                                                                         -- write event timer latch LW   wb_mil_scu_offset + 16#40#.
 constant  rd_wr_dly_timer_HW_a:     unsigned(15 downto 0)  := x"0011";  -- read event timer latch HW    wb_mil_scu_offset + 16#44#.
-                                                                        -- write event timer latch HW   wb_mil_scu_offset + 16#44#. 
+                                                                        -- write event timer latch HW   wb_mil_scu_offset + 16#44#.
 constant  wr_soft_reset_a:          unsigned(15 downto 0)  := x"0012";  -- wr softreset to wb_mil_scu   wb_mil_scu_offset + 16#48#.
 
 constant  wr_rd_blk_length_a:       unsigned(15 downto 0)  := x"0013";  -- wr/rd block mode data0       wb_mil_scu_offset + 16#4C#.
 constant  rd_blk_fifo_cnt_a:        unsigned(15 downto 0)  := x"0014";  -- rd block mode fifo fill cnt  wb_mil_scu_offset + 16#50#.
+
+constant  rd_mil_err_cnt:           unsigned(15 downto 0)  := x"0015";  -- rd mil timing error counter  wb_mil_scu_offset + 16#54#.
                                                       
 CONSTANT  ram_count:                integer                :=  255;     -- max 254: aktuelle Version, max 255 zukünftig bei Strahlendiagnosemode.
 CONSTANT  sio_mil_first_reg_a:      unsigned(15 downto 0)  :=  x"0400";
@@ -345,7 +347,9 @@ component event_processing is
     ev_timer_res:     out   std_logic;
     ev_puls1:         out   std_logic;
     ev_puls2:         out   std_logic;
-    timing_received:  out   std_logic
+    timing_received:  out   std_logic;
+    mil_err_cnt:      out   std_logic_vector(31 downto 0);
+    clr_mil_err_cnt:  in    std_logic
     );
 end component event_processing;
 
