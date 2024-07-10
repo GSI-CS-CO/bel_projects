@@ -3,6 +3,7 @@ import contextlib
 import csv         # used in analyseFrequencyFromCsv
 import datetime    # used in analyseFrequencyFromCsv
 import difflib     # used in compareExpectedResult
+import logging
 import os
 import pathlib
 import subprocess  # used in startAllPatterns
@@ -198,32 +199,76 @@ class DmTestbench(unittest.TestCase):
     return snoop_command1
 
   def getEbResetCommand(self):
+    """Get the eb-reset command. If eb-reset exists in the repository or
+    workspace, this file name is returned. Otherwise 'eb-reset' is returned,
+    which assumes that eb-reset is installed.
+    """
     ebResetCommand1 = '../../../tools/eb-reset'
     if not os.path.isfile(ebResetCommand1):
       ebResetCommand1 = 'eb-reset'
     # ~ print(f'getEbResetCommand: {ebResetCommand1}')
     return ebResetCommand1
 
-  def snoopToCsv(self, csvFileName, eventId='0', mask='0', duration=1):
+  def snoopToCsv(self, csvFileName, eventId='0', mask='0', duration=1, resource=None):
     """Snoop timing messages with saft-ctl for <duration> seconds (default = 1) and write the messages to <csvFileName>.
     Details: start saft-ctl with Popen, run it for <duration> seconds.
+    Use 'resource is None' as an indicator that this method is called in the main thread.
+    If resource is not None, it is a threading.Lock() object which indicates that
+    the method started in a separate thread. It has to be released
+    before the snoop command is started.
     """
+    testName = os.environ['PYTEST_CURRENT_TEST']
+    logging.getLogger().info(f'{testName}, snoopToCsv: {csvFileName=}, {eventId=}, {mask=}, {duration=}, {resource=}')
     with open(csvFileName, 'wb') as file1:
-      process = subprocess.run(self.getSnoopCommand(eventId, mask, duration), shell=True, check=True, stdout=file1)
-      self.assertEqual(process.returncode, 0, f'Returncode: {process.returncode}')
+      try:
+        startTime = datetime.datetime.now()
+        if not resource is None:
+          print('snoopToCsv: Start Thread ', startTime.time())
+          resource.release()
+        process = subprocess.run(self.getSnoopCommand(eventId, mask, duration), shell=True, check=True, stdout=file1)
+        endTime = datetime.datetime.now()
+        if not resource is None:
+          print(f'snoopToCsv: Return: {process.returncode:3d}   {endTime.time()}, duration: {endTime - startTime}')
+        self.assertEqual(process.returncode, 0, f'Returncode: {process.returncode}')
+      except Exception as exception:
+        if resource is None:
+          raise exception
+        else:
+          self.exc_info = sys.exc_info()
 
-  def snoopToCsvWithAction(self, csvFileName, action, eventId='0', mask='0', duration=1):
+  def snoopToCsvWithAction(self, csvFileName, action, actionArgs=[], eventId='0', mask='0', duration=1):
     """Snoop timing messages with saft-ctl for <duration> seconds (default = 1).
     Write the messages to <csvFileName>.
     Details: start saft-ctl with Popen in its own thread, run it for <duration> seconds.
     action should end before snoop.
     """
-    snoop = threading.Thread(target=self.snoopToCsv, args=(csvFileName, eventId, mask, duration))
+    testName = os.environ['PYTEST_CURRENT_TEST']
+    logging.getLogger().info(f'{testName}, snoopToCsvWithAction: {csvFileName=}, {eventId=}, {mask=}, {duration=}, {action=}, {actionArgs=}')
+    self.exc_info = None
+    print('snoopToCsv: acquire lock ', datetime.datetime.now().time())
+    resource = threading.Lock()
+    # wait at most 10 seconds for the thread to start.
+    # Lock is released before the main action of the thread starts.
+    resource.acquire(timeout=10.0)
+    snoop = threading.Thread(target=self.snoopToCsv, args=(csvFileName, eventId, mask, duration, resource))
     snoop.start()
-    action()
-    snoop.join()
+    resource.acquire(timeout=10.0)
+    print('snoopToCsv: call action  ', datetime.datetime.now().time())
+    try:
+      if len(actionArgs) == 0:
+        action()
+      else:
+        action(actionArgs)
+    finally:
+      print('snoopToCsv: finish action', datetime.datetime.now().time())
+      snoop.join()
+      resource.release()
+      print('snoopToCsv: release lock ', datetime.datetime.now().time())
+      if not self.exc_info is None:
+        # ~ print(f'{self.exc_info=}')
+        raise self.exc_info[1].with_traceback(self.exc_info[2])
 
-  def analyseFrequencyFromCsv(self, csvFileName, column=20, printTable=True, checkValues=dict()):
+  def analyseFrequencyFromCsv(self, csvFileName, column=20, printTable=True, checkValues=dict(), addDelayed=False):
     """Analyse the frequency of the values in the specified column. Default column is 20 (parameter of the timing message).
     Prints (if printTable=True) the table of values, counters, and frequency over the whole time span.
     Column for EVTNO is 8. Timing messages should have 'fid=1' otherwise column numbers are different.
@@ -243,6 +288,7 @@ class DmTestbench(unittest.TestCase):
     with open(csvFileName) as csv_file:
       csv_reader = csv.reader(csv_file, delimiter=' ')
       for row in csv_reader:
+        self.assertGreater(len(row), column, f'Column {column} does not exist. Maximal column {len(row)}. May be fid=1 should be used in schedule.')
         line_count += 1
         time1 = datetime.datetime.strptime(row[1] + ' ' + row[2][:-3], '%Y-%m-%d %H:%M:%S.%f')
         if minTime > time1:
@@ -291,13 +337,34 @@ class DmTestbench(unittest.TestCase):
             self.assertFalse(item in listCounter.keys(), f'Key {item} found, should not occur')
           elif item in listCounter.keys():
             if str(checkValues[item])[0] == '>':
-              self.assertGreater(listCounter[item], int(checkValues[item][1:]), f'assertGreater for {item}: is:{listCounter[item]} expected:{checkValues[item]}')
+              if addDelayed and (item + '!delayed') in listCounter.keys():
+                self.assertGreater(listCounter[item] + listCounter[item + '!delayed'], int(checkValues[item][1:]), f'assertGreater for {item}: is:{listCounter[item]} + { + listCounter[item + "!delayed"]} expected:{checkValues[item]}')
+              else:
+                self.assertGreater(listCounter[item], int(checkValues[item][1:]), f'assertGreater for {item}: is:{listCounter[item]} expected:{checkValues[item]}')
             elif str(checkValues[item])[0] == '<':
-              self.assertGreater(int(checkValues[item][1:]), listCounter[item], f'assertSmaller for {item}: is:{listCounter[item]} expected:{checkValues[item]}')
+              if addDelayed and (item + '!delayed') in listCounter.keys():
+                self.assertGreater(int(checkValues[item][1:]), listCounter[item] + listCounter[item + '!delayed'], f'assertSmaller for {item}: is:{listCounter[item]} + { + listCounter[item + "!delayed"]} expected:{checkValues[item]}')
+              else:
+                self.assertGreater(int(checkValues[item][1:]), listCounter[item], f'assertSmaller for {item}: is:{listCounter[item]} expected:{checkValues[item]}')
             elif str(checkValues[item])[0] == '=':
-              self.assertEqual(listCounter[item], int(checkValues[item][1:]), f'assertEqual for {item}: is:{listCounter[item]} expected:{checkValues[item]}')
+              if addDelayed and (item + '!delayed') in listCounter.keys():
+                self.assertEqual(listCounter[item] + listCounter[item + '!delayed'], int(checkValues[item][1:]), f'assertEqual for {item}: is:{listCounter[item]} + { + listCounter[item + "!delayed"]} expected:{checkValues[item]}')
+              else:
+                self.assertEqual(listCounter[item], int(checkValues[item][1:]), f'assertEqual for {item}: is:{listCounter[item]} expected:{checkValues[item]}')
             else:
-              self.assertEqual(listCounter[item], int(checkValues[item]), f'assertEqual for {item}: is:{listCounter[item]} expected:{checkValues[item]}')
+              if addDelayed and (item + '!delayed') in listCounter.keys():
+                self.assertEqual(listCounter[item] + listCounter[item + '!delayed'], int(checkValues[item]), f'assertEqual for {item}: is:{listCounter[item]} + { + listCounter[item + "!delayed"]} expected:{checkValues[item]}')
+              else:
+                self.assertEqual(listCounter[item], int(checkValues[item]), f'assertEqual for {item}: is:{listCounter[item]} expected:{checkValues[item]}')
+          elif addDelayed and item + '!delayed' in listCounter.keys():
+            if str(checkValues[item])[0] == '>':
+              self.assertGreater(listCounter[item + '!delayed'], int(checkValues[item][1:]), f'assertGreater for {item}: is:{listCounter[item + "!delayed"]} expected:{checkValues[item]}')
+            elif str(checkValues[item])[0] == '<':
+              self.assertGreater(int(checkValues[item][1:]), listCounter[item + '!delayed'], f'assertSmaller for {item}: is:{listCounter[item + "!delayed"]} expected:{checkValues[item]}')
+            elif str(checkValues[item])[0] == '=':
+              self.assertEqual(listCounter[item + '!delayed'], int(checkValues[item][1:]), f'assertEqual for {item}: is:{listCounter[item + "!delayed"]} expected:{checkValues[item]}')
+            else:
+              self.assertEqual(listCounter[item + '!delayed'], int(checkValues[item]), f'assertEqual for {item}: is:{listCounter[item + "!delayed"]} expected:{checkValues[item]}')
           else:
             self.assertTrue(item in listCounter.keys(), f'Key {item} not found, but expected.')
 
