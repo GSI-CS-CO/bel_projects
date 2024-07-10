@@ -124,7 +124,10 @@ void fwlib_publishStatusArray(uint64_t statusArray     // status array (each bit
 // publish status of ongoing transfer
 void fwlib_publishTransferStatus(uint32_t nTransfer,   // # of transfers
                                  uint32_t nInject,     // # of injections within current transferr
-                                 uint32_t transStat    // status of ongoing transfer
+                                 uint32_t transStat,   // status of ongoing transfer
+                                 uint32_t nLate,       // number of messages that could not be delivered in time
+                                 uint32_t offsDone,    // offset event deadline to time when we are done [ns]
+                                 uint32_t comLatency   // latency for messages received from via ECA (tDeadline - tNow)) [ns]
                                  );
 
 // publish number of bad status incidents
