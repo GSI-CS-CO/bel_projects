@@ -47,7 +47,7 @@
 #define WRF50_MASK_LOCK_DM              0x4    // mode is Data Master
 
 // constants
-#define WRF50_POSTTRIGGER_TLU        500000    // posttrigger [ns] for avoiding late messages from the TLU and defining an order (DM vs mains)x
+#define WRF50_POSTTRIGGER_TLU        500000    // posttrigger [ns] for avoiding late messages from the TLU and defining an order (DM vs mains)
 #define WRF50_CYCLELEN_MIN         19800000    // minimum cycle length [ns]
 #define WRF50_CYCLELEN_MAX         20400000    // maximum cycle length [ns]
 

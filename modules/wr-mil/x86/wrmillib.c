@@ -375,11 +375,11 @@ void wrf50_printDiag(int32_t f50Offs, uint32_t mode, uint32_t TMainsAct, uint32_
   printf("act offset mains: act - predict [us] : %15.3f\n"      , (double)offsMainsAct/1000.0);
   printf("min offset mains: act - predict [us] : %15.3f\n"      , (double)offsMainsMin/1000.0);
   printf("max offset mains: act - predict [us] : %15.3f\n"      , (double)offsMainsMax/1000.0);
-  printf("lock state                           : %15u\n"        , lockState);
-  printf("lock date                            : %s\n"          , timestr);
-  printf("# locks                              : %15u\n"        , nLocked);
-  printf("# cycles                             : %15u\n"        , nCycles);
-  printf("# sent phase words                   : %15u\n"        , nSent);
+  printf("DM lock state                        : %15u\n"        , lockState);
+  printf("DM lock date                         : %s\n"          , timestr);
+  printf("DM # locks                           : %15u\n"        , nLocked);
+  printf("DM # cycles                          : %15u\n"        , nCycles);
+  printf("DM # sent phase words                : %15u\n"        , nSent);
 } // wrf50_printDiag
 
 

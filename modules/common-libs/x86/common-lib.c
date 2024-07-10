@@ -234,19 +234,19 @@ void comlib_printDiag(uint64_t statusArray, uint32_t state, uint32_t version, ui
   secs     = (unsigned long)((double)tDiag / 1000000000.0);
   tm = gmtime(&secs);
   strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S TAI", tm);
-  printf("diagnostics reset at                : %s\n", timestr);
-  printf("version                             : %06x\n", version);
+  printf("diagnostics reset at                : %s\n"       , timestr);
+  printf("version                             : %06x\n"     , version);
   printf("mac                                 : 0x%012" PRIx64 "\n", mac);
   printf("ip                                  : %03d.%03d.%03d.%03d\n", (ip & 0xff000000) >> 24, (ip & 0x00ff0000) >> 16, (ip & 0x0000ff00) >> 8, (ip & 0x000000ff));
-  printf("used shared mem [byte]              : %u\n", usedSize);
-  printf("state (# of changes)                : %s (%u)\n", comlib_stateText(state), nBadState);
-  printf("# of transfers                      : %012u\n", nTransfer);
-  printf("# of injections                     : %012u\n", nInjection);  
-  printf("status of act transfer              : 0x%x\n", statTrans);
-  printf("# late events                       : 0d%015u\n"     , nLate);
-  printf("'offset done' (processing time) [us]:   %15.3f\n"    , (double)offsDone/1000.0);
-  printf("communication latency [us]          :   %15.3f\n"    , (double)comLatency/1000.0);
-  printf("sum status (# changes): 0x%" PRIx64 " (%u)\n", statusArray, nBadStatus);
+  printf("used shared mem [byte]              : %u\n"       , usedSize);
+  printf("state (# of changes)                : %s (%u)\n"  , comlib_stateText(state), nBadState);
+  printf("# of transfers                      : %012u\n"    , nTransfer);
+  printf("# of injections                     : %012u\n"    , nInjection);  
+  printf("status of act transfer              : 0x%x\n"     , statTrans);
+  printf("# late events                       : %012u\n"    , nLate);
+  printf("'offset done' (processing time) [us]: %12.3f\n"   , (double)offsDone/1000.0);
+  printf("communication latency [us]          : %12.3f\n"   , (double)comLatency/1000.0);
+  printf("sum status (# changes): 0x%" PRIx64 " (%u)\n"     , statusArray, nBadStatus);
   if ((statusArray >> COMMON_STATUS_OK) & 0x1)
     printf("overall status        : OK\n");
   else

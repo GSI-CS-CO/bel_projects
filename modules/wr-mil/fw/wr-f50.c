@@ -118,7 +118,10 @@ uint32_t getNCycles;
 uint32_t getNSent;
 uint32_t getNEvtsLate;
 uint32_t getOffsDone;
-int32_t  getComLatency;  
+int32_t  getComLatency;
+
+int32_t  maxComLatency;
+uint32_t maxOffsDone;
 
 uint64_t statusArray;                      // all status infos are ORed bit-wise into statusArray, statusArray is then published
 uint32_t nEvtsLate;                        // # of late messages
@@ -249,7 +252,8 @@ void extern_clearDiag()
   getNSent        = 0x0;
   getNEvtsLate    = 0x0;
   getOffsDone     = 0x0;
-  getComLatency   = 0x0;   
+  getComLatency   = 0x0;
+  maxComLatency   = 0x0;
 
   statusArray     = 0x0;
   nEvtsLate       = 0x0;
@@ -489,11 +493,13 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint64_t sendEvtId;                                         // evtid to send
   uint64_t sendParam;                                         // parameter to send
   uint32_t sendTEF;                                           // TEF to send
-
+  
   uint64_t tluStamp;                                          // timestamp of TLU (50 Hz mains)
   uint64_t dmStamp;                                           // timestamp from DM
   uint64_t dmStampNxt;                                        // next timestamp for DM
-  uint64_t tmpEvtNo; 
+  uint64_t tmpEvtNo;
+
+  uint32_t tmpOffsDone;                                       // temporary variable
   
   
   status    = actStatus;
@@ -638,7 +644,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
       
       getNSent++;
-      getOffsDone    = (uint32_t)(getSysTime() - tluStamp);
+      getOffsDone    = (uint32_t)(getSysTime() - recDeadline);
                                             
       break;
     default :                                                         // flush ECA Queue
@@ -711,7 +717,11 @@ int main(void) {
     fwlib_publishStatusArray(statusArray);
     pubState = actState;
     fwlib_publishState(pubState);
-    fwlib_publishTransferStatus(0, 0, 0, nEvtsLate, getOffsDone, getComLatency);
+
+    if (getComLatency > maxComLatency) maxComLatency = getComLatency;
+    if (getOffsDone   > maxOffsDone)   maxOffsDone   = getOffsDone;
+
+    fwlib_publishTransferStatus(0, 0, 0, nEvtsLate, maxOffsDone, maxComLatency);
     
     *pSharedGetTMainsAct      = getTMainsAct;
     *pSharedGetTDMAct         = getTDMAct;
