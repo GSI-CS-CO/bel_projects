@@ -253,7 +253,9 @@ void extern_clearDiag()
   getNEvtsLate    = 0x0;
   getOffsDone     = 0x0;
   getComLatency   = 0x0;
+  maxOffsDone     = 0x0;
   maxComLatency   = 0x0;
+
 
   statusArray     = 0x0;
   nEvtsLate       = 0x0;

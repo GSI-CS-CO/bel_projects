@@ -108,6 +108,10 @@ uint32_t nEvtsLate;                     // # of late messages
 uint32_t offsDone;                      // offset deadline WR message to time when we are done [ns]
 int32_t  comLatency;                    // latency for messages received via ECA
 
+int32_t  maxComLatency;
+uint32_t maxOffsDone;
+
+
 uint32_t utc_trigger;
 int32_t  utc_utc_delay;
 int32_t  trig_utc_delay;
@@ -209,15 +213,17 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
 // clear project specific diagnostics
 void extern_clearDiag()
 {
-  statusArray  = 0x0;
-  nEvtsSnd     = 0x0;
-  nEvtsRecT    = 0x0;
-  nEvtsRecD    = 0x0;
-  nEvtsErr     = 0x0;
-  nEvtsBurst   = 0x0;
-  nEvtsLate    = 0x0;
-  offsDone     = 0x0;
-  comLatency   = 0x0;
+  statusArray   = 0x0;
+  nEvtsSnd      = 0x0;
+  nEvtsRecT     = 0x0;
+  nEvtsRecD     = 0x0;
+  nEvtsErr      = 0x0;
+  nEvtsBurst    = 0x0;
+  nEvtsLate     = 0x0;
+  offsDone      = 0x0;
+  comLatency    = 0x0;
+  maxOffsDone   = 0x0;
+  maxComLatency = 0x0;
   resetEventErrCntMil(pMilRec);
 } // extern_clearDiag 
 
@@ -358,6 +364,9 @@ uint32_t extern_entryActionOperation()
   nEvtsBurst           = 0;
   nEvtsLate            = 0;
   offsDone             = 0;
+  comLatency           = 0;
+  maxOffsDone          = 0;
+  maxComLatency        = 0;
 
   // configure MIL receiver for timing events for all 16 virtual accelerators
   // if mil_mon == 2, the FIFO for event data monitoring must be enabled
@@ -611,8 +620,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       else flagIsLate = 0;
 
       // max value of offset done
-      tmp32    = sysTime - recDeadline;
-      if (tmp32 > offsDone) offsDone = tmp32;
+      offsDone = sysTime - recDeadline;
 
       // handle UTC events; here the UTC time (- offset) is distributed as a series of MIL telegrams
       if (recEvtNo == utc_trigger) {
@@ -759,7 +767,11 @@ int main(void) {
     fwlib_publishStatusArray(statusArray);
     pubState = actState;
     fwlib_publishState(pubState);
-    fwlib_publishTransferStatus(0, 0, 0, nEvtsLate, offsDone, comLatency);
+
+    if (comLatency > maxComLatency) maxComLatency = comLatency;
+    if (offsDone   > maxOffsDone)   maxOffsDone   = offsDone;
+    fwlib_publishTransferStatus(0, 0, 0, nEvtsLate, maxOffsDone, maxComLatency);
+    
     *pSharedGetNEvtsSndHi  = (uint32_t)(nEvtsSnd >> 32);
     *pSharedGetNEvtsSndLo  = (uint32_t)(nEvtsSnd & 0xffffffff);
     *pSharedGetNEvtsRecTHi = (uint32_t)(nEvtsRecT >> 32);
