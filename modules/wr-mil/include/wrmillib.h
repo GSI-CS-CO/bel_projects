@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 20-Jun-2024
+ *  version : 10-Jul-2024
  *
  * library for wr-mil
  *
@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define WRMILLIB_VERSION 0x000010
+#define WRMILLIB_VERSION 0x000011
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  WRMILLIB_STATUS_OK                 0            // OK
@@ -173,9 +173,6 @@ extern "C" {
                            uint64_t *nEvtsRecD,                  // number of MIL telegrams received (data)
                            uint32_t *nEvtsRecErr,                // number of 'broken' MIL telegrams received by VHDL Manchester decoder
                            uint32_t *nEvtsBurst,                 // number of detected high frequency bursts
-                           uint32_t *nEvtsLate,                  // number of translated events that could not be delivered in time
-                           uint32_t *offsDone,                   // offset deadline WR message to time when we are done [ns]
-                           uint32_t *comLatency,                 // latency for messages received from via ECA (tDeadline - tNow)) [ns]
                            int      printFlag                    // print info to screen 
                            );
 
@@ -189,9 +186,9 @@ extern "C" {
                            int32_t  *offsDmAct,                  // offset of cycle start: t_DM_act - t_mains_act; actual value                
                            int32_t  *offsDmMin,                  // offset of cycle start: t_DM_act - t_mains_act; min value                   
                            int32_t  *offsDmMax,                  // offset of cycle start: t_DM_act - t_mains_act; max value
-                           int32_t  *DTDMAct,                   // change of period: DM_act - DM_previous; actual value 
-                           int32_t  *DTDMMin,                   // change of period: DM_act - DM_previous; min value   
-                           int32_t  *DTDMMax,                   // change of period: DM_act - DM_previous; max value   
+                           int32_t  *DTDMAct,                    // change of period: DM_act - DM_previous; actual value 
+                           int32_t  *DTDMMin,                    // change of period: DM_act - DM_previous; min value   
+                           int32_t  *DTDMMax,                    // change of period: DM_act - DM_previous; max value   
                            int32_t  *offsMainsAct,               // offset of cycle start: t_mains_act - t_mains_predict; actual value     
                            int32_t  *offsMainsMin,               // offset of cycle start: t_mains_act - t_mains_predict; min value        
                            int32_t  *offsMainsMax,               // offset of cycle start: t_mains_act - t_mains_predict; max value        
@@ -200,9 +197,6 @@ extern "C" {
                            uint32_t *nLocked,                    // counts how many locks have been achieved                           
                            uint32_t *nCycles,                    // number of UNILAC cycles
                            uint32_t *nSent,                      // number of messages sent to the Data Master (as broadcast)
-                           uint32_t *nEvtsLate,                  // number of translated events that could not be delivered in time    
-                           uint32_t *comLatency,                 // latency for messages received from via ECA (tDeadline - tNow)) [ns]// print info to screen
-                           uint32_t *offsDone,                   // offset t_mains_act to time when we are done
                            int      printFlag                    // prints info on common firmware properties to stdout
                            );
  

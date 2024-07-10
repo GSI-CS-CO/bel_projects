@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 26-Jun-2024
+ *  version : 10-Jul-2024
  *
  * monitors WR-MIL gateway
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define WRMIL_SERV_MON_VERSION 0x000009
+#define WRMIL_SERV_MON_VERSION 0x000011
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -690,7 +690,7 @@ int main(int argc, char** argv)
     uint32_t      tmp32a, tmp32b, tmp32c, tmp32d, tmp32e, tmp32f, tmp32g, tmp32h, tmp32i;
     int32_t       stmp32a;
     uint64_t      tmp64a;
-    uint32_t      fwGid, fwEvtsLate, fwOffsDone, fwEvtsRecErr, fwEvtsBurst, fwState, fwVersion;
+    uint32_t      fwGid, fwEvtsRecErr, fwEvtsBurst, fwState, fwVersion;
     uint64_t      fwEvtsSnd, fwEvtsRecT, fwEvtsRecD, fwStatus;
 
     t_old = comlib_getSysTime();
@@ -718,7 +718,7 @@ int main(int argc, char** argv)
 
         // update firmware data
         wrmil_common_read(ebDevice, &fwStatus, &fwState, &tmp32a, &tmp32b, &fwVersion, &tmp32c, 0);
-        wrmil_info_read(ebDevice, &tmp32a, &tmp32b, &tmp32c, &fwGid, &stmp32a, &tmp64a, &tmp32f, &tmp32g, &tmp32h, &fwEvtsSnd, &fwEvtsRecT, &fwEvtsRecD, &fwEvtsRecErr, &fwEvtsBurst, &fwEvtsLate, &fwOffsDone,&tmp32i, 0);
+        wrmil_info_read(ebDevice, &tmp32a, &tmp32b, &tmp32c, &fwGid, &stmp32a, &tmp64a, &tmp32f, &tmp32g, &tmp32h, &fwEvtsSnd, &fwEvtsRecT, &fwEvtsRecD, &fwEvtsRecErr, &fwEvtsBurst, 0);
         if (fwGid != gid) fwStatus |= COMMON_STATUS_OUTOFRANGE; // signal an error
 
         disStatus  = fwStatus;

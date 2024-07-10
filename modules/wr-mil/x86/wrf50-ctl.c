@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Michael Reese GSI-Darmstadt
- *  version : 21-Jun-2024
+ *  version : 10-Jul-2024
  *
  * Command-line interface for wr-f50
  *
@@ -154,9 +154,6 @@ int main(int argc, char** argv) {
   uint32_t nLocked;
   uint32_t nCycles;
   uint32_t nSent; 
-  uint32_t nEvtsLate;
-  uint32_t offsDone;
-  uint32_t comLatency;
  
   program = argv[0];    
 
@@ -234,7 +231,7 @@ int main(int argc, char** argv) {
 
     wrmil_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
     wrf50_info_read(ebDevice, &f50Offset, &mode, &TMainsAct, &TDmAct, &TDmSet, &offsDmAct, &offsDmMin, &offsDmMax, &dTDMAct, &dTDMMin, &dTDMMax,
-                    &offsMainsAct, &offsMainsMin, &offsMainsMax, &lockState, &lockDate, &nLocked, &nCycles, &nSent, &nEvtsLate, &offsDone, &comLatency, 0);
+                    &offsMainsAct, &offsMainsMin, &offsMainsMax, &lockState, &lockDate, &nLocked, &nCycles, &nSent, 0);
 
     // print set status bits (except OK)
     for (i = COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
@@ -287,7 +284,7 @@ int main(int argc, char** argv) {
         if ((statusArray >> i) & 0x1)  printf("    status bit is set : %s\n", wrmil_status_text(i));
       } // for i
       wrf50_info_read(ebDevice, &f50Offset, &mode, &TMainsAct, &TDmAct, &TDmSet, &offsDmAct, &offsDmMin, &offsDmMax, &dTDMAct, &dTDMMin, &dTDMMax,
-                      &offsMainsAct, &offsMainsMin, &offsMainsMax, &lockState, &lockDate, &nLocked, &nCycles, &nSent, &nEvtsLate, &offsDone, &comLatency, 1);
+                      &offsMainsAct, &offsMainsMin, &offsMainsMax, &lockState, &lockDate, &nLocked, &nCycles, &nSent, 1);
     } // "diag"    
   } //if command
 
@@ -318,7 +315,7 @@ if (snoop) {
 
       if (printFlag) {
         wrf50_info_read(ebDevice, &f50Offset, &mode, &TMainsAct, &TDmAct, &TDmSet, &offsDmAct, &offsDmMin, &offsDmMax, &dTDMAct, &dTDMMin, &dTDMMax,
-                        &offsMainsAct, &offsMainsMin, &offsMainsMax, &lockState, &lockDate, &nLocked, &nCycles, &nSent, &nEvtsLate, &offsDone, &comLatency, 0);
+                        &offsMainsAct, &offsMainsMin, &offsMainsMax, &lockState, &lockDate, &nLocked, &nCycles, &nSent, 0);
         printf(", %s (%6u), ",  comlib_stateText(state), nBadState);
         if ((statusArray >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);
         else printf("NOTOK(%6u)\n", nBadStatus);

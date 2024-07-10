@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Micheal Reese, Mathias Kreider GSI-Darmstadt
- *  version : 03-Jul-2024
+ *  version : 10-Jul-2024
  *
  *  firmware required for the White Rabbit -> MIL Gateways
  *  
@@ -37,7 +37,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define WRMIL_FW_VERSION      0x000010    // make this consistent with makefile
+#define WRMIL_FW_VERSION      0x000011    // make this consistent with makefile
 
 #define RESET_INHIBIT_COUNTER    10000    // count so many main ECA timemouts, prior sending fill event
 //#define WR_MIL_GATEWAY_LATENCY 70650    // additional latency in units of nanoseconds
@@ -93,13 +93,6 @@ volatile uint32_t *pSharedGetNEvtsRecDHi;  // pointer to a "user defined" u32 re
 volatile uint32_t *pSharedGetNEvtsRecDLo;  // pointer to a "user defined" u32 register; here: number of telegrams received (data), high word
 volatile uint32_t *pSharedGetNEvtsErr;     // pointer to a "user defined" u32 register; here: number of received MIL telegrams with errors, detected by VHDL manchester decoder
 volatile uint32_t *pSharedGetNEvtsBurst;   // pointer to a "user defined" u32 register; here: number of occurences of 'nonsense high frequency bursts' 
-volatile uint32_t *pSharedGetNEvtsLate;    // pointer to a "user defined" u32 register; here: number of late events
-volatile uint32_t *pSharedGetOffsDone;     // pointer to a "user defined" u32 register; here: offset deadline WR message to time when we are done
-volatile uint32_t *pSharedGetComLatency;   // pointer to a "user defined" u32 register; here: communicatin latency for events received by ECA
-//volatile uint32_t *pSharedGetNLateHisto;   // pointer to a "user defined" u32 register; here: dummy register to indicate position after the last valid register
-//volatile uint32_t *pSharedGetNMilHisto;    // pointer to a "user defined" u32 register; here: dummy register to indicate position after the last valid register
-//volatile uint32_t *pSharedGetMsiSlot;      // pointer to a "user defined" u32 register; here: MSI slot is stored here
-
 
 uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM
 volatile uint32_t *pMilSend;            // address of MIL device sending timing messages, usually this will be a SIO
@@ -173,12 +166,6 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
   pSharedGetNEvtsRecDLo      = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_RECD_LO    >> 2));
   pSharedGetNEvtsErr         = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_ERR        >> 2));
   pSharedGetNEvtsBurst       = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_BURST      >> 2));
-  pSharedGetNEvtsLate        = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_LATE       >> 2));
-  pSharedGetOffsDone         = (uint32_t *)(pShared + (WRMIL_SHARED_GET_OFFS_DONE         >> 2));  
-  pSharedGetComLatency       = (uint32_t *)(pShared + (WRMIL_SHARED_GET_COM_LATENCY       >> 2));
-  //pSharedGetNLateHisto       = (uint32_t *)(pShared + (WRMIL_SHARED_GET_LATE_HISTOGRAM    >> 2));
-  //pSharedGetNMilHisto        = (uint32_t *)(pShared + (WRMIL_SHARED_GET_MIL_HISTOGRAM     >> 2));
-  //pSharedGetMsiSlot          = (uint32_t *)(pShared + (WRMIL_SHARED_GET_MSI_SLOT          >> 2));
 
   // find address of CPU from external perspective
   idx = 0;
@@ -350,12 +337,6 @@ uint32_t extern_entryActionOperation()
   *pSharedGetNEvtsRecDLo    = 0x0;
   *pSharedGetNEvtsErr       = 0x0;
   *pSharedGetNEvtsBurst     = 0x0;
-  *pSharedGetNEvtsLate      = 0x0;  
-  *pSharedGetOffsDone       = 0x0;  
-  *pSharedGetComLatency     = 0x0;
-  //*pSharedGetNLateHisto     = 0x0;
-  //*pSharedGetNMilHisto      = 0x0; 
-  //*pSharedGetMsiSlot        = 0x0;
 
   // init set values
   utc_trigger          = *pSharedSetUtcTrigger;
@@ -778,7 +759,7 @@ int main(void) {
     fwlib_publishStatusArray(statusArray);
     pubState = actState;
     fwlib_publishState(pubState);
-    *pSharedGetComLatency  = comLatency;
+    fwlib_publishTransferStatus(0, 0, 0, nEvtsLate, offsDone, comLatency);
     *pSharedGetNEvtsSndHi  = (uint32_t)(nEvtsSnd >> 32);
     *pSharedGetNEvtsSndLo  = (uint32_t)(nEvtsSnd & 0xffffffff);
     *pSharedGetNEvtsRecTHi = (uint32_t)(nEvtsRecT >> 32);
@@ -787,8 +768,6 @@ int main(void) {
     *pSharedGetNEvtsRecDLo = (uint32_t)(nEvtsRecD & 0xffffffff);
     *pSharedGetNEvtsErr    = nEvtsErr;
     *pSharedGetNEvtsBurst  = nEvtsBurst;
-    *pSharedGetNEvtsLate   = nEvtsLate;
-    *pSharedGetOffsDone    = offsDone;
   } // while
 
   return(1); // this should never happen ...

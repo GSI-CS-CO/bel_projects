@@ -98,14 +98,8 @@
 #define WRMIL_SHARED_GET_N_EVTS_RECD_LO    (WRMIL_SHARED_GET_N_EVTS_RECD_HI   + _32b_SIZE_)  // number of received MIL telegrams (data), low word
 #define WRMIL_SHARED_GET_N_EVTS_ERR        (WRMIL_SHARED_GET_N_EVTS_RECD_LO   + _32b_SIZE_)  // number of received MIL telegrams with errors, detected by VHDL manchester decoder
 #define WRMIL_SHARED_GET_N_EVTS_BURST      (WRMIL_SHARED_GET_N_EVTS_ERR       + _32b_SIZE_)  // number of occurences of 'nonsense high frequency bursts' 
-#define WRMIL_SHARED_GET_N_EVTS_LATE       (WRMIL_SHARED_GET_N_EVTS_BURST     + _32b_SIZE_)  // number of translated events that could not be delivered in time
-#define WRMIL_SHARED_GET_OFFS_DONE         (WRMIL_SHARED_GET_N_EVTS_LATE      + _32b_SIZE_)  // offset deadline WR message to time when we are done [ns]
-#define WRMIL_SHARED_GET_COM_LATENCY       (WRMIL_SHARED_GET_OFFS_DONE        + _32b_SIZE_)  // latency for messages received from via ECA (tDeadline - tNow)) [ns]
-//#define WRMIL_SHARED_GET_LATE_HISTOGRAM    (WRMIL_SHARED_GET_COM_LATENCY      + _32b_SIZE_)  // dummy register to indicate position after the last valid register
-//#define WRMIL_SHARED_GET_MIL_HISTOGRAM     (WRMIL_SHARED_GET_LATE_HISTOGRAM   + _32b_SIZE_)  // dummy register to indicate position after the last valid register
-//#define WRMIL_SHARED_GET_MSI_SLOT          (WRMIL_SHARED_GET_MIL_HISTOGRAM    + _32b_SIZE_)  // MSI slot is stored here
 
 // diagnosis: end of used shared memory
-#define WRMIL_SHARED_END                   (WRMIL_SHARED_GET_COM_LATENCY      + _32b_SIZE_) 
+#define WRMIL_SHARED_END                   (WRMIL_SHARED_GET_N_EVTS_BURST     + _32b_SIZE_) 
 
 #endif

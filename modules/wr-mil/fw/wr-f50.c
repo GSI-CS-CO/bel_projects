@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 2024-Jun-11
+ *  version : 10-Jul-2024
  *
  *  firmware required for the 50 Hz mains -> WR gateway
  *  
@@ -41,7 +41,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define WRF50_FW_VERSION      0x000010                                  // make this consistent with makefile
+#define WRF50_FW_VERSION      0x000011                                  // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -93,9 +93,6 @@ volatile uint32_t *pSharedGetLockDateLo;   // pointer to a "user defined" u32 re
 volatile uint32_t *pSharedGetNLocked;      // pointer to a "user defined" u32 register; here: counts how many locks have been achieved                           
 volatile uint32_t *pSharedGetNCycles;      // pointer to a "user defined" u32 register; here: number of UNILAC cycles
 volatile uint32_t *pSharedGetNSent;        // pointer to a "user defined" u32 register; here: number of messages sent to the Data Master (as broadcast)
-volatile uint32_t *pSharedGetNEvtsLate;    // pointer to a "user defined" u32 register; here: number of translated events that could not be delivered in time
-volatile uint32_t *pSharedGetOffsDone;     // offset t_mains_act to time when we are done
-volatile uint32_t *pSharedGetComLatency;   // pointer to a "user defined" u32 register; here: latency for messages received from via ECA (tDeadline - tNow)) [ns]
 
 uint32_t *cpuRamExternal;                  // external address (seen from host bridge) of this CPU's RAM
 
@@ -190,9 +187,6 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
   pSharedGetNLocked       = (uint32_t *)(pShared + (WRF50_SHARED_GET_N_LOCKED        >> 2));
   pSharedGetNCycles       = (uint32_t *)(pShared + (WRF50_SHARED_GET_N_CYCLES        >> 2));
   pSharedGetNSent         = (uint32_t *)(pShared + (WRF50_SHARED_GET_N_SENT          >> 2));
-  pSharedGetNEvtsLate     = (uint32_t *)(pShared + (WRF50_SHARED_GET_N_EVTS_LATE     >> 2));
-  pSharedGetOffsDone      = (uint32_t *)(pShared + (WRF50_SHARED_GET_OFFS_DONE       >> 2));
-  pSharedGetComLatency    = (uint32_t *)(pShared + (WRF50_SHARED_GET_COM_LATENCY     >> 2));
 
   // find address of CPU from external perspective
   idx = 0;
@@ -326,9 +320,6 @@ uint32_t extern_entryActionOperation()
   *pSharedGetNLocked        = 0x0;
   *pSharedGetNCycles        = 0x0;
   *pSharedGetNSent          = 0x0;
-  *pSharedGetNEvtsLate      = 0x0;   
-  *pSharedGetOffsDone       = 0x0;   
-  *pSharedGetComLatency     = 0x0;
 
   // init set values
   setF50Offset              = *pSharedSetF50Offset;
@@ -720,6 +711,7 @@ int main(void) {
     fwlib_publishStatusArray(statusArray);
     pubState = actState;
     fwlib_publishState(pubState);
+    fwlib_publishTransferStatus(0, 0, 0, nEvtsLate, getOffsDone, getComLatency);
     
     *pSharedGetTMainsAct      = getTMainsAct;
     *pSharedGetTDMAct         = getTDMAct;
@@ -739,9 +731,6 @@ int main(void) {
     *pSharedGetNLocked        = getNLocked;
     *pSharedGetNCycles        = getNCycles;
     *pSharedGetNSent          = getNSent;
-    *pSharedGetNEvtsLate      = getNEvtsLate;
-    *pSharedGetOffsDone       = getOffsDone;
-    *pSharedGetComLatency     = getComLatency;
   } // while
 
   return(1); // this should never happen ...
