@@ -115,6 +115,12 @@ void die(const char* where,eb_status_t status) {
   exit(1);
 }
 
+void success(const char* where,eb_status_t status) {
+  fprintf(stdout,"%s: %s : %s\n",
+    program,where, eb_status(status));
+  exit(0);
+}
+
 void read_asmi_id(int slave_nr, eb_data_t* epcsid) {
   eb_status_t status;
   // clear the param and cmd register
@@ -444,7 +450,7 @@ int main(int argc, char * const* argv) {
   //trigger reconfiguration
   if (tflag == 1) {
     reconfig(slave_id, 0xdeadbeef);
-    exit(1);
+    exit(0);
   }
 
   //write file
@@ -508,6 +514,7 @@ int main(int argc, char * const* argv) {
     }
     fclose(fp);
     printf("New image written to epcs.\n");
+    exit(0);
   }
 
   // erase needed sectors
