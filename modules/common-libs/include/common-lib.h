@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 15-Feb-2023
+ *  version : 10-Jul-2024
  *
  * common x86 routines for firmware
  *
@@ -37,7 +37,7 @@
 #ifndef _COMMON_LIB_H_
 #define _COMMON_LIB_H_
 
-#define COMMON_LIB_VERSION "0.03.02"
+#define COMMON_LIB_VERSION "0.04.00"
 
 #include <etherbone.h>
 
@@ -82,6 +82,9 @@ int comlib_readDiag(eb_device_t device,                // Etherbone device
                     uint32_t    *nTransfer,            // # of transfers
                     uint32_t    *nInjection,           // # of injection within ongoing transfers
                     uint32_t    *statTrans,            // status bits of transfer (application specific)
+                    uint32_t    *nLate,                // number of messages that could not be delivered in time
+                    uint32_t    *offsDone,             // offset event deadline to time when we are done [ns]
+                    uint32_t    *comLatency,           // latency for messages received from via ECA (tDeadline - tNow)) [ns]
                     uint32_t    *usedSize,             // used size of shared memory
                     int         printFlag              // '1' print information to stdout
                     );
@@ -99,6 +102,9 @@ void comlib_printDiag(uint64_t  statusArray,           // array with status bits
                       uint32_t  nTransfer,             // # of transfers
                       uint32_t  nInjection,            // # of injection within ongoing transfers
                       uint32_t  statTrans,             // status bits of transfer (application specific)
+                      uint32_t  nLate,                 // number of messages that could not be delivered in time
+                      uint32_t  offsDone,              // offset event deadline to time when we are done [ns]
+                      uint32_t  comLatency,            // latency for messages received from via ECA (tDeadline - tNow)) [ns]
                       uint32_t  usedSize               // used size of shared memory
                       );
 

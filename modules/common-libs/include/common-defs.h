@@ -100,7 +100,10 @@ typedef union {                                // easier copying of bytes float 
 #define COMMON_SHARED_NTRANSFER       (COMMON_SHARED_TS0LO        + _32b_SIZE_)         // # of transfers
 #define COMMON_SHARED_NINJECT         (COMMON_SHARED_NTRANSFER    + _32b_SIZE_)         // # of injections (within current transfer)
 #define COMMON_SHARED_TRANSSTAT       (COMMON_SHARED_NINJECT      + _32b_SIZE_)         // bitwise state of ongoing transfer
-#define COMMON_SHARED_DATA_4EB        (COMMON_SHARED_TRANSSTAT    + _32b_SIZE_)         // shared area for EB return values
+#define COMMON_SHARED_NLATE           (COMMON_SHARED_TRANSSTAT    + _32b_SIZE_)         // number of messages that could not be delivered in time
+#define COMMON_SHARED_OFFSDONE        (COMMON_SHARED_NLATE        + _32b_SIZE_)         // offset event deadline to time when we are done [ns]
+#define COMMON_SHARED_COMLATENCY      (COMMON_SHARED_OFFSDONE     + _32b_SIZE_)         // latency for messages received from via ECA (tDeadline - tNow)) [ns]
+#define COMMON_SHARED_DATA_4EB        (COMMON_SHARED_COMLATENCY   + _32b_SIZE_)         // shared area for EB return values
 #define COMMON_SHARED_USEDSIZE        (COMMON_SHARED_DATA_4EB     + (COMMON_DATA4EBSIZE << 2))  // used size of shared memory [bytes] /* chk */
 #define COMMON_SHARED_END             (COMMON_SHARED_USEDSIZE     + _32b_SIZE_)         // here the common part of the shared memory ends
 

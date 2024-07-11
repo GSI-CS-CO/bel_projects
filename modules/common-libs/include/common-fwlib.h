@@ -71,7 +71,7 @@ uint32_t fwlib_wait4MILEvent(uint32_t usTimeout,      // timeout [us]
                              uint32_t *evtCode,       // event code (8 relevant bits)
                              uint32_t *virtAcc,       // virtual accelerator (4 relevant bits)
                              uint32_t *validEvtCodes, // array of valid event codes the routine will listen to
-                             uint32_t nValidEvtCodes  // # of valid event codes
+                             uint32_t nValidEvtCodes  // # of valid event codes; in case n==0, the routine will return with the first event received
                              );
 
 // pulse lemo for debugging with scope
@@ -108,7 +108,7 @@ volatile uint32_t * fwlib_getMilPiggy();
 volatile uint32_t * fwlib_getOLED();
 
 // get WB address of SCU bus master
-volatile uint16_t * fwlib_getSbMaster();
+volatile uint32_t * fwlib_getSbMaster();
 
 // acquire and publish NIC data
 void fwlib_publishNICData();
@@ -124,7 +124,10 @@ void fwlib_publishStatusArray(uint64_t statusArray     // status array (each bit
 // publish status of ongoing transfer
 void fwlib_publishTransferStatus(uint32_t nTransfer,   // # of transfers
                                  uint32_t nInject,     // # of injections within current transferr
-                                 uint32_t transStat    // status of ongoing transfer
+                                 uint32_t transStat,   // status of ongoing transfer
+                                 uint32_t nLate,       // number of messages that could not be delivered in time
+                                 uint32_t offsDone,    // offset event deadline to time when we are done [ns]
+                                 uint32_t comLatency   // latency for messages received from via ECA (tDeadline - tNow)) [ns]
                                  );
 
 // publish number of bad status incidents

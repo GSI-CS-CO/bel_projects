@@ -560,5 +560,25 @@ int16_t disableLemoEvtMil(volatile uint32_t *base, uint32_t lemo)
 
   return MIL_STAT_OK;
 } // disableLemoEvtMil
+                            
+
+int16_t readEventErrCntMil(volatile uint32_t *base, uint32_t *errWordCnt)
+{
+  uint32_t *pErrorRegister;    // register error event counter
+
+  pErrorRegister  = (uint32_t *)(base + (MIL_REG_WR_EVT_ERR_CNT >> 2));
+  *errWordCnt = *pErrorRegister;
+
+  return MIL_STAT_OK;
+} //readEventErrcnt
 
 
+int16_t resetEventErrCntMil(volatile uint32_t *base)
+{
+  uint32_t *pErrorRegister;    // register error event counter
+
+  pErrorRegister  = (uint32_t *)(base + (MIL_REG_WR_EVT_ERR_CNT >> 2));
+  *pErrorRegister = 0x0;
+
+  return MIL_STAT_OK;
+} //resetEventErrCnt

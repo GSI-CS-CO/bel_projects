@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 14-Mar-2023
+ *  version : 10-Jul-2024
  *
  *  common functions used by various firmware projects
  *
@@ -76,7 +76,7 @@ volatile uint32_t *pWREp;               // WB address of WR Endpoint
 volatile uint32_t *pIOCtrl;             // WB address of IO Control
 volatile uint32_t *pMILPiggy;           // WB address of MIL device bus (MIL piggy)
 volatile uint32_t *pOLED;               // WB address of OLED (display)
-volatile uint16_t *pSbMaster;           // WB address of SCU bus master
+volatile uint32_t *pSbMaster;           // WB address of SCU bus master
 
 // global variables
 uint32_t *pSharedVersion;               // pointer to a "user defined" u32 register; here: publish version
@@ -97,6 +97,9 @@ uint32_t *pSharedTS0Lo;                 // pointer to a "user defined" u32 regis
 uint32_t *pSharedNTransfer;             // pointer to a "user defined" u32 register; here: # of transfers
 uint32_t *pSharedNInject;               // pointer to a "user defined" u32 register; here: # of injections within current transfer
 uint32_t *pSharedTransStat;             // pointer to a "user defined" u32 register; here: status of transfer
+uint32_t *pSharedNLate;                 // pointer to a "user defined" u32 register; here: number of messages that could not be delivered in time
+uint32_t *pSharedOffsDone;              // pointer to a "user defined" u32 register; here: offset event deadline to time when we are done [ns]
+uint32_t *pSharedComLatency;            // pointer to a "user defined" u32 register; here: latency for messages received from via ECA (tDeadline - tNow)) [ns]
 uint32_t *pSharedUsedSize;              // pointer to a "user defined" u32 register; here: size of (used) shared memory
 
 uint32_t *cpuRamExternalData4EB;        // external address (seen from host bridge) of this CPU's RAM: field for EB return values
@@ -206,7 +209,7 @@ uint32_t findSbMaster() //find WB address of SCU bus master
   pSbMaster = 0x0;
 
   // get Wishbone address for SCU bus master
-  pSbMaster = (uint16_t *)find_device_adr(GSI, SCU_BUS_MASTER);
+  pSbMaster = find_device_adr(GSI, SCU_BUS_MASTER);
 
   if (!pSbMaster) {DBPRINT1("common-fwlib: can't find SCU bus master\n"); return COMMON_STATUS_ERROR;}
   else                                                      return COMMON_STATUS_OK;
@@ -614,6 +617,9 @@ void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t shared
   pSharedNTransfer        = (uint32_t *)(pShared + (COMMON_SHARED_NTRANSFER >> 2));
   pSharedNInject          = (uint32_t *)(pShared + (COMMON_SHARED_NINJECT >> 2));
   pSharedTransStat        = (uint32_t *)(pShared + (COMMON_SHARED_TRANSSTAT >> 2));
+  pSharedNLate            = (uint32_t *)(pShared + (COMMON_SHARED_NLATE >> 2));
+  pSharedOffsDone         = (uint32_t *)(pShared + (COMMON_SHARED_OFFSDONE >> 2));
+  pSharedComLatency       = (uint32_t *)(pShared + (COMMON_SHARED_COMLATENCY >> 2));
   pSharedUsedSize         = (uint32_t *)(pShared + (COMMON_SHARED_USEDSIZE >> 2));
 
   // clear shared mem
@@ -743,7 +749,8 @@ uint32_t fwlib_wait4MILEvent(uint32_t usTimeout, uint32_t *evtData, uint32_t *ev
   *virtAcc    = 0xffff;
   *evtData    = 0xffff;
   *evtCode    = 0xffff;
-  valid       = 0;
+  if (nValidEvtCodes == 0) valid = 1;           // just return with the first element read from FIFO
+  else                     valid = 0;           // only return if element read from FIFO matches one of the validEvtcodes
 
   while(getSysTime() < timeoutT) {              // while not timed out...
     while (fifoNotemptyEvtMil(pMILPiggy)) {     // while fifo contains data
@@ -838,7 +845,7 @@ volatile uint32_t* fwlib_getOLED()
   return pOLED;
 } // fwlib_getMilOLED
 
-volatile uint16_t* fwlib_getSbMaster()
+volatile uint32_t* fwlib_getSbMaster()
 {
   return pSbMaster;
 } // fwlib_getSbMaster
@@ -872,11 +879,14 @@ void fwlib_publishStatusArray(uint64_t statusArray)
 } // fwlib_publishStatusArray
 
 
-void fwlib_publishTransferStatus(uint32_t nTransfer, uint32_t nInject, uint32_t transStat)
+void fwlib_publishTransferStatus(uint32_t nTransfer, uint32_t nInject, uint32_t transStat, uint32_t nLate, uint32_t offsDone, uint32_t comLatency)
 {
-  *pSharedNTransfer = nTransfer;
-  *pSharedNInject   = nInject;
-  *pSharedTransStat = transStat;
+  *pSharedNTransfer  = nTransfer;
+  *pSharedNInject    = nInject;
+  *pSharedTransStat  = transStat;
+  *pSharedNLate      = nLate;
+  *pSharedOffsDone   = offsDone;
+  *pSharedComLatency = comLatency;
 } // fwlib_publishTransferStatus
 
 
