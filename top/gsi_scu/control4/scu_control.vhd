@@ -262,6 +262,7 @@ begin
       g_lm32_ramsizes      => c_lm32_ramsizes/4,
       g_lm32_init_files    => f_string_list_repeat(c_initf_name, c_cores),
       g_lm32_profiles      => f_string_list_repeat(c_profile_name, c_cores),
+      g_en_psram_delay     => true,
       g_en_asmi            => true
     )
     port map(
@@ -348,10 +349,10 @@ begin
       hw_version              => x"0000000" & not scu_cb_version);
 
   -- PSRAM -> This needs to be changed on the next revision
-  psram_cen(0) <= s_psram_cen when (s_psram_sel(0) = '1') else '1';
-  psram_cen(1) <= s_psram_cen when (s_psram_sel(1) = '1') else '1';
-  psram_cen(2) <= s_psram_cen when (s_psram_sel(2) = '1') else '1';
-  psram_cen(3) <= s_psram_cen when (s_psram_sel(3) = '1') else '1';
+  psram_cen(0) <= s_psram_cen;
+  psram_cen(1) <= '1';
+  psram_cen(2) <= '1';
+  psram_cen(3) <= '1';
 
   -- LEDs
   wr_led_pps    <= s_led_pps;                                             -- white = PPS
