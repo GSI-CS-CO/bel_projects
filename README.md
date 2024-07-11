@@ -23,6 +23,7 @@ GSI Timing Gateware and Tools
       - [Backup Plan](#backup-plan)
     - [Tool qmegawiz](#tool-qmegawiz)
     - [Tool qsys-generate](#tool-qsys-generate)
+    - [Permission denied](#permission-denied)
   - [Build Flow](#build-flow)
     - [Required Packages](#required-packages)
     - [Library libmpfr](#library-libmpfr)
@@ -213,6 +214,12 @@ export QUARTUS=/opt/quartus/
 export QSYS_ROOTDIR=$QUARTUS/sopc_builder/bin
 export PATH=$PATH:$QUARTUS_ROOTDIR:$QSYS_ROOTDIR
 ```
+
+### Permission denied
+
+Error: /bin/sh: 1: cannot create /ramsize_pkg.vhd: Permission denied
+
+Solution: Check all your (changed) Manifest.py files.
 
 ## Build Flow
 
