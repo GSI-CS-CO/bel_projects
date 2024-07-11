@@ -43,7 +43,7 @@ class DmPps(dm_testbench.DmTestbench):
     The status of the schedules is compared against known dot files.
     The messages are snooped and checked.
     """
-    snoopFile = 'snoop_test0.csv'
+    snoopFile = 'snoop_PpsAdd0.csv'
     self.scheduleFile0 = 'pps-test0-0.dot'
     self.scheduleFile1 = 'pps-test0-1.dot'
     self.downloadFile0 = 'pps-test0-0-download.dot'
@@ -149,7 +149,7 @@ class DmPps(dm_testbench.DmTestbench):
     """Test with five schedules.
     Add two schedules, remove the third, add the fourth, remove the fifth.
     """
-    snoopFile0 = 'snoop_test3_0.csv'
+    snoopFile0 = 'snoop_PpsAdd3.csv'
     self.scheduleFile0 = 'pps-test3-0.dot'
     self.scheduleFile1 = 'pps-test3-1.dot'
     self.scheduleFile2 = 'pps-test3-2.dot'
@@ -208,7 +208,7 @@ class DmPps(dm_testbench.DmTestbench):
     Then stop the pattern A and remove it.
     Check that the appropriate number of messages is produced.
     """
-    snoopFile0 = 'snoop_test4_0.csv'
+    snoopFile0 = 'snoop_PpsAdd4.csv'
     self.scheduleFile0 = 'pps-test4-0.dot'
     self.scheduleFile1 = 'pps-test4-1.dot'
     self.scheduleFile2 = 'pps-test4-2.dot'
@@ -251,7 +251,7 @@ class DmPps(dm_testbench.DmTestbench):
     When pattern A has finished, remove it.
     Check that the appropriate number of messages is produced.
     """
-    snoopFile0 = 'snoop_test5_0.csv'
+    snoopFile0 = 'snoop_PpsAdd5.csv'
     self.scheduleFile0 = 'pps-test5-0.dot'
     self.scheduleFile1 = 'pps-test5-1.dot'
     self.downloadFile0 = 'pps-test5-0-download.dot'
@@ -276,7 +276,7 @@ class DmPps(dm_testbench.DmTestbench):
     This fails (return 250). Later the second try for remove
     works. The status between the steps is saved for later compare.
     """
-    self.delay(0.1)
+    self.delay(0.5)
     self.startPattern(self.scheduleFile0, 'A')
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile0), [0], 0, 0)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'remove', self.schedulesFolder + self.scheduleFile1), [250], 2, 22)
@@ -290,7 +290,7 @@ class DmPps(dm_testbench.DmTestbench):
     """Test adding a node which changes the pattern entry.
     Check that the appropriate number of messages is produced.
     """
-    snoopFile0 = 'snoop_test6.csv'
+    snoopFile0 = 'snoop_PpsAdd6.csv'
     self.scheduleFile0 = 'pps-test6-0.dot'
     self.scheduleFile1 = 'pps-test6-1.dot'
     self.scheduleFile2 = 'pps-test6-2.dot'
