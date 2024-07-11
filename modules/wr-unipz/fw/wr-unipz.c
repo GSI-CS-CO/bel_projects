@@ -72,7 +72,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define WRUNIPZ_FW_VERSION 0x000216                                     // make this consistent with makefile
+#define WRUNIPZ_FW_VERSION 0x000217                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -114,7 +114,6 @@ uint32_t *pSharedDtMax;                 // pointer to a "user defined" u32 regis
 uint32_t *pSharedDtMin;                 // pointer to a "user defined" u32 register; here: min diff between deadline and time of dispatching
 uint32_t *pSharedCycJmpMax;             // pointer to a "user defined" u32 register; here: max diff between expected and actual start of UNILAC cycle
 uint32_t *pSharedCycJmpMin;             // pointer to a "user defined" u32 register; here: min diff between expected and actual start of UNILAC cycle
-uint32_t *pSharedNLate;                 // pointer to a "user defined" u32 register; here: # late messages
 uint32_t *pSharedVaccAvg;               // pointer to a "user defined" u32 register; here: virt accs played during past second
 uint32_t *pSharedPzAvg;                 // pointer to a "user defined" u32 register; here: PZs used during the past second
 uint32_t *pSharedEvtData;               // pointer to a "user defined" u32 register; here: config data
@@ -168,6 +167,13 @@ uint32_t milEvts[] = {WRUNIPZ_EVT_PZ1,  // MIL evt codes we are listening for
                       WRUNIPZ_EVT_PZ7,
                       WRUNIPZ_EVT_SYNCH_DATA,
                       WRUNIPZ_EVT_50HZ_SYNCH};
+
+uint32_t nEvtsLate;                     // # of late messages
+uint32_t offsDone;                      // offset deadline WR message to time when we are done [ns]
+int32_t  comLatency;                    // latency for messages received via ECA
+
+int32_t  maxComLatency;
+uint32_t maxOffsDone;
 
 // write a timing message to the WR network
 uint64_t writeTM(uint32_t uniEvt, uint64_t tStart, uint32_t pz, uint32_t virtAcc, uint32_t flagNochop, uint32_t flagShortchop)
@@ -332,7 +338,6 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
   pSharedDtMin            = (uint32_t *)(pShared + (WRUNIPZ_SHARED_DTMIN >> 2));
   pSharedCycJmpMax        = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CYCJMPMAX >> 2));
   pSharedCycJmpMin        = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CYCJMPMIN >> 2));
-  pSharedNLate            = (uint32_t *)(pShared + (WRUNIPZ_SHARED_NLATE >> 2));
   pSharedVaccAvg          = (uint32_t *)(pShared + (WRUNIPZ_SHARED_VACCAVG >> 2));
   pSharedPzAvg            = (uint32_t *)(pShared + (WRUNIPZ_SHARED_PZAVG >> 2));
   pSharedEvtData          = (uint32_t *)(pShared + (WRUNIPZ_SHARED_EVT_DATA >> 2));
@@ -651,15 +656,15 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       DBPRINT3("wr-unipz: 50Hz, data %d, evtcode %d, virtAcc %d\n", evtData, evtCode, virtAcc);
       
       // get timestamp from TLU -> ECA
-      ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recEvtId, &recParam, &recTEF, &flagLate, &flagEarly, &flagConflict, &flagDelayed);
-      deadline = recDeadline;
+      ecaAction  = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recEvtId, &recParam, &recTEF, &flagLate, &flagEarly, &flagConflict, &flagDelayed);
+      deadline   = recDeadline;
       
       // check, if timestamping via TLU failed; if yes, continue with TS from MIL
       if (ecaAction == WRUNIPZ_ECADO_TIMEOUT) {      
         deadline = tMIL;                                        
         status   = WRUNIPZ_STATUS_NOTIMESTAMP;
       } // if ecaAction
-      
+
       // check, if timestamps form TLU and MIL are out of order; if yes, continue with TS from MIL
       if (deadline > tMIL) {
       deadline = tMIL;
@@ -671,6 +676,8 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
         deadline = tMIL;
         status   = WRUNIPZ_STATUS_BADTIMESTAMP;
       } // if tMIL
+
+      comLatency = (int32_t)(getSysTime() - deadline);
       
       // walk through all PZs and run requested virt acc (time critical stuff)
       nLateLocal  = nLate;                                      // for bookkepping of late messages
@@ -777,6 +784,8 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       break;
   } // switch evtCode
 
+  comLatency = (int32_t)(getSysTime() - recDeadline);
+
   // write MIL Event received via internal bus to our own ECA input
   // this allows debugging using saft-ctl snoop ...
   TS_dbg    = tMIL;
@@ -785,6 +794,10 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
   evtId_dbg = evtId_dbg | ((uint64_t)virtAcc << 20);
   param_dbg = (uint64_t)evtData;
   fwlib_ecaWriteTM(TS_dbg, evtId_dbg, param_dbg, 0x0, 1);
+
+  // check WR sync state
+  if (fwlib_wrCheckSyncState() == COMMON_STATUS_WRBADSYNC) return COMMON_STATUS_WRBADSYNC;
+  else                                                     return status;
   
   return status;
 } // doActionOperation
@@ -868,11 +881,15 @@ int main(void) {
     fwlib_publishStatusArray(statusArray);
     pubState             = actState;
     fwlib_publishState(pubState);
+
+    if (comLatency > maxComLatency) maxComLatency = comLatency;
+    if (offsDone   > maxOffsDone)   maxOffsDone   = offsDone;
+    fwlib_publishTransferStatus(0, 0, 0, nLate, maxOffsDone, maxComLatency);
+
     *pSharedDtMax        = dtMax;
     *pSharedDtMin        = dtMin;
     *pSharedCycJmpMax    = cycJmpMax;
     *pSharedCycJmpMin    = cycJmpMin;
-    *pSharedNLate        = nLate;
     *pSharedNCycle       = nCycleAct; 
     *pSharedNMessageHi   = (uint32_t)(nMsgAct >> 32);
     *pSharedNMessageLo   = (uint32_t)(nMsgAct & 0xffffffff);

@@ -4,7 +4,7 @@
 #include <common-defs.h>
 
 // !!!!!
-// experimental: let's try the same header and DP RAM layout for ALL B2B firmwares....
+// experimental: let's try the same header and DP RAM layout for ALL firmwares....
 // !!!!!
 
 // this file is structured in two parts
@@ -27,7 +27,7 @@
 #define WRUNIPZ_MILCALIBOFFSET       29000    // calibration offset to MIL event bus [ns]; MIL events are always 'late' due its protocol; this offset must be added to WR deadlines
 #define WRUNIPZ_QQOFFSET               500    // offset for sending special service event for QQ [us] /* chk: QQ is breaking the concept of WR */
 #define WRUNIPZ_A4OFFSET               500    // offset for sending special service event for A4 [us] /* chk: A4 is breaking the concept of WR */
-#define WRUNIPZ_TDIFFMIL                25    // minimmum time difference [us] between sending telegrams to the MIL bus
+#define WRUNIPZ_TDIFFMIL                45    // minimmum time difference [us] between sending telegrams to the MIL bus; 25us is enough, but UNIPZ sends service events 45us after last event
 
 // numbers for UNIPZ
 #define WRUNIPZ_NEVT                    20    // # of events per virt acc
@@ -129,8 +129,7 @@ typedef struct dataTable {                    // table with _one_ virtAcc for _o
 #define WRUNIPZ_SHARED_DTMIN          (WRUNIPZ_SHARED_DTMAX      + _32b_SIZE_)          // delta T min (actTime - deadline)
 #define WRUNIPZ_SHARED_CYCJMPMAX      (WRUNIPZ_SHARED_DTMIN      + _32b_SIZE_)          // delta T max (expected and actual start of UNILAC cycle)
 #define WRUNIPZ_SHARED_CYCJMPMIN      (WRUNIPZ_SHARED_CYCJMPMAX  + _32b_SIZE_)          // delta T min (expected and actual start of UNILAC cycle)
-#define WRUNIPZ_SHARED_NLATE          (WRUNIPZ_SHARED_CYCJMPMIN  + _32b_SIZE_)          // # of late messages
-#define WRUNIPZ_SHARED_VACCAVG        (WRUNIPZ_SHARED_NLATE      + _32b_SIZE_)          // virt accs used (past second) bits 0..15 (normal), 16-31 (verkuerzt)
+#define WRUNIPZ_SHARED_VACCAVG        (WRUNIPZ_SHARED_CYCJMPMIN  + _32b_SIZE_)          // virt accs used (past second) bits 0..15 (normal), 16-31 (verkuerzt)
 #define WRUNIPZ_SHARED_PZAVG          (WRUNIPZ_SHARED_VACCAVG    + _32b_SIZE_)          // PZ used (past second) bits 0..6
 
 // shared memory for submitting new 'event tables'                                      

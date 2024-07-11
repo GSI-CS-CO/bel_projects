@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 03-May-2022
+ *  version : 11-Jul-2024
  *
  *  command-line interface for wrunipz
  *
@@ -150,12 +150,11 @@ void printCycle(uint32_t cycles, uint32_t tCycleAvg, uint32_t msgFreqAvg, uint32
 } // printCycle
 
 
-void printDiags(uint32_t nCycles, uint64_t nMessages, int32_t dtMax, int32_t dtMin, int32_t cycJmpMax, int32_t cycJmpMin, uint32_t nLate)
+void printDiags(uint32_t nCycles, uint64_t nMessages, int32_t dtMax, int32_t dtMin, int32_t cycJmpMax, int32_t cycJmpMin)
 {
   printf("\nwr-unipz: statistics ...\n");
   printf("# of cycles           : %010u\n",   nCycles);
   printf("# of messages         : %010lu\n",  nMessages);
-  printf("# of late messages    : %010u\n",   nLate);
   printf("dt min [us]           : %08.1f\n",  (double)dtMin / 1000.0);
   printf("dt max [us]           : %08.1f\n",  (double)dtMax / 1000.0);
   printf("cycle jump min [us]   : %08.1f\n",  (double)cycJmpMin / 1000.0);
@@ -381,7 +380,7 @@ int main(int argc, char** argv) {
         if ((statusArray >> i) & 0x1)  printf("    status bit is set : %s\n", wrunipz_status_text(i));
       } // for i
       wrunipz_info_read(ebDevice, &cycles, &tCycle, &fMessages, &nLate, &vaccAvg, &pzAvg, &messages, &dtMax, &dtMin, &cycJmpMax, &cycJmpMin);
-      printDiags(cycles, messages, dtMax, dtMin, cycJmpMax, cycJmpMin, nLate);
+      printDiags(cycles, messages, dtMax, dtMin, cycJmpMax, cycJmpMin);
     } // "diag"
 
     if (!strcasecmp(command, "ftestfull")) {

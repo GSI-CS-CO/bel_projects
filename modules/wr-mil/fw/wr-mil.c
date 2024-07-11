@@ -619,7 +619,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       } // if systime
       else flagIsLate = 0;
 
-      // max value of offset done
       offsDone = sysTime - recDeadline;
 
       // handle UTC events; here the UTC time (- offset) is distributed as a series of MIL telegrams
