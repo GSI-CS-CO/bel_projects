@@ -7,6 +7,7 @@ set -e
 # ./jenkinsBuild 8 for firmware with 8 threads
 # ./jenkinsBuild 32 for firmware with 32 threads
 uname -a
+ssh root@fel0069.acc.gsi.de 'uname -a'
 # create links needed for Rocky-9 environment
 date
 export DATAMASTER=tcp/fel0069.acc.gsi.de
