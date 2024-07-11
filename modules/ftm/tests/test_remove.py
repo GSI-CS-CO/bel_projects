@@ -121,7 +121,7 @@ class DmSchedRemove(dm_testbench.DmTestbench):
     self.downloadFile0 = self.scheduleFile0.replace('.dot', '-download.dot')
     self.downloadFile1 = self.scheduleFile1.replace('.dot', '-download.dot')
     self.downloadFile2 = self.scheduleFile2.replace('.dot', '-download.dot')
-    self.snoopToCsvWithAction(snoopFile, self.actionRemove4, duration=2)
+    self.snoopToCsvWithAction(snoopFile, self.actionRemove4, duration=3)
     self.startAndCheckSubprocess(('scheduleCompare', '-s', '-u', self.schedulesFolder + self.scheduleFile0, self.downloadFile0), [0], 0, 0)
     self.deleteFile(self.downloadFile0)
     self.startAndCheckSubprocess(('scheduleCompare', '-s', '-u', self.schedulesFolder + self.downloadFile1, self.downloadFile1), [0], 0, 0)
@@ -137,8 +137,7 @@ class DmSchedRemove(dm_testbench.DmTestbench):
     Stop the pattern and remove part of the schedule.
     Add part of the schedule with a switch node instead of tmsg.
     """
-    self.addSchedule(self.scheduleFile0)
-    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'A'), [0], 1, 0)
+    self.startPattern(self.scheduleFile0, 'A')
     self.delay(1.0)
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile0])
     self.startAndCheckSubprocess([self.binaryDmCmd, self.datamaster, 'stoppattern', 'A'])
