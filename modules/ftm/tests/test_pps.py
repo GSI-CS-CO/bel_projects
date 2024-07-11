@@ -48,7 +48,6 @@ class DmPps(dm_testbench.DmTestbench):
     self.scheduleFile1 = 'pps-test0-1.dot'
     self.downloadFile0 = 'pps-test0-0-download.dot'
     self.downloadFile1 = 'pps-test0-1-download.dot'
-    self.addSchedule(self.scheduleFile0)
     self.snoopToCsvWithAction(snoopFile, self.actionPpsAdd0, duration=1)
     self.startAndCheckSubprocess(('scheduleCompare', '-s', '-u', self.schedulesFolder + self.scheduleFile0, self.downloadFile0), [0], 0, 0)
     self.deleteFile(self.downloadFile0)
@@ -65,6 +64,8 @@ class DmPps(dm_testbench.DmTestbench):
     Again start pattern A. The flow command triggers the next messages.
     At the end, 12 messages are produced and the pattern loops in block B_A.
     """
+    self.delay(0.1)
+    self.addSchedule(self.scheduleFile0)
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'A'), [0], 1, 0)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile0), [0], 0, 0)
     self.addSchedule(self.scheduleFile1)
