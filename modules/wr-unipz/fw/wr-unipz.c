@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 28-Jun-2024
+ *  version : 11-Jul-2024
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
@@ -435,6 +435,8 @@ void extern_clearDiag()
   nMsgAct        = 0;
   nMsgPrev       = 0;
   statusArray    = 0;
+  maxComLatency  = 0;
+  maxOffsDone    = 0;
 } // clearDiag
 
 
@@ -784,7 +786,7 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       break;
   } // switch evtCode
 
-  comLatency = (int32_t)(getSysTime() - recDeadline);
+  offsDone = (int32_t)(getSysTime() - tMIL);
 
   // write MIL Event received via internal bus to our own ECA input
   // this allows debugging using saft-ctl snoop ...
@@ -820,7 +822,8 @@ int main(void) {
   status         = COMMON_STATUS_OK;
   buildID        = (uint32_t *)(INT_BASE_ADR + BUILDID_OFFS);
 
-  // init 
+  // init
+  pp_printf("wr-unipz: huhu\n");
   init();
   initSharedMem(&reqState, &sharedSize);                               // initialize shared memory THIS MUST BE CALLED FIRST
   fwlib_init((uint32_t *)_startshared, cpuRamExternal, SHARED_OFFS, sharedSize, "wr-unipz", WRUNIPZ_FW_VERSION); // init common stuff
