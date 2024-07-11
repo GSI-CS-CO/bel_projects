@@ -3,38 +3,47 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-Jan-2023
+ *  version : 28-Jun-2024
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
  *
  *  source code UNIPZ:
- *  - https://www-acc.gsi.de/viewvc/view/devacc/trunk/eqmodels/pz/common/src/pzus-dpr-def.h (relevant header file)
- *  - https://www-acc.gsi.de/viewvc/view/devacc/trunk/eqmodels/pz/pzu/src/pzu-eqms.c (source code for PZ 1..7)
- *  - https://www-acc.gsi.de/viewvc/view/devacc/trunk/eqmodels/pz/pzus/src/pzus-helper.hh (masks and definitions)
+ *  - https://www-acc.gsi.de/viewvc/view/devacc/eqmodels/pz/common/src/pzus-dpr-def.h (relevant header file)
+ *  - https://www-acc.gsi.de/viewvc/view/devacc/eqmodels/pz/pzu/src/pzu-eqms.c (source code for PZ 1..7)
+ *  - https://www-acc.gsi.de/viewvc/view/devacc/eqmodels/pz/common/src/pzus-dpr-def.h (relevant header file)
+ *  - https://www-acc.gsi.de/viewvc/view/devacc/eqmodels/pz/common/src/pzus-dpr-def.h (relevant header file)
+ *  - https://www-acc.gsi.de/viewvc/view/devacc/eqmodels/pz/pzu/src/pzu-eqms.c (source code for PZ 1..7)
+ *  - https://www-acc.gsi.de/viewvc/view/devacc/eqmodels/pz/pzu/src/pzu-eqms.c (source code for PZ 1..7)
+ *  - https://www-acc.gsi.de/viewvc/view/devacc/eqmodels/pz/common/src/pzus-dpr-def.h (relevant header file)
+ *  - https://www-acc.gsi.de/viewvc/view/devacc/eqmodels/pz/pzu/src/pzu-eqms.c (source code for PZ 1..7)
+ *  - https://www-acc.gsi.de/viewvc/view/devacc/eqmodels/pz/pzus/src/pzus-helper.hh (masks and definitions)
  * 
  *   events for the next cycle (received from the SuperPZ) have the following format:
  *   see code UNIPZ (defined in pzus-dpr-def-h, lines 72 ff; example: 0x10(use 'Kanal 1'), 0x00(use 'Kanal 0')
  *       15: value 0: announce event
  *           value 1: service event
  *   12..14: in case of announce event:
- *       14: short chopper pulse
- *       13: no    chopper pulse
- *       12: channel ('Kanal Nummer'; UNIPZ has max two channels - 1 bit is sufficient)
+ *       14: short chopper pulse                      (bits 12..15: value 0x3)
+ *       13: no    chopper pulse                      (bits 12..15: value 0x2)
+ *           ** this bit has to be copied to bit 14 of a MIL telegram! **
+ *       12: channel                                  (bits 12..15: value 0x1)                 
+             ('Kanal Nummer'; UNIPZ has max two channels - 1 bit is sufficient)
  *   12..14: in case of service event: (info: service events are sent AFTER timing events have been sent)
  *           value 111: set all magnets to zero value (bits 12..15: value 0xf)
  *           value 110: send prep event for vacc      (bits 12..15: value 0xe)
  *           value 101: send prep event NOW           (bits 12..15: value 0xd) special case: don't wait until timing events have been sent
+ *           value 100: unlock A4                     (bits 12..15: value 0xc) special case: don't wait until timing events have been sent
  *    8..11: virt acc
  *    0...7: value 1..7 equals # of PZ (** counting starts at 1(!) **)
  * 
  *   a '50 Hz sync' event (received from SuperPZ) has the following format:
  *    8..15: don't care
- *    0...7: 0x33
+ *    0...7: 0d33
  *
  *   a 'sync data' event (recevied from SuperPZ) has the following format:
  *    8..15: don't care
- *    0...7: 0x32
+ *    0...7: 0d32
  *  
  * -------------------------------------------------------------------------------------------
  * License Agreement for this software:
@@ -63,7 +72,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define WRUNIPZ_FW_VERSION 0x000214                                     // make this consistent with makefile
+#define WRUNIPZ_FW_VERSION 0x000216                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -175,28 +184,32 @@ uint64_t writeTM(uint32_t uniEvt, uint64_t tStart, uint32_t pz, uint32_t virtAcc
 
   // convert UNILAC event data
   // see wr-unipz.h -> 'typedef struct dataTable' on definition of bits in data
-  t        = (uint32_t)((uniEvt >> 16) & 0xffff);      // get time relative to begining of UNILAC cycle [us]
-  evtCode  = (uint32_t)( uniEvt        & 0x00ff);      // get event number
-  evtData  = (uint32_t)((uniEvt >> 12) & 0x000f);      // get event data
-  flags    = (uint32_t)( flagNochop          & 0x1) |  // 'no chopper bit'
+  t         = (uint32_t)((uniEvt >> 16) & 0xffff);      // get time relative to begining of UNILAC cycle [us]
+  evtCode   = (uint32_t)( uniEvt        & 0x00ff);      // get event number
+  evtData   = (uint32_t)((uniEvt >> 12) & 0x000f);      // get event data from set-values
+  if (evtCode != EVT_COMMAND) { 
+    evtData = evtData & 0xb;                            // clear third bit; third bit will carry 'no beam' information
+    evtData = evtData | ((flagNochop & 0x1) << 2);      // fill  third bit with 'no beam' information
+  } // if evtCode
+    flags   = (uint32_t)( flagNochop         & 0x1) |  // 'no chopper bit'
              (uint32_t)((flagShortchop << 1) & 0x2);   // 'short chopper bit'
 
   // fill timing message
-  id       = ((uint64_t)0x1       << 60)     |         // FID = 1
-             ((uint64_t)(gid[pz]) << 48)     |         // GID
-             ((uint64_t)evtCode   << 36)     |         // EVTNO
-             ((uint64_t)0x0       << 32)     |         // flags
-             ((uint64_t)virtAcc   << 20)     |         // SID
-             ((uint64_t)0x0       <<  6)     |         // BPID
-             ((uint64_t)0x0       <<  5)     |         // reserved
-             ((uint64_t)0x0       <<  4)     |         // reqNoBeam
-             ((uint64_t)0x0            );              // virtAcc only for DM-UNIPZ gateway
-  param    = ((uint64_t)flags     << 32)     |         // parameter field high bits
-             ((uint64_t)evtData        );              // parameter field low bits
+  id        = ((uint64_t)0x1       << 60)     |         // FID = 1
+              ((uint64_t)(gid[pz]) << 48)     |         // GID
+              ((uint64_t)evtCode   << 36)     |         // EVTNO
+              ((uint64_t)0x0       << 32)     |         // flags
+              ((uint64_t)virtAcc   << 20)     |         // SID
+              ((uint64_t)0x0       <<  6)     |         // BPID
+              ((uint64_t)0x0       <<  5)     |         // reserved
+              ((uint64_t)0x0       <<  4)     |         // (reqNoBeam, not here)
+              ((uint64_t)evtData        );              // last four bits; see https://www-acc.gsi.de/wiki/ProjectMgmt/MappingWrMilSisEsrUnilac#A_5_Decision
+  param     = ((uint64_t)flags     << 32)     |         // parameter field high bits, does carry flags
+              ((uint64_t)0x0            );              // parameter field low bits, compatibility to 'old' wr-unipz (to be removed)
   
   // calc deadline
-  offset   = (uint64_t)t * 1000;                       // convert offset -> ns
-  deadline = tStart + (uint64_t)offset + (uint64_t)WRUNIPZ_MILCALIBOFFSET; 
+  offset    = (uint64_t)t * 1000;                       // convert offset us -> ns
+  deadline  = tStart + (uint64_t)offset + (uint64_t)WRUNIPZ_MILCALIBOFFSET; 
 
   // send message
   fwlib_ebmWriteTM(deadline, id, param, 0x0, 1);
@@ -726,13 +739,14 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       } // if !SERVICE
       else {                                                    // B: super PZ has sent info on a service event: bits 12..15 encode event type
         DBPRINT3("wr-unipz: service event for pz %d, vacc %d\n", ipz, virtAcc);
-        servOffs = getVaccLen(bigData[ipz][actChan[ipz] * WRUNIPZ_NVACC + actVacc[ipz]]) & 0xffff;     // when to play service event relative to start of cycle [us]
-        tmpOffs  = (getSysTime() - syncPrevT4 + (uint64_t)COMMON_LATELIMIT) / 1000;                    // last possibility to play service event without risking of a late message [us]
+        servOffs  = getVaccLen(bigData[ipz][actChan[ipz] * WRUNIPZ_NVACC + actVacc[ipz]]) & 0xffff;    // when to play service event relative to start of cycle [us]
+        servOffs += (uint32_t)WRUNIPZ_TDIFFMIL;                                                        // add minimum time difference between sending transmission of MIL telegrams [us]
+        tmpOffs   = (getSysTime() - syncPrevT4 + (uint64_t)COMMON_LATELIMIT) / 1000;                   // last possibility to play service event without risking of a late message [us]
         if (servOffs < tmpOffs) {
           servOffs = tmpOffs; 
           /* pp_printf("wr-unipz: prevent late service message\n"); */
         } // if tmpOffs
-        servEvt  = 0x0;
+        servEvt   = 0x0;
         if (evtData == WRUNIPZ_EVTDATA_PREPACC) {
           servEvt = EVT_AUX_PRP_NXT_ACC | ((virtAcc & 0xf) << 8) | ((servOffs & 0xffff)        << 16); // send after last event of current PZ cycle
           writeTM(servEvt, syncPrevT4, ipz, virtAcc, 0, 0);                                            // send message

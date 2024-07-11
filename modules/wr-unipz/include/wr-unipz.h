@@ -27,6 +27,7 @@
 #define WRUNIPZ_MILCALIBOFFSET       29000    // calibration offset to MIL event bus [ns]; MIL events are always 'late' due its protocol; this offset must be added to WR deadlines
 #define WRUNIPZ_QQOFFSET               500    // offset for sending special service event for QQ [us] /* chk: QQ is breaking the concept of WR */
 #define WRUNIPZ_A4OFFSET               500    // offset for sending special service event for A4 [us] /* chk: A4 is breaking the concept of WR */
+#define WRUNIPZ_TDIFFMIL                25    // minimmum time difference [us] between sending telegrams to the MIL bus
 
 // numbers for UNIPZ
 #define WRUNIPZ_NEVT                    20    // # of events per virt acc
@@ -86,10 +87,11 @@
 #define WRUNIPZ_EVTDATA_PREPACC        0xe    // service event: execute preparation event for virt acc 
 #define WRUNIPZ_EVTDATA_ZEROACC        0xf    // set all magnets to zero value
 
-// event codes for service events (sent by wr-unipz)
+// event codes for events (sent by wr-unipz)
 #define EVT_AUX_PRP_NXT_ACC           0x11    // set values in magnet prep. cycles
 #define EVT_UNLOCK_ALVAREZ            0x15    // unlock A4 for next pulse 
 #define EVT_MAGN_DOWN                 0x19    // set magnets to zero current
+#define EVT_COMMAND                   0xff    // event command
 
 
 typedef struct dataTable {                    // table with _one_ virtAcc for _one_ Pulszentrale
@@ -97,8 +99,15 @@ typedef struct dataTable {                    // table with _one_ virtAcc for _o
   uint32_t prepFlags;                         // if bit 'n' is set, data[n] is prep data
   uint32_t evtFlags;                          // if bit 'n' is set, data[n] is event data  
   uint32_t data[WRUNIPZ_NEVT];                // bits 0..7 'event code', bits 8..11 reserved, bits 12..15 'event data', bits 16..31 offset [us]
-                                              // 'event data' is _not_ as desribed in https://www-acc.gsi.de/data/documentation/eq-models/pzus/gm-pzus.pdf (page 72)
-                                              // instead: bit 15 ('high current'), bit 14 ('no chopper'), bit 13 ('high brho'), bit 12 (reserved)
+                                              // 'event data':
+                                              // WRUNIPZ_EVT_PZ1..PZ7: bit 15 (n/a), bit 14 ('short chopper'/ unused (?)), bit 13 ('no chopper'), bit 12 ('channel')
+                                              // EVT_Prep_Next_Acc   : https://www-acc.gsi.de/data/documentation/eq-models/pzus/gm-pzus.pdf (page 72)
+                                              //                       bit 15 ('high current'), bit 14 (unused)      , bit 13 (short chopper), bit 12 (no chopper)
+                                              // Beam Status (??)    : bit 15 ('high current'), bit 14 ('no chopper'), bit 13 ('high brho')  , bit 12 (reserved)
+                                              // EVT_COMMAND         : PZ-Kennung: 1(SIS), 2(ESR), 9(QR), 10(QL), 11(QN), 12(UN), 13(UH), 14(UA), 15(TK)
+                                              // Commands, 0d200..208: ??
+                                              // UTC (0xe0..e4)      : UTC time in special format, see code or documentation
+                                              // all anderen Evts    : 0x0
 } dataTable;
 
 // ****************************************************************************************
