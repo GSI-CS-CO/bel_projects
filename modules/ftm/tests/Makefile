@@ -18,11 +18,13 @@ IGNORE = --ignore=dmPerformance/ --ignore=messageCounter/ --ignore=other/ --igno
 OPTIONS ?=
 
 test:
+	rm -f dm-test-timestamps.txt
 	TEST_BINARY_DM_CMD="$(TEST_DM_CMD)" TEST_BINARY_DM_SCHED="$(TEST_DM_SCHED)" LD_LIBRARY_PATH="$(CARPEDM_PATH):$(LD_LIBRARY_PATH)" \
 		SNOOP_COMMAND="$(SNOOP)" DATAMASTER="$(DATAMASTER)" TEST_SCHEDULES=schedules/ \
 		python3 -m pytest $(IGNORE) $(OPTIONS)
 
 remote:
+	rm -f dm-test-timestamps.txt
 	TEST_BINARY_DM_CMD="$(TEST_DM_CMD)" TEST_BINARY_DM_SCHED="$(TEST_DM_SCHED)" LD_LIBRARY_PATH="$(CARPEDM_PATH):$(LD_LIBRARY_PATH)" \
 		SNOOP_COMMAND="$(SNOOP_FEL0069)" DATAMASTER="tcp/fel0069.acc.gsi.de" TEST_SCHEDULES=schedules/ \
 		python3 -m pytest --junitxml=dm-test-result.xml $(IGNORE) $(OPTIONS)

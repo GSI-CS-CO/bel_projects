@@ -27,7 +27,7 @@ class SimultaneousThreads(dm_testbench.DmTestbench):
     self.downloadFile0 = self.scheduleFile0.replace('.dot', '-download.dot')
     snoopFile = 'snoop_' + self.scheduleFile0.replace('.dot', '.csv')
     threadMask = self.generateSchedule(self.schedulesFolder + self.scheduleFile0, threads)
-    self.snoopToCsvWithAction(snoopFile, self.actionSimultaneousThreads, duration=2)
+    self.snoopToCsvWithAction(snoopFile, self.actionSimultaneousThreads, duration=3)
     counts = self.analyseDmCmdOutput('00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'[:self.cpuQuantity*self.threadQuantity], useVerbose=True)
     key1 = ''
     for key in counts:
@@ -50,7 +50,7 @@ class SimultaneousThreads(dm_testbench.DmTestbench):
     Download the schedule for later compare.
     """
     self.startPattern(self.scheduleFile0, 'MAIN')
-    self.delay(1.0)
+    self.delay(1.5)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile0), [0], 0, 0)
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'stoppattern', 'MAIN'), [0], 0, 0)
 
