@@ -1,7 +1,5 @@
 digraph G {
-graph [
-name="EsrStacking-compact"
-]
+  graph [mindist=1.0 name="EsrStacking-compact" nodesep=0.6 overlap=false rankdir=TB ranksep=1.0 root=Demo]
 "ESR_20Nov_Stacking_new_SL.C1.3_EXIT" [beamproc=undefined, bpentry=false, bpexit=false, color=black, fillcolor=white, patentry=false, patexit=false, pattern=ESR_20Nov_Stacking_new_SL, qhi=false, qil=false, qlo=false, shape=rectangle, style=filled, tperiod=10000, type=block];
 "ESR_20Nov_Stacking_new_SL.C1.3_MANIP_PERFORM_EXIT" [beamproc=undefined, bpentry=false, bpexit=false, color=black, fillcolor=white, patentry=false, patexit=false, pattern=ESR_20Nov_Stacking_new_SL, qhi=false, qil=false, qlo=true, shape=rectangle, style=filled, tperiod=310000000, type=block];
 "ESR_20Nov_Stacking_new_SL.C1.3_MANIP_RESTART_FGS_ENTRY" [beamproc=undefined, bpentry=false, bpexit=false, color=black, fillcolor=white, patentry=false, patexit=false, pattern=ESR_20Nov_Stacking_new_SL, qhi=false, qil=false, qlo=false, shape=rectangle, style=filled, tperiod=10000, type=block];

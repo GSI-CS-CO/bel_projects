@@ -1,7 +1,5 @@
 digraph G {
-graph [
-name="star4-compact"
-]
+  graph [name="star4-compact"]
 node1;
 node2;
 node3;

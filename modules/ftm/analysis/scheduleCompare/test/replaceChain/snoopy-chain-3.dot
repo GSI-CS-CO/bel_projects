@@ -1,7 +1,5 @@
 digraph G {
-graph [
-name="-compact"
-]
+  graph [mindist=1.0 name="-compact" nodesep=0.6 overlap=false rankdir=TB ranksep=1.0 root=Demo]
 CRYRING_C_2019_november_extraction_000 [beamin=0, beamproc=undefined, bpentry=false, bpexit=false, bpid=10, color=black, evtno=259, fid=1, fillcolor=green, gid=200, id="0x10c8103000100280", par="0x0000040000000000", patentry=false, patexit=false, pattern=CRYRING_C_2019_november_extraction, reqnobeam=0, shape=oval, sid=1, style=filled, tef=0, toffs=0, type=tmsg, vacc=0];
 CRYRING_C_2019_november_extraction_BLOCK [beamproc=undefined, bpentry=false, bpexit=false, color=black, fillcolor=green, patentry=false, patexit=false, pattern=CRYRING_C_2019_november_extraction, qhi=false, qil=false, qlo=false, shape=rectangle, style=filled, tperiod=6892000000, type=block];
 CRYRING_C_2019_november_extraction_ENTRY [beamproc=undefined, bpentry=false, bpexit=false, color=darkorange3, fillcolor=green, patentry=true, patexit=false, pattern=CRYRING_C_2019_november_extraction, penwidth=2, qhi=false, qil=false, qlo=false, shape=rectangle, style=filled, tperiod=10000, type=block];

@@ -55,7 +55,7 @@ ScheduleGraph.o: ScheduleGraph.h
 
 scheduleCompact.o: scheduleCompact.h scheduleCompare.h scheduleIsomorphism.h printSchedule.h
 
-replaceChain.o: replaceChain.h configuration.h
+replaceChain.o: replaceChain.h configuration.h ScheduleEdge.h ScheduleVertex.h ScheduleGraph.h printSchedule.h parseSchedule.h scheduleCompact.h
 
 replaceChainImpl.o: replaceChainImpl.h replaceChain.h configuration.h
 
