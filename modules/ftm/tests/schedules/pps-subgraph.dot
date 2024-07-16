@@ -4,7 +4,7 @@ name="pps-subgraph"
 edge [type=defdst style=filled fillcolor=white color=black]
   subgraph subgraph1 {
     node [cpu=0 pattern=A]
-    EVT_01 [type=tmsg fid=1 gid="4095", evtno="4095", sid="4095", bpid="16383" par=1024 toffs=0 patentry=1 shape=oval fillcolor=green penwidth=2 color=darkorange3]
+    EVT_01 [type=tmsg fid=1 gid="4095", evtno="4095", sid="4095", bpid="16383" id="0x1ffffff0ffffffc0" par=1024 toffs=0 patentry=1 shape=oval fillcolor=green penwidth=2 color=darkorange3]
     B_00 [type=block tperiod=1000000000 qlo=1 patexit=1 shape=rectangle fillcolor=green penwidth=2 color=purple]
     EVT_01 -> B_00 -> EVT_01
   }

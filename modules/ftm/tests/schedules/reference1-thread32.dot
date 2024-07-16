@@ -1,0 +1,13 @@
+digraph "reference1" {
+  graph [rankdir=TB nodesep=0.6 mindist=1.0 ranksep=1.0 overlap=false]
+  name="reference1"
+  node [cpu=0 fid=1 toffs=0 gid=200 beamin=0 bpcstart=0 sid=1 bpid=3 reqnobeam=0 vacc=0 tef=0 shape=oval style=filled fillcolor=green color=black]
+  B_PAT1 [type=block tperiod=100000000 pattern=PAT1 patexit=1 qlo=1 shape=rectangle color=purple]
+  T_PAT1 [type=tmsg pattern=PAT1 patentry=1 evtno=259 id="0x10c81030001000c0" par="0x0000000010000fa0" color=darkorange3]
+  T_PAT1 -> B_PAT1 -> T_PAT1 [type=defdst color=red]
+
+  B_PAT2 [type=block tperiod=100000000 pattern=PAT2 patexit=1 qlo=1 shape=rectangle color=purple]
+  T_PAT2 [type=tmsg pattern=PAT2 patentry=1 evtno=260 id="0x10c81040001000c0" par="0x10000fe800000000" color=darkorange3]
+  T_PAT2 -> B_PAT2->T_PAT2 [type=defdst color=red]
+  T_PAT2 -> T_PAT1 [type=reference color=pink fieldtail="0x10" fieldhead="0x14" fieldwidth=64]
+}

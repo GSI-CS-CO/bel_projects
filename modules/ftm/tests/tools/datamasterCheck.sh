@@ -3,8 +3,9 @@
 # Usage:
 # ./datamasterCheck.sh [remote] [<hostname>]
 # hostname: with correct domain or subdomain.
-# if no argument is given, the $(hostname) is used.
-# if 'remote' keyword is used, ssh is used for eb-mon / eb-info commands
+# If hostname ends with '.acc', argument 'remote' is assumed.
+# If no argument is given, the $(hostname) is used.
+# If 'remote' keyword is used, ssh is used for eb-mon / eb-info commands
 # and dm-cmd is used with socat (tcp/<hostname>).
 
 datamasterInfo() {
@@ -46,19 +47,23 @@ remoteDatamasterInfo() {
   echo " PCI on host $DM_HOST"
   ssh root@$DM_HOST 'lspci -k | grep "Class 6800"'
   ssh root@$DM_HOST 'ls -l /dev/wb*'
+  if [ -z "$TR_HOST" ]
+  then
+    TR_HOST=$DM_HOST
+  fi
   if ! [ -z "$TR0" ]
   then
     echo
     echo
-    echo "Timing-Receiver:" ; ssh root@$DM_HOST "eb-mon -vi $TR0" ; ssh root@$DM_HOST "eb-info $TR0"
-    echo "$TR0 WR time: "; ssh root@$DM_HOST "eb-mon -d $TR0"
+    echo "Timing-Receiver: $TR_HOST" ; ssh root@$TR_HOST "eb-mon -vi $TR0" ; ssh root@$TR_HOST "eb-info $TR0"
+    echo "$TR0 WR time: "; ssh root@$TR_HOST "eb-mon -d $TR0"
   fi
   if ! [ -z "$DM" ]
   then
     echo
     echo
-    echo "Datamaster:" ; ssh root@$DM_HOST "eb-mon -yi $DM" ; ssh root@$DM_HOST "eb-info $DM"
-    echo "$DM datamaster host time: "; ssh root@$DM_HOST 'date -Iseconds'
+    echo "Datamaster Gateware Image:" ; ssh root@$DM_HOST "eb-info $DM"
+    echo "$DM datamaster host time: "; ssh root@$DM_HOST 'date +"%Y-%m-%dT%H:%M:%s%z"'
     echo "$DM datamaster IP: "; ssh root@$DM_HOST "eb-mon -i $DM"
     echo "$DM datamaster WR sync status: "; ssh root@$DM_HOST "eb-mon -y $DM"
     echo "$DM datamaster link status: "; ssh root@$DM_HOST "eb-mon -l $DM"
@@ -74,11 +79,13 @@ remoteDatamasterInfo() {
   ssh root@$DM_HOST 'df -h /var/log/' 2>&1 || true
 }
 
+# The BEL_PROJECTS_PATH is used to run a simple test.
 if [ ! $BEL_PROJECTS_PATH ]
 then
   BEL_PROJECTS_PATH=$HOME/bel_projects/dev
 fi
 
+# Checking the arguments.
 if [ $# -eq 2 ] && [ "$1" = "remote" ]
 then
   DM_HOST=$2
@@ -110,12 +117,38 @@ then
   DM=dev/wbm0
   TR0=dev/wbm1
   remoteDatamasterInfo
+elif [ "$DM_HOST" = "tsl014" ]
+then
+  DM=dev/wbm0
+  TR0=dev/wbm0
+  TR_HOST=scuxl0001.acc.gsi.de
+  if [ "$1" = "remote" ]
+  then
+    remoteDatamasterInfo
+  else
+    datamasterInfo
+  fi
+elif [ "$DM_HOST" = "tsl014.acc" ]
+then
+  DM=dev/wbm0
+  TR0=dev/wbm0
+  TR_HOST=scuxl0001.acc.gsi.de
+  remoteDatamasterInfo
+elif [ "$DM_HOST" = "fel0090.acc" ]
+then
+  DM=dev/wbm0
+  TR0=""
+  remoteDatamasterInfo
 elif [ "$DM_HOST" = "fel0101.acc" ]
 then
-  echo "On host $DM_HOST: not implemented"
+  DM=dev/wbm0
+  TR0=""
+  remoteDatamasterInfo
 elif [ "$DM_HOST" = "tsl017.acc" ]
 then
-  echo "On host $DM_HOST: not implemented"
+  DM=dev/wbm0
+  TR0=""
+  remoteDatamasterInfo
 elif [ "$DM_HOST" = "tsl018" ]
 then
   DM=dev/wbm0

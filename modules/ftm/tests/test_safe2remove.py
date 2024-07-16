@@ -108,20 +108,22 @@ class UnitTestSafe2Remove(dm_testbench.DmTestbench):
 
   @pytest.mark.slow
   def test_safe2remove_group_4_9_1(self):
-    self.safe2removeTestcasePerformance('groups_4_nonDefaultPatterns_9_blocksPerPattern_1', delta(seconds=15))
+    if self.cpuQuantity > 3:
+      self.safe2removeTestcasePerformance('groups_4_nonDefaultPatterns_9_blocksPerPattern_1', delta(seconds=15))
 
   @pytest.mark.slow
   def test_safe2remove_group_4_9_10(self):
-    self.safe2removeTestcasePerformance('groups_4_nonDefaultPatterns_9_blocksPerPattern_10', delta(seconds=20))
+    if self.cpuQuantity > 3:
+      self.safe2removeTestcasePerformance('groups_4_nonDefaultPatterns_9_blocksPerPattern_10', delta(seconds=20))
 
   @pytest.mark.slow
   def test_safe2remove_group_4_9_150(self):
-    self.safe2removeTestcasePerformance('groups_4_nonDefaultPatterns_9_blocksPerPattern_150', delta(seconds=95))
+    if self.cpuQuantity > 3:
+      self.safe2removeTestcasePerformance('groups_4_nonDefaultPatterns_9_blocksPerPattern_150', delta(seconds=95))
 
   def test_safe2remove_blockflow1(self):
     self.startAllPattern('block-flow1.dot')
-    file_name = 'snoop_block-flow1.csv'
-    parameter_column = 20
-    self.snoopToCsv(file_name, duration=5)
-    self.analyseFrequencyFromCsv(file_name, parameter_column)
-    self.deleteFile(file_name)
+    fileName = 'snoop_block-flow1.csv'
+    self.snoopToCsv(fileName, duration=5)
+    self.analyseFrequencyFromCsv(fileName, 20, checkValues={'0x00000000000000a1': '>100', '0x00000000000000a2': '>100', '0x00000000000000b1': '>300', '0x00000000000000b2': '>300'})
+    self.deleteFile(fileName)

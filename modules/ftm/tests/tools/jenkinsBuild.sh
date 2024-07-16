@@ -6,7 +6,8 @@ set -e
 # script for automated datamaster tests with jenkins, including make of test prerequisites
 # ./jenkinsBuild 8 for firmware with 8 threads
 # ./jenkinsBuild 32 for firmware with 32 threads
-
+uname -a
+ssh root@fel0069.acc.gsi.de 'uname -a'
 # create links needed for Rocky-9 environment
 date
 export DATAMASTER=tcp/fel0069.acc.gsi.de
@@ -34,6 +35,8 @@ export PATH=$PATH:$WORKSPACE/tools/:$WORKSPACE/modules/ftm/bin/:$WORKSPACE/modul
 # build ftm lm32 firmware
 THR_QTY=$THR_QTY PATH=$PATH:$HOME/.local/bin:$WORKSPACE/lm32-toolchain/bin/ make -C $WORKSPACE/syn/gsi_pexarria5/ftm/ ftm.bin
 # load the required lm32 firmware into fel0069
+# use eb-ls in fwload_all.sh from workspace
+export PATH=$PATH:$WORKSPACE/ip_cores/etherbone-core/api/tools/
 $WORKSPACE/syn/gsi_pexarria5/ftm/fwload_all.sh $DATAMASTER $WORKSPACE/syn/gsi_pexarria5/ftm/ftm.bin
 # run all tests; date: timestamp to get duration of tests.
 date

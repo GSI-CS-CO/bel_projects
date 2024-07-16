@@ -21,9 +21,9 @@ subgraph cpu1 {
   Ori_T2_A  [type=origin pattern=MAIN patentry=0 toffs=0 thread=2]
   Ori_T3_B  [type=origin pattern=MAIN patentry=0 toffs=0 thread=3]
 
-  StThrT1   [type=startthread pattern=MAIN patentry=0 toffs=  235 startoffs=0 thread=1]
-  StThrT2   [type=startthread pattern=MAIN patentry=0 toffs=  235 startoffs=10000000 thread=2]
-  StThrT3   [type=startthread pattern=MAIN patentry=0 toffs=10000 startoffs=0 thread=3]
+  StThrT1   [type=startthread pattern=MAIN patentry=0 toffs=  235 startoffs=0 thread="0x2"]
+  StThrT2   [type=startthread pattern=MAIN patentry=0 toffs=  235 startoffs=10000000 thread="0x4"]
+  StThrT3   [type=startthread pattern=MAIN patentry=0 toffs=10000 startoffs=0 thread="0x8"]
 
   Evt_MAIN  [type=tmsg pattern=MAIN patentry=0 toffs=20000 fid=1 evtno=1 par=1]
   B_MAIN    [type=block pattern=MAIN patexit=1 tperiod=1000000000 qlo=1]
