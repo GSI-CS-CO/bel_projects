@@ -1,7 +1,5 @@
 digraph G {
-graph [
-name="-compact"
-]
+  graph [mindist=1.0 name="-compact" nodesep=0.6 overlap=false rankdir=TB ranksep=1.0 root=Demo]
 "ESR_FAST_TO_YRT1MH2_20211004_INT_TEST.C1.10_EXIT" [beamproc=undefined, bpentry=false, bpexit=false, color=black, fillcolor=green, patentry=false, patexit=false, pattern=ESR_FAST_TO_YRT1MH2_20211004_INT_TEST, qhi=false, qil=false, qlo=false, shape=rectangle, style=filled, tperiod=10000, type=block];
 "ESR_FAST_TO_YRT1MH2_20211004_INT_TEST.C1.10_MANIP_PERFORM_ENTRY" [beamproc=undefined, bpentry=false, bpexit=false, color=black, fillcolor=green, patentry=false, patexit=false, pattern=ESR_FAST_TO_YRT1MH2_20211004_INT_TEST, qhi=false, qil=false, qlo=false, shape=rectangle, style=filled, tperiod=10000, type=block];
 "ESR_FAST_TO_YRT1MH2_20211004_INT_TEST.C1.10_MANIP_PERFORM_EXIT" [beamproc=undefined, bpentry=false, bpexit=false, color=black, fillcolor=green, patentry=false, patexit=false, pattern=ESR_FAST_TO_YRT1MH2_20211004_INT_TEST, qhi=false, qil=false, qlo=true, shape=rectangle, style=filled, tperiod=318000000, type=block];

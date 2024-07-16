@@ -11,8 +11,21 @@ boost::dynamic_properties setDynamicProperties(ScheduleGraph& g, configuration& 
     dp.property("flags", boost::get(&ScheduleVertex::flags, g));
   }
   // attributes of the graph
+  // graph [root="Demo",rankdir = TB, nodesep = 0.6, mindist = 1.0, ranksep = 1.0, overlap = false]
   boost::ref_property_map<ScheduleGraph*, std::string> gName(boost::get_property(g, &GraphProperties::name));
   dp.property("name", gName);
+  boost::ref_property_map<ScheduleGraph*, std::string> gRoot(boost::get_property(g, &GraphProperties::root));
+  dp.property("root", gRoot);
+  boost::ref_property_map<ScheduleGraph*, std::string> gRankdir(boost::get_property(g, &GraphProperties::rankdir));
+  dp.property("rankdir", gRankdir);
+  boost::ref_property_map<ScheduleGraph*, std::string> gNodesep(boost::get_property(g, &GraphProperties::nodesep));
+  dp.property("nodesep", gNodesep);
+  boost::ref_property_map<ScheduleGraph*, std::string> gMindist(boost::get_property(g, &GraphProperties::mindist));
+  dp.property("mindist", gMindist);
+  boost::ref_property_map<ScheduleGraph*, std::string> gRanksep(boost::get_property(g, &GraphProperties::ranksep));
+  dp.property("ranksep", gRanksep);
+  boost::ref_property_map<ScheduleGraph*, std::string> gOverlap(boost::get_property(g, &GraphProperties::overlap));
+  dp.property("overlap", gOverlap);
   if (config.extraProperties) {
     boost::ref_property_map<ScheduleGraph*, std::string> gBb(boost::get_property(g, &GraphProperties::bb));
     boost::ref_property_map<ScheduleGraph*, std::string> g_draw_(boost::get_property(g, &GraphProperties::_draw_));
@@ -72,9 +85,13 @@ boost::dynamic_properties setDynamicProperties(ScheduleGraph& g, configuration& 
   dp.property("patexit", boost::get(&ScheduleVertex::patexit, g));
   dp.property("bpentry", boost::get(&ScheduleVertex::bpentry, g));
   dp.property("bpexit", boost::get(&ScheduleVertex::bpexit, g));
-  // attribute of edges
+  dp.property("section", boost::get(&ScheduleVertex::section, g));
+  // attributes of edges
   dp.property("type", boost::get(&ScheduleEdge::type, g));
   dp.property("color", boost::get(&ScheduleEdge::color, g));
+  dp.property("fieldhead", boost::get(&ScheduleEdge::fieldhead, g));
+  dp.property("fieldtail", boost::get(&ScheduleEdge::fieldtail, g));
+  dp.property("fieldwidth", boost::get(&ScheduleEdge::fieldwidth, g));
   if (config.extraProperties) {
     dp.property("_draw_", boost::get(&ScheduleEdge::_draw_, g));
     dp.property("_hdraw_", boost::get(&ScheduleEdge::_hdraw_, g));

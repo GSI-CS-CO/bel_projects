@@ -10,8 +10,15 @@
 #include "ScheduleEdge.h"
 
 class GraphProperties {
+  // graph [root="Demo",rankdir = TB, nodesep = 0.6, mindist = 1.0, ranksep = 1.0, overlap = false]
  public:
   std::string name = std::string("");
+  std::string root = std::string("");
+  std::string rankdir = std::string("");
+  std::string nodesep = std::string("");
+  std::string mindist = std::string("");
+  std::string ranksep = std::string("");
+  std::string overlap = std::string("");
   std::string xdotversion = std::string("");
   std::string _draw_ = std::string("");
   std::string bb = std::string("");

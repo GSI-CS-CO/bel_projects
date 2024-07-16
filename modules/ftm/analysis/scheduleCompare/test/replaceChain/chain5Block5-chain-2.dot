@@ -1,7 +1,5 @@
 digraph G {
-graph [
-name="chain5Block5-compact"
-]
+  graph [name="chain5Block5-compact"]
 "a
 ...(3)
 e" [label="a
