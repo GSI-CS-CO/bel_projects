@@ -1,0 +1,17 @@
+digraph G {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+Block0[cpu="0", flags="0x00108107", type="block", tperiod="1000000000", pattern="ref1", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green", penwidth=2, color = "purple"];
+Msg1[cpu="0", flags="0x00002002", type="tmsg", toffs="0", pattern="ref1", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="0", evtno="253", beamin="1", bpcstart="1", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x10000fdc00000000", par="0x1000101800225003", tef="0", shape     = "oval", fillcolor = "white", penwidth=2, color = "darkorange3"];
+Msg2[cpu="0", flags="0x00000102", type="tmsg", toffs="200000000", pattern="ref1", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="2", evtno="2", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1002002000000000", par="0x0000000000225002", tef="0", shape     = "oval", fillcolor = "green"];
+Msg3[cpu="0", flags="0x00000102", type="tmsg", toffs="300000000", pattern="ref1", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="3", evtno="3", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1003003000000000", par="0x0000000000225003", tef="0", shape     = "oval", fillcolor = "green"];
+Msg4[cpu="0", flags="0x00000102", type="tmsg", toffs="400000000", pattern="ref1", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="4", evtno="4", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1004004000000000", par="0x0000000000225004", tef="0", shape     = "oval", fillcolor = "green"];
+Block0->Msg1 [type="defdst", color = "red"];
+Msg1->Msg2 [type="defdst", color = "red"];
+Msg1->Msg2 [type="reference", fieldhead="8", fieldtail="8", fieldwidth="64", color = "pink"];
+Msg1->Msg3 [type="reference", fieldhead="16", fieldtail="16", fieldwidth="64", color = "pink"];
+Msg1->Msg4 [type="reference", fieldhead="20", fieldtail="24", fieldwidth="32", color = "pink"];
+Msg2->Msg3 [type="defdst", color = "red"];
+Msg3->Msg4 [type="defdst", color = "red"];
+Msg4->Block0 [type="defdst", color = "red"];
+}

@@ -11,8 +11,16 @@ Compare original schedule with downloaded schedule
 """
 class AddDownloadCompare(dm_testbench.DmTestbench):
 
-  def addDownloadCompareSchedule(self, scheduleFile, statusMeta=False, abortPattern=False):
-    statusFile = 'status.dot'
+  def addDownloadCompareSchedule(self, scheduleFile, statusMeta=False, abortPattern=False, compareStrict=True):
+    # modify the schedule file name when we have 3 CPUs or 32 threads.
+    # This is needed for dynpar edges where memory addresses are stored
+    # in the parameter values.
+    statusFile = scheduleFile.replace('.dot', '-download.dot')
+    if self.cpuQuantity == 3:
+      scheduleFile3cpu = scheduleFile.replace('.dot', '-3cpu.dot')
+      fileObj = pathlib.Path(self.schedulesFolder + scheduleFile3cpu)
+      if fileObj.exists():
+        scheduleFile = scheduleFile3cpu
     if self.threadQuantity == 32:
       scheduleFile32 = scheduleFile.replace('.dot', '-thread32.dot')
       fileObj = pathlib.Path(self.schedulesFolder + scheduleFile32)
@@ -21,15 +29,23 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     self.startPattern(scheduleFile, 'patternA')
     if statusMeta:
       options = '-so'
+      returnCode = 2
     else:
       options = '-o'
+      returnCode = 0
+    if compareStrict:
+      # compare in silent mode.
+      scheduleCompareOption = '-s'
+    else:
+      # compare in silent mode and interpret 'undefined' as empty string.
+      scheduleCompareOption = '-us'
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', options, statusFile))
-    self.startAndCheckSubprocess(('scheduleCompare', '-s', self.schedulesFolder + scheduleFile, statusFile), [0], 0, 0)
+    self.startAndCheckSubprocess(('scheduleCompare', scheduleCompareOption, self.schedulesFolder + scheduleFile, statusFile), [returnCode], 0, 0)
     self.deleteFile(statusFile)
     statusFile = 'statusKeep.dot'
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'keep', self.schedulesFolder + scheduleFile))
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', options, statusFile))
-    self.startAndCheckSubprocess(('scheduleCompare', '-s', self.schedulesFolder + scheduleFile, statusFile), [0], 0, 0)
+    self.startAndCheckSubprocess(('scheduleCompare', scheduleCompareOption, self.schedulesFolder + scheduleFile, statusFile), [returnCode], 0, 0)
     self.deleteFile(statusFile)
     # remove the schedule
     if abortPattern:
@@ -44,6 +60,270 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     fileName = 'moveSchedules.sh'
     with open(fileName, 'a') as file1:
       file1.write('mv dot/' + scheduleFile + ' ' + self.schedulesFolder + '\n')
+
+  def test_aScheduleBlockBlockAltdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-block-altdst.dot')
+    # ~ {{dnt::sBlock, dnt::sBlock, det::sAltDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockBlockDefdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-block-defdst.dot')
+    # ~ {{dnt::sBlock, dnt::sBlock, det::sDefDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockBlockReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-block-reference.dot')
+    # ~ {{dnt::sBlock, dnt::sBlock, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockBlockalignAltdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-blockalign-altdst.dot')
+    # ~ {{dnt::sBlock, dnt::sBlockAlign, det::sAltDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockBlockalignDefdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-blockalign-defdst.dot')
+    # ~ {{dnt::sBlock, dnt::sBlockAlign, det::sDefDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockBlockalignReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-blockalign-reference.dot')
+    # ~ {{dnt::sBlock, dnt::sBlockAlign, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockFlowAltdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-flow-altdst.dot')
+    # ~ {{dnt::sBlock, dnt::sCmdFlow, det::sAltDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockFlowDefdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-flow-defdst.dot')
+    # ~ {{dnt::sBlock, dnt::sCmdFlow, det::sDefDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockFlowReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-flow-reference.dot')
+    # ~ {{dnt::sBlock, dnt::sCmdFlow, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockFlushAltdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-flush-altdst.dot')
+    # ~ {{dnt::sBlock, dnt::sCmdFlush, det::sAltDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockFlushDefdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-flush-defdst.dot')
+    # ~ {{dnt::sBlock, dnt::sCmdFlush, det::sDefDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockFlushReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-flush-reference.dot')
+    # ~ {{dnt::sBlock, dnt::sCmdFlush, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockGlobalAltdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-global-altdst.dot', compareStrict=False)
+    # ~ {{dnt::sBlock, dnt::sGlobal, det::sAltDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockGlobalDefdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-global-defdst.dot', compareStrict=False)
+    # ~ {{dnt::sBlock, dnt::sGlobal, det::sDefDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockGlobalReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-global-reference.dot', compareStrict=False)
+    # ~ {{dnt::sBlock, dnt::sGlobal, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockNoopAltdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-noop-altdst.dot')
+    # ~ {{dnt::sBlock, dnt::sCmdNoop, det::sAltDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockNoopDefdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-noop-defdst.dot')
+    # ~ {{dnt::sBlock, dnt::sCmdNoop, det::sDefDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockNoopReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-noop-reference.dot')
+    # ~ {{dnt::sBlock, dnt::sCmdNoop, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockOriginAltdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-origin-altdst.dot')
+    # ~ {{dnt::sBlock, dnt::sOrigin, det::sAltDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockOriginDefdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-origin-defdst.dot')
+    # ~ {{dnt::sBlock, dnt::sOrigin, det::sDefDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockOriginReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-origin-reference.dot')
+    # ~ {{dnt::sBlock, dnt::sOrigin, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockStartthreadAltdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-startthread-altdst.dot')
+    # ~ {{dnt::sBlock, dnt::sStartThread, det::sAltDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockStartthreadDefdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-startthread-defdst.dot')
+    # ~ {{dnt::sBlock, dnt::sStartThread, det::sDefDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockStartthreadReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-startthread-reference.dot')
+    # ~ {{dnt::sBlock, dnt::sStartThread, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockSwitchAltdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-switch-altdst.dot')
+    # ~ {{dnt::sBlock, dnt::sSwitch, det::sAltDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockSwitchDefdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-switch-defdst.dot')
+    # ~ {{dnt::sBlock, dnt::sSwitch, det::sDefDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockSwitchReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-switch-reference.dot')
+    # ~ {{dnt::sBlock, dnt::sSwitch, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockTmsgAltdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-tmsg-altdst.dot')
+    # ~ {{dnt::sBlock, dnt::sTMsg, det::sAltDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockTmsgDefdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-tmsg-defdst.dot')
+    # ~ {{dnt::sBlock, dnt::sTMsg, det::sDefDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockTmsgReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-tmsg-reference.dot')
+    # ~ {{dnt::sBlock, dnt::sTMsg, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockWaitAltdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-wait-altdst.dot')
+    # ~ {{dnt::sBlock, dnt::sCmdWait, det::sAltDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockWaitDefdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-wait-defdst.dot')
+    # ~ {{dnt::sBlock, dnt::sCmdWait, det::sDefDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockWaitReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-block-wait-reference.dot')
+    # ~ {{dnt::sBlock, dnt::sCmdWait, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockalignBlockAltdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-block-altdst.dot')
+    # ~ {{dnt::sBlockAlign, dnt::sBlock, det::sAltDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockalignBlockDefdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-block-defdst.dot')
+    # ~ {{dnt::sBlockAlign, dnt::sBlock, det::sDefDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockalignBlockReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-block-reference.dot')
+    # ~ {{dnt::sBlockAlign, dnt::sBlock, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockalignBlockalignAltdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-blockalign-altdst.dot')
+    # ~ {{dnt::sBlockAlign, dnt::sBlockAlign, det::sAltDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockalignBlockalignDefdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-blockalign-defdst.dot')
+    # ~ {{dnt::sBlockAlign, dnt::sBlockAlign, det::sDefDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockalignBlockalignReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-blockalign-reference.dot')
+    # ~ {{dnt::sBlockAlign, dnt::sBlockAlign, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockalignFlowAltdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-flow-altdst.dot')
+    # ~ {{dnt::sBlockAlign, dnt::sCmdFlow, det::sAltDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockalignFlowDefdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-flow-defdst.dot')
+    # ~ {{dnt::sBlockAlign, dnt::sCmdFlow, det::sDefDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockalignFlowReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-flow-reference.dot')
+    # ~ {{dnt::sBlockAlign, dnt::sCmdFlow, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockalignFlushAltdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-flush-altdst.dot')
+    # ~ {{dnt::sBlockAlign, dnt::sCmdFlush, det::sAltDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockalignFlushDefdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-flush-defdst.dot')
+    # ~ {{dnt::sBlockAlign, dnt::sCmdFlush, det::sDefDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockalignFlushReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-flush-reference.dot')
+    # ~ {{dnt::sBlockAlign, dnt::sCmdFlush, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockalignGlobalAltdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-global-altdst.dot', compareStrict=False)
+    # ~ {{dnt::sBlockAlign, dnt::sGlobal, det::sAltDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockalignGlobalDefdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-global-defdst.dot', compareStrict=False)
+    # ~ {{dnt::sBlockAlign, dnt::sGlobal, det::sDefDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockalignGlobalReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-global-reference.dot', compareStrict=False)
+    # ~ {{dnt::sBlockAlign, dnt::sGlobal, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockalignNoopAltdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-noop-altdst.dot')
+    # ~ {{dnt::sBlockAlign, dnt::sCmdNoop, det::sAltDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockalignNoopDefdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-noop-defdst.dot')
+    # ~ {{dnt::sBlockAlign, dnt::sCmdNoop, det::sDefDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockalignNoopReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-noop-reference.dot')
+    # ~ {{dnt::sBlockAlign, dnt::sCmdNoop, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockalignOriginAltdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-origin-altdst.dot')
+    # ~ {{dnt::sBlockAlign, dnt::sOrigin, det::sAltDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockalignOriginDefdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-origin-defdst.dot')
+    # ~ {{dnt::sBlockAlign, dnt::sOrigin, det::sDefDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockalignOriginReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-origin-reference.dot')
+    # ~ {{dnt::sBlockAlign, dnt::sOrigin, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockalignStartthreadAltdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-startthread-altdst.dot')
+    # ~ {{dnt::sBlockAlign, dnt::sStartThread, det::sAltDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockalignStartthreadDefdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-startthread-defdst.dot')
+    # ~ {{dnt::sBlockAlign, dnt::sStartThread, det::sDefDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockalignStartthreadReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-startthread-reference.dot')
+    # ~ {{dnt::sBlockAlign, dnt::sStartThread, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockalignSwitchAltdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-switch-altdst.dot')
+    # ~ {{dnt::sBlockAlign, dnt::sSwitch, det::sAltDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockalignSwitchDefdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-switch-defdst.dot')
+    # ~ {{dnt::sBlockAlign, dnt::sSwitch, det::sDefDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockalignSwitchReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-switch-reference.dot')
+    # ~ {{dnt::sBlockAlign, dnt::sSwitch, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockalignTmsgAltdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-tmsg-altdst.dot')
+    # ~ {{dnt::sBlockAlign, dnt::sTMsg, det::sAltDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockalignTmsgDefdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-tmsg-defdst.dot')
+    # ~ {{dnt::sBlockAlign, dnt::sTMsg, det::sDefDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockalignTmsgReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-tmsg-reference.dot')
+    # ~ {{dnt::sBlockAlign, dnt::sTMsg, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockalignWaitAltdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-wait-altdst.dot')
+    # ~ {{dnt::sBlockAlign, dnt::sCmdWait, det::sAltDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockalignWaitDefdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-wait-defdst.dot')
+    # ~ {{dnt::sBlockAlign, dnt::sCmdWait, det::sDefDst}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleBlockalignWaitReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-blockalign-wait-reference.dot')
+    # ~ {{dnt::sBlockAlign, dnt::sCmdWait, det::sRef}, SingleEdgeTest::TEST_OK},
 
   def test_aScheduleTmsgBlockDefdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-block-defdst.dot')
@@ -164,6 +444,66 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
   def test_aScheduleTmsgOriginDynpar1(self):
     self.addDownloadCompareSchedule('testSingleEdge-tmsg-origin-dynpar1.dot')
     # ~ {{dnt::sTMsg, dnt::sOrigin, det::sDynPar1}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleTmsgBlockReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-tmsg-block-reference.dot')
+    # ~ {{dnt::sTMsg, dnt::sBlock, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleTmsgBlockalignReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-tmsg-blockalign-reference.dot')
+    # ~ {{dnt::sTMsg, dnt::sBlockAlign, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleTmsgFlowReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-tmsg-flow-reference.dot')
+    # ~ {{dnt::sTMsg, dnt::sCmdFlow, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleTmsgFlushReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-tmsg-flush-reference.dot')
+    # ~ {{dnt::sTMsg, dnt::sCmdFlush, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleTmsgNoopReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-tmsg-noop-reference.dot')
+    # ~ {{dnt::sTMsg, dnt::sCmdNoop, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleTmsgOriginReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-tmsg-origin-reference.dot')
+    # ~ {{dnt::sTMsg, dnt::sOrigin, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleTmsgStartthreadReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-tmsg-startthread-reference.dot')
+    # ~ {{dnt::sTMsg, dnt::sStartThread, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleTmsgSwitchReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-tmsg-switch-reference.dot')
+    # ~ {{dnt::sTMsg, dnt::sSwitch, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleTmsgTmsgReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-tmsg-tmsg-reference.dot')
+    # ~ {{dnt::sTMsg, dnt::sTMsg, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  def test_aScheduleTmsgWaitReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-tmsg-wait-reference.dot')
+    # ~ {{dnt::sTMsg, dnt::sCmdWait, det::sRef}, SingleEdgeTest::TEST_OK},
+
+  @pytest.mark.development
+  def test_aScheduleTmsgGlobalDefdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-tmsg-global-defdst.dot')
+    # ~ {{dnt::sTMsg, dnt::sGlobal, det::sDefDst}, SingleEdgeTest::TEST_OK},
+
+  @pytest.mark.development
+  def test_aScheduleTmsgGlobalDynpar0(self):
+    self.addDownloadCompareSchedule('testSingleEdge-tmsg-global-dynpar0.dot')
+    # ~ {{dnt::sTMsg, dnt::sGlobal, det::sDynPar0}, SingleEdgeTest::TEST_OK},
+
+  @pytest.mark.development
+  def test_aScheduleTmsgGlobalDynpar1(self):
+    self.addDownloadCompareSchedule('testSingleEdge-tmsg-global-dynpar1.dot')
+    # ~ {{dnt::sTMsg, dnt::sGlobal, det::sDynPar1}, SingleEdgeTest::TEST_OK},
+
+  @pytest.mark.development
+  def test_aScheduleTmsgGlobalReference(self):
+    self.addDownloadCompareSchedule('testSingleEdge-tmsg-global-reference.dot')
+    # ~ {{dnt::sTMsg, dnt::sGlobal, det::sRef}, SingleEdgeTest::TEST_OK},
 
   def test_aScheduleNoopBlockDefdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-noop-block-defdst.dot')
@@ -395,6 +735,16 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     self.addDownloadCompareSchedule('testSingleEdge-switch-origin-switchdst.dot', abortPattern=True)
     # ~ {{dnt::sSwitch, dnt::sOrigin, det::sSwitchDst}, SingleEdgeTest::TEST_OK},
 
+  @pytest.mark.development
+  def test_aScheduleSwitchGlobalDefdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-switch-global-defdst.dot')
+    # ~ {{dnt::sSwitch, dnt::sGlobal, det::sDefDst}, SingleEdgeTest::TEST_OK},
+
+  @pytest.mark.development
+  def test_aScheduleSwitchGlobalSwitchdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-switch-global-switchdst.dot')
+    # ~ {{dnt::sSwitch, dnt::sGlobal, det::sSwitchDst}, SingleEdgeTest::TEST_OK},
+
   def test_aScheduleFlushBlockDefdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-flush-block-defdst.dot')
     # ~ {{dnt::sCmdFlush, dnt::sBlock, det::sDefDst}, SingleEdgeTest::TEST_OK},
@@ -483,6 +833,16 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     self.addDownloadCompareSchedule('testSingleEdge-flush-origin-flushovr.dot')
     # ~ {{dnt::sCmdFlush, dnt::sOrigin, det::sCmdFlushOvr}, SingleEdgeTest::TEST_OK},
 
+  @pytest.mark.development
+  def test_aScheduleFlushGlobalDefdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-flush-global-defdst.dot')
+    # ~ {{dnt::sCmdFlush, dnt::sGlobal, det::sDefDst}, SingleEdgeTest::TEST_OK},
+
+  @pytest.mark.development
+  def test_aScheduleFlushGlobalFlushovr(self):
+    self.addDownloadCompareSchedule('testSingleEdge-flush-global-flushovr.dot')
+    # ~ {{dnt::sCmdFlush, dnt::sGlobal, det::sCmdFlushOvr}, SingleEdgeTest::TEST_OK},
+
   def test_aScheduleWaitBlockDefdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-wait-block-defdst.dot')
     # ~ {{dnt::sCmdWait, dnt::sBlock, det::sDefDst}, SingleEdgeTest::TEST_OK},
@@ -531,165 +891,10 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
     self.addDownloadCompareSchedule('testSingleEdge-wait-origin-defdst.dot')
     # ~ {{dnt::sCmdWait, dnt::sOrigin, det::sDefDst}, SingleEdgeTest::TEST_OK},
 
-  def test_aScheduleBlockBlockDefdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-block-block-defdst.dot')
-    # ~ {{dnt::sBlock, dnt::sBlock, det::sDefDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockBlockalignDefdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-block-blockalign-defdst.dot')
-    # ~ {{dnt::sBlock, dnt::sBlockAlign, det::sDefDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockFlowDefdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-block-flow-defdst.dot')
-    # ~ {{dnt::sBlock, dnt::sCmdFlow, det::sDefDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockFlushDefdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-block-flush-defdst.dot')
-    # ~ {{dnt::sBlock, dnt::sCmdFlush, det::sDefDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockNoopDefdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-block-noop-defdst.dot')
-    # ~ {{dnt::sBlock, dnt::sCmdNoop, det::sDefDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockSwitchDefdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-block-switch-defdst.dot')
-    # ~ {{dnt::sBlock, dnt::sSwitch, det::sDefDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockTmsgDefdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-block-tmsg-defdst.dot')
-    # ~ {{dnt::sBlock, dnt::sTMsg, det::sDefDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockWaitDefdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-block-wait-defdst.dot')
-    # ~ {{dnt::sBlock, dnt::sCmdWait, det::sDefDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockBlockAltdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-block-block-altdst.dot')
-    # ~ {{dnt::sBlock, dnt::sBlock, det::sAltDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockBlockalignAltdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-block-blockalign-altdst.dot')
-    # ~ {{dnt::sBlock, dnt::sBlockAlign, det::sAltDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockFlowAltdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-block-flow-altdst.dot')
-    # ~ {{dnt::sBlock, dnt::sCmdFlow, det::sAltDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockFlushAltdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-block-flush-altdst.dot')
-    # ~ {{dnt::sBlock, dnt::sCmdFlush, det::sAltDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockNoopAltdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-block-noop-altdst.dot')
-    # ~ {{dnt::sBlock, dnt::sCmdNoop, det::sAltDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockSwitchAltdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-block-switch-altdst.dot')
-    # ~ {{dnt::sBlock, dnt::sSwitch, det::sAltDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockTmsgAltdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-block-tmsg-altdst.dot')
-    # ~ {{dnt::sBlock, dnt::sTMsg, det::sAltDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockWaitAltdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-block-wait-altdst.dot')
-    # ~ {{dnt::sBlock, dnt::sCmdWait, det::sAltDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockStartthreadDefdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-block-startthread-defdst.dot')
-    # ~ {{dnt::sBlock, dnt::sStartThread, det::sDefDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockOriginDefdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-block-origin-defdst.dot')
-    # ~ {{dnt::sBlock, dnt::sOrigin, det::sDefDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockStartthreadAltdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-block-startthread-altdst.dot')
-    # ~ {{dnt::sBlock, dnt::sStartThread, det::sAltDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockOriginAltdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-block-origin-altdst.dot')
-    # ~ {{dnt::sBlock, dnt::sOrigin, det::sAltDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockalignBlockDefdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-blockalign-block-defdst.dot')
-    # ~ {{dnt::sBlockAlign, dnt::sBlock, det::sDefDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockalignBlockalignDefdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-blockalign-blockalign-defdst.dot')
-    # ~ {{dnt::sBlockAlign, dnt::sBlockAlign, det::sDefDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockalignFlowDefdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-blockalign-flow-defdst.dot')
-    # ~ {{dnt::sBlockAlign, dnt::sCmdFlow, det::sDefDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockalignFlushDefdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-blockalign-flush-defdst.dot')
-    # ~ {{dnt::sBlockAlign, dnt::sCmdFlush, det::sDefDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockalignNoopDefdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-blockalign-noop-defdst.dot')
-    # ~ {{dnt::sBlockAlign, dnt::sCmdNoop, det::sDefDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockalignSwitchDefdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-blockalign-switch-defdst.dot')
-    # ~ {{dnt::sBlockAlign, dnt::sSwitch, det::sDefDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockalignTmsgDefdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-blockalign-tmsg-defdst.dot')
-    # ~ {{dnt::sBlockAlign, dnt::sTMsg, det::sDefDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockalignWaitDefdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-blockalign-wait-defdst.dot')
-    # ~ {{dnt::sBlockAlign, dnt::sCmdWait, det::sDefDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockalignBlockAltdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-blockalign-block-altdst.dot')
-    # ~ {{dnt::sBlockAlign, dnt::sBlock, det::sAltDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockalignBlockalignAltdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-blockalign-blockalign-altdst.dot')
-    # ~ {{dnt::sBlockAlign, dnt::sBlockAlign, det::sAltDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockalignFlowAltdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-blockalign-flow-altdst.dot')
-    # ~ {{dnt::sBlockAlign, dnt::sCmdFlow, det::sAltDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockalignFlushAltdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-blockalign-flush-altdst.dot')
-    # ~ {{dnt::sBlockAlign, dnt::sCmdFlush, det::sAltDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockalignNoopAltdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-blockalign-noop-altdst.dot')
-    # ~ {{dnt::sBlockAlign, dnt::sCmdNoop, det::sAltDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockalignSwitchAltdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-blockalign-switch-altdst.dot')
-    # ~ {{dnt::sBlockAlign, dnt::sSwitch, det::sAltDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockalignTmsgAltdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-blockalign-tmsg-altdst.dot')
-    # ~ {{dnt::sBlockAlign, dnt::sTMsg, det::sAltDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockalignWaitAltdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-blockalign-wait-altdst.dot')
-    # ~ {{dnt::sBlockAlign, dnt::sCmdWait, det::sAltDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockalignStartthreadDefdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-blockalign-startthread-defdst.dot')
-    # ~ {{dnt::sBlockAlign, dnt::sStartThread, det::sDefDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockalignOriginDefdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-blockalign-origin-defdst.dot')
-    # ~ {{dnt::sBlockAlign, dnt::sOrigin, det::sDefDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockalignStartthreadAltdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-blockalign-startthread-altdst.dot')
-    # ~ {{dnt::sBlockAlign, dnt::sStartThread, det::sAltDst}, SingleEdgeTest::TEST_OK},
-
-  def test_aScheduleBlockalignOriginAltdst(self):
-    self.addDownloadCompareSchedule('testSingleEdge-blockalign-origin-altdst.dot')
-    # ~ {{dnt::sBlockAlign, dnt::sOrigin, det::sAltDst}, SingleEdgeTest::TEST_OK},
+  @pytest.mark.development
+  def test_aScheduleWaitGlobalDefdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-wait-global-defdst.dot')
+    # ~ {{dnt::sCmdWait, dnt::sGlobal, det::sDefDst}, SingleEdgeTest::TEST_OK},
 
   def test_aScheduleStartthreadBlockDefdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-startthread-block-defdst.dot')
@@ -730,6 +935,11 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
   def test_aScheduleStartthreadTmsgDefdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-startthread-tmsg-defdst.dot')
     # ~ {{dnt::sStartThread, dnt::sTMsg, det::sDefDst}, SingleEdgeTest::TEST_OK},
+
+  @pytest.mark.development
+  def test_aScheduleStartthreadGlobalDefdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-startthread-global-defdst.dot')
+    # ~ {{dnt::sStartThread, dnt::sGlobal, det::sDefDst}, SingleEdgeTest::TEST_OK},
 
   def test_aScheduleOriginBlockDefdst(self):
     self.addDownloadCompareSchedule('testSingleEdge-origin-block-defdst.dot')
@@ -810,3 +1020,13 @@ class AddDownloadCompare(dm_testbench.DmTestbench):
   def test_aScheduleOriginTmsgOrigindst(self):
     self.addDownloadCompareSchedule('testSingleEdge-origin-tmsg-origindst.dot')
     # ~ {{dnt::sOrigin, dnt::sTMsg, det::sOriginDst}, SingleEdgeTest::TEST_OK},
+
+  @pytest.mark.development
+  def test_aScheduleOriginGlobalDefdst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-origin-global-defdst.dot')
+    # ~ {{dnt::sOrigin, dnt::sGlobal, det::sDefDst}, SingleEdgeTest::TEST_OK},
+
+  @pytest.mark.development
+  def test_aScheduleOriginGlobalOrigindst(self):
+    self.addDownloadCompareSchedule('testSingleEdge-origin-global-origindst.dot')
+    # ~ {{dnt::sOrigin, dnt::sGlobal, det::sOriginDst}, SingleEdgeTest::TEST_OK},

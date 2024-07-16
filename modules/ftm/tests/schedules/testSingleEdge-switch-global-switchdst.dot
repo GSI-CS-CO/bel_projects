@@ -1,0 +1,7 @@
+digraph G {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+A1[cpu="0", flags="0x00002012", type="switch", toffs="0", pattern="patternA", patentry="true", patexit="false", beamproc="beamA", bpentry="false", bpexit="false", shape     = "pentagon", fillcolor = "white", penwidth=2, color = "darkorange3"];
+B2[cpu="0", flags="0x00008013", type="global", section="registers", shape = "rectangle", color = "orange", style = "dashed, filled"];
+A1->B2 [type="switchdst", color = "pink"];
+}

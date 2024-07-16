@@ -1,0 +1,7 @@
+digraph "patternAremoveB" {
+  name="patternAremoveB"
+  node [type=block cpu=1 pattern=B style=filled fillcolor=white color=black]
+  BLOCK0_V0 [tperiod=100000000]
+  ALIGN_V0 [tperiod=0]
+  REPCOUNT_BLOCK_V0 [qlo=1]
+}

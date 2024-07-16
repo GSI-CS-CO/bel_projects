@@ -1,0 +1,17 @@
+digraph "cpu0-1-switch-block-target" {
+  name="cpu0-1-switch-block-target"
+  graph [rankdir=TB nodesep=0.6 mindist=1.0 ranksep=1.0 overlap=false]
+  node [style=filled fillcolor=white color=black penwidth=2]
+  Switch0 [label="Switch0\n(CPU 0)" cpu=0 type=switch tvalid=0 vabs=0 prio=0 toffs=2500000 pattern=X patentry=1 patexit=0 beamproc=beamX bpentry=0 bpexit=0 qty=1 shape=hexagon color=darkorange3]
+  Evt0 [label="Evt0\n(CPU 0)" cpu=0 type=tmsg fid=1 par=0 toffs=0 pattern=X patentry=0 patexit=0 beamproc=beamA bpentry=0 bpexit=0 shape=oval]
+  Block0 [label="Block0\n(CPU 0)" cpu=0 type=block tperiod=20000000 pattern=X patentry=0 patexit=1 beamproc=beamX bpentry=0 bpexit=0 qlo=1 qhi=0 qil=0 shape=rectangle color=purple]
+  Evt1a [label="Evt1a\n(CPU 1)" cpu=1 type=tmsg fid=1 par=1 toffs=0 pattern=A patentry=1 patexit=0 beamproc=beamA bpentry=0 bpexit=0 shape=oval color=darkorange3]
+  Evt1b [label="Evt1b\n(CPU 1)" cpu=1 type=tmsg fid=1 par=2 toffs=5000000 pattern=A patentry=0 patexit=0 beamproc=beamA bpentry=0 bpexit=0 shape=oval]
+  Block1 [label="Block1\n(CPU 1)" cpu=1 type=block tperiod=10000000 pattern=A patentry=0 patexit=1 beamproc=beamA bpentry=0 bpexit=0 qlo=1 qhi=0 qil=0 shape=rectangle color=purple]
+  Switch0 -> Block1 [type=target color=blue]
+  Switch0 -> Evt1b [type=switchdst color=pink]
+  Evt1a -> Block1 -> Evt1a [type=defdst color=red]
+  Evt1b -> Block1 [type=defdst color=red]
+  Block1 -> Evt1b [type=altdst]
+  Block0 -> Evt0 -> Switch0 -> Block0 [type=defdst color=red]
+}
