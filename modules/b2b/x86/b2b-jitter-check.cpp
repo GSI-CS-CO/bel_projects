@@ -37,7 +37,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_JITTER_CHECK_VERSION 0x000700
+#define B2B_JITTER_CHECK_VERSION 0x000702
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -503,7 +503,7 @@ int main(int argc, char** argv)
     evtPrefix |= ioPrefix;            
     snoopID    = evtPrefix + 0x1; // last bit is set: rising edge
     //printf("id %llx\n", snoopID);
-    condition  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xffffffffffffffff, 17));
+    condition  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xffffffffffffffff, 0));
     condition->setAcceptLate(true);
     condition->setAcceptEarly(true);
     condition->setAcceptConflict(true);

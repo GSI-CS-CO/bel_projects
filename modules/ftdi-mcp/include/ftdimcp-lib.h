@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 24-October-2023
+ *  version : 07-Mar-2024
  * 
  * x86 routines for a MCP4725 connected via FT232H
  * as an example, this can be used to set the level of a comparator circuit
@@ -38,7 +38,7 @@
 #ifndef _FTDIMCP_LIB_H_
 #define _FTDIMCP_LIB_H_
 
-#define FTDIMCP_LIB_VERSION 0x000006
+#define FTDIMCP_LIB_VERSION 0x000007
 
 // ftdi, i2c
 #include <ftd2xx.h>
@@ -86,6 +86,7 @@ FT_STATUS ftdimcp_init(FT_HANDLE cHandle                 // handle to channel
 
 // set level of comparator
 FT_STATUS ftdimcp_setLevel(FT_HANDLE cHandle,            // handle to channel
+                           uint32_t  dacAddr,            // I2C address of DAC
                            double    dacLevel,           // level [%]
                            int       flagEeprom,         // 1: write to EEPROM too
                            int       flagDebug           // 1: print debug info
@@ -93,7 +94,8 @@ FT_STATUS ftdimcp_setLevel(FT_HANDLE cHandle,            // handle to channel
 
 
 // get level of comparator
-FT_STATUS ftdimcp_getLevel(FT_HANDLE cHandle             // handle to channel
+FT_STATUS ftdimcp_getLevel(FT_HANDLE cHandle,            // handle to channel
+                           uint32_t  dacAddr             // I2C address of DAC
                            );
 
 

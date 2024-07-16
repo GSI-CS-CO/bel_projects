@@ -12,3 +12,4 @@ b2b-serv-sys dev/wbm0 -s pro_sis18-kde &
 b2b-serv-raw tr1 -e0 pro &
 b2b-jitter-check tr1 tr0 -p3 -t5 pro_sis18-kde &
 b2b-analyzer pro_sis18 &
+b2b-serv-kickdiag tr0 -r0 -m0 -i1 pro &
