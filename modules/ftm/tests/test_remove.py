@@ -138,7 +138,9 @@ class DmSchedRemove(dm_testbench.DmTestbench):
     Stop the pattern and remove part of the schedule.
     Add part of the schedule with a switch node instead of tmsg.
     """
-    self.startPattern(self.scheduleFile0, 'A')
+    self.delay(0.3)
+    self.startPattern(self.scheduleFile0, 'X')
+    self.startAndCheckSubprocess([self.binaryDmCmd, self.datamaster, 'startpattern', 'A'])
     self.delay(1.0)
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile0])
     self.startAndCheckSubprocess([self.binaryDmCmd, self.datamaster, 'stoppattern', 'A'])
@@ -148,6 +150,7 @@ class DmSchedRemove(dm_testbench.DmTestbench):
     self.addSchedule(self.scheduleFile2)
     self.delay(0.1)
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile2])
+    self.startAndCheckSubprocess([self.binaryDmCmd, self.datamaster, 'startpattern', 'Y'])
 
   def testSchedRemovePatternA(self):
     scheduleFile1 = 'patternA-repcount.dot'
