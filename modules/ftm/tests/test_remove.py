@@ -28,6 +28,7 @@ class DmSchedRemove(dm_testbench.DmTestbench):
     Download the schedule for later compare.
     Stop the pattern and remove part of the schedule.
     """
+    self.delay(0.3)
     self.startPattern(self.scheduleFile0, 'A')
     self.delay(1.0)
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile0])
@@ -99,6 +100,7 @@ class DmSchedRemove(dm_testbench.DmTestbench):
     Download the schedule for later compare.
     Stop the pattern and remove part of the schedule.
     """
+    self.delay(0.3)
     self.startPattern(self.scheduleFile0, 'A')
     self.delay(1.0)
     self.startAndCheckSubprocess([self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile0])
