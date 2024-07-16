@@ -30,11 +30,11 @@ class DmTestbench(unittest.TestCase):
     self.cpuQuantity, self.threadQuantity = self.getThreadQuantityFromFirmware()
 
   def setUp(self):
-    self.logToFile('    setUp:' + str(datetime.datetime.now()), 'dm-test-timestamps.txt')
+    # ~ self.logToFile('    setUp:' + str(datetime.datetime.now()), 'dm-test-timestamps.txt')
     self.initDatamaster()
 
-  def tearDown(self):
-    self.logToFile(' tearDown:' + str(datetime.datetime.now()), 'dm-test-timestamps.txt')
+  # ~ def tearDown(self):
+    # ~ self.logToFile(' tearDown:' + str(datetime.datetime.now()), 'dm-test-timestamps.txt')
 
   def initDatamaster(self):
     """Initialize (clean) the datamaster.

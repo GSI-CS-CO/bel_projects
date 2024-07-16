@@ -14,7 +14,7 @@ class DmSchedOverwrite(dm_testbench.DmTestbench):
     self.scheduleFile1 = 'overwrite1-1.dot'
     self.downloadFile0 = self.scheduleFile0.replace('.dot', '-download.dot')
     self.downloadFile1 = self.scheduleFile1.replace('.dot', '-download.dot')
-    self.snoopToCsvWithAction(snoopFile, self.actionOverwrite1, duration=2)
+    self.snoopToCsvWithAction(snoopFile, self.actionOverwrite1, duration=3)
     self.startAndCheckSubprocess(('scheduleCompare', '-s', '-u', self.schedulesFolder + self.scheduleFile0, self.downloadFile0), [0], 0, 0)
     self.deleteFile(self.downloadFile0)
     self.startAndCheckSubprocess(('scheduleCompare', '-s', '-u', self.schedulesFolder + self.downloadFile1, self.downloadFile1), [0], 0, 0)
@@ -26,6 +26,7 @@ class DmSchedOverwrite(dm_testbench.DmTestbench):
     """During snoop start pattern A. This produces messages with 10Hz.
     Download the schedule for later compare.
     """
+    self.delay(0.3)
     self.addSchedule(self.scheduleFile0)
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'A'), [0], 1, 0)
     self.delay(1.0)
@@ -92,7 +93,7 @@ class DmSchedOverwrite(dm_testbench.DmTestbench):
     self.downloadFile0 = self.scheduleFile0.replace('.dot', '-download.dot')
     self.downloadFile1 = self.scheduleFile1.replace('.dot', '-download.dot')
     self.downloadFile2 = 'overwrite3-2-download.dot'
-    self.snoopToCsvWithAction(snoopFile, self.actionOverwrite3, duration=2)
+    self.snoopToCsvWithAction(snoopFile, self.actionOverwrite3, duration=3)
     self.startAndCheckSubprocess(('scheduleCompare', '-s', '-u', self.schedulesFolder + self.scheduleFile0, self.downloadFile0), [0], 0, 0)
     self.deleteFile(self.downloadFile0)
     self.startAndCheckSubprocess(('scheduleCompare', '-s', '-u', self.schedulesFolder + self.downloadFile1, self.downloadFile1), [0], 0, 0)
@@ -109,6 +110,7 @@ class DmSchedOverwrite(dm_testbench.DmTestbench):
     Stop the pattern.
     Overwrite the schedule with the flow schedule and save the status for later compare.
     """
+    self.delay(0.3)
     self.addSchedule(self.scheduleFile0)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile0), [0], 0, 0)
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'A'), [0], 1, 0)
