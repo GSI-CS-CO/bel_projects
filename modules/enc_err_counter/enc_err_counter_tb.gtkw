@@ -1,0 +1,31 @@
+[*]
+[*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
+[*] Wed Jul 17 12:26:30 2024
+[*]
+[dumpfile] "/home/lucas/VHDL_projects/enc_err_counter/modules/enc_err_counter/enc_err_counter_tb.ghw"
+[dumpfile_mtime] "Wed Jul 17 12:26:01 2024"
+[dumpfile_size] 2908165
+[savefile] "/home/lucas/VHDL_projects/enc_err_counter/modules/enc_err_counter/enc_err_counter_tb.gtkw"
+[timestart] 0
+[size] 1000 600
+[pos] -1 -1
+*-14.000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[treeopen] top.enc_err_counter_tb.
+[treeopen] top.enc_err_counter_tb.dut.
+[treeopen] top.enc_err_counter_tb.dut.cnt.
+[sst_width] 233
+[signals_width] 118
+[sst_expanded] 1
+[sst_vpaned_height] 144
+@29
+top.enc_err_counter_tb.dut.rstn_sys_i
+@28
+top.enc_err_counter_tb.enc_err
+top.enc_err_counter_tb.s_clk_ref
+top.enc_err_counter_tb.s_clk_sys
+@22
+#{top.enc_err_counter_tb.dut.cnt.bin[31:0]} top.enc_err_counter_tb.dut.cnt.bin[31] top.enc_err_counter_tb.dut.cnt.bin[30] top.enc_err_counter_tb.dut.cnt.bin[29] top.enc_err_counter_tb.dut.cnt.bin[28] top.enc_err_counter_tb.dut.cnt.bin[27] top.enc_err_counter_tb.dut.cnt.bin[26] top.enc_err_counter_tb.dut.cnt.bin[25] top.enc_err_counter_tb.dut.cnt.bin[24] top.enc_err_counter_tb.dut.cnt.bin[23] top.enc_err_counter_tb.dut.cnt.bin[22] top.enc_err_counter_tb.dut.cnt.bin[21] top.enc_err_counter_tb.dut.cnt.bin[20] top.enc_err_counter_tb.dut.cnt.bin[19] top.enc_err_counter_tb.dut.cnt.bin[18] top.enc_err_counter_tb.dut.cnt.bin[17] top.enc_err_counter_tb.dut.cnt.bin[16] top.enc_err_counter_tb.dut.cnt.bin[15] top.enc_err_counter_tb.dut.cnt.bin[14] top.enc_err_counter_tb.dut.cnt.bin[13] top.enc_err_counter_tb.dut.cnt.bin[12] top.enc_err_counter_tb.dut.cnt.bin[11] top.enc_err_counter_tb.dut.cnt.bin[10] top.enc_err_counter_tb.dut.cnt.bin[9] top.enc_err_counter_tb.dut.cnt.bin[8] top.enc_err_counter_tb.dut.cnt.bin[7] top.enc_err_counter_tb.dut.cnt.bin[6] top.enc_err_counter_tb.dut.cnt.bin[5] top.enc_err_counter_tb.dut.cnt.bin[4] top.enc_err_counter_tb.dut.cnt.bin[3] top.enc_err_counter_tb.dut.cnt.bin[2] top.enc_err_counter_tb.dut.cnt.bin[1] top.enc_err_counter_tb.dut.cnt.bin[0]
+#{top.enc_err_counter_tb.dut.cnt.bin_x[31:0]} top.enc_err_counter_tb.dut.cnt.bin_x[31] top.enc_err_counter_tb.dut.cnt.bin_x[30] top.enc_err_counter_tb.dut.cnt.bin_x[29] top.enc_err_counter_tb.dut.cnt.bin_x[28] top.enc_err_counter_tb.dut.cnt.bin_x[27] top.enc_err_counter_tb.dut.cnt.bin_x[26] top.enc_err_counter_tb.dut.cnt.bin_x[25] top.enc_err_counter_tb.dut.cnt.bin_x[24] top.enc_err_counter_tb.dut.cnt.bin_x[23] top.enc_err_counter_tb.dut.cnt.bin_x[22] top.enc_err_counter_tb.dut.cnt.bin_x[21] top.enc_err_counter_tb.dut.cnt.bin_x[20] top.enc_err_counter_tb.dut.cnt.bin_x[19] top.enc_err_counter_tb.dut.cnt.bin_x[18] top.enc_err_counter_tb.dut.cnt.bin_x[17] top.enc_err_counter_tb.dut.cnt.bin_x[16] top.enc_err_counter_tb.dut.cnt.bin_x[15] top.enc_err_counter_tb.dut.cnt.bin_x[14] top.enc_err_counter_tb.dut.cnt.bin_x[13] top.enc_err_counter_tb.dut.cnt.bin_x[12] top.enc_err_counter_tb.dut.cnt.bin_x[11] top.enc_err_counter_tb.dut.cnt.bin_x[10] top.enc_err_counter_tb.dut.cnt.bin_x[9] top.enc_err_counter_tb.dut.cnt.bin_x[8] top.enc_err_counter_tb.dut.cnt.bin_x[7] top.enc_err_counter_tb.dut.cnt.bin_x[6] top.enc_err_counter_tb.dut.cnt.bin_x[5] top.enc_err_counter_tb.dut.cnt.bin_x[4] top.enc_err_counter_tb.dut.cnt.bin_x[3] top.enc_err_counter_tb.dut.cnt.bin_x[2] top.enc_err_counter_tb.dut.cnt.bin_x[1] top.enc_err_counter_tb.dut.cnt.bin_x[0]
+[pattern_trace] 1
+[pattern_trace] 0

@@ -72,6 +72,7 @@ use work.cpri_phy_reconf_pkg.all;
 use work.beam_dump_pkg.all;
 use work.wb_i2c_wrapper_pkg.all;
 use work.remote_update_pkg.all;
+use work.enc_err_counter_pkg.all;
 
 entity monster is
   generic(
@@ -127,7 +128,8 @@ entity monster is
     g_en_timer             : boolean;
     g_en_eca_tap           : boolean;
     g_en_asmi              : boolean;
-    g_en_psram_delay       : boolean);
+    g_en_psram_delay       : boolean;
+    g_en_enc_err_counter   : boolean);
   port(
     -- Required: core signals
     core_clk_20m_vcxo_i    : in    std_logic;
@@ -515,7 +517,8 @@ architecture rtl of monster is
     devs_a10_phy_reconf,
     devs_i2c_wrapper,
     devs_eca_tap,
-    devs_asmi
+    devs_asmi,
+    devs_enc_err_counter
   );
   constant c_dev_slaves          : natural := dev_slaves'pos(dev_slaves'right)+1;
 
@@ -558,7 +561,8 @@ architecture rtl of monster is
     dev_slaves'pos(devs_a10_phy_reconf) => f_sdb_auto_device(c_cpri_phy_reconf_sdb,            g_a10_en_phy_reconf),
     dev_slaves'pos(devs_i2c_wrapper)    => f_sdb_auto_device(c_i2c_wrapper_sdb,                g_en_i2c_wrapper),
     dev_slaves'pos(devs_eca_tap)        => f_sdb_auto_device(c_eca_tap_sdb,                    g_en_eca_tap),
-    dev_slaves'pos(devs_asmi)           => f_sdb_auto_device(c_wb_asmi_sdb,                    g_en_asmi));
+    dev_slaves'pos(devs_asmi)           => f_sdb_auto_device(c_wb_asmi_sdb,                    g_en_asmi),
+    dev_slaves'pos(devs_enc_err_counter)=> f_sdb_auto_device(c_enc_err_counter_sdb,            g_en_enc_err_counter));
   constant c_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_bridge_sdb  : t_sdb_bridge       := f_xwb_bridge_layout_sdb(true, c_dev_layout, c_dev_sdb_address);
@@ -3307,6 +3311,21 @@ end generate;
         slave_o     =>  asmi_o
       );
    end generate asmi_y;
+
+	
+  enc_err_counter_n : if not g_en_enc_err_counter generate
+  	dev_bus_master_i(dev_slaves'pos(devs_enc_err_counter)) <= cc_dummy_slave_out;
+  end generate;
+  enc_err_counter_y : if g_en_enc_err_counter generate
+    enc_err_counter_slave : enc_err_counter
+      port map(
+      clk_sys_i    	=> clk_sys,
+      clk_ref_i		=> phy_clk,
+      rstn_sys_i   	=> rstn_sys,
+      slave_i   	=> dev_bus_master_o(dev_slaves'pos(devs_enc_err_counter)),
+      slave_o   	=> dev_bus_master_i(dev_slaves'pos(devs_enc_err_counter)),
+      enc_err_i		=> phy_rx_enc_err);
+  end generate;
 
   -- END OF Wishbone slaves
   ----------------------------------------------------------------------------------
