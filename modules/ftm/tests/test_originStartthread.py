@@ -10,7 +10,7 @@ class TestOriginStartthread(dm_testbench.DmTestbench):
     """Start and stop patterns on different threads.
     Check that the correct threads are running-
     """
-    self.delay(0.2)
+    self.delay(0.4)
     # ~ now = datetime.now().time() # time object
     # ~ print("start of startStopPattern ", now)
     # ~ line1 = self.startAndGetSubprocessOutput(('ssh', 'root@fel0069.acc', 'eb-mon', '-d', 'dev/wbm1'), [0], 1, 0)
@@ -41,19 +41,21 @@ class TestOriginStartthread(dm_testbench.DmTestbench):
 
   def test_threadsStartStop(self):
     """Thread 0 assigns TmsgX and BlockX to thread X=1,2,3 and starts these threads.
-    Then start pattern D (Tmsg4 and Block4) to show that this does not stop the other threads.
+    Then start pattern D (Tmsg4 and Block4 on thread 0) to show that this does not stop the other threads.
     Stop pattern A which stops thread 1.
     Stop pattern C which stops thread 3.
     Stop node Block2 which stops thread 2.
+    A good test run has 2 messages on thread 0 (pattern X and pattern D), nearly 20 messages on thread 1 (pattern A),
+    nearly 40 messages on thread 2 (pattern B), nearly 30 messages on thread 3 (pattern C). Total of about 90 messages.
     """
     self.addSchedule('threadsStartStop.dot')
     fileName = 'snoop_threadsStartStop.csv'
     # ~ print("before snoop ", datetime.now().time())
-    self.snoopToCsvWithAction(fileName, self.startStopPattern, duration=1)
+    self.snoopToCsvWithAction(fileName, self.startStopPattern, duration=2)
     # analyse column 20 which contains the parameter.
     # check par=0:1, par=1:18, par=2:36, par=3:27, par=4:1 for snoop of 1 second.
     self.analyseFrequencyFromCsv(fileName, column=20, printTable=True,
-        checkValues={'0x0000000000000000': '1', '0x0000000000000001': '>17', '0x0000000000000002': '>35', '0x0000000000000003': '>26', '0x0000000000000004': '1'})
+        checkValues={'0x0000000000000000': '1', '0x0000000000000001': '>17', '0x0000000000000002': '>35', '0x0000000000000003': '>26', '0x0000000000000004': '1'}, addDelayed=True)
     self.deleteFile(fileName)
 
   def test_nodeInTwoThreads(self):

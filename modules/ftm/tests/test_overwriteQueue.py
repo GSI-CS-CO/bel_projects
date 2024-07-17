@@ -5,7 +5,7 @@ import dm_testbench
 class OverwriteBlocks(dm_testbench.DmTestbench):
 
   def actionOverwriteSchedules(self):
-    self.delay(0.1)
+    self.delay(0.4)
     # start the first pattern with no queues
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'PPS_Q'), linesCout=1, linesCerr=0)
     self.delay(2)
@@ -34,6 +34,12 @@ class OverwriteBlocks(dm_testbench.DmTestbench):
     self.deleteFile(statusFile)
 
   def test_overwriteSchedules(self):
+    """A good snoop contains 140 messages, cpu 0 thread 0.
+    There are 21 messages with parameter 1 and 2.
+    There are 22 messages with parameter 11 and 12.
+    There are 27 messages with parameter 21 and 22.
+    If parameter 1 or 2 occure not >19, snoop starts too late.
+    """
     fileName = 'snoop_overwriteSchedules.csv'
     self.addSchedule('pps-no-queue.dot')
     self.snoopToCsvWithAction(fileName, self.actionOverwriteSchedules, duration=8)
