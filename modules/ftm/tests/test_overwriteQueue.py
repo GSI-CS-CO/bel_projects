@@ -5,7 +5,7 @@ import dm_testbench
 class OverwriteBlocks(dm_testbench.DmTestbench):
 
   def actionOverwriteSchedules(self):
-    self.delay(0.1)
+    self.delay(0.4)
     # start the first pattern with no queues
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'PPS_Q'), linesCout=1, linesCerr=0)
     self.delay(2)
