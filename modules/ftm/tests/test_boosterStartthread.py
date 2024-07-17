@@ -15,12 +15,15 @@ class UnitTestBoosterStartThread(dm_testbench.DmTestbench):
     self.deleteFile(file_name)
 
   def test_threeThreads1(self):
+    """ A good snoop contains a cycle with 7 or more messages with evtno 0x0100.
+    A cycle is 1 sec to 1.2 sec long.
+    """
     self.startPattern('booster_startthread-1.dot', 'BOOST_REQ')
     file_name = 'snoop_startthread-1.csv'
     self.snoopToCsv(file_name, duration=2)
     column_EVTNO = 8
     self.analyseFrequencyFromCsv(file_name, column_EVTNO,
-        checkValues={'0x0100': '>7', '0x0200': '>0', '0x0102': '=1', '0x0103': '=1', '0x0160': '>0'})
+        checkValues={'0x0100': '>6', '0x0200': '>0', '0x0102': '=1', '0x0103': '=1', '0x0160': '>0'})
     self.deleteFile(file_name)
 
   def test_threeThreads2(self):
