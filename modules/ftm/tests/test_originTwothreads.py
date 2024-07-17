@@ -10,15 +10,19 @@ class TestOriginTwoThreads(dm_testbench.DmTestbench):
     """
     self.delay(0.5)
     # start pattern B
-    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'B'), [0], 1, 0)
+    self.startPattern('twothreads.dot', 'B')
     # check that thread 1 is running
     self.analyseDmCmdOutput('01000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'[:self.cpuQuantity*self.threadQuantity])
 
   def test_twoThreads(self):
     """Add the schedule. Trigger action and snoop.
     Check the parameter field of the timing messages.
+    First message has parameter 1, second message has parameter 2, third and
+    all following messages have parameter 1.
+    If the first message is missing, this is not detected by the check. More than
+    15 messages with parameter 1 are following. If snoop starts to late, it may
+    not detect the second message and the check fails.
     """
-    self.addSchedule('twothreads.dot')
     snoopFileName = 'snoop_twothreads.csv'
     self.snoopToCsvWithAction(snoopFileName, self.startPatternAndSee, duration=2)
     # analyse column 20 which contains the parameter.
