@@ -31,11 +31,14 @@ class ConnectCpus(dm_testbench.DmTestbench):
   def testTwoCpusSwitch(self):
     """Load a schedule with a target edge that connects a node on CPU 0
     with a node on CPU 1. There is also a switchdst edge from CPU 0 to CPU 1.
+    A good snoop starts with more than 10 messages with parameter 0x0000000000000001.
+    After these, messages with parameters 0x0000000000000000 and 0x0000000000000002
+    occure frequently.
     """
     snoopFile = 'snoop_TwoCpusSwitch.csv'
     self.scheduleFile0 = 'cpu0-1-switch-block-target.dot'
     self.downloadFile0 = self.scheduleFile0.replace('.dot', '-download.dot')
-    self.snoopToCsvWithAction(snoopFile, self.actionTwoCpusSwitch, duration=1)
+    self.snoopToCsvWithAction(snoopFile, self.actionTwoCpusSwitch, duration=2)
     self.startAndCheckSubprocess(('scheduleCompare', '-s', '-u', self.schedulesFolder + self.downloadFile0, self.downloadFile0), [0], 0, 0)
     self.deleteFile(self.downloadFile0)
     self.analyseFrequencyFromCsv(snoopFile, column=20, printTable=True, checkValues={'0x0000000000000000': '>35', '0x0000000000000001': '>0', '0x0000000000000002': '>35'}, addDelayed=True)
@@ -45,6 +48,7 @@ class ConnectCpus(dm_testbench.DmTestbench):
     """During snoop start pattern X and A. This produces messages.
     Download the schedule for later compare.
     """
+    self.delay(0.3)
     self.addSchedule(self.scheduleFile0)
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'A'), [0], 1, 0)
     self.delay(0.1)
