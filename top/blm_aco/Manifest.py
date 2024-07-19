@@ -1,5 +1,5 @@
 files = [
-   "blm_aco.vhd",
+   "blm_aco_v1.0.vhd",
    "scu_diob_pkg.vhd",
    "scu_diob.sdc",
    "diob_debounce.vhd",
@@ -21,22 +21,21 @@ files = [
    "fg901040.vhd",
    "in_reg.vhd",
    "BLM_watchdog_v1.0.vhd",
-   "BLM_gate_timing_seq.vhd",
+   "BLM_gate_timing_seq_v1.2.vhd",
    "up_down_counter.vhd",
-   "Beam_Loss_check_v1.1.vhd",
+   "Beam_Loss_check_v1.2.vhd",
    "front_board_id_v0.vhd",
    "BLM_counter_pool_el.vhd",
-   #"BLM_out_el.vhd",
-   "BLM_out_el_m.vhd",
-   "IOBP_LED_ID_Module.vhd",
+   "BLM_out_el_m_v1.0.vhd",
+  # "IOBP_LED_ID_Module.vhd",
+  "IOBP_LED_ID_module_v1.0.vhd",
    "p_connector.vhd",
    "BLM_in_mux.vhd",
-   "BLM_gate_timing_seq_elem.vhd",
+   "BLM_gate_el_v1.0.vhd",
    "BLM_ena_in_mux.vhd",
    "blm_24_9_9_9pll.vhd",
-   "deglitcher.v"
-  # "gate_deglitcher.v",
-   #"deglitcher_v1.vhd"
+   "deglitcher.v",
+   "BLM_cnt_pulse_former.vhd"
 ]
 
 modules = {

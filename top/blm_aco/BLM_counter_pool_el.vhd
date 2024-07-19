@@ -83,7 +83,7 @@ begin
               
         elsif (clk'EVENT AND clk= '1') then 
 
-            if RESET ='1' then --counter reset
+            if (RESET ='1' or gate_reset_ena = '1') then --counter reset
 
                 cnt_enable <='0';
                 CLEAR <='1';
