@@ -1040,6 +1040,8 @@ uint32_t extern_entryActionConfigured()
 // entry action of state operation
 uint32_t extern_entryActionOperation()
 {
+  fwlib_clearDiag();                                                        // clear common diagnostic data
+  
   return COMMON_STATUS_OK;
 } // extern_entryActionOperation
 
