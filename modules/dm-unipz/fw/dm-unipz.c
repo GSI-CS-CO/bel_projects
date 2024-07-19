@@ -1403,16 +1403,21 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       else                 *dtTransfer = ecaDeadline - tTkreq;                     // we got a valid timestamp
 
       if (status == COMMON_STATUS_OK) {                                            // we don't want to overwrite an already existing bad status
-        if (flagTkReq) {                                                           // only do this test, if TK is reserved (if TK is not reserved, synchronization with UNILAC is not included in the schedule)
+        if (flagTkReq) {                                                           // only do this tests, if TK is reserved (if TK is not reserved, synchronization with UNILAC is not included in the schedule)
           // check if time difference is not reasonable. It must be within a small window around the value DMUNIPZ_OFFSETINJECT.
           if ((*dtSync1 < (uint64_t)(DMUNIPZ_OFFSETINJECT - DMUNIPZ_MATCHWINDOW)) || (*dtSync1 > (uint64_t)(DMUNIPZ_OFFSETINJECT + DMUNIPZ_MATCHWINDOW))) status = DMUNIPZ_STATUS_BADSYNC;
+
+          // check if time difference is not reasonable. It must be larger than 10ms. A shorter difference indicates failure/missing '10s waiting block' at DM
+          if (*dtInject < (uint64_t)(DMUNIPZ_OFFSETINJECT + DMUNIPZ_MATCHWINDOW)) status = DMUNIPZ_STATUS_BADSCHEDULEA;
         } // if flagTKReq
       } // if status
 
+      /* moved this test inside 'if (flagTkreq) ...' just above
       if (status == COMMON_STATUS_OK) {                                            // we don't want to overwrite an already existing bad status
         // check if time difference is not reasonable. It must be larger than 10ms. A shorter difference indicates failure/missing '10s waiting block' at DM
         if (*dtInject < (uint64_t)(DMUNIPZ_OFFSETINJECT + DMUNIPZ_MATCHWINDOW)) status = DMUNIPZ_STATUS_BADSCHEDULEA;
       } // if status
+      */
       
       break;
       
@@ -1535,7 +1540,7 @@ int main(void) {
 
     if (comLatency > maxComLatency) maxComLatency = comLatency;
     if (offsDone   > maxOffsDone)   maxOffsDone   = offsDone;
-    fwlib_publishTransferStatus((nTransfer, nMulti, statusTransfer, nLate, maxOffsDone, maxComLatency);
+    fwlib_publishTransferStatus(nTransfer, nMulti, statusTransfer, nLate, maxOffsDone, maxComLatency);
 
 
     /* publish info on mode (multi-multi/booster) and booster cycles (if applicable) */
