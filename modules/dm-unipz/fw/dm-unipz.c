@@ -1535,7 +1535,7 @@ int main(void) {
 
     if (comLatency > maxComLatency) maxComLatency = comLatency;
     if (offsDone   > maxOffsDone)   maxOffsDone   = offsDone;
-    fwlib_publishTransferStatus(0, 0, 0, nLate, maxOffsDone, maxComLatency);
+    fwlib_publishTransferStatus((nTransfer, nMulti, statusTransfer, nLate, maxOffsDone, maxComLatency);
 
 
     /* publish info on mode (multi-multi/booster) and booster cycles (if applicable) */
