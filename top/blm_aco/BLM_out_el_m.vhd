@@ -22,11 +22,12 @@ port (
 
   wd_out           : in std_logic_vector(53 downto 0);  -- wd_error
   gate_in          : in std_logic_vector(11 downto 0); -- to be sent to the status registers
+  gate_error       : in std_logic_vector(11 downto 0); -- to be sent to the status registers
   gate_out        : in std_logic_vector (11 downto 0); --gate error
   counter_reg: in t_BLM_counter_Array;
  
   BLM_Output      : out std_logic_vector(5 downto 0);
-  BLM_status_Reg : out t_IO_Reg_0_to_23_Array 
+  BLM_status_Reg : out t_IO_Reg_0_to_25_Array 
 
   );
 
@@ -59,12 +60,20 @@ signal read_cnt: t_cnt:= (others => 0);
 signal read_counters: integer range 0 to 127;
 
 signal ena_out: std_logic_vector(5 downto 0);
+signal gate_output : std_logic_vector(11 downto 0);
+signal gate_error_output: std_logic_vector(11 downto 0);
+signal wd_output: std_logic_vector(53 downto 0);
+signal gate_input : std_logic_vector(11 downto 0);
 
 begin
 
 
-OVERFLOW <= gate_in& wd_out& gate_out & UP_OVERFLOW & DOWN_OVERFLOW;
+OVERFLOW <= gate_in& wd_out& gate_error & UP_OVERFLOW & DOWN_OVERFLOW;
 --gate_input <= gate_in;
+gate_output <= gate_out;
+gate_error_output <=gate_error;
+wd_output <= wd_out;
+gate_input <= gate_in;
 
 sel_signal_proc: process (BLM_out_sel_Reg)
 
@@ -160,19 +169,29 @@ end process;
      --------------------------------------------------------------------------------------------------
      status_reg_overflow_proc: process (OVERFLOW)
      begin
-        for i in 0 to 19 loop
+        for i in 0 to 15 loop
          --   BLM_status_reg(i) <= not OVERFLOW((i*16+15) downto i*16); 
             BLM_status_reg(i) <=  OVERFLOW((i*16+15) downto i*16);
         end loop;
     end process;
-    
-    --BLM_status_reg(20) <= "00" & not OVERFLOW(333 downto 320); -- bits 333-321 gate inputs, bits 321-320 = wd_out (53 downto 52)
-   -- BLM_status_reg(21)(5 downto 0) <= not BLM_out_signal; -- physical outputs
-    BLM_status_reg(20) <= "00" & OVERFLOW(333 downto 320); -- bits 333-321 gate inputs, bits 321-320 = wd_out (53 downto 52)
-    BLM_status_reg(21)(5 downto 0) <= BLM_out_signal; -- physical outputs
-    BLM_status_reg(21)(15 downto 6)  <= (others =>'0');    
-    BLM_status_reg(22)<= cnt_readback(15 downto 0);
-    BLM_status_reg(23) <= "00"& cnt_readback(29 downto 16);
+    BLM_status_reg(16) <= "0000"& gate_error_output;
+    BLM_status_reg(17) <= wd_output(15 downto 0);
+    BLM_status_reg(18) <= wd_output(31 downto 16);
+    BLM_status_reg(19) <= wd_output(47 downto 32);
+    BLM_status_reg(20) <= "0000000000" & wd_output(53 downto 48);
+    BLM_status_reg(21) <= cnt_readback(15 downto 0);
+    BLM_status_reg(22) <= "00" & cnt_readback(29 downto 16);
+    BLM_status_reg(23) <= "0000" & gate_input;
+    BLM_status_reg(24) <= "0000" & gate_output;
+    BLM_status_reg(25) <= "0000000000" & BLM_out_signal; 
+  --  --BLM_status_reg(20) <= "00" & not OVERFLOW(333 downto 320); -- bits 333-321 gate inputs, bits 321-320 = wd_out (53 downto 52)
+ --  -- BLM_status_reg(21)(5 downto 0) <= not BLM_out_signal; -- physical outputs
+ --   BLM_status_reg(20) <= "00" & OVERFLOW(333 downto 320); -- bits 333-321 gate inputs, bits 321-320 = wd_out (53 downto 52)
+ --   BLM_status_reg(21)(5 downto 0) <= BLM_out_signal; -- physical outputs
+ --   BLM_status_reg(21)(15 downto 6)  <= cnt_readback(9 downto 0);    
+ --   BLM_status_reg(22)<= cnt_readback(25 downto 10);
+ --   BLM_status_reg(23) <= gate_output& cnt_readback(29 downto 26);
+  
 
 
  BLM_Output <= BLM_out_signal;

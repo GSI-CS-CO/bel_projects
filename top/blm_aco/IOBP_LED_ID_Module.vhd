@@ -8,7 +8,8 @@ entity IOBP_LED_ID_Module is
 port (
         clk_sys           : in  std_logic;      
         rstn_sys          : in  std_logic;      
-        Ena_Every_250ns   : in  std_logic; 
+    --    Ena_Every_250ns   : in  std_logic; 
+    Ena_Every_500ns       : in std_logic;
         AW_ID             : in  std_logic_vector(7 downto 0); -- Application_ID
         IOBP_LED_ID_Bus_i : in  std_logic_vector(7 downto 0);   -- LED_ID_Bus_In
         IOBP_Aktiv_LED_o  : in  t_led_array;    -- Active LEDs of the "Slave-Boards"
@@ -27,13 +28,14 @@ architecture rtl of IOBP_LED_ID_Module is
 
 signal Slave_Loop_cnt:      integer range 0 to 12;         -- 1-12   -- Loop-Counter
 
-type   IOBP_LED_state_t is   (IOBP_idle, led_id_wait, led_id_loop, led_str_rot_h, led_str_rot_l, led_gruen,
+type   IOBP_LED_state_t is   (IOBP_START_DEL, IOBP_idle, led_id_wait, led_id_loop, led_str_rot_h, led_str_rot_l, led_gruen,
                               led_str_gruen_h, led_str_gruen_l, iobp_led_dis, iobp_led_z, iobp_id_str_h, iobp_rd_id, iobp_id_str_l, iobp_end);
-signal IOBP_state:   IOBP_LED_state_t:= IOBP_idle;
-        
+--signal IOBP_state:   IOBP_LED_state_t:= IOBP_idle;
+signal IOBP_state:   IOBP_LED_state_t:= IOBP_START_DEL;        
 begin
 
-P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
+--P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
+P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_500ns, rstn_sys, IOBP_state)
 
     begin
       if (not rstn_sys = '1') then
@@ -42,11 +44,14 @@ P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
         IOBP_STR_rot_o       <=  (others => '0');    --  Led-Strobs 'red'
         IOBP_STR_gruen_o     <=  (others => '0');    --  Led-Strobs 'green'
         IOBP_STR_id_o        <=  (others => '0');    --  ID-Strobs
+        IOBP_state           <=  IOBP_START_DEL;
 
-
-    ELSIF (clk_sys'EVENT AND clk_sys = '1' AND Ena_Every_250ns = '1') THEN
+        ELSIF (clk_sys'EVENT AND clk_sys = '1' AND Ena_Every_500ns = '1') THEN
+   -- ELSIF (clk_sys'EVENT AND clk_sys = '1' AND Ena_Every_250ns = '1') THEN
 --  ELSIF ((rising_edge(clk_sys)) or Ena_Every_100ns)  then
       case IOBP_state is
+        when IOBP_START_DEL => IOBP_state  <= IOBP_idle;
+
         when IOBP_idle   =>  Slave_Loop_cnt       <=  1;                 -- Loop-Counter
 
                             if  (AW_ID(7 downto 0) = "00010011") THEN  IOBP_state  <= led_id_wait; -- AW_ID(7 downto 0) = c_AW_INLB12S1.ID
@@ -98,7 +103,7 @@ P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
                                     IOBP_state     <= IOBP_idle;
                                   end if;
 
-        when others           =>  IOBP_state       <= IOBP_idle;
+        when others           =>  IOBP_state       <= IOBP_START_DEL;
 
       end case;
     end if;

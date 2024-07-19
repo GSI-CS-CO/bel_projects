@@ -44,7 +44,7 @@ port (
                                                    --=> 126 registers             
                                                     --   REg127  (ex Reg121): counter outputs buffering enable (bit 15) and buffered output select (bit 7-0). Bits 14-8 not used     
     -- OUT register
-    BLM_status_Reg    : out t_IO_Reg_0_to_23_Array ;
+    BLM_status_Reg    : out t_IO_Reg_0_to_25_Array ;
 
       -- OUT BLM
       BLM_Out           : out std_logic_vector(5 downto 0) 
@@ -175,12 +175,13 @@ component BLM_gate_timing_seq is
         
         wd_out           : in std_logic_vector(53 downto 0); 
         gate_in          : in std_logic_vector(11 downto 0); -- to be sent to the status registers
+        gate_error        : in std_logic_vector (11 downto 0); 
         gate_out        : in std_logic_vector (11 downto 0); 
         counter_reg: in t_BLM_counter_Array;
       
 
         BLM_Output      : out std_logic_vector(5 downto 0);
-        BLM_status_Reg : out t_IO_Reg_0_to_23_Array 
+        BLM_status_Reg : out t_IO_Reg_0_to_25_Array 
         
         );
      
@@ -193,8 +194,8 @@ begin
 
 VALUE_IN <= BLM_test_signal & BLM_data_in;
 BLM_gate_recover <= BLM_gate_recover_Reg(11 downto 0);
-BLM_gate_prepare <= BLM_gate_seq_prep_ck_sel_Reg(14 downto 3);
-BLM_gate_seq_clk_sel <= BLM_gate_seq_prep_ck_sel_Reg(2 downto 0);
+BLM_gate_prepare <= BLM_gate_seq_prep_ck_sel_Reg(11 downto 0);
+--BLM_gate_seq_clk_sel <= BLM_gate_seq_prep_ck_sel_Reg(2 downto 0);
 
  -- gate_timing_clock_sel_proc: process( BLM_gate_seq_clk_sel)
  --   begin
@@ -393,7 +394,8 @@ BLM_out_section: BLM_out_el
    DOWN_OVERFLOW   => DOWN_OVERFLOW,
     wd_out           => out_1wd, --out_wd, --out_1wd,
     gate_in         => BLM_gate_in(5 downto 0) & BLM_gate_in(11 downto 6),--BLM_gate_in,
-    gate_out        => gate_error(5 downto 0) & gate_error(11 downto 6),
+    gate_error        => gate_error(5 downto 0) & gate_error(11 downto 6),
+    gate_out        => gate_output(5 downto 0) & gate_output(11 downto 6),
     BLM_Output      => BLM_out,
     counter_reg =>  counter_value,   
     BLM_status_Reg  => BLM_status_Reg 

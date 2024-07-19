@@ -466,7 +466,7 @@ port (
                                                     --=> 126 registers             
                                                     --   REg127             ex Reg121: counter outputs buffering enable (bit 15) and buffered output select (bit 7-0). Bits 14-8 not used     
     -- OUT register
-    BLM_status_Reg    : out t_IO_Reg_0_to_23_Array ;
+    BLM_status_Reg    : out t_IO_Reg_0_to_25_Array ;
 
       -- OUT BLM
       BLM_Out           : out std_logic_vector(5 downto 0) 
@@ -856,7 +856,7 @@ end component aw_io_reg;
   signal IOBP_msk_rd_active:      std_logic;
   signal IOBP_msk_Dtack:          std_logic;
   signal IOBP_msk_data_to_SCUB:   std_logic_vector(15 downto 0);
- signal BLM_Status_Reg:    t_IO_Reg_0_to_23_Array ;
+ signal BLM_Status_Reg:    t_IO_Reg_0_to_25_Array ;
 
 signal IOBP_Output: std_logic_vector(5 downto 0);     -- Outputs "Slave-Karten 1-12"  --but I use only 1-2-3 respectiverly for slot 10-11-12
 
@@ -872,9 +872,9 @@ signal IOBP_Input:  t_IOBP_array;    -- Inputs "Slave-Karten 1-12"
   signal IOBP_id_rd_active:       std_logic;
   signal IOBP_id_Dtack:           std_logic;
   signal IOBP_id_data_to_SCUB:    std_logic_vector(15 downto 0);
-  signal IOBP_in_data_to_SCUB:    t_IO_Reg_0_to_2_Array;
-  signal IOBP_in_rd_active:       std_logic_vector(2 downto 0);
-  signal IOBP_in_Dtack:            std_logic_vector(2 downto 0);
+  signal IOBP_in_data_to_SCUB:    t_IO_Reg_0_to_3_Array;
+  signal IOBP_in_rd_active:       std_logic_vector(3 downto 0);
+  signal IOBP_in_Dtack:            std_logic_vector(3 downto 0);
   signal IOBP_in_res_Dtack: std_logic;
   signal IOBP_Sel_LED:      t_led_array;    -- Sel-LED's der "Slave-Karten"
   signal IOBP_ID:           t_id_array;     -- IDs of the "Slave-Boards"
@@ -1444,6 +1444,40 @@ BLM_status_registers_0_23:for i in 0 to 2 generate
         );
     end generate BLM_status_registers_0_23;
 
+     
+
+
+        BLM_Status_READBACK_Reg_24_25: in_reg
+        generic map(
+              Base_addr =>  c_Status_READBACK_Base_Addr +24
+              )
+        port map  (
+              Adr_from_SCUB_LA   =>  ADR_from_SCUB_LA,
+              Data_from_SCUB_LA  =>  Data_from_SCUB_LA,
+              Ext_Adr_Val        =>  Ext_Adr_Val,
+              Ext_Rd_active      =>  Ext_Rd_active,
+              Ext_Rd_fin         =>  Ext_Rd_fin,
+              Ext_Wr_active      =>  Ext_Wr_active,
+              Ext_Wr_fin         =>  SCU_Ext_Wr_fin,
+              clk                =>  clk_sys,
+              nReset             =>  rstn_sys,
+        --
+              Reg_In1            =>  BLM_Status_Reg(24),
+              Reg_In2            =>  BLM_Status_Reg(24+1),
+              Reg_In3            =>  (others =>'0'),
+              Reg_In4            =>  (others =>'0'),
+              Reg_In5            =>  (others =>'0'),
+              Reg_In6            =>  (others =>'0'),
+              Reg_In7            =>  (others =>'0'),
+              Reg_In8            =>  (others =>'0'),
+    
+        --
+              Reg_rd_active      =>  IOBP_in_rd_active(3),
+              Dtack_to_SCUB      =>  IOBP_in_Dtack(3),
+              Data_to_SCUB       =>  IOBP_in_data_to_SCUB(3)
+            );
+     
+    
 
 threshold_registers: for i in 0 to 63 generate
 
@@ -1975,7 +2009,7 @@ rd_port_mux:  process ( clk_switch_rd_active,     clk_switch_rd_data,
   variable sel: unsigned(11 downto 0);
   variable sel_th: unsigned(63 downto 0);
   variable sel_in_sel: unsigned(15 downto 0);
-  variable sel_st: unsigned(2 downto 0);
+  variable sel_st: unsigned(3 downto 0);
   variable sel_out_sel: unsigned(15 downto 0); 
 
   begin
@@ -2023,7 +2057,7 @@ else
            end loop;
            else
            if to_integer(sel_st) > 0 then  
-           for i in 0 to 2 loop
+           for i in 0 to 3 loop
              if sel_st(i) = '1' then 
                 Data_to_SCUB <= IOBP_in_data_to_SCUB(i);
              end if;
