@@ -2,7 +2,7 @@ name: CI Basic Build
 
 on:
   push:
-    branches: 
+    branches:
       - "master"
       - "proposed_master"
       - "fallout"
@@ -23,10 +23,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Update
-        run: sudo apt-get update 
-      
+        run: sudo apt-get update
+
       - name: Install missing packages
         run: sudo apt-get -y install automake libreadline-dev build-essential libboost-all-dev docbook-utils pkg-config libsigc++-2.0-dev --fix-missing
 
@@ -57,11 +57,11 @@ jobs:
       - name: Install simple-display
         run: make simple-display-install
 
+      - name: Build phtif
+        run: make phtif
+
       - name: Build saftlib
         run: make saftlib -j$(nproc)
 
       - name: Install saftlib
         run: sudo make saftlib-install
-
-      - name: Build phtif
-        run: make phtif
