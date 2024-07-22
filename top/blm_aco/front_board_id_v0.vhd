@@ -25,7 +25,7 @@ Port ( clk : in STD_LOGIC;
        IOBP_ID          : in t_id_array;
        INTL_Output      : in std_logic_vector(5 downto 0);
        AW_Output_Reg    : in std_logic_vector(5 downto 0);
-       nBLM_out_ena      : in std_logic;
+     --  nBLM_out_ena      : in std_logic;
        AW_IOBP_Input_Reg     : out t_IO_Reg_1_to_7_Array;
        IOBP_Output     : out std_logic_vector (5 downto 0);     
        IOBP_Input     : out t_IOBP_array;
@@ -374,12 +374,12 @@ begin
                                                     ------------------------------------------------------------------
                                                     --- AW_Config register assigment to be defined
                                                     ------------------------------------------------------------------
-                                                      if nBLM_out_ena ='0' then -- correct values to be checked
+                                                     -- if nBLM_out_ena ='0' then -- correct values to be checked
 
                                                         IOBP_Out <= INTL_Output;
-                                                      else
-                                                        IOBP_Out <= AW_Output_Reg AND not IOBP_Masken_Reg6(11 downto 6);
-                                                      end if;
+                                                    --  else
+                                                     --   IOBP_Out <= AW_Output_Reg AND not IOBP_Masken_Reg6(11 downto 6);
+                                                    --  end if;
                                                       --------------------------------------------------------------------     
                                                       OUT_SLOT <= not IOBP_Out;                                                  
                                                       --OUT_SLOT <=IOBP_Input(1); --  not IOBP_Out;

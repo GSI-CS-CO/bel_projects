@@ -448,7 +448,8 @@ port (
    -- IN BLM 
     BLM_data_in       : in std_logic_vector(53 downto 0);
     BLM_gate_in       : in std_logic_vector(11 downto 0);
-   BLM_tst_ck_sig    : in std_logic_vector (10 downto 0);
+    BLM_tst_ck_sig    : in std_logic_vector (10 downto 0);
+    IOBP_LED_nr       : in std_logic_vector(3 downto 0);
     --IN registers
     pos_threshold           : in t_BLM_th_Array; --t_BLM_th_Array is array (0 to 127) of std_logic_vector(31 downto 0);
     neg_threshold           : in t_BLM_th_Array ;
@@ -466,7 +467,8 @@ port (
                                                     --=> 126 registers             
                                                     --   REg127             ex Reg121: counter outputs buffering enable (bit 15) and buffered output select (bit 7-0). Bits 14-8 not used     
     -- OUT register
-    BLM_status_Reg    : out t_IO_Reg_0_to_25_Array ;
+   -- BLM_status_Reg    : out t_IO_Reg_0_to_25_Array ;
+   BLM_status_Reg    : out t_IO_Reg_0_to_29_Array ;
 
       -- OUT BLM
       BLM_Out           : out std_logic_vector(5 downto 0) 
@@ -493,7 +495,7 @@ component front_board_id is
        IOBP_ID          : in t_id_array;
        INTL_Output      : in std_logic_vector(5 downto 0);
        AW_Output_Reg    : in std_logic_vector(5 downto 0);
-       nBLM_out_ena      : in std_logic;
+      -- nBLM_out_ena      : in std_logic;
        AW_IOBP_Input_Reg     : out t_IO_Reg_1_to_7_Array;
        IOBP_Output     : out std_logic_vector (5 downto 0);     
        IOBP_Input     : out t_IOBP_array;
@@ -509,7 +511,8 @@ component IOBP_LED_ID_Module
 port (
         clk_sys           : in  std_logic;      
         rstn_sys          : in  std_logic;      
-        Ena_Every_250ns   : in  std_logic; 
+        --Ena_Every_250ns   : in  std_logic; 
+        Ena_Every_500ns   : in std_logic;
         AW_ID             : in  std_logic_vector(7 downto 0); -- Application_ID
         IOBP_LED_ID_Bus_i : in  std_logic_vector(7 downto 0);   -- LED_ID_Bus_In
         IOBP_Aktiv_LED_o  : in  t_led_array;    -- Active LEDs of the "Slave-Boards"
@@ -519,7 +522,8 @@ port (
         IOBP_STR_gruen_o  : out std_logic_vector(12 downto 1);  -- LED-Str Green for Slave 12-1
         IOBP_STR_ID_o     : out std_logic_vector(12 downto 1);  -- ID-Str Green for Slave 12-1
         IOBP_LED_ID_Bus_o : out std_logic_vector(7 downto 0);   -- LED_ID_Bus_Out
-        IOBP_ID           : out t_id_array     -- IDs of the "Slave-Boards"
+        IOBP_ID           : out t_id_array ;    -- IDs of the "Slave-Boards"
+        IOBP_LED_state_nr : out std_logic_vector(3 downto 0)
         
         );
  end component IOBP_LED_ID_Module;
@@ -856,7 +860,8 @@ end component aw_io_reg;
   signal IOBP_msk_rd_active:      std_logic;
   signal IOBP_msk_Dtack:          std_logic;
   signal IOBP_msk_data_to_SCUB:   std_logic_vector(15 downto 0);
- signal BLM_Status_Reg:    t_IO_Reg_0_to_25_Array ;
+ --signal BLM_Status_Reg:    t_IO_Reg_0_to_25_Array ;
+ signal BLM_Status_Reg:    t_IO_Reg_0_to_29_Array ;
 
 signal IOBP_Output: std_logic_vector(5 downto 0);     -- Outputs "Slave-Karten 1-12"  --but I use only 1-2-3 respectiverly for slot 10-11-12
 
@@ -1035,12 +1040,14 @@ signal BLM_ctrl_Dtack:        std_logic_vector(2 downto 0);                  -- 
 ---------------------------------------
             -- Dtack to SCU Bus Macro
 -----for BLM out_sel 
-signal BLM_out_sel_Reg :       t_BLM_out_sel_reg_Array; --127 registers
+signal BLM_out_sel_Reg :       t_BLM_out_sel_reg_Array; 
 
 signal BLM_out_sel_rd_active:  std_logic_vector(15 downto 0);
 signal BLM_out_sel_Dtack: std_logic_vector(15 downto 0);
 signal BLM_out_sel_data_to_SCUB: t_IO_Reg_0_to_15_Array;
 signal BLM_out_sel_res_Dtack     : std_logic;
+
+signal IOBP_LED_sm_nr: std_logic_vector(3 downto 0);
 ---
 constant ZERO_th: std_logic_vector(BLM_th_Dtack'range) := (others => '0');
 constant ZERO_in_sel: std_logic_vector(BLM_in_sel_Dtack'range) := (others => '0');
@@ -1447,7 +1454,7 @@ BLM_status_registers_0_23:for i in 0 to 2 generate
      
 
 
-        BLM_Status_READBACK_Reg_24_25: in_reg
+        BLM_Status_READBACK_Reg_24_29: in_reg
         generic map(
               Base_addr =>  c_Status_READBACK_Base_Addr +24
               )
@@ -1464,10 +1471,10 @@ BLM_status_registers_0_23:for i in 0 to 2 generate
         --
               Reg_In1            =>  BLM_Status_Reg(24),
               Reg_In2            =>  BLM_Status_Reg(24+1),
-              Reg_In3            =>  (others =>'0'),
-              Reg_In4            =>  (others =>'0'),
-              Reg_In5            =>  (others =>'0'),
-              Reg_In6            =>  (others =>'0'),
+              Reg_In3            =>  BLM_Status_Reg(24+2),
+              Reg_In4            =>  BLM_Status_Reg(24+3),
+              Reg_In5            =>  BLM_Status_Reg(24+4),
+              Reg_In6            =>  BLM_Status_Reg(24+5),
               Reg_In7            =>  (others =>'0'),
               Reg_In8            =>  (others =>'0'),
     
@@ -1496,14 +1503,14 @@ BLM_thr_Reg: io_reg
               clk                =>  clk_sys,
               nReset             =>  rstn_sys,
 
-              Reg_IO1            =>  pos_thres_Reg(i)(15 downto 0),
-              Reg_IO2            =>  pos_thres_Reg(i)(31 downto 16),
-              Reg_IO3            =>  neg_thres_Reg(i)(15 downto 0),
-              Reg_IO4            =>  neg_thres_Reg(i)(31 downto 16),
-              Reg_IO5            =>  pos_thres_Reg(i+64)(15 downto 0),
-              Reg_IO6            =>  pos_thres_Reg(i+64)(31 downto 16),
-              Reg_IO7            =>  neg_thres_Reg(i+64)(15 downto 0),
-              Reg_IO8            =>  neg_thres_Reg(i+64)(31 downto 16),
+              Reg_IO1            =>  pos_thres_Reg(2*i)(15 downto 0),
+              Reg_IO2            =>  pos_thres_Reg(2*i)(31 downto 16),
+              Reg_IO3            =>  neg_thres_Reg(2*i)(15 downto 0),
+              Reg_IO4            =>  neg_thres_Reg(2*i)(31 downto 16),
+              Reg_IO5            =>  pos_thres_Reg(2*i+1)(15 downto 0),
+              Reg_IO6            =>  pos_thres_Reg(2*i+1)(31 downto 16),
+              Reg_IO7            =>  neg_thres_Reg(2*i+1)(15 downto 0),
+              Reg_IO8            =>  neg_thres_Reg(2*i+1)(31 downto 16),
         --
               Reg_rd_active      =>  BLM_th_active (i),
               Dtack_to_SCUB      =>  BLM_th_Dtack(i),
@@ -1565,9 +1572,8 @@ BLM_ctrl_Reg_1st_block: io_reg
                                                           -- bit 2-0 for the clock gate sel, the same for all
 
   Reg_IO3            =>  BLM_ctrl_Reg,               --  bit 0 = counter RESET, 
-                                                     --  bit 1: when 0 the outputs of board in slot 12 are the direct outptuts of the output OR,  
-                                                     --         when 1, the outputs in slot 12 are the values of AW_Output_Reg(6),  
-                                                     --  bit 13..2 Direct Gate-usage, one bit for each gate signal input, 
+                                    
+                                                     --  bit 11..0 Direct Gate-usage, one bit for each gate signal input, 
                                                      --  bit 14 reset from gate: when 1 the corresponding gate signal selecting the counter enable
                                                      --         is used instead to reset it.
                                                      -- bit 15 not used
@@ -2235,7 +2241,7 @@ BLM_Module : Beam_Loss_check
   BLM_data_in      => BLM_data_in,--BLM_deglitcher_data(53 downto 0), --BLM_data_in,
   BLM_gate_in      => BLM_gate_in,
   BLM_tst_ck_sig   => BLM_tst_ck_sig,
- 
+  IOBP_LED_nr      => IOBP_LED_sm_nr,
   --IN registers
   pos_threshold            => pos_thres_Reg,
   neg_threshold            => neg_thres_Reg,
@@ -2273,7 +2279,7 @@ PIO_SYNC          => PIO_SYNC(142 DOWNTO 20),
 IOBP_ID           => IOBP_ID,
 INTL_Output       =>  BLM_out, --INTL_Output,
 AW_Output_Reg     => AW_Output_Reg(6)(11 downto  6),
-nBLM_out_ena        => BLM_ctrl_Reg(1), -- 
+--nBLM_out_ena        => BLM_ctrl_Reg(1), -- 
 AW_IOBP_Input_Reg => AW_IOBP_Input_Reg,
 IOBP_Output       => IOBP_Output,
 IOBP_Input        => IOBP_Input,
@@ -2293,7 +2299,9 @@ IOBP_Sel_LED      => IOBP_Sel_LED
       port map (
               clk_sys           => clk_sys,      
               rstn_sys          => rstn_sys,    
-              Ena_Every_250ns   => Ena_Every_250ns,
+             -- Ena_Every_250ns   => Ena_Every_250ns,
+              Ena_Every_500ns => Ena_Every_500ns,
+
               AW_ID             => AW_ID,
               IOBP_LED_ID_Bus_i => IOBP_LED_ID_Bus_i,
               IOBP_Aktiv_LED_o  => IOBP_Aktiv_LED_o,
@@ -2303,7 +2311,8 @@ IOBP_Sel_LED      => IOBP_Sel_LED
               IOBP_STR_gruen_o  => IOBP_STR_gruen_o,
               IOBP_STR_ID_o     => IOBP_STR_ID_o,
               IOBP_LED_ID_Bus_o => IOBP_LED_ID_Bus_o,
-              IOBP_ID           => IOBP_ID
+              IOBP_ID           => IOBP_ID,
+              IOBP_LED_state_nr =>  IOBP_LED_sm_nr
               
               );
 

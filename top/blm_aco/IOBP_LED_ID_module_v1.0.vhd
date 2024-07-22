@@ -19,8 +19,8 @@ port (
         IOBP_STR_gruen_o  : out std_logic_vector(12 downto 1);  -- LED-Str Green for Slave 12-1
         IOBP_STR_ID_o     : out std_logic_vector(12 downto 1);  -- ID-Str Green for Slave 12-1
         IOBP_LED_ID_Bus_o : out std_logic_vector(7 downto 0);   -- LED_ID_Bus_Out
-        IOBP_ID           : out t_id_array     -- IDs of the "Slave-Boards"
-        
+        IOBP_ID           : out t_id_array ;    -- IDs of the "Slave-Boards"
+        IOBP_LED_state_nr : out std_logic_vector(3 downto 0)
         );
         end IOBP_LED_ID_Module;
         
@@ -32,7 +32,40 @@ type   IOBP_LED_state_t is   (IOBP_START_DEL, IOBP_idle, led_id_wait, led_id_loo
                               led_str_gruen_h, led_str_gruen_l, iobp_led_dis, iobp_led_z, iobp_id_str_h, iobp_rd_id, iobp_id_str_l, iobp_end);
 --signal IOBP_state:   IOBP_LED_state_t:= IOBP_idle;
 signal IOBP_state:   IOBP_LED_state_t:= IOBP_START_DEL;        
+
+signal state_sm: integer range 0 to 15:= 0;
 begin
+
+
+    state_sm_proc: process(clk_sys, rstn_sys)--(IOBP_state)
+    begin
+    if ((rstn_sys= '0')) then 
+      state_sm <= 0;
+    elsif rising_edge(clk_sys) then
+  
+      case IOBP_state is
+  
+        when IOBP_START_DEL          => state_sm <= 0;
+        when IOBP_idle               => state_sm <= 1;
+        when led_id_wait             => state_sm <= 2;
+        when led_id_loop             => state_sm <= 3;
+        when led_str_rot_h           => state_sm <= 4;
+        when led_str_rot_l           => state_sm <= 5;
+        when led_gruen               => state_sm <= 6;
+        when led_str_gruen_h         => state_sm <= 7;
+        when led_str_gruen_l         => state_sm <= 8;
+        when iobp_led_dis            => state_sm <= 9;
+        when iobp_led_z              => state_sm <= 10;
+        when iobp_id_str_h           => state_sm <= 11;
+        when iobp_rd_id              => state_sm <= 12;
+        when iobp_id_str_l           => state_sm <= 13;
+        when iobp_end                => state_sm <= 14;
+        when others                  => state_sm <= 15;
+
+      end case;
+    end if;
+   end process;
+
 
 --P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
 P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_500ns, rstn_sys, IOBP_state)
@@ -45,17 +78,21 @@ P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_500ns, rstn_sys, IOBP_state)
         IOBP_STR_gruen_o     <=  (others => '0');    --  Led-Strobs 'green'
         IOBP_STR_id_o        <=  (others => '0');    --  ID-Strobs
         IOBP_state           <=  IOBP_START_DEL;
+        IOBP_LED_state_nr    <="0000";
 
-        ELSIF (clk_sys'EVENT AND clk_sys = '1' AND Ena_Every_500ns = '1') THEN
+    ELSIF (clk_sys'EVENT AND clk_sys = '1' AND Ena_Every_500ns = '1') THEN
    -- ELSIF (clk_sys'EVENT AND clk_sys = '1' AND Ena_Every_250ns = '1') THEN
 --  ELSIF ((rising_edge(clk_sys)) or Ena_Every_100ns)  then
+
+    IOBP_LED_state_nr <=  std_logic_vector(to_unsigned(state_sm, IOBP_LED_state_nr'length));
+
       case IOBP_state is
         when IOBP_START_DEL => IOBP_state  <= IOBP_idle;
 
         when IOBP_idle   =>  Slave_Loop_cnt       <=  1;                 -- Loop-Counter
 
                             if  (AW_ID(7 downto 0) = "00010011") THEN  IOBP_state  <= led_id_wait; -- AW_ID(7 downto 0) = c_AW_INLB12S1.ID
-                                                                       else  IOBP_state  <= IOBP_idle;
+                                                                       else  IOBP_state  <= IOBP_START_DEL;
                             end if;
 
         when led_id_wait      =>  IOBP_LED_En          <=  '1';                --  Output-Enable for LED- ID-Bus

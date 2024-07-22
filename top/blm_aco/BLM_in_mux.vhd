@@ -34,8 +34,8 @@ signal up, down : std_logic;
               
        elsif (clk'EVENT AND clk= '1') then 
            
-            up_sig_sel <= to_integer(unsigned (mux_sel(5 downto 0)));
-            down_sig_sel <= to_integer(unsigned (mux_sel(11 downto 6)));
+            down_sig_sel <= to_integer(unsigned (mux_sel(5 downto 0)));
+            up_sig_sel <= to_integer(unsigned (mux_sel(11 downto 6)));
 
                for i in 0 to  63 loop
                 if up_sig_sel = i then cnt_up<= in_mux(i);

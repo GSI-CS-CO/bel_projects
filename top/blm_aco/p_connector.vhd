@@ -260,7 +260,8 @@ port(
 
     --input: Anwender_ID ---
       AW_ID(7 downto 0)         <=  PIO_SYNC(150 downto 143);
-
+IOBP_Id_Reg7(15 downto 8) <= (others => '0');
+IOBP_Id_Reg7(7 downto 0)  <= AW_ID(7 downto 0);
 
     --  --- Output: Anwender-LED's ---
 
@@ -275,7 +276,7 @@ port(
 
    (PIO_ENA(17), PIO_ENA(19), PIO_ENA(21), PIO_ENA(23),
     PIO_ENA(25), PIO_ENA(27), PIO_ENA(29), PIO_ENA(31) )  <=  std_logic_vector'("11111111"); --  Output-Enable
-
+PIO_ENA(150 downto 143) <= std_logic_vector'("00000000");
 
     A_TA(15 downto 0) <= hp_la_o(15 downto 0); ----------------- Output für HP-Logic-Analysator
 

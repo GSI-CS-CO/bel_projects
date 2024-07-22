@@ -25,10 +25,11 @@ port (
   gate_error       : in std_logic_vector(11 downto 0); -- to be sent to the status registers
   gate_out        : in std_logic_vector (11 downto 0); --gate error
   counter_reg: in t_BLM_counter_Array;
- 
+  gate_state: in std_logic_vector(47 downto 0);
+  led_id_state : in std_logic_vector(3 downto 0);
   BLM_Output      : out std_logic_vector(5 downto 0);
-  BLM_status_Reg : out t_IO_Reg_0_to_25_Array 
-
+  --BLM_status_Reg : out t_IO_Reg_0_to_25_Array 
+  BLM_status_Reg : out t_IO_Reg_0_to_29_Array 
   );
 
 end BLM_out_el;
@@ -68,7 +69,7 @@ signal gate_input : std_logic_vector(11 downto 0);
 begin
 
 
-OVERFLOW <= gate_in& wd_out& gate_error & UP_OVERFLOW & DOWN_OVERFLOW;
+OVERFLOW <= (not (gate_in)) & wd_out& gate_error & UP_OVERFLOW & DOWN_OVERFLOW;
 --gate_input <= gate_in;
 gate_output <= gate_out;
 gate_error_output <=gate_error;
@@ -125,6 +126,7 @@ begin
            end if;    
         
     end loop; 
+        
     end if;   
 end  process;
 
@@ -180,7 +182,7 @@ end process;
     BLM_status_reg(19) <= wd_output(47 downto 32);
     BLM_status_reg(20) <= "0000000000" & wd_output(53 downto 48);
     BLM_status_reg(21) <= cnt_readback(15 downto 0);
-    BLM_status_reg(22) <= "00" & cnt_readback(29 downto 16);
+    BLM_status_reg(22) <= cnt_readback(29) & cnt_readback(29) & cnt_readback(29 downto 16);
     BLM_status_reg(23) <= "0000" & gate_input;
     BLM_status_reg(24) <= "0000" & gate_output;
     BLM_status_reg(25) <= "0000000000" & BLM_out_signal; 
@@ -191,9 +193,15 @@ end process;
  --   BLM_status_reg(21)(15 downto 6)  <= cnt_readback(9 downto 0);    
  --   BLM_status_reg(22)<= cnt_readback(25 downto 10);
  --   BLM_status_reg(23) <= gate_output& cnt_readback(29 downto 26);
-  
 
 
+
+ BLM_status_reg(26) <= gate_state(15 downto 0); -- '0'& gate_sm_state(3)& '0'& gate_sm_state(2) & '0'& gate_sm_state(1)&'0'& gate_sm_state(0);
+
+ BLM_status_reg(27) <= gate_state(31 downto 16); -- '0'& gate_sm_state(7)&'0'& gate_sm_state(6)& '0'& gate_sm_state(5) & '0'& gate_sm_state(4)
+ BLM_status_reg(28) <=  gate_state(47 downto 32); --'0'& gate_sm_state(11) & '0'& gate_sm_state(10)& '0'& gate_sm_state(9)&'0'& gate_sm_state(8)
+ BLM_status_reg(29)(15 downto 4) <= (others => '0');
+ BLM_status_reg(29)(3 downto 0) <= led_id_state;
  BLM_Output <= BLM_out_signal;
 
 end architecture;
