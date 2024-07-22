@@ -128,7 +128,7 @@ begin---------------------------------------------------------------------------
 							slave_o.dat <= cnt_aux.bin_x;												
 						elsif slave_i.adr(7 downto 0) = x"08" then -- 0x08
 							slave_o.dat <= overflow_reg;
-						elsif slave_i.adr(7 downto 0) = x"0C"
+						elsif slave_i.adr(7 downto 0) = x"0C" then
 							slave_o.dat <= overflow_reg_aux;
 						end if;
 					end if;

@@ -1,4 +1,6 @@
 # PHY Encoder Error Counter
+# **IMPORTANT NOTICE** in this branch the eca and the pcie module for the pexarria5 have been turned off for quicker build times for testing
+
 This module counts the pulses coming from the PHY enc_err output and transfers them to the system clock domain. There they can be read via Wishbone.
 0x00 Error Counter 1
 0x04 Error Counter 2 (auxiliary)
