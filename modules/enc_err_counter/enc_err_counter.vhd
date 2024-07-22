@@ -56,7 +56,8 @@ entity enc_err_counter is
 		slave_o       : out t_wishbone_slave_out;
 		slave_i       : in  t_wishbone_slave_in;
 		
-		enc_err_i	  : in std_logic
+		enc_err_i	  : in std_logic;
+		enc_err_aux_i : in std_logic
 	);
 end entity;
 
@@ -82,9 +83,17 @@ architecture enc_err_counter_arc of enc_err_counter is
 		bin_x, gray_x   : t_counter;
 	end record;
 	
-	signal cnt	: t_counter_block := (others =>(others => '0'));
+	signal cnt				: t_counter_block := (others =>(others => '0'));
+	signal overflow_reg 	: std_logic_vector(31 downto 0) := x"00000000";
+	signal rst_counter_sys	: std_logic := '0';
+	signal rst_counter_ref	: std_logic := '0';
+	signal rst_shift_reg	: unsigned(1 downto 0);
 	
-	signal overflow_reg : std_logic_vector(31 downto 0) := x"00000000";
+	signal cnt_aux				: t_counter_block := (others =>(others => '0'));
+	signal overflow_reg_aux 	: std_logic_vector(31 downto 0) := x"00000000";
+	signal rst_counter_sys_aux	: std_logic := '0';
+	signal rst_counter_ref_aux	: std_logic := '0';	
+	signal rst_shift_reg_aux	: unsigned(1 downto 0);
 	
 	-- wishbone controller
 	signal ack_flag		 : std_logic := '0';
@@ -102,33 +111,80 @@ begin---------------------------------------------------------------------------
 			else
 			
 				--limits the ack signal to one pulse, so the slave guarantees that it is finished
-				if ack_flag = '0' and slave_i.cyc = '1' and slave_i.stb = '1' then --add possible check if action is done -> otherwise delay the ack
+				if ack_flag = '0' and slave_i.cyc = '1' and slave_i.stb = '1' then --add possible check if action is done -> otherwise delay the ack (multi cycle wb action)
 					slave_o.ack <= '1';
 					ack_flag <= '1';
 					if slave_i.we = '1' then --read or write
-						--reg_mem <= slave_i.dat;
+						if slave_i.adr(7 downto 0) = x"00" and slave_i.dat(3 downto 0) = x"1" then
+							rst_counter_sys <= '1';
+						elsif slave_i.adr(7 downto 0) = x"04" and slave_i.dat(3 downto 0) = x"1" then -- 0x04
+							rst_counter_sys_aux <= '1';
+						end if;
+						
 					else
-					
 						if slave_i.adr(7 downto 0) = x"00" then
 							slave_o.dat <= cnt.bin_x;
 						elsif slave_i.adr(7 downto 0) = x"04" then -- 0x04
-							-- second register													
-						else 
+							slave_o.dat <= cnt_aux.bin_x;												
+						elsif slave_i.adr(7 downto 0) = x"08" then -- 0x08
 							slave_o.dat <= overflow_reg;
+						elsif slave_i.adr(7 downto 0) = x"0C"
+							slave_o.dat <= overflow_reg_aux;
 						end if;
 					end if;
 				else
 					slave_o.ack <='0';
 					ack_flag <= '0';
+					rst_counter_sys <= '0';
+					rst_counter_sys_aux <= '0';
 				end if; --ack				
 			
 			end if; --sync reset
 		end if; --rising edge	
 	end process;
 	
+	--shift register for edge registering for crossing clock domain from system clock to reference clock
+	reset_shift_register : process (clk_ref_i)
+	begin
+		if rstn_sys_i = '1' then
+			if rising_edge(clk_ref_i) then
+				rst_shift_reg <= shift_left(rst_shift_reg, 1);
+				rst_shift_reg (0) <= rst_counter_sys;
+				if rst_shift_reg(1) = '0' and rst_shift_reg(0) = '1' then
+					rst_counter_ref <= '1';
+				else 
+					rst_counter_ref <= '0';
+				end if;
+			end if;
+		else
+			rst_shift_reg <= "00";
+		end if;
+	end process;
+	
+	--shift register for edge registering for crossing clock domain from system clock to reference clock
+	reset_shift_register_aux : process (clk_ref_i)
+	begin
+		if rstn_sys_i = '1' then
+			if rising_edge(clk_ref_i) then
+				rst_shift_reg_aux <= shift_left(rst_shift_reg_aux, 1);
+				rst_shift_reg_aux (0) <= rst_counter_sys_aux;
+				if rst_shift_reg_aux(1) = '0' and rst_shift_reg_aux(0) = '1' then
+					rst_counter_ref_aux <= '1';
+				else 
+					rst_counter_ref_aux <= '0';
+				end if;
+			end if;
+		else
+			rst_shift_reg_aux <= "00";
+		end if;
+	end process;
+	
 	-- error counter
 	cnt.bin_next  <= std_logic_vector(unsigned(cnt.bin) + 1);
   	cnt.gray_next <= f_gray_encode(cnt.bin_next);
+  	
+  	cnt_aux.bin_next  <= std_logic_vector(unsigned(cnt_aux.bin) + 1);
+  	cnt_aux.gray_next <= f_gray_encode(cnt_aux.bin_next);
   	
   	U_Sync : gc_sync_register
     generic map (
@@ -138,22 +194,55 @@ begin---------------------------------------------------------------------------
       rst_n_a_i => rstn_sys_i,
       d_i       => cnt.gray,
       q_o       => cnt.gray_x);
+      
+	U_Sync_aux : gc_sync_register
+	generic map (
+      g_width => c_counter_bits)
+    port map (
+      clk_i     => clk_sys_i,
+      rst_n_a_i => rstn_sys_i,
+      d_i       => cnt_aux.gray,
+      q_o       => cnt_aux.gray_x);
   	
   	cnt.bin_x <= f_gray_decode(cnt.gray_x, 1);
+  	
+  	cnt_aux.bin_x <= f_gray_decode(cnt_aux.gray_x, 1);
 	
 	-- reference clock domain
 	process (clk_ref_i) begin
 		if rstn_sys_i = '1' then
-			if rising_edge(clk_ref_i) and enc_err_i = '1' then
-				cnt.bin <= cnt.bin_next;
-				cnt.gray <= cnt.gray_next;
+			if rst_counter_ref = '0' then
+				if rising_edge(clk_ref_i) and enc_err_i = '1' then
+					if cnt.bin = x"FFFFFFFF" then
+						overflow_reg <= x"00000001";
+					end if;
 
-				if cnt.bin_next = x"FFFFFFFF" then
-					overflow_reg <= x"00000001";					
+					cnt.bin <= cnt.bin_next;
+					cnt.gray <= cnt.gray_next;
 				end if;
+			else 
+				cnt.bin <= x"00000000";
+				cnt.gray <= f_gray_encode(cnt.bin);
+				overflow_reg <= x"00000000";
+			end if;
+			
+			if rst_counter_ref_aux = '0' then
+				if rising_edge(clk_ref_i) and enc_err_aux_i = '1' then
+					if cnt_aux.bin = x"FFFFFFFF" then
+						overflow_reg_aux <= x"00000001";
+					end if;
+
+					cnt_aux.bin <= cnt_aux.bin_next;
+					cnt_aux.gray <= cnt_aux.gray_next;
+				end if;
+			else 
+				cnt_aux.bin <= x"00000000";
+				cnt_aux.gray <= f_gray_encode(cnt_aux.bin);
+				overflow_reg_aux <= x"00000000";
 			end if;
 		else 
-			cnt.bin  <= (others => '0');
+			cnt_aux.bin  <= (others => '0');
+			cnt_aux.bin <= (others => '0');
 		end if;
 	end process;
 	

@@ -45,6 +45,9 @@ architecture enc_err_counter_tb_arc of enc_err_counter_tb is
 	signal s_ack            : std_logic;
 	signal s_flag			: std_logic;
 	signal enc_err			: std_logic := '0';
+	signal enc_err_aux		: std_logic := '0';
+	signal nerrors			: std_logic_vector(31 downto 0) := (others => '0');
+	signal nerrors_aux		: std_logic_vector(31 downto 0) := (others => '0');
 	
 	-- Functions
 	-- Function wb_stim -> Helper function to create a human-readable testbench
@@ -83,7 +86,8 @@ architecture enc_err_counter_tb_arc of enc_err_counter_tb is
 			slave_o       : out t_wishbone_slave_out;
 			slave_i       : in  t_wishbone_slave_in;
 
-			enc_err_i	  : in std_logic
+			enc_err_i	  : in std_logic;
+			enc_err_aux_i : in std_logic
 		);
 	end component;
 begin------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -97,7 +101,8 @@ begin---------------------------------------------------------------------------
 			slave_o       => s_wb_slave_out,
 			slave_i       => s_wb_slave_in,
 
-			enc_err_i	  => enc_err
+			enc_err_i	  => enc_err,
+			enc_err_aux_i => enc_err_aux
 		);
 
 	-- Reset controller
@@ -119,22 +124,4 @@ begin---------------------------------------------------------------------------
 		elsif rising_edge(s_clk_sys) then
 			s_sequence_cnt <= std_logic_vector(unsigned(s_sequence_cnt) + 1);
 		end if;
-	end process;
- 	
- 	-- Wishbone controller
-	p_wishbone_stim : process
-	begin
-		-- Reset
-		s_wb_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_reg_all_zero, c_reg_all_zero);
-		wait until rising_edge(s_rst_n);
-		wait until rising_edge(s_clk_sys);
-		wait for c_sys_clock_cycle*100;
-		
-		--check error counter
-		
-		
-		--Finish simulation; copied from i2c_testbench.vhd
-		wait for c_sys_clock_cycle*10000;
-		-- Using STOP_TIME from settings.sh here
-		--report "Simulation done!" severity failure;
 	end process;

@@ -35,7 +35,8 @@ package enc_err_counter_pkg is
 		slave_o       : out t_wishbone_slave_out;
 		slave_i       : in  t_wishbone_slave_in;
 
-		enc_err_i	  : in std_logic
+		enc_err_i	  : in std_logic;
+		enc_err_aux_i : in std_logic
       );
   end component;
 

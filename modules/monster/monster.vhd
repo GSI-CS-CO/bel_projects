@@ -3324,7 +3324,8 @@ end generate;
       rstn_sys_i   	=> rstn_sys,
       slave_i   	=> dev_bus_master_o(dev_slaves'pos(devs_enc_err_counter)),
       slave_o   	=> dev_bus_master_i(dev_slaves'pos(devs_enc_err_counter)),
-      enc_err_i		=> phy_rx_enc_err);
+      enc_err_i		=> phy_rx_enc_err,
+      enc_err_aux_i => phy_aux_rx_enc_err);
   end generate;
 
   -- END OF Wishbone slaves
