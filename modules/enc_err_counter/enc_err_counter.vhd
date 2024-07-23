@@ -115,10 +115,10 @@ begin---------------------------------------------------------------------------
 			else
 			
 				--limits the ack signal to one pulse, so the slave guarantees that it is finished
-				if ack_flag = '0' and slave_i.cyc = '1' and slave_i.stb = '1' then --add possible check if action is done -> otherwise delay the ack (multi cycle wb action)
+				if ack_flag = '0' and slave_i.cyc = '1' and slave_i.stb = '1' then
 					slave_o.ack <= '1';
 					ack_flag <= '1';
-					if slave_i.we = '1' then --read or write
+					if slave_i.we = '1' then -- write enable and x"1" in data signifies reset for the counter at the given address
 						if slave_i.adr(7 downto 0) = x"00" and slave_i.dat(3 downto 0) = x"1" then
 							rst_counter_sys <= '1';
 						elsif slave_i.adr(7 downto 0) = x"04" and slave_i.dat(3 downto 0) = x"1" then -- 0x04
@@ -126,13 +126,13 @@ begin---------------------------------------------------------------------------
 						end if;
 						
 					else
-						if slave_i.adr(7 downto 0) = x"00" then
+						if slave_i.adr(7 downto 0) = x"00" then -- counter 1
 							slave_o.dat <= cnt.bin_x;
-						elsif slave_i.adr(7 downto 0) = x"04" then -- 0x04
+						elsif slave_i.adr(7 downto 0) = x"04" then -- auxiliary counter
 							slave_o.dat <= cnt_aux.bin_x;												
-						elsif slave_i.adr(7 downto 0) = x"08" then -- 0x08
+						elsif slave_i.adr(7 downto 0) = x"08" then -- counter 1 overflow flag
 							slave_o.dat <= overflow_reg;
-						elsif slave_i.adr(7 downto 0) = x"0C" then
+						elsif slave_i.adr(7 downto 0) = x"0C" then -- auxiliary counter overflow flag
 							slave_o.dat <= overflow_reg_aux;
 						end if;
 					end if;
@@ -183,7 +183,7 @@ begin---------------------------------------------------------------------------
 		end if; -- rising_edge(clk_ref_i)
 	end process;
 	
-	-- error counter
+	-- error counter clock domain crossing
 	cnt.bin_next  <= std_logic_vector(unsigned(cnt.bin) + 1);
   	cnt.gray_next <= f_gray_encode(cnt.bin_next);
   	
@@ -210,7 +210,7 @@ begin---------------------------------------------------------------------------
   	
   	cnt.bin_x <= f_gray_decode(cnt.gray_x, 1);
   	
-  	cnt_aux.bin_x <= f_gray_decode(cnt_aux.gray_x, 1);
+	cnt_aux.bin_x <= f_gray_decode(cnt_aux.gray_x, 1);
 
 	-- synching enc_err_i to ensure synchronous and stable signal
 	p_synch_enc_err_sig : process (clk_ref_i) begin
@@ -243,10 +243,10 @@ begin---------------------------------------------------------------------------
 	-- reference clock domain
 	process (clk_ref_i) begin
 		if rising_edge(clk_ref_i) then
-			if rstn_sys_i = '1' then
-				if rst_counter_ref = '0' then
+			if rstn_sys_i = '1' then -- system reset
+				if rst_counter_ref = '0' then	-- counter and overflow flag reset
 					if synched_enc_err = '1' then
-						if cnt.bin = x"FFFFFFFF" then
+						if cnt.bin = x"FFFFFFFF" then -- overflow
 							overflow_reg <= x"00000001";
 						end if;
 
@@ -257,11 +257,11 @@ begin---------------------------------------------------------------------------
 					cnt.bin <= x"00000000";
 					cnt.gray <= f_gray_encode(cnt.bin);
 					overflow_reg <= x"00000000";
-				end if; -- rst_counter_ref
+				end if; -- rst_counter_ref: counter and overflow flag reset
 				
-				if rst_counter_ref_aux = '0' then
+				if rst_counter_ref_aux = '0' then -- counter and overflow flag reset
 					if synched_enc_err_aux = '1' then
-						if cnt_aux.bin = x"FFFFFFFF" then
+						if cnt_aux.bin = x"FFFFFFFF" then -- overflow
 							overflow_reg_aux <= x"00000001";
 						end if;
 
@@ -272,7 +272,7 @@ begin---------------------------------------------------------------------------
 					cnt_aux.bin <= x"00000000";
 					cnt_aux.gray <= f_gray_encode(cnt_aux.bin);
 					overflow_reg_aux <= x"00000000";
-				end if; -- rst_counter_ref_aux
+				end if; -- rst_counter_ref_aux: counter and overflow flag reset
 			else 
 				cnt_aux.bin  <= (others => '0');
 				cnt_aux.bin <= (others => '0');
