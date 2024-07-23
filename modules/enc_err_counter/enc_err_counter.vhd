@@ -82,6 +82,8 @@ architecture enc_err_counter_arc of enc_err_counter is
 		gray, gray_next : t_counter;
 		bin_x, gray_x   : t_counter;
 	end record;
+
+	signal rstn_ref			: std_logic := '0';
 	
 	signal cnt				: t_counter_block := (others =>(others => '0'));
 	signal overflow_reg 	: std_logic_vector(31 downto 0) := x"00000000";
@@ -106,6 +108,13 @@ begin---------------------------------------------------------------------------
 	-- wishbone controller
 	slave_o.err   <= '0';
 	slave_o.stall <= '0';
+
+	--sampling reset signal into reference clock domain
+	p_rstn_ref : process (clk_ref_i) begin
+		if rising_edge(clk_ref_i) then
+			rstn_ref <= rstn_sys_i;
+		end if;
+	end process;
 	
 	wb_read_write: process(clk_sys_i)
 	begin
@@ -151,7 +160,7 @@ begin---------------------------------------------------------------------------
 	reset_counter_shift_register : process (clk_ref_i)
 	begin
 		if rising_edge(clk_ref_i) then
-			if rstn_sys_i = '1' then
+			if rstn_ref = '1' then
 				rst_shift_reg <= shift_left(rst_shift_reg, 1);
 				rst_shift_reg (0) <= rst_counter_sys;
 				if rst_shift_reg(1) = '0' and rst_shift_reg(0) = '1' then
@@ -169,7 +178,7 @@ begin---------------------------------------------------------------------------
 	reset_counter_shift_register_aux : process (clk_ref_i)
 	begin
 		if rising_edge(clk_ref_i) then
-			if rstn_sys_i = '1' then
+			if rstn_ref = '1' then
 				rst_shift_reg_aux <= shift_left(rst_shift_reg_aux, 1);
 				rst_shift_reg_aux (0) <= rst_counter_sys_aux;
 				if rst_shift_reg_aux(1) = '0' and rst_shift_reg_aux(0) = '1' then
@@ -212,38 +221,27 @@ begin---------------------------------------------------------------------------
   	
 	cnt_aux.bin_x <= f_gray_decode(cnt_aux.gray_x, 1);
 
-	-- synching enc_err_i to ensure synchronous and stable signal
-	p_synch_enc_err_sig : process (clk_ref_i) begin
-		if rising_edge(clk_ref_i) then
-			synched_enc_err <= enc_err_i;
-		end if;
-	end process;
-
-	-- synching enc_err_i to ensure synchronous and stable signal
+	-- synching enc_err_i to ensure synchronous and stable signal; separating wishbone interface from reference clock domain
 	p_synch_enc_err_sig_aux : process (clk_ref_i) begin
 		if rising_edge(clk_ref_i) then
-			synched_enc_err_aux <= enc_err_aux_i;
-		end if;
-	end process;
-
-	-- separating wishbone interface from the reference clock domain with a flip flop
-	p_synch_reg_mem : process (clk_sys_i) begin
-		if rising_edge(clk_sys_i) then
-			reg_mem <= cnt.bin_x;
-		end if;
-	end process;
-
-	-- separating wishbone interface from the reference clock domain with a flip flop
-	p_synch_reg_mem_aux : process (clk_sys_i) begin
-		if rising_edge(clk_sys_i) then
-			reg_mem_aux <= cnt_aux.bin_x;
+			if rstn_ref = '1' then
+				synched_enc_err <= enc_err_i;
+				synched_enc_err_aux <= enc_err_aux_i;
+				reg_mem <= cnt.bin_x;
+				reg_mem_aux <= cnt_aux.bin_x;
+			else
+				synched_enc_err <= '0';
+				synched_enc_err_aux <= '0';
+				reg_mem <= (others => '0');
+				reg_mem_aux <= (others => '0');
+			end if;
 		end if;
 	end process;
 
 	-- reference clock domain
 	process (clk_ref_i) begin
 		if rising_edge(clk_ref_i) then
-			if rstn_sys_i = '1' then -- system reset
+			if rstn_ref = '1' then
 				if rst_counter_ref = '0' then	-- counter and overflow flag reset
 					if synched_enc_err = '1' then
 						if cnt.bin = x"FFFFFFFF" then -- overflow
@@ -276,7 +274,7 @@ begin---------------------------------------------------------------------------
 			else 
 				cnt_aux.bin  <= (others => '0');
 				cnt_aux.bin <= (others => '0');
-			end if; -- rstn_sys_i
+			end if; --rstn_ref
 		end if; -- rising_edge(clk_ref_i)
 	end process;
 	
