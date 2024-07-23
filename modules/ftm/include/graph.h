@@ -76,6 +76,7 @@ public:
   std::string id_bpcstart = sZero;
   std::string id_reqnob   = sZero;
   std::string id_vacc     = sZero;
+  std::string id_evtidatt = sZero;
   std::string par         = sUndefined64;
   std::string tef         = sZero;
   std::string res         = sZero;

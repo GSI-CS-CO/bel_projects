@@ -50,6 +50,7 @@ myVertex::myVertex(myVertex const &src) {
   this->id_bpcstart = src.id_bpcstart;
   this->id_reqnob = src.id_reqnob;
   this->id_vacc = src.id_vacc;
+  this->id_evtidatt = src.id_evtidatt;
   this->par = src.par;
   this->tef = src.tef;
   this->res = src.res;

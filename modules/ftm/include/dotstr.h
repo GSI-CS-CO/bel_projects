@@ -138,6 +138,7 @@ namespace DotStr {
           extern const std::string sReqNoB;
           extern const std::string sVacc;
           extern const std::string sRes;
+          extern const std::string sEvtIdAtt;
         }
         extern const std::string sPar;
         extern const std::string sTef;

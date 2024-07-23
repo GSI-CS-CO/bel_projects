@@ -143,6 +143,7 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
     dp.property(dnp::TMsg::SubId::sBPCstart,    boost::get(&myVertex::id_bpcstart, g));
     dp.property(dnp::TMsg::SubId::sReqNoB,      boost::get(&myVertex::id_reqnob,   g));
     dp.property(dnp::TMsg::SubId::sVacc,        boost::get(&myVertex::id_vacc,     g));
+    dp.property(dnp::TMsg::SubId::sEvtIdAtt,    boost::get(&myVertex::id_evtidatt, g));
     dp.property(dnp::TMsg::sPar,                boost::get(&myVertex::par,         g));
     dp.property(dnp::TMsg::sTef,                boost::get(&myVertex::tef,         g));
 
