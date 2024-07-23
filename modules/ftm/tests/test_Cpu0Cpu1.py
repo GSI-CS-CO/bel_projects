@@ -55,6 +55,8 @@ class ConnectCpus(dm_testbench.DmTestbench):
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'X'), [0], 1, 0)
     self.delay(1.0)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile0), [0], 0, 0)
+    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'stoppattern', 'X'), [0], 0, 0)
+    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'stoppattern', 'A'), [0], 0, 0)
 
   def testTwoCpusFlush(self):
     """Load a schedule with a flushovr edge that connects a node on CPU 0

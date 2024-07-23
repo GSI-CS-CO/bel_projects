@@ -76,16 +76,21 @@ class UnitTestBoosterStartThread(dm_testbench.DmTestbench):
     self.analyseFrequencyFromCsv(file_name, column_EVTNO, checkValues={'0x0001': '>2990'})
     self.deleteFile(file_name)
 
-  def test_booster_8_loops(self):
-    self.startPattern('booster-8-loops.dot', 'MAIN')
-    file_name = 'snoop_booster-8-loops.csv'
-    self.snoopToCsv(file_name, duration=2)
+  def testBooster8Loops(self):
+    snoopFileName = 'snoop_booster-8-loops.csv'
+    self.snoopToCsvWithAction(snoopFileName, self.actionBooster8Loops, duration=3)
     # Assert that there are more than 19 tmsg in 2 seconds with EVTNO 0x0000
     # from loop in thread 0. Assert that thread 1 to 7 produces
     # timing messages with 10Hz.
     column_EVTNO = 8
-    self.analyseFrequencyFromCsv(file_name, column_EVTNO,
+    self.analyseFrequencyFromCsv(snoopFileName, column_EVTNO,
                       checkValues={'0x0000': '>19', '0x0001': '>19',
                       '0x0002': '>19', '0x0003': '>19', '0x0004': '>19',
                       '0x0005': '>19', '0x0006': '>19', '0x0007': '>19'})
-    self.deleteFile(file_name)
+    self.deleteFile(snoopFileName)
+
+  def actionBooster8Loops(self):
+    self.delay(0.3)
+    self.startPattern('booster-8-loops.dot', 'MAIN')
+    self.delay(2.0)
+    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'stoppattern', 'MAIN'), [0], 0, 0)

@@ -179,6 +179,16 @@ then
   DM=dev/wbm0
   TR0=""
   remoteDatamasterInfo
+elif [ "$DM_HOST" = "fel0077.acc" ]
+then
+  DM=dev/wbm0
+  TR0=""
+  remoteDatamasterInfo
+elif [ "$DM_HOST" = "fel0006.acc" ]
+then
+  DM=dev/wbm0
+  TR0=""
+  remoteDatamasterInfo
 else
   echo "Unknown datamaster host $DM_HOST"
 fi
