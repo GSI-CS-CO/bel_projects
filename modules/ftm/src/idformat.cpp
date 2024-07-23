@@ -23,7 +23,8 @@ std::vector<vPf> idFormats = {
     {ssi::sSid,      20, 12},
     {ssi::sBpid,      6, 14},
     {ssi::sReqNoB,    4, 1},
-    {ssi::sVacc,      0, 4}
+    {ssi::sVacc,      0, 4},
+    {ssi::sEvtIdAtt,  0, 6}
   }
 };
 

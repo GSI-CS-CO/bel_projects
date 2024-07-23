@@ -142,6 +142,7 @@ namespace DotStr {
           const std::string sReqNoB        = "reqnobeam"; // Request no beam
           const std::string sVacc          = "vacc";      // Virtual accelerator
           const std::string sRes           = "res";       // reserved
+          const std::string sEvtIdAtt      = "eventIdAttributes"; // same as res + vacc + reqnobeam 
         }
         const std::string sPar           = "par"; // transparent Parameter field
         const std::string sTef           = "tef"; // time fraction (TEF) field
