@@ -103,6 +103,10 @@ dmunipz-ctl dev/wbm0 startop
 
 echo -e dm-unipz - start: startup script finished
 
+sleep 2
+
+dmunipz-ctl dev/wbm0 cleardiag
+
 ###########################################
 # testing without datamaster
 ###########################################
