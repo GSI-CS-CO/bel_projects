@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 06-Feb-2023
+ *  version : 19-Jul-2024
  *
  * Command-line interface for dmunipz
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.8.12"
+#define DMUNIPZ_X86_VERSION "0.8.21"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -461,6 +461,10 @@ int main(int argc, char** argv) {
   uint32_t iterations;
   uint32_t nTransfer; 
   uint32_t nInjection;
+  uint32_t nLate;
+  uint32_t offsDone;
+  uint32_t comLatency;
+
   uint32_t virtAccReq;   
   uint32_t virtAccRec;   
   uint32_t noBeam;
@@ -596,13 +600,13 @@ int main(int argc, char** argv) {
   } // if getConfig
 
   if (getVersion) {
-    comlib_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &usedSize, 0);
+    comlib_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &nLate, &offsDone, &comLatency, &usedSize, 0);
     printf("dm-unipz: software (firmware) version %s (%06x)\n",  DMUNIPZ_X86_VERSION, version);     
   } // if getEBVersion
 
   if (getInfo) {
     // status
-    comlib_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &usedSize, 0);
+    comlib_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &nLate, &offsDone, &comLatency, &usedSize, 1);
     readInfo(&iterations, &virtAccReq, &virtAccRec, &noBeam, &dtStart, &dtSync1, &dtSync2, &dtInject, &dtTransfer, &dtTkreq, &dtBreq, &dtBprep, &dtReady2Sis, &nR2sTransfer, &nR2sCycle, &nBooster);
     printTransferHeader();
     printTransfer(nTransfer, nInjection, virtAccReq, virtAccRec, noBeam, dtStart, dtSync1, dtSync2, dtInject, dtTransfer, dtTkreq, dtBreq, dtBprep, dtReady2Sis, nR2sTransfer, nR2sCycle, nBooster, statTrans); 
@@ -613,7 +617,7 @@ int main(int argc, char** argv) {
 
   if (command) {
     // state required to give proper warnings
-    comlib_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &usedSize, 0);
+    comlib_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &nLate, &offsDone, &comLatency, &usedSize, 0);
 
     if (!strcasecmp(command, "configure")) {
       eb_device_write(device, dmunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_CONFIGURE, 0, eb_block);
@@ -646,7 +650,7 @@ int main(int argc, char** argv) {
     } // "debugoff"
 
     if (!strcasecmp(command, "diag")) {
-      comlib_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &usedSize, 1);
+      comlib_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &nLate, &offsDone, &comLatency, &usedSize, 1);
       readConfig(&flexOffset, &uniTimeout, &tkTimeout, &dstMac, &dstIp);
       printf("\ndm-unipz: the values below are applied if the gateway becomes 'CONFIGURED'\n");
       printf("flexOffset            : %" PRIu32 " ns\n", flexOffset);
@@ -725,7 +729,7 @@ int main(int argc, char** argv) {
     printTransferHeader();
 
     while (1) {
-      comlib_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &usedSize, 0);
+      comlib_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &nLate, &offsDone, &comLatency, &usedSize, 0);
       readInfo(&iterations, &virtAccReq, &virtAccRec, &noBeam, &dtStart, &dtSync1, &dtSync2, &dtInject, &dtTransfer, &dtTkreq, &dtBreq, &dtBprep, &dtReady2Sis, &nR2sTransfer, &nR2sCycle, &nBooster);
 
       switch(state) {

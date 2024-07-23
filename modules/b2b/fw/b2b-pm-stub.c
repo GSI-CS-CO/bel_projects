@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 24-Feb-2023
+ *  version : 23-Nov-2023
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -38,7 +38,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPMSTUB_FW_VERSION 0x000700                                   // make this consistent with makefile
+#define B2BPMSTUB_FW_VERSION 0x000703                                   // make this consistent with makefile
 
 //standard includes
 #include <stdio.h>
@@ -386,7 +386,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       // send command: transmit measured phase value to the network
       sendEvtId    = fwlib_buildEvtidV1(recGid, sendEvtNo, 0, recSid, recBpid, flagPMError);
       sendParam    = tH1_125ps;
-      sendDeadline = recDeadline + (uint64_t)COMMON_AHEADT;
+      sendDeadline = getSysTime() + (uint64_t)B2B_AHEADT;              // use a more aggressive deadline < COMMON_AHEADT
       fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0, 0);
 
       // send the confidence value of the phase fit to ECA (for monitoring purposes)
@@ -475,7 +475,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         if (flagMatchDone) tmp.f = (float)dtMatch_as / 1000000000.0; // convert to float [ns]
         else               tmp.data = 0x7fffffff;                    // mark as invalid
         sendParam   |= (uint64_t)(tmp.data & 0xffffffff);            // low word; match diagnostic
-        sendDeadline = recDeadline + (uint64_t)COMMON_AHEADT;
+        sendDeadline = getSysTime() + (uint64_t)COMMON_AHEADT;       // use the more conservativ deadline
         fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0, 0);
 
         // send the confidence value of the phase fit to ECA (for monitoring purposes)

@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 05-Oct-2023
+ *  version : 15-Nov-2023
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -42,7 +42,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION      0x000700                                  // make this consistent with makefile
+#define B2BPM_FW_VERSION      0x000702                                  // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -536,7 +536,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       sendParam    = tH1_t.ns;
       sendTEF      = (uint32_t)( (int16_t)(tH1_t.ps)  & 0xffff);
       sendTEF     |= (uint32_t)((uint16_t)(tH1_t.dps) & 0xffff) << 16; 
-      sendDeadline = recDeadline + (uint64_t)COMMON_AHEADT;
+      sendDeadline = getSysTime() + (uint64_t)B2B_AHEADT;             // use a more aggressive deadline < COMMON_AHEADT
       fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, sendTEF, 0);
       //t2 = getSysTime();
       // send something to ECA (for monitoring purposes) chk do something useful here
@@ -637,7 +637,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       //tmp1 = (int32_t)(dtMatch_as / 1000000); pp_printf("match3 [ps] %08d\n", tmp1); //pp_printf("match3 [hex float ns] %08x\n", tmp.data);
       
       sendParam   |= (uint64_t)(tmp.data & 0xffffffff);               // low word; match diagnostic
-      sendDeadline = recDeadline + (uint64_t)COMMON_AHEADT;
+      sendDeadline = getSysTime() + (uint64_t)COMMON_AHEADT;          // use a more conservative deadline
       fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0, 0);
       
       // send something to ECA (for monitoring purposes) chk do something useful here

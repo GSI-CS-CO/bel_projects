@@ -64,7 +64,6 @@ eb_address_t wrunipz_state;             // state of state machine
 eb_address_t wrunipz_cycles;            // # of UNILAC cycles
 eb_address_t wrunipz_tCycleAvg;         // average cycle time
 eb_address_t wrunipz_msgFreqAvg;        // average message rate
-eb_address_t wrunipz_nLate;             // # of late messages
 eb_address_t wrunipz_vaccAvg;           // virt acc played
 eb_address_t wrunipz_pzAvg;             // PZs played
 eb_address_t wrunipz_nMessageLo;        // number of messages, read
@@ -73,7 +72,6 @@ eb_address_t wrunipz_dtMax;             // delta T (max) between message time of
 eb_address_t wrunipz_dtMin;             // delta T (min) between message time of dispatching and deadline, read
 eb_address_t wrunipz_cycJmpMax;         // delta T (max) between expected and actual start of UNILAC cycle, read
 eb_address_t wrunipz_cycJmpMin;         // delta T (min) between expected and actual start of UNILAC cycle, read
-eb_address_t wrunipz_nLate;             // # of late messages, read
 eb_address_t wrunipz_vaccAvg;           // virtual accelerators played over the past second, read
 eb_address_t wrunipz_pzAvg;             // PZs used over the past second, read
 eb_address_t wrunipz_evtData;           // event data
@@ -158,7 +156,6 @@ uint32_t wrunipz_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t
   wrunipz_dtMin        = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_DTMIN;
   wrunipz_cycJmpMax    = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CYCJMPMAX;
   wrunipz_cycJmpMin    = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CYCJMPMIN;
-  wrunipz_nLate        = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_NLATE;
   wrunipz_vaccAvg      = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_VACCAVG;
   wrunipz_pzAvg        = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_PZAVG;
   wrunipz_evtData      = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_EVT_DATA;
@@ -225,29 +222,34 @@ uint32_t wrunipz_info_read(uint64_t ebDevice, uint32_t *ncycles, uint32_t *tCycl
   eb_cycle_read(eb_cycle, wrunipz_cycles,        EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
   eb_cycle_read(eb_cycle, wrunipz_tCycleAvg,     EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
   eb_cycle_read(eb_cycle, wrunipz_msgFreqAvg,    EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
-  eb_cycle_read(eb_cycle, wrunipz_nLate,         EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
-  eb_cycle_read(eb_cycle, wrunipz_vaccAvg,       EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
-  eb_cycle_read(eb_cycle, wrunipz_pzAvg,         EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
-  eb_cycle_read(eb_cycle, wrunipz_nMessageHi,    EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
-  eb_cycle_read(eb_cycle, wrunipz_nMessageLo,    EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
-  eb_cycle_read(eb_cycle, wrunipz_dtMax,         EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
-  eb_cycle_read(eb_cycle, wrunipz_dtMin,         EB_BIG_ENDIAN|EB_DATA32, &(data[9])); 
-  eb_cycle_read(eb_cycle, wrunipz_cycJmpMax,     EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
-  eb_cycle_read(eb_cycle, wrunipz_cycJmpMin,     EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
+  eb_cycle_read(eb_cycle, wrunipz_vaccAvg,       EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
+  eb_cycle_read(eb_cycle, wrunipz_pzAvg,         EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
+  eb_cycle_read(eb_cycle, wrunipz_nMessageHi,    EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
+  eb_cycle_read(eb_cycle, wrunipz_nMessageLo,    EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
+  eb_cycle_read(eb_cycle, wrunipz_dtMax,         EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
+  eb_cycle_read(eb_cycle, wrunipz_dtMin,         EB_BIG_ENDIAN|EB_DATA32, &(data[8])); 
+  eb_cycle_read(eb_cycle, wrunipz_cycJmpMax,     EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
+  eb_cycle_read(eb_cycle, wrunipz_cycJmpMin,     EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
   if ((eb_status = eb_cycle_close(eb_cycle)) != EB_OK) return COMMON_STATUS_EB;
 
   *ncycles       = data[0];
   *tCycleAvg     = data[1];
   *msgFreqAvg    = data[2];
-  *nLate         = data[3];
-  *vaccAvg       = data[4];
-  *pzAvg         = data[5];
-  *nMessages     = (uint64_t)(data[6]) << 32;
-  *nMessages    += data[7];
-  *dtMax         = data[8];
-  *dtMin         = data[9];
-  *cycJmpMax     = data[10]; 
-  *cycJmpMin     = data[11];
+  *vaccAvg       = data[3];
+  *pzAvg         = data[4];
+  *nMessages     = (uint64_t)(data[5]) << 32;
+  *nMessages    += data[6];
+  *dtMax         = data[7];
+  *dtMin         = data[8];
+  *cycJmpMax     = data[9]; 
+  *cycJmpMin     = data[10];
+
+  // code for ABI compatability with DeviceAccess
+  uint64_t    dummy64a, dummy64b, dummy64c, dummy64e;
+  uint32_t    dummy32a, dummy32b, dummy32c, dummy32d, dummy32e, dummy32f, dummy32g, dummy32h, dummy32i, dummy32j, dummy32k;
+
+  if ((eb_status = comlib_readDiag(eb_device, &dummy64a, &dummy32h, &dummy32i, &dummy64e, &dummy32j, &dummy32a, &dummy32k, &dummy64b, &dummy64c,
+                                   &dummy32b, &dummy32c, &dummy32d, &dummy32e, nLate, &dummy32f, &dummy32g, 0)) != COMMON_STATUS_OK) return COMMON_STATUS_EB;
 
   return COMMON_STATUS_OK;
 } // wrunipz_info_read
@@ -259,13 +261,13 @@ uint32_t wrunipz_common_read(uint64_t ebDevice, uint64_t *statusArray, uint32_t 
   eb_device_t eb_device;
 
   uint64_t    dummy64a, dummy64b, dummy64c;
-  uint32_t    dummy32a, dummy32b, dummy32c, dummy32d, dummy32e;
+  uint32_t    dummy32a, dummy32b, dummy32c, dummy32d, dummy32e, dummy32f, dummy32g, dummy32h;
 
   if (!ebDevice) return COMMON_STATUS_EB;
   eb_device = (eb_device_t)ebDevice;
 
   if ((eb_status = comlib_readDiag(eb_device, statusArray, state, version, &dummy64a, &dummy32a, nBadStatus, nBadState, &dummy64b, &dummy64c,
-                                   &dummy32b, &dummy32c, &dummy32d, &dummy32e, printDiag)) != COMMON_STATUS_OK) return COMMON_STATUS_EB;
+                                   &dummy32b, &dummy32c, &dummy32d, &dummy32e, &dummy32f, &dummy32g, &dummy32h, printDiag)) != COMMON_STATUS_OK) return COMMON_STATUS_EB;
 
   return COMMON_STATUS_OK;
 } // wrunipz_status_read

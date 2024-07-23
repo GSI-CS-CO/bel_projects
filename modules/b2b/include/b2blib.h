@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-Sep-2023
+ *  version : 20-Nov-2023
  *
  * library for b2b
  *
@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define B2BLIB_VERSION 0x000700
+#define B2BLIB_VERSION 0x000702
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  B2BLIB_STATUS_OK                 0            // OK
@@ -81,9 +81,11 @@ extern "C" {
     uint64_t ext_T;                                    // extraction: period of h=1 Group DDS [as]
     uint32_t ext_h;                                    // extraction: harmonic number of rf
     float    ext_cTrig;                                // extraction: correction for extraction kicker [ns]
+    uint32_t ext_sid;                                  // extraction: ID of extraction sequence (redundant)
     uint64_t inj_T;                                    // injection : ...
     uint32_t inj_h;
     float    inj_cTrig;
+    uint32_t inj_sid;
     float    cPhase;                                   // phase correction for b2b mode
   } setval_t;
 

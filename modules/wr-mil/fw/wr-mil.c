@@ -467,6 +467,11 @@ uint32_t convert_WReventID_to_milTelegram(uint64_t evtId, uint32_t *milTelegram)
   // B: BPID(14)
   // R: Reserved(10)
   // s: status bits
+  //    see https://www-acc.gsi.de/wiki/Timing/TimingSystemEventMil#Normal_Event
+  //    bit 0: reserved
+  //    bit 1: high b/rho, rigid beam
+  //    bit 2: no beam
+  //    bit 3: high current
   // v: virtAcc = virtual accellerator
   // c: evtCode = MIL relevant part of the evtNo (only 0..255)
   // i: InBeam(1)
@@ -619,7 +624,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       } // if systime
       else flagIsLate = 0;
 
-      // max value of offset done
       offsDone = sysTime - recDeadline;
 
       // handle UTC events; here the UTC time (- offset) is distributed as a series of MIL telegrams

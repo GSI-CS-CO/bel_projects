@@ -96,6 +96,7 @@ deploy:
 	cp $(SW)/b2b-viewer $(STAGING)$(ARCH)$(PREFIX)/usr/bin              # '/usr' is a hack 
 	cp $(SW)/b2b-archiver $(STAGING)$(ARCH)$(PREFIX)/usr/bin            # '/usr' is a hack
 	cp $(SW)/b2b-jitter-check $(STAGING)$(ARCH)$(PREFIX)/usr/bin        # '/usr' is a hack
+	cp $(SW)/b2b-serv-kickdiag $(STAGING)$(ARCH)$(PREFIX)/usr/bin       # '/usr' is a hack
 	cp $(FW)/*.bin $(STAGING)/firmware                   
 #	cp $(SW)/b2b-pname-info $(STAGING)$(ARCH)$(PREFIX)/usr/bin          # '/usr' is a hack; this is special and works only on ASL
 

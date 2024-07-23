@@ -43,16 +43,16 @@ eb-fwload dev/wbm0 u 0x0 dmunipz.bin
 # some data masters
 # dmunipz-ctl dev/wbm0 ebmdm 0x00267b000446 0xc0a880bc (tsl015, user network) 
 # dmunipz-ctl dev/wbm0 ebmdm 0x00267b000484 0xc0a88111 (tsl020, integration network) 
+# dmunipz-ctl dev/wbm0 ebmdm 0x00267b000422 0xc0a80c04 (tsl008, integration network backup)
 # dmunipz-ctl dev/wbm0 ebmdm 0x00267b00046b 0xc0a880f7 (tsl017, production network)
 # dmunipz-ctl dev/wbm0 ebmdm 0x00267b00045e 0xc0a880d4 (tsl018, production network backup)
-# dmunipz-ctl dev/wbm0 ebmdm 0x00267b000422 0xc0a80c04 (tsl008, 'Hanno network')
 # dmunipz-ctl dev/wbm0 ebmdm 0x00267b000455 0xc0a80b01 (tsl404, 'Testnetz Dietrich')
 #
 
 # do some write actions to set register values
 echo -e dm-unipz - start: set MAC and IP of gateway and Data Master
 
-dmunipz-ctl dev/wbm0 ebmdm 0x00267b00046b 0xc0a880f7
+dmunipz-ctl dev/wbm0 ebmdm 0x00267b000422 0xc0a80c04
 
 echo -e dm-unipz - start: make firmware operational
 
@@ -102,6 +102,10 @@ echo -e dm-unipz - start: start operation
 dmunipz-ctl dev/wbm0 startop
 
 echo -e dm-unipz - start: startup script finished
+
+sleep 2
+
+dmunipz-ctl dev/wbm0 cleardiag
 
 ###########################################
 # testing without datamaster

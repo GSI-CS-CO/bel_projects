@@ -15,7 +15,7 @@ FW          ?=../fw
 WRUNIPZLIB  := libwrunipzlib.so
 
 # include common Makefile stuff
-include ../../b2b/x86/targetsysbuild.db
+include targetsysbuild.db
 
 
 #TARGETS     := wrunipz-ctl
@@ -47,7 +47,7 @@ lib: wrunipzlib.c
 clean:
 	rm -f *.o $(TARGETS) $(WRUNIPZLIB)*
 
-deploy:
+install:
 	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/bin
 	cp $(TARGETS) $(STAGING)$(ARCH)$(PREFIX)/bin
 	cp $(WRUNIPZLIB).1.0 $(STAGING)$(ARCH)$(PREFIX)/lib

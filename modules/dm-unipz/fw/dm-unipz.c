@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 06-Feb-2023
+ *  version : 23-Jul-2024
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000812                                     // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000821                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -174,6 +174,14 @@ dmComm  dmCmds[DM_NBLOCKS];             // data for treatment of blocks
 #define DM_NTHREADS      1              // max number of threads changed within the Data Master
 dmThrd  dmThrs[DM_NTHREADS];            // data for treatment of threads
 #define REQBEAM          0              // handles DM for beam request; thread handling
+
+uint32_t nLate;                         // # of late messages
+uint32_t offsDone;                      // offset deadline WR message to time when we are done [ns]
+int32_t  comLatency;                    // latency for messages received via ECA
+
+int32_t  maxComLatency;
+uint32_t maxOffsDone;
+
 
 
 // check thread control data
@@ -1032,6 +1040,8 @@ uint32_t extern_entryActionConfigured()
 // entry action of state operation
 uint32_t extern_entryActionOperation()
 {
+  fwlib_clearDiag();                                                        // clear common diagnostic data
+  
   return COMMON_STATUS_OK;
 } // extern_entryActionOperation
 
@@ -1060,6 +1070,9 @@ void extern_clearDiag()
   nTransfer       = 0x0;
   nMulti          = 0x0;
   nBoost          = 0x0;
+  nLate           = 0x0;
+  maxComLatency   = 0x0;
+  maxOffsDone     = 0x0;
 } // extern_clearDiag
 
 
@@ -1155,10 +1168,11 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
   status = actStatus; 
 
   nextAction = fwlib_wait4ECAEvent(COMMON_DEFAULT_TIMEOUT * 1000, &ecaDeadline, &ecaEvtId, &ecaParam, &ecaTef, &flagLate, &flagEarly, &flagConflict, &flagDelayed);  // 'do action' is driven by actions issued by the ECA
+  if (flagLate) nLate++;
 
   switch (nextAction) {
     case DMUNIPZ_ECADO_REQTK :                                                     // received command "REQTK" from data master
-      
+      comLatency = (int32_t)(getSysTime() - ecaDeadline);
       if (flagLate) return DMUNIPZ_STATUS_LATEEVENT;                               // never request TK in case of a late event
 
       (*nTransfer)++;                                                              // diagnostics: increment number of transfers
@@ -1200,7 +1214,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       break;
 
     case DMUNIPZ_ECADO_PREPBEAM :                                                  // received command "PREPBEAM" from data master
-      
+      comLatency = (int32_t)(getSysTime() - ecaDeadline);
       if (flagLate) return DMUNIPZ_STATUS_LATEEVENT;                               // never perform PREPBEAM in case of a late event
 
       //---- prepare beam 
@@ -1214,7 +1228,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
     case DMUNIPZ_ECADO_REQBEAM   :                                                 // received command "CMD_UNI_BREQ" from data master
                                                                                    // this is an OR, no 'break' on purpose
     case DMUNIPZ_ECADO_REQBEAMNW :                                                 // received command "CMD_UNI_BREQ_NOWAIT" from data master
-      
+      comLatency = (int32_t)(getSysTime() - ecaDeadline);
       if (flagLate) return DMUNIPZ_STATUS_LATEEVENT;                               // error: never request beam in case of a 'late event'
 
       // this is ugly, but ...
@@ -1354,7 +1368,8 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       break;
 
     case DMUNIPZ_ECADO_RELTK :                                                     // received command "REL_TK" from data master
-
+      comLatency = (int32_t)(getSysTime() - ecaDeadline);
+      
       //---- copy tag specific data from ECA
       // calculate time difference between EVT_READY_TO_SIS and CMD_UNI_TCREL
       if (tReady2Sis == 0) *dtSync2 = 0xffffffffffffffff;                          // no valid timestamp for EVT_READY_TO_SIS
@@ -1374,7 +1389,8 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       break;
 
     case DMUNIPZ_ECADO_MBTRIGGER :                                                 // received MBTRIGGER: convenience feature triggering all kind of diagnostics
-
+      comLatency = (int32_t)(getSysTime() - ecaDeadline);
+      
       // calculate time difference between EVT_READY_TO_SIS and EVT_MB_TRIGGER
       if (tReady2Sis == 0) *dtSync1 = 0xffffffffffffffff;                          // no valid timestamp for EVT_READY_TO_SIS
       else                 *dtSync1 = ecaDeadline - tReady2Sis;                    // we got a valid timestamp
@@ -1388,20 +1404,26 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       else                 *dtTransfer = ecaDeadline - tTkreq;                     // we got a valid timestamp
 
       if (status == COMMON_STATUS_OK) {                                            // we don't want to overwrite an already existing bad status
-        if (flagTkReq) {                                                           // only do this test, if TK is reserved (if TK is not reserved, synchronization with UNILAC is not included in the schedule)
+        if (flagTkReq) {                                                           // only do this tests, if TK is reserved (if TK is not reserved, synchronization with UNILAC is not included in the schedule)
           // check if time difference is not reasonable. It must be within a small window around the value DMUNIPZ_OFFSETINJECT.
           if ((*dtSync1 < (uint64_t)(DMUNIPZ_OFFSETINJECT - DMUNIPZ_MATCHWINDOW)) || (*dtSync1 > (uint64_t)(DMUNIPZ_OFFSETINJECT + DMUNIPZ_MATCHWINDOW))) status = DMUNIPZ_STATUS_BADSYNC;
+
+          // check if time difference is not reasonable. It must be larger than 10ms. A shorter difference indicates failure/missing '10s waiting block' at DM
+          if (*dtInject < (uint64_t)(DMUNIPZ_OFFSETINJECT + DMUNIPZ_MATCHWINDOW)) status = DMUNIPZ_STATUS_BADSCHEDULEA;
         } // if flagTKReq
       } // if status
 
+      /* moved this test inside 'if (flagTkreq) ...' just above
       if (status == COMMON_STATUS_OK) {                                            // we don't want to overwrite an already existing bad status
         // check if time difference is not reasonable. It must be larger than 10ms. A shorter difference indicates failure/missing '10s waiting block' at DM
         if (*dtInject < (uint64_t)(DMUNIPZ_OFFSETINJECT + DMUNIPZ_MATCHWINDOW)) status = DMUNIPZ_STATUS_BADSCHEDULEA;
       } // if status
+      */
       
       break;
       
-    case DMUNIPZ_ECADO_READY2SIS :                                                 // diagnostics: received EVT_READY_TO_SIS via TLU 
+    case DMUNIPZ_ECADO_READY2SIS :                                                 // diagnostics: received EVT_READY_TO_SIS via TLU
+       comLatency = (int32_t)(getSysTime() - ecaDeadline);
       if (flagTkReq) nR2sTransfer++;                                               // receiving EVT_READY_TO_SIS during ongoing transfer within transfer but outside injection (injection handled by case 'DMUNIPZ_ECADO_REQBEAM')
       nR2sTotal++;                                                                 // receiving EVT_READY_TO_SIS outside ongoing transfer indicates a periodic "virtual accelerator" from UNILAC to TK
 
@@ -1410,6 +1432,9 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
     default:
       return fwlib_wrCheckSyncState();
     } // switch nextAction
+
+    offsDone = (int32_t)(getSysTime() - ecaDeadline);
+  
 
   return status;
 } // doActionOperation
@@ -1514,7 +1539,14 @@ int main(void) {
     fwlib_publishStatusArray(statusArray);
     pubState             = actState;
     fwlib_publishState(pubState);
-    fwlib_publishTransferStatus(nTransfer, nMulti, statusTransfer);
+
+    // comLatency will have a large value (~10ms) as handling some do-actions takes a long time
+    if (comLatency > maxComLatency) maxComLatency = comLatency;
+    // offsDone will have a large value (~100ms (!))) as handling some do-actions takes a long time
+    if (offsDone   > maxOffsDone)   maxOffsDone   = offsDone;
+    fwlib_publishTransferStatus(nTransfer, nMulti, statusTransfer, nLate, maxOffsDone, maxComLatency);
+
+
     /* publish info on mode (multi-multi/booster) and booster cycles (if applicable) */
     
     i++;

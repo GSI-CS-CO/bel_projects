@@ -27,6 +27,7 @@
 #define B2B_ECADO_TLUINPUT2        0xa02   // event from IO2 (TLU)
 #define B2B_ECADO_TLUINPUT3        0xa03   // event from IO3 (TLU)
 #define B2B_ECADO_TLUINPUT4        0xa04   // event from IO4 (TLU)
+#define B2B_ECADO_TLUINPUT5        0xa05   // event from IO5 (TLU)
 #define B2B_ECADO_KICKSTART1        0x31   // SIS18 extraction: EVT_KICK_START1; ESR extraction: EVT_KICK_START2
 #define B2B_ECADO_KICKSTART2        0x45   // SIS18 extraction: EVT_KICK_START1; ESR extraction: EVT_KICK_START2
 #define B2B_ECADO_B2B_PMEXT        0x800   // command: perform phase measurement (extraction)
@@ -98,6 +99,7 @@
 #define B2B_PRETRIGGERINJKICK     300000    // offset [ns] used as pre-trigger on the injection kick event
 #define B2B_PRETRIGGERPR          250000    // offset [ns] used as pre-trigger on the PRINJ/PREXT event
 #define B2B_PRETRIGGERTR           20000    // offset [ns] used as pre-trigger on the trigger event
+#define B2B_AHEADT                300000    // more aggressive ahead interval for determining the deadline of a timing message
 #define B2B_ACCEPTKMON             10000    // timewindow [us]!!! in which monitor signal  from kicker electronics is expected
 #define B2B_ACCEPTKPROBE             100    // timewindow [us]!!! in which signals from kicker magnet probe are expected
 #define B2B_TDIAGOBS            15900000    // observation interval for phase diagnostic; a bit shorter than length of flat top
