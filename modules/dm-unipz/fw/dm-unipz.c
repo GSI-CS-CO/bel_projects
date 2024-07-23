@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 19-Jul-2024
+ *  version : 23-Jul-2024
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000820                                     // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000821                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -1389,7 +1389,8 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       break;
 
     case DMUNIPZ_ECADO_MBTRIGGER :                                                 // received MBTRIGGER: convenience feature triggering all kind of diagnostics
-
+      comLatency = (int32_t)(getSysTime() - ecaDeadline);
+      
       // calculate time difference between EVT_READY_TO_SIS and EVT_MB_TRIGGER
       if (tReady2Sis == 0) *dtSync1 = 0xffffffffffffffff;                          // no valid timestamp for EVT_READY_TO_SIS
       else                 *dtSync1 = ecaDeadline - tReady2Sis;                    // we got a valid timestamp
@@ -1421,7 +1422,8 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       
       break;
       
-    case DMUNIPZ_ECADO_READY2SIS :                                                 // diagnostics: received EVT_READY_TO_SIS via TLU 
+    case DMUNIPZ_ECADO_READY2SIS :                                                 // diagnostics: received EVT_READY_TO_SIS via TLU
+       comLatency = (int32_t)(getSysTime() - ecaDeadline);
       if (flagTkReq) nR2sTransfer++;                                               // receiving EVT_READY_TO_SIS during ongoing transfer within transfer but outside injection (injection handled by case 'DMUNIPZ_ECADO_REQBEAM')
       nR2sTotal++;                                                                 // receiving EVT_READY_TO_SIS outside ongoing transfer indicates a periodic "virtual accelerator" from UNILAC to TK
 
@@ -1538,7 +1540,9 @@ int main(void) {
     pubState             = actState;
     fwlib_publishState(pubState);
 
+    // comLatency will have a large value (~10ms) as handling some do-actions takes a long time
     if (comLatency > maxComLatency) maxComLatency = comLatency;
+    // offsDone will have a large value (~100ms (!))) as handling some do-actions takes a long time
     if (offsDone   > maxOffsDone)   maxOffsDone   = offsDone;
     fwlib_publishTransferStatus(nTransfer, nMulti, statusTransfer, nLate, maxOffsDone, maxComLatency);
 
