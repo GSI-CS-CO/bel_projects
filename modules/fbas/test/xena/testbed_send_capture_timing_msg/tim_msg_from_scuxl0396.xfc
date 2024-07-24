@@ -1,0 +1,20 @@
+;XENAPORT
+;FormatVersion: 2
+;Savedby: ValkyrieManager (v1.77.7853.2)
+;Testbed: flood_timing_msg
+;Chassis: New chassis S.427, D.38)
+;ChassisSerial: 7711642
+;ModuleModel: M6SFP
+;Port: 0/0
+PM_INDICES  0 1
+PM_PROTOCOL  [0]  ETHERNET
+PM_POSITION  [0]  6
+PM_MATCH  [0]  0xFFFFFFFFFFFF0000 0x00267B0006D70000
+PM_PROTOCOL  [1]  ETHERNET UDP
+PM_POSITION  [1]  36
+PM_MATCH  [1]  0xFFFF000000000000 0xEBD0000000000000
+PL_INDICES
+PF_INDICES  0
+PF_COMMENT  [0]  "filter timing msg from scuxl0396"
+PF_CONDITION  [0]  0 0 0 0 3 0
+PF_ENABLE  [0]  OFF

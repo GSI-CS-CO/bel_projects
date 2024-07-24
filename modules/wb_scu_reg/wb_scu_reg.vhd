@@ -89,7 +89,7 @@ begin
     -- port A
     clka_i  => clk_sys_i,
     bwea_i  => s_scub_sel,  
-    wea_i   => wrpulse and Ext_Adr_Val,
+    wea_i   => wrpulse and Ext_Adr_Val and dtack,
     aa_i    => '0' & s_adr_a(f_log2_size(size*2)-1 downto 1),
     da_i    => Data_from_SCUB_LA & Data_from_SCUB_LA,
     qa_o    => s_qa_o,

@@ -14,13 +14,8 @@ entity ftm10 is
     clk_20m_vcxo_i        : in std_logic; -- 20MHz VCXO clock
     clk_20m_vcxo_alt_i    : in std_logic; -- 20MHz VCXO clock alternative
 
-    clk_125m_pllref_i     : in std_logic; -- 125 MHz PLL reference
     clk_125m_local_i      : in std_logic; -- Local clk from 125Mhz oszillator
-    clk_125m_sfpref_i     : in std_logic; -- PLL/SFP reference clk from 125Mhz oszillator
-
-    clk_125m_pllref_alt_i : in std_logic; -- 125 MHz PLL reference alternative
     clk_125m_local_alt_i  : in std_logic; -- Local clk from 125Mhz oszillator alternative
-    clk_125m_sfpref_alt_i : in std_logic; -- PLL/SFP reference clk from 125Mhz oszillator alternative
 
     clk_125m_tcb_pllref_i : in std_logic; -- 125 MHz PLL reference at tranceiver bank
     clk_125m_tcb_local_i  : in std_logic; -- Local clk from 125Mhz oszillator at tranceiver bank
@@ -42,37 +37,53 @@ entity ftm10 is
     wr_ndac_cs_o  : out std_logic_vector(2 downto 1);
 
     -----------------------------------------------------------------------
+    -- SPI Flash User Mode
+    -----------------------------------------------------------------------
+    --UM_AS_D           : inout std_logic_vector(3 downto 0) := (others => 'Z');
+    --UM_nCSO           : out   std_logic := 'Z';
+    --UM_DCLK           : out   std_logic := 'Z';
+
+    -----------------------------------------------------------------------
     -- OneWire
     -----------------------------------------------------------------------
-    rom_data_io     : inout std_logic;
-    rom_aux_data_io : inout std_logic;
+    OneWire_CB          : inout std_logic;
+    OneWire_CB_splz     : out   std_logic; --Strong Pull-Up for Onewire
+    OneWire_aux_CB      : inout std_logic;
+    OneWire_aux_CB_splz : out   std_logic; --Strong Pull-Up for Onewire
 
     -----------------------------------------------------------------------
     -- Misc.
     -----------------------------------------------------------------------
-    fpga_res_i : in std_logic;
-    nres_i     : in std_logic;
-
-    -----------------------------------------------------------------------
-    -- LVTTL IOs
-    -----------------------------------------------------------------------
-    lemo_p_i : in    std_logic_vector(19 downto 0);
-    lemo_n_i : in    std_logic_vector(19 downto 0);
-    lemo_p_o : out   std_logic_vector(19 downto 0);
-    lemo_n_o : out   std_logic_vector(19 downto 0);
+    nuser_pb_i   : in  std_logic; -- User Button
+    nres_out_o   : out std_logic; -- Reset MAX10
+    a_nsys_reset : in  std_logic; -- Reset
 
     -----------------------------------------------------------------------
     -- I2C
     -----------------------------------------------------------------------
-    i2c_scl_pad_io   : inout std_logic_vector(4 downto 0);
-    i2c_sda_pad_io   : inout std_logic_vector(4 downto 0);
+    i2c_scl_pad_io   : inout std_logic_vector(5 downto 1);
+    i2c_sda_pad_io   : inout std_logic_vector(5 downto 1);
 
     -----------------------------------------------------------------------
     -- leds onboard
     -----------------------------------------------------------------------
     wr_leds_o                  : out std_logic_vector(3 downto 0) := (others => '1');
     wr_aux_leds_or_node_leds_o : out std_logic_vector(3 downto 0) := (others => '1');
-    rt_leds_o                  : out std_logic_vector(3 downto 0) := (others => '1');
+
+    -----------------------------------------------------------------------
+    -- Pseudo-SRAM (4x 256Mbit)
+    -----------------------------------------------------------------------
+    psram_a            : out   std_logic_vector(23 downto 0) := (others => 'Z');
+    psram_dq           : inout std_logic_vector(15 downto 0) := (others => 'Z');
+    psram_clk          : out   std_logic := 'Z';
+    psram_advn         : out   std_logic_vector(3 downto 0) := (others => 'Z');
+    psram_cre          : out   std_logic_vector(3 downto 0) := (others => 'Z');
+    psram_cen          : out   std_logic_vector(3 downto 0) := (others => '1');
+    psram_oen          : out   std_logic_vector(3 downto 0) := (others => 'Z');
+    psram_ubn          : out   std_logic_vector(3 downto 0) := (others => 'Z');
+    psram_wen          : out   std_logic_vector(3 downto 0) := (others => 'Z');
+    psram_lbn          : out   std_logic_vector(3 downto 0) := (others => 'Z');
+    psram_wait         : in    std_logic_vector(3 downto 0); -- DDR magic
 
     -----------------------------------------------------------------------
     -- usb
@@ -82,29 +93,31 @@ entity ftm10 is
     usb_fd_io    : inout std_logic_vector(7 downto 0);
     usb_pa_io    : inout std_logic_vector(7 downto 0) := (others => 'Z');
     usb_ctl_i    : in    std_logic_vector(2 downto 0);
-    usb_uclk_i   : in    std_logic;
     usb_ures_o   : out   std_logic;
-    usb_uclkin_i : in    std_logic;
+    usb_clk_i    : in    std_logic;
+    usb_uclk_i   : in    std_logic;
 
+    -- ATXMega (F2F) previously CPLD
     -----------------------------------------------------------------------
-    -- CPLD
-    -----------------------------------------------------------------------
-    cpld_io : inout std_logic_vector(9 downto 0);
+    cpld_io     : inout std_logic_vector(5 downto 0);
+    f2f_i2c_scl : inout std_logic;
+    f2f_i2c_sda : inout std_logic;
 
     -----------------------------------------------------------------------
     -- SFP (main WR Interface)
     -----------------------------------------------------------------------
-    sfp_tx_disable_o : out   std_logic := '0';
-    sfp_tx_fault_i   : in    std_logic;
-    sfp_los_i        : in    std_logic;
-    sfp_txp_o        : out   std_logic;
-    sfp_rxp_i        : in    std_logic;
-    sfp_mod0_i       : in    std_logic;
-    sfp_mod1_io      : inout std_logic;
-    sfp_mod2_io      : inout std_logic;
+    sfp_tx_disable_o   : out   std_logic;                    -- Second SFP (ftm10 only)
+    sfp_tx_fault_i     : in    std_logic;                    -- Second SFP (ftm10 only)
+    sfp_los_i          : in    std_logic;                    -- Second SFP (ftm10 only)
+    sfp_txp_o          : out   std_logic;                    -- Second SFP (ftm10 only)
+    sfp_rxp_i          : in    std_logic;                    -- Second SFP (ftm10 only)
+    sfp_mod0_i         : in    std_logic;                    -- Second SFP (ftm10 only)
+    sfp_mod1_io        : inout std_logic;                    -- Second SFP (ftm10 only)
+    sfp_mod2_io        : inout std_logic;                    -- Second SFP (ftm10 only)
+    sfp_aux_gpio_extra : inout std_logic_vector(3 downto 0); -- USBC5 (pexarria10 only)
 
     -----------------------------------------------------------------------
-    -- SFP (auxiliary)
+    -- SFP (auxiliary - only used on ftm10)
     -----------------------------------------------------------------------
     sfp_aux_tx_disable_o : out   std_logic := '0';
     sfp_aux_tx_fault_i   : in    std_logic;
@@ -113,7 +126,32 @@ entity ftm10 is
     sfp_aux_rxp_i        : in    std_logic;
     sfp_aux_mod0_i       : in    std_logic;
     sfp_aux_mod1_io      : inout std_logic;
-    sfp_aux_mod2_io      : inout std_logic);
+    sfp_aux_mod2_io      : inout std_logic;
+
+    -----------------------------------------------------------------------
+    -- USBC no USB functionality only LVDS signals
+    -----------------------------------------------------------------------
+    usbc_tx1_en     : out std_logic_vector(5 downto 1);
+    usbc_tx2_en     : out std_logic_vector(5 downto 1);
+    usbc_tx3_en     : out std_logic_vector(5 downto 1);
+    usbc_tx4_en     : out std_logic_vector(5 downto 1);
+    --usbc_tx1_n     : out std_logic_vector(5 downto 1);
+    usbc_tx1_p     : out std_logic_vector(5 downto 1);
+    --usbc_tx2_n     : out std_logic_vector(5 downto 1);
+    usbc_tx2_p     : out std_logic_vector(5 downto 1);
+    --usbc_tx3_n     : out std_logic_vector(5 downto 1);
+    usbc_tx3_p     : out std_logic_vector(5 downto 1);
+    --usbc_tx4_n     : out std_logic_vector(5 downto 1);
+    usbc_tx4_p     : out std_logic_vector(5 downto 1);
+    usbc_rx1_n     : in std_logic_vector(5 downto 1);
+    usbc_rx1_p     : in std_logic_vector(5 downto 1);
+    usbc_rx2_n     : in std_logic_vector(5 downto 1);
+    usbc_rx2_p     : in std_logic_vector(5 downto 1);
+    usbc_rx3_n     : in std_logic_vector(5 downto 1);
+    usbc_rx3_p     : in std_logic_vector(5 downto 1);
+    usbc_rx4_n     : in std_logic_vector(5 downto 1);
+    usbc_rx4_p     : in std_logic_vector(5 downto 1)
+    );
 
 end ftm10;
 
@@ -129,19 +167,21 @@ architecture rtl of ftm10 is
   signal s_led_aux_track    : std_logic;
   signal s_led_aux_pps      : std_logic;
 
-  signal s_gpio_o       : std_logic_vector(13 downto 0);
-  signal s_gpio_i       : std_logic_vector(9 downto 0);
-  signal s_lvds_p_i     : std_logic_vector(19 downto 0);
-  signal s_lvds_n_i     : std_logic_vector(19 downto 0);
-  signal s_lvds_p_o     : std_logic_vector(19 downto 0);
-  signal s_lvds_n_o     : std_logic_vector(19 downto 0);
+  signal s_sfp_disable : std_logic;
 
-  signal s_i2c_scl_pad_out  : std_logic_vector(4 downto 0);
-  signal s_i2c_scl_pad_in   : std_logic_vector(4 downto 0);
-  signal s_i2c_scl_padoen   : std_logic_vector(4 downto 0);
-  signal s_i2c_sda_pad_out  : std_logic_vector(4 downto 0);
-  signal s_i2c_sda_pad_in   : std_logic_vector(4 downto 0);
-  signal s_i2c_sda_padoen   : std_logic_vector(4 downto 0);
+  signal s_gpio_o   : std_logic_vector(5 downto 0);
+  signal s_gpio_i   : std_logic_vector(5 downto 0);
+  signal s_lvds_p_i : std_logic_vector(19 downto 0);
+  signal s_lvds_n_i : std_logic_vector(19 downto 0);
+  signal s_lvds_p_o : std_logic_vector(19 downto 0);
+  signal s_lvds_n_o : std_logic_vector(19 downto 0);
+
+  signal s_i2c_scl_pad_out  : std_logic_vector(6 downto 1);
+  signal s_i2c_scl_pad_in   : std_logic_vector(6 downto 1);
+  signal s_i2c_scl_padoen   : std_logic_vector(6 downto 1);
+  signal s_i2c_sda_pad_out  : std_logic_vector(6 downto 1);
+  signal s_i2c_sda_pad_in   : std_logic_vector(6 downto 1);
+  signal s_i2c_sda_padoen   : std_logic_vector(6 downto 1);
 
   signal s_clk_20m_vcxo_i       : std_logic;
   signal s_clk_125m_pllref_i    : std_logic;
@@ -151,8 +191,19 @@ architecture rtl of ftm10 is
   signal s_stub_pll_locked      : std_logic;
   signal s_stub_pll_locked_prev : std_logic;
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 33) :=
+  signal s_psram_ubn     : std_logic;
+  signal s_psram_lbn     : std_logic;
+  signal s_psram_cen     : std_logic;
+  signal s_psram_oen     : std_logic;
+  signal s_psram_wen     : std_logic;
+  signal s_psram_cre     : std_logic;
+  signal s_psram_advn    : std_logic;
+  signal s_psram_wait    : std_logic;
+  signal s_psram_wait_or : std_logic; -- Remove this later
+
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 25) :=
   (
+  -- TBD: LEDs are missing, how to implement I2C-controlled IOs? Use spec. out and in?
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
     ("CPLD_IO_0  ",  IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
     ("CPLD_IO_1  ",  IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
@@ -160,41 +211,34 @@ architecture rtl of ftm10 is
     ("CPLD_IO_3  ",  IO_NONE,         false,   false,  3,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
     ("CPLD_IO_4  ",  IO_NONE,         false,   false,  4,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
     ("CPLD_IO_5  ",  IO_NONE,         false,   false,  5,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("CPLD_IO_6  ",  IO_NONE,         false,   false,  6,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("CPLD_IO_7  ",  IO_NONE,         false,   false,  7,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("CPLD_IO_8  ",  IO_NONE,         false,   false,  8,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("CPLD_IO_9  ",  IO_NONE,         false,   false,  9,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("LED1_BASE_R",  IO_NONE,         false,   false, 10,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LED2_BASE_B",  IO_NONE,         false,   false, 11,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LED3_BASE_G",  IO_NONE,         false,   false, 12,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LED4_BASE_W",  IO_NONE,         false,   false, 13,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("USBC1_IO1  ",  IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC1_IO2  ",  IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC1_IO3  ",  IO_NONE,         false,   false,  2,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC1_IO4  ",  IO_NONE,         false,   false,  3,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC1_IO5  ",  IO_NONE,         false,   false,  4,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC2_IO1  ",  IO_NONE,         false,   false,  5,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC2_IO2  ",  IO_NONE,         false,   false,  6,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC2_IO3  ",  IO_NONE,         false,   false,  7,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC2_IO4  ",  IO_NONE,         false,   false,  8,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC2_IO5  ",  IO_NONE,         false,   false,  9,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC3_IO1  ",  IO_NONE,         false,   false, 10,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC3_IO2  ",  IO_NONE,         false,   false, 11,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC3_IO3  ",  IO_NONE,         false,   false, 12,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC3_IO4  ",  IO_NONE,         false,   false, 13,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC3_IO5  ",  IO_NONE,         false,   false, 14,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC4_IO1  ",  IO_NONE,         false,   false, 15,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC4_IO2  ",  IO_NONE,         false,   false, 16,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC4_IO3  ",  IO_NONE,         false,   false, 17,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC4_IO4  ",  IO_NONE,         false,   false, 18,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC4_IO5  ",  IO_NONE,         false,   false, 19,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS)
+    ("USBC1_IO1  ",  IO_I2C_USB_C,    false,   false,  0,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC1_IO2  ",  IO_I2C_USB_C,    false,   false,  1,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC1_IO3  ",  IO_I2C_USB_C,    false,   false,  2,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC1_IO4  ",  IO_I2C_USB_C,    false,   false,  3,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC1_IO5  ",  IO_I2C_USB_C,    false,   false,  4,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC2_IO1  ",  IO_I2C_USB_C,    false,   false,  5,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC2_IO2  ",  IO_I2C_USB_C,    false,   false,  6,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC2_IO3  ",  IO_I2C_USB_C,    false,   false,  7,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC2_IO4  ",  IO_I2C_USB_C,    false,   false,  8,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC2_IO5  ",  IO_I2C_USB_C,    false,   false,  9,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC3_IO1  ",  IO_I2C_USB_C,    false,   false, 10,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC3_IO2  ",  IO_I2C_USB_C,    false,   false, 11,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC3_IO3  ",  IO_I2C_USB_C,    false,   false, 12,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC3_IO4  ",  IO_I2C_USB_C,    false,   false, 13,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC3_IO5  ",  IO_I2C_USB_C,    false,   false, 14,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC4_IO1  ",  IO_I2C_USB_C,    false,   false, 15,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC4_IO2  ",  IO_I2C_USB_C,    false,   false, 16,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC4_IO3  ",  IO_I2C_USB_C,    false,   false, 17,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC4_IO4  ",  IO_I2C_USB_C,    false,   false, 18,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("USBC4_IO5  ",  IO_I2C_USB_C,    false,   false, 19,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS)
   );
 
-  constant c_family        : string := "Arria 10 GX FTM10";
-  constant c_project       : string := "ftm10";
-  constant c_cores         : natural:= 4;
-  constant c_initf_name    : string := c_project & "_stub.mif";
-  constant c_profile_name  : string := "medium_icache_debug";
+  constant c_family       : string  := "Arria 10 GX FTM10";
+  constant c_project      : string  := "ftm10";
+  constant c_initf_name   : string  := c_project & "_stub.mif";
+  constant c_profile_name : string  := "medium_icache_debug";
+  constant c_psram_bits   : natural := 24;
+  constant c_cores        : natural := 8;
 
 begin
 
@@ -203,15 +247,17 @@ begin
       g_family             => c_family,
       g_project            => c_project,
       g_flash_bits         => 25, -- !!! TODO: Check this
-      g_gpio_out           => 4,
-      g_gpio_inout         => 10,
+      g_psram_bits         => c_psram_bits,
+      g_gpio_inout         => 6,
       g_lvds_inout         => 20,
       g_en_i2c_wrapper     => true,
-      g_num_i2c_interfaces => 5,
+      g_num_i2c_interfaces => 6,
       g_en_pcie            => true,
       g_en_tlu             => false,
       g_en_usb             => true,
+      g_en_psram           => true,
       g_io_table           => io_mapping_table,
+      g_en_a10ts           => true,
       g_a10_use_sys_fpll   => false,
       g_a10_use_ref_fpll   => false,
       g_dual_port_wr       => true,
@@ -222,7 +268,8 @@ begin
       g_lm32_cores         => c_cores,
       g_lm32_ramsizes      => c_lm32_ramsizes/4,
       g_lm32_init_files    => f_string_list_repeat(c_initf_name, c_cores),
-      g_lm32_profiles      => f_string_list_repeat(c_profile_name, c_cores)
+      g_lm32_profiles      => f_string_list_repeat(c_profile_name, c_cores),
+      g_en_asmi            => true
     )
     port map(
       core_clk_20m_vcxo_i     => clk_20m_vcxo_i,
@@ -232,8 +279,8 @@ begin
       wr_dac_sclk_o           => wr_dac_sclk_o,
       wr_dac_din_o            => wr_dac_din_o,
       wr_ndac_cs_o            => wr_ndac_cs_o,
-      wr_onewire_io           => rom_data_io,
-      wr_aux_onewire_io       => rom_aux_data_io,
+      wr_onewire_io           => OneWire_CB,
+      wr_aux_onewire_io       => OneWire_aux_CB,
       wr_sfp_sda_io           => sfp_mod2_io,
       wr_sfp_scl_io           => sfp_mod1_io,
       wr_sfp_det_i            => sfp_mod0_i,
@@ -250,6 +297,7 @@ begin
       sfp_aux_tx_disable_o    => open,
       sfp_aux_tx_fault_i      => sfp_aux_tx_fault_i,
       sfp_aux_los_i           => sfp_aux_los_i,
+      wbar_phy_dis_o          => s_sfp_disable,
       i2c_scl_pad_i           => s_i2c_scl_pad_in,
       i2c_scl_pad_o           => s_i2c_scl_pad_out,
       i2c_scl_padoen_o        => s_i2c_scl_padoen,
@@ -286,45 +334,101 @@ begin
       pcie_refclk_i           => pcie_refclk_i,
       pcie_rstn_i             => nPCI_RESET_i,
       pcie_rx_i               => pcie_rx_i,
-      pcie_tx_o               => pcie_tx_o);
+      pcie_tx_o               => pcie_tx_o,
+      --PSRAM TODO: Multi Chip
+      ps_clk                  => psram_clk,
+      ps_addr                 => psram_a,
+      ps_data                 => psram_dq,
+      ps_seln(0)              => s_psram_ubn,
+      ps_seln(1)              => s_psram_lbn,
+      ps_cen                  => s_psram_cen,
+      ps_oen                  => s_psram_oen,
+      ps_wen                  => s_psram_wen,
+      ps_cre                  => s_psram_cre,
+      ps_advn                 => s_psram_advn,
+      ps_wait                 => s_psram_wait_or);
 
-  -- SFPs
-  sfp_tx_disable_o     <= '0';
-  sfp_aux_tx_disable_o <= '0';
+  -- SFP management
+  sfp_tx_disable_o     <= s_sfp_disable;
+  sfp_aux_tx_disable_o <= s_sfp_disable;
+
+  -- PSRAM test connection, add selector later (psram0/1/2/3)
+  s_psram_wait_or <= psram_wait(0) or psram_wait(1) or psram_wait(2) or psram_wait(3);
+  psram_test : for i in 0 to 3 generate
+    psram_advn(i) <= s_psram_advn;
+    psram_cre(i)  <= s_psram_cre;
+    psram_cen(i)  <= s_psram_cen;
+    psram_oen(i)  <= s_psram_oen;
+    psram_ubn(i)  <= s_psram_ubn;
+    psram_wen(i)  <= s_psram_wen;
+    psram_lbn(i)  <= s_psram_lbn;
+  end generate;
 
   -- LEDs
-  wr_leds_o(0)     <= not (s_led_link_act and s_led_link_up);         -- red   = traffic/no-link
-  wr_leds_o(1)     <= not s_led_link_up;                              -- blue  = link
-  wr_leds_o(2)     <= not s_led_track;                                -- green = timing valid
-  wr_leds_o(3)     <= not s_led_pps;                                  -- white = PPS
+  wr_leds_o(0)                  <= not (s_led_link_act and s_led_link_up);          -- red   = traffic/no-link
+  wr_leds_o(1)                  <= not s_led_track;                                 -- green = timing valid
+  wr_leds_o(2)                  <= not (s_led_link_up and not(s_led_track));        -- blue  = link
+  wr_leds_o(3)                  <= not s_led_pps;                                   -- white = PPS
+  wr_aux_leds_or_node_leds_o(0) <= not (s_led_aux_link_act and s_led_aux_link_up);  -- red   = traffic/no-link
+  wr_aux_leds_or_node_leds_o(1) <= not s_led_aux_track;                             -- green = timing valid
+  wr_aux_leds_or_node_leds_o(2) <= not (s_led_aux_link_up and not(s_led_aux_track));-- blue  = link
+  wr_aux_leds_or_node_leds_o(3) <= not s_led_aux_pps;                               -- white = PPS
 
-  wr_aux_leds_or_node_leds_o(0) <= not (s_led_aux_link_act and s_led_aux_link_up); -- red   = traffic/no-link
-  wr_aux_leds_or_node_leds_o(1) <= not s_led_aux_link_up;                          -- blue  = link
-  wr_aux_leds_or_node_leds_o(2) <= not s_led_aux_track;                            -- green = timing valid
-  wr_aux_leds_or_node_leds_o(3) <= not s_led_aux_pps;                              -- white = PPS
+  -- Unused
+  sfp_aux_gpio_extra(0) <= 'Z';
+  sfp_aux_gpio_extra(1) <= 'Z';
+  sfp_aux_gpio_extra(2) <= 'Z';
+  sfp_aux_gpio_extra(3) <= 'Z';
 
-  rt_leds_o        <= not s_gpio_o(13 downto 10);
+  -------------------------------------------------
+  -- LVDS USBC mapping
+  -------------------------------------------------
+  -- USBC TX LVDS output
+  usbc_tx : for i in 0 to 4 generate
+    --usbc_tx1_n(i+1) <= s_lvds_n_o(i);
+    usbc_tx1_p(i+1) <= s_lvds_p_o(i);
+    --usbc_tx2_n(i+1) <= s_lvds_n_o(i+5);
+    usbc_tx2_p(i+1) <= s_lvds_p_o(i+5);
+    --usbc_tx3_n(i+1) <= s_lvds_n_o(i+10);
+    usbc_tx3_p(i+1) <= s_lvds_p_o(i+10);
+    --usbc_tx4_n(i+1) <= s_lvds_n_o(i+15);
+    usbc_tx4_p(i+1) <= s_lvds_p_o(i+15);
+  end generate;
 
-  -- LEMOs
-  lemos : for i in 0 to 19 generate
-    s_lvds_p_i(i)      <= lemo_p_i(i);
-    s_lvds_n_i(i)      <= lemo_n_i(i);
-    lemo_p_o(i)        <= s_lvds_p_o(i);
-    lemo_n_o(i)        <= s_lvds_n_o(i);
+  -- USBC RX LVDS input
+  usbc_rx : for i in 0 to 4 generate
+    s_lvds_n_i(i)    <= usbc_rx1_n(i+1);
+    s_lvds_p_i(i)    <= usbc_rx1_p(i+1);
+    s_lvds_n_i(i+5)  <= usbc_rx2_n(i+1);
+    s_lvds_p_i(i+5)  <= usbc_rx2_p(i+1);
+    s_lvds_n_i(i+10) <= usbc_rx3_n(i+1);
+    s_lvds_p_i(i+10) <= usbc_rx3_p(i+1);
+    s_lvds_n_i(i+15) <= usbc_rx4_n(i+1);
+    s_lvds_p_i(i+15) <= usbc_rx4_p(i+1);
   end generate;
 
   -- I2C
-  interfaces : for i in 0 to 4 generate
-    i2c_scl_pad_io(i)   <= s_i2c_scl_pad_out(i) when (s_i2c_scl_padoen(i) = '0') else 'Z';
-    i2c_sda_pad_io(i)   <= s_i2c_sda_pad_out(i) when (s_i2c_sda_padoen(i) = '0') else 'Z';
-    s_i2c_scl_pad_in(i) <= i2c_scl_pad_io(i);
-    s_i2c_sda_pad_in(i) <= i2c_sda_pad_io(i);
+  interfaces : for i in 2 to 6 generate
+    i2c_scl_pad_io(i-1) <= s_i2c_scl_pad_out(i) when (s_i2c_scl_padoen(i) = '0') else 'Z';
+    i2c_sda_pad_io(i-1) <= s_i2c_sda_pad_out(i) when (s_i2c_sda_padoen(i) = '0') else 'Z';
+    s_i2c_scl_pad_in(i) <= i2c_scl_pad_io(i-1);
+    s_i2c_sda_pad_in(i) <= i2c_sda_pad_io(i-1);
   end generate;
 
   -- CPLD
-  s_gpio_i(9 downto 0) <= cpld_io(9 downto 0);
-  cpld_con : for i in 0 to 9 generate
+  s_gpio_i(5 downto 0) <= cpld_io(5 downto 0);
+  cpld_con : for i in 0 to 5 generate
     cpld_io(i) <= s_gpio_o(i) when s_gpio_o(i)='0' else 'Z';
   end generate;
+
+  -- I2C to ATXMega
+  f2f_i2c_scl         <= s_i2c_scl_pad_out(1) when (s_i2c_scl_padoen(1) = '0') else 'Z';
+  f2f_i2c_sda         <= s_i2c_sda_pad_out(1) when (s_i2c_sda_padoen(1) = '0') else 'Z';
+  s_i2c_scl_pad_in(1) <= f2f_i2c_scl ;
+  s_i2c_sda_pad_in(1) <= f2f_i2c_sda;
+
+  -- OneWire
+  OneWire_CB_splz     <= '1'; -- Strong Pull-Up disabled
+  OneWire_aux_CB_splz <= '1'; -- Strong Pull-Up disabled
 
 end rtl;

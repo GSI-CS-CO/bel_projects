@@ -16,7 +16,7 @@ constant  c_mil_addr_width:       integer := integer(ceil(log2(real(c_mil_byte_a
 constant c_xwb_gsi_mil_scu : t_sdb_device := (
   abi_class     => x"0000",             -- undocumented device
   abi_ver_major => x"01",
-  abi_ver_minor => x"00",
+  abi_ver_minor => x"01",
   wbd_endian    => c_sdb_endian_big,    -- '1' = little, '0' = big
   wbd_width     => x"4",                -- only 32-bit port granularity allowed
   sdb_component => (
@@ -25,8 +25,8 @@ constant c_xwb_gsi_mil_scu : t_sdb_device := (
   product => (
   vendor_id     => x"0000000000000651", -- GSI
   device_id     => x"35aa6b96",
-  version       => x"00000002",
-  date          => x"20170907",
+  version       => x"00000003",
+  date          => x"20231211",
   name          => "GSI_MIL_SCU        ")));  -- should be 19 Char
 
 
@@ -67,15 +67,19 @@ constant  mil_rd_lemo_inp_a:        unsigned(15 downto 0)  := x"000B";  -- read 
 constant  rd_ev_timer_LW_a:         unsigned(15 downto 0)  := x"000C";  -- read event timer lower Word  wb_mil_scu_offset + 16#30#.
                                                                         -- reserved                     wb_mil_scu_offset + 16#34#.
 constant  rd_wait_timer_LW_a:       unsigned(15 downto 0)  := x"000E";  -- read wait timer lower Word   wb_mil_scu_offset + 16#38#.
-                                                                        -- reserved                     wb_mil_scu_offset + 16#3c#..   
+                                                                        -- reserved                     wb_mil_scu_offset + 16#3c#.
 constant  rd_wr_dly_timer_LW_a:     unsigned(15 downto 0)  := x"0010";  -- read event timer latch LW    wb_mil_scu_offset + 16#40#.
                                                                         -- write event timer latch LW   wb_mil_scu_offset + 16#40#.
 constant  rd_wr_dly_timer_HW_a:     unsigned(15 downto 0)  := x"0011";  -- read event timer latch HW    wb_mil_scu_offset + 16#44#.
-                                                                        -- write event timer latch HW   wb_mil_scu_offset + 16#44#. 
+                                                                        -- write event timer latch HW   wb_mil_scu_offset + 16#44#.
 constant  wr_soft_reset_a:          unsigned(15 downto 0)  := x"0012";  -- wr softreset to wb_mil_scu   wb_mil_scu_offset + 16#48#.
 
-                                                        
-CONSTANT  ram_count:                integer                :=  254;     -- max 254: aktuelle Version, max 255 zukünftig bei Strahlendiagnosemode.
+constant  wr_rd_blk_length_a:       unsigned(15 downto 0)  := x"0013";  -- wr/rd block mode data0       wb_mil_scu_offset + 16#4C#.
+constant  rd_blk_fifo_cnt_a:        unsigned(15 downto 0)  := x"0014";  -- rd block mode fifo fill cnt  wb_mil_scu_offset + 16#50#.
+
+constant  rd_mil_err_cnt:           unsigned(15 downto 0)  := x"0015";  -- rd mil timing error counter  wb_mil_scu_offset + 16#54#.
+                                                      
+CONSTANT  ram_count:                integer                :=  255;     -- max 254: aktuelle Version, max 255 zukünftig bei Strahlendiagnosemode.
 CONSTANT  sio_mil_first_reg_a:      unsigned(15 downto 0)  :=  x"0400";
 CONSTANT  sio_mil_last_reg_a:       unsigned(15 downto 0)  :=  x"0440";
 CONSTANT  tx_taskram_first_adr:     unsigned(15 downto 0)  :=  x"0C01";
@@ -343,7 +347,9 @@ component event_processing is
     ev_timer_res:     out   std_logic;
     ev_puls1:         out   std_logic;
     ev_puls2:         out   std_logic;
-    timing_received:  out   std_logic
+    timing_received:  out   std_logic;
+    mil_err_cnt:      out   std_logic_vector(31 downto 0);
+    clr_mil_err_cnt:  in    std_logic
     );
 end component event_processing;
 

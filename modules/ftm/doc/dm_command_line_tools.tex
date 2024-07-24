@@ -1,0 +1,178 @@
+\subsection{Tool dm-cmd}
+\label{Tool_dm-cmd}
+\begin{lstlisting}[style = helptext]
+dm-cmd v0.36.3, build date 20220602
+Sends a command or dotfile of commands to the DM
+There are global, local and queued commands
+
+Usage: dm-cmd [OPTION] <etherbone-device> <command>
+                              [target node] [parameter]
+
+
+General Options:
+  -c <cpu-idx>              Select CPU core by index, default is 0
+  -t <thread-idx>           Select thread inside selected CPU core
+                            by index, default is 0
+  -v                        Verbose operation, print more details
+  -d                        Debug operation, print everything
+  -i <command .dot file>    Run commands from dot file
+  status                    Show status of all threads and cores
+                            (default)
+  details                   Show time statistics and detailed
+                            information on uptime and recent changes
+  clearstats                Clear all status and statistics info
+  gathertime <Time / ns>    Set msg gathering time for priority queue
+  maxmsg <Message Quantity> Set maximum messages in a packet for
+                            priority queue
+  running                   Show bitfield of all running threads
+                            on this CPU core
+  heap                      Show current scheduler heap
+  startpattern <pattern>    Request start of selected pattern
+  abortpattern <pattern>    Try to immediately abort selected pattern
+  chkrem       <pattern>    Check if removal of selected pattern
+                            would be safe
+  starttime <Time / ns>     Set start time for this thread
+  preptime <Time / ns>      Set preparation time (lead) for this thread
+  deadline                  Show next deadline for this thread
+  origin <target>           Set the node with which selected
+                            thread will start
+  origin                    Return the node with which selected
+                            thread will start
+  cursor                    Show name of currently active node
+                            of selected thread
+  hex <target>              Show hex dump of selected Node
+  queue <target>            Show content of all queues
+\end{lstlisting}
+\texttt{target} is a block node where the queues are configured.
+\begin{lstlisting}[style = helptext]
+  rawqueue <target>         Dump all meta information of the command
+                            queues of the block <target> including
+                            commands
+  start                     Request start of selected thread.
+                            Requires a valid origin.
+  stop                      Request stop of selected thread.
+                            Does reverse lookup of current pattern,
+                            prone to race condition
+  abort                     Immediately abort selected thread.
+  halt                      Immediately aborts all threads on all CPUs.
+  lock <target>             Locks all queues of a block for asynchronous
+                            queue manipulation mode. This makes the
+                            queues invisible to the DM and allowing
+                            modification during active runtime.
+                            ACTIVE LOCK MEANS DM WILL NEITHER WRITE TO
+                            NOR READ FROM THIS BLOCK'S QUEUES!
+  clear <target>            Clears all queues of a locked block
+                            allowing modification/refill during
+                            active runtime.
+  unlock <target>           Unlocks all queues of a block, making
+                            them visible to the DM.
+  asyncflush <target>  <prios>         Flushes all pending commands
+                            of given priorities (3b Hi-Md-Lo ->
+                            0x0..0x7) in an locked block of the schedule
+  unlock <target>                      Unlocks a block from
+                            asynchronous queue manipulation mode
+  showlocks                            Lists all currently locked blocks
+  staticflush <target> <prios>         Flushes all pending commands
+                            of given priorities (3b Hi-Md-Lo ->
+                            0x0..0x7) in an inactive (static)
+                            block of the schedule
+  staticflushpattern <pattern> <prios> Flushes all pending commands
+                            of given priorities (3b Hi-Md-Lo ->
+                            0x0..0x7) in an inactive (static)
+                            pattern of the schedule
+  rawvisited [<target>]     Show 1 for a visited node, 0 for not visited.
+                            If no target node is given, show all nodes.
+
+Queued commands (viable options in square brackets):
+  stop <target> [laps]                 Request stop at
+                                       selected block (flow to idle)
+  stoppattern  <pattern> [laps]        Request stop of selected pattern
+  noop <target> [lapq]                 Placeholder to stall succeeding
+                                       commands, has no effect itself
+  flow <target> <destination node>     [lapqs]  Changes schedule
+                                       flow to <Destination Node>
+  flowpattern <target pat.> <dst pat.> [lapqs]  Changes schedule
+                                       flow to <Destination Pattern>
+  relwait <target> <wait time / ns> [laps] Changes Block period
+                                       to <wait time>
+  abswait <target> <wait time / ns> [lap] Stretches Block
+                                       period until <wait time>
+  flush <target> <prios> [lap]         Flushes all pending
+                                       commands of given priorities
+                                       (3b, 0x0..0x7) le cmd priority
+Options for queued commands:
+  -l <Time / ns>           Time in ns after which the command will
+                           become active, default is 0 (immediately)
+  -a                       Interprete valid time of command as
+                           absolute. Default is relative (current
+                           WR time is added)
+  -p <priority>            The priority of the command (0 = Low,
+                           1 = High, 2 = Interlock), default is 0
+  -q <quantity>            The number of times the command will
+                           be inserted into the target queue,
+                           default is 1
+  -s                       Changes to the schedule are permanent
+
+Diagnostics:
+  diag                               Show time statistics and
+                                     detailed information on
+                                     uptime and recent changes
+  cleardiag                          Clears all CPU and HW statistics
+                                     and details
+  cfghwdiag <TAI / ns> <Stall / ns>  Sets observation window for
+                                     ECA TAI time continuity and
+                                     CPU stall streaks
+  starthwdiag                        Starts HW diagnostic data
+                                     acquisition
+  stophwdiag                         Stops HW diagnostic data
+                                     acquisition
+  clearhwdiag                        (Todo)
+  cfgcpudiag <Warn. Threshold / ns>  Globally sets warning
+                                     threshold for minimum message
+                                     dispatch lead
+  clearcpudiag                       Clears CPU statistics for
+                                     given index
+\end{lstlisting}
+
+\subsection{Tool dm-sched}
+\label{Tool_dm-sched}
+\begin{lstlisting}[style = helptext]
+dm-sched v0.36.3, build date 20220602
+Creates Binary Data for the DataMaster (DM) from Schedule Graphs
+(.dot files) and uploads/downloads to/from CPU Core <m> of the
+DM (CPU currently specified in schedule as cpu=<m>).
+
+Usage: dm-sched <etherbone-device> <Command> <.dot file>
+
+Commands:
+  status                 Gets current DM schedule state (default)
+  dump                   Gets current DM schedule
+  clear                  Clear DM, existing nodes will be erased.
+  add        <.dot file> Add a Schedule from input file to DM,
+                         nodes with identical hashes (names) on
+                         the DM will be ignored.
+  overwrite  <.dot file> Overwrites all Schedules on DM with
+                         the one in the input file, already
+                         existing nodes on the DM will be erased.
+  remove     <.dot file> Removes the schedule in the input file
+                         from the DM, nodes with hashes (names)
+                         not present on the DM will be ignored
+  keep       <.dot file> Removes everything BUT the schedule in
+                         the input file from the DM, nodes with
+                         hashes (names) not present on the DM
+                         will be ignored.
+  rawvisited             Show 'visited' (1) / 'not visited' (0)
+                         for all nodes.
+  chkrem     <.dot file> Checks if all patterns in given dot can
+                         be removed safely
+  -n                     No verify, status will not be read after
+                         operation
+  -o         <.dot file> Specify output file name, default is
+                         'download.dot'
+  -s                     Show Meta Nodes. Download will not only
+                         contain schedules, but also queues, etc.
+  -v                     Verbose operation, print more details
+  -d                     Debug operation, print everything
+  -f                     Force, overrides the safety check for
+                         clear, remove, overwrite and keep
+\end{lstlisting}

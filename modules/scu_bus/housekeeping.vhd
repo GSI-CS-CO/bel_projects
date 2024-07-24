@@ -92,7 +92,7 @@ architecture housekeeping_arch of housekeeping is
     2 => f_sdb_auto_device(c_xwb_uart,                true),
     3 => f_sdb_auto_device(c_xwb_scu_reg,             true),
     4 => f_sdb_auto_device(c_wb_rem_upd_sdb,          true),
-    5 => f_sdb_embed_device(c_wb_asmi_sdb,             x"20000000"));
+    5 => f_sdb_embed_device(c_wb_asmi_slave_sdb,  x"20000000"));
 
   constant c_layout_req_masters : t_sdb_record_array(c_masters-1 downto 0) :=
     (c_lm32_data  => f_sdb_auto_msi(c_msi_lm32_sdb,           true),
@@ -277,11 +277,12 @@ begin
       slave_i => cc_dummy_slave_in,
       slave_o => open,
 
+      -- read only
       Adr_from_SCUB_LA  => ADR_from_SCUB_LA,
       Data_from_SCUB_LA => Data_from_SCUB_LA,
       Ext_Adr_Val       => Ext_Adr_Val,
       Ext_Rd_active     => Ext_Rd_active,
-      Ext_Wr_active     => Ext_Wr_active,
+      Ext_Wr_active     => '0',
       user_rd_active    => info_rom_rd_active,
       Data_to_SCUB      => info_rom_data,
       Dtack_to_SCUB     => info_rom_dtack);
@@ -311,10 +312,10 @@ begin
     port map (
       clk_sys_i => clk_update,
       rst_n_i   => rstn_update,
-      
+
       slave_i      =>  aru_i,
       slave_o      =>  aru_o,
-      
+
       -- asmi interface, needed for pof check
       asmi_busy       => asmi_busy,
       asmi_data_valid => asmi_data_valid,
@@ -345,15 +346,15 @@ begin
   -----------------------------------------
   -- wb interface for altera remote update
   -----------------------------------------
-  asmi: wb_asmi
+  asmi: wb_asmi_slave
     generic map ( PAGESIZE => 256 )
     port map (
       clk_flash_i => clk_flash,
       rst_n_i   => rstn_flash,
-      
+
       slave_i      =>  asmi_i,
       slave_o      =>  asmi_o,
-      
+
       -- asmi interface, needed for pof check
       asmi_busy         => asmi_busy,
       asmi_data_valid   => asmi_data_valid,
@@ -362,9 +363,9 @@ begin
       asmi_rden_ext     => asmi_rden_ext,
       asmi_read_ext     => asmi_read_ext,
       -- needed for multiplexing
-      asmi_to_ext       => asmi_to_ext);  
-      
-  
+      asmi_to_ext       => asmi_to_ext);
+
+
   Data_to_SCUB <= wb_reg_data when wb_reg_rd_active = '1' else
                   info_rom_data when info_rom_rd_active = '1' else
                   (others => '0');

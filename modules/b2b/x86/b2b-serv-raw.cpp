@@ -1,9 +1,9 @@
 /*******************************************************************************************
- *  b2b-serv-raw.c
+ *  b2b-serv-raw.cpp
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 26-Jul-2021
+ *  version : 20-Nov-2023
  *
  * publishes raw data of the b2b system
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000301
+#define B2B_SERV_RAW_VERSION 0x000702
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -52,12 +52,15 @@
 #include <string.h>
 #include <inttypes.h>
 #include <unistd.h>
+#include <math.h>
 
 // saftlib includes
 #include "SAFTd.h"
 #include "TimingReceiver.h"
-#include "SoftwareActionSink.h"
-#include "SoftwareCondition.h"
+//#include "SoftwareActionSink.h"
+//#include "SoftwareCondition.h"
+#include "EmbeddedCPUActionSink.h"
+#include "EmbeddedCPUCondition.h"
 #include "iDevice.h"
 #include "iOwned.h"
 #include "CommonFunctions.h"
@@ -67,12 +70,10 @@
 #include <b2blib.h>                     // API
 #include <b2b.h>                        // FW
 
+using namespace saftlib;
 using namespace std;
 
-
 #define FID          0x1                // format ID of timing messages
-/* #define EKSOFFSET    -500000            // offset for EVT_KICK_START  */
-
 
 static const char* program;
 
@@ -103,6 +104,53 @@ uint32_t reqExtRing;                    // requested extraction ring
 
 uint32_t sid;                           // Sequence ID
 uint32_t bpid;                          // Beam Process ID
+
+
+// init setval
+void initSetval(setval_t *setval)
+{
+  setval->mode                  = -1;
+  setval->ext_T                 = -1;
+  setval->ext_h                 = -1;
+  setval->ext_cTrig             = NAN;
+  setval->ext_sid               = -1;
+  setval->inj_T                 = -1;
+  setval->inj_h                 = -1;
+  setval->inj_cTrig             = NAN;
+  setval->inj_sid               = -1;
+  setval->cPhase                = NAN;
+} // initSetval
+
+// init getval
+void initGetval(getval_t *getval)
+{
+  getval->ext_phase             = -1;
+  getval->ext_phaseFract        = NAN;
+  getval->ext_phaseErr          = NAN;
+  getval->ext_phaseSysmaxErr    = NAN;
+  getval->ext_dKickMon          = NAN;
+  getval->ext_dKickProb         = NAN;
+  getval->ext_diagPhase         = NAN;
+  getval->ext_diagMatch         = NAN;
+  getval->inj_phase             = -1;
+  getval->inj_phaseFract        = NAN;
+  getval->inj_phaseErr          = NAN;
+  getval->inj_phaseSysmaxErr    = NAN;
+  getval->inj_dKickMon          = NAN;
+  getval->inj_dKickProb         = NAN;
+  getval->inj_diagPhase         = NAN;
+  getval->inj_diagMatch         = NAN;
+  getval->flagEvtRec            = 0;
+  getval->flagEvtErr            = 0;
+  getval->flagEvtLate           = 0;
+  getval->tCBS                  = -1;
+  getval->finOff                = NAN;
+  getval->prrOff                = NAN;
+  getval->preOff                = NAN;
+  getval->priOff                = NAN;
+  getval->kteOff                = NAN;
+  getval->ktiOff                = NAN;
+} // initGetval
 
 
 // update set value
@@ -138,11 +186,10 @@ void disUpdateSetval(uint32_t sid, uint64_t tStart, setval_t setval)
 } // disUpdateGetval
 
 
-// this will be called when receiving ECA actions
-static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags, uint32_t tag)
+// handle received timing message
+static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, uint64_t param, uint32_t tef, uint32_t isLate, uint32_t isEarly, uint32_t isConflict, uint32_t isDelayed)
 {
   uint32_t            recSid;          // received SID
-  int                 flagLate;
   int                 flagErr;
 
   static int          flagActive;      // flag: b2b is active
@@ -150,8 +197,12 @@ static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline
   static getval_t     getval;          // get values
   static uint64_t     tStart;          // time of transfer
 
-  recSid      = ((id    & 0x00000000fff00000) >> 20);
-  flagLate    = flags & 0x1;
+  //uint64_t one_ns_as = 1000000000;
+  fdat_t   tmp;
+  float    tmpf;
+  uint32_t tmpu;
+
+  recSid      = ((evtId  & 0x00000000fff00000) >> 20);
 
   // check ranges
   if (recSid  > B2B_NSID)                 return;
@@ -160,42 +211,22 @@ static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline
   //printf("tag %d\n", tag);
   // mark message as received
   getval.flagEvtRec  |= 0x1 << tag;
-  getval.flagEvtLate |= flagLate << tag;;
+  getval.flagEvtLate |= isLate << tag;;
   
   switch (tag) {
     case tagStart   :
-      sid                  = recSid;
-      tStart               = deadline.getUTC();
-      flagActive           = 1;
-      setval.flag_nok      = 0xfffffffe;                    // mode is 'ok'
-      setval.mode          = 0;
-      setval.ext_T         = 0;
-      setval.ext_h         = 0;
-      setval.ext_cTrig     = 0;
-      setval.inj_T         = 0;
-      setval.inj_h         = 0;
-      setval.inj_cTrig     = 0;
-      setval.cPhase        = 0;
-      getval.flag_nok      = 0xffffffff;
-      getval.ext_phase     = 0;
-      getval.ext_dKickMon  = 0;
-      getval.ext_dKickProb = 0;
-      getval.ext_diagPhase = 0;
-      getval.ext_diagMatch = 0;
-      getval.inj_phase     = 0;
-      getval.inj_dKickMon  = 0;
-      getval.inj_dKickProb = 0;
-      getval.inj_diagPhase = 0;
-      getval.inj_diagMatch = 0;
-      getval.flagEvtRec    = 0x1 << tag;
-      getval.flagEvtErr    = 0;
-      getval.flagEvtLate   = flagLate << tag;;
-      getval.tCBS          = deadline.getTAI();
-      getval.doneOff       = 0;
-      getval.preOff        = 0;
-      getval.priOff        = 0;
-      getval.kteOff        = 0;
-      getval.ktiOff        = 0;
+      sid                          = recSid;
+      tStart                       = deadline.getUTC();
+      flagActive                   = 1;
+      
+      initSetval(&setval);
+      setval.mode                  = 0;      // in the simplest case mode is '0' (OFF)
+      setval.ext_sid               = sid;
+
+      initGetval(&getval);
+      getval.flagEvtRec            = 0x1 << tag;
+      getval.flagEvtLate           = isLate << tag;
+      getval.tCBS                  = deadline.getTAI();
       break;
     case tagStop    :
       flagActive       = 0;
@@ -203,86 +234,113 @@ static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline
       disUpdateGetval(sid, tStart, getval);      
       break;
     case tagPme     :
-      setval.mode      = 2;
-      setval.ext_h     = ((param & 0xff00000000000000) >> 56);
-      setval.ext_T     = ((param & 0x00ffffffffffffff));
-      if (setval.ext_h) setval.flag_nok &= 0xfffffffb;      // if ok, reset bit
-      if (setval.ext_T) setval.flag_nok &= 0xfffffffd;      // if ok, reset bit
+      setval.mode              = ((param & 0x00f0000000000000) >> 52);
+      setval.ext_h             = ((param & 0xff00000000000000) >> 56);
+      setval.ext_T             = ((param & 0x000fffffffffffff));    // [as]
+      if (setval.mode > 0) {
+        tmpf                   = comlib_half2float((uint16_t)((tef & 0xffff0000)  >> 16)); // [us, hfloat]; chk for NAN?
+        setval.ext_cTrig       = tmpf * 1000.0;                     // [ns]
+      } // if mode
+      if (setval.mode > 2) {
+        tmpf                   = comlib_half2float((uint16_t)( tef & 0x0000ffff));         // [us, hfloat]; chk for NAN?
+        setval.inj_cTrig        = tmpf * 1000.0;                     // [ns]
+      } // if mode
       break;
     case tagPmi     :
-      setval.mode      = 4;
-      setval.inj_h     = ((param & 0xff00000000000000) >> 56);
-      setval.inj_T     = ((param & 0x00ffffffffffffff));
-      if (setval.inj_h) setval.flag_nok &= 0xffffffef;
-      if (setval.inj_T) setval.flag_nok &= 0xffffffdf;
+      setval.inj_h             = ((param & 0xff00000000000000) >> 56);
+      setval.inj_T             = ((param & 0x000fffffffffffff));    // [as]
+      if (setval.mode > 3) {
+        tmpf                   = comlib_half2float((uint16_t)((tef & 0xffff0000) >> 16));              // [us, hfloat]]
+        setval.cPhase          = tmpf  * 1000;                      // [ns]
+      } // if mode
       break;
     case tagPre     :
-      getval.preOff      = (int32_t)(param - getval.tCBS);
-      getval.ext_phase   = param;
-      if (param) getval.flag_nok &= 0xfffffffe;
-      flagErr            = ((id & B2B_ERRFLAG_PMEXT) != 0);
-      getval.flagEvtErr |= flagErr << tag;
+      getval.preOff             = (float)(param - getval.tCBS);
+      getval.ext_phase          = param;
+      getval.ext_phaseFract     = (float)( tef & 0x0000ffff) / 1000.0 ;
+      getval.ext_phaseErr       = (float)((tef & 0xffff0000) >> 16) / 1000.0;
+      getval.ext_phaseSysmaxErr = (float)b2b_calc_max_sysdev_ps(setval.ext_T, B2B_NSAMPLES, 0) / 1000.0;
+      flagErr                   = ((evtId & B2B_ERRFLAG_PMEXT) != 0);
+      getval.flagEvtErr        |= flagErr << tag;
       break;
     case tagPri     :
-      getval.priOff      = (int32_t)(param - getval.tCBS);
-      getval.inj_phase   = param;
-      if (param) getval.flag_nok &= 0xffffffdf;
-      flagErr            = ((id & B2B_ERRFLAG_PMINJ) != 0);
-      getval.flagEvtErr |= flagErr << tag;
+      getval.priOff             = (float)(param - getval.tCBS);
+      getval.inj_phase          = param;
+      getval.inj_phaseFract     = (float)( tef & 0x0000ffff) / 1000.0;
+      getval.inj_phaseErr       = (float)((tef & 0xffff0000) >> 16) / 1000.0;
+      getval.inj_phaseSysmaxErr = (float)b2b_calc_max_sysdev_ps(setval.inj_T, B2B_NSAMPLES, 0) / 1000.0;
+      flagErr                   = ((evtId & B2B_ERRFLAG_PMINJ) != 0);
+      getval.flagEvtErr        |= flagErr << tag;
       break;     
     case tagKte     :
-      if (!setval.mode) setval.mode = 1;                    // special case: extraction kickers shall fire upon EKS /* chk */
-      getval.kteOff       = (int32_t)(deadline.getTAI() - getval.tCBS);
-      setval.ext_cTrig    = ((param & 0x00000000ffffffff));
-      getval.doneOff      = ((param & 0xffffffff00000000) >> 32);
-      setval.flag_nok    &= 0xfffffff7;
-      flagErr             = ((id & B2B_ERRFLAG_CBU) != 0);
-      getval.flagEvtErr  |= flagErr << tag;
+      getval.kteOff            = deadline.getTAI() - getval.tCBS;
+      tmpf                     = comlib_half2float((uint16_t)((tef & 0xffff0000) >> 16));        // [us, hfloat]
+      getval.finOff            = tmpf * 1000.0;
+      tmpf                     = comlib_half2float((uint16_t)(tef & 0x0000ffff));                // [us, hfloat]
+      getval.prrOff            = tmpf * 1000.0;
+      flagErr                  = ((evtId & B2B_ERRFLAG_CBU) != 0);
+      getval.flagEvtErr       |= flagErr << tag;
       break;
     case tagKti     :
-      if (setval.mode < 3) setval.mode = 3;
-      getval.ktiOff      = (int32_t)(deadline.getTAI() - getval.tCBS);
-      setval.inj_cTrig   = ((param & 0x00000000ffffffff));
-      setval.cPhase      = ((param & 0xffffffff00000000) >> 32);
-      setval.flag_nok   &= 0xffffffbf;
-      setval.flag_nok   &= 0xffffff7f;
-      flagErr            = ((id    & 0x0000000000000010) >> 4);
-      getval.flagEvtErr |= flagErr << tag;
+      setval.inj_sid           = recSid;;
+      getval.ktiOff            = deadline.getTAI() - getval.tCBS;
+      flagErr                  = ((evtId    & 0x0000000000000010) >> 4);
+      getval.flagEvtErr       |= flagErr << tag;
       break;
-    case tagKde     :
-      getval.ext_dKickProb = ((param & 0x00000000ffffffff));
-      getval.ext_dKickMon  = ((param & 0xffffffff00000000) >> 32);
-      if (getval.ext_dKickProb != 0x7fffffff) getval.flag_nok &= 0xfffffffb;
-      if (getval.ext_dKickMon  != 0x7fffffff) getval.flag_nok &= 0xfffffffd;
-      flagErr              = ((id & B2B_ERRFLAG_KDEXT) != 0);
-      getval.flagEvtErr   |= flagErr << tag;
+    case tagKde     :          // data types within parameter field are 'int' as this a. should be easy for the users b. granularity is 1ns only
+      tmpu                     = (uint32_t)(param & 0x00000000ffffffff);
+      if (tmpu == 0x7fffffff) getval.ext_dKickProb = NAN;
+      else                    getval.ext_dKickProb = tmpu;
+      tmpu                     = (uint32_t)((param & 0xffffffff00000000) >> 32);
+      if (tmpu == 0x7fffffff) getval.ext_dKickMon  = NAN;
+      else                    getval.ext_dKickMon  = tmpu;
+      flagErr                  = ((evtId & B2B_ERRFLAG_KDEXT) != 0);
+      getval.flagEvtErr       |= flagErr << tag;
       break;
-    case tagKdi     :
-      getval.inj_dKickProb = ((param & 0x00000000ffffffff));
-      getval.inj_dKickMon  = ((param & 0xffffffff00000000) >> 32);
-      if (getval.inj_dKickProb != 0x7fffffff) getval.flag_nok &= 0xffffff7f;
-      if (getval.inj_dKickMon  != 0x7fffffff) getval.flag_nok &= 0xffffffbf;          
-      flagErr              = ((id & B2B_ERRFLAG_KDINJ) != 0);
-      getval.flagEvtErr   |= flagErr << tag;
+    case tagKdi     :          // data types within parameter field are 'int' as this a. should be easy for the users b. granularity is 1ns only
+      tmpu                     = (uint32_t)(param & 0x00000000ffffffff);
+      if (tmpu == 0x7fffffff) getval.inj_dKickProb = NAN;
+      else                    getval.inj_dKickProb = tmpu;
+      tmpu                     = (uint32_t)((param & 0xffffffff00000000) >> 32);
+      if (tmpu == 0x7fffffff) getval.inj_dKickMon  = NAN;
+      else                    getval.inj_dKickMon  = tmpu;
+      flagErr                  = ((evtId & B2B_ERRFLAG_KDINJ) != 0);
+      getval.flagEvtErr       |= flagErr << tag;
       break;
-    case tagPde     :
-      getval.ext_diagMatch = ((param & 0x00000000ffffffff));
-      getval.ext_diagPhase = ((param & 0xffffffff00000000) >> 32);
-      if (getval.ext_diagMatch != 0x7fffffff) getval.flag_nok &= 0xffffffef;
-      if (getval.ext_diagPhase != 0x7fffffff) getval.flag_nok &= 0xfffffff7;          
+    case tagPde     :         // chk: consider changing 0x7fffffff to NAN in b2b-pm.c after beam time 2024
+      tmp.data                 = ((param & 0x00000000ffffffff));
+      if (tmp.data == 0x7fffffff) getval.ext_diagMatch = NAN;
+      else                        getval.ext_diagMatch = (double)tmp.f;
+      tmp.data                 = ((param & 0xffffffff00000000) >> 32);
+      if (tmp.data == 0x7fffffff) getval.ext_diagPhase = NAN;
+      else                        getval.ext_diagPhase = (double)tmp.f;
       break;
-    case tagPdi     :
-      getval.inj_diagMatch = ((param & 0x00000000ffffffff));
-      getval.inj_diagPhase = ((param & 0xffffffff00000000) >> 32);
-      if (getval.inj_diagMatch != 0x7fffffff) getval.flag_nok &= 0xfffffdff;
-      if (getval.inj_diagPhase != 0x7fffffff) getval.flag_nok &= 0xfffffeff;          
+    case tagPdi     :         // chk: consider changing 0x7fffffff to NAN in b2b-pm.c after beam time 2024
+      tmp.data                 = ((param & 0x00000000ffffffff));
+      if (tmp.data == 0x7fffffff) getval.inj_diagMatch = NAN;
+      else                        getval.inj_diagMatch = (double)tmp.f;
+      tmp.data                 = ((param & 0xffffffff00000000) >> 32);
+      if (tmp.data == 0x7fffffff) getval.inj_diagPhase = NAN;
+      else                        getval.inj_diagPhase = (double)tmp.f;
       break;
     default         :
       ;
   } // switch tag
   
   //printf("out tag %d, bpid %d\n", tag, bpid);
-} // on_action
+} // timingmessage
+
+
+// this will be called when receiving ECA actions from software action queue
+// informative: this routine is presently not used, as the softare action queue does not support the TEF field
+/*static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags, uint32_t tag)
+{
+  int                 flagLate;
+
+  flagLate    = flags & 0x1;
+
+  timingMessage(tag, deadline, id, param, 0x0, flagLate, 0, 0, 0);
+} // recTimingMessag*/
 
 
 // call back for command
@@ -311,7 +369,7 @@ void disAddServices(char *prefix)
   disStateId      = dis_add_service(name, "C", disState, 10, 0 , 0);
 
   sprintf(name, "%s-raw_hostname", prefix);
-  disHostnameId   = dis_add_service(name, "C", &disHostname, 32, 0 , 0);
+  disHostnameId   = dis_add_service(name, "C", disHostname, DIMCHARSIZE, 0 , 0);
 
   sprintf(name, "%s-raw_status", prefix);
   disStatus       = 0x1;   
@@ -323,31 +381,37 @@ void disAddServices(char *prefix)
   // set values
   for (i=0; i< B2B_NSID; i++) {
     sprintf(name, "%s-raw_sid%02d_setval", prefix, i);
-    disSetvalId[i]  = dis_add_service(name, "I:1;I:1;X:1;I:2;X:1;I:2;I:1", &(disSetval[i]), sizeof(setval_t), 0, 0);
+    disSetvalId[i]  = dis_add_service(name, "I:1;X:1;I:1;F:1;I:1;X:1;I:1;F:1;I:1;F:1", &(disSetval[i]), sizeof(setval_t), 0, 0);
+    dis_set_timestamp(disSetvalId[i], 1, 0);
   } // for i
 
   // set values
   for (i=0; i< B2B_NSID; i++) {
     sprintf(name, "%s-raw_sid%02d_getval", prefix, i);
-    disGetvalId[i]  = dis_add_service(name, "I:1;X:1;I:4;X:1;I:4;I:3;X:1;I:5", &(disGetval[i]), sizeof(getval_t), 0, 0);
+    disGetvalId[i]  = dis_add_service(name, "X:1;F:7;X:1;F:7;I:3;X:1;F:6", &(disGetval[i]), sizeof(getval_t), 0, 0);
+    dis_set_timestamp(disGetvalId[i], 1, 0);
   } // for i
 } // disAddServices
 
                         
-using namespace saftlib;
-using namespace std;
+//using namespace saftlib;
+//using namespace std;
 
 // display help
 static void help(void) {
-  std::cerr << std::endl << "Usage: " << program << " <device name> [OPTIONS] <server name>" << std::endl;
+  std::cerr << std::endl << "Usage: " << program << " <device name> [OPTIONS] <server name prefix>" << std::endl;
   std::cerr << std::endl;
-  std::cerr << "  -e<index>            specify extraction ring (0:SIS18[default], 1: ESR)" << std::endl;
+  std::cerr << "  -e<index>            specify extraction ring (0: SIS18[default], 1: ESR, 2: CRYRING)" << std::endl;
   std::cerr << "  -h                   display this help and exit" << std::endl;
   std::cerr << "  -f                   use the first attached device (and ignore <device name>)" << std::endl;
   std::cerr << std::endl;
   std::cerr << std::endl;
   std::cerr << "This tool provides a server for raw b2b data." << std::endl;
-  std::cerr << "Example1: '" << program << " tr1 -e0'" << std::endl;
+  std::cerr << std::endl;
+  std::cerr << "Important notice: This program uses the ECA action queue of an lm32(!). Only one instance of this" << std::endl;
+  std::cerr << "programm shall be used. Other programs (from host or lm32) must not access that action  queue. " << std::endl;
+  std::cerr << std::endl;
+  std::cerr << "Example1: '" << program << " tr0 -e0 pro'" << std::endl;
   std::cerr << std::endl;
 
   std::cerr << "Report bugs to <d.beck@gsi.de> !!!" << std::endl;
@@ -366,14 +430,14 @@ int main(int argc, char** argv)
   uint64_t snoopID     = 0x0;
   int      nCondition  = 0;
 
-  char tmp[128];
+  char tmp[752];
   int i;
 
   // variables attach, remove
   char    *deviceName = NULL;
 
-  char     ringName[DIMMAXSIZE];
-  char     prefix[DIMMAXSIZE];
+  char     ringName[NAMELEN];
+  char     prefix[NAMELEN*2];
   char     disName[DIMMAXSIZE];
 
 
@@ -386,8 +450,9 @@ int main(int argc, char** argv)
     switch (opt) {
       case 'e' :
         switch (strtol(optarg, &tail, 0)) {
-          case 0 : reqExtRing = SIS18_RING; break;
-          case 1 : reqExtRing = ESR_RING;   break;
+          case 0 : reqExtRing = SIS18_RING;   break;
+          case 1 : reqExtRing = ESR_RING;     break;
+          case 2 : reqExtRing = CRYRING_RING; break;
           default:
             std::cerr << "option -e: parameter out of range" << std::endl;
             return 1;
@@ -430,17 +495,25 @@ int main(int argc, char** argv)
       sprintf(ringName, "sis18");
       break;
     case ESR_RING :
-      nCondition = 7;
+      nCondition = 15;
       sprintf(ringName, "esr");
+      break;
+    case CRYRING_RING :
+      nCondition = 7;
+      sprintf(ringName, "yr");
       break;
     default :
         std::cerr << "Ring '"<< reqExtRing << "' does not exist" << std::endl;
         return -1;;
   } // switch extRing
   
-
+  // init DIM service data
+  for (i=0; i< B2B_NSID; i++ ) {
+    initSetval(&(disSetval[i]));
+    initGetval(&(disGetval[i]));
+  } // for i
   
-  if (optind+1 < argc) sprintf(prefix, "b2b_%s_%s", ringName, argv[++optind]);
+  if (optind+1 < argc) sprintf(prefix, "b2b_%s_%s", argv[++optind], ringName);
   else                 sprintf(prefix, "b2b_%s", ringName);
 
   printf("%s: starting server using prefix %s\n", program, prefix);
@@ -470,128 +543,256 @@ int main(int argc, char** argv)
       receiver = TimingReceiver_Proxy::create(devices[deviceName]);
     } //if(useFirstDevice);
 
-
     // create software action sink
-    std::shared_ptr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
-    std::shared_ptr<SoftwareCondition_Proxy> condition[nCondition];
-    uint32_t tag[nCondition];
+    //std::shared_ptr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
+    //std::shared_ptr<SoftwareCondition_Proxy> condition[nCondition];
+
+    // search for embedded CPU channel
+     map<std::string, std::string> e_cpus = receiver->getInterfaces()["EmbeddedCPUActionSink"];
+    if (e_cpus.size() != 1)
+    {
+      std::cerr << "Device '" << receiver->getName() << "' has no embedded CPU!" << std::endl;
+      return (-1);
+    }
+    // connect to embedded CPU
+    std::shared_ptr<EmbeddedCPUActionSink_Proxy> e_cpu = EmbeddedCPUActionSink_Proxy::create(e_cpus.begin()->second);
+
+    // create action sink for ecpu
+    std::shared_ptr<EmbeddedCPUCondition_Proxy> condition[nCondition];
+    //uint32_t tag[nCondition];
+    uint32_t tmpTag;
 
     // define conditions (ECA filter rules)
     switch (reqExtRing) {
       case SIS18_RING : 
 
         // SIS18, CMD_B2B_START, signals start of data collection
+        tmpTag        = tagStart;
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_RING << 48) | ((uint64_t)B2B_ECADO_B2B_START << 36);
-        condition[0]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
-        tag[0]        = tagStart;
+        condition[0]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[0]        = tmpTag;
         
-        // SIS18, CMD_B2B_START, +100ms (!), signals stop of data collection 
+        // SIS18, CMD_B2B_START, +100ms (!), signals stop of data collection
+        tmpTag        = tagStop;        
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_RING << 48) | ((uint64_t)B2B_ECADO_B2B_START << 36);
-        condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 100000000));
-        tag[1]        = tagStop;
+        condition[1]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 100000000, tmpTag));
+        //tag[1]        = tmpTag;
         
-        // SIS18 to extraction, PMEXT, 
+        // SIS18 to extraction, PMEXT,
+        tmpTag        = tagPme;
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_B2B_EXTRACT << 48) | ((uint64_t)B2B_ECADO_B2B_PMEXT << 36);
-        condition[2]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
-        tag[2]        = tagPme;
+        condition[2]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[2]        = tmpTag;
 
         // SIS18 to extraction, PREXT
+        tmpTag        = tagPre;
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_B2B_EXTRACT << 48) | ((uint64_t)B2B_ECADO_B2B_PREXT << 36);
-        condition[3]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
-        tag[3]        = tagPre;
+        condition[3]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[3]        = tmpTag;
 
         // SIS18 to extraction, DIAGEXT
+        tmpTag        = tagPde;
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_B2B_EXTRACT << 48) | ((uint64_t)B2B_ECADO_B2B_DIAGEXT << 36);
-        condition[4]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
-        tag[4]        = tagPde;
+        condition[4]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[4]        = tmpTag;
 
         // SIS18 to ESR, PMEXT
+        tmpTag        = tagPme;       
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_B2B_ESR << 48) | ((uint64_t)B2B_ECADO_B2B_PMEXT << 36);
-        condition[5]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
-        tag[5]        = tagPme;
+        condition[5]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[5]        = tmpTag;
 
         // SIS18 to ESR, PMINJ
+        tmpTag        = tagPmi;       
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_B2B_ESR << 48) | ((uint64_t)B2B_ECADO_B2B_PMINJ << 36);
-        condition[6]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
-        tag[6]        = tagPmi;
+        condition[6]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[6]        = tmpTag;
 
         // SIS18 to ESR, PREXT
+        tmpTag        = tagPre;       
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_B2B_ESR << 48) | ((uint64_t)B2B_ECADO_B2B_PREXT << 36);
-        condition[7]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
-        tag[7]        = tagPre;
+        condition[7]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[7]        = tmpTag;
 
         // SIS18 to ESR, PRINJ
+        tmpTag        = tagPri;       
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_B2B_ESR << 48) | ((uint64_t)B2B_ECADO_B2B_PRINJ << 36);
-        condition[8]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
-        tag[8]        = tagPri;
+        condition[8]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[8]        = tmpTag;
    
         // SIS18 to ESR, DIAGEXT
+        tmpTag        = tagPde;
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_B2B_ESR << 48) | ((uint64_t)B2B_ECADO_B2B_DIAGEXT << 36);
-        condition[9]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
-        tag[9]        = tagPde;
+        condition[9]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[9]        = tmpTag;
 
         // SIS18 to ESR, DIAGINJ
+        tmpTag        = tagPdi;
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_B2B_ESR << 48) | ((uint64_t)B2B_ECADO_B2B_DIAGINJ << 36);
-        condition[10] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
-        tag[10]       = tagPdi;
+        condition[10] = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[10]       = tmpTag;
         
         // SIS18 extraction kicker trigger
+        tmpTag        = tagKte;        
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_RING << 48) | ((uint64_t)B2B_ECADO_B2B_TRIGGEREXT << 36);
-        condition[11] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
-        tag[11]       = tagKte;
+        condition[11] = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[11]       = tmpTag;
         
         // SIS18 extraction kicker diagnostic
+        tmpTag        = tagKde;
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_RING << 48) | ((uint64_t)B2B_ECADO_B2B_DIAGKICKEXT << 36);
-        condition[12] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
-        tag[12]       = tagKde;
+        condition[12] = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[12]       = tmpTag;
         
         // ESR injection kicker trigger
+        tmpTag        = tagKti;        
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_RING << 48) | ((uint64_t)B2B_ECADO_B2B_TRIGGERINJ << 36);
-        condition[13] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
-        tag[13]       = tagKti;
+        condition[13] = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[13]       = tmpTag;
         
         // ESR injection kicker diagnostic
+        tmpTag        = tagKdi;        
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_RING << 48) | ((uint64_t)B2B_ECADO_B2B_DIAGKICKINJ << 36);
-        condition[14] = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
-        tag[14]       = tagKdi;
+        condition[14] = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[14]       = tmpTag;
         
         break;
       case ESR_RING : 
 
         // ESR, CMD_B2B_START, signals start of data collection
+        tmpTag        = tagStart;        
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_RING << 48) | ((uint64_t)B2B_ECADO_B2B_START << 36);
-        condition[0]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
-        tag[0]        = tagStart;
+        condition[0]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[0]        = tmpTag;
         
         // ESR, CMD_B2B_START, +100ms (!), signals stop of data collection 
+        tmpTag        = tagStop;
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_RING << 48) | ((uint64_t)B2B_ECADO_B2B_START << 36);
-        condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 100000000));
-        tag[1]        = tagStop;
+        condition[1]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 100000000, tmpTag));
+        //tag[1]        = tmpTag;
         
         // ESR to extraction, PMEXT, 
+        tmpTag        = tagPme;       
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_B2B_EXTRACT << 48) | ((uint64_t)B2B_ECADO_B2B_PMEXT << 36);
-        condition[2]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
-        tag[2]        = tagPme;
+        condition[2]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[2]        = tmpTag;
 
         // ESR to extraction, PREXT
+        tmpTag        = tagPre;        
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_B2B_EXTRACT << 48) | ((uint64_t)B2B_ECADO_B2B_PREXT << 36);
-        condition[3]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
-        tag[3]        = tagPre;
+        condition[3]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[3]        = tmpTag;
 
         // ESR to extraction, DIAGEXT
+        tmpTag        = tagPde;
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_B2B_EXTRACT << 48) | ((uint64_t)B2B_ECADO_B2B_DIAGEXT << 36);
-        condition[4]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
-        tag[4]        = tagPde;
+        condition[4]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[4]        = tmpTag;
        
+        // ESR to CRYRING, PMEXT
+        tmpTag        = tagPme;
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_B2B_CRYRING << 48) | ((uint64_t)B2B_ECADO_B2B_PMEXT << 36);
+        condition[5]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[5]        = tmpTag;
+
+        // ESR to CRYRING, PMINJ
+        tmpTag        = tagPmi;        
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_B2B_CRYRING << 48) | ((uint64_t)B2B_ECADO_B2B_PMINJ << 36);
+        condition[6]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[6]        = tmpTag;
+
+        // ESR to CRYRING, PREXT
+        tmpTag        = tagPre;
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_B2B_CRYRING << 48) | ((uint64_t)B2B_ECADO_B2B_PREXT << 36);
+        condition[7]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[7]        = tmpTag;
+
+        // ESR to CRYRING, PRINJ
+        tmpTag        = tagPri;
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_B2B_CRYRING << 48) | ((uint64_t)B2B_ECADO_B2B_PRINJ << 36);
+        condition[8]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[8]        = tmpTag;
+   
+        // ESR to CRYRING, DIAGEXT
+        tmpTag        = tagPde;
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_B2B_CRYRING << 48) | ((uint64_t)B2B_ECADO_B2B_DIAGEXT << 36);
+        condition[9]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[9]        = tmpTag;
+
+        // ESR to CRYRING, DIAGINJ
+        tmpTag        = tagPdi;        
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_B2B_CRYRING << 48) | ((uint64_t)B2B_ECADO_B2B_DIAGINJ << 36);
+        condition[10] = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[10]       = tmpTag;
+
         // ESR extraction kicker trigger
+        tmpTag        = tagKte;        
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_RING << 48) | ((uint64_t)B2B_ECADO_B2B_TRIGGEREXT << 36);
-        condition[5]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
-        tag[5]        = tagKte;
+        condition[11] = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[11]       = tmpTag;
         
         // ESR extraction kicker diagnostic
+        tmpTag        = tagKde;
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_RING << 48) | ((uint64_t)B2B_ECADO_B2B_DIAGKICKEXT << 36);
-        condition[6]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
-        tag[6]        = tagKde;
+        condition[12] = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[12]       = tmpTag;
+
+        // CRYRING injection kicker trigger
+        tmpTag        = tagKti;
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)CRYRING_RING << 48) | ((uint64_t)B2B_ECADO_B2B_TRIGGERINJ << 36);
+        condition[13] = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[13]       = tmpTag;
+        
+        // CRYRING injection kicker diagnostic
+        tmpTag        = tagKdi;
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)CRYRING_RING << 48) | ((uint64_t)B2B_ECADO_B2B_DIAGKICKINJ << 36);
+        condition[14] = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[14]       = tmpTag;
+
+        break;
+      case CRYRING_RING : 
+
+        // CRYRING, CMD_B2B_START, signals start of data collection
+        tmpTag        = tagStart;
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)CRYRING_RING << 48) | ((uint64_t)B2B_ECADO_B2B_START << 36);
+        condition[0]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[0]        = tmpTag;
+        
+        // CRYRING, CMD_B2B_START, +100ms (!), signals stop of data collection 
+        tmpTag        = tagStop;
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)CRYRING_RING << 48) | ((uint64_t)B2B_ECADO_B2B_START << 36);
+        condition[1]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 100000000, tmpTag));
+        //tag[1]        = tmpTag;
+        
+        // CRYRING to extraction, PMEXT, 
+        tmpTag        = tagPme;        
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)CRYRING_B2B_EXTRACT << 48) | ((uint64_t)B2B_ECADO_B2B_PMEXT << 36);
+        condition[2]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[2]        = tmpTag;
+
+        // CRYRING to extraction, PREXT
+        tmpTag        = tagPre;
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)CRYRING_B2B_EXTRACT << 48) | ((uint64_t)B2B_ECADO_B2B_PREXT << 36);
+        condition[3]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[3]        = tmpTag;
+
+        // CRYRING to extraction, DIAGEXT
+        tmpTag        = tagPde;
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)CRYRING_B2B_EXTRACT << 48) | ((uint64_t)B2B_ECADO_B2B_DIAGEXT << 36);
+        condition[4]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[4]        = tmpTag;
+       
+        // CRYRING extraction kicker trigger
+        tmpTag        = tagKte;
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)CRYRING_RING << 48) | ((uint64_t)B2B_ECADO_B2B_TRIGGEREXT << 36);
+        condition[5]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[5]        = tmpTag;
+        
+        // CRYRING extraction kicker diagnostic
+        tmpTag        = tagKde;
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)CRYRING_RING << 48) | ((uint64_t)B2B_ECADO_B2B_DIAGKICKEXT << 36);
+        condition[6]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[6]        = tmpTag;
 
         break;
       default :
@@ -605,13 +806,52 @@ int main(int argc, char** argv)
       condition[i]->setAcceptEarly(true);
       condition[i]->setAcceptConflict(true);
       condition[i]->setAcceptDelayed(true);
-      condition[i]->SigAction.connect(sigc::bind(sigc::ptr_fun(&recTimingMessage), tag[i]));
+      //condition[i]->SigAction.connect(sigc::bind(sigc::ptr_fun(&recTimingMessage), tag[i]));
       condition[i]->setActive(true);    
     } // for i
+
+
+    eb_device_t   device;
+    eb_address_t  ecaq_base;
+    char          ebPath[1024];
+    uint32_t      recTag;
+    uint64_t      deadline;
+    uint64_t      evtId; 
+    uint64_t      param;  
+    uint32_t      tef;
+    uint32_t      isLate;
+    uint32_t      isEarly;
+    uint32_t      isConflict;
+    uint32_t      isDelayed;
+    saftlib::Time deadline_t;
+    uint32_t      ecaStatus;
+    eb_status_t   ebStatus;
+    uint32_t      qIdx = 0;
+    uint64_t      t1, t2;
+    uint32_t      tmp32;
+
+    sprintf(ebPath, "%s", receiver->getEtherbonePath().c_str());
+    if ((ebStatus = comlib_ecaq_open(ebPath, qIdx, &device, &ecaq_base)) != EB_OK) {
+      std::cerr << program << ": can't open lm32 ECA queue" << std::endl;
+      exit(1);
+    } // if ebStatus
     
     while(true) {
-      saftlib::wait_for_signal();
+      //      saftlib::wait_for_signal();
+      t1 = comlib_getSysTime();
+      ecaStatus = comlib_wait4ECAEvent(1, device, ecaq_base, &recTag, &deadline, &evtId, &param, &tef, &isLate, &isEarly, &isConflict, &isDelayed);
+      t2 = comlib_getSysTime();
+      tmp32 = t2 - t1; 
+      if (tmp32 > 10000000) printf("%s: reading from ECA Q took %u [us]\n", program, tmp32 / 1000);
+      if (ecaStatus == COMMON_STATUS_EB) { printf("eca EB error, device %x, address %x\n", device, (uint32_t)ecaq_base);}
+      if (ecaStatus == COMMON_STATUS_OK) {
+        deadline_t = saftlib::makeTimeTAI(deadline);
+        //t2         = comlib_getSysTime(); printf("msg: tag %x, id %lx, tef %lx, dtu %lu\n", recTag, evtId, tef, (uint32_t)(t2 -t1));
+        timingMessage(recTag, deadline_t, evtId, param, tef, isLate, isEarly, isConflict, isDelayed);
+      }
     } // while true
+    comlib_ecaq_close(device);
+    
   } // try
   catch (const saftbus::Error& error) {
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;

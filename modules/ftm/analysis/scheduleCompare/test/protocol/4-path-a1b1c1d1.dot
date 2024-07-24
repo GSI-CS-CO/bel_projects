@@ -1,0 +1,6 @@
+digraph "4-path-a1b1c1d1" {
+name="4-path-a1b1c1d1"
+node [type=tmsg]
+edge [type=xy]
+a1 -> b1 -> c1 -> d1
+}

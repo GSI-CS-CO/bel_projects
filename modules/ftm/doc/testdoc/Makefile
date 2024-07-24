@@ -11,4 +11,5 @@ fel0069:
 	pdflatex $@.tex
 
 clean:
+	$(MAKE) -C TestPattern/ clean
 	rm *.aux *.acn *.acr *.alg *.glg *.gls *.ist *.log *.sg[0-9] *.sl[0-9] *.sy[0-9] || true

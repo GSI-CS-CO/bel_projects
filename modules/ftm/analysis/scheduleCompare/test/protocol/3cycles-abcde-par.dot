@@ -1,0 +1,8 @@
+digraph "3cycles-abcde-par" {
+name="3cycles-abcde-par"
+node [type=tmsg par=1]
+edge [type=xy]
+a -> b -> c -> a
+b -> d -> a 
+c -> e -> b
+}

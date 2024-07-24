@@ -1,0 +1,4 @@
+digraph cycle10 {
+name = cycle10
+a -> j -> i -> h -> g -> f -> e -> d -> c -> b -> a
+}

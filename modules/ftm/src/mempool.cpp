@@ -24,6 +24,35 @@ void MemPool::syncPoolToBmp() {
   }
 }
 
+uint32_t MemPool::getUsedBmpBits() const {
+  uint32_t cntOnes=0;
+  for(unsigned int bitIdx = 0; bitIdx < bmpBits; bitIdx++) {
+    if (bmp[bitIdx / 8] & (1 << (7 - bitIdx % 8))) {cntOnes++;}
+  }
+  return cntOnes;
+}
+
+uint32_t MemPool::getFreeBmpBits() const {
+  uint32_t cntZeroes=0;
+  for(unsigned int bitIdx = 0; bitIdx < bmpBits; bitIdx++) {
+    if (!(bmp[bitIdx / 8] & (1 << (7 - bitIdx % 8)))) {cntZeroes++;}
+  }
+  return cntZeroes;
+}
+
+void MemPool::debugBmpShow() const {
+  const unsigned int linew = 80;
+
+  for(unsigned int bitIdx = 0; bitIdx < bmpBits; bitIdx++) {
+    char out='-';
+    if (bmp[bitIdx / 8] & (1 << (7 - bitIdx % 8))) {out='*';}
+    std::cout << out;
+    
+    if (!(bitIdx % linew)) std::cout << std::endl;
+  }
+  std::cout << std::endl;
+}
+
 bool MemPool::syncBmpToPool() {
   initBmp();
   //Go through pool and update Bmp
@@ -33,6 +62,7 @@ bool MemPool::syncBmpToPool() {
       uint8_t       tmp = ~(1 << (7 - (bitIdx % 8)));
       bmp[bitIdx / 8]  &= tmp;
     } else {//something's awfully wrong, address out of range!
+      
       return false;
     }
   }

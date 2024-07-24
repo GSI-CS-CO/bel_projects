@@ -1,8 +1,8 @@
 TARGET		= scu_control
-DEVICE		= 10AX027E3F
-FLASH		= EPCQL512
+DEVICE		= 10AX027E3
+FLASH		= MT25QU512
 SPI_LANES	= ASx4
 RAM_SIZE	= 262144
-SKIP_JIC	= yes
+ARRIA10_JIC	= yes
 
 include ../../build.mk

@@ -4,9 +4,9 @@
 //
 //  created : 11-Nov-2016
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 02-Jun-2021
+//  version : 22-Jun-2023
 //
-#define WB_SLAVES_VERSION "0.08.0"
+#define WB_SLAVES_VERSION "0.09.1"
 //
 //  defines wishbone vendor IDs
 //  defines wishbone device IDs and registers
@@ -67,7 +67,11 @@
 
 
 //-- Etherbone-Config --
+#ifdef META_TIMING
+#include "hw/etherbone-config.h"
+#else
 #include "../ip_cores/wrpc-sw/include/hw/etherbone-config.h"
+#endif
 // device ID
 #define ETHERBONE_CONFIG_VENDOR       	 WB_GSI      // vendor ID
 #define ETHERBONE_CONFIG_PRODUCT       	 0x68202b22  // product ID
@@ -97,13 +101,17 @@
 //-- WB4-BlockRAM --
 // see ip_cores/wrpc-sw/arch/lm32/crt0.h
 // device ID
-#define WB4_BLOCKRAM_VENDOR      WB_CERN             // vendor ID
-#define WB4_BLOCKRAM_PRODUCT     0x66cfeb52          // product ID
-#define WB4_BLOCKRAM_VMAJOR      1                   // major revision
-#define WB4_BLOCKRAM_VMINOR      0                   // minor revision
+#define WB4_BLOCKRAM_VENDOR         WB_CERN             // vendor ID
+#define WB4_BLOCKRAM_PRODUCT        0x66cfeb52          // product ID
+#define WB4_BLOCKRAM_VMAJOR         1                   // major revision
+#define WB4_BLOCKRAM_VMINOR         0                   // minor revision
 
 // register offsets
-#define WB4_BLOCKRAM_WR_UPTIME   0xa0                // uptime of WR
+#define WB4_BLOCKRAM_WR_UPTIME      0xa0                // uptime of WR
+#define WB4_BLOCKRAM_IPSTATE_050004 0x1a5b4             // ip state for gw v5.0.4
+#define WB4_BLOCKRAM_IPSTATE_060001 0x1b544             // ip state for gw v6.0.1
+#define WB4_BLOCKRAM_IPSTATE_060102 0x1b544             // ip state for gw v6.1.2
+#define WB4_BLOCKRAM_IPSTATE_060201 0x1b544             // ip state for gw v6.2.1
 
 // masks
 
@@ -136,7 +144,11 @@
 
 
 //-- ECA  --
+#ifdef META_TIMING
+#include "eca_regs.h"
+#else
 #include "../ip_cores/wr-cores/modules/wr_eca/eca_regs.h"
+#endif
 // device ID
 #define ECA_CTRL_VENDOR              WB_GSI              // vendor ID
 #define ECA_CTRL_PRODUCT             ECA_SDB_DEVICE_ID   // product ID

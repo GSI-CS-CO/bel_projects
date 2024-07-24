@@ -3,38 +3,47 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 02-Sep-2021
+ *  version : 11-Jul-2024
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
  *
  *  source code UNIPZ:
- *  - https://www-acc.gsi.de/viewvc/view/devacc/trunk/eqmodels/pz/common/src/pzus-dpr-def.h (relevant header file)
- *  - https://www-acc.gsi.de/viewvc/view/devacc/trunk/eqmodels/pz/pzu/src/pzu-eqms.c (source code for PZ 1..7)
- *  - https://www-acc.gsi.de/viewvc/view/devacc/trunk/eqmodels/pz/pzus/src/pzus-helper.hh (masks and definitions)
+ *  - https://www-acc.gsi.de/viewvc/view/devacc/eqmodels/pz/common/src/pzus-dpr-def.h (relevant header file)
+ *  - https://www-acc.gsi.de/viewvc/view/devacc/eqmodels/pz/pzu/src/pzu-eqms.c (source code for PZ 1..7)
+ *  - https://www-acc.gsi.de/viewvc/view/devacc/eqmodels/pz/common/src/pzus-dpr-def.h (relevant header file)
+ *  - https://www-acc.gsi.de/viewvc/view/devacc/eqmodels/pz/common/src/pzus-dpr-def.h (relevant header file)
+ *  - https://www-acc.gsi.de/viewvc/view/devacc/eqmodels/pz/pzu/src/pzu-eqms.c (source code for PZ 1..7)
+ *  - https://www-acc.gsi.de/viewvc/view/devacc/eqmodels/pz/pzu/src/pzu-eqms.c (source code for PZ 1..7)
+ *  - https://www-acc.gsi.de/viewvc/view/devacc/eqmodels/pz/common/src/pzus-dpr-def.h (relevant header file)
+ *  - https://www-acc.gsi.de/viewvc/view/devacc/eqmodels/pz/pzu/src/pzu-eqms.c (source code for PZ 1..7)
+ *  - https://www-acc.gsi.de/viewvc/view/devacc/eqmodels/pz/pzus/src/pzus-helper.hh (masks and definitions)
  * 
  *   events for the next cycle (received from the SuperPZ) have the following format:
  *   see code UNIPZ (defined in pzus-dpr-def-h, lines 72 ff; example: 0x10(use 'Kanal 1'), 0x00(use 'Kanal 0')
  *       15: value 0: announce event
  *           value 1: service event
  *   12..14: in case of announce event:
- *       14: short chopper pulse
- *       13: no    chopper pulse
- *       12: channel ('Kanal Nummer'; UNIPZ has max two channels - 1 bit is sufficient)
+ *       14: short chopper pulse                      (bits 12..15: value 0x3)
+ *       13: no    chopper pulse                      (bits 12..15: value 0x2)
+ *           ** this bit has to be copied to bit 14 of a MIL telegram! **
+ *       12: channel                                  (bits 12..15: value 0x1)                 
+             ('Kanal Nummer'; UNIPZ has max two channels - 1 bit is sufficient)
  *   12..14: in case of service event: (info: service events are sent AFTER timing events have been sent)
  *           value 111: set all magnets to zero value (bits 12..15: value 0xf)
  *           value 110: send prep event for vacc      (bits 12..15: value 0xe)
  *           value 101: send prep event NOW           (bits 12..15: value 0xd) special case: don't wait until timing events have been sent
+ *           value 100: unlock A4                     (bits 12..15: value 0xc) special case: don't wait until timing events have been sent
  *    8..11: virt acc
  *    0...7: value 1..7 equals # of PZ (** counting starts at 1(!) **)
  * 
  *   a '50 Hz sync' event (received from SuperPZ) has the following format:
  *    8..15: don't care
- *    0...7: 0x33
+ *    0...7: 0d33
  *
  *   a 'sync data' event (recevied from SuperPZ) has the following format:
  *    8..15: don't care
- *    0...7: 0x32
+ *    0...7: 0d32
  *  
  * -------------------------------------------------------------------------------------------
  * License Agreement for this software:
@@ -63,7 +72,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define WRUNIPZ_FW_VERSION 0x000208                                     // make this consistent with makefile
+#define WRUNIPZ_FW_VERSION 0x000217                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -105,7 +114,6 @@ uint32_t *pSharedDtMax;                 // pointer to a "user defined" u32 regis
 uint32_t *pSharedDtMin;                 // pointer to a "user defined" u32 register; here: min diff between deadline and time of dispatching
 uint32_t *pSharedCycJmpMax;             // pointer to a "user defined" u32 register; here: max diff between expected and actual start of UNILAC cycle
 uint32_t *pSharedCycJmpMin;             // pointer to a "user defined" u32 register; here: min diff between expected and actual start of UNILAC cycle
-uint32_t *pSharedNLate;                 // pointer to a "user defined" u32 register; here: # late messages
 uint32_t *pSharedVaccAvg;               // pointer to a "user defined" u32 register; here: virt accs played during past second
 uint32_t *pSharedPzAvg;                 // pointer to a "user defined" u32 register; here: PZs used during the past second
 uint32_t *pSharedEvtData;               // pointer to a "user defined" u32 register; here: config data
@@ -160,6 +168,13 @@ uint32_t milEvts[] = {WRUNIPZ_EVT_PZ1,  // MIL evt codes we are listening for
                       WRUNIPZ_EVT_SYNCH_DATA,
                       WRUNIPZ_EVT_50HZ_SYNCH};
 
+uint32_t nEvtsLate;                     // # of late messages
+uint32_t offsDone;                      // offset deadline WR message to time when we are done [ns]
+int32_t  comLatency;                    // latency for messages received via ECA
+
+int32_t  maxComLatency;
+uint32_t maxOffsDone;
+
 // write a timing message to the WR network
 uint64_t writeTM(uint32_t uniEvt, uint64_t tStart, uint32_t pz, uint32_t virtAcc, uint32_t flagNochop, uint32_t flagShortchop)
 {
@@ -175,31 +190,36 @@ uint64_t writeTM(uint32_t uniEvt, uint64_t tStart, uint32_t pz, uint32_t virtAcc
 
   // convert UNILAC event data
   // see wr-unipz.h -> 'typedef struct dataTable' on definition of bits in data
-  t        = (uint32_t)((uniEvt >> 16) & 0xffff);      // get time relative to begining of UNILAC cycle [us]
-  evtCode  = (uint32_t)( uniEvt        & 0x00ff);      // get event number
-  evtData  = (uint32_t)((uniEvt >> 12) & 0x000f);      // get event data
-  flags    = (uint32_t)( flagNochop          & 0x1) |  // 'no chopper bit'
-             (uint32_t)((flagShortchop << 1) & 0x2);   // 'short chopper bit'
+  t         = (uint32_t)((uniEvt >> 16) & 0xffff);      // get time relative to begining of UNILAC cycle [us]
+  evtCode   = (uint32_t)( uniEvt        & 0x00ff);      // get event number
+  evtData   = (uint32_t)((uniEvt >> 12) & 0x000f);      // get event data from set-values
+  if (evtCode != EVT_COMMAND) { 
+    evtData = evtData & 0xb;                            // clear third bit; third bit will carry 'no beam' information
+    evtData = evtData | ((flagNochop & 0x1) << 2);      // fill  third bit with 'no beam' information
+  } // if evtCode
+    flags   = (uint32_t)( flagNochop          & 0x1) |  // 'no chopper bit'
+              (uint32_t)((flagShortchop << 1) & 0x2);   // 'short chopper bit'
 
   // fill timing message
-  id       = ((uint64_t)0x1       << 60)     |         // FID = 1
-             ((uint64_t)(gid[pz]) << 48)     |         // GID
-             ((uint64_t)evtCode   << 36)     |         // EVTNO
-             ((uint64_t)0x0       << 32)     |         // flags
-             ((uint64_t)virtAcc   << 20)     |         // SID
-             ((uint64_t)0x0       <<  6)     |         // BPID
-             ((uint64_t)0x0       <<  5)     |         // reserved
-             ((uint64_t)0x0       <<  4)     |         // reqNoBeam
-             ((uint64_t)0x0            );              // virtAcc only for DM-UNIPZ gateway
-  param    = ((uint64_t)flags     << 32)     |         // parameter field high bits
-             ((uint64_t)evtData        );              // parameter field low bits
+  id        = ((uint64_t)0x1       << 60)     |         // FID = 1
+              ((uint64_t)(gid[pz]) << 48)     |         // GID
+              ((uint64_t)evtCode   << 36)     |         // EVTNO
+              ((uint64_t)0x0       << 32)     |         // flags
+              ((uint64_t)virtAcc   << 20)     |         // SID
+              ((uint64_t)0x0       <<  6)     |         // BPID
+              ((uint64_t)0x0       <<  5)     |         // reserved
+              ((uint64_t)0x0       <<  4)     |         // (reqNoBeam, not here)
+              ((uint64_t)evtData        );              // last four bits; see https://www-acc.gsi.de/wiki/bin/viewauth/ProjectMgmt/MappingWrMilSisEsrUnilac#A_5_Decision
+                                                        // bit 0: reserved; bit 1: high b/rho, rigid beam; bit2: 'no beam'; bit3: high current
+  param     = ((uint64_t)flags     << 32)     |         // parameter field high bits, does carry flags
+              ((uint64_t)0x0            );              // parameter field low bits, compatibility to 'old' wr-unipz (to be removed)
   
   // calc deadline
-  offset   = (uint64_t)t * 1000;                       // convert offset -> ns
-  deadline = tStart + (uint64_t)offset + (uint64_t)WRUNIPZ_MILCALIBOFFSET; 
+  offset    = (uint64_t)t * 1000;                       // convert offset us -> ns
+  deadline  = tStart + (uint64_t)offset + (uint64_t)WRUNIPZ_MILCALIBOFFSET; 
 
   // send message
-  fwlib_ebmWriteTM(deadline, id, param, 1);
+  fwlib_ebmWriteTM(deadline, id, param, 0x0, 1);
   
   // diag and status
   tDiff = deadline - getSysTime();
@@ -297,7 +317,7 @@ void init()
 
 
 // determine address and clear shared mem
-void initSharedMem() 
+void initSharedMem(uint32_t *reqState, uint32_t *sharedSize) 
 {
   uint32_t idx;
   uint32_t *pSharedTemp;
@@ -319,33 +339,49 @@ void initSharedMem()
   pSharedDtMin            = (uint32_t *)(pShared + (WRUNIPZ_SHARED_DTMIN >> 2));
   pSharedCycJmpMax        = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CYCJMPMAX >> 2));
   pSharedCycJmpMin        = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CYCJMPMIN >> 2));
-  pSharedNLate            = (uint32_t *)(pShared + (WRUNIPZ_SHARED_NLATE >> 2));
   pSharedVaccAvg          = (uint32_t *)(pShared + (WRUNIPZ_SHARED_VACCAVG >> 2));
   pSharedPzAvg            = (uint32_t *)(pShared + (WRUNIPZ_SHARED_PZAVG >> 2));
   pSharedEvtData          = (uint32_t *)(pShared + (WRUNIPZ_SHARED_EVT_DATA >> 2));
   pSharedEvtFlag          = (uint32_t *)(pShared + (WRUNIPZ_SHARED_EVT_FLAGS >> 2));
   
   // find address of CPU from external perspective
+  cpuRamExternal = 0x0;
   idx = 0;
-  find_device_multi(&found_clu, &idx, 1, GSI, LM32_CB_CLUSTER);	
+  find_device_multi(&found_clu, &idx, 1, GSI, LM32_CB_CLUSTER);
+  if (idx == 0) {
+    *reqState = COMMON_STATE_FATAL;
+    DBPRINT1("wr-unipz: fatal error - did not find LM32-CB-CLUSTER!\n");
+  } // if idx     	
   idx = 0;
   find_device_multi_in_subtree(&found_clu, &found_sdb[0], &idx, c_Max_Rams, GSI, LM32_RAM_USER);
-  if(idx >= cpuId) cpuRamExternal = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
+  if (idx == 0) {
+    *reqState = COMMON_STATE_FATAL;
+    DBPRINT1("wr-unipz: fatal error - did not find THIS CPU!\n");
+  } // if idx    
+  else cpuRamExternal = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
 
-  DBPRINT2("wr-unipz: CPU RAM External 0x%8x, begin shared 0x%08x\n", cpuRamExternal, SHARED_OFFS);
+  DBPRINT2("wr-unipz: CPU RAM external 0x%8x, shared offset 0x%08x\n", cpuRamExternal, SHARED_OFFS);
+  DBPRINT2("wr-unipz: fw common shared begin   0x%08x\n", pShared);
+  DBPRINT2("wr-unipz: fw common shared end     0x%08x\n", pShared + (COMMON_SHARED_END >> 2));
 
   // clear shared mem
   i = 0;
   pSharedTemp        = (uint32_t *)(pShared + (COMMON_SHARED_END >> 2 ) + 1);
-  DBPRINT2("wr-unipz: COMMON_SHARED_BEGIN 0x%08x\n", pSharedTemp);
+  DBPRINT2("wr-unipz: fw specific shared begin 0x%08x\n", pSharedTemp);
   while (pSharedTemp < (uint32_t *)(pShared + (WRUNIPZ_SHARED_END >> 2 ))) {
     *pSharedTemp = 0x0;
     pSharedTemp++;
     i++;
   } // while pSharedTemp
+  DBPRINT2("dm-unipz: fw specific shared end   0x%08x\n", pSharedTemp);
 
-  fwlib_publishSharedSize((uint32_t)(pSharedTemp - pShared) << 2);
-  
+  *sharedSize        = (uint32_t)(pSharedTemp - pShared) << 2;
+
+  // basic info to wr console                                                                                                                                                                                                                
+  DBPRINT1("\n");
+  DBPRINT1("wr-unipz: initSharedMem, shared size [bytes]: %d\n", *sharedSize);
+  DBPRINT1("\n");
+
   // set initial values;
 } // initSharedMem 
 
@@ -400,6 +436,8 @@ void extern_clearDiag()
   nMsgAct        = 0;
   nMsgPrev       = 0;
   statusArray    = 0;
+  maxComLatency  = 0;
+  maxOffsDone    = 0;
 } // clearDiag
 
 
@@ -514,7 +552,7 @@ uint32_t extern_entryActionOperation()
   uint64_t iDummy;
   uint64_t pDummy;
   uint32_t fDummy;
-  uint32_t flagDummy;
+  uint32_t flagDummy1, flagDummy2, flagDummy3, flagDummy4;
 
   fwlib_clearDiag();
   clearAllPZ();                                              // clear all event tables
@@ -530,7 +568,7 @@ uint32_t extern_entryActionOperation()
 
   // flush ECA queue for lm32
   i = 0;
-  while (fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &tDummy, &iDummy, &pDummy, &fDummy, &flagDummy) !=  WRUNIPZ_ECADO_TIMEOUT) {i++;}
+  while (fwlib_wait4ECAEvent(1 * 1000, &tDummy, &iDummy, &pDummy, &fDummy, &flagDummy1, &flagDummy2, &flagDummy3, &flagDummy4) != WRUNIPZ_ECADO_TIMEOUT) {i++;}
   DBPRINT1("wr-unipz: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
 
   return COMMON_STATUS_OK;
@@ -577,7 +615,11 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
   uint64_t recEvtId;                                          // event ID received via ECA
   uint64_t recParam;                                          // param received via ECA
   uint32_t recTEF;                                            // TEF field received via ECA
-  uint32_t flagIsLate;                                        // flag indicating that we received a 'late' event from ECA
+  uint32_t flagLate;                                          // flag indicating that we received a 'late' event from ECA
+  uint32_t flagEarly;                                         // flag indicating that a 'early event' was received from data master
+  uint32_t flagConflict;                                      // flag indicating that a 'conflict event' was received from data master
+  uint32_t flagDelayed;                                       // flag indicating that a 'delayed event' was received from data master
+
   uint64_t deadline;                                          // deadline to be used for action
   uint64_t tMIL;                                              // time when MIL event was received
   uint64_t tDummy;                                            // dummy timestamp
@@ -592,10 +634,13 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
   uint32_t isPrepFlag;                                        // flag 'isPrep': prep-events are sent immediately, non-prep-events are sent at 50 Hz trigger
   int      ipz;                                               // index of PZ, helper variable
   int      i;
-  uint32_t chn;                                               // channel
   uint32_t servEvt;                                           // service event
   uint32_t servOffs;                                          // offset for service event
+  uint32_t tmpOffs;                                           // helper variable
   int32_t  tJump;                                             // diff between expected and actual start of UNILAC cycle
+  uint64_t TS_dbg;                                            // debug: send received MIL event to ECA for debugging, here: TS
+  uint64_t evtId_dbg;                                         // debug: vacc as GID; evtCode as evtNo
+  uint64_t param_dbg;                                         // debug: evtData
 
   status = actStatus;
 
@@ -614,15 +659,15 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       DBPRINT3("wr-unipz: 50Hz, data %d, evtcode %d, virtAcc %d\n", evtData, evtCode, virtAcc);
       
       // get timestamp from TLU -> ECA
-      ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate);
-      deadline = recDeadline;
+      ecaAction  = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recEvtId, &recParam, &recTEF, &flagLate, &flagEarly, &flagConflict, &flagDelayed);
+      deadline   = recDeadline;
       
       // check, if timestamping via TLU failed; if yes, continue with TS from MIL
       if (ecaAction == WRUNIPZ_ECADO_TIMEOUT) {      
         deadline = tMIL;                                        
         status   = WRUNIPZ_STATUS_NOTIMESTAMP;
       } // if ecaAction
-      
+
       // check, if timestamps form TLU and MIL are out of order; if yes, continue with TS from MIL
       if (deadline > tMIL) {
       deadline = tMIL;
@@ -634,6 +679,8 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
         deadline = tMIL;
         status   = WRUNIPZ_STATUS_BADTIMESTAMP;
       } // if tMIL
+
+      comLatency = (int32_t)(getSysTime() - deadline);
       
       // walk through all PZs and run requested virt acc (time critical stuff)
       nLateLocal  = nLate;                                      // for bookkepping of late messages
@@ -669,15 +716,13 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       
       // reset requested virt accs; flush ECA queue
       for (i=0; i < WRUNIPZ_NPZ; i++) nextVacc[i] = 0xffffffff; // 0xffffffff: no virt acc for PZ
-      while (fwlib_wait4ECAEvent(0, &tDummy, &iDummy, &pDummy, &fDummy, &flagIsLate) !=  WRUNIPZ_ECADO_TIMEOUT) {asm("nop");}
+      while (fwlib_wait4ECAEvent(0, &tDummy, &iDummy, &pDummy, &fDummy, &flagLate, &flagEarly, &flagConflict, &flagDelayed) !=  WRUNIPZ_ECADO_TIMEOUT) {asm("nop");}
       
       break;
       
-    case WRUNIPZ_EVT_PZ1 ... WRUNIPZ_EVT_PZ7 :                  // super PZ announces what happens in next UNILAC cycle
+    case WRUNIPZ_EVT_PZ1 ... WRUNIPZ_EVT_PZ7 :                  // A: super PZ announces what happens in next UNILAC cycle or B: 'Service Event'
       // extract information from event from super PZ
       ipz            = evtCode - 1;                             // PZ: sPZ counts from 1..7, we count from 0..6
-      nextVacc[ipz]  = virtAcc;
-      chn            =  ((evtData & WRUNIPZ_EVTDATA_CHANNEL) != 0); // use relevant bit as channel number (there are only two channels)
       
       // there are two different types of announce events
       // A: The announce event contains information about the vacc to played in the next cycle
@@ -688,8 +733,9 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       if ((evtData & WRUNIPZ_EVTDATA_SERVICE) == 0) {           // A: super PZ has announced vacc for next cycle: bits 12 (channel number), bits 13..15 (chopper mode)
         DBPRINT3("wr-unipz: playing prep events, pz %d, vacc %d\n", ipz, virtAcc);
         // get chopper mode
-        nextChan[ipz]      = chn;
-        nextChopNo[ipz]    = ((evtData & WRUNIPZ_EVTDATA_NOCHOP)    != 0);
+        nextChan[ipz]      = ((evtData & WRUNIPZ_EVTDATA_CHANNEL) != 0); // bit as channel number (there are only two channels)
+        nextChopNo[ipz]    = ((evtData & WRUNIPZ_EVTDATA_NOCHOP)  != 0);
+        nextVacc[ipz]      = virtAcc;
         nextChopShort[ipz] = nextChan[ipz];                     // UNIPZ implements 'short chopper' via a different 'Kanal', not via bit 14 as described in the documentation
         // pp_printf("data %d\n", evtData);
         
@@ -698,13 +744,19 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
         nLateLocal = nLate;
         isPrepFlag = 1;                                                  
         deadline   = predictNxtCycle();                         // predict start of next cycle
-        pzRunVacc(bigData[ipz][chn * WRUNIPZ_NVACC + virtAcc], deadline, ipz, virtAcc, isPrepFlag);
+        pzRunVacc(bigData[ipz][nextChan[ipz] * WRUNIPZ_NVACC + nextVacc[ipz]], deadline, ipz, nextVacc[ipz], isPrepFlag);
         if ((nLate != nLateLocal) && (status == COMMON_STATUS_OK)) status = WRUNIPZ_STATUS_LATE;
       } // if !SERVICE
       else {                                                    // B: super PZ has sent info on a service event: bits 12..15 encode event type
         DBPRINT3("wr-unipz: service event for pz %d, vacc %d\n", ipz, virtAcc);
-        servOffs = getVaccLen(bigData[ipz][chn * WRUNIPZ_NVACC + virtAcc]) & 0xffff;
-        servEvt  = 0x0;
+        servOffs  = getVaccLen(bigData[ipz][actChan[ipz] * WRUNIPZ_NVACC + actVacc[ipz]]) & 0xffff;    // when to play service event relative to start of cycle [us]
+        servOffs += (uint32_t)WRUNIPZ_TDIFFMIL;                                                        // add minimum time difference between sending transmission of MIL telegrams [us]
+        tmpOffs   = (getSysTime() - syncPrevT4 + (uint64_t)COMMON_LATELIMIT) / 1000;                   // last possibility to play service event without risking of a late message [us]
+        if (servOffs < tmpOffs) {
+          servOffs = tmpOffs; 
+          /* pp_printf("wr-unipz: prevent late service message\n"); */
+        } // if tmpOffs
+        servEvt   = 0x0;
         if (evtData == WRUNIPZ_EVTDATA_PREPACC) {
           servEvt = EVT_AUX_PRP_NXT_ACC | ((virtAcc & 0xf) << 8) | ((servOffs & 0xffff)        << 16); // send after last event of current PZ cycle
           writeTM(servEvt, syncPrevT4, ipz, virtAcc, 0, 0);                                            // send message
@@ -734,6 +786,21 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
     default :
       break;
   } // switch evtCode
+
+  offsDone = (int32_t)(getSysTime() - tMIL);
+
+  // write MIL Event received via internal bus to our own ECA input
+  // this allows debugging using saft-ctl snoop ...
+  TS_dbg    = tMIL;
+  evtId_dbg = 0xcafe000000000000;
+  evtId_dbg = evtId_dbg | ((uint64_t)evtCode << 36);
+  evtId_dbg = evtId_dbg | ((uint64_t)virtAcc << 20);
+  param_dbg = (uint64_t)evtData;
+  fwlib_ecaWriteTM(TS_dbg, evtId_dbg, param_dbg, 0x0, 1);
+
+  // check WR sync state
+  if (fwlib_wrCheckSyncState() == COMMON_STATUS_WRBADSYNC) return COMMON_STATUS_WRBADSYNC;
+  else                                                     return status;
   
   return status;
 } // doActionOperation
@@ -745,6 +812,8 @@ int main(void) {
   uint32_t actState;                                          // actual FSM state
   uint32_t pubState;                                          // value of published state
   uint32_t reqState;                                          // requested FSM state
+  uint32_t sharedSize;                                        // size of shared memory
+
   uint32_t *buildID;
 
   // init local variables
@@ -754,10 +823,11 @@ int main(void) {
   status         = COMMON_STATUS_OK;
   buildID        = (uint32_t *)(INT_BASE_ADR + BUILDID_OFFS);
 
-  // init 
-  init();                                                              // initialize stuff for lm32
-  fwlib_init((uint32_t *)_startshared, cpuRamExternal, SHARED_OFFS, "wr-unipz", WRUNIPZ_FW_VERSION); // init common stuff
-  initSharedMem();                                                     // initialize shared memory
+  // init
+  pp_printf("wr-unipz: huhu\n");
+  init();
+  initSharedMem(&reqState, &sharedSize);                               // initialize shared memory THIS MUST BE CALLED FIRST
+  fwlib_init((uint32_t *)_startshared, cpuRamExternal, SHARED_OFFS, sharedSize, "wr-unipz", WRUNIPZ_FW_VERSION); // init common stuff
   fwlib_clearDiag();                                                   // clear common diagnostic data
 
   while (1) {
@@ -815,11 +885,15 @@ int main(void) {
     fwlib_publishStatusArray(statusArray);
     pubState             = actState;
     fwlib_publishState(pubState);
+
+    if (comLatency > maxComLatency) maxComLatency = comLatency;
+    if (offsDone   > maxOffsDone)   maxOffsDone   = offsDone;
+    fwlib_publishTransferStatus(0, 0, 0, nLate, maxOffsDone, maxComLatency);
+
     *pSharedDtMax        = dtMax;
     *pSharedDtMin        = dtMin;
     *pSharedCycJmpMax    = cycJmpMax;
     *pSharedCycJmpMin    = cycJmpMin;
-    *pSharedNLate        = nLate;
     *pSharedNCycle       = nCycleAct; 
     *pSharedNMessageHi   = (uint32_t)(nMsgAct >> 32);
     *pSharedNMessageLo   = (uint32_t)(nMsgAct & 0xffffffff);

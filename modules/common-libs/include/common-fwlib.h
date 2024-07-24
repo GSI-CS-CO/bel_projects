@@ -1,11 +1,48 @@
 #ifndef _COMMON_FWLIB_
 #define _COMMON_FWLIB_
 
-// project time t1 [ns] to approximately t2 [ns] in multiples of period T [as]
+// typedef for treating sub-ns timestamps within the b2b firmware
+// the picosecond part may exceed +-1000, but it is recommended to
+// use fwlib_cleanB2bt for alignment 
+typedef struct{                                      
+  uint64_t ns;                                        // full nanoseconds of time
+  int32_t  ps;                                        // ps fraction of time, should be positive
+  uint32_t dps;                                       // uncertainty [ps]
+} b2bt_t;
+
+
+// adjusts ns such, that ps part remains small 
+b2bt_t fwlib_cleanB2bt(b2bt_t t_ps                    // time [ps]
+                       );
+
+
+// project time t1 [ns] to approximately t2 [ns] in multiples of period T [as]; returns projected time [ns]
 uint64_t fwlib_advanceTime(uint64_t t1,               // time 1 [ns]
                            uint64_t t2,               // time 2 [ns], where t2 > t1
-                           uint64_t Tas               // period T [as]
+                           uint64_t T_as              // period T [as]
                            );
+
+// project time t1 [ps] to approximately t2 [ps] in multiples of period T [as]; returns projected time [ps]
+b2bt_t fwlib_advanceTimePs(b2bt_t    t1_ps,           // time 1 [ps]
+                           b2bt_t    t2_ps,           // time 2 [ps], where t2 > t1
+                           uint64_t T_as              // period T [as]
+                           );
+
+// convert [ns, float] to [ps], returns t [ps]
+b2bt_t fwlib_tfns2tps(float t_ns                      // time [ns]
+                      );
+
+// convert [ps] to [ns, float], returns t [ns, float]f
+float fwlib_tps2tfns(b2bt_t t_ps                      // time [ps]
+                     );
+
+// convert [ns] to [ps], returns t [ps]
+b2bt_t fwlib_tns2tps(uint64_t t_ns                    // time [ns]
+                     );
+
+// convert [ps] to [ns], returns t [ns]
+uint64_t fwlib_tps2tns(b2bt_t t_ps                    // time [ps]
+                       );
 
 // get my own MAC, returns MAC
 uint64_t fwlib_wrGetMac();
@@ -16,12 +53,12 @@ uint32_t fwlib_wrCheckSyncState();
 //find WB address of WR Endpoint
 //uint32_t findWREp();
 
-// 1. query ECA for actions, 2. trigger activity, returns (error) status
+// 1. query ECA for actions, 2. trigger activity, returns ECA action (=tag, a value of '0' is reserved for signaling a timeout
 uint32_t fwlib_wait4ECAEvent(uint32_t usTimeout,      // timeout [us]
                              uint64_t *deadline,      // deadline of action
                              uint64_t *evtId,         // event ID
                              uint64_t *param,         // parameter field
-                             uint32_t *tef,           // TEF filed
+                             uint32_t *tef,           // TEF field
                              uint32_t *isLate,        // flag 'late'
                              uint32_t *isEarly,       // flag 'early'
                              uint32_t *isConflict,    // flag 'conflict'
@@ -34,7 +71,7 @@ uint32_t fwlib_wait4MILEvent(uint32_t usTimeout,      // timeout [us]
                              uint32_t *evtCode,       // event code (8 relevant bits)
                              uint32_t *virtAcc,       // virtual accelerator (4 relevant bits)
                              uint32_t *validEvtCodes, // array of valid event codes the routine will listen to
-                             uint32_t nValidEvtCodes  // # of valid event codes
+                             uint32_t nValidEvtCodes  // # of valid event codes; in case n==0, the routine will return with the first event received
                              );
 
 // pulse lemo for debugging with scope
@@ -70,6 +107,9 @@ volatile uint32_t * fwlib_getMilPiggy();
 // get address of OLED
 volatile uint32_t * fwlib_getOLED();
 
+// get WB address of SCU bus master
+volatile uint32_t * fwlib_getSbMaster();
+
 // acquire and publish NIC data
 void fwlib_publishNICData();
 
@@ -84,7 +124,10 @@ void fwlib_publishStatusArray(uint64_t statusArray     // status array (each bit
 // publish status of ongoing transfer
 void fwlib_publishTransferStatus(uint32_t nTransfer,   // # of transfers
                                  uint32_t nInject,     // # of injections within current transferr
-                                 uint32_t transStat    // status of ongoing transfer
+                                 uint32_t transStat,   // status of ongoing transfer
+                                 uint32_t nLate,       // number of messages that could not be delivered in time
+                                 uint32_t offsDone,    // offset event deadline to time when we are done [ns]
+                                 uint32_t comLatency   // latency for messages received from via ECA (tDeadline - tNow)) [ns]
                                  );
 
 // publish number of bad status incidents
@@ -141,6 +184,7 @@ uint64_t fwlib_buildEvtidV1(uint32_t gid,              // group ID
 uint32_t fwlib_ecaWriteTM(uint64_t deadline,           // deadline (when action shall be performed)
                           uint64_t evtId,              // event ID
                           uint64_t param,              // parameter field
+                          uint32_t tef,                // TEF field
                           uint32_t flagForceLate       // disable rescheduling in case of 'late' deadline
                           );
 
@@ -151,6 +195,7 @@ uint32_t fwlib_ecaWriteTM(uint64_t deadline,           // deadline (when action 
 uint32_t fwlib_ebmWriteTM(uint64_t deadline,           // deadline (when action shall be performed)
                           uint64_t evtId,              // event ID
                           uint64_t param,              // parameter field
+                          uint32_t tef,                // TEF field
                           uint32_t flagForceLate       // disable rescheduling in case of 'late' deadline
                           );
 
@@ -173,5 +218,13 @@ void fwlib_printOLED(char *chars                       // text to print
 
 // clear OLED
 void fwlib_clearOLED();
+
+// non-optimed routine for converting single precision to half precision float, IEEE 754
+uint16_t fwlib_float2half(float f                      // single precision number
+                          );
+
+// non-optimed routine for converting half precision to single precision float, IEEE 754
+float fwlib_half2float(uint16_t h                      // half precision number
+                       );
 
 #endif 

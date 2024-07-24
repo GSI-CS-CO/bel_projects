@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 08-June-2021
+ *  version : 17-May-2023
  *
  * publishes status of a b2b system (CBU, PM, KD ...)
  *
@@ -34,6 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
+#define B2B_SERVSYS_VERSION 0x000702
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -84,21 +85,17 @@ static void die(const char* where, eb_status_t status) {
 
 
 static void help(void) {
-  uint32_t version;
-  
-  fprintf(stderr, "Usage: %s [OPTION] <etherbone-device> [PREFIX]\n", program);
+  fprintf(stderr, "Usage: %s [OPTION] <etherbone-device> <server name>\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "  -h                  display this help and exit\n");
   fprintf(stderr, "  -e                  display version\n");
   fprintf(stderr, "  -s                  start server publishing system info\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "Use this tool to publish information on a B2B system (CBU, PM, KD...)\n");
-  fprintf(stderr, "Example1: '%s dev/wbm0 pro-sis18-pm -s\n", program);
+  fprintf(stderr, "Use this tool to publish information on a B2B system (CBU, PM, KDE ...)\n");
+  fprintf(stderr, "Example1: '%s dev/wbm0 pro_sis18-pm -s'\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
-
-  b2b_version_library(&version);
-  fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", b2b_version_text(version));
+  fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", b2b_version_text(B2B_SERVSYS_VERSION));
 } //help
 
 
@@ -121,7 +118,7 @@ void disAddServices(char *prefix)
   disStateId      = dis_add_service(name, "C", disState, 10, 0 , 0);
 
   sprintf(name, "%s_hostname", prefix);
-  disHostnameId   = dis_add_service(name, "C", &disHostname, 32, 0 , 0);
+  disHostnameId   = dis_add_service(name, "C", disHostname, DIMCHARSIZE, 0 , 0);
 
   sprintf(name, "%s_status", prefix);
   disStatusId     = dis_add_service(name, "X", &disStatus, sizeof(disStatus), 0 , 0);
@@ -152,6 +149,7 @@ int main(int argc, char** argv) {
   uint32_t actState = COMMON_STATE_UNKNOWN;    // actual state of gateway
   uint32_t verLib;
   uint32_t verFw;
+  uint32_t verFwOld;
 
   uint32_t cpu;
   uint32_t status;
@@ -204,9 +202,9 @@ int main(int argc, char** argv) {
   
   if (getVersion) {
     b2b_version_library(&verLib);
-    printf("b2b: library (firmware) version %s",  b2b_version_text(verLib));     
+    printf("b2b: serv-sys / library / firmware /  version %s / %s",  b2b_version_text(verLib), b2b_version_text(B2B_SERVSYS_VERSION));     
     b2b_version_firmware(ebDevice, &verFw);
-    printf(" (%s)\n",  b2b_version_text(verFw));     
+    printf(" / %s\n",  b2b_version_text(verFw));     
   } // if getVersion
 
 
@@ -221,6 +219,7 @@ int main(int argc, char** argv) {
     b2b_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
     sprintf(disVersion, "%s", b2b_version_text(verFw));
     dis_update_service(disVersionId);
+    verFwOld = verFw;
 
     while (1) {
       b2b_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
@@ -239,6 +238,12 @@ int main(int argc, char** argv) {
         disNTransfer = nTransfer;
         dis_update_service(disNTransferId);
       } // if disNTransfer  
+
+      if (verFw != verFwOld) {
+        sprintf(disVersion, "%s", b2b_version_text(verFw));
+        dis_update_service(disVersionId);
+        verFwOld = verFw;
+      } // if verFw 
         
       sleep(1);
     } // while

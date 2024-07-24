@@ -1,0 +1,5 @@
+digraph star4 {
+name=star4
+node1 -> node2 -> node3
+node2 -> node4
+}

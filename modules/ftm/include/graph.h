@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/graph/graphviz.hpp>
 #include "ftm_common.h"
 #include "common.h"
@@ -73,6 +73,8 @@ public:
   std::string tef         = sZero;
   std::string res         = sZero;
 
+  //StartThread
+  std::string startOffs = sZero;
   //Command
 
   std::string tValid = sZero;
@@ -98,6 +100,7 @@ public:
   std::string cmdDest     = sUndefined;
   std::string cmdDestBp   = sUndefined;
   std::string cmdDestPat  = sUndefined;
+  std::string cmdDestThr  = sZero;
 
   myVertex() {}
 

@@ -2,8 +2,6 @@
 \sloppy
 \label{AppendixA} % For referencing this appendix elsewhere, use \ref{AppendixA}
 
-Lorem ipsum dolor sit amet... blabla
-
 %%%%%%%%%%%%%%%% Block %%%%%%%%%%%%%%%%
 \begin{figure}[H]
   \begin{bytefield}{32}
@@ -78,6 +76,58 @@ Lorem ipsum dolor sit amet... blabla
   \label{fig:Timing-Message-Memory-Layout}
 \end{figure}
 \noindent
+
+%%%%%%%%%%%%%%%% Set Thread Origin %%%%%%%%%%%%%%%%
+\begin{figure}[H]
+  
+  \begin{bytefield}{32}
+    \bitheader{31,0}\\
+    \colorwordbox{lightyellow}{2}{Time Offset to Block Start (\SI{}{\nano\second})}\\
+    \colorwordbox{lightyellow}{1}{Ptr to Thread Origin Node}\\
+    \colorwordbox{lightgray}{1}{}\\
+    \colorwordbox{lightyellow}{1}{CPU Idx}\\
+    \colorwordbox{lightyellow}{1}{Thread Idx}\\
+    \colorwordbox{lightgray}{1}{}\\
+    \colorwordbox{lightgray}{1}{}\\
+    \colorwordbox{lightgray}{1}{}\\
+    \colorwordbox{lightgray}{1}{}\\
+    \colorwordbox{lightblue}{1}{Hash of Node Name}\\
+    \bitheader{25,24,23,22,21,20,17,16,13,12,10,9,8,7,0} \\
+    \begin{rightwordgroup}{Node Flags}
+      \colorbitbox{lightgray}{6}{}  & \colorbitbox{lightyellow}{1}{\tiny Dyn RES} & \colorbitbox{lightyellow}{1}{\tiny Dyn TEF} & \colorbitbox{lightyellow}{1}{\tiny Dyn PA1} & \colorbitbox{lightyellow}{1}{\tiny Dyn PA0} & \colorbitbox{lightyellow}{1}{\tiny Dyn PAR} & \colorbitbox{lightyellow}{1}{\tiny Dyn ID} & \colorbitbox{lightgray}{2}{} & \colorbitbox{lightblue}{2}{\tiny Debug}  & \colorbitbox{lightgray}{2}{} & \colorbitbox{lightyellow}{1}{\tiny Pat in} & \colorbitbox{lightyellow}{1}{\tiny BP in} & \colorbitbox{lightgray}{1}{} & \bitbox{1}{\rotatebox{90}{\tiny Syn}} & \colorbitbox{lightgreen}{2}{\tiny Paint} & \colorbitbox{lightyellow}{8}{\tiny Type}
+  \end{rightwordgroup}\\
+    \colorwordbox{lightyellow}{1}{Next Ptr}\\
+\end{bytefield}
+  \caption{Origin Memory Layout}
+  \label{fig:Origin-Memory-Layout}
+\end{figure}
+\noindent
+
+%%%%%%%%%%%%%%%% Start Thread  %%%%%%%%%%%%%%%%
+\begin{figure}[H]
+  
+  \begin{bytefield}{32}
+    \bitheader{31,0}\\
+    \colorwordbox{lightyellow}{2}{Time Offset to Block Start (\SI{}{\nano\second})}\\
+    \colorwordbox{lightyellow}{2}{Start Time Offset to Block Start (\SI{}{\nano\second}) Abs time passed to Thread}\\
+    \colorwordbox{lightyellow}{1}{CPU Idx}\\
+    \colorwordbox{lightyellow}{1}{Thread Idx}\\
+    \colorwordbox{lightgray}{1}{}\\
+    \colorwordbox{lightgray}{1}{}\\
+    \colorwordbox{lightgray}{1}{}\\
+    \colorwordbox{lightgray}{1}{}\\
+    \colorwordbox{lightblue}{1}{Hash of Node Name}\\
+    \bitheader{25,24,23,22,21,20,17,16,13,12,10,9,8,7,0} \\
+    \begin{rightwordgroup}{Node Flags}
+      \colorbitbox{lightgray}{6}{}  & \colorbitbox{lightyellow}{1}{\tiny Dyn RES} & \colorbitbox{lightyellow}{1}{\tiny Dyn TEF} & \colorbitbox{lightyellow}{1}{\tiny Dyn PA1} & \colorbitbox{lightyellow}{1}{\tiny Dyn PA0} & \colorbitbox{lightyellow}{1}{\tiny Dyn PAR} & \colorbitbox{lightyellow}{1}{\tiny Dyn ID} & \colorbitbox{lightgray}{2}{} & \colorbitbox{lightblue}{2}{\tiny Debug}  & \colorbitbox{lightgray}{2}{} & \colorbitbox{lightyellow}{1}{\tiny Pat in} & \colorbitbox{lightyellow}{1}{\tiny BP in} & \colorbitbox{lightgray}{1}{} & \bitbox{1}{\rotatebox{90}{\tiny Syn}} & \colorbitbox{lightgreen}{2}{\tiny Paint} & \colorbitbox{lightyellow}{8}{\tiny Type}
+  \end{rightwordgroup}\\
+    \colorwordbox{lightyellow}{1}{Next Ptr}\\
+\end{bytefield}
+  \caption{Startthread Memory Layout}
+  \label{fig:Startthread-Memory-Layout}
+\end{figure}
+\noindent
+
 
 
 %%%%%%%%%%%%%%%% Flow %%%%%%%%%%%%%%%%
@@ -184,6 +234,35 @@ Lorem ipsum dolor sit amet... blabla
   \label{fig:Flush-Command-Memory-Layout}
 \end{figure}
 \noindent
+
+%%%%%%%%%%%%%%%% Switch %%%%%%%%%%%%%%%%
+\begin{figure}[H]
+  \begin{bytefield}{32}
+    \bitheader{31,0}\\
+    \colorwordbox{lightyellow}{2}{Time Offset to Block Start (\SI{}{\nano\second})}\\
+    \colorwordbox{lightyellow}{1}{Ptr to Target Block}\\
+    \colorwordbox{lightgray}{2}{}\\
+    \bitheader{23,20} \\
+    \begin{rightwordgroup}{Cmd Action}
+      \colorbitbox{lightgray}{8}{}  & \colorbitbox{lightyellow}{4}{\tiny Type} & \colorbitbox{lightgray}{20}{}
+  \end{rightwordgroup}\\
+    \colorwordbox{lightyellow}{1}{Ptr to Switch Destination}\\
+    \colorwordbox{lightgray}{1}{}\\
+    \colorwordbox{lightgray}{1}{}\\
+    \colorwordbox{lightgray}{1}{}\\
+    \colorwordbox{lightblue}{1}{Hash of Node Name}\\
+    \bitheader{20,17,16,13,12,10,9,8,7,0} \\
+    \begin{rightwordgroup}{Node Flags}
+      \colorbitbox{lightgray}{11}{} & \colorbitbox{lightblue}{1}{\rotatebox{90}{\tiny Peer}} & \colorbitbox{lightgray}{2}{} & \colorbitbox{lightblue}{2}{\tiny Debug} & & \colorbitbox{lightgray}{2}{} & \colorbitbox{lightyellow}{1}{\tiny Pat in} & \colorbitbox{lightyellow}{1}{\tiny BP in} & \colorbitbox{lightgray}{1}{} & \bitbox{1}{\rotatebox{90}{\tiny Syn}} & \colorbitbox{lightgreen}{2}{\tiny Paint} & \colorbitbox{lightyellow}{8}{\tiny Type}
+  \end{rightwordgroup}\\
+    \colorwordbox{lightyellow}{1}{Next Ptr}\\
+\end{bytefield}
+  \caption{Switch Command Memory Layout}
+  \label{fig:Switch-Command-Memory-Layout}
+\end{figure}
+\noindent
+
+
 
 %%%%%%%%%%%%%%%% Alt. Destination List %%%%%%%%%%%%%%%%
 \begin{figure}[H]
@@ -398,30 +477,33 @@ Lorem ipsum dolor sit amet... blabla
 }%
 }
 
-\begin{bytefield}{32}
-\bitlabel{1}{Carry} & \bitlabel{1}{Reserved} &
-\bitlabel{1}{Parity} & \bitlabel{1}{Reserved} &
-\bitlabel{1}{Adjust} & \bitlabel{1}{Reserved} &
-\bitlabel{1}{Zero} & \bitlabel{1}{Sign} &
-\bitlabel{1}{Trap} & \bitlabel{1}{Interrupt enable} &
-\bitlabel{1}{Direction} & \bitlabel{1}{Overflow} &
-\bitlabel{2}{I/O privilege level (12--13)} &
-\bitlabel{1}{Nested task} & \bitlabel{1}{Reserved} &
-\bitlabel{1}{Carry} & \bitlabel{1}{Reserved} &
-\bitlabel{1}{Parity} & \bitlabel{1}{Reserved} &
-\bitlabel{1}{Adjust} & \bitlabel{1}{Reserved} &
-\bitlabel{1}{Zero} & \bitlabel{1}{Sign} &
-\bitlabel{1}{Node } & 
-\bitlabel{3}{} &
-\bitlabel{1}{BMP 3} & \bitlabel{1}{BMP 2} &
-\bitlabel{1}{BMP 1} & \bitlabel{1}{BMP 0} \\
-\bitheader{0-31} \\
-\bitbox{1}{0} & \bitbox{1}{1} & \bitbox{1}{0} & \bitbox{1}{0} &
-\bitbox{1}{0} & \bitbox{1}{0} & \bitbox{1}{0} & \bitbox{1}{1} &
-\bitbox{1}{0} & \bitbox{1}{0} & \bitbox{1}{0} & \bitbox{1}{0} &
-\bitbox{1}{0} & \bitbox{1}{0} & \bitbox{1}{0} & \bitbox{1}{0} &
-\bitbox{1}{0} & \bitbox{1}{0} & \bitbox{1}{0} & \bitbox{1}{0} &
-\bitbox{1}{0} & \bitbox{1}{0} & \bitbox{1}{0} & \bitbox{1}{0} &
-\bitbox{1}{1} & \bitbox{1}{0} & \bitbox{1}{0} & \bitbox{1}{0} &
-\bitbox{1}{1} & \bitbox{1}{1} & \bitbox{1}{1} & \bitbox{1}{1}
-\end{bytefield}
+
+
+
+%\begin{bytefield}{32}
+%\bitlabel{1}{Carry} & \bitlabel{1}{Reserved} &
+%\bitlabel{1}{Parity} & \bitlabel{1}{Reserved} &
+%\bitlabel{1}{Adjust} & \bitlabel{1}{Reserved} &
+%\bitlabel{1}{Zero} & \bitlabel{1}{Sign} &
+%\bitlabel{1}{Trap} & \bitlabel{1}{Interrupt enable} &
+%\bitlabel{1}{Direction} & \bitlabel{1}{Overflow} &
+%\bitlabel{2}{I/O privilege level (12--13)} &
+%\bitlabel{1}{Nested task} & \bitlabel{1}{Reserved} &
+%\bitlabel{1}{Carry} & \bitlabel{1}{Reserved} &
+%\bitlabel{1}{Parity} & \bitlabel{1}{Reserved} &
+%\bitlabel{1}{Adjust} & \bitlabel{1}{Reserved} &
+%\bitlabel{1}{Zero} & \bitlabel{1}{Sign} &
+%\bitlabel{1}{Node } & 
+%\bitlabel{3}{} &
+%\bitlabel{1}{BMP 3} & \bitlabel{1}{BMP 2} &
+%\bitlabel{1}{BMP 1} & \bitlabel{1}{BMP 0} \\
+%\bitheader{0-31} \\
+%\bitbox{1}{0} & \bitbox{1}{1} & \bitbox{1}{0} & \bitbox{1}{0} &
+%\bitbox{1}{0} & \bitbox{1}{0} & \bitbox{1}{0} & \bitbox{1}{1} &
+%\bitbox{1}{0} & \bitbox{1}{0} & \bitbox{1}{0} & \bitbox{1}{0} &
+%\bitbox{1}{0} & \bitbox{1}{0} & \bitbox{1}{0} & \bitbox{1}{0} &
+%\bitbox{1}{0} & \bitbox{1}{0} & \bitbox{1}{0} & \bitbox{1}{0} &
+%\bitbox{1}{0} & \bitbox{1}{0} & \bitbox{1}{0} & \bitbox{1}{0} &
+%\bitbox{1}{1} & \bitbox{1}{0} & \bitbox{1}{0} & \bitbox{1}{0} &
+%\bitbox{1}{1} & \bitbox{1}{1} & \bitbox{1}{1} & \bitbox{1}{1}
+%\end{bytefield}

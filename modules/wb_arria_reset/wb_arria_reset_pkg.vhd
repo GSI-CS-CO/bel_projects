@@ -35,6 +35,20 @@ component arria5_reset
   );
 end component;
 
+component arria10_reset
+  PORT
+  (
+    clock       : IN STD_LOGIC ;
+    param       : IN STD_LOGIC_VECTOR (2 DOWNTO 0);
+    read_param  : IN STD_LOGIC ;
+    reconfig    : IN STD_LOGIC ;
+    reset       : IN STD_LOGIC ;
+    reset_timer : IN STD_LOGIC ;
+    busy        : OUT STD_LOGIC ;
+    data_out    : OUT STD_LOGIC_VECTOR (31 DOWNTO 0)
+  );
+end component;
+
 component wb_arria_reset is
   generic (
             arria_family : string                := "Arria II";
@@ -49,11 +63,12 @@ component wb_arria_reset is
     rstn_upd_i    : in std_logic;
     hw_version    : in std_logic_vector(31 downto 0);
     slave_o       : out t_wishbone_slave_out;
-    slave_i       : in t_wishbone_slave_in;
+    slave_i       : in  t_wishbone_slave_in;
     phy_rst_o     : out std_logic;
     phy_aux_rst_o : out std_logic;
     phy_dis_o     : out std_logic;
     phy_aux_dis_o : out std_logic;
+    psram_sel_o   : out std_logic_vector(3 downto 0);
     rstn_o        : out std_logic_vector(rst_channels-1 downto 0));
 end component;
 

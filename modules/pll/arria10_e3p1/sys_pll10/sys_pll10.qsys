@@ -189,7 +189,7 @@
   <parameter name="gui_new_mif_file_path" value="~/pll.mif" />
   <parameter name="gui_number_of_clocks" value="5" />
   <parameter name="gui_operation_mode" value="direct" />
-  <parameter name="gui_output_clock_frequency0" value="100.0" />
+  <parameter name="gui_output_clock_frequency0" value="62.5" />
   <parameter name="gui_output_clock_frequency1" value="100.0" />
   <parameter name="gui_output_clock_frequency10" value="100.0" />
   <parameter name="gui_output_clock_frequency11" value="100.0" />
@@ -289,7 +289,7 @@
   <parameter name="system_info_device_component" value="10AX115S2F45I1SG" />
   <parameter name="system_info_device_family" value="Arria 10" />
   <parameter name="system_info_device_speed_grade" value="1" />
-  <parameter name="system_part_trait_speed_grade" value="2" />
+  <parameter name="system_part_trait_speed_grade" value="1" />
  </module>
  <interconnectRequirement for="$system" name="qsys_mm.clockCrossingAdapter" value="HANDSHAKE" />
  <interconnectRequirement for="$system" name="qsys_mm.enableEccProtection" value="FALSE" />

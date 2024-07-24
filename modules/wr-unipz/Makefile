@@ -1,26 +1,46 @@
 # PREFIX  controls where programs and libraries get installed
 # Note: during compile (all), PREFIX must be set to the final installation path
+# Set SYSENV to the target system environment (YOCTO, ACC7, ACC9, OPT)
 # Example usage:
 #   'make clean'                                                                       (!!! this is important !!!)
-#   'make MASP=NO PRO=NO PREFIX= all'                                                  (hack: leave PREFIX empty for SCU path)
-#   'make MASP=NO PRO=YES PREFIX= all'                                                 (hack: leave PREFIX empty for SCU path)
+#   'make ENV=int SYSENV=ACC7 PREFIX= all'                                             (hack: leave PREFIX empty for SCU path)
+#   'make ENV=pro SYSENV=ACC7 PREFIX= all'                                             (hack: leave PREFIX empty for SCU path)
 # Example deploy:
-#   'make MASP=NO PRO=NO PREFIX= STAGING=/common/export/timing-rte/wrunipz-dev deploy' (hack: leave PREFIX empty for SCU path)
-#   'make MASP=NO PRO=YES PREFIX= STAGING=/common/export/timing-rte/wrunipz deploy'    (hack: leave PREFIX empty for SCU path)
+#   'make SYSENV=ACC7 PREFIX= STAGING=/common/export/timing-rte/wrunipz-dev deploy'    (hack: leave PREFIX empty for SCU path)
+#   'make SYSENV=ACC7 PREFIX= STAGING=/common/export/timing-rte/wrunipz deploy'        (hack: leave PREFIX empty for SCU path)
 PREFIX      ?= /usr/local
 STAGING     ?=
-ARCH        ?= /x86_64
-# EB          ?= ../../ip_cores/etherbone-core/api
+
+# relative paths
 FW          ?= fw
 SW          ?= x86
-ASL         ?= asl
-#TARGETS     := firmware software
+SYSTEMD     ?= systemd
+NFSINIT     ?= nfs-init
+GENNFSINIT  ?= ../../../../ci_cd/scripts/yocto_helper/nfsinit/fec-init
+INC         ?= include
 
-#EXTRA_FLAGS ?=
-#CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -I $(EB) -I $(FW)
-#LIBS        ?= -L $(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm
+# target system environment, OPT is default
+SYSENV      ?= OPT
 
-all:: firmware software
+ifeq ($(SYSENV), OPT)
+USRPATH     ?= /opt/usr
+ARCH        ?=
+endif
+
+ifeq ($(SYSENV), YOCTO)
+USRPATH     := /common/usr/timing/wr-mil/yocto/usr
+ARCH        := /x86_64
+endif
+
+ifeq ($(SYSENV), ACC7)
+USRPATH     := /common/usr/timing/wr-mil/centos7/usr/
+ARCH        := /x86_64
+endif
+
+# set environment, default is int
+ENV         ?= int
+
+all:: firmware software nfsinit
 
 software:: 
 	$(MAKE) -C $(SW) all
@@ -28,24 +48,38 @@ software::
 firmware:
 	$(MAKE) -C $(FW)
 
+nfsinit:
+	echo $(shell cd $(NFSINIT); $(GENNFSINIT)/generate-main.sh $(ENV); cd ..)
+
 clean:
 	$(MAKE) -C $(SW) clean
 	$(MAKE) -C $(FW) clean
+	rm -f $(NFSINIT)/wrunipz-*.sh
 
 deploy: 
-	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/usr/bin     # '/usr' is a hack
-	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/usr/lib     # '/usr' is a hack
-	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/usr/include # '/usr' is a hack
+# create folders
+	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/usr/bin                         # '/usr' is a hack
+	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/usr/lib                         # '/usr' is a hack
+	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/usr/include                     # '/usr' is a hack
+	mkdir -p $(STAGING)/$(SYSTEMD)
 	mkdir -p $(STAGING)/firmware
-	cp ../../tools/eb-fwload $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
-	cp $(ASL)/wrunipz.sh $(STAGING)
-	cp $(SW)/wr-unipz_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
-	cp $(SW)/wrunipz-ctl $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
-	cp $(FW)/wrunipz.bin $(STAGING)/firmware
-	cp -a $(SW)/libwrunipzlib.so* $(STAGING)$(ARCH)$(PREFIX)/usr/lib # '/usr' is a hack
-	cp $(SW)/../include/wrunipzlib.h $(STAGING)$(ARCH)$(PREFIX)/usr/include
 
-#	script /common/export/nfsinit/global/timing-rte-wrunipz-dev is _here_ in sub-folder wrunipz-asl 
+# nfsinit scripts
+	cp $(NFSINIT)/*.sh $(STAGING)
+
+# tools
+	cp $(SW)/wrunipz-ctl $(STAGING)$(ARCH)$(PREFIX)/usr/bin             # '/usr' is a hack
+	cp $(FW)/wrunipz.bin $(STAGING)/firmware
+	cp -a $(SW)/libwrunipzlib.so* $(STAGING)$(ARCH)$(PREFIX)/usr/lib    # '/usr' is a hack
+
+# configuration
+	cp $(SW)/*.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin                    # '/usr' is a hack
+
+# systemd
+	cp $(SYSTEMD)/*.service $(STAGING)/$(SYSTEMD)                       # systemd units
+
+# header files, required for building Device Access
+	cp $(INC)/wrunipzlib.h $(STAGING)$(ARCH)$(PREFIX)/usr/include       # '/usr' is a hack
 
 .PHONY: all clean
 

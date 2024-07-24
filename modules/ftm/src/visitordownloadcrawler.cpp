@@ -41,6 +41,9 @@ void VisitorDownloadCrawler::visit(const Block& el) const {
   Graph::in_edge_iterator in_begin, in_end;
   uint32_t tmpAdr;
 
+  try {
+    
+  
 
   tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT,cpu, writeBeBytesToLeNumber<uint32_t>(b + BLOCK_ALT_DEST_PTR ));
   //if the block has no destination list, set default destination ourself
@@ -53,7 +56,10 @@ void VisitorDownloadCrawler::visit(const Block& el) const {
   if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(det::sQPrio[PRIO_HI]), g);
   tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT,cpu, writeBeBytesToLeNumber<uint32_t>(b + BLOCK_CMDQ_LO_PTR ));
   if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(det::sQPrio[PRIO_LO]), g);
-
+  
+  } catch (std::runtime_error const& err) {
+   std::cerr << "Failed to create Block <" << g[v].name << " edges: " << err.what() << std::endl;
+  } 
 }
 
 void VisitorDownloadCrawler::visit(const TimingMsg& el) const  {
@@ -90,6 +96,28 @@ std::pair<uint8_t, AdrType> VisitorDownloadCrawler::createSwitch(const Switch& e
   if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(targetCpu, tmpAdr))))->v, myEdge(det::sSwitchTarget),    g);
 
   return std::make_pair(targetCpu, adrT);
+}
+
+void VisitorDownloadCrawler::visit(const Origin& el) const  {
+  uint8_t targetCpu;
+  AdrType adrT;
+  uint32_t tmpAdr;
+
+  uint32_t  auxAdr = writeBeBytesToLeNumber<uint32_t>(b + ORIGIN_DEST );
+
+  std::tie(targetCpu, adrT) = at.adrClassification(auxAdr);
+  targetCpu = (adrT == AdrType::PEER ? targetCpu : cpu); // Internal address type does not know which cpu it belongs to
+
+
+
+  setDefDst();
+  tmpAdr = at.adrConv(adrT, AdrType::MGMT, targetCpu, auxAdr);
+  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(targetCpu, tmpAdr))))->v, myEdge(det::sOriginDst),    g);
+
+}
+
+void VisitorDownloadCrawler::visit(const StartThread& el) const  {
+  setDefDst();
 }
 
 std::pair<uint8_t, AdrType> VisitorDownloadCrawler::createCmd(const Command& el) const {

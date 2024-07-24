@@ -36,7 +36,7 @@ package monster_pkg is
   type io_channel is (IO_GPIO, IO_LVDS, IO_FIXED, IO_VIRTUAL);
   type io_direction is (IO_OUTPUT, IO_INPUT, IO_INOUTPUT);
   type io_logic_level is (IO_TTL, IO_LVTTL, IO_LVDS, IO_NIM, IO_CMOS);
-  type io_special_purpose is (IO_NONE, IO_TTL_TO_NIM, IO_CLK_IN_EN, IO_MTCA4_TRIG_BPL_PDN, IO_MTCA4_FAILSAFE_EN, IO_LIBERA_TRIG_OE, IO_MTCA4_BPL_BUF_OE);
+  type io_special_purpose is (IO_NONE, IO_TTL_TO_NIM, IO_CLK_IN_EN, IO_MTCA4_TRIG_BPL_PDN, IO_MTCA4_FAILSAFE_EN, IO_LIBERA_TRIG_OE, IO_MTCA4_BPL_BUF_OE, IO_I2C_USB_C);
 
   type t_io_mapping_table is
     record                                               -- Byte(s) = Bit(s)
@@ -125,11 +125,14 @@ package monster_pkg is
       g_lm32_profiles        : string; -- multiple profiles must be seperated by a semicolon ';'
       g_lm32_are_ftm         : boolean := false;
       g_en_tempsens          : boolean := false;
+      g_en_a10ts             : boolean := false;
       g_delay_diagnostics    : boolean := false;
       g_en_eca               : boolean := true;
       g_en_wd_tmr            : boolean := false;
       g_en_timer             : boolean := false;
-      g_en_eca_tap           : boolean := false
+      g_en_eca_tap           : boolean := false;
+      g_en_asmi              : boolean := false;
+      g_en_psram_delay       : boolean := false
     );
     port(
       -- Required: core signals
@@ -146,7 +149,9 @@ package monster_pkg is
       core_rstn_butis_o      : out   std_logic;
       core_clk_sys_o         : out   std_logic;
       core_clk_200m_o        : out   std_logic;
+      core_clk_25m_o         : out   std_logic;
       core_clk_20m_o         : out   std_logic;
+      core_clk_10m_o         : out   std_logic;
       core_debug_o           : out   std_logic_vector(15 downto 0);
       core_clk_debug_i       : in    std_logic := '0';
       -- Required: white rabbit pins
@@ -171,6 +176,7 @@ package monster_pkg is
       wr_ext_pps_i           : in    std_logic := '0';
       wr_uart_o              : out   std_logic;
       wr_uart_i              : in    std_logic := '1';
+      wr_pps_out_o           : out   std_logic;
       -- SFP
       sfp_tx_disable_o       : out   std_logic := '0';
       sfp_tx_fault_i         : in    std_logic;
@@ -370,6 +376,7 @@ package monster_pkg is
       ps_cre                 : out   std_logic;
       ps_advn                : out   std_logic;
       ps_wait                : in    std_logic := '0';
+      ps_chip_selector       : out   std_logic_vector(3 downto 0);
       -- i2c
       i2c_scl_pad_i          : in    std_logic_vector(g_num_i2c_interfaces-1 downto 0) := (others => '0');
       i2c_scl_pad_o          : out   std_logic_vector(g_num_i2c_interfaces-1 downto 0);
@@ -512,6 +519,7 @@ package body monster_pkg is
         when IO_MTCA4_FAILSAFE_EN  => special := 4;
         when IO_LIBERA_TRIG_OE     => special := 5;
         when IO_MTCA4_BPL_BUF_OE   => special := 6;
+        when IO_I2C_USB_C          => special := 7;
         when others                => special := 63;
       end case;
       result(i).info_special := std_logic_vector(to_unsigned(special, result(i).info_special'length));

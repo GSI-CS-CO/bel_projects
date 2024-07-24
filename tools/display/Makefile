@@ -25,7 +25,12 @@ all: simple-display
 simple-display: $(SOURCES)
 	$(CC) $(CFLAGS) $(WCFLAGS) $(DEFINE) -o $@ $^ $(LIBS) -I../../modules/oled_display
 
-clean:  rm -f $(TARGETS)
+install:
+	cp $(TARGETS) $(STAGING)$(PREFIX)/bin
+
+clean:
+	rm -f $(TARGETS)
+
 # =================================================================================================
 # END OF ASL DEPLOYMENT
 # =================================================================================================
@@ -41,7 +46,7 @@ endif
 
 ifeq ($(BUILD), linux)
 FLAGS   = -Wall -O2 -g -I../../modules/oled_display
-CFLAGS  = $(FLAGS) -Wmissing-declarations -Wmissing-prototypes -DPLATFORM=$(BUILD)
+CFLAGS  = $(FLAGS) -fcommon -Wmissing-declarations -Wmissing-prototypes -DPLATFORM=$(BUILD)
 SOURCES = main-x86.c disp.c disp-oled.c disp-lcd.c ssd1325_serial_driver.c
 LIBS    = -Wl,-rpath,$(PREFIX)/lib -letherbone
 DEFINE  = -DSSD1325_TARGET_EMBEDDED=0
@@ -68,6 +73,9 @@ simple-display.bin: simple-display.elf
 
 simple-display.elf: crt0.o simple-display.o main-lm32.o
 	$(CC) $(CFLAGS) -o $@ -nostdlib -T linker.ld $^
+
+install:
+	cp simple-display $(STAGING)$(PREFIX)/bin
 
 clean:
 	rm -f *.o *.elf *.bin simple-display

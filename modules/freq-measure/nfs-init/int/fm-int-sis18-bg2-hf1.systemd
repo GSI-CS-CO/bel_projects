@@ -1,0 +1,13 @@
+# yocto; temporarily disabled
+#SERVICEA=fm-int-sis18.service
+#cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
+#systemctl daemon-reload
+#
+#systemctl start $SERVICEA
+
+# hack for acc7
+export DIM_DNS_NODE=asl105
+
+freq-measure sis18 int &
+
+

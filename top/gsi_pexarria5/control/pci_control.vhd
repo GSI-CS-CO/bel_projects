@@ -246,13 +246,11 @@ architecture rtl of pci_control is
     ("MHDMR_CK200", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_LVDS),
     ("MHDMR_SYOU ", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_LVDS)
   );
-  constant c_family    : string := "Arria V";
-  constant c_project   : string := "pci_control";
-  constant c_cores         : natural:= 1;
-  constant c_initf_name 	: string := c_project & "_stub.mif";
-  constant c_profile_name  : string := "medium_icache_debug";
-  -- projectname is standard to ensure a stub mif that prevents unwanted scanning of the bus
-  -- multiple init files for n processors are to be seperated by semicolon ';'
+  constant c_family       : string := "Arria V";
+  constant c_project      : string := "pci_control";
+  constant c_initf_name   : string := c_project & "_stub.mif";
+  constant c_profile_name : string := "medium_icache_debug";
+  constant c_cores        : natural := 1;
 
 begin
 
@@ -279,7 +277,8 @@ begin
       g_lm32_cores        => c_cores,
       g_lm32_ramsizes     => c_lm32_ramsizes/4,
       g_lm32_init_files   => f_string_list_repeat(c_initf_name, c_cores),
-      g_lm32_profiles     => f_string_list_repeat(c_profile_name, c_cores)
+      g_lm32_profiles     => f_string_list_repeat(c_profile_name, c_cores),
+      g_en_asmi           => false
     )
     port map(
       core_clk_20m_vcxo_i     => clk_20m_vcxo_i,

@@ -1,0 +1,70 @@
+digraph G {
+graph [
+name="chains123123123-compact"
+]
+a11 [label=a11];
+b11 [label=b11];
+c11 [label=c11];
+x [label=x];
+y [label=y];
+"a21
+a22" [label="a21
+a22"];
+"a31
+a32
+a33" [label="a31
+a32
+a33"];
+"b21
+b22" [label="b21
+b22"];
+"b31
+b32
+b33" [label="b31
+b32
+b33"];
+"c21
+c22" [label="c21
+c22"];
+"c31
+c32
+c33" [label="c31
+c32
+c33"];
+x->a11 ;
+a11->y ;
+x->b11 ;
+b11->y ;
+x->c11 ;
+c11->y ;
+x->"a21
+a22" ;
+"a21
+a22"->y ;
+x->"a31
+a32
+a33" ;
+"a31
+a32
+a33"->y ;
+x->"b21
+b22" ;
+"b21
+b22"->y ;
+x->"b31
+b32
+b33" ;
+"b31
+b32
+b33"->y ;
+x->"c21
+c22" ;
+"c21
+c22"->y ;
+x->"c31
+c32
+c33" ;
+"c31
+c32
+c33"->y ;
+}

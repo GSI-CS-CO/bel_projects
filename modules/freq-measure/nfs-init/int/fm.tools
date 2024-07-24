@@ -1,0 +1,8 @@
+# libraries
+
+# software
+cp -a $MOUNTPOINT/$ARCH/usr/bin/freq-measure /usr/bin/
+cp -a $MOUNTPOINT/$ARCH/usr/bin/freq-mon-simple /usr/bin/
+
+# firmware
+

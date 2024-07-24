@@ -1,0 +1,10 @@
+[Unit]
+Description = wrmil monitoring server for PRO PZU UH
+
+[Service]
+Type = simple
+Environment="DIM_DNS_NODE=asl105"
+ExecStart = b2b-analyzer int_esr
+
+[Install]
+WantedBy = multi-user.target

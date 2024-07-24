@@ -2,9 +2,10 @@
 # Note: during compile (all), PREFIX must be set to the final installation path
 # Example usage:
 #   'make clean'                                                 
-#   'make PREFIX= all'                                                (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= all'                                                    (hack: leave PREFIX empty for SCU path)
 # Example deploy:
-#   'make PREFIX= STAGING=/common/export/timing-rte/phtif deploy'     (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= STAGING=/common/export/timing-rte/phtif-dev deploy'     (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= STAGING=/common/export/timing-rte/phtif deploy'         (hack: leave PREFIX empty for SCU path)
 PREFIX      ?= /usr/local
 STAGING     ?=
 ARCH        ?= /x86_64

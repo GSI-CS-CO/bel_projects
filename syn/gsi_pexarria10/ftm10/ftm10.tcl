@@ -6,4 +6,6 @@ source ../../../ip_cores/general-cores/platform/altera/wb_pcie/arria10gx_ftm10.t
 source ../../../ip_cores/general-cores/platform/altera/networks/arria10gx/arria10gx.tcl
 source ../../../ip_cores/wr-cores/platform/altera/wr_arria10_phy/wr_arria10_ftm10_phy/wr_arria10_ftm10_phy.tcl
 source ../../../modules/lvds/arria10_ftm10/arria10_ftm10_lvds.tcl
-
+source ../../../modules/remote_update/asmi10.tcl
+source ../../../modules/wb_arria_reset/arria10_reset.tcl
+source ../../../modules/a10ts/src/hdl/a10ts_generate.tcl

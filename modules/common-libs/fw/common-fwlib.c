@@ -3,10 +3,10 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 08-Oct-2021
+ *  version : 10-Jul-2024
  *
  *  common functions used by various firmware projects
- *  
+ *
  * -------------------------------------------------------------------------------------------
  * License Agreement for this software:
  *
@@ -27,7 +27,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *
@@ -54,12 +54,14 @@
 #include "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"   // register layout ECA queue
 #include "../../../ip_cores/wr-cores/modules/wr_eca/eca_regs.h"         // register layout ECA control
 // #include "../../../ip_cores/wr-cores/modules/wr_pps_gen/pps_gen_regs.h" // useless register layout, I can't handle this wbgen stuff here
-#include "../../../ip_cores/saftlib/drivers/eca_flags.h"                // definitions for ECA queue
+#include "../../ip_cores/saftlib/src/eca_flags.h"                       // definitions for ECA queue
 #include "../../../tools/wb_slaves.h"                                   // Dietrichs hackish solution for defining register layout
 
 /* includes for this project */
 #include <common-defs.h>                                                // common definitions
 #include <common-fwlib.h>                                               // fwlib
+
+#include <common-core.c>
 
 // these routines are typically application specific
 extern void     extern_clearDiag();
@@ -74,6 +76,7 @@ volatile uint32_t *pWREp;               // WB address of WR Endpoint
 volatile uint32_t *pIOCtrl;             // WB address of IO Control
 volatile uint32_t *pMILPiggy;           // WB address of MIL device bus (MIL piggy)
 volatile uint32_t *pOLED;               // WB address of OLED (display)
+volatile uint32_t *pSbMaster;           // WB address of SCU bus master
 
 // global variables
 uint32_t *pSharedVersion;               // pointer to a "user defined" u32 register; here: publish version
@@ -94,6 +97,9 @@ uint32_t *pSharedTS0Lo;                 // pointer to a "user defined" u32 regis
 uint32_t *pSharedNTransfer;             // pointer to a "user defined" u32 register; here: # of transfers
 uint32_t *pSharedNInject;               // pointer to a "user defined" u32 register; here: # of injections within current transfer
 uint32_t *pSharedTransStat;             // pointer to a "user defined" u32 register; here: status of transfer
+uint32_t *pSharedNLate;                 // pointer to a "user defined" u32 register; here: number of messages that could not be delivered in time
+uint32_t *pSharedOffsDone;              // pointer to a "user defined" u32 register; here: offset event deadline to time when we are done [ns]
+uint32_t *pSharedComLatency;            // pointer to a "user defined" u32 register; here: latency for messages received from via ECA (tDeadline - tNow)) [ns]
 uint32_t *pSharedUsedSize;              // pointer to a "user defined" u32 register; here: size of (used) shared memory
 
 uint32_t *cpuRamExternalData4EB;        // external address (seen from host bridge) of this CPU's RAM: field for EB return values
@@ -117,7 +123,7 @@ void ebmClearSharedMem()
 uint32_t findPPSGen() //find WB address of WR PPS Gen
 {
   pPPSGen = 0x0;
-  
+
   // get Wishbone address for PPS Gen
   pPPSGen = find_device_adr(CERN, WR_PPS_GEN);
 
@@ -129,7 +135,7 @@ uint32_t findPPSGen() //find WB address of WR PPS Gen
 uint32_t findWREp() //find WB address of WR Endpoint
 {
   pWREp = 0x0;
-  
+
   pWREp = find_device_adr(WR_ENDPOINT_VENDOR, WR_ENDPOINT_PRODUCT);
 
   if (!pWREp) {DBPRINT1("common-fwlib: can't find WR Endpoint\n"); return COMMON_STATUS_ERROR;}
@@ -144,7 +150,7 @@ uint32_t findIOCtrl() // find WB address of IO Control
   pIOCtrl = find_device_adr(IO_CTRL_VENDOR, IO_CTRL_PRODUCT);
 
   if (!pIOCtrl) {DBPRINT1("common-fwlib: can't find IO Control\n"); return COMMON_STATUS_ERROR;}
-  else                                                           return COMMON_STATUS_OK;    
+  else                                                           return COMMON_STATUS_OK;
 } // findIOCtrol
 
 
@@ -155,18 +161,18 @@ uint32_t findECAQueue() // find WB address of ECA channel for LM32
 
   // stuff below needed to get WB address of ECA queue
   sdb_location ECAQ_base[ECAQMAX];
-  uint32_t ECAQidx = 0;         
-  uint32_t *tmp;                
+  uint32_t ECAQidx = 0;
+  uint32_t *tmp;
   int i;
 
-  // get Wishbone address of ECA queue 
+  // get Wishbone address of ECA queue
   // get list of ECA queues
   find_device_multi(ECAQ_base, &ECAQidx, ECAQMAX, ECA_QUEUE_SDB_VENDOR_ID, ECA_QUEUE_SDB_DEVICE_ID);
   pECAQ = 0x0;
 
   // find ECA queue connected to ECA chanel for LM32
   for (i=0; i < ECAQidx; i++) {
-    tmp = (uint32_t *)(getSdbAdr(&ECAQ_base[i]));  
+    tmp = (uint32_t *)(getSdbAdr(&ECAQ_base[i]));
     if ( *(tmp + (ECA_QUEUE_QUEUE_ID_GET >> 2)) == ECACHANNELFORLM32) pECAQ = tmp;
   }
 
@@ -178,7 +184,7 @@ uint32_t findECAQueue() // find WB address of ECA channel for LM32
 uint32_t findMILPiggy() //find WB address of MIL Piggy
 {
   pMILPiggy = 0x0;
-  
+
   // get Wishbone address for MIL Piggy
   pMILPiggy = find_device_adr(GSI, SCU_MIL);
 
@@ -190,7 +196,7 @@ uint32_t findMILPiggy() //find WB address of MIL Piggy
 uint32_t findOLED() //find WB address of OLED
 {
   pOLED = 0x0;
-  
+
   // get Wishbone address for OLED
   pOLED = find_device_adr(OLED_SDB_VENDOR_ID, OLED_SDB_DEVICE_ID);
 
@@ -198,6 +204,16 @@ uint32_t findOLED() //find WB address of OLED
   else                                                      return COMMON_STATUS_OK;
 } // findOLED
 
+uint32_t findSbMaster() //find WB address of SCU bus master
+{
+  pSbMaster = 0x0;
+
+  // get Wishbone address for SCU bus master
+  pSbMaster = find_device_adr(GSI, SCU_BUS_MASTER);
+
+  if (!pSbMaster) {DBPRINT1("common-fwlib: can't find SCU bus master\n"); return COMMON_STATUS_ERROR;}
+  else                                                      return COMMON_STATUS_OK;
+} // findSbMaster
 
 uint32_t exitActionError()
 {
@@ -207,7 +223,16 @@ uint32_t exitActionError()
 //---------------------------------------------------
 // public routines
 //---------------------------------------------------
-uint64_t fwlib_advanceTime(uint64_t t1, uint64_t t2, uint64_t Tas)
+b2bt_t fwlib_cleanB2bt(b2bt_t t_ps)
+{
+  while (t_ps.ps < -500) {t_ps.ns -= 1; t_ps.ps += 1000;}
+  while (t_ps.ps >= 500) {t_ps.ns += 1; t_ps.ps -= 1000;}
+
+  return t_ps;
+} // alignB2bt
+
+
+uint64_t fwlib_advanceTime(uint64_t t1, uint64_t t2, uint64_t Tas) // advance t2 to t > t1 [ns]
 {
   uint64_t dtns;                // approximate time interval to advance [ns]
   uint64_t dtas;                // approximate time interval to advance [as]
@@ -216,6 +241,7 @@ uint64_t fwlib_advanceTime(uint64_t t1, uint64_t t2, uint64_t Tas)
   uint64_t intervalNs;          // interval [ns]
   uint64_t tAdvanced;           // result
   uint64_t nineO = 1000000000;  // nine order of magnitude
+  uint64_t half;                // helper variable
 
   if (Tas == 0)          return 0;
   if (t2 < t1)           return 0;               // order ok ?
@@ -225,11 +251,102 @@ uint64_t fwlib_advanceTime(uint64_t t1, uint64_t t2, uint64_t Tas)
   dtas       = dtns * nineO;
   nPeriods   = (uint64_t)((double)dtas / (double)Tas) + 1;
   intervalAs = nPeriods * Tas;
-  intervalNs = (uint64_t)((double)intervalAs / (double)nineO);
+  half       = nineO >> 1;
+  intervalNs = intervalAs / nineO;
+  if (intervalAs % nineO > half) intervalNs++;
   tAdvanced  = t1 + intervalNs;
 
-  return tAdvanced;
+  return tAdvanced; // [ns]
 } //fwlib_advanceTime
+
+
+b2bt_t fwlib_advanceTimePs(b2bt_t t1_t, b2bt_t t2_t, uint64_t  T_as)
+{
+  uint64_t dt_ps;                    // approximate time interval to advance [ps]
+  uint64_t dt_as;                    // approximate time interval to advance [as]
+  uint64_t nPeriods;                 // # of periods
+  uint64_t interval_as;              // interval [as]
+  uint64_t interval_ps;              // interval [ps]
+  uint64_t interval_ns;              // inverval [ns]
+  b2bt_t   tAdvanced_t;              // result
+  uint64_t half;                     // helper variable
+  int64_t  fraction_as;              // helper variable
+  uint64_t nineO = 1000000000;       // 9 orders of magnitude
+
+  tAdvanced_t.ns  = 0;
+  tAdvanced_t.ps  = 0;
+  tAdvanced_t.dps = 0;
+
+  if (T_as == 0)                       return tAdvanced_t; // no valid RF period
+  if (t2_t.ns < t1_t.ns)               return tAdvanced_t; // order ok ?
+  if ((t2_t.ns - t1_t.ns) > nineO)     return tAdvanced_t; // not more than 1s! (~18 s max!)
+
+  dt_ps           = (t2_t.ns - t1_t.ns)*1000 + (uint64_t)(t2_t.ps - t1_t.ps);
+  dt_as           = dt_ps * 1000000;
+  nPeriods        = dt_as / T_as + 1;                      // division does an implicit 'floor': need to increment
+  interval_as     = nPeriods * T_as;
+  half            = nineO >> 1;
+  interval_ns     = interval_as / nineO;
+  fraction_as     = interval_as % nineO;
+
+  if (fraction_as > half) {                                // rounding to ns
+    interval_ns++;
+    fraction_as -= nineO;
+  } // if fraction
+  tAdvanced_t.ns  = t1_t.ns + interval_ns;
+  tAdvanced_t.ps  = t1_t.ps + fraction_as / 1000000;       // no rounding to ps
+  tAdvanced_t.dps = t1_t.dps;
+
+  return tAdvanced_t; // [ps]
+} // fwlib_advanceTimePs
+
+
+b2bt_t fwlib_tfns2tps(float t_ns)
+{
+  b2bt_t t_ps;
+
+  t_ps.ns = t_ns;
+  t_ps.ps = (t_ns - (float)(t_ps.ns)) * 1000.0;
+  t_ps    = fwlib_cleanB2bt(t_ps);
+
+  return t_ps;
+} // tfns2ps
+
+
+float fwlib_tps2tfns(b2bt_t t_ps)
+{  
+  float  tmp1, tmp2;
+  
+  tmp1 = (float)(t_ps.ns);
+  tmp2 = (float)(t_ps.ps) / 1000.0;
+
+  return tmp1 + tmp2;;
+} // fwlib_tps2tfns
+
+
+b2bt_t fwlib_tns2tps(uint64_t t_ns)
+{
+  b2bt_t t_ps;
+
+  t_ps.ns  = t_ns;
+  t_ps.ps  = 0;
+  t_ps.dps = 0;
+
+  return t_ps;
+} // tns2tps
+
+
+uint64_t fwlib_tps2tns(b2bt_t t_ps)              // time [ps]
+{
+  uint64_t t_ns;
+  b2bt_t   ts_t;
+
+  ts_t = fwlib_cleanB2bt(t_ps);                  // clean, includes rounding
+
+  t_ns = ts_t.ns;
+
+  return t_ns;
+} // tps2tns
 
 
 uint64_t fwlib_wrGetMac()  // get my own MAC
@@ -251,7 +368,7 @@ uint64_t fwlib_wrGetMac()  // get my own MAC
 uint32_t fwlib_ioCtrlSetGate(uint32_t enable, uint32_t io)  // set gate of LVDS input
 {
   uint32_t offset;
-  
+
   if ((enable != 1) && (enable != 0)) return COMMON_STATUS_OUTOFRANGE;
   if (io > 31)                        return COMMON_STATUS_OUTOFRANGE;
 
@@ -278,8 +395,8 @@ uint32_t fwlib_ebmInit(uint32_t msTimeout, uint64_t dstMac, uint32_t dstIp, uint
 
   // init ebm
   ebm_init();
-  ebm_config_if(DESTINATION,  dstMac    , dstIp,                       0xebd0); 
-  ebm_config_if(SOURCE, fwlib_wrGetMac(), *(pEbCfg + (EBC_SRC_IP>>2)), 0xebd0); 
+  ebm_config_if(DESTINATION,  dstMac    , dstIp,                       0xebd0);
+  ebm_config_if(SOURCE, fwlib_wrGetMac(), *(pEbCfg + (EBC_SRC_IP>>2)), 0xebd0);
   ebm_config_meta(1500, 0x0, eb_ops);
   ebm_clr();
 
@@ -300,7 +417,7 @@ uint32_t fwlib_ebmWriteN(uint32_t address, uint32_t *data, uint32_t n32BitWords)
   for (i=0; i<n32BitWords; i++) ebm_op(address + i*4, data[i], EBM_WRITE);  // put data into EB cycle
   if (n32BitWords == 1)         ebm_op(address      , data[0], EBM_WRITE);  // workaround runt frame issue
   ebm_flush();                                                              // commit EB cycle via the network
-  
+
   return COMMON_STATUS_OK;
 } // fwlib_ebmWriteN
 
@@ -326,8 +443,8 @@ uint32_t fwlib_ebmReadN(uint32_t msTimeout, uint32_t address, uint32_t *data, ui
   for (i=0; i<n32BitWords; i++) ebm_op(address + i*4, (uint32_t)(&(cpuRamExternalData4EB[i])), EBM_READ);            // put data into EB cycle
                                 ebm_op(address      , (uint32_t)(&(cpuRamExternalData4EB[handshakeIdx])), EBM_READ); // handshake data
   ebm_flush();                                                                                       // commit EB cycle via the network
-  
-  timeoutT = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000;                                                     
+
+  timeoutT = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000;
   while (getSysTime() < timeoutT) {                                                                  // wait for received data until timeout
     if (pSharedData4EB[handshakeIdx] != COMMON_EB_HACKISH) {                                         // hackish solution to determine if a reply value has been received
       for (i=0; i<n32BitWords; i++) data[i] = pSharedData4EB[i];
@@ -336,7 +453,7 @@ uint32_t fwlib_ebmReadN(uint32_t msTimeout, uint32_t address, uint32_t *data, ui
     }
   } //while not timed out
 
-  return COMMON_STATUS_EBREADTIMEDOUT; 
+  return COMMON_STATUS_EBREADTIMEDOUT;
 } //fwlib_ebmReadN
 
 
@@ -357,13 +474,13 @@ uint64_t fwlib_buildEvtidV1(uint32_t gid, uint32_t evtno, uint32_t flags, uint32
 // fwlib_buildEvtidV1
 
 
-uint32_t fwlib_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uint32_t flagForceLate)  
+uint32_t fwlib_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uint32_t tef, uint32_t flagForceLate)
 {
-  uint32_t res, tef;                   // temporary variables for bit shifting etc
+  uint32_t res;                        // temporary variables for bit shifting etc
   uint32_t deadlineLo, deadlineHi;
   uint32_t idLo, idHi;
   uint32_t paramLo, paramHi;
-  
+
   uint32_t status;                     // return value
 
   // check deadline
@@ -379,39 +496,39 @@ uint32_t fwlib_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uin
   // pack Ethernet frame with message data
   idHi       = (uint32_t)((evtId >> 32)    & 0xffffffff);
   idLo       = (uint32_t)(evtId            & 0xffffffff);
-  tef     = 0x00000000;
+  // tef already in proper format
   res     = 0x00000000;
   paramHi    = (uint32_t)((param >> 32)    & 0xffffffff);
   paramLo    = (uint32_t)(param            & 0xffffffff);
   deadlineHi = (uint32_t)((deadline >> 32) & 0xffffffff);
   deadlineLo = (uint32_t)(deadline         & 0xffffffff);
-          
+
   // pack timing message
-  atomic_on();                                  
-  ebm_op(COMMON_ECA_ADDRESS, idHi,       EBM_WRITE);             
-  ebm_op(COMMON_ECA_ADDRESS, idLo,       EBM_WRITE);             
+  atomic_on();
+  ebm_op(COMMON_ECA_ADDRESS, idHi,       EBM_WRITE);
+  ebm_op(COMMON_ECA_ADDRESS, idLo,       EBM_WRITE);
   ebm_op(COMMON_ECA_ADDRESS, paramHi,    EBM_WRITE);
   ebm_op(COMMON_ECA_ADDRESS, paramLo,    EBM_WRITE);
-  ebm_op(COMMON_ECA_ADDRESS, tef,        EBM_WRITE);
   ebm_op(COMMON_ECA_ADDRESS, res,        EBM_WRITE);
+  ebm_op(COMMON_ECA_ADDRESS, tef,        EBM_WRITE);
   ebm_op(COMMON_ECA_ADDRESS, deadlineHi, EBM_WRITE);
   ebm_op(COMMON_ECA_ADDRESS, deadlineLo, EBM_WRITE);
   atomic_off();
-          
+
   // send timing message
   ebm_flush();
-          
+
   return status;
 } //fwlib_ebmWriteTM
 
 
-uint32_t fwlib_ecaWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uint32_t flagForceLate)  
+uint32_t fwlib_ecaWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uint32_t tef, uint32_t flagForceLate)
 {
-  uint32_t res, tef;                   // temporary variables for bit shifting etc
+  uint32_t res;                        // temporary variables for bit shifting etc
   uint32_t deadlineLo, deadlineHi;
   uint32_t idLo, idHi;
   uint32_t paramLo, paramHi;
-  
+
   uint32_t status;                     // return value
 
   // check deadline
@@ -424,7 +541,7 @@ uint32_t fwlib_ecaWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uin
   // pack 32bit words of message data
   idHi       = (uint32_t)((evtId >> 32)    & 0xffffffff);
   idLo       = (uint32_t)(evtId            & 0xffffffff);
-  tef     = 0x00000000;
+  // tef already in proper format
   res     = 0x00000000;
   paramHi    = (uint32_t)((param >> 32)    & 0xffffffff);
   paramLo    = (uint32_t)(param            & 0xffffffff);
@@ -432,17 +549,17 @@ uint32_t fwlib_ecaWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uin
   deadlineLo = (uint32_t)(deadline         & 0xffffffff);
 
   // write timing message to ECA input
-  atomic_on();                                  
+  atomic_on();
   *pEca = idHi;
   *pEca = idLo;
   *pEca = paramHi;
   *pEca = paramLo;
-  *pEca = tef;
   *pEca = res;
+  *pEca = tef;
   *pEca = deadlineHi;
   *pEca = deadlineLo;
   atomic_off();
-          
+
   return status;
 } //fwlib_ecaWriteTM
 
@@ -463,7 +580,7 @@ void fwlib_publishSharedSize(uint32_t size)
 {
   *pSharedUsedSize = size;
   DBPRINT2("common-fwlib: %u bytes of shared mem are actually used\n", size);
-  
+
 } // fwlib_publishSharedInfo
 
 
@@ -473,7 +590,7 @@ void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t shared
   uint32_t *pShared;
   uint32_t commonSharedSize;
   int      i;
-  
+
   // set pointer to shared memory
   pShared                 = startShared;
 
@@ -498,10 +615,13 @@ void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t shared
   pSharedTS0Hi            = (uint32_t *)(pShared + (COMMON_SHARED_TS0HI >> 2));
   pSharedTS0Lo            = (uint32_t *)(pShared + (COMMON_SHARED_TS0LO >> 2));
   pSharedNTransfer        = (uint32_t *)(pShared + (COMMON_SHARED_NTRANSFER >> 2));
-  pSharedNInject          = (uint32_t *)(pShared + (COMMON_SHARED_NINJECT >> 2));  
+  pSharedNInject          = (uint32_t *)(pShared + (COMMON_SHARED_NINJECT >> 2));
   pSharedTransStat        = (uint32_t *)(pShared + (COMMON_SHARED_TRANSSTAT >> 2));
+  pSharedNLate            = (uint32_t *)(pShared + (COMMON_SHARED_NLATE >> 2));
+  pSharedOffsDone         = (uint32_t *)(pShared + (COMMON_SHARED_OFFSDONE >> 2));
+  pSharedComLatency       = (uint32_t *)(pShared + (COMMON_SHARED_COMLATENCY >> 2));
   pSharedUsedSize         = (uint32_t *)(pShared + (COMMON_SHARED_USEDSIZE >> 2));
-    
+
   // clear shared mem
   i = 0;
   pSharedTemp        = (uint32_t *)(pShared + (COMMON_SHARED_BEGIN >> 2 ));
@@ -523,7 +643,7 @@ void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t shared
 
   // set initial values;
   ebmClearSharedMem();
-  *pSharedVersion      = fwVersion; // of all the shared variabes, only VERSION is a constant. Set it now!
+  *pSharedVersion      = fwVersion; // of all the shared variables, only VERSION is a constant. Set it now!
   *pSharedNBadStatus   = 0;
   *pSharedNBadState    = 0;
   flagRecover          = 0;
@@ -535,7 +655,7 @@ void fwlib_printOLED(char *chars)
   uint32_t i;
 
   if (!pOLED) return;                         // no OLED: just return
-  
+
   for (i=0;i<strlen(chars);i++) *(pOLED + (OLED_UART_OWR >> 2)) = chars[i];
 } // fwlib_printOLED
 
@@ -548,26 +668,33 @@ void fwlib_clearOLED()
 } // fwlib_clearOLED
 
 
-uint32_t fwlib_wait4ECAEvent(uint32_t usTimeout, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *tef, uint32_t *isLate, uint32_t *isEarly, uint32_t *isConflict, uint32_t *isDelayed)  // 1. query ECA for actions, 2. trigger activity
+uint32_t fwlib_wait4ECAEvent(uint32_t timeout_us, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *tef, uint32_t *isLate, uint32_t *isEarly, uint32_t *isConflict, uint32_t *isDelayed)  // 1. query ECA for actions, 2. trigger activity
 {
   uint32_t *pECAFlag;           // address of ECA flag
-  uint32_t evtIdHigh;           // high 32bit of eventID   
-  uint32_t evtIdLow;            // low 32bit of eventID    
-  uint32_t evtDeadlHigh;        // high 32bit of deadline  
-  uint32_t evtDeadlLow;         // low 32bit of deadline   
+  uint32_t ecaFlag;             // ECA flag
+  uint32_t evtIdHigh;           // high 32bit of eventID
+  uint32_t evtIdLow;            // low 32bit of eventID
+  uint32_t evtDeadlHigh;        // high 32bit of deadline
+  uint32_t evtDeadlLow;         // low 32bit of deadline
   uint32_t evtParamHigh;        // high 32 bit of parameter field
   uint32_t evtParamLow ;        // low 32 bit of parameter field
-  uint32_t actTag;              // tag of action           
+  uint32_t actTag;              // tag of action
   uint32_t nextAction;          // describes what to do next
   uint64_t timeoutT;            // when to time out
+  uint64_t timeout;             // timeout [ns]
 
 
   pECAFlag    = (uint32_t *)(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));   // address of ECA flag
 
-  timeoutT    = getSysTime() + (uint64_t)usTimeout * (uint64_t)1000 + (uint64_t)1000; 
-  
+  // conversion from ns -> us: use shift by 10 bits instead of multiplication by '1000'
+  // reduces time per read from ~6.5 us to ~4.8 us
+  //timeout     = ((uint64_t)timeout_us + 1) * 1000;
+  timeout     = ((uint64_t)timeout_us + 1) << 10;
+  timeoutT    = getSysTime() + timeout;
+
   while (getSysTime() < timeoutT) {
-    if (*pECAFlag & (0x0001 << ECA_VALID)) {                        // if ECA data is valid
+    ecaFlag = *pECAFlag;                                            // we'll need this value more than once per iteration
+    if (ecaFlag & (0x0001 << ECA_VALID)) {                          // if ECA data is valid
 
       // read data
       evtIdHigh    = *(pECAQ + (ECA_QUEUE_EVENT_ID_HI_GET >> 2));
@@ -578,21 +705,21 @@ uint32_t fwlib_wait4ECAEvent(uint32_t usTimeout, uint64_t *deadline, uint64_t *e
       evtParamHigh = *(pECAQ + (ECA_QUEUE_PARAM_HI_GET >> 2));
       evtParamLow  = *(pECAQ + (ECA_QUEUE_PARAM_LO_GET >> 2));
       *tef         = *(pECAQ + (ECA_QUEUE_TEF_GET >> 2));
-      *isLate      = *pECAFlag & (0x0001 << ECA_LATE);
-      *isEarly     = *pECAFlag & (0x0001 << ECA_EARLY);
-      *isConflict  = *pECAFlag & (0x0001 << ECA_CONFLICT);
-      *isDelayed   = *pECAFlag & (0x0001 << ECA_DELAYED);
-      
+
+      *isLate      = ecaFlag & (0x0001 << ECA_LATE);
+      *isEarly     = ecaFlag & (0x0001 << ECA_EARLY);
+      *isConflict  = ecaFlag & (0x0001 << ECA_CONFLICT);
+      *isDelayed   = ecaFlag & (0x0001 << ECA_DELAYED);
       *deadline    = ((uint64_t)evtDeadlHigh << 32) + (uint64_t)evtDeadlLow;
       *evtId       = ((uint64_t)evtIdHigh    << 32) + (uint64_t)evtIdLow;
       *param       = ((uint64_t)evtParamHigh << 32) + (uint64_t)evtParamLow;
-      
+
       // pop action from channel
       *(pECAQ + (ECA_QUEUE_POP_OWR >> 2)) = 0x1;
 
       // here: do s.th. according to tag
       nextAction = actTag;
-    
+
       return nextAction;
     } // if data is valid
   } // while not timed out
@@ -602,13 +729,13 @@ uint32_t fwlib_wait4ECAEvent(uint32_t usTimeout, uint64_t *deadline, uint64_t *e
   *param    = 0x0;
   *tef      = 0x0;
   *isLate   = 0x0;
-  
+
   return COMMON_ECADO_TIMEOUT;
 } // fwlib_wait4ECAEvent
 
 
 // wait for MIL event or timeout
-uint32_t fwlib_wait4MILEvent(uint32_t usTimeout, uint32_t *evtData, uint32_t *evtCode, uint32_t *virtAcc, uint32_t *validEvtCodes, uint32_t nValidEvtCodes) 
+uint32_t fwlib_wait4MILEvent(uint32_t usTimeout, uint32_t *evtData, uint32_t *evtCode, uint32_t *virtAcc, uint32_t *validEvtCodes, uint32_t nValidEvtCodes)
 {
   uint32_t evtRec;             // one MIL event
   uint32_t evtCodeRec;         // "event number"
@@ -616,17 +743,18 @@ uint32_t fwlib_wait4MILEvent(uint32_t usTimeout, uint32_t *evtData, uint32_t *ev
   uint32_t virtAccRec;         // "virt Acc"
   uint64_t timeoutT;           // when to time out
   int      valid;              // evt is valid
-  int      i;                
+  int      i;
 
   timeoutT    = getSysTime() + (uint64_t)usTimeout * (uint64_t)1000;
-  *virtAcc    = 0xffff;           
+  *virtAcc    = 0xffff;
   *evtData    = 0xffff;
   *evtCode    = 0xffff;
-  valid       = 0;
+  if (nValidEvtCodes == 0) valid = 1;           // just return with the first element read from FIFO
+  else                     valid = 0;           // only return if element read from FIFO matches one of the validEvtcodes
 
   while(getSysTime() < timeoutT) {              // while not timed out...
     while (fifoNotemptyEvtMil(pMILPiggy)) {     // while fifo contains data
-      popFifoEvtMil(pMILPiggy, &evtRec);    
+      popFifoEvtMil(pMILPiggy, &evtRec);
       evtCodeRec  = evtRec & 0x000000ff;        // extract event code
       virtAccRec  = (evtRec >> 8)  & 0x0f;      // extract virtual accelerator
       evtDataRec  = (evtRec >> 12) & 0x0f;      // extract event data
@@ -645,7 +773,7 @@ uint32_t fwlib_wait4MILEvent(uint32_t usTimeout, uint32_t *evtData, uint32_t *ev
     asm("nop");                                 // wait a bit...
   } // while not timed out
 
-  return COMMON_STATUS_TIMEDOUT;  
+  return COMMON_STATUS_TIMEDOUT;
 } // fwlib_wait4MILEvent
 
 
@@ -665,12 +793,12 @@ void fwlib_initCmds() // init stuff for handling commands, trivial for now, will
   *pSharedCmd     = 0x0;
 } // fwlib_initCmds
 
- 
+
 void fwlib_clearDiag()// clears all statistics
 {
   uint64_t now;
 
-  extern_clearDiag(); 
+  extern_clearDiag();
 
   nBadStatus = 0;
   nBadState  = 0;
@@ -686,20 +814,21 @@ uint32_t fwlib_doActionS0()
   uint32_t status = COMMON_STATUS_OK;
   uint64_t now;
 
-  if (findECAQueue() != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR; 
+  if (findECAQueue() != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
   if (findPPSGen()   != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
   if (findWREp()     != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
   if (findIOCtrl()   != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
-  findOLED();       // ignore error; not every TR has a MIL piggy
+  findOLED();       // ignore error; not every TR has OLED device
   findMILPiggy();   // ignore error; not every TR has a MIL piggy
+  findSbMaster();   // ignore error; not every TR has SCU bus master
 
   now           = getSysTime();
   *pSharedTS0Hi = (uint32_t)(now >> 32);
   *pSharedTS0Lo = (uint32_t)now & 0xffffffff;
 
   fwlib_publishNICData();
-  
-  fwlib_initCmds();                    
+
+  fwlib_initCmds();
 
   return status;
 } // fwlib_doActionS0
@@ -716,12 +845,16 @@ volatile uint32_t* fwlib_getOLED()
   return pOLED;
 } // fwlib_getMilOLED
 
+volatile uint32_t* fwlib_getSbMaster()
+{
+  return pSbMaster;
+} // fwlib_getSbMaster
 
 void fwlib_publishNICData()
 {
   uint64_t mac;
   uint32_t ip;
-  
+
   mac = fwlib_wrGetMac(pWREp);
   *pSharedMacHi = (uint32_t)(mac >> 32) & 0xffff;
   *pSharedMacLo = (uint32_t)(mac        & 0xffffffff);
@@ -733,7 +866,7 @@ void fwlib_publishNICData()
 
 void fwlib_publishState(uint32_t state)
 {
-  *pSharedState = state; 
+  *pSharedState = state;
 } // fwlib_publishState
 
 
@@ -746,18 +879,21 @@ void fwlib_publishStatusArray(uint64_t statusArray)
 } // fwlib_publishStatusArray
 
 
-void fwlib_publishTransferStatus(uint32_t nTransfer, uint32_t nInject, uint32_t transStat)
+void fwlib_publishTransferStatus(uint32_t nTransfer, uint32_t nInject, uint32_t transStat, uint32_t nLate, uint32_t offsDone, uint32_t comLatency)
 {
-  *pSharedNTransfer = nTransfer;
-  *pSharedNInject   = nInject;
-  *pSharedTransStat = transStat;
+  *pSharedNTransfer  = nTransfer;
+  *pSharedNInject    = nInject;
+  *pSharedTransStat  = transStat;
+  *pSharedNLate      = nLate;
+  *pSharedOffsDone   = offsDone;
+  *pSharedComLatency = comLatency;
 } // fwlib_publishTransferStatus
 
 
 void fwlib_incBadStatusCnt()
 {
   nBadStatus++;
-  
+
   *pSharedNBadStatus = nBadStatus;
 } // fwlib_incBadStatusCnt
 
@@ -765,7 +901,7 @@ void fwlib_incBadStatusCnt()
 void fwlib_incBadStateCnt()
 {
   nBadState++;
-  
+
   *pSharedNBadState = nBadState;
 } // fwlib_incBadStateCnt
 
@@ -804,9 +940,9 @@ void fwlib_cmdHandler(uint32_t *reqState, uint32_t *cmd) // handle commands from
       default:
         DBPRINT3("common-fwlib: common_cmdHandler received unknown command '0x%08x'\n", *cmd);
         break;
-    } // switch 
-    *pSharedCmd = 0x0;                       // reset cmd value in shared memory 
-  } // if command 
+    } // switch
+    *pSharedCmd = 0x0;                       // reset cmd value in shared memory
+  } // if command
 } // fwlib_cmdHandler
 
 
@@ -814,7 +950,7 @@ uint32_t fwlib_changeState(uint32_t *actState, uint32_t *reqState, uint32_t actS
 {
   uint64_t statusTransition = COMMON_STATUS_OK;
   uint32_t status;
-  uint32_t nextState;                   
+  uint32_t nextState;
 
   // if something severe happened, perform implicitely allowed transition to ERROR or FATAL states
   // else                        , handle explicitcely allowed transitions
@@ -824,7 +960,7 @@ uint32_t fwlib_changeState(uint32_t *actState, uint32_t *reqState, uint32_t actS
     nextState = *actState;                       // per default: remain in actual state without exit or entry action
     switch (*actState) {                         // check for allowed transitions: 1. determine next state, 2. perform exit or entry actions if required
       case COMMON_STATE_S0:
-        if      (*reqState == COMMON_STATE_IDLE)       {                                                    nextState = *reqState;}      
+        if      (*reqState == COMMON_STATE_IDLE)       {                                                    nextState = *reqState;}
         break;
       case COMMON_STATE_IDLE:
         if      (*reqState == COMMON_STATE_CONFIGURED) {statusTransition = extern_entryActionConfigured();  nextState = *reqState;}
@@ -842,24 +978,24 @@ uint32_t fwlib_changeState(uint32_t *actState, uint32_t *reqState, uint32_t actS
       case COMMON_STATE_ERROR:
         if      (*reqState == COMMON_STATE_IDLE)       {statusTransition = exitActionError();               nextState = *reqState;}
         break;
-      default: 
+      default:
         nextState = COMMON_STATE_S0;
         break;
     } // switch actState
   }  // else something severe happened
-  
+
   // if the transition failed, transit to error state (except we are already in FATAL state)
   if ((statusTransition != COMMON_STATUS_OK) && (nextState != COMMON_STATE_FATAL)) nextState = COMMON_STATE_ERROR;
 
   // if the state changes
-  if (*actState != nextState) {                   
+  if (*actState != nextState) {
     pp_printf("common-fwlib: changed to state %u\n", (unsigned int)nextState);
-    *actState = nextState;                      
+    *actState = nextState;
     status = statusTransition;
   } // if state change
   else  status = actStatus;
 
-  *reqState = COMMON_STATE_UNKNOWN;              // reset requested state (= no change state requested)  
+  *reqState = COMMON_STATE_UNKNOWN;              // reset requested state (= no change state requested)
 
   return status;
 } //fwlib_changeState
@@ -869,7 +1005,7 @@ uint32_t fwlib_changeState(uint32_t *actState, uint32_t *reqState, uint32_t actS
 uint32_t fwlib_doActionState(uint32_t *reqState, uint32_t actState, uint32_t status)
 {
   int j;
-   
+
   switch(actState) {                                                   // state specific do actions
     case COMMON_STATE_S0 :
       status = fwlib_doActionS0();                                     // important initialization that must succeed!
@@ -878,7 +1014,7 @@ uint32_t fwlib_doActionState(uint32_t *reqState, uint32_t actState, uint32_t sta
       break;
     case COMMON_STATE_ERROR :
       flagRecover = 1;                                                 // start autorecovery
-      break; 
+      break;
     case COMMON_STATE_FATAL :
       fwlib_publishState(actState);
       pp_printf("common-fwlib: a FATAL error has occured. Good bye.\n");
@@ -901,7 +1037,7 @@ void fwlib_doAutoRecovery(uint32_t actState, uint32_t *reqState)
     case COMMON_STATE_ERROR :
       DBPRINT3("common-fwlib: attempting autorecovery ERROR -> IDLE\n");
       uwait(10000000);
-      *reqState = COMMON_STATE_IDLE; 
+      *reqState = COMMON_STATE_IDLE;
       break;
     case COMMON_STATE_IDLE :
       DBPRINT3("common-fwlib: attempting autorecovery IDLE -> CONFIGURED\n");
@@ -918,3 +1054,15 @@ void fwlib_doAutoRecovery(uint32_t actState, uint32_t *reqState)
       break;
     } // switch actState
 } // fwlib_doAutoRecovery
+
+
+uint16_t fwlib_float2half(float f)
+{
+  return comcore_float2half(f);
+} // fwlib_float2half
+
+
+float fwlib_half2float(uint16_t h)
+{
+  return comcore_half2float(h);
+} // fwlib_half2float

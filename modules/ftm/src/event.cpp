@@ -53,6 +53,33 @@ void Switch::deserialise(uint8_t* b) {
   Event::deserialise(b);
 }
 
+void StartThread::deserialise(uint8_t* b) {
+  Event::deserialise(b);
+  this->setStartOffs(writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[STARTTHREAD_STARTOFFS]));
+//
+  this->setThread(writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[STARTTHREAD_THR]));
+}
+
+void StartThread::serialise(const vAdr &va, uint8_t* b) const {
+  Event::serialise(va, b);
+  writeLeNumberToBeBytes(b + (ptrdiff_t)STARTTHREAD_STARTOFFS, this->getStartOffs());
+  //writeLeNumberToBeBytes(b + (ptrdiff_t)STARTTHREAD_CPU ,  va[ADR_ORIGIN_CPU]);
+  writeLeNumberToBeBytes(b + (ptrdiff_t)STARTTHREAD_THR,  this->getThread());
+}
+
+void Origin::serialise(const vAdr &va, uint8_t* b) const {
+  Event::serialise(va, b);
+  writeLeNumberToBeBytes(b + (ptrdiff_t)ORIGIN_DEST, va[ADR_ORIGIN_DEST]);
+  writeLeNumberToBeBytes(b + (ptrdiff_t)ORIGIN_CPU,  va[ADR_ORIGIN_CPU]);
+  writeLeNumberToBeBytes(b + (ptrdiff_t)ORIGIN_THR,  this->getThread());
+}
+
+void Origin::deserialise(uint8_t* b) {
+  Event::deserialise(b);
+  this->setThread(writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[ORIGIN_THR]));
+}
+
+
 void Command::deserialise(uint8_t* b)   {
   Event::deserialise(b);
   this->tValid  = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[CMD_VALID_TIME]);
@@ -146,7 +173,34 @@ void Switch::show(uint32_t cnt, const char* prefix) const {
   else p = (char*)prefix;
   printf("%s***------- %3u -------\n", p, cnt);
   printf("%s*** Switch @ %llu, ", p, (long long unsigned int)this->tOffs);
-}  
+}
+
+
+void Origin::show(void) const {
+  Origin::show(0, "");
+}
+
+void Origin::show(uint32_t cnt, const char* prefix) const {
+  char* p;
+  if (prefix == nullptr) p = (char*)"";
+  else p = (char*)prefix;
+  printf("%s***------- %3u -------\n", p, cnt);
+  printf("%s*** Origin @ %llu, ", p, (long long unsigned int)this->tOffs);
+  printf("%s*** Thr @ %u, ", p, (unsigned int)this->getThread());
+}    
+
+void StartThread::show(void) const {
+  StartThread::show(0, "");
+}
+
+void StartThread::show(uint32_t cnt, const char* prefix) const {
+  char* p;
+  if (prefix == nullptr) p = (char*)"";
+  else p = (char*)prefix;
+  printf("%s***------- %3u -------\n", p, cnt);
+  printf("%s*** Origin @ %llu, ", p, (long long unsigned int)this->tOffs);
+  printf("%s*** Thr @ %u, ", p, (unsigned int)this->getThread());
+} 
 
 void Command::show(void) const {
   Command::show(0, "");
@@ -159,6 +213,7 @@ void Command::show(uint32_t cnt, const char* prefix) const {
   printf("%s***------- %3u -------\n", p, cnt);
   printf("%s*** Command   @ %llu, ", p, (long long unsigned int)this->tOffs);
   printf("%sValid @ %llu, ", p, (long long unsigned int)this->tValid);
+  printf("%sact @ 0x%08x, ", p, (unsigned int)this->act);
 }
 
 void Flush::show(void) const {
