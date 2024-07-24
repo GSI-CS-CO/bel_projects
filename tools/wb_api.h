@@ -11,7 +11,7 @@
 //            -- Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
 //  version : 21-Jun-2023
 //
-#define WB_API_VERSION "0.16.0"
+#define WB_API_VERSION "0.17.0"
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API.
 //
@@ -211,7 +211,8 @@ eb_status_t wb_1wire_get_temp(eb_device_t device,              // EB device
 // reset the FPGA, reload new image from flash
 eb_status_t wb_wr_reset(eb_device_t device,                    // EB device
                         int devIndex,                          // 0,1,2... - there may be more than 1 device on the WB bus
-                        uint32_t value                         // value to be written to the reset controller
+                        uint32_t value,                        // value to be written to the reset controller
+                        int flagForce                          // 1: force reset even with incompatible gateware; 0: don't force reset
                         );
 
 // disable or enable the watchdog for automated FPGA reset

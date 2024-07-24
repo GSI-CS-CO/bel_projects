@@ -3,7 +3,7 @@
 //
 //  created : Apr 10, 2013
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 22-Jun-2023
+//  version : 24-Jul-2024
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API,
 // but only a temporary solution.
@@ -833,7 +833,7 @@ eb_status_t wb_1wire_get_temp(eb_device_t device, int devIndex, unsigned int bus
 } // wb_1wire_get_temp
 
 
-eb_status_t wb_wr_reset(eb_device_t device, int devIndex, uint32_t value)
+eb_status_t wb_wr_reset(eb_device_t device, int devIndex, uint32_t value, int flagForce)
 {
   eb_data_t    data;
   eb_address_t address;
@@ -844,7 +844,9 @@ eb_status_t wb_wr_reset(eb_device_t device, int devIndex, uint32_t value)
   return EB_OK;
 #endif
 
-  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR, devIndex, &reset_addr)) != EB_OK) return status;
+  status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR, devIndex, &reset_addr);
+  if ((status != EB_OK)  && (status != EB_ABI)) return status;
+  if ((status == EB_ABI) && !flagForce)         return status;
 
   address = reset_addr + FPGA_RESET_RESET;
   data    = (eb_data_t)value;
