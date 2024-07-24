@@ -269,11 +269,11 @@ Solution: In case a simple "make" does not fix this:
 make hdlmake_install
 ```
 
-#### Tool hdlmake not found (Python 2.7)
+#### Tool hdlmake not found (for both Python 2.7 & Python 3.x)
 
 Error: /bin/sh: 1: hdlmake: not found
 
-Solution: You should run "make" to install hdlmake locally. In case you're still using Python 2.7 you have to adjust your PATH variable:
+Solution: You should run "make" to install hdlmake locally and adjust your PATH variable:
 
 ```
 export PATH=$PATH:$HOME/.local/bin
