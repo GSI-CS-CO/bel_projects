@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 02-Jun-2021
+ *  version : 25-Jul-2024
  *
  * Command-line interface for resetting a FPGA. This forces a restart using the image stored
  * in the local flash of the timing receiver.
@@ -36,7 +36,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 01-December-2017
  ********************************************************************************************/
-#define EBRESET_VERSION "1.3.0"
+#define EBRESET_VERSION "1.3.1"
 
 // standard includes
 #include <unistd.h> // getopt
@@ -71,6 +71,8 @@ static void help(void) {
   fprintf(stderr, "\n");
   fprintf(stderr, "  -e               display etherbone version\n");
   fprintf(stderr, "  -p<t>            after FPGA reset, wait for the specified time [s] and probe device\n");
+  fprintf(stderr, "  -f               force 'fpgareset' of FPGA with incompatible FPGA gateware\n");
+  fprintf(stderr, "                   use the 'force' option at your own risk: this might brick your device\n");
   fprintf(stderr, "  -h               display this help and exit\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "  wddisable        disables the watchdog (preventing automated FPGA reset permanently)\n");
@@ -104,12 +106,13 @@ int main(int argc, char** argv) {
 
   const char* devName;
   const char* command;
-  int         cmdExecuted=0;
+  int         cmdExecuted     = 0;
 
-  int         getEBVersion=0;
-  int         probeAfterReset=0;
-  int         waitTime=1;
-  int         exitCode=0;
+  int         getEBVersion    = 0;
+  int         flagForce       = 0;
+  int         probeAfterReset = 0;
+  int         waitTime        = 1;
+  int         exitCode        = 0;
   uint32_t    nCPU;
   uint64_t    i;
 
@@ -121,29 +124,32 @@ int main(int argc, char** argv) {
 
   program = argv[0];
 
-  while ((opt = getopt(argc, argv, "p:eh")) != -1) {
+  while ((opt = getopt(argc, argv, "p:feh")) != -1) {
     switch (opt) {
-    case 'p' :
-      probeAfterReset=1;
-      waitTime = strtol(optarg, &tail, 0);
-      if (*tail != 0) {
-        fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg);
-        exit(1);
-      } // if *tail
-      break;
-    case 'e':
-      getEBVersion=1;
-      break;
-    case 'h':
-      help();
-      return 0;
+      case 'p' :
+        probeAfterReset=1;
+        waitTime = strtol(optarg, &tail, 0);
+        if (*tail != 0) {
+          fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg);
+          exit(1);
+        } // if *tail
+        break;
+      case 'e':
+        getEBVersion = 1;
+        break;
+      case 'f':
+        flagForce = 1;
+        break;
+      case 'h':
+        help();
+        return 0;
       case ':':
       case '?':
         error = 1;
-      break;
-    default:
-      fprintf(stderr, "%s: bad getopt result\n", program);
-      return 1;
+        break;
+      default:
+        fprintf(stderr, "%s: bad getopt result\n", program);
+        return 1;
     } // switch opt
   } // while opt
 
@@ -186,8 +192,8 @@ int main(int argc, char** argv) {
       cmdExecuted = 1;
 
       // depending on the device, the etherbone cycle either completes or times out
-      status = wb_wr_reset(device, devIndex, 0xdeadbeef);
-      if ((status != EB_TIMEOUT) && (status != EB_OK)) die("RESET FPGA", status);
+      status = wb_wr_reset(device, devIndex, 0xdeadbeef, flagForce);
+      if ((status != EB_TIMEOUT) && (status != EB_OK) && (status != EB_ABI)) die("RESET FPGA", status);
 
       if (probeAfterReset) {
         //close, wait and reopen socket, try to read a property (here: ip) from the device
