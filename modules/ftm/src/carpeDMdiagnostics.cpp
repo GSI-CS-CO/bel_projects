@@ -10,6 +10,9 @@
 #include <random>
 
 #include "common.h"
+#include "log.h"
+#include <locale>
+#include <codecvt>
 
 #include "carpeDMimpl.h"
 #include "minicommand.h"
@@ -275,7 +278,7 @@ std::string& CarpeDM::CarpeDMimpl::getRawQReport(const std::string& blockName, s
     uint32_t wrIdxs = boost::dynamic_pointer_cast<Block>(g[x->v].np)->getWrIdxs();
     uint32_t rdIdxs = boost::dynamic_pointer_cast<Block>(g[x->v].np)->getRdIdxs();
 
-    if (verbose) sLog << "Check for orphaned commands is scanning Queue @ " << blockName << std::endl;
+    log<VERBOSE>(L"Check for orphaned commands is scanning Queue @ %1%") % blockName.c_str();
 
     for (uint8_t prio = PRIO_LO; prio <= PRIO_IL; prio++) {
 
@@ -315,7 +318,7 @@ std::string& CarpeDM::CarpeDMimpl::getRawQReport(const std::string& blockName, s
       if (pendingCnt) {for(uint8_t pidx = rdIdx; pidx < (rdIdx + pendingCnt); pidx++) {pendingIdx.insert( pidx & Q_IDX_MAX_MSK);}}
 
 
-      if (verbose) sLog << "Prio " << (int)prio << std::endl;
+      log<VERBOSE>(L"Prio ") % (int)prio;
 
       //find buffers of all non empty slots
       for (uint8_t i = 0; i <= Q_IDX_MAX_MSK; i++) {
@@ -370,12 +373,12 @@ std::string& CarpeDM::CarpeDMimpl::getRawQReport(const std::string& blockName, s
                                   sDst = g[dst->v].name;
                                   for (auto& itOrphan : futureOrphan) {
                                     if (sDst == itOrphan) {
-                                      if (verbose) sLog << "found orphaned command pointing to " << itOrphan << " in slot " << (int)idx << std::endl;
+                                      log<VERBOSE>(L"found orphaned command pointing to %1% in slot %2%") % itOrphan.c_str() % (int)idx;
                                       qe.orphaned = true;
                                       break;}
                                   }
                                 } catch (...) {
-                                  if (verbose) sLog << "found orphaned command pointing to unknown destination (#" << std::dec << (int)dstCpu << " 0x" << std::hex << dstAdr << std::dec << " in slot " << (int)idx << std::endl;
+                                  log<VERBOSE>(L"found orphaned command pointing to unknown destination (#%1% 0x%2$#08x in slot %3%") % (int)dstCpu % dstAdr % (int)idx;
                                   sDst = DotStr::Misc::sUndefined;
                                   qe.orphaned = true;
                                 }
@@ -410,12 +413,12 @@ std::string& CarpeDM::CarpeDMimpl::getRawQReport(const std::string& blockName, s
                                   sDst = g[dst->v].name;
                                   for (auto& itOrphan : futureOrphan) {
                                     if (sDst == itOrphan) {
-                                      if (verbose) sLog << "found orphaned command pointing to " << itOrphan << " in slot " << (int)idx << std::endl;
+                                      log<VERBOSE>(L"found orphaned command pointing to %1% in slot %2%") % itOrphan.c_str() % (int)idx;
                                       qe.orphaned = true;
                                       break;}
                                   }
                                 } catch (...) {
-                                  if (verbose) sLog << "found orphaned command pointing to unknown destination (#" << std::dec << (int)dstCpu << " 0x" << std::hex << dstAdr << std::dec << " in slot " << (int)idx << std::endl;
+                                  log<VERBOSE>(L"found orphaned command pointing to unknown destination (#%1% 0x%2$#08x in slot %3%") % (int)dstCpu % dstAdr % (int)idx;
                                   sDst = DotStr::Misc::sUndefined;
                                   qe.orphaned = true;
                                 }
@@ -446,7 +449,7 @@ void CarpeDM::CarpeDMimpl::dumpNode(const std::string& name) {
   if (hm.contains(name)) {
     auto it = atDown.lookupHash(hm.lookup(name));
     auto* x = (AllocMeta*)&(*it);
-    sLog << hexDump(g[x->v].name.c_str(), (const char*)x->b, _MEM_BLOCK_SIZE);
+    log<ALWAYS>(L"%1%") % hexDump(g[x->v].name.c_str(), (const char*)x->b, _MEM_BLOCK_SIZE).c_str();
   }
 }
 
@@ -472,8 +475,8 @@ void CarpeDM::CarpeDMimpl::showPaint() {
 void CarpeDM::CarpeDMimpl::inspectHeap(uint8_t cpuIdx) {
   vAdr vRa;
   vBuf heap;
-
-
+  std::stringstream auxstream;
+  
   uint32_t baseAdr = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs;
   uint32_t heapAdr = baseAdr + ebd.getCtlAdr(ADRLUT_SHCTL_HEAP);
   uint32_t thrAdr  = baseAdr + ebd.getCtlAdr(ADRLUT_SHCTL_THR_DAT);
@@ -481,8 +484,7 @@ void CarpeDM::CarpeDMimpl::inspectHeap(uint8_t cpuIdx) {
   for(int i=0; i<ebd.getThrQty(); i++) vRa.push_back(heapAdr + i * _PTR_SIZE_);
   heap = ebd.readCycle(vRa);
 
-
-  sLog << std::setfill(' ') << "CPU " << "Rank  " << std::setfill(' ') << std::setw(5) << "Thread  " << std::setfill(' ') << std::setw(21)
+  auxstream << std::setfill(' ') << "CPU " << "Rank  " << std::setfill(' ') << std::setw(5) << "Thread  " << std::setfill(' ') << std::setw(21)
   << "Deadline  " << std::setfill(' ') << std::setw(21) << "Origin  " << std::setfill(' ') << std::setw(21) << "Cursor" << std::endl;
 
 
@@ -490,7 +492,7 @@ void CarpeDM::CarpeDMimpl::inspectHeap(uint8_t cpuIdx) {
   for(int i=0; i<ebd.getThrQty(); i++) {
 
     uint8_t thrIdx = (writeBeBytesToLeNumber<uint32_t>((uint8_t*)&heap[i * _PTR_SIZE_])  - atDown.adrConv(AdrType::EXT, AdrType::INT,cpuIdx, thrAdr)) / _T_TD_SIZE_;
-    sLog << std::dec
+    auxstream << std::dec
     << std::setfill(' ') << std::setw(3) << (int)cpuIdx
     << std::setfill(' ') << std::setw(5) << i
     << std::setfill(' ') << std::setw(8) << (int)thrIdx
@@ -498,6 +500,9 @@ void CarpeDM::CarpeDMimpl::inspectHeap(uint8_t cpuIdx) {
     << std::setfill(' ') << std::setw(21) << getThrOrigin(cpuIdx, thrIdx)
     << std::setfill(' ') << std::setw(21) << getThrCursor(cpuIdx, thrIdx) << std::endl;
   }
+  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+  std::wstring wide_str = converter.from_bytes(auxstream.str());
+  log<ALWAYS>(wide_str.c_str());
 }
 
 
@@ -653,8 +658,7 @@ HealthReport& CarpeDM::CarpeDMimpl::getHealth(uint8_t cpuIdx, HealthReport &hr) 
 
 
   uint8_t cmdOpType = writeBeBytesToLeNumber<uint32_t>(b + T_DIAG_CMD_MOD + T_MOD_INFO_TYPE);   //there may be more info here later, so don't use byte offsets, just mask (by cast now)
-  //printf("Cmd Optype %02x @ 0x%08x, Flow would be %02x\n", cmdOpType, T_DIAG_CMD_MOD + T_MOD_INFO_TYPE, OP_TYPE_CMD_FLOW);
-
+  
   switch(cmdOpType) {
     case OP_TYPE_CMD_FLOW  : hr.cmodOpType = "Flow";  break;
     case OP_TYPE_CMD_NOP   : hr.cmodOpType = "No Op"; break;
@@ -689,15 +693,17 @@ void CarpeDM::CarpeDMimpl::show(const std::string& title, const std::string& log
 
   Graph& g        = (dir == TransferDir::UPLOAD ? gUp  : gDown);
   AllocTable& at  = (dir == TransferDir::UPLOAD ? atUp : atDown);
+  std::stringstream auxstream;
 
-  sLog << std::endl << title << std::endl;
+
+  auxstream << std::endl << title << std::endl;
 
   // find max name length for alignment
   size_t maxLen = 0;
   BOOST_FOREACH( vertex_t v, vertices(g) ) { maxLen = std::max(maxLen, g[v].name.length()); }
 
 
-  sLog << std::endl << std::left << std::setfill(' ') << std::setw(3) << "Idx" << "   " << std::setfill(' ') << std::setw(3) << "S/R" << "   "
+  auxstream << std::endl << std::left << std::setfill(' ') << std::setw(3) << "Idx" << "   " << std::setfill(' ') << std::setw(3) << "S/R" << "   "
                     << std::setfill(' ') << std::setw(3) << "Cpu" << "   " << std::setw(maxLen) << "Name" << "   "
                     << std::setw(10) << "Hash" << "   " << std::setw(10)  <<  "Int. Adr"  << "   " << std::setw(10) << "Ext. Adr" << std::endl;
 
@@ -705,7 +711,7 @@ void CarpeDM::CarpeDMimpl::show(const std::string& title, const std::string& log
     auto x = at.lookupVertex(v);
 
     if( !(filterMeta) || (filterMeta & !(g[v].np->isMeta())) ) {
-      sLog   << std::right << std::setfill(' ') << std::setw(4) << std::dec << v
+      auxstream   << std::right << std::setfill(' ') << std::setw(4) << std::dec << v
       << "   "    << std::setfill(' ') << std::setw(2) << std::dec << (int)(at.isStaged(x))
       << "   "    << std::setfill(' ') << std::setw(3) << std::dec << (int)x->cpu
       << "   "    << std::setfill(' ') << std::setw(maxLen) << std::left << g[v].name
@@ -715,9 +721,15 @@ void CarpeDM::CarpeDMimpl::show(const std::string& title, const std::string& log
     }
   }
 
-  sLog << std::endl;
+  auxstream << std::endl;
 
-  if(debug) {
+  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+  std::wstring wide_str = converter.from_bytes(auxstream.str());
+  log<ALWAYS>(wide_str.c_str());
+
+  auxstream.clear();
+
+  if(GLOBAL_LOG_LEVEL >= DEBUG_LVL0) {
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
       auto x = at.lookupVertex(v);
       dumpNode(g[x->v].name);
@@ -736,12 +748,15 @@ void CarpeDM::CarpeDMimpl::show(const std::string& title, const std::string& log
   }
   maxLengthPatternName += 1;
   maxLengthEntryName += 1;
-  sLog << std::endl << std::left << std::setw(maxLengthPatternName) << std::setfill(' ') << "Patterns" << std::setw(maxLengthEntryName) << "Entry" << "Exit" << std::endl;
+  auxstream << std::endl << std::left << std::setw(maxLengthPatternName) << std::setfill(' ') << "Patterns" << std::setw(maxLengthEntryName) << "Entry" << "Exit" << std::endl;
 
   for (auto& it : gt.getAllPatterns()) {
-    sLog << std::left << std::setw(maxLengthPatternName) << std::setfill(' ') << it << std::setw(maxLengthEntryName) << getPatternEntryNode(it) << getPatternExitNode(it) << std::endl;
+    auxstream << std::left << std::setw(maxLengthPatternName) << std::setfill(' ') << it << std::setw(maxLengthEntryName) << getPatternEntryNode(it) << getPatternExitNode(it) << std::endl;
   }
-  sLog << std::endl;
+  auxstream << std::endl;
+
+  wide_str = converter.from_bytes(auxstream.str());
+  log<ALWAYS>(wide_str.c_str());
 }
 
 

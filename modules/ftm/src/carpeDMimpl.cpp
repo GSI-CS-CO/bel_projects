@@ -20,9 +20,7 @@
 #include "log.h"
 
 
-  CarpeDM::CarpeDMimpl::CarpeDMimpl()                                        : sLog(std::cout),  sErr(std::cerr) {Validation::init();}
-  CarpeDM::CarpeDMimpl::CarpeDMimpl(std::ostream& sLog)                      : sLog(sLog),       sErr(std::cerr) {Validation::init();}
-  CarpeDM::CarpeDMimpl::CarpeDMimpl(std::ostream& sLog, std::ostream& sErr)  : sLog(sLog),       sErr(sErr)      {Validation::init();}
+  CarpeDM::CarpeDMimpl::CarpeDMimpl()  {Validation::init();}
   CarpeDM::CarpeDMimpl::~CarpeDMimpl() {}
 
 // Etherbone interface
@@ -56,7 +54,7 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
 
   void CarpeDM::CarpeDMimpl::completeId(vertex_t v, Graph& g) { // deduce SubID fields from ID or vice versa, depending on whether ID is defined
 
-
+    log<DEBUG_LVL0>(L"Entering timing msg ID field assembly from subfields");
 
     std::stringstream ss;
     uint64_t id;
@@ -66,7 +64,6 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
     try{
 
       if (g[v].id == DotStr::Misc::sUndefined64) { // from SubID fields to ID
-        //sLog << "Input Node  " << g[v].name;
         fid = (s2u<uint8_t>(g[v].id_fid) & ID_FID_MSK); //get fid
         if (fid >= idFormats.size()) throw std::runtime_error("bad format id (FID) " + std::to_string(fid) + " field in Node '" + g[v].name + "'");
         vPf& vTmp = idFormats[fid]; //choose conversion vector by fid
@@ -75,14 +72,13 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
           //use dot property tag string as key to dp map (map of tags to (maps of vertex_indices to values))
 
           uint64_t val = s2u<uint64_t>(boost::get(it.s, dp, v)); // use vertex index v as key in this property map to obtain value
-          //sLog << ", " << std::dec << it.s << " = " << (val & ((1 << it.bits ) - 1) ) << ", (" << (int)it.pos << ",0x" << std::hex << ((1 << it.bits ) - 1) << ")";
-          id |= ((val & ((1 << it.bits ) - 1) ) << it.pos); // OR the masked and shifted value to id
+                    id |= ((val & ((1 << it.bits ) - 1) ) << it.pos); // OR the masked and shifted value to id
         }
 
         ss.flush();
         ss << "0x" << std::hex << id;
         g[v].id = ss.str();
-        //sLog << "ID = " << g[v].id << std::endl;
+        
       } else { //from ID to SubID fields
         id = s2u<uint8_t>(g[v].id);
         fid = ((id >> ID_FID_POS) & ID_FID_MSK);
@@ -198,22 +194,29 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
 
 
   void CarpeDM::CarpeDMimpl::showMemSpace() {
-    sLog << std::setfill(' ') << std::setw(11) << "Space" << std::setw(11) << "Free";
-    if (verbose) {
-      sLog << std::setw(11) << "cTotal" << std::setw(11) << "cFree"  << std::setw(11) << "cUsed";
-      sLog << std::setw(11) << "bmpTotal" << std::setw(11) << "bmpFree"  << std::setw(11) << "bmpUsed";
-      sLog << std::setw(11) << "bmpBytes";
+    std::stringstream auxstream;
+    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+    
+    auxstream << std::setfill(' ') << std::setw(11) << "Space" << std::setw(11) << "Free";
+    if(GLOBAL_LOG_LEVEL >= VERBOSE) {
+      auxstream << std::setw(11) << "cTotal" << std::setw(11) << "cFree"  << std::setw(11) << "cUsed";
+      auxstream << std::setw(11) << "bmpTotal" << std::setw(11) << "bmpFree"  << std::setw(11) << "bmpUsed";
+      auxstream << std::setw(11) << "bmpBytes";
     }
-    sLog << std::endl;
+    auxstream << std::endl;
     for (uint8_t x = 0; x < ebd.getCpuQty(); x++) {
-      sLog << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalSpace(x)    << std::setw(10) << atDown.getFreeSpace(x) * 100 / atDown.getTotalSpace(x) << "%";
-      if (verbose) {
-        sLog << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalChunkQty(x) << std::setw(10) << atDown.getFreeChunkQty(x)  << std::setw(10) << atDown.getUsedChunkQty(x);
-        sLog << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalBmpBits(x) << std::setw(10) << atDown.getFreeBmpBits(x)  << std::setw(10) << atDown.getUsedBmpBits(x);
-        sLog << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalBmpSize(x);
+      auxstream << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalSpace(x)    << std::setw(10) << atDown.getFreeSpace(x) * 100 / atDown.getTotalSpace(x) << "%";
+      if(GLOBAL_LOG_LEVEL >= VERBOSE) {
+        auxstream << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalChunkQty(x) << std::setw(10) << atDown.getFreeChunkQty(x)  << std::setw(10) << atDown.getUsedChunkQty(x);
+        auxstream << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalBmpBits(x) << std::setw(10) << atDown.getFreeBmpBits(x)  << std::setw(10) << atDown.getUsedBmpBits(x);
+        auxstream << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalBmpSize(x);
       }
-      sLog << std::endl;
+      auxstream << std::endl;
     }
+
+    std::wstring wide_str = converter.from_bytes(auxstream.str());
+    log<ALWAYS>(wide_str.c_str());
+
   }
 
 
@@ -233,7 +236,7 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
   }
 
   uint32_t CarpeDM::CarpeDMimpl::getNodeAdr(const std::string& name, TransferDir dir, AdrType adrT) {
-    if (verbose) sLog << "Looking up Adr of " << name << std::endl;
+    log<VERBOSE>(L"Looking up Adr of %1%") % name.c_str();
     if(name == DotStr::Node::Special::sIdle) return LM32_NULL_PTR; //idle node is resolved as a null ptr without comment
 
     AllocTable& at = (dir == TransferDir::UPLOAD ? atUp : atDown );
@@ -274,7 +277,7 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
   void CarpeDM::CarpeDMimpl::loadHashDictFile(const std::string& fn) {loadHashDict(readTextFile(fn));};
   bool CarpeDM::CarpeDMimpl::isHashDictEmpty() {return (bool)(hm.size() == 0);};
   int  CarpeDM::CarpeDMimpl::getHashDictSize() {return hm.size();};
-  void CarpeDM::CarpeDMimpl::showHashDict() {hm.debug(sLog);};
+  void CarpeDM::CarpeDMimpl::showHashDict() {hm.debug();};
 
   // Group/Entry/Exit Table ///////////////////////////////////////////////////////////////////////////////
   std::string CarpeDM::CarpeDMimpl::storeGroupsDict() {return gt.store();};
@@ -283,7 +286,7 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
   void CarpeDM::CarpeDMimpl::loadGroupsDictFile(const std::string& fn) {loadGroupsDict(readTextFile(fn));};
   void CarpeDM::CarpeDMimpl::clearGroupsDict() {gt.clear();}; //Clear pattern table
    int CarpeDM::CarpeDMimpl::getGroupsSize() {return gt.getSize();};
-  void CarpeDM::CarpeDMimpl::showGroupsDict() {gt.debug(sLog);};
+  void CarpeDM::CarpeDMimpl::showGroupsDict() {gt.debug();};
 
 
   void CarpeDM::CarpeDMimpl::writeDotFile(const std::string& fn, Graph& g, bool filterMeta) { writeTextFile(fn, createDot(g, filterMeta)); }
@@ -349,11 +352,10 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
   //write out dotfile from download graph of a memunit
   void CarpeDM::CarpeDMimpl::writeTextFile(const std::string& fn, const std::string& s) {
     std::ofstream out(fn);
-
-    if (verbose) sLog << "Writing Output File " << fn << "... ";
+    log<VERBOSE>(L"Writing Output File %1% ...") % fn.c_str();
     if(out.good()) { out << s; }
     else {throw std::runtime_error(" Could not write to .dot file '" + fn + "'"); return;}
-    if (verbose) sLog << "Done.";
+    log<VERBOSE>(L"Done.");
   }
 
   bool CarpeDM::CarpeDMimpl::validate(Graph& g, AllocTable& at, bool force) {
@@ -389,7 +391,7 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
       hm = hmBak;
       gt = gtBak;
       ct = ctBak;
-      sLog << "Operation FAILED, executing roll back\n" << std::endl;
+      log<ERROR>(L"Operation FAILED, executing roll back\n");
       throw;
     }
 

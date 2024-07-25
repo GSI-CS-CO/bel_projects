@@ -12,6 +12,8 @@
 
 #include "common.h"
 
+#include "log.h"
+
 #include "carpeDMimpl.h"
 #include "minicommand.h"
 #include "propwrite.h"
@@ -44,7 +46,6 @@ vEbwrs& CarpeDM::CarpeDMimpl::blockAsyncClearQueues(vEbwrs& ew, const std::strin
 vEbwrs& CarpeDM::CarpeDMimpl::switching(vEbwrs& ew, const std::string& sTarget, const std::string& sDst) {
   uint32_t tadr = getNodeAdr(sTarget, TransferDir::DOWNLOAD, AdrType::EXT) + NODE_DEF_DEST_PTR;
   uint32_t dadr = getNodeAdr(sDst, TransferDir::DOWNLOAD, AdrType::INT);
-  //sLog << "switch conv 0x" << std::hex << dadr << std::endl;
   //overwrite def dst ptr
   ew.va += tadr;
   writeLeNumberToBeBytes<uint32_t>(ew.vb, dadr);
@@ -129,18 +130,17 @@ vEbwrs& CarpeDM::CarpeDMimpl::createCommand(vEbwrs& ew, const std::string& type,
 
     //Start is different to stop - start uses 'destination', stop uses target (entry node vs exit block)
     if (type == dnt::sCmdStart)   {
-      sLog << "Yep, its a start allright" << std::endl;
-      if (hm.lookup(destination)) {sLog << " Starting at <" << destination << ">" << std::endl; startNodeOrigin(ew, destination, cmdThr, cmdTvalid);  }
+      if (hm.lookup(destination)) { log<VERBOSE>(L" Starting at <%1%>") % destination.c_str(); startNodeOrigin(ew, destination, cmdThr, cmdTvalid); }
       else {throw std::runtime_error("Cannot execute command '" + type + "' No valid cpu/thr provided and '" + destination + "' is not a valid node name\n");}
       return ew;
     }
     if (type == dnt::sCmdStop)    {
-      if (hm.lookup(target)) { sLog << " Stopping at <" << target << ">" << std::endl; stopNodeOrigin(ew, target); }
+      if (hm.lookup(target)) { log<VERBOSE>(L" Stopping at <%1%>") % target.c_str(); stopNodeOrigin(ew, target); }
       else {throw std::runtime_error("Cannot execute command '" + type + "' No valid cpu/thr provided and '" + target + "' is not a valid node name\n");}
       return ew;
     }
     else if (type == dnt::sCmdAbort)   {
-      if (hm.lookup(target)) {sLog << " Aborting (trying) at <" << target << ">" << std::endl; abortNodeOrigin(ew, target); }
+      if (hm.lookup(target)) {log<VERBOSE>(L" Aborting (trying) at <%1%>") % target.c_str(); abortNodeOrigin(ew, target); }
       else {throw std::runtime_error("Cannot execute command '" + type + "'. No valid cpu/thr provided and '" + target + "' is not a valid node name\n");}
       return ew;
     }
@@ -151,7 +151,6 @@ vEbwrs& CarpeDM::CarpeDMimpl::createCommand(vEbwrs& ew, const std::string& type,
     //Origin
     if (type == dnt::sCmdOrigin)   {
       if (hm.lookup(destination)) {
-        sLog << " Setting Origin to <" << destination << ">" << std::endl;
         uint8_t cpuIdx    = getNodeCpu(destination, TransferDir::DOWNLOAD); // a node can only run on the cpu it resides
         setThrOrigin(ew, cpuIdx, cmdThr, destination); //configure thread and run it
       }
@@ -192,8 +191,6 @@ vEbwrs& CarpeDM::CarpeDMimpl::createCommand(vEbwrs& ew, const std::string& type,
 
     } else if (type == dnt::sCmdFlow) {
 
-      //sLog << " Flowing from <" << target << "> to <" << destination << ">, permanent defDest change='" << s2u<bool>(g[v].perma) << "'" << std::endl;
-
       uint32_t adr = LM32_NULL_PTR;
       try { adr = getNodeAdr(destination, TransferDir::DOWNLOAD, AdrType::INT); } catch (std::runtime_error const& err) {
         throw std::runtime_error("Destination '" + destination + "'' invalid: " + std::string(err.what()));
@@ -225,7 +222,6 @@ vEbwrs& CarpeDM::CarpeDMimpl::createCommand(vEbwrs& ew, const std::string& type,
     }
     else { throw std::runtime_error("Command type <" + type + "> is not supported!\n");}
 
-    //sLog << std::endl;
     createMiniCommand(ew, target, cmdPrio, mc);
 
   return ew;
@@ -323,13 +319,12 @@ vEbwrs& CarpeDM::CarpeDMimpl::createCommandBurst(vEbwrs& ew, Graph& g) {
     perma     = s2u<bool>(g[v].perma);
 
     cmdThr    = s2u<uint8_t>(g[v].cmdDestThr);
-    sLog << "g[v].cmdDestThr == " << g[v].cmdDestThr << " == Num" << cmdThr << std::endl;
     lockRd    = true;
     lockWr    = true;
     //fixme hack to test compile
     abswait   = false;
 
-    if(verbose) sLog << "Command <" << g[v].name << ">, type <" << g[v].type << ">" << std::endl;
+    log<VERBOSE>(L"Command <%1%>, type <%2%>") % g[v].name.c_str() % g[v].type.c_str();
     createCommand(ew, type, target, destination, cmdPrio, cmdQty, vabs, cmdTvalid, perma, qIl, qHi, qLo, cmdTwait, abswait, lockRd, lockWr, cmdThr);
     } catch (std::runtime_error const& err) {
         throw std::runtime_error( "Parser error when processing command <" + g[v].name + ">. Cause: " + err.what());
@@ -526,7 +521,7 @@ vEbwrs& CarpeDM::CarpeDMimpl::createCommandBurst(vEbwrs& ew, Graph& g) {
 
   //hard abort everything, emergency only
   void CarpeDM::CarpeDMimpl::halt() {
-    if (verbose) sLog << "Aborting all activity" << std::endl;
+    log<VERBOSE>(L"Aborting all activity");
     vEbwrs ew;
     uint8_t b[4];
     writeLeNumberToBeBytes<uint32_t>(b, (uint32_t)((1ll << ebd.getThrQty())-1) );
@@ -646,7 +641,6 @@ const vAdr CarpeDM::CarpeDMimpl::getCmdWrAdrs(uint32_t hash, uint8_t prio) {
 
   //Check if requested queue priority level exists
   uint32_t blAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&x->b[BLOCK_CMDQ_PTRS + prio * _PTR_SIZE_]);
-  //sLog << "Block BListAdr 0x" << std::hex << blAdr << std::endl;
   if(blAdr == LM32_NULL_PTR) {
     throw std::runtime_error( "Block node does not have requested queue of prio " + std::to_string((int)prio));
   }
@@ -658,7 +652,6 @@ const vAdr CarpeDM::CarpeDMimpl::getCmdWrAdrs(uint32_t hash, uint8_t prio) {
   uint8_t rdIdx  = eRdIdx & Q_IDX_MAX_MSK;
 
   //Check if queue is not full
-  //sLog << "wrIdx " << (int)wrIdx << " rdIdx " << (int)rdIdx << " ewrIdx " << (int)eWrIdx << " rdIdx " << (int)rdIdx << " eRdIdx " << eRdIdx << std::endl;
   if ((wrIdx == rdIdx) && (eWrIdx != eRdIdx)) {throw std::runtime_error( gDown[x->v].name + " queue of prio " + std::to_string((int)prio) + " is full, can't write.\n");}
   //lookup Buffer List
   it = atDown.lookupAdr(x->cpu, atDown.adrConv(AdrType::INT, AdrType::MGMT, x->cpu, blAdr), carpeDMcommand::exIntro);
@@ -669,10 +662,7 @@ const vAdr CarpeDM::CarpeDMimpl::getCmdWrAdrs(uint32_t hash, uint8_t prio) {
   ptrdiff_t bufIdx   = wrIdx / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  );
   ptrdiff_t elemIdx  = wrIdx % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  );
 
-  //sLog << "bIdx " << bufIdx << " eIdx " << elemIdx << " @ 0x" << std::hex << pmBl->adr << std::endl;
   uint32_t  startAdr = atDown.adrConv(AdrType::INT, AdrType::EXT,pmBl->cpu, writeBeBytesToLeNumber<uint32_t>((uint8_t*)&pmBl->b[bufIdx * _PTR_SIZE_])) + elemIdx * _T_CMD_SIZE_;
-
-  //sLog << "Current BufAdr 0x" << std::hex << startAdr << std::endl;
 
   //generate command address range
   for(uint32_t adr = startAdr; adr < startAdr + _T_CMD_SIZE_; adr += _32b_SIZE_) ret.push_back(adr);
@@ -692,7 +682,7 @@ const vAdr CarpeDM::CarpeDMimpl::getCmdWrAdrs(uint32_t hash, uint8_t prio) {
     //find the address corresponding to given name
     auto it = atDown.lookupHash(hash, carpeDMcommand::exIntro);
     auto* x = (AllocMeta*)&(*it);
-        //sLog << "indices: 0x" << std::hex << writeBeBytesToLeNumber<uint32_t>((uint8_t*)&x->b[BLOCK_CMDQ_WR_IDXS]) << std::endl;
+    
     //get incremented Write index of requested prio
     eWrIdx = ( writeBeBytesToLeNumber<uint32_t>((uint8_t*)&x->b[BLOCK_CMDQ_WR_IDXS]) >> (prio * 8)) & Q_IDX_MAX_OVF_MSK;
     //assign to index vector
@@ -768,7 +758,6 @@ vEbwrs& CarpeDM::CarpeDMimpl::startNodeOrigin(vEbwrs& ew, const std::string& sNo
   setThrOrigin(ew, cpuIdx, thrIdx, sNode); //configure thread and run it
   setThrStartTime(ew, cpuIdx, thrIdx, t);
   startThr(ew, cpuIdx, thrIdx);
-  //sLog << "Started thread at cpuidx " << std::dec << cpuIdx << " thrIdx " << thrIdx << " @ 0x" << std::hex << cmdTvalid << std::endl;
   return ew;
 }
 /*
@@ -811,22 +800,22 @@ vEbwrs& CarpeDM::CarpeDMimpl::abortNodeOrigin(vEbwrs& ew, const std::string& sNo
 
 
   vStrC CarpeDM::CarpeDMimpl::getGraphPatterns(Graph& g)  {
-    std::set<std::string> sP, log;
+    std::set<std::string> sP, slog;
     vStrC ret;
 
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
 
       //std::cout << g[v].name << " ---> " << getNodePattern(g[v].name) << std::endl;
       std::string tmpPatName = g[v].patName;
-      if (tmpPatName == DotStr::Misc::sUndefined) log.insert(g[v].name);
+      if (tmpPatName == DotStr::Misc::sUndefined) slog.insert(g[v].name);
       sP.insert(tmpPatName);
 
     }
 
     for(auto& itP : sP) ret.push_back(itP);
-    if (log.size() > 0) {
-      sErr << "Warning: getGraphPatterns found no valid patterns for the following nodes:" << std::endl;
-      for(auto& itL : log) sErr << itL << std::endl;
+    if (slog.size() > 0) {
+      log<WARNING>(L"Warning: getGraphPatterns found no valid patterns for the following nodes:");
+      for(auto& itL : slog) log<WARNING>(L"%1%") % itL.c_str();
     }
     return ret;
 
@@ -909,7 +898,7 @@ vEbwrs& CarpeDM::CarpeDMimpl::staticFlush(const std::string& sBlock, bool prioIl
 
 
   if ( (!isSafeToRemove(sPattern, dbgReport)) && !force)  {
-    if(debug) sLog << dbgReport << std::endl;
+    log<DEBUG_LVL0>(L"%1%") % dbgReport.c_str();
     throw std::runtime_error(carpeDMcommand::exIntro + "staticFlush: Pattern <" + sPattern + "> of block member <" + sBlock + "> is active, static flush not safely possible!");
   }
 
@@ -918,7 +907,7 @@ vEbwrs& CarpeDM::CarpeDMimpl::staticFlush(const std::string& sBlock, bool prioIl
   if(optimisedS2R && isCovenantPending(sBlock)) throw std::runtime_error(carpeDMcommand::exIntro + "staticFlush: cannot flush, block <" + sBlock + "> is in a safe2remove-covenant!");
 
 
-  if(verbose) sLog << "Trying to flush block <" << sBlock << ">" << std::endl;
+  log<VERBOSE>(L"Trying to flush block <%1%>") % sBlock.c_str();
 
   //get the block
   auto x = at.lookupHash(hm.lookup(sBlock, carpeDMcommand::exIntro));
@@ -957,7 +946,7 @@ vEbwrs& CarpeDM::CarpeDMimpl::deactivateOrphanedCommands(vEbwrs& ew, std::vector
         QueueElement& qe = qr.aQ[prio].aQe[i];
 
         if(qe.orphaned) {
-          if (verbose) sLog << "Deactivating orphaned command @ " << qr.name << " prio " << std::dec << (int)prio << " slot " << (int)i << std::hex << ", adr of action field is 0x" << qe.extAdr + T_CMD_ACT << std::endl;
+          log<VERBOSE>(L"Deactivating orphaned command @ %1% prio %2% slot %3%, adr of action field is 0x%4$#08x") % qr.name.c_str() % (int)prio % (int)i % (qe.extAdr + T_CMD_ACT);
           qe.qty = 0; // deactivate command execution
           //reconstruct action field from report. bit awkward, but not really bad either.
           uint32_t action = (qe.type << ACT_TYPE_POS) | ((prio & ACT_PRIO_MSK) << ACT_PRIO_POS) | ((qe.qty & ACT_QTY_MSK) << ACT_QTY_POS) | (qe.validAbs << ACT_VABS_POS) | (qe.flowPerma << ACT_CHP_POS );

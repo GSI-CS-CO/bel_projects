@@ -18,8 +18,6 @@ class CarpeDM {
 public:
   class CarpeDMimpl;
   CarpeDM();
-  CarpeDM(std::ostream& sLog);
-  CarpeDM(std::ostream& sLog, std::ostream& sErr);
   ~CarpeDM();
 
 // Etherbone interface

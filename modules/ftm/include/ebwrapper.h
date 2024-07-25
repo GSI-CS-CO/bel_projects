@@ -24,12 +24,6 @@ using namespace etherbone;
 class EbWrapper {
 
 protected:
-  //bool& sim;
-  std::ostream& sLog;
-  std::ostream& sErr;
-  bool& verbose;
-  bool& debug;
-
   Socket ebs;
   Device ebd;
 
@@ -62,7 +56,7 @@ protected:
   // SDB Functions
 
 public:
-  EbWrapper(std::ostream& sLog, std::ostream& sErr, bool& verbose, bool& debug) : sLog(sLog), sErr(sErr), verbose(verbose), debug(debug) {
+  EbWrapper() {
     if (expVersionMin <= 0) {throw std::runtime_error("Bad required minimum firmware version string received from Makefile");}
   };
   ~EbWrapper() {};

@@ -18,8 +18,6 @@
     vertex_t        v;
     AllocTable&     at;
     CovenantTable&  ct;
-    std::ostream& sLog;
-    std::ostream& sErr;
     uint8_t*        b = nullptr;
     uint8_t         cpu;
 
@@ -30,7 +28,7 @@
     static const std::string exIntro;
 
   public:
-    VisitorDownloadCrawler(Graph& g, vertex_t v, AllocTable& at, CovenantTable& ct, std::ostream& sLog, std::ostream& sErr)  : g(g), v(v), at(at), ct(ct), sLog(sLog), sErr(sErr) { auto x = at.lookupVertex(v); cpu = x->cpu; b = (uint8_t*)x->b; };
+    VisitorDownloadCrawler(Graph& g, vertex_t v, AllocTable& at, CovenantTable& ct)  : g(g), v(v), at(at), ct(ct) { auto x = at.lookupVertex(v); cpu = x->cpu; b = (uint8_t*)x->b; };
     ~VisitorDownloadCrawler() {};
     virtual void visit(const Block& el) const;
     virtual void visit(const TimingMsg& el) const;

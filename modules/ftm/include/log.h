@@ -7,7 +7,7 @@
 
 
 enum log_level_t {
-    NOTHING     = 0,
+    ALWAYS      = 0,
     CRITICAL    = 1,
     ERROR       = 2,
     WARNING     = 3,
@@ -22,7 +22,7 @@ enum log_level_t {
 
 
 extern const char* const log_lvl_str[];
-extern log_level_t GLOBAL_LEVEL;
+extern log_level_t GLOBAL_LOG_LEVEL;
 
 using namespace std;
 
@@ -35,7 +35,7 @@ public:
     ~formatted_log_t() {
         // GLOBAL_LEVEL is a global variable and could be changed at runtime
         // Any customization could be here
-        if ( level <= GLOBAL_LEVEL ) wcout << log_lvl_str[level] << L" " << fmt << endl;
+        if ( level <= GLOBAL_LOG_LEVEL ) wcout << log_lvl_str[level] << L" " << fmt << endl;
     }        
     template <typename T> 
     formatted_log_t& operator %(T value) {

@@ -91,22 +91,10 @@ vertex_vec_t VisitorUploadCrawler::getChildrenByEdgeType(vertex_t vStart, const 
 
   return ret;
 }
-/*
-vertex_set_t VisitorUploadCrawler::getChildrenByEdgeType(vertex_t vStart, const std::string edgeType) const {
-  Graph::out_edge_iterator out_begin, out_end, out_cur;
-  vertex_set_t ret;
-  boost::tie(out_begin, out_end) = out_edges(vStart,g);
 
-  for (out_cur = out_begin; out_cur != out_end; ++out_cur)
-  {
-    if (g[target(*out_cur,g)].np == nullptr) throw std::runtime_error( exIntro + "Node " + g[target(*out_cur,g)].name + " of type " + g[target(*out_cur,g)].type + " has not data object\n");
-    if (g[*out_cur].type == edgeType) { ret.insert(target(*out_cur, g));}
-  }
 
-  return ret;
-}
-*/
- vertex_t VisitorUploadCrawler::getOnlyChildByEdgeType(vertex_t vStart, const std::string edgeType) const {
+
+vertex_t VisitorUploadCrawler::getOnlyChildByEdgeType(vertex_t vStart, const std::string edgeType) const {
   vertex_t ret = null_vertex;
 
   vertex_vec_t vs = getChildrenByEdgeType(vStart, edgeType);
@@ -204,33 +192,6 @@ mVal VisitorUploadCrawler::getRefLinks() const {
   return t;
 }
 
-
-/*
-  mVal VisitorUploadCrawler::getValLinks() const {
-    Graph::out_edge_iterator out_begin, out_end, out_cur;
-    mVal t;
-    
-    boost::tie(out_begin, out_end) = out_edges(v,g);
-
-    for (out_cur = out_begin; out_cur != out_end; ++out_cur)
-    {
-      if (g[*out_cur].type == edgeType) {
-        uint32_t oTarget  = s2u(g[*out_cur].fHead);
-        uint32_t oSource  = s2u(g[*out_cur].fTail);
-        uint32_t width    = s2u(g[*out_cur].bWidth) == 64 ? 1 : 0;
-        //we create a map entry, adress offset to adress, that will contain our refPtr
-        //key is offset oSource (e.g. TMSG_RES)
-        //value is the address of the target node + offset oTarget
-        t.insert(oSource, getEdgeTargetAdr(v, target(*out_cur, g)) );
-        if (oTarget / )
-        t.insert(NODE_OPT_DYN, )
-      }
-    }
-    
-    return t;
-  }    
-*/
-
   mVal VisitorUploadCrawler::getDynSrc() const {
 
     mVal ret;
@@ -242,11 +203,11 @@ mVal VisitorUploadCrawler::getRefLinks() const {
 
     for (out_cur = out_begin; out_cur != out_end; ++out_cur)
     {
-      if (g[target(*out_cur,g)].np == nullptr) sErr << g[target(*out_cur,g)].name << " is UNDEFINED" << std::endl;
+      if (g[target(*out_cur,g)].np == nullptr) log<CRITICAL>(L"%1%  is UNDEFINED") % g[target(*out_cur,g)].name.c_str();
       else {
 
         if (g[*out_cur].type == det::sDynId) {
-          if (ret.find(TMSG_ID_LO) != ret.end()) {sErr << "Found more than one dynamic id source" << std::endl; break;
+          if (ret.find(TMSG_ID_LO) != ret.end()) {log<ERROR>(L"Found more than one dynamic id source"); break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
             uint32_t aId = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_ID_SMSK);
@@ -256,7 +217,7 @@ mVal VisitorUploadCrawler::getRefLinks() const {
           }
         }
         if (g[*out_cur].type == det::sDynPar1) {
-          if (ret.find(TMSG_PAR_HI) != ret.end()){sErr << "Found more than one dynamic par1 source" << std::endl; break;
+          if (ret.find(TMSG_PAR_HI) != ret.end()){log<ERROR>(L"Found more than one dynamic par1 source"); break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
             uint32_t aPar1 = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR1_SMSK);
@@ -265,7 +226,7 @@ mVal VisitorUploadCrawler::getRefLinks() const {
           }
         }
         if (g[*out_cur].type == det::sDynPar0) {
-          if (ret.find(TMSG_PAR_LO) != ret.end()) {sErr << "Found more than one dynamic par0 source" << std::endl; break;
+          if (ret.find(TMSG_PAR_LO) != ret.end()) {log<ERROR>(L"Found more than one dynamic par0 source"); break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
             uint32_t aPar0 = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR0_SMSK);
@@ -275,7 +236,7 @@ mVal VisitorUploadCrawler::getRefLinks() const {
         }
 
         if (g[*out_cur].type == det::sDynRes) {
-          if (ret.find(TMSG_RES) != ret.end()) {sErr << "Found more than one dynamic res source" << std::endl; break;
+          if (ret.find(TMSG_RES) != ret.end()) {log<ERROR>(L"Found more than one dynamic res source"); break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
             uint32_t aRes = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_RES_SMSK);
@@ -310,8 +271,6 @@ mVal VisitorUploadCrawler::getRefLinks() const {
 
     return ret;
   }
-
-
 
 
 mVal VisitorUploadCrawler::getQBuf() const {
@@ -353,7 +312,6 @@ mVal  VisitorUploadCrawler::getSwitchTarget() const {
 }
 
 //TODO cleanup the dst function redundancies
-
 mVal VisitorUploadCrawler::getFlowDst() const {
   mVal ret;
   log<DEBUG_LVL0>(L"flowDst: Entering");

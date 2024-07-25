@@ -2,8 +2,6 @@
 #include "carpeDMimpl.h"
 
   CarpeDM::CarpeDM() : impl_(new CarpeDMimpl()) {}
-  CarpeDM::CarpeDM(std::ostream& sLog) : impl_(new CarpeDMimpl(sLog)) {}
-  CarpeDM::CarpeDM(std::ostream& sLog, std::ostream& sErr) : impl_(new CarpeDMimpl(sLog, sErr)) {}
   CarpeDM::~CarpeDM() = default;
 
 // Etherbone interface

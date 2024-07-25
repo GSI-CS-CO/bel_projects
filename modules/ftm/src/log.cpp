@@ -1,9 +1,9 @@
 #include "log.h"
 
-log_level_t GLOBAL_LEVEL = ERROR;
+log_level_t GLOBAL_LOG_LEVEL = ERROR;
 
 const char* const log_lvl_str[] = {
-	"NOTHING:",
+	"ALWAYS:",
     "CRITICAL:",
     "ERROR:",
     "WARNING:",
@@ -14,3 +14,12 @@ const char* const log_lvl_str[] = {
     "DEBUG LVL 2:",
     "DEBUG LVL 3:",
 };
+
+/* Examples:
+std::string:
+    log<INFO>(L"Node %1% has an...") % name.c_str();
+signed/unsigned
+    log<WARNING>(L"Number %1% is greater...") % counter;
+hex n nibbles
+    log<INFO>(L"Address is 0x%1$#08x...") % adr;
+*/

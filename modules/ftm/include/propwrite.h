@@ -158,7 +158,7 @@ template <class Name>
     return edge_writer<typeMap, fHeadMap, fTailMap, bWidthMap>(type, fHead, fTail, bWidth);
   }
 
-
+  //what the hell is this?
   template <class typeMap>
   struct static_eq {
     static_eq() { } // necessary ?

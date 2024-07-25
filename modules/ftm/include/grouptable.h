@@ -190,7 +190,7 @@ public:
   const size_t getSize()          const { return a.size(); }
 
 
-  void debug(std::ostream& os);
+  void debug();
   vStrC getAllNodes();
 
 };

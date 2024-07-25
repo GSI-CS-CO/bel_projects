@@ -1,6 +1,9 @@
 #include <boost/algorithm/string.hpp>
 #include "ebwrapper.h"
 #include "log.h"
+#include <locale>
+#include <codecvt>
+
 
 const int EbWrapper::expVersionMin = EbWrapper::parseFwVersionString(EXP_VER);
 const int EbWrapper::expVersionMax = (expVersionMin / (int)FwId::VERSION_MAJOR_MUL) * (int)FwId::VERSION_MAJOR_MUL
@@ -23,7 +26,7 @@ int EbWrapper::writeCycle(const vAdr& va, const vBuf& vb, const vBl& vcs) const 
   //eb_status_t status;
   //FIXME What about MTU? What about returned eb status ??
 
-  if (debug) log<DEBUG_LVL3>(L"eb: Starting Write Cycle");
+  log<DEBUG_LVL3>(L"eb: Starting Write Cycle");
   Cycle cyc;
   eb_data_t veb[va.size()];
 
@@ -36,10 +39,10 @@ int EbWrapper::writeCycle(const vAdr& va, const vBuf& vb, const vBl& vcs) const 
     for(int i = 0; i < (va.end()-va.begin()); i++) {
     if (i && vcs.at(i)) {
       cyc.close();
-      if (debug) log<DEBUG_LVL3>(L"eb: Close and open next Write Cycle");
+      log<DEBUG_LVL3>(L"eb: Close and open next Write Cycle");
       cyc.open(ebd);
     }
-    if (debug) log<DEBUG_LVL3>(L"eb: Writing @ %1$#08x Val %2$#08x ") % va[i] % veb[i];
+    log<DEBUG_LVL3>(L"eb: Writing @ %1$#08x Val %2$#08x ") % va[i] % veb[i];
     cyc.write(va[i], EB_BIG_ENDIAN | EB_DATA32, veb[i]);
 
     }
@@ -66,7 +69,7 @@ vBuf EbWrapper::readCycle(const vAdr& va, const vBl& vcs) const {
   Cycle cyc;
   eb_data_t veb[va.size()];
   vBuf ret = vBuf(va.size() * 4);
-  if (debug) log<DEBUG_LVL3>(L"eb: Starting Read Cycle");
+  log<DEBUG_LVL3>(L"eb: Starting Read Cycle");
   //sLog << "Got Adr Vec with " << va.size() << " Adrs" << std::endl;
 
   try {
@@ -75,10 +78,10 @@ vBuf EbWrapper::readCycle(const vAdr& va, const vBl& vcs) const {
     //FIXME dirty break into cycles
     if (i && vcs.at(i)) {
       cyc.close();
-      if (debug) log<DEBUG_LVL3>(L"eb: Close and open next Read Cycle");
+      log<DEBUG_LVL3>(L"eb: Close and open next Read Cycle");
       cyc.open(ebd);
     }
-    if (debug) log<DEBUG_LVL3>(L"eb: Reading @ %1$#08x ") % va[i];
+    log<DEBUG_LVL3>(L"eb: Reading @ %1$#08x ") % va[i];
     cyc.read(va[i], EB_BIG_ENDIAN | EB_DATA32, (eb_data_t*)&veb[i]);
     }
     cyc.close();
@@ -213,7 +216,7 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
             uint32_t sharedOffs   = parseSharedOffs(vFwIdROM[cpuIdx]);
                      thrQty       = parseThrQty(vFwIdROM[cpuIdx]);
                                     readAdrLUT(extBaseAdr, sharedOffs, adrLut);
-            //sLog << "Reading LUT" << std::endl;                                    
+                                 
             uint32_t ctlSize      = getCtlAdr(ADRLUT_SHCTL_END);
             uint32_t space        = parseSharedSize(vFwIdROM[cpuIdx]) - ctlSize;
               
@@ -239,9 +242,8 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
       throw;// std::runtime_error("Could not find CPUs running valid DM Firmware\n" );
     }
 
-    if(verbose) {
-      sLog << " Done."  << std::endl << "Found " << (unsigned)cpuQty << " Cores, " << cpuIdxMap.size() << " of them run a valid DM firmware." << std::endl;
-    }
+    log<VERBOSE>(L" Done.\nFound %1% Cores, %2%  of them run a valid DM firmware.") % (unsigned)cpuQty % cpuIdxMap.size();
+    
     std::string fwCause = foundVersionMax == -1 ? "" : "Requires FW v" + createFwVersionString(expVersionMin) + ", found " + createFwVersionString(foundVersionMax);
     if (cpuIdxMap.size() == 0) {throw std::runtime_error("No CPUs running a valid DM firmware found. " + fwCause);}
 
@@ -254,7 +256,7 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
   bool EbWrapper::disconnect() {
     bool ret = false;
 
-    if(verbose) sLog << "Disconnecting ... ";
+    log<VERBOSE>(L"Disconnecting ... ");
     try {
       ebd.close();
       ebs.close();
@@ -265,7 +267,7 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
       //TODO report why we could not disconnect
     }
     
-    if(verbose) sLog << " Done" << std::endl;
+    log<VERBOSE>(L" Done");
     
     return ret;
   }
@@ -389,7 +391,7 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
     //FIXME replace with FW ID string constants
     //CAREFUL: Get the EXACT position. If you miss out on leading spaces, the parsed number gets truncated!
     std::string value = parseFwIdROMTag(fwIdROM, "IntAdrOffs  : ", 10, true);
-    //sLog << "IntAdrOffs : " << value << " parsed: 0x" << std::hex << s2u<uint32_t>(value) << std::endl;
+    log<DEBUG_LVL1>(L"IntAdrOffs : %1%, parsed: 0x%2$#08x") % value.c_str() % s2u<uint32_t>(value);
     return s2u<uint32_t>(value);
 
   }
@@ -397,35 +399,39 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
   uint32_t EbWrapper::parseSharedOffs(const std::string& fwIdROM) const {
     //FIXME replace with FW ID string constants
     std::string value = parseFwIdROMTag(fwIdROM, "SharedOffs  : ", 10, true);
-    //sLog << "Parsing SharedOffs : " << value << " parsed: 0x" << std::hex << s2u<uint32_t>(value) << std::endl;
+    log<DEBUG_LVL1>(L"SharedOffs : %1%, parsed: 0x%2$#08x") % value.c_str() % s2u<uint32_t>(value);
     return s2u<uint32_t>(value);
 
   }
 
   uint32_t EbWrapper::parseSharedSize(const std::string& fwIdROM) const{
     std::string value = parseFwIdROMTag(fwIdROM, "SharedSize  : ", 10, true);
-    //sLog << "SharedSize : " << value << " parsed: "  << std::dec << s2u<uint32_t>(value) << std::endl;
+    log<DEBUG_LVL1>(L"SharedSize : %1%, parsed: 0x%2$#08x") % value.c_str() % s2u<uint32_t>(value);
     return s2u<uint32_t>(value);
 
   }
 
   uint32_t EbWrapper::parseThrQty(const std::string& fwIdROM) const{
     std::string value = parseFwIdROMTag(fwIdROM, "ThreadQty   : ", 10, true);
-    //sLog << "SharedSize : " << value << " parsed: "  << std::dec << s2u<uint32_t>(value) << std::endl;
+    log<DEBUG_LVL1>(L"SharedOffs : %1%, parsed: %2%") % value.c_str() % s2u<uint32_t>(value);
     return s2u<uint32_t>(value);
 
   }
 
 
   void EbWrapper::showCpuList() const {
-    sLog << std::endl << std::setfill(' ') << std::setw(5) << "CPU" << std::setfill(' ') << std::setw(11) << "FW found"
+    std::stringstream auxstream;
+    auxstream << std::endl << std::setfill(' ') << std::setw(5) << "CPU" << std::setfill(' ') << std::setw(11) << "FW found"
          << std::setfill(' ') << std::setw(11) << "Min" << std::setw(11) << "Max" << std::setw(11)  << std::endl;
     for (int x = 0; x < cpuQty; x++) {
   
-      sLog << std::dec << std::setfill(' ') << std::setw(5) << x << std::setfill(' ') << std::setw(11) << getFwVersionString(x)
+      auxstream << std::dec << std::setfill(' ') << std::setw(5) << x << std::setfill(' ') << std::setw(11) << getFwVersionString(x)
            << std::setfill(' ') << std::setw(11) << createFwVersionString(getExpVersionMin())
            << std::setfill(' ') << std::setw(11) << createFwVersionString(getExpVersionMax());
     }
+    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+    std::wstring wide_str = converter.from_bytes(auxstream.str());
+    log<ALWAYS>(wide_str.c_str());
   }
 
 

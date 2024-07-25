@@ -53,12 +53,8 @@ private:
   bool sim      = false;
   bool testmode = false;
   bool optimisedS2R = true;
-  std::ostream& sLog;
-  std::ostream& sErr;
 
-
-
-  EbWrapper ebd = EbWrapper(sLog, sErr, verbose, debug);
+  EbWrapper ebd = EbWrapper();
 
   LockManager lm = LockManager(ebd, hm, ct, atDown); //get us an instance of the lock manager
 
@@ -179,8 +175,6 @@ protected:
 
 public:
   CarpeDMimpl();
-  CarpeDMimpl(std::ostream& sLog);
-  CarpeDMimpl(std::ostream& sLog, std::ostream& sErr);
   ~CarpeDMimpl();
 
 // Etherbone interface
@@ -398,7 +392,7 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
                void coverage3Upload(uint64_t seed );
                std::vector<std::vector<uint64_t>> coverage3TestData(uint64_t seedStart, uint64_t cases, uint8_t parts, uint8_t percentage );
              Graph& getDownGraph(); //Returns the Download Graph for CPU <cpuIdx
-               void dirtyCtShow() {ct.debug(sLog);}
+               void dirtyCtShow() {ct.debug();}
                void showCpuList() {return ebd.showCpuList();}
             uint8_t getCpuQty() {return ebd.getCpuQty();}
             uint8_t getThrQty() {return ebd.getThrQty();}

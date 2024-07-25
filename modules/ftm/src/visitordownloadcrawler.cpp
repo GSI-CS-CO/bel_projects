@@ -219,7 +219,6 @@ void VisitorDownloadCrawler::visit(const DestList& el) const {
 
   setDefDst();
 
-  //sLog << "Trying to find parent of " << g[v].name << std::endl;
   boost::tie(out_begin, out_end) = out_edges(v,g);
   if(out_begin != out_end) {
     unsigned idx = s2u<unsigned>(g[v].name.substr(g[v].name.find_last_not_of("0123456789") + 1));

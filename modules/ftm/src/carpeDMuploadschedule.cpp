@@ -34,7 +34,7 @@ using namespace DotStr::Misc;
 
   //TODO CPU Load Balancer
   vEbwrs CarpeDM::CarpeDMimpl::gatherUploadVector(std::set<uint8_t> moddedCpus, uint32_t modCnt, uint8_t opType) {
-    //sLog << "Starting Upload address & data vectors" << std::endl;
+    log<VERBOSE>(L"Starting Upload address & data vectors");
     vEbwrs ew;
     uint32_t adr, modAdrBase;
 
@@ -293,8 +293,6 @@ using namespace DotStr::Misc;
 
       myVertex* vt = (myVertex*)&gUp[v];
 
-      //sLog << "Testing " << vt->name << std::endl;
-
       std::string name = gUp[v].name;
       //try{
         //if (!(hm.lookup(name)))                   {throw std::runtime_error("Node '" + name + "' was unknown to the hashmap"); return;}
@@ -317,7 +315,6 @@ using namespace DotStr::Misc;
 
         amI it = atUp.lookupHashNoEx(hash); //if we already have a download entry, keep allocation, but update vertex index
         if (!atUp.isOk(it)) {
-          //sLog << "Adding " << name << std::endl;
           allocState = atUp.allocate(cpu, hash, v, gUp, true);
           if (allocState == ALLOC_NO_SPACE)         {throw std::runtime_error("Not enough space in CPU " + std::to_string(cpu) + " memory pool"); return; }
           if (allocState == ALLOC_ENTRY_EXISTS)     {throw std::runtime_error("Node '" + name + "' would be duplicate in graph."); return; }
@@ -366,7 +363,7 @@ using namespace DotStr::Misc;
     // Crawl vertices and serialise their data objects for upload
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
 
-      gUp[v].np->accept(VisitorUploadCrawler(gUp, v, atUp, sLog, sErr));
+      gUp[v].np->accept(VisitorUploadCrawler(gUp, v, atUp));
 
       //Check if all mandatory fields were properly initialised
       auto x = atUp.lookupVertex(v);
@@ -500,10 +497,9 @@ using namespace DotStr::Misc;
     //copy_graph(gTmp, gUp, boost::orig_to_copy(vertexMapWrapper));
     log<VERBOSE>(L"addition: Merging graphs");
     mycopy_graph<Graph>(gTmp, gUp, vertexMap);
-    //for(auto& it : vertexMap ) {sLog <<  "gTmp " << gTmp[it.first].name << " @ " << it.first << " gUp " << it.second << std::endl; }
+    
     //merge duplicate nodes
     for(auto& it : duplicates ) {
-      //sLog <<  it.first << " <- " << it.second << "(" << vertexMap[it.second] << ")" << std::endl;
       mergeUploadDuplicates(it.first, vertexMap[it.second]);
     }
     log<VERBOSE>(L"addition: Removing duplicates");
@@ -571,7 +567,7 @@ using namespace DotStr::Misc;
 
     //TODO Test this approach to remove square complexity by lookup
     BOOST_FOREACH( vertex_t w, vertices(gTmp) ) {
-      if (verbose) sLog <<  "Searching " << std::hex << " 0x" << gTmp[w].hash << std::endl;
+      log<DEBUG_LVL0>(L"subtraction: Searching 0x%1$#08x") % gTmp[w].hash;
 
       if (gTmp[w].type == DotStr::Misc::sUndefined) continue;
 
@@ -601,7 +597,6 @@ using namespace DotStr::Misc;
     //remove designated vertices
     log<VERBOSE>(L"subtraction: removing designated nodes");
     for(auto& vd : toDelete ) {
-      //sLog <<  "Removing Node " << gUp[vertexMap[vd]].name << std::endl;
       atUp.deallocate(gUp[vertexMap[vd]].hash); //using the hash is independent of vertex descriptors, so no remapping necessary yet
       //remove node from hash and groups dict
       log<DEBUG_LVL0>(L"subtraction: removing %1%") % gUp[vertexMap[vd]].name.c_str();
@@ -646,7 +641,7 @@ using namespace DotStr::Misc;
     vBuf mgmtBinary = compress(tmpBuf);
     atUp.allocateMgmt(mgmtBinary);
     atUp.populateMgmt(mgmtBinary);
-    //atUp.debugMgmt(sLog);
+    //atUp.debugMgmt();
     atUp.syncBmpsToPools();
   }
 
@@ -679,13 +674,13 @@ using namespace DotStr::Misc;
   int CarpeDM::CarpeDMimpl::add(Graph& g, bool force) {
 
     if ((boost::get_property(g, boost::graph_name)).find(DotStr::Graph::Special::sCmd) != std::string::npos) {throw std::runtime_error("Expected a schedule, but these appear to be commands (Tag '" + DotStr::Graph::Special::sCmd + "' found in graphname)"); return -1;}
-    if(verbose) sLog << "Download binary as base for addition" << std::endl;
+    log<VERBOSE>(L"Download binary as base for addition");
     baseUploadOnDownload();
-    if(verbose) sLog << "Add new subgraph" << std::endl;
+    log<VERBOSE>(L"Add new subgraph");
     addition(g);
     //writeUpDotFile("upload.dot", false);
     validate(gUp, atUp, force);
-    if(verbose) sLog << "Upload" << std::endl;
+    log<VERBOSE>(L"Upload");
     return upload(OP_TYPE_SCH_ADD);
   }
 
@@ -727,7 +722,6 @@ using namespace DotStr::Misc;
     //FIXME Resource hog with square complexity. Replace inner loop by lookup
     bool found;
     BOOST_FOREACH( vertex_t w, vertices(gUp) ) {
-      //sLog <<  "Scanning " << gUp[w].name << std::endl;
       found = false;
       BOOST_FOREACH( vertex_t v, vertices(gTmpKeep) ) {
         if ((gTmpKeep[v].name == gUp[w].name)) {

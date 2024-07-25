@@ -1,5 +1,9 @@
 #include "grouptable.h"
 #include "aux_boost.h"
+#include "log.h"
+#include <locale>
+#include <codecvt>
+
 
   std::string GroupTable::store() {
     std::stringstream os;
@@ -22,12 +26,17 @@
     return x.second;
   }
 
-  void GroupTable::debug(std::ostream& os) {
+  void GroupTable::debug() {
+    std::stringstream auxstream;
+    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+
     for (pmI x = a.begin(); x != a.end(); x++) {
-      os << x->node << " -> Pattern: " << x->pattern <<  ", Entry: " <<  (int)x->patternEntry <<  ", Exit: " <<  (int)x->patternExit;
-      os << " -> Beamproc: " << x->beamproc <<  ", Entry: " <<  (int)x->beamprocEntry <<  ", Exit: " <<  (int)x->beamprocExit << std::endl;
+      auxstream << x->node << " -> Pattern: " << x->pattern <<  ", Entry: " <<  (int)x->patternEntry <<  ", Exit: " <<  (int)x->patternExit;
+      auxstream << " -> Beamproc: " << x->beamproc <<  ", Entry: " <<  (int)x->beamprocEntry <<  ", Exit: " <<  (int)x->beamprocExit << std::endl;
 
     }
+    std::wstring wide_str = converter.from_bytes(auxstream.str());
+    log<ALWAYS>(wide_str.c_str());
   }
 
   pmI GroupTable::lookupOrCreateNode(const std::string& sNode) {

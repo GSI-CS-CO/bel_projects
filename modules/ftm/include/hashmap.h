@@ -155,7 +155,7 @@ public:
    * Outputs the a human readable table version of the hashmap
    * @param os Outstream used for debug
   */
-  void debug(std::ostream& os); ///< Debug prints hashmap content
+  void debug(); ///< Debug prints hashmap content
 
 
 };
