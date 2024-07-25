@@ -38,7 +38,7 @@
 
 \Large{Martin Skorsky}
 
-\Large{Last change: 2024-02-28}
+\Large{Last change: 2024-07-25}
 \end{center}
 \vfill
 \end{titlepage}
@@ -46,7 +46,7 @@
 \tableofcontents
 
 \chapter{Overview - What is tested}
-The tests for the datamaster are written with Python and the pytest framework. This implies that tests can be strated
+The tests for the datamaster are written with Python and the pytest framework. This implies that tests can be started
 by name and also with a name pattern to select a group of tests. The tests use the datamaster tools \texttt{dm-cmd}
 and \texttt{dm-sched}.
 
@@ -54,6 +54,27 @@ The tests use the instance of the current build folder of the datamaster tools a
 
 All tests are on branch \texttt{dm-fallout-tests}. The tests run with \texttt{make} or \texttt{make all} in folder \texttt{modules/ftm/tests}.
 To compile \texttt{libcarpedm} use \texttt{make prepare}. This runs \texttt{make clean} and \texttt{make} in folder \texttt{modules/ftm/ftmx86}.
+
+Important: The tests need exclusive access to the datamaster and the timing receiver. Otherwise the schedules and timing messages may be not the ones to test.
+
+Examples:
+
+\texttt{OPTIONS='--runslow' make}
+
+Run all tests against the local datamaster, even those marked with --runslow. These test take longer than usual tests.
+
+\texttt{OPTIONS='--runslow -k test\_threadsStartStop' make}
+
+Run tests with test\_threadsStartStop in the file name, the class name or the test method name. In this case it is a file name.
+
+These two markers are allowed to skip some of the tests.
+\begin{enumerate}
+\item \texttt{--runslow} Tests marked with this marker are long running tests which slow down the over all execution time. If you add this marker to
+the \texttt{OPTIONS}, these tests will run. Do not use it during test development.
+\item \texttt{--development} Tests marked with this marker are not ready for automated testing. These are under development. If you add this marker
+to the \texttt{OPTIONS}, these tests will run.
+\end{enumerate}
+Some test need both markers to run.
 
 \begin{table}
 \caption{Which test tests what (Part 1)\\ x means: this test uses the component, T means: this test tests this component.
