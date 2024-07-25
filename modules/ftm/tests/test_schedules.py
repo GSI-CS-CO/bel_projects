@@ -2,50 +2,60 @@ import dm_testbench
 import pytest
 
 """
-Start all pattern in a schedule and analyse the frequency of timing messages for 6 seconds.
+Test two schedules from production.
+Start all pattern in the schedule and analyse the frequency of timing messages for some seconds.
+
+For the long running tests (1 minute, 10 minutes) both markers --runslow and --development
+have to be set on command line.
 """
 class Schedules(dm_testbench.DmTestbench):
 
-  def test_frequency_schedule1(self):
-    self.startAllPattern('schedule1.dot')
-    file_name = 'snoop_schedule1.csv'
-    parameter_column = 8
-    self.snoopToCsv(file_name, duration=6)
-    self.analyseFrequencyFromCsv(file_name, parameter_column, checkValues={'0x0100': '>30', '0x021b': '>0'})
-    self.deleteFile(file_name)
+  def runFrequencySchedule(self, duration=6):
+    """Run a schedule from production (SIS18, Jun2 2020). This schedule
+    has 544 nodes and 607 edges. Start all pattern, snoop for the given duration
+    and check for two evtno values.
+    """
+    scheduleFile = 'schedule1.dot'
+    self.startAllPattern(scheduleFile)
+    snoopFileName = 'snoop_schedule1.csv'
+    parameterColumn = 8
+    self.snoopToCsv(snoopFileName, duration=duration)
+    self.analyseFrequencyFromCsv(snoopFileName, parameterColumn, checkValues={'0x0100': '>30', '0x021b': '>0'})
+    self.deleteFile(snoopFileName)
+    # compare downloaded schedule with original schedule.
+    statusFile = scheduleFile.replace('.dot', '-download.dot')
+    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', '-o', statusFile))
+    self.startAndCheckSubprocess(('scheduleCompare', '-s', self.schedulesFolder + statusFile, statusFile), [0], 0, 0)
+    self.deleteFile(statusFile)
 
-  def test_frequency_schedule2(self):
+  def testFrequencySchedule1(self):
+    """Run the snoop for 6 seconds.
+    """
+    self.runFrequencySchedule()
+
+  def testFrequencySchedule2(self):
+    """Run a schedule from production (SIS18, March 2021). This schedule
+    has 879 nodes and 987 edges. Start all pattern, snoop for the given duration
+    and check for two evtno values.
+    """
     if self.cpuQuantity > 3:
       self.startAllPattern('schedule2.dot')
-      file_name = 'snoop_schedule2.csv'
-      parameter_column = 8
-      self.snoopToCsv(file_name, duration=6)
-      self.analyseFrequencyFromCsv(file_name, parameter_column, checkValues={'0x0100': '>15', '0x021b': '>0'})
-      self.deleteFile(file_name)
+      snoopFileName = 'snoop_schedule2.csv'
+      parameterColumn = 8
+      self.snoopToCsv(snoopFileName, duration=6)
+      self.analyseFrequencyFromCsv(snoopFileName, parameterColumn, checkValues={'0x0100': '>15', '0x021b': '>0'})
+      self.deleteFile(snoopFileName)
 
-  # ~ @pytest.mark.development
-  # ~ def test_frequency_schedule1_0060(self):
-    # ~ self.startAllPattern('schedule1.dot')
-    # ~ file_name = 'snoop_schedule1.csv'
-    # ~ parameter_column = 8
-    # ~ self.snoopToCsv(file_name, duration=60)
-    # ~ self.analyseFrequencyFromCsv(file_name, parameter_column)
-    # ~ self.deleteFile(file_name)
+  @pytest.mark.slow
+  @pytest.mark.development
+  def testFrequencySchedule1_0060(self):
+    """Run the snoop for 1 minute.
+    """
+    self.runFrequencySchedule(60)
 
-  # ~ @pytest.mark.development
-  # ~ def test_frequency_schedule1_0600(self):
-    # ~ self.startAllPattern('schedule1.dot')
-    # ~ file_name = 'snoop_schedule1.csv'
-    # ~ parameter_column = 8
-    # ~ self.snoopToCsv(file_name, duration=600)
-    # ~ self.analyseFrequencyFromCsv(file_name, parameter_column)
-    # ~ self.deleteFile(file_name)
-
-  # ~ @pytest.mark.development
-  # ~ def test_frequency_schedule1_3600(self):
-    # ~ self.startAllPattern('schedule1.dot')
-    # ~ file_name = 'snoop_schedule1.csv'
-    # ~ parameter_column = 8
-    # ~ self.snoopToCsv(file_name, duration=3600)
-    # ~ self.analyseFrequencyFromCsv(file_name, parameter_column)
-    # ~ self.deleteFile(file_name)
+  @pytest.mark.slow
+  @pytest.mark.development
+  def testFrequencySchedule1_0600(self):
+    """Run the snoop for 10 minutes.
+    """
+    self.runFrequencySchedule(600)
