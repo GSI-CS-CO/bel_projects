@@ -4,7 +4,7 @@ name="booster-8-loops"
 edge [type=defdst]
 node [cpu=0 fid=1 fillcolor=white style=filled type=block tperiod=1000 pattern=MAIN toffs=0]
 Evt_MAIN [type=tmsg patentry=1 evtno=0 par=0]
-B_MAIN [patexit=1 tperiod=100000000]
+B_MAIN [patexit=1 tperiod=100000000 qlo=1]
 Evt_MAIN -> Origin_T1 -> Startthread_T1 -> Origin_T2 -> Startthread_T2 -> Origin_T3 -> Startthread_T3 -> Origin_T4 -> Startthread_T4 -> Origin_T5 -> Startthread_T5 -> Origin_T6 -> Startthread_T6 -> Origin_T7 -> Startthread_T7 -> B_MAIN -> Evt_MAIN
 
 Origin_T1 [type=origin toffs=10000000 thread=1]

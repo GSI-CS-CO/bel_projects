@@ -11,32 +11,39 @@ class UnitTestUnilac(dm_testbench.DmTestbench):
 
   def unilacPerformance(self, numberOfMessages):
     """ Test performance of one CPU for UNILAC."""
-    scheduleName = self.schedulesFolder + f'unilac{numberOfMessages}.dot'
+    self.scheduleName = self.schedulesFolder + f'unilac{numberOfMessages}.dot'
     snoopFileName = f'snoop-unilac{numberOfMessages}.csv'
-    patternName = f'UNILAC{numberOfMessages}'
-    self.generate_schedule_msg(scheduleName, patternName, numberOfMessages)
+    self.patternName = f'UNILAC{numberOfMessages}'
+    self.generateScheduleMsg(self.scheduleName, self.patternName, numberOfMessages)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
-        scheduleName), [0], linesCout=0, linesCerr=0)
-    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern',
-        patternName), [0], linesCout=1, linesCerr=0)
-    self.snoopToCsv(snoopFileName, eventId='0x1000001000000000', mask='0xFFFFFFF000000000')
+        self.scheduleName), [0], linesCout=0, linesCerr=0)
+    self.snoopToCsvWithAction(snoopFileName, self.actionUnilacPerformance, eventId='0x1000001000000000', mask='0xFFFFFFF000000000', duration=3)
     self.analyseFrequencyFromCsv(snoopFileName, column=20, printTable=True, checkValues={'0x0000000000000001': '>49'})
-    self.deleteFile(scheduleName)
+    self.deleteFile(self.scheduleName)
     self.deleteFile(snoopFileName)
 
-  def test_unilac100(self):
+  def actionUnilacPerformance(self):
+    self.delay(0.3)
+    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern',
+        self.patternName), [0], linesCout=1, linesCerr=0)
+    self.delay(1.0)
+    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'stoppattern',
+        self.patternName), [0], linesCout=0, linesCerr=0)
+
+
+  def testUnilac100(self):
     """ Test performance of one CPU for UNILAC. Should reach 5kHz timing messages (100 messages per 20 msec)."""
     self.unilacPerformance(100)
 
-  def test_unilac900(self):
+  def testUnilac900(self):
     """ Test performance of one CPU for UNILAC. Should reach 45kHz timing messages (900 messages per 20 msec)."""
     self.unilacPerformance(900)
 
-  def test_unilac1800(self):
+  def testUnilac1800(self):
     """ Test performance of one CPU for UNILAC. Should reach 90kHz timing messages (1800 messages per 20 msec)."""
     self.unilacPerformance(1800)
 
-  def generate_schedule_msg(self, fileName, patternName, numberOfMsgs, cpu=0):
+  def generateScheduleMsg(self, fileName, patternName, numberOfMsgs, cpu=0):
     """Generate a schedule and write it to a file. The schedule has one block, a flow and timing messages.
     The timing messages are in two loops. At the end of the first loop, the flow switches flow to the second loop.
     The timing messages have a name counting from 0 to numberOfMsgs - 1. toffs is the number in
