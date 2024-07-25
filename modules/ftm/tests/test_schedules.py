@@ -20,7 +20,7 @@ class Schedules(dm_testbench.DmTestbench):
     snoopFileName = 'snoop_schedule1.csv'
     parameterColumn = 8
     self.snoopToCsv(snoopFileName, duration=duration)
-    self.analyseFrequencyFromCsv(snoopFileName, parameterColumn, checkValues={'0x0100': '>30', '0x021b': '>0'})
+    self.analyseFrequencyFromCsv(snoopFileName, parameterColumn, checkValues={'0x0100': '>30', '0x021b': '>0'}, addDelayed=True)
     self.deleteFile(snoopFileName)
     # compare downloaded schedule with original schedule.
     statusFile = scheduleFile.replace('.dot', '-download.dot')
