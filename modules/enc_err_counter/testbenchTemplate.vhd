@@ -63,7 +63,7 @@ architecture enc_err_counter_tb_arc of enc_err_counter_tb is
 	signal s_gen_err_FSM	: t_gen_err_FSM := idle;
 	signal s_next_err 		: t_gen_err_FSM := idle;
 	
-	type t_assertion_FSM is (idle, set_wb, check_wb, reset, reset_2);
+	type t_assertion_FSM is (idle, set_wb1, check_wb1, set_wb2, check_wb2, reset, reset2, reset3, reset4, reset5, reset6, reset7, reset8);
 	signal s_assertion_FSM	: t_assertion_FSM := idle;
 	signal s_next_assert	: t_assertion_FSM := idle;
 
@@ -201,7 +201,7 @@ p_next_assertion : process(s_clk_sys, s_rst_n) begin
 		if rising_edge(s_clk_sys) then
 			s_assertion_FSM <= s_next_assert;
 		end if;
-		if s_assertion_FSM = reset_2 then
+		if s_assertion_FSM = reset8 then
 			s_done_checking_error <= '1';
 		else
 			s_done_checking_error <= '0';
@@ -217,21 +217,32 @@ p_assertion_FSM : process(s_assertion_FSM, s_done_generating, s_ass_set_wb, s_as
 		s_wb_slave_in	<= wb_stim(c_cyc_off, c_str_off, c_we_off, c_reg_all_zero, c_reg_all_zero);
 
 		if s_done_generating = '1' and s_ass_set_wb = '1' then
-			s_next_assert <= set_wb;
+			s_next_assert <= set_wb1;
 		elsif s_done_generating = '1' and s_ass_reset = '1' then
 			s_next_assert <= reset;
 		else
 			s_next_assert <= idle;
 		end if;
 
-		when set_wb =>
+		when set_wb1 =>
 		s_wb_slave_in <= wb_stim(c_cyc_on, c_str_on, c_we_off, x"00000000", c_reg_all_zero);
 		
-		s_next_assert <= check_wb;
+		s_next_assert <= check_wb1;
 
-		when check_wb =>
+		when check_wb1 =>
 		s_wb_slave_in <= wb_stim(c_cyc_on, c_str_on, c_we_off, x"00000000", c_reg_all_zero);
 		wb_expect("", s_wb_slave_out.dat, t_wishbone_data(nerrors));
+
+		s_next_assert <= set_wb2;
+
+		when set_wb2 =>
+		s_wb_slave_in <= wb_stim(c_cyc_on, c_str_on, c_we_off, x"00000004", c_reg_all_zero);
+		
+		s_next_assert <= check_wb2;
+
+		when check_wb2 =>
+		s_wb_slave_in <= wb_stim(c_cyc_on, c_str_on, c_we_off, x"00000004", c_reg_all_zero);
+		wb_expect("", s_wb_slave_out.dat, t_wishbone_data(nerrors_aux));
 
 		if s_ass_reset = '1' then
 			s_next_assert <= reset;
@@ -242,13 +253,43 @@ p_assertion_FSM : process(s_assertion_FSM, s_done_generating, s_ass_set_wb, s_as
 		when reset =>
 		s_wb_slave_in <= wb_stim(c_cyc_on, c_str_on, c_we_on, x"00000000", x"00000001");
 
-		s_next_assert <= reset_2;
+		s_next_assert <= reset2;
 
-		when reset_2 =>
+		when reset2 =>
+		s_wb_slave_in <= wb_stim(c_cyc_on, c_str_on, c_we_on, x"00000000", x"00000001");
+
+		s_next_assert <= reset3;
+
+		when reset3 =>
 		s_wb_slave_in <= wb_stim(c_cyc_on, c_str_on, c_we_on, x"00000004", x"00000001");
 
+		s_next_assert <= reset4;
+
+		when reset4 =>
+		s_wb_slave_in <= wb_stim(c_cyc_on, c_str_on, c_we_on, x"00000004", x"00000001");
+
+		s_next_assert <= reset5;
+
+		when reset5 =>
+		s_wb_slave_in <= wb_stim(c_cyc_on, c_str_on, c_we_on, x"00000000", x"00000000");
+
+		s_next_assert <= reset6;
+
+		when reset6 =>
+		s_wb_slave_in <= wb_stim(c_cyc_on, c_str_on, c_we_on, x"00000000", x"00000000");
+
+		s_next_assert <= reset7;
+
+		when reset7 =>
+		s_wb_slave_in <= wb_stim(c_cyc_on, c_str_on, c_we_on, x"00000004", x"00000000");
+
+		s_next_assert <= reset8;
+
+		when reset8 =>
+		s_wb_slave_in <= wb_stim(c_cyc_on, c_str_on, c_we_on, x"00000004", x"00000000");
+
 		if s_ass_set_wb = '1' then
-			s_next_assert <= set_wb;
+			s_next_assert <= set_wb1;
 		else
 			s_next_assert <= idle;
 		end if;

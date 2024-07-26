@@ -132,8 +132,12 @@ begin---------------------------------------------------------------------------
 					if slave_i.we = '1' then -- write enable and x"1" in data signifies reset for the counter at the given address
 						if slave_i.adr(7 downto 0) = x"00" and slave_i.dat(3 downto 0) = x"1" then
 							rst_counter_sys <= '1';
+						elsif slave_i.adr(7 downto 0) = x"00" then
+							rst_counter_sys <= '0';
 						elsif slave_i.adr(7 downto 0) = x"04" and slave_i.dat(3 downto 0) = x"1" then -- 0x04
 							rst_counter_sys_aux <= '1';
+						elsif slave_i.adr(7 downto 0) = x"04" then
+							rst_counter_sys_aux <= '0';
 						end if;
 						
 					else

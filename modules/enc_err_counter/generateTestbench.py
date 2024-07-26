@@ -57,6 +57,8 @@ def test_wb_output(fout,clk_signal_name, en_aux):
     fout.write(f"wait until rising_edge({clk_signal_name});\n")
     fout.write(f"s_ass_set_wb <= '0';\n")
     fout.write(f"wait until rising_edge({clk_signal_name});\n")
+    fout.write(f"wait until rising_edge({clk_signal_name});\n")
+    fout.write(f"wait until rising_edge({clk_signal_name});\n")
 
 def generate_error_fsm_controller(fout, nerrors, en_aux):
     #write FSM header
