@@ -92,6 +92,7 @@ architecture enc_err_counter_arc of enc_err_counter is
 	signal rst_shift_reg	: unsigned(1 downto 0);
 	signal synched_enc_err	: std_logic := '0';
 	signal reg_mem			: std_logic_vector(31 downto 0) := x"00000000";
+	signal reg_overflow		: std_logic_vector(31 downto 0) := x"00000000";
 	
 	signal cnt_aux				: t_counter_block := (others =>(others => '0'));
 	signal overflow_reg_aux 	: std_logic_vector(31 downto 0) := x"00000000";
@@ -100,6 +101,7 @@ architecture enc_err_counter_arc of enc_err_counter is
 	signal rst_shift_reg_aux	: unsigned(1 downto 0);
 	signal synched_enc_err_aux	: std_logic := '0';
 	signal reg_mem_aux			: std_logic_vector(31 downto 0) := x"00000000";
+	signal reg_overflow_aux		: std_logic_vector(31 downto 0) := x"00000000";
 	
 	-- wishbone controller
 	signal ack_flag		 : std_logic := '0';
@@ -136,13 +138,13 @@ begin---------------------------------------------------------------------------
 						
 					else
 						if slave_i.adr(7 downto 0) = x"00" then -- counter 1
-							slave_o.dat <= cnt.bin_x;
+							slave_o.dat <= reg_mem;
 						elsif slave_i.adr(7 downto 0) = x"04" then -- auxiliary counter
-							slave_o.dat <= cnt_aux.bin_x;												
+							slave_o.dat <= reg_mem_aux;												
 						elsif slave_i.adr(7 downto 0) = x"08" then -- counter 1 overflow flag
-							slave_o.dat <= overflow_reg;
+							slave_o.dat <= reg_overflow;
 						elsif slave_i.adr(7 downto 0) = x"0C" then -- auxiliary counter overflow flag
-							slave_o.dat <= overflow_reg_aux;
+							slave_o.dat <= reg_overflow_aux;
 						end if;
 					end if;
 				else
@@ -229,11 +231,15 @@ begin---------------------------------------------------------------------------
 				synched_enc_err_aux <= enc_err_aux_i;
 				reg_mem <= cnt.bin_x;
 				reg_mem_aux <= cnt_aux.bin_x;
+				reg_overflow <= overflow_reg;
+				reg_overflow_aux <= overflow_reg_aux;
 			else
 				synched_enc_err <= '0';
 				synched_enc_err_aux <= '0';
 				reg_mem <= (others => '0');
 				reg_mem_aux <= (others => '0');
+				reg_overflow <= (others => '0');
+				reg_overflow_aux <= (others => '0');
 			end if;
 		end if;
 	end process;

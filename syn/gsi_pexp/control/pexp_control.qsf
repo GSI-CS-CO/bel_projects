@@ -313,7 +313,6 @@ set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_tlu:ecatlu"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_wb_event:ecawb"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|ftm_lm32_cluster:lm32*"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|wr_eca:eca"
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_location_assignment FRACTIONALPLL_X0_Y18_N0 -to "monster:main|dmtd_pll5:\\dmtd_a5:dmtd_inst|dmtd_pll5_0002:dmtd_pll5_inst|altera_pll:altera_pll_i|general[0].gpll~FRACTIONAL_PLL"
 set_location_assignment FRACTIONALPLL_X0_Y60_N0 -to "monster:main|sys_pll5:\\sys_a5:sys_inst|sys_pll5_0002:sys_pll5_inst|altera_pll:altera_pll_i|general[0].gpll~FRACTIONAL_PLL"
 set_location_assignment FRACTIONALPLL_X43_Y65_N0 -to "monster:main|ref_pll5:\\ref_a5:ref_inst|ref_pll5_0002:ref_pll5_inst|altera_pll:altera_pll_i|altera_arriav_pll:arriav_pll|altera_arriav_pll_base:fpll_0|cntnen"
@@ -1146,3 +1145,7 @@ set_global_assignment -name QIP_FILE ../../../modules/pll/arria5/dmtd_pll5.qip
 set_global_assignment -name QIP_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria5_phy/arria5_phy8.qip"
 set_global_assignment -name QIP_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria5_phy/arria5_phy16.qip"
 set_global_assignment -name QIP_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria5_phy/arria5_phy_reconf.qip"
+set_global_assignment -name USE_SIGNALTAP_FILE reset_stp.stp
+set_global_assignment -name SIGNALTAP_FILE reset_stp.stp
+
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
