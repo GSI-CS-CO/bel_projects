@@ -41,14 +41,32 @@ architecture enc_err_counter_tb_arc of enc_err_counter_tb is
 	signal s_wb_desc_out  : t_wishbone_device_descriptor;
 	
 	-- Testbench logic
-	signal s_sequence_cnt   : std_logic_vector(31 downto 0);
 	signal s_ack            : std_logic;
-	signal s_flag			: std_logic;
 	signal enc_err			: std_logic := '0';
 	signal enc_err_aux		: std_logic := '0';
-	signal nerrors			: std_logic_vector(31 downto 0) := (others => '0');
-	signal nerrors_aux		: std_logic_vector(31 downto 0) := (others => '0');
+	signal nerrors			: unsigned(31 downto 0) := (others => '0');
+	signal nerrors_aux		: unsigned(31 downto 0) := (others => '0');
+
+	-- control signals error generator
+	signal s_err_idle 				: std_logic := '0';
+	signal s_err_error				: std_logic := '0' ;
+	signal s_err_await				: std_logic := '0';
+	signal s_done_generating		: std_logic := '0';
+
+	-- control signal assertion
+	signal s_ass_idle 				: std_logic := '0';
+	signal s_ass_set_wb				: std_logic := '0';
+	signal s_ass_reset				: std_logic := '0';
+	signal s_done_checking_error	: std_logic := '0';
+
+	type t_gen_err_FSM is (idle, error, await_test);
+	signal s_gen_err_FSM	: t_gen_err_FSM := idle;
+	signal s_next_err 		: t_gen_err_FSM := idle;
 	
+	type t_assertion_FSM is (idle, set_wb, check_wb, reset, reset_2);
+	signal s_assertion_FSM	: t_assertion_FSM := idle;
+	signal s_next_assert	: t_assertion_FSM := idle;
+
 	-- Functions
 	-- Function wb_stim -> Helper function to create a human-readable testbench
 	function wb_stim(cyc : std_logic; stb : std_logic; we : std_logic;
@@ -115,13 +133,126 @@ begin---------------------------------------------------------------------------
 	
 	-- Short ack
  	s_ack <= s_wb_slave_out.ack;
- 	
- 	-- Testbench controller
-	p_tb_ctl : process(s_clk_sys, s_rst_n) is
-	begin
-		if s_rst_n = '0' then
-			s_sequence_cnt <= (others => '0');
-		elsif rising_edge(s_clk_sys) then
-			s_sequence_cnt <= std_logic_vector(unsigned(s_sequence_cnt) + 1);
+
+p_next_error : process(s_clk_ref, s_rst_n) begin
+	if s_rst_n = '1' then
+		if rising_edge(s_clk_ref) then
+			if s_gen_err_FSM = await_test and (s_next_err = idle or s_next_err = error) then
+				nerrors <= (others => '0');
+				nerrors_aux <= (others => '0');
+			end if;
+			s_gen_err_FSM <= s_next_err;
+			if s_gen_err_FSM = error then
+				nerrors <= nerrors + 1;
+				nerrors_aux <= nerrors_aux + 1;
+			end if;
 		end if;
-	end process;
+	else
+		s_gen_err_FSM <= idle;
+	end if;
+end process;
+
+p_err_gen_FSM : process(s_gen_err_FSM, s_err_idle, s_err_error, s_err_await, s_done_checking_error)
+begin
+	s_done_generating <= '0';
+
+	case s_gen_err_FSM is
+		when idle =>
+		enc_err <= '0';
+		enc_err_aux <= '0';
+
+		if s_err_error = '1' then
+			s_next_err <= error;
+		elsif s_err_await ='1' then
+			s_next_err <= await_test;
+		else
+			s_next_err <= idle;
+		end if;
+
+		when error =>
+		enc_err <= '1';
+		enc_err_aux <= '1';
+	
+		if s_err_idle = '1' then
+			s_next_err <= idle;
+		elsif s_err_await ='1' then
+			s_next_err <= await_test;
+		else
+			s_next_err <= error;
+		end if;
+
+		when await_test =>
+		enc_err <= '0';
+		enc_err_aux <= '0';
+		s_done_generating <= '1';
+
+		if s_err_error = '1' and s_done_checking_error = '1' then
+			s_next_err <= error;
+		elsif s_done_checking_error = '1' then
+			s_next_err <= idle;
+		else
+			s_next_err <= await_test;
+		end if;
+	end case;
+end process;
+
+p_next_assertion : process(s_clk_sys, s_rst_n) begin
+	if s_rst_n = '1' then
+		if rising_edge(s_clk_sys) then
+			s_assertion_FSM <= s_next_assert;
+		end if;
+		if s_assertion_FSM = reset_2 then
+			s_done_checking_error <= '1';
+		else
+			s_done_checking_error <= '0';
+		end if;
+	else
+		s_assertion_FSM <= idle;
+	end if;
+end process;
+
+p_assertion_FSM : process(s_assertion_FSM, s_done_generating, s_ass_set_wb, s_ass_reset, s_ass_idle) begin
+	case s_assertion_FSM is
+		when idle =>
+		s_wb_slave_in	<= wb_stim(c_cyc_off, c_str_off, c_we_off, c_reg_all_zero, c_reg_all_zero);
+
+		if s_done_generating = '1' and s_ass_set_wb = '1' then
+			s_next_assert <= set_wb;
+		elsif s_done_generating = '1' and s_ass_reset = '1' then
+			s_next_assert <= reset;
+		else
+			s_next_assert <= idle;
+		end if;
+
+		when set_wb =>
+		s_wb_slave_in <= wb_stim(c_cyc_on, c_str_on, c_we_off, x"00000000", c_reg_all_zero);
+		
+		s_next_assert <= check_wb;
+
+		when check_wb =>
+		s_wb_slave_in <= wb_stim(c_cyc_on, c_str_on, c_we_off, x"00000000", c_reg_all_zero);
+		wb_expect("", s_wb_slave_out.dat, t_wishbone_data(nerrors));
+
+		if s_ass_reset = '1' then
+			s_next_assert <= reset;
+		else
+			s_next_assert <= idle;
+		end if;
+
+		when reset =>
+		s_wb_slave_in <= wb_stim(c_cyc_on, c_str_on, c_we_on, x"00000000", x"00000001");
+
+		s_next_assert <= reset_2;
+
+		when reset_2 =>
+		s_wb_slave_in <= wb_stim(c_cyc_on, c_str_on, c_we_on, x"00000004", x"00000001");
+
+		if s_ass_set_wb = '1' then
+			s_next_assert <= set_wb;
+		else
+			s_next_assert <= idle;
+		end if;
+
+	end case;
+end process;
+
