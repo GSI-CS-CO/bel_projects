@@ -259,7 +259,7 @@ begin---------------------------------------------------------------------------
 					end if;
 				else 
 					cnt.bin <= x"00000000";
-					cnt.gray <= f_gray_encode(cnt.bin);
+					cnt.gray <= f_gray_encode(x"00000000");
 					overflow_reg <= x"00000000";
 				end if; -- rst_counter_ref: counter and overflow flag reset
 				
@@ -274,7 +274,7 @@ begin---------------------------------------------------------------------------
 					end if;
 				else 
 					cnt_aux.bin <= x"00000000";
-					cnt_aux.gray <= f_gray_encode(cnt_aux.bin);
+					cnt_aux.gray <= f_gray_encode(x"00000000");
 					overflow_reg_aux <= x"00000000";
 				end if; -- rst_counter_ref_aux: counter and overflow flag reset
 			else 
