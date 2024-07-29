@@ -108,8 +108,9 @@ architecture enc_err_counter_arc of enc_err_counter is
 	
 begin------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	-- wishbone controller
-	slave_o.err   <= '0';
-	slave_o.stall <= '0';
+	slave_o.err		<= '0';
+	slave_o.stall	<= '0';
+	slave_o.rty		<= '0';
 
 	--sampling reset signal into reference clock domain
 	p_rstn_ref : process (clk_ref_i) begin
@@ -123,6 +124,10 @@ begin---------------------------------------------------------------------------
 		if rising_edge(clk_sys_i) then
 			if (rstn_sys_i = '0') then
 				--TBD reset init
+				slave_o.ack <='0';
+				ack_flag <= '0';
+				rst_counter_sys <= '0';
+				rst_counter_sys_aux <= '0';
 			else
 			
 				--limits the ack signal to one pulse, so the slave guarantees that it is finished
@@ -156,6 +161,7 @@ begin---------------------------------------------------------------------------
 					ack_flag <= '0';
 					rst_counter_sys <= '0';
 					rst_counter_sys_aux <= '0';
+					slave_o.dat <= (others => '0');
 				end if; --ack				
 			
 			end if; --sync reset
@@ -176,7 +182,8 @@ begin---------------------------------------------------------------------------
 				end if;
 			else
 				rst_shift_reg <= "00";
-			end if; -- rstn_sys_i
+				rst_counter_ref <= '0';
+			end if; -- rstn_ref
 		end if; -- rising_edge(clk_ref_i)
 	end process;
 	
@@ -194,7 +201,8 @@ begin---------------------------------------------------------------------------
 				end if;
 			else
 				rst_shift_reg_aux <= "00";
-			end if; -- rstn_sys_i
+				rst_counter_ref_aux <= '0';
+			end if; -- rstn_ref
 		end if; -- rising_edge(clk_ref_i)
 	end process;
 	
@@ -282,8 +290,13 @@ begin---------------------------------------------------------------------------
 					overflow_reg_aux <= x"00000000";
 				end if; -- rst_counter_ref_aux: counter and overflow flag reset
 			else 
-				cnt_aux.bin  <= (others => '0');
-				cnt_aux.bin <= (others => '0');
+				cnt.bin  <= (others => '0');
+				cnt.gray <= f_gray_encode(x"00000000");
+				overflow_reg <= x"00000000";
+				
+				cnt_aux.bin <= x"00000000";
+				cnt_aux.gray <= f_gray_encode(x"00000000");
+				overflow_reg_aux <= x"00000000";
 			end if; --rstn_ref
 		end if; -- rising_edge(clk_ref_i)
 	end process;

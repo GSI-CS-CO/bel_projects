@@ -12,5 +12,8 @@ This module counts the pulses coming from the PHY enc_err output and transfers t
 To reset a counter without a power cycle you can write a one into the counter address. The following write resets error counter one and it's overflow flag.
 eb-write <proto/host/port> 0xXXXXXX00/4 0x00000001
 
+The reset is a toggle. The counter won't rise as long as it is set. So the reset reigster has to be set to 0 again by:
+eb-write <proto/host/port> 0xXXXXXX00/4 0x00000000
+
 ## Clock Domain Crossing
 The clock domain is crossed using grey code encoding and a sync register.
