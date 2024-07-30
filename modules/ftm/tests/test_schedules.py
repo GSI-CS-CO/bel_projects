@@ -30,14 +30,13 @@ class Schedules(dm_testbench.DmTestbench):
       self.startAndCheckSubprocess(('scheduleCompare', '-s', self.schedulesFolder + statusFile, statusFile), [0], 0, 0)
     except AssertionError as instance:
       self.assertEqual(instance.args[0], "False is not true : wrong return code 1, expected: [0], Command line: ('scheduleCompare', '-s', 'schedules/schedule1-download.dot', 'schedule1-download.dot')\nstderr: []\nstdout: []", 'wrong exception')
-      # ~ self.assertEqual(instance.args[0][0], "False is not true : wrong return code 1, expected: [0], Command line: ('scheduleCompare', '-s', 'schedules/schedule1-download.dot', 'schedule1-download.dot')", 'wrong exception')
       self.startAndCheckSubprocess(('scheduleCompare', '-s', self.schedulesFolder + statusFile1, statusFile), [0], 0, 0)
     self.deleteFile(statusFile)
 
   def testFrequencySchedule1(self):
-    """Run the snoop for 6 seconds.
+    """Run the snoop for 16 seconds.
     """
-    self.runFrequencySchedule()
+    self.runFrequencySchedule(16)
 
   def testFrequencySchedule2(self):
     """Run a schedule from production (SIS18, March 2021). This schedule
