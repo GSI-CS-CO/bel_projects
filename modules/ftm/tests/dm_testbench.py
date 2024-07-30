@@ -26,6 +26,7 @@ class DmTestbench(unittest.TestCase):
     self.datamaster = os.environ['DATAMASTER']
     self.schedulesFolder = os.environ.get('TEST_SCHEDULES', 'schedules/')
     self.snoop_command = os.environ.get('SNOOP_COMMAND', 'saft-ctl tr0 -xv snoop 0 0 0')
+    self.deleteFiles = os.environ.get('DELETE_FILES', 'True')
     self.patternStarted = False
     self.cpuQuantity, self.threadQuantity = self.getThreadQuantityFromFirmware()
 
@@ -612,9 +613,10 @@ class DmTestbench(unittest.TestCase):
   def deleteFile(self, fileName):
     """Delete file <fileName>.
     """
-    fileToRemove = pathlib.Path(fileName)
-    if fileToRemove.exists():
-      fileToRemove.unlink()
+    if self.deleteFiles.lower() == 'true':
+      fileToRemove = pathlib.Path(fileName)
+      if fileToRemove.exists():
+        fileToRemove.unlink()
 
   def resetAllCpus(self):
     """Reset each CPU (loop over all lm32 CPUs).
