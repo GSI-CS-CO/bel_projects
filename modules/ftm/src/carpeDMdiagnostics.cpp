@@ -179,7 +179,7 @@ namespace coverage {
         //if it is pending, say so
         report += (qe.pending ? "pending " : "empty   ");
 
-        if (!(verbose | qe.pending)) { report += "-\n"; continue;}
+        if (!((GLOBAL_LOG_LEVEL >= VERBOSE) | qe.pending)) { report += "-\n"; continue;}
 
         std::stringstream auxstream;
         auxstream << std::setfill('0') << std::setw(16) << std::hex << qe.validTime << " " << std::setfill('0') << std::setw(19) << std::dec << qe.validTime;

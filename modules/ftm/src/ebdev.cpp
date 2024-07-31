@@ -1,12 +1,12 @@
 #include "ebebd.h"
+#include "log.h"
 
 int EbDev::writeCycle(vAdr va, vBuf& vb, vBl vcs)
 {
 
   //eb_status_t status;
   //FIXME What about MTU? What about returned eb status ??
-
-  if (debug) sLog << "Starting Write Cycle" << std::endl;
+  log<DEBUG>(L"Starting Write Cycle");
   Cycle cyc;
   eb_data_t veb[va.size()];
 
@@ -19,11 +19,10 @@ int EbDev::writeCycle(vAdr va, vBuf& vb, vBl vcs)
     for(int i = 0; i < (va.end()-va.begin()); i++) {
     if (i && vcs.at(i)) {
       cyc.close();
-      if (debug) sLog << "Close and open next Write Cycle" << std::endl;
+      log<DEBUG>(L"Close and open next Write Cycle");
       cyc.open(dev);
     }
-
-    if (debug) sLog << " Writing @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << " : 0x" << std::hex << std::setfill('0') << std::setw(8) << veb[i] << std::endl;
+    log<DEBUG>(L" Writing @ 0x%1$#08x : 0x%2$#08x") % va[i] % veb[i];
     cyc.write(va[i], EB_BIG_ENDIAN | EB_DATA32, veb[i]);
 
     }
@@ -51,8 +50,8 @@ vBuf EbDev::readCycle(vAdr va, vBl vcs)
   Cycle cyc;
   eb_data_t veb[va.size()];
   vBuf ret = vBuf(va.size() * 4);
-  if (debug) sLog << "Starting Read Cycle" << std::endl;
-  //sLog << "Got Adr Vec with " << va.size() << " Adrs" << std::endl;
+  log<DEBUG>(L"Starting Read Cycle");
+  
 
   try {
     cyc.open(dev);
@@ -60,10 +59,10 @@ vBuf EbDev::readCycle(vAdr va, vBl vcs)
     //FIXME dirty break into cycles
     if (i && vcs.at(i)) {
       cyc.close();
-      if (debug) sLog << "Close and open next Read Cycle" << std::endl;
+      log<DEBUG>(L"Close and open next Read Cycle");
       cyc.open(dev);
     }
-    if (debug) sLog << " Reading @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << std::endl;
+    log<DEBUG>(L" Reading @ 0x%1$#08x") % va[i];
     cyc.read(va[i], EB_BIG_ENDIAN | EB_DATA32, (eb_data_t*)&veb[i]);
     }
     cyc.close();
@@ -142,7 +141,8 @@ bool EbDev::connect(const std::string& en) {
 
     vFw.clear();
 
-    if(verbose) sLog << "Connecting to " << en << "... ";
+
+    log<VERBOSE>(L"Connecting to %1%") % en.c_str();
     try {
       ebs.open(0, EB_DATAX|EB_ADDRX);
       ebd.open(ebs, ebdevname.c_str(), EB_DATAX|EB_ADDRX, 3);
@@ -197,9 +197,8 @@ bool EbDev::connect(const std::string& en) {
       throw;// std::runtime_error("Could not find CPUs running valid DM Firmware\n" );
     }
 
-    if(verbose) {
-      sLog << " Done."  << std::endl << "Found " << unsigned(ebd.getCpuQty()) << " Cores, " << cpuIdxMap.size() << " of them run a valid DM firmware." << std::endl;
-    }
+    log<VERBOSE>(L"Done.\nFound %1% Cores, %2% of them run a valid DM firmware.") % unsigned(ebd.getCpuQty()) % cpuIdxMap.size();
+     
     std::string fwCause = foundVersionMax == -1 ? "" : "Requires FW v" + createFwVersionString(expVersion) + ", found " + createFwVersionString(foundVersionMax);
     if (cpuIdxMap.size() == 0) {throw std::runtime_error("No CPUs running a valid DM firmware found. " + fwCause);}
 
@@ -211,7 +210,7 @@ bool EbDev::connect(const std::string& en) {
   bool EbDev::disconnect() {
     bool ret = false;
 
-    if(verbose) sLog << "Disconnecting ... ";
+    log<VERBOSE>(L"Disconnecting ... ");
     try {
       ebd.close();
       ebs.close();
@@ -222,7 +221,7 @@ bool EbDev::connect(const std::string& en) {
       //TODO report why we could not disconnect
     }
 
-    if(verbose) sLog << " Done" << std::endl;
+    log<VERBOSE>(L" Done.");
 
     return ret;
   }
