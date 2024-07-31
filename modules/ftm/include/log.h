@@ -7,6 +7,7 @@
 
 
 enum log_level_t {
+
     ALWAYS      = 0,
     CRITICAL    = 1,
     ERROR       = 2,
@@ -17,7 +18,11 @@ enum log_level_t {
     DEBUG_LVL1  = 7,
     DEBUG_LVL2  = 8,
     DEBUG_LVL3  = 9,
-    DEBUG       = 8,
+    DEBUG       = DEBUG_LVL2,
+    LOG_MIN     = ALWAYS,
+    LOG_MAX     = DEBUG_LVL3,
+    LOG_DEFAULT = WARNING,
+
 };
 
 

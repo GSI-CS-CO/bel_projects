@@ -9,7 +9,7 @@
 #include "filenames.h"
 #include "log.h"
 
-extern log_level_t GLOBAL_LEVEL;
+extern log_level_t GLOBAL_LOG_LEVEL;
 
 
 
@@ -36,6 +36,7 @@ static void help(const char *program) {
   fprintf(stderr, "  -s                        Show Meta Nodes. Download will not only contain schedules, but also queues, etc. \n");
   fprintf(stderr, "  -v                        Verbose operation, print more details\n");
   fprintf(stderr, "  -d                        Debug operation, print everything\n");
+  fprintf(stderr, "  -x                        Run with given loglevel, between %u (%s) and %u (%s). Default is %u (%s)\n", LOG_MIN, log_lvl_str[LOG_MIN], LOG_MAX, log_lvl_str[LOG_MAX], LOG_DEFAULT, log_lvl_str[LOG_DEFAULT]);
   fprintf(stderr, "  -f                        Force, overrides the safety check for clear, remove, overwrite and keep\n");
 
   fprintf(stderr, "\n");
@@ -53,10 +54,11 @@ int main(int argc, char* argv[]) {
   const char *netaddress, *inputFilename = NULL, *cmdName = "status", *outputFilename = outfile;
 //  const char *dirname = (const char *)getcwd(dirnameBuff, 80);
   int32_t error=0;
+  int32_t tmp;
 
 
 // start getopt
-   while ((opt = getopt(argc, argv, "fnshvo:d")) != -1) {
+   while ((opt = getopt(argc, argv, "fnshvo:dx:")) != -1) {
       switch (opt) {
 
          case 'o':
@@ -69,7 +71,7 @@ int main(int argc, char* argv[]) {
             break;
          case 'd':
             debug = true;
-            GLOBAL_LEVEL = DEBUG;
+            GLOBAL_LOG_LEVEL = DEBUG;
             break;
 
          case 'n':
@@ -81,8 +83,19 @@ int main(int argc, char* argv[]) {
 
          case 'v':
             verbose = true;
-            GLOBAL_LEVEL = VERBOSE;
+            GLOBAL_LOG_LEVEL = VERBOSE;
             break;
+
+         case 'x':
+            tmp = strtol(optarg, NULL, 0);
+            if ((tmp < LOG_MIN) || (tmp > LOG_MAX)) {
+              std::cerr << program << ": Loglevel must be between " << LOG_MIN << " (" << log_lvl_str[LOG_MIN] << ") and " << LOG_MAX << " (" << log_lvl_str[LOG_MAX] << ")" << std::endl;
+              error = -1;
+            } else {
+              GLOBAL_LOG_LEVEL = (log_level_t)tmp;
+            }
+          break;
+               
 
          case 's':
             strip = false;

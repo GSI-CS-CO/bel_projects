@@ -3,16 +3,16 @@
 log_level_t GLOBAL_LOG_LEVEL = ERROR;
 
 const char* const log_lvl_str[] = {
-	"ALWAYS:",
-    "CRITICAL:",
-    "ERROR:",
-    "WARNING:",
-    "INFO:",
-    "VERBOSE:",
-    "DEBUG LVL 0:",
-    "DEBUG LVL 1:",
-    "DEBUG LVL 2:",
-    "DEBUG LVL 3:",
+	"ALWAYS",
+    "CRITICAL",
+    "ERROR",
+    "WARNING",
+    "INFO",
+    "VERBOSE",
+    "DEBUG LVL 0",
+    "DEBUG LVL 1",
+    "DEBUG LVL 2",
+    "DEBUG LVL 3",
 };
 
 /* Examples:

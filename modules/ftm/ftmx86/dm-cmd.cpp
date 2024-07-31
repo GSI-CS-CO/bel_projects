@@ -13,10 +13,13 @@
 #include "dotstr.h"
 #include "strprintf.h"
 #include "filenames.h"
+#include "log.h"
 
 #include <typeinfo>
 
 namespace dnt = DotStr::Node::TypeVal;
+
+extern log_level_t GLOBAL_LOG_LEVEL;
 
 
 static void help(const char *program) {
@@ -30,6 +33,7 @@ static void help(const char *program) {
   fprintf(stderr, "                            <thread-idx> is used as a bit mask if hex number. Example: 0xf0 represents thread 4 to 7.\n");
   fprintf(stderr, "  -v                        Verbose operation, print more details\n");
   fprintf(stderr, "  -d                        Debug operation, print everything\n");
+  fprintf(stderr, "  -x                        Run with given loglevel, between %u (%s) and %u (%s). Default is %u (%s)\n", LOG_MIN, log_lvl_str[LOG_MIN], LOG_MAX, log_lvl_str[LOG_MAX], LOG_DEFAULT, log_lvl_str[LOG_DEFAULT]);
   fprintf(stderr, "  -i <command .dot file>    Run commands from dot file\n");
   fprintf(stderr, "  status                    Show status of all threads and cores (default)\n");
   fprintf(stderr, "  details                   Show time statistics and detailed information on uptime and recent changes\n");
@@ -443,7 +447,7 @@ int main(int argc, char* argv[]) {
   const char *tempCpuBits = NULL;
 
 // start getopt
-   while ((opt = getopt(argc, argv, "shvc:p:l:t:q:i:daf")) != -1) {
+   while ((opt = getopt(argc, argv, "shvc:p:l:t:q:i:dafx:")) != -1) {
       switch (opt) {
         case 'f':
           force = true;
@@ -495,6 +499,16 @@ int main(int argc, char* argv[]) {
             cmdQty = (uint32_t)tmp;
           }
           break;
+        case 'x':
+            tmp = strtol(optarg, NULL, 0);
+            if ((tmp < LOG_MIN) || (tmp > LOG_MAX)) {
+              std::cerr << program << ": Loglevel must be between " << LOG_MIN << " (" << log_lvl_str[LOG_MIN] << ") and " << LOG_MAX << " (" << log_lvl_str[LOG_MAX] << ")" << std::endl;
+              error = -1;
+            } else {
+              GLOBAL_LOG_LEVEL = (log_level_t)tmp;
+            }
+          break;
+
         case 's':
           permanent = true;
           break;
