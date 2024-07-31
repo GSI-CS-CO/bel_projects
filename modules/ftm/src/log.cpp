@@ -1,9 +1,11 @@
 #include "log.h"
 
 log_level_t GLOBAL_LOG_LEVEL = ERROR;
+bool OUTPUT_GLOBAL_LOG_LEVEL = false;
+
 
 const char* const log_lvl_str[] = {
-    "",
+    "ALWAYS",
     "CRITICAL",
     "ERROR",
     "WARNING",

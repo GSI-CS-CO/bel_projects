@@ -71,7 +71,6 @@ int main(int argc, char* argv[]) {
             break;
          case 'd':
             debug = true;
-            GLOBAL_LOG_LEVEL = DEBUG;
             break;
 
          case 'n':
@@ -83,7 +82,6 @@ int main(int argc, char* argv[]) {
 
          case 'v':
             verbose = true;
-            GLOBAL_LOG_LEVEL = VERBOSE;
             break;
 
          case 'x':
@@ -137,8 +135,14 @@ int main(int argc, char* argv[]) {
   CarpeDM cdm;
 
 
-  if(verbose) cdm.verboseOn();
-  if(debug)   cdm.debugOn();
+  if(verbose) {
+    cdm.verboseOn();
+    if(GLOBAL_LOG_LEVEL < VERBOSE) GLOBAL_LOG_LEVEL = VERBOSE;
+  }  
+  if(debug) {
+    cdm.debugOn();
+    if(GLOBAL_LOG_LEVEL < DEBUG) GLOBAL_LOG_LEVEL = DEBUG;
+  }  
 
 
   try {

@@ -552,9 +552,15 @@ int main(int argc, char* argv[]) {
 
   CarpeDM cdm;
 
-  if(verbose) cdm.verboseOn();
-  if(debug)   cdm.debugOn();
-
+ if(verbose) {
+    cdm.verboseOn();
+    if(GLOBAL_LOG_LEVEL < VERBOSE) GLOBAL_LOG_LEVEL = VERBOSE;
+  }
+  if(debug) {
+    cdm.debugOn();
+    if(GLOBAL_LOG_LEVEL < DEBUG) GLOBAL_LOG_LEVEL = DEBUG;
+  }
+ 
   try {
     cdm.connect(std::string(netaddress));
   } catch (std::runtime_error const& err) {
