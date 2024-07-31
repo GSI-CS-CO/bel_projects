@@ -7958,10 +7958,10 @@ case AW_Config2 is
 IOBP_Sel_Led(i) <= IOBP_SK_Sel_Led(i);
  end loop;
 
-IOBP_Sel_Led(9)<= not quench_sk_out(23 downto 18);
-IOBP_Sel_Led(10)<= not quench_sk_out(17 downto 12);
-IOBP_Sel_Led(11)<= not quench_sk_out(11 downto 6);
-IOBP_Sel_Led(12)<= not quench_sk_out(5 downto 0);
+IOBP_Sel_Led(9)<=  quench_sk_out(23 downto 18);
+IOBP_Sel_Led(10)<= quench_sk_out(17 downto 12);
+IOBP_Sel_Led(11)<= quench_sk_out(11 downto 6);
+IOBP_Sel_Led(12)<= quench_sk_out(5 downto 0);
 
    when OTHERS =>
    
