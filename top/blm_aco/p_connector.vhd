@@ -2,7 +2,6 @@ LIBRARY IEEE;
 USE IEEE.std_logic_1164.all;
 USE IEEE.numeric_std.all;
 use work.scu_diob_pkg.all;
-use work.daq_pkg.all;
 
 entity p_connector is
 
@@ -96,10 +95,7 @@ port(
   s_nLED_User3_i         : out std_logic;
   --IOBP_Output_Readback   : out t_IO_Reg_0_to_7_Array;
   --IOBP_Output_Readback   : out std_logic_vector(15 downto 0);
-  Deb_Sync66             : out std_logic_vector(65 downto 0);
-  daq_dat                : out t_daq_dat;
-  daq_diob_ID            : out std_logic_vector(15 downto 0)
-  
+  Deb_Sync66             : out std_logic_vector(65 downto 0)
   );
   end p_connector;
   
@@ -449,13 +445,6 @@ Syn66(65 DOWNTO 60)   <=  not IOBP_Input( 11);
                          Deb_Sync66 <=  Deb66_out;     -- Debounce und Synchronisation
 --END IF;
 
----------------------------------------------------------------------------------------------------------
-  --################################      daq_channels assignments     ##################################
-
-    daq_dat(1)(5 downto 0) <= AW_Output_Reg(6)(11 downto  6);
-    daq_dat(1)(15 downto 6) <= (others => '0');
-    daq_diob_ID(15 downto 0)<= "0000000000010011" ; --"00000000"& c_AW_INLB12S1.ID;
---############################################################################################################
 
 
 else
