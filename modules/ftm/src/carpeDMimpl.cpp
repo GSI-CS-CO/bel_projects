@@ -215,7 +215,7 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
     }
 
     std::wstring wide_str = converter.from_bytes(auxstream.str());
-    log<ALWAYS>(wide_str.c_str());
+    log<ALWAYS>(L"%1%") % wide_str.c_str();
 
   }
 

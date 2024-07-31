@@ -21,7 +21,7 @@ enum log_level_t {
     DEBUG       = DEBUG_LVL2,
     LOG_MIN     = ALWAYS,
     LOG_MAX     = DEBUG_LVL3,
-    LOG_DEFAULT = WARNING,
+    LOG_DEFAULT = ERROR,
 
 };
 

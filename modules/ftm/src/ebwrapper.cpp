@@ -431,7 +431,7 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
     }
     std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
     std::wstring wide_str = converter.from_bytes(auxstream.str());
-    log<ALWAYS>(wide_str.c_str());
+    log<ALWAYS>(L"%1%") % wide_str.c_str();
   }
 
 

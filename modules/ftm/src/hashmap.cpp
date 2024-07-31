@@ -90,6 +90,6 @@ void HashMap::debug() {
       auxstream << "Node: " << std::setfill(' ') << std::setw(40) << x.right << " Hash 0x"  << std::hex << std::setfill('0') << std::setw(8) << x.left << std::endl;
     }
     std::wstring wide_str = converter.from_bytes(auxstream.str());
-    log<ALWAYS>(wide_str.c_str());
+    log<ALWAYS>(L"%1%") % wide_str.c_str();
   }
 

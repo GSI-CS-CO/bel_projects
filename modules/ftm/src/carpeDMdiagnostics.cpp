@@ -502,7 +502,7 @@ void CarpeDM::CarpeDMimpl::inspectHeap(uint8_t cpuIdx) {
   }
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
   std::wstring wide_str = converter.from_bytes(auxstream.str());
-  log<ALWAYS>(wide_str.c_str());
+  log<ALWAYS>(L"%1%") % wide_str.c_str();
 }
 
 
@@ -725,7 +725,7 @@ void CarpeDM::CarpeDMimpl::show(const std::string& title, const std::string& log
 
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
   std::wstring wide_str = converter.from_bytes(auxstream.str());
-  log<ALWAYS>(wide_str.c_str());
+  log<ALWAYS>(L"%1%") % wide_str.c_str();
 
   auxstream.clear();
 
@@ -756,7 +756,7 @@ void CarpeDM::CarpeDMimpl::show(const std::string& title, const std::string& log
   auxstream << std::endl;
 
   wide_str = converter.from_bytes(auxstream.str());
-  log<ALWAYS>(wide_str.c_str());
+  log<ALWAYS>(L"%1%") % wide_str.c_str();
 }
 
 

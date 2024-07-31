@@ -159,7 +159,7 @@ namespace dnt = DotStr::Node::TypeVal;
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //create AllocTable and Vertices
-    log<VERBOSE>(L"Analysing downloaded graph binary %1 bytes\n") % downloadData.size();
+    log<VERBOSE>(L"Analysing downloaded graph binary %1% bytes\n") % downloadData.size();
     uint32_t nodeCnt = 0;
     
     //go through Memories
