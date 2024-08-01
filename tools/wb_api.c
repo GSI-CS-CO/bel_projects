@@ -66,6 +66,7 @@ eb_address_t reset_addr     = EB_NULL;
 eb_address_t brom_addr      = EB_NULL;
 eb_address_t dm_diag_addr   = EB_NULL;
 eb_address_t eca_tap_addr   = EB_NULL;
+eb_address_t eec_addr       = EB_NULL;
 
 eb_address_t BASE_ONEWIRE;
 extern struct w1_bus wrpc_w1_bus;
@@ -853,6 +854,83 @@ eb_status_t wb_wr_reset(eb_device_t device, int devIndex, uint32_t value)
 
   return status;
 } // wb_wr_reset
+
+
+eb_status_t wb_wr_read_enc_err_counter(eb_device_t device, int devIndex, int phyIndex, eb_data_t *counter, eb_data_t *overflowFlag)
+{
+  eb_address_t counterAddress;
+  eb_address_t overflowAddress;
+  eb_status_t  status;
+
+
+#ifdef WB_SIMULATE
+  return EB_OK;
+#endif
+
+  if ((status = wb_check_device(device, ENC_ERR_COUNTER_VENDOR, ENC_ERR_COUNTER_PRODUCT, ENC_ERR_COUNTER_VMAJOR, ENC_ERR_COUNTER_VMINOR, devIndex, &eec_addr)) != EB_OK) return status;
+
+  switch (phyIndex)
+  {
+  case 1:
+    counterAddress  = eec_addr + ENC_ERR_COUNTER_COUNTER1_GET;
+    overflowAddress = eec_addr + ENC_ERR_COUNTER_OVERFLOW1_GET;
+    break;
+  
+  case 2:
+    counterAddress = eec_addr + ENC_ERR_COUNTER_COUNTER2_GET;
+    overflowAddress = eec_addr + ENC_ERR_COUNTER_OVERFLOW2_GET;
+    break;
+
+  default:
+    return EB_OOM; // there are a maximum of 2 phy interfaces, no valid index given
+    break;
+  }
+
+  if ((status = eb_device_read(device, counterAddress, EB_BIG_ENDIAN|EB_DATA32, counter, 0, eb_block)) != EB_OK) return status;
+
+  if ((status = eb_device_read(device, overflowAddress, EB_BIG_ENDIAN|EB_DATA32, overflowFlag, 0, eb_block)) != EB_OK) return status;
+
+  return status;
+} // wb_wr_read_enc_err_counter
+
+
+eb_status_t wb_wr_reset_enc_err_counter(eb_device_t device, int devIndex, int phyIndex)
+{
+  eb_data_t    data;
+  eb_address_t address;
+  eb_status_t  status;
+
+
+#ifdef WB_SIMULATE
+  return EB_OK;
+#endif
+
+  if ((status = wb_check_device(device, ENC_ERR_COUNTER_VENDOR, ENC_ERR_COUNTER_PRODUCT, ENC_ERR_COUNTER_VMAJOR, ENC_ERR_COUNTER_VMINOR, devIndex, &eec_addr)) != EB_OK) return status;
+
+  switch (phyIndex)
+  {
+  case 1:
+    address = eec_addr + ENC_ERR_COUNTER_RESET1;
+    break;
+  
+  case 2:
+    address = eec_addr + ENC_ERR_COUNTER_RESET2;
+    break;
+
+  default:
+    return EB_OOM; // there are a maximum of 2 phy interfaces, no valid index given
+    break;
+  }
+  data = (eb_data_t)1;
+
+  if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, data, 0, eb_block)) != EB_OK) return status;
+
+  data = (eb_data_t)0;
+
+  if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, data, 0, eb_block)) != EB_OK) return status;
+
+  return status;
+} // wb_wr_reset_enc_err_counter
 
 
 eb_status_t wb_wr_watchdog(eb_device_t device, int devIndex, int enable)

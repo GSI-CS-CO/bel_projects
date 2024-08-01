@@ -87,11 +87,13 @@ static void help(void)
   fprintf(stderr, "  -m               display WR MAC\n");
   fprintf(stderr, "  -o               display offset between WR time and system time [ms]\n");
   fprintf(stderr, "  -p               display state of IP\n");
+  fprintf(stderr, "  -r<phyIndex>     reset the encoder error counter of the given PHY index (1 or 2)");
   fprintf(stderr, "  -s <secs> <cpu>  snoop for information continuously (and print warnings. THIS OPTION RESETS ALL STATS!)\n");
   fprintf(stderr, "  -t<busIndex>     display temperature of sensor on the specified 1-wire bus\n");
   fprintf(stderr, "  -u<index>        user 1-wire: specify WB device in case multiple WB devices of the same type exist (default: u0)\n");
   fprintf(stderr, "  -v               display verbose information\n");
   fprintf(stderr, "  -w<index>        WR 1-wire: specify WB device in case multiple WB devices of the same type exist (default: w0)\n");
+  fprintf(stderr, "  -x<phyIndex>     read the encoder error counter and overflow flag of the given PHY index (1 or 2)");
   fprintf(stderr, "  -y               display WR sync status\n");
   fprintf(stderr, "  -z               display FPGA uptime [h]\n");
   fprintf(stderr, "\n");
@@ -177,6 +179,7 @@ int main(int argc, char** argv) {
   eb_socket_t       socket;
   int               devIndex=-1;  // 0,1,2... - there may be more than 1 device on the WB bus
   unsigned int      busIndex=-1;  // index of 1-wire bus connected to a controller
+  int               phyIndex=-1;  // index of phy interface
 
   int               i;            // counter for comparing WR time with other device
   int               nCompare = 5; // number of compares
@@ -204,6 +207,8 @@ int main(int argc, char** argv) {
   int         getCPUStall=0;
   int         getECATap=0;
   int         snoopMode=0;
+  int         readEncErrCounter=0;
+  int         resetEncErrCounter=0;
   int         exitCode=0;
 
   unsigned int family         = 0;    // 1-Wire: familyCode
@@ -214,6 +219,8 @@ int main(int argc, char** argv) {
   double       snoopStallMax  = 0;
   double       snoopStallAct  = 0;
   uint32_t     nSecs;
+  eb_data_t    counter;
+  eb_data_t    overflowFlag;
 
   uint64_t    nsecs64, nsecsOther64;
   uint64_t    nsecsSum64, nsecsSumOther64;
@@ -267,7 +274,7 @@ int main(int argc, char** argv) {
 
   program = argv[0];
 
-  while ((opt = getopt(argc, argv, "t:u:w:f:b:c:j:s:adgopymlievhzk")) != -1) {
+  while ((opt = getopt(argc, argv, "t:u:w:f:b:c:j:s:adgopymlievhzkr:x:")) != -1) {
     switch (opt) {
       case 'a':
         getBuildType=1;
@@ -326,6 +333,23 @@ int main(int argc, char** argv) {
         break;
       case 'p':
         getWRIPState=1;
+        break;
+      case 'r':
+        resetEncErrCounter=1;
+        phyIndex = strtol(optarg, &tail, 0);
+        if(!(phyIndex == 1 || phyIndex == 2)) {
+          fprintf(stderr, "PHY interface index has to be 1 or 2, not %d!\n", phyIndex);
+          exit(1);
+        }
+        break;
+      case 'x':
+        readEncErrCounter=1;
+        phyIndex = strtol(optarg, &tail, 0);
+        if(!(phyIndex == 1 || phyIndex == 2)) {
+          fprintf(stderr, "PHY interface index has to be 1 or 2, not %d!\n", phyIndex);
+          exit(1);
+        }
+        break;
         break;
       case 'y':
         getWRSync=1;
@@ -764,6 +788,15 @@ int main(int argc, char** argv) {
     } // ecatapdisable
     
   } // if command
+
+  if (resetEncErrCounter) {
+    wb_wr_reset_enc_err_counter(device, devIndex, phyIndex);
+  } // if resetEncErrCounter
+
+  if (readEncErrCounter) {
+    wb_wr_read_enc_err_counter(device, devIndex, phyIndex, &counter, &overflowFlag);
+    fprintf(stdout, "PHY#%d counter: %lu, overflow: %lu\n", phyIndex, counter, overflowFlag);
+  } // if readEncErrCounter
   
   wb_close(device, socket);
   wb_close(deviceOther, socket);

@@ -10,7 +10,7 @@ package enc_err_counter_pkg is
 
   constant c_enc_err_counter_sdb : t_sdb_device := (
     abi_class     => x"0000", -- undocumented device
-    abi_ver_major => x"00",
+    abi_ver_major => x"01",
     abi_ver_minor => x"00",
     wbd_endian    => c_sdb_endian_big,
     wbd_width     => x"7", -- 8/16/32-bit port granularity

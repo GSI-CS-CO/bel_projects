@@ -214,6 +214,19 @@ eb_status_t wb_wr_reset(eb_device_t device,                    // EB device
                         uint32_t value                         // value to be written to the reset controller
                         );
 
+// read the counter and overflow flag of the encoder error counter on the device at phyIndex
+eb_status_t wb_wr_read_enc_err_counter(eb_device_t device,     // EB device
+                        int devIndex,                          // 0,1,2... - there may be more than 1 device on the WB bus
+                        int phyIndex,                          // index of the interface to be read
+                        eb_data_t *counter,                     // return values
+                        eb_data_t *overflowFlag);
+
+// reset the counter of the encoder error counter on the device at phyIndex
+eb_status_t wb_wr_reset_enc_err_counter(eb_device_t device,    // EB device
+                        int devIndex,                          // 0,1,2... - there may be more than 1 device on the WB bus
+                        int phyIndex                           // index of the counter to be reset
+                        );
+
 // disable or enable the watchdog for automated FPGA reset
 eb_status_t wb_wr_watchdog(eb_device_t device,                 // EB device
                            int devIndex,                       // 0,1,2... - there may be more than 1 device on the WB bus
