@@ -3319,13 +3319,13 @@ end generate;
   enc_err_counter_y : if g_en_enc_err_counter generate
     enc_err_counter_slave : enc_err_counter
       port map(
-      clk_sys_i    	=> clk_sys,
-      clk_ref_i		=> phy_clk,
-      rstn_sys_i   	=> rstn_sys,
+      clk_sys_i     => clk_sys,
+      clk_ref_i		  => phy_clk,
+      rstn_sys_i    => rstn_sys,
       rstn_ref_i   	=> rstn_ref,
-      slave_i   	=> dev_bus_master_o(dev_slaves'pos(devs_enc_err_counter)),
-      slave_o   	=> dev_bus_master_i(dev_slaves'pos(devs_enc_err_counter)),
-      enc_err_i		=> phy_rx_enc_err,
+      slave_i   	  => dev_bus_master_o(dev_slaves'pos(devs_enc_err_counter)),
+      slave_o   	  => dev_bus_master_i(dev_slaves'pos(devs_enc_err_counter)),
+      enc_err_i		  => phy_rx_enc_err,
       enc_err_aux_i => phy_aux_rx_enc_err);
   end generate;
 

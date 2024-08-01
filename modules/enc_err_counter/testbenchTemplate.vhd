@@ -16,18 +16,18 @@ end;
 
 architecture enc_err_counter_tb_arc of enc_err_counter_tb is
 	--Testbench settings
-	constant c_reset_time  		: time    := 190 ns;
-	constant c_sys_clock_cycle 	: time    := 16.1 ns;
-	constant c_ref_clock_cycle  : time 	  := 7.9 ns;
+	constant c_reset_time  		  : time  := 190 ns;
+	constant c_sys_clock_cycle  : time  := 16.1 ns;
+	constant c_ref_clock_cycle  : time  := 7.9 ns;
 	
 	-- Other constants
-	constant c_cyc_on                      : std_logic := '1';
-	constant c_cyc_off                     : std_logic := '0';
-	constant c_str_on                      : std_logic := '1';
-	constant c_str_off                     : std_logic := '0';
-	constant c_we_on                       : std_logic := '1';
-	constant c_we_off                      : std_logic := '0';
-	constant c_reg_all_zero				   : std_logic_vector(31 downto 0) := x"00000000";
+	constant c_cyc_on       : std_logic := '1';
+	constant c_cyc_off      : std_logic := '0';
+	constant c_str_on       : std_logic := '1';
+	constant c_str_off      : std_logic := '0';
+	constant c_we_on        : std_logic := '1';
+	constant c_we_off       : std_logic := '0';
+	constant c_reg_all_zero : std_logic_vector(31 downto 0) := x"00000000";
 	
 	-- Basic device signals
 	signal s_clk_sys	: std_logic := '0';
@@ -41,23 +41,23 @@ architecture enc_err_counter_tb_arc of enc_err_counter_tb is
 	signal s_wb_desc_out  : t_wishbone_device_descriptor;
 	
 	-- Testbench logic
-	signal s_ack            : std_logic;
-	signal enc_err			: std_logic := '0';
-	signal enc_err_aux		: std_logic := '0';
-	signal nerrors			: unsigned(31 downto 0) := (others => '0');
-	signal nerrors_aux		: unsigned(31 downto 0) := (others => '0');
+	signal s_ack            : std_logic             := '0';
+	signal enc_err			    : std_logic             := '0';
+	signal enc_err_aux		  : std_logic             := '0';
+	signal nerrors			    : unsigned(31 downto 0) := (others => '0');
+	signal nerrors_aux		  : unsigned(31 downto 0) := (others => '0');
 
 	-- control signals error generator
 	signal s_err_idle 				: std_logic := '0';
-	signal s_err_error				: std_logic := '0' ;
+	signal s_err_error				: std_logic := '0';
 	signal s_err_await				: std_logic := '0';
-	signal s_done_generating		: std_logic := '0';
+	signal s_done_generating  : std_logic := '0';
 
 	-- control signal assertion
-	signal s_ass_idle 				: std_logic := '0';
-	signal s_ass_set_wb				: std_logic := '0';
-	signal s_ass_reset				: std_logic := '0';
-	signal s_done_checking_error	: std_logic := '0';
+	signal s_ass_idle 				    : std_logic := '0';
+	signal s_ass_set_wb				    : std_logic := '0';
+	signal s_ass_reset				    : std_logic := '0';
+	signal s_done_checking_error  : std_logic := '0';
 
 	type t_gen_err_FSM is (idle, error, await_test);
 	signal s_gen_err_FSM	: t_gen_err_FSM := idle;
@@ -65,13 +65,12 @@ architecture enc_err_counter_tb_arc of enc_err_counter_tb is
 	
 	type t_assertion_FSM is (idle, set_wb1, check_wb1, set_wb2, check_wb2, reset, reset2, reset3, reset4, reset5, reset6, reset7, reset8);
 	signal s_assertion_FSM	: t_assertion_FSM := idle;
-	signal s_next_assert	: t_assertion_FSM := idle;
+	signal s_next_assert	  : t_assertion_FSM := idle;
 
 	-- Functions
 	-- Function wb_stim -> Helper function to create a human-readable testbench
-	function wb_stim(cyc : std_logic; stb : std_logic; we : std_logic;
-		             adr : t_wishbone_address; dat : t_wishbone_data) return t_wishbone_slave_in is
-	variable v_setup : t_wishbone_slave_in;
+	function wb_stim(cyc : std_logic; stb : std_logic; we : std_logic; adr : t_wishbone_address; dat : t_wishbone_data) return t_wishbone_slave_in is
+	  variable v_setup : t_wishbone_slave_in;
 	begin
 		v_setup.cyc := cyc;
 		v_setup.stb := stb;
@@ -98,14 +97,14 @@ architecture enc_err_counter_tb_arc of enc_err_counter_tb is
 	component enc_err_counter
 		port (
 			clk_sys_i     : in std_logic;
-			clk_ref_i	  : in std_logic;
+			clk_ref_i	    : in std_logic;
 			rstn_sys_i    : in std_logic;
 			rstn_ref_i    : in std_logic;
 
 			slave_o       : out t_wishbone_slave_out;
 			slave_i       : in  t_wishbone_slave_in;
 
-			enc_err_i	  : in std_logic;
+			enc_err_i	    : in std_logic;
 			enc_err_aux_i : in std_logic
 		);
 	end component;
@@ -114,14 +113,14 @@ begin---------------------------------------------------------------------------
 	dut : enc_err_counter
 		port map (
 			clk_sys_i     => s_clk_sys,
-			clk_ref_i	  => s_clk_ref,
+			clk_ref_i	    => s_clk_ref,
 			rstn_sys_i    => s_rst_n,
 			rstn_ref_i	  => s_rst_n,
 
 			slave_o       => s_wb_slave_out,
 			slave_i       => s_wb_slave_in,
 
-			enc_err_i	  => enc_err,
+			enc_err_i	    => enc_err,
 			enc_err_aux_i => enc_err_aux
 		);
 

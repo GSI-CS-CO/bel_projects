@@ -143,7 +143,9 @@ def write_testbench(tb_name, nerrors):
     fout.write("end architecture enc_err_counter_tb_arc;\n")
     fout.close()
 
-    os.remove("enc_err_counter_tb.vhd")
+    if os.path.isfile("enc_err_counter_tb.vhd"):
+      os.remove("enc_err_counter_tb.vhd")
+  
     shutil.copyfile(tb_name, "enc_err_counter_tb.vhd")
 
 tb_name = f"{__MODULENAME__}_tb_ref_clk_{clk_ref}_sys_clk_{clk_sys}.vhd"
