@@ -3322,6 +3322,7 @@ end generate;
       clk_sys_i    	=> clk_sys,
       clk_ref_i		=> phy_clk,
       rstn_sys_i   	=> rstn_sys,
+      rstn_ref_i   	=> rstn_ref,
       slave_i   	=> dev_bus_master_o(dev_slaves'pos(devs_enc_err_counter)),
       slave_o   	=> dev_bus_master_i(dev_slaves'pos(devs_enc_err_counter)),
       enc_err_i		=> phy_rx_enc_err,

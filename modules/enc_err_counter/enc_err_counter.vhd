@@ -49,9 +49,10 @@ use work.genram_pkg.all;
 entity enc_err_counter is
 	--possible generics like clock speeds?
 	port (
-		clk_sys_i     : in std_logic;
-		clk_ref_i	  : in std_logic;
-		rstn_sys_i    : in std_logic;
+		clk_sys_i	: in std_logic;
+		clk_ref_i	: in std_logic;
+		rstn_sys_i	: in std_logic;
+		rstn_ref_i	: in std_logic;
 
 		slave_o       : out t_wishbone_slave_out;
 		slave_i       : in  t_wishbone_slave_in;
@@ -82,8 +83,6 @@ architecture enc_err_counter_arc of enc_err_counter is
 		gray, gray_next : t_counter;
 		bin_x, gray_x   : t_counter;
 	end record;
-
-	signal rstn_ref			: std_logic := '0';
 	
 	signal cnt				: t_counter_block := (others =>(others => '0'));
 	signal overflow_reg 	: std_logic_vector(31 downto 0) := x"00000000";
@@ -111,25 +110,17 @@ begin---------------------------------------------------------------------------
 	slave_o.err		<= '0';
 	slave_o.stall	<= '0';
 	slave_o.rty		<= '0';
-
-	--sampling reset signal into reference clock domain
-	p_rstn_ref : process (clk_ref_i) begin
-		if rising_edge(clk_ref_i) then
-			rstn_ref <= rstn_sys_i;
-		end if;
-	end process;
 	
-	wb_read_write: process(clk_sys_i)
+	wb_read_write: process(clk_sys_i, rstn_sys_i)
 	begin
-		if rising_edge(clk_sys_i) then
-			if (rstn_sys_i = '0') then
-				--TBD reset init
-				slave_o.ack <='0';
-				ack_flag <= '0';
-				rst_counter_sys <= '0';
-				rst_counter_sys_aux <= '0';
-			else
-			
+		if (rstn_sys_i = '0') then
+		slave_o.ack <='0';
+		ack_flag <= '0';
+		rst_counter_sys <= '0';
+		rst_counter_sys_aux <= '0';
+		else
+			if rising_edge(clk_sys_i) then
+				
 				--limits the ack signal to one pulse, so the slave guarantees that it is finished
 				if ack_flag = '0' and slave_i.cyc = '1' and slave_i.stb = '1' then
 					slave_o.ack <= '1';
@@ -164,15 +155,15 @@ begin---------------------------------------------------------------------------
 					slave_o.dat <= (others => '0');
 				end if; --ack				
 			
-			end if; --sync reset
-		end if; --rising edge	
+			end if; --rising edge	
+		end if; --sync reset
 	end process;
 	
 	--shift register for edge registering for crossing clock domain from system clock to reference clock
-	reset_counter_shift_register : process (clk_ref_i)
+	reset_counter_shift_register : process (clk_ref_i, rstn_ref_i)
 	begin
-		if rising_edge(clk_ref_i) then
-			if rstn_ref = '1' then
+		if rstn_ref_i = '1' then
+			if rising_edge(clk_ref_i) then
 				rst_shift_reg <= shift_left(rst_shift_reg, 1);
 				rst_shift_reg (0) <= rst_counter_sys;
 				if rst_shift_reg(1) = '0' and rst_shift_reg(0) = '1' then
@@ -180,18 +171,18 @@ begin---------------------------------------------------------------------------
 				else 
 					rst_counter_ref <= '0';
 				end if;
-			else
-				rst_shift_reg <= "00";
-				rst_counter_ref <= '0';
-			end if; -- rstn_ref
-		end if; -- rising_edge(clk_ref_i)
+			end if; -- rising_edge(clk_ref_i)
+		else
+			rst_shift_reg <= "00";
+			rst_counter_ref <= '0';
+		end if; -- rstn_ref_i
 	end process;
 	
 	--shift register for edge registering for crossing clock domain from system clock to reference clock
-	reset_counter_shift_register_aux : process (clk_ref_i)
+	reset_counter_shift_register_aux : process (clk_ref_i, rstn_ref_i)
 	begin
-		if rising_edge(clk_ref_i) then
-			if rstn_ref = '1' then
+		if rstn_ref_i = '1' then
+			if rising_edge(clk_ref_i) then
 				rst_shift_reg_aux <= shift_left(rst_shift_reg_aux, 1);
 				rst_shift_reg_aux (0) <= rst_counter_sys_aux;
 				if rst_shift_reg_aux(1) = '0' and rst_shift_reg_aux(0) = '1' then
@@ -199,11 +190,11 @@ begin---------------------------------------------------------------------------
 				else 
 					rst_counter_ref_aux <= '0';
 				end if;
-			else
-				rst_shift_reg_aux <= "00";
-				rst_counter_ref_aux <= '0';
-			end if; -- rstn_ref
-		end if; -- rising_edge(clk_ref_i)
+			end if; -- rising_edge(clk_ref_i)
+		else
+			rst_shift_reg_aux <= "00";
+			rst_counter_ref_aux <= '0';
+		end if; -- rstn_ref_i
 	end process;
 	
 	-- error counter clock domain crossing
@@ -237,15 +228,15 @@ begin---------------------------------------------------------------------------
 
 	-- synching enc_err_i to ensure synchronous and stable signal; separating wishbone interface from reference clock domain
 	p_synch_enc_err_sig_aux : process (clk_ref_i) begin
-		if rising_edge(clk_ref_i) then
-			if rstn_ref = '1' then
-				synched_enc_err <= enc_err_i;
-				synched_enc_err_aux <= enc_err_aux_i;
-				reg_mem <= cnt.bin_x;
-				reg_mem_aux <= cnt_aux.bin_x;
-				reg_overflow <= overflow_reg;
-				reg_overflow_aux <= overflow_reg_aux;
-			else
+		if rstn_ref_i = '1' then
+			synched_enc_err <= enc_err_i;
+			synched_enc_err_aux <= enc_err_aux_i;
+			reg_mem <= cnt.bin_x;
+			reg_mem_aux <= cnt_aux.bin_x;
+			reg_overflow <= overflow_reg;
+			reg_overflow_aux <= overflow_reg_aux;
+		else
+			if rising_edge(clk_ref_i) then
 				synched_enc_err <= '0';
 				synched_enc_err_aux <= '0';
 				reg_mem <= (others => '0');
@@ -258,8 +249,8 @@ begin---------------------------------------------------------------------------
 
 	-- reference clock domain
 	process (clk_ref_i) begin
-		if rising_edge(clk_ref_i) then
-			if rstn_ref = '1' then
+		if rstn_ref_i = '1' then
+			if rising_edge(clk_ref_i) then
 				if rst_counter_ref = '0' then	-- counter and overflow flag reset
 					if synched_enc_err = '1' then
 						if cnt.bin = x"FFFFFFFF" then -- overflow
@@ -289,16 +280,16 @@ begin---------------------------------------------------------------------------
 					cnt_aux.gray <= f_gray_encode(x"00000000");
 					overflow_reg_aux <= x"00000000";
 				end if; -- rst_counter_ref_aux: counter and overflow flag reset
-			else 
-				cnt.bin  <= (others => '0');
-				cnt.gray <= f_gray_encode(x"00000000");
-				overflow_reg <= x"00000000";
-				
-				cnt_aux.bin <= x"00000000";
-				cnt_aux.gray <= f_gray_encode(x"00000000");
-				overflow_reg_aux <= x"00000000";
-			end if; --rstn_ref
-		end if; -- rising_edge(clk_ref_i)
+			end if; -- rising_edge(clk_ref_i)
+		else 
+			cnt.bin  <= (others => '0');
+			cnt.gray <= f_gray_encode(x"00000000");
+			overflow_reg <= x"00000000";
+			
+			cnt_aux.bin <= x"00000000";
+			cnt_aux.gray <= f_gray_encode(x"00000000");
+			overflow_reg_aux <= x"00000000";
+		end if; --rstn_ref_i
 	end process;
 	
 end architecture;

@@ -31,6 +31,7 @@ package enc_err_counter_pkg is
 		clk_sys_i     : in std_logic;
 		clk_ref_i	  : in std_logic;
 		rstn_sys_i    : in std_logic;
+		rstn_ref_i    : in std_logic;
 
 		slave_o       : out t_wishbone_slave_out;
 		slave_i       : in  t_wishbone_slave_in;

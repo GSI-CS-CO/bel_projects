@@ -100,6 +100,7 @@ architecture enc_err_counter_tb_arc of enc_err_counter_tb is
 			clk_sys_i     : in std_logic;
 			clk_ref_i	  : in std_logic;
 			rstn_sys_i    : in std_logic;
+			rstn_ref_i    : in std_logic;
 
 			slave_o       : out t_wishbone_slave_out;
 			slave_i       : in  t_wishbone_slave_in;
@@ -115,6 +116,7 @@ begin---------------------------------------------------------------------------
 			clk_sys_i     => s_clk_sys,
 			clk_ref_i	  => s_clk_ref,
 			rstn_sys_i    => s_rst_n,
+			rstn_ref_i	  => s_rst_n,
 
 			slave_o       => s_wb_slave_out,
 			slave_i       => s_wb_slave_in,
