@@ -87,13 +87,13 @@ static void help(void)
   fprintf(stderr, "  -m               display WR MAC\n");
   fprintf(stderr, "  -o               display offset between WR time and system time [ms]\n");
   fprintf(stderr, "  -p               display state of IP\n");
-  fprintf(stderr, "  -r<phyIndex>     reset the encoder error counter of the given PHY index (1 or 2)");
+  fprintf(stderr, "  -r<phyIndex>     reset the encoder error counter of the given PHY index (1 or 2)\n");
   fprintf(stderr, "  -s <secs> <cpu>  snoop for information continuously (and print warnings. THIS OPTION RESETS ALL STATS!)\n");
   fprintf(stderr, "  -t<busIndex>     display temperature of sensor on the specified 1-wire bus\n");
   fprintf(stderr, "  -u<index>        user 1-wire: specify WB device in case multiple WB devices of the same type exist (default: u0)\n");
   fprintf(stderr, "  -v               display verbose information\n");
   fprintf(stderr, "  -w<index>        WR 1-wire: specify WB device in case multiple WB devices of the same type exist (default: w0)\n");
-  fprintf(stderr, "  -x<phyIndex>     read the encoder error counter and overflow flag of the given PHY index (1 or 2)");
+  fprintf(stderr, "  -x<phyIndex>     read the encoder error counter and overflow flag of the given PHY index (1 or 2)\n");
   fprintf(stderr, "  -y               display WR sync status\n");
   fprintf(stderr, "  -z               display FPGA uptime [h]\n");
   fprintf(stderr, "\n");
