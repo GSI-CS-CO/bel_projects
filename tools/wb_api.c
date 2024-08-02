@@ -66,7 +66,6 @@ eb_address_t reset_addr     = EB_NULL;
 eb_address_t brom_addr      = EB_NULL;
 eb_address_t dm_diag_addr   = EB_NULL;
 eb_address_t eca_tap_addr   = EB_NULL;
-eb_address_t eec_addr       = EB_NULL;
 
 eb_address_t BASE_ONEWIRE;
 extern struct w1_bus wrpc_w1_bus;
@@ -861,6 +860,7 @@ eb_status_t wb_wr_read_enc_err_counter(eb_device_t device, int devIndex, int phy
   eb_address_t counterAddress;
   eb_address_t overflowAddress;
   eb_status_t  status;
+  eb_address_t eec_addr = EB_NULL;
 
 
 #ifdef WB_SIMULATE
@@ -868,6 +868,10 @@ eb_status_t wb_wr_read_enc_err_counter(eb_device_t device, int devIndex, int phy
 #endif
 
   if ((status = wb_check_device(device, ENC_ERR_COUNTER_VENDOR, ENC_ERR_COUNTER_PRODUCT, ENC_ERR_COUNTER_VMAJOR, ENC_ERR_COUNTER_VMINOR, devIndex, &eec_addr)) != EB_OK) return status;
+
+  if(phyIndex == 2) {
+    if ((status = wb_check_second_phy_interface(device, devIndex, eec_addr)) != EB_OK) return status;
+  }
 
   switch (phyIndex)
   {
@@ -899,6 +903,7 @@ eb_status_t wb_wr_reset_enc_err_counter(eb_device_t device, int devIndex, int ph
   eb_data_t    data;
   eb_address_t address;
   eb_status_t  status;
+  eb_address_t eec_addr = EB_NULL;
 
 
 #ifdef WB_SIMULATE
@@ -906,6 +911,10 @@ eb_status_t wb_wr_reset_enc_err_counter(eb_device_t device, int devIndex, int ph
 #endif
 
   if ((status = wb_check_device(device, ENC_ERR_COUNTER_VENDOR, ENC_ERR_COUNTER_PRODUCT, ENC_ERR_COUNTER_VMAJOR, ENC_ERR_COUNTER_VMINOR, devIndex, &eec_addr)) != EB_OK) return status;
+
+  if(phyIndex == 2) {
+    if ((status = wb_check_second_phy_interface(device, devIndex, eec_addr)) != EB_OK) return status;
+  }
 
   switch (phyIndex)
   {
@@ -931,6 +940,29 @@ eb_status_t wb_wr_reset_enc_err_counter(eb_device_t device, int devIndex, int ph
 
   return status;
 } // wb_wr_reset_enc_err_counter
+
+
+eb_status_t wb_check_second_phy_interface(eb_device_t device, int devIndex, eb_address_t address)
+{
+  eb_status_t  status;
+
+
+  #ifdef WB_SIMULATE
+    return EB_OK;
+  #endif
+
+  eb_address_t flagAddress = address + ENC_ERR_COUNTER_AUX_PHY_FLAG;
+
+  eb_data_t aux_phy_flag;
+  if ((status = eb_device_read(device, flagAddress, EB_BIG_ENDIAN|EB_DATA32, &aux_phy_flag, 0, eb_block)) != EB_OK) return status;
+  if (aux_phy_flag != 0x00000001) {
+    fprintf(stderr, "The auxiliary phy interface (phy#2) doesn't exist!\n");
+    return EB_OOM; // phy interface 2 doesn't exist
+  } else {
+    return EB_OK;
+  }
+  return EB_OK;
+} // wb_check_second_phy_interface
 
 
 eb_status_t wb_wr_watchdog(eb_device_t device, int devIndex, int enable)

@@ -95,6 +95,9 @@ architecture enc_err_counter_tb_arc of enc_err_counter_tb is
   end procedure wb_expect;
   
   component enc_err_counter
+    generic (
+      g_aux_phy_interface : in boolean
+    );
     port (
       clk_sys_i     : in std_logic;
       clk_ref_i     : in std_logic;
@@ -111,6 +114,9 @@ architecture enc_err_counter_tb_arc of enc_err_counter_tb is
 begin------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
   dut : enc_err_counter
+    generic map (
+      g_aux_phy_interface => true    
+    )
     port map (
       clk_sys_i     => s_clk_sys,
       clk_ref_i     => s_clk_ref,

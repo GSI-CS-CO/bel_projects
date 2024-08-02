@@ -27,6 +27,9 @@ package enc_err_counter_pkg is
     
     
   component enc_err_counter is
+    generic (
+      g_aux_phy_interface : boolean
+    );
     port(
     clk_sys_i     : in std_logic;
     clk_ref_i     : in std_logic;

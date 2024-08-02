@@ -3318,6 +3318,9 @@ end generate;
   end generate;
   enc_err_counter_y : if g_en_enc_err_counter generate
     enc_err_counter_slave : enc_err_counter
+      generic map (
+        g_aux_phy_interface => g_dual_port_wr
+      )
       port map(
       clk_sys_i     => clk_sys,
       clk_ref_i     => phy_clk,

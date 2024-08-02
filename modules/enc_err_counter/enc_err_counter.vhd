@@ -47,7 +47,10 @@ use work.gencores_pkg.all;
 use work.genram_pkg.all;
 
 entity enc_err_counter is
-  --possible generics like clock speeds?
+  generic (
+    g_aux_phy_interface : boolean
+  );
+
   port (
     clk_sys_i     : in std_logic;
     clk_ref_i     : in std_logic;
@@ -94,14 +97,12 @@ architecture enc_err_counter_arc of enc_err_counter is
   signal reg_overflow     : std_logic_vector(31 downto 0) := x"00000000";
   
   signal cnt_aux              : t_counter_block               := (others =>(others => '0'));
-  signal overflow_reg_aux     : std_logic_vector(31 downto 0) := x"00000000";
   signal rst_counter_sys_aux  : std_logic                     := '0';
   signal rst_counter_ref_aux  : std_logic                     := '0';  
   signal rst_shift_reg_aux    : unsigned(1 downto 0)          := "00";
   signal synched_enc_err_aux  : std_logic                     := '0';
   signal reg_mem_aux          : std_logic_vector(31 downto 0) := x"00000000";
-  signal reg_overflow_aux     : std_logic_vector(31 downto 0) := x"00000000";
-  
+
   -- wishbone controller
   signal ack_flag : std_logic := '0';
   
@@ -135,9 +136,11 @@ begin---------------------------------------------------------------------------
             elsif slave_i.adr(7 downto 0) = x"04" then -- auxiliary counter
               slave_o.dat <= reg_mem_aux;                        
             elsif slave_i.adr(7 downto 0) = x"08" then -- counter 1 overflow flag
-              slave_o.dat <= reg_overflow;
+              slave_o.dat <= (31 downto 1 => '0') & reg_overflow(0);
             elsif slave_i.adr(7 downto 0) = x"0C" then -- auxiliary counter overflow flag
-              slave_o.dat <= reg_overflow_aux;
+              slave_o.dat <= (31 downto 1 => '0') & reg_overflow(1);
+            elsif slave_i.adr(7 downto 0) = x"10" then -- second phy interface existance flag
+              slave_o.dat <= (31 downto 1 => '0') & reg_overflow(2);
             end if;
           end if;
           
@@ -160,6 +163,13 @@ begin---------------------------------------------------------------------------
     end if; --rstn_sys_i
   end process;
   
+  aux_phy_interface_n : if not g_aux_phy_interface generate
+    overflow_reg(2) <= '0';
+  end generate;
+  aux_phy_interface_y : if g_aux_phy_interface generate
+    overflow_reg(2) <= '1';
+  end generate;
+
   --shift register for edge registering for crossing clock domain from system clock to reference clock
   reset_counter_shift_register : process (clk_ref_i, rstn_ref_i)
   begin
@@ -243,14 +253,12 @@ begin---------------------------------------------------------------------------
       if rising_edge(clk_sys_i) then
         reg_mem           <= cnt.bin_x;
         reg_mem_aux       <= cnt_aux.bin_x;
-        reg_overflow      <= overflow_reg; -- possible to sample this in sys domain or synch register needed?
-        reg_overflow_aux  <= overflow_reg_aux;
+        reg_overflow      <= overflow_reg;
       end if;
     else
       reg_mem           <= (others => '0');
       reg_mem_aux       <= (others => '0');
       reg_overflow      <= (others => '0');
-      reg_overflow_aux  <= (others => '0');
     end if;
   end process;
 
@@ -276,7 +284,7 @@ begin---------------------------------------------------------------------------
         if rst_counter_ref = '0' then  -- counter and overflow flag reset
           if synched_enc_err = '1' then
             if cnt.bin = x"FFFFFFFF" then -- overflow
-              overflow_reg <= x"00000001";
+              overflow_reg(0) <= '1';
             end if;
 
             cnt.bin   <= cnt.bin_next;
@@ -285,13 +293,13 @@ begin---------------------------------------------------------------------------
         else 
           cnt.bin       <= x"00000000";
           cnt.gray      <= f_gray_encode(x"00000000");
-          overflow_reg  <= x"00000000";
+          overflow_reg(0) <= '0';
         end if; -- rst_counter_ref: counter and overflow flag reset
         
         if rst_counter_ref_aux = '0' then -- counter and overflow flag reset
           if synched_enc_err_aux = '1' then
             if cnt_aux.bin = x"FFFFFFFF" then -- overflow
-              overflow_reg_aux <= x"00000001";
+              overflow_reg(1) <= '1';
             end if;
 
             cnt_aux.bin   <= cnt_aux.bin_next;
@@ -300,7 +308,7 @@ begin---------------------------------------------------------------------------
         else 
           cnt_aux.bin       <= x"00000000";
           cnt_aux.gray      <= f_gray_encode(x"00000000");
-          overflow_reg_aux  <= x"00000000";
+          overflow_reg(1) <= '0';
         end if; -- rst_counter_ref_aux: counter and overflow flag reset
 
       end if; -- rising_edge(clk_ref_i)
@@ -309,11 +317,10 @@ begin---------------------------------------------------------------------------
     else --rstn_ref_i
       cnt.bin       <= (others => '0');
       cnt.gray      <= f_gray_encode(x"00000000");
-      overflow_reg  <= x"00000000";
+      overflow_reg(1 downto 0) <= "00";
       
       cnt_aux.bin       <= x"00000000";
       cnt_aux.gray      <= f_gray_encode(x"00000000");
-      overflow_reg_aux  <= x"00000000";
     end if; --rstn_ref_i
 
   end process;

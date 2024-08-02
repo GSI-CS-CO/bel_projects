@@ -1,6 +1,8 @@
 #!/bin/bash
 source settings.sh
 
+./generateTestbench.py
+
 # Run
 echo "Removing old files ..."
 for item in $TB_NAME *.o *.vcd *.cf *.ghw

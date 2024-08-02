@@ -190,7 +190,7 @@
 // device ID
 #define ENC_ERR_COUNTER_VENDOR        WB_GSI              // vendor ID
 #define ENC_ERR_COUNTER_PRODUCT       0x434e5452          // product ID
-#define ENC_ERR_COUNTER_VMAJOR        0                   // major revision
+#define ENC_ERR_COUNTER_VMAJOR        1                   // major revision
 #define ENC_ERR_COUNTER_VMINOR        0                   // minor revision
 
 // register offsets
@@ -198,6 +198,7 @@
 #define ENC_ERR_COUNTER_COUNTER2_GET  0x0004              // read error counter 2
 #define ENC_ERR_COUNTER_OVERFLOW1_GET 0x0008              // read overflow register 1
 #define ENC_ERR_COUNTER_OVERFLOW2_GET 0x000c              // read overflow register 1
+#define ENC_ERR_COUNTER_AUX_PHY_FLAG  0x0010              // read aux phy flag
 
 #define ENC_ERR_COUNTER_RESET1        0x0000              // reset address 1
 #define ENC_ERR_COUNTER_RESET2        0x0004              // reset address 2

@@ -227,6 +227,12 @@ eb_status_t wb_wr_reset_enc_err_counter(eb_device_t device,    // EB device
                         int phyIndex                           // index of the counter to be reset
                         );
 
+eb_status_t wb_check_second_phy_interface(
+                        eb_device_t device,                    // EB device
+                        int devIndex,                          // 0,1,2... - there may be more than 1 device on the WB bus
+                        eb_address_t address
+                        );
+
 // disable or enable the watchdog for automated FPGA reset
 eb_status_t wb_wr_watchdog(eb_device_t device,                 // EB device
                            int devIndex,                       // 0,1,2... - there may be more than 1 device on the WB bus

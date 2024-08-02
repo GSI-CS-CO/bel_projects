@@ -790,11 +790,11 @@ int main(int argc, char** argv) {
   } // if command
 
   if (resetEncErrCounter) {
-    wb_wr_reset_enc_err_counter(device, devIndex, phyIndex);
+    if ((status = wb_wr_reset_enc_err_counter(device, devIndex, phyIndex)) != EB_OK) die("Reset encoder error counter", status);
   } // if resetEncErrCounter
 
   if (readEncErrCounter) {
-    wb_wr_read_enc_err_counter(device, devIndex, phyIndex, &counter, &overflowFlag);
+    if ((status = wb_wr_read_enc_err_counter(device, devIndex, phyIndex, &counter, &overflowFlag)) != EB_OK) die("Reset encoder error counter", status);
     fprintf(stdout, "PHY#%d counter: %lu, overflow: %lu\n", phyIndex, counter, overflowFlag);
   } // if readEncErrCounter
   
