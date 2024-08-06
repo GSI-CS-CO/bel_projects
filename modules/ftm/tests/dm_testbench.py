@@ -578,11 +578,11 @@ class DmTestbench(unittest.TestCase):
       self.addSchedule(f'pps-all-threads-cpu{cpu}.dot')
     # Check all CPUs that no thread is running.
     self.delay(0.2)
-    lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', cpuMask, 'running'), [0], len(cpuList), 0)
-    # ~ self.printStdOutStdErr(lines)
+    lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', cpuMask, 'running'), [0], len(cpuList), 0)
+    # ~ self.printStdOutStdErr([lines,[]])
     for i in range(len(cpuList)):
       expectedText = 'CPU {variable} Running Threads: 0x0'.format(variable=i)
-      self.assertEqual(lines[0][i], expectedText, 'wrong output, expected: ' + expectedText)
+      self.assertEqual(lines[i], expectedText, 'wrong output, expected: ' + expectedText + '\n' + '\n'.join(lines))
     # Start pattern for all CPUs and all threads
     threadList = [('a', '0'), ('b', '1'), ('c', '2'), ('d', '3'), ('e', '4'), ('f', '5'), ('g', '6'), ('h', '7'),
                   ('a', '8'), ('b', '9'), ('c', '10'), ('d', '11'), ('e', '12'), ('f', '13'), ('g', '14'), ('h', '15'),
