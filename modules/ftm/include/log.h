@@ -4,7 +4,9 @@
 #include <sstream>
 #include <boost/format.hpp>
 #include <iostream>
+#include <codecvt>
 
+#define GLOBAL_LOG_COMPATIBILITY 1
 
 enum log_level_t {
 
@@ -41,9 +43,17 @@ public:
     ~formatted_log_t() {
         // GLOBAL_LEVEL is a global variable and could be changed at runtime
         // Any customization could be here
-	std::string s = OUTPUT_GLOBAL_LOG_LEVEL ? std::string(log_lvl_str[level]) + ":" : "";
+	    std::string s = OUTPUT_GLOBAL_LOG_LEVEL ? std::string(log_lvl_str[level]) + ":" : "";
 
-        if ( level <= GLOBAL_LOG_LEVEL ) wcout << s.c_str() << L" " << fmt << endl;
+        if ( level <= GLOBAL_LOG_LEVEL ) {
+            if (GLOBAL_LOG_COMPATIBILITY) {
+                std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+                std::string narrow_fmt = converter.to_bytes(fmt.str());
+                cout << s << " " << narrow_fmt << endl;
+            } else wcout << s.c_str() << L" " << fmt << endl;
+
+       }
+
     }        
     template <typename T> 
     formatted_log_t& operator %(T value) {
