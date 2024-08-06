@@ -318,7 +318,7 @@ std::string& CarpeDM::CarpeDMimpl::getRawQReport(const std::string& blockName, s
       if (pendingCnt) {for(uint8_t pidx = rdIdx; pidx < (rdIdx + pendingCnt); pidx++) {pendingIdx.insert( pidx & Q_IDX_MAX_MSK);}}
 
 
-      log<VERBOSE>(L"Prio ") % (int)prio;
+      log<VERBOSE>(L"Prio %1%") % (int)prio;
 
       //find buffers of all non empty slots
       for (uint8_t i = 0; i <= Q_IDX_MAX_MSK; i++) {

@@ -5,6 +5,7 @@ bool OUTPUT_GLOBAL_LOG_LEVEL = false;
 
 
 const char* const log_lvl_str[] = {
+    "NONE",
     "ALWAYS",
     "CRITICAL",
     "ERROR",

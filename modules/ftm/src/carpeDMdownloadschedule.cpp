@@ -52,7 +52,7 @@ namespace dnt = DotStr::Node::TypeVal;
       log<DEBUG_LVL1>(L"Bmp %1%") % i;
       for(unsigned int bitIdx = at.getMemories()[i].bmpSize / _MEM_BLOCK_SIZE; bitIdx < at.getMemories()[i].bmpBits; bitIdx++) {
         //if the bit says the node is used, we add the node to read addresses
-        log<DEBUG_LVL1>(L"Bit Idx %1% valid %2% na 0x%3%$#08x") % bitIdx % at.getMemories()[i].getBmpBit(bitIdx) % (at.getMemories()[i].sharedOffs + bitIdx * _MEM_BLOCK_SIZE);
+        log<DEBUG_LVL1>(L"Bit Idx %1% valid %2% na 0x%3$#08x") % bitIdx % at.getMemories()[i].getBmpBit(bitIdx) % (at.getMemories()[i].sharedOffs + bitIdx * _MEM_BLOCK_SIZE);
         
         if (at.getMemories()[i].getBmpBit(bitIdx)) {
           uint32_t nodeAdr = at.getMemories()[i].bmpOffs + bitIdx * _MEM_BLOCK_SIZE;

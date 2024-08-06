@@ -10,18 +10,19 @@
 
 enum log_level_t {
 
-    ALWAYS      = 0,
-    CRITICAL    = 1,
-    ERROR       = 2,
-    WARNING     = 3,
-    INFO        = 4,
-    VERBOSE     = 5,
-    DEBUG_LVL0  = 6,
-    DEBUG_LVL1  = 7,
-    DEBUG_LVL2  = 8,
-    DEBUG_LVL3  = 9,
+    NONE        = 0,
+    ALWAYS      = 1,
+    CRITICAL    = 2,
+    ERROR       = 3,
+    WARNING     = 4,
+    INFO        = 5,
+    VERBOSE     = 6,
+    DEBUG_LVL0  = 7,
+    DEBUG_LVL1  = 8,
+    DEBUG_LVL2  = 9,
+    DEBUG_LVL3  = 10,
     DEBUG       = DEBUG_LVL2,
-    LOG_MIN     = ALWAYS,
+    LOG_MIN     = NONE,
     LOG_MAX     = DEBUG_LVL3,
     LOG_DEFAULT = ERROR,
 
@@ -44,7 +45,6 @@ public:
         // GLOBAL_LEVEL is a global variable and could be changed at runtime
         // Any customization could be here
 	    std::string s = OUTPUT_GLOBAL_LOG_LEVEL ? std::string(log_lvl_str[level]) + ":" : "";
-
         if ( level <= GLOBAL_LOG_LEVEL ) {
             if (GLOBAL_LOG_COMPATIBILITY) {
                 std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
