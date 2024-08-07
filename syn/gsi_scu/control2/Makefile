@@ -12,11 +12,12 @@ include ../../build.mk
 CFLAGS        += -O2
 
 $(TARGET).elf: $(PATHSCU)/main.c  $(INCPATH)/display.c  $(PATHSCU)/cb.c \
-                $(PATHSCU)/scu_bus.c $(PATHSCU)/scu_mil.c $(PATHSCU)/fg.c  \
-		$(PATHSCU)/dow_crc.c $(PATHSCU)/history.c \
-                $(W1)/dev/w1.c $(W1)/dev/w1-temp.c $(W1)/dev/w1-hw.c
+               $(PATHSCU)/scu_bus.c $(PATHSCU)/scu_mil.c $(PATHSCU)/fg.c  \
+               $(PATHSCU)/dow_crc.c $(PATHSCU)/history.c \
+               $(W1)/dev/w1.c $(W1)/dev/w1-temp.c $(W1)/dev/w1-hw.c
+
+$(TARGET).bin: %.elf
+	$(OBJCOPY) -O binary $< $@
 
 clean::
 	rm -f $(PATHSCU)/main.o $(W1)/dev/*.o
-
-                
