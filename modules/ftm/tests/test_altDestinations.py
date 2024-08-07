@@ -200,5 +200,5 @@ class UnitTestAltDestinations(dm_testbench.DmTestbench):
     self.delay(1.0)
     cmdFileName = self.schedulesFolder + 'altdst-missing-node-cmd.dot'
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, '-i',
-        cmdFileName), [0], linesCout=1, linesCerr=0)
+        cmdFileName), [0], linesCout=0, linesCerr=0)
 

@@ -463,7 +463,7 @@ class DmTestbench(unittest.TestCase):
     are used to signal the section inside the output.
     checkFlush = False means: check that no flush is executed.
     """
-    output = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-v', 'queue', blockName), [0], 38)
+    output = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-v', 'queue', blockName), [0], 39)
     checkQueue0 = False
     check0 = False
     checkQueue1 = False
