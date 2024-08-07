@@ -43,8 +43,6 @@ then
 	interface=1
 fi
 
-echo $interface
-
 get_sensor_address
 read_enc_err_counter
 
