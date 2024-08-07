@@ -16,8 +16,5 @@ $(TARGET).elf: $(PATHSCU)/main.c  $(INCPATH)/display.c  $(PATHSCU)/cb.c \
                $(PATHSCU)/dow_crc.c $(PATHSCU)/history.c \
                $(W1)/dev/w1.c $(W1)/dev/w1-temp.c $(W1)/dev/w1-hw.c
 
-$(TARGET).bin: %.elf
-	$(OBJCOPY) -O binary $< $@
-
 clean::
 	rm -f $(PATHSCU)/main.o $(W1)/dev/*.o
