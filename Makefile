@@ -502,7 +502,7 @@ fw-bg-clean::
 	$(MAKE) -C modules/burst_generator clean
 
 fw-fg-scu2-scu3: lm32-toolchain
-	$(MAKE) -C syn/gsi_scu/control2 scu_control.elf
+	$(MAKE) -C syn/gsi_scu/control2 scu_control.bin
 
 fw-fg-scu2-scu3-clean::
 	$(MAKE) -C syn/gsi_scu/control2 clean
