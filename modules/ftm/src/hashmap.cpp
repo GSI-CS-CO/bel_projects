@@ -1,8 +1,7 @@
 #include "hashmap.h"
 #include <iostream>
 #include <sstream>
-#include <locale>
-#include <codecvt>
+
 #include "common.h"
 #include "aux_boost.h"
 #include "log.h"
@@ -83,13 +82,13 @@ void HashMap::load(const std::string& s) {
 
 void HashMap::debug() {
     std::stringstream auxstream;
-    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+    
     
     for (auto& x : hm) {
 
       auxstream << "Node: " << std::setfill(' ') << std::setw(40) << x.right << " Hash 0x"  << std::hex << std::setfill('0') << std::setw(8) << x.left << std::endl;
     }
-    std::wstring wide_str = converter.from_bytes(auxstream.str());
-    log<ALWAYS>(L"%1%") % wide_str.c_str();
+    
+    log<ALWAYS>("%1%") % auxstream.str();
   }
 

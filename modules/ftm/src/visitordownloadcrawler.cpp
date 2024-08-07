@@ -35,7 +35,7 @@ void VisitorDownloadCrawler::setDefDst() const {
     // it is possible that a covenant will cause carpeDM to intentionally leave an orphaned def dst to avoid contesting the DM's future changes
     // So if there is a covenant registered for the node we're just processing, ignore the exception. Otherwise rethrow
     if (!ct.isOk(ct.lookup(g[v].name))) { throw; }
-    else {log<WARNING>(L"setDefDst: Node %1% has an invalid def dst, ignoring because of active covenant")  % g[v].name.c_str();}
+    else {log<WARNING>("setDefDst: Node %1% has an invalid def dst, ignoring because of active covenant")  % g[v].name.c_str();}
   }
 
 }
@@ -61,7 +61,7 @@ void VisitorDownloadCrawler::visit(const Block& el) const {
   if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(det::sQPrio[PRIO_LO]), g);
   
   } catch (std::runtime_error const& err) {
-    log<ERROR>(L"visitBlock: Failed to create Block %1% edges: %2%") % g[v].name.c_str() % err.what();
+    log<ERROR>("visitBlock: Failed to create Block %1% edges: %2%") % g[v].name.c_str() % err.what();
   }
 
   setRefLinks();
@@ -224,7 +224,7 @@ void VisitorDownloadCrawler::visit(const DestList& el) const {
     unsigned idx = s2u<unsigned>(g[v].name.substr(g[v].name.find_last_not_of("0123456789") + 1));
     //get the parent Block. there is only one, neighbourhood validation function made sure of this
     vPblock = target(*out_begin,g);
-    log<DEBUG_LVL0>(L"Download dstLst: childblock <%1%>/<%2%> <---- <%3%>/<%4%>(thisListnode) at idx %5%")  % g[vPblock].name.c_str() % g[vPblock].type.c_str() % g[v].name.c_str() % g[v].type.c_str() % idx;
+    log<DEBUG_LVL0>("Download dstLst: childblock <%1%>/<%2%> <---- <%3%>/<%4%>(thisListnode) at idx %5%")  % g[vPblock].name.c_str() % g[vPblock].type.c_str() % g[v].name.c_str() % g[v].type.c_str() % idx;
 
     //add all destination (including default destination (defDstPtr might have changed during runtime) connections from the dest list to the parent block
 
@@ -248,16 +248,16 @@ void VisitorDownloadCrawler::visit(const DestList& el) const {
         } catch (...) {
           if (!ct.isOk(ct.lookup(g[vPblock].name))) { throw; }
           else {
-            log<ERROR>(L"visitDestList: Node %1% has an invalid def dst, ignoring because of active covenant") % g[vPblock].name.c_str();
+            log<ERROR>("visitDestList: Node %1% has an invalid def dst, ignoring because of active covenant") % g[vPblock].name.c_str();
           }
 
         }
       }
     }
     if (!defaultValid == (idx=0)) { //default destination was not in alt dest list. that shouldnt happen ... draw it in
-      log<ERROR>(L"visitDestList: Adr %1$#x not in AltDestList. Someone set an arbitrary pointer for a DefDest, following this edge might crash the DM") % defAdr;
+      log<ERROR>("visitDestList: Adr %1$#x not in AltDestList. Someone set an arbitrary pointer for a DefDest, following this edge might crash the DM") % defAdr;
       if (defAdr != LM32_NULL_PTR) {
-        log<DEBUG_LVL0>(L"Download dstLst: defAdr %1$#x will be drawn in")  % defAdr;
+        log<DEBUG_LVL0>("Download dstLst: defAdr %1$#x will be drawn in")  % defAdr;
         try {
           auto x = at.lookupAdr(cpu, defAdr);
           boost::add_edge(vPblock, x->v, (myEdge){det::sBadDefDst}, g);
@@ -272,10 +272,10 @@ void VisitorDownloadCrawler::visit(const DestList& el) const {
 }
 
 void VisitorDownloadCrawler::setRefLinks() const {
-  log<DEBUG_LVL0>(L"Entered Reflink recreation for Node %1%") % g[v].name.c_str();
+  log<DEBUG_LVL0>("Entered Reflink recreation for Node %1%") % g[v].name.c_str();
 
   uint32_t dynOps = writeBeBytesToLeNumber<uint32_t>(b + NODE_OPT_DYN);
-  log<DEBUG_LVL2>(L"Total Dynops found %1$#08x") % dynOps;
+  log<DEBUG_LVL2>("Total Dynops found %1$#08x") % dynOps;
   for (uint8_t idx=0; idx < 9; idx++) {
     uint32_t ds = dynOps >> (idx * 3);
     unsigned mode = ds & DYN_MODE_SMSK;
@@ -284,13 +284,13 @@ void VisitorDownloadCrawler::setRefLinks() const {
 
       uint32_t width    = (ds & DYN_WIDTH64_SMSK) ? 64 : 32;
       uint32_t oSource  = idx << 2;
-      log<DEBUG_LVL2>(L"Descriptor: idx %1% dynOps Slice %2$#02x Osource %3$#08x") % idx % (ds & 0x7) % oSource;
+      log<DEBUG_LVL2>("Descriptor: idx %1% dynOps Slice %2$#02x Osource %3$#08x") % idx % (ds & 0x7) % oSource;
       //This is an adress with offset to a word inside a node. To create an edge, we need the address of the node.
       //get the tmpAdr from the indexed 32b word
       uint32_t dbgAdr = writeBeBytesToLeNumber<uint32_t>(b + (idx << 2));
-      log<DEBUG_LVL2>(L"Got Adr %1$#08x") % dbgAdr;
+      log<DEBUG_LVL2>("Got Adr %1$#08x") % dbgAdr;
       uint32_t tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT, cpu, dbgAdr);
-      log<DEBUG_LVL2>(L"Found tmpAdr %1$#08x at Source offset %2$#08x, Startoffs %3$#08x, diff %4$#08x") % tmpAdr % oSource % at.getStartOffs(cpu) % (tmpAdr - at.getStartOffs(cpu));
+      log<DEBUG_LVL2>("Found tmpAdr %1$#08x at Source offset %2$#08x, Startoffs %3$#08x, diff %4$#08x") % tmpAdr % oSource % at.getStartOffs(cpu) % (tmpAdr - at.getStartOffs(cpu));
       //Subtract the beginning of the mem pool. The result modulo nodesize gives us the target word offset in Byte (we need it later)
       uint32_t oTarget;
       if((tmpAdr < at.getStartOffs(cpu)) || (tmpAdr > at.getEndOffs(cpu))) { // this is a global. 
@@ -305,11 +305,11 @@ void VisitorDownloadCrawler::setRefLinks() const {
       try {
         //Subtract the Target word offset from tmpAdr and we get the node adress
         uint32_t nodeAdr = tmpAdr - oTarget;
-        log<DEBUG_LVL2>(L"Trying lookup for tmpAdr %1$#08x Split: node adr: %2$#08x Offset Target: %3$#08x") % tmpAdr % nodeAdr % oTarget;
+        log<DEBUG_LVL2>("Trying lookup for tmpAdr %1$#08x Split: node adr: %2$#08x Offset Target: %3$#08x") % tmpAdr % nodeAdr % oTarget;
         auto x = at.lookupAdr(cpu, nodeAdr);
 
         boost::add_edge(v, x->v, myEdge(det::sDyn[mode], std::to_string((unsigned)oTarget), std::to_string((unsigned)oSource), std::to_string((unsigned)width)), g);
-        log<DEBUG_LVL2>(L"Found Reflink to TargetNode %1%. Offset Source: %2$#08x Offset Target: %3$#08x Width: %4%") % g[x->v].name.c_str() % oSource % oTarget % width;
+        log<DEBUG_LVL2>("Found Reflink to TargetNode %1%. Offset Source: %2$#08x Offset Target: %3$#08x Width: %4%") % g[x->v].name.c_str() % oSource % oTarget % width;
       } catch(exception& err) {
         throw std::runtime_error( "Error when recreating a byReference/byValue edge from node binary <" + g[v].name + ">. Cause: " + err.what());
       }

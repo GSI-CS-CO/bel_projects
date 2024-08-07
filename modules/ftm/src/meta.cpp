@@ -17,7 +17,7 @@ void CmdQMeta::serialise(const mVal &m, uint8_t* b) const {
   Meta::serialise(m, b);
 
   for ( const auto &myPair : m ) {
-    log<DEBUG>(L"Serialiser CmdQMeta: Inserting Adr: %1$#x Val %2$#x ")  % myPair.first % myPair.second;
+    log<DEBUG>("Serialiser CmdQMeta: Inserting Adr: %1$#x Val %2$#x ")  % myPair.first % myPair.second;
     writeLeNumberToBeBytes(b + (ptrdiff_t)myPair.first,  myPair.second); 
   }
 
@@ -34,7 +34,7 @@ void DestList::serialise(const mVal &m, uint8_t* b) const {
   //for each map entry, add the element to buffer
   for ( const auto &myPair : m ) {
 
-    log<DEBUG>(L"Serialiser DstList: Inserting Adr: %1$#x Val %2$#x ")  % myPair.first % myPair.second;
+    log<DEBUG>("Serialiser DstList: Inserting Adr: %1$#x Val %2$#x ")  % myPair.first % myPair.second;
     writeLeNumberToBeBytes(b + (ptrdiff_t)myPair.first,  myPair.second); 
   }
 

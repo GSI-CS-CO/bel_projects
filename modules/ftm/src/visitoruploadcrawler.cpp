@@ -113,7 +113,7 @@ vertex_t VisitorUploadCrawler::getOnlyChildByEdgeType(vertex_t vStart, const std
     if (vSrc != null_vertex && vDst != null_vertex) {
       auto src = at.lookupVertex(vSrc);
       auto dst = at.lookupVertex(vDst);
-      log<DEBUG_LVL2>(L"edgeTargetAdr %1% -> %2%, dst adr b4 conv %3$#08x") % g[src->v].name.c_str() % g[dst->v].name.c_str() % dst->adr;
+      log<DEBUG_LVL2>("edgeTargetAdr %1% -> %2%, dst adr b4 conv %3$#08x") % g[src->v].name.c_str() % g[dst->v].name.c_str() % dst->adr;
       ret = at.adrConv(AdrType::MGMT, (dst->cpu == src->cpu ? AdrType::INT : AdrType::PEER), dst->cpu, dst->adr);
     }
     return ret;
@@ -152,7 +152,7 @@ mVal VisitorUploadCrawler::getRefLinks() const {
   mVal t;
   uint32_t dynOps = 0;
 
-  log<DEBUG_LVL0>(L"Entered Reflink handling for Node %1%") % g[v].name.c_str();
+  log<DEBUG_LVL0>("Entered Reflink handling for Node %1%") % g[v].name.c_str();
 
   boost::tie(out_begin, out_end) = out_edges(v,g);
 
@@ -161,7 +161,7 @@ mVal VisitorUploadCrawler::getRefLinks() const {
 
 
     if ((g[*out_cur].type == det::sAdr) || (g[*out_cur].type == det::sRef) || (g[*out_cur].type == det::sRef2)) {
-      log<DEBUG_LVL2>(L"Found Reflink to TargetNode %1%. Offset Source: %3% Offset Target: %2% Width: %4%") % g[target(*out_cur,g)].name.c_str() % g[*out_cur].fhead.c_str() % g[*out_cur].ftail.c_str() % g[*out_cur].bwidth.c_str();
+      log<DEBUG_LVL2>("Found Reflink to TargetNode %1%. Offset Source: %3% Offset Target: %2% Width: %4%") % g[target(*out_cur,g)].name.c_str() % g[*out_cur].fhead.c_str() % g[*out_cur].ftail.c_str() % g[*out_cur].bwidth.c_str();
       uint32_t oTarget  = s2u<uint32_t>(g[*out_cur].fhead);
       uint32_t oSource  = s2u<uint32_t>(g[*out_cur].ftail);
       uint32_t width    = s2u<uint32_t>(g[*out_cur].bwidth) == 64 ? 1 : 0;
@@ -174,7 +174,7 @@ mVal VisitorUploadCrawler::getRefLinks() const {
 
       uint32_t bDesc = ((width & DYN_WIDTH64_MSK) << DYN_WIDTH64_POS) | ((dynMode & DYN_MODE_MSK) << DYN_MODE_POS); //descriptor bits for this ref
       dynOps |= bDesc << bIdx; // add to dynops
-      log<DEBUG_LVL2>(L"Descriptor: idx %1% bshift %2% dynOps Slice %3$#02x shifted slice %4$#08x") % (oSource>>2) % bIdx % bDesc % (bDesc << bIdx);
+      log<DEBUG_LVL2>("Descriptor: idx %1% bshift %2% dynOps Slice %3$#02x shifted slice %4$#08x") % (oSource>>2) % bIdx % bDesc % (bDesc << bIdx);
 
       //we create a map entry, adress offset to adress, that will contain our refPtr
       //key is offset oSource (e.g. TMSG_RES)
@@ -182,13 +182,13 @@ mVal VisitorUploadCrawler::getRefLinks() const {
       
       if (oTarget % 4 || oSource % 4) {throw std::runtime_error( exIntro + "Reflink Offsets are not 4B aligned: Offset Source " + std::to_string((unsigned)oSource) + " Offset Target " + std::to_string((unsigned)oTarget) + "\n");} // check if adress is 32b aligned. if not, throw ex
       uint32_t tmpAdr = getEdgeTargetAdr(v, target(*out_cur, g));
-      log<DEBUG_LVL2>(L"Inserting: @Offset Source: %1$#02x edge target Adr %2$#08x + Offset Target %3$#02x = %4$#08x") % oSource % tmpAdr % oTarget % (tmpAdr + oTarget);
+      log<DEBUG_LVL2>("Inserting: @Offset Source: %1$#02x edge target Adr %2$#08x + Offset Target %3$#02x = %4$#08x") % oSource % tmpAdr % oTarget % (tmpAdr + oTarget);
       t.insert({oSource, tmpAdr + oTarget});
     }
   }
   
   t.insert({NODE_OPT_DYN, dynOps});
-  log<DEBUG_LVL2>(L"Passing Dynops to Offs %1$#08x Value: %2$#08x") % NODE_OPT_DYN % dynOps;
+  log<DEBUG_LVL2>("Passing Dynops to Offs %1$#08x Value: %2$#08x") % NODE_OPT_DYN % dynOps;
   return t;
 }
 
@@ -203,11 +203,11 @@ mVal VisitorUploadCrawler::getRefLinks() const {
 
     for (out_cur = out_begin; out_cur != out_end; ++out_cur)
     {
-      if (g[target(*out_cur,g)].np == nullptr) log<CRITICAL>(L"%1%  is UNDEFINED") % g[target(*out_cur,g)].name.c_str();
+      if (g[target(*out_cur,g)].np == nullptr) log<CRITICAL>("%1%  is UNDEFINED") % g[target(*out_cur,g)].name.c_str();
       else {
 
         if (g[*out_cur].type == det::sDynId) {
-          if (ret.find(TMSG_ID_LO) != ret.end()) {log<ERROR>(L"Found more than one dynamic id source"); break;
+          if (ret.find(TMSG_ID_LO) != ret.end()) {log<ERROR>("Found more than one dynamic id source"); break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
             uint32_t aId = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_ID_SMSK);
@@ -217,7 +217,7 @@ mVal VisitorUploadCrawler::getRefLinks() const {
           }
         }
         if (g[*out_cur].type == det::sDynPar1) {
-          if (ret.find(TMSG_PAR_HI) != ret.end()){log<ERROR>(L"Found more than one dynamic par1 source"); break;
+          if (ret.find(TMSG_PAR_HI) != ret.end()){log<ERROR>("Found more than one dynamic par1 source"); break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
             uint32_t aPar1 = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR1_SMSK);
@@ -226,7 +226,7 @@ mVal VisitorUploadCrawler::getRefLinks() const {
           }
         }
         if (g[*out_cur].type == det::sDynPar0) {
-          if (ret.find(TMSG_PAR_LO) != ret.end()) {log<ERROR>(L"Found more than one dynamic par0 source"); break;
+          if (ret.find(TMSG_PAR_LO) != ret.end()) {log<ERROR>("Found more than one dynamic par0 source"); break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
             uint32_t aPar0 = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR0_SMSK);
@@ -236,7 +236,7 @@ mVal VisitorUploadCrawler::getRefLinks() const {
         }
 
         if (g[*out_cur].type == det::sDynRes) {
-          if (ret.find(TMSG_RES) != ret.end()) {log<ERROR>(L"Found more than one dynamic res source"); break;
+          if (ret.find(TMSG_RES) != ret.end()) {log<ERROR>("Found more than one dynamic res source"); break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
             uint32_t aRes = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_RES_SMSK);
@@ -292,12 +292,12 @@ mVal VisitorUploadCrawler::getQBuf() const {
 }
 
  mVal  VisitorUploadCrawler::getCmdTarget(Command& el) const {
-  log<DEBUG_LVL0>(L"cmdTarget: Entering");
+  log<DEBUG_LVL0>("cmdTarget: Entering");
   mVal ret;
   //search for cmd target, returns NULL PTR if there is no target
   ret.insert({CMD_TARGET, getEdgeTargetAdr(v, getOnlyChildByEdgeType(v, det::sCmdTarget)) });
 
-  log<DEBUG_LVL1>(L"cmdTarget: Done. Target Adr = %1$#08x") % (unsigned)getEdgeTargetAdr(v, getOnlyChildByEdgeType(v, det::sCmdTarget));
+  log<DEBUG_LVL1>("cmdTarget: Done. Target Adr = %1$#08x") % (unsigned)getEdgeTargetAdr(v, getOnlyChildByEdgeType(v, det::sCmdTarget));
   return ret;
 }
 
@@ -314,21 +314,21 @@ mVal  VisitorUploadCrawler::getSwitchTarget() const {
 //TODO cleanup the dst function redundancies
 mVal VisitorUploadCrawler::getFlowDst() const {
   mVal ret;
-  log<DEBUG_LVL0>(L"flowDst: Entering");
+  log<DEBUG_LVL0>("flowDst: Entering");
   //this will return exactly one target, otherwise neighbourhood check would have detected the misshapen schedule
   vertex_vec_t vsTgt = getChildrenByEdgeType(v, det::sCmdTarget);
   //command cross over to other CPUs is okay. Find out what Cpu the command target is on
 
 
   vertex_vec_t vsDst = getChildrenByEdgeType(v, det::sCmdFlowDst);
-  if((vsTgt.size() == 0) || (vsDst.size() == 0)) { ret.insert({(unsigned)CMD_FLOW_DEST, (unsigned)LM32_NULL_PTR}); log<DEBUG_LVL0>(L"flowDst: Done, unconnected"); return ret;}// if this command is not connected, return a null pointer as flowdst
+  if((vsTgt.size() == 0) || (vsDst.size() == 0)) { ret.insert({(unsigned)CMD_FLOW_DEST, (unsigned)LM32_NULL_PTR}); log<DEBUG_LVL0>("flowDst: Done, unconnected"); return ret;}// if this command is not connected, return a null pointer as flowdst
 
   auto tgt = at.lookupVertex(*vsTgt.begin());
   auto dst = at.lookupVertex(*vsDst.begin());
 
   if (dst->cpu != tgt->cpu) throw std::runtime_error(  exIntro + "Target " + g[*vsTgt.begin()].name + "'s CPU must not differ from Dst " + g[*vsDst.begin()].name + "'s CPU\n");
   ret.insert({(unsigned)CMD_FLOW_DEST, (unsigned)at.adrConv(AdrType::MGMT, AdrType::INT , dst->cpu, dst->adr)});
-  log<DEBUG_LVL1>(L"flowDst: Done. Dst Adr = %1$#08x") % (unsigned)at.adrConv(AdrType::MGMT, AdrType::INT , dst->cpu, dst->adr);
+  log<DEBUG_LVL1>("flowDst: Done. Dst Adr = %1$#08x") % (unsigned)at.adrConv(AdrType::MGMT, AdrType::INT , dst->cpu, dst->adr);
   return ret;
 }
 
@@ -396,7 +396,7 @@ mVal VisitorUploadCrawler::getListDst() const {
   // this means single pass/independent reconstroction of altdsts - each dstlst by its own. process all, and you get all the altdsts back.
 
   /*--- find origin block and parent node (can be the same). Count number of hops necessary to reach original block ---*/
-  log<DEBUG_LVL0>(L"dstLst: Entering");
+  log<DEBUG_LVL0>("dstLst: Entering");
   vertex_t va;
 
   Graph::out_edge_iterator out_begin, out_end;
@@ -406,7 +406,7 @@ mVal VisitorUploadCrawler::getListDst() const {
   if (!g[va].np->isBlock()) { throw std::runtime_error(  exIntro + "DstList " + g[v].name + "is childless!\n");}
 
 
-  log<DEBUG_LVL0>(L"dstLst: childblock <%1%>/<%2%> <---- <%3%>/<%4%>(thisListnode)")  % g[va].name.c_str() % g[va].type.c_str() % g[v].name.c_str() % g[v].type.c_str();
+  log<DEBUG_LVL0>("dstLst: childblock <%1%>/<%2%> <---- <%3%>/<%4%>(thisListnode)")  % g[va].name.c_str() % g[va].type.c_str() % g[v].name.c_str() % g[v].type.c_str();
 
   /*--- Get us the vector of all altDst nodes ---*/
   vertex_vec_t altVec = getChildrenByEdgeType(va, det::sAltDst); //get all known altdst nodes
@@ -432,7 +432,7 @@ mVal VisitorUploadCrawler::getListDst() const {
     ret.insert({offs, getEdgeTargetAdr(v, altVec[i])});
     offs += _PTR_SIZE_;
   }
-  log<DEBUG_LVL0>(L"dstLst: done");
+  log<DEBUG_LVL0>("dstLst: done");
   //insert pointer to our parent block as this node's defdst (lazy, but it kinda is, even if the firmware does not traverse it)
   ret.insert({(unsigned)DST_NXTPTR, getEdgeTargetAdr(v, va)});
 

@@ -11,8 +11,7 @@
 
 #include "common.h"
 #include "log.h"
-#include <locale>
-#include <codecvt>
+
 
 #include "carpeDMimpl.h"
 #include "minicommand.h"
@@ -278,7 +277,7 @@ std::string& CarpeDM::CarpeDMimpl::getRawQReport(const std::string& blockName, s
     uint32_t wrIdxs = boost::dynamic_pointer_cast<Block>(g[x->v].np)->getWrIdxs();
     uint32_t rdIdxs = boost::dynamic_pointer_cast<Block>(g[x->v].np)->getRdIdxs();
 
-    log<VERBOSE>(L"Check for orphaned commands is scanning Queue @ %1%") % blockName.c_str();
+    log<VERBOSE>("Check for orphaned commands is scanning Queue @ %1%") % blockName.c_str();
 
     for (uint8_t prio = PRIO_LO; prio <= PRIO_IL; prio++) {
 
@@ -318,7 +317,7 @@ std::string& CarpeDM::CarpeDMimpl::getRawQReport(const std::string& blockName, s
       if (pendingCnt) {for(uint8_t pidx = rdIdx; pidx < (rdIdx + pendingCnt); pidx++) {pendingIdx.insert( pidx & Q_IDX_MAX_MSK);}}
 
 
-      log<VERBOSE>(L"Prio %1%") % (int)prio;
+      log<VERBOSE>("Prio %1%") % (int)prio;
 
       //find buffers of all non empty slots
       for (uint8_t i = 0; i <= Q_IDX_MAX_MSK; i++) {
@@ -373,12 +372,12 @@ std::string& CarpeDM::CarpeDMimpl::getRawQReport(const std::string& blockName, s
                                   sDst = g[dst->v].name;
                                   for (auto& itOrphan : futureOrphan) {
                                     if (sDst == itOrphan) {
-                                      log<VERBOSE>(L"found orphaned command pointing to %1% in slot %2%") % itOrphan.c_str() % (int)idx;
+                                      log<VERBOSE>("found orphaned command pointing to %1% in slot %2%") % itOrphan.c_str() % (int)idx;
                                       qe.orphaned = true;
                                       break;}
                                   }
                                 } catch (...) {
-                                  log<VERBOSE>(L"found orphaned command pointing to unknown destination (#%1% 0x%2$#08x in slot %3%") % (int)dstCpu % dstAdr % (int)idx;
+                                  log<VERBOSE>("found orphaned command pointing to unknown destination (#%1% 0x%2$#08x in slot %3%") % (int)dstCpu % dstAdr % (int)idx;
                                   sDst = DotStr::Misc::sUndefined;
                                   qe.orphaned = true;
                                 }
@@ -413,12 +412,12 @@ std::string& CarpeDM::CarpeDMimpl::getRawQReport(const std::string& blockName, s
                                   sDst = g[dst->v].name;
                                   for (auto& itOrphan : futureOrphan) {
                                     if (sDst == itOrphan) {
-                                      log<VERBOSE>(L"found orphaned command pointing to %1% in slot %2%") % itOrphan.c_str() % (int)idx;
+                                      log<VERBOSE>("found orphaned command pointing to %1% in slot %2%") % itOrphan.c_str() % (int)idx;
                                       qe.orphaned = true;
                                       break;}
                                   }
                                 } catch (...) {
-                                  log<VERBOSE>(L"found orphaned command pointing to unknown destination (#%1% 0x%2$#08x in slot %3%") % (int)dstCpu % dstAdr % (int)idx;
+                                  log<VERBOSE>("found orphaned command pointing to unknown destination (#%1% 0x%2$#08x in slot %3%") % (int)dstCpu % dstAdr % (int)idx;
                                   sDst = DotStr::Misc::sUndefined;
                                   qe.orphaned = true;
                                 }
@@ -449,7 +448,7 @@ void CarpeDM::CarpeDMimpl::dumpNode(const std::string& name) {
   if (hm.contains(name)) {
     auto it = atDown.lookupHash(hm.lookup(name));
     auto* x = (AllocMeta*)&(*it);
-    log<ALWAYS>(L"%1%") % hexDump(g[x->v].name.c_str(), (const char*)x->b, _MEM_BLOCK_SIZE).c_str();
+    log<ALWAYS>("%1%") % hexDump(g[x->v].name.c_str(), (const char*)x->b, _MEM_BLOCK_SIZE).c_str();
   }
 }
 
@@ -500,9 +499,7 @@ void CarpeDM::CarpeDMimpl::inspectHeap(uint8_t cpuIdx) {
     << std::setfill(' ') << std::setw(21) << getThrOrigin(cpuIdx, thrIdx)
     << std::setfill(' ') << std::setw(21) << getThrCursor(cpuIdx, thrIdx) << std::endl;
   }
-  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-  std::wstring wide_str = converter.from_bytes(auxstream.str());
-  log<ALWAYS>(L"%1%") % wide_str.c_str();
+  log<ALWAYS>("%1%") % auxstream.str();
 }
 
 
@@ -723,9 +720,7 @@ void CarpeDM::CarpeDMimpl::show(const std::string& title, const std::string& log
 
   auxstream << std::endl;
 
-  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-  std::wstring wide_str = converter.from_bytes(auxstream.str());
-  log<ALWAYS>(L"%1%") % wide_str.c_str();
+  log<ALWAYS>("%1%") % auxstream.str();
 
   auxstream.clear();
 
@@ -755,8 +750,8 @@ void CarpeDM::CarpeDMimpl::show(const std::string& title, const std::string& log
   }
   auxstream << std::endl;
 
-  wide_str = converter.from_bytes(auxstream.str());
-  log<ALWAYS>(L"%1%") % wide_str.c_str();
+  
+  log<ALWAYS>("%1%") % auxstream.str();
 }
 
 

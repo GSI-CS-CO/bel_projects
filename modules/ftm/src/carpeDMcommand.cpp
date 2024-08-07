@@ -130,17 +130,17 @@ vEbwrs& CarpeDM::CarpeDMimpl::createCommand(vEbwrs& ew, const std::string& type,
 
     //Start is different to stop - start uses 'destination', stop uses target (entry node vs exit block)
     if (type == dnt::sCmdStart)   {
-      if (hm.lookup(destination)) { log<VERBOSE>(L" Starting at <%1%>") % destination.c_str(); startNodeOrigin(ew, destination, cmdThr, cmdTvalid); }
+      if (hm.lookup(destination)) { log<VERBOSE>(" Starting at <%1%>") % destination.c_str(); startNodeOrigin(ew, destination, cmdThr, cmdTvalid); }
       else {throw std::runtime_error("Cannot execute command '" + type + "' No valid cpu/thr provided and '" + destination + "' is not a valid node name\n");}
       return ew;
     }
     if (type == dnt::sCmdStop)    {
-      if (hm.lookup(target)) { log<VERBOSE>(L" Stopping at <%1%>") % target.c_str(); stopNodeOrigin(ew, target); }
+      if (hm.lookup(target)) { log<VERBOSE>(" Stopping at <%1%>") % target.c_str(); stopNodeOrigin(ew, target); }
       else {throw std::runtime_error("Cannot execute command '" + type + "' No valid cpu/thr provided and '" + target + "' is not a valid node name\n");}
       return ew;
     }
     else if (type == dnt::sCmdAbort)   {
-      if (hm.lookup(target)) {log<VERBOSE>(L" Aborting (trying) at <%1%>") % target.c_str(); abortNodeOrigin(ew, target); }
+      if (hm.lookup(target)) {log<VERBOSE>(" Aborting (trying) at <%1%>") % target.c_str(); abortNodeOrigin(ew, target); }
       else {throw std::runtime_error("Cannot execute command '" + type + "'. No valid cpu/thr provided and '" + target + "' is not a valid node name\n");}
       return ew;
     }
@@ -324,7 +324,7 @@ vEbwrs& CarpeDM::CarpeDMimpl::createCommandBurst(vEbwrs& ew, Graph& g) {
     //fixme hack to test compile
     abswait   = false;
 
-    log<VERBOSE>(L"Command <%1%>, type <%2%>") % g[v].name.c_str() % g[v].type.c_str();
+    log<VERBOSE>("Command <%1%>, type <%2%>") % g[v].name.c_str() % g[v].type.c_str();
     createCommand(ew, type, target, destination, cmdPrio, cmdQty, vabs, cmdTvalid, perma, qIl, qHi, qLo, cmdTwait, abswait, lockRd, lockWr, cmdThr);
     } catch (std::runtime_error const& err) {
         throw std::runtime_error( "Parser error when processing command <" + g[v].name + ">. Cause: " + err.what());
@@ -521,7 +521,7 @@ vEbwrs& CarpeDM::CarpeDMimpl::createCommandBurst(vEbwrs& ew, Graph& g) {
 
   //hard abort everything, emergency only
   void CarpeDM::CarpeDMimpl::halt() {
-    log<VERBOSE>(L"Aborting all activity");
+    log<VERBOSE>("Aborting all activity");
     vEbwrs ew;
     uint8_t b[4];
     writeLeNumberToBeBytes<uint32_t>(b, (uint32_t)((1ll << ebd.getThrQty())-1) );
@@ -814,8 +814,8 @@ vEbwrs& CarpeDM::CarpeDMimpl::abortNodeOrigin(vEbwrs& ew, const std::string& sNo
 
     for(auto& itP : sP) ret.push_back(itP);
     if (slog.size() > 0) {
-      log<WARNING>(L"Warning: getGraphPatterns found no valid patterns for the following nodes:");
-      for(auto& itL : slog) log<WARNING>(L"%1%") % itL.c_str();
+      log<WARNING>("Warning: getGraphPatterns found no valid patterns for the following nodes:");
+      for(auto& itL : slog) log<WARNING>("%1%") % itL.c_str();
     }
     return ret;
 
@@ -898,7 +898,7 @@ vEbwrs& CarpeDM::CarpeDMimpl::staticFlush(const std::string& sBlock, bool prioIl
 
 
   if ( (!isSafeToRemove(sPattern, dbgReport)) && !force)  {
-    log<DEBUG_LVL0>(L"%1%") % dbgReport.c_str();
+    log<DEBUG_LVL0>("%1%") % dbgReport.c_str();
     throw std::runtime_error(carpeDMcommand::exIntro + "staticFlush: Pattern <" + sPattern + "> of block member <" + sBlock + "> is active, static flush not safely possible!");
   }
 
@@ -907,7 +907,7 @@ vEbwrs& CarpeDM::CarpeDMimpl::staticFlush(const std::string& sBlock, bool prioIl
   if(optimisedS2R && isCovenantPending(sBlock)) throw std::runtime_error(carpeDMcommand::exIntro + "staticFlush: cannot flush, block <" + sBlock + "> is in a safe2remove-covenant!");
 
 
-  log<VERBOSE>(L"Trying to flush block <%1%>") % sBlock.c_str();
+  log<VERBOSE>("Trying to flush block <%1%>") % sBlock.c_str();
 
   //get the block
   auto x = at.lookupHash(hm.lookup(sBlock, carpeDMcommand::exIntro));
@@ -946,7 +946,7 @@ vEbwrs& CarpeDM::CarpeDMimpl::deactivateOrphanedCommands(vEbwrs& ew, std::vector
         QueueElement& qe = qr.aQ[prio].aQe[i];
 
         if(qe.orphaned) {
-          log<VERBOSE>(L"Deactivating orphaned command @ %1% prio %2% slot %3%, adr of action field is 0x%4$#08x") % qr.name.c_str() % (int)prio % (int)i % (qe.extAdr + T_CMD_ACT);
+          log<VERBOSE>("Deactivating orphaned command @ %1% prio %2% slot %3%, adr of action field is 0x%4$#08x") % qr.name.c_str() % (int)prio % (int)i % (qe.extAdr + T_CMD_ACT);
           qe.qty = 0; // deactivate command execution
           //reconstruct action field from report. bit awkward, but not really bad either.
           uint32_t action = (qe.type << ACT_TYPE_POS) | ((prio & ACT_PRIO_MSK) << ACT_PRIO_POS) | ((qe.qty & ACT_QTY_MSK) << ACT_QTY_POS) | (qe.validAbs << ACT_VABS_POS) | (qe.flowPerma << ACT_CHP_POS );

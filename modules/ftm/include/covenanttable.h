@@ -15,8 +15,7 @@
 #include "graph.h"
 #include "hashmap.h"
 #include "log.h"
-#include <locale>
-#include <codecvt>
+
 
 using boost::multi_index_container;
 using namespace boost::multi_index;
@@ -141,14 +140,12 @@ public:
 
   void debug() {
     std::stringstream auxstream;
-    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
     auxstream << "Active Safe2remove-Covenants:" << std::endl;
     for (cmI x = a.begin(); x != a.end(); x++) {
       auxstream << x->name << " prio: " << std::dec << (int)x->prio <<  ", slot: " <<  (int)x->slot <<  ", ChkSum: 0x" << std::hex <<  x->chkSum << std::endl;
     }
     
-    std::wstring wide_str = converter.from_bytes(auxstream.str());
-    log<ALWAYS>(wide_str.c_str());
+    log<ALWAYS>("%1%") % auxstream.str();
   }
 
   const CovenantMeta_set& getTable() const { return a; }

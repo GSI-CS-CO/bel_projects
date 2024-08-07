@@ -110,7 +110,7 @@ Graph& updown_copy_graph(const Graph& original, Graph& cpy, vertex_map_t& vmap, 
       vertex_t i = boost::add_vertex(original[v], cpy);
       vmap[v] = i; // must keep track of descriptors as they can differ between graphs
     } else {
-      log<DEBUG_LVL0>(L"updown: skipping node %1% and clearing its alloctable, hashmap and grouptable entries.") % original[v].name.c_str();
+      log<DEBUG_LVL0>("updown: skipping node %1% and clearing its alloctable, hashmap and grouptable entries.") % original[v].name.c_str();
       //we don't copy dstlists. remove their stuff from tables.
       at.deallocate(original[v].hash); //using the hash is independent of vertex descriptors, so no remapping necessary yet
       hm.remove(original[v].hash);

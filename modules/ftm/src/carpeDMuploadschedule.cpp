@@ -34,7 +34,7 @@ using namespace DotStr::Misc;
 
   //TODO CPU Load Balancer
   vEbwrs CarpeDM::CarpeDMimpl::gatherUploadVector(std::set<uint8_t> moddedCpus, uint32_t modCnt, uint8_t opType) {
-    log<VERBOSE>(L"Starting Upload address & data vectors");
+    log<VERBOSE>("Starting Upload address & data vectors");
     vEbwrs ew;
     uint32_t adr, modAdrBase;
 
@@ -119,14 +119,14 @@ using namespace DotStr::Misc;
     unsigned loops = (multiDst + 1 + DST_MAX -1) / DST_MAX; //add 1 to multidst. its the altdst count, but we need 1 more for a defdst.
     for (unsigned i=0; i<loops;i++) {
       const std::string name = prefix + dnm::sDstListSuffix + "_" + std::to_string(i);
-      log<DEBUG_LVL0>(L"generateDstLst: Accomodating %1% + 1 destinations. Loop %2%/%3%, generating %4% ") % multiDst % i % loops % name.c_str();
+      log<DEBUG_LVL0>("generateDstLst: Accomodating %1% + 1 destinations. Loop %2%/%3%, generating %4% ") % multiDst % i % loops % name.c_str();
       hm.add(name);
       vertex_t vD = boost::add_vertex(myVertex(name, g[v].cpu, hm.lookup(name), nullptr, dnt::sDstList, DotStr::Misc::sHexZero), g);
       //FIXME add to grouptable
       g[vD].patName = g[v].patName;
       gt.setPattern(g[vD].name, g[vD].patName, false, false);
       edge_t thisEdge = (boost::add_edge(vD, v, myEdge(det::sDefDst), g)).first;
-      log<DEBUG_LVL1>(L"generateDstLst: Adding Edge from %1% to %2%. Setting pattern name to %3%") % g[source(thisEdge, g)].name.c_str() % g[target(thisEdge, g)].name.c_str() % g[vD].patName.c_str();
+      log<DEBUG_LVL1>("generateDstLst: Adding Edge from %1% to %2%. Setting pattern name to %3%") % g[source(thisEdge, g)].name.c_str() % g[target(thisEdge, g)].name.c_str() % g[vD].patName.c_str();
     }
 
   }
@@ -193,7 +193,7 @@ using namespace DotStr::Misc;
           if (g[*out_cur].type == det::sAltDst)         multiDst++;
           if (g[*out_cur].type == det::sDstList)        hasDstLst   = true;
         }
-        log<DEBUG_LVL1>(L"generateBlockMeta: Checking Block %1%. MultiDst=%2% hasDstLst=%3%") % g[v].name.c_str() % multiDst % hasDstLst;
+        log<DEBUG_LVL1>("generateBlockMeta: Checking Block %1%. MultiDst=%2% hasDstLst=%3%") % g[v].name.c_str() % multiDst % hasDstLst;
 
         //create requested Queues / Destination List
         if (genIl && !hasIl ) { generateQmeta(g, v, PRIO_IL); }
@@ -239,7 +239,7 @@ using namespace DotStr::Misc;
       // A covenant means the DM will change the default dst to a safe value in the near future.
       // If we'd also change def dst, doing it before DM does has no effect, and doing it after the DM did would overwrite the safe def dst
       if(!isCovenantPending(g[x->v].name)) at.setStaged(x);
-      else { log<INFO>(L"updateStaging: Node %1% has an active covenant. Skipping staging to avoid race condition.") % g[v].name.c_str(); }
+      else { log<INFO>("updateStaging: Node %1% has an active covenant. Skipping staging to avoid race condition.") % g[v].name.c_str(); }
 
     }
 
@@ -373,7 +373,7 @@ using namespace DotStr::Misc;
       bool foundUninitialised = (n != std::string::npos);
 
       if(debug || foundUninitialised) {
-        log<DEBUG_LVL1>(L"prepareUpload: @ %1$#08x \n %2%") % atUp.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr) % hexDump(gUp[v].name.c_str(), haystack.c_str(), _MEM_BLOCK_SIZE).c_str();
+        log<DEBUG_LVL1>("prepareUpload: @ %1$#08x \n %2%") % atUp.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr) % hexDump(gUp[v].name.c_str(), haystack.c_str(), _MEM_BLOCK_SIZE).c_str();
       }
 
       if(foundUninitialised) {
@@ -448,7 +448,7 @@ using namespace DotStr::Misc;
 
     //Upload
     ebd.writeCycle(ew.va, ew.vb, ew.vcs);
-    log<INFO>(L"upload: Done");
+    log<INFO>("upload: Done");
     freshDownload = false;
     return ew.va.size();
 
@@ -475,7 +475,7 @@ using namespace DotStr::Misc;
   void CarpeDM::CarpeDMimpl::addition(Graph& gTmp) {
 
     vertex_map_t vertexMap, duplicates;
-    log<VERBOSE>(L"addition: Generating Metadata");
+    log<VERBOSE>("addition: Generating Metadata");
 
 
     //find and list all duplicates i.e. docking points between trees and Update hash dict
@@ -495,14 +495,14 @@ using namespace DotStr::Misc;
     //merge graphs (will lead to disjunct trees with duplicates at overlaps), but keep the mapping for vertex merge
     //boost::associative_property_map<vertex_map_t> vertexMapWrapper(vertexMap);
     //copy_graph(gTmp, gUp, boost::orig_to_copy(vertexMapWrapper));
-    log<VERBOSE>(L"addition: Merging graphs");
+    log<VERBOSE>("addition: Merging graphs");
     mycopy_graph<Graph>(gTmp, gUp, vertexMap);
     
     //merge duplicate nodes
     for(auto& it : duplicates ) {
       mergeUploadDuplicates(it.first, vertexMap[it.second]);
     }
-    log<VERBOSE>(L"addition: Removing duplicates");
+    log<VERBOSE>("addition: Removing duplicates");
     //now remove duplicates
     for(auto& itDup : duplicates ) {
       boost::clear_vertex(vertexMap[itDup.second], gUp);
@@ -514,7 +514,7 @@ using namespace DotStr::Misc;
 
     //FIXME this also adds/changes the known nodes based on the download. Do we really want that?
     //add whats left to groups dict
-    log<VERBOSE>(L"addition: Updating Group dict");
+    log<VERBOSE>("addition: Updating Group dict");
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
       try {
         gt.setBeamproc(gUp[v].name, gUp[v].bpName, (s2u<bool>(gUp[v].bpEntry)), (s2u<bool>(gUp[v].bpExit)));
@@ -524,27 +524,27 @@ using namespace DotStr::Misc;
       }
     }
     //writeUpDotFile("inspect.dot", false);
-    log<VERBOSE>(L"addition: creating binary for upload");
+    log<VERBOSE>("addition: creating binary for upload");
     prepareUpload();
     atUp.syncBmpsToPools();
-    log<INFO>(L"addition: Done");
+    log<INFO>("addition: Done");
   }
 
   void CarpeDM::CarpeDMimpl::pushMetaNeighbours(vertex_t v, Graph& g, vertex_set_t& s) {
 
     //recursively find all adjacent meta type vertices
     BOOST_FOREACH( vertex_t w, adjacent_vertices(v, g)) {
-      log<DEBUG_LVL0>(L"Checking adjacent vertex %1%") % g[w].name.c_str();
+      log<DEBUG_LVL0>("Checking adjacent vertex %1%") % g[w].name.c_str();
       if (g[w].np == nullptr) {throw std::runtime_error("Node " + g[w].name + " does not have a data object, this is bad");}
       if (g[w].np->isMeta()) {
         s.insert(w);
-        log<DEBUG_LVL0>(L"Added adjacent vertex %1% to del map, %2% vertex idx") % g[w].name.c_str() % w;
+        log<DEBUG_LVL0>("Added adjacent vertex %1% to del map, %2% vertex idx") % g[w].name.c_str() % w;
         pushMetaNeighbours(w, g, s);
       } else {
-        log<DEBUG_LVL0>(L"Skipping adjacent vertex %1%, %2% vertex idx") % g[w].name.c_str() % w;
+        log<DEBUG_LVL0>("Skipping adjacent vertex %1%, %2% vertex idx") % g[w].name.c_str() % w;
       }
     }
-    log<INFO>(L"pushMetaNeighbours: Done");
+    log<INFO>("pushMetaNeighbours: Done");
   }
 
   void CarpeDM::CarpeDMimpl::subtraction(Graph& gTmp) {
@@ -558,7 +558,7 @@ using namespace DotStr::Misc;
 
     //TODO probably a more elegant solution out there, but I don't have the time for trial and error on boost property maps.
     //create 1:1 vertex map for all vertices in gUp initially marked for deletion. Also add all their meta children to leave no loose ends
-    log<VERBOSE>(L"subtraction: Searching nodes to remove");
+    log<VERBOSE>("subtraction: Searching nodes to remove");
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
       vertexMap[v] = v;
       //hvm.insert(hashVertexTuple(gUp[v].hash, v))
@@ -567,18 +567,18 @@ using namespace DotStr::Misc;
 
     //TODO Test this approach to remove square complexity by lookup
     BOOST_FOREACH( vertex_t w, vertices(gTmp) ) {
-      log<DEBUG_LVL0>(L"subtraction: Searching 0x%1$#08x") % gTmp[w].hash;
+      log<DEBUG_LVL0>("subtraction: Searching 0x%1$#08x") % gTmp[w].hash;
 
       if (gTmp[w].type == DotStr::Misc::sUndefined) continue;
 
       auto x = atUp.lookupHashNoEx(gTmp[w].hash);
       if (atUp.isOk(x)) {
         toDelete.insert(x->v);
-        log<DEBUG_LVL0>(L"subtraction: Checking adjacent vertices of node %1%") % gUp[x->v].name.c_str();                   // add the node
+        log<DEBUG_LVL0>("subtraction: Checking adjacent vertices of node %1%") % gUp[x->v].name.c_str();                   // add the node
         pushMetaNeighbours(x->v, gUp, toDelete); // add all of its meta children as well
       }
     }
-    log<VERBOSE>(L"subtraction: updating staging");
+    log<VERBOSE>("subtraction: updating staging");
     //FIXME Square complexity, but unsure if inner loop can be replaced
     //check staging, vertices might have lost children
     for(auto& vd : toDelete ) {
@@ -595,11 +595,11 @@ using namespace DotStr::Misc;
 
     //FIXME Square complexity, but unsure if inner loop can be replaced
     //remove designated vertices
-    log<VERBOSE>(L"subtraction: removing designated nodes");
+    log<VERBOSE>("subtraction: removing designated nodes");
     for(auto& vd : toDelete ) {
       atUp.deallocate(gUp[vertexMap[vd]].hash); //using the hash is independent of vertex descriptors, so no remapping necessary yet
       //remove node from hash and groups dict
-      log<DEBUG_LVL0>(L"subtraction: removing %1%") % gUp[vertexMap[vd]].name.c_str();
+      log<DEBUG_LVL0>("subtraction: removing %1%") % gUp[vertexMap[vd]].name.c_str();
       hm.remove(gUp[vertexMap[vd]].name);
       gt.remove<Groups::Node>(gUp[vertexMap[vd]].name);
       boost::clear_vertex(vertexMap[vd], gUp);
@@ -625,7 +625,7 @@ using namespace DotStr::Misc;
     generateBlockMeta(gUp); //auto generate desired Block Meta Nodes
     prepareUpload();
     atUp.syncBmpsToPools();
-    log<INFO>(L"subtraction: Done");
+    log<INFO>("subtraction: Done");
   }
 
 
@@ -674,13 +674,13 @@ using namespace DotStr::Misc;
   int CarpeDM::CarpeDMimpl::add(Graph& g, bool force) {
 
     if ((boost::get_property(g, boost::graph_name)).find(DotStr::Graph::Special::sCmd) != std::string::npos) {throw std::runtime_error("Expected a schedule, but these appear to be commands (Tag '" + DotStr::Graph::Special::sCmd + "' found in graphname)"); return -1;}
-    log<VERBOSE>(L"Download binary as base for addition");
+    log<VERBOSE>("Download binary as base for addition");
     baseUploadOnDownload();
-    log<VERBOSE>(L"Add new subgraph");
+    log<VERBOSE>("Add new subgraph");
     addition(g);
     //writeUpDotFile("upload.dot", false);
     validate(gUp, atUp, force);
-    log<VERBOSE>(L"Upload");
+    log<VERBOSE>("Upload");
     return upload(OP_TYPE_SCH_ADD);
   }
 

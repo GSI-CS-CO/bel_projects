@@ -1,8 +1,6 @@
 #include "grouptable.h"
 #include "aux_boost.h"
 #include "log.h"
-#include <locale>
-#include <codecvt>
 
 
   std::string GroupTable::store() {
@@ -28,15 +26,15 @@
 
   void GroupTable::debug() {
     std::stringstream auxstream;
-    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+    
 
     for (pmI x = a.begin(); x != a.end(); x++) {
       auxstream << x->node << " -> Pattern: " << x->pattern <<  ", Entry: " <<  (int)x->patternEntry <<  ", Exit: " <<  (int)x->patternExit;
       auxstream << " -> Beamproc: " << x->beamproc <<  ", Entry: " <<  (int)x->beamprocEntry <<  ", Exit: " <<  (int)x->beamprocExit << std::endl;
 
     }
-    std::wstring wide_str = converter.from_bytes(auxstream.str());
-    log<ALWAYS>(L"%1%") % wide_str.c_str();
+    
+    log<ALWAYS>("%1%") % auxstream.str();
   }
 
   pmI GroupTable::lookupOrCreateNode(const std::string& sNode) {

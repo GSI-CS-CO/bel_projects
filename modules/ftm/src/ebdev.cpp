@@ -6,7 +6,7 @@ int EbDev::writeCycle(vAdr va, vBuf& vb, vBl vcs)
 
   //eb_status_t status;
   //FIXME What about MTU? What about returned eb status ??
-  log<DEBUG>(L"Starting Write Cycle");
+  log<DEBUG>("Starting Write Cycle");
   Cycle cyc;
   eb_data_t veb[va.size()];
 
@@ -19,10 +19,10 @@ int EbDev::writeCycle(vAdr va, vBuf& vb, vBl vcs)
     for(int i = 0; i < (va.end()-va.begin()); i++) {
     if (i && vcs.at(i)) {
       cyc.close();
-      log<DEBUG>(L"Close and open next Write Cycle");
+      log<DEBUG>("Close and open next Write Cycle");
       cyc.open(dev);
     }
-    log<DEBUG>(L" Writing @ 0x%1$#08x : 0x%2$#08x") % va[i] % veb[i];
+    log<DEBUG>(" Writing @ 0x%1$#08x : 0x%2$#08x") % va[i] % veb[i];
     cyc.write(va[i], EB_BIG_ENDIAN | EB_DATA32, veb[i]);
 
     }
@@ -50,7 +50,7 @@ vBuf EbDev::readCycle(vAdr va, vBl vcs)
   Cycle cyc;
   eb_data_t veb[va.size()];
   vBuf ret = vBuf(va.size() * 4);
-  log<DEBUG>(L"Starting Read Cycle");
+  log<DEBUG>("Starting Read Cycle");
   
 
   try {
@@ -59,10 +59,10 @@ vBuf EbDev::readCycle(vAdr va, vBl vcs)
     //FIXME dirty break into cycles
     if (i && vcs.at(i)) {
       cyc.close();
-      log<DEBUG>(L"Close and open next Read Cycle");
+      log<DEBUG>("Close and open next Read Cycle");
       cyc.open(dev);
     }
-    log<DEBUG>(L" Reading @ 0x%1$#08x") % va[i];
+    log<DEBUG>(" Reading @ 0x%1$#08x") % va[i];
     cyc.read(va[i], EB_BIG_ENDIAN | EB_DATA32, (eb_data_t*)&veb[i]);
     }
     cyc.close();
@@ -142,7 +142,7 @@ bool EbDev::connect(const std::string& en) {
     vFw.clear();
 
 
-    log<VERBOSE>(L"Connecting to %1%") % en.c_str();
+    log<VERBOSE>("Connecting to %1%") % en.c_str();
     try {
       ebs.open(0, EB_DATAX|EB_ADDRX);
       ebd.open(ebs, ebdevname.c_str(), EB_DATAX|EB_ADDRX, 3);
@@ -197,7 +197,7 @@ bool EbDev::connect(const std::string& en) {
       throw;// std::runtime_error("Could not find CPUs running valid DM Firmware\n" );
     }
 
-    log<VERBOSE>(L"Done.\nFound %1% Cores, %2% of them run a valid DM firmware.") % unsigned(ebd.getCpuQty()) % cpuIdxMap.size();
+    log<VERBOSE>("Done.\nFound %1% Cores, %2% of them run a valid DM firmware.") % unsigned(ebd.getCpuQty()) % cpuIdxMap.size();
      
     std::string fwCause = foundVersionMax == -1 ? "" : "Requires FW v" + createFwVersionString(expVersion) + ", found " + createFwVersionString(foundVersionMax);
     if (cpuIdxMap.size() == 0) {throw std::runtime_error("No CPUs running a valid DM firmware found. " + fwCause);}
@@ -210,7 +210,7 @@ bool EbDev::connect(const std::string& en) {
   bool EbDev::disconnect() {
     bool ret = false;
 
-    log<VERBOSE>(L"Disconnecting ... ");
+    log<VERBOSE>("Disconnecting ... ");
     try {
       ebd.close();
       ebs.close();
@@ -221,7 +221,7 @@ bool EbDev::connect(const std::string& en) {
       //TODO report why we could not disconnect
     }
 
-    log<VERBOSE>(L" Done.");
+    log<VERBOSE>(" Done.");
 
     return ret;
   }

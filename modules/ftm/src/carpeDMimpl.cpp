@@ -54,7 +54,7 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
 
   void CarpeDM::CarpeDMimpl::completeId(vertex_t v, Graph& g) { // deduce SubID fields from ID or vice versa, depending on whether ID is defined
 
-    log<DEBUG_LVL0>(L"Entering timing msg ID field assembly from subfields");
+    log<DEBUG_LVL0>("Entering timing msg ID field assembly from subfields");
 
     std::stringstream ss;
     uint64_t id;
@@ -195,7 +195,6 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
 
   void CarpeDM::CarpeDMimpl::showMemSpace() {
     std::stringstream auxstream;
-    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
     
     auxstream << std::setfill(' ') << std::setw(11) << "Space" << std::setw(11) << "Free";
     if(GLOBAL_LOG_LEVEL >= VERBOSE) {
@@ -214,8 +213,7 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
       auxstream << std::endl;
     }
 
-    std::wstring wide_str = converter.from_bytes(auxstream.str());
-    log<ALWAYS>(L"%1%") % wide_str.c_str();
+    log<ALWAYS>("%1%") % auxstream.str();
 
   }
 
@@ -236,7 +234,7 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
   }
 
   uint32_t CarpeDM::CarpeDMimpl::getNodeAdr(const std::string& name, TransferDir dir, AdrType adrT) {
-    log<VERBOSE>(L"Looking up Adr of %1%") % name.c_str();
+    log<VERBOSE>("Looking up Adr of %1%") % name.c_str();
     if(name == DotStr::Node::Special::sIdle) return LM32_NULL_PTR; //idle node is resolved as a null ptr without comment
 
     AllocTable& at = (dir == TransferDir::UPLOAD ? atUp : atDown );
@@ -352,10 +350,10 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
   //write out dotfile from download graph of a memunit
   void CarpeDM::CarpeDMimpl::writeTextFile(const std::string& fn, const std::string& s) {
     std::ofstream out(fn);
-    log<VERBOSE>(L"Writing Output File %1% ...") % fn.c_str();
+    log<VERBOSE>("Writing Output File %1% ...") % fn.c_str();
     if(out.good()) { out << s; }
     else {throw std::runtime_error(" Could not write to .dot file '" + fn + "'"); return;}
-    log<VERBOSE>(L"Done.");
+    log<VERBOSE>("Done.");
   }
 
   bool CarpeDM::CarpeDMimpl::validate(Graph& g, AllocTable& at, bool force) {
@@ -391,7 +389,7 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
       hm = hmBak;
       gt = gtBak;
       ct = ctBak;
-      log<ERROR>(L"Operation FAILED, executing roll back\n");
+      log<ERROR>("Operation FAILED, executing roll back\n");
       throw;
     }
 

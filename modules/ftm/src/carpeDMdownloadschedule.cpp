@@ -42,17 +42,17 @@ namespace dnt = DotStr::Node::TypeVal;
 
 
   vEbrds CarpeDM::CarpeDMimpl::gatherDownloadDataVector() {
-    log<DEBUG_LVL0>(L"Starting download bmp data vectors");
+    log<DEBUG_LVL0>("Starting download bmp data vectors");
     AllocTable& at = atDown;
     vEbrds er;
     //go through Memories
     for(unsigned int i = 0; i < at.getMemories().size(); i++) {
       //go through a memory's bmp bits, starting at number of nodes the bmp itself needs (bmpSize / memblocksize). Otherwise, we'd needlessly download the bmp again
 
-      log<DEBUG_LVL1>(L"Bmp %1%") % i;
+      log<DEBUG_LVL1>("Bmp %1%") % i;
       for(unsigned int bitIdx = at.getMemories()[i].bmpSize / _MEM_BLOCK_SIZE; bitIdx < at.getMemories()[i].bmpBits; bitIdx++) {
         //if the bit says the node is used, we add the node to read addresses
-        log<DEBUG_LVL1>(L"Bit Idx %1% valid %2% na 0x%3$#08x") % bitIdx % at.getMemories()[i].getBmpBit(bitIdx) % (at.getMemories()[i].sharedOffs + bitIdx * _MEM_BLOCK_SIZE);
+        log<DEBUG_LVL1>("Bit Idx %1% valid %2% na 0x%3$#08x") % bitIdx % at.getMemories()[i].getBmpBit(bitIdx) % (at.getMemories()[i].sharedOffs + bitIdx * _MEM_BLOCK_SIZE);
         
         if (at.getMemories()[i].getBmpBit(bitIdx)) {
           uint32_t nodeAdr = at.getMemories()[i].bmpOffs + bitIdx * _MEM_BLOCK_SIZE;
@@ -98,14 +98,14 @@ namespace dnt = DotStr::Node::TypeVal;
       }
     }
 
-    log<VERBOSE>(L"Mgmt found %1% data chunks. Total %2% nodes scanned. Trying to recover GroupTable ...") % found % nodeCnt;
+    log<VERBOSE>("Mgmt found %1% data chunks. Total %2% nodes scanned. Trying to recover GroupTable ...") % found % nodeCnt;
     
 
     // recover container
     vBuf aux = at.recoverMgmt();
     vBuf tmpMgmtRecovery = decompress(aux);
 
-    log<VERBOSE>(L"Bytes expected: %1%, recovered:  %2%") % at.getMgmtTotalSize() % aux.size();
+    log<VERBOSE>("Bytes expected: %1%, recovered:  %2%") % at.getMgmtTotalSize() % aux.size();
     
     if (tmpMgmtRecovery.size()) {
       // Rebuild Grouptable
@@ -142,7 +142,7 @@ namespace dnt = DotStr::Node::TypeVal;
 
       //rt.debug();
     } else {
-      log<VERBOSE>(L"Management recovery returned empty, this happens when accessing a virgin DM FW memory. Skip Grouptable and Covenant Table creation");
+      log<VERBOSE>("Management recovery returned empty, this happens when accessing a virgin DM FW memory. Skip Grouptable and Covenant Table creation");
     }
     // clean up - remove now obsolete management data (we need a fresh set anyway once upload data is set)
     at.deallocateAllMgmt();
@@ -159,7 +159,7 @@ namespace dnt = DotStr::Node::TypeVal;
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //create AllocTable and Vertices
-    log<VERBOSE>(L"Analysing downloaded graph binary %1% bytes") % downloadData.size();
+    log<VERBOSE>("Analysing downloaded graph binary %1% bytes") % downloadData.size();
     uint32_t nodeCnt = 0;
     
     //go through Memories
@@ -210,7 +210,7 @@ namespace dnt = DotStr::Node::TypeVal;
 
 
           if (!(at.insert(cpu, adr, hash, v, false, false))) {
-            log<ERROR>(L"Offending Node at: CPU %1% 0x%2$#08x") % (int)cpu % adr;
+            log<ERROR>("Offending Node at: CPU %1% 0x%2$#08x") % (int)cpu % adr;
             hexDump("Dump", (char*)&downloadData[localAdr], _MEM_BLOCK_SIZE );
             throw std::runtime_error( std::string("Hash or address collision when adding node ") + name);
           };
@@ -239,8 +239,8 @@ namespace dnt = DotStr::Node::TypeVal;
             case NODE_TYPE_ALTDST       : g[v].np = (node_ptr) new   DestList(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sDstList;    g[v].np->deserialise((uint8_t*)x->b); break;
             case NODE_TYPE_QBUF         : g[v].np = (node_ptr) new CmdQBuffer(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sQBuf; break;
             //   NODE_TYPE_GLOBAL can never occur here, similar to management nodes. Don't list it. 
-            case NODE_TYPE_UNKNOWN      : log<ERROR>(L"Node type %1% is unknown") % g[v].type.c_str(); break;
-            default                     : log<ERROR>(L"Node type 0x%1$#02x not supported!") % type; break;
+            case NODE_TYPE_UNKNOWN      : log<ERROR>("Node type %1% is unknown") % g[v].type.c_str(); break;
+            default                     : log<ERROR>("Node type 0x%1$#02x not supported!") % type; break;
           }
           
 
@@ -250,7 +250,7 @@ namespace dnt = DotStr::Node::TypeVal;
     }
     
     
-    log<VERBOSE>(L"Node creation done. Creating Edges..");
+    log<VERBOSE>("Node creation done. Creating Edges..");
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // create edges
@@ -275,7 +275,7 @@ namespace dnt = DotStr::Node::TypeVal;
       }
     }
 
-    log<VERBOSE>(L"Done. Graph generation complete");
+    log<VERBOSE>("Done. Graph generation complete");
 
 
   }
@@ -285,7 +285,7 @@ namespace dnt = DotStr::Node::TypeVal;
     AllocTable& at = atDown;
     unsigned count = 0;
 
-    log<DEBUG_LVL0>(L"Recreating Global Refs");
+    log<DEBUG_LVL0>("Recreating Global Refs");
 
     //we already recreated the reftable from the mamagement nodes we downloaded, Now, for each entry in rt, we create the global node and insert into atDown.
     refIt rtBegin, rtEnd;
@@ -301,7 +301,7 @@ namespace dnt = DotStr::Node::TypeVal;
       std::tie(cpu, adrType) = at.adrClassification(tmpAdr);
       //TODO this does not cover all possible address types
       //If it is not an adress inside a CPUs shared space, throw an ex for now
-      log<DEBUG_LVL0>(L"Global Node at: CPU %1% 0x%2$#08x") % (int)cpu % tmpAdr;
+      log<DEBUG_LVL0>("Global Node at: CPU %1% 0x%2$#08x") % (int)cpu % tmpAdr;
       if (adrType != AdrType::INT) {throw std::runtime_error( std::string("Error. GlobalReftable entry contains an address not part of the AdrType::INT"));}
       
       uint32_t adr = at.adrConv(adrType, AdrType::MGMT, cpu, tmpAdr);
@@ -333,14 +333,14 @@ namespace dnt = DotStr::Node::TypeVal;
 
       //allocate node
        if (!(at.insert(cpu, adr, hash, v, false, true))) {
-        log<ERROR>(L"Offending Node at: CPU %1% 0x%2$#08x") % (int)cpu % adr;
+        log<ERROR>("Offending Node at: CPU %1% 0x%2$#08x") % (int)cpu % adr;
         throw std::runtime_error( std::string("Hash or address collision when adding node ") + name);
       };
       
       //add object
       g[v].np = (node_ptr) new Global(g[v].name, g[v].patName, g[v].bpName, hash, cpu, 0, g[v].section);
 
-      log<DEBUG_LVL0>(L"Added Global Node %1% @ CPU #%2% 0x%3%$#08x") % name.c_str() % (int)cpu % adr; 
+      log<DEBUG_LVL0>("Added Global Node %1% @ CPU #%2% 0x%3%$#08x") % name.c_str() % (int)cpu % adr; 
       count++;
     }
 
@@ -388,7 +388,7 @@ namespace dnt = DotStr::Node::TypeVal;
     atDown.clearMemories();
     gDown.clear();
     //get all BMPs so we know which nodes to download
-    log<VERBOSE>(L"Downloading ...");
+    log<VERBOSE>("Downloading ...");
     vDlBmpD = ebd.readCycle(erBmp.va, erBmp.vcs);
     
     atDown.setBmps( vDlBmpD );
@@ -397,19 +397,19 @@ namespace dnt = DotStr::Node::TypeVal;
     // read out current time for upload mod time (seconds, but probably better to use same format as DM FW. Convert to ns)
     updateModTime();
 
-    log<VERBOSE>(L"Done.\nCalling parser for Mgmt Meta");
+    log<VERBOSE>("Done.\nCalling parser for Mgmt Meta");
     readMgmtLLMeta(); // we have to do this before parsing
       
     
 
-    log<VERBOSE>(L"returned.\nCalling parser for Mgmt Data");
+    log<VERBOSE>("returned.\nCalling parser for Mgmt Data");
     parseDownloadMgmt(vDlD);
-    log<VERBOSE>(L"returned.\nCalling parser for Download Meta");
+    log<VERBOSE>("returned.\nCalling parser for Download Meta");
 
     recreateGlobalRefs();
 
     parseDownloadData(vDlD);
-    log<VERBOSE>(L"returned.");
+    log<VERBOSE>("returned.");
 
     freshDownload = true;
     if(optimisedS2R) updateCovenants();

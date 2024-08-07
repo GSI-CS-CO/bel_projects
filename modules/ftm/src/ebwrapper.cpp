@@ -1,8 +1,7 @@
 #include <boost/algorithm/string.hpp>
 #include "ebwrapper.h"
 #include "log.h"
-#include <locale>
-#include <codecvt>
+
 
 
 const int EbWrapper::expVersionMin = EbWrapper::parseFwVersionString(EXP_VER);
@@ -26,7 +25,7 @@ int EbWrapper::writeCycle(const vAdr& va, const vBuf& vb, const vBl& vcs) const 
   //eb_status_t status;
   //FIXME What about MTU? What about returned eb status ??
 
-  log<DEBUG_LVL3>(L"eb: Starting Write Cycle");
+  log<DEBUG_LVL3>("eb: Starting Write Cycle");
   Cycle cyc;
   eb_data_t veb[va.size()];
 
@@ -39,10 +38,10 @@ int EbWrapper::writeCycle(const vAdr& va, const vBuf& vb, const vBl& vcs) const 
     for(int i = 0; i < (va.end()-va.begin()); i++) {
     if (i && vcs.at(i)) {
       cyc.close();
-      log<DEBUG_LVL3>(L"eb: Close and open next Write Cycle");
+      log<DEBUG_LVL3>("eb: Close and open next Write Cycle");
       cyc.open(ebd);
     }
-    log<DEBUG_LVL3>(L"eb: Writing @ %1$#08x Val %2$#08x ") % va[i] % veb[i];
+    log<DEBUG_LVL3>("eb: Writing @ %1$#08x Val %2$#08x ") % va[i] % veb[i];
     cyc.write(va[i], EB_BIG_ENDIAN | EB_DATA32, veb[i]);
 
     }
@@ -69,7 +68,7 @@ vBuf EbWrapper::readCycle(const vAdr& va, const vBl& vcs) const {
   Cycle cyc;
   eb_data_t veb[va.size()];
   vBuf ret = vBuf(va.size() * 4);
-  log<DEBUG_LVL3>(L"eb: Starting Read Cycle");
+  log<DEBUG_LVL3>("eb: Starting Read Cycle");
   //sLog << "Got Adr Vec with " << va.size() << " Adrs" << std::endl;
 
   try {
@@ -78,10 +77,10 @@ vBuf EbWrapper::readCycle(const vAdr& va, const vBl& vcs) const {
     //FIXME dirty break into cycles
     if (i && vcs.at(i)) {
       cyc.close();
-      log<DEBUG_LVL3>(L"eb: Close and open next Read Cycle");
+      log<DEBUG_LVL3>("eb: Close and open next Read Cycle");
       cyc.open(ebd);
     }
-    log<DEBUG_LVL3>(L"eb: Reading @ %1$#08x ") % va[i];
+    log<DEBUG_LVL3>("eb: Reading @ %1$#08x ") % va[i];
     cyc.read(va[i], EB_BIG_ENDIAN | EB_DATA32, (eb_data_t*)&veb[i]);
     }
     cyc.close();
@@ -177,7 +176,7 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
     vFoundVersion.clear();
     vFwIdROM.clear();
 
-    log<VERBOSE>(L"eb: Connecting to %1% ...") % ebdevname.c_str();
+    log<VERBOSE>("eb: Connecting to %1% ...") % ebdevname.c_str();
    
     try {
       ebs.open(0, EB_DATAX|EB_ADDRX);
@@ -242,7 +241,7 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
       throw;// std::runtime_error("Could not find CPUs running valid DM Firmware\n" );
     }
 
-    log<VERBOSE>(L" Done.\nFound %1% Cores, %2%  of them run a valid DM firmware.") % (unsigned)cpuQty % cpuIdxMap.size();
+    log<VERBOSE>(" Done.\nFound %1% Cores, %2%  of them run a valid DM firmware.") % (unsigned)cpuQty % cpuIdxMap.size();
     
     std::string fwCause = foundVersionMax == -1 ? "" : "Requires FW v" + createFwVersionString(expVersionMin) + ", found " + createFwVersionString(foundVersionMax);
     if (cpuIdxMap.size() == 0) {throw std::runtime_error("No CPUs running a valid DM firmware found. " + fwCause);}
@@ -256,7 +255,7 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
   bool EbWrapper::disconnect() {
     bool ret = false;
 
-    log<VERBOSE>(L"Disconnecting ... ");
+    log<VERBOSE>("Disconnecting ... ");
     try {
       ebd.close();
       ebs.close();
@@ -267,7 +266,7 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
       //TODO report why we could not disconnect
     }
     
-    log<VERBOSE>(L" Done");
+    log<VERBOSE>(" Done");
     
     return ret;
   }
@@ -391,7 +390,7 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
     //FIXME replace with FW ID string constants
     //CAREFUL: Get the EXACT position. If you miss out on leading spaces, the parsed number gets truncated!
     std::string value = parseFwIdROMTag(fwIdROM, "IntAdrOffs  : ", 10, true);
-    log<DEBUG_LVL1>(L"IntAdrOffs : %1%, parsed: 0x%2$#08x") % value.c_str() % s2u<uint32_t>(value);
+    log<DEBUG_LVL1>("IntAdrOffs : %1%, parsed: 0x%2$#08x") % value.c_str() % s2u<uint32_t>(value);
     return s2u<uint32_t>(value);
 
   }
@@ -399,21 +398,21 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
   uint32_t EbWrapper::parseSharedOffs(const std::string& fwIdROM) const {
     //FIXME replace with FW ID string constants
     std::string value = parseFwIdROMTag(fwIdROM, "SharedOffs  : ", 10, true);
-    log<DEBUG_LVL1>(L"SharedOffs : %1%, parsed: 0x%2$#08x") % value.c_str() % s2u<uint32_t>(value);
+    log<DEBUG_LVL1>("SharedOffs : %1%, parsed: 0x%2$#08x") % value.c_str() % s2u<uint32_t>(value);
     return s2u<uint32_t>(value);
 
   }
 
   uint32_t EbWrapper::parseSharedSize(const std::string& fwIdROM) const{
     std::string value = parseFwIdROMTag(fwIdROM, "SharedSize  : ", 10, true);
-    log<DEBUG_LVL1>(L"SharedSize : %1%, parsed: 0x%2$#08x") % value.c_str() % s2u<uint32_t>(value);
+    log<DEBUG_LVL1>("SharedSize : %1%, parsed: 0x%2$#08x") % value.c_str() % s2u<uint32_t>(value);
     return s2u<uint32_t>(value);
 
   }
 
   uint32_t EbWrapper::parseThrQty(const std::string& fwIdROM) const{
     std::string value = parseFwIdROMTag(fwIdROM, "ThreadQty   : ", 10, true);
-    log<DEBUG_LVL1>(L"SharedOffs : %1%, parsed: %2%") % value.c_str() % s2u<uint32_t>(value);
+    log<DEBUG_LVL1>("SharedOffs : %1%, parsed: %2%") % value.c_str() % s2u<uint32_t>(value);
     return s2u<uint32_t>(value);
 
   }
@@ -429,9 +428,8 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
            << std::setfill(' ') << std::setw(11) << createFwVersionString(getExpVersionMin())
            << std::setfill(' ') << std::setw(11) << createFwVersionString(getExpVersionMax());
     }
-    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-    std::wstring wide_str = converter.from_bytes(auxstream.str());
-    log<ALWAYS>(L"%1%") % wide_str.c_str();
+    
+    log<ALWAYS>("%1%") % auxstream.str();
   }
 
 

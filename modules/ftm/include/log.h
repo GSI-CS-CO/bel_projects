@@ -4,7 +4,7 @@
 #include <sstream>
 #include <boost/format.hpp>
 #include <iostream>
-#include <codecvt>
+
 
 #define GLOBAL_LOG_COMPATIBILITY 1
 
@@ -40,20 +40,12 @@ class formatted_log_t {
 
 
 public:
-    formatted_log_t( log_level_t level, const wchar_t* msg ) : fmt(msg), level(level) {}
+    formatted_log_t( log_level_t level, const char* msg ) : fmt(msg), level(level) {}
     ~formatted_log_t() {
         // GLOBAL_LEVEL is a global variable and could be changed at runtime
         // Any customization could be here
 	    std::string s = OUTPUT_GLOBAL_LOG_LEVEL ? std::string(log_lvl_str[level]) + ":" : "";
-        if ( level <= GLOBAL_LOG_LEVEL ) {
-            if (GLOBAL_LOG_COMPATIBILITY) {
-                std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-                std::string narrow_fmt = converter.to_bytes(fmt.str());
-                cout << s << " " << narrow_fmt << endl;
-            } else wcout << s.c_str() << L" " << fmt << endl;
-
-       }
-
+        if ( level <= GLOBAL_LOG_LEVEL ) { cout << s << " " << fmt << endl; }
     }        
     template <typename T> 
     formatted_log_t& operator %(T value) {
@@ -61,13 +53,13 @@ public:
         return *this;
     }    
 protected:
-    boost::wformat  fmt;
+    boost::format  fmt;
     log_level_t     level;
 };
 }//namespace log_impl
 // Helper function. Class formatted_log_t will not be used directly.
 template <log_level_t level>
-log_impl::formatted_log_t log(const wchar_t* msg) {
+log_impl::formatted_log_t log(const char* msg) {
     return log_impl::formatted_log_t( level, msg );
 }
 
