@@ -140,9 +140,9 @@ public:
 
   void debug() {
     std::stringstream auxstream;
-    auxstream << "Active Safe2remove-Covenants:" << std::endl;
+    auxstream << "Active Safe2remove-Covenants:";
     for (cmI x = a.begin(); x != a.end(); x++) {
-      auxstream << x->name << " prio: " << std::dec << (int)x->prio <<  ", slot: " <<  (int)x->slot <<  ", ChkSum: 0x" << std::hex <<  x->chkSum << std::endl;
+      auxstream << std::endl << x->name << " prio: " << std::dec << (int)x->prio <<  ", slot: " <<  (int)x->slot <<  ", ChkSum: 0x" << std::hex <<  x->chkSum;
     }
     
     log<ALWAYS>("%1%") % auxstream.str();

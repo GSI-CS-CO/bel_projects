@@ -720,10 +720,6 @@ void CarpeDM::CarpeDMimpl::show(const std::string& title, const std::string& log
 
   auxstream << std::endl;
 
-  log<ALWAYS>("%1%") % auxstream.str();
-
-  auxstream.clear();
-
   if(GLOBAL_LOG_LEVEL >= DEBUG_LVL0) {
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
       auto x = at.lookupVertex(v);
@@ -748,9 +744,6 @@ void CarpeDM::CarpeDMimpl::show(const std::string& title, const std::string& log
   for (auto& it : gt.getAllPatterns()) {
     auxstream << std::left << std::setw(maxLengthPatternName) << std::setfill(' ') << it << std::setw(maxLengthEntryName) << getPatternEntryNode(it) << getPatternExitNode(it) << std::endl;
   }
-  auxstream << std::endl;
-
-  
   log<ALWAYS>("%1%") % auxstream.str();
 }
 

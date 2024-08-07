@@ -44,8 +44,8 @@ public:
     ~formatted_log_t() {
         // GLOBAL_LEVEL is a global variable and could be changed at runtime
         // Any customization could be here
-	    std::string s = OUTPUT_GLOBAL_LOG_LEVEL ? std::string(log_lvl_str[level]) + ":" : "";
-        if ( level <= GLOBAL_LOG_LEVEL ) { cout << s << " " << fmt << endl; }
+	    std::string s = OUTPUT_GLOBAL_LOG_LEVEL ? std::string(log_lvl_str[level]) + ": " : "";
+        if ( level <= GLOBAL_LOG_LEVEL ) { cout << s << fmt << endl; }
     }        
     template <typename T> 
     formatted_log_t& operator %(T value) {

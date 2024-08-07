@@ -203,14 +203,17 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
       auxstream << std::setw(11) << "bmpBytes";
     }
     auxstream << std::endl;
-    for (uint8_t x = 0; x < ebd.getCpuQty(); x++) {
+    uint8_t cpuQty = ebd.getCpuQty();
+    for (uint8_t x = 0; x < cpuQty; x++) {
       auxstream << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalSpace(x)    << std::setw(10) << atDown.getFreeSpace(x) * 100 / atDown.getTotalSpace(x) << "%";
       if(GLOBAL_LOG_LEVEL >= VERBOSE) {
         auxstream << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalChunkQty(x) << std::setw(10) << atDown.getFreeChunkQty(x)  << std::setw(10) << atDown.getUsedChunkQty(x);
         auxstream << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalBmpBits(x) << std::setw(10) << atDown.getFreeBmpBits(x)  << std::setw(10) << atDown.getUsedBmpBits(x);
         auxstream << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalBmpSize(x);
       }
-      auxstream << std::endl;
+      if (x < cpuQty -1) {
+        auxstream << std::endl;
+      }
     }
 
     log<ALWAYS>("%1%") % auxstream.str();
