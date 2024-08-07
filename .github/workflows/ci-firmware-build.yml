@@ -46,4 +46,7 @@ jobs:
         run: sudo make etherbone-install
 
       - name: Build burst generator
-        run: make bg
+        run: make fw-bg
+
+      - name: Build function generator
+        run: make fw-fg-scu2-scu3
