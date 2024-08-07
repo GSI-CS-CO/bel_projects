@@ -98,14 +98,14 @@ namespace dnt = DotStr::Node::TypeVal;
       }
     }
 
-    log<VERBOSE>(L"Mgmt found %1% data chunks. Total %2% nodes scanned. Trying to recover GroupTable ...\n") % found % nodeCnt;
+    log<VERBOSE>(L"Mgmt found %1% data chunks. Total %2% nodes scanned. Trying to recover GroupTable ...") % found % nodeCnt;
     
 
     // recover container
     vBuf aux = at.recoverMgmt();
     vBuf tmpMgmtRecovery = decompress(aux);
 
-    log<VERBOSE>(L"Bytes expected: %1%, recovered:  %2%\n") % at.getMgmtTotalSize() % aux.size();
+    log<VERBOSE>(L"Bytes expected: %1%, recovered:  %2%") % at.getMgmtTotalSize() % aux.size();
     
     if (tmpMgmtRecovery.size()) {
       // Rebuild Grouptable
@@ -159,7 +159,7 @@ namespace dnt = DotStr::Node::TypeVal;
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //create AllocTable and Vertices
-    log<VERBOSE>(L"Analysing downloaded graph binary %1% bytes\n") % downloadData.size();
+    log<VERBOSE>(L"Analysing downloaded graph binary %1% bytes") % downloadData.size();
     uint32_t nodeCnt = 0;
     
     //go through Memories

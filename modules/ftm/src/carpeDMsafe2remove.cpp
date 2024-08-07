@@ -159,7 +159,7 @@ bool CarpeDM::CarpeDMimpl::isSafeToRemove(std::set<std::string> patterns, std::s
     log<VERBOSE>(L"%1% --> {") % gEq[it].name.c_str();
 
     for (auto& itPv : covenantsPerVertex[it]) { log<VERBOSE>(L"%1%, ") % ((itPv != null_vertex) ? gEq[itPv].name.c_str() : "NULL"); }
-    log<VERBOSE>(L"\n");
+    //log<VERBOSE>(L"\n");
   }
 
   //create set of all covenants which must be honoured so the prediction will hold. Because of the propagation along reverse trees, doing it for intersection members is sufficient
@@ -167,7 +167,7 @@ bool CarpeDM::CarpeDMimpl::isSafeToRemove(std::set<std::string> patterns, std::s
     covenants.insert(covenantsPerVertex[it].begin(), covenantsPerVertex[it].end());
     log<VERBOSE>(L"%1% --> {") % gEq[it].name.c_str();
     for (auto& itPv : covenantsPerVertex[it]) { log<VERBOSE>(L"%1%, ") % ((itPv != null_vertex) ? gEq[itPv].name.c_str() : "NULL"); }
-    log<VERBOSE>(L"\n");
+    //log<VERBOSE>(L"\n");
   }
 
 
@@ -396,7 +396,7 @@ bool CarpeDM::CarpeDMimpl::updateStaleDefaultDestinations(Graph& g, AllocTable& 
     if(g[vChkBlock].np->isBlock()) {
       //second, inspect their queues and see if default dest is made stale by a dominant flow
       vertex_set_t sVflowDst = getDominantFlowDst(vChkBlock, g, at, covTab, qAnalysis);
-      log<VERBOSE>(L"\n");
+      //log<VERBOSE>(L"\n");
       for (auto& it : sVflowDst) {
 
         //if (sVflowDst.size() > 1) {throw std::runtime_error(isSafeToRemove::exIntro + "updateStaleDefDst: found more than one dominant flow, must be 0..1");}
