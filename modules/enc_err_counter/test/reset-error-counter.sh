@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 dev=$1
 interface=$2
 addr="NULL"
