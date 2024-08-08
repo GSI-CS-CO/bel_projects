@@ -377,7 +377,7 @@ class DmTestbench(unittest.TestCase):
     """
     if useVerbose:
       outputStdoutStderr = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-v'), [0])
-      offsetLines = 7 + 16 + self.cpuQuantity
+      offsetLines = 7 + 17 + self.cpuQuantity
     else:
       outputStdoutStderr = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster), [0])
       offsetLines = 7 + self.cpuQuantity
