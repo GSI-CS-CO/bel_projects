@@ -484,20 +484,20 @@ void CarpeDM::CarpeDMimpl::inspectHeap(uint8_t cpuIdx) {
   heap = ebd.readCycle(vRa);
 
   auxstream << std::setfill(' ') << "CPU " << "Rank  " << std::setfill(' ') << std::setw(5) << "Thread  " << std::setfill(' ') << std::setw(21)
-  << "Deadline  " << std::setfill(' ') << std::setw(21) << "Origin  " << std::setfill(' ') << std::setw(21) << "Cursor" << std::endl;
+  << "Deadline  " << std::setfill(' ') << std::setw(21) << "Origin  " << std::setfill(' ') << std::setw(21) << "Cursor";
 
 
 
   for(int i=0; i<ebd.getThrQty(); i++) {
 
     uint8_t thrIdx = (writeBeBytesToLeNumber<uint32_t>((uint8_t*)&heap[i * _PTR_SIZE_])  - atDown.adrConv(AdrType::EXT, AdrType::INT,cpuIdx, thrAdr)) / _T_TD_SIZE_;
-    auxstream << std::dec
+    auxstream << std::endl << std::dec
     << std::setfill(' ') << std::setw(3) << (int)cpuIdx
     << std::setfill(' ') << std::setw(5) << i
     << std::setfill(' ') << std::setw(8) << (int)thrIdx
     << std::setfill(' ') << std::setw(21) << getThrDeadline(cpuIdx, thrIdx)
     << std::setfill(' ') << std::setw(21) << getThrOrigin(cpuIdx, thrIdx)
-    << std::setfill(' ') << std::setw(21) << getThrCursor(cpuIdx, thrIdx) << std::endl;
+    << std::setfill(' ') << std::setw(21) << getThrCursor(cpuIdx, thrIdx);
   }
   log<ALWAYS>("%1%") % auxstream.str();
 }
