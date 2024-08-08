@@ -41,11 +41,18 @@ class formatted_log_t {
 
 public:
     formatted_log_t( log_level_t level, const char* msg ) : fmt(msg), level(level) {}
+    formatted_log_t( log_level_t level, const char* msg, bool useEndl ) : fmt(msg), level(level), useEndl(useEndl) {}
     ~formatted_log_t() {
         // GLOBAL_LEVEL is a global variable and could be changed at runtime
         // Any customization could be here
 	    std::string s = OUTPUT_GLOBAL_LOG_LEVEL ? std::string(log_lvl_str[level]) + ": " : "";
-        if ( level <= GLOBAL_LOG_LEVEL ) { cout << s << fmt << endl; }
+        if ( level <= GLOBAL_LOG_LEVEL ) {
+          if (useEndl == true) {
+            cout << s << fmt << endl;
+          } else {
+            cout << s << fmt;
+          }
+        }
     }        
     template <typename T> 
     formatted_log_t& operator %(T value) {
@@ -55,12 +62,18 @@ public:
 protected:
     boost::format  fmt;
     log_level_t     level;
+    bool useEndl = true;
 };
 }//namespace log_impl
 // Helper function. Class formatted_log_t will not be used directly.
 template <log_level_t level>
 log_impl::formatted_log_t log(const char* msg) {
     return log_impl::formatted_log_t( level, msg );
+}
+
+template <log_level_t level>
+log_impl::formatted_log_t log(const char* msg, bool useEndl) {
+    return log_impl::formatted_log_t( level, msg, useEndl );
 }
 
 #endif /* _LOG_H_ */
