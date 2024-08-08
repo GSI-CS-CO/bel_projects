@@ -185,7 +185,7 @@ class ThreadBitsTest(dm_testbench.DmTestbench):
     self.assertEqual(lines[1][0], f"{self.binaryDmCmd}: Thread argument 'preptime' is invalid. Not a number.", 'wrong output')
 
   def testMissingArgumentVerbose(self):
-    lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-v', '-t', 'preptime'), [255], 2, 1)
+    lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-v', '-t', 'preptime'), [255], 3, 1)
     self.assertEqual(lines[1][0], f"{self.binaryDmCmd}: Thread argument 'preptime' is invalid. Not a number.", 'wrong output')
 
   def tearDown(self):
