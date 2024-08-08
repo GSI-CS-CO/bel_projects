@@ -1,3 +1,4 @@
+
 import dm_testbench
 
 """Class collects unit tests for the command line of dm-sched.
@@ -6,7 +7,7 @@ class TestDmSched(dm_testbench.DmTestbench):
 
   def test_sched_usage(self):
     self.startAndGetSubprocessOutput([self.binaryDmSched, '-h'],
-         expectedReturnCode=[0], linesCout=0, linesCerr=25)
+         expectedReturnCode=[0], linesCout=0, linesCerr=26)
 
   def test_sched_default(self):
     linesOut = self.startAndGetSubprocessOutput([self.binaryDmSched, self.datamaster],
