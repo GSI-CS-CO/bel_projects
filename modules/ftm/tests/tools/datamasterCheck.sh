@@ -22,6 +22,7 @@ datamasterInfo() {
     echo
     echo
     echo "Timing-Receiver:" ; eb-mon -vi $TR0 ; eb-info $TR0
+    saft-ctl -ijf tr
   fi
   if ! [ -z "$DM" ]
   then
@@ -57,6 +58,7 @@ remoteDatamasterInfo() {
     echo
     echo "Timing-Receiver: $TR_HOST" ; ssh root@$TR_HOST "eb-mon -vi $TR0" ; ssh root@$TR_HOST "eb-info $TR0"
     echo "$TR0 WR time: "; ssh root@$TR_HOST "eb-mon -d $TR0"
+    ssh root@$TR_HOST "saft-ctl -ijf tr"
   fi
   if ! [ -z "$DM" ]
   then

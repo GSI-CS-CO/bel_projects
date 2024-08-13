@@ -554,6 +554,35 @@ class DmTestbench(unittest.TestCase):
     else:
       self.assertFalse(flushExecuted, f'flushExecuted: {flushExecuted}, queuesToFlush: {queuesToFlush}')
 
+  def inspectQueue(self, node, read=0, write=0, pending=0, retry=False):
+    # check the result with dm-cmd ... queue <node>.
+    lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, 'queue', node), [0], 10, 0)
+    try:
+      self.verifyInspectingQueueOutput(lines, node, read, write, pending)
+    except AssertionError as instance:
+      testName = os.environ['PYTEST_CURRENT_TEST']
+      logging.getLogger().warning(f'{testName}, AssertionError while Inspecting Queues, try second inspection.' + '\n' + '\n'.join(lines))
+      self.assertEqual(instance.args[0][:111], "'Priority 0 (priolo)  RdIdx: 0 WrIdx: 1    Pending: 1' != 'Priority 0 (priolo)  RdIdx: 0 WrIdx: 1    Pending: 0", 'wrong exception')
+      # second try: check the result with dm-cmd ... queue <node>.
+      if retry:
+        self.delay(1.0)
+        lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, 'queue', node), [0], 10, 0)
+        self.verifyInspectingQueueOutput(lines, node, 1, 1, 0)
+
+  def verifyInspectingQueueOutput(self, lines, node, read, write, pending):
+    # verify the output (lines 1 to 9).
+    expectedLines = ['', f'Inspecting Queues of Block {node}',
+    'Priority 2 (prioil)  Not instantiated',
+    'Priority 1 (priohi)  Not instantiated',
+    f'Priority 0 (priolo)  RdIdx: {read} WrIdx: {write}    Pending: {pending}',
+    '', '', '', '']
+    for i in range(0,4):
+      expectedLines[i+5] = f'#{(i+read) % 4} empty   -'
+    if pending == 1:
+      expectedLines[5] = '#0 pending Valid Time: 0x0000000000000000 0000000000000000000    CmdType: noop    Qty: 1'
+    for i in range(1,9):
+      self.assertEqual(lines[i], expectedLines[i], 'wrong output, expected: ' + expectedLines[i] + '\n' + '\n'.join(lines))
+
   def delay(self, duration):
     """Delay for <duration> seconds. <duration> is a float.
     """
@@ -577,12 +606,12 @@ class DmTestbench(unittest.TestCase):
     for cpu in cpuList:
       self.addSchedule(f'pps-all-threads-cpu{cpu}.dot')
     # Check all CPUs that no thread is running.
-    self.delay(0.2)
-    lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', cpuMask, 'running'), [0], len(cpuList), 0)
-    # ~ self.printStdOutStdErr(lines)
+    self.delay(0.4)
+    lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', cpuMask, 'running'), [0], len(cpuList), 0)
+    # ~ self.printStdOutStdErr([lines,[]])
     for i in range(len(cpuList)):
       expectedText = 'CPU {variable} Running Threads: 0x0'.format(variable=i)
-      self.assertEqual(lines[0][i], expectedText, 'wrong output, expected: ' + expectedText)
+      self.assertEqual(lines[i], expectedText, 'wrong output, expected: ' + expectedText + '\n' + '\n'.join(lines))
     # Start pattern for all CPUs and all threads
     threadList = [('a', '0'), ('b', '1'), ('c', '2'), ('d', '3'), ('e', '4'), ('f', '5'), ('g', '6'), ('h', '7'),
                   ('a', '8'), ('b', '9'), ('c', '10'), ('d', '11'), ('e', '12'), ('f', '13'), ('g', '14'), ('h', '15'),

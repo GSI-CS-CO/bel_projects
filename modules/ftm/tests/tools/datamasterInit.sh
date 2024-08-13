@@ -61,7 +61,7 @@ elif [ "$DM_HOST" = "fel0069" ]
 then
   # echo 'Check kernel modules and CERN pci devices.'
   # sudo lspci -nn -vkd 10dc:
-  if  ssh root@fel0069.acc.gsi.de "saft-ctl tr1 -j"
+  if  ssh root@fel0069.acc.gsi.de "saft-ctl tr1 -ij"
   then
     echo 'saft daemon for tr1 started.'
   else
