@@ -606,7 +606,7 @@ class DmTestbench(unittest.TestCase):
     for cpu in cpuList:
       self.addSchedule(f'pps-all-threads-cpu{cpu}.dot')
     # Check all CPUs that no thread is running.
-    self.delay(0.2)
+    self.delay(0.4)
     lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', cpuMask, 'running'), [0], len(cpuList), 0)
     # ~ self.printStdOutStdErr([lines,[]])
     for i in range(len(cpuList)):
