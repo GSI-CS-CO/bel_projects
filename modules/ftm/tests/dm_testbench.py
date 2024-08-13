@@ -26,6 +26,7 @@ class DmTestbench(unittest.TestCase):
     self.datamaster = os.environ['DATAMASTER']
     self.schedulesFolder = os.environ.get('TEST_SCHEDULES', 'schedules/')
     self.snoop_command = os.environ.get('SNOOP_COMMAND', 'saft-ctl tr0 -xv snoop 0 0 0')
+    self.deleteFiles = os.environ.get('DELETE_FILES', 'True')
     self.patternStarted = False
     self.cpuQuantity, self.threadQuantity = self.getThreadQuantityFromFirmware()
 
@@ -373,7 +374,10 @@ class DmTestbench(unittest.TestCase):
 
   def analyseDmCmdOutput(self, threadsToCheck='', useVerbose=False) -> dict:
     """Collect the message counts for all threads. Use dm-cmd to get the
-    status with the message counts.
+    status with the message counts. Return a dict with the message counts.
+    Key: first letter is cpu, next two letters thread number.
+    Example: key=123 is cpu 1, thread 23.
+    Assumption: less than 10 cpus, less than 100 threads.
     """
     if useVerbose:
       outputStdoutStderr = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-v'), [0])
@@ -401,7 +405,7 @@ class DmTestbench(unittest.TestCase):
             thread = int(line[8 + offset1:10 + offset1])
           running = line[21 + offset1:24 + offset1]
           count = int(line[32 + offset:42 + offset])
-          msgCounts[f'{10*cpu:02d}{thread:02d}'] = str(count)
+          msgCounts[f'{cpu:1d}{thread:02d}'] = str(count)
           if running == 'yes':
             threadsCheck = threadsCheck[:self.threadQuantity * cpu + thread] + '1' + threadsCheck[self.threadQuantity * cpu + thread + 1:]
           # ~ print(f'threadsCheck: {threadsCheck}, threadsToCheck: {threadsToCheck}, running:{running} {cpu} {thread} "{line[8 + offset1:10 + offset1]}"')
@@ -423,9 +427,9 @@ class DmTestbench(unittest.TestCase):
     """Check that threads are running by comparison of message counts.
     Assumption: there is at least one timing message for this thread in
     messageIntervall (default 1.0 second).
-    dm-cmd runs twice and the message counts for the second run must be
-    greater than the first message counts. In addition the first
-    message counts should be grater than 0.
+    dm-cmd runs twice and the message count for the second run must be
+    greater than the first message count. In addition the first
+    message count should be grater than 0.
     """
     firstCounts = self.analyseDmCmdOutput()
     self.delay(messageInterval)
@@ -433,9 +437,9 @@ class DmTestbench(unittest.TestCase):
     for key in firstCounts:
       firstCount = int(firstCounts[key])
       secondCount = int(secondCounts[key])
-      # ~ print(f'key={key}, firstCount={firstCount}, secondCount={secondCount}')
       cpu = int(key[0])
-      thread = int(key[1])
+      thread = int(key[1:])
+      # ~ print(f'{key=}, {firstCount=}, {secondCount=}, {key[0]=}, {cpu=}, {key[1:]=}, {thread=}')
       self.assertGreater(secondCount, firstCount, f'CPU {cpu} Thread {thread} First: {firstCount}, second: {secondCount}')
       self.assertGreater(firstCount, 0, f'CPU {cpu} Thread {thread} firstCount is {firstCount}')
 
@@ -550,6 +554,35 @@ class DmTestbench(unittest.TestCase):
     else:
       self.assertFalse(flushExecuted, f'flushExecuted: {flushExecuted}, queuesToFlush: {queuesToFlush}')
 
+  def inspectQueue(self, node, read=0, write=0, pending=0, retry=False):
+    # check the result with dm-cmd ... queue <node>.
+    lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, 'queue', node), [0], 10, 0)
+    try:
+      self.verifyInspectingQueueOutput(lines, node, read, write, pending)
+    except AssertionError as instance:
+      testName = os.environ['PYTEST_CURRENT_TEST']
+      logging.getLogger().warning(f'{testName}, AssertionError while Inspecting Queues, try second inspection.' + '\n' + '\n'.join(lines))
+      self.assertEqual(instance.args[0][:111], "'Priority 0 (priolo)  RdIdx: 0 WrIdx: 1    Pending: 1' != 'Priority 0 (priolo)  RdIdx: 0 WrIdx: 1    Pending: 0", 'wrong exception')
+      # second try: check the result with dm-cmd ... queue <node>.
+      if retry:
+        self.delay(1.0)
+        lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, 'queue', node), [0], 10, 0)
+        self.verifyInspectingQueueOutput(lines, node, 1, 1, 0)
+
+  def verifyInspectingQueueOutput(self, lines, node, read, write, pending):
+    # verify the output (lines 1 to 9).
+    expectedLines = ['', f'Inspecting Queues of Block {node}',
+    'Priority 2 (prioil)  Not instantiated',
+    'Priority 1 (priohi)  Not instantiated',
+    f'Priority 0 (priolo)  RdIdx: {read} WrIdx: {write}    Pending: {pending}',
+    '', '', '', '']
+    for i in range(0,4):
+      expectedLines[i+5] = f'#{(i+read) % 4} empty   -'
+    if pending == 1:
+      expectedLines[5] = '#0 pending Valid Time: 0x0000000000000000 0000000000000000000    CmdType: noop    Qty: 1'
+    for i in range(1,9):
+      self.assertEqual(lines[i], expectedLines[i], 'wrong output, expected: ' + expectedLines[i] + '\n' + '\n'.join(lines))
+
   def delay(self, duration):
     """Delay for <duration> seconds. <duration> is a float.
     """
@@ -568,24 +601,26 @@ class DmTestbench(unittest.TestCase):
     """
     cpuList = self.listFromBits(cpus, self.cpuQuantity)
     cpuMask = self.maskFromList(cpuList, self.cpuQuantity)
+    # ~ print(f'{cpuList=}, {cpuMask=}')
     # Add schedules for all CPUs and start pattern on all threads.
     for cpu in cpuList:
       self.addSchedule(f'pps-all-threads-cpu{cpu}.dot')
     # Check all CPUs that no thread is running.
-    self.delay(0.2)
-    lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', cpuMask, 'running'), [0], len(cpuList), 0)
-    # ~ self.printStdOutStdErr(lines)
+    self.delay(0.4)
+    lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', cpuMask, 'running'), [0], len(cpuList), 0)
+    # ~ self.printStdOutStdErr([lines,[]])
     for i in range(len(cpuList)):
       expectedText = 'CPU {variable} Running Threads: 0x0'.format(variable=i)
-      self.assertEqual(lines[0][i], expectedText, 'wrong output, expected: ' + expectedText)
+      self.assertEqual(lines[i], expectedText, 'wrong output, expected: ' + expectedText + '\n' + '\n'.join(lines))
     # Start pattern for all CPUs and all threads
     threadList = [('a', '0'), ('b', '1'), ('c', '2'), ('d', '3'), ('e', '4'), ('f', '5'), ('g', '6'), ('h', '7'),
                   ('a', '8'), ('b', '9'), ('c', '10'), ('d', '11'), ('e', '12'), ('f', '13'), ('g', '14'), ('h', '15'),
                   ('a', '16'), ('b', '17'), ('c', '18'), ('d', '19'), ('e', '20'), ('f', '21'), ('g', '22'), ('h', '23'),
                   ('a', '24'), ('b', '25'), ('c', '26'), ('d', '27'), ('e', '28'), ('f', '29'), ('g', '30'), ('h', '31')]
-    for x, y in threadList[0:self.threadQuantity]:
+    for x, thread in threadList[0:self.threadQuantity]:
       for cpu in cpuList:
-        self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', f'PPS{cpu}' + x, '-t', y), [0])
+        patternName = f'PPS{cpu}' + x
+        self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', patternName, '-t', thread), [0])
     self.checkRunningThreadsCmd()
     # Check all CPUs that all threads are running.
     lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', cpuMask, 'running'), [0], len(cpuList), 0)
@@ -607,9 +642,10 @@ class DmTestbench(unittest.TestCase):
   def deleteFile(self, fileName):
     """Delete file <fileName>.
     """
-    fileToRemove = pathlib.Path(fileName)
-    if fileToRemove.exists():
-      fileToRemove.unlink()
+    if self.deleteFiles.lower() == 'true':
+      fileToRemove = pathlib.Path(fileName)
+      if fileToRemove.exists():
+        fileToRemove.unlink()
 
   def resetAllCpus(self):
     """Reset each CPU (loop over all lm32 CPUs).

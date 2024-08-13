@@ -236,7 +236,7 @@ class DmPps(dm_testbench.DmTestbench):
     download the four schedules for later compare.
     """
     # remote execution: small delay for snoop to start before the pattern is started.
-    self.delay(0.1)
+    self.delay(0.3)
     self.startPattern(self.scheduleFile0, 'A')
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile0), [0], 0, 0)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'remove', self.schedulesFolder + self.scheduleFile1), [250], 2, 2)
