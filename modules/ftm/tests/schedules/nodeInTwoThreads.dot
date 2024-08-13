@@ -17,7 +17,7 @@ Origin1 [type=origin thread=1]
 Origin2 [type=origin thread=2]
 
 // the blocks are 10ms long.
-Block0 [type=block tperiod=10000000 pattern=A patexit=1]
+Block0 [type=block tperiod=10000000 pattern=A patexit=1 qlo=1]
 // the block is 5ms long.
 Block3 [type=block tperiod=5000000 pattern=B patexit=1]
 

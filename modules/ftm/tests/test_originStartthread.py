@@ -65,13 +65,17 @@ class TestOriginStartthread(dm_testbench.DmTestbench):
     The loop in thread 0 (nodes Tmsg0, OriginN, StartthreadN, Block0) starts
     the threads 1 and 2 every 10ms. Thread 1 and 2 end with Block3.
     """
-    self.startPattern('nodeInTwoThreads.dot', 'A')
-    fileName = 'snoop_nodeInTwoThreads.csv'
+    snoopFileName = 'snoop_nodeInTwoThreads.csv'
+    self.snoopToCsvWithAction(snoopFileName, self.actionNodeInTwoThreads, duration=2)
+    self.analyseFrequencyFromCsv(snoopFileName, column=20, printTable=True,
+        checkValues={'0x0000000000000000': '>100', '0x0000000000000001': '>100', '0x0000000000000002': '>100', '0x0000000000000003': '>100', '0x0000000000000003!conflict': '>100'})
+    self.deleteFile(snoopFileName)
+
+  def actionNodeInTwoThreads(self):
     self.delay(0.3)
-    self.snoopToCsv(fileName, duration=1)
-    self.analyseFrequencyFromCsv(fileName, column=20, printTable=True,
-        checkValues={'0x0000000000000000': '>99', '0x0000000000000001': '100', '0x0000000000000002': '100', '0x0000000000000003': '100', '0x0000000000000003!conflict': '100'})
-    self.deleteFile(fileName)
+    self.startPattern('nodeInTwoThreads.dot', 'A')
+    self.delay(1.0)
+    self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'stoppattern', 'A'), [0], 0, 0)
 
   def test_startStopAllThreads(self):
     """Run a pps pattern on all threads and all CPUs. Halt all threads and check this state.
