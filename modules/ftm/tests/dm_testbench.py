@@ -554,6 +554,35 @@ class DmTestbench(unittest.TestCase):
     else:
       self.assertFalse(flushExecuted, f'flushExecuted: {flushExecuted}, queuesToFlush: {queuesToFlush}')
 
+  def inspectQueue(self, node, read=0, write=0, pending=0, retry=False):
+    # check the result with dm-cmd ... queue <node>.
+    lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, 'queue', node), [0], 10, 0)
+    try:
+      self.verifyInspectingQueueOutput(lines, node, read, write, pending)
+    except AssertionError as instance:
+      testName = os.environ['PYTEST_CURRENT_TEST']
+      logging.getLogger().warning(f'{testName}, AssertionError while Inspecting Queues, try second inspection.' + '\n' + '\n'.join(lines))
+      self.assertEqual(instance.args[0][:111], "'Priority 0 (priolo)  RdIdx: 0 WrIdx: 1    Pending: 1' != 'Priority 0 (priolo)  RdIdx: 0 WrIdx: 1    Pending: 0", 'wrong exception')
+      # second try: check the result with dm-cmd ... queue <node>.
+      if retry:
+        self.delay(1.0)
+        lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, 'queue', node), [0], 10, 0)
+        self.verifyInspectingQueueOutput(lines, node, 1, 1, 0)
+
+  def verifyInspectingQueueOutput(self, lines, node, read, write, pending):
+    # verify the output (lines 1 to 9).
+    expectedLines = ['', f'Inspecting Queues of Block {node}',
+    'Priority 2 (prioil)  Not instantiated',
+    'Priority 1 (priohi)  Not instantiated',
+    f'Priority 0 (priolo)  RdIdx: {read} WrIdx: {write}    Pending: {pending}',
+    '', '', '', '']
+    for i in range(0,4):
+      expectedLines[i+5] = f'#{(i+read) % 4} empty   -'
+    if pending == 1:
+      expectedLines[5] = '#0 pending Valid Time: 0x0000000000000000 0000000000000000000    CmdType: noop    Qty: 1'
+    for i in range(1,9):
+      self.assertEqual(lines[i], expectedLines[i], 'wrong output, expected: ' + expectedLines[i] + '\n' + '\n'.join(lines))
+
   def delay(self, duration):
     """Delay for <duration> seconds. <duration> is a float.
     """
