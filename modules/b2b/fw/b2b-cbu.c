@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 06-Oct-2023
+ *  version : 15-Aug-2024
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  NB: units of variables are [ns] unless explicitely mentioned as suffix
@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000702                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000704                                      // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -128,7 +128,6 @@ volatile float    *pSharedGetCTrigExt;  // pointer to a "user defined" u32 regis
 volatile float    *pSharedGetCTrigInj;  // pointer to a "user defined" u32 register; here: correction for trigger injection ('injction kicker knob') [ns]
 volatile uint32_t *pSharedGetTBeatHi;   // pointer to a "user defined" u32 register; here: period of beating, high bits [as]
 volatile uint32_t *pSharedGetTBeatLo;   // pointer to a "user defined" u32 register; here: period of beating, low bits
-volatile int32_t  *pSharedGetComLatency;// pointer to a "user defined" u32 register; here: latency for messages received via ECA [ns]
 
 // important for b2b system
 uint32_t  gid;                          // GID used for transfer
@@ -242,7 +241,6 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
   pSharedGetCTrigInj      =    (float *)(pShared + (B2B_SHARED_GET_CTRIGINJ    >> 2));
   pSharedGetTBeatHi       = (uint32_t *)(pShared + (B2B_SHARED_GET_TBEATHI     >> 2));
   pSharedGetTBeatLo       = (uint32_t *)(pShared + (B2B_SHARED_GET_TBEATLO     >> 2));
-  pSharedGetComLatency    =  (int32_t *)(pShared + (B2B_SHARED_GET_COMLATENCY  >> 2));
   
   // find address of CPU from external perspective
   idx = 0;
@@ -465,7 +463,6 @@ uint32_t extern_entryActionOperation()
   *pSharedGetCTrigInj    = 0x0;
   *pSharedGetTBeatHi     = 0x0;
   *pSharedGetTBeatLo     = 0x0;
-  *pSharedGetComLatency  = 0x0;
 
   return COMMON_STATUS_OK;
 } // extern_entryActionOperation
@@ -1310,7 +1307,7 @@ int main(void) {
     fwlib_publishStatusArray(statusArray);
     pubState          = actState;
     fwlib_publishState(pubState);
-    fwlib_publishTransferStatus(nTransfer, 0x0, transStat);
+    fwlib_publishTransferStatus(nTransfer, 0x0, transStat, 0x0, 0x0, comLatency);  /*chk: set values of nLate and offsDone */
 
     // update get values
     *pSharedGetGid        = gid;
@@ -1327,7 +1324,6 @@ int main(void) {
     *pSharedGetCTrigInj   = fwlib_tps2tfns(cTrigInj_t);
     *pSharedGetTBeatHi    = (uint32_t)((TBeat_as >> 32)  & 0xffffffff); 
     *pSharedGetTBeatLo    = (uint32_t)( TBeat_as         & 0xffffffff);
-    *pSharedGetComLatency = comLatency;
   } // while
 
   return (1); // this should never happen ...

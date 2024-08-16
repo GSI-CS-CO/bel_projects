@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-Nov-2023
+ *  version : 15-Aug-2024
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -38,7 +38,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPMSTUB_FW_VERSION 0x000703                                   // make this consistent with makefile
+#define B2BPMSTUB_FW_VERSION 0x000704                                   // make this consistent with makefile
 
 //standard includes
 #include <stdio.h>
@@ -75,7 +75,6 @@ volatile uint32_t *pSharedGetSid;       // pointer to a "user defined" u32 regis
 volatile uint32_t *pSharedGetTH1Hi;     // pointer to a "user defined" u32 register; here: period of h=1, high bits
 volatile uint32_t *pSharedGetTH1Lo;     // pointer to a "user defined" u32 register; here: period of h=1, low bits
 volatile uint32_t *pSharedGetNH;        // pointer to a "user defined" u32 register; here: harmonic number
-volatile int32_t  *pSharedGetComLatency;// pointer to a "user defined" u32 register; here: latency for messages received via ECA
 
 uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM            
 
@@ -115,7 +114,6 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
   pSharedGetTH1Hi         = (uint32_t *)(pShared + (B2B_SHARED_GET_TH1EXTHI   >> 2));   // for simplicity: use 'EXT' for data
   pSharedGetTH1Lo         = (uint32_t *)(pShared + (B2B_SHARED_GET_TH1EXTLO   >> 2));
   pSharedGetNH            = (uint32_t *)(pShared + (B2B_SHARED_GET_NHEXT      >> 2));
-  pSharedGetComLatency    =  (int32_t *)(pShared + (B2B_SHARED_GET_COMLATENCY >> 2));
 
   // find address of CPU from external perspective
   idx = 0;
@@ -209,7 +207,6 @@ uint32_t extern_entryActionOperation()
   *pSharedGetNH          = 0x0;
   *pSharedGetGid         = 0x0; 
   *pSharedGetSid         = 0x0;
-  *pSharedGetComLatency  = 0x0;
 
   return COMMON_STATUS_OK;
 } // extern_entryActionOperation
@@ -557,8 +554,7 @@ int main(void) {
     fwlib_publishStatusArray(statusArray);
     pubState = actState;
     fwlib_publishState(pubState);
-    fwlib_publishTransferStatus(nTransfer, 0x0, transStat);
-    *pSharedGetComLatency = comLatency;
+    fwlib_publishTransferStatus(nTransfer, 0x0, transStat, 0x0, 0x0, comLatency); /* chk: set values of nLate and offsDone */
   } // while
 
   return(1); // this should never happen ...

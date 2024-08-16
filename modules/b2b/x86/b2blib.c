@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 18-Oct-2023
+ *  version : 15-Aug-2024
  *
  * library for b2b
  *
@@ -401,7 +401,6 @@ uint32_t b2b_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t cpu
   b2b_get_cPhase       = lm32_base + SHARED_OFFS + B2B_SHARED_GET_CPHASE;
   b2b_get_cTrigExt     = lm32_base + SHARED_OFFS + B2B_SHARED_GET_CTRIGEXT;
   b2b_get_cTrigInj     = lm32_base + SHARED_OFFS + B2B_SHARED_GET_CTRIGINJ;
-  b2b_get_comLatency   = lm32_base + SHARED_OFFS + B2B_SHARED_GET_COMLATENCY;
 
   // do this just at the very end
   *ebDevice = (uint64_t)eb_device;
@@ -539,13 +538,13 @@ uint32_t b2b_common_read(uint64_t ebDevice, uint64_t *statusArray, uint32_t *sta
   eb_device_t eb_device;
 
   uint64_t    dummy64a, dummy64b, dummy64c;
-  uint32_t    dummy32a, dummy32c, dummy32d, dummy32e;
+  uint32_t    dummy32a, dummy32c, dummy32d, dummy32e, dummy32f, dummy32g, dummy32h;
 
   if (!ebDevice) return COMMON_STATUS_EB;
   eb_device = (eb_device_t)ebDevice;
 
-  if ((eb_status = comlib_readDiag(eb_device, statusArray, state, version, &dummy64a, &dummy32a, nBadStatus, nBadState, &dummy64b, &dummy64c,
-                                   nTransfer, &dummy32c, &dummy32d, &dummy32e, printDiag)) != COMMON_STATUS_OK) return COMMON_STATUS_EB;
+  if ((eb_status = comlib_readDiag(eb_device, statusArray, state, version, &dummy64a, &dummy32a, nBadStatus, nBadState, &dummy64b, &dummy64c, nTransfer, &dummy32c,
+                                   &dummy32d, &dummy32e, &dummy32f, &dummy32g, &dummy32h, printDiag)) != COMMON_STATUS_OK) return COMMON_STATUS_EB;
 
   return COMMON_STATUS_OK;
 } // b2b_status_read

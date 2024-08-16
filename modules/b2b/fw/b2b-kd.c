@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-Dec-2022
+ *  version : 15-Aug-2024
  *
  *  firmware required for kicker and related diagnostics
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 19-November-2020
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000702                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000704                                       // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -72,13 +72,14 @@ volatile uint32_t *pSharedGettKickDMon;    // pointer to a "user defined" u32 re
 volatile uint32_t *pSharedGettKickDProbe;  // pointer to a "user defined" u32 register; here: delay of probe signal
 volatile uint32_t *pSharedGetKickSid;      // pointer to a "user defined" u32 register; here: SID of last kicker event
 volatile uint32_t *pSharedGetKickGid;      // pointer to a "user defined" u32 register; here: GID of last kicker event
-volatile int32_t  *pSharedGetComLatency;   // pointer to a "user defined" u32 register; here: latency for messages received via ECA
 
 uint32_t *cpuRamExternal;                  // external address (seen from host bridge) of this CPU's RAM            
 
 uint64_t statusArray;                      // all status infos are ORed bit-wise into statusArray, statusArray is then published
 uint32_t nTransfer;                        // # of transfers
 uint32_t transStat;                        // status of transfer, here: meanDelta of 'poor mans fit'
+int32_t  comLatency;                       // latency for messages received via ECA [ns]
+
 
 
 // typical init for lm32
@@ -110,7 +111,6 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
   pSharedGettKickDProbe   = (uint32_t *)(pShared + (B2B_SHARED_GET_DKPROBE     >> 2));
   pSharedGetKickSid       = (uint32_t *)(pShared + (B2B_SHARED_GET_SID         >> 2));
   pSharedGetKickGid       = (uint32_t *)(pShared + (B2B_SHARED_GET_GID         >> 2));
-  pSharedGetComLatency    =  (int32_t *)(pShared + (B2B_SHARED_GET_COMLATENCY  >> 2));
   
   // find address of CPU from external perspective
   idx = 0;
@@ -212,7 +212,6 @@ uint32_t extern_entryActionOperation()
   *pSharedGettKickDProbe  = 0x0;
   *pSharedGetKickSid      = 0x0;
   *pSharedGetKickGid      = 0x0;
-  *pSharedGetComLatency   = 0x0;
 
   return COMMON_STATUS_OK;
 } // extern_entryActionOperation
@@ -291,7 +290,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       *pSharedGetKickSid     = recSid;
       *pSharedGettKickTrigHi = (uint32_t)((tKickTrig  >> 32) & 0xffffffff);
       *pSharedGettKickTrigLo = (uint32_t)( tKickTrig         & 0xffffffff);
-      *pSharedGetComLatency  = (int32_t)(getSysTime() - recDeadline);
+      comLatency             = (int32_t)(getSysTime() - recDeadline);
 
 
       // we must do this here, as doing this os B2B_ECADO_TLUINPUT2 would be too late
@@ -453,7 +452,7 @@ int main(void) {
     fwlib_publishStatusArray(statusArray);
     pubState              = actState;
     fwlib_publishState(pubState);
-    fwlib_publishTransferStatus(nTransfer, 0x0, transStat);
+    fwlib_publishTransferStatus(nTransfer, 0x0, transStat, 0x0, 0x0, comLatency);  /* chk: set nLate, offsDone */
   } // while
 
   return(1); // this should never happen ...
