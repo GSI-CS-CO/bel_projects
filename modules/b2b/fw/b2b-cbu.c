@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 15-Aug-2024
+ *  version : 16-Aug-2024
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  NB: units of variables are [ns] unless explicitely mentioned as suffix
@@ -168,8 +168,12 @@ int32_t   nPhaseResult;                 // number of received phase result, requ
 uint64_t  statusArray;                  // all status infos are ORed bit-wise into statusArray, statusArray is then published
 uint32_t  nTransfer;                    // # of transfers
 uint32_t  transStat;                    // status of ongoing transfer
-int32_t   comLatency;                   // latency for messages received via ECA [ns]
 uint32_t  mState;                       // state of 'miniFSM' 
+int32_t   comLatency;                   // latency for messages received via ECA [ns]
+int32_t   offsDone;                     // offset deadline WR message to time when we are done [ns]
+int32_t   maxComLatency;
+uint32_t  maxOffsDone;
+uint32_t  nLate;                        // # of late messages
 
 // flags
 uint32_t  flagClearAllSid;              // data for all SIDs shall be cleared
@@ -284,10 +288,14 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
 // clears all statistics
 void extern_clearDiag()
 {
-  statusArray  = 0x0;
-  nTransfer    = 0x0;
-  transStat    = 0x0;
-  comLatency = 0x0;
+  statusArray   = 0x0;
+  nTransfer     = 0x0;
+  transStat     = 0x0;
+  nLate         = 0x0;
+  comLatency    = 0x0;
+  maxComLatency = 0x0;
+  offsDone      = 0x0;
+  maxOffsDone   = 0x0;
 } // extern_clearDiag 
 
 
@@ -463,6 +471,12 @@ uint32_t extern_entryActionOperation()
   *pSharedGetCTrigInj    = 0x0;
   *pSharedGetTBeatHi     = 0x0;
   *pSharedGetTBeatLo     = 0x0;
+
+  nLate                  = 0x0;
+  comLatency             = 0x0;
+  maxComLatency          = 0x0;
+  offsDone               = 0x0;
+  maxOffsDone            = 0x0;
 
   return COMMON_STATUS_OK;
 } // extern_entryActionOperation
@@ -973,20 +987,11 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
   ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recId, &recParam, &recTef, &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
 
-  /*if (flagIsLate) {
-    tmp32 = (uint32_t)(getSysTime() - recDeadline);
-    pp_printf("late event....\n");
-    pp_printf("late by            %u\n", tmp32);
-    tmp32 = (uint32_t)(recId >> 32) & 0xffffffff;
-    pp_printf("late event is idhi 0x%08x\n", tmp32);
-    tmp32 = (uint32_t)(recId)       & 0xffffffff;
-    pp_printf("late event is idlo 0x%08x\n", tmp32);
-    } // if flag late */
+  if (ecaAction != B2B_ECADO_TIMEOUT) comLatency   = (int32_t)(getSysTime() - recDeadline);
     
   switch (ecaAction) {
 
     case B2B_ECADO_B2B_START :                                // received: CMD_B2B_START from DM; B2B transfer starts
-      comLatency   = (int32_t)(getSysTime() - recDeadline);
       recGid       = (uint32_t)((recId >> 48) & 0x0fff);
       recSid       = (uint32_t)((recId >> 20) & 0x0fff);
       recBpid      = (uint32_t)((recId >>  6) & 0x3fff);
@@ -1202,8 +1207,9 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   if (mState == B2B_MFSM_EXTTRIG ) {
     sendGid      =  getTrigGid(1);
     if (!sendGid) return COMMON_STATUS_OUTOFRANGE;
-    tTrigExt     = tTrig + cTrigExt_t.ns;                                     // trigger correctionl; chk: sub-ns part
-    tmpf         = (float)(getSysTime() - tCBS) / 1000.0;                     // time from CBS to now [us]
+    tTrigExt     = tTrig + cTrigExt_t.ns;                                     // trigger correction; chk: sub-ns part
+    offsDone     = getSysTime() - tCBS;
+    tmpf         = (float)offsDone / 1000.0;                                  // time from CBS to now [us]
     //tmp32 = (uint32_t)tmpf; pp_printf("sid %d, fin-cbs %u\n", sid, tmp32);
     offsetFin_us = fwlib_float2half(tmpf);
     if (tTrigExt < getSysTime() + (uint64_t)(COMMON_LATELIMIT)) {             // we are too late!
@@ -1240,7 +1246,10 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   if (flagClearAllSid) {clearAllSid(); flagClearAllSid = 0;}
 
   // check for late event
-  if ((status == COMMON_STATUS_OK) && flagIsLate) status = B2B_STATUS_LATEMESSAGE;
+  if ((status == COMMON_STATUS_OK) && flagIsLate) {
+    status = B2B_STATUS_LATEMESSAGE;
+    nLate++;
+  } // if status
   
   // check WR sync state; worst case, do this last
   if (fwlib_wrCheckSyncState() == COMMON_STATUS_WRBADSYNC) return COMMON_STATUS_WRBADSYNC;
@@ -1305,9 +1314,11 @@ int main(void) {
     
     if ((pubState == COMMON_STATE_OPREADY) && (actState  != COMMON_STATE_OPREADY)) fwlib_incBadStateCnt();
     fwlib_publishStatusArray(statusArray);
-    pubState          = actState;
+    pubState        = actState;
     fwlib_publishState(pubState);
-    fwlib_publishTransferStatus(nTransfer, 0x0, transStat, 0x0, 0x0, comLatency);  /*chk: set values of nLate and offsDone */
+    if (comLatency > maxComLatency) maxComLatency = comLatency;
+    if (offsDone   > maxOffsDone)   maxOffsDone   = offsDone;
+    fwlib_publishTransferStatus(nTransfer, 0x0, transStat, nLate, maxOffsDone, maxComLatency); 
 
     // update get values
     *pSharedGetGid        = gid;

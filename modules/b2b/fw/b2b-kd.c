@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 15-Aug-2024
+ *  version : 16-Aug-2024
  *
  *  firmware required for kicker and related diagnostics
  *  
@@ -79,7 +79,10 @@ uint64_t statusArray;                      // all status infos are ORed bit-wise
 uint32_t nTransfer;                        // # of transfers
 uint32_t transStat;                        // status of transfer, here: meanDelta of 'poor mans fit'
 int32_t  comLatency;                       // latency for messages received via ECA [ns]
-
+int32_t  offsDone;                         // offset deadline WR message to time when we are done [ns]
+int32_t  maxComLatency;
+uint32_t maxOffsDone;
+uint32_t nLate;                            // # of late messages
 
 
 // typical init for lm32
@@ -153,9 +156,15 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
 // clear project specific diagnostics
 void extern_clearDiag()
 {
-  statusArray  = 0x0; 
-  nTransfer    = 0;
-  transStat    = 0;
+  statusArray   = 0x0; 
+  nTransfer     = 0;
+  transStat     = 0;
+  nLate         = 0x0;
+  comLatency    = 0x0;
+  maxComLatency = 0x0;
+  offsDone      = 0x0;
+  maxOffsDone   = 0x0;
+
 } // extern_clearDiag
   
 
@@ -213,6 +222,12 @@ uint32_t extern_entryActionOperation()
   *pSharedGetKickSid      = 0x0;
   *pSharedGetKickGid      = 0x0;
 
+  nLate                   = 0x0;
+  comLatency              = 0x0;
+  maxComLatency           = 0x0;
+  offsDone                = 0x0;
+  maxOffsDone             = 0x0;
+
   return COMMON_STATUS_OK;
 } // extern_entryActionOperation
 
@@ -235,7 +250,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint32_t flagIsDelayed;                                     // flag 'delayed'
   uint32_t ecaAction;                                         // action triggered by event received from ECA
   uint64_t recDeadline;                                       // deadline received
-  uint64_t reqDeadline;                                       // deadline requested by sender
+  static uint64_t reqDeadline;                                // deadline requested by sender
   uint64_t recEvtId;                                          // evt ID received
   uint64_t recParam;                                          // param received
   uint32_t recTEF;                                            // TEF received
@@ -260,12 +275,15 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   static uint32_t flagSendMessage;                            // flag: a message shall be sent
 
   int64_t  dKickMon;                                          // delay of kicker monitor signal with respect to kicker trigger signal 
-  int64_t  dKickProbe;                                        // delay of kicker probe signal with respect to kicker trigger signal 
+  int64_t  dKickProbe;                                        // delay of kicker probe signal with respect to kicker trigger signal
+  uint64_t sysTime;                                           // helper variable
   
   status    = actStatus;
   transStat = 0x0;
 
   ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT*1000, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
+
+  if (ecaAction != B2B_ECADO_TIMEOUT) comLatency = (int32_t)(getSysTime() - recDeadline);
 
   // this switch statement mainly serves for collecting data; received data are marked by flags
   switch (ecaAction) {
@@ -290,13 +308,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       *pSharedGetKickSid     = recSid;
       *pSharedGettKickTrigHi = (uint32_t)((tKickTrig  >> 32) & 0xffffffff);
       *pSharedGettKickTrigLo = (uint32_t)( tKickTrig         & 0xffffffff);
-      comLatency             = (int32_t)(getSysTime() - recDeadline);
-
-
-      // we must do this here, as doing this os B2B_ECADO_TLUINPUT2 would be too late
-      // hence, we receive probe signals only if the kicker fires after it has been triggered
-      //fwlib_ioCtrlSetGate(1, 0);   chk                       // enable input gate probe signal extraction
-      //fwlib_ioCtrlSetGate(1, 3);   chk                       // enable input gate probe signal injection
 
       break; //  B2B_ECADO_B2B_TRIGGERINJ
 
@@ -368,16 +379,15 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     sendDeadline = tKickTrig +  (uint64_t)(2 * COMMON_AHEADT);        // data shall become true 1ms after trigger event
 
     // if we are too late, reschedule message; this will happen in case there is no monitor signal from the electronics
-    if (getSysTime() > (sendDeadline - COMMON_AHEADT)) {
-      sendDeadline = getSysTime() + COMMON_AHEADT;
+    sysTime = getSysTime();
+    if (sysTime > (sendDeadline - COMMON_AHEADT)) {
+      sendDeadline = sysTime + COMMON_AHEADT;
       status = B2B_STATUS_NOKICK; // ohps, too late!
     } // if getSysTime
 
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0, 0);
 
-    //fwlib_ioCtrlSetGate(0, 0);  chk                          // disable input gates 
-    //fwlib_ioCtrlSetGate(0, 3);  chk
-    
+    offsDone               = sysTime - reqDeadline;
     *pSharedGettKickDMon   = dKickMon;
     *pSharedGettKickDProbe = dKickProbe;
     transStat              = flagsError;
@@ -386,8 +396,12 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   } // if flagSendMessage
     
   // check for late event
-  if ((status == COMMON_STATUS_OK) && flagIsLate) status = B2B_STATUS_LATEMESSAGE;
- 
+    // check for late event
+  if ((status == COMMON_STATUS_OK) && flagIsLate) {
+    status = B2B_STATUS_LATEMESSAGE;
+    nLate++;
+  } // if status
+
   // check WR sync state
   if (fwlib_wrCheckSyncState() == COMMON_STATUS_WRBADSYNC) return COMMON_STATUS_WRBADSYNC;
   else                                                     return status;
@@ -452,7 +466,9 @@ int main(void) {
     fwlib_publishStatusArray(statusArray);
     pubState              = actState;
     fwlib_publishState(pubState);
-    fwlib_publishTransferStatus(nTransfer, 0x0, transStat, 0x0, 0x0, comLatency);  /* chk: set nLate, offsDone */
+    if (comLatency > maxComLatency) maxComLatency = comLatency;
+    if (offsDone   > maxOffsDone)   maxOffsDone   = offsDone;
+    fwlib_publishTransferStatus(nTransfer, 0x0, transStat, nLate, maxOffsDone, maxComLatency); 
   } // while
 
   return(1); // this should never happen ...

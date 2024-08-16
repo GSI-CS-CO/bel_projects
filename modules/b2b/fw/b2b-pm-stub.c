@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 15-Aug-2024
+ *  version : 16-Aug-2024
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -340,6 +340,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
   ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate, &flagEarly, &flagConflict, &flagDelayed);
 
+  if (ecaAction != B2B_ECADO_TIMEOUT) comLatency = (int32_t)(getSysTime() - recDeadline);
+
   switch (ecaAction) {
     // the following two cases handle H=1 group DDS phase measurement
     case B2B_ECADO_B2B_PMEXT :                                        // this is an OR, no 'break' on purpose
@@ -347,8 +349,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     case B2B_ECADO_B2B_PMINJ :
       if (!sendEvtNo) sendEvtNo = B2B_ECADO_B2B_PRINJ;
 
-      comLatency       = (int32_t)(getSysTime() - recDeadline);
-      
       *pSharedGetTH1Hi = (uint32_t)((recParam >> 32) & 0x00ffffff);   // lower 56 bit used as period
       *pSharedGetTH1Lo = (uint32_t)( recParam        & 0xffffffff);
       *pSharedGetNH    = (uint32_t)((recParam>> 56)  & 0xff      );   // upper 8 bit used as harmonic number

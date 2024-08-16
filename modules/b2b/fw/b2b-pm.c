@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 15-Aug-2024
+ *  version : 16-Aug-2024
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -85,7 +85,12 @@ uint32_t *cpuRamExternal;               // external address (seen from host brid
 uint64_t statusArray;                   // all status infos are ORed bit-wise into statusArray, statusArray is then published
 uint32_t nTransfer;                     // # of transfers
 uint32_t transStat;                     // status of transfer, here: meanDelta of 'poor mans fit'
-int32_t  comLatency;                    // latency for messages received via ECA
+int32_t  comLatency;                    // latency for messages received via ECA [ns]
+int32_t  offsDone;                      // offset deadline WR message to time when we are done [ns]
+int32_t  maxComLatency;
+uint32_t maxOffsDone;
+uint32_t nLate;                         // # of late messages
+
 
 // for phase measurement
 uint64_t tStamp[B2B_NSAMPLES];          // timestamp samples
@@ -164,10 +169,14 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
 // clear project specific diagnostics
 void extern_clearDiag()
 {
-  statusArray  = 0x0; 
-  nTransfer    = 0;
-  transStat    = 0;
-  comLatency   = 0x0;
+  statusArray   = 0x0; 
+  nTransfer     = 0;
+  transStat     = 0;
+  nLate         = 0x0;
+  comLatency    = 0x0;
+  maxComLatency = 0x0;
+  offsDone      = 0x0;
+  maxOffsDone   = 0x0;
 } // extern_clearDiag
   
 
@@ -216,6 +225,12 @@ uint32_t extern_entryActionOperation()
   *pSharedGetNH          = 0x0;
   *pSharedGetGid         = 0x0; 
   *pSharedGetSid         = 0x0;
+
+  nLate                  = 0x0;
+  comLatency             = 0x0;
+  maxComLatency          = 0x0;
+  offsDone               = 0x0;
+  maxOffsDone            = 0x0;
 
   return COMMON_STATUS_OK;
 } // extern_entryActionOperation
@@ -485,6 +500,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
   ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
 
+  if (ecaAction != B2B_ECADO_TIMEOUT) comLatency = (int32_t)(getSysTime() - recDeadline);
+
   switch (ecaAction) {
     // the following two cases handle h=1 group DDS phase measurement
     case B2B_ECADO_B2B_PMEXT :                                        // this is an OR, no 'break' on purpose
@@ -492,8 +509,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     case B2B_ECADO_B2B_PMINJ :
       if (!sendEvtNo) sendEvtNo = B2B_ECADO_B2B_PRINJ;
       //t1 = getSysTime();
-      comLatency       = (int32_t)(getSysTime() - recDeadline);
-      
       *pSharedGetTH1Hi = (uint32_t)((recParam >> 32) & 0x000fffff);   // lower 52 bit used as period
       *pSharedGetTH1Lo = (uint32_t)( recParam        & 0xffffffff);
       *pSharedGetNH    = (uint32_t)((recParam>> 56)  & 0xff      );   // upper 8 bit used as harmonic number
@@ -508,7 +523,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       flagPMError      = 0x0;
       tH1_t.ns         = 0x6fffffffffffffff;                          // bogus number, might help for debugging chk
 
-      
       nSamples                              = B2B_NSAMPLES;               
       if (TH1_as >  2500000000000) nSamples = B2B_NSAMPLES >> 1;      // use only 1/2 for nue < 400 kHz: 80us@400kHz and B2B_NSAMPLES=32
       if (TH1_as >  5000000000000) nSamples = B2B_NSAMPLES >> 2;      // use only 1/4 for nue < 200 kHz: 80us@200kHz and B2B_NSAMPLES=32
