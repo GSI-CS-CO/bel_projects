@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 16-Aug-2024
+ *  version : 19-Aug-2024
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -469,6 +469,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint64_t sendParam;                                         // parameter to send
   uint32_t sendTEF;                                           // TEF to send
   uint32_t sendEvtNo;                                         // EvtNo to send
+  uint64_t sysTime; 
   
   // phase measurement
   uint32_t nInput;                                            // # of timestamps
@@ -500,7 +501,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
   ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
 
-  if (ecaAction != B2B_ECADO_TIMEOUT) comLatency = (int32_t)(getSysTime() - recDeadline);
+  //if (ecaAction != B2B_ECADO_TIMEOUT) comLatency = (int32_t)(getSysTime() - recDeadline);
 
   switch (ecaAction) {
     // the following two cases handle h=1 group DDS phase measurement
@@ -508,6 +509,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       sendEvtNo   = B2B_ECADO_B2B_PREXT;
     case B2B_ECADO_B2B_PMINJ :
       if (!sendEvtNo) sendEvtNo = B2B_ECADO_B2B_PRINJ;
+      comLatency = (int32_t)(getSysTime() - recDeadline);
+
       //t1 = getSysTime();
       *pSharedGetTH1Hi = (uint32_t)((recParam >> 32) & 0x000fffff);   // lower 52 bit used as period
       *pSharedGetTH1Lo = (uint32_t)( recParam        & 0xffffffff);
@@ -552,11 +555,13 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, sendTEF, 0);
       //t2 = getSysTime();
       // send something to ECA (for monitoring purposes) chk do something useful here
+      sysTime      = getSysTime();
       sendEvtId    = fwlib_buildEvtidV1(0xfff, ecaAction, 0, recSid, recBpid, 0x0);
       sendParam    = 0xdeadbeef;
-      sendDeadline = getSysTime();                                    // produces a late action but allows explicit monitoring of processing time   
+      sendDeadline = sysTime;                                         // produces a late action but allows explicit monitoring of processing time   
       fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0, 1);     // force late message
 
+      offsDone     = sysTime - recDeadline;
       transStat    = tH1_t.dps;
       nTransfer++;
 
@@ -570,7 +575,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     case B2B_ECADO_B2B_TRIGGEREXT :                                   // this is an OR, no 'break' on purpose
     case B2B_ECADO_B2B_TRIGGERINJ :                                   // this case only makes sense if cases B2B_ECADO_B2B_PMEXT/INJ succeeded
       if (!flagPMError) {
-
+        comLatency = (int32_t)(getSysTime() - recDeadline);
         reqDeadline = recDeadline + (uint64_t)B2B_PRETRIGGERTR;       // ECA is configured to pre-trigger ahead of time!!!
         nInput   = 0;
         TWait    = (int64_t)((reqDeadline - (TMeas >> 1)) - getSysTime());  // time how long we should wait before starting the measurement
@@ -614,9 +619,10 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     case B2B_ECADO_B2B_PDEXT :                                        // this is an OR, no 'break' on purpose
       sendEvtNo   = B2B_ECADO_B2B_DIAGEXT;
     case B2B_ECADO_B2B_PDINJ :
-      if (!sendEvtNo) 
-        sendEvtNo = B2B_ECADO_B2B_DIAGINJ;
-
+      if (!sendEvtNo) sendEvtNo = B2B_ECADO_B2B_DIAGINJ;
+      
+      comLatency = (int32_t)(getSysTime() - recDeadline);
+      
       recGid          = (uint32_t)((recEvtId >> 48) & 0xfff     );
       recSid          = (uint32_t)((recEvtId >> 20) & 0xfff     );
       recBpid         = (uint32_t)((recEvtId >>  6) & 0x3fff    );
@@ -661,11 +667,14 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       break; // case  B2B_ECADO_B2B_PDEXT/INJ
       
     default :                                                         // flush ECA queue
-      flagIsLate = 0;                                                 // ingore late events
+      flagIsLate = 0;                                                 // ignore late events in this case
   } // switch ecaAction
  
   // check for late event
-  if ((status == COMMON_STATUS_OK) && flagIsLate) status = B2B_STATUS_LATEMESSAGE;
+  if ((status == COMMON_STATUS_OK) && flagIsLate) {
+    status = B2B_STATUS_LATEMESSAGE;
+    nLate++;
+  } // if status
   
   // check WR sync state
   if (fwlib_wrCheckSyncState() == COMMON_STATUS_WRBADSYNC) return COMMON_STATUS_WRBADSYNC;
@@ -730,7 +739,9 @@ int main(void) {
     fwlib_publishStatusArray(statusArray);
     pubState = actState;
     fwlib_publishState(pubState);
-    fwlib_publishTransferStatus(nTransfer, 0x0, transStat, 0x0, 0x0, comLatency); /* chk: set values of offsDone and comLatency */
+    if (comLatency > maxComLatency) maxComLatency = comLatency;
+    if (offsDone   > maxOffsDone)   maxOffsDone   = offsDone;
+    fwlib_publishTransferStatus(nTransfer, 0x0, transStat, nLate, maxOffsDone, maxComLatency); 
   } // while
 
   return(1); // this should never happen ...

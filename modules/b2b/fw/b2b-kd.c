@@ -283,8 +283,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
   ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT*1000, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
 
-  if (ecaAction != B2B_ECADO_TIMEOUT) comLatency = (int32_t)(getSysTime() - recDeadline);
-
   // this switch statement mainly serves for collecting data; received data are marked by flags
   switch (ecaAction) {
     case B2B_ECADO_B2B_TRIGGEREXT :                           // this is an OR, no 'break' on purpose
@@ -292,6 +290,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       // this is ugly, but ...
       if (ecaAction == B2B_ECADO_B2B_TRIGGEREXT) flagIsExt = 1;
       else                                       flagIsExt = 0;
+
+      comLatency = (int32_t)(getSysTime() - recDeadline);
       
       reqDeadline = recDeadline + (uint64_t)B2B_PRETRIGGERTR;// ECA is configured to pre-trigger ahead of time!!!
 
@@ -312,7 +312,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       break; //  B2B_ECADO_B2B_TRIGGERINJ
 
     case B2B_ECADO_TLUINPUT2 :                               // received monitor signal from kicker electronics
-      
+      comLatency         = (int32_t)(getSysTime() - recDeadline);
       tKickMon           = recDeadline;
       flagRecMon         = 1;
 

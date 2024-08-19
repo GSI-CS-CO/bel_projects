@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define B2BLIB_VERSION 0x000704
+#define B2BLIB_VERSION 0x000705
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  B2BLIB_STATUS_OK                 0            // OK
@@ -320,7 +320,6 @@ extern "C" {
                          double  *cPhase,                      // correction of phase [ns]
                          double  *cTrigExt,                    // correction of extraction kicker trigger [ns]
                          double  *cTrigInj,                    // correction of injection kicker trigger [ns]
-                         int32_t *comLatency,                  // communication latency [ns]
                          int     printFlag                     // prints info on b2b firmware properties to stdout
                          );
   

@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 16-Aug-2024
+ *  version : 19-Aug-2024
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  NB: units of variables are [ns] unless explicitely mentioned as suffix
@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000704                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000705                                      // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -987,11 +987,11 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
   ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recId, &recParam, &recTef, &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
 
-  if (ecaAction != B2B_ECADO_TIMEOUT) comLatency   = (int32_t)(getSysTime() - recDeadline);
-    
   switch (ecaAction) {
 
     case B2B_ECADO_B2B_START :                                // received: CMD_B2B_START from DM; B2B transfer starts
+      comLatency   = (int32_t)(getSysTime() - recDeadline); 
+
       recGid       = (uint32_t)((recId >> 48) & 0x0fff);
       recSid       = (uint32_t)((recId >> 20) & 0x0fff);
       recBpid      = (uint32_t)((recId >>  6) & 0x3fff);
@@ -1077,6 +1077,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
     case B2B_ECADO_B2B_PREXT :                                 // received: measured phase from extraction machine
       if (mode < B2B_MODE_B2E) return status;                  // ignore informative phase result
+      comLatency   = (int32_t)(getSysTime() - recDeadline);
+       
       tmpf         = (float)(getSysTime() - tCBS) / 1000.0;    // time from CBS to now [us]
       offsetPrr_us = fwlib_float2half(tmpf);                   // -> half precision
       recGid       = (uint32_t)((recId >> 48) & 0xfff     );
@@ -1102,6 +1104,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
     case B2B_ECADO_B2B_PRINJ :                                 // received: measured phase from injection machine
       if (mode <  B2B_MODE_B2B) return status;                 // ignore informative phase result
+      comLatency   = (int32_t)(getSysTime() - recDeadline);
+
       tmpf         = (float)(getSysTime() - tCBS) / 1000.0;    // time from CBS to now [us]
       offsetPrr_us = fwlib_float2half(tmpf);                   // -> half precision
       recGid        = (uint32_t)((recId >> 48) & 0xfff     );
