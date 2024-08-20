@@ -126,6 +126,7 @@ entity scu4slim is
     user_led_0 : out std_logic_vector(2 downto 0) := (others => '1');
     wr_rgb_led : out std_logic_vector(2 downto 0) := (others => '1');
     lemo_led   : out std_logic_vector(5 downto 0) := (others => '1');
+    debug_led  : out std_logic_vector(7 downto 0) := (others => '1');
 
     -----------------------------------------------------------------------
     -- Pseudo-SRAM (4x 256Mbit)
@@ -133,14 +134,14 @@ entity scu4slim is
     psram_a    : out   std_logic_vector(23 downto 0) := (others => 'Z');
     psram_dq   : inout std_logic_vector(15 downto 0) := (others => 'Z');
     psram_clk  : out   std_logic := 'Z';
-    psram_advn : out   std_logic := 'Z';
-    psram_cre  : out   std_logic := 'Z';
+    psram_advn : out   std_logic_vector(3 downto 0) := (others => '1');
+    psram_cre  : out   std_logic_vector(3 downto 0) := (others => '1');
     psram_cen  : out   std_logic_vector(3 downto 0) := (others => '1');
-    psram_oen  : out   std_logic := 'Z';
-    psram_wen  : out   std_logic := 'Z';
-    psram_ubn  : out   std_logic := 'Z';
-    psram_lbn  : out   std_logic := 'Z';
-    psram_wait : in    std_logic; -- DDR magic
+    psram_oen  : out   std_logic_vector(3 downto 0) := (others => '1');
+    psram_wen  : out   std_logic_vector(3 downto 0) := (others => '1');
+    psram_ubn  : out   std_logic_vector(3 downto 0) := (others => '1');
+    psram_lbn  : out   std_logic_vector(3 downto 0) := (others => '1');
+    psram_wait : in    std_logic_vector (3 downto 0); -- DDR magic
 
     -----------------------------------------------------------------------
     -- SPI Flash User Mode
@@ -161,7 +162,8 @@ entity scu4slim is
     sfp_rxp_i        : in    std_logic;
     sfp_mod0_i       : in    std_logic;
     sfp_mod1_io      : inout std_logic;
-    sfp_mod2_io      : inout std_logic);
+    sfp_mod2_io      : inout std_logic;
+    sfp_rate_sel_o   : out   std_logic);
 
 end scu4slim;
 
@@ -197,6 +199,13 @@ architecture rtl of scu4slim is
   signal s_core_clk_25m     : std_logic;
 
   signal s_psram_cen        : std_logic;
+  signal s_psram_cre        : std_logic;
+  signal s_psram_advn       : std_logic;
+  signal s_psram_oen        : std_logic;
+  signal s_psram_wen        : std_logic;
+  signal s_psram_ubn        : std_logic;
+  signal s_psram_lbn        : std_logic;
+  
   signal s_psram_sel        : std_logic_vector(3 downto 0);
 
   signal rstn_ref           : std_logic;
@@ -336,22 +345,27 @@ begin
       ps_clk                  => psram_clk,
       ps_addr                 => psram_a,
       ps_data                 => psram_dq,
-      ps_seln(0)              => psram_lbn,
-      ps_seln(1)              => psram_ubn,
+      ps_seln(0)              => s_psram_lbn,
+      ps_seln(1)              => s_psram_ubn,
       ps_cen                  => s_psram_cen,
-      ps_oen                  => psram_oen,
-      ps_wen                  => psram_wen,
-      ps_cre                  => psram_cre,
-      ps_advn                 => psram_advn,
-      ps_wait                 => psram_wait,
+      ps_oen                  => s_psram_oen,
+      ps_wen                  => s_psram_wen,
+      ps_cre                  => s_psram_cre,
+      ps_advn                 => s_psram_advn,
+      ps_wait                 => psram_wait(0) or psram_wait(1) or psram_wait(2) or psram_wait(3),
       ps_chip_selector        => s_psram_sel,
       hw_version              => x"0000000" & not scu_cb_version);
 
   -- PSRAM -> This needs to be changed on the next revision
-  psram_cen(0) <= s_psram_cen when (s_psram_sel(0) = '1') else '1';
-  psram_cen(1) <= s_psram_cen when (s_psram_sel(1) = '1') else '1';
-  psram_cen(2) <= s_psram_cen when (s_psram_sel(2) = '1') else '1';
-  psram_cen(3) <= s_psram_cen when (s_psram_sel(3) = '1') else '1';
+  psram_sel : for i in 0 to 3 generate
+  psram_cen(i)  <= s_psram_cen when  (s_psram_sel(i) = '1') else '1';
+  psram_cre(i)  <= s_psram_cre when  (s_psram_sel(i) = '1') else '1';
+  psram_oen(i)  <= s_psram_oen when  (s_psram_sel(i) = '1') else '1';
+  psram_wen(i)  <= s_psram_wen when  (s_psram_sel(i) = '1') else '1';
+  psram_lbn(i)  <= s_psram_lbn when  (s_psram_sel(i) = '1') else '1';
+  psram_ubn(i)  <= s_psram_ubn when  (s_psram_sel(i) = '1') else '1';
+  psram_advn(i) <= s_psram_advn when (s_psram_sel(i) = '1') else '1';
+end generate;
 
   -- LEDs
   wr_led_pps    <= s_led_pps;                                             -- white = PPS
@@ -407,5 +421,7 @@ begin
   nADR_EN     <= '0';
   A_Spare     <= (others => 'Z');
   --A_OneWire   <= 'Z';
+
+  sfp_rate_sel_o <= '1'; --SFP rate full speed
 
 end rtl;
