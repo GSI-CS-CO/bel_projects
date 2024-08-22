@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 17-Nov-2023
+ *  version : 22-Aug-2024
  *
  * publishes additional diagnostic data of the kicker
  
@@ -37,7 +37,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_KICKD_VERSION 0x000704
+#define B2B_SERV_KICKD_VERSION 0x000705
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -88,15 +88,18 @@ static const char* program;
 // tags for kicker diag
 enum evtKTag{tagKRising, tagKFalling, tagKStart, tagKStop};
 
-// services
+double    no_link_dbl   = NAN;          // indicates "no link" for missing DIM services of type double
+
+// published services
 char      disVersion[DIMCHARSIZE];
 char      disHostname[DIMCHARSIZE];
 uint32_t  disNTransfer;
-double    disRisingOffs[B2B_NSID];       // offset of first rising edge to B2B_TRIGGER
-double    disFallingOffs[B2B_NSID];      // offset of first falling edge to B2B_TRIGGER
-uint32_t  disRisingN[B2B_NSID];          // number of rising edges; expectation value is 1
-uint32_t  disFallingN[B2B_NSID];         // number of falling edges; expectation value is 1
-double    disLen[B2B_NSID];              // lengh of signal
+double    disRisingOffs[B2B_NSID];      // offset of first rising edge to B2B_TRIGGER
+double    disFallingOffs[B2B_NSID];     // offset of first falling edge to B2B_TRIGGER
+uint32_t  disRisingN[B2B_NSID];         // number of rising edges; expectation value is 1
+uint32_t  disFallingN[B2B_NSID];        // number of falling edges; expectation value is 1
+double    disLen[B2B_NSID];             // lengh of signal
+double    disSetLevel[B2B_NSID];        // set level of comparator for detection of probe signals
 
 uint32_t  disVersionId      = 0;
 uint32_t  disHostnameId     = 0;
@@ -105,7 +108,13 @@ uint32_t  disRisingOffsId[B2B_NSID];
 uint32_t  disFallingOffsId[B2B_NSID];
 uint32_t  disRisingNId[B2B_NSID];
 uint32_t  disFallingNId[B2B_NSID];
-uint32_t  disLenId[B2B_NSID];        
+uint32_t  disLenId[B2B_NSID];
+uint32_t  disSetLevelId[B2B_NSID];
+
+// subscribed services
+double    dicSetLevel;                  // set level of comparator value for detection of probe signals
+
+uint32_t  dicSetLevelId; 
 
 
 // local variables
@@ -165,6 +174,7 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
     case tagKStop    :
       flagActive                   = 0;
       if ((disRisingN[sid] > 0) && (disFallingN[sid] > 0)) disLen[sid] = disFallingOffs[sid] - disRisingOffs[sid];
+      disSetLevel[sid]             = dicSetLevel;
       disUpdateValues(sid);
       break;
     case tagKRising  :
@@ -238,6 +248,17 @@ void disAddServices(char *prefix)
   } // for i
 } // disAddServices
 
+
+// add all dim services
+void dicSubscribeServices(char *prefix)
+{
+  char name[DIMMAXSIZE];
+
+    sprintf(name, "%s_setlevel", prefix);
+    //printf("name %s\n", name);
+    dicSetLevelId      = dic_info_service_stamped(name, MONITORED, 0, &dicSetLevel, sizeof(double), 0, 0, &no_link_dbl, sizeof(double));
+} // dicSubscribeServices
+
                         
 using namespace saftlib;
 using namespace std;
@@ -281,6 +302,7 @@ int main(int argc, char** argv)
   // 
   char     ringName[NAMELEN];
   char     prefix[NAMELEN*2];
+  char     comparatorPrefix[NAMELEN*2];
   char     disName[DIMMAXSIZE];
 
   reqRing  = SIS18_RING;                // gid SIS18
@@ -409,6 +431,16 @@ int main(int argc, char** argv)
   
   sprintf(disName, "%s", prefix);
   dis_start_serving(disName);
+
+  if (optind+1 < argc) { 
+    if (!reqMode) sprintf(comparatorPrefix, "b2b_%s_%s-kse", argv[++optind], ringName);  // extraction
+    else          sprintf(comparatorPrefix, "b2b_%s_%s-ksi", argv[++optind], ringName);  // injection
+  }
+  else            sprintf(comparatorPrefix, "b2b_%s", ringName);
+
+  printf("%s: subscribing to comparator server using prefix %s\n", program, comparatorPrefix);
+
+  dicSubscribeServices(comparatorPrefix);
   
   try {
     // basic saftd stuff

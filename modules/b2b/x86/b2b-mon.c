@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 20-Nov-2023
+ *  version : 22-Aug-2024
  *
  * subscribes to and displays status of many b2b transfers
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_MON_VERSION 0x000704
+#define B2B_MON_VERSION 0x000705
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -74,26 +74,12 @@ getval_t   dicGetval[NALLSID];            // b2b get-values
 diagval_t  dicDiagval[NALLSID];           // diagnostic (analyzed values)
 diagstat_t dicDiagstat[NALLSID];          // additional status data
 char       dicPName[NALLSID][DIMMAXSIZE]; // pattern names
-double     dicLevelExtSis18;              // actual comparator level of kicker probe signal
-double     dicLevelInjEsr;
-double     dicLevelExtEsr;
-double     dicLevelInjYr;
-double     dicLevelExtYr;
-double     dicKickLenExt[NALLSID];
-double     dicKickLenInj[NALLSID];
 
 uint32_t  dicSetvalId[NALLSID];
 uint32_t  dicGetvalId[NALLSID];
 uint32_t  dicDiagvalId[NALLSID];
 uint32_t  dicDiagstatId[NALLSID];
 uint32_t  dicPNameId[NALLSID];
-uint32_t  dicLevelExtSis18Id;
-uint32_t  dicLevelInjEsrId;
-uint32_t  dicLevelExtEsrId;
-uint32_t  dicLevelInjYrId;
-uint32_t  dicLevelExtYrId;
-uint32_t  dicKickLenExtId[NALLSID];
-uint32_t  dicKickLenInjId[NALLSID];
 
 #define  TXTNA       "  N/A"
 #define  TXTUNKWN    "UNKWN"
@@ -248,15 +234,10 @@ void buildPrintLine(uint32_t idx)
   char     tmp5[32];
   char     tmp6[32];
   double   dtmp1;
-  double   *pLevelExt;
-  double   *pLevelInj;
-
   double   nueDiff;
 
   uint32_t sid;
   ring_t   ringExt;
-  ring_t   ringInj;
-  uint32_t idxInj;
   double   cRingExt;
   double   cRingInj; 
 
@@ -273,13 +254,11 @@ void buildPrintLine(uint32_t idx)
 
   // extraction ring name
   switch (ringExt) {
-    case SIS18   : sprintf(origin, "SIS18");  sprintf(tmp1, "ESR");  pLevelExt = &dicLevelExtSis18; pLevelInj = &dicLevelInjEsr; ringInj = ESR;     cRingExt = 216; cRingInj = 108; break;
-    case ESR     : sprintf(origin, "ESR");    sprintf(tmp1, "YR");   pLevelExt = &dicLevelExtEsr;   pLevelInj = &dicLevelInjYr;  ringInj = CRYRING; cRingExt = 108; cRingInj =  54; break;
-    case CRYRING : sprintf(origin, "YR");     sprintf(tmp1, " ");    pLevelExt = &dicLevelExtYr;    pLevelInj = NULL;            ringInj = NORING;  cRingExt =  54; cRingInj = NAN; break;
-    default      : sprintf(origin, TXTUNKWN); sprintf(tmp1, " ");    pLevelExt = NULL;              pLevelInj = NULL;            ringInj = NORING;  cRingExt = NAN; cRingInj = NAN; break;
+    case SIS18   : sprintf(origin, "SIS18");  sprintf(tmp1, "ESR"); cRingExt = 216; cRingInj = 108; break;
+    case ESR     : sprintf(origin, "ESR");    sprintf(tmp1, "YR");  cRingExt = 108; cRingInj =  54; break;
+    case CRYRING : sprintf(origin, "YR");     sprintf(tmp1, " ");   cRingExt =  54; cRingInj = NAN; break;
+    default      : sprintf(origin, TXTUNKWN); sprintf(tmp1, " ");   cRingExt = NAN; cRingInj = NAN; break;
   } // switch ringExt
-
-  idxInj = (ringInj - 1) * 16 + dicSetval[idx].inj_sid;
 
   // pattern name
   if (strlen(dicPName[idx]) == 0) sprintf(pattern, "%s", TXTUNKWN);               // invalid
@@ -293,12 +272,12 @@ void buildPrintLine(uint32_t idx)
 
   // destination
   switch (set_mode[idx]) {
-    case B2B_MODE_OFF : sprintf(dest, "---");      flagTCBS = 1; flagOther = 1; flagB2b = 0; flagExtTrig = 0; flagInjTrig = 0; pLevelExt = NULL; pLevelInj = NULL; break;
-    case B2B_MODE_BSE : sprintf(dest, "kicker");   flagTCBS = 1; flagOther = 1; flagB2b = 0; flagExtTrig = 1; flagInjTrig = 0; pLevelInj = NULL;                   break;
-    case B2B_MODE_B2E : sprintf(dest, "target");   flagTCBS = 1; flagOther = 1; flagB2b = 0; flagExtTrig = 1; flagInjTrig = 0; pLevelInj = NULL;                   break;
-    case B2B_MODE_B2C : sprintf(dest, "%s", tmp1); flagTCBS = 1; flagOther = 1; flagB2b = 0; flagExtTrig = 1; flagInjTrig = 1;                                     break;
-    case B2B_MODE_B2B : sprintf(dest, "%s", tmp1); flagTCBS = 1; flagOther = 1; flagB2b = 1; flagExtTrig = 1; flagInjTrig = 1;                                     break;
-    default: sprintf(dest, TXTUNKWN);   flagTCBS = 0; flagOther = 0; flagB2b = 0; flagExtTrig = 0; flagInjTrig = 0; pLevelExt = NULL; pLevelInj = NULL; break;
+    case B2B_MODE_OFF : sprintf(dest, "---");      flagTCBS = 1; flagOther = 1; flagB2b = 0; flagExtTrig = 0; flagInjTrig = 0; break;
+    case B2B_MODE_BSE : sprintf(dest, "kicker");   flagTCBS = 1; flagOther = 1; flagB2b = 0; flagExtTrig = 1; flagInjTrig = 0; break;
+    case B2B_MODE_B2E : sprintf(dest, "target");   flagTCBS = 1; flagOther = 1; flagB2b = 0; flagExtTrig = 1; flagInjTrig = 0; break;
+    case B2B_MODE_B2C : sprintf(dest, "%s", tmp1); flagTCBS = 1; flagOther = 1; flagB2b = 0; flagExtTrig = 1; flagInjTrig = 1; break;
+    case B2B_MODE_B2B : sprintf(dest, "%s", tmp1); flagTCBS = 1; flagOther = 1; flagB2b = 1; flagExtTrig = 1; flagInjTrig = 1; break;
+    default: sprintf(dest, TXTUNKWN);   flagTCBS = 0; flagOther = 0; flagB2b = 0; flagExtTrig = 0; flagInjTrig = 0; break;
   } // switch set_mode
 
   // ignore ancient timestamps
@@ -362,12 +341,8 @@ void buildPrintLine(uint32_t idx)
     else                                            sprintf(nueMeasInj, "---");
     
     // comparator level for kicker probe signal
-    if (pLevelExt == NULL)                                  sprintf(setLevelExt, "%s", "---");
-    else if (*(uint32_t *)pLevelExt == no_link_32)          sprintf(setLevelExt, "%s", "NOLINK");
-    else                                                    sprintf(setLevelExt, "%6.2f", *pLevelExt);
-    if (pLevelInj == NULL)                                  sprintf(setLevelInj, "%s", "---");
-    else if (*(uint32_t *)pLevelInj == no_link_32)          sprintf(setLevelInj, "%s", "NOLINK");
-    else                                                    sprintf(setLevelInj, "%6.2f", *pLevelInj);
+    sprintf(setLevelExt, "%6.2f", dicGetval[idx].ext_dKickProbLevel);
+    sprintf(setLevelInj, "%6.2f", dicGetval[idx].inj_dKickProbLevel);
   } // if flagOther
   else {
     sprintf(extNue, "---");
@@ -391,12 +366,13 @@ void buildPrintLine(uint32_t idx)
     if ((dicGetval[idx].flagEvtRec >> 4) & 0x1) sprintf(tmp1, "%7.1f", convertUnit(set_extCTrig[idx] - dicDiagval[idx].ext_ddsOffAct, dicSetval[idx].ext_T));
     else sprintf(tmp1, "%s", TXTERROR);
     // signal from output of kicker electronics
-    if (isnan(dicGetval[idx].ext_dKickMon))  sprintf(tmp2, "%s", TXTERROR);
-    else                                     sprintf(tmp2, "%5.0f", convertUnit(dicGetval[idx].ext_dKickMon, dicSetval[idx].ext_T));
-    if (isnan(dicGetval[idx].ext_dKickProb)) sprintf(tmp3, "%s", TXTUNKWN);
-    else                                     sprintf(tmp3, "%5.0f", convertUnit(dicGetval[idx].ext_dKickProb,dicSetval[idx].ext_T));
-    if (isnan(dicKickLenExt[idx]))           sprintf(tmp4, "%s", TXTUNKWN);
-    else                                     sprintf(tmp4, "%5.0f", convertUnit(dicKickLenExt[idx],dicSetval[idx].ext_T));
+    if (isnan(dicGetval[idx].ext_dKickMon))     sprintf(tmp2, "%s", TXTERROR);
+    else                                        sprintf(tmp2, "%5.0f", convertUnit(dicGetval[idx].ext_dKickMon, dicSetval[idx].ext_T));
+    // signal from magent probes
+    if (isnan(dicGetval[idx].ext_dKickProb))    sprintf(tmp3, "%s", TXTUNKWN);
+    else                                        sprintf(tmp3, "%5.0f", convertUnit(dicGetval[idx].ext_dKickProb,dicSetval[idx].ext_T));
+    if (isnan(dicGetval[idx].ext_dKickProbLen)) sprintf(tmp4, "%s", TXTUNKWN);
+    else                                        sprintf(tmp4, "%5.0f", convertUnit(dicGetval[idx].ext_dKickProbLen,dicSetval[idx].ext_T));
 
     sprintf(extTrig, "%7.1f %7s %5s %5s %5s", convertUnit(set_extCTrig[idx], dicSetval[idx].ext_T), tmp1, tmp2, tmp3, tmp4);
   } // if flagExtTrig
@@ -417,13 +393,13 @@ void buildPrintLine(uint32_t idx)
     else sprintf(tmp1, "%s", TXTERROR);
     
     // signal from output of kicker electronics
-    if (isnan(dicGetval[idx].inj_dKickMon))  sprintf(tmp2, "%s", TXTERROR);
-    else                                     sprintf(tmp2, "%5.0f", convertUnit(dicGetval[idx].inj_dKickMon, dicSetval[idx].inj_T));
+    if (isnan(dicGetval[idx].inj_dKickMon))     sprintf(tmp2, "%s", TXTERROR);
+    else                                        sprintf(tmp2, "%5.0f", convertUnit(dicGetval[idx].inj_dKickMon,dicSetval[idx].inj_T));
     // signal from magnet probes
-    if (isnan(dicGetval[idx].inj_dKickProb)) sprintf(tmp3, "%s", TXTUNKWN);
-    else                                     sprintf(tmp3, "%5.0f", convertUnit(dicGetval[idx].inj_dKickProb, dicSetval[idx].inj_T));
-    if (isnan(dicKickLenInj[idxInj]))      sprintf(tmp6, "%s", TXTUNKWN);
-    else                                   sprintf(tmp6, "%5.0f", convertUnit(dicKickLenInj[idxInj],dicSetval[idx].inj_T));
+    if (isnan(dicGetval[idx].inj_dKickProb))    sprintf(tmp3, "%s", TXTUNKWN);
+    else                                        sprintf(tmp3, "%5.0f", convertUnit(dicGetval[idx].inj_dKickProb,dicSetval[idx].inj_T));
+    if (isnan(dicGetval[idx].inj_dKickProbLen)) sprintf(tmp6, "%s", TXTUNKWN);
+    else                                        sprintf(tmp6, "%5.0f", convertUnit(dicGetval[idx].inj_dKickProbLen,dicSetval[idx].inj_T));
 
       // difference to kicker electronics extraction
     if (isnan(dicGetval[idx].ext_dKickMon) || isnan(dicGetval[idx].inj_dKickMon))
@@ -433,10 +409,10 @@ void buildPrintLine(uint32_t idx)
       sprintf(tmp4, "%5.0f", convertUnit(dtmp1, dicSetval[idx].inj_T));
     } // else isnan
     // difference to magnet probe extraction
-    if (isnan(dicGetval[idx].ext_dKickProb) || isnan(dicGetval[idx].inj_dKickProb) || isnan(dicKickLenInj[idxInj]))
+    if (isnan(dicGetval[idx].ext_dKickProb) || isnan(dicGetval[idx].inj_dKickProb) || isnan(dicGetval[idx].inj_dKickProbLen))
       sprintf(tmp5, "%s", TXTUNKWN);
     else {
-      dtmp1 = set_injCTrig[idx] - set_extCTrig[idx] + dicGetval[idx].inj_dKickProb - dicGetval[idx].ext_dKickProb + dicKickLenInj[idxInj];
+      dtmp1 = set_injCTrig[idx] - set_extCTrig[idx] + dicGetval[idx].inj_dKickProb - dicGetval[idx].ext_dKickProb + dicGetval[idx].inj_dKickProbLen;
       sprintf(tmp5, "%5.0f", convertUnit(dtmp1, dicSetval[idx].inj_T));
     } // else isnan
 
@@ -559,52 +535,6 @@ void dicSubscribeServices(char *prefix, uint32_t idx)
   dicPNameId[idx]        = dic_info_service_stamped(name, MONITORED, 0, &(dicPName[idx]), DIMMAXSIZE, 0 , 0, &no_link_str, sizeof(no_link_str));  
 } // dicSubscribeServices
 
-
-// as the feature of kicker flattop length is still experimental, let's keep this in a dedicated routine;
-// on the long run, this information could possibly be added to dicDiagval, or dicGetVal
-void dicSubscribeKickLenServices(char *prefix, uint32_t idx)
-{
-  char     name[DIMMAXSIZE];
-  char     ringName[32];
-  ring_t   ring;
-  uint32_t sid;
-
-  idx2RingSid(idx, &ring, &sid);
-  switch (ring) {
-    case SIS18   : sprintf(ringName, "sis18"); break;
-    case ESR     : sprintf(ringName, "esr");   break;
-    case CRYRING : sprintf(ringName, "yr");    break;
-    default : break;
-  } // switch ring
-
-  sprintf(name, "%s_%s-kdde_sid%02d_len", prefix, ringName,  sid);
-  /* printf("name %s\n", name); */
-  dicKickLenExtId[idx]      = dic_info_service_stamped(name, MONITORED, 0, &(dicKickLenExt[idx]), sizeof(double), 0 , 0, &no_link_dbl, sizeof(double));
-  sprintf(name, "%s_%s-kddi_sid%02d_len", prefix, ringName,  sid);
-  /* printf("name %s\n", name); */
-  dicKickLenInjId[idx]      = dic_info_service_stamped(name, MONITORED, 0, &(dicKickLenInj[idx]), sizeof(double), 0 , 0, &no_link_dbl, sizeof(double));
-} // dicSubscribeKicklenServices
-
-
-void dicSubscribeLevelServices(char *prefix)
-{
-  char     name[DIMMAXSIZE];
-  
-  sprintf(name, "%s_sis18-kse_setlevel", prefix);
-  dicLevelExtSis18Id = dic_info_service_stamped(name, MONITORED, 0, &dicLevelExtSis18, sizeof(double), 0 , 0, &no_link_32, sizeof(no_link_str));
-
-  sprintf(name, "%s_esr-ksi_setlevel", prefix);
-  dicLevelInjEsrId   = dic_info_service_stamped(name, MONITORED, 0, &dicLevelInjEsr  , sizeof(double), 0 , 0, &no_link_32, sizeof(no_link_str));
-  
-  sprintf(name, "%s_esr-kse_setlevel", prefix);
-  dicLevelExtEsrId   = dic_info_service_stamped(name, MONITORED, 0, &dicLevelExtEsr  , sizeof(double), 0 , 0, &no_link_32, sizeof(no_link_str));
-  
-  sprintf(name, "%s_yr-ksi_setlevel", prefix);
-  dicLevelInjYrId    = dic_info_service_stamped(name, MONITORED, 0, &dicLevelInjYr   , sizeof(double), 0 , 0, &no_link_32, sizeof(no_link_str));
-
-  sprintf(name, "%s_yr-kse_setlevel", prefix);
-  dicLevelExtYrId    = dic_info_service_stamped(name, MONITORED, 0, &dicLevelExtYr   , sizeof(double), 0 , 0, &no_link_32, sizeof(no_link_str));  
-} // dicSubscribeLevelServices
 
 // clear status
 void clearStatus()
@@ -778,9 +708,7 @@ int main(int argc, char** argv)
     sprintf(printLineK[i], "not initialized");
     sprintf(printLineN[i], "not initialized");
     dicSubscribeServices(prefix, i);
-    dicSubscribeKickLenServices(prefix, i);
   } // for i
-  dicSubscribeLevelServices(prefix);
 
   buildHeader();
   flagPrintNow = 1;
