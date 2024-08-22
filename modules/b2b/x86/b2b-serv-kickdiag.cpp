@@ -245,6 +245,9 @@ void disAddServices(char *prefix)
 
     sprintf(name, "%s_sid%02d_len", prefix, i);
     disLenId[i]         = dis_add_service(name, "D:1", &(disLen[i]), sizeof(double), 0, 0);
+
+    sprintf(name, "%s_sid%02d_level", prefix, i);
+    disLenId[i]         = dis_add_service(name, "D:1", &(disSetLevel[i]), sizeof(double), 0, 0);
   } // for i
 } // disAddServices
 
