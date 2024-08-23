@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-Aug-2024
+ *  version : 23-Aug-2024
  *
  * publishes additional diagnostic data of the kicker
  
@@ -131,6 +131,7 @@ void initValues(uint32_t sid)
   disRisingN[sid]      = 0;
   disFallingN[sid]     = 0;
   disLen[sid]          = NAN;
+  disSetLevel[sid]     = NAN;
 } // initValues
 
 
@@ -142,6 +143,7 @@ void disUpdateValues(uint32_t sid)
   dis_update_service(disRisingNId[sid]);
   dis_update_service(disFallingNId[sid]);
   dis_update_service(disLenId[sid]);
+  dis_update_service(disSetLevelId[sid]);
   
   disNTransfer++;
   dis_update_service(disNTransferId);
@@ -170,20 +172,24 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       tStart                       = deadline.getTAI();
       flagActive                   = 1;
       initValues(sid);
+      //      printf("start %d\n", sid);
       break;
     case tagKStop    :
       flagActive                   = 0;
       if ((disRisingN[sid] > 0) && (disFallingN[sid] > 0)) disLen[sid] = disFallingOffs[sid] - disRisingOffs[sid];
       disSetLevel[sid]             = dicSetLevel;
       disUpdateValues(sid);
+      //printf("stop %d, level %f\n", sid, disSetLevel[sid]);
       break;
     case tagKRising  :
       disRisingN[sid]++;
       if (disRisingN[sid] == 1)  disRisingOffs[sid]  = (float)(deadline.getTAI() - tStart);
+      //      printf("rising %d\n", sid);
       break;
     case tagKFalling :
       disFallingN[sid]++;
       if (disFallingN[sid] == 1) disFallingOffs[sid] = (float)(deadline.getTAI() - tStart);
+      //      printf("falling, sid %d,  N %d, offset %f\n", sid, disFallingN[sid], disFallingOffs[sid]);
       break;
     default         :
       ;
@@ -231,23 +237,23 @@ void disAddServices(char *prefix)
 
   // values
   for (i=0; i< B2B_NSID; i++) {
-    sprintf(name, "%s_sid%02d_risingoffs", prefix, i);
-    disRisingOffsId[i]  = dis_add_service(name, "D:1", &(disRisingOffs[i]), sizeof(double), 0, 0);
+    sprintf(name, "%s_sid%02d_risingoffs",  prefix, i);
+    disRisingOffsId[i]  = dis_add_service(name, "D:1", &(disRisingOffs[i]),  sizeof(double), 0, 0);
 
-    sprintf(name, "%s_sid%02d_risingN", prefix, i);
-    disRisingNId[i]     = dis_add_service(name, "I:1", &(disRisingN[i]), sizeof(uint32_t), 0, 0);
+    sprintf(name, "%s_sid%02d_risingN",     prefix, i);
+    disRisingNId[i]     = dis_add_service(name, "I:1", &(disRisingN[i]),     sizeof(uint32_t), 0, 0);
 
     sprintf(name, "%s_sid%02d_fallingoffs", prefix, i);
     disFallingOffsId[i] = dis_add_service(name, "D:1", &(disFallingOffs[i]), sizeof(double), 0, 0);
 
-    sprintf(name, "%s_sid%02d_fallingN", prefix, i);
-    disFallingNId[i]    = dis_add_service(name, "I:1", &(disFallingN[i]), sizeof(uint32_t), 0, 0);
+    sprintf(name, "%s_sid%02d_fallingN",    prefix, i);
+    disFallingNId[i]    = dis_add_service(name, "I:1", &(disFallingN[i]),    sizeof(uint32_t), 0, 0);
 
-    sprintf(name, "%s_sid%02d_len", prefix, i);
-    disLenId[i]         = dis_add_service(name, "D:1", &(disLen[i]), sizeof(double), 0, 0);
+    sprintf(name, "%s_sid%02d_len",         prefix, i);
+    disLenId[i]         = dis_add_service(name, "D:1", &(disLen[i]),         sizeof(double), 0, 0);
 
-    sprintf(name, "%s_sid%02d_level", prefix, i);
-    disLenId[i]         = dis_add_service(name, "D:1", &(disSetLevel[i]), sizeof(double), 0, 0);
+    sprintf(name, "%s_sid%02d_level",       prefix, i);
+    disSetLevelId[i]    = dis_add_service(name, "D:1", &(disSetLevel[i]),    sizeof(double), 0, 0);
   } // for i
 } // disAddServices
 
@@ -258,7 +264,6 @@ void dicSubscribeServices(char *prefix)
   char name[DIMMAXSIZE];
 
     sprintf(name, "%s_setlevel", prefix);
-    //printf("name %s\n", name);
     dicSetLevelId      = dic_info_service_stamped(name, MONITORED, 0, &dicSetLevel, sizeof(double), 0, 0, &no_link_dbl, sizeof(double));
 } // dicSubscribeServices
 
@@ -301,6 +306,7 @@ int main(int argc, char** argv)
 
   // variables attach, remove
   char    *deviceName = NULL;
+  char    *envName    = NULL;
 
   // 
   char     ringName[NAMELEN];
@@ -384,7 +390,10 @@ int main(int argc, char** argv)
     return 0;
   } // if optind
 
+  if (!(optind+1 < argc)) return 1;
+  
   deviceName = argv[optind];
+  envName    = argv[optind+1];
   gethostname(disHostname, 32);
 
   switch(reqRing) {
@@ -422,12 +431,9 @@ int main(int argc, char** argv)
   disNTransfer          = 0;
   for (i=0; i< B2B_NSID; i++ ) initValues(i);
  
-  if (optind+1 < argc) { 
-    if (!reqMode) sprintf(prefix, "b2b_%s_%s-kdde", argv[++optind], ringName);  // extraction
-    else          sprintf(prefix, "b2b_%s_%s-kddi", argv[++optind], ringName);  // injection
-  }
-  else            sprintf(prefix, "b2b_%s", ringName);
-
+  if (!reqMode) sprintf(prefix, "b2b_%s_%s-kdde", envName, ringName);  // extraction
+  else          sprintf(prefix, "b2b_%s_%s-kddi", envName, ringName);  // injection
+  
   printf("%s: starting server using prefix %s\n", program, prefix);
 
   disAddServices(prefix);
@@ -435,11 +441,8 @@ int main(int argc, char** argv)
   sprintf(disName, "%s", prefix);
   dis_start_serving(disName);
 
-  if (optind+1 < argc) { 
-    if (!reqMode) sprintf(comparatorPrefix, "b2b_%s_%s-kse", argv[++optind], ringName);  // extraction
-    else          sprintf(comparatorPrefix, "b2b_%s_%s-ksi", argv[++optind], ringName);  // injection
-  }
-  else            sprintf(comparatorPrefix, "b2b_%s", ringName);
+  if (!reqMode) sprintf(comparatorPrefix, "b2b_%s_%s-kse", envName, ringName);  // extraction
+  else          sprintf(comparatorPrefix, "b2b_%s_%s-ksi", envName, ringName);  // injection
 
   printf("%s: subscribing to comparator server using prefix %s\n", program, comparatorPrefix);
 

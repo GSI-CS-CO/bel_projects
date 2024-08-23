@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 20-Nov-2023
+ *  version : 22-Aug-2024
  *
  * publishes raw data of the b2b system
  *
@@ -233,6 +233,7 @@ void disUpdateSetval(uint32_t sid, uint64_t tStart, setval_t setval)
 static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, uint64_t param, uint32_t tef, uint32_t isLate, uint32_t isEarly, uint32_t isConflict, uint32_t isDelayed)
 {
   uint32_t            recSid;          // received SID
+  uint32_t            recGid;          // receiver GID
   int                 flagErr;
 
   static int          flagActive;      // flag: b2b is active
@@ -246,6 +247,7 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
   uint32_t tmpu;
 
   recSid      = ((evtId  & 0x00000000fff00000) >> 20);
+  recGid      = ((evtId  & 0x0fff000000000000) >> 48);
 
   // check ranges
   if (recSid  > B2B_NSID)                 return;
@@ -265,7 +267,7 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       initSetval(&setval);
       setval.mode                  = 0;      // in the simplest case mode is '0' (OFF)
       setval.ext_sid               = sid;
-      setval.ext_gid               = ((evtId  & 0x0fff000000000000) >> 48);
+      setval.ext_gid               = recGid;
 
       initGetval(&getval);
       getval.flagEvtRec            = 0x1 << tag;
@@ -279,7 +281,7 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       break;
     case tagPme     :
       setval.mode              = ((param & 0x00f0000000000000) >> 52);
-      switch(setval.ext_gid) {
+      switch(recGid) {
         case SIS18_B2B_ESR    : setval.inj_gid = ESR_RING;     break;
         case SIS18_B2B_SIS100 : setval.inj_gid = SIS100_RING;  break;
         case ESR_B2B_CRYRING  : setval.inj_gid = CRYRING_RING; break;
@@ -468,6 +470,7 @@ void dicSubscribeServices(char *prefix)
 
   for (i=0; i<B2B_NSID; i++) {
     sprintf(name, "%s_sis18-kdde_sid%02d_len",    prefix, i);
+    printf("prefix %s, name %s\n", prefix, name);
     dicKickLenSIS18ExtId[i] = dic_info_service_stamped(   name, MONITORED, 0, &(dicKickLenSIS18Ext[i]),    sizeof(double), 0 , 0, &no_link_dbl, sizeof(double));
     sprintf(name, "%s_esr-kdde_sid%02d_len",      prefix, i);
     dicKickLenESRExtId[i] = dic_info_service_stamped(     name, MONITORED, 0, &(dicKickLenESRExt[i]),      sizeof(double), 0 , 0, &no_link_dbl, sizeof(double));
@@ -541,6 +544,7 @@ int main(int argc, char** argv)
 
   // variables attach, remove
   char    *deviceName = NULL;
+  char    *envName    = NULL;
 
   char     ringName[NAMELEN];
   char     prefix[NAMELEN*2];
@@ -593,7 +597,10 @@ int main(int argc, char** argv)
     return 0;
   } // if optind
 
+  if (!(optind+1 < argc)) return 1;
+  
   deviceName = argv[optind];
+  envName    = argv[optind+1];
   gethostname(disHostname, 32);
 
   switch(reqExtRing) {
@@ -621,8 +628,7 @@ int main(int argc, char** argv)
   } // for i
   
   // create service and start server
-  if (optind+1 < argc) sprintf(prefix, "b2b_%s_%s", argv[++optind], ringName);
-  else                 sprintf(prefix, "b2b_%s", ringName);
+  sprintf(prefix, "b2b_%s_%s", envName, ringName);
 
   printf("%s: starting server using prefix %s\n", program, prefix);
 
@@ -635,8 +641,7 @@ int main(int argc, char** argv)
   dis_start_serving(disName);
 
   // subscribe to services at kicker diagnostic
-  if (optind+1 < argc) sprintf(kickerPrefix, "b2b_%s", argv[++optind]);
-  else                 sprintf(kickerPrefix, "b2b");
+  sprintf(kickerPrefix, "b2b_%s", envName);
 
   printf("%s: subscribing to services using prefix %s\n", program, kickerPrefix);  
 
