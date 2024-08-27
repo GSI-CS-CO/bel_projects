@@ -401,7 +401,8 @@ begin
   s_i2c_sda_pad_in(1) <= avr_sda;
 
   -- Resets
-  A_nReset    <= rstn_ref;
+  A_nReset      <= rstn_ref;
+  nFPGA_Res_Out <= rstn_ref; -- To ComExpress
 
   -- fixed scubus signals
   ADR_TO_SCUB <= '1';
