@@ -189,6 +189,7 @@ architecture rtl of ftm4dp is
   signal s_stub_pll_reset       : std_logic;
   signal s_stub_pll_locked      : std_logic;
   signal s_stub_pll_locked_prev : std_logic;
+  signal rstn_ref               : std_logic;
 
   signal s_i2c_scl_pad_out  : std_logic_vector(1 downto 1);
   signal s_i2c_scl_pad_in   : std_logic_vector(1 downto 1);
