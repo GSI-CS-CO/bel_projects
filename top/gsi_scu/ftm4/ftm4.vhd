@@ -245,6 +245,7 @@ begin
       core_clk_125m_pllref_i  => clk_125m_tcb_pllref_i,
       core_clk_125m_local_i   => clk_125m_tcb_local_i,
       core_clk_125m_sfpref_i  => clk_125m_tcb_pllref_i,
+      core_rstn_wr_ref_o      => rstn_ref,
       wr_onewire_io           => OneWire_CB,
       wr_sfp_sda_io           => sfp_mod2_io,
       wr_sfp_scl_io           => sfp_mod1_io,
@@ -336,5 +337,8 @@ begin
   avr_sda             <= s_i2c_sda_pad_out(1) when (s_i2c_sda_padoen(1) = '0') else 'Z';
   s_i2c_scl_pad_in(1) <= avr_scl;
   s_i2c_sda_pad_in(1) <= avr_sda;
+
+  -- Resets
+  nFPGA_Res_Out <= rstn_ref; -- To ComExpress
 
 end rtl;
