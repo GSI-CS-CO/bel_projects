@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-Aug-2024
+ *  version : 27-Aug-2024
  *
  * archives set and get values to data files
  *
@@ -138,7 +138,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
 
   // set values
   new  = strSetval;
-  new += sprintf(new, "%s.%03d; %x; %d; %d", tCBS, utc_msecs[sid], dicSetval[sid].ext_gid, sid, dicSetval[sid].mode);
+  new += sprintf(new, "%s.%03d; 0x%x; %d; %d", tCBS, utc_msecs[sid], dicSetval[sid].ext_gid, sid, dicSetval[sid].mode);
   if (dicSetval[sid].ext_T == -1) new += sprintf(new, "; %s"    , nan_str);
   else new += sprintf(new, "; %lu"   , dicSetval[sid].ext_T);
   if (dicSetval[sid].ext_h == -1) new += sprintf(new, "; %s"    , nan_str);
@@ -177,7 +177,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
     new += sprintf(new, "; %8.3f", act);
   } // else isnan
 
-  new += sprintf(new, "; %d; %d", dicSetval[sid].inj_gid, dicSetval[sid].inj_sid);
+  new += sprintf(new, "; 0x%x; %d", dicSetval[sid].inj_gid, dicSetval[sid].inj_sid);
   if (dicGetval[sid].inj_phase == -1) new += sprintf(new, "; %s"   , nan_str);
   else new += sprintf(new, "; %lu", dicGetval[sid].inj_phase);
   new += sprintf(new, "; %7.3f"   , dicGetval[sid].inj_phaseFract);
