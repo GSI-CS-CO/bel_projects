@@ -205,7 +205,7 @@ architecture rtl of scu4slim is
   signal s_psram_wen        : std_logic;
   signal s_psram_ubn        : std_logic;
   signal s_psram_lbn        : std_logic;
-  
+
   signal s_psram_sel        : std_logic_vector(3 downto 0);
 
   signal rstn_ref           : std_logic;
@@ -414,7 +414,8 @@ end generate;
   s_i2c_sda_pad_in(1) <= avr_sda;
 
   -- Resets
-  A_nReset    <= rstn_ref;
+  A_nReset      <= rstn_ref;
+  nFPGA_Res_Out <= rstn_ref;
 
   -- fixed scubus signals
   ADR_TO_SCUB <= '1';
