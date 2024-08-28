@@ -105,7 +105,7 @@ static void help(void) {
 // header String for file
 char * headerString()
 {
-  return "patternName; time_CBS_UTC; ext_gid; ext_sid; mode; ext_T [as]; ext_h; ext_cTrig; inj_T; inj_h; inj_cTrig; cPhase; ext_phase; ext_phaseFract; ext_phaseErr; ext_maxsysErr; ext_dKickMon; ext_dkickProb; ext_kickLen; ext_kickLevel; ext_diagPhase; ext_diag_Match; inj_gid; inj_sid; inj_phase; inj_phaseFract; inj_phaseErr; inj_maxsysErr; inj_dKickMon; inj_dKickProb; inj_kickLen; inj_kickLevel; inj_diagPhase; inj_diagMatch; received PME; PMI; PRE; PRI; KTE; KTI; KDE; KDI; PDE; PDI; error PME; PMI; PRE; PRI; KTE; KTI; KDE; KDI; PDE; PDI; late PME; PMI; PRE; PRI; KTE; KTI; KDE; KDI; PDE; PDI; fin-CBS; prr-CBS; t0E-CBS; t0I-CBS; kte-CBS; kti-CBS; ext_nueGet; ext_dNueGet; inj_nueGet; inj_dNueGet";
+  return "patternName; time_CBS_UTC; ext_gid; ext_sid; mode; ext_T [as]; ext_h; ext_cTrig; inj_T; inj_h; inj_cTrig; cPhase; ext_phase; ext_phaseFract; ext_phaseErr; ext_maxsysErr; ext_dKickMon; ext_dkickProb; ext_kickLen; ext_kickLevel; ext_diagPhase; ext_diag_Match; inj_gid; inj_sid; inj_phase; inj_phaseFract; inj_phaseErr; inj_maxsysErr; inj_dKickMon; inj_dKickProb; inj_kickLen; inj_kickLevel; inj_diagPhase; inj_diagMatch; received PME; PMI; PRE; PRI; PSE; PSI; KTE; KTI; KDE; KDI; PDE; PDI; error PME; PMI; PRE; PRI; PSE; PSI; KTE; KTI; KDE; KDI; PDE; PDI; late PME; PMI; PRE; PRI; PSE; PSI; KTE; KTI; KDE; KDI; PDE; PDI; fin-CBS; prr-CBS; t0E-CBS; t0I-CBS; kte-CBS; kti-CBS; ext_nueGet; ext_dNueGet; inj_nueGet; inj_dNueGet";
 } // headerString
 
 // receive get values
@@ -202,9 +202,9 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
     new += sprintf(new, "; %8.3f",  act);
   } // else isnan
 
-  for (i=0; i<10; i++) new += sprintf(new, "; %d", ((dicGetval[sid].flagEvtRec  >> i) & 0x1));
-  for (i=0; i<10; i++) new += sprintf(new, "; %d", ((dicGetval[sid].flagEvtErr  >> i) & 0x1));
-  for (i=0; i<10; i++) new += sprintf(new, "; %d", ((dicGetval[sid].flagEvtLate >> i) & 0x1));
+  for (i=0; i<tagStart; i++) new += sprintf(new, "; %d", ((dicGetval[sid].flagEvtRec  >> i) & 0x1));
+  for (i=0; i<tagStart; i++) new += sprintf(new, "; %d", ((dicGetval[sid].flagEvtErr  >> i) & 0x1));
+  for (i=0; i<tagStart; i++) new += sprintf(new, "; %d", ((dicGetval[sid].flagEvtLate >> i) & 0x1));
   new += sprintf(new, "; %f; %f; %f; %f; %f; %f", dicGetval[sid].finOff, dicGetval[sid].prrOff, dicGetval[sid].preOff, dicGetval[sid].priOff, dicGetval[sid].kteOff, dicGetval[sid].ktiOff);
 
   // frequency values; chk: in principle we should check the timestammp of the service too?

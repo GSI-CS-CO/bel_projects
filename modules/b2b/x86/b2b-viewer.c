@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 30-Jan-2024
+ *  version : 28-Aug-2024
  *
  * subscribes to and displays status of a b2b transfer
  *
@@ -471,19 +471,19 @@ int printStatus(uint32_t sid)
   printf("events  :   PME  PMI  PRE  PRI  PSE  PSI  KTE  KTI  KDE  KDI  PDE  PDI\n");
 
   printf("required:");
-  for (i=0; i<10; i++) if ((modeMask    >> i) & 0x1) printf("    X"); else printf("     ");
+  for (i=0; i<tagStart; i++) if ((modeMask    >> i) & 0x1) printf("    X"); else printf("     ");
   printf("\n");
 
   printf("received:");
-  for (i=0; i<10; i++) if ((dicGetval.flagEvtRec  >> i) & 0x1) printf("    X"); else printf("     ");
+  for (i=0; i<tagStart; i++) if ((dicGetval.flagEvtRec  >> i) & 0x1) printf("    X"); else printf("     ");
   printf("\n");
 
   printf("late    :");
-  for (i=0; i<10; i++) if ((dicGetval.flagEvtLate >> i) & 0x1) printf("    X"); else printf("     ");
+  for (i=0; i<tagStart; i++) if ((dicGetval.flagEvtLate >> i) & 0x1) printf("    X"); else printf("     ");
   printf("\n");
   
   printf("error   :");
-  for (i=0; i<10; i++) if ((flagEvtErr  >> i) & 0x1) printf("    X"); else printf("     ");
+  for (i=0; i<tagStart; i++) if ((flagEvtErr  >> i) & 0x1) printf("    X"); else printf("     ");
   printf("\n");
 
   if (set_mode == B2B_MODE_OFF) {
@@ -533,13 +533,13 @@ int printRf(uint32_t sid)
   switch(set_mode) {
     case 0 ... 2 :
     case 5       :                                          // this is an OR
-      if ((dicGetval.flagEvtErr >> 2) & 0x1) printf("ext: %s\n", TXTERROR);
+      if ((dicGetval.flagEvtErr >> tagPre) & 0x1) printf("ext: %s\n", TXTERROR);
       else printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
                   dicDiagval.ext_rfOffAct, dicDiagval.ext_rfOffAve, dicDiagval.ext_rfOffSdev, dicGetval.ext_phaseSysmaxErr, dicDiagval.ext_rfOffMin, dicDiagval.ext_rfOffMax);
       printf("inj: %s\n", TXTNA);
       if (dicDiagval.ext_rfNueN == 0) printf("ext: %s\n\n\n", TXTNA);
       else {
-        if ((dicGetval.flagEvtErr >> 2) & 0x1)
+        if ((dicGetval.flagEvtErr >> tagPre) & 0x1)
           printf("ext: calc [Hz] act(unctnty)  %s\n", TXTERROR);
         else
           printf("ext: calc [Hz] act(unctnty)  %14.6f(%8.6f)           diff %9.6f\n", dicDiagval.ext_rfNueAct, dicDiagval.ext_rfNueActErr, dicDiagval.ext_rfNueAct - 1000000000.0 / set_extT);
@@ -550,16 +550,16 @@ int printRf(uint32_t sid)
       break; 
     case 3 ... 4 :
     case 6 ... 7 :                                          // this is an OR
-      if ((dicGetval.flagEvtErr >> 2) & 0x1)
+      if ((dicGetval.flagEvtErr >> tagPre) & 0x1)
         printf(   "ext: act %s\n", TXTERROR);
       else printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
                   dicDiagval.ext_rfOffAct, dicDiagval.ext_rfOffAve, dicDiagval.ext_rfOffSdev, dicGetval.ext_phaseSysmaxErr, dicDiagval.ext_rfOffMin, dicDiagval.ext_rfOffMax);
-      if ((dicGetval.flagEvtErr >> 3) & 0x1) printf("inj: %s\n", TXTERROR);
+      if ((dicGetval.flagEvtErr >> tagPri) & 0x1) printf("inj: %s\n", TXTERROR);
       else printf("inj: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
                   dicDiagval.inj_rfOffAct, dicDiagval.inj_rfOffAve, dicDiagval.inj_rfOffSdev, dicGetval.inj_phaseSysmaxErr, dicDiagval.inj_rfOffMin, dicDiagval.inj_rfOffMax);
       if (dicDiagval.ext_rfNueN == 0) printf("ext: %s\n\n\n", TXTNA);
       else {
-        if ((dicGetval.flagEvtErr >> 2) & 0x1)
+        if ((dicGetval.flagEvtErr >> tagPre) & 0x1)
           printf("ext: calc [Hz] act(unctnty)  %s\n", TXTERROR);
         else
           printf("ext: calc [Hz] act(unctnty)  %14.6f(%8.6f)           diff %9.6f\n", dicDiagval.ext_rfNueAct, dicDiagval.ext_rfNueActErr, dicDiagval.ext_rfNueAct - 1000000000.0 / set_extT);
@@ -568,7 +568,7 @@ int printRf(uint32_t sid)
       } // else
       if (dicDiagval.inj_rfNueN == 0) printf("inj: %s\n\n\n", TXTNA);
       else {
-        if ((dicGetval.flagEvtErr >> 3) & 0x1)
+        if ((dicGetval.flagEvtErr >> tagPri) & 0x1)
           printf("inj: calc [Hz] act(unctnty)  %s\n", TXTERROR);
         else
           printf("inj: calc [Hz] act(unctnty)  %14.6f(%8.6f)           diff %9.6f\n", dicDiagval.inj_rfNueAct, dicDiagval.inj_rfNueActErr, dicDiagval.inj_rfNueAct - 1000000000.0 / set_injT);

@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-Aug-2024
+ *  version : 28-Aug-2024
  *
  * subscribes to and displays status of many b2b transfers
  *
@@ -297,7 +297,7 @@ void buildPrintLine(uint32_t idx)
     if (*(uint32_t *)&(dicDiagval[idx]) == no_link_32) sprintf(nueMeasExt, "NOLINK");
     else {
       nueDiff = dicDiagval[idx].ext_rfNueAct - set_extNue[idx];
-      if ((dicGetval[idx].flagEvtErr >> 2) & 0x1)  sprintf(nueMeasExt, "ERROR: no RF signal detected");
+      if ((dicGetval[idx].flagEvtErr >> tagPre) & 0x1)  sprintf(nueMeasExt, "ERROR: no RF signal detected");
       else {
         if ((fabs(dicDiagval[idx].ext_ddsOffAct) > set_extT[idx] / 10) || (fabs(dicDiagval[idx].ext_rfOffAct) > set_extT[idx] / 4)){  // this is hack to possibly detect wrong set-values
           sprintf(tmp1, "check DDS");
@@ -320,7 +320,7 @@ void buildPrintLine(uint32_t idx)
       if (*(uint32_t *)&(dicDiagval[idx]) == no_link_32) sprintf(nueMeasInj, "NOLINK");
       else {
         nueDiff = dicDiagval[idx].inj_rfNueAct - set_injNue[idx];
-        if ((dicGetval[idx].flagEvtErr >> 3) & 0x1)   sprintf(nueMeasInj, "ERROR: no RF signal detected");
+        if ((dicGetval[idx].flagEvtErr >> tagPri) & 0x1)   sprintf(nueMeasInj, "ERROR: no RF signal detected");
         else {
           if ((fabs(dicDiagval[idx].inj_ddsOffAct) > set_injT[idx] / 10) || (fabs(dicDiagval[idx].inj_rfOffAct) > set_injT[idx] / 4)){  // this is hack to possibly detect wrong set-values
             sprintf(tmp1, "check DDS");
@@ -353,8 +353,8 @@ void buildPrintLine(uint32_t idx)
   } // else flagOther
   
   if (flagB2b) {
-    if ((dicGetval[idx].flagEvtErr >> 4) & 0x1) sprintf(b2b, "%s",  TXTERROR);
-    else                                        sprintf(b2b, "%7.1f %7.1f", convertUnit(dicSetval[idx].cPhase, dicSetval[idx].ext_T), convertUnit(dicDiagval[idx].phaseOffAct, dicSetval[idx].ext_T));
+    if ((dicGetval[idx].flagEvtErr >> tagKte) & 0x1) sprintf(b2b, "%s",  TXTERROR);
+    else                                             sprintf(b2b, "%7.1f %7.1f", convertUnit(dicSetval[idx].cPhase, dicSetval[idx].ext_T), convertUnit(dicDiagval[idx].phaseOffAct, dicSetval[idx].ext_T));
   } // if flagB2B
   else {
     if (flagInjTrig) sprintf(b2b, "coastg");
@@ -363,7 +363,7 @@ void buildPrintLine(uint32_t idx)
   
   if (flagExtTrig) {
     // trigger event received
-    if ((dicGetval[idx].flagEvtRec >> 4) & 0x1) sprintf(tmp1, "%7.1f", convertUnit(set_extCTrig[idx] - dicDiagval[idx].ext_ddsOffAct, dicSetval[idx].ext_T));
+    if ((dicGetval[idx].flagEvtRec >> tagKte) & 0x1) sprintf(tmp1, "%7.1f", convertUnit(set_extCTrig[idx] - dicDiagval[idx].ext_ddsOffAct, dicSetval[idx].ext_T));
     else sprintf(tmp1, "%s", TXTERROR);
     // signal from output of kicker electronics
     if (isnan(dicGetval[idx].ext_dKickMon))     sprintf(tmp2, "%s", TXTERROR);
@@ -380,7 +380,7 @@ void buildPrintLine(uint32_t idx)
 
   if (flagInjTrig) {
     // trigger event received
-    if ((dicGetval[idx].flagEvtRec >> 5) & 0x1) {
+    if ((dicGetval[idx].flagEvtRec >> tagKti) & 0x1) {
       if (flagB2b) {
         if (isnan(dicDiagval[idx].inj_ddsOffAct)) sprintf(tmp1, "%s", TXTUNKWN);
         else                                      sprintf(tmp1, "%7.1f", convertUnit(set_injCTrig[idx] - dicDiagval[idx].inj_ddsOffAct, dicSetval[idx].inj_T)); //b2b : diff to DDS of injection ring

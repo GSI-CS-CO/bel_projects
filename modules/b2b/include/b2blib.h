@@ -114,7 +114,7 @@ extern "C" {
     float    inj_dKickProbLevel;
     float    inj_diagPhase;
     float    inj_diagMatch;
-    uint32_t flagEvtRec;                               // flag for events received; pme, pmi, pre, pri, kte, kti, kde, kdi, pde, pdi, start, stop
+    uint32_t flagEvtRec;                               // flag for events received; pme, pmi, pre, pri, pse, psi, kte, kti, kde, kdi, pde, pdi, start, stop
     uint32_t flagEvtErr;                               // error flag;               pme, pmi, ...
     uint32_t flagEvtLate;                              // flag for events late;     pme, pmi, ...
     uint64_t tCBS;                                     // deadline of CMD_B2B_START [ns]
