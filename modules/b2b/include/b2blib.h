@@ -4,6 +4,7 @@
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
  *  version : 21-Aug-2024
+ *  version : 30-Jan-2024
  *
  * library for b2b
  *
@@ -41,7 +42,7 @@
 extern "C" {
 #endif
 
-#define B2BLIB_VERSION 0x000705
+#define B2BLIB_VERSION 0x000800
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  B2BLIB_STATUS_OK                 0            // OK
@@ -72,7 +73,7 @@ extern "C" {
   enum tuneKnob{NOKNOB, TRIGEXT, TRIGINJ, PHASE};
   typedef enum tuneKnob knob_t;
 
-  enum evtTag{tagPme, tagPmi, tagPre, tagPri, tagKte, tagKti, tagKde, tagKdi, tagPde, tagPdi, tagStart, tagStop};
+  enum evtTag{tagPme, tagPmi, tagPre, tagPri, tagPse, tagPsi, tagKte, tagKti, tagKde, tagKdi, tagPde, tagPdi, tagStart, tagStop};
   typedef enum evtTag evtTag_t;
 
   // data type set values; data are in 'native units' used by the lm32 firmware; NAN of unsigned integers is signaled by all bits set

@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 19-Aug-2024
+ *  version : 28-Aug-2024
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  NB: units of variables are [ns] unless explicitely mentioned as suffix
@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000705                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000800                                      // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -149,6 +149,10 @@ uint64_t  tCBS;                         // deadline of CMD_B2B_START
 uint16_t  offsetPrr_us;                 // offset from CBS to to deadline of PRE [us, hfloat]
 uint32_t  nGExt;                        // geometric harmonic number of extraction machine due to its circumference
 uint32_t  nGInj;                        // geometric harmonic number of injections machine due to its circumference
+b2bt_t    pShiftExt;                    // phase shift value for extraction machine
+b2bt_t    pShiftInj;                    // phase shift value for injection machine
+uint64_t  tWantExt;                     // desired earliest time of extraction
+
 
 // copies for nice trigger messages
 uint32_t  flagsExt;                     // LSA flags extraction
@@ -338,8 +342,12 @@ uint32_t setSubmit()
   // diable 'valid' flag here so that the corresponding setting is disabled in case of erronous settings
   setFlagValid[sid]    = 0;
 
-  if (*pSharedSetMode >= B2B_MODE_B2C) flagInject = 1;
-  else                                 flagInject = 0;
+  if (*pSharedSetMode == B2B_MODE_B2C ||
+      *pSharedSetMode ==  B2B_MODE_B2BFBEAT ||
+      *pSharedSetMode ==  B2B_MODE_B2BPSHIFTE ||
+      *pSharedSetMode ==  B2B_MODE_B2BPSHIFTI
+      ) flagInject = 1;
+  else  flagInject = 0;
 
   // in case of injection to another ring, we need to check for correct SID of extraction ring
   if (flagInject && (*pSharedSetSidEInj != sid)) return B2B_STATUS_BADSETTING;
@@ -348,12 +356,14 @@ uint32_t setSubmit()
   // values required for extraction
   setMode[sid]         = *pSharedSetMode;    
   setGid[sid]          = *pSharedSetGidExt;
-  setTH1Ext_as[sid]     = (uint64_t)(*pSharedSetTH1ExtHi) << 32;
-  setTH1Ext_as[sid]    |= (uint64_t)(*pSharedSetTH1ExtLo);
+  setTH1Ext_as[sid]    = (uint64_t)(*pSharedSetTH1ExtHi) << 32;
+  setTH1Ext_as[sid]   |= (uint64_t)(*pSharedSetTH1ExtLo);
   setNHExt[sid]        = *pSharedSetNHExt;
-  setCTrigExt[sid]   = *pSharedSetCTrigExt;
+  setCTrigExt[sid]     = *pSharedSetCTrigExt;
   setNBuckExt[sid]     = (int32_t)(*pSharedSetNBuckExt);
   setFFinTune[sid]     = *pSharedSetFFinTune;
+  setCPhase[sid]       = *pSharedSetCPhase;
+
 
   // additional values required in case of injection into another ring
   if (flagInject) {
@@ -365,7 +375,6 @@ uint32_t setSubmit()
     setTH1Inj_as[sid]  = (uint64_t)(*pSharedSetTH1InjHi) << 32;
     setTH1Inj_as[sid] |= (uint64_t)(*pSharedSetTH1InjLo);
     setNHInj[sid]      = *pSharedSetNHInj;
-    setCPhase[sid]     = *pSharedSetCPhase;
     setCTrigInj[sid]   = *pSharedSetCTrigInj;
     setNBuckInj[sid]   = (int32_t)(*pSharedSetNBuckInj);
     setFMBTune[sid]    = *pSharedSetFMBTune;
@@ -376,7 +385,6 @@ uint32_t setSubmit()
     setLBpidInj[sid]   = 0;
     setLParamInj[sid]  = 0;
     setLParamInj[sid]  = 0;
-    setCPhase[sid]     = 0;
     setCTrigInj[sid]   = 0;
     setNBuckInj[sid]   = 0;
     setFMBTune[sid]    = 0;
@@ -828,30 +836,30 @@ uint32_t getNextMState(uint32_t mode, uint32_t actMState) {
   uint32_t nextMState = B2B_MFSM_NOTHING;
 
   switch (mode) {
-    case B2B_MODE_OFF :     // off (slow extraction)
+    case B2B_MODE_OFF :     // off (no or slow extraction)
       switch (actMState) {
         case B2B_MFSM_S0 :
-          nextMState = B2B_MFSM_EXTPS;
+          nextMState = B2B_MFSM_EXT_PMEAS_S;
           break;
-        case B2B_MFSM_EXTPS :
+        case B2B_MFSM_EXT_PMEAS_S :
           nextMState = B2B_MFSM_NOTHING;
           break;
         default :
           nextMState = B2B_MFSM_NOTHING;
       } // switch actMState mode OFF
       break;
-    case B2B_MODE_BSE :     // kick on start event
+    case B2B_MODE_BSE :     // trigger kicker (no synchronization to h=1 signal); might by useful for testing
       switch (actMState) {
         case B2B_MFSM_S0 :
-          nextMState = B2B_MFSM_EXTKICK;
+          nextMState = B2B_MFSM_EXT_TKICK_C;
           break;
-        case B2B_MFSM_EXTKICK :
-          nextMState =  B2B_MFSM_EXTPS;
+        case B2B_MFSM_EXT_TKICK_C :
+          nextMState =  B2B_MFSM_EXT_PMEAS_S;
           break;
-        case B2B_MFSM_EXTPS :
-          nextMState =  B2B_MFSM_EXTTRIG;
+        case B2B_MFSM_EXT_PMEAS_S :
+          nextMState = B2B_MFSM_EXT_TRIG;
           break;
-        case B2B_MFSM_EXTTRIG :
+        case B2B_MFSM_EXT_TRIG :
           nextMState = B2B_MFSM_NOTHING;
           break;
         default:
@@ -861,18 +869,18 @@ uint32_t getNextMState(uint32_t mode, uint32_t actMState) {
     case B2B_MODE_B2E :     // bunch to extraction
       switch (actMState) {
         case B2B_MFSM_S0 :
-          nextMState = B2B_MFSM_EXTPS;
+          nextMState = B2B_MFSM_EXT_PMEAS_S;
           break;
-        case  B2B_MFSM_EXTPS :
-          nextMState = B2B_MFSM_EXTPR;
+        case  B2B_MFSM_EXT_PMEAS_S :
+          nextMState = B2B_MFSM_EXT_PMEAS_R;
           break;
-        case B2B_MFSM_EXTPR :
-          nextMState = B2B_MFSM_EXTBGT;
+        case B2B_MFSM_EXT_PMEAS_R :
+          nextMState = B2B_MFSM_EXT_TNEXTRF_C;
           break;
-        case B2B_MFSM_EXTBGT :
-          nextMState = B2B_MFSM_EXTTRIG;
+        case B2B_MFSM_EXT_TNEXTRF_C :
+          nextMState = B2B_MFSM_EXT_TRIG;
           break;
-        case B2B_MFSM_EXTTRIG :
+        case B2B_MFSM_EXT_TRIG :
           nextMState = B2B_MFSM_NOTHING;
           break;
         default :
@@ -882,66 +890,90 @@ uint32_t getNextMState(uint32_t mode, uint32_t actMState) {
     case B2B_MODE_B2C :     // bunch to coasting beam
       switch (actMState) {
         case B2B_MFSM_S0 :
-          nextMState = B2B_MFSM_EXTPS;
+          nextMState = B2B_MFSM_EXT_PMEAS_S;
           break;
-        case B2B_MFSM_EXTPS :
-          nextMState = B2B_MFSM_INJPS;
+        case B2B_MFSM_EXT_PMEAS_S :
+          nextMState = B2B_MFSM_INJ_PMEAS_S;
           break;
-        case B2B_MFSM_INJPS :
-          nextMState = B2B_MFSM_EXTPR;
+        case B2B_MFSM_INJ_PMEAS_S :
+          nextMState = B2B_MFSM_EXT_PMEAS_R;
           break;
-        case B2B_MFSM_EXTPR :
-          nextMState = B2B_MFSM_EXTBGT;
+        case B2B_MFSM_EXT_PMEAS_R :
+          nextMState = B2B_MFSM_EXT_TNEXTRF_C;
           break;
-        case B2B_MFSM_EXTBGT :
-          nextMState = B2B_MFSM_EXTTRIG;
+        case B2B_MFSM_EXT_TNEXTRF_C :
+          nextMState = B2B_MFSM_EXT_TRIG;
           break;
-        case B2B_MFSM_EXTTRIG :
-          nextMState = B2B_MFSM_INJTRIG ;
+        case B2B_MFSM_EXT_TRIG :
+          nextMState = B2B_MFSM_INJ_TRIG ;
           break;
-        case B2B_MFSM_INJTRIG :
+        case B2B_MFSM_INJ_TRIG :
           nextMState = B2B_MFSM_NOTHING;
           break;
         default :
           nextMState = B2B_MFSM_NOTHING;
       } // switch actMState mode B2C
       break;
-    case B2B_MODE_B2B :     // bunch to bucket
+    case B2B_MODE_B2BFBEAT :     // bunch to bucket, frequency beating
       switch (actMState) {
         case B2B_MFSM_S0 :
-          nextMState = B2B_MFSM_EXTPS;
+          nextMState = B2B_MFSM_EXT_PMEAS_S;
           break;
-        case B2B_MFSM_EXTPS :
-          nextMState = B2B_MFSM_INJPS;
+        case B2B_MFSM_EXT_PMEAS_S :
+          nextMState = B2B_MFSM_INJ_PMEAS_S;
           break;
-        case B2B_MFSM_INJPS :
+        case B2B_MFSM_INJ_PMEAS_S :
           nPhaseResult = 0;     
-          nextMState = B2B_MFSM_BOTHPR;
+          nextMState = B2B_MFSM_ALL_PMEAS_R;
           break;                           
-        case B2B_MFSM_BOTHPR :                                      // we have a diamond structure: we requested two phase measurements
-          nPhaseResult++;                                           // but we don't know which result is received first; the simplest 
-          if (nPhaseResult == 2) nextMState = B2B_MFSM_EXTMATCHT;   // solution is to use a counter and count to 2
-          else                   nextMState = B2B_MFSM_BOTHPR;
+        case B2B_MFSM_ALL_PMEAS_R :                                  // we have a diamond structure: we requested two phase measurements
+          nPhaseResult++;                                            // but we don't know which result is received first; the simplest 
+          if (nPhaseResult == 2) nextMState = B2B_MFSM_EXT_TFBEAT_C; // solution is to use a counter and count to 2
+          else                   nextMState = B2B_MFSM_ALL_PMEAS_R;
           break;
-        case B2B_MFSM_EXTMATCHT :
-          nextMState = B2B_MFSM_EXTTRIG;
+        case B2B_MFSM_EXT_TFBEAT_C :
+          nextMState = B2B_MFSM_EXT_TRIG;
           break;
-        case B2B_MFSM_EXTTRIG :
-          nextMState = B2B_MFSM_INJTRIG ;
+        case B2B_MFSM_EXT_TRIG :
+          nextMState = B2B_MFSM_INJ_TRIG ;
           break;
-        case B2B_MFSM_INJTRIG :
+        case B2B_MFSM_INJ_TRIG :
           nextMState = B2B_MFSM_NOTHING;
           break;
         default :
           nextMState = B2B_MFSM_NOTHING;
       } // switch actMState mode B2C
+      break;
+    case B2B_MODE_B2EPSHIFT :   // bunch to extraction; basically the same as mode B2B_MODE_B2E but with additional phase shift; might be useful for testing
+      switch (actMState) {
+        case B2B_MFSM_S0 :
+          nextMState = B2B_MFSM_EXT_PMEAS_S;
+          break;
+        case  B2B_MFSM_EXT_PMEAS_S :
+          nextMState = B2B_MFSM_EXT_PMEAS_R;
+          break;
+        case B2B_MFSM_EXT_PMEAS_R :
+          nextMState = B2B_MFSM_EXT_PSHIFT_S;
+          break;
+        case B2B_MFSM_EXT_PSHIFT_S :
+          nextMState = B2B_MFSM_EXT_TNEXTRF_C;
+          break;
+        case B2B_MFSM_EXT_TNEXTRF_C :
+          nextMState = B2B_MFSM_EXT_TRIG;
+          break;
+        case B2B_MFSM_EXT_TRIG :
+          nextMState = B2B_MFSM_NOTHING;
+          break;
+        default :
+          nextMState = B2B_MFSM_NOTHING;
+      } // switch actMState mode B2EPSHIFT
       break;
       
     default :
       nextMState = B2B_MFSM_NOTHING;
   } // switch mode
 
-  //if (!nextMState) pp_printf("mode %x, actMState %x\n", mode, actMState);
+  // pp_printf("mode %x, actMState %x nxtMState %x\n", mode, actMState, nextMState);
 
   return nextMState;
 } // getNextMState
@@ -970,7 +1002,6 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   uint32_t recBpid;                                           // BPID received
   uint32_t recRes;                                            // reserved bits received
   uint64_t tMatch;                                            // time when phases of injecion and extraction match
-  uint64_t tWantExt;                                          // approximate time of extraction
   uint64_t tTrig;                                             // time when kickers shall be triggered;
   uint64_t tTrigExt;                                          // time when extraction kicker shall be triggered; tTrigExt = tTrig + cTrigExt;
   uint64_t tTrigInj;                                          // time when injection kicker shall be triggered;  tTrigInj = tTrig + cTrigInj;
@@ -981,7 +1012,9 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   
   uint32_t tmp32;
   float    tmpf;
+  fdat_t   tmp;
   uint64_t t1, t2;
+  
 
   status = actStatus;
 
@@ -1070,7 +1103,41 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
       tCBS        = recDeadline;
       getGeometricHarmonics(gid, &nGExt, &nGInj);
-      
+
+      // initialize approximate/earliest trigger time
+      switch (mode) {
+        case B2B_MODE_BSE        :   // kick Start, simply trigger at eaerliest deadline; maybe useful for testing
+        case B2B_MODE_B2E        :   // fast extraction in phase gap; this is an OR, no 'break' on purpose
+        case B2B_MODE_B2C        :   // bunch to coasting beam; transfer between rings; this is an OR, no 'break' on purpose
+        case B2B_MODE_B2BFBEAT   :   // bunch to bucket using frequency beating; this is an OR, no 'break' on purpose
+          tWantExt = tCBS + B2B_KICKOFFSETMIN;
+          break;
+        case B2B_MODE_B2EPSHIFT  :   // phase shift followed by fast extraction in bunch gap; maybe useful for testing
+        case B2B_MODE_B2BPSHIFTE :   // bunch to bucket using phase shift at extraction machine; this is an OR, no 'break' on purpose
+        case B2B_MODE_B2BPSHIFTI :   // bunch to bucket using phase shift at injection machine; this is an OR, no 'break' on purpose
+          tWantExt = tCBS + B2B_KICKOFFSETPSHIFT;
+          break;
+        default :
+          tWantExt = tCBS;
+          break;
+      } // switch mode
+
+      // initialize phase shift values
+      switch (mode) {
+        case B2B_MODE_B2EPSHIFT  :
+          pShiftExt.ns = cPhase_t.ns;                         // chk: temporary solution; in the future this value might be available by a dedicated parameter
+          pShiftExt.ps = cPhase_t.ps;                         // chk: temporary solution; in the future this value might be available by a dedicated parameter
+          pShiftInj.ns = 0;
+          pShiftInj.ps = 0;
+          break;
+        default :
+          pShiftExt.ns = 0;
+          pShiftExt.ps = 0;
+          pShiftInj.ns = 0;
+          pShiftInj.ps = 0;
+          break;
+      } // switch mode
+
       mState      = getNextMState(mode, B2B_MFSM_S0);
       errorFlags  = 0x0;
       break;
@@ -1086,9 +1153,9 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       recRes       = (uint32_t)(recId & 0x3f);                 // lowest 6 bit of EvtId
 
       // check, if received evtID is valid
-      if (recGid != gid)                                             return COMMON_STATUS_OUTOFRANGE;   
-      if (recSid != sid)                                             return COMMON_STATUS_OUTOFRANGE;
-      if ((mState != B2B_MFSM_EXTPR) && (mState != B2B_MFSM_BOTHPR)) return COMMON_STATUS_OUTOFRANGE;
+      if (recGid != gid)                                                        return COMMON_STATUS_OUTOFRANGE;   
+      if (recSid != sid)                                                        return COMMON_STATUS_OUTOFRANGE;
+      if ((mState != B2B_MFSM_EXT_PMEAS_R) && (mState != B2B_MFSM_ALL_PMEAS_R)) return COMMON_STATUS_OUTOFRANGE;
 
       // handling error bits
       if (recRes & B2B_ERRFLAG_PMEXT) errorFlags |= B2B_ERRFLAG_PMEXT;
@@ -1103,11 +1170,10 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       break;
 
     case B2B_ECADO_B2B_PRINJ :                                 // received: measured phase from injection machine
-      if (mode <  B2B_MODE_B2B) return status;                 // ignore informative phase result
-      comLatency   = (int32_t)(getSysTime() - recDeadline);
-
-      tmpf         = (float)(getSysTime() - tCBS) / 1000.0;    // time from CBS to now [us]
-      offsetPrr_us = fwlib_float2half(tmpf);                   // -> half precision
+      if (mode <  B2B_MODE_B2BFBEAT) return status;            // ignore informative phase result
+      comLatency    = (int32_t)(getSysTime() - recDeadline);
+      tmpf          = (float)(getSysTime() - tCBS) / 1000.0;    // time from CBS to now [us]
+      offsetPrr_us  = fwlib_float2half(tmpf);                   // -> half precision
       recGid        = (uint32_t)((recId >> 48) & 0xfff     );
       recSid        = (uint32_t)((recId >> 20) & 0xfff     );
       recRes        = (uint32_t)(recId & 0x3f);               // lowest 6 bit of EvtId
@@ -1115,7 +1181,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       // check, if received evtID is valid
       if (recGid != gid)             return COMMON_STATUS_OUTOFRANGE;   
       if (recSid != sid)             return COMMON_STATUS_OUTOFRANGE;
-      if (mState != B2B_MFSM_BOTHPR) return COMMON_STATUS_OUTOFRANGE;
+      if (mState != B2B_MFSM_ALL_PMEAS_R) return COMMON_STATUS_OUTOFRANGE;
 
       // handling error bits
       if (recRes & B2B_ERRFLAG_PMINJ) errorFlags |= B2B_ERRFLAG_PMINJ;
@@ -1136,14 +1202,14 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   } // switch ecaAction
 
   // trigger at earliest kicker deadline
-  if (mState == B2B_MFSM_EXTKICK) {
-    tTrig      = tCBS + B2B_KICKOFFSETMIN;
+  if (mState == B2B_MFSM_EXT_TKICK_C) {
+    tTrig      = tWantExt;
     transStat |= mState;
     mState     = getNextMState(mode, mState);
-  } // B2B_MFSM_EXTKICK
+  } // B2B_MFSM_EXT_TKICK_C
 
   // request phase measurement of extraction 
-  if (mState == B2B_MFSM_EXTPS) {
+  if (mState == B2B_MFSM_EXT_PMEAS_S) {
     tH1Ext_t.ns    = 0x0;
     tH1Ext_t.ps    = 0x0;
     tH1Ext_t.dps   = 0x0;
@@ -1159,10 +1225,10 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, sendTef, 0);
     transStat     |= mState;
     mState         = getNextMState(mode, mState);
-  } // B2B_MFSM_EXTPS
+  } // B2B_MFSM_EXT_PMEAS_S
 
   // request phase measurement of injection
-  if (mState == B2B_MFSM_INJPS) {
+  if (mState == B2B_MFSM_INJ_PMEAS_S) {
     tH1Inj_t.ns    = 0x0;
     tH1Inj_t.ps    = 0x0;
     tH1Inj_t.dps   = 0x0;
@@ -1177,24 +1243,38 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, sendTef, 0);
     transStat     |= mState;
     mState         = getNextMState(mode, mState);
-  } // B2B_MFSM_INJPS
+  } // B2B_MFSM_INJ_PMEAS_S
 
-  // prepare fast extraction in bunch gap: calculate trigger time
-  if (mState == B2B_MFSM_EXTBGT) {
-    tWantExt = tCBS + B2B_KICKOFFSETMIN;
-    if (errorFlags) tTrig = tWantExt;                                         // plan B
+  // send phase shift request to low-level rf at extraction machine
+  if (mState == B2B_MFSM_EXT_PSHIFT_S) {
+    // send command: phase shift at extraction machine
+    sendEvtId      = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PSHIFTEXT, flagsExt, sidExt, bpidExt, 0);
+    // send param: low word: absolute phase shift value [degree, float]
+    // chk: N.B. this only works if the absolute phase shift so far is '0'
+    tmp.f = 360.0 * fwlib_tps2tfns(pShiftExt)/((float)TH1Ext_as / 1000000000.0);// phase shift [degree, float]
+    sendParam      = (uint64_t)(tmp.data);
+    tmp.f = (float)B2B_PHASESHIFTTIME;                                          // time for phase shift [ns, float]
+    sendParam     |= (uint64_t)(tmp.data) << 32;
+    sendDeadline   =  getSysTime() + (uint64_t)COMMON_AHEADT;                   // use a conservative deadline
+    fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0, 0);
+    transStat     |= mState;
+    mState         = getNextMState(mode, mState);
+  } // B2B_MFSM_EXT_PSHIFT_S
+
+  // prepare fast extraction at ~tWantExt; calculate time for next positive 0-crossing of h=1 signal
+  if (mState == B2B_MFSM_EXT_TNEXTRF_C) {
+    tWantExt      = tWantExt + pShiftExt.ns; 
+    if (errorFlags) tTrig = tWantExt;                                           // plan B
     else if (calcExtTime(&tTrig, tWantExt) != COMMON_STATUS_OK) {
-      tTrig       = tWantExt;                                                 // plan B
+      tTrig       = tWantExt;                                                   // plan B
       errorFlags |= B2B_ERRFLAG_CBU;
     } // if NOT STATUS_OK
-      
     transStat |= mState;
     mState     = getNextMState(mode, mState);
-  } // B2B_MFSM_EXTBGT
+  } // B2B_MFSM_EXT_TNEXTRF_C
 
   // prepare fast extraction with phase matching between both machines is achieved: calculate trigger time
-  if (mState == B2B_MFSM_EXTMATCHT) {
-    tWantExt = tCBS + B2B_KICKOFFSETMIN;
+  if (mState == B2B_MFSM_EXT_TFBEAT_C) {
     //tmp32 = (getSysTime() - tCBS); pp_printf("pre phase match %u\n", tmp32);
     if (errorFlags) {tTrig =  tWantExt;/*pp_printf("b2b: error flags\n");*/}  // plan B
     else if ((status = calcPhaseMatch(tWantExt, &tTrig, &TBeat_as)) != COMMON_STATUS_OK) {
@@ -1205,10 +1285,10 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     transStat   |= mState;
     mState       = getNextMState(mode, mState);
     //tmp32 = (getSysTime() - tCBS); pp_printf("post phase match %u\n", tmp32);
-  } // B2B_MFSM_EXTMATCHT
+  } // B2B_MFSM_EXT_TFBEAT_C
 
   // trigger extraction kicker
-  if (mState == B2B_MFSM_EXTTRIG ) {
+  if (mState == B2B_MFSM_EXT_TRIG ) {
     sendGid      =  getTrigGid(1);
     if (!sendGid) return COMMON_STATUS_OUTOFRANGE;
     tTrigExt     = tTrig + cTrigExt_t.ns;                                     // trigger correction; chk: sub-ns part
@@ -1227,10 +1307,10 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, sendTef, 0);
     transStat   |= mState;
     mState       = getNextMState(mode, mState);
-  } // B2B_MFSM_EXTTRIG
+  } // B2B_MFSM_EXT_TRIG
 
   // trigger injection kicker
-  if (mState == B2B_MFSM_INJTRIG ) {
+  if (mState == B2B_MFSM_INJ_TRIG ) {
     sendGid      =  getTrigGid(0);
     if (!sendGid) return COMMON_STATUS_OUTOFRANGE;
     tTrigInj     = tTrig + cTrigInj_t.ns;                                     // trigger correction; chk: sub-ns part
@@ -1245,7 +1325,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     } // else tTrigInj
     transStat   |= mState;
     mState       = getNextMState(mode, mState);
-  } // B2B_MFSM_TRIGINJ
+  } // B2B_MFSM_INJ_TRIG
   
   if (flagClearAllSid) {clearAllSid(); flagClearAllSid = 0;}
 

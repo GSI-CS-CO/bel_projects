@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 17-Oct-2023
+ *  version : 30-Jan-2024
  *
  * subscribes to and displays status of a b2b transfer
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_VIEWER_VERSION 0x000705
+#define B2B_VIEWER_VERSION 0x000800
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -107,11 +107,15 @@ double   b2b_diffD;                                         // difference of rf 
 double   b2b_beatNue;                                       // beat frequency
 double   b2b_beatT;                                         // beat period
 
-#define MSKRECMODE0 0x105               // mask defining events that should be received for the different modes, mode off
-#define MSKRECMODE1 0x155               // ... mode BSE
-#define MSKRECMODE2 0x155               // ... mode B2E
-#define MSKRECMODE3 0x3ff               // ... mode B2C
-#define MSKRECMODE4 0x3ff               // ... mode B2B
+#define MSKRECMODE0 0x405               // mask defining events that should be received for the different modes, mode off
+#define MSKRECMODE1 0x545               // ... mode BSE
+#define MSKRECMODE2 0x545               // ... mode B2E
+#define MSKRECMODE3 0xfcf               // ... mode B2C
+#define MSKRECMODE4 0xfcf               // ... mode B2BFBEAT
+#define MSKRECMODE5 0x555               // ... mode B2EPSHIFT
+#define MSKRECMODE6 0xfdf               // ... mode B2BPSHIFTE
+#define MSKRECMODE7 0xfef               // ... mode B2BPSHIFTI
+
 
 // other
 int      flagPrintSet;                                      // flag: print set values
@@ -333,6 +337,10 @@ int printSet(uint32_t sid)
       sprintf(modeStr, "'bunch 2 bucket'");
       modeMask = MSKRECMODE4;
       break;
+    case 5 :
+      sprintf(modeStr, "'bunch 2 fast ext. w. phase shift");
+      modeMask = MSKRECMODE5;
+      break;
     default :
       sprintf(modeStr, "'unknonwn'");
   } // switch mode
@@ -350,7 +358,7 @@ int printSet(uint32_t sid)
       printf("inj: %s\n", TXTNA);
       printf("b2b: %s\n", TXTNA);
       break;*/
-    case 1 ... 2 : 
+    case 1 ... 2 :
       printf("ext: kick  corr %8.3f ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_extCTrig, set_extNue, set_extT, set_extH);
       printf("inj: %s\n", TXTNA);
       printf("b2b: %s\n", TXTNA);
@@ -364,6 +372,11 @@ int printSet(uint32_t sid)
       printf("ext: kick  corr %8.3f ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_extCTrig, set_extNue, set_extT, set_extH);
       printf("inj: kick  corr %8.3f ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_injCTrig, set_injNue, set_injT, set_injH);
       printf("b2b: phase corr %8.3f ns       %12.3f °\n", set_cPhase, set_cPhaseD);
+      break;
+    case 5:
+      printf("ext: kick  corr %8.3f ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_extCTrig, set_extNue, set_extT, set_extH);
+      printf("inj: %s\n", TXTNA);
+      printf("b2b: phase corr %8.3f ns       %12.3f °\n", set_cPhase, set_cPhaseD);     
       break;
     default :
       ;
@@ -401,6 +414,13 @@ int printDiag(uint32_t sid)
       else  printf("b2b: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
                    dicDiagval.phaseOffAct, dicDiagval.phaseOffAve, dicDiagval.phaseOffSdev, dicGetval.ext_phaseSysmaxErr + dicGetval.inj_phaseSysmaxErr, dicDiagval.phaseOffMin, dicDiagval.phaseOffMax);
       break;
+    case 5 :
+      if (dicDiagval.ext_ddsOffN == 0) printf("ext: %s\n", TXTNA);
+      else  printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
+                   dicDiagval.ext_ddsOffAct, dicDiagval.ext_ddsOffAve, dicDiagval.ext_ddsOffSdev, dicGetval.ext_phaseSysmaxErr, dicDiagval.ext_ddsOffMin, dicDiagval.ext_ddsOffMax);
+      printf("inj: %s\n", TXTNA);
+      printf("b2b: %s\n", TXTNA);
+      break;
     default :
       ;
   } // switch set mode
@@ -414,7 +434,7 @@ int printKick(uint32_t sid)
   printf("--- kicker ---                                           #ext %5u, #inj %5u\n", dicDiagstat.ext_monRemN, dicDiagstat.inj_monRemN);
 
   // extraction kicker
-  if (set_mode == 0) printf("ext: %s\n\n", TXTNA);
+  if (set_mode == B2B_MODE_OFF) printf("ext: %s\n\n", TXTNA);
   else {
     printf("ext: monitor delay [ns] %5.0f", dicGetval.ext_dKickMon);
     printf(", probe delay [ns] %5.0f\n"   , dicGetval.ext_dKickProb);
@@ -424,13 +444,13 @@ int printKick(uint32_t sid)
   } // else mode == 0
 
   // injection kicker
-  if (set_mode < 3) printf("inj: %s\n\n", TXTNA);
+  if ((set_mode < B2B_MODE_B2C) || (set_mode == B2B_MODE_B2EPSHIFT)) printf("inj: %s\n\n", TXTNA);
   else {
     printf("inj: monitor delay [ns] %5.0f", dicGetval.inj_dKickMon);
     printf(", probe delay [ns] %5.0f"     , dicGetval.inj_dKickProb);
     printf(", diff mon. [ns] %f\n", dicGetval.inj_dKickMon - dicGetval.ext_dKickMon);
-    if (set_mode > 3) printf("     mon h=1 ph [ns] act %4.0f, ave(sdev) %8.3f(%6.3f), minmax %4.0f, %4.0f\n", dicDiagstat.inj_monRemAct, dicDiagstat.inj_monRemAve, dicDiagstat.inj_monRemSdev,
-                             dicDiagstat.inj_monRemMin, dicDiagstat.inj_monRemMax);
+    if (set_mode > B2B_MODE_B2C) printf("     mon h=1 ph [ns] act %4.0f, ave(sdev) %8.3f(%6.3f), minmax %4.0f, %4.0f\n", dicDiagstat.inj_monRemAct, dicDiagstat.inj_monRemAve, dicDiagstat.inj_monRemSdev,
+                                        dicDiagstat.inj_monRemMin, dicDiagstat.inj_monRemMax);
     else              printf("\n");
   } // else mode < 3
 
@@ -448,7 +468,7 @@ int printStatus(uint32_t sid)
 
   printf("--- status (expert) ---                      #b2b %5u, #ext %5u, #inj %5u\n", dicDiagstat.cbs_priOffN, dicDiagstat.cbs_kteOffN, dicDiagstat.cbs_ktiOffN);
 
-  printf("events  :   PME  PMI  PRE  PRI  KTE  KTI  KDE  KDI  PDE  PDI\n");
+  printf("events  :   PME  PMI  PRE  PRI  PSE  PSI  KTE  KTI  KDE  KDI  PDE  PDI\n");
 
   printf("required:");
   for (i=0; i<10; i++) if ((modeMask    >> i) & 0x1) printf("    X"); else printf("     ");
@@ -487,7 +507,7 @@ int printStatus(uint32_t sid)
            (double)dicDiagstat.cbs_kteOffAct/1000.0, dicDiagstat.cbs_kteOffAve/1000.0, dicDiagstat.cbs_kteOffSdev/1000.0,
            (double)dicDiagstat.cbs_kteOffMin/1000.0, (double)dicDiagstat.cbs_kteOffMax/1000.0);
   }
-  if (set_mode < B2B_MODE_B2C)
+  if ((set_mode < B2B_MODE_B2C) || (set_mode ==  B2B_MODE_B2EPSHIFT))
     printf("KTI-CBS [us]: %s\n", TXTNA);
   else
     printf("KTI-CBS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
@@ -512,6 +532,7 @@ int printRf(uint32_t sid)
   printf("--- rf DDS [ns] ---                                      #ext %5u, #inj %5u\n", dicDiagval.ext_rfOffN, dicDiagval.inj_rfOffN);
   switch(set_mode) {
     case 0 ... 2 :
+    case 5       :                                          // this is an OR
       if ((dicGetval.flagEvtErr >> 2) & 0x1) printf("ext: %s\n", TXTERROR);
       else printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
                   dicDiagval.ext_rfOffAct, dicDiagval.ext_rfOffAve, dicDiagval.ext_rfOffSdev, dicGetval.ext_phaseSysmaxErr, dicDiagval.ext_rfOffMin, dicDiagval.ext_rfOffMax);
@@ -528,6 +549,7 @@ int printRf(uint32_t sid)
       printf("inj: %s\n\n\n", TXTNA);
       break; 
     case 3 ... 4 :
+    case 6 ... 7 :                                          // this is an OR
       if ((dicGetval.flagEvtErr >> 2) & 0x1)
         printf(   "ext: act %s\n", TXTERROR);
       else printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
@@ -585,7 +607,16 @@ void printData(int flagOnce, uint32_t sid, char *name)
       sprintf(modeStr, "'bunch 2 coasting'");
       break;
     case 4 :
-      sprintf(modeStr, "'bunch 2 bucket'");
+      sprintf(modeStr, "'bunch 2 bucket f-beat'");
+      break;
+    case 5 :
+      sprintf(modeStr, "'b2extr. phase shift'");
+      break;
+    case 6 :
+      sprintf(modeStr, "'b2b phase shift extr.'");
+      break;
+    case 7 :
+      sprintf(modeStr, "'b2 phase shift inj.'");
       break;
     default :
       sprintf(modeStr, "'unknonwn'");
