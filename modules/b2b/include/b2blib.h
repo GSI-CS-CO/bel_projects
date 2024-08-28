@@ -3,7 +3,8 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 20-Nov-2023
+ *  version : 21-Aug-2024
+ *  version : 30-Jan-2024
  *
  * library for b2b
  *
@@ -41,7 +42,7 @@
 extern "C" {
 #endif
 
-#define B2BLIB_VERSION 0x000702
+#define B2BLIB_VERSION 0x000800
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  B2BLIB_STATUS_OK                 0            // OK
@@ -72,7 +73,7 @@ extern "C" {
   enum tuneKnob{NOKNOB, TRIGEXT, TRIGINJ, PHASE};
   typedef enum tuneKnob knob_t;
 
-  enum evtTag{tagPme, tagPmi, tagPre, tagPri, tagKte, tagKti, tagKde, tagKdi, tagPde, tagPdi, tagStart, tagStop};
+  enum evtTag{tagPme, tagPmi, tagPre, tagPri, tagPse, tagPsi, tagKte, tagKti, tagKde, tagKdi, tagPde, tagPdi, tagStart, tagStop};
   typedef enum evtTag evtTag_t;
 
   // data type set values; data are in 'native units' used by the lm32 firmware; NAN of unsigned integers is signaled by all bits set
@@ -82,10 +83,12 @@ extern "C" {
     uint32_t ext_h;                                    // extraction: harmonic number of rf
     float    ext_cTrig;                                // extraction: correction for extraction kicker [ns]
     uint32_t ext_sid;                                  // extraction: ID of extraction sequence (redundant)
+    uint32_t ext_gid;                                  // extraction: GID of extraction machine (redundant)
     uint64_t inj_T;                                    // injection : ...
     uint32_t inj_h;
     float    inj_cTrig;
     uint32_t inj_sid;
+    uint32_t inj_gid; 
     float    cPhase;                                   // phase correction for b2b mode
   } setval_t;
 
@@ -97,6 +100,8 @@ extern "C" {
     float    ext_phaseSysmaxErr;                       // extraction: maximum systematic error of phase [ns]
     float    ext_dKickMon;                             // extraction: offset electronics monitor signal [ns]
     float    ext_dKickProb;                            // extraction: offset magnet probe signal [ns]
+    float    ext_dKickProbLen;                         // extraction: length of magnet probe signal [ns]
+    float    ext_dKickProbLevel;                       // extraction: level of comparator for magent probe signal [%]
     float    ext_diagPhase;                            // extraction: offset from expected h=1 to actual h=1 signal [ns]
     float    ext_diagMatch;                            // extraction: offset from calculated 'phase match' to actual h=1 signal [ns]
     uint64_t inj_phase;                                // injection : ...
@@ -105,9 +110,11 @@ extern "C" {
     float    inj_phaseSysmaxErr;    
     float    inj_dKickMon;
     float    inj_dKickProb;
+    float    inj_dKickProbLen;
+    float    inj_dKickProbLevel;
     float    inj_diagPhase;
     float    inj_diagMatch;
-    uint32_t flagEvtRec;                               // flag for events received; pme, pmi, pre, pri, kte, kti, kde, kdi, pde, pdi, start, stop
+    uint32_t flagEvtRec;                               // flag for events received; pme, pmi, pre, pri, pse, psi, kte, kti, kde, kdi, pde, pdi, start, stop
     uint32_t flagEvtErr;                               // error flag;               pme, pmi, ...
     uint32_t flagEvtLate;                              // flag for events late;     pme, pmi, ...
     uint64_t tCBS;                                     // deadline of CMD_B2B_START [ns]
@@ -320,7 +327,6 @@ extern "C" {
                          double  *cPhase,                      // correction of phase [ns]
                          double  *cTrigExt,                    // correction of extraction kicker trigger [ns]
                          double  *cTrigInj,                    // correction of injection kicker trigger [ns]
-                         int32_t *comLatency,                  // communication latency [ns]
                          int     printFlag                     // prints info on b2b firmware properties to stdout
                          );
   

@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 27-Sep-2023
+ *  version : 16-Aug-2023
  *
  * subscribes to and displays status of a b2b system (CBU, PM, KD ...)
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_CLIENT_SYS_VERSION 0x000702
+#define B2B_CLIENT_SYS_VERSION 0x000800
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -154,7 +154,6 @@ static void help(void) {
   fprintf(stderr, "\n");
   fprintf(stderr, "  -h                  display this help and exit\n");
   fprintf(stderr, "  -e                  display version\n");
-  fprintf(stderr, "  -s                  subscribe and display system info\n");
   fprintf(stderr, "  -o                  print info only once and exit (useful with '-s')\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to display system information on the B2B system\n");
@@ -323,7 +322,6 @@ int main(int argc, char** argv) {
   //  char *tail;
 
   int      getVersion;
-  int      subscribe;
   int      once;
 
   char     userInput;
@@ -335,17 +333,13 @@ int main(int argc, char** argv) {
 
   program    = argv[0];
   getVersion = 0;
-  subscribe  = 0;
   once       = 0;
   quit       = 0;
 
-  while ((opt = getopt(argc, argv, "seho")) != -1) {
+  while ((opt = getopt(argc, argv, "eho")) != -1) {
     switch (opt) {
       case 'e':
         getVersion = 1;
-        break;
-      case 's':
-        subscribe = 1;
         break;
       case 'o':
         once = 1;
@@ -385,40 +379,38 @@ int main(int argc, char** argv) {
   buildHeader(environment);
   if (getVersion) printf("%s: version %s\n", program, b2b_version_text(B2B_CLIENT_SYS_VERSION));
 
-  if (subscribe) {
-    printf("b2b-client-sys: starting client using prefix %s\n", prefix);
-    sleep(1);
-    dicSubscribeServices(prefix);
+  printf("b2b-client-sys: starting client using prefix %s\n", prefix);
+  sleep(1);
+  dicSubscribeServices(prefix);
 
-    while (!quit) {
-      if (once) {sleep(1); quit=1;}                 // wait a bit to get the values
-      printServices(once);
-      if (!quit) {
-        sysId = 0xffff;
-        userInput = comlib_term_getChar();
-        switch (userInput) {
-          case 'a' ... 'f' :
-            sysId = userInput - 87;                 // no break on purpose
-          case '0' ... '9' :
-            if (sysId == 0xffff) sysId = userInput - 48; // ugly
-            dicCmdClearDiag(prefix, sysId);
-            dicCmdClearJitterChk(prefix, sysId);
-            break;
-          case 'h'         :
-            printHelpText();
-            break;
-          case 'q'         :
-            quit = 1;
-            break;
-          case 's'         :
-            printStatusText();
-            break;
-          default          :
-            usleep(1000000);
-        } // switch
-      } // if !quit
-    } // while
-  } // if subscribe
+  while (!quit) {
+    if (once) {sleep(1); quit=1;}                 // wait a bit to get the values
+    printServices(once);
+    if (!quit) {
+      sysId = 0xffff;
+      userInput = comlib_term_getChar();
+      switch (userInput) {
+        case 'a' ... 'f' :
+          sysId = userInput - 87;                 // no break on purpose
+        case '0' ... '9' :
+          if (sysId == 0xffff) sysId = userInput - 48; // ugly
+          dicCmdClearDiag(prefix, sysId);
+          dicCmdClearJitterChk(prefix, sysId);
+          break;
+        case 'h'         :
+          printHelpText();
+          break;
+        case 'q'         :
+          quit = 1;
+          break;
+        case 's'         :
+          printStatusText();
+          break;
+        default          :
+          usleep(1000000);
+      } // switch
+    } // if !quit
+  } // while
 
   return exitCode;
 }

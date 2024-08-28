@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 18-Oct-2023
+ *  version : 19-Aug-2024
  *
  * library for b2b
  *
@@ -109,7 +109,6 @@ eb_address_t b2b_get_TBeatLo;           // period of beating, low bits
 eb_address_t b2b_get_cPhase;            // phase correction
 eb_address_t b2b_get_cTrigExt;          // kicker correction extraction
 eb_address_t b2b_get_cTrigInj;          // kicker correction injection
-eb_address_t b2b_get_comLatency;        // latency for message transfer via ECA
 
 #define WAITCMDDONE COMMON_DEFAULT_TIMEOUT * 1000 // use default timeout and convert to us to be sure the command is processed
 
@@ -401,7 +400,6 @@ uint32_t b2b_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t cpu
   b2b_get_cPhase       = lm32_base + SHARED_OFFS + B2B_SHARED_GET_CPHASE;
   b2b_get_cTrigExt     = lm32_base + SHARED_OFFS + B2B_SHARED_GET_CTRIGEXT;
   b2b_get_cTrigInj     = lm32_base + SHARED_OFFS + B2B_SHARED_GET_CTRIGINJ;
-  b2b_get_comLatency   = lm32_base + SHARED_OFFS + B2B_SHARED_GET_COMLATENCY;
 
   // do this just at the very end
   *ebDevice = (uint64_t)eb_device;
@@ -453,26 +451,25 @@ uint32_t b2b_version_library(uint32_t *version)
 } // b2b_version_library
 
 
-void b2b_printDiag(uint32_t sid, uint32_t gid, uint32_t mode, uint64_t TH1Ext, uint32_t nHExt, uint64_t TH1Inj, uint32_t nHInj, uint64_t TBeat, float cPhase, float cTrigExt, float cTrigInj, int32_t comLatency)
+void b2b_printDiag(uint32_t sid, uint32_t gid, uint32_t mode, uint64_t TH1Ext, uint32_t nHExt, uint64_t TH1Inj, uint32_t nHInj, uint64_t TBeat, float cPhase, float cTrigExt, float cTrigInj)
 {
   printf("b2b: info  ...\n\n");
 
-  printf("SID                   : %012u\n"     , sid);
-  printf("GID                   : %012u\n"     , gid);
-  printf("mode                  : %012u\n"     , mode);
-  printf("period h=1 extraction : %012.6f ns\n", (double)TH1Ext/1000000000.0);
-  printf("period h=1 injection  : %012.6f ns\n", (double)TH1Inj/1000000000.0);
-  printf("harmonic number extr. : %012d\n"     , nHExt);
-  printf("harmonic number inj.  : %012d\n"     , nHInj);
-  printf("period of beating     : %012.6f us\n", (double)TBeat/1000000000000.0);
-  printf("adjust RF-phase       : %012.3f ns\n", cPhase);
-  printf("adjust ext kicker     : %012.3f ns\n", cTrigExt);
-  printf("adjust inj kicker     : %012.3f ns\n", cTrigInj);
-  printf("communication latency : %012.3f us\n", (double)comLatency/1000.0);
+  printf("SID                                 : %012u\n"     , sid);
+  printf("GID                                 : %012u\n"     , gid);
+  printf("mode                                : %012u\n"     , mode);
+  printf("period h=1 extraction               : %012.6f ns\n", (double)TH1Ext/1000000000.0);
+  printf("period h=1 injection                : %012.6f ns\n", (double)TH1Inj/1000000000.0);
+  printf("harmonic number extr.               : %012d\n"     , nHExt);
+  printf("harmonic number inj.                : %012d\n"     , nHInj);
+  printf("period of beating                   : %012.6f us\n", (double)TBeat/1000000000000.0);
+  printf("adjust RF-phase                     : %012.3f ns\n", cPhase);
+  printf("adjust ext kicker                   : %012.3f ns\n", cTrigExt);
+  printf("adjust inj kicker                   : %012.3f ns\n", cTrigInj);
 } // b2b_printDiags
 
 
-uint32_t b2b_info_read(uint64_t ebDevice, uint32_t *sid, uint32_t *gid, uint32_t *mode, uint64_t *TH1Ext, uint32_t *nHExt, uint64_t *TH1Inj, uint32_t *nHInj, uint64_t *TBeat, double *cPhase, double*cTrigExt, double *cTrigInj, int32_t *comLatency, int printFlag)
+uint32_t b2b_info_read(uint64_t ebDevice, uint32_t *sid, uint32_t *gid, uint32_t *mode, uint64_t *TH1Ext, uint32_t *nHExt, uint64_t *TH1Inj, uint32_t *nHInj, uint64_t *TBeat, double *cPhase, double*cTrigExt, double *cTrigInj, int printFlag)
 {
   eb_cycle_t   eb_cycle;
   eb_status_t  eb_status;
@@ -502,7 +499,6 @@ uint32_t b2b_info_read(uint64_t ebDevice, uint32_t *sid, uint32_t *gid, uint32_t
   eb_cycle_read(eb_cycle, b2b_get_cPhase,        EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
   eb_cycle_read(eb_cycle, b2b_get_cTrigExt,      EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
   eb_cycle_read(eb_cycle, b2b_get_cTrigInj,      EB_BIG_ENDIAN|EB_DATA32, &(data[13]));
-  eb_cycle_read(eb_cycle, b2b_get_comLatency,    EB_BIG_ENDIAN|EB_DATA32, &(data[14]));
   if ((eb_status = eb_cycle_close(eb_cycle)) != EB_OK) return COMMON_STATUS_EB;
 
   *gid           = data[0];
@@ -525,9 +521,8 @@ uint32_t b2b_info_read(uint64_t ebDevice, uint32_t *sid, uint32_t *gid, uint32_t
   tmp.data       = data[13];            // see above ...
   *cTrigInj      = (double)(tmp.f);
   fCTrigInj      = tmp.f;
-  *comLatency    = data[14];
 
-  if (printFlag) b2b_printDiag(*sid, *gid, *mode, *TH1Ext, *nHExt, *TH1Inj, *nHInj, *TBeat, fCPhase, fCTrigExt, fCTrigInj, *comLatency);
+  if (printFlag) b2b_printDiag(*sid, *gid, *mode, *TH1Ext, *nHExt, *TH1Inj, *nHInj, *TBeat, fCPhase, fCTrigExt, fCTrigInj);
   
   return COMMON_STATUS_OK;
 } // b2b_info_read
@@ -539,13 +534,13 @@ uint32_t b2b_common_read(uint64_t ebDevice, uint64_t *statusArray, uint32_t *sta
   eb_device_t eb_device;
 
   uint64_t    dummy64a, dummy64b, dummy64c;
-  uint32_t    dummy32a, dummy32c, dummy32d, dummy32e;
+  uint32_t    dummy32a, dummy32c, dummy32d, dummy32e, dummy32f, dummy32g, dummy32h;
 
   if (!ebDevice) return COMMON_STATUS_EB;
   eb_device = (eb_device_t)ebDevice;
 
-  if ((eb_status = comlib_readDiag(eb_device, statusArray, state, version, &dummy64a, &dummy32a, nBadStatus, nBadState, &dummy64b, &dummy64c,
-                                   nTransfer, &dummy32c, &dummy32d, &dummy32e, printDiag)) != COMMON_STATUS_OK) return COMMON_STATUS_EB;
+  if ((eb_status = comlib_readDiag(eb_device, statusArray, state, version, &dummy64a, &dummy32a, nBadStatus, nBadState, &dummy64b, &dummy64c, nTransfer, &dummy32c,
+                                   &dummy32d, &dummy32e, &dummy32f, &dummy32g, &dummy32h, printDiag)) != COMMON_STATUS_OK) return COMMON_STATUS_EB;
 
   return COMMON_STATUS_OK;
 } // b2b_status_read
