@@ -6,7 +6,7 @@
  *  version : 23-Aug-2024
  *
  * publishes additional diagnostic data of the kicker
- 
+ *
  * this is experimental, as this information is not retrieved via a timing message (sent by 
  * the b2b system) but it is obtained from local ECA actions at the kicker frontend
  *
@@ -37,7 +37,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_KICKD_VERSION 0x000705
+#define B2B_SERV_KICKD_VERSION 0x000800
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
