@@ -57,7 +57,8 @@ software:
 	$(MAKE) -C $(SW) all
 
 firmware:
-	$(MAKE) -C $(FW)
+	$(MAKE) TARGET=dmunipz -C $(FW)
+	$(MAKE) TARGET=dmunidm -C $(FW)
 
 nfsinit:
 	echo $(shell cd $(NFSINIT); $(GENNFSINIT)/generate-main.sh $(ENV); cd ..)
