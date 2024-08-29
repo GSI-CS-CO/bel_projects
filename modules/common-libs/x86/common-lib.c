@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 10-Jul-2024
+ *  version : 29-Aug-2024
  *
  *  common x86 routines useful for CLIs handling firmware
  * 
@@ -229,7 +229,7 @@ void comlib_printDiag(uint64_t statusArray, uint32_t state, uint32_t version, ui
   secs     = (unsigned long)((double)tS0 / 1000000000.0);
   tm = gmtime(&secs);
   strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S TAI", tm);
-  printf("firmware boot at      : %s\n", timestr);
+  printf("firmware boot at                    : %s\n", timestr);
 
   secs     = (unsigned long)((double)tDiag / 1000000000.0);
   tm = gmtime(&secs);
@@ -246,14 +246,14 @@ void comlib_printDiag(uint64_t statusArray, uint32_t state, uint32_t version, ui
   printf("# late events                       : %012u\n"    , nLate);
   printf("'offset done' (processing time) [us]: %12.3f\n"   , (double)offsDone/1000.0);
   printf("communication latency [us]          : %12.3f\n"   , (double)comLatency/1000.0);
-  printf("sum status (# changes): 0x%" PRIx64 " (%u)\n"     , statusArray, nBadStatus);
+  printf("sum status (# changes)              : 0x%" PRIx64 " (%u)\n"     , statusArray, nBadStatus);
   if ((statusArray >> COMMON_STATUS_OK) & 0x1)
-    printf("overall status        : OK\n");
+    printf("overall status                      : OK\n");
   else
-    printf("overall status        : NOT OK\n");  
+    printf("overall status                      : NOT OK\n");  
   for (i= COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
     if ((statusArray >> i) & 0x1)
-      printf("    status bit is set : %s\n", comlib_statusText(i));
+      printf("    status bit is set               : %s\n", comlib_statusText(i));
   } // for i
 } // comlib_printDiag;
 

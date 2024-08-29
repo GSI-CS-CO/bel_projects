@@ -80,6 +80,7 @@ deploy:
 # tools
 	cp $(SW)/dmunipz-ctl $(STAGING)$(ARCH)$(PREFIX)/usr/bin             # '/usr' is a hack
 	cp $(FW)/dmunipz.bin $(STAGING)/firmware
+	cp $(FW)/dmunidm.bin $(STAGING)/firmware
 
 # configuration
 	cp $(SW)/*.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin                    # '/usr' is a hack
