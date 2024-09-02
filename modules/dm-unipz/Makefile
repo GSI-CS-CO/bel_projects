@@ -67,6 +67,7 @@ clean:
 	$(MAKE) -C $(SW) clean
 	$(MAKE) -C $(FW) clean
 	rm -f $(NFSINIT)/dmunipz-*.sh
+	rm -f $(NFSINIT)/dmunidm-*.sh
 
 deploy: 
 # create folders
