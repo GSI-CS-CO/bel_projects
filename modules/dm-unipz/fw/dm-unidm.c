@@ -1071,12 +1071,18 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
 
       //---- request beam from UNIPZ and wait for EVT_READY_TO_SIS, dummy beam request for compatibility
       *dtBreq = getSysTime() - ecaDeadline;                                        // diagnostics: time difference between CMD_UNI_BREQ and reply from UNIPZ
-      if ((milStatus = fwlib_wait4MILEvent(uniTimeout * 1000, &milDummyData, &milDummyCode, virtAccRec, milEvts, nMilEvts)) == COMMON_STATUS_OK) {   // wait for event in MIL FIFO
-        ecaInjAction = fwlib_wait4ECAEvent(DMUNIPZ_QUERYTIMEOUT * 1000, &tReady2Sis, &ecaDummyId, &ecaDummyParam, &ecaDummyTef, &flagLate, &flagEarly, &flagConflict, &flagDelayed); // wait for event from ECA (hoping this is MIL Event -> TLU)
+ 
+      /*if ((milStatus = fwlib_wait4MILEvent(uniTimeout * 1000, &milDummyData, &milDummyCode, virtAccRec, milEvts, nMilEvts)) == COMMON_STATUS_OK) {   // wait for event in MIL FIFO; uniTimout < 500 is a hack for testing
+        ecaInjAction = fwlib_wait4ECAEvent(DMUNIPZ_QUERYTIMEOUT * 1000, &tReady2Sis, &ecaDummyId, &ecaDummyParam, &ecaDummyTef, &flagLate, &flagEarly, &flagConflict, &flagDelayed); // wait for event from ECA (hoping this is MIL Event -> TLU)*/
+      /* hack for testing */
+      if (uniTimeout < 500) {
+        ecaInjAction = fwlib_wait4ECAEvent(2000 * 1000, &tReady2Sis, &ecaDummyId, &ecaDummyParam, &ecaDummyTef, &flagLate, &flagEarly, &flagConflict, &flagDelayed); // wait for event from ECA (hoping this is MIL Event -> TLU)
+
         switch (ecaInjAction)                                                      // switch required to detect messages that are not expected at this part of the schedule
           {
             case DMUNIPZ_ECADO_READY2SIS2:                                         // testing: received command "EVT_READY_TO_SIS" via timing message
                                                                                    // this is an OR, no 'break' on purpose
+              milStatus = COMMON_STATUS_OK;                                        // hack for testing
             case DMUNIPZ_ECADO_READY2SIS :                                         // no error:  received EVT_READY_TO_SIS via TLU -> ECA
               if ((getSysTime() - tReady2Sis) < DMUNIPZ_MATCHWINDOW) {             // check timestamp from TLU: only accept reasonably recent timestamp
                 flagMilEvtValid = 1;                                               // everything ok: set flag for successful event reception
