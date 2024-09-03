@@ -557,16 +557,18 @@ class DmTestbench(unittest.TestCase):
   def inspectQueue(self, node, read=0, write=0, pending=0, retry=False):
     # check the result with dm-cmd ... queue <node>.
     lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, 'queue', node), [0], 10, 0)
+    print('1. try', '\n'.join(lines))
     try:
       self.verifyInspectingQueueOutput(lines, node, read, write, pending)
     except AssertionError as instance:
       testName = os.environ['PYTEST_CURRENT_TEST']
       logging.getLogger().warning(f'{testName}, AssertionError while Inspecting Queues, try second inspection.' + '\n' + '\n'.join(lines))
-      self.assertEqual(instance.args[0][:111], "'Priority 0 (priolo)  RdIdx: 0 WrIdx: 1    Pending: 1' != 'Priority 0 (priolo)  RdIdx: 0 WrIdx: 1    Pending: 0", 'wrong exception')
+      self.assertEqual(instance.args[0][:111], f"'Priority 0 (priolo)  RdIdx: 0 WrIdx: 1    Pending: 1' != 'Priority 0 (priolo)  RdIdx: {read} WrIdx: {write}    Pending: {pending}", 'current exception is ' + instance.args[0])
       # second try: check the result with dm-cmd ... queue <node>.
       if retry:
         self.delay(1.0)
         lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, 'queue', node), [0], 10, 0)
+        print('2. try', '\n'.join(lines))
         self.verifyInspectingQueueOutput(lines, node, 1, 1, 0)
 
   def verifyInspectingQueueOutput(self, lines, node, read, write, pending):
@@ -599,6 +601,8 @@ class DmTestbench(unittest.TestCase):
     Load schedules into DM, one for each CPU and start all threads.
     Check that these are running.
     """
+    testName = os.environ['PYTEST_CURRENT_TEST']
+    logging.getLogger().debug(f'{testName} prepare threads {datetime.datetime.now()}')
     cpuList = self.listFromBits(cpus, self.cpuQuantity)
     cpuMask = self.maskFromList(cpuList, self.cpuQuantity)
     # ~ print(f'{cpuList=}, {cpuMask=}')
@@ -612,25 +616,24 @@ class DmTestbench(unittest.TestCase):
     for i in range(len(cpuList)):
       expectedText = 'CPU {variable} Running Threads: 0x0'.format(variable=i)
       self.assertEqual(lines[i], expectedText, 'wrong output, expected: ' + expectedText + '\n' + '\n'.join(lines))
+    if self.threadQuantity == 32:
+      threadMask = '0xffffffff'
+      threadList = [('a', '0x01010101'), ('b', '0x02020202'), ('c', '0x04040404'), ('d', '0x08080808'), ('e', '0x10101010'), ('f', '0x20202020'), ('g', '0x40404040'), ('h', '0x80808080')]
+    elif self.threadQuantity == 8:
+      threadMask = '0xff'
+      threadList = [('a', '0x01'), ('b', '0x02'), ('c', '0x04'), ('d', '0x08'), ('e', '0x10'), ('f', '0x20'), ('g', '0x40'), ('h', '0x80')]
+    else:
+      self.assertFalse(True, f'threadQuantity is {self.threadQuantity}, allowed: 8 or 32')
     # Start pattern for all CPUs and all threads
-    threadList = [('a', '0'), ('b', '1'), ('c', '2'), ('d', '3'), ('e', '4'), ('f', '5'), ('g', '6'), ('h', '7'),
-                  ('a', '8'), ('b', '9'), ('c', '10'), ('d', '11'), ('e', '12'), ('f', '13'), ('g', '14'), ('h', '15'),
-                  ('a', '16'), ('b', '17'), ('c', '18'), ('d', '19'), ('e', '20'), ('f', '21'), ('g', '22'), ('h', '23'),
-                  ('a', '24'), ('b', '25'), ('c', '26'), ('d', '27'), ('e', '28'), ('f', '29'), ('g', '30'), ('h', '31')]
     for x, thread in threadList[0:self.threadQuantity]:
       for cpu in cpuList:
         patternName = f'PPS{cpu}' + x
+        logging.getLogger().debug(f'{testName} {patternName} {cpu} {thread} {datetime.datetime.now()}')
         self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', patternName, '-t', thread), [0])
     self.checkRunningThreadsCmd()
     # Check all CPUs that all threads are running.
     lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', cpuMask, 'running'), [0], len(cpuList), 0)
     # ~ self.printStdOutStdErr(lines)
-    if self.threadQuantity == 32:
-      threadMask = '0xffffffff'
-    elif self.threadQuantity == 8:
-      threadMask = '0xff'
-    else:
-      self.assertFalse(True, f'threadQuantity is {self.threadQuantity}, allowed: 8 or 32')
     for i in range(len(cpuList)):
       if i in cpuList:
         expectedText = 'CPU {variable} Running Threads: {mask}'.format(variable=i, mask=threadMask)
@@ -638,6 +641,7 @@ class DmTestbench(unittest.TestCase):
       else:
         expectedText = 'CPU {variable} Running Threads: {mask}'.format(variable=i, mask='0x0')
         self.assertEqual(lines[0][i], expectedText, 'wrong output, expected: ' + expectedText)
+    logging.getLogger().debug(f'{testName}         threads {datetime.datetime.now()}')
 
   def deleteFile(self, fileName):
     """Delete file <fileName>.
