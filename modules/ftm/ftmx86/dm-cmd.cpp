@@ -964,8 +964,6 @@ int main(int argc, char* argv[]) {
               }
               return -1;
             }
-            //~ std::cout << "Pattern '" << targetName << "' started on thread " << thread << "." << std::endl;
-            break;
           }
         }
       } else {
