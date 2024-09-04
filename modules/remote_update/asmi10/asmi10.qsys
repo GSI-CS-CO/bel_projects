@@ -182,7 +182,7 @@
  <module
    name="asmi_parallel_0"
    kind="altera_asmi_parallel"
-   version="18.1"
+   version="23.1"
    enabled="1"
    autoexport="1">
   <parameter name="CBX_AUTO_BLACKBOX" value="ALL" />
