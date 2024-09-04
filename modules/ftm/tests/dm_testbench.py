@@ -386,6 +386,8 @@ class DmTestbench(unittest.TestCase):
       outputStdoutStderr = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster), [0])
       offsetLines = 7 + self.cpuQuantity
     output = outputStdoutStderr[0]
+    testName = os.environ['PYTEST_CURRENT_TEST']
+    logging.getLogger().info(f'{testName}, analyseDmCmdOutput' + '\n' + '\n'.join(output))
     msgCounts = {}
     threadsCheck = '0' * (self.threadQuantity * self.cpuQuantity)
     index = 0
@@ -423,7 +425,7 @@ class DmTestbench(unittest.TestCase):
       self.assertEqual(threadsCheck, threadsToCheck, f'threads running: {threadsCheck}, expected: {threadsToCheck}')
     return msgCounts
 
-  def checkRunningThreadsCmd(self, messageInterval=1.0):
+  def checkRunningThreadsCmd(self, messageInterval=1.0, cpuList=[0,1,2,3]):
     """Check that threads are running by comparison of message counts.
     Assumption: there is at least one timing message for this thread in
     messageIntervall (default 1.0 second).
@@ -438,10 +440,11 @@ class DmTestbench(unittest.TestCase):
       firstCount = int(firstCounts[key])
       secondCount = int(secondCounts[key])
       cpu = int(key[0])
-      thread = int(key[1:])
-      # ~ print(f'{key=}, {firstCount=}, {secondCount=}, {key[0]=}, {cpu=}, {key[1:]=}, {thread=}')
-      self.assertGreater(secondCount, firstCount, f'CPU {cpu} Thread {thread} First: {firstCount}, second: {secondCount}')
-      self.assertGreater(firstCount, 0, f'CPU {cpu} Thread {thread} firstCount is {firstCount}')
+      if cpu in cpuList:
+        thread = int(key[1:])
+        # ~ print(f'{key=}, {firstCount=}, {secondCount=}, {key[0]=}, {cpu=}, {key[1:]=}, {thread=}')
+        self.assertGreater(secondCount, firstCount, f'CPU {cpu} Thread {thread} First: {firstCount}, second: {secondCount}')
+        self.assertGreater(firstCount, 0, f'CPU {cpu} Thread {thread} firstCount is {firstCount}')
 
   def getQuantity(self, line):
     """Get the quantity of command executions from the output line of 'dm-cmd <datamaster> queue -v <block name>'.
@@ -630,7 +633,7 @@ class DmTestbench(unittest.TestCase):
         patternName = f'PPS{cpu}' + x
         logging.getLogger().debug(f'{testName} {patternName} {cpu} {thread} {datetime.datetime.now()}')
         self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', patternName, '-t', thread), [0])
-    self.checkRunningThreadsCmd()
+    self.checkRunningThreadsCmd(cpuList=cpuList)
     # Check all CPUs that all threads are running.
     lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', cpuMask, 'running'), [0], len(cpuList), 0)
     # ~ self.printStdOutStdErr(lines)
