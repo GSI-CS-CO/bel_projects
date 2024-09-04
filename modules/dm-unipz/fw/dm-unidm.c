@@ -1079,9 +1079,9 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       // argh! with this new ICU stuff, we have to ignore delivered virtaccs we are not interested in
       wait4BeamT         = getSysTime() + (uint64_t)uniTimeout * 1000000;
       wait4BeamTimeoutUs = (int64_t)(wait4BeamT - getSysTime()) / 1000; 
-      pp_printf("now\n");
+      //pp_printf("now\n");
       while(wait4BeamTimeoutUs > 0) {
-        pp_printf("waitbeamtimeout: %d\n", wait4BeamTimeoutUs);
+        //pp_printf("waitbeamtimeout: %d\n", wait4BeamTimeoutUs);
         if ((milStatus = fwlib_wait4MILEvent(uniTimeout * 1000, &milDummyData, &milDummyCode, virtAccRec, milEvts, nMilEvts)) == COMMON_STATUS_OK) {   // wait for event in MIL FIFO; uniTimout < 500 is a hack for testing
           ecaInjAction = fwlib_wait4ECAEvent(DMUNIPZ_QUERYTIMEOUT * 1000, &tReady2Sis, &ecaDummyId, &ecaDummyParam, &ecaDummyTef, &flagLate, &flagEarly, &flagConflict, &flagDelayed); // wait for event from ECA (hoping this is MIL Event -> TLU)
           if (*virtAccRec == *virtAccReq) wait4BeamTimeoutUs = -1;
