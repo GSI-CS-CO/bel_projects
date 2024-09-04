@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 29-Aug-2024
+ *  version : 04-Sep-2024
  *
  *  lm32 program for gateway between 'UNILAC Data Master' and 'Ring Data Master'
  * 
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000830                                     // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000900                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -953,6 +953,9 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
   uint64_t ecaDummyParam;                                                          // ECA event: param
   uint32_t ecaDummyTef;
 
+  uint64_t wait4BeamT;                                                             // absolute time until we wait for beam from UNILAC [ns]
+  int32_t  wait4BeamTimeoutUs;                                                     // timeout (how long) we wait for beam from UNILAC [us]
+
   volatile uint32_t *pMilPiggy;
 
   pMilPiggy = fwlib_getMilPiggy();
@@ -1066,23 +1069,33 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       enableFilterEvtMil(pMilPiggy);                                               // enable filter @ MIL piggy
       clearFifoEvtMil(pMilPiggy);                                                  // get rid of junk in FIFO @ MIL piggy
 
-      *dtBprep = getSysTime() - ecaDeadline;                                       // diagnostics: time difference between CMD_UNI_BREQ and begine to request at UNIPZ
+      *dtBprep = getSysTime() - ecaDeadline;                                       // diagnostics: time difference between CMD_UNI_BREQ and begin to request at UNIPZ
       *statusTransfer = *statusTransfer | (0x1 << DMUNIPZ_TRANS_REQBEAM);          // diagnostics: update status of transfer
 
       //---- request beam from UNIPZ and wait for EVT_READY_TO_SIS, dummy beam request for compatibility
       *dtBreq = getSysTime() - ecaDeadline;                                        // diagnostics: time difference between CMD_UNI_BREQ and reply from UNIPZ
- 
-      /*if ((milStatus = fwlib_wait4MILEvent(uniTimeout * 1000, &milDummyData, &milDummyCode, virtAccRec, milEvts, nMilEvts)) == COMMON_STATUS_OK) {   // wait for event in MIL FIFO; uniTimout < 500 is a hack for testing
-        ecaInjAction = fwlib_wait4ECAEvent(DMUNIPZ_QUERYTIMEOUT * 1000, &tReady2Sis, &ecaDummyId, &ecaDummyParam, &ecaDummyTef, &flagLate, &flagEarly, &flagConflict, &flagDelayed); // wait for event from ECA (hoping this is MIL Event -> TLU)*/
-      /* hack for testing */
-      if (uniTimeout < 500) {
-        ecaInjAction = fwlib_wait4ECAEvent(2000 * 1000, &tReady2Sis, &ecaDummyId, &ecaDummyParam, &ecaDummyTef, &flagLate, &flagEarly, &flagConflict, &flagDelayed); // wait for event from ECA (hoping this is MIL Event -> TLU)
 
+
+      // argh! with this new ICU stuff, we have to ignore delivered virtaccs we are not interested in
+      wait4BeamT         = getSysTime() + (uint64_t)uniTimeout * 1000000;
+      wait4BeamTimeoutUs = (int64_t)(wait4BeamT - getSysTime()) / 1000; 
+      pp_printf("now\n");
+      while(wait4BeamTimeoutUs > 0) {
+        pp_printf("waitbeamtimeout: %d\n", wait4BeamTimeoutUs);
+        if ((milStatus = fwlib_wait4MILEvent(uniTimeout * 1000, &milDummyData, &milDummyCode, virtAccRec, milEvts, nMilEvts)) == COMMON_STATUS_OK) {   // wait for event in MIL FIFO; uniTimout < 500 is a hack for testing
+          ecaInjAction = fwlib_wait4ECAEvent(DMUNIPZ_QUERYTIMEOUT * 1000, &tReady2Sis, &ecaDummyId, &ecaDummyParam, &ecaDummyTef, &flagLate, &flagEarly, &flagConflict, &flagDelayed); // wait for event from ECA (hoping this is MIL Event -> TLU)
+          if (*virtAccRec == *virtAccReq) wait4BeamTimeoutUs = -1;
+          else                            wait4BeamTimeoutUs = (int64_t)(wait4BeamT - getSysTime()) / 1000;
+
+        } // if wait4Milevent OK
+        else wait4BeamTimeoutUs = -1;
+      } // while
+
+      if (*virtAccRec != *virtAccReq) milStatus = COMMON_STATUS_OUTOFRANGE;
+
+      if (milStatus == COMMON_STATUS_OK) {
         switch (ecaInjAction)                                                      // switch required to detect messages that are not expected at this part of the schedule
           {
-            case DMUNIPZ_ECADO_READY2SIS2:                                         // testing: received command "EVT_READY_TO_SIS" via timing message
-                                                                                   // this is an OR, no 'break' on purpose
-              milStatus = COMMON_STATUS_OK;                                        // hack for testing
             case DMUNIPZ_ECADO_READY2SIS :                                         // no error:  received EVT_READY_TO_SIS via TLU -> ECA
               if ((getSysTime() - tReady2Sis) < DMUNIPZ_MATCHWINDOW) {             // check timestamp from TLU: only accept reasonably recent timestamp
                 flagMilEvtValid = 1;                                               // everything ok: set flag for successful event reception
@@ -1099,7 +1112,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
               status = DMUNIPZ_STATUS_BADSCHEDULEB;
               flagNoCmd = 1;                                                       // wrong LSA schedule or Data Master messed up: Don't increase the chaos by sending commands to DM
           } // switch (ecaInjAction)
-      } // if wait4MILEvt
+      } // if milStatus OK
       else {                                                                       // error: timeout, EVT_READY_TO_SIS was not received in MIL FIFO                                          
         status = milStatus;
         if (status == COMMON_STATUS_TIMEDOUT) status = DMUNIPZ_STATUS_WAIT4UNIEVENT; 
@@ -1120,7 +1133,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
         status = DMUNIPZ_STATUS_SAFETYMARGIN;
       } // if tCmdThrd
 
-      if (getSysTime() > tDmTimeout){                                              // error: Data Master is no longer waiting on us - risk of messung up the schedule and 'late events' 
+      if (getSysTime() > tDmTimeout){                                              // error: Data Master is no longer waiting on us - risk of messing up the schedule and 'late events' 
         flagNoCmd = 1;                                                             // plang B is to sacrifice the beam and continue with actual time plus offset
         status = DMUNIPZ_STATUS_DMTIMEOUT;
       }
