@@ -627,8 +627,8 @@ class DmTestbench(unittest.TestCase):
       threadList = [('a', '0x01'), ('b', '0x02'), ('c', '0x04'), ('d', '0x08'), ('e', '0x10'), ('f', '0x20'), ('g', '0x40'), ('h', '0x80')]
     else:
       self.assertFalse(True, f'threadQuantity is {self.threadQuantity}, allowed: 8 or 32')
-    # Start pattern for all CPUs and all threads
-    for x, thread in threadList[0:self.threadQuantity]:
+    # Start pattern for all CPUs in cpuList and all threads
+    for x, thread in threadList:
       for cpu in cpuList:
         patternName = f'PPS{cpu}' + x
         logging.getLogger().debug(f'{testName} {patternName} {cpu} {thread} {datetime.datetime.now()}')
