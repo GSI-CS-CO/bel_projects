@@ -387,7 +387,7 @@ class DmTestbench(unittest.TestCase):
       offsetLines = 7 + self.cpuQuantity
     output = outputStdoutStderr[0]
     testName = os.environ['PYTEST_CURRENT_TEST']
-    logging.getLogger().info(f'{testName}, analyseDmCmdOutput' + '\n' + '\n'.join(output))
+    logging.getLogger().debug(f'{testName}, analyseDmCmdOutput' + '\n' + '\n'.join(output))
     msgCounts = {}
     threadsCheck = '0' * (self.threadQuantity * self.cpuQuantity)
     index = 0
@@ -608,14 +608,11 @@ class DmTestbench(unittest.TestCase):
     logging.getLogger().debug(f'{testName} prepare threads {datetime.datetime.now()}')
     cpuList = self.listFromBits(cpus, self.cpuQuantity)
     cpuMask = self.maskFromList(cpuList, self.cpuQuantity)
-    # ~ print(f'{cpuList=}, {cpuMask=}')
     # Add schedules for all CPUs and start pattern on all threads.
     for cpu in cpuList:
       self.addSchedule(f'pps-all-threads-cpu{cpu}.dot')
     # Check all CPUs that no thread is running.
-    self.delay(0.4)
     lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', cpuMask, 'running'), [0], len(cpuList), 0)
-    # ~ self.printStdOutStdErr([lines,[]])
     for i in range(len(cpuList)):
       expectedText = 'CPU {variable} Running Threads: 0x0'.format(variable=i)
       self.assertEqual(lines[i], expectedText, 'wrong output, expected: ' + expectedText + '\n' + '\n'.join(lines))
@@ -635,15 +632,13 @@ class DmTestbench(unittest.TestCase):
         self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', patternName, '-t', thread), [0])
     self.checkRunningThreadsCmd(cpuList=cpuList)
     # Check all CPUs that all threads are running.
-    lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', cpuMask, 'running'), [0], len(cpuList), 0)
-    # ~ self.printStdOutStdErr(lines)
+    lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', cpuMask, 'running'), [0], len(cpuList), 0)
     for i in range(len(cpuList)):
       if i in cpuList:
         expectedText = 'CPU {variable} Running Threads: {mask}'.format(variable=i, mask=threadMask)
-        self.assertEqual(lines[0][i], expectedText, 'wrong output, expected: ' + expectedText)
       else:
         expectedText = 'CPU {variable} Running Threads: {mask}'.format(variable=i, mask='0x0')
-        self.assertEqual(lines[0][i], expectedText, 'wrong output, expected: ' + expectedText)
+      self.assertEqual(lines[i], expectedText, 'wrong output, expected: ' + expectedText + '\n' + '\n'.join(lines))
     logging.getLogger().debug(f'{testName}         threads {datetime.datetime.now()}')
 
   def deleteFile(self, fileName):
