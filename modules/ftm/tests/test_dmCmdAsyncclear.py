@@ -10,6 +10,11 @@ class AsyncClearTests(dm_testbench.DmTestbench):
     """Prepare all threads on all CPUs.
     Run the asyncClear for some threads. This needs a block with a
     queue. There is no output of the command.
+
+    First check that the noop comand is in the low prio queue (pending=1) and read=0 and write=1.
+    Second check that the queue is cleared. This is pending=0, write=0, read=0 (indices are reset).
+    If this fails, the queue is not cleared (read=0, write=1, pending=1) or
+    the noop command is executed (read=1, write=1, pending=0).
     """
     self.prepareRunThreads()
     # run asyncClear for some CPUs and threads.
