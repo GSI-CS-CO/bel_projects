@@ -75,7 +75,6 @@ volatile uint32_t *pSharedGetNMilSndLo;    // pointer to a "user defined" u32 re
 volatile uint32_t *pSharedGetNMilSndErr;   // pointer to a "user defined" u32 register; here: number of failed MIL writes
 volatile uint32_t *pSharedGetNEvtsRecHi;   // pointer to a "user defined" u32 register; here: number of timing messages received, high word
 volatile uint32_t *pSharedGetNEvtsRecLo;   // pointer to a "user defined" u32 register; here: number of timing messages received, low word
-volatile uint32_t *pSharedGetNEvtsLate;    // pointer to a "user defined" u32 register; here: number of late timing messages received
 
 uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM
 volatile uint32_t *pMilSend;            // address of MIL device sending timing messages, usually this will be a SIO
@@ -84,7 +83,7 @@ uint64_t statusArray;                   // all status infos are ORed bit-wise in
 uint64_t nMilSnd;                       // # of MIL writes
 uint32_t nMilSndErr;                    // # of failed MIL writes                      
 uint64_t nEvtsRec;                      // # of received timing messages
-uint32_t nEvtsLate;                     // # of late timing messages
+uint32_t nEvtsLate;
 uint32_t offsDone;                      // offset deadline WR message to time when we are done [ns]
 int32_t  comLatency;                    // latency for messages received via ECA
 
@@ -222,12 +221,21 @@ uint32_t extern_entryActionConfigured()
   else {
     // SCU slaves have offsets 0x20000, 0x40000... for slots 1, 2 ...
     pMilSend = fwlib_getSbMaster();
+    pp_printf("sb master 0x%x\n", pMilSend);
     if (!pMilSend) {
       DBPRINT1("uni-chop: ERROR - can't find MIL device\n");
       return COMMON_STATUS_OUTOFRANGE;
     } // if !pMilSend
-    else pMilSend += *pSharedSetMilDev * 0x20000;
+    /*else pMilSend += *pSharedSetMilDev * 0x20000;*/
+    else pMilSend = pMilSend;
   } // else SetMilDev
+
+  pp_printf("test 0x%x\n",  *pSharedSetMilDev * 0x20000);
+  pp_printf("mil send 0x%x, mil dev %d\n", pMilSend, *pSharedSetMilDev);
+  pMilSend = pMilSend + 0x20;
+  pMilSend = 0x80420800;
+  pp_printf("mil send2  0x%x\n", pMilSend);  
+
 
   // reset MIL sender and wait
   if ((status = resetPiggyDevMil(pMilSend))  != MIL_STAT_OK) {
@@ -262,14 +270,11 @@ uint32_t extern_entryActionOperation()
   DBPRINT1("uni-chop: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
     
   // init get values
-  *pShared                  = 0x0;
-  *pSharedSetMilDev         = 0x0;
   *pSharedGetNMilSndHi      = 0x0;
   *pSharedGetNMilSndLo      = 0x0;
   *pSharedGetNMilSndErr     = 0x0;
   *pSharedGetNEvtsRecHi     = 0x0;
   *pSharedGetNEvtsRecLo     = 0x0;
-  *pSharedGetNEvtsLate      = 0x0;
 
   nMilSnd                   = 0;
   nMilSndErr                = 0;
@@ -284,6 +289,7 @@ uint32_t extern_entryActionOperation()
   
   readFromModuleMil(IFB_ADDR_CU, MOD_LOGIC1_ADDR, MOD_LOGIC1_REG_STATUSGLOBAL, &data);
   pp_printf("module version 0x%x\n", data);
+  pp_printf("mil device 0x%x\n", pMilSend);
   
 
   return COMMON_STATUS_OK;
@@ -536,7 +542,6 @@ int main(void) {
     *pSharedGetNEvtsRecLo  = (uint32_t)(nEvtsRec & 0xffffffff);
     *pSharedGetNMilSndHi   = (uint32_t)(nMilSnd >> 32);
     *pSharedGetNMilSndLo   = (uint32_t)(nMilSnd & 0xffffffff);
-    *pSharedGetNEvtsLate   = (uint32_t)(nEvtsLate);
     *pSharedGetNMilSndErr  = (uint32_t)(nMilSndErr);
   } // while
 
