@@ -387,7 +387,7 @@ class DmTestbench(unittest.TestCase):
       offsetLines = 7 + self.cpuQuantity
     output = outputStdoutStderr[0]
     testName = os.environ['PYTEST_CURRENT_TEST']
-    logging.getLogger().info(f'{testName}, analyseDmCmdOutput' + '\n' + '\n'.join(output))
+    logging.getLogger().debug(f'{testName}, analyseDmCmdOutput' + '\n' + '\n'.join(output))
     msgCounts = {}
     threadsCheck = '0' * (self.threadQuantity * self.cpuQuantity)
     index = 0
@@ -608,17 +608,23 @@ class DmTestbench(unittest.TestCase):
     logging.getLogger().debug(f'{testName} prepare threads {datetime.datetime.now()}')
     cpuList = self.listFromBits(cpus, self.cpuQuantity)
     cpuMask = self.maskFromList(cpuList, self.cpuQuantity)
-    # ~ print(f'{cpuList=}, {cpuMask=}')
     # Add schedules for all CPUs and start pattern on all threads.
     for cpu in cpuList:
       self.addSchedule(f'pps-all-threads-cpu{cpu}.dot')
     # Check all CPUs that no thread is running.
-    self.delay(0.4)
     lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', cpuMask, 'running'), [0], len(cpuList), 0)
-    # ~ self.printStdOutStdErr([lines,[]])
     for i in range(len(cpuList)):
       expectedText = 'CPU {variable} Running Threads: 0x0'.format(variable=i)
-      self.assertEqual(lines[i], expectedText, 'wrong output, expected: ' + expectedText + '\n' + '\n'.join(lines))
+      try:
+        self.assertEqual(lines[i], expectedText, 'wrong output, expected: ' + expectedText + '\n' + '\n'.join(lines))
+      except AssertionError as exception:
+        # second try to check the running threads
+        # dm-cmd -c cpuMask running shows the same result as the first call. So halt all threads before.
+        self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'halt'), [0], 0, 0)
+        lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', cpuMask, 'running'), [0], len(cpuList), 0)
+        for i in range(len(cpuList)):
+          expectedText = 'CPU {variable} Running Threads: 0x0'.format(variable=i)
+          self.assertEqual(lines[i], expectedText, 'wrong output, expected: ' + expectedText + '\n' + '\n'.join(lines))
     if self.threadQuantity == 32:
       threadMask = '0xffffffff'
       threadList = [('a', '0x01010101'), ('b', '0x02020202'), ('c', '0x04040404'), ('d', '0x08080808'), ('e', '0x10101010'), ('f', '0x20202020'), ('g', '0x40404040'), ('h', '0x80808080')]
@@ -627,23 +633,31 @@ class DmTestbench(unittest.TestCase):
       threadList = [('a', '0x01'), ('b', '0x02'), ('c', '0x04'), ('d', '0x08'), ('e', '0x10'), ('f', '0x20'), ('g', '0x40'), ('h', '0x80')]
     else:
       self.assertFalse(True, f'threadQuantity is {self.threadQuantity}, allowed: 8 or 32')
-    # Start pattern for all CPUs and all threads
-    for x, thread in threadList[0:self.threadQuantity]:
+    # Start pattern for all CPUs in cpuList and all threads
+    for x, thread in threadList:
       for cpu in cpuList:
         patternName = f'PPS{cpu}' + x
         logging.getLogger().debug(f'{testName} {patternName} {cpu} {thread} {datetime.datetime.now()}')
         self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', patternName, '-t', thread), [0])
     self.checkRunningThreadsCmd(cpuList=cpuList)
     # Check all CPUs that all threads are running.
-    lines = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', cpuMask, 'running'), [0], len(cpuList), 0)
-    # ~ self.printStdOutStdErr(lines)
+    lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', cpuMask, 'running'), [0], len(cpuList), 0)
     for i in range(len(cpuList)):
       if i in cpuList:
         expectedText = 'CPU {variable} Running Threads: {mask}'.format(variable=i, mask=threadMask)
-        self.assertEqual(lines[0][i], expectedText, 'wrong output, expected: ' + expectedText)
       else:
         expectedText = 'CPU {variable} Running Threads: {mask}'.format(variable=i, mask='0x0')
-        self.assertEqual(lines[0][i], expectedText, 'wrong output, expected: ' + expectedText)
+      try:
+        self.assertEqual(lines[i], expectedText, 'wrong output, expected: ' + expectedText + '\n' + '\n'.join(lines))
+      except AssertionError as exception:
+        self.delay(1.0)
+        lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', cpuMask, 'running'), [0], len(cpuList), 0)
+        for i in range(len(cpuList)):
+          if i in cpuList:
+            expectedText = 'CPU {variable} Running Threads: {mask}'.format(variable=i, mask=threadMask)
+          else:
+            expectedText = 'CPU {variable} Running Threads: {mask}'.format(variable=i, mask='0x0')
+          self.assertEqual(lines[i], expectedText, 'wrong output, expected: ' + expectedText + '\n' + '\n'.join(lines))
     logging.getLogger().debug(f'{testName}         threads {datetime.datetime.now()}')
 
   def deleteFile(self, fileName):

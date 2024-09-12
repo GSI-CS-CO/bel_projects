@@ -13,6 +13,7 @@ datamasterInfo() {
   echo " PCI on host $DM_HOST"
   lspci | grep "Class 6800"
   echo "Check kernel modules and CERN pci devices."
+  # this runs with sudo to show the Kernel driver in use.
   sudo lspci -nn -vkd 10dc:
   #~ sudo lspci -vs 0000:04:00.0
   #~ sudo lspci -vs 0000:17:00.0
@@ -36,6 +37,12 @@ datamasterInfo() {
     echo
     echo " Datamaster status:"
     dm-cmd $DM -v
+  fi
+  echo " Run one simple test to verify setup."
+  if [ ! $BEL_PROJECTS_PATH ]
+  then
+    # Use the path of the script ${0%/*} and step down.
+    BEL_PROJECTS_PATH=${0%/*}/../../../..
   fi
   OPTIONS='-k zzz' make -C $BEL_PROJECTS_PATH/modules/ftm/tests
   echo
@@ -80,12 +87,6 @@ remoteDatamasterInfo() {
   echo " Datamaster log space"
   ssh root@$DM_HOST 'df -h /var/log/' 2>&1 || true
 }
-
-# The BEL_PROJECTS_PATH is used to run a simple test.
-if [ ! $BEL_PROJECTS_PATH ]
-then
-  BEL_PROJECTS_PATH=$HOME/bel_projects/dev
-fi
 
 # Checking the arguments.
 if [ $# -eq 2 ] && [ "$1" = "remote" ]
