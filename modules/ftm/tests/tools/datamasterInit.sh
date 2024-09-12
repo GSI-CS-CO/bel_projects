@@ -49,7 +49,7 @@ then
   # Build the latest firmware with 8 or 32 threads
   if [ $# -ge 2 ] && [ ${FIRMWARE} == "ftm.bin" ]
   then
-    THR_QTY=$THR_QTY PATH=$PATH:$BEL_PROJECTS_PATH/lm32-toolchain/bin/ make -C $BEL_PROJECTS_PATH/syn/gsi_pexarria5/ftm/ $FIRMWARE
+    THR_QTY=$THR_QTY PATH=$PATH:../../../lm32-toolchain/bin/ make -C $BEL_PROJECTS_PATH/syn/gsi_pexarria5/ftm/ $FIRMWARE
     FIRMWARE=$BEL_PROJECTS_PATH/syn/gsi_pexarria5/ftm/ftm.bin
   fi
   # Load the latest firmware to datamaster
@@ -78,7 +78,7 @@ then
   # Build the latest firmware with 8 or 32 threads
   if [ $# -ge 2 ] && [ ${FIRMWARE} == "ftm.bin" ]
   then
-    THR_QTY=$THR_QTY PATH=$PATH:$BEL_PROJECTS_PATH/lm32-toolchain/bin/ make -C $BEL_PROJECTS_PATH/syn/gsi_pexarria5/ftm/ $FIRMWARE
+    THR_QTY=$THR_QTY PATH=$PATH:../../../lm32-toolchain/bin/ make -C $BEL_PROJECTS_PATH/syn/gsi_pexarria5/ftm/ $FIRMWARE
     FIRMWARE=$BEL_PROJECTS_PATH/syn/gsi_pexarria5/ftm/ftm.bin
   fi
   # load the latest firmware to datamaster
