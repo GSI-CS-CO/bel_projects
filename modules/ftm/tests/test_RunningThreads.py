@@ -7,8 +7,8 @@ import pytest
 """
 Module collects tests for running threads.
 
-Run with
-OPTIONS='-k test_running_threads.py -rP --log-level=WARNING' make remote
+Run with (example):
+OPTIONS='-k test_RunningThreads.py -rP --log-level=WARNING --development' make remote
 """
 class RunningThreads(dm_testbench.DmTestbench):
 
