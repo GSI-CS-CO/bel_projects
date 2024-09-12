@@ -1,0 +1,10 @@
+[Unit]
+Description = unichop monitoring server for PRO
+
+[Service]
+Type = simple
+Environment="DIM_DNS_NODE=asl105"
+ExecStart = unichop-bla int_esr
+
+[Install]
+WantedBy = multi-user.target

@@ -708,6 +708,8 @@ int16_t writeToPZU(uint16_t ifbAddr, uint16_t modAddr, uint16_t data)
   volatile uint32_t *pMilPiggy;
 
   pMilPiggy = fwlib_getMilPiggy();
+
+  /* chk: according to Stefan Rauch, first the data shall be written, select modules comes second */
   
   // select module
   wData     = (modAddr << 8) | C_IO32_KANAL_0;
