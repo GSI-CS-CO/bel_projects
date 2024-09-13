@@ -58,7 +58,7 @@ unichop-ctl $TRGW startop
 ###########################################
 
 # lm32 listens to timing messages for EVTNO 0x000..0x0ff
-#saft-ecpu-ctl $SDGW -c 0x1${SIDGW}000000000000 0xfffff00000000000 500000 0xff -g -d
+saft-ecpu-ctl $SDGW -c 0x1ff0fa0000000000 0xffffffff00000000 1000000 0xfa0 -g -d
 
 ###########################################
 # reset diagnostics

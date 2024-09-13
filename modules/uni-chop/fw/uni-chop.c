@@ -78,6 +78,7 @@ volatile uint32_t *pSharedGetNEvtsRecLo;   // pointer to a "user defined" u32 re
 
 uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM
 volatile uint32_t *pMilSend;            // address of MIL device sending timing messages, usually this will be a SIO
+uint16_t slotSio;                       // slot of SIO in SCU crate
 
 uint64_t statusArray;                   // all status infos are ORed bit-wise into statusArray, statusArray is then published
 uint64_t nMilSnd;                       // # of MIL writes
@@ -165,6 +166,48 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
 } // initSharedMem
 
 
+// write to modules connected via MIL
+int16_t writeToModuleMil(uint16_t ifbAddr, uint16_t modAddr, uint16_t modReg, uint16_t data)
+{
+  uint16_t wData     = 0x0;     // data to write
+  int16_t  busStatus = 0;       // status of bus operation
+
+  // select module
+  wData     = (modAddr << 8) | modReg;
+  switch(slotSio) {
+    case 0:
+      busStatus = writeDevMil(pMilSend, ifbAddr, IFB_FC_ADDR_BUS_W, wData);
+      break;
+    default:
+      busStatus = scubWriteDevMil(pMilSend, slotSio, ifbAddr, IFB_FC_ADDR_BUS_W, wData);
+      break;
+  } // switch slotSio
+  
+  if (busStatus != MIL_STAT_OK) {
+    DBPRINT1("uni-chop: writeToModuleMil failed (address write), MIL error code %d\n", busStatus);
+    return UNICHOP_STATUS_MIL;
+  } // if busStatus not ok
+
+  // write data word
+  wData     = data;
+  switch (slotSio) {
+    case 0:
+      busStatus = writeDevMil(pMilSend, ifbAddr, IFB_FC_DATA_BUS_W, wData);
+      break;
+    default:
+      busStatus = scubWriteDevMil(pMilSend, slotSio, ifbAddr, IFB_FC_DATA_BUS_W, wData);
+      break;
+  } // switch slotSio
+    
+  if (busStatus != MIL_STAT_OK) {
+    DBPRINT1("uni-chop: writeToModuleMil failed (data write), MIL error code %d\n", busStatus);
+    return UNICHOP_STATUS_MIL;
+  } // if busStatus not ok
+  
+  return COMMON_STATUS_OK;
+} // writeToPZU
+
+
 // read from modules connected via MIL
 int16_t readFromModuleMil(uint16_t ifbAddr, uint16_t modAddr, uint16_t modReg, uint16_t *data) 
 {
@@ -174,14 +217,31 @@ int16_t readFromModuleMil(uint16_t ifbAddr, uint16_t modAddr, uint16_t modReg, u
 
   // select module
   wData     = (modAddr << 8) | modReg;
-  if ((busStatus = writeDevMil(pMilSend, ifbAddr, IFB_FC_ADDR_BUS_W, wData))  != MIL_STAT_OK) {
-    DBPRINT1("uni-chop: readFromChopper failed (address), MIL error code %d\n", busStatus);
+  switch(slotSio) {
+    case 0:
+      busStatus = writeDevMil(pMilSend, ifbAddr, IFB_FC_ADDR_BUS_W, wData);
+      break;
+    default:
+      busStatus = scubWriteDevMil(pMilSend, slotSio, ifbAddr, IFB_FC_ADDR_BUS_W, wData);
+      break;
+  } // switch slotSio
+
+  if (busStatus != MIL_STAT_OK) {
+    DBPRINT1("uni-chop: readFromModuleMil failed (address write), MIL error code %d\n", busStatus);
     return busStatus;
   } // if busStatus not ok
 
   // read data
-  if ((busStatus = readDevMil(pMilSend, ifbAddr, IFB_FC_DATA_BUS_R, &rData)) == MIL_STAT_OK) *data = rData;
-  if (busStatus != MIL_STAT_OK) DBPRINT1("uni-chop: readFromChopper failed (data), MIL error code %d\n", busStatus);
+  switch(slotSio) {
+    case 0:
+      readDevMil(pMilSend, ifbAddr, IFB_FC_DATA_BUS_R, &rData);
+      break;
+    default:
+      scubReadDevMil(pMilSend, slotSio, ifbAddr, IFB_FC_DATA_BUS_R, &rData);
+      break;
+  } // switch slotSio
+  if (busStatus == MIL_STAT_OK) *data = rData;
+  if (busStatus != MIL_STAT_OK) DBPRINT1("uni-chop: readFromModuleMil failed (data read), MIL error code %d\n", busStatus);
   
   return(busStatus);
 } // readFromModuleMil 
@@ -213,6 +273,7 @@ uint32_t extern_entryActionConfigured()
   // get address of MIL device sending MIL telegrams; 0 is MIL piggy
   if (*pSharedSetMilDev == 0){
     pMilSend = fwlib_getMilPiggy();
+    slotSio  = 0;
     if (!pMilSend) {
       DBPRINT1("uni-chop: ERROR - can't find MIL device\n");
       return COMMON_STATUS_OUTOFRANGE;
@@ -221,27 +282,40 @@ uint32_t extern_entryActionConfigured()
   else {
     // SCU slaves have offsets 0x20000, 0x40000... for slots 1, 2 ...
     pMilSend = fwlib_getSbMaster();
-    pp_printf("sb master 0x%x\n", pMilSend);
+    slotSio  = *pSharedSetMilDev;
     if (!pMilSend) {
       DBPRINT1("uni-chop: ERROR - can't find MIL device\n");
       return COMMON_STATUS_OUTOFRANGE;
     } // if !pMilSend
-    /*else pMilSend += *pSharedSetMilDev * 0x20000;*/
-    else pMilSend = pMilSend;
   } // else SetMilDev
 
-  pp_printf("test 0x%x\n",  *pSharedSetMilDev * 0x20000);
-  pp_printf("mil send 0x%x, mil dev %d\n", pMilSend, *pSharedSetMilDev);
-  pMilSend = pMilSend + 0x20;
-  pMilSend = 0x80420800;
-  pp_printf("mil send2  0x%x\n", pMilSend);  
-
-
   // reset MIL sender and wait
-  if ((status = resetPiggyDevMil(pMilSend))  != MIL_STAT_OK) {
+  switch (slotSio) {
+    case 0:
+      status = resetPiggyDevMil(pMilSend);
+      break;
+    default:
+      status = scubResetDevMil(pMilSend, slotSio);
+      break;
+  } // switch slotSio
+  if (status != MIL_STAT_OK) {
     DBPRINT1("uni-chop: ERROR - can't reset MIL device\n");
     return UNICHOP_STATUS_MIL;
   }  // if reset
+
+  // check if connection to chopper unit is ok
+  switch (slotSio) {
+    case 0:
+      status = echoTestDevMil(pMilSend, IFB_ADDR_CU, 0x0651);
+      break;
+    default:
+      status = scubEchoTestDevMil(pMilSend, slotSio, IFB_ADDR_CU, 0x0651);
+      break;
+  } // switch slotSio
+  if (status != MIL_STAT_OK) {
+    DBPRINT1("uni-chop: ERROR - modulbus SIS IFK not available at (ext) base address 0x%08x! Error code is %u\n", (unsigned int)((uint32_t)pMilSend & 0x7FFFFFFF), (unsigned int)status);
+    return UNICHOP_STATUS_MIL;
+  } // if status
 
   // if everything is ok, we must return with COMMON_STATUS_OK
   if (status == MIL_STAT_OK) status = COMMON_STATUS_OK;
@@ -286,11 +360,9 @@ uint32_t extern_entryActionOperation()
   maxOffsDone               = 0;
 
   uint16_t data;
-  
+
   readFromModuleMil(IFB_ADDR_CU, MOD_LOGIC1_ADDR, MOD_LOGIC1_REG_STATUSGLOBAL, &data);
   pp_printf("module version 0x%x\n", data);
-  pp_printf("mil device 0x%x\n", pMilSend);
-  
 
   return COMMON_STATUS_OK;
 } // extern_entryActionOperation
@@ -344,34 +416,41 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       recGid       = (uint32_t)((recEvtId >> 48) & 0x00000fff);
       recEvtNo     = (uint32_t)((recEvtId >> 36) & 0x00000fff);
       recSid       = (uint32_t)((recEvtId >> 20) & 0x00000fff);
-
       if (recGid != GID_LOCAL) return UNICHOP_STATUS_BADSETTING;
       if (recSid  > 15)        return COMMON_STATUS_OUTOFRANGE;
-
       // check if we are too late 
-      if (getSysTime() > recDeadline) {
+      if (getSysTime() > recDeadline+1000000) {
         nEvtsLate++;
         flagIsLate    = 1;
       } // if getSysTime
       else flagIsLate = 0;
-
+      //pp_printf("lateflag %d\n", flagIsLate);
       if (!flagIsLate) {
         strahlweg_reg  =  recParam        & 0xffff;
         strahlweg_mask = (recParam >> 16) & 0xffff;
 
-        /*        // write strahlweg register
-        writeToCU(UNICHOP_ADDR_MIL_64BIO, C_IO64_KANAL_1, strahlweg_reg);
+        // write strahlweg register
+        status = writeToModuleMil(IFB_ADDR_CU, MOD_LOGIC1_ADDR, MOD_LOGIC1_REG_STRAHLWEG_REG, strahlweg_reg);
+        //if (status != COMMON_STATUS_OK) pp_printf("uhps %d\n", status);
+        //        else                            pp_printf("wrote strahlweg_reg 0x%x\n", strahlweg_reg);
 
         // write strahlweg mask
-        writeToCU(UNICHOP_ADDR_MIL_64BIO, */
-
+        status = writeToModuleMil(IFB_ADDR_CU, MOD_LOGIC1_ADDR, MOD_LOGIC1_REG_STRAHLWEG_MASK, strahlweg_mask);
+        //if (status != COMMON_STATUS_OK) pp_printf("uhps %d\n", status);
+        //else                            pp_printf("wrote strahlweg_mask 0x%x\n", strahlweg_mask);
       } // if not late
 
-
+      scubEchoTestDevMil(pMilSend, 1, IFB_ADDR_CU, 0xbabe);
+      //scubEchoTestDevMil(pMilSend, 1, IFB_ADDR_CU, 0xcafe);
       
+      //strahlweg_reg = 0x42;
+      //readFromModuleMil(IFB_ADDR_CU, MOD_LOGIC1_ADDR, MOD_LOGIC1_REG_STRAHLWEG_REG, &strahlweg_reg);
+      //      pp_printf("read strahlweg reg 0x%x\n", strahlweg_reg);
 
-
-
+      //strahlweg_mask = 0x17;
+      //readFromModuleMil(IFB_ADDR_CU, MOD_LOGIC1_ADDR, MOD_LOGIC1_REG_STRAHLWEG_MASK, &strahlweg_mask);
+      //      pp_printf("read strahlweg mask 0x%x\n", strahlweg_mask);
+      
 
       /*
       
@@ -405,9 +484,10 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       // write the MIL message in time.
       // note: we add 20us in the comparison taking into account the time it takes to write
       // the message to the ECA and the time it takes the ECA to process that message
+      */
 
-      offsDone = sysTime - recDeadline;
-
+      offsDone = getSysTime() - recDeadline;
+      /*
       // handle UTC events; here the UTC time (- offset) is distributed as a series of MIL telegrams
       if (recEvtNo == utc_trigger) {
         // send EVT_UTC_1/2/3/4/5 telegrams
@@ -426,8 +506,9 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
       // reset inhibit counter for fill events
       inhibit_fill_events = RESET_INHIBIT_COUNTER;
-
+      */
       break;
+      /*
 
     // received timing message from TLU; this indicates a received MIL telegram on the MIL piggy
     case UNICHOP_ECADO_MIL_TLU:

@@ -35,7 +35,7 @@
 #define IFB_FC_DATA_BUS_R               0x90   // function code, data bus read
 
 // interface board: main chopoper control
-#define IFB_ADDR_CU                     0x68   // MIL address of chopper IF; FG 380.221
+#define IFB_ADDR_CU                     0x60   // MIL address of chopper IF; FG 380.221
 #define MOD_LOGIC1_ADDR                 0x09   // logic module 1 (Strahlwege et al),  module bus address,  FG 450.410/411
 #define MOD_LOGIC1_REG_STRAHLWEG_REG    0x60   // logic module 1, register/address for Strahlwegregister
 #define MOD_LOGIC1_REG_STRAHLWEG_MASK   0x62   // logic module 1, register/address for Strahlwegmaske
