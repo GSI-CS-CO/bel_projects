@@ -313,6 +313,56 @@ int16_t resetPiggyDevMil(volatile uint32_t *base)
   else                   return MIL_STAT_OK;
 } //resetPiggyDevMil
 
+int16_t scubWriteDevMil(volatile uint32_t *base, uint16_t slot, uint16_t  ifbAddr, uint16_t  fctCode, uint16_t  data)
+{
+  // just a wrapper for the function of the original library
+  // replace code once original library becomes deprecated
+  
+  uint16_t fc_ifb_addr;
+
+  fc_ifb_addr = ifbAddr | (fctCode << 8);
+
+  return (int16_t)scub_write_mil((unsigned short *)base, (short)slot, (short)data, (short)fc_ifb_addr);
+} // writeDevMil
+
+int16_t scubReadDevMil(volatile uint32_t *base, uint16_t slot, uint16_t  ifbAddr, uint16_t  fctCode, uint16_t  *data)
+{
+  // just a wrapper for the function of the original library
+  // replace code once original library becomes deprecated
+
+  uint16_t fc_ifb_addr;
+
+  fc_ifb_addr = ifbAddr | (fctCode << 8);
+
+  return (int16_t)scub_read_mil((unsigned short *)base, (short)slot, (short *)data, (short)fc_ifb_addr);
+} //writeDevMil
+
+int16_t scubEchoTestDevMil(volatile uint32_t *base, uint16_t slot, uint16_t  ifbAddr, uint16_t data)
+{
+  int32_t  busStatus;
+  uint16_t rData = 0x0;
+
+  busStatus = scubWriteDevMil(base, slot, ifbAddr, FC_WR_IFC_ECHO, data);
+  if (busStatus != MIL_STAT_OK) return busStatus;
+
+  busStatus = scubReadDevMil(base, slot, ifbAddr, FC_RD_IFC_ECHO, &rData);
+  if (busStatus != MIL_STAT_OK) return busStatus;
+
+  if (data != rData) return MIL_STAT_ERROR;
+  else               return MIL_STAT_OK;
+} //echoTestDevMil
+
+int16_t scubResetDevMil(volatile uint32_t *base, uint16_t slot)
+{
+  int32_t  busStatus;
+  
+  // just a wrapper for the function of the original library
+  // replace code once original library becomes deprecated
+
+  busStatus = scub_reset_mil((unsigned short*)base, (short)slot);
+  if (busStatus != OKAY) return MIL_STAT_ERROR;
+  else                   return MIL_STAT_OK;
+} //resetPiggyDevMil
 
 int16_t clearFilterEvtMil(volatile uint32_t *base)
 {

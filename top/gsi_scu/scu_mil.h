@@ -216,7 +216,7 @@ inline int scub_write_mil(volatile unsigned short *base, int slot, short data, s
 /***********************************************************
 * routines for MIL device bus (Canon socket)      
 ************************************************************/
-
+// routines for MIL Piggy; here 'base' ist the Wishbone address of the MIL-Piggy
 // write to MIL device bus; returns error code                                                             
 int16_t writeDevMil(volatile uint32_t *base,            // Wishbone address seen from the CPUs perspective 
                     uint16_t  ifbAddr,                  // MIL address of interface board                  
@@ -233,12 +233,42 @@ int16_t readDevMil(volatile uint32_t *base,             // Wishbone address seen
 
 // write data to the echo register of a MIL device, then read and compare the data; returns error code                                                            
 int16_t echoTestDevMil(volatile uint32_t *base,         // Wishbone address seen from the CPUs perspective 
-                    uint16_t  ifbAddr,                  // MIL address of interface board                  
-                    uint16_t  data                      // data                                            
+                       uint16_t  ifbAddr,               // MIL address of interface board                  
+                       uint16_t  data                   // data                                            
                     );
 
 // reset device bus part of MIL piggy
-int16_t resetPiggyDevMil(volatile uint32_t *base);      // Wishbone address seen from the CPUs perspective 
+int16_t resetPiggyDevMil(volatile uint32_t *base);      // Wishbone address seen from the CPUs perspective
+
+// routines for SIO on SCUBus; here, 'base' is the wishbone address of the SCU Bus interface
+// write to MIL device bus; returns error code                                                             
+int16_t scubWriteDevMil(volatile uint32_t *base,        // Wishbone address seen from the CPUs perspective
+                        uint16_t  slot,                 // slot of SIO in backplane
+                        uint16_t  ifbAddr,              // MIL address of interface board                  
+                        uint16_t  fctCode,              // function code                                   
+                        uint16_t  data                  // data                                            
+                        );
+
+// read from MIL device bus; returns error code                                                            
+int16_t scubReadDevMil(volatile uint32_t *base,         // Wishbone address seen from the CPUs perspective 
+                       uint16_t  slot,                  // slot of SIO in backplane
+                       uint16_t  ifbAddr,               // MIL address of interface board                  
+                       uint16_t  fctCode,               // function code                                   
+                       uint16_t  *data                  // data                                            
+                       );
+
+// write data to the echo register of a MIL device, then read and compare the data; returns error code                                                            
+int16_t scubEchoTestDevMil(volatile uint32_t *base,     // Wishbone address seen from the CPUs perspective 
+                           uint16_t  slot,              // slot of SIO in backplane
+                           uint16_t  ifbAddr,           // MIL address of interface board                  
+                           uint16_t  data               // data                                            
+                           );
+
+// reset device bus part of MIL piggy
+int16_t scubResetDevMil(volatile uint32_t *base,       // Wishbone address seen from the CPUs perspective
+                        uint16_t  slot                 // slot of SIO in backplane
+                        );       
+
 
 /***********************************************************
 * routines for MIL event bus receiver (bipolar LEMO socket)
