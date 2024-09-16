@@ -229,7 +229,7 @@ void comlib_printDiag(uint64_t statusArray, uint32_t state, uint32_t version, ui
   secs     = (unsigned long)((double)tS0 / 1000000000.0);
   tm = gmtime(&secs);
   strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S TAI", tm);
-  printf("firmware boot at      : %s\n", timestr);
+  printf("firmware boot at                    : %s\n", timestr);
 
   secs     = (unsigned long)((double)tDiag / 1000000000.0);
   tm = gmtime(&secs);
