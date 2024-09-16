@@ -14,6 +14,7 @@ entity wb_irq_scu_bus is
             g_address_granularity : t_wishbone_address_granularity  := BYTE;
             clk_in_hz             : integer := 62_500_000;
             time_out_in_ns        : integer := 250;
+            d_valid_to_ds_in_ns   : integer := 30;
             test                  : integer range 0 to 1 := 0);
   port (
         clk_i               : std_logic;

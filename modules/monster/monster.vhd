@@ -420,6 +420,19 @@ architecture rtl of monster is
     we  => '0',
     dat => (others => '0'));
 
+  function get_valid_to_ds return natural is
+  begin
+    if c_is_arria10gx_scu4 then
+      return 80;
+    else
+      return 30;
+    end if;
+  end function;
+
+  constant c_scub_valid_to_ds_in_ns : natural := get_valid_to_ds;
+
+
+
   ----------------------------------------------------------------------------------
   -- GSI Top Crossbar Masters ------------------------------------------------------
   ----------------------------------------------------------------------------------
@@ -2995,7 +3008,8 @@ end generate;
         g_address_granularity => BYTE,
         clk_in_hz             => 62_500_000,
         Test                  => 0,
-        Time_Out_in_ns        => 350)
+        Time_Out_in_ns        => 350,
+        d_valid_to_ds_in_ns   => c_scub_valid_to_ds_in_ns)
       port map(
         clk_i              => clk_sys,
         rst_n_i            => rstn_sys,
