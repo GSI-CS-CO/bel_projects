@@ -20,12 +20,14 @@
 #define UNICHOP_ECADO_TIMEOUT    COMMON_ECADO_TIMEOUT
 #define UNICHOP_ECADO_UNKOWN               1   // unkown activity requested (unexpected action by ECA)
 #define UNICHOP_ECADO_STRAHLWEG_REC    0xfa0   // timing message received with 'Strahlweg information'; param 0..15: Strahlwegregister; param 16..31: Strahlwegmaske
-#define UNICHOP_ECADO_MIL_SEND         0xfa8   // diagnostic timing message sent by firmware for each MIL write; param: 24..31 addr, 16..23: func code, 0..15 data
+#define UNICHOP_ECADO_DIAG_MIL_WRITE   0xfa8   // diagnostic timing message sent by firmware for each MIL write; param: 48..55 status,  40..47 slot, 32..39 ifb addr, 24..31 mod addr, 16..23: reg addr, 0..15 data
+#define UNICHOP_ECADO_DIAG_MIL_READ    0xfa9   // each MIL write
 
 // commands from the outside
 
 #define GID_INVALID                      0x0   // invalid GID
-#define GID_LOCAL                      0xff0   // group for local timing messages received/sent by firmware
+#define GID_LOCAL                      0xff0   // internal: group for local timing messages received/sent exchanged between host and lm32 firmware
+#define GID_MILMON                     0xff1   // internal: timing messages for MIL monitoring
 
 // specialities
 // part below provided by Ludwig Hechler and Stefan Rauch
@@ -53,6 +55,7 @@
 //#define UNICHOP_GW_MSI_EVENT              0x3  // ored with (mil_event_number << 8)
 
 // constants
+#define UNICHOP_MILMODULE_ACCESST     100000   // time required to access (read/write) HW via MIL<->Modulebus  [ns]
 
 // default values
 

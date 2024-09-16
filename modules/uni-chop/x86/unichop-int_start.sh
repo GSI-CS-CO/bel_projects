@@ -9,12 +9,6 @@
 export TRGW=dev/wbm0         # EB device 
 export SDGW=tr0              # saftlib device
 export MILDEV=1              # MIL device, piggy(0), sio slot 1 (1) ...
-# piggy: Wishbone address of 'GSI_MIL_SCU'
-#        the register 0x1004 needs to be added
-#        exammple piggy: 0x9004 @ fallout Gateware
-# SIO  : Wishbone address of 'SCU-BUS-Master' + (slot number) * 0x20000
-#        the register 0x800 needs to be added
-#        example SIO slot #1: 0x420800
 ###########################################
 # setting for development
 # gateway: N/A
@@ -58,7 +52,8 @@ unichop-ctl $TRGW startop
 ###########################################
 
 # lm32 listens to timing messages for EVTNO 0x000..0x0ff
-saft-ecpu-ctl $SDGW -c 0x1ff0fa0000000000 0xffffffff00000000 1000000 0xfa0 -g -d
+# requires a negative offset that is 2x the value of UNICHOP_MILMODULE_ACCESST
+saft-ecpu-ctl $SDGW -c 0x1ff0fa0000000000 0xffffffff00000000 200000 0xfa0 -g -d
 
 ###########################################
 # reset diagnostics

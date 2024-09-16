@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Tobias Habermann GSI-Darmstadt
- *  version : 12-Sep-2024
+ *  version : 16-Sep-2024
  *
  *  firmware required for UNILAC chopper control
  *  
@@ -166,6 +166,30 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
 } // initSharedMem
 
 
+// send MIL diag message to ECAaction
+void sendMilDiag(int writeFlag, uint16_t status, uint16_t slotSio, uint16_t ifbAddr, uint16_t modAddr, uint16_t modReg, uint16_t data)
+{
+  uint64_t sendEvtId;
+  uint32_t sendEvtNo;
+  uint64_t sendParam;
+  uint64_t sendDeadline;
+
+  if (writeFlag) sendEvtNo = 0xfa8;
+  else           sendEvtNo = 0xfa9;
+
+  sendEvtId    = fwlib_buildEvtidV1(GID_MILMON, sendEvtNo, 0x0, 0x0, 0x0, 0x0);
+  sendParam    = (uint64_t)(status  & 0xff) << 48;
+  sendParam   |= (uint64_t)(slotSio & 0xff) << 40;
+  sendParam   |= (uint64_t)(ifbAddr & 0xff) << 32;
+  sendParam   |= (uint64_t)(modAddr & 0xff) << 24;
+  sendParam   |= (uint64_t)(modReg  & 0xff) << 16;
+  sendParam   |= (uint64_t)(data    & 0xffff);
+  sendDeadline = getSysTime() + COMMON_AHEADT;
+
+  fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0x0);
+} // sendMilDiag
+
+
 // write to modules connected via MIL
 int16_t writeToModuleMil(uint16_t ifbAddr, uint16_t modAddr, uint16_t modReg, uint16_t data)
 {
@@ -234,10 +258,10 @@ int16_t readFromModuleMil(uint16_t ifbAddr, uint16_t modAddr, uint16_t modReg, u
   // read data
   switch(slotSio) {
     case 0:
-      readDevMil(pMilSend, ifbAddr, IFB_FC_DATA_BUS_R, &rData);
+      busStatus = readDevMil(pMilSend, ifbAddr, IFB_FC_DATA_BUS_R, &rData);
       break;
     default:
-      scubReadDevMil(pMilSend, slotSio, ifbAddr, IFB_FC_DATA_BUS_R, &rData);
+      busStatus = scubReadDevMil(pMilSend, slotSio, ifbAddr, IFB_FC_DATA_BUS_R, &rData);
       break;
   } // switch slotSio
   if (busStatus == MIL_STAT_OK) *data = rData;
@@ -418,95 +442,29 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       recSid       = (uint32_t)((recEvtId >> 20) & 0x00000fff);
       if (recGid != GID_LOCAL) return UNICHOP_STATUS_BADSETTING;
       if (recSid  > 15)        return COMMON_STATUS_OUTOFRANGE;
-      // check if we are too late 
-      if (getSysTime() > recDeadline+1000000) {
-        nEvtsLate++;
-        flagIsLate    = 1;
-      } // if getSysTime
-      else flagIsLate = 0;
-      //pp_printf("lateflag %d\n", flagIsLate);
+
       if (!flagIsLate) {
         strahlweg_reg  =  recParam        & 0xffff;
         strahlweg_mask = (recParam >> 16) & 0xffff;
 
         // write strahlweg register
         status = writeToModuleMil(IFB_ADDR_CU, MOD_LOGIC1_ADDR, MOD_LOGIC1_REG_STRAHLWEG_REG, strahlweg_reg);
-        //if (status != COMMON_STATUS_OK) pp_printf("uhps %d\n", status);
-        //        else                            pp_printf("wrote strahlweg_reg 0x%x\n", strahlweg_reg);
+        if (status == COMMON_STATUS_OK)   nMilSnd++;
+        else                              nMilSndErr++;
+        sendMilDiag(1, (uint16_t)status, slotSio, IFB_ADDR_CU, MOD_LOGIC1_ADDR, MOD_LOGIC1_REG_STRAHLWEG_REG , strahlweg_reg);
 
         // write strahlweg mask
-        status = writeToModuleMil(IFB_ADDR_CU, MOD_LOGIC1_ADDR, MOD_LOGIC1_REG_STRAHLWEG_MASK, strahlweg_mask);
-        //if (status != COMMON_STATUS_OK) pp_printf("uhps %d\n", status);
-        //else                            pp_printf("wrote strahlweg_mask 0x%x\n", strahlweg_mask);
+        if (status == COMMON_STATUS_OK) {
+          status = writeToModuleMil(IFB_ADDR_CU, MOD_LOGIC1_ADDR, MOD_LOGIC1_REG_STRAHLWEG_MASK, strahlweg_mask);
+          if (status == COMMON_STATUS_OK) nMilSnd++;
+          else                            nMilSndErr++;
+          sendMilDiag(1, (uint16_t)status, slotSio, IFB_ADDR_CU, MOD_LOGIC1_ADDR, MOD_LOGIC1_REG_STRAHLWEG_MASK, strahlweg_mask);
+        } // if status ok
       } // if not late
 
-      scubEchoTestDevMil(pMilSend, 1, IFB_ADDR_CU, 0xbabe);
-      //scubEchoTestDevMil(pMilSend, 1, IFB_ADDR_CU, 0xcafe);
-      
-      //strahlweg_reg = 0x42;
-      //readFromModuleMil(IFB_ADDR_CU, MOD_LOGIC1_ADDR, MOD_LOGIC1_REG_STRAHLWEG_REG, &strahlweg_reg);
-      //      pp_printf("read strahlweg reg 0x%x\n", strahlweg_reg);
-
-      //strahlweg_mask = 0x17;
-      //readFromModuleMil(IFB_ADDR_CU, MOD_LOGIC1_ADDR, MOD_LOGIC1_REG_STRAHLWEG_MASK, &strahlweg_mask);
-      //      pp_printf("read strahlweg mask 0x%x\n", strahlweg_mask);
-      
-
-      /*
-      
-      // build timing message and inject into ECA
-
-      // deadline
-      sendDeadline  = recDeadline + UNICHOP_PRETRIGGER_DM + mil_latency - UNICHOP_MILSEND_LATENCY;
-       // protect from nonsense hi-frequency bursts
-      if (sendDeadline < previous_time + UNICHOP_MILSEND_MININTERVAL) {
-        sendDeadline = previous_time + UNICHOP_MILSEND_MININTERVAL;
-        nEvtsBurst++;
-      } // if sendDeadline
-      previous_time = sendDeadline;
-
-      // evtID + param
-      sendEvtId     = recEvtId;
-      prepMilTelegramEca(milTelegram, &sendEvtId, &sendParam);
-
-      // clear MIL FIFO and write to ECA
-      if (mil_mon) clearFifoEvtMil(pMilRec);
-      fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 1);
-
-      nEvtsSnd++;
-      sysTime = getSysTime();
-      // note: we pretrigger 500us the WR-messages to have time to deliver the message
-      // however, some service events will come with an 'official' pretrigger of only 250us;
-      // thus, the ECA will report the WR-message as late. For us however, we only need write the
-      // MIL-message to the ECA 'in time'. Here, 'in time' means that we write the MIL-message
-      // to the ECA sooner than its deadline. Usually this will be the case even if we receive
-      // the WR-message late from the ECA. Thus the late info depends on if we manage to
-      // write the MIL message in time.
-      // note: we add 20us in the comparison taking into account the time it takes to write
-      // the message to the ECA and the time it takes the ECA to process that message
-      */
-
       offsDone = getSysTime() - recDeadline;
-      /*
-      // handle UTC events; here the UTC time (- offset) is distributed as a series of MIL telegrams
-      if (recEvtNo == utc_trigger) {
-        // send EVT_UTC_1/2/3/4/5 telegrams
-        make_mil_timestamp(sendDeadline, evt_utc, utc_offset);
-        sendDeadline += trig_utc_delay * one_us_ns;
-        for (i=0; i<UNICHOP_N_UTC_EVTS; i++){
-          sendDeadline += utc_utc_delay * one_us_ns;
-          prepMilTelegramEca(evt_utc[i], &sendEvtId, &sendParam);
-          // nicer evtId for debugging only
-          sendEvtId &= 0xffff000fffffffff;
-          sendEvtId |= (uint64_t)(0x0e0 + i) << 36;
-          fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 1);
-          nEvtsSnd++;
-        } // for i
-      } // if utc_trigger
+      nEvtsRec++;
 
-      // reset inhibit counter for fill events
-      inhibit_fill_events = RESET_INHIBIT_COUNTER;
-      */
       break;
       /*
 
