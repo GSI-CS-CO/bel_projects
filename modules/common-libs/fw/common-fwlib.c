@@ -753,8 +753,8 @@ uint32_t fwlib_wait4MILEvent(uint32_t usTimeout, uint32_t *evtData, uint32_t *ev
   else                     valid = 0;           // only return if element read from FIFO matches one of the validEvtcodes
 
   while(getSysTime() < timeoutT) {              // while not timed out...
-    while (fifoNotemptyEvtMil(pMILPiggy)) {     // while fifo contains data
-      popFifoEvtMil(pMILPiggy, &evtRec);
+    while (fifoNotemptyEvtMil(pMILPiggy, 0)) {  // while fifo contains data
+      popFifoEvtMil(pMILPiggy, 0, &evtRec);
       evtCodeRec  = evtRec & 0x000000ff;        // extract event code
       virtAccRec  = (evtRec >> 8)  & 0x0f;      // extract virtual accelerator
       evtDataRec  = (evtRec >> 12) & 0x0f;      // extract event data
@@ -781,9 +781,9 @@ void fwlib_milPulseLemo(uint32_t nLemo) // pulse lemo for debugging with scope
 {
   uint32_t i;
 
-  setLemoOutputEvtMil(pMILPiggy, nLemo, 1);
+  setLemoOutputEvtMil(pMILPiggy, 0, nLemo, 1);
   for (i=0; i< 10 * COMMON_US_ASMNOP; i++) asm("nop");
-  setLemoOutputEvtMil(pMILPiggy, nLemo, 0);
+  setLemoOutputEvtMil(pMILPiggy, 0, nLemo, 0);
 } // fwlib_milPulseLemo
 
 

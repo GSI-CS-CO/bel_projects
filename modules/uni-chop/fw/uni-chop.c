@@ -37,7 +37,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define UNICHOP_FW_VERSION      0x000001  // make this consistent with makefile
+#define UNICHOP_FW_VERSION      0x000002  // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -198,14 +198,8 @@ int16_t writeToModuleMil(uint16_t ifbAddr, uint16_t modAddr, uint16_t modReg, ui
 
   // select module
   wData     = (modAddr << 8) | modReg;
-  switch(slotSio) {
-    case 0:
-      busStatus = writeDevMil(pMilSend, ifbAddr, IFB_FC_ADDR_BUS_W, wData);
-      break;
-    default:
-      busStatus = scubWriteDevMil(pMilSend, slotSio, ifbAddr, IFB_FC_ADDR_BUS_W, wData);
-      break;
-  } // switch slotSio
+
+  busStatus = writeDevMil(pMilSend, slotSio, ifbAddr, IFB_FC_ADDR_BUS_W, wData);
   
   if (busStatus != MIL_STAT_OK) {
     DBPRINT1("uni-chop: writeToModuleMil failed (address write), MIL error code %d\n", busStatus);
@@ -214,14 +208,8 @@ int16_t writeToModuleMil(uint16_t ifbAddr, uint16_t modAddr, uint16_t modReg, ui
 
   // write data word
   wData     = data;
-  switch (slotSio) {
-    case 0:
-      busStatus = writeDevMil(pMilSend, ifbAddr, IFB_FC_DATA_BUS_W, wData);
-      break;
-    default:
-      busStatus = scubWriteDevMil(pMilSend, slotSio, ifbAddr, IFB_FC_DATA_BUS_W, wData);
-      break;
-  } // switch slotSio
+
+  busStatus = writeDevMil(pMilSend, slotSio, ifbAddr, IFB_FC_DATA_BUS_W, wData);
     
   if (busStatus != MIL_STAT_OK) {
     DBPRINT1("uni-chop: writeToModuleMil failed (data write), MIL error code %d\n", busStatus);
@@ -241,14 +229,8 @@ int16_t readFromModuleMil(uint16_t ifbAddr, uint16_t modAddr, uint16_t modReg, u
 
   // select module
   wData     = (modAddr << 8) | modReg;
-  switch(slotSio) {
-    case 0:
-      busStatus = writeDevMil(pMilSend, ifbAddr, IFB_FC_ADDR_BUS_W, wData);
-      break;
-    default:
-      busStatus = scubWriteDevMil(pMilSend, slotSio, ifbAddr, IFB_FC_ADDR_BUS_W, wData);
-      break;
-  } // switch slotSio
+
+  busStatus = writeDevMil(pMilSend, slotSio, ifbAddr, IFB_FC_ADDR_BUS_W, wData);
 
   if (busStatus != MIL_STAT_OK) {
     DBPRINT1("uni-chop: readFromModuleMil failed (address write), MIL error code %d\n", busStatus);
@@ -256,14 +238,8 @@ int16_t readFromModuleMil(uint16_t ifbAddr, uint16_t modAddr, uint16_t modReg, u
   } // if busStatus not ok
 
   // read data
-  switch(slotSio) {
-    case 0:
-      busStatus = readDevMil(pMilSend, ifbAddr, IFB_FC_DATA_BUS_R, &rData);
-      break;
-    default:
-      busStatus = scubReadDevMil(pMilSend, slotSio, ifbAddr, IFB_FC_DATA_BUS_R, &rData);
-      break;
-  } // switch slotSio
+  busStatus = readDevMil(pMilSend, slotSio, ifbAddr, IFB_FC_DATA_BUS_R, &rData);
+
   if (busStatus == MIL_STAT_OK) *data = rData;
   if (busStatus != MIL_STAT_OK) DBPRINT1("uni-chop: readFromModuleMil failed (data read), MIL error code %d\n", busStatus);
   
@@ -314,28 +290,14 @@ uint32_t extern_entryActionConfigured()
   } // else SetMilDev
 
   // reset MIL sender and wait
-  switch (slotSio) {
-    case 0:
-      status = resetPiggyDevMil(pMilSend);
-      break;
-    default:
-      status = scubResetDevMil(pMilSend, slotSio);
-      break;
-  } // switch slotSio
+  status = resetDevMil(pMilSend, slotSio);
   if (status != MIL_STAT_OK) {
     DBPRINT1("uni-chop: ERROR - can't reset MIL device\n");
     return UNICHOP_STATUS_MIL;
   }  // if reset
 
   // check if connection to chopper unit is ok
-  switch (slotSio) {
-    case 0:
-      status = echoTestDevMil(pMilSend, IFB_ADDR_CU, 0x0651);
-      break;
-    default:
-      status = scubEchoTestDevMil(pMilSend, slotSio, IFB_ADDR_CU, 0x0651);
-      break;
-  } // switch slotSio
+  status = echoTestDevMil(pMilSend, slotSio, IFB_ADDR_CU, 0x0651);
   if (status != MIL_STAT_OK) {
     DBPRINT1("uni-chop: ERROR - modulbus SIS IFK not available at (ext) base address 0x%08x! Error code is %u\n", (unsigned int)((uint32_t)pMilSend & 0x7FFFFFFF), (unsigned int)status);
     return UNICHOP_STATUS_MIL;
