@@ -111,13 +111,13 @@ entity scu4slim is
     -----------------------------------------------------------------------
     -- usb
     -----------------------------------------------------------------------
-    slrd : out   std_logic;
-    slwr : out   std_logic;
-    fd   : inout std_logic_vector(7 downto 0) := (others => 'Z');
-    pa   : inout std_logic_vector(7 downto 0) := (others => 'Z');
-    ctl  : in    std_logic_vector(2 downto 0);
-    uclk : in    std_logic;
-    ures : out   std_logic;
+    --slrd : out   std_logic;
+    --slwr : out   std_logic;
+    --fd   : inout std_logic_vector(7 downto 0) := (others => 'Z');
+    --pa   : inout std_logic_vector(7 downto 0) := (others => 'Z');
+    --ctl  : in    std_logic_vector(2 downto 0);
+    --uclk : in    std_logic;
+    --ures : out   std_logic;
 
     -----------------------------------------------------------------------
     -- leds onboard
