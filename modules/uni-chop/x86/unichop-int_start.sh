@@ -51,9 +51,15 @@ unichop-ctl $TRGW startop
 # configure ECA
 ###########################################
 
-# lm32 listens to timing messages for EVTNO 0x000..0x0ff
-# requires a negative offset that is 2x the value of UNICHOP_MILMODULE_ACCESST
-saft-ecpu-ctl $SDGW -c 0x1ff0fa0000000000 0xffffffff00000000 200000 0xfa0 -g -d
+# lm32 listens to timing messages
+# UNICHOP_ECADO_STRAHLWEG_WRITE, requires a negative offset that is 2x the value of UNICHOP_MILMODULE_ACCESST
+saft-ecpu-ctl $SDGW -c 0x1ff0fa0000000000 0xfffffff000000000 200000 0xfa0 -g -d
+# UNICHOP_ECADO_RPGG_WRITE, requires a negative offset that is 2x the value of UNICHOP_MILMODULE_ACCESST
+saft-ecpu-ctl $SDGW -c 0x1ff0fa2000000000 0xfffffff000000000 200000 0xfa2 -g -d
+# UNICHOP_ECADO_STRAHLWEG_READ
+saft-ecpu-ctl $SDGW -c 0x1ff0fa1000000000 0xfffffff000000000 0 0xfa1 -d
+# UNICHOP_ECADO_RPGG_READ
+saft-ecpu-ctl $SDGW -c 0x1ff0fa3000000000 0xfffffff000000000 0 0xfa3 -d
 
 ###########################################
 # reset diagnostics

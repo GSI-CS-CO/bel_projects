@@ -177,7 +177,7 @@ void sendMilDiag(int writeFlag, uint16_t status, uint16_t slotSio, uint16_t ifbA
   if (writeFlag) sendEvtNo = 0xfa8;
   else           sendEvtNo = 0xfa9;
 
-  sendEvtId    = fwlib_buildEvtidV1(GID_MILMON, sendEvtNo, 0x0, 0x0, 0x0, 0x0);
+  sendEvtId    = fwlib_buildEvtidV1(GID_DIAG_MIL, sendEvtNo, 0x0, 0x0, 0x0, 0x0);
   sendParam    = (uint64_t)(status  & 0xff) << 48;
   sendParam   |= (uint64_t)(slotSio & 0xff) << 40;
   sendParam   |= (uint64_t)(ifbAddr & 0xff) << 32;
@@ -201,23 +201,24 @@ int16_t writeToModuleMil(uint16_t ifbAddr, uint16_t modAddr, uint16_t modReg, ui
 
   busStatus = writeDevMil(pMilSend, slotSio, ifbAddr, IFB_FC_ADDR_BUS_W, wData);
   
-  if (busStatus != MIL_STAT_OK) {
-    DBPRINT1("uni-chop: writeToModuleMil failed (address write), MIL error code %d\n", busStatus);
-    return UNICHOP_STATUS_MIL;
-  } // if busStatus not ok
-
-  // write data word
-  wData     = data;
-
-  busStatus = writeDevMil(pMilSend, slotSio, ifbAddr, IFB_FC_DATA_BUS_W, wData);
+  if (busStatus == MIL_STAT_OK) {
+    // write data word
+    wData     = data;
+    busStatus = writeDevMil(pMilSend, slotSio, ifbAddr, IFB_FC_DATA_BUS_W, wData);
+  } // if ok
     
-  if (busStatus != MIL_STAT_OK) {
-    DBPRINT1("uni-chop: writeToModuleMil failed (data write), MIL error code %d\n", busStatus);
-    return UNICHOP_STATUS_MIL;
-  } // if busStatus not ok
-  
-  return COMMON_STATUS_OK;
-} // writeToPZU
+  if (busStatus == MIL_STAT_OK) {
+    busStatus = COMMON_STATUS_OK;
+  } // if ok
+  else {
+    DBPRINT1("uni-chop: writeToModuleMil failed, MIL error code %d\n", busStatus);
+    busStatus = UNICHOP_STATUS_MIL;
+  } // else ok
+
+  sendMilDiag(1, busStatus, slotSio, ifbAddr, modAddr, modReg, data);
+    
+  return busStatus;
+} // writeToModuleMil
 
 
 // read from modules connected via MIL
@@ -232,16 +233,21 @@ int16_t readFromModuleMil(uint16_t ifbAddr, uint16_t modAddr, uint16_t modReg, u
 
   busStatus = writeDevMil(pMilSend, slotSio, ifbAddr, IFB_FC_ADDR_BUS_W, wData);
 
-  if (busStatus != MIL_STAT_OK) {
-    DBPRINT1("uni-chop: readFromModuleMil failed (address write), MIL error code %d\n", busStatus);
-    return busStatus;
-  } // if busStatus not ok
+  if (busStatus == MIL_STAT_OK) {
+    // read data
+    busStatus = readDevMil(pMilSend, slotSio, ifbAddr, IFB_FC_DATA_BUS_R, &rData);
+  } // if ok
 
-  // read data
-  busStatus = readDevMil(pMilSend, slotSio, ifbAddr, IFB_FC_DATA_BUS_R, &rData);
+  if (busStatus == MIL_STAT_OK) {
+    *data     = rData;
+    busStatus = COMMON_STATUS_OK;
+  } // if ok
+  else {
+    DBPRINT1("uni-chop: readFromModuleMil failed, MIL error code %d\n", busStatus);
+    busStatus = UNICHOP_STATUS_MIL;
+  } // else ok
 
-  if (busStatus == MIL_STAT_OK) *data = rData;
-  if (busStatus != MIL_STAT_OK) DBPRINT1("uni-chop: readFromModuleMil failed (data read), MIL error code %d\n", busStatus);
+  sendMilDiag(0, busStatus, slotSio, ifbAddr, modAddr, modReg, rData);
   
   return(busStatus);
 } // readFromModuleMil 
@@ -385,6 +391,14 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
   uint16_t strahlweg_mask;                                    // strahlweg mask
   uint16_t strahlweg_reg;                                     // strahlweg register
+  uint16_t rpgIqrStart;                                       // RPG IQR start event
+  uint16_t rpgIqrStop;                                        // RPG IQR stop event
+  uint16_t rpgIqlStart;                                       // RPG IQL start event
+  uint16_t rpgIqlStop;                                        // RPG IQL stop event
+  uint16_t rpgHliStart;                                       // RPG HLI start event
+  uint16_t rpgHliStop;                                        // RPG HLI stop event
+  uint16_t rpgHsiStart;                                       // RPG HSI start event
+  uint16_t rpgHsiStop;                                        // RPG HSI stop event
 
   int      i;
   uint64_t one_us_ns = 1000;
@@ -397,7 +411,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
   switch (ecaAction) {
     // received timing message containing Strahlweg data
-    case UNICHOP_ECADO_STRAHLWEG_REC:
+    case UNICHOP_ECADO_STRAHLWEG_WRITE:
       comLatency   = (int32_t)(getSysTime() - recDeadline);
       recGid       = (uint32_t)((recEvtId >> 48) & 0x00000fff);
       recEvtNo     = (uint32_t)((recEvtId >> 36) & 0x00000fff);
@@ -413,14 +427,12 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         status = writeToModuleMil(IFB_ADDR_CU, MOD_LOGIC1_ADDR, MOD_LOGIC1_REG_STRAHLWEG_REG, strahlweg_reg);
         if (status == COMMON_STATUS_OK)   nMilSnd++;
         else                              nMilSndErr++;
-        sendMilDiag(1, (uint16_t)status, slotSio, IFB_ADDR_CU, MOD_LOGIC1_ADDR, MOD_LOGIC1_REG_STRAHLWEG_REG , strahlweg_reg);
 
         // write strahlweg mask
         if (status == COMMON_STATUS_OK) {
           status = writeToModuleMil(IFB_ADDR_CU, MOD_LOGIC1_ADDR, MOD_LOGIC1_REG_STRAHLWEG_MASK, strahlweg_mask);
           if (status == COMMON_STATUS_OK) nMilSnd++;
           else                            nMilSndErr++;
-          sendMilDiag(1, (uint16_t)status, slotSio, IFB_ADDR_CU, MOD_LOGIC1_ADDR, MOD_LOGIC1_REG_STRAHLWEG_MASK, strahlweg_mask);
         } // if status ok
       } // if not late
 
@@ -428,35 +440,100 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       nEvtsRec++;
 
       break;
-      /*
 
-    // received timing message from TLU; this indicates a received MIL telegram on the MIL piggy
-    case UNICHOP_ECADO_MIL_TLU:
+    // received timing message containing RPG data
+    case UNICHOP_ECADO_RPG_WRITE:
+      comLatency   = (int32_t)(getSysTime() - recDeadline);
+      recGid       = (uint32_t)((recEvtId >> 48) & 0x00000fff);
+      recEvtNo     = (uint32_t)((recEvtId >> 36) & 0x00000fff);
+      recSid       = (uint32_t)((recEvtId >> 20) & 0x00000fff);
+      if (recGid != GID_LOCAL) return UNICHOP_STATUS_BADSETTING;
+      if (recSid  > 15)        return COMMON_STATUS_OUTOFRANGE;
 
-      // in case of data monitoring, read message from MIL piggy FIFO and re-send it locally via the ECA
-      if (mil_mon==2) {
-        if (fwlib_wait4MILEvent(50, &recMilEvtData, &recMilEvtCode, &recMilVAcc, recMilEvts, 0) == COMMON_STATUS_OK) {
+      if (!flagIsLate) {
+        rpgIqrStart =  recParam        & 0xff;
+        rpgIqrStop  = (recParam >>  8) & 0xff; 
+        rpgIqlStart = (recParam >> 16) & 0xff;
+        rpgIqlStop  = (recParam >> 24) & 0xff;
+        rpgHliStart = (recParam >> 32) & 0xff;
+        rpgHliStop  = (recParam >> 40) & 0xff;
+        rpgHsiStart = (recParam >> 48) & 0xff;
+        rpgHsiStop  = (recParam >> 56) & 0xff; 
 
-          // deadline
-          sendDeadline  = recDeadline - UNICHOP_POSTTRIGGER_TLU; // time stamp when MIL telegram was decoded at MIL piggy
-          sendDeadline += 1000000;                             // advance to 1ms into the future to avoid late messages
-          // evtID
-          sendEvtId     = fwlib_buildEvtidV1(LOC_MIL_REC, recMilEvtCode, 0x0, recMilVAcc, 0x0, recMilEvtData);
-          // param
-          sendParam     = ((uint64_t)mil_domain) << 32;
 
-          fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 1);
-          nEvtsRecD++;
-        } // if wait4Milevent
-      } // if mil_mon
+        // write to HW
+        status = writeToModuleMil(IFB_ADDR_CU, MOD_RPG_IQR_ADDR, MOD_RPG_XXX_STOPEVT_REG, rpgIqrStop);
+        if (status == COMMON_STATUS_OK)   nMilSnd++;
+        else                              nMilSndErr++;
 
-      // read number of received 'broken' MIL telegrams
-      readEventErrCntMil(pMilRec, &nEvtsErr);
+        status = writeToModuleMil(IFB_ADDR_CU, MOD_RPG_IQR_ADDR, MOD_RPG_XXX_STARTEVT_REG, rpgIqrStart);
+        if (status == COMMON_STATUS_OK)   nMilSnd++;
+        else                              nMilSndErr++;
 
-      nEvtsRecT++;
-      
-      break;*/
+        status = writeToModuleMil(IFB_ADDR_CU, MOD_RPG_IQL_ADDR, MOD_RPG_XXX_STOPEVT_REG, rpgIqlStop);
+        if (status == COMMON_STATUS_OK)   nMilSnd++;
+        else                              nMilSndErr++;
+        
+        status = writeToModuleMil(IFB_ADDR_CU, MOD_RPG_IQL_ADDR, MOD_RPG_XXX_STARTEVT_REG, rpgIqlStart);
+        if (status == COMMON_STATUS_OK)   nMilSnd++;
+        else                              nMilSndErr++;
 
+        status = writeToModuleMil(IFB_ADDR_CU, MOD_RPG_HSI_ADDR, MOD_RPG_XXX_STOPEVT_REG, rpgHsiStop);
+        if (status == COMMON_STATUS_OK)   nMilSnd++;
+        else                              nMilSndErr++;
+
+        status = writeToModuleMil(IFB_ADDR_CU, MOD_RPG_HSI_ADDR, MOD_RPG_XXX_STARTEVT_REG, rpgHsiStart);
+        if (status == COMMON_STATUS_OK)   nMilSnd++;
+        else                              nMilSndErr++;
+
+        status = writeToModuleMil(IFB_ADDR_CU, MOD_RPG_HLI_ADDR, MOD_RPG_XXX_STOPEVT_REG, rpgHliStop);
+        if (status == COMMON_STATUS_OK)   nMilSnd++;
+        else                              nMilSndErr++;
+
+        status = writeToModuleMil(IFB_ADDR_CU, MOD_RPG_HLI_ADDR, MOD_RPG_XXX_STARTEVT_REG, rpgHliStart);
+        if (status == COMMON_STATUS_OK)   nMilSnd++;
+        else                              nMilSndErr++;
+      } // if not late
+
+      offsDone = getSysTime() - recDeadline;
+      nEvtsRec++;
+
+      break;
+
+    case UNICHOP_ECADO_STRAHLWEG_READ:
+      comLatency   = (int32_t)(getSysTime() - recDeadline);
+      recGid       = (uint32_t)((recEvtId >> 48) & 0x00000fff);
+      recEvtNo     = (uint32_t)((recEvtId >> 36) & 0x00000fff);
+      recSid       = (uint32_t)((recEvtId >> 20) & 0x00000fff);
+      if (recGid != GID_LOCAL) return UNICHOP_STATUS_BADSETTING;
+      if (recSid  > 15)        return COMMON_STATUS_OUTOFRANGE;
+
+      if (!flagIsLate) {
+        // read strahlweg register
+        status = readFromModuleMil(IFB_ADDR_CU, MOD_LOGIC1_ADDR, MOD_LOGIC1_REG_STRAHLWEG_REG, &strahlweg_reg);
+        if (status == COMMON_STATUS_OK)   nMilSnd++;
+        else                              nMilSndErr++;
+
+        // read strahlweg mask
+        if (status == COMMON_STATUS_OK) {
+          status = readFromModuleMil(IFB_ADDR_CU, MOD_LOGIC1_ADDR, MOD_LOGIC1_REG_STRAHLWEG_MASK, &strahlweg_mask);
+          if (status == COMMON_STATUS_OK) nMilSnd++;
+          else                            nMilSndErr++;
+        } // if status ok
+
+        // write result to ECA
+        sendEvtId    = fwlib_buildEvtidV1(GID_LOCAL, UNICHOP_ECADO_DIAG_STRAHLWEG_READ, 0x0, 0x0, 0x0, 0x0);
+        sendParam    = (uint64_t)(strahlweg_reg & 0xffff);
+        sendParam   |= (uint64_t)(strahlweg_mask &0xffff) << 16;
+        sendDeadline = getSysTime() + COMMON_AHEADT;
+        fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0x0);
+      } // if not late
+
+      offsDone = getSysTime() - recDeadline;
+      nEvtsRec++;
+
+      break;
+  
     default :                                                         // flush ECA Queue
       flagIsLate = 0;                                                 // ignore late events
   } // switch ecaAction
