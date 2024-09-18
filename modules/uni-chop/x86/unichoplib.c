@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 12-Sep-2024
+ *  version : 18-Sep-2024
  *
  * library for uni-chop
  *
@@ -209,10 +209,10 @@ void unichop_printDiag(uint32_t milDev, uint64_t nMilSend, uint32_t nMilError, u
 {
   printf("unichop: info  ...\n\n");
   
-  printf("MIL Device (0: piggy, 1..: SIO N)    : %15d\n"        , milDev);
-  printf("# of MIL writes                      : %15lu\n"        , nMilSend);
-  printf("# of MIL communication erros         : %15u\n"        , nMilError);
-  printf("# of events received                 : %15lu\n"        , nEvtsReceived);
+  printf("MIL Device (0: piggy, 1..: SIO N)   : %15d\n"        , milDev);
+  printf("# of MIL writes                     : %15lu\n"       , nMilSend);
+  printf("# of MIL communication erros        : %15u\n"        , nMilError);
+  printf("# of events received                : %15lu\n"       , nEvtsReceived);
 } // unichop_printDiag
 
 
