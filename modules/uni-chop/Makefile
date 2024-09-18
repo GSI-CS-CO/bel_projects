@@ -4,6 +4,7 @@
 # Example build:
 #   'make clean'                                                 
 #   'make MASP=NO ENV=int SYSENV=ACC7 PREFIX= all'                                    (hack: leave PREFIX empty for SCU path)
+#   'x86/make-yocto' 
 # Example deploy (for ASL only):
 #   'make PREFIX= SYSENV=ACC7 STAGING=/common/export/timing-rte/unichop-dev deploy'   (hack: leave PREFIX empty for SCU path)
 #   'make PREFIX= SYSENV=ACC7 STAGING=/common/export/timing-rte/unichop deploy'       (hack: leave PREFIX empty for SCU path)
@@ -50,8 +51,13 @@ TARGETS := firmware software nfsinit
 
 all: $(TARGETS)
 
-software:: 
-	$(MAKE) -C $(SW) all
+software:
+ifeq ($(SYSENV), YOCTO)
+# I really hate this hack, but I found no simpler solution
+	bash x86/make-yocto-software-all
+else
+	$(MAKE) -C $(SW) all)
+endif 
 
 firmware:
 	$(MAKE) TARGET=unichop -C $(FW)
