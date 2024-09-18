@@ -24,8 +24,12 @@ class AsyncClearTests(dm_testbench.DmTestbench):
     blockNode = 'Block0b'
     self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', f'{cpu}', '-t', f'{thread}', 'noop', blockNode), [0], 0, 0)
     # The noop command should be pending (pending=1).
-    self.inspectQueue(blockNode, read=0, write=1, pending=1)
+    try:
+      self.inspectQueue(blockNode, read=0, write=1, pending=1)
+    except AssertionError as errorInstance:
+      # sometimes the noop command is already executed. Then read and write index are 1 and pending is 0.
+      self.inspectQueue(blockNode, read=1, write=1, pending=0)
     self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-c', f'{cpu}', '-t', f'{thread}', 'asyncclear', blockNode), [0], 0, 0)
     # check the result with dm-cmd ... queue Block0b.
-    # The queues should be empty after asynchronous clear.
+    # The queues should be empty and the indices 0 after asynchronous clear.
     self.inspectQueue(blockNode, read=0, write=0, pending=0, retry=True)
