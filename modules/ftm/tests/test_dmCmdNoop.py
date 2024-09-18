@@ -28,4 +28,8 @@ class NoopTests(dm_testbench.DmTestbench):
     # check the result with dm-cmd ... queue Block0b.
     # The noop command should be pending (pending=1). If this is false,
     # retry.
-    self.inspectQueue(blockNode, read=0, write=1, pending=1, retry=True)
+    try:
+      self.inspectQueue(blockNode, read=0, write=1, pending=1, retry=True)
+    except AssertionError as errorInstance:
+      # sometimes the noop command is already executed. Then read and write index are 1 and pending is 0.
+      self.inspectQueue(blockNode, read=1, write=1, pending=0)
