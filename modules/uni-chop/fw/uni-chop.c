@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Tobias Habermann GSI-Darmstadt
- *  version : 16-Sep-2024
+ *  version : 18-Sep-2024
  *
  *  firmware required for UNILAC chopper control
  *  
@@ -460,9 +460,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         rpgHsiStart = (recParam >> 48) & 0xff;
         rpgHsiStop  = (recParam >> 56) & 0xff; 
 
-
         // write to HW
-        status = writeToModuleMil(IFB_ADDR_CU, MOD_RPG_IQR_ADDR, MOD_RPG_XXX_STOPEVT_REG, rpgIqrStop);
+        status = writeToModuleMil(IFB_ADDR_CU, MOD_RPG_IQR_ADDR, MOD_RPG_XXX_STOPEVT_REG,  rpgIqrStop);
         if (status == COMMON_STATUS_OK)   nMilSnd++;
         else                              nMilSndErr++;
 
@@ -470,7 +469,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         if (status == COMMON_STATUS_OK)   nMilSnd++;
         else                              nMilSndErr++;
 
-        status = writeToModuleMil(IFB_ADDR_CU, MOD_RPG_IQL_ADDR, MOD_RPG_XXX_STOPEVT_REG, rpgIqlStop);
+        status = writeToModuleMil(IFB_ADDR_CU, MOD_RPG_IQL_ADDR, MOD_RPG_XXX_STOPEVT_REG,  rpgIqlStop);
         if (status == COMMON_STATUS_OK)   nMilSnd++;
         else                              nMilSndErr++;
         
@@ -478,7 +477,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         if (status == COMMON_STATUS_OK)   nMilSnd++;
         else                              nMilSndErr++;
 
-        status = writeToModuleMil(IFB_ADDR_CU, MOD_RPG_HSI_ADDR, MOD_RPG_XXX_STOPEVT_REG, rpgHsiStop);
+        status = writeToModuleMil(IFB_ADDR_CU, MOD_RPG_HSI_ADDR, MOD_RPG_XXX_STOPEVT_REG,  rpgHsiStop);
         if (status == COMMON_STATUS_OK)   nMilSnd++;
         else                              nMilSndErr++;
 
@@ -486,7 +485,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         if (status == COMMON_STATUS_OK)   nMilSnd++;
         else                              nMilSndErr++;
 
-        status = writeToModuleMil(IFB_ADDR_CU, MOD_RPG_HLI_ADDR, MOD_RPG_XXX_STOPEVT_REG, rpgHliStop);
+        status = writeToModuleMil(IFB_ADDR_CU, MOD_RPG_HLI_ADDR, MOD_RPG_XXX_STOPEVT_REG,  rpgHliStop);
         if (status == COMMON_STATUS_OK)   nMilSnd++;
         else                              nMilSndErr++;
 
