@@ -4,7 +4,7 @@
 
 # with set -e the script fails on the first failing command. This marks the jenkins job as failed.
 set -e
-if [[ -v WORKSPACE ]]
+if [[ ! -v WORKSPACE ]]
 then
   export WORKSPACE=$(git rev-parse --show-toplevel)
 fi
@@ -25,7 +25,7 @@ else
 fi
 # create links needed for Rocky-9 environment
 cd res/rocky-9
-test -f libmpfr.so.4 || ./generate_soft_links.sh
+test -L libmpfr.so.4 || ./generate_soft_links.sh
 export PATH=$PATH:$(pwd)
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)
 cd ../..
