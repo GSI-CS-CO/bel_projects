@@ -554,8 +554,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
       break;
 
-    // received timing message requesting a MIL write
-    case UNICHOP_ECADO_MIL_WRITE:
+    // received timing message requesting a standard MIL write
+    case UNICHOP_ECADO_MIL_SWRITE:
       comLatency   = (int32_t)(getSysTime() - recDeadline);
       recGid       = (uint32_t)((recEvtId >> 48) & 0x00000fff);
       recEvtNo     = (uint32_t)((recEvtId >> 36) & 0x00000fff);
@@ -580,8 +580,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       
       break;
 
-    // received a timing message requesting a MIL write
-    case UNICHOP_ECADO_MIL_READ:
+    // received a timing message requesting a standard MIL read
+    case UNICHOP_ECADO_MIL_SREAD:
       comLatency   = (int32_t)(getSysTime() - recDeadline);
       recGid       = (uint32_t)((recEvtId >> 48) & 0x00000fff);
       recEvtNo     = (uint32_t)((recEvtId >> 36) & 0x00000fff);
@@ -600,7 +600,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         else                              nMilSndErr++;
 
         // write result to ECA
-        sendEvtId    = fwlib_buildEvtidV1(GID_LOCAL, UNICHOP_ECADO_DIAG_MIL_READ, 0x0, 0x0, 0x0, 0x0);
+        sendEvtId    = fwlib_buildEvtidV1(GID_LOCAL, UNICHOP_ECADO_DIAG_MIL_SREAD, 0x0, 0x0, 0x0, 0x0);
         sendParam    = (uint64_t)(milData & 0xffff);
         sendDeadline = getSysTime() + COMMON_AHEADT;
         fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0x0);
