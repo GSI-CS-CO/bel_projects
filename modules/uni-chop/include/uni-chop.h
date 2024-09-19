@@ -12,9 +12,7 @@
 // ****************************************************************************************
 
 // (error) status, each status will be represented by one bit, bits will be ORed into a 32bit word
-#define UNICHOP_STATUS_LATEMESSAGE            16   // late timing message received
-#define UNICHOP_STATUS_BADSETTING             17   // bad setting data
-#define UNICHOP_STATUS_MIL                    18   // an error on MIL hardware occured (MIL piggy etc...)
+#define UNICHOP_STATUS_MIL                    16   // an error on MIL hardware occured (MIL piggy etc...)
 
 // activity requested by ECA Handler, the relevant codes are also used as "tags"
 #define UNICHOP_ECADO_TIMEOUT    COMMON_ECADO_TIMEOUT
@@ -22,7 +20,7 @@
 #define UNICHOP_ECADO_STRAHLWEG_WRITE      0xfa0   // timing message received from host; writes data to chopper control; param 0..15: Strahlwegregister; param 16..31: Strahlwegmaske
 #define UNICHOP_ECADO_STRAHLWEG_READ       0xfa1   // timing message received from host; request read data from chopper control
 #define UNICHOP_ECADO_RPG_WRITE            0xfa2   // timing message received from host; writes data to Rahmenpulsgeneratoren; param 48..63 HSI start..stop, 32..47 HLI start..stop, 16..31 IQL start..stop, 0..15 IQR start..stop
-#define UNICHOP_ECADO_DIAG_MIL_WRITE       0xfa8   // diagnostic timing message sent by firmware for each MIL write; param: 48..55 status,  40..47 slot, 32..39 ifb addr, 24..31 mod addr, 16..23: reg addr, 0..15 data
+#define UNICHOP_ECADO_DIAG_MIL_WRITE       0xfa8   // diagnostic timing message sent by firmware for each MIL write; param: 48..63 status,  40..47 slot, 32..39 ifb addr, 24..31 mod addr, 16..23: reg addr, 0..15 data
 #define UNICHOP_ECADO_DIAG_MIL_READ        0xfa9   // diagnostic timing message sent by firmware for each MIL read; param ...
 #define UNICHOP_ECADO_DIAG_STRAHLWEG_READ  0xfaa   // diagnostic timing message sent by firmware after Strahlweg info has been read; param 0..15: Strahlwegregister; param 16..31: Strahlwegmaske
 

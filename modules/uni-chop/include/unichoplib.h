@@ -41,20 +41,22 @@
 extern "C" {
 #endif
 
-#define UNICHOPLIB_VERSION 0x000001
+#define UNICHOPLIB_VERSION 0x000002
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
-#define  UNICHOPLIB_STATUS_OK                 0            // OK
-#define  UNICHOPLIB_STATUS_ERROR              1            // an error occured
-#define  UNICHOPLIB_STATUS_TIMEDOUT           2            // a timeout occured
-#define  UNICHOPLIB_STATUS_OUTOFRANGE         3            // some value is out of range
-#define  UNICHOPLIB_STATUS_EB                 4            // an Etherbone error occured
-#define  UNICHOPLIB_STATUS_NOIP               5            // DHCP request via WR network failed
-#define  UNICHOPLIB_STATUS_WRONGIP            6            // IP received via DHCP does not match local config
-#define  UNICHOPLIB_STATUS_EBREADTIMEDOUT     7            // EB read via WR network timed out
-#define  UNICHOPLIB_STATUS_WRBADSYNC          8            // White Rabbit: not in 'TRACK_PHASE'
-#define  UNICHOPLIB_STATUS_AUTORECOVERY       9            // trying auto-recovery from state ERROR
-#define  UNICHOPLIB_STATUS_RESERVEDTILHERE   15            // 00..15 reserved for common error codes
+#define  UNICHOPLIB_STATUS_OK                  0            // OK
+#define  UNICHOPLIB_STATUS_ERROR               1            // an error occured
+#define  UNICHOPLIB_STATUS_TIMEDOUT            2            // a timeout occured
+#define  UNICHOPLIB_STATUS_OUTOFRANGE          3            // some value is out of range
+#define  UNICHOPLIB_STATUS_EB                  4            // an Etherbone error occured
+#define  UNICHOPLIB_STATUS_NOIP                5            // DHCP request via WR network failed
+#define  UNICHOPLIB_STATUS_WRONGIP             6            // IP received via DHCP does not match local config
+#define  UNICHOPLIB_STATUS_EBREADTIMEDOUT      7            // EB read via WR network timed out
+#define  UNICHOPLIB_STATUS_WRBADSYNC           8            // White Rabbit: not in 'TRACK_PHASE'
+#define  UNICHOPLIB_STATUS_AUTORECOVERY        9            // trying auto-recovery from state ERROR
+#define  UNICHOPLIB_COMMON_STATUS_LATEMESSAGE 10            // late timing message received
+#define  UNICHOPLIB_STATUS_BADSETTING         11            // bad setting data
+#define  UNICHOPLIB_STATUS_RESERVEDTILHERE    15            // 00..15 reserved for common error codes
 
 // states; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  UNICHOPLIB_STATE_UNKNOWN             0            // unknown state

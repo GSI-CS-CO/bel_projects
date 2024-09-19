@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 18-Sep-2024
+ *  version : 19-Sep-2024
  *
  * library for uni-chop
  *
@@ -91,8 +91,6 @@ const char* unichop_status_text(uint32_t code)
   static char message[256];
   
   switch (code) {
-    case UNICHOP_STATUS_LATEMESSAGE          : sprintf(message, "error %d, %s", code, "late timing message received"); break;
-    case UNICHOP_STATUS_BADSETTING           : sprintf(message, "error %d, %s", code, "bad setting data"); break;
     case UNICHOP_STATUS_MIL                  : sprintf(message, "error %d, %s", code, "MIL communication error"); break;     
     default                                  : sprintf(message, "%s", comlib_statusText(code)); break;
   } // switch code
@@ -210,8 +208,8 @@ void unichop_printDiag(uint32_t milDev, uint64_t nMilSend, uint32_t nMilError, u
   printf("unichop: info  ...\n\n");
   
   printf("MIL Device (0: piggy, 1..: SIO N)   : %15d\n"        , milDev);
-  printf("# of MIL writes                     : %15lu\n"       , nMilSend);
-  printf("# of MIL communication erros        : %15u\n"        , nMilError);
+  printf("# of MIL transactions               : %15lu\n"       , nMilSend);
+  printf("# of MIL communication errors       : %15u\n"        , nMilError);
   printf("# of events received                : %15lu\n"       , nEvtsReceived);
 } // unichop_printDiag
 

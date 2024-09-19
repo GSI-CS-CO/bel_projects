@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 18-Sep-2024
+ *  version : 19-Sep-2024
  *
  *  common x86 routines useful for CLIs handling firmware
  * 
@@ -182,6 +182,8 @@ const char* comlib_statusText(uint32_t bit)
     case COMMON_STATUS_EBREADTIMEDOUT   : sprintf(message, "error %d, %s",    bit, "EB read via WR network timed out"); break;
     case COMMON_STATUS_WRBADSYNC        : sprintf(message, "error %d, %s",    bit, "White Rabbit: not in 'TRACK_PHASE'"); break;
     case COMMON_STATUS_AUTORECOVERY     : sprintf(message, "errorFix %d, %s", bit, "attempting auto-recovery from state ERROR"); break;
+    case COMMON_STATUS_LATEMESSAGE      : sprintf(message, "error %d, %s",    bit, "late timing message received"); break;
+    case COMMON_STATUS_BADSETTING       : sprintf(message, "error %d, %s",    bit, "bad setting data"); break;
     default                             : sprintf(message, "error %d, %s",    bit, "undefined error code"); break;
   }
 

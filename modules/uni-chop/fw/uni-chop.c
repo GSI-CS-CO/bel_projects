@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Tobias Habermann GSI-Darmstadt
- *  version : 18-Sep-2024
+ *  version : 19-Sep-2024
  *
  *  firmware required for UNILAC chopper control
  *  
@@ -167,23 +167,26 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
 
 
 // send MIL diag message to ECAaction
-void sendMilDiag(int writeFlag, uint16_t status, uint16_t slotSio, uint16_t ifbAddr, uint16_t modAddr, uint16_t modReg, uint16_t data)
+void sendMilDiag(int writeFlag, uint32_t status, uint16_t slotSio, uint16_t ifbAddr, uint16_t modAddr, uint16_t modReg, uint16_t data)
 {
   uint64_t sendEvtId;
   uint32_t sendEvtNo;
   uint64_t sendParam;
   uint64_t sendDeadline;
+  uint32_t statusArray;
 
   if (writeFlag) sendEvtNo = 0xfa8;
   else           sendEvtNo = 0xfa9;
 
+  statusArray  = (1 << status); 
+
   sendEvtId    = fwlib_buildEvtidV1(GID_DIAG_MIL, sendEvtNo, 0x0, 0x0, 0x0, 0x0);
-  sendParam    = (uint64_t)(status  & 0xff) << 48;
-  sendParam   |= (uint64_t)(slotSio & 0xff) << 40;
-  sendParam   |= (uint64_t)(ifbAddr & 0xff) << 32;
-  sendParam   |= (uint64_t)(modAddr & 0xff) << 24;
-  sendParam   |= (uint64_t)(modReg  & 0xff) << 16;
-  sendParam   |= (uint64_t)(data    & 0xffff);
+  sendParam    = (uint64_t)(statusArray  & 0xffff) << 48;
+  sendParam   |= (uint64_t)(slotSio      & 0xff  ) << 40;
+  sendParam   |= (uint64_t)(ifbAddr      & 0xff  ) << 32;
+  sendParam   |= (uint64_t)(modAddr      & 0xff  ) << 24;
+  sendParam   |= (uint64_t)(modReg       & 0xff  ) << 16;
+  sendParam   |= (uint64_t)(data         & 0xffff);
   sendDeadline = getSysTime() + COMMON_AHEADT;
 
   fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0x0);
@@ -191,10 +194,11 @@ void sendMilDiag(int writeFlag, uint16_t status, uint16_t slotSio, uint16_t ifbA
 
 
 // write to modules connected via MIL
-int16_t writeToModuleMil(uint16_t ifbAddr, uint16_t modAddr, uint16_t modReg, uint16_t data)
+int32_t writeToModuleMil(uint16_t ifbAddr, uint16_t modAddr, uint16_t modReg, uint16_t data)
 {
   uint16_t wData     = 0x0;     // data to write
   int16_t  busStatus = 0;       // status of bus operation
+  int32_t  status;
 
   // select module
   wData     = (modAddr << 8) | modReg;
@@ -206,27 +210,29 @@ int16_t writeToModuleMil(uint16_t ifbAddr, uint16_t modAddr, uint16_t modReg, ui
     wData     = data;
     busStatus = writeDevMil(pMilSend, slotSio, ifbAddr, IFB_FC_DATA_BUS_W, wData);
   } // if ok
-    
+
+  sendMilDiag(1, busStatus, slotSio, ifbAddr, modAddr, modReg, data);
+  
   if (busStatus == MIL_STAT_OK) {
-    busStatus = COMMON_STATUS_OK;
+    status = COMMON_STATUS_OK;
   } // if ok
   else {
     DBPRINT1("uni-chop: writeToModuleMil failed, MIL error code %d\n", busStatus);
-    busStatus = UNICHOP_STATUS_MIL;
+    status = UNICHOP_STATUS_MIL;
   } // else ok
 
-  sendMilDiag(1, busStatus, slotSio, ifbAddr, modAddr, modReg, data);
     
-  return busStatus;
+  return status;
 } // writeToModuleMil
 
 
 // read from modules connected via MIL
-int16_t readFromModuleMil(uint16_t ifbAddr, uint16_t modAddr, uint16_t modReg, uint16_t *data) 
+int32_t readFromModuleMil(uint16_t ifbAddr, uint16_t modAddr, uint16_t modReg, uint16_t *data) 
 {
   uint16_t wData      = 0x0;    // data to write
   uint16_t rData      = 0x0;    // data to read
   int16_t  busStatus  = 0;      // status of bus operation
+  int32_t  status;
 
   // select module
   wData     = (modAddr << 8) | modReg;
@@ -238,18 +244,19 @@ int16_t readFromModuleMil(uint16_t ifbAddr, uint16_t modAddr, uint16_t modReg, u
     busStatus = readDevMil(pMilSend, slotSio, ifbAddr, IFB_FC_DATA_BUS_R, &rData);
   } // if ok
 
+  sendMilDiag(0, busStatus, slotSio, ifbAddr, modAddr, modReg, rData);
+  
   if (busStatus == MIL_STAT_OK) {
     *data     = rData;
-    busStatus = COMMON_STATUS_OK;
+    status    = COMMON_STATUS_OK;
   } // if ok
   else {
     DBPRINT1("uni-chop: readFromModuleMil failed, MIL error code %d\n", busStatus);
-    busStatus = UNICHOP_STATUS_MIL;
+    status    = UNICHOP_STATUS_MIL;
   } // else ok
 
-  sendMilDiag(0, busStatus, slotSio, ifbAddr, modAddr, modReg, rData);
   
-  return(busStatus);
+  return status;
 } // readFromModuleMil 
 
 
@@ -416,7 +423,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       recGid       = (uint32_t)((recEvtId >> 48) & 0x00000fff);
       recEvtNo     = (uint32_t)((recEvtId >> 36) & 0x00000fff);
       recSid       = (uint32_t)((recEvtId >> 20) & 0x00000fff);
-      if (recGid != GID_LOCAL) return UNICHOP_STATUS_BADSETTING;
+      if (recGid != GID_LOCAL) return COMMON_STATUS_BADSETTING;
       if (recSid  > 15)        return COMMON_STATUS_OUTOFRANGE;
 
       if (!flagIsLate) {
@@ -447,7 +454,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       recGid       = (uint32_t)((recEvtId >> 48) & 0x00000fff);
       recEvtNo     = (uint32_t)((recEvtId >> 36) & 0x00000fff);
       recSid       = (uint32_t)((recEvtId >> 20) & 0x00000fff);
-      if (recGid != GID_LOCAL) return UNICHOP_STATUS_BADSETTING;
+      if (recGid != GID_LOCAL) return COMMON_STATUS_BADSETTING;
       if (recSid  > 15)        return COMMON_STATUS_OUTOFRANGE;
 
       if (!flagIsLate) {
@@ -504,7 +511,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       recGid       = (uint32_t)((recEvtId >> 48) & 0x00000fff);
       recEvtNo     = (uint32_t)((recEvtId >> 36) & 0x00000fff);
       recSid       = (uint32_t)((recEvtId >> 20) & 0x00000fff);
-      if (recGid != GID_LOCAL) return UNICHOP_STATUS_BADSETTING;
+      if (recGid != GID_LOCAL) return COMMON_STATUS_BADSETTING;
       if (recSid  > 15)        return COMMON_STATUS_OUTOFRANGE;
 
       if (!flagIsLate) {
@@ -539,7 +546,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
  
   // check for late event
   if ((status == COMMON_STATUS_OK) && flagIsLate) {
-    status = UNICHOP_STATUS_LATEMESSAGE;
+    status = COMMON_STATUS_LATEMESSAGE;
     nEvtsLate++;
   } // if flagIslate
   
