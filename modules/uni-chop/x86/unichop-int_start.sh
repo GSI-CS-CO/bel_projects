@@ -58,8 +58,13 @@ saft-ecpu-ctl $SDGW -c 0x1ff0fa0000000000 0xfffffff000000000 200000 0xfa0 -g -d
 saft-ecpu-ctl $SDGW -c 0x1ff0fa2000000000 0xfffffff000000000 200000 0xfa2 -g -d
 # UNICHOP_ECADO_STRAHLWEG_READ
 saft-ecpu-ctl $SDGW -c 0x1ff0fa1000000000 0xfffffff000000000 0 0xfa1 -d
-# UNICHOP_ECADO_RPGG_READ
+# UNICHOP_ECADO_RPG_READ
 saft-ecpu-ctl $SDGW -c 0x1ff0fa3000000000 0xfffffff000000000 0 0xfa3 -d
+# UNICHOP_ECADO_MIL_SWRITE
+saft-ecpu-ctl $SDGW -c 0x1ff0fa6000000000 0xfffffff000000000 0 0xfa6 -d
+# UNICHOP_ECADO_MIL_SREAD
+saft-ecpu-ctl $SDGW -c 0x1ff0fa7000000000 0xfffffff000000000 0 0xfa7 -d
+
 
 ###########################################
 # reset diagnostics
