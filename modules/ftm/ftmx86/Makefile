@@ -8,7 +8,7 @@ VERSION_CARPEDM= 1.1.1
 
 ifeq ($(findstring asl75,$(shell hostname)),asl75)
   # ASL build paths for asl75x
-  EBPATH	=/common/export/timing-rte/tg-fallout-v6.2.x-rocky9/x86_64
+  EBPATH	=/common/export/timing-rte/tg-fallout-v6.3.1-rocky9
 else
 ifeq ($(findstring asl,$(shell hostname)),asl)
   # ASL build paths for asl74x
@@ -73,7 +73,7 @@ COMMON_SRC_FILES = event.cpp meta.cpp block.cpp visitoruploadcrawler.cpp visitor
                    dotstr.cpp idformat.cpp grouptable.cpp validation.cpp visitorvalidation.cpp common.cpp carpeDMsafe2remove.cpp lzmaCompression.cpp \
                    delayDiagnostics.cpp lockmanager.cpp blocklock.cpp ebwrapper.cpp log.cpp reflocation.cpp globalreftable.cpp global.cpp
 
-CDM_SRC_FILES    = $(COMMON_SRC_FILES) carpeDM.cpp  
+CDM_SRC_FILES    = $(COMMON_SRC_FILES) carpeDM.cpp
 TEST_SRC_FILES   = $(COMMON_SRC_FILES)
 
 T_SOURCES       = $(addprefix $(SRCPATH)/, $(CDM_SRC_FILES)) $(addprefix $(LZMAPATH)/, $(LZMA_SRC_FILES))
