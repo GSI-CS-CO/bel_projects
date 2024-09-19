@@ -565,8 +565,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       
       if (!flagIsLate) {
         milData     =  recParam        & 0xffff;
-        milModAddr  = (recParam >> 16) & 0xff; 
-        milModReg   = (recParam >> 24) & 0xff;
+        milModReg   = (recParam >> 16) & 0xff;
+        milModAddr  = (recParam >> 24) & 0xff; 
         milIfb      = (recParam >> 32) & 0xff;
 
         // write to HW
@@ -591,11 +591,11 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
       if (!flagIsLate) {
         // read strahlweg register
-        milModAddr  = (recParam >> 16) & 0xff; 
-        milModReg   = (recParam >> 24) & 0xff;
+        milModReg   = (recParam >> 16) & 0xff; 
+        milModAddr  = (recParam >> 24) & 0xff;
         milIfb      = (recParam >> 32) & 0xff;
 
-        status = readFromModuleMil(milIfb, milModAddr, milModAddr, &milData);
+        status = readFromModuleMil(milIfb, milModAddr, milModReg, &milData);
         if (status == COMMON_STATUS_OK)   nMilSnd++;
         else                              nMilSndErr++;
 
