@@ -1,17 +1,20 @@
 #! /bin/bash -x
 
+# start this script somewhere inside the git repository. WORKSPACE is set if not set before.
+
 # with set -e the script fails on the first failing command. This marks the jenkins job as failed.
 set -e
-if [[ -z "${WORKSPACE}" ]]
+if [[ -v WORKSPACE ]]
 then
-  export WORKSPACE=$(pwd)
+  export WORKSPACE=$(git rev-parse --show-toplevel)
 fi
+echo $WORKSPACE
+cd $WORKSPACE
 # script for automated datamaster tests with jenkins, including make of test prerequisites
 # ./jenkinsBuild 8 for firmware with 8 threads
 # ./jenkinsBuild 32 for firmware with 32 threads
 uname -a
 ssh root@fel0069.acc.gsi.de 'uname -a'
-# create links needed for Rocky-9 environment
 date
 export DATAMASTER=tcp/fel0069.acc.gsi.de
 if [ $# -eq 1 ]
@@ -20,6 +23,7 @@ then
 else
   THR_QTY=8
 fi
+# create links needed for Rocky-9 environment
 cd res/rocky-9
 test -f libmpfr.so.4 || ./generate_soft_links.sh
 export PATH=$PATH:$(pwd)
