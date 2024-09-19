@@ -167,26 +167,23 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
 
 
 // send MIL diag message to ECAaction
-void sendMilDiag(int writeFlag, uint32_t status, uint16_t slotSio, uint16_t ifbAddr, uint16_t modAddr, uint16_t modReg, uint16_t data)
+void sendMilDiag(int writeFlag, uint16_t status, uint16_t slotSio, uint16_t ifbAddr, uint16_t modAddr, uint16_t modReg, uint16_t data)
 {
   uint64_t sendEvtId;
   uint32_t sendEvtNo;
   uint64_t sendParam;
   uint64_t sendDeadline;
-  uint32_t statusArray;
 
   if (writeFlag) sendEvtNo = 0xfa8;
   else           sendEvtNo = 0xfa9;
 
-  statusArray  = (1 << status); 
-
   sendEvtId    = fwlib_buildEvtidV1(GID_DIAG_MIL, sendEvtNo, 0x0, 0x0, 0x0, 0x0);
-  sendParam    = (uint64_t)(statusArray  & 0xffff) << 48;
-  sendParam   |= (uint64_t)(slotSio      & 0xff  ) << 40;
-  sendParam   |= (uint64_t)(ifbAddr      & 0xff  ) << 32;
-  sendParam   |= (uint64_t)(modAddr      & 0xff  ) << 24;
-  sendParam   |= (uint64_t)(modReg       & 0xff  ) << 16;
-  sendParam   |= (uint64_t)(data         & 0xffff);
+  sendParam    = (uint64_t)(status  & 0xffff) << 48;
+  sendParam   |= (uint64_t)(slotSio & 0xff  ) << 40;
+  sendParam   |= (uint64_t)(ifbAddr & 0xff  ) << 32;
+  sendParam   |= (uint64_t)(modAddr & 0xff  ) << 24;
+  sendParam   |= (uint64_t)(modReg  & 0xff  ) << 16;
+  sendParam   |= (uint64_t)(data    & 0xffff);
   sendDeadline = getSysTime() + COMMON_AHEADT;
 
   fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0x0);
@@ -200,17 +197,23 @@ int32_t writeToModuleMil(uint16_t ifbAddr, uint16_t modAddr, uint16_t modReg, ui
   int16_t  busStatus = 0;       // status of bus operation
   int32_t  status;
 
-  // select module
-  wData     = (modAddr << 8) | modReg;
-
-  busStatus = writeDevMil(pMilSend, slotSio, ifbAddr, IFB_FC_ADDR_BUS_W, wData);
-  
-  if (busStatus == MIL_STAT_OK) {
-    // write data word
-    wData     = data;
-    busStatus = writeDevMil(pMilSend, slotSio, ifbAddr, IFB_FC_DATA_BUS_W, wData);
-  } // if ok
-
+  if (modAddr) {
+    // select module
+    wData     = (modAddr << 8) | modReg;
+    
+    busStatus = writeDevMil(pMilSend, slotSio, ifbAddr, IFB_FC_ADDR_BUS_W, wData);
+    
+    if (busStatus == MIL_STAT_OK) {
+      // write data word
+      wData     = data;
+      busStatus = writeDevMil(pMilSend, slotSio, ifbAddr, IFB_FC_DATA_BUS_W, wData);
+    } // if ok
+  } // if modAddr
+  else {
+    // module address '0': no module, direct write to MIL slave
+    busStatus = writeDevMil(pMilSend, slotSio, ifbAddr, modReg, data);
+  } // else (no module)
+    
   sendMilDiag(1, busStatus, slotSio, ifbAddr, modAddr, modReg, data);
   
   if (busStatus == MIL_STAT_OK) {
@@ -234,16 +237,22 @@ int32_t readFromModuleMil(uint16_t ifbAddr, uint16_t modAddr, uint16_t modReg, u
   int16_t  busStatus  = 0;      // status of bus operation
   int32_t  status;
 
-  // select module
-  wData     = (modAddr << 8) | modReg;
-
-  busStatus = writeDevMil(pMilSend, slotSio, ifbAddr, IFB_FC_ADDR_BUS_W, wData);
-
-  if (busStatus == MIL_STAT_OK) {
-    // read data
-    busStatus = readDevMil(pMilSend, slotSio, ifbAddr, IFB_FC_DATA_BUS_R, &rData);
-  } // if ok
-
+  if (modAddr) {
+    // select module
+    wData     = (modAddr << 8) | modReg;
+    
+    busStatus = writeDevMil(pMilSend, slotSio, ifbAddr, IFB_FC_ADDR_BUS_W, wData);
+    
+    if (busStatus == MIL_STAT_OK) {
+      // read data
+      busStatus = readDevMil(pMilSend, slotSio, ifbAddr, IFB_FC_DATA_BUS_R, &rData);
+    } // if ok
+  } // if modAddr
+  else {
+    // module address '0': no module, direct read from MIL slave
+    busStatus = readDevMil(pMilSend, slotSio, ifbAddr, modReg, &rData);
+  } // else (no module)
+  
   sendMilDiag(0, busStatus, slotSio, ifbAddr, modAddr, modReg, rData);
   
   if (busStatus == MIL_STAT_OK) {
@@ -407,6 +416,11 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint16_t rpgHsiStart;                                       // RPG HSI start event
   uint16_t rpgHsiStop;                                        // RPG HSI stop event
 
+  uint16_t milData;                                           // MIL data
+  uint16_t milIfb;                                            // MIL device bus slave address
+  uint16_t milModAddr;                                        // address of module in MIL slave crate
+  uint16_t milModReg;                                         // register of module in MIL slave crate
+
   int      i;
   uint64_t one_us_ns = 1000;
   uint64_t sysTime;
@@ -531,6 +545,63 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         sendEvtId    = fwlib_buildEvtidV1(GID_LOCAL, UNICHOP_ECADO_DIAG_STRAHLWEG_READ, 0x0, 0x0, 0x0, 0x0);
         sendParam    = (uint64_t)(strahlweg_reg & 0xffff);
         sendParam   |= (uint64_t)(strahlweg_mask &0xffff) << 16;
+        sendDeadline = getSysTime() + COMMON_AHEADT;
+        fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0x0);
+      } // if not late
+
+      offsDone = getSysTime() - recDeadline;
+      nEvtsRec++;
+
+      break;
+
+    // received timing message requesting a MIL write
+    case UNICHOP_ECADO_MIL_WRITE:
+      comLatency   = (int32_t)(getSysTime() - recDeadline);
+      recGid       = (uint32_t)((recEvtId >> 48) & 0x00000fff);
+      recEvtNo     = (uint32_t)((recEvtId >> 36) & 0x00000fff);
+      recSid       = (uint32_t)((recEvtId >> 20) & 0x00000fff);
+      if (recGid != GID_LOCAL) return COMMON_STATUS_BADSETTING;
+      if (recSid  > 15)        return COMMON_STATUS_OUTOFRANGE;
+      
+      if (!flagIsLate) {
+        milData     =  recParam        & 0xffff;
+        milModAddr  = (recParam >> 16) & 0xff; 
+        milModReg   = (recParam >> 24) & 0xff;
+        milIfb      = (recParam >> 32) & 0xff;
+
+        // write to HW
+        status = writeToModuleMil(milIfb, milModAddr, milModReg, milData);
+        if (status == COMMON_STATUS_OK)   nMilSnd++;
+        else                              nMilSndErr++;
+      } // if not late
+      
+      offsDone = getSysTime() - recDeadline;
+      nEvtsRec++;
+      
+      break;
+
+    // received a timing message requesting a MIL write
+    case UNICHOP_ECADO_MIL_READ:
+      comLatency   = (int32_t)(getSysTime() - recDeadline);
+      recGid       = (uint32_t)((recEvtId >> 48) & 0x00000fff);
+      recEvtNo     = (uint32_t)((recEvtId >> 36) & 0x00000fff);
+      recSid       = (uint32_t)((recEvtId >> 20) & 0x00000fff);
+      if (recGid != GID_LOCAL) return COMMON_STATUS_BADSETTING;
+      if (recSid  > 15)        return COMMON_STATUS_OUTOFRANGE;
+
+      if (!flagIsLate) {
+        // read strahlweg register
+        milModAddr  = (recParam >> 16) & 0xff; 
+        milModReg   = (recParam >> 24) & 0xff;
+        milIfb      = (recParam >> 32) & 0xff;
+
+        status = readFromModuleMil(milIfb, milModAddr, milModAddr, &milData);
+        if (status == COMMON_STATUS_OK)   nMilSnd++;
+        else                              nMilSndErr++;
+
+        // write result to ECA
+        sendEvtId    = fwlib_buildEvtidV1(GID_LOCAL, UNICHOP_ECADO_DIAG_MIL_READ, 0x0, 0x0, 0x0, 0x0);
+        sendParam    = (uint64_t)(milData & 0xffff);
         sendDeadline = getSysTime() + COMMON_AHEADT;
         fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0x0);
       } // if not late
