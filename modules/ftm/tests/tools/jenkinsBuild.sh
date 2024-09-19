@@ -2,7 +2,10 @@
 
 # with set -e the script fails on the first failing command. This marks the jenkins job as failed.
 set -e
-
+if [[ -z "${WORKSPACE}" ]]
+then
+  export WORKSPACE=$(pwd)
+fi
 # script for automated datamaster tests with jenkins, including make of test prerequisites
 # ./jenkinsBuild 8 for firmware with 8 threads
 # ./jenkinsBuild 32 for firmware with 32 threads
@@ -18,11 +21,10 @@ else
   THR_QTY=8
 fi
 cd res/rocky-9
-./generate_soft_links.sh
+test -f libmpfr.so.4 || ./generate_soft_links.sh
 export PATH=$PATH:$(pwd)
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)
 cd ../..
-# ./fix-git.sh
 # make all prerequisites: 1. hdlmake and lm32-toolchain, 2. etherbone, 3. eb-tools, 4. test-tools for ftm.
 make
 make etherbone
