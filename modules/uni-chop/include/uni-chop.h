@@ -17,12 +17,11 @@
 // activity requested by ECA Handler, the relevant codes are also used as "tags"
 #define UNICHOP_ECADO_TIMEOUT    COMMON_ECADO_TIMEOUT
 #define UNICHOP_ECADO_UNKOWN                   1   // unkown activity requested (unexpected action by ECA)
-#define UNICHOP_ECADO_STRAHLWEG_WRITE      0xfa0   // timing message received from host; writes data to chopper control; param 0..15: Strahlwegregister; param 16..31: Strahlwegmaske
-#define UNICHOP_ECADO_STRAHLWEG_READ       0xfa1   // timing message received from host; request read data from chopper control
-#define UNICHOP_ECADO_RPG_WRITE            0xfa2   // timing message received from host; writes data to Rahmenpulsgeneratoren; param 48..63 HSI start..stop, 32..47 HLI start..stop, 16..31 IQL start..stop, 0..15 IQR start..stop
-#define UNICHOP_ECADO_MIL_SWRITE           0xfae   // timing message received from host; standard data write to MIL : 32..39 ifb addr, 24..31 mod addr, 16..23: reg addr, 0..15 data
-#define UNICHOP_ECADO_MIL_SREAD            0xfaf   // timing message received from host; standard data read from MIL: 32..39 ifb addr, 24..31 mod addr, 16..23: reg addr, 0..15 reserved
-
+#define UNICHOP_ECADO_STRAHLWEG_WRITE      0xfa0   // writes data to chopper control;         param 0..15: Strahlwegregister; param 16..31: Strahlwegmaske
+#define UNICHOP_ECADO_STRAHLWEG_READ       0xfa1   // request read data from chopper control; param 0..15: Strahlwegregister; param 16..31: Strahlwegmaske
+#define UNICHOP_ECADO_RPG_WRITE            0xfa2   //  writes data to Rahmenpulsgeneratoren;  param 48..63 HSI start..stop, 32..47 HLI start..stop, 16..31 IQL start..stop, 0..15 IQR start..stop
+#define UNICHOP_ECADO_MIL_SWRITE           0xfb0   // standard data write to MIL;             param: 32..39 ifb addr, 24..31 mod addr, 16..23: reg addr, 0..15 data
+#define UNICHOP_ECADO_MIL_SREAD            0xfb1   // standard data read from MIL;            param: 32..39 ifb addr, 24..31 mod addr, 16..23: reg addr, 0..15 reserved
 
 // commands from the outside
 

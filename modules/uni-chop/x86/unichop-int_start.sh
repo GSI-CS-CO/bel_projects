@@ -61,9 +61,9 @@ saft-ecpu-ctl $SDGW -c 0x1ff0fa1000000000 0xfffffff000000000 0 0xfa1 -d
 # UNICHOP_ECADO_RPG_READ
 saft-ecpu-ctl $SDGW -c 0x1ff0fa3000000000 0xfffffff000000000 0 0xfa3 -d
 # UNICHOP_ECADO_MIL_SWRITE
-saft-ecpu-ctl $SDGW -c 0x1ff0fa6000000000 0xfffffff000000000 0 0xfa6 -d
+saft-ecpu-ctl $SDGW -c 0x1ff0fb0000000000 0xfffffff000000000 0 0xfb0 -d
 # UNICHOP_ECADO_MIL_SREAD
-saft-ecpu-ctl $SDGW -c 0x1ff0fa7000000000 0xfffffff000000000 0 0xfa7 -d
+saft-ecpu-ctl $SDGW -c 0x1ff0fb1000000000 0xfffffff000000000 0 0xfb1 -d
 
 
 ###########################################
