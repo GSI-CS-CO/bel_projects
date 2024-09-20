@@ -121,7 +121,7 @@ static void help(void) {
   fprintf(stderr, "saft-ctl tr0 -x snoop 0x1ff1fa0000000000 0xffffff0000000000 0\n"                    );
   fprintf(stderr, "tDeadline: 0x17f6e1ba6fe69830 EvtID: 0x1ff1fa1000000000 Param: 0x0000000000ff0001\n");
   fprintf(stderr, "        GID data received from lm32:    ^^^\n"                                      );
-  fprintf(stderr, "        EvtNo strahlweg data       :    ^^^\n"                                      );
+  fprintf(stderr, "        EvtNo read strahlweg data  :       ^^^\n"                                   );
   fprintf(stderr, "                               value of strahlweg maske      :           ^^^^\n"    );
   fprintf(stderr, "                               value of strahlweg register   :               ^^^^\n");
   fprintf(stderr, "\n"); 
@@ -170,12 +170,12 @@ static void help(void) {
   fprintf(stderr, "                                                      version:               ^^^^\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Examples standard MIL write/read host<->lm32<->MIL<->MIL device<->module bus\n"     );
-  fprintf(stderr, "saft-ctl tr0 -p inject 0x1ff0fa6000000000 0x00000060096007ff 0\n"                   );
+  fprintf(stderr, "saft-ctl tr0 -p inject 0x1ff0fb0000000000 0x00000060096007ff 0\n"                   );
   fprintf(stderr, "      write value to chopper unit 'Strahlweg register   ^^^^: data\n"               );
   fprintf(stderr, "                                                      ^^    : submodule addr\n"     );
   fprintf(stderr, "                                                    ^^      : module addr\n"        );
   fprintf(stderr, "                                                  ^^        : MIL ifb addr\n"       );
-  fprintf(stderr, "saft-ctl tr0 -p inject 0x1ff0fa7000000000 0x0000006009600000 0\n"                   );
+  fprintf(stderr, "saft-ctl tr0 -p inject 0x1ff0fb1000000000 0x0000006009600000 0\n"                   );
   fprintf(stderr, "      read value from chopper unit 'Strahlweg register' ^^^^: reserved\n"           );
   fprintf(stderr, "                                                      ^^    : submodule addr\n"     );
   fprintf(stderr, "                                                    ^^      : module addr, 0: IFA\n");
