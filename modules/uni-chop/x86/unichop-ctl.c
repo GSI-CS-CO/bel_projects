@@ -161,7 +161,7 @@ static void help(void) {
   fprintf(stderr, "                                            submodule addr   :             ^^\n"    );
   fprintf(stderr, "                                            data             :               ^^^^\n");
   fprintf(stderr, "example: read version of 'logic module 1' in chopper unit\n"                        );
-  fprintf(sterrr, "saft-ctl tr0 -p inject 0x1ff0fb1000000000 0x0000016009660000 0\n"                   );
+  fprintf(stderr, "saft-ctl tr0 -p inject 0x1ff0fb1000000000 0x0000016009660000 0\n"                   );
   fprintf(stderr, "      read value from  MIL                      ^^           : SIO slot\n"          );
   fprintf(stderr, "                                                  ^^         : MIL ifb addr\n"      );
   fprintf(stderr, "                                                    ^^       : module addr\n"       );
