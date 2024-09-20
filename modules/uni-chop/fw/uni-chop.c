@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Tobias Habermann GSI-Darmstadt
- *  version : 19-Sep-2024
+ *  version : 20-Sep-2024
  *
  *  firmware required for UNILAC chopper control
  *  
@@ -37,7 +37,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define UNICHOP_FW_VERSION      0x000002  // make this consistent with makefile
+#define UNICHOP_FW_VERSION      0x000003  // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -174,10 +174,10 @@ void sendMilDiag(int writeFlag, uint16_t status, uint16_t slotSio, uint16_t ifbA
   uint64_t sendParam;
   uint64_t sendDeadline;
 
-  if (writeFlag) sendEvtNo = 0xfa8;
-  else           sendEvtNo = 0xfa9;
+  if (writeFlag) sendEvtNo = UNICHOP_ECADO_MIL_SWRITE;
+  else           sendEvtNo = UNICHOP_ECADO_MIL_SREAD;
 
-  sendEvtId    = fwlib_buildEvtidV1(GID_DIAG_MIL, sendEvtNo, 0x0, 0x0, 0x0, 0x0);
+  sendEvtId    = fwlib_buildEvtidV1(GID_LOCAL_ECPU_FROM, sendEvtNo, 0x0, 0x0, 0x0, 0x0);
   sendParam    = (uint64_t)(status  & 0xffff) << 48;
   sendParam   |= (uint64_t)(slotSio & 0xff  ) << 40;
   sendParam   |= (uint64_t)(ifbAddr & 0xff  ) << 32;
@@ -437,8 +437,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       recGid       = (uint32_t)((recEvtId >> 48) & 0x00000fff);
       recEvtNo     = (uint32_t)((recEvtId >> 36) & 0x00000fff);
       recSid       = (uint32_t)((recEvtId >> 20) & 0x00000fff);
-      if (recGid != GID_LOCAL) return COMMON_STATUS_BADSETTING;
-      if (recSid  > 15)        return COMMON_STATUS_OUTOFRANGE;
+      if (recGid != GID_LOCAL_ECPU_TO) return COMMON_STATUS_BADSETTING;
+      if (recSid  > 15)                return COMMON_STATUS_OUTOFRANGE;
 
       if (!flagIsLate) {
         strahlweg_reg  =  recParam        & 0xffff;
@@ -468,8 +468,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       recGid       = (uint32_t)((recEvtId >> 48) & 0x00000fff);
       recEvtNo     = (uint32_t)((recEvtId >> 36) & 0x00000fff);
       recSid       = (uint32_t)((recEvtId >> 20) & 0x00000fff);
-      if (recGid != GID_LOCAL) return COMMON_STATUS_BADSETTING;
-      if (recSid  > 15)        return COMMON_STATUS_OUTOFRANGE;
+      if (recGid != GID_LOCAL_ECPU_TO) return COMMON_STATUS_BADSETTING;
+      if (recSid  > 15)                return COMMON_STATUS_OUTOFRANGE;
 
       if (!flagIsLate) {
         rpgIqrStart =  recParam        & 0xff;
@@ -525,8 +525,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       recGid       = (uint32_t)((recEvtId >> 48) & 0x00000fff);
       recEvtNo     = (uint32_t)((recEvtId >> 36) & 0x00000fff);
       recSid       = (uint32_t)((recEvtId >> 20) & 0x00000fff);
-      if (recGid != GID_LOCAL) return COMMON_STATUS_BADSETTING;
-      if (recSid  > 15)        return COMMON_STATUS_OUTOFRANGE;
+      if (recGid != GID_LOCAL_ECPU_TO) return COMMON_STATUS_BADSETTING;
+      if (recSid  > 15)                return COMMON_STATUS_OUTOFRANGE;
 
       if (!flagIsLate) {
         // read strahlweg register
@@ -542,7 +542,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         } // if status ok
 
         // write result to ECA
-        sendEvtId    = fwlib_buildEvtidV1(GID_LOCAL, UNICHOP_ECADO_DIAG_STRAHLWEG_READ, 0x0, 0x0, 0x0, 0x0);
+        sendEvtId    = fwlib_buildEvtidV1(GID_LOCAL_ECPU_FROM, UNICHOP_ECADO_STRAHLWEG_READ, 0x0, 0x0, 0x0, 0x0);
         sendParam    = (uint64_t)(strahlweg_reg & 0xffff);
         sendParam   |= (uint64_t)(strahlweg_mask &0xffff) << 16;
         sendDeadline = getSysTime() + COMMON_AHEADT;
@@ -560,8 +560,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       recGid       = (uint32_t)((recEvtId >> 48) & 0x00000fff);
       recEvtNo     = (uint32_t)((recEvtId >> 36) & 0x00000fff);
       recSid       = (uint32_t)((recEvtId >> 20) & 0x00000fff);
-      if (recGid != GID_LOCAL) return COMMON_STATUS_BADSETTING;
-      if (recSid  > 15)        return COMMON_STATUS_OUTOFRANGE;
+      if (recGid != GID_LOCAL_ECPU_TO) return COMMON_STATUS_BADSETTING;
+      if (recSid  > 15)                return COMMON_STATUS_OUTOFRANGE;
       
       if (!flagIsLate) {
         milData     =  recParam        & 0xffff;
@@ -586,8 +586,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       recGid       = (uint32_t)((recEvtId >> 48) & 0x00000fff);
       recEvtNo     = (uint32_t)((recEvtId >> 36) & 0x00000fff);
       recSid       = (uint32_t)((recEvtId >> 20) & 0x00000fff);
-      if (recGid != GID_LOCAL) return COMMON_STATUS_BADSETTING;
-      if (recSid  > 15)        return COMMON_STATUS_OUTOFRANGE;
+      if (recGid != GID_LOCAL_ECPU_TO) return COMMON_STATUS_BADSETTING;
+      if (recSid  > 15)                return COMMON_STATUS_OUTOFRANGE;
 
       if (!flagIsLate) {
         // read strahlweg register
@@ -596,14 +596,10 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         milIfb      = (recParam >> 32) & 0xff;
 
         status = readFromModuleMil(milIfb, milModAddr, milModReg, &milData);
+        // result is obtained via MIL diagnostics (gid: 0xff1, evtno: 0xfa9);
+
         if (status == COMMON_STATUS_OK)   nMilSnd++;
         else                              nMilSndErr++;
-
-        // write result to ECA
-        sendEvtId    = fwlib_buildEvtidV1(GID_LOCAL, UNICHOP_ECADO_DIAG_MIL_SREAD, 0x0, 0x0, 0x0, 0x0);
-        sendParam    = (uint64_t)(milData & 0xffff);
-        sendDeadline = getSysTime() + COMMON_AHEADT;
-        fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0x0);
       } // if not late
 
       offsDone = getSysTime() - recDeadline;

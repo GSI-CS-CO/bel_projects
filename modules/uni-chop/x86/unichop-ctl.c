@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Tobias Habermann GSI-Darmstadt
- *  version : 12-Sep-2024
+ *  version : 20-Sep-2024
  *
  * Command-line interface for uni-chop
  *
@@ -86,7 +86,10 @@ static void help(void) {
   fprintf(stderr, "  cleardiag           command clears FW statistics\n"                               );
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to control (some) properties of the UNILAC chopper from the command line\n"  );
-  fprintf(stderr, "Example1: '%s dev/wbm0 -w1 configure'\n", program                                   );
+  fprintf(stderr, "Example:\n"                                                                         );
+  fprintf(stderr, "  '%s dev/wbm0 -w1 configure'\n", program                                           );
+  fprintf(stderr, "  '%s dev/wbm0 startop'\n",       program                                           );
+  fprintf(stderr, "  '%s dev/wbm0 diag'\n",          program                                           );
   fprintf(stderr, "\n");
   fprintf(stderr, "For testing and debugging timing messages can be sent / received via saftlib\n"     );
   fprintf(stderr, "GID:\n"                                                                             );
@@ -96,7 +99,6 @@ static void help(void) {
   fprintf(stderr, "      0xfa0: host -> lm32: write Strahlweg data\n"                                  );
   fprintf(stderr, "      0xfa1: host -> lm32: read Strahlweg data\n"                                   );
   fprintf(stderr, "      0xfa2: host -> lm32: write RPG data (write only)\n"                           );
-  fprintf(stderr, "      0xfa2: host -> lm32: write RPG data (write only)\n"                           );
   fprintf(stderr, "      0xfa6: host -> lm32: standard MIL write\n"                                    );
   fprintf(stderr, "      0xfa7: host -> lm32: standard MIL read\n"                                     );
   fprintf(stderr, "      0xfa8: lm32 -> ECA (host): diagnostics, MIL write\n"                          );
@@ -104,21 +106,21 @@ static void help(void) {
   fprintf(stderr, "      0xfaa: lm32 -> ECA (host): diagnostics, Strahlweg data in chopper unit\n"     );
   fprintf(stderr, "Examles write/read host<->lm32<->MIL<->Chopper unit:\n"                             );
   fprintf(stderr, "saft-ctl tr0 -p inject 0x1ff0fa0000000000 0x0000000000ff0001 0\n"                   );
-  fprintf(stderr, "      write Strahlweg data to HW                        ^^^^: strahlweg_register\n" );
-  fprintf(stderr, "                                                    ^^^^    : strahlweg_maske\n"    );
+  fprintf(stderr, "      write Strahlweg data to HW                        ^^^^ : strahlweg_register\n");
+  fprintf(stderr, "                                                    ^^^^     : strahlweg_maske\n"   );
   fprintf(stderr, "saft-ctl tr0 -p inject 0x1ff0fa1000000000 0x0000000000000000 0\n"                   );
   fprintf(stderr, "      read Strahlweg data from HW\n"                                                );
   fprintf(stderr, "\n");
   fprintf(stderr, "saft-ctl tr0 -p inject 0x1ff0fa2000000000 0x0806080608020802 0\n"                   );
-  fprintf(stderr, "      write RPG data to HW                                ^^: IRQ start event\n"    );
-  fprintf(stderr, "                                                        ^^  : IRQ stop event\n"     );
-  fprintf(stderr, "                                                      ^^    : IRL start event\n"    );
-  fprintf(stderr, "                                                    ^^      : IQL stop event\n"     );
-  fprintf(stderr, "                                                  ^^        : HLI start event\n"    );
-  fprintf(stderr, "                                                ^^          : HLI stop event\n"     );
-  fprintf(stderr, "                                              ^^            : HSI start event\n"    );
-  fprintf(stderr, "                                            ^^              : HSI stop event\n"     );
-  fprintf(stderr, "data from lm32:\n"                                                                  );
+  fprintf(stderr, "      write RPG data to HW                                ^^ : IRQ start event\n"   );
+  fprintf(stderr, "                                                        ^^   : IRQ stop event\n"    );
+  fprintf(stderr, "                                                      ^^     : IRL start event\n"   );
+  fprintf(stderr, "                                                    ^^       : IQL stop event\n"    );
+  fprintf(stderr, "                                                  ^^         : HLI start event\n"   );
+  fprintf(stderr, "                                                ^^           : HLI stop event\n"    );
+  fprintf(stderr, "                                              ^^             : HSI start event\n"   );
+  fprintf(stderr, "                                            ^^               : HSI stop event\n"    );
+  fprintf(stderr, "Example receive data from lm32:\n"                                                  );
   fprintf(stderr, "saft-ctl tr0 -x snoop 0x1ff0000000000000 0xffff000000000000 0\n"                    );
   fprintf(stderr, "tDeadline: 0x17f6a44700881490 EvtID: 0x1ff0faa000000000 Param: 0x0000000000ff0001\n");
   fprintf(stderr, "     Strahlweg data from HW                strahlweg_register:               ^^^^\n");
@@ -126,35 +128,37 @@ static void help(void) {
   fprintf(stderr, "Examples MIL bus diagnostic:\n"                                                     );
   fprintf(stderr, "saft-ctl tr0 -x snoop 0x1ff1000000000000 0xffff000000000000 0\n"                    );
   fprintf(stderr, "tDeadline: 0x17f6a4794b1c5228 EvtID: 0x1ff1fa8000000000 Param: 0x0001016009600001\n");
-  fprintf(stderr, "     MIL diagnostic (strahlweg reg  write)  MIL error code   :   ^^^^\n"            );
+  fprintf(stderr, "     here: write 'strahlweg register'       MIL error code   :   ^^^^\n"            );
   fprintf(stderr, "                                            SIO slot         :       ^^\n"          );
   fprintf(stderr, "                                            MIL ifb addr     :         ^^\n"        );
   fprintf(stderr, "                                            module addr      :           ^^\n"      );
   fprintf(stderr, "                                            submodule addr   :             ^^\n"    );
   fprintf(stderr, "                                            data             :               ^^^^\n");
   fprintf(stderr, "tDeadline: 0x17f6a4794b1c7278 EvtID: 0x1ff1fa8000000000 Param: 0x000101600962ffff\n");
-  fprintf(stderr, "     MIL diagnostic (strahlweg mask write)  MIL error code   :   ^^^^\n"            );
+  fprintf(stderr, "     here: write 'strahlweg maske'          MIL error code   :   ^^^^\n"            );
   fprintf(stderr, "                                            SIO slot         :       ^^\n"          );
   fprintf(stderr, "                                            MIL ifb addr     :         ^^\n"        );
   fprintf(stderr, "                                            module addr      :           ^^\n"      );
   fprintf(stderr, "                                            submodule addr   :             ^^\n"    );
   fprintf(stderr, "                                            data             :               ^^^^\n");
-  fprintf(stderr, "Examples standard MIL write/read host<->lm32<->MIL<->MIL Device\n"                  );
-  fprintf(stderr, "saft-ctl tr0 -p inject 0x1ff0fa6000000000 0x000000600013dead 0\n"                   );
+  fprintf(stderr, "\n"                                                                                 );
+  fprintf(stderr, "\n");
+  fprintf(stderr, "Examples standard MIL write/read host<->lm32<->MIL<->MIL device\n"                  );
+  fprintf(stderr, "saft-ctl tr0 -p inject 0x1ff0fa6000000000 0x000000600013cafe 0\n"                   );
   fprintf(stderr, "      write value to IFA echo register                  ^^^^: data\n"               );
   fprintf(stderr, "                                                      ^^    : register\n"           );
   fprintf(stderr, "                                                    ^^      : module addr, 0: IFA\n");
   fprintf(stderr, "                                                  ^^        : MIL ifb addr\n"       );
   fprintf(stderr, "saft-ctl tr0 -p inject 0x1ff0fa7000000000 0x0000006000890000 0\n"                   );
-  fprintf(stderr, "      read Strahlweg data from HW\n"                                                );
   fprintf(stderr, "      read value fom IFA echo register                  ^^^^: reserved\n"           );
   fprintf(stderr, "                                                      ^^    : register\n"           );
   fprintf(stderr, "                                                    ^^      : module addr, 0: IFA\n");
   fprintf(stderr, "                                                  ^^        : MIL ifb addr\n"       );
-  fprintf(stderr, "saft-ctl tr0 -x snoop 0x1ff0000000000000 0xffff000000000000 0\n"                    );
+  fprintf(stderr, "saft-ctl tr0 -x snoop 0x1ff1fa9000000000 0xfffffff000000000 0\n"                    );
   fprintf(stderr, "tDeadline: 0x17f6ae9c30d516c0 EvtID: 0x1ff0fab000000000 Param: 0x000000000000dead\n");
   fprintf(stderr, "     Echo Register from HW                             value:                ^^^^\n");
-  fprintf(stderr, "Examples standard MIL write/read host<->lm32<->MIL<->Chopper unit\n"                );
+  fprintf(stderr, "\n");
+  fprintf(stderr, "Examples standard MIL write/read host<->lm32<->MIL<->MIL device<->module bus\n"     );
   fprintf(stderr, "saft-ctl tr0 -p inject 0x1ff0fa6000000000 0x00000060096007ff 0\n"                   );
   fprintf(stderr, "      write value to chopper unit 'Strahlweg register   ^^^^: data\n"               );
   fprintf(stderr, "                                                      ^^    : submodule addr\n"     );
@@ -165,7 +169,7 @@ static void help(void) {
   fprintf(stderr, "                                                      ^^    : submodule addr\n"     );
   fprintf(stderr, "                                                    ^^      : module addr, 0: IFA\n");
   fprintf(stderr, "                                                  ^^        : MIL ifb addr\n"       );
-  fprintf(stderr, "...\n",                                                                             );
+  fprintf(stderr, "...\n"                                                                              );
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
 
