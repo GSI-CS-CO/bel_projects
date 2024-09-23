@@ -8,7 +8,8 @@ use work.wb_dma_pkg.all;
 
 entity wb_dma_ch_rf is
   generic(
-    g_cache_size : natural := 16
+    g_data_cache_size : natural := 16;
+    g_read_cache_size : natural := 8;
   );
   port(
     clk_i : in std_logic;
@@ -53,17 +54,26 @@ signal pointer      : std_logic_vector(c_wishbone_address_width downto 0);
 
 begin
 
+read_op_buffer: generic_async_fifo
+generic map (
+  g_data_width => 2*c_wishbone_address_width,
+  g_size => g_read_cache_size
+)
+port map (
+  
+);
+
 data_cache : generic_async_fifo
 generic map (
   g_data_width => 64,
-  g_size => g_cache_size
+  g_size => g_data_cache_size
 )
 port map (
   rst_n_i => rstn_i,
 
   -- write port
   clk_wr_i => clk_i,
-  d_i      => wb_data_i,
+  d_i      => wb_data_i & addr,
   we_i     => cache_we,
 
   wr_empty_o        => data_cache_full,
