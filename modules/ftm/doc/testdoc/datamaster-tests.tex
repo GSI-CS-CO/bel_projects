@@ -38,7 +38,7 @@
 
 \Large{Martin Skorsky}
 
-\Large{Last change: 2024-07-25}
+\Large{Last change: 2024-09-24}
 \end{center}
 \vfill
 \end{titlepage}
@@ -85,19 +85,21 @@ These are considered as OK if no exception occurs.}
 \hline
 Test                                    & \ry{number of tests } & \ry{Tools} & \ry{libcarpedm} & \ry{firmware} & \ry{uses Python} & \ry{checks result } \\ \hline
 dmPerformance                           &                     &   x        &   T             &   x           &   -              &   -                 \\ \hline
-test\_addDownloadCompare.py             &  190                &   T        &   T             &   T           &   x              &   -                 \\ \hline
-test\_altDestinations.py                &  11                 &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_Cpu0Cpu1.py                       &  3                  &   T        &   T             &   T           &   x              &   -                 \\ \hline
+test\_RunningThreads.py                 &  1                  &   T        &   T             &   T           &   x              &   -                 \\ \hline
+test\_add.py                            &  1                  &   T        &   T             &   T           &   x              &   -                 \\ \hline
+test\_addDownloadCompare.py             &  238                &   T        &   T             &   T           &   x              &   -                 \\ \hline
+test\_altDestinations.py                &  20                 &   T        &   T             &   T           &   x              &   x                 \\ \hline
 test\_async.py                          &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_basic.py                          &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_blink.py                          &  1                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
 test\_boosterStartthread.py             &  8                  &   x        &   T             &   T           &   x              &   x                 \\ \hline
 test\_bpcStart.py                       &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_coupling.py                       &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_dmThreads.py                      &  33                 &   x        &   x             &   T           &   x              &   x                 \\ \hline
 test\_dmCmd.py                          &  31                 &   T        &   x             &   x           &   x              &   x                 \\ \hline
 test\_dmCmdAbort.py                     &  3                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
 test\_dmCmdAsyncclear.py                &  1                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
-test\_dmCmdCpudiag.py                   &  1                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_dmCmdClearcpudiag.py              &  1                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
 test\_dmCmdCursor.py                    &  1                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
 test\_dmCmdDeadlinePreptimeStarttime.py &  18                 &   T        &   T             &   T           &   x              &   x                 \\ \hline
 test\_dmCmdForce.py                     &  1                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
@@ -106,9 +108,10 @@ test\_dmCmdHex.py                       &  1                  &   T        &   T
 test\_dmCmdNoop.py                      &  1                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
 test\_dmCmdOrigin.py                    &  1                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
 test\_dmSched.py                        &  8                  &   T        &   x             &   x           &   x              &   x                 \\ \hline
-test\_dmTestbench.py                    &  9                  &   T        &   x             &   x           &   x              &   x                 \\ \hline
+test\_dmTestbench.py                    &  19                 &   T        &   x             &   x           &   x              &   x                 \\ \hline
+test\_dmThreads.py                      &  33                 &   x        &   x             &   T           &   x              &   x                 \\ \hline
 test\_environment.py                    &  3                  &   -        &   -             &   -           &   x              &   x                 \\ \hline
-test\_fid7.py                           &  1                  &   x        &   x             &   T           &   x              &   x                 \\ \hline
+test\_fid.py                            &  3                  &   x        &   x             &   T           &   x              &   x                 \\ \hline
 test\_flow.py                           &  5                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_flowpattern.py                    &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_flush.py                          &  24                 &   x        &   T             &   T           &   x              &   x                 \\ \hline
@@ -135,11 +138,14 @@ test\_patternStartStop.py               &  1                  &   x        &   T
 test\_pps.py                            &  10                 &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_pps10Hz.py                        &  3                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_prioAndType.py                    &  2                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_remove.py                         &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_priorityQueue.py                  &  2                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_referenceEdges.py                 &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_remove.py                         &  6                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_runAllSingle.py                   &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_runCpu0Single.py                  &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_safe2remove.py                    &  19                 &   x        &   T             &   T           &   x              &   x                 \\ \hline
-test\_schedules.py                      &  2                  &   x        &   x             &   T           &   x              &   -                 \\ \hline
+test\_schedules.py                      &  4                  &   x        &   x             &   T           &   x              &   -                 \\ \hline
+test\_simultaneousThreads.py            &  3                  &   x        &   x             &   T           &   x              &   -                 \\ \hline
 test\_singleEdgeTest.py                 &  1                  &   -        &   T             &   -           &   -              &   x                 \\ \hline
 test\_startStopAbort.py                 &  2                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_switch.py                         &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
@@ -156,6 +162,15 @@ The test starts a schedule on a clean datamaster, checks if some part of
 the schedule is removable, removes it and then adds another schedule.
 This is done for a small schedule and a larger schedule. The test is ok
 if all commands work. There is no check for this.
+
+\section{test\_Cpu0Cpu1.py}
+\texttt{test\_Cpu0Cpu1.py} test that
+
+\section{test\_RunningThreads.py}
+\texttt{test\_RunningThreads.py} test that
+
+\section{test\_add.py}
+\texttt{test\_add.py} test that
 
 \section{test\_addDownloadCompare.py}
 \texttt{test\_addDownloadCompare.py} test that a schedule is equivalent
@@ -559,10 +574,15 @@ the schedules one 4 CPUs, each with 8 threads. This produces 32 messages per sec
 \texttt{test\_environment.py} checks the test environment. The test is ok if and only if dm-cmd and dm-sched are
 from folder ../bin and libcarpedm is loaded from ../lib. This is checked with \texttt{ldd}.
 
-\section{test\_fid7.py}
-\texttt{test\_fid7.py} tests the fix for the format id 7 bug. This bug
+\section{test\_fid.py}
+\texttt{test\_fid.py} tests timing messages with different values of fid.
+\begin{enumerate}
+\item \texttt{test\_fid7} tests the fix for the format id 7 bug. This bug
 was: under some conditions an illegal format id 7 was in the message.
 The test checks that ony format id 1 is in the snooped messages.
+\item \texttt{test\_fid0} tests with fid 0, which results in 19 fields in the timing messages.
+\item \texttt{test\_fid1} tests the standard format of the timing messages.
+\end{enumerate}
 
 \section{test\_flow.py}
 This test is based on \texttt{full\_test/dynamic/branch/single}, using flow instead of flowcommand.
@@ -1092,6 +1112,12 @@ displaying the priority queues.
   Two checks of the time values with \texttt{dm-cmd rawqueue}.
 \end{enumerate}
 
+\section{test\_priorityQueue.py}
+\texttt{test\_priorityQueue.py} tests that
+
+\section{test\_referenceEdges.py}
+\texttt{test\_referenceEdges.py} tests that
+
 \section{test\_remove.py}
 \begin{enumerate}
 \item testRemove1
@@ -1241,8 +1267,20 @@ This test was \texttt{full\_test/dynamic/basics/run\_cpu0\_single}.
 \end{enumerate}
 These test steps are applied to a bunch of schedules.
 The schedules use 1 to 4 CPUs whith 1, 2, 4, and 9 pattern beside the default pattern. There are 1, 10, or 150 blocks per pattern.
+
 \section{test\_schedules.py}
 \texttt{test\_schedules.py} collects schedules which are started. Tests that the schedules are compiled and loaded.
+
+\section{test\_simultaneousThreads.py}
+\texttt{test\_simultaneousThreads.py} tests that startthread nodes can start a number of threads simultaneously.
+In Figure~\ref{fig:Pattern_for_the_simultaneous_start_of_threads} StartThread (runs in thread 0) starts threads 1, 2, and 3.
+To check that the threads are running, each threads produces timing messages with the thread number as parameter.
+    \begin{figure}
+        \centering
+        \includegraphics*[width=1.0\textwidth,keepaspectratio]{TestPattern/simultaneousThreads4.pdf}
+        \caption{Pattern for the simultaneous start of threads}
+        \label{fig:Pattern_for_the_simultaneous_start_of_threads}
+    \end{figure}
 
 \include{singleEdgeTest}
 

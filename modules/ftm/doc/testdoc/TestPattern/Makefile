@@ -22,6 +22,7 @@ PDFs = static_basic.pdf static_coupling1.pdf static_coupling2.pdf static_prio_an
 	overwrite2-0.pdf overwrite2-1-download.pdf overwrite2-2-download.pdf \
 	overwrite3-0.pdf overwrite3-1.pdf overwrite3-0-download.pdf overwrite3-1-download.pdf overwrite3-2-download.pdf \
 	pps-no-queue.pdf pps-qlo.pdf pps-qlo-status.pdf pps-qhi.pdf pps-qhi-status.pdf \
+	simultaneousThreads4.pdf \
 	remove1-0.pdf remove1-1.pdf remove1-1-download.pdf \
 	remove2-0.pdf remove2-1.pdf remove2-1-download.pdf \
 	remove3-0.pdf remove3-1.pdf remove3-1-download.pdf \
@@ -29,18 +30,6 @@ PDFs = static_basic.pdf static_coupling1.pdf static_coupling2.pdf static_prio_an
 
 all: $(PDFs)
 
-static_basic.pdf: static_basic.dot
-static_coupling1.pdf: static_coupling1.dot
-static_coupling2.pdf: static_coupling2.dot
-static_prio_and_type.pdf: static_prio_and_type.dot
-static_prio_and_type_meta.pdf: static_prio_and_type_meta.dot
-dynamic_async.pdf: dynamic_async.dot
-dynamic_basic_run_cpu0_single.pdf: dynamic_basic_run_cpu0_single.dot
-dynamic_basic_run_all_single.pdf: dynamic_basic_run_all_single.dot
-dynamic_basic_start_stop_abort.pdf: dynamic_basic_start_stop_abort.dot
-dynamic_branch_single.pdf: dynamic_branch_single.dot
-dynamic_loop.pdf: dynamic_loop.dot
-blink-download.pdf: blink-download.dot
 booster_all_threads-s.pdf: booster_all_threads-s.dot
 	./create-pdf.sh $< neato
 
@@ -53,11 +42,8 @@ booster_startthread-1-s.pdf: booster_startthread-1-s.dot
 booster_startthread-2-s.pdf: booster_startthread-2-s.dot
 	./create-pdf.sh $< neato
 
-booster_startthread-3-s.pdf: booster_startthread-3-s.dot
 booster_thread_0_loop-s.pdf: booster_thread_0_loop-s.dot
 	./create-pdf.sh $< neato
-
-booster_thread_0-s.pdf: booster_thread_0-s.dot
 
 booster_8_loops.pdf: booster_8_loops.dot
 	./create-pdf.sh $< neato

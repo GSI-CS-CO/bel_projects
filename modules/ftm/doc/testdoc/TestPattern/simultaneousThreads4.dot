@@ -1,0 +1,30 @@
+digraph G {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+B_01[cpu="1", flags="0x00008107", type="block", tperiod="10000000", pattern="01", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green", penwidth=2, color = "purple"];
+B_02[cpu="1", flags="0x00008107", type="block", tperiod="10000000", pattern="02", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green", penwidth=2, color = "purple"];
+B_03[cpu="1", flags="0x00008107", type="block", tperiod="10000000", pattern="03", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green", penwidth=2, color = "purple"];
+B_MAIN[cpu="1", flags="0x00108107", type="block", tperiod="20000000", pattern="MAIN", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green", penwidth=2, color = "purple"];
+Evt_01[cpu="1", flags="0x00002102", type="tmsg", toffs="300000", pattern="01", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="0", evtno="2", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1000002000000000", par="0x0000000000000001", tef="0", shape     = "oval", fillcolor = "green", penwidth=2, color = "darkorange3"];
+Evt_02[cpu="1", flags="0x00002102", type="tmsg", toffs="600000", pattern="02", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="0", evtno="2", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1000002000000000", par="0x0000000000000002", tef="0", shape     = "oval", fillcolor = "green", penwidth=2, color = "darkorange3"];
+Evt_03[cpu="1", flags="0x00002102", type="tmsg", toffs="900000", pattern="03", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="0", evtno="2", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1000002000000000", par="0x0000000000000003", tef="0", shape     = "oval", fillcolor = "green", penwidth=2, color = "darkorange3"];
+B_VARI[cpu="1", flags="0x00008107", type="block", tperiod="200000", pattern="MAIN", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green", penwidth=2, color = "purple"];
+Evt_MAIN[cpu="1", flags="0x00008102", type="tmsg", toffs="0", pattern="MAIN", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="0", evtno="1", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1000001000000000", par="0x0000000000000000", tef="0", shape     = "oval", fillcolor = "green"];
+Ori_T01[cpu="1", flags="0x0000200d", type="origin", toffs="0", pattern="MAIN", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", thread="1", shape     = "octagon", color  = "cyan", fillcolor = "white", penwidth=2, color = "darkorange3"];
+Ori_T02[cpu="1", flags="0x0000200d", type="origin", toffs="0", pattern="MAIN", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", thread="2", shape     = "octagon", color  = "cyan", fillcolor = "white", penwidth=2, color = "darkorange3"];
+Ori_T03[cpu="1", flags="0x0000200d", type="origin", toffs="0", pattern="MAIN", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", thread="3", shape     = "octagon", color  = "cyan", fillcolor = "white", penwidth=2, color = "darkorange3"];
+StartThread[cpu="1", flags="0x0000800e", type="startthread", toffs="0", pattern="MAIN", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", startoffs="0", thread="14", shape     = "triangle", color  = "cyan", fillcolor = "white"];
+StartThread->Evt_MAIN [type="defdst", color = "red"];
+B_MAIN->B_VARI [type="defdst", color = "red"];
+Evt_03->B_03 [type="defdst", color = "red"];
+B_VARI->StartThread [type="defdst", color = "red"];
+Evt_01->B_01 [type="defdst", color = "red"];
+Evt_02->B_02 [type="defdst", color = "red"];
+Evt_MAIN->B_MAIN [type="defdst", color = "red"];
+Ori_T01->Ori_T02 [type="defdst", color = "red"];
+Ori_T01->Evt_01 [type="origindst", color = "gray"];
+Ori_T02->Ori_T03 [type="defdst", color = "red"];
+Ori_T02->Evt_02 [type="origindst", color = "gray"];
+Ori_T03->B_VARI [type="defdst", color = "red"];
+Ori_T03->Evt_03 [type="origindst", color = "gray"];
+}
