@@ -40,11 +40,8 @@ package wb_dma_pkg is
     rstn_sys_i    : in std_logic;
     rstn_ref_i    : in std_logic;
 
-    slave_o       : out t_wishbone_slave_out;
-    slave_i       : in  t_wishbone_slave_in;
-
-    enc_err_i     : in std_logic;
-    enc_err_aux_i : in std_logic
+    master_o      : out t_wishbone_slave_out;
+    master_i      : in  t_wishbone_slave_in;
     );
   end component;
 
