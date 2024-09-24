@@ -12,45 +12,70 @@ entity wb_dma_engine is
     rstn_i : in std_logic;
 
     -- read logic
-    s_queue_full  : in std_logic;
-    s_write_data_cache_enable : out std_logic
+    s_queue_full_i              : in std_logic;
+    s_queue_empty_i             : in std_logic;
+    s_read_enable_o             : out std_logic;
+    s_store_read_op_o           : out std_logic_vector[2*c_wishbone_address_width downto 0];
+    s_data_cache_write_enable_i : out std_logic
   );
 end entity;
 
 architecture behavioral of wb_dma_engine is
 
+  -- read op contstructor signals
+  signal s_read_addr    : std_logic_vector(c_wishbone_address_width-1 downto 0);
+
+  -- read op FIFO FSM signals
   type t_read_state is (IDLE, READ);
   signal s_read_state : t_read_state := IDLE;
-  signal s_read_enable : std_logic := '0';
   
   type t_state is (IDLE, WRITE, UPDATE, LD_DESC1, LD_DESC2, LD_DESC3, LD_DESC4, LD_DESC5, WB, PAUSE);
   signal s_state : t_state := IDLE;
-  signal s_write_data_cache_enable : std_logic := '0';
 
 begin
-
-  READ_FSM: process (clk, rstn_i)
+  
+  -- increases the memory address for the read and write operations
+  p_incr_addr: process (clk_i)
   begin
-    s_read_enable <= '0';
-    s_write_data_cache_enable <= '0';
+    if s_start_desc then
+      s_read_addr <= s_read_init_address;
+    else
+      s_read_addr <= std_logic_vector(unsigned(s_read_addr) + unsigned(4));
+    end if;
+  end process;
+
+  p_descriptor_handler: process (clk_i)
+  begin
+    
+  end process;
+  
+  -- manages the fifo cache with the read ops
+  p_READ_MNGR: process (clk_i, rstn_i)
+  begin
+    s_read_enable_o <= '0';
+    s_data_cache_write_enable_i <= '0';
     if not rstn_i then
       s_read_state <= IDLE;
     else
       case s_read_state is
         when IDLE =>
-          if ((not s_queue_full) and read_enable) s_read_state <= READ;
+          if (not s_queue_empty_i) then
+             s_read_state <= READ; -- if there is a read op in the fifo cache start reading
+          end if;
         when READ =>
           s_read_state <= READ;
-          if (s_queue_full or (not s_read_enable)) then
+          if s_queue_empty_i then
             s_read_state <= IDLE;
           else
-            s_read_enable <= '1';
-            if (s_read_ack) s_write_data_cache_enable <= '1';
+            s_read_enable_o <= '1';
+            if (s_read_ack) then
+              s_write_data_cache_enable <= '1'; -- when the data is available on the bus, write it to the data cache
+            end if;
           end if;
       end case;
     end if;
-    
-  end process READ_FSM;
+  end process READ_MNGR;
+
 
   FSM: process(clk, rstn_i) begin
     if not rstn_i then
