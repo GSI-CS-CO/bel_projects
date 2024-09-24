@@ -85,10 +85,10 @@ These are considered as OK if no exception occurs.}
 \hline
 Test                                    & \ry{number of tests } & \ry{Tools} & \ry{libcarpedm} & \ry{firmware} & \ry{uses Python} & \ry{checks result } \\ \hline
 dmPerformance                           &                     &   x        &   T             &   x           &   -              &   -                 \\ \hline
-test\_Cpu0Cpu1.py                       &  3                  &   T        &   T             &   T           &   x              &   -                 \\ \hline
-test\_RunningThreads.py                 &  1                  &   T        &   T             &   T           &   x              &   -                 \\ \hline
-test\_add.py                            &  1                  &   T        &   T             &   T           &   x              &   -                 \\ \hline
-test\_addDownloadCompare.py             &  238                &   T        &   T             &   T           &   x              &   -                 \\ \hline
+test\_Cpu0Cpu1.py                       &  3                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_RunningThreads.py                 &  1                  &   -        &   -             &   -           &   x              &   x                 \\ \hline
+test\_add.py                            &  1                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_addDownloadCompare.py             &  238                &   T        &   T             &   T           &   x              &   x                 \\ \hline
 test\_altDestinations.py                &  20                 &   T        &   T             &   T           &   x              &   x                 \\ \hline
 test\_async.py                          &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
 test\_basic.py                          &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
@@ -164,7 +164,26 @@ This is done for a small schedule and a larger schedule. The test is ok
 if all commands work. There is no check for this.
 
 \section{test\_Cpu0Cpu1.py}
-\texttt{test\_Cpu0Cpu1.py} test that
+\texttt{test\_Cpu0Cpu1.py} tests three cases where an edge connects nodes on two CPUs.
+    \begin{figure}
+        \centering
+        \includegraphics*[width=1.0\textwidth,keepaspectratio]{TestPattern/cpu0-1-flow-block-target.pdf}
+        \caption{A flow node on CPU 0 connects with a target edge to a block node on CPU 1}
+        \label{fig:cpu0-1-flow-block-target}
+    \end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics*[width=1.0\textwidth,keepaspectratio]{TestPattern/cpu0-1-flush-block-flushovr.pdf}
+        \caption{A flush node on CPU 0 connects with a flushovr edge to a block node on CPU 1}
+        \label{fig:cpu0-1-flush-block-flushovr}
+    \end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics*[width=1.0\textwidth,keepaspectratio]{TestPattern/cpu0-1-switch-block-target.pdf}
+        \caption{A switch node on CPU 0 connects with a target edge to a block node on CPU 1}
+        \label{fig:cpu0-1-switch-block-target}
+    \end{figure}
+Only for some node types and edge types it is allowed that source and target node run on different CPUs.
 
 \section{test\_RunningThreads.py}
 \texttt{test\_RunningThreads.py} test that
@@ -1281,6 +1300,7 @@ To check that the threads are running, each threads produces timing messages wit
         \caption{Pattern for the simultaneous start of threads}
         \label{fig:Pattern_for_the_simultaneous_start_of_threads}
     \end{figure}
+The tests run for two threads (0 and 1), four threads (0, 1, 2, 3) and all threads (8 or 32).
 
 \include{singleEdgeTest}
 
