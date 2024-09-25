@@ -5,6 +5,7 @@ use ieee.numeric_std.all;
 library work;
 use work.wishbone_pkg.all;
 use work.wb_dma_pkg.all;
+use work.genram_pkg.all;
 
 entity wb_dma_ch_rf is
   generic(
@@ -16,8 +17,8 @@ entity wb_dma_ch_rf is
     rstn_i : in std_logic;
 
     -- module IOs
-    wb_data_i : std_logic_vector(c_wishbone_data_width-1 downto 0);
-    wb_data_o : std_logic_vector(c_wishbone_data_width-1 downto 0); 
+    wb_data_i : in std_logic_vector(c_wishbone_data_width-1 downto 0);
+    wb_data_o : out std_logic_vector(c_wishbone_data_width-1 downto 0); 
 
     -- register file update control signals
     -- de_csr_i
@@ -35,10 +36,9 @@ entity wb_dma_ch_rf is
     -- read ops FIFO control signals
     s_read_ops_we_i           : in std_logic;
     s_read_ops_read_en_i      : in std_logic;
-    s_read_ops                : in std_logic_vector((2*c_wishbone_address_width)-1 downto 0);
+    s_read_op_i               : in std_logic_vector((2*c_wishbone_address_width)-1 downto 0);
     s_read_ops_cache_full_o   : out std_logic;
     s_read_ops_cache_empty_o  : out std_logic;
-    s_read_init_address       : in std_logic_vector(c_wishbone_address_width-1 downto 0);
 
     -- read FSM signals
     cache_we          : in std_logic; -- write enable
@@ -76,7 +76,7 @@ port map (
 
   -- write port
   clk_wr_i => clk_i,
-  d_i      => TODO & TODO,
+  d_i      => s_read_op_i,
   we_i     => s_read_ops_we_i,
 
   wr_empty_o        => s_read_ops_cache_full_o,
@@ -87,8 +87,8 @@ port map (
 
   -- read port
   clk_rd_i => clk_i,
-  q_o      => wb_data_o,
-  rd_i     => data_cache_full,
+  q_o      => r_hold_op,
+  rd_i     => s_read_ops_read_en_i,
 
   rd_empty_o        => s_read_ops_cache_empty_o,
   rd_full_o         => open,
@@ -107,8 +107,8 @@ port map (
 
   -- write port
   clk_wr_i => clk_i,
-  d_i      => wb_data_i & addr,
-  we_i     => cache_we,
+  d_i      => x"0000000000000000",
+  we_i     => '0',
 
   wr_empty_o        => data_cache_full,
   wr_full_o         => open,
@@ -119,9 +119,9 @@ port map (
   -- read port
   clk_rd_i => clk_i,
   q_o      => wb_data_o,
-  rd_i     => data_cache_full,
+  rd_i     => '0',
 
-  rd_empty_o        => read_queue_empty,
+  rd_empty_o        => data_cache_empty,
   rd_full_o         => open,
   rd_almost_empty_o => open,
   rd_almost_full_o  => open,
