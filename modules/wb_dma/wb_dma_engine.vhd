@@ -11,12 +11,21 @@ entity wb_dma_engine is
     clk_i : in std_logic;
     rstn_i : in std_logic;
 
+    -- read ops signals
+    s_read_ops_we_o             : out std_logic;
+
     -- read logic
     s_queue_full_i              : in std_logic;
     s_queue_empty_i             : in std_logic;
     s_read_enable_o             : out std_logic;
-    s_store_read_op_o           : out std_logic_vector[2*c_wishbone_address_width downto 0];
-    s_data_cache_write_enable_i : out std_logic
+    s_store_read_op_o           : out std_logic_vector((2*c_wishbone_address_width)-1 downto 0);
+    s_data_cache_write_enable_o : out std_logic;
+    s_read_ack                  : in std_logic;
+
+    --only for testing!!!!
+    s_start_desc                : in std_logic;
+    s_read_init_address         : in std_logic_vector(c_wishbone_address_width-1 downto 0);
+    s_descriptor_active         : in std_logic
   );
 end entity;
 
@@ -33,79 +42,53 @@ architecture behavioral of wb_dma_engine is
   signal s_state : t_state := IDLE;
 
 begin
-  
-  -- increases the memory address for the read and write operations
-  p_incr_addr: process (clk_i)
-  begin
-    if s_start_desc then
-      s_read_addr <= s_read_init_address;
-    else
-      s_read_addr <= std_logic_vector(unsigned(s_read_addr) + unsigned(4));
-    end if;
-  end process;
 
-  p_descriptor_handler: process (clk_i)
+  p_descriptor_handler: process (clk_i, rstn_i)
   begin
-    
+    if rstn_i = '1' then
+      s_read_addr <= (others => '0');
+      s_read_ops_we_o <= '0';
+    else
+      if rising_edge(clk_i) then
+        if s_start_desc = '1' then
+          s_read_addr <= s_read_init_address;
+        elsif not (s_queue_full_i = '1') and s_descriptor_active = '1' then
+          s_read_addr <= std_logic_vector(unsigned(s_read_addr) + 4);
+          s_read_ops_we_o <= '1';
+        else
+          s_read_ops_we_o <= '0';
+        end if;
+      end if;
+    end if;
   end process;
   
   -- manages the fifo cache with the read ops
   p_READ_MNGR: process (clk_i, rstn_i)
   begin
-    s_read_enable_o <= '0';
-    s_data_cache_write_enable_i <= '0';
-    if not rstn_i then
+    if rstn_i = '0' then
       s_read_state <= IDLE;
     else
-      case s_read_state is
-        when IDLE =>
-          if (not s_queue_empty_i) then
-             s_read_state <= READ; -- if there is a read op in the fifo cache start reading
-          end if;
-        when READ =>
-          s_read_state <= READ;
-          if s_queue_empty_i then
-            s_read_state <= IDLE;
-          else
-            s_read_enable_o <= '1';
-            if (s_read_ack) then
-              s_write_data_cache_enable <= '1'; -- when the data is available on the bus, write it to the data cache
+      if rising_edge(clk_i) then
+        s_read_enable_o <= '0';
+        s_data_cache_write_enable_o <= '0';
+        case s_read_state is
+          when IDLE =>
+            if not s_queue_empty_i = '1' then
+              s_read_state <= READ; -- if there is a read op in the fifo cache start reading
             end if;
-          end if;
-      end case;
+          when READ =>
+            s_read_state <= READ;
+            if s_queue_empty_i = '1' then
+              s_read_state <= IDLE;
+            else
+              s_read_enable_o <= '1';
+              if s_read_ack = '1' then
+                s_data_cache_write_enable_o <= '1'; -- when the data is available on the bus, write it to the data cache
+              end if;
+            end if;
+        end case;
+      end if;
     end if;
-  end process READ_MNGR;
-
-
-  FSM: process(clk, rstn_i) begin
-    if not rstn_i then
-      state <= IDLE;
-    else
-      case s_state is
-        when IDLE =>
-      
-        when READ =>
-
-        when WRITE =>
-        
-        when UPDATE =>
-
-        when LD_DESC1 =>
-
-        when LD_DESC2 =>
-
-        when LD_DESC3 =>
-
-        when LD_DESC4 =>
-
-        when LD_DESC5 =>
-
-        when WB =>
-
-        when PAUSE =>
-
-      end case;  
-    end if;
-  end process FSM;
+  end process p_READ_MNGR;
 
 end architecture;
