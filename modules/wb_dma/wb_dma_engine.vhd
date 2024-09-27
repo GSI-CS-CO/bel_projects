@@ -18,7 +18,6 @@ entity wb_dma_engine is
     s_queue_full_i              : in std_logic;
     s_queue_empty_i             : in std_logic;
     s_read_enable_o             : out std_logic;
-    s_store_read_op_o           : out std_logic_vector((2*c_wishbone_address_width)-1 downto 0);
     s_data_cache_write_enable_o : out std_logic;
     s_read_ack                  : in std_logic;
 
