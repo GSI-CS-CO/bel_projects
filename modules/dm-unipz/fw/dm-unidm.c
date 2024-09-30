@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 04-Sep-2024
+ *  version : 30-Sep-2024
  *
  *  lm32 program for gateway between 'UNILAC Data Master' and 'Ring Data Master'
  * 
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000900                                     // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000901                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -710,21 +710,21 @@ uint32_t configMILEvent(uint16_t evtCode)
 
 
   // initialize status and command register with initial values; disable event filtering; clear filter RAM
-  if (writeCtrlStatRegEvtMil(pMilPiggy, MIL_CTRL_STAT_ENDECODER_FPGA | MIL_CTRL_STAT_INTR_DEB_ON) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+  if (writeCtrlStatRegEvtMil(pMilPiggy, 0, MIL_CTRL_STAT_ENDECODER_FPGA | MIL_CTRL_STAT_INTR_DEB_ON) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
 
   // clean up 
-  if (disableLemoEvtMil(pMilPiggy, 1) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
-  if (disableLemoEvtMil(pMilPiggy, 2) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
-  if (disableFilterEvtMil(pMilPiggy)  != MIL_STAT_OK) return COMMON_STATUS_ERROR; 
-  if (clearFilterEvtMil(pMilPiggy)    != MIL_STAT_OK) return COMMON_STATUS_ERROR; 
+  if (disableLemoEvtMil(pMilPiggy, 0, 1) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+  if (disableLemoEvtMil(pMilPiggy, 0, 2) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+  if (disableFilterEvtMil(pMilPiggy, 0)  != MIL_STAT_OK) return COMMON_STATUS_ERROR; 
+  if (clearFilterEvtMil(pMilPiggy, 0)    != MIL_STAT_OK) return COMMON_STATUS_ERROR; 
 
   for (i=0; i < (0xf+1); i++) {
     // set filter (FIFO and LEMO1 pulsing) for all possible virtual accelerators
-    if (setFilterEvtMil(pMilPiggy,  evtCode, i, MIL_FILTER_EV_TO_FIFO | MIL_FILTER_EV_PULS1_S) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+    if (setFilterEvtMil(pMilPiggy,  0, evtCode, i, MIL_FILTER_EV_TO_FIFO | MIL_FILTER_EV_PULS1_S) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
   }
 
   // configure LEMO1 for pulse generation
-  if (configLemoPulseEvtMil(pMilPiggy, 1) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+  if (configLemoPulseEvtMil(pMilPiggy, 0, 1) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
 
   return COMMON_STATUS_OK;
 } // configMILEvent
@@ -796,13 +796,13 @@ uint32_t extern_entryActionConfigured()
   // dropped test if DM is reachable by reading from ECA input: no ECA at DM
 
   // reset MIL piggy and wait
-  if ((status = resetPiggyDevMil(pMilPiggy))  != MIL_STAT_OK) {
+  if ((status = resetDevMil(pMilPiggy, 0))  != MIL_STAT_OK) {
     DBPRINT1("dm-unipz: ERROR - can't reset MIL Piggy\n");
     return DMUNIPZ_STATUS_DEVBUSERROR;
   } 
   
   // check if modulbus I/O is ok
-  if ((status = echoTestDevMil(pMilPiggy, IFB_ADDRESS_SIS, 0xbabe)) != MIL_STAT_OK) {
+  if ((status = echoTestDevMil(pMilPiggy, 0, IFB_ADDRESS_SIS, 0xbabe)) != MIL_STAT_OK) {
     DBPRINT1("dm-unipz: ERROR - modulbus SIS IFK not available at (ext) base address 0x%08x! Error code is %u\n", (unsigned int)((uint32_t)pMilPiggy & 0x7FFFFFFF), (unsigned int)status);
     return DMUNIPZ_STATUS_DEVBUSERROR;
   }
@@ -817,7 +817,7 @@ uint32_t extern_entryActionConfigured()
 
   DBPRINT1("dm-unipz: MIL piggy configured for receving events (eventbus)\n");
 
-  configLemoOutputEvtMil(pMilPiggy, 2);    // used to see a blinking LED (and optionally connect a scope) for debugging
+  configLemoOutputEvtMil(pMilPiggy, 0, 2);    // used to see a blinking LED (and optionally connect a scope) for debugging
 
   // flush ECA queue for lm32
   i = 0;
@@ -848,7 +848,7 @@ volatile uint32_t *pMilPiggy;
 
   pMilPiggy = fwlib_getMilPiggy();
   
-  if (disableFilterEvtMil(pMilPiggy) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+  if (disableFilterEvtMil(pMilPiggy, 0) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
 
   // always disable debugging when entering state 'operation'
   flagDebug = 0;
@@ -1066,8 +1066,8 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       } // if !flagBooster
 
       //---- arm MIL Piggy 
-      enableFilterEvtMil(pMilPiggy);                                               // enable filter @ MIL piggy
-      clearFifoEvtMil(pMilPiggy);                                                  // get rid of junk in FIFO @ MIL piggy
+      enableFilterEvtMil(pMilPiggy, 0);                                            // enable filter @ MIL piggy
+      clearFifoEvtMil(pMilPiggy, 0);                                               // get rid of junk in FIFO @ MIL piggy
 
       *dtBprep = getSysTime() - ecaDeadline;                                       // diagnostics: time difference between CMD_UNI_BREQ and begin to request at UNIPZ
       *statusTransfer = *statusTransfer | (0x1 << DMUNIPZ_TRANS_REQBEAM);          // diagnostics: update status of transfer
@@ -1156,7 +1156,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       *dtStart     = tCmdThrd - getSysTime();                                      // diagnostics: we want to know how much of the thread-offset for Data Masteris left (just to avoid the discussion), its a nice feature too
 
       //---- release beam and un-arm MIL piggy, dummy for compatibility
-      disableFilterEvtMil(pMilPiggy);                                              // disable filter @ MIL piggy to avoid accumulation of junk
+      disableFilterEvtMil(pMilPiggy, 0);                                           // disable filter @ MIL piggy to avoid accumulation of junk
 
       //---- conclude the setting status of transfer and status of gateway
       *statusTransfer = *statusTransfer | (0x1 << DMUNIPZ_TRANS_RELBEAM);          // diagnostics: update status of transfer
