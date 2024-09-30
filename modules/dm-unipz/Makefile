@@ -57,7 +57,8 @@ software:
 	$(MAKE) -C $(SW) all
 
 firmware:
-	$(MAKE) -C $(FW)
+	$(MAKE) TARGET=dmunipz -C $(FW)
+	$(MAKE) TARGET=dmunidm -C $(FW)
 
 nfsinit:
 	echo $(shell cd $(NFSINIT); $(GENNFSINIT)/generate-main.sh $(ENV); cd ..)
@@ -66,6 +67,7 @@ clean:
 	$(MAKE) -C $(SW) clean
 	$(MAKE) -C $(FW) clean
 	rm -f $(NFSINIT)/dmunipz-*.sh
+	rm -f $(NFSINIT)/dmunidm-*.sh
 
 deploy: 
 # create folders
@@ -79,6 +81,7 @@ deploy:
 # tools
 	cp $(SW)/dmunipz-ctl $(STAGING)$(ARCH)$(PREFIX)/usr/bin             # '/usr' is a hack
 	cp $(FW)/dmunipz.bin $(STAGING)/firmware
+	cp $(FW)/dmunidm.bin $(STAGING)/firmware
 
 # configuration
 	cp $(SW)/*.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin                    # '/usr' is a hack
