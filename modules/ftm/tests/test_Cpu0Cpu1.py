@@ -82,27 +82,9 @@ class ConnectCpus(dm_testbench.DmTestbench):
     self.delay(1.0)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile0), [0], 0, 0)
 
-  # ~ @pytest.mark.development
-  # ~ def testTwoCpusOrigin(self):
-    # ~ """Load a schedule with a origindst edge that connects a node on CPU 0
-    # ~ with a node on CPU 1.
-    # ~ """
-    # ~ snoopFile = 'snoop_TwoCpusOrigin.csv'
-    # ~ self.scheduleFile0 = 'cpu0-1-origin-block-origindst.dot'
-    # ~ self.downloadFile0 = self.scheduleFile0.replace('.dot', '-download.dot')
-    # ~ self.snoopToCsvWithAction(snoopFile, self.actionTwoCpusOrigin, duration=1)
-    # ~ self.startAndCheckSubprocess(('scheduleCompare', '-s', '-u', self.schedulesFolder + self.scheduleFile0, self.downloadFile0), [0], 0, 0)
-    # ~ self.deleteFile(self.downloadFile0)
-    # ~ self.analyseFrequencyFromCsv(snoopFile, column=20, printTable=True, checkValues={'0x0000000000000000': '>35', '0x0000000000000001': '>10'}, addDelayed=True)
-    # ~ self.deleteFile(snoopFile)
-
-  # ~ def actionTwoCpusOrigin(self):
-    # ~ """During snoop start pattern X and A. This produces messages.
-    # ~ Download the schedule for later compare.
-    # ~ """
-    # ~ self.addSchedule(self.scheduleFile0)
-    # ~ self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'A'), [0], 1, 0)
-    # ~ self.delay(0.1)
-    # ~ self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', 'X'), [0], 1, 0)
-    # ~ self.delay(1.0)
-    # ~ self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile0), [0], 0, 0)
+  def testTwoCpusOrigin(self):
+    """Load a schedule with a origindst edge that connects a node on CPU 0
+    with a node on CPU 1. This fails. Not allowed for origindst edges.
+    """
+    self.scheduleFile0 = 'cpu0-1-origin-block-origindst.dot'
+    self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add', self.schedulesFolder + self.scheduleFile0), [250], 2, 2)
