@@ -152,7 +152,7 @@ port(
   wren_b    : in std_logic;
   address_b : in std_logic_vector(widthad_b-1 downto 0);
   data_b    : in std_logic_vector(width_b-1 downto 0);
-  q_b       : out std_logic_vector(width_b-1 downto 0);
+  q_b       : out std_logic_vector(width_b-1 downto 0)
 );
 end component simple_dpram;
 

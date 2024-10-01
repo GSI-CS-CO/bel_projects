@@ -82,6 +82,38 @@ architecture syn of inferred_sync_fifo_m is
 
   signal q_comb : std_logic_vector(g_data_width-1 downto 0);
 
+  component generic_dpram_m is
+  generic(
+  -- standard parameters
+  g_data_width               : natural;
+  g_size                     : natural;
+  g_with_byte_enable         : boolean := false;
+  g_addr_conflict_resolution : string := "dont_care";
+  g_init_file                : string := "none";
+  g_dual_clock               : boolean := true;
+  g_fail_if_file_not_found   : boolean := false);
+port(
+  rst_n_i : in std_logic := '1';      -- synchronous reset, active LO
+
+  -- Port A
+  clka_i : in  std_logic;
+  bwea_i : in  std_logic_vector((g_data_width+7)/8-1 downto 0);
+  wea_i  : in  std_logic;
+  aa_i   : in  std_logic_vector(f_log2_size(g_size)-1 downto 0);
+  da_i   : in  std_logic_vector(g_data_width-1 downto 0);
+  qa_o   : out std_logic_vector(g_data_width-1 downto 0);
+  
+  -- Port B
+  clkb_i : in  std_logic;
+  bweb_i : in  std_logic_vector((g_data_width+7)/8-1 downto 0);
+  web_i  : in  std_logic;
+  ab_i   : in  std_logic_vector(f_log2_size(g_size)-1 downto 0);
+  db_i   : in  std_logic_vector(g_data_width-1 downto 0);
+  qb_o   : out std_logic_vector(g_data_width-1 downto 0)
+  );
+
+end component generic_dpram_m;
+
 begin  -- syn
 
   we_int <= we_i and not full;
@@ -102,7 +134,11 @@ begin  -- syn
       da_i    => d_i,
       clkb_i  => '0',
       ab_i    => std_logic_vector(rd_ptr_muxed(c_pointer_width-1 downto 0)),
-      qb_o    => q_comb);
+      qb_o    => q_comb,
+      bwea_i  => (others => '0'),
+      bweb_i  => (others => '0'),
+      web_i   => '0',
+      db_i    => (others => '0'));
 
   p_rd_ptr_mux: process(rd_int, rd_ptr)
   begin

@@ -46,12 +46,12 @@ port(
   wren_b    : in std_logic;
   address_b : in std_logic_vector(widthad_b-1 downto 0);
   data_b    : in std_logic_vector(width_b-1 downto 0);
-  q_b       : out std_logic_vector(width_b-1 downto 0);
+  q_b       : out std_logic_vector(width_b-1 downto 0)
 );
 end simple_dpram;
 
 architecture syn of simple_dpram is
-type ram_type is array (1023 downto 0) of std_logic_vector(15 downto 0);
+type ram_type is array (numwords_a downto 0) of std_logic_vector(width_a-1 downto 0);
 shared variable RAM : ram_type;
 begin
 process(clock0)

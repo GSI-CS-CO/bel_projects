@@ -53,10 +53,28 @@ architecture rtl of wb_dma is
     signal cache_re          : std_logic := '0'; -- read enable
     signal data_cache_full   : std_logic := '0';
 
+  component wb_dma_engine is
+  port(
+    clk_i : in std_logic;
+    rstn_i : in std_logic;
+
+    -- read logic
+    s_queue_full_i              : in std_logic;
+    s_queue_empty_i             : in std_logic;
+    s_read_enable_o             : out std_logic := '0';
+    s_data_cache_write_enable_o : out std_logic := '0';
+    s_read_ack                  : in std_logic;
+
+    --only for testing!!!!
+    s_start_desc                : in std_logic;
+    s_read_init_address         : in std_logic_vector(c_wishbone_address_width-1 downto 0);
+    s_descriptor_active         : in std_logic
+  );
+  end component;
+
   component wb_dma_ch_rf is
     generic(
-      g_data_cache_size : natural := 16;
-      g_read_cache_size : natural := 8
+      g_data_cache_size : natural := 16
     );
     port(
       clk_i : in std_logic;
