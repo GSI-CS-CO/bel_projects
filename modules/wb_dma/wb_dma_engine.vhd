@@ -11,14 +11,11 @@ entity wb_dma_engine is
     clk_i : in std_logic;
     rstn_i : in std_logic;
 
-    -- read ops signals
-    s_read_ops_we_o             : out std_logic;
-
     -- read logic
     s_queue_full_i              : in std_logic;
     s_queue_empty_i             : in std_logic;
-    s_read_enable_o             : out std_logic;
-    s_data_cache_write_enable_o : out std_logic;
+    s_read_enable_o             : out std_logic := '0';
+    s_data_cache_write_enable_o : out std_logic := '0';
     s_read_ack                  : in std_logic;
 
     --only for testing!!!!
@@ -42,27 +39,8 @@ architecture behavioral of wb_dma_engine is
 
 begin
 
-  p_descriptor_handler: process (clk_i, rstn_i)
-  begin
-    if rstn_i = '1' then
-      s_read_addr <= (others => '0');
-      s_read_ops_we_o <= '0';
-    else
-      if rising_edge(clk_i) then
-        if s_start_desc = '1' then
-          s_read_addr <= s_read_init_address;
-        elsif not (s_queue_full_i = '1') and s_descriptor_active = '1' then
-          s_read_addr <= std_logic_vector(unsigned(s_read_addr) + 4);
-          s_read_ops_we_o <= '1';
-        else
-          s_read_ops_we_o <= '0';
-        end if;
-      end if;
-    end if;
-  end process;
-  
   -- manages the fifo cache with the read ops
-  p_READ_MNGR: process (clk_i, rstn_i)
+  p_cache_manager: process (clk_i, rstn_i)
   begin
     if rstn_i = '0' then
       s_read_state <= IDLE;
@@ -88,6 +66,6 @@ begin
         end case;
       end if;
     end if;
-  end process p_READ_MNGR;
+  end process p_cache_manager;
 
 end architecture;

@@ -1,0 +1,43 @@
+[*]
+[*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
+[*] Tue Oct  1 11:13:52 2024
+[*]
+[dumpfile] "/home/lucas/VHDL_projects/wb_dma/modules/wb_dma/wb_dma_tb.ghw"
+[dumpfile_mtime] "Tue Oct  1 11:13:41 2024"
+[dumpfile_size] 65739
+[savefile] "/home/lucas/VHDL_projects/wb_dma/modules/wb_dma/wb_dma_tb.gtkw"
+[timestart] 0
+[size] 2490 1376
+[pos] 0 26
+*-26.213482 108500000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[treeopen] top.wb_dma_tb.
+[treeopen] top.wb_dma_tb.dut.
+[treeopen] top.wb_dma_tb.dut.dma_engine.
+[treeopen] top.wb_dma_tb.dut.register_file.
+[sst_width] 233
+[signals_width] 246
+[sst_expanded] 1
+[sst_vpaned_height] 397
+@28
+top.wb_dma_tb.s_clk
+top.wb_dma_tb.s_rstn
+@200
+-dut
+@28
+top.wb_dma_tb.dut.s_descriptor_active_i
+top.wb_dma_tb.dut.s_start_desc_i
+@22
+#{top.wb_dma_tb.dut.s_read_init_address_i[31:0]} top.wb_dma_tb.dut.s_read_init_address_i[31] top.wb_dma_tb.dut.s_read_init_address_i[30] top.wb_dma_tb.dut.s_read_init_address_i[29] top.wb_dma_tb.dut.s_read_init_address_i[28] top.wb_dma_tb.dut.s_read_init_address_i[27] top.wb_dma_tb.dut.s_read_init_address_i[26] top.wb_dma_tb.dut.s_read_init_address_i[25] top.wb_dma_tb.dut.s_read_init_address_i[24] top.wb_dma_tb.dut.s_read_init_address_i[23] top.wb_dma_tb.dut.s_read_init_address_i[22] top.wb_dma_tb.dut.s_read_init_address_i[21] top.wb_dma_tb.dut.s_read_init_address_i[20] top.wb_dma_tb.dut.s_read_init_address_i[19] top.wb_dma_tb.dut.s_read_init_address_i[18] top.wb_dma_tb.dut.s_read_init_address_i[17] top.wb_dma_tb.dut.s_read_init_address_i[16] top.wb_dma_tb.dut.s_read_init_address_i[15] top.wb_dma_tb.dut.s_read_init_address_i[14] top.wb_dma_tb.dut.s_read_init_address_i[13] top.wb_dma_tb.dut.s_read_init_address_i[12] top.wb_dma_tb.dut.s_read_init_address_i[11] top.wb_dma_tb.dut.s_read_init_address_i[10] top.wb_dma_tb.dut.s_read_init_address_i[9] top.wb_dma_tb.dut.s_read_init_address_i[8] top.wb_dma_tb.dut.s_read_init_address_i[7] top.wb_dma_tb.dut.s_read_init_address_i[6] top.wb_dma_tb.dut.s_read_init_address_i[5] top.wb_dma_tb.dut.s_read_init_address_i[4] top.wb_dma_tb.dut.s_read_init_address_i[3] top.wb_dma_tb.dut.s_read_init_address_i[2] top.wb_dma_tb.dut.s_read_init_address_i[1] top.wb_dma_tb.dut.s_read_init_address_i[0]
+@200
+-dma_engine
+@22
+#{top.wb_dma_tb.dut.dma_engine.s_read_addr[31:0]} top.wb_dma_tb.dut.dma_engine.s_read_addr[31] top.wb_dma_tb.dut.dma_engine.s_read_addr[30] top.wb_dma_tb.dut.dma_engine.s_read_addr[29] top.wb_dma_tb.dut.dma_engine.s_read_addr[28] top.wb_dma_tb.dut.dma_engine.s_read_addr[27] top.wb_dma_tb.dut.dma_engine.s_read_addr[26] top.wb_dma_tb.dut.dma_engine.s_read_addr[25] top.wb_dma_tb.dut.dma_engine.s_read_addr[24] top.wb_dma_tb.dut.dma_engine.s_read_addr[23] top.wb_dma_tb.dut.dma_engine.s_read_addr[22] top.wb_dma_tb.dut.dma_engine.s_read_addr[21] top.wb_dma_tb.dut.dma_engine.s_read_addr[20] top.wb_dma_tb.dut.dma_engine.s_read_addr[19] top.wb_dma_tb.dut.dma_engine.s_read_addr[18] top.wb_dma_tb.dut.dma_engine.s_read_addr[17] top.wb_dma_tb.dut.dma_engine.s_read_addr[16] top.wb_dma_tb.dut.dma_engine.s_read_addr[15] top.wb_dma_tb.dut.dma_engine.s_read_addr[14] top.wb_dma_tb.dut.dma_engine.s_read_addr[13] top.wb_dma_tb.dut.dma_engine.s_read_addr[12] top.wb_dma_tb.dut.dma_engine.s_read_addr[11] top.wb_dma_tb.dut.dma_engine.s_read_addr[10] top.wb_dma_tb.dut.dma_engine.s_read_addr[9] top.wb_dma_tb.dut.dma_engine.s_read_addr[8] top.wb_dma_tb.dut.dma_engine.s_read_addr[7] top.wb_dma_tb.dut.dma_engine.s_read_addr[6] top.wb_dma_tb.dut.dma_engine.s_read_addr[5] top.wb_dma_tb.dut.dma_engine.s_read_addr[4] top.wb_dma_tb.dut.dma_engine.s_read_addr[3] top.wb_dma_tb.dut.dma_engine.s_read_addr[2] top.wb_dma_tb.dut.dma_engine.s_read_addr[1] top.wb_dma_tb.dut.dma_engine.s_read_addr[0]
+@200
+-register_file
+@28
+top.wb_dma_tb.dut.register_file.s_read_ops_cache_empty_o
+@29
+top.wb_dma_tb.dut.register_file.s_read_ops_cache_full_o
+[pattern_trace] 1
+[pattern_trace] 0
