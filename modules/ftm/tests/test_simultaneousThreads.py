@@ -2,10 +2,7 @@ import dm_testbench
 import pytest
 
 """
-Test cases for edges of type reference.
-These edges have the additional attributes
-fieldtail: offset into the source node, fieldhead: offset into
-the target node, fieldwidth: width of the referenced field.
+Test cases for starting many threads with one startthread node.
 """
 class SimultaneousThreads(dm_testbench.DmTestbench):
 
@@ -19,14 +16,14 @@ class SimultaneousThreads(dm_testbench.DmTestbench):
     self.runSimultaneousThreads(2)
 
   def runSimultaneousThreads(self, threads):
-    """Use a schedule with an edge of type reference between two loops
-    (a block and a tmsg). The loops run with 10Hz.
-    Check for the correct parameter value when using the reference.
+    """Use a schedule with a node of type startthread to start a number of
+    threads at the same time (simultaneously).
+    The startthread node is in a loop which produces messages with 50 Hz.
     """
     self.scheduleFile0 = f'simultaneousThreads{threads}.dot'
     self.downloadFile0 = self.scheduleFile0.replace('.dot', '-download.dot')
     snoopFile = 'snoop_' + self.scheduleFile0.replace('.dot', '.csv')
-    threadMask = self.generateSchedule(self.schedulesFolder + self.scheduleFile0, threads)
+    self.generateSchedule(self.schedulesFolder + self.scheduleFile0, threads)
     self.snoopToCsvWithAction(snoopFile, self.actionSimultaneousThreads, duration=3)
     counts = self.analyseDmCmdOutput('00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'[:self.cpuQuantity*self.threadQuantity], useVerbose=True)
     key1 = ''
@@ -46,7 +43,7 @@ class SimultaneousThreads(dm_testbench.DmTestbench):
     self.deleteFile(self.schedulesFolder + self.scheduleFile0)
 
   def actionSimultaneousThreads(self):
-    """During snoop start pattern MAIN.
+    """During snoop start pattern MAIN. Run it for 1.5 seconds and stop it.
     Download the schedule for later compare.
     """
     self.startPattern(self.scheduleFile0, 'MAIN')
@@ -54,7 +51,7 @@ class SimultaneousThreads(dm_testbench.DmTestbench):
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'status', '-o', self.downloadFile0), [0], 0, 0)
     self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'stoppattern', 'MAIN'), [0], 0, 0)
 
-  def generateSchedule(self, fileName, threadQuantity) -> str:
+  def generateSchedule(self, fileName, threadQuantity):
     """Generate a schedule and write it to a file.
 
     :param fileName: the name of the schedule file.
@@ -75,10 +72,9 @@ class SimultaneousThreads(dm_testbench.DmTestbench):
     lines = []
     lines.append(f'digraph "SimultaneousThreads{threadQuantity}" {{')
     lines.append(f'  name="SimultaneousThreads{threadQuantity}"')
-    lines.append(f'  node [cpu=1 toffs=0 pattern=MAIN fillcolor=white style=filled]')
     # create the MAIN loop
+    lines.append(f'  node [cpu=1 toffs=0 pattern=MAIN fillcolor=white style=filled]')
     lines.append(f'  B_VARI [type=block shape=rectangle tperiod=200000]')
-    # ~ lines.append(f'  StartThread [type=startthread shape=triangle color=cyan pattern=MAIN startoffs=0 thread="0x{threadMask}"]')
     lines.append(f'  StartThread [type=startthread shape=triangle color=cyan pattern=MAIN startoffs=0 thread="{threadMask}"]')
     lines.append(f'  Evt_MAIN [type=tmsg shape=oval fid=1 evtno=1 par=0 id="0x1000001000000000"]')
     lines.append(f'  B_MAIN [type=block shape=rectangle patexit=1 color=purple tperiod=20000000 qlo=1]')
@@ -114,4 +110,3 @@ class SimultaneousThreads(dm_testbench.DmTestbench):
     # write the file
     with open(fileName, 'w') as file1:
       file1.write("\n".join(lines))
-    return threadMask
