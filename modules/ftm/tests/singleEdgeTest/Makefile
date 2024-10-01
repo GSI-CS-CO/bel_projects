@@ -1,7 +1,7 @@
 
 ifeq ($(findstring asl75,$(shell hostname)),asl75)
   # ASL build paths for asl75x
-  EBPATH ?=/common/export/timing-rte/tg-fallout-v6.2.x-rocky9/x86_64
+  EBPATH ?=/common/export/timing-rte/tg-fallout-v6.3.1-rocky9
 else
 ifeq ($(findstring asl,$(shell hostname)),asl)
   # ASL build paths for asl74x

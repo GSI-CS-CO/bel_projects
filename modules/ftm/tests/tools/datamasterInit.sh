@@ -22,7 +22,7 @@ if [ $# -ge 2 ]
 then
   FIRMWARE=$2
 else
-  FIRMWARE=~/Documents/fel0069/ftm_v8.0.4-rc1.bin
+  FIRMWARE=ftm.bin
 fi
 
 # the third argument is the number of threads. Values 8 or 32 are allowed.
@@ -65,8 +65,7 @@ then
   then
     echo 'saft daemon for tr1 started.'
   else
-    echo 'start saft daemon for tr1.'
-    ssh root@fel0069.acc.gsi.de '/usr/sbin/saftd tr1:dev/wbm1'
+    echo 'check saft daemon for tr1 on fel0069.'
   fi
   # Monitoring output
   echo -n -e '\n\ndev/wbm1 monitoring: '; ssh root@fel0069.acc.gsi.de 'eb-mon -v dev/wbm1'
