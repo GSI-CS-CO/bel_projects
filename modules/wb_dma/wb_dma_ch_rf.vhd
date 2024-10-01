@@ -56,12 +56,52 @@ signal s_write_addr   : std_logic_vector(c_wishbone_address_width-1 downto 0) :=
 signal s_read_op      : std_logic_vector((2*c_wishbone_address_width)-1 downto 0) := (others => '0');
 signal r_hold_op      : std_logic_vector((2*c_wishbone_address_width)-1 downto 0) := (others => '0'); -- register not possible?
 
+component generic_sync_fifo_m is
+
+  generic (
+    g_data_width : natural;
+    g_size       : natural;
+    g_show_ahead : boolean := false;
+
+    -- Read-side flag selection
+    g_with_empty        : boolean := true;   -- with empty flag
+    g_with_full         : boolean := true;   -- with full flag
+    g_with_almost_empty : boolean := false;
+    g_with_almost_full  : boolean := false;
+    g_with_count        : boolean := false;  -- with words counter
+
+    g_almost_empty_threshold : integer;  -- threshold for almost empty flag
+    g_almost_full_threshold  : integer;  -- threshold for almost full flag
+    g_register_flag_outputs  : boolean := true
+    );
+
+  port (
+    rst_n_i : in std_logic := '1';
+
+    clk_i : in std_logic;
+    d_i   : in std_logic_vector(g_data_width-1 downto 0);
+    we_i  : in std_logic;
+
+    q_o  : out std_logic_vector(g_data_width-1 downto 0);
+    rd_i : in  std_logic;
+
+    empty_o        : out std_logic;
+    full_o         : out std_logic;
+    almost_empty_o : out std_logic;
+    almost_full_o  : out std_logic;
+    count_o        : out std_logic_vector(f_log2_size(g_size)-1 downto 0)
+    );
+
+end component generic_sync_fifo_m;
+
 begin
 
-data_and_addr_cache : generic_sync_fifo
+data_and_addr_cache : generic_sync_fifo_m
 generic map (
   g_data_width => 64,
-  g_size => g_data_cache_size
+  g_size => g_data_cache_size,
+  g_almost_empty_threshold => 0,
+  g_almost_full_threshold => 0
 )
 port map (
   clk_i => clk_i, 
