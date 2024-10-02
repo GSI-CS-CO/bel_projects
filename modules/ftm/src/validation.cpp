@@ -153,7 +153,7 @@ void init() {
     boost::tie(out_begin, out_end) = out_edges(v,g);
     std::string cpuSource = g[v].cpu;
     for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
-      if (g[*out_cur].type == e::sDefDst || g[*out_cur].type == e::sAltDst) {
+      if (g[*out_cur].type == e::sDefDst || g[*out_cur].type == e::sAltDst || g[*out_cur].type == e::sDynPar0 || g[*out_cur].type == e::sDynPar1 || g[*out_cur].type == e::sDynId || g[*out_cur].type == e::sOriginDst) {
         if (g[target(*out_cur,g)].cpu != cpuSource) {
           throw std::runtime_error("Neighbourhood: Nodes '" + g[v].name + "' (CPU " + g[v].cpu + ") and '"
             + g[target(*out_cur,g)].name + "' (CPU " + g[target(*out_cur,g)].cpu + ") must have the same CPU.");
