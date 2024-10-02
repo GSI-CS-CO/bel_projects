@@ -1,0 +1,14 @@
+digraph "cpu0-1-origin-block-origindst" {
+  name="cpu0-1-origin-block-origindst"
+  graph [rankdir=TB nodesep=0.6 mindist=1.0 ranksep=1.0 overlap=false]
+  node [style=filled fillcolor=white color=black penwidth=2]
+  Block0 [label="Block0\n(CPU 0)" cpu=0 type=block tperiod=20000000 pattern=X patentry=0 patexit=1 beamproc=beamX bpentry=0 bpexit=0 qlo=1 qhi=0 qil=0 shape=rectangle color=purple]
+  Block1 [label="Block1\n(CPU 1)" cpu=1 type=block tperiod=10000000 pattern=A patentry=0 patexit=1 beamproc=beamA bpentry=0 bpexit=0 qlo=1 qhi=0 qil=0 shape=rectangle color=purple]
+  Origin0 [label="Origin0\n(CPU 0)" cpu=0 type=origin toffs=0 pattern=X patentry=1 patexit=0 beamproc=beamA bpentry=0 bpexit=0 thread=0 shape=octagon color=darkorange3]
+  Evt0 [label="Evt0\n(CPU 0)" cpu=0 type=tmsg fid=1 par=0 toffs=0 pattern=X patentry=0 patexit=0 beamproc=beamA bpentry=0 bpexit=0 shape=oval]
+  Evt1a [label="Evt1a\n(CPU 1)" cpu=1 type=tmsg fid=1 par=1 toffs=0 pattern=A patentry=1 patexit=0 beamproc=beamA bpentry=0 bpexit=0 shape=oval color=darkorange3]
+  edge [type=defdst color=red]
+  Origin0 -> Evt1a [type=origindst color=gray]
+  Origin0 -> Block0 -> Evt0 -> Origin0
+  Evt1a -> Block1 -> Evt1a
+}
