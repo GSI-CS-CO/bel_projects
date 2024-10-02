@@ -51,6 +51,30 @@ class Schedules(dm_testbench.DmTestbench):
       self.analyseFrequencyFromCsv(snoopFileName, parameterColumn, checkValues={'0x0100': '>15', '0x021b': '>0'})
       self.deleteFile(snoopFileName)
 
+  def testSchedule2024_10_02_int(self):
+    """Run a schedule from integration (2024-10-02). Start all pattern, snoop for the given duration
+    and check for two evtno values.
+    """
+    if self.cpuQuantity > 3:
+      self.startAllPattern('2024-10-02-schedule-int.dot')
+      snoopFileName = '2024-10-02-schedule-int.csv'
+      parameterColumn = 8
+      self.snoopToCsv(snoopFileName, duration=6)
+      self.analyseFrequencyFromCsv(snoopFileName, parameterColumn, checkValues={'0x0100': '>0', '0x021b': '>0'})
+      self.deleteFile(snoopFileName)
+
+  def testSchedule2024_10_02_prod(self):
+    """Run a schedule from production (2024-10-02). Start all pattern, snoop for the given duration
+    and check for two evtno values.
+    """
+    if self.cpuQuantity > 3:
+      self.startAllPattern('2024-10-02-schedule-prod.dot')
+      snoopFileName = '2024-10-02-schedule-prod.csv'
+      parameterColumn = 8
+      self.snoopToCsv(snoopFileName, duration=6)
+      self.analyseFrequencyFromCsv(snoopFileName, parameterColumn, checkValues={'0x0100': '>0', '0x0200': '>0'})
+      self.deleteFile(snoopFileName)
+
   @pytest.mark.slow
   @pytest.mark.development
   def testFrequencySchedule1_0060(self):
