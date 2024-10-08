@@ -56,7 +56,7 @@ ifeq ($(SYSENV), YOCTO)
 # I really hate this hack, but I found no simpler solution
 	bash x86/make-yocto-software-all
 else
-	$(MAKE) -C $(SW) all)
+	$(MAKE) -C $(SW) all
 endif 
 
 firmware:
