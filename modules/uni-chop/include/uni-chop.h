@@ -19,7 +19,7 @@
 #define UNICHOP_ECADO_UNKOWN                   1   // unkown activity requested (unexpected action by ECA)
 #define UNICHOP_ECADO_STRAHLWEG_WRITE      0xfa0   // writes data to chopper control;         param 0..15: Strahlwegregister; param 16..31: Strahlwegmaske
 #define UNICHOP_ECADO_STRAHLWEG_READ       0xfa1   // request read data from chopper control; param 0..15: Strahlwegregister; param 16..31: Strahlwegmaske
-#define UNICHOP_ECADO_RPG_WRITE            0xfa2   //  writes data to Rahmenpulsgeneratoren;  param 48..63 HSI start..stop, 32..47 HLI start..stop, 16..31 IQL start..stop, 0..15 IQR start..stop
+#define UNICHOP_ECADO_RPG_WRITE            0xfa2   // writes data to Rahmenpulsgeneratoren;   param 48..63 HSI start..stop, 32..47 HLI start..stop, 16..31 IQL start..stop, 0..15 IQR start..stop
 #define UNICHOP_ECADO_MIL_SWRITE           0xfb0   // standard data write to MIL;             param: 32..39 ifb addr, 24..31 mod addr, 16..23: reg addr, 0..15 data
 #define UNICHOP_ECADO_MIL_SREAD            0xfb1   // standard data read from MIL;            param: 32..39 ifb addr, 24..31 mod addr, 16..23: reg addr, 0..15 reserved
 
@@ -40,11 +40,16 @@
 // interface board: main chopper control
 #define IFB_ADDR_CU                         0x60   // MIL address of chopper IF; FG 380.221
 
-// modulebus module for Strahlwege
+// modulebus module Logic1
 #define MOD_LOGIC1_ADDR                     0x09   // logic module 1 (Strahlwege et al),  module bus address, FG 450.410/411
 #define MOD_LOGIC1_REG_STRAHLWEG_REG        0x60   // logic module 1, register/address for Strahlwegregister
 #define MOD_LOGIC1_REG_STRAHLWEG_MASK       0x62   // logic module 1, register/subaddress for Strahlwegmaske
 #define MOD_LOGIC1_REG_STATUSGLOBAL         0x66   // logic module 1, register/subaddress for global status, contains version number (2024: 0x14)
+
+// modulebus module Logic2
+#define MOD_LOGIC2_ADDR                     0x08   // logic module 2 (Strahlwege et al),  module bus address, FG 450.410/411
+#define MOD_LOGIC2_REG_ANFORDER_MASK        0x68   // logic module 2, register/subaddress for Strahlwegmaske
+#define MOD_LOGIC2_REG_STATUSGLOBAL         0x66   // logic module 2, register/subaddress for global status, contains version number (2024: 0x03)
 
 // modulebus modules for Rahmenpulsgeneratoren
 #define MOD_RPG_IQR_ADDR                    0x01   // Rahmenpulsgenerator IQL, module bus address, FG 450.681

@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Tobias Habermann GSI-Darmstadt
- *  version : 20-Sep-2024
+ *  version : 08-Oct-2024
  *
  * Command-line interface for uni-chop
  *
@@ -96,17 +96,18 @@ static void help(void) {
   fprintf(stderr, "      0xff0: group for local timing messages that are sent TO the lm32 firmware\n"  );
   fprintf(stderr, "      0xff1: group for local timing messages that are sent FROM the lm32 firmware\n");
   fprintf(stderr, "EvtNo:\n"                                                                           );
-  fprintf(stderr, "      0xfa0: host -> lm32: write Strahlweg data\n"                                  );
-  fprintf(stderr, "      0xfa1: host -> lm32: read Strahlweg data\n"                                   );
+  fprintf(stderr, "      0xfa0: host -> lm32: write strahlweg and anforder data\n"                     );
+  fprintf(stderr, "      0xfa1: host -> lm32: read strahlweg and anforder data\n"                      );
   fprintf(stderr, "      0xfa2: host -> lm32: write RPG data (experimental, write only)\n"             );
   fprintf(stderr, "      0xfb0: host -> lm32: standard MIL write\n"                                    );
   fprintf(stderr, "      0xfb1: host -> lm32: standard MIL read\n"                                     );
-  fprintf(stderr, "Examples: write/read host<->lm32<->MIL<->Chopper unit:\n"                           );
-  fprintf(stderr, "saft-ctl tr0 -p inject 0x1ff0fa0000000000 0x0000000000ff0001 0\n"                   );
-  fprintf(stderr, "      write Strahlweg data to HW                        ^^^^ : strahlweg_register\n");
-  fprintf(stderr, "                                                    ^^^^     : strahlweg_maske\n"   );
+  fprintf(stderr, "Examples: write/read host<->lm32<->MIL<->chopper unit:\n"                           );
+  fprintf(stderr, "saft-ctl tr0 -p inject 0x1ff0fa0000000000 0x0000000ab00ff0001 0\n"                   );
+  fprintf(stderr, "      write strahlweg and anforder data to HW            ^^^^ : strahlweg_register\n");
+  fprintf(stderr, "                                                     ^^^^     : strahlweg_maske\n"   );
+  fprintf(stderr, "                                                 ^^^^         : anforder_maske\n"    );
   fprintf(stderr, "saft-ctl tr0 -p inject 0x1ff0fa1000000000 0x0000000000000000 0\n"                   );
-  fprintf(stderr, "      read Strahlweg data from HW\n"                                                );
+  fprintf(stderr, "      read strahlweg and anforder data from HW\n"                                   );
   fprintf(stderr, "saft-ctl tr0 -p inject 0x1ff0fa2000000000 0x0806080608020802 0\n"                   );
   fprintf(stderr, "      write RPG data to HW                                ^^ : IRQ start event\n"   );
   fprintf(stderr, "                                                        ^^   : IRQ stop event\n"    );
@@ -122,6 +123,7 @@ static void help(void) {
   fprintf(stderr, "tDeadline: 0x17f6e1ba6fe69830 EvtID: 0x1ff1fa1000000000 Param: 0x0000000000ff0001\n");
   fprintf(stderr, "        GID data received from lm32:    ^^^\n"                                      );
   fprintf(stderr, "        EvtNo read strahlweg data  :       ^^^\n"                                   );
+  fprintf(stderr, "                               value of anforder maske       :       ^^^^\n"        );
   fprintf(stderr, "                               value of strahlweg maske      :           ^^^^\n"    );
   fprintf(stderr, "                               value of strahlweg register   :               ^^^^\n");
   fprintf(stderr, "\n"); 
