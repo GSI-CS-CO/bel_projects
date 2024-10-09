@@ -65,9 +65,15 @@ saft-ecpu-ctl $SDGW -c 0x1ff0fb0000000000 0xfffffff000000000 0 0xfb0 -d
 # UNICHOP_ECADO_MIL_SREAD
 saft-ecpu-ctl $SDGW -c 0x1ff0fb1000000000 0xfffffff000000000 0 0xfb1 -d
 
+###########################################
+# init RPGs (Rahmenpulsgeneratoren)
+###########################################
+sleep 1
+saft-dm tr0 -p unichop-int-saftdm.txt
+
 
 ###########################################
 # reset diagnostics
 ###########################################
-sleep 1
+sleep 2
 unichop-ctl $TRGW cleardiag
