@@ -94,6 +94,7 @@ deploy:
 
 # configuration; the format is 'unichop-<environment>-<machine>-<room>-<function>_start.sh'
 	cp $(SW)/*.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin                    # '/usr' is a hack
+	cp $(SW)/*saftdm.txt $(STAGING)$(ARCH)$(PREFIX)/usr/bin             # '/usr' is a hack
 
 # systemd
 	cp $(SYSTEMD)/*.service $(STAGING)/$(SYSTEMD)                       # systemd units
