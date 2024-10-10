@@ -97,11 +97,7 @@ prog:
 
 %.jic:	%.sof %.opt
 ifndef SKIP_JIC
-ifeq ($(ARRIA10_JIC), yes)
-	$(QUARTUS_BIN)/quartus_cpf -c -d $(FLASH) -s $(DEVICE) $< $@
-else
 	$(QUARTUS_BIN)/quartus_cpf -c -o $*.opt -d $(FLASH) -s $(DEVICE) $< $@
-endif
 endif
 ifdef SKIP_JIC
 	echo "Skipping JIC file..."
