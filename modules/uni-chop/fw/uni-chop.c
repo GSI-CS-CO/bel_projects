@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Tobias Habermann GSI-Darmstadt
- *  version : 08-Oct-2024
+ *  version : 11-Oct-2024
  *
  *  firmware required for UNILAC chopper control
  *  
@@ -37,7 +37,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define UNICHOP_FW_VERSION      0x000004  // make this consistent with makefile
+#define UNICHOP_FW_VERSION      0x000005  // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -408,19 +408,15 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint16_t strahlweg_mask;                                    // strahlweg mask
   uint16_t strahlweg_reg;                                     // strahlweg register
   uint16_t anforder_mask;                                     // anforder mask
-  uint16_t rpgIqrStart;                                       // RPG IQR start event
-  uint16_t rpgIqrStop;                                        // RPG IQR stop event
-  uint16_t rpgIqlStart;                                       // RPG IQL start event
-  uint16_t rpgIqlStop;                                        // RPG IQL stop event
-  uint16_t rpgHliStart;                                       // RPG HLI start event
-  uint16_t rpgHliStop;                                        // RPG HLI stop event
-  uint16_t rpgHsiStart;                                       // RPG HSI start event
-  uint16_t rpgHsiStop;                                        // RPG HSI stop event
 
   uint16_t milData;                                           // MIL data
   uint16_t milIfb;                                            // MIL device bus slave address
   uint16_t milModAddr;                                        // address of module in MIL slave crate
   uint16_t milModReg;                                         // register of module in MIL slave crate
+
+  uint16_t rpgGatelenHi;                                      // high word of RPG gate length
+  uint16_t rpgGatelenLo;                                      // high word of RPG gate length
+  uint32_t rpgGatelen;                                        // RPG gate length [ns]
 
   int      i;
   uint64_t one_us_ns = 1000;
@@ -465,64 +461,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
           else                            nMilSndErr++;
         } // if status ok      
 
-      } // if not late
-
-      offsDone = getSysTime() - recDeadline;
-      nEvtsRec++;
-
-      break;
-
-    // received timing message containing RPG data
-    case UNICHOP_ECADO_RPG_WRITE:
-      comLatency   = (int32_t)(getSysTime() - recDeadline);
-      recGid       = (uint32_t)((recEvtId >> 48) & 0x00000fff);
-      recEvtNo     = (uint32_t)((recEvtId >> 36) & 0x00000fff);
-      recSid       = (uint32_t)((recEvtId >> 20) & 0x00000fff);
-      if (recGid != GID_LOCAL_ECPU_TO) return COMMON_STATUS_BADSETTING;
-      if (recSid  > 15)                return COMMON_STATUS_OUTOFRANGE;
-
-      if (!flagIsLate) {
-        rpgIqrStart =  recParam        & 0xff;
-        rpgIqrStop  = (recParam >>  8) & 0xff; 
-        rpgIqlStart = (recParam >> 16) & 0xff;
-        rpgIqlStop  = (recParam >> 24) & 0xff;
-        rpgHliStart = (recParam >> 32) & 0xff;
-        rpgHliStop  = (recParam >> 40) & 0xff;
-        rpgHsiStart = (recParam >> 48) & 0xff;
-        rpgHsiStop  = (recParam >> 56) & 0xff; 
-
-        // write to HW
-        status = writeToModuleMil(IFB_ADDR_CU, MOD_RPG_IQR_ADDR, MOD_RPG_XXX_STOPEVT_REG,  rpgIqrStop);
-        if (status == COMMON_STATUS_OK)   nMilSnd++;
-        else                              nMilSndErr++;
-
-        status = writeToModuleMil(IFB_ADDR_CU, MOD_RPG_IQR_ADDR, MOD_RPG_XXX_STARTEVT_REG, rpgIqrStart);
-        if (status == COMMON_STATUS_OK)   nMilSnd++;
-        else                              nMilSndErr++;
-
-        status = writeToModuleMil(IFB_ADDR_CU, MOD_RPG_IQL_ADDR, MOD_RPG_XXX_STOPEVT_REG,  rpgIqlStop);
-        if (status == COMMON_STATUS_OK)   nMilSnd++;
-        else                              nMilSndErr++;
-        
-        status = writeToModuleMil(IFB_ADDR_CU, MOD_RPG_IQL_ADDR, MOD_RPG_XXX_STARTEVT_REG, rpgIqlStart);
-        if (status == COMMON_STATUS_OK)   nMilSnd++;
-        else                              nMilSndErr++;
-
-        status = writeToModuleMil(IFB_ADDR_CU, MOD_RPG_HSI_ADDR, MOD_RPG_XXX_STOPEVT_REG,  rpgHsiStop);
-        if (status == COMMON_STATUS_OK)   nMilSnd++;
-        else                              nMilSndErr++;
-
-        status = writeToModuleMil(IFB_ADDR_CU, MOD_RPG_HSI_ADDR, MOD_RPG_XXX_STARTEVT_REG, rpgHsiStart);
-        if (status == COMMON_STATUS_OK)   nMilSnd++;
-        else                              nMilSndErr++;
-
-        status = writeToModuleMil(IFB_ADDR_CU, MOD_RPG_HLI_ADDR, MOD_RPG_XXX_STOPEVT_REG,  rpgHliStop);
-        if (status == COMMON_STATUS_OK)   nMilSnd++;
-        else                              nMilSndErr++;
-
-        status = writeToModuleMil(IFB_ADDR_CU, MOD_RPG_HLI_ADDR, MOD_RPG_XXX_STARTEVT_REG, rpgHliStart);
-        if (status == COMMON_STATUS_OK)   nMilSnd++;
-        else                              nMilSndErr++;
       } // if not late
 
       offsDone = getSysTime() - recDeadline;
@@ -624,7 +562,43 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       nEvtsRec++;
 
       break;
-  
+
+    // received a timing message marking the end of an ion source pulse
+    case UNICHOP_ECADO_IQSTOP :
+      comLatency   = (int32_t)(getSysTime() - recDeadline);
+      recGid       = (uint32_t)((recEvtId >> 48) & 0x00000fff);
+      recEvtNo     = (uint32_t)((recEvtId >> 36) & 0x00000fff);
+      recSid       = (uint32_t)((recEvtId >> 20) & 0x00000fff);
+
+      if (recSid  > 15)       return COMMON_STATUS_OUTOFRANGE;
+      
+      if (!flagIsLate) {
+        if (recGid == GID_PZU_QR) milModAddr = MOD_RPG_IQR_ADDR;
+        if (recGid == GID_PZU_QL) milModAddr = MOD_RPG_IQL_ADDR;
+
+        status                                 = readFromModuleMil(IFB_ADDR_CU, milModAddr, MOD_LOGIC1_REG_GATELENHI, &rpgGatelenHi);
+        if (status == COMMON_STATUS_OK) status = readFromModuleMil(IFB_ADDR_CU, milModAddr, MOD_LOGIC1_REG_GATELENLO, &rpgGatelenLo);
+        
+        rpgGatelen  = (uint32_t)(rpgGatelenHi & 0x1ff) << 16;
+        rpgGatelen |= (uint32_t)rpgGatelenLo;
+        if ((rpgGatelenHi >> 8) && 0x3) {
+          status     = COMMON_STATUS_OUTOFRANGE;
+          rpgGatelen = 0x0000ffff;
+        } // if rpgGatelen
+
+        // write result to ECA
+        sendEvtId    = fwlib_buildEvtidV1(GID_LOCAL_ECPU_FROM,UNICHOP_ECADO_IQSTOP, 0x0, recSid, 0x0, 0x0);
+        sendParam    = (uint64_t)(rpgGatelen & 0xffffffff);
+        sendParam   |= (uint64_t)(milModAddr) << 32;
+        sendDeadline = getSysTime() + COMMON_AHEADT;
+        fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0x0);
+      } // if flagIsLate
+
+      offsDone = getSysTime() - recDeadline;
+      // nEvtsRec++; don't increase counter - this is just monitoring
+
+      break;
+      
     default :                                                         // flush ECA Queue
       flagIsLate = 0;                                                 // ignore late events
   } // switch ecaAction

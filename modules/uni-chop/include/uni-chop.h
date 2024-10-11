@@ -22,13 +22,21 @@
 #define UNICHOP_ECADO_RPG_WRITE            0xfa2   // writes data to Rahmenpulsgeneratoren;   param 48..63 HSI start..stop, 32..47 HLI start..stop, 16..31 IQL start..stop, 0..15 IQR start..stop
 #define UNICHOP_ECADO_MIL_SWRITE           0xfb0   // standard data write to MIL;             param: 32..39 ifb addr, 24..31 mod addr, 16..23: reg addr, 0..15 data
 #define UNICHOP_ECADO_MIL_SREAD            0xfb1   // standard data read from MIL;            param: 32..39 ifb addr, 24..31 mod addr, 16..23: reg addr, 0..15 reserved
+#define UNICHOP_ECADO_IQSTOP               0x00a   // read RPG ion source;                    param: 16..20 value 1: QR value 2: QL, 0..15 length of RPG length counter [us] value 0: no pulse; value 0xffff invalid; 
+#define UNICHOP_ECADO_HISTOP               0x008   // read RPG HSI/HLI;                       param: 16..20 value 3: HLI value 4: HSI, 0..15 length of RPG length counter [us] value 0: no pulse; value 0xffff invalid; 
+
 
 // commands from the outside
 
 // GIDs
 #define GID_INVALID                          0x0   // invalid GID
+#define GID_PZU_QR                         0x1c0   // UNILAC Timing - Source Right
+#define GID_PZU_QL                         0x1c1   // UNILAC Timing - Source Left
+#define GID_PZU_UN                         0x1c3   // UNILAC Timing - High Charge State Injector (HLI)
+#define GID_PZU_UH                         0x1c4   // UNILAC Timing - High Current Injector (HSI)
 #define GID_LOCAL_ECPU_TO                  0xff0   // internal: group for local timing messages that are sent (from the host) TO the lm32 firmware
 #define GID_LOCAL_ECPU_FROM                0xff1   // internal: group for local timing messages that are sent FROM the lm32 firmware (to the host)
+
 
 // specialities
 // part below provided by Ludwig Hechler and Stefan Rauch
@@ -45,6 +53,9 @@
 #define MOD_LOGIC1_REG_STRAHLWEG_REG        0x60   // logic module 1, register/address for Strahlwegregister
 #define MOD_LOGIC1_REG_STRAHLWEG_MASK       0x62   // logic module 1, register/subaddress for Strahlwegmaske
 #define MOD_LOGIC1_REG_STATUSGLOBAL         0x66   // logic module 1, register/subaddress for global status, contains version number (2024: 0x14)
+#define MOD_LOGIC1_REG_GATELENHI            0x42   // logic module 1, register/subaddress for gate length, hi word, 0..8 : high part, 9: overflow, 10: active
+#define MOD_LOGIC1_REG_GATELENLO            0x40   // logic module 1, register/subaddress for gate length, lo word, 0..15: low  part
+
 
 // modulebus module Logic2
 #define MOD_LOGIC2_ADDR                     0x08   // logic module 2 (Strahlwege et al),  module bus address, FG 450.410/411
@@ -56,8 +67,8 @@
 #define MOD_RPG_IQL_ADDR                    0x02   // Rahmenpulsgenerator IQL, module bus address, FG 450.681
 #define MOD_RPG_HLI_ADDR                    0x03   // Rahmenpulsgenerator HLI, module bus address, FG 450.681
 #define MOD_RPG_HSI_ADDR                    0x04   // Rahmenpulsgenerator HSI, module bus address, FG 450.681
-#define MOD_RPG_XXX_STARTEVT_REG            0x12   // Rahmenpulsgeneratoren, register/subaddress for start event
-#define MOD_RPG_XXX_STOPEVT_REG             0x14   // Rahmenpulsgeneratoren, register/subaddress for stop event
+//#define MOD_RPG_XXX_STARTEVT_REG            0x12   // Rahmenpulsgeneratoren, register/subaddress for start event
+//#define MOD_RPG_XXX_STOPEVT_REG             0x14   // Rahmenpulsgeneratoren, register/subaddress for stop event
 
 // interrupts
 //#define UNICHOP_GW_MSI_LATE_EVENT         0x1

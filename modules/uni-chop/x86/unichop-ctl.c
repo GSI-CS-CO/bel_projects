@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Tobias Habermann GSI-Darmstadt
- *  version : 08-Oct-2024
+ *  version : 11-Oct-2024
  *
  * Command-line interface for uni-chop
  *
@@ -98,7 +98,6 @@ static void help(void) {
   fprintf(stderr, "EvtNo:\n"                                                                           );
   fprintf(stderr, "      0xfa0: host -> lm32: write strahlweg and anforder data\n"                     );
   fprintf(stderr, "      0xfa1: host -> lm32: read strahlweg and anforder data\n"                      );
-  fprintf(stderr, "      0xfa2: host -> lm32: write RPG data (experimental, write only)\n"             );
   fprintf(stderr, "      0xfb0: host -> lm32: standard MIL write\n"                                    );
   fprintf(stderr, "      0xfb1: host -> lm32: standard MIL read\n"                                     );
   fprintf(stderr, "Examples: write/read host<->lm32<->MIL<->chopper unit:\n"                           );
@@ -108,15 +107,6 @@ static void help(void) {
   fprintf(stderr, "                                                 ^^^^         : anforder_maske\n"    );
   fprintf(stderr, "saft-ctl tr0 -p inject 0x1ff0fa1000000000 0x0000000000000000 0\n"                   );
   fprintf(stderr, "      read strahlweg and anforder data from HW\n"                                   );
-  fprintf(stderr, "saft-ctl tr0 -p inject 0x1ff0fa2000000000 0x0806080608020802 0\n"                   );
-  fprintf(stderr, "      write RPG data to HW                                ^^ : IRQ start event\n"   );
-  fprintf(stderr, "                                                        ^^   : IRQ stop event\n"    );
-  fprintf(stderr, "                                                      ^^     : IRL start event\n"   );
-  fprintf(stderr, "                                                    ^^       : IQL stop event\n"    );
-  fprintf(stderr, "                                                  ^^         : HLI start event\n"   );
-  fprintf(stderr, "                                                ^^           : HLI stop event\n"    );
-  fprintf(stderr, "                                              ^^             : HSI start event\n"   );
-  fprintf(stderr, "                                            ^^               : HSI stop event\n"    );
   fprintf(stderr, "\n"); 
   fprintf(stderr, "Example: receive strahlweg data read from chopper unit:\n"                          );
   fprintf(stderr, "saft-ctl tr0 -x snoop 0x1ff1fa0000000000 0xffffff0000000000 0\n"                    );
@@ -151,7 +141,7 @@ static void help(void) {
   fprintf(stderr, "                                                      ^^    : register\n"           );
   fprintf(stderr, "                                                    ^^      : module addr, 0: IFA\n");
   fprintf(stderr, "                                                  ^^        : MIL ifb addr\n"       );
-  fprintf(stderr, "saft-ctl tr0 -x snoop 0x1ff1fb0000000000 0xffffff0000000000 0\n"                    );
+  fprintf(stderr, "saft-ctl tr0 -x snoop 0x1ff1fb1000000000 0xfffffff000000000 0\n"                    );
   fprintf(stderr, "tDeadline: 0x17f6e324b8b808c0 EvtID: 0x1ff1fb1000000000 Param: 0x000101600089cafe\n");
   fprintf(stderr, "        GID data received from lm32:    ^^^\n"                                      );
   fprintf(stderr, "        EvtNo MIL read             :       ^^^\n"                                   );
@@ -168,7 +158,7 @@ static void help(void) {
   fprintf(stderr, "                                                  ^^         : MIL ifb addr\n"      );
   fprintf(stderr, "                                                    ^^       : module addr\n"       );
   fprintf(stderr, "                                                      ^^     : submodule addr\n"    );
-  fprintf(stderr, "saft-ctl tr0 -x snoop 0x1ff1fb0000000000 0xffffff0000000000 0\n"                    );
+  fprintf(stderr, "saft-ctl tr0 -x snoop 0x1ff1fbf000000000 0xfffffff000000000 0\n"                    );
   fprintf(stderr, "tDeadline: 0x17f6e3999a40d0d8 EvtID: 0x1ff1fb1000000000 Param: 0x0001016009660014\n");
   fprintf(stderr, "                                                      version:               ^^^^\n");
   fprintf(stderr, "\n");
