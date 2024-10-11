@@ -61,11 +61,11 @@ saft-ecpu-ctl $SDGW -c 0x1ff0fb0000000000 0xfffffff000000000 0 0xfb0 -d
 # UNICHOP_ECADO_MIL_SREAD
 saft-ecpu-ctl $SDGW -c 0x1ff0fb1000000000 0xfffffff000000000 0 0xfb1 -d
 # UNICHOP_ECADO_IQSTOP (QR, QL)
-saft-ecpu-ctl $SDGW -c 0x11c000a000000000 0xfffffff000000000 0 0x00a -d
-saft-ecpu-ctl $SDGW -c 0x11c100a000000000 0xfffffff000000000 0 0x00a -d
+#saft-ecpu-ctl $SDGW -c 0x11c000a000000000 0xfffffff000000000 0 0x00a -d
+#saft-ecpu-ctl $SDGW -c 0x11c100a000000000 0xfffffff000000000 0 0x00a -d
 #UNICHOP_ECADO_HISTOP (HLI, HSI)
-saft-ecpu-ctl $SDGW -c 0x11c3008000000000 0xfffffff000000000 0 0x008 -d
-saft-ecpu-ctl $SDGW -c 0x11c4008000000000 0xfffffff000000000 0 0x008 -d
+#saft-ecpu-ctl $SDGW -c 0x11c3008000000000 0xfffffff000000000 0 0x008 -d
+#saft-ecpu-ctl $SDGW -c 0x11c4008000000000 0xfffffff000000000 0 0x008 -d
 
 ###########################################
 # init RPGs (Rahmenpulsgeneratoren)

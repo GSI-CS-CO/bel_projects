@@ -158,7 +158,7 @@ static void help(void) {
   fprintf(stderr, "                                                  ^^         : MIL ifb addr\n"      );
   fprintf(stderr, "                                                    ^^       : module addr\n"       );
   fprintf(stderr, "                                                      ^^     : submodule addr\n"    );
-  fprintf(stderr, "saft-ctl tr0 -x snoop 0x1ff1fbf000000000 0xfffffff000000000 0\n"                    );
+  fprintf(stderr, "saft-ctl tr0 -x snoop 0x1ff1fb1000000000 0xfffffff000000000 0\n"                    );
   fprintf(stderr, "tDeadline: 0x17f6e3999a40d0d8 EvtID: 0x1ff1fb1000000000 Param: 0x0001016009660014\n");
   fprintf(stderr, "                                                      version:               ^^^^\n");
   fprintf(stderr, "\n");
