@@ -54,23 +54,24 @@ unichop-ctl $TRGW startop
 # lm32 listens to timing messages
 # UNICHOP_ECADO_STRAHLWEG_WRITE, requires a negative offset that is 2x the value of UNICHOP_MILMODULE_ACCESST
 saft-ecpu-ctl $SDGW -c 0x1ff0fa0000000000 0xfffffff000000000 200000 0xfa0 -g -d
-# UNICHOP_ECADO_RPGG_WRITE, requires a negative offset that is 2x the value of UNICHOP_MILMODULE_ACCESST
-saft-ecpu-ctl $SDGW -c 0x1ff0fa2000000000 0xfffffff000000000 200000 0xfa2 -g -d
 # UNICHOP_ECADO_STRAHLWEG_READ
 saft-ecpu-ctl $SDGW -c 0x1ff0fa1000000000 0xfffffff000000000 0 0xfa1 -d
-# UNICHOP_ECADO_RPG_READ
-saft-ecpu-ctl $SDGW -c 0x1ff0fa3000000000 0xfffffff000000000 0 0xfa3 -d
 # UNICHOP_ECADO_MIL_SWRITE
 saft-ecpu-ctl $SDGW -c 0x1ff0fb0000000000 0xfffffff000000000 0 0xfb0 -d
 # UNICHOP_ECADO_MIL_SREAD
 saft-ecpu-ctl $SDGW -c 0x1ff0fb1000000000 0xfffffff000000000 0 0xfb1 -d
+# UNICHOP_ECADO_IQSTOP (QR, QL)
+saft-ecpu-ctl $SDGW -c 0x11c000a000000000 0xfffffff000000000 0 0x00a -d
+saft-ecpu-ctl $SDGW -c 0x11c100a000000000 0xfffffff000000000 0 0x00a -d
+#UNICHOP_ECADO_HISTOP (HLI, HSI)
+saft-ecpu-ctl $SDGW -c 0x11c3008000000000 0xfffffff000000000 0 0x008 -d
+saft-ecpu-ctl $SDGW -c 0x11c4008000000000 0xfffffff000000000 0 0x008 -d
 
 ###########################################
 # init RPGs (Rahmenpulsgeneratoren)
 ###########################################
 sleep 1
 saft-dm tr0 -p unichop-int-saftdm.txt
-
 
 ###########################################
 # reset diagnostics
