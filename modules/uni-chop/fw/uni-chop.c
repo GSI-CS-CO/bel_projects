@@ -587,7 +587,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         } // if rpgGatelen
 
         // write result to ECA
-        sendEvtId    = fwlib_buildEvtidV1(GID_LOCAL_ECPU_FROM,UNICHOP_ECADO_IQSTOP, 0x0, recSid, 0x0, 0x0);
+        sendEvtId    = fwlib_buildEvtidV1(GID_LOCAL_ECPU_FROM, UNICHOP_ECADO_IQSTOP, 0x0, recSid, 0x0, 0x0);
         sendParam    = (uint64_t)(rpgGatelen & 0xffffffff);
         sendParam   |= (uint64_t)(milModAddr) << 32;
         sendDeadline = getSysTime() + COMMON_AHEADT;
