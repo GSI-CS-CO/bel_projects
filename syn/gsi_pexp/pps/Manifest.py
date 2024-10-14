@@ -13,7 +13,7 @@ quartus_preflow = "pexp_pps.tcl"
 
 modules = {
   "local" : [
-    "../../../top/gsi_pps/sdr",
+    "../../../top/gsi_pexp/pps",
   ]
 }
 
