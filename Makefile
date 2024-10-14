@@ -40,6 +40,7 @@ CHECK_PMC              = ./syn/gsi_pmc/control/pci_pmc
 CHECK_MICROTCA         = ./syn/gsi_microtca/control/microtca_control
 CHECK_PEXP             = ./syn/gsi_pexp/control/pexp_control
 CHECK_PEXP_SDR         = ./syn/gsi_pexp/sdr/pexp_control_sdr
+CHECK_PEXP_PPS         = ./syn/gsi_pexp/pps/pexp_pps
 CHECK_SCU4             = ./syn/gsi_scu/control4/scu_control
 CHECK_FTM4             = ./syn/gsi_scu/ftm4/ftm4
 CHECK_FTM4DP           = ./syn/gsi_scu/ftm4dp/ftm4dp
@@ -62,6 +63,7 @@ PATH_PMC               = syn/gsi_pmc/control
 PATH_MICROTCA          = syn/gsi_microtca/control
 PATH_PEXP              = syn/gsi_pexp/control
 PATH_PEXP_SDR          = syn/gsi_pexp/sdr
+PATH_PEXP_PPS          = syn/gsi_pexp/pps
 PATH_SCU4              = syn/gsi_scu/control4
 PATH_FTM4              = syn/gsi_scu/ftm4
 PATH_FTM4DP            = syn/gsi_scu/ftm4dp
@@ -534,6 +536,18 @@ pexp-sdr-sort:
 
 pexp-sdr-check:
 	$(call check_timing, $(CHECK_PEXP_SDR))
+
+pexp-pps:	firmware
+	$(MAKE) -C $(PATH_PEXP_PPS) all
+
+pexp-pps-clean::
+	$(MAKE) -C $(PATH_PEXP_PPS) clean
+
+pexp-pps-sort:
+	$(call sort_file, $(CHECK_PEXP_PPS))
+
+pexp-pps-check:
+	$(call check_timing, $(CHECK_PEXP_PPS))
 
 avsoc:		firmware
 	$(MAKE) -C syn/gsi_avsoc/av_rocket_board all
