@@ -146,9 +146,9 @@ entity pexp_pps is
     pe_waken        : out std_logic
 
     );
-end pexp_control;
+end pexp_pps;
 
-architecture rtl of pexp_control is
+architecture rtl of pexp_pps is
 
   constant c_HWT_EN_BIT : natural := 8;
 
@@ -201,7 +201,7 @@ architecture rtl of pexp_control is
 
 
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 23) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 24) :=
   (
   -- Name[11 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
     ("LED1       ", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL  ), -- user LEDs
@@ -227,12 +227,13 @@ architecture rtl of pexp_control is
     ("IO2        ", IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
     ("IO3        ", IO_NONE,         false,   false,  2,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
     ("IO4        ", IO_NONE,         false,   false,  3,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
-    ("IO5        ", IO_NONE,         false,   false,  4,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL)
+    ("IO5        ", IO_NONE,         false,   false,  4,     IO_INPUT,    IO_LVDS,  true,         false,       IO_LVTTL),
+    ("IO5_PPS    ", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, true,         true,        IO_LVTTL)
   );
 
 
   constant c_family     : string := "Arria V";
-  constant c_project    : string := "pexp_control";
+  constant c_project    : string := "pexp_pps";
   constant c_cores      : natural:= 1;
   constant c_initf_name : string := c_project & "_stub.mif";
   constant c_profile_name : string := "medium_icache_debug";
@@ -263,37 +264,37 @@ architecture rtl of pexp_control is
 
   signal core_debug_out       : std_logic_vector(15 downto 0);
 
-
+  signal s_real_wr_pps   : std_logic;
 
 begin
 
   main : monster
     generic map(
-      g_family            => c_family,
-      g_project           => c_project,
-      g_flash_bits        => 25,
-      g_lvds_inout        => 5,  -- 5 LEMOs at front panel
-      g_lvds_in           => 0,
-      g_lvds_out          => 0,
-      g_gpio_out          => 9,  -- 8 on-boards LEDs, internal HW test enable
-      g_gpio_in           => 10, -- FPGA button and HEX switch (1+4), CPLD button and HEX switch (1+4)
-      g_fixed             => 0,
-      g_lvds_invert       => false,
-      g_en_usb            => true,
-      g_en_lcd            => true,
-      g_en_user_ow        => false,
-      g_en_tempsens       => true,
-      g_en_pcie           => true,
-      g_delay_diagnostics => true,
-      g_en_timer          => true,
-      g_en_eca_tap        => true,
-      g_en_asmi           => false,
-      g_en_enc_err_counter=> false,
-      g_io_table          => io_mapping_table,
-      g_lm32_cores        => c_cores,
-      g_lm32_ramsizes     => c_lm32_ramsizes/4,
-      g_lm32_init_files   => f_string_list_repeat(c_initf_name, c_cores),
-      g_lm32_profiles     => f_string_list_repeat(c_profile_name, c_cores)
+      g_family             => c_family,
+      g_project            => c_project,
+      g_flash_bits         => 25,
+      g_lvds_inout         => 4,  -- 5 LEMOs at front panel
+      g_lvds_in            => 1,
+      g_lvds_out           => 0,
+      g_gpio_out           => 9,  -- 8 on-boards LEDs, internal HW test enable
+      g_gpio_in            => 10, -- FPGA button and HEX switch (1+4), CPLD button and HEX switch (1+4)
+      g_fixed              => 1,
+      g_lvds_invert        => false,
+      g_en_usb             => true,
+      g_en_lcd             => true,
+      g_en_user_ow         => false,
+      g_en_tempsens        => true,
+      g_en_pcie            => true,
+      g_delay_diagnostics  => true,
+      g_en_timer           => true,
+      g_en_eca_tap         => true,
+      g_en_asmi            => false,
+      g_en_enc_err_counter => true,
+      g_io_table           => io_mapping_table,
+      g_lm32_cores         => c_cores,
+      g_lm32_ramsizes      => c_lm32_ramsizes/4,
+      g_lm32_init_files    => f_string_list_repeat(c_initf_name, c_cores),
+      g_lm32_profiles      => f_string_list_repeat(c_profile_name, c_cores)
     )
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
@@ -313,6 +314,7 @@ begin
       wr_sfp_tx_o            => sfp_txp_o,
       wr_sfp_rx_i            => sfp_rxp_i,
       wbar_phy_dis_o         => sfp_tx_dis_o,
+      wr_pps_out_o           => s_real_wr_pps,
 
       wr_dac_sclk_o          => wr_dac_sclk_o,
       wr_dac_din_o           => wr_dac_din_o,
@@ -329,10 +331,10 @@ begin
       lvds_n_i               => s_lvds_n_i,
       lvds_i_led_o           => s_lvds_i_led,
 
-      lvds_p_o               => s_lvds_p_o,
-      lvds_n_o               => s_lvds_n_o,
-      lvds_o_led_o           => s_lvds_o_led,
-      lvds_oen_o             => s_lvds_oe,
+      lvds_p_o               => s_lvds_p_o(3 downto 0),
+      lvds_n_o               => s_lvds_n_o(3 downto 0),
+      lvds_o_led_o           => s_lvds_o_led(3 downto 0),
+      lvds_oen_o             => s_lvds_oe(3 downto 0),
       lvds_term_o            => s_lvds_term_en,
 
       led_link_up_o          => s_led_link_up,
@@ -375,6 +377,18 @@ begin
         s_blink_counter <= s_blink_counter + 1;
     end if;
   end process;
+
+  buffer_pps : altera_lvds_obuf
+    generic map(
+      g_family  => c_family)
+    port map(
+      datain    => s_real_wr_pps,
+      dataout   => s_lvds_p_o(4),
+      dataout_b => s_lvds_n_o(4)
+    );
+
+  s_lvds_o_led(4)   <= s_led_pps;
+  s_lvds_oe(4)      <= '1';
 
   -- hex switches as gpio inputs
   s_gpio_in(3 downto 0) <= not hswf_i; -- FPGA HEX switch

@@ -1,6 +1,7 @@
 
 
 
+
 set_global_assignment -name ACTIVE_SERIAL_CLOCK FREQ_100MHZ
 set_global_assignment -name ADV_NETLIST_OPT_SYNTH_WYSIWYG_REMAP OFF
 set_global_assignment -name AHDL_FILE ../../../modules/modulbus/i2c.tdf
@@ -615,9 +616,13 @@ set_global_assignment -name VHDL_FILE ../../../modules/daq/daq.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/daq/Zeitbasis_daq.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/ddr3/ddr3_wrapper_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/ddr3/ddr3_wrapper.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/diob/del_quench_detection.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/diob/hw_interlock.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/diob/QuD_masken_reg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/diob/qud_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/diob/quench_detection.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/diob/spill_abort.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/diob/TM_quench_detection.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/dm_diag/dm_diag_auto_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/dm_diag/dm_diag_auto.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/dm_diag/dm_diag.vhd -library work
@@ -625,6 +630,8 @@ set_global_assignment -name VHDL_FILE ../../../modules/eca_tap/eca_tap_auto_pkg.
 set_global_assignment -name VHDL_FILE ../../../modules/eca_tap/eca_tap_auto.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/eca_tap/eca_tap_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/eca_tap/eca_tap.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/enc_err_counter/enc_err_counter_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/enc_err_counter/enc_err_counter.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/flash_loader/flash_loader_v01.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_lm32_cluster.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_lm32.vhd -library work
