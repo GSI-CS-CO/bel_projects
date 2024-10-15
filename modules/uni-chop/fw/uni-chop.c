@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Tobias Habermann GSI-Darmstadt
- *  version : 11-Oct-2024
+ *  version : 15-Oct-2024
  *
  *  firmware required for UNILAC chopper control
  *  
@@ -414,9 +414,10 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint16_t milModAddr;                                        // address of module in MIL slave crate
   uint16_t milModReg;                                         // register of module in MIL slave crate
 
-  uint16_t rpgGatelenHi;                                      // high word of RPG gate length
-  uint16_t rpgGatelenLo;                                      // high word of RPG gate length
-  uint32_t rpgGatelen;                                        // RPG gate length [ns]
+  uint16_t tChopRiseAct;                                      // time of rising edge of chopper readback pulse
+  uint16_t tChopFallAct;                                      // time of falling edge of chopper readback pulse
+  uint16_t tChopFallCtrl;                                     // time of falling edge of chopper control pulse
+  uint16_t lenChopAct;                                        // length of chopper readback pulse
 
   int      i;
   uint64_t one_us_ns = 1000;
@@ -563,7 +564,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
       break;
 
-    // received a timing message marking the end of an ion source pulse
+     // received a timing message marking the end of an ion source pulse
     case UNICHOP_ECADO_IQSTOP :
       comLatency   = (int32_t)(getSysTime() - recDeadline);
       recGid       = (uint32_t)((recEvtId >> 48) & 0x00000fff);
@@ -571,7 +572,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       recSid       = (uint32_t)((recEvtId >> 20) & 0x00000fff);
 
       if (recSid  > 15)       return COMMON_STATUS_OUTOFRANGE;
-      
+      /* schrott 
       if (!flagIsLate) {
         if (recGid == GID_PZU_QR) milModAddr = MOD_RPG_IQR_ADDR;
         if (recGid == GID_PZU_QL) milModAddr = MOD_RPG_IQL_ADDR;
@@ -590,6 +591,50 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         sendEvtId    = fwlib_buildEvtidV1(GID_LOCAL_ECPU_FROM, UNICHOP_ECADO_IQSTOP, 0x0, recSid, 0x0, 0x0);
         sendParam    = (uint64_t)(rpgGatelen & 0xffffffff);
         sendParam   |= (uint64_t)(milModAddr) << 32;
+        sendDeadline = getSysTime() + COMMON_AHEADT;
+        fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0x0);
+      } // if flagIsLate
+      */
+
+      offsDone = getSysTime() - recDeadline;
+      // nEvtsRec++; don't increase counter - this is just monitoring
+
+      break;
+
+    // received a timing message marking the end of an ion source pulse
+    case UNICHOP_ECADO_HISTOP :
+      comLatency   = (int32_t)(getSysTime() - recDeadline);
+      recGid       = (uint32_t)((recEvtId >> 48) & 0x00000fff);
+      recEvtNo     = (uint32_t)((recEvtId >> 36) & 0x00000fff);
+      recSid       = (uint32_t)((recEvtId >> 20) & 0x00000fff);
+
+      if (recSid  > 15)       return COMMON_STATUS_OUTOFRANGE;
+      
+      if (!flagIsLate) {
+        if (recGid == GID_PZU_UN) milModAddr = MOD_LOGIC1_ADDR;
+        if (recGid == GID_PZU_UH) milModAddr = MOD_LOGIC1_ADDR;
+
+        status                                 = readFromModuleMil(IFB_ADDR_CU, milModAddr, MOD_LOGIC1_REG_ACT_POSEDGE_RD,  &tChopRiseAct);
+        if (status == COMMON_STATUS_OK) status = readFromModuleMil(IFB_ADDR_CU, milModAddr, MOD_LOGIC1_REG_ACT_NEGEDGE_RD,  &tChopFallAct);
+        if (status == COMMON_STATUS_OK) status = readFromModuleMil(IFB_ADDR_CU, milModAddr, MOD_LOGIC1_REG_CTRL_NEGEDGE_RD, &tChopFallCtrl);
+
+        /* later: error handling
+        rpgGatelen  = (uint32_t)(rpgGatelenHi & 0x1ff) << 16;
+        rpgGatelen |= (uint32_t)rpgGatelenLo;
+        if ((rpgGatelenHi >> 8) && 0x3) {
+          status     = COMMON_STATUS_OUTOFRANGE;
+          rpgGatelen = 0x0000ffff;
+        } // if rpgGatelen
+        */
+
+        lenChopAct = tChopFallAct - tChopRiseAct;
+
+        // write result to ECA
+        sendEvtId    = fwlib_buildEvtidV1(GID_LOCAL_ECPU_FROM, UNICHOP_ECADO_HISTOP, 0x0, recSid, 0x0, 0x0);
+        sendParam    = (uint64_t)(tChopFallCtrl) << 48;
+        sendParam   |= (uint64_t)(tChopRiseAct)  << 32;
+        sendParam   |= (uint64_t)(tChopFallAct)  << 16;
+        sendParam   |= (uint64_t)(lenChopAct); 
         sendDeadline = getSysTime() + COMMON_AHEADT;
         fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0x0);
       } // if flagIsLate
