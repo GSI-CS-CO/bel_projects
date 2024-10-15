@@ -124,8 +124,6 @@ entity pexp_pps is
     -- enable clock input from front panel LEMO
     lvt_in_clk_en_n_o   : out std_logic;
 
-
-
     -----------------------------------------------------------------------
     -----------------------------------------------------------------------
     -- form factor specific pins/interfaces
@@ -199,8 +197,6 @@ architecture rtl of pexp_pps is
   signal s_log_out  : std_logic_vector(16 downto 0);
   signal s_log_in   : std_logic_vector(16 downto 0);
 
-
-
   constant io_mapping_table : t_io_mapping_table_arg_array(0 to 24) :=
   (
   -- Name[11 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
@@ -227,15 +223,15 @@ architecture rtl of pexp_pps is
     ("IO2        ", IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
     ("IO3        ", IO_NONE,         false,   false,  2,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
     ("IO4        ", IO_NONE,         false,   false,  3,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
-    ("IO5        ", IO_NONE,         false,   false,  4,     IO_INPUT,    IO_LVDS,  true,         false,       IO_LVTTL),
+    ("IO5        ", IO_NONE,         false,   false,  4,     IO_INPUT,    IO_LVDS,  false,        true,        IO_LVTTL),
     ("IO5_PPS    ", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, true,         true,        IO_LVTTL)
   );
 
 
-  constant c_family     : string := "Arria V";
-  constant c_project    : string := "pexp_pps";
-  constant c_cores      : natural:= 1;
-  constant c_initf_name : string := c_project & "_stub.mif";
+  constant c_family       : string := "Arria V";
+  constant c_project      : string := "pexp_pps";
+  constant c_cores        : natural:= 1;
+  constant c_initf_name   : string := c_project & "_stub.mif";
   constant c_profile_name : string := "medium_icache_debug";
 
   -- projectname is standard to ensure a stub mif that prevents unwanted scanning of the bus
