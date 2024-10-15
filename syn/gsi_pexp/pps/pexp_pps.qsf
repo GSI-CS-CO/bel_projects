@@ -1,7 +1,3 @@
-
-
-
-
 set_global_assignment -name ACTIVE_SERIAL_CLOCK FREQ_100MHZ
 set_global_assignment -name ADV_NETLIST_OPT_SYNTH_WYSIWYG_REMAP OFF
 set_global_assignment -name AHDL_FILE ../../../modules/modulbus/i2c.tdf
@@ -144,7 +140,7 @@ set_global_assignment -name QIP_FILE ../../../modules/pll/arria5/sys_pll5.qip
 set_global_assignment -name QSYS_FILE ../../../modules/temp_sens/temp_sens.qsys
 set_global_assignment -name RELEASE_CLEARS_BEFORE_TRI_STATES ON
 set_global_assignment -name SDC_FILE ../../../top/common/arria5.sdc
-set_global_assignment -name SEED 37
+set_global_assignment -name SEED 250
 set_global_assignment -name SMART_RECOMPILE ON
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
 set_global_assignment -name STRATIXII_CONFIGURATION_DEVICE EPCQ256
