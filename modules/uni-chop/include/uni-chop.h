@@ -53,9 +53,9 @@
 #define MOD_LOGIC1_REG_STRAHLWEG_REG        0x60   // logic module 1, register/address for Strahlwegregister
 #define MOD_LOGIC1_REG_STRAHLWEG_MASK       0x62   // logic module 1, register/subaddress for Strahlwegmaske
 #define MOD_LOGIC1_REG_STATUSGLOBAL         0x66   // logic module 1, register/subaddress for global status, contains version number (2024: 0x14)
-#define MOD_LOGIC1_REG_GATELENHI            0x42   // logic module 1, register/subaddress for gate length, hi word, 0..8 : high part, 9: overflow, 10: active
-#define MOD_LOGIC1_REG_GATELENLO            0x40   // logic module 1, register/subaddress for gate length, lo word, 0..15: low  part
-
+#define MOD_LOGIC1_REG_ACT_POSEDGE_RD       0x6c   // logic module 1, register/subaddress for time of rising edge of chopper readback pulse
+#define MOD_LOGIC1_REG_ACT_NEGEDGE_RD       0x70   // logic module 1, register/subaddress for time of falling edge of chopper readback pulse
+#define MOD_LOGIC1_REG_CTRL_NEGEDGE_RD      0x6e   // logic module 1, register/subaddress for time of falling edge of chopper control pulse
 
 // modulebus module Logic2
 #define MOD_LOGIC2_ADDR                     0x08   // logic module 2 (Strahlwege et al),  module bus address, FG 450.410/411
