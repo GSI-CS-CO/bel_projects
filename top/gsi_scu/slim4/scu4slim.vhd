@@ -146,9 +146,9 @@ entity scu4slim is
     -----------------------------------------------------------------------
     -- SPI Flash User Mode
     -----------------------------------------------------------------------
-    UM_AS_D           : inout std_logic_vector(3 downto 0) := (others => 'Z');
-    UM_nCSO           : out   std_logic := 'Z';
-    UM_DCLK           : out   std_logic := 'Z';
+    --UM_AS_D           : inout std_logic_vector(3 downto 0) := (others => 'Z');
+    --UM_nCSO           : out   std_logic := 'Z';
+    --UM_DCLK           : out   std_logic := 'Z';
 
     -----------------------------------------------------------------------
     -- SFP
