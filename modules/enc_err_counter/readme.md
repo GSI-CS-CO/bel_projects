@@ -1,5 +1,6 @@
 # PHY Encoder Error Counter
 
+[!IMPORTANT]
 This module counts the pulses coming from the PHY enc_err output and transfers them to the system clock domain. There they can be read via Wishbone.
 
 | Address | Meaning |
@@ -19,7 +20,7 @@ To reset a counter without a power cycle you can write a one into the counter ad
 eb-write <proto/host/port> 0xXXXXXX00/4 0x00000001
 ```
 
-The reset is a toggle. The counter won't rise as long as it is set. So the reset reigster has to be set to 0 again by:
+The reset is a toggle. The counter won't rise as long as it is set. So the reset register has to be set to 0 again by:
 
 ```
 eb-write <proto/host/port> 0xXXXXXX00/4 0x00000000

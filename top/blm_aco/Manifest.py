@@ -23,7 +23,8 @@ files = [
    "BLM_watchdog_v1.0.vhd",
    "BLM_gate_timing_seq_v1.2.vhd",
    "up_down_counter.vhd",
-   "Beam_Loss_check_v1.2.vhd",
+   # working, but without ev_ctrl "Beam_Loss_check_v1.2.vhd",
+    "Beam_Loss_check_v2.vhd",
    "front_board_id_v0.vhd",
    "BLM_counter_pool_el.vhd",
    "BLM_out_el_m_v1.0.vhd",
@@ -35,7 +36,8 @@ files = [
    "BLM_ena_in_mux.vhd",
    "blm_24_9_9_9pll.vhd",
    "deglitcher.v",
-   "BLM_cnt_pulse_former.vhd"
+   "BLM_cnt_pulse_former.vhd",
+   "event_ctrl_el.vhd"
 ]
 
 modules = {

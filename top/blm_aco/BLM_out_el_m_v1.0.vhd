@@ -24,7 +24,7 @@ port (
   gate_in          : in std_logic_vector(11 downto 0); -- to be sent to the status registers
   gate_error       : in std_logic_vector(11 downto 0); -- to be sent to the status registers
   gate_out        : in std_logic_vector (11 downto 0); --gate error
-  counter_reg: in t_BLM_counter_Array;
+ -- counter_reg: in t_BLM_counter_Array;
   gate_state: in std_logic_vector(47 downto 0);
   led_id_state : in std_logic_vector(3 downto 0);
   BLM_Output      : out std_logic_vector(5 downto 0);
@@ -131,41 +131,7 @@ begin
 end  process;
 
       
-----------------------------------------------------------------------------------------
-out_counter_buffer_proc: process (clk, nRST)
-begin
-    if not nRST='1' then 
-        for i in 0 to 127 loop
-            up_down_counter_val(i) <= (others =>'0');
-        end loop;
-         
-           out_cnt_wr <='0';
-  
-        elsif (clk'EVENT AND clk= '1') then 
-           
-                out_cnt_wr<=  BLM_out_sel_reg(126)(15);
-      
-
-               
-                if out_cnt_wr='1' then  
-
-                for i in 0 to 127 loop
-                    up_down_counter_val(i) <= counter_reg(i);
-            
-                    end loop;
-                end if;
-    
-        end if;        
-end process;
-
-    status_reg_counter_value_process: process (up_down_counter_val,  BLM_out_sel_reg(121))
-        begin
-
-            read_counters <= to_integer(unsigned(BLM_out_sel_Reg(126)(6 downto 0)));
-            cnt_readback <= up_down_counter_val(read_counters);
-      
-
-        end process;
+------------------------------------------------------------------------------------
     --------------------------------------------------------------------------------------------------
      -----                         BLM_STATUS_REGISTERS               
      --------------------------------------------------------------------------------------------------
@@ -181,8 +147,8 @@ end process;
     BLM_status_reg(18) <= wd_output(31 downto 16);
     BLM_status_reg(19) <= wd_output(47 downto 32);
     BLM_status_reg(20) <= "0000000000" & wd_output(53 downto 48);
-    BLM_status_reg(21) <= cnt_readback(15 downto 0);
-    BLM_status_reg(22) <= cnt_readback(29) & cnt_readback(29) & cnt_readback(29 downto 16);
+    BLM_status_reg(21) <=(others =>'0');
+    BLM_status_reg(22) <=(others =>'0');
     BLM_status_reg(23) <= "0000" & gate_input;
     BLM_status_reg(24) <= "0000" & gate_output;
     BLM_status_reg(25) <= "0000000000" & BLM_out_signal; 
