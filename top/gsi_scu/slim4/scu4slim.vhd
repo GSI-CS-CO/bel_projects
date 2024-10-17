@@ -75,6 +75,7 @@ entity scu4slim is
     ADR_TO_SCUB       : out   std_logic;
     nADR_EN           : out   std_logic;
     A_OneWire         : inout std_logic;
+    A_nRnW            : out   std_logic;
 
     -----------------------------------------------------------------------
     -- Misc.
@@ -205,6 +206,8 @@ architecture rtl of scu4slim is
   signal s_psram_wen        : std_logic;
   signal s_psram_ubn        : std_logic;
   signal s_psram_lbn        : std_logic;
+  
+  signal s_RnW              : std_logic;
 
   signal s_psram_sel        : std_logic_vector(3 downto 0);
 
@@ -308,7 +311,7 @@ begin
       scubus_a_d              => A_D,
       scubus_nsel_data_drv    => nSel_Ext_Data_DRV,
       scubus_a_nds            => A_nDS,
-      scubus_a_rnw            => A_RnW,
+      scubus_a_rnw            => s_RnW,
       scubus_a_ndtack         => A_nDtack,
       scubus_a_nsrq           => A_nSRQ,
       scubus_a_nsel           => A_nSEL,
@@ -416,6 +419,10 @@ end generate;
   -- Resets
   A_nReset      <= rstn_ref;
   nFPGA_Res_Out <= rstn_ref;
+
+  -- dynamic scubus signals
+  A_RnW  <= s_RnW;
+  A_nRnW <= not s_RnW;
 
   -- fixed scubus signals
   ADR_TO_SCUB <= '1';
