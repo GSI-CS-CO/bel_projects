@@ -1,7 +1,7 @@
 # PHY Encoder Error Counter
 
-[!IMPORTANT]
-This module counts the pulses coming from the PHY enc_err output and transfers them to the system clock domain. There they can be read via Wishbone.
+> [!IMPORTANT]
+> This module counts the pulses coming from the PHY enc_err output and transfers them to the system clock domain. There they can be read via Wishbone.
 
 | Address | Meaning |
 | ------- | ------- |
