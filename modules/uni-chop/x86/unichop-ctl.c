@@ -179,11 +179,12 @@ static void help(void) {
   fprintf(stderr, "\n");
   fprintf(stderr, "Example: actual chopper readback data for HSI\n"                                    );
   fprintf(stderr, "saft-ctl tr0 -x snoop 0x1ff1fc3000000000 0xfffffff000000000 0\n"                    );
-  fprintf(stderr, "tDeadline: 0x17ff7f30c753c528 EvtID: 0x1ff1008000900000 Param: 0x01f4000001f401f4\n");
+  fprintf(stderr, "tDeadline: 0x17ff97ecad3b9ad0 EvtID: 0x1ff1fc3000900000 Param: 0x01f4000001f401f4\n");
   fprintf(stderr, "                        measured length of chopper pulse     :               ^^^^\n"); 
   fprintf(stderr, "                        measured time of chopper falling edge:           ^^^^    \n"); 
   fprintf(stderr, "                        measured time of chopper rising edge :       ^^^^        \n"); 
-  fprintf(stderr, "                        measured time of ctrl falling edge   :  ^^^^             \n"); 
+  fprintf(stderr, "                        measured time of ctrl falling edge   :  ^^^^             \n");
+  fprintf(stderr, "                        NB: value 0x7fff: no data; 0xffff invalid data           \n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
 
