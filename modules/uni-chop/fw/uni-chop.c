@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Tobias Habermann GSI-Darmstadt
- *  version : 15-Oct-2024
+ *  version : 18-Oct-2024
  *
  *  firmware required for UNILAC chopper control
  *  
@@ -402,6 +402,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint32_t recBpid;                                           // BPID received
   uint64_t sendDeadline;                                      // deadline to send
   uint64_t sendEvtId;                                         // evtid to send
+  uint32_t sendEvtNo;                                         // evtno to send
   uint64_t sendParam;                                         // parameter to send
   uint32_t sendTEF;                                           // TEF to send
 
@@ -418,13 +419,21 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint16_t tChopFallAct;                                      // time of falling edge of chopper readback pulse
   uint16_t tChopFallCtrl;                                     // time of falling edge of chopper control pulse
   uint16_t lenChopAct;                                        // length of chopper readback pulse
+  uint16_t regChopRiseAct;                                    // register of rising edge of chopper readback pulse
+  uint16_t regChopFallAct;                                    // register of falling edge of chopper readback pulse
+  uint16_t regChopFallCtrl;                                   // register of falling edge of chopper control pulse
 
+  
   int      i;
   uint64_t one_us_ns = 1000;
   uint64_t sysTime;
   uint32_t tmp32;
   
-  status    = actStatus;
+  status          = actStatus;
+  sendEvtNo       = 0x0;
+  regChopRiseAct  = 0x0;
+  regChopFallAct  = 0x0;
+  regChopFallCtrl = 0x0;
 
   ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
 
@@ -601,8 +610,21 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
       break;
 
-    // received a timing message marking the end of an ion source pulse
-    case UNICHOP_ECADO_HISTOP :
+    // received a timing message marking the end of a chopper pulse at HLI or HSI
+    case UNICHOP_ECADO_HLISTOP :
+      sendEvtNo         = UNICHOP_ECADO_HLISTOP;
+      regChopRiseAct    = MOD_LOGIC1_REG_HLI_ACT_POSEDGE_RD;
+      regChopFallAct    = MOD_LOGIC1_REG_HLI_ACT_NEGEDGE_RD;
+      regChopFallCtrl   = MOD_LOGIC1_REG_HLI_CTRL_NEGEDGE_RD;
+
+    case UNICHOP_ECADO_HSISTOP :                                    // this is an OR, no 'break' on purpose
+      if (!sendEvtNo) {
+        sendEvtNo = UNICHOP_ECADO_HSISTOP;
+        regChopRiseAct  = MOD_LOGIC1_REG_HSI_ACT_POSEDGE_RD;
+        regChopFallAct  = MOD_LOGIC1_REG_HSI_ACT_NEGEDGE_RD;
+        regChopFallCtrl = MOD_LOGIC1_REG_HSI_CTRL_NEGEDGE_RD;
+      } // if not sendEveNo
+        
       comLatency   = (int32_t)(getSysTime() - recDeadline);
       recGid       = (uint32_t)((recEvtId >> 48) & 0x00000fff);
       recEvtNo     = (uint32_t)((recEvtId >> 36) & 0x00000fff);
@@ -614,23 +636,30 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         if (recGid == GID_PZU_UN) milModAddr = MOD_LOGIC1_ADDR;
         if (recGid == GID_PZU_UH) milModAddr = MOD_LOGIC1_ADDR;
 
-        status                                 = readFromModuleMil(IFB_ADDR_CU, milModAddr, MOD_LOGIC1_REG_ACT_POSEDGE_RD,  &tChopRiseAct);
-        if (status == COMMON_STATUS_OK) status = readFromModuleMil(IFB_ADDR_CU, milModAddr, MOD_LOGIC1_REG_ACT_NEGEDGE_RD,  &tChopFallAct);
-        if (status == COMMON_STATUS_OK) status = readFromModuleMil(IFB_ADDR_CU, milModAddr, MOD_LOGIC1_REG_CTRL_NEGEDGE_RD, &tChopFallCtrl);
+        status                                 = readFromModuleMil(IFB_ADDR_CU, milModAddr, regChopRiseAct , &tChopRiseAct);
+        if (status == COMMON_STATUS_OK) status = readFromModuleMil(IFB_ADDR_CU, milModAddr, regChopFallAct , &tChopFallAct);
+        if (status == COMMON_STATUS_OK) status = readFromModuleMil(IFB_ADDR_CU, milModAddr, regChopFallCtrl, &tChopFallCtrl);
 
-        /* later: error handling
-        rpgGatelen  = (uint32_t)(rpgGatelenHi & 0x1ff) << 16;
-        rpgGatelen |= (uint32_t)rpgGatelenLo;
-        if ((rpgGatelenHi >> 8) && 0x3) {
-          status     = COMMON_STATUS_OUTOFRANGE;
-          rpgGatelen = 0x0000ffff;
-        } // if rpgGatelen
-        */
+        
+        
+        // test for valid/invalid bits
+        // for explanation of bits see https://github.com/GSI-CS-CO/bel_projects/blob/master/top/fg45041x/chopper_m1/chopper_monitoring.vhd
+        if (!tChopRiseAct)                           tChopRiseAct  = UNICHOP_U16_NODATA; 
+        else if ((tChopRiseAct  & 0xff80) != 0x8000) tChopRiseAct  = UNICHOP_U16_INVALID;
+        else                                         tChopRiseAct  = tChopRiseAct  & 0x7f;
+        if (!tChopFallAct)                           tChopFallAct  = UNICHOP_U16_NODATA;
+        else if ((tChopFallAct  & 0xc000) != 0x8000) tChopFallAct  = UNICHOP_U16_INVALID;
+        else                                         tChopFallAct  = tChopFallAct  & 0x3fff;
+        if (!tChopFallCtrl)                          tChopFallCtrl = UNICHOP_U16_NODATA;
+        else if ((tChopFallCtrl & 0xc000) != 0x8000) tChopFallCtrl = UNICHOP_U16_INVALID;
+        else                                         tChopFallCtrl = tChopFallCtrl & 0x3fff;
 
-        lenChopAct = tChopFallAct - tChopRiseAct;
+        if ((tChopFallAct == UNICHOP_U16_INVALID) || (tChopRiseAct == UNICHOP_U16_INVALID))    lenChopAct = UNICHOP_U16_INVALID;
+        else if ((tChopFallAct == UNICHOP_U16_NODATA) && (tChopRiseAct == UNICHOP_U16_NODATA)) lenChopAct = UNICHOP_U16_NODATA;
+        else                                                                                   lenChopAct = tChopFallAct - tChopRiseAct;
 
         // write result to ECA
-        sendEvtId    = fwlib_buildEvtidV1(GID_LOCAL_ECPU_FROM, UNICHOP_ECADO_HISTOP, 0x0, recSid, 0x0, 0x0);
+        sendEvtId    = fwlib_buildEvtidV1(GID_LOCAL_ECPU_FROM, sendEvtNo, 0x0, recSid, 0x0, 0x0);
         sendParam    = (uint64_t)(tChopFallCtrl) << 48;
         sendParam   |= (uint64_t)(tChopRiseAct)  << 32;
         sendParam   |= (uint64_t)(tChopFallAct)  << 16;
