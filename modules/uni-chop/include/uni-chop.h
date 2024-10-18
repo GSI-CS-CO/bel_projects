@@ -19,12 +19,12 @@
 #define UNICHOP_ECADO_UNKOWN                   1   // unkown activity requested (unexpected action by ECA)
 #define UNICHOP_ECADO_STRAHLWEG_WRITE      0xfa0   // writes data to chopper control;         param 0..15: Strahlwegregister; param 16..31: Strahlwegmaske
 #define UNICHOP_ECADO_STRAHLWEG_READ       0xfa1   // request read data from chopper control; param 0..15: Strahlwegregister; param 16..31: Strahlwegmaske
-#define UNICHOP_ECADO_RPG_WRITE            0xfa2   // writes data to Rahmenpulsgeneratoren;   param 48..63 HSI start..stop, 32..47 HLI start..stop, 16..31 IQL start..stop, 0..15 IQR start..stop
 #define UNICHOP_ECADO_MIL_SWRITE           0xfb0   // standard data write to MIL;             param: 32..39 ifb addr, 24..31 mod addr, 16..23: reg addr, 0..15 data
 #define UNICHOP_ECADO_MIL_SREAD            0xfb1   // standard data read from MIL;            param: 32..39 ifb addr, 24..31 mod addr, 16..23: reg addr, 0..15 reserved
-#define UNICHOP_ECADO_IQSTOP               0x00a   // read RPG ion source;                    param: 16..20 value 1: QR value 2: QL, 0..15 length of RPG length counter [us] value 0: no pulse; value 0xffff invalid; 
-#define UNICHOP_ECADO_HISTOP               0x008   // read RPG HSI/HLI;                       param: 16..20 value 3: HLI value 4: HSI, 0..15 length of RPG length counter [us] value 0: no pulse; value 0xffff invalid; 
+#define UNICHOP_ECADO_HLISTOP              0xfc2   // read actual chopper data HLI            param: 48..63 t ctrl falling edge, 32..47 t chop rising edge, 16..31 t chop falling edge, 0..15 chop length [us] value 0: no pulse, value 0xffff invalid;
+#define UNICHOP_ECADO_HSISTOP              0xfc3   // read actual chopper data HSI            param: 48..63 t ctrl falling edge, 32..47 t chop rising edge, 16..31 t chop falling edge, 0..15 chop length [us] value 0: no pulse, value 0xffff invalid;
 
+#define UNICHOP_ECADO_IQSTOP               0xf0a   // read RPG ion source;                    param: 16..20 value 1: QR value 2: QL, 0..15 length of RPG length counter [us] value 0: no pulse; value 0xffff invalid; 
 
 // commands from the outside
 
@@ -53,9 +53,12 @@
 #define MOD_LOGIC1_REG_STRAHLWEG_REG        0x60   // logic module 1, register/address for Strahlwegregister
 #define MOD_LOGIC1_REG_STRAHLWEG_MASK       0x62   // logic module 1, register/subaddress for Strahlwegmaske
 #define MOD_LOGIC1_REG_STATUSGLOBAL         0x66   // logic module 1, register/subaddress for global status, contains version number (2024: 0x14)
-#define MOD_LOGIC1_REG_ACT_POSEDGE_RD       0x6c   // logic module 1, register/subaddress for time of rising edge of chopper readback pulse
-#define MOD_LOGIC1_REG_ACT_NEGEDGE_RD       0x70   // logic module 1, register/subaddress for time of falling edge of chopper readback pulse
-#define MOD_LOGIC1_REG_CTRL_NEGEDGE_RD      0x6e   // logic module 1, register/subaddress for time of falling edge of chopper control pulse
+#define MOD_LOGIC1_REG_HSI_ACT_POSEDGE_RD   0x6c   // logic module 1, register/subaddress for time of rising edge of chopper readback pulse (HSI)
+#define MOD_LOGIC1_REG_HSI_ACT_NEGEDGE_RD   0x70   // logic module 1, register/subaddress for time of falling edge of chopper readback pulse (HSI)
+#define MOD_LOGIC1_REG_HSI_CTRL_NEGEDGE_RD  0x6e   // logic module 1, register/subaddress for time of falling edge of chopper control pulse (HSI)
+#define MOD_LOGIC1_REG_HLI_ACT_POSEDGE_RD   0x74   // logic module 1, register/subaddress for time of rising edge of chopper readback pulse (HLI)
+#define MOD_LOGIC1_REG_HLI_ACT_NEGEDGE_RD   0x76   // logic module 1, register/subaddress for time of falling edge of chopper readback pulse (HLI)
+#define MOD_LOGIC1_REG_HLI_CTRL_NEGEDGE_RD  0x78   // logic module 1, register/subaddress for time of falling edge of chopper control pulse (HLI)
 
 // modulebus module Logic2
 #define MOD_LOGIC2_ADDR                     0x08   // logic module 2 (Strahlwege et al),  module bus address, FG 450.410/411
@@ -76,7 +79,10 @@
 //#define UNICHOP_GW_MSI_EVENT              0x3  // ored with (mil_event_number << 8)
 
 // constants
-#define UNICHOP_MILMODULE_ACCESST     100000   // time required to access (read/write) HW via MIL<->Modulebus  [ns]
+#define UNICHOP_MILMODULE_ACCESST         100000   // time required to access (read/write) HW via MIL<->Modulebus  [ns]
+#define UNICHOP_U16_NODATA                0x7fff   // no data available
+#define UNICHOP_U16_INVALID               0xffff   // data invalid
+
 
 // default values
 
