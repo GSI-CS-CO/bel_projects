@@ -61,8 +61,8 @@ entity ftm10 is
     -----------------------------------------------------------------------
     -- I2C
     -----------------------------------------------------------------------
-    i2c_scl_pad_io   : inout std_logic_vector(5 downto 1);
-    i2c_sda_pad_io   : inout std_logic_vector(5 downto 1);
+    i2c_scl_pad_io   : inout std_logic_vector(4 downto 1);
+    i2c_sda_pad_io   : inout std_logic_vector(4 downto 1);
 
     -----------------------------------------------------------------------
     -- leds onboard
@@ -114,7 +114,7 @@ entity ftm10 is
     sfp_mod0_i         : in    std_logic;                    -- Second SFP (ftm10 only)
     sfp_mod1_io        : inout std_logic;                    -- Second SFP (ftm10 only)
     sfp_mod2_io        : inout std_logic;                    -- Second SFP (ftm10 only)
-    sfp_aux_gpio_extra : inout std_logic_vector(3 downto 0); -- USBC5 (pexarria10 only)
+    --sfp_aux_gpio_extra : inout std_logic_vector(3 downto 0); -- USBC5 (pexarria10 only)
 
     -----------------------------------------------------------------------
     -- SFP (auxiliary - only used on ftm10)
@@ -176,12 +176,12 @@ architecture rtl of ftm10 is
   signal s_lvds_p_o : std_logic_vector(19 downto 0);
   signal s_lvds_n_o : std_logic_vector(19 downto 0);
 
-  signal s_i2c_scl_pad_out  : std_logic_vector(6 downto 1);
-  signal s_i2c_scl_pad_in   : std_logic_vector(6 downto 1);
-  signal s_i2c_scl_padoen   : std_logic_vector(6 downto 1);
-  signal s_i2c_sda_pad_out  : std_logic_vector(6 downto 1);
-  signal s_i2c_sda_pad_in   : std_logic_vector(6 downto 1);
-  signal s_i2c_sda_padoen   : std_logic_vector(6 downto 1);
+  signal s_i2c_scl_pad_out  : std_logic_vector(5 downto 1);
+  signal s_i2c_scl_pad_in   : std_logic_vector(5 downto 1);
+  signal s_i2c_scl_padoen   : std_logic_vector(5 downto 1);
+  signal s_i2c_sda_pad_out  : std_logic_vector(5 downto 1);
+  signal s_i2c_sda_pad_in   : std_logic_vector(5 downto 1);
+  signal s_i2c_sda_padoen   : std_logic_vector(5 downto 1);
 
   signal s_clk_20m_vcxo_i       : std_logic;
   signal s_clk_125m_pllref_i    : std_logic;
@@ -251,7 +251,7 @@ begin
       g_gpio_inout         => 6,
       g_lvds_inout         => 20,
       g_en_i2c_wrapper     => true,
-      g_num_i2c_interfaces => 6,
+      g_num_i2c_interfaces => 5,
       g_en_pcie            => true,
       g_en_tlu             => false,
       g_en_usb             => true,
@@ -375,10 +375,10 @@ begin
   wr_aux_leds_or_node_leds_o(3) <= not s_led_aux_pps;                               -- white = PPS
 
   -- Unused
-  sfp_aux_gpio_extra(0) <= 'Z';
-  sfp_aux_gpio_extra(1) <= 'Z';
-  sfp_aux_gpio_extra(2) <= 'Z';
-  sfp_aux_gpio_extra(3) <= 'Z';
+  --sfp_aux_gpio_extra(0) <= 'Z';
+  --sfp_aux_gpio_extra(1) <= 'Z';
+  --sfp_aux_gpio_extra(2) <= 'Z';
+  --sfp_aux_gpio_extra(3) <= 'Z';
 
   -------------------------------------------------
   -- LVDS USBC mapping
@@ -408,7 +408,7 @@ begin
   end generate;
 
   -- I2C
-  interfaces : for i in 2 to 6 generate
+  interfaces : for i in 2 to 5 generate
     i2c_scl_pad_io(i-1) <= s_i2c_scl_pad_out(i) when (s_i2c_scl_padoen(i) = '0') else 'Z';
     i2c_sda_pad_io(i-1) <= s_i2c_sda_pad_out(i) when (s_i2c_sda_padoen(i) = '0') else 'Z';
     s_i2c_scl_pad_in(i) <= i2c_scl_pad_io(i-1);
