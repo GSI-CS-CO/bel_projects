@@ -1111,8 +1111,6 @@ set_location_assignment PIN_AA4 -to "usbc_tx4_p[4](n)"
 set_location_assignment PIN_AA5 -to usbc_tx4_p[1]
 set_location_assignment PIN_AA6 -to "usbc_tx4_p[1](n)"
 set_location_assignment PIN_AB1 -to usbc_tx3_p[1]
-set_location_assignment PIN_AB27 -to "clk_125m_tcb_local_i(n)"
-set_location_assignment PIN_AB28 -to clk_125m_tcb_local_i
 set_location_assignment PIN_AB2 -to usbc_tx4_p[3]
 set_location_assignment PIN_AB31 -to "pcie_rx_i[3](n)"
 set_location_assignment PIN_AB32 -to pcie_rx_i[3]
@@ -1378,10 +1376,13 @@ set_location_assignment PIN_W6 -to usbc_tx4_p[5]
 set_location_assignment PIN_W7 -to "usbc_tx4_p[5](n)"
 set_location_assignment PIN_W9 -to usbc_rx4_n[5]
 set_location_assignment PIN_Y1 -to usbc_tx3_p[5]
-set_location_assignment PIN_Y27 -to "pcie_refclk_i(n)"
-set_location_assignment PIN_Y28 -to pcie_refclk_i
 set_location_assignment PIN_Y2 -to "usbc_tx3_p[5](n)"
 set_location_assignment PIN_Y3 -to usbc_tx3_p[3]
 set_location_assignment PIN_Y4 -to "usbc_tx3_p[3](n)"
 set_location_assignment PIN_Y8 -to usbc_tx4_p[2]
 set_location_assignment PIN_Y9 -to "usbc_tx4_p[2](n)"
+
+set_location_assignment PIN_Y28 -to clk_125m_tcb_local_i
+set_location_assignment PIN_Y27 -to "clk_125m_tcb_local_i(n)"
+set_location_assignment PIN_AB28 -to pcie_refclk_i
+set_location_assignment PIN_AB27 -to "pcie_refclk_i(n)"
