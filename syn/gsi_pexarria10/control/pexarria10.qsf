@@ -193,12 +193,6 @@ set_instance_assignment -name IO_STANDARD "1.8 V" -to altera_reserved_tms
 set_instance_assignment -name IO_STANDARD "1.8 V" -to a_nsys_reset
 set_instance_assignment -name IO_STANDARD "1.8 V" -to clk_20m_vcxo_alt_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to clk_20m_vcxo_i
-set_instance_assignment -name IO_STANDARD "1.8 V" -to cpld_io[0]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to cpld_io[1]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to cpld_io[2]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to cpld_io[3]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to cpld_io[4]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to cpld_io[5]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to f2f_i2c_scl
 set_instance_assignment -name IO_STANDARD "1.8 V" -to f2f_i2c_sda
 set_instance_assignment -name IO_STANDARD "1.8 V" -to i2c_scl_pad_io[1]
