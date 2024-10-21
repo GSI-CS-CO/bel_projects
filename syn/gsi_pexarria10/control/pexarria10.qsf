@@ -904,12 +904,6 @@ set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_mod1_io
 set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_mod2_io
 set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_tx_disable_o
 set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_tx_fault_i
-set_instance_assignment -name IO_STANDARD "1.8 V" -to UM_AS_D[0]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to UM_AS_D[1]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to UM_AS_D[2]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to UM_AS_D[3]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to UM_DCLK
-set_instance_assignment -name IO_STANDARD "1.8 V" -to UM_nCSO
 set_instance_assignment -name IO_STANDARD "1.8 V" -to usb_clk_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to usb_ctl_i[0]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to usb_ctl_i[1]
@@ -1011,7 +1005,6 @@ set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_tlu:ecatlu"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_wb_event:ecawb"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|ftm_lm32_cluster:lm32*"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|wr_eca:eca"
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_instance_assignment -name SLEW_RATE 1 -to psram_a[0]
 set_instance_assignment -name SLEW_RATE 1 -to psram_a[1]
 set_instance_assignment -name SLEW_RATE 1 -to psram_a[10]
@@ -1157,7 +1150,6 @@ set_location_assignment PIN_AE4 -to usbc_tx2_en[1]
 set_location_assignment PIN_AE8 -to wr_ndac_cs_o[2]
 set_location_assignment PIN_AE9 -to wr_dac_sclk_o
 set_location_assignment PIN_AF1 -to usbc_tx3_en[3]
-set_location_assignment PIN_AF23 -to UM_nCSO
 set_location_assignment PIN_AF25 -to usb_fd_io[4]
 set_location_assignment PIN_AF27 -to "clk_125m_tcb_sfpref_i(n)"
 set_location_assignment PIN_AF28 -to clk_125m_tcb_sfpref_i
@@ -1165,7 +1157,6 @@ set_location_assignment PIN_AF5 -to usbc_tx2_en[2]
 set_location_assignment PIN_AF8 -to wr_dac_din_o
 set_location_assignment PIN_AF9 -to wr_ndac_cs_o[1]
 set_location_assignment PIN_AG1 -to i2c_scl_pad_io[2]
-set_location_assignment PIN_AG23 -to UM_AS_D[3]
 set_location_assignment PIN_AG25 -to usb_fd_io[5]
 set_location_assignment PIN_AG2 -to i2c_sda_pad_io[2]
 set_location_assignment PIN_AG33 -to "pcie_tx_o[3](n)"
@@ -1174,7 +1165,6 @@ set_location_assignment PIN_AG3 -to usbc_tx3_en[5]
 set_location_assignment PIN_AG5 -to i2c_scl_pad_io[1]
 set_location_assignment PIN_AG6 -to i2c_sda_pad_io[1]
 set_location_assignment PIN_AH10 -to nres_out_o
-set_location_assignment PIN_AH23 -to UM_AS_D[0]
 set_location_assignment PIN_AH25 -to usb_fd_io[6]
 set_location_assignment PIN_AH26 -to usb_pa_io[0]
 set_location_assignment PIN_AH27 -to usb_pa_io[1]
@@ -1184,7 +1174,6 @@ set_location_assignment PIN_AH4 -to usbc_tx3_en[4]
 set_location_assignment PIN_AH5 -to sfp_aux_gpio_io_extra[1]
 set_location_assignment PIN_AH8 -to f2f_i2c_sda
 set_location_assignment PIN_AJ1 -to i2c_scl_pad_io[4]
-set_location_assignment PIN_AJ24 -to UM_AS_D[2]
 set_location_assignment PIN_AJ25 -to usb_fd_io[7]
 set_location_assignment PIN_AJ26 -to usb_pa_io[2]
 set_location_assignment PIN_AJ27 -to usb_pa_io[3]
@@ -1197,7 +1186,6 @@ set_location_assignment PIN_AJ6 -to sfp_tx_fault_i
 set_location_assignment PIN_AJ7 -to sfp_tx_disable_o
 set_location_assignment PIN_AK1 -to i2c_scl_pad_io[5]
 set_location_assignment PIN_AK22 -to a_nsys_reset
-set_location_assignment PIN_AK24 -to UM_AS_D[1]
 set_location_assignment PIN_AK26 -to usb_slwr_o
 set_location_assignment PIN_AK27 -to usb_slrd_o
 set_location_assignment PIN_AK2 -to i2c_sda_pad_io[5]
@@ -1218,7 +1206,6 @@ set_location_assignment PIN_AL5 -to clk_125m_local_alt_i
 set_location_assignment PIN_AL6 -to sfp_los_i
 set_location_assignment PIN_AM1 -to sfp_mod1_io
 set_location_assignment PIN_AM23 -to wr_leds_o[0]
-set_location_assignment PIN_AM26 -to UM_DCLK
 set_location_assignment PIN_AM27 -to usb_pa_io[4]
 set_location_assignment PIN_AM2 -to sfp_mod2_io
 set_location_assignment PIN_AM3 -to sfp_aux_gpio_io_extra[3]
@@ -1389,3 +1376,5 @@ set_location_assignment PIN_Y3 -to usbc_tx3_p[3]
 set_location_assignment PIN_Y4 -to "usbc_tx3_p[3](n)"
 set_location_assignment PIN_Y8 -to usbc_tx4_p[2]
 set_location_assignment PIN_Y9 -to "usbc_tx4_p[2](n)"
+
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
