@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Tobias Habermann GSI-Darmstadt
- *  version : 18-Oct-2024
+ *  version : 23-Oct-2024
  *
  *  firmware required for UNILAC chopper control
  *  
@@ -37,7 +37,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define UNICHOP_FW_VERSION      0x000006  // make this consistent with makefile
+#define UNICHOP_FW_VERSION      0x000007  // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -422,7 +422,9 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint16_t regChopRiseAct;                                    // register of rising edge of chopper readback pulse
   uint16_t regChopFallAct;                                    // register of falling edge of chopper readback pulse
   uint16_t regChopFallCtrl;                                   // register of falling edge of chopper control pulse
-
+  uint32_t rpgGatelen;                                        // measured length of RPG gate
+  uint16_t rpgGatelenHi;                                      // measured length of RPG gate, hi word
+  uint16_t rpgGatelenLo;                                      // measured length of RPG gate, lo word 
   
   int      i;
   uint64_t one_us_ns = 1000;
@@ -581,29 +583,25 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       recSid       = (uint32_t)((recEvtId >> 20) & 0x00000fff);
 
       if (recSid  > 15)       return COMMON_STATUS_OUTOFRANGE;
-      /* schrott 
+      
       if (!flagIsLate) {
-        if (recGid == GID_PZU_QR) milModAddr = MOD_RPG_IQR_ADDR;
-        if (recGid == GID_PZU_QL) milModAddr = MOD_RPG_IQL_ADDR;
+        if (recGid == GID_PZU_QR) {milModAddr = MOD_RPG_IQR_ADDR; sendEvtNo = UNICHOP_ECADO_QRSTOP;}
+        if (recGid == GID_PZU_QL) {milModAddr = MOD_RPG_IQL_ADDR; sendEvtNo = UNICHOP_ECADO_QLSTOP;}
 
-        status                                 = readFromModuleMil(IFB_ADDR_CU, milModAddr, MOD_LOGIC1_REG_GATELENHI, &rpgGatelenHi);
-        if (status == COMMON_STATUS_OK) status = readFromModuleMil(IFB_ADDR_CU, milModAddr, MOD_LOGIC1_REG_GATELENLO, &rpgGatelenLo);
+        status                                 = readFromModuleMil(IFB_ADDR_CU, milModAddr, MOD_RPG_XXX_GATELENHI_REG, &rpgGatelenHi);
+        if (status == COMMON_STATUS_OK) status = readFromModuleMil(IFB_ADDR_CU, milModAddr, MOD_RPG_XXX_GATELENLO_REG, &rpgGatelenLo);
         
         rpgGatelen  = (uint32_t)(rpgGatelenHi & 0x1ff) << 16;
         rpgGatelen |= (uint32_t)rpgGatelenLo;
-        if ((rpgGatelenHi >> 8) && 0x3) {
-          status     = COMMON_STATUS_OUTOFRANGE;
-          rpgGatelen = 0x0000ffff;
-        } // if rpgGatelen
+        if ((rpgGatelenHi >> 8) && 0x3) {status = COMMON_STATUS_OUTOFRANGE; rpgGatelen = 0xffffffff;}
+        if  (rpgGatelenHi == 0)         {                                   rpgGatelen = 0x7fffffff;}
 
         // write result to ECA
-        sendEvtId    = fwlib_buildEvtidV1(GID_LOCAL_ECPU_FROM, UNICHOP_ECADO_IQSTOP, 0x0, recSid, 0x0, 0x0);
+        sendEvtId    = fwlib_buildEvtidV1(GID_LOCAL_ECPU_FROM, sendEvtNo, 0x0, recSid, 0x0, 0x0);
         sendParam    = (uint64_t)(rpgGatelen & 0xffffffff);
-        sendParam   |= (uint64_t)(milModAddr) << 32;
         sendDeadline = getSysTime() + COMMON_AHEADT;
         fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0x0);
       } // if flagIsLate
-      */
 
       offsDone = getSysTime() - recDeadline;
       // nEvtsRec++; don't increase counter - this is just monitoring
