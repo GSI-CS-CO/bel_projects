@@ -1,0 +1,330 @@
+<session sof_file="">
+  <display_tree gui_logging_enabled="0">
+    <display_branch instance="auto_signaltap_0" signal_set="USE_GLOBAL_TEMP" trigger="USE_GLOBAL_TEMP"/>
+  </display_tree>
+  <global_info>
+    <single attribute="active instance" value="0"/>
+    <single attribute="lock mode" value="0"/>
+    <multi attribute="frame size" size="2" value="1280,1368"/>
+    <single attribute="jtag widget visible" value="1"/>
+    <multi attribute="jtag widget size" size="2" value="355,147"/>
+    <single attribute="instance widget visible" value="1"/>
+    <single attribute="config widget visible" value="1"/>
+    <single attribute="hierarchy widget visible" value="1"/>
+    <single attribute="data log widget visible" value="1"/>
+  </global_info>
+  <instance enabled="true" entity_name="sld_signaltap" is_auto_node="yes" name="auto_signaltap_0" source_file="sld_signaltap.vhd">
+    <node_ip_info instance_id="0" mfg_id="110" node_id="0" version="6"/>
+    <position_info>
+      <single attribute="active tab" value="1"/>
+      <single attribute="setup vertical scroll position" value="0"/>
+      <single attribute="setup horizontal scroll position" value="0"/>
+    </position_info>
+    <signal_set global_temp="1" name="signal_set: 2024/10/22 17:27:19  #0">
+      <clock name="clk_125m_local_i" polarity="posedge" tap_mode="classic"/>
+      <config pipeline_level="0" ram_type="AUTO" reserved_data_nodes="0" reserved_storage_qualifier_nodes="0" reserved_trigger_nodes="0" sample_depth="256" trigger_in_enable="no" trigger_out_enable="no"/>
+      <top_entity/>
+      <signal_vec>
+        <trigger_input_vec>
+          <wire name="clk_125m_tcb_pllref_i" tap_mode="classic"/>
+          <wire name="clk_125m_tcb_sfpref_i" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[0][0]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[0][1]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[0][2]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[1][0]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[1][1]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[1][2]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[2][0]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[2][1]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[2][2]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[3][0]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[3][1]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[3][2]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|pll_lock_i[0]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|pll_lock_i[1]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|pll_lock_i[2]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|pll_lock_i[3]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|currentspeed[0]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|currentspeed[1]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ev128ns" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ev1us" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|lane_act[0]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|lane_act[1]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|lane_act[2]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|lane_act[3]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ltssmstate[0]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ltssmstate[1]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ltssmstate[2]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ltssmstate[3]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ltssmstate[4]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|pld_core_ready" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|serdes_pll_locked" tap_mode="classic"/>
+          <wire name="nPCI_RESET_i" tap_mode="classic"/>
+          <wire name="pcie_refclk_i" tap_mode="classic"/>
+        </trigger_input_vec>
+        <data_input_vec>
+          <wire name="clk_125m_tcb_pllref_i" tap_mode="classic"/>
+          <wire name="clk_125m_tcb_sfpref_i" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[0][0]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[0][1]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[0][2]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[1][0]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[1][1]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[1][2]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[2][0]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[2][1]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[2][2]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[3][0]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[3][1]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[3][2]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|pll_lock_i[0]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|pll_lock_i[1]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|pll_lock_i[2]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|pll_lock_i[3]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|currentspeed[0]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|currentspeed[1]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ev128ns" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ev1us" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|lane_act[0]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|lane_act[1]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|lane_act[2]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|lane_act[3]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ltssmstate[0]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ltssmstate[1]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ltssmstate[2]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ltssmstate[3]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ltssmstate[4]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|pld_core_ready" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|serdes_pll_locked" tap_mode="classic"/>
+          <wire name="nPCI_RESET_i" tap_mode="classic"/>
+          <wire name="pcie_refclk_i" tap_mode="classic"/>
+        </data_input_vec>
+        <storage_qualifier_input_vec>
+          <wire name="clk_125m_tcb_pllref_i" tap_mode="classic"/>
+          <wire name="clk_125m_tcb_sfpref_i" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[0][0]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[0][1]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[0][2]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[1][0]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[1][1]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[1][2]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[2][0]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[2][1]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[2][2]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[3][0]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[3][1]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|nresets[3][2]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|pll_lock_i[0]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|pll_lock_i[1]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|pll_lock_i[2]" tap_mode="classic"/>
+          <wire name="monster:main|altera_reset:reset|pll_lock_i[3]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|currentspeed[0]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|currentspeed[1]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ev128ns" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ev1us" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|lane_act[0]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|lane_act[1]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|lane_act[2]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|lane_act[3]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ltssmstate[0]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ltssmstate[1]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ltssmstate[2]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ltssmstate[3]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ltssmstate[4]" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|pld_core_ready" tap_mode="classic"/>
+          <wire name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|serdes_pll_locked" tap_mode="classic"/>
+          <wire name="nPCI_RESET_i" tap_mode="classic"/>
+          <wire name="pcie_refclk_i" tap_mode="classic"/>
+        </storage_qualifier_input_vec>
+      </signal_vec>
+      <presentation>
+        <unified_setup_data_view>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="pcie_refclk_i" tap_mode="classic" type="input pin"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="clk_125m_tcb_pllref_i" tap_mode="classic" type="input pin"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="clk_125m_tcb_sfpref_i" tap_mode="classic" type="input pin"/>
+          <node is_selected="false" level-0="alt_or" name="monster:main|altera_reset:reset|nresets[0][2..0]" order="msb_to_lsb" type="register">
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[0][2]" tap_mode="classic" type="register"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[0][1]" tap_mode="classic" type="register"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[0][0]" tap_mode="classic" type="register"/>
+          </node>
+          <node is_selected="false" level-0="alt_or" name="monster:main|altera_reset:reset|nresets[1][2..0]" order="msb_to_lsb" type="register">
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[1][2]" tap_mode="classic" type="register"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[1][1]" tap_mode="classic" type="register"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[1][0]" tap_mode="classic" type="register"/>
+          </node>
+          <node is_selected="false" level-0="alt_or" name="monster:main|altera_reset:reset|nresets[2][2..0]" order="msb_to_lsb" type="register">
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[2][2]" tap_mode="classic" type="register"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[2][1]" tap_mode="classic" type="register"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[2][0]" tap_mode="classic" type="register"/>
+          </node>
+          <node is_selected="false" level-0="alt_or" name="monster:main|altera_reset:reset|nresets[3][2..0]" order="msb_to_lsb" type="register">
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[3][2]" tap_mode="classic" type="register"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[3][1]" tap_mode="classic" type="register"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[3][0]" tap_mode="classic" type="register"/>
+          </node>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|pll_lock_i[0]" tap_mode="classic" type="combinatorial"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|pll_lock_i[1]" tap_mode="classic" type="combinatorial"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|pll_lock_i[2]" tap_mode="classic" type="combinatorial"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|pll_lock_i[3]" tap_mode="classic" type="combinatorial"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="nPCI_RESET_i" tap_mode="classic" type="input pin"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ev1us" tap_mode="classic" type="combinatorial"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ev128ns" tap_mode="classic" type="combinatorial"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|pld_core_ready" tap_mode="classic" type="combinatorial"/>
+          <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|serdes_pll_locked" tap_mode="classic" type="combinatorial"/>
+          <node is_selected="false" level-0="alt_or" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|lane_act[3..0]" order="msb_to_lsb" type="combinatorial">
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|lane_act[3]" tap_mode="classic" type="combinatorial"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|lane_act[2]" tap_mode="classic" type="combinatorial"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|lane_act[1]" tap_mode="classic" type="combinatorial"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|lane_act[0]" tap_mode="classic" type="combinatorial"/>
+          </node>
+          <node is_selected="false" level-0="alt_or" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|currentspeed[1..0]" order="msb_to_lsb" type="combinatorial">
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|currentspeed[1]" tap_mode="classic" type="combinatorial"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|currentspeed[0]" tap_mode="classic" type="combinatorial"/>
+          </node>
+          <node is_selected="false" level-0="alt_or" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ltssmstate[4..0]" order="msb_to_lsb" type="combinatorial">
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ltssmstate[4]" tap_mode="classic" type="combinatorial"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ltssmstate[3]" tap_mode="classic" type="combinatorial"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ltssmstate[2]" tap_mode="classic" type="combinatorial"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ltssmstate[1]" tap_mode="classic" type="combinatorial"/>
+            <node duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ltssmstate[0]" tap_mode="classic" type="combinatorial"/>
+          </node>
+        </unified_setup_data_view>
+        <data_view>
+          <net data_index="34" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="pcie_refclk_i" storage_index="34" tap_mode="classic" trigger_index="34" type="unknown"/>
+          <net data_index="0" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="clk_125m_tcb_pllref_i" storage_index="0" tap_mode="classic" trigger_index="0" type="unknown"/>
+          <net data_index="1" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="clk_125m_tcb_sfpref_i" storage_index="1" tap_mode="classic" trigger_index="1" type="unknown"/>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|altera_reset:reset|nresets[0][2..0]" order="msb_to_lsb" type="register">
+            <net data_index="4" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[0][2]" storage_index="4" tap_mode="classic" trigger_index="4" type="unknown"/>
+            <net data_index="3" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[0][1]" storage_index="3" tap_mode="classic" trigger_index="3" type="unknown"/>
+            <net data_index="2" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[0][0]" storage_index="2" tap_mode="classic" trigger_index="2" type="unknown"/>
+          </bus>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|altera_reset:reset|nresets[1][2..0]" order="msb_to_lsb" type="register">
+            <net data_index="7" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[1][2]" storage_index="7" tap_mode="classic" trigger_index="7" type="unknown"/>
+            <net data_index="6" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[1][1]" storage_index="6" tap_mode="classic" trigger_index="6" type="unknown"/>
+            <net data_index="5" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[1][0]" storage_index="5" tap_mode="classic" trigger_index="5" type="unknown"/>
+          </bus>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|altera_reset:reset|nresets[2][2..0]" order="msb_to_lsb" type="register">
+            <net data_index="10" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[2][2]" storage_index="10" tap_mode="classic" trigger_index="10" type="unknown"/>
+            <net data_index="9" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[2][1]" storage_index="9" tap_mode="classic" trigger_index="9" type="unknown"/>
+            <net data_index="8" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[2][0]" storage_index="8" tap_mode="classic" trigger_index="8" type="unknown"/>
+          </bus>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|altera_reset:reset|nresets[3][2..0]" order="msb_to_lsb" type="register">
+            <net data_index="13" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[3][2]" storage_index="13" tap_mode="classic" trigger_index="13" type="unknown"/>
+            <net data_index="12" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[3][1]" storage_index="12" tap_mode="classic" trigger_index="12" type="unknown"/>
+            <net data_index="11" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[3][0]" storage_index="11" tap_mode="classic" trigger_index="11" type="unknown"/>
+          </bus>
+          <net data_index="14" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|pll_lock_i[0]" storage_index="14" tap_mode="classic" trigger_index="14" type="unknown"/>
+          <net data_index="15" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|pll_lock_i[1]" storage_index="15" tap_mode="classic" trigger_index="15" type="unknown"/>
+          <net data_index="16" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|pll_lock_i[2]" storage_index="16" tap_mode="classic" trigger_index="16" type="unknown"/>
+          <net data_index="17" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|pll_lock_i[3]" storage_index="17" tap_mode="classic" trigger_index="17" type="unknown"/>
+          <net data_index="33" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="nPCI_RESET_i" storage_index="33" tap_mode="classic" trigger_index="33" type="unknown"/>
+          <net data_index="21" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ev1us" storage_index="21" tap_mode="classic" trigger_index="21" type="unknown"/>
+          <net data_index="20" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ev128ns" storage_index="20" tap_mode="classic" trigger_index="20" type="unknown"/>
+          <net data_index="31" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|pld_core_ready" storage_index="31" tap_mode="classic" trigger_index="31" type="unknown"/>
+          <net data_index="32" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|serdes_pll_locked" storage_index="32" tap_mode="classic" trigger_index="32" type="unknown"/>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|lane_act[3..0]" order="msb_to_lsb" type="combinatorial">
+            <net data_index="25" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|lane_act[3]" storage_index="25" tap_mode="classic" trigger_index="25" type="unknown"/>
+            <net data_index="24" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|lane_act[2]" storage_index="24" tap_mode="classic" trigger_index="24" type="unknown"/>
+            <net data_index="23" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|lane_act[1]" storage_index="23" tap_mode="classic" trigger_index="23" type="unknown"/>
+            <net data_index="22" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|lane_act[0]" storage_index="22" tap_mode="classic" trigger_index="22" type="unknown"/>
+          </bus>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|currentspeed[1..0]" order="msb_to_lsb" type="combinatorial">
+            <net data_index="19" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|currentspeed[1]" storage_index="19" tap_mode="classic" trigger_index="19" type="unknown"/>
+            <net data_index="18" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|currentspeed[0]" storage_index="18" tap_mode="classic" trigger_index="18" type="unknown"/>
+          </bus>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ltssmstate[4..0]" order="msb_to_lsb" type="combinatorial">
+            <net data_index="30" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ltssmstate[4]" storage_index="30" tap_mode="classic" trigger_index="30" type="unknown"/>
+            <net data_index="29" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ltssmstate[3]" storage_index="29" tap_mode="classic" trigger_index="29" type="unknown"/>
+            <net data_index="28" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ltssmstate[2]" storage_index="28" tap_mode="classic" trigger_index="28" type="unknown"/>
+            <net data_index="27" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ltssmstate[1]" storage_index="27" tap_mode="classic" trigger_index="27" type="unknown"/>
+            <net data_index="26" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ltssmstate[0]" storage_index="26" tap_mode="classic" trigger_index="26" type="unknown"/>
+          </bus>
+        </data_view>
+        <setup_view>
+          <net data_index="34" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="pcie_refclk_i" storage_index="34" tap_mode="classic" trigger_index="34" type="unknown"/>
+          <net data_index="0" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="clk_125m_tcb_pllref_i" storage_index="0" tap_mode="classic" trigger_index="0" type="unknown"/>
+          <net data_index="1" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="clk_125m_tcb_sfpref_i" storage_index="1" tap_mode="classic" trigger_index="1" type="unknown"/>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|altera_reset:reset|nresets[0][2..0]" order="msb_to_lsb" type="register">
+            <net data_index="4" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[0][2]" storage_index="4" tap_mode="classic" trigger_index="4" type="unknown"/>
+            <net data_index="3" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[0][1]" storage_index="3" tap_mode="classic" trigger_index="3" type="unknown"/>
+            <net data_index="2" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[0][0]" storage_index="2" tap_mode="classic" trigger_index="2" type="unknown"/>
+          </bus>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|altera_reset:reset|nresets[1][2..0]" order="msb_to_lsb" type="register">
+            <net data_index="7" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[1][2]" storage_index="7" tap_mode="classic" trigger_index="7" type="unknown"/>
+            <net data_index="6" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[1][1]" storage_index="6" tap_mode="classic" trigger_index="6" type="unknown"/>
+            <net data_index="5" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[1][0]" storage_index="5" tap_mode="classic" trigger_index="5" type="unknown"/>
+          </bus>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|altera_reset:reset|nresets[2][2..0]" order="msb_to_lsb" type="register">
+            <net data_index="10" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[2][2]" storage_index="10" tap_mode="classic" trigger_index="10" type="unknown"/>
+            <net data_index="9" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[2][1]" storage_index="9" tap_mode="classic" trigger_index="9" type="unknown"/>
+            <net data_index="8" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[2][0]" storage_index="8" tap_mode="classic" trigger_index="8" type="unknown"/>
+          </bus>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|altera_reset:reset|nresets[3][2..0]" order="msb_to_lsb" type="register">
+            <net data_index="13" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[3][2]" storage_index="13" tap_mode="classic" trigger_index="13" type="unknown"/>
+            <net data_index="12" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[3][1]" storage_index="12" tap_mode="classic" trigger_index="12" type="unknown"/>
+            <net data_index="11" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|nresets[3][0]" storage_index="11" tap_mode="classic" trigger_index="11" type="unknown"/>
+          </bus>
+          <net data_index="14" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|pll_lock_i[0]" storage_index="14" tap_mode="classic" trigger_index="14" type="unknown"/>
+          <net data_index="15" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|pll_lock_i[1]" storage_index="15" tap_mode="classic" trigger_index="15" type="unknown"/>
+          <net data_index="16" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|pll_lock_i[2]" storage_index="16" tap_mode="classic" trigger_index="16" type="unknown"/>
+          <net data_index="17" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|altera_reset:reset|pll_lock_i[3]" storage_index="17" tap_mode="classic" trigger_index="17" type="unknown"/>
+          <net data_index="33" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="nPCI_RESET_i" storage_index="33" tap_mode="classic" trigger_index="33" type="unknown"/>
+          <net data_index="21" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ev1us" storage_index="21" tap_mode="classic" trigger_index="21" type="unknown"/>
+          <net data_index="20" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ev128ns" storage_index="20" tap_mode="classic" trigger_index="20" type="unknown"/>
+          <net data_index="31" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|pld_core_ready" storage_index="31" tap_mode="classic" trigger_index="31" type="unknown"/>
+          <net data_index="32" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|serdes_pll_locked" storage_index="32" tap_mode="classic" trigger_index="32" type="unknown"/>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|lane_act[3..0]" order="msb_to_lsb" type="combinatorial">
+            <net data_index="25" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|lane_act[3]" storage_index="25" tap_mode="classic" trigger_index="25" type="unknown"/>
+            <net data_index="24" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|lane_act[2]" storage_index="24" tap_mode="classic" trigger_index="24" type="unknown"/>
+            <net data_index="23" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|lane_act[1]" storage_index="23" tap_mode="classic" trigger_index="23" type="unknown"/>
+            <net data_index="22" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|lane_act[0]" storage_index="22" tap_mode="classic" trigger_index="22" type="unknown"/>
+          </bus>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|currentspeed[1..0]" order="msb_to_lsb" type="combinatorial">
+            <net data_index="19" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|currentspeed[1]" storage_index="19" tap_mode="classic" trigger_index="19" type="unknown"/>
+            <net data_index="18" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|currentspeed[0]" storage_index="18" tap_mode="classic" trigger_index="18" type="unknown"/>
+          </bus>
+          <bus is_selected="false" level-0="alt_or" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ltssmstate[4..0]" order="msb_to_lsb" type="combinatorial">
+            <net data_index="30" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ltssmstate[4]" storage_index="30" tap_mode="classic" trigger_index="30" type="unknown"/>
+            <net data_index="29" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ltssmstate[3]" storage_index="29" tap_mode="classic" trigger_index="29" type="unknown"/>
+            <net data_index="28" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ltssmstate[2]" storage_index="28" tap_mode="classic" trigger_index="28" type="unknown"/>
+            <net data_index="27" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ltssmstate[1]" storage_index="27" tap_mode="classic" trigger_index="27" type="unknown"/>
+            <net data_index="26" duplicate_name_allowed="false" is_data_input="true" is_node_valid="true" is_selected="false" is_storage_input="true" is_trigger_input="true" name="monster:main|pcie_wb:\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_ftm10_pcie_hip:\arria10gx_ftm10:hip|ltssmstate[0]" storage_index="26" tap_mode="classic" trigger_index="26" type="unknown"/>
+          </bus>
+        </setup_view>
+        <trigger_in_editor/>
+        <trigger_out_editor/>
+      </presentation>
+      <trigger attribute_mem_mode="false" gap_record="true" global_temp="1" name="trigger: 2024/10/22 17:27:19  #1" position="pre" power_up_trigger_mode="false" record_data_gap="true" segment_size="256" storage_mode="off" storage_qualifier_disabled="no" storage_qualifier_port_is_pin="true" storage_qualifier_port_name="auto_stp_external_storage_qualifier" storage_qualifier_port_tap_mode="classic" trigger_type="circular">
+        <power_up_trigger position="pre" storage_qualifier_disabled="no"/>
+        <events use_custom_flow_control="no">
+          <level enabled="yes" name="condition1" type="basic">
+            <power_up enabled="yes">
+            </power_up>
+            <op_node/>
+          </level>
+        </events>
+        <storage_qualifier_events>
+          <transitional>11111111111111111111111111111111111
+            <pwr_up_transitional>11111111111111111111111111111111111</pwr_up_transitional>
+          </transitional>
+          <storage_qualifier_level type="basic">
+            <power_up>
+            </power_up>
+            <op_node/>
+          </storage_qualifier_level>
+          <storage_qualifier_level type="basic">
+            <power_up>
+            </power_up>
+            <op_node/>
+          </storage_qualifier_level>
+          <storage_qualifier_level type="basic">
+            <power_up>
+            </power_up>
+            <op_node/>
+          </storage_qualifier_level>
+        </storage_qualifier_events>
+      </trigger>
+    </signal_set>
+  </instance>
+  <mnemonics/>
+</session>

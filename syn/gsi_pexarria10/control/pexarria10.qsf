@@ -1,3 +1,4 @@
+
 set_global_assignment -name ACTIVE_SERIAL_CLOCK FREQ_100MHZ
 set_global_assignment -name ADV_NETLIST_OPT_SYNTH_WYSIWYG_REMAP OFF
 set_global_assignment -name AHDL_FILE ../../../modules/modulbus/i2c.tdf
@@ -128,7 +129,7 @@ set_global_assignment -name EDA_SIMULATION_TOOL "<None>"
 set_global_assignment -name ENABLE_BOOT_SEL_PIN ON
 set_global_assignment -name ENABLE_CONFIGURATION_PINS ON
 set_global_assignment -name ENABLE_NCE_PIN ON
-set_global_assignment -name ENABLE_SIGNALTAP OFF
+set_global_assignment -name ENABLE_SIGNALTAP ON
 set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 2
 set_global_assignment -name FAMILY "Arria 10"
 set_global_assignment -name FINAL_PLACEMENT_OPTIMIZATION ALWAYS
@@ -1005,7 +1006,6 @@ set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_tlu:ecatlu"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_wb_event:ecawb"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|ftm_lm32_cluster:lm32*"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|wr_eca:eca"
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_instance_assignment -name SLEW_RATE 1 -to psram_a[0]
 set_instance_assignment -name SLEW_RATE 1 -to psram_a[1]
 set_instance_assignment -name SLEW_RATE 1 -to psram_a[10]
@@ -1112,6 +1112,8 @@ set_location_assignment PIN_AA4 -to "usbc_tx4_p[4](n)"
 set_location_assignment PIN_AA5 -to usbc_tx4_p[1]
 set_location_assignment PIN_AA6 -to "usbc_tx4_p[1](n)"
 set_location_assignment PIN_AB1 -to usbc_tx3_p[1]
+set_location_assignment PIN_AB27 -to "pcie_refclk_i(n)"
+set_location_assignment PIN_AB28 -to pcie_refclk_i
 set_location_assignment PIN_AB2 -to usbc_tx4_p[3]
 set_location_assignment PIN_AB31 -to "pcie_rx_i[3](n)"
 set_location_assignment PIN_AB32 -to pcie_rx_i[3]
@@ -1368,13 +1370,145 @@ set_location_assignment PIN_W6 -to usbc_tx4_p[5]
 set_location_assignment PIN_W7 -to "usbc_tx4_p[5](n)"
 set_location_assignment PIN_W9 -to usbc_rx4_n[5]
 set_location_assignment PIN_Y1 -to usbc_tx3_p[5]
+set_location_assignment PIN_Y27 -to "clk_125m_tcb_local_i(n)"
+set_location_assignment PIN_Y28 -to clk_125m_tcb_local_i
 set_location_assignment PIN_Y2 -to "usbc_tx3_p[5](n)"
 set_location_assignment PIN_Y3 -to usbc_tx3_p[3]
 set_location_assignment PIN_Y4 -to "usbc_tx3_p[3](n)"
 set_location_assignment PIN_Y8 -to usbc_tx4_p[2]
 set_location_assignment PIN_Y9 -to "usbc_tx4_p[2](n)"
 
-set_location_assignment PIN_Y28 -to clk_125m_tcb_local_i
-set_location_assignment PIN_Y27 -to "clk_125m_tcb_local_i(n)"
-set_location_assignment PIN_AB28 -to pcie_refclk_i
-set_location_assignment PIN_AB27 -to "pcie_refclk_i(n)"
+set_global_assignment -name USE_SIGNALTAP_FILE stp1.stp
+set_global_assignment -name SIGNALTAP_FILE stp1.stp
+set_global_assignment -name SLD_NODE_CREATOR_ID 110 -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_ENTITY_NAME sld_signaltap -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_clk -to clk_125m_local_i -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[0] -to clk_125m_tcb_pllref_i -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[1] -to clk_125m_tcb_sfpref_i -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[2] -to "monster:main|altera_reset:reset|nresets[0][0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[3] -to "monster:main|altera_reset:reset|nresets[0][1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[4] -to "monster:main|altera_reset:reset|nresets[0][2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[5] -to "monster:main|altera_reset:reset|nresets[1][0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[6] -to "monster:main|altera_reset:reset|nresets[1][1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[7] -to "monster:main|altera_reset:reset|nresets[1][2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[8] -to "monster:main|altera_reset:reset|nresets[2][0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[9] -to "monster:main|altera_reset:reset|nresets[2][1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[10] -to "monster:main|altera_reset:reset|nresets[2][2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[11] -to "monster:main|altera_reset:reset|nresets[3][0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[12] -to "monster:main|altera_reset:reset|nresets[3][1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[13] -to "monster:main|altera_reset:reset|nresets[3][2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[14] -to "monster:main|altera_reset:reset|pll_lock_i[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[15] -to "monster:main|altera_reset:reset|pll_lock_i[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[16] -to "monster:main|altera_reset:reset|pll_lock_i[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[17] -to "monster:main|altera_reset:reset|pll_lock_i[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[18] -to "monster:main|pcie_wb:\\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_pex10_pcie_hip:\\arria10gx_pex10:hip|currentspeed[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[19] -to "monster:main|pcie_wb:\\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_pex10_pcie_hip:\\arria10gx_pex10:hip|currentspeed[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[20] -to "monster:main|pcie_wb:\\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_pex10_pcie_hip:\\arria10gx_pex10:hip|ev128ns" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[21] -to "monster:main|pcie_wb:\\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_pex10_pcie_hip:\\arria10gx_pex10:hip|ev1us" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[22] -to "monster:main|pcie_wb:\\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_pex10_pcie_hip:\\arria10gx_pex10:hip|lane_act[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[23] -to "monster:main|pcie_wb:\\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_pex10_pcie_hip:\\arria10gx_pex10:hip|lane_act[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[24] -to "monster:main|pcie_wb:\\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_pex10_pcie_hip:\\arria10gx_pex10:hip|lane_act[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[25] -to "monster:main|pcie_wb:\\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_pex10_pcie_hip:\\arria10gx_pex10:hip|lane_act[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[26] -to "monster:main|pcie_wb:\\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_pex10_pcie_hip:\\arria10gx_pex10:hip|ltssmstate[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[27] -to "monster:main|pcie_wb:\\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_pex10_pcie_hip:\\arria10gx_pex10:hip|ltssmstate[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[28] -to "monster:main|pcie_wb:\\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_pex10_pcie_hip:\\arria10gx_pex10:hip|ltssmstate[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[29] -to "monster:main|pcie_wb:\\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_pex10_pcie_hip:\\arria10gx_pex10:hip|ltssmstate[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[30] -to "monster:main|pcie_wb:\\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_pex10_pcie_hip:\\arria10gx_pex10:hip|ltssmstate[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[31] -to "monster:main|pcie_wb:\\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_pex10_pcie_hip:\\arria10gx_pex10:hip|pld_core_ready" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[32] -to "monster:main|pcie_wb:\\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_pex10_pcie_hip:\\arria10gx_pex10:hip|serdes_pll_locked" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[33] -to nPCI_RESET_i -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[34] -to pcie_refclk_i -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[0] -to clk_125m_tcb_pllref_i -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[1] -to clk_125m_tcb_sfpref_i -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[2] -to "monster:main|altera_reset:reset|nresets[0][0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[3] -to "monster:main|altera_reset:reset|nresets[0][1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[4] -to "monster:main|altera_reset:reset|nresets[0][2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[5] -to "monster:main|altera_reset:reset|nresets[1][0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[6] -to "monster:main|altera_reset:reset|nresets[1][1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[7] -to "monster:main|altera_reset:reset|nresets[1][2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[8] -to "monster:main|altera_reset:reset|nresets[2][0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[9] -to "monster:main|altera_reset:reset|nresets[2][1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[10] -to "monster:main|altera_reset:reset|nresets[2][2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[11] -to "monster:main|altera_reset:reset|nresets[3][0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[12] -to "monster:main|altera_reset:reset|nresets[3][1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[13] -to "monster:main|altera_reset:reset|nresets[3][2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[14] -to "monster:main|altera_reset:reset|pll_lock_i[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[15] -to "monster:main|altera_reset:reset|pll_lock_i[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[16] -to "monster:main|altera_reset:reset|pll_lock_i[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[17] -to "monster:main|altera_reset:reset|pll_lock_i[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[18] -to "monster:main|pcie_wb:\\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_pex10_pcie_hip:\\arria10gx_pex10:hip|currentspeed[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[19] -to "monster:main|pcie_wb:\\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_pex10_pcie_hip:\\arria10gx_pex10:hip|currentspeed[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[20] -to "monster:main|pcie_wb:\\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_pex10_pcie_hip:\\arria10gx_pex10:hip|ev128ns" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[21] -to "monster:main|pcie_wb:\\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_pex10_pcie_hip:\\arria10gx_pex10:hip|ev1us" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[22] -to "monster:main|pcie_wb:\\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_pex10_pcie_hip:\\arria10gx_pex10:hip|lane_act[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[23] -to "monster:main|pcie_wb:\\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_pex10_pcie_hip:\\arria10gx_pex10:hip|lane_act[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[24] -to "monster:main|pcie_wb:\\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_pex10_pcie_hip:\\arria10gx_pex10:hip|lane_act[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[25] -to "monster:main|pcie_wb:\\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_pex10_pcie_hip:\\arria10gx_pex10:hip|lane_act[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[26] -to "monster:main|pcie_wb:\\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_pex10_pcie_hip:\\arria10gx_pex10:hip|ltssmstate[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[27] -to "monster:main|pcie_wb:\\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_pex10_pcie_hip:\\arria10gx_pex10:hip|ltssmstate[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[28] -to "monster:main|pcie_wb:\\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_pex10_pcie_hip:\\arria10gx_pex10:hip|ltssmstate[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[29] -to "monster:main|pcie_wb:\\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_pex10_pcie_hip:\\arria10gx_pex10:hip|ltssmstate[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[30] -to "monster:main|pcie_wb:\\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_pex10_pcie_hip:\\arria10gx_pex10:hip|ltssmstate[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[31] -to "monster:main|pcie_wb:\\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_pex10_pcie_hip:\\arria10gx_pex10:hip|pld_core_ready" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[32] -to "monster:main|pcie_wb:\\pcie_y:pcie|pcie_altera:pcie_phy|arria10gx_pex10_pcie_hip:\\arria10gx_pex10:hip|serdes_pll_locked" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[33] -to nPCI_RESET_i -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[34] -to pcie_refclk_i -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_RAM_BLOCK_TYPE=AUTO" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_DATA_BITS=35" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_TRIGGER_BITS=35" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_STORAGE_QUALIFIER_BITS=35" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_NODE_INFO=805334528" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_POWER_UP_TRIGGER=0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_INVERSION_MASK=0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_INVERSION_MASK_LENGTH=127" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_STORAGE_QUALIFIER_INVERSION_MASK_LENGTH=0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_SEGMENT_SIZE=256" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_ATTRIBUTE_MEM_MODE=OFF" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_STATE_FLOW_USE_GENERATED=0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_STATE_BITS=11" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_BUFFER_FULL_STOP=1" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_CURRENT_RESOURCE_WIDTH=1" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_INCREMENTAL_ROUTING=1" -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[0] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[1] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[2] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[3] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[4] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[5] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[6] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[7] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[8] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[9] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[10] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[11] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[12] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[13] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[14] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[15] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[16] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[17] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[18] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[19] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[20] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[21] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[22] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[23] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[24] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[25] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[26] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[27] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[28] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[29] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[30] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[31] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_TRIGGER_LEVEL=1" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_SAMPLE_DEPTH=256" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_TRIGGER_IN_ENABLED=0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_TRIGGER_PIPELINE=0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_RAM_PIPELINE=0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_COUNTER_PIPELINE=0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_ADVANCED_TRIGGER_ENTITY=basic,1," -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_TRIGGER_LEVEL_PIPELINE=1" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_ENABLE_ADVANCED_TRIGGER=0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_FILE db/stp1_auto_stripped.stp
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
