@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 19-Sep-2024
+ *  version : 23-Oct-2024
  *
  * library for uni-chop
  *
@@ -84,6 +84,13 @@ uint64_t unichop_getSysTime()
   gettimeofday(&tv,NULL);
   return tv.tv_sec * (uint64_t)1000000000+ tv.tv_usec * (uint64_t)1000;
 } // unichop_getSysTime()
+
+
+void unichop_t2secs(uint64_t ts, uint32_t *secs, uint32_t *nsecs)
+{
+  *nsecs = (uint32_t)(ts % 1000000000);
+  *secs  = (uint32_t)(ts / 1000000000);
+} // unichop_t2secs
 
 
 const char* unichop_status_text(uint32_t code)
