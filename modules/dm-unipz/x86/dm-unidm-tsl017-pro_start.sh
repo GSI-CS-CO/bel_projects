@@ -53,6 +53,7 @@ eb-fwload dev/wbm0 u 0x0 dmunidm.bin
 echo -e dm-unidm - start: set MAC and IP of gateway and Data Master
 
 dmunipz-ctl dev/wbm0 ebmdm 0x00267b00046b 0xc0a880f7
+dmunipz-ctl dev/wbm0 uni 10000
 
 echo -e dm-unidm - start: make firmware operational
 
