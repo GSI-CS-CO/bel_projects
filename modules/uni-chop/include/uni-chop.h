@@ -21,6 +21,8 @@
 #define UNICHOP_ECADO_STRAHLWEG_READ       0xfa1   // request read data from chopper control; param 0..15: Strahlwegregister; param 16..31: Strahlwegmaske
 #define UNICHOP_ECADO_MIL_SWRITE           0xfb0   // standard data write to MIL;             param: 32..39 ifb addr, 24..31 mod addr, 16..23: reg addr, 0..15 data
 #define UNICHOP_ECADO_MIL_SREAD            0xfb1   // standard data read from MIL;            param: 32..39 ifb addr, 24..31 mod addr, 16..23: reg addr, 0..15 reserved
+#define UNICHOP_ECADO_QRSTOP               0xfc0   // read actual chopper data QR             param: 48..63 t ctrl falling edge, 32..47 t chop rising edge, 16..31 t chop falling edge, 0..15 chop length [us] value 0: no pulse, value 0xffff invalid;
+#define UNICHOP_ECADO_QLSTOP               0xfc1   // read actual chopper data QL             param: 48..63 t ctrl falling edge, 32..47 t chop rising edge, 16..31 t chop falling edge, 0..15 chop length [us] value 0: no pulse, value 0xffff invalid;
 #define UNICHOP_ECADO_HLISTOP              0xfc2   // read actual chopper data HLI            param: 48..63 t ctrl falling edge, 32..47 t chop rising edge, 16..31 t chop falling edge, 0..15 chop length [us] value 0: no pulse, value 0xffff invalid;
 #define UNICHOP_ECADO_HSISTOP              0xfc3   // read actual chopper data HSI            param: 48..63 t ctrl falling edge, 32..47 t chop rising edge, 16..31 t chop falling edge, 0..15 chop length [us] value 0: no pulse, value 0xffff invalid;
 
@@ -39,6 +41,9 @@
 
 
 // specialities
+#define UNICHOP_NSID                          16   // max number of data (SID)
+
+
 // part below provided by Ludwig Hechler and Stefan Rauch
 // interface boards: common function codes
 #define IFB_FC_ADDR_BUS_W                   0x11   // function code, address bus write
@@ -70,8 +75,8 @@
 #define MOD_RPG_IQL_ADDR                    0x02   // Rahmenpulsgenerator IQL, module bus address, FG 450.681
 #define MOD_RPG_HLI_ADDR                    0x03   // Rahmenpulsgenerator HLI, module bus address, FG 450.681
 #define MOD_RPG_HSI_ADDR                    0x04   // Rahmenpulsgenerator HSI, module bus address, FG 450.681
-//#define MOD_RPG_XXX_STARTEVT_REG            0x12   // Rahmenpulsgeneratoren, register/subaddress for start event
-//#define MOD_RPG_XXX_STOPEVT_REG             0x14   // Rahmenpulsgeneratoren, register/subaddress for stop event
+#define MOD_RPG_XXX_GATELENHI_REG           0x42   // Rahmenpulsgeneratoren, register for gate puls length counter, hi word
+#define MOD_RPG_XXX_GATELENLO_REG           0x40   // Rahmenpulsgeneratoren, register for gate puls length counter, lo word (reading this register reset register values)
 
 // interrupts
 //#define UNICHOP_GW_MSI_LATE_EVENT         0x1
