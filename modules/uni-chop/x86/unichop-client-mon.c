@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 20-Jun-2024
+ *  version : 24-Oct-2024
  *
  * subscribes to and displays status of a uni-chop firmware
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define UNICHOP_CLIENT_MON_VERSION 0x000001
+#define UNICHOP_CLIENT_MON_VERSION 0x000007
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -59,6 +59,8 @@ const char* program;
 #define DIMMAXSIZE  1024                 // max size for service names
 #define SCREENWIDTH 1024                 // width of screen
 
+#define  TOLD       3600                 // [s]; if the previous data is more in the past than this value, the data is considered out of date
+
 uint32_t no_link_32    = 0xdeadbeef;
 uint64_t no_link_64    = 0xdeadbeefce420651;
 char     no_link_str[] = "NO_LINK";
@@ -71,34 +73,28 @@ char     header[SCREENWIDTH+1];                             // header line to be
 char     empty[SCREENWIDTH+1];                              // an empty line
 
 const char * sysShortNames[] = {
-  "pzu_qr",
-  "pzu_ql",
-  "pzu_qn",
-  "pzu_un",
-  "pzu_uh",
-  "pzu_at",
-  "pzu_tk",
-  "pzu_f50",
-  "sis18_ring",
-  "esr_ring"
+  "hli",
+  "hsi"
 };
 
-struct unichopGw_t {
-  char        version[DIMCHARSIZE];
-  char        state[DIMCHARSIZE];
-  char        hostname[DIMCHARSIZE];
-  uint64_t    status;
-  monval_t    monData;
+char        dicVersion[DIMCHARSIZE];
+char        dicState[DIMCHARSIZE];
+char        dicHostname[DIMCHARSIZE];
+uint64_t    dicStatus;
+//monval_t    dicMonDataHLI[UNICHOP_NSID];
+//monval_t    dicMonDataHSI[UNICHOP_NSID];
 
-  uint32_t    versionId;
-  uint32_t    stateId;
-  uint32_t    hostnameId;
-  uint32_t    statusId;
-  uint32_t    monDataId;
-}; // struct unichopGw_t
+uint32_t    dicVersionId;
+uint32_t    dicStateId;
+uint32_t    dicHostnameId;
+uint32_t    dicStatusId;
+uint32_t    dicMonDataHLIId[UNICHOP_NSID];
+uint32_t    dicMonDataHSIId[UNICHOP_NSID];
 
-struct unichopGw_t dicSystem;
-
+monData_t   joinedMonData[UNICHOP_NSID];                    // a virtacc can be either HSI or HLI - thus, the data is joined into one set of virtaccs
+time_t      monData_secs[UNICHOP_NSID];                     // UTC seconds
+uint32_t    monData_msecs[UNICHOP_NSID];                    // UTC milliseconds
+ 
 
 // help
 static void help(void) {
@@ -107,7 +103,7 @@ static void help(void) {
   fprintf(stderr, "  -h                  display this help and exit\n");
   fprintf(stderr, "  -e                  display version\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "Use this tool to display system information on the UNICHOP system\n");
+  fprintf(stderr, "Use this tool to display UNILAC chopper status\n");
   fprintf(stderr, "Example1: '%s -s pro'\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
@@ -117,11 +113,34 @@ static void help(void) {
 
 void buildHeader(char * environment)
 {
-  sprintf(title, "\033[7m UNICHOP System Status %3s ------------------------------------------------------------------------------------------------ (units [us] unless explicitly given) -  v%8s\033[0m", environment, unichop_version_text(UNICHOP_CLIENT_MON_VERSION));
-  sprintf(header, "  # MIL domain  version      state        status     #sent/fw    #missd/fw      #err/fw    #burst/fw   #match/x86  r[%%] mode     ave    sdev      min      max         node");    
+  sprintf(title, "\033[7m UNICHOP System Status %3s ----------------------------------------- (units [us] unless explicitly given) -  v%8s\033[0m", environment, unichop_version_text(UNICHOP_CLIENT_MON_VERSION));
+  sprintf(header, " SID what      exe_time    #cycles         #ok #no_trigger   #no_pulse | lenTrig    tChop lenChop\n");    
   sprintf(empty , "                                                                                                                                                                            ");
   //       printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234\n");  
 } // buildHeader
+
+
+// receive monitoring data
+void recMonData(long *tag, monData_t *address, int *size)
+{
+  uint32_t sid;
+  uint32_t secs, msecs;
+  
+
+  sid = *tag;
+  if ((sid < 0) || (sid >= UNICHOP_NSID)) return;
+
+  if (*size == sizeof(monData_t)) {
+    joinedMonData[sid] = *address;
+    dic_get_timestamp(0, &secs, &msecs);
+    monData_secs[sid]  = (time_t)secs;
+    monData_msecs[sid] = msecs;
+  } // if proper size
+  else {
+    monData_msecs[sid] = 0;
+    monData_secs[sid]  = 0;
+  } // else proper size 
+} // recSetValue
 
 
 // add all dim services
@@ -129,26 +148,41 @@ void dicSubscribeServices(char *prefix)
 {
   char name[DIMMAXSIZE];
 
-  sprintf(name, "%s_%s-mon_version_fw", prefix, sysShortNames[i]);
-  dicSystem.versionId   = dic_info_service(name, MONITORED, 0, (dicSystem.version), DIMCHARSIZE, 0, 0, &no_link_32, sizeof(no_link_32));
-  sprintf(name, "%s_%s-mon_state", prefix, sysShortNames[i]);
-  dicSystem.stateId     = dic_info_service(name, MONITORED, 0, (dicSystem.state), DIMCHARSIZE, 0, 0, &no_link_32, sizeof(no_link_32));
-  sprintf(name, "%s_%s-mon_hostname", prefix, sysShortNames[i]);
-  dicSystem.hostnameId  = dic_info_service(name, MONITORED, 0, (dicSystem.hostname), DIMCHARSIZE, 0, 0, &no_link_32, sizeof(no_link_32));
-  sprintf(name, "%s_%s-mon_status", prefix, sysShortNames[i]);
-  dicSystem.statusId    = dic_info_service(name, MONITORED, 0, &(dicSystem.status), sizeof(uint64_t), 0, 0, &no_link_64, sizeof(no_link_64));
-  sprintf(name, "%s_%s-mon_data", prefix, sysShortNames[i]);
-  dicSystem.monDataId    = dic_info_service(name, MONITORED, 0, &(dicSystem.monData), sizeof(dicSystem.monData), 0, 0, &no_link_32, sizeof(no_link_32));   
+  int i;
+
+  sprintf(name, "%s_mon_version_fw", prefix);
+  dicVersionId   = dic_info_service(name, MONITORED, 0, dicVersion,  DIMCHARSIZE,      0, 0, &no_link_32, sizeof(no_link_32));
+  sprintf(name, "%s_mon_state", prefix);
+  dicStateId     = dic_info_service(name, MONITORED, 0, dicState,    DIMCHARSIZE,      0, 0, &no_link_32, sizeof(no_link_32));
+  sprintf(name, "%s_mon_hostname", prefix);
+  dicHostnameId  = dic_info_service(name, MONITORED, 0, dicHostname, DIMCHARSIZE,      0, 0, &no_link_32, sizeof(no_link_32));
+  sprintf(name, "%s_mon_status", prefix);
+  dicStatusId    = dic_info_service(name, MONITORED, 0, &dicStatus,  sizeof(uint64_t), 0, 0, &no_link_64, sizeof(no_link_64));
+
+  
+  for (i=0; i<UNICHOP_NSID; i++) {
+    // HLI
+    sprintf(name, "%s_hli-data_sid%02d", prefix, i);
+    dicMonDataHLIId[i] = dic_info_service(name, MONITORED, 0, 0, recMonData, i, &no_link_32, sizeof(no_link_32));
+
+    // HSI
+    sprintf(name, "%s_hsi-data_sid%02d", prefix, i);
+    dicMonDataHSIId[i] = dic_info_service(name, MONITORED, 0, 0, recMonData, i, &no_link_32, sizeof(no_link_32));
+  } // for i
+          
 } // dicSubscribeServices
 
 
 // send 'clear diag' command to server
-void dicCmdClearDiag(char *prefix, uint32_t indexServer)
+void dicCmdClearDiag(char *prefix, uint32_t sid)
 {
   char name[DIMMAXSIZE];
+  static int data;
 
-  sprintf(name, "%s_%s-mon_cmd_cleardiag", prefix, sysShortNames[indexServer]);
-  dic_cmnd_service(name, 0, 0);
+  data = sid;
+
+  sprintf(name, "%s_mon_cmd_cleardiag", prefix);
+  dic_cmnd_service(name, &data, sizeof(data));
 } // dicCmdClearDiag
 
 
@@ -157,6 +191,28 @@ void printServices()
 {
   int i;
 
+  time_t   time_date;
+  uint64_t actNsecs;
+  time_t   actT;
+
+
+  char     cChopT[64];
+  char     cWhat[32];
+  char     cNCycles[24];
+  char     cNOk[24];
+  char     cNTriggerFails[24];
+  char     cNChopperFails[24];
+  char     cTriggerLen[24];
+  char     cChopperT[24];
+  char     cChopperLen[24];
+
+  char     tmp1[32];
+  char     buff[100];
+
+  
+  /*
+
+  
   char     cStatus[17];
   char     cVersion[9];
   char     cState[11];
@@ -173,64 +229,71 @@ void printServices()
   char     cTSdev[24];
   char     cTMin[24];
   char     cTMax[24];
-  char     buff[100];
-  time_t   time_date;
   uint32_t *tmp;
+  */
+
+  actNsecs  = comlib_getSysTime();
+  actT      = (time_t)(actNsecs / 1000000000);
 
   //printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
 
   // footer with date and time
   time_date = time(0);
   strftime(buff,50,"%d-%b-%y %H:%M",localtime(&time_date));
-  sprintf(footer, "\033[7m exit <q> | clear status <digit> | print status <s> | help <h>                                                                                              %s\033[0m", buff);
-  
+  sprintf(footer, "\033[7m exit <q> | clear status <digit> | help <h>                                                        %s\033[0m", buff);
+
   comlib_term_curpos(1,1);
   
   printf("%s\n", title);
   printf("%s\n", header);
-  if (dicSystem.status    == no_link_64)    sprintf(cStatus,  "%13s",         no_link_str);
-  else                                         sprintf(cStatus,  "%13"PRIx64"",  dicSystem.status);
-  tmp = (uint32_t *)(dicSystem.state);
-  if (*tmp == no_link_32)                      sprintf(cState,   "%10s",         no_link_str);
-  else                                         sprintf(cState,   "%10s",         dicSystem.state); 
-  tmp = (uint32_t *)(dicSystem.version);
-  if (*tmp == no_link_32)                      sprintf(cVersion, "%8s",          no_link_str);
-  else                                         sprintf(cVersion, "%8s",          dicSystem.version); 
-  tmp = (uint32_t *)(dicSystem.hostname);
-  if (*tmp == no_link_32)                      sprintf(cHost,   "%12s",          no_link_str);
-  else                                         sprintf(cHost,   "%12s",          dicSystem.hostname);
-  tmp = (uint32_t *)(&(dicSystem.monData));
-  if (*tmp == no_link_32)                      sprintf(cData,   "%96s",          no_link_str);
-  else  {
-    if (dicSystem.monData.nFwSnd  == -1)    sprintf(cNFwSnd, "%12s" , "nan");
-    else                                       sprintf(cNFwSnd, "%12lu", dicSystem.monData.nFwSnd);
-    if (dicSystem.monData.nFwRecT == -1)    sprintf(cNFwMssd,"%12s" , "nan");
-    else                                       sprintf(cNFwMssd,"%12ld", (int64_t)(dicSystem.monData.nFwSnd - dicSystem.monData.nFwRecT));
-    if (dicSystem.monData.nFwRecErr == -1)  sprintf(cNFwErr, "%12s" , "nan");
-    else                                       sprintf(cNFwErr, "%12u" , dicSystem.monData.nFwRecErr);
-    if (dicSystem.monData.nFwBurst  == -1)  sprintf(cNFwBrst,"%12s" , "nan");
-    else                                       sprintf(cNFwBrst,"%12u" , dicSystem.monData.nFwBurst);
-    if (dicSystem.monData.nMatch  == -1)    sprintf(cNMatch, "%12s" , "nan");        
-    else                                       sprintf(cNMatch, "%12lu", dicSystem.monData.nMatch);
-    sprintf(cRMatch, "%5.1f",  100.0 * dicSystem.monData.nMatch / dicSystem.monData.nStart);
-    sprintf(cMMatch, "%4d"   ,  dicSystem.monData.cMode);
-    if (isnan(dicSystem.monData.tAve))      sprintf(cTAve,   "%7s"  , "nan");        
-    else                                       sprintf(cTAve,   "%7.3f", dicSystem.monData.tAve);
-    if (isnan(dicSystem.monData.tSdev))     sprintf(cTSdev,  "%7s"  , "nan");        
-    else                                       sprintf(cTSdev,  "%7.3f", dicSystem.monData.tSdev);
-    if (isnan(dicSystem.monData.tMin))      sprintf(cTMin,   "%7s"  , "nan");        
-    else                                       sprintf(cTMin,   "%8.3f", dicSystem.monData.tMin);
-    if (isnan(dicSystem.monData.tMax))      sprintf(cTMax,   "%7s"  , "nan");        
-    else                                       sprintf(cTMax,   "%8.3f", dicSystem.monData.tMax);
-    sprintf(cData, "%12s %12s %12s %12s %12s %5s %4s %7s %7s %8s %8s",  cNFwSnd, cNFwMssd, cNFwErr, cNFwBrst, cNMatch, cRMatch, cMMatch, cTAve, cTSdev, cTMin, cTMax);
-  } // else nolink
-    printf(" %2x %10s %8s %10s %13s %109s %12s\n", i, sysShortNames[i], cVersion, cState, cStatus, cData, cHost);
+
+  for (i=0; i<UNICHOP_NSID; i++) {
+    if (monData_secs[i] == 0)                         printf(" %3d NOLINK                                                                          |                         \n", i);
+    else if ((actT - monData_secs[i]) > (time_t)TOLD) printf(" %3d out of date                                                                     |                         \n", i);
+    else {
+      // what
+      if (joinedMonData[i].machine == tagHLI) sprintf(cWhat, "HLI");
+      else                                    sprintf(cWhat, "HSI");
+      
+      // execution time
+      strftime(tmp1, 10, "%H:%M:%S", gmtime(&(monData_secs[i])));
+      sprintf(cChopT, "%8s.%03d", tmp1, monData_msecs[i]);
+
+      // # of cycles
+      sprintf(cNCycles,        "%10d", joinedMonData[i].cyclesN);
+
+      // # of succesful executions
+      sprintf(cNOk,            "%10d", joinedMonData[i].pulseStopN);
+
+      // # of trigger failures
+      sprintf(cNTriggerFails,  "%10d", joinedMonData[i].triggerErrN);
+
+      // # of choopper failures
+      sprintf(cNChopperFails,  "%10d", joinedMonData[i].pulseStopErrN);
+      
+      // trigger length
+      if (!joinedMonData[i].triggerFlag)    sprintf(cTriggerLen, "%7d", joinedMonData[i].triggerLen);
+      else                                  sprintf(cTriggerLen, "    ---");
+
+      // chopper time
+      if (!joinedMonData[i].pulseStartFlag) sprintf(cChopperT  , "%7d", joinedMonData[i].pulseStartT);
+      else                                  sprintf(cChopperT  , "    ---");
+
+      // chopper length
+      if (!joinedMonData[i].pulseStopFlag)  sprintf(cChopperLen, "%7d", joinedMonData[i].pulseLen);
+      else                                  sprintf(cChopperLen, "    ---");
+
+      printf(" %3x %5s %12s %10s %10s %10s | %7s %7s %7s\n", i, cWhat, cChopT, cNOk, cNTriggerFails, cNChopperFails, cTriggerLen, cChopperT, cChopperLen);
+
+    } // else: data available
+  } // for i
 
   for (i=0; i<10; i++) printf("%s\n", empty);
   printf("%s\n", footer);
 } // printServices
 
 
+/*
 // print status text to screen
 void printStatusText()
 {
@@ -247,13 +310,11 @@ void printStatusText()
   printf("press any key to continue\n");
   while (!comlib_term_getChar()) {usleep(200000);}
 } // printStatusText
-
+*/
 
 // print help text to screen
 void printHelpText()
 {
-  int i;
-
   comlib_term_curpos(1,1);
   printf("%s\n", title);
   
@@ -274,7 +335,7 @@ int main(int argc, char** argv) {
   int      getVersion;
 
   char     userInput;
-  int      sysId;
+  int      sid;
   int      quit;
 
   char     prefix[DIMMAXSIZE];
@@ -331,14 +392,14 @@ int main(int argc, char** argv) {
   while (!quit) {
     printServices();
     if (!quit) {
-      sysId = 0xffff;
+      sid = 0xffff;
       userInput = comlib_term_getChar();
       switch (userInput) {
         case 'a' ... 'f' :
-          sysId = userInput - 87;                 // no break on purpose
+          sid = userInput - 87;                 // no break on purpose
         case '0' ... '9' :
-          if (sysId == 0xffff) sysId = userInput - 48; // ugly
-          dicCmdClearDiag(prefix, sysId);
+          if (sid == 0xffff) sid = userInput - 48; // ugly
+          dicCmdClearDiag(prefix, (uint32_t)sid);
           break;
         case 'h'         :
           printHelpText();
@@ -347,7 +408,7 @@ int main(int argc, char** argv) {
           quit = 1;
           break;
         case 's'         :
-          printStatusText();
+          //printStatusText();
           break;
         default          :
           usleep(1000000);
