@@ -86,51 +86,86 @@ char      disVersion[DIMCHARSIZE];      // firmware version
 char      disState[DIMCHARSIZE];        // firmware state
 char      disHostname[DIMCHARSIZE];     // hostname
 uint64_t  disStatus;                    // firmware status
-monData_t disMonData[UNICHOP_NSID*2];   // max 16 virtaccs; 0..15: HLI; 16..31: HSI; contains chopper data;
+monData_t disMonDataHLI[UNICHOP_NSID];  // max 16 virtaccs; 0..15: HLI; 16..31: HSI; contains chopper data;
+monData_t disMonDataHSI[UNICHOP_NSID];  // max 16 virtaccs; 0..15: HLI; 16..31: HSI; contains chopper data;
 
 uint32_t  disVersionId      = 0;
 uint32_t  disStateId        = 0;
 uint32_t  disStatusId       = 0;
 uint32_t  disHostnameId     = 0;
-uint32_t  disMonDataId[UNICHOP_NSID*2];
+uint32_t  disMonDataHLIId[UNICHOP_NSID];
+uint32_t  disMonDataHSIId[UNICHOP_NSID];
 uint32_t  disCmdClearId     = 0;
 
 uint32_t  one_ms_ns = 1000;
 
 void clearStats(int index)
 {
-  disMonData[index].cyclesN         = 0;
-  disMonData[index].triggerLen      = 0;
-  disMonData[index].triggerN        = 0;
-  disMonData[index].triggerErrN     = 0;
-  disMonData[index].triggerFlag     = 0;
-  disMonData[index].triggerErr      = 0;
-  disMonData[index].pulseStartT     = 0;
-  disMonData[index].pulseStartN     = 0;
-  disMonData[index].pulseStartErrN  = 0;
-  disMonData[index].pulseStartFlag  = 0;
-  disMonData[index].pulseStartErr   = 0;
-  disMonData[index].pulseStopT      = 0;
-  disMonData[index].pulseStopN      = 0;
-  disMonData[index].pulseStopErrN   = 0;
-  disMonData[index].pulseStopFlag   = 0;
-  disMonData[index].pulseStopErr    = 0;
-  disMonData[index].pulseLen        = 0;
+  disMonDataHLI[index].cyclesN         = 0;
+  disMonDataHLI[index].triggerLen      = 0;
+  disMonDataHLI[index].triggerN        = 0;
+  disMonDataHLI[index].triggerErrN     = 0;
+  disMonDataHLI[index].triggerFlag     = 0;
+  disMonDataHLI[index].triggerErr      = 0;
+  disMonDataHLI[index].pulseStartT     = 0;
+  disMonDataHLI[index].pulseStartN     = 0;
+  disMonDataHLI[index].pulseStartErrN  = 0;
+  disMonDataHLI[index].pulseStartFlag  = 0;
+  disMonDataHLI[index].pulseStartErr   = 0;
+  disMonDataHLI[index].pulseStopT      = 0;
+  disMonDataHLI[index].pulseStopN      = 0;
+  disMonDataHLI[index].pulseStopErrN   = 0;
+  disMonDataHLI[index].pulseStopFlag   = 0;
+  disMonDataHLI[index].pulseStopErr    = 0;
+  disMonDataHLI[index].pulseLen        = 0;
+  disMonDataHLI[index].sid             = index;
+  disMonDataHLI[index].machine         = tagHLI;
+
+  disMonDataHSI[index].cyclesN         = 0;
+  disMonDataHSI[index].triggerLen      = 0;
+  disMonDataHSI[index].triggerN        = 0;
+  disMonDataHSI[index].triggerErrN     = 0;
+  disMonDataHSI[index].triggerFlag     = 0;
+  disMonDataHSI[index].triggerErr      = 0;
+  disMonDataHSI[index].pulseStartT     = 0;
+  disMonDataHSI[index].pulseStartN     = 0;
+  disMonDataHSI[index].pulseStartErrN  = 0;
+  disMonDataHSI[index].pulseStartFlag  = 0;
+  disMonDataHSI[index].pulseStartErr   = 0;
+  disMonDataHSI[index].pulseStopT      = 0;
+  disMonDataHSI[index].pulseStopN      = 0;
+  disMonDataHSI[index].pulseStopErrN   = 0;
+  disMonDataHSI[index].pulseStopFlag   = 0;
+  disMonDataHSI[index].pulseStopErr    = 0;
+  disMonDataHSI[index].pulseLen        = 0;
+  disMonDataHSI[index].sid             = index;
+  disMonDataHSI[index].machine         = tagHSI;
+    
+
 } // clearStats
 
 
 // update value
-void disUpdateData(int index, uint64_t tChop, monData_t data)
+void disUpdateData(uint32_t tag, int sid, uint64_t tChop, monData_t data)
 {
   uint32_t secs;
   uint32_t msecs;
   
   unichop_t2secs(tChop, &secs, &msecs);
   msecs  /= 1000000;
+
+  if (tag = tagHLI) {
+    disMonDataHLI[sid] = data;
+    dis_set_timestamp(disMonDataHLIId[sid], secs, msecs);
+    dis_update_service(disMonDataHLIId[sid]);
+  } // if tagHLI
+
+  if (tag = tagHSI) {
+    disMonDataHSI[sid] = data;
+    dis_set_timestamp(disMonDataHSIId[sid], secs, msecs);
+    dis_update_service(disMonDataHSIId[sid]);
+  } // if tagHLI
   
-  disMonData[index] = data;
-  dis_set_timestamp(disMonDataId[index], secs, msecs);
-  dis_update_service(disMonDataId[index]);
 } // disUpdateData
 
 
@@ -144,7 +179,6 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
   //uint32_t            mGid;            // GID
   uint32_t            mSid;            // SID
   //uint32_t            mEvtNo;          // event number
-  int                 index;           // 0..15: HLI; 16..31: HSI
   uint32_t            triggerLen;
   uint32_t            pulseStart;
   uint32_t            pulseStop;
@@ -159,19 +193,19 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
   if (tag   > tagHSI)                     return;  // illegal tag
   if (mSid  > UNICHOP_NSID)               return;  // out of range
 
-  index = -1; 
   switch (tag) {
     case tagHLI   :
-      index = 0;
     case tagHSI   :                                // this is an OR, no break on purpose;
-      if (index != 0) index = UNICHOP_NSID;
 
-      index                     += mSid;
+      if (tag == tagHLI) monData = disMonDataHLI[mSid];
+      if (tag == tagHSI) monData = disMonDataHSI[mSid];
+
       triggerLen                 = ((param & 0xffff000000000000) >> 48);
       pulseStart                 = ((param & 0x0000ffff00000000) >> 32);
       pulseStop                  = ((param & 0x00000000ffff0000) >> 16);
 
-      disMonData[index].cyclesN++;
+      monData.cyclesN++;
+
       tChopUtc                   = deadline.getTAI();
 
       switch (triggerLen) {
@@ -233,7 +267,7 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
 
       if ((monData.pulseStopErr == 0) && (monData.pulseStartErr == 0)) monData.pulseLen = monData.pulseStopT - monData.pulseStartT;
 
-      disUpdateData(index, tChopUtc, monData);
+      disUpdateData(tag, mSid, tChopUtc, monData);
       break;
     default         :
       ;
@@ -276,16 +310,14 @@ void disAddServices(char *prefix)
   disStatusId     = dis_add_service(name, "X", &disStatus, sizeof(disStatus), 0 , 0);
 
   // monitoring data service
-  // HLI
   for (i=0; i < UNICHOP_NSID; i++) {
+    // HLI
     sprintf(name, "%s_hli-data_sid%02d", prefix, i);
-    disMonDataId[i]  = dis_add_service(name, "I:17", &(disMonData[i]), sizeof(monData_t), 0, 0);
-  } // for i
+    disMonDataHLIId[i]  = dis_add_service(name, "I:18", &(disMonDataHLI[i]), sizeof(monData_t), 0, 0);
 
-  // HSI
-  for (i=UNICHOP_NSID; i < 2*UNICHOP_NSID; i++) {
-    sprintf(name, "%s_hsi-data_sid%02d", prefix, i-UNICHOP_NSID);
-    disMonDataId[i]  = dis_add_service(name, "I:17", &(disMonData[i]), sizeof(monData_t), 0, 0);
+    // HSI
+    sprintf(name, "%s_hsi-data_sid%02d", prefix, i);
+    disMonDataHSIId[i]  = dis_add_service(name, "I:18", &(disMonDataHSI[i]), sizeof(monData_t), 0, 0);
   } // for i
 
   // command clear
@@ -383,7 +415,7 @@ int main(int argc, char** argv)
   domainName = argv[++optind];
   gethostname(disHostname, 32);
   
-  sprintf(prefix, "unichop_%s-mon", domainName);
+  sprintf(prefix, "unichop_%s_mon", domainName);
 
   if (startServer) {
     printf("%s: starting server using prefix %s\n", program, prefix);

@@ -31,15 +31,15 @@ $(info compiling x86 binaries for $(SYSENV))
 $(info ours CCFLAGS for c code is $(CCFLAGS))
 $(info ours CXFLAGS for c++ code is $(CXFLAGS))
 
-TARGETS     := unichop-ctl unichop-serv-mon #unichop-client-mon 
+TARGETS     := unichop-ctl unichop-serv-mon unichop-client-mon 
 
 all: lib $(TARGETS)
 
 unichop-ctl: unichop-ctl.c
 	$(CC) $(CFLAGS) $(CCFLAGS) -o unichop-ctl unichop-ctl.c $(LIBS)
 
-#unichop-client-mon: unichop-client-mon.c
-#	$(CC) $(CFLAGS) $(CCFLAGS) -o unichop-client-mon unichop-client-mon.c $(LIBS) -ldim -lpthread 
+unichop-client-mon: unichop-client-mon.c
+	$(CC) $(CFLAGS) $(CCFLAGS) -o unichop-client-mon unichop-client-mon.c $(LIBS) -ldim -lpthread 
 
 unichop-serv-mon: unichop-serv-mon.cpp
 	$(CXX) $(CFLAGS) $(CXFLAGS) ../../common-libs/x86/common-lib.c -o unichop-serv-mon unichop-serv-mon.cpp $(XLIBS) -ldim -lpthread

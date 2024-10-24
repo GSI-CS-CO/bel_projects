@@ -92,6 +92,8 @@ extern "C" {
     int32_t   pulseStopFlag;                             // ... detected
     uint32_t  pulseStopErr;                              // ... error
     uint32_t  pulseLen;                                  // length of chopper pulse
+    uint32_t  sid;                                       // sequence ID
+    uint32_t  machine;                                   // 'tag'
   } monData_t;
     
   // ---------------------------------
