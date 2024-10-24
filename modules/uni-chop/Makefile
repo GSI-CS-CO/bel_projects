@@ -3,7 +3,7 @@
 # Set SYSENV to the target system environment (YOCTO, ACC7, ACC9, OPT)
 # Example build:
 #   'make clean'                                                 
-#   'make MASP=NO ENV=int SYSENV=YOCTO PREFIX= all'                                   (hack: leave PREFIX empty for SCU path)
+#   'make ENV=int SYSENV=YOCTO PREFIX= all'                                           (hack: leave PREFIX empty for SCU path)
 # Example deploy (for ASL only):
 #   'make PREFIX= SYSENV=YOCTO STAGING=/common/export/timing-rte/unichop-dev deploy'  (hack: leave PREFIX empty for SCU path)
 #   'make PREFIX= SYSENV=YOCTO STAGING=/common/export/timing-rte/unichop deploy'      (hack: leave PREFIX empty for SCU path)
@@ -29,12 +29,12 @@ ARCH        ?=
 endif
 
 ifeq ($(SYSENV), YOCTO)
-USRPATH     := /common/usr/timing/unichop/yocto/usr
+USRPATH     := /common/usr/timing/user-dietrich/yocto/usr
 ARCH        := /x86_64
 endif
 
 ifeq ($(SYSENV), ACC7)
-USRPATH     := /common/usr/timing/unichop/centos7/usr/
+USRPATH     := /common/usr/timing/user-dietrich/centos7/usr/
 ARCH        := /x86_64
 endif
 
@@ -86,8 +86,8 @@ deploy:
 	cp $(SW)/unichop-ctl $(STAGING)$(ARCH)$(PREFIX)/usr/bin               # '/usr' is a hack
 	cp -a $(SW)/*.so.* $(STAGING)$(ARCH)$(PREFIX)/usr/lib               # '/usr' is a hack
 	cp -a $(SW)/*.so $(STAGING)$(ARCH)$(PREFIX)/usr/lib                 # '/usr' is a hack
-#	cp $(USRPATH)/lib/libdim.so $(STAGING)$(ARCH)$(PREFIX)/usr/lib      # '/usr' is a hack
-#	cp $(SW)/unichop-serv-mon $(STAGING)$(ARCH)$(PREFIX)/usr/bin          # '/usr' is a hack
+	cp $(USRPATH)/lib/libdim.so $(STAGING)$(ARCH)$(PREFIX)/usr/lib      # '/usr' is a hack
+	cp $(SW)/unichop-serv-mon $(STAGING)$(ARCH)$(PREFIX)/usr/bin          # '/usr' is a hack
 #	cp $(SW)/unichop-client-mon $(STAGING)$(ARCH)$(PREFIX)/usr/bin        # '/usr' is a hack
 	cp $(FW)/*.bin $(STAGING)/firmware                   
 

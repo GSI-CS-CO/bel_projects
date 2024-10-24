@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-Sep-2024
+ *  version : 23-Oct-2024
  *
  * monitors uni-chop firmware
  *
@@ -276,8 +276,15 @@ void disAddServices(char *prefix)
   disStatusId     = dis_add_service(name, "X", &disStatus, sizeof(disStatus), 0 , 0);
 
   // monitoring data service
+  // HLI
   for (i=0; i < UNICHOP_NSID; i++) {
-    sprintf(name, "%s_data", prefix);
+    sprintf(name, "%s_hli-data_sid%02d", prefix, i);
+    disMonDataId[i]  = dis_add_service(name, "I:17", &(disMonData[i]), sizeof(monData_t), 0, 0);
+  } // for i
+
+  // HSI
+  for (i=UNICHOP_NSID; i < 2*UNICHOP_NSID; i++) {
+    sprintf(name, "%s_hsi-data_sid%02d", prefix, i-UNICHOP_NSID);
     disMonDataId[i]  = dis_add_service(name, "I:17", &(disMonData[i]), sizeof(monData_t), 0, 0);
   } // for i
 
@@ -325,8 +332,8 @@ int main(int argc, char** argv)
 
   // variables attach, remove
   char    *deviceName = NULL;
+  char    *domainName = NULL;
 
-  char     domainName[NAMELEN];          // name of MIL domain
   char     prefix[NAMELEN*2];            // prefix DIM services
   char     disName[DIMMAXSIZE];          // name of DIM server
   uint32_t verLib;                       // library version
@@ -373,10 +380,10 @@ int main(int argc, char** argv)
   } // if optind
 
   deviceName = argv[optind];
+  domainName = argv[++optind];
   gethostname(disHostname, 32);
   
-  if (optind+1 < argc) sprintf(prefix, "unichop_%s_%s-mon", argv[++optind], domainName);
-  else                 sprintf(prefix, "unichop_%s-mon", domainName);
+  sprintf(prefix, "unichop_%s-mon", domainName);
 
   if (startServer) {
     printf("%s: starting server using prefix %s\n", program, prefix);
