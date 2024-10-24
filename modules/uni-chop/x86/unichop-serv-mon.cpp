@@ -154,13 +154,13 @@ void disUpdateData(uint32_t tag, int sid, uint64_t tChop, monData_t data)
   unichop_t2secs(tChop, &secs, &msecs);
   msecs  /= 1000000;
 
-  if (tag = tagHLI) {
+  if (tag == tagHLI) {
     disMonDataHLI[sid] = data;
     dis_set_timestamp(disMonDataHLIId[sid], secs, msecs);
     dis_update_service(disMonDataHLIId[sid]);
   } // if tagHLI
 
-  if (tag = tagHSI) {
+  if (tag == tagHSI) {
     disMonDataHSI[sid] = data;
     dis_set_timestamp(disMonDataHSIId[sid], secs, msecs);
     dis_update_service(disMonDataHSIId[sid]);
@@ -200,22 +200,26 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
       if (tag == tagHLI) monData = disMonDataHLI[mSid];
       if (tag == tagHSI) monData = disMonDataHSI[mSid];
 
+      // printf("tag %d, ncycles %d, sid %d\n", tag, monData.cyclesN, mSid);
+
       triggerLen                 = ((param & 0xffff000000000000) >> 48);
       pulseStart                 = ((param & 0x0000ffff00000000) >> 32);
       pulseStop                  = ((param & 0x00000000ffff0000) >> 16);
 
       monData.cyclesN++;
+      monData.machine            = tag;
+      monData.sid                = mSid;
 
-      tChopUtc                   = deadline.getTAI();
+      tChopUtc                   = deadline.getUTC();
 
       switch (triggerLen) {
-        case 0x7fff :
+        case UNICHOP_U16_INVALID :
           monData.triggerLen     = 0x7fffffff;
           monData.triggerFlag    = 0;
           monData.triggerErr     = 1;
           monData.triggerErrN++;
           break;
-        case 0xffff :
+        case UNICHOP_U16_NODATA  :
           monData.triggerLen     = 0;
           monData.triggerFlag    = 0;
           monData.triggerErr     = 0;
@@ -228,13 +232,13 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
       } // switch triggerLen
 
       switch (pulseStart) {
-        case 0x7fff :
+        case UNICHOP_U16_INVALID :
           monData.pulseStartT    = 0x7fffffff;
           monData.pulseStartFlag = 0;
           monData.pulseStartErr  = 1;
           monData.pulseStartErrN++;
           break;
-        case 0xffff :
+        case UNICHOP_U16_NODATA  :
           monData.pulseStartT    = 0;
           monData.pulseStartFlag = 0;
           monData.pulseStartErr  = 0;
@@ -247,13 +251,13 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
       } // switch pulseStart
 
       switch (pulseStop) {
-        case 0x7fff :
+        case UNICHOP_U16_INVALID :
           monData.pulseStopT     = 0x7fffffff;
           monData.pulseStopFlag  = 0;
           monData.pulseStopErr   = 1;
           monData.pulseStopErrN++;
           break;
-        case 0xffff :
+        case UNICHOP_U16_NODATA  :
           monData.pulseStopT     = 0;
           monData.pulseStopFlag  = 0;
           monData.pulseStopErr   = 0;
@@ -313,11 +317,11 @@ void disAddServices(char *prefix)
   for (i=0; i < UNICHOP_NSID; i++) {
     // HLI
     sprintf(name, "%s_hli-data_sid%02d", prefix, i);
-    disMonDataHLIId[i]  = dis_add_service(name, "I:18", &(disMonDataHLI[i]), sizeof(monData_t), 0, 0);
+    disMonDataHLIId[i]  = dis_add_service(name, "I", &(disMonDataHLI[i]), sizeof(monData_t), 0, 0);
 
     // HSI
     sprintf(name, "%s_hsi-data_sid%02d", prefix, i);
-    disMonDataHSIId[i]  = dis_add_service(name, "I:18", &(disMonDataHSI[i]), sizeof(monData_t), 0, 0);
+    disMonDataHSIId[i]  = dis_add_service(name, "I", &(disMonDataHSI[i]), sizeof(monData_t), 0, 0);
   } // for i
 
   // command clear
@@ -420,7 +424,7 @@ int main(int argc, char** argv)
   if (startServer) {
     printf("%s: starting server using prefix %s\n", program, prefix);
 
-    for (i=0; i<UNICHOP_NSID*2; i++) clearStats(i);
+    for (i=0; i<UNICHOP_NSID; i++) clearStats(i);
     disAddServices(prefix);
     
     sprintf(disName, "%s", prefix);
