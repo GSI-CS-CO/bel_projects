@@ -104,7 +104,7 @@ static void help(void) {
   fprintf(stderr, "  -e                  display version\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to display UNILAC chopper status\n");
-  fprintf(stderr, "Example1: '%s -s pro'\n", program);
+  fprintf(stderr, "Example1: '%s pro'\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
   fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", unichop_version_text(UNICHOP_CLIENT_MON_VERSION));
@@ -113,25 +113,30 @@ static void help(void) {
 
 void buildHeader(char * environment)
 {
-  sprintf(title, "\033[7m UNICHOP System Status %3s ----------------------------------------- (units [us] unless explicitly given) -  v%8s\033[0m", environment, unichop_version_text(UNICHOP_CLIENT_MON_VERSION));
-  sprintf(header, " SID what      exe_time    #cycles         #ok #no_trigger   #no_pulse | lenTrig    tChop lenChop\n");    
-  sprintf(empty , "                                                                                                                                                                            ");
+  sprintf(title, "\033[7m UNICHOP System Status %3s --------------- (units [us] unless explicitly given) -  v%8s\033[0m", environment, unichop_version_text(UNICHOP_CLIENT_MON_VERSION));
+  sprintf(header, " SID what          UTC    #cycles        #ok   #no_trig  #no_pulse | lenTrig   tChop lenChop");    
+  sprintf(empty , "                                                                                            ");
   //       printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234\n");  
 } // buildHeader
 
 
 // receive monitoring data
-void recMonData(long *tag, monData_t *address, int *size)
+void recMonData(long *tag, int *address, int *size)
 {
-  uint32_t sid;
-  uint32_t secs, msecs;
-  
+  uint32_t  sid;
+  uint32_t  secs, msecs;
+  monData_t *monData;
 
-  sid = *tag;
+  sid     = (uint32_t)(*tag);
+  monData = (monData_t *)address;
+
+  //printf("received service %d, size %d, mondata size %d\n", sid, *size, sizeof(monData_t));
+  
   if ((sid < 0) || (sid >= UNICHOP_NSID)) return;
 
   if (*size == sizeof(monData_t)) {
-    joinedMonData[sid] = *address;
+    joinedMonData[sid] = *monData;
+    //printf("sid %d, cycles %d\n", sid, joinedMonData[sid].cyclesN);;
     dic_get_timestamp(0, &secs, &msecs);
     monData_secs[sid]  = (time_t)secs;
     monData_msecs[sid] = msecs;
@@ -139,7 +144,7 @@ void recMonData(long *tag, monData_t *address, int *size)
   else {
     monData_msecs[sid] = 0;
     monData_secs[sid]  = 0;
-  } // else proper size 
+  } // else proper size
 } // recSetValue
 
 
@@ -149,27 +154,33 @@ void dicSubscribeServices(char *prefix)
   char name[DIMMAXSIZE];
 
   int i;
+  static monData_t dummy;
 
   sprintf(name, "%s_mon_version_fw", prefix);
-  dicVersionId   = dic_info_service(name, MONITORED, 0, dicVersion,  DIMCHARSIZE,      0, 0, &no_link_32, sizeof(no_link_32));
+  dicVersionId   = dic_info_service(name, MONITORED, 0, dicVersion,  DIMCHARSIZE,       0, 0, &no_link_32, sizeof(no_link_32));
   sprintf(name, "%s_mon_state", prefix);
-  dicStateId     = dic_info_service(name, MONITORED, 0, dicState,    DIMCHARSIZE,      0, 0, &no_link_32, sizeof(no_link_32));
+  dicStateId     = dic_info_service(name, MONITORED, 0, dicState,    DIMCHARSIZE,       0, 0, &no_link_32, sizeof(no_link_32));
   sprintf(name, "%s_mon_hostname", prefix);
-  dicHostnameId  = dic_info_service(name, MONITORED, 0, dicHostname, DIMCHARSIZE,      0, 0, &no_link_32, sizeof(no_link_32));
+  dicHostnameId  = dic_info_service(name, MONITORED, 0, dicHostname, DIMCHARSIZE,       0, 0, &no_link_32, sizeof(no_link_32));
   sprintf(name, "%s_mon_status", prefix);
-  dicStatusId    = dic_info_service(name, MONITORED, 0, &dicStatus,  sizeof(uint64_t), 0, 0, &no_link_64, sizeof(no_link_64));
+  dicStatusId    = dic_info_service(name, MONITORED, 0, &dicStatus,  sizeof(dicStatus), 0, 0, &no_link_64, sizeof(no_link_64));
 
-  
+  //  printf("balbal\n");
+
+  //dicMonDataHLIId[0] = dic_info_service(name, MONITORED, 0, &(joinedMonData[0]), sizeof(monData_t), 0, 0, &no_link_32, sizeof(no_link_32));
+
   for (i=0; i<UNICHOP_NSID; i++) {
     // HLI
-    sprintf(name, "%s_hli-data_sid%02d", prefix, i);
-    dicMonDataHLIId[i] = dic_info_service(name, MONITORED, 0, 0, recMonData, i, &no_link_32, sizeof(no_link_32));
+    sprintf(name, "%s_mon_hli-data_sid%02d", prefix, i);
+    //printf("name %s\n", name);
+    dicMonDataHLIId[i] = dic_info_service_stamped(name, MONITORED, 0, 0, 0, recMonData, i, &no_link_32, sizeof(no_link_32));
 
     // HSI
-    sprintf(name, "%s_hsi-data_sid%02d", prefix, i);
-    dicMonDataHSIId[i] = dic_info_service(name, MONITORED, 0, 0, recMonData, i, &no_link_32, sizeof(no_link_32));
+    sprintf(name, "%s_mon_hsi-data_sid%02d", prefix, i);
+    //printf("name %s\n", name);   
+    dicMonDataHSIId[i] = dic_info_service_stamped(name, MONITORED, 0, 0, 0, recMonData, i, &no_link_32, sizeof(no_link_32));
   } // for i
-          
+  
 } // dicSubscribeServices
 
 
@@ -200,8 +211,8 @@ void printServices()
   char     cWhat[32];
   char     cNCycles[24];
   char     cNOk[24];
-  char     cNTriggerFails[24];
-  char     cNChopperFails[24];
+  char     cNNoTrigger[24];
+  char     cNNoChopper[24];
   char     cTriggerLen[24];
   char     cChopperT[24];
   char     cChopperLen[24];
@@ -240,7 +251,7 @@ void printServices()
   // footer with date and time
   time_date = time(0);
   strftime(buff,50,"%d-%b-%y %H:%M",localtime(&time_date));
-  sprintf(footer, "\033[7m exit <q> | clear status <digit> | help <h>                                                        %s\033[0m", buff);
+  sprintf(footer, "\033[7m exit <q> | clear status <digit> | help <h>                                  %s\033[0m", buff);
 
   comlib_term_curpos(1,1);
   
@@ -248,8 +259,9 @@ void printServices()
   printf("%s\n", header);
 
   for (i=0; i<UNICHOP_NSID; i++) {
-    if (monData_secs[i] == 0)                         printf(" %3d NOLINK                                                                          |                         \n", i);
-    else if ((actT - monData_secs[i]) > (time_t)TOLD) printf(" %3d out of date                                                                     |                         \n", i);
+    if (monData_secs[i] == 0)                         printf(" %3x NOLINK                                                        |                         \n", i);
+    else if (joinedMonData[i].cyclesN == 0)           printf(" %3x no data                                                       |                         \n", i);
+    else if ((actT - monData_secs[i]) > (time_t)TOLD) printf(" %3x out of date                                                   |                         \n", i);
     else {
       // what
       if (joinedMonData[i].machine == tagHLI) sprintf(cWhat, "HLI");
@@ -260,37 +272,44 @@ void printServices()
       sprintf(cChopT, "%8s.%03d", tmp1, monData_msecs[i]);
 
       // # of cycles
-      sprintf(cNCycles,        "%10d", joinedMonData[i].cyclesN);
+      sprintf(cNCycles,     "%10d", joinedMonData[i].cyclesN);
 
       // # of succesful executions
-      sprintf(cNOk,            "%10d", joinedMonData[i].pulseStopN);
+      sprintf(cNOk,         "%10d", joinedMonData[i].pulseStopN);
 
       // # of trigger failures
-      sprintf(cNTriggerFails,  "%10d", joinedMonData[i].triggerErrN);
+      sprintf(cNNoTrigger,  "%10d", joinedMonData[i].cyclesN - joinedMonData[i].triggerN);
 
       // # of choopper failures
-      sprintf(cNChopperFails,  "%10d", joinedMonData[i].pulseStopErrN);
+      sprintf(cNNoChopper,  "%10d", joinedMonData[i].cyclesN - joinedMonData[i].pulseStopN);
       
       // trigger length
-      if (!joinedMonData[i].triggerFlag)    sprintf(cTriggerLen, "%7d", joinedMonData[i].triggerLen);
-      else                                  sprintf(cTriggerLen, "    ---");
+      if (joinedMonData[i].triggerFlag)    sprintf(cTriggerLen, "%7d", joinedMonData[i].triggerLen);
+      else                                 sprintf(cTriggerLen, "    ---");
 
       // chopper time
-      if (!joinedMonData[i].pulseStartFlag) sprintf(cChopperT  , "%7d", joinedMonData[i].pulseStartT);
-      else                                  sprintf(cChopperT  , "    ---");
+      if (joinedMonData[i].pulseStartFlag) sprintf(cChopperT  , "%7d", joinedMonData[i].pulseStartT);
+      else                                 sprintf(cChopperT  , "    ---");
 
       // chopper length
-      if (!joinedMonData[i].pulseStopFlag)  sprintf(cChopperLen, "%7d", joinedMonData[i].pulseLen);
-      else                                  sprintf(cChopperLen, "    ---");
+      if (joinedMonData[i].pulseStopFlag)  sprintf(cChopperLen, "%7d", joinedMonData[i].pulseLen);
+      else                                 sprintf(cChopperLen, "    ---");
 
-      printf(" %3x %5s %12s %10s %10s %10s | %7s %7s %7s\n", i, cWhat, cChopT, cNOk, cNTriggerFails, cNChopperFails, cTriggerLen, cChopperT, cChopperLen);
-
+      printf(" %3x %4s %12s %10s %10s %10s %10s | %7s %7s %7s\n", i, cWhat, cChopT, cNCycles, cNOk, cNNoTrigger, cNNoChopper, cTriggerLen, cChopperT, cChopperLen);
     } // else: data available
   } // for i
 
-  for (i=0; i<10; i++) printf("%s\n", empty);
+  /*
+  printf("%s\n", empty);
+  printf("host     : %s\n" , dicHostname);
+  printf("version  : %s\n" , dicVersion);
+  printf("state    : %s\n" , dicState);
+  printf("status   : %lu\n", dicStatus);
+  */
+
+  for (i=0; i<3; i++) printf("%s\n", empty);
   printf("%s\n", footer);
-} // printServices
+} // printServicesq
 
 
 /*
