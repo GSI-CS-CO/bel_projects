@@ -99,7 +99,7 @@ uint32_t  disMonDataHLIId[UNICHOP_NSID];
 uint32_t  disMonDataHSIId[UNICHOP_NSID];
 uint32_t  disCmdClearId     = 0;
 
-uint32_t  one_ms_ns = 10000000;
+uint32_t  one_ms_ns = 1000000;
 
 void clearStats(int index)
 {
