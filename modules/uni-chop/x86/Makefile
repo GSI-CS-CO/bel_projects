@@ -21,7 +21,7 @@ EXTRA_FLAGS ?= $(PRODUCTIVE)
 CCFLAGS     ?= $(EXTRA_FLAGS) -I$(EB) -I$(USRPATH)/include -I$(FW) -I../include -I../../common-libs/include 
 LIBS        ?= -L. -L$(EB)/.libs -L$(USRPATH)/lib -Wl,-rpath,$(PREFIX)/lib -letherbone -lm -lunichoplib
 # the following is for c++ code
-CXFLAGS     ?= `pkg-config  saftlib --cflags` -I$(ASLINC) $(CCFLAGS)
+CXFLAGS     ?= `pkg-config  saftlib --cflags` -I$(ASLINC) -I$(ASLINC2) $(CCFLAGS)
 XLIBS       ?= `pkg-config  saftlib --libs` -L$(ASLLIB) $(LIBS)
 
 $(info PRO is $(PRO))

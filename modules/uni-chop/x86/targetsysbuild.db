@@ -36,5 +36,6 @@ EB          ?= ../../../ip_cores/etherbone-core/api
 CFLAGS      ?= -Wall -O2 -g
 CXX         := g++ --std=c++0x
 ASLINC      := $(PKG_CONFIG_PATH)../../include/saftlib
+ASLINC2     := $(PKG_CONFIG_PATH)../../include
 ASLLIB      := $(PKG_CONFIG_PATH)../../lib
 endif

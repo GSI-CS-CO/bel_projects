@@ -1,11 +1,11 @@
 #!/bin/bash
 # Example usage (asl74x)
-# './buildApp.sh $HOME/consoleApps/uni-chop unichop-int-sys-mon unichop-client-mon'
-# './buildApp.sh $HOME/consoleApps/uni-chop unichop-pro-sys-mon unichop-client-mon'
+# './buildApp.sh $HOME/consoleApps/uni-chop unichop-int-mon unichop-client-mon'
+# './buildApp.sh $HOME/consoleApps/uni-chop unichop-pro-mon unichop-client-mon'
 #set -x
 
 SW=../x86
-USRPATH=/common/usr/timing/uni-chop/rocky9
+USRPATH=/common/usr/timing/user-dietrich/rocky9
 APPBUILD=$1/$2/current
 NAME=$2
 BIN=$3
