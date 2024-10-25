@@ -262,7 +262,7 @@ void printServices()
   printf("%s\n", header);
 
   for (i=0; i<UNICHOP_NSID; i++) {
-    if (monData_secs[i] == 0)                         printf(" %3x NOLINK                                                        |                         \n", i);
+    if (monData_secs[i] == 0)                         printf(" %3x %s                                                       |                         \n", i, no_link_str);
     else if (joinedMonData[i].cyclesN == 0)           printf(" %3x no data                                                       |                         \n", i);
     else if ((actT - monData_secs[i]) > (time_t)TOLD) printf(" %3x out of date                                                   |                         \n", i);
     else {
@@ -301,27 +301,23 @@ void printServices()
       printf(" %3x %4s %12s %10s %10s %10s %10s | %7s %7s %7s\n", i, cWhat, cChopT, cNCycles, cNOk, cNNoTrigger, cNNoChopper, cTriggerLen, cChopperT, cChopperLen);
     } // else: data available
   } // for i
-
-  printf("Expert data:                                                                                \n");
-  printf("host     : %32s, version %32s\n" , dicHostname, dicVersion);;
-  printf("state    : %24s, status  %24lu, #late %24u\n" , dicState, dicStatus, dicNLate);
-  printf("status   : %lu\n", dicStatus);
-
-  for (i=0; i<3; i++) printf("%s\n", empty);
+  printf("--------------------------------------------------------------------------------------------\n");
+  printf("%s\n", empty);
+  printf("%16s %16s %16s                                          \n"                       , dicHostname, dicVersion, dicState);
+  printf("#late %10u         status    %12x                                             \n" , dicNLate, dicStatus);
+  for (i=0; i<0; i++) printf("%s\n", empty);
   printf("%s\n", footer);
 } // printServicesq
 
 
-/*
 // print status text to screen
 void printStatusText()
 {
   int i,j;
   uint64_t status;
 
-  status = dicSystem.status;
+  status = dicStatus;
   if ((status != 0x1) && (status != no_link_64)) {
-    printf(" %12s:\n", sysShortNames[i]);
     for (j = COMMON_STATUS_OK + 1; j<(int)(sizeof(status)*8); j++) {
       if ((status >> j) & 0x1)  printf("  ---------- status bit is set : %s\n", unichop_status_text(j));
     } // for j
@@ -329,7 +325,7 @@ void printStatusText()
   printf("press any key to continue\n");
   while (!comlib_term_getChar()) {usleep(200000);}
 } // printStatusText
-*/
+
 
 // print help text to screen
 void printHelpText()
@@ -427,7 +423,7 @@ int main(int argc, char** argv) {
           quit = 1;
           break;
         case 's'         :
-          //printStatusText();
+          printStatusText();
           break;
         default          :
           usleep(1000000);
