@@ -3,8 +3,8 @@ cp -a $MOUNTPOINT/$ARCH/usr/lib/* /usr/lib/
 ldconfig
 # software
 cp -a $MOUNTPOINT/$ARCH/usr/bin/unichop-ctl /usr/bin/
-#cp -a $MOUNTPOINT/$ARCH/usr/bin/unichop-serv-mon /usr/bin/
-#cp -a $MOUNTPOINT/$ARCH/usr/bin/unichop-client-mon /usr/bin/
+cp -a $MOUNTPOINT/$ARCH/usr/bin/unichop-serv-mon /usr/bin/
+cp -a $MOUNTPOINT/$ARCH/usr/bin/unichop-client-mon /usr/bin/
 
 # firmware
 cp -a $MOUNTPOINT/firmware/* /
