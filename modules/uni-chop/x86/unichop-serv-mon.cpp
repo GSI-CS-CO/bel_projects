@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-Oct-2024
+ *  version : 25-Oct-2024
  *
  * monitors uni-chop firmware
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define UNICHOP_SERV_MON_VERSION 0x000007
+#define UNICHOP_SERV_MON_VERSION 0x000008
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -86,18 +86,20 @@ char      disVersion[DIMCHARSIZE];      // firmware version
 char      disState[DIMCHARSIZE];        // firmware state
 char      disHostname[DIMCHARSIZE];     // hostname
 uint64_t  disStatus;                    // firmware status
+uint32_t  disNLate;                     // number of late events detected by firmware
 monData_t disMonDataHLI[UNICHOP_NSID];  // max 16 virtaccs; 0..15: HLI; 16..31: HSI; contains chopper data;
 monData_t disMonDataHSI[UNICHOP_NSID];  // max 16 virtaccs; 0..15: HLI; 16..31: HSI; contains chopper data;
 
 uint32_t  disVersionId      = 0;
 uint32_t  disStateId        = 0;
 uint32_t  disStatusId       = 0;
+uint32_t  disNLateId        = 0;
 uint32_t  disHostnameId     = 0;
 uint32_t  disMonDataHLIId[UNICHOP_NSID];
 uint32_t  disMonDataHSIId[UNICHOP_NSID];
 uint32_t  disCmdClearId     = 0;
 
-uint32_t  one_ms_ns = 1000;
+uint32_t  one_ms_ns = 10000000;
 
 void clearStats(int index)
 {
@@ -313,6 +315,10 @@ void disAddServices(char *prefix)
   disStatus       = 0x1;   
   disStatusId     = dis_add_service(name, "X", &disStatus, sizeof(disStatus), 0 , 0);
 
+  sprintf(name, "%s_nlate", prefix);
+  disNLate        = 0x0;
+  disNLateId      = dis_add_service(name, "I", &disNLate, sizeof(disNLate), 0 , 0);
+
   // monitoring data service
   for (i=0; i < UNICHOP_NSID; i++) {
     // HLI
@@ -499,7 +505,7 @@ int main(int argc, char** argv)
     */
 
     uint64_t      t_new, t_old;
-    uint32_t      fwState, fwVersion;
+    uint32_t      fwState, fwVersion, fwNLate;
     uint64_t      fwStatus;
     uint32_t      tmp32a, tmp32b, tmp32c;
 
@@ -514,9 +520,10 @@ int main(int argc, char** argv)
         t_old      = t_new;
 
         // update firmware data
-        unichop_common_read(ebDevice, &fwStatus, &fwState, &tmp32a, &tmp32b, &fwVersion, &tmp32c, 0);
+        unichop_common_read(ebDevice, &fwStatus, &fwState, &tmp32a, &tmp32b, &fwVersion, &tmp32c, &fwNLate, 0);
 
         disStatus  = fwStatus;
+        disNLate   = fwNLate;
         sprintf(disState  , "%s", unichop_state_text(fwState));
         sprintf(disVersion, "%s", unichop_version_text(fwVersion));
                
@@ -525,6 +532,7 @@ int main(int argc, char** argv)
           dis_update_service(disStatusId);
           dis_update_service(disStateId);
           dis_update_service(disVersionId);
+          dis_update_service(disNLateId);
         } // if startServer      
       } // if update
 

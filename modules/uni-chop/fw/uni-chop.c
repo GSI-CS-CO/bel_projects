@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Tobias Habermann GSI-Darmstadt
- *  version : 23-Oct-2024
+ *  version : 25-Oct-2024
  *
  *  firmware required for UNILAC chopper control
  *  
@@ -452,7 +452,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       if (!flagIsLate) {
         strahlweg_reg  =  recParam        & 0xffff;
         strahlweg_mask = (recParam >> 16) & 0xffff;
-        anforder_mask  = (recParam >> 24) & 0xffff;
+        anforder_mask  = (recParam >> 32) & 0xffff;
 
         // write strahlweg register
         status = writeToModuleMil(IFB_ADDR_CU, MOD_LOGIC1_ADDR, MOD_LOGIC1_REG_STRAHLWEG_REG, strahlweg_reg);

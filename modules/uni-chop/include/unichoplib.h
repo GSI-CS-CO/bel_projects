@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define UNICHOPLIB_VERSION 0x000007
+#define UNICHOPLIB_VERSION 0x000008
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  UNICHOPLIB_STATUS_OK                  0            // OK
@@ -161,13 +161,14 @@ extern "C" {
 
   // get common properties from firmware, returns error code
   uint32_t unichop_common_read(uint64_t ebDevice,                // EB device
-                             uint64_t *statusArray,              // array with status bits
-                             uint32_t *state,                    // state
-                             uint32_t *nBadStatus,               // # of bad status incidents
-                             uint32_t *nBadState,                // # of bad state incidents
-                             uint32_t *version,                  // FW version
-                             uint32_t *nTransfer,                // # of transfer
-                             int      printDiag                  // prints info on common firmware properties to stdout
+                               uint64_t *statusArray,            // array with status bits
+                               uint32_t *state,                  // state
+                               uint32_t *nBadStatus,             // # of bad status incidents
+                               uint32_t *nBadState,              // # of bad state incidents
+                               uint32_t *version,                // FW version
+                               uint32_t *nTransfer,              // # of transfer
+                               uint32_t *nLate,                  // number of late events received
+                               int      printDiag                // prints info on common firmware properties to stdout
                              );
   
   // uploads configuration, returns error code

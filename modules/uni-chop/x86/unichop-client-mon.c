@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 24-Oct-2024
+ *  version : 25-Oct-2024
  *
  * subscribes to and displays status of a uni-chop firmware
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define UNICHOP_CLIENT_MON_VERSION 0x000007
+#define UNICHOP_CLIENT_MON_VERSION 0x000008
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -81,6 +81,7 @@ char        dicVersion[DIMCHARSIZE];
 char        dicState[DIMCHARSIZE];
 char        dicHostname[DIMCHARSIZE];
 uint64_t    dicStatus;
+uint32_t    dicNLate;
 //monval_t    dicMonDataHLI[UNICHOP_NSID];
 //monval_t    dicMonDataHSI[UNICHOP_NSID];
 
@@ -88,6 +89,7 @@ uint32_t    dicVersionId;
 uint32_t    dicStateId;
 uint32_t    dicHostnameId;
 uint32_t    dicStatusId;
+uint32_t    dicNLateId;
 uint32_t    dicMonDataHLIId[UNICHOP_NSID];
 uint32_t    dicMonDataHSIId[UNICHOP_NSID];
 
@@ -154,7 +156,6 @@ void dicSubscribeServices(char *prefix)
   char name[DIMMAXSIZE];
 
   int i;
-  static monData_t dummy;
 
   sprintf(name, "%s_mon_version_fw", prefix);
   dicVersionId   = dic_info_service(name, MONITORED, 0, dicVersion,  DIMCHARSIZE,       0, 0, &no_link_32, sizeof(no_link_32));
@@ -164,6 +165,8 @@ void dicSubscribeServices(char *prefix)
   dicHostnameId  = dic_info_service(name, MONITORED, 0, dicHostname, DIMCHARSIZE,       0, 0, &no_link_32, sizeof(no_link_32));
   sprintf(name, "%s_mon_status", prefix);
   dicStatusId    = dic_info_service(name, MONITORED, 0, &dicStatus,  sizeof(dicStatus), 0, 0, &no_link_64, sizeof(no_link_64));
+  sprintf(name, "%s_mon_nlate", prefix);
+  dicNLateId     = dic_info_service(name, MONITORED, 0, &dicNLate,   sizeof(dicNLate),  0, 0, &no_link_32, sizeof(no_link_32));
 
   //  printf("balbal\n");
 
@@ -299,13 +302,10 @@ void printServices()
     } // else: data available
   } // for i
 
-  /*
-  printf("%s\n", empty);
-  printf("host     : %s\n" , dicHostname);
-  printf("version  : %s\n" , dicVersion);
-  printf("state    : %s\n" , dicState);
+  printf("Expert data:                                                                                \n");
+  printf("host     : %32s, version %32s\n" , dicHostname, dicVersion);;
+  printf("state    : %24s, status  %24lu, #late %24u\n" , dicState, dicStatus, dicNLate);
   printf("status   : %lu\n", dicStatus);
-  */
 
   for (i=0; i<3; i++) printf("%s\n", empty);
   printf("%s\n", footer);
