@@ -88,7 +88,7 @@ deploy:
 	cp -a $(SW)/*.so $(STAGING)$(ARCH)$(PREFIX)/usr/lib                 # '/usr' is a hack
 	cp $(USRPATH)/lib/libdim.so $(STAGING)$(ARCH)$(PREFIX)/usr/lib      # '/usr' is a hack
 	cp $(SW)/unichop-serv-mon $(STAGING)$(ARCH)$(PREFIX)/usr/bin          # '/usr' is a hack
-#	cp $(SW)/unichop-client-mon $(STAGING)$(ARCH)$(PREFIX)/usr/bin        # '/usr' is a hack
+	cp $(SW)/unichop-client-mon $(STAGING)$(ARCH)$(PREFIX)/usr/bin        # '/usr' is a hack
 	cp $(FW)/*.bin $(STAGING)/firmware                   
 
 # configuration; the format is 'unichop-<environment>-<machine>-<room>-<function>_start.sh'
