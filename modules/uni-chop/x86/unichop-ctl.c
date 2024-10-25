@@ -205,6 +205,7 @@ int main(int argc, char** argv) {
   uint32_t nBadStatus;
   uint32_t nBadState;
   uint32_t nTransfer;
+  uint32_t nLate;
           
   uint32_t verLib;
   uint32_t verFw;
@@ -276,7 +277,7 @@ int main(int argc, char** argv) {
   if (getInfo) {
     // status
 
-    unichop_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
+    unichop_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, &nLate, 0);
 
     unichop_info_read(ebDevice, &milDev, &nMilSend, &nMilError, &nEvtsReceived, 0);
     
@@ -288,7 +289,7 @@ int main(int argc, char** argv) {
 
   if (command) {
     // state required to give proper warnings
-    unichop_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
+    unichop_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, &nLate, 0);
 
     // request state changes
     if (!strcasecmp(command, "configure")) {
@@ -326,7 +327,7 @@ int main(int argc, char** argv) {
     } // "cleardiag"
 
     if (!strcasecmp(command, "diag")) {
-      unichop_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 1);
+      unichop_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, &nLate, 1);
       for (i = COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
         if ((statusArray >> i) & 0x1)  printf("    status bit is set : %s\n", unichop_status_text(i));
       } // for i
