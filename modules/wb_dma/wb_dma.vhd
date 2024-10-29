@@ -17,9 +17,12 @@ entity wb_dma is
         --master_i       : in  t_wishnumeric_std-body.vhdlbone_slave_in;
 
     	-- test signals
-        s_start_desc_i : in std_logic;
+        s_start_desc_i        : in std_logic;
         s_read_init_address_i : in t_wishbone_address;
-        s_descriptor_active_i : in std_logic
+        s_descriptor_active_i : in std_logic;
+        s_data_in_i           : in std_logic_vector(c_wishbone_data_width-1 downto 0);
+
+        s_data_in_ack_i       : in std_logic
         );
 end entity;
 
@@ -29,6 +32,13 @@ architecture rtl of wb_dma is
     ------------------------------------------
     -- read ops signals
     signal s_read_ops_we             : std_logic := '0';
+
+    signal s_load_descriptor_en      : std_logic := '0';
+
+    signal s_desc_csr_sz_we  : in std_logic;
+    signal s_desc_addr0_we   : in std_logic;
+    signal s_desc_addr1      : in std_logic;
+    signal s_pointer_we      : in std_logic;
 
     -- read logic
     signal s_ops_queue_full          : std_logic := '0';
@@ -58,6 +68,13 @@ architecture rtl of wb_dma is
     clk_i : in std_logic;
     rstn_i : in std_logic;
 
+    s_load_descriptor_en_o      : out std_logic;
+
+    s_desc_csr_sz_we_i  : in std_logic;
+    s_desc_addr0_we_i   : in std_logic;
+    s_desc_addr1_i      : in std_logic;
+    s_pointer_we_i      : in std_logic;
+
     -- read logic
     s_queue_full_i              : in std_logic;
     s_queue_empty_i             : in std_logic;
@@ -68,7 +85,9 @@ architecture rtl of wb_dma is
     --only for testing!!!!
     s_start_desc                : in std_logic;
     s_read_init_address         : in std_logic_vector(c_wishbone_address_width-1 downto 0);
-    s_descriptor_active         : in std_logic
+    s_descriptor_active         : in std_logic;
+
+    s_data_in_ack_i             : in std_logic
   );
   end component;
 
@@ -79,10 +98,18 @@ architecture rtl of wb_dma is
     port(
       clk_i : in std_logic;
       rstn_i : in std_logic;
-  
+
       -- module IOs
       --wb_data_i : in std_logic_vector(c_wishbone_data_width-1 downto 0);
       --wb_data_o : out std_logic_vector(c_wishbone_data_width-1 downto 0);
+
+      -- control signals
+      s_desc_csr_sz_we  : in std_logic;
+      s_desc_addr0_we   : in std_logic;
+      s_desc_addr1      : in std_logic;
+      s_pointer_we      : in std_logic;
+
+      data_in           : in std_logic_vector(c_wishbone_data_width-1 downto 0);
   
       -- read FSM signals
       cache_we          : in std_logic; -- write enable
@@ -102,6 +129,13 @@ begin
         clk_i => clk_sys_i,
         rstn_i => rstn_sys_i,
 
+        s_load_descriptor_en_o => s_load_descriptor_en,
+
+        s_desc_csr_sz_we_i  => s_desc_csr_sz_we,
+        s_desc_addr0_we_i   => s_desc_addr0_we,
+        s_desc_addr1_i      => s_desc_addr1,
+        s_pointer_we_i      => s_pointer_we,
+
         -- read logic
         s_queue_full_i => s_ops_queue_full,
         s_queue_empty_i => s_ops_queue_empty,
@@ -111,7 +145,9 @@ begin
         
         s_start_desc => s_start_desc_i,
         s_read_init_address => s_read_init_address_i,
-        s_descriptor_active =>s_descriptor_active_i	
+        s_descriptor_active => s_descriptor_active_i,
+
+        s_data_in_ack_i => s_data_in_ack_i
     );    
 
     register_file: wb_dma_ch_rf
@@ -126,6 +162,13 @@ begin
       --wb_data_i => (others => '0'), 
       --wb_data_o => open, 
       -- read FSM signals
+
+      s_desc_csr_sz_we  => s_desc_csr_sz_we,
+      s_desc_addr0_we   => s_desc_addr0_we,
+      s_desc_addr1      => s_desc_addr1,
+      s_pointer_we      => s_pointer_we,
+
+      data_in => s_data_in_i,
 
       cache_we          => '0',
       data_cache_empty  => open,

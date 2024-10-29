@@ -11,6 +11,13 @@ entity wb_dma_engine is
     clk_i : in std_logic;
     rstn_i : in std_logic;
 
+    s_load_descriptor_en_o      : out std_logic;
+
+    s_desc_csr_sz_we_i  : in std_logic;
+    s_desc_addr0_we_i   : in std_logic;
+    s_desc_addr1_i      : in std_logic;
+    s_pointer_we_i      : in std_logic;
+
     -- read logic
     s_queue_full_i              : in std_logic;
     s_queue_empty_i             : in std_logic;
@@ -21,7 +28,9 @@ entity wb_dma_engine is
     --only for testing!!!!
     s_start_desc                : in std_logic;
     s_read_init_address         : in std_logic_vector(c_wishbone_address_width-1 downto 0);
-    s_descriptor_active         : in std_logic
+    s_descriptor_active         : in std_logic;
+
+    s_data_in_ack_i             : in std_logic
   );
 end entity;
 
@@ -31,41 +40,58 @@ architecture behavioral of wb_dma_engine is
   signal s_read_addr    : std_logic_vector(c_wishbone_address_width-1 downto 0);
 
   -- read op FIFO FSM signals
-  type t_read_state is (IDLE, READ);
-  signal s_read_state : t_read_state := IDLE;
   
-  type t_state is (IDLE, WRITE, UPDATE, LD_DESC1, LD_DESC2, LD_DESC3, LD_DESC4, LD_DESC5, WB, PAUSE);
-  signal s_state : t_state := IDLE;
+  type t_state is (IDLE, READ, WRITE, UPDATE, LD_DESC1, LD_DESC2, LD_DESC3, LD_DESC4, LD_DESC5, WB, PAUSE);
+  signal r_state : t_state := IDLE;
 
 begin
 
-  -- manages the fifo cache with the read ops
-  p_cache_manager: process (clk_i, rstn_i)
-  begin
-    if rstn_i = '0' then
-      s_read_state <= IDLE;
-    else
-      if rising_edge(clk_i) then
-        s_read_enable_o <= '0';
-        s_data_cache_write_enable_o <= '0';
-        case s_read_state is
-          when IDLE =>
-            if not s_queue_empty_i = '1' then
-              s_read_state <= READ; -- if there is a read op in the fifo cache start reading
-            end if;
-          when READ =>
-            s_read_state <= READ;
-            if s_queue_empty_i = '1' then
-              s_read_state <= IDLE;
-            else
-              s_read_enable_o <= '1';
-              if s_read_ack = '1' then
-                s_data_cache_write_enable_o <= '1'; -- when the data is available on the bus, write it to the data cache
-              end if;
-            end if;
-        end case;
-      end if;
+p_state_machine: process (clk_i)
+begin
+if rstn_i = '0' then
+  r_state <= IDLE;
+elsif rising_edge(clk_i) then
+  case r_state is
+  
+  when IDLE =>
+
+  when LD_DESC1 =>
+    s_load_descriptor_en_o <= '1';
+    
+    if s_data_in_ack_i = '1' then
+     r_state <= LD_DESC2;
     end if;
-  end process p_cache_manager;
+  
+  when LD_DESC2 =>
+    s_load_descriptor_en_o <= '1';
+    
+    if s_data_in_ack_i = '1' then
+     r_state <= LD_DESC3;
+    end if;
+  
+  when LD_DESC3 =>
+    s_load_descriptor_en_o <= '1';
+    
+    if s_data_in_ack_i = '1' then
+     r_state <= LD_DESC4;
+    end if;
+  
+  when LD_DESC4 =>
+    s_load_descriptor_en_o <= '1';
+    
+    if s_data_in_ack_i = '1' then
+     r_state <= LD_DESC5;
+    end if;
+  
+  when LD_DESC5 =>
+    s_load_descriptor_en_o <= '1';
+    
+    if s_data_in_ack_i = '1' then
+     r_state <= READ; --TODO
+    end if;
+  
+  end case;
+end if;
+end process;
 
 end architecture;

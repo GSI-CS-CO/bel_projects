@@ -32,6 +32,14 @@ entity wb_dma_ch_rf is
     -- dma_rest
     -- ptr_set
 
+    -- channel control signals
+    s_desc_csr_sz_we  : in std_logic;
+    s_desc_addr0_we   : in std_logic;
+    s_desc_addr1      : in std_logic;
+    s_pointer_we      : in std_logic;
+
+    data_in           : in std_logic_vector(c_wishbone_data_width-1 downto 0);
+
     -- read FSM signals
     cache_we          : in std_logic; -- write enable
     data_cache_empty  : out std_logic;
@@ -47,11 +55,12 @@ end entity;
 
 architecture rtl of wb_dma_ch_rf is
 
-signal s_desc_csr_sz  : std_logic_vector(c_wishbone_data_width-1 downto 0) := (others => '0');
-signal s_desc_addr0   : std_logic_vector(c_wishbone_data_width-1 downto 0) := (others => '0');
-signal s_desc_addr1   : std_logic_vector(c_wishbone_data_width-1 downto 0) := (others => '0');
-signal s_pointer      : std_logic_vector(c_wishbone_address_width-1 downto 0) := (others => '0');
+signal r_desc_csr_and_sz  : std_logic_vector(c_wishbone_data_width-1 downto 0) := (others => '0');
+signal r_desc_addr0       : std_logic_vector(c_wishbone_data_width-1 downto 0) := (others => '0');
+signal r_desc_addr1       : std_logic_vector(c_wishbone_data_width-1 downto 0) := (others => '0');
+signal r_pointer          : std_logic_vector(c_wishbone_address_width-1 downto 0) := (others => '0');
 
+signal s_read_addr    : std_logic_vector(c_wishbone_address_width-1 downto 0) := (others => '0');
 signal s_write_addr   : std_logic_vector(c_wishbone_address_width-1 downto 0) := (others => '0');
 signal s_read_op      : std_logic_vector((2*c_wishbone_address_width)-1 downto 0) := (others => '0');
 signal r_hold_op      : std_logic_vector((2*c_wishbone_address_width)-1 downto 0) := (others => '0'); -- register not possible?
@@ -95,6 +104,21 @@ component generic_sync_fifo_m is
 end component generic_sync_fifo_m;
 
 begin
+
+p_load_desc: process(clk_i, rstn_i)
+begin
+  if rstn_i = '0' then
+    r_desc_csr_and_sz <= (others => '0');
+    r_desc_addr0      <= (others => '0');
+    r_desc_addr1      <= (others => '0');
+    r_pointer         <= (others => '0');
+  elsif rising_edge(clk_i) then
+    r_desc_csr_and_sz <= data_in when s_desc_csr_sz_we = '1';
+    r_desc_addr0      <= data_in when s_desc_addr0_we = '1';
+    r_desc_addr1      <= data_in when s_desc_addr1 = '1';
+    r_pointer         <= data_in when s_pointer_we = '1';
+  end if;
+end process;
 
 data_and_addr_cache : generic_sync_fifo_m
 generic map (

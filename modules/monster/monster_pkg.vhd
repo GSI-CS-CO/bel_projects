@@ -96,7 +96,7 @@ package monster_pkg is
       g_fixed                : natural := 0;
       g_rams                 : natural := 1;
       g_lvds_invert          : boolean := false;
-      g_en_tlu               : boolean := true;
+      g_en_tlu               : boolean := false;
       g_en_pcie              : boolean := false;
       g_en_vme               : boolean := false;
       g_en_usb               : boolean := false;
@@ -119,7 +119,7 @@ package monster_pkg is
       g_a10_use_sys_fpll     : boolean := false;
       g_a10_use_ref_fpll     : boolean := false;
       g_a10_en_phy_reconf    : boolean := false;
-      g_en_butis             : boolean := true;
+      g_en_butis             : boolean := false;
       g_lm32_cores           : natural := 1;
       g_lm32_MSIs            : natural := 1;
       g_lm32_ramsizes        : natural := 131072/4; -- in 32b words
@@ -129,7 +129,7 @@ package monster_pkg is
       g_en_tempsens          : boolean := false;
       g_en_a10ts             : boolean := false;
       g_delay_diagnostics    : boolean := false;
-      g_en_eca               : boolean := true;
+      g_en_eca               : boolean := false;
       g_en_wd_tmr            : boolean := false;
       g_en_timer             : boolean := false;
       g_en_eca_tap           : boolean := false;
@@ -138,6 +138,8 @@ package monster_pkg is
       g_en_enc_err_counter   : boolean := false;
       g_en_a10vs             : boolean := false;
       g_en_cellular_ram      : boolean := false
+      g_en_virtualRAM        : boolean := false;
+      g_en_enc_err_counter   : boolean := false
     );
     port(
       -- Required: core signals

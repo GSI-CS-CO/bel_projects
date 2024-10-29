@@ -56,5 +56,6 @@ modules = {
     "enc_err_counter",
     "a10vs",
     "cellular_ram",
+    "virtualRAM",
   ]
 }
