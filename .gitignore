@@ -32,6 +32,9 @@ syn
 *.xml
 *.rpt
 *~
+*.cf
+*.ghw
+*.inp
 greybox_tmp
 *_shared_mmap.h
 buildid.c

@@ -29,4 +29,9 @@ package wb_dma_pkg is
   constant c_dma_done : natural := 11;
   constant c_dma_err  : natural := 12;
 
+  constant c_desc_csr_sz  : std_logic_vector (1 downto 0) := "00";
+  constant c_addr0        : std_logic_vector (1 downto 0) := "01";
+  constant c_addr1        : std_logic_vector (1 downto 0) := "10";
+  constant c_next_desc    : std_logic_vector (1 downto 0) := "11";
+
 end package;

@@ -15,10 +15,10 @@ entity pci_control is
     -----------------------------------------
     -- PCI express pins
     -----------------------------------------
-    pcie_refclk_i  : in  std_logic;
-    pcie_rx_i      : in  std_logic_vector(3 downto 0);
-    pcie_tx_o      : out std_logic_vector(3 downto 0);
-    nPCI_RESET     : in std_logic;
+    --pcie_refclk_i  : in  std_logic;
+    --pcie_rx_i      : in  std_logic_vector(3 downto 0);
+    --pcie_tx_o      : out std_logic_vector(3 downto 0);
+    --nPCI_RESET     : in std_logic;
 
     pe_smdat        : inout std_logic; -- !!!
     pe_snclk        : out std_logic;   -- !!!
@@ -264,21 +264,25 @@ begin
       g_lvds_out          => 0,
       g_lvds_inout        => 3,
       g_fixed             => 2,
-      g_lvds_invert       => true,
-      g_en_pcie           => true,
+      g_lvds_invert       => false,
+      g_en_pcie           => false,
       g_en_usb            => true,
-      g_en_lcd            => true,
-      g_en_user_ow        => true,
-      g_en_tempsens       => true,
-      g_delay_diagnostics => true,
-      g_en_timer          => true,
-      g_en_eca_tap        => true,
+      g_en_lcd            => false,
+      g_en_user_ow        => false,
+      g_en_tempsens       => false,
+      g_delay_diagnostics => false,
+      g_en_timer          => false,
+      g_en_eca_tap        => false,
       g_io_table          => io_mapping_table,
       g_lm32_cores        => c_cores,
       g_lm32_ramsizes     => c_lm32_ramsizes/4,
       g_lm32_init_files   => f_string_list_repeat(c_initf_name, c_cores),
       g_lm32_profiles     => f_string_list_repeat(c_profile_name, c_cores),
-      g_en_asmi           => false
+      g_en_asmi           => false,
+      g_en_eca            => false,
+      g_en_butis          => false,
+      g_en_tlu            => false,
+      g_en_virtualRAM     => true
     )
     port map(
       core_clk_20m_vcxo_i     => clk_20m_vcxo_i,
@@ -314,10 +318,10 @@ begin
       led_link_act_o          => led_link_act,
       led_track_o             => led_track,
       led_pps_o               => led_pps,
-      pcie_refclk_i           => pcie_refclk_i,
-      pcie_rstn_i             => nPCI_RESET,
-      pcie_rx_i               => pcie_rx_i,
-      pcie_tx_o               => pcie_tx_o,
+      -- pcie_refclk_i           => pcie_refclk_i,
+      -- pcie_rstn_i             => nPCI_RESET,
+      -- pcie_rx_i               => pcie_rx_i,
+      -- pcie_tx_o               => pcie_tx_o,
       usb_rstn_o              => ures,
       usb_ebcyc_i             => pa(3),
       usb_speed_i             => pa(0),
