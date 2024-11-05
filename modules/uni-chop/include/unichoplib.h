@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define UNICHOPLIB_VERSION 0x000008
+#define UNICHOPLIB_VERSION 0x000009
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  UNICHOPLIB_STATUS_OK                  0            // OK
@@ -78,20 +78,16 @@ extern "C" {
     uint32_t  cyclesN;                                   // number of cycles
     uint32_t  triggerLen;                                // length of trigger pulse, t0 is rising edge of trigger pulse [us]
     uint32_t  triggerN;                                  // number of detected triggers
-    uint32_t  triggerErrN;                               // number of trigger errors
-    int32_t   triggerFlag;                               // 1: trigger detected
-    int32_t   triggerErr;                                // 1: trigger error
+    int32_t   triggerFlag;                               // 1: trigger detected (last cycle)
     uint32_t  pulseStartT;                               // rising edge of chopper pulse [us], t0 is ...
     uint32_t  pulseStartN;                               // ... number
-    uint32_t  pulseStartErrN;                            // ... number
-    int32_t   pulseStartFlag;                            // ... detected
-    int32_t   pulseStartErr;                             // ... error
+    int32_t   pulseStartFlag;                            // ... detected (last cycle)
     uint32_t  pulseStopT;                                // falling edge of chopper pulse [us], t0 is ...
     uint32_t  pulseStopN;                                // ... number
-    uint32_t  pulseStopErrN;                             // ... number
-    int32_t   pulseStopFlag;                             // ... detected
-    uint32_t  pulseStopErr;                              // ... error
+    int32_t   pulseStopFlag;                             // ... detected (last cycle)
     uint32_t  pulseLen;                                  // length of chopper pulse
+    uint32_t  nobeamN;                                   // ... number of cycles with 'no beam' flag
+    int32_t   nobeamFlag;                                // 'no beam' flag (last cycle)
     uint32_t  sid;                                       // sequence ID
     uint32_t  machine;                                   // 'tag'
   } monData_t;

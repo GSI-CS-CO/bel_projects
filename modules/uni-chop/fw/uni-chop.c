@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Tobias Habermann GSI-Darmstadt
- *  version : 25-Oct-2024
+ *  version : 05-Nov-2024
  *
  *  firmware required for UNILAC chopper control
  *  
@@ -37,7 +37,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define UNICHOP_FW_VERSION      0x000008  // make this consistent with makefile
+#define UNICHOP_FW_VERSION      0x000009  // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -400,6 +400,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint32_t recEvtNo;                                          // event number received
   uint32_t recSid;                                            // SID received
   uint32_t recBpid;                                           // BPID received
+  uint32_t recAttribute;                                      // MIL event data in the lowest 4 bits, https://www-acc.gsi.de/wiki/Timing/TimingSystemEventMil#Mapping_between_Settings_and_MIL_Event_Telegrams
   uint64_t sendDeadline;                                      // deadline to send
   uint64_t sendEvtId;                                         // evtid to send
   uint32_t sendEvtNo;                                         // evtno to send
@@ -627,7 +628,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       recGid       = (uint32_t)((recEvtId >> 48) & 0x00000fff);
       recEvtNo     = (uint32_t)((recEvtId >> 36) & 0x00000fff);
       recSid       = (uint32_t)((recEvtId >> 20) & 0x00000fff);
-
+      recAttribute = (uint32_t)((recEvtId      ) & 0x0000003f); 
+            
       if (recSid  > 15)       return COMMON_STATUS_OUTOFRANGE;
       
       if (!flagIsLate) {
@@ -637,8 +639,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         status                                 = readFromModuleMil(IFB_ADDR_CU, milModAddr, regChopRiseAct , &tChopRiseAct);
         if (status == COMMON_STATUS_OK) status = readFromModuleMil(IFB_ADDR_CU, milModAddr, regChopFallAct , &tChopFallAct);
         if (status == COMMON_STATUS_OK) status = readFromModuleMil(IFB_ADDR_CU, milModAddr, regChopFallCtrl, &tChopFallCtrl);
-
-        
         
         // test for valid/invalid bits
         // for explanation of bits see https://github.com/GSI-CS-CO/bel_projects/blob/master/top/fg45041x/chopper_m1/chopper_monitoring.vhd
@@ -657,7 +657,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         else                                                                                   lenChopAct = tChopFallAct - tChopRiseAct;
 
         // write result to ECA
-        sendEvtId    = fwlib_buildEvtidV1(GID_LOCAL_ECPU_FROM, sendEvtNo, 0x0, recSid, 0x0, 0x0);
+        sendEvtId    = fwlib_buildEvtidV1(GID_LOCAL_ECPU_FROM, sendEvtNo, 0x0, recSid, 0x0, recAttribute);
         sendParam    = (uint64_t)(tChopFallCtrl) << 48;
         sendParam   |= (uint64_t)(tChopRiseAct)  << 32;
         sendParam   |= (uint64_t)(tChopFallAct)  << 16;

@@ -197,8 +197,8 @@ uint64_t writeTM(uint32_t uniEvt, uint64_t tStart, uint32_t pz, uint32_t virtAcc
     evtData = evtData & 0xb;                            // clear third bit; third bit will carry 'no beam' information
     evtData = evtData | ((flagNochop & 0x1) << 2);      // fill  third bit with 'no beam' information
   } // if evtCode
-    flags   = (uint32_t)( flagNochop          & 0x1) |  // 'no chopper bit'
-              (uint32_t)((flagShortchop << 1) & 0x2);   // 'short chopper bit'
+  flags     = (uint32_t)( flagNochop          & 0x1) |  // 'no chopper bit'     /* chk: deprecated */
+              (uint32_t)((flagShortchop << 1) & 0x2);   // 'short chopper bit'  /* chk: deprecated */
 
   // fill timing message
   id        = ((uint64_t)0x1       << 60)     |         // FID = 1
@@ -211,7 +211,7 @@ uint64_t writeTM(uint32_t uniEvt, uint64_t tStart, uint32_t pz, uint32_t virtAcc
               ((uint64_t)0x0       <<  4)     |         // (reqNoBeam, not here)
               ((uint64_t)evtData        );              // last four bits; see https://www-acc.gsi.de/wiki/bin/viewauth/ProjectMgmt/MappingWrMilSisEsrUnilac#A_5_Decision
                                                         // bit 0: reserved; bit 1: high b/rho, rigid beam; bit2: 'no beam'; bit3: high current
-  param     = ((uint64_t)flags     << 32)     |         // parameter field high bits, does carry flags
+  param     = ((uint64_t)flags     << 32)     |         // parameter field high bits, does carry flags /* chk: deprecated */
               ((uint64_t)0x0            );              // parameter field low bits, compatibility to 'old' wr-unipz (to be removed)
   
   // calc deadline
