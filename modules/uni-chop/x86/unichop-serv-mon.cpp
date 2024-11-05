@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 25-Oct-2024
+ *  version : 05-Nov-2024
  *
  * monitors uni-chop firmware
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define UNICHOP_SERV_MON_VERSION 0x000008
+#define UNICHOP_SERV_MON_VERSION 0x000009
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -106,44 +106,34 @@ void clearStats(int index)
   disMonDataHLI[index].cyclesN         = 0;
   disMonDataHLI[index].triggerLen      = 0;
   disMonDataHLI[index].triggerN        = 0;
-  disMonDataHLI[index].triggerErrN     = 0;
   disMonDataHLI[index].triggerFlag     = 0;
-  disMonDataHLI[index].triggerErr      = 0;
   disMonDataHLI[index].pulseStartT     = 0;
   disMonDataHLI[index].pulseStartN     = 0;
-  disMonDataHLI[index].pulseStartErrN  = 0;
   disMonDataHLI[index].pulseStartFlag  = 0;
-  disMonDataHLI[index].pulseStartErr   = 0;
   disMonDataHLI[index].pulseStopT      = 0;
   disMonDataHLI[index].pulseStopN      = 0;
-  disMonDataHLI[index].pulseStopErrN   = 0;
   disMonDataHLI[index].pulseStopFlag   = 0;
-  disMonDataHLI[index].pulseStopErr    = 0;
   disMonDataHLI[index].pulseLen        = 0;
+  disMonDataHLI[index].nobeamN         = 0;
+  disMonDataHLI[index].nobeamFlag      = 0;
   disMonDataHLI[index].sid             = index;
   disMonDataHLI[index].machine         = tagHLI;
 
   disMonDataHSI[index].cyclesN         = 0;
   disMonDataHSI[index].triggerLen      = 0;
   disMonDataHSI[index].triggerN        = 0;
-  disMonDataHSI[index].triggerErrN     = 0;
   disMonDataHSI[index].triggerFlag     = 0;
-  disMonDataHSI[index].triggerErr      = 0;
   disMonDataHSI[index].pulseStartT     = 0;
   disMonDataHSI[index].pulseStartN     = 0;
-  disMonDataHSI[index].pulseStartErrN  = 0;
   disMonDataHSI[index].pulseStartFlag  = 0;
-  disMonDataHSI[index].pulseStartErr   = 0;
   disMonDataHSI[index].pulseStopT      = 0;
   disMonDataHSI[index].pulseStopN      = 0;
-  disMonDataHSI[index].pulseStopErrN   = 0;
   disMonDataHSI[index].pulseStopFlag   = 0;
-  disMonDataHSI[index].pulseStopErr    = 0;
   disMonDataHSI[index].pulseLen        = 0;
+  disMonDataHSI[index].nobeamN         = 0;
+  disMonDataHSI[index].nobeamFlag      = 0;
   disMonDataHSI[index].sid             = index;
   disMonDataHSI[index].machine         = tagHSI;
-    
-
 } // clearStats
 
 
@@ -178,18 +168,16 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
   monData_t           monData;
   
   uint32_t            mFid;            // FID 
-  //uint32_t            mGid;            // GID
   uint32_t            mSid;            // SID
-  //uint32_t            mEvtNo;          // event number
+  uint32_t            mAttribute;      // attribute;
   uint32_t            triggerLen;
   uint32_t            pulseStart;
   uint32_t            pulseStop;
 
   mFid        = ((evtId  & 0xf000000000000000) >> 60);
-  //mGid        = ((evtId  & 0x0fff000000000000) >> 48);
   mSid        = ((evtId  & 0x00000000fff00000) >> 20);
-  //mEvtNo      = ((evtId  & 0x0000fff000000000) >> 36);
-
+  mAttribute  = ((evtId  & 0x000000000000003f)      );
+  
   // check ranges
   if (mFid != FID)                        return;  // unexpected format of timing message
   if (tag   > tagHSI)                     return;  // illegal tag
@@ -211,6 +199,8 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
       monData.cyclesN++;
       monData.machine            = tag;
       monData.sid                = mSid;
+      monData.nobeamFlag         = ((mAttribute & 0x4) >> 2);
+      if (monData.nobeamFlag) monData.nobeamN++;
 
       tChopUtc                   = deadline.getUTC();
 
@@ -218,18 +208,14 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
         case UNICHOP_U16_INVALID :
           monData.triggerLen     = 0x7fffffff;
           monData.triggerFlag    = 0;
-          monData.triggerErr     = 1;
-          monData.triggerErrN++;
           break;
         case UNICHOP_U16_NODATA  :
           monData.triggerLen     = 0;
           monData.triggerFlag    = 0;
-          monData.triggerErr     = 0;
           break;
         default :
           monData.triggerLen     = triggerLen;
           monData.triggerFlag    = 1;
-          monData.triggerErr     = 0;        
           monData.triggerN++;
       } // switch triggerLen
 
@@ -237,18 +223,14 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
         case UNICHOP_U16_INVALID :
           monData.pulseStartT    = 0x7fffffff;
           monData.pulseStartFlag = 0;
-          monData.pulseStartErr  = 1;
-          monData.pulseStartErrN++;
           break;
         case UNICHOP_U16_NODATA  :
           monData.pulseStartT    = 0;
           monData.pulseStartFlag = 0;
-          monData.pulseStartErr  = 0;
           break;
         default :
           monData.pulseStartT    = pulseStart;
           monData.pulseStartFlag = 1;
-          monData.pulseStartErr  = 0;        
           monData.pulseStartN++;
       } // switch pulseStart
 
@@ -256,22 +238,18 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
         case UNICHOP_U16_INVALID :
           monData.pulseStopT     = 0x7fffffff;
           monData.pulseStopFlag  = 0;
-          monData.pulseStopErr   = 1;
-          monData.pulseStopErrN++;
           break;
         case UNICHOP_U16_NODATA  :
           monData.pulseStopT     = 0;
           monData.pulseStopFlag  = 0;
-          monData.pulseStopErr   = 0;
           break;
         default :
           monData.pulseStopT     = pulseStop;
           monData.pulseStopFlag  = 1;
-          monData.pulseStopErr   = 0;        
           monData.pulseStopN++;
       } // switch pulseStop
 
-      if ((monData.pulseStopErr == 0) && (monData.pulseStartErr == 0)) monData.pulseLen = monData.pulseStopT - monData.pulseStartT;
+      if (monData.pulseStopFlag && monData.pulseStartFlag) monData.pulseLen = monData.pulseStopT - monData.pulseStartT;
 
       disUpdateData(tag, mSid, tChopUtc, monData);
       break;
