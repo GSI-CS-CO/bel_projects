@@ -13,10 +13,10 @@ entity wb_dma_engine is
 
     s_load_descriptor_en_o      : out std_logic;
 
-    s_desc_csr_sz_we_i  : in std_logic;
-    s_desc_addr0_we_i   : in std_logic;
-    s_desc_addr1_i      : in std_logic;
-    s_pointer_we_i      : in std_logic;
+    s_desc_csr_sz_we_o  : out std_logic;
+    s_desc_addr0_we_o   : out std_logic;
+    s_desc_addr1_we_o   : out std_logic;
+    s_pointer_we_o      : out std_logic;
 
     -- read logic
     s_queue_full_i              : in std_logic;
@@ -51,6 +51,11 @@ begin
 if rstn_i = '0' then
   r_state <= IDLE;
 elsif rising_edge(clk_i) then
+  s_desc_csr_sz_we_o <= '0';
+  s_desc_addr0_we_o  <= '0';
+  s_desc_addr1_we_o  <= '0';
+  s_pointer_we_o     <= '0';
+  
   case r_state is
   
   when IDLE =>
@@ -59,28 +64,32 @@ elsif rising_edge(clk_i) then
     s_load_descriptor_en_o <= '1';
     
     if s_data_in_ack_i = '1' then
-     r_state <= LD_DESC2;
+      s_desc_csr_sz_we_o <= '1';
+      r_state <= LD_DESC2;
     end if;
   
   when LD_DESC2 =>
     s_load_descriptor_en_o <= '1';
     
     if s_data_in_ack_i = '1' then
-     r_state <= LD_DESC3;
+      s_desc_addr0_we_o  <= '1';
+      r_state <= LD_DESC3;
     end if;
   
   when LD_DESC3 =>
     s_load_descriptor_en_o <= '1';
     
     if s_data_in_ack_i = '1' then
-     r_state <= LD_DESC4;
+      s_desc_addr1_we_o  <= '1';
+      r_state <= LD_DESC4;
     end if;
   
   when LD_DESC4 =>
     s_load_descriptor_en_o <= '1';
     
     if s_data_in_ack_i = '1' then
-     r_state <= LD_DESC5;
+      s_pointer_we_o     <= '1';
+      r_state <= LD_DESC5;
     end if;
   
   when LD_DESC5 =>

@@ -1,0 +1,181 @@
+running install
+/usr/lib/python3/dist-packages/setuptools/_distutils/cmd.py:66: SetuptoolsDeprecationWarning: setup.py install is deprecated.
+!!
+
+        ********************************************************************************
+        Please avoid running ``setup.py`` directly.
+        Instead, use pypa/build, pypa/installer or other
+        standards-based tools.
+
+        See https://blog.ganssle.io/articles/2021/10/setup-py-deprecated.html for details.
+        ********************************************************************************
+
+!!
+  self.initialize_options()
+/usr/lib/python3/dist-packages/setuptools/_distutils/cmd.py:66: EasyInstallDeprecationWarning: easy_install command is deprecated.
+!!
+
+        ********************************************************************************
+        Please avoid running ``setup.py`` and ``easy_install``.
+        Instead, use pypa/build, pypa/installer or other
+        standards-based tools.
+
+        See https://github.com/pypa/setuptools/issues/917 for details.
+        ********************************************************************************
+
+!!
+  self.initialize_options()
+running bdist_egg
+running egg_info
+writing hdlmake.egg-info/PKG-INFO
+writing dependency_links to hdlmake.egg-info/dependency_links.txt
+writing entry points to hdlmake.egg-info/entry_points.txt
+writing top-level names to hdlmake.egg-info/top_level.txt
+reading manifest file 'hdlmake.egg-info/SOURCES.txt'
+reading manifest template 'MANIFEST.in'
+warning: no files found matching 'ez_setup.py'
+warning: no files found matching '*' under directory 'scripts'
+no previously-included directories found matching 'docs/_build'
+adding license file 'COPYING'
+writing manifest file 'hdlmake.egg-info/SOURCES.txt'
+installing library code to build/bdist.linux-x86_64/egg
+running install_lib
+running build_py
+creating build/bdist.linux-x86_64/egg
+creating build/bdist.linux-x86_64/egg/hdlmake
+creating build/bdist.linux-x86_64/egg/hdlmake/module
+copying build/lib/hdlmake/module/module.py -> build/bdist.linux-x86_64/egg/hdlmake/module
+copying build/lib/hdlmake/module/__init__.py -> build/bdist.linux-x86_64/egg/hdlmake/module
+copying build/lib/hdlmake/_version.py -> build/bdist.linux-x86_64/egg/hdlmake
+creating build/bdist.linux-x86_64/egg/hdlmake/sourcefiles
+copying build/lib/hdlmake/sourcefiles/srcfile.py -> build/bdist.linux-x86_64/egg/hdlmake/sourcefiles
+copying build/lib/hdlmake/sourcefiles/dep_file.py -> build/bdist.linux-x86_64/egg/hdlmake/sourcefiles
+copying build/lib/hdlmake/sourcefiles/xci_parser.py -> build/bdist.linux-x86_64/egg/hdlmake/sourcefiles
+copying build/lib/hdlmake/sourcefiles/vhdl_parser.py -> build/bdist.linux-x86_64/egg/hdlmake/sourcefiles
+copying build/lib/hdlmake/sourcefiles/sourcefileset.py -> build/bdist.linux-x86_64/egg/hdlmake/sourcefiles
+copying build/lib/hdlmake/sourcefiles/vlog_parser.py -> build/bdist.linux-x86_64/egg/hdlmake/sourcefiles
+copying build/lib/hdlmake/sourcefiles/new_dep_solver.py -> build/bdist.linux-x86_64/egg/hdlmake/sourcefiles
+copying build/lib/hdlmake/sourcefiles/__init__.py -> build/bdist.linux-x86_64/egg/hdlmake/sourcefiles
+creating build/bdist.linux-x86_64/egg/hdlmake/manifest_parser
+copying build/lib/hdlmake/manifest_parser/manifestparser.py -> build/bdist.linux-x86_64/egg/hdlmake/manifest_parser
+copying build/lib/hdlmake/manifest_parser/configparser.py -> build/bdist.linux-x86_64/egg/hdlmake/manifest_parser
+copying build/lib/hdlmake/manifest_parser/__init__.py -> build/bdist.linux-x86_64/egg/hdlmake/manifest_parser
+creating build/bdist.linux-x86_64/egg/hdlmake/util
+copying build/lib/hdlmake/util/termcolor.py -> build/bdist.linux-x86_64/egg/hdlmake/util
+copying build/lib/hdlmake/util/shell.py -> build/bdist.linux-x86_64/egg/hdlmake/util
+copying build/lib/hdlmake/util/path.py -> build/bdist.linux-x86_64/egg/hdlmake/util
+copying build/lib/hdlmake/util/__init__.py -> build/bdist.linux-x86_64/egg/hdlmake/util
+creating build/bdist.linux-x86_64/egg/hdlmake/action
+copying build/lib/hdlmake/action/tree.py -> build/bdist.linux-x86_64/egg/hdlmake/action
+copying build/lib/hdlmake/action/commands.py -> build/bdist.linux-x86_64/egg/hdlmake/action
+copying build/lib/hdlmake/action/action.py -> build/bdist.linux-x86_64/egg/hdlmake/action
+copying build/lib/hdlmake/action/__init__.py -> build/bdist.linux-x86_64/egg/hdlmake/action
+copying build/lib/hdlmake/main.py -> build/bdist.linux-x86_64/egg/hdlmake
+creating build/bdist.linux-x86_64/egg/hdlmake/tools
+copying build/lib/hdlmake/tools/liberosoc.py -> build/bdist.linux-x86_64/egg/hdlmake/tools
+copying build/lib/hdlmake/tools/xilinx.py -> build/bdist.linux-x86_64/egg/hdlmake/tools
+copying build/lib/hdlmake/tools/load_tool.py -> build/bdist.linux-x86_64/egg/hdlmake/tools
+copying build/lib/hdlmake/tools/icestorm.py -> build/bdist.linux-x86_64/egg/hdlmake/tools
+copying build/lib/hdlmake/tools/vivado.py -> build/bdist.linux-x86_64/egg/hdlmake/tools
+copying build/lib/hdlmake/tools/diamond.py -> build/bdist.linux-x86_64/egg/hdlmake/tools
+copying build/lib/hdlmake/tools/isim.py -> build/bdist.linux-x86_64/egg/hdlmake/tools
+copying build/lib/hdlmake/tools/iverilog.py -> build/bdist.linux-x86_64/egg/hdlmake/tools
+copying build/lib/hdlmake/tools/quartus.py -> build/bdist.linux-x86_64/egg/hdlmake/tools
+copying build/lib/hdlmake/tools/makefile.py -> build/bdist.linux-x86_64/egg/hdlmake/tools
+copying build/lib/hdlmake/tools/libero.py -> build/bdist.linux-x86_64/egg/hdlmake/tools
+copying build/lib/hdlmake/tools/riviera.py -> build/bdist.linux-x86_64/egg/hdlmake/tools
+copying build/lib/hdlmake/tools/ise.py -> build/bdist.linux-x86_64/egg/hdlmake/tools
+copying build/lib/hdlmake/tools/vivado_sim.py -> build/bdist.linux-x86_64/egg/hdlmake/tools
+copying build/lib/hdlmake/tools/makefilesyn.py -> build/bdist.linux-x86_64/egg/hdlmake/tools
+copying build/lib/hdlmake/tools/makefilesim.py -> build/bdist.linux-x86_64/egg/hdlmake/tools
+copying build/lib/hdlmake/tools/ghdl.py -> build/bdist.linux-x86_64/egg/hdlmake/tools
+copying build/lib/hdlmake/tools/active_hdl.py -> build/bdist.linux-x86_64/egg/hdlmake/tools
+copying build/lib/hdlmake/tools/planahead.py -> build/bdist.linux-x86_64/egg/hdlmake/tools
+copying build/lib/hdlmake/tools/__init__.py -> build/bdist.linux-x86_64/egg/hdlmake/tools
+copying build/lib/hdlmake/tools/makefilevsim.py -> build/bdist.linux-x86_64/egg/hdlmake/tools
+copying build/lib/hdlmake/tools/modelsim.py -> build/bdist.linux-x86_64/egg/hdlmake/tools
+copying build/lib/hdlmake/__main__.py -> build/bdist.linux-x86_64/egg/hdlmake
+creating build/bdist.linux-x86_64/egg/hdlmake/fetch
+copying build/lib/hdlmake/fetch/local.py -> build/bdist.linux-x86_64/egg/hdlmake/fetch
+copying build/lib/hdlmake/fetch/fetcher.py -> build/bdist.linux-x86_64/egg/hdlmake/fetch
+copying build/lib/hdlmake/fetch/svn.py -> build/bdist.linux-x86_64/egg/hdlmake/fetch
+copying build/lib/hdlmake/fetch/git.py -> build/bdist.linux-x86_64/egg/hdlmake/fetch
+copying build/lib/hdlmake/fetch/__init__.py -> build/bdist.linux-x86_64/egg/hdlmake/fetch
+copying build/lib/hdlmake/__init__.py -> build/bdist.linux-x86_64/egg/hdlmake
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/module/module.py to module.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/module/__init__.py to __init__.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/_version.py to _version.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/sourcefiles/srcfile.py to srcfile.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/sourcefiles/dep_file.py to dep_file.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/sourcefiles/xci_parser.py to xci_parser.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/sourcefiles/vhdl_parser.py to vhdl_parser.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/sourcefiles/sourcefileset.py to sourcefileset.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/sourcefiles/vlog_parser.py to vlog_parser.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/sourcefiles/new_dep_solver.py to new_dep_solver.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/sourcefiles/__init__.py to __init__.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/manifest_parser/manifestparser.py to manifestparser.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/manifest_parser/configparser.py to configparser.cpython-312.pyc
+build/bdist.linux-x86_64/egg/hdlmake/manifest_parser/configparser.py:29: SyntaxWarning: "is not" with 'str' literal. Did you mean "!="?
+  if not sys.version[0] is "2":
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/manifest_parser/__init__.py to __init__.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/util/termcolor.py to termcolor.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/util/shell.py to shell.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/util/path.py to path.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/util/__init__.py to __init__.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/action/tree.py to tree.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/action/commands.py to commands.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/action/action.py to action.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/action/__init__.py to __init__.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/main.py to main.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/tools/liberosoc.py to liberosoc.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/tools/xilinx.py to xilinx.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/tools/load_tool.py to load_tool.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/tools/icestorm.py to icestorm.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/tools/vivado.py to vivado.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/tools/diamond.py to diamond.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/tools/isim.py to isim.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/tools/iverilog.py to iverilog.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/tools/quartus.py to quartus.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/tools/makefile.py to makefile.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/tools/libero.py to libero.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/tools/riviera.py to riviera.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/tools/ise.py to ise.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/tools/vivado_sim.py to vivado_sim.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/tools/makefilesyn.py to makefilesyn.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/tools/makefilesim.py to makefilesim.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/tools/ghdl.py to ghdl.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/tools/active_hdl.py to active_hdl.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/tools/planahead.py to planahead.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/tools/__init__.py to __init__.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/tools/makefilevsim.py to makefilevsim.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/tools/modelsim.py to modelsim.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/__main__.py to __main__.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/fetch/local.py to local.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/fetch/fetcher.py to fetcher.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/fetch/svn.py to svn.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/fetch/git.py to git.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/fetch/__init__.py to __init__.cpython-312.pyc
+byte-compiling build/bdist.linux-x86_64/egg/hdlmake/__init__.py to __init__.cpython-312.pyc
+creating build/bdist.linux-x86_64/egg/EGG-INFO
+copying hdlmake.egg-info/PKG-INFO -> build/bdist.linux-x86_64/egg/EGG-INFO
+copying hdlmake.egg-info/SOURCES.txt -> build/bdist.linux-x86_64/egg/EGG-INFO
+copying hdlmake.egg-info/dependency_links.txt -> build/bdist.linux-x86_64/egg/EGG-INFO
+copying hdlmake.egg-info/entry_points.txt -> build/bdist.linux-x86_64/egg/EGG-INFO
+copying hdlmake.egg-info/top_level.txt -> build/bdist.linux-x86_64/egg/EGG-INFO
+zip_safe flag not set; analyzing archive contents...
+creating 'dist/hdlmake-3.3-py3.12.egg' and adding 'build/bdist.linux-x86_64/egg' to it
+removing 'build/bdist.linux-x86_64/egg' (and everything under it)
+Processing hdlmake-3.3-py3.12.egg
+Removing /home/lucas/.local/lib/python3.12/site-packages/hdlmake-3.3-py3.12.egg
+Copying hdlmake-3.3-py3.12.egg to /home/lucas/.local/lib/python3.12/site-packages
+Adding hdlmake 3.3 to easy-install.pth file
+Installing hdlmake script to /home/lucas/.local/bin
+
+Installed /home/lucas/.local/lib/python3.12/site-packages/hdlmake-3.3-py3.12.egg
+Processing dependencies for hdlmake==3.3
+Finished processing dependencies for hdlmake==3.3
+test -f ip_cores/etherbone-core/api/Makefile.in || ./ip_cores/etherbone-core/api/autogen.sh
++ git log
++ aclocal -I auto
+./ip_cores/etherbone-core/api/autogen.sh: 5: aclocal: not found
+make: *** [Makefile:110: etherbone] Error 127

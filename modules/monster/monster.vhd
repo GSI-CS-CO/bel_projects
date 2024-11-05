@@ -74,6 +74,8 @@ use work.wb_i2c_wrapper_pkg.all;
 use work.remote_update_pkg.all;
 use work.enc_err_counter_pkg.all;
 use work.virtualRAM_pkg.all;
+use work.wb_dma_pkg.all;
+use work.wb_dma_slave_auto_pkg.all;
 
 entity monster is
   generic(
@@ -131,7 +133,8 @@ entity monster is
     g_en_asmi              : boolean;
     g_en_psram_delay       : boolean;
     g_en_enc_err_counter   : boolean;
-    g_en_virtualRAM        : boolean);
+    g_en_virtualRAM        : boolean;
+    g_en_wb_dma            : boolean);
   port(
     -- Required: core signals
     core_clk_20m_vcxo_i    : in    std_logic;
@@ -520,7 +523,9 @@ architecture rtl of monster is
     devs_i2c_wrapper,
     devs_eca_tap,
     devs_asmi,
-    devs_enc_err_counter
+    devs_enc_err_counter,
+    devs_wb_dma_slv,
+    devs_ram
   );
   constant c_dev_slaves          : natural := dev_slaves'pos(dev_slaves'right)+1;
 
@@ -564,7 +569,9 @@ architecture rtl of monster is
     dev_slaves'pos(devs_i2c_wrapper)    => f_sdb_auto_device(c_i2c_wrapper_sdb,                g_en_i2c_wrapper),
     dev_slaves'pos(devs_eca_tap)        => f_sdb_auto_device(c_eca_tap_sdb,                    g_en_eca_tap),
     dev_slaves'pos(devs_asmi)           => f_sdb_auto_device(c_wb_asmi_sdb,                    g_en_asmi),
-    dev_slaves'pos(devs_enc_err_counter)=> f_sdb_auto_device(c_enc_err_counter_sdb,            g_en_enc_err_counter));
+    dev_slaves'pos(devs_enc_err_counter)=> f_sdb_auto_device(c_enc_err_counter_sdb,            g_en_enc_err_counter),
+    dev_slaves'pos(devs_wb_dma_slv)     => f_sdb_auto_device(c_wb_dma_slave_data_sdb,          g_en_wb_dma),
+    dev_slaves'pos(devs_ram)            => f_sdb_auto_device(c_virtualRAM_sdb,                 g_en_virtualRAM));
   constant c_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_bridge_sdb  : t_sdb_bridge       := f_xwb_bridge_layout_sdb(true, c_dev_layout, c_dev_sdb_address);
@@ -589,7 +596,6 @@ architecture rtl of monster is
     tops_wr_aux_fast_path,
     tops_ebm,
     tops_beam_dump,
-    tops_ram,
     tops_emb_cpu
     );
   constant c_top_slaves        : natural := top_slaves'pos(top_slaves'right)+1;
@@ -604,8 +610,7 @@ architecture rtl of monster is
    top_slaves'pos(tops_wr_aux_fast_path) => f_sdb_auto_bridge(c_wrcore_aux_bridge_sdb,           g_dual_port_wr),
    top_slaves'pos(tops_ebm)              => f_sdb_auto_device(c_ebm_sdb,                         true),
    top_slaves'pos(tops_emb_cpu)          => f_sdb_auto_device(c_eca_queue_slave_sdb,             g_en_eca),
-   top_slaves'pos(tops_beam_dump)        => f_sdb_embed_device(c_beam_dump_sdb, x"7FFF0000",     g_en_beam_dump),
-   top_slaves'pos(tops_ram)              => f_sdb_auto_device(c_virtualRAM_sdb,                  g_en_virtualRAM));
+   top_slaves'pos(tops_beam_dump)        => f_sdb_embed_device(c_beam_dump_sdb, x"7FFF0000",     g_en_beam_dump));
 
   constant c_top_layout      : t_sdb_record_array := f_sdb_auto_layout(c_top_layout_req_masters, c_top_layout_req_slaves);
   constant c_top_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_top_layout_req_masters, c_top_layout_req_slaves);
@@ -3341,7 +3346,7 @@ end generate;
   --------------------------------------------
 
   virtualRAM_n : if not g_en_virtualRAM generate
-    top_bus_master_i(top_slaves'pos(tops_ram)) <= cc_dummy_slave_out;
+    dev_bus_master_i(dev_slaves'pos(devs_ram)) <= cc_dummy_slave_out;
   end generate;
 
   virtualRAM_y : if g_en_virtualRAM generate
@@ -3350,10 +3355,25 @@ end generate;
         clk_sys_i => clk_sys,
         rst_n_i   => rstn_sys,
 
-        slave_i => top_bus_master_o(top_slaves'pos(tops_ram)),
-        slave_o => top_bus_master_i(top_slaves'pos(tops_ram))
+        slave_i => dev_bus_master_o(dev_slaves'pos(devs_ram)),
+        slave_o => dev_bus_master_i(dev_slaves'pos(devs_ram))
         );
   end generate virtualRAM_y;
+
+  wb_dma_n : if not g_en_wb_dma generate
+    dev_bus_master_i(dev_slaves'pos(devs_wb_dma_slv)) <= cc_dummy_slave_out;
+  end generate;
+
+  wb_dma_y : if g_en_wb_dma generate
+    wb_dma_test : wb_dma
+      port map(
+        clk_sys_i     => clk_sys,
+        rstn_sys_i    => rstn_sys,
+
+        slave_i => dev_bus_master_o(dev_slaves'pos(devs_wb_dma_slv)),
+        slave_o => dev_bus_master_i(dev_slaves'pos(devs_wb_dma_slv))
+      );
+  end generate;
 
   -- END OF Wishbone slaves
   ----------------------------------------------------------------------------------

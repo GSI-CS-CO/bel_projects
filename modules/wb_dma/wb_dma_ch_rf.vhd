@@ -35,7 +35,7 @@ entity wb_dma_ch_rf is
     -- channel control signals
     s_desc_csr_sz_we  : in std_logic;
     s_desc_addr0_we   : in std_logic;
-    s_desc_addr1      : in std_logic;
+    s_desc_addr1_we   : in std_logic;
     s_pointer_we      : in std_logic;
 
     data_in           : in std_logic_vector(c_wishbone_data_width-1 downto 0);
@@ -55,17 +55,19 @@ end entity;
 
 architecture rtl of wb_dma_ch_rf is
 
-signal r_desc_csr_and_sz  : std_logic_vector(c_wishbone_data_width-1 downto 0) := (others => '0');
-signal r_desc_addr0       : std_logic_vector(c_wishbone_data_width-1 downto 0) := (others => '0');
-signal r_desc_addr1       : std_logic_vector(c_wishbone_data_width-1 downto 0) := (others => '0');
-signal r_pointer          : std_logic_vector(c_wishbone_address_width-1 downto 0) := (others => '0');
+signal r_desc_csr_and_sz  : std_logic_vector(c_wishbone_data_width-1 downto 0);
+signal r_desc_addr0       : std_logic_vector(c_wishbone_data_width-1 downto 0);
+signal r_desc_addr1       : std_logic_vector(c_wishbone_data_width-1 downto 0);
+signal r_pointer          : std_logic_vector(c_wishbone_address_width-1 downto 0);
 
-signal s_read_addr    : std_logic_vector(c_wishbone_address_width-1 downto 0) := (others => '0');
-signal s_write_addr   : std_logic_vector(c_wishbone_address_width-1 downto 0) := (others => '0');
-signal s_read_op      : std_logic_vector((2*c_wishbone_address_width)-1 downto 0) := (others => '0');
-signal r_hold_op      : std_logic_vector((2*c_wishbone_address_width)-1 downto 0) := (others => '0'); -- register not possible?
+signal r_desc_valid       : std_logic := '0';
 
-component generic_sync_fifo_m is
+signal s_read_addr    : std_logic_vector(c_wishbone_address_width-1 downto 0);
+signal s_write_addr   : std_logic_vector(c_wishbone_address_width-1 downto 0);
+signal s_read_op      : std_logic_vector((2*c_wishbone_address_width)-1 downto 0);
+signal r_hold_op      : std_logic_vector((2*c_wishbone_address_width)-1 downto 0); -- register not possible?
+
+component generic_sync_fifo is
 
   generic (
     g_data_width : natural;
@@ -101,7 +103,7 @@ component generic_sync_fifo_m is
     count_o        : out std_logic_vector(f_log2_size(g_size)-1 downto 0)
     );
 
-end component generic_sync_fifo_m;
+end component generic_sync_fifo;
 
 begin
 
@@ -113,14 +115,25 @@ begin
     r_desc_addr1      <= (others => '0');
     r_pointer         <= (others => '0');
   elsif rising_edge(clk_i) then
-    r_desc_csr_and_sz <= data_in when s_desc_csr_sz_we = '1';
-    r_desc_addr0      <= data_in when s_desc_addr0_we = '1';
-    r_desc_addr1      <= data_in when s_desc_addr1 = '1';
-    r_pointer         <= data_in when s_pointer_we = '1';
+    if s_desc_csr_sz_we = '1' then
+      r_desc_csr_and_sz <= data_in;
+    end if;
+    
+    if s_desc_addr0_we = '1' then
+      r_desc_addr0 <= data_in;
+    end if;
+
+    if s_desc_addr1_we = '1' then
+      r_desc_addr1 <= data_in;
+    end if;
+
+    if s_pointer_we = '1' then
+      r_pointer <= data_in;
+    end if;
   end if;
 end process;
 
-data_and_addr_cache : generic_sync_fifo_m
+data_and_addr_cache : generic_sync_fifo
 generic map (
   g_data_width => 64,
   g_size => g_data_cache_size,
