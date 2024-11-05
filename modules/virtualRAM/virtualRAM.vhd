@@ -89,8 +89,8 @@ begin
   RAM1 : xwb_dpram
   generic map (
     g_size                  => g_size,
-    g_init_file             => "sw/main.ram",
-    g_must_have_init_file   => true,
+--    g_init_file             => "/home/lucas/VHDL_projects/wb_dma/modules/virtualRAM/sw/main.ram",
+    g_must_have_init_file   => false,
     g_slave1_interface_mode => CLASSIC,
     g_slave1_granularity    => BYTE
   )

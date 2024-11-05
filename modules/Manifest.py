@@ -57,5 +57,6 @@ modules = {
     "a10vs",
     "cellular_ram",
     "virtualRAM",
+    "wb_dma",
   ]
 }
