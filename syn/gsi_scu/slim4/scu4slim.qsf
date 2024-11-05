@@ -1051,7 +1051,6 @@ set_location_assignment PIN_C8 -to ext_id[0]
 set_location_assignment PIN_D14 -to ADR_TO_SCUB
 set_location_assignment PIN_D15 -to clk_125m_local_i
 set_location_assignment PIN_D17 -to serial_cb_in[1]
-set_location_assignment PIN_D19 -to A_nRnW
 set_location_assignment PIN_D20 -to serial_cb_out[0]
 set_location_assignment PIN_D22 -to A_nSEL[8]
 set_location_assignment PIN_D23 -to A_nSEL[7]
