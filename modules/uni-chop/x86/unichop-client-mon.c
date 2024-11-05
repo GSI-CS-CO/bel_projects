@@ -116,8 +116,8 @@ static void help(void) {
 void buildHeader(char * environment)
 {
   sprintf(title, "\033[7m UNICHOP System Status %3s --------------------------------- (units [us] unless explicitly given) -  v%8s\033[0m", environment, unichop_version_text(UNICHOP_CLIENT_MON_VERSION));
-  sprintf(header, " SID what          UTC    #cycles      #chop   #no_beam   #no_trig  #no_pulse | lenTrig   tChop lenChop nob");    
-  sprintf(empty , "                                                                                                           ");
+  sprintf(header, " SID what          UTC    #cycles      #chop   #no_beam   #no_trig  #no_pulse | lenTrig   tChop lenChop nobeam");    
+  sprintf(empty , "                                                                                                              ");
   //       printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234\n");  
 } // buildHeader
 
@@ -256,7 +256,7 @@ void printServices()
   // footer with date and time
   time_date = time(0);
   strftime(buff,50,"%d-%b-%y %H:%M",localtime(&time_date));
-  sprintf(footer, "\033[7m exit <q> | clear status <digit> | help <h>                                               %s\033[0m", buff);
+  sprintf(footer, "\033[7m exit <q> | clear status <digit> | help <h>                                                    %s\033[0m", buff);
 
   comlib_term_curpos(1,1);
   
@@ -264,9 +264,9 @@ void printServices()
   printf("%s\n", header);
 
   for (i=0; i<UNICHOP_NSID; i++) {
-    if (monData_secs[i] == 0)                         printf(" %3x %s                                                       |                         \n", i, no_link_str);
-    else if (joinedMonData[i].cyclesN == 0)           printf(" %3x no data                                                       |                         \n", i);
-    else if ((actT - monData_secs[i]) > (time_t)TOLD) printf(" %3x out of date                                                   |                         \n", i);
+    if (monData_secs[i] == 0)                         printf(" %3x %s                                                                  |                         \n", i, no_link_str);
+    else if (joinedMonData[i].cyclesN == 0)           printf(" %3x no data                                                                  |                         \n", i);
+    else if ((actT - monData_secs[i]) > (time_t)TOLD) printf(" %3x out of date                                                              |                         \n", i);
     else {
       // what
       if (joinedMonData[i].machine == tagHLI) sprintf(cWhat, "HLI");
@@ -308,7 +308,7 @@ void printServices()
       else                                 sprintf(cChopperLen, " ");
       
 
-      printf(" %3x %4s %12s %10s %10s %10s %10s %10s | %7s %7s %7s %3s\n", i, cWhat, cChopT, cNCycles, cNChop, cNNoBeam, cNNoTrigger, cNNoChopper, cTriggerLen, cChopperT, cChopperLen, cNoBeamFlag);
+      printf(" %3x %4s %12s %10s %10s %10s %10s %10s | %7s %7s %7s %6s\n", i, cWhat, cChopT, cNCycles, cNChop, cNNoBeam, cNNoTrigger, cNNoChopper, cTriggerLen, cChopperT, cChopperLen, cNoBeamFlag);
     } // else: data available
   } // for i
   printf("-------------------------------------------------------------------------------------------------------------\n");
