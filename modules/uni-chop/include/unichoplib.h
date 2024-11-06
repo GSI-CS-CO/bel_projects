@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 25-Oct-2024
+ *  version : 06-Nov-2024
  *
  * library for uni-chop
  *
@@ -88,6 +88,8 @@ extern "C" {
     uint32_t  pulseLen;                                  // length of chopper pulse
     uint32_t  nobeamN;                                   // ... number of cycles with 'no beam' flag
     int32_t   nobeamFlag;                                // 'no beam' flag (last cycle)
+    uint32_t  wrongTrigN;                                // number of wrong triggers
+    int32_t   wrongTrigFlag;                             // ... detected (last cycle)
     uint32_t  sid;                                       // sequence ID
     uint32_t  machine;                                   // 'tag'
   } monData_t;
