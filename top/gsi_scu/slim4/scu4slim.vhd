@@ -148,9 +148,9 @@ entity scu4slim is
     -----------------------------------------------------------------------
     -- SPI Flash User Mode
     -----------------------------------------------------------------------
-    --UM_AS_D           : inout std_logic_vector(3 downto 0) := (others => 'Z');
-    --UM_nCSO           : out   std_logic := 'Z';
-    --UM_DCLK           : out   std_logic := 'Z';
+    UM_AS_D           : inout std_logic_vector(3 downto 0) := (others => 'Z');
+    UM_nCSO           : out   std_logic := 'Z';
+    UM_DCLK           : out   std_logic := 'Z';
 
     -----------------------------------------------------------------------
     -- SFP
@@ -213,7 +213,6 @@ architecture rtl of scu4slim is
 
   signal rstn_ref           : std_logic;
   signal clk_ref            : std_logic;
-
 
   constant io_mapping_table : t_io_mapping_table_arg_array(0 to 14) :=
   (
@@ -298,7 +297,7 @@ begin
       wbar_phy_dis_o          => sfp_tx_disable_o,
       sfp_tx_fault_i          => sfp_tx_fault_i,
       sfp_los_i               => sfp_los_i,
-      gpio_i(1 downto 0)      => lemo_in,  --- !!!!!!!!!!!
+      gpio_i(1 downto 0)      => lemo_in,
       gpio_i(4 downto 2)      => s_gpio_i,
       gpio_o(9 downto 0)      => s_gpio_o(9 downto 0),
       --lvds_p_i                => s_lvds_p_i,
@@ -393,7 +392,6 @@ end generate;
         datain    => fastIO_p_i(i),
         dataout   => s_gpio_i(i)
       );
-
   end generate;
   lemo_out <= s_gpio_o(6 downto 3);
 
