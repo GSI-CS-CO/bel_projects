@@ -168,8 +168,8 @@ Question: Which Version of Quartus Do I Need?
 
 Answer:
 
-- Arria2/ArriaV: Quartus 18.1.0 (Build 625 09/12/2018 SJ) Standard Edition
-- Arria10: Quartus 23.1.1 (Build 993 05/14/2024 SC) Standard Edition
+- Arria II/Arria V: Quartus 18.1.0 (Build 625 09/12/2018 SJ) Standard Edition
+- Arria 10: Quartus 23.1.1 (Build 993 05/14/2024 SC) Standard Edition
 
 ### Library libpng12
 
