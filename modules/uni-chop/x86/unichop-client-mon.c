@@ -116,8 +116,8 @@ static void help(void) {
 void buildHeader(char * environment)
 {
   sprintf(title, "\033[7m UNILAC Chopper Monitor %3s -------------------------------------------------- (units [us] unless explicitly given) -  v%8s\033[0m", environment, unichop_version_text(UNICHOP_CLIENT_MON_VERSION));
-  sprintf(header, " SID what          UTC    #cycles      #chop   #no_beam  #failTrig  #failChop #wrongTrig | lenTrig   tChop lenChop nobeam wgTrig");    
-  sprintf(empty , "                                                                                                                                ");
+  sprintf(header, " SID what          UTC    #cycles      #chop #interlock     #block  #failChop #wrongChop | lenTrig   tChop lenChop intrlk  block nobeam wgChop");    
+  sprintf(empty , "                                                                                                                                              ");
   //       printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234\n");  
 } // buildHeader
 
@@ -209,46 +209,26 @@ void printServices()
   uint64_t actNsecs;
   time_t   actT;
 
+  //  sprintf(header, " SID what          UTC    #cycles      #chop #interlock     #block  #failChop #wrongChop | lenTrig   tChop lenChop intrlk  block nobeam wgChop");    
 
+  char     cWhat[24];
   char     cChopT[64];
-  char     cWhat[32];
   char     cNCycles[24];
   char     cNChop[24];
-  char     cNNoBeam[24];
-  char     cNFailTrigger[24];
+  char     cNInterlock[24];
+  char     cNBlock[24];
   char     cNFailChopper[24];
-  char     cNWrongTrigger[24];
+  char     cNWrongChopper[24];
   char     cTriggerLen[24];
   char     cChopperT[24];
   char     cChopperLen[24];
+  char     cInterlockFlag[24];
+  char     cBlockFlag[24];
   char     cNoBeamFlag[24];
-  char     cWrongTriggerFlag[24];
+  char     cWrongChopFlag[24];
 
   char     tmp1[32];
   char     buff[100];
-
-  
-  /*
-
-  
-  char     cStatus[17];
-  char     cVersion[9];
-  char     cState[11];
-  char     cHost[19];
-  char     cData[512];
-  char     cNFwSnd[24];
-  char     cNFwMssd[24];
-  char     cNFwErr[24];
-  char     cNFwBrst[24];
-  char     cNMatch[24];
-  char     cRMatch[24];
-  char     cMMatch[24];
-  char     cTAve[24];
-  char     cTSdev[24];
-  char     cTMin[24];
-  char     cTMax[24];
-  uint32_t *tmp;
-  */
 
   actNsecs  = comlib_getSysTime();
   actT      = (time_t)(actNsecs / 1000000000);
@@ -284,17 +264,17 @@ void printServices()
       // # of executions with chopper
       sprintf(cNChop,         "%10d", joinedMonData[i].pulseStopN);
 
-      // # of executions with 'no beam'
-      sprintf(cNNoBeam,       "%10d", joinedMonData[i].nobeamN);
+      // # of executions with 'interlock'
+      sprintf(cNInterlock,    "%10d", joinedMonData[i].interlockN);
 
-      // # of missing triggers
-      sprintf(cNFailTrigger,  "%10d", joinedMonData[i].cyclesN - joinedMonData[i].nobeamN - joinedMonData[i].triggerN);
+      // # of executions with 'block'
+      sprintf(cNBlock,        "%10d", joinedMonData[i].blockN);
 
       // # of missing chops
-      sprintf(cNFailChopper,  "%10d", joinedMonData[i].cyclesN - joinedMonData[i].nobeamN - joinedMonData[i].pulseStopN);
+      sprintf(cNFailChopper,  "%10d", joinedMonData[i].cyclesN - joinedMonData[i].nobeamN - joinedMonData[i].interlockN - joinedMonData[i].pulseStopN);
 
-      // # of wrong triggers; trigger detected although 'no beam flag' was set
-      sprintf(cNWrongTrigger, "%10d", joinedMonData[i].wrongTrigN);
+      // # of wrong chopper trigger; trigger detected although 'no beam flag' was set
+      sprintf(cNWrongChopper, "%10d", joinedMonData[i].wrongTrigN);
       
       // trigger length
       if (joinedMonData[i].triggerFlag)    sprintf(cTriggerLen      , "%7d", joinedMonData[i].triggerLen);
@@ -308,17 +288,25 @@ void printServices()
       if (joinedMonData[i].pulseStopFlag)  sprintf(cChopperLen      , "%7d", joinedMonData[i].pulseLen);
       else                                 sprintf(cChopperLen      , "    ---");
 
+      // interlock flag
+      if (joinedMonData[i].interlockFlag)  sprintf(cInterlockFlag   , "   X  ");
+      else                                 sprintf(cInterlockFlag   , "      ");
+
+      // no block flag
+      if (joinedMonData[i].blockFlag)      sprintf(cBlockFlag       , "   X  ");
+      else                                 sprintf(cBlockFlag       , "      ");
+      
       // no beam flag
       if (joinedMonData[i].nobeamFlag)     sprintf(cNoBeamFlag      , "   X  ");
       else                                 sprintf(cNoBeamFlag      , "      ");
 
-      // wrong trigger flag
-      if (joinedMonData[i].wrongTrigFlag)  sprintf(cWrongTriggerFlag, "   X  ");
-      else                                 sprintf(cWrongTriggerFlag, "      ");
+      // wrong chopper flag
+      if (joinedMonData[i].wrongTrigFlag)  sprintf(cWrongChopFlag   , "   X  ");
+      else                                 sprintf(cWrongChopFlag   , "      ");
 
 
-      printf(" %3x %4s %12s %10s %10s %10s %10s %10s %10s | %7s %7s %7s %6s %6s\n", i, cWhat, cChopT, cNCycles, cNChop, cNNoBeam, cNFailTrigger, cNFailChopper, cNWrongTrigger,
-                                                                                    cTriggerLen, cChopperLen, cChopperT, cNoBeamFlag, cWrongTriggerFlag);
+      printf(" %3x %4s %12s %10s %10s %10s %10s %10s %10s | %7s %7s %7s %6s %6s %6s %6s\n", i, cWhat, cChopT, cNCycles, cNChop, cNInterlock, cNBlock, cNFailChopper, cNWrongChopper,
+                                                                                            cTriggerLen, cChopperT, cChopperLen, cInterlockFlag, cBlockFlag, cNoBeamFlag, cWrongChopFlag);
     } // else: data available
   } // for i
   printf("-------------------------------------------------------------------------------------------------------------------------------\n");

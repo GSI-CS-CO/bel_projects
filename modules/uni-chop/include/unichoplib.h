@@ -88,6 +88,10 @@ extern "C" {
     uint32_t  pulseLen;                                  // length of chopper pulse
     uint32_t  nobeamN;                                   // ... number of cycles with 'no beam' flag
     int32_t   nobeamFlag;                                // 'no beam' flag (last cycle)
+    uint32_t  blockN;                                    // number of blocked triggers (blocked by chopper control)
+    int32_t   blockFlag;                                 // 'blocked' flag (last cycle)
+    uint32_t  interlockN;                                // number of interlocked trigger (interlocked by chopper control)
+    int32_t   interlockFlag;                             // 'interlocked' flag (last cycle)
     uint32_t  wrongTrigN;                                // number of wrong triggers
     int32_t   wrongTrigFlag;                             // ... detected (last cycle)
     uint32_t  sid;                                       // sequence ID

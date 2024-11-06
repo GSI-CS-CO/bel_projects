@@ -25,6 +25,8 @@
 #define UNICHOP_ECADO_QLSTOP               0xfc1   // read actual chopper data QL             param: 48..63 t ctrl falling edge, 32..47 t chop rising edge, 16..31 t chop falling edge, 0..15 chop length [us] value 0: no pulse, value 0xffff invalid;
 #define UNICHOP_ECADO_HLISTOP              0xfc2   // read actual chopper data HLI            param: 48..63 t ctrl falling edge, 32..47 t chop rising edge, 16..31 t chop falling edge, 0..15 chop length [us] value 0: no pulse, value 0xffff invalid;
 #define UNICHOP_ECADO_HSISTOP              0xfc3   // read actual chopper data HSI            param: 48..63 t ctrl falling edge, 32..47 t chop rising edge, 16..31 t chop falling edge, 0..15 chop length [us] value 0: no pulse, value 0xffff invalid;
+#define UNICHOP_ECADO_HLICMD               0xfc4   // received EVT_COMMAND @HLI
+#define UNICHOP_ECADO_HSICMD               0xfc5   // received EVT_COMMAND @HSI
 
 #define UNICHOP_ECADO_IQSTOP               0xf0a   // read RPG ion source;                    param: 16..20 value 1: QR value 2: QL, 0..15 length of RPG length counter [us] value 0: no pulse; value 0xffff invalid; 
 

@@ -116,6 +116,10 @@ void clearStats(int index)
   disMonDataHLI[index].pulseLen        = 0;
   disMonDataHLI[index].nobeamN         = 0;
   disMonDataHLI[index].nobeamFlag      = 0;
+  disMonDataHLI[index].blockN          = 0;
+  disMonDataHLI[index].blockFlag       = 0;
+  disMonDataHLI[index].interlockN      = 0;
+  disMonDataHLI[index].interlockFlag   = 0;
   disMonDataHLI[index].sid             = index;
   disMonDataHLI[index].machine         = tagHLI;
 
@@ -132,6 +136,10 @@ void clearStats(int index)
   disMonDataHSI[index].pulseLen        = 0;
   disMonDataHSI[index].nobeamN         = 0;
   disMonDataHSI[index].nobeamFlag      = 0;
+  disMonDataHSI[index].blockN          = 0;
+  disMonDataHSI[index].blockFlag       = 0;
+  disMonDataHSI[index].interlockN      = 0;
+  disMonDataHSI[index].interlockFlag   = 0;
   disMonDataHSI[index].sid             = index;
   disMonDataHSI[index].machine         = tagHSI;
 } // clearStats
@@ -169,6 +177,7 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
   
   uint32_t            mFid;            // FID 
   uint32_t            mSid;            // SID
+  uint32_t            mBpid;           // BPID, used for block and interlock flags
   uint32_t            mAttribute;      // attribute;
   uint32_t            triggerLen;
   uint32_t            pulseStart;
@@ -176,6 +185,7 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
 
   mFid        = ((evtId  & 0xf000000000000000) >> 60);
   mSid        = ((evtId  & 0x00000000fff00000) >> 20);
+  mBpid       = ((evtId  & 0x00000000000003c0) >> 06);
   mAttribute  = ((evtId  & 0x000000000000003f)      );
   
   // check ranges
@@ -187,8 +197,23 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
     case tagHLI   :
     case tagHSI   :                                // this is an OR, no break on purpose;
 
-      if (tag == tagHLI) monData = disMonDataHLI[mSid];
-      if (tag == tagHSI) monData = disMonDataHSI[mSid];
+      if (tag == tagHLI) {
+        monData                    = disMonDataHLI[mSid];
+
+        monData.blockFlag          = (mBpid >> 3) & 0x1;
+        if (monData.blockFlag) monData.blockN++;
+        monData.interlockFlag      = (mBpid >> 1) & 0x1;;
+        if (monData.interlockFlag) monData.interlockN++;
+      } // if HLI
+
+      if (tag == tagHSI) {
+        monData                    = disMonDataHSI[mSid];
+
+        monData.blockFlag          = (mBpid >> 2) & 0x1;
+        if (monData.blockFlag) monData.blockN++;
+        monData.interlockFlag      = (mBpid     ) & 0x1;
+        if (monData.interlockFlag) monData.interlockN++;
+      } // if HSI
 
       // printf("tag %d, ncycles %d, sid %d\n", tag, monData.cyclesN, mSid);
 
@@ -199,8 +224,10 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
       monData.cyclesN++;
       monData.machine            = tag;
       monData.sid                = mSid;
-      monData.nobeamFlag         = ((mAttribute & 0x4) >> 2);
+      
+      monData.nobeamFlag         = (mAttribute & 0x4) >> 2;
       if (monData.nobeamFlag) monData.nobeamN++;
+      
 
       tChopUtc                   = deadline.getUTC();
 
@@ -251,10 +278,10 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
 
       if (monData.pulseStopFlag && monData.pulseStartFlag) monData.pulseLen = monData.pulseStopT - monData.pulseStartT;
 
-      if (monData.nobeamFlag    && monData.triggerFlag   ) {
+      if ((monData.nobeamFlag || monData.blockFlag || monData.interlockFlag)  && monData.triggerFlag) {
         monData.wrongTrigFlag    = 1;
         monData.wrongTrigN++;
-      } // if trigger detected although cycle marked as 'no beam'
+      } // if trigger detected although cycle should have been executed without beam
 
       disUpdateData(tag, mSid, tChopUtc, monData);
       break;
