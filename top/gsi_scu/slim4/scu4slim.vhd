@@ -6,6 +6,8 @@ library work;
 use work.gencores_pkg.all;
 use work.monster_pkg.all;
 use work.ramsize_pkg.c_lm32_ramsizes;
+use work.altera_lvds_pkg.all;
+use work.altera_networks_pkg.all;
 
 entity scu4slim is
   port(
@@ -55,7 +57,7 @@ entity scu4slim is
     nTHRMTRIP         : in  std_logic;
     WDT               : in  std_logic;
     fpga_res_i        : in  std_logic;
-    nSys_Reset        : in    std_logic;  -- Reset From ComX
+    nSys_Reset        : in  std_logic;  -- Reset From ComX
 
     -----------------------------------------------------------------------
     -- SCU Bus
@@ -79,7 +81,7 @@ entity scu4slim is
     -----------------------------------------------------------------------
     -- Misc.
     -----------------------------------------------------------------------
-    nFPGA_Res_Out : out std_logic;  --Reset  Output
+    nFPGA_Res_Out : out   std_logic;  -- Reset  Output
     user_btn      : in    std_logic;  -- User Button
     avr_sda       : inout std_logic;  -- I2C Connection to AVR MCU
     avr_scl       : inout std_logic;  -- I2C Connection to AVR MCU
@@ -99,8 +101,8 @@ entity scu4slim is
     fastIO_p_i : in  std_logic_vector(2 downto 0);
     fastIO_n_i : in  std_logic_vector(2 downto 0);
     fastIO_p_o : out std_logic_vector(2 downto 0); -- Negativ Pin assigned by Quartus, manually assignment causes issues
-    lemo_out   : out std_logic_vector(3 downto 0); --Isolated Onboard TTL OUT
-    lemo_in    : in  std_logic_vector(1 downto 0); --Isolated OnBoard TTL IN
+    lemo_out   : out std_logic_vector(3 downto 0); -- Isolated Onboard TTL OUT
+    lemo_in    : in  std_logic_vector(1 downto 0); -- Isolated OnBoard TTL IN
 
     -----------------------------------------------------------------------
     -- Extension Connector
@@ -146,9 +148,9 @@ entity scu4slim is
     -----------------------------------------------------------------------
     -- SPI Flash User Mode
     -----------------------------------------------------------------------
-    UM_AS_D           : inout std_logic_vector(3 downto 0) := (others => 'Z');
-    UM_nCSO           : out   std_logic := 'Z';
-    UM_DCLK           : out   std_logic := 'Z';
+    --UM_AS_D           : inout std_logic_vector(3 downto 0) := (others => 'Z');
+    --UM_nCSO           : out   std_logic := 'Z';
+    --UM_DCLK           : out   std_logic := 'Z';
 
     -----------------------------------------------------------------------
     -- SFP
@@ -175,11 +177,12 @@ architecture rtl of scu4slim is
   signal s_led_pps      : std_logic;
   signal s_lemo_led     : std_logic_vector (5 downto 0);
 
-  signal s_gpio_o    : std_logic_vector(6 downto 0);
-  signal s_lvds_p_i  : std_logic_vector(2 downto 0);
-  signal s_lvds_n_i  : std_logic_vector(2 downto 0);
-  signal s_lvds_p_o  : std_logic_vector(2 downto 0);
-  signal s_lvds_term : std_logic_vector(2 downto 0);
+  signal s_gpio_o    : std_logic_vector(9 downto 0);
+  signal s_gpio_i    : std_logic_vector(2 downto 0);
+  --signal s_lvds_p_i  : std_logic_vector(2 downto 0);
+  --signal s_lvds_n_i  : std_logic_vector(2 downto 0);
+  --signal s_lvds_p_o  : std_logic_vector(2 downto 0);
+  --signal s_lvds_term : std_logic_vector(2 downto 0);
 
   signal s_clk_20m_vcxo_i       : std_logic;
   signal s_clk_125m_pllref_i    : std_logic;
@@ -217,6 +220,9 @@ architecture rtl of scu4slim is
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
     ("LEMO_IN_0  ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
     ("LEMO_IN_1  ",  IO_NONE,         false,   false,  1,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("FAST_IN_0  ",  IO_NONE,         false,   false,  2,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVDS),
+    ("FAST_IN_1  ",  IO_NONE,         false,   false,  3,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVDS),
+    ("FAST_IN_2  ",  IO_NONE,         false,   false,  4,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVDS),
     ("USER_LED0_R",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("USER_LED0_G",  IO_NONE,         false,   false,  1,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("USER_LED0_B",  IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
@@ -224,12 +230,9 @@ architecture rtl of scu4slim is
     ("LEMO_OUT_1 ",  IO_NONE,         false,   false,  4,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LEMO_OUT_2 ",  IO_NONE,         false,   false,  5,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LEMO_OUT_3 ",  IO_NONE,         false,   false,  6,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("FAST_IN_0  ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
-    ("FAST_IN_1  ",  IO_NONE,         false,   false,  1,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
-    ("FAST_IN_2  ",  IO_NONE,         false,   false,  2,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
-    ("FAST_OUT_0 ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_LVDS,  false,        false,       IO_LVDS),
-    ("FAST_OUT_1 ",  IO_NONE,         false,   false,  1,     IO_OUTPUT,   IO_LVDS,  false,        false,       IO_LVDS),
-    ("FAST_OUT_2 ",  IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_LVDS,  false,        false,       IO_LVDS)
+    ("FAST_OUT_0 ",  IO_NONE,         false,   false,  7,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVDS),
+    ("FAST_OUT_1 ",  IO_NONE,         false,   false,  8,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVDS),
+    ("FAST_OUT_2 ",  IO_NONE,         false,   false,  9,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVDS)
   );
 
   constant c_family       : string := "Arria 10 GX SCU4";
@@ -247,11 +250,11 @@ begin
       g_project            => c_project,
       g_flash_bits         => 25, -- !!! TODO: Check this
       g_psram_bits         => c_psram_bits,
-      g_gpio_in            => 2,
-      g_gpio_out           => 7,
-      g_lvds_in            => 3,
-      g_lvds_out           => 3,
-      g_lvds_invert        => true,
+      g_gpio_in            => 5,
+      g_gpio_out           => 10,
+      --g_lvds_in            => 3,
+      --g_lvds_out           => 3,
+      --g_lvds_invert        => true,
       g_en_user_ow         => true,
       g_en_ddr3            => false,
       g_en_cfi             => false,
@@ -295,11 +298,12 @@ begin
       wbar_phy_dis_o          => sfp_tx_disable_o,
       sfp_tx_fault_i          => sfp_tx_fault_i,
       sfp_los_i               => sfp_los_i,
-      gpio_i                  => lemo_in,
-      gpio_o(6 downto 0)      => s_gpio_o(6 downto 0),
-      lvds_p_i                => s_lvds_p_i,
-      lvds_n_i                => s_lvds_n_i,
-      lvds_p_o                => s_lvds_p_o,
+      gpio_i(1 downto 0)      => lemo_in,  --- !!!!!!!!!!!
+      gpio_i(4 downto 2)      => s_gpio_i,
+      gpio_o(9 downto 0)      => s_gpio_o(9 downto 0),
+      --lvds_p_i                => s_lvds_p_i,
+      --lvds_n_i                => s_lvds_n_i,
+      --lvds_p_o                => s_lvds_p_o,
       led_link_up_o           => s_led_link_up,
       led_link_act_o          => s_led_link_act,
       led_track_o             => s_led_track,
@@ -376,9 +380,20 @@ end generate;
 
   -- LEMOs
   lemos : for i in 0 to 2 generate
-    s_lvds_p_i(i) <= fastIO_p_i(i);
-    s_lvds_n_i(i) <= fastIO_n_i(i);
-    fastIO_p_o(i) <= s_lvds_p_o(i);
+    --s_lvds_p_i(i) <= fastIO_p_i(i);
+    --s_lvds_n_i(i) <= fastIO_n_i(i);
+    --fastIO_p_o(i) <= s_lvds_p_o(i);
+    fastIO_p_o <= s_gpio_o(9 downto 7);
+
+    lvds_to_single_gpio : altera_lvds_ibuf
+      generic map(
+        g_family  => c_family)
+      port map(
+        datain_b  => fastIO_n_i(i),
+        datain    => fastIO_p_i(i),
+        dataout   => s_gpio_i(i)
+      );
+
   end generate;
   lemo_out <= s_gpio_o(6 downto 3);
 
