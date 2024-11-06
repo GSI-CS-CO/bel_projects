@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 05-Nov-2024
+ *  version : 06-Nov-2024
  *
  * subscribes to and displays status of a uni-chop firmware
  *
@@ -115,9 +115,9 @@ static void help(void) {
 
 void buildHeader(char * environment)
 {
-  sprintf(title, "\033[7m UNICHOP System Status %3s --------------------------------- (units [us] unless explicitly given) -  v%8s\033[0m", environment, unichop_version_text(UNICHOP_CLIENT_MON_VERSION));
-  sprintf(header, " SID what          UTC    #cycles      #chop   #no_beam   #no_trig  #no_pulse | lenTrig   tChop lenChop nobeam");    
-  sprintf(empty , "                                                                                                              ");
+  sprintf(title, "\033[7m UNILAC Chopper Monitor %3s -------------------------------------------------- (units [us] unless explicitly given) -  v%8s\033[0m", environment, unichop_version_text(UNICHOP_CLIENT_MON_VERSION));
+  sprintf(header, " SID what          UTC    #cycles      #chop   #no_beam  #failTrig  #failChop #wrongTrig | lenTrig   tChop lenChop nobeam wgTrig");    
+  sprintf(empty , "                                                                                                                                ");
   //       printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234\n");  
 } // buildHeader
 
@@ -215,12 +215,14 @@ void printServices()
   char     cNCycles[24];
   char     cNChop[24];
   char     cNNoBeam[24];
-  char     cNNoTrigger[24];
-  char     cNNoChopper[24];
+  char     cNFailTrigger[24];
+  char     cNFailChopper[24];
+  char     cNWrongTrigger[24];
   char     cTriggerLen[24];
   char     cChopperT[24];
   char     cChopperLen[24];
   char     cNoBeamFlag[24];
+  char     cWrongTriggerFlag[24];
 
   char     tmp1[32];
   char     buff[100];
@@ -256,7 +258,7 @@ void printServices()
   // footer with date and time
   time_date = time(0);
   strftime(buff,50,"%d-%b-%y %H:%M",localtime(&time_date));
-  sprintf(footer, "\033[7m exit <q> | clear status <digit> | help <h>                                                    %s\033[0m", buff);
+  sprintf(footer, "\033[7m exit <q> | clear status <digit> | help <h>                                                                      %s\033[0m", buff);
 
   comlib_term_curpos(1,1);
   
@@ -264,9 +266,9 @@ void printServices()
   printf("%s\n", header);
 
   for (i=0; i<UNICHOP_NSID; i++) {
-    if (monData_secs[i] == 0)                         printf(" %3x %s                                                                  |                         \n", i, no_link_str);
-    else if (joinedMonData[i].cyclesN == 0)           printf(" %3x no data                                                                  |                         \n", i);
-    else if ((actT - monData_secs[i]) > (time_t)TOLD) printf(" %3x out of date                                                              |                         \n", i);
+    if (monData_secs[i] == 0)                         printf(" %3x %s                                                                             |                                \n", i, no_link_str);
+    else if (joinedMonData[i].cyclesN == 0)           printf(" %3x no data                                                                             |                                \n", i);
+    else if ((actT - monData_secs[i]) > (time_t)TOLD) printf(" %3x out of date                                                                         |                                \n", i);
     else {
       // what
       if (joinedMonData[i].machine == tagHLI) sprintf(cWhat, "HLI");
@@ -277,41 +279,49 @@ void printServices()
       sprintf(cChopT, "%8s.%03d", tmp1, monData_msecs[i]);
 
       // # of cycles
-      sprintf(cNCycles,     "%10d", joinedMonData[i].cyclesN);
+      sprintf(cNCycles,       "%10d", joinedMonData[i].cyclesN);
 
       // # of executions with chopper
-      sprintf(cNChop,       "%10d", joinedMonData[i].pulseStopN);
+      sprintf(cNChop,         "%10d", joinedMonData[i].pulseStopN);
 
       // # of executions with 'no beam'
-      sprintf(cNNoBeam,     "%10d", joinedMonData[i].nobeamN);
+      sprintf(cNNoBeam,       "%10d", joinedMonData[i].nobeamN);
 
-      // # of trigger failures
-      sprintf(cNNoTrigger,  "%10d", joinedMonData[i].cyclesN - joinedMonData[i].nobeamN - joinedMonData[i].triggerN);
+      // # of missing triggers
+      sprintf(cNFailTrigger,  "%10d", joinedMonData[i].cyclesN - joinedMonData[i].nobeamN - joinedMonData[i].triggerN);
 
-      // # of choopper failures
-      sprintf(cNNoChopper,  "%10d", joinedMonData[i].cyclesN - joinedMonData[i].nobeamN - joinedMonData[i].pulseStopN);
+      // # of missing chops
+      sprintf(cNFailChopper,  "%10d", joinedMonData[i].cyclesN - joinedMonData[i].nobeamN - joinedMonData[i].pulseStopN);
+
+      // # of wrong triggers; trigger detected although 'no beam flag' was set
+      sprintf(cNWrongTrigger, "%10d", joinedMonData[i].wrongTrigN);
       
       // trigger length
-      if (joinedMonData[i].triggerFlag)    sprintf(cTriggerLen, "%7d", joinedMonData[i].triggerLen);
-      else                                 sprintf(cTriggerLen, "    ---");
+      if (joinedMonData[i].triggerFlag)    sprintf(cTriggerLen      , "%7d", joinedMonData[i].triggerLen);
+      else                                 sprintf(cTriggerLen      , "    ---");
 
       // chopper time
-      if (joinedMonData[i].pulseStartFlag) sprintf(cChopperT  , "%7d", joinedMonData[i].pulseStartT);
-      else                                 sprintf(cChopperT  , "    ---");
+      if (joinedMonData[i].pulseStartFlag) sprintf(cChopperT        , "%7d", joinedMonData[i].pulseStartT);
+      else                                 sprintf(cChopperT        , "    ---");
 
       // chopper length
-      if (joinedMonData[i].pulseStopFlag)  sprintf(cChopperLen, "%7d", joinedMonData[i].pulseLen);
-      else                                 sprintf(cChopperLen, "    ---");
+      if (joinedMonData[i].pulseStopFlag)  sprintf(cChopperLen      , "%7d", joinedMonData[i].pulseLen);
+      else                                 sprintf(cChopperLen      , "    ---");
 
       // no beam flag
-      if (joinedMonData[i].nobeamFlag)     sprintf(cNoBeamFlag, "X");
-      else                                 sprintf(cChopperLen, " ");
-      
+      if (joinedMonData[i].nobeamFlag)     sprintf(cNoBeamFlag      , "   X  ");
+      else                                 sprintf(cNoBeamFlag      , "      ");
 
-      printf(" %3x %4s %12s %10s %10s %10s %10s %10s | %7s %7s %7s %6s\n", i, cWhat, cChopT, cNCycles, cNChop, cNNoBeam, cNNoTrigger, cNNoChopper, cTriggerLen, cChopperT, cChopperLen, cNoBeamFlag);
+      // wrong trigger flag
+      if (joinedMonData[i].wrongTrigFlag)  sprintf(cWrongTriggerFlag, "   X  ");
+      else                                 sprintf(cWrongTriggerFlag, "      ");
+
+
+      printf(" %3x %4s %12s %10s %10s %10s %10s %10s %10s | %7s %7s %7s %6s %6s\n", i, cWhat, cChopT, cNCycles, cNChop, cNNoBeam, cNFailTrigger, cNFailChopper, cNWrongTrigger,
+                                                                                    cTriggerLen, cChopperLen, cChopperT, cNoBeamFlag, cWrongTriggerFlag);
     } // else: data available
   } // for i
-  printf("-------------------------------------------------------------------------------------------------------------\n");
+  printf("-------------------------------------------------------------------------------------------------------------------------------\n");
   printf("%s\n", empty);
   printf("%16s %16s %16s                                          \n"                       , dicHostname, dicVersion, dicState);
   printf("#late %10u         status    %12lx                                             \n" , dicNLate, dicStatus);

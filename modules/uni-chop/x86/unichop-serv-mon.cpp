@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 05-Nov-2024
+ *  version : 06-Nov-2024
  *
  * monitors uni-chop firmware
  *
@@ -250,6 +250,11 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
       } // switch pulseStop
 
       if (monData.pulseStopFlag && monData.pulseStartFlag) monData.pulseLen = monData.pulseStopT - monData.pulseStartT;
+
+      if (monData.nobeamFlag    && monData.triggerFlag   ) {
+        monData.wrongTrigFlag    = 1;
+        monData.wrongTrigN++;
+      } // if trigger detected although cycle marked as 'no beam'
 
       disUpdateData(tag, mSid, tChopUtc, monData);
       break;
