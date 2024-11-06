@@ -404,8 +404,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint64_t sendDeadline;                                      // deadline to send
   uint64_t sendEvtId;                                         // evtid to send
   uint32_t sendEvtNo;                                         // evtno to send
-  uint64_t sendParam;                                         // parameter to send
-  uint32_t sendTEF;                                           // TEF to send
+  uint32_t sendBpid;                                          // bpid to send
+  uint64_t sendParam;                                         // parameter to send  
 
   uint16_t strahlweg_mask;                                    // strahlweg mask
   uint16_t strahlweg_reg;                                     // strahlweg register
@@ -425,7 +425,12 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint16_t regChopFallCtrl;                                   // register of falling edge of chopper control pulse
   uint32_t rpgGatelen;                                        // measured length of RPG gate
   uint16_t rpgGatelenHi;                                      // measured length of RPG gate, hi word
-  uint16_t rpgGatelenLo;                                      // measured length of RPG gate, lo word 
+  uint16_t rpgGatelenLo;                                      // measured length of RPG gate, lo word
+
+  static uint32_t flagInterlockHLI = 0;                       // chopper control detected slow interlock, HLI
+  static uint32_t flagInterlockHSI = 0;                       // chopper control detected slow interlock, HSI
+  static uint32_t flagBlockHLI     = 0;                       // chopper control executes with 'no beam', HLI
+  static uint32_t flagBlockHSI     = 0;                       // chopper control executes with 'no beam', HSI  
   
   int      i;
   uint64_t one_us_ns = 1000;
@@ -451,9 +456,14 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       if (recSid  > 15)                return COMMON_STATUS_OUTOFRANGE;
 
       if (!flagIsLate) {
-        strahlweg_reg  =  recParam        & 0xffff;
-        strahlweg_mask = (recParam >> 16) & 0xffff;
-        anforder_mask  = (recParam >> 32) & 0xffff;
+        strahlweg_reg    =  recParam        & 0xffff;
+        strahlweg_mask   = (recParam >> 16) & 0xffff;
+        anforder_mask    = (recParam >> 32) & 0xffff;
+
+        flagBlockHLI     = (strahlweg_reg >> 7) & 0x1;
+        flagBlockHSI     = (strahlweg_reg >> 6) & 0x1;
+        flagInterlockHLI = (strahlweg_reg >> 5) & 0x1;
+        flagInterlockHSI = (strahlweg_reg >> 4) & 0x1;
 
         // write strahlweg register
         status = writeToModuleMil(IFB_ADDR_CU, MOD_LOGIC1_ADDR, MOD_LOGIC1_REG_STRAHLWEG_REG, strahlweg_reg);
@@ -473,8 +483,15 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
           if (status == COMMON_STATUS_OK) nMilSnd++;
           else                            nMilSndErr++;
         } // if status ok      
-
       } // if not late
+      else {
+        // we set all flags to block/interlock as the watchdog of the chopper control shoult inhibit the chopper       
+        flagBlockHLI     = 1;
+        flagBlockHSI     = 1;
+        flagInterlockHLI = 1;
+        flagInterlockHSI = 1;        
+      } // else: is late
+
 
       offsDone = getSysTime() - recDeadline;
       nEvtsRec++;
@@ -656,8 +673,11 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         else if ((tChopFallAct == UNICHOP_U16_NODATA) && (tChopRiseAct == UNICHOP_U16_NODATA)) lenChopAct = UNICHOP_U16_NODATA;
         else                                                                                   lenChopAct = tChopFallAct - tChopRiseAct;
 
+        // use lower 4bits of bpid for set values of chopper control
+        sendBpid     = (flagBlockHLI << 3) || (flagBlockHSI << 2) || (flagInterlockHLI << 1) || flagInterlockHSI;
+
         // write result to ECA
-        sendEvtId    = fwlib_buildEvtidV1(GID_LOCAL_ECPU_FROM, sendEvtNo, 0x0, recSid, 0x0, recAttribute);
+        sendEvtId    = fwlib_buildEvtidV1(GID_LOCAL_ECPU_FROM, sendEvtNo, 0x0, recSid, sendBpid, recAttribute);
         sendParam    = (uint64_t)(tChopFallCtrl) << 48;
         sendParam   |= (uint64_t)(tChopRiseAct)  << 32;
         sendParam   |= (uint64_t)(tChopFallAct)  << 16;
@@ -669,6 +689,18 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       offsDone = getSysTime() - recDeadline;
       // nEvtsRec++; don't increase counter - this is just monitoring
 
+      break;
+
+    // monitoring 'commands' from chopper control; reset every new cycle
+    case UNICHOP_ECADO_HLICMD :
+      flagInterlockHLI = 0;
+      flagBlockHLI     = 0;
+      break;
+
+    // monitoring 'commands' from chopper control; reset every new cycle
+    case UNICHOP_ECADO_HSICMD :
+      flagInterlockHSI = 0;
+      flagBlockHSI     = 0;
       break;
       
     default :                                                         // flush ECA Queue
