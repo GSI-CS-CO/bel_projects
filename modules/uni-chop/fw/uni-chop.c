@@ -674,7 +674,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         else                                                                                   lenChopAct = tChopFallAct - tChopRiseAct;
 
         // use lower 4bits of bpid for set values of chopper control
-        sendBpid     = (flagBlockHLI << 3) || (flagBlockHSI << 2) || (flagInterlockHLI << 1) || flagInterlockHSI;
+        sendBpid     = (flagBlockHLI << 3) | (flagBlockHSI << 2) | (flagInterlockHLI << 1) | flagInterlockHSI;
 
         // write result to ECA
         sendEvtId    = fwlib_buildEvtidV1(GID_LOCAL_ECPU_FROM, sendEvtNo, 0x0, recSid, sendBpid, recAttribute);
