@@ -116,8 +116,8 @@ static void help(void) {
 void buildHeader(char * environment)
 {
   sprintf(title, "\033[7m UNILAC Chopper Monitor %3s -------------------------------------------------------------------------------------- (units [us] unless explicitly given) -  v%8s\033[0m", environment, unichop_version_text(UNICHOP_CLIENT_MON_VERSION));
-  sprintf(header, " SID what          UTC    #cycles      #chop #interlock     #block  #failChop #wrongChop     #cciFail    #cciLate | lenTrig   tChop lenChop intrlk  block nobeam wgChop");    
-  sprintf(empty , "                                                                                                                                              ");
+  sprintf(header, " SID what          UTC    #cycles      #chop #interlock     #block  #failChop #wrongChop   #cciFail   #cciLate | lenTrig   tChop lenChop    ilk block nobeam wgChop");    
+  sprintf(empty , "                                                                                                                                                                   ");
   //       printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234\n");  
 } // buildHeader
 
@@ -248,7 +248,7 @@ void printServices()
   printf("%s\n", header);
 
   for (i=0; i<UNICHOP_NSID; i++) {
-    if (monData_secs[i] == 0)                         printf(" %3x %s                                                                                                 |                                                   .\n", i, no_link_str);
+    if (monData_secs[i] == 0)                         printf(" %3x %s                                                                                                   |                                                   .\n", i, no_link_str);
     else if (joinedMonData[i].cyclesN == 0)           printf(" %3x no data                                                                                                   |                                                   .\n", i);
     else if ((actT - monData_secs[i]) > (time_t)TOLD) printf(" %3x out of date                                                                                               |                                                   .\n", i);
     else {
@@ -273,7 +273,7 @@ void printServices()
       sprintf(cNBlock,        "%10d", joinedMonData[i].blockN);
 
       // # of missing chops
-      sprintf(cNFailChopper,  "%10d", joinedMonData[i].cyclesN - joinedMonData[i].blockN - joinedMonData[i].interlockN - joinedMonData[i].pulseStopN);
+      sprintf(cNFailChopper,  "%10d", joinedMonData[i].failChopN);
 
       // # of wrong chopper trigger; trigger detected although 'no beam flag' was set
       sprintf(cNWrongChopper, "%10d", joinedMonData[i].wrongTrigN);

@@ -92,6 +92,8 @@ extern "C" {
     int32_t   blockFlag;                                 // 'blocked' flag (last cycle)
     uint32_t  interlockN;                                // number of interlocked trigger (interlocked by chopper control)
     int32_t   interlockFlag;                             // 'interlocked' flag (last cycle)
+    uint32_t  failChopN;                                 // number of wrong chops
+    int32_t   failChopFlag;                              // ... detected (last cycle)
     uint32_t  wrongTrigN;                                // number of wrong triggers
     int32_t   wrongTrigFlag;                             // ... detected (last cycle)
     uint32_t  cciRecN;                                   // number of received strahlweg maske and register received from chopper control interface
