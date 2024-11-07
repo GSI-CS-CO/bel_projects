@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Tobias Habermann GSI-Darmstadt
- *  version : 18-Oct-2024
+ *  version : 07-Nov-2024
  *
  * Command-line interface for uni-chop
  *
@@ -180,6 +180,8 @@ static void help(void) {
   fprintf(stderr, "Example: actual chopper readback data for HSI\n"                                    );
   fprintf(stderr, "saft-ctl tr0 -x snoop 0x1ff1fc3000000000 0xfffffff000000000 0\n"                    );
   fprintf(stderr, "tDeadline: 0x17ff97ecad3b9ad0 EvtID: 0x1ff1fc3000900000 Param: 0x01f4000001f401f4\n");
+  fprintf(stderr, "                                                    ^        :                   \n");
+  fprintf(stderr, " bpid bit 0,1: 0x0, 2: block, 3: interlock, 4: CCI received, 5: CCI late         \n");
   fprintf(stderr, "                        measured length of chopper pulse     :               ^^^^\n"); 
   fprintf(stderr, "                        measured time of chopper falling edge:           ^^^^    \n"); 
   fprintf(stderr, "                        measured time of chopper rising edge :       ^^^^        \n"); 

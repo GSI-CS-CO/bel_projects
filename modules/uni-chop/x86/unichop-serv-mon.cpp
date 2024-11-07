@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 06-Nov-2024
+ *  version : 07-Nov-2024
  *
  * monitors uni-chop firmware
  *
@@ -120,6 +120,12 @@ void clearStats(int index)
   disMonDataHLI[index].blockFlag       = 0;
   disMonDataHLI[index].interlockN      = 0;
   disMonDataHLI[index].interlockFlag   = 0;
+  disMonDataHLI[index].wrongTrigN      = 0;
+  disMonDataHLI[index].wrongTrigFlag   = 0;
+  disMonDataHLI[index].cciRecN         = 0;
+  disMonDataHLI[index].cciRecFlag      = 0;
+  disMonDataHLI[index].cciLateN        = 0;
+  disMonDataHLI[index].cciLateFlag     = 0;
   disMonDataHLI[index].sid             = index;
   disMonDataHLI[index].machine         = tagHLI;
 
@@ -140,6 +146,12 @@ void clearStats(int index)
   disMonDataHSI[index].blockFlag       = 0;
   disMonDataHSI[index].interlockN      = 0;
   disMonDataHSI[index].interlockFlag   = 0;
+  disMonDataHSI[index].wrongTrigN      = 0;
+  disMonDataHSI[index].wrongTrigFlag   = 0;
+  disMonDataHSI[index].cciRecN         = 0;
+  disMonDataHSI[index].cciRecFlag      = 0;
+  disMonDataHSI[index].cciLateN        = 0;
+  disMonDataHSI[index].cciLateFlag     = 0;
   disMonDataHSI[index].sid             = index;
   disMonDataHSI[index].machine         = tagHSI;
 } // clearStats
@@ -185,7 +197,7 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
 
   mFid        = ((evtId  & 0xf000000000000000) >> 60);
   mSid        = ((evtId  & 0x00000000fff00000) >> 20);
-  mBpid       = ((evtId  & 0x00000000000003c0) >> 06);
+  mBpid       = ((evtId  & 0x00000000000fffc0) >> 06);
   mAttribute  = ((evtId  & 0x000000000000003f)      );
   
   // check ranges
@@ -197,23 +209,17 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
     case tagHLI   :
     case tagHSI   :                                // this is an OR, no break on purpose;
 
-      if (tag == tagHLI) {
-        monData                    = disMonDataHLI[mSid];
+      if (tag == tagHLI) monData  = disMonDataHLI[mSid];
+      if (tag == tagHSI) monData  = disMonDataHSI[mSid];
 
-        monData.blockFlag          = (mBpid >> 3) & 0x1;
-        if (monData.blockFlag) monData.blockN++;
-        monData.interlockFlag      = (mBpid >> 1) & 0x1;;
-        if (monData.interlockFlag) monData.interlockN++;
-      } // if HLI
-
-      if (tag == tagHSI) {
-        monData                    = disMonDataHSI[mSid];
-
-        monData.blockFlag          = (mBpid >> 2) & 0x1;
-        if (monData.blockFlag) monData.blockN++;
-        monData.interlockFlag      = (mBpid     ) & 0x1;
-        if (monData.interlockFlag) monData.interlockN++;
-      } // if HSI
+      monData.blockFlag           = (mBpid >> 2) & 0x1;
+      if (monData.blockFlag)      monData.blockN++;
+      monData.interlockFlag       = (mBpid >> 3) & 0x1;
+      if (monData.interlockFlag)  monData.interlockN++;
+      monData.cciRecFlag          = (mBpid >> 4) & 0x1;
+      if (monData.cciRecFlag)     monData.cciRecN++;
+      monData.cciLateFlag         = (mBpid >> 5) & 0x1;
+      if (monData.cciLateFlag)    monData.cciLateN++;
 
       // printf("tag %d, ncycles %d, sid %d\n", tag, monData.cyclesN, mSid);
 
@@ -228,7 +234,6 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
       monData.nobeamFlag         = (mAttribute & 0x4) >> 2;
       if (monData.nobeamFlag) monData.nobeamN++;
       
-
       tChopUtc                   = deadline.getUTC();
 
       switch (triggerLen) {

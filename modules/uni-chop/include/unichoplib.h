@@ -94,6 +94,10 @@ extern "C" {
     int32_t   interlockFlag;                             // 'interlocked' flag (last cycle)
     uint32_t  wrongTrigN;                                // number of wrong triggers
     int32_t   wrongTrigFlag;                             // ... detected (last cycle)
+    uint32_t  cciRecN;                                   // number of received strahlweg maske and register received from chopper control interface
+    int32_t   cciRecFlag;                                // ... detected (last cycle)
+    uint32_t  cciLateN;                                  // number of received strahlweg maske and register received >> late << from chopper control interface (last cycle)
+    int32_t   cciLateFlag;                               // ... detected (last cycle)
     uint32_t  sid;                                       // sequence ID
     uint32_t  machine;                                   // 'tag'
   } monData_t;

@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 06-Nov-2024
+ *  version : 07-Nov-2024
  *
  * subscribes to and displays status of a uni-chop firmware
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define UNICHOP_CLIENT_MON_VERSION 0x000009
+#define UNICHOP_CLIENT_MON_VERSION 0x000010
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -115,8 +115,8 @@ static void help(void) {
 
 void buildHeader(char * environment)
 {
-  sprintf(title, "\033[7m UNILAC Chopper Monitor %3s ---------------------------------------------------------------- (units [us] unless explicitly given) -  v%8s\033[0m", environment, unichop_version_text(UNICHOP_CLIENT_MON_VERSION));
-  sprintf(header, " SID what          UTC    #cycles      #chop #interlock     #block  #failChop #wrongChop | lenTrig   tChop lenChop intrlk  block nobeam wgChop");    
+  sprintf(title, "\033[7m UNILAC Chopper Monitor %3s -------------------------------------------------------------------------------------- (units [us] unless explicitly given) -  v%8s\033[0m", environment, unichop_version_text(UNICHOP_CLIENT_MON_VERSION));
+  sprintf(header, " SID what          UTC    #cycles      #chop #interlock     #block  #failChop #wrongChop     #cciFail    #cciLate | lenTrig   tChop lenChop intrlk  block nobeam wgChop");    
   sprintf(empty , "                                                                                                                                              ");
   //       printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234\n");  
 } // buildHeader
@@ -219,6 +219,8 @@ void printServices()
   char     cNBlock[24];
   char     cNFailChopper[24];
   char     cNWrongChopper[24];
+  char     cNCciNone[24];
+  char     cNCciLate[24];
   char     cTriggerLen[24];
   char     cChopperT[24];
   char     cChopperLen[24];
@@ -238,7 +240,7 @@ void printServices()
   // footer with date and time
   time_date = time(0);
   strftime(buff,50,"%d-%b-%y %H:%M",localtime(&time_date));
-  sprintf(footer, "\033[7m exit <q> | clear status <digit> | help <h>                                                                                    %s\033[0m", buff);
+  sprintf(footer, "\033[7m exit <q> | clear status <digit> | help <h>                                                                                                          %s\033[0m", buff);
 
   comlib_term_curpos(1,1);
   
@@ -246,9 +248,9 @@ void printServices()
   printf("%s\n", header);
 
   for (i=0; i<UNICHOP_NSID; i++) {
-    if (monData_secs[i] == 0)                         printf(" %3x %s                                                                             |                                                    \n", i, no_link_str);
-    else if (joinedMonData[i].cyclesN == 0)           printf(" %3x no data                                                                             |                                                    \n", i);
-    else if ((actT - monData_secs[i]) > (time_t)TOLD) printf(" %3x out of date                                                                         |                                                    \n", i);
+    if (monData_secs[i] == 0)                         printf(" %3x %s                                                                                                 |                                                   .\n", i, no_link_str);
+    else if (joinedMonData[i].cyclesN == 0)           printf(" %3x no data                                                                                                   |                                                   .\n", i);
+    else if ((actT - monData_secs[i]) > (time_t)TOLD) printf(" %3x out of date                                                                                               |                                                   .\n", i);
     else {
       // what
       if (joinedMonData[i].machine == tagHLI) sprintf(cWhat, "HLI");
@@ -275,6 +277,12 @@ void printServices()
 
       // # of wrong chopper trigger; trigger detected although 'no beam flag' was set
       sprintf(cNWrongChopper, "%10d", joinedMonData[i].wrongTrigN);
+
+      // # missing messages from CCI
+      sprintf(cNCciNone,      "%10d", joinedMonData[i].cyclesN - joinedMonData[i].cciRecN);
+
+      // # late messages from CCI
+      sprintf(cNCciLate,      "%10d", joinedMonData[i].cciLateN);
       
       // trigger length
       if (joinedMonData[i].triggerFlag)    sprintf(cTriggerLen      , "%7d", joinedMonData[i].triggerLen);
@@ -305,11 +313,11 @@ void printServices()
       else                                 sprintf(cWrongChopFlag   , "      ");
 
 
-      printf(" %3x %4s %12s %10s %10s %10s %10s %10s %10s | %7s %7s %7s %6s %6s %6s %6s\n", i, cWhat, cChopT, cNCycles, cNChop, cNInterlock, cNBlock, cNFailChopper, cNWrongChopper,
-                                                                                            cTriggerLen, cChopperT, cChopperLen, cInterlockFlag, cBlockFlag, cNoBeamFlag, cWrongChopFlag);
+      printf(" %3x %4s %12s %10s %10s %10s %10s %10s %10s %10s %10s | %7s %7s %7s %6s %6s %6s %6s\n", i, cWhat, cChopT, cNCycles, cNChop, cNInterlock, cNBlock, cNFailChopper, cNWrongChopper, cNCciNone, cNCciLate,
+                                                                                                      cTriggerLen, cChopperT, cChopperLen, cInterlockFlag, cBlockFlag, cNoBeamFlag, cWrongChopFlag);
     } // else: data available
   } // for i
-  printf("----------------------------------------------------------------------------------------------------------------------------------------------\n");
+  printf("--------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
   printf("%s\n", empty);
   printf("%16s %16s %16s                                          \n"                       , dicHostname, dicVersion, dicState);
   printf("#late %10u         status    %12lx                                             \n" , dicNLate, dicStatus);
