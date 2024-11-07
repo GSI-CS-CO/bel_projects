@@ -293,12 +293,16 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
         monData.wrongTrigFlag    = 1;
         monData.wrongTrigN++;
       }
+      else
+        monData.wrongTrigFlag    = 0;
 
       // if no chopper detected although there was nothing to prevent the chopper
       if (!(monData.nobeamFlag || monData.blockFlag || monData.interlockFlag) && !(monData.pulseStopFlag)) {
         monData.failChopFlag     = 1;
         monData.failChopN++;
       }
+      else
+        monData.failChopFlag     = 0;
       
       disUpdateData(tag, mSid, tChopUtc, monData);
       break;

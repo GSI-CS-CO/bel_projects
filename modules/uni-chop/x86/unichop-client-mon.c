@@ -115,9 +115,9 @@ static void help(void) {
 
 void buildHeader(char * environment)
 {
-  sprintf(title, "\033[7m UNILAC Chopper Monitor %3s ------------------------------------------------------------------------------------- (units [us] unless explicitly given) -  v%8s\033[0m", environment, unichop_version_text(UNICHOP_CLIENT_MON_VERSION));
-  sprintf(header, " SID what          UTC    #cycles      #chop #interlock     #block  #failChop #wrongChop   #cciFail   #cciLate | lenTrig   tChop lenChop    ilk block nobeam wgChop");    
-  sprintf(empty , "                                                                                                                                                                  .");
+  sprintf(title, "\033[7m UNILAC Chopper Monitor %3s -------------------------------------------------------------------------------------- (units [us] unless explicitly given) -  v%8s\033[0m", environment, unichop_version_text(UNICHOP_CLIENT_MON_VERSION));
+  sprintf(header, " SID what          UTC    #cycles      #chop #interlock     #block  #failChop #wrongChop   #cciFail   #cciLate | lenTrig   tChop lenChop    ilk  block nobeam wgChop");    
+  sprintf(empty , "                                                                                                                                                                   .");
   //       printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234\n");  
 } // buildHeader
 
@@ -240,7 +240,7 @@ void printServices()
   // footer with date and time
   time_date = time(0);
   strftime(buff,50,"%d-%b-%y %H:%M",localtime(&time_date));
-  sprintf(footer, "\033[7m exit <q> | clear status <digit> | help <h>                                                                                                         %s\033[0m", buff);
+  sprintf(footer, "\033[7m exit <q> | clear status <digit> | help <h>                                                                                                          %s\033[0m", buff);
 
   comlib_term_curpos(1,1);
   
@@ -248,9 +248,9 @@ void printServices()
   printf("%s\n", header);
 
   for (i=0; i<UNICHOP_NSID; i++) {
-    if (monData_secs[i] == 0)                         printf(" %3x %s                                                                                                   |                                                  .\n", i, no_link_str);
-    else if (joinedMonData[i].cyclesN == 0)           printf(" %3x no data                                                                                                   |                                                  .\n", i);
-    else if ((actT - monData_secs[i]) > (time_t)TOLD) printf(" %3x out of date                                                                                               |                                                  .\n", i);
+    if (monData_secs[i] == 0)                         printf(" %3x %s                                                                                                   |                                                   .\n", i, no_link_str);
+    else if (joinedMonData[i].cyclesN == 0)           printf(" %3x no data                                                                                                   |                                                   .\n", i);
+    else if ((actT - monData_secs[i]) > (time_t)TOLD) printf(" %3x out of date                                                                                               |                                                   .\n", i);
     else {
       // what
       if (joinedMonData[i].machine == tagHLI) sprintf(cWhat, "HLI");
@@ -317,10 +317,16 @@ void printServices()
                                                                                                       cTriggerLen, cChopperT, cChopperLen, cInterlockFlag, cBlockFlag, cNoBeamFlag, cWrongChopFlag);
     } // else: data available
   } // for i
-  printf("-------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
+  printf("--------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
   printf("%s\n", empty);
-  printf("%16s %16s %16s                                                                                                                .\n"                       , dicHostname, dicVersion, dicState);
-  printf("#late %10u         status    %12lx                                                                                                                   .\n" , dicNLate, dicStatus);
+  if (dicStatus != no_link_64) {
+    printf("%16s %16s %16s                                                                                                                 .\n"                       , dicHostname, dicVersion, dicState);
+    printf("#late %10u         status    %12lx                                                                                                                    .\n" , dicNLate, dicStatus);
+  } // if 'link'
+  else {
+    printf("     %s                                                                                                                                                       .\n", no_link_str);
+    printf("%s\n", empty);
+  } // else: 'no_link'
   for (i=0; i<0; i++) printf("%s\n", empty);
   printf("%s\n", footer);
 } // printServicesq
