@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define UNICHOPLIB_VERSION 0x000009
+#define UNICHOPLIB_VERSION 0x000010
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  UNICHOPLIB_STATUS_OK                  0            // OK
