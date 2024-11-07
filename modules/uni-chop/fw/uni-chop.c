@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Tobias Habermann GSI-Darmstadt
- *  version : 05-Nov-2024
+ *  version : 07-Nov-2024
  *
  *  firmware required for UNILAC chopper control
  *  
@@ -37,7 +37,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define UNICHOP_FW_VERSION      0x000009  // make this consistent with makefile
+#define UNICHOP_FW_VERSION      0x000010  // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -430,7 +430,9 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   static uint32_t flagInterlockHLI = 0;                       // chopper control detected slow interlock, HLI
   static uint32_t flagInterlockHSI = 0;                       // chopper control detected slow interlock, HSI
   static uint32_t flagBlockHLI     = 0;                       // chopper control executes with 'no beam', HLI
-  static uint32_t flagBlockHSI     = 0;                       // chopper control executes with 'no beam', HSI  
+  static uint32_t flagBlockHSI     = 0;                       // chopper control executes with 'no beam', HSI
+  static uint32_t flagCCIRec       = 0;                       // received strahlweg register and mask from chopper control interface
+  static uint32_t flagCCILate      = 0;                       // message from chopper control interface was late
   
   int      i;
   uint64_t one_us_ns = 1000;
@@ -454,6 +456,9 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       recSid       = (uint32_t)((recEvtId >> 20) & 0x00000fff);
       if (recGid != GID_LOCAL_ECPU_TO) return COMMON_STATUS_BADSETTING;
       if (recSid  > 15)                return COMMON_STATUS_OUTOFRANGE;
+
+      flagCCIRec   = 1;
+      flagCCILate  = flagIsLate;
 
       if (!flagIsLate) {
         strahlweg_reg    =  recParam        & 0xffff;
@@ -485,7 +490,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         } // if status ok      
       } // if not late
       else {
-        // we set all flags to block/interlock as the watchdog of the chopper control shoult inhibit the chopper       
+        // we set all flags to block/interlock as the watchdog of the chopper control should inhibit the chopper       
         flagBlockHLI     = 1;
         flagBlockHSI     = 1;
         flagInterlockHLI = 1;
@@ -632,6 +637,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       regChopRiseAct    = MOD_LOGIC1_REG_HLI_ACT_POSEDGE_RD;
       regChopFallAct    = MOD_LOGIC1_REG_HLI_ACT_NEGEDGE_RD;
       regChopFallCtrl   = MOD_LOGIC1_REG_HLI_CTRL_NEGEDGE_RD;
+      sendBpid          = (flagBlockHLI << 2) | (flagInterlockHLI << 3);
 
     case UNICHOP_ECADO_HSISTOP :                                    // this is an OR, no 'break' on purpose
       if (!sendEvtNo) {
@@ -639,13 +645,17 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         regChopRiseAct  = MOD_LOGIC1_REG_HSI_ACT_POSEDGE_RD;
         regChopFallAct  = MOD_LOGIC1_REG_HSI_ACT_NEGEDGE_RD;
         regChopFallCtrl = MOD_LOGIC1_REG_HSI_CTRL_NEGEDGE_RD;
+        sendBpid        = (flagBlockHSI << 2) | (flagInterlockHSI << 3);
       } // if not sendEveNo
+
+      // lower 2 bit of sendBpid set to 0 for byte alignment and easier debugging using saft-ctl snoop
+      sendBpid         |= (flagCCIRec   << 4) | (flagCCILate      << 5);
         
       comLatency   = (int32_t)(getSysTime() - recDeadline);
       recGid       = (uint32_t)((recEvtId >> 48) & 0x00000fff);
       recEvtNo     = (uint32_t)((recEvtId >> 36) & 0x00000fff);
       recSid       = (uint32_t)((recEvtId >> 20) & 0x00000fff);
-      recAttribute = (uint32_t)((recEvtId      ) & 0x0000003f); 
+      recAttribute = (uint32_t)((recEvtId      ) & 0x0000003f);
             
       if (recSid  > 15)       return COMMON_STATUS_OUTOFRANGE;
       
@@ -673,9 +683,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         else if ((tChopFallAct == UNICHOP_U16_NODATA) && (tChopRiseAct == UNICHOP_U16_NODATA)) lenChopAct = UNICHOP_U16_NODATA;
         else                                                                                   lenChopAct = tChopFallAct - tChopRiseAct;
 
-        // use lower 4bits of bpid for set values of chopper control
-        sendBpid     = (flagBlockHLI << 3) | (flagBlockHSI << 2) | (flagInterlockHLI << 1) | flagInterlockHSI;
-
         // write result to ECA
         sendEvtId    = fwlib_buildEvtidV1(GID_LOCAL_ECPU_FROM, sendEvtNo, 0x0, recSid, sendBpid, recAttribute);
         sendParam    = (uint64_t)(tChopFallCtrl) << 48;
@@ -691,16 +698,15 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
       break;
 
-    // monitoring 'commands' from chopper control; reset every new cycle
+    // monitoring 'commands' from chopper control; reset with every new cycle for HLI and HSI
     case UNICHOP_ECADO_HLICMD :
-      flagInterlockHLI = 0;
-      flagBlockHLI     = 0;
-      break;
-
-    // monitoring 'commands' from chopper control; reset every new cycle
-    case UNICHOP_ECADO_HSICMD :
+    case UNICHOP_ECADO_HSICMD :                                       // this is an OR, no 'break' on purpose
       flagInterlockHSI = 0;
       flagBlockHSI     = 0;
+      flagInterlockHLI = 0;
+      flagBlockHLI     = 0;
+      flagCCILate      = 0;
+      flagCCIRec       = 0;
       break;
       
     default :                                                         // flush ECA Queue
