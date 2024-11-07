@@ -490,7 +490,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         } // if status ok      
       } // if not late
       else {
-        // we set all flags to block/interlock as the watchdog of the chopper control should inhibit the chopper       
+        // we set all flags to block/interlock as the watchdog of the chopper control should inhibit the chopper
+        /* chk, I think its a stupid idea to set everything to '1' */
         flagBlockHLI     = 1;
         flagBlockHSI     = 1;
         flagInterlockHLI = 1;
