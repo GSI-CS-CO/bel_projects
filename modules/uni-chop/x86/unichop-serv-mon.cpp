@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define UNICHOP_SERV_MON_VERSION 0x000009
+#define UNICHOP_SERV_MON_VERSION 0x000010
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -120,6 +120,8 @@ void clearStats(int index)
   disMonDataHLI[index].blockFlag       = 0;
   disMonDataHLI[index].interlockN      = 0;
   disMonDataHLI[index].interlockFlag   = 0;
+  disMonDataHLI[index].failChopN       = 0;
+  disMonDataHLI[index].failChopFlag    = 0;
   disMonDataHLI[index].wrongTrigN      = 0;
   disMonDataHLI[index].wrongTrigFlag   = 0;
   disMonDataHLI[index].cciRecN         = 0;
@@ -146,6 +148,8 @@ void clearStats(int index)
   disMonDataHSI[index].blockFlag       = 0;
   disMonDataHSI[index].interlockN      = 0;
   disMonDataHSI[index].interlockFlag   = 0;
+  disMonDataHSI[index].failChopN       = 0;
+  disMonDataHSI[index].failChopFlag    = 0;
   disMonDataHSI[index].wrongTrigN      = 0;
   disMonDataHSI[index].wrongTrigFlag   = 0;
   disMonDataHSI[index].cciRecN         = 0;
@@ -283,11 +287,19 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
 
       if (monData.pulseStopFlag && monData.pulseStartFlag) monData.pulseLen = monData.pulseStopT - monData.pulseStartT;
 
+      
+      // if trigger detected although cycle should have been executed without beam
       if ((monData.nobeamFlag || monData.blockFlag || monData.interlockFlag)  && monData.triggerFlag) {
         monData.wrongTrigFlag    = 1;
         monData.wrongTrigN++;
-      } // if trigger detected although cycle should have been executed without beam
+      }
 
+      // if no chopper detected although there was nothing to prevent the chopper
+      if (!(monData.nobeamFlag || monData.blockFlag || monData.interlockFlag) && !(monData.pulseStopFlag)) {
+        monData.failChopFlag     = 1;
+        monData.failChopN++;
+      }
+      
       disUpdateData(tag, mSid, tChopUtc, monData);
       break;
     default         :
