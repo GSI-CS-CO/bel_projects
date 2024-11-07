@@ -67,6 +67,10 @@ saft-ecpu-ctl $SDGW -c 0x1ff0fb1000000000 0xfffffff000000000 0 0xfb1 -d
 saft-ecpu-ctl $SDGW -c 0x11c4008000000000 0xfffffff000000000 0 0xfc3 -d
 #UNICHOP ECADO_HLISTOP
 saft-ecpu-ctl $SDGW -c 0x11c3008000000000 0xfffffff000000000 0 0xfc2 -d
+#UNICHOP_ECADO_HSICMD
+saft-ecpu-ctl $SDGW -c 0x11c40ff000000000 0xfffffff000000000 0 0xfc5 -d
+#UNICHOP ECADO_HLICMD
+saft-ecpu-ctl $SDGW -c 0x11c30ff000000000 0xfffffff000000000 0 0xfc4 -d
 
 
 ###########################################
