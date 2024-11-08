@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 07-Nov-2024
+ *  version : 08-Nov-2024
  *
  * subscribes to and displays status of a uni-chop firmware
  *
@@ -239,8 +239,8 @@ void printServices()
 
   // footer with date and time
   time_date = time(0);
-  strftime(buff,50,"%d-%b-%y %H:%M",localtime(&time_date));
-  sprintf(footer, "\033[7m exit <q> | clear status <digit> | help <h>                                                                                                          %s\033[0m", buff);
+  strftime(buff,50,"%d-%b-%y %H:%M:%S",localtime(&time_date));
+  sprintf(footer, "\033[7m exit <q> | clear status <digit> | help <h>                                                                                                       %s\033[0m", buff);
 
   comlib_term_curpos(1,1);
   
@@ -309,8 +309,8 @@ void printServices()
       else                                 sprintf(cNoBeamFlag      , "      ");
 
       // wrong chopper flag
-      if (joinedMonData[i].wrongTrigFlag)  sprintf(cWrongChopFlag   , "   X  ");
-      else                                 sprintf(cWrongChopFlag   , "      ");
+      if (joinedMonData[i].wrongTrigFlag)  sprintf(cWrongChopFlag   , "   X .");
+      else                                 sprintf(cWrongChopFlag   , "     .");
 
 
       printf(" %3x %4s %12s %10s %10s %10s %10s %10s %10s %10s %10s | %7s %7s %7s %6s %6s %6s %6s\n", i, cWhat, cChopT, cNCycles, cNChop, cNInterlock, cNBlock, cNFailChopper, cNWrongChopper, cNCciNone, cNCciLate,
