@@ -705,7 +705,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       } // if not flagIsLate
 
       // disable relevant RPG
-      writeToModuleMil(rpgAddr, MOD_RPG_HLI_ADDR, MOD_RPG_XXX_ENABLE_REG, MOD_RPG_XXX_ENABLE_FALSE);
+      writeToModuleMil(IFB_ADDR_CU, rpgAddr, MOD_RPG_XXX_ENABLE_REG, MOD_RPG_XXX_ENABLE_FALSE);
 
       offsDone = getSysTime() - recDeadline;
       // nEvtsRec++; don't increase counter - this is just monitoring
