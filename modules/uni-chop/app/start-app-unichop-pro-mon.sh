@@ -8,7 +8,7 @@ SCRIPTDIR=$(dirname "${SCRIPT}")
 # We assume that the script resides in bin/ folder inside the base folder, so going one level up
 BASEDIR=$(cd "${SCRIPTDIR}/.." >/dev/null; pwd)
 
-# script for starting the unichop system viewer on INT
+# script for starting the unichop viewer on INT
 export DIM_DNS_NODE=asl105
 export LD_LIBRARY_PATH=${BASEDIR}/lib
-xterm -T 'uni-chop system status' -fa monaco -fs 10 -geometry 173x24 -e ${BASEDIR}/bin/unichop-client-mon pro
+xterm -T 'unilac chopper viewer' -fa monaco -fs 10 -geometry 164x24 -e ${BASEDIR}/bin/unichop-client-mon pro

@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 10-Jul-2024
+ *  version : 07-Nov-2024
  *
  * monitors uni-chop firmware
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define UNICHOP_SERV_MON_VERSION 0x000001
+#define UNICHOP_SERV_MON_VERSION 0x000010
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -68,50 +68,11 @@
 #include <unichoplib.h>                 // API
 #include <uni-chop.h>                   // FW
 
-// USE MASP
-#ifdef USEMASP
-// includes for MASP
-#include "MASP/Emitter/End_of_scope_status_emitter.h"
-#include "MASP/StatusDefinition/DeviceStatus.h"
-#include "MASP/Util/Logger.h"
-#include "MASP/Common/StatusNames.h"
-#include <boost/thread/thread.hpp> // (sleep)
-#include <iostream>
-#include <string>
-#include <limits.h>
-
-std::string   maspNomen;
-std::string   maspSourceId; 
-bool          maspProductive;     // send to pro/dev masp
-bool          maspSigOpReady;     // value for MASP signal OP_READY
-bool          maspSigTransfer;    // value for MASP signal TRANSFER (custom emitter)
-
-MASP::StatusEmitterConfig get_config() {
-  char   hostname[HOST_NAME_MAX];
-
-  gethostname(hostname, HOST_NAME_MAX);
-  maspSourceId   = maspNomen + "." + std::string(hostname);
-
-#ifdef PRODUCTIVE
-  maspProductive = true;
-#else
-  maspProductive = false;
-#endif
-
-  MASP::StatusEmitterConfig config = MASP::StatusEmitterConfig(MASP::StatusEmitterConfig::CUSTOM_EMITTER_DEFAULT(), maspSourceId, maspProductive);
-
-  return config;
-}
-#endif
-
-
 using namespace saftlib;
 using namespace std;
 
 #define FID                0x1          // format ID of timing messages
 #define UPDATE_TIME_MS    1000          // time for status updates [ms]
-#define MATCH_WIN_US        20          // window for matching start and stop evts [us]
-#define INITMINMAX 10000000000          // init value for min/max
 
 static const char* program;
 
@@ -125,221 +86,241 @@ char      disVersion[DIMCHARSIZE];      // firmware version
 char      disState[DIMCHARSIZE];        // firmware state
 char      disHostname[DIMCHARSIZE];     // hostname
 uint64_t  disStatus;                    // firmware status
-monval_t  disMonData;
+uint32_t  disNLate;                     // number of late events detected by firmware
+monData_t disMonDataHLI[UNICHOP_NSID];  // max 16 virtaccs; 0..15: HLI; 16..31: HSI; contains chopper data;
+monData_t disMonDataHSI[UNICHOP_NSID];  // max 16 virtaccs; 0..15: HLI; 16..31: HSI; contains chopper data;
 
 uint32_t  disVersionId      = 0;
 uint32_t  disStateId        = 0;
 uint32_t  disStatusId       = 0;
+uint32_t  disNLateId        = 0;
 uint32_t  disHostnameId     = 0;
-uint32_t  disMonDataId      = 0;
+uint32_t  disMonDataHLIId[UNICHOP_NSID];
+uint32_t  disMonDataHSIId[UNICHOP_NSID];
 uint32_t  disCmdClearId     = 0;
 
+uint32_t  one_ms_ns = 1000000;
 
-// local variables
-monval_t  monData;                      // monitoring data
-double    tAveOld;                      // helper for stats
-double    tAveStreamOld;                // helper for stats
-int       flagClear;                    // flag for clearing diag data;
-uint32_t  matchWindow       = MATCH_WIN_US;
-uint32_t  modeCompare       = 0;
-uint64_t  offsetStart;                  // correction to be used for different monitoring types
-uint64_t  offsetStop;                   // correction to be used for different monitoring types
-
-
-
-uint64_t  one_us_ns = 1000;
-uint64_t  one_ms_ns = 1000000;
-
-/*uint32_t  nNotSnd           = 0;
-uint32_t  nBadEvt           = 0;
-uint32_t  badEvt            = 0xfff;
-uint64_t  tStartOld         = 0;
-uint64_t  dStartMin         = 1000000000;
-uint64_t  tStopOld          = 0;
-uint64_t  dStopMin          = 1000000000;
-#define   NMONI 400
-int       nMon              = 0;
-uint64_t  deadlineMon[NMONI];
-uint32_t  evtNoMon[NMONI];
-uint32_t  tagMon[NMONI];
-uint32_t  flagsMon[NMONI];
-*/
-
-
-// calc basic statistic properties
-void calcStats(double *meanNew,         // new mean value, please remember for later
-               double meanOld,          // old mean value (required for 'running stats')
-               double *streamNew,       // new stream value, please remember for later
-               double streamOld,        // old stream value (required for 'running stats')
-               double val,              // the new value :-)
-               uint32_t n,              // number of values (required for 'running stats')
-               double *var,             // standard variance
-               double *sdev             // standard deviation
-               )
+void clearStats(int index)
 {
-  // see  ”The Art of ComputerProgramming, Volume 2: Seminumerical Algorithms“, Donald Knuth, or
-  // http://www.netzmafia.de/skripten/hardware/Control/auswertung.pdf
-  if (n > 1) {
-    *meanNew   = meanOld + (val - meanOld) / (double)n;
-    *streamNew = streamOld + (val - meanOld)*(val - *meanNew);
-    *var       = *streamNew / (double)(n - 1);
-    *sdev      = sqrt(*var);
-  }
-  else {
-    *meanNew = val;
-    *var     = 0;
-  }
-} // calcStats
+  disMonDataHLI[index].cyclesN         = 0;
+  disMonDataHLI[index].triggerLen      = 0;
+  disMonDataHLI[index].triggerN        = 0;
+  disMonDataHLI[index].triggerFlag     = 0;
+  disMonDataHLI[index].pulseStartT     = 0;
+  disMonDataHLI[index].pulseStartN     = 0;
+  disMonDataHLI[index].pulseStartFlag  = 0;
+  disMonDataHLI[index].pulseStopT      = 0;
+  disMonDataHLI[index].pulseStopN      = 0;
+  disMonDataHLI[index].pulseStopFlag   = 0;
+  disMonDataHLI[index].pulseLen        = 0;
+  disMonDataHLI[index].nobeamN         = 0;
+  disMonDataHLI[index].nobeamFlag      = 0;
+  disMonDataHLI[index].blockN          = 0;
+  disMonDataHLI[index].blockFlag       = 0;
+  disMonDataHLI[index].interlockN      = 0;
+  disMonDataHLI[index].interlockFlag   = 0;
+  disMonDataHLI[index].failChopN       = 0;
+  disMonDataHLI[index].failChopFlag    = 0;
+  disMonDataHLI[index].wrongTrigN      = 0;
+  disMonDataHLI[index].wrongTrigFlag   = 0;
+  disMonDataHLI[index].cciRecN         = 0;
+  disMonDataHLI[index].cciRecFlag      = 0;
+  disMonDataHLI[index].cciLateN        = 0;
+  disMonDataHLI[index].cciLateFlag     = 0;
+  disMonDataHLI[index].sid             = index;
+  disMonDataHLI[index].machine         = tagHLI;
 
-
-// clear statistics
-void clearStats()
-{
-  // monData.gid      = 0x0;
-  monData.nFwSnd     = 0x0;
-  monData.nFwRecD    = 0x0;
-  monData.nFwRecT    = 0x0;
-  monData.nFwRecErr  = 0x0;
-  monData.nFwBurst   = 0x0;
-  monData.nStart     = 0x0;
-  monData.nStop      = 0x0;
-  monData.nMatch     = 0x0;
-  monData.nFailSnd   = 0x0;
-  monData.nFailEvt   = 0x0;
-  monData.nFailOrder = 0x0;
-  monData.tAct       = NAN;
-  monData.tMin       =  INITMINMAX;
-  monData.tMax       = -INITMINMAX;
-  monData.tAve       = NAN;
-  monData.tSdev      = NAN;        
-  tAveOld            = NAN;
-  tAveStreamOld      = NAN;
+  disMonDataHSI[index].cyclesN         = 0;
+  disMonDataHSI[index].triggerLen      = 0;
+  disMonDataHSI[index].triggerN        = 0;
+  disMonDataHSI[index].triggerFlag     = 0;
+  disMonDataHSI[index].pulseStartT     = 0;
+  disMonDataHSI[index].pulseStartN     = 0;
+  disMonDataHSI[index].pulseStartFlag  = 0;
+  disMonDataHSI[index].pulseStopT      = 0;
+  disMonDataHSI[index].pulseStopN      = 0;
+  disMonDataHSI[index].pulseStopFlag   = 0;
+  disMonDataHSI[index].pulseLen        = 0;
+  disMonDataHSI[index].nobeamN         = 0;
+  disMonDataHSI[index].nobeamFlag      = 0;
+  disMonDataHSI[index].blockN          = 0;
+  disMonDataHSI[index].blockFlag       = 0;
+  disMonDataHSI[index].interlockN      = 0;
+  disMonDataHSI[index].interlockFlag   = 0;
+  disMonDataHSI[index].failChopN       = 0;
+  disMonDataHSI[index].failChopFlag    = 0;
+  disMonDataHSI[index].wrongTrigN      = 0;
+  disMonDataHSI[index].wrongTrigFlag   = 0;
+  disMonDataHSI[index].cciRecN         = 0;
+  disMonDataHSI[index].cciRecFlag      = 0;
+  disMonDataHSI[index].cciLateN        = 0;
+  disMonDataHSI[index].cciLateFlag     = 0;
+  disMonDataHSI[index].sid             = index;
+  disMonDataHSI[index].machine         = tagHSI;
 } // clearStats
+
+
+// update value
+void disUpdateData(uint32_t tag, int sid, uint64_t tChop, monData_t data)
+{
+  uint32_t secs;
+  uint32_t msecs;
+  
+  unichop_t2secs(tChop, &secs, &msecs);
+  msecs  /= 1000000;
+
+  if (tag == tagHLI) {
+    disMonDataHLI[sid] = data;
+    dis_set_timestamp(disMonDataHLIId[sid], secs, msecs);
+    dis_update_service(disMonDataHLIId[sid]);
+  } // if tagHLI
+
+  if (tag == tagHSI) {
+    disMonDataHSI[sid] = data;
+    dis_set_timestamp(disMonDataHSIId[sid], secs, msecs);
+    dis_update_service(disMonDataHSIId[sid]);
+  } // if tagHLI
+  
+} // disUpdateData
 
 
 // handle received timing message
 static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags, uint32_t tag)
 {
-  static int          flagMsgStart;    // flag: marks that a start message has been received
-  static uint64_t     deadlineStart;     // deadline of MIL event sent
-  static uint32_t     sndEvtNo;        // evtNo of MIL event sent
+  uint64_t            tChopUtc;        // time of chopper pulse
+  monData_t           monData;
   
   uint32_t            mFid;            // FID 
-  uint32_t            mGid;            // GID
-  uint32_t            mEvtNo;          // event number
-
-  double              tDiff;           // time difference between stop and start; must be smaller than match window
-  double              mean;            // mean value for statistics
-  double              sdev;            // sdev for statistics
-  double              stream;          // a stream value for statistics
-  double              dummy;
+  uint32_t            mSid;            // SID
+  uint32_t            mBpid;           // BPID, used for block and interlock flags
+  uint32_t            mAttribute;      // attribute;
+  uint32_t            triggerLen;
+  uint32_t            pulseStart;
+  uint32_t            pulseStop;
 
   mFid        = ((evtId  & 0xf000000000000000) >> 60);
-  mGid        = ((evtId  & 0x0fff000000000000) >> 48);
-  mEvtNo      = ((evtId  & 0x0000fff000000000) >> 36);
-
-  stream      = 0;
-  sdev        = 0;
-
-  /*
-  deadlineMon[nMon] = deadline.getTAI();
-  evtNoMon[nMon]    = mEvtNo;
-  tagMon[nMon]      = tag;
-  flagsMon[nMon]    = flags;
-  nMon++;
-  if (nMon == NMONI) {
-    for (int i=0; i<NMONI; i++) 
-      printf("tag %d, evt %2x, deadline %lu, flags %u\n", tagMon[i], evtNoMon[i], deadlineMon[i], flagsMon[i]);
-    exit(1);
-  }
-  */
-  /*
-  printf("tag %d, evt %2x, deadline %lu, flags %u\n", tag, mEvtNo, deadline.getTAI(), flags);
-  */
-
+  mSid        = ((evtId  & 0x00000000fff00000) >> 20);
+  mBpid       = ((evtId  & 0x00000000000fffc0) >> 06);
+  mAttribute  = ((evtId  & 0x000000000000003f)      );
+  
   // check ranges
   if (mFid != FID)                        return;  // unexpected format of timing message
-  if (tag   > tagStop)                    return;  // illegal tag
-  if ((modeCompare == 2) && ((mEvtNo >= 0x0e0) && (mEvtNo <= 0x0e4))) return; // exclude UTC telegrams
-  //printf("tag %d\n", tag);
+  if (tag   > tagHSI)                     return;  // illegal tag
+  if (mSid  > UNICHOP_NSID)               return;  // out of range
 
-  
   switch (tag) {
-    case tagStart   :
-      //if (mGid != monData.gid)            return;  // received GID does not match configuration
-      monData.nStart++; 
-      flagMsgStart                 = 1;
-      deadlineStart                = deadline.getTAI();
-      /*if ((deadlineStart - tStartOld) < dStartMin) dStartMin = deadlineStart - tStartOld;
-        tStartOld = deadlineStart;*/
-      sndEvtNo                     = mEvtNo;
-      monData.tAct                 = NAN;
-      //monData.tMin                 = NAN;
-      //monData.tMax                 = NAN;
-      //monData.tAve                 = NAN;
-      //monData.tSdev                = NAN;
-      break;
-    case tagStop    :
-      monData.nStop++;
-      /*if ((deadline.getTAI() - tStopOld) < dStopMin) dStopMin = deadline.getTAI() - tStopOld;
-        tStopOld = deadline.getTAI();*/
+    case tagHLI   :
+    case tagHSI   :                                // this is an OR, no break on purpose;
 
-      // a MIL telegram has been received although no MIL telegram has been sent: give up
-      if (!flagMsgStart){
-        monData.nFailSnd++;
-        return;
-      } // if !flagMsgStart
+      if (tag == tagHLI) monData  = disMonDataHLI[mSid];
+      if (tag == tagHSI) monData  = disMonDataHSI[mSid];
 
-      // evtNo of MIL received/sent telegrams do not match: give up
-      if ((mEvtNo != sndEvtNo) && (modeCompare != 4)) {
-        monData.nFailEvt++;
-        return;  
-      } // if !evtNo
-      // assume we have a matching pair of sent and received MIL telegrams
-      flagMsgStart                  = 0;
-      tDiff                         = (double)((int64_t)(deadline.getTAI() - offsetStop - deadlineStart)) / (double)one_us_ns;
+      monData.blockFlag           = (mBpid >> 2) & 0x1;
+      if (monData.blockFlag)      monData.blockN++;
+      monData.interlockFlag       = (mBpid >> 3) & 0x1;
+      if (monData.interlockFlag)  monData.interlockN++;
+      monData.cciRecFlag          = (mBpid >> 4) & 0x1;
+      if (monData.cciRecFlag)     monData.cciRecN++;
+      monData.cciLateFlag         = (mBpid >> 5) & 0x1;
+      if (monData.cciLateFlag)    monData.cciLateN++;
 
-      // check causality
-      if (tDiff < -1.0 * matchWindow){
-        monData.nFailOrder++;
-        return;
-      } // if tDiff
-      if (modeCompare == 4) tDiff  += (double)offsetStart / (double)one_us_ns;  // hacky
-      monData.nMatch++;
-      monData.tAct                  = tDiff;
-      if (monData.tAct < monData.tMin) monData.tMin = monData.tAct;
-      if (monData.tAct > monData.tMax) monData.tMax = monData.tAct;
+      // printf("tag %d, ncycles %d, sid %d\n", tag, monData.cyclesN, mSid);
 
-      calcStats(&mean, tAveOld, &stream, tAveStreamOld, monData.tAct, monData.nMatch , &dummy, &sdev);
-      tAveOld       = mean;
-      tAveStreamOld = stream;
-      monData.tAve  = mean;
-      monData.tSdev = sdev;
+      triggerLen                 = ((param & 0xffff000000000000) >> 48);
+      pulseStart                 = ((param & 0x0000ffff00000000) >> 32);
+      pulseStop                  = ((param & 0x00000000ffff0000) >> 16);
+
+      monData.cyclesN++;
+      monData.machine            = tag;
+      monData.sid                = mSid;
+      
+      monData.nobeamFlag         = (mAttribute & 0x4) >> 2;
+      if (monData.nobeamFlag) monData.nobeamN++;
+      
+      tChopUtc                   = deadline.getUTC();
+
+      switch (triggerLen) {
+        case UNICHOP_U16_INVALID :
+          monData.triggerLen     = 0x7fffffff;
+          monData.triggerFlag    = 0;
+          break;
+        case UNICHOP_U16_NODATA  :
+          monData.triggerLen     = 0;
+          monData.triggerFlag    = 0;
+          break;
+        default :
+          monData.triggerLen     = triggerLen;
+          monData.triggerFlag    = 1;
+          monData.triggerN++;
+      } // switch triggerLen
+
+      switch (pulseStart) {
+        case UNICHOP_U16_INVALID :
+          monData.pulseStartT    = 0x7fffffff;
+          monData.pulseStartFlag = 0;
+          break;
+        case UNICHOP_U16_NODATA  :
+          monData.pulseStartT    = 0;
+          monData.pulseStartFlag = 0;
+          break;
+        default :
+          monData.pulseStartT    = pulseStart;
+          monData.pulseStartFlag = 1;
+          monData.pulseStartN++;
+      } // switch pulseStart
+
+      switch (pulseStop) {
+        case UNICHOP_U16_INVALID :
+          monData.pulseStopT     = 0x7fffffff;
+          monData.pulseStopFlag  = 0;
+          break;
+        case UNICHOP_U16_NODATA  :
+          monData.pulseStopT     = 0;
+          monData.pulseStopFlag  = 0;
+          break;
+        default :
+          monData.pulseStopT     = pulseStop;
+          monData.pulseStopFlag  = 1;
+          monData.pulseStopN++;
+      } // switch pulseStop
+
+      if (monData.pulseStopFlag && monData.pulseStartFlag) monData.pulseLen = monData.pulseStopT - monData.pulseStartT;
+
+      
+      // if trigger detected although cycle should have been executed without beam
+      if ((monData.nobeamFlag || monData.blockFlag || monData.interlockFlag)  && monData.triggerFlag) {
+        monData.wrongTrigFlag    = 1;
+        monData.wrongTrigN++;
+      }
+      else
+        monData.wrongTrigFlag    = 0;
+
+      // if no chopper detected although there was nothing to prevent the chopper
+      if (!(monData.nobeamFlag || monData.blockFlag || monData.interlockFlag) && !(monData.pulseStopFlag)) {
+        monData.failChopFlag     = 1;
+        monData.failChopN++;
+      }
+      else
+        monData.failChopFlag     = 0;
+      
+      disUpdateData(tag, mSid, tChopUtc, monData);
       break;
     default         :
       ;
   } // switch tag
-  
-  //printf("out tag %d, bpid %d\n", tag, bpid);
 } // timingmessage
 
 
-// this will be called when receiving ECA actions from software action queue
-// informative: this routine is presently not used, as the softare action queue does not support the TEF field
-/*static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags, uint32_t tag)
-{
-  int                 flagLate;
-
-  flagLate    = flags & 0x1;
-
-  timingMessage(tag, deadline, id, param, 0x0, flagLate, 0, 0, 0);
-} // recTimingMessag*/
-
-
 // callback for command
-void dis_cmd_clear(void *tag, void *buffer, int *size)
+void dis_cmd_clear(void *tag, void *address, int *size)
 {
-  flagClear = 1;
+  int32_t *index;
+  
+  if (*size != sizeof(int32_t)) return;
+  index = (int *)(address);
+
+  clearStats(*index);
 } // dis_cmd_clear
 
 
@@ -347,6 +328,7 @@ void dis_cmd_clear(void *tag, void *buffer, int *size)
 void disAddServices(char *prefix)
 {
   char name[DIMMAXSIZE];
+  int  i;
 
   // 'generic' services
   sprintf(name, "%s_version_fw", prefix);
@@ -364,9 +346,20 @@ void disAddServices(char *prefix)
   disStatus       = 0x1;   
   disStatusId     = dis_add_service(name, "X", &disStatus, sizeof(disStatus), 0 , 0);
 
+  sprintf(name, "%s_nlate", prefix);
+  disNLate        = 0x0;
+  disNLateId      = dis_add_service(name, "I", &disNLate, sizeof(disNLate), 0 , 0);
+
   // monitoring data service
-  sprintf(name, "%s_data", prefix);
-  disMonDataId  = dis_add_service(name, "I:2;X:3;I:2;X:3;I:3;D:5", &(disMonData), sizeof(monval_t), 0, 0);
+  for (i=0; i < UNICHOP_NSID; i++) {
+    // HLI
+    sprintf(name, "%s_hli-data_sid%02d", prefix, i);
+    disMonDataHLIId[i]  = dis_add_service(name, "I", &(disMonDataHLI[i]), sizeof(monData_t), 0, 0);
+
+    // HSI
+    sprintf(name, "%s_hsi-data_sid%02d", prefix, i);
+    disMonDataHSIId[i]  = dis_add_service(name, "I", &(disMonDataHSI[i]), sizeof(monData_t), 0, 0);
+  } // for i
 
   // command clear
   sprintf(name, "%s_cmd_cleardiag", prefix);
@@ -382,30 +375,10 @@ static void help(void) {
   std::cerr << "  -e                   display version"                                             << std::endl;
   std::cerr << "  -f                   use the first attached device (and ignore <device name>)"    << std::endl;
   std::cerr << "  -d                   start server publishing data"                                << std::endl;
-  std::cerr << "  -c <mode>            type of comparison; default 0; this can be"                  << std::endl;
-  std::cerr << "                       0: don't compare                                         "   << std::endl;
-  std::cerr << "                       1: compare received MIL telegrams with WR timing messages"   << std::endl;
-  std::cerr << "                       2: compare received MIL telegrams with sent MIL telegrams"   << std::endl;
-  std::cerr << "                       3: as mode '2' but excludes UTC telegrams"                   << std::endl;
-  std::cerr << "                       4: as mode '1' but discarding data from MIL piggy"           << std::endl;
-  std::cerr << "                       5: compare sent MIL telegrams with WR timing messages"       << std::endl;
-  std::cerr << "  -m <match windows>   [us] windows for matching start/stop evts; default 20"       << std::endl;
   std::cerr << std::endl;
-  std::cerr << "  The paremter -s is mandatory"                                                     << std::endl;
-  std::cerr << "  -s <MIL domain>      MIL domain; this can be"                                     << std::endl;
-  std::cerr << "                       0: PZU_QR; UNILAC, Source Right"                             << std::endl;
-  std::cerr << "                       1: PZU_QL; UNILAC, Source Left"                              << std::endl;     
-  std::cerr << "                       2: PZU_QN; UNILAC, Source High Charge State Injector (HLI)"  << std::endl;
-  std::cerr << "                       3: PZU_UN; UNILAC, High Charge State Injector (HLI)"         << std::endl;
-  std::cerr << "                       4: PZU_UH; UNILAC, High Current Injector (HSI)"              << std::endl;
-  std::cerr << "                       5: PZU_AT; UNILAC, Alvarez Cavities"                         << std::endl;
-  std::cerr << "                       6: PZU_TK; UNILAC, Transfer Line"                            << std::endl;
-  std::cerr << "                       7: SIS18_RING"                                               << std::endl;
-  std::cerr << "                       8: ESR_RING"                                                 << std::endl;
+  std::cerr << "This tool monitors the HLI and HSI choppers"                                        << std::endl;
   std::cerr << std::endl;
-  std::cerr << "This tool monitors a White Rabbit -> MIL gateway."                                  << std::endl;
-  std::cerr << std::endl;
-  std::cerr << "Example1: '" << program << " tr0 -s0 -d pro'"                                       << std::endl;
+  std::cerr << "Example1: '" << program << " tr0 -d pro'"                                           << std::endl;
   std::cerr << std::endl;
   std::cerr << "Report bugs to <d.beck@gsi.de> !!!" << std::endl;
   std::cerr << "Version " << unichop_version_text(UNICHOP_SERV_MON_VERSION) << ". Licensed under the GPL v3." << std::endl;
@@ -419,11 +392,6 @@ int main(int argc, char** argv)
   bool     useFirstDev    = false;
   bool     getVersion     = false;
   bool     startServer    = false;
-  uint32_t gid=0xffffffff;                // gid for gateway
-  uint32_t gidStart;                      // relevant to select the type of messages used as a start
-  uint64_t idStop;                        // relevant to select the type of messages used as a stop
-  uint64_t maskStop;                      // relevant to select the type of messages used as a stop
-  
 
   char    *tail;
 
@@ -432,14 +400,13 @@ int main(int argc, char** argv)
   uint64_t snoopID     = 0x0;
   int      nCondition  = 2;
 
-  char     tmp[752];
-  int      tmpi;
+  //char     tmp[752];
   int      i;
 
   // variables attach, remove
   char    *deviceName = NULL;
+  char    *domainName = NULL;
 
-  char     domainName[NAMELEN];          // name of MIL domain
   char     prefix[NAMELEN*2];            // prefix DIM services
   char     disName[DIMMAXSIZE];          // name of DIM server
   uint32_t verLib;                       // library version
@@ -452,7 +419,7 @@ int main(int argc, char** argv)
 
   // parse for options
   program = argv[0];
-  while ((opt = getopt(argc, argv, "s:m:c:hefd")) != -1) {
+  while ((opt = getopt(argc, argv, "hefd")) != -1) {
     switch (opt) {
       case 'e' :
         getVersion  = true;
@@ -462,41 +429,6 @@ int main(int argc, char** argv)
         break;
       case 'd' :
         startServer = true;
-        break;
-      case 's' :
-        tmpi        = strtoull(optarg, &tail, 0);
-        if (*tail != 0) {std::cerr << "Specify a proper number, not " << optarg << "'%s'!" << std::endl; return 1;}
-        switch (tmpi) {
-          case 0: gid = PZU_QR;     sprintf(domainName, "%s", "pzu_qr");     break;
-          case 1: gid = PZU_QL;     sprintf(domainName, "%s", "pzu_ql");     break;
-          case 2: gid = PZU_QN;     sprintf(domainName, "%s", "pzu_qn");     break;
-          case 3: gid = PZU_UN;     sprintf(domainName, "%s", "pzu_un");     break;
-          case 4: gid = PZU_UH;     sprintf(domainName, "%s", "pzu_uh");     break;
-          case 5: gid = PZU_AT;     sprintf(domainName, "%s", "pzu_at");     break;
-          case 6: gid = PZU_TK;     sprintf(domainName, "%s", "pzu_tk");     break;
-          case 7: gid = SIS18_RING; sprintf(domainName, "%s", "sis18_ring"); break;
-          case 8: gid = ESR_RING;   sprintf(domainName, "%s", "esr_ring");   break;
-          default: {std::cerr << "Specify a proper number, not " << tmpi << "'%s'!" << std::endl; return 1;} break;
-        } // switch tmpi
-#ifdef USEMASP
-        switch (tmpi) {
-          case 0: maspNomen = std::string("U_WR2MIL_PZUQR");    break;
-          case 1: maspNomen = std::string("U_WR2MIL_PZUQL");    break;
-          case 2: maspNomen = std::string("U_WR2MIL_PZUQN");    break;
-          case 3: maspNomen = std::string("U_WR2MIL_PZUUN");    break;
-          case 4: maspNomen = std::string("U_WR2MIL_PZUUH");    break;
-          case 5: maspNomen = std::string("U_WR2MIL_PZUAT");    break;
-          case 6: maspNomen = std::string("U_WR2MIL_PZUTK");    break;
-          case 7: maspNomen = std::string("U_WR2MIL_SIS18");    break;
-          case 8: maspNomen = std::string("U_WR2MIL_ESR");      break;
-        } // switch tmpi
-#endif
-        break;
-      case 'm':
-        matchWindow = strtoull(optarg, &tail, 0);
-        break;
-      case 'c':
-        modeCompare = strtoull(optarg, &tail, 0);
         break;
       case 'h':
         help();
@@ -512,12 +444,7 @@ int main(int argc, char** argv)
     std::cerr << program << ": expecting one non-optional arguments: <device name>" << std::endl;
     help();
     return 1;
-  }
-
-  if (gid == 0xffffffff) {
-    std::cerr << program << ": parameter -s is non-optional\n";
-    return 1;
-  } // if gid
+  } // if optind
 
   // no parameters, no command: just display help and exit
   if ((optind == 1) && (argc == 1)) {
@@ -526,15 +453,15 @@ int main(int argc, char** argv)
   } // if optind
 
   deviceName = argv[optind];
+  domainName = argv[++optind];
   gethostname(disHostname, 32);
   
-  if (optind+1 < argc) sprintf(prefix, "unichop_%s_%s-mon", argv[++optind], domainName);
-  else                 sprintf(prefix, "unichop_%s-mon", domainName);
+  sprintf(prefix, "unichop_%s_mon", domainName);
 
   if (startServer) {
     printf("%s: starting server using prefix %s\n", program, prefix);
 
-    clearStats();
+    for (i=0; i<UNICHOP_NSID; i++) clearStats(i);
     disAddServices(prefix);
     
     sprintf(disName, "%s", prefix);
@@ -572,144 +499,51 @@ int main(int argc, char** argv)
       printf(" / %s\n",  unichop_version_text(verFw));     
     } // if getVersion
 
-#ifdef USEMASP 
-    // optional: disable masp logging (default: log to stdout, can be customized)
-    MASP::no_logger no_log;
-    MASP::Logger::middleware_logger = &no_log;
-
-    MASP::StatusEmitter emitter(get_config());
-    std::cout << "uni-chop: emmitting to MASP as sourceId: " << maspSourceId << ", using nomen: " << maspNomen << ", environment pro: " << maspProductive << std::endl;
-#else
-    std::cout << "uni-chop: no MASP emitter!" << std::endl;
-#endif // USEMASP
-
     // create software action sink
     std::shared_ptr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
     std::shared_ptr<SoftwareCondition_Proxy> condition[nCondition];
 
-    /*
-    // search for embedded CPU channel
-     map<std::string, std::string> e_cpus = receiver->getInterfaces()["EmbeddedCPUActionSink"];
-    if (e_cpus.size() != 1)
-    {
-      std::cerr << "Device '" << receiver->getName() << "' has no embedded CPU!" << std::endl;
-      return (-1);
-    }
-    // connect to embedded CPU
-    std::shared_ptr<EmbeddedCPUActionSink_Proxy> e_cpu = EmbeddedCPUActionSink_Proxy::create(e_cpus.begin()->second);
-
-    // create action sink for ecpu
-    std::shared_ptr<EmbeddedCPUCondition_Proxy> condition[nCondition];
-    */
     uint32_t tag[nCondition];
     uint32_t tmpTag;
 
-    if (modeCompare) {
-      // define conditions (ECA filter rules)
+    // message containing info on HLI chopper
+    tmpTag        = tagHLI;
+    snoopID       = ((uint64_t)FID << 60 | (uint64_t)GID_LOCAL_ECPU_FROM << 48 | (uint64_t)UNICHOP_ECADO_HLISTOP << 36);
+    condition[0]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+    tag[0]        = tmpTag;
 
-      // select if we use the received White Rabbit timing messages or the sent MIL telegrams as start
-      switch (modeCompare) {
-        case 1:
-          // compare received MIL telegrams (stop) to received WR Timing messages (start)
-          // received MIL telegrams have a deadline 1ms after timestamp,
-          // thus we must add 1ms to the start action for matching
-          gidStart    = gid;
-          idStop      = ((uint64_t)LOC_MIL_REC << 48);
-          maskStop    = 0xfffff00000000000;
-          offsetStart = one_ms_ns;
-          offsetStop  = one_us_ns * matchWindow;
-          break;
-        case 2 ... 3:
-          // compare received MIL telegrams (stop) to sent MIL telegrams (start)
-          // received MIL telegrams have a deadline 1ms after timestamp,
-          // thus we must add 1ms to the start action for matching
-          gidStart    = LOC_MIL_SEND;
-          idStop      = ((uint64_t)LOC_MIL_REC << 48);
-          maskStop    = 0xfffff00000000000;
-          offsetStart = one_ms_ns + UNICHOP_MILSEND_LATENCY;
-          offsetStop  = one_us_ns * matchWindow;
-          break;
-        case 4:
-          // compare timestamps of received MIL telegrams (stop) to received WR Timing messags (start)
-          // this might be less precise as we can't check the event number of received MIL telegrams
-          // we post-trigger the messages, to avoid late messages at the TLU
-          gidStart    = gid;
-          idStop      = ((uint64_t)LOC_TLU << 48) | ((uint64_t)UNICHOP_ECADO_MIL_TLU << 36) | 0x1;
-          maskStop    = 0xffffffffffffffff;
-          offsetStart = UNICHOP_POSTTRIGGER_TLU;
-          offsetStop  = UNICHOP_POSTTRIGGER_TLU + one_us_ns * matchWindow;
-          break;
-        case 5:
-          // compare sent MIL telegrams (stop) to received WR Timing messags (start)
-          gidStart    = gid;
-          idStop      = ((uint64_t)LOC_MIL_SEND << 48);
-          maskStop    = 0xfffff00000000000;
-          offsetStart = -UNICHOP_MILSEND_LATENCY;
-          offsetStop  = one_us_ns * matchWindow;
-          break;
-        default:
-          // bogus; unused
-          gidStart    = 0;
-          idStop      = 0;
-          maskStop    = 0;
-          offsetStart = 0;
-          offsetStop  = 0;
-          break;
-      } // switch modeCompare
-
-      // message that is injected locally by the lm32 firmware (triggering a rule on the ECA WB channel towards the MIL interface)
-      // this message must be delayed by one ms to (hopefully) coincide with the received MIL telegram
-      // we also do prefix matching of the first four bits of the evtNo (should be '0x0')
-      tmpTag        = tagStart;
-      snoopID       = ((uint64_t)FID << 60) | ((uint64_t)gidStart << 48);
-      condition[0]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffff00000000000, offsetStart));
-      tag[0]        = tmpTag;
-        
-      // message that is injected locally by the lm32 firmware after detecting and decoding a receive MIL telegram
-      // this message is delayed by 20us to avoid a) a collision b) to have a defined order of both messages
-      // (this assumes that the 'true' offset between both messages is always smaller than 20us)
-      // we also do prefix machting of the first four bits of the evtNo (should be '0x0')
-      tmpTag        = tagStop;        
-      snoopID       = ((uint64_t)FID << 60) | idStop;
-      condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, maskStop, offsetStop));
-      tag[1]        = tmpTag;
+    // message containing info on HSI chopper
+    tmpTag        = tagHSI;
+    snoopID       = ((uint64_t)FID << 60 | (uint64_t)GID_LOCAL_ECPU_FROM << 48 | (uint64_t)UNICHOP_ECADO_HSISTOP << 36);
+    condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+    tag[1]        = tmpTag;
     
-      // let's go!
-      for (i=0; i<nCondition; i++) {
-        condition[i]->setAcceptLate(true);
-        condition[i]->setAcceptEarly(true);
-        condition[i]->setAcceptConflict(true);
-        condition[i]->setAcceptDelayed(true);
-        condition[i]->SigAction.connect(sigc::bind(sigc::ptr_fun(&timingMessage), tag[i]));
-        condition[i]->setActive(true);    
-      } // for i
-    } // if modeCompare
+    // let's go!
+    for (i=0; i<nCondition; i++) {
+      condition[i]->setAcceptLate(true);
+      condition[i]->setAcceptEarly(true);
+      condition[i]->setAcceptConflict(true);
+      condition[i]->setAcceptDelayed(true);
+      condition[i]->SigAction.connect(sigc::bind(sigc::ptr_fun(&timingMessage), tag[i]));
+      condition[i]->setActive(true);    
+    } // for i 
 
+
+    /*
     saftlib::Time deadline_t;
-    uint64_t      t_new, t_old;
-    uint32_t      tmp32a, tmp32b, tmp32c, tmp32d, tmp32e, tmp32f, tmp32g, tmp32h, tmp32i;
     int32_t       stmp32a;
     uint64_t      tmp64a;
-    uint32_t      fwGid, fwEvtsRecErr, fwEvtsBurst, fwState, fwVersion;
-    uint64_t      fwEvtsSnd, fwEvtsRecT, fwEvtsRecD, fwStatus;
+    */
+
+    uint64_t      t_new, t_old;
+    uint32_t      fwState, fwVersion, fwNLate;
+    uint64_t      fwStatus;
+    uint32_t      tmp32a, tmp32b, tmp32c;
+
+
 
     t_old = comlib_getSysTime();
     while(true) {
-      /*
-      t1 = comlib_getSysTime();
-      ecaStatus = comlib_wait4ECAEvent(1, device, ecaq_base, &recTag, &deadline, &evtId, &param, &tef, &isLate, &isEarly, &isConflict, &isDelayed);
-      t2 = comlib_getSysTime();
-      tmp32 = t2 - t1; 
-      if (tmp32 > 10000000) printf("%s: reading from ECA Q took %u [us]\n", program, tmp32 / 1000);
-      if (ecaStatus == COMMON_STATUS_EB) { printf("eca EB error, device %x, address %x\n", device, (uint32_t)ecaq_base);}
-      if (ecaStatus == COMMON_STATUS_OK) {
-        deadline_t = saftlib::makeTimeTAI(deadline);
-        //t2         = comlib_getSysTime(); printf("msg: tag %x, id %lx, tef %lx, dtu %lu\n", recTag, evtId, tef, (uint32_t)(t2 -t1));
-        timingMessage(recTag, deadline_t, evtId, param, tef, isLate, isEarly, isConflict, isDelayed);
-        }*/
-      // irgendwo hier periodisch DIM service aktualisieren bzw. update auf Bildschirm bzw. update MASP
-      monData.gid   = gid;
-      monData.cMode = modeCompare;
       saftlib::wait_for_signal(UPDATE_TIME_MS / 10);
 
       t_new = comlib_getSysTime();
@@ -717,57 +551,31 @@ int main(int argc, char** argv)
         t_old      = t_new;
 
         // update firmware data
-        unichop_common_read(ebDevice, &fwStatus, &fwState, &tmp32a, &tmp32b, &fwVersion, &tmp32c, 0);
-        unichop_info_read(ebDevice, &tmp32a, &tmp32b, &tmp32c, &fwGid, &stmp32a, &tmp64a, &tmp32f, &tmp32g, &tmp32h, &fwEvtsSnd, &fwEvtsRecT, &fwEvtsRecD, &fwEvtsRecErr, &fwEvtsBurst, 0);
-        if (fwGid != gid) fwStatus |= COMMON_STATUS_OUTOFRANGE; // signal an error
+        unichop_common_read(ebDevice, &fwStatus, &fwState, &tmp32a, &tmp32b, &fwVersion, &tmp32c, &fwNLate, 0);
 
         disStatus  = fwStatus;
+        disNLate   = fwNLate;
         sprintf(disState  , "%s", unichop_state_text(fwState));
         sprintf(disVersion, "%s", unichop_version_text(fwVersion));
                
-        // update monitoring data
-        monData.nFwSnd    = fwEvtsSnd;
-        monData.nFwRecT   = fwEvtsRecT;
-        monData.nFwRecErr = fwEvtsRecErr;
-        monData.nFwBurst  = fwEvtsBurst;
-        monData.nFwRecD   = fwEvtsRecD;
-        disMonData        = monData;
-        if (disMonData.tMin ==  INITMINMAX) disMonData.tMin = NAN;
-        if (disMonData.tMax == -INITMINMAX) disMonData.tMax = NAN;
-
         if (startServer) {
-          // update service data
+          // update service data; monitoring data already updated inside callback function
           dis_update_service(disStatusId);
           dis_update_service(disStateId);
           dis_update_service(disVersionId);
-          dis_update_service(disMonDataId);
-        } // if startServer
-
-        //printf("unichop-mon: fw snd %ld, recD %ld, recT %ld; mon snd %ld, rec %ld, match %ld, act %f, ave %f, sdev %f, min %f, max %f\n", monData.nFwSnd, monData.nFwRecT, monData.nFwRecT, monData.nStart, monData.nStop, monData.nMatch, monData.tAct, monData.tAve, monData.tSdev, monData.tMin, monData.tMax);
-
-#ifdef USEMASP
-      if (fwState  == COMMON_STATE_OPREADY) maspSigOpReady  = true;
-      else                                  maspSigOpReady  = false;
-
-      maspSigTransfer = true;   // ok, this is dummy for now, e.g. in case of MIL troubles or so
-      
-      // use masp end of scope emitter
-      {  
-        MASP::End_of_scope_status_emitter scoped_emitter(maspNomen, emitter);
-        scoped_emitter.set_OP_READY(maspSigOpReady);
-        // scoped_emitter.set_custom_status(DMUNIPZ_MASP_CUSTOMSIG, maspSigTransfer); disabled as our boss did not like it
-      } // <--- status is send when the End_of_scope_emitter goes out of scope  
-#endif
-       
+          dis_update_service(disNLateId);
+        } // if startServer      
       } // if update
 
+      /*
       // clear data
       if (flagClear) {
-        clearStats();                           // clear server
+        clearStats();                             // clear server
         unichop_cmd_cleardiag(ebDevice);          // clear fw diags
         
         flagClear = 0;
       } // if flagclear
+      */
     } // while true
 
     unichop_firmware_close(ebDevice);    

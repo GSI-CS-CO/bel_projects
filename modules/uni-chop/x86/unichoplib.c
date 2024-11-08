@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 19-Sep-2024
+ *  version : 25-Oct-2024
  *
  * library for uni-chop
  *
@@ -84,6 +84,13 @@ uint64_t unichop_getSysTime()
   gettimeofday(&tv,NULL);
   return tv.tv_sec * (uint64_t)1000000000+ tv.tv_usec * (uint64_t)1000;
 } // unichop_getSysTime()
+
+
+void unichop_t2secs(uint64_t ts, uint32_t *secs, uint32_t *nsecs)
+{
+  *nsecs = (uint32_t)(ts % 1000000000);
+  *secs  = (uint32_t)(ts / 1000000000);
+} // unichop_t2secs
 
 
 const char* unichop_status_text(uint32_t code)
@@ -183,13 +190,13 @@ uint32_t unichop_firmware_close(uint64_t ebDevice)
 uint32_t unichop_version_firmware(uint64_t ebDevice, uint32_t *version)
 {
   uint64_t       dummy64a;
-  uint32_t       dummy32a, dummy32b, dummy32c, dummy32d;
+  uint32_t       dummy32a, dummy32b, dummy32c, dummy32d, dummy32e;
   uint32_t       errorCode;
 
   if (!ebDevice) return COMMON_STATUS_EB;
   *version = 0xffffffff;
   
-  errorCode = unichop_common_read(ebDevice, &dummy64a, &dummy32a, &dummy32b, &dummy32c, version, &dummy32d, 0);
+  errorCode = unichop_common_read(ebDevice, &dummy64a, &dummy32a, &dummy32b, &dummy32c, version, &dummy32d, &dummy32e, 0);
 
   return errorCode;
 } // unichop_version_firmware
@@ -246,19 +253,19 @@ uint32_t unichop_info_read(uint64_t ebDevice, uint32_t *milDev, uint64_t *nMilSe
 } // unichop_info_read
 
 
-uint32_t unichop_common_read(uint64_t ebDevice, uint64_t *statusArray, uint32_t *state, uint32_t *nBadStatus, uint32_t *nBadState, uint32_t *version, uint32_t *nTransfer, int printDiag)
+uint32_t unichop_common_read(uint64_t ebDevice, uint64_t *statusArray, uint32_t *state, uint32_t *nBadStatus, uint32_t *nBadState, uint32_t *version, uint32_t *nTransfer, uint32_t *nLate, int printDiag)
 {
   eb_status_t eb_status;
   eb_device_t eb_device;
 
   uint64_t    dummy64a, dummy64b, dummy64c;
-  uint32_t    dummy32a, dummy32c, dummy32d, dummy32e, dummy32f, dummy32g, dummy32h;
+  uint32_t    dummy32a, dummy32c, dummy32d, dummy32f, dummy32g, dummy32h;
 
   if (!ebDevice) return COMMON_STATUS_EB;
   eb_device = (eb_device_t)ebDevice;
 
   if ((eb_status = comlib_readDiag(eb_device, statusArray, state, version, &dummy64a, &dummy32a, nBadStatus, nBadState, &dummy64b, &dummy64c,
-                                   nTransfer, &dummy32c, &dummy32d, &dummy32e, &dummy32f, &dummy32g, &dummy32h, printDiag)) != COMMON_STATUS_OK) return COMMON_STATUS_EB;
+                                   nTransfer, &dummy32c, &dummy32d, nLate, &dummy32f, &dummy32g, &dummy32h, printDiag)) != COMMON_STATUS_OK) return COMMON_STATUS_EB;
 
   return COMMON_STATUS_OK;
 } // unichop_status_read

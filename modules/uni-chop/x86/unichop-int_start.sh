@@ -14,7 +14,7 @@ export MILDEV=1              # MIL device, piggy(0), sio slot 1 (1) ...
 # gateway: N/A
 ###########################################
 
-echo -e UNICHOP start script for GID 0x$SIDGW
+echo -e UNICHOP start script for UNILAC Chopper
 
 ###########################################
 # clean up stuff
@@ -54,20 +54,33 @@ unichop-ctl $TRGW startop
 # lm32 listens to timing messages
 # UNICHOP_ECADO_STRAHLWEG_WRITE, requires a negative offset that is 2x the value of UNICHOP_MILMODULE_ACCESST
 saft-ecpu-ctl $SDGW -c 0x1ff0fa0000000000 0xfffffff000000000 200000 0xfa0 -g -d
-# UNICHOP_ECADO_RPGG_WRITE, requires a negative offset that is 2x the value of UNICHOP_MILMODULE_ACCESST
-saft-ecpu-ctl $SDGW -c 0x1ff0fa2000000000 0xfffffff000000000 200000 0xfa2 -g -d
 # UNICHOP_ECADO_STRAHLWEG_READ
 saft-ecpu-ctl $SDGW -c 0x1ff0fa1000000000 0xfffffff000000000 0 0xfa1 -d
-# UNICHOP_ECADO_RPG_READ
-saft-ecpu-ctl $SDGW -c 0x1ff0fa3000000000 0xfffffff000000000 0 0xfa3 -d
 # UNICHOP_ECADO_MIL_SWRITE
 saft-ecpu-ctl $SDGW -c 0x1ff0fb0000000000 0xfffffff000000000 0 0xfb0 -d
 # UNICHOP_ECADO_MIL_SREAD
 saft-ecpu-ctl $SDGW -c 0x1ff0fb1000000000 0xfffffff000000000 0 0xfb1 -d
+# UNICHOP_ECADO_IQSTOP (QR, QL)
+#saft-ecpu-ctl $SDGW -c 0x11c000a000000000 0xfffffff000000000 0 0xf0a -d
+#saft-ecpu-ctl $SDGW -c 0x11c100a000000000 0xfffffff000000000 0 0xf0a -d
+#UNICHOP_ECADO_HSISTOP
+saft-ecpu-ctl $SDGW -c 0x11c4008000000000 0xfffffff000000000 0 0xfc3 -d
+#UNICHOP ECADO_HLISTOP
+saft-ecpu-ctl $SDGW -c 0x11c3008000000000 0xfffffff000000000 0 0xfc2 -d
+#UNICHOP_ECADO_HSICMD
+saft-ecpu-ctl $SDGW -c 0x11c40ff000000000 0xfffffff000000000 0 0xfc5 -d
+#UNICHOP ECADO_HLICMD
+saft-ecpu-ctl $SDGW -c 0x11c30ff000000000 0xfffffff000000000 0 0xfc4 -d
 
+
+###########################################
+# init RPGs (Rahmenpulsgeneratoren)
+###########################################
+sleep 1
+saft-dm tr0 -p unichop-int-saftdm.txt
 
 ###########################################
 # reset diagnostics
 ###########################################
-sleep 1
+sleep 2
 unichop-ctl $TRGW cleardiag

@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Tobias Habermann GSI-Darmstadt
- *  version : 20-Sep-2024
+ *  version : 07-Nov-2024
  *
  * Command-line interface for uni-chop
  *
@@ -96,32 +96,27 @@ static void help(void) {
   fprintf(stderr, "      0xff0: group for local timing messages that are sent TO the lm32 firmware\n"  );
   fprintf(stderr, "      0xff1: group for local timing messages that are sent FROM the lm32 firmware\n");
   fprintf(stderr, "EvtNo:\n"                                                                           );
-  fprintf(stderr, "      0xfa0: host -> lm32: write Strahlweg data\n"                                  );
-  fprintf(stderr, "      0xfa1: host -> lm32: read Strahlweg data\n"                                   );
-  fprintf(stderr, "      0xfa2: host -> lm32: write RPG data (experimental, write only)\n"             );
-  fprintf(stderr, "      0xfb0: host -> lm32: standard MIL write\n"                                    );
-  fprintf(stderr, "      0xfb1: host -> lm32: standard MIL read\n"                                     );
-  fprintf(stderr, "Examples: write/read host<->lm32<->MIL<->Chopper unit:\n"                           );
-  fprintf(stderr, "saft-ctl tr0 -p inject 0x1ff0fa0000000000 0x0000000000ff0001 0\n"                   );
-  fprintf(stderr, "      write Strahlweg data to HW                        ^^^^ : strahlweg_register\n");
-  fprintf(stderr, "                                                    ^^^^     : strahlweg_maske\n"   );
+  fprintf(stderr, "      0xfa0: host -> lm32      : write strahlweg and anforder data\n"               );
+  fprintf(stderr, "      0xfa1: host -> lm32      : read strahlweg and anforder data\n"                );
+  fprintf(stderr, "      0xfb0: host -> lm32      : standard MIL write\n"                              );
+  fprintf(stderr, "      0xfb1: host -> lm32      : standard MIL read\n"                               );
+  fprintf(stderr, "      0xfc2: WR -> lm32 -> host: actual chopper readback data HLI\n"                );
+  fprintf(stderr, "      0xfc3: WR -> lm32 -> host: actual chopper readback data HSI\n"                );
+  fprintf(stderr, "\n"); 
+  fprintf(stderr, "Examples: write/read host<->lm32<->MIL<->chopper unit:\n"                           );
+  fprintf(stderr, "saft-ctl tr0 -p inject 0x1ff0fa0000000000 0x0000000ab00ff0001 0\n"                   );
+  fprintf(stderr, "      write strahlweg and anforder data to HW            ^^^^ : strahlweg_register\n");
+  fprintf(stderr, "                                                     ^^^^     : strahlweg_maske\n"   );
+  fprintf(stderr, "                                                 ^^^^         : anforder_maske\n"    );
   fprintf(stderr, "saft-ctl tr0 -p inject 0x1ff0fa1000000000 0x0000000000000000 0\n"                   );
-  fprintf(stderr, "      read Strahlweg data from HW\n"                                                );
-  fprintf(stderr, "saft-ctl tr0 -p inject 0x1ff0fa2000000000 0x0806080608020802 0\n"                   );
-  fprintf(stderr, "      write RPG data to HW                                ^^ : IRQ start event\n"   );
-  fprintf(stderr, "                                                        ^^   : IRQ stop event\n"    );
-  fprintf(stderr, "                                                      ^^     : IRL start event\n"   );
-  fprintf(stderr, "                                                    ^^       : IQL stop event\n"    );
-  fprintf(stderr, "                                                  ^^         : HLI start event\n"   );
-  fprintf(stderr, "                                                ^^           : HLI stop event\n"    );
-  fprintf(stderr, "                                              ^^             : HSI start event\n"   );
-  fprintf(stderr, "                                            ^^               : HSI stop event\n"    );
+  fprintf(stderr, "      read strahlweg and anforder data from HW\n"                                   );
   fprintf(stderr, "\n"); 
   fprintf(stderr, "Example: receive strahlweg data read from chopper unit:\n"                          );
   fprintf(stderr, "saft-ctl tr0 -x snoop 0x1ff1fa0000000000 0xffffff0000000000 0\n"                    );
   fprintf(stderr, "tDeadline: 0x17f6e1ba6fe69830 EvtID: 0x1ff1fa1000000000 Param: 0x0000000000ff0001\n");
   fprintf(stderr, "        GID data received from lm32:    ^^^\n"                                      );
   fprintf(stderr, "        EvtNo read strahlweg data  :       ^^^\n"                                   );
+  fprintf(stderr, "                               value of anforder maske       :       ^^^^\n"        );
   fprintf(stderr, "                               value of strahlweg maske      :           ^^^^\n"    );
   fprintf(stderr, "                               value of strahlweg register   :               ^^^^\n");
   fprintf(stderr, "\n"); 
@@ -149,7 +144,7 @@ static void help(void) {
   fprintf(stderr, "                                                      ^^    : register\n"           );
   fprintf(stderr, "                                                    ^^      : module addr, 0: IFA\n");
   fprintf(stderr, "                                                  ^^        : MIL ifb addr\n"       );
-  fprintf(stderr, "saft-ctl tr0 -x snoop 0x1ff1fb0000000000 0xffffff0000000000 0\n"                    );
+  fprintf(stderr, "saft-ctl tr0 -x snoop 0x1ff1fb1000000000 0xfffffff000000000 0\n"                    );
   fprintf(stderr, "tDeadline: 0x17f6e324b8b808c0 EvtID: 0x1ff1fb1000000000 Param: 0x000101600089cafe\n");
   fprintf(stderr, "        GID data received from lm32:    ^^^\n"                                      );
   fprintf(stderr, "        EvtNo MIL read             :       ^^^\n"                                   );
@@ -166,7 +161,7 @@ static void help(void) {
   fprintf(stderr, "                                                  ^^         : MIL ifb addr\n"      );
   fprintf(stderr, "                                                    ^^       : module addr\n"       );
   fprintf(stderr, "                                                      ^^     : submodule addr\n"    );
-  fprintf(stderr, "saft-ctl tr0 -x snoop 0x1ff1fb0000000000 0xffffff0000000000 0\n"                    );
+  fprintf(stderr, "saft-ctl tr0 -x snoop 0x1ff1fb1000000000 0xfffffff000000000 0\n"                    );
   fprintf(stderr, "tDeadline: 0x17f6e3999a40d0d8 EvtID: 0x1ff1fb1000000000 Param: 0x0001016009660014\n");
   fprintf(stderr, "                                                      version:               ^^^^\n");
   fprintf(stderr, "\n");
@@ -181,7 +176,17 @@ static void help(void) {
   fprintf(stderr, "                                                      ^^    : submodule addr\n"     );
   fprintf(stderr, "                                                    ^^      : module addr\n"        );
   fprintf(stderr, "                                                  ^^        : MIL ifb addr\n"       );
-  fprintf(stderr, "...\n"                                                                              );
+  fprintf(stderr, "\n");
+  fprintf(stderr, "Example: actual chopper readback data for HSI\n"                                    );
+  fprintf(stderr, "saft-ctl tr0 -x snoop 0x1ff1fc3000000000 0xfffffff000000000 0\n"                    );
+  fprintf(stderr, "tDeadline: 0x17ff97ecad3b9ad0 EvtID: 0x1ff1fc3000900000 Param: 0x01f4000001f401f4\n");
+  fprintf(stderr, "                                                    ^        :                   \n");
+  fprintf(stderr, " bpid bit 0,1: 0x0, 2: block, 3: interlock, 4: CCI received, 5: CCI late         \n");
+  fprintf(stderr, "                        measured length of chopper pulse     :               ^^^^\n"); 
+  fprintf(stderr, "                        measured time of chopper falling edge:           ^^^^    \n"); 
+  fprintf(stderr, "                        measured time of chopper rising edge :       ^^^^        \n"); 
+  fprintf(stderr, "                        measured time of ctrl falling edge   :  ^^^^             \n");
+  fprintf(stderr, "                        NB: value 0x7fff: no data; 0xffff invalid data           \n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
 
@@ -202,6 +207,7 @@ int main(int argc, char** argv) {
   uint32_t nBadStatus;
   uint32_t nBadState;
   uint32_t nTransfer;
+  uint32_t nLate;
           
   uint32_t verLib;
   uint32_t verFw;
@@ -273,7 +279,7 @@ int main(int argc, char** argv) {
   if (getInfo) {
     // status
 
-    unichop_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
+    unichop_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, &nLate, 0);
 
     unichop_info_read(ebDevice, &milDev, &nMilSend, &nMilError, &nEvtsReceived, 0);
     
@@ -285,7 +291,7 @@ int main(int argc, char** argv) {
 
   if (command) {
     // state required to give proper warnings
-    unichop_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
+    unichop_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, &nLate, 0);
 
     // request state changes
     if (!strcasecmp(command, "configure")) {
@@ -323,7 +329,7 @@ int main(int argc, char** argv) {
     } // "cleardiag"
 
     if (!strcasecmp(command, "diag")) {
-      unichop_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 1);
+      unichop_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, &nLate, 1);
       for (i = COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
         if ((statusArray >> i) & 0x1)  printf("    status bit is set : %s\n", unichop_status_text(i));
       } // for i

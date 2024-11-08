@@ -13,14 +13,14 @@ CXX         := g++ --std=c++0x
 endif
 
 ifeq ($(SYSENV), YOCTO)
-USRPATH     := /common/usr/timing/wr-mil/yocto/usr
+USRPATH     := /common/usr/timing/user-dietrich/yocto/usr
 ARCH        := /x86_64
 EB          ?= .
 CFLAGS      ?=
 endif
 
 ifeq ($(SYSENV), ACC7)
-USRPATH     := /common/usr/timing/wr-mil/centos7/usr
+USRPATH     := /common/usr/timing/user-dietrich/centos7/usr
 ARCH        := /x86_64
 EB          ?= ../../../ip_cores/etherbone-core/api
 CFLAGS      ?= -Wall -O2 -g
@@ -30,11 +30,12 @@ ASLLIB      := $(PKG_CONFIG_PATH)../../lib
 endif
 
 ifeq ($(SYSENV), ACC9)
-USRPATH     := /common/usr/timing/wr-mil/rocky9/usr
+USRPATH     := /common/usr/timing/user-dietrich/rocky9/usr
 ARCH        := /x86_64
 EB          ?= ../../../ip_cores/etherbone-core/api
 CFLAGS      ?= -Wall -O2 -g
 CXX         := g++ --std=c++0x
 ASLINC      := $(PKG_CONFIG_PATH)../../include/saftlib
+ASLINC2     := $(PKG_CONFIG_PATH)../../include
 ASLLIB      := $(PKG_CONFIG_PATH)../../lib
 endif

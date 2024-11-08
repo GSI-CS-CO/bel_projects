@@ -8,20 +8,13 @@
 # gateway : dev/wbm0, tr0
 export TRGW=dev/wbm0         # EB device 
 export SDGW=tr0              # saftlib device
-export MILDEV=0              # MIL device, piggy(0), sio slot 1 (1) ...
-export MILADDR=0x9004        # address of MIL device to which MIL telegram is written
-# piggy: Wishbone address of 'GSI_MIL_SCU'
-#        the register 0x1004 needs to be added
-#        exammple piggy: 0x9004 @ fallout Gateware
-# SIO  : Wishbone address of 'SCU-BUS-Master' + (slot number) * 0x20000
-#        the register 0x800 needs to be added
-#        example SIO slot #1: 0x420800
+export MILDEV=1              # MIL device, piggy(0), sio slot 1 (1) ...
 ###########################################
 # setting for development
 # gateway: N/A
 ###########################################
 
-echo -e UNICHOP start script for GID 0x$SIDGW
+echo -e UNICHOP start script for UNILAC Chopper
 
 ###########################################
 # clean up stuff
@@ -50,31 +43,44 @@ eb-fwload $TRGW u 0x0 unichop.bin
 
 echo -e UNICHOP: configure firmware for gateway $NGW
 sleep 2
-unichop-ctl $TRGW -s$NGW -w$MILDEV -m2 -l1240 -g -t246 -d0 -u30 configure
+unichop-ctl $TRGW -w$MILDEV configure
 sleep 2
 unichop-ctl $TRGW startop
 
 ###########################################
 # configure ECA
 ###########################################
-echo -e UNICHOP: configure $SDGW for timestamping, needed for monitoring
-#  configured as TLU input (Lemo cable from MIL piggy)
-saft-io-ctl $SDGW -n B1 -o 0 
-saft-io-ctl $SDGW -n B1 -b 0x1fe1a01000000000
 
-# lm32 listens to TLU
-saft-ecpu-ctl $SDGW -c 0x1fe1a01000000001 0xffffffffffffffff 20000 0xa01 -d
+# lm32 listens to timing messages
+# UNICHOP_ECADO_STRAHLWEG_WRITE, requires a negative offset that is 2x the value of UNICHOP_MILMODULE_ACCESST
+saft-ecpu-ctl $SDGW -c 0x1ff0fa0000000000 0xfffffff000000000 200000 0xfa0 -g -d
+# UNICHOP_ECADO_STRAHLWEG_READ
+saft-ecpu-ctl $SDGW -c 0x1ff0fa1000000000 0xfffffff000000000 0 0xfa1 -d
+# UNICHOP_ECADO_MIL_SWRITE
+saft-ecpu-ctl $SDGW -c 0x1ff0fb0000000000 0xfffffff000000000 0 0xfb0 -d
+# UNICHOP_ECADO_MIL_SREAD
+saft-ecpu-ctl $SDGW -c 0x1ff0fb1000000000 0xfffffff000000000 0 0xfb1 -d
+# UNICHOP_ECADO_IQSTOP (QR, QL)
+#saft-ecpu-ctl $SDGW -c 0x11c000a000000000 0xfffffff000000000 0 0xf0a -d
+#saft-ecpu-ctl $SDGW -c 0x11c100a000000000 0xfffffff000000000 0 0xf0a -d
+#UNICHOP_ECADO_HSISTOP
+saft-ecpu-ctl $SDGW -c 0x11c4008000000000 0xfffffff000000000 0 0xfc3 -d
+#UNICHOP ECADO_HLISTOP
+saft-ecpu-ctl $SDGW -c 0x11c3008000000000 0xfffffff000000000 0 0xfc2 -d
+#UNICHOP_ECADO_HSICMD
+saft-ecpu-ctl $SDGW -c 0x11c40ff000000000 0xfffffff000000000 0 0xfc5 -d
+#UNICHOP ECADO_HLICMD
+saft-ecpu-ctl $SDGW -c 0x11c30ff000000000 0xfffffff000000000 0 0xfc4 -d
 
-# lm32 writes to MIL device via ECA wishbone channel
-echo -e UNICHOP: configure $DGW wishbone channel, needed for writing telegrams to the MIL device
-saft-wbm-ctl $SDGW -c 0x1ff0000000000000 0xffff000000000000 0 1 -d
-saft-wbm-ctl $SDGW -r 1 $MILADDR 0 0x5f
 
-# lm32 listens to timing messages for EVTNO 0x000..0x0ff
-saft-ecpu-ctl $SDGW -c 0x1${SIDGW}000000000000 0xfffff00000000000 500000 0xff -g -d
+###########################################
+# init RPGs (Rahmenpulsgeneratoren)
+###########################################
+sleep 1
+saft-dm tr0 -p unichop-pro-saftdm.txt
 
 ###########################################
 # reset diagnostics
 ###########################################
-sleep 1
+sleep 2
 unichop-ctl $TRGW cleardiag

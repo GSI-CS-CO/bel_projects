@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 12-Sep-2024
+ *  version : 06-Nov-2024
  *
  * library for uni-chop
  *
@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define UNICHOPLIB_VERSION 0x000002
+#define UNICHOPLIB_VERSION 0x000010
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  UNICHOPLIB_STATUS_OK                  0            // OK
@@ -57,6 +57,7 @@ extern "C" {
 #define  UNICHOPLIB_COMMON_STATUS_LATEMESSAGE 10            // late timing message received
 #define  UNICHOPLIB_STATUS_BADSETTING         11            // bad setting data
 #define  UNICHOPLIB_STATUS_RESERVEDTILHERE    15            // 00..15 reserved for common error codes
+  //#define  UNICHOPLIB_STATUS_NODATA             16            // no data
 
 // states; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  UNICHOPLIB_STATE_UNKNOWN             0            // unknown state
@@ -68,39 +69,54 @@ extern "C" {
 #define  UNICHOPLIB_STATE_ERROR               6            // in error -> IDLE ("recover")
 #define  UNICHOPLIB_STATE_FATAL               7            // in fatal error; RIP
 
-  enum evtTag{tagStart, tagStop};
+  enum evtTag{tagHLI, tagHSI};
   typedef enum evtTag evtTag_t;
 
   // data type monitoring values; data are in 'native units' used by the lm32 firmware
   // added 'dummies' to avoid odd-numbered data types for better compatibility 
   typedef struct{
-    uint32_t  gid;                                       // GID for which the gateway is active
-    uint32_t  cMode;                                     // comparison mode; server option '-c'
-    uint64_t  nFwSnd;                                    // firmware # of sent MIL telegrams
-    uint64_t  nFwRecD;                                   // firmware # of received MIL telegrams (data)
-    uint64_t  nFwRecT;                                   // firmware # of received MIL telegrams (TAI)
-    uint32_t  nFwRecErr;                                 // firmware # of received 'broken' MIL telegrams detected by VHDL Manchester decoder
-    uint32_t  nFwBurst;                                  // firmware # of detected high frequency bursts
-    uint64_t  nStart;                                    // host # of start messages (type depends on comparison mode)
-    uint64_t  nStop;                                     // host # of stop messages (type depends on comparison mode)
-    uint64_t  nMatch;                                    // host # of matches (start vs stop messages)
-    uint32_t  nFailSnd;                                  // host # of mismatches due to start event
-    uint32_t  nFailEvt;                                  // host # of mismatches due to event number
-    uint32_t  nFailOrder;                                // host # of mismatches due to event order
-    double    tAct;                                      // actual deviation offset value, t_stop - t_start [us]
-    double    tMin;                                      // minimum offset value [us]
-    double    tMax;                                      // maximum offset value [us]
-    double    tAve;                                      // average offset value [us]
-    double    tSdev;                                     // standard deviation offset value [us]
-  } monval_t;
-
+    uint32_t  cyclesN;                                   // number of cycles
+    uint32_t  triggerLen;                                // length of trigger pulse, t0 is rising edge of trigger pulse [us]
+    uint32_t  triggerN;                                  // number of detected triggers
+    int32_t   triggerFlag;                               // 1: trigger detected (last cycle)
+    uint32_t  pulseStartT;                               // rising edge of chopper pulse [us], t0 is ...
+    uint32_t  pulseStartN;                               // ... number
+    int32_t   pulseStartFlag;                            // ... detected (last cycle)
+    uint32_t  pulseStopT;                                // falling edge of chopper pulse [us], t0 is ...
+    uint32_t  pulseStopN;                                // ... number
+    int32_t   pulseStopFlag;                             // ... detected (last cycle)
+    uint32_t  pulseLen;                                  // length of chopper pulse
+    uint32_t  nobeamN;                                   // ... number of cycles with 'no beam' flag
+    int32_t   nobeamFlag;                                // 'no beam' flag (last cycle)
+    uint32_t  blockN;                                    // number of blocked triggers (blocked by chopper control)
+    int32_t   blockFlag;                                 // 'blocked' flag (last cycle)
+    uint32_t  interlockN;                                // number of interlocked trigger (interlocked by chopper control)
+    int32_t   interlockFlag;                             // 'interlocked' flag (last cycle)
+    uint32_t  failChopN;                                 // number of wrong chops
+    int32_t   failChopFlag;                              // ... detected (last cycle)
+    uint32_t  wrongTrigN;                                // number of wrong triggers
+    int32_t   wrongTrigFlag;                             // ... detected (last cycle)
+    uint32_t  cciRecN;                                   // number of received strahlweg maske and register received from chopper control interface
+    int32_t   cciRecFlag;                                // ... detected (last cycle)
+    uint32_t  cciLateN;                                  // number of received strahlweg maske and register received >> late << from chopper control interface (last cycle)
+    int32_t   cciLateFlag;                               // ... detected (last cycle)
+    uint32_t  sid;                                       // sequence ID
+    uint32_t  machine;                                   // 'tag'
+  } monData_t;
     
   // ---------------------------------
+
   // helper routines
   // ---------------------------------
   
   // get host system time [ns]
   uint64_t unichop_getSysTime();
+
+  //convert timestamp [ns] to seconds and nanoseconds
+  void unichop_t2secs(uint64_t ts,                              // timestamp [ns]
+                      uint32_t *secs,                           // seconds
+                      uint32_t *nsecs                           // nanosecons
+                      );
 
   // convert status code to status text
   const char* unichop_status_text(uint32_t code                 // status code
@@ -153,13 +169,14 @@ extern "C" {
 
   // get common properties from firmware, returns error code
   uint32_t unichop_common_read(uint64_t ebDevice,                // EB device
-                             uint64_t *statusArray,              // array with status bits
-                             uint32_t *state,                    // state
-                             uint32_t *nBadStatus,               // # of bad status incidents
-                             uint32_t *nBadState,                // # of bad state incidents
-                             uint32_t *version,                  // FW version
-                             uint32_t *nTransfer,                // # of transfer
-                             int      printDiag                  // prints info on common firmware properties to stdout
+                               uint64_t *statusArray,            // array with status bits
+                               uint32_t *state,                  // state
+                               uint32_t *nBadStatus,             // # of bad status incidents
+                               uint32_t *nBadState,              // # of bad state incidents
+                               uint32_t *version,                // FW version
+                               uint32_t *nTransfer,              // # of transfer
+                               uint32_t *nLate,                  // number of late events received
+                               int      printDiag                // prints info on common firmware properties to stdout
                              );
   
   // uploads configuration, returns error code
