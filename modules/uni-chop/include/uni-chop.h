@@ -78,7 +78,8 @@
 #define MOD_RPG_HLI_ADDR                    0x03   // Rahmenpulsgenerator HLI, module bus address, FG 450.681
 #define MOD_RPG_HSI_ADDR                    0x04   // Rahmenpulsgenerator HSI, module bus address, FG 450.681
 #define MOD_RPG_XXX_GATELENHI_REG           0x42   // Rahmenpulsgeneratoren, register for gate puls length counter, hi word
-#define MOD_RPG_XXX_GATELENLO_REG           0x40   // Rahmenpulsgeneratoren, register for gate puls length counter, lo word (reading this register reset register values)
+#define MOD_RPG_XXX_GATELENLO_REG           0x40   // Rahmenpulsgeneratoren, register for gate puls length counter, lo word (reading this register resets register values)
+#define MOD_RPG_XXX_ENABLE_REG              0x10   // Rahmenpulsgeneratoren, registe for 'enable'
 
 // interrupts
 //#define UNICHOP_GW_MSI_LATE_EVENT         0x1
@@ -89,6 +90,8 @@
 #define UNICHOP_MILMODULE_ACCESST         100000   // time required to access (read/write) HW via MIL<->Modulebus  [ns]
 #define UNICHOP_U16_NODATA                0x7fff   // no data available
 #define UNICHOP_U16_INVALID               0xffff   // data invalid
+#define MOD_RPG_XXX_ENABLE_TRUE           0x00f5   // enable word for RPG enable register
+#define MOD_RPG_XXX_ENABLE_FALSE          0x0000   // disable word for RPG enable register
 
 
 // default values

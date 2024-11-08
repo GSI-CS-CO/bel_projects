@@ -37,7 +37,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define UNICHOP_FW_VERSION      0x000010  // make this consistent with makefile
+#define UNICHOP_FW_VERSION      0x000011  // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -426,6 +426,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint32_t rpgGatelen;                                        // measured length of RPG gate
   uint16_t rpgGatelenHi;                                      // measured length of RPG gate, hi word
   uint16_t rpgGatelenLo;                                      // measured length of RPG gate, lo word
+  uint16_t rpgAddr;                                           // address for selected RPG
 
   static uint32_t flagInterlockHLI = 0;                       // chopper control detected slow interlock, HLI
   static uint32_t flagInterlockHSI = 0;                       // chopper control detected slow interlock, HSI
@@ -487,15 +488,22 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
           status = writeToModuleMil(IFB_ADDR_CU, MOD_LOGIC2_ADDR, MOD_LOGIC2_REG_ANFORDER_MASK, anforder_mask);
           if (status == COMMON_STATUS_OK) nMilSnd++;
           else                            nMilSndErr++;
-        } // if status ok      
+        } // if status ok
+
+        // enable RPGs for HLI and HSI
+        if (status == COMMON_STATUS_OK) {
+          writeToModuleMil(IFB_ADDR_CU, MOD_RPG_HLI_ADDR, MOD_RPG_XXX_ENABLE_REG, MOD_RPG_XXX_ENABLE_TRUE);
+          writeToModuleMil(IFB_ADDR_CU, MOD_RPG_HSI_ADDR, MOD_RPG_XXX_ENABLE_REG, MOD_RPG_XXX_ENABLE_TRUE);
+        } // if status ok
+        
       } // if not late
       else {
         // we set all flags to block/interlock as the watchdog of the chopper control should inhibit the chopper
-        /* chk, I think its a stupid idea to set everything to '1' */
+        /* chk, I think its a stupid idea to set everything to '1' 
         flagBlockHLI     = 1;
         flagBlockHSI     = 1;
         flagInterlockHLI = 1;
-        flagInterlockHSI = 1;        
+        flagInterlockHSI = 1; */
       } // else: is late
 
 
@@ -639,6 +647,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       regChopFallAct    = MOD_LOGIC1_REG_HLI_ACT_NEGEDGE_RD;
       regChopFallCtrl   = MOD_LOGIC1_REG_HLI_CTRL_NEGEDGE_RD;
       sendBpid          = (flagBlockHLI << 2) | (flagInterlockHLI << 3);
+      rpgAddr           = MOD_RPG_HLI_ADDR;
 
     case UNICHOP_ECADO_HSISTOP :                                    // this is an OR, no 'break' on purpose
       if (!sendEvtNo) {
@@ -647,6 +656,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         regChopFallAct  = MOD_LOGIC1_REG_HSI_ACT_NEGEDGE_RD;
         regChopFallCtrl = MOD_LOGIC1_REG_HSI_CTRL_NEGEDGE_RD;
         sendBpid        = (flagBlockHSI << 2) | (flagInterlockHSI << 3);
+        rpgAddr         = MOD_RPG_HSI_ADDR;
       } // if not sendEveNo
 
       // lower 2 bit of sendBpid set to 0 for byte alignment and easier debugging using saft-ctl snoop
@@ -692,7 +702,10 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         sendParam   |= (uint64_t)(lenChopAct); 
         sendDeadline = getSysTime() + COMMON_AHEADT;
         fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0x0);
-      } // if flagIsLate
+      } // if not flagIsLate
+
+      // disable relevant RPG
+      writeToModuleMil(rpgAddr, MOD_RPG_HLI_ADDR, MOD_RPG_XXX_ENABLE_REG, MOD_RPG_XXX_ENABLE_FALSE);
 
       offsDone = getSysTime() - recDeadline;
       // nEvtsRec++; don't increase counter - this is just monitoring
