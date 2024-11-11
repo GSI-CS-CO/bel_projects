@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 10-Jul-2024
+ *  version : 11-Nov-2024
  *
  * library for wr-mil
  *
@@ -330,20 +330,20 @@ void wrmil_printDiag(uint32_t utcTrigger, uint32_t utcDelay, uint32_t trigUtcDel
 {
   printf("wrmil: info  ...\n\n");
 
-  printf("GID                                  : 0x%015x\n"     , gid);
-  printf("UTC trigger evt ID                   : 0x%015x\n"     , utcTrigger);
-  printf("UTC MIL delay [us]                   : 0d%015u\n"     , utcDelay);
-  printf("UTC trigger delay [us]               : 0d%015u\n"     , trigUtcDelay);
-  printf("MIL latency [ns]                     : 0d%015d\n"     , latency);
-  printf("UTC offset [ms]                      : 0d%015lu\n"    , utcOffset);
-  printf("request fill event                   : 0d%015u\n"     , requestFill);
-  printf("MIL dev (0: piggy, 1.. :SIO)         : 0x%015x\n"     , milDev);
-  printf("MIL data monitoring                  : 0d%015u\n"     , milMon);
-  printf("# MIL events sent                    : 0d%015lu\n"    , nEvtsSnd);
-  printf("# MIL events received (TAI)          : 0d%015lu\n"    , nEvtsRecT);
-  printf("# MIL events received (data)         : 0d%015lu\n"    , nEvtsRecD);
-  printf("# MIL events received (error)        : 0d%015u\n"     , nEvtsErr);
-  printf("# high frequency bursts              : 0d%015u\n"     , nEvtsBurst);
+  printf("GID                                 : 0x%015x\n"     , gid);
+  printf("UTC trigger evt ID                  : 0x%015x\n"     , utcTrigger);
+  printf("UTC MIL delay [us]                  : 0d%015u\n"     , utcDelay);
+  printf("UTC trigger delay [us]              : 0d%015u\n"     , trigUtcDelay);
+  printf("MIL latency [ns]                    : 0d%015d\n"     , latency);
+  printf("UTC offset [ms]                     : 0d%015lu\n"    , utcOffset);
+  printf("request fill event                  : 0d%015u\n"     , requestFill);
+  printf("MIL dev (0: piggy, 1.. :SIO)        : 0x%015x\n"     , milDev);
+  printf("MIL data monitoring                 : 0d%015u\n"     , milMon);
+  printf("# MIL events sent                   : 0d%015lu\n"    , nEvtsSnd);
+  printf("# MIL events received (TAI)         : 0d%015lu\n"    , nEvtsRecT);
+  printf("# MIL events received (data)        : 0d%015lu\n"    , nEvtsRecD);
+  printf("# MIL events received (error)       : 0d%015u\n"     , nEvtsErr);
+  printf("# high frequency bursts             : 0d%015u\n"     , nEvtsBurst);
 } // wrmil_printDiag
 
 
@@ -361,25 +361,25 @@ void wrf50_printDiag(int32_t f50Offs, uint32_t mode, uint32_t TMainsAct, uint32_
   
   printf("wrf50: info  ...\n\n");
   
-  printf("offset to 50 Hz mains [us]           : %15d\n"        , f50Offs);
-  printf("mode                                 : %15u\n"        , mode);
-  printf("act period of mains [us]             : %15.3f\n"      , (double)TMainsAct/1000.0);
-  printf("act period of DM [us]                : %15.3f\n"      , (double)TDmAct/1000.0);
-  printf("set period of DM [us]                : %15.3f\n"      , (double)TDmSet/1000.0);
-  printf("act offset DM: DM - mains [Hz]       : %15.3f\n"      , (double)offsDmAct/1000.0);
-  printf("min offset DM: DM - mains [Hz]       : %15.3f\n"      , (double)offsDmMin/1000.0);
-  printf("max offset DM: DM - mains [Hz]       : %15.3f\n"      , (double)offsDmMax/1000.0);
-  printf("act period change DM: act - prev [us]: %15.3f\n"      , (double)dTDMAct/1000.0);
-  printf("min period change DM: act - prev [us]: %15.3f\n"      , (double)dTDMMin/1000.0);
-  printf("max period change DM: act - prev [us]: %15.3f\n"      , (double)dTDMMax/1000.0);
-  printf("act offset mains: act - predict [us] : %15.3f\n"      , (double)offsMainsAct/1000.0);
-  printf("min offset mains: act - predict [us] : %15.3f\n"      , (double)offsMainsMin/1000.0);
-  printf("max offset mains: act - predict [us] : %15.3f\n"      , (double)offsMainsMax/1000.0);
-  printf("DM lock state                        : %15u\n"        , lockState);
-  printf("DM lock date                         : %s\n"          , timestr);
-  printf("DM # locks                           : %15u\n"        , nLocked);
-  printf("DM # cycles                          : %15u\n"        , nCycles);
-  printf("DM # sent phase words                : %15u\n"        , nSent);
+  printf("offset to 50 Hz mains [us]          : %15d\n"        , f50Offs);
+  printf("mode                                : %15u\n"        , mode);
+  printf("act period of mains [us]            : %15.3f\n"      , (double)TMainsAct/1000.0);
+  printf("act period of DM [us]               : %15.3f\n"      , (double)TDmAct/1000.0);
+  printf("set period of DM [us]               : %15.3f\n"      , (double)TDmSet/1000.0);
+  printf("act offset DM: DM - mains [us]      : %15.3f\n"      , (double)offsDmAct/1000.0);
+  printf("min offset DM: DM - mains [us]      : %15.3f\n"      , (double)offsDmMin/1000.0);
+  printf("max offset DM: DM - mains [us]      : %15.3f\n"      , (double)offsDmMax/1000.0);
+  printf("act period change DM: act - prev[us]: %15.3f\n"      , (double)dTDMAct/1000.0);
+  printf("min period change DM: act - prev[us]: %15.3f\n"      , (double)dTDMMin/1000.0);
+  printf("max period change DM: act - prev[us]: %15.3f\n"      , (double)dTDMMax/1000.0);
+  printf("act offset mains: act - predict [us]: %15.3f\n"      , (double)offsMainsAct/1000.0);
+  printf("min offset mains: act - predict [us]: %15.3f\n"      , (double)offsMainsMin/1000.0);
+  printf("max offset mains: act - predict [us]: %15.3f\n"      , (double)offsMainsMax/1000.0);
+  printf("DM lock state                       : %15u\n"        , lockState);
+  printf("DM lock date                        : %s\n"          , timestr);
+  printf("DM # locks                          : %15u\n"        , nLocked);
+  printf("DM # cycles                         : %15u\n"        , nCycles);
+  printf("DM # sent phase words               : %15u\n"        , nSent);
 } // wrf50_printDiag
 
 
