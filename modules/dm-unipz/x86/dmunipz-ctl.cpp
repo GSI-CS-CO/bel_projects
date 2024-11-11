@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 19-Jul-2024
+ *  version : 11-Nov-2024
  *
  * Command-line interface for dmunipz
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.8.21"
+#define DMUNIPZ_X86_VERSION "00.09.02"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -653,11 +653,11 @@ int main(int argc, char** argv) {
       comlib_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &nLate, &offsDone, &comLatency, &usedSize, 1);
       readConfig(&flexOffset, &uniTimeout, &tkTimeout, &dstMac, &dstIp);
       printf("\ndm-unipz: the values below are applied if the gateway becomes 'CONFIGURED'\n");
-      printf("flexOffset            : %" PRIu32 " ns\n", flexOffset);
-      printf("uniTimeout            : %" PRIu32 " ms\n", uniTimeout);
-      printf("tkTimeout             : %" PRIu32 " ms\n", tkTimeout);
-      printf("DM MAC                : 0x%012" PRIx64 "\n", dstMac);
-      printf("DM IP                 : %03d.%03d.%03d.%03d\n", (dstIp & 0xff000000) >> 24, (dstIp & 0x00ff0000) >> 16, (dstIp & 0x0000ff00) >> 8, (dstIp & 0x000000ff));
+      printf("flexOffset                          : %" PRIu32 " ns\n", flexOffset);
+      printf("uniTimeout                          : %" PRIu32 " ms\n", uniTimeout);
+      printf("tkTimeout                           : %" PRIu32 " ms\n", tkTimeout);
+      printf("DM MAC                              : 0x%012" PRIx64 "\n", dstMac);
+      printf("DM IP                               : %03d.%03d.%03d.%03d\n", (dstIp & 0xff000000) >> 24, (dstIp & 0x00ff0000) >> 16, (dstIp & 0x0000ff00) >> 8, (dstIp & 0x000000ff));
     } // "diag"
     
     if (!strcasecmp(command, "ebmdm")) {
