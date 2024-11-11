@@ -11,4 +11,4 @@ BASEDIR=$(cd "${SCRIPTDIR}/.." >/dev/null; pwd)
 # script for starting the unichop viewer on INT
 export DIM_DNS_NODE=asl105
 export LD_LIBRARY_PATH=${BASEDIR}/lib
-xterm -T 'unilac chopper viewer' -fa monaco -fs 10 -geometry 164x24 -e ${BASEDIR}/bin/unichop-client-mon pro
+xterm -T 'unilac chopper monitor' -fa monaco -fs 10 -geometry 164x24 -e ${BASEDIR}/bin/unichop-client-mon pro
