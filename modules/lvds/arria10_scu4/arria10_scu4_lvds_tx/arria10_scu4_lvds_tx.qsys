@@ -75,7 +75,7 @@
  <module
    name="lvds_0"
    kind="altera_lvds"
-   version="18.1"
+   version="23.1"
    enabled="1"
    autoexport="1">
   <parameter name="CPA_ENABLED" value="false" />
