@@ -6,7 +6,7 @@
    version="1.0"
    description=""
    tags="INTERNAL_COMPONENT=true"
-   categories="" />
+   categories="System" />
  <parameter name="bonusData"><![CDATA[bonusData 
 {
    element iopll_0
@@ -60,7 +60,7 @@
  <module
    name="iopll_0"
    kind="altera_iopll"
-   version="18.1"
+   version="23.1"
    enabled="1"
    autoexport="1">
   <parameter name="gui_active_clk" value="false" />
@@ -240,7 +240,7 @@
   <parameter name="gui_phase_shift_deg8" value="0.0" />
   <parameter name="gui_phase_shift_deg9" value="0.0" />
   <parameter name="gui_phout_division" value="1" />
-  <parameter name="gui_pll_auto_reset" value="true" />
+  <parameter name="gui_pll_auto_reset" value="false" />
   <parameter name="gui_pll_bandwidth_preset" value="Low" />
   <parameter name="gui_pll_cal_done" value="false" />
   <parameter name="gui_pll_cascading_mode" value="adjpllin" />
