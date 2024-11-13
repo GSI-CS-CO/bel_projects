@@ -287,7 +287,6 @@ set_global_assignment -name VERILOG_FILE ../../../modules/cfi_flash/cfi_ctrl_eng
 set_global_assignment -name VERILOG_FILE ../../../modules/cfi_flash/cfi_ctrl.v -library work
 set_global_assignment -name VERILOG_FILE ../../../modules/lpc_uart/serirq_defines.v -library work
 set_global_assignment -name VERILOG_FILE ../../../modules/lpc_uart/serirq_slave.v -library work
-set_global_assignment -name VERILOG_FILE ../../../modules/remote_update/asmi10/asmi10/altera_asmi_parallel_231/synth/asmi10_altera_asmi_parallel_231_47nf7hy.v -library work
 set_global_assignment -name VERILOG_FILE ../../../modules/remote_update/asmi5/asmi5/synthesis/submodules/asmi5_asmi_parallel_0.v -library work
 set_global_assignment -name VERILOG_FILE ../../../modules/remote_update/asmi_arriaII/asmi_arriaII/synthesis/submodules/asmi_arriaII_asmi_parallel_0.v -library work
 set_global_assignment -name VERILOG_FILE ../../../modules/stub_pll/stub_pll/altera_iopll_160/synth/stub_pll_altera_iopll_160_z2kwsvq.v -library work
