@@ -186,6 +186,18 @@ sudo apt update
 sudo apt install libpng12-0
 ```
 
+If this PPA can't be added, you need to compile the library:
+
+```
+cd res/ubuntu-22-and-later
+tar xf libpng_1.2.54.orig.tar
+cd libpng-1.2.54
+./autogen
+./configure
+make
+sudo make install
+```
+
 #### Backup Plan
 
 You can use a copy from here:
