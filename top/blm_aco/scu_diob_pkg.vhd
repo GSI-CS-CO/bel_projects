@@ -41,4 +41,7 @@ package scu_diob_pkg is
  TYPE     t_IO_Reg_0_to_29_Array is array(0 to 29) of std_logic_vector(15 downto 0);
  TYPE     t_IO_Reg_0_to_1_Array     is array (0 to 1)  of std_logic_vector(15 downto 0);
  TYPE     t_IO_Reg_0_to_31_Array is array (0 to 31)  of std_logic_vector(15 downto 0);
+ TYPE     t_group_Array 		is array (0 to 127) of std_logic_vector(3 downto 0);
+ 
+ type    local_set_thr_array        is array (0 to 4095) of  std_logic_vector(31 downto 0);
 end scu_diob_pkg;

@@ -41,7 +41,8 @@ port (
 
 
     ev_thr_load: in std_logic;
-    virt_acc: in std_logic_vector(11 downto 0);
+
+    
     ev_prepare_reg : in std_logic_vector(11 downto 0);
     ev_recover_reg: in std_logic_vector(11 downto 0);
     ev_counter_reset: in std_logic;
@@ -102,6 +103,9 @@ signal LED_ID_state:  std_logic_vector(3 downto 0);
 signal pos_th, neg_th: t_BLM_th_Array;
 signal ev_pos_neg_thr: std_logic_vector(63 downto 0):=(others => '0');
 signal cnt_nr : integer range 0 to 127;
+
+
+
   component BLM_watchdog is
   
     port(
@@ -218,10 +222,9 @@ begin
 
 VALUE_IN <= BLM_test_signal & BLM_data_in;
 BLM_gate_recover <= ev_recover_reg or BLM_gate_recover_Reg(11 downto 0);
-  BLM_gate_prepare <= ev_prepare_reg or BLM_gate_seq_prep_ck_sel_Reg(11 downto 0);
+BLM_gate_prepare <= ev_prepare_reg or BLM_gate_seq_prep_ck_sel_Reg(11 downto 0);
 
 
---direct_gate <= BLM_ctrl_Reg(11 downto 0);
 direct_gate <= BLM_ctrl_Reg(5 downto 0) & BLM_ctrl_Reg(11 downto 6);
 g_clock <= gate_clock;
 
@@ -313,9 +316,9 @@ end process direct_gate_operation;
             wd_reset=>  BLM_wd_reset(i), -- watchdog reset signal
             hold => BLM_wdog_hold_time_Reg,
             in_watchdog => BLM_data_in(i),
-          --  ena_i =>    '1',  -- enable for input connected to the counter
+      
             INTL_out =>   out_1wd(i));
-            --INTL_out =>   out_wd(i));
+     
       end generate wd_elem_gen;
 
 
@@ -338,7 +341,7 @@ BLM_counter_pool: for i in 0 to 127 generate
 
 BLM_counter_pool_elem: BLM_counter_pool_el
 generic map (      
-      WIDTH  => 32)
+      WIDTH  => 32)  -- Counter width
 port map (
   CLK            => clk_sys,  
   nRST           => rstn_sys,
@@ -369,9 +372,6 @@ BLM_out_section: BLM_out_el
     BLM_out_sel_reg => BLM_out_sel_reg, 
     --
   UP_OVERFLOW  =>UP_OVERFLOW,
-   -- UP_OVERFLOW => neg_threshold(0) & pos_threshold(0)&UP_OVERFLOW(63 downto 0),
-   --UP_OVERFLOW     => UP_OVERFLOW(127 downto 80)& gate_state & "0000"& BLM_gate_in(5 downto 0) & BLM_gate_in(11 downto 6)& "0000"& gate_output(5 downto 0) & gate_output(11 downto 6), -- UP_OVERFLOW & gate_in & gate_out , -- ONLY FOR TESTS 
-   --DOWN_OVERFLOW   => DOWN_OVERFLOW_OUT,
    DOWN_OVERFLOW   => DOWN_OVERFLOW,
     wd_out           => out_1wd, --out_wd, --out_1wd,
     gate_in         => BLM_gate_in(5 downto 0) & BLM_gate_in(11 downto 6),--BLM_gate_in,
@@ -379,8 +379,7 @@ BLM_out_section: BLM_out_el
     gate_out        => gate_output(5 downto 0) & gate_output(11 downto 6),
     gate_state      => gate_state,
     led_id_state    => LED_ID_state,
-    BLM_Output      => BLM_out,
-   -- counter_reg =>  counter_value,   
+    BLM_Output      => BLM_out, 
     BLM_status_Reg  => BLM_status_Reg 
     );
 

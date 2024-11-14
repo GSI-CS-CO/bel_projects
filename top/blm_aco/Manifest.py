@@ -1,5 +1,6 @@
 files = [
-   "blm_aco_v1.0.vhd",
+    # working, but without local_thr_mem "blm_aco_v1.0.vhd",
+   "blm_aco_v1.1.vhd",
    "scu_diob_pkg.vhd",
    "scu_diob.sdc",
    "diob_debounce.vhd",
@@ -28,7 +29,7 @@ files = [
    "front_board_id_v0.vhd",
    "BLM_counter_pool_el.vhd",
    "BLM_out_el_m_v1.0.vhd",
-  # "IOBP_LED_ID_Module.vhd",
+
   "IOBP_LED_ID_module_v1.0.vhd",
    "p_connector.vhd",
    "BLM_in_mux.vhd",
@@ -37,7 +38,13 @@ files = [
    "blm_24_9_9_9pll.vhd",
    "deglitcher.v",
    "BLM_cnt_pulse_former.vhd",
-   "event_ctrl_el.vhd"
+   "event_ctrl_el.vhd",
+   "local_thr_mem.vhd",
+   "bus_splitter.vhd",
+    "th_ram.vhd",
+    "l0ad_thr_fifo.vhd",
+  "local_thr_box_2_1.vhd",
+  "threshold_trigger_input.vhd"
 ]
 
 modules = {

@@ -155,17 +155,19 @@ architecture blm_aco_arch_for_Beam_Loss_Mon of blm_aco is
     CONSTANT c_Tag_Ctrl1_Base_Addr:              Integer := 16#0580#;  -- Tag-Control
     CONSTANT c_IOBP_Masken_Base_Addr:            Integer := 16#0630#;  -- IO-Backplane Maske-Register
     CONSTANT c_IOBP_ID_Base_Addr:                Integer := 16#0638#;  -- IO-Backplane Modul-ID-Register
-    CONSTANT c_Status_READBACK_Base_Addr:        Integer := 16#0670#;  -- IO-Backplane Output Readback Register: 24 x 16 bit registers --> +18h 
-  --  CONSTANT c_DIOB_DAQ_Base_Addr:               Integer := 16#2000#;  -- DAQ Base Address
-    CONSTANT c_BLM_thres_Base_Addr:              Integer := 16#0700#;  -- BLM thresholds for the counter pool: 512 16 bit registers--> + 200h
+    
+    CONSTANT c_Status_READBACK_Base_Addr:        Integer := 16#0700#;  -- IO-Backplane Output Readback Register: 24 x 16 bit registers --> +18h 
+    CONSTANT c_BLM_ctrl_Base_Addr:               Integer := 16#0800#;   --BLM control registers: 15 x 16 bit registers --7Fh  
+    CONSTANT c_BLM_event_readout_Base_Addr:      Integer := 16#0900#;   --BLM event readout registers: 8 x 16 bit registers
+    CONSTANT c_BLM_event_ctrl_Base_Addr:         Integer := 16#0A00#;   --BLM event control registers: 8 x 16 bit registers
     CONSTANT c_BLM_in_sel_Base_Addr:             Integer := 16#1000#;   --BLM input mux select registers :      128 16 bit registers -->80h
     CONSTANT c_BLM_out_sel_Base_Addr:            Integer := 16#1100#;   --BLM output mux select registers :      130 16 bit registers -->82h 
-    CONSTANT c_BLM_ctrl_Base_Addr:               Integer := 16#1200#;   --BLM control registers: 15 x 16 bit registers --7Fh
-    CONSTANT c_BLM_event_readout_Base_Addr:      Integer := 16#1280#;   --BLM event readout registers: 8 x 16 bit registers
-    CONSTANT c_BLM_event_ctrl_Base_Addr:         Integer := 16#1288#;   --BLM event control registers: 8 x 16 bit registers
-    CONSTANT c_BLM_counter_readout_Base_Addr:    Integer := 16#1290#;   --BLM counters readout registers: 256 x 16 bit registers 
-  --  CONSTANT c_BLM_mem_thres_Base_Addr:          Integer := 16#1390#;   --BLM thresholds from local RAM : 512 x 16 bit registers
-
+    CONSTANT c_BLM_counter_readout_Base_Addr:    Integer := 16#1200#;   --BLM counters readout registers: 256 x 16 bit registers 
+    CONSTANT c_BLM_group_thres_Base_Addr:        Integer := 16#1600#;   --BLM thresholds group: 32 x 16 bit registers
+    CONSTANT c_BLM_thres_Base_Addr1:             Integer := 16#1800#;
+    CONSTANT c_BLM_thres_Base_Addr2:             Integer := 16#1880#;
+    CONSTANT c_BLM_thres_Base_Addr3:             Integer := 16#1900#;
+    CONSTANT c_BLM_thres_Base_Addr4:             Integer := 16#1980#;
 
 --  +============================================================================================================================+
 --  |                                                 CONSTANT                                                                   |
@@ -433,29 +435,21 @@ port (
     --   when 1, the outputs in slot 12 are the values of AW_Output_Reg(6),  bit 15..3 free
     BLM_gate_seq_prep_ck_sel_Reg : in std_logic_vector(15 downto 0);
     BLM_gate_recover_Reg : in std_logic_vector(15 downto 0);
-  --  BLM_gate_seq_in_ena_Reg : in std_logic_vector(15 downto 0); --"00"& ena for gate board2 &"00" & ena for gate board1 
     BLM_in_sel_Reg          : in t_BLM_reg_Array; --128 x (4 bit for gate ena & 6 bit for up signal ena & 6 for down signal ena)
-   BLM_out_sel_reg : in t_BLM_out_sel_reg_Array;    -- 122 x 16 bits = Reg120-0:  "0000" and 6 x (54 watchdog errors  + 12 gate errors + 256 counters overflows outputs) 
+    BLM_out_sel_reg : in t_BLM_out_sel_reg_Array;    -- 122 x 16 bits = Reg120-0:  "0000" and 6 x (54 watchdog errors  + 12 gate errors + 256 counters overflows outputs) 
                                                     -- + 4 more registers for 6 x 12 input gate (= 72 bits) to be send to the outputs.    
                                                     --=> 126 registers             
-                                                    --   REg127             ex Reg121: counter outputs buffering enable (bit 15) and buffered output select (bit 7-0). Bits 14-8 not used     
+                                                    --   REg127             ex Reg121: counter outputs buffering enable (bit 15) and buffered output select (bit 7-0). Bits 14-8 not used    
+
     -- OUT register
-   -- BLM_status_Reg    : out t_IO_Reg_0_to_25_Array ;
-
-
-
-   ev_prepare_reg : in std_logic_vector(11 downto 0);
-   ev_recover_reg: in std_logic_vector(11 downto 0);
-   ev_counter_reset: in std_logic;
-   ev_thr_load: in std_logic;
-   virt_acc: in std_logic_vector(11 downto 0);
-
-
-   BLM_status_Reg    : out t_IO_Reg_0_to_29_Array ;
-
-   counter_readout_reg: out t_BLM_th_Array  ;
+    ev_prepare_reg : in std_logic_vector(11 downto 0);
+    ev_recover_reg: in std_logic_vector(11 downto 0);
+    ev_counter_reset: in std_logic;
+    ev_thr_load: in std_logic;
+    BLM_status_Reg    : out t_IO_Reg_0_to_29_Array ;
+    counter_readout_reg: out t_BLM_th_Array  ;
       -- OUT BLM
-      BLM_Out           : out std_logic_vector(5 downto 0) 
+    BLM_Out           : out std_logic_vector(5 downto 0) 
 );
 
   end component Beam_Loss_check;
@@ -678,6 +672,64 @@ component  event_ctrl_el is
   );
   end component event_ctrl_el;
   
+ component bus_splitter is
+    port(
+      clock: in std_logic;
+   -- from bus
+        A_A: in std_logic; -- SCU-Adress Bus
+        A_nDS: in std_logic; -- Data strobe driven by master
+   
+        nSel_Ext_Data_Drv_out : out std_logic; -- '0' => select the external data driver on the SCU_Bus slave
+     --   A_D: inout std_logic_vector(15 downto 0); -- SCU-Data Bus
+        A_nDtack: out std_logic; -- Data-Acknowlege zero active, '0' => enables external open drain driver
+
+    -- from/to slave 1
+        A_nDS_to_1: out std_logic; 
+        SCU_Dtack_from_1: in  std_logic;    
+        nSel_Ext_Data_Drv_in_from_1:  in std_logic; 
+       -- A_D_to_1: inout std_logic_vector(15 downto 0); 
+        -- from/to ram 2
+        A_nDS_to_2: out std_logic; 
+        SCU_Dtack_from_2: in  std_logic;   
+        nSel_Ext_Data_Drv_in_from_2:  in std_logic   
+      --  A_D_to_2: inout std_logic_vector(15 downto 0)
+    );
+end component bus_splitter;
+
+component local_thr_mem is
+  port(
+    clk : in std_logic;     
+    nRST : in std_logic;   
+    A_A: in std_logic_vector(15 downto 0); 
+    A_nDS: in std_logic; 
+    A_nBoardSel: in std_logic; 
+    A_RnW: in std_logic; 
+    load_thr: in std_logic;
+    loaded_data_set: in std_logic_vector(11 downto 0);
+    new_dataset_ready: in std_logic; 
+    counter_group_Reg : in t_IO_Reg_0_to_31_Array;
+    --
+    reg_trigger: in std_logic;
+    reg_group_dataset: in std_logic_vector(11 downto 0);
+    
+    timing_trigger: in std_logic;
+    timing_group_dataset: in std_logic_vector(11 downto 0);
+    --
+
+    A_D: inout std_logic_vector(15 downto 0); 
+    A_Dtack: out std_logic;
+   -- thr_data: out std_logic_vector(63 downto 0);
+    loc_pos_thr:  out t_BLM_th_Array;
+    loc_neg_thr:  out t_BLM_th_Array;
+
+    nSel_Ext_Data_Drv_out : out std_logic;
+
+    box_state_nr: out std_logic_vector(2 downto 0);
+    counter_nr_read: out std_logic_vector(7 downto 0); -- for tests
+    reg_state_nr : out std_logic_vector(1 downto 0)
+  );
+  end component local_thr_mem;
+
 --  +============================================================================================================================+
 --  |                                                         signal                                                             |
 --  +============================================================================================================================+
@@ -1044,7 +1096,7 @@ signal IOBP_LED_sm_nr: std_logic_vector(3 downto 0);
 ----------------------------------------------------------
           -- for event and virtual accelerator 
 signal BLM_event_readout_Reg :t_IO_Reg_0_to_2_Array;
-signal BLM_virt_acc_rd_Reg: std_logic_vector(15 downto 0);
+
 signal BLM_event_v_acc_readout_rd_active: std_logic;
 signal BLM_event_v_acc_readout_Dtack: std_logic;
 signal BLM_event_v_acc_readout_data_to_SCUB: std_logic_vector(15 downto 0);
@@ -1052,7 +1104,6 @@ signal BLM_event_v_acc_readout_data_to_SCUB: std_logic_vector(15 downto 0);
 
 signal BLM_event_key_Reg:std_logic_vector(15 downto 0);
 signal BLM_event_ctrl_Reg: std_logic_vector(15 downto 0);
-signal BLM_mem_cmd_Reg: std_logic_vector(15 downto 0);
 signal BLM_new_dataset_Reg: std_logic_vector(15 downto 0);
 
 signal BLM_event_v_acc_ctrl_rd_active: std_logic;
@@ -1069,12 +1120,68 @@ signal counter_readout_active: std_logic_vector(31 downto 0);
 signal counter_readout_Dtack: std_logic_vector(31 downto 0);
 signal counter_readout_data_to_SCUB: t_IO_Reg_0_to_31_Array;
 signal counter_readout_res_Dtack: std_logic;
-
+signal BLM_th_Dtack1:        std_logic_vector(15 downto 0);
+signal BLM_th_Dtack2:        std_logic_vector(15 downto 0);
+signal BLM_th_Dtack3:        std_logic_vector(15 downto 0);
+signal BLM_th_Dtack4:        std_logic_vector(15 downto 0);
+signal A_D_to_1: std_logic_vector(15 downto 0);
+signal A_D_to_2: std_logic_vector(15 downto 0);
+signal counter_group_active: std_logic_vector(3 downto 0);
+signal counter_group_Dtack : std_logic_vector(3 downto 0);
+signal counter_group_res_Dtack: std_logic;
 constant ZERO_th: std_logic_vector(BLM_th_Dtack'range) := (others => '0');
 constant ZERO_in_sel: std_logic_vector(BLM_in_sel_Dtack'range) := (others => '0');
 constant ZERO_status_sel: std_logic_vector(IOBP_in_Dtack'range) := (others => '0');
 constant ZERO_out_sel: std_logic_vector(BLM_out_sel_Dtack'range) := (others => '0');
 constant ZERO_cnt_readout_sel: std_logic_vector(counter_readout_Dtack'range) := (others => '0');
+constant ZERO_counter_group: std_logic_vector(counter_group_Dtack'range) := (others => '0');
+constant ZERO_th1: std_logic_vector(BLM_th_Dtack1'range) := (others => '0');
+constant ZERO_th2: std_logic_vector(BLM_th_Dtack2'range) := (others => '0');
+constant ZERO_th3: std_logic_vector(BLM_th_Dtack3'range) := (others => '0');
+constant ZERO_th4: std_logic_vector(BLM_th_Dtack4'range) := (others => '0');
+
+signal A_nDS_to_Slave: std_logic; -- Data strobe driven by master to slave
+
+signal A_nSel_Ext_Data_Drv_from_slave:  std_logic;
+signal A_nDS_to_RAM: std_logic; -- Data strobe driven by master to slave
+signal SCU_Dtack_from_RAM: std_logic:='0';
+signal A_nSel_Ext_Data_Drv_from_ram:std_logic:='1';
+
+
+
+signal pos_threshold:  t_BLM_th_Array;
+signal neg_threshold:  t_BLM_th_Array;
+signal trigger: std_logic;
+signal loc_pos_thr:   t_BLM_th_Array; --o to 127 
+signal loc_neg_thr:  t_BLM_th_Array;
+
+signal blm_trigger: std_logic;
+--signal timing_trigger: std_logic;
+signal    blm_group_dataset :  std_logic_vector(11 downto 0);
+signal new_dataset_ready:  std_logic; 
+signal  box_state_nr_reg: std_logic_vector(15 downto 0);
+signal counter_nr_read_reg: std_logic_vector(15 downto 0);
+signal counter_group_Reg : t_IO_Reg_0_to_31_Array;
+ signal reg_state_nr_reg: std_logic_vector(15 downto 0);                 --
+
+signal counter_group_data_to_SCUB:   t_IO_Reg_0_to_3_Array; 
+
+signal BLM_th_active1:       std_logic_vector(15 downto 0);
+
+signal BLM_th_data1_to_SCUB: t_IO_Reg_0_to_15_Array; 
+signal BLM_th_active2:       std_logic_vector(15 downto 0);
+
+signal BLM_th_data2_to_SCUB: t_IO_Reg_0_to_15_Array; 
+signal BLM_th_active3:       std_logic_vector(15 downto 0);
+
+signal BLM_th_data3_to_SCUB: t_IO_Reg_0_to_15_Array; 
+signal BLM_th_active4:       std_logic_vector(15 downto 0);
+
+signal BLM_th_data4_to_SCUB: t_IO_Reg_0_to_15_Array; 
+signal BLM_th_res1_Dtack: std_logic;
+signal BLM_th_res2_Dtack: std_logic;
+signal BLM_th_res3_Dtack: std_logic;
+signal BLM_th_res4_Dtack: std_logic;
 --  ###############################################################################################################################
 --  ###############################################################################################################################
 --  #####                                                                                                                     #####
@@ -1508,37 +1615,155 @@ BLM_status_registers_0_23:for i in 0 to 2 generate
      
     
 
-threshold_registers: for i in 0 to 63 generate
 
-BLM_thr_Reg: io_reg
-        generic map(
-              Base_addr =>  c_BLM_thres_Base_Addr + 8*i
-              )
-        port map  (
-              Adr_from_SCUB_LA   =>  ADR_from_SCUB_LA,
-              Data_from_SCUB_LA  =>  Data_from_SCUB_LA,
-              Ext_Adr_Val        =>  Ext_Adr_Val,
-              Ext_Rd_active      =>  Ext_Rd_active,
-              Ext_Rd_fin         =>  Ext_Rd_fin,
-              Ext_Wr_active      =>  Ext_Wr_active,
-              Ext_Wr_fin         =>  SCU_Ext_Wr_fin,
-              clk                =>  clk_sys,
-              nReset             =>  rstn_sys,
+threshold_registers1_4: for i in 0 to 15 generate
 
-              Reg_IO1            =>  pos_thres_Reg(2*i)(15 downto 0),
-              Reg_IO2            =>  pos_thres_Reg(2*i)(31 downto 16),
-              Reg_IO3            =>  neg_thres_Reg(2*i)(15 downto 0),
-              Reg_IO4            =>  neg_thres_Reg(2*i)(31 downto 16),
-              Reg_IO5            =>  pos_thres_Reg(2*i+1)(15 downto 0),
-              Reg_IO6            =>  pos_thres_Reg(2*i+1)(31 downto 16),
-              Reg_IO7            =>  neg_thres_Reg(2*i+1)(15 downto 0),
-              Reg_IO8            =>  neg_thres_Reg(2*i+1)(31 downto 16),
-        --
-              Reg_rd_active      =>  BLM_th_active (i),
-              Dtack_to_SCUB      =>  BLM_th_Dtack(i),
-              Data_to_SCUB       =>  BLM_th_data_to_SCUB(i)
-            );
-  end generate threshold_registers;
+
+
+  BLM_thr_Reg1: in_reg
+          generic map(
+                Base_addr =>  c_BLM_thres_Base_Addr1 + 8*i
+                )
+          port map  (
+                Adr_from_SCUB_LA   =>  ADR_from_SCUB_LA,
+                Data_from_SCUB_LA  =>  Data_from_SCUB_LA,
+                Ext_Adr_Val        =>  Ext_Adr_Val,
+                Ext_Rd_active      =>  Ext_Rd_active,
+                Ext_Rd_fin         =>  Ext_Rd_fin,
+                Ext_Wr_active      =>  Ext_Wr_active,
+                Ext_Wr_fin         =>  SCU_Ext_Wr_fin,
+                clk                =>  clk_sys,
+                nReset             =>  rstn_sys,
+  
+                Reg_In1            =>  pos_threshold(2*i)(15 downto 0),
+                Reg_In2            =>  pos_threshold(2*i)(31 downto 16),
+                Reg_In3            =>  neg_threshold(2*i)(15 downto 0),
+                Reg_In4            =>  neg_threshold(2*i)(31 downto 16),
+                Reg_In5            =>  pos_threshold(2*i+1)(15 downto 0),
+                Reg_In6            =>  pos_threshold(2*i+1)(31 downto 16),
+                Reg_In7            =>  neg_threshold(2*i+1)(15 downto 0),
+                Reg_In8            =>  neg_threshold(2*i+1)(31 downto 16),
+          --
+                Reg_rd_active      =>  BLM_th_active1 (i),
+                Dtack_to_SCUB      =>  BLM_th_Dtack1(i),
+                Data_to_SCUB       =>  BLM_th_data1_to_SCUB(i)
+              );
+  
+  
+              
+    end generate threshold_registers1_4;
+
+      threshold_registers2_4: for i in 0 to 15 generate
+
+
+
+        BLM_thr_Reg2: in_reg
+                generic map(
+                      Base_addr =>  c_BLM_thres_Base_Addr2 + 8*i
+                      )
+                port map  (
+                      Adr_from_SCUB_LA   =>  ADR_from_SCUB_LA,
+                      Data_from_SCUB_LA  =>  Data_from_SCUB_LA,
+                      Ext_Adr_Val        =>  Ext_Adr_Val,
+                      Ext_Rd_active      =>  Ext_Rd_active,
+                      Ext_Rd_fin         =>  Ext_Rd_fin,
+                      Ext_Wr_active      =>  Ext_Wr_active,
+                      Ext_Wr_fin         =>  SCU_Ext_Wr_fin,
+                      clk                =>  clk_sys,
+                      nReset             =>  rstn_sys,
+        
+                      Reg_In1            =>  pos_threshold(2*i+32)(15 downto 0),
+                      Reg_In2            =>  pos_threshold(2*i+32)(31 downto 16),
+                      Reg_In3            =>  neg_threshold(2*i+32)(15 downto 0),
+                      Reg_In4            =>  neg_threshold(2*i+32)(31 downto 16),
+                      Reg_In5            =>  pos_threshold(2*i+1+32)(15 downto 0),
+                      Reg_In6            =>  pos_threshold(2*i+1+32)(31 downto 16),
+                      Reg_In7            =>  neg_threshold(2*i+1+32)(15 downto 0),
+                      Reg_In8            =>  neg_threshold(2*i+1+32)(31 downto 16),
+                --
+                      Reg_rd_active      =>  BLM_th_active2(i),
+                      Dtack_to_SCUB      =>  BLM_th_Dtack2(i),
+                      Data_to_SCUB       =>  BLM_th_data2_to_SCUB(i)
+                    );
+        
+        
+                    
+          end generate threshold_registers2_4;
+
+            threshold_registers3_4: for i in 0 to 15 generate
+
+
+
+              BLM_thr_Reg3: in_reg
+                      generic map(
+                            Base_addr =>  c_BLM_thres_Base_Addr3 + 8*i
+                            )
+                      port map  (
+                            Adr_from_SCUB_LA   =>  ADR_from_SCUB_LA,
+                            Data_from_SCUB_LA  =>  Data_from_SCUB_LA,
+                            Ext_Adr_Val        =>  Ext_Adr_Val,
+                            Ext_Rd_active      =>  Ext_Rd_active,
+                            Ext_Rd_fin         =>  Ext_Rd_fin,
+                            Ext_Wr_active      =>  Ext_Wr_active,
+                            Ext_Wr_fin         =>  SCU_Ext_Wr_fin,
+                            clk                =>  clk_sys,
+                            nReset             =>  rstn_sys,
+              
+                            Reg_In1            =>  pos_threshold(2*i+64)(15 downto 0),
+                            Reg_In2            =>  pos_threshold(2*i+64)(31 downto 16),
+                            Reg_In3            =>  neg_threshold(2*i+64)(15 downto 0),
+                            Reg_In4            =>  neg_threshold(2*i+64)(31 downto 16),
+                            Reg_In5            =>  pos_threshold(2*i+1+64)(15 downto 0),
+                            Reg_In6            =>  pos_threshold(2*i+1+64)(31 downto 16),
+                            Reg_In7            =>  neg_threshold(2*i+1+64)(15 downto 0),
+                            Reg_In8            =>  neg_threshold(2*i+1+64)(31 downto 16),
+                      --
+                            Reg_rd_active      =>  BLM_th_active3(i),
+                            Dtack_to_SCUB      =>  BLM_th_Dtack3(i),
+                            Data_to_SCUB       =>  BLM_th_data3_to_SCUB(i)
+                          );
+              
+              
+                          
+                end generate threshold_registers3_4;
+
+                  threshold_registers4_4: for i in 0 to 15 generate
+
+
+
+                    BLM_thr_Reg4: in_reg
+                            generic map(
+                                  Base_addr =>  c_BLM_thres_Base_Addr4 + 8*i
+                                  )
+                            port map  (
+                                  Adr_from_SCUB_LA   =>  ADR_from_SCUB_LA,
+                                  Data_from_SCUB_LA  =>  Data_from_SCUB_LA,
+                                  Ext_Adr_Val        =>  Ext_Adr_Val,
+                                  Ext_Rd_active      =>  Ext_Rd_active,
+                                  Ext_Rd_fin         =>  Ext_Rd_fin,
+                                  Ext_Wr_active      =>  Ext_Wr_active,
+                                  Ext_Wr_fin         =>  SCU_Ext_Wr_fin,
+                                  clk                =>  clk_sys,
+                                  nReset             =>  rstn_sys,
+                    
+                                  Reg_In1            =>  pos_threshold(2*i+96)(15 downto 0),
+                                  Reg_In2            =>  pos_threshold(2*i+96)(31 downto 16),
+                                  Reg_In3            =>  neg_threshold(2*i+96)(15 downto 0),
+                                  Reg_In4            =>  neg_threshold(2*i+96)(31 downto 16),
+                                  Reg_In5            =>  pos_threshold(2*i+1+96)(15 downto 0),
+                                  Reg_In6            =>  pos_threshold(2*i+1+96)(31 downto 16),
+                                  Reg_In7            =>  neg_threshold(2*i+1+96)(15 downto 0),
+                                  Reg_In8            =>  neg_threshold(2*i+1+96)(31 downto 16),
+                            --
+                                  Reg_rd_active      =>  BLM_th_active4(i),
+                                  Dtack_to_SCUB      =>  BLM_th_Dtack4(i),
+                                  Data_to_SCUB       =>  BLM_th_data4_to_SCUB(i)
+                                );
+                    
+                    
+                                
+                      end generate threshold_registers4_4;
+                                            
 
 BLM_in_sel_registers: for i in 0 to 15 generate 
 
@@ -1751,9 +1976,9 @@ port map  (
       Reg_In1            =>  BLM_event_readout_Reg(0),
       Reg_In2            =>  BLM_event_readout_Reg(1),
       Reg_In3            =>  BLM_event_readout_Reg(2),
-      Reg_In4            =>  BLM_virt_acc_rd_Reg,
-      Reg_In5            => (others =>'0'),
-      Reg_In6            =>  (others =>'0'),
+      Reg_In4            =>  box_state_nr_reg,
+      Reg_In5            =>  counter_nr_read_reg,
+      Reg_In6            =>  reg_state_nr_reg,
       Reg_In7            =>  (others =>'0'),
       Reg_In8            =>  (others =>'0'),
 --
@@ -1780,8 +2005,8 @@ port map  (
    
       Reg_IO1            =>   BLM_event_key_Reg,
       Reg_IO2            =>   BLM_event_ctrl_Reg,
-      Reg_IO3            =>   BLM_mem_cmd_Reg,
-      Reg_IO4            =>   BLM_new_dataset_Reg,
+      Reg_IO3            =>   BLM_new_dataset_Reg, --trigger & dataset_nr & group_nr
+      Reg_IO4            =>   open,
       Reg_IO5            =>   open,
       Reg_IO6            =>   open,
       Reg_IO7            =>   open,
@@ -1825,38 +2050,39 @@ port map  (
                       );
             end generate counters_readout_registers;
 
-      --  RAM_threshold_registers: for i in 0 to 63 generate
 
-        --  BLM_RAM_thr_Reg: io_reg
-        --          generic map(
-         --               Base_addr =>  c_BLM_mem_thres_Base_Addr + 8*i
-          --              )
-          --        port map  (
-          --              Adr_from_SCUB_LA   =>  ADR_from_SCUB_LA,
-          --              Data_from_SCUB_LA  =>  Data_from_SCUB_LA,
-          --              Ext_Adr_Val        =>  Ext_Adr_Val,
-          --              Ext_Rd_active      =>  Ext_Rd_active,
-          --              Ext_Rd_fin         =>  Ext_Rd_fin,
-          --              Ext_Wr_active      =>  Ext_Wr_active,
-          --              Ext_Wr_fin         =>  SCU_Ext_Wr_fin,
-          --              clk                =>  clk_sys,
-          --              nReset             =>  rstn_sys,
+      BLM_counter_groups_reg_block0_to_31:for i in 0 to 3 generate 
+
+       counter_groups_reg_block: io_reg
+                  generic map(
+                        Base_addr =>  c_BLM_group_thres_Base_Addr +8*i
+                        )
+                  port map  (
+                        Adr_from_SCUB_LA   =>  ADR_from_SCUB_LA,
+                        Data_from_SCUB_LA  =>  Data_from_SCUB_LA,
+                        Ext_Adr_Val        =>  Ext_Adr_Val,
+                        Ext_Rd_active      =>  Ext_Rd_active,
+                        Ext_Rd_fin         =>  Ext_Rd_fin,
+                        Ext_Wr_active      =>  Ext_Wr_active,
+                        Ext_Wr_fin         =>  SCU_Ext_Wr_fin,
+                        clk                =>  clk_sys,
+                        nReset             =>  rstn_sys,
           
-          --              Reg_IO1            =>  mem_pos_thres_Reg(2*i)(15 downto 0),
-          --              Reg_IO2            =>  mem_pos_thres_Reg(2*i)(31 downto 16),
-           --             Reg_IO3            =>  mem_neg_thres_Reg(2*i)(15 downto 0),
-            --            Reg_IO4            =>  mem_neg_thres_Reg(2*i)(31 downto 16),
-          --              Reg_IO5            =>  mem_pos_thres_Reg(2*i+1)(15 downto 0),
-           --             Reg_IO6            =>  mem_pos_thres_Reg(2*i+1)(31 downto 16),
-           --             Reg_IO7            =>  mem_neg_thres_Reg(2*i+1)(15 downto 0),
-           --             Reg_IO8            =>  mem_neg_thres_Reg(2*i+1)(31 downto 16),
+                        Reg_IO1            =>   counter_group_Reg(8*i),
+                        Reg_IO2            =>   counter_group_Reg(8*i+1),
+                        Reg_IO3            =>   counter_group_Reg(8*i+2),
+                        Reg_IO4            =>   counter_group_Reg(8*i+3),
+                        Reg_IO5            =>  counter_group_Reg(8*i+4),
+                        Reg_IO6            =>    counter_group_Reg(8*i+5),
+                        Reg_IO7            =>   counter_group_Reg(8*i+6),
+                        Reg_IO8            =>   counter_group_Reg(8*i+7),
                   --
-           --             Reg_rd_active      =>  BLM_mem th_active (i),
-           --             Dtack_to_SCUB      =>  BLM_mem_th_Dtack(i),
-           --             Data_to_SCUB       =>  BLM__memth_data_to_SCUB(i)
-           --           );
-           -- end generate threshold_registers;
-          
+                        Reg_rd_active      =>  counter_group_active(i) ,
+                        Dtack_to_SCUB      =>  counter_group_Dtack(i),
+                        Data_to_SCUB       =>  counter_group_data_to_SCUB(i)
+                      );
+
+                    end generate     BLM_counter_groups_reg_block0_to_31;
 
       Event_Timestamping_module:  event_ctrl_el 
 
@@ -1951,10 +2177,11 @@ port map  (
 p_led_sel: led_n
   generic map (stretch_cnt => stretch_cnt)
   port map      (ena => Ena_Every_20ms, CLK => clk_sys, Sig_in => (not A_nBoardSel and not A_nDS), nLED => s_nLED_Sel);-- LED: sel Board
+  --port map      (ena => Ena_Every_20ms, CLK => clk_sys, Sig_in => (not A_nBoardSel_to_scu_slave and not A_nDS_to_Slave), nLED => s_nLED_Sel);-- LED: sel Board
 
 p_led_dtack: led_n
   generic map (stretch_cnt => stretch_cnt)
-  port map      (ena => Ena_Every_20ms, CLK => clk_sys, Sig_in => SCUB_Dtack, nLED => s_nLED_Dtack);-- LED: Dtack to SCU-Bus
+  port map      (ena => Ena_Every_20ms, CLK => clk_sys, Sig_in => not A_nDtack, nLED => s_nLED_Dtack);-- LED: Dtack to SCU-Bus
 
 p_led_inr: led_n
   generic map (stretch_cnt => stretch_cnt)
@@ -2034,9 +2261,9 @@ generic map (
 port map (
     SCUB_Addr               => A_A,                                   -- in, SCU_Bus: address bus
     nSCUB_Timing_Cyc        => A_nEvent_Str,                          -- in, SCU_Bus signal: low active SCU_Bus runs timing cycle
-    SCUB_Data               => A_D,                                   -- inout, SCU_Bus: data bus (FPGA tri state buffer)
+    SCUB_Data               => A_D, --A_D_to_1, --A_D,                                   -- inout, SCU_Bus: data bus (FPGA tri state buffer)
     nSCUB_Slave_Sel         => A_nBoardSel,                           -- in, SCU_Bus: '0' => SCU master select slave
-    nSCUB_DS                => A_nDS,                                 -- in, SCU_Bus: '0' => SCU master activate data strobe
+    nSCUB_DS                => A_nDS_to_Slave,--A_nDS,                                 -- in, SCU_Bus: '0' => SCU master activate data strobe
     SCUB_RDnWR              => A_RnW,                                 -- in, SCU_Bus: '1' => SCU master read slave
     clk                     => clk_sys,
     nSCUB_Reset_in          => A_nReset,                              -- in, SCU_Bus-Signal: '0' => 'nSCUB_Reset_in' is active
@@ -2059,7 +2286,7 @@ port map (
                                                                       -- '0' => slave service request to SCU ma
     SCUB_SRQ                => SCUB_SRQ,                              -- out, for connect via ext. open collector driver
                                                                       -- '1' => slave service request to SCU master
-    nSel_Ext_Data_Drv       => A_nSel_Ext_Data_Drv,                   -- out, '0' => select the external data driver on the SCU_Bus slave
+    nSel_Ext_Data_Drv       => A_nSel_Ext_Data_Drv_from_slave,  --A_nSel_Ext_Data_Drv,                   -- out, '0' => select the external data driver on the SCU_Bus slave
     Ext_Data_Drv_Rd         => A_Ext_Data_RD,                         -- out, '1' => direction of the external data driver on the
                                                                       -- SCU_Bus slave is to the SCU_Bus
     Standard_Reg_Acc        => Standard_Reg_Acc,                      -- out, '1' => mark the access to register of this macro
@@ -2139,36 +2366,53 @@ rd_port_mux:  process ( clk_switch_rd_active,              clk_switch_rd_data,
                         IOBP_id_rd_active,                 IOBP_id_data_to_SCUB,
                         IOBP_in_rd_active,                 IOBP_in_data_to_SCUB,
                         BLM_ctrl_rd_active,                BLM_ctrl_data_to_SCUB,
-                        BLM_th_active,                     BLM_th_data_to_SCUB,
+                        --BLM_th_active,                     BLM_th_data_to_SCUB,
+                        BLM_th_active1,                     BLM_th_data1_to_SCUB,
+                        BLM_th_active2,                     BLM_th_data2_to_SCUB,
+                        BLM_th_active3,                     BLM_th_data3_to_SCUB,
+                        BLM_th_active4,                     BLM_th_data4_to_SCUB,                                          
                         BLM_in_sel_rd_active,              BLM_in_sel_data_to_SCUB,
                         BLM_event_v_acc_readout_rd_active, BLM_event_v_acc_readout_data_to_SCUB,
                         BLM_event_v_acc_ctrl_rd_active,    BLM_event_v_acc_ctrl_data_to_SCUB,
-                        counter_readout_active,            counter_readout_data_to_SCUB
+                        counter_readout_active,            counter_readout_data_to_SCUB,
+                        counter_group_active,              counter_group_data_to_SCUB
                       )
 
 
   variable sel: unsigned(12 downto 0);
-  variable sel_th: unsigned(63 downto 0);
+  --variable sel_th: unsigned(63 downto 0);
+  variable sel_th1: unsigned(15 downto 0);
+  variable sel_th2: unsigned(15 downto 0);
+  variable sel_th3: unsigned(15 downto 0);
+  variable sel_th4: unsigned(15 downto 0);
   variable sel_in_sel: unsigned(15 downto 0);
   variable sel_st: unsigned(3 downto 0);
   variable sel_out_sel: unsigned(15 downto 0); 
   variable sel_cnt_readout_sel: unsigned(31 downto 0); 
+  variable sel_counter_group: unsigned(3 downto 0);
   begin
 
 
     sel_in_sel := unsigned(BLM_in_sel_rd_active);
-    sel_th:= unsigned (BLM_th_active);
+    --sel_th:= unsigned (BLM_th_active);
+    sel_th1:= unsigned (BLM_th_active1);
+    sel_th2:= unsigned (BLM_th_active2);
+    sel_th3:= unsigned (BLM_th_active3);
+    sel_th4:= unsigned (BLM_th_active4);
+
     sel_st:= unsigned(IOBP_in_rd_active);
     sel_out_sel := unsigned(BLM_out_sel_rd_active);
     sel_cnt_readout_sel := unsigned(counter_readout_active);
-    
+    sel_counter_group:= unsigned(counter_group_active);
+
     sel:=   BLM_event_v_acc_readout_rd_active & BLM_event_v_acc_ctrl_rd_active& 
             BLM_ctrl_rd_active(2) & BLM_ctrl_rd_active(1)&BLM_ctrl_rd_active(0)   & 
             AW_Port1_rd_active & tmr_rd_active &  wb_scu_rd_active & clk_switch_rd_active &
-            Conf_Sts1_rd_active & Tag_Ctrl1_rd_active & IOBP_msk_rd_active & IOBP_id_rd_active ;
+            Conf_Sts1_rd_active & Tag_Ctrl1_rd_active & IOBP_msk_rd_active & IOBP_id_rd_active  ;
   
 if to_integer(sel(12 downto 0))>0 then
   case sel(12 downto 0) IS
+
       when "1000000000000" => Data_to_SCUB <=  BLM_event_v_acc_readout_data_to_SCUB; 
       when "0100000000000" => Data_to_SCUB <=  BLM_event_v_acc_ctrl_data_to_SCUB; 
       when "0010000000000" => Data_to_SCUB <= BLM_ctrl_data_to_SCUB(2);
@@ -2186,12 +2430,39 @@ if to_integer(sel(12 downto 0))>0 then
       when others      => Data_to_SCUB <= (others => '0');
     end case;
 else 
-    if to_integer(sel_th)>0 then
-        for i in 0 to 63 loop
-          if sel_th(i) = '1' then 
-            Data_to_SCUB <= BLM_th_data_to_SCUB(i);
-          end if;
-        end loop;
+    --if to_integer(sel_th)>0 then
+      --  for i in 0 to 63 loop
+     --     if sel_th(i) = '1' then 
+     --       Data_to_SCUB <= BLM_th_data_to_SCUB(i);
+    --      end if;
+    --    end loop;
+    if to_integer(sel_th1)>0 then
+          for i in 0 to 15 loop
+            if sel_th1(i) = '1' then 
+              Data_to_SCUB <= BLM_th_data1_to_SCUB(i);
+            end if;
+          end loop;
+        else 
+          if to_integer(sel_th2)>0 then
+          for i in 0 to 15 loop
+            if sel_th2(i) = '1' then 
+              Data_to_SCUB <= BLM_th_data2_to_SCUB(i);
+            end if;
+          end loop;
+        else 
+          if to_integer(sel_th3)>0 then
+          for i in 0 to 15 loop
+            if sel_th3(i) = '1' then 
+              Data_to_SCUB <= BLM_th_data3_to_SCUB(i);
+            end if;
+          end loop;
+        else 
+          if to_integer(sel_th4)>0 then
+          for i in 0 to 15 loop
+            if sel_th4(i) = '1' then 
+              Data_to_SCUB <= BLM_th_data4_to_SCUB(i);
+            end if;
+          end loop;
         else 
         if to_integer(sel_in_sel) > 0 then  
            for i in 0 to 15 loop
@@ -2220,7 +2491,13 @@ else
                    Data_to_SCUB <=  counter_readout_data_to_SCUB(i);
                 end if;
               end loop;
-           
+              else
+              if to_integer(sel_counter_group)>0 then
+                for i in 0 to 3 loop
+                  if sel_counter_group(i) = '1' then 
+                    Data_to_SCUB <= counter_group_data_to_SCUB(i);
+                  end if;
+                end loop;
         else 
            Data_to_SCUB <= (others =>'0');
         end if;
@@ -2228,12 +2505,16 @@ else
     end if;
   end if;
   end if;  
-end if;        
+end if;   
+end if;   
+end if;
+end if;  
+end if;
   end process rd_port_mux;
 
   ------------------------------------------------------
   -----Dtack_to_SCUB for gate/wd ena registers
-  new_Dtack_sproc: process(BLM_th_Dtack,BLM_in_sel_Dtack)
+  new_Dtack_sproc: process(BLM_th_Dtack1,BLM_th_Dtack2,BLM_th_Dtack3,BLM_th_Dtack4,BLM_in_sel_Dtack, BLM_out_sel_Dtack,IOBP_in_Dtack,counter_readout_Dtack, counter_group_Dtack)
   begin
   
 ------------------------------------------------------
@@ -2241,8 +2522,20 @@ end if;
   ------------------------------------------------------
   -----Dtack_to_SCUB for threshold registers
  
-    if (BLM_th_Dtack = ZERO_th) then BLM_th_res_Dtack <='0';
-    else BLM_th_res_Dtack <='1';
+    if (BLM_th_Dtack1 = ZERO_th) then BLM_th_res1_Dtack <='0';
+    else BLM_th_res1_Dtack <='1';
+    end if;
+
+    if (BLM_th_Dtack2 = ZERO_th) then BLM_th_res2_Dtack <='0';
+    else BLM_th_res2_Dtack <='1';
+    end if;
+
+    if (BLM_th_Dtack3 = ZERO_th) then BLM_th_res3_Dtack <='0';
+    else BLM_th_res3_Dtack <='1';
+    end if;
+
+    if (BLM_th_Dtack4 = ZERO_th) then BLM_th_res4_Dtack <='0';
+    else BLM_th_res4_Dtack <='1';
     end if;
   ------------------------------------------------------
   -----Dtack_to_SCUB for input and gate ena registers
@@ -2269,15 +2562,19 @@ end if;
 if (counter_readout_Dtack =ZERO_cnt_readout_sel) then counter_readout_res_Dtack <='0';
 else counter_readout_res_Dtack <='1';
 end if;
-   
+
+if (counter_group_Dtack = ZERO_counter_group) then counter_group_res_Dtack <= '0';
+else counter_group_res_Dtack <= '1';
+end if;
 -------------- Dtack_to_SCUB -----------------------------
 
     Dtack_to_SCUB <= ( tmr_dtack  or AW_Port1_Dtack   or wb_scu_dtack  or clk_switch_dtack  or Conf_Sts1_Dtack  or Tag_Ctrl1_Dtack  or
                          IOBP_msk_Dtack   or IOBP_id_Dtack    or    IOBP_in_res_Dtack  or 
-                         BLM_ctrl_Dtack(2) or BLM_ctrl_Dtack(1) or  BLM_ctrl_Dtack(0) or BLM_th_res_Dtack or BLM_in_sel_res_Dtack or BLM_out_sel_res_Dtack or 
-                         BLM_event_v_acc_readout_Dtack or BLM_event_v_acc_ctrl_Dtack or  counter_readout_res_Dtack);
+                         BLM_ctrl_Dtack(2) or BLM_ctrl_Dtack(1) or  BLM_ctrl_Dtack(0) or --BLM_th_res_Dtack 
+                         BLM_th_res1_Dtack or BLM_th_res2_Dtack or BLM_th_res3_Dtack or BLM_th_res4_Dtack or BLM_in_sel_res_Dtack or BLM_out_sel_res_Dtack or 
+                         BLM_event_v_acc_readout_Dtack or BLM_event_v_acc_ctrl_Dtack or  counter_readout_res_Dtack or counter_group_res_Dtack);
 
-    A_nDtack <= NOT(SCUB_Dtack);
+  --  A_nDtack <= NOT(SCUB_Dtack);
     A_nSRQ   <= NOT(SCUB_SRQ);
   end process;
 
@@ -2394,8 +2691,8 @@ BLM_Module : Beam_Loss_check
   BLM_tst_ck_sig   => BLM_tst_ck_sig,
   IOBP_LED_nr      => IOBP_LED_sm_nr,
   --IN registers
-  pos_threshold            => pos_thres_Reg,
-  neg_threshold            => neg_thres_Reg,
+  pos_threshold            => pos_threshold, --pos_thres_Reg,
+  neg_threshold            => neg_threshold, --neg_thres_Reg,
   BLM_wdog_hold_time_Reg   => BLM_wdog_hold_time_Reg,
   BLM_wd_reset => BLM_wd_reset,
   BLM_gate_hold_time_Reg   => BLM_gate_hold_time_Reg,
@@ -2408,15 +2705,10 @@ BLM_Module : Beam_Loss_check
 
 -- event_ctrl_sig
 
-
 ev_counter_reset=> ev_cmd_reset_ctr,
 ev_thr_load => ev_cmd_load_thr,
-virt_acc => loaded_data_set,
 ev_prepare_reg =>ev_cmd_prepare,
 ev_recover_reg =>ev_cmd_recover,
-
-
-
 
   -- OUT register
   BLM_status_Reg           => BLM_status_Reg,
@@ -2425,8 +2717,57 @@ counter_readout_reg => counter_readout_Reg,
   BLM_Out                 => BLM_out
 );
 
+bus_splitter_elem: bus_splitter 
+  port map(
+    clock => clk_sys,
+ -- from bus
+      A_A => A_A(15),
+      A_nDS => A_nDS,
+      nSel_Ext_Data_Drv_out => A_nSel_Ext_Data_Drv,
+      --A_D => A_D,
+      A_nDtack  => A_nDtack,
 
+  -- from/to slave 1
+      A_nDS_to_1 => A_nDS_to_Slave,
+      SCU_Dtack_from_1 => SCUB_Dtack,   
+      nSel_Ext_Data_Drv_in_from_1 => A_nSel_Ext_Data_Drv_from_slave,
+      --A_D_to_1 =>A_D_to_1,
+      -- from/to ram 2
+      A_nDS_to_2=> A_nDS_to_RAM,
+      SCU_Dtack_from_2=> SCU_Dtack_from_RAM,  
+      nSel_Ext_Data_Drv_in_from_2 => A_nSel_Ext_Data_Drv_from_ram
+      --A_D_to_2=> A_D_to_2
+  );
 
+  local_threshold_memory: local_thr_mem 
+    port map(
+        clk =>clk_sys,
+        nRST=> rstn_sys,
+        A_A => A_A,
+        A_nDS => A_nDS_to_RAM,
+        A_nBoardSel => A_nBoardSel,
+        A_RnW => A_RnW,
+        load_thr => ev_cmd_load_thr,
+        loaded_data_set => blm_group_dataset  ,-- loaded_data_set,
+
+        new_dataset_ready => new_dataset_ready,
+        counter_group_Reg => counter_group_reg,
+        reg_trigger    => BLM_new_dataset_Reg(12),
+        reg_group_dataset=>  BLM_new_dataset_Reg(11 downto 0),
+        timing_trigger       => ev_cmd_load_thr,
+        timing_group_dataset=>loaded_data_set,
+        A_D=> A_D,        
+        A_Dtack=> SCU_Dtack_from_RAM, 
+        loc_pos_thr => loc_pos_thr,
+        loc_neg_thr => loc_neg_thr,
+        nSel_Ext_Data_Drv_out => A_nSel_Ext_Data_Drv_from_ram,
+        box_state_nr => box_state_nr_reg(2 downto 0),
+        counter_nr_read =>counter_nr_read_reg(7 downto 0),
+        reg_state_nr => reg_state_nr_reg(1 downto 0)
+    );
+ 
+
+    
 front_board_id_Module: front_board_id 
 port map   
 ( clk               => clk_sys,
@@ -2711,4 +3052,9 @@ AW_B12s1_connection: p_connector
                 div_o =>  blm_clk_1kHz
   );
   
+
+    pos_threshold <= loc_pos_thr;
+    neg_threshold <= loc_neg_thr; 
+ 
+
 end architecture;
