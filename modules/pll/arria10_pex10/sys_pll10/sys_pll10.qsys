@@ -65,7 +65,7 @@
  <module
    name="iopll_0"
    kind="altera_iopll"
-   version="18.1"
+   version="23.1"
    enabled="1"
    autoexport="1">
   <parameter name="gui_active_clk" value="false" />

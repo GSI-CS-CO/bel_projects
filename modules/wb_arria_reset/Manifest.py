@@ -1,6 +1,6 @@
 def __helper():
     dirs = []
-    dirs.extend(["arria10_reset/arria10_reset/altera_remote_update_181"]) 
+    dirs.extend(["arria10_reset/arria10_reset/altera_remote_update_231"])
     return dirs
 
 files = [

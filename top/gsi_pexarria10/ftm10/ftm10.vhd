@@ -5,8 +5,14 @@ use ieee.numeric_std.all;
 library work;
 use work.monster_pkg.all;
 use work.ramsize_pkg.c_lm32_ramsizes;
+use work.altera_lvds_pkg.all;
+use work.altera_networks_pkg.all;
 
 entity ftm10 is
+  generic(
+    g_quad_mode_psram : boolean := false; -- True: Connect all PSRAMs; False: connect only $g_default_psram PSRAM
+    g_default_psram   : natural := 0 -- Possible values: 0, 1, 2, 3
+  );
   port(
     ------------------------------------------------------------------------
     -- Input clocks
@@ -169,8 +175,8 @@ architecture rtl of ftm10 is
 
   signal s_sfp_disable : std_logic;
 
-  signal s_gpio_o   : std_logic_vector(5 downto 0);
-  signal s_gpio_i   : std_logic_vector(5 downto 0);
+  signal s_gpio_o   : std_logic_vector(19 downto 0);
+  signal s_gpio_i   : std_logic_vector(19 downto 0);
   signal s_lvds_p_i : std_logic_vector(19 downto 0);
   signal s_lvds_n_i : std_logic_vector(19 downto 0);
   signal s_lvds_p_o : std_logic_vector(19 downto 0);
@@ -201,36 +207,30 @@ architecture rtl of ftm10 is
   signal s_psram_wait    : std_logic;
   signal s_psram_wait_or : std_logic; -- Remove this later
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 25) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 19) :=
   (
   -- TBD: LEDs are missing, how to implement I2C-controlled IOs? Use spec. out and in?
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
-    ("CPLD_IO_0  ",  IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("CPLD_IO_1  ",  IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("CPLD_IO_2  ",  IO_NONE,         false,   false,  2,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("CPLD_IO_3  ",  IO_NONE,         false,   false,  3,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("CPLD_IO_4  ",  IO_NONE,         false,   false,  4,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("CPLD_IO_5  ",  IO_NONE,         false,   false,  5,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("USBC1_IO1  ",  IO_I2C_USB_C,    false,   false,  0,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC1_IO2  ",  IO_I2C_USB_C,    false,   false,  1,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC1_IO3  ",  IO_I2C_USB_C,    false,   false,  2,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC1_IO4  ",  IO_I2C_USB_C,    false,   false,  3,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC1_IO5  ",  IO_I2C_USB_C,    false,   false,  4,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC2_IO1  ",  IO_I2C_USB_C,    false,   false,  5,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC2_IO2  ",  IO_I2C_USB_C,    false,   false,  6,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC2_IO3  ",  IO_I2C_USB_C,    false,   false,  7,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC2_IO4  ",  IO_I2C_USB_C,    false,   false,  8,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC2_IO5  ",  IO_I2C_USB_C,    false,   false,  9,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC3_IO1  ",  IO_I2C_USB_C,    false,   false, 10,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC3_IO2  ",  IO_I2C_USB_C,    false,   false, 11,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC3_IO3  ",  IO_I2C_USB_C,    false,   false, 12,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC3_IO4  ",  IO_I2C_USB_C,    false,   false, 13,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC3_IO5  ",  IO_I2C_USB_C,    false,   false, 14,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC4_IO1  ",  IO_I2C_USB_C,    false,   false, 15,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC4_IO2  ",  IO_I2C_USB_C,    false,   false, 16,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC4_IO3  ",  IO_I2C_USB_C,    false,   false, 17,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC4_IO4  ",  IO_I2C_USB_C,    false,   false, 18,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("USBC4_IO5  ",  IO_I2C_USB_C,    false,   false, 19,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS)
+    ("USBC1_IO1  ",  IO_I2C_USB_C,    false,   false,  0,     IO_INOUTPUT, IO_GPIO,  true,         false,       IO_TTL),
+    ("USBC1_IO2  ",  IO_I2C_USB_C,    false,   false,  1,     IO_INOUTPUT, IO_GPIO,  true,         false,       IO_TTL),
+    ("USBC1_IO3  ",  IO_I2C_USB_C,    false,   false,  2,     IO_INOUTPUT, IO_GPIO,  true,         false,       IO_TTL),
+    ("USBC1_IO4  ",  IO_I2C_USB_C,    false,   false,  3,     IO_INOUTPUT, IO_GPIO,  true,         false,       IO_TTL),
+    ("USBC1_IO5  ",  IO_I2C_USB_C,    false,   false,  4,     IO_INOUTPUT, IO_GPIO,  true,         false,       IO_TTL),
+    ("USBC2_IO1  ",  IO_I2C_USB_C,    false,   false,  5,     IO_INOUTPUT, IO_GPIO,  true,         false,       IO_TTL),
+    ("USBC2_IO2  ",  IO_I2C_USB_C,    false,   false,  6,     IO_INOUTPUT, IO_GPIO,  true,         false,       IO_TTL),
+    ("USBC2_IO3  ",  IO_I2C_USB_C,    false,   false,  7,     IO_INOUTPUT, IO_GPIO,  true,         false,       IO_TTL),
+    ("USBC2_IO4  ",  IO_I2C_USB_C,    false,   false,  8,     IO_INOUTPUT, IO_GPIO,  true,         false,       IO_TTL),
+    ("USBC2_IO5  ",  IO_I2C_USB_C,    false,   false,  9,     IO_INOUTPUT, IO_GPIO,  true,         false,       IO_TTL),
+    ("USBC3_IO1  ",  IO_I2C_USB_C,    false,   false, 10,     IO_INOUTPUT, IO_GPIO,  true,         false,       IO_TTL),
+    ("USBC3_IO2  ",  IO_I2C_USB_C,    false,   false, 11,     IO_INOUTPUT, IO_GPIO,  true,         false,       IO_TTL),
+    ("USBC3_IO3  ",  IO_I2C_USB_C,    false,   false, 12,     IO_INOUTPUT, IO_GPIO,  true,         false,       IO_TTL),
+    ("USBC3_IO4  ",  IO_I2C_USB_C,    false,   false, 13,     IO_INOUTPUT, IO_GPIO,  true,         false,       IO_TTL),
+    ("USBC3_IO5  ",  IO_I2C_USB_C,    false,   false, 14,     IO_INOUTPUT, IO_GPIO,  true,         false,       IO_TTL),
+    ("USBC4_IO1  ",  IO_I2C_USB_C,    false,   false, 15,     IO_INOUTPUT, IO_GPIO,  true,         false,       IO_TTL),
+    ("USBC4_IO2  ",  IO_I2C_USB_C,    false,   false, 16,     IO_INOUTPUT, IO_GPIO,  true,         false,       IO_TTL),
+    ("USBC4_IO3  ",  IO_I2C_USB_C,    false,   false, 17,     IO_INOUTPUT, IO_GPIO,  true,         false,       IO_TTL),
+    ("USBC4_IO4  ",  IO_I2C_USB_C,    false,   false, 18,     IO_INOUTPUT, IO_GPIO,  true,         false,       IO_TTL),
+    ("USBC4_IO5  ",  IO_I2C_USB_C,    false,   false, 19,     IO_INOUTPUT, IO_GPIO,  true,         false,       IO_TTL)
   );
 
   constant c_family       : string  := "Arria 10 GX FTM10";
@@ -248,8 +248,7 @@ begin
       g_project            => c_project,
       g_flash_bits         => 25, -- !!! TODO: Check this
       g_psram_bits         => c_psram_bits,
-      g_gpio_inout         => 6,
-      g_lvds_inout         => 20,
+      g_gpio_inout         => 20,
       g_en_i2c_wrapper     => true,
       g_num_i2c_interfaces => 6,
       g_en_pcie            => true,
@@ -306,10 +305,10 @@ begin
       i2c_sda_padoen_o        => s_i2c_sda_padoen,
       gpio_o                  => s_gpio_o,
       gpio_i                  => s_gpio_i,
-      lvds_p_i                => s_lvds_p_i,
-      lvds_n_i                => s_lvds_n_i,
-      lvds_p_o                => s_lvds_p_o,
-      lvds_n_o                => s_lvds_n_o,
+      gpio_oen_o(4 downto 0)   => usbc_tx1_en,
+      gpio_oen_o(9 downto 5)   => usbc_tx2_en,
+      gpio_oen_o(14 downto 10) => usbc_tx3_en,
+      gpio_oen_o(19 downto 15) => usbc_tx4_en,
       usb_rstn_o              => usb_ures_o,
       usb_ebcyc_i             => usb_pa_io(3),
       usb_speed_i             => usb_pa_io(0),
@@ -352,17 +351,43 @@ begin
   sfp_tx_disable_o     <= s_sfp_disable;
   sfp_aux_tx_disable_o <= s_sfp_disable;
 
-  -- PSRAM test connection, add selector later (psram0/1/2/3)
-  s_psram_wait_or <= psram_wait(0) or psram_wait(1) or psram_wait(2) or psram_wait(3);
-  psram_test : for i in 0 to 3 generate
-    psram_advn(i) <= s_psram_advn;
-    psram_cre(i)  <= s_psram_cre;
-    psram_cen(i)  <= s_psram_cen;
-    psram_oen(i)  <= s_psram_oen;
-    psram_ubn(i)  <= s_psram_ubn;
-    psram_wen(i)  <= s_psram_wen;
-    psram_lbn(i)  <= s_psram_lbn;
-  end generate;
+  -- Use only one PSRAM (TBD: Multichip support)
+  psram_single : if not(g_quad_mode_psram) generate
+    psram_gen : for i in 0 to 3 generate
+      psram_enable : if (g_default_psram = i) generate
+        s_psram_wait_or <= psram_wait(i);
+        psram_advn(i)   <= s_psram_advn;
+        psram_cre(i)    <= s_psram_cre;
+        psram_cen(i)    <= s_psram_cen;
+        psram_oen(i)    <= s_psram_oen;
+        psram_ubn(i)    <= s_psram_ubn;
+        psram_wen(i)    <= s_psram_wen;
+        psram_lbn(i)    <= s_psram_lbn;
+      end generate; -- psram_enable
+      psram_disable : if not(g_default_psram = i) generate
+        psram_advn(i) <= '0';
+        psram_cre(i)  <= '0';
+        psram_cen(i)  <= '1';
+        psram_oen(i)  <= '1';
+        psram_ubn(i)  <= '0';
+        psram_wen(i)  <= '1';
+        psram_lbn(i)  <= '0';
+      end generate; -- psram_disable
+    end generate; -- psram_gen
+  end generate; -- psram_single
+
+  psram_quad : if (g_quad_mode_psram) generate
+    s_psram_wait_or <= psram_wait(0) or psram_wait(1) or psram_wait(2) or psram_wait(3);
+    psram_quad_gen : for i in 0 to 3 generate
+      psram_advn(i)   <= s_psram_advn;
+      psram_cre(i)    <= s_psram_cre;
+      psram_cen(i)    <= s_psram_cen;
+      psram_oen(i)    <= s_psram_oen;
+      psram_ubn(i)    <= s_psram_ubn;
+      psram_wen(i)    <= s_psram_wen;
+      psram_lbn(i)    <= s_psram_lbn;
+    end generate; -- psram_quad_gen
+  end generate; -- psram_quad
 
   -- LEDs
   wr_leds_o(0)                  <= not (s_led_link_act and s_led_link_up);          -- red   = traffic/no-link
@@ -385,26 +410,85 @@ begin
   -------------------------------------------------
   -- USBC TX LVDS output
   usbc_tx : for i in 0 to 4 generate
-    --usbc_tx1_n(i+1) <= s_lvds_n_o(i);
-    usbc_tx1_p(i+1) <= s_lvds_p_o(i);
-    --usbc_tx2_n(i+1) <= s_lvds_n_o(i+5);
-    usbc_tx2_p(i+1) <= s_lvds_p_o(i+5);
-    --usbc_tx3_n(i+1) <= s_lvds_n_o(i+10);
-    usbc_tx3_p(i+1) <= s_lvds_p_o(i+10);
-    --usbc_tx4_n(i+1) <= s_lvds_n_o(i+15);
-    usbc_tx4_p(i+1) <= s_lvds_p_o(i+15);
+    usbc_tx1_p(i+1) <= s_gpio_o(i);
+    usbc_tx2_p(i+1) <= s_gpio_o(i+5);
+    usbc_tx3_p(i+1) <= s_gpio_o(i+10);
+    usbc_tx4_p(i+1) <= s_gpio_o(i+15);
+
+--    lvds_to_single_gpio_tx1 : altera_lvds_obuf
+--      generic map(
+--        g_family  => c_family)
+--      port map(
+--        datain    => s_gpio_o(i),
+--        dataout   => usbc_tx1_p(i+1),
+--        dataout_b => usbc_tx1_n(i+1)
+--      );
+
+--    lvds_to_single_gpio_tx2 : altera_lvds_obuf
+--      generic map(
+--        g_family  => c_family)
+--      port map(
+--        datain    => s_gpio_o(i+5),
+--        dataout   => usbc_tx2_p(i+1),
+--        dataout_b => usbc_tx2_n(i+1)
+--      );
+
+--    lvds_to_single_gpio_tx3 : altera_lvds_obuf
+--      generic map(
+--        g_family  => c_family)
+--      port map(
+--        datain    => s_gpio_o(i+10),
+--        dataout   => usbc_tx3_p(i+1),
+--        dataout_b => usbc_tx3_n(i+1)
+--      );
+
+--    lvds_to_single_gpio_tx4 : altera_lvds_obuf
+--      generic map(
+--        g_family  => c_family)
+--      port map(
+--        datain    => s_gpio_o(i+15),
+--        dataout   => usbc_tx4_p(i+1),
+--        dataout_b => usbc_tx4_n(i+1)
+--      );
   end generate;
 
   -- USBC RX LVDS input
   usbc_rx : for i in 0 to 4 generate
-    s_lvds_n_i(i)    <= usbc_rx1_n(i+1);
-    s_lvds_p_i(i)    <= usbc_rx1_p(i+1);
-    s_lvds_n_i(i+5)  <= usbc_rx2_n(i+1);
-    s_lvds_p_i(i+5)  <= usbc_rx2_p(i+1);
-    s_lvds_n_i(i+10) <= usbc_rx3_n(i+1);
-    s_lvds_p_i(i+10) <= usbc_rx3_p(i+1);
-    s_lvds_n_i(i+15) <= usbc_rx4_n(i+1);
-    s_lvds_p_i(i+15) <= usbc_rx4_p(i+1);
+    lvds_to_single_gpio_rx1 : altera_lvds_ibuf
+      generic map(
+        g_family  => c_family)
+      port map(
+        datain_b  => usbc_rx1_n(i+1),
+        datain    => usbc_rx1_p(i+1),
+        dataout   => s_gpio_i(i)
+      );
+
+    lvds_to_single_gpio_rx2 : altera_lvds_ibuf
+      generic map(
+        g_family  => c_family)
+      port map(
+        datain_b  => usbc_rx2_n(i+1),
+        datain    => usbc_rx2_p(i+1),
+        dataout   => s_gpio_i(i+5)
+      );
+
+    lvds_to_single_gpio_rx3 : altera_lvds_ibuf
+      generic map(
+        g_family  => c_family)
+      port map(
+        datain_b  => usbc_rx3_n(i+1),
+        datain    => usbc_rx3_p(i+1),
+        dataout   => s_gpio_i(i+10)
+      );
+
+    lvds_to_single_gpio_rx4 : altera_lvds_ibuf
+      generic map(
+        g_family  => c_family)
+      port map(
+        datain_b  => usbc_rx4_n(i+1),
+        datain    => usbc_rx4_p(i+1),
+        dataout   => s_gpio_i(i+15)
+      );
   end generate;
 
   -- I2C
@@ -416,9 +500,11 @@ begin
   end generate;
 
   -- CPLD
-  s_gpio_i(5 downto 0) <= cpld_io(5 downto 0);
+  -- ATXMega (F2F) previously CPLD
+  --s_gpio_i(5 downto 0) <= cpld_io(5 downto 0);
   cpld_con : for i in 0 to 5 generate
-    cpld_io(i) <= s_gpio_o(i) when s_gpio_o(i)='0' else 'Z';
+    --cpld_io(i) <= s_gpio_o(i) when s_gpio_o(i)='0' else 'Z';
+    cpld_io(i) <= 'Z';
   end generate;
 
   -- I2C to ATXMega
