@@ -4661,13 +4661,15 @@ end generate Quench_Matrix_Gen;
                                                       
                                                   when "00000101"  | "00000110" => -- Output Modul in slot 9
                                                       AW_SK_Input_Reg(5)(5 downto  0)<=   (OTHERS => '0');
-                                                      IOBP_SK_Output(9) <= AW_Output_Reg(5)(5 downto  0) AND not IOBP_Masken_Reg5(5 downto 0);
-                                                      PIO_OUT_SLOT_9 <= IOBP_SK_Output(9);
                                                       PIO_ENA_SLOT_9 <= std_logic_vector'("111111");
-                                                      --IOBP_SK_Aktiv_LED_i(9)  <=  IOBP_SK_Output(9);
                                                       IOBP_SK_Aktiv_LED_i(9)  <= not ( IOBP_Masken_Reg5( 5 downto 0) );  -- Register für Sel-LED's vom Slave 9
                                                       IOBP_SK_Input(9)  <= (OTHERS => '0');
-                                                      --IOBP_SK_Sel_LED(9)   <=  not ( IOBP_Masken_Reg5( 5 downto 0) );  -- Register für Sel-LED's vom Slave 9
+                                                      if  AW_Config2 =  x"DEDE" then --quench detection 
+                                                        IOBP_SK_Output(9)<=  quench_sk_out(23 downto 18);
+                                                      else
+                                                        IOBP_SK_Output(9) <= AW_Output_Reg(5)(5 downto  0) AND not IOBP_Masken_Reg5(5 downto 0);
+                                                      end if;
+                                                      PIO_OUT_SLOT_9 <= IOBP_SK_Output(9);
                                                       IOBP_SK_Sel_LED(9)   <=  IOBP_SK_Output(9);
 
                                                   when "00000001"|"00000010" => -- 5 In/1 Out Modul in slot 9
@@ -4719,14 +4721,17 @@ end generate Quench_Matrix_Gen;
 
                                                   when "00000101"  | "00000110" => -- Output Modul in slot 10
                                                       AW_SK_Input_Reg(5)(11 downto  6)<=   (OTHERS => '0');
-                                                      IOBP_SK_Output(10) <= AW_Output_Reg(5)(11 downto  6) AND not IOBP_Masken_Reg5(11 downto 6);
-                                                      PIO_OUT_SLOT_10 <= IOBP_SK_Output(10);
-                                                      PIO_ENA_SLOT_10 <= std_logic_vector'("111111");
-                                                      --IOBP_SK_Aktiv_LED_i(10)  <=  IOBP_SK_Output(10);
+
+                                                      PIO_ENA_SLOT_10 <= std_logic_vector'("111111");                           
                                                       IOBP_SK_Aktiv_LED_i(10)  <=  not ( IOBP_Masken_Reg5(11 downto 6)  );  -- Register für Sel-LED's vom Slave 10
                                                       IOBP_SK_Input(10)  <= (OTHERS => '0');
-                                                      --IOBP_SK_Sel_LED(10)  <=  not ( IOBP_Masken_Reg5(11 downto 6)  );  -- Register für Sel-LED's vom Slave 10
+                                                      if  AW_Config2 =  x"DEDE" then --quench detection 
+                                                        IOBP_SK_Output(10) <=  quench_sk_out(17 downto 12);
+                                                      else
+                                                        IOBP_SK_Output(10) <= AW_Output_Reg(5)(11 downto  6) AND not IOBP_Masken_Reg5(11 downto 6);
+                                                      end if;
                                                       IOBP_SK_Sel_LED(10)  <=  IOBP_SK_Output(10); 
+                                                      PIO_OUT_SLOT_10 <= IOBP_SK_Output(10);
 
                                                   when "00000001"|"00000010" => -- 5 In/1 Out Modul in slot 10
                                                       AW_SK_Input_Reg(5)( 10 downto  6) <=   (Deb_Sync72( 58 downto  54) AND not IOBP_Masken_Reg5( 10 downto  6));  -- Input, IO-Modul Nr. 10
@@ -4776,14 +4781,16 @@ end generate Quench_Matrix_Gen;
 
                                                   when "00000101"  | "00000110" => -- Output Modul in slot 11
                                                       AW_SK_Input_Reg(6)(5 downto  0)<=   (OTHERS => '0');
-                                                      IOBP_SK_Output(11) <= AW_Output_Reg(6)(5 downto  0) AND not IOBP_Masken_Reg6(5 downto 0);
-                                                      PIO_OUT_SLOT_11 <= IOBP_SK_Output(11);
                                                       PIO_ENA_SLOT_11 <= std_logic_vector'("111111");
-                                                      --IOBP_SK_Aktiv_LED_i(11)  <=  IOBP_SK_Output(11);
                                                       IOBP_SK_Aktiv_LED_i(11)  <=  not ( IOBP_Masken_Reg6(5 downto 0) );
                                                       IOBP_SK_Input(11)  <= (OTHERS => '0');
-                                                      --IOBP_SK_Sel_LED(11)  <=  not ( IOBP_Masken_Reg6(5 downto 0) );  -- Register für Sel-LED's vom Slave 11
+                                                      if  AW_Config2 =  x"DEDE" then --quench detection 
+                                                        IOBP_SK_Output(11) <=quench_sk_out(11 downto 6);
+                                                      else
+                                                        IOBP_SK_Output(11) <= AW_Output_Reg(6)(5 downto  0) AND not IOBP_Masken_Reg6(5 downto 0);
+                                                      end if;
                                                       IOBP_SK_Sel_LED(11)  <=  IOBP_SK_Output(11); -- Register für Sel-LED's vom Slave 11
+                                                      PIO_OUT_SLOT_11 <= IOBP_SK_Output(11);
 
                                                   when "00000001"|"00000010" => -- 5 In/1 Out Modul in slot 11
                                                       AW_SK_Input_Reg(6)( 4 downto  0) <=   (Deb_Sync72( 64 downto  60) AND not IOBP_Masken_Reg6( 4 downto  0));  -- Input, IO-Modul Nr. 11
@@ -4835,14 +4842,17 @@ end generate Quench_Matrix_Gen;
 
                                                   when "00000101"  | "00000110" => -- Output Modul in slot 12
                                                       AW_SK_Input_Reg(6)(11 downto  6)<=   (OTHERS => '0');
-                                                      IOBP_SK_Output(12) <= AW_Output_Reg(6)(11 downto  6) AND not IOBP_Masken_Reg6(11 downto 6);
-                                                      PIO_OUT_SLOT_12 <= IOBP_SK_Output(12);
+
                                                       PIO_ENA_SLOT_12 <= std_logic_vector'("111111");
-                                                      --IOBP_SK_Aktiv_LED_i(12)  <=  IOBP_SK_Output(12);
                                                       IOBP_SK_Aktiv_LED_i(12)  <=   not ( IOBP_Masken_Reg6( 11 downto 6) );  -- Register für Sel-LED's vom Slave 12
                                                       IOBP_SK_Input(12)  <= (OTHERS => '0');
-                                                      --IOBP_SK_Sel_LED(12)  <=  not ( IOBP_Masken_Reg6( 11 downto 6) );  -- Register für Sel-LED's vom Slave 12
+                                                      if  AW_Config2 =  x"DEDE" then --quench detection 
+                                                        IOBP_SK_Output(12) <=  quench_sk_out(5 downto 0);
+                                                      else
+                                                        IOBP_SK_Output(12) <= AW_Output_Reg(6)(11 downto  6) AND not IOBP_Masken_Reg6(11 downto 6);
+                                                      end if;
                                                       IOBP_SK_Sel_LED(12)  <=  IOBP_SK_Output(12);
+                                                      PIO_OUT_SLOT_12 <= IOBP_SK_Output(12);
 
                                                   when "00000001"|"00000010" => -- 5 In/1 Out Modul in slot 12
                                                       AW_SK_Input_Reg(6)( 10 downto  6) <=   (Deb_Sync72( 70 downto  66) AND not IOBP_Masken_Reg6( 10 downto  6));  -- Input, IO-Modul Nr. 12
@@ -7940,57 +7950,11 @@ END IF;
 ( PIO_OUT(119), PIO_OUT(111), PIO_OUT(121), PIO_OUT(109), PIO_OUT(123), PIO_OUT(107))<= PIO_OUT_SLOT_6;
 ( PIO_OUT(35),  PIO_OUT(45),  PIO_OUT(37),  PIO_OUT(43),  PIO_OUT(39),  PIO_OUT(41)) <= PIO_OUT_SLOT_7;
 ( PIO_OUT(137), PIO_OUT(129), PIO_OUT(139), PIO_OUT(127), PIO_OUT(141), PIO_OUT(125))<= PIO_OUT_SLOT_8;
-
-case AW_Config2 is
-  when x"DEDE" => --Quench Detection Development
-  
-
- ( PIO_OUT(30),  PIO_OUT(20),  PIO_OUT(28),  PIO_OUT(22),  PIO_OUT(26),  PIO_OUT(24)) <= quench_sk_out(23 downto 18);
- ( PIO_OUT(130), PIO_OUT(138), PIO_OUT(128), PIO_OUT(140), PIO_OUT(126), PIO_OUT(142))<= quench_sk_out(17 downto 12);
- ( PIO_OUT(48),  PIO_OUT(38),  PIO_OUT(46),  PIO_OUT(40),  PIO_OUT(44),  PIO_OUT(42)) <= quench_sk_out(11 downto 6);
- ( PIO_OUT(112), PIO_OUT(120), PIO_OUT(110), PIO_OUT(122), PIO_OUT(108), PIO_OUT(124))<= quench_sk_out(5 downto 0);
- 
- IOBP_Output_Readback(4) <= "0000" & quench_sk_out(23 downto 12);
- IOBP_Output_Readback(5) <= "0000" & quench_sk_out(11 downto 0); --slot 11 & slot 12
-
- ---------------- Output-Register(Maske) für die Iput- und Output Sel-LED's vom Slave 1-12
- for i in 1 to 8 loop
-IOBP_Sel_Led(i) <= IOBP_SK_Sel_Led(i);
- end loop;
-
-IOBP_Sel_Led(9)<=  quench_sk_out(23 downto 18);
-IOBP_Sel_Led(10)<= quench_sk_out(17 downto 12);
-IOBP_Sel_Led(11)<= quench_sk_out(11 downto 6);
-IOBP_Sel_Led(12)<= quench_sk_out(5 downto 0);
-
-   when OTHERS =>
-   
-
  ( PIO_OUT(30),  PIO_OUT(20),  PIO_OUT(28),  PIO_OUT(22),  PIO_OUT(26),  PIO_OUT(24)) <= PIO_OUT_SLOT_9;
  ( PIO_OUT(130), PIO_OUT(138), PIO_OUT(128), PIO_OUT(140), PIO_OUT(126), PIO_OUT(142))<= PIO_OUT_SLOT_10;
  ( PIO_OUT(48),  PIO_OUT(38),  PIO_OUT(46),  PIO_OUT(40),  PIO_OUT(44),  PIO_OUT(42)) <= PIO_OUT_SLOT_11;
  ( PIO_OUT(112), PIO_OUT(120), PIO_OUT(110), PIO_OUT(122), PIO_OUT(108), PIO_OUT(124))<= PIO_OUT_SLOT_12;
-
- IOBP_Output_Readback(4) <= "0000" & IOBP_SK_Output(10) & IOBP_SK_Output(9);
-IOBP_Output_Readback(5) <= "0000" & IOBP_SK_Output(12) & IOBP_SK_Output(11);
-
----------------- Output-Register(Maske) für die Iput- und Output Sel-LED's vom Slave 1-12
-IOBP_Sel_Led <= IOBP_SK_Sel_Led;
- end case;
-
---( PIO_OUT(56),  PIO_OUT(62),  PIO_OUT(54),  PIO_OUT(60),  PIO_OUT(52),  PIO_OUT(58)) <= PIO_OUT_SLOT_1;
---( PIO_OUT(96),  PIO_OUT(102), PIO_OUT(94), PIO_OUT(100),  PIO_OUT(92),  PIO_OUT(98)) <= PIO_OUT_SLOT_2;
---( PIO_OUT(73),  PIO_OUT(79),  PIO_OUT(71),  PIO_OUT(77),  PIO_OUT(69),  PIO_OUT(75)) <= PIO_OUT_SLOT_3;
---( PIO_OUT(101), PIO_OUT(93),  PIO_OUT(103), PIO_OUT(91),  PIO_OUT(105), PIO_OUT(89)) <= PIO_OUT_SLOT_4;
---( PIO_OUT(53),  PIO_OUT(63),  PIO_OUT(55),  PIO_OUT(61),  PIO_OUT(57),  PIO_OUT(59)) <= PIO_OUT_SLOT_5;
---( PIO_OUT(119), PIO_OUT(111), PIO_OUT(121), PIO_OUT(109), PIO_OUT(123), PIO_OUT(107))<= PIO_OUT_SLOT_6;
---( PIO_OUT(35),  PIO_OUT(45),  PIO_OUT(37),  PIO_OUT(43),  PIO_OUT(39),  PIO_OUT(41)) <= PIO_OUT_SLOT_7;
---( PIO_OUT(137), PIO_OUT(129), PIO_OUT(139), PIO_OUT(127), PIO_OUT(141), PIO_OUT(125))<= PIO_OUT_SLOT_8;
---( PIO_OUT(30),  PIO_OUT(20),  PIO_OUT(28),  PIO_OUT(22),  PIO_OUT(26),  PIO_OUT(24)) <= PIO_OUT_SLOT_9;
---( PIO_OUT(130), PIO_OUT(138), PIO_OUT(128), PIO_OUT(140), PIO_OUT(126), PIO_OUT(142))<= PIO_OUT_SLOT_10;
---( PIO_OUT(48),  PIO_OUT(38),  PIO_OUT(46),  PIO_OUT(40),  PIO_OUT(44),  PIO_OUT(42)) <= PIO_OUT_SLOT_11;
---( PIO_OUT(112), PIO_OUT(120), PIO_OUT(110), PIO_OUT(122), PIO_OUT(108), PIO_OUT(124))<= PIO_OUT_SLOT_12;
-
+ IOBP_Sel_Led <= IOBP_SK_Sel_Led;
 
 AW_Input_Reg<= AW_SK_Input_Reg;
 IOBP_Aktiv_LED_i <= IOBP_SK_Aktiv_LED_i;
@@ -7999,8 +7963,22 @@ IOBP_Output_Readback(0) <= "0000" & IOBP_SK_Output(2) & IOBP_SK_Output(1);
 IOBP_Output_Readback(1) <= "0000" & IOBP_SK_Output(4) & IOBP_SK_Output(3);
 IOBP_Output_Readback(2) <= "0000" & IOBP_SK_Output(6) & IOBP_SK_Output(5);
 IOBP_Output_Readback(3) <= "0000" & IOBP_SK_Output(8) & IOBP_SK_Output(7);
---IOBP_Output_Readback(4) <= "0000" & IOBP_SK_Output(10) & IOBP_SK_Output(9);
---IOBP_Output_Readback(5) <= "0000" & IOBP_SK_Output(12) & IOBP_SK_Output(11);
+
+case AW_Config2 is
+  when x"DEDE" => --Quench Detection Development
+  
+ IOBP_Output_Readback(4) <= "0000" & quench_sk_out(23 downto 12);
+ IOBP_Output_Readback(5) <= "0000" & quench_sk_out(11 downto 0); --slot 11 & slot 12
+
+   when OTHERS =>  
+
+ IOBP_Output_Readback(4) <= "0000" & IOBP_SK_Output(10) & IOBP_SK_Output(9);
+IOBP_Output_Readback(5) <= "0000" & IOBP_SK_Output(12) & IOBP_SK_Output(11);
+
+---------------- Output-Register(Maske) für die Iput- und Output Sel-LED's vom Slave 1-12
+--IOBP_Sel_Led <= IOBP_SK_Sel_Led;
+ end case;
+
 IOBP_Output_Readback(6) <= (OTHERS => '0');
 IOBP_Output_Readback(7) <= (OTHERS => '0');
 
