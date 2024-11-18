@@ -31,7 +31,7 @@ signal sync_str : std_logic;
 
 
 
-type event_state_type is (idle, check_state, select_state, wait_state);
+type event_state_type is (idle, latch_state, check_state, select_state, wait_state);
 signal event_state: event_state_type;
 
 
@@ -93,26 +93,24 @@ begin
         event_enable <= BLM_event_ctrl_Reg(0);
         case (event_state) is
             when idle => 
-                --for i in 31 to 16 loop
-                --    compare_vector(i) <= latched_value(i) XNOR BLM_event_key_Reg(i);
-                --end loop; 
-                --    compare <= and_reduce (compare_vector);
+		if (sync_str = '1' and event_enable ='1') then  
+			event_state <= latch_state;	                
+                end if;
+                
+             when latch_state =>    
+                latched_value  <= data_address & data_value;
+                
                 if BLM_event_key_Reg = data_address then
                     compare <= '1';
                 else
                     compare <= '0';
                 end if;
-               -- if sync_str ='1' then 
-		
-                if (sync_str = '1' and event_enable ='1') then    
- 		    latched_value  <= data_address & data_value;
-                    event_state <= check_state;
-                end if;
-                
+		event_state <= check_state;	      
+                  
             when check_state => 
                 if compare = '1' then 
-                    event_state <= select_state;
                     tag_code <= latched_value(15 downto 0);
+                    event_state <= select_state;
                 else
                     event_state <= wait_state; 
                 end if;
