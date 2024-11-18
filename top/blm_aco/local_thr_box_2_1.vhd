@@ -33,8 +33,8 @@ signal state_sm: integer range 0 to 7:= 0;
 signal cnt_nr: integer range 0 to 128;
 --signal set_cnt: integer range 0 to 31;
 signal start_addr: std_logic_vector(11 downto 0);
-signal group_nr: std_logic_vector(4 downto 0);
-signal dataset: std_logic_vector(6 downto 0);
+signal group_nr: std_logic_vector(3 downto 0);
+signal dataset: std_logic_vector(7 downto 0);
 --signal cnt_nr_start: integer range 0 to 128;
 
 
@@ -42,8 +42,8 @@ signal dataset: std_logic_vector(6 downto 0);
 
 begin 
 
-    group_nr <= group_dataset(11 downto 7);
-    dataset <= group_dataset(6 downto 0);
+    group_nr <= group_dataset(11 downto 8);
+    dataset <= group_dataset(7 downto 0);
     start_addr <= dataset(4 downto 0) & "0000000";
     addr_b_ram <= std_logic_vector(to_unsigned(addr_nr, addr_b_ram'length));
     counter_nr_read<= std_logic_vector(to_unsigned(cnt_nr, counter_nr_read'length));
