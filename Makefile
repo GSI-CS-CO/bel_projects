@@ -42,6 +42,7 @@ CHECK_PEXP             = ./syn/gsi_pexp/control/pexp_control
 CHECK_PEXP_SDR         = ./syn/gsi_pexp/sdr/pexp_control_sdr
 CHECK_PEXP_PPS         = ./syn/gsi_pexp/pps/pexp_pps
 CHECK_SCU4             = ./syn/gsi_scu/control4/scu_control
+CHECK_SCU5             = ./syn/gsi_scu/control5/scu_control
 CHECK_FTM4             = ./syn/gsi_scu/ftm4/ftm4
 CHECK_FTM4DP           = ./syn/gsi_scu/ftm4dp/ftm4dp
 CHECK_FTM              = ./syn/gsi_pexarria5/ftm/ftm
@@ -65,6 +66,7 @@ PATH_PEXP              = syn/gsi_pexp/control
 PATH_PEXP_SDR          = syn/gsi_pexp/sdr
 PATH_PEXP_PPS          = syn/gsi_pexp/pps
 PATH_SCU4              = syn/gsi_scu/control4
+PATH_SCU5              = syn/gsi_scu/control5
 PATH_FTM4              = syn/gsi_scu/ftm4
 PATH_FTM4DP            = syn/gsi_scu/ftm4dp
 PATH_FTM               = syn/gsi_pexarria5/ftm
@@ -381,17 +383,17 @@ ftm-check:
 # Arria 10 devices
 # #################################################################################################
 
-scu4:		firmware
-	$(MAKE) -C $(PATH_SCU4) all
+scu5:		firmware
+	$(MAKE) -C $(PATH_SCU5) all
 
-scu4-sort:
-	$(call sort_file, $(CHECK_SCU4))
+scu5-sort:
+	$(call sort_file, $(CHECK_SCU5))
 
-scu4-check:
-	$(call check_timing, $(CHECK_SCU4))
+scu5-check:
+		$(call check_timing, $(CHECK_SCU5))
 
-scu4-clean::
-	$(MAKE) -C $(PATH_SCU4) clean
+scu5-clean::
+		$(MAKE) -C $(PATH_SCU5) clean
 
 ftm4:		firmware
 	$(MAKE) -C $(PATH_FTM4) all
@@ -596,6 +598,18 @@ idrogen-sort:
 
 idrogen-check:
 	$(call check_timing, $(CHECK_IDROGEN))
+
+scu4:		firmware
+	$(MAKE) -C $(PATH_SCU4) all
+
+scu4-sort:
+	$(call sort_file, $(CHECK_SCU4))
+
+scu4-check:
+		$(call check_timing, $(CHECK_SCU4))
+
+scu4-clean::
+	$(MAKE) -C $(PATH_SCU4) clean
 
 # We need to run ./fix-git.sh and ./install-hdlmake.sh: make them a prerequisite for Makefile
 Makefile: prereq-rule
