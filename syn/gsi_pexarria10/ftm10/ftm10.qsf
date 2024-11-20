@@ -113,17 +113,9 @@ set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_fd_io -section_id USB_GR
 set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_pa_io -section_id USB_GROUP
 set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_pa_io -section_id USB_GROUP_INOUT
 set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_slrd_o -section_id USB_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_slrd -section_id USB_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_slrd -section_id USB_GROUP_OUT
 set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_slwr_o -section_id USB_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_slwr -section_id USB_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_slwr -section_id USB_GROUP_OUT
 set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_uclk_i -section_id USB_GROUP_IN
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_uclk -section_id USB_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_uclk -section_id USB_GROUP_IN
 set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_ures_o -section_id USB_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_ures -section_id USB_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_ures -section_id USB_GROUP_OUT
 set_global_assignment -name AUTO_SHIFT_REGISTER_RECOGNITION OFF
 set_global_assignment -name CRC_ERROR_OPEN_DRAIN ON
 set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
@@ -861,12 +853,6 @@ set_instance_assignment -name IO_STANDARD "1.8 V" -to altera_reserved_tms
 set_instance_assignment -name IO_STANDARD "1.8 V" -to a_nsys_reset
 set_instance_assignment -name IO_STANDARD "1.8 V" -to clk_20m_vcxo_alt_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to clk_20m_vcxo_i
-set_instance_assignment -name IO_STANDARD "1.8 V" -to cpld_io[0]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to cpld_io[1]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to cpld_io[2]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to cpld_io[3]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to cpld_io[4]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to cpld_io[5]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to f2f_i2c_scl
 set_instance_assignment -name IO_STANDARD "1.8 V" -to f2f_i2c_sda
 set_instance_assignment -name IO_STANDARD "1.8 V" -to i2c_scl_pad_io[1]
@@ -881,7 +867,6 @@ set_instance_assignment -name IO_STANDARD "1.8 V" -to i2c_sda_pad_io[4]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to i2c_sda_pad_io[5]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to nPCI_RESET_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to nres_out_o
-set_instance_assignment -name IO_STANDARD "1.8 V" -to nuser_pb_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to OneWire_aux_CB
 set_instance_assignment -name IO_STANDARD "1.8 V" -to OneWire_aux_CB_splz
 set_instance_assignment -name IO_STANDARD "1.8 V" -to OneWire_CB
@@ -955,12 +940,6 @@ set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_mod1_io
 set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_mod2_io
 set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_tx_disable_o
 set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_tx_fault_i
-set_instance_assignment -name IO_STANDARD "1.8 V" -to UM_AS_D[0]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to UM_AS_D[1]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to UM_AS_D[2]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to UM_AS_D[3]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to UM_DCLK
-set_instance_assignment -name IO_STANDARD "1.8 V" -to UM_nCSO
 set_instance_assignment -name IO_STANDARD "1.8 V" -to usb_clk_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to usb_ctl_i[0]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to usb_ctl_i[1]
@@ -1170,7 +1149,6 @@ set_location_assignment PIN_AE4 -to usbc_tx2_en[1]
 set_location_assignment PIN_AE8 -to wr_ndac_cs_o[2]
 set_location_assignment PIN_AE9 -to wr_dac_sclk_o
 set_location_assignment PIN_AF1 -to usbc_tx3_en[3]
-set_location_assignment PIN_AF23 -to UM_nCSO
 set_location_assignment PIN_AF25 -to usb_fd_io[4]
 set_location_assignment PIN_AF27 -to "clk_125m_tcb_sfpref_i(n)"
 set_location_assignment PIN_AF28 -to clk_125m_tcb_sfpref_i
@@ -1178,7 +1156,6 @@ set_location_assignment PIN_AF5 -to usbc_tx2_en[2]
 set_location_assignment PIN_AF8 -to wr_dac_din_o
 set_location_assignment PIN_AF9 -to wr_ndac_cs_o[1]
 set_location_assignment PIN_AG1 -to i2c_scl_pad_io[2]
-set_location_assignment PIN_AG23 -to UM_AS_D[3]
 set_location_assignment PIN_AG25 -to usb_fd_io[5]
 set_location_assignment PIN_AG2 -to i2c_sda_pad_io[2]
 set_location_assignment PIN_AG33 -to "pcie_tx_o[3](n)"
@@ -1187,7 +1164,6 @@ set_location_assignment PIN_AG3 -to usbc_tx3_en[5]
 set_location_assignment PIN_AG5 -to i2c_scl_pad_io[1]
 set_location_assignment PIN_AG6 -to i2c_sda_pad_io[1]
 set_location_assignment PIN_AH10 -to nres_out_o
-set_location_assignment PIN_AH23 -to UM_AS_D[0]
 set_location_assignment PIN_AH25 -to usb_fd_io[6]
 set_location_assignment PIN_AH26 -to usb_pa_io[0]
 set_location_assignment PIN_AH27 -to usb_pa_io[1]
@@ -1197,7 +1173,6 @@ set_location_assignment PIN_AH4 -to usbc_tx3_en[4]
 #set_location_assignment PIN_AH5 -to sfp_aux_gpio_io_extra[1]
 set_location_assignment PIN_AH8 -to f2f_i2c_sda
 set_location_assignment PIN_AJ1 -to i2c_scl_pad_io[4]
-set_location_assignment PIN_AJ24 -to UM_AS_D[2]
 set_location_assignment PIN_AJ25 -to usb_fd_io[7]
 set_location_assignment PIN_AJ26 -to usb_pa_io[2]
 set_location_assignment PIN_AJ27 -to usb_pa_io[3]
@@ -1212,7 +1187,6 @@ set_location_assignment PIN_AJ6 -to sfp_tx_fault_i
 set_location_assignment PIN_AJ7 -to sfp_tx_disable_o
 #set_location_assignment PIN_AK1 -to i2c_scl_pad_io[5]
 set_location_assignment PIN_AK22 -to a_nsys_reset
-set_location_assignment PIN_AK24 -to UM_AS_D[1]
 set_location_assignment PIN_AK26 -to usb_slwr_o
 set_location_assignment PIN_AK27 -to usb_slrd_o
 #set_location_assignment PIN_AK2 -to i2c_sda_pad_io[5]
@@ -1233,7 +1207,6 @@ set_location_assignment PIN_AL5 -to clk_125m_local_alt_i
 set_location_assignment PIN_AL6 -to sfp_los_i
 set_location_assignment PIN_AM1 -to sfp_mod1_io
 set_location_assignment PIN_AM23 -to wr_leds_o[0]
-set_location_assignment PIN_AM26 -to UM_DCLK
 set_location_assignment PIN_AM27 -to usb_pa_io[4]
 set_location_assignment PIN_AM2 -to sfp_mod2_io
 set_location_assignment PIN_AM31 -to "sfp_aux_txp_o(n)"
