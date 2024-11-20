@@ -167,12 +167,13 @@ architecture rtl of pexarria10 is
   signal s_led_track    : std_logic;
   signal s_led_pps      : std_logic;
 
-  signal s_gpio_o   : std_logic_vector(30 downto 0);
-  signal s_gpio_i   : std_logic_vector(30 downto 0);
-  signal s_lvds_p_i : std_logic_vector(19 downto 0);
-  signal s_lvds_n_i : std_logic_vector(19 downto 0);
-  signal s_lvds_p_o : std_logic_vector(19 downto 0);
-  signal s_lvds_n_o : std_logic_vector(19 downto 0);
+  signal s_gpio_o         : std_logic_vector(30 downto 0);
+  signal s_gpio_i         : std_logic_vector(30 downto 0);
+  signal s_gpio_oe_unused : std_logic_vector(10 downto 0);
+  signal s_lvds_p_i       : std_logic_vector(19 downto 0);
+  signal s_lvds_n_i       : std_logic_vector(19 downto 0);
+  signal s_lvds_p_o       : std_logic_vector(19 downto 0);
+  signal s_lvds_n_o       : std_logic_vector(19 downto 0);
 
   signal s_i2c_scl_pad_out  : std_logic_vector(6 downto 1);
   signal s_i2c_scl_pad_in   : std_logic_vector(6 downto 1);
@@ -298,6 +299,7 @@ begin
       gpio_oen_o(9 downto 5)   => usbc_tx2_en,
       gpio_oen_o(14 downto 10) => usbc_tx3_en,
       gpio_oen_o(19 downto 15) => usbc_tx4_en,
+		gpio_oen_o(30 downto 20) => s_gpio_oe_unused,
       usb_rstn_o               => usb_ures_o,
       usb_ebcyc_i              => usb_pa_io(3),
       usb_speed_i              => usb_pa_io(0),
