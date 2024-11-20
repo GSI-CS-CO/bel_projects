@@ -921,11 +921,6 @@ set_instance_assignment -name IO_STANDARD "1.8 V" -to psram_oen
 set_instance_assignment -name IO_STANDARD "1.8 V" -to psram_ubn
 set_instance_assignment -name IO_STANDARD "1.8 V" -to psram_wait
 set_instance_assignment -name IO_STANDARD "1.8 V" -to psram_wen
-set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_aux_gpio_extra
-set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_aux_gpio_extra[0]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_aux_gpio_extra[1]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_aux_gpio_extra[2]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_aux_gpio_extra[3]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_aux_los_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_aux_mod0_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_aux_mod1_io
@@ -1210,10 +1205,10 @@ set_location_assignment PIN_AM2 -to sfp_mod2_io
 set_location_assignment PIN_AM31 -to "sfp_aux_txp_o(n)"
 set_location_assignment PIN_AM32 -to sfp_aux_txp_o
 #set_location_assignment PIN_AM3 -to sfp_aux_gpio_io_extra[3]
-set_location_assignment PIN_AM5 -to sfp_aux_los_io_nc
-set_location_assignment PIN_AM6 -to sfp_aux_mod0_io_nc
-set_location_assignment PIN_AM7 -to sfp_aux_mod1_io_nc
-set_location_assignment PIN_AM8 -to sfp_aux_mod2_io_nc
+set_location_assignment PIN_AM5 -to sfp_aux_los_i
+set_location_assignment PIN_AM6 -to sfp_aux_mod0_i
+set_location_assignment PIN_AM7 -to sfp_aux_mod1_io
+set_location_assignment PIN_AM8 -to sfp_aux_mod2_io
 set_location_assignment PIN_AN20 -to wr_aux_leds_or_node_leds_o[3]
 set_location_assignment PIN_AN22 -to wr_leds_o[2]
 set_location_assignment PIN_AN23 -to wr_leds_o[1]
@@ -1221,8 +1216,8 @@ set_location_assignment PIN_AN25 -to usb_ctl_i[1]
 set_location_assignment PIN_AN27 -to usb_pa_io[5]
 set_location_assignment PIN_AN33 -to "pcie_tx_o[0](n)"
 set_location_assignment PIN_AN34 -to pcie_tx_o[0]
-set_location_assignment PIN_AN4 -to sfp_aux_tx_disable_io_nc
-set_location_assignment PIN_AN5 -to sfp_aux_tx_fault_io_nc
+set_location_assignment PIN_AN4 -to sfp_aux_tx_disable_o
+set_location_assignment PIN_AN5 -to sfp_aux_tx_fault_i
 set_location_assignment PIN_AP20 -to wr_aux_leds_or_node_leds_o[2]
 set_location_assignment PIN_AP21 -to wr_aux_leds_or_node_leds_o[1]
 set_location_assignment PIN_AP22 -to wr_aux_leds_or_node_leds_o[0]
