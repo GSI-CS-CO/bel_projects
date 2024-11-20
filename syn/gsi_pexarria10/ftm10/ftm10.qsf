@@ -859,12 +859,10 @@ set_instance_assignment -name IO_STANDARD "1.8 V" -to i2c_scl_pad_io[1]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to i2c_scl_pad_io[2]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to i2c_scl_pad_io[3]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to i2c_scl_pad_io[4]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to i2c_scl_pad_io[5]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to i2c_sda_pad_io[1]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to i2c_sda_pad_io[2]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to i2c_sda_pad_io[3]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to i2c_sda_pad_io[4]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to i2c_sda_pad_io[5]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to nPCI_RESET_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to nres_out_o
 set_instance_assignment -name IO_STANDARD "1.8 V" -to OneWire_aux_CB
