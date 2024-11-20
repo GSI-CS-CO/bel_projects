@@ -299,7 +299,7 @@ begin
       gpio_oen_o(9 downto 5)   => usbc_tx2_en,
       gpio_oen_o(14 downto 10) => usbc_tx3_en,
       gpio_oen_o(19 downto 15) => usbc_tx4_en,
-		gpio_oen_o(30 downto 20) => s_gpio_oe_unused,
+      gpio_oen_o(30 downto 20) => s_gpio_oe_unused,
       usb_rstn_o               => usb_ures_o,
       usb_ebcyc_i              => usb_pa_io(3),
       usb_speed_i              => usb_pa_io(0),
