@@ -445,7 +445,7 @@ port (
     ev_prepare_reg : in std_logic_vector(11 downto 0);
     ev_recover_reg: in std_logic_vector(11 downto 0);
     ev_counter_reset: in std_logic;
-    ev_thr_load: in std_logic;
+   -- ev_thr_load: in std_logic;
     BLM_status_Reg    : out t_IO_Reg_0_to_29_Array ;
     counter_readout_reg: out t_BLM_th_Array  ;
       -- OUT BLM
@@ -704,8 +704,8 @@ component local_thr_mem is
     A_nDS: in std_logic; 
     A_nBoardSel: in std_logic; 
     A_RnW: in std_logic; 
-    load_thr: in std_logic;
-    loaded_data_set: in std_logic_vector(11 downto 0);
+  --  load_thr: in std_logic;
+   -- loaded_data_set: in std_logic_vector(11 downto 0);
     new_dataset_ready: in std_logic; 
     counter_group_Reg : in t_IO_Reg_0_to_31_Array;
     --
@@ -1157,7 +1157,7 @@ signal loc_neg_thr:  t_BLM_th_Array;
 
 signal blm_trigger: std_logic;
 --signal timing_trigger: std_logic;
-signal    blm_group_dataset :  std_logic_vector(11 downto 0);
+--signal    blm_group_dataset :  std_logic_vector(11 downto 0);
 signal new_dataset_ready:  std_logic; 
 signal  box_state_nr_reg: std_logic_vector(15 downto 0);
 signal counter_nr_read_reg: std_logic_vector(15 downto 0);
@@ -2706,7 +2706,7 @@ BLM_Module : Beam_Loss_check
 -- event_ctrl_sig
 
 ev_counter_reset=> ev_cmd_reset_ctr,
-ev_thr_load => ev_cmd_load_thr,
+--ev_thr_load => ev_cmd_load_thr,
 ev_prepare_reg =>ev_cmd_prepare,
 ev_recover_reg =>ev_cmd_recover,
 
@@ -2747,8 +2747,8 @@ bus_splitter_elem: bus_splitter
         A_nDS => A_nDS_to_RAM,
         A_nBoardSel => A_nBoardSel,
         A_RnW => A_RnW,
-        load_thr => ev_cmd_load_thr,
-        loaded_data_set => blm_group_dataset  ,-- loaded_data_set,
+      --  load_thr => ev_cmd_load_thr,
+     --   loaded_data_set => blm_group_dataset  ,-- loaded_data_set,
 
         new_dataset_ready => new_dataset_ready,
         counter_group_Reg => counter_group_reg,

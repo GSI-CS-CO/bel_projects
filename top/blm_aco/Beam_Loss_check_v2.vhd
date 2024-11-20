@@ -40,7 +40,7 @@ port (
     BLM_out_sel_reg : in t_BLM_out_sel_reg_Array;   --- 122 x 16 bits = Reg120-0:  "0000" and 6 x (54 watchdog errors  + 12 gate errors + 256 counters overflows outputs) 
 
 
-    ev_thr_load: in std_logic;
+    --ev_thr_load: in std_logic;
 
     
     ev_prepare_reg : in std_logic_vector(11 downto 0);

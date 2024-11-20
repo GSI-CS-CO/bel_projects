@@ -12,8 +12,8 @@ entity local_thr_mem is
         A_nDS : in std_logic;
         A_nBoardSel : in std_logic;
         A_RnW : in std_logic;
-        load_thr : in std_logic;
-        loaded_data_set : in std_logic_vector(11 downto 0);
+   --     load_thr : in std_logic;
+   --     loaded_data_set : in std_logic_vector(11 downto 0);
         new_dataset_ready : in std_logic;
         counter_group_Reg : in t_IO_Reg_0_to_31_Array;
         --
