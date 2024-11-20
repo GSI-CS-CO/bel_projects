@@ -214,7 +214,7 @@ architecture rtl of ftm4dp is
 
   constant c_family       : string  := "Arria 10 GX FTM4";
   constant c_project      : string  := "scu_control";
-  constant c_initf_name   : string  := c_project & "_stub.mif";
+  constant c_initf_name   : string  := "ftm4dp" & "_stub.mif";
   constant c_profile_name : string  := "medium_icache_debug";
   constant c_psram_bits   : natural := 24;
   constant c_cores        : natural := 8;
