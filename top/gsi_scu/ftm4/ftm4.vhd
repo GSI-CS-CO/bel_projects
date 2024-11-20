@@ -39,10 +39,10 @@ entity ftm4 is
     -----------------------------------------------------------------------
     -- OneWire
     -----------------------------------------------------------------------
-    OneWire_CB : inout std_logic;
-    onewire_ext: inout std_logic;        -- to extension board
-    onewire_ext_splz: out std_logic;  --Strong Pull-Up for Onewire
-    OneWire_CB_splz : out std_logic;  --Strong Pull-Up for Onewire
+    OneWire_CB       : inout std_logic;
+    onewire_ext      : inout std_logic;  -- to extension board
+    onewire_ext_splz : out std_logic;  --Strong Pull-Up for Onewire
+    OneWire_CB_splz  : out std_logic;  --Strong Pull-Up for Onewire
 
     -----------------------------------------------------------------------
     -- ComExpress signals
@@ -206,7 +206,7 @@ architecture rtl of ftm4 is
 
   constant c_family       : string  := "Arria 10 GX FTM4";
   constant c_project      : string  := "scu_control";
-  constant c_initf_name   : string  := c_project & "_stub.mif";
+  constant c_initf_name   : string  := "ftm4" & "_stub.mif";
   constant c_profile_name : string  := "medium_icache_debug";
   constant c_psram_bits   : natural := 24;
   constant c_cores        : natural := 8;
