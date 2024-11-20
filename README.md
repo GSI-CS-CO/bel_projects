@@ -230,6 +230,10 @@ export QSYS_ROOTDIR=$QUARTUS/sopc_builder/bin
 export PATH=$PATH:$QUARTUS_ROOTDIR:$QSYS_ROOTDIR
 ```
 
+Error: (293007): Current module quartus_sh ended unexpectedly. Verify that you have sufficient memory available to compile your design.
+
+Solution: Use the right Quartus version for your project.
+
 ### Permission denied
 
 Error: /bin/sh: 1: cannot create /ramsize_pkg.vhd: Permission denied
