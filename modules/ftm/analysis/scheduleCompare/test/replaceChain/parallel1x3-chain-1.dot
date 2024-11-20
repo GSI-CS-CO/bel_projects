@@ -1,7 +1,5 @@
 digraph G {
-graph [
-name="parallel1x3-compact"
-]
+  graph [name="parallel1x3-compact"]
 node1 [label=node1];
 node5 [label=node5];
 "node2

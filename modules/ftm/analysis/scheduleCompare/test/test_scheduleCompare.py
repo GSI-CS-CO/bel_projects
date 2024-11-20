@@ -14,7 +14,7 @@ class TestScheduleCompare(common_scheduleCompare.CommonScheduleCompare):
     self.callScheduleCompare('permutations/test0.dot', 'permutations/test0.dot', '-v', expectedReturnCode=0, linesCerr=0, linesCout=26)
 
   def test_usage_message(self):
-    self.callScheduleCompare('', '', '-h', expectedReturnCode=14, linesCerr=25, linesCout=0)
+    self.callScheduleCompare('', '', '-h', expectedReturnCode=14, linesCerr=26, linesCout=0)
 
   def test_folder_dot_tmsg(self):
     self.allPairsFilesInFolderTest('dot_tmsg/')

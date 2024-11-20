@@ -1,33 +1,6 @@
 \documentclass[12pt,a4paper]{report}
 % Language: English
-\pdfminorversion=7
-\usepackage[pdftex]{graphicx}
-\usepackage{changepage}
-\usepackage{xcolor}
-\usepackage{listings}
 \usepackage{xurl}
-
-\lstdefinestyle{dotfiles}{
-  escapeinside={(*@}{@*)}, % (*@\label{mylabel}@*)
-  numbers=left,
-  stepnumber=1,
-  numberstyle=\tiny,
-  numbersep=10pt,
-  captionpos=b,
-  belowcaptionskip=1\baselineskip,
-  breaklines=true,
-  keepspaces=true,
-  columns=flexible,
-  language=C,
-  showstringspaces=false,
-  basicstyle=\scriptsize\ttfamily,
-  keywordstyle=\color{green!40!black},
-  commentstyle=\itshape\color{purple!40!black},
-  identifierstyle=\color{blue},
-  stringstyle=\color{red},
-  tabsize=2,
-  morekeywords={digraph, graph, subgraph, edge, node, color, style, shape, fillcolor},
-}
 
 \newcommand{\ry}{\rotatebox{90}}
 \begin{document}
@@ -39,7 +12,7 @@
 
 \Large{Martin Skorsky}
 
-\Large{Last change: 2022-01-27}
+\Large{Last change: 2023-10-10}
 \end{center}
 \vfill
 \end{titlepage}
@@ -50,8 +23,8 @@
 \section{SuperMicro fel0069}
 The data master for the test system is hosted on SuperMicro fel0069 with two PEXARIA5d \texttt{(fel0069.acc.gsi.de)}.
 One of these is the data master. The other one is used to analyse the timing messages with snoop.
-The SuperMicro is accessible with \texttt{ssh root@fel0069.acc} via ASL cluster or other hosts.
-The management interface (ILO) is accessible via \url{https://fel0069i64.acc}.
+The SuperMicro is accessible with \texttt{ssh root@fel0069.acc.gsi.de} via ASL cluster or other hosts.
+The management interface (ILO) is accessible via \url{https://fel0069i.acc.gsi.de}.
 \begin{enumerate}
 \item fel0069.acc.gsi.de
 \begin{itemize}
@@ -105,7 +78,7 @@ This has to be done for every user / host which needs access to fel0069 with ssh
 \section{White Rabbit Switch nwt0473m66}
 Location: BG2.009, Rack BG2A.A9, Slot 29 \raggedright
 \linebreak Configuration: blank. Not an access switch or distribution switch!
-\linebreak Access via tsl001, like other switches.
+\linebreak Access via tsl101, like other switches.
 \linebreak Name: nwt0473m66.timing.acc.gsi.de,
 \linebreak IP: 192.168.21.219.
 \linebreak Connections: fibre optic cable from wri2 to pexaria248t, fibre optic cable from wri3 to pexaria305t. Network cable to acc network for management.
@@ -168,17 +141,17 @@ FW-ID ROM will contain:
 Pexaria for snoop: \url{https://github.com/GSI-CS-CO/bel\_projects/releases/download/fallout-v6.0.1/pexarria5.rpd}
 
 \section{Access the Data Master}
-\texttt{dm-cmd tcp/fel0069.acc}
+\texttt{dm-cmd tcp/fel0069.acc.gsi.de}
 \linebreak
-\texttt{dm-sched tcp/fel0069.acc}
+\texttt{dm-sched tcp/fel0069.acc.gsi.de}
 
 \section{Remote Snoop of Timing Messages}
-Snoop per remote ssh: Set up of ssh without password: use public key of user@host and transfer it to root@fel0069.acc:~/.ssh/authorized\_keys with \texttt{ssh-copy-id}.
+Snoop per remote ssh: Set up of ssh without password: use public key of user@host and transfer it to root@fel0069.acc.gsi.de:~/.ssh/authorized\_keys with \texttt{ssh-copy-id}.
 Snoop with Python3: the tests using python3 / pytest read the command for snooping from environment variable SNOOP.
 \begin{itemize}
 \item Example for local environment: saft-ctl tr0 -xv snoop 0 0 0
-\item Example for remote environment on fel0069.acc: ssh -t root@fel0069.acc 'saft-ctl tr1 -xv snoop 0 0 0' \linebreak
-saftd on fel0069.acc monitors dev/wbm1 as tr1.
+\item Example for remote environment on fel0069.acc.gsi.de: ssh -t root@fel0069.acc.gsi.de 'saft-ctl tr1 -xv snoop 0 0 0' \linebreak
+saftd on fel0069.acc.gsi.de monitors dev/wbm1 as tr1.
 \end{itemize}
 The tests add an additional parameter for the number of seconds to snoop.
 
@@ -186,25 +159,6 @@ The tests add an additional parameter for the number of seconds to snoop.
 \begin{enumerate}
 \item Python 3.6.9
 \item pytest 6.1.2
-\end{enumerate}
-
-\section{Jenkins on tsl025.acc.gsi.de}
-Update tsl025 with sudo apt update / upgrade.
-Preparation of jenkins user on tsl025 for remote snoop.
-\linebreak Switch to user jenkins on tsl025:
-\linebreak sudo su -s /bin/bash jenkins
-\linebreak ssh-keygen -t rsa -b 4096
-\linebreak ssh-copy-id -i /var/lib/jenkins/.ssh/id\_rsa.pub root@fel0069
-\linebreak ssh -t root@fel0069 'saft-ctl tr1 -xv snoop 0 0 0 3' (this is the test that the previous commands were successful)
-
-\subsection{Jenkins Jobs on tsl025}
-This Jenkins server is \url{http://tsl025:8080/}.
-\begin{enumerate}
-\item Build and install the tools (dm-cmd, dm-sched, libcarpedm)
-\item Build and install scheduleCompare
-\item check remote snoop
-\item Run tests (13 out of 49 tests are skipped because of longer duration). Takes about 40 seconds. Useful during test developement.
-\item Run all 49 tests. Takes up to 6 min. Normal test execution.
 \end{enumerate}
 
 \section{Install Image to Test on Datamaster}
@@ -254,60 +208,6 @@ make
 sudo make install
 \end{verbatim}
 
-\subsection{Flash on dal029 (data master develoment environment)}
-
-Remark: datamaster for development environment is now on acopc042, dev/wbm1 ! Commands have to be changed accordingly.
-
-On \texttt{dal029.acc.gsi.de} do (use \texttt{ssh root@dal029.acc.gsi.de}):
-\begin{verbatim}
-# 1. Preparation:
-scp martin@acopc042:bel_projects/release/syn/gsi_pexarria5/ftm/ftm.rpd
-                   ftm_v6.1.2-rc1.rpd
-## stop saftd - error message if saftd is not running
-saft-ctl tr0 quit
-## stop datamaster
-dm-cmd dev/wbm0 halt
-## halt all lm32 CPUs
-eb-reset dev/wbm0 cpuhalt 0xff
-# 2. Flash - don't use eb-flash-secure.
-# Included preparation not ok.
-# Parameters -s and -w not supported
-eb-flash -s 0x10000 -w 3 dev/wbm0 ftm_v6.1.2-rc1.rpd
-# 3. Reboot
-eb-reset dev/wbm0 fpgareset; reboot
-\end{verbatim}
-Now, if result of flash looks OK, update PXE boot (on ASL cluster).
-\begin{verbatim}
-ssh mskorsky@asl742.acc
-cd /common/export/nfsinit/dal029/
-rm 20_timing-rte
-ln -s ../global/timing-rte-tg-fallout-v6.1.2-rc1 20_timing-rte
-str-D # end ssh session
-\end{verbatim}
-Second reboot of dal069.
-\begin{verbatim}
-ssh root@dal069.acc
-reboot
-\end{verbatim}
-Configure dal069 after reboot.
-\begin{verbatim}
-ssh root@dal029.acc
-eb-console dev/wbm0
-ip set 192.168.128.204
-strg-D # end ssh session
-\end{verbatim}
-Finally: check that datamaster is up and run tests (do this on acopc042).
-\begin{verbatim}
-dm-cmd tcp/dal029.acc
-# Run tests
-# on acopc042: export DM=tcp/dal029.acc
-cd ~/be_projects/test/module/ftm/tests
-# Run quick tests (40 seconds)
-make
-# Run all tests (6 minutes)
-OPTIONS=--runslow make
-\end{verbatim}
-
 \subsection{Flash on fel0069 (data master test environment)}
 On \texttt{fel0069.acc.gsi.de} do (use \texttt{ssh root@fel0069.acc.gsi.de}):
 \begin{verbatim}
@@ -339,7 +239,7 @@ eb-reset dev/wbm0 fpgareset; eb-reset dev/wbm1 fpgareset; reboot
 \end{verbatim}
 Now, if result of flash looks OK, update PXE boot (on ASL cluster).
 \begin{verbatim}
-ssh mskorsky@asl742.acc
+ssh mskorsky@asl755.acc
 cd /common/export/nfsinit/fel0069/
 # adopt gateware timing rte
 rm 20_timing-rte
@@ -349,33 +249,14 @@ rm 40_generator_dev
 ln -s ../global/dm-.... 40_generator_dev
 str-D # end ssh session
 \end{verbatim}
-Second reboot of fel0029.
 \begin{verbatim}
 ssh root@fel0069.acc
 reboot
-\end{verbatim}
-Configure fel0029 after reboot.
-\begin{verbatim}
-ssh-copy-id -i .ssh/id_rsa.pub root@fel0069.acc
-ssh root@fel0069.acc
-eb-console dev/wbm0
-ip set 192.168.131.184
-eb-console dev/wbm1
-ip set 192.168.131.241
-# Start saftd
-saftd tr1:dev/wbm1
-strg-D # end ssh session
 \end{verbatim}
 Finally: check that datamaster is up and run tests (do this on acopc042).
 \begin{verbatim}
 dm-cmd tcp/fel0069.acc
 \end{verbatim}
-Run tests on tsl025.acc: start Jenkins Jobs \url{http://tsl025:8080/}
-
-\section{Open tasks}
-\begin{enumerate}
-\item Configure tsl025 as Jenkins-Slave of builder.acc.gsi.de
-\item Add scripts / jobs to install a defined firmware / datamaster firmware on fel0069/dev/wbm0
-\end{enumerate}
+Run tests on tsl021.acc.gsi.de: start Jenkins Jobs \url{https://builder.acc.gsi.de/jenkins/job/timing/view/tests/job/test_module_ftm_datamaster_dm-fallout-tests/}
 
 \end{document}

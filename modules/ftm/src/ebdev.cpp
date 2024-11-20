@@ -198,7 +198,7 @@ bool EbDev::connect(const std::string& en) {
     }
 
     if(verbose) {
-      sLog << " Done."  << std::endl << "Found " << ebd.getCpuQty() << " Cores, " << cpuIdxMap.size() << " of them run a valid DM firmware." << std::endl;
+      sLog << " Done."  << std::endl << "Found " << unsigned(ebd.getCpuQty()) << " Cores, " << cpuIdxMap.size() << " of them run a valid DM firmware." << std::endl;
     }
     std::string fwCause = foundVersionMax == -1 ? "" : "Requires FW v" + createFwVersionString(expVersion) + ", found " + createFwVersionString(foundVersionMax);
     if (cpuIdxMap.size() == 0) {throw std::runtime_error("No CPUs running a valid DM firmware found. " + fwCause);}
@@ -221,15 +221,15 @@ bool EbDev::connect(const std::string& en) {
       throw std::runtime_error("Etherbone " + std::string(ex.method) + " returned " + std::string(eb_status(ex.status)) + "\n" );
       //TODO report why we could not disconnect
     }
-    
+
     if(verbose) sLog << " Done" << std::endl;
-    
+
     return ret;
   }
 
 
 
- 
+
 
   uint64_t EbDev::getDmWrTime() const {
     /* get time from Cluster Time Module (ECA Time with or wo ECA) */

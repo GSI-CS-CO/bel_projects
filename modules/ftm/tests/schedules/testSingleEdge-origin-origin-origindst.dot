@@ -1,0 +1,10 @@
+digraph G {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+A1[cpu="0", flags="0x0000200d", type="origin", toffs="0", pattern="patternA", patentry="true", patexit="false", beamproc="beamA", bpentry="false", bpexit="false", thread="0", shape     = "octagon", color  = "cyan", fillcolor = "white", penwidth=2, color = "darkorange3"];
+B2[cpu="0", flags="0x0000800d", type="origin", toffs="0", pattern="patternA", patentry="false", patexit="true", beamproc="beamA", bpentry="false", bpexit="false", thread="0", shape     = "octagon", color  = "cyan", fillcolor = "white"];
+C3[cpu="0", flags="0x00100007", type="block", tperiod="2000", pattern="patternA", patentry="false", patexit="false", beamproc="beamA", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white"];
+A1->B2 [type="origindst", color = "gray"];
+B2->C3 [type="defdst", color = "red"];
+A1->C3 [type="defdst", color = "red"];
+}

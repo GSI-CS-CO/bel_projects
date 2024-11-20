@@ -1,0 +1,59 @@
+digraph G {
+  graph [mindist=1.0 name="EsrStacking-compact" nodesep=0.6 overlap=false rankdir=TB ranksep=1.0 root=Demo]
+"ESR_20Nov_Stacking_new_SL.C1.3_EXIT" [beamproc=undefined, bpentry=false, bpexit=false, color=black, fillcolor=white, patentry=false, patexit=false, pattern=ESR_20Nov_Stacking_new_SL, qhi=false, qil=false, qlo=false, shape=rectangle, style=filled, tperiod=10000, type=block];
+"ESR_20Nov_Stacking_new_SL.C1.3_MANIP_PERFORM_EXIT" [beamproc=undefined, bpentry=false, bpexit=false, color=black, fillcolor=white, patentry=false, patexit=false, pattern=ESR_20Nov_Stacking_new_SL, qhi=false, qil=false, qlo=true, shape=rectangle, style=filled, tperiod=310000000, type=block];
+"ESR_20Nov_Stacking_new_SL.C1.3_MANIP_SAFE" [beamproc=undefined, bpentry=false, bpexit=false, color=black, fillcolor=white, patentry=false, patexit=false, pattern=ESR_20Nov_Stacking_new_SL, qhi=false, qil=false, qlo=true, shape=rectangle, style=filled, tperiod=10000000, type=block];
+"ESR_20Nov_Stacking_new_SL.C1.3_MANIP_WAIT_ENTRY" [beamproc=undefined, bpentry=false, bpexit=false, color=black, fillcolor=white, patentry=false, patexit=false, pattern=ESR_20Nov_Stacking_new_SL, qhi=false, qil=false, qlo=false, shape=rectangle, style=filled, tperiod=10000, type=block];
+"ESR_20Nov_Stacking_new_SL.C1.3_MANIP_WAIT_EXIT" [beamproc=undefined, bpentry=false, bpexit=false, color=black, fillcolor=white, patentry=false, patexit=false, pattern=ESR_20Nov_Stacking_new_SL, qhi=false, qil=false, qlo=true, shape=rectangle, style=filled, tperiod=270000000, type=block];
+"ESR_20Nov_Stacking_new_SL.C1.4_BREAK_ENTRY" [beamproc=undefined, bpentry=false, bpexit=false, color=black, fillcolor=white, patentry=false, patexit=false, pattern=ESR_20Nov_Stacking_new_SL, qhi=false, qil=false, qlo=true, shape=rectangle, style=filled, tperiod=10000, type=block];
+"ESR_20Nov_Stacking_new_SL.C1.4_BREAK_EXIT" [beamproc=undefined, bpentry=false, bpexit=false, color=black, fillcolor=white, patentry=false, patexit=false, pattern=ESR_20Nov_Stacking_new_SL, qhi=false, qil=false, qlo=false, shape=rectangle, style=filled, tperiod=10000, type=block];
+"ESR_20Nov_Stacking_new_SL.C1.3_MANIP_RESTART_FGS_ENTRY
+...(2)
+ESR_20Nov_Stacking_new_SL.C1.3_MANIP_RESTART_FGS_EXIT" [color=black, fillcolor=white, label="ESR_20Nov_Stacking_new_SL.C1.3_MANIP_RESTART_FGS_ENTRY
+...(2)
+ESR_20Nov_Stacking_new_SL.C1.3_MANIP_RESTART_FGS_EXIT", pattern=ESR_20Nov_Stacking_new_SL, shape=rectangle, style=filled, type=block];
+"ESR_20Nov_Stacking_new_SL.C1.4_ENTRY
+...(7)
+ESR_20Nov_Stacking_new_SL.C1.4_BLOCK_EXIT" [color=black, fillcolor=white, label="ESR_20Nov_Stacking_new_SL.C1.4_ENTRY
+...(7)
+ESR_20Nov_Stacking_new_SL.C1.4_BLOCK_EXIT", pattern=ESR_20Nov_Stacking_new_SL, shape=rectangle, style=filled, type=block];
+"ESR_20Nov_Stacking_new_SL.C1.4_BREAK_BLOCK_ENTRY
+...(5)
+ESR_20Nov_Stacking_new_SL.C1.4_BREAK_BLOCK_EXIT" [color=black, fillcolor=white, label="ESR_20Nov_Stacking_new_SL.C1.4_BREAK_BLOCK_ENTRY
+...(5)
+ESR_20Nov_Stacking_new_SL.C1.4_BREAK_BLOCK_EXIT", pattern=ESR_20Nov_Stacking_new_SL, shape=rectangle, style=filled, type=block];
+"ESR_20Nov_Stacking_new_SL_076
+...(3)
+ESR_20Nov_Stacking_new_SL_080" [color=black, fillcolor=white, label="ESR_20Nov_Stacking_new_SL_076
+...(3)
+ESR_20Nov_Stacking_new_SL_080", pattern=ESR_20Nov_Stacking_new_SL, shape=oval, style=filled, type=tmsg];
+"ESR_20Nov_Stacking_new_SL.C1.4_BREAK_ENTRY"->"ESR_20Nov_Stacking_new_SL.C1.4_BREAK_EXIT"  [color=red, type=defdst];
+"ESR_20Nov_Stacking_new_SL.C1.3_MANIP_PERFORM_EXIT"->"ESR_20Nov_Stacking_new_SL.C1.3_EXIT"  [color=red, type=defdst];
+"ESR_20Nov_Stacking_new_SL.C1.3_MANIP_PERFORM_EXIT"->"ESR_20Nov_Stacking_new_SL.C1.3_MANIP_WAIT_ENTRY"  [color=black, type=altdst];
+"ESR_20Nov_Stacking_new_SL.C1.3_MANIP_SAFE"->"ESR_20Nov_Stacking_new_SL.C1.3_MANIP_WAIT_ENTRY"  [color=red, type=defdst];
+"ESR_20Nov_Stacking_new_SL.C1.3_MANIP_WAIT_EXIT"->"ESR_20Nov_Stacking_new_SL.C1.3_MANIP_WAIT_ENTRY"  [color=black, type=altdst];
+"ESR_20Nov_Stacking_new_SL.C1.3_MANIP_WAIT_EXIT"->"ESR_20Nov_Stacking_new_SL.C1.3_MANIP_RESTART_FGS_ENTRY
+...(2)
+ESR_20Nov_Stacking_new_SL.C1.3_MANIP_RESTART_FGS_EXIT"  [color=red, type=defdst];
+"ESR_20Nov_Stacking_new_SL.C1.3_MANIP_RESTART_FGS_ENTRY
+...(2)
+ESR_20Nov_Stacking_new_SL.C1.3_MANIP_RESTART_FGS_EXIT"->"ESR_20Nov_Stacking_new_SL.C1.3_EXIT"  [color=red, type=defdst];
+"ESR_20Nov_Stacking_new_SL.C1.3_EXIT"->"ESR_20Nov_Stacking_new_SL.C1.4_ENTRY
+...(7)
+ESR_20Nov_Stacking_new_SL.C1.4_BLOCK_EXIT"  [color=red, type=defdst];
+"ESR_20Nov_Stacking_new_SL.C1.4_ENTRY
+...(7)
+ESR_20Nov_Stacking_new_SL.C1.4_BLOCK_EXIT"->"ESR_20Nov_Stacking_new_SL.C1.4_BREAK_ENTRY"  [color=red, type=defdst];
+"ESR_20Nov_Stacking_new_SL.C1.4_BREAK_ENTRY"->"ESR_20Nov_Stacking_new_SL.C1.4_BREAK_BLOCK_ENTRY
+...(5)
+ESR_20Nov_Stacking_new_SL.C1.4_BREAK_BLOCK_EXIT"  [color=black, type=altdst];
+"ESR_20Nov_Stacking_new_SL.C1.4_BREAK_BLOCK_ENTRY
+...(5)
+ESR_20Nov_Stacking_new_SL.C1.4_BREAK_BLOCK_EXIT"->"ESR_20Nov_Stacking_new_SL.C1.4_BREAK_ENTRY"  [color=red, type=defdst];
+"ESR_20Nov_Stacking_new_SL.C1.3_MANIP_WAIT_ENTRY"->"ESR_20Nov_Stacking_new_SL_076
+...(3)
+ESR_20Nov_Stacking_new_SL_080"  [color=red, type=defdst];
+"ESR_20Nov_Stacking_new_SL_076
+...(3)
+ESR_20Nov_Stacking_new_SL_080"->"ESR_20Nov_Stacking_new_SL.C1.3_MANIP_WAIT_EXIT"  [color=red, type=defdst];
+}

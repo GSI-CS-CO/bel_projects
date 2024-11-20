@@ -1,0 +1,7 @@
+digraph pps_zzz {
+node [cpu=1 pattern=PPS_ZZZ type=tmsg toffs=0 tef=0 patentry=0 patexit=0 fid=1]
+B_PPS [type=block tperiod=1000000000 patexit=1]
+EVT_PPS1 [patentry=1 gid=5 evtno=215 beamin=0 sid=2 bpid=8 reqnobeam=0 vacc=0 par="0x234"]
+EVT_PPS2 [gid=5 evtno=205 sid=2 bpid=8 par="0x123" toffs=500000000];
+B_PPS -> EVT_PPS1 -> EVT_PPS2 -> B_PPS [type=defdst]
+}

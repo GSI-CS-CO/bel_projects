@@ -9,6 +9,7 @@
 #include "common.h"
 #include <etherbone.h>
 #include "alloctable.h"
+#include "reflocation.h"
 #include "ftm_common.h"
 
 #define SDB_VENDOR_GSI      0x0000000000000651ULL
@@ -39,6 +40,8 @@ protected:
   std::vector<int> vFoundVersion;
   std::map<uint8_t, uint8_t> cpuIdxMap;
   uint8_t cpuQty;
+  uint8_t thrQty;
+  uint32_t adrLut[(SHCTL_STATUS - SHCTL_ADR_TAB + _32b_SIZE_ - 1) / _32b_SIZE_]; //alloc
 
   std::string ebdevname;
 
@@ -55,7 +58,7 @@ protected:
   std::string getFwIdROM(uint8_t cpuIdx) const;
   std::string createFwVersionString(const int fwVer) const;
   static int parseFwVersionString(const std::string& s);
-  std::string readFwIdROMTag(const std::string& fwIdROM, const std::string& tag, size_t maxlen, bool stopAtCr ) const;
+  std::string parseFwIdROMTag(const std::string& fwIdROM, const std::string& tag, size_t maxlen, bool stopAtCr ) const;
   // SDB Functions
 
 public:
@@ -64,7 +67,7 @@ public:
   };
   ~EbWrapper() {};
   
-  bool connect(const std::string& ebdevname, AllocTable& atUp, AllocTable& atDown);
+  bool connect(const std::string& ebdevname, AllocTable& atUp, AllocTable& atDown, RefLocation& rl);
   bool disconnect(); //Close connection
   int writeCycle(const vEbwrs& ew) const;
   int writeCycle(const vAdr& va, const vBuf& vb, const vBl& vcs) const;
@@ -80,13 +83,17 @@ public:
   uint64_t getDmWrTime() const;
   bool isValidDMCpu(uint8_t cpuIdx) {return (cpuIdxMap.count(cpuIdx) > 0);}; //Check if CPU is registered as running a valid firmware
   uint8_t getCpuQty()   const {return cpuQty;} //Return number of found CPUs (not necessarily valid ones!)
+  uint8_t getThrQty()   const {return thrQty;} //Return number of found Threads per CPU
+  uint32_t getCtlAdr(const uint8_t& idx) const {return adrLut[idx];} //Return the corresponding  ctl address (necessary to support different number of thread-FWs)
   bool isCpuIdxValid(uint8_t cpuIdx) { if ( cpuIdxMap.find(cpuIdx) != cpuIdxMap.end() ) return true; else return false;}
   uint32_t getDiagDevAdr() {return diagDevs[0].sdb_component.addr_first;}
   int getExpVersionMin() const {return expVersionMin;} 
   int getExpVersionMax() const {return expVersionMax;}
-  uint32_t getIntBaseAdr(const std::string& fwIdROM) const; 
-  uint32_t getSharedOffs(const std::string& fwIdROM) const;
-  uint32_t getSharedSize(const std::string& fwIdROM) const;
+  uint32_t parseIntBaseAdr(const std::string& fwIdROM) const; 
+  uint32_t parseSharedOffs(const std::string& fwIdROM) const;
+  uint32_t parseSharedSize(const std::string& fwIdROM) const;
+  uint32_t parseThrQty(const std::string& fwIdROM) const;
+  int readAdrLUT(uint32_t extBaseAdr, uint32_t sharedOffs, uint32_t* lut) const;
 
   std::string getFwVersionString(uint8_t cpuIdx) const {return createFwVersionString(vFoundVersion[cpuIdx]);}
   void showCpuList() const;

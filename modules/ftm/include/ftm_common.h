@@ -57,7 +57,7 @@
 //@{ 
 #define PREPTIME_DEFAULT 		1000000ULL // standard preptime offset, sets lead to 1 ms
 #define WORLD_BASE_ADR          0x80000000 ///< Base address leading from the CPU cluster to top crossbar ('world')
-#define _THR_QTY_               8 ///< Maximum number of threads
+//#define _THR_QTY_               32 ///< Maximum number of threads
 #define _HEAP_SIZE_             (_THR_QTY_) ///< Scheduler heap size (power of 2)
 #define _T_GRID_OFFS_           0ULL      ///< Origin of time grid for align blocks in ns
 #define _T_GRID_SIZE_           10000ULL  ///< Grid size for align blocks ns
@@ -172,41 +172,53 @@
 #define T_META_CON_SIZE     (T_META_START_PTR   + _PTR_SIZE_) ///< table container size in byte ( is groupsTable + covenantTable size)
 #define T_META_GRPTAB_SIZE  (T_META_CON_SIZE    + _32b_SIZE_) ///< groupsTable size in byte
 #define T_META_COVTAB_SIZE  (T_META_GRPTAB_SIZE + _32b_SIZE_) ///< covenantTable size in byte
-#define T_META_FLAGS        (T_META_COVTAB_SIZE + _32b_SIZE_) ///< flags field
+#define T_META_REFTAB_SIZE  (T_META_COVTAB_SIZE + _32b_SIZE_) ///< globalRefTable size in byte
+#define T_META_FLAGS        (T_META_REFTAB_SIZE + _32b_SIZE_) ///< flags field
 #define _T_META_SIZE_       (T_META_FLAGS       + _32b_SIZE_) ///< Size of Name/Group table meta data
 //@}
+
+
+
+#define ADRLUT_SHCTL_THR_STA  0
+#define ADRLUT_SHCTL_THR_DAT  1
+#define ADRLUT_SHCTL_HEAP     2
+#define ADRLUT_SHCTL_REGS     3
+#define ADRLUT_SHCTL_END      4
 
 /** @name Top control register sections
  * Top layout of all control register areas. Sections are Scheduler, Status, Meta Data, Diagnostics, Thread Control, Thread Staging, Thread Metadata
  */
 //@{ 
 #define _SHCTL_START_    0
-#define SHCTL_HEAP       (_SHCTL_START_)                              ///< Scheduler Heap
-#define SHCTL_STATUS     (SHCTL_HEAP    + _THR_QTY_ * _PTR_SIZE_)     ///< Status Registers
+#define SHCTL_ADR_TAB    (_SHCTL_START_)                              ///< pTHRDAT, pHEAP, pREGS, pEND
+#define SHCTL_STATUS     (SHCTL_ADR_TAB + 12 * _PTR_SIZE_)            ///< Status Registers
 #define SHCTL_META       (SHCTL_STATUS  + _32b_SIZE_ )                ///< Group/Node Lookup Table Overhead
 #define SHCTL_DIAG       (SHCTL_META    + _T_META_SIZE_ )             ///< Diagnostic Registers
-#define SHCTL_CMD        (SHCTL_DIAG    + _T_DIAG_SIZE_ )             ///< Command Register, NOT IMPLEMENTED
-#define SHCTL_TGATHER    (SHCTL_CMD     + _32b_SIZE_ )                ///< Gather Time (HW Priority Queue Config) Register
+#define SHCTL_INFO       (SHCTL_DIAG    + _T_DIAG_SIZE_ )             ///< Command Register, NOT IMPLEMENTED
+#define SHCTL_TGATHER    (SHCTL_INFO    + _32b_SIZE_ )                ///< Gather Time (HW Priority Queue Config) Register
 #define SHCTL_THR_CTL    (SHCTL_TGATHER + _TS_SIZE_  )                ///< Thread Control Registers (1 bit per Thread )
 #define SHCTL_THR_STA    (SHCTL_THR_CTL + _T_TC_SIZE_  )              ///< Thread Staging Areas (1 area per Thread )
+//From here on addresses depend on THR_QTY
 #define SHCTL_THR_DAT    (SHCTL_THR_STA + _THR_QTY_ * _T_TS_SIZE_  )  ///< Thread Runtime Meta Data Areas(1 area per Thread )
-#define SHCTL_INBOXES    (SHCTL_THR_DAT + _THR_QTY_ * _T_TD_SIZE_  )  ///< Inboxes for MSI (1 per Core in System ), NOT IMPLEMENTED
-#define _SHCTL_END_      (SHCTL_INBOXES + _THR_QTY_ * _32b_SIZE_)	  ///< Size of all control register sections	
+#define SHCTL_HEAP       (SHCTL_THR_DAT + _THR_QTY_ * _T_TD_SIZE_  )  ///< Scheduler Heap
+#define SHCTL_REGS       (SHCTL_HEAP    + _THR_QTY_ * _PTR_SIZE_)     ///< Inboxes for MSI (1 per Core in System ), NOT IMPLEMENTED
+#define _SHCTL_END_      (SHCTL_REGS    + _THR_QTY_ * _32b_SIZE_)	    ///< Size of all control register sections	
 //@}
 
 /*
-#pragma message(VAR_NAME_VALUE(_SHCTL_START_))
-#pragma message(VAR_NAME_VALUE(SHCTL_HEAP   ))
-#pragma message(VAR_NAME_VALUE(SHCTL_STATUS ))
-#pragma message(VAR_NAME_VALUE(SHCTL_META   ))
-#pragma message(VAR_NAME_VALUE(SHCTL_DIAG   ))
-#pragma message(VAR_NAME_VALUE(SHCTL_CMD    ))
-#pragma message(VAR_NAME_VALUE(SHCTL_TGATHER))
-#pragma message(VAR_NAME_VALUE(SHCTL_THR_CTL))
-#pragma message(VAR_NAME_VALUE(SHCTL_THR_STA))
-#pragma message(VAR_NAME_VALUE(SHCTL_THR_DAT))
-#pragma message(VAR_NAME_VALUE(SHCTL_INBOXES))
-#pragma message(VAR_NAME_VALUE(_SHCTL_END_  ))
+#pragma message(VAR_NAME_VALUE(_SHCTL_START_ ))
+#pragma message(VAR_NAME_VALUE(SHCTL_ADR_TAB ))
+#pragma message(VAR_NAME_VALUE(SHCTL_STATUS  ))
+#pragma message(VAR_NAME_VALUE(SHCTL_META    ))
+#pragma message(VAR_NAME_VALUE(SHCTL_DIAG    ))
+#pragma message(VAR_NAME_VALUE(SHCTL_INFO     ))
+#pragma message(VAR_NAME_VALUE(SHCTL_TGATHER ))
+#pragma message(VAR_NAME_VALUE(SHCTL_THR_CTL ))
+#pragma message(VAR_NAME_VALUE(SHCTL_THR_STA ))
+#pragma message(VAR_NAME_VALUE(SHCTL_THR_DAT ))
+#pragma message(VAR_NAME_VALUE(SHCTL_HEAP    ))
+#pragma message(VAR_NAME_VALUE(SHCTL_REGS    ))
+#pragma message(VAR_NAME_VALUE(_SHCTL_END_))
 */
 
 
@@ -267,6 +279,7 @@
 /** @name Generic node layout definitions. Goes for all nodes */
 //@{
 #define NODE_BEGIN              (0)		///< First word
+#define NODE_OPT_DYN            (0x24)   ///< Word definitions if we have dynamic fields
 #define NODE_HASH               (0x28)	///< 32b hash of the node name string
 #define NODE_FLAGS              (NODE_HASH  + _32b_SIZE_) ///< Flag field
 #define NODE_DEF_DEST_PTR       (NODE_FLAGS + _32b_SIZE_) ///< Default destination (successor) pointer
@@ -301,8 +314,11 @@
 
 /** @name Alternative destination list node layout definition*/
 //@{
+#define DST_MAX                 9
+
 #define DST_ARRAY               (NODE_BEGIN) ///< Array of pointers to all nodes which are alternative definitions
-#define DST_ARRAY_END           (DST_ARRAY + 10 * _PTR_SIZE_) ///< End of Array
+#define DST_ARRAY_END           (DST_ARRAY + DST_MAX * _PTR_SIZE_) ///< End of Array
+#define DST_NXTPTR              NODE_DEF_DEST_PTR ///< End of Array
 //@}
 
 /** @name Origin node layout definition.*/
@@ -608,7 +624,8 @@
 #define NODE_TYPE_COVENANT      (NODE_TYPE_MGMT         +1)	///< contain the addresses of commands (in queues) which the user agrees not to preempt if optimised safe2remove is to work
 #define NODE_TYPE_NULL          (NODE_TYPE_COVENANT     +1)	///< type returned by getNodeType if the node ptr was NULL. Intentionally not 0x000...
 #define NODE_TYPE_CSWITCH       (NODE_TYPE_NULL         +1)	///< instantaneously switch defdest of a block. Like permanent flow with no queue
-#define _NODE_TYPE_END_         (NODE_TYPE_CSWITCH      +1)	///< Node type Quantity
+#define NODE_TYPE_GLOBAL        (NODE_TYPE_CSWITCH      +1) ///< A node symbolizing a global memory location. This is just for sake of completeness as we will never write node structures for this to firmware
+#define _NODE_TYPE_END_         (NODE_TYPE_GLOBAL       +1)	///< Node type Quantity
 //@}
 
 /** @name Node flag field bit defs - Type field. Contains node type enum. Sparsity allows using array of handler function in LM32 */
@@ -681,6 +698,13 @@
 #define NFLG_DEBUG1_SMSK    (NFLG_DEBUG1_MSK << NFLG_DEBUG1_POS)
 //@}
 
+/** @name Node flag field bit defs - Node has dynamic fields */
+//@{
+#define NFLG_DYNAMIC_FIELDS_MSK     0x1
+#define NFLG_DYNAMIC_FIELDS_POS     18
+#define NFLG_DYNAMIC_FIELDS_SMSK    (NFLG_DYNAMIC_FIELDS_MSK << NFLG_DYNAMIC_FIELDS_POS)
+//@}
+
 /** @name Node flag field bit defs - Position of type specific flags */
 //@{
 #define NFLG_BITS_SPECIFIC_POS  20
@@ -694,9 +718,29 @@
 //@}
 
 
-//FIXME selling my soul here by allowing dynamic changes to timing msg content.
-// Prime BS caused by Jutta's "we must know which pattern it belongs to and dont want to use a proper DB lookup".
-// Evil stuff and likely to explode in our faces at some point
+
+#define DYN_MODE_IM        0  ///< The field is used as is (immediate)
+#define DYN_MODE_ADR       1  ///< The field is filled adr the reference edge points to, but FW will use as is
+#define DYN_MODE_REF       2  ///< The field is filled adr the reference edge points to, FW will deref pointer
+#define DYN_MODE_REF2      3  ///< The field is filled adr the reference edge points to, FW will deref pointer twice (ptr2ptr)
+
+//
+/** @name Node flag field bit defs - interprete ID word as 64b word */
+//@{
+#define DYN_MODE_MSK    0x3
+#define DYN_MODE_POS    0
+#define DYN_MODE_SMSK   (DYN_MODE_MSK << DYN_MODE_POS)
+//@}
+
+//
+/** @name Node flag field bit defs - interprete ID word as 64b word */
+//@{
+#define DYN_WIDTH64_MSK    0x1 
+#define DYN_WIDTH64_POS    2
+#define DYN_WIDTH64_SMSK   (DYN_WIDTH64_MSK << DYN_WIDTH64_POS)
+//@}
+
+
 
 //
 /** @name Node flag field bit defs - interprete ID word as 64b word */

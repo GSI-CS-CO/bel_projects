@@ -1,0 +1,8 @@
+OPTIONS ?=
+
+all:
+	DATAMASTER=$$DM PYTHONPATH=../ pytest $(OPTIONS)
+
+log:
+	DATAMASTER=$$DM PYTHONPATH=../ pytest -rP $(OPTIONS)
+

@@ -1,7 +1,5 @@
 digraph G {
-graph [
-name="chainY-compact"
-]
+  graph [name="chainY-compact"]
 "a
 ...(3)
 e" [label="a

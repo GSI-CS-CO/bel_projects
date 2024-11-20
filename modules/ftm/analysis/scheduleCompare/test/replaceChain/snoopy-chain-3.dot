@@ -1,7 +1,5 @@
 digraph G {
-graph [
-name="-compact"
-]
+  graph [mindist=1.0 name="-compact" nodesep=0.6 overlap=false rankdir=TB ranksep=1.0 root=Demo]
 CRYRING_C_2019_november_extraction_000 [beamin=0, beamproc=undefined, bpentry=false, bpexit=false, bpid=10, color=black, evtno=259, fid=1, fillcolor=green, gid=200, id="0x10c8103000100280", par="0x0000040000000000", patentry=false, patexit=false, pattern=CRYRING_C_2019_november_extraction, reqnobeam=0, shape=oval, sid=1, style=filled, tef=0, toffs=0, type=tmsg, vacc=0];
 CRYRING_C_2019_november_extraction_BLOCK [beamproc=undefined, bpentry=false, bpexit=false, color=black, fillcolor=green, patentry=false, patexit=false, pattern=CRYRING_C_2019_november_extraction, qhi=false, qil=false, qlo=false, shape=rectangle, style=filled, tperiod=6892000000, type=block];
 CRYRING_C_2019_november_extraction_ENTRY [beamproc=undefined, bpentry=false, bpexit=false, color=darkorange3, fillcolor=green, patentry=true, patexit=false, pattern=CRYRING_C_2019_november_extraction, penwidth=2, qhi=false, qil=false, qlo=false, shape=rectangle, style=filled, tperiod=10000, type=block];
@@ -158,223 +156,232 @@ SIS18_SLOW_HTP_ENG_RUN_REPCOUNT_FLOW [beamproc=undefined, bpentry=false, bpexit=
 ...(118)
 CRYRING_C_2019_november_extraction_120" [color=black, fillcolor=green, label="CRYRING_C_2019_november_extraction_001
 ...(118)
-CRYRING_C_2019_november_extraction_120", pattern=CRYRING_C_2019_november_extraction, shape=oval, style=filled];
+CRYRING_C_2019_november_extraction_120", pattern=CRYRING_C_2019_november_extraction, shape=oval, style=filled, type=tmsg];
 "ESR_20Nov_Stacking_new_SL.C1.2_EXIT
-ESR_20Nov_Stacking_new_SL.C1.3_ENTRY" [color=black, fillcolor=white, pattern=ESR_20Nov_Stacking_new_SL, shape=rectangle, style=filled];
+ESR_20Nov_Stacking_new_SL.C1.3_ENTRY" [color=black, fillcolor=white, pattern=ESR_20Nov_Stacking_new_SL, shape=rectangle, style=filled, type=block];
+"ESR_20Nov_Stacking_new_SL.C1.4_ENTRY
+ESR_20Nov_Stacking_new_SL.C1.4_BLOCK_ENTRY" [color=black, fillcolor=white, pattern=ESR_20Nov_Stacking_new_SL, shape=rectangle, style=filled, type=block];
 "ESR_20Nov_Stacking_new_SL.C1.4_BREAK_EXIT
 ESR_20Nov_Stacking_new_SL.C1.4_EXIT
-ESR_20Nov_Stacking_new_SL.C1.5_ENTRY" [color=black, fillcolor=white, pattern=ESR_20Nov_Stacking_new_SL, shape=rectangle, style=filled];
+ESR_20Nov_Stacking_new_SL.C1.5_ENTRY" [color=black, fillcolor=white, pattern=ESR_20Nov_Stacking_new_SL, shape=rectangle, style=filled, type=block];
+"ESR_20Nov_Stacking_new_SL.C1.6_ENTRY
+ESR_20Nov_Stacking_new_SL.C1.6_BLOCK_ENTRY" [color=black, fillcolor=white, pattern=ESR_20Nov_Stacking_new_SL, shape=rectangle, style=filled, type=block];
+"ESR_20Nov_Stacking_new_SL.C1.6_BLOCK_EXIT
+ESR_20Nov_Stacking_new_SL.C1.6_EXIT" [color=black, fillcolor=white, pattern=ESR_20Nov_Stacking_new_SL, shape=rectangle, style=filled, type=block];
 "ESR_20Nov_Stacking_new_SL_001
 ESR_20Nov_Stacking_new_SL_002
-ESR_20Nov_Stacking_new_SL_003" [color=black, fillcolor=white, pattern=ESR_20Nov_Stacking_new_SL, shape=oval, style=filled];
+ESR_20Nov_Stacking_new_SL_003" [color=black, fillcolor=white, pattern=ESR_20Nov_Stacking_new_SL, shape=oval, style=filled, type=tmsg];
 "ESR_20Nov_Stacking_new_SL_004
 ...(6)
 ESR_20Nov_Stacking_new_SL_011" [color=black, fillcolor=white, label="ESR_20Nov_Stacking_new_SL_004
 ...(6)
-ESR_20Nov_Stacking_new_SL_011", pattern=ESR_20Nov_Stacking_new_SL, shape=oval, style=filled];
+ESR_20Nov_Stacking_new_SL_011", pattern=ESR_20Nov_Stacking_new_SL, shape=oval, style=filled, type=tmsg];
 "ESR_20Nov_Stacking_new_SL_012
 ...(43)
 ESR_20Nov_Stacking_new_SL_056" [color=black, fillcolor=white, label="ESR_20Nov_Stacking_new_SL_012
 ...(43)
-ESR_20Nov_Stacking_new_SL_056", pattern=ESR_20Nov_Stacking_new_SL, shape=oval, style=filled];
+ESR_20Nov_Stacking_new_SL_056", pattern=ESR_20Nov_Stacking_new_SL, shape=oval, style=filled, type=tmsg];
 "ESR_20Nov_Stacking_new_SL_057
 ...(3)
 ESR_20Nov_Stacking_new_SL_061" [color=black, fillcolor=white, label="ESR_20Nov_Stacking_new_SL_057
 ...(3)
-ESR_20Nov_Stacking_new_SL_061", pattern=ESR_20Nov_Stacking_new_SL, shape=oval, style=filled];
+ESR_20Nov_Stacking_new_SL_061", pattern=ESR_20Nov_Stacking_new_SL, shape=oval, style=filled, type=tmsg];
 "ESR_20Nov_Stacking_new_SL_062
 ...(12)
 ESR_20Nov_Stacking_new_SL_075" [color=black, fillcolor=white, label="ESR_20Nov_Stacking_new_SL_062
 ...(12)
-ESR_20Nov_Stacking_new_SL_075", pattern=ESR_20Nov_Stacking_new_SL, shape=oval, style=filled];
+ESR_20Nov_Stacking_new_SL_075", pattern=ESR_20Nov_Stacking_new_SL, shape=oval, style=filled, type=tmsg];
 "ESR_20Nov_Stacking_new_SL_076
 ...(3)
 ESR_20Nov_Stacking_new_SL_080" [color=black, fillcolor=white, label="ESR_20Nov_Stacking_new_SL_076
 ...(3)
-ESR_20Nov_Stacking_new_SL_080", pattern=ESR_20Nov_Stacking_new_SL, shape=oval, style=filled];
+ESR_20Nov_Stacking_new_SL_080", pattern=ESR_20Nov_Stacking_new_SL, shape=oval, style=filled, type=tmsg];
 "ESR_20Nov_Stacking_new_SL_081
-ESR_20Nov_Stacking_new_SL_082" [color=black, fillcolor=white, pattern=ESR_20Nov_Stacking_new_SL, shape=oval, style=filled];
+ESR_20Nov_Stacking_new_SL_082" [color=black, fillcolor=white, pattern=ESR_20Nov_Stacking_new_SL, shape=oval, style=filled, type=tmsg];
+"ESR_20Nov_Stacking_new_SL_083
+...(28)
+ESR_20Nov_Stacking_new_SL_112" [color=black, fillcolor=white, label="ESR_20Nov_Stacking_new_SL_083
+...(28)
+ESR_20Nov_Stacking_new_SL_112", pattern=ESR_20Nov_Stacking_new_SL, shape=oval, style=filled, type=tmsg];
 "ESR_20Nov_Stacking_new_SL_113
 ...(3)
 ESR_20Nov_Stacking_new_SL_117" [color=black, fillcolor=white, label="ESR_20Nov_Stacking_new_SL_113
 ...(3)
-ESR_20Nov_Stacking_new_SL_117", pattern=ESR_20Nov_Stacking_new_SL, shape=oval, style=filled];
+ESR_20Nov_Stacking_new_SL_117", pattern=ESR_20Nov_Stacking_new_SL, shape=oval, style=filled, type=tmsg];
 "ESR_20Nov_Stacking_new_SL_118
 ...(12)
 ESR_20Nov_Stacking_new_SL_131" [color=black, fillcolor=white, label="ESR_20Nov_Stacking_new_SL_118
 ...(12)
-ESR_20Nov_Stacking_new_SL_131", pattern=ESR_20Nov_Stacking_new_SL, shape=oval, style=filled];
+ESR_20Nov_Stacking_new_SL_131", pattern=ESR_20Nov_Stacking_new_SL, shape=oval, style=filled, type=tmsg];
 "ESR_20Nov_Stacking_new_SL_132
 ...(3)
 ESR_20Nov_Stacking_new_SL_136" [color=black, fillcolor=white, label="ESR_20Nov_Stacking_new_SL_132
 ...(3)
-ESR_20Nov_Stacking_new_SL_136", pattern=ESR_20Nov_Stacking_new_SL, shape=oval, style=filled];
+ESR_20Nov_Stacking_new_SL_136", pattern=ESR_20Nov_Stacking_new_SL, shape=oval, style=filled, type=tmsg];
 "ESR_20Nov_Stacking_new_SL_137
-ESR_20Nov_Stacking_new_SL_138" [color=black, fillcolor=white, pattern=ESR_20Nov_Stacking_new_SL, shape=oval, style=filled];
+ESR_20Nov_Stacking_new_SL_138" [color=black, fillcolor=white, pattern=ESR_20Nov_Stacking_new_SL, shape=oval, style=filled, type=tmsg];
+"ESR_20Nov_Stacking_new_SL_139
+...(18)
+ESR_20Nov_Stacking_new_SL_158" [color=black, fillcolor=white, label="ESR_20Nov_Stacking_new_SL_139
+...(18)
+ESR_20Nov_Stacking_new_SL_158", pattern=ESR_20Nov_Stacking_new_SL, shape=oval, style=filled, type=tmsg];
 "ESR_20Nov_Stacking_new_SL_159
 ...(12)
 ESR_20Nov_Stacking_new_SL_172" [color=black, fillcolor=white, label="ESR_20Nov_Stacking_new_SL_159
 ...(12)
-ESR_20Nov_Stacking_new_SL_172", pattern=ESR_20Nov_Stacking_new_SL, shape=oval, style=filled];
+ESR_20Nov_Stacking_new_SL_172", pattern=ESR_20Nov_Stacking_new_SL, shape=oval, style=filled, type=tmsg];
 "ESR_20Nov_Stacking_new_SL_173
 ESR_20Nov_Stacking_new_SL_174
-ESR_20Nov_Stacking_new_SL_175" [color=black, fillcolor=white, pattern=ESR_20Nov_Stacking_new_SL, shape=oval, style=filled];
+ESR_20Nov_Stacking_new_SL_175" [color=black, fillcolor=white, pattern=ESR_20Nov_Stacking_new_SL, shape=oval, style=filled, type=tmsg];
+"ESR_INJECTION_COOLING_2.C1.1_ENTRY
+ESR_INJECTION_COOLING_2.C1.1_BLOCK_ENTRY" [color=black, fillcolor=green, pattern=ESR_INJECTION_COOLING_2, shape=rectangle, style=filled, type=block];
+"ESR_INJECTION_COOLING_2.C1.1_BLOCK_EXIT
+ESR_INJECTION_COOLING_2.C1.1_EXIT
+ESR_INJECTION_COOLING_2.C1.2_ENTRY" [color=black, fillcolor=green, pattern=ESR_INJECTION_COOLING_2, shape=rectangle, style=filled, type=block];
 "ESR_INJECTION_COOLING_2.C1.2_EXIT
-ESR_INJECTION_COOLING_2.C1.3_ENTRY" [color=black, fillcolor=green, pattern=ESR_INJECTION_COOLING_2, shape=rectangle, style=filled];
+ESR_INJECTION_COOLING_2.C1.3_ENTRY" [color=black, fillcolor=green, pattern=ESR_INJECTION_COOLING_2, shape=rectangle, style=filled, type=block];
+"ESR_INJECTION_COOLING_2.C1.4_ENTRY
+ESR_INJECTION_COOLING_2.C1.4_BLOCK_ENTRY" [color=black, fillcolor=green, pattern=ESR_INJECTION_COOLING_2, shape=rectangle, style=filled, type=block];
+"ESR_INJECTION_COOLING_2.C1.4_BLOCK_EXIT
+...(2)
+ESR_INJECTION_COOLING_2.C1.5_BLOCK_ENTRY" [color=black, fillcolor=green, label="ESR_INJECTION_COOLING_2.C1.4_BLOCK_EXIT
+...(2)
+ESR_INJECTION_COOLING_2.C1.5_BLOCK_ENTRY", pattern=ESR_INJECTION_COOLING_2, shape=rectangle, style=filled, type=block];
+"ESR_INJECTION_COOLING_2.C1.5_BLOCK_EXIT
+ESR_INJECTION_COOLING_2.C1.5_EXIT" [color=black, fillcolor=green, pattern=ESR_INJECTION_COOLING_2, shape=rectangle, style=filled, type=block];
+"ESR_INJECTION_COOLING_2_001
+ESR_INJECTION_COOLING_2_002
+ESR_INJECTION_COOLING_2_003" [color=black, fillcolor=green, pattern=ESR_INJECTION_COOLING_2, shape=oval, style=filled, type=tmsg];
+"ESR_INJECTION_COOLING_2_004
+...(6)
+ESR_INJECTION_COOLING_2_011" [color=black, fillcolor=green, label="ESR_INJECTION_COOLING_2_004
+...(6)
+ESR_INJECTION_COOLING_2_011", pattern=ESR_INJECTION_COOLING_2, shape=oval, style=filled, type=tmsg];
 "ESR_INJECTION_COOLING_2_012
 ...(14)
 ESR_INJECTION_COOLING_2_027" [color=black, fillcolor=green, label="ESR_INJECTION_COOLING_2_012
 ...(14)
-ESR_INJECTION_COOLING_2_027", pattern=ESR_INJECTION_COOLING_2, shape=oval, style=filled];
+ESR_INJECTION_COOLING_2_027", pattern=ESR_INJECTION_COOLING_2, shape=oval, style=filled, type=tmsg];
 "ESR_INJECTION_COOLING_2_028
 ...(13)
 ESR_INJECTION_COOLING_2_042" [color=black, fillcolor=green, label="ESR_INJECTION_COOLING_2_028
 ...(13)
-ESR_INJECTION_COOLING_2_042", pattern=ESR_INJECTION_COOLING_2, shape=oval, style=filled];
+ESR_INJECTION_COOLING_2_042", pattern=ESR_INJECTION_COOLING_2, shape=oval, style=filled, type=tmsg];
 "ESR_INJECTION_COOLING_2_043
 ...(3)
 ESR_INJECTION_COOLING_2_047" [color=black, fillcolor=white, label="ESR_INJECTION_COOLING_2_043
 ...(3)
-ESR_INJECTION_COOLING_2_047", pattern=ESR_INJECTION_COOLING_2, shape=oval, style=filled];
+ESR_INJECTION_COOLING_2_047", pattern=ESR_INJECTION_COOLING_2, shape=oval, style=filled, type=tmsg];
 "ESR_INJECTION_COOLING_2_048
 ...(12)
 ESR_INJECTION_COOLING_2_061" [color=black, fillcolor=green, label="ESR_INJECTION_COOLING_2_048
 ...(12)
-ESR_INJECTION_COOLING_2_061", pattern=ESR_INJECTION_COOLING_2, shape=oval, style=filled];
+ESR_INJECTION_COOLING_2_061", pattern=ESR_INJECTION_COOLING_2, shape=oval, style=filled, type=tmsg];
 "ESR_INJECTION_COOLING_2_062
 ...(3)
 ESR_INJECTION_COOLING_2_066" [color=black, fillcolor=white, label="ESR_INJECTION_COOLING_2_062
 ...(3)
-ESR_INJECTION_COOLING_2_066", pattern=ESR_INJECTION_COOLING_2, shape=oval, style=filled];
+ESR_INJECTION_COOLING_2_066", pattern=ESR_INJECTION_COOLING_2, shape=oval, style=filled, type=tmsg];
 "ESR_INJECTION_COOLING_2_067
-ESR_INJECTION_COOLING_2_068" [color=black, fillcolor=white, pattern=ESR_INJECTION_COOLING_2, shape=oval, style=filled];
+ESR_INJECTION_COOLING_2_068" [color=black, fillcolor=white, pattern=ESR_INJECTION_COOLING_2, shape=oval, style=filled, type=tmsg];
+"ESR_INJECTION_COOLING_2_069
+...(14)
+ESR_INJECTION_COOLING_2_084" [color=black, fillcolor=green, label="ESR_INJECTION_COOLING_2_069
+...(14)
+ESR_INJECTION_COOLING_2_084", pattern=ESR_INJECTION_COOLING_2, shape=oval, style=filled, type=tmsg];
+"ESR_INJECTION_COOLING_2_085
+...(12)
+ESR_INJECTION_COOLING_2_098" [color=black, fillcolor=green, label="ESR_INJECTION_COOLING_2_085
+...(12)
+ESR_INJECTION_COOLING_2_098", pattern=ESR_INJECTION_COOLING_2, shape=oval, style=filled, type=tmsg];
+"ESR_INJECTION_COOLING_2_099
+ESR_INJECTION_COOLING_2_100
+ESR_INJECTION_COOLING_2_101" [color=black, fillcolor=green, pattern=ESR_INJECTION_COOLING_2, shape=oval, style=filled, type=tmsg];
 "SIS18_FAST_ESR_REBUNCH_ENG_RUN_001
 ...(21)
 SIS18_FAST_ESR_REBUNCH_ENG_RUN_023" [color=black, fillcolor=green, label="SIS18_FAST_ESR_REBUNCH_ENG_RUN_001
 ...(21)
-SIS18_FAST_ESR_REBUNCH_ENG_RUN_023", pattern=SIS18_FAST_ESR_REBUNCH_ENG_RUN, shape=oval, style=filled];
+SIS18_FAST_ESR_REBUNCH_ENG_RUN_023", pattern=SIS18_FAST_ESR_REBUNCH_ENG_RUN, shape=oval, style=filled, type=tmsg];
 "SIS18_FAST_ESR_REBUNCH_ENG_RUN_025
 ...(8)
 SIS18_FAST_ESR_REBUNCH_ENG_RUN_034" [color=black, fillcolor=green, label="SIS18_FAST_ESR_REBUNCH_ENG_RUN_025
 ...(8)
-SIS18_FAST_ESR_REBUNCH_ENG_RUN_034", pattern=SIS18_FAST_ESR_REBUNCH_ENG_RUN, shape=oval, style=filled];
+SIS18_FAST_ESR_REBUNCH_ENG_RUN_034", pattern=SIS18_FAST_ESR_REBUNCH_ENG_RUN, shape=oval, style=filled, type=tmsg];
 "SIS18_FAST_ESR_REBUNCH_ENG_RUN_036
 ...(6)
 SIS18_FAST_ESR_REBUNCH_ENG_RUN_043" [color=black, fillcolor=green, label="SIS18_FAST_ESR_REBUNCH_ENG_RUN_036
 ...(6)
-SIS18_FAST_ESR_REBUNCH_ENG_RUN_043", pattern=SIS18_FAST_ESR_REBUNCH_ENG_RUN, shape=oval, style=filled];
+SIS18_FAST_ESR_REBUNCH_ENG_RUN_043", pattern=SIS18_FAST_ESR_REBUNCH_ENG_RUN, shape=oval, style=filled, type=tmsg];
 "SIS18_FAST_ESR_REBUNCH_ENG_RUN_044
 ...(24)
 SIS18_FAST_ESR_REBUNCH_ENG_RUN_069" [color=black, fillcolor=green, label="SIS18_FAST_ESR_REBUNCH_ENG_RUN_044
 ...(24)
-SIS18_FAST_ESR_REBUNCH_ENG_RUN_069", pattern=SIS18_FAST_ESR_REBUNCH_ENG_RUN, shape=oval, style=filled];
+SIS18_FAST_ESR_REBUNCH_ENG_RUN_069", pattern=SIS18_FAST_ESR_REBUNCH_ENG_RUN, shape=oval, style=filled, type=tmsg];
 "SIS18_FAST_ESR_REBUNCH_ENG_RUN_070
 ...(33)
 SIS18_FAST_ESR_REBUNCH_ENG_RUN_104" [color=black, fillcolor=green, label="SIS18_FAST_ESR_REBUNCH_ENG_RUN_070
 ...(33)
-SIS18_FAST_ESR_REBUNCH_ENG_RUN_104", pattern=SIS18_FAST_ESR_REBUNCH_ENG_RUN, shape=oval, style=filled];
+SIS18_FAST_ESR_REBUNCH_ENG_RUN_104", pattern=SIS18_FAST_ESR_REBUNCH_ENG_RUN, shape=oval, style=filled, type=tmsg];
 "SIS18_FAST_HTP_ENG_RUN_001
 ...(32)
 SIS18_FAST_HTP_ENG_RUN_034" [color=black, fillcolor=green, label="SIS18_FAST_HTP_ENG_RUN_001
 ...(32)
-SIS18_FAST_HTP_ENG_RUN_034", pattern=SIS18_FAST_HTP_ENG_RUN, shape=oval, style=filled];
+SIS18_FAST_HTP_ENG_RUN_034", pattern=SIS18_FAST_HTP_ENG_RUN, shape=oval, style=filled, type=tmsg];
 "SIS18_FAST_HTP_ENG_RUN_036
 ...(5)
 SIS18_FAST_HTP_ENG_RUN_042" [color=black, fillcolor=green, label="SIS18_FAST_HTP_ENG_RUN_036
 ...(5)
-SIS18_FAST_HTP_ENG_RUN_042", pattern=SIS18_FAST_HTP_ENG_RUN, shape=oval, style=filled];
+SIS18_FAST_HTP_ENG_RUN_042", pattern=SIS18_FAST_HTP_ENG_RUN, shape=oval, style=filled, type=tmsg];
 "SIS18_FAST_HTP_ENG_RUN_044
 ...(6)
 SIS18_FAST_HTP_ENG_RUN_051" [color=black, fillcolor=green, label="SIS18_FAST_HTP_ENG_RUN_044
 ...(6)
-SIS18_FAST_HTP_ENG_RUN_051", pattern=SIS18_FAST_HTP_ENG_RUN, shape=oval, style=filled];
+SIS18_FAST_HTP_ENG_RUN_051", pattern=SIS18_FAST_HTP_ENG_RUN, shape=oval, style=filled, type=tmsg];
 "SIS18_FAST_HTP_ENG_RUN_052
 ...(66)
 SIS18_FAST_HTP_ENG_RUN_119" [color=black, fillcolor=green, label="SIS18_FAST_HTP_ENG_RUN_052
 ...(66)
-SIS18_FAST_HTP_ENG_RUN_119", pattern=SIS18_FAST_HTP_ENG_RUN, shape=oval, style=filled];
+SIS18_FAST_HTP_ENG_RUN_119", pattern=SIS18_FAST_HTP_ENG_RUN, shape=oval, style=filled, type=tmsg];
 "SIS18_SLOW_HFS_20191119_061619_001
 ...(16)
 SIS18_SLOW_HFS_20191119_061619_018" [color=black, fillcolor=green, label="SIS18_SLOW_HFS_20191119_061619_001
 ...(16)
-SIS18_SLOW_HFS_20191119_061619_018", pattern=SIS18_SLOW_HFS_20191119_061619, shape=oval, style=filled];
+SIS18_SLOW_HFS_20191119_061619_018", pattern=SIS18_SLOW_HFS_20191119_061619, shape=oval, style=filled, type=tmsg];
 "SIS18_SLOW_HFS_20191119_061619_020
 ...(4)
 SIS18_SLOW_HFS_20191119_061619_025" [color=black, fillcolor=green, label="SIS18_SLOW_HFS_20191119_061619_020
 ...(4)
-SIS18_SLOW_HFS_20191119_061619_025", pattern=SIS18_SLOW_HFS_20191119_061619, shape=oval, style=filled];
+SIS18_SLOW_HFS_20191119_061619_025", pattern=SIS18_SLOW_HFS_20191119_061619, shape=oval, style=filled, type=tmsg];
 "SIS18_SLOW_HFS_20191119_061619_027
 ...(6)
 SIS18_SLOW_HFS_20191119_061619_034" [color=black, fillcolor=green, label="SIS18_SLOW_HFS_20191119_061619_027
 ...(6)
-SIS18_SLOW_HFS_20191119_061619_034", pattern=SIS18_SLOW_HFS_20191119_061619, shape=oval, style=filled];
+SIS18_SLOW_HFS_20191119_061619_034", pattern=SIS18_SLOW_HFS_20191119_061619, shape=oval, style=filled, type=tmsg];
 "SIS18_SLOW_HFS_20191119_061619_035
 ...(42)
 SIS18_SLOW_HFS_20191119_061619_078" [color=black, fillcolor=green, label="SIS18_SLOW_HFS_20191119_061619_035
 ...(42)
-SIS18_SLOW_HFS_20191119_061619_078", pattern=SIS18_SLOW_HFS_20191119_061619, shape=oval, style=filled];
+SIS18_SLOW_HFS_20191119_061619_078", pattern=SIS18_SLOW_HFS_20191119_061619, shape=oval, style=filled, type=tmsg];
 "SIS18_SLOW_HTP_ENG_RUN_001
 ...(32)
 SIS18_SLOW_HTP_ENG_RUN_034" [color=black, fillcolor=green, label="SIS18_SLOW_HTP_ENG_RUN_001
 ...(32)
-SIS18_SLOW_HTP_ENG_RUN_034", pattern=SIS18_SLOW_HTP_ENG_RUN, shape=oval, style=filled];
+SIS18_SLOW_HTP_ENG_RUN_034", pattern=SIS18_SLOW_HTP_ENG_RUN, shape=oval, style=filled, type=tmsg];
 "SIS18_SLOW_HTP_ENG_RUN_036
 ...(4)
 SIS18_SLOW_HTP_ENG_RUN_041" [color=black, fillcolor=green, label="SIS18_SLOW_HTP_ENG_RUN_036
 ...(4)
-SIS18_SLOW_HTP_ENG_RUN_041", pattern=SIS18_SLOW_HTP_ENG_RUN, shape=oval, style=filled];
+SIS18_SLOW_HTP_ENG_RUN_041", pattern=SIS18_SLOW_HTP_ENG_RUN, shape=oval, style=filled, type=tmsg];
 "SIS18_SLOW_HTP_ENG_RUN_043
 ...(6)
 SIS18_SLOW_HTP_ENG_RUN_050" [color=black, fillcolor=green, label="SIS18_SLOW_HTP_ENG_RUN_043
 ...(6)
-SIS18_SLOW_HTP_ENG_RUN_050", pattern=SIS18_SLOW_HTP_ENG_RUN, shape=oval, style=filled];
+SIS18_SLOW_HTP_ENG_RUN_050", pattern=SIS18_SLOW_HTP_ENG_RUN, shape=oval, style=filled, type=tmsg];
 "SIS18_SLOW_HTP_ENG_RUN_051
 ...(66)
 SIS18_SLOW_HTP_ENG_RUN_118" [color=black, fillcolor=green, label="SIS18_SLOW_HTP_ENG_RUN_051
 ...(66)
-SIS18_SLOW_HTP_ENG_RUN_118", pattern=SIS18_SLOW_HTP_ENG_RUN, shape=oval, style=filled];
-"ESR_20Nov_Stacking_new_SL.C1.4_ENTRY
-ESR_20Nov_Stacking_new_SL.C1.4_BLOCK_ENTRY
-ESR_20Nov_Stacking_new_SL_083
-...(28)
-ESR_20Nov_Stacking_new_SL_112" [color=black, fillcolor=white, label="
-ESR_20Nov_Stacking_new_SL_083
-...(28)
-ESR_20Nov_Stacking_new_SL_112", pattern=ESR_20Nov_Stacking_new_SL, shape=rectangle, style=filled];
-"ESR_20Nov_Stacking_new_SL.C1.6_ENTRY
-ESR_20Nov_Stacking_new_SL.C1.6_BLOCK_ENTRY
-ESR_20Nov_Stacking_new_SL_139
-...(18)
-ESR_20Nov_Stacking_new_SL_158
-ESR_20Nov_Stacking_new_SL.C1.6_BLOCK_EXIT
-ESR_20Nov_Stacking_new_SL.C1.6_EXIT" [color=black, fillcolor=white, label="
-ESR_20Nov_Stacking_new_SL_139
-...(18)
-ESR_20Nov_Stacking_new_SL_158", pattern=ESR_20Nov_Stacking_new_SL, shape=rectangle, style=filled];
-"ESR_INJECTION_COOLING_2_001
-ESR_INJECTION_COOLING_2_002
-ESR_INJECTION_COOLING_2_003
-...(2)
-ESR_INJECTION_COOLING_2.C1.1_BLOCK_EXIT
-ESR_INJECTION_COOLING_2.C1.1_EXIT
-ESR_INJECTION_COOLING_2.C1.2_ENTRY" [color=black, fillcolor=green, label="ESR_INJECTION_COOLING_2_001
-ESR_INJECTION_COOLING_2_002
-ESR_INJECTION_COOLING_2_003
-...(2)
-ESR_INJECTION_COOLING_2.C1.1_BLOCK_EXIT
-ESR_INJECTION_COOLING_2.C1.1_EXIT
-ESR_INJECTION_COOLING_2.C1.2_ENTRY", pattern=ESR_INJECTION_COOLING_2, shape=oval, style=filled];
-"ESR_INJECTION_COOLING_2.C1.4_ENTRY
-ESR_INJECTION_COOLING_2.C1.4_BLOCK_ENTRY
-...(4)
-ESR_INJECTION_COOLING_2_099
-ESR_INJECTION_COOLING_2_100
-ESR_INJECTION_COOLING_2_101" [color=black, fillcolor=green, label="ESR_INJECTION_COOLING_2.C1.4_ENTRY
-ESR_INJECTION_COOLING_2.C1.4_BLOCK_ENTRY
-...(4)
-ESR_INJECTION_COOLING_2_099
-ESR_INJECTION_COOLING_2_100
-ESR_INJECTION_COOLING_2_101", pattern=ESR_INJECTION_COOLING_2, shape=rectangle, style=filled];
+SIS18_SLOW_HTP_ENG_RUN_118", pattern=SIS18_SLOW_HTP_ENG_RUN, shape=oval, style=filled, type=tmsg];
 SA_20191117145507303_DEFAULT_000->SA_20191117145507303_DEFAULT_BLOCK  [color=red, type=defdst];
 SA_20191117145507303_DEFAULT_BLOCK->SA_20191117145507303_DEFAULT_EXIT  [color=red, type=defdst];
 SA_20191117145507303_DEFAULT_ENTRY->SA_20191117145507303_DEFAULT_000  [color=red, type=defdst];
@@ -610,12 +617,18 @@ CRYRING_C_2019_november_extraction_120"->CRYRING_C_2019_november_extraction_BLOC
 ESR_20Nov_Stacking_new_SL.C1.3_ENTRY"  [color=red, type=defdst];
 "ESR_20Nov_Stacking_new_SL.C1.2_EXIT
 ESR_20Nov_Stacking_new_SL.C1.3_ENTRY"->"ESR_20Nov_Stacking_new_SL.C1.3_MANIP_PERFORM_ENTRY"  [color=red, type=defdst];
+"ESR_20Nov_Stacking_new_SL.C1.3_EXIT"->"ESR_20Nov_Stacking_new_SL.C1.4_ENTRY
+ESR_20Nov_Stacking_new_SL.C1.4_BLOCK_ENTRY"  [color=red, type=defdst];
 "ESR_20Nov_Stacking_new_SL.C1.4_BREAK_ENTRY"->"ESR_20Nov_Stacking_new_SL.C1.4_BREAK_EXIT
 ESR_20Nov_Stacking_new_SL.C1.4_EXIT
 ESR_20Nov_Stacking_new_SL.C1.5_ENTRY"  [color=red, type=defdst];
 "ESR_20Nov_Stacking_new_SL.C1.4_BREAK_EXIT
 ESR_20Nov_Stacking_new_SL.C1.4_EXIT
 ESR_20Nov_Stacking_new_SL.C1.5_ENTRY"->"ESR_20Nov_Stacking_new_SL.C1.5_MANIP_PERFORM_ENTRY"  [color=red, type=defdst];
+"ESR_20Nov_Stacking_new_SL.C1.5_EXIT"->"ESR_20Nov_Stacking_new_SL.C1.6_ENTRY
+ESR_20Nov_Stacking_new_SL.C1.6_BLOCK_ENTRY"  [color=red, type=defdst];
+"ESR_20Nov_Stacking_new_SL.C1.6_BLOCK_EXIT
+ESR_20Nov_Stacking_new_SL.C1.6_EXIT"->"ESR_20Nov_Stacking_new_SL.C1.7_ENTRY"  [color=red, type=defdst];
 ESR_20Nov_Stacking_new_SL_000->"ESR_20Nov_Stacking_new_SL_001
 ESR_20Nov_Stacking_new_SL_002
 ESR_20Nov_Stacking_new_SL_003"  [color=red, type=defdst];
@@ -656,6 +669,13 @@ ESR_20Nov_Stacking_new_SL_080"->"ESR_20Nov_Stacking_new_SL.C1.3_MANIP_WAIT_EXIT"
 ESR_20Nov_Stacking_new_SL_082"  [color=red, type=defdst];
 "ESR_20Nov_Stacking_new_SL_081
 ESR_20Nov_Stacking_new_SL_082"->"ESR_20Nov_Stacking_new_SL.C1.3_MANIP_RESTART_FGS_EXIT"  [color=red, type=defdst];
+"ESR_20Nov_Stacking_new_SL.C1.4_ENTRY
+ESR_20Nov_Stacking_new_SL.C1.4_BLOCK_ENTRY"->"ESR_20Nov_Stacking_new_SL_083
+...(28)
+ESR_20Nov_Stacking_new_SL_112"  [color=red, type=defdst];
+"ESR_20Nov_Stacking_new_SL_083
+...(28)
+ESR_20Nov_Stacking_new_SL_112"->"ESR_20Nov_Stacking_new_SL.C1.4_BLOCK_EXIT"  [color=red, type=defdst];
 "ESR_20Nov_Stacking_new_SL.C1.4_BREAK_BLOCK_ENTRY"->"ESR_20Nov_Stacking_new_SL_113
 ...(3)
 ESR_20Nov_Stacking_new_SL_117"  [color=red, type=defdst];
@@ -678,6 +698,14 @@ ESR_20Nov_Stacking_new_SL_136"->"ESR_20Nov_Stacking_new_SL.C1.5_MANIP_WAIT_EXIT"
 ESR_20Nov_Stacking_new_SL_138"  [color=red, type=defdst];
 "ESR_20Nov_Stacking_new_SL_137
 ESR_20Nov_Stacking_new_SL_138"->"ESR_20Nov_Stacking_new_SL.C1.5_MANIP_RESTART_FGS_EXIT"  [color=red, type=defdst];
+"ESR_20Nov_Stacking_new_SL.C1.6_ENTRY
+ESR_20Nov_Stacking_new_SL.C1.6_BLOCK_ENTRY"->"ESR_20Nov_Stacking_new_SL_139
+...(18)
+ESR_20Nov_Stacking_new_SL_158"  [color=red, type=defdst];
+"ESR_20Nov_Stacking_new_SL_139
+...(18)
+ESR_20Nov_Stacking_new_SL_158"->"ESR_20Nov_Stacking_new_SL.C1.6_BLOCK_EXIT
+ESR_20Nov_Stacking_new_SL.C1.6_EXIT"  [color=red, type=defdst];
 "ESR_20Nov_Stacking_new_SL.C1.7_BLOCK_ENTRY"->"ESR_20Nov_Stacking_new_SL_159
 ...(12)
 ESR_20Nov_Stacking_new_SL_172"  [color=red, type=defdst];
@@ -690,10 +718,31 @@ ESR_20Nov_Stacking_new_SL_175"  [color=red, type=defdst];
 "ESR_20Nov_Stacking_new_SL_173
 ESR_20Nov_Stacking_new_SL_174
 ESR_20Nov_Stacking_new_SL_175"->ESR_20Nov_Stacking_new_SL_BLOCK  [color=red, type=defdst];
+"ESR_INJECTION_COOLING_2.C1.1_BLOCK_EXIT
+ESR_INJECTION_COOLING_2.C1.1_EXIT
+ESR_INJECTION_COOLING_2.C1.2_ENTRY"->"ESR_INJECTION_COOLING_2.C1.2_REPCOUNT_FLOW"  [color=red, type=defdst];
 "ESR_INJECTION_COOLING_2.C1.2_REPCOUNT_BLOCK"->"ESR_INJECTION_COOLING_2.C1.2_EXIT
 ESR_INJECTION_COOLING_2.C1.3_ENTRY"  [color=red, type=defdst];
 "ESR_INJECTION_COOLING_2.C1.2_EXIT
 ESR_INJECTION_COOLING_2.C1.3_ENTRY"->"ESR_INJECTION_COOLING_2.C1.3_MANIP_PERFORM_ENTRY"  [color=red, type=defdst];
+"ESR_INJECTION_COOLING_2.C1.3_EXIT"->"ESR_INJECTION_COOLING_2.C1.4_ENTRY
+ESR_INJECTION_COOLING_2.C1.4_BLOCK_ENTRY"  [color=red, type=defdst];
+ESR_INJECTION_COOLING_2_000->"ESR_INJECTION_COOLING_2_001
+ESR_INJECTION_COOLING_2_002
+ESR_INJECTION_COOLING_2_003"  [color=red, type=defdst];
+"ESR_INJECTION_COOLING_2_001
+ESR_INJECTION_COOLING_2_002
+ESR_INJECTION_COOLING_2_003"->"ESR_INJECTION_COOLING_2.C1.1_ENTRY
+ESR_INJECTION_COOLING_2.C1.1_BLOCK_ENTRY"  [color=red, type=defdst];
+"ESR_INJECTION_COOLING_2.C1.1_ENTRY
+ESR_INJECTION_COOLING_2.C1.1_BLOCK_ENTRY"->"ESR_INJECTION_COOLING_2_004
+...(6)
+ESR_INJECTION_COOLING_2_011"  [color=red, type=defdst];
+"ESR_INJECTION_COOLING_2_004
+...(6)
+ESR_INJECTION_COOLING_2_011"->"ESR_INJECTION_COOLING_2.C1.1_BLOCK_EXIT
+ESR_INJECTION_COOLING_2.C1.1_EXIT
+ESR_INJECTION_COOLING_2.C1.2_ENTRY"  [color=red, type=defdst];
 "ESR_INJECTION_COOLING_2.C1.2_BLOCK_ENTRY"->"ESR_INJECTION_COOLING_2_012
 ...(14)
 ESR_INJECTION_COOLING_2_027"  [color=red, type=defdst];
@@ -728,6 +777,31 @@ ESR_INJECTION_COOLING_2_066"->"ESR_INJECTION_COOLING_2.C1.3_MANIP_WAIT_EXIT"  [c
 ESR_INJECTION_COOLING_2_068"  [color=red, type=defdst];
 "ESR_INJECTION_COOLING_2_067
 ESR_INJECTION_COOLING_2_068"->"ESR_INJECTION_COOLING_2.C1.3_MANIP_RESTART_FGS_EXIT"  [color=red, type=defdst];
+"ESR_INJECTION_COOLING_2.C1.4_ENTRY
+ESR_INJECTION_COOLING_2.C1.4_BLOCK_ENTRY"->"ESR_INJECTION_COOLING_2_069
+...(14)
+ESR_INJECTION_COOLING_2_084"  [color=red, type=defdst];
+"ESR_INJECTION_COOLING_2_069
+...(14)
+ESR_INJECTION_COOLING_2_084"->"ESR_INJECTION_COOLING_2.C1.4_BLOCK_EXIT
+...(2)
+ESR_INJECTION_COOLING_2.C1.5_BLOCK_ENTRY"  [color=red, type=defdst];
+"ESR_INJECTION_COOLING_2.C1.4_BLOCK_EXIT
+...(2)
+ESR_INJECTION_COOLING_2.C1.5_BLOCK_ENTRY"->"ESR_INJECTION_COOLING_2_085
+...(12)
+ESR_INJECTION_COOLING_2_098"  [color=red, type=defdst];
+"ESR_INJECTION_COOLING_2_085
+...(12)
+ESR_INJECTION_COOLING_2_098"->"ESR_INJECTION_COOLING_2.C1.5_BLOCK_EXIT
+ESR_INJECTION_COOLING_2.C1.5_EXIT"  [color=red, type=defdst];
+"ESR_INJECTION_COOLING_2.C1.5_BLOCK_EXIT
+ESR_INJECTION_COOLING_2.C1.5_EXIT"->"ESR_INJECTION_COOLING_2_099
+ESR_INJECTION_COOLING_2_100
+ESR_INJECTION_COOLING_2_101"  [color=red, type=defdst];
+"ESR_INJECTION_COOLING_2_099
+ESR_INJECTION_COOLING_2_100
+ESR_INJECTION_COOLING_2_101"->ESR_INJECTION_COOLING_2_BLOCK  [color=red, type=defdst];
 SIS18_FAST_ESR_REBUNCH_ENG_RUN_000->"SIS18_FAST_ESR_REBUNCH_ENG_RUN_001
 ...(21)
 SIS18_FAST_ESR_REBUNCH_ENG_RUN_023"  [color=red, type=defdst];
@@ -830,54 +904,4 @@ SIS18_SLOW_HTP_ENG_RUN_118"  [color=red, type=defdst];
 "SIS18_SLOW_HTP_ENG_RUN_051
 ...(66)
 SIS18_SLOW_HTP_ENG_RUN_118"->SIS18_SLOW_HTP_ENG_RUN_BLOCK  [color=red, type=defdst];
-"ESR_20Nov_Stacking_new_SL.C1.3_EXIT"->"ESR_20Nov_Stacking_new_SL.C1.4_ENTRY
-ESR_20Nov_Stacking_new_SL.C1.4_BLOCK_ENTRY
-ESR_20Nov_Stacking_new_SL_083
-...(28)
-ESR_20Nov_Stacking_new_SL_112"  [color=red, type=defdst];
-"ESR_20Nov_Stacking_new_SL.C1.4_ENTRY
-ESR_20Nov_Stacking_new_SL.C1.4_BLOCK_ENTRY
-ESR_20Nov_Stacking_new_SL_083
-...(28)
-ESR_20Nov_Stacking_new_SL_112"->"ESR_20Nov_Stacking_new_SL.C1.4_BLOCK_EXIT"  [color=red, type=defdst];
-"ESR_20Nov_Stacking_new_SL.C1.5_EXIT"->"ESR_20Nov_Stacking_new_SL.C1.6_ENTRY
-ESR_20Nov_Stacking_new_SL.C1.6_BLOCK_ENTRY
-ESR_20Nov_Stacking_new_SL_139
-...(18)
-ESR_20Nov_Stacking_new_SL_158
-ESR_20Nov_Stacking_new_SL.C1.6_BLOCK_EXIT
-ESR_20Nov_Stacking_new_SL.C1.6_EXIT"  [color=red, type=defdst];
-"ESR_20Nov_Stacking_new_SL.C1.6_ENTRY
-ESR_20Nov_Stacking_new_SL.C1.6_BLOCK_ENTRY
-ESR_20Nov_Stacking_new_SL_139
-...(18)
-ESR_20Nov_Stacking_new_SL_158
-ESR_20Nov_Stacking_new_SL.C1.6_BLOCK_EXIT
-ESR_20Nov_Stacking_new_SL.C1.6_EXIT"->"ESR_20Nov_Stacking_new_SL.C1.7_ENTRY"  [color=red, type=defdst];
-ESR_INJECTION_COOLING_2_000->"ESR_INJECTION_COOLING_2_001
-ESR_INJECTION_COOLING_2_002
-ESR_INJECTION_COOLING_2_003
-...(2)
-ESR_INJECTION_COOLING_2.C1.1_BLOCK_EXIT
-ESR_INJECTION_COOLING_2.C1.1_EXIT
-ESR_INJECTION_COOLING_2.C1.2_ENTRY"  [color=red, type=defdst];
-"ESR_INJECTION_COOLING_2_001
-ESR_INJECTION_COOLING_2_002
-ESR_INJECTION_COOLING_2_003
-...(2)
-ESR_INJECTION_COOLING_2.C1.1_BLOCK_EXIT
-ESR_INJECTION_COOLING_2.C1.1_EXIT
-ESR_INJECTION_COOLING_2.C1.2_ENTRY"->"ESR_INJECTION_COOLING_2.C1.2_REPCOUNT_FLOW"  [color=red, type=defdst];
-"ESR_INJECTION_COOLING_2.C1.3_EXIT"->"ESR_INJECTION_COOLING_2.C1.4_ENTRY
-ESR_INJECTION_COOLING_2.C1.4_BLOCK_ENTRY
-...(4)
-ESR_INJECTION_COOLING_2_099
-ESR_INJECTION_COOLING_2_100
-ESR_INJECTION_COOLING_2_101"  [color=red, type=defdst];
-"ESR_INJECTION_COOLING_2.C1.4_ENTRY
-ESR_INJECTION_COOLING_2.C1.4_BLOCK_ENTRY
-...(4)
-ESR_INJECTION_COOLING_2_099
-ESR_INJECTION_COOLING_2_100
-ESR_INJECTION_COOLING_2_101"->ESR_INJECTION_COOLING_2_BLOCK  [color=red, type=defdst];
 }

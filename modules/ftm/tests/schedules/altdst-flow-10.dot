@@ -52,7 +52,6 @@ digraph "altdst-flow-10" {
   Flow07 -> Msg07 [type=flowdst]
   Flow08 -> Msg08 [type=flowdst]
   Flow09 -> Msg09 [type=flowdst]
-  Flow10 -> Msg10 [type=flowdst]
   Flow00 -> Block [type=target]
   Flow01 -> Block [type=target]
   Flow02 -> Block [type=target]

@@ -1,0 +1,10 @@
+digraph G {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+A1[cpu="0", flags="0x00802002", type="tmsg", toffs="0", pattern="patternA", patentry="true", patexit="false", beamproc="beamA", bpentry="false", bpexit="false", fid="1", gid="33", evtno="0", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1021000000000000", par="0x040a0f9c00000000", tef="2068673551", shape     = "oval", fillcolor = "white", penwidth=2, color = "darkorange3"];
+B2[cpu="0", flags="0x00008005", type="flush", toffs="0", pattern="patternA", patentry="false", patexit="true", beamproc="beamA", bpentry="false", bpexit="false", tvalid="0", vabs="false", prio="0", shape     = "hexagon", qlo="false", qhi="false", qil="false", fillcolor = "white"];
+C3[cpu="0", flags="0x00100007", type="block", tperiod="2000", pattern="patternA", patentry="false", patexit="false", beamproc="beamA", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white"];
+A1->B2 [type="dynpar1", color = "pink"];
+B2->C3 [type="defdst", color = "red"];
+A1->C3 [type="defdst", color = "red"];
+}

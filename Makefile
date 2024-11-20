@@ -214,7 +214,7 @@ sdbfs-clean::
 	$(MAKE) -C ip_cores/fpga-config-space/sdbfs DIRS="lib userspace" clean
 
 lm32-toolchain-download :
-	test -f lm32-gcc.tar.xz || wget https://github.com/GSI-CS-CO/lm32-toolchain/releases/download/v1.1-2023-04-04/lm32-gcc-4.5.3.tar.xz -O lm32-gcc.tar.xz
+	test -f lm32-gcc.tar.xz || wget --progress=dot:mega https://github.com/GSI-CS-CO/lm32-toolchain/releases/download/v1.1-2023-04-04/lm32-gcc-4.5.3.tar.xz -O lm32-gcc.tar.xz
 
 lm32-toolchain:	lm32-toolchain-download
 	test -d lm32-gcc || tar -xf lm32-gcc.tar.xz

@@ -1,7 +1,7 @@
 digraph G {
 graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
 node [style     = "filled", fillcolor = "white", color = "black"]
-A1[cpu="0", flags="0x00000007", type="block", tperiod="0", pattern="patternA", patentry=1, patexit=1, beamproc="beamA", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white"];
-B2[cpu="0", flags="0x00000008", type="blockalign", tperiod="0", pattern="patternB", patentry=1, patexit=1, beamproc="beamB", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", style  = "dotted", fillcolor = "white"];
-A1->B2 [type="altdst", color     = "black"];
+A1[cpu="0", flags="0x00102007", type="block", tperiod="1000", pattern="patternA", patentry="true", patexit="false", beamproc="beamA", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "darkorange3"];
+B2[cpu="0", flags="0x00108008", type="blockalign", tperiod="1000", pattern="patternA", patentry="false", patexit="true", beamproc="beamA", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", style  = "dotted, filled", fillcolor = "white", penwidth=2, color = "purple"];
+A1->B2 [type="altdst", color = "black"];
 }

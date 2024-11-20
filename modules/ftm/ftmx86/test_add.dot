@@ -1,0 +1,44 @@
+digraph g {
+name="multi_add";
+
+graph []
+edge  [type="defdst"];
+node  [cpu="0", pattern="PPS"];
+
+Evt_5000     [type="tmsg", toffs=0, fid=1, par="0x13"];
+Evt_5010     [type="tmsg", toffs=0, fid=1, par="0x13"];
+Evt_5020     [type="tmsg", toffs=0, fid=1, par="0x13"];
+Evt_5030     [type="tmsg", toffs=0, fid=1, par="0x13"];
+Evt_5040     [type="tmsg", toffs=0, fid=1, par="0x13"];
+Evt_5050     [type="tmsg", toffs=0, fid=1, par="0x13"];
+Evt_5060     [type="tmsg", toffs=0, fid=1, par="0x13"];
+Evt_5070     [type="tmsg", toffs=0, fid=1, par="0x13"];
+Evt_5080     [type="tmsg", toffs=0, fid=1, par="0x13"];
+
+B_ENTRY -> Evt_5000 [type="altdst"];
+B_ENTRY -> Evt_5010 [type="altdst"];
+B_ENTRY -> Evt_5020 [type="altdst"];
+B_ENTRY -> Evt_5030 [type="altdst"];
+B_ENTRY -> Evt_5040 [type="altdst"];
+B_ENTRY -> Evt_5050 [type="altdst"];
+B_ENTRY -> Evt_5060 [type="altdst"];
+B_ENTRY -> Evt_5070 [type="altdst"];
+B_ENTRY -> Evt_5080 [type="altdst"];
+
+Evt_5000-> B_PPS
+Evt_5010-> B_PPS
+Evt_5020-> B_PPS
+Evt_5030-> B_PPS
+Evt_5040-> B_PPS
+Evt_5050-> B_PPS
+Evt_5060-> B_PPS
+Evt_5070-> B_PPS
+Evt_5080-> B_PPS
+
+
+
+
+
+
+}
+

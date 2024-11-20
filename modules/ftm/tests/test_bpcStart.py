@@ -10,7 +10,7 @@ class BpcStart(dm_testbench.DmTestbench):
   def test_bpcstart(self):
     self.startPattern('bpcStart.dot')
     file_name = 'snoop_protocol.csv'
-    self.snoopToCsv(file_name, 2)
+    self.snoopToCsv(file_name, duration=2)
     # Read this file snoop_protocol.csv as csv
     test_result = True
     with open(file_name) as csv_file:

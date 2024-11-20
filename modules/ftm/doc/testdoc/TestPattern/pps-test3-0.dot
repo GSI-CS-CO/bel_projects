@@ -1,0 +1,12 @@
+digraph "pps-test3-0" {
+  name="pps-test3-0"
+  subgraph subgraph0 {
+    node [cpu=1 pattern=A tperiod=100000000 toffs=0 fid=1 gid=5 sid=2 bpid=8 style=filled color=black fillcolor=white penwidth=2 shape=oval]
+    B_0 [type=block patexit=1 qlo=1 shape=rectangle color=purple]
+    Evt_0 [type=tmsg patentry=1 evtno=0 par=1 color=darkorange3]
+    Evt_A [type=tmsg evtno=15 par=2 ]
+    B_A [type=block shape=rectangle]
+    edge [type=defdst color=red]
+    Evt_0 -> B_0 -> Evt_A -> B_A -> Evt_0
+  }
+}

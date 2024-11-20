@@ -1,0 +1,25 @@
+digraph g {
+name="Global_Test";
+
+graph []
+edge  [type="defdst"]
+
+
+subgraph cpu0 {
+  node  [cpu="0", pattern="PAT1"];
+
+  B_PAT1[type="block", tperiod="1000000000", patexit="true", qlo="true" ];
+  T_PAT1[type="tmsg", toffs="0", patentry="true", fid="1", gid="200", evtno="259", beamin="0", bpcstart="0", sid="1", bpid="3", reqnobeam="0", vacc="0", par="0xCAFEBABE00000000", tef="0"];
+  T_PAT1->B_PAT1->T_PAT1;
+
+  GLOBAL_TEST [type="global", section="registers", pattern="EXTERN" ];
+  
+
+  B_PAT1->GLOBAL_TEST [type="reference", fieldtail="0x04", fieldhead="0x00", fieldwidth="32"];
+  T_PAT1->GLOBAL_TEST [type="reference", fieldtail="0x14", fieldhead="0x00", fieldwidth="32"];
+  T_PAT1->GLOBAL_TEST [type="address", fieldtail="0x10", fieldhead="0x00", fieldwidth="32"];
+}
+
+
+
+}

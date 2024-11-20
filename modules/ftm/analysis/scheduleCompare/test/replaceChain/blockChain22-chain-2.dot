@@ -1,10 +1,8 @@
 digraph G {
-graph [
-name="blockChain22-compact"
-]
+  graph [name="blockChain22-compact"]
 "B1
 ...(2)
 C2" [label="B1
 ...(2)
-C2", shape=rectangle];
+C2", shape=rectangle, type=block];
 }

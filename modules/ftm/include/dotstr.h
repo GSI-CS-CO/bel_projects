@@ -5,6 +5,23 @@
 
 namespace DotStr {
 
+  namespace Locations {
+    namespace base {
+      extern const std::string sStatus;
+      extern const std::string sCurThr;
+      extern const std::string sCurNode;
+      extern const std::string sRegisters;
+    }
+    namespace fields {
+      extern const std::string sThrTB;
+      extern const std::string sThrDL;
+      extern const std::string sThrID;
+      extern const std::string sNodeHash;
+      extern const std::string sNodeFlags;
+      extern const std::string sNodeDefDst;
+    }  
+  }
+
   namespace Misc {
     //pattern for uninitialised properties and their detection
     extern const unsigned char deadbeef[4];
@@ -35,6 +52,11 @@ namespace DotStr {
       namespace Base {
         extern const std::string sType;
       }
+      namespace Data {
+        extern const std::string sFieldHead;
+        extern const std::string sFieldTail;
+        extern const std::string sBitWidth;
+      }
     }
 
     namespace TypeVal {
@@ -56,6 +78,14 @@ namespace DotStr {
       extern const std::string sDynTef;
       extern const std::string sDynRes;
       extern const std::string sMeta;
+
+      extern const std::string sIm;
+      extern const std::string sAdr;
+      extern const std::string sRef;
+      extern const std::string sRef2;
+      extern const std::string sWrite;
+      extern const std::string sDyn[];
+
       extern const std::string sAny;
       extern const std::string sDynFlowDst;
       extern const std::string sResFlowDst;
@@ -73,6 +103,7 @@ namespace DotStr {
         extern const std::string sType;
         extern const std::string sName;
         extern const std::string sCpu;
+        extern const std::string sSection;
         extern const std::string sThread;
         extern const std::string sFlags;
         extern const std::string sPatEntry;
@@ -107,6 +138,7 @@ namespace DotStr {
           extern const std::string sReqNoB;
           extern const std::string sVacc;
           extern const std::string sRes;
+          extern const std::string sEvtIdAtt;
         }
         extern const std::string sPar;
         extern const std::string sTef;
@@ -173,6 +205,7 @@ namespace DotStr {
       extern const std::string sDstList;
       extern const std::string sQBuf;
       extern const std::string sMeta;
+      extern const std::string sGlobal;
       extern const bool bMetaNode;
       extern const bool bRealNode;
 
@@ -243,6 +276,10 @@ namespace DotStr {
       namespace Meta {
         extern const std::string sLookDef;
       }
+
+      namespace Global {
+        extern const std::string sLookDef;
+      }
     }
 
     namespace Edge {
@@ -256,6 +293,7 @@ namespace DotStr {
       extern const std::string sLookDebug1;
       extern const std::string sLookDebug2;
       extern const std::string sLookbad;
+      extern const std::string sLookRef;
 
     }
   }

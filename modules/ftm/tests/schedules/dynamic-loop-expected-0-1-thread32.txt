@@ -1,0 +1,384 @@
+CPU:00,THR:00,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:IN_A, OriginPattern:INIT_A0
+CPU:00,THR:01,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:02,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:03,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:04,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:05,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:06,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:07,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:08,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:09,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:10,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:11,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:12,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:13,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:14,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:15,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:16,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:17,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:18,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:19,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:20,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:21,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:22,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:23,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:24,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:25,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:26,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:27,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:28,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:29,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:30,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:31,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:00,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:01,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:02,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:03,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:04,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:05,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:06,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:07,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:08,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:09,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:10,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:11,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:12,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:13,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:14,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:15,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:16,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:17,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:18,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:19,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:20,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:21,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:22,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:23,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:24,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:25,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:26,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:27,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:28,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:29,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:30,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:31,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:00,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:01,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:02,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:03,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:04,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:05,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:06,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:07,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:08,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:09,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:10,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:11,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:12,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:13,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:14,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:15,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:16,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:17,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:18,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:19,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:20,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:21,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:22,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:23,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:24,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:25,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:26,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:27,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:28,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:29,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:30,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:31,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:03,THR:00,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:03,THR:01,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:03,THR:02,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:03,THR:03,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:03,THR:04,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:03,THR:05,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:03,THR:06,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:03,THR:07,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:03,THR:08,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:03,THR:09,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:03,THR:10,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:03,THR:11,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:03,THR:12,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:03,THR:13,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:03,THR:14,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:03,THR:15,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:03,THR:16,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:03,THR:17,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:03,THR:18,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:03,THR:19,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:03,THR:20,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:03,THR:21,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:03,THR:22,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:03,THR:23,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:03,THR:24,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:03,THR:25,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:03,THR:26,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:03,THR:27,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:03,THR:28,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:03,THR:29,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:03,THR:30,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:03,THR:31,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle

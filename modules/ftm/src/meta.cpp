@@ -1,41 +1,44 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "meta.h"
+#include "global.h"
 #include "ftm_common.h"
+#include "log.h"
 
 
 
 
 
-
-void Meta::serialise(const vAdr &va, uint8_t* b) const {
-  Node::serialise(va, b);
+void Meta::serialise(const mVal &m, uint8_t* b) const {
+  Node::serialise(m, b);
 };
 
-void CmdQMeta::serialise(const vAdr &va, uint8_t* b) const {
-  Meta::serialise(va, b);
-  auto startIt = va.begin() + ADR_CMDQ_BUF_ARRAY;
-  //FIXME size check !
-  for(auto it = startIt; it < va.end(); it++) {
-    writeLeNumberToBeBytes(b + (ptrdiff_t)CMDQ_BUF_ARRAY + (it - startIt) * _32b_SIZE_,  *it);
+void CmdQMeta::serialise(const mVal &m, uint8_t* b) const {
+  Meta::serialise(m, b);
+
+  for ( const auto &myPair : m ) {
+    log<DEBUG>(L"Serialiser CmdQMeta: Inserting Adr: %1$#x Val %2$#x ")  % myPair.first % myPair.second;
+    writeLeNumberToBeBytes(b + (ptrdiff_t)myPair.first,  myPair.second); 
   }
 
 };
 
-void CmdQBuffer::serialise(const vAdr &va, uint8_t* b) const {
-  Meta::serialise(va, b);
+void CmdQBuffer::serialise(const mVal &m, uint8_t* b) const {
+  Meta::serialise(m, b);
 };
 
-void DestList::serialise(const vAdr &va, uint8_t* b) const {
-  Meta::serialise(va, b);
+void DestList::serialise(const mVal &m, uint8_t* b) const {
+  Meta::serialise(m, b);
+  //FIXME how do we concat the maps if we have multiple things to add?
 
+  //for each map entry, add the element to buffer
+  for ( const auto &myPair : m ) {
 
-
-  auto startIt = va.begin();
-  //FIXME size check !
-  for(auto it = startIt; it < va.end(); it++) {
-    writeLeNumberToBeBytes(b + (ptrdiff_t)DST_ARRAY + (it - startIt) * _32b_SIZE_,  *it);
+    log<DEBUG>(L"Serialiser DstList: Inserting Adr: %1$#x Val %2$#x ")  % myPair.first % myPair.second;
+    writeLeNumberToBeBytes(b + (ptrdiff_t)myPair.first,  myPair.second); 
   }
+
+
 
 };
 
@@ -72,4 +75,6 @@ void DestList::show(uint32_t cnt, const char* prefix) const {
   printf("%s***------- %3u -------\n", p, cnt);
 
 };
+
+
 

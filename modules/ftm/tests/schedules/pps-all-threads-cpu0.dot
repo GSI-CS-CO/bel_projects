@@ -1,0 +1,36 @@
+digraph pps_all0 {
+graph [name=pps_all0]
+edge [type=defdst]
+node [cpu=0 fid=1 toffs=0 tef=0 tperiod=1000000000]
+Block0a[type=block pattern=PPS0a patexit=1 qlo=1]
+Evt0a[type=tmsg pattern=PPS0a patentry=1 gid=10 evtno=210 par=48]
+Block0a->Evt0a->Block0a
+
+Block0b[type=block pattern=PPS0b patexit=1 qlo=1]
+Evt0b[type=tmsg pattern=PPS0b patentry=1 gid=10 evtno=210 par=49]
+Block0b->Evt0b->Block0b
+
+Block0c[type=block pattern=PPS0c patexit=1 qlo=1]
+Evt0c[type=tmsg pattern=PPS0c patentry=1 gid=10 evtno=210 par=50]
+Block0c->Evt0c->Block0c
+
+Block0d[type=block pattern=PPS0d patexit=1 qlo=1]
+Evt0d[type=tmsg pattern=PPS0d patentry=1 gid=10 evtno=210 par=51]
+Block0d->Evt0d->Block0d
+
+Block0e[type=block pattern=PPS0e patexit=1 qlo=1]
+Evt0e[type=tmsg pattern=PPS0e patentry=1 gid=10 evtno=210 par=52]
+Block0e->Evt0e->Block0e
+
+Block0f[type=block pattern=PPS0f patexit=1 qlo=1]
+Evt0f[type=tmsg pattern=PPS0f patentry=1 gid=10 evtno=210 par=50]
+Block0f->Evt0f->Block0f
+
+Block0g[type=block pattern=PPS0g patexit=1 qlo=1]
+Evt0g[type=tmsg pattern=PPS0g patentry=1 gid=10 evtno=210 par=54]
+Block0g->Evt0g->Block0g
+
+Block0h[type=block pattern=PPS0h patexit=1 qlo=1]
+Evt0h[type=tmsg pattern=PPS0h patentry=1 gid=10 evtno=210 par=55]
+Block0h->Evt0h->Block0h
+}

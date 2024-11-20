@@ -1,7 +1,5 @@
 digraph G {
-graph [
-name="eight-compact"
-]
+  graph [name="eight-compact"]
 a;
 "b
 c

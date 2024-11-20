@@ -1,0 +1,11 @@
+digraph "pps-test2-1" {
+name="pps-test2-1"
+subgraph subgraph1 {
+  node  [cpu=1 pattern=B]
+  Evt_B [type=tmsg patentry=1 toffs=0 fid=1 gid=5, evtno=205, sid=2, bpid=8, par="0x123" shape=oval fillcolor=green penwidth=2 color=darkorange3]
+  B_B [type=block patexit=1 tperiod=100000000, qlo=1 shape=rectangle fillcolor=green penwidth=2 color=purple]
+  B_A [type=block cpu=0 pattern=A tperiod=100000000, qlo=1 shape=rectangle fillcolor=green penwidth=2]
+  Evt_B -> B_B [type=defdst color=red]
+  B_A -> Evt_B [type=altdst]
+}
+}

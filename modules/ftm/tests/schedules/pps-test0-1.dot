@@ -1,0 +1,7 @@
+digraph "pps-test0-1" {
+name="pps-test0-1"
+subgraph cpu0 {
+  B_A -> B_A [type=defdst]
+  B_A -> Evt_A [type=altdst]
+}
+}

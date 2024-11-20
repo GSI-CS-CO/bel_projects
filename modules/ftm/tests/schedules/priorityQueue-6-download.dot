@@ -1,0 +1,31 @@
+digraph G {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+Block0[cpu="0", flags="0x0010a107", type="block", tperiod="500000000", pattern="PriorityQueue0006", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+Msg0_0000[cpu="0", flags="0x00000102", type="tmsg", toffs="0", pattern="PriorityQueue0006", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="6", evtno="0", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1006000000000000", par="0x0000000000000000", tef="0", shape     = "oval", fillcolor = "green"];
+Msg0_0001[cpu="0", flags="0x00000102", type="tmsg", toffs="0", pattern="PriorityQueue0006", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="6", evtno="1", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1006001000000000", par="0x0000000000000001", tef="0", shape     = "oval", fillcolor = "green"];
+Msg0_0002[cpu="0", flags="0x00000102", type="tmsg", toffs="0", pattern="PriorityQueue0006", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="6", evtno="2", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1006002000000000", par="0x0000000000000002", tef="0", shape     = "oval", fillcolor = "green"];
+Msg0_0003[cpu="0", flags="0x00000102", type="tmsg", toffs="0", pattern="PriorityQueue0006", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="6", evtno="3", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1006003000000000", par="0x0000000000000003", tef="0", shape     = "oval", fillcolor = "green"];
+Msg0_0004[cpu="0", flags="0x00000102", type="tmsg", toffs="0", pattern="PriorityQueue0006", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="6", evtno="4", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1006004000000000", par="0x0000000000000004", tef="0", shape     = "oval", fillcolor = "green"];
+Msg0_0005[cpu="0", flags="0x00000002", type="tmsg", toffs="0", pattern="PriorityQueue0006", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="6", evtno="5", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1006005000000000", par="0x0000000000000005", tef="0", shape     = "oval", fillcolor = "white"];
+Block0_QBl_Lo[cpu="0", flags="0x00000009", type="qinfo", shape = "rectangle", color = "gray", style = "dashed, filled"];
+Block0_Qb_Lo0[cpu="0", flags="0x0000000a", type="qbuf", shape = "rectangle", color = "gray", style = "dashed, filled"];
+Block0_Qb_Lo1[cpu="0", flags="0x0000000a", type="qbuf", shape = "rectangle", color = "gray", style = "dashed, filled"];
+Block0_ListDst_0[cpu="0", flags="0x0000000c", type="listdst", shape = "rectangle", color = "gray", style = "dashed, filled"];
+Block0->Msg0_0000 [type="defdst", color = "red"];
+Block0->Block0_QBl_Lo [type="priolo", color = "gray"];
+Msg0_0000->Block0 [type="defdst", color = "red"];
+Msg0_0001->Block0 [type="defdst", color = "red"];
+Msg0_0002->Block0 [type="defdst", color = "red"];
+Msg0_0003->Block0 [type="defdst", color = "red"];
+Msg0_0004->Block0 [type="defdst", color = "red"];
+Msg0_0005->Block0 [type="defdst", color = "red"];
+Block0_QBl_Lo->Block0_Qb_Lo0 [type="meta", color = "gray"];
+Block0_QBl_Lo->Block0_Qb_Lo1 [type="meta", color = "gray"];
+Block0_ListDst_0->Block0 [type="defdst", color = "red"];
+Block0->Msg0_0002 [type="altdst", color = "black"];
+Block0->Msg0_0003 [type="altdst", color = "black"];
+Block0->Msg0_0004 [type="altdst", color = "black"];
+Block0->Msg0_0005 [type="altdst", color = "black"];
+Block0->Msg0_0001 [type="altdst", color = "black"];
+}

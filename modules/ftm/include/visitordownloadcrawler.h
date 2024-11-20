@@ -9,23 +9,7 @@
 #include "covenanttable.h"
 
 
-class Event;
-class Block;
-class Meta;
-
-class Command;
-class Noop;
-class TimingMsg;
-class Flow;
-class Switch;
-class Origin;
-class StartThread;
-class Flush;
-class Wait;
-
-class CmdQMeta;
-class CmdQBuffer;
-class DestList;
+#include "visitorclasslist.h"
 
 
 
@@ -42,6 +26,7 @@ class DestList;
     std::pair<uint8_t, AdrType> createCmd(const Command& el) const;
     std::pair<uint8_t, AdrType> createSwitch(const Switch& el) const;
     void setDefDst(void) const;
+    void setRefLinks() const;
     static const std::string exIntro;
 
   public:
@@ -59,6 +44,7 @@ class DestList;
     virtual void visit(const CmdQMeta& el) const;
     virtual void visit(const CmdQBuffer& el) const;
     virtual void visit(const DestList& el) const;
+    virtual void visit(const Global& el) const;
 
   };
 

@@ -13,6 +13,8 @@
 #include "graph.h"
 #include "common.h"
 #include "mempool.h"
+#include "reflocation.h"
+#include "globalreftable.h"
 
 #define ALLOC_OK             (0)
 #define ALLOC_NO_SPACE      (-1)
@@ -27,6 +29,8 @@ using namespace boost::multi_index;
 
 enum class AllocPoolMode {WITHOUT_MGMT = 0, WITH_MGMT = 1};
 
+typedef std::map<uint32_t, uint32_t> GlobalRefMap;
+
 struct AllocMeta {
   uint8_t     cpu;
   uint32_t    adr;
@@ -34,12 +38,12 @@ struct AllocMeta {
   vertex_t    v;
   uint8_t     b[_MEM_BLOCK_SIZE];
   bool        staged;
-
+  bool        global;
 
   AllocMeta(uint8_t cpu, uint32_t adr, uint32_t hash) : cpu(cpu), adr(adr), hash(hash) {std::memset(b, 0, sizeof b);}
   AllocMeta(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v) : cpu(cpu), adr(adr), hash(hash), v(v), staged(false) {std::memset(b, 0, sizeof b);}
   AllocMeta(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v, bool staged) : cpu(cpu), adr(adr), hash(hash), v(v), staged(staged) {std::memset(b, 0, sizeof b);}
-
+  AllocMeta(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v, bool staged, bool global) : cpu(cpu), adr(adr), hash(hash), v(v), staged(staged), global(global) {std::memset(b, 0, sizeof b);}
   // Multiindexed Elements are immutable, must use the modify function of the container to change attributes
 };
 
@@ -100,8 +104,6 @@ typedef boost::multi_index_container<
 
 typedef MgmtMeta_set::iterator mmI;
 
-
-
 class AllocTable {
 
   AllocMeta_set a;
@@ -112,13 +114,16 @@ class AllocTable {
   uint32_t mgmtTotalSize;
   uint32_t mgmtGrpSize;
   uint32_t mgmtCovSize;
+  uint32_t mgmtRefSize;
+
+
 
 
 
 
 public:
 
-  AllocTable(){};
+  AllocTable(const RefLocation& rl, GlobalRefTable& rt) : rl(&rl), rt(&rt) {};
   ~AllocTable(){};
 
    //deep copy
@@ -128,13 +133,19 @@ public:
 
   void cpyWithoutMgmt(AllocTable const &src);
 
+  const RefLocation* rl;
+  GlobalRefTable* rt;
+
+
   std::vector<MemPool>& getMemories() {return vPool;}
-  void addMemory(uint8_t cpu, uint32_t extBaseAdr, uint32_t intBaseAdr, uint32_t peerBaseAdr, uint32_t sharedOffs, uint32_t space, uint32_t rawSize) {vPool.push_back(MemPool(cpu, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize)); }
+  void addMemory(uint8_t cpu, uint32_t extBaseAdr, uint32_t intBaseAdr, uint32_t peerBaseAdr, uint32_t sharedOffs, uint32_t space, uint32_t rawSize, uint32_t ctlSize) {vPool.push_back(MemPool(cpu, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize, ctlSize)); }
   void clearMemories() { for (unsigned int i = 0; i < vPool.size(); i++ ) vPool[i].init(); }
   void removeMemories() { vPool.clear(); }
   uint32_t getTotalSpace(uint8_t cpu)    const { return vPool[cpu].getTotalSpace(); }
   uint32_t getFreeSpace(uint8_t cpu)     const { return vPool[cpu].getFreeSpace(); }
   uint32_t getUsedSpace(uint8_t cpu)     const { return vPool[cpu].getUsedSpace(); }
+  uint32_t getStartOffs(uint8_t cpu)     const { return vPool[cpu].getStartOffs(); }
+  uint32_t getEndOffs(uint8_t cpu)     const { return vPool[cpu].getEndOffs(); }
   
   uint32_t getFreeChunkQty(uint8_t cpu)  const { return vPool[cpu].getFreeChunkQty(); }
   uint32_t getTotalChunkQty(uint8_t cpu) const { return vPool[cpu].getTotalChunkQty(); }
@@ -161,14 +172,14 @@ public:
 
   //Allocation functions
 // TODO - Maybe better with pair <iterator, bool> to get a direct handle on the inserted/allocated element?
-  int allocate(uint8_t cpu, uint32_t hash, vertex_t v, bool staged);
-  int allocate(uint8_t cpu, uint32_t hash, vertex_t v) {return allocate(cpu, hash, v, true); }
+  int allocate(uint8_t cpu, uint32_t hash, vertex_t v, Graph& g, bool staged);
+  int allocate(uint8_t cpu, uint32_t hash, vertex_t v, Graph& g) {return allocate(cpu, hash, v, g, true);}
 
 
   bool deallocate(uint32_t hash);
 
-  bool insert(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v, bool staged);
-  bool insert(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v) {return insert(cpu, adr, hash, v, true); }
+  bool insert(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v, bool staged, bool global);
+  bool insert(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v) {return insert(cpu, adr, hash, v, true, false); }
 
   bool removeByVertex(vertex_t v);
   bool removeByAdr(uint8_t cpu, uint32_t adr);
@@ -209,12 +220,13 @@ public:
   vBuf recoverMgmt();
 
   void setMgmtLLstartAdr(uint32_t startAdr) {mgmtStartAdr = startAdr;}
-  void setMgmtLLSizes(uint32_t grpSize, uint32_t covSize) {mgmtGrpSize = grpSize; mgmtCovSize = covSize;}
+  void setMgmtLLSizes(uint32_t grpSize, uint32_t covSize, uint32_t refSize) {mgmtGrpSize = grpSize; mgmtCovSize = covSize; mgmtRefSize = refSize;}
   uint32_t getMgmtLLstartAdr()  {return mgmtStartAdr;}
   void setMgmtTotalSize(uint32_t totSize)      {mgmtTotalSize = totSize;}
   uint32_t getMgmtTotalSize()      {return mgmtTotalSize;}
   uint32_t getMgmtGrpSize()      {return mgmtGrpSize;}
   uint32_t getMgmtCovSize()      {return mgmtCovSize;}
+  uint32_t getMgmtRefSize()      {return mgmtRefSize;}
   void debugMgmt(std::ostream& os);
   const MgmtMeta_set& getMgmtTable() const { return m; }
   const size_t getMgmtSize()          const { return m.size(); }

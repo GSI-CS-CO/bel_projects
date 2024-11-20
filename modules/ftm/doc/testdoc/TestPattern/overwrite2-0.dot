@@ -1,0 +1,14 @@
+digraph "overwrite2-0" {
+  node [cpu=0 pattern=A tperiod=100000000 toffs=0 fid=1 gid=5 sid=2 bpid=8 style=filled color=black fillcolor=white penwidth=2 shape=oval]
+  BlockA [type=block patexit=1 qlo=1 shape=rectangle color=purple]
+  EvtA [type=tmsg evtno=0 par=1]
+  EvtB [type=tmsg evtno=0 par=2]
+  SwitchS [type=switch patentry=1 shape=pentagon color=darkorange3]
+  edge [type=defdst color=red]
+  EvtA -> BlockA -> EvtA
+  SwitchS -> EvtA
+  EvtB -> BlockA
+  SwitchS -> BlockA [type=target color=blue]
+  SwitchS -> EvtB [type=switchdst color=pink]
+  BlockA -> EvtB [type=altdst color=black]
+}
