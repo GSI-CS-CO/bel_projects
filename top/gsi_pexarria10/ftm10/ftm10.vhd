@@ -118,7 +118,6 @@ entity ftm10 is
     sfp_mod0_i         : in    std_logic;                    -- Second SFP (ftm10 only)
     sfp_mod1_io        : inout std_logic;                    -- Second SFP (ftm10 only)
     sfp_mod2_io        : inout std_logic;                    -- Second SFP (ftm10 only)
-    sfp_aux_gpio_extra : inout std_logic_vector(3 downto 0); -- USBC5 (pexarria10 only)
 
     -----------------------------------------------------------------------
     -- SFP (auxiliary - only used on ftm10)
