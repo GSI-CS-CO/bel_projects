@@ -396,12 +396,6 @@ begin
   wr_aux_leds_or_node_leds_o(2) <= not (s_led_aux_link_up and not(s_led_aux_track));-- blue  = link
   wr_aux_leds_or_node_leds_o(3) <= not s_led_aux_pps;                               -- white = PPS
 
-  -- Unused
-  sfp_aux_gpio_extra(0) <= 'Z';
-  sfp_aux_gpio_extra(1) <= 'Z';
-  sfp_aux_gpio_extra(2) <= 'Z';
-  sfp_aux_gpio_extra(3) <= 'Z';
-
   -------------------------------------------------
   -- LVDS USBC mapping
   -------------------------------------------------
