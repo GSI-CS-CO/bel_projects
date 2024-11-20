@@ -60,7 +60,6 @@ entity pexarria10 is
     -----------------------------------------------------------------------
     -- Misc.
     -----------------------------------------------------------------------
-    nuser_pb_i   : in  std_logic; -- User Button
     nres_out_o   : out std_logic; -- Reset MAX10
     a_nsys_reset : in  std_logic; -- Reset
 
@@ -106,7 +105,6 @@ entity pexarria10 is
     -----------------------------------------------------------------------
     -- ATXMega (F2F) previously CPLD
     -----------------------------------------------------------------------
-    cpld_io     : inout std_logic_vector(5 downto 0);
     f2f_i2c_scl : inout std_logic;
     f2f_i2c_sda : inout std_logic;
 
@@ -502,10 +500,10 @@ begin
 
   -- ATXMega (F2F) previously CPLD
   --s_gpio_i(5 downto 0) <= cpld_io(5 downto 0);
-  cpld_con : for i in 0 to 5 generate
+  --cpld_con : for i in 0 to 5 generate
     --cpld_io(i) <= s_gpio_o(i) when s_gpio_o(i)='0' else 'Z';
-    cpld_io(i) <= 'Z';
-  end generate;
+    --cpld_io(i) <= 'Z';
+  --end generate;
 
   -- I2C to ATXMega
   f2f_i2c_scl         <= s_i2c_scl_pad_out(1) when (s_i2c_scl_padoen(1) = '0') else 'Z';
