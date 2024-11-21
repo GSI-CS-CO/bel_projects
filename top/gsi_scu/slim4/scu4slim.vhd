@@ -16,7 +16,6 @@ entity scu4slim is
     clk_20m_vcxo_alt_i    : in std_logic; -- 20MHz VCXO clock alternative
 
     clk_125m_local_i      : in std_logic; -- Local clk from 125Mhz oszillator
-    clk_125m_local_alt_i  : in std_logic; -- Local clk from 125Mhz oszillator alternative
 
     clk_125m_tcb_pllref_i : in std_logic; -- 125 MHz PLL reference at tranceiver bank
     clk_125m_tcb_local_i  : in std_logic; -- Local clk from 125Mhz oszillator at tranceiver bank
@@ -134,14 +133,14 @@ entity scu4slim is
     psram_a    : out   std_logic_vector(23 downto 0) := (others => 'Z');
     psram_dq   : inout std_logic_vector(15 downto 0) := (others => 'Z');
     psram_clk  : out   std_logic := 'Z';
-    psram_advn : out   std_logic_vector(3 downto 0) := (others => '1');
-    psram_cre  : out   std_logic_vector(3 downto 0) := (others => '1');
-    psram_cen  : out   std_logic_vector(3 downto 0) := (others => '1');
-    psram_oen  : out   std_logic_vector(3 downto 0) := (others => '1');
-    psram_wen  : out   std_logic_vector(3 downto 0) := (others => '1');
-    psram_ubn  : out   std_logic_vector(3 downto 0) := (others => '1');
-    psram_lbn  : out   std_logic_vector(3 downto 0) := (others => '1');
-    psram_wait : in    std_logic_vector (3 downto 0); -- DDR magic
+    psram_advn : out   std_logic_vector(1 downto 0) := (others => '1');
+    psram_cre  : out   std_logic_vector(1 downto 0) := (others => '1');
+    psram_cen  : out   std_logic_vector(1 downto 0) := (others => '1');
+    psram_oen  : out   std_logic_vector(1 downto 0) := (others => '1');
+    psram_wen  : out   std_logic_vector(1 downto 0) := (others => '1');
+    psram_ubn  : out   std_logic_vector(1 downto 0) := (others => '1');
+    psram_lbn  : out   std_logic_vector(1 downto 0) := (others => '1');
+    psram_wait : in    std_logic_vector (1 downto 0); -- DDR magic
 
     -----------------------------------------------------------------------
     -- SPI Flash User Mode
@@ -353,12 +352,12 @@ begin
       ps_wen                  => s_psram_wen,
       ps_cre                  => s_psram_cre,
       ps_advn                 => s_psram_advn,
-      ps_wait                 => psram_wait(0) or psram_wait(1) or psram_wait(2) or psram_wait(3),
+      ps_wait                 => psram_wait(0) or psram_wait(1),
       ps_chip_selector        => s_psram_sel,
       hw_version              => x"0000000" & not scu_cb_version);
 
   -- PSRAM -> This needs to be changed on the next revision
-  psram_sel : for i in 0 to 3 generate
+  psram_sel : for i in 0 to 1 generate
   psram_cen(i)  <= s_psram_cen when  (s_psram_sel(i) = '1') else '1';
   psram_cre(i)  <= s_psram_cre when  (s_psram_sel(i) = '1') else '1';
   psram_oen(i)  <= s_psram_oen when  (s_psram_sel(i) = '1') else '1';
