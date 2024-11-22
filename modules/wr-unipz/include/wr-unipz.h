@@ -24,7 +24,7 @@
 #define WRUNIPZ_UNILACPERIODMIN   19800000    // min length of one UNILAC cylce [ns]
 
 #define WRUNIPZ_MAXPREPOFFSET         2000    // max offset of a prep event within UNILAC cycle [us]; all with events a smaller offset will be predicted from previous cycles
-#define WRUNIPZ_MILCALIBOFFSET       29000    // calibration offset to MIL event bus [ns]; MIL events are always 'late' due its protocol; this offset must be added to WR deadlines
+#define WRUNIPZ_MILCALIBOFFSET       27000    // calibration offset to MIL event bus [ns]; MIL events are always 'late' due its protocol; this offset must be added to WR deadlines
 #define WRUNIPZ_QQOFFSET               500    // offset for sending special service event for QQ [us] /* chk: QQ is breaking the concept of WR */
 #define WRUNIPZ_A4OFFSET               500    // offset for sending special service event for A4 [us] /* chk: A4 is breaking the concept of WR */
 #define WRUNIPZ_TDIFFMIL                45    // minimmum time difference [us] between sending telegrams to the MIL bus; 25us is enough, but UNIPZ sends service events 45us after last event
