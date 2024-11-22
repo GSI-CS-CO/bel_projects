@@ -18,7 +18,6 @@ entity scu4slim is
     clk_20m_vcxo_alt_i    : in std_logic; -- 20MHz VCXO clock alternative
 
     clk_125m_local_i      : in std_logic; -- Local clk from 125Mhz oszillator
-    clk_125m_local_alt_i  : in std_logic; -- Local clk from 125Mhz oszillator alternative
 
     clk_125m_tcb_pllref_i : in std_logic; -- 125 MHz PLL reference at tranceiver bank
     clk_125m_tcb_local_i  : in std_logic; -- Local clk from 125Mhz oszillator at tranceiver bank
@@ -113,13 +112,13 @@ entity scu4slim is
     -----------------------------------------------------------------------
     -- usb
     -----------------------------------------------------------------------
-    slrd : out   std_logic;
-    slwr : out   std_logic;
-    fd   : inout std_logic_vector(7 downto 0) := (others => 'Z');
-    pa   : inout std_logic_vector(7 downto 0) := (others => 'Z');
-    ctl  : in    std_logic_vector(2 downto 0);
-    uclk : in    std_logic;
-    ures : out   std_logic;
+    --slrd : out   std_logic;
+    --slwr : out   std_logic;
+    --fd   : inout std_logic_vector(7 downto 0) := (others => 'Z');
+    --pa   : inout std_logic_vector(7 downto 0) := (others => 'Z');
+    --ctl  : in    std_logic_vector(2 downto 0);
+    --uclk : in    std_logic;
+    --ures : out   std_logic;
 
     -----------------------------------------------------------------------
     -- leds onboard
@@ -136,21 +135,21 @@ entity scu4slim is
     psram_a    : out   std_logic_vector(23 downto 0) := (others => 'Z');
     psram_dq   : inout std_logic_vector(15 downto 0) := (others => 'Z');
     psram_clk  : out   std_logic := 'Z';
-    psram_advn : out   std_logic_vector(3 downto 0) := (others => '1');
-    psram_cre  : out   std_logic_vector(3 downto 0) := (others => '1');
-    psram_cen  : out   std_logic_vector(3 downto 0) := (others => '1');
-    psram_oen  : out   std_logic_vector(3 downto 0) := (others => '1');
-    psram_wen  : out   std_logic_vector(3 downto 0) := (others => '1');
-    psram_ubn  : out   std_logic_vector(3 downto 0) := (others => '1');
-    psram_lbn  : out   std_logic_vector(3 downto 0) := (others => '1');
-    psram_wait : in    std_logic_vector (3 downto 0); -- DDR magic
+    psram_advn : out   std_logic_vector(1 downto 0) := (others => '1');
+    psram_cre  : out   std_logic_vector(1 downto 0) := (others => '1');
+    psram_cen  : out   std_logic_vector(1 downto 0) := (others => '1');
+    psram_oen  : out   std_logic_vector(1 downto 0) := (others => '1');
+    psram_wen  : out   std_logic_vector(1 downto 0) := (others => '1');
+    psram_ubn  : out   std_logic_vector(1 downto 0) := (others => '1');
+    psram_lbn  : out   std_logic_vector(1 downto 0) := (others => '1');
+    psram_wait : in    std_logic_vector (1 downto 0); -- DDR magic
 
     -----------------------------------------------------------------------
     -- SPI Flash User Mode
     -----------------------------------------------------------------------
-    UM_AS_D           : inout std_logic_vector(3 downto 0) := (others => 'Z');
-    UM_nCSO           : out   std_logic := 'Z';
-    UM_DCLK           : out   std_logic := 'Z';
+    --UM_AS_D           : inout std_logic_vector(3 downto 0) := (others => 'Z');
+    --UM_nCSO           : out   std_logic := 'Z';
+    --UM_DCLK           : out   std_logic := 'Z';
 
     -----------------------------------------------------------------------
     -- SFP
@@ -208,6 +207,7 @@ architecture rtl of scu4slim is
   signal s_psram_wen        : std_logic;
   signal s_psram_ubn        : std_logic;
   signal s_psram_lbn        : std_logic;
+  
 
   signal s_psram_sel        : std_logic_vector(3 downto 0);
 
@@ -262,7 +262,7 @@ begin
       g_en_scubus          => true,
       g_en_pcie            => true,
       g_en_tlu             => false,
-      g_en_usb             => true,
+      g_en_usb             => false,
       g_en_psram           => true,
       g_io_table           => io_mapping_table,
       g_en_tempsens        => false,
@@ -331,19 +331,19 @@ begin
       i2c_sda_pad_o           => s_i2c_sda_pad_out,
       i2c_sda_padoen_o        => s_i2c_sda_padoen,
       -- FX2 USB
-      usb_rstn_o              => ures,
-      usb_ebcyc_i             => pa(3),
-      usb_speed_i             => pa(0),
-      usb_shift_i             => pa(1),
-      usb_readyn_io           => pa(7),
-      usb_fifoadr_o           => pa(5 downto 4),
-      usb_sloen_o             => pa(2),
-      usb_fulln_i             => ctl(1),
-      usb_emptyn_i            => ctl(2),
-      usb_slrdn_o             => slrd,
-      usb_slwrn_o             => slwr,
-      usb_pktendn_o           => pa(6),
-      usb_fd_io               => fd,
+      --usb_rstn_o              => ures,
+      --usb_ebcyc_i             => pa(3),
+      --usb_speed_i             => pa(0),
+      --usb_shift_i             => pa(1),
+      --usb_readyn_io           => pa(7),
+      --usb_fifoadr_o           => pa(5 downto 4),
+      --usb_sloen_o             => pa(2),
+      --usb_fulln_i             => ctl(1),
+      --usb_emptyn_i            => ctl(2),
+      --usb_slrdn_o             => slrd,
+      --usb_slwrn_o             => slwr,
+      --usb_pktendn_o           => pa(6),
+      --usb_fd_io               => fd,
       -- PSRAM TODO: Multi Chip
       ps_clk                  => psram_clk,
       ps_addr                 => psram_a,
@@ -355,12 +355,12 @@ begin
       ps_wen                  => s_psram_wen,
       ps_cre                  => s_psram_cre,
       ps_advn                 => s_psram_advn,
-      ps_wait                 => psram_wait(0) or psram_wait(1) or psram_wait(2) or psram_wait(3),
+      ps_wait                 => psram_wait(0) or psram_wait(1),
       ps_chip_selector        => s_psram_sel,
       hw_version              => x"0000000" & not scu_cb_version);
 
   -- PSRAM -> This needs to be changed on the next revision
-  psram_sel : for i in 0 to 3 generate
+  psram_sel : for i in 0 to 1 generate
   psram_cen(i)  <= s_psram_cen when  (s_psram_sel(i) = '1') else '1';
   psram_cre(i)  <= s_psram_cre when  (s_psram_sel(i) = '1') else '1';
   psram_oen(i)  <= s_psram_oen when  (s_psram_sel(i) = '1') else '1';
@@ -429,6 +429,8 @@ end generate;
   -- Resets
   A_nReset      <= rstn_ref;
   nFPGA_Res_Out <= rstn_ref;
+
+
 
   -- fixed scubus signals
   ADR_TO_SCUB <= '1';
