@@ -765,7 +765,7 @@ int main(int argc, char** argv)
           actStatus    = fwStatus;
         } // if actstatus
 
-        if (((t_new - t_lastlog) / one_ms_ns) > 10000) { // update every 10s
+        if (((t_new - t_lastlog) / one_ms_ns) > 60000) { // update once per minute
           printFlag = 1;
           t_lastlog = t_new;
         } // if lastlog
