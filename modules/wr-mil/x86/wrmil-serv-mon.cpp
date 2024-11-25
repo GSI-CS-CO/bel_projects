@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 10-Jul-2024
+ *  version : 25-Nov-2024
  *
  * monitors WR-MIL gateway
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define WRMIL_SERV_MON_VERSION 0x000012
+#define WRMIL_SERV_MON_VERSION 0x000013
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -427,12 +427,15 @@ int main(int argc, char** argv)
 
   char    *tail;
 
+  // variables logging
+  uint32_t actState = COMMON_STATE_UNKNOWN;    // actual state of of gateway
+  uint64_t actStatus      = 0;                 // actual status of gateway
+  int      printFlag      = 0;
 
   // variables snoop event
   uint64_t snoopID     = 0x0;
   int      nCondition  = 2;
 
-  char     tmp[752];
   int      tmpi;
   int      i;
 
@@ -687,10 +690,10 @@ int main(int argc, char** argv)
 
     saftlib::Time deadline_t;
     uint64_t      t_new, t_old;
-    uint32_t      tmp32a, tmp32b, tmp32c, tmp32d, tmp32e, tmp32f, tmp32g, tmp32h, tmp32i;
+    uint32_t      tmp32a, tmp32b, tmp32c, tmp32f, tmp32g, tmp32h;
     int32_t       stmp32a;
     uint64_t      tmp64a;
-    uint32_t      fwGid, fwEvtsRecErr, fwEvtsBurst, fwState, fwVersion;
+    uint32_t      fwGid, fwEvtsRecErr, fwEvtsBurst, fwState, fwVersion, nBadStatus, nBadState;
     uint64_t      fwEvtsSnd, fwEvtsRecT, fwEvtsRecD, fwStatus;
 
     t_old = comlib_getSysTime();
@@ -717,7 +720,7 @@ int main(int argc, char** argv)
         t_old      = t_new;
 
         // update firmware data
-        wrmil_common_read(ebDevice, &fwStatus, &fwState, &tmp32a, &tmp32b, &fwVersion, &tmp32c, 0);
+        wrmil_common_read(ebDevice, &fwStatus, &fwState, &nBadStatus, &nBadState, &fwVersion, &tmp32c, 0);
         wrmil_info_read(ebDevice, &tmp32a, &tmp32b, &tmp32c, &fwGid, &stmp32a, &tmp64a, &tmp32f, &tmp32g, &tmp32h, &fwEvtsSnd, &fwEvtsRecT, &fwEvtsRecD, &fwEvtsRecErr, &fwEvtsBurst, 0);
         if (fwGid != gid) fwStatus |= COMMON_STATUS_OUTOFRANGE; // signal an error
 
@@ -743,6 +746,30 @@ int main(int argc, char** argv)
           dis_update_service(disMonDataId);
         } // if startServer
 
+
+        // logging
+        printFlag      = 0;
+
+        if (actState != fwState) {
+          printFlag    = 1;
+          actState     = fwState;
+        } // if actstate
+        if (actStatus  != fwStatus) {
+          printFlag    = 1;
+          actStatus    = fwStatus;
+        } // if actstatus
+
+      if (printFlag) {
+         printf("%s (%6u), ",  comlib_stateText(fwState), nBadState);
+         if ((fwStatus >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);
+         else printf("NOTOK(%6u)\n", nBadStatus);
+         // print set status bits (except OK)
+         for (i= COMMON_STATUS_OK + 1; i<(int)(sizeof(fwStatus)*8); i++) {
+           if ((fwStatus >> i) & 0x1)  printf("  ------ status bit is set : %s\n", wrmil_status_text(i));
+         } // for i
+         fflush(stdout);
+      } // if printFlag
+        
         //printf("wrmil-mon: fw snd %ld, recD %ld, recT %ld; mon snd %ld, rec %ld, match %ld, act %f, ave %f, sdev %f, min %f, max %f\n", monData.nFwSnd, monData.nFwRecT, monData.nFwRecT, monData.nStart, monData.nStop, monData.nMatch, monData.tAct, monData.tAve, monData.tSdev, monData.tMin, monData.tMax);
 
 #ifdef USEMASP
