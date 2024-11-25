@@ -443,8 +443,9 @@ int main(int argc, char** argv)
   char    *deviceName = NULL;
 
   char     domainName[NAMELEN];          // name of MIL domain
-  char     prefix[NAMELEN*2];            // prefix DIM services
+  char     prefix[NAMELEN*3];            // prefix DIM services
   char     disName[DIMMAXSIZE];          // name of DIM server
+  char     environment[NAMELEN];         // environment, typically either int or pro
   uint32_t verLib;                       // library version
   uint32_t verFw;                        // firmware version
   
@@ -531,8 +532,12 @@ int main(int argc, char** argv)
   deviceName = argv[optind];
   gethostname(disHostname, 32);
   
-  if (optind+1 < argc) sprintf(prefix, "wrmil_%s_%s-mon", argv[++optind], domainName);
-  else                 sprintf(prefix, "wrmil_%s-mon", domainName);
+  if (optind+1 < argc) {
+    sprintf(environment, "%s", argv[++optind]);
+    sprintf(prefix, "wrmil_%s_%s-mon", environment, domainName);
+  } // if optind
+  else
+    sprintf(prefix, "wrmil_%s-mon", domainName);
 
   if (startServer) {
     printf("%s: starting server using prefix %s\n", program, prefix);
@@ -766,7 +771,8 @@ int main(int argc, char** argv)
         } // if lastlog
 
       if (printFlag) {
-        printf("%lu", fwEvtsSnd);
+        printf("env %s, MIL domain %s", environment, domainName);
+        printf(", %lu", fwEvtsSnd);
          printf(", %s (%6u), ",  comlib_stateText(fwState), nBadState);
          if ((fwStatus >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);
          else printf("NOTOK(%6u)\n", nBadStatus);
