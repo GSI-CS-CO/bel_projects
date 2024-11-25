@@ -689,14 +689,15 @@ int main(int argc, char** argv)
     } // if modeCompare
 
     saftlib::Time deadline_t;
-    uint64_t      t_new, t_old;
+    uint64_t      t_new, t_old, t_lastlog;
     uint32_t      tmp32a, tmp32b, tmp32c, tmp32f, tmp32g, tmp32h;
     int32_t       stmp32a;
     uint64_t      tmp64a;
     uint32_t      fwGid, fwEvtsRecErr, fwEvtsBurst, fwState, fwVersion, nBadStatus, nBadState;
     uint64_t      fwEvtsSnd, fwEvtsRecT, fwEvtsRecD, fwStatus;
 
-    t_old = comlib_getSysTime();
+    t_old     = comlib_getSysTime();
+    t_lastlog = comlib_getSysTime();
     while(true) {
       /*
       t1 = comlib_getSysTime();
@@ -759,8 +760,14 @@ int main(int argc, char** argv)
           actStatus    = fwStatus;
         } // if actstatus
 
+        if (((t_new - t_lastlog) / one_ms_ns) > 10000) { // update every 10s
+          printFlag = 1;
+          t_lastlog = t_new;
+        } // if lastlog
+
       if (printFlag) {
-         printf("%s (%6u), ",  comlib_stateText(fwState), nBadState);
+        printf("%lu", fwEvtsSnd);
+         printf(", %s (%6u), ",  comlib_stateText(fwState), nBadState);
          if ((fwStatus >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);
          else printf("NOTOK(%6u)\n", nBadStatus);
          // print set status bits (except OK)
