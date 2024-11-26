@@ -282,7 +282,8 @@ begin
       g_en_eca            => false,
       g_en_butis          => false,
       g_en_tlu            => false,
-      g_en_virtualRAM     => true
+      g_en_virtualRAM     => true,
+      g_en_wb_dma         => true
     )
     port map(
       core_clk_20m_vcxo_i     => clk_20m_vcxo_i,

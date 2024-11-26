@@ -1,7 +1,7 @@
 --! @file        wb_dma_slave_auto_pkg.vhd
 --  DesignUnit   wb_dma_slave_auto
 --! @author      M. Kreider <>
---! @date        05/11/2024
+--! @date        26/11/2024
 --! @version     0.0.1
 --! @copyright   2024 GSI Helmholtz Centre for Heavy Ion Research GmbH
 --!
@@ -38,20 +38,28 @@ use work.wbgenplus_pkg.all;
 use work.genram_pkg.all;
 package wb_dma_slave_auto_pkg is
 
-  constant c_dma_csr_RW : natural := 16#0#; -- rw, 32 b, DMA controller control and status register
+  constant c_dma_csr_RW             : natural := 16#00000#; -- rw, 32 b, DMA controller control and status register
+  constant c_channel_csr_RW         : natural := 16#00004#; -- rw, 32 b, DMA channel CSR
+  constant c_descr_queue_intake_OWR : natural := 16#00008#; -- wo, 32 b, DMA channel descriptor queue intake
 
   --| Component --------------------- wb_dma_slave_auto ---------------------------------------|
   component wb_dma_slave_auto is
+  generic(
+    g_channels  : natural := 16 --Number of DMA channels
+  );
   Port(
-    clk_sys_i   : std_logic;                            -- Clock input for sys domain
-    rst_sys_n_i : std_logic;                            -- Reset input (active low) for sys domain
-    error_i     : in  std_logic_vector(1-1 downto 0);   -- Error control
-    stall_i     : in  std_logic_vector(1-1 downto 0);   -- flow control
-    dma_csr_o   : out std_logic_vector(32-1 downto 0);  -- DMA controller control and status register
+    clk_sys_i             : std_logic;                                        -- Clock input for sys domain
+    rst_sys_n_i           : std_logic;                                        -- Reset input (active low) for sys domain
+    error_i               : in  std_logic_vector(1-1 downto 0);               -- Error control
+    stall_i               : in  std_logic_vector(1-1 downto 0);               -- flow control
+    channel_csr_o         : out matrix(g_channels-1 downto 0, 32-1 downto 0); -- DMA channel CSR
+    descr_queue_intake_o  : out matrix(g_channels-1 downto 0, 32-1 downto 0); -- DMA channel descriptor queue intake
+    dma_csr_o             : out std_logic_vector(32-1 downto 0);              -- DMA controller control and status register
     
-    data_i      : in  t_wishbone_slave_in;
-    data_o      : out t_wishbone_slave_out
+    data_i                : in  t_wishbone_slave_in;
+    data_o                : out t_wishbone_slave_out
 
+    
   );
   end component;
 
@@ -63,12 +71,12 @@ package wb_dma_slave_auto_pkg is
   wbd_width     => x"7", -- 8/16/32-bit port granularity
   sdb_component => (
   addr_first    => x"0000000000000000",
-  addr_last     => x"0000000000000003",
+  addr_last     => x"0000000000000007",
   product => (
   vendor_id     => x"0000000000000651",
   device_id     => x"77646d61",
   version       => x"00000001",
-  date          => x"20241105",
+  date          => x"20241126",
   name          => "DMA Controller Slv ")));
 
 end wb_dma_slave_auto_pkg;

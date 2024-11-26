@@ -69,16 +69,23 @@ architecture rtl of wb_dma is
 
 
   component wb_dma_slave is
-  port(
-    clk_sys_i   : std_logic;                            -- Clock input for sys domain
-    rst_sys_n_i : std_logic;                            -- Reset input (active low) for sys domain
-    error_i     : in  std_logic_vector(1-1 downto 0);   -- Error control
-    stall_i     : in  std_logic_vector(1-1 downto 0);   -- flow control
-    dma_csr_o   : out std_logic_vector(32-1 downto 0);  -- DMA controller control and status register
+    generic(
+      g_channels  : natural := 16 --Number of DMA channels
+    );
+    Port(
+      clk_sys_i             : std_logic;                                        -- Clock input for sys domain
+      rst_sys_n_i           : std_logic;                                        -- Reset input (active low) for sys domain
+      error_i               : in  std_logic_vector(1-1 downto 0);               -- Error control
+      stall_i               : in  std_logic_vector(1-1 downto 0);               -- flow control
+      channel_csr_o         : out matrix(g_channels-1 downto 0, 32-1 downto 0); -- DMA channel CSR
+      descr_queue_intake_o  : out matrix(g_channels-1 downto 0, 32-1 downto 0); -- DMA channel descriptor queue intake
+      dma_csr_o             : out std_logic_vector(32-1 downto 0);              -- DMA controller control and status register
+      
+      data_i                : in  t_wishbone_slave_in;
+      data_o                : out t_wishbone_slave_out
     
-    data_i      : in  t_wishbone_slave_in;
-    data_o      : out t_wishbone_slave_out
-  );
+      
+    );
   end component;
 
   -- component wb_dma_engine is
@@ -111,7 +118,7 @@ architecture rtl of wb_dma is
 
   component wb_dma_ch_rf is
     generic(
-      g_data_cache_size : natural := 16
+      g_data_cache_size : natural := 1
     );
     port(
       clk_i : in std_logic;
