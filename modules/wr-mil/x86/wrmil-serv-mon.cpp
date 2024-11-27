@@ -700,7 +700,16 @@ int main(int argc, char** argv)
         } // if lastlog
 
       if (printFlag) {
-        printf("env %s, gid %-11s", environment, domainName);
+        // grrrr.... logger omits white spaces, thus the formatting becomes lousy
+        // we have to do padding with a dedicated character 
+#define LENGID 11  // GID name with most characters is SIS18_RING requiring a MIL gateway
+        char fill[LENGID+1];
+        int  len;
+        for (int i=0;i<LENGID;i++) fill[i] = '.';
+        len = strlen(domainName);
+        if (len < LENGID) sprintf(&(fill[LENGID - len]), "%s", domainName);
+        
+        printf("env %s, gid %s", environment, fill);
         printf(", nSent %012lu", fwEvtsSnd);
          printf(", %s (%06u), ",  comlib_stateText(fwState), nBadState);
          if ((fwStatus >> COMMON_STATUS_OK) & 0x1) printf("OK   (%06u)\n", nBadStatus);
