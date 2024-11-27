@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 25-Nov-2024
+ *  version : 26-Nov-2024
  *
  * monitors WR-MIL gateway
  *
@@ -150,21 +150,6 @@ uint64_t  offsetStop;                   // correction to be used for different m
 uint64_t  one_us_ns = 1000;
 uint64_t  one_ms_ns = 1000000;
 
-/*uint32_t  nNotSnd           = 0;
-uint32_t  nBadEvt           = 0;
-uint32_t  badEvt            = 0xfff;
-uint64_t  tStartOld         = 0;
-uint64_t  dStartMin         = 1000000000;
-uint64_t  tStopOld          = 0;
-uint64_t  dStopMin          = 1000000000;
-#define   NMONI 400
-int       nMon              = 0;
-uint64_t  deadlineMon[NMONI];
-uint32_t  evtNoMon[NMONI];
-uint32_t  tagMon[NMONI];
-uint32_t  flagsMon[NMONI];
-*/
-
 
 // calc basic statistic properties
 void calcStats(double *meanNew,         // new mean value, please remember for later
@@ -241,22 +226,6 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
   stream      = 0;
   sdev        = 0;
 
-  /*
-  deadlineMon[nMon] = deadline.getTAI();
-  evtNoMon[nMon]    = mEvtNo;
-  tagMon[nMon]      = tag;
-  flagsMon[nMon]    = flags;
-  nMon++;
-  if (nMon == NMONI) {
-    for (int i=0; i<NMONI; i++) 
-      printf("tag %d, evt %2x, deadline %lu, flags %u\n", tagMon[i], evtNoMon[i], deadlineMon[i], flagsMon[i]);
-    exit(1);
-  }
-  */
-  /*
-  printf("tag %d, evt %2x, deadline %lu, flags %u\n", tag, mEvtNo, deadline.getTAI(), flags);
-  */
-
   // check ranges
   if (mFid != FID)                        return;  // unexpected format of timing message
   if (tag   > tagStop)                    return;  // illegal tag
@@ -318,22 +287,8 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
       break;
     default         :
       ;
-  } // switch tag
-  
-  //printf("out tag %d, bpid %d\n", tag, bpid);
+  } // switch tag 
 } // timingmessage
-
-
-// this will be called when receiving ECA actions from software action queue
-// informative: this routine is presently not used, as the softare action queue does not support the TEF field
-/*static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags, uint32_t tag)
-{
-  int                 flagLate;
-
-  flagLate    = flags & 0x1;
-
-  timingMessage(tag, deadline, id, param, 0x0, flagLate, 0, 0, 0);
-} // recTimingMessag*/
 
 
 // callback for command
@@ -595,20 +550,6 @@ int main(int argc, char** argv)
     std::shared_ptr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
     std::shared_ptr<SoftwareCondition_Proxy> condition[nCondition];
 
-    /*
-    // search for embedded CPU channel
-     map<std::string, std::string> e_cpus = receiver->getInterfaces()["EmbeddedCPUActionSink"];
-    if (e_cpus.size() != 1)
-    {
-      std::cerr << "Device '" << receiver->getName() << "' has no embedded CPU!" << std::endl;
-      return (-1);
-    }
-    // connect to embedded CPU
-    std::shared_ptr<EmbeddedCPUActionSink_Proxy> e_cpu = EmbeddedCPUActionSink_Proxy::create(e_cpus.begin()->second);
-
-    // create action sink for ecpu
-    std::shared_ptr<EmbeddedCPUCondition_Proxy> condition[nCondition];
-    */
     uint32_t tag[nCondition];
     uint32_t tmpTag;
 
@@ -704,19 +645,7 @@ int main(int argc, char** argv)
     t_old     = comlib_getSysTime();
     t_lastlog = comlib_getSysTime();
     while(true) {
-      /*
-      t1 = comlib_getSysTime();
-      ecaStatus = comlib_wait4ECAEvent(1, device, ecaq_base, &recTag, &deadline, &evtId, &param, &tef, &isLate, &isEarly, &isConflict, &isDelayed);
-      t2 = comlib_getSysTime();
-      tmp32 = t2 - t1; 
-      if (tmp32 > 10000000) printf("%s: reading from ECA Q took %u [us]\n", program, tmp32 / 1000);
-      if (ecaStatus == COMMON_STATUS_EB) { printf("eca EB error, device %x, address %x\n", device, (uint32_t)ecaq_base);}
-      if (ecaStatus == COMMON_STATUS_OK) {
-        deadline_t = saftlib::makeTimeTAI(deadline);
-        //t2         = comlib_getSysTime(); printf("msg: tag %x, id %lx, tef %lx, dtu %lu\n", recTag, evtId, tef, (uint32_t)(t2 -t1));
-        timingMessage(recTag, deadline_t, evtId, param, tef, isLate, isEarly, isConflict, isDelayed);
-        }*/
-      // irgendwo hier periodisch DIM service aktualisieren bzw. update auf Bildschirm bzw. update MASP
+      // hier periodisch DIM service aktualisieren bzw. update auf Bildschirm bzw. update MASP
       monData.gid   = gid;
       monData.cMode = modeCompare;
       saftlib::wait_for_signal(UPDATE_TIME_MS / 10);
@@ -771,8 +700,8 @@ int main(int argc, char** argv)
         } // if lastlog
 
       if (printFlag) {
-        printf("env %s, MIL domain %s", environment, domainName);
-        printf(", %lu", fwEvtsSnd);
+        printf("env %s, gid %10s", environment, domainName);
+        printf(", nSent %12lu", fwEvtsSnd);
          printf(", %s (%6u), ",  comlib_stateText(fwState), nBadState);
          if ((fwStatus >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);
          else printf("NOTOK(%6u)\n", nBadStatus);
