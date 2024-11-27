@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 26-Nov-2024
+ *  version : 27-Nov-2024
  *
  * monitors WR-MIL gateway
  *
@@ -701,14 +701,15 @@ int main(int argc, char** argv)
 
       if (printFlag) {
         // grrrr.... logger omits white spaces, thus the formatting becomes lousy
-        // we have to do padding with a dedicated character 
-#define LENGID 11  // GID name with most characters is SIS18_RING requiring a MIL gateway
+        // the following lines do padding with a dedicated character 
+#define LENGID 11                                        // GID name with most characters is SIS18_RING requiring a MIL gateway
         char fill[LENGID+1];
         int  len;
         for (int i=0;i<LENGID;i++) fill[i] = '.';
         len = strlen(domainName);
         if (len < LENGID) sprintf(&(fill[LENGID - len]), "%s", domainName);
-        
+
+        // print to screen (with optional piping to logger)
         printf("env %s, gid %s", environment, fill);
         printf(", nSent %012lu", fwEvtsSnd);
          printf(", %s (%06u), ",  comlib_stateText(fwState), nBadState);
@@ -721,7 +722,6 @@ int main(int argc, char** argv)
          fflush(stdout);
       } // if printFlag
         
-        //printf("wrmil-mon: fw snd %ld, recD %ld, recT %ld; mon snd %ld, rec %ld, match %ld, act %f, ave %f, sdev %f, min %f, max %f\n", monData.nFwSnd, monData.nFwRecT, monData.nFwRecT, monData.nStart, monData.nStop, monData.nMatch, monData.tAct, monData.tAve, monData.tSdev, monData.tMin, monData.tMax);
 
 #ifdef USEMASP
       if (fwState  == COMMON_STATE_OPREADY) maspSigOpReady  = true;
