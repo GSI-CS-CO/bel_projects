@@ -700,11 +700,11 @@ int main(int argc, char** argv)
         } // if lastlog
 
       if (printFlag) {
-        printf("env %s, gid %10s", environment, domainName);
-        printf(", nSent %12lu", fwEvtsSnd);
-         printf(", %s (%6u), ",  comlib_stateText(fwState), nBadState);
-         if ((fwStatus >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);
-         else printf("NOTOK(%6u)\n", nBadStatus);
+        printf("env %s, gid %-11s", environment, domainName);
+        printf(", nSent %012lu", fwEvtsSnd);
+         printf(", %s (%06u), ",  comlib_stateText(fwState), nBadState);
+         if ((fwStatus >> COMMON_STATUS_OK) & 0x1) printf("OK   (%06u)\n", nBadStatus);
+         else printf("NOTOK(%06u)\n", nBadStatus);
          // print set status bits (except OK)
          for (i= COMMON_STATUS_OK + 1; i<(int)(sizeof(fwStatus)*8); i++) {
            if ((fwStatus >> i) & 0x1)  printf("  ------ status bit is set : %s\n", wrmil_status_text(i));
