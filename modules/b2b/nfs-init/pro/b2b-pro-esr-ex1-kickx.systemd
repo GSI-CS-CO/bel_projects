@@ -16,7 +16,7 @@ export DIM_DNS_NODE=asl105
 
 b2b-serv-sys dev/wbm0 -s pro_esr-kdx &
 b2b-serv-raw tr1 -e1 pro &
-b2b-jitter-check tr1 tr0 -p3 -t5 pro_esr-kdx &
+b2b-jitter-check tr1 tr0 -p5 -t5 pro_esr-kdx &
 b2b-analyzer pro_esr &
 b2b-serv-kickdiag tr0 -r1 -m0 -i1 pro &
 b2b-serv-kickdiag tr0 -r1 -m1 -i1 pro &
