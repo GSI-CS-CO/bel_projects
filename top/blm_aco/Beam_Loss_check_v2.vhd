@@ -30,12 +30,16 @@ port (
                                                                 -- bit 14 reset from gate
                                                                 -- bit 15 free
 
-    BLM_gate_seq_prep_ck_sel_Reg : in std_logic_vector(15 downto 0);-- bit 15 free
+  --  BLM_gate_seq_prep_ck_sel_Reg : in std_logic_vector(15 downto 0);-- bit 15 free
                                                                    -- bit 12counter RESET,
-                                                                   -- bit 11-0f or gate_prepare signals
+    BLM_counters_Reg: in std_logic_vector(15 downto 0); --bit 15-2 free
+                                                                   --bit 1 reset from gate CTR_AUTORESET
+                                                                   --bit 0 global counter RESET                                                                -- bit 11-0f or gate_prepare signals
                                                                   -- 
     BLM_gate_recover_Reg : in std_logic_vector(15 downto 0); -- bit 15_12 free
-                                                            -- bit 11-0 for gate_prepare signals
+                                                            -- bit 11-0 for gate_recover signals
+    BLM_gate_prep_Reg: in std_logic_vector(15 downto 0);     -- bit 15_12 free
+                                                              -- bit 11-0 for gate_prepare signals
     BLM_in_sel_Reg          : in t_BLM_reg_Array; --128 x (4 bit for gate ena & 6 bit for up signal ena & 6 for down signal ena)
     BLM_out_sel_reg : in t_BLM_out_sel_reg_Array;   --- 122 x 16 bits = Reg120-0:  "0000" and 6 x (54 watchdog errors  + 12 gate errors + 256 counters overflows outputs) 
 
@@ -103,7 +107,8 @@ signal LED_ID_state:  std_logic_vector(3 downto 0);
 signal pos_th, neg_th: t_BLM_th_Array;
 signal ev_pos_neg_thr: std_logic_vector(63 downto 0):=(others => '0');
 signal cnt_nr : integer range 0 to 127;
-
+signal AUTO_RESET: std_logic; --bit 1 reset from gate
+signal RESET: std_logic;--bit 0 global counter RESET
 
 
   component BLM_watchdog is
@@ -219,10 +224,11 @@ component BLM_gate_timing_seq is
 ---######################################################################################
 
 begin
-
+RESET <= BLM_counters_Reg(0);
+AUTO_RESET <= BLM_counters_Reg(1);
 VALUE_IN <= BLM_test_signal & BLM_data_in;
 BLM_gate_recover <= ev_recover_reg or BLM_gate_recover_Reg(11 downto 0);
-BLM_gate_prepare <= ev_prepare_reg or BLM_gate_seq_prep_ck_sel_Reg(11 downto 0);
+BLM_gate_prepare <= ev_prepare_reg or BLM_gate_prep_Reg(11 downto 0); --ev_prepare_reg or BLM_gate_seq_prep_ck_sel_Reg(11 downto 0);
 
 
 direct_gate <= BLM_ctrl_Reg(5 downto 0) & BLM_ctrl_Reg(11 downto 6);
@@ -345,8 +351,8 @@ generic map (
 port map (
   CLK            => clk_sys,  
   nRST           => rstn_sys,
-  gate_reset_ena => BLM_ctrl_reg(14) and cnt_enable(i),
-  RESET          => BLM_gate_seq_prep_ck_sel_Reg(12) or ev_counter_reset,
+  gate_reset_ena => AUTO_RESET and cnt_enable(i), --BLM_ctrl_reg(14) and cnt_enable(i),
+  RESET          => RESET or ev_counter_reset, --BLM_gate_seq_prep_ck_sel_Reg(12) or ev_counter_reset,
   ENABLE         => cnt_enable(i),
   pos_threshold  => pos_threshold(i),
   neg_threshold  => neg_threshold(i),

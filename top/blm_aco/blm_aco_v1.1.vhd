@@ -433,8 +433,10 @@ port (
     BLM_gate_hold_time_Reg  : in  t_BLM_gate_hold_Time_Array;
     BLM_ctrl_Reg            : in std_logic_vector(15 downto 0); --bit 0 = counter RESET, bit 1 = counter LOAD, bit 2: when 0 the outputs of board in slot 12 are the direct outptuts of the output OR, 
     --   when 1, the outputs in slot 12 are the values of AW_Output_Reg(6),  bit 15..3 free
-    BLM_gate_seq_prep_ck_sel_Reg : in std_logic_vector(15 downto 0);
+    --BLM_gate_seq_prep_ck_sel_Reg : in std_logic_vector(15 downto 0);
+    BLM_counters_Reg: in std_logic_vector(15 downto 0);
     BLM_gate_recover_Reg : in std_logic_vector(15 downto 0);
+    BLM_gate_prep_Reg: in std_logic_vector(15 downto 0);
     BLM_in_sel_Reg          : in t_BLM_reg_Array; --128 x (4 bit for gate ena & 6 bit for up signal ena & 6 for down signal ena)
     BLM_out_sel_reg : in t_BLM_out_sel_reg_Array;    -- 122 x 16 bits = Reg120-0:  "0000" and 6 x (54 watchdog errors  + 12 gate errors + 256 counters overflows outputs) 
                                                     -- + 4 more registers for 6 x 12 input gate (= 72 bits) to be send to the outputs.    
@@ -706,7 +708,7 @@ component local_thr_mem is
     A_RnW: in std_logic; 
   --  load_thr: in std_logic;
    -- loaded_data_set: in std_logic_vector(11 downto 0);
-    new_dataset_ready: in std_logic; 
+   -- new_dataset_ready: in std_logic; 
     counter_group_Reg : in t_IO_Reg_0_to_31_Array;
     --
     reg_trigger: in std_logic;
@@ -1071,8 +1073,10 @@ signal BLM_in_sel_res_Dtack     : std_logic;
 -----for hold times, gate enable and clock for gate sequence selection
 signal BLM_wdog_hold_time_Reg :  std_logic_vector(15 downto 0);
 signal BLM_gate_hold_time_Reg :  t_BLM_gate_hold_Time_Array;
-signal BLM_gate_seq_prep_ck_sel_Reg: std_logic_vector(15 downto 0); 
+--signal BLM_gate_seq_prep_ck_sel_Reg: std_logic_vector(15 downto 0); 
+signal BLM_counters_Reg: std_logic_vector(15 downto 0);
 signal BLM_gate_recover_Reg : std_logic_vector(15 downto 0);
+signal BLM_gate_prep_Reg: std_logic_vector(15 downto 0);
 --signal BLM_gate_seq_in_ena_Reg :  std_logic_vector(15 downto 0);
 signal BLM_wd_reset_Reg: t_IO_Reg_0_to_3_Array;
 
@@ -1086,9 +1090,9 @@ signal BLM_ctrl_Dtack:        std_logic_vector(2 downto 0);                  -- 
 -----for BLM out_sel 
 signal BLM_out_sel_Reg :       t_BLM_out_sel_reg_Array; 
 
-signal BLM_out_sel_rd_active:  std_logic_vector(15 downto 0);
-signal BLM_out_sel_Dtack: std_logic_vector(15 downto 0);
-signal BLM_out_sel_data_to_SCUB: t_IO_Reg_0_to_15_Array;
+signal BLM_out_sel_rd_active:  std_logic_vector(23 downto 0);
+signal BLM_out_sel_Dtack: std_logic_vector(23 downto 0);
+signal BLM_out_sel_data_to_SCUB:t_IO_Reg_0_to_23_Array;
 signal BLM_out_sel_res_Dtack     : std_logic;
 
 signal IOBP_LED_sm_nr: std_logic_vector(3 downto 0);
@@ -1814,17 +1818,19 @@ BLM_ctrl_Reg_1st_block: io_reg
         nReset             =>  rstn_sys,
  
   Reg_IO1            =>  BLM_wdog_hold_time_Reg,     -- the same for all
-  Reg_IO2            =>  BLM_gate_seq_prep_ck_sel_Reg,    -- bit 15 not used
-                                                          -- bit 14-3 for gate_prepare signals
-                                                          -- bit 2-0 for the clock gate sel, the same for all
+  Reg_IO2            =>  BLM_counters_Reg, --bit 15-2 free
+                                           --bit 1 reset from gate CTR_AUTORESET
+                                           --bit 0 global counter RESET
+                      --BLM_gate_seq_prep_ck_sel_Reg,    -- bit 15-13 free
+                                                          -- bit 12 global counter RESET,
+                                                          -- bit 11-0 for gate_prepare signals
 
-  Reg_IO3            =>  BLM_ctrl_Reg,               --  bit 0 = counter RESET, 
-                                    
-                                                     --  bit 11..0 Direct Gate-usage, one bit for each gate signal input, 
+  Reg_IO3            =>  BLM_ctrl_Reg,               --  bit 11..0 Direct Gate-usage, one bit for each gate signal input, 
+                                                     --  bit 13-12 free  
                                                      --  bit 14 reset from gate: when 1 the corresponding gate signal selecting the counter enable
                                                      --         is used instead to reset it.
-                                                     -- bit 15 not used
-  Reg_IO4            =>  BLM_gate_recover_Reg, -- bit 15 -12 not used
+                                                     --  bit 15  free
+  Reg_IO4            => open, -- BLM_gate_recover_Reg, -- bit 15 -12 not used
                                                 -- bit 11-0 for gate_recover signals
   Reg_IO5            =>   BLM_gate_hold_time_Reg(0), 
   Reg_IO6            =>   BLM_gate_hold_time_Reg(1),
@@ -1894,7 +1900,7 @@ BLM_ctrl_Reg_1st_block: io_reg
           Data_to_SCUB       =>   BLM_ctrl_data_to_SCUB(2)
               );
           
-  BLM_out_sel_registers: for i in 0 to 14 generate 
+  BLM_out_sel_registers: for i in 0 to 23 generate 
 
       BLM_o_sel_Reg: io_reg
       generic map(
@@ -1928,35 +1934,7 @@ BLM_ctrl_Reg_1st_block: io_reg
 
 
 
-          BLM_o_sel_Reg_120_126: io_reg
-          generic map(
-                Base_addr =>  c_BLM_out_sel_Base_Addr + 120
-                )
-          port map  (
-                Adr_from_SCUB_LA   =>  ADR_from_SCUB_LA,
-                Data_from_SCUB_LA  =>  Data_from_SCUB_LA,
-                Ext_Adr_Val        =>  Ext_Adr_Val,
-                Ext_Rd_active      =>  Ext_Rd_active,
-                Ext_Rd_fin         =>  Ext_Rd_fin,
-                Ext_Wr_active      =>  Ext_Wr_active,
-                Ext_Wr_fin         =>  SCU_Ext_Wr_fin,
-                clk                =>  clk_sys,
-                nReset             =>  rstn_sys,
-          --
-                Reg_IO1            =>  BLM_out_sel_Reg(120),
-                Reg_IO2            =>  BLM_out_sel_Reg(121),
-                Reg_IO3            =>  BLM_out_sel_Reg(122),
-                Reg_IO4            =>  BLM_out_sel_Reg(123),
-                Reg_IO5            =>  BLM_out_sel_Reg(124),
-                Reg_IO6            =>  BLM_out_sel_Reg(125),
-                Reg_IO7            =>   open,
-                Reg_IO8            =>  open,
-          --
-                Reg_rd_active      =>  BLM_out_sel_rd_active(15),
-                Dtack_to_SCUB      =>  BLM_out_sel_Dtack(15),
-                Data_to_SCUB       =>  BLM_out_sel_data_to_SCUB(15));
-
-
+        
  -------------------------------------------------------------------- 
 BLM_event_v_acc_readout_Reg: in_reg
 generic map(
@@ -2006,8 +1984,8 @@ port map  (
       Reg_IO1            =>   BLM_event_key_Reg,
       Reg_IO2            =>   BLM_event_ctrl_Reg,
       Reg_IO3            =>   BLM_new_dataset_Reg, --trigger & dataset_nr & group_nr
-      Reg_IO4            =>   open,
-      Reg_IO5            =>   open,
+      Reg_IO4            =>   BLM_gate_prep_Reg, --open,
+      Reg_IO5            =>   BLM_gate_recover_Reg, --open, 
       Reg_IO6            =>   open,
       Reg_IO7            =>   open,
       Reg_IO8            =>   open,
@@ -2387,7 +2365,7 @@ rd_port_mux:  process ( clk_switch_rd_active,              clk_switch_rd_data,
   variable sel_th4: unsigned(15 downto 0);
   variable sel_in_sel: unsigned(15 downto 0);
   variable sel_st: unsigned(3 downto 0);
-  variable sel_out_sel: unsigned(15 downto 0); 
+  variable sel_out_sel: unsigned(23 downto 0); 
   variable sel_cnt_readout_sel: unsigned(31 downto 0); 
   variable sel_counter_group: unsigned(3 downto 0);
   begin
@@ -2479,7 +2457,7 @@ else
            end loop;
            else
            if to_integer(sel_out_sel) > 0 then  
-           for i in 0 to 15 loop
+           for i in 0 to 23 loop
              if sel_out_sel(i) = '1' then 
                 Data_to_SCUB <=  BLM_out_sel_data_to_SCUB(i);
              end if;
@@ -2697,8 +2675,10 @@ BLM_Module : Beam_Loss_check
   BLM_wd_reset => BLM_wd_reset,
   BLM_gate_hold_time_Reg   => BLM_gate_hold_time_Reg,
   BLM_ctrl_Reg             => BLM_ctrl_Reg,
-  BLM_gate_seq_prep_ck_sel_Reg  => BLM_gate_seq_prep_ck_sel_Reg,
+  --BLM_gate_seq_prep_ck_sel_Reg  => BLM_gate_seq_prep_ck_sel_Reg,
+  BLM_counters_Reg => BLM_counters_REG,
   BLM_gate_recover_Reg => BLM_gate_recover_Reg,
+  BLM_gate_prep_Reg => BLM_gate_prep_Reg,
   --BLM_gate_seq_in_ena_Reg  => BLM_gate_seq_in_ena_Reg,
   BLM_in_sel_Reg           => BLM_in_sel_Reg,
   BLM_out_sel_reg          => BLM_out_sel_Reg,
@@ -2750,7 +2730,7 @@ bus_splitter_elem: bus_splitter
       --  load_thr => ev_cmd_load_thr,
      --   loaded_data_set => blm_group_dataset  ,-- loaded_data_set,
 
-        new_dataset_ready => new_dataset_ready,
+     --   new_dataset_ready => new_dataset_ready,
         counter_group_Reg => counter_group_reg,
         reg_trigger    => BLM_new_dataset_Reg(12),
         reg_group_dataset=>  BLM_new_dataset_Reg(11 downto 0),

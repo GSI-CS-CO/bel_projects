@@ -11,7 +11,7 @@ port (
   CLK              : in std_logic;      -- Clock
   nRST             : in std_logic;      -- Reset
 
-     BLM_out_sel_reg : in t_BLM_out_sel_reg_Array;  -- 122 x 16 bits = Reg120-0:  "0000" and 6 x (54 watchdog errors  + 12 gate errors + 256 counters overflows outputs) 
+     BLM_out_sel_reg : in t_BLM_out_sel_reg_Array; --192x16 --132x16 -- 122 x 16 bits = Reg120-0:  "0000" and 6 x (54 watchdog errors  + 12 gate errors + 256 counters overflows outputs) 
                                                      -- + 4 more registers for 6 x 12 input gate (= 72 bits) to be send to the outputs.    
                                                      --=> 126 registers             
                                                     --   REg127             ex Reg121: counter outputs buffering enable (bit 15) and buffered output select (bit 7-0). Bits 14-8 not used     
@@ -37,15 +37,15 @@ end BLM_out_el;
 
 architecture rtl of BLM_out_el is
 
-signal sel_tot: std_logic_vector(2003 downto 0); --I need 4 more 16 bits registers 
-type t_sel is array (0 to 5) of std_logic_vector(333 downto 0);
+signal sel_tot: std_logic_vector(3071 downto 0); --I need 4 more 16 bits registers 
+type t_sel is array (0 to 5) of std_logic_vector(511 downto 0);
 signal sel, product: t_sel;
 --type t_int_sel is array (0 to 5) of integer;
 --signal int_sel: t_int_sel;
 
 signal BLM_out_signal, Out_to_or: std_logic_vector(5 downto 0):=(others =>'0');
 
-signal OVERFLOW : std_logic_vector(333 downto 0);
+signal OVERFLOW : std_logic_vector(511 downto 0);
 
 
 --signal gate_input: std_logic_vector(11 downto 0);
@@ -65,11 +65,12 @@ signal gate_output : std_logic_vector(11 downto 0);
 signal gate_error_output: std_logic_vector(11 downto 0);
 signal wd_output: std_logic_vector(53 downto 0);
 signal gate_input : std_logic_vector(11 downto 0);
-
+signal zero_fill_ov: std_logic_vector(159 downto 0);
 begin
 
+zero_fill_ov <= (others => '0');
 
-OVERFLOW <= (not (gate_in)) & wd_out& gate_error & UP_OVERFLOW & DOWN_OVERFLOW;
+OVERFLOW <= zero_fill_ov & "0000"& (not (gate_in)) &  "0000000000" & wd_out& "0000"& gate_error & UP_OVERFLOW & DOWN_OVERFLOW;
 --gate_input <= gate_in;
 gate_output <= gate_out;
 gate_error_output <=gate_error;
@@ -80,13 +81,13 @@ sel_signal_proc: process (BLM_out_sel_Reg)
 
     begin
 
-        for i in 0 to 124 loop 
+        for i in 0 to 191 loop 
             sel_tot((i*16+15) downto i*16)<=  BLM_out_sel_Reg(i);
-            sel_tot(2003 downto 2000) <= BLM_out_sel_Reg(125)(3 downto 0);
+         --   sel_tot(2003 downto 2000) <= BLM_out_sel_Reg(125)(3 downto 0);
         end loop;
         
         for k in 0 to 5 loop
-            sel(k) <= sel_tot((334*(k+1)-1) downto 334*k); 
+            sel(k) <= sel_tot((512*(k+1)-1) downto 512*k); 
         end loop;
         
    end process;
@@ -95,7 +96,7 @@ sel_signal_proc: process (BLM_out_sel_Reg)
 out_signals_proc: process (OVERFLOW, sel)
 begin
     for j in 0 to 5 loop
-        for i in 0 to 333 loop
+        for i in 0 to 511 loop
             product(j)(i) <= sel(j)(i) and OVERFLOW(i);
         end loop;
            ena_out(j) <= or_reduce(sel(j));
