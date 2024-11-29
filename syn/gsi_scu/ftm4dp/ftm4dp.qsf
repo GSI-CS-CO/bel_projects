@@ -288,7 +288,6 @@ set_global_assignment -name VERILOG_FILE ../../../modules/cfi_flash/cfi_ctrl_eng
 set_global_assignment -name VERILOG_FILE ../../../modules/cfi_flash/cfi_ctrl.v -library work
 set_global_assignment -name VERILOG_FILE ../../../modules/lpc_uart/serirq_defines.v -library work
 set_global_assignment -name VERILOG_FILE ../../../modules/lpc_uart/serirq_slave.v -library work
-set_global_assignment -name VERILOG_FILE ../../../modules/remote_update/asmi10/asmi10/altera_asmi_parallel_231/synth/asmi10_altera_asmi_parallel_231_47nf7hy.v -library work
 set_global_assignment -name VERILOG_FILE ../../../modules/remote_update/asmi5/asmi5/synthesis/submodules/asmi5_asmi_parallel_0.v -library work
 set_global_assignment -name VERILOG_FILE ../../../modules/remote_update/asmi_arriaII/asmi_arriaII/synthesis/submodules/asmi_arriaII_asmi_parallel_0.v -library work
 set_global_assignment -name VERILOG_FILE ../../../modules/stub_pll/stub_pll/altera_iopll_160/synth/stub_pll_altera_iopll_160_z2kwsvq.v -library work
@@ -1181,8 +1180,8 @@ set_location_assignment PIN_M3 -to nTHRMTRIP
 set_location_assignment PIN_M6 -to psram_a[4]
 set_location_assignment PIN_M8 -to psram_a[18]
 set_location_assignment PIN_N1 -to clk_20m_vcxo_alt_i
-set_location_assignment PIN_N23 -to "pcie_refclk_i(n)"
-set_location_assignment PIN_N24 -to pcie_refclk_i
+set_location_assignment PIN_N23 -to "clk_125m_tcb_local_i(n)"
+set_location_assignment PIN_N24 -to clk_125m_tcb_local_i
 set_location_assignment PIN_N27 -to "pcie_tx_o[3](n)"
 set_location_assignment PIN_N28 -to pcie_tx_o[3]
 set_location_assignment PIN_N2 -to scu_cb_version[3]
@@ -1196,8 +1195,8 @@ set_location_assignment PIN_P4 -to scu_cb_version[2]
 set_location_assignment PIN_P5 -to "clk_125m_sfpref_i(n)"
 set_location_assignment PIN_P7 -to psram_wait
 set_location_assignment PIN_P8 -to psram_a[5]
-set_location_assignment PIN_R23 -to "clk_125m_tcb_local_i(n)"
-set_location_assignment PIN_R24 -to clk_125m_tcb_local_i
+set_location_assignment PIN_R23 -to "pcie_refclk_i(n)"
+set_location_assignment PIN_R24 -to pcie_refclk_i
 set_location_assignment PIN_R27 -to "pcie_tx_o[2](n)"
 set_location_assignment PIN_R28 -to pcie_tx_o[2]
 set_location_assignment PIN_R4 -to sfp_mod0_i

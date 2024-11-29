@@ -1172,8 +1172,8 @@ set_location_assignment PIN_M3 -to nTHRMTRIP
 set_location_assignment PIN_M6 -to psram_a[4]
 set_location_assignment PIN_M8 -to psram_a[18]
 set_location_assignment PIN_N1 -to clk_20m_vcxo_alt_i
-set_location_assignment PIN_N23 -to "pcie_refclk_i(n)"
-set_location_assignment PIN_N24 -to pcie_refclk_i
+set_location_assignment PIN_N23 -to "clk_125m_tcb_local_i(n)"
+set_location_assignment PIN_N24 -to clk_125m_tcb_local_i
 set_location_assignment PIN_N27 -to "pcie_tx_o[3](n)"
 set_location_assignment PIN_N28 -to pcie_tx_o[3]
 set_location_assignment PIN_N2 -to scu_cb_version[3]
@@ -1187,8 +1187,8 @@ set_location_assignment PIN_P4 -to scu_cb_version[2]
 set_location_assignment PIN_P5 -to "clk_125m_sfpref_i(n)"
 set_location_assignment PIN_P7 -to psram_wait
 set_location_assignment PIN_P8 -to psram_a[5]
-set_location_assignment PIN_R23 -to "clk_125m_tcb_local_i(n)"
-set_location_assignment PIN_R24 -to clk_125m_tcb_local_i
+set_location_assignment PIN_R23 -to "pcie_refclk_i(n)"
+set_location_assignment PIN_R24 -to pcie_refclk_i
 set_location_assignment PIN_R27 -to "pcie_tx_o[2](n)"
 set_location_assignment PIN_R28 -to pcie_tx_o[2]
 set_location_assignment PIN_R4 -to sfp_mod0_i
