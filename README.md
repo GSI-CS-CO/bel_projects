@@ -486,7 +486,7 @@ sudo apt upgrade ca-certificates
 | ----------------------- | ------------------------------ | ---------------------------- |
 | SCU2 & SCU2             | Promo 11 (Micro-USB)           | - |
 | Vetar2a                 | Promo 11 (Micro-USB) <br> Promo 5 | Promo 5: SEL1 0x1 - SEL2 0x4 |
-| Pexarria5               | Promo 5                        | FPGA Promo 5: SEL1 0x2 - SEL2 0x8 <br> CPLD Promo 5: SEL1 0x1 - SEL2 0x4 |
+| Pexarria5               | Promo 5 <br> Promo 12          | FPGA Promo 5: SEL1 0x2 - SEL2 0x8 <br> CPLD Promo 5: SEL1 0x1 - SEL2 0x4 <br> FPGA Promo 12: SEL1 0x2 - SEL2 0x8 (?) <br> CPLD Promo 12: SEL1 0x1 - SEL2 0x4 (?) |
 | Exploder5               | Promo 11 (Micro-USB) <br> Promo 5 <br> Promo 12 | FPGA Promo 5: SEL1 0x1 - SEL2 0x4 <br> CPLD Promo 5: SEL1 0x2 - SEL2 0x8 <br> FPGA Promo 12: SEL1 0x1 - SEL2 0x4 (?) <br> CPLD Promo 12: SEL1 0x2 - SEL2 0x8 (?) |
 | MicroTCA/AMC            | Promo 11 (Micro-USB)           | FPGA/CPLD JTAG chain |
 | PMC                     | Promo 11 (Micro-USB)           | FPGA/CPLD JTAG chain |
