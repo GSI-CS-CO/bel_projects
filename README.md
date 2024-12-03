@@ -42,6 +42,7 @@ GSI Timing Gateware and Tools
   - [Git](#git)
     - [CAfile](#cafile)
   - [JTAG and Programming](#jtag-and-programming)
+    - [JTAG Overview](#jtag-overview)
     - [USB-Blaster Issues](#usb-blaster-issues)
     - [Altera/Intel USB Blaster](#alteraintel-usb-blaster)
     - [Xilinx Platform Cable II](#xilinx-platform-cable-ii)
@@ -478,6 +479,23 @@ sudo apt upgrade ca-certificates
 ```
 
 ## JTAG and Programming
+
+### JTAG Overview
+
+| Timing Receiver         | JTAG Adapter(s)                | JTAG Adapter Configuration   |
+| ----------------------- | ------------------------------ | ---------------------------- |
+| SCU2 & SCU2             | Promo 11 (Micro-USB)           | - |
+| Vetar2a                 | Promo 11 (Micro-USB) <br> Promo 5 | Promo 5: SEL1 0x1 - SEL2 0x4 |
+| Pexarria5               | Promo 5                        | FPGA Promo 5: SEL1 0x2 - SEL2 0x8 <br> CPLD Promo 5: SEL1 0x1 - SEL2 0x4 |
+| Exploder5               | Promo 11 (Micro-USB) <br> Promo 5 <br> Promo 12 | FPGA Promo 5: SEL1 0x1 - SEL2 0x4 <br> CPLD Promo 5: SEL1 0x2 - SEL2 0x8 <br> FPGA Promo 12: SEL1 0x1 - SEL2 0x4 (?) <br> CPLD Promo 12: SEL1 0x2 - SEL2 0x8 (?) |
+| MicroTCA/AMC            | Promo 11 (Micro-USB)           | FPGA/CPLD JTAG chain |
+| PMC                     | Promo 11 (Micro-USB)           | FPGA/CPLD JTAG chain |
+| PEXP                    | Promo 11 (Micro-USB)           | FPGA/CPLD JTAG chain |
+| SCU4 & FTM4             | Promo 11 (Micro-USB)           | - |
+| Pexarria10 & FTM10      | Promo 11 (Micro-USB)           | Optional USB to JTAG adapter † |
+| SCU5                    | Promo 11 (Micro-USB)           | Optional USB to JTAG adapter † |
+
+† If attached: [FPGA USB-Programmer2 JTAG (Arrow)](https://shop.trenz-electronic.de/de/TEI0004-02-FPGA-USB-Programmer2-JTAG-Arrow-fuer-die-Entwicklung-mit-Intel-FPGAs?c=26)
 
 ### USB-Blaster Issues
 
