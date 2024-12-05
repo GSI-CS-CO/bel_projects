@@ -241,6 +241,80 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 set_global_assignment -name AHDL_FILE ../../modules/modulbus/i2c.tdf
 set_global_assignment -name ALM_REGISTER_PACKING_EFFORT HIGH
 set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
@@ -927,7 +1001,7 @@ set_global_assignment -name VHDL_FILE ../../top/blm_aco/atr_timeout.vhd -library
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/aw_io_reg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/Beam_Loss_check_v2.vhd -library work
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/blm_24_9_9_9pll.vhd -library work
-set_global_assignment -name VHDL_FILE ../../top/blm_aco/blm_aco_v1.0.vhd -library work
+set_global_assignment -name VHDL_FILE ../../top/blm_aco/blm_aco_v1.1.vhd -library work
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/BLM_cnt_pulse_former.vhd -library work
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/BLM_counter_pool_el.vhd -library work
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/BLM_ena_in_mux.vhd -library work
@@ -936,6 +1010,7 @@ set_global_assignment -name VHDL_FILE ../../top/blm_aco/BLM_gate_timing_seq_v1.2
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/BLM_in_mux.vhd -library work
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/BLM_out_el_m_v1.0.vhd -library work
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/BLM_watchdog_v1.0.vhd -library work
+set_global_assignment -name VHDL_FILE ../../top/blm_aco/bus_splitter.vhd -library work
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/config_status.vhd -library work
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/diob_debounce.vhd -library work
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/diob_sync.vhd -library work
@@ -947,15 +1022,19 @@ set_global_assignment -name VHDL_FILE ../../top/blm_aco/in_reg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/IOBP_LED_ID_module_v1.0.vhd -library work
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/io_reg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/io_spi_dac_8420.vhd -library work
+set_global_assignment -name VHDL_FILE ../../top/blm_aco/l0ad_thr_fifo.vhd -library work
+set_global_assignment -name VHDL_FILE ../../top/blm_aco/local_thr_box_2_1.vhd -library work
+set_global_assignment -name VHDL_FILE ../../top/blm_aco/local_thr_mem.vhd -library work
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/outpuls.vhd -library work
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/p_connector.vhd -library work
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/scu_diob_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/tag_ctrl.vhd -library work
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/tag_n.vhd -library work
+set_global_assignment -name VHDL_FILE ../../top/blm_aco/th_ram.vhd -library work
+set_global_assignment -name VHDL_FILE ../../top/blm_aco/threshold_trigger_input.vhd -library work
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/up_down_counter.vhd -library work
 set_global_assignment -name VHDL_INPUT_VERSION VHDL_2008
 set_global_assignment -name VHDL_SHOW_LMF_MAPPING_MESSAGES OFF
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to A_nSEL_Ext_Signal_DRV
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to PIO[143]
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to PIO[144]
@@ -1194,3 +1273,5 @@ set_location_assignment PIN_Y3 -to PIO[112]
 set_location_assignment PIN_Y4 -to PIO[111]
 set_location_assignment PIN_Y7 -to PIO[110]
 set_location_assignment PIN_Y9 -to PIO[120]
+
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
