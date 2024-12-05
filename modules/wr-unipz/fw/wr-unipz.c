@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-Nov-2024
+ *  version : 05-Dec-2024
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
@@ -72,7 +72,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define WRUNIPZ_FW_VERSION 0x000218                                     // make this consistent with makefile
+#define WRUNIPZ_FW_VERSION 0x000219                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -165,6 +165,7 @@ uint32_t milEvts[] = {WRUNIPZ_EVT_PZ1,  // MIL evt codes we are listening for
                       WRUNIPZ_EVT_PZ5,
                       WRUNIPZ_EVT_PZ6,
                       WRUNIPZ_EVT_PZ7,
+                      WRUNIPZ_EVT_NO_BEAM,
                       WRUNIPZ_EVT_SYNCH_DATA,
                       WRUNIPZ_EVT_50HZ_SYNCH};
 
@@ -414,6 +415,7 @@ uint32_t configMILEvent()
     if (setFilterEvtMil(pMilPiggy, 0, WRUNIPZ_EVT_PZ5       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
     if (setFilterEvtMil(pMilPiggy, 0, WRUNIPZ_EVT_PZ6       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
     if (setFilterEvtMil(pMilPiggy, 0, WRUNIPZ_EVT_PZ7       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+    if (setFilterEvtMil(pMilPiggy, 0, WRUNIPZ_EVT_NO_BEAM   , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
   }
 
   // configure LEMO1 for pulse generation
@@ -777,6 +779,20 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       
       break;
       
+    case WRUNIPZ_EVT_NO_BEAM :
+      // priv. comm. P. Kainberger: this is an additional 'service event' implemented via a different mechanism
+      // when this is received from the Superpulszentrale, it is played for all PZs, that play the vacc specified
+
+      for (i=0; i<WRUNIPZ_NPZ; i++) {
+        // check, if we need to play the service event
+        if (actVacc[i] == virtAcc) {
+          servEvt = EVT_NO_BEAM | ((virtAcc & 0xf) << 8) | ((uint16_t)WRUNIPZ_NOBEAMOFFSET << 16); // send 'now' /* chk  WRUNIPZ_NOBEAMOFFSET */
+          writeTM(servEvt, getSysTime(), i, virtAcc, 0, 0);
+        } // if actVacc
+      } // for all PZs
+      
+      break;
+
     case WRUNIPZ_EVT_SYNCH_DATA :                               // super PZ commits recently supplied virt acc -> replace active data by the new ones
       DBPRINT3("wr-unipz: synch data event\n");
       configTransactSubmit();
@@ -784,6 +800,7 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       break;
       
     default :
+      pp_printf("default case, evtCode %d\n", evtCode);
       break;
   } // switch evtCode
 
