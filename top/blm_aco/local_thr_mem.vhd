@@ -133,7 +133,7 @@ architecture rtl of local_thr_mem is
     signal cnt_vector : std_logic_vector(511 downto 0);
     signal blm_trigger : std_logic;
 
-    type new_dataset_state_m is (reg_idle, timing,finish_state); --wait_state,
+    type new_dataset_state_m is (reg_idle, finish_state); --wait_state,
     signal new_dataset_state : new_dataset_state_m;
     signal fifo_in_data : std_logic_vector(11 downto 0);
     signal fifo_wr : std_logic;
@@ -141,7 +141,7 @@ architecture rtl of local_thr_mem is
     signal fifo_rd : std_logic;
     signal empty_fifo : std_logic;
     signal fifo_out_data : std_logic_vector(11 downto 0);
-    signal state_sm : integer range 0 to 3 := 0;
+    signal state_sm : integer range 0 to 2 := 0;
 
     signal timing_trigger_out: std_logic;
     signal timing_dataset: std_logic_vector(11 downto 0);
@@ -321,10 +321,10 @@ begin
         elsif rising_edge(clk) then
             case new_dataset_state is
                 when reg_idle => state_sm <= 0;
-                when timing => state_sm <= 1;
-                when finish_state => state_sm <= 2;
+         --       when timing => state_sm <= 1;
+                when finish_state => state_sm <= 1;
 
-                when others => state_sm <= 3;
+                when others => state_sm <= 2;
             end case;
         end if;
     end process;

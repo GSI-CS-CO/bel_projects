@@ -26,12 +26,7 @@ port (
     BLM_wd_reset            : in std_logic_vector(53 downto 0);
     BLM_gate_hold_time_Reg  : in  t_BLM_gate_hold_Time_Array;
     BLM_ctrl_Reg            : in std_logic_vector(15 downto 0);  
-                                                                -- bit 11-0 Direct Gate-usage, one bit for each gate signal input (BLM_gate_in), 
-                                                                -- bit 14 reset from gate
-                                                                -- bit 15 free
-
-  --  BLM_gate_seq_prep_ck_sel_Reg : in std_logic_vector(15 downto 0);-- bit 15 free
-                                                                   -- bit 12counter RESET,
+                                                              z
     BLM_counters_Reg: in std_logic_vector(15 downto 0); --bit 15-2 free
                                                                    --bit 1 reset from gate CTR_AUTORESET
                                                                    --bit 0 global counter RESET                                                                -- bit 11-0f or gate_prepare signals
