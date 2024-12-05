@@ -800,7 +800,7 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       break;
       
     default :
-      pp_printf("default case, evtCode %d\n", evtCode);
+      // pp_printf("default case, evtCode %d\n", evtCode);
       break;
   } // switch evtCode
 
