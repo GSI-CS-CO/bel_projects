@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 28-Aug-2024
+ *  version : 13-Dec-2024
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  NB: units of variables are [ns] unless explicitely mentioned as suffix
@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000800                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000801                                      // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -354,7 +354,8 @@ uint32_t setSubmit()
   /* more checking required chk */
 
   // values required for extraction
-  setMode[sid]         = *pSharedSetMode;    
+  setMode[sid]         = *pSharedSetMode;
+  //pp_printf("submit sid %d, mode %d\n", sid, *pSharedSetMode);
   setGid[sid]          = *pSharedSetGidExt;
   setTH1Ext_as[sid]    = (uint64_t)(*pSharedSetTH1ExtHi) << 32;
   setTH1Ext_as[sid]   |= (uint64_t)(*pSharedSetTH1ExtLo);
@@ -391,7 +392,7 @@ uint32_t setSubmit()
   } // else flagInject   
   
   setFlagValid[sid]    = 1;
-  DBPRINT3("submit %u\n", sid);
+  //pp_printf("submit %u\n", sid);
   return COMMON_STATUS_OK;
 } // setSubmit
 
@@ -1248,12 +1249,13 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   // send phase shift request to low-level rf at extraction machine
   if (mState == B2B_MFSM_EXT_PSHIFT_S) {
     // send command: phase shift at extraction machine
+    pp_printf("now: EXT_PSHIFT_S\n");
     sendEvtId      = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PSHIFTEXT, flagsExt, sidExt, bpidExt, 0);
     // send param: low word: absolute phase shift value [degree, float]
     // chk: N.B. this only works if the absolute phase shift so far is '0'
     tmp.f = 360.0 * fwlib_tps2tfns(pShiftExt)/((float)TH1Ext_as / 1000000000.0);// phase shift [degree, float]
     sendParam      = (uint64_t)(tmp.data);
-    tmp.f = (float)B2B_PHASESHIFTTIME;                                          // time for phase shift [ns, float]
+    tmp.f          = B2B_PHASESHIFTTIME;                                        // time for phase shift [s, float]
     sendParam     |= (uint64_t)(tmp.data) << 32;
     sendDeadline   =  getSysTime() + (uint64_t)COMMON_AHEADT;                   // use a conservative deadline
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0, 0);
@@ -1408,6 +1410,7 @@ int main(void) {
     *pSharedGetGid        = gid;
     *pSharedGetSid        = sid;
     *pSharedGetMode       = mode;
+    /* pp_printf("update, sid %d, mode %d\n", sid, mode); */
     *pSharedGetTH1ExtHi   = (uint32_t)((TH1Ext_as >> 32) & 0xffffffff); 
     *pSharedGetTH1ExtLo   = (uint32_t)( TH1Ext_as        & 0xffffffff);
     *pSharedGetNHExt      = nHExt;
