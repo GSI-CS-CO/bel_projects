@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-Aug-2024
+ *  version : 16-dec-2024
  *
  * publishes raw data of the b2b system
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000800
+#define B2B_SERV_RAW_VERSION 0x000801
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -324,7 +324,7 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       getval.inj_phaseSysmaxErr = (float)b2b_calc_max_sysdev_ps(setval.inj_T, B2B_NSAMPLES, 0) / 1000.0;
       flagErr                   = ((evtId & B2B_ERRFLAG_PMINJ) != 0);
       getval.flagEvtErr        |= flagErr << tag;
-      break;     
+      break;
     case tagKte     :
       getval.kteOff            = deadline.getTAI() - getval.tCBS;
       tmpf                     = comlib_half2float((uint16_t)((tef & 0xffff0000) >> 16));        // [us, hfloat]
@@ -605,7 +605,7 @@ int main(int argc, char** argv)
 
   switch(reqExtRing) {
     case SIS18_RING :
-      nCondition = 15;
+      nCondition = 16;
       sprintf(ringName, "sis18");
       break;
     case ESR_RING :
@@ -717,6 +717,8 @@ int main(int argc, char** argv)
         condition[4]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
         //tag[4]        = tmpTag;
 
+        // SIS18 to extraction, continues further down ...
+
         // SIS18 to ESR, PMEXT
         tmpTag        = tagPme;       
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_B2B_ESR << 48) | ((uint64_t)B2B_ECADO_B2B_PMEXT << 36);
@@ -776,7 +778,13 @@ int main(int argc, char** argv)
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_RING << 48) | ((uint64_t)B2B_ECADO_B2B_DIAGKICKINJ << 36);
         condition[14] = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
         //tag[14]       = tmpTag;
-        
+
+        // SIS18 to extraction, phase shift extraction
+        tmpTag        = tagPse;
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_B2B_EXTRACT << 48) | ((uint64_t)B2B_ECADO_B2B_PSHIFTEXT << 36);
+        condition[15]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[15]        = tmpTag;
+
         break;
       case ESR_RING : 
 
