@@ -1249,7 +1249,6 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   // send phase shift request to low-level rf at extraction machine
   if (mState == B2B_MFSM_EXT_PSHIFT_S) {
     // send command: phase shift at extraction machine
-    pp_printf("now: EXT_PSHIFT_S\n");
     sendEvtId      = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PSHIFTEXT, flagsExt, sidExt, bpidExt, 0);
     // send param: low word: absolute phase shift value [degree, float]
     // chk: N.B. this only works if the absolute phase shift so far is '0'
@@ -1410,7 +1409,7 @@ int main(void) {
     *pSharedGetGid        = gid;
     *pSharedGetSid        = sid;
     *pSharedGetMode       = mode;
-    /* pp_printf("update, sid %d, mode %d\n", sid, mode); */
+    // pp_printf("update, sid %d, mode %d\n", sid, mode); 
     *pSharedGetTH1ExtHi   = (uint32_t)((TH1Ext_as >> 32) & 0xffffffff); 
     *pSharedGetTH1ExtLo   = (uint32_t)( TH1Ext_as        & 0xffffffff);
     *pSharedGetNHExt      = nHExt;
