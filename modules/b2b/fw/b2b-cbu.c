@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 13-Dec-2024
+ *  version : 16-Dec-2024
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  NB: units of variables are [ns] unless explicitely mentioned as suffix
@@ -1221,7 +1221,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     sendParam     |= (uint64_t)(nGExt & 0xff) << 56;                            // use upper 8 bit as geometric harmonic number
     sendParam     |= (uint64_t)(mode & 0xf)   << 52;                            // use next upper 4 bit as mode info
     sendTef        = (uint32_t)(cTrigExt_us)  << 16;                            // high 16 bit: ext kicker correction
-    sendTef       |= (uint32_t)(cTrigInj_us);                                   // low 16 bit : inj kicker correction
+    sendTef       |= (uint32_t)(cPhase_us);                                     // low 16 bit: phase correction
     sendDeadline   = tCBS + (uint64_t)B2B_PMOFFSET;                             // fixed deadline relative to CBS
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, sendTef, 0);
     transStat     |= mState;
@@ -1239,7 +1239,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     sendParam      = TH1Inj_as & 0x000fffffffffffff;                            // use low 52 bit as period
     sendParam     |= (uint64_t)(nGInj & 0xff) << 56;                            // use upper 8 bit as geometric harmonic number
     // sendParam: next upper 4 bit: reserved
-    sendTef        = (uint32_t)(cPhase_us) << 16;                               // high 16 bit: phase correction, low 16 bit: reserved
+    sendTef        = (uint32_t)(cTrigInj_us) << 16;                             // high 16 bit: inj kicker correction; low 16 bit: reserved
     sendDeadline   = tCBS + (uint64_t)B2B_PMOFFSET + 1;                         // fixed deadline relative to B2BS, add 1ns to avoid collision with PMEXT
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, sendTef, 0);
     transStat     |= mState;

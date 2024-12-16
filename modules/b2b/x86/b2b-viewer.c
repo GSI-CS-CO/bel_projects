@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 28-Aug-2024
+ *  version :17-dec-2024
  *
  * subscribes to and displays status of a b2b transfer
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_VIEWER_VERSION 0x000800
+#define B2B_VIEWER_VERSION 0x000801
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -353,11 +353,6 @@ int printSet(uint32_t sid)
       printf("inj: %s\n", TXTNA);
       printf("b2b: %s\n", TXTNA);
       break;
-      /*    case 1 :
-      printf("ext: kick  corr %8.3f ns\n", set_extCTrig);
-      printf("inj: %s\n", TXTNA);
-      printf("b2b: %s\n", TXTNA);
-      break;*/
     case 1 ... 2 :
       printf("ext: kick  corr %8.3f ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_extCTrig, set_extNue, set_extT, set_extH);
       printf("inj: %s\n", TXTNA);
