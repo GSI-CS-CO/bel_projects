@@ -265,7 +265,7 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       flagActive                   = 1;
       
       initSetval(&setval);
-      setval.mode                  = 0;      // in the simplest case mode is '0' (OFF)
+      setval.mode                  = B2B_MODE_OFF;    // in the simplest case
       setval.ext_sid               = sid;
       setval.ext_gid               = recGid;
 
@@ -290,21 +290,21 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       
       setval.ext_h             = ((param & 0xff00000000000000) >> 56);
       setval.ext_T             = ((param & 0x000fffffffffffff));    // [as]
-      if (setval.mode > 0) {
+      if (setval.mode > B2B_MODE_OFF) {
         tmpf                   = comlib_half2float((uint16_t)((tef & 0xffff0000)  >> 16)); // [us, hfloat]; chk for NAN?
         setval.ext_cTrig       = tmpf * 1000.0;                     // [ns]
       } // if mode
-      if (setval.mode > 2) {
+      if ((setval.mode >  B2B_MODE_B2E) && (setval.mode != B2B_MODE_B2C)) {
         tmpf                   = comlib_half2float((uint16_t)( tef & 0x0000ffff));         // [us, hfloat]; chk for NAN?
-        setval.inj_cTrig        = tmpf * 1000.0;                    // [ns]
+        setval.cPhase          = tmpf  * 1000;                      // [ns]
       } // if mode
       break;
     case tagPmi     :
       setval.inj_h             = ((param & 0xff00000000000000) >> 56);
       setval.inj_T             = ((param & 0x000fffffffffffff));    // [as]
-      if (setval.mode > 3) {
+      if (setval.mode > B2B_MODE_B2E) {
         tmpf                   = comlib_half2float((uint16_t)((tef & 0xffff0000) >> 16));              // [us, hfloat]]
-        setval.cPhase          = tmpf  * 1000;                      // [ns]
+        setval.inj_cTrig       = tmpf * 1000.0;                     // [ns]
       } // if mode
       break;
     case tagPre     :
