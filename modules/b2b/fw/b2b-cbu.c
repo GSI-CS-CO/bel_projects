@@ -342,7 +342,7 @@ uint32_t setSubmit()
   // diable 'valid' flag here so that the corresponding setting is disabled in case of erronous settings
   setFlagValid[sid]    = 0;
 
-  if (*pSharedSetMode == B2B_MODE_B2C ||
+  if (*pSharedSetMode ==  B2B_MODE_B2C ||
       *pSharedSetMode ==  B2B_MODE_B2BFBEAT ||
       *pSharedSetMode ==  B2B_MODE_B2BPSHIFTE ||
       *pSharedSetMode ==  B2B_MODE_B2BPSHIFTI
@@ -1254,7 +1254,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     // chk: N.B. this only works if the absolute phase shift so far is '0'
     tmp.f = 360.0 * fwlib_tps2tfns(pShiftExt)/((float)TH1Ext_as / 1000000000.0);// phase shift [degree, float]
     sendParam      = (uint64_t)(tmp.data);
-    tmp.f          = B2B_PHASESHIFTTIME;                                        // time for phase shift [s, float]
+    tmp.f          = (float)B2B_PHASESHIFTTIMEDDS;                              // time for phase shift [s, float]
     sendParam     |= (uint64_t)(tmp.data) << 32;
     sendDeadline   =  getSysTime() + (uint64_t)COMMON_AHEADT;                   // use a conservative deadline
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0, 0);

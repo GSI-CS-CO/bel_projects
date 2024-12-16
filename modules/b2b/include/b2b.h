@@ -108,7 +108,8 @@
 #define B2B_PRETRIGGERINJKICK     300000    // offset [ns] used as pre-trigger on the injection kick event
 #define B2B_PRETRIGGERPR          250000    // offset [ns] used as pre-trigger on the PRINJ/PREXT event
 #define B2B_PRETRIGGERTR           20000    // offset [ns] used as pre-trigger on the trigger event
-#define B2B_PHASESHIFTTIME  (float)0.005    // time [s] used for phase shifting of low-level rf; DDS uses SI units
+#define B2B_PHASESHIFTTIME       5000000    // time [s] used for phase shifting of low-level rf; DDS uses SI units
+#define B2B_PHASESHIFTTIMEDDS  (float)B2B_PHASESHIFTTIME/1000000000.0 // DDS want SI units
 #define B2B_KICKOFFSETPSHIFT     B2B_PHASESHIFTTIME +  B2B_KICKOFFSETMIN + 1000000 // offset [ns] deadline of kicker trigger events relative to B2BS event when performing phase shifts
 #define B2B_AHEADT                300000    // more aggressive ahead interval for determining the deadline of a timing message
 #define B2B_ACCEPTKMON             10000    // timewindow [us]!!! in which monitor signal  from kicker electronics is expected

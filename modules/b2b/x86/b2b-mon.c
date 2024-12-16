@@ -720,7 +720,6 @@ int main(int argc, char** argv)
         buildPrintLine(i);
       } // if flagSetUpdate
     } // for i
-
     
     if (flagPrintNow) printData(name);
     if (!quit) {
