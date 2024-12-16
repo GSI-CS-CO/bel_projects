@@ -479,10 +479,10 @@ int main(int argc, char** argv)
     condition[0]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
     tag[0]        = tmpTag;
   
-    // CMD_B2B_TRIGGER..., +1ms (!), signals stop of data collection
+    // CMD_B2B_TRIGGER..., +100us (!), signals stop of data collection
     tmpTag        = tagKStop;        
     snoopID       = ((uint64_t)FID << 60) | ((uint64_t)reqRing  << 48) | ((uint64_t)reqEvtNo << 36);
-    condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 1000000));
+    condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 100000));
     tag[1]        = tmpTag;
 
     // IO input rising edge
