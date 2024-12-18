@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 16-dec-2024
+ *  version : 18-dec-2024
  *
  * subscribes to and displays status of many b2b transfers
  *
@@ -419,7 +419,7 @@ void buildPrintLine(uint32_t idx)
   else             sprintf(injSid, "%s", "--");
 
   sprintf(printLineK[idx], "|%20s | %12s |%6s | %2d | %33s |%6s | %2s |%15s | %46s |", pattern, tCBS, origin, sid, extTrig, dest, injSid, b2b, injTrig);
-  sprintf(printLineN[idx], "|%20s | %12s |%6s | %2d | %38s | %43s | %6s  %6s       |", pattern, tCBS, origin, sid, nueMeasExt, nueMeasInj, setLevelExt, setLevelInj);
+  sprintf(printLineN[idx], "|%20s | %12s |%6s | %2d | %43s | %43s | %6s  %6s       |", pattern, tCBS, origin, sid, nueMeasExt, nueMeasInj, setLevelExt, setLevelInj);
   //                printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
 
 } //buildPrintLine
