@@ -16,4 +16,5 @@ package scu_diob_pkg is
   TYPE    t_in_array                is array (0 to 8) of std_logic_vector(5 downto 0);
   TYPE    t_gate_counter_in_Array   is array (0 to 5) of std_logic_vector(11 downto 0);
   TYPE    t_IO_Reg_1_to_8_Array     is array (1 to 8)  of std_logic_vector(15 downto 0);
+  
 end scu_diob_pkg;
