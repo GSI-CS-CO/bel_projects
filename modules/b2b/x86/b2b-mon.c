@@ -348,7 +348,9 @@ void buildPrintLine(uint32_t idx)
   
   if (flagCphase) {
     if ((dicGetval[idx].flagEvtErr >> tagKte) & 0x1) sprintf(b2b, "%s",  TXTERROR);
-    else                                             sprintf(b2b, "%7.1f %7.1f", convertUnit(dicSetval[idx].cPhase, dicSetval[idx].ext_T), convertUnit(dicDiagval[idx].phaseOffAct, dicSetval[idx].ext_T));
+    else { if (flagB2b)                              sprintf(b2b, "%7.1f %7.1f", convertUnit(dicSetval[idx].cPhase, dicSetval[idx].ext_T), convertUnit(dicDiagval[idx].phaseOffAct, dicSetval[idx].ext_T));
+           else                                      sprintf(b2b, "%7.1f %7s"  , convertUnit(dicSetval[idx].cPhase, dicSetval[idx].ext_T), "---");
+    } // else flagCphase
   } // if flagCphase
   else {
     if (flagInjTrig) sprintf(b2b, "coastg");
