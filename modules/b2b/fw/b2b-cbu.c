@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 16-Dec-2024
+ *  version : 20-Dec-2024
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  NB: units of variables are [ns] unless explicitely mentioned as suffix
@@ -1010,6 +1010,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   uint16_t cTrigExt_us;                                       // correction for extraction trigger [half precision, us]
   uint16_t cTrigInj_us;                                       // correction for injection trigger [half precision, us]
   uint16_t cPhase_us;                                         // correction for phase [half precision, us]
+  uint32_t pShiftPhase;                                       // buffer for phase shift
+  uint32_t pShiftTime;                                        // buffer for phase shift time
   
   uint32_t tmp32;
   float    tmpf;
@@ -1173,11 +1175,11 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     case B2B_ECADO_B2B_PRINJ :                                 // received: measured phase from injection machine
       if (mode <  B2B_MODE_B2BFBEAT) return status;            // ignore informative phase result
       comLatency    = (int32_t)(getSysTime() - recDeadline);
-      tmpf          = (float)(getSysTime() - tCBS) / 1000.0;    // time from CBS to now [us]
-      offsetPrr_us  = fwlib_float2half(tmpf);                   // -> half precision
+      tmpf          = (float)(getSysTime() - tCBS) / 1000.0;   // time from CBS to now [us]
+      offsetPrr_us  = fwlib_float2half(tmpf);                  // -> half precision
       recGid        = (uint32_t)((recId >> 48) & 0xfff     );
       recSid        = (uint32_t)((recId >> 20) & 0xfff     );
-      recRes        = (uint32_t)(recId & 0x3f);               // lowest 6 bit of EvtId
+      recRes        = (uint32_t)(recId & 0x3f);                // lowest 6 bit of EvtId
 
       // check, if received evtID is valid
       if (recGid != gid)             return COMMON_STATUS_OUTOFRANGE;   
@@ -1199,7 +1201,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       break;
 
     default :
-      return status;                                          // the miniFSM is driven by ECA Events; don't continue if timeout
+      return status;                                           // the miniFSM is driven by ECA Events; don't continue if timeout
   } // switch ecaAction
 
   // trigger at earliest kicker deadline
@@ -1249,15 +1251,37 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   // send phase shift request to low-level rf at extraction machine
   if (mState == B2B_MFSM_EXT_PSHIFT_S) {
     // send command: phase shift at extraction machine
-    sendEvtId      = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PSHIFTEXT, flagsExt, sidExt, bpidExt, 0);
-    // send param: low word: absolute phase shift value [degree, float]
     // chk: N.B. this only works if the absolute phase shift so far is '0'
-    tmp.f = 360.0 * fwlib_tps2tfns(pShiftExt)/((float)TH1Ext_as / 1000000000.0);// phase shift [degree, float]
-    sendParam      = (uint64_t)(tmp.data);
+
+    // send param
+    // - low word : absolute phase shift value [degree , float], swap of endianess required
+    // - high word: time of phase shift        [seconds, float], swap of endianess required
+    // evtID: requires 0x0001 at the 2nd lowest 16 bit word
+    // - 0x...........1....
+    sendEvtId      = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PSHIFTEXT, flagsExt, sidExt, bpidExt, 0);
+    // set (start bit), messes up a bit in BPID
+    sendEvtId     |= 0x0000000000010000;
+    tmp.f          = 360.0 * fwlib_tps2tfns(pShiftExt)/((float)TH1Ext_as / 1000000000.0);// phase shift [degree, float]
+    // change endianess
+    pShiftPhase    = (tmp.data & 0x0000ffff) << 16;
+    pShiftPhase   |= (tmp.data & 0xffff0000) >> 16;
+
     tmp.f          = (float)B2B_PHASESHIFTTIMEDDS;                              // time for phase shift [s, float]
-    sendParam     |= (uint64_t)(tmp.data) << 32;
-    sendDeadline   =  getSysTime() + (uint64_t)COMMON_AHEADT;                   // use a conservative deadline
+    // change endianess
+    pShiftTime     = (tmp.data & 0x0000ffff) << 16;
+    pShiftTime    |= (tmp.data & 0xffff0000) >> 16;
+    sendParam      = (uint64_t)pShiftPhase;
+    sendParam     |= (uint64_t)pShiftTime << 32;
+    sendDeadline   = ((tCBS + B2B_KICKOFFSETMIN) / 10000) * 10000;              // round to BuTiS t0 (100 kHz)
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0, 0);
+
+    // we need to revert the phase shift at the end of flattop, after we are finished with diagnostics
+    sendDeadline   = tCBS +  B2B_TDIAGOBS +  B2B_KICKOFFSETMIN;                 // 'observation time' + minimum offset for kick as safety margin
+    // invert the 'negative' bit, low 32 bit of param field (remember we had changed the endianess)
+    // this is a bit dirty, but guarantees avoiding any rounding errors
+    sendParam     ^= 0x0000000000008000;
+    fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0, 0);
+    
     transStat     |= mState;
     mState         = getNextMState(mode, mState);
   } // B2B_MFSM_EXT_PSHIFT_S
