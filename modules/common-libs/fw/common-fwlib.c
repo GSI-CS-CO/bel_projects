@@ -86,7 +86,7 @@ uint32_t *pSharedNBadStatus;            // pointer to a "user defined" u32 regis
 uint32_t *pSharedNBadState;             // pointer to a "user defined" u32 register; here: publish # of bad state (=FATAL, ERROR, UNKNOWN) incidents
 volatile uint32_t *pSharedCmd;          // pointer to a "user defined" u32 register; here: get command from host
 uint32_t *pSharedState;                 // pointer to a "user defined" u32 register; here: publish status
-volatile uint32_t *pSharedData4EB;      // pointer to a n x u32 register; here: memory region for receiving EB return values
+volatile uint32_t *pSharedData4EB;      // pointer to a "user defined" u32 register; here: memory region for receiving EB return values
 uint32_t *pSharedMacHi;                 // pointer to a "user defined" u32 register; here: high bits of MAC
 uint32_t *pSharedMacLo;                 // pointer to a "user defined" u32 register; here: low bits of MAC
 uint32_t *pSharedIp;                    // pointer to a "user defined" u32 register; here: IP
