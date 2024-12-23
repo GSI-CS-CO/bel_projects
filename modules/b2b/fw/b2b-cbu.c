@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 20-Dec-2024
+ *  version : 23-Dec-2024
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  NB: units of variables are [ns] unless explicitely mentioned as suffix
@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000801                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000802                                      // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -555,7 +555,7 @@ void getGeometricHarmonics(uint32_t gid, uint32_t *nExt, uint32_t *nInj)
 } // getGeometricHarmonics
 
 
-// calculates time for extraction
+// calculates time for extraction kick (nanoseconds precision is sufficient)
 uint32_t calcExtTime(uint64_t *tExtract, uint64_t tWant)
 {
   b2bt_t tExt;
@@ -943,7 +943,7 @@ uint32_t getNextMState(uint32_t mode, uint32_t actMState) {
           break;
         default :
           nextMState = B2B_MFSM_NOTHING;
-      } // switch actMState mode B2C
+      } // switch actMState mode B2B_FBEAT
       break;
     case B2B_MODE_B2EPSHIFT :   // bunch to extraction; basically the same as mode B2B_MODE_B2E but with additional phase shift; might be useful for testing
       switch (actMState) {
@@ -954,13 +954,13 @@ uint32_t getNextMState(uint32_t mode, uint32_t actMState) {
           nextMState = B2B_MFSM_EXT_PMEAS_R;
           break;
         case B2B_MFSM_EXT_PMEAS_R :
-          nextMState = B2B_MFSM_EXT_PSHIFT_S;
-          break;
-        case B2B_MFSM_EXT_PSHIFT_S :
           nextMState = B2B_MFSM_EXT_TNEXTRF_C;
           break;
         case B2B_MFSM_EXT_TNEXTRF_C :
-          nextMState = B2B_MFSM_EXT_TRIG;
+          nextMState = B2B_MFSM_EXT_PSHIFT_S ;
+          break;         
+        case B2B_MFSM_EXT_PSHIFT_S :
+          nextMState =  B2B_MFSM_EXT_TRIG;
           break;
         case B2B_MFSM_EXT_TRIG :
           nextMState = B2B_MFSM_NOTHING;
@@ -969,6 +969,42 @@ uint32_t getNextMState(uint32_t mode, uint32_t actMState) {
           nextMState = B2B_MFSM_NOTHING;
       } // switch actMState mode B2EPSHIFT
       break;
+    case B2B_MODE_B2BPSHIFTE :     // bunch to bucket, phase shift in extraction ring
+      switch (actMState) {
+        case B2B_MFSM_S0 :
+          nextMState = B2B_MFSM_EXT_PMEAS_S;
+          break;
+        case B2B_MFSM_EXT_PMEAS_S  :
+          nextMState = B2B_MFSM_INJ_PMEAS_S;
+          break;
+        case B2B_MFSM_INJ_PMEAS_S  :
+          nPhaseResult = 0;     
+          nextMState = B2B_MFSM_ALL_PMEAS_R;
+          break;                           
+        case B2B_MFSM_ALL_PMEAS_R  :                                  // we have a diamond structure: we requested two phase measurements
+          nPhaseResult++;                                             // but we don't know which result is received first; the simplest 
+          if (nPhaseResult == 2) nextMState = B2B_MFSM_EXT_TNEXTRF_C; // solution is to use a counter and count to 2
+          else                   nextMState = B2B_MFSM_ALL_PMEAS_R;
+          break;
+        case B2B_MFSM_EXT_TNEXTRF_C:
+          nextMState = B2B_MFSM_EXT_PSHIFT_C;
+          break;
+        case B2B_MFSM_EXT_PSHIFT_C:
+          nextMState = B2B_MFSM_EXT_PSHIFT_S;
+          break;
+        case B2B_MFSM_EXT_PSHIFT_S: 
+          nextMState = B2B_MFSM_EXT_TRIG;
+          break;
+        case B2B_MFSM_EXT_TRIG :
+          nextMState = B2B_MFSM_INJ_TRIG ;
+          break;
+        case B2B_MFSM_INJ_TRIG :
+          nextMState = B2B_MFSM_NOTHING;
+          break;
+        default :
+          nextMState = B2B_MFSM_NOTHING;
+      } // switch actMState mode B2B_B2BSHIFTE
+      break;      
       
     default :
       nextMState = B2B_MFSM_NOTHING;
@@ -1002,7 +1038,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   uint32_t recSid;                                            // SID received
   uint32_t recBpid;                                           // BPID received
   uint32_t recRes;                                            // reserved bits received
-  uint64_t tMatch;                                            // time when phases of injecion and extraction match
+  uint64_t tMatch;                                            // time when phases of injecion and extraction match (beating method)
   uint64_t tTrig;                                             // time when kickers shall be triggered;
   uint64_t tTrigExt;                                          // time when extraction kicker shall be triggered; tTrigExt = tTrig + cTrigExt;
   uint64_t tTrigInj;                                          // time when injection kicker shall be triggered;  tTrigInj = tTrig + cTrigInj;
@@ -1012,7 +1048,13 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   uint16_t cPhase_us;                                         // correction for phase [half precision, us]
   uint32_t pShiftPhase;                                       // buffer for phase shift
   uint32_t pShiftTime;                                        // buffer for phase shift time
+  b2bt_t   tPhase0Ext;                                        // time of 0-crossing of h=1 at extraction time
+  b2bt_t   tPhase0Inj;                                        // time of 0-crossing of h=1 at extraction time
+  int64_t  tPhase0Ext_as;                                     // ... [us]
+  int64_t  tPhase0Inj_as;                                     // ... [us]
+  int64_t  tPhaseDiff_as;                                     // phase difference at extraction time
   
+
   uint32_t tmp32;
   float    tmpf;
   fdat_t   tmp;
@@ -1248,6 +1290,48 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     mState         = getNextMState(mode, mState);
   } // B2B_MFSM_INJ_PMEAS_S
 
+  // prepare fast extraction at ~tWantExt; calculate time for next positive 0-crossing of h=1 signal
+  if (mState == B2B_MFSM_EXT_TNEXTRF_C) {
+    if (errorFlags) tTrig = tWantExt;                                           // plan B
+    else if (calcExtTime(&tTrig, tWantExt) != COMMON_STATUS_OK) {
+      tTrig       = tWantExt;                                                   // plan B
+      errorFlags |= B2B_ERRFLAG_CBU;
+    } // if NOT STATUS_OK
+    transStat |= mState;
+    mState     = getNextMState(mode, mState);
+  } // B2B_MFSM_EXT_TNEXTRF_C
+
+  // prepare fast extraction with phase matching between both machines (here: beating method): calculate trigger time
+  if (mState == B2B_MFSM_EXT_TFBEAT_C) {
+    //tmp32 = (getSysTime() - tCBS); pp_printf("pre phase match %u\n", tmp32);
+    if (errorFlags) {tTrig =  tWantExt;/*pp_printf("b2b: error flags\n");*/}  // plan B
+    else if ((status = calcPhaseMatch(tWantExt, &tTrig, &TBeat_as)) != COMMON_STATUS_OK) {
+      tTrig       = tWantExt;                                                 // plan B
+      errorFlags |= B2B_ERRFLAG_CBU;
+      //pp_printf("b2b: error match algorithm, TBeat %lu\n", (uint32_t)(TBeat_as / 1000000000));
+    } // if NOT STATUS_OK
+    transStat   |= mState;
+    mState       = getNextMState(mode, mState);
+    //tmp32 = (getSysTime() - tCBS); pp_printf("post phase match %u\n", tmp32);
+  } // B2B_MFSM_EXT_TFBEAT_C
+
+  // prepare fast extraction with phase matching between both machines is (here: phase shift method): calculate trigger time
+  if (mState == B2B_MFSM_EXT_PSHIFT_C) {
+    // calculate phase difference at extraction time
+    tPhase0Ext     = fwlib_advanceTimePs(tH1Ext_t, fwlib_tns2tps(tWantExt), TH1Ext_as);// exact phase 0 at ~extraction time
+    tPhase0Ext.ns -= tCBS;                                                             // relative to tCBS
+    tPhase0Ext_as  =  tPhase0Ext.ns *  one_ns_as +  tPhase0Ext.ps * one_ps_as;         // convert to as
+    tPhase0Inj     = fwlib_advanceTimePs(tH1Inj_t, fwlib_tns2tps(tWantExt), TH1Inj_as);// exact phase 0 at ~extraction time
+    tPhase0Inj.ns -= tCBS;                                                             // relative to tCBS
+    tPhase0Inj.ns -= cPhase_t.ns;                                                      // subtract requrested phase difference at transfer
+    tPhase0Inj.ps -= cPhase_t.ps;
+    tPhase0Inj_as  =  tPhase0Inj.ns *  one_ns_as +  tPhase0Inj.ps * one_ps_as;         // convert to as
+    tPhaseDiff_as  = tPhase0Ext_as - tPhase0Inj_as;                                    // phase difference we need to shift
+    while (tPhaseDiff_as < 0) {tPhaseDiff_as += TH1Ext_as;}                            // keep it simple: only positive phase shifting
+    pShiftExt.ns   = (uint64_t)tPhaseDiff_as / one_ns_as;                              // convert to ns
+    pShiftExt.ps   = ((uint64_t)tPhaseDiff_as % one_ns_as) / one_ps_as;                // remaining ps
+  } // B2B_MFSM_EXT_PSHIFT_C  
+
   // send phase shift request to low-level rf at extraction machine
   if (mState == B2B_MFSM_EXT_PSHIFT_S) {
     // send command: phase shift at extraction machine
@@ -1259,9 +1343,9 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     // evtID: requires 0x0001 at the 2nd lowest 16 bit word
     // - 0x...........1....
     sendEvtId      = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PSHIFTEXT, flagsExt, sidExt, bpidExt, 0);
-    // set (start bit), messes up a bit in BPID
+    // set (start bit), messes up a bit in BPID; PSM of low-level rf has inverted definition of direction
     sendEvtId     |= 0x0000000000010000;
-    tmp.f          = 360.0 * fwlib_tps2tfns(pShiftExt)/((float)TH1Ext_as / 1000000000.0);// phase shift [degree, float]
+    tmp.f          = -360.0 * fwlib_tps2tfns(pShiftExt)/((float)TH1Ext_as / 1000000000.0);// phase shift [degree, float]
     // change endianess
     pShiftPhase    = (tmp.data & 0x0000ffff) << 16;
     pShiftPhase   |= (tmp.data & 0xffff0000) >> 16;
@@ -1285,38 +1369,12 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     transStat     |= mState;
     mState         = getNextMState(mode, mState);
   } // B2B_MFSM_EXT_PSHIFT_S
-
-  // prepare fast extraction at ~tWantExt; calculate time for next positive 0-crossing of h=1 signal
-  if (mState == B2B_MFSM_EXT_TNEXTRF_C) {
-    tWantExt      = tWantExt + pShiftExt.ns; 
-    if (errorFlags) tTrig = tWantExt;                                           // plan B
-    else if (calcExtTime(&tTrig, tWantExt) != COMMON_STATUS_OK) {
-      tTrig       = tWantExt;                                                   // plan B
-      errorFlags |= B2B_ERRFLAG_CBU;
-    } // if NOT STATUS_OK
-    transStat |= mState;
-    mState     = getNextMState(mode, mState);
-  } // B2B_MFSM_EXT_TNEXTRF_C
-
-  // prepare fast extraction with phase matching between both machines is achieved: calculate trigger time
-  if (mState == B2B_MFSM_EXT_TFBEAT_C) {
-    //tmp32 = (getSysTime() - tCBS); pp_printf("pre phase match %u\n", tmp32);
-    if (errorFlags) {tTrig =  tWantExt;/*pp_printf("b2b: error flags\n");*/}  // plan B
-    else if ((status = calcPhaseMatch(tWantExt, &tTrig, &TBeat_as)) != COMMON_STATUS_OK) {
-      tTrig       = tWantExt;                                                 // plan B
-      errorFlags |= B2B_ERRFLAG_CBU;
-      //pp_printf("b2b: error match algorithm, TBeat %lu\n", (uint32_t)(TBeat_as / 1000000000));
-    } // if NOT STATUS_OK
-    transStat   |= mState;
-    mState       = getNextMState(mode, mState);
-    //tmp32 = (getSysTime() - tCBS); pp_printf("post phase match %u\n", tmp32);
-  } // B2B_MFSM_EXT_TFBEAT_C
-
+  
   // trigger extraction kicker
   if (mState == B2B_MFSM_EXT_TRIG ) {
     sendGid      =  getTrigGid(1);
     if (!sendGid) return COMMON_STATUS_OUTOFRANGE;
-    tTrigExt     = tTrig + cTrigExt_t.ns;                                     // trigger correction; chk: sub-ns part
+    tTrigExt     = tTrig + cTrigExt_t.ns + pShiftExt.ns;                      // trigger correction; ns are sufficient; chk sign of phase correction;
     offsDone     = getSysTime() - tCBS;
     tmpf         = (float)offsDone / 1000.0;                                  // time from CBS to now [us]
     //tmp32 = (uint32_t)tmpf; pp_printf("sid %d, fin-cbs %u\n", sid, tmp32);
