@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 18-dec-2024
+ *  version : 23-dec-2024
  *
  * subscribes to and displays status of many b2b transfers
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_MON_VERSION 0x000801
+#define B2B_MON_VERSION 0x000802
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -349,7 +349,7 @@ void buildPrintLine(uint32_t idx)
   if (flagCphase) {
     if ((dicGetval[idx].flagEvtErr >> tagKte) & 0x1) sprintf(b2b, "%s",  TXTERROR);
     else { if (flagB2b)                              sprintf(b2b, "%7.1f %7.1f", convertUnit(dicSetval[idx].cPhase, dicSetval[idx].ext_T), convertUnit(dicDiagval[idx].phaseOffAct, dicSetval[idx].ext_T));
-           else                                      sprintf(b2b, "%7.1f %7s"  , convertUnit(dicSetval[idx].cPhase, dicSetval[idx].ext_T), "---");
+           else                                      sprintf(b2b, "%7.1f %7.1f", convertUnit(dicSetval[idx].cPhase, dicSetval[idx].ext_T), convertUnit(dicDiagval[idx].ext_rfOffAct, dicSetval[idx].ext_T));
     } // else flagCphase
   } // if flagCphase
   else {
