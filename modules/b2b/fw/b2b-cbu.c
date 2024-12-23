@@ -1330,6 +1330,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     while (tPhaseDiff_as < 0) {tPhaseDiff_as += TH1Ext_as;}                            // keep it simple: only positive phase shifting
     pShiftExt.ns   = (uint64_t)tPhaseDiff_as / one_ns_as;                              // convert to ns
     pShiftExt.ps   = ((uint64_t)tPhaseDiff_as % one_ns_as) / one_ps_as;                // remaining ps
+    transStat   |= mState;
+    mState       = getNextMState(mode, mState);
   } // B2B_MFSM_EXT_PSHIFT_C  
 
   // send phase shift request to low-level rf at extraction machine
