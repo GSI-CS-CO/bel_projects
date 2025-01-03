@@ -104,6 +104,7 @@ extern "C" {
     float    ext_dKickProbLevel;                       // extraction: level of comparator for magent probe signal [%]
     float    ext_diagPhase;                            // extraction: offset from expected h=1 to actual h=1 signal [ns]
     float    ext_diagMatch;                            // extraction: offset from calculated 'phase match' to actual h=1 signal [ns]
+    float    ext_phaseShift;                           // phase shift value [ns]
     uint64_t inj_phase;                                // injection : ...
     float    inj_phaseFract;
     float    inj_phaseErr;
@@ -114,6 +115,7 @@ extern "C" {
     float    inj_dKickProbLevel;
     float    inj_diagPhase;
     float    inj_diagMatch;
+    float    inj_phaseShift;
     uint32_t flagEvtRec;                               // flag for events received; pme, pmi, pre, pri, pse, psi, kte, kti, kde, kdi, pde, pdi, start, stop
     uint32_t flagEvtErr;                               // error flag;               pme, pmi, ...
     uint32_t flagEvtLate;                              // flag for events late;     pme, pmi, ...
