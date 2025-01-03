@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 16-dec-2024
+ *  version : 03-jan-2025
  *
  * publishes raw data of the b2b system
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000801
+#define B2B_SERV_RAW_VERSION 0x000802
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -173,6 +173,7 @@ void initGetval(getval_t *getval)
   getval->ext_dKickProbLevel    = NAN;
   getval->ext_diagPhase         = NAN;
   getval->ext_diagMatch         = NAN;
+  getval->ext_phaseShift        = NAN;
   getval->inj_phase             = -1;
   getval->inj_phaseFract        = NAN;
   getval->inj_phaseErr          = NAN;
@@ -183,6 +184,7 @@ void initGetval(getval_t *getval)
   getval->inj_dKickProbLevel    = NAN;
   getval->inj_diagPhase         = NAN;
   getval->inj_diagMatch         = NAN;
+  getval->inj_phaseShift        = NAN;
   getval->flagEvtRec            = 0;
   getval->flagEvtErr            = 0;
   getval->flagEvtLate           = 0;
@@ -391,6 +393,20 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       if (tmp.data == 0x7fffffff) getval.inj_diagPhase = NAN;
       else                        getval.inj_diagPhase = (double)tmp.f;
       break;
+    case tagPse     :
+      tmpu                     = ((param & 0x00000000ffffffff));
+      // revert endianess hack
+      tmp.data                 = ((tmpu & 0x0000ffff) << 16);
+      tmp.data                |= ((tmpu & 0xffff0000) >> 16);
+      getval.ext_phaseShift    = tmp.f;
+      break;
+    case tagPsi     :
+      tmpu                     = ((param & 0x00000000ffffffff));
+      // revert endianess hack
+      tmp.data                 = ((tmpu & 0x0000ffff) << 16);
+      tmp.data                |= ((tmpu & 0xffff0000) >> 16);
+      getval.inj_phaseShift    = tmp.f;
+      break;
     default         :
       ;
   } // switch tag
@@ -456,7 +472,7 @@ void disAddServices(char *prefix)
   // set values
   for (i=0; i< B2B_NSID; i++) {
     sprintf(name, "%s-raw_sid%02d_getval", prefix, i);
-    disGetvalId[i]  = dis_add_service(name, "X:1;F:9;X:1;F:9;I:3;X:1;F:6", &(disGetval[i]), sizeof(getval_t), 0, 0);
+    disGetvalId[i]  = dis_add_service(name, "X:1;F:10;X:1;F:10;I:3;X:1;F:6", &(disGetval[i]), sizeof(getval_t), 0, 0);
     dis_set_timestamp(disGetvalId[i], 1, 0);
   } // for i
 } // disAddServices
@@ -605,7 +621,7 @@ int main(int argc, char** argv)
 
   switch(reqExtRing) {
     case SIS18_RING :
-      nCondition = 16;
+      nCondition = 17;
       sprintf(ringName, "sis18");
       break;
     case ESR_RING :
@@ -782,8 +798,15 @@ int main(int argc, char** argv)
         // SIS18 to extraction, phase shift extraction
         tmpTag        = tagPse;
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_B2B_EXTRACT << 48) | ((uint64_t)B2B_ECADO_B2B_PSHIFTEXT << 36);
-        condition[15]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        condition[15] = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
         //tag[15]        = tmpTag;
+
+        // SIS18 to ESR, phase shift extraction
+        tmpTag        = tagPse;
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_B2B_ESR << 48) | ((uint64_t)B2B_ECADO_B2B_PSHIFTEXT << 36);
+        condition[16] = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[16]        = tmpTag;
+
 
         break;
       case ESR_RING : 
