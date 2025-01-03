@@ -511,7 +511,9 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
 
     // rf frequency diagnostics; theoretical value is set value
     if (!isnan(disDiagval[sid].ext_rfOffAct)) {
-      calcNue(&act, &actErr, disDiagval[sid].ext_rfOffAct - dicGetval[sid].ext_phaseShift, (double)B2B_TDIAGOBS, dicSetval[sid].ext_T, dicGetval[sid].ext_phaseSysmaxErr);
+      if (isnan(dicGetval[sid].ext_phaseShift)) tmp = disDiagval[sid].ext_rfOffAct;
+      else                                      tmp = disDiagval[sid].ext_rfOffAct - dicGetval[sid].ext_phaseShift;
+      calcNue(&act, &actErr, tmp, (double)B2B_TDIAGOBS, dicSetval[sid].ext_T, dicGetval[sid].ext_phaseSysmaxErr);
       if (dicSetval[sid].ext_T != 0) tmp = 1000000000000000000.0 /  (double)(dicSetval[sid].ext_T);
       else                           tmp = 0.0;
       n   = ++(ext_rfNueN[sid]);
@@ -721,7 +723,9 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
 
     // rf frequency diagnostics; theoretical value is '0'
     if (!isnan(disDiagval[sid].inj_rfOffAct) && (dicSetval[sid].inj_T != -1)) {
-      calcNue(&act, &actErr, disDiagval[sid].inj_rfOffAct - dicGetval[sid].inj_phaseShift, (double)B2B_TDIAGOBS, dicSetval[sid].inj_T, dicGetval[sid].inj_phaseSysmaxErr);
+      if (isnan(dicGetval[sid].inj_phaseShift)) tmp = disDiagval[sid].inj_rfOffAct;
+      else                                      tmp = disDiagval[sid].inj_rfOffAct - dicGetval[sid].inj_phaseShift;
+      calcNue(&act, &actErr, tmp, (double)B2B_TDIAGOBS, dicSetval[sid].inj_T, dicGetval[sid].inj_phaseSysmaxErr);
       tmp = 1000000000000000000.0 /  (double)(dicSetval[sid].inj_T);
       n   = ++(inj_rfNueN[sid]);
       
