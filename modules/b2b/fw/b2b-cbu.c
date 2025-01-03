@@ -1315,21 +1315,26 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     //tmp32 = (getSysTime() - tCBS); pp_printf("post phase match %u\n", tmp32);
   } // B2B_MFSM_EXT_TFBEAT_C
 
-  // prepare fast extraction with phase matching between both machines is (here: phase shift method): calculate trigger time
+  // prepare fast extraction with phase matching between both machines is (here: phase shift method  @ extraction): calculate phase shift
   if (mState == B2B_MFSM_EXT_PSHIFT_C) {
     // calculate phase difference at extraction time
-    tPhase0Ext     = fwlib_advanceTimePs(tH1Ext_t, fwlib_tns2tps(tWantExt), TH1Ext_as);// exact phase 0 at ~extraction time
+    tPhase0Ext     = fwlib_advanceTimePs(tH1Ext_t, fwlib_tns2tps(tTrig), TH1Ext_as);   // exact phase 0 at ~extraction time
     tPhase0Ext.ns -= tCBS;                                                             // relative to tCBS
+    //tmp32 = tPhase0Ext.ns; pp_printf("phase 0 ext %d\n", tmp32);
     tPhase0Ext_as  =  tPhase0Ext.ns *  one_ns_as +  tPhase0Ext.ps * one_ps_as;         // convert to as
-    tPhase0Inj     = fwlib_advanceTimePs(tH1Inj_t, fwlib_tns2tps(tWantExt), TH1Inj_as);// exact phase 0 at ~extraction time
+
+    tPhase0Inj     = fwlib_advanceTimePs(tH1Inj_t, fwlib_tns2tps(tTrig), TH1Inj_as);  // exact phase 0 at ~extraction time
     tPhase0Inj.ns -= tCBS;                                                             // relative to tCBS
-    tPhase0Inj.ns -= cPhase_t.ns;                                                      // subtract requrested phase difference at transfer
-    tPhase0Inj.ps -= cPhase_t.ps;
+    //tmp32 = tPhase0Inj.ns; pp_printf("phase 0 inj %d\n", tmp32);
     tPhase0Inj_as  =  tPhase0Inj.ns *  one_ns_as +  tPhase0Inj.ps * one_ps_as;         // convert to as
-    tPhaseDiff_as  = tPhase0Ext_as - tPhase0Inj_as;                                    // phase difference we need to shift
+
+    tPhaseDiff_as  = tPhase0Inj_as - tPhase0Ext_as;                                    // phase difference we need to shift
     while (tPhaseDiff_as < 0) {tPhaseDiff_as += TH1Ext_as;}                            // keep it simple: only positive phase shifting
     pShiftExt.ns   = (uint64_t)tPhaseDiff_as / one_ns_as;                              // convert to ns
+    //tmp32          = (uint32_t)pShiftExt.ns; pp_printf("shift ns %d", tmp32);
     pShiftExt.ps   = ((uint64_t)tPhaseDiff_as % one_ns_as) / one_ps_as;                // remaining ps
+    //tmp32          = (uint32_t)pShiftExt.ps;
+    //pp_printf("; shift ps %d\n", tmp32);
     transStat   |= mState;
     mState       = getNextMState(mode, mState);
   } // B2B_MFSM_EXT_PSHIFT_C  
@@ -1367,6 +1372,9 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     // this is a bit dirty, but guarantees avoiding any rounding errors
     sendParam     ^= 0x0000000000008000;
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0, 0);
+
+    // if we do a phase shift at the extraction machine we must also correct the trigger time
+    tTrig        += pShiftExt.ns;
     
     transStat     |= mState;
     mState         = getNextMState(mode, mState);
@@ -1376,7 +1384,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   if (mState == B2B_MFSM_EXT_TRIG ) {
     sendGid      =  getTrigGid(1);
     if (!sendGid) return COMMON_STATUS_OUTOFRANGE;
-    tTrigExt     = tTrig + cTrigExt_t.ns + pShiftExt.ns;                      // trigger correction; ns are sufficient; chk sign of phase correction;
+    //tmp32 = (uint32_t)pShiftExt.ns; pp_printf("sid %d, pshift @ trigger %d\n", sidExt, tmp32);
+    tTrigExt     = tTrig + cTrigExt_t.ns;                                     // trigger correction; ns are sufficient
     offsDone     = getSysTime() - tCBS;
     tmpf         = (float)offsDone / 1000.0;                                  // time from CBS to now [us]
     //tmp32 = (uint32_t)tmpf; pp_printf("sid %d, fin-cbs %u\n", sid, tmp32);

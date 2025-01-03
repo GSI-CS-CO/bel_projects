@@ -64,6 +64,7 @@ saft-wbm-ctl $SDPS -x
 echo -e B2B: configure $SDPS wishbone channel, needed for writing duration and value for phase shift
 # parameter field 0xaaaabbbbccccdddd
 # shift value low bits: 0xcccc
+# mode B2B_MODE_B2EPSHIFT
 saft-wbm-ctl $SDPS -c 0x13a080a000000000 0xfffffff000000000 40000 1 -dg
 saft-wbm-ctl $SDPS -r 1 $DDSSHIFTPHAS 0 0x52
 # shift value high bits: 0xdddd
@@ -78,6 +79,21 @@ saft-wbm-ctl $SDPS -r 4 $DDSSHIFTTIME 0 0x41
 # start phase shift, EvtID 0x...........1....
 saft-wbm-ctl $SDPS -c 0x13a080a000000000 0xfffffff000000000     0 5 -d
 saft-wbm-ctl $SDPS -r 5 $DDSSHIFTSTRT - 0x32
+# mode B2B_MODE_B2BPSHIFTE
+saft-wbm-ctl $SDPS -c 0x13a180a000000000 0xfffffff000000000 40000 6 -dg
+saft-wbm-ctl $SDPS -r 6 $DDSSHIFTPHAS 0 0x52
+# shift value high bits: 0xdddd
+saft-wbm-ctl $SDPS -c 0x13a180a000000000 0xfffffff000000000 30000 7 -dg 
+saft-wbm-ctl $SDPS -r 7 $DDSSHIFTPHAS 0 0x51
+# shift time low bits: 0xbbbb
+saft-wbm-ctl $SDPS -c 0x13a180a000000000 0xfffffff000000000 20000 8 -dg
+saft-wbm-ctl $SDPS -r 8 $DDSSHIFTTIME 0 0x42
+# shift time high bits: 0xaaaa
+saft-wbm-ctl $SDPS -c 0x13a180a000000000 0xfffffff000000000 10000 9 -dg
+saft-wbm-ctl $SDPS -r 9 $DDSSHIFTTIME 0 0x41
+# start phase shift, EvtID 0x...........1....
+saft-wbm-ctl $SDPS -c 0x13a180a000000000 0xfffffff000000000     0 10 -d
+saft-wbm-ctl $SDPS -r 10 $DDSSHIFTSTRT - 0x32
 
 
 

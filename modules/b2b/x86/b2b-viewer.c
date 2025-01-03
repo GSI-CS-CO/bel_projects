@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-dec-2024
+ *  version : 02-jan-2025
  *
  * subscribes to and displays status of a b2b transfer
  *
@@ -263,7 +263,7 @@ void calcBeatValues()
   b2b_beatT    = 0;
 
   if (!flagSetValid)                      return;
-  if (set_mode != B2B_MODE_B2BFBEAT)      return;
+  if ((set_mode != B2B_MODE_B2BFBEAT) && (set_mode != B2B_MODE_B2BPSHIFTE))     return;
   if ((set_extH == 0) || (set_injH == 0)) return;
   if ((set_extT == 0) || (set_injT == 0)) return;
   if (set_extT == set_injT)               return;
@@ -459,7 +459,7 @@ int printKick(uint32_t sid)
   } // else mode == 0
 
   // injection kicker
-  if ((set_mode < B2B_MODE_B2C) || (set_mode == B2B_MODE_B2BFBEAT) || (set_mode ==  B2B_MODE_B2BPSHIFTE)) printf("inj: %s\n\n", TXTNA);
+  if ((set_mode < B2B_MODE_B2C) || (set_mode == B2B_MODE_B2EPSHIFT)) printf("inj: %s\n\n", TXTNA);
   else {
     printf("inj: monitor delay [ns] %5.0f", dicGetval.inj_dKickMon);
     printf(", probe delay [ns] %5.0f"     , dicGetval.inj_dKickProb);
