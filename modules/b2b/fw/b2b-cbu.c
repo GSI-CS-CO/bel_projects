@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-Dec-2024
+ *  version : 02-jan-2025
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  NB: units of variables are [ns] unless explicitely mentioned as suffix
@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000802                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000803                                      // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
