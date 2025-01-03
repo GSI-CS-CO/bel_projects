@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERVSYS_VERSION 0x000800
+#define B2B_SERVSYS_VERSION 0x000803
 
 // standard includes 
 #include <unistd.h> // getopt
