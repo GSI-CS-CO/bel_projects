@@ -243,7 +243,7 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
   static getval_t     getval;          // get values
   static uint64_t     tStart;          // time of transfer
 
-  //uint64_t one_ns_as = 1000000000;
+  uint64_t one_ns_as = 1000000000;
   fdat_t   tmp;
   float    tmpf;
   uint32_t tmpu;
@@ -398,6 +398,7 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       // revert endianess hack
       tmp.data                 = ((tmpu & 0x0000ffff) << 16);
       tmp.data                |= ((tmpu & 0xffff0000) >> 16);
+      if (!isnan(tmp.f)) tmp.f = tmp.f / 360.0 * (setval.ext_T / (float)one_ns_as);
       getval.ext_phaseShift    = tmp.f;
       break;
     case tagPsi     :
@@ -405,6 +406,7 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       // revert endianess hack
       tmp.data                 = ((tmpu & 0x0000ffff) << 16);
       tmp.data                |= ((tmpu & 0xffff0000) >> 16);
+      if (!isnan(tmp.f)) tmp.f = tmp.f / 360.0 * (setval.inj_T / (float)one_ns_as);
       getval.inj_phaseShift    = tmp.f;
       break;
     default         :

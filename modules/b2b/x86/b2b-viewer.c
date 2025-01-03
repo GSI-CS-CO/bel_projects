@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 02-jan-2025
+ *  version : 03-jan-2025
  *
  * subscribes to and displays status of a b2b transfer
  *
@@ -124,6 +124,7 @@ int      flagPrintDiag;                                     // flag: print diagn
 int      flagPrintRf;                                       // flag: print rf info
 int      flagPrintKick;                                     // flag: print kick info
 int      flagPrintStat;                                     // flag: print status info
+int      flagPrintPshift;                                   // flag: phase shift info
 int      modeMask;                                          // mask: marks events used in actual mode
 
 static void help(void) {
@@ -443,6 +444,27 @@ int printDiag(uint32_t sid)
 } // printDiag
 
 
+// print phase shift info
+int printPshift(uint32_t sid)
+{
+  printf("--- requested phase shift ---                            #ext %5u, #inj %5u\n", dicDiagval.ext_ddsOffN, dicDiagval.inj_ddsOffN);
+
+  switch (set_mode) {
+    case B2B_MODE_OFF ... B2B_MODE_B2BFBEAT :
+      printf("ext: %s\n", TXTNA);
+      printf("inj: %s\n", TXTNA);
+      break;
+    case B2B_MODE_B2EPSHIFT ... B2B_MODE_B2BPSHIFTI :
+      printf("ext: %8.3f ns, %8.3f °\n", dicGetval.ext_phaseShift, dicGetval.ext_phaseShift / set_extT * 360.0);
+      printf("inj: %8.3f ns, %8.3f °\n", dicGetval.inj_phaseShift, dicGetval.inj_phaseShift / set_injT * 360.0);
+      break;
+    default :
+      ;
+  } // switch set mode
+  return 3;
+} // printPshift
+
+
 // print kicker info
 int printKick(uint32_t sid)
 {
@@ -473,6 +495,7 @@ int printKick(uint32_t sid)
 
   return 5;                                                 // 5 lines
 } // printKick
+
 
 // print status info
 int printStatus(uint32_t sid)
@@ -645,21 +668,22 @@ void printData(int flagOnce, uint32_t sid, char *name)
     for (i=0;i<60;i++) printf("\n");
     time_date = time(0);
     strftime(tLocal,50,"%d-%b-%y %H:%M",localtime(&time_date));
-    printf("\033[7m--- b2b viewer (%9s) ---   SID %02d %21s CBS @ %s.%03d\033[0m\n", name, sid, modeStr, tCBS, set_msecs);
+    printf("\033[7m--- b2b viewer (%9s) --- SID %02d %23s CBS @ %s.%03d\033[0m\n", name, sid, modeStr, tCBS, set_msecs);
     //printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
   } // if not once
 
-  if (flagPrintSet)  nLines += printSet(sid);
-  if (flagPrintBeat) nLines += printBeat();
-  if (flagPrintDiag) nLines += printDiag(sid);
-  if (flagPrintRf)   nLines += printRf(sid);
-  if (flagPrintKick) nLines += printKick(sid);
-  if (flagPrintStat) nLines += printStatus(sid);
+  if (flagPrintSet)    nLines += printSet(sid);
+  if (flagPrintBeat)   nLines += printBeat();
+  if (flagPrintDiag)   nLines += printDiag(sid);
+  if (flagPrintPshift) nLines += printPshift(sid);
+  if (flagPrintRf)     nLines += printRf(sid);
+  if (flagPrintKick)   nLines += printKick(sid);
+  if (flagPrintStat)   nLines += printStatus(sid);
   
   if (!flagOnce) {
     if (nLines < 21) for (i=0; i < (21 - nLines); i++) printf("\n");
     //printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
-    printf("\033[7m <q>uit <c>lear <b>eat <d>diag <r>f <k>ick <s>tatus              %s\033[0m\n", tLocal);
+    printf("\033[7m <q>uit <c>lear <b>eat <d>diag <r>f <k>ick <p>shift <s>tatus     %s\033[0m\n", tLocal);
   } // if not once
 } // printServices
 
@@ -681,19 +705,21 @@ int main(int argc, char** argv) {
   uint32_t sid;                             // sequence ID
 
 
-  program       = argv[0];
-  getVersion    = 0;
-  subscribe     = 0;
-  once          = 0;
-  quit          = 0;
-  what          = SETVAL;
-  flagPrintSet  = 1;
-  flagPrintBeat = 0;
-  flagPrintDiag = 0;
-  flagPrintRf   = 0;
-  flagPrintKick = 0;
-  flagPrintStat = 0;
-  sid           = 0;
+  program         = argv[0];
+  getVersion      = 0;
+  subscribe       = 0;
+  once            = 0;
+  quit            = 0;
+  what            = SETVAL;
+  flagPrintSet    = 1;
+  flagPrintBeat   = 0;
+  flagPrintDiag   = 0;
+  flagPrintRf     = 0;
+  flagPrintKick   = 0;
+  flagPrintStat   = 0;
+  flagPrintPshift = 0;
+  
+  sid             = 0;
 
   while ((opt = getopt(argc, argv, "s:o:eh")) != -1) {
     switch (opt) {
@@ -770,24 +796,27 @@ int main(int argc, char** argv) {
             dicCmdClearDiag(prefix, sid);
             break;
           case 'b' :
-            flagPrintBeat = !flagPrintBeat;
+            flagPrintBeat   = !flagPrintBeat;
             break;
           case 'd' :
-            flagPrintDiag = !flagPrintDiag;
+            flagPrintDiag   = !flagPrintDiag;
             break;
           case 'k' :
-            flagPrintKick = !flagPrintKick;
+            flagPrintKick   = !flagPrintKick;
+            break;
+          case 'p' :
+            flagPrintPshift = !flagPrintPshift;
             break;
           case 'r' :
-            flagPrintRf = !flagPrintRf;
+            flagPrintRf     = !flagPrintRf;
             break;
           case 's' :
-            flagPrintStat = !flagPrintStat;
+            flagPrintStat   = !flagPrintStat;
             break;
-          case 'q'         :
+          case 'q' :
             quit = 1;
             break;
-          default          :
+          default  :
             usleep(1000000);
         } // switch
       } // if !once

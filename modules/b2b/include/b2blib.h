@@ -3,8 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-Aug-2024
- *  version : 30-Jan-2024
+ *  version : 03-jan-2025
  *
  * library for b2b
  *
@@ -42,7 +41,7 @@
 extern "C" {
 #endif
 
-#define B2BLIB_VERSION 0x000800
+#define B2BLIB_VERSION 0x000802
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  B2BLIB_STATUS_OK                 0            // OK
@@ -166,7 +165,7 @@ extern "C" {
     double   ext_rfNueAve;
     double   ext_rfNueSdev;
     double   ext_rfNueDiff;
-    double   ext_rfNueEst;                             // estimated 'true' DDS frequency based on its DDS resolution
+    double   ext_rfNueEst;                             // estimated 'true' DDS frequency based on DDS resolution (32bit)
     double   inj_rfNueAct;                             // injection, measured rf frequency
     double   inj_rfNueActErr;
     uint32_t inj_rfNueN;

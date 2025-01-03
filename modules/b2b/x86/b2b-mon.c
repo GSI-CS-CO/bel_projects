@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-dec-2024
+ *  version : 03-jan-2025
  *
  * subscribes to and displays status of many b2b transfers
  *
@@ -271,8 +271,8 @@ void buildPrintLine(uint32_t idx)
     case B2B_MODE_B2C       : sprintf(dest, "%s", tmp1); flagTCBS = 1; flagOther = 1; flagB2b = 0; flagCphase = 0; flagExtTrig = 1; flagInjTrig = 1; break;
     case B2B_MODE_B2BFBEAT  : sprintf(dest, "%s", tmp1); flagTCBS = 1; flagOther = 1; flagB2b = 1; flagCphase = 1; flagExtTrig = 1; flagInjTrig = 1; break;
     case B2B_MODE_B2EPSHIFT : sprintf(dest, "target");   flagTCBS = 1; flagOther = 1; flagB2b = 0; flagCphase = 1; flagExtTrig = 1; flagInjTrig = 0; break;
-    case B2B_MODE_B2BPSHIFTE: sprintf(dest, "target");   flagTCBS = 1; flagOther = 1; flagB2b = 1; flagCphase = 1; flagExtTrig = 1; flagInjTrig = 1; break;     
-    default:               sprintf(dest, TXTUNKWN);     flagTCBS = 0; flagOther = 0; flagB2b = 0; flagCphase = 0; flagExtTrig = 0; flagInjTrig = 0; break;
+    case B2B_MODE_B2BPSHIFTE: sprintf(dest, "%s", tmp1); flagTCBS = 1; flagOther = 1; flagB2b = 1; flagCphase = 1; flagExtTrig = 1; flagInjTrig = 1; break;     
+    default:                  sprintf(dest, TXTUNKWN);   flagTCBS = 0; flagOther = 0; flagB2b = 0; flagCphase = 0; flagExtTrig = 0; flagInjTrig = 0; break;
   } // switch set_mode
 
   // ignore ancient timestamps
@@ -294,7 +294,7 @@ void buildPrintLine(uint32_t idx)
       nueDiff = dicDiagval[idx].ext_rfNueAct - set_extNue[idx];
       if ((dicGetval[idx].flagEvtErr >> tagPre) & 0x1)  sprintf(nueMeasExt, "ERROR: no RF signal detected");
       else {
-        if ((fabs(dicDiagval[idx].ext_ddsOffAct) > set_extT[idx] / 10) || (fabs(dicDiagval[idx].ext_rfOffAct) > set_extT[idx] / 4)){  // this is hack to possibly detect wrong set-values
+        if (fabs(dicDiagval[idx].ext_ddsOffAct) > set_extT[idx] / 10) {  // this is hack to possibly detect wrong set-values
           sprintf(tmp1, "check DDS");
           sprintf(tmp2, "value");
           sprintf(tmp3, "n/a");
@@ -311,13 +311,13 @@ void buildPrintLine(uint32_t idx)
     } // else NOLINK
 
     // frequency data, injection
-    if (set_mode[idx] > B2B_MODE_B2E) {
+    if ((set_mode[idx] > B2B_MODE_B2E) && (set_mode[idx] != B2B_MODE_B2EPSHIFT)) {
       if (*(uint32_t *)&(dicDiagval[idx]) == no_link_32) sprintf(nueMeasInj, "NOLINK");
       else {
         nueDiff = dicDiagval[idx].inj_rfNueAct - set_injNue[idx];
         if ((dicGetval[idx].flagEvtErr >> tagPri) & 0x1)   sprintf(nueMeasInj, "ERROR: no RF signal detected");
         else {
-          if ((fabs(dicDiagval[idx].inj_ddsOffAct) > set_injT[idx] / 10) || (fabs(dicDiagval[idx].inj_rfOffAct) > set_injT[idx] / 4)){  // this is hack to possibly detect wrong set-values
+          if (fabs(dicDiagval[idx].inj_ddsOffAct) > set_injT[idx] / 10) {  // this is hack to possibly detect wrong set-values
             sprintf(tmp1, "check DDS");
             sprintf(tmp2, "value");
             sprintf(tmp3, "n/a");
