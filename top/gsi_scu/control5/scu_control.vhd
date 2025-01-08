@@ -135,14 +135,14 @@ entity scu_control is
     psram_a    : out   std_logic_vector(23 downto 0) := (others => 'Z');
     psram_dq   : inout std_logic_vector(15 downto 0) := (others => 'Z');
     psram_clk  : out   std_logic := 'Z';
-    psram_advn : out   std_logic := 'Z';
-    psram_cre  : out   std_logic := 'Z';
+    psram_advn : out   std_logic_vector(3 downto 0) := (others => '1');
+    psram_cre  : out   std_logic_vector(3 downto 0) := (others => '0');
     psram_cen  : out   std_logic_vector(3 downto 0) := (others => '1');
-    psram_oen  : out   std_logic := 'Z';
-    psram_wen  : out   std_logic := 'Z';
-    psram_ubn  : out   std_logic := 'Z';
-    psram_lbn  : out   std_logic := 'Z';
-    psram_wait : in    std_logic; -- DDR magic
+    psram_oen  : out   std_logic_vector(3 downto 0) := (others => '1');
+    psram_wen  : out   std_logic_vector(3 downto 0) := (others => '1');
+    psram_ubn  : out   std_logic := '1';
+    psram_lbn  : out   std_logic := '1';
+    psram_wait : in    std_logic_vector(3 downto 0);
 
     -----------------------------------------------------------------------
     -- SPI Flash User Mode
@@ -199,8 +199,12 @@ architecture rtl of scu_control is
 
   signal s_core_clk_25m     : std_logic;
 
-  signal s_psram_cen        : std_logic;
-  signal s_psram_sel        : std_logic_vector(3 downto 0);
+  signal s_psram_advn       : std_logic_vector(3 downto 0);
+  signal s_psram_cre        : std_logic_vector(3 downto 0);
+  signal s_psram_cen        : std_logic_vector(3 downto 0);
+  signal s_psram_oen        : std_logic_vector(3 downto 0);
+  signal s_psram_wen        : std_logic_vector(3 downto 0);
+  signal s_psram_wait       : std_logic_vector(3 downto 0);
 
   signal rstn_ref           : std_logic;
   signal clk_ref            : std_logic;
@@ -342,27 +346,49 @@ begin
       ps_data                 => psram_dq,
       ps_seln(0)              => psram_lbn,
       ps_seln(1)              => psram_ubn,
-      ps_cen                  => s_psram_cen,
-      ps_oen                  => psram_oen,
-      ps_wen                  => psram_wen,
-      ps_cre                  => psram_cre,
-      ps_advn                 => psram_advn,
-      ps_wait                 => psram_wait,
-      ps_chip_selector        => s_psram_sel,
+      ps_cre                  => s_psram_cre(0),
+      ps_cen                  => s_psram_cen(0),
+      ps_oen                  => s_psram_oen(0),
+      ps_wen                  => s_psram_wen(0),
+      ps_advn                 => s_psram_advn(0),
+      ps_wait                 => s_psram_wait(0),
       hw_version              => x"0000000" & not scu_cb_version);
 
-  -- PSRAM -> This needs to be changed on the next revision
-  psram_cen(0) <= s_psram_cen;
+  -- PSRAM
+  psram_cre(0) <= s_psram_cre(0);
+  psram_cre(1) <= '1';
+  psram_cre(2) <= '1';
+  psram_cre(3) <= '1';
+
+  psram_cen(0) <= s_psram_cen(0);
   psram_cen(1) <= '1';
   psram_cen(2) <= '1';
   psram_cen(3) <= '1';
+
+  psram_oen(0) <= s_psram_oen(0);
+  psram_oen(1) <= '1';
+  psram_oen(2) <= '1';
+  psram_oen(3) <= '1';
+
+  psram_wen(0) <= s_psram_wen(0);
+  psram_wen(1) <= '1';
+  psram_wen(2) <= '1';
+  psram_wen(3) <= '1';
+
+  psram_advn(0) <= s_psram_advn(0);
+  psram_advn(1) <= '1';
+  psram_advn(2) <= '1';
+  psram_advn(3) <= '1';
+
+  s_psram_wait <= psram_wait;
+  user_led_0      <= s_gpio_o(2 downto 0) or s_psram_wait(3 downto 1); -- Keep unused WAIT in pins used, there this laster
 
   -- LEDs
   wr_led_pps    <= s_led_pps;                                             -- white = PPS
   wr_rgb_led(0) <= s_led_link_act;                                        -- WR-RGB Red
   wr_rgb_led(1) <= s_led_track;                                           -- WR-RGB Green
   wr_rgb_led(2) <= '1' when (not s_led_track and s_led_link_up) else '0'; -- WR-RGB Blue
-  user_led_0    <= s_gpio_o(2 downto 0);
+  --user_led_0    <= s_gpio_o(2 downto 0); -> See PSRAM
 
   -- LEMOs
   lemos : for i in 0 to 2 generate
