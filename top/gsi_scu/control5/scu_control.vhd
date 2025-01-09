@@ -356,9 +356,9 @@ begin
 
   -- PSRAM
   psram_cre(0) <= s_psram_cre(0);
-  psram_cre(1) <= '1';
-  psram_cre(2) <= '1';
-  psram_cre(3) <= '1';
+  psram_cre(1) <= '0';
+  psram_cre(2) <= '0';
+  psram_cre(3) <= '0';
 
   psram_cen(0) <= s_psram_cen(0);
   psram_cen(1) <= '1';
