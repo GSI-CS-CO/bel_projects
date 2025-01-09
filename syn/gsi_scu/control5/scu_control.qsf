@@ -1,3 +1,24 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 set_global_assignment -name ACTIVE_SERIAL_CLOCK FREQ_100MHZ
 set_global_assignment -name ADV_NETLIST_OPT_SYNTH_WYSIWYG_REMAP OFF
 set_global_assignment -name AHDL_FILE ../../../modules/modulbus/i2c.tdf
@@ -56,8 +77,14 @@ set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[8] -section_id PSRAM
 set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[8] -section_id PSRAM_GROUP_OUT
 set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[9] -section_id PSRAM_GROUP
 set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[9] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_advn -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_advn -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_advn[0] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_advn[0] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_advn[1] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_advn[1] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_advn[2] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_advn[2] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_advn[3] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_advn[3] -section_id PSRAM_GROUP_OUT
 set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cen[0] -section_id PSRAM_GROUP
 set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cen[0] -section_id PSRAM_GROUP_OUT
 set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cen[1] -section_id PSRAM_GROUP
@@ -68,8 +95,14 @@ set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cen[3] -section_id PSR
 set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cen[3] -section_id PSRAM_GROUP_OUT
 set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_clk -section_id PSRAM_GROUP
 set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_clk -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cre -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cre -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cre[0] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cre[0] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cre[1] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cre[1] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cre[2] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cre[2] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cre[3] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cre[3] -section_id PSRAM_GROUP_OUT
 set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[0] -section_id PSRAM_GROUP
 set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[0] -section_id PSRAM_GROUP_INOUT
 set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[10] -section_id PSRAM_GROUP
@@ -104,14 +137,32 @@ set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[9] -section_id PSRA
 set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[9] -section_id PSRAM_GROUP_INOUT
 set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_lbn -section_id PSRAM_GROUP
 set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_lbn -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_oen -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_oen -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_oen[0] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_oen[0] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_oen[1] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_oen[1] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_oen[2] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_oen[2] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_oen[3] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_oen[3] -section_id PSRAM_GROUP_OUT
 set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_ubn -section_id PSRAM_GROUP
 set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_ubn -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wait -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wait -section_id PSRAM_GROUP_IN
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wen -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wen -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wait[0] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wait[0] -section_id PSRAM_GROUP_IN
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wait[1] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wait[1] -section_id PSRAM_GROUP_IN
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wait[2] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wait[2] -section_id PSRAM_GROUP_IN
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wait[3] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wait[3] -section_id PSRAM_GROUP_IN
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wen[0] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wen[0] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wen[1] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wen[1] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wen[2] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wen[2] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wen[3] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wen[3] -section_id PSRAM_GROUP_OUT
 set_global_assignment -name ASSIGNMENT_GROUP_MEMBER slrd -section_id USB_GROUP
 set_global_assignment -name ASSIGNMENT_GROUP_MEMBER slrd -section_id USB_GROUP_OUT
 set_global_assignment -name ASSIGNMENT_GROUP_MEMBER slwr -section_id USB_GROUP
@@ -1069,9 +1120,9 @@ set_location_assignment PIN_B23 -to onewire_ext_splz
 set_location_assignment PIN_B24 -to pa[3]
 set_location_assignment PIN_B25 -to nSel_Ext_Data_DRV
 set_location_assignment PIN_B26 -to pa[2]
+set_location_assignment PIN_B3 -to psram_oen[3]
 set_location_assignment PIN_B3 -to psram_ubn
 set_location_assignment PIN_B4 -to psram_a[9]
-set_location_assignment PIN_B5 -to psram_cen[2]
 set_location_assignment PIN_B6 -to psram_dq[4]
 set_location_assignment PIN_B8 -to OneWire_CB_splz
 set_location_assignment PIN_C10 -to pa[4]
@@ -1085,6 +1136,7 @@ set_location_assignment PIN_C21 -to A_OneWire
 set_location_assignment PIN_C22 -to A_Spare[1]
 set_location_assignment PIN_C23 -to A_Spare[0]
 set_location_assignment PIN_C2 -to psram_a[11]
+set_location_assignment PIN_C3 -to psram_wen[3]
 set_location_assignment PIN_C5 -to psram_dq[5]
 set_location_assignment PIN_C6 -to psram_dq[11]
 set_location_assignment PIN_C7 -to clk_125m_pllref_alt_i
@@ -1097,13 +1149,13 @@ set_location_assignment PIN_D20 -to serial_cb_out[0]
 set_location_assignment PIN_D22 -to A_nSEL[8]
 set_location_assignment PIN_D23 -to A_nSEL[4]
 set_location_assignment PIN_D2 -to psram_a[22]
+set_location_assignment PIN_D3 -to psram_wait[2]
 set_location_assignment PIN_D4 -to psram_a[6]
 set_location_assignment PIN_D5 -to psram_dq[6]
 set_location_assignment PIN_D7 -to "clk_125m_pllref_alt_i(n)"
 set_location_assignment PIN_D8 -to avr_sda
 set_location_assignment PIN_E14 -to pa[6]
 set_location_assignment PIN_E15 -to "clk_125m_local_i(n)"
-set_location_assignment PIN_E1 -to psram_wen
 set_location_assignment PIN_E21 -to A_nSEL[6]
 set_location_assignment PIN_E22 -to A_nReset
 set_location_assignment PIN_E23 -to A_SysClock
@@ -1116,11 +1168,9 @@ set_location_assignment PIN_F18 -to A_nDtack
 set_location_assignment PIN_F1 -to psram_a[1]
 set_location_assignment PIN_F21 -to A_D[8]
 set_location_assignment PIN_F22 -to A_nSEL[5]
-set_location_assignment PIN_F2 -to psram_advn
+set_location_assignment PIN_F2 -to psram_wait[3]
 set_location_assignment PIN_F4 -to psram_a[0]
-set_location_assignment PIN_F6 -to psram_cen[0]
 set_location_assignment PIN_F7 -to psram_dq[2]
-set_location_assignment PIN_F9 -to psram_cen[3]
 set_location_assignment PIN_G18 -to A_nSRQ[4]
 set_location_assignment PIN_G19 -to A_D[12]
 set_location_assignment PIN_G1 -to wr_rgb_led[1]
@@ -1129,8 +1179,6 @@ set_location_assignment PIN_G21 -to A_nSEL[7]
 set_location_assignment PIN_G23 -to clk_20m_vcxo_i
 set_location_assignment PIN_G3 -to psram_a[14]
 set_location_assignment PIN_G4 -to psram_a[16]
-set_location_assignment PIN_G8 -to psram_oen
-set_location_assignment PIN_G9 -to psram_cen[1]
 set_location_assignment PIN_H16 -to A_D[10]
 set_location_assignment PIN_H17 -to A_nSRQ[3]
 set_location_assignment PIN_H18 -to A_RnW
@@ -1139,7 +1187,7 @@ set_location_assignment PIN_H20 -to A_nSRQ[1]
 set_location_assignment PIN_H21 -to A_nDS
 set_location_assignment PIN_H22 -to A_nSRQ[6]
 set_location_assignment PIN_H3 -to psram_a[21]
-set_location_assignment PIN_H5 -to psram_cre
+set_location_assignment PIN_H5 -to psram_cen[2]
 set_location_assignment PIN_H6 -to psram_a[10]
 set_location_assignment PIN_H7 -to psram_a[23]
 set_location_assignment PIN_H8 -to psram_dq[3]
@@ -1150,6 +1198,7 @@ set_location_assignment PIN_J20 -to A_D[9]
 set_location_assignment PIN_J22 -to A_D[11]
 set_location_assignment PIN_J2 -to scu_cb_version[1]
 set_location_assignment PIN_J5 -to psram_a[15]
+set_location_assignment PIN_J7 -to psram_wen[2]
 set_location_assignment PIN_J8 -to psram_dq[9]
 set_location_assignment PIN_J9 -to psram_dq[10]
 set_location_assignment PIN_K17 -to A_nTiming_Cycle
@@ -1158,9 +1207,11 @@ set_location_assignment PIN_K20 -to A_nSRQ[8]
 set_location_assignment PIN_K21 -to A_D[15]
 set_location_assignment PIN_K22 -to A_nSEL[3]
 set_location_assignment PIN_K23 -to A_nSEL[2]
+set_location_assignment PIN_K2 -to psram_wait[0]
 set_location_assignment PIN_K4 -to fd[4]
 set_location_assignment PIN_K5 -to psram_a[8]
 set_location_assignment PIN_K6 -to psram_a[13]
+set_location_assignment PIN_K7 -to psram_oen[2]
 set_location_assignment PIN_K9 -to psram_dq[0]
 set_location_assignment PIN_L1 -to sfp_los_i
 set_location_assignment PIN_L6 -to psram_a[19]
@@ -1169,6 +1220,8 @@ set_location_assignment PIN_L9 -to psram_dq[14]
 set_location_assignment PIN_M25 -to "pcie_rx_i[3](n)"
 set_location_assignment PIN_M26 -to pcie_rx_i[3]
 set_location_assignment PIN_M3 -to nTHRMTRIP
+set_location_assignment PIN_M4 -to psram_wait[1]
+set_location_assignment PIN_M5 -to psram_cen[3]
 set_location_assignment PIN_M6 -to psram_a[4]
 set_location_assignment PIN_M8 -to psram_a[18]
 set_location_assignment PIN_N1 -to clk_20m_vcxo_alt_i
@@ -1178,43 +1231,56 @@ set_location_assignment PIN_N27 -to "pcie_tx_o[3](n)"
 set_location_assignment PIN_N28 -to pcie_tx_o[3]
 set_location_assignment PIN_N2 -to scu_cb_version[3]
 set_location_assignment PIN_N5 -to clk_125m_sfpref_i
+set_location_assignment PIN_N6 -to psram_advn[3]
 set_location_assignment PIN_N6 -to psram_lbn
+set_location_assignment PIN_N7 -to psram_advn[2]
+set_location_assignment PIN_N8 -to psram_cre[2]
 set_location_assignment PIN_P25 -to "pcie_rx_i[2](n)"
 set_location_assignment PIN_P26 -to pcie_rx_i[2]
 set_location_assignment PIN_P2 -to scu_cb_version[0]
 set_location_assignment PIN_P3 -to fd[7]
+set_location_assignment PIN_P3 -to psram_cen[0]
 set_location_assignment PIN_P4 -to scu_cb_version[2]
 set_location_assignment PIN_P5 -to "clk_125m_sfpref_i(n)"
-set_location_assignment PIN_P7 -to psram_wait
+set_location_assignment PIN_P7 -to psram_cre[3]
 set_location_assignment PIN_P8 -to psram_a[5]
+set_location_assignment PIN_R1 -to psram_oen[0]
 set_location_assignment PIN_R23 -to "clk_125m_tcb_local_i(n)"
 set_location_assignment PIN_R24 -to clk_125m_tcb_local_i
 set_location_assignment PIN_R27 -to "pcie_tx_o[2](n)"
 set_location_assignment PIN_R28 -to pcie_tx_o[2]
+set_location_assignment PIN_R2 -to psram_cre[1]
 set_location_assignment PIN_R4 -to sfp_mod0_i
 set_location_assignment PIN_R6 -to psram_a[7]
 set_location_assignment PIN_R7 -to psram_a[20]
 set_location_assignment PIN_T1 -to fd[6]
+set_location_assignment PIN_T1 -to psram_cre[0]
 set_location_assignment PIN_T25 -to "pcie_rx_i[1](n)"
 set_location_assignment PIN_T26 -to pcie_rx_i[1]
+set_location_assignment PIN_T3 -to psram_wen[1]
 set_location_assignment PIN_T4 -to sfp_tx_fault_i
 set_location_assignment PIN_T6 -to fd[1]
 set_location_assignment PIN_T7 -to fd[2]
+set_location_assignment PIN_T7 -to psram_wen[0]
 set_location_assignment PIN_T8 -to WDT
 set_location_assignment PIN_T9 -to fd[5]
+set_location_assignment PIN_T9 -to psram_oen[1]
 set_location_assignment PIN_U23 -to "clk_125m_tcb_pllref_i(n)"
 set_location_assignment PIN_U24 -to clk_125m_tcb_pllref_i
 set_location_assignment PIN_U27 -to "pcie_tx_o[1](n)"
 set_location_assignment PIN_U28 -to pcie_tx_o[1]
 set_location_assignment PIN_U3 -to sfp_mod2_io
+set_location_assignment PIN_U4 -to psram_advn[0]
 set_location_assignment PIN_U5 -to fd[3]
 set_location_assignment PIN_U6 -to wr_rgb_led[0]
+set_location_assignment PIN_U8 -to psram_cen[1]
 set_location_assignment PIN_V25 -to "pcie_rx_i[0](n)"
 set_location_assignment PIN_V26 -to pcie_rx_i[0]
 set_location_assignment PIN_V2 -to user_led_0[1]
 set_location_assignment PIN_V3 -to sfp_mod1_io
 set_location_assignment PIN_V7 -to wr_rgb_led[2]
 set_location_assignment PIN_V8 -to fd[0]
+set_location_assignment PIN_V8 -to psram_advn[1]
 set_location_assignment PIN_W10 -to altera_reserved_tdo
 set_location_assignment PIN_W21 -to A_nSEL[9]
 set_location_assignment PIN_W23 -to "clk_125m_tcb_sfpref_i(n)"
