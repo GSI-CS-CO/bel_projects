@@ -26,8 +26,8 @@ component incoming_signals_modulator is
 ;
 end component incoming_signals_modulator;
 
-signal debouncer_out: std_logic_vector(width -1 downto 0);
-signal output_deb: std_logic_vector(width -1 downto 0);
+signal modulator_out: std_logic_vector(width -1 downto 0);
+signal output_mod: std_logic_vector(width -1 downto 0);
 begin
 
    mod_block: for i in 0 to (width-1) generate
@@ -36,21 +36,21 @@ begin
         (clk => clk,
         nRST => nRST,
         in_sig =>in_sig(i),
-        out_sig => debouncer_out(i)
+        out_sig => modulator_out(i)
         );
     end generate mod_block;
 
-process(mod_enable, debouncer_out, in_sig)    
+process(mod_enable, modulator_out, in_sig)    
 begin
     for i in 0 to (width-1) loop
         if mod_enable(i) ='1' then
-            output_deb(i) <= debouncer_out(i);
+            output_mod(i) <= modulator_out(i);
         else
-            output_deb(i) <= in_sig(i);
+            output_mod(i) <= in_sig(i);
         end if;
     end loop;
 end process;
 
-out_sig <= output_deb;
+out_sig <= output_mod;
 
 end architecture;

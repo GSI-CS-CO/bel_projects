@@ -45,6 +45,5 @@ end architecture rtl;
 
 
 
-  --  IOBP_expected_ID <= IOBP_Exp_ID_Reg6 & IOBP_Exp_ID_Reg5 & IOBP_Exp_ID_Reg4 & IOBP_Exp_ID_Reg3 & IOBP_Exp_ID_Reg2 & IOBP_Exp_ID_Reg1;
---Expected_ID <= to_integer(signed (Expected_ID));
+--IOBP_expected_ID <= IOBP_Exp_ID_Reg6 & IOBP_Exp_ID_Reg5 & IOBP_Exp_ID_Reg4 & IOBP_Exp_ID_Reg3 & IOBP_Exp_ID_Reg2 & IOBP_Exp_ID_Reg1;
 --Effective_ID <=IOBP_ID(12) & IOBP_ID(11) &IOBP_ID(10) & IOBP_ID(9) &IOBP_ID(8) & IOBP_ID(7) &IOBP_ID(6) & IOBP_ID(5) &IOBP_ID(4) & IOBP_ID(3) &IOBP_ID(2) & IOBP_ID(1);
