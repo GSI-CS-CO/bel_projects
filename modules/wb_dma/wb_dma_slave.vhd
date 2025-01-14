@@ -1,9 +1,9 @@
 --! @file        wb_dma_slave.xml
 --  DesignUnit   wb_dma_slave
 --! @author      M. Kreider <>
---! @date        10/12/2024
+--! @date        14/01/2025
 --! @version     0.0.1
---! @copyright   2024 GSI Helmholtz Centre for Heavy Ion Research GmbH
+--! @copyright   2025 GSI Helmholtz Centre for Heavy Ion Research GmbH
 --!
 
 --TODO: This is a stub, finish/update it yourself
@@ -41,8 +41,9 @@ Port(
   rst_sys_n_i           : std_logic;                                        -- Reset input (active low) for sys domain
   error_i               : in  std_logic_vector(1-1 downto 0);               -- Error control
   stall_i               : in  std_logic_vector(1-1 downto 0);               -- flow control
+  ch_sel_o              : out std_logic_vector(8-1 downto 0);               -- Channel select register
   channel_csr_o         : out matrix(g_channels-1 downto 0, 32-1 downto 0); -- DMA channel CSR
-  descr_queue_intake_o  : out matrix(g_channels-1 downto 0, 32-1 downto 0); -- DMA channel descriptor queue intake
+  descr_queue_intake_o  : out std_logic_vector(32-1 downto 0);              -- DMA channel descriptor queue intake
   dma_csr_o             : out std_logic_vector(32-1 downto 0);              -- DMA controller control and status register
   
   data_i                : in  t_wishbone_slave_in;
@@ -58,7 +59,8 @@ architecture rtl of wb_dma_slave is
   signal s_data_stall_i               : std_logic_vector(1-1 downto 0)                := (others => '0'); -- flow control
   signal s_data_dma_csr_o             : std_logic_vector(32-1 downto 0)               := (others => '0'); -- DMA controller control and status register
   signal s_data_channel_csr_o         : matrix(g_channels-1 downto 0, 32-1 downto 0)  := (others => (others => '0')); -- DMA channel CSR
-  signal s_data_descr_queue_intake_o  : matrix(g_channels-1 downto 0, 32-1 downto 0)  := (others => (others => '0')); -- DMA channel descriptor queue intake
+  signal s_data_descr_queue_intake_o  : std_logic_vector(32-1 downto 0)               := (others => '0'); -- DMA channel descriptor queue intake
+  signal s_data_ch_sel_o              : std_logic_vector(8-1 downto 0)                := (others => '0'); -- Channel select register
   
 
 
@@ -73,6 +75,7 @@ begin
     dma_csr_o             => s_data_dma_csr_o,
     channel_csr_o         => s_data_channel_csr_o,
     descr_queue_intake_o  => s_data_descr_queue_intake_o,
+    ch_sel_o              => s_data_ch_sel_o,
     data_i                => data_i,
     data_o                => data_o  );
 end rtl;

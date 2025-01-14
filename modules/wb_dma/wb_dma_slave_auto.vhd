@@ -49,7 +49,7 @@ Port(
   stall_i               : in  std_logic_vector(1-1 downto 0);               -- flow control
   ch_sel_o              : out std_logic_vector(8-1 downto 0);               -- Channel select register
   channel_csr_o         : out matrix(g_channels-1 downto 0, 32-1 downto 0); -- DMA channel CSR
-  descr_queue_intake_o  : out matrix(g_channels-1 downto 0, 32-1 downto 0); -- DMA channel descriptor queue intake
+  descr_queue_intake_o  : out std_logic_vector(32-1 downto 0);              -- DMA channel descriptor queue intake
   dma_csr_o             : out std_logic_vector(32-1 downto 0);              -- DMA controller control and status register
   
   data_i                : in  t_wishbone_slave_in;
@@ -82,11 +82,10 @@ architecture rtl of wb_dma_slave_auto is
   signal s_stall_i            : std_logic_vector(1-1 downto 0)                := (others => '0');                     -- flow control
   signal r_dma_csr            : std_logic_vector(32-1 downto 0)               := (others => '0');                     -- DMA controller control and status register
   signal r_channel_csr        : matrix(g_channels-1 downto 0, 32-1 downto 0)  := (others => (others => '0'));         -- DMA channel CSR
-  signal r_descr_queue_intake : matrix(g_channels-1 downto 0, 32-1 downto 0)  := (others => (others => '0'));         -- DMA channel descriptor queue intake
+  signal r_descr_queue_intake : std_logic_vector(32-1 downto 0)               := (others => '0');                     -- DMA channel descriptor queue intake
   signal r_ch_sel             : std_logic_vector(8-1 downto 0)                := (others => '0');                     -- Channel select register
 
   signal r_p : integer ;
-
 
 begin
 
@@ -141,7 +140,7 @@ begin
         r_error               <= std_logic_vector(to_unsigned(0, 1));
         r_dma_csr             <= (others => '0');
         r_channel_csr         <= mrst(r_channel_csr);
-        r_descr_queue_intake  <= mrst(r_descr_queue_intake);
+        r_descr_queue_intake  <= (others => '0');
         r_ch_sel              <= (others => '0');
       else
         r_e           <= s_e;
@@ -166,11 +165,11 @@ begin
           if(s_w = '1') then
             -- WISHBONE WRITE ACTIONS
             case to_integer(unsigned(s_a_ext)) is
-              when c_dma_csr_RW             => r_dma_csr  <= f_wb_wr(r_dma_csr, s_d, s_s, "owr");                                           -- 
-              when c_channel_csr_RW         => mset(r_channel_csr, f_wb_wr(mget(r_channel_csr, r_p), s_d, s_s, "owr"), r_p);                -- 
-              when c_descr_queue_intake_OWR => mset(r_descr_queue_intake, f_wb_wr(mget(r_descr_queue_intake, r_p), s_d, s_s, "owr"), r_p);  -- 
-              when c_ch_sel_RW              => r_ch_sel   <= f_wb_wr(r_ch_sel, s_d, s_s, "owr");                                            -- 
-              when others                   => r_error    <= "1";
+              when c_dma_csr_RW             => r_dma_csr            <= f_wb_wr(r_dma_csr, s_d, s_s, "owr");                   -- 
+              when c_channel_csr_RW         => mset(r_channel_csr, f_wb_wr(mget(r_channel_csr, r_p), s_d, s_s, "owr"), r_p);  -- 
+              when c_descr_queue_intake_OWR => r_descr_queue_intake <= f_wb_wr(r_descr_queue_intake, s_d, s_s, "owr");        -- 
+              when c_ch_sel_RW              => r_ch_sel             <= f_wb_wr(r_ch_sel, s_d, s_s, "owr");                    -- 
+              when others                   => r_error              <= "1";
             end case;
           else
             -- WISHBONE READ ACTIONS
@@ -185,8 +184,9 @@ begin
         
         case to_integer(unsigned(r_a_ext1)) is
           when c_dma_csr_RW       => data_o.dat <= std_logic_vector(resize(unsigned(r_dma_csr), data_o.dat'length));                -- 
-          when c_channel_csr_RW   => data_o.dat <= std_logic_vector(resize(unsigned(mget(r_channel_csr, r_p)), data_o.dat'length));   -- 
-          when c_ch_sel_RW        => data_o.dat <= std_logic_vector(resize(unsigned(r_ch_sel), data_o.dat'length));                 -- 
+          when c_channel_csr_RW   => data_o.dat <= std_logic_vector(resize(unsigned(mget(r_channel_csr, r_p)), data_o.dat'length)); -- 
+          when c_descr_queue_intake_OWR => data_o.dat <= (others => 'X');
+          when c_ch_sel_RW        => data_o.dat <= std_logic_vector(resize(unsigned(r_ch_sel), data_o.dat'length));                 --
           when others             => data_o.dat <= (others => 'X');
         end case;
 
