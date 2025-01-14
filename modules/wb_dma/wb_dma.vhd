@@ -4,32 +4,34 @@ use ieee.numeric_std.all;
 
 library work;
 use work.wishbone_pkg.all;
+use work.genram_pkg.all;
+use work.wb_dma_slave_auto_pkg.all;
 
 entity wb_dma is
-    -- generic (
-    --   g_aux_phy_interface : boolean
-    -- );
-    port(
-        clk_sys_i     : in std_logic;
-        rstn_sys_i    : in std_logic;
+  generic(
+    g_host_ram_size  : Integer := 16
+  );
+  port(
+    clk_sys_i     : in std_logic;
+    rstn_sys_i    : in std_logic;
 
-        slave_i : in t_wishbone_slave_in;
-        slave_o : out t_wishbone_slave_out
-    
-        --master_o       : out t_wishbone_slave_out;
-        --master_i       : in  t_wishnumeric_std-body.vhdlbone_slave_in;
-
-    	-- test signals
-        -- s_start_desc_i        : in std_logic;
-        -- s_read_init_address_i : in t_wishbone_address;
-        -- s_descriptor_active_i : in std_logic;
-        -- s_data_in_i           : in std_logic_vector(c_wishbone_data_width-1 downto 0);
-
-        -- s_data_in_ack_i       : in std_logic
-        );
+    slave_i : in t_wishbone_slave_in;
+    slave_o : out t_wishbone_slave_out
+    );
 end entity;
 
 architecture rtl of wb_dma is
+
+  -- HOST RAM SIGNALS
+  ------------------------------------------
+  signal s_host_ram_wea       : std_logic;
+  signal s_host_ram_address_a : std_logic_vector(c_wishbone_address_width-1 downto 0);
+  signal s_host_ram_data_a    : std_logic_vector(c_wishbone_data_width-1 downto 0);
+  signal s_host_ram_out_a     : std_logic_vector(c_wishbone_data_width-1 downto 0);
+  signal s_host_ram_web       : std_logic;
+  signal s_host_ram_address_b : std_logic_vector(c_wishbone_address_width-1 downto 0);
+  signal s_host_ram_data_b    : std_logic_vector(c_wishbone_data_width-1 downto 0);
+  signal s_host_ram_out_b     : std_logic_vector(c_wishbone_data_width-1 downto 0);
 
   -- DMA ENGINE SIGNALS
   ------------------------------------------
@@ -68,25 +70,25 @@ architecture rtl of wb_dma is
 
 
 
-  component wb_dma_slave is
-    generic(
-      g_channels  : natural := 16 --Number of DMA channels
-    );
-    Port(
-      clk_sys_i             : std_logic;                                        -- Clock input for sys domain
-      rst_sys_n_i           : std_logic;                                        -- Reset input (active low) for sys domain
-      error_i               : in  std_logic_vector(1-1 downto 0);               -- Error control
-      stall_i               : in  std_logic_vector(1-1 downto 0);               -- flow control
-      channel_csr_o         : out matrix(g_channels-1 downto 0, 32-1 downto 0); -- DMA channel CSR
-      descr_queue_intake_o  : out matrix(g_channels-1 downto 0, 32-1 downto 0); -- DMA channel descriptor queue intake
-      dma_csr_o             : out std_logic_vector(32-1 downto 0);              -- DMA controller control and status register
+  -- component wb_dma_slave is
+  --   generic(
+  --     g_channels  : natural := 16 --Number of DMA channels
+  --   );
+  --   Port(
+  --     clk_sys_i             : std_logic;                                        -- Clock input for sys domain
+  --     rst_sys_n_i           : std_logic;                                        -- Reset input (active low) for sys domain
+  --     error_i               : in  std_logic_vector(1-1 downto 0);               -- Error control
+  --     stall_i               : in  std_logic_vector(1-1 downto 0);               -- flow control
+  --     channel_csr_o         : out matrix(g_channels-1 downto 0, 32-1 downto 0); -- DMA channel CSR
+  --     descr_queue_intake_o  : out matrix(g_channels-1 downto 0, 32-1 downto 0); -- DMA channel descriptor queue intake
+  --     dma_csr_o             : out std_logic_vector(32-1 downto 0);              -- DMA controller control and status register
       
-      data_i                : in  t_wishbone_slave_in;
-      data_o                : out t_wishbone_slave_out
+  --     data_i                : in  t_wishbone_slave_in;
+  --     data_o                : out t_wishbone_slave_out
     
       
-    );
-  end component;
+  --   );
+  -- end component;
 
   -- component wb_dma_engine is
   -- port(
@@ -149,18 +151,6 @@ architecture rtl of wb_dma is
 
 begin
 
-    wb_dma_slave_in: wb_dma_slave
-      port map(
-        clk_sys_i   => clk_sys_i,
-        rst_sys_n_i => rstn_sys_i,
-        error_i     => (others => '0'),
-        stall_i     => (others => '0'),
-        dma_csr_o   => open,
-        
-        data_i      => slave_i,
-        data_o      => slave_o
-      );
-
     -- dma_engine: wb_dma_engine
     -- port map (
     --     clk_i => clk_sys_i,
@@ -213,5 +203,49 @@ begin
       -- write FSM signals
       cache_re          => '0',
       data_cache_full   => open
+    );
+
+    register_file_ram: generic_dpram
+    generic map (
+      g_data_width               => c_wishbone_data_width,
+      g_size                     => g_host_ram_size,
+      g_with_byte_enable         => false,
+      g_dual_clock               => false
+    )
+    port map (
+      rst_n_i => rstn_sys_i,      -- synchronous reset, active LO
+
+      -- Port A
+      clka_i => clk_sys_i,
+      bwea_i => (others => '0'),
+      wea_i  => s_host_ram_wea,
+      aa_i   => s_host_ram_address_a(f_log2_size(g_host_ram_size)-1 downto 0),
+      da_i   => s_host_ram_data_a,
+      qa_o   => s_host_ram_out_a,
+      
+      -- Port B
+      clkb_i => clk_sys_i,
+      bweb_i => (others => '0'),
+      web_i  => s_host_ram_web,
+      ab_i   => s_host_ram_address_b(f_log2_size(g_host_ram_size)-1 downto 0),
+      db_i   => s_host_ram_data_b,
+      qb_o   => s_host_ram_out_b
+    );
+
+    wishbone_slave : wb_dma_slave_auto
+    generic map (
+      g_channels => 16 --Number of DMA channels
+    )
+    port map (
+      clk_sys_i              => clk_sys_i,  -- Clock input for sys domain
+      rst_sys_n_i            => rstn_sys_i, -- Reset input (active low) for sys domain
+      error_i                => (others => '0'),        -- Error control
+      stall_i                => (others => '0'),        -- flow control
+      channel_csr_o          =>  open,      -- DMA channel CSR
+      descr_queue_intake_o   =>  open,      -- DMA channel descriptor queue intake
+      dma_csr_o              =>  open,      -- DMA controller control and status register
+      
+      data_i                => slave_i,
+      data_o                => slave_o
     );
 end architecture;
