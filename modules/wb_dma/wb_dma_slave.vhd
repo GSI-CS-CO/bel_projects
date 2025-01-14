@@ -1,7 +1,7 @@
 --! @file        wb_dma_slave.xml
 --  DesignUnit   wb_dma_slave
 --! @author      M. Kreider <>
---! @date        26/11/2024
+--! @date        10/12/2024
 --! @version     0.0.1
 --! @copyright   2024 GSI Helmholtz Centre for Heavy Ion Research GmbH
 --!
@@ -57,8 +57,8 @@ architecture rtl of wb_dma_slave is
   signal s_data_error_i               : std_logic_vector(1-1 downto 0)                := (others => '0'); -- Error control
   signal s_data_stall_i               : std_logic_vector(1-1 downto 0)                := (others => '0'); -- flow control
   signal s_data_dma_csr_o             : std_logic_vector(32-1 downto 0)               := (others => '0'); -- DMA controller control and status register
-  signal s_data_channel_csr_o         : matrix(g_channels-1 downto 0, 32-1 downto 0)  := (others => '0'); -- DMA channel CSR
-  signal s_data_descr_queue_intake_o  : matrix(g_channels-1 downto 0, 32-1 downto 0)  := (others => '0'); -- DMA channel descriptor queue intake
+  signal s_data_channel_csr_o         : matrix(g_channels-1 downto 0, 32-1 downto 0)  := (others => (others => '0')); -- DMA channel CSR
+  signal s_data_descr_queue_intake_o  : matrix(g_channels-1 downto 0, 32-1 downto 0)  := (others => (others => '0')); -- DMA channel descriptor queue intake
   
 
 
