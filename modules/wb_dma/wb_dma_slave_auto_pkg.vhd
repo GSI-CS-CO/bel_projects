@@ -55,7 +55,7 @@ package wb_dma_slave_auto_pkg is
     stall_i               : in  std_logic_vector(1-1 downto 0);               -- flow control
     ch_sel_o              : out std_logic_vector(8-1 downto 0);               -- Channel select register
     channel_csr_o         : out matrix(g_channels-1 downto 0, 32-1 downto 0); -- DMA channel CSR
-    descr_queue_intake_o  : out matrix(g_channels-1 downto 0, 32-1 downto 0); -- DMA channel descriptor queue intake
+    descr_queue_intake_o  : out std_logic_vector(32-1 downto 0);              -- DMA channel descriptor queue intake
     dma_csr_o             : out std_logic_vector(32-1 downto 0);              -- DMA controller control and status register
     
     data_i                : in  t_wishbone_slave_in;
