@@ -17,12 +17,16 @@ entity scu_control is
     clk_20m_vcxo_i        : in std_logic; -- 20MHz VCXO clock
     clk_20m_vcxo_alt_i    : in std_logic; -- 20MHz VCXO clock alternative
 
-    clk_125m_local_i      : in std_logic; -- Local clk from 125Mhz oszillator
-    clk_125m_local_alt_i  : in std_logic; -- Local clk from 125Mhz oszillator alternative
+    clk_20m_ext_con_vcxo_i     : in std_logic; -- 20MHz VCXO clock
+    clk_20m_ext_con_vcxo_alt_i : in std_logic; -- 20MHz VCXO clock alternative
 
-    clk_125m_tcb_pllref_i : in std_logic; -- 125 MHz PLL reference at tranceiver bank
-    clk_125m_tcb_local_i  : in std_logic; -- Local clk from 125Mhz oszillator at tranceiver bank
-    clk_125m_tcb_sfpref_i : in std_logic; -- PLL/SFP reference clk from 125Mhz oszillator at tranceiver bank
+    --clk_125m_local_i      : in std_logic; -- Local clk from 125Mhz oszillator
+    --clk_125m_local_alt_i  : in std_logic; -- Local clk from 125Mhz oszillator alternative
+    --clk_125m_tcb_pllref_i : in std_logic; -- 125 MHz PLL reference at tranceiver bank
+    --clk_125m_tcb_local_i  : in std_logic; -- Local clk from 125Mhz oszillator at tranceiver bank
+    --clk_125m_tcb_sfpref_i : in std_logic; -- PLL/SFP reference clk from 125Mhz oszillator at tranceiver bank
+
+
 
     ------------------------------------------------------------------------
     -- PCI express pins
@@ -37,27 +41,28 @@ entity scu_control is
     ------------------------------------------------------------------------
     wr_dac_sclk_o : out std_logic;
     wr_dac_din_o  : out std_logic;
-    wr_ndac_cs_o  : out std_logic_vector(2 downto 1);
+    wr_ndac_cs_o  : out std_logic_vector(2 downto 1); -- NDAC_CS1/2?
 
     -----------------------------------------------------------------------
     -- OneWire
     -----------------------------------------------------------------------
     OneWire_CB       : inout std_logic;
+    OneWire_CB_splz  : out   std_logic; -- strong Pull-Up for Onewire
+
     onewire_ext      : inout std_logic; -- to extension board
-    onewire_ext_splz : out   std_logic;   --Strong Pull-Up for Onewire
-    OneWire_CB_splz  : out   std_logic;   --Strong Pull-Up for Onewire
+    onewire_ext_splz : out   std_logic; -- strong Pull-Up for Onewire
 
     -----------------------------------------------------------------------
     -- ComExpress signals
     -----------------------------------------------------------------------
-    ser0_rxd          : out std_logic;  -- RX/TX view from ComX
-    ser0_txd          : in  std_logic;  -- RX/TX view from ComX
-    ser1_rxd          : out std_logic;  -- RX/TX view from ComX
-    ser1_txd          : in  std_logic;  -- RX/TX view from ComX
+    ser0_rxd          : out std_logic; -- RX/TX view from ComX
+    ser0_txd          : in  std_logic; -- RX/TX view from ComX
+    ser1_rxd          : out std_logic; -- RX/TX view from ComX
+    ser1_txd          : in  std_logic; -- RX/TX view from ComX
     nTHRMTRIP         : in  std_logic;
     WDT               : in  std_logic;
-    fpga_res_i        : in  std_logic;
-    nSys_Reset        : in    std_logic;  -- Reset From ComX
+    fpga_res_i        : in  std_logic; -- NCB_RESET?
+    nSys_Reset        : in  std_logic; -- Reset From ComX
 
     -----------------------------------------------------------------------
     -- SCU Bus
@@ -81,10 +86,10 @@ entity scu_control is
     -----------------------------------------------------------------------
     -- Misc.
     -----------------------------------------------------------------------
-    nFPGA_Res_Out : out std_logic;  --Reset  Output
-    user_btn      : in    std_logic;  -- User Button
-    avr_sda       : inout std_logic;  -- I2C Connection to AVR MCU
-    avr_scl       : inout std_logic;  -- I2C Connection to AVR MCU
+    nFPGA_Res_Out : out   std_logic;                     -- Reset  Output
+    user_btn      : in    std_logic;                     -- User Button (NUSER_PB?)
+    avr_sda       : inout std_logic;                     -- I2C Connection to AVR MCU (F2F-I2C-ADA?)
+    avr_scl       : inout std_logic;                     -- I2C Connection to AVR MCU (F2F-I2C-SCL?)
     serial_cb_out : out   std_logic_vector (1 downto 0); -- Serial to Backplane
     serial_cb_in  : in    std_logic_vector (1 downto 0); -- Serial to Backplane
     rear_in       : in    std_logic_vector (1 downto 0); -- GPIO to Backplane
@@ -100,14 +105,15 @@ entity scu_control is
     -----------------------------------------------------------------------
     fastIO_p_i : in  std_logic_vector(2 downto 0);
     fastIO_n_i : in  std_logic_vector(2 downto 0);
-    fastIO_p_o : out std_logic_vector(2 downto 0); -- Negativ Pin assigned by Quartus, manually assignment causes issues
-    lemo_out   : out std_logic_vector(3 downto 0); --Isolated Onboard TTL OUT
-    lemo_in    : in  std_logic_vector(1 downto 0); --Isolated OnBoard TTL IN
+    fastIO_p_o : out std_logic_vector(2 downto 0); -- Negativ Pin assigned by Quartus 18.1, manually assignment causes issues
+    fastIO_n_o : out std_logic_vector(2 downto 0); -- Now possible? If not: Delete this
+    lemo_out   : out std_logic_vector(3 downto 0); -- Isolated Onboard TTL OUT
+    lemo_in    : in  std_logic_vector(1 downto 0); -- Isolated OnBoard TTL IN
 
     -----------------------------------------------------------------------
     -- Extension Connector
     -----------------------------------------------------------------------
-    ext_ch : inout std_logic_vector(21 downto 0);
+    ext_ch : inout std_logic_vector(21 downto 0); -- See EIO
     ext_id : in    std_logic_vector(3 downto 0);
 
     -----------------------------------------------------------------------
@@ -125,9 +131,9 @@ entity scu_control is
     -- leds onboard
     -----------------------------------------------------------------------
     wr_led_pps : out std_logic := '1';
-    user_led_0 : out std_logic_vector(2 downto 0) := (others => '1');
-    wr_rgb_led : out std_logic_vector(2 downto 0) := (others => '1');
-    lemo_led   : out std_logic_vector(5 downto 0) := (others => '1');
+    user_led_0 : out std_logic_vector(2 downto 0) := (others => '1'); -- USER_LED0?
+    wr_rgb_led : out std_logic_vector(2 downto 0) := (others => '1'); -- LDWR0_B/G/R?
+    lemo_led   : out std_logic_vector(5 downto 0) := (others => '1'); -- LEMO_LED?
 
     -----------------------------------------------------------------------
     -- Pseudo-SRAM (4x 256Mbit)
@@ -140,16 +146,43 @@ entity scu_control is
     psram_cen  : out   std_logic_vector(3 downto 0) := (others => '1');
     psram_oen  : out   std_logic_vector(3 downto 0) := (others => '1');
     psram_wen  : out   std_logic_vector(3 downto 0) := (others => '1');
-    psram_ubn  : out   std_logic := '1';
-    psram_lbn  : out   std_logic := '1';
+    psram_ubn  : out   std_logic_vector(3 downto 0) := (others => '0');
+    psram_lbn  : out   std_logic_vector(3 downto 0) := (others => '0');
     psram_wait : in    std_logic_vector(3 downto 0);
 
     -----------------------------------------------------------------------
     -- SPI Flash User Mode
     -----------------------------------------------------------------------
-    UM_AS_D           : inout std_logic_vector(3 downto 0) := (others => 'Z');
-    UM_nCSO           : out   std_logic := 'Z';
-    UM_DCLK           : out   std_logic := 'Z';
+    AS_D    : inout std_logic_vector(3 downto 0) := (others => 'Z');
+    AS_NCSO : out   std_logic := 'Z';
+    AS_DCLK : out   std_logic := 'Z';
+
+    -----------------------------------------------------------------------
+    -- Unknown or New Stuff
+    -----------------------------------------------------------------------
+    A_EXT_CON_RX1_N : in  std_logic;
+    A_EXT_CON_RX1_P : in  std_logic;
+    DEBUG_LED       : out std_logic_vector(7 downto 0);
+
+    -----------------------------------------------------------------------
+    -- Xenomorph Stuff
+    -----------------------------------------------------------------------
+    A_MASTER_CON_RX1_N : in std_logic;
+    A_MASTER_CON_RX1_P : in std_logic;
+    A_MASTER_CON_RX2_N : in std_logic;
+    A_MASTER_CON_RX2_P : in std_logic;
+    A_MASTER_CON_RX3_N : in std_logic;
+    A_MASTER_CON_RX3_P : in std_logic;
+    A_MASTER_CON_RX4_N : in std_logic;
+    A_MASTER_CON_RX4_P : in std_logic;
+
+    NCSO : inout std_logic; -- No idea what this is
+    NSTATUS : inout std_logic; -- ?
+
+    -----------------------------------------------------------------------
+    -- Unassignable
+    -----------------------------------------------------------------------
+
 
     -----------------------------------------------------------------------
     -- SFP
@@ -205,6 +238,8 @@ architecture rtl of scu_control is
   signal s_psram_oen        : std_logic_vector(3 downto 0);
   signal s_psram_wen        : std_logic_vector(3 downto 0);
   signal s_psram_wait       : std_logic_vector(3 downto 0);
+  signal s_psram_ubn        : std_logic_vector(3 downto 0);
+  signal s_psram_lbn        : std_logic_vector(3 downto 0);
 
   signal rstn_ref           : std_logic;
   signal clk_ref            : std_logic;
@@ -344,8 +379,8 @@ begin
       ps_clk                  => psram_clk,
       ps_addr                 => psram_a,
       ps_data                 => psram_dq,
-      ps_seln(0)              => psram_lbn,
-      ps_seln(1)              => psram_ubn,
+      ps_seln(0)              => s_psram_lbn(0),
+      ps_seln(1)              => s_psram_ubn(0),
       ps_cre                  => s_psram_cre(0),
       ps_cen                  => s_psram_cen(0),
       ps_oen                  => s_psram_oen(0),
@@ -380,8 +415,18 @@ begin
   psram_advn(2) <= '1';
   psram_advn(3) <= '1';
 
+  psram_lbn(0) <= s_psram_lbn(0);
+  psram_lbn(1) <= '0';
+  psram_lbn(2) <= '0';
+  psram_lbn(3) <= '0';
+
+  psram_ubn(0) <= s_psram_ubn(0);
+  psram_ubn(1) <= '0';
+  psram_ubn(2) <= '0';
+  psram_ubn(3) <= '0';
+
   s_psram_wait <= psram_wait;
-  user_led_0      <= s_gpio_o(2 downto 0) or s_psram_wait(3 downto 1); -- Keep unused WAIT in pins used, there this laster
+  user_led_0   <= s_gpio_o(2 downto 0) or s_psram_wait(3 downto 1); -- Keep unused WAIT in pins used, there this laster
 
   -- LEDs
   wr_led_pps    <= s_led_pps;                                             -- white = PPS
