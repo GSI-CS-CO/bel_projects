@@ -11,7 +11,7 @@ entity fg_quad_ifa is
   generic (
     clk_in_hz:            integer := 50_000_000;        -- 50Mhz
     diag_on_is_1:         integer range 0 to 1 := 0;    -- if 1 then diagnosic information is generated during compilation
-    fw_version:           integer range 0 to 65535 := 2
+    fw_version:           integer range 0 to 65535 := 3
     );
   port (
     -- ifa interface

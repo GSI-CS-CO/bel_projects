@@ -166,14 +166,14 @@ begin
       freq_sel_reg  <=  (others => '0');
       step_sel_reg  <=  (others => '0');
     else
-      if s_stp_reached = '1' or sync_start = '1' then
+      if (s_stp_reached = '1' or sync_start = '1') and s_coeff_rcvd = '1' then
         -- shifting for quadratic coefficient a
         s_a_reg <= shift_left(resize(signed(data_a), 64), shift_a);
         s_Q_reg <= shift_left(resize(signed(data_b), 64), shift_b); -- Q0 = b
         s_X_reg <= shift_left(resize(signed(data_c), 64), 32);      -- X0 = c
       end if;
 
-      if s_stp_reached = '1' or load_start = '1' then
+      if (s_stp_reached = '1' or load_start = '1') and s_coeff_rcvd = '1' then
         step_sel_reg <= step_sel;
         freq_sel_reg <= freq_sel;
       end if;
@@ -398,14 +398,14 @@ begin
         freq_sel_reg  <=  (others => '0');
         step_sel_reg  <=  (others => '0');
       else
-        if s_stp_reached = '1' or sync_start_stretched = '1' then
+        if (s_stp_reached = '1' or sync_start_stretched = '1' ) and s_coeff_rcvd = '1' then
           -- shifting for quadratic coefficient a
           s_a_reg <= shift_left(resize(signed(data_a), 64), shift_a);
           s_Q_reg <= shift_left(resize(signed(data_b), 64), shift_b); -- Q0 = b
           s_X_reg <= shift_left(resize(signed(data_c), 64), 32);      -- X0 = c
         end if;
 
-        if s_stp_reached = '1' or load_start_stretched = '1' then
+        if (s_stp_reached = '1' or load_start_stretched = '1') and s_coeff_rcvd = '1' then
           step_sel_reg <= step_sel;
           freq_sel_reg <= freq_sel;
         end if;
