@@ -315,6 +315,7 @@
 
 
 
+
 set_global_assignment -name AHDL_FILE ../../modules/modulbus/i2c.tdf
 set_global_assignment -name ALM_REGISTER_PACKING_EFFORT HIGH
 set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
@@ -1035,6 +1036,7 @@ set_global_assignment -name VHDL_FILE ../../top/blm_aco/threshold_trigger_input.
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/up_down_counter.vhd -library work
 set_global_assignment -name VHDL_INPUT_VERSION VHDL_2008
 set_global_assignment -name VHDL_SHOW_LMF_MAPPING_MESSAGES OFF
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to A_nSEL_Ext_Signal_DRV
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to PIO[143]
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to PIO[144]
@@ -1273,5 +1275,3 @@ set_location_assignment PIN_Y3 -to PIO[112]
 set_location_assignment PIN_Y4 -to PIO[111]
 set_location_assignment PIN_Y7 -to PIO[110]
 set_location_assignment PIN_Y9 -to PIO[120]
-
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
