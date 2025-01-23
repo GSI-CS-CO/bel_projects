@@ -120,13 +120,13 @@ entity scu_control is
     -----------------------------------------------------------------------
     -- usb
     -----------------------------------------------------------------------
-    slrd : out   std_logic;
-    slwr : out   std_logic;
-    fd   : inout std_logic_vector(7 downto 0) := (others => 'Z');
-    pa   : inout std_logic_vector(7 downto 0) := (others => 'Z');
-    ctl  : in    std_logic_vector(2 downto 0);
-    uclk : in    std_logic;
-    ures : out   std_logic;
+    usb_slrd : out   std_logic;
+    usb_slwr : out   std_logic;
+    usb_fd   : inout std_logic_vector(7 downto 0) := (others => 'Z');
+    usb_pa   : inout std_logic_vector(7 downto 0) := (others => 'Z');
+    usb_ctl  : in    std_logic_vector(2 downto 0);
+    usb_uclk : in    std_logic;
+    usb_ures : out   std_logic;
 
     -----------------------------------------------------------------------
     -- leds onboard
@@ -363,19 +363,19 @@ begin
       i2c_sda_pad_o           => s_i2c_sda_pad_out,
       i2c_sda_padoen_o        => s_i2c_sda_padoen,
       -- FX2 USB
-      usb_rstn_o              => ures,
-      usb_ebcyc_i             => pa(3),
-      usb_speed_i             => pa(0),
-      usb_shift_i             => pa(1),
-      usb_readyn_io           => pa(7),
-      usb_fifoadr_o           => pa(5 downto 4),
-      usb_sloen_o             => pa(2),
-      usb_fulln_i             => ctl(1),
-      usb_emptyn_i            => ctl(2),
-      usb_slrdn_o             => slrd,
-      usb_slwrn_o             => slwr,
-      usb_pktendn_o           => pa(6),
-      usb_fd_io               => fd,
+      usb_rstn_o              => usb_ures,
+      usb_ebcyc_i             => usb_pa(3),
+      usb_speed_i             => usb_pa(0),
+      usb_shift_i             => usb_pa(1),
+      usb_readyn_io           => usb_pa(7),
+      usb_fifoadr_o           => usb_pa(5 downto 4),
+      usb_sloen_o             => usb_pa(2),
+      usb_fulln_i             => usb_ctl(1),
+      usb_emptyn_i            => usb_ctl(2),
+      usb_slrdn_o             => usb_slrd,
+      usb_slwrn_o             => usb_slwr,
+      usb_pktendn_o           => usb_pa(6),
+      usb_fd_io               => usb_fd,
       -- PSRAM TODO: Multi Chip
       ps_clk                  => psram_clk,
       ps_addr                 => psram_a,
