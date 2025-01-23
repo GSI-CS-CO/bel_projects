@@ -14,27 +14,28 @@ entity scu_control is
     ------------------------------------------------------------------------
     -- Input clocks
     ------------------------------------------------------------------------
-    clk_20m_vcxo_i        : in std_logic; -- 20MHz VCXO clock
-    clk_20m_vcxo_alt_i    : in std_logic; -- 20MHz VCXO clock alternative
+    clk1_20m_vcxo_i     : in std_logic; -- 20MHz VCXO clock, WR#1
+    clk1_20m_vcxo_alt_i : in std_logic; -- 20MHz VCXO clock, WR#1, alternative clock
+    clk2_20m_vcxo_i     : in std_logic; -- 20MHz VCXO clock, WR#2
+    clk2_20m_vcxo_alt_i : in std_logic; -- 20MHz VCXO clock, WR#2, alternative clock
 
-    clk_20m_ext_con_vcxo_i     : in std_logic; -- 20MHz VCXO clock
-    clk_20m_ext_con_vcxo_alt_i : in std_logic; -- 20MHz VCXO clock alternative
+    clk_125m_local_aa18 : in std_logic; -- Local clk from 125Mhz oszillator
+    clk_125m_local_d15  : in std_logic; -- Local clk from 125Mhz oszillator alternative
 
-    --clk_125m_local_i      : in std_logic; -- Local clk from 125Mhz oszillator
-    --clk_125m_local_alt_i  : in std_logic; -- Local clk from 125Mhz oszillator alternative
-    --clk_125m_tcb_pllref_i : in std_logic; -- 125 MHz PLL reference at tranceiver bank
-    --clk_125m_tcb_local_i  : in std_logic; -- Local clk from 125Mhz oszillator at tranceiver bank
-    --clk_125m_tcb_sfpref_i : in std_logic; -- PLL/SFP reference clk from 125Mhz oszillator at tranceiver bank
+    clk_gxbl1c_u24      : in std_logic; -- 125 MHz WR1, 125 MHz WR2, 125 MHz local, 100 MHz real or fake PCIe, set by AVR
+    clk_gxbl1c_w24      : in std_logic; -- ""
+    clk_gxbl1d_n24      : in std_logic; -- "", PCIe option #1
+    clk_gxbl1d_r24      : in std_logic; -- "", PCIe option #2
 
-
+    clk1_wr_125m_ab16   : in std_logic; -- Optional Serdes/Deserdes clocks (based on WR#1)
+    clk1_wr_125m_ac20   : in std_logic; -- ""
 
     ------------------------------------------------------------------------
     -- PCI express pins
     ------------------------------------------------------------------------
-    pcie_refclk_i : in    std_logic;
-    pcie_rx_i     : in    std_logic_vector(3 downto 0);
-    pcie_tx_o     : out   std_logic_vector(3 downto 0);
-    nPCI_RESET_i  : in    std_logic;
+    pcie_rx_i     : in  std_logic_vector(3 downto 0);
+    pcie_tx_o     : out std_logic_vector(3 downto 0);
+    nPCI_RESET_i  : in  std_logic;
 
     ------------------------------------------------------------------------
     -- WR DAC signals
@@ -307,10 +308,10 @@ begin
       g_en_asmi            => true
     )
     port map(
-      core_clk_20m_vcxo_i     => clk_20m_vcxo_i,
-      core_clk_125m_pllref_i  => clk_125m_tcb_pllref_i,
-      core_clk_125m_local_i   => clk_125m_tcb_local_i,
-      core_clk_125m_sfpref_i  => clk_125m_tcb_pllref_i,
+      core_clk_20m_vcxo_i     => clk1_20m_vcxo_i,
+      core_clk_125m_pllref_i  => clk_gxbl1c_u24,
+      core_clk_125m_local_i   => clk_125m_local_aa18,
+      core_clk_125m_sfpref_i  => clk_gxbl1c_u24,
       core_clk_25m_o          => s_core_clk_25m,
       core_clk_wr_ref_o       => clk_ref,
       core_rstn_wr_ref_o      => rstn_ref,
@@ -350,7 +351,7 @@ begin
       scubus_a_sysclock       => A_SysClock,
       ow_io(0)                => onewire_ext,
       ow_io(1)                => A_OneWire,
-      pcie_refclk_i           => pcie_refclk_i,
+      pcie_refclk_i           => clk_gxbl1d_n24,
       pcie_rstn_i             => nPCI_RESET_i,
       pcie_rx_i               => pcie_rx_i,
       pcie_tx_o               => pcie_tx_o,
