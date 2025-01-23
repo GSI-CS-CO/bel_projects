@@ -125,8 +125,9 @@ entity scu_control is
     usb_fd   : inout std_logic_vector(7 downto 0) := (others => 'Z');
     usb_pa   : inout std_logic_vector(7 downto 0) := (others => 'Z');
     usb_ctl  : in    std_logic_vector(2 downto 0);
-    usb_uclk : in    std_logic;
-    usb_ures : out   std_logic;
+    usb_uclk : in    std_logic; -- T0OUT/IFCLK
+	 usb_clk  : in    std_logic; -- T1OUT/CLKOUT - unused
+    usb_ures : out   std_logic; -- NFX2_RESET
 
     -----------------------------------------------------------------------
     -- leds onboard
