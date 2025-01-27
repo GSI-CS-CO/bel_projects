@@ -609,10 +609,24 @@ scu4-sort:
 	$(call sort_file, $(CHECK_SCU4))
 
 scu4-check:
-		$(call check_timing, $(CHECK_SCU4))
+	$(call check_timing, $(CHECK_SCU4))
 
 scu4-clean::
 	$(MAKE) -C $(PATH_SCU4) clean
+
+# #################################################################################################
+# Build flow targets
+# #################################################################################################
+
+# Set NUM_PARALLEL_PROCESSORS to ALL in each QSF file
+set_max_parallel_processors:
+	@find . -type f -name "*.qsf" | while read -r file; do \
+			if grep -q "set_global_assignment -name NUM_PARALLEL_PROCESSORS" "$$file"; then \
+					sed -i 's/set_global_assignment -name NUM_PARALLEL_PROCESSORS [0-9]\+/set_global_assignment -name NUM_PARALLEL_PROCESSORS ALL/' "$$file"; \
+			else \
+					echo 'set_global_assignment -name NUM_PARALLEL_PROCESSORS ALL' >> "$$file"; \
+			fi; \
+	done
 
 # We need to run ./fix-git.sh and ./install-hdlmake.sh: make them a prerequisite for Makefile
 Makefile: prereq-rule
