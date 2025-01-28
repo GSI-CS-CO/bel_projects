@@ -1189,3 +1189,17 @@ set_location_assignment PIN_B15 -to rear_out[0]
 set_location_assignment PIN_B18 -to rear_out[1]
 set_location_assignment PIN_T8 -to WDT
 set_location_assignment PIN_D18 -to pcie_rdy_o
+set_location_assignment PIN_L1 -to sfp_los_i
+set_location_assignment PIN_R4 -to sfp_mod0_i
+set_location_assignment PIN_V3 -to sfp_mod1_io
+set_location_assignment PIN_U3 -to sfp_mod2_io
+set_location_assignment PIN_W3 -to sfp_tx_disable_o
+set_location_assignment PIN_T4 -to sfp_tx_fault_i
+set_location_assignment PIN_AF21 -to ser0_rxd
+set_location_assignment PIN_AH15 -to ser0_txd
+set_location_assignment PIN_AB3 -to ser1_rxd
+set_location_assignment PIN_AA8 -to ser1_txd
+set_location_assignment PIN_A12 -to serial_cb_in[0]
+set_location_assignment PIN_A11 -to serial_cb_in[1]
+set_location_assignment PIN_A14 -to serial_cb_out[0]
+set_location_assignment PIN_A13 -to serial_cb_out[1]
