@@ -982,8 +982,6 @@ set_location_assignment PIN_AH12 -to A_D[10]
 set_location_assignment PIN_AH13 -to A_D[3]
 set_location_assignment PIN_AH16 -to A_D[5]
 set_location_assignment PIN_AH17 -to A_A[10]
-set_location_assignment PIN_AH18 -to A_A[6]
-set_location_assignment PIN_AH18 -to AS_NCSO
 set_location_assignment PIN_AH20 -to A_A[9]
 set_location_assignment PIN_AH21 -to A_A[8]
 set_location_assignment PIN_AH22 -to A_A[0]
@@ -1122,3 +1120,19 @@ set_location_assignment PIN_C8 -to ext_id[0]
 set_location_assignment PIN_B11 -to ext_id[1]
 set_location_assignment PIN_C12 -to ext_id[2]
 set_location_assignment PIN_C13 -to ext_id[3]
+set_location_assignment PIN_N1 -to clk1_20m_vcxo_alt_i
+set_location_assignment PIN_AD3 -to clk1_20m_vcxo_i
+set_location_assignment PIN_C7 -to clk2_20m_vcxo_alt_i
+set_location_assignment PIN_G6 -to clk2_20m_vcxo_i
+set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_local_aa18
+set_location_assignment PIN_AA18 -to clk_125m_local_aa18
+set_location_assignment PIN_AA19 -to "clk_125m_local_aa18(n)"
+set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_local_d15
+set_location_assignment PIN_D15 -to clk_125m_local_d15
+set_location_assignment PIN_E15 -to "clk_125m_local_d15(n)"
+set_instance_assignment -name IO_STANDARD LVDS -to clk1_wr_125m_ab16
+set_instance_assignment -name IO_STANDARD LVDS -to clk1_wr_125m_ac20
+set_location_assignment PIN_AB16 -to clk1_wr_125m_ab16
+set_location_assignment PIN_AA16 -to "clk1_wr_125m_ab16(n)"
+set_location_assignment PIN_AC20 -to clk1_wr_125m_ac20
+set_location_assignment PIN_AB20 -to "clk1_wr_125m_ac20(n)"
