@@ -178,6 +178,7 @@ entity scu_control is
     -----------------------------------------------------------------------
     -- SFP
     -----------------------------------------------------------------------
+    sfp_rate_sel_o   : out   std_logic;
     sfp_tx_disable_o : out   std_logic;
     sfp_tx_fault_i   : in    std_logic;
     sfp_los_i        : in    std_logic;
@@ -484,5 +485,8 @@ begin
   nADR_EN     <= '0';
   A_Spare     <= (others => 'Z');
   --A_OneWire   <= 'Z';
+
+  -- other fixed signals
+  sfp_rate_sel_o <= '0';
 
 end rtl;
