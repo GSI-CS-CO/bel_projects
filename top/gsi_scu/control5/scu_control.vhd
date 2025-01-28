@@ -153,13 +153,6 @@ entity scu_control is
     psram_wait : in    std_logic_vector(3 downto 0);
 
     -----------------------------------------------------------------------
-    -- SPI Flash User Mode
-    -----------------------------------------------------------------------
-    AS_D    : inout std_logic_vector(3 downto 0) := (others => 'Z');
-    AS_NCSO : out   std_logic := 'Z';
-    AS_DCLK : out   std_logic := 'Z';
-
-    -----------------------------------------------------------------------
     -- Unknown or New Stuff
     -----------------------------------------------------------------------
     A_EXT_CON_RX1_N : in  std_logic;
