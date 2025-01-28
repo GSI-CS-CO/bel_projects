@@ -1175,3 +1175,17 @@ set_location_assignment PIN_AC21 -to A_nSRQ[9]
 set_location_assignment PIN_AD22 -to A_nSRQ[10]
 set_location_assignment PIN_AE21 -to A_nSRQ[11]
 set_location_assignment PIN_AF22 -to A_nSRQ[12]
+set_location_assignment PIN_AE15 -to lemo_out[0]
+set_location_assignment PIN_AG16 -to lemo_out[1]
+set_location_assignment PIN_AC13 -to lemo_out[2]
+set_location_assignment PIN_AC15 -to lemo_out[3]
+set_location_assignment PIN_AE16 -to lemo_in[0]
+set_location_assignment PIN_AF19 -to lemo_in[1]
+set_location_assignment PIN_AG21 -to nSys_Reset
+set_location_assignment PIN_AE14 -to A_nTiming_Cycle
+set_location_assignment PIN_B13 -to rear_in[0]
+set_location_assignment PIN_A27 -to rear_in[1]
+set_location_assignment PIN_B15 -to rear_out[0]
+set_location_assignment PIN_B18 -to rear_out[1]
+set_location_assignment PIN_T8 -to WDT
+set_location_assignment PIN_D18 -to pcie_rdy_o
