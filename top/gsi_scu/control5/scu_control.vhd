@@ -36,6 +36,7 @@ entity scu_control is
     pcie_rx_i     : in  std_logic_vector(3 downto 0);
     pcie_tx_o     : out std_logic_vector(3 downto 0);
     nPCI_RESET_i  : in  std_logic;
+    pcie_rdy_o    : out std_logic;
 
     ------------------------------------------------------------------------
     -- WR DAC signals
