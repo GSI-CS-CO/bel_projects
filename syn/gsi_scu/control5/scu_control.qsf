@@ -3,12 +3,6 @@ set_global_assignment -name ACTIVE_SERIAL_CLOCK FREQ_100MHZ
 set_global_assignment -name ADV_NETLIST_OPT_SYNTH_WYSIWYG_REMAP OFF
 set_global_assignment -name AHDL_FILE ../../../modules/modulbus/i2c.tdf
 set_global_assignment -name ALLOW_POWER_UP_DONT_CARE OFF
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER ctl -section_id USB_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER ctl -section_id USB_GROUP_IN
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER fd -section_id USB_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER fd -section_id USB_GROUP_INOUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER pa -section_id USB_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER pa -section_id USB_GROUP_INOUT
 set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[0] -section_id PSRAM_GROUP
 set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[0] -section_id PSRAM_GROUP_OUT
 set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[10] -section_id PSRAM_GROUP
@@ -895,8 +889,6 @@ set_instance_assignment -name IO_STANDARD "1.8 V" -to altera_reserved_tck
 set_instance_assignment -name IO_STANDARD "1.8 V" -to altera_reserved_tdi
 set_instance_assignment -name IO_STANDARD "1.8 V" -to altera_reserved_tdo
 set_instance_assignment -name IO_STANDARD "1.8 V" -to altera_reserved_tms
-set_instance_assignment -name IO_STANDARD "1.8 V" -to clk_20m_vcxo_alt_i
-set_instance_assignment -name IO_STANDARD "1.8 V" -to clk_20m_vcxo_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to fpga_res_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to nPCI_RESET_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to nSys_Reset
@@ -940,15 +932,6 @@ set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to pcie
 set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to "pcie_tx_o[3](n)"
 set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to sfp_rxp_i
 set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to sfp_txp_o
-set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_local_alt_i
-set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_local_i
-set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_pllref_alt_i
-set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_pllref_i
-set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_sfpref_alt_i
-set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_sfpref_i
-set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_tcb_local_i
-set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_tcb_pllref_i
-set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_tcb_sfpref_i
 set_instance_assignment -name IO_STANDARD LVDS -to fastIO_n_i[0]
 set_instance_assignment -name IO_STANDARD LVDS -to fastIO_n_i[1]
 set_instance_assignment -name IO_STANDARD LVDS -to fastIO_n_i[2]
@@ -958,7 +941,6 @@ set_instance_assignment -name IO_STANDARD LVDS -to fastIO_p_i[2]
 set_instance_assignment -name IO_STANDARD LVDS -to fastIO_p_o[0]
 set_instance_assignment -name IO_STANDARD LVDS -to fastIO_p_o[1]
 set_instance_assignment -name IO_STANDARD LVDS -to fastIO_p_o[2]
-set_instance_assignment -name IO_STANDARD LVDS -to pcie_refclk_i
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_ac_wbm:c1"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_queue:c0"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_queue:c2"
@@ -966,7 +948,6 @@ set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_tlu:ecatlu"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_wb_event:ecawb"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|ftm_lm32_cluster:lm32*"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|wr_eca:eca"
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to scu_cb_version
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to scu_cb_version[0]
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to scu_cb_version[1]
@@ -1104,3 +1085,6 @@ set_location_assignment PIN_V8 -to psram_advn[1]
 set_location_assignment PIN_Y17 -to A_A[15]
 set_location_assignment PIN_Y19 -to A_A[14]
 set_location_assignment PIN_Y21 -to A_A[7]
+
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
+set_location_assignment PIN_D14 -to ADR_TO_SCUB
