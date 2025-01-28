@@ -1136,3 +1136,15 @@ set_location_assignment PIN_AB16 -to clk1_wr_125m_ab16
 set_location_assignment PIN_AA16 -to "clk1_wr_125m_ab16(n)"
 set_location_assignment PIN_AC20 -to clk1_wr_125m_ac20
 set_location_assignment PIN_AB20 -to "clk1_wr_125m_ac20(n)"
+set_instance_assignment -name IO_STANDARD LVDS -to clk_gxbl1c_u24
+set_instance_assignment -name IO_STANDARD LVDS -to clk_gxbl1c_w24
+set_instance_assignment -name IO_STANDARD LVDS -to clk_gxbl1d_n24
+set_instance_assignment -name IO_STANDARD LVDS -to clk_gxbl1d_r24
+set_location_assignment PIN_U24 -to clk_gxbl1c_u24
+set_location_assignment PIN_U23 -to "clk_gxbl1c_u24(n)"
+set_location_assignment PIN_W24 -to clk_gxbl1c_w24
+set_location_assignment PIN_W23 -to "clk_gxbl1c_w24(n)"
+set_location_assignment PIN_N24 -to clk_gxbl1d_n24
+set_location_assignment PIN_N23 -to "clk_gxbl1d_n24(n)"
+set_location_assignment PIN_R24 -to clk_gxbl1d_r24
+set_location_assignment PIN_R23 -to "clk_gxbl1d_r24(n)"
