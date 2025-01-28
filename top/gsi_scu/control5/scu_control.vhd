@@ -176,15 +176,8 @@ entity scu_control is
     NSTATUS : inout std_logic; -- ?
 
     -----------------------------------------------------------------------
-    -- Unassignable
-    -----------------------------------------------------------------------
-
-
-    -----------------------------------------------------------------------
     -- SFP
     -----------------------------------------------------------------------
-    --sfp_led_fpg_o    : out   std_logic;
-    --sfp_led_fpr_o    : out   std_logic;
     sfp_tx_disable_o : out   std_logic;
     sfp_tx_fault_i   : in    std_logic;
     sfp_los_i        : in    std_logic;
@@ -193,6 +186,8 @@ entity scu_control is
     sfp_mod0_i       : in    std_logic;
     sfp_mod1_io      : inout std_logic;
     sfp_mod2_io      : inout std_logic);
+
+
 
 end scu_control;
 
