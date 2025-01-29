@@ -428,7 +428,7 @@ begin
   s_psram_wait <= psram_wait;
   --user_led_0   <= s_gpio_o(2 downto 0) or s_psram_wait(3 downto 1); -- Keep unused WAIT in pins used, there this laster
   user_led0_r <= s_gpio_o(0);
-  user_led0_g <= s_gpio_o(1); 
+  user_led0_g <= s_gpio_o(1);
   user_led0_b <= s_gpio_o(2);
 
   -- LEDs
@@ -443,7 +443,16 @@ begin
     --s_lvds_p_i(i) <= fastIO_p_i(i);
     --s_lvds_n_i(i) <= fastIO_n_i(i);
     --fastIO_p_o(i) <= s_lvds_p_o(i);
-    fastIO_p_o <= s_gpio_o(9 downto 7);
+    --fastIO_p_o <= s_gpio_o(9 downto 7); -- !!!
+
+    single_gpio_to_lvds : altera_lvds_obuf
+      generic map(
+        g_family  => c_family)
+      port map(
+        dataout_b  => fastIO_n_o(i),
+        dataout    => fastIO_p_o(i),
+        datain     => s_gpio_o(7+i)
+      );
 
     lvds_to_single_gpio : altera_lvds_ibuf
       generic map(
