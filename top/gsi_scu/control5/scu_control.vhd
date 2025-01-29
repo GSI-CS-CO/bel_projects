@@ -113,7 +113,7 @@ entity scu_control is
     fastIO_p_i : in  std_logic_vector(2 downto 0);
     fastIO_n_i : in  std_logic_vector(2 downto 0);
     fastIO_p_o : out std_logic_vector(2 downto 0); -- Negativ Pin assigned by Quartus 18.1, manually assignment causes issues
-    fastIO_n_o : out std_logic_vector(2 downto 0); -- Now possible? If not: Delete this
+    --fastIO_n_o : out std_logic_vector(2 downto 0); -- Now possible? If not: Delete this
     lemo_out   : out std_logic_vector(3 downto 0); -- Isolated Onboard TTL OUT
     lemo_in    : in  std_logic_vector(1 downto 0); -- Isolated OnBoard TTL IN
 
@@ -443,16 +443,16 @@ begin
     --s_lvds_p_i(i) <= fastIO_p_i(i);
     --s_lvds_n_i(i) <= fastIO_n_i(i);
     --fastIO_p_o(i) <= s_lvds_p_o(i);
-    --fastIO_p_o <= s_gpio_o(9 downto 7); -- !!!
+    fastIO_p_o <= s_gpio_o(9 downto 7); -- !!!
 
-    single_gpio_to_lvds : altera_lvds_obuf
-      generic map(
-        g_family  => c_family)
-      port map(
-        dataout_b  => fastIO_n_o(i),
-        dataout    => fastIO_p_o(i),
-        datain     => s_gpio_o(7+i)
-      );
+    --single_gpio_to_lvds : altera_lvds_obuf
+    --  generic map(
+    --    g_family  => c_family)
+    --  port map(
+    --    dataout_b  => fastIO_n_o(i),
+    --    dataout    => fastIO_p_o(i),
+    --    datain     => s_gpio_o(7+i)
+    --  );
 
     lvds_to_single_gpio : altera_lvds_ibuf
       generic map(

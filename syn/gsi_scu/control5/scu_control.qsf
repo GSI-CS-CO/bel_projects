@@ -1,4 +1,22 @@
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 set_global_assignment -name ACTIVE_SERIAL_CLOCK FREQ_100MHZ
 set_global_assignment -name ADV_NETLIST_OPT_SYNTH_WYSIWYG_REMAP OFF
 set_global_assignment -name AHDL_FILE ../../../modules/modulbus/i2c.tdf
@@ -956,6 +974,7 @@ set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_tlu:ecatlu"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_wb_event:ecawb"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|ftm_lm32_cluster:lm32*"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|wr_eca:eca"
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to scu_cb_version
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to scu_cb_version[0]
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to scu_cb_version[1]
@@ -967,6 +986,7 @@ set_location_assignment PIN_A11 -to serial_cb_in[1]
 set_location_assignment PIN_A12 -to serial_cb_in[0]
 set_location_assignment PIN_A13 -to serial_cb_out[1]
 set_location_assignment PIN_A14 -to serial_cb_out[0]
+set_location_assignment PIN_A16 -to avr_scl
 set_location_assignment PIN_A22 -to A_nSEL[3]
 set_location_assignment PIN_A27 -to rear_in[1]
 set_location_assignment PIN_A2 -to psram_a[17]
@@ -974,23 +994,32 @@ set_location_assignment PIN_A3 -to psram_ubn[3]
 set_location_assignment PIN_A4 -to psram_a[3]
 set_location_assignment PIN_A6 -to psram_dq[8]
 set_location_assignment PIN_A7 -to psram_dq[1]
+set_location_assignment PIN_A9 -to user_btn
 set_location_assignment PIN_AA16 -to "clk1_wr_125m_ab16(n)"
 set_location_assignment PIN_AA17 -to A_A[13]
 set_location_assignment PIN_AA18 -to clk_125m_local_aa18
 set_location_assignment PIN_AA19 -to "clk_125m_local_aa18(n)"
+set_location_assignment PIN_AA1 -to lemo_led[5]
 set_location_assignment PIN_AA21 -to A_A[6]
 set_location_assignment PIN_AA22 -to A_nSEL[2]
 set_location_assignment PIN_AA23 -to A_nSEL[1]
+set_location_assignment PIN_AA2 -to wr_ndac_cs_o[2]
+set_location_assignment PIN_AA3 -to lemo_led[2]
 set_location_assignment PIN_AA4 -to ext_ch[19]
+set_location_assignment PIN_AA6 -to lemo_led[0]
+set_location_assignment PIN_AA7 -to lemo_led[1]
 set_location_assignment PIN_AA8 -to ser1_txd
 set_location_assignment PIN_AA9 -to ext_ch[0]
 set_location_assignment PIN_AB16 -to clk1_wr_125m_ab16
 set_location_assignment PIN_AB18 -to A_D[7]
 set_location_assignment PIN_AB19 -to A_nSEL[12]
 set_location_assignment PIN_AB20 -to "clk1_wr_125m_ac20(n)"
+set_location_assignment PIN_AB21 -to A_Spare[1]
 set_location_assignment PIN_AB23 -to A_nSEL[10]
 set_location_assignment PIN_AB3 -to ser1_rxd
+set_location_assignment PIN_AB4 -to wr_ndac_cs_o[1]
 set_location_assignment PIN_AB5 -to ext_ch[16]
+set_location_assignment PIN_AB6 -to wr_dac_sclk_o
 set_location_assignment PIN_AC13 -to lemo_out[2]
 set_location_assignment PIN_AC15 -to lemo_out[3]
 set_location_assignment PIN_AC16 -to A_D[11]
@@ -1002,7 +1031,11 @@ set_location_assignment PIN_AC23 -to A_nSEL[11]
 set_location_assignment PIN_AC5 -to ext_ch[15]
 set_location_assignment PIN_AC7 -to ext_ch[12]
 set_location_assignment PIN_AD12 -to A_nSEL[8]
+set_location_assignment PIN_AD13 -to fastIO_p_o[1]
 set_location_assignment PIN_AD15 -to A_nSRQ[3]
+set_location_assignment PIN_AD18 -to fastIO_p_o[2]
+set_location_assignment PIN_AD19 -to fastIO_n_i[0]
+set_location_assignment PIN_AD20 -to fastIO_p_i[0]
 set_location_assignment PIN_AD22 -to A_nSRQ[10]
 set_location_assignment PIN_AD23 -to A_nSRQ[8]
 set_location_assignment PIN_AD2 -to ext_ch[9]
@@ -1015,15 +1048,20 @@ set_location_assignment PIN_AE12 -to A_D[13]
 set_location_assignment PIN_AE14 -to A_nTiming_Cycle
 set_location_assignment PIN_AE15 -to lemo_out[0]
 set_location_assignment PIN_AE16 -to lemo_in[0]
+set_location_assignment PIN_AE17 -to fastIO_p_o[0]
+set_location_assignment PIN_AE19 -to fastIO_p_i[2]
 set_location_assignment PIN_AE1 -to ext_ch[11]
+set_location_assignment PIN_AE20 -to fastIO_n_i[2]
 set_location_assignment PIN_AE21 -to A_nSRQ[11]
 set_location_assignment PIN_AE22 -to A_A[4]
 set_location_assignment PIN_AE23 -to A_nSRQ[7]
 set_location_assignment PIN_AE2 -to ext_ch[8]
+set_location_assignment PIN_AE4 -to lemo_led[3]
 set_location_assignment PIN_AF11 -to A_nSEL[7]
 set_location_assignment PIN_AF12 -to A_nSEL[6]
 set_location_assignment PIN_AF13 -to A_D[15]
 set_location_assignment PIN_AF14 -to A_nSEL[4]
+set_location_assignment PIN_AF17 -to A_Spare[0]
 set_location_assignment PIN_AF18 -to A_nSEL[5]
 set_location_assignment PIN_AF19 -to lemo_in[1]
 set_location_assignment PIN_AF1 -to ext_ch[21]
@@ -1035,6 +1073,8 @@ set_location_assignment PIN_AF6 -to ext_ch[1]
 set_location_assignment PIN_AG10 -to A_D[4]
 set_location_assignment PIN_AG11 -to A_A[12]
 set_location_assignment PIN_AG13 -to A_D[8]
+set_location_assignment PIN_AG14 -to fastIO_p_i[1]
+set_location_assignment PIN_AG15 -to fastIO_n_i[1]
 set_location_assignment PIN_AG16 -to lemo_out[1]
 set_location_assignment PIN_AG18 -to A_nDtack
 set_location_assignment PIN_AG19 -to A_A[3]
@@ -1062,9 +1102,13 @@ set_location_assignment PIN_B11 -to ext_id[1]
 set_location_assignment PIN_B13 -to rear_in[0]
 set_location_assignment PIN_B14 -to A_D[14]
 set_location_assignment PIN_B15 -to rear_out[0]
+set_location_assignment PIN_B16 -to wr_led_pps
 set_location_assignment PIN_B18 -to rear_out[1]
+set_location_assignment PIN_B19 -to nADR_EN
 set_location_assignment PIN_B1 -to psram_a[12]
 set_location_assignment PIN_B20 -to A_D[12]
+set_location_assignment PIN_B23 -to A_OneWire_stpz
+set_location_assignment PIN_B24 -to A_SysClock
 set_location_assignment PIN_B26 -to A_D[9]
 set_location_assignment PIN_B3 -to psram_oen[3]
 set_location_assignment PIN_B4 -to psram_a[9]
@@ -1077,6 +1121,7 @@ set_location_assignment PIN_C17 -to usb_pa[3]
 set_location_assignment PIN_C18 -to usb_pa[1]
 set_location_assignment PIN_C1 -to psram_clk
 set_location_assignment PIN_C20 -to A_nSRQ[5]
+set_location_assignment PIN_C21 -to A_OneWire
 set_location_assignment PIN_C2 -to psram_a[11]
 set_location_assignment PIN_C3 -to psram_wen[3]
 set_location_assignment PIN_C5 -to psram_dq[5]
@@ -1095,6 +1140,7 @@ set_location_assignment PIN_D2 -to psram_a[22]
 set_location_assignment PIN_D3 -to psram_wait[2]
 set_location_assignment PIN_D4 -to psram_a[6]
 set_location_assignment PIN_D5 -to psram_dq[6]
+set_location_assignment PIN_D8 -to avr_sda
 set_location_assignment PIN_E15 -to "clk_125m_local_d15(n)"
 set_location_assignment PIN_E19 -to usb_pa[7]
 set_location_assignment PIN_E20 -to usb_pa[4]
@@ -1115,6 +1161,7 @@ set_location_assignment PIN_F4 -to psram_a[0]
 set_location_assignment PIN_F7 -to psram_dq[2]
 set_location_assignment PIN_G18 -to usb_fd[3]
 set_location_assignment PIN_G19 -to usb_fd[6]
+set_location_assignment PIN_G1 -to wr_rgb_led[1]
 set_location_assignment PIN_G20 -to usb_fd[5]
 set_location_assignment PIN_G23 -to usb_clk
 set_location_assignment PIN_G3 -to psram_a[14]
@@ -1123,6 +1170,7 @@ set_location_assignment PIN_G6 -to clk2_20m_vcxo_i
 set_location_assignment PIN_H16 -to usb_slwr
 set_location_assignment PIN_H17 -to usb_slrd
 set_location_assignment PIN_H18 -to usb_fd[4]
+set_location_assignment PIN_H1 -to user_led0_b
 set_location_assignment PIN_H2 -to DEBUG_LED[5]
 set_location_assignment PIN_H3 -to psram_a[21]
 set_location_assignment PIN_H5 -to psram_cen[2]
@@ -1130,6 +1178,7 @@ set_location_assignment PIN_H6 -to psram_a[10]
 set_location_assignment PIN_H7 -to psram_a[23]
 set_location_assignment PIN_H8 -to psram_dq[3]
 set_location_assignment PIN_J18 -to usb_ctl[2]
+set_location_assignment PIN_J2 -to scu_cb_version[1]
 set_location_assignment PIN_J3 -to DEBUG_LED[1]
 set_location_assignment PIN_J5 -to psram_a[15]
 set_location_assignment PIN_J7 -to psram_wen[2]
@@ -1148,6 +1197,7 @@ set_location_assignment PIN_L6 -to psram_a[19]
 set_location_assignment PIN_L7 -to psram_lbn[2]
 set_location_assignment PIN_L8 -to psram_dq[13]
 set_location_assignment PIN_L9 -to psram_dq[14]
+set_location_assignment PIN_M3 -to nTHRMTRIP
 set_location_assignment PIN_M4 -to psram_wait[1]
 set_location_assignment PIN_M5 -to psram_cen[3]
 set_location_assignment PIN_M6 -to psram_a[4]
@@ -1155,11 +1205,14 @@ set_location_assignment PIN_M8 -to psram_a[18]
 set_location_assignment PIN_N1 -to clk1_20m_vcxo_alt_i
 set_location_assignment PIN_N23 -to "clk_gxbl1d_n24(n)"
 set_location_assignment PIN_N24 -to clk_gxbl1d_n24
+set_location_assignment PIN_N2 -to scu_cb_version[3]
 set_location_assignment PIN_N3 -to DEBUG_LED[7]
 set_location_assignment PIN_N6 -to psram_advn[3]
 set_location_assignment PIN_N7 -to psram_advn[2]
 set_location_assignment PIN_N8 -to psram_cre[2]
+set_location_assignment PIN_P2 -to scu_cb_version[0]
 set_location_assignment PIN_P3 -to psram_cen[0]
+set_location_assignment PIN_P4 -to scu_cb_version[2]
 set_location_assignment PIN_P7 -to psram_cre[3]
 set_location_assignment PIN_P8 -to psram_a[5]
 set_location_assignment PIN_P9 -to psram_ubn[2]
@@ -1168,6 +1221,7 @@ set_location_assignment PIN_R23 -to "clk_gxbl1d_r24(n)"
 set_location_assignment PIN_R24 -to clk_gxbl1d_r24
 set_location_assignment PIN_R2 -to psram_cre[1]
 set_location_assignment PIN_R4 -to sfp_mod0_i
+set_location_assignment PIN_R5 -to sfp_rate_sel_o
 set_location_assignment PIN_R6 -to psram_a[7]
 set_location_assignment PIN_R7 -to psram_a[20]
 set_location_assignment PIN_T1 -to psram_cre[0]
@@ -1184,10 +1238,13 @@ set_location_assignment PIN_U24 -to clk_gxbl1c_u24
 set_location_assignment PIN_U3 -to sfp_mod2_io
 set_location_assignment PIN_U4 -to psram_advn[0]
 set_location_assignment PIN_U5 -to psram_lbn[0]
+set_location_assignment PIN_U6 -to wr_rgb_led[0]
 set_location_assignment PIN_U8 -to psram_cen[1]
 set_location_assignment PIN_V1 -to DEBUG_LED[3]
+set_location_assignment PIN_V2 -to user_led0_g
 set_location_assignment PIN_V3 -to sfp_mod1_io
 set_location_assignment PIN_V5 -to DEBUG_LED[6]
+set_location_assignment PIN_V7 -to wr_rgb_led[2]
 set_location_assignment PIN_V8 -to psram_advn[1]
 set_location_assignment PIN_W20 -to A_nSRQ[4]
 set_location_assignment PIN_W21 -to A_nSEL[9]
@@ -1195,43 +1252,14 @@ set_location_assignment PIN_W23 -to "clk_gxbl1c_w24(n)"
 set_location_assignment PIN_W24 -to clk_gxbl1c_w24
 set_location_assignment PIN_W2 -to DEBUG_LED[2]
 set_location_assignment PIN_W3 -to sfp_tx_disable_o
+set_location_assignment PIN_W4 -to user_led0_r
+set_location_assignment PIN_W7 -to wr_dac_din_o
 set_location_assignment PIN_Y17 -to A_A[15]
 set_location_assignment PIN_Y19 -to A_A[14]
+set_location_assignment PIN_Y1 -to lemo_led[4]
+set_location_assignment PIN_Y20 -to A_RnW
 set_location_assignment PIN_Y21 -to A_A[7]
 set_location_assignment PIN_Y4 -to ext_ch[10]
 set_location_assignment PIN_Y5 -to ext_ch[7]
 set_location_assignment PIN_Y6 -to ext_ch[14]
 set_location_assignment PIN_Y7 -to ext_ch[13]
-
-set_location_assignment PIN_W7 -to wr_dac_din_o
-set_location_assignment PIN_AB6 -to wr_dac_sclk_o
-set_location_assignment PIN_AB21 -to A_Spare[1]
-set_location_assignment PIN_AF17 -to A_Spare[0]
-set_location_assignment PIN_B24 -to A_SysClock
-set_location_assignment PIN_Y20 -to A_RnW
-set_location_assignment PIN_C21 -to A_OneWire
-set_location_assignment PIN_B23 -to A_OneWire_stpz
-set_location_assignment PIN_R5 -to sfp_rate_sel_o
-set_location_assignment PIN_A16 -to avr_scl
-set_location_assignment PIN_D8 -to avr_sda
-set_location_assignment PIN_P2 -to scu_cb_version[0]
-set_location_assignment PIN_J2 -to scu_cb_version[1]
-set_location_assignment PIN_P4 -to scu_cb_version[2]
-set_location_assignment PIN_N2 -to scu_cb_version[3]
-set_location_assignment PIN_H1 -to user_led0_b
-set_location_assignment PIN_V2 -to user_led0_g
-set_location_assignment PIN_W4 -to user_led0_r
-set_location_assignment PIN_U6 -to wr_rgb_led[0]
-set_location_assignment PIN_G1 -to wr_rgb_led[1]
-set_location_assignment PIN_V7 -to wr_rgb_led[2]
-set_location_assignment PIN_B16 -to wr_led_pps
-set_location_assignment PIN_A9 -to user_btn
-set_location_assignment PIN_AB4 -to wr_ndac_cs_o[1]
-set_location_assignment PIN_AA2 -to wr_ndac_cs_o[2]
-set_location_assignment PIN_AA6 -to lemo_led[0]
-set_location_assignment PIN_AA7 -to lemo_led[1]
-set_location_assignment PIN_AA3 -to lemo_led[2]
-set_location_assignment PIN_AE4 -to lemo_led[3]
-set_location_assignment PIN_Y1 -to lemo_led[4]
-set_location_assignment PIN_AA1 -to lemo_led[5]
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
