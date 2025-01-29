@@ -1,22 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 set_global_assignment -name ACTIVE_SERIAL_CLOCK FREQ_100MHZ
 set_global_assignment -name ADV_NETLIST_OPT_SYNTH_WYSIWYG_REMAP OFF
 set_global_assignment -name AHDL_FILE ../../../modules/modulbus/i2c.tdf
@@ -1010,6 +991,7 @@ set_location_assignment PIN_AA6 -to lemo_led[0]
 set_location_assignment PIN_AA7 -to lemo_led[1]
 set_location_assignment PIN_AA8 -to ser1_txd
 set_location_assignment PIN_AA9 -to ext_ch[0]
+set_location_assignment PIN_AB11 -to nPCI_RESET_i
 set_location_assignment PIN_AB16 -to clk1_wr_125m_ab16
 set_location_assignment PIN_AB18 -to A_D[7]
 set_location_assignment PIN_AB19 -to A_nSEL[12]
@@ -1028,7 +1010,9 @@ set_location_assignment PIN_AC20 -to clk1_wr_125m_ac20
 set_location_assignment PIN_AC21 -to A_nSRQ[9]
 set_location_assignment PIN_AC22 -to A_A[5]
 set_location_assignment PIN_AC23 -to A_nSEL[11]
+set_location_assignment PIN_AC2 -to OneWire_CB
 set_location_assignment PIN_AC5 -to ext_ch[15]
+set_location_assignment PIN_AC6 -to nFPGA_Res_Out
 set_location_assignment PIN_AC7 -to ext_ch[12]
 set_location_assignment PIN_AD12 -to A_nSEL[8]
 set_location_assignment PIN_AD13 -to fastIO_p_o[1]
@@ -1109,10 +1093,12 @@ set_location_assignment PIN_B1 -to psram_a[12]
 set_location_assignment PIN_B20 -to A_D[12]
 set_location_assignment PIN_B23 -to A_OneWire_stpz
 set_location_assignment PIN_B24 -to A_SysClock
+set_location_assignment PIN_B25 -to nSel_Ext_Data_DRV
 set_location_assignment PIN_B26 -to A_D[9]
 set_location_assignment PIN_B3 -to psram_oen[3]
 set_location_assignment PIN_B4 -to psram_a[9]
 set_location_assignment PIN_B6 -to psram_dq[4]
+set_location_assignment PIN_B8 -to OneWire_CB_splz
 set_location_assignment PIN_C12 -to ext_id[2]
 set_location_assignment PIN_C13 -to ext_id[3]
 set_location_assignment PIN_C15 -to A_nSRQ[2]
@@ -1259,6 +1245,7 @@ set_location_assignment PIN_Y19 -to A_A[14]
 set_location_assignment PIN_Y1 -to lemo_led[4]
 set_location_assignment PIN_Y20 -to A_RnW
 set_location_assignment PIN_Y21 -to A_A[7]
+set_location_assignment PIN_Y2 -to onewire_ext
 set_location_assignment PIN_Y4 -to ext_ch[10]
 set_location_assignment PIN_Y5 -to ext_ch[7]
 set_location_assignment PIN_Y6 -to ext_ch[14]

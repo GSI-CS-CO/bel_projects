@@ -52,7 +52,6 @@ entity scu_control is
     OneWire_CB_splz  : out   std_logic; -- strong Pull-Up for Onewire
 
     onewire_ext      : inout std_logic; -- to extension board
-    onewire_ext_splz : out   std_logic; -- strong Pull-Up for Onewire
 
     -----------------------------------------------------------------------
     -- ComExpress signals
@@ -179,9 +178,6 @@ entity scu_control is
     A_MASTER_CON_RX3_P : in std_logic;
     A_MASTER_CON_RX4_N : in std_logic;
     A_MASTER_CON_RX4_P : in std_logic;
-
-    NCSO : inout std_logic; -- No idea what this is
-    NSTATUS : inout std_logic; -- ?
 
     -----------------------------------------------------------------------
     -- SFP
