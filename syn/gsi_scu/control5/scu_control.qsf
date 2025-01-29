@@ -955,7 +955,6 @@ set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_tlu:ecatlu"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_wb_event:ecawb"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|ftm_lm32_cluster:lm32*"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|wr_eca:eca"
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to scu_cb_version
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to scu_cb_version[0]
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to scu_cb_version[1]
@@ -1250,3 +1249,6 @@ set_location_assignment PIN_Y4 -to ext_ch[10]
 set_location_assignment PIN_Y5 -to ext_ch[7]
 set_location_assignment PIN_Y6 -to ext_ch[14]
 set_location_assignment PIN_Y7 -to ext_ch[13]
+
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
+set_location_assignment PIN_A26 -to fpga_res_i
