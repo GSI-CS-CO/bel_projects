@@ -478,7 +478,6 @@ begin
   end generate;
 
   -- OneWire
-  onewire_ext_splz  <= '1';  --Strong Pull-Up disabled
   OneWire_CB_splz   <= '1';  --Strong Pull-Up disabled
 
   --Extension Piggy
