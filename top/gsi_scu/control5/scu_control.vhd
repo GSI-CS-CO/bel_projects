@@ -84,14 +84,15 @@ entity scu_control is
     ADR_TO_SCUB       : out   std_logic;
     nADR_EN           : out   std_logic;
     A_OneWire         : inout std_logic;
+    A_OneWire_stpz    : out   std_logic;
 
     -----------------------------------------------------------------------
     -- Misc.
     -----------------------------------------------------------------------
     nFPGA_Res_Out : out   std_logic;                     -- Reset  Output
     user_btn      : in    std_logic;                     -- User Button (NUSER_PB?)
-    avr_sda       : inout std_logic;                     -- I2C Connection to AVR MCU (F2F-I2C-ADA?)
-    avr_scl       : inout std_logic;                     -- I2C Connection to AVR MCU (F2F-I2C-SCL?)
+    avr_sda       : inout std_logic;                     -- I2C Connection to AVR MCU (F2F-I2C-ADA)
+    avr_scl       : inout std_logic;                     -- I2C Connection to AVR MCU (F2F-I2C-SCL)
     serial_cb_out : out   std_logic_vector (1 downto 0); -- Serial to Backplane
     serial_cb_in  : in    std_logic_vector (1 downto 0); -- Serial to Backplane
     rear_in       : in    std_logic_vector (1 downto 0); -- GPIO to Backplane
@@ -101,6 +102,10 @@ entity scu_control is
     -- SCU-CB Version
     -----------------------------------------------------------------------
     scu_cb_version : in  std_logic_vector(3 downto 0); -- must be assigned with weak pull ups
+                                                       -- PIN_P2 VERSION_2_0
+                                                       -- PIN_J2 VERSION_2_1
+                                                       -- PIN_P4 VERSION_2_2 (ground, no pull up)
+                                                       -- PIN_N2 VERSION_2_3
 
     -----------------------------------------------------------------------
     -- LVTTL IOs
@@ -127,14 +132,17 @@ entity scu_control is
     usb_pa   : inout std_logic_vector(7 downto 0) := (others => 'Z');
     usb_ctl  : in    std_logic_vector(2 downto 0);
     usb_uclk : in    std_logic; -- T0OUT/IFCLK
-	 usb_clk  : in    std_logic; -- T1OUT/CLKOUT - unused
+    usb_clk  : in    std_logic; -- T1OUT/CLKOUT - unused
     usb_ures : out   std_logic; -- NFX2_RESET
 
     -----------------------------------------------------------------------
     -- leds onboard
     -----------------------------------------------------------------------
     wr_led_pps : out std_logic := '1';
-    user_led_0 : out std_logic_vector(2 downto 0) := (others => '1'); -- USER_LED0?
+    --user_led_0 : out std_logic_vector(2 downto 0) := (others => '1'); -- USER_LED0?
+    user_led0_g : out std_logic;
+    user_led0_b : out std_logic;
+    user_led0_r : out std_logic;
     wr_rgb_led : out std_logic_vector(2 downto 0) := (others => '1'); -- LDWR0_B/G/R?
     lemo_led   : out std_logic_vector(5 downto 0) := (others => '1'); -- LEMO_LED?
 
@@ -418,7 +426,10 @@ begin
   psram_ubn(3) <= '0';
 
   s_psram_wait <= psram_wait;
-  user_led_0   <= s_gpio_o(2 downto 0) or s_psram_wait(3 downto 1); -- Keep unused WAIT in pins used, there this laster
+  --user_led_0   <= s_gpio_o(2 downto 0) or s_psram_wait(3 downto 1); -- Keep unused WAIT in pins used, there this laster
+  user_led0_r <= s_gpio_o(0);
+  user_led0_g <= s_gpio_o(1); 
+  user_led0_b <= s_gpio_o(2);
 
   -- LEDs
   wr_led_pps    <= s_led_pps;                                             -- white = PPS
@@ -488,5 +499,6 @@ begin
 
   -- other fixed signals
   sfp_rate_sel_o <= '0';
+  A_OneWire_stpz <= '0';
 
 end rtl;
