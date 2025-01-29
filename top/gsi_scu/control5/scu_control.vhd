@@ -161,14 +161,12 @@ entity scu_control is
     psram_wait : in    std_logic_vector(3 downto 0);
 
     -----------------------------------------------------------------------
-    -- Unknown or New Stuff
+    -- Debugging
     -----------------------------------------------------------------------
-    A_EXT_CON_RX1_N : in  std_logic;
-    A_EXT_CON_RX1_P : in  std_logic;
     DEBUG_LED       : out std_logic_vector(7 downto 0);
 
     -----------------------------------------------------------------------
-    -- Xenomorph Stuff
+    -- Tr Stuff
     -----------------------------------------------------------------------
     A_MASTER_CON_RX1_N : in std_logic;
     A_MASTER_CON_RX1_P : in std_logic;
@@ -178,6 +176,38 @@ entity scu_control is
     A_MASTER_CON_RX3_P : in std_logic;
     A_MASTER_CON_RX4_N : in std_logic;
     A_MASTER_CON_RX4_P : in std_logic;
+    GXBL1C_RX_CH2N  : in std_logic;
+    GXBL1C_RX_CH2P  : in std_logic;
+    GXBL1C_RX_CH3N  : in std_logic;
+    GXBL1C_RX_CH3P  : in std_logic;
+    GXBL1C_TX_CH0CN : out std_logic;
+    GXBL1C_TX_CH0CP : out std_logic;
+    GXBL1C_TX_CH0N  : out std_logic;
+    GXBL1C_TX_CH0P  : out std_logic;
+    GXBL1C_TX_CH1CN : out std_logic;
+    GXBL1C_TX_CH1CP : out std_logic;
+    GXBL1C_TX_CH1N  : out std_logic;
+    GXBL1C_TX_CH1P  : out std_logic;
+    GXBL1C_TX_CH2CN : out std_logic;
+    GXBL1C_TX_CH2CP : out std_logic;
+    GXBL1C_TX_CH3CN : out std_logic;
+    GXBL1C_TX_CH3CP : out std_logic;
+    GXBL1D_RX_CH2N  : in std_logic;
+    GXBL1D_RX_CH2P  : in std_logic;
+    GXBL1D_RX_CH3N  : in std_logic;
+    GXBL1D_RX_CH3P  : in std_logic;
+    GXBL1D_RX_CH4N  : in std_logic;
+    GXBL1D_RX_CH4P  : in std_logic;
+    GXBL1D_RX_CH5N  : in std_logic;
+    GXBL1D_RX_CH5P  : in std_logic;
+    GXBL1D_TX_CH2CN : out std_logic;
+    GXBL1D_TX_CH2CP : out std_logic;
+    GXBL1D_TX_CH3CN : out std_logic;
+    GXBL1D_TX_CH3CP : out std_logic;
+    GXBL1D_TX_CH4CN : out std_logic;
+    GXBL1D_TX_CH4CP : out std_logic;
+    GXBL1D_TX_CH5CN : out std_logic;
+    GXBL1D_TX_CH5CP : out std_logic;
 
     -----------------------------------------------------------------------
     -- SFP
@@ -186,8 +216,8 @@ entity scu_control is
     sfp_tx_disable_o : out   std_logic;
     sfp_tx_fault_i   : in    std_logic;
     sfp_los_i        : in    std_logic;
-    sfp_txp_o        : out   std_logic;
-    sfp_rxp_i        : in    std_logic;
+    --sfp_txp_o        : out   std_logic;
+    --sfp_rxp_i        : in    std_logic;
     sfp_mod0_i       : in    std_logic;
     sfp_mod1_io      : inout std_logic;
     sfp_mod2_io      : inout std_logic);
