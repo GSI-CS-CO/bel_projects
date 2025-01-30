@@ -1,4 +1,5 @@
 
+
 set_global_assignment -name ACTIVE_SERIAL_CLOCK FREQ_100MHZ
 set_global_assignment -name ADV_NETLIST_OPT_SYNTH_WYSIWYG_REMAP OFF
 set_global_assignment -name AHDL_FILE ../../../modules/modulbus/i2c.tdf
@@ -1183,7 +1184,7 @@ set_location_assignment PIN_H18 -to usb_fd[4]
 set_location_assignment PIN_H1 -to user_led0_b
 set_location_assignment PIN_H25 -to GXBL1D_RX_CH3N
 set_location_assignment PIN_H26 -to GXBL1D_RX_CH3P
-set_location_assignment PIN_H2 -to DEBUG_LED[5]
+set_location_assignment PIN_H2 -to debug_leds[5]
 set_location_assignment PIN_H3 -to psram_a[21]
 set_location_assignment PIN_H5 -to psram_cen[2]
 set_location_assignment PIN_H6 -to psram_a[10]
@@ -1193,7 +1194,7 @@ set_location_assignment PIN_J18 -to usb_ctl[2]
 set_location_assignment PIN_J27 -to GXBL1D_TX_CH3CN
 set_location_assignment PIN_J28 -to GXBL1D_TX_CH3CP
 set_location_assignment PIN_J2 -to scu_cb_version[1]
-set_location_assignment PIN_J3 -to DEBUG_LED[1]
+set_location_assignment PIN_J3 -to debug_leds[1]
 set_location_assignment PIN_J5 -to psram_a[15]
 set_location_assignment PIN_J7 -to psram_wen[2]
 set_location_assignment PIN_J8 -to psram_dq[9]
@@ -1228,7 +1229,7 @@ set_location_assignment PIN_N24 -to clk_gxbl1d_n24
 set_location_assignment PIN_N27 -to "pcie_tx_o[3](n)"
 set_location_assignment PIN_N28 -to pcie_tx_o[3]
 set_location_assignment PIN_N2 -to scu_cb_version[3]
-set_location_assignment PIN_N3 -to DEBUG_LED[7]
+set_location_assignment PIN_N3 -to debug_leds[7]
 set_location_assignment PIN_N6 -to psram_advn[3]
 set_location_assignment PIN_N7 -to psram_advn[2]
 set_location_assignment PIN_N8 -to psram_cre[2]
@@ -1253,14 +1254,14 @@ set_location_assignment PIN_R7 -to psram_a[20]
 set_location_assignment PIN_T1 -to psram_cre[0]
 set_location_assignment PIN_T25 -to "pcie_rx_i[1](n)"
 set_location_assignment PIN_T26 -to pcie_rx_i[1]
-set_location_assignment PIN_T2 -to DEBUG_LED[4]
+set_location_assignment PIN_T2 -to debug_leds[4]
 set_location_assignment PIN_T3 -to psram_wen[1]
 set_location_assignment PIN_T4 -to sfp_tx_fault_i
 set_location_assignment PIN_T6 -to psram_ubn[1]
 set_location_assignment PIN_T7 -to psram_wen[0]
 set_location_assignment PIN_T8 -to WDT
 set_location_assignment PIN_T9 -to psram_oen[1]
-set_location_assignment PIN_U1 -to DEBUG_LED[0]
+set_location_assignment PIN_U1 -to debug_leds[0]
 set_location_assignment PIN_U23 -to "clk_gxbl1c_u24(n)"
 set_location_assignment PIN_U24 -to clk_gxbl1c_u24
 set_location_assignment PIN_U27 -to "pcie_tx_o[1](n)"
@@ -1270,12 +1271,12 @@ set_location_assignment PIN_U4 -to psram_advn[0]
 set_location_assignment PIN_U5 -to psram_lbn[0]
 set_location_assignment PIN_U6 -to wr_rgb_led[0]
 set_location_assignment PIN_U8 -to psram_cen[1]
-set_location_assignment PIN_V1 -to DEBUG_LED[3]
+set_location_assignment PIN_V1 -to debug_leds[3]
 set_location_assignment PIN_V25 -to "pcie_rx_i[0](n)"
 set_location_assignment PIN_V26 -to pcie_rx_i[0]
 set_location_assignment PIN_V2 -to user_led0_g
 set_location_assignment PIN_V3 -to sfp_mod1_io
-set_location_assignment PIN_V5 -to DEBUG_LED[6]
+set_location_assignment PIN_V5 -to debug_leds[6]
 set_location_assignment PIN_V7 -to wr_rgb_led[2]
 set_location_assignment PIN_V8 -to psram_advn[1]
 set_location_assignment PIN_W20 -to A_nSRQ[4]
@@ -1284,7 +1285,7 @@ set_location_assignment PIN_W23 -to "clk_gxbl1c_w24(n)"
 set_location_assignment PIN_W24 -to clk_gxbl1c_w24
 set_location_assignment PIN_W27 -to "pcie_tx_o[0](n)"
 set_location_assignment PIN_W28 -to pcie_tx_o[0]
-set_location_assignment PIN_W2 -to DEBUG_LED[2]
+set_location_assignment PIN_W2 -to debug_leds[2]
 set_location_assignment PIN_W3 -to sfp_tx_disable_o
 set_location_assignment PIN_W4 -to user_led0_r
 set_location_assignment PIN_W7 -to wr_dac_din_o
