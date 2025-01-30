@@ -1,5 +1,3 @@
-
-
 set_global_assignment -name ACTIVE_SERIAL_CLOCK FREQ_100MHZ
 set_global_assignment -name ADV_NETLIST_OPT_SYNTH_WYSIWYG_REMAP OFF
 set_global_assignment -name AHDL_FILE ../../../modules/modulbus/i2c.tdf
@@ -915,6 +913,30 @@ set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_rgb_led
 set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_rgb_led[0]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_rgb_led[1]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_rgb_led[2]
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to gxbl1c_rx_ch0p_af26
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to gxbl1c_rx_ch1p_ad26
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to gxbl1c_rx_ch2p_ab26
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to gxbl1c_rx_ch2p_y26
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to gxbl1c_rx_ch3p_v26_pcie0_rx
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to gxbl1c_rx_ch4p_t26_pcie1_rx
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to gxbl1c_tx_ch0p_ag28
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to gxbl1c_tx_ch1p_ae28
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to gxbl1c_tx_ch2p_ac28
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to gxbl1c_tx_ch3p_aa28
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to gxbl1c_tx_ch4p_w28_pcie0_tx
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to gxbl1c_tx_ch5p_u28_pcie1_tx
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to gxbl1d_rx_ch0p_p26_pcie2_rx
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to gxbl1d_rx_ch1p_m26_pcie3_rx
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to gxbl1d_rx_ch2p_k26_pciex_rx
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to gxbl1d_rx_ch3p_h26_pciex_rx
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to gxbl1d_rx_ch4p_f26_pciex_rx
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to gxbl1d_rx_ch5p_d26_pciex_rx
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to gxbl1d_tx_ch0p_r28_pcie2_tx
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to gxbl1d_tx_ch1p_n28_pcie3_tx
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to gxbl1d_tx_ch2p_l28_pciex_tx
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to gxbl1d_tx_ch3p_j28_pciex_tx
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to gxbl1d_tx_ch4p_g28_pciex_tx
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to gxbl1d_tx_ch5p_e28_pciex_tx
 set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_local_aa18
 set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_local_d15
 set_instance_assignment -name IO_STANDARD LVDS -to clk1_wr_125m_ab16
@@ -980,6 +1002,8 @@ set_location_assignment PIN_AB19 -to A_nSEL[12]
 set_location_assignment PIN_AB20 -to "clk1_wr_125m_ac20(n)"
 set_location_assignment PIN_AB21 -to A_Spare[1]
 set_location_assignment PIN_AB23 -to A_nSEL[10]
+set_location_assignment PIN_AB25 -to "gxbl1c_rx_ch2p_ab26(n)"
+set_location_assignment PIN_AB26 -to gxbl1c_rx_ch2p_ab26
 set_location_assignment PIN_AB3 -to ser1_rxd
 set_location_assignment PIN_AB4 -to wr_ndac_cs_o[1]
 set_location_assignment PIN_AB5 -to ext_ch[16]
@@ -992,6 +1016,8 @@ set_location_assignment PIN_AC20 -to clk1_wr_125m_ac20
 set_location_assignment PIN_AC21 -to A_nSRQ[9]
 set_location_assignment PIN_AC22 -to A_A[5]
 set_location_assignment PIN_AC23 -to A_nSEL[11]
+set_location_assignment PIN_AC27 -to "gxbl1c_tx_ch2p_ac28(n)"
+set_location_assignment PIN_AC28 -to gxbl1c_tx_ch2p_ac28
 set_location_assignment PIN_AC2 -to OneWire_CB
 set_location_assignment PIN_AC5 -to ext_ch[15]
 set_location_assignment PIN_AC6 -to nFPGA_Res_Out
@@ -1004,6 +1030,15 @@ set_location_assignment PIN_AD19 -to fastIO_n_i[0]
 set_location_assignment PIN_AD20 -to fastIO_p_i[0]
 set_location_assignment PIN_AD22 -to A_nSRQ[10]
 set_location_assignment PIN_AD23 -to A_nSRQ[8]
+set_location_assignment PIN_AD25 -to "gxbl1c_rx_ch1p_ad26(n)"
+set_location_assignment PIN_AD26 -to gxbl1c_rx_ch1p_ad26
+
+
+set_location_assignment PIN_AF26 -to "gxbl1c_rx_ch0p_af26(n)"
+set_location_assignment PIN_AF25 -to gxbl1c_rx_ch0p_af26
+
+
+
 set_location_assignment PIN_AD2 -to ext_ch[9]
 set_location_assignment PIN_AD3 -to clk1_20m_vcxo_i
 set_location_assignment PIN_AD4 -to ext_ch[17]
@@ -1021,6 +1056,8 @@ set_location_assignment PIN_AE20 -to fastIO_n_i[2]
 set_location_assignment PIN_AE21 -to A_nSRQ[11]
 set_location_assignment PIN_AE22 -to A_A[4]
 set_location_assignment PIN_AE23 -to A_nSRQ[7]
+set_location_assignment PIN_AE27 -to "gxbl1c_tx_ch1p_ae28(n)"
+set_location_assignment PIN_AE28 -to gxbl1c_tx_ch1p_ae28
 set_location_assignment PIN_AE2 -to ext_ch[8]
 set_location_assignment PIN_AE4 -to lemo_led[3]
 set_location_assignment PIN_AF11 -to A_nSEL[7]
@@ -1048,6 +1085,8 @@ set_location_assignment PIN_AG1 -to ext_ch[20]
 set_location_assignment PIN_AG20 -to A_A[2]
 set_location_assignment PIN_AG21 -to nSys_Reset
 set_location_assignment PIN_AG23 -to A_A[11]
+set_location_assignment PIN_AG27 -to "gxbl1c_tx_ch0p_ag28(n)"
+set_location_assignment PIN_AG28 -to gxbl1c_tx_ch0p_ag28
 set_location_assignment PIN_AG3 -to ext_ch[5]
 set_location_assignment PIN_AG4 -to ext_ch[3]
 set_location_assignment PIN_AG9 -to A_D[2]
@@ -1104,6 +1143,8 @@ set_location_assignment PIN_D18 -to pcie_rdy_o
 set_location_assignment PIN_D20 -to usb_pa[5]
 set_location_assignment PIN_D22 -to usb_fd[7]
 set_location_assignment PIN_D23 -to usb_ctl[0]
+set_location_assignment PIN_D25 -to "gxbl1d_rx_ch5p_d26_pciex_rx(n)"
+set_location_assignment PIN_D26 -to gxbl1d_rx_ch5p_d26_pciex_rx
 set_location_assignment PIN_D2 -to psram_a[22]
 set_location_assignment PIN_D3 -to psram_wait[2]
 set_location_assignment PIN_D4 -to psram_a[6]
@@ -1113,6 +1154,8 @@ set_location_assignment PIN_E15 -to "clk_125m_local_d15(n)"
 set_location_assignment PIN_E19 -to usb_pa[7]
 set_location_assignment PIN_E20 -to usb_pa[4]
 set_location_assignment PIN_E21 -to usb_ctl[1]
+set_location_assignment PIN_E27 -to "gxbl1d_tx_ch5p_e28_pciex_tx(n)"
+set_location_assignment PIN_E28 -to gxbl1d_tx_ch5p_e28_pciex_tx
 set_location_assignment PIN_E2 -to psram_a[2]
 set_location_assignment PIN_E4 -to psram_lbn[3]
 set_location_assignment PIN_E5 -to psram_dq[12]
@@ -1124,6 +1167,8 @@ set_location_assignment PIN_F19 -to usb_pa[6]
 set_location_assignment PIN_F1 -to psram_a[1]
 set_location_assignment PIN_F22 -to usb_ures
 set_location_assignment PIN_F23 -to usb_uclk
+set_location_assignment PIN_F25 -to "gxbl1d_rx_ch4p_f26_pciex_rx(n)"
+set_location_assignment PIN_F26 -to gxbl1d_rx_ch4p_f26_pciex_rx
 set_location_assignment PIN_F2 -to psram_wait[3]
 set_location_assignment PIN_F4 -to psram_a[0]
 set_location_assignment PIN_F7 -to psram_dq[2]
@@ -1132,6 +1177,8 @@ set_location_assignment PIN_G19 -to usb_fd[6]
 set_location_assignment PIN_G1 -to wr_rgb_led[1]
 set_location_assignment PIN_G20 -to usb_fd[5]
 set_location_assignment PIN_G23 -to usb_clk
+set_location_assignment PIN_G27 -to "gxbl1d_tx_ch4p_g28_pciex_tx(n)"
+set_location_assignment PIN_G28 -to gxbl1d_tx_ch4p_g28_pciex_tx
 set_location_assignment PIN_G3 -to psram_a[14]
 set_location_assignment PIN_G4 -to psram_a[16]
 set_location_assignment PIN_G6 -to clk2_20m_vcxo_i
@@ -1139,6 +1186,8 @@ set_location_assignment PIN_H16 -to usb_slwr
 set_location_assignment PIN_H17 -to usb_slrd
 set_location_assignment PIN_H18 -to usb_fd[4]
 set_location_assignment PIN_H1 -to user_led0_b
+set_location_assignment PIN_H25 -to "gxbl1d_rx_ch3p_h26_pciex_rx(n)"
+set_location_assignment PIN_H26 -to gxbl1d_rx_ch3p_h26_pciex_rx
 set_location_assignment PIN_H2 -to debug_leds[5]
 set_location_assignment PIN_H3 -to psram_a[21]
 set_location_assignment PIN_H5 -to psram_cen[2]
@@ -1146,6 +1195,8 @@ set_location_assignment PIN_H6 -to psram_a[10]
 set_location_assignment PIN_H7 -to psram_a[23]
 set_location_assignment PIN_H8 -to psram_dq[3]
 set_location_assignment PIN_J18 -to usb_ctl[2]
+set_location_assignment PIN_J27 -to "gxbl1d_tx_ch3p_j28_pciex_tx(n)"
+set_location_assignment PIN_J28 -to gxbl1d_tx_ch3p_j28_pciex_tx
 set_location_assignment PIN_J2 -to scu_cb_version[1]
 set_location_assignment PIN_J3 -to debug_leds[1]
 set_location_assignment PIN_J5 -to psram_a[15]
@@ -1153,6 +1204,8 @@ set_location_assignment PIN_J7 -to psram_wen[2]
 set_location_assignment PIN_J8 -to psram_dq[9]
 set_location_assignment PIN_J9 -to psram_dq[10]
 set_location_assignment PIN_K17 -to usb_fd[0]
+set_location_assignment PIN_K25 -to "gxbl1d_rx_ch2p_k26_pciex_rx(n)"
+set_location_assignment PIN_K26 -to gxbl1d_rx_ch2p_k26_pciex_rx
 set_location_assignment PIN_K2 -to psram_wait[0]
 set_location_assignment PIN_K4 -to psram_ubn[0]
 set_location_assignment PIN_K5 -to psram_a[8]
@@ -1160,11 +1213,15 @@ set_location_assignment PIN_K6 -to psram_a[13]
 set_location_assignment PIN_K7 -to psram_oen[2]
 set_location_assignment PIN_K9 -to psram_dq[0]
 set_location_assignment PIN_L1 -to sfp_los_i
+set_location_assignment PIN_L27 -to "gxbl1d_tx_ch2p_l28_pciex_tx(n)"
+set_location_assignment PIN_L28 -to gxbl1d_tx_ch2p_l28_pciex_tx
 set_location_assignment PIN_L4 -to psram_lbn[1]
 set_location_assignment PIN_L6 -to psram_a[19]
 set_location_assignment PIN_L7 -to psram_lbn[2]
 set_location_assignment PIN_L8 -to psram_dq[13]
 set_location_assignment PIN_L9 -to psram_dq[14]
+set_location_assignment PIN_M25 -to "gxbl1d_rx_ch1p_m26_pcie3_rx(n)"
+set_location_assignment PIN_M26 -to gxbl1d_rx_ch1p_m26_pcie3_rx
 set_location_assignment PIN_M3 -to nTHRMTRIP
 set_location_assignment PIN_M4 -to psram_wait[1]
 set_location_assignment PIN_M5 -to psram_cen[3]
@@ -1173,6 +1230,8 @@ set_location_assignment PIN_M8 -to psram_a[18]
 set_location_assignment PIN_N1 -to clk1_20m_vcxo_alt_i
 set_location_assignment PIN_N23 -to "clk_gxbl1d_n24(n)"
 set_location_assignment PIN_N24 -to clk_gxbl1d_n24
+set_location_assignment PIN_N27 -to "gxbl1d_tx_ch1p_n28_pcie3_tx(n)"
+set_location_assignment PIN_N28 -to gxbl1d_tx_ch1p_n28_pcie3_tx
 set_location_assignment PIN_N2 -to scu_cb_version[3]
 set_location_assignment PIN_N3 -to debug_leds[7]
 set_location_assignment PIN_N6 -to psram_advn[3]
@@ -1187,12 +1246,16 @@ set_location_assignment PIN_P9 -to psram_ubn[2]
 set_location_assignment PIN_R1 -to psram_oen[0]
 set_location_assignment PIN_R23 -to "clk_gxbl1d_r24(n)"
 set_location_assignment PIN_R24 -to clk_gxbl1d_r24
+set_location_assignment PIN_R27 -to "gxbl1d_tx_ch0p_r28_pcie2_tx(n)"
+set_location_assignment PIN_R28 -to gxbl1d_tx_ch0p_r28_pcie2_tx
 set_location_assignment PIN_R2 -to psram_cre[1]
 set_location_assignment PIN_R4 -to sfp_mod0_i
 set_location_assignment PIN_R5 -to sfp_rate_sel_o
 set_location_assignment PIN_R6 -to psram_a[7]
 set_location_assignment PIN_R7 -to psram_a[20]
 set_location_assignment PIN_T1 -to psram_cre[0]
+set_location_assignment PIN_T25 -to "gxbl1c_rx_ch4p_t26_pcie1_rx(n)"
+set_location_assignment PIN_T26 -to gxbl1c_rx_ch4p_t26_pcie1_rx
 set_location_assignment PIN_T2 -to debug_leds[4]
 set_location_assignment PIN_T3 -to psram_wen[1]
 set_location_assignment PIN_T4 -to sfp_tx_fault_i
@@ -1203,12 +1266,16 @@ set_location_assignment PIN_T9 -to psram_oen[1]
 set_location_assignment PIN_U1 -to debug_leds[0]
 set_location_assignment PIN_U23 -to "clk_gxbl1c_u24(n)"
 set_location_assignment PIN_U24 -to clk_gxbl1c_u24
+set_location_assignment PIN_U27 -to "gxbl1c_tx_ch5p_u28_pcie1_tx(n)"
+set_location_assignment PIN_U28 -to gxbl1c_tx_ch5p_u28_pcie1_tx
 set_location_assignment PIN_U3 -to sfp_mod2_io
 set_location_assignment PIN_U4 -to psram_advn[0]
 set_location_assignment PIN_U5 -to psram_lbn[0]
 set_location_assignment PIN_U6 -to wr_rgb_led[0]
 set_location_assignment PIN_U8 -to psram_cen[1]
 set_location_assignment PIN_V1 -to debug_leds[3]
+set_location_assignment PIN_V25 -to "gxbl1c_rx_ch3p_v26_pcie0_rx(n)"
+set_location_assignment PIN_V26 -to gxbl1c_rx_ch3p_v26_pcie0_rx
 set_location_assignment PIN_V2 -to user_led0_g
 set_location_assignment PIN_V3 -to sfp_mod1_io
 set_location_assignment PIN_V5 -to debug_leds[6]
@@ -1218,6 +1285,8 @@ set_location_assignment PIN_W20 -to A_nSRQ[4]
 set_location_assignment PIN_W21 -to A_nSEL[9]
 set_location_assignment PIN_W23 -to "clk_gxbl1c_w24(n)"
 set_location_assignment PIN_W24 -to clk_gxbl1c_w24
+set_location_assignment PIN_W27 -to "gxbl1c_tx_ch4p_w28_pcie0_tx(n)"
+set_location_assignment PIN_W28 -to gxbl1c_tx_ch4p_w28_pcie0_tx
 set_location_assignment PIN_W2 -to debug_leds[2]
 set_location_assignment PIN_W3 -to sfp_tx_disable_o
 set_location_assignment PIN_W4 -to user_led0_r
@@ -1227,46 +1296,16 @@ set_location_assignment PIN_Y19 -to A_A[14]
 set_location_assignment PIN_Y1 -to lemo_led[4]
 set_location_assignment PIN_Y20 -to A_RnW
 set_location_assignment PIN_Y21 -to A_A[7]
+set_location_assignment PIN_Y25 -to "gxbl1c_rx_ch2p_y26(n)"
+set_location_assignment PIN_Y26 -to gxbl1c_rx_ch2p_y26
 set_location_assignment PIN_Y2 -to onewire_ext
 set_location_assignment PIN_Y4 -to ext_ch[10]
 set_location_assignment PIN_Y5 -to ext_ch[7]
 set_location_assignment PIN_Y6 -to ext_ch[14]
 set_location_assignment PIN_Y7 -to ext_ch[13]
 
-set_location_assignment PIN_AF26 -to gxbl1c_rx_ch0p_af26
-set_instance_assignment -name IO_STANDARD LVDS -to gxbl1c_rx_ch0p_af26
-set_location_assignment PIN_AF25 -to "gxbl1c_rx_ch0p_af26(n)"
-set_instance_assignment -name IO_STANDARD LVDS -to gxbl1c_rx_ch1p_ad26
-set_instance_assignment -name IO_STANDARD LVDS -to gxbl1c_rx_ch2p_ab26
-set_instance_assignment -name IO_STANDARD LVDS -to gxbl1c_rx_ch2p_y26
-set_instance_assignment -name IO_STANDARD LVDS -to gxbl1c_rx_ch3p_v26_pcie0_rx
-set_instance_assignment -name IO_STANDARD LVDS -to gxbl1c_rx_ch4p_t26_pcie1_rx
-set_instance_assignment -name IO_STANDARD LVDS -to gxbl1c_tx_ch0p_ag28
-set_instance_assignment -name IO_STANDARD LVDS -to gxbl1c_tx_ch1p_ae28
-set_instance_assignment -name IO_STANDARD LVDS -to gxbl1c_tx_ch2p_ac28
-set_instance_assignment -name IO_STANDARD LVDS -to gxbl1c_tx_ch3p_aa28
-set_instance_assignment -name IO_STANDARD LVDS -to gxbl1c_tx_ch4p_w28_pcie0_tx
-set_instance_assignment -name IO_STANDARD LVDS -to gxbl1c_tx_ch5p_u28_pcie1_tx
-set_instance_assignment -name IO_STANDARD LVDS -to gxbl1d_rx_ch0p_p26_pcie2_rx
-set_instance_assignment -name IO_STANDARD LVDS -to gxbl1d_rx_ch1p_m26_pcie3_rx
-set_instance_assignment -name IO_STANDARD LVDS -to gxbl1d_rx_ch2p_k26_pciex_rx
-set_instance_assignment -name IO_STANDARD LVDS -to gxbl1d_rx_ch3p_h26_pciex_rx
-set_instance_assignment -name IO_STANDARD LVDS -to gxbl1d_rx_ch4p_f26_pciex_rx
-set_instance_assignment -name IO_STANDARD LVDS -to gxbl1d_rx_ch5p_d26_pciex_rx
-set_instance_assignment -name IO_STANDARD LVDS -to gxbl1d_tx_ch0p_r28_pcie2_tx
-set_instance_assignment -name IO_STANDARD LVDS -to gxbl1d_tx_ch1p_n28_pcie3_tx
-set_instance_assignment -name IO_STANDARD LVDS -to gxbl1d_tx_ch2p_l28_pciex_tx
-set_instance_assignment -name IO_STANDARD LVDS -to gxbl1d_tx_ch3p_j28_pciex_tx
-set_instance_assignment -name IO_STANDARD LVDS -to gxbl1d_tx_ch4p_g28_pciex_tx
-set_instance_assignment -name IO_STANDARD LVDS -to gxbl1d_tx_ch5p_e28_pciex_tx
-set_location_assignment PIN_AD26 -to gxbl1c_rx_ch1p_ad26
-set_location_assignment PIN_AD25 -to "gxbl1c_rx_ch1p_ad26(n)"
-set_location_assignment PIN_AB26 -to gxbl1c_rx_ch2p_ab26
-set_location_assignment PIN_AB25 -to "gxbl1c_rx_ch2p_ab26(n)"
-set_location_assignment PIN_Y26 -to gxbl1c_rx_ch2p_y26
-set_location_assignment PIN_Y25 -to "gxbl1c_rx_ch2p_y26(n)"
-set_location_assignment PIN_V26 -to gxbl1c_rx_ch3p_v26_pcie0_rx
-set_location_assignment PIN_V25 -to "gxbl1c_rx_ch3p_v26_pcie0_rx(n)"
-set_location_assignment PIN_T26 -to gxbl1c_rx_ch4p_t26_pcie1_rx
-set_location_assignment PIN_T25 -to "gxbl1c_rx_ch4p_t26_pcie1_rx(n)"
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
+set_location_assignment PIN_AA28 -to gxbl1c_tx_ch3p_aa28
+set_location_assignment PIN_AA27 -to "gxbl1c_tx_ch3p_aa28(n)"
+set_location_assignment PIN_P26 -to gxbl1d_rx_ch0p_p26_pcie2_rx
+set_location_assignment PIN_P25 -to "gxbl1d_rx_ch0p_p26_pcie2_rx(n)"
