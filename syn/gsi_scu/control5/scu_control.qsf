@@ -1034,8 +1034,8 @@ set_location_assignment PIN_AD25 -to "gxbl1c_rx_ch1p_ad26(n)"
 set_location_assignment PIN_AD26 -to gxbl1c_rx_ch1p_ad26
 
 
-set_location_assignment PIN_AF26 -to "gxbl1c_rx_ch0p_af26(n)"
-set_location_assignment PIN_AF25 -to gxbl1c_rx_ch0p_af26
+set_location_assignment PIN_AF25 -to "gxbl1c_rx_ch0p_af26(n)"
+set_location_assignment PIN_AF26 -to gxbl1c_rx_ch0p_af26
 
 
 
@@ -1043,7 +1043,7 @@ set_location_assignment PIN_AD2 -to ext_ch[9]
 set_location_assignment PIN_AD3 -to clk1_20m_vcxo_i
 set_location_assignment PIN_AD4 -to ext_ch[17]
 set_location_assignment PIN_AD5 -to ext_ch[2]
-set_location_assignment PIN_AE10 -to A_nSRQ[1]
+set_location_assignment PIN_AE5 -to A_nSRQ[1]
 set_location_assignment PIN_AE11 -to A_nReset
 set_location_assignment PIN_AE12 -to A_D[13]
 set_location_assignment PIN_AE14 -to A_nTiming_Cycle
@@ -1304,8 +1304,8 @@ set_location_assignment PIN_Y5 -to ext_ch[7]
 set_location_assignment PIN_Y6 -to ext_ch[14]
 set_location_assignment PIN_Y7 -to ext_ch[13]
 
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_location_assignment PIN_AA28 -to gxbl1c_tx_ch3p_aa28
 set_location_assignment PIN_AA27 -to "gxbl1c_tx_ch3p_aa28(n)"
 set_location_assignment PIN_P26 -to gxbl1d_rx_ch0p_p26_pcie2_rx
 set_location_assignment PIN_P25 -to "gxbl1d_rx_ch0p_p26_pcie2_rx(n)"
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
