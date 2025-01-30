@@ -225,6 +225,7 @@ package monster_pkg is
       pcie_rstn_i            : in    std_logic := '0';
       pcie_rx_i              : in    std_logic_vector(3 downto 0) := (others => '0');
       pcie_tx_o              : out   std_logic_Vector(3 downto 0);
+      pcie_ready_o           : out   std_logic := '0';
       -- g_en_vme
       vme_as_n_i             : in    std_logic := '0';
       vme_rst_n_i            : in    std_logic := '0';

@@ -219,6 +219,7 @@ entity monster is
     pcie_rstn_i            : in    std_logic;
     pcie_rx_i              : in    std_logic_vector(3 downto 0);
     pcie_tx_o              : out   std_logic_Vector(3 downto 0) := (others => 'Z');
+    pcie_ready_o           : out   std_logic;
     -- g_en_vme
     vme_as_n_i             : in    std_logic;
     vme_rst_n_i            : in    std_logic;
@@ -3312,7 +3313,7 @@ end generate;
       );
    end generate asmi_y;
 
-  
+
   enc_err_counter_n : if not g_en_enc_err_counter generate
     dev_bus_master_i(dev_slaves'pos(devs_enc_err_counter)) <= cc_dummy_slave_out;
   end generate;
@@ -3336,4 +3337,3 @@ end generate;
   ----------------------------------------------------------------------------------
 
 end rtl;
-
