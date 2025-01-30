@@ -193,6 +193,15 @@ package monster_pkg is
       phy_aux_tx_ready_o     : out   std_logic;
       phy_debug_o            : out   std_logic;
       phy_debug_i            : in    std_logic_vector(7 downto 0) := (others => '0');
+      aux_clk_125m_pllref_i  : in    std_logic := '0';
+      aux_clk_125m_sfpref_i  : in    std_logic := '0';
+      -- Debug
+      debug_sys_locked_o     : out   std_logic := '0';
+      debug_ge_85_c_o        : out   std_logic := '0';
+      debug_ref1_locked_o    : out   std_logic := '0';
+      debug_dmtd1_locked_o   : out   std_logic := '0';
+      debug_ref2_locked_o    : out   std_logic := '0';
+      debug_dmtd2_locked_o   : out   std_logic := '0';
       -- GPIO for the board (inouts start at 0, dedicated in/outs come after)
       gpio_i                 : in    std_logic_vector(f_sub1(g_gpio_inout+g_gpio_in)  downto 0) := (others => '1');
       gpio_o                 : out   std_logic_vector(f_sub1(g_gpio_inout+g_gpio_out) downto 0);
@@ -405,6 +414,8 @@ package monster_pkg is
       pmc_inta_o             : out   std_logic;
       pmc_req_o              : out   std_logic;
       pmc_gnt_i              : in    std_logic := '1';
+      -- g_en_a10ts
+      ge_85_c_o              : out   std_logic;
       -- g_en_user_ow
       ow_io                  : inout std_logic_vector(1 downto 0) := (others => 'Z');
       hw_version             : in std_logic_vector(31 downto 0) := (others => 'Z'));

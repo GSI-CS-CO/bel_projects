@@ -187,6 +187,15 @@ entity monster is
     phy_aux_tx_ready_o     : out   std_logic;
     phy_debug_o            : out   std_logic;
     phy_debug_i            : in    std_logic_vector(7 downto 0) := (others => '0');
+    aux_clk_125m_pllref_i  : in    std_logic;
+    aux_clk_125m_sfpref_i  : in    std_logic;
+    -- Debug
+    debug_sys_locked_o     : out   std_logic;
+    debug_ge_85_c_o        : out   std_logic;
+    debug_ref1_locked_o    : out   std_logic;
+    debug_dmtd1_locked_o   : out   std_logic;
+    debug_ref2_locked_o    : out   std_logic;
+    debug_dmtd2_locked_o   : out   std_logic;
     -- GPIO for the board
     gpio_i                 : in    std_logic_vector(f_sub1(g_gpio_inout+g_gpio_in)  downto 0);
     gpio_o                 : out   std_logic_vector(f_sub1(g_gpio_inout+g_gpio_out) downto 0) := (others => 'Z');
@@ -396,6 +405,8 @@ entity monster is
     -- g_en_user_ow
     ow_io                  : inout std_logic_vector(1 downto 0);
     hw_version             : in    std_logic_vector(31 downto 0);
+    -- g_en_a10ts
+    ge_85_c_o              : out   std_logic;
    -- g_en_tempsens
     tempsens_clr_out       : out   std_logic);
 end monster;
@@ -1014,6 +1025,12 @@ begin
       rstn_o(2)     => rstn_update,
       rstn_o(3)     => rstn_ref);
 
+      debug_sys_locked_o   <= sys_locked;
+      debug_ref1_locked_o  <= ref_locked;
+      debug_dmtd1_locked_o <= dmtd_locked;
+      debug_ref2_locked_o  <= '0';
+      debug_dmtd2_locked_o <= '0';
+
   dmtd_a2 : if c_is_arria2 generate
     dmtd_inst : dmtd_pll port map(
       areset   => pll_rst,
@@ -1436,6 +1453,7 @@ begin
   pcie_n : if not g_en_pcie generate
     top_bus_slave_i (top_my_masters'pos(topm_pcie)) <= cc_dummy_master_out;
     top_msi_master_i(top_my_masters'pos(topm_pcie)) <= cc_dummy_slave_out;
+    pcie_ready_o <= '0';
   end generate;
   pcie_y : if g_en_pcie generate
     pcie : pcie_wb
@@ -1457,6 +1475,7 @@ begin
         slave_rstn_i  => rstn_sys,
         slave_i       => top_msi_master_o(top_my_masters'pos(topm_pcie)),
         slave_o       => top_msi_master_i(top_my_masters'pos(topm_pcie)));
+    pcie_ready_o <= '0';
   end generate;
 
   pmc_n : if not g_en_pmc generate
@@ -3235,17 +3254,19 @@ end generate;
 
   a10ts_n : if not g_en_a10ts generate
     dev_bus_master_i(dev_slaves'pos(devs_a10ts)) <= cc_dummy_slave_out;
+    ge_85_c_o <= '0';
   end generate;
   a10ts_y : if g_en_a10ts generate
     a10ts_inst : a10ts
       generic map (
         g_use_ext_trigger => false)
       port map (
-        clk_i      => clk_sys,
-        rst_n_i    => rstn_sys,
-        clk_20m_i  => clk_20m,
-        slave_i    => dev_bus_master_o(dev_slaves'pos(devs_a10ts)),
-        slave_o    => dev_bus_master_i(dev_slaves'pos(devs_a10ts)));
+        clk_i     => clk_sys,
+        rst_n_i   => rstn_sys,
+        clk_20m_i => clk_20m,
+        ge_85_c_o => ge_85_c_o,
+        slave_i   => dev_bus_master_o(dev_slaves'pos(devs_a10ts)),
+        slave_o   => dev_bus_master_i(dev_slaves'pos(devs_a10ts)));
   end generate;
 
   i2c_wrapper_n : if not g_en_i2c_wrapper generate
