@@ -33,8 +33,6 @@ entity scu_control is
     ------------------------------------------------------------------------
     -- PCI express pins
     ------------------------------------------------------------------------
-    pcie_rx_i     : in  std_logic_vector(3 downto 0);
-    pcie_tx_o     : out std_logic_vector(3 downto 0);
     nPCI_RESET_i  : in  std_logic;
     pcie_rdy_o    : out std_logic;
 
@@ -163,51 +161,65 @@ entity scu_control is
     -----------------------------------------------------------------------
     -- Debugging
     -----------------------------------------------------------------------
-    DEBUG_LED       : out std_logic_vector(7 downto 0);
+    debug_leds : out std_logic_vector(7 downto 0);
 
     -----------------------------------------------------------------------
-    -- Tr Stuff
+    -- Transceiver bank 1C
     -----------------------------------------------------------------------
-    A_MASTER_CON_RX1_N : in std_logic;
-    A_MASTER_CON_RX1_P : in std_logic;
-    A_MASTER_CON_RX2_N : in std_logic;
-    A_MASTER_CON_RX2_P : in std_logic;
-    A_MASTER_CON_RX3_N : in std_logic;
-    A_MASTER_CON_RX3_P : in std_logic;
-    A_MASTER_CON_RX4_N : in std_logic;
-    A_MASTER_CON_RX4_P : in std_logic;
-    GXBL1C_RX_CH2N  : in std_logic;
-    GXBL1C_RX_CH2P  : in std_logic;
-    GXBL1C_RX_CH3N  : in std_logic;
-    GXBL1C_RX_CH3P  : in std_logic;
-    GXBL1C_TX_CH0CN : out std_logic;
-    GXBL1C_TX_CH0CP : out std_logic;
-    GXBL1C_TX_CH0N  : out std_logic;
-    GXBL1C_TX_CH0P  : out std_logic;
-    GXBL1C_TX_CH1CN : out std_logic;
-    GXBL1C_TX_CH1CP : out std_logic;
-    GXBL1C_TX_CH1N  : out std_logic;
-    GXBL1C_TX_CH1P  : out std_logic;
-    GXBL1C_TX_CH2CN : out std_logic;
-    GXBL1C_TX_CH2CP : out std_logic;
-    GXBL1C_TX_CH3CN : out std_logic;
-    GXBL1C_TX_CH3CP : out std_logic;
-    GXBL1D_RX_CH2N  : in std_logic;
-    GXBL1D_RX_CH2P  : in std_logic;
-    GXBL1D_RX_CH3N  : in std_logic;
-    GXBL1D_RX_CH3P  : in std_logic;
-    GXBL1D_RX_CH4N  : in std_logic;
-    GXBL1D_RX_CH4P  : in std_logic;
-    GXBL1D_RX_CH5N  : in std_logic;
-    GXBL1D_RX_CH5P  : in std_logic;
-    GXBL1D_TX_CH2CN : out std_logic;
-    GXBL1D_TX_CH2CP : out std_logic;
-    GXBL1D_TX_CH3CN : out std_logic;
-    GXBL1D_TX_CH3CP : out std_logic;
-    GXBL1D_TX_CH4CN : out std_logic;
-    GXBL1D_TX_CH4CP : out std_logic;
-    GXBL1D_TX_CH5CN : out std_logic;
-    GXBL1D_TX_CH5CP : out std_logic;
+    gxbl1c_rx_ch0p_af26         : in std_logic;
+    gxbl1c_rx_ch0n_af25         : in std_logic;
+    gxbl1c_rx_ch1p_ad26         : in std_logic;
+    gxbl1c_rx_ch1n_ad25         : in std_logic;
+    gxbl1c_rx_ch2p_ab26         : in std_logic;
+    gxbl1c_rx_ch2n_ab25         : in std_logic;
+    gxbl1c_rx_ch2p_y26          : in std_logic;
+    gxbl1c_rx_ch2n_y25          : in std_logic;
+    gxbl1c_rx_ch3p_v26_pcie0_rx : in std_logic;
+    gxbl1c_rx_ch3n_v25_pcie0_rx : in std_logic;
+    gxbl1c_rx_ch4p_t26_pcie1_rx : in std_logic;
+    gxbl1c_rx_ch4n_t25_pcie1_rx : in std_logic;
+
+    gxbl1c_tx_ch0p_ag28         : in std_logic;
+    gxbl1c_tx_ch0n_ag27         : in std_logic;
+    gxbl1c_tx_ch1p_ae28         : in std_logic;
+    gxbl1c_tx_ch1n_ae27         : in std_logic;
+    gxbl1c_tx_ch2p_ac28         : in std_logic;
+    gxbl1c_tx_ch2n_ac27         : in std_logic;
+    gxbl1c_tx_ch3p_aa28         : in std_logic;
+    gxbl1c_tx_ch3n_aa27         : in std_logic;
+    gxbl1c_tx_ch4p_w28_pcie0_tx : in std_logic;
+    gxbl1c_tx_ch4n_w28_pcie0_tx : in std_logic;
+    gxbl1c_tx_ch5p_u28_pcie1_tx : in std_logic;
+    gxbl1c_tx_ch5n_u28_pcie1_tx : in std_logic;
+
+    -----------------------------------------------------------------------
+    -- Transceiver bank 1D
+    -----------------------------------------------------------------------
+    gxbl1d_rx_ch0p_p26_pcie2_rx : in std_logic;
+    gxbl1d_rx_ch0n_p25_pcie2_rx : in std_logic;
+    gxbl1d_rx_ch1p_m26_pcie3_rx : in std_logic;
+    gxbl1d_rx_ch1n_m25_pcie3_rx : in std_logic;
+    gxbl1d_rx_ch2p_k26_pciex_rx : in std_logic;
+    gxbl1d_rx_ch2n_k25_pciex_rx : in std_logic;
+    gxbl1d_rx_ch3p_h26_pciex_rx : in std_logic;
+    gxbl1d_rx_ch3n_h25_pciex_rx : in std_logic;
+    gxbl1d_rx_ch4p_f26_pciex_rx : in std_logic;
+    gxbl1d_rx_ch4n_f25_pciex_rx : in std_logic;
+    gxbl1d_rx_ch5p_d26_pciex_rx : in std_logic;
+    gxbl1d_rx_ch5n_d25_pciex_rx : in std_logic;
+
+    gxbl1d_tx_ch0p_r28_pcie2_tx : in std_logic;
+    gxbl1d_tx_ch0n_r27_pcie2_tx : in std_logic;
+    gxbl1d_tx_ch1p_n28_pcie3_tx : in std_logic;
+    gxbl1d_tx_ch1n_n27_pcie3_tx : in std_logic;
+    gxbl1d_tx_ch2p_l28_pciex_tx : in std_logic;
+    gxbl1d_tx_ch2n_l27_pciex_tx : in std_logic;
+    gxbl1d_tx_ch3p_j28_pciex_tx : in std_logic;
+    gxbl1d_tx_ch3n_j27_pciex_tx : in std_logic;
+    gxbl1d_tx_ch4p_g28_pciex_tx : in std_logic;
+    gxbl1d_tx_ch4n_g27_pciex_tx : in std_logic;
+    gxbl1d_tx_ch5p_e28_pciex_tx : in std_logic;
+    gxbl1d_tx_ch5n_e27_pciex_tx : in std_logic;
 
     -----------------------------------------------------------------------
     -- SFP
@@ -216,13 +228,9 @@ entity scu_control is
     sfp_tx_disable_o : out   std_logic;
     sfp_tx_fault_i   : in    std_logic;
     sfp_los_i        : in    std_logic;
-    --sfp_txp_o        : out   std_logic;
-    --sfp_rxp_i        : in    std_logic;
     sfp_mod0_i       : in    std_logic;
     sfp_mod1_io      : inout std_logic;
     sfp_mod2_io      : inout std_logic);
-
-
 
 end scu_control;
 
