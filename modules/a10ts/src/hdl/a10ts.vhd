@@ -15,6 +15,7 @@ entity a10ts is
     clk_i     : in  std_logic := '0';
     rst_n_i   : in  std_logic := '1';
     clk_20m_i : in  std_logic := '0';
+    ge_85_c_o : out std_logic := '0';
     slave_i   : in  t_wishbone_slave_in;
     slave_o   : out t_wishbone_slave_out);
 end a10ts;
@@ -82,6 +83,19 @@ begin
         slave_o.dat (31 downto 10) <= (others => '0');
       else
         slave_o.dat <= (others => '0');
+      end if;
+    end if;
+  end process;
+
+  ge_85_c_detector : process(clk_i, rst_n_i) is
+  begin
+    if rst_n_i = '0' then
+      ge_85_c_o <= '0';
+    elsif rising_edge(clk_i) then
+      if unsigned(s_temp_sync) >= to_unsigned(517, s_temp_sync'length) then -- 517 ~= 85 °C
+        ge_85_c_o <= '1';
+      else
+        ge_85_c_o <= '0';
       end if;
     end if;
   end process;
