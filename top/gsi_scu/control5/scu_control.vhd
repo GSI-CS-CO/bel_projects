@@ -372,6 +372,13 @@ begin
       led_link_act_o          => s_led_link_act,
       led_track_o             => s_led_track,
       led_pps_o               => s_led_pps,
+      debug_sys_locked_o      => debug_leds(0),
+      debug_ge_85_c_o         => debug_leds(1),
+      debug_ref1_locked_o     => debug_leds(2),
+      debug_dmtd1_locked_o    => debug_leds(3),
+      debug_ref2_locked_o     => debug_leds(4),
+      debug_dmtd2_locked_o    => debug_leds(5),
+      pcie_ready_o            => debug_leds(6),
       scubus_a_a              => A_A,
       scubus_a_d              => A_D,
       scubus_nsel_data_drv    => nSel_Ext_Data_DRV,
@@ -548,5 +555,6 @@ begin
   -- other fixed signals
   sfp_rate_sel_o <= '0';
   A_OneWire_stpz <= '0';
+  debug_leds(7)  <= nPCI_RESET_i;
 
 end rtl;
