@@ -339,6 +339,7 @@ Optional (python-is-python3 not found):
 ```shell
 sudo ln -s /usr/bin/python3 /etc/python
 sudo apt-get install python-setuptools
+sudo apt-get install python3-setuptools
 ```
 
 In case you have no sudo rights:
@@ -370,6 +371,17 @@ Solution: Just install the right setuptools:
 ```shell
 sudo apt-get install python3-setuptools # Python 3.X
 sudo apt-get install python-setuptools # Python 2.X
+```
+
+### Python Six
+
+Error: ModuleNotFoundError: No module named 'six'
+
+Solution:
+
+```shell
+sudo apt-get install python-six
+sudo apt-get install python3-six
 ```
 
 ### Compiling Saftlib
