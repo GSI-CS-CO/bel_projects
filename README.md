@@ -34,6 +34,7 @@ GSI Timing Gateware and Tools
     - [Python not found](#python-not-found)
     - [No module named pkg_resources](#no-module-named-pkg_resources)
     - [Setuptools not found](#setuptools-not-found)
+    - [Python Six](#python-six)
     - [Compiling Saftlib](#compiling-saftlib)
     - [CC not found](#cc-not-found)
     - [Rocky-9](#rocky-9)
