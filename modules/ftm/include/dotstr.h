@@ -11,6 +11,11 @@ namespace DotStr {
       extern const std::string sCurThr;
       extern const std::string sCurNode;
       extern const std::string sRegisters;
+
+      extern const std::string sThrCtl;
+      extern const std::string sThrData;
+      extern const std::string sThrStaging;
+      extern const std::string sThrStart;
     }
     namespace fields {
       extern const std::string sThrTB;

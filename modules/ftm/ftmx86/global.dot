@@ -13,6 +13,10 @@ subgraph cpu0 {
   T_PAT1->B_PAT1->T_PAT1;
 
   GLOBAL_TEST [type="global", section="registers", pattern="EXTERN" ];
+  GLOBAL_CTL    [type="global", section="threadControl", pattern="EXTERN" ];
+  GLOBAL_TEST00 [type="global", section="threadStaging_00", pattern="EXTERN" ];
+  GLOBAL_TEST01 [type="global", section="threadStaging_01", pattern="EXTERN" ];
+  GLOBAL_TEST31 [type="global", section="threadStaging_31", pattern="EXTERN" ];
   
 
   B_PAT1->GLOBAL_TEST [type="reference", fieldtail="0x04", fieldhead="0x00", fieldwidth="32"];

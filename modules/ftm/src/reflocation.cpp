@@ -12,16 +12,27 @@ namespace dmv   = DotStr::Misc;
 namespace dloc  = DotStr::Locations::base;
 namespace dfld  = DotStr::Locations::fields;
 
-
+/** Sets the global memory location table
+   * This allows graph nodes referencing external memory adr. such as registers
+   * @param ebd Active etherbone connection to a DM instance
+   * @param sharedOffs memory shared offset read from Firmware Info ROM
+   * @return existence of hash
+  */
 void RefLocation::init(EbWrapper* ebd, const uint32_t sharedOffs) {
   ml.clear();
   mf.clear();
-  //std::cout << "Init RefMaps" << std::hex << sharedOffs << std::endl;
-  //std::cout << "Shared Offs: 0x" << std::hex << sharedOffs << std::endl;
-  ml.insert({dmv::sZero, 0x0 });
-  ml.insert({dloc::sRegisters, ebd->getCtlAdr(ADRLUT_SHCTL_REGS) + sharedOffs});
-  mf.insert({dmv::sZero, 0x0 });
-  //add more locations that should be commonly known here. Could even add one per thread with a loop etc
+
+  ml.insert({dmv::sZero, 0x0 });                                                      //zero as an always working trst
+  ml.insert({dloc::sThrCtl,     sharedOffs + SHCTL_THR_CTL});                         //allows thread start/halt from other platfroms
+  ml.insert({dloc::sRegisters,  sharedOffs + ebd->getCtlAdr(ADRLUT_SHCTL_REGS)});     //'mail boxes' for interplatform communication
+
+  //Thread staging areas (pretime, starttime etc). Allows remote manipulation of these parameters (be)for(e) thread starts
+  for(int i=0; i < ebd->getThrQty(); i++) {
+    std::ostringstream oss;
+    oss << std::setw(2) << std::setfill('0') << i;
+    ml.insert({dloc::sThrStaging + "_" + oss.str(), sharedOffs + ebd->getCtlAdr(ADRLUT_SHCTL_THR_STA) + i * _T_TS_SIZE_});
+  }
+
 
 }
 
