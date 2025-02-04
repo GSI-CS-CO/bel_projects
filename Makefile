@@ -398,30 +398,6 @@ scu5-check:
 scu5-clean::
 		$(MAKE) -C $(PATH_SCU5) clean
 
-ftm4:		firmware
-	$(MAKE) -C $(PATH_FTM4) all
-
-ftm4-sort:
-	$(call sort_file, $(CHECK_FTM4))
-
-ftm4-check:
-	$(call check_timing, $(CHECK_FTM4))
-
-ftm4-clean::
-	$(MAKE) -C $(PATH_FTM4) clean
-
-ftm4dp:		firmware
-	$(MAKE) -C $(PATH_FTM4DP) all
-
-ftm4dp-sort:
-	$(call sort_file, $(CHECK_FTM4DP))
-
-ftm4dp-check:
-	$(call check_timing, $(CHECK_FTM4DP))
-
-ftm4dp-clean::
-	$(MAKE) -C $(PATH_FTM4DP) clean
-
 pexarria10:	firmware
 	$(MAKE) -C $(PATH_PEXARRIA10) all
 
@@ -613,6 +589,30 @@ scu4-check:
 
 scu4-clean::
 	$(MAKE) -C $(PATH_SCU4) clean
+
+ftm4:		firmware
+	$(MAKE) -C $(PATH_FTM4) all
+
+ftm4-sort:
+	$(call sort_file, $(CHECK_FTM4))
+
+ftm4-check:
+	$(call check_timing, $(CHECK_FTM4))
+
+ftm4-clean::
+	$(MAKE) -C $(PATH_FTM4) clean
+
+ftm4dp:		firmware
+	$(MAKE) -C $(PATH_FTM4DP) all
+
+ftm4dp-sort:
+	$(call sort_file, $(CHECK_FTM4DP))
+
+ftm4dp-check:
+	$(call check_timing, $(CHECK_FTM4DP))
+
+ftm4dp-clean::
+	$(MAKE) -C $(PATH_FTM4DP) clean
 
 # #################################################################################################
 # Build flow targets
