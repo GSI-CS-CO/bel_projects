@@ -184,8 +184,7 @@ begin
         
         case to_integer(unsigned(r_a_ext1)) is
           when c_dma_csr_RW       => data_o.dat <= std_logic_vector(resize(unsigned(r_dma_csr), data_o.dat'length));                -- 
-          when c_channel_csr_RW   => data_o.dat <= std_logic_vector(resize(unsigned(mget(r_channel_csr, r_p)), data_o.dat'length)); -- 
-          when c_descr_queue_intake_OWR => data_o.dat <= (others => 'X');
+          when c_channel_csr_RW   => data_o.dat <= std_logic_vector(resize(unsigned(mget(r_channel_csr, r_p)), data_o.dat'length)); --
           when c_ch_sel_RW        => data_o.dat <= std_logic_vector(resize(unsigned(r_ch_sel), data_o.dat'length));                 --
           when others             => data_o.dat <= (others => 'X');
         end case;
