@@ -59,6 +59,10 @@ protected:
   std::string createFwVersionString(const int fwVer) const;
   static int parseFwVersionString(const std::string& s);
   std::string parseFwIdROMTag(const std::string& fwIdROM, const std::string& tag, size_t maxlen, bool stopAtCr ) const;
+  uint32_t parseIntBaseAdr(const std::string& fwIdROM) const;
+  uint32_t parseSharedOffs(const std::string& fwIdROM) const;
+  uint32_t parseSharedSize(const std::string& fwIdROM) const;
+  uint32_t parseThrQty(const std::string& fwIdROM) const;
   // SDB Functions
 
 public:
@@ -89,10 +93,6 @@ public:
   uint32_t getDiagDevAdr() {return diagDevs[0].sdb_component.addr_first;}
   int getExpVersionMin() const {return expVersionMin;} 
   int getExpVersionMax() const {return expVersionMax;}
-  uint32_t parseIntBaseAdr(const std::string& fwIdROM) const; 
-  uint32_t parseSharedOffs(const std::string& fwIdROM) const;
-  uint32_t parseSharedSize(const std::string& fwIdROM) const;
-  uint32_t parseThrQty(const std::string& fwIdROM) const;
   int readAdrLUT(uint32_t extBaseAdr, uint32_t sharedOffs, uint32_t* lut) const;
 
   std::string getFwVersionString(uint8_t cpuIdx) const {return createFwVersionString(vFoundVersion[cpuIdx]);}
