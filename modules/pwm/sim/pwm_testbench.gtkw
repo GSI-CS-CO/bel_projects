@@ -1,0 +1,204 @@
+[*]
+[*] GTKWave Analyzer v3.3.116 (w)1999-2023 BSI
+[*] Tue Feb  4 15:49:50 2025
+[*]
+[dumpfile] "/home/agr/dev/bel_projects/modules/pwm/sim/pwm_testbench.ghw"
+[dumpfile_mtime] "Tue Feb  4 15:04:20 2025"
+[dumpfile_size] 12715378
+[savefile] "/home/agr/dev/bel_projects/modules/pwm/sim/pwm_testbench.gtkw"
+[timestart] 282800000
+[size] 2560 1392
+[pos] -1 -1
+*-25.842342 225000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[treeopen] top.pwm_testbench.
+[treeopen] top.pwm_testbench.dut.
+[treeopen] top.pwm_testbench.dut.pwm_wb.
+[treeopen] top.pwm_testbench.dut.pwm_wb.drive.
+[treeopen] top.pwm_testbench.dut.pwm_wb.regs_in.
+[treeopen] top.pwm_testbench.dut.pwm_wb.regs_out.
+[treeopen] top.pwm_testbench.dut.pwm_wb.u_wb_slave.
+[treeopen] top.pwm_testbench.dut.t_wb_out.
+[sst_width] 381
+[signals_width] 271
+[sst_expanded] 1
+[sst_vpaned_height] 932
+@28
+top.pwm_testbench.dut.s_rst_sys_n_i
+top.pwm_testbench.dut.s_clk_sys_i
+top.pwm_testbench.s_wb_master_out.cyc
+top.pwm_testbench.s_wb_master_out.stb
+[color] 2
+top.pwm_testbench.s_wb_master_out.we
+[color] 1
+top.pwm_testbench.dut.t_wb_out.ack
+[color] 2
+top.pwm_testbench.dut.t_wb_out.stall
+[color] 5
+top.pwm_testbench.dut.t_wb_out.err
+@200
+-controller out
+@22
+[color] 3
+#{top.pwm_testbench.dut.t_wb_in.adr[31:0]} top.pwm_testbench.dut.t_wb_in.adr[31] top.pwm_testbench.dut.t_wb_in.adr[30] top.pwm_testbench.dut.t_wb_in.adr[29] top.pwm_testbench.dut.t_wb_in.adr[28] top.pwm_testbench.dut.t_wb_in.adr[27] top.pwm_testbench.dut.t_wb_in.adr[26] top.pwm_testbench.dut.t_wb_in.adr[25] top.pwm_testbench.dut.t_wb_in.adr[24] top.pwm_testbench.dut.t_wb_in.adr[23] top.pwm_testbench.dut.t_wb_in.adr[22] top.pwm_testbench.dut.t_wb_in.adr[21] top.pwm_testbench.dut.t_wb_in.adr[20] top.pwm_testbench.dut.t_wb_in.adr[19] top.pwm_testbench.dut.t_wb_in.adr[18] top.pwm_testbench.dut.t_wb_in.adr[17] top.pwm_testbench.dut.t_wb_in.adr[16] top.pwm_testbench.dut.t_wb_in.adr[15] top.pwm_testbench.dut.t_wb_in.adr[14] top.pwm_testbench.dut.t_wb_in.adr[13] top.pwm_testbench.dut.t_wb_in.adr[12] top.pwm_testbench.dut.t_wb_in.adr[11] top.pwm_testbench.dut.t_wb_in.adr[10] top.pwm_testbench.dut.t_wb_in.adr[9] top.pwm_testbench.dut.t_wb_in.adr[8] top.pwm_testbench.dut.t_wb_in.adr[7] top.pwm_testbench.dut.t_wb_in.adr[6] top.pwm_testbench.dut.t_wb_in.adr[5] top.pwm_testbench.dut.t_wb_in.adr[4] top.pwm_testbench.dut.t_wb_in.adr[3] top.pwm_testbench.dut.t_wb_in.adr[2] top.pwm_testbench.dut.t_wb_in.adr[1] top.pwm_testbench.dut.t_wb_in.adr[0]
+[color] 3
+#{top.pwm_testbench.dut.t_wb_in.dat[31:0]} top.pwm_testbench.dut.t_wb_in.dat[31] top.pwm_testbench.dut.t_wb_in.dat[30] top.pwm_testbench.dut.t_wb_in.dat[29] top.pwm_testbench.dut.t_wb_in.dat[28] top.pwm_testbench.dut.t_wb_in.dat[27] top.pwm_testbench.dut.t_wb_in.dat[26] top.pwm_testbench.dut.t_wb_in.dat[25] top.pwm_testbench.dut.t_wb_in.dat[24] top.pwm_testbench.dut.t_wb_in.dat[23] top.pwm_testbench.dut.t_wb_in.dat[22] top.pwm_testbench.dut.t_wb_in.dat[21] top.pwm_testbench.dut.t_wb_in.dat[20] top.pwm_testbench.dut.t_wb_in.dat[19] top.pwm_testbench.dut.t_wb_in.dat[18] top.pwm_testbench.dut.t_wb_in.dat[17] top.pwm_testbench.dut.t_wb_in.dat[16] top.pwm_testbench.dut.t_wb_in.dat[15] top.pwm_testbench.dut.t_wb_in.dat[14] top.pwm_testbench.dut.t_wb_in.dat[13] top.pwm_testbench.dut.t_wb_in.dat[12] top.pwm_testbench.dut.t_wb_in.dat[11] top.pwm_testbench.dut.t_wb_in.dat[10] top.pwm_testbench.dut.t_wb_in.dat[9] top.pwm_testbench.dut.t_wb_in.dat[8] top.pwm_testbench.dut.t_wb_in.dat[7] top.pwm_testbench.dut.t_wb_in.dat[6] top.pwm_testbench.dut.t_wb_in.dat[5] top.pwm_testbench.dut.t_wb_in.dat[4] top.pwm_testbench.dut.t_wb_in.dat[3] top.pwm_testbench.dut.t_wb_in.dat[2] top.pwm_testbench.dut.t_wb_in.dat[1] top.pwm_testbench.dut.t_wb_in.dat[0]
+[color] 3
+#{top.pwm_testbench.dut.t_wb_in.sel[3:0]} top.pwm_testbench.dut.t_wb_in.sel[3] top.pwm_testbench.dut.t_wb_in.sel[2] top.pwm_testbench.dut.t_wb_in.sel[1] top.pwm_testbench.dut.t_wb_in.sel[0]
+#{top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[31:0]} top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[31] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[30] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[29] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[28] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[27] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[26] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[25] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[24] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[23] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[22] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[21] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[20] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[19] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[18] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[17] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[16] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[15] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[14] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[13] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[12] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[11] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[10] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[9] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[8] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[7] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[6] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[5] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[4] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[3] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[2] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[1] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[0]
+@200
+-device out
+@c00022
+#{top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[31:0]} top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[31] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[30] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[29] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[28] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[27] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[26] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[25] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[24] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[23] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[22] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[21] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[20] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[19] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[18] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[17] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[16] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[15] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[14] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[13] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[12] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[11] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[10] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[9] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[8] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[7] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[6] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[5] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[4] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[3] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[2] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[1] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[0]
+@28
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[31]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[30]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[29]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[28]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[27]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[26]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[25]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[24]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[23]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[22]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[21]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[20]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[19]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[18]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[17]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[16]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[15]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[14]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[13]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[12]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[11]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[10]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[9]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[8]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[7]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[6]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[5]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[4]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[3]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[2]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[1]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[0]
+@1401200
+-group_end
+@22
+[color] 2
+#{top.pwm_testbench.dut.t_wb_out.dat[31:0]} top.pwm_testbench.dut.t_wb_out.dat[31] top.pwm_testbench.dut.t_wb_out.dat[30] top.pwm_testbench.dut.t_wb_out.dat[29] top.pwm_testbench.dut.t_wb_out.dat[28] top.pwm_testbench.dut.t_wb_out.dat[27] top.pwm_testbench.dut.t_wb_out.dat[26] top.pwm_testbench.dut.t_wb_out.dat[25] top.pwm_testbench.dut.t_wb_out.dat[24] top.pwm_testbench.dut.t_wb_out.dat[23] top.pwm_testbench.dut.t_wb_out.dat[22] top.pwm_testbench.dut.t_wb_out.dat[21] top.pwm_testbench.dut.t_wb_out.dat[20] top.pwm_testbench.dut.t_wb_out.dat[19] top.pwm_testbench.dut.t_wb_out.dat[18] top.pwm_testbench.dut.t_wb_out.dat[17] top.pwm_testbench.dut.t_wb_out.dat[16] top.pwm_testbench.dut.t_wb_out.dat[15] top.pwm_testbench.dut.t_wb_out.dat[14] top.pwm_testbench.dut.t_wb_out.dat[13] top.pwm_testbench.dut.t_wb_out.dat[12] top.pwm_testbench.dut.t_wb_out.dat[11] top.pwm_testbench.dut.t_wb_out.dat[10] top.pwm_testbench.dut.t_wb_out.dat[9] top.pwm_testbench.dut.t_wb_out.dat[8] top.pwm_testbench.dut.t_wb_out.dat[7] top.pwm_testbench.dut.t_wb_out.dat[6] top.pwm_testbench.dut.t_wb_out.dat[5] top.pwm_testbench.dut.t_wb_out.dat[4] top.pwm_testbench.dut.t_wb_out.dat[3] top.pwm_testbench.dut.t_wb_out.dat[2] top.pwm_testbench.dut.t_wb_out.dat[1] top.pwm_testbench.dut.t_wb_out.dat[0]
+@20000
+-
+@22
+[color] 7
+#{top.pwm_testbench.dut.pwm_wb.period_val[15:0]} top.pwm_testbench.dut.pwm_wb.period_val[15] top.pwm_testbench.dut.pwm_wb.period_val[14] top.pwm_testbench.dut.pwm_wb.period_val[13] top.pwm_testbench.dut.pwm_wb.period_val[12] top.pwm_testbench.dut.pwm_wb.period_val[11] top.pwm_testbench.dut.pwm_wb.period_val[10] top.pwm_testbench.dut.pwm_wb.period_val[9] top.pwm_testbench.dut.pwm_wb.period_val[8] top.pwm_testbench.dut.pwm_wb.period_val[7] top.pwm_testbench.dut.pwm_wb.period_val[6] top.pwm_testbench.dut.pwm_wb.period_val[5] top.pwm_testbench.dut.pwm_wb.period_val[4] top.pwm_testbench.dut.pwm_wb.period_val[3] top.pwm_testbench.dut.pwm_wb.period_val[2] top.pwm_testbench.dut.pwm_wb.period_val[1] top.pwm_testbench.dut.pwm_wb.period_val[0]
+@25
+[color] 7
+#{top.pwm_testbench.dut.pwm_wb.period_val[15:0]} top.pwm_testbench.dut.pwm_wb.period_val[15] top.pwm_testbench.dut.pwm_wb.period_val[14] top.pwm_testbench.dut.pwm_wb.period_val[13] top.pwm_testbench.dut.pwm_wb.period_val[12] top.pwm_testbench.dut.pwm_wb.period_val[11] top.pwm_testbench.dut.pwm_wb.period_val[10] top.pwm_testbench.dut.pwm_wb.period_val[9] top.pwm_testbench.dut.pwm_wb.period_val[8] top.pwm_testbench.dut.pwm_wb.period_val[7] top.pwm_testbench.dut.pwm_wb.period_val[6] top.pwm_testbench.dut.pwm_wb.period_val[5] top.pwm_testbench.dut.pwm_wb.period_val[4] top.pwm_testbench.dut.pwm_wb.period_val[3] top.pwm_testbench.dut.pwm_wb.period_val[2] top.pwm_testbench.dut.pwm_wb.period_val[1] top.pwm_testbench.dut.pwm_wb.period_val[0]
+@24
+[color] 7
+#{top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[15:0]} top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[15] top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[14] top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[13] top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[12] top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[11] top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[10] top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[9] top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[8] top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[7] top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[6] top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[5] top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[4] top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[3] top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[2] top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[1] top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[0]
+@22
+[color] 6
+#{top.pwm_testbench.dut.pwm_wb.regs_out.cr_period_o[15:0]} top.pwm_testbench.dut.pwm_wb.regs_out.cr_period_o[15] top.pwm_testbench.dut.pwm_wb.regs_out.cr_period_o[14] top.pwm_testbench.dut.pwm_wb.regs_out.cr_period_o[13] top.pwm_testbench.dut.pwm_wb.regs_out.cr_period_o[12] top.pwm_testbench.dut.pwm_wb.regs_out.cr_period_o[11] top.pwm_testbench.dut.pwm_wb.regs_out.cr_period_o[10] top.pwm_testbench.dut.pwm_wb.regs_out.cr_period_o[9] top.pwm_testbench.dut.pwm_wb.regs_out.cr_period_o[8] top.pwm_testbench.dut.pwm_wb.regs_out.cr_period_o[7] top.pwm_testbench.dut.pwm_wb.regs_out.cr_period_o[6] top.pwm_testbench.dut.pwm_wb.regs_out.cr_period_o[5] top.pwm_testbench.dut.pwm_wb.regs_out.cr_period_o[4] top.pwm_testbench.dut.pwm_wb.regs_out.cr_period_o[3] top.pwm_testbench.dut.pwm_wb.regs_out.cr_period_o[2] top.pwm_testbench.dut.pwm_wb.regs_out.cr_period_o[1] top.pwm_testbench.dut.pwm_wb.regs_out.cr_period_o[0]
+@20000
+-
+@22
+[color] 7
+#{top.pwm_testbench.dut.pwm_wb.presc_val[15:0]} top.pwm_testbench.dut.pwm_wb.presc_val[15] top.pwm_testbench.dut.pwm_wb.presc_val[14] top.pwm_testbench.dut.pwm_wb.presc_val[13] top.pwm_testbench.dut.pwm_wb.presc_val[12] top.pwm_testbench.dut.pwm_wb.presc_val[11] top.pwm_testbench.dut.pwm_wb.presc_val[10] top.pwm_testbench.dut.pwm_wb.presc_val[9] top.pwm_testbench.dut.pwm_wb.presc_val[8] top.pwm_testbench.dut.pwm_wb.presc_val[7] top.pwm_testbench.dut.pwm_wb.presc_val[6] top.pwm_testbench.dut.pwm_wb.presc_val[5] top.pwm_testbench.dut.pwm_wb.presc_val[4] top.pwm_testbench.dut.pwm_wb.presc_val[3] top.pwm_testbench.dut.pwm_wb.presc_val[2] top.pwm_testbench.dut.pwm_wb.presc_val[1] top.pwm_testbench.dut.pwm_wb.presc_val[0]
+@24
+[color] 7
+#{top.pwm_testbench.dut.pwm_wb.presc_val[15:0]} top.pwm_testbench.dut.pwm_wb.presc_val[15] top.pwm_testbench.dut.pwm_wb.presc_val[14] top.pwm_testbench.dut.pwm_wb.presc_val[13] top.pwm_testbench.dut.pwm_wb.presc_val[12] top.pwm_testbench.dut.pwm_wb.presc_val[11] top.pwm_testbench.dut.pwm_wb.presc_val[10] top.pwm_testbench.dut.pwm_wb.presc_val[9] top.pwm_testbench.dut.pwm_wb.presc_val[8] top.pwm_testbench.dut.pwm_wb.presc_val[7] top.pwm_testbench.dut.pwm_wb.presc_val[6] top.pwm_testbench.dut.pwm_wb.presc_val[5] top.pwm_testbench.dut.pwm_wb.presc_val[4] top.pwm_testbench.dut.pwm_wb.presc_val[3] top.pwm_testbench.dut.pwm_wb.presc_val[2] top.pwm_testbench.dut.pwm_wb.presc_val[1] top.pwm_testbench.dut.pwm_wb.presc_val[0]
+[color] 7
+#{top.pwm_testbench.dut.pwm_wb.regs_in.cr_presc_i[15:0]} top.pwm_testbench.dut.pwm_wb.regs_in.cr_presc_i[15] top.pwm_testbench.dut.pwm_wb.regs_in.cr_presc_i[14] top.pwm_testbench.dut.pwm_wb.regs_in.cr_presc_i[13] top.pwm_testbench.dut.pwm_wb.regs_in.cr_presc_i[12] top.pwm_testbench.dut.pwm_wb.regs_in.cr_presc_i[11] top.pwm_testbench.dut.pwm_wb.regs_in.cr_presc_i[10] top.pwm_testbench.dut.pwm_wb.regs_in.cr_presc_i[9] top.pwm_testbench.dut.pwm_wb.regs_in.cr_presc_i[8] top.pwm_testbench.dut.pwm_wb.regs_in.cr_presc_i[7] top.pwm_testbench.dut.pwm_wb.regs_in.cr_presc_i[6] top.pwm_testbench.dut.pwm_wb.regs_in.cr_presc_i[5] top.pwm_testbench.dut.pwm_wb.regs_in.cr_presc_i[4] top.pwm_testbench.dut.pwm_wb.regs_in.cr_presc_i[3] top.pwm_testbench.dut.pwm_wb.regs_in.cr_presc_i[2] top.pwm_testbench.dut.pwm_wb.regs_in.cr_presc_i[1] top.pwm_testbench.dut.pwm_wb.regs_in.cr_presc_i[0]
+@22
+[color] 6
+#{top.pwm_testbench.dut.pwm_wb.regs_out.cr_presc_o[15:0]} top.pwm_testbench.dut.pwm_wb.regs_out.cr_presc_o[15] top.pwm_testbench.dut.pwm_wb.regs_out.cr_presc_o[14] top.pwm_testbench.dut.pwm_wb.regs_out.cr_presc_o[13] top.pwm_testbench.dut.pwm_wb.regs_out.cr_presc_o[12] top.pwm_testbench.dut.pwm_wb.regs_out.cr_presc_o[11] top.pwm_testbench.dut.pwm_wb.regs_out.cr_presc_o[10] top.pwm_testbench.dut.pwm_wb.regs_out.cr_presc_o[9] top.pwm_testbench.dut.pwm_wb.regs_out.cr_presc_o[8] top.pwm_testbench.dut.pwm_wb.regs_out.cr_presc_o[7] top.pwm_testbench.dut.pwm_wb.regs_out.cr_presc_o[6] top.pwm_testbench.dut.pwm_wb.regs_out.cr_presc_o[5] top.pwm_testbench.dut.pwm_wb.regs_out.cr_presc_o[4] top.pwm_testbench.dut.pwm_wb.regs_out.cr_presc_o[3] top.pwm_testbench.dut.pwm_wb.regs_out.cr_presc_o[2] top.pwm_testbench.dut.pwm_wb.regs_out.cr_presc_o[1] top.pwm_testbench.dut.pwm_wb.regs_out.cr_presc_o[0]
+@20000
+-
+@22
+#{top.pwm_testbench.dut.pwm_wb.cntr_main[15:0]} top.pwm_testbench.dut.pwm_wb.cntr_main[15] top.pwm_testbench.dut.pwm_wb.cntr_main[14] top.pwm_testbench.dut.pwm_wb.cntr_main[13] top.pwm_testbench.dut.pwm_wb.cntr_main[12] top.pwm_testbench.dut.pwm_wb.cntr_main[11] top.pwm_testbench.dut.pwm_wb.cntr_main[10] top.pwm_testbench.dut.pwm_wb.cntr_main[9] top.pwm_testbench.dut.pwm_wb.cntr_main[8] top.pwm_testbench.dut.pwm_wb.cntr_main[7] top.pwm_testbench.dut.pwm_wb.cntr_main[6] top.pwm_testbench.dut.pwm_wb.cntr_main[5] top.pwm_testbench.dut.pwm_wb.cntr_main[4] top.pwm_testbench.dut.pwm_wb.cntr_main[3] top.pwm_testbench.dut.pwm_wb.cntr_main[2] top.pwm_testbench.dut.pwm_wb.cntr_main[1] top.pwm_testbench.dut.pwm_wb.cntr_main[0]
+@20000
+-
+@8024
+#{top.pwm_testbench.dut.pwm_wb.cntr_pre[15:0]} top.pwm_testbench.dut.pwm_wb.cntr_pre[15] top.pwm_testbench.dut.pwm_wb.cntr_pre[14] top.pwm_testbench.dut.pwm_wb.cntr_pre[13] top.pwm_testbench.dut.pwm_wb.cntr_pre[12] top.pwm_testbench.dut.pwm_wb.cntr_pre[11] top.pwm_testbench.dut.pwm_wb.cntr_pre[10] top.pwm_testbench.dut.pwm_wb.cntr_pre[9] top.pwm_testbench.dut.pwm_wb.cntr_pre[8] top.pwm_testbench.dut.pwm_wb.cntr_pre[7] top.pwm_testbench.dut.pwm_wb.cntr_pre[6] top.pwm_testbench.dut.pwm_wb.cntr_pre[5] top.pwm_testbench.dut.pwm_wb.cntr_pre[4] top.pwm_testbench.dut.pwm_wb.cntr_pre[3] top.pwm_testbench.dut.pwm_wb.cntr_pre[2] top.pwm_testbench.dut.pwm_wb.cntr_pre[1] top.pwm_testbench.dut.pwm_wb.cntr_pre[0]
+@20000
+-
+-
+-
+-
+-
+@800022
+[color] 2
+#{top.pwm_testbench.dut.s_pwm_o[7:0]} top.pwm_testbench.dut.s_pwm_o[7] top.pwm_testbench.dut.s_pwm_o[6] top.pwm_testbench.dut.s_pwm_o[5] top.pwm_testbench.dut.s_pwm_o[4] top.pwm_testbench.dut.s_pwm_o[3] top.pwm_testbench.dut.s_pwm_o[2] top.pwm_testbench.dut.s_pwm_o[1] top.pwm_testbench.dut.s_pwm_o[0]
+@8028
+[color] 2
+top.pwm_testbench.dut.s_pwm_o[7]
+@28
+[color] 2
+top.pwm_testbench.dut.s_pwm_o[6]
+[color] 2
+top.pwm_testbench.dut.s_pwm_o[5]
+[color] 2
+top.pwm_testbench.dut.s_pwm_o[4]
+[color] 2
+top.pwm_testbench.dut.s_pwm_o[3]
+[color] 2
+top.pwm_testbench.dut.s_pwm_o[2]
+[color] 2
+top.pwm_testbench.dut.s_pwm_o[1]
+[color] 2
+top.pwm_testbench.dut.s_pwm_o[0]
+@20000
+-
+@200
+-adr write
+@22
+#{top.pwm_testbench.s_wb_master_out.adr[31:0]} top.pwm_testbench.s_wb_master_out.adr[31] top.pwm_testbench.s_wb_master_out.adr[30] top.pwm_testbench.s_wb_master_out.adr[29] top.pwm_testbench.s_wb_master_out.adr[28] top.pwm_testbench.s_wb_master_out.adr[27] top.pwm_testbench.s_wb_master_out.adr[26] top.pwm_testbench.s_wb_master_out.adr[25] top.pwm_testbench.s_wb_master_out.adr[24] top.pwm_testbench.s_wb_master_out.adr[23] top.pwm_testbench.s_wb_master_out.adr[22] top.pwm_testbench.s_wb_master_out.adr[21] top.pwm_testbench.s_wb_master_out.adr[20] top.pwm_testbench.s_wb_master_out.adr[19] top.pwm_testbench.s_wb_master_out.adr[18] top.pwm_testbench.s_wb_master_out.adr[17] top.pwm_testbench.s_wb_master_out.adr[16] top.pwm_testbench.s_wb_master_out.adr[15] top.pwm_testbench.s_wb_master_out.adr[14] top.pwm_testbench.s_wb_master_out.adr[13] top.pwm_testbench.s_wb_master_out.adr[12] top.pwm_testbench.s_wb_master_out.adr[11] top.pwm_testbench.s_wb_master_out.adr[10] top.pwm_testbench.s_wb_master_out.adr[9] top.pwm_testbench.s_wb_master_out.adr[8] top.pwm_testbench.s_wb_master_out.adr[7] top.pwm_testbench.s_wb_master_out.adr[6] top.pwm_testbench.s_wb_master_out.adr[5] top.pwm_testbench.s_wb_master_out.adr[4] top.pwm_testbench.s_wb_master_out.adr[3] top.pwm_testbench.s_wb_master_out.adr[2] top.pwm_testbench.s_wb_master_out.adr[1] top.pwm_testbench.s_wb_master_out.adr[0]
+@28
+#{top.pwm_testbench.dut.t_wb_in.adr[31:0]} top.pwm_testbench.dut.t_wb_in.adr[31] top.pwm_testbench.dut.t_wb_in.adr[30] top.pwm_testbench.dut.t_wb_in.adr[29] top.pwm_testbench.dut.t_wb_in.adr[28] top.pwm_testbench.dut.t_wb_in.adr[27] top.pwm_testbench.dut.t_wb_in.adr[26] top.pwm_testbench.dut.t_wb_in.adr[25] top.pwm_testbench.dut.t_wb_in.adr[24] top.pwm_testbench.dut.t_wb_in.adr[23] top.pwm_testbench.dut.t_wb_in.adr[22] top.pwm_testbench.dut.t_wb_in.adr[21] top.pwm_testbench.dut.t_wb_in.adr[20] top.pwm_testbench.dut.t_wb_in.adr[19] top.pwm_testbench.dut.t_wb_in.adr[18] top.pwm_testbench.dut.t_wb_in.adr[17] top.pwm_testbench.dut.t_wb_in.adr[16] top.pwm_testbench.dut.t_wb_in.adr[15] top.pwm_testbench.dut.t_wb_in.adr[14] top.pwm_testbench.dut.t_wb_in.adr[13] top.pwm_testbench.dut.t_wb_in.adr[12] top.pwm_testbench.dut.t_wb_in.adr[11] top.pwm_testbench.dut.t_wb_in.adr[10] top.pwm_testbench.dut.t_wb_in.adr[9] top.pwm_testbench.dut.t_wb_in.adr[8] top.pwm_testbench.dut.t_wb_in.adr[7] top.pwm_testbench.dut.t_wb_in.adr[6] top.pwm_testbench.dut.t_wb_in.adr[5] top.pwm_testbench.dut.t_wb_in.adr[4] top.pwm_testbench.dut.t_wb_in.adr[3] top.pwm_testbench.dut.t_wb_in.adr[2] top.pwm_testbench.dut.t_wb_in.adr[1] top.pwm_testbench.dut.t_wb_in.adr[0]
+#{top.pwm_testbench.dut.pwm_wb.wb_adr_i[5:0]} top.pwm_testbench.dut.pwm_wb.wb_adr_i[5] top.pwm_testbench.dut.pwm_wb.wb_adr_i[4] top.pwm_testbench.dut.pwm_wb.wb_adr_i[3] top.pwm_testbench.dut.pwm_wb.wb_adr_i[2] top.pwm_testbench.dut.pwm_wb.wb_adr_i[1] top.pwm_testbench.dut.pwm_wb.wb_adr_i[0]
+#{top.pwm_testbench.dut.pwm_wb.u_wb_slave.wb_adr_i[3:0]} top.pwm_testbench.dut.pwm_wb.u_wb_slave.wb_adr_i[3] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wb_adr_i[2] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wb_adr_i[1] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wb_adr_i[0]
+@200
+-f_handle_dr_writes
+@22
+[color] 3
+#{top.pwm_testbench.dut.pwm_wb.regs_out.dr0_o[15:0]} top.pwm_testbench.dut.pwm_wb.regs_out.dr0_o[15] top.pwm_testbench.dut.pwm_wb.regs_out.dr0_o[14] top.pwm_testbench.dut.pwm_wb.regs_out.dr0_o[13] top.pwm_testbench.dut.pwm_wb.regs_out.dr0_o[12] top.pwm_testbench.dut.pwm_wb.regs_out.dr0_o[11] top.pwm_testbench.dut.pwm_wb.regs_out.dr0_o[10] top.pwm_testbench.dut.pwm_wb.regs_out.dr0_o[9] top.pwm_testbench.dut.pwm_wb.regs_out.dr0_o[8] top.pwm_testbench.dut.pwm_wb.regs_out.dr0_o[7] top.pwm_testbench.dut.pwm_wb.regs_out.dr0_o[6] top.pwm_testbench.dut.pwm_wb.regs_out.dr0_o[5] top.pwm_testbench.dut.pwm_wb.regs_out.dr0_o[4] top.pwm_testbench.dut.pwm_wb.regs_out.dr0_o[3] top.pwm_testbench.dut.pwm_wb.regs_out.dr0_o[2] top.pwm_testbench.dut.pwm_wb.regs_out.dr0_o[1] top.pwm_testbench.dut.pwm_wb.regs_out.dr0_o[0]
+#{top.pwm_testbench.dut.pwm_wb.regs_in.dr0_i[15:0]} top.pwm_testbench.dut.pwm_wb.regs_in.dr0_i[15] top.pwm_testbench.dut.pwm_wb.regs_in.dr0_i[14] top.pwm_testbench.dut.pwm_wb.regs_in.dr0_i[13] top.pwm_testbench.dut.pwm_wb.regs_in.dr0_i[12] top.pwm_testbench.dut.pwm_wb.regs_in.dr0_i[11] top.pwm_testbench.dut.pwm_wb.regs_in.dr0_i[10] top.pwm_testbench.dut.pwm_wb.regs_in.dr0_i[9] top.pwm_testbench.dut.pwm_wb.regs_in.dr0_i[8] top.pwm_testbench.dut.pwm_wb.regs_in.dr0_i[7] top.pwm_testbench.dut.pwm_wb.regs_in.dr0_i[6] top.pwm_testbench.dut.pwm_wb.regs_in.dr0_i[5] top.pwm_testbench.dut.pwm_wb.regs_in.dr0_i[4] top.pwm_testbench.dut.pwm_wb.regs_in.dr0_i[3] top.pwm_testbench.dut.pwm_wb.regs_in.dr0_i[2] top.pwm_testbench.dut.pwm_wb.regs_in.dr0_i[1] top.pwm_testbench.dut.pwm_wb.regs_in.dr0_i[0]
+@28
+[color] 1
+top.pwm_testbench.dut.pwm_wb.regs_out.dr0_load_o
+[color] 1
+top.pwm_testbench.dut.pwm_wb.regs_out.dr1_load_o
+@22
+[color] 3
+#{top.pwm_testbench.dut.pwm_wb.drive[0][15:0]} top.pwm_testbench.dut.pwm_wb.drive[0][15] top.pwm_testbench.dut.pwm_wb.drive[0][14] top.pwm_testbench.dut.pwm_wb.drive[0][13] top.pwm_testbench.dut.pwm_wb.drive[0][12] top.pwm_testbench.dut.pwm_wb.drive[0][11] top.pwm_testbench.dut.pwm_wb.drive[0][10] top.pwm_testbench.dut.pwm_wb.drive[0][9] top.pwm_testbench.dut.pwm_wb.drive[0][8] top.pwm_testbench.dut.pwm_wb.drive[0][7] top.pwm_testbench.dut.pwm_wb.drive[0][6] top.pwm_testbench.dut.pwm_wb.drive[0][5] top.pwm_testbench.dut.pwm_wb.drive[0][4] top.pwm_testbench.dut.pwm_wb.drive[0][3] top.pwm_testbench.dut.pwm_wb.drive[0][2] top.pwm_testbench.dut.pwm_wb.drive[0][1] top.pwm_testbench.dut.pwm_wb.drive[0][0]
+@20000
+-
+@22
+#{top.pwm_testbench.dut.pwm_wb.drive[1][15:0]} top.pwm_testbench.dut.pwm_wb.drive[1][15] top.pwm_testbench.dut.pwm_wb.drive[1][14] top.pwm_testbench.dut.pwm_wb.drive[1][13] top.pwm_testbench.dut.pwm_wb.drive[1][12] top.pwm_testbench.dut.pwm_wb.drive[1][11] top.pwm_testbench.dut.pwm_wb.drive[1][10] top.pwm_testbench.dut.pwm_wb.drive[1][9] top.pwm_testbench.dut.pwm_wb.drive[1][8] top.pwm_testbench.dut.pwm_wb.drive[1][7] top.pwm_testbench.dut.pwm_wb.drive[1][6] top.pwm_testbench.dut.pwm_wb.drive[1][5] top.pwm_testbench.dut.pwm_wb.drive[1][4] top.pwm_testbench.dut.pwm_wb.drive[1][3] top.pwm_testbench.dut.pwm_wb.drive[1][2] top.pwm_testbench.dut.pwm_wb.drive[1][1] top.pwm_testbench.dut.pwm_wb.drive[1][0]
+#{top.pwm_testbench.dut.pwm_wb.drive[2][15:0]} top.pwm_testbench.dut.pwm_wb.drive[2][15] top.pwm_testbench.dut.pwm_wb.drive[2][14] top.pwm_testbench.dut.pwm_wb.drive[2][13] top.pwm_testbench.dut.pwm_wb.drive[2][12] top.pwm_testbench.dut.pwm_wb.drive[2][11] top.pwm_testbench.dut.pwm_wb.drive[2][10] top.pwm_testbench.dut.pwm_wb.drive[2][9] top.pwm_testbench.dut.pwm_wb.drive[2][8] top.pwm_testbench.dut.pwm_wb.drive[2][7] top.pwm_testbench.dut.pwm_wb.drive[2][6] top.pwm_testbench.dut.pwm_wb.drive[2][5] top.pwm_testbench.dut.pwm_wb.drive[2][4] top.pwm_testbench.dut.pwm_wb.drive[2][3] top.pwm_testbench.dut.pwm_wb.drive[2][2] top.pwm_testbench.dut.pwm_wb.drive[2][1] top.pwm_testbench.dut.pwm_wb.drive[2][0]
+#{top.pwm_testbench.dut.pwm_wb.drive[3][15:0]} top.pwm_testbench.dut.pwm_wb.drive[3][15] top.pwm_testbench.dut.pwm_wb.drive[3][14] top.pwm_testbench.dut.pwm_wb.drive[3][13] top.pwm_testbench.dut.pwm_wb.drive[3][12] top.pwm_testbench.dut.pwm_wb.drive[3][11] top.pwm_testbench.dut.pwm_wb.drive[3][10] top.pwm_testbench.dut.pwm_wb.drive[3][9] top.pwm_testbench.dut.pwm_wb.drive[3][8] top.pwm_testbench.dut.pwm_wb.drive[3][7] top.pwm_testbench.dut.pwm_wb.drive[3][6] top.pwm_testbench.dut.pwm_wb.drive[3][5] top.pwm_testbench.dut.pwm_wb.drive[3][4] top.pwm_testbench.dut.pwm_wb.drive[3][3] top.pwm_testbench.dut.pwm_wb.drive[3][2] top.pwm_testbench.dut.pwm_wb.drive[3][1] top.pwm_testbench.dut.pwm_wb.drive[3][0]
+#{top.pwm_testbench.dut.pwm_wb.drive[4][15:0]} top.pwm_testbench.dut.pwm_wb.drive[4][15] top.pwm_testbench.dut.pwm_wb.drive[4][14] top.pwm_testbench.dut.pwm_wb.drive[4][13] top.pwm_testbench.dut.pwm_wb.drive[4][12] top.pwm_testbench.dut.pwm_wb.drive[4][11] top.pwm_testbench.dut.pwm_wb.drive[4][10] top.pwm_testbench.dut.pwm_wb.drive[4][9] top.pwm_testbench.dut.pwm_wb.drive[4][8] top.pwm_testbench.dut.pwm_wb.drive[4][7] top.pwm_testbench.dut.pwm_wb.drive[4][6] top.pwm_testbench.dut.pwm_wb.drive[4][5] top.pwm_testbench.dut.pwm_wb.drive[4][4] top.pwm_testbench.dut.pwm_wb.drive[4][3] top.pwm_testbench.dut.pwm_wb.drive[4][2] top.pwm_testbench.dut.pwm_wb.drive[4][1] top.pwm_testbench.dut.pwm_wb.drive[4][0]
+#{top.pwm_testbench.dut.pwm_wb.drive[5][15:0]} top.pwm_testbench.dut.pwm_wb.drive[5][15] top.pwm_testbench.dut.pwm_wb.drive[5][14] top.pwm_testbench.dut.pwm_wb.drive[5][13] top.pwm_testbench.dut.pwm_wb.drive[5][12] top.pwm_testbench.dut.pwm_wb.drive[5][11] top.pwm_testbench.dut.pwm_wb.drive[5][10] top.pwm_testbench.dut.pwm_wb.drive[5][9] top.pwm_testbench.dut.pwm_wb.drive[5][8] top.pwm_testbench.dut.pwm_wb.drive[5][7] top.pwm_testbench.dut.pwm_wb.drive[5][6] top.pwm_testbench.dut.pwm_wb.drive[5][5] top.pwm_testbench.dut.pwm_wb.drive[5][4] top.pwm_testbench.dut.pwm_wb.drive[5][3] top.pwm_testbench.dut.pwm_wb.drive[5][2] top.pwm_testbench.dut.pwm_wb.drive[5][1] top.pwm_testbench.dut.pwm_wb.drive[5][0]
+#{top.pwm_testbench.dut.pwm_wb.drive[6][15:0]} top.pwm_testbench.dut.pwm_wb.drive[6][15] top.pwm_testbench.dut.pwm_wb.drive[6][14] top.pwm_testbench.dut.pwm_wb.drive[6][13] top.pwm_testbench.dut.pwm_wb.drive[6][12] top.pwm_testbench.dut.pwm_wb.drive[6][11] top.pwm_testbench.dut.pwm_wb.drive[6][10] top.pwm_testbench.dut.pwm_wb.drive[6][9] top.pwm_testbench.dut.pwm_wb.drive[6][8] top.pwm_testbench.dut.pwm_wb.drive[6][7] top.pwm_testbench.dut.pwm_wb.drive[6][6] top.pwm_testbench.dut.pwm_wb.drive[6][5] top.pwm_testbench.dut.pwm_wb.drive[6][4] top.pwm_testbench.dut.pwm_wb.drive[6][3] top.pwm_testbench.dut.pwm_wb.drive[6][2] top.pwm_testbench.dut.pwm_wb.drive[6][1] top.pwm_testbench.dut.pwm_wb.drive[6][0]
+@20000
+-
+@c08022
+#{top.pwm_testbench.dut.pwm_wb.u_wb_slave.rwaddr_reg[3:0]} top.pwm_testbench.dut.pwm_wb.u_wb_slave.rwaddr_reg[3] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rwaddr_reg[2] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rwaddr_reg[1] top.pwm_testbench.dut.pwm_wb.u_wb_slave.rwaddr_reg[0]
+@28
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rwaddr_reg[3]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rwaddr_reg[2]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rwaddr_reg[1]
+top.pwm_testbench.dut.pwm_wb.u_wb_slave.rwaddr_reg[0]
+@1401200
+-group_end
+@22
+#{top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[31:0]} top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[31] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[30] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[29] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[28] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[27] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[26] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[25] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[24] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[23] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[22] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[21] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[20] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[19] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[18] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[17] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[16] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[15] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[14] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[13] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[12] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[11] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[10] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[9] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[8] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[7] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[6] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[5] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[4] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[3] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[2] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[1] top.pwm_testbench.dut.pwm_wb.u_wb_slave.wrdata_reg[0]
+#{top.pwm_testbench.dut.pwm_wb.u_wb_slave.bwsel_reg[3:0]} top.pwm_testbench.dut.pwm_wb.u_wb_slave.bwsel_reg[3] top.pwm_testbench.dut.pwm_wb.u_wb_slave.bwsel_reg[2] top.pwm_testbench.dut.pwm_wb.u_wb_slave.bwsel_reg[1] top.pwm_testbench.dut.pwm_wb.u_wb_slave.bwsel_reg[0]
+#{top.pwm_testbench.dut.pwm_wb.u_wb_slave.bwsel_reg[3:0]} top.pwm_testbench.dut.pwm_wb.u_wb_slave.bwsel_reg[3] top.pwm_testbench.dut.pwm_wb.u_wb_slave.bwsel_reg[2] top.pwm_testbench.dut.pwm_wb.u_wb_slave.bwsel_reg[1] top.pwm_testbench.dut.pwm_wb.u_wb_slave.bwsel_reg[0]
+@1001200
+-group_end
+[pattern_trace] 1
+[pattern_trace] 0
