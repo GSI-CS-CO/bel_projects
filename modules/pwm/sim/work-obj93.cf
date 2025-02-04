@@ -1,0 +1,30 @@
+v 4
+file . "pwm_testbench.vhd" "b0fd75b10f4f943d16e7cfaeb2537ef97603d56d" "20250204150415.508":
+  entity pwm_testbench at 3( 82) + 0 on 28;
+  architecture pwm_testbench_architecture of pwm_testbench at 19( 318) + 0 on 29;
+file . "../src/pwm.vhd" "314f7bc837bab4c98bb1ff182e9147f645153390" "20250204150415.507":
+  entity pwm at 1( 0) + 0 on 26;
+  architecture pwm_arch of pwm at 52( 1361) + 0 on 27;
+file . "../src/pwm_pkg.vhd" "a1c4ea9ed01f7c109523752bbf30607987ddcecd" "20250204150415.507":
+  package pwm_pkg at 1( 0) + 0 on 25;
+file . "../../../ip_cores/general-cores/modules/wishbone/wb_slave_adapter/wb_slave_adapter.vhd" "1fa259d7135716f7b13f38faf26e93d7a9776b89" "20250204150415.507":
+  entity wb_slave_adapter at 28( 1282) + 0 on 23;
+  architecture rtl of wb_slave_adapter at 86( 3667) + 0 on 24;
+file . "../../../ip_cores/general-cores/modules/wishbone/wb_simple_pwm/xwb_simple_pwm.vhd" "d636ac9e3ffef3bff8cff70d5096acc4b576ccdb" "20250204150415.506":
+  entity xwb_simple_pwm at 35( 1743) + 0 on 21;
+  architecture wrapper of xwb_simple_pwm at 65( 2542) + 0 on 22;
+file . "../../../ip_cores/general-cores/modules/wishbone/wb_simple_pwm/wb_simple_pwm.vhd" "702e6732ecb505a62856b960ed7927780098c332" "20250204150415.506":
+  entity wb_simple_pwm at 36( 1743) + 0 on 19;
+  architecture behavioral of wb_simple_pwm at 72( 2856) + 0 on 20;
+file . "../../../ip_cores/general-cores/modules/wishbone/wb_simple_pwm/simple_pwm_wb.vhd" "32e89e66b5d2be31ef6a191463d6080d5784c5af" "20250204150415.505":
+  entity simple_pwm_wb at 13( 741) + 0 on 17;
+  architecture syn of simple_pwm_wb at 38( 1844) + 0 on 18;
+file . "../../../ip_cores/general-cores/modules/wishbone/wb_simple_pwm/simple_pwm_wbgen2_pkg.vhd" "4eb447f2371332803c747cdf2225180eff3b10f6" "20250204150415.504":
+  package spwm_wbgen2_pkg at 13( 749) + 0 on 15 body;
+  package body spwm_wbgen2_pkg at 102( 4658) + 0 on 16;
+file . "../../../ip_cores/general-cores/modules/wishbone/wishbone_pkg.vhd" "94ad3225f0a223326d9f7a983f63ed16172b8458" "20250204150415.503":
+  package wishbone_pkg at 26( 1269) + 0 on 13 body;
+  package body wishbone_pkg at 1295( 54897) + 0 on 14;
+file . "../../../ip_cores/general-cores/modules/genrams/genram_pkg.vhd" "968380252a320e026105acec27ad705d944bc74a" "20250204150415.498":
+  package genram_pkg at 25( 1221) + 0 on 11 body;
+  package body genram_pkg at 290( 13081) + 0 on 12;
