@@ -386,6 +386,7 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
 
        std::string& inspectQueues(const std::string& blockName, std::string& report);      // Show all command fields in Block Queue
                void show(const std::string& title, const std::string& logDictFile, TransferDir dir, bool filterMeta );
+               void showExtAdr(const std::string& node);
                void showUp(bool filterMeta);                                               // show a CPU's Upload address table
                void showDown(bool filterMeta);
                void dumpNode(const std::string& name);                     // hex dump a node

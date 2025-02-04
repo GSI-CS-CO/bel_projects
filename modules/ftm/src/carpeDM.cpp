@@ -200,6 +200,7 @@ vEbwrs& CarpeDM::createCommand(vEbwrs& ew, const std::string& type, const std::s
 
        std::string& CarpeDM::inspectQueues(const std::string& blockName, std::string& report) {return impl_->inspectQueues(blockName, report);}      // Show all command fields in Block Queue
                void CarpeDM::show(const std::string& title, const std::string& logDictFile, TransferDir dir, bool filterMeta ) {return impl_->show(title, logDictFile, dir, filterMeta );}
+            void CarpeDM::showExtAdr(const std::string& node) { return impl_->showExtAdr(node);} 
             void CarpeDM::showUp(bool filterMeta)            { return impl_->showUp(filterMeta);}                                               // show a CPU's Upload address table
             void CarpeDM::showDown(bool filterMeta)          { return impl_->showDown(filterMeta);}
             void CarpeDM::dumpNode(const std::string& name)  { return impl_->dumpNode(name);}                     // hex dump a node

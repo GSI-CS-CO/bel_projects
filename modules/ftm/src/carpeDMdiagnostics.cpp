@@ -745,6 +745,14 @@ void CarpeDM::CarpeDMimpl::show(const std::string& title, const std::string& log
 }
 
 
+void CarpeDM::CarpeDMimpl::showExtAdr(const std::string& nodename) {
+  uint32_t extAdr;
+  try {
+    extAdr = getNodeAdr(nodename, TransferDir::DOWNLOAD, AdrType::EXT);
+  } catch (std::runtime_error const& err) {std::cerr << "Error when trying to look up external Address of Node <" << nodename << ">: " << err.what() << std::endl;}
+
+  sLog << "0x" << std::right << std::hex << std::setfill('0') << std::setw(8) << extAdr << std::endl;
+}
 
 
 using namespace coverage;
