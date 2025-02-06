@@ -401,13 +401,13 @@ scu5-clean::
 	$(MAKE) -C $(PATH_SCU5) clean
 
 ftm5dp:		firmware
-	$(MAKE) -C $(FTM5DP) all
+	$(MAKE) -C $(PATH_FTM5DP) all
 
 ftm5dp-sort:
-	$(call sort_file, $(FTM5DP))
+	$(call sort_file, $(CHECK_FTM5DP))
 
 ftm5dp-check:
-	$(call check_timing, $(FTM5DP))
+	$(call check_timing, $(CHECK_FTM5DP))
 
 ftm5dp-clean::
 	$(MAKE) -C $(PATH_FTM5DP) clean
