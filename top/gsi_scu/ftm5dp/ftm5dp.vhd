@@ -108,7 +108,7 @@ entity ftm5dp is
     -- LVTTL IOs
     -----------------------------------------------------------------------
     fastIO_p_i : in  std_logic_vector(2 downto 0);
-    fastIO_n_i : in  std_logic_vector(2 downto 0);
+    --fastIO_n_i : in  std_logic_vector(2 downto 0); fastIO_n_o : out std_logic_vector(2 downto 0); -- Now possible? If not: Delete this
     fastIO_p_o : out std_logic_vector(2 downto 0); -- Negativ Pin assigned by Quartus 18.1, manually assignment causes issues
     --fastIO_n_o : out std_logic_vector(2 downto 0); -- Now possible? If not: Delete this
     lemo_out   : out std_logic_vector(3 downto 0); -- Isolated Onboard TTL OUT
@@ -502,14 +502,16 @@ begin
     --    datain     => s_gpio_o(7+i)
     --  );
 
-    lvds_to_single_gpio : altera_lvds_ibuf
-      generic map(
-        g_family  => c_family)
-      port map(
-        datain_b  => fastIO_n_i(i),
-        datain    => fastIO_p_i(i),
-        dataout   => s_gpio_i(i)
-      );
+    --lvds_to_single_gpio : altera_lvds_ibuf
+    --  generic map(
+    --    g_family  => c_family)
+    --  port map(
+    --    datain_b  => fastIO_n_i(i),
+    --    datain    => fastIO_p_i(i),
+    --    dataout   => s_gpio_i(i)
+    --  );
+     s_gpio_i(2 downto 0) <= fastIO_p_i(2 downto 0);
+  
   end generate;
   lemo_out <= s_gpio_o(6 downto 3);
 

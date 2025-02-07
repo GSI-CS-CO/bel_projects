@@ -986,7 +986,6 @@ set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_tlu:ecatlu"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_wb_event:ecawb"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|ftm_lm32_cluster:lm32*"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|wr_eca:eca"
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to scu_cb_version
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to scu_cb_version[0]
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to scu_cb_version[1]
@@ -1054,8 +1053,6 @@ set_location_assignment PIN_AD12 -to A_nSEL[8]
 set_location_assignment PIN_AD13 -to fastIO_p_o[1]
 set_location_assignment PIN_AD15 -to A_nSRQ[3]
 set_location_assignment PIN_AD18 -to fastIO_p_o[2]
-set_location_assignment PIN_AD19 -to fastIO_n_i[0]
-set_location_assignment PIN_AD20 -to fastIO_p_i[0]
 set_location_assignment PIN_AD22 -to A_nSRQ[10]
 set_location_assignment PIN_AD23 -to A_nSRQ[8]
 set_location_assignment PIN_AD25 -to "gxbl1c_rx_ch1p_ad26(n)"
@@ -1070,9 +1067,7 @@ set_location_assignment PIN_AE14 -to A_nTiming_Cycle
 set_location_assignment PIN_AE15 -to lemo_out[0]
 set_location_assignment PIN_AE16 -to lemo_in[0]
 set_location_assignment PIN_AE17 -to fastIO_p_o[0]
-set_location_assignment PIN_AE19 -to fastIO_p_i[2]
 set_location_assignment PIN_AE1 -to ext_ch[11]
-set_location_assignment PIN_AE20 -to fastIO_n_i[2]
 set_location_assignment PIN_AE21 -to A_nSRQ[11]
 set_location_assignment PIN_AE22 -to A_A[4]
 set_location_assignment PIN_AE23 -to A_nSRQ[7]
@@ -1099,8 +1094,6 @@ set_location_assignment PIN_AF6 -to ext_ch[1]
 set_location_assignment PIN_AG10 -to A_D[4]
 set_location_assignment PIN_AG11 -to A_A[12]
 set_location_assignment PIN_AG13 -to A_D[8]
-set_location_assignment PIN_AG14 -to fastIO_p_i[1]
-set_location_assignment PIN_AG15 -to fastIO_n_i[1]
 set_location_assignment PIN_AG16 -to lemo_out[1]
 set_location_assignment PIN_AG18 -to A_nDtack
 set_location_assignment PIN_AG19 -to A_A[3]
@@ -1328,3 +1321,5 @@ set_location_assignment PIN_Y4 -to ext_ch[10]
 set_location_assignment PIN_Y5 -to ext_ch[7]
 set_location_assignment PIN_Y6 -to ext_ch[14]
 set_location_assignment PIN_Y7 -to ext_ch[13]
+
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
