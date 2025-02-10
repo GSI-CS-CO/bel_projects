@@ -136,6 +136,7 @@ package monster_pkg is
       g_en_eca_tap           : boolean := false;
       g_en_asmi              : boolean := false;
       g_en_psram_delay       : boolean := false;
+      g_en_pwm               : boolean := true;
       g_en_enc_err_counter   : boolean := false;
       g_en_a10vs             : boolean := false;
       g_en_cellular_ram      : boolean := false;
@@ -440,6 +441,8 @@ package monster_pkg is
       -- g_en_user_ow
       ow_io                  : inout std_logic_vector(1 downto 0) := (others => 'Z');
       hw_version             : in std_logic_vector(31 downto 0) := (others => 'Z');
+      -- g_en_pwm
+      pwm_o                  : out    std_logic_vector(7 downto 0);
       poweroff_comx          : out std_logic;
       -- rack mount timing receiver
       is_rmt                 : out   std_logic := 'Z');

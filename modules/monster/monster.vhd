@@ -76,6 +76,7 @@ use work.enc_err_counter_pkg.all;
 use work.a10vs_pkg.all;
 use work.cellular_ram_pkg.all;
 use work.neorv32_shell_pkg.all;
+use work.pwm_pkg.all;
 
 entity monster is
   generic(
@@ -135,6 +136,7 @@ entity monster is
     g_en_eca_tap           : boolean;
     g_en_asmi              : boolean;
     g_en_psram_delay       : boolean;
+    g_en_pwm               : boolean;
     g_en_enc_err_counter   : boolean;
     g_en_a10vs             : boolean;
     g_en_cellular_ram      : boolean;
@@ -435,7 +437,9 @@ entity monster is
    -- g_en_tempsens
     tempsens_clr_out       : out   std_logic;
     -- rack mount timing receiver
-    is_rmt                 : out   std_logic := '0');
+    is_rmt                 : out   std_logic := '0';
+    -- g_en_pwm
+    pwm_o                  : out    std_logic_vector(7 downto 0));
 end monster;
 
 architecture rtl of monster is
@@ -603,7 +607,8 @@ architecture rtl of monster is
     devs_asmi,
     devs_enc_err_counter,
     devs_a10vs,
-    devs_cellular_ram
+    devs_cellular_ram,
+    devs_pwm
   );
   constant c_dev_slaves          : natural := dev_slaves'pos(dev_slaves'right)+1;
 
@@ -650,7 +655,8 @@ architecture rtl of monster is
     dev_slaves'pos(devs_asmi)           => f_sdb_auto_device(c_wb_asmi_sdb,                        g_en_asmi),
     dev_slaves'pos(devs_enc_err_counter)=> f_sdb_auto_device(c_enc_err_counter_sdb,                g_en_enc_err_counter),
     dev_slaves'pos(devs_a10vs)          => f_sdb_auto_device(c_a10vs_sdb,                          g_en_a10vs),
-    dev_slaves'pos(devs_cellular_ram)   => f_sdb_auto_device(f_cellular_ram_sdb(g_cr_bits),        g_en_cellular_ram));
+    dev_slaves'pos(devs_cellular_ram)   => f_sdb_auto_device(f_cellular_ram_sdb(g_cr_bits),        g_en_cellular_ram),
+    dev_slaves'pos(devs_pwm)            => f_sdb_auto_device(c_pwm_sdb,                            g_en_pwm));
   constant c_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_bridge_sdb  : t_sdb_bridge       := f_xwb_bridge_layout_sdb(true, c_dev_layout, c_dev_sdb_address);
@@ -3676,6 +3682,20 @@ end generate;
         slave_i    => a10vs_slave_i,
         slave_o    => a10vs_slave_o
       );
+  end generate;
+
+  pwm_n : if not g_en_pwm generate
+    dev_bus_master_i(dev_slaves'pos(devs_pwm)) <= cc_dummy_slave_out;
+  end generate;
+    
+  pwm_y : if g_en_pwm generate
+    pwm_pwm : pwm
+      port map (
+        s_clk_sys_i     => clk_sys,
+        s_rst_sys_n_i   => rstn_sys,
+        t_wb_out        => dev_bus_master_i(dev_slaves'pos(devs_pwm)),
+        t_wb_in         => dev_bus_master_o(dev_slaves'pos(devs_pwm)),
+        s_pwm_o         => pwm_o);
   end generate;
 
   -- END OF Wishbone slaves

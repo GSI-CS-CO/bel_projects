@@ -32,7 +32,6 @@ modules = {
     "monster",
     "heap",
     "butis_t0",
-    "power_test",
     "ssd1325",
     "nau8811",
     "psram",
@@ -57,5 +56,6 @@ modules = {
     "a10vs",
     "cellular_ram",
     "neorv32",
+    "pwm",
   ]
 }
