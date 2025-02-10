@@ -32,7 +32,6 @@ modules = {
     "monster",
     "heap",
     "butis_t0",
-    "power_test",
     "ssd1325",
     "nau8811",
     "psram",
@@ -53,5 +52,6 @@ modules = {
     "diob",
     "wb_timer",
     "i2c_wrapper",
+    "pwm",
   ]
 }
