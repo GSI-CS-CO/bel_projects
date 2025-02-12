@@ -435,6 +435,7 @@ port (
     --   when 1, the outputs in slot 12 are the values of AW_Output_Reg(6),  bit 15..3 free
     --BLM_gate_seq_prep_ck_sel_Reg : in std_logic_vector(15 downto 0);
     BLM_counters_Reg: in std_logic_vector(15 downto 0);
+    BLM_gate_sync_rcv : in std_logic_vector(15 downto 0);
     BLM_gate_recover_Reg : in std_logic_vector(15 downto 0);
     BLM_gate_prep_Reg: in std_logic_vector(15 downto 0);
     BLM_in_sel_Reg          : in t_BLM_reg_Array; --128 x (4 bit for gate ena & 6 bit for up signal ena & 6 for down signal ena)
@@ -731,6 +732,25 @@ component local_thr_mem is
     reg_state_nr : out std_logic_vector(1 downto 0)
   );
   end component local_thr_mem;
+
+  component clk_div_n is
+
+    generic ( n: integer range 0 to 125000);
+
+    Port (
+        clk_in : in  STD_LOGIC;
+        nrst  : in  STD_LOGIC;
+        clk_out: out STD_LOGIC
+    );
+end component clk_div_n;
+
+component  clk_divider_by_5 is
+
+  Port (
+  clk_in: in std_logic;
+  nrst: in std_logic;
+  clk_out: out std_logic);
+end component clk_divider_by_5;
 
 --  +============================================================================================================================+
 --  |                                                         signal                                                             |
@@ -1071,6 +1091,7 @@ signal BLM_in_sel_res_Dtack     : std_logic;
 
 ----------------------------------------------------------------
 -----for hold times, gate enable and clock for gate sequence selection
+signal BLM_gate_sync_rcv: std_logic_vector(15 downto 0);
 signal BLM_wdog_hold_time_Reg :  std_logic_vector(15 downto 0);
 signal BLM_gate_hold_time_Reg :  t_BLM_gate_hold_Time_Array;
 --signal BLM_gate_seq_prep_ck_sel_Reg: std_logic_vector(15 downto 0); 
@@ -1827,10 +1848,9 @@ BLM_ctrl_Reg_1st_block: io_reg
 
   Reg_IO3            =>  BLM_ctrl_Reg,               --  bit 11..0 Direct Gate-usage, one bit for each gate signal input, 
                                                      --  bit 13-12 free  
-                                                     --  bit 14 reset from gate: when 1 the corresponding gate signal selecting the counter enable
-                                                     --         is used instead to reset it.
+                                                     --  
                                                      --  bit 15  free
-  Reg_IO4            => open, -- BLM_gate_recover_Reg, -- bit 15 -12 not used
+  Reg_IO4            => BLM_gate_sync_rcv, -- BLM_gate_recover_Reg, -- bit 15 -12 not used
                                                 -- bit 11-0 for gate_recover signals
   Reg_IO5            =>   BLM_gate_hold_time_Reg(0), 
   Reg_IO6            =>   BLM_gate_hold_time_Reg(1),
@@ -2675,7 +2695,7 @@ BLM_Module : Beam_Loss_check
   BLM_wd_reset => BLM_wd_reset,
   BLM_gate_hold_time_Reg   => BLM_gate_hold_time_Reg,
   BLM_ctrl_Reg             => BLM_ctrl_Reg,
-  --BLM_gate_seq_prep_ck_sel_Reg  => BLM_gate_seq_prep_ck_sel_Reg,
+  BLM_gate_sync_rcv => BLM_gate_sync_rcv,
   BLM_counters_Reg => BLM_counters_REG,
   BLM_gate_recover_Reg => BLM_gate_recover_Reg,
   BLM_gate_prep_Reg => BLM_gate_prep_Reg,
@@ -2963,7 +2983,7 @@ AW_B12s1_connection: p_connector
     blm_clk_sig24_9_9_9MHz: blm_24_9_9_9pll 
     PORT map
     (
-      areset	=> rstn_sys,
+      areset	=> not rstn_sys,
       inclk0	=> clk_sys,
 
       c0	=>  blm_clk_24_9MHz,
@@ -2971,68 +2991,69 @@ AW_B12s1_connection: p_connector
     );
  
 
-  blm_clk_100MHz <= ENA_every_10ms;
+  blm_clk_100MHz <= '0'; --no longer used, therefore no longer generated
   blm_clk_10MHz  <= Ena_every_100ns;
   blm_clk_1MHz   <= Ena_every_1us;
 
 
-  comp_25_Mhz_gen: div_n
-  generic map (n => 4, diag_on => 0)  
-  port map(
-                clk => clk_sys,
-                ena => blm_clk_100MHz,
-                div_o => blm_clk_25MHz
-   );             
+comp_25_Mhz_gen: clk_divider_by_5
 
+  Port map(
+      clk_in => clk_sys,
+      nrst  	=> rstn_sys,
+      clk_out => blm_clk_25MHz
+  );
+            
 
-  comp_0_99_Mhz_gen: div_n
-  generic map (n => 10, diag_on => 0)
-    port map(
-                clk => clk_sys,
-                ena => blm_clk_9_9MHz,
-                div_o => blm_clk_0_99MHz
-     
+comp_0_99_Mhz_gen: clk_div_n 
+generic map (n => 5) --( n=> 10)
+  Port map(
+      clk_in => blm_clk_9_9MHz,
+      nrst  	=> rstn_sys,
+      clk_out => blm_clk_0_99MHz
   );
 
 
-  comp_100_kHz_gen:  div_n
-  generic map (n => 1000, diag_on => 0) 
-  port map(  
-                clk => clk_sys,
-                ena => blm_clk_100MHz,
-                div_o => blm_clk_100kHz
-  );
+comp_100_kHz_gen: clk_div_n 
+
+generic map (n => 5) --( n=> 10)
+Port map(
+    clk_in => blm_clk_1MHz,
+    nrst  	=> rstn_sys,
+    clk_out => blm_clk_100kHz
+);
 
 
-  comp_99kHz_gen:  div_n
-  generic map (n => 100, diag_on => 0)  
-  port map(
-                clk => clk_sys,
-                ena => blm_clk_9_9MHz,
-                div_o => blm_clk_99kHz
-     
-  );
+comp_99kHz_gen: clk_div_n 
+
+generic map (n => 50) --( n=> 100)
+Port map(
+    clk_in => blm_clk_9_9MHz,
+    nrst  	=> rstn_sys,
+    clk_out => blm_clk_99kHz
+);
 
 
+comp_10_kHz_gen: clk_div_n 
 
-  comp_10_kHz_gen:  div_n
-  generic map (n => 1000, diag_on => 0)  
-  port map (
-                clk => clk_sys,
-                ena => blm_clk_100MHz,
-                div_o => blm_clk_10kHz
-  );
+generic map(n => 50) --( n=> 100)
+Port map(
+    clk_in => blm_clk_1MHz,
+    nrst  	=> rstn_sys,
+    clk_out => blm_clk_10kHz
+);
 
 
-  comp_1_kHz_gen: div_n
-  generic map (n => 10000, diag_on => 0)  
-  port map(
-                clk => clk_sys,
-                ena => blm_clk_100MHz,
-                div_o =>  blm_clk_1kHz
-  );
+comp_1_kHz_gen: clk_div_n 
+
+generic map (n => 500) -- ( n=> 1000)
+Port map(
+    clk_in => blm_clk_1MHz,
+    nrst  	=> rstn_sys,
+    clk_out => blm_clk_1kHz
+);
+
   
-
     pos_threshold <= loc_pos_thr;
     neg_threshold <= loc_neg_thr; 
  
