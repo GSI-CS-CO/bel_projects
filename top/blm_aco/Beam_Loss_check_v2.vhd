@@ -26,7 +26,7 @@ port (
     BLM_wd_reset            : in std_logic_vector(53 downto 0);
     BLM_gate_hold_time_Reg  : in  t_BLM_gate_hold_Time_Array;
     BLM_ctrl_Reg            : in std_logic_vector(15 downto 0);  
-                                                              
+    BLM_gate_sync_rcv : in std_logic_vector(15 downto 0);                                                        
     BLM_counters_Reg: in std_logic_vector(15 downto 0); --bit 15-2 free
                                                                    --bit 1 reset from gate CTR_AUTORESET
                                                                    --bit 0 global counter RESET                                                                -- bit 11-0f or gate_prepare signals
@@ -133,6 +133,8 @@ component BLM_gate_timing_seq is
       gate_in : in std_logic_vector(n-1 downto 0);        -- input signal
       direct_gate : in std_logic_vector(n-1 downto 0);
       BLM_gate_recover: in std_logic_vector(11 downto 0); 
+
+      gate_sync_rcv : in std_logic_vector(11 downto 0);
       BLM_gate_prepare : in std_logic_vector(11 downto 0); 
       hold_time : in  t_BLM_gate_hold_Time_Array;
       gate_error : out std_logic_vector(n-1 downto 0); -- gate doesn't start within the given timeout
@@ -281,6 +283,8 @@ end process direct_gate_operation;
       direct_gate => direct_gate,
       BLM_gate_recover => BLM_gate_recover(5 downto 0)&BLM_gate_recover(11 downto 6),
       BLM_gate_prepare => BLM_gate_prepare(5 downto 0)&BLM_gate_prepare(11 downto 6),
+
+      gate_sync_rcv  => BLM_gate_sync_rcv(5 downto 0)& BLM_gate_sync_rcv(11 downto 6),
       hold_time => gate_hold_time,
 
       gate_error => gate_sm_error, -- gate error
@@ -392,6 +396,6 @@ BLM_out_section: BLM_out_el
       end loop;
       end process counters_readout_proc;
 
-      
+     
   end architecture;
 

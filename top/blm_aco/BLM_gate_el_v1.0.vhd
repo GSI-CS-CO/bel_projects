@@ -11,6 +11,7 @@ port(
  direct_gate : in std_logic;
   prepare : in std_logic;
   recover : in std_logic;
+  sync_rcv: in std_logic;
   hold: in std_logic_vector(15 downto 0);
 
   gate_error : out std_logic;  -- gate doesn't start within the given timeout
@@ -45,12 +46,12 @@ begin
 
     case gate_state is
 
-      when idle           => state_sm <= 0;
-      when prepare_state  => state_sm <= 1;
-      when gate           => state_sm <= 2;
-      when waiting        => state_sm <= 3;
-      when error          => state_sm <= 4;
-      when recover_state  => state_sm <= 5;
+      when idle              => state_sm <= 0;
+      when prepare_state     => state_sm <= 1;
+      when gate              => state_sm <= 2;
+      when waiting           => state_sm <= 3;
+      when error             => state_sm <= 4;
+      when recover_state     => state_sm <= 5;
       when direct_gate_state => state_sm <= 6;
 
       when others         => null;
@@ -69,28 +70,27 @@ gate_proc: process (clk_i, rstn_i)
         gate_error  <= '0';
         gate_out <='0';
         gate_er <='0';
-       gate_state <= idle;
-      gate_state_nr <= "000";
+        gate_state <= idle;
+        gate_state_nr <= "000";
         curr_val <='0';
      
       elsif rising_edge(clk_i) then
 
         curr_val <= gate_in ;
-       gate_state_nr <=  std_logic_vector(to_unsigned(state_sm, gate_state_nr'length));
+        gate_state_nr <=  std_logic_vector(to_unsigned(state_sm, gate_state_nr'length));
         gate_error <= gate_er;
         gate_out <= gate_out_sm;
 
-     hold_time <=unsigned(hold); 
-     timeout_reset <= hold_time &"00000000000000";
-         case gate_state is
+       hold_time <=unsigned(hold); 
+       timeout_reset <= hold_time &"00000000000000";
+       
+       case gate_state is
 
              when idle =>
-                   timeout <= timeout_reset;
-
+                   
                   if direct_gate ='1' then
                     gate_state <= direct_gate_state;
-                    gate_er <='0';
-                    
+                    gate_er <='0';                
 
                   else  
                     if curr_val='1' then --0
@@ -98,7 +98,8 @@ gate_proc: process (clk_i, rstn_i)
                       gate_state <= error;    
                      
                     elsif prepare ='1' then
-                       gate_state <=prepare_state;
+                      timeout <= timeout_reset;
+                      gate_state <=prepare_state;
                    
                      end if;
                   end if;
@@ -109,8 +110,7 @@ gate_proc: process (clk_i, rstn_i)
                        gate_state <= gate;
                       gate_out_sm <= '1';
                      
-                     else
-         
+                     else     
            
                             timeout <= timeout -1;
                             if (to_integer(timeout )=0) then
@@ -151,9 +151,16 @@ gate_proc: process (clk_i, rstn_i)
               when recover_state => --5
                     
                               if recover ='0' then 
-                               gate_state <= idle;
-                               gate_er<='0';
-                               
+                                if sync_rcv ='0' then
+                                  gate_state <= idle;
+                                  gate_er<='0';
+                                else
+                                  if prepare ='1' then  
+                                    timeout <= timeout_reset;
+                                    gate_state <= prepare_state;
+                                    gate_er <='0';
+                                  end if;
+                                end if;
                               end if;
                 
               when direct_gate_state => --6
@@ -164,8 +171,6 @@ gate_proc: process (clk_i, rstn_i)
               if direct_gate ='0' then
                 gate_state <= idle;
               end if;
-
-              --gate_out_sm <= curr_val;
 
               when others => null;
           end case;

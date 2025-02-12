@@ -21,7 +21,7 @@ port(
   BLM_gate_recover: in std_logic_vector(11 downto 0); 
   BLM_gate_prepare : in std_logic_vector(11 downto 0); 
   hold_time : in  t_BLM_gate_hold_Time_Array;
---  all_thres_ready: in std_logic;
+  gate_sync_rcv : in std_logic_vector(11 downto 0);
   gate_error : out std_logic_vector(n-1 downto 0);  -- gate doesn't start within the given timeout
   state_nr: out t_gate_state_nr;
   gate_out: out std_logic_vector(n-1 downto 0)        -- out gate signal
@@ -45,6 +45,7 @@ component BLM_gate_timing_seq_elem is
     direct_gate : in std_logic;
     prepare : in std_logic;
     recover : in std_logic;
+    sync_rcv : in std_logic;
     hold: in std_logic_vector(15 downto 0);
 --
     gate_error : out std_logic;  -- gate doesn't start within the given timeout
@@ -72,6 +73,7 @@ begin
               direct_gate => direct_gate(i),
               prepare => BLM_gate_prepare(i),
               recover => BLM_gate_recover(i),
+              sync_rcv =>gate_sync_rcv(i),
               hold => hold_time(i),
 
               gate_error => gate_er(i), 
