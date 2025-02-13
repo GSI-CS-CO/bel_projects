@@ -36,6 +36,7 @@ architecture pwm_testbench_architecture of pwm_testbench is
   constant c_pwm_allzero   : std_logic_vector(31 downto 0) := ( others => '0');
   constant c_pwm_allone    : t_wishbone_data := ( others => '1');
   constant c_pwm_fifteen   : t_wishbone_data := ( 0 => '1', 1 => '1', 2 => '1', 3 => '1',others => '0');
+  constant c_pwm_0_1       : t_wishbone_data := x"00000001";
   constant c_pwm_10_1024   : t_wishbone_data := x"A0000040";
   constant c_pwm_2_254     : t_wishbone_data := x"0200FE00";
   constant c_pwm_2_10      : t_wishbone_data := x"0002000A";
@@ -44,7 +45,8 @@ architecture pwm_testbench_architecture of pwm_testbench is
   constant c_pwm_4_8       : t_wishbone_data := x"00040008";
   constant c_pwm_4_1       : t_wishbone_data := x"00040001";
   constant c_pwm_5_3       : t_wishbone_data := x"00050003";
-  --constant c_pwm_4_2       : t_wishbone_data := x"00040002";
+  constant c_pwm_test_c_p  : t_wishbone_data := x"9C3F03E7";
+  constant c_pwm_test_d    : t_wishbone_data := x"00004E1F";
 
   constant c_pwm_adr_0     : std_logic_vector(31 downto 0) := ( 0 => '0', 1 => '0', 2 => '0', 3 => '0',others => '0');
 
@@ -166,8 +168,8 @@ function to_logic_to_int(x : std_logic) return natural is
             --
             -- WRITE CONFIG REGISTER 1
             wait until rising_edge(s_clk);
-            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_pwm_adr_0, c_pwm_ch_0, c_pwm_4_2);
-            report("WRITE: Writing c_pwm_4_2 at c_pwm_adr_0");
+            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_pwm_adr_0, c_pwm_ch_0, c_pwm_test_c_p);
+            report("WRITE: Writing c_pwm_test_c_p at c_pwm_adr_0 - setting period to 9C3F, prescaler to 03E7");
             while (s_wb_master_in.ack = '0') loop
               wait until rising_edge(s_clk);
             end loop;
@@ -211,8 +213,8 @@ function to_logic_to_int(x : std_logic) return natural is
             --
             -- WRITE CONFIG REGISTER 2
             wait until rising_edge(s_clk);
-            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_pwm_adr_1, c_pwm_ch_0, c_pwm_4_1 );
-            report("WRITE: Trigger load Channel 0 - Writing c_pwm_4_1 at c_pwm_adr_1");
+            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_pwm_adr_1, c_pwm_ch_0, c_pwm_test_d);
+            report("WRITE: Trigger load Channel 0 - Writing c_pwm_test_d at c_pwm_adr_1");
             while (s_wb_master_in.ack = '0') loop
               wait until rising_edge(s_clk);
             end loop;
@@ -238,36 +240,36 @@ function to_logic_to_int(x : std_logic) return natural is
             end loop; -- Waiter
             --
             --
-            --
-            -- WRITE CONFIG REGISTER 2
-            wait until rising_edge(s_clk);
-            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_pwm_adr_1, c_pwm_ch_0, c_pwm_5_3);
-            report("WRITE: Trigger load Channel 0 - Writing _pwm_5_3 at c_pwm_adr_1");
-            while (s_wb_master_in.ack = '0') loop
-              wait until rising_edge(s_clk);
-            end loop;
-            s_wb_master_out  <= wb_stim(c_cyc_off, c_str_off, c_we_off,  c_pwm_adr_0, c_pwm_ch_0, c_pwm_allzero);
-            --
-            for i in 0 to 5 loop
-              wait until rising_edge(s_clk);
-            end loop; -- Waiter
-            --
-            --
-            --
-            -- READ CONFIG REGISTER 2
-            wait until rising_edge(s_clk);
-            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_off, c_pwm_adr_1, c_pwm_ch_0, c_pwm_allzero);
-            report("READ: c_pwm_adr_1");
-            while (s_wb_master_in.ack = '0') loop
-              wait until rising_edge(s_clk);
-            end loop;
-            s_wb_master_out  <= wb_stim(c_cyc_off, c_str_off, c_we_off,  c_pwm_adr_0, c_pwm_ch_0, c_pwm_allzero);
-            --
-            for i in 0 to 100 loop
-              wait until rising_edge(s_clk);
-            end loop; -- Waiter
-            --
-            --
+            ----
+            ---- WRITE CONFIG REGISTER 2
+            --wait until rising_edge(s_clk);
+            --s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_pwm_adr_1, c_pwm_ch_0, c_pwm_5_3);
+            --report("WRITE: Trigger load Channel 0 - Writing _pwm_5_3 at c_pwm_adr_1");
+            --while (s_wb_master_in.ack = '0') loop
+            --  wait until rising_edge(s_clk);
+            --end loop;
+            --s_wb_master_out  <= wb_stim(c_cyc_off, c_str_off, c_we_off,  c_pwm_adr_0, c_pwm_ch_0, c_pwm_allzero);
+            ----
+            --for i in 0 to 5 loop
+            --  wait until rising_edge(s_clk);
+            --end loop; -- Waiter
+            ----
+            ----
+            ----
+            ---- READ CONFIG REGISTER 2
+            --wait until rising_edge(s_clk);
+            --s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_off, c_pwm_adr_1, c_pwm_ch_0, c_pwm_allzero);
+            --report("READ: c_pwm_adr_1");
+            --while (s_wb_master_in.ack = '0') loop
+            --  wait until rising_edge(s_clk);
+            --end loop;
+            --s_wb_master_out  <= wb_stim(c_cyc_off, c_str_off, c_we_off,  c_pwm_adr_0, c_pwm_ch_0, c_pwm_allzero);
+            ----
+            --for i in 0 to 100 loop
+            --  wait until rising_edge(s_clk);
+            --end loop; -- Waiter
+            ----
+            ----
             ----
             ----
             ---- WRITE CONFIG REGISTER 2

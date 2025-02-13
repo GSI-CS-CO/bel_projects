@@ -4,20 +4,30 @@ use ieee.numeric_std.all;
 
 library work;
 use work.wishbone_pkg.all;
-use work.spwm_wbgen2_pkg.all; 
+use work.spwm_wbgen2_pkg.all;
+
+-- This is just a wrapper for the PWM module from general_cores
 
 entity pwm is
 
-
     generic (
         g_simulation                : in boolean := false;
+
         g_pwm_channel_num           : integer range 1 to 8 := 8;
-        g_pwm_interface_mode        : t_wishbone_interface_mode := PIPELINED
+        g_pwm_regs_size             : integer range 1 to 16 := 16;
+        
+        g_pwm_default_period        : integer range 1 to 16 := 16;
+        g_pwm_default_presc         : integer range 0 to 255 := 0;
+        g_pwm_default_val           : integer range 0 to 255 := 0;
+
+        g_pwm_interface_mode        : t_wishbone_interface_mode := PIPELINED;
+        g_pwm_address_granularity   : t_wishbone_address_granularity := BYTE
+
+
     );
 
     port(
-    
-    -- these two sys signals come from SysCon
+
     s_clk_sys_i       : in std_logic;
     s_rst_sys_n_i     : in std_logic;
 
@@ -44,7 +54,6 @@ entity pwm is
         -- equal to t_wishbone_master_out
 
     s_pwm_o           : out std_logic_vector(g_pwm_channel_num-1 downto 0)
-    -- start with only one channel
     );
 
 end entity;
@@ -80,15 +89,21 @@ begin
     --      pwm_o      : out std_logic_vector(g_num_channels-1 downto 0));
     --end component;
     generic map(
-        g_num_channels          =>  g_pwm_channel_num,
-        g_interface_mode        =>  g_pwm_interface_mode,
-        g_default_val           =>  0
+
+        g_num_channels        =>  g_pwm_channel_num,
+        g_regs_size           =>  g_pwm_regs_size,
+        g_default_period      =>  g_pwm_default_period,
+        g_default_presc       =>  g_pwm_default_presc,
+        g_default_val         =>  g_pwm_default_val,
+        g_interface_mode      =>  g_pwm_interface_mode,
+        g_address_granularity =>  g_pwm_address_granularity
+    
     )
     port map (
         rst_n_i     =>  s_rst_sys_n_i,
         clk_sys_i   =>  s_clk_sys_i,
 
-        -- as defined in the module
+        -- as defined in the general_cores module
         -- wb_simple_pwm only takes the lower 6 bits
         wb_adr_i    => t_wb_in.adr(5 downto 0),
         wb_dat_i    => t_wb_in.dat,    
