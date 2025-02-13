@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-Jul-2024
+ *  version : 30-Sep-2024
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000821                                     // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000902                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -708,17 +708,19 @@ int16_t writeToPZU(uint16_t ifbAddr, uint16_t modAddr, uint16_t data)
   volatile uint32_t *pMilPiggy;
 
   pMilPiggy = fwlib_getMilPiggy();
+
+  /* chk: according to Stefan Rauch, first the data shall be written, select modules comes second */
   
   // select module
   wData     = (modAddr << 8) | C_IO32_KANAL_0;
-  if ((busStatus = writeDevMil(pMilPiggy, ifbAddr, IFB_ADR_BUS_W, wData)) != MIL_STAT_OK) {
+  if ((busStatus = writeDevMil(pMilPiggy, 0, ifbAddr, IFB_ADR_BUS_W, wData)) != MIL_STAT_OK) {
     DBPRINT1("dm-unipz: writeToPZU failed (address), MIL error code %d\n", busStatus);
     return busStatus;
   } // if busStatus not ok
 
   // write data word
   wData     = data;
-  busStatus = writeDevMil(pMilPiggy, ifbAddr, IFB_DATA_BUS_W, wData);
+  busStatus = writeDevMil(pMilPiggy, 0, ifbAddr, IFB_DATA_BUS_W, wData);
   if (busStatus != MIL_STAT_OK) DBPRINT1("dm-unipz: writeToPZU failed (data), MIL error code %d\n", busStatus);
   
   return (busStatus);
@@ -737,13 +739,13 @@ int16_t readFromPZU(uint16_t ifbAddr, uint16_t modAddr, uint16_t *data)
     
   // select module
   wData     = (modAddr << 8) | C_IO32_KANAL_0;
-  if ((busStatus = writeDevMil(pMilPiggy, ifbAddr, IFB_ADR_BUS_W, wData))  != MIL_STAT_OK) {
+  if ((busStatus = writeDevMil(pMilPiggy, 0, ifbAddr, IFB_ADR_BUS_W, wData))  != MIL_STAT_OK) {
     DBPRINT1("dm-unipz: readFromPZU failed (address), MIL error code %d\n", busStatus);
     return busStatus;
   } // if busStatus not ok
 
   // read data
-  if ((busStatus = readDevMil(pMilPiggy, ifbAddr, IFB_DATA_BUS_R, &rData)) == MIL_STAT_OK) *data = rData;
+  if ((busStatus = readDevMil(pMilPiggy, 0, ifbAddr, IFB_DATA_BUS_R, &rData)) == MIL_STAT_OK) *data = rData;
   if (busStatus != MIL_STAT_OK) DBPRINT1("dm-unipz: readFromPZU failed (data), MIL error code %d\n", busStatus);
   
   return(busStatus);
@@ -910,21 +912,21 @@ uint32_t configMILEvent(uint16_t evtCode)
 
 
   // initialize status and command register with initial values; disable event filtering; clear filter RAM
-  if (writeCtrlStatRegEvtMil(pMilPiggy, MIL_CTRL_STAT_ENDECODER_FPGA | MIL_CTRL_STAT_INTR_DEB_ON) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+  if (writeCtrlStatRegEvtMil(pMilPiggy, 0, MIL_CTRL_STAT_ENDECODER_FPGA | MIL_CTRL_STAT_INTR_DEB_ON) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
 
   // clean up 
-  if (disableLemoEvtMil(pMilPiggy, 1) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
-  if (disableLemoEvtMil(pMilPiggy, 2) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
-  if (disableFilterEvtMil(pMilPiggy)  != MIL_STAT_OK) return COMMON_STATUS_ERROR; 
-  if (clearFilterEvtMil(pMilPiggy)    != MIL_STAT_OK) return COMMON_STATUS_ERROR; 
+  if (disableLemoEvtMil(pMilPiggy, 0, 1) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+  if (disableLemoEvtMil(pMilPiggy, 0, 2) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+  if (disableFilterEvtMil(pMilPiggy, 0)  != MIL_STAT_OK) return COMMON_STATUS_ERROR; 
+  if (clearFilterEvtMil(pMilPiggy, 0)    != MIL_STAT_OK) return COMMON_STATUS_ERROR; 
 
   for (i=0; i < (0xf+1); i++) {
     // set filter (FIFO and LEMO1 pulsing) for all possible virtual accelerators
-    if (setFilterEvtMil(pMilPiggy,  evtCode, i, MIL_FILTER_EV_TO_FIFO | MIL_FILTER_EV_PULS1_S) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+    if (setFilterEvtMil(pMilPiggy, 0, evtCode, i, MIL_FILTER_EV_TO_FIFO | MIL_FILTER_EV_PULS1_S) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
   }
 
   // configure LEMO1 for pulse generation
-  if (configLemoPulseEvtMil(pMilPiggy, 1) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+  if (configLemoPulseEvtMil(pMilPiggy, 0, 1) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
 
   return COMMON_STATUS_OK;
 } // configMILEvent
@@ -996,13 +998,13 @@ uint32_t extern_entryActionConfigured()
   // dropped test if DM is reachable by reading from ECA input: no ECA at DM
 
   // reset MIL piggy and wait
-  if ((status = resetPiggyDevMil(pMilPiggy))  != MIL_STAT_OK) {
+  if ((status = resetDevMil(pMilPiggy, 0))  != MIL_STAT_OK) {
     DBPRINT1("dm-unipz: ERROR - can't reset MIL Piggy\n");
     return DMUNIPZ_STATUS_DEVBUSERROR;
   } 
   
   // check if modulbus I/O is ok
-  if ((status = echoTestDevMil(pMilPiggy, IFB_ADDRESS_SIS, 0xbabe)) != MIL_STAT_OK) {
+  if ((status = echoTestDevMil(pMilPiggy, 0, IFB_ADDRESS_SIS, 0xbabe)) != MIL_STAT_OK) {
     DBPRINT1("dm-unipz: ERROR - modulbus SIS IFK not available at (ext) base address 0x%08x! Error code is %u\n", (unsigned int)((uint32_t)pMilPiggy & 0x7FFFFFFF), (unsigned int)status);
     return DMUNIPZ_STATUS_DEVBUSERROR;
   }
@@ -1017,8 +1019,8 @@ uint32_t extern_entryActionConfigured()
 
   DBPRINT1("dm-unipz: MIL piggy configured for receving events (eventbus)\n");
 
-  configLemoOutputEvtMil(pMilPiggy, 2);    // used to see a blinking LED (and optionally connect a scope) for debugging
-  checkClearReqNotOk(uniTimeout);          // in case a 'req_not_ok' flag has been set at UNIPZ, try to clear it
+  configLemoOutputEvtMil(pMilPiggy, 0, 2);    // used to see a blinking LED (and optionally connect a scope) for debugging
+  checkClearReqNotOk(uniTimeout);             // in case a 'req_not_ok' flag has been set at UNIPZ, try to clear it
 
   // clear bits for modulbus I/O to UNILAC
   writePZUData.uword = 0x0;
@@ -1053,7 +1055,7 @@ volatile uint32_t *pMilPiggy;
 
   pMilPiggy = fwlib_getMilPiggy();
   
-  if (disableFilterEvtMil(pMilPiggy) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+  if (disableFilterEvtMil(pMilPiggy, 0) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
 
   // always disable debugging when entering state 'operation'
   flagDebug = 0;
@@ -1276,8 +1278,8 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       } // if !flagBooster
 
       //---- arm MIL Piggy 
-      enableFilterEvtMil(pMilPiggy);                                               // enable filter @ MIL piggy
-      clearFifoEvtMil(pMilPiggy);                                                  // get rid of junk in FIFO @ MIL piggy
+      enableFilterEvtMil(pMilPiggy, 0);                                            // enable filter @ MIL piggy
+      clearFifoEvtMil(pMilPiggy, 0);                                               // get rid of junk in FIFO @ MIL piggy
 
       *dtBprep = getSysTime() - ecaDeadline;                                       // diagnostics: time difference between CMD_UNI_BREQ and begine to request at UNIPZ
       *statusTransfer = *statusTransfer | (0x1 << DMUNIPZ_TRANS_REQBEAM);          // diagnostics: update status of transfer
@@ -1354,7 +1356,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       releaseBeam(uniTimeout);                                                     // release beam request at UNIPZ
       unprepareBeam();                                                             // release beam preparation at UNIPZ
       checkClearReqNotOk(uniTimeout);                                              // check and possibly clear 'req not ok' flag at UNIPZ
-      disableFilterEvtMil(pMilPiggy);                                              // disable filter @ MIL piggy to avoid accumulation of junk
+      disableFilterEvtMil(pMilPiggy, 0);                                           // disable filter @ MIL piggy to avoid accumulation of junk
 
       //---- conclude the setting status of transfer and status of gateway
       *statusTransfer = *statusTransfer | (0x1 << DMUNIPZ_TRANS_RELBEAM);          // diagnostics: update status of transfer

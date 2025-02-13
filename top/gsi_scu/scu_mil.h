@@ -216,111 +216,133 @@ inline int scub_write_mil(volatile unsigned short *base, int slot, short data, s
 /***********************************************************
 * routines for MIL device bus (Canon socket)      
 ************************************************************/
-
+// routines for MIL Piggy; here 'base' ist the Wishbone address of the MIL-Piggy
 // write to MIL device bus; returns error code                                                             
-int16_t writeDevMil(volatile uint32_t *base,            // Wishbone address seen from the CPUs perspective 
-                    uint16_t  ifbAddr,                  // MIL address of interface board                  
-                    uint16_t  fctCode,                  // function code                                   
-                    uint16_t  data                      // data                                            
+int16_t writeDevMil(volatile uint32_t *base,            // Wishbone address seen from the CPUs perspective
+                    uint16_t scubSlot,                  // SCU bus slot, 0: MILPiggy, 1..N: SIO in slot 1..N
+                    uint16_t ifbAddr,                   // MIL address of interface board                  
+                    uint16_t fctCode,                   // function code                                   
+                    uint16_t data                       // data                                            
                     );
 
 // read from MIL device bus; returns error code                                                            
-int16_t readDevMil(volatile uint32_t *base,             // Wishbone address seen from the CPUs perspective 
+int16_t readDevMil(volatile uint32_t *base,             // Wishbone address seen from the CPUs perspective
+                   uint16_t  scubSlot,                  // SCU bus slot, 0: MILPiggy, 1..N: SIO in slot 1..N
                    uint16_t  ifbAddr,                   // MIL address of interface board                  
                    uint16_t  fctCode,                   // function code                                   
                    uint16_t  *data                      // data                                            
                    );
 
 // write data to the echo register of a MIL device, then read and compare the data; returns error code                                                            
-int16_t echoTestDevMil(volatile uint32_t *base,         // Wishbone address seen from the CPUs perspective 
-                    uint16_t  ifbAddr,                  // MIL address of interface board                  
-                    uint16_t  data                      // data                                            
-                    );
+int16_t echoTestDevMil(volatile uint32_t *base,         // Wishbone address seen from the CPUs perspective
+                       uint16_t  scubSlot,              // SCU bus slot, 0: MILPiggy, 1..N: SIO in slot 1..N
+                       uint16_t  ifbAddr,               // MIL address of interface board                  
+                       uint16_t  data                   // data                                            
+                       );
 
 // reset device bus part of MIL piggy
-int16_t resetPiggyDevMil(volatile uint32_t *base);      // Wishbone address seen from the CPUs perspective 
+int16_t resetDevMil(volatile uint32_t *base,            // Wishbone address seen from the CPUs perspective
+                    uint16_t  scubSlot                  // SCU bus slot, 0: MILPiggy, 1..N: SIO in slot 1..N                       
+                    );
+
 
 /***********************************************************
 * routines for MIL event bus receiver (bipolar LEMO socket)
 ************************************************************/
 
-/* clear filter RAM; returns error code */
-int16_t clearFilterEvtMil(volatile uint32_t *base      // Wishbone address seen from the CPUs perspective 
+// clear filter RAM; returns error code 
+int16_t clearFilterEvtMil(volatile uint32_t *base,      // Wishbone address seen from the CPUs perspective
+                          uint16_t  scubSlot            // SCU bus slot, 0: MILPiggy, 1..N: SIO in slot 1..N                       
                           );
 
-/* set a filter; returns error code */
-int16_t setFilterEvtMil(volatile uint32_t *base,       // Wishbone address seen from the CPUs perspective 
-                        uint16_t evtCode,              // event code                                      
-                        uint16_t virtAcc,              // virtual accelerator                             
-                        uint32_t filter                // filter value                                    
+// set a filter; returns error code
+int16_t setFilterEvtMil(volatile uint32_t *base,        // Wishbone address seen from the CPUs perspective 
+                        uint16_t  scubSlot,             // SCU bus slot, 0: MILPiggy, 1..N: SIO in slot 1..N                          
+                        uint16_t evtCode,               // event code                                      
+                        uint16_t virtAcc,               // virtual accelerator                             
+                        uint32_t filter                 // filter value                                    
                         );
 
-/* enable all filters, filtering is either ON or OFF for all filters; returns error code */
-int16_t enableFilterEvtMil(volatile uint32_t *base     // Wishbone address seen from the CPUs perspective 
+// enable all filters, filtering is either ON or OFF for all filters; returns error code 
+int16_t enableFilterEvtMil(volatile uint32_t *base,     // Wishbone address seen from the CPUs perspective
+                           uint16_t  scubSlot           // SCU bus slot, 0: MILPiggy, 1..N: SIO in slot 1..N
                            );
 
-/* disble all filters, filtering is either ON or OFF for all filters; returns error code */
-int16_t disableFilterEvtMil(volatile uint32_t *base    // Wishbone address seen from the CPUs perspective 
+// disble all filters, filtering is either ON or OFF for all filters; returns error code
+int16_t disableFilterEvtMil(volatile uint32_t *base,    // Wishbone address seen from the CPUs perspective
+                            uint16_t  scubSlot          // SCU bus slot, 0: MILPiggy, 1..N: SIO in slot 1..N
                             );
 
 /* write to status and control register; returns error code */
-int16_t writeCtrlStatRegEvtMil(volatile uint32_t *base,// Wishbone address seen from the CPUs perspective 
-                               uint32_t value          // register value                                  
+int16_t writeCtrlStatRegEvtMil(volatile uint32_t *base, // Wishbone address seen from the CPUs perspective 
+                               uint16_t  scubSlot,      // SCU bus slot, 0: MILPiggy, 1..N: SIO in slot 1..N
+                               uint32_t value           // register value                                  
                                );
  
 /* read from status and control register; returns error code */
-int16_t readCtrlStatRegEvtMil(volatile uint32_t *base,    // Wishbone address seen from the CPUs perspective 
-                              uint32_t *value             // register value                                  
+int16_t readCtrlStatRegEvtMil(volatile uint32_t *base,  // Wishbone address seen from the CPUs perspective 
+                              uint16_t  scubSlot,       // SCU bus slot, 0: MILPiggy, 1..N: SIO in slot 1..N
+                              uint32_t *value           // register value                                  
                               );
 
 /* query fill state of event FIFO; returns '1' if not empty */
-uint16_t fifoNotemptyEvtMil(volatile uint32_t *base      // Wishbone address seen from the CPUs perspective 
-                           );
+uint16_t fifoNotemptyEvtMil(volatile uint32_t *base,    // Wishbone address seen from the CPUs perspective 
+                            uint16_t  scubSlot          // SCU bus slot, 0: MILPiggy, 1..N: SIO in slot 1..N
+                            );
 
 /* remove all elements from the FIFO; returns error code */
-int16_t clearFifoEvtMil(volatile uint32_t *base         // Wishbone address seen from the CPUs perspective 
-                    );
+int16_t clearFifoEvtMil(volatile uint32_t *base,        // Wishbone address seen from the CPUs perspective 
+                        uint16_t  scubSlot              // SCU bus slot, 0: MILPiggy, 1..N: SIO in slot 1..N
+                        );
 
 /* pop on element of the FIFO; returns error code */
 int16_t popFifoEvtMil(volatile uint32_t *base,          // Wishbone address seen from the CPUs perspective 
+                      uint16_t  scubSlot,               // SCU bus slot, 0: MILPiggy, 1..N: SIO in slot 1..N
                       uint32_t *evtData                 // data of an event                                
                       );
 
 /*configure a single ended LEMO for pulse generation, remember to set a filter too; returns error code */
 int16_t configLemoPulseEvtMil(volatile uint32_t *base,  // Wishbone address seen from the CPUs perspective 
+                              uint16_t  scubSlot,       // SCU bus slot, 0: MILPiggy, 1..N: SIO in slot 1..N
                               uint32_t lemo             // select LEMO 1..4                                
                               );
 
 /* configure a single ended LEMO for gate generation, remember to set a filter too; returns error code */
 int16_t configLemoGateEvtMil(volatile uint32_t *base,   // Wishbone address seen from the CPUs perspective 
+                             uint16_t  scubSlot,        // SCU bus slot, 0: MILPiggy, 1..N: SIO in slot 1..N
                              uint32_t lemo              // select LEMO 1..4                                
                              );
 
 /* configure a single ended LEMO for programmable output (not controlled via event) */
 int16_t configLemoOutputEvtMil(volatile uint32_t *base, // Wishbone address seen from the CPUs perspective 
+                               uint16_t  scubSlot,      // SCU bus slot, 0: MILPiggy, 1..N: SIO in slot 1..N
                                uint32_t lemo            // select LEMO 1..4                                
                                );
 
 
 /* set the output value of a single ended LEMO programmatically (not controlled via event) */
 int16_t setLemoOutputEvtMil(volatile uint32_t *base,    // Wishbone address seen from the CPUs perspective 
+                            uint16_t  scubSlot,         // SCU bus slot, 0: MILPiggy, 1..N: SIO in slot 1..N
                             uint32_t lemo,              // select LEMO 1..4
                             uint32_t on                 // 1: on, 0: off
                             );
 
 /* disable a single ended LEMO output; returns error code */
 int16_t disableLemoEvtMil(volatile uint32_t *base,      // Wishbone address seen from the CPUs perspective 
+                          uint16_t  scubSlot,           // SCU bus slot, 0: MILPiggy, 1..N: SIO in slot 1..N
                           uint32_t lemo                 // select LEMO 1..4                                
                           );
 
 /* read error counter for 'broken' received MIL telegrams  */
 int16_t readEventErrCntMil(volatile uint32_t *base,     // Wishbone address seen from the CPUs perspective 
-                        uint32_t *errWordCnt            // error counter for 
-                        );
+                           uint16_t  scubSlot,          // SCU bus slot, 0: MILPiggy, 1..N: SIO in slot 1..N
+                           uint32_t *errWordCnt         // error counter for 
+                           );
 
 /* reset error counter for 'broken' received MIL telegrams  */
-int16_t resetEventErrCntMil(volatile uint32_t *base     // Wishbone address seen from the CPUs perspective 
-                         );
+int16_t resetEventErrCntMil(volatile uint32_t *base,    // Wishbone address seen from the CPUs perspective 
+                            uint16_t  scubSlot          // SCU bus slot, 0: MILPiggy, 1..N: SIO in slot 1..N
+                            );
 
 
 /***********************************************************

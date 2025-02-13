@@ -38,6 +38,8 @@ typedef union {                                // easier copying of bytes float 
 #define  COMMON_STATUS_EBREADTIMEDOUT     7    // EB read via WR network timed out
 #define  COMMON_STATUS_WRBADSYNC          8    // White Rabbit: not in 'TRACK_PHASE'
 #define  COMMON_STATUS_AUTORECOVERY       9    // trying auto-recovery from state ERROR
+#define  COMMON_STATUS_LATEMESSAGE       10    // late timing message received
+#define  COMMON_STATUS_BADSETTING        11    // bad setting data
 #define  COMMON_STATUS_RESERVEDTILHERE   15    // 00..15 reserved for common error codes
 
 // commands from the outside

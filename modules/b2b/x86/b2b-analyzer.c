@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 25-Jan-2024
+ *  version : 03-Jan-2025
  *
  * analyzes and publishes get values
  * 
@@ -36,7 +36,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_ANALYZER_VERSION 0x000800
+#define B2B_ANALYZER_VERSION 0x000803
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -511,7 +511,9 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
 
     // rf frequency diagnostics; theoretical value is set value
     if (!isnan(disDiagval[sid].ext_rfOffAct)) {
-      calcNue(&act, &actErr, disDiagval[sid].ext_rfOffAct, (double)B2B_TDIAGOBS, dicSetval[sid].ext_T, dicGetval[sid].ext_phaseSysmaxErr);
+      if (isnan(dicGetval[sid].ext_phaseShift)) tmp = disDiagval[sid].ext_rfOffAct;
+      else                                      tmp = disDiagval[sid].ext_rfOffAct - dicGetval[sid].ext_phaseShift;
+      calcNue(&act, &actErr, tmp, (double)B2B_TDIAGOBS, dicSetval[sid].ext_T, dicGetval[sid].ext_phaseSysmaxErr);
       if (dicSetval[sid].ext_T != 0) tmp = 1000000000000000000.0 /  (double)(dicSetval[sid].ext_T);
       else                           tmp = 0.0;
       n   = ++(ext_rfNueN[sid]);
@@ -652,7 +654,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
 
   } // if mode B2B_MODE_B2E
 
-  if (mode >= B2B_MODE_B2C) {
+  if ((mode >= B2B_MODE_B2C) && (mode != B2B_MODE_B2EPSHIFT)){
     // offset from deadline CBS to KTI
     if (!isnan(dicGetval[sid].ktiOff)) {
       act = dicGetval[sid].ktiOff;
@@ -721,7 +723,9 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
 
     // rf frequency diagnostics; theoretical value is '0'
     if (!isnan(disDiagval[sid].inj_rfOffAct) && (dicSetval[sid].inj_T != -1)) {
-      calcNue(&act, &actErr, disDiagval[sid].inj_rfOffAct, (double)B2B_TDIAGOBS, dicSetval[sid].inj_T, dicGetval[sid].inj_phaseSysmaxErr);
+      if (isnan(dicGetval[sid].inj_phaseShift)) tmp = disDiagval[sid].inj_rfOffAct;
+      else                                      tmp = disDiagval[sid].inj_rfOffAct - dicGetval[sid].inj_phaseShift;
+      calcNue(&act, &actErr, tmp, (double)B2B_TDIAGOBS, dicSetval[sid].inj_T, dicGetval[sid].inj_phaseSysmaxErr);
       tmp = 1000000000000000000.0 /  (double)(dicSetval[sid].inj_T);
       n   = ++(inj_rfNueN[sid]);
       
@@ -763,7 +767,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
     
   } // if mode B2B_MODE_B2C
 
-  if (mode == B2B_MODE_B2BFBEAT) {
+  if ((mode == B2B_MODE_B2BFBEAT) || (mode == B2B_MODE_B2BPSHIFTE)) {
 
     // match diagnostics; theoretical value is '0'
     if (!isnan(dicGetval[sid].inj_diagMatch) && !isnan(dicSetval[sid].cPhase) && !isnan(dicSetval[sid].inj_cTrig) && (dicSetval[sid].inj_T != -1)) { 

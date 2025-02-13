@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 28-Aug-2024
+ *  version : 03-jan-2025
  *
  * subscribes to and displays status of many b2b transfers
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_MON_VERSION 0x000800
+#define B2B_MON_VERSION 0x000803
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -105,12 +105,6 @@ time_t   set_secs[NALLSID];                                 // CBS deadline, tim
 
 time_t   secsOffset;                                        // offset between timestamp and system time
 
-#define MSKRECMODE0 0x105               // mask defining events that should be received for the different modes, mode off
-#define MSKRECMODE1 0x155               // ... mode BSE
-#define MSKRECMODE2 0x155               // ... mode B2E
-#define MSKRECMODE3 0x3ff               // ... mode B2C
-#define MSKRECMODE4 0x3ff               // ... mode B2B
-
 // other
 int      flagPrintIdx[NALLSID];                             // flag: print line with given index
 int      flagPrintInactive;                                 // flag: print inactive SIDs too
@@ -120,8 +114,6 @@ int      flagPrintEsr;                                      // flag: print SIDs 
 int      flagPrintYr;                                       // flag: print SIDs for CRYRINg
 int      flagPrintNow;                                      // flag: print stuff to screen NOW
 int      flagPrintNs;                                       // flag: in units of nanoseconds
-
-int      modeMask;                                          // mask: marks events used in actual mode
 
 char     title[SCREENWIDTH+1];                              // title line to be printed
 char     footer[SCREENWIDTH+1];                             // footer line to be printed
@@ -213,6 +205,7 @@ void buildPrintLine(uint32_t idx)
   char     pattern[64];
   int      flagTCBS;
   int      flagOther;
+  int      flagCphase;
   int      flagB2b;
   int      flagExtTrig;
   int      flagInjTrig;
@@ -272,12 +265,14 @@ void buildPrintLine(uint32_t idx)
 
   // destination
   switch (set_mode[idx]) {
-    case B2B_MODE_OFF      : sprintf(dest, "---");      flagTCBS = 1; flagOther = 1; flagB2b = 0; flagExtTrig = 0; flagInjTrig = 0; break;
-    case B2B_MODE_BSE      : sprintf(dest, "kicker");   flagTCBS = 1; flagOther = 1; flagB2b = 0; flagExtTrig = 1; flagInjTrig = 0; break;
-    case B2B_MODE_B2E      : sprintf(dest, "target");   flagTCBS = 1; flagOther = 1; flagB2b = 0; flagExtTrig = 1; flagInjTrig = 0; break;
-    case B2B_MODE_B2C      : sprintf(dest, "%s", tmp1); flagTCBS = 1; flagOther = 1; flagB2b = 0; flagExtTrig = 1; flagInjTrig = 1; break;
-    case B2B_MODE_B2BFBEAT : sprintf(dest, "%s", tmp1); flagTCBS = 1; flagOther = 1; flagB2b = 1; flagExtTrig = 1; flagInjTrig = 1; break;
-    default: sprintf(dest, TXTUNKWN);   flagTCBS = 0; flagOther = 0; flagB2b = 0; flagExtTrig = 0; flagInjTrig = 0; break;
+    case B2B_MODE_OFF       : sprintf(dest, "---");      flagTCBS = 1; flagOther = 1; flagB2b = 0; flagCphase = 0; flagExtTrig = 0; flagInjTrig = 0; break;
+    case B2B_MODE_BSE       : sprintf(dest, "kicker");   flagTCBS = 1; flagOther = 1; flagB2b = 0; flagCphase = 0; flagExtTrig = 1; flagInjTrig = 0; break;
+    case B2B_MODE_B2E       : sprintf(dest, "target");   flagTCBS = 1; flagOther = 1; flagB2b = 0; flagCphase = 0; flagExtTrig = 1; flagInjTrig = 0; break;
+    case B2B_MODE_B2C       : sprintf(dest, "%s", tmp1); flagTCBS = 1; flagOther = 1; flagB2b = 0; flagCphase = 0; flagExtTrig = 1; flagInjTrig = 1; break;
+    case B2B_MODE_B2BFBEAT  : sprintf(dest, "%s", tmp1); flagTCBS = 1; flagOther = 1; flagB2b = 1; flagCphase = 1; flagExtTrig = 1; flagInjTrig = 1; break;
+    case B2B_MODE_B2EPSHIFT : sprintf(dest, "target");   flagTCBS = 1; flagOther = 1; flagB2b = 0; flagCphase = 1; flagExtTrig = 1; flagInjTrig = 0; break;
+    case B2B_MODE_B2BPSHIFTE: sprintf(dest, "%s", tmp1); flagTCBS = 1; flagOther = 1; flagB2b = 1; flagCphase = 1; flagExtTrig = 1; flagInjTrig = 1; break;     
+    default:                  sprintf(dest, TXTUNKWN);   flagTCBS = 0; flagOther = 0; flagB2b = 0; flagCphase = 0; flagExtTrig = 0; flagInjTrig = 0; break;
   } // switch set_mode
 
   // ignore ancient timestamps
@@ -299,7 +294,7 @@ void buildPrintLine(uint32_t idx)
       nueDiff = dicDiagval[idx].ext_rfNueAct - set_extNue[idx];
       if ((dicGetval[idx].flagEvtErr >> tagPre) & 0x1)  sprintf(nueMeasExt, "ERROR: no RF signal detected");
       else {
-        if ((fabs(dicDiagval[idx].ext_ddsOffAct) > set_extT[idx] / 10) || (fabs(dicDiagval[idx].ext_rfOffAct) > set_extT[idx] / 4)){  // this is hack to possibly detect wrong set-values
+        if (fabs(dicDiagval[idx].ext_ddsOffAct) > set_extT[idx] / 10) {  // this is hack to possibly detect wrong set-values
           sprintf(tmp1, "check DDS");
           sprintf(tmp2, "value");
           sprintf(tmp3, "n/a");
@@ -316,13 +311,13 @@ void buildPrintLine(uint32_t idx)
     } // else NOLINK
 
     // frequency data, injection
-    if (set_mode[idx] > B2B_MODE_B2E) {
+    if ((set_mode[idx] > B2B_MODE_B2E) && (set_mode[idx] != B2B_MODE_B2EPSHIFT)) {
       if (*(uint32_t *)&(dicDiagval[idx]) == no_link_32) sprintf(nueMeasInj, "NOLINK");
       else {
         nueDiff = dicDiagval[idx].inj_rfNueAct - set_injNue[idx];
         if ((dicGetval[idx].flagEvtErr >> tagPri) & 0x1)   sprintf(nueMeasInj, "ERROR: no RF signal detected");
         else {
-          if ((fabs(dicDiagval[idx].inj_ddsOffAct) > set_injT[idx] / 10) || (fabs(dicDiagval[idx].inj_rfOffAct) > set_injT[idx] / 4)){  // this is hack to possibly detect wrong set-values
+          if (fabs(dicDiagval[idx].inj_ddsOffAct) > set_injT[idx] / 10) {  // this is hack to possibly detect wrong set-values
             sprintf(tmp1, "check DDS");
             sprintf(tmp2, "value");
             sprintf(tmp3, "n/a");
@@ -352,14 +347,16 @@ void buildPrintLine(uint32_t idx)
     sprintf(setLevelInj, "---");
   } // else flagOther
   
-  if (flagB2b) {
+  if (flagCphase) {
     if ((dicGetval[idx].flagEvtErr >> tagKte) & 0x1) sprintf(b2b, "%s",  TXTERROR);
-    else                                             sprintf(b2b, "%7.1f %7.1f", convertUnit(dicSetval[idx].cPhase, dicSetval[idx].ext_T), convertUnit(dicDiagval[idx].phaseOffAct, dicSetval[idx].ext_T));
-  } // if flagB2B
+    else { if (flagB2b)                              sprintf(b2b, "%7.1f %7.1f", convertUnit(dicSetval[idx].cPhase, dicSetval[idx].ext_T), convertUnit(dicDiagval[idx].phaseOffAct, dicSetval[idx].ext_T));
+           else                                      sprintf(b2b, "%7.1f %7.1f", convertUnit(dicSetval[idx].cPhase, dicSetval[idx].ext_T), convertUnit(dicDiagval[idx].ext_rfOffAct, dicSetval[idx].ext_T));
+    } // else flagCphase
+  } // if flagCphase
   else {
     if (flagInjTrig) sprintf(b2b, "coastg");
     else             sprintf(b2b, "---");
-  } // else flagb2b
+  } // else flagCphase
   
   if (flagExtTrig) {
     // trigger event received
@@ -425,7 +422,7 @@ void buildPrintLine(uint32_t idx)
   else             sprintf(injSid, "%s", "--");
 
   sprintf(printLineK[idx], "|%20s | %12s |%6s | %2d | %33s |%6s | %2s |%15s | %46s |", pattern, tCBS, origin, sid, extTrig, dest, injSid, b2b, injTrig);
-  sprintf(printLineN[idx], "|%20s | %12s |%6s | %2d | %38s | %43s | %6s  %6s       |", pattern, tCBS, origin, sid, nueMeasExt, nueMeasInj, setLevelExt, setLevelInj);
+  sprintf(printLineN[idx], "|%20s | %12s |%6s | %2d | %43s | %43s | %6s  %6s       |", pattern, tCBS, origin, sid, nueMeasExt, nueMeasInj, setLevelExt, setLevelInj);
   //                printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
 
 } //buildPrintLine
@@ -726,7 +723,6 @@ int main(int argc, char** argv)
         buildPrintLine(i);
       } // if flagSetUpdate
     } // for i
-
     
     if (flagPrintNow) printData(name);
     if (!quit) {

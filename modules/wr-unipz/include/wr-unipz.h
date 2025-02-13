@@ -24,9 +24,10 @@
 #define WRUNIPZ_UNILACPERIODMIN   19800000    // min length of one UNILAC cylce [ns]
 
 #define WRUNIPZ_MAXPREPOFFSET         2000    // max offset of a prep event within UNILAC cycle [us]; all with events a smaller offset will be predicted from previous cycles
-#define WRUNIPZ_MILCALIBOFFSET       29000    // calibration offset to MIL event bus [ns]; MIL events are always 'late' due its protocol; this offset must be added to WR deadlines
+#define WRUNIPZ_MILCALIBOFFSET       27000    // calibration offset to MIL event bus [ns]; MIL events are always 'late' due its protocol; this offset must be added to WR deadlines
 #define WRUNIPZ_QQOFFSET               500    // offset for sending special service event for QQ [us] /* chk: QQ is breaking the concept of WR */
 #define WRUNIPZ_A4OFFSET               500    // offset for sending special service event for A4 [us] /* chk: A4 is breaking the concept of WR */
+#define WRUNIPZ_NOBEAMOFFSET          1320    // offset for sending special service event for EVT_BEAM_OFF [us] /* chk: EVT_NO_BEAM is breaking the concept of WR */
 #define WRUNIPZ_TDIFFMIL                45    // minimmum time difference [us] between sending telegrams to the MIL bus; 25us is enough, but UNIPZ sends service events 45us after last event
 
 // numbers for UNIPZ
@@ -66,15 +67,16 @@
 */
 
 // event codes from Super PZ received via internal bus (bits 0..7)
-#define WRUNIPZ_EVT_PZ1                  1    // next cycle PZ 1
-#define WRUNIPZ_EVT_PZ2                  2    // next cycle PZ 2
-#define WRUNIPZ_EVT_PZ3                  3    // next cycle PZ 3
-#define WRUNIPZ_EVT_PZ4                  4    // next cycle PZ 4
-#define WRUNIPZ_EVT_PZ5                  5    // next cycle PZ 5
-#define WRUNIPZ_EVT_PZ6                  6    // next cycle PZ 6
-#define WRUNIPZ_EVT_PZ7                  7    // next cycle PZ 7
-#define WRUNIPZ_EVT_SYNCH_DATA          32    // commit event for transaction
-#define WRUNIPZ_EVT_50HZ_SYNCH          33    // 50 Hz trigger, cycle start
+#define WRUNIPZ_EVT_PZ1                0x1    // next cycle PZ 1
+#define WRUNIPZ_EVT_PZ2                0x2    // next cycle PZ 2
+#define WRUNIPZ_EVT_PZ3                0x3    // next cycle PZ 3
+#define WRUNIPZ_EVT_PZ4                0x4    // next cycle PZ 4
+#define WRUNIPZ_EVT_PZ5                0x5    // next cycle PZ 5
+#define WRUNIPZ_EVT_PZ6                0x6    // next cycle PZ 6
+#define WRUNIPZ_EVT_PZ7                0x7    // next cycle PZ 7
+#define WRUNIPZ_EVT_SYNCH_DATA        0x20    // commit event for transaction
+#define WRUNIPZ_EVT_50HZ_SYNCH        0x21    // 50 Hz trigger, cycle start
+#define WRUNIPZ_EVT_NO_BEAM           0x89    // 'there is no beam ...', speciality by UNIPZ (prov. comm. P. Kainberger)
 
 // event data from Super PZ received via internal bus (bits 12..15)
 #define WRUNIPZ_EVTDATA_CHANNEL        0x1    // bit 12 - channel number: there are only two channels -> channel number coded in one bit
@@ -91,6 +93,7 @@
 #define EVT_AUX_PRP_NXT_ACC           0x11    // set values in magnet prep. cycles
 #define EVT_UNLOCK_ALVAREZ            0x15    // unlock A4 for next pulse 
 #define EVT_MAGN_DOWN                 0x19    // set magnets to zero current
+#define EVT_NO_BEAM                   0x89    // signal 'no beam'
 #define EVT_COMMAND                   0xff    // event command
 
 

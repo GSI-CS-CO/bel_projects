@@ -32,7 +32,7 @@ b2bt_t fwlib_advanceTimePs(b2bt_t    t1_ps,           // time 1 [ps]
 b2bt_t fwlib_tfns2tps(float t_ns                      // time [ns]
                       );
 
-// convert [ps] to [ns, float], returns t [ns, float]f
+// convert [ps] to [ns, float], returns t [ns, float]
 float fwlib_tps2tfns(b2bt_t t_ps                      // time [ps]
                      );
 

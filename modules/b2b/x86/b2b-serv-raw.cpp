@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-Aug-2024
+ *  version : 03-jan-2025
  *
  * publishes raw data of the b2b system
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000800
+#define B2B_SERV_RAW_VERSION 0x000803
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -173,6 +173,7 @@ void initGetval(getval_t *getval)
   getval->ext_dKickProbLevel    = NAN;
   getval->ext_diagPhase         = NAN;
   getval->ext_diagMatch         = NAN;
+  getval->ext_phaseShift        = NAN;
   getval->inj_phase             = -1;
   getval->inj_phaseFract        = NAN;
   getval->inj_phaseErr          = NAN;
@@ -183,6 +184,7 @@ void initGetval(getval_t *getval)
   getval->inj_dKickProbLevel    = NAN;
   getval->inj_diagPhase         = NAN;
   getval->inj_diagMatch         = NAN;
+  getval->inj_phaseShift        = NAN;
   getval->flagEvtRec            = 0;
   getval->flagEvtErr            = 0;
   getval->flagEvtLate           = 0;
@@ -241,7 +243,7 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
   static getval_t     getval;          // get values
   static uint64_t     tStart;          // time of transfer
 
-  //uint64_t one_ns_as = 1000000000;
+  uint64_t one_ns_as = 1000000000;
   fdat_t   tmp;
   float    tmpf;
   uint32_t tmpu;
@@ -265,7 +267,7 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       flagActive                   = 1;
       
       initSetval(&setval);
-      setval.mode                  = 0;      // in the simplest case mode is '0' (OFF)
+      setval.mode                  = B2B_MODE_OFF;    // in the simplest case
       setval.ext_sid               = sid;
       setval.ext_gid               = recGid;
 
@@ -290,21 +292,21 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       
       setval.ext_h             = ((param & 0xff00000000000000) >> 56);
       setval.ext_T             = ((param & 0x000fffffffffffff));    // [as]
-      if (setval.mode > 0) {
+      if (setval.mode > B2B_MODE_OFF) {
         tmpf                   = comlib_half2float((uint16_t)((tef & 0xffff0000)  >> 16)); // [us, hfloat]; chk for NAN?
         setval.ext_cTrig       = tmpf * 1000.0;                     // [ns]
       } // if mode
-      if (setval.mode > 2) {
+      if ((setval.mode >  B2B_MODE_B2E) && (setval.mode != B2B_MODE_B2C)) {
         tmpf                   = comlib_half2float((uint16_t)( tef & 0x0000ffff));         // [us, hfloat]; chk for NAN?
-        setval.inj_cTrig        = tmpf * 1000.0;                    // [ns]
+        setval.cPhase          = tmpf  * 1000;                      // [ns]
       } // if mode
       break;
     case tagPmi     :
       setval.inj_h             = ((param & 0xff00000000000000) >> 56);
       setval.inj_T             = ((param & 0x000fffffffffffff));    // [as]
-      if (setval.mode > 3) {
+      if (setval.mode > B2B_MODE_B2E) {
         tmpf                   = comlib_half2float((uint16_t)((tef & 0xffff0000) >> 16));              // [us, hfloat]]
-        setval.cPhase          = tmpf  * 1000;                      // [ns]
+        setval.inj_cTrig       = tmpf * 1000.0;                     // [ns]
       } // if mode
       break;
     case tagPre     :
@@ -324,7 +326,7 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       getval.inj_phaseSysmaxErr = (float)b2b_calc_max_sysdev_ps(setval.inj_T, B2B_NSAMPLES, 0) / 1000.0;
       flagErr                   = ((evtId & B2B_ERRFLAG_PMINJ) != 0);
       getval.flagEvtErr        |= flagErr << tag;
-      break;     
+      break;
     case tagKte     :
       getval.kteOff            = deadline.getTAI() - getval.tCBS;
       tmpf                     = comlib_half2float((uint16_t)((tef & 0xffff0000) >> 16));        // [us, hfloat]
@@ -391,6 +393,22 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       if (tmp.data == 0x7fffffff) getval.inj_diagPhase = NAN;
       else                        getval.inj_diagPhase = (double)tmp.f;
       break;
+    case tagPse     :
+      tmpu                     = ((param & 0x00000000ffffffff));
+      // revert endianess hack
+      tmp.data                 = ((tmpu & 0x0000ffff) << 16);
+      tmp.data                |= ((tmpu & 0xffff0000) >> 16);
+      if (!isnan(tmp.f)) tmp.f = tmp.f / 360.0 * (setval.ext_T / (float)one_ns_as);
+      getval.ext_phaseShift    = tmp.f;
+      break;
+    case tagPsi     :
+      tmpu                     = ((param & 0x00000000ffffffff));
+      // revert endianess hack
+      tmp.data                 = ((tmpu & 0x0000ffff) << 16);
+      tmp.data                |= ((tmpu & 0xffff0000) >> 16);
+      if (!isnan(tmp.f)) tmp.f = tmp.f / 360.0 * (setval.inj_T / (float)one_ns_as);
+      getval.inj_phaseShift    = tmp.f;
+      break;
     default         :
       ;
   } // switch tag
@@ -456,7 +474,7 @@ void disAddServices(char *prefix)
   // set values
   for (i=0; i< B2B_NSID; i++) {
     sprintf(name, "%s-raw_sid%02d_getval", prefix, i);
-    disGetvalId[i]  = dis_add_service(name, "X:1;F:9;X:1;F:9;I:3;X:1;F:6", &(disGetval[i]), sizeof(getval_t), 0, 0);
+    disGetvalId[i]  = dis_add_service(name, "X:1;F:10;X:1;F:10;I:3;X:1;F:6", &(disGetval[i]), sizeof(getval_t), 0, 0);
     dis_set_timestamp(disGetvalId[i], 1, 0);
   } // for i
 } // disAddServices
@@ -605,7 +623,7 @@ int main(int argc, char** argv)
 
   switch(reqExtRing) {
     case SIS18_RING :
-      nCondition = 15;
+      nCondition = 17;
       sprintf(ringName, "sis18");
       break;
     case ESR_RING :
@@ -717,6 +735,8 @@ int main(int argc, char** argv)
         condition[4]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
         //tag[4]        = tmpTag;
 
+        // SIS18 to extraction, continues further down ...
+
         // SIS18 to ESR, PMEXT
         tmpTag        = tagPme;       
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_B2B_ESR << 48) | ((uint64_t)B2B_ECADO_B2B_PMEXT << 36);
@@ -776,7 +796,20 @@ int main(int argc, char** argv)
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_RING << 48) | ((uint64_t)B2B_ECADO_B2B_DIAGKICKINJ << 36);
         condition[14] = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
         //tag[14]       = tmpTag;
-        
+
+        // SIS18 to extraction, phase shift extraction
+        tmpTag        = tagPse;
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_B2B_EXTRACT << 48) | ((uint64_t)B2B_ECADO_B2B_PSHIFTEXT << 36);
+        condition[15] = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[15]        = tmpTag;
+
+        // SIS18 to ESR, phase shift extraction
+        tmpTag        = tagPse;
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_B2B_ESR << 48) | ((uint64_t)B2B_ECADO_B2B_PSHIFTEXT << 36);
+        condition[16] = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[16]        = tmpTag;
+
+
         break;
       case ESR_RING : 
 

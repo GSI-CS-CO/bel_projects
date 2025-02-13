@@ -262,7 +262,7 @@ int reset_mil(volatile unsigned *base) {
  *
  ***********************************************************
  ***********************************************************/
-int16_t writeDevMil(volatile uint32_t *base, uint16_t  ifbAddr, uint16_t  fctCode, uint16_t  data)
+int16_t writeDevMil(volatile uint32_t *base, uint16_t scubSlot, uint16_t  ifbAddr, uint16_t  fctCode, uint16_t  data)
 {
   // just a wrapper for the function of the original library
   // replace code once original library becomes deprecated
@@ -271,10 +271,12 @@ int16_t writeDevMil(volatile uint32_t *base, uint16_t  ifbAddr, uint16_t  fctCod
 
   fc_ifb_addr = ifbAddr | (fctCode << 8);
 
-  return (int16_t)write_mil((unsigned int *)base, (short)data, (short)fc_ifb_addr);
+  if (scubSlot == 0) return (int16_t)write_mil((unsigned int *)base, (short)data, (short)fc_ifb_addr);                         // piggy
+  else               return (int16_t)scub_write_mil((unsigned short *)base, (short)scubSlot, (short)data, (short)fc_ifb_addr); // sio
 } // writeDevMil
 
-int16_t readDevMil(volatile uint32_t *base, uint16_t  ifbAddr, uint16_t  fctCode, uint16_t  *data)
+
+int16_t readDevMil(volatile uint32_t *base, uint16_t scubSlot, uint16_t  ifbAddr, uint16_t  fctCode, uint16_t  *data)
 {
   // just a wrapper for the function of the original library
   // replace code once original library becomes deprecated
@@ -283,42 +285,49 @@ int16_t readDevMil(volatile uint32_t *base, uint16_t  ifbAddr, uint16_t  fctCode
 
   fc_ifb_addr = ifbAddr | (fctCode << 8);
 
-  return (int16_t)read_mil((unsigned int *)base, (short *)data, (short)fc_ifb_addr);
-} //writeDevMil
+  if (scubSlot == 0) return (int16_t)read_mil((unsigned int *)base, (short *)data, (short)fc_ifb_addr);                         // piggy
+  else               return (int16_t)scub_read_mil((unsigned short *)base, (short)scubSlot, (short *)data, (short)fc_ifb_addr); // sio
+} //readDevMil
 
-int16_t echoTestDevMil(volatile uint32_t *base, uint16_t  ifbAddr, uint16_t data)
+
+int16_t echoTestDevMil(volatile uint32_t *base, uint16_t scubSlot, uint16_t  ifbAddr, uint16_t data)
 {
   int32_t  busStatus;
   uint16_t rData = 0x0;
 
-  busStatus = writeDevMil(base, ifbAddr, FC_WR_IFC_ECHO, data);
+  busStatus = writeDevMil(base, scubSlot,ifbAddr, FC_WR_IFC_ECHO, data);
   if (busStatus != MIL_STAT_OK) return busStatus;
 
-  busStatus = readDevMil(base, ifbAddr, FC_RD_IFC_ECHO, &rData);
+  busStatus = readDevMil(base, scubSlot, ifbAddr, FC_RD_IFC_ECHO, &rData);
   if (busStatus != MIL_STAT_OK) return busStatus;
 
   if (data != rData) return MIL_STAT_ERROR;
   else               return MIL_STAT_OK;
 } //echoTestDevMil
 
-int16_t resetPiggyDevMil(volatile uint32_t *base)
+
+int16_t resetDevMil(volatile uint32_t *base, uint16_t scubSlot)
 {
   int32_t  busStatus;
   
   // just a wrapper for the function of the original library
   // replace code once original library becomes deprecated
 
-  busStatus = reset_mil((unsigned int *)base);
+  if (scubSlot == 0) busStatus = reset_mil((unsigned int *)base);                         // piggy
+  else               busStatus = scub_reset_mil((unsigned short*)base, (short)scubSlot);  // sio
   if (busStatus != OKAY) return MIL_STAT_ERROR;
-  else                   return MIL_STAT_OK;
-} //resetPiggyDevMil
+  else                   return MIL_STAT_OK;      
+} //resetDevMil
 
 
-int16_t clearFilterEvtMil(volatile uint32_t *base)
+int16_t clearFilterEvtMil(volatile uint32_t *base, uint16_t scubSlot)
 {
   uint32_t filterSize;         // size of filter RAM     
   uint32_t *pFilterRAM;        // RAM for event filters
   uint32_t i;
+
+  // scubSlot > 0: SIO, not yet implemented
+  if (scubSlot > 0) return MIL_STAT_OUT_OF_RANGE;
 
   filterSize = (MIL_REG_EV_FILT_LAST >> 2) - (MIL_REG_EV_FILT_FIRST >> 2) + 1;
   // mprintf("filtersize: %d, base 0x%08x\n", filterSize, base);
@@ -331,9 +340,12 @@ int16_t clearFilterEvtMil(volatile uint32_t *base)
   return MIL_STAT_OK;
 } //clearFiterEvtMil
 
-int16_t setFilterEvtMil(volatile uint32_t *base, uint16_t evtCode, uint16_t virtAcc, uint32_t filter)
+int16_t setFilterEvtMil(volatile uint32_t *base, uint16_t scubSlot, uint16_t evtCode, uint16_t virtAcc, uint32_t filter)
 {
   uint32_t *pFilterRAM;        // RAM for event filters
+
+  // scubSlot > 0: SIO, not yet implemented
+  if (scubSlot > 0) return MIL_STAT_OUT_OF_RANGE;
 
   if (virtAcc > 15) return MIL_STAT_OUT_OF_RANGE;
 
@@ -346,63 +358,81 @@ int16_t setFilterEvtMil(volatile uint32_t *base, uint16_t evtCode, uint16_t virt
   return MIL_STAT_OK;
 } //setFilterEvtMil
 
-int16_t enableFilterEvtMil(volatile uint32_t *base)
+int16_t enableFilterEvtMil(volatile uint32_t *base, uint16_t scubSlot)
 {
   uint32_t regValue;
 
-  readCtrlStatRegEvtMil(base, &regValue);
+  // scubSlot > 0: SIO, not yet implemented
+  if (scubSlot > 0) return MIL_STAT_OUT_OF_RANGE;
+
+  readCtrlStatRegEvtMil(base, scubSlot, &regValue);
   regValue = regValue | MIL_CTRL_STAT_EV_FILTER_ON;
-  writeCtrlStatRegEvtMil(base, regValue);
+  writeCtrlStatRegEvtMil(base, scubSlot, regValue);
   
   return MIL_STAT_OK;
 } //enableFilterEvtMil
 
 
-int16_t disableFilterEvtMil(volatile uint32_t *base)
+int16_t disableFilterEvtMil(volatile uint32_t *base, uint16_t scubSlot)
 {
   uint32_t regValue;
 
-  readCtrlStatRegEvtMil(base, &regValue);
+  // scubSlot > 0: SIO, not yet implemented
+  if (scubSlot > 0) return MIL_STAT_OUT_OF_RANGE;
+  
+  readCtrlStatRegEvtMil(base, scubSlot, &regValue);
   regValue = regValue & (MIL_CTRL_STAT_EV_FILTER_ON);
-  writeCtrlStatRegEvtMil(base, regValue);
+  writeCtrlStatRegEvtMil(base, scubSlot, regValue);
     
   return MIL_STAT_OK;
 } // disableFilterEvtMil
 
-int16_t writeCtrlStatRegEvtMil(volatile uint32_t *base, uint32_t value)
+int16_t writeCtrlStatRegEvtMil(volatile uint32_t *base, uint16_t scubSlot, uint32_t value)
 {
   uint32_t *pControlRegister;  // control register of event filter
 
+  // scubSlot > 0: SIO, not yet implemented
+  if (scubSlot > 0) return MIL_STAT_OUT_OF_RANGE;
+  
   pControlRegister  = (uint32_t *)(base + (MIL_REG_WR_RD_STATUS >> 2));
   *pControlRegister = value;
 
   return MIL_STAT_OK;
 } // writeCtrlStatRegMil
 
-int16_t readCtrlStatRegEvtMil(volatile uint32_t *base, uint32_t *value)
+int16_t readCtrlStatRegEvtMil(volatile uint32_t *base, uint16_t scubSlot, uint32_t *value)
 {
   uint32_t *pControlRegister;  // control register of event filter
 
+  // scubSlot > 0: SIO, not yet implemented
+  if (scubSlot > 0) return MIL_STAT_OUT_OF_RANGE;
+ 
   pControlRegister  = (uint32_t *)(base + (MIL_REG_WR_RD_STATUS >> 2));
   *value = *pControlRegister;
 
   return MIL_STAT_OK;
 } //readCtrlStatRegMil
 
-uint16_t fifoNotemptyEvtMil(volatile uint32_t *base)
+uint16_t fifoNotemptyEvtMil(volatile uint32_t *base, uint16_t scubSlot)
 {
   uint32_t regValue;
   uint16_t fifoNotEmpty;
 
-  readCtrlStatRegEvtMil(base, &regValue);
+  // scubSlot > 0: SIO, not yet implemented
+  if (scubSlot > 0) return MIL_STAT_OUT_OF_RANGE;
+   
+  readCtrlStatRegEvtMil(base, scubSlot, &regValue);
   fifoNotEmpty = (uint16_t)(regValue & MIL_CTRL_STAT_EV_FIFO_NE);
   
   return (fifoNotEmpty);
 } // fifoNotemptyEvtMil
 
-int16_t clearFifoEvtMil(volatile uint32_t *base)
+int16_t clearFifoEvtMil(volatile uint32_t *base, uint16_t scubSlot)
 {
   uint32_t *pFIFO;
+
+  // scubSlot > 0: SIO, not yet implemented
+  if (scubSlot > 0) return MIL_STAT_OUT_OF_RANGE;
 
   pFIFO = (uint32_t *)(base + (MIL_REG_RD_CLR_EV_FIFO >> 2));
   *pFIFO = 0x1; // check value!!!
@@ -410,10 +440,13 @@ int16_t clearFifoEvtMil(volatile uint32_t *base)
   return MIL_STAT_OK;
 } // clearFifoEvtMil
 
-int16_t popFifoEvtMil(volatile uint32_t *base, uint32_t *evtData)
+int16_t popFifoEvtMil(volatile uint32_t *base, uint16_t scubSlot, uint32_t *evtData)
 {
   uint32_t *pFIFO;
 
+  // scubSlot > 0: SIO, not yet implemented
+  if (scubSlot > 0) return MIL_STAT_OUT_OF_RANGE;
+  
   pFIFO = (uint32_t *)(base + (MIL_REG_RD_CLR_EV_FIFO >> 2));
 
   *evtData = *pFIFO;
@@ -421,20 +454,23 @@ int16_t popFifoEvtMil(volatile uint32_t *base, uint32_t *evtData)
   return MIL_STAT_OK;
 } // popFifoEvtMil
 
-int16_t configLemoPulseEvtMil(volatile uint32_t *base, uint32_t lemo)
+int16_t configLemoPulseEvtMil(volatile uint32_t *base, uint16_t scubSlot, uint32_t lemo)
 {
   uint32_t *pConfigRegister;
 
   uint32_t statRegValue;
   uint32_t confRegValue;
   
-  if (lemo > 4) return MIL_STAT_OUT_OF_RANGE;
+  // scubSlot > 0: SIO, not yet implemented
+  if (scubSlot > 0) return MIL_STAT_OUT_OF_RANGE;
+
+  if (lemo > 4)     return MIL_STAT_OUT_OF_RANGE;
 
   // disable gate mode 
-  readCtrlStatRegEvtMil(base, &statRegValue);
+  readCtrlStatRegEvtMil(base, scubSlot, &statRegValue);
   if (lemo == 1) statRegValue = statRegValue & ~MIL_CTRL_STAT_PULS1_FRAME;
   if (lemo == 2) statRegValue = statRegValue & ~MIL_CTRL_STAT_PULS2_FRAME;
-  writeCtrlStatRegEvtMil(base, statRegValue);
+  writeCtrlStatRegEvtMil(base, scubSlot, statRegValue);
 
   // enable output
   pConfigRegister = (uint32_t *)(base + (MIL_REG_WR_RF_LEMO_CONF >> 2));
@@ -448,20 +484,23 @@ int16_t configLemoPulseEvtMil(volatile uint32_t *base, uint32_t lemo)
   return MIL_STAT_OK;
 } // configLemoPulseEvtMil
 
-int16_t configLemoGateEvtMil(volatile uint32_t *base, uint32_t lemo)
+int16_t configLemoGateEvtMil(volatile uint32_t *base, uint16_t scubSlot, uint32_t lemo)
 {
   uint32_t *pConfigRegister;
 
   uint32_t statRegValue;
   uint32_t confRegValue;
 
-  if (lemo > 2) return MIL_STAT_OUT_OF_RANGE;
+  // scubSlot > 0: SIO, not yet implemented
+  if (scubSlot > 0) return MIL_STAT_OUT_OF_RANGE;
+
+  if (lemo > 2)     return MIL_STAT_OUT_OF_RANGE;
   
   // enable gate mode 
-  readCtrlStatRegEvtMil(base, &statRegValue);
+  readCtrlStatRegEvtMil(base, scubSlot, &statRegValue);
   if (lemo == 1) statRegValue = statRegValue | MIL_CTRL_STAT_PULS1_FRAME;
   if (lemo == 2) statRegValue = statRegValue | MIL_CTRL_STAT_PULS2_FRAME;
-  writeCtrlStatRegEvtMil(base, statRegValue);
+  writeCtrlStatRegEvtMil(base, scubSlot, statRegValue);
 
   // enable output
   pConfigRegister = (uint32_t *)(base + (MIL_REG_WR_RF_LEMO_CONF >> 2));
@@ -473,20 +512,23 @@ int16_t configLemoGateEvtMil(volatile uint32_t *base, uint32_t lemo)
   return MIL_STAT_OK;  
 } //enableLemoGateEvtMil
 
-int16_t configLemoOutputEvtMil(volatile uint32_t *base, uint32_t lemo)
+int16_t configLemoOutputEvtMil(volatile uint32_t *base, uint16_t scubSlot, uint32_t lemo)
 {
   uint32_t *pConfigRegister;
 
   uint32_t statRegValue;
   uint32_t confRegValue;
+
+  // scubSlot > 0: SIO, not yet implemented
+  if (scubSlot > 0) return MIL_STAT_OUT_OF_RANGE;
   
-  if (lemo > 4) return MIL_STAT_OUT_OF_RANGE;
+  if (lemo > 4)     return MIL_STAT_OUT_OF_RANGE;
 
   // disable gate mode 
-  readCtrlStatRegEvtMil(base, &statRegValue);
+  readCtrlStatRegEvtMil(base, scubSlot, &statRegValue);
   if (lemo == 1) statRegValue = statRegValue & ~MIL_CTRL_STAT_PULS1_FRAME;
   if (lemo == 2) statRegValue = statRegValue & ~MIL_CTRL_STAT_PULS2_FRAME;
-  writeCtrlStatRegEvtMil(base, statRegValue);
+  writeCtrlStatRegEvtMil(base, scubSlot, statRegValue);
 
   // enable output for programable operation
   pConfigRegister = (uint32_t *)(base + (MIL_REG_WR_RF_LEMO_CONF >> 2));
@@ -500,13 +542,17 @@ int16_t configLemoOutputEvtMil(volatile uint32_t *base, uint32_t lemo)
   return MIL_STAT_OK; 
 } //configLemoOutputEvtMil
 
-int16_t setLemoOutputEvtMil(volatile uint32_t *base, uint32_t lemo, uint32_t on)
+int16_t setLemoOutputEvtMil(volatile uint32_t *base, uint16_t scubSlot, uint32_t lemo, uint32_t on)
 {
   uint32_t *pLemoDataRegister;
 
   uint32_t dataRegValue;
 
+  // scubSlot > 0: SIO, not yet implemented
+  if (scubSlot > 0) return MIL_STAT_OUT_OF_RANGE; 
+
   if (lemo > 4) return MIL_STAT_OUT_OF_RANGE;
+
   if (on > 1)   return MIL_STAT_OUT_OF_RANGE;
 
   // read current value of register
@@ -534,20 +580,23 @@ int16_t setLemoOutputEvtMil(volatile uint32_t *base, uint32_t lemo, uint32_t on)
 } //setLemoOutputEvtMil
 
 
-int16_t disableLemoEvtMil(volatile uint32_t *base, uint32_t lemo)
+int16_t disableLemoEvtMil(volatile uint32_t *base, uint16_t scubSlot, uint32_t lemo)
 {
   uint32_t *pConfigRegister;
 
   uint32_t statRegValue;
   uint32_t confRegValue;
 
-  if (lemo > 4) return MIL_STAT_OUT_OF_RANGE;
+  // scubSlot > 0: SIO, not yet implemented
+  if (scubSlot > 0) return MIL_STAT_OUT_OF_RANGE;
+
+  if (lemo > 4)     return MIL_STAT_OUT_OF_RANGE;
 
   // disable gate mode 
-  readCtrlStatRegEvtMil(base, &statRegValue);
+  readCtrlStatRegEvtMil(base, scubSlot, &statRegValue);
   if (lemo == 1) statRegValue = statRegValue & ~MIL_CTRL_STAT_PULS1_FRAME;
   if (lemo == 2) statRegValue = statRegValue & ~MIL_CTRL_STAT_PULS2_FRAME;
-  writeCtrlStatRegEvtMil(base, statRegValue);
+  writeCtrlStatRegEvtMil(base, scubSlot, statRegValue);
 
   // disable output
   pConfigRegister = (uint32_t *)(base + (MIL_REG_WR_RF_LEMO_CONF >> 2));
@@ -562,9 +611,12 @@ int16_t disableLemoEvtMil(volatile uint32_t *base, uint32_t lemo)
 } // disableLemoEvtMil
                             
 
-int16_t readEventErrCntMil(volatile uint32_t *base, uint32_t *errWordCnt)
+int16_t readEventErrCntMil(volatile uint32_t *base, uint16_t scubSlot, uint32_t *errWordCnt)
 {
   uint32_t *pErrorRegister;    // register error event counter
+
+  // scubSlot > 0: SIO, not yet implemented
+  if (scubSlot > 0) return MIL_STAT_OUT_OF_RANGE;
 
   pErrorRegister  = (uint32_t *)(base + (MIL_REG_WR_EVT_ERR_CNT >> 2));
   *errWordCnt = *pErrorRegister;
@@ -573,9 +625,12 @@ int16_t readEventErrCntMil(volatile uint32_t *base, uint32_t *errWordCnt)
 } //readEventErrcnt
 
 
-int16_t resetEventErrCntMil(volatile uint32_t *base)
+int16_t resetEventErrCntMil(volatile uint32_t *base, uint16_t scubSlot)
 {
   uint32_t *pErrorRegister;    // register error event counter
+
+  // scubSlot > 0: SIO, not yet implemented
+  if (scubSlot > 0) return MIL_STAT_OUT_OF_RANGE;
 
   pErrorRegister  = (uint32_t *)(base + (MIL_REG_WR_EVT_ERR_CNT >> 2));
   *pErrorRegister = 0x0;

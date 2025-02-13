@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-Aug-2024
+ *  version : 16-dec-2024
  *
  * publishes additional diagnostic data of the kicker
  *
@@ -37,7 +37,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_KICKD_VERSION 0x000800
+#define B2B_SERV_KICKD_VERSION 0x000803
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -473,16 +473,16 @@ int main(int argc, char** argv)
 
     // define conditions (ECA filter rules)
 
-    // CMD_B2B_EXTTRIG, signals start of data collection
+    // CMD_B2B_TRIGGER..., signals start of data collection
     tmpTag        = tagKStart;
     snoopID       = ((uint64_t)FID << 60) | ((uint64_t)reqRing  << 48) | ((uint64_t)reqEvtNo << 36);
     condition[0]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
     tag[0]        = tmpTag;
   
-    // CMD_B2B_EXTTRIG, +100ms (!), signals stop of data collection
+    // CMD_B2B_TRIGGER..., +100us (!), signals stop of data collection
     tmpTag        = tagKStop;        
     snoopID       = ((uint64_t)FID << 60) | ((uint64_t)reqRing  << 48) | ((uint64_t)reqEvtNo << 36);
-    condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 100000000));
+    condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 100000));
     tag[1]        = tmpTag;
 
     // IO input rising edge
