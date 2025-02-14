@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 13-feb-2025
+ *  version : 14-feb-2025
  *
  * subscribes to and displays status of many b2b transfers
  *
@@ -191,8 +191,8 @@ void buildHeader()
 {
   sprintf(headerK, "|        pattern name | t_last [UTC] | orign | sid|  mode   | kick set    trg offst start fltop | destn | sid| phase set get  | kick  set    trg offst start fltop Doffst  TOF |");
   sprintf(emptyK,  "|                     |              |       |    |         |                                   |       |    |                |                                                |");
-  sprintf(headerN, "|        pattern name | t_last [UTC] | orign | sid|         | h1gDDS ext set      get(stdev)diff[Hz]  v/c | h1gDDS inj set      get(stdev)diff[Hz]  v/c | prob ext inj [%%]     |");
-  sprintf(emptyN,  "|                     |              |       |    |                                                       |                                             |                      |");
+  sprintf(headerN, "|        pattern name | t_last [UTC] | orign | sid|  mode   | h1gDDS ext set      get(stdev)diff[Hz]  v/c | h1gDDS inj set      get(stdev)diff[Hz]  v/c | prob ext inj [%%]     |");
+  sprintf(emptyN,  "|                     |              |       |    |         |                                             |                                             |                      |");
   //        printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
 } // buildHeader
 
