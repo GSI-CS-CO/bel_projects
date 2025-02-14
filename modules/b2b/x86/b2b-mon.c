@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 03-jan-2025
+ *  version : 13-feb-2025
  *
  * subscribes to and displays status of many b2b transfers
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_MON_VERSION 0x000803
+#define B2B_MON_VERSION 0x000804
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -189,10 +189,10 @@ double convertUnit(double value_ns, uint64_t TH1)
 
 void buildHeader()
 {
-  sprintf(headerK, "|        pattern name | t_last [UTC] | orign | sid| kick set    trg offst start fltop | destn | sid| phase set get  | kick  set    trg offst start fltop Doffst  TOF |");
-  sprintf(emptyK,  "|                     |              |       |    |                                   |       |    |                |                                                |");
-  sprintf(headerN, "|        pattern name | t_last [UTC] | orign | sid| h1gDDS ext set      get(stdev)diff[Hz]  v/c | h1gDDS inj set      get(stdev)diff[Hz]  v/c | prob ext inj [%%]     |");
-  sprintf(emptyN,  "|                     |              |       |    |                                             |                                             |                      |");
+  sprintf(headerK, "|        pattern name | t_last [UTC] | orign | sid|  mode   | kick set    trg offst start fltop | destn | sid| phase set get  | kick  set    trg offst start fltop Doffst  TOF |");
+  sprintf(emptyK,  "|                     |              |       |    |         |                                   |       |    |                |                                                |");
+  sprintf(headerN, "|        pattern name | t_last [UTC] | orign | sid|         | h1gDDS ext set      get(stdev)diff[Hz]  v/c | h1gDDS inj set      get(stdev)diff[Hz]  v/c | prob ext inj [%%]     |");
+  sprintf(emptyN,  "|                     |              |       |    |                                                       |                                             |                      |");
   //        printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
 } // buildHeader
 
@@ -202,6 +202,7 @@ void buildPrintLine(uint32_t idx)
 {
   char     origin[10];
   char     dest[32];
+  char     mode[32];
   char     pattern[64];
   int      flagTCBS;
   int      flagOther;
@@ -265,14 +266,15 @@ void buildPrintLine(uint32_t idx)
 
   // destination
   switch (set_mode[idx]) {
-    case B2B_MODE_OFF       : sprintf(dest, "---");      flagTCBS = 1; flagOther = 1; flagB2b = 0; flagCphase = 0; flagExtTrig = 0; flagInjTrig = 0; break;
-    case B2B_MODE_BSE       : sprintf(dest, "kicker");   flagTCBS = 1; flagOther = 1; flagB2b = 0; flagCphase = 0; flagExtTrig = 1; flagInjTrig = 0; break;
-    case B2B_MODE_B2E       : sprintf(dest, "target");   flagTCBS = 1; flagOther = 1; flagB2b = 0; flagCphase = 0; flagExtTrig = 1; flagInjTrig = 0; break;
-    case B2B_MODE_B2C       : sprintf(dest, "%s", tmp1); flagTCBS = 1; flagOther = 1; flagB2b = 0; flagCphase = 0; flagExtTrig = 1; flagInjTrig = 1; break;
-    case B2B_MODE_B2BFBEAT  : sprintf(dest, "%s", tmp1); flagTCBS = 1; flagOther = 1; flagB2b = 1; flagCphase = 1; flagExtTrig = 1; flagInjTrig = 1; break;
-    case B2B_MODE_B2EPSHIFT : sprintf(dest, "target");   flagTCBS = 1; flagOther = 1; flagB2b = 0; flagCphase = 1; flagExtTrig = 1; flagInjTrig = 0; break;
-    case B2B_MODE_B2BPSHIFTE: sprintf(dest, "%s", tmp1); flagTCBS = 1; flagOther = 1; flagB2b = 1; flagCphase = 1; flagExtTrig = 1; flagInjTrig = 1; break;     
-    default:                  sprintf(dest, TXTUNKWN);   flagTCBS = 0; flagOther = 0; flagB2b = 0; flagCphase = 0; flagExtTrig = 0; flagInjTrig = 0; break;
+    case B2B_MODE_OFF       : sprintf(mode, "   OFF   ");    sprintf(dest, "---");      flagTCBS = 1; flagOther = 1; flagB2b = 0; flagCphase = 0; flagExtTrig = 0; flagInjTrig = 0; break;
+    case B2B_MODE_BSE       : sprintf(mode, " test 1  ");  sprintf(dest, "kicker");   flagTCBS = 1; flagOther = 1; flagB2b = 0; flagCphase = 0; flagExtTrig = 1; flagInjTrig = 0; break;
+    case B2B_MODE_B2E       : sprintf(mode, "extr fast"); sprintf(dest, "target");   flagTCBS = 1; flagOther = 1; flagB2b = 0; flagCphase = 0; flagExtTrig = 1; flagInjTrig = 0; break;
+    case B2B_MODE_B2C       : sprintf(mode, "b2b coast"); sprintf(dest, "%s", tmp1); flagTCBS = 1; flagOther = 1; flagB2b = 0; flagCphase = 0; flagExtTrig = 1; flagInjTrig = 1; break;
+    case B2B_MODE_B2BFBEAT  : sprintf(mode, "b2b fbeat"); sprintf(dest, "%s", tmp1); flagTCBS = 1; flagOther = 1; flagB2b = 1; flagCphase = 1; flagExtTrig = 1; flagInjTrig = 1; break;
+    case B2B_MODE_B2EPSHIFT : sprintf(mode, " test 2  ");  sprintf(dest, "target");   flagTCBS = 1; flagOther = 1; flagB2b = 0; flagCphase = 1; flagExtTrig = 1; flagInjTrig = 0; break;
+    case B2B_MODE_B2BPSHIFTE: sprintf(mode, "b2b psext"); sprintf(dest, "%s", tmp1); flagTCBS = 1; flagOther = 1; flagB2b = 1; flagCphase = 1; flagExtTrig = 1; flagInjTrig = 1; break;
+    case B2B_MODE_B2BPSHIFTI: sprintf(mode, "b2b psinj"); sprintf(dest, "%s", tmp1); flagTCBS = 1; flagOther = 1; flagB2b = 1; flagCphase = 1; flagExtTrig = 1; flagInjTrig = 1; break;
+    default:                  sprintf(mode, "   ---   ");    sprintf(dest, TXTUNKWN);   flagTCBS = 0; flagOther = 0; flagB2b = 0; flagCphase = 0; flagExtTrig = 0; flagInjTrig = 0; break;
   } // switch set_mode
 
   // ignore ancient timestamps
@@ -421,8 +423,8 @@ void buildPrintLine(uint32_t idx)
   if (flagInjTrig) sprintf(injSid, "%2d", dicSetval[idx].inj_sid);
   else             sprintf(injSid, "%s", "--");
 
-  sprintf(printLineK[idx], "|%20s | %12s |%6s | %2d | %33s |%6s | %2s |%15s | %46s |", pattern, tCBS, origin, sid, extTrig, dest, injSid, b2b, injTrig);
-  sprintf(printLineN[idx], "|%20s | %12s |%6s | %2d | %43s | %43s | %6s  %6s       |", pattern, tCBS, origin, sid, nueMeasExt, nueMeasInj, setLevelExt, setLevelInj);
+  sprintf(printLineK[idx], "|%20s | %12s |%6s | %2d |%9s| %33s |%6s | %2s |%15s | %46s |", pattern, tCBS, origin, sid, mode, extTrig, dest, injSid, b2b, injTrig);
+  sprintf(printLineN[idx], "|%20s | %12s |%6s | %2d |%9s| %43s | %43s | %6s  %6s       |", pattern, tCBS, origin, sid, mode, nueMeasExt, nueMeasInj, setLevelExt, setLevelInj);
   //                printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
 
 } //buildPrintLine
@@ -590,8 +592,8 @@ void printData(char *name)
   strftime(buff,53,"%d-%b-%y %H:%M:%S",localtime(&time_date));
   if (flagPrintNs) sprintf(unitInfo, "(units [ns] unless explicitly given)");
   else             sprintf(unitInfo, " (units [°] unless explicitly given)");
-  sprintf(title,  "\033[7m B2B Monitor %3s ---------------------------------------------------------------------------------------------------- %s - v%8s\033[0m", name, unitInfo, b2b_version_text(B2B_MON_VERSION));
-  sprintf(footer, "\033[7m exit <q> | toggle data <d>, units <u> | toggle inactive <i>, SIS18 <0>, ESR <1>, YR <2> | help <h>                                                 %s\033[0m", buff);
+  sprintf(title,  "\033[7m B2B Monitor %3s -------------------------------------------------------------------------------------------------------------- %s - v%8s\033[0m", name, unitInfo, b2b_version_text(B2B_MON_VERSION));
+  sprintf(footer, "\033[7m exit <q> | toggle data <d>, units <u> | toggle inactive <i>, SIS18 <0>, ESR <1>, YR <2> | help <h>                                                           %s\033[0m", buff);
 
   comlib_term_curpos(1,1);
 
@@ -626,7 +628,7 @@ void printHelpText()
   for (i=0; i<15; i++) printf("%s\n", emptyK);
   //printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
   printf("please visit the following URL                                                    \n");
-  printf("https://www-acc.gsi.de/wiki/BunchBucket/BunchBucketHowCLI#B2B_Monitor             \n");
+  printf("https://wiki.gsi.de/TOS/BunchBucket/BunchBucketHowCLI#B2B_Monitor                 \n");
   printf("%s\n", emptyK);
   printf("press any key to continue\n");
   while (!comlib_term_getChar()) {usleep(200000);}

@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 11-feb-2025
+ *  version : 13-feb-2025
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  NB: units of variables are [ns] unless explicitely mentioned as suffix
@@ -1197,6 +1197,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
         case B2B_MODE_B2BPSHIFTE :   // bunch to bucket using phase shift at extraction machine; this is an OR, no 'break' on purpose
         case B2B_MODE_B2BPSHIFTI :   // bunch to bucket using phase shift at injection machine; this is an OR, no 'break' on purpose
           tWantExt = tCBS + B2B_KICKOFFSETPSHIFT;
+          /* tWantExt = tCBS + B2B_KICKOFFSETMIN + 800000; used for measuring phase shift curve; here @80us */
           break;
         default :
           tWantExt = tCBS;
@@ -1359,7 +1360,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     //tmp32 = tPhase0Ext.ns; pp_printf("phase 0 ext %d\n", tmp32);
     tPhase0Ext_as  =  tPhase0Ext.ns *  one_ns_as +  tPhase0Ext.ps * one_ps_as;         // convert to as
 
-    tPhase0Inj     = fwlib_advanceTimePs(tH1Inj_t, fwlib_tns2tps(tTrig), TH1Inj_as);  // exact phase 0 at ~extraction time
+    tPhase0Inj     = fwlib_advanceTimePs(tH1Inj_t, fwlib_tns2tps(tTrig), TH1Inj_as);   // exact phase 0 at ~extraction time
     tPhase0Inj.ns -= tCBS;                                                             // relative to tCBS
     //tmp32 = tPhase0Inj.ns; pp_printf("phase 0 inj %d\n", tmp32);
     tPhase0Inj_as  =  tPhase0Inj.ns *  one_ns_as +  tPhase0Inj.ps * one_ps_as;         // convert to as
@@ -1383,7 +1384,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     //tmp32 = tPhase0Ext.ns; pp_printf("phase 0 ext %d\n", tmp32);
     tPhase0Ext_as  =  tPhase0Ext.ns *  one_ns_as +  tPhase0Ext.ps * one_ps_as;         // convert to as
 
-    tPhase0Inj     = fwlib_advanceTimePs(tH1Inj_t, fwlib_tns2tps(tTrig), TH1Inj_as);  // exact phase 0 at ~extraction time
+    tPhase0Inj     = fwlib_advanceTimePs(tH1Inj_t, fwlib_tns2tps(tTrig), TH1Inj_as);   // exact phase 0 at ~extraction time
     tPhase0Inj.ns -= tCBS;                                                             // relative to tCBS
     //tmp32 = tPhase0Inj.ns; pp_printf("phase 0 inj %d\n", tmp32);
     tPhase0Inj_as  =  tPhase0Inj.ns *  one_ns_as +  tPhase0Inj.ps * one_ps_as;         // convert to as
