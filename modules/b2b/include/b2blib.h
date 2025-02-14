@@ -213,13 +213,13 @@ extern "C" {
     double   cbs_ktiOffSdev;
     double   cbs_ktiOffMin;
     double   cbs_ktiOffMax;
-    double   ext_monRemAct;                            // remainder (ext_T, h=1) from phase to electronics monitor
-    uint32_t ext_monRemN;
+    double   ext_monRemAct;                            // remainder (ext_T, h=1) from phase to electronics monitor; chk: can be removed after 2025 beamtime
+    uint32_t ext_monRemN;                              
     double   ext_monRemAve;
     double   ext_monRemSdev;
     double   ext_monRemMin;
     double   ext_monRemMax;
-    double   inj_monRemAct;                            // remainder (ext_T, h=1) from phase to electronics monitor
+    double   inj_monRemAct;                            // remainder (ext_T, h=1) from phase to electronics monitor; chk: can be removed after 2025 beamtime
     uint32_t inj_monRemN;
     double   inj_monRemAve;
     double   inj_monRemSdev;

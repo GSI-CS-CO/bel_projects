@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 13-feb-2025
+ *  version : 14-feb-2025
  *
  * publishes raw data of the b2b system
  *
@@ -627,7 +627,7 @@ int main(int argc, char** argv)
       sprintf(ringName, "sis18");
       break;
     case ESR_RING :
-      nCondition = 15;
+      nCondition = 18;
       sprintf(ringName, "esr");
       break;
     case CRYRING_RING :
@@ -908,6 +908,24 @@ int main(int argc, char** argv)
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)CRYRING_RING << 48) | ((uint64_t)B2B_ECADO_B2B_DIAGKICKINJ << 36);
         condition[14] = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
         //tag[14]       = tmpTag;
+
+        // ESR to extraction, phase shift extraction
+        tmpTag        = tagPse;
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_B2B_EXTRACT << 48) | ((uint64_t)B2B_ECADO_B2B_PSHIFTEXT << 36);
+        condition[15] = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[15]        = tmpTag;
+
+        // ESR to CRYRING, phase shift extraction
+        tmpTag        = tagPse;
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_B2B_CRYRING << 48) | ((uint64_t)B2B_ECADO_B2B_PSHIFTEXT << 36);
+        condition[16] = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[16]        = tmpTag;
+
+        // ESR to CRYRING, phase shift injection
+        tmpTag        = tagPsi;
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_B2B_CRYRING << 48) | ((uint64_t)B2B_ECADO_B2B_PSHIFTINJ << 36);
+        condition[17] = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[17]        = tmpTag;
 
         break;
       case CRYRING_RING : 

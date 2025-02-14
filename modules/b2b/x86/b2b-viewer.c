@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 13-feb-2025
+ *  version : 14-feb-2025
  *
  * subscribes to and displays status of a b2b transfer
  *
@@ -471,32 +471,29 @@ int printPshift(uint32_t sid)
 // print kicker info
 int printKick(uint32_t sid)
 {
-  printf("--- kicker ---                                           #ext %5u, #inj %5u\n", dicDiagstat.ext_monRemN, dicDiagstat.inj_monRemN);
+  printf("--- kicker [ns] ---                                      #ext %5u, #inj %5u\n", dicDiagstat.ext_monRemN, dicDiagstat.inj_monRemN);
 
   // extraction kicker
-  if (set_mode == B2B_MODE_OFF) printf("ext: %s\n\n", TXTNA);
+  if (set_mode == B2B_MODE_OFF) printf("ext: %s\n", TXTNA);
   else {
-    printf("ext: monitor delay [ns] %5.0f", dicGetval.ext_dKickMon);
-    printf(", probe delay [ns] %5.0f\n"   , dicGetval.ext_dKickProb);
-    if (set_mode > 1) printf("     mon h=1 ph [ns] act %4.0f, ave(sdev) %8.3f(%6.3f), minmax %4.0f, %4.0f\n", dicDiagstat.ext_monRemAct, dicDiagstat.ext_monRemAve, dicDiagstat.ext_monRemSdev,
-                             dicDiagstat.ext_monRemMin, dicDiagstat.ext_monRemMax);
-    else              printf("\n");
+    printf("ext: monitor %5.0f", dicGetval.ext_dKickMon);
+    printf(", start %5.0f"     , dicGetval.ext_dKickProb);
+    printf(", fltop %5.0f"     , dicGetval.ext_dKickProbLen);
+    printf(", level %5.2f [%%]", dicGetval.ext_dKickProbLevel);
+    printf("\n");
   } // else mode == 0
 
   // injection kicker
   if ((set_mode < B2B_MODE_B2C) || (set_mode == B2B_MODE_B2EPSHIFT)) printf("inj: %s\n\n", TXTNA);
   else {
-    printf("inj: monitor delay [ns] %5.0f", dicGetval.inj_dKickMon);
-    printf(", probe delay [ns] %5.0f"     , dicGetval.inj_dKickProb);
-    printf(", diff mon. [ns] %f\n", dicGetval.inj_dKickMon - dicGetval.ext_dKickMon);
-    if ((set_mode == B2B_MODE_B2C) || (set_mode > B2B_MODE_B2BPSHIFTE))
-      printf("     mon h=1 ph [ns] act %4.0f, ave(sdev) %8.3f(%6.3f), minmax %4.0f, %4.0f\n", dicDiagstat.inj_monRemAct, dicDiagstat.inj_monRemAve, dicDiagstat.inj_monRemSdev,
-                                                                                              dicDiagstat.inj_monRemMin, dicDiagstat.inj_monRemMax);
-    else
-      printf("\n");
+    printf("inj: monitor %5.0f", dicGetval.inj_dKickMon);
+    printf(", start %5.0f"     , dicGetval.inj_dKickProb);
+    printf(", fltop %5.0f"     , dicGetval.inj_dKickProbLen);
+    printf(", level %5.2f [%%]", dicGetval.inj_dKickProbLevel);
+    printf("\n");
   } // else mode ...
 
-  return 5;                                                 // 5 lines
+  return 3;                                                 // 3 lines
 } // printKick
 
 
@@ -559,7 +556,7 @@ int printStatus(uint32_t sid)
   printf("t0E-CBS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
          (double)dicDiagstat.cbs_preOffAct/1000.0, dicDiagstat.cbs_preOffAve/1000.0, dicDiagstat.cbs_preOffSdev/1000.0,
          (double)dicDiagstat.cbs_preOffMin/1000.0, (double)dicDiagstat.cbs_preOffMax/1000.0);
-  if (set_mode < B2B_MODE_B2C)
+  if ((set_mode < B2B_MODE_B2C) || (set_mode == B2B_MODE_B2EPSHIFT))
     printf("t0I-CBS [us]: %s\n", TXTNA);
   else
     printf("t0I-CBS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
