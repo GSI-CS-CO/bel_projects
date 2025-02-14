@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 03-jan-2025
+ *  version : 13-feb-2025
  *
  * subscribes to and displays status of a b2b transfer
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_VIEWER_VERSION 0x000803
+#define B2B_VIEWER_VERSION 0x000804
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -346,6 +346,10 @@ int printSet(uint32_t sid)
       sprintf(modeStr, "'bunch 2 bucket extr. phase shift");
       modeMask = MSKRECMODE6;
       break;
+    case B2B_MODE_B2BPSHIFTI :
+      sprintf(modeStr, "'bunch 2 bucket inj. phase shift");
+      modeMask = MSKRECMODE6;
+      break;
     default :
       sprintf(modeStr, "'unknonwn'");
   } // switch mode
@@ -368,17 +372,14 @@ int printSet(uint32_t sid)
       printf("inj: kick  corr %8.3f ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_injCTrig, set_injNue, set_injT, set_injH);
       printf("b2b: %s\n", TXTNA);
       break;
-    case B2B_MODE_B2BFBEAT :
-      printf("ext: kick  corr %8.3f ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_extCTrig, set_extNue, set_extT, set_extH);
-      printf("inj: kick  corr %8.3f ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_injCTrig, set_injNue, set_injT, set_injH);
-      printf("b2b: phase corr %8.3f ns       %12.3f °\n", set_cPhase, set_cPhaseD);
-      break;
     case  B2B_MODE_B2EPSHIFT :
       printf("ext: kick  corr %8.3f ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_extCTrig, set_extNue, set_extT, set_extH);
       printf("inj: %s\n", TXTNA);
       printf("b2b: phase corr %8.3f ns       %12.3f °\n", set_cPhase, set_cPhaseD);     
       break;
-    case B2B_MODE_B2BPSHIFTE :
+    case B2B_MODE_B2BFBEAT   :                                    
+    case B2B_MODE_B2BPSHIFTE :                             // this is an OR, no break on purpose;
+    case B2B_MODE_B2BPSHIFTI :                             // this is an OR, no break on purpose;
       printf("ext: kick  corr %8.3f ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_extCTrig, set_extNue, set_extT, set_extH);
       printf("inj: kick  corr %8.3f ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_injCTrig, set_injNue, set_injT, set_injH);
       printf("b2b: phase corr %8.3f ns       %12.3f °\n", set_cPhase, set_cPhaseD);
@@ -408,7 +409,7 @@ int printDiag(uint32_t sid)
       printf("inj: %s\n", TXTNA);
       printf("b2b: %s\n", TXTNA);
       break;
-    case B2B_MODE_B2BFBEAT :
+      /*    case B2B_MODE_B2BFBEAT :
       if (dicDiagval.ext_ddsOffN == 0) printf("ext: %s\n", TXTNA);
       else  printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
                    dicDiagval.ext_ddsOffAct, dicDiagval.ext_ddsOffAve, dicDiagval.ext_ddsOffSdev, dicGetval.ext_phaseSysmaxErr, dicDiagval.ext_ddsOffMin, dicDiagval.ext_ddsOffMax);
@@ -418,7 +419,7 @@ int printDiag(uint32_t sid)
       if (dicDiagval.phaseOffN == 0) printf("b2b: %s\n", TXTNA);
       else  printf("b2b: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
                    dicDiagval.phaseOffAct, dicDiagval.phaseOffAve, dicDiagval.phaseOffSdev, dicGetval.ext_phaseSysmaxErr + dicGetval.inj_phaseSysmaxErr, dicDiagval.phaseOffMin, dicDiagval.phaseOffMax);
-      break;
+                   break;*/
     case B2B_MODE_B2EPSHIFT :
       if (dicDiagval.ext_ddsOffN == 0) printf("ext: %s\n", TXTNA);
       else  printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
@@ -426,7 +427,9 @@ int printDiag(uint32_t sid)
       printf("inj: %s\n", TXTNA);
       printf("b2b: %s\n", TXTNA);
       break;
-    case B2B_MODE_B2BPSHIFTE :
+    case B2B_MODE_B2BFBEAT   :
+    case B2B_MODE_B2BPSHIFTE :                             // this is an OR, no break on purpose;
+    case B2B_MODE_B2BPSHIFTI :                             // this is an OR, no break on purpose;
       if (dicDiagval.ext_ddsOffN == 0) printf("ext: %s\n", TXTNA);
       else  printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
                    dicDiagval.ext_ddsOffAct, dicDiagval.ext_ddsOffAve, dicDiagval.ext_ddsOffSdev, dicGetval.ext_phaseSysmaxErr, dicDiagval.ext_ddsOffMin, dicDiagval.ext_ddsOffMax);
@@ -656,7 +659,7 @@ void printData(int flagOnce, uint32_t sid, char *name)
       sprintf(modeStr, "'b2b phase shift extr.'");
       break;
     case 7 :
-      sprintf(modeStr, "'b2 phase shift inj.'");
+      sprintf(modeStr, "'b2b phase shift inj.'");
       break;
     default :
       sprintf(modeStr, "'unknonwn'");

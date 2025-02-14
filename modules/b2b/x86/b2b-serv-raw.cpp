@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 12-feb-2025
+ *  version : 13-feb-2025
  *
  * publishes raw data of the b2b system
  *
@@ -488,7 +488,7 @@ void dicSubscribeServices(char *prefix)
 
   for (i=0; i<B2B_NSID; i++) {
     sprintf(name, "%s_sis18-kdde_sid%02d_len",    prefix, i);
-    printf("prefix %s, name %s\n", prefix, name);
+    //printf("prefix %s, name %s\n", prefix, name);
     dicKickLenSIS18ExtId[i] = dic_info_service_stamped(   name, MONITORED, 0, &(dicKickLenSIS18Ext[i]),    sizeof(double), 0 , 0, &no_link_dbl, sizeof(double));
     sprintf(name, "%s_esr-kdde_sid%02d_len",      prefix, i);
     dicKickLenESRExtId[i] = dic_info_service_stamped(     name, MONITORED, 0, &(dicKickLenESRExt[i]),      sizeof(double), 0 , 0, &no_link_dbl, sizeof(double));
@@ -810,7 +810,7 @@ int main(int argc, char** argv)
         //tag[16]        = tmpTag;
 
         // SIS18 to ESR, phase shift injection
-        tmpTag        = tagPse;
+        tmpTag        = tagPsi;
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_B2B_ESR << 48) | ((uint64_t)B2B_ECADO_B2B_PSHIFTINJ << 36);
         condition[17] = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
         //tag[17]        = tmpTag;
