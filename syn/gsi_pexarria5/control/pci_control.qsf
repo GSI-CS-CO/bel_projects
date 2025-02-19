@@ -1,3 +1,4 @@
+
 set_global_assignment -name ACTIVE_SERIAL_CLOCK FREQ_100MHZ
 set_global_assignment -name ADV_NETLIST_OPT_SYNTH_WYSIWYG_REMAP OFF
 set_global_assignment -name AHDL_FILE ../../../modules/modulbus/i2c.tdf
@@ -566,6 +567,7 @@ set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_tlu
 set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/platform/altera/wr_altera_pkg.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria5_phy/wr_arria5_phy.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/platform/altera/xwrc_platform_altera.vhd" -library work
+set_global_assignment -name VHDL_FILE ../../../modules/a10ts/src/hdl/a10ts_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/ad7606/ad7606.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/ad7606/adc_modul_bus.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/ad7606/adc_pkg.vhd -library work
@@ -613,9 +615,13 @@ set_global_assignment -name VHDL_FILE ../../../modules/daq/daq.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/daq/Zeitbasis_daq.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/ddr3/ddr3_wrapper_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/ddr3/ddr3_wrapper.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/diob/del_quench_detection.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/diob/hw_interlock.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/diob/QuD_masken_reg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/diob/qud_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/diob/quench_detection.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/diob/spill_abort.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/diob/TM_quench_detection.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/dm_diag/dm_diag_auto_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/dm_diag/dm_diag_auto.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/dm_diag/dm_diag.vhd -library work
@@ -713,11 +719,6 @@ set_global_assignment -name VHDL_FILE ../../../modules/pll/altera_butis.vhd -lib
 set_global_assignment -name VHDL_FILE ../../../modules/pll/altera_phase.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/pll/altera_reset.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/pll/pll_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/power_test/power_test_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/power_test/power_test.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/power_test/pwm.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/power_test/row_array.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/power_test/row.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/prioq2/arbiter.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/prioq2/min3.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/prioq2/min9_64.vhd -library work
@@ -728,12 +729,16 @@ set_global_assignment -name VHDL_FILE ../../../modules/prioq2/prio.vhd -library 
 set_global_assignment -name VHDL_FILE ../../../modules/prioq2/queue_unit.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/psram/psram_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/psram/psram.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/pwm/src/pwm_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/pwm/src/pwm.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/remote_update/altasmi.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/remote_update/asmi10/asmi10/altera_asmi_parallel_181/synth/asmi10_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/remote_update/asmi10/asmi10/synth/asmi10.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/remote_update/asmi5/asmi5/synthesis/asmi5.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/remote_update/asmi_arriaII/asmi_arriaII/synthesis/asmi_arriaII.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/remote_update/remote_update_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/remote_update/remote_update.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/remote_update/wb_asmi_slave.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/remote_update/wb_asmi.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/remote_update/wb_remote_update.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/reverse_lpb/reverse_lpb.vhd -library work

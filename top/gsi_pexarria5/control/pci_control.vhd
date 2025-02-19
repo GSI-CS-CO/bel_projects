@@ -367,10 +367,10 @@ begin
   di(6) <= '0' when (    led_link_up and not led_track) = '1' else 'Z'; -- blue
   di(4) <= '0' when (    led_link_up and     led_track) = '1' else 'Z'; -- green
 
-  led(1) <= not (led_link_act and led_link_up); -- red   = traffic/no-link
-  led(2) <= not led_link_up;                    -- blue  = link
-  led(3) <= not led_track;                      -- green = timing valid
-  led(4) <= not led_pps;                        -- white = PPS
+  --led(1) <= not (led_link_act and led_link_up); -- red   = traffic/no-link
+  --led(2) <= not led_link_up;                    -- blue  = link
+  --led(3) <= not led_track;                      -- green = timing valid
+  --led(4) <= not led_pps;                        -- white = PPS
 
   ledsfpg(3 downto 1) <= (others => '1');
   ledsfpr(3 downto 1) <= (others => '1');
@@ -378,14 +378,24 @@ begin
   ledsfpr(4) <= not led_link_act;
 
   -- GPIO LEDs
-  led(5) <= '0' when gpio_o(0)='1' else 'Z'; -- (baseboard), red
-  led(6) <= '0' when gpio_o(1)='1' else 'Z'; -- blue
-  led(7) <= '0' when gpio_o(2)='1' else 'Z'; -- green
-  led(8) <= '0' when gpio_o(3)='1' else 'Z'; -- white
+  --led(5) <= '0' when gpio_o(0)='1' else 'Z'; -- (baseboard), red
+  --led(6) <= '0' when gpio_o(1)='1' else 'Z'; -- blue
+  --led(7) <= '0' when gpio_o(2)='1' else 'Z'; -- green
+  --led(8) <= '0' when gpio_o(3)='1' else 'Z'; -- white
   p7     <= '0' when gpio_o(4)='1' else 'Z'; -- (add-on board), red
   n7     <= '0' when gpio_o(5)='1' else 'Z'; -- blue
   p8     <= '0' when gpio_o(6)='1' else 'Z'; -- green
   n8     <= '0' when gpio_o(7)='1' else 'Z'; -- white
+
+  -- using LEDs 1-8 for PWM test
+  led(1) <= not s_pwm_led(0);
+  led(2) <= not s_pwm_led(1);
+  led(3) <= not s_pwm_led(2);
+  led(4) <= not s_pwm_led(3);
+  led(5) <= not s_pwm_led(4);
+  led(6) <= not s_pwm_led(5);
+  led(7) <= not s_pwm_led(6);
+  led(8) <= not s_pwm_led(7);
 
   -- BuTiS/MDMHR Output
   p19 <= butis_clk_200;

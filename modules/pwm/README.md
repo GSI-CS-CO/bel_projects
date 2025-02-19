@@ -12,7 +12,7 @@ These are **not** used like in many PWM modules but follow the following rules:
   
 To calculate PWM period $T_{pwm}$ and using the input clocks cycle time $T_{clk}$  
 ```math
-T_{pwm} = T_{counter} + 1 \cdot P + 1 \cdot T_{clk}
+T_{pwm} = (T_{counter} + 1) \cdot (P + 1) \cdot T_{clk}
 ```
   
     
@@ -21,7 +21,7 @@ Assuming $T_{clk} = 16ns, T_{counter} = 4, P = 2$ yields a PWM cycle time $T_{pw
 The third writable value, Duty Cycle Ratio $D$, describes the length the PWM signal is high in relation to the whole PWM period. The PWM duty cycle $T_{high}$
 
 ```math
-T_{high} = D + 1 \cdot P + 1 \cdot T_{clk}
+T_{high} = D \cdot (P + 1) \cdot T_{clk}
 ```
 
   

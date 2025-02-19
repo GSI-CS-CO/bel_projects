@@ -8,11 +8,19 @@ use work.spwm_wbgen2_pkg.all;
 
 entity pwm is
 
+    -- This is just a wrapper for the PWM module from general_cores
 
     generic (
         g_simulation                : in boolean := false;
         g_pwm_channel_num           : integer range 1 to 8 := 8;
-        g_pwm_interface_mode        : t_wishbone_interface_mode := PIPELINED
+        g_pwm_regs_size             : integer range 1 to 16 := 16;
+        
+        g_pwm_default_period        : integer range 1 to 16 := 16;
+        g_pwm_default_presc         : integer range 0 to 255 := 0;
+        g_pwm_default_val           : integer range 0 to 255 := 0;
+
+        g_pwm_interface_mode        : t_wishbone_interface_mode := PIPELINED;
+        g_pwm_address_granularity   : t_wishbone_address_granularity := BYTE
     );
 
     port(
@@ -53,7 +61,11 @@ architecture pwm_arch of pwm is
 
     signal s_tb_pwm_o : std_logic;
 
+    --signal t_adr_temp_i : t_wishbone_address;
+
 begin
+
+    --t_adr_temp_i <= "0" & t_wb_in.adr(7 downto 2);
 
     PWM_WB : wb_simple_pwm
     --component wb_simple_pwm
@@ -80,17 +92,28 @@ begin
     --      pwm_o      : out std_logic_vector(g_num_channels-1 downto 0));
     --end component;
     generic map(
-        g_num_channels          =>  g_pwm_channel_num,
-        g_interface_mode        =>  g_pwm_interface_mode,
-        g_default_val           =>  0
+        g_num_channels        =>  g_pwm_channel_num,
+        g_regs_size           =>  g_pwm_regs_size,
+        g_default_period      =>  g_pwm_default_period,
+        g_default_presc       =>  g_pwm_default_presc,
+        g_default_val         =>  g_pwm_default_val,
+        g_interface_mode      =>  g_pwm_interface_mode,
+        g_address_granularity =>  g_pwm_address_granularity
     )
     port map (
         rst_n_i     =>  s_rst_sys_n_i,
         clk_sys_i   =>  s_clk_sys_i,
 
-        -- as defined in the module
+        -- as defined in the general_cores module:
         -- wb_simple_pwm only takes the lower 6 bits
-        wb_adr_i    => t_wb_in.adr(5 downto 0),
+        -- inner wb_adr_i takes only 4 bits of these
+        -- and we need to stay aligned
+        wb_adr_i(5) => t_wb_in.adr(5),
+        wb_adr_i(4) => t_wb_in.adr(4),
+        wb_adr_i(3) => t_wb_in.adr(3),
+        wb_adr_i(2) => t_wb_in.adr(2),
+        wb_adr_i(1) => '0',
+        wb_adr_i(0) => '0',
         wb_dat_i    => t_wb_in.dat,    
         wb_dat_o    => t_wb_out.dat,
         wb_cyc_i    => t_wb_in.cyc,
