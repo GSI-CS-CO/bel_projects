@@ -15,13 +15,13 @@ package pwm_pkg is
     wbd_width     => x"7", -- 8/16/32-bit port granularity
     sdb_component => (
     addr_first    => x"0000000000000000",
-    addr_last     => x"000000000000000f",
+    addr_last     => x"00000000000000ff",
     product       => (
     vendor_id     => x"0000000000000651",
     device_id     => x"434E5453",
     version       => x"00000001",
     date          => x"20250125",
-    name          => "GSI:PWMPWMPWMPWMPWM")));
+    name          => "GSI:PWM-MODULE     ")));
 
   component pwm is
 

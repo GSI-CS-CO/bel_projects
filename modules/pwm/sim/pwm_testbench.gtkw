@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.116 (w)1999-2023 BSI
-[*] Tue Feb  4 15:49:50 2025
+[*] Tue Feb 18 16:00:53 2025
 [*]
 [dumpfile] "/home/agr/dev/bel_projects/modules/pwm/sim/pwm_testbench.ghw"
-[dumpfile_mtime] "Tue Feb  4 15:04:20 2025"
-[dumpfile_size] 12715378
+[dumpfile_mtime] "Tue Feb 18 15:46:03 2025"
+[dumpfile_size] 13882237
 [savefile] "/home/agr/dev/bel_projects/modules/pwm/sim/pwm_testbench.gtkw"
-[timestart] 282800000
-[size] 2560 1392
-[pos] -1 -1
-*-25.842342 225000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[timestart] 12998200000
+[size] 2560 1348
+[pos] -2561 -361
+*-25.842342 524900000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
 [treeopen] top.pwm_testbench.
 [treeopen] top.pwm_testbench.dut.
@@ -18,11 +18,12 @@
 [treeopen] top.pwm_testbench.dut.pwm_wb.regs_in.
 [treeopen] top.pwm_testbench.dut.pwm_wb.regs_out.
 [treeopen] top.pwm_testbench.dut.pwm_wb.u_wb_slave.
+[treeopen] top.pwm_testbench.dut.t_wb_in.
 [treeopen] top.pwm_testbench.dut.t_wb_out.
 [sst_width] 381
-[signals_width] 271
+[signals_width] 296
 [sst_expanded] 1
-[sst_vpaned_height] 932
+[sst_vpaned_height] 885
 @28
 top.pwm_testbench.dut.s_rst_sys_n_i
 top.pwm_testbench.dut.s_clk_sys_i
@@ -93,10 +94,9 @@ top.pwm_testbench.dut.pwm_wb.u_wb_slave.rddata_reg[0]
 @22
 [color] 7
 #{top.pwm_testbench.dut.pwm_wb.period_val[15:0]} top.pwm_testbench.dut.pwm_wb.period_val[15] top.pwm_testbench.dut.pwm_wb.period_val[14] top.pwm_testbench.dut.pwm_wb.period_val[13] top.pwm_testbench.dut.pwm_wb.period_val[12] top.pwm_testbench.dut.pwm_wb.period_val[11] top.pwm_testbench.dut.pwm_wb.period_val[10] top.pwm_testbench.dut.pwm_wb.period_val[9] top.pwm_testbench.dut.pwm_wb.period_val[8] top.pwm_testbench.dut.pwm_wb.period_val[7] top.pwm_testbench.dut.pwm_wb.period_val[6] top.pwm_testbench.dut.pwm_wb.period_val[5] top.pwm_testbench.dut.pwm_wb.period_val[4] top.pwm_testbench.dut.pwm_wb.period_val[3] top.pwm_testbench.dut.pwm_wb.period_val[2] top.pwm_testbench.dut.pwm_wb.period_val[1] top.pwm_testbench.dut.pwm_wb.period_val[0]
-@25
+@24
 [color] 7
 #{top.pwm_testbench.dut.pwm_wb.period_val[15:0]} top.pwm_testbench.dut.pwm_wb.period_val[15] top.pwm_testbench.dut.pwm_wb.period_val[14] top.pwm_testbench.dut.pwm_wb.period_val[13] top.pwm_testbench.dut.pwm_wb.period_val[12] top.pwm_testbench.dut.pwm_wb.period_val[11] top.pwm_testbench.dut.pwm_wb.period_val[10] top.pwm_testbench.dut.pwm_wb.period_val[9] top.pwm_testbench.dut.pwm_wb.period_val[8] top.pwm_testbench.dut.pwm_wb.period_val[7] top.pwm_testbench.dut.pwm_wb.period_val[6] top.pwm_testbench.dut.pwm_wb.period_val[5] top.pwm_testbench.dut.pwm_wb.period_val[4] top.pwm_testbench.dut.pwm_wb.period_val[3] top.pwm_testbench.dut.pwm_wb.period_val[2] top.pwm_testbench.dut.pwm_wb.period_val[1] top.pwm_testbench.dut.pwm_wb.period_val[0]
-@24
 [color] 7
 #{top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[15:0]} top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[15] top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[14] top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[13] top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[12] top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[11] top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[10] top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[9] top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[8] top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[7] top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[6] top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[5] top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[4] top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[3] top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[2] top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[1] top.pwm_testbench.dut.pwm_wb.regs_in.cr_period_i[0]
 @22
@@ -138,8 +138,10 @@ top.pwm_testbench.dut.s_pwm_o[7]
 @28
 [color] 2
 top.pwm_testbench.dut.s_pwm_o[6]
+@29
 [color] 2
 top.pwm_testbench.dut.s_pwm_o[5]
+@28
 [color] 2
 top.pwm_testbench.dut.s_pwm_o[4]
 [color] 2
