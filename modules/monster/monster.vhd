@@ -672,6 +672,10 @@ architecture rtl of monster is
   signal rstn_ref         : std_logic;
   signal rstn_butis       : std_logic;
 
+  signal ref_locked_aux   : std_logic;
+  signal clk_ref0_aux     : std_logic;
+  signal clk_ref_aux      : std_logic;
+
   signal phase_done       : std_logic;
   signal phase_step       : std_logic;
   signal phase_sel        : std_logic_vector(4 downto 0);
@@ -1128,7 +1132,6 @@ begin
       clk_sys4      <= clk_sys2;
   end generate;
 
-
   sys_clk : global_region port map(
     inclk  => clk_sys0,
     outclk => clk_sys);
@@ -1210,6 +1213,25 @@ begin
       phase_done  => phase_done);
   end generate;
 
+  dual_port_wr_core_ref_a10_aux : if g_dual_port_wr generate
+    ref_a10_aux : if (c_is_arria10 and not(g_a10_use_ref_fpll)) generate
+      ref_inst_aux : ref_pll10 port map(
+        rst         => pll_rst,
+        refclk      => aux_clk_125m_pllref_i, -- 125 MHz
+        outclk_2    => clk_ref0_aux, --  125 MHz
+        outclk_3    => open, --  200 MHz
+        outclk_4    => open, --   25 MHz
+        lvds_clk(0) => open, -- 1000 MHz
+        loaden(0)   => open, -- 125 MHz, 1/8 duty, -1.5ns phase
+        locked      => open,
+        scanclk     => '0',
+        cntsel      => (others => '0'),
+        phase_en    => '0',
+        updn        => '0',              -- positive phase shift (widen period)
+        phase_done  => open);
+    end generate;
+  end generate;
+
   ref_fa10 : if (c_is_arria10 and g_a10_use_ref_fpll) generate
     ref_inst : ref_fpll10 port map(
       pll_refclk0   => core_clk_125m_pllref_i,
@@ -1244,6 +1266,12 @@ begin
   ref_clk : global_region port map(
     inclk  => clk_ref0,
     outclk => clk_ref);
+
+  dual_port_wr_core_ref_clk_aux : if g_dual_port_wr generate
+    ref_clk_aux : global_region port map(
+      inclk  => clk_ref0_aux,
+      outclk => clk_ref_aux);
+  end generate;
 
   --butis_clk : global_region port map(
   --  inclk  => clk_ref1,
@@ -2013,7 +2041,7 @@ end generate;
       port map (
         clk_sys_i            => clk_sys,
         clk_dmtd_i           => clk_dmtd_aux,
-        clk_ref_i            => clk_ref,
+        clk_ref_i            => clk_ref_aux,
         clk_aux_i            => (others => '0'),
         pps_ext_i            => wr_ext_pps_i,
         rst_n_i              => rstn_sys,
@@ -2207,8 +2235,8 @@ end generate;
           g_use_ext_loop         => true,
           g_use_ext_rst          => true)
         port map (
-          clk_ref_i              => clk_ref,
-          clk_phy_i              => phy_clk,
+          clk_ref_i              => clk_ref_aux,
+          clk_phy_i              => aux_clk_125m_sfpref_i,
           reconfig_write_i       => (others => '0'),
           reconfig_read_i        => (others => '0'),
           reconfig_address_i     => (others => '0'),
