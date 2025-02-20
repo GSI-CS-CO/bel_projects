@@ -363,6 +363,16 @@ begin
       wbar_phy_dis_o          => sfp_tx_disable_o,
       sfp_tx_fault_i          => sfp_tx_fault_i,
       sfp_los_i               => sfp_los_i,
+
+      wr_aux_sfp_sda_io       => ext_ch(2),
+      wr_aux_sfp_scl_io       => ext_ch(3),
+      wr_aux_sfp_det_i        => ext_ch(4),
+      wr_aux_sfp_tx_o         => gxbl1c_tx_ch1p_ae28,
+      wr_aux_sfp_rx_i         => gxbl1c_rx_ch1p_ad26,
+      sfp_aux_tx_disable_o    => ext_ch(5),
+      sfp_aux_tx_fault_i      => ext_ch(6),
+      sfp_aux_los_i           => ext_ch(7),
+
       gpio_i(1 downto 0)      => lemo_in,
       gpio_i(4 downto 2)      => s_gpio_i,
       gpio_o(9 downto 0)      => s_gpio_o(9 downto 0),
@@ -511,7 +521,7 @@ begin
     --    dataout   => s_gpio_i(i)
     --  );
      s_gpio_i(2 downto 0) <= fastIO_p_i(2 downto 0);
-  
+
   end generate;
   lemo_out <= s_gpio_o(6 downto 3);
 
@@ -537,7 +547,7 @@ begin
   --Extension Piggy
   ext_ch(0) <= s_led_pps;
   ext_ch(1) <= s_core_clk_25m;
-  ext_ch(21 downto 2) <= (others => 'Z');
+  ext_ch(21 downto 8) <= (others => 'Z');
 
   -- I2C to ATXMEGA
   avr_scl             <= s_i2c_scl_pad_out(1) when (s_i2c_scl_padoen(1) = '0') else 'Z';
