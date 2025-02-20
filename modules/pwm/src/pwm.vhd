@@ -26,8 +26,8 @@ entity pwm is
     port(
     
     -- these two sys signals come from SysCon
-    s_clk_sys_i       : in std_logic;
-    s_rst_sys_n_i     : in std_logic;
+    clk_sys_i       : in std_logic;
+    rst_sys_n_i     : in std_logic;
 
 
     t_wb_out          : out t_wishbone_slave_out;
@@ -51,7 +51,7 @@ entity pwm is
         --end record t_wishbone_slave_in;
         -- equal to t_wishbone_master_out
 
-    s_pwm_o           : out std_logic_vector(g_pwm_channel_num-1 downto 0)
+    pwm_o           : out std_logic_vector((g_pwm_channel_num-1) downto 0)
     -- start with only one channel
     );
 
@@ -101,8 +101,8 @@ begin
         g_address_granularity =>  g_pwm_address_granularity
     )
     port map (
-        rst_n_i     =>  s_rst_sys_n_i,
-        clk_sys_i   =>  s_clk_sys_i,
+        rst_n_i     =>  rst_sys_n_i,
+        clk_sys_i   =>  clk_sys_i,
 
         -- as defined in the general_cores module:
         -- wb_simple_pwm only takes the lower 6 bits
@@ -123,7 +123,7 @@ begin
         wb_ack_o    => t_wb_out.ack,
         wb_stall_o  => t_wb_out.stall,
 
-        pwm_o       =>  s_pwm_o
+        pwm_o       =>  pwm_o
 
     );
 
