@@ -680,8 +680,11 @@ architecture rtl of monster is
 
   -- DMTD PLL from clk_20m_vcxo_i
   signal dmtd_locked      : std_logic;
+  signal dmtd_locked_aux  : std_logic;
   signal clk_dmtd0        : std_logic;
   signal clk_dmtd         : std_logic;
+  signal clk_dmtd0_aux    : std_logic;
+  signal clk_dmtd_aux     : std_logic;
 
   -- BuTiS T0 clocks
   signal clk_butis_t0     : std_logic := '0'; -- 100KHz
@@ -1039,6 +1042,7 @@ begin
       c0       => clk_dmtd0,              --  62.5MHz
       locked   => dmtd_locked);
   end generate;
+
   dmtd_a5 : if c_is_arria5 generate
     dmtd_inst : dmtd_pll5 port map(
       rst      => pll_rst,
@@ -1055,9 +1059,25 @@ begin
       locked   => dmtd_locked);
   end generate;
 
+  dual_port_wr_core_dmtd_a10_aux : if g_dual_port_wr generate
+    dmtd_a10_aux : if c_is_arria10 generate
+      dmtd_inst : dmtd_pll10 port map(
+        rst      => pll_rst,
+        refclk   => aux_clk_20m_vcxo_i,    --  20  MHz
+        outclk_0 => clk_dmtd0_aux,         --  62.5MHz
+        locked   => dmtd_locked_aux);
+    end generate;
+  end generate;
+
   dmtd_clk : single_region port map(
     inclk  => clk_dmtd0,
     outclk => clk_dmtd);
+
+  dual_port_wr_core_dmtd_clk : if g_dual_port_wr generate
+    dmtd_clk_aux : single_region port map(
+      inclk  => clk_dmtd0_aux,
+      outclk => clk_dmtd_aux);
+  end generate;
 
   sys_a2 : if c_is_arria2 generate
     sys_inst : sys_pll port map(
@@ -1992,7 +2012,7 @@ end generate;
 
       port map (
         clk_sys_i            => clk_sys,
-        clk_dmtd_i           => clk_dmtd,
+        clk_dmtd_i           => clk_dmtd_aux,
         clk_ref_i            => clk_ref,
         clk_aux_i            => (others => '0'),
         pps_ext_i            => wr_ext_pps_i,
