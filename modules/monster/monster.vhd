@@ -113,6 +113,7 @@ entity monster is
     g_en_beam_dump         : boolean;
     g_en_i2c_wrapper       : boolean;
     g_num_i2c_interfaces   : integer;
+    g_num_pwm_channels     : integer;
     g_dual_port_wr         : boolean;
     g_io_table             : t_io_mapping_table_arg_array;
     g_en_pmc               : boolean;
@@ -1055,6 +1056,7 @@ architecture rtl of monster is
   signal s_gpio_src_ioc       : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
   signal s_gpio_src_wr_pps    : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
   signal s_gpio_src_butis_t0  : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
+  signal s_gpio_src_pwm       : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
 
   signal s_gpio_mux           : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
   signal s_lvds_mux           : std_logic_vector(f_sub1(c_eca_lvds) downto 0);
@@ -1144,6 +1146,11 @@ architecture rtl of monster is
   signal s_tms    : std_logic;
   signal s_tck    : std_logic;
 
+
+  ----------------------------------------------------------------------------------
+  -- pwm signals ------------------------------------------------------------------
+  ----------------------------------------------------------------------------------
+  signal s_pwm_dummy_vector : std_logic_vector((c_eca_gpio-g_num_pwm_channels-1) downto 0) := (others => '0');
 
 begin
 
@@ -2689,7 +2696,7 @@ end generate;
     s_gpio_src_wr_pps(i) <= '0' when s_gpio_pps_mux(i)='0' else ext_pps;
   end generate;
 
-  s_gpio_out <= s_gpio_src_eca or s_gpio_src_ioc or s_gpio_src_butis_t0 or s_gpio_src_wr_pps;
+  s_gpio_out <= s_gpio_src_eca or s_gpio_src_ioc or s_gpio_src_butis_t0 or s_gpio_src_wr_pps or s_gpio_src_pwm;
   process(clk_ref, rstn_ref)
   begin
     if(rstn_ref = '0') then
@@ -3690,12 +3697,16 @@ end generate;
     
   pwm_y : if g_en_pwm generate
     pwm_pwm : pwm
+    generic map (
+        g_pwm_channel_num => c_eca_gpio
+      )
       port map (
-        s_clk_sys_i     => clk_sys,
-        s_rst_sys_n_i   => rstn_sys,
-        t_wb_out        => dev_bus_master_i(dev_slaves'pos(devs_pwm)),
-        t_wb_in         => dev_bus_master_o(dev_slaves'pos(devs_pwm)),
-        s_pwm_o         => pwm_o);
+        clk_sys_i         => clk_sys,
+        rst_sys_n_i       => rstn_sys,
+        t_wb_out          => dev_bus_master_i(dev_slaves'pos(devs_pwm)),
+        t_wb_in           => dev_bus_master_o(dev_slaves'pos(devs_pwm)),
+        pwm_o             => s_gpio_src_pwm((c_eca_gpio-1) downto 0)
+      );
   end generate;
 
   -- END OF Wishbone slaves
