@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_CLIENT_SYS_VERSION 0x000803
+#define B2B_CLIENT_SYS_VERSION 0x000804
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -55,7 +55,7 @@
 
 const char* program;
 
-#define B2BNSYS     16                   // number of B2B systems
+#define B2BNSYS     26                   // number of B2B systems
 
 #define DIMCHARSIZE 32                   // standard size for char services
 #define DIMMAXSIZE  1024                 // max size for service names
@@ -72,23 +72,62 @@ char     footer[SCREENWIDTH+1];                             // footer line to be
 char     header[SCREENWIDTH+1];                             // header line to be printed
 char     empty[SCREENWIDTH+1];                              // an empty line
 
+const char * sysClearKeys[] = {
+  "0",
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "A",
+  "B",
+  "C",
+  "E",
+  "E",
+  "F",
+  "G",
+  "H",
+  "I",
+  "J",
+  "K",
+  "L",
+  "M",
+  "N",
+  "O",
+  "P"
+};
+
 const char * sysShortNames[] = {
   "sis18-cbu",
   "sis18-pm",
+  "sis18-psm",
   "sis18-kde",
   "sis18-raw",
   "sis18-cal",
   "esr-cbu",
   "esr-pm",
+  "esr-psm",
   "esr-kdx",
   "esr-raw",
   "esr-cal",
   "yr-cbu",
   "yr-pm",
+  "yr-psm",
   "yr-kdi",
   "yr-kde",
   "yr-raw",
-  "yr-cal"
+  "yr-cal",
+  "sis100-cbu",
+  "sis100-pm",
+  "sis100-psm",
+  "sis100-kdi",
+  "sis100-kde",
+  "sis100-raw",
+  "sis100-cal",
 };
 
 const char * ringNames[] = {
@@ -97,6 +136,8 @@ const char * ringNames[] = {
   " SIS18",
   " SIS18",
   " SIS18",
+  " SIS18",
+  "   ESR",
   "   ESR",
   "   ESR",
   "   ESR",
@@ -107,26 +148,44 @@ const char * ringNames[] = {
   "    YR",
   "    YR",
   "    YR",
-  "    YR"
+  "    YR",
+  "    YR",
+  "SIS100",
+  "SIS100",
+  "SIS100",
+  "SIS100",
+  "SIS100",
+  "SIS100",
+  "SIS100",
 };
 
 const char * typeNames[] = {
   "CBU",
   " PM",
+  "PSM",
   "KDE",
   "DAQ",
   "CAL",
   "CBU",
   " PM",
+  "PSM",
   "KDX",
   "DAQ",
   "CAL",
   "CBU",
   " PM",
+  "PSM",
   "KDI",
   "KDE",
   "DAQ",
-  "CAL"
+  "CAL",
+  "CBU",
+  " PM",
+  "PSM",
+  "KDE",
+  "KDI",
+  "DAQ",
+  "CAL",
 };
 
 struct b2bSystem_t {
@@ -238,7 +297,7 @@ void printServices(int flagOnce)
   // footer with date and time
   time_date = time(0);
   strftime(buff,50,"%d-%b-%y %H:%M",localtime(&time_date));
-  sprintf(footer, "\033[7m exit <q> | clear status <digit> | print status <s> | help <h>   %s\033[0m", buff);
+  sprintf(footer, "\033[7m exit <q> | clear status <digit> | print status <s> | help <z>   %s\033[0m", buff);
   
   comlib_term_curpos(1,1);
   
@@ -270,10 +329,10 @@ void printServices(int flagOnce)
         if ( maxmin >= 1.1)                      sprintf(cJitter, "%4d", (int)maxmin);
       } // else isnan
     } // else nolink
-    printf(" %2x %6s %3s %8s %10s %9s %13s %4s %16s\n", i, ringNames[i], typeNames[i], cVersion, cState, cTransfer, cStatus, cJitter, cHost);
+    printf("%2s %6s %3s %8s %10s %9s %13s %4s %16s\n", sysClearKeys[i], ringNames[i], typeNames[i], cVersion, cState, cTransfer, cStatus, cJitter, cHost);
   } // for i
 
-  for (i=0; i<4; i++) printf("%s\n", empty);
+  //for (i=0; i<2; i++) printf("%s\n", empty);
   if (!flagOnce) printf("%s\n", footer);
 } // printServices
 
@@ -309,7 +368,7 @@ void printHelpText()
   for (i=0; i<B2BNSYS; i++) printf("%s\n", empty);
   //printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
   printf("please visit the following URL                                                  \n");
-  printf("https://www-acc.gsi.de/wiki/BunchBucket/BunchBucketHowCLI#B2B_System_Status     \n");
+  printf("https://wiki.gsi.de/TOS/BunchBucket/BunchBucketHowCLI#B2B_System_Status         \n");
   printf("%s\n", empty);
   printf("press any key to continue\n");
   while (!comlib_term_getChar()) {usleep(200000);}
@@ -390,8 +449,8 @@ int main(int argc, char** argv) {
       sysId = 0xffff;
       userInput = comlib_term_getChar();
       switch (userInput) {
-        case 'a' ... 'f' :
-          sysId = userInput - 87;                 // no break on purpose
+        case 'A' ... 'O' :
+          sysId = userInput - 55;                 // no break on purpose
         case '0' ... '9' :
           if (sysId == 0xffff) sysId = userInput - 48; // ugly
           dicCmdClearDiag(prefix, sysId);
