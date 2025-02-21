@@ -38,10 +38,10 @@ echo -e B2B start script for all rf room, use a single SCU Crate for phase shift
 # clean up stuff
 ###########################################
 echo -e b2b: bring possibly resident firmware to idle state
-b2b-ctl $TRPM stopop
+b2b-ctl $TRPS stopop
 sleep 2
 
-b2b-ctl $TRPM idle
+b2b-ctl $TRPS idle
 sleep 2
 
 echo -e b2b: destroy all unowned conditions and delete all macros for wishbone channel of ECA
@@ -54,13 +54,13 @@ saft-scu-ctl $SDPS -x
 # load firmware to lm32
 ###########################################
 echo -e b2b: load firmware 
-eb-fwload $TRPM u 0x0 b2bpmstub.bin
+eb-fwload $TRPS u 0x0 b2bpmstub.bin
 
 echo -e b2b: configure firmware
 sleep 2
-b2b-ctl $TRPM configure
+b2b-ctl $TRPS configure
 sleep 2
-b2b-ctl $TRPM startop
+b2b-ctl $TRPS startop
 sleep 2
 
 ###########################################
