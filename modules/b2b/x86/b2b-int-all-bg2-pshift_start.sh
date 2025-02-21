@@ -66,13 +66,17 @@ sleep 2
 b2b-ctl $TRPS startop
 sleep 2
 
-echo -e b2b: configure $SDPS lm32 channel, needed for counting phase shifts
-# lm32 listens to phase shift SIS18 extraction
-saft-ecpu-ctl $SDPS -c 0x112c80a000000000 0xfffffff000000000 0 80a -d
-# lm32 listens to phase shift ESR injection
-saft-ecpu-ctl $SDPS -c 0x115480b000000000 0xfffffff000000000 0 80b -d
-# lm32 listens to phase shift ESR extraction
-saft-ecpu-ctl $SDPS -c 0x115480a000000000 0xfffffff000000000 0 80a -d
+# disabled as this leads to ambiguation; we need a dedicated user space
+# program on the host to count phase shifts
+#echo -e b2b: configure $SDPS lm32 channel, needed for counting phase shifts
+# lm32 listens to phase shift @SIS18 fast extraction
+#saft-ecpu-ctl $SDPS -c 0x13a080a000000000 0xfffffff000000000 0 0x80a -d
+# lm32 listens to phase shift @SIS18 transfer to ESR
+#saft-ecpu-ctl $SDPS -c 0x13a180a000000000 0xfffffff000000000 0 0x80a -d
+# lm32 listens to phase shift @ESR injection transfer from SIS18
+#saft-ecpu-ctl $SDPS -c 0x13a180b000000000 0xfffffff000000000 0 0x80b -d
+# lm32 listens to phase shift @ESR fast extraction
+#saft-ecpu-ctl $SDPS -c 0x130580a000000000 0xfffffff000000000 0 0x80a -d
 
 ###########################################
 # configure ECA
