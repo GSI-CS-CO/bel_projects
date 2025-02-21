@@ -44,6 +44,9 @@ sleep 2
 b2b-ctl $TRPS idle
 sleep 2
 
+echo -e b2b: destroy all unowned conditions for lm32 channel of ECA
+saft-ecpu-ctl $SDPS -x
+
 echo -e b2b: destroy all unowned conditions and delete all macros for wishbone channel of ECA
 saft-wbm-ctl $SDPS -x
 
@@ -54,7 +57,7 @@ saft-scu-ctl $SDPS -x
 # load firmware to lm32
 ###########################################
 echo -e b2b: load firmware 
-eb-fwload $TRPS u 0x0 b2bpmstub.bin
+eb-fwload $TRPS u 0x0 b2bpsm.bin
 
 echo -e b2b: configure firmware
 sleep 2
@@ -62,6 +65,14 @@ b2b-ctl $TRPS configure
 sleep 2
 b2b-ctl $TRPS startop
 sleep 2
+
+echo -e b2b: configure $SDPS lm32 channel, needed for counting phase shifts
+# lm32 listens to phase shift SIS18 extraction
+saft-ecpu-ctl $SDPS -c 0x112c80a000000000 0xfffffff000000000 0 80a -d
+# lm32 listens to phase shift ESR injection
+saft-ecpu-ctl $SDPS -c 0x115480b000000000 0xfffffff000000000 0 80b -d
+# lm32 listens to phase shift ESR extraction
+saft-ecpu-ctl $SDPS -c 0x115480a000000000 0xfffffff000000000 0 80a -d
 
 ###########################################
 # configure ECA

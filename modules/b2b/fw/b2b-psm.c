@@ -287,6 +287,10 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   if (ecaAction != B2B_ECADO_TIMEOUT) comLatency = (int32_t)(getSysTime() - recDeadline);
 
   switch (ecaAction) {
+    case B2B_ECADO_B2B_PSHIFTEXT :
+    case B2B_ECADO_B2B_PSHIFTINJ :                                    // this is an OR; no break on purpose
+      nTransfer++;
+      break;
       default :                                                       // flush ECA queue
       flagIsLate = 0;                                                 // ingore late events
   } // switch ecaAction

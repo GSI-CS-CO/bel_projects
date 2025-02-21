@@ -329,7 +329,7 @@ void printServices(int flagOnce)
         if ( maxmin >= 1.1)                      sprintf(cJitter, "%4d", (int)maxmin);
       } // else isnan
     } // else nolink
-    printf("%2s %6s %3s %8s %10s %9s %13s %4s %16s\n", sysClearKeys[i], ringNames[i], typeNames[i], cVersion, cState, cTransfer, cStatus, cJitter, cHost);
+    printf(" %2s %6s %3s %8s %10s %9s %13s %4s %16s\n", sysClearKeys[i], ringNames[i], typeNames[i], cVersion, cState, cTransfer, cStatus, cJitter, cHost);
   } // for i
 
   //for (i=0; i<2; i++) printf("%s\n", empty);
