@@ -6,8 +6,8 @@ set -x
 ###########################################
 # setting for production
 # PS : dev/wbm0, tr0
-# pro: two Dual FIB 3 (= 4 DDS)
 # some DDS registers
+# pro: two Single FIB 3
 # 0x000c        : FW_Version
 export TRPS=dev/wbm0
 export SDPS=tr0
@@ -17,12 +17,12 @@ export  SIS18DDSSHIFTSTRT=0x444024    # phase shift, start
 export   SIS18DDSTAGREGLO=0x440612    # fg quad, tag config low bits
 export   SIS18DDSTAGREGHI=0x440614    # fg quad, tag config high bits
 export SIS18DDSTAGREGCTRL=0x440600    # fg quad, control register
-export    ESRDDSSHIFTPHAS=0x484000    # phase shift, value [degree, float]
-export    ESRDDSSHIFTTIME=0x484004    # phase shift, value [s, float]
-export    ESRDDSSHIFTSTRT=0x484024    # phase shift, start
-export     ESRDDSTAGREGLO=0x480612    # fg quad, tag config low bits
-export     ESRDDSTAGREGHI=0x480614    # fg quad, tag config high bits
-export   ESRDDSTAGREGCTRL=0x480600    # fg quad, control register
+export    ESRDDSSHIFTPHAS=0x4c4000    # phase shift, value [degree, float]
+export    ESRDDSSHIFTTIME=0x4c4004    # phase shift, value [s, float]
+export    ESRDDSSHIFTSTRT=0x4c4024    # phase shift, start
+export     ESRDDSTAGREGLO=0x4c0612    # fg quad, tag config low bits
+export     ESRDDSTAGREGHI=0x4c0614    # fg quad, tag config high bits
+export   ESRDDSTAGREGCTRL=0x4c0600    # fg quad, control register
 export DDSTAGCTRL=0xcc020000          # fg quad, value written to the control register for enabling phase reset
 export DDSTAGRESET=0x47114711         # tag value for phase reset
 export DDSTAGRESETLO=0x4711           # tag value for phase reset, low word
