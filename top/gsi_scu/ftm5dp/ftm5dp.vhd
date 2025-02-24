@@ -343,9 +343,12 @@ begin
     )
     port map(
       core_clk_20m_vcxo_i     => clk1_20m_vcxo_i,
+      aux_clk_20m_vcxo_i      => clk2_20m_vcxo_i,
       core_clk_125m_pllref_i  => clk_gxbl1c_u24,
-      core_clk_125m_local_i   => clk_125m_local_aa18,
       core_clk_125m_sfpref_i  => clk_gxbl1c_u24,
+      aux_clk_125m_pllref_i   => clk_gxbl1c_w24,
+      aux_clk_125m_sfpref_i   => clk_gxbl1c_w24,
+      core_clk_125m_local_i   => clk_125m_local_aa18,
       core_clk_25m_o          => s_core_clk_25m,
       core_clk_wr_ref_o       => clk_ref,
       core_rstn_wr_ref_o      => rstn_ref,
