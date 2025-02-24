@@ -300,7 +300,7 @@ architecture rtl of ftm5dp is
 
   constant c_family       : string := "Arria 10 GX FTM4";
   constant c_project      : string := "scu_control";
-  constant c_cores        : natural:= 8;
+  constant c_cores        : natural:= 4;
   constant c_initf_name   : string := c_project & "_stub.mif";
   constant c_profile_name : string := "medium_icache_debug";
   constant c_psram_bits   : natural := 24;
