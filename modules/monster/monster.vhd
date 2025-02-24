@@ -1067,7 +1067,7 @@ begin
 
   dual_port_wr_core_dmtd_a10_aux : if g_dual_port_wr generate
     dmtd_a10_aux : if c_is_arria10 generate
-      dmtd_inst : dmtd_pll10 port map(
+      dmtd_inst_aux : dmtd_pll10 port map(
         rst      => pll_rst,
         refclk   => aux_clk_20m_vcxo_i,    --  20  MHz
         outclk_0 => clk_dmtd0_aux,         --  62.5MHz
