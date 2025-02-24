@@ -13,6 +13,7 @@ set clk_sys0_62_5_sys_clk              [get_clocks {main|\sys_a10:sys_inst|iopll
 set clk_sys2_20_generic_clk            [get_clocks {main|\sys_a10:sys_inst|iopll_0|outclk2}]
 set clk_sys4_10_flash_clk              [get_clocks {main|\sys_a10:sys_inst|iopll_0|outclk4}]
 set clk_dmtd_62_5_clk                  [get_clocks {main|\dmtd_a10:dmtd_inst|iopll_0|outclk0}]
+set clk_aux_dmtd_62_5_clk              [get_clocks {main|\dual_port_wr_core_dmtd_a10_aux:dmtd_a10_aux:dmtd_inst_aux|iopll_0|outclk0}]
 
 # Special device input clocks
 create_clock -period 125Mhz -name clk_125m_tcb_local_in  [get_ports {clk_125m_tcb_local_i}]
@@ -225,6 +226,7 @@ set_clock_groups -asynchronous \
                     main|\phy_a10:phy|\det_phy:ftm10_phy:inst_phy|xcvr_native_a10_0|tx_clkout \
                     main|\phy_a10:phy|\det_phy:ftm10_phy:inst_phy|xcvr_native_a10_0|tx_pma_clk}] \
 -group [get_clocks {main|\dmtd_a10:dmtd_inst|iopll_0|outclk0}] \
+-group [get_clocks {main|\dual_port_wr_core_dmtd_a10_aux:dmtd_a10_aux:dmtd_inst_aux|iopll_0|outclk0}] \
 -group [get_clocks {main|\sys_a10:sys_inst|iopll_0|outclk0}] \
 -group [get_clocks {main|\sys_a10:sys_inst|iopll_0|outclk2}] \
 -group [get_clocks {main|\sys_a10:sys_inst|iopll_0|outclk3}] \
