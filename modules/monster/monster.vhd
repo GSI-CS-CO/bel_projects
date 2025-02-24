@@ -713,14 +713,16 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
   -- Master signals ----------------------------------------------------------------
   ----------------------------------------------------------------------------------
-  signal wrc_slave_i     : t_wishbone_slave_in;
-  signal wrc_slave_o     : t_wishbone_slave_out;
-  signal wrc_aux_slave_i : t_wishbone_slave_in;
-  signal wrc_aux_slave_o : t_wishbone_slave_out;
-  signal wrc_master_i    : t_wishbone_master_in;
-  signal wrc_master_o    : t_wishbone_master_out;
-  signal s_eca_evt_m_i   : t_wishbone_master_in;
-  signal s_eca_evt_m_o   : t_wishbone_master_out;
+  signal wrc_slave_i      : t_wishbone_slave_in;
+  signal wrc_slave_o      : t_wishbone_slave_out;
+  signal wrc_aux_slave_i  : t_wishbone_slave_in;
+  signal wrc_aux_slave_o  : t_wishbone_slave_out;
+  signal wrc_master_i     : t_wishbone_master_in;
+  signal wrc_master_o     : t_wishbone_master_out;
+  signal wrc_aux_master_i : t_wishbone_master_in;
+  signal wrc_aux_master_o : t_wishbone_master_out;
+  signal s_eca_evt_m_i    : t_wishbone_master_in;
+  signal s_eca_evt_m_o    : t_wishbone_master_out;
 
   signal psram_slave_i   : t_wishbone_slave_in;
   signal psram_slave_o   : t_wishbone_slave_out;
