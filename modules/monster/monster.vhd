@@ -16,7 +16,7 @@
 --! but WITHOUT ANY WARRANTY; without even the implied warranty of
 --! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 --! Lesser General Public License for more details.
---!
+--!g_dual_port_wr
 --! You should have received a copy of the GNU Lesser General Public
 --! License along with this library. If not, see <http://www.gnu.org/licenses/>.
 ---------------------------------------------------------------------------------
@@ -444,18 +444,20 @@ architecture rtl of monster is
       topm_vme,
       topm_pmc,
       topm_usb,
+      topm_ebs_aux,
       topm_prioq
     );
   constant c_top_my_masters : natural := top_my_masters'pos(top_my_masters'right)+1;
 
   constant c_top_layout_my_masters : t_sdb_record_array(c_top_my_masters-1 downto 0) :=
-   (top_my_masters'pos(topm_ebs)     => f_sdb_auto_msi(c_ebs_msi,     false),   -- Need to add MSI support !!!
-    top_my_masters'pos(topm_eca_wbm) => f_sdb_auto_msi(c_null_msi,    false),   -- no MSIs for ECA=>WB macro player
-    top_my_masters'pos(topm_pcie)    => f_sdb_auto_msi(c_pcie_msi,    g_en_pcie),
-    top_my_masters'pos(topm_vme)     => f_sdb_auto_msi(c_vme_msi,     g_en_vme),
-    top_my_masters'pos(topm_pmc)     => f_sdb_auto_msi(c_pmc_msi,     g_en_pmc),
-    top_my_masters'pos(topm_usb)     => f_sdb_auto_msi(c_usb_msi,     g_en_usb),
-    top_my_masters'pos(topm_prioq)   => f_sdb_auto_msi(c_null_msi,    false));
+   (top_my_masters'pos(topm_ebs)         => f_sdb_auto_msi(c_ebs_msi,     false),   -- Need to add MSI support !!!
+    top_my_masters'pos(topm_eca_wbm)     => f_sdb_auto_msi(c_null_msi,    false),   -- no MSIs for ECA=>WB macro player
+    top_my_masters'pos(topm_pcie)        => f_sdb_auto_msi(c_pcie_msi,    g_en_pcie),
+    top_my_masters'pos(topm_vme)         => f_sdb_auto_msi(c_vme_msi,     g_en_vme),
+    top_my_masters'pos(topm_pmc)         => f_sdb_auto_msi(c_pmc_msi,     g_en_pmc),
+    top_my_masters'pos(topm_usb)         => f_sdb_auto_msi(c_usb_msi,     g_en_usb),
+    top_my_masters'pos(topm_ebs_aux)     => f_sdb_auto_msi(c_ebs_msi,     false),   -- Need to add MSI support !!!
+    top_my_masters'pos(topm_prioq)       => f_sdb_auto_msi(c_null_msi,    false));
 
   -- The FTM adds a bunch of masters to this crossbar
   constant c_ftm_masters : t_sdb_record_array := f_lm32_masters_bridge_msis(g_lm32_cores);
@@ -599,6 +601,7 @@ architecture rtl of monster is
     tops_wr_fast_path,
     tops_wr_aux_fast_path,
     tops_ebm,
+    tops_ebm_aux,
     tops_beam_dump,
     tops_emb_cpu
     );
@@ -613,6 +616,7 @@ architecture rtl of monster is
    top_slaves'pos(tops_wr_fast_path)     => f_sdb_auto_bridge(c_wrcore_bridge_sdb,               true),
    top_slaves'pos(tops_wr_aux_fast_path) => f_sdb_auto_bridge(c_wrcore_aux_bridge_sdb,           g_dual_port_wr),
    top_slaves'pos(tops_ebm)              => f_sdb_auto_device(c_ebm_sdb,                         true),
+   top_slaves'pos(tops_ebm_aux)          => f_sdb_auto_device(c_ebm_sdb,                         g_dual_port_wr),
    top_slaves'pos(tops_emb_cpu)          => f_sdb_auto_device(c_eca_queue_slave_sdb,             g_en_eca),
    top_slaves'pos(tops_beam_dump)        => f_sdb_embed_device(c_beam_dump_sdb, x"7FFF0000",     g_en_beam_dump));
 
@@ -731,6 +735,11 @@ architecture rtl of monster is
   signal eb_src_in     : t_wrf_source_in;
   signal eb_snk_out    : t_wrf_sink_out;
   signal eb_snk_in     : t_wrf_sink_in;
+
+  signal eb_aux_src_out : t_wrf_source_out;
+  signal eb_aux_src_in  : t_wrf_source_in;
+  signal eb_aux_snk_out : t_wrf_sink_out;
+  signal eb_aux_snk_in  : t_wrf_sink_in;
 
   signal uart_usb : std_logic; -- from usb
   signal uart_mux : std_logic; -- either usb or external
@@ -1470,6 +1479,26 @@ begin
       ebm_wb_slave_i  => top_bus_master_o(top_slaves'pos(tops_ebm)),
       ebm_wb_slave_o  => top_bus_master_i(top_slaves'pos(tops_ebm)));
 
+    top_msi_master_i(top_my_masters'pos(topm_ebs_aux)) <= cc_dummy_slave_out; -- Etherbone does not accept MSI !!!
+    eb_master_slave_wrapper_aux : if g_dual_port_wr generate
+      eb_aux : eb_master_slave_wrapper
+        generic map(
+          g_with_master     => true,
+          g_ebs_sdb_address => (x"00000000" & c_top_sdb_address))
+        port map(
+          clk_i           => clk_sys,
+          nRst_i          => rstn_sys,
+          snk_i           => eb_aux_snk_in,
+          snk_o           => eb_aux_snk_out,
+          src_o           => eb_aux_src_out,
+          src_i           => eb_aux_src_in,
+          ebs_cfg_slave_o => wrc_aux_master_i,
+          ebs_cfg_slave_i => wrc_aux_master_o,
+          ebs_wb_master_o => top_bus_slave_i (top_my_masters'pos(topm_ebs_aux)),
+          ebs_wb_master_i => top_bus_slave_o (top_my_masters'pos(topm_ebs_aux)),
+          ebm_wb_slave_i  => top_bus_master_o(top_slaves'pos(tops_ebm_aux)),
+          ebm_wb_slave_o  => top_bus_master_i(top_slaves'pos(tops_ebm_aux)));
+    end generate;
 
   lm32 : ftm_lm32_cluster
     generic map(
