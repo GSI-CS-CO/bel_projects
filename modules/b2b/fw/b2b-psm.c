@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-Feb-2025
+ *  version : 25-Feb-2025
  *
  *  firmware for the psm module
  *  
@@ -36,7 +36,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPSM_FW_VERSION 0x000804                                      // make this consistent with makefile
+#define B2BPSM_FW_VERSION 0x000805                                      // make this consistent with makefile
 
 //standard includes
 #include <stdio.h>
@@ -77,8 +77,9 @@ volatile uint32_t *pSharedGetNH;        // pointer to a "user defined" u32 regis
 uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM            
 
 uint64_t statusArray;                   // all status infos are ORed bit-wise into statusArray, statusArray is then published
-uint32_t nTransfer;                     // # of transfers
-uint32_t transStat;                     // status of transfer, here: meanDelta of 'poor mans fit'
+uint32_t nPsmSIS18;                     // # of phase shifts in SIS18
+uint32_t nPsmSIS100;                    // # of phase shifts in SIS100
+uint32_t nPsmStori;                     // # of phase shifts in storage ring (ESR, CRYRING) 
 int32_t  comLatency;                    // latency for messages received via ECA
 
 // for phase measurement
@@ -157,7 +158,9 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
 void extern_clearDiag()
 {
   statusArray  = 0x0; 
-  nTransfer    = 0;
+  nPsmSIS18    = 0;
+  nPsmSIS100   = 0;
+  nPsmStori    = 0;
   transStat    = 0;
   comLatency   = 0x0;
 } // extern_clearDiag
@@ -286,10 +289,27 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
   if (ecaAction != B2B_ECADO_TIMEOUT) comLatency = (int32_t)(getSysTime() - recDeadline);
 
+  recGid       = (uint32_t)((recId >> 48) & 0x0fff);
+
   switch (ecaAction) {
     case B2B_ECADO_B2B_PSHIFTEXT :
+      // extraction SIS18
+      if ((recGID == SIS18_B2B_EXTRACT) || (recGID == SIS18_B2B_ESR) || (recGID ==  SIS18_B2B_SIS100))
+        nPsmSIS18++;
+      // extraction ESR
+      if ((recGID == ESR_B2B_EXTRACT) || (recGID == ESR_B2B_CRYRING))
+        nPsmStori++;
+      // extraction CRYRING
+      if (recGID == ESR_B2B_CRYRING)
+        nPsmStori++;
+      // extraction SIS100
+      if (recGID == SIS100_B2B_EXTRACT)
+        nPsmSIS100++;
     case B2B_ECADO_B2B_PSHIFTINJ :                                    // this is an OR; no break on purpose
-      nTransfer++;
+      // injection ESR
+      if (recGID == SIS18_B2B_ESR)    nPsmStori++;
+      if (recGID == ESR_B2B_CRYRING)  nPsmStori++;
+      if (recGID == SIS18_B2B_SIS100) nPsmSIS100++;
       break;
       default :                                                       // flush ECA queue
       flagIsLate = 0;                                                 // ingore late events
@@ -362,7 +382,7 @@ int main(void) {
     fwlib_publishStatusArray(statusArray);
     pubState = actState;
     fwlib_publishState(pubState);
-    fwlib_publishTransferStatus(nTransfer, 0x0, transStat, 0x0, 0x0, comLatency); /* chk: set values of nLate and offsDone */
+    fwlib_publishTransferStatus(nPsmSIS18, nPsmStori, nPsmSIS100, 0x0, 0x0, comLatency); /* chk: set values of nLate and offsDone */
   } // while
 
   return(1); // this should never happen ...
