@@ -304,6 +304,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       // extraction SIS100
       if (recGid == SIS100_B2B_EXTRACT)
         nPsmSIS100++;
+      break;
     case B2B_ECADO_B2B_PSHIFTINJ :                                    // this is an OR; no break on purpose
       // injection ESR
       if (recGid == SIS18_B2B_ESR)    nPsmStori++;
