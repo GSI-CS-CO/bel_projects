@@ -161,7 +161,6 @@ void extern_clearDiag()
   nPsmSIS18    = 0;
   nPsmSIS100   = 0;
   nPsmStori    = 0;
-  transStat    = 0;
   comLatency   = 0x0;
 } // extern_clearDiag
   
@@ -289,27 +288,27 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
   if (ecaAction != B2B_ECADO_TIMEOUT) comLatency = (int32_t)(getSysTime() - recDeadline);
 
-  recGid       = (uint32_t)((recId >> 48) & 0x0fff);
+  recGid       = (uint32_t)((recEvtId >> 48) & 0x0fff);
 
   switch (ecaAction) {
     case B2B_ECADO_B2B_PSHIFTEXT :
       // extraction SIS18
-      if ((recGID == SIS18_B2B_EXTRACT) || (recGID == SIS18_B2B_ESR) || (recGID ==  SIS18_B2B_SIS100))
+      if ((recGid == SIS18_B2B_EXTRACT) || (recGid == SIS18_B2B_ESR) || (recGid ==  SIS18_B2B_SIS100))
         nPsmSIS18++;
       // extraction ESR
-      if ((recGID == ESR_B2B_EXTRACT) || (recGID == ESR_B2B_CRYRING))
+      if ((recGid == ESR_B2B_EXTRACT) || (recGid == ESR_B2B_CRYRING))
         nPsmStori++;
       // extraction CRYRING
-      if (recGID == ESR_B2B_CRYRING)
+      if (recGid == ESR_B2B_CRYRING)
         nPsmStori++;
       // extraction SIS100
-      if (recGID == SIS100_B2B_EXTRACT)
+      if (recGid == SIS100_B2B_EXTRACT)
         nPsmSIS100++;
     case B2B_ECADO_B2B_PSHIFTINJ :                                    // this is an OR; no break on purpose
       // injection ESR
-      if (recGID == SIS18_B2B_ESR)    nPsmStori++;
-      if (recGID == ESR_B2B_CRYRING)  nPsmStori++;
-      if (recGID == SIS18_B2B_SIS100) nPsmSIS100++;
+      if (recGid == SIS18_B2B_ESR)    nPsmStori++;
+      if (recGid == ESR_B2B_CRYRING)  nPsmStori++;
+      if (recGid == SIS18_B2B_SIS100) nPsmSIS100++;
       break;
       default :                                                       // flush ECA queue
       flagIsLate = 0;                                                 // ingore late events
@@ -342,7 +341,9 @@ int main(void) {
   actState       = COMMON_STATE_UNKNOWN;
   pubState       = COMMON_STATE_UNKNOWN;
   status         = COMMON_STATUS_OK;
-  nTransfer      = 0;
+  nPsmSIS100     = 0;
+  nPsmSIS18      = 0;
+  nPsmStori      = 0;
 
   init();                                                                     // initialize stuff for lm32
   initSharedMem(&reqState, &sharedSize);                                      // initialize shared memory  
