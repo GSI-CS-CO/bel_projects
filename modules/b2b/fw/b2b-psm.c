@@ -293,13 +293,13 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   switch (ecaAction) {
     case B2B_ECADO_B2B_PSHIFTEXT :
       // extraction SIS18
-      if ((recGid == SIS18_B2B_EXTRACT) || (recGid == SIS18_B2B_ESR) || (recGid ==  SIS18_B2B_SIS100))
+      if ((recGid == SIS18_B2B_EXTRACT) || (recGid == SIS18_B2B_ESR) || (recGid == SIS18_B2B_SIS100))
         nPsmSIS18++;
       // extraction ESR
       if ((recGid == ESR_B2B_EXTRACT) || (recGid == ESR_B2B_CRYRING))
         nPsmStori++;
       // extraction CRYRING
-      if (recGid == ESR_B2B_CRYRING)
+      if (recGid == CRYRING_B2B_EXTRACT)
         nPsmStori++;
       // extraction SIS100
       if (recGid == SIS100_B2B_EXTRACT)
