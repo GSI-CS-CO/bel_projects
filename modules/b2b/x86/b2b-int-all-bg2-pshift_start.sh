@@ -70,13 +70,17 @@ sleep 2
 # program on the host to count phase shifts
 #echo -e b2b: configure $SDPS lm32 channel, needed for counting phase shifts
 # lm32 listens to phase shift @SIS18 fast extraction
-#saft-ecpu-ctl $SDPS -c 0x13a080a000000000 0xfffffff000000000 0 0x80a -d
+saft-ecpu-ctl $SDPS -c 0x13a080a000000000 0xfffffff000000000 0 0x80a -d
 # lm32 listens to phase shift @SIS18 transfer to ESR
-#saft-ecpu-ctl $SDPS -c 0x13a180a000000000 0xfffffff000000000 0 0x80a -d
+saft-ecpu-ctl $SDPS -c 0x13a180a000000000 0xfffffff000000000 0 0x80a -d
+# lm32 listens to phase shift @SIS18 transfer to SIS100
+saft-ecpu-ctl $SDPS -c 0x13a280a000000000 0xfffffff000000000 0 0x80a -d
 # lm32 listens to phase shift @ESR injection transfer from SIS18
-#saft-ecpu-ctl $SDPS -c 0x13a180b000000000 0xfffffff000000000 0 0x80b -d
+saft-ecpu-ctl $SDPS -c 0x13a180b000000000 0xfffffff000000000 0 0x80b -d
 # lm32 listens to phase shift @ESR fast extraction
-#saft-ecpu-ctl $SDPS -c 0x130580a000000000 0xfffffff000000000 0 0x80a -d
+saft-ecpu-ctl $SDPS -c 0x13a580a000000000 0xfffffff000000000 0 0x80a -d
+# lm32 listens to phase shift @ESR transfer to CRYRING
+saft-ecpu-ctl $SDPS -c 0x13a680a000000000 0xfffffff000000000 0 0x80a -d
 
 ###########################################
 # configure ECA
