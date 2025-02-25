@@ -81,6 +81,10 @@ saft-ecpu-ctl $SDPS -c 0x13a180b000000000 0xfffffff000000000 0 0x80b -d
 saft-ecpu-ctl $SDPS -c 0x13a580a000000000 0xfffffff000000000 0 0x80a -d
 # lm32 listens to phase shift @ESR transfer to CRYRING
 saft-ecpu-ctl $SDPS -c 0x13a680a000000000 0xfffffff000000000 0 0x80a -d
+# lm32 listens to phase shift @SIS100 injection from SIS18
+saft-ecpu-ctl $SDPS -c 0x13a280b000000000 0xfffffff000000000 0 0x80b -d
+# lm32 listens to phase shift @SIS100 fast extraction
+saft-ecpu-ctl $SDPS -c 0x13b080a000000000 0xfffffff000000000 0 0x80a -d
 
 ###########################################
 # configure ECA

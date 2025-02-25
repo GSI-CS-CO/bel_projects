@@ -16,3 +16,4 @@ export DIM_DNS_NODE=asl105
 
 b2b-serv-sys dev/wbm0 -s int_sis18-psm &
 b2b-serv-sys dev/wbm0 -s int_esr-psm &
+b2b-serv-sys dev/wbm0 -s int_sis100-psm &
