@@ -542,7 +542,7 @@ architecture rtl of monster is
 
   -- We have to specify the values for WRC as they provide no function for this
   constant c_wrcore_bridge_sdb     : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
-  constant c_wrcore_aux_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0004ffff", x"00040000");
+  constant c_wrcore_aux_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
   constant c_ftm_slaves : t_sdb_bridge := f_cluster_bridge(c_dev_bridge_msi, g_lm32_cores, g_lm32_ramsizes, g_lm32_are_ftm, g_delay_diagnostics);
 
   constant c_dev_layout_req_slaves : t_sdb_record_array(c_dev_slaves-1 downto 0) :=
