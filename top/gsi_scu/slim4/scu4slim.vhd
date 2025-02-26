@@ -207,7 +207,7 @@ architecture rtl of scu4slim is
   signal s_psram_wen        : std_logic;
   signal s_psram_ubn        : std_logic;
   signal s_psram_lbn        : std_logic;
-  
+  signal s_psram_wait       : std_logic;
 
   signal s_psram_sel        : std_logic_vector(3 downto 0);
 
@@ -355,20 +355,28 @@ begin
       ps_wen                  => s_psram_wen,
       ps_cre                  => s_psram_cre,
       ps_advn                 => s_psram_advn,
-      ps_wait                 => psram_wait(0) or psram_wait(1),
+      ps_wait                 => s_psram_wait,
       ps_chip_selector        => s_psram_sel,
       hw_version              => x"0000000" & not scu_cb_version);
 
-  -- PSRAM -> This needs to be changed on the next revision
-  psram_sel : for i in 0 to 1 generate
-  psram_cen(i)  <= s_psram_cen when  (s_psram_sel(i) = '1') else '1';
-  psram_cre(i)  <= s_psram_cre when  (s_psram_sel(i) = '1') else '1';
-  psram_oen(i)  <= s_psram_oen when  (s_psram_sel(i) = '1') else '1';
-  psram_wen(i)  <= s_psram_wen when  (s_psram_sel(i) = '1') else '1';
-  psram_lbn(i)  <= s_psram_lbn when  (s_psram_sel(i) = '1') else '1';
-  psram_ubn(i)  <= s_psram_ubn when  (s_psram_sel(i) = '1') else '1';
-  psram_advn(i) <= s_psram_advn when (s_psram_sel(i) = '1') else '1';
-end generate;
+  -- PSRAM #1
+  psram_cen(0)  <= s_psram_cen;
+  psram_cre(0)  <= s_psram_cre;
+  psram_oen(0)  <= s_psram_oen;
+  psram_wen(0)  <= s_psram_wen;
+  psram_lbn(0)  <= s_psram_lbn;
+  psram_ubn(0)  <= s_psram_ubn;
+  psram_advn(0) <= s_psram_advn;
+  s_psram_wait  <= psram_wait(0);
+
+  -- PSRAM #2
+  psram_cen(1)  <= '1';
+  psram_cre(1)  <= '0';
+  psram_oen(1)  <= '1';
+  psram_wen(1)  <= '1';
+  psram_lbn(1)  <= '1';
+  psram_ubn(1)  <= '1';
+  psram_advn(1) <= '1';
 
   -- LEDs
   wr_led_pps    <= s_led_pps;                                             -- white = PPS
@@ -429,8 +437,6 @@ end generate;
   -- Resets
   A_nReset      <= rstn_ref;
   nFPGA_Res_Out <= rstn_ref;
-
-
 
   -- fixed scubus signals
   ADR_TO_SCUB <= '1';
