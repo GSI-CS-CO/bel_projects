@@ -24,6 +24,8 @@ use std.textio.all;
 library work;
 use work.wishbone_pkg.all;
 use work.a10vs_pkg.all;
+-- avalon
+use work.avalon_vs_pkg.all;
 
 entity a10vs_tb is
 end a10vs_tb;
@@ -57,9 +59,23 @@ architecture a10vs_tb_rtl of a10vs_tb is
 
     signal s_clk       : std_logic := '0';
     signal s_rst_n     : std_logic := '0';
+    signal s_rst       : std_logic := '1';
 
     signal s_slave_in  : t_wishbone_slave_in;
     signal s_slave_out : t_wishbone_slave_out;
+
+    -- avalon
+    signal s_avs_ctrl_csr_addr        : std_logic;
+    signal s_avs_ctrl_csr_rd          : std_logic;
+    signal s_avs_ctrl_csr_readdata    : std_logic_vector(31 downto 0);
+    signal s_avs_ctrl_csr_wr          : std_logic;
+    signal s_avs_ctrl_csr_writedata   : std_logic_vector(31 downto 0);
+
+    signal s_avs_sample_csr_addr      : std_logic_vector(3 downto 0);
+    signal s_avs_sample_csr_rd        : std_logic;
+    signal s_avs_sample_csr_readdata  : std_logic_vector(31 downto 0);
+    signal s_avs_sample_csr_wr        : std_logic;
+    signal s_avs_sample_csr_writedata : std_logic_vector(31 downto 0);
 
     -- Functions
     -- Function wb_stim -> Helper function to create a human-readable testbench
@@ -108,6 +124,8 @@ begin
         s_rst_n <= '1';
     end process;
 
+    s_rst <= not s_rst_n;
+
     -- A10VS instance
     a10vs_dut: a10vs
         generic map (
@@ -122,18 +140,38 @@ begin
             slave_i => s_slave_in,
             slave_o => s_slave_out,
 
-            -- voltage sensor (IP core) interface (Avalon-ST)
-            vs_ctrl_csr_addr     => open,
-            vs_ctrl_csr_rd       => open,
-            vs_ctrl_csr_wr       => open,
-            vs_ctrl_csr_wrdata   => open,
-            vs_ctrl_csr_rddata   => x"0000cafe",
-            vs_sample_csr_addr   => open,
-            vs_sample_csr_rd     => open,
-            vs_sample_csr_wr     => open,
-            vs_sample_csr_wrdata => open,
-            vs_sample_csr_rddata => x"0000babe",
+            -- voltage sensor IP core interface (Avalon-MM)
+            vs_ctrl_csr_addr     => s_avs_ctrl_csr_addr,
+            vs_ctrl_csr_rd       => s_avs_ctrl_csr_rd,
+            vs_ctrl_csr_wr       => s_avs_ctrl_csr_wr,
+            vs_ctrl_csr_wrdata   => s_avs_ctrl_csr_writedata,
+            vs_ctrl_csr_rddata   => s_avs_ctrl_csr_readdata,
+            vs_sample_csr_addr   => s_avs_sample_csr_addr,
+            vs_sample_csr_rd     => s_avs_sample_csr_rd,
+            vs_sample_csr_wr     => s_avs_sample_csr_wr,
+            vs_sample_csr_wrdata => s_avs_sample_csr_writedata,
+            vs_sample_csr_rddata => s_avs_sample_csr_readdata,
             vs_sample_irq        => '0'
+        );
+
+    -- Avalon_vs instance
+    voltage_sensor_0: avalon_vs
+        generic map (
+            g_addr_width => 4
+        )
+        port map (
+            avs_clk                  => s_clk,
+            avs_rst                  => s_rst,
+            avs_ctrl_csr_addr        => s_avs_ctrl_csr_addr,
+            avs_ctrl_csr_rd          => s_avs_ctrl_csr_rd,
+            avs_ctrl_csr_readdata    => s_avs_ctrl_csr_readdata,
+            avs_ctrl_csr_wr          => s_avs_ctrl_csr_wr,
+            avs_ctrl_csr_writedata   => s_avs_ctrl_csr_writedata,
+            avs_sample_csr_addr      => s_avs_sample_csr_addr,
+            avs_sample_csr_rd        => s_avs_sample_csr_rd,
+            avs_sample_csr_readdata  => s_avs_sample_csr_readdata,
+            avs_sample_csr_wr        => s_avs_sample_csr_wr,
+            avs_sample_csr_writedata => s_avs_sample_csr_writedata
         );
 
     -- Wishbone controller
@@ -162,7 +200,7 @@ begin
 
         -- Read from sample 0 register
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_off, c_vs_sample0_addr, c_reg_all_zero);
-        wait until rising_edge(s_clk); wb_expect("Read from sample 0 reg?", s_slave_out.dat, x"0000babe");
+        wait until rising_edge(s_clk); wb_expect("Read from sample 0 reg?", s_slave_out.dat, x"00000011");
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_vs_sample0_addr, c_reg_all_zero);
         wait until rising_edge(s_clk);
 
@@ -175,7 +213,7 @@ begin
 
         -- Read from sample 7 register
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_off, c_vs_sample7_addr, c_reg_all_zero);
-        wait until rising_edge(s_clk); wb_expect("Read from sample 7 reg?", s_slave_out.dat, x"0000babe");
+        wait until rising_edge(s_clk); wb_expect("Read from sample 7 reg?", s_slave_out.dat, x"00000088");
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_vs_sample7_addr, c_reg_all_zero);
         wait until rising_edge(s_clk);
 
@@ -192,19 +230,19 @@ begin
 
         -- Read access (controller core: command register)
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_off, c_vs_cmd_addr, c_reg_all_zero);
-        wait until rising_edge(s_clk); wb_expect("Write to controller core?", s_slave_out.dat, x"0000cafe");
+        wait until rising_edge(s_clk); wb_expect("Write to controller core?", s_slave_out.dat, x"000000ff");
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_vs_cmd_addr, c_reg_all_zero);
         wait until rising_edge(s_clk);
 
         -- Read access (sample store: register 0)
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_off, c_vs_sample0_addr, c_reg_all_zero);
-        wait until rising_edge(s_clk); wb_expect("Read from sample 0 reg?", s_slave_out.dat, x"0000babe");
+        wait until rising_edge(s_clk); wb_expect("Read from sample 0 reg?", s_slave_out.dat, x"00000011");
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_vs_sample0_addr, c_reg_all_zero);
         wait until rising_edge(s_clk);
 
         -- Read access (sample store: register 7)
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_off, c_vs_sample7_addr, c_reg_all_zero);
-        wait until rising_edge(s_clk); wb_expect("Read from sample 7 reg?", s_slave_out.dat, x"0000babe");
+        wait until rising_edge(s_clk); wb_expect("Read from sample 7 reg?", s_slave_out.dat, x"00000088");
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_vs_sample7_addr, c_reg_all_zero);
         wait until rising_edge(s_clk);
 
@@ -213,6 +251,7 @@ begin
         wait until rising_edge(s_clk); wb_expect("Read from invalid address?", s_slave_out.dat, c_reg_all_zero);
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_vs_invalid_addr, c_reg_all_zero);
         wait until rising_edge(s_clk);
+
 
         -- Idle
         wait until rising_edge(s_clk);

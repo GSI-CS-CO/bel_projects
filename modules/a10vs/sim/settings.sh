@@ -16,7 +16,11 @@ VHD_PACK="$GENCORE_PATH/modules/genrams/genram_pkg.vhd \
           $GENCORE_PATH/modules/wishbone/wishbone_pkg.vhd \
           $GENCORE_PATH/modules/common/gencores_pkg.vhd"
 
+SIM_FILES="avalon_vs.vhd \
+            avalon_vs_pkg.vhd"
+
 VHD_FILES="$VHD_PACK \
+           $SIM_FILES \
            $A10VS_PATH/a10vs_pkg.vhd \
            $A10VS_PATH/a10vs.vhd \
            $A10VS_PATH/a10vs_tb.vhd"
