@@ -40,19 +40,20 @@ package a10vs_pkg is
             slave_i : in  t_wishbone_slave_in;
             slave_o : out t_wishbone_slave_out;
 
-            -- voltage sensor (IP core) interface (Avalon-ST)
-            vs_clk             : out std_logic;                     --          clock.clk
-            vs_rst             : out std_logic;                     --     reset_sink.reset
-            vs_ctrl_csr_addr   : out std_logic;                     -- controller_csr.address
-            vs_ctrl_csr_rd     : out std_logic;                     --               .read
-            vs_ctrl_csr_wr     : out std_logic;                     --               .write
-            vs_ctrl_csr_wrdata : out std_logic_vector(31 downto 0); --               .writedata
-            vs_ctrl_csr_rddata : in  std_logic_vector(31 downto 0); --               .readdata
-            vs_rsp_valid       : in  std_logic;                     --       response.valid
-            vs_rsp_channel     : in  std_logic_vector(2 downto 0);  --               .channel
-            vs_rsp_data        : in  std_logic_vector(5 downto 0);  --               .data
-            vs_rsp_start_pkt   : in  std_logic;                     --               .startofpacket
-            vs_rsp_end_pkt     : in  std_logic                      --               .endofpacket
+            -- voltage sensor (IP core) interface (Avalon-MM)
+            vs_clk               : out std_logic;                     -- clk
+            vs_rst               : out std_logic;                     -- reset
+            vs_ctrl_csr_addr     : out std_logic;                     -- address
+            vs_ctrl_csr_rd       : out std_logic;                     -- read
+            vs_ctrl_csr_wr       : out std_logic;                     -- write
+            vs_ctrl_csr_wrdata   : out std_logic_vector(31 downto 0); -- writedata
+            vs_ctrl_csr_rddata   : in  std_logic_vector(31 downto 0); -- readdata
+            vs_sample_csr_addr   : out std_logic_vector(3 downto 0);  -- address
+            vs_sample_csr_rd     : out std_logic;                     -- read
+            vs_sample_csr_wr     : out std_logic;                     -- write
+            vs_sample_csr_wrdata : out std_logic_vector(31 downto 0); -- writedata
+            vs_sample_csr_rddata : in  std_logic_vector(31 downto 0); -- readdata
+            vs_sample_irq        : in  std_logic                      -- irq
         );
     end component;
 

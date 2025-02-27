@@ -60,7 +60,6 @@ architecture a10vs_tb_rtl of a10vs_tb is
 
     signal s_slave_in  : t_wishbone_slave_in;
     signal s_slave_out : t_wishbone_slave_out;
-    signal s_dev_desc  : t_wishbone_device_descriptor;
 
     -- Functions
     -- Function wb_stim -> Helper function to create a human-readable testbench
@@ -124,18 +123,19 @@ begin
             slave_o => s_slave_out,
 
             -- voltage sensor (IP core) interface (Avalon-ST)
-            vs_clk             => open,
-            vs_rst             => open,
-            vs_ctrl_csr_addr   => open,
-            vs_ctrl_csr_rd     => open,
-            vs_ctrl_csr_wr     => open,
-            vs_ctrl_csr_wrdata => open,
-            vs_ctrl_csr_rddata => (others =>'0'),
-            vs_rsp_valid       => '0',
-            vs_rsp_channel     => (others =>'0'),
-            vs_rsp_data        => (others =>'0'),
-            vs_rsp_start_pkt   => '0',
-            vs_rsp_end_pkt     => '0'
+            vs_clk               => open,
+            vs_rst               => open,
+            vs_ctrl_csr_addr     => open,
+            vs_ctrl_csr_rd       => open,
+            vs_ctrl_csr_wr       => open,
+            vs_ctrl_csr_wrdata   => open,
+            vs_ctrl_csr_rddata   => x"0000cafe",
+            vs_sample_csr_addr   => open,
+            vs_sample_csr_rd     => open,
+            vs_sample_csr_wr     => open,
+            vs_sample_csr_wrdata => open,
+            vs_sample_csr_rddata => x"0000babe",
+            vs_sample_irq        => '0'
         );
 
     -- Wishbone controller
@@ -164,7 +164,7 @@ begin
 
         -- Read from sample 0 register
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_off, c_vs_sample0_addr, c_reg_all_zero);
-        wait until rising_edge(s_clk); wb_expect("Read from sample 0 reg?", s_slave_out.dat, x"00000001");
+        wait until rising_edge(s_clk); wb_expect("Read from sample 0 reg?", s_slave_out.dat, x"0000babe");
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_vs_sample0_addr, c_reg_all_zero);
         wait until rising_edge(s_clk);
 
@@ -177,7 +177,7 @@ begin
 
         -- Read from sample 7 register
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_off, c_vs_sample7_addr, c_reg_all_zero);
-        wait until rising_edge(s_clk); wb_expect("Read from sample 7 reg?", s_slave_out.dat, x"00000008");
+        wait until rising_edge(s_clk); wb_expect("Read from sample 7 reg?", s_slave_out.dat, x"0000babe");
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_vs_sample7_addr, c_reg_all_zero);
         wait until rising_edge(s_clk);
 
@@ -194,19 +194,19 @@ begin
 
         -- Read access (controller core: command register)
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_off, c_vs_cmd_addr, c_reg_all_zero);
-        wait until rising_edge(s_clk); wb_expect("Write to controller core?", s_slave_out.dat, x"000000ff");
+        wait until rising_edge(s_clk); wb_expect("Write to controller core?", s_slave_out.dat, x"0000cafe");
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_vs_cmd_addr, c_reg_all_zero);
         wait until rising_edge(s_clk);
 
         -- Read access (sample store: register 0)
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_off, c_vs_sample0_addr, c_reg_all_zero);
-        wait until rising_edge(s_clk); wb_expect("Read from sample 0 reg?", s_slave_out.dat, x"00000001");
+        wait until rising_edge(s_clk); wb_expect("Read from sample 0 reg?", s_slave_out.dat, x"0000babe");
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_vs_sample0_addr, c_reg_all_zero);
         wait until rising_edge(s_clk);
 
         -- Read access (sample store: register 7)
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_off, c_vs_sample7_addr, c_reg_all_zero);
-        wait until rising_edge(s_clk); wb_expect("Read from sample 7 reg?", s_slave_out.dat, x"00000008");
+        wait until rising_edge(s_clk); wb_expect("Read from sample 7 reg?", s_slave_out.dat, x"0000babe");
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_vs_sample7_addr, c_reg_all_zero);
         wait until rising_edge(s_clk);
 
