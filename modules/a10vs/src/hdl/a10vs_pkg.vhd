@@ -41,8 +41,6 @@ package a10vs_pkg is
             slave_o : out t_wishbone_slave_out;
 
             -- voltage sensor (IP core) interface (Avalon-MM)
-            vs_clk               : out std_logic;                     -- clk
-            vs_rst               : out std_logic;                     -- reset
             vs_ctrl_csr_addr     : out std_logic;                     -- address
             vs_ctrl_csr_rd       : out std_logic;                     -- read
             vs_ctrl_csr_wr       : out std_logic;                     -- write

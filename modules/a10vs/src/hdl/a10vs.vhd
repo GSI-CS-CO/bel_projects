@@ -44,8 +44,6 @@ entity a10vs is
         slave_o : out t_wishbone_slave_out;
 
         -- voltage sensor (IP core) interface (Avalon-MM)
-        vs_clk               : out std_logic;                     -- clk
-		vs_rst               : out std_logic;                     -- reset
 		vs_ctrl_csr_addr     : out std_logic;                     -- address
 		vs_ctrl_csr_rd       : out std_logic;                     -- read
 		vs_ctrl_csr_wr       : out std_logic;                     -- write
@@ -126,8 +124,6 @@ begin
     end process;
 
     -- Avalon-MM interface (voltage sensor controller)
-    vs_clk <= clk_i;
-    vs_rst <= not rst_n_i;
 
     -- Avalon-MM address
     p_av_address_decode: process(s_re)

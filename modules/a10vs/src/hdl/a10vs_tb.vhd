@@ -123,8 +123,6 @@ begin
             slave_o => s_slave_out,
 
             -- voltage sensor (IP core) interface (Avalon-ST)
-            vs_clk               => open,
-            vs_rst               => open,
             vs_ctrl_csr_addr     => open,
             vs_ctrl_csr_rd       => open,
             vs_ctrl_csr_wr       => open,
