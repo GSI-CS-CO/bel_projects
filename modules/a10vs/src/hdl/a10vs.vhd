@@ -74,7 +74,6 @@ architecture a10vs_rtl of a10vs is
 
     -- other
     signal s_adr             : std_logic_vector(c_adr_width - 1 downto 0);
-    signal s_dat             : std_logic_vector(c_vs_reg_size - 1 downto 0);
     signal s_ack_avs         : std_logic;                                    -- ack for avalon-mm (ensure valid data on avalon bus)
     signal s_ack             : std_logic;                                    -- ack for wishbone
     signal s_re              : std_logic_vector(0 to c_vs_reg_n - 1);        -- enable for the voltage sensor registers
@@ -85,8 +84,6 @@ begin
     slave_o.err    <= '0';               -- no abnormal cycle termination
     slave_o.rty    <= '0';               -- no cycle retry
     slave_o.stall  <= '0';               -- no pipeline
-
-    slave_o.dat(g_data_size - 1 downto c_vs_reg_size) <= (others => '0');   -- no high word
 
     -- WB ack
     p_wb_ack: process(clk_i, rst_n_i)
@@ -151,16 +148,14 @@ begin
         if rising_edge(clk_i) then
             case s_vs_sel is
                 when c_ctrl_sel   =>
-                    s_dat <= vs_ctrl_csr_rddata(c_vs_reg_size - 1 downto 0);
+                    slave_o.dat <= vs_ctrl_csr_rddata;
                 when c_sample_sel =>
-                    s_dat <= vs_sample_csr_rddata(c_vs_reg_size - 1 downto 0);
+                    slave_o.dat <= vs_sample_csr_rddata;
                 when others       =>
-                    s_dat <= (others => '0');
+                    slave_o.dat <= (others => '0');
             end case;
         end if;
     end process;
-
-    slave_o.dat(c_vs_reg_size - 1 downto 0) <= s_dat;
 
     p_av_writedata: process(s_vs_sel)
     begin

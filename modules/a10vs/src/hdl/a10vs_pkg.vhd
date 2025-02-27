@@ -56,6 +56,5 @@ package a10vs_pkg is
     end component;
 
     constant c_vs_reg_n        : integer := 11;                     -- number of the IP core registers
-    constant c_vs_reg_size     : integer := 16;                     -- bits, size of the IP core registers
 
 end package a10vs_pkg;
