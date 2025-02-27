@@ -75,7 +75,8 @@ architecture a10vs_rtl of a10vs is
     -- other
     signal s_adr             : std_logic_vector(c_adr_width - 1 downto 0);
     signal s_dat             : std_logic_vector(c_vs_reg_size - 1 downto 0);
-    signal s_ack             : std_logic;
+    signal s_ack_avs         : std_logic;                                    -- ack for avalon-mm (ensure valid data on avalon bus)
+    signal s_ack             : std_logic;                                    -- ack for wishbone
     signal s_re              : std_logic_vector(0 to c_vs_reg_n - 1);        -- enable for the voltage sensor registers
 
 begin
@@ -91,14 +92,16 @@ begin
     p_wb_ack: process(clk_i, rst_n_i)
     begin
         if rst_n_i = '0' then
-            s_ack <= '0';
+            s_ack_avs <= '0';
+            s_ack     <= s_ack_avs;
         else
             if rising_edge(clk_i) then
                 if slave_i.cyc = '1' and slave_i.stb = '1' then
-                    s_ack <= '1';
+                    s_ack_avs <= '1';
                 else
-                    s_ack <= '0';
+                    s_ack_avs <= '0';
                 end if;
+                s_ack <= s_ack_avs;
             end if;
         end if;
     end process;
@@ -143,16 +146,18 @@ begin
     vs_sample_csr_addr <= s_adr;
 
     -- Avalon-MM data access
-    p_av_readdata: process(s_vs_sel)
+    p_av_readdata: process(clk_i)
     begin
-        case s_vs_sel is
-            when c_ctrl_sel   =>
-                s_dat <= vs_ctrl_csr_rddata(c_vs_reg_size - 1 downto 0);
-            when c_sample_sel =>
-                s_dat <= vs_sample_csr_rddata(c_vs_reg_size - 1 downto 0);
-            when others       =>
-                s_dat <= (others => '0');
-        end case;
+        if rising_edge(clk_i) then
+            case s_vs_sel is
+                when c_ctrl_sel   =>
+                    s_dat <= vs_ctrl_csr_rddata(c_vs_reg_size - 1 downto 0);
+                when c_sample_sel =>
+                    s_dat <= vs_sample_csr_rddata(c_vs_reg_size - 1 downto 0);
+                when others       =>
+                    s_dat <= (others => '0');
+            end case;
+        end if;
     end process;
 
     slave_o.dat(c_vs_reg_size - 1 downto 0) <= s_dat;
