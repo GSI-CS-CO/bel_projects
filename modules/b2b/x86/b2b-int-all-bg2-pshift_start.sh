@@ -6,27 +6,28 @@ set -x
 ###########################################
 # setting for production
 # PS : dev/wbm0, tr0
-# pro: two Dual FIB 3 (= 4 DDS)
-# some DDS registers
-# 0x000c        : FW_Version
+# int: two Dual FIB 3 (= 4 DDS)
+# pro: two single FIB3 (= 2 DDS)
 export TRPS=dev/wbm0
 export SDPS=tr0
-export  SIS18DDSSHIFTPHAS=0x444000    # phase shift, value [degree, single precision float]
-export  SIS18DDSSHIFTTIME=0x444004    # phase shift, value [s, float]
-export  SIS18DDSSHIFTSTRT=0x444024    # phase shift, start
-export   SIS18DDSTAGREGLO=0x440612    # fg quad, tag config low bits
-export   SIS18DDSTAGREGHI=0x440614    # fg quad, tag config high bits
-export SIS18DDSTAGREGCTRL=0x440600    # fg quad, control register
-export    ESRDDSSHIFTPHAS=0x484000    # phase shift, value [degree, float]
-export    ESRDDSSHIFTTIME=0x484004    # phase shift, value [s, float]
-export    ESRDDSSHIFTSTRT=0x484024    # phase shift, start
-export     ESRDDSTAGREGLO=0x480612    # fg quad, tag config low bits
-export     ESRDDSTAGREGHI=0x480614    # fg quad, tag config high bits
-export   ESRDDSTAGREGCTRL=0x480600    # fg quad, control register
-export DDSTAGCTRL=0xcc020000          # fg quad, value written to the control register for enabling phase reset
-export DDSTAGRESET=0x47114711         # tag value for phase reset
-export DDSTAGRESETLO=0x4711           # tag value for phase reset, low word
-export DDSTAGRESETHI=0x4711           # tag value for phase reset, high word
+
+# SCU bus slots
+export SIS18DDS=0x44
+export   ESRDDS=0x48
+
+# registers
+export  FWVERSION=000c            # FW version; useful when looking for modules on the scu bus
+export  SHIFTPHAS=4000            # phase shift, value [degree, single precision float]
+export  SHIFTTIME=4004            # phase shift, value [s, float]
+export  SHIFTSTRT=4024            # phase shift, start
+export   TAGREGLO=0612            # fg quad, tag config low bits
+export   TAGREGHI=0614            # fg quad, tag config high bits
+export TAGREGCTRL=0600            # fg quad, control register
+
+# values
+export     DDSENABLE=0xcc020000   # fg quad, value written to the control register for enabling phase reset
+export DDSTAGRESETLO=4711         # tag value for phase reset, low word
+export DDSTAGRESETHI=4711         # tag value for phase reset, high word
 
 
 ###########################################
@@ -126,23 +127,23 @@ echo -e record macros
 #       -------------
 # SIS18
 # phase shift, phase
-saft-wbm-ctl $SDPS -r 0x00 $SIS18DDSSHIFTPHAS 0 0x5c
-saft-wbm-ctl $SDPS -r 0x01 $SIS18DDSSHIFTPHAS 0 0x53
+saft-wbm-ctl $SDPS -r 0x00 $SIS18DDS$SHIFTPHAS 0 0x5c
+saft-wbm-ctl $SDPS -r 0x01 $SIS18DDS$SHIFTPHAS 0 0x53
 # phase shift, time
-saft-wbm-ctl $SDPS -r 0x02 $SIS18DDSSHIFTTIME 0 0x4c
-saft-wbm-ctl $SDPS -r 0x03 $SIS18DDSSHIFTTIME 0 0x43
+saft-wbm-ctl $SDPS -r 0x02 $SIS18DDS$SHIFTTIME 0 0x4c
+saft-wbm-ctl $SDPS -r 0x03 $SIS18DDS$SHIFTTIME 0 0x43
 # phase shift, start, EvtID 0x...........1....
-saft-wbm-ctl $SDPS -r 0x04 $SIS18DDSSHIFTSTRT - 0x3c
+saft-wbm-ctl $SDPS -r 0x04 $SIS18DDS$SHIFTSTRT 0 0x3c
 #
 # ESR
 # phase shift, phase
-saft-wbm-ctl $SDPS -r 0x05 $ESRDDSSHIFTPHAS 0 0x5c
-saft-wbm-ctl $SDPS -r 0x06 $ESRDDSSHIFTPHAS 0 0x53
+saft-wbm-ctl $SDPS -r 0x05 $ESRDDS$SHIFTPHAS 0 0x5c
+saft-wbm-ctl $SDPS -r 0x06 $ESRDDS$SHIFTPHAS 0 0x53
 # phase shift, time
-saft-wbm-ctl $SDPS -r 0x07 $ESRDDSSHIFTTIME 0 0x4c
-saft-wbm-ctl $SDPS -r 0x08 $ESRDDSSHIFTTIME 0 0x43
+saft-wbm-ctl $SDPS -r 0x07 $ESRDDS$SHIFTTIME 0 0x4c
+saft-wbm-ctl $SDPS -r 0x08 $ESRDDS$SHIFTTIME 0 0x43
 # phase shift, start, EvtID 0x...........1....
-saft-wbm-ctl $SDPS -r 0x09 $ESRDDSSHIFTSTRT - 0x3c
+saft-wbm-ctl $SDPS -r 0x09 $ESRDDS$SHIFTSTRT 0 0x3c
 #
 # SIS100
 # ... (to be done)
@@ -193,24 +194,25 @@ echo -e B2B: configure $SDPS scu bus tag channel, needed for DDS phase reset
 echo -e SIS18, ESR, SIS100
 # will be replaced by saft-wbm-ctl
 # configure DDS to react on tag for phase reset
-eb-write $TRPS $SIS18DDSTAGREGLO/2 $DDSTAGRESETLO
-eb-write $TRPS $SIS18DDSTAGREGHI/2 $DDSTAGRESETHI
-eb-write $TRPS $ESRDDSTAGREGLO/2 $DDSTAGRESETLO
-eb-write $TRPS $ESRDDSTAGREGHI/2 $DDSTAGRESETHI
+eb-write $TRPS $SIS18DDS$TAGREGLO/2 0x$DDSTAGRESETLO
+eb-write $TRPS $SIS18DDS$TAGREGHI/2 0x$DDSTAGRESETHI
+eb-write $TRPS $ESRDDS$TAGREGLO/2   0x$DDSTAGRESETLO
+eb-write $TRPS $ESRDDS$TAGREGHI/2   0x$DDSTAGRESETHI
 # SIS100 ... (to be done)
 #
 # SIS18
 # configure ECA wishbone channel to enable phase reset at DDS, the 'enable' is done 10us prior CMD_PHASE_RESET
 saft-wbm-ctl tr0 -c 0x112c159000000000  0xfffffff000000000 10000 0x0a -dg
-saft-wbm-ctl tr0 -r 0x0a $SIS18DDSTAGREGCTRL $DDSTAGCTRL 0x0c
+saft-wbm-ctl tr0 -r 0x0a $SIS18DDS$TAGREGCTRL $DDSENABLE 0x0c
+echo $DDSENABLE
 # configure ECA tag channel to write tag upon receiving CMD_PHASE_RESET
-saft-scu-ctl $SDPS -c 0x112c159000000000 0xfffffff000000000 0 $DDSTAGRESET -d
+saft-scu-ctl $SDPS -c 0x112c159000000000 0xfffffff000000000 0 0x$DDSTAGRESETHI$DDSTAGRESETLO -d
 # ESR
 # configure ECA wishbone channel to enable phase reset at DDS, the 'enable' is done 10us prior CMD_PHASE_RESET
 saft-wbm-ctl tr0 -c 0x1154159000000000  0xfffffff000000000 10000 0x0b -dg
-saft-wbm-ctl tr0 -r 0x0b $ESRDDSTAGREGCTRL $DDSTAGCTRL 0x0c
+saft-wbm-ctl tr0 -r 0x0b $ESRDDS$TAGREGCTRL $DDSENABLE 0x0c
 # configure ECA tag channel to write tag upon receiving CMD_PHASE_RESET
-saft-scu-ctl $SDPS -c 0x1154159000000000 0xfffffff000000000 0 $DDSTAGRESET -d
+saft-scu-ctl $SDPS -c 0x1154159000000000 0xfffffff000000000 0 0x$DDSTAGRESETHI$DDSTAGRESETLO -d
 
 
 
