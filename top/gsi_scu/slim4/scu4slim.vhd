@@ -214,14 +214,16 @@ architecture rtl of scu4slim is
   signal rstn_ref           : std_logic;
   signal clk_ref            : std_logic;
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 14) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 16) :=
   (
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
     ("LEMO_IN_0  ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
     ("LEMO_IN_1  ",  IO_NONE,         false,   false,  1,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
-    ("FAST_IN_0  ",  IO_NONE,         false,   false,  2,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVDS),
-    ("FAST_IN_1  ",  IO_NONE,         false,   false,  3,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVDS),
-    ("FAST_IN_2  ",  IO_NONE,         false,   false,  4,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVDS),
+    ("REAR_IN_0  ",  IO_NONE,         false,   false,  2,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("REAR_IN_1  ",  IO_NONE,         false,   false,  3,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("FAST_IN_0  ",  IO_NONE,         false,   false,  4,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVDS),
+    ("FAST_IN_1  ",  IO_NONE,         false,   false,  5,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVDS),
+    ("FAST_IN_2  ",  IO_NONE,         false,   false,  6,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVDS),
     ("USER_LED0_R",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("USER_LED0_G",  IO_NONE,         false,   false,  1,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("USER_LED0_B",  IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
@@ -249,7 +251,7 @@ begin
       g_project            => c_project,
       g_flash_bits         => 25, -- !!! TODO: Check this
       g_psram_bits         => c_psram_bits,
-      g_gpio_in            => 5,
+      g_gpio_in            => 7,
       g_gpio_out           => 10,
       --g_lvds_in            => 3,
       --g_lvds_out           => 3,
@@ -292,13 +294,13 @@ begin
       wr_dac_sclk_o           => wr_dac_sclk_o,
       wr_dac_din_o            => wr_dac_din_o,
       wr_ndac_cs_o            => wr_ndac_cs_o,
-      wr_uart_o               => ser1_rxd,
-      wr_uart_i               => ser1_txd,
+      wr_uart_o               => open,
+      wr_uart_i               => '1',
       wbar_phy_dis_o          => sfp_tx_disable_o,
       sfp_tx_fault_i          => sfp_tx_fault_i,
       sfp_los_i               => sfp_los_i,
-      gpio_i(1 downto 0)      => lemo_in,
-      gpio_i(4 downto 2)      => s_gpio_i,
+      gpio_i(3 downto 0)      => rear_in & lemo_in,
+      gpio_i(6 downto 4)      => s_gpio_i(2 downto 0),
       gpio_o(9 downto 0)      => s_gpio_o(9 downto 0),
       --lvds_p_i                => s_lvds_p_i,
       --lvds_n_i                => s_lvds_n_i,
@@ -443,6 +445,10 @@ begin
   nADR_EN     <= '0';
   A_Spare     <= (others => 'Z');
   --A_OneWire   <= 'Z';
+
+  --IBN
+  ser0_rxd  <= ser1_txd;
+  ser1_rxd  <= ser0_txd;
 
   sfp_rate_sel_o <= '1'; --SFP rate full speed
 
