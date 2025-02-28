@@ -16,7 +16,7 @@
 --! but WITHOUT ANY WARRANTY; without even the implied warranty of
 --! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 --! Lesser General Public License for more details.
---!
+--!g_dual_port_wr
 --! You should have received a copy of the GNU Lesser General Public
 --! License along with this library. If not, see <http://www.gnu.org/licenses/>.
 ---------------------------------------------------------------------------------
@@ -187,6 +187,16 @@ entity monster is
     phy_aux_tx_ready_o     : out   std_logic;
     phy_debug_o            : out   std_logic;
     phy_debug_i            : in    std_logic_vector(7 downto 0) := (others => '0');
+    aux_clk_20m_vcxo_i     : in    std_logic;
+    aux_clk_125m_pllref_i  : in    std_logic;
+    aux_clk_125m_sfpref_i  : in    std_logic;
+    -- Debug
+    debug_sys_locked_o     : out   std_logic;
+    debug_ge_85_c_o        : out   std_logic;
+    debug_ref1_locked_o    : out   std_logic;
+    debug_dmtd1_locked_o   : out   std_logic;
+    debug_ref2_locked_o    : out   std_logic;
+    debug_dmtd2_locked_o   : out   std_logic;
     -- GPIO for the board
     gpio_i                 : in    std_logic_vector(f_sub1(g_gpio_inout+g_gpio_in)  downto 0);
     gpio_o                 : out   std_logic_vector(f_sub1(g_gpio_inout+g_gpio_out) downto 0) := (others => 'Z');
@@ -219,6 +229,7 @@ entity monster is
     pcie_rstn_i            : in    std_logic;
     pcie_rx_i              : in    std_logic_vector(3 downto 0);
     pcie_tx_o              : out   std_logic_Vector(3 downto 0) := (others => 'Z');
+    pcie_ready_o           : out   std_logic;
     -- g_en_vme
     vme_as_n_i             : in    std_logic;
     vme_rst_n_i            : in    std_logic;
@@ -395,6 +406,8 @@ entity monster is
     -- g_en_user_ow
     ow_io                  : inout std_logic_vector(1 downto 0);
     hw_version             : in    std_logic_vector(31 downto 0);
+    -- g_en_a10ts
+    ge_85_c_o              : out   std_logic;
    -- g_en_tempsens
     tempsens_clr_out       : out   std_logic);
 end monster;
@@ -431,18 +444,20 @@ architecture rtl of monster is
       topm_vme,
       topm_pmc,
       topm_usb,
+      topm_ebs_aux,
       topm_prioq
     );
   constant c_top_my_masters : natural := top_my_masters'pos(top_my_masters'right)+1;
 
   constant c_top_layout_my_masters : t_sdb_record_array(c_top_my_masters-1 downto 0) :=
-   (top_my_masters'pos(topm_ebs)     => f_sdb_auto_msi(c_ebs_msi,     false),   -- Need to add MSI support !!!
-    top_my_masters'pos(topm_eca_wbm) => f_sdb_auto_msi(c_null_msi,    false),   -- no MSIs for ECA=>WB macro player
-    top_my_masters'pos(topm_pcie)    => f_sdb_auto_msi(c_pcie_msi,    g_en_pcie),
-    top_my_masters'pos(topm_vme)     => f_sdb_auto_msi(c_vme_msi,     g_en_vme),
-    top_my_masters'pos(topm_pmc)     => f_sdb_auto_msi(c_pmc_msi,     g_en_pmc),
-    top_my_masters'pos(topm_usb)     => f_sdb_auto_msi(c_usb_msi,     g_en_usb),
-    top_my_masters'pos(topm_prioq)   => f_sdb_auto_msi(c_null_msi,    false));
+   (top_my_masters'pos(topm_ebs)         => f_sdb_auto_msi(c_ebs_msi,     false),   -- Need to add MSI support !!!
+    top_my_masters'pos(topm_eca_wbm)     => f_sdb_auto_msi(c_null_msi,    false),   -- no MSIs for ECA=>WB macro player
+    top_my_masters'pos(topm_pcie)        => f_sdb_auto_msi(c_pcie_msi,    g_en_pcie),
+    top_my_masters'pos(topm_vme)         => f_sdb_auto_msi(c_vme_msi,     g_en_vme),
+    top_my_masters'pos(topm_pmc)         => f_sdb_auto_msi(c_pmc_msi,     g_en_pmc),
+    top_my_masters'pos(topm_usb)         => f_sdb_auto_msi(c_usb_msi,     g_en_usb),
+    top_my_masters'pos(topm_ebs_aux)     => f_sdb_auto_msi(c_ebs_msi,     false),   -- Need to add MSI support !!!
+    top_my_masters'pos(topm_prioq)       => f_sdb_auto_msi(c_null_msi,    false));
 
   -- The FTM adds a bunch of masters to this crossbar
   constant c_ftm_masters : t_sdb_record_array := f_lm32_masters_bridge_msis(g_lm32_cores);
@@ -527,7 +542,7 @@ architecture rtl of monster is
 
   -- We have to specify the values for WRC as they provide no function for this
   constant c_wrcore_bridge_sdb     : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
-  constant c_wrcore_aux_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0004ffff", x"00040000");
+  constant c_wrcore_aux_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
   constant c_ftm_slaves : t_sdb_bridge := f_cluster_bridge(c_dev_bridge_msi, g_lm32_cores, g_lm32_ramsizes, g_lm32_are_ftm, g_delay_diagnostics);
 
   constant c_dev_layout_req_slaves : t_sdb_record_array(c_dev_slaves-1 downto 0) :=
@@ -584,8 +599,9 @@ architecture rtl of monster is
     tops_dev,
     tops_mil,
     tops_wr_fast_path,
-    tops_wr_aux_fast_path,
     tops_ebm,
+    tops_wr_aux_fast_path,
+    tops_ebm_aux,
     tops_beam_dump,
     tops_emb_cpu
     );
@@ -598,8 +614,9 @@ architecture rtl of monster is
    top_slaves'pos(tops_dev)              => f_sdb_auto_bridge(c_dev_bridge_sdb,                  true),
    top_slaves'pos(tops_mil)              => f_sdb_auto_device(c_xwb_gsi_mil_scu,                 g_en_mil),
    top_slaves'pos(tops_wr_fast_path)     => f_sdb_auto_bridge(c_wrcore_bridge_sdb,               true),
-   top_slaves'pos(tops_wr_aux_fast_path) => f_sdb_auto_bridge(c_wrcore_aux_bridge_sdb,           g_dual_port_wr),
    top_slaves'pos(tops_ebm)              => f_sdb_auto_device(c_ebm_sdb,                         true),
+   top_slaves'pos(tops_wr_aux_fast_path) => f_sdb_auto_bridge(c_wrcore_aux_bridge_sdb,           g_dual_port_wr),
+   top_slaves'pos(tops_ebm_aux)          => f_sdb_auto_device(c_ebm_sdb,                         g_dual_port_wr),
    top_slaves'pos(tops_emb_cpu)          => f_sdb_auto_device(c_eca_queue_slave_sdb,             g_en_eca),
    top_slaves'pos(tops_beam_dump)        => f_sdb_embed_device(c_beam_dump_sdb, x"7FFF0000",     g_en_beam_dump));
 
@@ -659,6 +676,10 @@ architecture rtl of monster is
   signal rstn_ref         : std_logic;
   signal rstn_butis       : std_logic;
 
+  signal ref_locked_aux   : std_logic;
+  signal clk_ref0_aux     : std_logic;
+  signal clk_ref_aux      : std_logic;
+
   signal phase_done       : std_logic;
   signal phase_step       : std_logic;
   signal phase_sel        : std_logic_vector(4 downto 0);
@@ -667,8 +688,11 @@ architecture rtl of monster is
 
   -- DMTD PLL from clk_20m_vcxo_i
   signal dmtd_locked      : std_logic;
+  signal dmtd_locked_aux  : std_logic;
   signal clk_dmtd0        : std_logic;
   signal clk_dmtd         : std_logic;
+  signal clk_dmtd0_aux    : std_logic;
+  signal clk_dmtd_aux     : std_logic;
 
   -- BuTiS T0 clocks
   signal clk_butis_t0     : std_logic := '0'; -- 100KHz
@@ -693,14 +717,16 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
   -- Master signals ----------------------------------------------------------------
   ----------------------------------------------------------------------------------
-  signal wrc_slave_i     : t_wishbone_slave_in;
-  signal wrc_slave_o     : t_wishbone_slave_out;
-  signal wrc_aux_slave_i : t_wishbone_slave_in;
-  signal wrc_aux_slave_o : t_wishbone_slave_out;
-  signal wrc_master_i    : t_wishbone_master_in;
-  signal wrc_master_o    : t_wishbone_master_out;
-  signal s_eca_evt_m_i   : t_wishbone_master_in;
-  signal s_eca_evt_m_o   : t_wishbone_master_out;
+  signal wrc_slave_i      : t_wishbone_slave_in;
+  signal wrc_slave_o      : t_wishbone_slave_out;
+  signal wrc_aux_slave_i  : t_wishbone_slave_in;
+  signal wrc_aux_slave_o  : t_wishbone_slave_out;
+  signal wrc_master_i     : t_wishbone_master_in;
+  signal wrc_master_o     : t_wishbone_master_out;
+  signal wrc_aux_master_i : t_wishbone_master_in;
+  signal wrc_aux_master_o : t_wishbone_master_out;
+  signal s_eca_evt_m_i    : t_wishbone_master_in;
+  signal s_eca_evt_m_o    : t_wishbone_master_out;
 
   signal psram_slave_i   : t_wishbone_slave_in;
   signal psram_slave_o   : t_wishbone_slave_out;
@@ -709,6 +735,11 @@ architecture rtl of monster is
   signal eb_src_in     : t_wrf_source_in;
   signal eb_snk_out    : t_wrf_sink_out;
   signal eb_snk_in     : t_wrf_sink_in;
+
+  signal eb_aux_src_out : t_wrf_source_out;
+  signal eb_aux_src_in  : t_wrf_source_in;
+  signal eb_aux_snk_out : t_wrf_sink_out;
+  signal eb_aux_snk_in  : t_wrf_sink_in;
 
   signal uart_usb : std_logic; -- from usb
   signal uart_mux : std_logic; -- either usb or external
@@ -1013,6 +1044,12 @@ begin
       rstn_o(2)     => rstn_update,
       rstn_o(3)     => rstn_ref);
 
+      debug_sys_locked_o   <= sys_locked;
+      debug_ref1_locked_o  <= ref_locked;
+      debug_dmtd1_locked_o <= dmtd_locked;
+      debug_ref2_locked_o  <= '0';
+      debug_dmtd2_locked_o <= '0';
+
   dmtd_a2 : if c_is_arria2 generate
     dmtd_inst : dmtd_pll port map(
       areset   => pll_rst,
@@ -1020,6 +1057,7 @@ begin
       c0       => clk_dmtd0,              --  62.5MHz
       locked   => dmtd_locked);
   end generate;
+
   dmtd_a5 : if c_is_arria5 generate
     dmtd_inst : dmtd_pll5 port map(
       rst      => pll_rst,
@@ -1036,9 +1074,25 @@ begin
       locked   => dmtd_locked);
   end generate;
 
+  dual_port_wr_core_dmtd_a10_aux : if g_dual_port_wr generate
+    dmtd_a10_aux : if c_is_arria10 generate
+      dmtd_inst_aux : dmtd_pll10 port map(
+        rst      => pll_rst,
+        refclk   => aux_clk_20m_vcxo_i,    --  20  MHz
+        outclk_0 => clk_dmtd0_aux,         --  62.5MHz
+        locked   => dmtd_locked_aux);
+    end generate;
+  end generate;
+
   dmtd_clk : single_region port map(
     inclk  => clk_dmtd0,
     outclk => clk_dmtd);
+
+  dual_port_wr_core_dmtd_clk : if g_dual_port_wr generate
+    dmtd_clk_aux : single_region port map(
+      inclk  => clk_dmtd0_aux,
+      outclk => clk_dmtd_aux);
+  end generate;
 
   sys_a2 : if c_is_arria2 generate
     sys_inst : sys_pll port map(
@@ -1088,7 +1142,6 @@ begin
       outclk3       => clk_sys3); -- 10 MHz
       clk_sys4      <= clk_sys2;
   end generate;
-
 
   sys_clk : global_region port map(
     inclk  => clk_sys0,
@@ -1171,6 +1224,25 @@ begin
       phase_done  => phase_done);
   end generate;
 
+  dual_port_wr_core_ref_a10_aux : if g_dual_port_wr generate
+    ref_a10_aux : if (c_is_arria10 and not(g_a10_use_ref_fpll)) generate
+      ref_inst_aux : ref_pll10 port map(
+        rst         => pll_rst,
+        refclk      => aux_clk_125m_pllref_i, -- 125 MHz
+        outclk_2    => clk_ref0_aux, --  125 MHz
+        outclk_3    => open, --  200 MHz
+        outclk_4    => open, --   25 MHz
+        lvds_clk(0) => open, -- 1000 MHz
+        loaden(0)   => open, -- 125 MHz, 1/8 duty, -1.5ns phase
+        locked      => open,
+        scanclk     => '0',
+        cntsel      => (others => '0'),
+        phase_en    => '0',
+        updn        => '0',              -- positive phase shift (widen period)
+        phase_done  => open);
+    end generate;
+  end generate;
+
   ref_fa10 : if (c_is_arria10 and g_a10_use_ref_fpll) generate
     ref_inst : ref_fpll10 port map(
       pll_refclk0   => core_clk_125m_pllref_i,
@@ -1205,6 +1277,12 @@ begin
   ref_clk : global_region port map(
     inclk  => clk_ref0,
     outclk => clk_ref);
+
+  dual_port_wr_core_ref_clk_aux : if g_dual_port_wr generate
+    ref_clk_aux : global_region port map(
+      inclk  => clk_ref0_aux,
+      outclk => clk_ref_aux);
+  end generate;
 
   --butis_clk : global_region port map(
   --  inclk  => clk_ref1,
@@ -1401,6 +1479,26 @@ begin
       ebm_wb_slave_i  => top_bus_master_o(top_slaves'pos(tops_ebm)),
       ebm_wb_slave_o  => top_bus_master_i(top_slaves'pos(tops_ebm)));
 
+    top_msi_master_i(top_my_masters'pos(topm_ebs_aux)) <= cc_dummy_slave_out; -- Etherbone does not accept MSI !!!
+    eb_master_slave_wrapper_aux : if g_dual_port_wr generate
+      eb_aux : eb_master_slave_wrapper
+        generic map(
+          g_with_master     => true,
+          g_ebs_sdb_address => (x"00000000" & c_top_sdb_address))
+        port map(
+          clk_i           => clk_sys,
+          nRst_i          => rstn_sys,
+          snk_i           => eb_aux_snk_in,
+          snk_o           => eb_aux_snk_out,
+          src_o           => eb_aux_src_out,
+          src_i           => eb_aux_src_in,
+          ebs_cfg_slave_o => wrc_aux_master_i,
+          ebs_cfg_slave_i => wrc_aux_master_o,
+          ebs_wb_master_o => top_bus_slave_i (top_my_masters'pos(topm_ebs_aux)),
+          ebs_wb_master_i => top_bus_slave_o (top_my_masters'pos(topm_ebs_aux)),
+          ebm_wb_slave_i  => top_bus_master_o(top_slaves'pos(tops_ebm_aux)),
+          ebm_wb_slave_o  => top_bus_master_i(top_slaves'pos(tops_ebm_aux)));
+    end generate;
 
   lm32 : ftm_lm32_cluster
     generic map(
@@ -1435,6 +1533,7 @@ begin
   pcie_n : if not g_en_pcie generate
     top_bus_slave_i (top_my_masters'pos(topm_pcie)) <= cc_dummy_master_out;
     top_msi_master_i(top_my_masters'pos(topm_pcie)) <= cc_dummy_slave_out;
+    pcie_ready_o <= '0';
   end generate;
   pcie_y : if g_en_pcie generate
     pcie : pcie_wb
@@ -1456,6 +1555,7 @@ begin
         slave_rstn_i  => rstn_sys,
         slave_i       => top_msi_master_o(top_my_masters'pos(topm_pcie)),
         slave_o       => top_msi_master_i(top_my_masters'pos(topm_pcie)));
+    pcie_ready_o <= '0';
   end generate;
 
   pmc_n : if not g_en_pmc generate
@@ -1971,8 +2071,8 @@ end generate;
 
       port map (
         clk_sys_i            => clk_sys,
-        clk_dmtd_i           => clk_dmtd,
-        clk_ref_i            => clk_ref,
+        clk_dmtd_i           => clk_dmtd_aux,
+        clk_ref_i            => clk_ref_aux,
         clk_aux_i            => (others => '0'),
         pps_ext_i            => wr_ext_pps_i,
         rst_n_i              => rstn_sys,
@@ -2004,8 +2104,8 @@ end generate;
         phy16_i              => phy16_aux_o,
         led_act_o            => link_act_aux,
         led_link_o           => link_up_aux,
-        sfp_scl_i            => wr_sfp_scl_io,
-        sfp_sda_i            => wr_sfp_sda_io,
+        sfp_scl_i            => wr_aux_sfp_scl_io,
+        sfp_sda_i            => wr_aux_sfp_sda_io,
         sfp_scl_o            => sfp_aux_scl_o,
         sfp_sda_o            => sfp_aux_sda_o,
         sfp_det_i            => wr_aux_sfp_det_i,
@@ -2017,14 +2117,14 @@ end generate;
         --owr_en_o             => owr_en,
         --owr_i(0)             => wr_onewire_io,
         --owr_i(1)             => '0',
-        --slave_i              => wrc_slave_i,
-        --slave_o              => wrc_slave_o,
-        --aux_master_o         => wrc_master_o,
-        --aux_master_i         => wrc_master_i,
-        --wrf_src_o            => eb_snk_in,
-        --wrf_src_i            => eb_snk_out,
-        --wrf_snk_o            => eb_src_in,
-        --wrf_snk_i            => eb_src_out,
+        slave_i              => wrc_aux_slave_i,
+        slave_o              => wrc_aux_slave_o,
+        aux_master_o         => wrc_aux_master_o,
+        aux_master_i         => wrc_aux_master_i,
+        wrf_src_o            => eb_aux_snk_in,
+        wrf_src_i            => eb_aux_snk_out,
+        wrf_snk_o            => eb_aux_src_in,
+        wrf_snk_i            => eb_aux_src_out,
         tm_link_up_o         => open,
         tm_dac_value_o       => open,
         tm_dac_wr_o          => open,
@@ -2166,8 +2266,8 @@ end generate;
           g_use_ext_loop         => true,
           g_use_ext_rst          => true)
         port map (
-          clk_ref_i              => clk_ref,
-          clk_phy_i              => phy_clk,
+          clk_ref_i              => clk_ref_aux,
+          clk_phy_i              => aux_clk_125m_sfpref_i,
           reconfig_write_i       => (others => '0'),
           reconfig_read_i        => (others => '0'),
           reconfig_address_i     => (others => '0'),
@@ -3234,17 +3334,19 @@ end generate;
 
   a10ts_n : if not g_en_a10ts generate
     dev_bus_master_i(dev_slaves'pos(devs_a10ts)) <= cc_dummy_slave_out;
+    ge_85_c_o <= '0';
   end generate;
   a10ts_y : if g_en_a10ts generate
     a10ts_inst : a10ts
       generic map (
         g_use_ext_trigger => false)
       port map (
-        clk_i      => clk_sys,
-        rst_n_i    => rstn_sys,
-        clk_20m_i  => clk_20m,
-        slave_i    => dev_bus_master_o(dev_slaves'pos(devs_a10ts)),
-        slave_o    => dev_bus_master_i(dev_slaves'pos(devs_a10ts)));
+        clk_i     => clk_sys,
+        rst_n_i   => rstn_sys,
+        clk_20m_i => clk_20m,
+        ge_85_c_o => ge_85_c_o,
+        slave_i   => dev_bus_master_o(dev_slaves'pos(devs_a10ts)),
+        slave_o   => dev_bus_master_i(dev_slaves'pos(devs_a10ts)));
   end generate;
 
   i2c_wrapper_n : if not g_en_i2c_wrapper generate
@@ -3312,7 +3414,7 @@ end generate;
       );
    end generate asmi_y;
 
-  
+
   enc_err_counter_n : if not g_en_enc_err_counter generate
     dev_bus_master_i(dev_slaves'pos(devs_enc_err_counter)) <= cc_dummy_slave_out;
   end generate;
@@ -3336,4 +3438,3 @@ end generate;
   ----------------------------------------------------------------------------------
 
 end rtl;
-

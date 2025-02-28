@@ -29,12 +29,12 @@ ARCH        ?=
 endif
 
 ifeq ($(SYSENV), YOCTO)
-USRPATH     := /common/usr/timing/wrmil/yocto/usr
+USRPATH     := /common/usr/timing/user-dietrich/yocto/usr
 ARCH        := /x86_64
 endif
 
 ifeq ($(SYSENV), ACC7)
-USRPATH     := /common/usr/timing/wrmil/centos7/usr/
+USRPATH     := /common/usr/timing/user-dietrich/centos7/usr/
 ARCH        := /x86_64
 endif
 
@@ -45,6 +45,8 @@ PRO         ?= YES
 else
 PRO         ?= NO
 endif
+
+export PRO
 
 TARGETS := firmware software nfsinit
 
@@ -71,6 +73,7 @@ deploy:
 # create folders
 	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/usr/bin                         # '/usr' is a hack
 	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/usr/lib                         # '/usr' is a hack
+	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/usr/lib64                       # '/usr' is a hack
 	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/usr/include                     # '/usr' is a hack
 	mkdir -p $(STAGING)/$(SYSTEMD)
 	mkdir -p $(STAGING)/firmware
@@ -87,7 +90,11 @@ deploy:
 	cp $(SW)/wrmil-serv-mon $(STAGING)$(ARCH)$(PREFIX)/usr/bin          # '/usr' is a hack
 	cp $(SW)/wrmil-client-mon $(STAGING)$(ARCH)$(PREFIX)/usr/bin        # '/usr' is a hack
 	cp $(SW)/wrf50-serv-mon $(STAGING)$(ARCH)$(PREFIX)/usr/bin          # '/usr' is a hack
-	cp $(FW)/*.bin $(STAGING)/firmware                   
+	cp $(FW)/*.bin $(STAGING)/firmware
+
+# MASP special hack for ACC7
+	cp /lib64/libboost_system-mt.so $(STAGING)$(ARCH)$(PREFIX)/usr/lib
+	cp /lib64/libboost_thread-mt.so.1.53.0 $(STAGING)$(ARCH)$(PREFIX)/usr/lib
 
 # configuration; the format is 'wrmil-<environment>-<machine>-<room>-<function>_start.sh'
 	cp $(SW)/*.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin                    # '/usr' is a hack

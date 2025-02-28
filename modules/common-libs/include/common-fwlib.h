@@ -32,7 +32,7 @@ b2bt_t fwlib_advanceTimePs(b2bt_t    t1_ps,           // time 1 [ps]
 b2bt_t fwlib_tfns2tps(float t_ns                      // time [ns]
                       );
 
-// convert [ps] to [ns, float], returns t [ns, float]f
+// convert [ps] to [ns, float], returns t [ns, float]
 float fwlib_tps2tfns(b2bt_t t_ps                      // time [ps]
                      );
 
@@ -122,9 +122,9 @@ void fwlib_publishStatusArray(uint64_t statusArray     // status array (each bit
                               );
 
 // publish status of ongoing transfer
-void fwlib_publishTransferStatus(uint32_t nTransfer,   // # of transfers
-                                 uint32_t nInject,     // # of injections within current transfer
-                                 uint32_t transStat,   // status of ongoing transfer
+void fwlib_publishTransferStatus(uint32_t nTransfer,   // # of transfers;                          PSM: # of phase shifts @ SIS18
+                                 uint32_t nInject,     // # of injections within current transfer; PSM: # of phase shifts @ ESR or CRYRING
+                                 uint32_t transStat,   // status of ongoing transfer;              PSM: # of phase shifts @ SIS100
                                  uint32_t nLate,       // number of messages that could not be delivered in time
                                  uint32_t offsDone,    // offset event deadline to time when we are done [ns]
                                  uint32_t comLatency   // latency for messages received from via ECA (tDeadline - tNow)) [ns]

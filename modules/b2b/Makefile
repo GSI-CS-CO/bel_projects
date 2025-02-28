@@ -58,6 +58,7 @@ firmware:
 	$(MAKE) TARGET=b2bpm -C $(FW)
 	$(MAKE) TARGET=b2bkd -C $(FW)
 	$(MAKE) TARGET=b2bpmstub -C $(FW)
+	$(MAKE) TARGET=b2bpsm -C $(FW)
 
 nfsinit:
 	echo $(shell cd $(NFSINIT); $(GENNFSINIT)/generate-main.sh $(ENV); cd ..)

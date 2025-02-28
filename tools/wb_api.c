@@ -3,7 +3,7 @@
 //
 //  created : Apr 10, 2013
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 24-Jul-2024
+//  version : 28-Feb-2025
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API,
 // but only a temporary solution.
@@ -364,10 +364,10 @@ eb_status_t wb_wr_get_ip_state(eb_device_t device, int devIndex, uint32_t buildN
   eb_address_t address;
   eb_address_t offset;
   eb_status_t  status;
-  
+
 #ifdef WB_SIMULATE
   *ipState = 1;
-    
+
   return EB_OK;
 #endif
 
@@ -386,11 +386,11 @@ eb_status_t wb_wr_get_ip_state(eb_device_t device, int devIndex, uint32_t buildN
       break;
     case 0x060201 :
       offset = WB4_BLOCKRAM_IPSTATE_060201;
-      break;    
+      break;
     default : return EB_OK;
   } // switch
 
-  if ((status = wb_check_device(device, WB4_BLOCKRAM_VENDOR, WB4_BLOCKRAM_PRODUCT, WB4_BLOCKRAM_VMAJOR, WB4_BLOCKRAM_VMINOR, devIndex, &wb4_ram)) != EB_OK) return status; 
+  if ((status = wb_check_device(device, WB4_BLOCKRAM_VENDOR, WB4_BLOCKRAM_PRODUCT, WB4_BLOCKRAM_VMAJOR, WB4_BLOCKRAM_VMINOR, devIndex, &wb4_ram)) != EB_OK) return status;
 
   address = wb4_ram + offset;
   if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block)) != EB_OK) return status;
@@ -857,12 +857,14 @@ eb_status_t wb_wr_reset(eb_device_t device, int devIndex, uint32_t value, int fl
 } // wb_wr_reset
 
 
-eb_status_t wb_wr_read_enc_err_counter(eb_device_t device, int devIndex, int phyIndex, eb_data_t *counter, eb_data_t *overflowFlag)
+eb_status_t wb_wr_read_enc_err_counter(eb_device_t device, int devIndex, int phyIndex, uint32_t *nError, int *flagOverflow)
 {
   eb_address_t counterAddress;
   eb_address_t overflowAddress;
   eb_status_t  status;
   eb_address_t eec_addr = EB_NULL;
+  eb_data_t    counter;
+  eb_data_t    overflowFlag;
 
 
 #ifdef WB_SIMULATE
@@ -871,30 +873,31 @@ eb_status_t wb_wr_read_enc_err_counter(eb_device_t device, int devIndex, int phy
 
   if ((status = wb_check_device(device, ENC_ERR_COUNTER_VENDOR, ENC_ERR_COUNTER_PRODUCT, ENC_ERR_COUNTER_VMAJOR, ENC_ERR_COUNTER_VMINOR, devIndex, &eec_addr)) != EB_OK) return status;
 
-  if(phyIndex == 2) {
+  if(phyIndex == 1) {
     if ((status = wb_check_second_phy_interface(device, devIndex, eec_addr)) != EB_OK) return status;
   }
 
-  switch (phyIndex)
-  {
-  case 1:
+  switch (phyIndex) {
+  case 0:
     counterAddress  = eec_addr + ENC_ERR_COUNTER_COUNTER1_GET;
     overflowAddress = eec_addr + ENC_ERR_COUNTER_OVERFLOW1_GET;
     break;
-  
-  case 2:
-    counterAddress = eec_addr + ENC_ERR_COUNTER_COUNTER2_GET;
+
+  case 1:
+    counterAddress  = eec_addr + ENC_ERR_COUNTER_COUNTER2_GET;
     overflowAddress = eec_addr + ENC_ERR_COUNTER_OVERFLOW2_GET;
     break;
 
   default:
     return EB_OOM; // there are a maximum of 2 phy interfaces, no valid index given
     break;
-  }
+  } // switch phyIndex
 
-  if ((status = eb_device_read(device, counterAddress, EB_BIG_ENDIAN|EB_DATA32, counter, 0, eb_block)) != EB_OK) return status;
+  if ((status = eb_device_read(device, counterAddress,  EB_BIG_ENDIAN|EB_DATA32, &counter,      0, eb_block)) != EB_OK) return status;
+  if ((status = eb_device_read(device, overflowAddress, EB_BIG_ENDIAN|EB_DATA32, &overflowFlag, 0, eb_block)) != EB_OK) return status;
 
-  if ((status = eb_device_read(device, overflowAddress, EB_BIG_ENDIAN|EB_DATA32, overflowFlag, 0, eb_block)) != EB_OK) return status;
+  *nError       = counter;
+  *flagOverflow = (int)overflowFlag;
 
   return status;
 } // wb_wr_read_enc_err_counter
@@ -914,17 +917,17 @@ eb_status_t wb_wr_reset_enc_err_counter(eb_device_t device, int devIndex, int ph
 
   if ((status = wb_check_device(device, ENC_ERR_COUNTER_VENDOR, ENC_ERR_COUNTER_PRODUCT, ENC_ERR_COUNTER_VMAJOR, ENC_ERR_COUNTER_VMINOR, devIndex, &eec_addr)) != EB_OK) return status;
 
-  if(phyIndex == 2) {
+  if(phyIndex == 1) {
     if ((status = wb_check_second_phy_interface(device, devIndex, eec_addr)) != EB_OK) return status;
   }
 
   switch (phyIndex)
   {
-  case 1:
+  case 0:
     address = eec_addr + ENC_ERR_COUNTER_RESET1;
     break;
-  
-  case 2:
+
+  case 1:
     address = eec_addr + ENC_ERR_COUNTER_RESET2;
     break;
 
@@ -958,8 +961,8 @@ eb_status_t wb_check_second_phy_interface(eb_device_t device, int devIndex, eb_a
   eb_data_t aux_phy_flag;
   if ((status = eb_device_read(device, flagAddress, EB_BIG_ENDIAN|EB_DATA32, &aux_phy_flag, 0, eb_block)) != EB_OK) return status;
   if (aux_phy_flag != 0x00000001) {
-    fprintf(stderr, "The auxiliary phy interface (phy#2) doesn't exist!\n");
-    return EB_OOM; // phy interface 2 doesn't exist
+    //fprintf(stderr, "The auxiliary phy interface (phy#2) doesn't exist!\n");
+    return EB_OOM; // second phy interface does not exist
   } else {
     return EB_OK;
   }
@@ -1052,6 +1055,7 @@ eb_status_t wb_wr_sfp_reset(eb_device_t device, int devIndex)
 
   // turn SFP off and on
   if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, FPGA_RESET_PHY_SFP_DIS_WR, 0, eb_block)) != EB_OK) return status;
+  usleep(750000);
   if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, 0, 0, eb_block)) != EB_OK) return status;
 
  return status;
@@ -1234,7 +1238,7 @@ eb_status_t wb_get_build_type(eb_device_t device, int size, char *buildType, uin
     *buildNumber = 0xffffffff;
   } // if sscanf
   else {
-    // limit sub-numbers to 255 
+    // limit sub-numbers to 255
     major = major & 0xff;
     minor = minor & 0xff;
     micro = micro & 0xff;

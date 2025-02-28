@@ -3,8 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-Aug-2024
- *  version : 30-Jan-2024
+ *  version : 03-jan-2025
  *
  * library for b2b
  *
@@ -42,7 +41,7 @@
 extern "C" {
 #endif
 
-#define B2BLIB_VERSION 0x000800
+#define B2BLIB_VERSION 0x000803
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  B2BLIB_STATUS_OK                 0            // OK
@@ -104,6 +103,7 @@ extern "C" {
     float    ext_dKickProbLevel;                       // extraction: level of comparator for magent probe signal [%]
     float    ext_diagPhase;                            // extraction: offset from expected h=1 to actual h=1 signal [ns]
     float    ext_diagMatch;                            // extraction: offset from calculated 'phase match' to actual h=1 signal [ns]
+    float    ext_phaseShift;                           // phase shift value [ns]
     uint64_t inj_phase;                                // injection : ...
     float    inj_phaseFract;
     float    inj_phaseErr;
@@ -114,6 +114,7 @@ extern "C" {
     float    inj_dKickProbLevel;
     float    inj_diagPhase;
     float    inj_diagMatch;
+    float    inj_phaseShift;
     uint32_t flagEvtRec;                               // flag for events received; pme, pmi, pre, pri, pse, psi, kte, kti, kde, kdi, pde, pdi, start, stop
     uint32_t flagEvtErr;                               // error flag;               pme, pmi, ...
     uint32_t flagEvtLate;                              // flag for events late;     pme, pmi, ...
@@ -164,7 +165,7 @@ extern "C" {
     double   ext_rfNueAve;
     double   ext_rfNueSdev;
     double   ext_rfNueDiff;
-    double   ext_rfNueEst;                             // estimated 'true' DDS frequency based on its DDS resolution
+    double   ext_rfNueEst;                             // estimated 'true' DDS frequency based on DDS resolution (32bit)
     double   inj_rfNueAct;                             // injection, measured rf frequency
     double   inj_rfNueActErr;
     uint32_t inj_rfNueN;
@@ -212,13 +213,13 @@ extern "C" {
     double   cbs_ktiOffSdev;
     double   cbs_ktiOffMin;
     double   cbs_ktiOffMax;
-    double   ext_monRemAct;                            // remainder (ext_T, h=1) from phase to electronics monitor
-    uint32_t ext_monRemN;
+    double   ext_monRemAct;                            // remainder (ext_T, h=1) from phase to electronics monitor; chk: can be removed after 2025 beamtime
+    uint32_t ext_monRemN;                              
     double   ext_monRemAve;
     double   ext_monRemSdev;
     double   ext_monRemMin;
     double   ext_monRemMax;
-    double   inj_monRemAct;                            // remainder (ext_T, h=1) from phase to electronics monitor
+    double   inj_monRemAct;                            // remainder (ext_T, h=1) from phase to electronics monitor; chk: can be removed after 2025 beamtime
     uint32_t inj_monRemN;
     double   inj_monRemAve;
     double   inj_monRemSdev;

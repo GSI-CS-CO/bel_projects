@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 10-Jul-2024
+ *  version : 29-Aug-2024
  *
  * common x86 routines for firmware
  *
@@ -37,7 +37,7 @@
 #ifndef _COMMON_LIB_H_
 #define _COMMON_LIB_H_
 
-#define COMMON_LIB_VERSION "0.04.00"
+#define COMMON_LIB_VERSION "0.04.01"
 
 #include <etherbone.h>
 
@@ -79,9 +79,9 @@ int comlib_readDiag(eb_device_t device,                // Etherbone device
                     uint32_t    *nBadState,            // # of bad state incidents
                     uint64_t    *tDiag,                // time, when diag data was reset
                     uint64_t    *tS0,                  // time, when entering S0 state (firmware boot)
-                    uint32_t    *nTransfer,            // # of transfers
-                    uint32_t    *nInjection,           // # of injection within ongoing transfers
-                    uint32_t    *statTrans,            // status bits of transfer (application specific)
+                    uint32_t    *nTransfer,            // # of transfers                                ; PSM: # phase shifts SIS18
+                    uint32_t    *nInjection,           // # of injection within ongoing transfers       ; PSM: # phase shifts ESR, CRYRING
+                    uint32_t    *statTrans,            // status bits of transfer (application specific); PSM: # phase shifts SIS100
                     uint32_t    *nLate,                // number of messages that could not be delivered in time
                     uint32_t    *offsDone,             // offset event deadline to time when we are done [ns]
                     uint32_t    *comLatency,           // latency for messages received from via ECA (tDeadline - tNow)) [ns]

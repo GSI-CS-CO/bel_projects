@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 28-Aug-2024
+ *  version : 14-feb-2025
  *
  * subscribes to and displays status of a b2b transfer
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_VIEWER_VERSION 0x000800
+#define B2B_VIEWER_VERSION 0x000804
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -124,6 +124,7 @@ int      flagPrintDiag;                                     // flag: print diagn
 int      flagPrintRf;                                       // flag: print rf info
 int      flagPrintKick;                                     // flag: print kick info
 int      flagPrintStat;                                     // flag: print status info
+int      flagPrintPshift;                                   // flag: phase shift info
 int      modeMask;                                          // mask: marks events used in actual mode
 
 static void help(void) {
@@ -206,7 +207,7 @@ void recSetvalue(long *tag, setval_t *address, int *size)
     set_secs      = (time_t)(secs);
 
   } // if flagSetValid
-  else set_mode = 0;
+  else set_mode = B2B_MODE_OFF;
 } // recSetValue
 
 
@@ -263,7 +264,7 @@ void calcBeatValues()
   b2b_beatT    = 0;
 
   if (!flagSetValid)                      return;
-  if (set_mode != 4)                      return;
+  if ((set_mode != B2B_MODE_B2BFBEAT) && (set_mode != B2B_MODE_B2BPSHIFTE))     return;
   if ((set_extH == 0) || (set_injH == 0)) return;
   if ((set_extT == 0) || (set_injT == 0)) return;
   if (set_extT == set_injT)               return;
@@ -317,29 +318,37 @@ int printSet(uint32_t sid)
   char   tCBS[100];
   
   switch (set_mode) {
-    case 0 :
+    case B2B_MODE_OFF :
       sprintf(modeStr, "'off'");
       modeMask = MSKRECMODE0;
       break;
-    case 1 :
+    case B2B_MODE_BSE :
       sprintf(modeStr, "'CMD_B2B_START'");
       modeMask = MSKRECMODE1;
       break;
-    case 2 :
+    case B2B_MODE_B2E :
       sprintf(modeStr, "'bunch 2 fast extraction'");
       modeMask = MSKRECMODE2;
       break;
-    case 3 :
+    case B2B_MODE_B2C :
       sprintf(modeStr, "'bunch 2 coasting beam'");
       modeMask = MSKRECMODE3;      
       break;
-    case 4 :
-      sprintf(modeStr, "'bunch 2 bucket'");
+    case B2B_MODE_B2BFBEAT :
+      sprintf(modeStr, "'bunch 2 bucket with fbeat'");
       modeMask = MSKRECMODE4;
       break;
-    case 5 :
+    case B2B_MODE_B2EPSHIFT :
       sprintf(modeStr, "'bunch 2 fast ext. w. phase shift");
       modeMask = MSKRECMODE5;
+      break;
+    case B2B_MODE_B2BPSHIFTE :
+      sprintf(modeStr, "'bunch 2 bucket extr. phase shift");
+      modeMask = MSKRECMODE6;
+      break;
+    case B2B_MODE_B2BPSHIFTI :
+      sprintf(modeStr, "'bunch 2 bucket inj. phase shift");
+      modeMask = MSKRECMODE6;
       break;
     default :
       sprintf(modeStr, "'unknonwn'");
@@ -348,35 +357,32 @@ int printSet(uint32_t sid)
   strftime(tCBS, 19, "%H:%M:%S", gmtime(&set_secs));
   printf("--- set values ---                                                     v%8s\n", b2b_version_text(B2B_VIEWER_VERSION));
   switch (set_mode) {
-    case 0 :
+    case B2B_MODE_OFF :
       printf("ext: kick  corr %8s ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", "n/a", set_extNue, set_extT, set_extH);
       printf("inj: %s\n", TXTNA);
       printf("b2b: %s\n", TXTNA);
       break;
-      /*    case 1 :
-      printf("ext: kick  corr %8.3f ns\n", set_extCTrig);
-      printf("inj: %s\n", TXTNA);
-      printf("b2b: %s\n", TXTNA);
-      break;*/
-    case 1 ... 2 :
+    case B2B_MODE_BSE ... B2B_MODE_B2E :
       printf("ext: kick  corr %8.3f ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_extCTrig, set_extNue, set_extT, set_extH);
       printf("inj: %s\n", TXTNA);
       printf("b2b: %s\n", TXTNA);
       break;
-    case 3 :
+    case B2B_MODE_B2C :
       printf("ext: kick  corr %8.3f ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_extCTrig, set_extNue, set_extT, set_extH);
       printf("inj: kick  corr %8.3f ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_injCTrig, set_injNue, set_injT, set_injH);
       printf("b2b: %s\n", TXTNA);
       break;
-    case 4 :
-      printf("ext: kick  corr %8.3f ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_extCTrig, set_extNue, set_extT, set_extH);
-      printf("inj: kick  corr %8.3f ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_injCTrig, set_injNue, set_injT, set_injH);
-      printf("b2b: phase corr %8.3f ns       %12.3f °\n", set_cPhase, set_cPhaseD);
-      break;
-    case 5:
+    case  B2B_MODE_B2EPSHIFT :
       printf("ext: kick  corr %8.3f ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_extCTrig, set_extNue, set_extT, set_extH);
       printf("inj: %s\n", TXTNA);
       printf("b2b: phase corr %8.3f ns       %12.3f °\n", set_cPhase, set_cPhaseD);     
+      break;
+    case B2B_MODE_B2BFBEAT   :                                    
+    case B2B_MODE_B2BPSHIFTE :                             // this is an OR, no break on purpose;
+    case B2B_MODE_B2BPSHIFTI :                             // this is an OR, no break on purpose;
+      printf("ext: kick  corr %8.3f ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_extCTrig, set_extNue, set_extT, set_extH);
+      printf("inj: kick  corr %8.3f ns; gDDS %15.6f Hz, %15.6f ns, h =%2d\n", set_injCTrig, set_injNue, set_injT, set_injH);
+      printf("b2b: phase corr %8.3f ns       %12.3f °\n", set_cPhase, set_cPhaseD);
       break;
     default :
       ;
@@ -391,19 +397,39 @@ int printDiag(uint32_t sid)
 {
   printf("--- diag diff DDS [ns] ---                   #b2b %5u, #ext %5u, #inj %5u\n", dicDiagval.phaseOffN, dicDiagval.ext_ddsOffN, dicDiagval.inj_ddsOffN);
   switch(set_mode) {
-    case 0 ... 1 :
+    case B2B_MODE_OFF ... B2B_MODE_BSE :
       printf("ext: %s\n", TXTNA);
       printf("inj: %s\n", TXTNA);
       printf("b2b: %s\n", TXTNA);
       break;
-    case 2 ... 3 :
+    case B2B_MODE_B2E ...  B2B_MODE_B2C :
       if (dicDiagval.ext_ddsOffN == 0) printf("ext: %s\n", TXTNA);
       else  printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
                    dicDiagval.ext_ddsOffAct, dicDiagval.ext_ddsOffAve, dicDiagval.ext_ddsOffSdev, dicGetval.ext_phaseSysmaxErr, dicDiagval.ext_ddsOffMin, dicDiagval.ext_ddsOffMax);
       printf("inj: %s\n", TXTNA);
       printf("b2b: %s\n", TXTNA);
       break;
-    case 4 :
+      /*    case B2B_MODE_B2BFBEAT :
+      if (dicDiagval.ext_ddsOffN == 0) printf("ext: %s\n", TXTNA);
+      else  printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
+                   dicDiagval.ext_ddsOffAct, dicDiagval.ext_ddsOffAve, dicDiagval.ext_ddsOffSdev, dicGetval.ext_phaseSysmaxErr, dicDiagval.ext_ddsOffMin, dicDiagval.ext_ddsOffMax);
+      if (dicDiagval.inj_ddsOffN == 0) printf("inj: %s\n", TXTNA);
+      else  printf("inj: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
+                   dicDiagval.inj_ddsOffAct, dicDiagval.inj_ddsOffAve, dicDiagval.inj_ddsOffSdev, dicGetval.inj_phaseSysmaxErr, dicDiagval.inj_ddsOffMin, dicDiagval.inj_ddsOffMax);
+      if (dicDiagval.phaseOffN == 0) printf("b2b: %s\n", TXTNA);
+      else  printf("b2b: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
+                   dicDiagval.phaseOffAct, dicDiagval.phaseOffAve, dicDiagval.phaseOffSdev, dicGetval.ext_phaseSysmaxErr + dicGetval.inj_phaseSysmaxErr, dicDiagval.phaseOffMin, dicDiagval.phaseOffMax);
+                   break;*/
+    case B2B_MODE_B2EPSHIFT :
+      if (dicDiagval.ext_ddsOffN == 0) printf("ext: %s\n", TXTNA);
+      else  printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
+                   dicDiagval.ext_ddsOffAct, dicDiagval.ext_ddsOffAve, dicDiagval.ext_ddsOffSdev, dicGetval.ext_phaseSysmaxErr, dicDiagval.ext_ddsOffMin, dicDiagval.ext_ddsOffMax);
+      printf("inj: %s\n", TXTNA);
+      printf("b2b: %s\n", TXTNA);
+      break;
+    case B2B_MODE_B2BFBEAT   :
+    case B2B_MODE_B2BPSHIFTE :                             // this is an OR, no break on purpose;
+    case B2B_MODE_B2BPSHIFTI :                             // this is an OR, no break on purpose;
       if (dicDiagval.ext_ddsOffN == 0) printf("ext: %s\n", TXTNA);
       else  printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
                    dicDiagval.ext_ddsOffAct, dicDiagval.ext_ddsOffAve, dicDiagval.ext_ddsOffSdev, dicGetval.ext_phaseSysmaxErr, dicDiagval.ext_ddsOffMin, dicDiagval.ext_ddsOffMax);
@@ -414,13 +440,6 @@ int printDiag(uint32_t sid)
       else  printf("b2b: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
                    dicDiagval.phaseOffAct, dicDiagval.phaseOffAve, dicDiagval.phaseOffSdev, dicGetval.ext_phaseSysmaxErr + dicGetval.inj_phaseSysmaxErr, dicDiagval.phaseOffMin, dicDiagval.phaseOffMax);
       break;
-    case 5 :
-      if (dicDiagval.ext_ddsOffN == 0) printf("ext: %s\n", TXTNA);
-      else  printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
-                   dicDiagval.ext_ddsOffAct, dicDiagval.ext_ddsOffAve, dicDiagval.ext_ddsOffSdev, dicGetval.ext_phaseSysmaxErr, dicDiagval.ext_ddsOffMin, dicDiagval.ext_ddsOffMax);
-      printf("inj: %s\n", TXTNA);
-      printf("b2b: %s\n", TXTNA);
-      break;
     default :
       ;
   } // switch set mode
@@ -428,34 +447,55 @@ int printDiag(uint32_t sid)
 } // printDiag
 
 
+// print phase shift info
+int printPshift(uint32_t sid)
+{
+  printf("--- requested phase shift ---                            #ext %5u, #inj %5u\n", dicDiagval.ext_ddsOffN, dicDiagval.inj_ddsOffN);
+
+  switch (set_mode) {
+    case B2B_MODE_OFF ... B2B_MODE_B2BFBEAT :
+      printf("ext: %s\n", TXTNA);
+      printf("inj: %s\n", TXTNA);
+      break;
+    case B2B_MODE_B2EPSHIFT ... B2B_MODE_B2BPSHIFTI :
+      printf("ext: %8.3f ns, %8.3f °\n", dicGetval.ext_phaseShift, dicGetval.ext_phaseShift / set_extT * 360.0);
+      printf("inj: %8.3f ns, %8.3f °\n", dicGetval.inj_phaseShift, dicGetval.inj_phaseShift / set_injT * 360.0);
+      break;
+    default :
+      ;
+  } // switch set mode
+  return 3;
+} // printPshift
+
+
 // print kicker info
 int printKick(uint32_t sid)
 {
-  printf("--- kicker ---                                           #ext %5u, #inj %5u\n", dicDiagstat.ext_monRemN, dicDiagstat.inj_monRemN);
+  printf("--- kicker [ns] ---                                      #ext %5u, #inj %5u\n", dicDiagstat.ext_monRemN, dicDiagstat.inj_monRemN);
 
   // extraction kicker
-  if (set_mode == B2B_MODE_OFF) printf("ext: %s\n\n", TXTNA);
+  if (set_mode == B2B_MODE_OFF) printf("ext: %s\n", TXTNA);
   else {
-    printf("ext: monitor delay [ns] %5.0f", dicGetval.ext_dKickMon);
-    printf(", probe delay [ns] %5.0f\n"   , dicGetval.ext_dKickProb);
-    if (set_mode > 1) printf("     mon h=1 ph [ns] act %4.0f, ave(sdev) %8.3f(%6.3f), minmax %4.0f, %4.0f\n", dicDiagstat.ext_monRemAct, dicDiagstat.ext_monRemAve, dicDiagstat.ext_monRemSdev,
-                             dicDiagstat.ext_monRemMin, dicDiagstat.ext_monRemMax);
-    else              printf("\n");
+    printf("ext: monitor %5.0f", dicGetval.ext_dKickMon);
+    printf(", start %5.0f"     , dicGetval.ext_dKickProb);
+    printf(", fltop %5.0f"     , dicGetval.ext_dKickProbLen);
+    printf(", level %5.2f [%%]", dicGetval.ext_dKickProbLevel);
+    printf("\n");
   } // else mode == 0
 
   // injection kicker
   if ((set_mode < B2B_MODE_B2C) || (set_mode == B2B_MODE_B2EPSHIFT)) printf("inj: %s\n\n", TXTNA);
   else {
-    printf("inj: monitor delay [ns] %5.0f", dicGetval.inj_dKickMon);
-    printf(", probe delay [ns] %5.0f"     , dicGetval.inj_dKickProb);
-    printf(", diff mon. [ns] %f\n", dicGetval.inj_dKickMon - dicGetval.ext_dKickMon);
-    if (set_mode > B2B_MODE_B2C) printf("     mon h=1 ph [ns] act %4.0f, ave(sdev) %8.3f(%6.3f), minmax %4.0f, %4.0f\n", dicDiagstat.inj_monRemAct, dicDiagstat.inj_monRemAve, dicDiagstat.inj_monRemSdev,
-                                        dicDiagstat.inj_monRemMin, dicDiagstat.inj_monRemMax);
-    else              printf("\n");
-  } // else mode < 3
+    printf("inj: monitor %5.0f", dicGetval.inj_dKickMon);
+    printf(", start %5.0f"     , dicGetval.inj_dKickProb);
+    printf(", fltop %5.0f"     , dicGetval.inj_dKickProbLen);
+    printf(", level %5.2f [%%]", dicGetval.inj_dKickProbLevel);
+    printf("\n");
+  } // else mode ...
 
-  return 5;                                                 // 5 lines
+  return 3;                                                 // 3 lines
 } // printKick
+
 
 // print status info
 int printStatus(uint32_t sid)
@@ -516,7 +556,7 @@ int printStatus(uint32_t sid)
   printf("t0E-CBS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
          (double)dicDiagstat.cbs_preOffAct/1000.0, dicDiagstat.cbs_preOffAve/1000.0, dicDiagstat.cbs_preOffSdev/1000.0,
          (double)dicDiagstat.cbs_preOffMin/1000.0, (double)dicDiagstat.cbs_preOffMax/1000.0);
-  if (set_mode < B2B_MODE_B2C)
+  if ((set_mode < B2B_MODE_B2C) || (set_mode == B2B_MODE_B2EPSHIFT))
     printf("t0I-CBS [us]: %s\n", TXTNA);
   else
     printf("t0I-CBS [us]: act %8.2f ave(sdev) %7.2f(%8.2f) minmax %7.2f, %8.2f\n",
@@ -531,8 +571,8 @@ int printRf(uint32_t sid)
 {
   printf("--- rf DDS [ns] ---                                      #ext %5u, #inj %5u\n", dicDiagval.ext_rfOffN, dicDiagval.inj_rfOffN);
   switch(set_mode) {
-    case 0 ... 2 :
-    case 5       :                                          // this is an OR
+    case B2B_MODE_OFF ... B2B_MODE_B2E :
+    case B2B_MODE_B2EPSHIFT            :                                          // this is an OR
       if ((dicGetval.flagEvtErr >> tagPre) & 0x1) printf("ext: %s\n", TXTERROR);
       else printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
                   dicDiagval.ext_rfOffAct, dicDiagval.ext_rfOffAve, dicDiagval.ext_rfOffSdev, dicGetval.ext_phaseSysmaxErr, dicDiagval.ext_rfOffMin, dicDiagval.ext_rfOffMax);
@@ -548,8 +588,8 @@ int printRf(uint32_t sid)
       } // else
       printf("inj: %s\n\n\n", TXTNA);
       break; 
-    case 3 ... 4 :
-    case 6 ... 7 :                                          // this is an OR
+    case B2B_MODE_B2C ... B2B_MODE_B2BFBEAT :
+    case B2B_MODE_B2BPSHIFTE ... B2B_MODE_B2BPSHIFTI :                                          // this is an OR
       if ((dicGetval.flagEvtErr >> tagPre) & 0x1)
         printf(   "ext: act %s\n", TXTERROR);
       else printf("ext: act %8.3f ave(sdev,smx) %8.3f(%6.3f,%5.3f) minmax %8.3f %8.3f\n",
@@ -616,7 +656,7 @@ void printData(int flagOnce, uint32_t sid, char *name)
       sprintf(modeStr, "'b2b phase shift extr.'");
       break;
     case 7 :
-      sprintf(modeStr, "'b2 phase shift inj.'");
+      sprintf(modeStr, "'b2b phase shift inj.'");
       break;
     default :
       sprintf(modeStr, "'unknonwn'");
@@ -628,21 +668,22 @@ void printData(int flagOnce, uint32_t sid, char *name)
     for (i=0;i<60;i++) printf("\n");
     time_date = time(0);
     strftime(tLocal,50,"%d-%b-%y %H:%M",localtime(&time_date));
-    printf("\033[7m--- b2b viewer (%9s) ---   SID %02d %21s CBS @ %s.%03d\033[0m\n", name, sid, modeStr, tCBS, set_msecs);
+    printf("\033[7m--- b2b viewer (%9s) --- SID %02d %23s CBS @ %s.%03d\033[0m\n", name, sid, modeStr, tCBS, set_msecs);
     //printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
   } // if not once
 
-  if (flagPrintSet)  nLines += printSet(sid);
-  if (flagPrintBeat) nLines += printBeat();
-  if (flagPrintDiag) nLines += printDiag(sid);
-  if (flagPrintRf)   nLines += printRf(sid);
-  if (flagPrintKick) nLines += printKick(sid);
-  if (flagPrintStat) nLines += printStatus(sid);
+  if (flagPrintSet)    nLines += printSet(sid);
+  if (flagPrintBeat)   nLines += printBeat();
+  if (flagPrintDiag)   nLines += printDiag(sid);
+  if (flagPrintPshift) nLines += printPshift(sid);
+  if (flagPrintRf)     nLines += printRf(sid);
+  if (flagPrintKick)   nLines += printKick(sid);
+  if (flagPrintStat)   nLines += printStatus(sid);
   
   if (!flagOnce) {
     if (nLines < 21) for (i=0; i < (21 - nLines); i++) printf("\n");
     //printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
-    printf("\033[7m <q>uit <c>lear <b>eat <d>diag <r>f <k>ick <s>tatus              %s\033[0m\n", tLocal);
+    printf("\033[7m <q>uit <c>lear <b>eat <d>diag <r>f <k>ick <p>shift <s>tatus     %s\033[0m\n", tLocal);
   } // if not once
 } // printServices
 
@@ -664,19 +705,21 @@ int main(int argc, char** argv) {
   uint32_t sid;                             // sequence ID
 
 
-  program       = argv[0];
-  getVersion    = 0;
-  subscribe     = 0;
-  once          = 0;
-  quit          = 0;
-  what          = SETVAL;
-  flagPrintSet  = 1;
-  flagPrintBeat = 0;
-  flagPrintDiag = 0;
-  flagPrintRf   = 0;
-  flagPrintKick = 0;
-  flagPrintStat = 0;
-  sid           = 0;
+  program         = argv[0];
+  getVersion      = 0;
+  subscribe       = 0;
+  once            = 0;
+  quit            = 0;
+  what            = SETVAL;
+  flagPrintSet    = 1;
+  flagPrintBeat   = 0;
+  flagPrintDiag   = 0;
+  flagPrintRf     = 0;
+  flagPrintKick   = 0;
+  flagPrintStat   = 0;
+  flagPrintPshift = 0;
+  
+  sid             = 0;
 
   while ((opt = getopt(argc, argv, "s:o:eh")) != -1) {
     switch (opt) {
@@ -753,24 +796,27 @@ int main(int argc, char** argv) {
             dicCmdClearDiag(prefix, sid);
             break;
           case 'b' :
-            flagPrintBeat = !flagPrintBeat;
+            flagPrintBeat   = !flagPrintBeat;
             break;
           case 'd' :
-            flagPrintDiag = !flagPrintDiag;
+            flagPrintDiag   = !flagPrintDiag;
             break;
           case 'k' :
-            flagPrintKick = !flagPrintKick;
+            flagPrintKick   = !flagPrintKick;
+            break;
+          case 'p' :
+            flagPrintPshift = !flagPrintPshift;
             break;
           case 'r' :
-            flagPrintRf = !flagPrintRf;
+            flagPrintRf     = !flagPrintRf;
             break;
           case 's' :
-            flagPrintStat = !flagPrintStat;
+            flagPrintStat   = !flagPrintStat;
             break;
-          case 'q'         :
+          case 'q' :
             quit = 1;
             break;
-          default          :
+          default  :
             usleep(1000000);
         } // switch
       } // if !once

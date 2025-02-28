@@ -9,9 +9,9 @@
 //            -- Wesley W. Terpstra <w.terpstra@gsi.de>
 //            -- Alessandro Rubini <rubini@gnudd.com>
 //            -- Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
-//  version : 21-Jun-2023
+//  version : 27-Feb-2025
 //
-#define WB_API_VERSION "0.17.0"
+#define WB_API_VERSION "0.18.0"
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API.
 //
@@ -217,15 +217,16 @@ eb_status_t wb_wr_reset(eb_device_t device,                    // EB device
 
 // read the counter and overflow flag of the encoder error counter on the device at phyIndex
 eb_status_t wb_wr_read_enc_err_counter(eb_device_t device,     // EB device
-                        int devIndex,                          // 0,1,2... - there may be more than 1 device on the WB bus
-                        int phyIndex,                          // index of the interface to be read
-                        eb_data_t *counter,                     // return values
-                        eb_data_t *overflowFlag);
+                                       int devIndex,           // 0,1,2... - there may be more than 1 device on the WB bus
+                                       int phyIndex,           // 0,1      - index of the interface to be read
+                                       uint32_t *nError,       // # of encoder errors
+                                       int *flagOverflow       // flags counter overflow
+                                       );
 
 // reset the counter of the encoder error counter on the device at phyIndex
 eb_status_t wb_wr_reset_enc_err_counter(eb_device_t device,    // EB device
                         int devIndex,                          // 0,1,2... - there may be more than 1 device on the WB bus
-                        int phyIndex                           // index of the counter to be reset
+                        int phyIndex                           // 0,1      - index of the interface to be reset
                         );
 
 eb_status_t wb_check_second_phy_interface(

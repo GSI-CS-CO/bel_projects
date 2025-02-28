@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 11-Jul-2024
+ *  version : 05-Dec-2024
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
@@ -72,7 +72,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define WRUNIPZ_FW_VERSION 0x000217                                     // make this consistent with makefile
+#define WRUNIPZ_FW_VERSION 0x000220                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -165,6 +165,7 @@ uint32_t milEvts[] = {WRUNIPZ_EVT_PZ1,  // MIL evt codes we are listening for
                       WRUNIPZ_EVT_PZ5,
                       WRUNIPZ_EVT_PZ6,
                       WRUNIPZ_EVT_PZ7,
+                      WRUNIPZ_EVT_NO_BEAM,
                       WRUNIPZ_EVT_SYNCH_DATA,
                       WRUNIPZ_EVT_50HZ_SYNCH};
 
@@ -197,8 +198,8 @@ uint64_t writeTM(uint32_t uniEvt, uint64_t tStart, uint32_t pz, uint32_t virtAcc
     evtData = evtData & 0xb;                            // clear third bit; third bit will carry 'no beam' information
     evtData = evtData | ((flagNochop & 0x1) << 2);      // fill  third bit with 'no beam' information
   } // if evtCode
-    flags   = (uint32_t)( flagNochop          & 0x1) |  // 'no chopper bit'
-              (uint32_t)((flagShortchop << 1) & 0x2);   // 'short chopper bit'
+  flags     = (uint32_t)( flagNochop          & 0x1) |  // 'no chopper bit'     /* chk: deprecated */
+              (uint32_t)((flagShortchop << 1) & 0x2);   // 'short chopper bit'  /* chk: deprecated */
 
   // fill timing message
   id        = ((uint64_t)0x1       << 60)     |         // FID = 1
@@ -211,7 +212,7 @@ uint64_t writeTM(uint32_t uniEvt, uint64_t tStart, uint32_t pz, uint32_t virtAcc
               ((uint64_t)0x0       <<  4)     |         // (reqNoBeam, not here)
               ((uint64_t)evtData        );              // last four bits; see https://www-acc.gsi.de/wiki/bin/viewauth/ProjectMgmt/MappingWrMilSisEsrUnilac#A_5_Decision
                                                         // bit 0: reserved; bit 1: high b/rho, rigid beam; bit2: 'no beam'; bit3: high current
-  param     = ((uint64_t)flags     << 32)     |         // parameter field high bits, does carry flags
+  param     = ((uint64_t)flags     << 32)     |         // parameter field high bits, does carry flags /* chk: deprecated */
               ((uint64_t)0x0            );              // parameter field low bits, compatibility to 'old' wr-unipz (to be removed)
   
   // calc deadline
@@ -395,29 +396,30 @@ uint32_t configMILEvent()
   pMilPiggy = fwlib_getMilPiggy();
 
   // initialize status and command register with initial values; disable event filtering; clear filter RAM
-  if (writeCtrlStatRegEvtMil(pMilPiggy, MIL_CTRL_STAT_ENDECODER_FPGA | MIL_CTRL_STAT_INTR_DEB_ON) != MIL_STAT_OK) return COMMON_STATUS_ERROR; //chk sure we go for status error?
+  if (writeCtrlStatRegEvtMil(pMilPiggy, 0,  MIL_CTRL_STAT_ENDECODER_FPGA | MIL_CTRL_STAT_INTR_DEB_ON) != MIL_STAT_OK) return COMMON_STATUS_ERROR; //chk sure we go for status error?
 
   // clean up 
-  if (disableLemoEvtMil(pMilPiggy, 1) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
-  if (disableLemoEvtMil(pMilPiggy, 2) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
-  if (disableFilterEvtMil(pMilPiggy)  != MIL_STAT_OK) return COMMON_STATUS_ERROR; 
-  if (clearFilterEvtMil(pMilPiggy)    != MIL_STAT_OK) return COMMON_STATUS_ERROR; 
+  if (disableLemoEvtMil(pMilPiggy, 0, 1) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+  if (disableLemoEvtMil(pMilPiggy, 0, 2) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+  if (disableFilterEvtMil(pMilPiggy, 0)  != MIL_STAT_OK) return COMMON_STATUS_ERROR; 
+  if (clearFilterEvtMil(pMilPiggy, 0)    != MIL_STAT_OK) return COMMON_STATUS_ERROR; 
 
   for (i=0; i < (0xf+1); i++) {
     // set filter for all possible virtual accelerators; set filter and LEMO for 50 Hz sync
-    if (setFilterEvtMil(pMilPiggy, WRUNIPZ_EVT_50HZ_SYNCH, i, MIL_FILTER_EV_TO_FIFO | MIL_FILTER_EV_PULS1_S) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
-    if (setFilterEvtMil(pMilPiggy, WRUNIPZ_EVT_SYNCH_DATA, i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
-    if (setFilterEvtMil(pMilPiggy, WRUNIPZ_EVT_PZ1       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
-    if (setFilterEvtMil(pMilPiggy, WRUNIPZ_EVT_PZ2       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
-    if (setFilterEvtMil(pMilPiggy, WRUNIPZ_EVT_PZ3       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
-    if (setFilterEvtMil(pMilPiggy, WRUNIPZ_EVT_PZ4       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
-    if (setFilterEvtMil(pMilPiggy, WRUNIPZ_EVT_PZ5       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
-    if (setFilterEvtMil(pMilPiggy, WRUNIPZ_EVT_PZ6       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
-    if (setFilterEvtMil(pMilPiggy, WRUNIPZ_EVT_PZ7       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+    if (setFilterEvtMil(pMilPiggy, 0, WRUNIPZ_EVT_50HZ_SYNCH, i, MIL_FILTER_EV_TO_FIFO | MIL_FILTER_EV_PULS1_S) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+    if (setFilterEvtMil(pMilPiggy, 0, WRUNIPZ_EVT_SYNCH_DATA, i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+    if (setFilterEvtMil(pMilPiggy, 0, WRUNIPZ_EVT_PZ1       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+    if (setFilterEvtMil(pMilPiggy, 0, WRUNIPZ_EVT_PZ2       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+    if (setFilterEvtMil(pMilPiggy, 0, WRUNIPZ_EVT_PZ3       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+    if (setFilterEvtMil(pMilPiggy, 0, WRUNIPZ_EVT_PZ4       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+    if (setFilterEvtMil(pMilPiggy, 0, WRUNIPZ_EVT_PZ5       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+    if (setFilterEvtMil(pMilPiggy, 0, WRUNIPZ_EVT_PZ6       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+    if (setFilterEvtMil(pMilPiggy, 0, WRUNIPZ_EVT_PZ7       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+    if (setFilterEvtMil(pMilPiggy, 0, WRUNIPZ_EVT_NO_BEAM   , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
   }
 
   // configure LEMO1 for pulse generation
-  if (configLemoPulseEvtMil(pMilPiggy, 1) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+  if (configLemoPulseEvtMil(pMilPiggy, 0, 1) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
 
   return COMMON_STATUS_OK;
 } // configMILEvent
@@ -525,7 +527,7 @@ uint32_t extern_entryActionConfigured()
   fwlib_publishNICData();
 
   // reset MIL piggy and wait
-  if ((status = resetPiggyDevMil(fwlib_getMilPiggy()))  != MIL_STAT_OK) {
+  if ((status = resetDevMil(fwlib_getMilPiggy(), 0))  != MIL_STAT_OK) {
     DBPRINT1("wr-unipz: ERROR - can't reset MIL Piggy\n");
     return WRUNIPZ_STATUS_MIL;
   } 
@@ -538,7 +540,7 @@ uint32_t extern_entryActionConfigured()
 
   DBPRINT1("wr-unipz: MIL piggy configured for receving events (eventbus)\n");
 
-  configLemoOutputEvtMil(fwlib_getMilPiggy(), 2);    // used to see a blinking LED (and optionally connect a scope) for debugging
+  configLemoOutputEvtMil(fwlib_getMilPiggy(), 0, 2);    // used to see a blinking LED (and optionally connect a scope) for debugging
   
   return status;
 } // entryActionConfigured
@@ -563,8 +565,8 @@ uint32_t extern_entryActionOperation()
   for (i=0; i < WRUNIPZ_NPZ; i++) nextVacc[i] = 0xffffffff;  // 0xffffffff: no virt acc
   for (i=0; i < WRUNIPZ_NPZ; i++) actVacc[i]  = 0xffffffff;  // 0xffffffff: no virt acc
   
-  enableFilterEvtMil(fwlib_getMilPiggy());                   // enable MIL event filter
-  clearFifoEvtMil(fwlib_getMilPiggy());                      // clear MIL event FIFO
+  enableFilterEvtMil(fwlib_getMilPiggy(), 0);                // enable MIL event filter
+  clearFifoEvtMil(fwlib_getMilPiggy(), 0);                   // clear MIL event FIFO
 
   // flush ECA queue for lm32
   i = 0;
@@ -576,7 +578,7 @@ uint32_t extern_entryActionOperation()
 
 // exit action state 'op ready'
 uint32_t extern_exitActionOperation(){
-  if (disableFilterEvtMil(fwlib_getMilPiggy()) != MIL_STAT_OK) return COMMON_STATUS_ERROR; 
+  if (disableFilterEvtMil(fwlib_getMilPiggy(), 0) != MIL_STAT_OK) return COMMON_STATUS_ERROR; 
   
   return COMMON_STATUS_OK;
 } // exitActionOperation
@@ -777,6 +779,20 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       
       break;
       
+    case WRUNIPZ_EVT_NO_BEAM :
+      // priv. comm. P. Kainberger: this is an additional 'service event' implemented via a different mechanism
+      // when this is received from the Superpulszentrale, it is played for all PZs, that play the vacc specified
+
+      for (i=0; i<WRUNIPZ_NPZ; i++) {
+        // check, if we need to play the service event
+        if (actVacc[i] == virtAcc) {
+          servEvt = EVT_NO_BEAM | ((virtAcc & 0xf) << 8) | ((uint16_t)WRUNIPZ_NOBEAMOFFSET << 16); // send 'now' /* chk  WRUNIPZ_NOBEAMOFFSET */
+          writeTM(servEvt, getSysTime(), i, virtAcc, 0, 0);
+        } // if actVacc
+      } // for all PZs
+      
+      break;
+
     case WRUNIPZ_EVT_SYNCH_DATA :                               // super PZ commits recently supplied virt acc -> replace active data by the new ones
       DBPRINT3("wr-unipz: synch data event\n");
       configTransactSubmit();
@@ -784,6 +800,7 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       break;
       
     default :
+      // pp_printf("default case, evtCode %d\n", evtCode);
       break;
   } // switch evtCode
 

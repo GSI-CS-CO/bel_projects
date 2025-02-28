@@ -217,7 +217,7 @@ architecture rtl of ftm4dp is
   constant c_initf_name   : string  := "ftm4dp" & "_stub.mif";
   constant c_profile_name : string  := "medium_icache_debug";
   constant c_psram_bits   : natural := 24;
-  constant c_cores        : natural := 8;
+  constant c_cores        : natural := 4;
 
 begin
 
@@ -252,9 +252,12 @@ begin
     )
     port map(
       core_clk_20m_vcxo_i     => clk_20m_vcxo_i,
+      aux_clk_20m_vcxo_i      => clk_20m_vcxo_i,
       core_clk_125m_pllref_i  => clk_125m_tcb_pllref_i,
-      core_clk_125m_local_i   => clk_125m_tcb_local_i,
       core_clk_125m_sfpref_i  => clk_125m_tcb_pllref_i,
+      aux_clk_125m_pllref_i   => clk_125m_tcb_pllref_i,
+      aux_clk_125m_sfpref_i   => clk_125m_tcb_pllref_i,
+      core_clk_125m_local_i   => clk_125m_tcb_local_i,
       core_rstn_wr_ref_o      => rstn_ref,
       wr_onewire_io           => OneWire_CB,
       wr_sfp_sda_io           => sfp_mod2_io,

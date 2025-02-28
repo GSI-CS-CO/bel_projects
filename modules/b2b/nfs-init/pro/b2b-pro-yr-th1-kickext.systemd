@@ -9,5 +9,5 @@
 export DIM_DNS_NODE=asl105
 
 b2b-serv-sys dev/wbm0 -s pro_yr-kde &
-b2b-jitter-check tr1 tr0 -p3 -t3 pro_yr-kde &
+b2b-jitter-check tr1 tr0 -p5 -t5 pro_yr-kde &
 b2b-serv-kickdiag tr0 -r2 -m0 -i1 pro &

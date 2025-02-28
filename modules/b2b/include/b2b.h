@@ -40,12 +40,12 @@
 #define B2B_ECADO_B2B_DIAGKICKINJ  0x807   // command: kick diagnostic (injection)
 #define B2B_ECADO_B2B_DIAGEXT      0x808   // command: result of diagnostic (extraction)
 #define B2B_ECADO_B2B_DIAGINJ      0x809   // command: result of diagnostic (injection)
+#define B2B_ECADO_B2B_PSHIFTEXT    0x80a   // command: shift phase of low-level-rf (extraction)
+#define B2B_ECADO_B2B_PSHIFTINJ    0x80b   // command: shift phase of low-level-rf (injection)
 #define B2B_ECADO_B2B_START        0x81f   // command: start b2b procedure
-#define B2B_ECADO_B2B_PDEXT        0x820   // internal command: perform phase diagnostic (extraction)
-#define B2B_ECADO_B2B_PDINJ        0x821   // internal command: perform phase diagnostic (injection)
+#define B2B_ECADO_B2B_PDEXT        0x820   // internal command: perform phase diagnostic (extraction) /* chk */
+#define B2B_ECADO_B2B_PDINJ        0x821   // internal command: perform phase diagnostic (injection)  /* chk */
 #define B2B_ECADO_B2B_INJKICKTEST  0x822   // internal command: perform injection kicker test
-#define B2B_ECADO_B2B_PSHIFTEXT    0xfb0   // command: shift phase of low-level-rf (extraction); the number is temporary and should become official after the 2024 beamtime
-#define B2B_ECADO_B2B_PSHIFTING    0xfb1   // command: shift phase of low-level-rf (injection); the number is temporary and should become official after the 2024 beamtime
 
 // commands from the outside
 #define B2B_CMD_CONFSUBMIT            11   // submit data written to DP RAM
@@ -84,7 +84,8 @@
 #define B2B_MFSM_INJ_TRIG          0x200   // Trigger injection kicker
 #define B2B_MFSM_EXT_PSHIFT_S      0x400   // phase shift extraction, Send request to low-level rf
 #define B2B_MFSM_INJ_PSHIFT_S      0x800   // phase shift injection, Send request to low-level rf
-#define B2B_MFSM_EXT_PSHIFT_C     0x1000   // Calculate value required for phase shift relative to low-level rf of extraction machine (b2b phase shift method)
+#define B2B_MFSM_EXT_PSHIFT_C     0x1000   // calculate value required for phase shift relative to low-level rf of extraction machine (b2b phase shift method)
+#define B2B_MFSM_INJ_PSHIFT_C     0x2000   // calculate value required for phase shift relative to low-level rf of injection machine (b2b phase shift method)
 #define B2B_MFSM_NOTHING        0x100000   // nothing to do
 
 // group IDs
@@ -108,7 +109,8 @@
 #define B2B_PRETRIGGERINJKICK     300000    // offset [ns] used as pre-trigger on the injection kick event
 #define B2B_PRETRIGGERPR          250000    // offset [ns] used as pre-trigger on the PRINJ/PREXT event
 #define B2B_PRETRIGGERTR           20000    // offset [ns] used as pre-trigger on the trigger event
-#define B2B_PHASESHIFTTIME       5000000    // time [ns] used for phase shifting of low-level rf
+#define B2B_PHASESHIFTTIME       5000000    // time [s] used for phase shifting of low-level rf; DDS uses SI units
+#define B2B_PHASESHIFTTIMEDDS  (float)B2B_PHASESHIFTTIME/1000000000.0 // DDS want SI units
 #define B2B_KICKOFFSETPSHIFT     B2B_PHASESHIFTTIME +  B2B_KICKOFFSETMIN + 1000000 // offset [ns] deadline of kicker trigger events relative to B2BS event when performing phase shifts
 #define B2B_AHEADT                300000    // more aggressive ahead interval for determining the deadline of a timing message
 #define B2B_ACCEPTKMON             10000    // timewindow [us]!!! in which monitor signal  from kicker electronics is expected
