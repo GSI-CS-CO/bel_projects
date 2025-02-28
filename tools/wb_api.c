@@ -364,10 +364,10 @@ eb_status_t wb_wr_get_ip_state(eb_device_t device, int devIndex, uint32_t buildN
   eb_address_t address;
   eb_address_t offset;
   eb_status_t  status;
-  
+
 #ifdef WB_SIMULATE
   *ipState = 1;
-    
+
   return EB_OK;
 #endif
 
@@ -386,11 +386,11 @@ eb_status_t wb_wr_get_ip_state(eb_device_t device, int devIndex, uint32_t buildN
       break;
     case 0x060201 :
       offset = WB4_BLOCKRAM_IPSTATE_060201;
-      break;    
+      break;
     default : return EB_OK;
   } // switch
 
-  if ((status = wb_check_device(device, WB4_BLOCKRAM_VENDOR, WB4_BLOCKRAM_PRODUCT, WB4_BLOCKRAM_VMAJOR, WB4_BLOCKRAM_VMINOR, devIndex, &wb4_ram)) != EB_OK) return status; 
+  if ((status = wb_check_device(device, WB4_BLOCKRAM_VENDOR, WB4_BLOCKRAM_PRODUCT, WB4_BLOCKRAM_VMAJOR, WB4_BLOCKRAM_VMINOR, devIndex, &wb4_ram)) != EB_OK) return status;
 
   address = wb4_ram + offset;
   if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block)) != EB_OK) return status;
@@ -882,7 +882,7 @@ eb_status_t wb_wr_read_enc_err_counter(eb_device_t device, int devIndex, int phy
     counterAddress  = eec_addr + ENC_ERR_COUNTER_COUNTER1_GET;
     overflowAddress = eec_addr + ENC_ERR_COUNTER_OVERFLOW1_GET;
     break;
-  
+
   case 1:
     counterAddress  = eec_addr + ENC_ERR_COUNTER_COUNTER2_GET;
     overflowAddress = eec_addr + ENC_ERR_COUNTER_OVERFLOW2_GET;
@@ -926,7 +926,7 @@ eb_status_t wb_wr_reset_enc_err_counter(eb_device_t device, int devIndex, int ph
   case 1:
     address = eec_addr + ENC_ERR_COUNTER_RESET1;
     break;
-  
+
   case 2:
     address = eec_addr + ENC_ERR_COUNTER_RESET2;
     break;
@@ -1055,6 +1055,7 @@ eb_status_t wb_wr_sfp_reset(eb_device_t device, int devIndex)
 
   // turn SFP off and on
   if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, FPGA_RESET_PHY_SFP_DIS_WR, 0, eb_block)) != EB_OK) return status;
+  usleep(750000);
   if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, 0, 0, eb_block)) != EB_OK) return status;
 
  return status;
@@ -1237,7 +1238,7 @@ eb_status_t wb_get_build_type(eb_device_t device, int size, char *buildType, uin
     *buildNumber = 0xffffffff;
   } // if sscanf
   else {
-    // limit sub-numbers to 255 
+    // limit sub-numbers to 255
     major = major & 0xff;
     minor = minor & 0xff;
     micro = micro & 0xff;

@@ -41,8 +41,9 @@ CHECK_MICROTCA         = ./syn/gsi_microtca/control/microtca_control
 CHECK_PEXP             = ./syn/gsi_pexp/control/pexp_control
 CHECK_PEXP_SDR         = ./syn/gsi_pexp/sdr/pexp_control_sdr
 CHECK_PEXP_PPS         = ./syn/gsi_pexp/pps/pexp_pps
-CHECK_SCU4             = ./syn/gsi_scu/control4/scu_control
 CHECK_SCU5             = ./syn/gsi_scu/control5/scu_control
+CHECK_FTM5DP           = ./syn/gsi_scu/ftm5dp/ftm5dp
+CHECK_SCU4             = ./syn/gsi_scu/control4/scu_control
 CHECK_FTM4             = ./syn/gsi_scu/ftm4/ftm4
 CHECK_FTM4DP           = ./syn/gsi_scu/ftm4dp/ftm4dp
 CHECK_FTM              = ./syn/gsi_pexarria5/ftm/ftm
@@ -65,8 +66,9 @@ PATH_MICROTCA          = syn/gsi_microtca/control
 PATH_PEXP              = syn/gsi_pexp/control
 PATH_PEXP_SDR          = syn/gsi_pexp/sdr
 PATH_PEXP_PPS          = syn/gsi_pexp/pps
-PATH_SCU4              = syn/gsi_scu/control4
 PATH_SCU5              = syn/gsi_scu/control5
+PATH_FTM5DP            = syn/gsi_scu/ftm5dp
+PATH_SCU4              = syn/gsi_scu/control4
 PATH_FTM4              = syn/gsi_scu/ftm4
 PATH_FTM4DP            = syn/gsi_scu/ftm4dp
 PATH_FTM               = syn/gsi_pexarria5/ftm
@@ -396,31 +398,19 @@ scu5-check:
 		$(call check_timing, $(CHECK_SCU5))
 
 scu5-clean::
-		$(MAKE) -C $(PATH_SCU5) clean
+	$(MAKE) -C $(PATH_SCU5) clean
 
-ftm4:		firmware
-	$(MAKE) -C $(PATH_FTM4) all
+ftm5dp:		firmware
+	$(MAKE) -C $(PATH_FTM5DP) all
 
-ftm4-sort:
-	$(call sort_file, $(CHECK_FTM4))
+ftm5dp-sort:
+	$(call sort_file, $(CHECK_FTM5DP))
 
-ftm4-check:
-	$(call check_timing, $(CHECK_FTM4))
+ftm5dp-check:
+	$(call check_timing, $(CHECK_FTM5DP))
 
-ftm4-clean::
-	$(MAKE) -C $(PATH_FTM4) clean
-
-ftm4dp:		firmware
-	$(MAKE) -C $(PATH_FTM4DP) all
-
-ftm4dp-sort:
-	$(call sort_file, $(CHECK_FTM4DP))
-
-ftm4dp-check:
-	$(call check_timing, $(CHECK_FTM4DP))
-
-ftm4dp-clean::
-	$(MAKE) -C $(PATH_FTM4DP) clean
+ftm5dp-clean::
+	$(MAKE) -C $(PATH_FTM5DP) clean
 
 pexarria10:	firmware
 	$(MAKE) -C $(PATH_PEXARRIA10) all
@@ -613,6 +603,30 @@ scu4-check:
 
 scu4-clean::
 	$(MAKE) -C $(PATH_SCU4) clean
+
+ftm4:		firmware
+	$(MAKE) -C $(PATH_FTM4) all
+
+ftm4-sort:
+	$(call sort_file, $(CHECK_FTM4))
+
+ftm4-check:
+	$(call check_timing, $(CHECK_FTM4))
+
+ftm4-clean::
+	$(MAKE) -C $(PATH_FTM4) clean
+
+ftm4dp:		firmware
+	$(MAKE) -C $(PATH_FTM4DP) all
+
+ftm4dp-sort:
+	$(call sort_file, $(CHECK_FTM4DP))
+
+ftm4dp-check:
+	$(call check_timing, $(CHECK_FTM4DP))
+
+ftm4dp-clean::
+	$(MAKE) -C $(PATH_FTM4DP) clean
 
 # #################################################################################################
 # Build flow targets

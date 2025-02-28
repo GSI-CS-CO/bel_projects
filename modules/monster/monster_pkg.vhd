@@ -193,6 +193,7 @@ package monster_pkg is
       phy_aux_tx_ready_o     : out   std_logic;
       phy_debug_o            : out   std_logic;
       phy_debug_i            : in    std_logic_vector(7 downto 0) := (others => '0');
+      aux_clk_20m_vcxo_i     : in    std_logic := '0';
       aux_clk_125m_pllref_i  : in    std_logic := '0';
       aux_clk_125m_sfpref_i  : in    std_logic := '0';
       -- Debug
