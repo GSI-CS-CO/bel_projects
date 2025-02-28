@@ -3,7 +3,7 @@
 //
 //  created : 2015
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 22-Jun-2021
+//  version : 28-Feb-2025
 //
 // Command-line interface for WR monitoring via Etherbone.
 //
@@ -34,7 +34,7 @@
 // For all questions and ideas contact: d.beck@gsi.de
 // Last update: 25-April-2015
 //////////////////////////////////////////////////////////////////////////////////////////////
-#define EBMON_VERSION "2.1.1"
+#define EBMON_VERSION "2.2.1"
 #define AHEADT       1000000     // data master works ahead of time [ns]
 #define EARLYDT   1000000000     // detection limit for early events [ns]
 
@@ -102,6 +102,7 @@ static void help(void)
   fprintf(stderr, "  ecatapclear  <clearFlag>           command clears ECA-Tap counters (b3: late count, b2: count/accu, b1: max, b0: min)\n");
   fprintf(stderr, "  ecatapenable                       command enables capture on ECA-Tap\n");
   fprintf(stderr, "  ecatapdisable                      command disables capture on ECA-Tap\n");
+  fprintf(stderr, "  encerrclear  <clearFlag>           command clears the error enconder counter (b1: PHY index 2; b0: PHY index 1)\n");
   fprintf(stderr, "\n");  
   fprintf(stderr, "Use this tool to get some info about WR enabled hardware.\n");
   fprintf(stderr, "Example1: '%s -v dev/wbm0' display typical information.\n", program);
@@ -206,9 +207,8 @@ int main(int argc, char** argv) {
   int         getBuildType=0;
   int         getCPUStall=0;
   int         getECATap=0;
+  int         getEncErrCounter=0;
   int         snoopMode=0;
-  int         readEncErrCounter=0;
-  int         resetEncErrCounter=0;
   int         exitCode=0;
 
   unsigned int family         = 0;    // 1-Wire: familyCode
@@ -219,8 +219,6 @@ int main(int argc, char** argv) {
   double       snoopStallMax  = 0;
   double       snoopStallAct  = 0;
   uint32_t     nSecs;
-  eb_data_t    counter;
-  eb_data_t    overflowFlag;
 
   uint64_t    nsecs64, nsecsOther64;
   uint64_t    nsecsSum64, nsecsSumOther64;
@@ -243,6 +241,7 @@ int main(int argc, char** argv) {
   uint32_t    stallAct;
   uint64_t    stallTS;
   short       ecaClearFlag;
+  short       encErrClearFlag;
   uint64_t    ecaNMessage;
   int64_t     ecaDtSum;
   int64_t     ecaDtMin;
@@ -250,6 +249,9 @@ int main(int argc, char** argv) {
   uint32_t    ecaNLate;
   int32_t     ecaLateOffset;
   int         ecaSumEarly;
+  uint32_t    nEncErr;
+  int         flagEncErrOverflow;
+
   
   int         link;
   uint32_t    uptime;
@@ -334,16 +336,8 @@ int main(int argc, char** argv) {
       case 'p':
         getWRIPState=1;
         break;
-      case 'r':
-        resetEncErrCounter=1;
-        phyIndex = strtol(optarg, &tail, 0);
-        if(!(phyIndex == 1 || phyIndex == 2)) {
-          fprintf(stderr, "PHY interface index has to be 1 or 2, not %d!\n", phyIndex);
-          exit(1);
-        }
-        break;
       case 'x':
-        readEncErrCounter=1;
+        getEncErrCounter=1;
         phyIndex = strtol(optarg, &tail, 0);
         if(!(phyIndex == 1 || phyIndex == 2)) {
           fprintf(stderr, "PHY interface index has to be 1 or 2, not %d!\n", phyIndex);
@@ -752,6 +746,11 @@ int main(int argc, char** argv) {
     fprintf(stdout, "--- late offset       : %d\n", ecaLateOffset);
     fprintf(stdout, "--- # of late messages: %u\n", ecaNLate);
   } // getECATap
+
+  if (getEncErrCounter) {
+    if ((status = wb_wr_read_enc_err_counter(device, devIndex, phyIndex, &nEncErr, &flagEncErrOverflow)) != EB_OK) die("WR get encoder error counter", status);
+    fprintf(stdout, "%u, %d\n", nEncErr, flagEncErrOverflow);
+  } // if getEncerrcounter
   
   if (command) {
 
@@ -786,18 +785,18 @@ int main(int argc, char** argv) {
       wb_eca_stats_enable(device, devIndex, 0x0);
       fprintf(stdout, "eb-mon: %s\n", command);
     } // ecatapdisable
+
+    if (!strcasecmp(command, "encerrclear")) {
+      if (optind+2  != argc)   {printf("expecting exactly one argument: encerrclear <clearFlag>\n"); return 1;}
+      encErrClearFlag = strtoul(argv[optind+1], &tail, 0);
+      if (encErrClearFlag > 3) {printf("clear error encoder counter: parameter out of range\n"); return 1;}
+      if (encErrClearFlag && 0x1) wb_wr_reset_enc_err_counter(device, devIndex, 1);
+      if (encErrClearFlag && 0x2) wb_wr_reset_enc_err_counter(device, devIndex, 2);
+      fprintf(stdout, "eb-mon: %s\n", command);
+    } // encerrclear   
     
   } // if command
 
-  if (resetEncErrCounter) {
-    if ((status = wb_wr_reset_enc_err_counter(device, devIndex, phyIndex)) != EB_OK) die("Reset encoder error counter", status);
-  } // if resetEncErrCounter
-
-  if (readEncErrCounter) {
-    if ((status = wb_wr_read_enc_err_counter(device, devIndex, phyIndex, &counter, &overflowFlag)) != EB_OK) die("Reset encoder error counter", status);
-    fprintf(stdout, "PHY#%d counter: %lu, overflow: %lu\n", phyIndex, counter, overflowFlag);
-  } // if readEncErrCounter
-  
   wb_close(device, socket);
   wb_close(deviceOther, socket);
   

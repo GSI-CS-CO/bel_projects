@@ -3,7 +3,7 @@
 //
 //  created : Apr 10, 2013
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 24-Jul-2024
+//  version : 27-Feb-2025
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API,
 // but only a temporary solution.
@@ -857,12 +857,14 @@ eb_status_t wb_wr_reset(eb_device_t device, int devIndex, uint32_t value, int fl
 } // wb_wr_reset
 
 
-eb_status_t wb_wr_read_enc_err_counter(eb_device_t device, int devIndex, int phyIndex, eb_data_t *counter, eb_data_t *overflowFlag)
+eb_status_t wb_wr_read_enc_err_counter(eb_device_t device, int devIndex, int phyIndex, uint32_t *nError, int *flagOverflow)
 {
   eb_address_t counterAddress;
   eb_address_t overflowAddress;
   eb_status_t  status;
   eb_address_t eec_addr = EB_NULL;
+  eb_data_t    counter;
+  eb_data_t    overflowFlag;
 
 
 #ifdef WB_SIMULATE
@@ -875,26 +877,27 @@ eb_status_t wb_wr_read_enc_err_counter(eb_device_t device, int devIndex, int phy
     if ((status = wb_check_second_phy_interface(device, devIndex, eec_addr)) != EB_OK) return status;
   }
 
-  switch (phyIndex)
-  {
+  switch (phyIndex) {
   case 1:
     counterAddress  = eec_addr + ENC_ERR_COUNTER_COUNTER1_GET;
     overflowAddress = eec_addr + ENC_ERR_COUNTER_OVERFLOW1_GET;
     break;
   
   case 2:
-    counterAddress = eec_addr + ENC_ERR_COUNTER_COUNTER2_GET;
+    counterAddress  = eec_addr + ENC_ERR_COUNTER_COUNTER2_GET;
     overflowAddress = eec_addr + ENC_ERR_COUNTER_OVERFLOW2_GET;
     break;
 
   default:
     return EB_OOM; // there are a maximum of 2 phy interfaces, no valid index given
     break;
-  }
+  } // switch phyIndex
 
-  if ((status = eb_device_read(device, counterAddress, EB_BIG_ENDIAN|EB_DATA32, counter, 0, eb_block)) != EB_OK) return status;
+  if ((status = eb_device_read(device, counterAddress,  EB_BIG_ENDIAN|EB_DATA32, &counter,      0, eb_block)) != EB_OK) return status;
+  if ((status = eb_device_read(device, overflowAddress, EB_BIG_ENDIAN|EB_DATA32, &overflowFlag, 0, eb_block)) != EB_OK) return status;
 
-  if ((status = eb_device_read(device, overflowAddress, EB_BIG_ENDIAN|EB_DATA32, overflowFlag, 0, eb_block)) != EB_OK) return status;
+  *nError       = counter;
+  *flagOverflow = (int)overflowFlag;
 
   return status;
 } // wb_wr_read_enc_err_counter
