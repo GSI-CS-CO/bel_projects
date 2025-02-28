@@ -79,9 +79,9 @@ int comlib_readDiag(eb_device_t device,                // Etherbone device
                     uint32_t    *nBadState,            // # of bad state incidents
                     uint64_t    *tDiag,                // time, when diag data was reset
                     uint64_t    *tS0,                  // time, when entering S0 state (firmware boot)
-                    uint32_t    *nTransfer,            // # of transfers
-                    uint32_t    *nInjection,           // # of injection within ongoing transfers
-                    uint32_t    *statTrans,            // status bits of transfer (application specific)
+                    uint32_t    *nTransfer,            // # of transfers                                ; PSM: # phase shifts SIS18
+                    uint32_t    *nInjection,           // # of injection within ongoing transfers       ; PSM: # phase shifts ESR, CRYRING
+                    uint32_t    *statTrans,            // status bits of transfer (application specific); PSM: # phase shifts SIS100
                     uint32_t    *nLate,                // number of messages that could not be delivered in time
                     uint32_t    *offsDone,             // offset event deadline to time when we are done [ns]
                     uint32_t    *comLatency,           // latency for messages received from via ECA (tDeadline - tNow)) [ns]

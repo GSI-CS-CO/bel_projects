@@ -41,7 +41,7 @@
 #define B2B_ECADO_B2B_DIAGEXT      0x808   // command: result of diagnostic (extraction)
 #define B2B_ECADO_B2B_DIAGINJ      0x809   // command: result of diagnostic (injection)
 #define B2B_ECADO_B2B_PSHIFTEXT    0x80a   // command: shift phase of low-level-rf (extraction)
-#define B2B_ECADO_B2B_PSHIFTING    0x80b   // command: shift phase of low-level-rf (injection)
+#define B2B_ECADO_B2B_PSHIFTINJ    0x80b   // command: shift phase of low-level-rf (injection)
 #define B2B_ECADO_B2B_START        0x81f   // command: start b2b procedure
 #define B2B_ECADO_B2B_PDEXT        0x820   // internal command: perform phase diagnostic (extraction) /* chk */
 #define B2B_ECADO_B2B_PDINJ        0x821   // internal command: perform phase diagnostic (injection)  /* chk */
@@ -84,7 +84,8 @@
 #define B2B_MFSM_INJ_TRIG          0x200   // Trigger injection kicker
 #define B2B_MFSM_EXT_PSHIFT_S      0x400   // phase shift extraction, Send request to low-level rf
 #define B2B_MFSM_INJ_PSHIFT_S      0x800   // phase shift injection, Send request to low-level rf
-#define B2B_MFSM_EXT_PSHIFT_C     0x1000   // Calculate value required for phase shift relative to low-level rf of extraction machine (b2b phase shift method)
+#define B2B_MFSM_EXT_PSHIFT_C     0x1000   // calculate value required for phase shift relative to low-level rf of extraction machine (b2b phase shift method)
+#define B2B_MFSM_INJ_PSHIFT_C     0x2000   // calculate value required for phase shift relative to low-level rf of injection machine (b2b phase shift method)
 #define B2B_MFSM_NOTHING        0x100000   // nothing to do
 
 // group IDs
