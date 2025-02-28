@@ -101,11 +101,13 @@ static void help(void)
   fprintf(stderr, "  ecatapclear  <clearFlag>           command clears ECA-Tap counters (b3: late count, b2: count/accu, b1: max, b0: min)\n");
   fprintf(stderr, "  ecatapenable                       command enables capture on ECA-Tap\n");
   fprintf(stderr, "  ecatapdisable                      command disables capture on ECA-Tap\n");
-  fprintf(stderr, "  encerrclear  <clearFlag>           command clears the error enconder counter (b1: PHY index 1; b0: PHY index 0)\n");
+  fprintf(stderr, "  encerrclear  <clearFlag>           command clears the enconder error counter (b1: PHY index 1; b0: PHY index 0)\n");
   fprintf(stderr, "\n");  
   fprintf(stderr, "Use this tool to get some info about WR enabled hardware.\n");
   fprintf(stderr, "Example1: '%s -v dev/wbm0' display typical information.\n", program);
   fprintf(stderr, "Example2: '%s -b0 -f0x43 dev/wbm0' read ID of EEPROM connected to 1st (user) 1-wire bus\n", program);
+  fprintf(stderr, "Example3: '%s -x0 dev/wbm0' read number of encoder errors for the first PHY\n", program);
+  fprintf(stderr, "Example4: '%s dev/wbm0 encerrclear 0x1' clears the encoder error counter for the first PHY\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "When using option '-s<n>', the following information is displayed\n");
   fprintf(stderr, "eb-mon:    WR [ns]   | CPU stall[%%]|                      [n(Hz)]   ECA                 [us(us)]\n");

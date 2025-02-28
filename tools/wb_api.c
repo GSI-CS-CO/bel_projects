@@ -917,17 +917,17 @@ eb_status_t wb_wr_reset_enc_err_counter(eb_device_t device, int devIndex, int ph
 
   if ((status = wb_check_device(device, ENC_ERR_COUNTER_VENDOR, ENC_ERR_COUNTER_PRODUCT, ENC_ERR_COUNTER_VMAJOR, ENC_ERR_COUNTER_VMINOR, devIndex, &eec_addr)) != EB_OK) return status;
 
-  if(phyIndex == 2) {
+  if(phyIndex == 1) {
     if ((status = wb_check_second_phy_interface(device, devIndex, eec_addr)) != EB_OK) return status;
   }
 
   switch (phyIndex)
   {
-  case 1:
+  case 0:
     address = eec_addr + ENC_ERR_COUNTER_RESET1;
     break;
 
-  case 2:
+  case 1:
     address = eec_addr + ENC_ERR_COUNTER_RESET2;
     break;
 
