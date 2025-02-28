@@ -3,7 +3,7 @@
 //
 //  created : Apr 10, 2013
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 27-Feb-2025
+//  version : 28-Feb-2025
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API,
 // but only a temporary solution.
@@ -873,17 +873,17 @@ eb_status_t wb_wr_read_enc_err_counter(eb_device_t device, int devIndex, int phy
 
   if ((status = wb_check_device(device, ENC_ERR_COUNTER_VENDOR, ENC_ERR_COUNTER_PRODUCT, ENC_ERR_COUNTER_VMAJOR, ENC_ERR_COUNTER_VMINOR, devIndex, &eec_addr)) != EB_OK) return status;
 
-  if(phyIndex == 2) {
+  if(phyIndex == 1) {
     if ((status = wb_check_second_phy_interface(device, devIndex, eec_addr)) != EB_OK) return status;
   }
 
   switch (phyIndex) {
-  case 1:
+  case 0:
     counterAddress  = eec_addr + ENC_ERR_COUNTER_COUNTER1_GET;
     overflowAddress = eec_addr + ENC_ERR_COUNTER_OVERFLOW1_GET;
     break;
   
-  case 2:
+  case 1:
     counterAddress  = eec_addr + ENC_ERR_COUNTER_COUNTER2_GET;
     overflowAddress = eec_addr + ENC_ERR_COUNTER_OVERFLOW2_GET;
     break;
@@ -961,8 +961,8 @@ eb_status_t wb_check_second_phy_interface(eb_device_t device, int devIndex, eb_a
   eb_data_t aux_phy_flag;
   if ((status = eb_device_read(device, flagAddress, EB_BIG_ENDIAN|EB_DATA32, &aux_phy_flag, 0, eb_block)) != EB_OK) return status;
   if (aux_phy_flag != 0x00000001) {
-    fprintf(stderr, "The auxiliary phy interface (phy#2) doesn't exist!\n");
-    return EB_OOM; // phy interface 2 doesn't exist
+    //fprintf(stderr, "The auxiliary phy interface (phy#2) doesn't exist!\n");
+    return EB_OOM; // second phy interface does not exist
   } else {
     return EB_OK;
   }

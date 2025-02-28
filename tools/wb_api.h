@@ -218,7 +218,7 @@ eb_status_t wb_wr_reset(eb_device_t device,                    // EB device
 // read the counter and overflow flag of the encoder error counter on the device at phyIndex
 eb_status_t wb_wr_read_enc_err_counter(eb_device_t device,     // EB device
                                        int devIndex,           // 0,1,2... - there may be more than 1 device on the WB bus
-                                       int phyIndex,           // index of the interface to be read
+                                       int phyIndex,           // 0,1      - index of the interface to be read
                                        uint32_t *nError,       // # of encoder errors
                                        int *flagOverflow       // flags counter overflow
                                        );
@@ -226,7 +226,7 @@ eb_status_t wb_wr_read_enc_err_counter(eb_device_t device,     // EB device
 // reset the counter of the encoder error counter on the device at phyIndex
 eb_status_t wb_wr_reset_enc_err_counter(eb_device_t device,    // EB device
                         int devIndex,                          // 0,1,2... - there may be more than 1 device on the WB bus
-                        int phyIndex                           // index of the counter to be reset
+                        int phyIndex                           // 0,1      - index of the interface to be reset
                         );
 
 eb_status_t wb_check_second_phy_interface(

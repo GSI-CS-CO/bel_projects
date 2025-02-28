@@ -87,13 +87,12 @@ static void help(void)
   fprintf(stderr, "  -m               display WR MAC\n");
   fprintf(stderr, "  -o               display offset between WR time and system time [ms]\n");
   fprintf(stderr, "  -p               display state of IP\n");
-  fprintf(stderr, "  -r<phyIndex>     reset the encoder error counter of the given PHY index (1 or 2)\n");
   fprintf(stderr, "  -s<secs> <cpu>   snoop for information continuously (and print warnings. THIS OPTION RESETS ALL STATS!)\n");
   fprintf(stderr, "  -t<busIndex>     display temperature of sensor on the specified 1-wire bus\n");
   fprintf(stderr, "  -u<index>        user 1-wire: specify WB device in case multiple WB devices of the same type exist (default: u0)\n");
   fprintf(stderr, "  -v               display verbose information\n");
   fprintf(stderr, "  -w<index>        WR 1-wire: specify WB device in case multiple WB devices of the same type exist (default: w0)\n");
-  fprintf(stderr, "  -x<phyIndex>     read the encoder error counter and overflow flag of the given PHY index (1 or 2)\n");
+  fprintf(stderr, "  -x<phyIndex>     read the encoder error counter of the given PHY index (default: x0)\n");
   fprintf(stderr, "  -y               display WR sync status\n");
   fprintf(stderr, "  -z               display FPGA uptime [h]\n");
   fprintf(stderr, "\n");
@@ -102,7 +101,7 @@ static void help(void)
   fprintf(stderr, "  ecatapclear  <clearFlag>           command clears ECA-Tap counters (b3: late count, b2: count/accu, b1: max, b0: min)\n");
   fprintf(stderr, "  ecatapenable                       command enables capture on ECA-Tap\n");
   fprintf(stderr, "  ecatapdisable                      command disables capture on ECA-Tap\n");
-  fprintf(stderr, "  encerrclear  <clearFlag>           command clears the error enconder counter (b1: PHY index 2; b0: PHY index 1)\n");
+  fprintf(stderr, "  encerrclear  <clearFlag>           command clears the error enconder counter (b1: PHY index 1; b0: PHY index 0)\n");
   fprintf(stderr, "\n");  
   fprintf(stderr, "Use this tool to get some info about WR enabled hardware.\n");
   fprintf(stderr, "Example1: '%s -v dev/wbm0' display typical information.\n", program);
@@ -276,7 +275,7 @@ int main(int argc, char** argv) {
 
   program = argv[0];
 
-  while ((opt = getopt(argc, argv, "t:u:w:f:b:c:j:s:adgopymlievhzkr:x:")) != -1) {
+  while ((opt = getopt(argc, argv, "t:u:w:f:b:c:j:s:x:adgopymlievhzk")) != -1) {
     switch (opt) {
       case 'a':
         getBuildType=1;
@@ -339,8 +338,8 @@ int main(int argc, char** argv) {
       case 'x':
         getEncErrCounter=1;
         phyIndex = strtol(optarg, &tail, 0);
-        if(!(phyIndex == 1 || phyIndex == 2)) {
-          fprintf(stderr, "PHY interface index has to be 1 or 2, not %d!\n", phyIndex);
+        if(!(phyIndex == 0 || phyIndex == 1)) {
+          fprintf(stderr, "PHY interface index has to be 0 or 1, not %d!\n", phyIndex);
           exit(1);
         }
         break;
@@ -749,7 +748,8 @@ int main(int argc, char** argv) {
 
   if (getEncErrCounter) {
     if ((status = wb_wr_read_enc_err_counter(device, devIndex, phyIndex, &nEncErr, &flagEncErrOverflow)) != EB_OK) die("WR get encoder error counter", status);
-    fprintf(stdout, "%u, %d\n", nEncErr, flagEncErrOverflow);
+    /* fprintf(stdout, "%u %d\n", nEncErr, flagEncErrOverflow); chk don't print overflow flag */
+    fprintf(stdout, "%u\n", nEncErr);
   } // if getEncerrcounter
   
   if (command) {
@@ -790,8 +790,8 @@ int main(int argc, char** argv) {
       if (optind+2  != argc)   {printf("expecting exactly one argument: encerrclear <clearFlag>\n"); return 1;}
       encErrClearFlag = strtoul(argv[optind+1], &tail, 0);
       if (encErrClearFlag > 3) {printf("clear error encoder counter: parameter out of range\n"); return 1;}
-      if (encErrClearFlag && 0x1) wb_wr_reset_enc_err_counter(device, devIndex, 1);
-      if (encErrClearFlag && 0x2) wb_wr_reset_enc_err_counter(device, devIndex, 2);
+      if (encErrClearFlag & 0x1) wb_wr_reset_enc_err_counter(device, devIndex, 0);
+      if (encErrClearFlag & 0x2) wb_wr_reset_enc_err_counter(device, devIndex, 1);
       fprintf(stdout, "eb-mon: %s\n", command);
     } // encerrclear   
     
