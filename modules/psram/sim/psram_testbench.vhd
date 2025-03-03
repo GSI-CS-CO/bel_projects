@@ -24,6 +24,11 @@ architecture rtl of psram_testbench is
   signal s_rst   : std_logic := '0';
   signal s_clk   : std_logic := '0';
 
+  signal s_psram_wait : std_logic := '0';
+
+  signal s_wb_slave_in  : t_wishbone_slave_in;
+  signal s_wb_slave_out : t_wishbone_slave_out;
+
   -- Functions
   -- Function wb_stim -> Helper function to create a human-readable testbench
   function wb_stim(cyc : std_logic; stb : std_logic; we : std_logic;
@@ -70,5 +75,17 @@ begin
     s_rst_n <= '1';
   end process;
   s_rst <= not(s_rst_n);
+
+  s_psram_wait <= '0';
+
+  -- I2C master (XWB Wrapper)
+  u_psram_dut : psram
+    port map (
+      clk_i    => s_clk,
+      rstn_i   => s_rst_n,
+      slave_i  => s_wb_slave_in,
+      slave_o  => s_wb_slave_out,
+      ps_wait  => s_psram_wait);
+
 
 end;
