@@ -24,6 +24,15 @@ architecture rtl of psram_testbench is
   signal s_rst   : std_logic := '0';
   signal s_clk   : std_logic := '0';
 
+  signal s_psram_clk  : std_logic;
+  signal s_psram_addr : std_logic_vector(23 downto 0);
+  signal s_psram_data : std_logic_vector(15 downto 0);
+  signal s_psram_seln : std_logic_vector(1 downto 0);
+  signal s_psram_cen  : std_logic;
+  signal s_psram_oen  : std_logic;
+  signal s_psram_wen  : std_logic;
+  signal s_psram_cre  : std_logic;
+  signal s_psram_advn : std_logic;
   signal s_psram_wait : std_logic := '0';
 
   signal s_wb_slave_in  : t_wishbone_slave_in;
@@ -57,6 +66,9 @@ architecture rtl of psram_testbench is
     end if;
   end procedure wb_expect;
 
+  type t_state is (S_RESET, S_IDLE, S_BCR_WRITE);
+  signal r_state : t_state := S_RESET;
+
 begin
 
   -- Clock generator
@@ -76,16 +88,43 @@ begin
   end process;
   s_rst <= not(s_rst_n);
 
-  s_psram_wait <= '0';
+  -- PSRAM controller
+  psram_fsm : process(s_clk, s_rst_n) is
+  begin
+    if s_rst_n = '0' then
+     s_psram_wait <= '0';
+     r_state <= S_RESET;
+    elsif rising_edge(s_clk) then
+      case r_state is
+        when S_RESET =>
+          r_state <= S_IDLE;
+          s_psram_wait <= '0';
+        when S_IDLE =>
+          r_state <= S_IDLE;
+          s_psram_wait <= '0';
+        when S_BCR_WRITE =>
+          r_state <= S_IDLE;
+          s_psram_wait <= '0';
+      end case;
+    end if;
+  end process;
 
-  -- I2C master (XWB Wrapper)
+  -- PSRAM
   u_psram_dut : psram
     port map (
       clk_i    => s_clk,
       rstn_i   => s_rst_n,
       slave_i  => s_wb_slave_in,
       slave_o  => s_wb_slave_out,
+      ps_clk   => s_psram_clk,
+      ps_addr  => s_psram_addr,
+      ps_data  => s_psram_data,
+      ps_seln  => s_psram_seln,
+      ps_cen   => s_psram_cen,
+      ps_oen   => s_psram_oen,
+      ps_wen   => s_psram_wen,
+      ps_cre   => s_psram_cre,
+      ps_advn  => s_psram_advn,
       ps_wait  => s_psram_wait);
-
 
 end;
