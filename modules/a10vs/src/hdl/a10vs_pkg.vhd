@@ -22,7 +22,7 @@ package a10vs_pkg is
                 device_id => x"a1076000",
                 version   => x"00000001",
                 date      => x"20250214",
-                name      => "ARRIA10_VS         "
+                name      => "Altera_voltage_sens"
             )
         )
     );
@@ -54,6 +54,33 @@ package a10vs_pkg is
             vs_sample_irq        : in  std_logic                      -- irq
         );
     end component;
+
+    component a10vs_ip is
+        port (
+            clock_clk                  : in  std_logic                     := '0';             --            clock.clk
+            controller_csr_address     : in  std_logic                     := '0';             --   controller_csr.address
+            controller_csr_read        : in  std_logic                     := '0';             --                 .read
+            controller_csr_write       : in  std_logic                     := '0';             --                 .write
+            controller_csr_writedata   : in  std_logic_vector(31 downto 0) := (others => '0'); --                 .writedata
+            controller_csr_readdata    : out std_logic_vector(31 downto 0);                    --                 .readdata
+            reset_sink_reset           : in  std_logic                     := '0';             --       reset_sink.reset
+            sample_store_csr_address   : in  std_logic_vector(3 downto 0)  := (others => '0'); -- sample_store_csr.address
+            sample_store_csr_read      : in  std_logic                     := '0';             --                 .read
+            sample_store_csr_write     : in  std_logic                     := '0';             --                 .write
+            sample_store_csr_writedata : in  std_logic_vector(31 downto 0) := (others => '0'); --                 .writedata
+            sample_store_csr_readdata  : out std_logic_vector(31 downto 0);                    --                 .readdata
+            sample_store_irq_irq       : out std_logic                                         -- sample_store_irq.irq
+        );
+    end component a10vs_ip;
+
+    component a10vs is
+        port (
+            clk_i   : in  std_logic;
+            rst_n_i : in  std_logic;
+            slave_i : in  t_wishbone_slave_in;
+            slave_o : out t_wishbone_slave_out
+        );
+        end component;
 
     constant c_vs_reg_n        : integer := 11;                     -- number of the IP core registers
 

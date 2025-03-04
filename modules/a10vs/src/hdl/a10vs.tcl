@@ -1,0 +1,1 @@
+qsys-generate a10vs_ip

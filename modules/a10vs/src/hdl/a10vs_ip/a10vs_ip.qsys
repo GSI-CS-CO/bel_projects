@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<system name="$${FILENAME}">
+ <component
+   name="$${FILENAME}"
+   displayName="$${FILENAME}"
+   version="1.0"
+   description=""
+   tags="INTERNAL_COMPONENT=true"
+   categories="" />
+ <parameter name="bonusData"><![CDATA[bonusData
+{
+   element voltage_sensor_0
+   {
+      datum _sortIndex
+      {
+         value = "0";
+         type = "int";
+      }
+   }
+}
+]]></parameter>
+ <parameter name="clockCrossingAdapter" value="HANDSHAKE" />
+ <parameter name="device" value="10AX027H2F34E2SG" />
+ <parameter name="deviceFamily" value="Arria 10" />
+ <parameter name="deviceSpeedGrade" value="2" />
+ <parameter name="fabricMode" value="QSYS" />
+ <parameter name="generateLegacySim" value="false" />
+ <parameter name="generationId" value="0" />
+ <parameter name="globalResetBus" value="false" />
+ <parameter name="hdlLanguage" value="VHDL" />
+ <parameter name="hideFromIPCatalog" value="true" />
+ <parameter name="lockedInterfaceDefinition" value="" />
+ <parameter name="maxAdditionalLatency" value="1" />
+ <parameter name="projectName" value="" />
+ <parameter name="sopcBorderPoints" value="false" />
+ <parameter name="systemHash" value="0" />
+ <parameter name="testBenchDutName" value="" />
+ <parameter name="timeStamp" value="0" />
+ <parameter name="useTestBenchNamingPattern" value="false" />
+ <instanceScript></instanceScript>
+ <interface name="clock" internal="voltage_sensor_0.clock" type="clock" dir="end">
+  <port name="clock_clk" internal="clock_clk" />
+ </interface>
+ <interface
+   name="controller_csr"
+   internal="voltage_sensor_0.controller_csr"
+   type="avalon"
+   dir="end">
+  <port name="controller_csr_address" internal="controller_csr_address" />
+  <port name="controller_csr_read" internal="controller_csr_read" />
+  <port name="controller_csr_write" internal="controller_csr_write" />
+  <port name="controller_csr_writedata" internal="controller_csr_writedata" />
+  <port name="controller_csr_readdata" internal="controller_csr_readdata" />
+ </interface>
+ <interface
+   name="reset_sink"
+   internal="voltage_sensor_0.reset_sink"
+   type="reset"
+   dir="end">
+  <port name="reset_sink_reset" internal="reset_sink_reset" />
+ </interface>
+ <interface name="response" internal="voltage_sensor_0.response" />
+ <interface
+   name="sample_store_csr"
+   internal="voltage_sensor_0.sample_store_csr"
+   type="avalon"
+   dir="end">
+  <port name="sample_store_csr_address" internal="sample_store_csr_address" />
+  <port name="sample_store_csr_read" internal="sample_store_csr_read" />
+  <port name="sample_store_csr_write" internal="sample_store_csr_write" />
+  <port
+     name="sample_store_csr_writedata"
+     internal="sample_store_csr_writedata" />
+  <port name="sample_store_csr_readdata" internal="sample_store_csr_readdata" />
+ </interface>
+ <interface
+   name="sample_store_irq"
+   internal="voltage_sensor_0.sample_store_irq"
+   type="interrupt"
+   dir="end">
+  <port name="sample_store_irq_irq" internal="sample_store_irq_irq" />
+ </interface>
+ <module
+   name="voltage_sensor_0"
+   kind="altera_voltage_sensor"
+   version="23.1"
+   enabled="1"
+   autoexport="1">
+  <parameter name="AUTO_DEVICE" value="10AX027H2F34E2SG" />
+  <parameter name="AUTO_DEVICE_FAMILY" value="Arria 10" />
+  <parameter name="AUTO_DEVICE_SPEEDGRADE" value="2" />
+  <parameter name="CORE_VAR" value="0" />
+  <parameter name="MEM_TYPE" value="0" />
+ </module>
+ <interconnectRequirement for="$system" name="qsys_mm.clockCrossingAdapter" value="HANDSHAKE" />
+ <interconnectRequirement for="$system" name="qsys_mm.enableEccProtection" value="FALSE" />
+ <interconnectRequirement for="$system" name="qsys_mm.insertDefaultSlave" value="FALSE" />
+ <interconnectRequirement for="$system" name="qsys_mm.maxAdditionalLatency" value="1" />
+</system>
