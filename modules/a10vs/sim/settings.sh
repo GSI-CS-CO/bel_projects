@@ -22,7 +22,7 @@ SIM_FILES="avalon_vs.vhd \
 VHD_FILES="$VHD_PACK \
            $SIM_FILES \
            $A10VS_PATH/a10vs_pkg.vhd \
-           $A10VS_PATH/a10vs.vhd \
+           $A10VS_PATH/a10vs_wb.vhd \
            $A10VS_PATH/a10vs_tb.vhd"
 
 # Functions

@@ -126,8 +126,8 @@ begin
 
     s_rst <= not s_rst_n;
 
-    -- A10VS instance
-    a10vs_dut: a10vs
+    -- a10vs_wb instance
+    a10vs_dut: a10vs_wb
         generic map (
             g_data_size => 32
         )

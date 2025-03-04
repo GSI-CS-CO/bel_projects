@@ -27,7 +27,7 @@ package a10vs_pkg is
         )
     );
 
-    component a10vs is
+    component a10vs_wb is
         generic (
             g_data_size : natural := 32
         );
