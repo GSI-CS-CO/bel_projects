@@ -183,12 +183,23 @@ saft-wbm-ctl $SDPS -c 0x13a580a000000000 0xfffffff000000000     0 0x09 -d
 # mode B2B_MODE_B2BPSHIFTI
 # phase shift, phase
 saft-wbm-ctl $SDPS -c 0x13a180b000000000 0xfffffff000000000 40000 0x05 -dg
-saft-wbm-ctl $SDPS -c 0x13a180b000000000 0xfffffff000000000 30000 0x06 -dg 
+saft-wbm-ctl $SDPS -c 0x13a180b000000000 0xfffffff000000000 30000 0x06 -dg
 # phase shift, time
 saft-wbm-ctl $SDPS -c 0x13a180b000000000 0xfffffff000000000 20000 0x07 -dg
 saft-wbm-ctl $SDPS -c 0x13a180b000000000 0xfffffff000000000 10000 0x08 -dg
 # phase shift, start
 saft-wbm-ctl $SDPS -c 0x13a180b000000000 0xfffffff000000000     0 0x09 -d
+# mode B2B_MODE_B2BPSHIFTE
+# phase shift, phase
+saft-wbm-ctl $SDPS -c 0x13a680a000000000 0xfffffff000000000 40000 0x05 -dg
+saft-wbm-ctl $SDPS -c 0x13a680a000000000 0xfffffff000000000 30000 0x06 -dg
+# phase shift, time
+saft-wbm-ctl $SDPS -c 0x13a680a000000000 0xfffffff000000000 20000 0x07 -dg
+saft-wbm-ctl $SDPS -c 0x13a680a000000000 0xfffffff000000000 10000 0x08 -dg
+# phase shift, start
+saft-wbm-ctl $SDPS -c 0x13a680a000000000 0xfffffff000000000     0 0x09 -d
+
+
 
 echo -e B2B: configure $SDPS scu bus tag channel, needed for DDS phase reset
 echo -e SIS18, ESR, SIS100
