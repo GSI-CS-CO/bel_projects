@@ -38,6 +38,15 @@ architecture rtl of psram_testbench is
   signal s_wb_slave_in  : t_wishbone_slave_in;
   signal s_wb_slave_out : t_wishbone_slave_out;
 
+  -- Other constants
+  constant c_reg_all_zero                : std_logic_vector(31 downto 0) := x"00000000";
+  constant c_cyc_on                      : std_logic := '1';
+  constant c_cyc_off                     : std_logic := '0';
+  constant c_str_on                      : std_logic := '1';
+  constant c_str_off                     : std_logic := '0';
+  constant c_we_on                       : std_logic := '1';
+  constant c_we_off                      : std_logic := '0';
+
   -- Functions
   -- Function wb_stim -> Helper function to create a human-readable testbench
   function wb_stim(cyc : std_logic; stb : std_logic; we : std_logic;
@@ -68,6 +77,7 @@ architecture rtl of psram_testbench is
 
   type t_state is (S_RESET, S_IDLE, S_BCR_WRITE);
   signal r_state : t_state := S_RESET;
+  signal s_int_delay_counter : std_logic_vector(31 downto 0);
 
 begin
 
@@ -94,11 +104,13 @@ begin
     if s_rst_n = '0' then
      s_psram_wait <= '0';
      r_state <= S_RESET;
+     s_int_delay_counter <= (others => '0');
     elsif rising_edge(s_clk) then
       case r_state is
         when S_RESET =>
           r_state <= S_IDLE;
           s_psram_wait <= '0';
+          s_int_delay_counter <= (others => '0');
         when S_IDLE =>
           r_state <= S_IDLE;
           s_psram_wait <= '0';
@@ -126,5 +138,14 @@ begin
       ps_cre   => s_psram_cre,
       ps_advn  => s_psram_advn,
       ps_wait  => s_psram_wait);
+
+      -- Wishbone controller
+      p_wishbone_stim : process
+      begin
+        -- Reset
+        s_wb_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_reg_all_zero, c_reg_all_zero);
+        wait until rising_edge(s_rst_n);
+        wait until rising_edge(s_clk);
+      end process;
 
 end;

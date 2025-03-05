@@ -1,33 +1,25 @@
 [*]
 [*] GTKWave Analyzer v3.3.116 (w)1999-2023 BSI
-[*] Tue Mar  4 12:37:00 2025
+[*] Wed Mar  5 12:48:51 2025
 [*]
 [dumpfile] "/mnt/hdd/usr/alex/2025_03_03_fallout_psram_simulation/modules/psram/sim/psram_testbench.ghw"
-[dumpfile_mtime] "Tue Mar  4 12:36:00 2025"
-[dumpfile_size] 5628277
+[dumpfile_mtime] "Wed Mar  5 12:46:39 2025"
+[dumpfile_size] 5628593
 [savefile] "/mnt/hdd/usr/alex/2025_03_03_fallout_psram_simulation/modules/psram/sim/psram_testbench.gtkw"
-[timestart] 0
-[size] 1431 1009
-[pos] -1 -1
-*-26.904951 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[timestart] 174000000
+[size] 1788 1010
+[pos] 179 148
+*-24.686331 242900000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
 [treeopen] top.psram_testbench.
-[treeopen] top.psram_testbench.s_wb_slave_in.
-[treeopen] top.psram_testbench.s_wb_slave_out.
+[treeopen] top.psram_testbench.u_psram_dut.
 [sst_width] 239
-[signals_width] 102
+[signals_width] 234
 [sst_expanded] 1
 [sst_vpaned_height] 301
 @28
 top.psram_testbench.u_psram_dut.rstn_i
 top.psram_testbench.u_psram_dut.clk_i
-top.psram_testbench.u_psram_dut.r_wbo_mux
-top.psram_testbench.u_psram_dut.r_ack
-top.psram_testbench.u_psram_dut.s_full_n
-top.psram_testbench.u_psram_dut.s_last_n
-top.psram_testbench.u_psram_dut.s_last
-top.psram_testbench.u_psram_dut.r_push
-top.psram_testbench.u_psram_dut.r_pop
 @420
 top.psram_testbench.u_psram_dut.r_state
 @28
@@ -37,18 +29,27 @@ top.psram_testbench.u_psram_dut.ps_cre
 top.psram_testbench.u_psram_dut.ps_wen
 top.psram_testbench.u_psram_dut.ps_oen
 top.psram_testbench.u_psram_dut.ps_cen
-top.psram_testbench.u_psram_dut.ps_clk
+@29
+#{top.psram_testbench.u_psram_dut.ps_seln[1:0]} top.psram_testbench.u_psram_dut.ps_seln[1] top.psram_testbench.u_psram_dut.ps_seln[0]
+@22
+#{top.psram_testbench.u_psram_dut.ps_data[15:0]} top.psram_testbench.u_psram_dut.ps_data[15] top.psram_testbench.u_psram_dut.ps_data[14] top.psram_testbench.u_psram_dut.ps_data[13] top.psram_testbench.u_psram_dut.ps_data[12] top.psram_testbench.u_psram_dut.ps_data[11] top.psram_testbench.u_psram_dut.ps_data[10] top.psram_testbench.u_psram_dut.ps_data[9] top.psram_testbench.u_psram_dut.ps_data[8] top.psram_testbench.u_psram_dut.ps_data[7] top.psram_testbench.u_psram_dut.ps_data[6] top.psram_testbench.u_psram_dut.ps_data[5] top.psram_testbench.u_psram_dut.ps_data[4] top.psram_testbench.u_psram_dut.ps_data[3] top.psram_testbench.u_psram_dut.ps_data[2] top.psram_testbench.u_psram_dut.ps_data[1] top.psram_testbench.u_psram_dut.ps_data[0]
+#{top.psram_testbench.u_psram_dut.ps_addr[23:0]} top.psram_testbench.u_psram_dut.ps_addr[23] top.psram_testbench.u_psram_dut.ps_addr[22] top.psram_testbench.u_psram_dut.ps_addr[21] top.psram_testbench.u_psram_dut.ps_addr[20] top.psram_testbench.u_psram_dut.ps_addr[19] top.psram_testbench.u_psram_dut.ps_addr[18] top.psram_testbench.u_psram_dut.ps_addr[17] top.psram_testbench.u_psram_dut.ps_addr[16] top.psram_testbench.u_psram_dut.ps_addr[15] top.psram_testbench.u_psram_dut.ps_addr[14] top.psram_testbench.u_psram_dut.ps_addr[13] top.psram_testbench.u_psram_dut.ps_addr[12] top.psram_testbench.u_psram_dut.ps_addr[11] top.psram_testbench.u_psram_dut.ps_addr[10] top.psram_testbench.u_psram_dut.ps_addr[9] top.psram_testbench.u_psram_dut.ps_addr[8] top.psram_testbench.u_psram_dut.ps_addr[7] top.psram_testbench.u_psram_dut.ps_addr[6] top.psram_testbench.u_psram_dut.ps_addr[5] top.psram_testbench.u_psram_dut.ps_addr[4] top.psram_testbench.u_psram_dut.ps_addr[3] top.psram_testbench.u_psram_dut.ps_addr[2] top.psram_testbench.u_psram_dut.ps_addr[1] top.psram_testbench.u_psram_dut.ps_addr[0]
+@200
+-Wishbone
+@28
+top.psram_testbench.s_wb_slave_in.cyc
+top.psram_testbench.s_wb_slave_in.stb
+top.psram_testbench.s_wb_slave_in.we
+@22
+#{top.psram_testbench.s_wb_slave_in.dat[31:0]} top.psram_testbench.s_wb_slave_in.dat[31] top.psram_testbench.s_wb_slave_in.dat[30] top.psram_testbench.s_wb_slave_in.dat[29] top.psram_testbench.s_wb_slave_in.dat[28] top.psram_testbench.s_wb_slave_in.dat[27] top.psram_testbench.s_wb_slave_in.dat[26] top.psram_testbench.s_wb_slave_in.dat[25] top.psram_testbench.s_wb_slave_in.dat[24] top.psram_testbench.s_wb_slave_in.dat[23] top.psram_testbench.s_wb_slave_in.dat[22] top.psram_testbench.s_wb_slave_in.dat[21] top.psram_testbench.s_wb_slave_in.dat[20] top.psram_testbench.s_wb_slave_in.dat[19] top.psram_testbench.s_wb_slave_in.dat[18] top.psram_testbench.s_wb_slave_in.dat[17] top.psram_testbench.s_wb_slave_in.dat[16] top.psram_testbench.s_wb_slave_in.dat[15] top.psram_testbench.s_wb_slave_in.dat[14] top.psram_testbench.s_wb_slave_in.dat[13] top.psram_testbench.s_wb_slave_in.dat[12] top.psram_testbench.s_wb_slave_in.dat[11] top.psram_testbench.s_wb_slave_in.dat[10] top.psram_testbench.s_wb_slave_in.dat[9] top.psram_testbench.s_wb_slave_in.dat[8] top.psram_testbench.s_wb_slave_in.dat[7] top.psram_testbench.s_wb_slave_in.dat[6] top.psram_testbench.s_wb_slave_in.dat[5] top.psram_testbench.s_wb_slave_in.dat[4] top.psram_testbench.s_wb_slave_in.dat[3] top.psram_testbench.s_wb_slave_in.dat[2] top.psram_testbench.s_wb_slave_in.dat[1] top.psram_testbench.s_wb_slave_in.dat[0]
+#{top.psram_testbench.s_wb_slave_in.adr[31:0]} top.psram_testbench.s_wb_slave_in.adr[31] top.psram_testbench.s_wb_slave_in.adr[30] top.psram_testbench.s_wb_slave_in.adr[29] top.psram_testbench.s_wb_slave_in.adr[28] top.psram_testbench.s_wb_slave_in.adr[27] top.psram_testbench.s_wb_slave_in.adr[26] top.psram_testbench.s_wb_slave_in.adr[25] top.psram_testbench.s_wb_slave_in.adr[24] top.psram_testbench.s_wb_slave_in.adr[23] top.psram_testbench.s_wb_slave_in.adr[22] top.psram_testbench.s_wb_slave_in.adr[21] top.psram_testbench.s_wb_slave_in.adr[20] top.psram_testbench.s_wb_slave_in.adr[19] top.psram_testbench.s_wb_slave_in.adr[18] top.psram_testbench.s_wb_slave_in.adr[17] top.psram_testbench.s_wb_slave_in.adr[16] top.psram_testbench.s_wb_slave_in.adr[15] top.psram_testbench.s_wb_slave_in.adr[14] top.psram_testbench.s_wb_slave_in.adr[13] top.psram_testbench.s_wb_slave_in.adr[12] top.psram_testbench.s_wb_slave_in.adr[11] top.psram_testbench.s_wb_slave_in.adr[10] top.psram_testbench.s_wb_slave_in.adr[9] top.psram_testbench.s_wb_slave_in.adr[8] top.psram_testbench.s_wb_slave_in.adr[7] top.psram_testbench.s_wb_slave_in.adr[6] top.psram_testbench.s_wb_slave_in.adr[5] top.psram_testbench.s_wb_slave_in.adr[4] top.psram_testbench.s_wb_slave_in.adr[3] top.psram_testbench.s_wb_slave_in.adr[2] top.psram_testbench.s_wb_slave_in.adr[1] top.psram_testbench.s_wb_slave_in.adr[0]
+#{top.psram_testbench.s_wb_slave_in.sel[3:0]} top.psram_testbench.s_wb_slave_in.sel[3] top.psram_testbench.s_wb_slave_in.sel[2] top.psram_testbench.s_wb_slave_in.sel[1] top.psram_testbench.s_wb_slave_in.sel[0]
+@28
 top.psram_testbench.s_wb_slave_out.stall
 top.psram_testbench.s_wb_slave_out.rty
 top.psram_testbench.s_wb_slave_out.err
 top.psram_testbench.s_wb_slave_out.ack
-@23
-#{top.psram_testbench.s_wb_slave_out.dat[31:0]} top.psram_testbench.s_wb_slave_out.dat[31] top.psram_testbench.s_wb_slave_out.dat[30] top.psram_testbench.s_wb_slave_out.dat[29] top.psram_testbench.s_wb_slave_out.dat[28] top.psram_testbench.s_wb_slave_out.dat[27] top.psram_testbench.s_wb_slave_out.dat[26] top.psram_testbench.s_wb_slave_out.dat[25] top.psram_testbench.s_wb_slave_out.dat[24] top.psram_testbench.s_wb_slave_out.dat[23] top.psram_testbench.s_wb_slave_out.dat[22] top.psram_testbench.s_wb_slave_out.dat[21] top.psram_testbench.s_wb_slave_out.dat[20] top.psram_testbench.s_wb_slave_out.dat[19] top.psram_testbench.s_wb_slave_out.dat[18] top.psram_testbench.s_wb_slave_out.dat[17] top.psram_testbench.s_wb_slave_out.dat[16] top.psram_testbench.s_wb_slave_out.dat[15] top.psram_testbench.s_wb_slave_out.dat[14] top.psram_testbench.s_wb_slave_out.dat[13] top.psram_testbench.s_wb_slave_out.dat[12] top.psram_testbench.s_wb_slave_out.dat[11] top.psram_testbench.s_wb_slave_out.dat[10] top.psram_testbench.s_wb_slave_out.dat[9] top.psram_testbench.s_wb_slave_out.dat[8] top.psram_testbench.s_wb_slave_out.dat[7] top.psram_testbench.s_wb_slave_out.dat[6] top.psram_testbench.s_wb_slave_out.dat[5] top.psram_testbench.s_wb_slave_out.dat[4] top.psram_testbench.s_wb_slave_out.dat[3] top.psram_testbench.s_wb_slave_out.dat[2] top.psram_testbench.s_wb_slave_out.dat[1] top.psram_testbench.s_wb_slave_out.dat[0]
-@28
-top.psram_testbench.s_wb_slave_in.we
-top.psram_testbench.s_wb_slave_in.stb
-top.psram_testbench.s_wb_slave_in.cyc
 @22
-#{top.psram_testbench.s_wb_slave_in.dat[31:0]} top.psram_testbench.s_wb_slave_in.dat[31] top.psram_testbench.s_wb_slave_in.dat[30] top.psram_testbench.s_wb_slave_in.dat[29] top.psram_testbench.s_wb_slave_in.dat[28] top.psram_testbench.s_wb_slave_in.dat[27] top.psram_testbench.s_wb_slave_in.dat[26] top.psram_testbench.s_wb_slave_in.dat[25] top.psram_testbench.s_wb_slave_in.dat[24] top.psram_testbench.s_wb_slave_in.dat[23] top.psram_testbench.s_wb_slave_in.dat[22] top.psram_testbench.s_wb_slave_in.dat[21] top.psram_testbench.s_wb_slave_in.dat[20] top.psram_testbench.s_wb_slave_in.dat[19] top.psram_testbench.s_wb_slave_in.dat[18] top.psram_testbench.s_wb_slave_in.dat[17] top.psram_testbench.s_wb_slave_in.dat[16] top.psram_testbench.s_wb_slave_in.dat[15] top.psram_testbench.s_wb_slave_in.dat[14] top.psram_testbench.s_wb_slave_in.dat[13] top.psram_testbench.s_wb_slave_in.dat[12] top.psram_testbench.s_wb_slave_in.dat[11] top.psram_testbench.s_wb_slave_in.dat[10] top.psram_testbench.s_wb_slave_in.dat[9] top.psram_testbench.s_wb_slave_in.dat[8] top.psram_testbench.s_wb_slave_in.dat[7] top.psram_testbench.s_wb_slave_in.dat[6] top.psram_testbench.s_wb_slave_in.dat[5] top.psram_testbench.s_wb_slave_in.dat[4] top.psram_testbench.s_wb_slave_in.dat[3] top.psram_testbench.s_wb_slave_in.dat[2] top.psram_testbench.s_wb_slave_in.dat[1] top.psram_testbench.s_wb_slave_in.dat[0]
+#{top.psram_testbench.s_wb_slave_out.dat[31:0]} top.psram_testbench.s_wb_slave_out.dat[31] top.psram_testbench.s_wb_slave_out.dat[30] top.psram_testbench.s_wb_slave_out.dat[29] top.psram_testbench.s_wb_slave_out.dat[28] top.psram_testbench.s_wb_slave_out.dat[27] top.psram_testbench.s_wb_slave_out.dat[26] top.psram_testbench.s_wb_slave_out.dat[25] top.psram_testbench.s_wb_slave_out.dat[24] top.psram_testbench.s_wb_slave_out.dat[23] top.psram_testbench.s_wb_slave_out.dat[22] top.psram_testbench.s_wb_slave_out.dat[21] top.psram_testbench.s_wb_slave_out.dat[20] top.psram_testbench.s_wb_slave_out.dat[19] top.psram_testbench.s_wb_slave_out.dat[18] top.psram_testbench.s_wb_slave_out.dat[17] top.psram_testbench.s_wb_slave_out.dat[16] top.psram_testbench.s_wb_slave_out.dat[15] top.psram_testbench.s_wb_slave_out.dat[14] top.psram_testbench.s_wb_slave_out.dat[13] top.psram_testbench.s_wb_slave_out.dat[12] top.psram_testbench.s_wb_slave_out.dat[11] top.psram_testbench.s_wb_slave_out.dat[10] top.psram_testbench.s_wb_slave_out.dat[9] top.psram_testbench.s_wb_slave_out.dat[8] top.psram_testbench.s_wb_slave_out.dat[7] top.psram_testbench.s_wb_slave_out.dat[6] top.psram_testbench.s_wb_slave_out.dat[5] top.psram_testbench.s_wb_slave_out.dat[4] top.psram_testbench.s_wb_slave_out.dat[3] top.psram_testbench.s_wb_slave_out.dat[2] top.psram_testbench.s_wb_slave_out.dat[1] top.psram_testbench.s_wb_slave_out.dat[0]
 [pattern_trace] 1
 [pattern_trace] 0
