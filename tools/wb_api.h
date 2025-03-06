@@ -9,9 +9,9 @@
 //            -- Wesley W. Terpstra <w.terpstra@gsi.de>
 //            -- Alessandro Rubini <rubini@gnudd.com>
 //            -- Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
-//  version : 27-Feb-2025
+//  version : 06-Mar-2025
 //
-#define WB_API_VERSION "0.18.0"
+#define WB_API_VERSION "0.19.0"
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API.
 //
@@ -87,6 +87,13 @@ eb_status_t wb_wr_get_time(eb_device_t  device,                // EB device
                            int devIndex,                       // 0,1,2... - there may be more than 1 device on the WB bus
                            uint64_t *nsecs                     // timestamp [ns]
                            );
+
+// gets the actual UTC or TAI time (depends on configuration of clock master) for TR with two White Rabbit ports
+// this is a very special routine to be used by Dr K + wing*wo*man only
+eb_status_t wb_wr_get_dualnic_time(eb_device_t  device,        // EB device
+                                   int devIndex,               // 0,1,2... - there may be more than 1 device on the WB bus
+                                   uint64_t *nsecs             // timestamp [ns]
+                                   );
 
 // gets MAC of White Rabbit port
 eb_status_t wb_wr_get_mac(eb_device_t device,                  // EB device

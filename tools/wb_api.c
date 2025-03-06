@@ -3,7 +3,7 @@
 //
 //  created : Apr 10, 2013
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 28-Feb-2025
+//  version : 06-Mar-2025
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API,
 // but only a temporary solution.
@@ -277,6 +277,50 @@ eb_status_t wb_wr_get_time(eb_device_t device, int devIndex, uint64_t *nsecs)
 
   return (status);
 } // wb_wr_get_time
+
+
+eb_status_t wb_wr_get_dualnic_time(eb_device_t  device, int devIndex, uint64_t *nsecs)
+{
+  eb_data_t    data1;
+  eb_data_t    data2;
+  eb_data_t    data3;
+  eb_data_t    data4;
+  eb_status_t  status;
+  eb_cycle_t   cycle;
+
+  uint64_t     secs;
+  uint64_t     nanosecs;
+  uint64_t     one_s_ns   = 1000000000;
+
+#ifdef WB_SIMULATE
+  *nsecs = 1000000123456789;
+
+  return EB_OK;
+#endif
+
+  // get time from PPS GEN
+  *nsecs = 0;
+  if ((status = wb_check_device(device, WR_PPS_GEN_VENDOR, WR_PPS_GEN_PRODUCT, WR_PPS_GEN_VMAJOR, WR_PPS_GEN_VMINOR, devIndex, &pps_addr)) != EB_OK) return status;
+  do {
+    if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;
+    eb_cycle_read(cycle, pps_addr + WR_PPS_GEN_CNTR_UTCHI, EB_BIG_ENDIAN|EB_DATA32, &data1);
+    eb_cycle_read(cycle, pps_addr + WR_PPS_GEN_CNTR_UTCLO, EB_BIG_ENDIAN|EB_DATA32, &data2);
+    eb_cycle_read(cycle, pps_addr + WR_PPS_GEN_CNTR_NSEC , EB_BIG_ENDIAN|EB_DATA32, &data3);
+    eb_cycle_read(cycle, pps_addr + WR_PPS_GEN_CNTR_UTCHI, EB_BIG_ENDIAN|EB_DATA32, &data4);
+    if ((status = eb_cycle_close(cycle)) != EB_OK) return status;
+  } while (data1 != data4);
+  
+  secs     = (uint64_t)data1 & 0xff;
+  secs     = secs << 32 | (uint64_t)data2;
+  nanosecs = (uint64_t)data3;
+  while (nanosecs >= one_s_ns) {
+    nanosecs =- one_s_ns;
+    secs++;
+  } // while 
+  *nsecs  = secs * one_s_ns + nanosecs;
+
+  return EB_OK;
+} //  wb_wr_get_dualnic_time
 
 
 eb_status_t wb_wr_get_mac(eb_device_t device, int devIndex, uint64_t *mac )
