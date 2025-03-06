@@ -3,14 +3,13 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
-use work.pwm_pkg.all;
 
 entity pwm_channel is
 
     generic (
         g_simulation                : in boolean := false;
 
-        g_pwm_counter_width         : integer range 1 to 32 := 16
+        g_pwm_counter_width         : integer
 
         -- TODO: set range
         --g_pwm_counter_low           : natural := 100;
@@ -27,9 +26,21 @@ entity pwm_channel is
         pwm_o           : out std_logic := '0'
     );
 
+    type t_pwm_values is record
+        low     : unsigned(g_pwm_counter_width-1 downto 0);
+        high    : unsigned(g_pwm_counter_width-1 downto 0);
+    end record t_pwm_values;
+
 end entity pwm_channel;
 
 architecture pwm_channel_arch of pwm_channel is
+
+    constant g_pwm_counter_width : natural range 1 to 16 := 16;
+    
+    type t_pwm_values is record
+        low     : unsigned(g_pwm_counter_width-1 downto 0);
+        high    : unsigned(g_pwm_counter_width-1 downto 0);
+    end record t_pwm_values;
 
     --type t_pwm_values is record
     --    low     : unsigned(g_pwm_counter_width-1 downto 0);

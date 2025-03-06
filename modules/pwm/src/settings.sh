@@ -14,7 +14,7 @@ VHD_PACK="../../../ip_cores/general-cores/modules/genrams/genram_pkg.vhd \
           ../../../ip_cores/general-cores/modules/wishbone/wishbone_pkg.vhd"
 VHD_FILES="$VHD_PACK \
             ../../../ip_cores/general-cores/modules/wishbone/wb_slave_adapter/wb_slave_adapter.vhd \
-            $PWM_PATH/pwm_pkg.vhd \
-            $PWM_PATH/pwm.vhd \
             $PWM_PATH/pwm_channel_pkg.vhd \
-            $PWM_PATH/pwm_channel.vhd"
+            $PWM_PATH/pwm_channel.vhd
+            $PWM_PATH/pwm_pkg.vhd \
+            $PWM_PATH/pwm.vhd "
