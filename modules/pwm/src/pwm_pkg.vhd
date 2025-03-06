@@ -7,37 +7,35 @@ use work.wishbone_pkg.all;
 
 package pwm_pkg is
 
- constant c_pwm_sdb : t_sdb_device := (
-    abi_class     => x"0000", -- undocumented device
-    abi_ver_major => x"00",
-    abi_ver_minor => x"01",
-    wbd_endian    => c_sdb_endian_big,
-    wbd_width     => x"7", -- 8/16/32-bit port granularity
-    sdb_component => (
-    addr_first    => x"0000000000000000",
-    addr_last     => x"00000000000000ff",
-    product       => (
-    vendor_id     => x"0000000000000651",
-    device_id     => x"434E5453",
-    version       => x"00000001",
-    date          => x"20250125",
-    name          => "GSI:PWM-MODULE     ")));
+    component pwm_channel is
 
-  component pwm is
+        generic (
+            g_simulation                : in boolean := false;
 
-    generic (
-        g_pwm_channel_num           : integer range 1 to 8 := 8
-    );
-    port(
-    clk_sys_i     : in std_logic;
-    rst_sys_n_i   : in std_logic;
+            g_pwm_channel_num           : natural range 1 to 32 := 8;
+            g_pwm_regs_size             : natural range 1 to 16 := 16;
 
-    t_wb_out        : out t_wishbone_slave_out;
-    t_wb_in         : in  t_wishbone_slave_in;
+            g_pwm_interface_mode        : t_wishbone_interface_mode := PIPELINED;
+            g_pwm_address_granularity   : t_wishbone_address_granularity := BYTE
+        );
+        port(
 
-    pwm_o         : out std_logic_vector(g_pwm_channel_num-1 downto 0)
-    );
+            clk_sys_i       : in std_logic;
+            rst_sys_n_i     : in std_logic;
 
-  end component;
+
+            t_wb_o           : out t_wishbone_slave_out;
+
+            t_wb_i           : in  t_wishbone_slave_in;
+
+            pwm_o           : out std_logic_vector((g_pwm_channel_num-1) downto 0)
+        );
+
+    end component;
+
+    type t_pwm_values is record
+        low     : unsigned(g_pwm_regs_size-1 downto 0);
+        high    : unsigned(g_pwm_regs_size-1 downto 0);
+    end record t_pwm_values;
 
 end package;
