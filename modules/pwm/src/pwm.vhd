@@ -72,7 +72,6 @@ architecture pwm_arch of pwm is
     constant mode_write   : std_logic_vector(3 downto 0) := "1111";
     constant mode_read    : std_logic_vector(3 downto 0) := "0111";
 
-
     type t_pwm_value_array is array(0 to (g_pwm_channel_num-1)) of t_pwm_values;
     signal s_pwm_values : t_pwm_value_array := (others => (others => 1));
 

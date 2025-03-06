@@ -4,16 +4,37 @@ use ieee.numeric_std.all;
 
 library work;
 use work.wishbone_pkg.all;
+use work.pwm_channel_pkg.all;
 
 package pwm_pkg is
 
-    component pwm_channel is
+    constant c_pwm_sdb : t_sdb_device := (
+
+        abi_class     => x"0000", -- undocumented device
+        abi_ver_major => x"00",
+        abi_ver_minor => x"01",
+        wbd_endian    => c_sdb_endian_big,
+        wbd_width     => x"7", -- 8/16/32-bit port granularity
+        sdb_component => (
+            addr_first    => x"0000000000000000",
+            addr_last     => x"00000000000000ff",
+            product       => (
+                vendor_id     => x"0000000000000651",
+                device_id     => x"434E5453",
+                version       => x"00000001",
+                date          => x"20250125",
+                name          => "GSI:PWM-MODULE     "
+            )
+        )
+    );
+
+    component pwm is
 
         generic (
             g_simulation                : in boolean := false;
 
             g_pwm_channel_num           : natural range 1 to 32 := 8;
-            g_pwm_regs_size             : natural range 1 to 16 := 16;
+            g_pwm_regs_size             : natural range 1 to 32 := 16;
 
             g_pwm_interface_mode        : t_wishbone_interface_mode := PIPELINED;
             g_pwm_address_granularity   : t_wishbone_address_granularity := BYTE
@@ -32,10 +53,5 @@ package pwm_pkg is
         );
 
     end component;
-
-    type t_pwm_values is record
-        low     : unsigned(g_pwm_regs_size-1 downto 0);
-        high    : unsigned(g_pwm_regs_size-1 downto 0);
-    end record t_pwm_values;
 
 end package;

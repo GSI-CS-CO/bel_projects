@@ -3,15 +3,20 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
-use work.pwm_pkg.all;
 
 package pwm_channel_pkg is
+
+    constant g_pwm_counter_width : natural range 1 to 16 := 16;
+
+    type t_pwm_values is record
+        low     : unsigned(g_pwm_counter_width-1 downto 0);
+        high    : unsigned(g_pwm_counter_width-1 downto 0);
+    end record t_pwm_values;
 
     component pwm_channel is
 
         generic (
             g_simulation                : in boolean;
-    
             g_pwm_counter_width         : natural
         );
         port(
