@@ -4,33 +4,27 @@ use ieee.numeric_std.all;
 
 library work;
 use work.wishbone_pkg.all;
-use work.spwm_wbgen2_pkg.all; 
+use work.pwm_channel_pkg.all;
 
 entity pwm is
 
-    -- This is just a wrapper for the PWM module from general_cores
-
     generic (
         g_simulation                : in boolean := false;
-        g_pwm_channel_num           : integer range 1 to 8 := 8;
-        g_pwm_regs_size             : integer range 1 to 16 := 16;
-        
-        g_pwm_default_period        : integer range 1 to 16 := 16;
-        g_pwm_default_presc         : integer range 0 to 255 := 0;
-        g_pwm_default_val           : integer range 0 to 255 := 0;
+
+        g_pwm_channel_num           : natural range 1 to 32 := 8;
+        g_pwm_regs_size             : natural range 1 to 16 := 16;
 
         g_pwm_interface_mode        : t_wishbone_interface_mode := PIPELINED;
         g_pwm_address_granularity   : t_wishbone_address_granularity := BYTE
     );
 
     port(
-    
-    -- these two sys signals come from SysCon
+
     clk_sys_i       : in std_logic;
     rst_sys_n_i     : in std_logic;
 
 
-    t_wb_out          : out t_wishbone_slave_out;
+    t_wb_o           : out t_wishbone_slave_out;
         -- type t_wishbone_slave_out is record
         -- ack   : std_logic;
         -- err   : std_logic;
@@ -40,7 +34,7 @@ entity pwm is
         -- end record t_wishbone_slave_out;
         -- equal to t_wishbone_master_in
 
-    t_wb_in            : in  t_wishbone_slave_in;
+    t_wb_i           : in  t_wishbone_slave_in;
         --type t_wishbone_slave_in is record
         --cyc : std_logic;
         --stb : std_logic;
@@ -52,79 +46,114 @@ entity pwm is
         -- equal to t_wishbone_master_out
 
     pwm_o           : out std_logic_vector((g_pwm_channel_num-1) downto 0)
-    -- start with only one channel
     );
 
 end entity;
 
 architecture pwm_arch of pwm is
 
-    signal s_tb_pwm_o : std_logic;
+    signal s_ack_state        : std_logic := '0';
+    signal s_led_state        : std_logic := '0';
 
-    --signal t_adr_temp_i : t_wishbone_address;
+    signal s_stall_state      : std_logic := '0';
+    signal s_retry_state      : std_logic := '0';
+    signal s_error_state      : std_logic := '0';
+
+    -- TODO put into type
+    --type t_wb_state is (s_wb_idle,  
+    --                    s_wb_read,
+    --                    s_wb_write,
+    --                    );
+    --signal s_wb_state : t_wb_state := s_wb_idle;
+
+    signal s_state_machine_vector : std_logic_vector(3 downto 0) := "0000";
+
+    -- all vectors are downto-range positions are 3210
+    constant mode_write   : std_logic_vector(3 downto 0) := "1111";
+    constant mode_read    : std_logic_vector(3 downto 0) := "0111";
+
+
+    type t_pwm_value_array is array(0 to (g_pwm_channel_num-1)) of t_pwm_values;
+    signal s_pwm_values : t_pwm_value_array := (others => (others => 1));
+
+
+    signal s_current_high       : std_logic_vector(15 downto 0) := (others => '0');
+    signal s_current_low        : std_logic_vector(15 downto 0) := (others => '0');
 
 begin
 
-    --t_adr_temp_i <= "0" & t_wb_in.adr(7 downto 2);
+    t_wb_o.ack <= s_ack_state;
 
-    PWM_WB : wb_simple_pwm
-    --component wb_simple_pwm
-    --    generic (
-    --      g_num_channels        : integer range 1 to 8;
-    --      g_regs_size           : integer range 1 to 16 := 16;
-    --      g_default_period      : integer range 0 to 255 := 0;
-    --      g_default_presc       : integer range 0 to 255 := 0;
-    --      g_default_val         : integer range 0 to 255 := 0;
-    --      g_interface_mode      : t_wishbone_interface_mode      := PIPELINED;
-    --      g_address_granularity : t_wishbone_address_granularity := BYTE);
-    --    port (
-    --      clk_sys_i  : in  std_logic;
-    --      rst_n_i    : in  std_logic;
-    --      wb_adr_i   : in  std_logic_vector(5 downto 0);
-    --      wb_dat_i   : in  std_logic_vector(31 downto 0);
-    --      wb_dat_o   : out std_logic_vector(31 downto 0);
-    --      wb_cyc_i   : in  std_logic;
-    --      wb_sel_i   : in  std_logic_vector(3 downto 0);
-    --      wb_stb_i   : in  std_logic;
-    --      wb_we_i    : in  std_logic;
-    --      wb_ack_o   : out std_logic;
-    --      wb_stall_o : out std_logic;
-    --      pwm_o      : out std_logic_vector(g_num_channels-1 downto 0));
-    --end component;
-    generic map(
-        g_num_channels        =>  g_pwm_channel_num,
-        g_regs_size           =>  g_pwm_regs_size,
-        g_default_period      =>  g_pwm_default_period,
-        g_default_presc       =>  g_pwm_default_presc,
-        g_default_val         =>  g_pwm_default_val,
-        g_interface_mode      =>  g_pwm_interface_mode,
-        g_address_granularity =>  g_pwm_address_granularity
-    )
-    port map (
-        rst_n_i     =>  rst_sys_n_i,
-        clk_sys_i   =>  clk_sys_i,
+    -- fill the pseudo state machine
+    s_state_machine_vector(0) <= rst_sys_n_i;
+    s_state_machine_vector(1) <= t_wb_i.cyc;
+    s_state_machine_vector(2) <= t_wb_i.stb;
+    s_state_machine_vector(3) <= t_wb_i.we;
 
-        -- as defined in the general_cores module:
-        -- wb_simple_pwm only takes the lower 6 bits
-        -- inner wb_adr_i takes only 4 bits of these
-        -- and we need to stay aligned
-        wb_adr_i(5) => t_wb_in.adr(5),
-        wb_adr_i(4) => t_wb_in.adr(4),
-        wb_adr_i(3) => t_wb_in.adr(3),
-        wb_adr_i(2) => t_wb_in.adr(2),
-        wb_adr_i(1) => '0',
-        wb_adr_i(0) => '0',
-        wb_dat_i    => t_wb_in.dat,    
-        wb_dat_o    => t_wb_out.dat,
-        wb_cyc_i    => t_wb_in.cyc,
-        wb_sel_i    => t_wb_in.sel,
-        wb_stb_i    => t_wb_in.stb,
-        wb_we_i     => t_wb_in.we,
-        wb_ack_o    => t_wb_out.ack,
-        wb_stall_o  => t_wb_out.stall,
+    -- for every wanted channel generate a PWM channel
+    pwm_channels: for i in 0 to g_pwm_channel_num-1 generate
+    begin
+        channel : pwm_channel
+            -- <entity_signal_name> => <local_signal_name>
+            generic map(
+                g_simulation            => g_simulation,
+                g_pwm_counter_width     => g_pwm_regs_size,
+                g_pwm_values            => s_pwm_values(i)
+            )
+            port map(
+                rst_sys_n_i             => rst_sys_n_i,
+                clk_sys_i               => clk_sys_i,
+                
+                pwm_o                   => pwm_o(i)
+            );
+    end generate pwm_channels;
 
-        pwm_o       =>  pwm_o
+    p_wb_ack: process(clk_sys_i)
+    begin
+        if rising_edge(clk_sys_i) then
+            if rst_sys_n_i = '0' then
+                s_ack_state <= '0';
+            else
+                if s_ack_state = '0' and t_wb_i.stb = '1' and t_wb_i.cyc = '1' then
+                    s_ack_state <= '1';
+                else
+                    s_ack_state <= '0';
+                end if;
+            end if;
+        end if;
+    end process p_wb_ack;
 
-    );
+    p_wb_reg: process(clk_sys_i)
+    begin
+        if rising_edge(clk_sys_i) then
+
+
+        end if; -- of rising_edge
+    end process p_wb_reg;
+
+    p_wb_write: process(clk_sys_i)
+    begin
+        if rising_edge(clk_sys_i) then
+            if rst_sys_n_i = '0' then
+                s_stall_state   <= '0';
+                s_error_state   <= '0';
+                s_retry_state   <= '0';
+            elsif s_state_machine_vector = mode_write then
+                -- todo reg write
+            end if;
+        end if;
+    end process p_wb_write;
+
+    p_wb_read: process(clk_sys_i)
+    begin
+        if rising_edge(clk_sys_i) then
+            if rst_sys_n_i = '0' then
+                t_wb_o.dat    <= (others => '0');
+            elsif s_state_machine_vector = mode_read then
+                t_wb_o.dat <= (others => '1');
+            end if;
+        end if;
+    end process p_wb_read;
+
 
 end pwm_arch;

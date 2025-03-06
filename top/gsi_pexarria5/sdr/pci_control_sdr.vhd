@@ -79,7 +79,8 @@ entity pci_control_sdr is
     p9              : out   std_logic := 'Z'; -- TERMEN1 = terminate TTLIO1, 1=x, 0|Z=x (Q2 BSH103 -- G pin)
     n9              : out   std_logic := 'Z'; -- TERMEN2 = terminate TTLIO2, 1=x, 0|Z=x
     p10             : out   std_logic := 'Z'; -- TERMEN3 = terminate TTLIO3, 1=x, 0|Z=x
-    n10             : out   std_logic := 'Z'; -- TTLEN1  = TTLIO1 output enable, 0=enable, 1|Z=disable
+    n10             : out   std_logic := 'Z'; -- TTLEN1  = 
+TTLIO1 output enable, 0=enable, 1|Z=disable
     p11             : out   std_logic := 'Z'; -- n/c
     n11             : out   std_logic := 'Z'; -- TTLEN3  = TTLIO2 output enable, 0=enable, 1|Z=disable
     p12             : out   std_logic := 'Z'; -- n/c
@@ -418,7 +419,7 @@ begin
   lvds_n_i(3) <= n17; -- LVDS_1 / SYIN
   lvds_n_i(4) <= n18; -- LVDS_2 / TRIN
 
-  -- LVDS outputs
+  -- LVDS outputs --abgeklemmt hier
   n25 <= lvds_n_o(0); -- TTLIO1
   --n27 <= lvds_n_o(1); -- TTLIO2
   --n28 <= lvds_n_o(2); -- TTLIO3
@@ -430,7 +431,7 @@ begin
   --p19 <= lvds_p_o(3); -- LVDS_3 / CK200 -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
   --p24 <= lvds_p_o(4); -- LVDS_4 / SYOU  -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
 
-  -- Special Output
+  -- Special Output --umgeklemmt hier
   -- s_lvds_p_o(3)    <= s_led_pps;
   buffer_pps : altera_lvds_obuf
     generic map(
