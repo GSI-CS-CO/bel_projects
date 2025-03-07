@@ -34,8 +34,11 @@ deploy:
 	cp $(NFSINIT)/*.sh $(STAGING)
 
 # tools
+# eb-mon is hack until next release
+	cp ../../tools/monitoring/eb-mon $(STAGING)$(ARCH)$(PREFIX)/usr/bin               # '/usr' is a hack
 
 # configuration
+
 
 # systemd
 	cp $(SYSTEMD)/*.service $(STAGING)/$(SYSTEMD)                       # systemd units
