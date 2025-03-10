@@ -257,6 +257,7 @@ begin
       g_dual_port_wr       => true,
       g_en_eca             => false,
       g_delay_diagnostics  => true,
+      g_en_enc_err_counter => true,
       g_lm32_are_ftm       => true,
       g_lm32_MSIs          => 1,
       g_lm32_cores         => c_cores,
