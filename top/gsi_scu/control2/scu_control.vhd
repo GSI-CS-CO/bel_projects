@@ -282,7 +282,7 @@ architecture rtl of scu_control is
 
   constant c_family  : string := "Arria II";
   constant c_project : string := "scu_control";
-  constant c_cores   : natural := 2;
+  constant c_cores   : natural := 1;
   constant c_profile_name  : string := "medium_icache_debug";
   constant c_initf   : string := c_project & ".mif" & ';' & c_project & "_stub.mif";
   -- projectname is standard to ensure a stub mif that prevents unwanted scanning of the bus
@@ -429,7 +429,8 @@ begin
       mem_DDR3_CLK           => DDR3_CLK,
       mem_DDR3_CLK_n         => DDR3_CLK_n,
       mem_DDR3_WE_n          => DDR3_WE_n,
-      hw_version             => x"0000000" & not scu_cb_version);
+      hw_version             => x"0000000" & not scu_cb_version,
+      poweroff_comx          => nPWRBTN);
 
   -- LPC UART
   lpc_slave: lpc_uart
@@ -571,7 +572,6 @@ begin
 
   -- External reset values
   nFPGA_Res_Out <= rstn_ref;
-  nPWRBTN    <= '1'; -- never power off atom
   A_nCONFIG  <= '1'; -- altremote_update used instead
   npci_pme   <= '1'; -- wake up pci system, not used
 

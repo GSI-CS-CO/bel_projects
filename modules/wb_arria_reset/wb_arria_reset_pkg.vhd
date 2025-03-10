@@ -69,7 +69,8 @@ component wb_arria_reset is
     phy_dis_o     : out std_logic;
     phy_aux_dis_o : out std_logic;
     psram_sel_o   : out std_logic_vector(3 downto 0);
-    rstn_o        : out std_logic_vector(rst_channels-1 downto 0));
+    rstn_o        : out std_logic_vector(rst_channels-1 downto 0);
+    poweroff_comx : out std_logic);
 end component;
 
 constant c_arria_reset : t_sdb_device := (
