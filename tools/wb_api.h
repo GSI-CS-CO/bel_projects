@@ -9,9 +9,9 @@
 //            -- Wesley W. Terpstra <w.terpstra@gsi.de>
 //            -- Alessandro Rubini <rubini@gnudd.com>
 //            -- Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
-//  version : 06-Mar-2025
+//  version : 07-Mar-2025
 //
-#define WB_API_VERSION "0.19.0"
+#define WB_API_VERSION "0.20.00"
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API.
 //
@@ -261,12 +261,14 @@ eb_status_t wb_wr_watchdog_status(eb_device_t device,          // EB device
 
 // reset the SFP
 eb_status_t wb_wr_sfp_reset(eb_device_t device,                 // EB device
-                            int devIndex                        // 0,1,2... - there may be more than 1 device on the WB bus
+                            int devIndex,                       // 0,1,2... - there may be more than 1 device on the WB bus
+                            int phyIndex                        // 0,1      - index of the interface to be reset
                             );
 
 // reset the PHY
 eb_status_t wb_wr_phy_reset(eb_device_t device,                 // EB device
-                            int devIndex                        // 0,1,2... - there may be more than 1 device on the WB bus
+                            int devIndex,                       // 0,1,2... - there may be more than 1 device on the WB bus
+                            int phyIndex                        // 0,1      - index of the interface to be reset
                             );
 
 // put user lm32 into reset state

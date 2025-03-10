@@ -3,7 +3,7 @@
 //
 //  created : 2015
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 06-mar-2025
+//  version : 07-mar-2025
 //
 // Command-line interface for WR monitoring via Etherbone.
 //
@@ -85,7 +85,7 @@ static void help(void)
   fprintf(stderr, "  -k               display 'ECA-Tap' statistics\n");
   fprintf(stderr, "  -l               display WR link status\n");
   fprintf(stderr, "  -m               display WR MAC\n");
-  fprintf(stderr, "  -n<NIC index>    specify NIC for selected properties; 0: 1st NIC, 1: 2nd NIC (default: n0)\n");
+  fprintf(stderr, "  -n<NIC index>    specify NIC for selected properties (0: 1st NIC; 1: 2nd NIC; default: n0)\n");
   fprintf(stderr, "  -o               display offset between WR time and system time [ms]\n");
   fprintf(stderr, "  -p               display state of IP\n");
   fprintf(stderr, "  -s<secs> <cpu>   snoop for information continuously (and print warnings. THIS OPTION RESETS ALL STATS!)\n");
@@ -93,10 +93,10 @@ static void help(void)
   fprintf(stderr, "  -u<index>        user 1-wire: specify WB device in case multiple WB devices of the same type exist (default: u0)\n");
   fprintf(stderr, "  -v               display verbose information\n");
   fprintf(stderr, "  -w<index>        WR 1-wire: specify WB device in case multiple WB devices of the same type exist (default: w0)\n");
-  fprintf(stderr, "  -x               display the encoder error counter\n");
+  fprintf(stderr, "  -x               display the 8b/10b encoding error counter\n");
   fprintf(stderr, "  -y               display WR sync status\n");
   fprintf(stderr, "  -z               display FPGA uptime [h]\n");
-  fprintf(stderr, "  -K               display WR time for dual SFP boards\n");
+  fprintf(stderr, "  -K               display WR time; for dual SFP boards only\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "  wrstatreset  <tWrObs> <tStallObs>  command clears WR statistics and sets observation times (default: 8 50000)\n");
   fprintf(stderr, "  ecatapreset  <lateOffset>          command resets ECA-Tap and sets offset for detection of late events (default: 0)\n");
@@ -112,14 +112,15 @@ static void help(void)
   fprintf(stderr, "Example4: '%s dev/wbm0 encerrclear 0x1' clears the encoder error counter for the first PHY\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "When using option '-s<n>', the following information is displayed\n");
-  fprintf(stderr, "eb-mon:    WR [ns]   | CPU stall[%%]|                      [n(Hz)]   ECA                 [us(us)]\n");
-  fprintf(stderr, "eb-mon:  lock +dt -dt|   max(  act)| nMessages( rate ) early late  min max avrge(act) ltncy\n");
-  fprintf(stderr, "eb-mon:     1  16   0| 32.71(17.87)|      2501(  69.0)     0    0  879 986   935(935)   121\n");
-  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '   '     '   '      '\n");
-  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '   '     '   '      '- latency\n");
-  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '   '     '   '- actual average (dl - ts)\n");
-  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '   '     '- average (dl - ts)\n");
-  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '   '- max (dl - ts) since last 'early event'\n");
+  fprintf(stderr, "eb-mon:    WR [ns]   | CPU stall[%]|                      [n(Hz)]   ECA                    [us]| # enc err\n");
+  fprintf(stderr, "eb-mon:  lock +dt -dt|   max(  act)| nMessages( rate ) early late  min   max  avrge( act) ltncy|          \n");
+  fprintf(stderr, "eb-mon:     1  16   0| 32.71(17.87)|      2501(  69.0)     0    0  879   986    935( 935)   121          0\n");
+  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '     '      '    '      '          '\n");
+  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '     '      '    '      '          '- # of encoding errors\n");
+  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '     '      '    '      '- latency\n");
+  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '     '      '    '- actual average (dl - ts)\n");
+  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '     '      '- average (dl - ts)\n");
+  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '     '- max (dl - ts) since last 'early event'\n");
   fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '- min (deadline - timestamp) since last 'late event'\n");
   fprintf(stderr, "            '   '   '      '     '           '      '      '    '- # of late messages\n");
   fprintf(stderr, "            '   '   '      '     '           '      '       - # of early messages\n");

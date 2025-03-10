@@ -1082,48 +1082,59 @@ eb_status_t wb_wr_watchdog_status(eb_device_t device, int devIndex, int *flagEna
 } // wb_wr_watchdog_status
 
 // reset the SFP
-eb_status_t wb_wr_sfp_reset(eb_device_t device, int devIndex)
+eb_status_t wb_wr_sfp_reset(eb_device_t device, int devIndex, int phyIndex)
 {
   eb_address_t address;
   eb_status_t  status;
+  uint32_t     regValue;
 
 #ifdef WB_SIMULATE
   *value = 0x0;
   return EB_OK;
 #endif
-
-  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR, devIndex, &reset_addr)) != EB_OK) return status;
+  switch (phyIndex) {
+    case 0 : regValue = FPGA_RESET_PHY_SFP_DIS_WR ; break;
+    case 1 : regValue = FPGA_RESET_PHY_SFP_DIS_AUX; break;
+    default: return EB_OOM;
+  } // switch phyIndex
 
   // get address of RESET controller
+  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR, devIndex, &reset_addr)) != EB_OK) return status;  
   address      = reset_addr + FPGA_RESET_PHY_RESET;
-
+  
   // turn SFP off and on
-  if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, FPGA_RESET_PHY_SFP_DIS_WR, 0, eb_block)) != EB_OK) return status;
+  if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, regValue, 0, eb_block)) != EB_OK) return status;
   usleep(750000);
-  if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, 0, 0, eb_block)) != EB_OK) return status;
+  if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, 0       , 0, eb_block)) != EB_OK) return status;
 
  return status;
 } // wb_wr_sfp_reset
 
 // reset the PHY
-eb_status_t wb_wr_phy_reset(eb_device_t device, int devIndex)
+eb_status_t wb_wr_phy_reset(eb_device_t device, int devIndex, int phyIndex)
 {
   eb_address_t address;
   eb_status_t  status;
+  uint32_t     regValue;
 
 #ifdef WB_SIMULATE
   *value = 0x0;
   return EB_OK;
 #endif
 
-  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR, devIndex, &reset_addr)) != EB_OK) return status;
+  switch (phyIndex) {
+    case 0 : regValue = FPGA_RESET_PHY_DROP_LINK_WR ; break;
+    case 1 : regValue = FPGA_RESET_PHY_DROP_LINK_AUX; break;
+    default: return EB_ADDRESS;
+  } // switch phyIndex
 
-  // get address of RESET controller
+  // get address of RESET controller 
+  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR, devIndex, &reset_addr)) != EB_OK) return status;
   address      = reset_addr + FPGA_RESET_PHY_RESET;
 
   // reset PHY and PLLs
-  if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, FPGA_RESET_PHY_DROP_LINK_WR, 0, eb_block)) != EB_OK) return status;
-  if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, 0, 0, eb_block)) != EB_OK) return status;
+  if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, regValue, 0, eb_block)) != EB_OK) return status;
+  if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, 0       , 0, eb_block)) != EB_OK) return status;
 
  return status;
 } // wb_wr_phy_reset
