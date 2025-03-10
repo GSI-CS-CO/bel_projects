@@ -188,7 +188,11 @@ begin
                 vs_ctrl_csr_wr   <= s_av_wr;
             when c_sample_sel =>
                 vs_sample_csr_rd <= s_av_rd;
-                vs_sample_csr_wr <= '0';         -- never write to sample store
+                if to_integer(unsigned(s_adr)) > 7 then
+                    vs_sample_csr_wr <= s_av_wr;  -- allow write-access to the irq registers
+                else
+                    vs_sample_csr_wr <= '0';      -- disallow write-access to the sample registers
+                end if;
             when others =>
                 -- none
         end case;
