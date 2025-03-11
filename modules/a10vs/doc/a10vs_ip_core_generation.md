@@ -209,23 +209,24 @@ When the project is opened by [quartus_gui], start Signal Tap Logic Analyzer fro
 ### Configuration for 'auto_signaltap_0'
 
 Signal Configuration:
-  - clock: clk_125m_local_i
+  - clock: monster:main|core_clk_125m_local_i (signal tap: pre-synthesis)
   - sample depth: 128, RAM type: Auto
   - Nodes Allocated: Auto
   - Storage qualifier:
     - Type: Continuous
 
 Node List (signal tap:pre-synthesis signals):
+  - clk_i
   - slave_i.cyc  (trigger enable)
   - slave_i.stb  (trigger enable)
-  - slave_i.we  (trigger enable)
+  - slave_i.we
   - slave_o.ack
   - vs_ctrl_csr_addr
   - vs_ctrl_csr_rd
   - vs_ctrl_csr_wr
   - vs_sample_csr_rd
   - vs_sample_csr_wr
-  - slave_i.adr[31..0]  (trigger enable)
+  - slave_i.adr[31..0]
   - slave_i.dat[15..0]
   - slave_o.dat[15..0]
   - vs_ctrl_csr_rddata[15..0]
@@ -233,6 +234,48 @@ Node List (signal tap:pre-synthesis signals):
   - vs_sample_csr_rdata[15..0]
 
 The configuration can be stored in *.stp file.
+
+### Compilation and programming
+
+Once nodes/signals for inspection are selected, start the compilation by clicking on 'Start Compilation'. It will run following task to completion:
+  - analysis & synthesis
+  - place & route
+  - generate bitstream
+  - timing analysis
+
+A corresponding *.sof file (ie., pexarria10.sof) will be created.
+For programming the target device:
+  - click on 'Browse Programming Files' to choose the *.sof file and
+  - click on 'Programm Device' to flash
+
+Assume that the target device (type: 10A027E) is mounted in the PCIe card and installed in a Linux host with EB tools. Use eb-{info|ls} tools to get the gateware information.
+If the EB tools return an error, re-load the wishbone and PCIe drivers, or reboot the Linux host.
+
+```
+$ eb-ls dev/wbm0 | grep -i altera_voltage
+13.34       0000000000000651:a1076000   40000c0 Altera_voltage_sens
+```
+
+### Analysis
+
+Click on 'Run Analysis' to start the analysis. It will wait for trigger conditions get valid.
+
+```
+$ eb-read dev/wbm0 0x40000c0/4        # read the sample register 0
+00000000
+
+$ eb-read dev/wbm0 0x40000e0/4        # read the interrupt enable register
+00000001                              # expected reset value
+
+$ eb-read dev/wbm0 0x40000e8/4        # read the command register
+00000000                              # expected reset value
+
+$ eb-write dev/wbm0 0x40000e8/4 0x83  # set the cyclic mode and start the core operation
+                                      # 0x83: MD[1:0]="01", MODE[1:0]="01", RUN="1"
+
+$ eb-read dev/wbm0 0x40000e8/4        # read the command register
+00000083                              # expected value
+```
 
 ## A. Issues
 
