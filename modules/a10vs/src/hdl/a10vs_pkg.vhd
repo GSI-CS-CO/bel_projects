@@ -16,7 +16,7 @@ package a10vs_pkg is
         wbd_width         => x"7",             -- 8/16/32-bit port granularity
         sdb_component     => (
             addr_first    => x"0000000000000000",
-            addr_last     => x"000000000000000f",
+            addr_last     => x"0000000000000028",
             product       => (
                 vendor_id => x"0000000000000651",
                 device_id => x"a1076000",
