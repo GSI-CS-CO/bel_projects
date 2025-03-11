@@ -5,5 +5,4 @@
 #systemctl start $SERVICEA
 
 # hack for sl7
-eb-mon dev/wbm0 encerrclear 0x1
-eb-mon dev/wbm0 -s 10 0 | logger -t eb-mon -p local0.inf &
+eb-mon dev/wbm1 -s 10 0 | logger -t eb-mon -p local0.info &
