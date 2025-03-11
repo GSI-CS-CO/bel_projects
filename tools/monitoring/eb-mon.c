@@ -3,7 +3,7 @@
 //
 //  created : 2015
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 07-mar-2025
+//  version : 11-mar-2025
 //
 // Command-line interface for WR monitoring via Etherbone.
 //
@@ -34,7 +34,7 @@
 // For all questions and ideas contact: d.beck@gsi.de
 // Last update: 25-April-2015
 //////////////////////////////////////////////////////////////////////////////////////////////
-#define EBMON_VERSION "2.2.3"
+#define EBMON_VERSION "2.2.4"
 #define AHEADT       1000000     // data master works ahead of time [ns]
 #define EARLYDT   1000000000     // detection limit for early events [ns]
 
@@ -112,7 +112,7 @@ static void help(void)
   fprintf(stderr, "Example4: '%s dev/wbm0 encerrclear 0x1' clears the encoder error counter for the first PHY\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "When using option '-s<n>', the following information is displayed\n");
-  fprintf(stderr, "eb-mon:    WR [ns]   | CPU stall[%]|                      [n(Hz)]   ECA                    [us]| # enc err\n");
+  fprintf(stderr, "eb-mon:    WR [ns]   | CPU stall[%%]|                     [n(Hz)]   ECA                    [us]| # enc err\n");
   fprintf(stderr, "eb-mon:  lock +dt -dt|   max(  act)| nMessages( rate ) early late  min   max  avrge( act) ltncy|          \n");
   fprintf(stderr, "eb-mon:     1  16   0| 32.71(17.87)|      2501(  69.0)     0    0  879   986    935( 935)   121          0\n");
   fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '     '      '    '      '          '\n");
@@ -255,6 +255,7 @@ int main(int argc, char** argv) {
   int32_t     ecaLateOffset;
   int         ecaSumEarly;
   uint32_t    nEncErr;
+  uint32_t    nEncErrOld;
   int         flagEncErrOverflow;
   int         flagEncErrExists; 
 
@@ -466,6 +467,7 @@ int main(int argc, char** argv) {
     wb_wr_reset_enc_err_counter(device, devIndex, nicIndex);
     nSecs            = snoopSecs;
     ecaSumEarly      = 0;
+    nEncErrOld       = 0;
     flagEncErrExists = 1;
     printSnoopHeader();
     while(1) {
@@ -506,6 +508,10 @@ int main(int argc, char** argv) {
       if (flagEncErrExists) {
         status = wb_wr_read_enc_err_counter(device, devIndex, nicIndex, &nEncErr, &flagEncErrOverflow);
         if (status != EB_OK) {flagEncErrExists = 0; nEncErr = 9999999;}
+        if (nEncErr > nEncErrOld) {
+          fprintf(stdout,                       "%s: error - 8b/10b cnt increased from %d to %d\n", program, nEncErrOld, nEncErr);
+          nEncErrOld = nEncErr;
+        } // if nEncErr
       } // reduce warnings in case gateware does not support error counter
        
       if (nSecs >= snoopSecs) {
