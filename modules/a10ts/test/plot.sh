@@ -111,11 +111,12 @@ get_sensor_address
 clean_up_log_files
 
 # Read time and temperature
+title="Temperature Measurements $dev - ($fpga_type)"
 while true; do
   sample_data
   if [ $plot_started -eq 0 ]; then
-    gnuplot -p -e 'set title "Temperature Measurements"; set autoscale xfix; set key top left box; set grid; set xlabel "FPGA Uptime [Decimal Hours]"; set ylabel "Temperature [Degree Celsius]"; set yrange [0:140]; plot "gnuplot_int.pipe" smooth bezier lt 2 lw 2 linecolor rgb "orange" title "FPGA (Internal) Temperature", "gnuplot_ext.pipe" smooth bezier lt 2 lw 2 linecolor rgb "blue" title "Board (External) Temperature"; while (1) { pause 1; replot; };' 2>>/dev/null &
-    gnuplot_pid=$!
+    #gnuplot -p -e "set title \"$title\"; set autoscale xfix; set key top left box; set grid; set xlabel \"FPGA Uptime [Decimal Hours]\"; set ylabel \"Temperature [Degree Celsius]\"; set yrange [0:140]; plot \"gnuplot_int.pipe\" lt 2 lw 2 linecolor rgb \"orange\" title \"FPGA (Internal) Temperature\", \"gnuplot_ext.pipe\" lt 2 lw 2 linecolor rgb \"blue\" title \"Board (External) Temperature\"; while (1) { pause 1; replot; };" 2>>/dev/null &
+gnuplot -p -e "set title \"$title\"; set autoscale xfix; set key top left box; set grid; set xlabel \"FPGA Uptime [Decimal Hours]\"; set ylabel \"Temperature [Degree Celsius]\"; set yrange [0:140]; plot \"gnuplot_int.pipe\" with linespoints lt 2 lw 2 pt 2 ps 1 linecolor rgb \"orange\" title \"FPGA (Internal) Temperature\", \"gnuplot_ext.pipe\" with linespoints lt 2 lw 2 pt 2 ps 1 linecolor rgb \"blue\" title \"Board (External) Temperature\"; while (1) { pause 1; replot; };" 2>>/dev/null &    gnuplot_pid=$!
     plot_started=1
     echo "Info: Press Ctrl+C to end the script, then close gnuplot ($gnuplot_pid) ..."
   fi
