@@ -34,7 +34,7 @@
 // For all questions and ideas contact: d.beck@gsi.de
 // Last update: 25-April-2015
 //////////////////////////////////////////////////////////////////////////////////////////////
-#define EBMON_VERSION "2.2.2"
+#define EBMON_VERSION "2.2.3"
 #define AHEADT       1000000     // data master works ahead of time [ns]
 #define EARLYDT   1000000000     // detection limit for early events [ns]
 
@@ -463,6 +463,7 @@ int main(int argc, char** argv) {
     wb_eca_stats_reset(device, devIndex, 0);
     wb_eca_stats_enable(device, devIndex, 0x1);
     wb_wr_stats_reset(device, devIndex, WRTOBS, STALLTOBS);
+    wb_wr_reset_enc_err_counter(device, devIndex, nicIndex);
     nSecs            = snoopSecs;
     ecaSumEarly      = 0;
     flagEncErrExists = 1;
