@@ -105,7 +105,7 @@ begin
     -- address decoder for the voltage sensor registers
     s_adr <= slave_i.adr(5 downto 2);
 
-    p_decode: process(rst_n_i, s_adr, slave_i.stb, slave_i.cyc)
+    p_decode_latch: process(rst_n_i, s_adr)
     begin
         if (rst_n_i = '0') then
             s_re <= (others => '0');
@@ -117,8 +117,6 @@ begin
                     else
                         s_re(i) <= '0';
                     end if;
-                else
-                    --s_re(i) <= '0';
                 end if;
             end loop;
         end if;
