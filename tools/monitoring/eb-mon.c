@@ -34,7 +34,7 @@
 // For all questions and ideas contact: d.beck@gsi.de
 // Last update: 25-April-2015
 //////////////////////////////////////////////////////////////////////////////////////////////
-#define EBMON_VERSION "2.2.4"
+#define EBMON_VERSION "2.2.5"
 #define AHEADT       1000000     // data master works ahead of time [ns]
 #define EARLYDT   1000000000     // detection limit for early events [ns]
 
@@ -789,6 +789,7 @@ int main(int argc, char** argv) {
     // die if not verbose
     if ((status != EB_OK) && !verbose) die("WR get encoder error counter", status);
     // if verbose, continue; this shall keep eb-mon -v useable even with old gateware
+    if (verbose)  fprintf(stdout, "# 8b/10b errors: ");
     if (status != EB_OK) sprintf(encErrStr, "EB error");
     else                 sprintf(encErrStr, "%u", nEncErr);
     fprintf(stdout, "%s\n", encErrStr);
