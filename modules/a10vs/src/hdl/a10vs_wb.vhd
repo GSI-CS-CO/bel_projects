@@ -75,6 +75,7 @@ architecture a10vs_wb_rtl of a10vs_wb is
     -- other
     signal s_adr             : std_logic_vector(c_adr_width - 1 downto 0);
     signal s_ack             : std_logic;                                    -- ack for wishbone
+    signal s_ack2            : std_logic;                                    -- ack delayed by 1 cycle (data from Avalon-MM is valid at 3rd cycle)
     signal s_re              : std_logic_vector(0 to c_vs_reg_n - 1);        -- enable for the voltage sensor registers
 
 begin
@@ -89,6 +90,7 @@ begin
     begin
         if rst_n_i = '0' then
             s_ack <= '0';
+            s_ack2 <= '0';
         else
             if rising_edge(clk_i) then
                 if slave_i.cyc = '1' and slave_i.stb = '1' then
@@ -96,11 +98,12 @@ begin
                 else
                     s_ack <= '0';
                 end if;
+                s_ack2 <= s_ack;
             end if;
         end if;
     end process;
 
-    slave_o.ack <= s_ack;
+    slave_o.ack <= s_ack2;
 
     -- address decoder for the voltage sensor registers
     s_adr <= slave_i.adr(5 downto 2);
