@@ -252,7 +252,11 @@ begin
               when 6 =>
                 s_psram_sel <= slave_i.dat(3 downto 0);
               when 7 =>
-                s_poweroff_comx <= slave_i.dat(0);
+                if(slave_i.dat = x"CAFEBAB0") then
+                  s_poweroff_comx <= slave_i.dat(0);
+                elsif(slave_i.dat = x"CAFEBAB1") then
+                  s_poweroff_comx <= slave_i.dat(0);
+                end if;
               when others => null;
             end case;
           else -- read

@@ -85,7 +85,7 @@ constant c_arria_reset : t_sdb_device := (
     product => (
     vendor_id     => x"0000000000000651", -- GSI
     device_id     => x"3a362063",
-    version       => x"00000002",
+    version       => x"00000003",
     date          => x"20131213",
     name          => "FPGA_RESET         ")));
 
