@@ -3,7 +3,7 @@
 //
 //  created : 2018
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 22-Jun-2023
+//  version : 12-Mar-2025
 //
 // Command-line interface for WR monitoring of many nodes via Etherbone.
 //
@@ -34,7 +34,7 @@
 // For all questions and ideas contact: d.beck@gsi.de
 // Last update: 27-April-2018
 //////////////////////////////////////////////////////////////////////////////////////////////
-#define EBMASSMON_VERSION "0.3.1"
+#define EBMASSMON_VERSION "0.3.2"
 
 // standard includes
 #include <unistd.h> // getopt
@@ -96,6 +96,7 @@ static void help(void) {
   fprintf(stderr, "  -m               include WR MAC\n");
   fprintf(stderr, "  -o               include offset between WR time and system time [ms]\n");
   fprintf(stderr, "  -q               justs parse file and list nodes. No hardware access. Useful for ATD file analysis\n");
+  fprintf(stderr, "  -r               include # of 8b/10b errors\n");
   fprintf(stderr, "  -s               include WR sync status\n");
   fprintf(stderr, "  -t               display table with all nodes\n");
   fprintf(stderr, "  -u               display statistics for all nodes\n");
@@ -134,7 +135,7 @@ static void help(void) {
   fprintf(stderr, "          display info on all SCUs of the production network queried via the ACC network\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Attention! there are separate IPAM files for SCU (scu.xt) and non-SCU (misc_devices.txt)\n");
-    fprintf(stderr, "\n");
+  fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
   fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", EBMASSMON_VERSION);
 } //help
@@ -242,7 +243,6 @@ static void removeNonAlphaNumeric(char *text)
 static int parseSimpleLineOk(char* fileLine, char* node)
 {
   removeNonAlphaNumeric(fileLine);
-  sprintf(node, "%s", fileLine);
   return 1;
 } // parseSimpleLineOk
 
@@ -261,7 +261,6 @@ static int parseIpamLineOk(char* fileLine, char* network, char* node, char* info
   if (fileLine         == NULL)    return 0;      // empty string: error
   if (fileLine[0]      == '#')     return 0;      // line is commented: return error
   if (strlen(fileLine) >=  MAXLEN) return 0;      // line too long: return error
-
 
   // parse first part including hostname
   sprintf(tmp, "%s", fileLine);   // make a copy
@@ -293,15 +292,15 @@ static int parseIpamLineOk(char* fileLine, char* network, char* node, char* info
     sprintf(node, "%s", ptr1);
     node_ok = 1;
   } // ptr != 0
-
+  
   // parse 2nd part which is the comment after hostname
   // network name  
   sprintf(tmp, "%s", fileLine);               // make another copy
-  if (tmp  != NULL) {
+  if (strlen(tmp) != 0) {
     sprintf(network, "N/A");
     ptr1 = NULL;
     ptr2 = NULL;
-    
+
     ptr1 = strstr(tmp, "# NW");               // comment starts here
     if (ptr1 != NULL) {                 
       ptr1 = &(ptr1[5]);                      // first character after '# NW '
@@ -315,7 +314,7 @@ static int parseIpamLineOk(char* fileLine, char* network, char* node, char* info
     
   // info
   sprintf(tmp, "%s", fileLine);               // make another copy
-  if (tmp != NULL) {
+  if (strlen(tmp) != 0) {
     sprintf(info, "N/A");
     ptr1 = NULL;
     ptr2 = NULL;
@@ -378,6 +377,13 @@ static void printSyncState(uint32_t syncState)
     else                                           fprintf(stdout, ", %8s", "NO SYNC");
   }
 } // printSyncState
+
+
+static void printEncErrors(uint32_t encErr)
+{
+  if (encErr == ~0)                                fprintf(stdout, ", %10s", "---");
+  else                                             fprintf(stdout, ", %10u", encErr);
+} // printEncErrors
 
 
 static void printLink(uint32_t link)
@@ -514,11 +520,11 @@ static void printEbStat(eb_status_t status)
 } // print eb state
 
 
-static void printHeader(int wrDate, int wrOffset, int wrSync, int wrMac, int wrLock, int wrLink, int wrIp, int wrUptime, int buildVer, int info, int checkIpMac, int tCont, int cpuStalls)
+static void printHeader(int wrDate, int wrOffset, int wrSync, int wrMac, int wrLock, int wrLink, int wrIp, int wrUptime, int buildVer, int info, int checkIpMac, int tCont, int cpuStalls, int encErr)
 {
   // always print header
   fprintf(stdout,   "%15s",   "node");
-  fprintf(stdout,   ", %10s", "network");
+  fprintf(stdout,   ", %11s", "network");
   fprintf(stdout,   ", %8s" , "ebStatus");
   fprintf(stdout,   ", %2s" , "up");
 
@@ -535,8 +541,8 @@ static void printHeader(int wrDate, int wrOffset, int wrSync, int wrMac, int wrL
   if (wrLock)     fprintf(stdout, ", %5s",  "#lock");
   if (wrIp)       fprintf(stdout, ", %15s", "IP");
   if (checkIpMac) fprintf(stdout, ", %8s",  "?MAC ?IP");
+  if (encErr)     fprintf(stdout, ", %10s", "8b/10b err");
   if (info)       fprintf(stdout, ", %s",   "info");  // this is the last option
-
 
   // always linefeed  
   fprintf(stdout, "\n");
@@ -571,6 +577,7 @@ int main(int argc, char** argv) {
   int          getWRTCont   = 0;       // option '-b'
   int          getCPUStalls = 0;       // option '-k'
   int          getBuildVer  = 0;       // option '-a'
+  int          getEncErr    = 0;       // option '-r'
   int          timeout      = 1000000; // option '-w'; internal representation is [us]
   int          fileFormat   = 0;       // option '-f'
   int          printTable   = 0;       // option '-t'  
@@ -594,6 +601,7 @@ int main(int argc, char** argv) {
   uint32_t     nodeIp[MAXNODES];
   uint32_t     atdIp[MAXNODES];
   uint32_t     nodeUp[MAXNODES];
+  uint32_t     nodeEncErr[MAXNODES];
   char         nodeNetwork[MAXNODES][MAXLEN+1];
   char         nodeInfo[MAXNODES][MAXLEN+1];
   eb_status_t  nodeEbStat[MAXNODES];
@@ -623,7 +631,7 @@ int main(int argc, char** argv) {
 
   program = argv[0];
 
-  while ((opt = getopt(argc, argv, "f:k:w:x:y:abcdeghijlmoqstuz")) != -1) {
+  while ((opt = getopt(argc, argv, "f:k:w:x:y:abcdeghijlmoqrstuz")) != -1) {
     switch (opt) {
       case 'a':
         getBuildVer=1;
@@ -689,6 +697,9 @@ int main(int argc, char** argv) {
           exit(1);
         } 
         checkIpMac=1;
+        break;
+      case 'r':
+        getEncErr=1;
         break;
       case 's':
         getWRSync=1;
@@ -797,6 +808,7 @@ int main(int argc, char** argv) {
     nodeLink[i]       = ~0;
     nodeUptime[i]     = ~0;
     nodeSyncState[i]  = ~0;
+    nodeEncErr[i]     = ~0;
     nodeIp[i]         = ~0;
     nodeUp[i]         = ~0;
     nodeEbStat[i]     = ~0;
@@ -842,13 +854,14 @@ int main(int argc, char** argv) {
               nodeNsecs64[nNodes] = tmp64;
               nodeOffset[nNodes]  = temp64;
               nodeUp[nNodes]      = 1;
-              if (getWRSync)   {if ((status = wb_wr_get_sync_state(device, devIndex, &tmp)) == EB_OK)                    nodeSyncState[nNodes] = tmp;}
-              if (getWRMac)    {if ((status = wb_wr_get_mac(device, devIndex, &tmp64)) == EB_OK)                         nodeMac[nNodes]       = tmp64;}
+              if (getWRSync)   {if ((status = wb_wr_get_sync_state(device, devIndex, &tmp))                    == EB_OK) nodeSyncState[nNodes] = tmp;}
+              if (getEncErr)   {if ((status = wb_wr_read_enc_err_counter(device, devIndex, 0, &tmp32, &tmp))   == EB_OK) nodeEncErr[nNodes]    = tmp32;}
+              if (getWRMac)    {if ((status = wb_wr_get_mac(device, devIndex, &tmp64))                         == EB_OK) nodeMac[nNodes]       = tmp64;}
               if (getWRLock)   {if ((status = wb_wr_stats_get_lock(device, devIndex, &tmp64, &temp64, &tmp32)) == EB_OK) nodeNLock[nNodes]     = tmp32;}
-              if (getWRLink)   {if ((status = wb_wr_get_link(device, devIndex, &tmp)) == EB_OK)                          nodeLink[nNodes]      = tmp;}
-              if (getWRIP)     {if ((status = wb_wr_get_ip(device, devIndex, &tmp)) == EB_OK)                            nodeIp[nNodes]        = tmp;}
-              if (getWRUptime) {if ((status = wb_wr_get_uptime(device, devIndex, &tmp32)) == EB_OK)                      nodeUptime[nNodes]    = tmp32;}
-              if (getBuildVer) {if ((status = wb_get_build_type(device, MAXLEN, tmpStr, &tmp32)) == EB_OK)               sprintf(buildType[nNodes], "%s", tmpStr);}
+              if (getWRLink)   {if ((status = wb_wr_get_link(device, devIndex, &tmp))                          == EB_OK) nodeLink[nNodes]      = tmp;}
+              if (getWRIP)     {if ((status = wb_wr_get_ip(device, devIndex, &tmp))                            == EB_OK) nodeIp[nNodes]        = tmp;}
+              if (getWRUptime) {if ((status = wb_wr_get_uptime(device, devIndex, &tmp32))                      == EB_OK) nodeUptime[nNodes]    = tmp32;}
+              if (getBuildVer) {if ((status = wb_get_build_type(device, MAXLEN, tmpStr, &tmp32))               == EB_OK) printf(buildType[nNodes], "%s", tmpStr);}
               if (getWRTCont)  {
                 if ((status = wb_wr_stats_get_continuity(device, devIndex, &contObsT, &contMaxPosDT, &tmp64, &contMaxNegDT, &temp64)) == EB_OK) {
                   if (contObsT == 8) {/* chk */ // just take the max jump; should be '16' for 62.5 MHz or '8' for 125 MHz eCPU
@@ -876,10 +889,10 @@ int main(int argc, char** argv) {
   if (printTable) {
     fprintf(stdout, "\nqueried data from %d nodes in network '%s'\n", nNodes, networkTypeNames[networkType]);
     
-    printHeader(getWRDate, getWROffset, getWRSync, getWRMac, getWRLock, getWRLink, getWRIP, getWRUptime, getBuildVer, dispInfo, checkIpMac, getWRTCont, getCPUStalls);
+    printHeader(getWRDate, getWROffset, getWRSync, getWRMac, getWRLock, getWRLink, getWRIP, getWRUptime, getBuildVer, dispInfo, checkIpMac, getWRTCont, getCPUStalls, getEncErr);
     for (i=0; i<nNodes; i++) {
       fprintf(stdout, "%15s", nodeName[i]);
-      fprintf(stdout, ", %10s", nodeNetwork[i]);
+      fprintf(stdout, ", %11s", nodeNetwork[i]);
       printEbStat(nodeEbStat[i]);
       printUp(nodeUp[i]);
       if (getWRDate)    printDate(nodeNsecs64[i]);
@@ -894,6 +907,7 @@ int main(int argc, char** argv) {
       if (getWRLock)    printNLock(nodeNLock[i]);
       if (getWRIP)      printIp(nodeIp[i]);
       if (checkIpMac)   printCheckIpMac(nodeMac[i], atdMac[i], nodeIp[i], atdIp[i]);
+      if (getEncErr)    printEncErrors(nodeEncErr[i]);
       if (dispInfo)     printInfo(nodeInfo[i]);
       printf("\n");
     } // for all nodes
