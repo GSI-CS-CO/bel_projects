@@ -145,7 +145,7 @@ begin
     vs_sample_csr_addr <= s_adr;
 
     -- Avalon-MM data access
-    p_av_readdata: process(rst_n_i, s_vs_sel, s_ack)
+    p_av_readdata: process(rst_n_i, s_vs_sel, vs_ctrl_csr_rddata, vs_sample_csr_rddata)
     begin
         if (rst_n_i = '0') then
             slave_o.dat <= (others => '0');
@@ -161,7 +161,7 @@ begin
         end if;
     end process;
 
-    p_av_writedata: process(s_vs_sel)
+    p_av_writedata: process(s_vs_sel, slave_i.dat)
     begin
         vs_ctrl_csr_wrdata   <= (others => '0');
         vs_sample_csr_wrdata <= (others => '0');
