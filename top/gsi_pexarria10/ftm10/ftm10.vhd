@@ -110,14 +110,14 @@ entity ftm10 is
     -----------------------------------------------------------------------
     -- SFP (main WR Interface)
     -----------------------------------------------------------------------
-    sfp_tx_disable_o   : out   std_logic;                    -- Second SFP (ftm10 only)
-    sfp_tx_fault_i     : in    std_logic;                    -- Second SFP (ftm10 only)
-    sfp_los_i          : in    std_logic;                    -- Second SFP (ftm10 only)
-    sfp_txp_o          : out   std_logic;                    -- Second SFP (ftm10 only)
-    sfp_rxp_i          : in    std_logic;                    -- Second SFP (ftm10 only)
-    sfp_mod0_i         : in    std_logic;                    -- Second SFP (ftm10 only)
-    sfp_mod1_io        : inout std_logic;                    -- Second SFP (ftm10 only)
-    sfp_mod2_io        : inout std_logic;                    -- Second SFP (ftm10 only)
+    sfp_tx_disable_o   : out   std_logic;
+    sfp_tx_fault_i     : in    std_logic;
+    sfp_los_i          : in    std_logic;
+    sfp_txp_o          : out   std_logic;
+    sfp_rxp_i          : in    std_logic;
+    sfp_mod0_i         : in    std_logic;
+    sfp_mod1_io        : inout std_logic;
+    sfp_mod2_io        : inout std_logic;
 
     -----------------------------------------------------------------------
     -- SFP (auxiliary - only used on ftm10)
@@ -169,8 +169,6 @@ architecture rtl of ftm10 is
   signal s_led_aux_link_act : std_logic;
   signal s_led_aux_track    : std_logic;
   signal s_led_aux_pps      : std_logic;
-
-  signal s_sfp_disable : std_logic;
 
   signal s_gpio_o   : std_logic_vector(19 downto 0);
   signal s_gpio_i   : std_logic_vector(19 downto 0);
@@ -259,6 +257,7 @@ begin
       g_dual_port_wr       => true,
       g_en_eca             => false,
       g_delay_diagnostics  => true,
+      g_en_enc_err_counter => true,
       g_lm32_are_ftm       => true,
       g_lm32_MSIs          => 1,
       g_lm32_cores         => c_cores,
@@ -296,7 +295,8 @@ begin
       sfp_aux_tx_disable_o    => open,
       sfp_aux_tx_fault_i      => sfp_aux_tx_fault_i,
       sfp_aux_los_i           => sfp_aux_los_i,
-      wbar_phy_dis_o          => s_sfp_disable,
+      wbar_phy_dis_o          => sfp_tx_disable_o,
+      wbar_phy_aux_dis_o      => sfp_aux_tx_disable_o,
       i2c_scl_pad_i           => s_i2c_scl_pad_in,
       i2c_scl_pad_o           => s_i2c_scl_pad_out,
       i2c_scl_padoen_o        => s_i2c_scl_padoen,
@@ -346,10 +346,6 @@ begin
       ps_cre                  => s_psram_cre,
       ps_advn                 => s_psram_advn,
       ps_wait                 => s_psram_wait_or);
-
-  -- SFP management
-  sfp_tx_disable_o     <= s_sfp_disable;
-  sfp_aux_tx_disable_o <= s_sfp_disable;
 
   -- Use only one PSRAM (TBD: Multichip support)
   psram_single : if not(g_quad_mode_psram) generate

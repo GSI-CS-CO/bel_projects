@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 25-Jul-2024
+ *  version : 07-Feb-2025
  *
  * Command-line interface for resetting a FPGA. This forces a restart using the image stored
  * in the local flash of the timing receiver.
@@ -36,7 +36,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 01-December-2017
  ********************************************************************************************/
-#define EBRESET_VERSION "1.3.1"
+#define EBRESET_VERSION "01.04.00"
 
 // standard includes
 #include <unistd.h> // getopt
@@ -73,15 +73,16 @@ static void help(void) {
   fprintf(stderr, "  -p<t>            after FPGA reset, wait for the specified time [s] and probe device\n");
   fprintf(stderr, "  -f               force 'fpgareset' of FPGA with incompatible FPGA gateware\n");
   fprintf(stderr, "                   use the 'force' option at your own risk: this might brick your device\n");
+  fprintf(stderr, "  -n<NIC index>    specify NIC when using dual SFP boards (0: 1st NIC; 1: 2nd NIC; default: n0)\n");
   fprintf(stderr, "  -h               display this help and exit\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "  wddisable        disables the watchdog (preventing automated FPGA reset permanently)\n");
   fprintf(stderr, "  wdenable         enables the watchdog (automated FPGA reset after 'some time')\n");
   fprintf(stderr, "  wdretrigger      retriggers an enabled watchdog (preventing automated FPGA reset for 'some time')\n");
   fprintf(stderr, "  wdstatus         gets the status of the watchdog; '1': enabled, '0': disabled\n");
-  fprintf(stderr, "  phyreset         resets the PHY (recommended for experts and developers)\n");
-  fprintf(stderr, "  sfpreset         resets the SFP (recommended for users)\n");
-  fprintf(stderr, "  cpuhalt <cpu>    halts a user lm32 CPU\n");
+  fprintf(stderr, "  phyreset         resets the PHY (recommended for experts and developers); use option '-n' for dual NIC boards\n");
+  fprintf(stderr, "  sfpreset         resets the SFP (recommended for users); use option '-n' for dual NIC boards\n");
+  fprintf(stderr, "  cpuhalt  <cpu>   halts a user lm32 CPU\n");
   fprintf(stderr, "                   specify a single CPU (0..31) or all CPUs (0xff)\n");
   fprintf(stderr, "  cpureset <cpu>   resets a user lm32 CPU, firmware restarts.\n");
   fprintf(stderr, "                   specify a single CPU (0..31) or all CPUs (0xff)\n");
@@ -112,6 +113,7 @@ int main(int argc, char** argv) {
   int         flagForce       = 0;
   int         probeAfterReset = 0;
   int         waitTime        = 1;
+  int         nicIndex        = 0;
   int         exitCode        = 0;
   uint32_t    nCPU;
   uint64_t    i;
@@ -124,7 +126,7 @@ int main(int argc, char** argv) {
 
   program = argv[0];
 
-  while ((opt = getopt(argc, argv, "p:feh")) != -1) {
+  while ((opt = getopt(argc, argv, "p:n:feh")) != -1) {
     switch (opt) {
       case 'p' :
         probeAfterReset=1;
@@ -139,6 +141,13 @@ int main(int argc, char** argv) {
         break;
       case 'f':
         flagForce = 1;
+        break;
+      case 'n':
+        nicIndex = strtol(optarg, &tail, 0);
+        if (!(nicIndex == 0 || nicIndex == 1)) {
+          fprintf(stderr, "NIC index has to be 0 or 1, not %d!\n", nicIndex);
+          exit(1);
+        } // if nicIndex
         break;
       case 'h':
         help();
@@ -242,7 +251,7 @@ int main(int argc, char** argv) {
     if (!strcasecmp(command, "phyreset")) {
       cmdExecuted = 1;
 
-      status = wb_wr_phy_reset(device, devIndex);
+      status = wb_wr_phy_reset(device, devIndex, nicIndex);
       if (status != EB_OK)  die("eb-reset: ", status);
     } // reset PHY
 
@@ -250,7 +259,7 @@ int main(int argc, char** argv) {
     if (!strcasecmp(command, "sfpreset")) {
       cmdExecuted = 1;
 
-      status = wb_wr_sfp_reset(device, devIndex);
+      status = wb_wr_sfp_reset(device, devIndex, nicIndex);
       if (status != EB_OK)  die("eb-reset: ", status);
     } // reset SFP
 

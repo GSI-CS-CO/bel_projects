@@ -3,7 +3,7 @@
 //
 //  created : 2015
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 28-Feb-2025
+//  version : 11-mar-2025
 //
 // Command-line interface for WR monitoring via Etherbone.
 //
@@ -34,7 +34,7 @@
 // For all questions and ideas contact: d.beck@gsi.de
 // Last update: 25-April-2015
 //////////////////////////////////////////////////////////////////////////////////////////////
-#define EBMON_VERSION "2.2.1"
+#define EBMON_VERSION "2.2.5"
 #define AHEADT       1000000     // data master works ahead of time [ns]
 #define EARLYDT   1000000000     // detection limit for early events [ns]
 
@@ -85,6 +85,7 @@ static void help(void)
   fprintf(stderr, "  -k               display 'ECA-Tap' statistics\n");
   fprintf(stderr, "  -l               display WR link status\n");
   fprintf(stderr, "  -m               display WR MAC\n");
+  fprintf(stderr, "  -n<NIC index>    specify NIC for selected properties (0: 1st NIC; 1: 2nd NIC; default: n0)\n");
   fprintf(stderr, "  -o               display offset between WR time and system time [ms]\n");
   fprintf(stderr, "  -p               display state of IP\n");
   fprintf(stderr, "  -s<secs> <cpu>   snoop for information continuously (and print warnings. THIS OPTION RESETS ALL STATS!)\n");
@@ -92,9 +93,10 @@ static void help(void)
   fprintf(stderr, "  -u<index>        user 1-wire: specify WB device in case multiple WB devices of the same type exist (default: u0)\n");
   fprintf(stderr, "  -v               display verbose information\n");
   fprintf(stderr, "  -w<index>        WR 1-wire: specify WB device in case multiple WB devices of the same type exist (default: w0)\n");
-  fprintf(stderr, "  -x<phyIndex>     read the encoder error counter of the given PHY index (default: x0)\n");
+  fprintf(stderr, "  -x               display the 8b/10b encoding error counter\n");
   fprintf(stderr, "  -y               display WR sync status\n");
   fprintf(stderr, "  -z               display FPGA uptime [h]\n");
+  fprintf(stderr, "  -K               display WR time; for dual SFP boards only\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "  wrstatreset  <tWrObs> <tStallObs>  command clears WR statistics and sets observation times (default: 8 50000)\n");
   fprintf(stderr, "  ecatapreset  <lateOffset>          command resets ECA-Tap and sets offset for detection of late events (default: 0)\n");
@@ -110,14 +112,15 @@ static void help(void)
   fprintf(stderr, "Example4: '%s dev/wbm0 encerrclear 0x1' clears the encoder error counter for the first PHY\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "When using option '-s<n>', the following information is displayed\n");
-  fprintf(stderr, "eb-mon:    WR [ns]   | CPU stall[%%]|                      [n(Hz)]   ECA                 [us(us)]\n");
-  fprintf(stderr, "eb-mon:  lock +dt -dt|   max(  act)| nMessages( rate ) early late  min max avrge(act) ltncy\n");
-  fprintf(stderr, "eb-mon:     1  16   0| 32.71(17.87)|      2501(  69.0)     0    0  879 986   935(935)   121\n");
-  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '   '     '   '      '\n");
-  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '   '     '   '      '- latency\n");
-  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '   '     '   '- actual average (dl - ts)\n");
-  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '   '     '- average (dl - ts)\n");
-  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '   '- max (dl - ts) since last 'early event'\n");
+  fprintf(stderr, "eb-mon:    WR [ns]   | CPU stall[%%]|                     [n(Hz)]   ECA                    [us]| # enc err\n");
+  fprintf(stderr, "eb-mon:  lock +dt -dt|   max(  act)| nMessages( rate ) early late  min   max  avrge( act) ltncy|          \n");
+  fprintf(stderr, "eb-mon:     1  16   0| 32.71(17.87)|      2501(  69.0)     0    0  879   986    935( 935)   121          0\n");
+  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '     '      '    '      '          '\n");
+  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '     '      '    '      '          '- # of encoding errors\n");
+  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '     '      '    '      '- latency\n");
+  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '     '      '    '- actual average (dl - ts)\n");
+  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '     '      '- average (dl - ts)\n");
+  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '     '- max (dl - ts) since last 'early event'\n");
   fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '- min (deadline - timestamp) since last 'late event'\n");
   fprintf(stderr, "            '   '   '      '     '           '      '      '    '- # of late messages\n");
   fprintf(stderr, "            '   '   '      '     '           '      '       - # of early messages\n");
@@ -136,12 +139,12 @@ static void help(void)
 
 void printSnoopHeader()
 { 
-  fprintf(stdout, "%s:    WR [ns]   | CPU stall[%%]|                      [n(Hz)]   ECA               [us]\n", program);
-  fprintf(stdout, "%s:  lock +dt -dt|   max(  act)| nMessages( rate ) early late  min max avrge(act) ltncy\n", program);
+  fprintf(stdout, "%s:    WR [ns]   | CPU stall[%%]|                      [n(Hz)]   ECA                    [us]| # enc err\n", program);
+  fprintf(stdout, "%s:  lock +dt -dt|   max(  act)| nMessages( rate ) early late  min   max  avrge( act) ltncy|          \n", program);
 } // printSnoopHeader
 
 
-void printSnoopData(int snoopInterval, int snoopLockFlag, int64_t contMaxPosDT, int64_t contMaxNegDT, double snoopStallMax, double snoopStallAct, uint64_t ecaNMessage, int64_t ecaMin, int64_t ecaMax, int64_t ecaDtSum, int ecaLate, int ecaEarly)
+void printSnoopData(int snoopInterval, int snoopLockFlag, int64_t contMaxPosDT, int64_t contMaxNegDT, double snoopStallMax, double snoopStallAct, uint64_t ecaNMessage, int64_t ecaMin, int64_t ecaMax, int64_t ecaDtSum, int ecaLate, int ecaEarly, uint32_t nErrEnc)
 {
   int average;
   int latency;
@@ -165,8 +168,8 @@ void printSnoopData(int snoopInterval, int snoopLockFlag, int64_t contMaxPosDT, 
   fprintf(stdout, "%3d ", (int)contMaxPosDT);
   fprintf(stdout, "%3d|", (int)contMaxNegDT);
   fprintf(stdout, " %5.2f(%5.2f)|", snoopStallMax, snoopStallAct);
-  if (ecaNMessage == 0) fprintf(stdout, " %9"PRIu64"(%6.1f)   %3d  %3d  %3d %3d   %3d(%3d)   %3d", (uint64_t)0, 0.0, 0, 0, 0, 0, 0, 0, 0);
-  else                  fprintf(stdout, " %9"PRIu64"(%6.1f)   %3d  %3d  %3d %3d   %3d(%3d)   %3d", ecaNMessage, (double)nMessageAct/(double)snoopInterval, ecaEarly, ecaLate, (int)(ecaMin/1000), (int)(ecaMax/1000), average, averageAct, latency);
+  if (ecaNMessage == 0) fprintf(stdout, " %9"PRIu64"(%6.1f)   %3d  %3d  %3d %5d   %4d(%4d)   %3d|   %7d", (uint64_t)0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0);
+  else                  fprintf(stdout, " %9"PRIu64"(%6.1f)   %3d  %3d  %3d %5d   %4d(%4d)   %3d|   %7d", ecaNMessage, (double)nMessageAct/(double)snoopInterval, ecaEarly, ecaLate, (int)(ecaMin/1000), (int)(ecaMax/1000), average, averageAct, latency, nErrEnc);
   fprintf(stdout, "\n");
   fflush(stdout); 
 
@@ -181,7 +184,7 @@ int main(int argc, char** argv) {
   eb_socket_t       socket;
   int               devIndex=-1;  // 0,1,2... - there may be more than 1 device on the WB bus
   unsigned int      busIndex=-1;  // index of 1-wire bus connected to a controller
-  int               phyIndex=-1;  // index of phy interface
+  int               nicIndex=0;   // index of WR interface; 0: 1st NIC, 1: 2nd NIC
 
   int               i;            // counter for comparing WR time with other device
   int               nCompare = 5; // number of compares
@@ -194,6 +197,7 @@ int main(int argc, char** argv) {
 
   int         getEBVersion=0;
   int         getWRDate=0;
+  int         getWRDNDate=0;
   int         getWROffset=0;
   int         getWRSync=0;
   int         getWRMac=0;
@@ -251,7 +255,9 @@ int main(int argc, char** argv) {
   int32_t     ecaLateOffset;
   int         ecaSumEarly;
   uint32_t    nEncErr;
+  uint32_t    nEncErrOld;
   int         flagEncErrOverflow;
+  int         flagEncErrExists; 
 
   
   int         link;
@@ -265,6 +271,7 @@ int main(int argc, char** argv) {
   char ipStateStr[64];
   char syncStr[64];
   char timestr[60];
+  char encErrStr[64];
   char dummy[64];
   uint32_t dummy32;
   char buildType[BUILDTYPELEN];
@@ -277,7 +284,7 @@ int main(int argc, char** argv) {
 
   program = argv[0];
 
-  while ((opt = getopt(argc, argv, "t:u:w:f:b:c:j:s:x:adgopymlievhzk")) != -1) {
+  while ((opt = getopt(argc, argv, "t:u:w:f:b:c:j:s:n:adgopymlievhzkxK")) != -1) {
     switch (opt) {
       case 'a':
         getBuildType=1;
@@ -294,10 +301,10 @@ int main(int argc, char** argv) {
         getWRDateOther=1;
         devNameOther = optarg;
         break;
-      case 'd':
-        getWRDate=1;
-        break;
-      case 'f':
+      case 'K':
+        getWRDNDate=1;
+        break; 
+     case 'f':
         family = strtol(optarg, &tail, 0);
         if (*tail != 0) {
           fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg);
@@ -337,14 +344,15 @@ int main(int argc, char** argv) {
       case 'p':
         getWRIPState=1;
         break;
+      case 'n':
+        nicIndex = strtol(optarg, &tail, 0);
+        if (!(nicIndex == 0 || nicIndex == 1)) {
+          fprintf(stderr, "NIC index has to be 0 or 1, not %d!\n", nicIndex);
+          exit(1);
+        } // if nicIndex
+        break;
       case 'x':
         getEncErrCounter=1;
-        phyIndex = strtol(optarg, &tail, 0);
-        if(!(phyIndex == 0 || phyIndex == 1)) {
-          fprintf(stderr, "PHY interface index has to be 0 or 1, not %d!\n", phyIndex);
-          exit(1);
-        }
-        break;
         break;
       case 'y':
         getWRSync=1;
@@ -397,6 +405,7 @@ int main(int argc, char** argv) {
         getWRUptime=1;
         getEBVersion=1;
         getBuildType=1;
+        getEncErrCounter=1;
         verbose=1;
         break;
       case 'w':
@@ -455,13 +464,16 @@ int main(int argc, char** argv) {
     wb_eca_stats_reset(device, devIndex, 0);
     wb_eca_stats_enable(device, devIndex, 0x1);
     wb_wr_stats_reset(device, devIndex, WRTOBS, STALLTOBS);
-    nSecs           = snoopSecs;
-    ecaSumEarly     = 0;
+    wb_wr_reset_enc_err_counter(device, devIndex, nicIndex);
+    nSecs            = snoopSecs;
+    ecaSumEarly      = 0;
+    nEncErrOld       = 0;
+    flagEncErrExists = 1;
     printSnoopHeader();
     while(1) {
       // get data
       // wr lock
-      wb_wr_get_sync_state(device, devIndex, &syncState);
+      wb_wr_get_sync_state(device, nicIndex, &syncState);
       if (syncState == WR_PPS_GEN_ESCR_MASK) snoopLockFlag = 1;
       else                                   snoopLockFlag = 0;
       if (!snoopLockFlag) {
@@ -491,10 +503,20 @@ int main(int argc, char** argv) {
         fprintf(stdout,                         "%s: error - early event %f [us]\n", program, (double)ecaDtMax/1000.0);
         wb_eca_stats_clear(device, devIndex, 0x2);
       }
-      
+
+      // error encoder
+      if (flagEncErrExists) {
+        status = wb_wr_read_enc_err_counter(device, devIndex, nicIndex, &nEncErr, &flagEncErrOverflow);
+        if (status != EB_OK) {flagEncErrExists = 0; nEncErr = 9999999;}
+        if (nEncErr > nEncErrOld) {
+          fprintf(stdout,                       "%s: error - 8b/10b cnt increased from %d to %d\n", program, nEncErrOld, nEncErr);
+          nEncErrOld = nEncErr;
+        } // if nEncErr
+      } // reduce warnings in case gateware does not support error counter
+       
       if (nSecs >= snoopSecs) {
         printSnoopData(snoopSecs, snoopLockFlag, contMaxPosDT, contMaxNegDT, snoopStallMax, snoopStallAct,
-                       ecaNMessage, ecaDtMin, ecaDtMax, ecaDtSum, ecaNLate, ecaSumEarly);
+                       ecaNMessage, ecaDtMin, ecaDtMax, ecaDtSum, ecaNLate, ecaSumEarly, nEncErr);
         nSecs = 1;
       } // if nSecs
       else nSecs++;
@@ -589,8 +611,22 @@ int main(int argc, char** argv) {
     }
   } // if getWRDate
 
+  if (getWRDNDate) {
+    if ((status = wb_wr_get_dualnic_time(device, nicIndex, &nsecs64)) != EB_OK) die("WR get dual NIC time", status);
+    secs     = (unsigned long)((double)nsecs64 / 1000000000.0);
+    usecs64  = nsecs64 / 1000.0;
+
+    // Format the date
+    tm = gmtime(&secs);
+    strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S %Z", tm);
+    
+    if (verbose) fprintf(stdout, "Current TAI: ");
+    fprintf(stdout, "%s (%lu us)", timestr, usecs64 - secs * 1000000);
+      fprintf(stdout, ", %"PRIu64" us\n", nsecs64 / 1000);
+  } // if getWRDNDate
+
   if (getWRSync) {
-    if ((status = wb_wr_get_sync_state(device, devIndex, &syncState)) != EB_OK) die("WR get sync state", status);
+    if ((status = wb_wr_get_sync_state(device, nicIndex, &syncState)) != EB_OK) die("WR get sync state", status);
     if ((syncState == WR_PPS_GEN_ESCR_MASK))
       sprintf(syncStr,"TRACKING");
     else if ((syncState == WR_PPS_GEN_ESCR_MASKTS))
@@ -604,13 +640,13 @@ int main(int argc, char** argv) {
   } // getWRSync
 
   if (getWRMac) {
-    if ((status = wb_wr_get_mac(device, devIndex, &mac)) != EB_OK) die("WR get MAC", status);
+    if ((status = wb_wr_get_mac(device, nicIndex, &mac)) != EB_OK) die("WR get MAC", status);
     if (verbose) fprintf(stdout, "MAC: ");
     fprintf(stdout, "%012llx\n", (long long unsigned)mac);
   }
 
   if (getWRLink) {
-    if ((status = wb_wr_get_link(device, devIndex, &link)) != EB_OK) die("WR get link state", status);
+    if ((status = wb_wr_get_link(device, nicIndex, &link)) != EB_OK) die("WR get link state", status);
     if (link) 
       sprintf(linkStr, "LINK_UP");
     else
@@ -620,14 +656,14 @@ int main(int argc, char** argv) {
   }
 
   if (getWRIP) {
-    if ((status = wb_wr_get_ip(device, devIndex, &ip)) != EB_OK) die("WR get IP", status);
+    if ((status = wb_wr_get_ip(device, nicIndex, &ip)) != EB_OK) die("WR get IP", status);
     if (verbose) fprintf(stdout, "IP: ");
     fprintf(stdout, "%03d.%03d.%03d.%03d\n", (ip & 0xFF000000) >> 24, (ip & 0x00FF0000) >> 16, (ip & 0x0000FF00) >> 8, ip & 0x000000FF);
   }
 
   if(getWRIPState) {
      if ((status = wb_get_build_type(device, BUILDTYPELEN, buildType, &dummy32)) != EB_OK) die("WB get build type (for IP state)", status);
-     if ((status = wb_wr_get_ip_state(device, devIndex, dummy32, &ipState)) != EB_OK) die("WB get IP state", status);
+     if ((status = wb_wr_get_ip_state(device, nicIndex, dummy32, &ipState)) != EB_OK) die("WB get IP state", status);
      switch (ipState) {
        case -1 :
          sprintf(ipStateStr, "unknown");
@@ -749,9 +785,14 @@ int main(int argc, char** argv) {
   } // getECATap
 
   if (getEncErrCounter) {
-    if ((status = wb_wr_read_enc_err_counter(device, devIndex, phyIndex, &nEncErr, &flagEncErrOverflow)) != EB_OK) die("WR get encoder error counter", status);
-    /* fprintf(stdout, "%u %d\n", nEncErr, flagEncErrOverflow); chk don't print overflow flag */
-    fprintf(stdout, "%u\n", nEncErr);
+    status = wb_wr_read_enc_err_counter(device, devIndex, nicIndex, &nEncErr, &flagEncErrOverflow);
+    // die if not verbose
+    if ((status != EB_OK) && !verbose) die("WR get encoder error counter", status);
+    // if verbose, continue; this shall keep eb-mon -v useable even with old gateware
+    if (verbose)  fprintf(stdout, "# 8b/10b errors: ");
+    if (status != EB_OK) sprintf(encErrStr, "EB error");
+    else                 sprintf(encErrStr, "%u", nEncErr);
+    fprintf(stdout, "%s\n", encErrStr);
   } // if getEncerrcounter
   
   if (command) {
@@ -789,9 +830,9 @@ int main(int argc, char** argv) {
     } // ecatapdisable
 
     if (!strcasecmp(command, "encerrclear")) {
-      if (optind+2  != argc)   {printf("expecting exactly one argument: encerrclear <clearFlag>\n"); return 1;}
+      if (optind+2  != argc)     {printf("expecting exactly one argument: encerrclear <clearFlag>\n"); return 1;}
       encErrClearFlag = strtoul(argv[optind+1], &tail, 0);
-      if (encErrClearFlag > 3) {printf("clear error encoder counter: parameter out of range\n"); return 1;}
+      if (encErrClearFlag > 0x3) {printf("clear error encoder counter: parameter out of range\n"); return 1;}
       if (encErrClearFlag & 0x1) wb_wr_reset_enc_err_counter(device, devIndex, 0);
       if (encErrClearFlag & 0x2) wb_wr_reset_enc_err_counter(device, devIndex, 1);
       fprintf(stdout, "eb-mon: %s\n", command);
