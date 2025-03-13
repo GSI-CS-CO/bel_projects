@@ -1,6 +1,6 @@
 files = [
-    # working, but without local_thr_mem "blm_aco_v1.0.vhd",
-   "blm_aco_v1.1.vhd",
+   #"blm_aco_v1.1.vhd", #current version
+   "blm_aco_v2.vhd", #update
    "scu_diob_pkg.vhd",
    "scu_diob.sdc",
    "diob_debounce.vhd",
@@ -24,8 +24,7 @@ files = [
    "BLM_watchdog_v1.0.vhd",
    "BLM_gate_timing_seq_v1.2.vhd",
    "up_down_counter.vhd",
-   "Beam_Loss_check_v2.vhd", # current version 
-  # "beam_loss_check_v3.vhd", # update
+   "Beam_Loss_check_v2.vhd", 
    "front_board_id_v0.vhd",
    "BLM_counter_pool_el.vhd",
    "BLM_out_el_m_v1.0.vhd",
@@ -42,8 +41,7 @@ files = [
    "bus_splitter.vhd",
     "th_ram.vhd",
     "l0ad_thr_fifo.vhd",
-    "local_thr_box_2_1.vhd", # current version
-   # "local_thr_box_v3.vhd",  # update
+    "local_thr_box_2_1.vhd",
     "threshold_trigger_input.vhd",
     "clk_divider.vhd",
     "clk_divider_by_5.vhd"
