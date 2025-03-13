@@ -8,22 +8,26 @@ package pwm_channel_pkg is
 
     constant g_pwm_counter_width : natural range 1 to 16 := 16;
 
-    type t_pwm_values is record
-        low     : unsigned(g_pwm_counter_width-1 downto 0);
-        high    : unsigned(g_pwm_counter_width-1 downto 0);
-    end record t_pwm_values;
+    --type t_pwm_values is record
+        --low     : unsigned(g_pwm_counter_width-1 downto 0);
+        --high    : unsigned(g_pwm_counter_width-1 downto 0);
+    --end record t_pwm_values;
 
     component pwm_channel is
 
         generic (
             g_simulation                : in boolean;
             g_pwm_counter_width         : natural
+            --g_pwm_values                : in t_pwm_values
         );
         port(
             clk_sys_i       : in std_logic;
             rst_sys_n_i     : in std_logic;
 
-            pwm_values      : in t_pwm_values;
+            low             : in unsigned(g_pwm_counter_width-1 downto 0);
+            high            : in unsigned(g_pwm_counter_width-1 downto 0);
+
+            --pwm_counter     : in unsigned(g_pwm_counter_width-1 downto 0);
 
             pwm_o           : out std_logic
         );
