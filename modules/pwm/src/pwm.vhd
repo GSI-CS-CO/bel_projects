@@ -52,12 +52,18 @@ end entity;
 
 architecture pwm_arch of pwm is
 
+    --constant c_pwm_default_value : natural := 100;
+    constant c_pwm_default_value : natural := 0;
+
     signal s_ack_state        : std_logic := '0';
     signal s_led_state        : std_logic := '0';
 
     signal s_stall_state      : std_logic := '0';
     signal s_retry_state      : std_logic := '0';
     signal s_error_state      : std_logic := '0';
+
+    signal s_reg_adr           : natural range 0 to g_pwm_channel_num-1;
+    signal s_is_high           : boolean;
 
     -- TODO put into type
     --type t_wb_state is (s_wb_idle,  
@@ -72,12 +78,11 @@ architecture pwm_arch of pwm is
     constant mode_write   : std_logic_vector(3 downto 0) := "1111";
     constant mode_read    : std_logic_vector(3 downto 0) := "0111";
 
-    type t_pwm_value_array is array(0 to (g_pwm_channel_num-1)) of t_pwm_values;
-    signal s_pwm_values : t_pwm_value_array := (others => (others => 1));
+    type t_pwm_values_array is array(0 to ((g_pwm_channel_num*2)-1)) of unsigned(g_pwm_regs_size-1 downto 0);
+    signal s_pwm_values_array : t_pwm_values_array  := (others=> to_unsigned(c_pwm_default_value, g_pwm_regs_size));
 
+    signal value_reg_address : natural range 0 to ((g_pwm_channel_num*2)-1);
 
-    signal s_current_high       : std_logic_vector(15 downto 0) := (others => '0');
-    signal s_current_low        : std_logic_vector(15 downto 0) := (others => '0');
 
 begin
 
@@ -89,6 +94,9 @@ begin
     s_state_machine_vector(2) <= t_wb_i.stb;
     s_state_machine_vector(3) <= t_wb_i.we;
 
+    -- get relevant address bits to write to the right value register
+    value_reg_address <= to_integer(unsigned(t_wb_i.adr(3 downto 2)));
+
     -- for every wanted channel generate a PWM channel
     pwm_channels: for i in 0 to g_pwm_channel_num-1 generate
     begin
@@ -96,12 +104,14 @@ begin
             -- <entity_signal_name> => <local_signal_name>
             generic map(
                 g_simulation            => g_simulation,
-                g_pwm_counter_width     => g_pwm_regs_size,
-                g_pwm_values            => s_pwm_values(i)
+                g_pwm_counter_width     => g_pwm_regs_size
             )
             port map(
                 rst_sys_n_i             => rst_sys_n_i,
                 clk_sys_i               => clk_sys_i,
+
+                high                    => s_pwm_values_array(i*2),
+                low                     => s_pwm_values_array((i*2)+1),
                 
                 pwm_o                   => pwm_o(i)
             );
@@ -122,14 +132,6 @@ begin
         end if;
     end process p_wb_ack;
 
-    p_wb_reg: process(clk_sys_i)
-    begin
-        if rising_edge(clk_sys_i) then
-
-
-        end if; -- of rising_edge
-    end process p_wb_reg;
-
     p_wb_write: process(clk_sys_i)
     begin
         if rising_edge(clk_sys_i) then
@@ -138,7 +140,13 @@ begin
                 s_error_state   <= '0';
                 s_retry_state   <= '0';
             elsif s_state_machine_vector = mode_write then
-                -- todo reg write
+                -- write values for high
+                -- they are (inside) the first 16-bit
+                s_pwm_values_array(value_reg_address*2)  <= (unsigned(t_wb_i.dat(t_wb_i.dat'length-1 downto g_pwm_regs_size)));
+                -- write values for low
+                -- they are (inside) the second 16-bit
+                s_pwm_values_array((value_reg_address*2)+1)  <= (unsigned(t_wb_i.dat((g_pwm_regs_size-1) downto 0)));
+                -- write value for low
             end if;
         end if;
     end process p_wb_write;
@@ -149,7 +157,12 @@ begin
             if rst_sys_n_i = '0' then
                 t_wb_o.dat    <= (others => '0');
             elsif s_state_machine_vector = mode_read then
-                t_wb_o.dat <= (others => '1');
+                -- read values for high
+                -- they are (inside) the first 16-bit
+                t_wb_o.dat(t_wb_o.dat'length-1 downto g_pwm_regs_size) <= std_logic_vector(s_pwm_values_array(value_reg_address*2));
+                -- read values for low
+                -- they are (inside) the first 16-bit
+                t_wb_o.dat((g_pwm_regs_size-1) downto 0)               <= std_logic_vector(s_pwm_values_array((value_reg_address*2)+1));
             end if;
         end if;
     end process p_wb_read;
