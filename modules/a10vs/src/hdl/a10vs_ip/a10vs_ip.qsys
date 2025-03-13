@@ -59,7 +59,6 @@
    dir="end">
   <port name="reset_sink_reset" internal="reset_sink_reset" />
  </interface>
- <interface name="response" internal="voltage_sensor_0.response" />
  <interface
    name="sample_store_csr"
    internal="voltage_sensor_0.sample_store_csr"

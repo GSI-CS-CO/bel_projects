@@ -8,6 +8,8 @@ A list given below shows the EDA tools that are used to generate the voltage sen
 
 ## 1. Steps done in "[quartus_gui]".
 
+Setup: Assignments -> Settings... -> IP Settings -> IP generation HDL preference: VHDL
+
 1.1. Start "[quartus_gui]" and set "Device Family = Arria 10 (GX/SX/GT)" in the "IP Catalog" window.
 
 1.2. Locate "Voltage Senser Intel FPGA IP" from the "Installed IP" -> "Library" -> "Configuration and Programming" list
@@ -16,9 +18,15 @@ A list given below shows the EDA tools that are used to generate the voltage sen
 
 ## 2. Steps done in "[ip_param_editor_gui]"
 
-2.1. Enter name and location of IP core:
-  - ip_core_qsys_name="[ip_core_name]"
-  - ip_core_qsys_location=bel_projects/modules/a10vs/src/hdl/a10vs_ip
+2.1. Entity name and location of IP core
+
+IP Variation
+  - Entity name: [ip_core_name]
+  - Save in folder: bel_projects/modules/a10vs/src/hdl/a10vs_ip
+
+Target Device
+  - Family: Arria 10
+  - Device: 10AX027H2F34E2GS
 
 There are 2 configurations available for the voltage sensor IP core.
 
@@ -43,44 +51,72 @@ Generation of the HDL code is ready to be proceeded.
 Directory structure ("default" preset):
 
 ```
-└── src
-    └── hdl
-        └── a10vs_ip
-            ├── a10vs_ip
-            │   ├── a10vs_ip_bb.v
-            │   ├── a10vs_ip.bsf
-            │   ├── a10vs_ip.cmp
-            │   ├── a10vs_ip.debuginfo
-            │   ├── a10vs_ip_generation.rpt
-            │   ├── a10vs_ip.html
-            │   ├── a10vs_ip_inst.v
-            │   ├── a10vs_ip_inst.vhd
-            │   ├── a10vs_ip.ppf
-            │   ├── a10vs_ip.qip
-            │   ├── a10vs_ip.xml
-            │   ├── altera_voltage_sensor_231
-            │   │   └── synth
-            │   │       ├── a10vs_ip_altera_voltage_sensor_231_dihpyaa_cfg.v
-            │   │       ├── a10vs_ip_altera_voltage_sensor_231_dihpyaa.v
-            │   │       └── a10vs_ip_pkg.vhd            -- add to repo
-            │   ├── altera_voltage_sensor_control_231
-            │   │   └── synth
-            │   │       ├── altera_voltage_sensor_control.sv
-            │   │       ├── voltage_sensor_avalon_control.sv
-            │   │       └── voltage_sensor_wrapper.sv
-            │   ├── altera_voltage_sensor_sample_store_231
-            │   │   └── synth
-            │   │       ├── altera_voltage_sensor_sample_store_ram.sv
-            │   │       ├── altera_voltage_sensor_sample_store_register.sv
-            │   │       └── altera_voltage_sensor_sample_store.sv
-            │   └── synth
-            │       └── a10vs_ip.vhd  -- add to repo
-            ├── a10vs_ip.qsys         -- add to repo
-            └── a10vs_ip.sopcinfo
-            └── ip
-                └── presets
-                    ├── core_only.qprs
-                    └── default.qprs
+modules/a10vs/src/hdl/a10vs_ip/
+├── a10vs_ip
+│   ├── a10vs_ip_bb.v
+│   ├── a10vs_ip.bsf
+│   ├── a10vs_ip.cmp
+│   ├── a10vs_ip.csv
+│   ├── a10vs_ip.debuginfo
+│   ├── a10vs_ip_generation_previous.rpt
+│   ├── a10vs_ip_generation.rpt
+│   ├── a10vs_ip.html
+│   ├── a10vs_ip_inst.v
+│   ├── a10vs_ip_inst.vhd
+│   ├── a10vs_ip.ppf
+│   ├── a10vs_ip.qip
+│   ├── a10vs_ip.sip
+│   ├── a10vs_ip.spd
+│   ├── a10vs_ip.xml
+│   ├── altera_voltage_sensor_231
+│   │   ├── Manifest.py
+│   │   ├── sim
+│   │   │   └── a10vs_ip_altera_voltage_sensor_231_dihpyaa.v
+│   │   └── synth
+│   │       ├── a10vs_ip_altera_voltage_sensor_231_dihpyaa_cfg.v
+│   │       ├── a10vs_ip_altera_voltage_sensor_231_dihpyaa.v
+│   │       └── a10vs_ip_pkg.vhd                                 -- add to repo
+│   ├── altera_voltage_sensor_control_231
+│   │   ├── sim
+│   │   │   ├── altera_voltage_sensor_control.sv
+│   │   │   ├── voltage_sensor_avalon_control.sv
+│   │   │   └── voltage_sensor_wrapper.sv
+│   │   └── synth
+│   │       ├── altera_voltage_sensor_control.sv
+│   │       ├── voltage_sensor_avalon_control.sv
+│   │       └── voltage_sensor_wrapper.sv
+│   ├── altera_voltage_sensor_sample_store_231
+│   │   ├── sim
+│   │   │   ├── altera_voltage_sensor_sample_store_ram.sv
+│   │   │   ├── altera_voltage_sensor_sample_store_register.sv
+│   │   │   └── altera_voltage_sensor_sample_store.sv
+│   │   └── synth
+│   │       ├── altera_voltage_sensor_sample_store_ram.sv
+│   │       ├── altera_voltage_sensor_sample_store_register.sv
+│   │       └── altera_voltage_sensor_sample_store.sv
+│   ├── sim                                                      -- simulation files
+│   │   ├── a10vs_ip.vhd
+│   │   ├── aldec
+│   │   │   └── rivierapro_setup.tcl
+│   │   ├── mentor
+│   │   │   └── msim_setup.tcl
+│   │   ├── synopsys
+│   │   │   └── vcsmx
+│   │   │       ├── synopsys_sim.setup
+│   │   │       └── vcsmx_setup.sh
+│   │   └── xcelium
+│   │       ├── cds.lib
+│   │       ├── cds_libs
+│   │       │   ├── a10vs_ip_altera_voltage_sensor_231.cds.lib
+│   │       │   ├── a10vs_ip_altera_voltage_sensor_control_231.cds.lib
+│   │       │   └── a10vs_ip_altera_voltage_sensor_sample_store_231.cds.lib
+│   │       ├── hdl.var
+│   │       └── xcelium_setup.sh
+│   └── synth
+│       └── a10vs_ip.vhd                                         -- add to repo
+├── a10vs_ip.qsys                                                -- add to repo
+├── a10vs_ip.sopcinfo
+└── altera_vs_ip_preset_0.qprs                                   -- preset file
 
 where following files are required for target synthesis (pexarria10, scu4) later:
   - a10vs_ip/a10vs_ip/altera_voltage_sensor_231/Manifest.py            -- add later
