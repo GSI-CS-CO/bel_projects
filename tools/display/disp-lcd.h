@@ -14,7 +14,7 @@
 #define CHR_HEI 8
 #define ERROR	-1
 
-unsigned long long framebuffer[FB_SIZE];
+extern unsigned long long framebuffer[FB_SIZE];
 extern volatile unsigned int* display;
 extern const char* program;
 extern const char* netaddress;

@@ -1,10 +1,18 @@
 #include "disp.h"
 
-
+volatile unsigned int* display;
+volatile unsigned int desiredDisplay;
 
 const unsigned int devID_disp_lcd     = 0xb77a5045;
 const unsigned int devID_disp_ssd1325 = 0x55d1325d;
 const unsigned long vendID_GSI        = 0x0000000000000651;
+
+void (*disp_put_loc_c)(eb_device_t device, char ascii, unsigned char row, unsigned char col) = NULL;
+void (*disp_put_c)(eb_device_t device, char ascii)                                           = NULL;
+void (*disp_put_s)(eb_device_t device, const char* str)                                      = NULL;
+void (*disp_put_line)(eb_device_t device, const char *sPtr, unsigned char row)               = NULL;
+
+
 
 t_disp_type init_disp(eb_device_t device)
 {

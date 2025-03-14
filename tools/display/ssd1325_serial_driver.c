@@ -2,6 +2,10 @@
 /* ==================================================================================================== */
 #include "ssd1325_serial_driver.h" /* Include SSD1325 Header */
 
+eb_device_t s_DeviceName;
+volatile uint32_t* p_uSSD1325_Area;
+
+
 /* Lookup table for characters */
 /* ==================================================================================================== */
 #if SSD1325_USE_LOWER_CHARS

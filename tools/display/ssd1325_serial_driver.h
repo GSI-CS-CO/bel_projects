@@ -127,7 +127,7 @@ typedef enum
 /* Globals */
 /* ==================================================================================================== */
 #if SSD1325_TARGET_EMBEDDED
-volatile s_SSD1325_RegisterArea* p_sSSD1325_Area;
+extern volatile s_SSD1325_RegisterArea* p_sSSD1325_Area;
 #endif
 
 /* Prototypes */
@@ -158,8 +158,8 @@ int32_t iSSD1325_DrawBitmap         (uint32_t uStartPositionX, uint32_t uStartPo
 #if SSD1325_TARGET_EMBEDDED==0  
 /* Wrappers (for host display functions -> see https://www-acc.gsi.de/svn/bel/timing/.../development) */
 /* ==================================================================================================== */
-eb_device_t s_DeviceName;
-volatile uint32_t* p_uSSD1325_Area;
+extern eb_device_t s_DeviceName;
+extern volatile uint32_t* p_uSSD1325_Area;
 void vSSD1325_InitDisplay (eb_device_t device);
 void vSSD1325_HostPutLocC (eb_device_t device, char ascii, unsigned char row, unsigned char col);
 void vSSD1325_HostPutC    (eb_device_t device, char ascii);

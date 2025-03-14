@@ -2,6 +2,7 @@
 
 unsigned char cursorCol = 1;
 unsigned char cursorRow = 1;
+unsigned long long framebuffer[FB_SIZE];
 
 
 void disp_write(eb_device_t device)
