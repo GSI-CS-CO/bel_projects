@@ -757,6 +757,9 @@ architecture rtl of monster is
 
   signal s_lm32_rstn : std_logic_vector(g_lm32_cores-1 downto 0);
 
+  signal a10vs_slave_i : t_wishbone_slave_in;
+  signal a10vs_slave_o : t_wishbone_slave_out;
+
   -- END OF Master signals
   ----------------------------------------------------------------------------------
 
@@ -3441,13 +3444,32 @@ end generate;
   a10vs_n : if not g_en_a10vs generate
     dev_bus_master_i(dev_slaves'pos(devs_a10vs)) <= cc_dummy_slave_out;
   end generate;
+
   a10vs_y : if g_en_a10vs generate
+    --------------------------------------------
+    -- clock crossing from sys clk to 10MHz clk
+    --------------------------------------------
+    xwb_sys2a10vs : xwb_clock_crossing
+      generic map ( g_size => 16)
+      port map(
+        -- Slave control port
+        slave_clk_i    => clk_sys,
+        slave_rst_n_i  => rstn_sys,
+        slave_i        => dev_bus_master_o(dev_slaves'pos(devs_a10vs)),
+        slave_o        => dev_bus_master_i(dev_slaves'pos(devs_a10vs)),
+        -- Master reader port
+        master_clk_i   => clk_10m,
+        master_rst_n_i => rstn_sys,
+        master_i       => a10vs_slave_o,
+        master_o       => a10vs_slave_i
+      );
+
     a10vs_0 : a10vs
       port map(
-        clk_i      => clk_sys,
+        clk_i      => clk_10m,
         rst_n_i    => rstn_sys,
-        slave_i    => dev_bus_master_o(dev_slaves'pos(devs_a10vs)),
-        slave_o    => dev_bus_master_i(dev_slaves'pos(devs_a10vs))
+        slave_i    => a10vs_slave_i,
+        slave_o    => a10vs_slave_o
       );
   end generate;
 
