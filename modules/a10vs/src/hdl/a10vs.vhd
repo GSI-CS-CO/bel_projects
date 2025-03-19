@@ -29,10 +29,6 @@ use work.wishbone_pkg.all;
 -- gsi
 use work.a10vs_pkg.all;
 
--- Intel IP (qsys)
-library a10vs_ip_altera_voltage_sensor_231;
-use a10vs_ip_altera_voltage_sensor_231.a10vs_ip_pkg.all;
-
 entity a10vs is
     port (
         -- wishbone syscon
