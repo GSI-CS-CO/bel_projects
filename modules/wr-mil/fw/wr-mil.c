@@ -568,7 +568,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   
   status    = actStatus;
 
-  ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
+  // one loop is around 37us => wait 963us only)
+  ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 963, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
 
   switch (ecaAction) {
     // received WR timing message from Data Master that shall be sent as a MIL telegram
