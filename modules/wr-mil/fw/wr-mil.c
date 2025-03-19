@@ -694,7 +694,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       sendEvtId     = fwlib_buildEvtidV1(mil_domain, WRMIL_DFLT_MIL_EVT_FILL, 0x0, 0x0, 0x0, 0x0); // chk
       convert_WReventID_to_milTelegram(sendEvtId, &milTelegram);                                   // --> MIL format
       prepMilTelegramEca(milTelegram, &sendEvtId, &sendParam);                                     // --> EvtId for internal use
-      fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0);                                // --> ECA
+      fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 1);                                // --> ECA
       nEvtsSnd++;
       inhibit_fill_events = RESET_INHIBIT_COUNTER;
     } // if not inhibit fill events
