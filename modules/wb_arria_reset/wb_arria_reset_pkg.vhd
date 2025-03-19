@@ -69,7 +69,8 @@ component wb_arria_reset is
     phy_dis_o     : out std_logic;
     phy_aux_dis_o : out std_logic;
     psram_sel_o   : out std_logic_vector(3 downto 0);
-    rstn_o        : out std_logic_vector(rst_channels-1 downto 0));
+    rstn_o        : out std_logic_vector(rst_channels-1 downto 0);
+    poweroff_comx : out std_logic);
 end component;
 
 constant c_arria_reset : t_sdb_device := (
@@ -84,7 +85,7 @@ constant c_arria_reset : t_sdb_device := (
     product => (
     vendor_id     => x"0000000000000651", -- GSI
     device_id     => x"3a362063",
-    version       => x"00000002",
+    version       => x"00000003",
     date          => x"20131213",
     name          => "FPGA_RESET         ")));
 

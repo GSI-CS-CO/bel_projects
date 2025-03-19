@@ -406,6 +406,7 @@ entity monster is
     -- g_en_user_ow
     ow_io                  : inout std_logic_vector(1 downto 0);
     hw_version             : in    std_logic_vector(31 downto 0);
+    poweroff_comx          : out   std_logic;
     -- g_en_a10ts
     ge_85_c_o              : out   std_logic;
    -- g_en_tempsens
@@ -2440,7 +2441,8 @@ end generate;
       phy_dis_o     => wbar_phy_dis,
       phy_aux_dis_o => wbar_phy_aux_dis,
       psram_sel_o   => ps_chip_selector,
-      rstn_o        => s_lm32_rstn);
+      rstn_o        => s_lm32_rstn,
+      poweroff_comx => poweroff_comx);
 
       wbar_phy_dis_o     <= wbar_phy_dis;
       wbar_phy_aux_dis_o <= wbar_phy_aux_dis;

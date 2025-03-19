@@ -47,7 +47,7 @@
 --                                        individual LM32 reset lines
 -------------------------------------------------------------------------------
 -- 2016-01-7  1.2      srauch 	- added register for hw version number
---					                    - read from address offset 0x8
+--			        - read from address offset 0x8
 -------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
@@ -89,7 +89,8 @@ entity wb_arria_reset is
 
     psram_sel_o   : out std_logic_vector(3 downto 0);
 
-    rstn_o        : out std_logic_vector(rst_channels-1 downto 0)
+    rstn_o        : out std_logic_vector(rst_channels-1 downto 0);
+    poweroff_comx : out std_logic
   );
 end entity;
 
@@ -111,6 +112,7 @@ architecture wb_arria_reset_arch of wb_arria_reset is
   signal phy_dis_sync     : std_logic;
   signal phy_aux_dis_sync : std_logic;
   signal s_psram_sel_sync : std_logic_vector(3 downto 0);
+  signal s_poweroff_comx  : std_logic;
   constant cnt_value      : integer := 1000 * 60 * 10; -- 10 min with 1ms granularity
   constant cnt_width      : integer := integer(ceil(log2(real(cnt_value)))) + 1;
 begin
@@ -208,14 +210,15 @@ begin
       slave_o.dat <= (others => '0');
 
       if rstn_sys_i = '0' then
-        disable_wd  <= '0';
-        retrg_wd    <= '0';
-        phy_rst     <= '0';
-        phy_aux_rst <= '0';
-        phy_dis     <= '0';
-        phy_aux_dis <= '0';
-        s_psram_sel <= "0001";
-        reset_reg   <= (others => '0');
+        disable_wd      <= '0';
+        retrg_wd        <= '0';
+        phy_rst         <= '0';
+        phy_aux_rst     <= '0';
+        phy_dis         <= '0';
+        phy_aux_dis     <= '0';
+        s_psram_sel     <= "0001";
+        s_poweroff_comx <= '1';
+        reset_reg       <= (others => '0');
       else
         retrg_wd <= '0';
         -- Detect a write to the register byte
@@ -248,6 +251,12 @@ begin
                 phy_aux_dis <= slave_i.dat(3);
               when 6 =>
                 s_psram_sel <= slave_i.dat(3 downto 0);
+              when 7 =>
+                if(slave_i.dat = x"CAFEBAB0") then
+                  s_poweroff_comx <= slave_i.dat(0);
+                elsif(slave_i.dat = x"CAFEBAB1") then
+                  s_poweroff_comx <= slave_i.dat(0);
+                end if;
               when others => null;
             end case;
           else -- read
@@ -257,6 +266,7 @@ begin
               when 3 => slave_o.dat <= x"0000000" & "000" & not disable_wd;
               when 5 => slave_o.dat <= x"0000000" & phy_aux_dis & phy_dis & phy_aux_rst & phy_rst;
               when 6 => slave_o.dat <= x"0000000" & s_psram_sel;
+              when 7 => slave_o.dat <= x"0000000" & "000" & s_poweroff_comx;
               when others => null;
             end case;
           end if;
@@ -307,6 +317,8 @@ begin
       data_i   => s_psram_sel(index),
       synced_o => s_psram_sel_sync(index)
     );
+
+  poweroff_comx <= s_poweroff_comx;
   end generate;
 
 end architecture;
