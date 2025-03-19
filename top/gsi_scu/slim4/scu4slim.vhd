@@ -211,10 +211,12 @@ architecture rtl of scu4slim is
 
   signal s_psram_sel        : std_logic_vector(3 downto 0);
 
+  signal s_debug_led        : std_logic_vector(7 downto 0);
+
   signal rstn_ref           : std_logic;
   signal clk_ref            : std_logic;
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 14) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 22) :=
   (
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
     ("LEMO_IN_0  ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
@@ -231,7 +233,15 @@ architecture rtl of scu4slim is
     ("LEMO_OUT_3 ",  IO_NONE,         false,   false,  6,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("FAST_OUT_0 ",  IO_NONE,         false,   false,  7,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVDS),
     ("FAST_OUT_1 ",  IO_NONE,         false,   false,  8,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVDS),
-    ("FAST_OUT_2 ",  IO_NONE,         false,   false,  9,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVDS)
+    ("FAST_OUT_2 ",  IO_NONE,         false,   false,  9,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVDS),
+    ("DEBUG_LED_0",  IO_NONE,         false,   false, 10,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("DEBUG_LED_1",  IO_NONE,         false,   false, 11,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("DEBUG_LED_2",  IO_NONE,         false,   false, 12,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("DEBUG_LED_3",  IO_NONE,         false,   false, 13,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("DEBUG_LED_4",  IO_NONE,         false,   false, 14,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("DEBUG_LED_5",  IO_NONE,         false,   false, 15,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("DEBUG_LED_6",  IO_NONE,         false,   false, 16,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("DEBUG_LED_7",  IO_NONE,         false,   false, 17,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL)
   );
 
   constant c_family       : string := "Arria 10 GX SCU4";
@@ -250,7 +260,7 @@ begin
       g_flash_bits         => 25, -- !!! TODO: Check this
       g_psram_bits         => c_psram_bits,
       g_gpio_in            => 5,
-      g_gpio_out           => 10,
+      g_gpio_out           => 18,
       --g_lvds_in            => 3,
       --g_lvds_out           => 3,
       --g_lvds_invert        => true,
@@ -301,6 +311,7 @@ begin
       gpio_i(1 downto 0)      => lemo_in,
       gpio_i(4 downto 2)      => s_gpio_i,
       gpio_o(9 downto 0)      => s_gpio_o(9 downto 0),
+      gpio_o(17 downto 10)    => s_debug_led,
       --lvds_p_i                => s_lvds_p_i,
       --lvds_n_i                => s_lvds_n_i,
       --lvds_p_o                => s_lvds_p_o,
@@ -445,6 +456,10 @@ begin
   A_Spare     <= (others => 'Z');
   --A_OneWire   <= 'Z';
 
+  -- SFP
   sfp_rate_sel_o <= '1'; --SFP rate full speed
+
+  -- Debug
+  debug_led <= not(s_debug_led);
 
 end rtl;
