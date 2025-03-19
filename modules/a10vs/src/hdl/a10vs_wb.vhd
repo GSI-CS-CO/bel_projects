@@ -12,9 +12,9 @@
 --------------------------------------------------------------------------------
 --
 -- Description: Wishbone slave for interfacing the Altera/Intel Arria 10 voltage
--- sensor IP core. The instantiated IP core includes only the controller core
--- and provides Avalon-MM complaint interface. This slave is responsible for
--- controlling core and storing the sampled sensor values.
+-- sensor IP core. This slave module is responsible for accessing to the
+-- instantiated control and sample store cores via the Avalon-MM complaint
+-- interface.
 --
 --------------------------------------------------------------------------------
 
@@ -60,13 +60,7 @@ end a10vs_wb;
 
 architecture a10vs_wb_rtl of a10vs_wb is
 
-    -- control or sample store selection
-    constant c_ctrl_sel      : std_logic_vector(1 downto 0)  := "01";        -- control
-    constant c_sample_sel    : std_logic_vector(1 downto 0)  := "10";        -- sample store
-
     constant c_adr_width     : integer                       := 4;           -- sample address width
-
-    signal s_vs_sel          : std_logic_vector(1 downto 0);                 -- select (control or sample)
 
     -- Avalon control
     signal s_av_rd           : std_logic;                                    -- read
@@ -75,8 +69,7 @@ architecture a10vs_wb_rtl of a10vs_wb is
     -- other
     signal s_adr             : std_logic_vector(c_adr_width - 1 downto 0);
     signal s_ack             : std_logic;                                    -- ack for wishbone
-    signal s_ack2            : std_logic;                                    -- ack delayed by 1 cycle (data from Avalon-MM is valid at 3rd cycle)
-    signal s_re              : std_logic_vector(0 to c_vs_reg_n - 1);        -- enable for the voltage sensor registers
+    signal s_ack2            : std_logic;                                    -- ack delayed by 2 cycles (data from Avalon-MM is valid at 4th cycle)
 
 begin
 
@@ -91,6 +84,7 @@ begin
         if rst_n_i = '0' then
             s_ack <= '0';
             s_ack2 <= '0';
+            slave_o.ack <= '0';
         else
             if rising_edge(clk_i) then
                 if slave_i.cyc = '1' and slave_i.stb = '1' then
@@ -99,106 +93,88 @@ begin
                     s_ack <= '0';
                 end if;
                 s_ack2 <= s_ack;
+                slave_o.ack <= s_ack2;
             end if;
-        end if;
-    end process;
-
-    slave_o.ack <= s_ack2;
-
-    -- address decoder for the voltage sensor registers
-    s_adr <= slave_i.adr(5 downto 2);
-
-    p_decode_latch: process(rst_n_i, s_adr)
-    begin
-        if (rst_n_i = '0') then
-            s_re <= (others => '0');
-        else
-            for i in 0 to c_vs_reg_n - 1 loop
-                if slave_i.stb = '1' and slave_i.cyc = '1' then
-                    if to_integer(unsigned(s_adr)) = i then
-                        s_re(i) <= '1';
-                    else
-                        s_re(i) <= '0';
-                    end if;
-                end if;
-            end loop;
         end if;
     end process;
 
     -- Avalon-MM interface (voltage sensor controller)
 
-    -- Avalon-MM address
-    p_av_address_decode: process(s_re)
-        variable v_sel : std_logic;
-    begin
-        v_sel := '0';
-
-        for i in 0 to c_vs_reg_n - 2 loop
-            v_sel := v_sel or s_re(i);
-        end loop;
-
-        s_vs_sel(0) <= s_re(c_vs_reg_n - 1);    -- ctrl
-        s_vs_sel(1) <= v_sel;                   -- sample
-    end process;
-
-    vs_ctrl_csr_addr   <= s_vs_sel(0);
+    -- Avalon-MM address decoder
+    s_adr <= slave_i.adr(5 downto 2);
     vs_sample_csr_addr <= s_adr;
 
-    -- Avalon-MM data access
-    p_av_readdata: process(rst_n_i, s_vs_sel, vs_ctrl_csr_rddata, vs_sample_csr_rddata)
+    p_ctrl_addr_decode: process(s_adr)
+    begin
+        case s_adr is
+            when x"A" =>
+                vs_ctrl_csr_addr <= '1';
+            when others =>
+                vs_ctrl_csr_addr <= '0';
+        end case;
+    end process;
+
+    -- Avalon-MM data bus
+    p_av_readdata: process(rst_n_i, clk_i, s_adr)
+        variable v_adr_int : integer;
     begin
         if (rst_n_i = '0') then
             slave_o.dat <= (others => '0');
         else
-            case s_vs_sel is
-                when c_ctrl_sel   =>
-                    slave_o.dat <= vs_ctrl_csr_rddata;
-                when c_sample_sel =>
-                    slave_o.dat <= vs_sample_csr_rddata;
-                when others       =>
-                    -- none
+            if rising_edge(clk_i) then
+                v_adr_int := to_integer(unsigned(s_adr));
+
+                case v_adr_int is
+                    when 10   =>
+                        slave_o.dat <= vs_ctrl_csr_rddata;
+                    when 0 to 9 =>
+                        slave_o.dat <= vs_sample_csr_rddata;
+                    when others       =>
+                        slave_o.dat <= (others => '0');
+                end case;
+            end if;
+        end if;
+    end process;
+
+    p_av_writedata: process(clk_i, s_adr)
+    begin
+        if rising_edge(clk_i) then
+            case s_adr is
+                when x"A"   =>
+                    vs_ctrl_csr_wrdata   <= slave_i.dat;
+                when x"9" | x"8" =>
+                    vs_sample_csr_wrdata <= slave_i.dat;
+                when others =>
+                    vs_ctrl_csr_wrdata   <= (others => '0');
+                    vs_sample_csr_wrdata <= (others => '0');
             end case;
         end if;
     end process;
 
-    p_av_writedata: process(s_vs_sel, slave_i.dat)
+    -- Avalon-MM control bus
+    s_av_rd <= slave_i.cyc and not slave_i.we;
+    s_av_wr <= slave_i.cyc and slave_i.we;
+
+    p_av_rd_wr: process(s_av_rd, s_av_wr, s_adr)
+        variable v_adr_int : integer;
     begin
-        vs_ctrl_csr_wrdata   <= (others => '0');
-        vs_sample_csr_wrdata <= (others => '0');
-        case s_vs_sel is
-            when c_ctrl_sel   =>
-                vs_ctrl_csr_wrdata   <= slave_i.dat;
-            when c_sample_sel =>
-                vs_sample_csr_wrdata <= slave_i.dat;
-            when others =>
-                -- none
-        end case;
-    end process;
+        v_adr_int := to_integer(unsigned(s_adr));
 
-    -- Avalon-MM control
-    s_av_rd <= slave_i.cyc and slave_i.stb and not slave_i.we;
-    s_av_wr <= slave_i.cyc and slave_i.stb and slave_i.we;
-
-    p_av_rd_wr: process(s_vs_sel, s_av_rd, s_av_wr)
-    begin
-        vs_ctrl_csr_wr   <= '0';
-        vs_ctrl_csr_rd   <= '0';
-        vs_sample_csr_wr <= '0';
-        vs_sample_csr_rd <= '0';
-
-        case s_vs_sel is
-            when c_ctrl_sel   =>
+        case v_adr_int is
+            when 10     =>
                 vs_ctrl_csr_rd   <= s_av_rd;
                 vs_ctrl_csr_wr   <= s_av_wr;
-            when c_sample_sel =>
+            when 8 to 9 =>
                 vs_sample_csr_rd <= s_av_rd;
-                if to_integer(unsigned(s_adr)) > 7 then
-                    vs_sample_csr_wr <= s_av_wr;  -- allow write-access to the irq registers
-                else
-                    vs_sample_csr_wr <= '0';      -- disallow write-access to the sample registers
-                end if;
+                vs_sample_csr_wr <= s_av_wr;  -- allow write-access to the irq registers
+            when 0 to 7 =>
+                vs_sample_csr_rd <= s_av_rd;
+                vs_sample_csr_wr <= '0';      -- disallow write-access to the sample registers
             when others =>
-                -- none
+                vs_ctrl_csr_wr   <= '0';
+                vs_ctrl_csr_rd   <= '0';
+                vs_sample_csr_wr <= '0';
+                vs_sample_csr_rd <= '0';
         end case;
     end process;
 
