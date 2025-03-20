@@ -112,7 +112,8 @@ void init() {
 
         }
       }
-      if (cnt > 1) throw std::runtime_error(exIntro + "' must not have multiple edges of type '" + et + "' to Node '" + g[vChk].name + "' of type '" + g[vChk].type + "'\n");
+      /// Important ! ///
+      if (cnt > 3) throw std::runtime_error(exIntro + "' must not have multiple edges of type '" + et + "' to Node '" + g[vChk].name + "' of type '" + g[vChk].type + "'\n");
     }
 
     for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
