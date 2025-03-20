@@ -329,6 +329,7 @@ begin
       g_en_usb             => true,
       g_en_psram           => true,
       g_io_table           => io_mapping_table,
+      g_en_enc_err_counter => true,
       g_en_tempsens        => false,
       g_en_a10ts           => true,
       g_a10_use_sys_fpll   => false,
