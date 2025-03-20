@@ -1,6 +1,6 @@
 #!/bin/bash
 
-dev="dev/wbm0"
+dev="dev/wbm0"            # default target device
 vendor_id="0x00000651"
 device_id="0xa1076000"
 
@@ -18,6 +18,12 @@ samples=()                # sensor samples
 adc_res=64                # ADC resolution: 6-bit
 adc_ref=1250              # ADC reference:  1250 mV (0x03f)
 
+usage() {
+    echo "usage: $0 [device]"
+    echo
+    echo "  device  Optional TR device (dev/wbm0 by default)"
+}
+
 check_sensor_address() {
 
     if [ "$addr" = "" ]; then
@@ -26,6 +32,20 @@ check_sensor_address() {
     fi
 }
 
+check_arguments() {
+
+    if [ $# -ne 0 ]; then
+
+        test -e /$1
+        if [ $? -ne 0 ]; then
+            echo "Error: Device $1 does not exist!"
+            usage
+            exit 1
+        fi
+
+        dev=$1  # update the target device
+    fi
+}
 
 get_sensor_address() {
 
@@ -109,6 +129,7 @@ print_samples() {
     done
 }
 
+check_arguments
 get_sensor_address
 enable_sensor_operation
 get_samples
