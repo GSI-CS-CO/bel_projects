@@ -128,9 +128,6 @@ begin
 
     -- a10vs_wb instance
     a10vs_dut: a10vs_wb
-        generic map (
-            g_data_size => 32
-        )
         port map (
             -- wishbone syscon
             clk_i   => s_clk,
@@ -193,26 +190,38 @@ begin
 
         -- Write 0x1 to the sample register 0 (dissalowed access)
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_on,  c_vs_sample0_addr, x"00000001");
-        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_vs_sample0_addr, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_vs_sample0_addr, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_vs_sample0_addr, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_vs_sample0_addr, c_reg_all_zero);
         wb_expect("Write 0x1 to sample reg 0", c_reg_all_zero, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_vs_sample0_addr, c_reg_all_zero);
         wait until rising_edge(s_clk);
 
         -- Read from the sample register 0 (0x11 is expected)
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_off, c_vs_sample0_addr, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_vs_sample0_addr, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_vs_sample0_addr, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_vs_sample0_addr, c_reg_all_zero);
+        wb_expect("Read from sample reg 0: 0x11", s_slave_out.dat, x"00000011");
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_vs_sample0_addr, c_reg_all_zero);
-        wait until rising_edge(s_clk); wb_expect("Read from sample reg 0: 0x11", s_slave_out.dat, x"00000011");
         wait until rising_edge(s_clk);
 
         -- Write 0x8 to the sample register 7 (dissalowed access)
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_on,  c_vs_sample7_addr, x"00000008");
-        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_vs_sample7_addr, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_vs_sample7_addr, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_vs_sample7_addr, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_vs_sample7_addr, c_reg_all_zero);
         wb_expect("Write 0x8 to sample reg 7", c_reg_all_zero, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_vs_sample7_addr, c_reg_all_zero);
         wait until rising_edge(s_clk);
 
         -- Read from the sample register 7 (0x88 is expected)
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_off, c_vs_sample7_addr, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_vs_sample7_addr, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_vs_sample7_addr, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_vs_sample7_addr, c_reg_all_zero);
+        wb_expect("Read from sample reg 7: 0x88", s_slave_out.dat, x"00000088");
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_vs_sample7_addr, c_reg_all_zero);
-        wait until rising_edge(s_clk); wb_expect("Read from sample reg 7: 0x88", s_slave_out.dat, x"00000088");
         wait until rising_edge(s_clk);
 
         -- Idle
@@ -221,45 +230,66 @@ begin
 
         -- Write 0xff to the command register
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_on,  c_vs_cmd_addr, x"000000ff");
-        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_vs_cmd_addr, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_vs_cmd_addr, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_vs_cmd_addr, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_vs_cmd_addr, c_reg_all_zero);
         wb_expect("Write 0xff to command reg", c_reg_all_zero, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_vs_cmd_addr, c_reg_all_zero);
         wait until rising_edge(s_clk);
 
         -- Read from the command register (0xff is expected)
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_off, c_vs_cmd_addr, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_vs_cmd_addr, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_vs_cmd_addr, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_vs_cmd_addr, c_reg_all_zero);
+        wb_expect("Read from command reg: 0xff", s_slave_out.dat, x"000000ff");
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_vs_cmd_addr, c_reg_all_zero);
-        wait until rising_edge(s_clk); wb_expect("Read from command reg: 0xff", s_slave_out.dat, x"000000ff");
 
         wait until rising_edge(s_clk);
 
         -- Read from the sample register 0 (0x11 is expected)
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_off, c_vs_sample0_addr, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_vs_sample0_addr, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_vs_sample0_addr, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_vs_sample0_addr, c_reg_all_zero);
+        wb_expect("Read from sample reg 0: 0x11", s_slave_out.dat, x"00000011");
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_vs_sample0_addr, c_reg_all_zero);
-        wait until rising_edge(s_clk); wb_expect("Read from sample reg 0: 0x11", s_slave_out.dat, x"00000011");
         wait until rising_edge(s_clk);
 
         -- Read from the sample register 7 (0x88 is expected)
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_off, c_vs_sample7_addr, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_vs_sample7_addr, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_vs_sample7_addr, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_vs_sample7_addr, c_reg_all_zero);
+        wb_expect("Read from sample reg 7: 0x88", s_slave_out.dat, x"00000088");
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_vs_sample7_addr, c_reg_all_zero);
-        wait until rising_edge(s_clk); wb_expect("Read from sample reg 7: 0x88", s_slave_out.dat, x"00000088");
         wait until rising_edge(s_clk);
 
         -- Read access from an invalid address
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_off, c_vs_invalid_addr, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_vs_invalid_addr, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_vs_invalid_addr, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_vs_invalid_addr, c_reg_all_zero);
+        wb_expect("Read from invalid address", s_slave_out.dat, c_reg_all_zero);
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_vs_invalid_addr, c_reg_all_zero);
-        wait until rising_edge(s_clk); wb_expect("Read from invalid address", s_slave_out.dat, c_reg_all_zero);
         wait until rising_edge(s_clk);
 
         -- Read access from the sample register 6 (0x77 is expected)
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_off, c_vs_sample6_addr, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_vs_sample6_addr, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_vs_sample6_addr, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_vs_sample6_addr, c_reg_all_zero);
+        wb_expect("Read from sample reg 6: 0x77", s_slave_out.dat, x"00000077");
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_vs_sample6_addr, c_reg_all_zero);
-        wait until rising_edge(s_clk); wb_expect("Read from sample reg 6: 0x77", s_slave_out.dat, x"00000077");
         wait until rising_edge(s_clk);
 
         -- Read access from the command register (0xff is expected)
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_off, c_vs_cmd_addr, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_vs_cmd_addr, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_vs_cmd_addr, c_reg_all_zero);
+        wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, c_vs_cmd_addr, c_reg_all_zero);
+        wb_expect("Read from command reg: 0xff", s_slave_out.dat, x"000000ff");
         wait until rising_edge(s_clk); s_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_vs_cmd_addr, c_reg_all_zero);
-        wait until rising_edge(s_clk); wb_expect("Read from command reg: 0xff", s_slave_out.dat, x"000000ff");
         wait until rising_edge(s_clk);
 
         -- Idle

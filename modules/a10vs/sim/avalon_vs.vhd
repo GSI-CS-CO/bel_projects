@@ -33,25 +33,10 @@ architecture avalon_vs_rtl of avalon_vs is
     signal s_sample_reg : sample_reg_array;
     signal s_ctrl_reg   : std_logic_vector(31 downto 0);
 
-    -- register enable
-    signal s_re         : std_logic_vector(0 to c_sample_n - 1);
-
 begin
 
-    address_decode: process(avs_rst, avs_sample_csr_addr)
-    begin
-        for i in 0 to c_sample_n - 1 loop
-            if avs_rst = '1' then
-                s_re(i) <= '0';
-            elsif to_integer(unsigned(avs_sample_csr_addr)) = i then
-                s_re(i) <= '1';
-            else
-                s_re(i) <= '0';
-            end if;
-        end loop;
-    end process;
-
-    sample_access: process(avs_clk, avs_rst)
+    sample_access: process(avs_rst, avs_clk, avs_sample_csr_addr)
+        variable v_addr: integer;
     begin
         if avs_rst = '1' then
             s_sample_reg(0) <= x"00000011";
@@ -66,20 +51,23 @@ begin
             s_sample_reg(9) <= x"000000bb";
         elsif rising_edge(avs_clk) then
             avs_sample_csr_readdata <= (others => '0');
-            for i in 0 to c_sample_n - 1 loop
-                if s_re(i) = '1' then
+            v_addr := to_integer(unsigned(avs_sample_csr_addr));
+
+            case v_addr is
+                when 0 to 9 =>
                     if avs_sample_csr_rd = '1' then
-                        avs_sample_csr_readdata <= s_sample_reg(i);
+                        avs_sample_csr_readdata <= s_sample_reg(v_addr);
                     end if;
                     if avs_sample_csr_wr = '1' then
-                        s_sample_reg(i) <= avs_sample_csr_writedata;
+                        s_sample_reg(v_addr) <= avs_sample_csr_writedata;
                     end if;
-                end if;
-            end loop;
+                when others =>
+                    null;
+            end case;
         end if;
     end process;
 
-    control_access: process(avs_clk, avs_rst)
+    control_access: process(avs_rst, avs_clk)
     begin
         if avs_rst = '1' then
             s_ctrl_reg <= x"0000cafe";
