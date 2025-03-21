@@ -315,9 +315,18 @@ int main(int argc, char** argv) {
       if (strstr(devName, "dev/wbm") != 0) die("eb-reset: refusing to power cycle myself", EB_OOM);
 
       // perform power off-on sequence
+      printf("eb-reset: powering off com express\n");
       status = wb_comx_power(device, devIndex, 0);
+      printf("... done\n");
+
+      printf("eb-reset: just a moment ...\n");
+      sleep(2);
+
+      printf("eb-reset: powering on com express\n");
       status = wb_comx_power(device, devIndex, 1);
-      
+      printf("... done\n");
+
+      printf("eb-reset: com express should be booting now; check host in a minute or so\n");
       if (status != EB_OK)  die("eb-reset: ", status);
     } // power cycle com x board
     
