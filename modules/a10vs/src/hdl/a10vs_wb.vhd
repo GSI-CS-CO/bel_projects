@@ -57,16 +57,20 @@ end a10vs_wb;
 
 architecture a10vs_wb_rtl of a10vs_wb is
 
-    constant c_adr_width     : integer                       := 4;           -- sample address width
+    constant c_vs_addr_width : integer := 4;   -- address width to select the voltage sensor registers
+    constant c_offs_cmd_reg  : integer := 10;  -- offset to the command register
+    constant c_offs_irqs_reg : integer := 9;   -- offset to the interrupt status register
+    constant c_offs_irqe_reg : integer := 8;   -- offset to the interrupt enable register
+    constant c_offs_smp7_reg : integer := 7;   -- offset to the last sample register
 
     -- Avalon control
-    signal s_av_rd           : std_logic;                                    -- read
-    signal s_av_wr           : std_logic;                                    -- write
+    signal s_av_rd           : std_logic;      -- Avalon read
+    signal s_av_wr           : std_logic;      -- Avalon write
 
     -- other
-    signal s_adr             : std_logic_vector(c_adr_width - 1 downto 0);
-    signal s_ack             : std_logic;                                    -- ack for wishbone
-    signal s_ack2            : std_logic;                                    -- ack delayed by 2 cycles (data from Avalon-MM is valid at 4th cycle)
+    signal s_adr             : std_logic_vector(c_vs_addr_width - 1 downto 0);
+    signal s_ack             : std_logic;      -- ack for wishbone
+    signal s_ack2            : std_logic;      -- ack delayed by 2 cycles (data from Avalon-MM is valid at 4th cycle)
 
 begin
 
@@ -95,7 +99,7 @@ begin
         end if;
     end process;
 
-    -- Avalon-MM interface (voltage sensor controller)
+    -- Avalon-MM interface to the voltage sensor
 
     -- Avalon-MM address decoder
     s_adr <= slave_i.adr(5 downto 2);
@@ -112,39 +116,33 @@ begin
     end process;
 
     -- Avalon-MM data bus
-    p_av_readdata: process(rst_n_i, clk_i, s_adr)
+    p_av_readdata_writedata: process(rst_n_i, clk_i, s_adr)
         variable v_adr_int : integer;
     begin
         if (rst_n_i = '0') then
             slave_o.dat <= (others => '0');
         else
             if rising_edge(clk_i) then
+
+                slave_o.dat <= (others => '0');               -- readdata
+                vs_ctrl_csr_wrdata   <= (others => '0');      -- writedata
+                vs_sample_csr_wrdata <= (others => '0');      -- writedata
+
                 v_adr_int := to_integer(unsigned(s_adr));
 
                 case v_adr_int is
-                    when 10   =>
-                        slave_o.dat <= vs_ctrl_csr_rddata;
-                    when 0 to 9 =>
+                    when c_offs_cmd_reg =>                     -- command register
+                        slave_o.dat        <= vs_ctrl_csr_rddata;
+                        vs_ctrl_csr_wrdata <= slave_i.dat;
+                    when c_offs_irqe_reg to c_offs_irqs_reg => -- irq enable and irq status regs
+                        slave_o.dat          <= vs_sample_csr_rddata;
+                        vs_sample_csr_wrdata <= slave_i.dat;
+                    when 0 to c_offs_smp7_reg =>               -- sample registers
                         slave_o.dat <= vs_sample_csr_rddata;
-                    when others       =>
-                        slave_o.dat <= (others => '0');
+                    when others =>
+                        null;
                 end case;
             end if;
-        end if;
-    end process;
-
-    p_av_writedata: process(clk_i, s_adr)
-    begin
-        if rising_edge(clk_i) then
-            case s_adr is
-                when x"A"   =>
-                    vs_ctrl_csr_wrdata   <= slave_i.dat;
-                when x"9" | x"8" =>
-                    vs_sample_csr_wrdata <= slave_i.dat;
-                when others =>
-                    vs_ctrl_csr_wrdata   <= (others => '0');
-                    vs_sample_csr_wrdata <= (others => '0');
-            end case;
         end if;
     end process;
 
@@ -158,15 +156,15 @@ begin
         v_adr_int := to_integer(unsigned(s_adr));
 
         case v_adr_int is
-            when 10     =>
+            when c_offs_cmd_reg  =>                     -- command reg
                 vs_ctrl_csr_rd   <= s_av_rd;
                 vs_ctrl_csr_wr   <= s_av_wr;
-            when 8 to 9 =>
+            when c_offs_irqe_reg to c_offs_irqs_reg =>  -- irq enable and irq status regs
                 vs_sample_csr_rd <= s_av_rd;
-                vs_sample_csr_wr <= s_av_wr;  -- allow write-access to the irq registers
-            when 0 to 7 =>
+                vs_sample_csr_wr <= s_av_wr;
+            when 0 to c_offs_smp7_reg =>                -- sample regs
                 vs_sample_csr_rd <= s_av_rd;
-                vs_sample_csr_wr <= '0';      -- disallow write-access to the sample registers
+                vs_sample_csr_wr <= '0';
             when others =>
                 vs_ctrl_csr_wr   <= '0';
                 vs_ctrl_csr_rd   <= '0';
