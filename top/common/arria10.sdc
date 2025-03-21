@@ -40,6 +40,8 @@ set_clock_groups -asynchronous \
 -group [get_clocks {clk_125m_local_i}] \
 -group [get_clocks {clk_125m_pllref_i}] \
 -group [get_clocks {clk_125m_sfpref_i}] \
+-group [get_clocks {clk_gxbl1c_u24}] \
+-group [get_clocks {clk_gxbl1c_w24}] \
 -group [get_clocks {~ALTERA_CLKUSR~}] \
 -group [get_clocks {pcie_refclk_i}] \
 -group [get_clocks {altera_ts_clk}] \
