@@ -62,9 +62,6 @@ begin
     s_rst <= not rst_n_i;
 
     a10vs_wb_0: component a10vs_wb
-        generic map (
-            g_data_size          => 32
-        )
         port map (
             clk_i                => clk_i,
             rst_n_i              => rst_n_i,

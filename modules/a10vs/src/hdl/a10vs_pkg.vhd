@@ -28,9 +28,6 @@ package a10vs_pkg is
     );
 
     component a10vs_wb is
-        generic (
-            g_data_size : natural := 32
-        );
         port (
             -- wishbone syscon
             clk_i   : in  std_logic := '0';

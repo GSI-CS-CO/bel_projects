@@ -31,9 +31,6 @@ use work.wishbone_pkg.all;
 use work.a10vs_pkg.all;
 
 entity a10vs_wb is
-    generic (
-        g_data_size : natural := 32
-    );
     port (
         -- wishbone syscon
         clk_i   : in  std_logic := '0';
