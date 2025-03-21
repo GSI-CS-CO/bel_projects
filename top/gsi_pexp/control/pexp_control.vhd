@@ -289,7 +289,6 @@ begin
       g_en_timer           => true,
       g_en_eca_tap         => true,
       g_en_asmi            => false,
-      g_en_enc_err_counter => false,
       g_io_table           => io_mapping_table,
       g_lm32_cores         => c_cores,
       g_lm32_ramsizes      => c_lm32_ramsizes/4,
