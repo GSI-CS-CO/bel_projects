@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 07-Feb-2025
+ *  version : 21-Mar-2025
  *
  * Command-line interface for resetting a FPGA. This forces a restart using the image stored
  * in the local flash of the timing receiver.
@@ -36,7 +36,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 01-December-2017
  ********************************************************************************************/
-#define EBRESET_VERSION "01.04.00"
+#define EBRESET_VERSION "01.05.00"
 
 // standard includes
 #include <unistd.h> // getopt
@@ -88,12 +88,18 @@ static void help(void) {
   fprintf(stderr, "                   specify a single CPU (0..31) or all CPUs (0xff)\n");
   fprintf(stderr, "  cpustatus        get the 'halt status' of all user lm32 (rightmost bit: CPU 0)\n");
   fprintf(stderr, "  fpgareset        resets the entire FPGA (see below)\n");
+  fprintf(stderr, "  comxpcyc         performs a power cycle of the SCUs COM Express module (see below)\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "Use this tool to reset a FPGA or lm32 user CPU(s).\n");
+  fprintf(stderr, "Use this tool to reset a FPGA or lm32 user CPU(s) or to power cycle a COM Express module.\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "The command 'fpgareset' forces a restart of the entire FPGA using the image stored in the \n");
   fprintf(stderr, "flash of the device. Don't use this command unless the flash contains a valid image (otherwise\n");
   fprintf(stderr, "your devices becomes bricked).\n");
+  fprintf(stderr, "\n");
+  fprintf(stderr, "The command 'comxpcyc' performs a power cycle of the SCUs COM Express board.\n");
+  fprintf(stderr, "Warning: Don't use the command from the COM Express board (or via socat) itself; if you ignore\n");
+  fprintf(stderr, "this warning, your COM Express board will power off leaving the 'power button' in an\n");
+  fprintf(stderr, "undefined state. Only use this command remotely (USB, timing network ...).\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
   fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", EBRESET_VERSION);
@@ -302,6 +308,19 @@ int main(int argc, char** argv) {
       printf("\n");
     } // get lm32 CPU status
 
+    // power cycle com x board
+    if (!strcasecmp(command, "comxpcyc")) {
+      cmdExecuted = 1;
+
+      if (strstr(devName, "dev/wbm") == 0) die("eb-reset: refusing to power cycle myself", EB_OOM);
+
+      // perform power off-on sequence
+      status = wb_comx_power(device, devIndex, 0);
+      status = wb_comx_power(device, devIndex, 1);
+      
+      if (status != EB_OK)  die("eb-reset: ", status);
+    } // power cycle com x board
+    
     wb_close(device, socket);
 
     if (!cmdExecuted) printf("eb-reset: unknonwn command %s\n", command);
