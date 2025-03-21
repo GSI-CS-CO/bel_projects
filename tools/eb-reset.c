@@ -312,7 +312,7 @@ int main(int argc, char** argv) {
     if (!strcasecmp(command, "comxpcyc")) {
       cmdExecuted = 1;
 
-      if (strstr(devName, "dev/wbm") == 0) die("eb-reset: refusing to power cycle myself", EB_OOM);
+      if (strstr(devName, "dev/wbm") != 0) die("eb-reset: refusing to power cycle myself", EB_OOM);
 
       // perform power off-on sequence
       status = wb_comx_power(device, devIndex, 0);

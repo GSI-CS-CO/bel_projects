@@ -1241,28 +1241,36 @@ eb_status_t wb_comx_power(eb_device_t device, int devIndex, uint32_t value)
 #ifdef WB_SIMULATE
   return EB_OK;
 #endif
-
+  printf("0\n");
   if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR, devIndex, &reset_addr)) != EB_OK) return status;
+  printf("1\n");
 
-  address = reset_addr + FPGA_RESET_COMX_PWRBUTTON_PUSH;
+  address = reset_addr + FPGA_RESET_COMX_PWRBUTTON;
   switch (value) {
     case 0 :                 // power off com express board
       // push power button ...
+      printf("a, reset_address 0x%x\n", address);
       data = (eb_data_t)(FPGA_RESET_COMX_PWRBUTTON_PUSH);
       if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, data, 0, eb_block)) != EB_OK) return status;
       // ... for at least 5 seconds
       usleep(6000000);
       // release power button
+      printf("b\n");
       data = (eb_data_t)(FPGA_RESET_COMX_PWRBUTTON_REL);
       if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, data, 0, eb_block)) != EB_OK) return status;
+      printf("c\n");
       break;
     case 1 :                 // power on com express board
       // push power button ...
+      printf("d\n");
       data = (eb_data_t)(FPGA_RESET_COMX_PWRBUTTON_PUSH);
       if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, data, 0, eb_block)) != EB_OK) return status;
-      // ... and release power button immediately
+      // ... and release power button after one second
+      usleep(1000000);
+      printf("e\n");
       data = (eb_data_t)(FPGA_RESET_COMX_PWRBUTTON_REL);
       if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, data, 0, eb_block)) != EB_OK) return status;
+      printf("f\n");
       break;
   default :
     return (EB_OOM);
