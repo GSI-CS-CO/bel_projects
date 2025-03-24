@@ -130,13 +130,11 @@ make exploder5          # Arria V
 make pmc                # Arria V
 make microtca           # Arria V
 make pexp               # Arria V
-make scu4               # Arria 10
 make scu4slim           # Arria 10
 make pexarria10         # Arria 10
 make ftm10              # Arria 10
-make ftm4               # Arria 10 - optional FTM4 development
-make ftm4dp             # Arria 10 - optional FTM4 dual port development
 make scu5               # Arria 10
+make ftm5               # Arria 10
 ```
 
 ## Additional Targets
