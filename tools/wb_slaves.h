@@ -4,9 +4,9 @@
 //
 //  created : 11-Nov-2016
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 06-Mar-2025
+//  version : 21-Mar-2025
 //
-#define WB_SLAVES_VERSION "00.09.02"
+#define WB_SLAVES_VERSION "00.09.03"
 //
 //  defines wishbone vendor IDs
 //  defines wishbone device IDs and registers
@@ -164,28 +164,34 @@
 
 //-- RESET  --
 // device ID
-#define FPGA_RESET_VENDOR            WB_GSI              // vendor ID
-#define FPGA_RESET_PRODUCT           0x3a362063          // product ID
-#define FPGA_RESET_VMAJOR            1                   // major revision
-#define FPGA_RESET_VMINOR            3                   // minor revision
+#define FPGA_RESET_VENDOR              WB_GSI              // vendor ID
+#define FPGA_RESET_PRODUCT             0x3a362063          // product ID
+#define FPGA_RESET_VMAJOR              1                   // major revision
+#define FPGA_RESET_VMINOR              3                   // minor revision
 
 // register offsets
-#define FPGA_RESET_RESET             0x0000              // reset register of FPGA (write), write 'deadbeef' to reset
-#define FPGA_RESET_USERLM32_GET      0x0004              // get reset status of user lm32, one bit per CPU, bit 0 is CPU 0 (read)
-#define FPGA_RESET_USERLM32_SET      0x0008              // puts user lm32 into RESET, one bit per CPU, bit 0 is CPU 0 (write)
-#define FPGA_RESET_USERLM32_CLEAR    0x000c              // clears RESET of user lm32, one bit per CPU, bit 0 is CPU 0 (write)
-#define FPGA_RESET_WATCHDOG_DISABLE  0x0004              // disables watchdog (write),    write 'cafebabe' to disable watchdog
-                                                         //                               write 'cafebab0' to reenable watchdog
-#define FPGA_RESET_WATCHDOG_STAT     0x000c              // reads watchdog stauts (read), read '1': watchdog enabled, '0': watchdog disabled
-#define FPGA_RESET_WATCHDOG_TRG      0x0010              // retrigger watchdog (write),   write 'cafebabe' regularly to prevent auto-reset
-                                                         //
-#define FPGA_RESET_PHY_RESET         0x0014              // reset register of PHY and SFP (write/read)
+#define FPGA_RESET_RESET               0x0000              // reset register of FPGA (write), write 'deadbeef' to reset
+#define FPGA_RESET_USERLM32_GET        0x0004              // get reset status of user lm32, one bit per CPU, bit 0 is CPU 0 (read)
+#define FPGA_RESET_USERLM32_SET        0x0008              // puts user lm32 into RESET, one bit per CPU, bit 0 is CPU 0 (write)
+#define FPGA_RESET_USERLM32_CLEAR      0x000c              // clears RESET of user lm32, one bit per CPU, bit 0 is CPU 0 (write)
+#define FPGA_RESET_WATCHDOG_DISABLE    0x0004              // disables watchdog (write),    write 'cafebabe' to disable watchdog
+                                                           //                               write 'cafebab0' to reenable watchdog
+#define FPGA_RESET_WATCHDOG_STAT       0x000c              // reads watchdog stauts (read), read '1': watchdog enabled, '0': watchdog disabled
+#define FPGA_RESET_WATCHDOG_TRG        0x0010              // retrigger watchdog (write),   write 'cafebabe' regularly to prevent auto-reset
+                                                           //
+#define FPGA_RESET_PHY_RESET           0x0014              // reset register of PHY and SFP (write/read)
+
+#define FPGA_RESET_COMX_PWRBUTTON      0x001c              // register for power button of the com x board (SCU, platform)
 
 // register values
-#define FPGA_RESET_PHY_DROP_LINK_WR  0x0001              // drop link: main (White Rabbit) port
-#define FPGA_RESET_PHY_DROP_LINK_AUX 0x0002              // drop link: auxiliary port
-#define FPGA_RESET_PHY_SFP_DIS_WR    0x0004              // disable SFP: main (White Rabbit) port
-#define FPGA_RESET_PHY_SFP_DIS_AUX   0x0008              // disable SFP: auxiliary port
+#define FPGA_RESET_PHY_DROP_LINK_WR    0x0001              // drop link: main (White Rabbit) port
+#define FPGA_RESET_PHY_DROP_LINK_AUX   0x0002              // drop link: auxiliary port
+#define FPGA_RESET_PHY_SFP_DIS_WR      0x0004              // disable SFP: main (White Rabbit) port
+#define FPGA_RESET_PHY_SFP_DIS_AUX     0x0008              // disable SFP: auxiliary port
+
+#define FPGA_RESET_COMX_PWRBUTTON_PUSH 0xcafebab0          // push power button
+#define FPGA_RESET_COMX_PWRBUTTON_REL  0xcafebab1          // release power button
+
 // masks
 
 //-- ENCODER ERROR COUNTER --

@@ -9,9 +9,9 @@
 //            -- Wesley W. Terpstra <w.terpstra@gsi.de>
 //            -- Alessandro Rubini <rubini@gnudd.com>
 //            -- Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
-//  version : 07-Mar-2025
+//  version : 21-Mar-2025
 //
-#define WB_API_VERSION "0.20.00"
+#define WB_API_VERSION "0.20.01"
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API.
 //
@@ -260,15 +260,15 @@ eb_status_t wb_wr_watchdog_status(eb_device_t device,          // EB device
                                   );
 
 // reset the SFP
-eb_status_t wb_wr_sfp_reset(eb_device_t device,                 // EB device
-                            int devIndex,                       // 0,1,2... - there may be more than 1 device on the WB bus
-                            int phyIndex                        // 0,1      - index of the interface to be reset
+eb_status_t wb_wr_sfp_reset(eb_device_t device,                // EB device
+                            int devIndex,                      // 0,1,2... - there may be more than 1 device on the WB bus
+                            int phyIndex                       // 0,1      - index of the interface to be reset
                             );
 
 // reset the PHY
-eb_status_t wb_wr_phy_reset(eb_device_t device,                 // EB device
-                            int devIndex,                       // 0,1,2... - there may be more than 1 device on the WB bus
-                            int phyIndex                        // 0,1      - index of the interface to be reset
+eb_status_t wb_wr_phy_reset(eb_device_t device,                // EB device
+                            int devIndex,                      // 0,1,2... - there may be more than 1 device on the WB bus
+                            int phyIndex                       // 0,1      - index of the interface to be reset
                             );
 
 // put user lm32 into reset state
@@ -287,6 +287,12 @@ eb_status_t wb_cpu_resume(eb_device_t device,                  // EB device
 eb_status_t wb_cpu_status(eb_device_t device,                  // EB device
                           int devIndex,                        // 0,1,2... - there may be more than 1 device on the WB bus
                           uint32_t *value                      // one bit per CPU; CPU 0 is rightmost bit
+                          );
+
+// power on/off com express board
+eb_status_t wb_comx_power(eb_device_t device,                  // EB device
+                          int devIndex,                        // 0,1,2... - there may be more than 1 device on the WB bus
+                          uint32_t value                       // 0: power off; 1: power on
                           );
 
 // get gateware build type

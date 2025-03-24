@@ -3,7 +3,7 @@
 //
 //  created : Apr 10, 2013
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 06-Mar-2025
+//  version : 21-Mar-2025
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API,
 // but only a temporary solution.
@@ -1229,6 +1229,45 @@ eb_status_t wb_cpu_status(eb_device_t device, int devIndex, uint32_t *value)
 
   return status;
 } // wb_cpu_status
+
+
+eb_status_t wb_comx_power(eb_device_t device, int devIndex, uint32_t value)
+{
+  eb_data_t    data;
+  eb_address_t address;
+  eb_status_t  status;
+  uint32_t     tSleep;
+
+
+#ifdef WB_SIMULATE
+  return EB_OK;
+#endif
+  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR, devIndex, &reset_addr)) != EB_OK) return status;
+
+  address = reset_addr + FPGA_RESET_COMX_PWRBUTTON;
+
+  
+  switch (value) {
+    case 0 :                 
+      tSleep = 6000000;      // long press: power off
+      break;
+    case 1:
+      tSleep = 1000000;       // short press: power on
+      break;
+    default:
+      return EB_OOM;
+      break;
+  } // switch value
+
+  // push and relase button
+  data = (eb_data_t)(FPGA_RESET_COMX_PWRBUTTON_PUSH);
+  if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, data, 0, eb_block)) != EB_OK) return status;
+  usleep(tSleep);
+  data = (eb_data_t)(FPGA_RESET_COMX_PWRBUTTON_REL);
+  if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, data, 0, eb_block)) != EB_OK) return status;
+  
+  return status;
+} // wb_comx_power
 
 
 eb_status_t wb_get_build_type(eb_device_t device, int size, char *buildType, uint32_t *buildNumber)
