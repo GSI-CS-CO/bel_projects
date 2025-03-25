@@ -2,6 +2,7 @@
 <<<<<<< HEAD
 =======
 
+
 set_global_assignment -name AHDL_FILE ../../../modules/modulbus/i2c.tdf
 >>>>>>> 46915707d (FEATURE PWM: started using gpios, modding for scu)
 set_global_assignment -name ALLOW_POWER_UP_DONT_CARE OFF
@@ -85,7 +86,40 @@ set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:scu_control.tcl"
 set_global_assignment -name PRE_MAPPING_RESYNTHESIS ON
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:00:25 FEBRUARY 13, 2012"
 set_global_assignment -name SAVE_DISK_SPACE OFF
+<<<<<<< HEAD
 set_global_assignment -name SEED 22
+=======
+set_global_assignment -name SDC_FILE ../../../top/gsi_scu/control3/scu_control.sdc
+set_global_assignment -name SIGNALTAP_FILE ../../../../signal_taps/pwm_scu3.stp
+set_global_assignment -name SLD_FILE db/pwm_scu3_auto_stripped.stp
+set_global_assignment -name SLD_NODE_CREATOR_ID 110 -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_ENTITY_NAME sld_signaltap -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_ADVANCED_TRIGGER_ENTITY=basic,1," -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_ATTRIBUTE_MEM_MODE=OFF" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_BUFFER_FULL_STOP=1" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_COUNTER_PIPELINE=0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_CURRENT_RESOURCE_WIDTH=1" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_DATA_BITS=165" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_ENABLE_ADVANCED_TRIGGER=0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_INCREMENTAL_ROUTING=1" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_INVERSION_MASK=000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_INVERSION_MASK_LENGTH=519" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_NODE_INFO=805334528" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_POWER_UP_TRIGGER=0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_RAM_BLOCK_TYPE=AUTO" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_RAM_PIPELINE=0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_SAMPLE_DEPTH=1024" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_SEGMENT_SIZE=1024" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_STATE_BITS=11" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_STATE_FLOW_USE_GENERATED=0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_STORAGE_QUALIFIER_BITS=165" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_STORAGE_QUALIFIER_INVERSION_MASK_LENGTH=0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_TRIGGER_BITS=165" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_TRIGGER_IN_ENABLED=0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_TRIGGER_LEVEL=1" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_TRIGGER_LEVEL_PIPELINE=1" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_TRIGGER_PIPELINE=0" -section_id auto_signaltap_0
+>>>>>>> 59ebff345 (PWM Feature: Added enable bit for every channel)
 set_global_assignment -name SMART_RECOMPILE ON
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
 set_global_assignment -name STRATIXII_CONFIGURATION_DEVICE EPCS128
@@ -98,7 +132,11 @@ set_global_assignment -name TIMING_ANALYZER_DO_CCPP_REMOVAL ON
 set_global_assignment -name TIMING_ANALYZER_MULTICORNER_ANALYSIS ON
 set_global_assignment -name USE_CONFIGURATION_DEVICE ON
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+set_global_assignment -name USE_SIGNALTAP_FILE ../../../../signal_taps/pwm_scu3.stp
+>>>>>>> 59ebff345 (PWM Feature: Added enable bit for every channel)
 set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/generated/lm32_allprofiles.v" -library work
 set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/platform/altera/jtag_tap.v" -library work
 set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/platform/generic/lm32_multiplier.v" -library work
@@ -877,6 +915,337 @@ set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_L_PER_LENGTH 8.66N -to DDR3
 set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_L_PER_LENGTH 8.66N -to DDR3_ODT[0]
 set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_L_PER_LENGTH 8.66N -to DDR3_RAS_n
 set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_L_PER_LENGTH 8.66N -to DDR3_WE_n
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_clk -to "monster:main|core_clk_sys_o" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[0] -to "monster:main|pwm:\\pwm_y:pwm_pwm|pwm_o[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[100] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_pre[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[101] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[0][0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[102] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[0][10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[103] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[0][11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[104] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[0][12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[105] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[0][13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[106] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[0][14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[107] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[0][15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[108] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[0][1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[109] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[0][2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[10] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[110] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[0][3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[111] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[0][4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[112] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[0][5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[113] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[0][6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[114] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[0][7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[115] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[0][8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[116] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[0][9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[117] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[1][0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[118] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[1][10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[119] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[1][11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[11] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[120] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[1][12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[121] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[1][13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[122] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[1][14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[123] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[1][15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[124] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[1][1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[125] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[1][2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[126] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[1][3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[127] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[1][4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[128] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[1][5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[129] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[1][6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[12] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[130] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[1][7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[131] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[1][8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[132] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[1][9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[133] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|period_val[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[134] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|period_val[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[135] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|period_val[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[136] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|period_val[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[137] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|period_val[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[138] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|period_val[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[139] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|period_val[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[13] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[140] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|period_val[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[141] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|period_val[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[142] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|period_val[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[143] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|period_val[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[144] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|period_val[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[145] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|period_val[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[146] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|period_val[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[147] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|period_val[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[148] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|period_val[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[149] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|presc_val[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[14] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[150] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|presc_val[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[151] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|presc_val[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[152] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|presc_val[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[153] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|presc_val[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[154] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|presc_val[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[155] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|presc_val[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[156] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|presc_val[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[157] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|presc_val[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[158] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|presc_val[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[159] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|presc_val[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[15] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[160] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|presc_val[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[161] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|presc_val[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[162] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|presc_val[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[163] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|presc_val[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[164] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|presc_val[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[16] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[17] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[18] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[19] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[1] -to "monster:main|pwm:\\pwm_y:pwm_pwm|pwm_o[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[20] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[21] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[26]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[22] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[27]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[23] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[28]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[24] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[29]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[25] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[26] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[30]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[27] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[31]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[28] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[29] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[2] -to "monster:main|pwm:\\pwm_y:pwm_pwm|rst_sys_n_i" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[30] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[31] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[32] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[33] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[34] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[35] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[36] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[37] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[38] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[39] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[3] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[40] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[41] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[42] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[43] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[44] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[45] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[46] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[47] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[48] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[49] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[4] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[50] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[51] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[52] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[53] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[26]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[54] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[27]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[55] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[28]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[56] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[29]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[57] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[58] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[30]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[59] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[31]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[5] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[60] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[61] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[62] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[63] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[64] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[65] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[66] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[67] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.stb" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[68] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.we" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[69] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_main[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[6] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[70] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_main[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[71] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_main[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[72] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_main[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[73] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_main[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[74] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_main[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[75] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_main[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[76] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_main[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[77] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_main[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[78] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_main[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[79] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_main[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[7] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[80] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_main[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[81] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_main[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[82] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_main[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[83] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_main[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[84] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_main[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[85] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_pre[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[86] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_pre[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[87] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_pre[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[88] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_pre[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[89] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_pre[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[8] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[90] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_pre[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[91] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_pre[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[92] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_pre[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[93] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_pre[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[94] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_pre[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[95] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_pre[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[96] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_pre[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[97] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_pre[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[98] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_pre[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[99] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_pre[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[9] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[0] -to "monster:main|pwm:\\pwm_y:pwm_pwm|pwm_o[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[100] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_pre[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[101] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[0][0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[102] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[0][10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[103] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[0][11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[104] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[0][12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[105] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[0][13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[106] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[0][14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[107] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[0][15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[108] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[0][1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[109] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[0][2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[10] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[110] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[0][3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[111] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[0][4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[112] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[0][5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[113] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[0][6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[114] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[0][7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[115] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[0][8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[116] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[0][9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[117] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[1][0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[118] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[1][10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[119] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[1][11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[11] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[120] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[1][12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[121] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[1][13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[122] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[1][14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[123] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[1][15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[124] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[1][1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[125] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[1][2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[126] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[1][3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[127] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[1][4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[128] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[1][5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[129] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[1][6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[12] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[130] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[1][7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[131] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[1][8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[132] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|drive[1][9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[133] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|period_val[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[134] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|period_val[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[135] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|period_val[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[136] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|period_val[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[137] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|period_val[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[138] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|period_val[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[139] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|period_val[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[13] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[140] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|period_val[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[141] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|period_val[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[142] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|period_val[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[143] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|period_val[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[144] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|period_val[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[145] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|period_val[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[146] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|period_val[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[147] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|period_val[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[148] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|period_val[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[149] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|presc_val[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[14] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[150] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|presc_val[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[151] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|presc_val[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[152] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|presc_val[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[153] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|presc_val[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[154] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|presc_val[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[155] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|presc_val[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[156] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|presc_val[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[157] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|presc_val[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[158] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|presc_val[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[159] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|presc_val[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[15] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[160] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|presc_val[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[161] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|presc_val[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[162] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|presc_val[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[163] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|presc_val[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[164] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|presc_val[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[16] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[17] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[18] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[19] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[1] -to "monster:main|pwm:\\pwm_y:pwm_pwm|pwm_o[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[20] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[21] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[26]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[22] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[27]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[23] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[28]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[24] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[29]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[25] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[26] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[30]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[27] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[31]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[28] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[29] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[2] -to "monster:main|pwm:\\pwm_y:pwm_pwm|rst_sys_n_i" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[30] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[31] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[32] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[33] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[34] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[35] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[36] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[37] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[38] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[39] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[3] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[40] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[41] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[42] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[43] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[44] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[45] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[46] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[47] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[48] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[49] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[4] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[50] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[51] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[52] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[53] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[26]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[54] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[27]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[55] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[28]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[56] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[29]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[57] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[58] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[30]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[59] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[31]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[5] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[60] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[61] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[62] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[63] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[64] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[65] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[66] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.dat[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[67] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.stb" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[68] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.we" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[69] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_main[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[6] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[70] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_main[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[71] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_main[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[72] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_main[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[73] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_main[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[74] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_main[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[75] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_main[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[76] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_main[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[77] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_main[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[78] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_main[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[79] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_main[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[7] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[80] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_main[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[81] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_main[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[82] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_main[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[83] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_main[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[84] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_main[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[85] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_pre[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[86] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_pre[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[87] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_pre[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[88] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_pre[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[89] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_pre[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[8] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[90] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_pre[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[91] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_pre[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[92] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_pre[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[93] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_pre[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[94] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_pre[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[95] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_pre[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[96] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_pre[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[97] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_pre[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[98] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_pre[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[99] -to "monster:main|pwm:\\pwm_y:pwm_pwm|wb_simple_pwm:PWM_WB|cntr_pre[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[9] -to "monster:main|pwm:\\pwm_y:pwm_pwm|t_wb_in.adr[15]" -section_id auto_signaltap_0
 set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to DDR3_ADDR[0]
 set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to DDR3_ADDR[1]
 set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to DDR3_ADDR[10]
@@ -1276,6 +1645,39 @@ set_instance_assignment -name OUTPUT_TERMINATION "SERIES 50 OHM WITHOUT CALIBRAT
 set_instance_assignment -name OUTPUT_TERMINATION "SERIES 50 OHM WITHOUT CALIBRATION" -to DDR3_DQ
 set_instance_assignment -name OUTPUT_TERMINATION "SERIES 50 OHM WITHOUT CALIBRATION" -to DDR3_DQS
 set_instance_assignment -name OUTPUT_TERMINATION "SERIES 50 OHM WITHOUT CALIBRATION" -to DDR3_DQSn
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[0] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[10] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[11] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[12] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[13] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[14] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[15] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[16] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[17] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[18] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[19] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[1] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[20] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[21] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[22] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[23] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[24] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[25] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[26] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[27] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[28] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[29] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[2] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[30] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[31] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[3] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[4] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[5] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[6] -to auto_signaltap_0|gnd -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[7] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[8] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[9] -to auto_signaltap_0|vcc -section_id auto_signaltap_0
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to lemo_io[1]
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to lemo_io[2]
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to scu_cb_version
@@ -1618,6 +2020,7 @@ set_location_assignment PIN_Y9 -to EIO[1]
 set_location_assignment PLL_2 -to "monster:main|sys_pll:\\sys_a2:sys_inst|altpll:altpll_component|sys_pll_altpll:auto_generated|pll1"
 set_location_assignment PLL_3 -to "monster:main|dmtd_pll:\\dmtd_a2:dmtd_inst|altpll:altpll_component|dmtd_pll_altpll:auto_generated|pll1"
 set_location_assignment PLL_4 -to "monster:main|ref_pll:\\ref_a2:ref_inst|altpll:altpll_component|ref_pll_altpll:auto_generated|pll1"
+<<<<<<< HEAD
 
 <<<<<<< HEAD
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/generated/xwb_lm32.vhd" -library work
@@ -2722,3 +3125,5 @@ set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT crc[31] -
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_global_assignment -name SLD_FILE db/pwm_scu3_auto_stripped.stp
 >>>>>>> aeabd6073 (PWM Feature: Starting changes for new PWM module)
+=======
+>>>>>>> 59ebff345 (PWM Feature: Added enable bit for every channel)

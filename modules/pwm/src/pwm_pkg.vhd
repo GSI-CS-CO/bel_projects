@@ -45,11 +45,11 @@ package pwm_pkg is
             rst_sys_n_i     : in std_logic;
 
 
-            t_wb_o           : out t_wishbone_slave_out;
+            t_wb_o          : out t_wishbone_slave_out;
+            t_wb_i          : in  t_wishbone_slave_in;
 
-            t_wb_i           : in  t_wishbone_slave_in;
-
-            pwm_o           : out std_logic_vector((g_pwm_channel_num-1) downto 0)
+            pwm_enable_i        : in std_logic_vector((g_pwm_channel_num-1) downto 0);
+            pwm_o               : out std_logic_vector((g_pwm_channel_num-1) downto 0)
         );
 
     end component;
