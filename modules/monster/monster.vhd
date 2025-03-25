@@ -3331,8 +3331,9 @@ end generate;
       port map (
         clk_sys_i         => clk_sys,
         rst_sys_n_i       => rstn_sys,
-        t_wb_out          => dev_bus_master_i(dev_slaves'pos(devs_pwm)),
-        t_wb_in           => dev_bus_master_o(dev_slaves'pos(devs_pwm)),
+        t_wb_o            => dev_bus_master_i(dev_slaves'pos(devs_pwm)),
+        t_wb_i            => dev_bus_master_o(dev_slaves'pos(devs_pwm)),
+        pwm_enable_i      => s_gpio_src_pwm((c_eca_gpio-1) downto 0),
         pwm_o             => s_gpio_src_pwm((c_eca_gpio-1) downto 0)
       );
   end generate;

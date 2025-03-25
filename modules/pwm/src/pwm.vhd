@@ -45,7 +45,8 @@ entity pwm is
         --end record t_wishbone_slave_in;
         -- equal to t_wishbone_master_out
 
-    pwm_o           : out std_logic_vector((g_pwm_channel_num-1) downto 0)
+    pwm_enable_i        : in std_logic_vector((g_pwm_channel_num-1) downto 0)   := (others => '0');
+    pwm_o               : out std_logic_vector((g_pwm_channel_num-1) downto 0)  := (others => '0')
     );
 
 end entity;
@@ -81,7 +82,10 @@ architecture pwm_arch of pwm is
     type t_pwm_values_array is array(0 to ((g_pwm_channel_num*2)-1)) of unsigned(g_pwm_regs_size-1 downto 0);
     signal s_pwm_values_array : t_pwm_values_array  := (others=> to_unsigned(c_pwm_default_value, g_pwm_regs_size));
 
-    signal value_reg_address : natural range 0 to ((g_pwm_channel_num*2)-1);
+    signal value_reg_address        : natural range 0 to ((g_pwm_channel_num*2)-1);
+
+    -- start phase for all channels is high for now
+    signal s_pwm_start_phase_i      : std_logic_vector((g_pwm_channel_num-1) downto 0) := (others => '1');
 
 
 begin
@@ -95,7 +99,7 @@ begin
     s_state_machine_vector(3) <= t_wb_i.we;
 
     -- get relevant address bits to write to the right value register
-    value_reg_address <= to_integer(unsigned(t_wb_i.adr(3 downto 2)));
+    value_reg_address <= to_integer(unsigned(t_wb_i.adr(t_wb_i.adr'length-1 downto 2)));
 
     -- for every wanted channel generate a PWM channel
     pwm_channels: for i in 0 to g_pwm_channel_num-1 generate
@@ -112,7 +116,9 @@ begin
 
                 high                    => s_pwm_values_array(i*2),
                 low                     => s_pwm_values_array((i*2)+1),
-                
+
+                pwm_start_phase_i       => s_pwm_start_phase_i(i),
+                pwm_enable_i            => pwm_enable_i(i),
                 pwm_o                   => pwm_o(i)
             );
     end generate pwm_channels;
