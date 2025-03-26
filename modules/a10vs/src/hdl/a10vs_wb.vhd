@@ -117,7 +117,7 @@ begin
 
     -- Avalon-MM data bus
     p_av_readdata_writedata: process(rst_n_i, clk_i, s_adr)
-        variable v_adr_int : integer;
+        variable v_adr_int : natural range 0 to 2**c_vs_addr_width - 1;
     begin
         if (rst_n_i = '0') then
             slave_o.dat <= (others => '0');
@@ -151,7 +151,7 @@ begin
     s_av_wr <= slave_i.cyc and slave_i.we;
 
     p_av_rd_wr: process(s_av_rd, s_av_wr, s_adr)
-        variable v_adr_int : integer;
+        variable v_adr_int : natural range 0 to 2**c_vs_addr_width - 1;
     begin
         v_adr_int := to_integer(unsigned(s_adr));
 
