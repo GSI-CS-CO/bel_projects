@@ -118,7 +118,7 @@ begin
     end process;
 
     -- Avalon-MM data bus
-    p_av_readdata_writedata: process(rst_n_i, clk_i, s_adr)
+    p_av_readdata_writedata: process(rst_n_i, clk_i)
         variable v_adr_int : natural range 0 to 2**c_vs_addr_width - 1;
     begin
         if (rst_n_i = '0') then
