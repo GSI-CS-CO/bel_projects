@@ -106,9 +106,11 @@ begin
     vs_sample_csr_addr <= s_adr;
 
     p_ctrl_addr_decode: process(s_adr)
+        variable v_adr_int : natural range 0 to 2**c_vs_addr_width - 1;
     begin
-        case s_adr is
-            when x"A" =>
+        v_adr_int := to_integer(unsigned(s_adr));
+        case v_adr_int is
+            when c_offs_cmd_reg =>        -- command register
                 vs_ctrl_csr_addr <= '1';
             when others =>
                 vs_ctrl_csr_addr <= '0';
