@@ -13,8 +13,8 @@
 --
 -- Description: Wishbone slave for interfacing the Altera/Intel Arria 10 voltage
 -- sensor IP core. This slave module is responsible for accessing to the
--- instantiated control and sample store cores via the Avalon-MM complaint
--- interface.
+-- instantiated control and sample store cores via the dedicated Avalon-MM
+-- interfaces.
 --
 --------------------------------------------------------------------------------
 
@@ -134,10 +134,10 @@ begin
                     when c_offs_cmd_reg =>                     -- command register
                         slave_o.dat        <= vs_ctrl_csr_rddata;
                         vs_ctrl_csr_wrdata <= slave_i.dat;
-                    when c_offs_irqe_reg to c_offs_irqs_reg => -- irq enable and irq status regs
+                    when c_offs_irqe_reg to c_offs_irqs_reg => -- irq registers
                         slave_o.dat          <= vs_sample_csr_rddata;
                         vs_sample_csr_wrdata <= slave_i.dat;
-                    when 0 to c_offs_smp7_reg =>               -- sample registers
+                    when 0 to c_offs_smp7_reg =>               -- sample registers (read-only)
                         slave_o.dat <= vs_sample_csr_rddata;
                     when others =>
                         null;
@@ -156,13 +156,13 @@ begin
         v_adr_int := to_integer(unsigned(s_adr));
 
         case v_adr_int is
-            when c_offs_cmd_reg  =>                     -- command reg
+            when c_offs_cmd_reg  =>                     -- command register
                 vs_ctrl_csr_rd   <= s_av_rd;
                 vs_ctrl_csr_wr   <= s_av_wr;
-            when c_offs_irqe_reg to c_offs_irqs_reg =>  -- irq enable and irq status regs
+            when c_offs_irqe_reg to c_offs_irqs_reg =>  -- irq registers
                 vs_sample_csr_rd <= s_av_rd;
                 vs_sample_csr_wr <= s_av_wr;
-            when 0 to c_offs_smp7_reg =>                -- sample regs
+            when 0 to c_offs_smp7_reg =>                -- sample registers (read-only)
                 vs_sample_csr_rd <= s_av_rd;
                 vs_sample_csr_wr <= '0';
             when others =>
