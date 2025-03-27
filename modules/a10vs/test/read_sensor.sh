@@ -86,6 +86,9 @@ enable_sensor_operation() {
 
     if [ $? -eq 0 ]; then
         echo "Info: Cyclic conversion mode: on"
+    else
+        echo "Error: Could not eb-write to device $dev. Exit!"
+        exit 1
     fi
 
     # check the interrupt status again
@@ -94,6 +97,7 @@ enable_sensor_operation() {
 
     # wait until complete block of samples is received: status=1
     while [ "$((16#$status))" = "0" ]; do
+        echo "Info: irq status: $status"
         status=$(eb-read $dev $(printf "0x%x/4" $offset))
         sleep 0.5
     done
