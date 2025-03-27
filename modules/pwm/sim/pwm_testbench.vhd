@@ -1,5 +1,3 @@
---wishbone secondary testbecnh
---bare bones testbench to test slave communication
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -49,11 +47,13 @@ architecture pwm_testbench_architecture of pwm_testbench is
   signal s_wb_master_out : t_wishbone_slave_in;   -- equal to t_wishbone_master_out
 
   -- PWM specific signals
-  signal s_tb_pwm_enable: std_logic_vector(c_channel_num-1 downto 0) := (others => '0');
+  signal s_tb_pwm_latch : std_logic_vector(c_channel_num-1 downto 0) := (others => '0');
   signal s_tb_pwm_out   : std_logic_vector(c_channel_num-1 downto 0) := (others => '0');
 
   -- PWM reg addresses
-  --constant c_ch_0_high  : std_logic_vector(31 downto 0) := "00000000000000000000000000000000"; -- 0x0200
+  --type t_pwm_ch_addr_array is array(0 to (c_channel_num-1)) of std_logic_vector(31 downto 0);
+  --signal pwm_addr_array : t_pwm_ch_addr_array := (others => (others => '0'));
+
   constant c_ch_00   : std_logic_vector(31 downto 0) :=x"00000000";
   constant c_ch_01   : std_logic_vector(31 downto 0) :=x"00000004";
   constant c_ch_02   : std_logic_vector(31 downto 0) :=x"00000008";
@@ -74,6 +74,26 @@ architecture pwm_testbench_architecture of pwm_testbench is
   constant c_ch_14   : std_logic_vector(31 downto 0) :=x"00000038";
   constant c_ch_15   : std_logic_vector(31 downto 0) :=x"0000003C";
 
+  constant c_ch_16   : std_logic_vector(31 downto 0) :=x"00000040";
+  constant c_ch_17   : std_logic_vector(31 downto 0) :=x"00000044";
+  constant c_ch_18   : std_logic_vector(31 downto 0) :=x"00000048";
+  constant c_ch_19   : std_logic_vector(31 downto 0) :=x"0000004C";
+
+  constant c_ch_20   : std_logic_vector(31 downto 0) :=x"00000050";
+  constant c_ch_21   : std_logic_vector(31 downto 0) :=x"00000054";
+  constant c_ch_22   : std_logic_vector(31 downto 0) :=x"00000058";
+  constant c_ch_23   : std_logic_vector(31 downto 0) :=x"0000005C";
+
+  constant c_ch_24   : std_logic_vector(31 downto 0) :=x"00000060";
+  constant c_ch_25   : std_logic_vector(31 downto 0) :=x"00000064";
+  constant c_ch_26   : std_logic_vector(31 downto 0) :=x"00000068";
+  constant c_ch_27   : std_logic_vector(31 downto 0) :=x"0000006C";
+
+  constant c_ch_28   : std_logic_vector(31 downto 0) :=x"00000070";
+  constant c_ch_29   : std_logic_vector(31 downto 0) :=x"00000074";
+  constant c_ch_30   : std_logic_vector(31 downto 0) :=x"00000078";
+  constant c_ch_31   : std_logic_vector(31 downto 0) :=x"0000007C";
+
   constant c_test_value     : std_logic_vector(31 downto 0) :=x"DEADBEEF";
 
   constant c_ch_0_value     : std_logic_vector(31 downto 0) :=x"00020004";
@@ -82,6 +102,9 @@ architecture pwm_testbench_architecture of pwm_testbench is
   constant c_ch_3_value     : std_logic_vector(31 downto 0) :=x"004B005A";
   constant c_ch_4_value     : std_logic_vector(31 downto 0) :=x"00690078";
   constant c_ch_5_value     : std_logic_vector(31 downto 0) :=x"00D200F0";
+
+  constant c_ch_00_mode     : std_logic_vector(31 downto 0) :=x"00000100";
+  constant c_mode_latch     : std_logic_vector(31 downto 0) :=x"00000000";
   
   -- Function wb_stim -> Helper function to create a human-readable testbench
   function wb_stim(cyc : std_logic; stb : std_logic; we : std_logic; adr: t_wishbone_address;
@@ -112,7 +135,6 @@ architecture pwm_testbench_architecture of pwm_testbench is
       return to_integer(x);
   end function to_logic_to_int;
 
-
   component pwm is
 
   generic (
@@ -128,8 +150,8 @@ architecture pwm_testbench_architecture of pwm_testbench is
       t_wb_o            : out t_wishbone_slave_out;
       t_wb_i            : in  t_wishbone_slave_in;
 
-      pwm_enable_i      : in std_logic_vector(g_pwm_channel_num-1 downto 0);
-      pwm_o             : out std_logic_vector(g_pwm_channel_num-1 downto 0)
+      pwm_latch_i       : in std_logic_vector(c_channel_num -1 downto 0);
+      pwm_o             : out std_logic_vector(c_channel_num-1 downto 0)
     );
 
   end component;
@@ -150,9 +172,8 @@ architecture pwm_testbench_architecture of pwm_testbench is
         t_wb_o          => s_wb_master_in,
         t_wb_i          => s_wb_master_out,
 
-        pwm_enable_i    => s_tb_pwm_enable,
+        pwm_latch_i     => s_tb_pwm_latch,
         pwm_o           => s_tb_pwm_out);
-
 
     -- generate clock
     p_clock : process
@@ -174,6 +195,7 @@ architecture pwm_testbench_architecture of pwm_testbench is
 
     p_test: process
         begin
+            report("Test in free-running mode");
             -- RESET active
             --
             s_wb_master_out  <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_reg_all_zero, c_reg_all_zero);
@@ -184,16 +206,14 @@ architecture pwm_testbench_architecture of pwm_testbench is
             --
             -- WRITE CHANNEL 0
             wait until rising_edge(s_clk);
-            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_00,c_ch_0_value);
-            report("WRITE: c_ch_0");
+            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_00, c_ch_0_value);
+            report("WRITE: c_ch_00");
             while (s_wb_master_in.ack = '0') loop
               wait until rising_edge(s_clk);
             end loop;
             for i in 0 to 5 loop
               wait until rising_edge(s_clk);
             end loop; -- Waiter
-            -- start counter with enable
-            s_tb_pwm_enable(0) <= '1';
             s_wb_master_out  <= wb_stim(c_cyc_off, c_str_off, c_we_off,  c_reg_all_zero, c_reg_all_zero);
             --
             for i in 0 to 5 loop
@@ -220,8 +240,6 @@ architecture pwm_testbench_architecture of pwm_testbench is
             -- WRITE CHANNEL 1
             wait until rising_edge(s_clk);
             s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_01, c_ch_1_value);
-            -- start counter with enable
-            s_tb_pwm_enable(1) <= '1';
             report("WRITE: c_ch_01");
             while (s_wb_master_in.ack = '0') loop
               wait until rising_edge(s_clk);
@@ -237,8 +255,6 @@ architecture pwm_testbench_architecture of pwm_testbench is
             -- WRITE CHANNEL 2
             wait until rising_edge(s_clk);
             s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_02, c_ch_2_value);
-            -- start counter with enable
-            s_tb_pwm_enable(2) <= '1';
             report("WRITE: c_ch_02");
             while (s_wb_master_in.ack = '0') loop
               wait until rising_edge(s_clk);
@@ -254,8 +270,6 @@ architecture pwm_testbench_architecture of pwm_testbench is
             -- WRITE CHANNEL 3
             wait until rising_edge(s_clk);
             s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_03, c_ch_3_value);
-            -- start counter with enable
-            s_tb_pwm_enable(3) <= '1';
             report("WRITE: c_ch_03");
             while (s_wb_master_in.ack = '0') loop
               wait until rising_edge(s_clk);
@@ -271,8 +285,6 @@ architecture pwm_testbench_architecture of pwm_testbench is
             -- WRITE CHANNEL 4
             wait until rising_edge(s_clk);
             s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_04, c_ch_4_value);
-            -- start counter with enable
-            s_tb_pwm_enable(4) <= '1';
             report("WRITE: c_ch_04");
             while (s_wb_master_in.ack = '0') loop
               wait until rising_edge(s_clk);
@@ -288,8 +300,6 @@ architecture pwm_testbench_architecture of pwm_testbench is
             -- WRITE CHANNEL 5
             wait until rising_edge(s_clk);
             s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_05, c_ch_5_value);
-            -- start counter with enable
-            s_tb_pwm_enable(5) <= '1';
             report("WRITE: c_ch_05");
             while (s_wb_master_in.ack = '0') loop
               wait until rising_edge(s_clk);
@@ -301,7 +311,455 @@ architecture pwm_testbench_architecture of pwm_testbench is
             end loop; -- Waiter
             --
             --
-
+            --
+            -- WRITE CHANNEL 6
+            wait until rising_edge(s_clk);
+            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_06, c_ch_0_value);
+            report("WRITE: c_ch_06");
+            while (s_wb_master_in.ack = '0') loop
+              wait until rising_edge(s_clk);
+            end loop;
+            s_wb_master_out  <= wb_stim(c_cyc_off, c_str_off, c_we_off,  c_reg_all_zero, c_reg_all_zero);
+            --
+            for i in 0 to 5 loop
+              wait until rising_edge(s_clk);
+            end loop; -- Waiter
+            --
+            --
+            --
+            -- WRITE CHANNEL 7
+            wait until rising_edge(s_clk);
+            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_07, c_ch_1_value);
+            report("WRITE: c_ch_07");
+            while (s_wb_master_in.ack = '0') loop
+              wait until rising_edge(s_clk);
+            end loop;
+            s_wb_master_out  <= wb_stim(c_cyc_off, c_str_off, c_we_off,  c_reg_all_zero, c_reg_all_zero);
+            --
+            for i in 0 to 5 loop
+              wait until rising_edge(s_clk);
+            end loop; -- Waiter
+            --
+            --
+            --
+            -- WRITE CHANNEL 8
+            wait until rising_edge(s_clk);
+            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_08, c_ch_2_value);
+            report("WRITE: c_ch_08");
+            while (s_wb_master_in.ack = '0') loop
+              wait until rising_edge(s_clk);
+            end loop;
+            s_wb_master_out  <= wb_stim(c_cyc_off, c_str_off, c_we_off,  c_reg_all_zero, c_reg_all_zero);
+            --
+            for i in 0 to 5 loop
+              wait until rising_edge(s_clk);
+            end loop; -- Waiter
+            --
+            --
+            --
+            -- WRITE CHANNEL 9
+            wait until rising_edge(s_clk);
+            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_09, c_ch_3_value);
+            report("WRITE: c_ch_09");
+            while (s_wb_master_in.ack = '0') loop
+              wait until rising_edge(s_clk);
+            end loop;
+            s_wb_master_out  <= wb_stim(c_cyc_off, c_str_off, c_we_off,  c_reg_all_zero, c_reg_all_zero);
+            --
+            for i in 0 to 5 loop
+              wait until rising_edge(s_clk);
+            end loop; -- Waiter
+            --
+            --
+            --
+            -- WRITE CHANNEL 10
+            wait until rising_edge(s_clk);
+            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_10, c_ch_4_value);
+            report("WRITE: c_ch_10");
+            while (s_wb_master_in.ack = '0') loop
+              wait until rising_edge(s_clk);
+            end loop;
+            s_wb_master_out  <= wb_stim(c_cyc_off, c_str_off, c_we_off,  c_reg_all_zero, c_reg_all_zero);
+            --
+            for i in 0 to 5 loop
+              wait until rising_edge(s_clk);
+            end loop; -- Waiter
+            --
+            --
+            --
+            -- WRITE CHANNEL 11
+            wait until rising_edge(s_clk);
+            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_11, c_ch_5_value);
+            report("WRITE: c_ch_11");
+            while (s_wb_master_in.ack = '0') loop
+              wait until rising_edge(s_clk);
+            end loop;
+            s_wb_master_out  <= wb_stim(c_cyc_off, c_str_off, c_we_off,  c_reg_all_zero, c_reg_all_zero);
+            --
+            for i in 0 to 5 loop
+              wait until rising_edge(s_clk);
+            end loop; -- Waiter
+            --
+            --
+            --
+            -- WRITE CHANNEL 12
+            wait until rising_edge(s_clk);
+            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_12, c_ch_0_value);
+            report("WRITE: c_ch_12");
+            while (s_wb_master_in.ack = '0') loop
+              wait until rising_edge(s_clk);
+            end loop;
+            s_wb_master_out  <= wb_stim(c_cyc_off, c_str_off, c_we_off,  c_reg_all_zero, c_reg_all_zero);
+            --
+            for i in 0 to 5 loop
+              wait until rising_edge(s_clk);
+            end loop; -- Waiter
+            --
+            --
+            --
+            -- WRITE CHANNEL 13
+            wait until rising_edge(s_clk);
+            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_13, c_ch_1_value);
+            report("WRITE: c_ch_13");
+            while (s_wb_master_in.ack = '0') loop
+              wait until rising_edge(s_clk);
+            end loop;
+            s_wb_master_out  <= wb_stim(c_cyc_off, c_str_off, c_we_off,  c_reg_all_zero, c_reg_all_zero);
+            --
+            for i in 0 to 5 loop
+              wait until rising_edge(s_clk);
+            end loop; -- Waiter
+            --
+            --
+            --
+            -- WRITE CHANNEL 14
+            wait until rising_edge(s_clk);
+            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_14, c_ch_2_value);
+            report("WRITE: c_ch_14");
+            while (s_wb_master_in.ack = '0') loop
+              wait until rising_edge(s_clk);
+            end loop;
+            s_wb_master_out  <= wb_stim(c_cyc_off, c_str_off, c_we_off,  c_reg_all_zero, c_reg_all_zero);
+            --
+            for i in 0 to 5 loop
+              wait until rising_edge(s_clk);
+            end loop; -- Waiter
+            --
+            --
+            --
+            -- WRITE CHANNEL 15
+            wait until rising_edge(s_clk);
+            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_15, c_ch_3_value);
+            report("WRITE: c_ch_15");
+            while (s_wb_master_in.ack = '0') loop
+              wait until rising_edge(s_clk);
+            end loop;
+            s_wb_master_out  <= wb_stim(c_cyc_off, c_str_off, c_we_off,  c_reg_all_zero, c_reg_all_zero);
+            --
+            for i in 0 to 5 loop
+              wait until rising_edge(s_clk);
+            end loop; -- Waiter
+            --
+            --
+            --
+            -- WRITE CHANNEL 16
+            wait until rising_edge(s_clk);
+            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_16, c_ch_4_value);
+            report("WRITE: c_ch_16");
+            while (s_wb_master_in.ack = '0') loop
+              wait until rising_edge(s_clk);
+            end loop;
+            s_wb_master_out  <= wb_stim(c_cyc_off, c_str_off, c_we_off,  c_reg_all_zero, c_reg_all_zero);
+            --
+            for i in 0 to 5 loop
+              wait until rising_edge(s_clk);
+            end loop; -- Waiter
+            --
+            --
+            --
+            -- WRITE CHANNEL 17
+            wait until rising_edge(s_clk);
+            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_17, c_ch_5_value);
+            report("WRITE: c_ch_17");
+            while (s_wb_master_in.ack = '0') loop
+              wait until rising_edge(s_clk);
+            end loop;
+            s_wb_master_out  <= wb_stim(c_cyc_off, c_str_off, c_we_off,  c_reg_all_zero, c_reg_all_zero);
+            --
+            for i in 0 to 5 loop
+              wait until rising_edge(s_clk);
+            end loop; -- Waiter
+            --
+            --
+            --
+            -- WRITE CHANNEL 18
+            wait until rising_edge(s_clk);
+            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_18, c_ch_0_value);
+            report("WRITE: c_ch_18");
+            while (s_wb_master_in.ack = '0') loop
+              wait until rising_edge(s_clk);
+            end loop;
+            s_wb_master_out  <= wb_stim(c_cyc_off, c_str_off, c_we_off,  c_reg_all_zero, c_reg_all_zero);
+            --
+            for i in 0 to 5 loop
+              wait until rising_edge(s_clk);
+            end loop; -- Waiter
+            --
+            --
+            --
+            -- WRITE CHANNEL 19
+            wait until rising_edge(s_clk);
+            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_19, c_ch_1_value);
+            report("WRITE: c_ch_19");
+            while (s_wb_master_in.ack = '0') loop
+              wait until rising_edge(s_clk);
+            end loop;
+            s_wb_master_out  <= wb_stim(c_cyc_off, c_str_off, c_we_off,  c_reg_all_zero, c_reg_all_zero);
+            --
+            for i in 0 to 5 loop
+              wait until rising_edge(s_clk);
+            end loop; -- Waiter
+            --
+            --
+            --
+            -- WRITE CHANNEL 20
+            wait until rising_edge(s_clk);
+            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_20, c_ch_2_value);
+            report("WRITE: c_ch_20");
+            while (s_wb_master_in.ack = '0') loop
+              wait until rising_edge(s_clk);
+            end loop;
+            s_wb_master_out  <= wb_stim(c_cyc_off, c_str_off, c_we_off,  c_reg_all_zero, c_reg_all_zero);
+            --
+            for i in 0 to 5 loop
+              wait until rising_edge(s_clk);
+            end loop; -- Waiter
+            --
+            --
+            --
+            -- WRITE CHANNEL 21
+            wait until rising_edge(s_clk);
+            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_21, c_ch_3_value);
+            report("WRITE: c_ch_21");
+            while (s_wb_master_in.ack = '0') loop
+              wait until rising_edge(s_clk);
+            end loop;
+            s_wb_master_out  <= wb_stim(c_cyc_off, c_str_off, c_we_off,  c_reg_all_zero, c_reg_all_zero);
+            --
+            for i in 0 to 5 loop
+              wait until rising_edge(s_clk);
+            end loop; -- Waiter
+            --
+            --
+            --
+            -- WRITE CHANNEL 22
+            wait until rising_edge(s_clk);
+            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_22, c_ch_4_value);
+            report("WRITE: c_ch_22");
+            while (s_wb_master_in.ack = '0') loop
+              wait until rising_edge(s_clk);
+            end loop;
+            s_wb_master_out  <= wb_stim(c_cyc_off, c_str_off, c_we_off,  c_reg_all_zero, c_reg_all_zero);
+            --
+            for i in 0 to 5 loop
+              wait until rising_edge(s_clk);
+            end loop; -- Waiter
+            --
+            --
+            --
+            -- WRITE CHANNEL 23
+            wait until rising_edge(s_clk);
+            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_23, c_ch_5_value);
+            report("WRITE: c_ch_23");
+            while (s_wb_master_in.ack = '0') loop
+              wait until rising_edge(s_clk);
+            end loop;
+            s_wb_master_out  <= wb_stim(c_cyc_off, c_str_off, c_we_off,  c_reg_all_zero, c_reg_all_zero);
+            --
+            for i in 0 to 5 loop
+              wait until rising_edge(s_clk);
+            end loop; -- Waiter
+            --
+            --
+            --
+            -- WRITE CHANNEL 24
+            wait until rising_edge(s_clk);
+            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_24, c_ch_0_value);
+            report("WRITE: c_ch_24");
+            while (s_wb_master_in.ack = '0') loop
+              wait until rising_edge(s_clk);
+            end loop;
+            s_wb_master_out  <= wb_stim(c_cyc_off, c_str_off, c_we_off,  c_reg_all_zero, c_reg_all_zero);
+            --
+            for i in 0 to 5 loop
+              wait until rising_edge(s_clk);
+            end loop; -- Waiter
+            --
+            --
+            --
+            -- WRITE CHANNEL 25
+            wait until rising_edge(s_clk);
+            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_25, c_ch_1_value);
+            report("WRITE: c_ch_25");
+            while (s_wb_master_in.ack = '0') loop
+              wait until rising_edge(s_clk);
+            end loop;
+            s_wb_master_out  <= wb_stim(c_cyc_off, c_str_off, c_we_off,  c_reg_all_zero, c_reg_all_zero);
+            --
+            for i in 0 to 5 loop
+              wait until rising_edge(s_clk);
+            end loop; -- Waiter
+            --
+            --
+            --
+            -- WRITE CHANNEL 26
+            wait until rising_edge(s_clk);
+            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_26, c_ch_2_value);
+            report("WRITE: c_ch_26");
+            while (s_wb_master_in.ack = '0') loop
+              wait until rising_edge(s_clk);
+            end loop;
+            s_wb_master_out  <= wb_stim(c_cyc_off, c_str_off, c_we_off,  c_reg_all_zero, c_reg_all_zero);
+            --
+            for i in 0 to 5 loop
+              wait until rising_edge(s_clk);
+            end loop; -- Waiter
+            --
+            --
+            --
+            -- WRITE CHANNEL 27
+            wait until rising_edge(s_clk);
+            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_27, c_ch_3_value);
+            report("WRITE: c_ch_27");
+            while (s_wb_master_in.ack = '0') loop
+              wait until rising_edge(s_clk);
+            end loop;
+            s_wb_master_out  <= wb_stim(c_cyc_off, c_str_off, c_we_off,  c_reg_all_zero, c_reg_all_zero);
+            --
+            for i in 0 to 5 loop
+              wait until rising_edge(s_clk);
+            end loop; -- Waiter
+            --
+            --
+            --
+            -- WRITE CHANNEL 28
+            wait until rising_edge(s_clk);
+            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_28, c_ch_4_value);
+            report("WRITE: c_ch_28");
+            while (s_wb_master_in.ack = '0') loop
+              wait until rising_edge(s_clk);
+            end loop;
+            s_wb_master_out  <= wb_stim(c_cyc_off, c_str_off, c_we_off,  c_reg_all_zero, c_reg_all_zero);
+            --
+            for i in 0 to 5 loop
+              wait until rising_edge(s_clk);
+            end loop; -- Waiter
+            --
+            --
+            --
+            -- WRITE CHANNEL 29
+            wait until rising_edge(s_clk);
+            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_29, c_ch_5_value);
+            report("WRITE: c_ch_29");
+            while (s_wb_master_in.ack = '0') loop
+              wait until rising_edge(s_clk);
+            end loop;
+            s_wb_master_out  <= wb_stim(c_cyc_off, c_str_off, c_we_off,  c_reg_all_zero, c_reg_all_zero);
+            --
+            for i in 0 to 5 loop
+              wait until rising_edge(s_clk);
+            end loop; -- Waiter
+            --
+            --
+            --
+            -- WRITE CHANNEL 30
+            wait until rising_edge(s_clk);
+            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_30, c_ch_0_value);
+            report("WRITE: c_ch_30");
+            while (s_wb_master_in.ack = '0') loop
+              wait until rising_edge(s_clk);
+            end loop;
+            s_wb_master_out  <= wb_stim(c_cyc_off, c_str_off, c_we_off,  c_reg_all_zero, c_reg_all_zero);
+            --
+            for i in 0 to 5 loop
+              wait until rising_edge(s_clk);
+            end loop; -- Waiter
+            --
+            --
+            --
+            -- WRITE CHANNEL 31
+            wait until rising_edge(s_clk);
+            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_31, c_ch_1_value);
+            -- start counter with enable
+            s_tb_pwm_latch(31) <= '1';
+            report("WRITE: c_ch_31");
+            while (s_wb_master_in.ack = '0') loop
+              wait until rising_edge(s_clk);
+            end loop;
+            s_wb_master_out  <= wb_stim(c_cyc_off, c_str_off, c_we_off,  c_reg_all_zero, c_reg_all_zero);
+            --
+            for i in 0 to 5 loop
+              wait until rising_edge(s_clk);
+            end loop; -- Waiter
+            --
+            --
+            --
+            --
+            report("Test in latched mode");
+            -- 
+            --
+            -- WRITE CHANNEL 0
+            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_00, c_reg_all_zero);
+            report("Turn Channel 0 off");
+            while (s_wb_master_in.ack = '0') loop
+              wait until rising_edge(s_clk);
+            end loop;
+            --
+            --
+            -- WRITE CHANNEL 0
+            wait until rising_edge(s_clk);
+            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_00_mode, c_mode_latch);
+            report("WRITE: c_ch_0 -> mode latched");
+            while (s_wb_master_in.ack = '0') loop
+              wait until rising_edge(s_clk);
+            end loop;
+            --
+            --
+            wait until rising_edge(s_clk);
+            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_on, c_ch_00, c_ch_0_value);
+            report("WRITE: c_ch_00");
+            while (s_wb_master_in.ack = '0') loop
+              wait until rising_edge(s_clk);
+            end loop;
+            --
+            --
+            for i in 0 to 20 loop
+              wait until rising_edge(s_clk);
+            end loop; -- Waiter
+            --
+            --
+            -- Now show a rising edge on the trigger line
+            s_tb_pwm_latch(0) <= '1';
+            for i in 0 to 5 loop
+              wait until rising_edge(s_clk);
+            end loop; -- Waiter
+            --
+            --
+            --
+            -- READ CHANNEL 0
+            wait until rising_edge(s_clk);
+            s_wb_master_out  <= wb_stim(c_cyc_on, c_str_on, c_we_off, c_ch_00, c_reg_all_zero);
+            report("READ: c_ch_00");
+            while (s_wb_master_in.ack = '0') loop
+              wait until rising_edge(s_clk);
+            end loop;
+            s_wb_master_out  <= wb_stim(c_cyc_off, c_str_off, c_we_off,  c_reg_all_zero,c_reg_all_zero);
+            --
+            for i in 0 to 5 loop
+              wait until rising_edge(s_clk);
+            end loop; -- Waiter
+            --
+            --
       end process;
 
 end architecture;

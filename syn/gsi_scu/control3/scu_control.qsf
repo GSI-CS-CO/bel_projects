@@ -1,6 +1,9 @@
 
 
 
+
+
+
 set_global_assignment -name AHDL_FILE ../../../modules/modulbus/i2c.tdf
 set_global_assignment -name ALLOW_POWER_UP_DONT_CARE OFF
 set_global_assignment -name AUTO_MERGE_PLLS OFF
@@ -762,6 +765,8 @@ set_global_assignment -name VHDL_FILE ../../../modules/prioq2/prio.vhd -library 
 set_global_assignment -name VHDL_FILE ../../../modules/prioq2/queue_unit.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/psram/psram_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/psram/psram.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/pwm/src/pwm_channel_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/pwm/src/pwm_channel.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/pwm/src/pwm_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/pwm/src/pwm.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/remote_update/altasmi.vhd -library work

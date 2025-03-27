@@ -1,10 +1,12 @@
+-- pwm controller
+-- handles wishbone
+-- configures channels
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
 use work.wishbone_pkg.all;
-use work.pwm_channel_pkg.all;
 
 entity pwm is
 
@@ -45,7 +47,7 @@ entity pwm is
         --end record t_wishbone_slave_in;
         -- equal to t_wishbone_master_out
 
-    pwm_enable_i        : in std_logic_vector((g_pwm_channel_num-1) downto 0)   := (others => '0');
+    pwm_latch_i        : in std_logic_vector((g_pwm_channel_num-1) downto 0)   := (others => '0');
     pwm_o               : out std_logic_vector((g_pwm_channel_num-1) downto 0)  := (others => '0')
     );
 
@@ -53,7 +55,6 @@ end entity;
 
 architecture pwm_arch of pwm is
 
-    --constant c_pwm_default_value : natural := 100;
     constant c_pwm_default_value : natural := 0;
 
     signal s_ack_state        : std_logic := '0';
@@ -82,10 +83,19 @@ architecture pwm_arch of pwm is
     type t_pwm_values_array is array(0 to ((g_pwm_channel_num*2)-1)) of unsigned(g_pwm_regs_size-1 downto 0);
     signal s_pwm_values_array : t_pwm_values_array  := (others=> to_unsigned(c_pwm_default_value, g_pwm_regs_size));
 
-    signal value_reg_address        : natural range 0 to ((g_pwm_channel_num*2)-1);
+    -- deafult running mode is free-running
+    type t_pwm_mode_array is array(0 to (g_pwm_channel_num-1)) of std_logic;
+    signal s_pwm_mode_array : t_pwm_mode_array  := (others => '1');
 
-    -- start phase for all channels is high for now
+    -- we have three address ranges
+    -- [ 0 - 63] high and low value: e.g. 0 high, 1 low for channel 0
+    -- [64 - 95] enable free-running mode bits: e.g. 64 is enable free-running bit for channel 0
+    signal value_reg_address        : natural range 0 to ((g_pwm_channel_num*3)-1);
+
+    -- start phase for all channels is low for now
     signal s_pwm_start_phase_i      : std_logic_vector((g_pwm_channel_num-1) downto 0) := (others => '1');
+
+    signal test : std_logic := '0';
 
 
 begin
@@ -104,7 +114,7 @@ begin
     -- for every wanted channel generate a PWM channel
     pwm_channels: for i in 0 to g_pwm_channel_num-1 generate
     begin
-        channel : pwm_channel
+        channel : entity work.pwm_channel
             -- <entity_signal_name> => <local_signal_name>
             generic map(
                 g_simulation            => g_simulation,
@@ -118,7 +128,8 @@ begin
                 low                     => s_pwm_values_array((i*2)+1),
 
                 pwm_start_phase_i       => s_pwm_start_phase_i(i),
-                pwm_enable_i            => pwm_enable_i(i),
+                pwm_latch_i             => pwm_latch_i(i),
+                pwm_mode_i              => s_pwm_mode_array(i),
                 pwm_o                   => pwm_o(i)
             );
     end generate pwm_channels;
@@ -146,13 +157,19 @@ begin
                 s_error_state   <= '0';
                 s_retry_state   <= '0';
             elsif s_state_machine_vector = mode_write then
-                -- write values for high
-                -- they are (inside) the first 16-bit
-                s_pwm_values_array(value_reg_address*2)  <= (unsigned(t_wb_i.dat(t_wb_i.dat'length-1 downto g_pwm_regs_size)));
-                -- write values for low
-                -- they are (inside) the second 16-bit
-                s_pwm_values_array((value_reg_address*2)+1)  <= (unsigned(t_wb_i.dat((g_pwm_regs_size-1) downto 0)));
-                -- write value for low
+                -- writing high and low values
+                if (value_reg_address < ((g_pwm_channel_num*2)-1)) then
+                    -- write values for high
+                    -- they are (inside) the first 16-bit
+                    s_pwm_values_array(value_reg_address*2)  <= (unsigned(t_wb_i.dat(t_wb_i.dat'length-1 downto g_pwm_regs_size)));
+                    -- write values for low
+                    -- they are (inside) the second 16-bit
+                    s_pwm_values_array((value_reg_address*2)+1)  <= (unsigned(t_wb_i.dat((g_pwm_regs_size-1) downto 0)));
+                -- writing mode values
+                else
+                    s_pwm_mode_array(value_reg_address-(g_pwm_channel_num*2)) <= t_wb_i.dat(0);  
+                    test <= t_wb_i.dat(0);             
+                end if;
             end if;
         end if;
     end process p_wb_write;
