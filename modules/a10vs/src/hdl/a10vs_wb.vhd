@@ -63,14 +63,10 @@ architecture a10vs_wb_rtl of a10vs_wb is
     constant c_offs_irqe_reg : integer := 8;   -- offset to the interrupt enable register
     constant c_offs_smp7_reg : integer := 7;   -- offset to the last sample register
 
-    -- Avalon control
-    signal s_av_rd           : std_logic;      -- Avalon read
-    signal s_av_wr           : std_logic;      -- Avalon write
-
-    -- other
     signal s_adr             : std_logic_vector(c_vs_addr_width - 1 downto 0);
     signal s_ack             : std_logic;      -- ack for wishbone
-    signal s_ack2            : std_logic;      -- ack delayed by 2 cycles (data from Avalon-MM is valid at 4th cycle)
+    signal s_ws2             : std_logic;      -- delay ack by 2 cycles
+    signal s_ws3             : std_logic;      -- delay ack by 3 cycles (data from Avalon-MM is valid at 5th cycle)
 
 begin
 
@@ -84,7 +80,8 @@ begin
     begin
         if rst_n_i = '0' then
             s_ack <= '0';
-            s_ack2 <= '0';
+            s_ws2 <= '0';
+            s_ws3 <= '0';
             slave_o.ack <= '0';
         else
             if rising_edge(clk_i) then
@@ -93,8 +90,9 @@ begin
                 else
                     s_ack <= '0';
                 end if;
-                s_ack2 <= s_ack;
-                slave_o.ack <= s_ack2;
+                s_ws2 <= s_ack;
+                s_ws3 <= s_ws2;
+                slave_o.ack <= s_ws3;
             end if;
         end if;
     end process;
@@ -149,30 +147,39 @@ begin
     end process;
 
     -- Avalon-MM control bus
-    s_av_rd <= slave_i.cyc and not slave_i.we;
-    s_av_wr <= slave_i.cyc and slave_i.we;
 
-    p_av_rd_wr: process(s_av_rd, s_av_wr, s_adr)
+    p_av_rd_wr: process(rst_n_i, clk_i)
         variable v_adr_int : natural range 0 to 2**c_vs_addr_width - 1;
     begin
-        v_adr_int := to_integer(unsigned(s_adr));
+        if rst_n_i = '0' then
+            vs_ctrl_csr_wr   <= '0';
+            vs_ctrl_csr_rd   <= '0';
+            vs_sample_csr_wr <= '0';
+            vs_sample_csr_rd <= '0';
+        elsif rising_edge(clk_i) then
 
-        case v_adr_int is
-            when c_offs_cmd_reg  =>                     -- command register
-                vs_ctrl_csr_rd   <= s_av_rd;
-                vs_ctrl_csr_wr   <= s_av_wr;
-            when c_offs_irqe_reg to c_offs_irqs_reg =>  -- irq registers
-                vs_sample_csr_rd <= s_av_rd;
-                vs_sample_csr_wr <= s_av_wr;
-            when 0 to c_offs_smp7_reg =>                -- sample registers (read-only)
-                vs_sample_csr_rd <= s_av_rd;
-                vs_sample_csr_wr <= '0';
-            when others =>
-                vs_ctrl_csr_wr   <= '0';
-                vs_ctrl_csr_rd   <= '0';
-                vs_sample_csr_wr <= '0';
-                vs_sample_csr_rd <= '0';
-        end case;
+            vs_ctrl_csr_wr   <= '0';
+            vs_ctrl_csr_rd   <= '0';
+            vs_sample_csr_wr <= '0';
+            vs_sample_csr_rd <= '0';
+
+            if slave_i.cyc = '1' then
+                v_adr_int := to_integer(unsigned(s_adr));
+
+                case v_adr_int is
+                    when c_offs_cmd_reg  =>                     -- command register
+                        vs_ctrl_csr_rd   <= not slave_i.we;
+                        vs_ctrl_csr_wr   <= slave_i.we;
+                    when c_offs_irqe_reg to c_offs_irqs_reg =>  -- irq registers
+                        vs_sample_csr_rd <= not slave_i.we;
+                        vs_sample_csr_wr <= slave_i.we;
+                    when 0 to c_offs_smp7_reg =>                -- sample registers (read-only)
+                        vs_sample_csr_rd <= not slave_i.we;
+                    when others =>
+                        null;
+                end case;
+            end if;
+        end if;
     end process;
 
 end a10vs_wb_rtl;
