@@ -1,29 +1,27 @@
 [*]
 [*] GTKWave Analyzer v3.3.116 (w)1999-2023 BSI
-[*] Wed Mar 12 16:04:27 2025
+[*] Thu Mar 27 14:48:02 2025
 [*]
 [dumpfile] "/home/agr/dev/bel_projects/modules/pwm/sim/pwm_testbench.ghw"
-[dumpfile_mtime] "Wed Mar 12 15:08:00 2025"
-[dumpfile_size] 90255683
+[dumpfile_mtime] "Thu Mar 27 14:48:02 2025"
+[dumpfile_size] 129259067
 [savefile] "/home/agr/dev/bel_projects/modules/pwm/sim/pwm_testbench.gtkw"
-[timestart] 0
+[timestart] 160700000
 [size] 2560 1392
 [pos] -1 -1
-*-29.742344 520300000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-25.242342 376000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
 [treeopen] top.pwm_testbench.
 [treeopen] top.pwm_testbench.dut.
 [treeopen] top.pwm_testbench.dut.pwm_channels[0].
 [treeopen] top.pwm_testbench.dut.pwm_channels[0].channel.
-[treeopen] top.pwm_testbench.dut.pwm_channels[1].
 [treeopen] top.pwm_testbench.dut.pwm_channels[1].channel.
-[treeopen] top.pwm_testbench.dut.pwm_channels[2].
 [treeopen] top.pwm_testbench.s_wb_master_in.
 [treeopen] top.pwm_testbench.s_wb_master_out.
-[sst_width] 381
+[sst_width] 408
 [signals_width] 502
 [sst_expanded] 1
-[sst_vpaned_height] 917
+[sst_vpaned_height] 913
 @28
 top.pwm_testbench.s_rst_n
 top.pwm_testbench.s_wb_master_out.cyc
@@ -63,17 +61,29 @@ top.pwm_testbench.dut.s_pwm_values_array[0][0]
 -
 @200
 -channel 0
+@28
+top.pwm_testbench.dut.pwm_channels[0].channel.pwm_mode_i
 @420
+top.pwm_testbench.dut.pwm_channels[0].channel.pwm_channel_phase
+@28
+top.pwm_testbench.dut.pwm_channels[0].channel.pwm_start_phase_i
+@420
+top.pwm_testbench.dut.pwm_channels[0].channel.pwm_channel_mode
 top.pwm_testbench.dut.pwm_channels[0].channel.pwm_channel_state
 @22
 #{top.pwm_testbench.dut.pwm_channels[0].channel.s_pwm_counter[15:0]} top.pwm_testbench.dut.pwm_channels[0].channel.s_pwm_counter[15] top.pwm_testbench.dut.pwm_channels[0].channel.s_pwm_counter[14] top.pwm_testbench.dut.pwm_channels[0].channel.s_pwm_counter[13] top.pwm_testbench.dut.pwm_channels[0].channel.s_pwm_counter[12] top.pwm_testbench.dut.pwm_channels[0].channel.s_pwm_counter[11] top.pwm_testbench.dut.pwm_channels[0].channel.s_pwm_counter[10] top.pwm_testbench.dut.pwm_channels[0].channel.s_pwm_counter[9] top.pwm_testbench.dut.pwm_channels[0].channel.s_pwm_counter[8] top.pwm_testbench.dut.pwm_channels[0].channel.s_pwm_counter[7] top.pwm_testbench.dut.pwm_channels[0].channel.s_pwm_counter[6] top.pwm_testbench.dut.pwm_channels[0].channel.s_pwm_counter[5] top.pwm_testbench.dut.pwm_channels[0].channel.s_pwm_counter[4] top.pwm_testbench.dut.pwm_channels[0].channel.s_pwm_counter[3] top.pwm_testbench.dut.pwm_channels[0].channel.s_pwm_counter[2] top.pwm_testbench.dut.pwm_channels[0].channel.s_pwm_counter[1] top.pwm_testbench.dut.pwm_channels[0].channel.s_pwm_counter[0]
+@23
 #{top.pwm_testbench.dut.pwm_channels[0].channel.high[15:0]} top.pwm_testbench.dut.pwm_channels[0].channel.high[15] top.pwm_testbench.dut.pwm_channels[0].channel.high[14] top.pwm_testbench.dut.pwm_channels[0].channel.high[13] top.pwm_testbench.dut.pwm_channels[0].channel.high[12] top.pwm_testbench.dut.pwm_channels[0].channel.high[11] top.pwm_testbench.dut.pwm_channels[0].channel.high[10] top.pwm_testbench.dut.pwm_channels[0].channel.high[9] top.pwm_testbench.dut.pwm_channels[0].channel.high[8] top.pwm_testbench.dut.pwm_channels[0].channel.high[7] top.pwm_testbench.dut.pwm_channels[0].channel.high[6] top.pwm_testbench.dut.pwm_channels[0].channel.high[5] top.pwm_testbench.dut.pwm_channels[0].channel.high[4] top.pwm_testbench.dut.pwm_channels[0].channel.high[3] top.pwm_testbench.dut.pwm_channels[0].channel.high[2] top.pwm_testbench.dut.pwm_channels[0].channel.high[1] top.pwm_testbench.dut.pwm_channels[0].channel.high[0]
+@22
 #{top.pwm_testbench.dut.pwm_channels[0].channel.low[15:0]} top.pwm_testbench.dut.pwm_channels[0].channel.low[15] top.pwm_testbench.dut.pwm_channels[0].channel.low[14] top.pwm_testbench.dut.pwm_channels[0].channel.low[13] top.pwm_testbench.dut.pwm_channels[0].channel.low[12] top.pwm_testbench.dut.pwm_channels[0].channel.low[11] top.pwm_testbench.dut.pwm_channels[0].channel.low[10] top.pwm_testbench.dut.pwm_channels[0].channel.low[9] top.pwm_testbench.dut.pwm_channels[0].channel.low[8] top.pwm_testbench.dut.pwm_channels[0].channel.low[7] top.pwm_testbench.dut.pwm_channels[0].channel.low[6] top.pwm_testbench.dut.pwm_channels[0].channel.low[5] top.pwm_testbench.dut.pwm_channels[0].channel.low[4] top.pwm_testbench.dut.pwm_channels[0].channel.low[3] top.pwm_testbench.dut.pwm_channels[0].channel.low[2] top.pwm_testbench.dut.pwm_channels[0].channel.low[1] top.pwm_testbench.dut.pwm_channels[0].channel.low[0]
 @1001200
 -group_end
 @20000
 -
 @28
+top.pwm_testbench.s_clk
+top.pwm_testbench.dut.pwm_channels[0].channel.v_last_latch
+top.pwm_testbench.dut.pwm_channels[0].channel.pwm_latch_i
 top.pwm_testbench.s_tb_pwm_out[0]
 @20000
 -
@@ -101,18 +111,128 @@ top.pwm_testbench.dut.pwm_channels[2].channel.pwm_channel_state
 #{top.pwm_testbench.dut.pwm_channels[1].channel.low[15:0]} top.pwm_testbench.dut.pwm_channels[1].channel.low[15] top.pwm_testbench.dut.pwm_channels[1].channel.low[14] top.pwm_testbench.dut.pwm_channels[1].channel.low[13] top.pwm_testbench.dut.pwm_channels[1].channel.low[12] top.pwm_testbench.dut.pwm_channels[1].channel.low[11] top.pwm_testbench.dut.pwm_channels[1].channel.low[10] top.pwm_testbench.dut.pwm_channels[1].channel.low[9] top.pwm_testbench.dut.pwm_channels[1].channel.low[8] top.pwm_testbench.dut.pwm_channels[1].channel.low[7] top.pwm_testbench.dut.pwm_channels[1].channel.low[6] top.pwm_testbench.dut.pwm_channels[1].channel.low[5] top.pwm_testbench.dut.pwm_channels[1].channel.low[4] top.pwm_testbench.dut.pwm_channels[1].channel.low[3] top.pwm_testbench.dut.pwm_channels[1].channel.low[2] top.pwm_testbench.dut.pwm_channels[1].channel.low[1] top.pwm_testbench.dut.pwm_channels[1].channel.low[0]
 @20000
 -
-@29
+@28
 top.pwm_testbench.s_tb_pwm_out[2]
 @20000
 -
-@800022
-#{top.pwm_testbench.s_tb_pwm_out[7:0]} top.pwm_testbench.s_tb_pwm_out[7] top.pwm_testbench.s_tb_pwm_out[6] top.pwm_testbench.s_tb_pwm_out[5] top.pwm_testbench.s_tb_pwm_out[4] top.pwm_testbench.s_tb_pwm_out[3] top.pwm_testbench.s_tb_pwm_out[2] top.pwm_testbench.s_tb_pwm_out[1] top.pwm_testbench.s_tb_pwm_out[0]
+@c00022
+#{top.pwm_testbench.dut.pwm_o[31:0]} top.pwm_testbench.dut.pwm_o[31] top.pwm_testbench.dut.pwm_o[30] top.pwm_testbench.dut.pwm_o[29] top.pwm_testbench.dut.pwm_o[28] top.pwm_testbench.dut.pwm_o[27] top.pwm_testbench.dut.pwm_o[26] top.pwm_testbench.dut.pwm_o[25] top.pwm_testbench.dut.pwm_o[24] top.pwm_testbench.dut.pwm_o[23] top.pwm_testbench.dut.pwm_o[22] top.pwm_testbench.dut.pwm_o[21] top.pwm_testbench.dut.pwm_o[20] top.pwm_testbench.dut.pwm_o[19] top.pwm_testbench.dut.pwm_o[18] top.pwm_testbench.dut.pwm_o[17] top.pwm_testbench.dut.pwm_o[16] top.pwm_testbench.dut.pwm_o[15] top.pwm_testbench.dut.pwm_o[14] top.pwm_testbench.dut.pwm_o[13] top.pwm_testbench.dut.pwm_o[12] top.pwm_testbench.dut.pwm_o[11] top.pwm_testbench.dut.pwm_o[10] top.pwm_testbench.dut.pwm_o[9] top.pwm_testbench.dut.pwm_o[8] top.pwm_testbench.dut.pwm_o[7] top.pwm_testbench.dut.pwm_o[6] top.pwm_testbench.dut.pwm_o[5] top.pwm_testbench.dut.pwm_o[4] top.pwm_testbench.dut.pwm_o[3] top.pwm_testbench.dut.pwm_o[2] top.pwm_testbench.dut.pwm_o[1] top.pwm_testbench.dut.pwm_o[0]
 @28
-top.pwm_testbench.s_tb_pwm_out[7]
-top.pwm_testbench.s_tb_pwm_out[6]
-top.pwm_testbench.s_tb_pwm_out[5]
-top.pwm_testbench.s_tb_pwm_out[4]
-top.pwm_testbench.s_tb_pwm_out[3]
+top.pwm_testbench.dut.pwm_o[31]
+top.pwm_testbench.dut.pwm_o[30]
+top.pwm_testbench.dut.pwm_o[29]
+top.pwm_testbench.dut.pwm_o[28]
+top.pwm_testbench.dut.pwm_o[27]
+top.pwm_testbench.dut.pwm_o[26]
+top.pwm_testbench.dut.pwm_o[25]
+top.pwm_testbench.dut.pwm_o[24]
+top.pwm_testbench.dut.pwm_o[23]
+top.pwm_testbench.dut.pwm_o[22]
+top.pwm_testbench.dut.pwm_o[21]
+top.pwm_testbench.dut.pwm_o[20]
+top.pwm_testbench.dut.pwm_o[19]
+top.pwm_testbench.dut.pwm_o[18]
+top.pwm_testbench.dut.pwm_o[17]
+top.pwm_testbench.dut.pwm_o[16]
+top.pwm_testbench.dut.pwm_o[15]
+top.pwm_testbench.dut.pwm_o[14]
+top.pwm_testbench.dut.pwm_o[13]
+top.pwm_testbench.dut.pwm_o[12]
+top.pwm_testbench.dut.pwm_o[11]
+top.pwm_testbench.dut.pwm_o[10]
+top.pwm_testbench.dut.pwm_o[9]
+top.pwm_testbench.dut.pwm_o[8]
+top.pwm_testbench.dut.pwm_o[7]
+top.pwm_testbench.dut.pwm_o[6]
+top.pwm_testbench.dut.pwm_o[5]
+top.pwm_testbench.dut.pwm_o[4]
+top.pwm_testbench.dut.pwm_o[3]
+top.pwm_testbench.dut.pwm_o[2]
+top.pwm_testbench.dut.pwm_o[1]
+[color] 1
+top.pwm_testbench.dut.pwm_o[0]
+@420
+top.pwm_testbench.dut.value_reg_address
+top.pwm_testbench.dut.pwm_channels[0].channel.pwm_channel_mode
+@28
+top.pwm_testbench.dut.pwm_channels[0].channel.pwm_latch_i
+@420
+top.pwm_testbench.dut.pwm_channels[0].channel.pwm_channel_state
+@800022
+#{top.pwm_testbench.dut.s_pwm_mode_array[0:31]} top.pwm_testbench.dut.s_pwm_mode_array[0] top.pwm_testbench.dut.s_pwm_mode_array[1] top.pwm_testbench.dut.s_pwm_mode_array[2] top.pwm_testbench.dut.s_pwm_mode_array[3] top.pwm_testbench.dut.s_pwm_mode_array[4] top.pwm_testbench.dut.s_pwm_mode_array[5] top.pwm_testbench.dut.s_pwm_mode_array[6] top.pwm_testbench.dut.s_pwm_mode_array[7] top.pwm_testbench.dut.s_pwm_mode_array[8] top.pwm_testbench.dut.s_pwm_mode_array[9] top.pwm_testbench.dut.s_pwm_mode_array[10] top.pwm_testbench.dut.s_pwm_mode_array[11] top.pwm_testbench.dut.s_pwm_mode_array[12] top.pwm_testbench.dut.s_pwm_mode_array[13] top.pwm_testbench.dut.s_pwm_mode_array[14] top.pwm_testbench.dut.s_pwm_mode_array[15] top.pwm_testbench.dut.s_pwm_mode_array[16] top.pwm_testbench.dut.s_pwm_mode_array[17] top.pwm_testbench.dut.s_pwm_mode_array[18] top.pwm_testbench.dut.s_pwm_mode_array[19] top.pwm_testbench.dut.s_pwm_mode_array[20] top.pwm_testbench.dut.s_pwm_mode_array[21] top.pwm_testbench.dut.s_pwm_mode_array[22] top.pwm_testbench.dut.s_pwm_mode_array[23] top.pwm_testbench.dut.s_pwm_mode_array[24] top.pwm_testbench.dut.s_pwm_mode_array[25] top.pwm_testbench.dut.s_pwm_mode_array[26] top.pwm_testbench.dut.s_pwm_mode_array[27] top.pwm_testbench.dut.s_pwm_mode_array[28] top.pwm_testbench.dut.s_pwm_mode_array[29] top.pwm_testbench.dut.s_pwm_mode_array[30] top.pwm_testbench.dut.s_pwm_mode_array[31]
+@28
+top.pwm_testbench.dut.s_pwm_mode_array[0]
+top.pwm_testbench.dut.s_pwm_mode_array[1]
+top.pwm_testbench.dut.s_pwm_mode_array[2]
+top.pwm_testbench.dut.s_pwm_mode_array[3]
+top.pwm_testbench.dut.s_pwm_mode_array[4]
+top.pwm_testbench.dut.s_pwm_mode_array[5]
+top.pwm_testbench.dut.s_pwm_mode_array[6]
+top.pwm_testbench.dut.s_pwm_mode_array[7]
+top.pwm_testbench.dut.s_pwm_mode_array[8]
+top.pwm_testbench.dut.s_pwm_mode_array[9]
+top.pwm_testbench.dut.s_pwm_mode_array[10]
+top.pwm_testbench.dut.s_pwm_mode_array[11]
+top.pwm_testbench.dut.s_pwm_mode_array[12]
+top.pwm_testbench.dut.s_pwm_mode_array[13]
+top.pwm_testbench.dut.s_pwm_mode_array[14]
+top.pwm_testbench.dut.s_pwm_mode_array[15]
+top.pwm_testbench.dut.s_pwm_mode_array[16]
+top.pwm_testbench.dut.s_pwm_mode_array[17]
+top.pwm_testbench.dut.s_pwm_mode_array[18]
+top.pwm_testbench.dut.s_pwm_mode_array[19]
+top.pwm_testbench.dut.s_pwm_mode_array[20]
+top.pwm_testbench.dut.s_pwm_mode_array[21]
+top.pwm_testbench.dut.s_pwm_mode_array[22]
+top.pwm_testbench.dut.s_pwm_mode_array[23]
+top.pwm_testbench.dut.s_pwm_mode_array[24]
+top.pwm_testbench.dut.s_pwm_mode_array[25]
+top.pwm_testbench.dut.s_pwm_mode_array[26]
+top.pwm_testbench.dut.s_pwm_mode_array[27]
+top.pwm_testbench.dut.s_pwm_mode_array[28]
+top.pwm_testbench.dut.s_pwm_mode_array[29]
+top.pwm_testbench.dut.s_pwm_mode_array[30]
+top.pwm_testbench.dut.s_pwm_mode_array[31]
+@1001200
+-group_end
+@1401200
+-group_end
+@800022
+#{top.pwm_testbench.dut.s_pwm_mode_array[0:31]} top.pwm_testbench.dut.s_pwm_mode_array[0] top.pwm_testbench.dut.s_pwm_mode_array[1] top.pwm_testbench.dut.s_pwm_mode_array[2] top.pwm_testbench.dut.s_pwm_mode_array[3] top.pwm_testbench.dut.s_pwm_mode_array[4] top.pwm_testbench.dut.s_pwm_mode_array[5] top.pwm_testbench.dut.s_pwm_mode_array[6] top.pwm_testbench.dut.s_pwm_mode_array[7] top.pwm_testbench.dut.s_pwm_mode_array[8] top.pwm_testbench.dut.s_pwm_mode_array[9] top.pwm_testbench.dut.s_pwm_mode_array[10] top.pwm_testbench.dut.s_pwm_mode_array[11] top.pwm_testbench.dut.s_pwm_mode_array[12] top.pwm_testbench.dut.s_pwm_mode_array[13] top.pwm_testbench.dut.s_pwm_mode_array[14] top.pwm_testbench.dut.s_pwm_mode_array[15] top.pwm_testbench.dut.s_pwm_mode_array[16] top.pwm_testbench.dut.s_pwm_mode_array[17] top.pwm_testbench.dut.s_pwm_mode_array[18] top.pwm_testbench.dut.s_pwm_mode_array[19] top.pwm_testbench.dut.s_pwm_mode_array[20] top.pwm_testbench.dut.s_pwm_mode_array[21] top.pwm_testbench.dut.s_pwm_mode_array[22] top.pwm_testbench.dut.s_pwm_mode_array[23] top.pwm_testbench.dut.s_pwm_mode_array[24] top.pwm_testbench.dut.s_pwm_mode_array[25] top.pwm_testbench.dut.s_pwm_mode_array[26] top.pwm_testbench.dut.s_pwm_mode_array[27] top.pwm_testbench.dut.s_pwm_mode_array[28] top.pwm_testbench.dut.s_pwm_mode_array[29] top.pwm_testbench.dut.s_pwm_mode_array[30] top.pwm_testbench.dut.s_pwm_mode_array[31]
+@28
+top.pwm_testbench.dut.s_pwm_mode_array[0]
+top.pwm_testbench.dut.test
+top.pwm_testbench.dut.s_pwm_mode_array[1]
+top.pwm_testbench.dut.s_pwm_mode_array[2]
+top.pwm_testbench.dut.s_pwm_mode_array[3]
+top.pwm_testbench.dut.s_pwm_mode_array[4]
+top.pwm_testbench.dut.s_pwm_mode_array[5]
+top.pwm_testbench.dut.s_pwm_mode_array[6]
+top.pwm_testbench.dut.s_pwm_mode_array[7]
+top.pwm_testbench.dut.s_pwm_mode_array[8]
+top.pwm_testbench.dut.s_pwm_mode_array[9]
+top.pwm_testbench.dut.s_pwm_mode_array[10]
+top.pwm_testbench.dut.s_pwm_mode_array[11]
+top.pwm_testbench.dut.s_pwm_mode_array[12]
+top.pwm_testbench.dut.s_pwm_mode_array[13]
+top.pwm_testbench.dut.s_pwm_mode_array[14]
+top.pwm_testbench.dut.s_pwm_mode_array[15]
+top.pwm_testbench.dut.s_pwm_mode_array[16]
+top.pwm_testbench.dut.s_pwm_mode_array[17]
+top.pwm_testbench.dut.s_pwm_mode_array[18]
+top.pwm_testbench.dut.s_pwm_mode_array[19]
+top.pwm_testbench.dut.s_pwm_mode_array[20]
+top.pwm_testbench.dut.s_pwm_mode_array[21]
+top.pwm_testbench.dut.s_pwm_mode_array[22]
+top.pwm_testbench.dut.s_pwm_mode_array[23]
+top.pwm_testbench.dut.s_pwm_mode_array[24]
+top.pwm_testbench.dut.s_pwm_mode_array[25]
+top.pwm_testbench.dut.s_pwm_mode_array[26]
+top.pwm_testbench.dut.s_pwm_mode_array[27]
+top.pwm_testbench.dut.s_pwm_mode_array[28]
+top.pwm_testbench.dut.s_pwm_mode_array[29]
+top.pwm_testbench.dut.s_pwm_mode_array[30]
+top.pwm_testbench.dut.s_pwm_mode_array[31]
 @1001200
 -group_end
 [pattern_trace] 1

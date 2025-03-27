@@ -22,7 +22,7 @@ package pwm_channel_pkg is
             high            : in unsigned(g_pwm_counter_width-1 downto 0);
 
             pwm_start_phase_i   : in std_logic;
-            pwm_enable_i        : in std_logic;
+            pwm_latch_i         : in std_logic;
             pwm_o               : out std_logic
         );
 
