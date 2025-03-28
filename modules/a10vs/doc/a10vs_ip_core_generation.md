@@ -252,24 +252,37 @@ Signal Configuration:
     - Type: Continuous
 
 Node List (signal tap:pre-synthesis signals):
-  - clk_i
-  - slave_i.cyc  (trigger enable)
-  - slave_i.stb  (trigger enable)
-  - slave_i.we
-  - slave_o.ack
-  - vs_ctrl_csr_addr
-  - vs_ctrl_csr_rd
-  - vs_ctrl_csr_wr
-  - vs_sample_csr_rd
-  - vs_sample_csr_wr
-  - slave_i.adr[31..0]
-  - slave_i.dat[15..0]
-  - slave_o.dat[15..0]
-  - vs_ctrl_csr_rddata[15..0]
-  - vs_sample_csr_addr[3..0]
-  - vs_sample_csr_rdata[15..0]
+  - a10vs_0:
+    - clk_i
+    - slave_i.cyc  (trigger enable, rising edge, basic OR)
+    - slave_i.stb  (trigger enable, rising edge, basic OR)
+    - slave_i.we
+    - slave_o.ack
+    - slave_o.dat[7..0]
+  - a10vs_ip_0:
+    - controller_csr_address
+    - sample_store_csr_readdata[7..0]
+    - controller_csr_read
+    - controller_csr_write
+    - sample_store_csr_read
+    - sample_store_csr_write
+    - sample_store_csr_address[3..0]
+    - controller_csr_writedata[8..0]
+    - controller_csr_readdata[8..0]
+  - voltage_block:
+    - vs_confin
+    - vs_clk
+    - vs_reset
+    - vs_eoc
+    - vs_eos
+    - vs_dataout[11..0]
+    - counter_value[4..0]
+  - vs_controller:
+    - valid_mode
+    - conv_run
 
 The configuration can be stored in *.stp file.
+Replace/disable the Signal Tap Logic Analyzer: Assignments -> Settings ... -> Signal Tap Logic Analyzer : check box "Enable Signal Tap Logic Analyzer" and specifiy *.stp file in "Signal Tap File name" field.
 
 ### Compilation and programming
 
@@ -306,11 +319,11 @@ $ eb-read dev/wbm0 0x40000e0/4        # read the interrupt enable register
 $ eb-read dev/wbm0 0x40000e8/4        # read the command register
 00000000                              # expected reset value
 
-$ eb-write dev/wbm0 0x40000e8/4 0x83  # set the cyclic mode and start the core operation
-                                      # 0x83: MD[1:0]="01", MODE[1:0]="01", RUN="1"
+$ eb-write dev/wbm0 0x40000e8/4 0x103 # set the cyclic mode and start the core operation
+                                      # 0x103: MD[1:0]="01", MODE[1:0]="01", RUN="1"
 
 $ eb-read dev/wbm0 0x40000e8/4        # read the command register
-00000083                              # expected value
+00000000                              # failed: expected value is 0x103
 ```
 
 ## A. Issues
