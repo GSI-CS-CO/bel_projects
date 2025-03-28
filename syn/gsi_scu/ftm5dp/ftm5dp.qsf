@@ -204,6 +204,7 @@ set_global_assignment -name QSYS_FILE "../../../ip_cores/wr-cores/platform/alter
 set_global_assignment -name QSYS_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria10_phy/wr_arria10_ftm4_phy/wr_arria10_ftm4_phy/wr_arria10_ftm4_phy.qsys"
 set_global_assignment -name QSYS_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria10_phy/wr_arria10_ftm4_phy/wr_arria10_ftm4_rst_ctl/wr_arria10_ftm4_rst_ctl.qsys"
 set_global_assignment -name QSYS_FILE ../../../modules/a10ts/src/hdl/a10ts_ip/a10ts_ip.qsys
+set_global_assignment -name QSYS_FILE ../../../modules/a10vs/src/hdl/a10vs_ip/a10vs_ip.qsys
 set_global_assignment -name QSYS_FILE ../../../modules/lvds/arria10_ftm4/arria10_ftm4_lvds_ibuf/arria10_ftm4_lvds_ibuf.qsys
 set_global_assignment -name QSYS_FILE ../../../modules/lvds/arria10_ftm4/arria10_ftm4_lvds_obuf/arria10_ftm4_lvds_obuf.qsys
 set_global_assignment -name QSYS_FILE ../../../modules/lvds/arria10_ftm4/arria10_ftm4_lvds_pll/arria10_ftm4_lvds_pll.qsys
@@ -645,6 +646,11 @@ set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/platform/alter
 set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/platform/altera/xwrc_platform_altera.vhd" -library work
 set_global_assignment -name VHDL_FILE ../../../modules/a10ts/src/hdl/a10ts_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/a10ts/src/hdl/a10ts.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/a10vs/src/hdl/a10vs_ip/a10vs_ip/altera_voltage_sensor_231/synth/a10vs_ip_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/a10vs/src/hdl/a10vs_ip/a10vs_ip/synth/a10vs_ip.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/a10vs/src/hdl/a10vs_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/a10vs/src/hdl/a10vs.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/a10vs/src/hdl/a10vs_wb.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/ad7606/ad7606.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/ad7606/adc_modul_bus.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/ad7606/adc_pkg.vhd -library work
