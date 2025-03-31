@@ -4,9 +4,9 @@
 //
 //  created : 11-Nov-2016
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 21-Mar-2025
+//  version : 31-Mar-2025
 //
-#define WB_SLAVES_VERSION "00.09.03"
+#define WB_SLAVES_VERSION "00.09.04"
 //
 //  defines wishbone vendor IDs
 //  defines wishbone device IDs and registers
@@ -166,8 +166,10 @@
 // device ID
 #define FPGA_RESET_VENDOR              WB_GSI              // vendor ID
 #define FPGA_RESET_PRODUCT             0x3a362063          // product ID
-#define FPGA_RESET_VMAJOR              1                   // major revision
-#define FPGA_RESET_VMINOR              3                   // minor revision
+#define FPGA_RESET_VMAJOR              1                   // major revision; major revision must fit!
+#define FPGA_RESET_VMINOR_ECPU         1                   // minimum minor revision for ecpu reset
+#define FPGA_RESET_VMINOR_RESET        3                   // minimum minor revision for fpga-, phy- and sfp-reset
+#define FPGA_RESET_VMINOR_PWRBUTTON    4                   // minimum minor revision for com express power button
 
 // register offsets
 #define FPGA_RESET_RESET               0x0000              // reset register of FPGA (write), write 'deadbeef' to reset
