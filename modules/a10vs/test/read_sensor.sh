@@ -21,7 +21,7 @@ adc_ref=1250              # ADC reference:  1250 mV (0x03f)
 usage() {
     echo "usage: $0 [device]"
     echo
-    echo "  device  Optional TR device (dev/wbm0 by default)"
+    echo "  device      Optional TR device (dev/wbm0 by default)"
 }
 
 check_sensor_address() {
@@ -34,16 +34,29 @@ check_sensor_address() {
 
 check_arguments() {
 
+    # update the target device if it's is given by user
     if [ $# -ne 0 ]; then
+        dev=$1
+    fi
 
-        test -e /$1
-        if [ $? -ne 0 ]; then
-            echo "Error: Device $1 does not exist!"
+    # check device availability
+    if [[ "${dev:0:3}" == "dev" ]]; then
+        if ! test -e "/$dev"; then
+            echo "Error: device $dev does not exist!"
             usage
             exit 1
         fi
-
-        dev=$1  # update the target device
+    else
+        val=5
+        if ! timeout $val eb-ls "$dev" > /dev/null 2>&1; then
+            if [ $? -eq 124 ]; then
+                echo "Error: timeout occured while checking device $dev"
+            else
+                echo "Error: device $dev not found!"
+            fi
+            usage
+            exit 1
+        fi
     fi
 }
 
@@ -142,7 +155,7 @@ print_samples() {
     done
 }
 
-check_arguments
+check_arguments $@
 get_sensor_address
 enable_sensor_operation
 get_samples
