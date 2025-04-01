@@ -73,6 +73,7 @@ use work.beam_dump_pkg.all;
 use work.wb_i2c_wrapper_pkg.all;
 use work.remote_update_pkg.all;
 use work.enc_err_counter_pkg.all;
+use work.a10vs_pkg.all;
 
 entity monster is
   generic(
@@ -129,7 +130,8 @@ entity monster is
     g_en_eca_tap           : boolean;
     g_en_asmi              : boolean;
     g_en_psram_delay       : boolean;
-    g_en_enc_err_counter   : boolean);
+    g_en_enc_err_counter   : boolean;
+    g_en_a10vs             : boolean);
   port(
     -- Required: core signals
     core_clk_20m_vcxo_i    : in    std_logic;
@@ -534,7 +536,8 @@ architecture rtl of monster is
     devs_i2c_wrapper,
     devs_eca_tap,
     devs_asmi,
-    devs_enc_err_counter
+    devs_enc_err_counter,
+    devs_a10vs
   );
   constant c_dev_slaves          : natural := dev_slaves'pos(dev_slaves'right)+1;
 
@@ -578,7 +581,8 @@ architecture rtl of monster is
     dev_slaves'pos(devs_i2c_wrapper)    => f_sdb_auto_device(c_i2c_wrapper_sdb,                g_en_i2c_wrapper),
     dev_slaves'pos(devs_eca_tap)        => f_sdb_auto_device(c_eca_tap_sdb,                    g_en_eca_tap),
     dev_slaves'pos(devs_asmi)           => f_sdb_auto_device(c_wb_asmi_sdb,                    g_en_asmi),
-    dev_slaves'pos(devs_enc_err_counter)=> f_sdb_auto_device(c_enc_err_counter_sdb,            g_en_enc_err_counter));
+    dev_slaves'pos(devs_enc_err_counter)=> f_sdb_auto_device(c_enc_err_counter_sdb,            g_en_enc_err_counter),
+    dev_slaves'pos(devs_a10vs)          => f_sdb_auto_device(c_a10vs_sdb,                      g_en_a10vs));
   constant c_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_bridge_sdb  : t_sdb_bridge       := f_xwb_bridge_layout_sdb(true, c_dev_layout, c_dev_sdb_address);
@@ -753,6 +757,9 @@ architecture rtl of monster is
   signal s_usb_fd_oen : std_logic;
 
   signal s_lm32_rstn : std_logic_vector(g_lm32_cores-1 downto 0);
+
+  signal a10vs_slave_i : t_wishbone_slave_in;
+  signal a10vs_slave_o : t_wishbone_slave_out;
 
   -- END OF Master signals
   ----------------------------------------------------------------------------------
@@ -3434,6 +3441,38 @@ end generate;
       slave_o       => dev_bus_master_i(dev_slaves'pos(devs_enc_err_counter)),
       enc_err_i     => phy_rx_enc_err,
       enc_err_aux_i => phy_aux_rx_enc_err);
+  end generate;
+
+  a10vs_n : if not g_en_a10vs generate
+    dev_bus_master_i(dev_slaves'pos(devs_a10vs)) <= cc_dummy_slave_out;
+  end generate;
+
+  a10vs_y : if g_en_a10vs generate
+    --------------------------------------------
+    -- clock crossing from sys clk to 10MHz clk
+    --------------------------------------------
+    xwb_sys2a10vs : xwb_clock_crossing
+      generic map ( g_size => 16)
+      port map(
+        -- Slave control port
+        slave_clk_i    => clk_sys,
+        slave_rst_n_i  => rstn_sys,
+        slave_i        => dev_bus_master_o(dev_slaves'pos(devs_a10vs)),
+        slave_o        => dev_bus_master_i(dev_slaves'pos(devs_a10vs)),
+        -- Master reader port
+        master_clk_i   => clk_10m,
+        master_rst_n_i => rstn_sys,
+        master_i       => a10vs_slave_o,
+        master_o       => a10vs_slave_i
+      );
+
+    a10vs_0 : a10vs
+      port map(
+        clk_i      => clk_10m,
+        rst_n_i    => rstn_sys,
+        slave_i    => a10vs_slave_i,
+        slave_o    => a10vs_slave_o
+      );
   end generate;
 
   -- END OF Wishbone slaves
