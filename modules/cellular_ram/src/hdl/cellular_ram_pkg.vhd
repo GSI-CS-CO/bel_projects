@@ -38,10 +38,10 @@ package body cellular_ram_pkg is
   is
     variable result : t_sdb_device;
   begin
-    result.abi_class     := x"0001"; -- Ram device
+    result.abi_class     := x"0001";
     result.abi_ver_major := x"01";
     result.abi_ver_minor := x"00";
-    result.wbd_width     := x"7"; -- 8/16/32-bit port granularity
+    result.wbd_width     := x"7";
     result.wbd_endian    := c_sdb_endian_big;
 
     result.sdb_component.addr_first := (others => '0');
