@@ -11,8 +11,7 @@ package cellular_ram_pkg is
 
   component cellular_ram is
     generic(
-      g_bits     : natural := 24;
-      g_row_bits : natural := 8);
+      g_bits     : natural := 24);
     port(
       clk_i      : in    std_logic;
       rstn_i     : in    std_logic;
@@ -30,6 +29,15 @@ package cellular_ram_pkg is
       ps_advn_o  : out   std_logic;
       ps_wait_i  : in    std_logic);
   end component;
+
+  type t_cellular_ram_out is record
+    cre : std_logic;
+    oen : std_logic;
+    wen : std_logic;
+    cen : std_logic;
+    ubn : std_logic;
+    lbn : std_logic;
+  end record t_cellular_ram_out;
 
 end package;
 

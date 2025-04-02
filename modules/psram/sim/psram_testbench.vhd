@@ -99,7 +99,7 @@ begin
   s_rst <= not(s_rst_n);
 
   -- PSRAM controller
-  psram_fsm : process(s_clk, s_rst_n) is
+  p_psram_fsm : process(s_clk, s_rst_n) is
   begin
     if s_rst_n = '0' then
      s_psram_wait <= '0';

@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.116 (w)1999-2023 BSI
-[*] Wed Mar  5 12:48:51 2025
+[*] Wed Mar  5 12:59:06 2025
 [*]
 [dumpfile] "/mnt/hdd/usr/alex/2025_03_03_fallout_psram_simulation/modules/psram/sim/psram_testbench.ghw"
-[dumpfile_mtime] "Wed Mar  5 12:46:39 2025"
+[dumpfile_mtime] "Wed Mar  5 12:56:49 2025"
 [dumpfile_size] 5628593
 [savefile] "/mnt/hdd/usr/alex/2025_03_03_fallout_psram_simulation/modules/psram/sim/psram_testbench.gtkw"
-[timestart] 174000000
+[timestart] 0
 [size] 1788 1010
-[pos] 179 148
-*-24.686331 242900000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[pos] 1685 1008
+*-27.077860 337100000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
 [treeopen] top.psram_testbench.
 [treeopen] top.psram_testbench.u_psram_dut.
@@ -29,10 +29,10 @@ top.psram_testbench.u_psram_dut.ps_cre
 top.psram_testbench.u_psram_dut.ps_wen
 top.psram_testbench.u_psram_dut.ps_oen
 top.psram_testbench.u_psram_dut.ps_cen
-@29
-#{top.psram_testbench.u_psram_dut.ps_seln[1:0]} top.psram_testbench.u_psram_dut.ps_seln[1] top.psram_testbench.u_psram_dut.ps_seln[0]
 @22
+#{top.psram_testbench.u_psram_dut.ps_seln[1:0]} top.psram_testbench.u_psram_dut.ps_seln[1] top.psram_testbench.u_psram_dut.ps_seln[0]
 #{top.psram_testbench.u_psram_dut.ps_data[15:0]} top.psram_testbench.u_psram_dut.ps_data[15] top.psram_testbench.u_psram_dut.ps_data[14] top.psram_testbench.u_psram_dut.ps_data[13] top.psram_testbench.u_psram_dut.ps_data[12] top.psram_testbench.u_psram_dut.ps_data[11] top.psram_testbench.u_psram_dut.ps_data[10] top.psram_testbench.u_psram_dut.ps_data[9] top.psram_testbench.u_psram_dut.ps_data[8] top.psram_testbench.u_psram_dut.ps_data[7] top.psram_testbench.u_psram_dut.ps_data[6] top.psram_testbench.u_psram_dut.ps_data[5] top.psram_testbench.u_psram_dut.ps_data[4] top.psram_testbench.u_psram_dut.ps_data[3] top.psram_testbench.u_psram_dut.ps_data[2] top.psram_testbench.u_psram_dut.ps_data[1] top.psram_testbench.u_psram_dut.ps_data[0]
+@23
 #{top.psram_testbench.u_psram_dut.ps_addr[23:0]} top.psram_testbench.u_psram_dut.ps_addr[23] top.psram_testbench.u_psram_dut.ps_addr[22] top.psram_testbench.u_psram_dut.ps_addr[21] top.psram_testbench.u_psram_dut.ps_addr[20] top.psram_testbench.u_psram_dut.ps_addr[19] top.psram_testbench.u_psram_dut.ps_addr[18] top.psram_testbench.u_psram_dut.ps_addr[17] top.psram_testbench.u_psram_dut.ps_addr[16] top.psram_testbench.u_psram_dut.ps_addr[15] top.psram_testbench.u_psram_dut.ps_addr[14] top.psram_testbench.u_psram_dut.ps_addr[13] top.psram_testbench.u_psram_dut.ps_addr[12] top.psram_testbench.u_psram_dut.ps_addr[11] top.psram_testbench.u_psram_dut.ps_addr[10] top.psram_testbench.u_psram_dut.ps_addr[9] top.psram_testbench.u_psram_dut.ps_addr[8] top.psram_testbench.u_psram_dut.ps_addr[7] top.psram_testbench.u_psram_dut.ps_addr[6] top.psram_testbench.u_psram_dut.ps_addr[5] top.psram_testbench.u_psram_dut.ps_addr[4] top.psram_testbench.u_psram_dut.ps_addr[3] top.psram_testbench.u_psram_dut.ps_addr[2] top.psram_testbench.u_psram_dut.ps_addr[1] top.psram_testbench.u_psram_dut.ps_addr[0]
 @200
 -Wishbone

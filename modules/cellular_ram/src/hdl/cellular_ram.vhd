@@ -4,11 +4,11 @@ use ieee.numeric_std.all;
 
 library work;
 use work.wishbone_pkg.all;
+use work.cellular_ram_pkg.all;
 
 entity cellular_ram is
   generic(
-    g_bits     : natural := 24;
-    g_row_bits : natural := 8);
+    g_bits     : natural := 24);
   port(
     clk_i      : in    std_logic;
     rstn_i     : in    std_logic;
@@ -29,17 +29,26 @@ end entity;
 
 architecture rtl of cellular_ram is
 
-  type t_state is (S_INITIAL, S_CHECK_VERSION, S_RESET, S_IDLE, S_WRITE_REQUEST, S_WRITE_WAIT, S_WRITE_LATCH, S_READ_REQUEST, S_READ_WAIT, S_READ_LATCH, S_BCR_REQUEST, S_BCR_WAIT, S_BCR_GAP, S_BCR_READ);
-  signal r_state : t_state := S_INITIAL;
-
-  signal r_ack : std_logic := '0';
+  type t_state is (S_INITIAL, S_READ, S_WRITE);
+  signal r_state   : t_state := S_INITIAL;
+  signal r_ram_out : t_cellular_ram_out;
+  signal r_ack     : std_logic := '0';
 
 begin
 
-  ps_clk_o      <= '0';
-  ps_advn_o     <= '0';
+  -- Wishbone
   slave_o.stall <= not(r_ack);
   slave_o.rty   <= '0';
+
+ -- Cellular RAM
+  ps_clk_o      <= '0';
+  ps_advn_o     <= '0';
+  ps_cre_o      <= r_ram_out.cre;
+  ps_oen_o      <= r_ram_out.oen;
+  ps_wen_o      <= r_ram_out.wen;
+  ps_cen_o      <= r_ram_out.cen;
+  ps_ubn_o      <= r_ram_out.ubn;
+  ps_lbn_o      <= r_ram_out.lbn;
 
   p_wishbone_handler : process(clk_i, rstn_i) is
   begin
@@ -52,13 +61,7 @@ begin
       -- Intenral state machine
       r_state       <= S_INITIAL;
       -- IOs - idle mode
-      ps_cre_o      <= '0';
-      ps_oen_o      <= '0'; -- X
-      ps_wen_o      <= '0'; -- X
-      ps_cre_o      <= '0';
-      ps_ubn_o      <= '0';
-      ps_lbn_o      <= '0'; -- X
-      ps_data_io    <= (others => '0');
+      ps_data_io    <= (others => '0'); -- X
       ps_addr_o     <= (others => '0');
     elsif rising_edge(clk_i) then
 

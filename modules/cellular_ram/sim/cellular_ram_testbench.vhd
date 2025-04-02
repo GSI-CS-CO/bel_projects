@@ -148,6 +148,14 @@ begin
         s_wb_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, c_reg_all_zero, c_reg_all_zero);
         wait until rising_edge(s_rst_n);
         wait until rising_edge(s_clk);
+        -- Read from address 0x0
+        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, x"00000000", c_reg_all_zero);
+        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_off, x"00000000", c_reg_all_zero);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, x"00000000", c_reg_all_zero);
+        wait until rising_edge(s_wb_slave_out.ack);
+        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, x"00000000", c_reg_all_zero);
+        wait until rising_edge(s_clk);
       end process;
 
 end;
