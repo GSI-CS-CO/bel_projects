@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 20-Jun-2024
+ *  version : 02-Apr-2025
  *
  * subscribes to and displays status of a wr-mil gateway
  *
@@ -269,7 +269,7 @@ void printHelpText()
   for (i=0; i<WRMILNSYS; i++) printf("%s\n", empty);
   //printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
   printf("please visit the following URL                                                  \n");
-  printf("https://www-acc.gsi.de/wiki                                                     \n");
+  printf("https://wiki.gsi.de/TOS/Timing/TimingSystemHowWrMil#Monitoring                  \n");
   printf("%s\n", empty);
   printf("press any key to continue\n");
   while (!comlib_term_getChar()) {usleep(200000);}

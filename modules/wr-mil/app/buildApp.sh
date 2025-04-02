@@ -5,7 +5,7 @@
 #set -x
 
 SW=../x86
-USRPATH=/common/usr/timing/user-dietrich/yocto
+USRPATH=/common/usr/timing/user-dietrich/rocky9
 APPBUILD=$1/$2/current
 NAME=$2
 BIN=$3
