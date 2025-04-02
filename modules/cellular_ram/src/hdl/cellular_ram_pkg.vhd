@@ -39,6 +39,11 @@ package cellular_ram_pkg is
     lbn : std_logic;
   end record t_cellular_ram_out;
 
+  function f_cellular_ram_set_outputs(cre : std_logic; oen : std_logic; wen : std_logic;
+                                      cen : std_logic; ubn : std_logic; lbn : std_logic)
+    return t_cellular_ram_out;
+  function f_cellular_ram_set_idle return t_cellular_ram_out;
+
 end package;
 
 package body cellular_ram_pkg is
@@ -64,5 +69,25 @@ package body cellular_ram_pkg is
 
     return result;
   end f_cellular_ram_sdb;
+
+  function f_cellular_ram_set_outputs(cre : std_logic; oen : std_logic; wen : std_logic;
+                                     cen : std_logic; ubn : std_logic; lbn : std_logic) return t_cellular_ram_out is
+  variable v_setup : t_cellular_ram_out;
+  begin
+    v_setup.cre := cre;
+    v_setup.oen := oen;
+    v_setup.wen := wen;
+    v_setup.cen := cen;
+    v_setup.ubn := ubn;
+    v_setup.lbn := lbn;
+    return v_setup;
+  end function f_cellular_ram_set_outputs;
+
+  function f_cellular_ram_set_idle return t_cellular_ram_out is
+  variable v_setup : t_cellular_ram_out;
+  begin
+    v_setup := f_cellular_ram_set_outputs('0','0','0','0','0','0');
+    return v_setup;
+  end function f_cellular_ram_set_idle;
 
 end cellular_ram_pkg;

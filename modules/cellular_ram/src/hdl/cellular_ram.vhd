@@ -60,9 +60,10 @@ begin
       slave_o.dat   <= (others => '0');
       -- Intenral state machine
       r_state       <= S_INITIAL;
-      -- IOs - idle mode
+      -- Data and addr
       ps_data_io    <= (others => '0'); -- X
       ps_addr_o     <= (others => '0');
+      r_ram_out     <= f_cellular_ram_set_idle;
     elsif rising_edge(clk_i) then
 
 
