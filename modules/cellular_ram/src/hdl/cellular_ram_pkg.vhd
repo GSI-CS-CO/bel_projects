@@ -14,20 +14,21 @@ package cellular_ram_pkg is
       g_bits     : natural := 24;
       g_row_bits : natural := 8);
     port(
-      clk_i     : in    std_logic;
-      rstn_i    : in    std_logic;
-      slave_i   : in    t_wishbone_slave_in;
-      slave_o   : out   t_wishbone_slave_out;
-      ps_clk    : out   std_logic;
-      ps_addr   : out   std_logic_vector(g_bits-1 downto 0);
-      ps_data   : inout std_logic_vector(15 downto 0);
-      ps_seln   : out   std_logic_vector(1 downto 0);
-      ps_cen    : out   std_logic;
-      ps_oen    : out   std_logic;
-      ps_wen    : out   std_logic;
-      ps_cre    : out   std_logic;
-      ps_advn   : out   std_logic;
-      ps_wait   : in    std_logic);
+      clk_i      : in    std_logic;
+      rstn_i     : in    std_logic;
+      slave_i    : in    t_wishbone_slave_in;
+      slave_o    : out   t_wishbone_slave_out;
+      ps_clk_o   : out   std_logic;
+      ps_addr_o  : out   std_logic_vector(g_bits-1 downto 0);
+      ps_data_io : inout std_logic_vector(15 downto 0);
+      ps_ubn_o   : out   std_logic;
+      ps_lbn_o   : out   std_logic;
+      ps_cen_o   : out   std_logic;
+      ps_oen_o   : out   std_logic;
+      ps_wen_o   : out   std_logic;
+      ps_cre_o   : out   std_logic;
+      ps_advn_o  : out   std_logic;
+      ps_wait_i  : in    std_logic);
   end component;
 
 end package;

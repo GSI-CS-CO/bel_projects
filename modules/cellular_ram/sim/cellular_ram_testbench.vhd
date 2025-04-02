@@ -27,7 +27,8 @@ architecture rtl of cellular_ram_testbench is
   signal s_psram_clk  : std_logic;
   signal s_psram_addr : std_logic_vector(23 downto 0);
   signal s_psram_data : std_logic_vector(15 downto 0);
-  signal s_psram_seln : std_logic_vector(1 downto 0);
+  signal s_psram_ubn  : std_logic;
+  signal s_psram_lbn  : std_logic;
   signal s_psram_cen  : std_logic;
   signal s_psram_oen  : std_logic;
   signal s_psram_wen  : std_logic;
@@ -124,20 +125,21 @@ begin
   -- Cellular RAM
   u_cellular_ram_dut : cellular_ram
     port map (
-      clk_i    => s_clk,
-      rstn_i   => s_rst_n,
-      slave_i  => s_wb_slave_in,
-      slave_o  => s_wb_slave_out,
-      ps_clk   => s_psram_clk,
-      ps_addr  => s_psram_addr,
-      ps_data  => s_psram_data,
-      ps_seln  => s_psram_seln,
-      ps_cen   => s_psram_cen,
-      ps_oen   => s_psram_oen,
-      ps_wen   => s_psram_wen,
-      ps_cre   => s_psram_cre,
-      ps_advn  => s_psram_advn,
-      ps_wait  => s_psram_wait);
+      clk_i      => s_clk,
+      rstn_i     => s_rst_n,
+      slave_i    => s_wb_slave_in,
+      slave_o    => s_wb_slave_out,
+      ps_clk_o   => s_psram_clk,
+      ps_addr_o  => s_psram_addr,
+      ps_data_io => s_psram_data,
+      ps_ubn_o   => s_psram_ubn,
+      ps_lbn_o   => s_psram_lbn,
+      ps_cen_o   => s_psram_cen,
+      ps_oen_o   => s_psram_oen,
+      ps_wen_o   => s_psram_wen,
+      ps_cre_o   => s_psram_cre,
+      ps_advn_o  => s_psram_advn,
+      ps_wait_i  => s_psram_wait);
 
       -- Wishbone controller
       p_wishbone_stim : process
