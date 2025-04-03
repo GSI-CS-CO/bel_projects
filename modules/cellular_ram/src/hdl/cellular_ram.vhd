@@ -63,7 +63,7 @@ begin
       -- Data and addr
       ps_data_io    <= (others => '0');
       ps_addr_o     <= (others => '0');
-      r_ram_out     <= f_cellular_ram_set_idle;
+      r_ram_out     <= f_cellular_ram_set_standby;
     elsif rising_edge(clk_i) then
 
 

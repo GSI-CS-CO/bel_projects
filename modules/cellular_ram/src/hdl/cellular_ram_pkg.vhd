@@ -41,8 +41,14 @@ package cellular_ram_pkg is
 
   function f_cellular_ram_set_outputs(cre : std_logic; oen : std_logic; wen : std_logic;
                                       cen : std_logic; ubn : std_logic; lbn : std_logic)
-    return t_cellular_ram_out;
-  function f_cellular_ram_set_idle return t_cellular_ram_out;
+                                      return t_cellular_ram_out;
+  function f_cellular_ram_set_read    return t_cellular_ram_out; -- Read from RAM
+  function f_cellular_ram_set_write   return t_cellular_ram_out; -- Write to RAM
+  function f_cellular_ram_set_standby return t_cellular_ram_out; -- Standby
+  function f_cellular_ram_set_noop    return t_cellular_ram_out; -- No operation
+  function f_cellular_ram_set_cfg_w   return t_cellular_ram_out; -- Configuration register write
+  function f_cellular_ram_set_cfg_r   return t_cellular_ram_out; -- Configuration register read
+  function f_cellular_ram_set_dpd     return t_cellular_ram_out; -- Deep power-down
 
 end package;
 
@@ -83,11 +89,40 @@ package body cellular_ram_pkg is
     return v_setup;
   end function f_cellular_ram_set_outputs;
 
-  function f_cellular_ram_set_idle return t_cellular_ram_out is
-  variable v_setup : t_cellular_ram_out;
+  -- Table                             CRE OEN WEN CEN UBN LBN
+  function f_cellular_ram_set_read return t_cellular_ram_out is
   begin
-    v_setup := f_cellular_ram_set_outputs('0','0','0','0','0','0');
-    return v_setup;
-  end function f_cellular_ram_set_idle;
+     return f_cellular_ram_set_outputs('0','0','1','0','0','0');
+  end function f_cellular_ram_set_read;
+
+  function f_cellular_ram_set_write return t_cellular_ram_out is
+  begin
+    return f_cellular_ram_set_outputs('0','0','0','0','0','0');
+  end function f_cellular_ram_set_write;
+
+  function f_cellular_ram_set_standby return t_cellular_ram_out is
+  begin
+    return f_cellular_ram_set_outputs('0','0','0','0','0','0');
+  end function f_cellular_ram_set_standby;
+
+  function f_cellular_ram_set_noop return t_cellular_ram_out is
+  begin
+    return f_cellular_ram_set_outputs('0','0','0','0','0','0');
+  end function f_cellular_ram_set_noop;
+
+  function f_cellular_ram_set_cfg_w return t_cellular_ram_out is
+  begin
+    return f_cellular_ram_set_outputs('1','1','0','0','0','0');
+  end function f_cellular_ram_set_cfg_w;
+
+  function f_cellular_ram_set_cfg_r return t_cellular_ram_out is
+  begin
+    return f_cellular_ram_set_outputs('1','0','1','0','0','0');
+  end function f_cellular_ram_set_cfg_r;
+
+  function f_cellular_ram_set_dpd return t_cellular_ram_out is
+  begin
+    return f_cellular_ram_set_outputs('0','0','0','1','0','0');
+  end function f_cellular_ram_set_dpd;
 
 end cellular_ram_pkg;
