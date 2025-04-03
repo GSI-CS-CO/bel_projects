@@ -77,11 +77,11 @@ begin
     elsif rising_edge(clk_i) then
       case r_state is
        when S_INITIAL =>
-         r_state    <= S_IDLE;
-         ps_data_io <= (others => 'Z');
-         ps_addr_o  <= (others => '0');
-         r_ram_out  <= f_cellular_ram_set_standby;
-         r_ack      <= '0';
+         r_state      <= S_IDLE;
+         ps_data_io   <= (others => 'Z');
+         ps_addr_o    <= (others => '0');
+         r_ram_out    <= f_cellular_ram_set_standby;
+         r_ack        <= '0';
        when S_IDLE =>
          if (slave_i.cyc and slave_i.stb) = '1' then
            if slave_i.we = '1' then
@@ -96,10 +96,11 @@ begin
              r_ram_out  <= f_cellular_ram_set_read;
            end if;
         else
-          ps_data_io <= (others => 'Z');
-          ps_addr_o  <= (others => '0');
-          r_ram_out  <= f_cellular_ram_set_standby;
-          r_ack      <= '0';
+          ps_data_io  <= (others => 'Z');
+          ps_addr_o   <= (others => '0');
+          r_ram_out   <= f_cellular_ram_set_standby;
+          r_ack       <= '0';
+          slave_o.dat <= (others => '0');
         end if;
       when S_WRITE =>
         r_counter_w <= r_counter_w + 1;
@@ -112,10 +113,11 @@ begin
       when S_READ =>
       r_counter_r <= r_counter_r + 1;
         if r_counter_r = c_tcem then
-          r_state     <= S_IDLE;
-          r_counter_r <= (others => '0');
-          r_ram_out   <= f_cellular_ram_set_standby;
-          r_ack       <= '1';
+          r_state                  <= S_IDLE;
+          r_counter_r              <= (others => '0');
+          r_ram_out                <= f_cellular_ram_set_standby;
+          r_ack                    <= '1';
+          slave_o.dat(15 downto 0) <= ps_data_io;
         end if;
       end case;
     end if;
