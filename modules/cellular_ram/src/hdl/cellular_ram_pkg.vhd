@@ -17,17 +17,17 @@ package cellular_ram_pkg is
       rstn_i     : in    std_logic;
       slave_i    : in    t_wishbone_slave_in;
       slave_o    : out   t_wishbone_slave_out;
-      ps_clk_o   : out   std_logic;
-      ps_addr_o  : out   std_logic_vector(g_bits-1 downto 0);
-      ps_data_io : inout std_logic_vector(15 downto 0);
-      ps_ubn_o   : out   std_logic;
-      ps_lbn_o   : out   std_logic;
-      ps_cen_o   : out   std_logic;
-      ps_oen_o   : out   std_logic;
-      ps_wen_o   : out   std_logic;
-      ps_cre_o   : out   std_logic;
-      ps_advn_o  : out   std_logic;
-      ps_wait_i  : in    std_logic);
+      cr_clk_o   : out   std_logic;
+      cr_addr_o  : out   std_logic_vector(g_bits-1 downto 0);
+      cr_data_io : inout std_logic_vector(15 downto 0);
+      cr_ubn_o   : out   std_logic;
+      cr_lbn_o   : out   std_logic;
+      cr_cen_o   : out   std_logic;
+      cr_oen_o   : out   std_logic;
+      cr_wen_o   : out   std_logic;
+      cr_cre_o   : out   std_logic;
+      cr_advn_o  : out   std_logic;
+      cr_wait_i  : in    std_logic);
   end component;
 
   type t_cellular_ram_out is record

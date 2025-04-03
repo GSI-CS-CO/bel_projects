@@ -14,17 +14,17 @@ entity cellular_ram is
     rstn_i     : in    std_logic;
     slave_i    : in    t_wishbone_slave_in;
     slave_o    : out   t_wishbone_slave_out;
-    ps_clk_o   : out   std_logic;
-    ps_addr_o  : out   std_logic_vector(g_bits-1 downto 0);
-    ps_data_io : inout std_logic_vector(15 downto 0);
-    ps_ubn_o   : out   std_logic;
-    ps_lbn_o   : out   std_logic;
-    ps_cen_o   : out   std_logic;
-    ps_oen_o   : out   std_logic;
-    ps_wen_o   : out   std_logic;
-    ps_cre_o   : out   std_logic;
-    ps_advn_o  : out   std_logic;
-    ps_wait_i  : in    std_logic);
+    cr_clk_o   : out   std_logic;
+    cr_addr_o  : out   std_logic_vector(g_bits-1 downto 0);
+    cr_data_io : inout std_logic_vector(15 downto 0);
+    cr_ubn_o   : out   std_logic;
+    cr_lbn_o   : out   std_logic;
+    cr_cen_o   : out   std_logic;
+    cr_oen_o   : out   std_logic;
+    cr_wen_o   : out   std_logic;
+    cr_cre_o   : out   std_logic;
+    cr_advn_o  : out   std_logic;
+    cr_wait_i  : in    std_logic);
 end entity;
 
 architecture rtl of cellular_ram is
@@ -49,16 +49,16 @@ begin
   slave_o.err <= '0';
 
  -- Cellular RAM
-  ps_cre_o  <= r_ram_out.cre;
-  ps_oen_o  <= r_ram_out.oen;
-  ps_wen_o  <= r_ram_out.wen;
-  ps_cen_o  <= r_ram_out.cen;
-  ps_ubn_o  <= r_ram_out.ubn;
-  ps_lbn_o  <= r_ram_out.lbn;
+  cr_cre_o  <= r_ram_out.cre;
+  cr_oen_o  <= r_ram_out.oen;
+  cr_wen_o  <= r_ram_out.wen;
+  cr_cen_o  <= r_ram_out.cen;
+  cr_ubn_o  <= r_ram_out.ubn;
+  cr_lbn_o  <= r_ram_out.lbn;
 
   -- Unused cellular RAM
-  ps_clk_o  <= '0';
-  ps_advn_o <= '0';
+  cr_clk_o  <= '0';
+  cr_advn_o <= '0';
 
   p_wishbone_handler : process(clk_i, rstn_i) is
   begin
@@ -71,33 +71,33 @@ begin
       r_counter_r <= (others => '0');
       r_counter_w <= (others => '0');
       -- Data and addr
-      ps_data_io  <= (others => 'Z');
-      ps_addr_o   <= (others => '0');
+      cr_data_io  <= (others => 'Z');
+      cr_addr_o   <= (others => '0');
       r_ram_out   <= f_cellular_ram_set_standby;
     elsif rising_edge(clk_i) then
       case r_state is
        when S_INITIAL =>
          r_state      <= S_IDLE;
-         ps_data_io   <= (others => 'Z');
-         ps_addr_o    <= (others => '0');
+         cr_data_io   <= (others => 'Z');
+         cr_addr_o    <= (others => '0');
          r_ram_out    <= f_cellular_ram_set_standby;
          r_ack        <= '0';
        when S_IDLE =>
          if (slave_i.cyc and slave_i.stb) = '1' then
            if slave_i.we = '1' then
              r_state    <= S_WRITE;
-             ps_addr_o  <= slave_i.adr(g_bits-1 downto 0);
-             ps_data_io <= slave_i.dat(15 downto 0);
+             cr_addr_o  <= slave_i.adr(g_bits-1 downto 0);
+             cr_data_io <= slave_i.dat(15 downto 0);
              r_ram_out  <= f_cellular_ram_set_write;
            else
              r_state    <= S_READ;
-             ps_addr_o  <= slave_i.adr(g_bits-1 downto 0);
-             ps_data_io <= (others => 'Z');
+             cr_addr_o  <= slave_i.adr(g_bits-1 downto 0);
+             cr_data_io <= (others => 'Z');
              r_ram_out  <= f_cellular_ram_set_read;
            end if;
         else
-          ps_data_io  <= (others => 'Z');
-          ps_addr_o   <= (others => '0');
+          cr_data_io  <= (others => 'Z');
+          cr_addr_o   <= (others => '0');
           r_ram_out   <= f_cellular_ram_set_standby;
           r_ack       <= '0';
           slave_o.dat <= (others => '0');
@@ -117,7 +117,7 @@ begin
           r_counter_r               <= (others => '0');
           r_ram_out                 <= f_cellular_ram_set_standby;
           r_ack                     <= '1';
-          slave_o.dat(15 downto 0)  <= (ps_data_io);
+          slave_o.dat(15 downto 0)  <= (cr_data_io);
           slave_o.dat(31 downto 16) <= (others => '0');
         end if;
       end case;

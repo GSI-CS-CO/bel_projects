@@ -129,17 +129,17 @@ begin
       rstn_i     => s_rst_n,
       slave_i    => s_wb_slave_in,
       slave_o    => s_wb_slave_out,
-      ps_clk_o   => s_psram_clk,
-      ps_addr_o  => s_psram_addr,
-      ps_data_io => s_psram_data,
-      ps_ubn_o   => s_psram_ubn,
-      ps_lbn_o   => s_psram_lbn,
-      ps_cen_o   => s_psram_cen,
-      ps_oen_o   => s_psram_oen,
-      ps_wen_o   => s_psram_wen,
-      ps_cre_o   => s_psram_cre,
-      ps_advn_o  => s_psram_advn,
-      ps_wait_i  => s_psram_wait);
+      cr_clk_o   => s_psram_clk,
+      cr_addr_o  => s_psram_addr,
+      cr_data_io => s_psram_data,
+      cr_ubn_o   => s_psram_ubn,
+      cr_lbn_o   => s_psram_lbn,
+      cr_cen_o   => s_psram_cen,
+      cr_oen_o   => s_psram_oen,
+      cr_wen_o   => s_psram_wen,
+      cr_cre_o   => s_psram_cre,
+      cr_advn_o  => s_psram_advn,
+      cr_wait_i  => s_psram_wait);
 
       -- Wishbone controller
       p_wishbone_stim : process
