@@ -744,13 +744,16 @@ architecture rtl of monster is
   signal s_eca_evt_m_i    : t_wishbone_master_in;
   signal s_eca_evt_m_o    : t_wishbone_master_out;
 
-  signal psram_slave_i   : t_wishbone_slave_in;
-  signal psram_slave_o   : t_wishbone_slave_out;
+  signal psram_slave_i : t_wishbone_slave_in;
+  signal psram_slave_o : t_wishbone_slave_out;
 
-  signal eb_src_out    : t_wrf_source_out;
-  signal eb_src_in     : t_wrf_source_in;
-  signal eb_snk_out    : t_wrf_sink_out;
-  signal eb_snk_in     : t_wrf_sink_in;
+  signal cellular_ram_slave_i : t_wishbone_slave_in;
+  signal cellular_ram_slave_o : t_wishbone_slave_out;
+
+  signal eb_src_out : t_wrf_source_out;
+  signal eb_src_in  : t_wrf_source_in;
+  signal eb_snk_out : t_wrf_sink_out;
+  signal eb_snk_in  : t_wrf_sink_in;
 
   signal eb_aux_src_out : t_wrf_source_out;
   signal eb_aux_src_in  : t_wrf_source_in;
@@ -3322,6 +3325,30 @@ end generate;
         ps_wait   => ps_wait);
       end generate;
   end generate;
+
+  cr_n : if not g_en_cellular_ram generate
+    dev_bus_master_i(dev_slaves'pos(devs_psram)) <= cc_dummy_slave_out;
+  end generate;
+  cr_y : if g_en_cellular_ram generate
+      cr : cellular_ram
+        generic map(
+          g_bits => g_cr_bits)
+        port map(
+        clk_i     => clk_sys,
+        rstn_i    => rstn_sys,
+        slave_i   => dev_bus_master_o(dev_slaves'pos(devs_psram)),
+        slave_o   => dev_bus_master_i(dev_slaves'pos(devs_psram)),
+        ps_clk    => ps_clk,
+        ps_addr   => ps_addr,
+        ps_data   => ps_data,
+        ps_seln   => ps_seln,
+        ps_cen    => ps_cen,
+        ps_oen    => ps_oen,
+        ps_wen    => ps_wen,
+        ps_cre    => ps_cre,
+        ps_advn   => ps_advn,
+        ps_wait   => ps_wait);
+    end generate;
 
   beam_dump_n : if not g_en_beam_dump generate
     top_bus_master_i(top_slaves'pos(tops_beam_dump)) <= cc_dummy_slave_out;
