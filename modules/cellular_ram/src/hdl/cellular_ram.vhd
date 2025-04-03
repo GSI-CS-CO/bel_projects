@@ -36,19 +36,20 @@ architecture rtl of cellular_ram is
 
 begin
 
-  -- Wishbone
+  -- Unused Wishbone signals
   slave_o.stall <= not(r_ack);
   slave_o.rty   <= '0';
+  slave_o.err   <= '0';
 
  -- Cellular RAM
-  ps_clk_o      <= '0';
-  ps_advn_o     <= '0';
-  ps_cre_o      <= r_ram_out.cre;
-  ps_oen_o      <= r_ram_out.oen;
-  ps_wen_o      <= r_ram_out.wen;
-  ps_cen_o      <= r_ram_out.cen;
-  ps_ubn_o      <= r_ram_out.ubn;
-  ps_lbn_o      <= r_ram_out.lbn;
+  ps_clk_o  <= '0';
+  ps_advn_o <= '0';
+  ps_cre_o  <= r_ram_out.cre;
+  ps_oen_o  <= r_ram_out.oen;
+  ps_wen_o  <= r_ram_out.wen;
+  ps_cen_o  <= r_ram_out.cen;
+  ps_ubn_o  <= r_ram_out.ubn;
+  ps_lbn_o  <= r_ram_out.lbn;
 
   p_wishbone_handler : process(clk_i, rstn_i) is
   begin
@@ -56,12 +57,11 @@ begin
       -- Wishbone
       r_ack         <= '0';
       slave_o.ack   <= '0';
-      slave_o.err   <= '0';
       slave_o.dat   <= (others => '0');
       -- Intenral state machine
       r_state       <= S_INITIAL;
       -- Data and addr
-      ps_data_io    <= (others => '0'); -- X
+      ps_data_io    <= (others => '0');
       ps_addr_o     <= (others => '0');
       r_ram_out     <= f_cellular_ram_set_idle;
     elsif rising_edge(clk_i) then
