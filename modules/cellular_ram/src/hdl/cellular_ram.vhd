@@ -113,11 +113,12 @@ begin
       when S_READ =>
       r_counter_r <= r_counter_r + 1;
         if r_counter_r = c_tcem then
-          r_state                  <= S_IDLE;
-          r_counter_r              <= (others => '0');
-          r_ram_out                <= f_cellular_ram_set_standby;
-          r_ack                    <= '1';
-          slave_o.dat(15 downto 0) <= ps_data_io;
+          r_state                   <= S_IDLE;
+          r_counter_r               <= (others => '0');
+          r_ram_out                 <= f_cellular_ram_set_standby;
+          r_ack                     <= '1';
+          slave_o.dat(15 downto 0)  <= (ps_data_io);
+          slave_o.dat(31 downto 16) <= (others => '0');
         end if;
       end case;
     end if;
