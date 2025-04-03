@@ -47,8 +47,8 @@ entity pwm is
         --end record t_wishbone_slave_in;
         -- equal to t_wishbone_master_out
 
-    pwm_latch_i        : in std_logic_vector((g_pwm_channel_num-1) downto 0)   := (others => '0');
-    pwm_o               : out std_logic_vector((g_pwm_channel_num-1) downto 0)  := (others => '0')
+    pwm_latch_i     : in std_logic := '0';
+    pwm_o           : out std_logic_vector((g_pwm_channel_num-1) downto 0)  := (others => '0')
     );
 
 end entity;
@@ -64,7 +64,7 @@ architecture pwm_arch of pwm is
     signal s_retry_state      : std_logic := '0';
     signal s_error_state      : std_logic := '0';
 
-    signal s_reg_adr           : natural range 0 to g_pwm_channel_num-1;
+    signal s_reg_adr           : natural range 0 to g_pwm_channel_num*3;
     signal s_is_high           : boolean;
 
     -- TODO put into type
@@ -91,12 +91,8 @@ architecture pwm_arch of pwm is
     -- [ 0 - 63] high and low value: e.g. 0 high, 1 low for channel 0
     -- [64 - 95] enable free-running mode bits: e.g. 64 is enable free-running bit for channel 0
     signal value_reg_address        : natural range 0 to ((g_pwm_channel_num*3)-1);
-
     -- start phase for all channels is low for now
     signal s_pwm_start_phase_i      : std_logic_vector((g_pwm_channel_num-1) downto 0) := (others => '1');
-
-    signal test : std_logic := '0';
-
 
 begin
 
@@ -128,35 +124,33 @@ begin
                 low                     => s_pwm_values_array((i*2)+1),
 
                 pwm_start_phase_i       => s_pwm_start_phase_i(i),
-                pwm_latch_i             => pwm_latch_i(i),
+                pwm_latch_i             => pwm_latch_i,
                 pwm_mode_i              => s_pwm_mode_array(i),
                 pwm_o                   => pwm_o(i)
             );
     end generate pwm_channels;
 
-    p_wb_ack: process(clk_sys_i)
+    p_wb_ack: process(clk_sys_i, rst_sys_n_i)
     begin
-        if rising_edge(clk_sys_i) then
-            if rst_sys_n_i = '0' then
-                s_ack_state <= '0';
+        if rst_sys_n_i = '0' then
+            s_ack_state <= '0';
+        elsif rising_edge(clk_sys_i) then
+            if s_ack_state = '0' and t_wb_i.stb = '1' and t_wb_i.cyc = '1' then
+                s_ack_state <= '1';
             else
-                if s_ack_state = '0' and t_wb_i.stb = '1' and t_wb_i.cyc = '1' then
-                    s_ack_state <= '1';
-                else
-                    s_ack_state <= '0';
-                end if;
+                s_ack_state <= '0';
             end if;
         end if;
     end process p_wb_ack;
 
-    p_wb_write: process(clk_sys_i)
+    p_wb_write: process(clk_sys_i, rst_sys_n_i)
     begin
-        if rising_edge(clk_sys_i) then
-            if rst_sys_n_i = '0' then
-                s_stall_state   <= '0';
-                s_error_state   <= '0';
-                s_retry_state   <= '0';
-            elsif s_state_machine_vector = mode_write then
+        if rst_sys_n_i = '0' then
+            s_stall_state   <= '0';
+            s_error_state   <= '0';
+            s_retry_state   <= '0';
+        elsif rising_edge(clk_sys_i) then 
+            if s_state_machine_vector = mode_write then
                 -- writing high and low values
                 if (value_reg_address < ((g_pwm_channel_num*2)-1)) then
                     -- write values for high
@@ -167,19 +161,18 @@ begin
                     s_pwm_values_array((value_reg_address*2)+1)  <= (unsigned(t_wb_i.dat((g_pwm_regs_size-1) downto 0)));
                 -- writing mode values
                 else
-                    s_pwm_mode_array(value_reg_address-(g_pwm_channel_num*2)) <= t_wb_i.dat(0);  
-                    test <= t_wb_i.dat(0);             
+                    s_pwm_mode_array(value_reg_address-(g_pwm_channel_num*2)) <= t_wb_i.dat(0);             
                 end if;
             end if;
         end if;
     end process p_wb_write;
 
-    p_wb_read: process(clk_sys_i)
+    p_wb_read: process(clk_sys_i, rst_sys_n_i)
     begin
-        if rising_edge(clk_sys_i) then
-            if rst_sys_n_i = '0' then
-                t_wb_o.dat    <= (others => '0');
-            elsif s_state_machine_vector = mode_read then
+        if rst_sys_n_i = '0' then
+            t_wb_o.dat    <= (others => '0');
+        elsif rising_edge(clk_sys_i) then
+            if s_state_machine_vector = mode_read then
                 -- read values for high
                 -- they are (inside) the first 16-bit
                 t_wb_o.dat(t_wb_o.dat'length-1 downto g_pwm_regs_size) <= std_logic_vector(s_pwm_values_array(value_reg_address*2));
@@ -189,6 +182,5 @@ begin
             end if;
         end if;
     end process p_wb_read;
-
 
 end pwm_arch;

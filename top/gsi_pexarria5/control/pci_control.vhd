@@ -5,6 +5,7 @@ use ieee.numeric_std.all;
 library work;
 use work.monster_pkg.all;
 use work.ramsize_pkg.c_lm32_ramsizes;
+use work.altera_lvds_pkg.all;
 
 entity pci_control is
   port(
@@ -214,7 +215,7 @@ architecture rtl of pci_control is
   signal led_track     : std_logic;
   signal led_pps       : std_logic;
 
-  signal gpio_o        : std_logic_vector(7 downto 0);
+  signal gpio_o        : std_logic_vector(9 downto 0);
   signal lvds_p_i      : std_logic_vector(4 downto 0);
   signal lvds_n_i      : std_logic_vector(4 downto 0);
   signal lvds_i_led    : std_logic_vector(4 downto 0);
@@ -227,25 +228,29 @@ architecture rtl of pci_control is
   signal butis_clk_200 : std_logic;
   signal butis_t0_ts   : std_logic;
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 14) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 16) :=
   (
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
-    ("LED1_BASE_R", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LED2_BASE_B", IO_NONE,         false,   false,  1,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LED3_BASE_G", IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LED4_BASE_W", IO_NONE,         false,   false,  3,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LED1_ADD_R ", IO_NONE,         false,   false,  4,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LED2_ADD_B ", IO_NONE,         false,   false,  5,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LED3_ADD_G ", IO_NONE,         false,   false,  6,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LED4_ADD_W ", IO_NONE,         false,   false,  7,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("IO1        ", IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
-    ("IO2        ", IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
-    ("IO3        ", IO_NONE,         false,   false,  2,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
-    ("MHDMR_SYIN ", IO_NONE,         false,   false,  3,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
-    ("MHDMR_TRIN ", IO_NONE,         false,   false,  4,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
-    ("MHDMR_CK200", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_LVDS),
-    ("MHDMR_SYOU ", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_LVDS)
+    ("LED1_BASE_R", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),     -- 00
+    ("LED2_BASE_B", IO_NONE,         false,   false,  1,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),     -- 01
+    ("LED3_BASE_G", IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),     -- 02
+    ("LED4_BASE_W", IO_NONE,         false,   false,  3,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),     -- 03
+    ("LED1_ADD_R ", IO_NONE,         false,   false,  4,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),     -- 04
+    ("LED2_ADD_B ", IO_NONE,         false,   false,  5,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),     -- 05
+    ("LED3_ADD_G ", IO_NONE,         false,   false,  6,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),     -- 06
+    ("LED4_ADD_W ", IO_NONE,         false,   false,  7,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),     -- 07
+    ("IO1_PWM    ", IO_NONE,         false,   false,  8,     IO_OUTPUT,   IO_GPIO,  true,         false,       IO_LVTTL),   -- 08 extra for PWM
+    ("IO2_PWM    ", IO_NONE,         false,   false,  9,     IO_OUTPUT,   IO_GPIO,  true,         false,       IO_LVTTL),   -- 09 extra for PWM
+    ("IO1        ", IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),   -- 08
+    ("IO2        ", IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),   -- 09
+    ("IO3        ", IO_NONE,         false,   false,  2,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),   -- 10
+    ("MHDMR_SYIN ", IO_NONE,         false,   false,  3,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),    -- 11
+    ("MHDMR_TRIN ", IO_NONE,         false,   false,  4,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),    -- 12
+    ("MHDMR_CK200", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_LVDS),    -- 13
+    ("MHDMR_SYOU ", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_LVDS)     -- 14
+    
   );
+
   constant c_family       : string := "Arria V";
   constant c_project      : string := "pci_control";
   constant c_initf_name   : string := c_project & "_stub.mif";
@@ -259,7 +264,7 @@ begin
       g_family             => c_family,
       g_project            => c_project,
       g_flash_bits         => 25,
-      g_gpio_out           => 8,
+      g_gpio_out           => 10,
       g_lvds_in            => 2,
       g_lvds_out           => 0,
       g_lvds_inout         => 3,
@@ -280,7 +285,8 @@ begin
       g_lm32_ramsizes      => c_lm32_ramsizes/4,
       g_lm32_init_files    => f_string_list_repeat(c_initf_name, c_cores),
       g_lm32_profiles      => f_string_list_repeat(c_profile_name, c_cores),
-      g_en_asmi            => true
+      g_en_asmi            => true,
+      g_en_pwm             => true
     )
     port map(
       core_clk_20m_vcxo_i     => clk_20m_vcxo_i,
@@ -407,15 +413,35 @@ begin
 
   -- LVDS outputs
   n25 <= lvds_n_o(0); -- TTLIO1
-  n27 <= lvds_n_o(1); -- TTLIO2
-  n28 <= lvds_n_o(2); -- TTLIO3
+  -- n27 <= lvds_n_o(1); -- TTLIO2
+  -- n28 <= lvds_n_o(2); -- TTLIO3
   --n19 <= lvds_n_o(3); -- LVDS_3 / CK200 -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
   --n24 <= lvds_n_o(4); -- LVDS_4 / SYOU  -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
   p25 <= lvds_p_o(0); -- TTLIO1
-  p27 <= lvds_p_o(1); -- TTLIO2
-  p28 <= lvds_p_o(2); -- TTLIO3
+  -- p27 <= lvds_p_o(1); -- TTLIO2
+  -- p28 <= lvds_p_o(2); -- TTLIO3
   --p19 <= lvds_p_o(3); -- LVDS_3 / CK200 -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
   --p24 <= lvds_p_o(4); -- LVDS_4 / SYOU  -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
+
+  -- SPECIAL PWM Output
+  buffer_pwm_0 : altera_lvds_obuf
+    generic map(
+      g_family  => c_family)
+    port map(
+      datain    => gpio_o(8),
+      dataout   => p27,
+      dataout_b => n27
+    );
+
+  --s_lvds_p_o(4)    <= clk_10m;
+  buffer_pwm_1 : altera_lvds_obuf
+    generic map(
+      g_family  => c_family)
+    port map(
+      datain    => gpio_o(9),
+      dataout   => p28,
+      dataout_b => n28
+    );
 
   -- LVDS activity LEDs
   n29 <= '0' when lvds_i_led(0)='1' else 'Z'; -- FPLED2/TTLIO1 blue

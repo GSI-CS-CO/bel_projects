@@ -820,6 +820,9 @@ architecture rtl of monster is
   signal cellular_ram_slave_i : t_wishbone_slave_in;
   signal cellular_ram_slave_o : t_wishbone_slave_out;
 
+  signal pwm_device_i   : t_wishbone_slave_in;
+  signal pwm_device_o   : t_wishbone_slave_out;
+
   signal eb_src_out : t_wrf_source_out;
   signal eb_src_in  : t_wrf_source_in;
   signal eb_snk_out : t_wrf_sink_out;
@@ -1151,6 +1154,7 @@ architecture rtl of monster is
   -- pwm signals ------------------------------------------------------------------
   ----------------------------------------------------------------------------------
   signal s_pwm_dummy_vector : std_logic_vector((c_eca_gpio-g_num_pwm_channels-1) downto 0) := (others => '0');
+  signal s_pwm_pps_dummy    : std_logic := '0';
 
 begin
 
@@ -3696,6 +3700,21 @@ end generate;
   end generate;
     
   pwm_y : if g_en_pwm generate
+    xwb_system_to_pwm : xwb_clock_crossing
+      generic map (g_size => 32)
+      port map(
+        -- Slave control port
+        slave_clk_i    => clk_sys,
+        slave_rst_n_i  => rstn_sys,
+        slave_i        => dev_bus_master_o(dev_slaves'pos(devs_pwm)),
+        slave_o        => dev_bus_master_i(dev_slaves'pos(devs_pwm)),
+        -- Master reader port
+        master_clk_i   => clk_ref0,
+        master_rst_n_i => rstn_sys,
+        master_i       => pwm_device_o,
+        master_o       => pwm_device_i
+        );
+
     pwm_pwm : pwm
     generic map (
         g_pwm_channel_num => c_eca_gpio
@@ -3703,9 +3722,9 @@ end generate;
       port map (
         clk_sys_i         => clk_sys,
         rst_sys_n_i       => rstn_sys,
-        t_wb_o            => dev_bus_master_i(dev_slaves'pos(devs_pwm)),
-        t_wb_i            => dev_bus_master_o(dev_slaves'pos(devs_pwm)),
-        pwm_enable_i      => s_gpio_src_pwm((c_eca_gpio-1) downto 0),
+        t_wb_o            => pwm_device_o,
+        t_wb_i            => pwm_device_i,
+        pwm_latch_i       => pps,
         pwm_o             => s_gpio_src_pwm((c_eca_gpio-1) downto 0)
       );
   end generate;

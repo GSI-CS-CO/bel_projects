@@ -16,7 +16,7 @@ package pwm_pkg is
         wbd_width     => x"7", -- 8/16/32-bit port granularity
         sdb_component => (
             addr_first    => x"0000000000000000",
-            addr_last     => x"00000000000000ff",
+            addr_last     => x"0000000000000fff",
             product       => (
                 vendor_id     => x"0000000000000651",
                 device_id     => x"434E5453",
@@ -47,8 +47,8 @@ package pwm_pkg is
             t_wb_o          : out t_wishbone_slave_out;
             t_wb_i          : in  t_wishbone_slave_in;
 
-            pwm_latch_i        : in std_logic_vector((g_pwm_channel_num-1) downto 0);
-            pwm_o               : out std_logic_vector((g_pwm_channel_num-1) downto 0)
+            pwm_latch_i     : in std_logic;
+            pwm_o           : out std_logic_vector((g_pwm_channel_num-1) downto 0)
         );
 
     end component;

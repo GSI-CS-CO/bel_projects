@@ -60,7 +60,7 @@ architecture pwm_channel_arch of pwm_channel is
 
 begin
 
-    p_counter: process (clk_sys_i)
+    p_counter: process (clk_sys_i, rst_sys_n_i)
 
     begin
         if (rst_sys_n_i = '0') then
@@ -73,12 +73,6 @@ begin
                 pwm_channel_mode <= pwm_free;
             end if;
 
-            --if pwm_start_phase_i = '0' then 
-            --    pwm_channel_phase <= phase_low;
-            --    else
-            --    pwm_channel_phase <= phase_high;
-            --end if;
-
             case( pwm_channel_state ) is
             
                 when pwm_idle =>
@@ -89,9 +83,11 @@ begin
 
                         if pwm_channel_mode = pwm_free 
                         then
-                            if pwm_channel_phase = phase_low then
+                            if pwm_start_phase_i = '0' then
+                                pwm_channel_phase <= phase_low;
                                 s_pwm_o           <= '0';
                             else
+                                pwm_channel_phase <= phase_high;
                                 s_pwm_o           <= '1';
                             end if;
                             pwm_channel_state <= pwm_running;
@@ -103,9 +99,21 @@ begin
     
                 when pwm_waiting =>
 
-                    if ((pwm_latch_i = '1') and (v_last_latch = '0')) then 
+                    if ((pwm_latch_i = '1') and (v_last_latch = '0')) then
+
+                        if pwm_start_phase_i = '0' then
+                            pwm_channel_phase <= phase_low;
+                        else
+                            pwm_channel_phase <= phase_high;
+                        end if;
 
                         pwm_channel_state <= pwm_running;
+
+                        if pwm_channel_phase = phase_low then
+                            s_pwm_o           <= '0';
+                        else
+                            s_pwm_o             <= '1';
+                        end if;
 
                     end if;
 
@@ -122,7 +130,7 @@ begin
 
                         if pwm_channel_phase = phase_low then
                             s_pwm_o           <= '0';
-                            if s_pwm_counter >= low  then
+                            if s_pwm_counter >= (low-1)  then
                                 s_pwm_counter       <= (others => '0');
                                 s_pwm_o             <= '1';
                                 pwm_channel_phase   <= phase_high;
@@ -130,12 +138,14 @@ begin
 
                         else
                             s_pwm_o           <= '1';
-                            if s_pwm_counter >= high then
+                            if s_pwm_counter >= (high-1) then
                                 s_pwm_counter       <= (others => '0');
                                 s_pwm_o             <= '0';
                                 pwm_channel_phase   <= phase_low;
                             end if;
+
                         end if;
+
                     end if;
                         
                 when others =>
