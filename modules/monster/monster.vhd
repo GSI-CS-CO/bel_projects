@@ -80,6 +80,7 @@ entity monster is
     g_project              : string;
     g_flash_bits           : natural;
     g_psram_bits           : natural;
+    g_cr_bits              : natural;
     g_ram_size             : natural;
     g_gpio_inout           : natural;
     g_gpio_in              : natural;
@@ -129,6 +130,7 @@ entity monster is
     g_en_eca_tap           : boolean;
     g_en_asmi              : boolean;
     g_en_psram_delay       : boolean;
+    g_en_cellular_ram      : boolean;
     g_en_enc_err_counter   : boolean);
   port(
     -- Required: core signals
@@ -377,6 +379,18 @@ entity monster is
     ps_advn                : out   std_logic := 'Z';
     ps_wait                : in    std_logic;
     ps_chip_selector       : out   std_logic_vector(3 downto 0);
+    -- g_en_cellular_ram
+    cr_clk                 : out   std_logic := 'Z';
+    cr_addr                : out   std_logic_vector(g_cr_bits-1 downto 0) := (others => 'Z');
+    cr_data                : inout std_logic_vector(15 downto 0);
+    cr_ubn_o               : out   std_logic := 'Z';
+    cr_lbn_o               : out   std_logic := 'Z';
+    cr_cen                 : out   std_logic := 'Z';
+    cr_oen                 : out   std_logic := 'Z';
+    cr_wen                 : out   std_logic := 'Z';
+    cr_cre                 : out   std_logic := 'Z';
+    cr_advn                : out   std_logic := 'Z';
+    cr_wait                : in    std_logic;
     -- i2c
     i2c_scl_pad_i          : in  std_logic_vector(g_num_i2c_interfaces-1 downto 0);
     i2c_scl_pad_o          : out std_logic_vector(g_num_i2c_interfaces-1 downto 0) := (others => 'Z');
@@ -533,7 +547,8 @@ architecture rtl of monster is
     devs_i2c_wrapper,
     devs_eca_tap,
     devs_asmi,
-    devs_enc_err_counter
+    devs_enc_err_counter,
+    devs_cellular_ram
   );
   constant c_dev_slaves          : natural := dev_slaves'pos(dev_slaves'right)+1;
 
@@ -577,6 +592,7 @@ architecture rtl of monster is
     dev_slaves'pos(devs_i2c_wrapper)    => f_sdb_auto_device(c_i2c_wrapper_sdb,                g_en_i2c_wrapper),
     dev_slaves'pos(devs_eca_tap)        => f_sdb_auto_device(c_eca_tap_sdb,                    g_en_eca_tap),
     dev_slaves'pos(devs_asmi)           => f_sdb_auto_device(c_wb_asmi_sdb,                    g_en_asmi),
+    dev_slaves'pos(devs_cellular_ram)   => f_sdb_auto_device(f_cellular_ram_sdb(g_cr_bits),    g_en_cellular_ram),
     dev_slaves'pos(devs_enc_err_counter)=> f_sdb_auto_device(c_enc_err_counter_sdb,            g_en_enc_err_counter));
   constant c_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_dev_layout_req_masters, c_dev_layout_req_slaves);
