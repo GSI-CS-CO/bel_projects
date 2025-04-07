@@ -16,10 +16,10 @@ entity pci_control is
     -----------------------------------------
     -- PCI express pins
     -----------------------------------------
-    pcie_refclk_i  : in  std_logic;
-    pcie_rx_i      : in  std_logic_vector(3 downto 0);
-    pcie_tx_o      : out std_logic_vector(3 downto 0);
-    nPCI_RESET     : in std_logic;
+    --pcie_refclk_i  : in  std_logic;
+    --pcie_rx_i      : in  std_logic_vector(3 downto 0);
+    --pcie_tx_o      : out std_logic_vector(3 downto 0);
+    --nPCI_RESET     : in std_logic;
 
     pe_smdat        : inout std_logic; -- !!!
     pe_snclk        : out std_logic;   -- !!!
@@ -322,10 +322,10 @@ begin
       led_link_act_o          => led_link_act,
       led_track_o             => led_track,
       led_pps_o               => led_pps,
-      pcie_refclk_i           => pcie_refclk_i,
-      pcie_rstn_i             => nPCI_RESET,
-      pcie_rx_i               => pcie_rx_i,
-      pcie_tx_o               => pcie_tx_o,
+      --pcie_refclk_i           => pcie_refclk_i,
+      --pcie_rstn_i             => nPCI_RESET,
+      --pcie_rx_i               => pcie_rx_i,
+      --pcie_tx_o               => pcie_tx_o,
       usb_rstn_o              => ures,
       usb_ebcyc_i             => pa(3),
       usb_speed_i             => pa(0),
