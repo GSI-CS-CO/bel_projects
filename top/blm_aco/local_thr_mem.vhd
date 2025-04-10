@@ -41,19 +41,22 @@ end local_thr_mem;
 architecture rtl of local_thr_mem is
 
     component th_ram is
-        port (
-            address_a : in std_logic_vector (13 downto 0);
-            address_b : in std_logic_vector (11 downto 0);
-            clock : in std_logic := '1';
-            data_a : in std_logic_vector (15 downto 0);
-            data_b : in std_logic_vector (63 downto 0);
-            rden_a : in std_logic := '1';
-            rden_b : in std_logic := '1';
-            wren_a : in std_logic := '0';
-            wren_b : in std_logic := '0';
-            q_a : out std_logic_vector (15 downto 0);
-            q_b : out std_logic_vector (63 downto 0)
-        );
+       
+	PORT
+	(
+		address_a		: IN STD_LOGIC_VECTOR (14 DOWNTO 0);
+		address_b		: IN STD_LOGIC_VECTOR (12 DOWNTO 0);
+		clock		: IN STD_LOGIC  := '1';
+		data_a		: IN STD_LOGIC_VECTOR (15 DOWNTO 0);
+		data_b		: IN STD_LOGIC_VECTOR (63 DOWNTO 0);
+		rden_a		: IN STD_LOGIC  := '1';
+		rden_b		: IN STD_LOGIC  := '1';
+		wren_a		: IN STD_LOGIC  := '0';
+		wren_b		: IN STD_LOGIC  := '0';
+		q_a		: OUT STD_LOGIC_VECTOR (15 DOWNTO 0);
+		q_b		: OUT STD_LOGIC_VECTOR (63 DOWNTO 0)
+	);
+
     end component th_RAM;
 
     component l0ad_thr_fifo is
@@ -76,7 +79,7 @@ architecture rtl of local_thr_mem is
             group_dataset : in std_logic_vector(11 downto 0);
             thr_data : in std_logic_vector(63 downto 0);
             addr_ena : out std_logic;
-            addr_b_ram : out std_logic_vector(11 downto 0);
+            addr_b_ram : out std_logic_vector(12 downto 0);
             counter_group : in t_group_Array; --128 x 4 bits
             state_nr : out std_logic_vector(2 downto 0);
             counter_nr_read : out std_logic_vector(7 downto 0); -- for tests
@@ -122,7 +125,7 @@ architecture rtl of local_thr_mem is
     signal counter_nr : integer range 0 to 127;
     signal set_nr : integer range 0 to 31;
 
-    signal address_b : std_logic_vector(11 downto 0);
+    signal address_b : std_logic_vector(12 downto 0);
     signal addr_nr : integer range 0 to 4095;
     --type thr_array is array (0 to 4095) of  std_logic_vector(31 downto 0);
     --signal neg_thr, pos_thr : thr_array;
@@ -250,7 +253,7 @@ begin
     port map
     (
 
-        address_a => A_A(13 downto 0),
+        address_a => A_A(14 downto 0),
         address_b => address_b,
         clock => clk,
         data_a => data_a,
