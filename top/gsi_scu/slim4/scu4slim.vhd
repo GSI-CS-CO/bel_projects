@@ -246,8 +246,8 @@ architecture rtl of scu4slim is
 
   constant c_family       : string := "Arria 10 GX SCU4";
   constant c_project      : string := "scu4slim";
-  constant c_cores        : natural:= 1;
-  constant c_initf_name   : string := c_project & "_stub.mif";
+  constant c_cores        : natural:= 2;
+  constant c_initf_name   : string := c_project & ".mif" & ';' & c_project & "_stub.mif";
   constant c_profile_name : string := "medium_icache_debug";
   constant c_psram_bits   : natural := 24;
 
