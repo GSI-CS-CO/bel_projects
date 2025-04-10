@@ -23,25 +23,26 @@ Port ( clk : in STD_LOGIC;
        IOBP_Masken_Reg6 : in STD_LOGIC_VECTOR(15 downto 0);
        PIO_SYNC         : in STD_LOGIC_VECTOR(142 DOWNTO 20);
        IOBP_ID          : in t_id_array;
-       INTL_Output      : in std_logic_vector(5 downto 0);
-       AW_Output_Reg    : in std_logic_vector(5 downto 0);
-     --  nBLM_out_ena      : in std_logic;
+       INTL_Output      : in std_logic_vector(11 downto 0);
+       AW_Output_Reg    : in std_logic_vector(15 downto 0);
+
        AW_IOBP_Input_Reg     : out t_IO_Reg_1_to_7_Array;
-       IOBP_Output     : out std_logic_vector (5 downto 0);     
+       IOBP_Output     : out std_logic_vector (11 downto 0);     
        IOBP_Input     : out t_IOBP_array;
        IOBP_Aktiv_LED_i   : out t_led_array;
-       OUT_SLOT         : out std_logic_vector(5 downto 0);
-       ENA_SLOT         : out std_logic_vector(5 downto 0);
+       OUT_SLOT_11         : out std_logic_vector(5 downto 0);
+       ENA_SLOT_11         : out std_logic_vector(5 downto 0);
+       OUT_SLOT_12         : out std_logic_vector(5 downto 0);
+       ENA_SLOT_12         : out std_logic_vector(5 downto 0);
        IOBP_Sel_LED     : out t_led_array
 );
 end front_board_id ;
 
 architecture Arch_front_board_id of front_board_id is
-    -- type   IOBP_slot_state_t is   (IOBP_slot_idle, IOBP_slot1, IOBP_slot2,IOBP_slot3,IOBP_slot4,IOBP_slot5,IOBP_slot6,IOBP_slot7,IOBP_slot8,IOBP_slot9,IOBP_slot10,IOBP_slot11,IOBP_slot12);
-    -- signal IOBP_slot_state:   IOBP_slot_state_t:= IOBP_slot_idle;
+ 
     type   t_reg_array         is array (1 to 12) of std_logic_vector(7 downto 0);
     signal conf_reg     :  t_reg_array;
-    Signal IOBP_Out     :  std_logic_vector(5 downto 0);
+    Signal IOBP_Out     :  std_logic_vector(11 downto 0);
 
 begin
          
@@ -54,18 +55,14 @@ begin
           for i in 1 to 12 loop
               conf_reg(i)<= (others => '0' );
           end loop;
-          OUT_SLOT <= (others => '0' );
-          ENA_SLOT <= (others => '0' );
-          -- IOBP_slot_state <= IOBP_slot_idle;
+          OUT_SLOT_11 <= (others => '0' );
+          ENA_SLOT_11 <= (others => '0' );
+          OUT_SLOT_12 <= (others => '0' );
+          ENA_SLOT_12 <= (others => '0' );
+     
 
       elsif (clk'EVENT AND clk = '1') then
 
-          -- case IOBP_slot_state is
-
-              -- when IOBP_slot_idle	=>
-              --                                IOBP_slot_state <= IOBP_slot1;
-
-              --when IOBP_slot1=>			    
                                             conf_reg(1)<= IOBP_ID(1);
                                             case conf_reg(1) is
                                                   when "00000011"  => --  6 LEMO Input Modul FG902.130 in slot 1
@@ -89,9 +86,7 @@ begin
                                                   when others     =>  NULL;
                                               end case;
 
-                                              --IOBP_slot_state <= IOBP_slot2;
-
-              --when IOBP_slot2=>			    
+ 
                                             conf_reg(2)<= IOBP_ID(2);
                                             case conf_reg(2) is
                                                   when "00000011"  => --  6 LEMO Input Modul FG902.130 in slot 2
@@ -116,9 +111,7 @@ begin
                                                   when others     =>  NULL;
                                               end case;
 
-                                              --IOBP_slot_state <= IOBP_slot3;
-
-              --when IOBP_slot3=>			    
+ 			    
                                             conf_reg(3)<= IOBP_ID(3);
                                             case conf_reg(3) is
                                                 when "00000011"  => --  6 LEMO Input Modul FG902.130 in slot 3
@@ -142,9 +135,7 @@ begin
                                                 when others     =>  NULL;
                                             end case;
 
-                                              --IOBP_slot_state <= IOBP_slot4;
-
-               --when IOBP_slot4=>			    
+ 		    
                                             conf_reg(4)<= IOBP_ID(4);
                                             case conf_reg(4) is
                                                 when "00000011"  => --  6 LEMO Input Modul FG902.130 in slot 4
@@ -170,9 +161,7 @@ begin
                                                   when others     =>  NULL;
                                             end case;
 
-                                              --IOBP_slot_state <= IOBP_slot5;
 
-              --when IOBP_slot5=>			    
                                             conf_reg(5)<= IOBP_ID(5);
                                               case conf_reg(5) is
                                                 when "00000011"  => -- 6 LEMO Input Modul FG902.130 in slot 5
@@ -197,9 +186,7 @@ begin
                                               when others     =>  NULL;
                                           end case;
 
-                                              --IOBP_slot_state <= IOBP_slot6;
-
-              --when IOBP_slot6=>			    
+   
                                             conf_reg(6)<= IOBP_ID(6);
                                               case conf_reg(6) is
                                                 when "00000011"  => -- 6 LEMO Input Modul FG902.130 in slot 6
@@ -223,10 +210,7 @@ begin
 
                                           when others     =>  NULL;
                                       end case;
-
-                                              --IOBP_slot_state <= IOBP_slot7;
-
-              --when IOBP_slot7=>			    
+   
                                             conf_reg(7)<= IOBP_ID(7);
                                               case conf_reg(7) is
                                                 when "00000011"  => -- 6 LEMO Input Modul FG902.130 in slot 7
@@ -244,17 +228,13 @@ begin
                                                 when "00000111"   => -- 6 LEMO Input Modul F FG902150 in slot 7
                                                       AW_IOBP_Input_Reg(4)( 5 downto  0) <=   (Deb_Sync( 41 downto  36) AND not IOBP_Masken_Reg4( 5 downto  0));
                                                       IOBP_Aktiv_LED_i(7)  <=    not ( IOBP_Masken_Reg4( 5 downto 0) );  -- Register für Sel-LED's vom Slave 7
-                                                      IOBP_Input(7)  <= not ( PIO_SYNC(35),  PIO_SYNC(45),  PIO_SYNC(37),  PIO_SYNC(43),  PIO_SYNC(39),  PIO_SYNC(41));
-                                                  
-                                                      --IOBP_SK_Sel_LED(7)   <=  not ( IOBP_Masken_Reg4( 5 downto 0) );  -- Register für Sel-LED's vom Slave 7
+                                                      IOBP_Input(7)  <= not ( PIO_SYNC(35),  PIO_SYNC(45),  PIO_SYNC(37),  PIO_SYNC(43),  PIO_SYNC(39),  PIO_SYNC(41));       
+                                              
                                                       IOBP_Sel_LED(7)   <= Deb_out(41 DOWNTO 36);
                                                
                                           when others     =>  NULL;
                                       end case;
-
-                                              --IOBP_slot_state <= IOBP_slot8;
-
-              --when IOBP_slot8=>			    
+			    
                                             conf_reg(8)<= IOBP_ID(8);
                                               case conf_reg(8) is
                                                 when "00000011"  => -- 6 LEMO Input Modul FG902.130 in slot 8
@@ -280,9 +260,7 @@ begin
 
                                               end case;
 
-                                              --IOBP_slot_state <= IOBP_slot9;
-
-              --when IOBP_slot9=>			    
+    
                                             conf_reg(9)<= IOBP_ID(9);
                                               case conf_reg(9) is
                                                 when "00000011"  => -- 6 LEMO Input Modul FG902.130 in slot 9
@@ -308,9 +286,6 @@ begin
                                                   
                                               end case;
 
-                                              --IOBP_slot_state <= IOBP_slot10;
-
-              --when IOBP_slot10=>			
                                             conf_reg(10)<= IOBP_ID(10);
                                               case conf_reg(10) is
                                                 when "00000011"  => -- 6 LEMO Input Modul FG902.130 in slot 10
@@ -334,65 +309,37 @@ begin
                                                                
                                                   when others     =>  NULL;
                                               end case;
-
-                                              --IOBP_slot_state <= IOBP_slot11;
-
-              --when IOBP_slot11=>			 
+	 
                                             conf_reg(11)<= IOBP_ID(11);
                                               case conf_reg(11) is
+                                                when "00000101"  | "00000110" => -- Output Modul in slot 11
+                                                  AW_IOBP_Input_Reg(6)(5 downto  0)<=   (OTHERS => '0');                                              
+                                                  IOBP_Out(5 downto 0) <= INTL_Output(5 downto 0);                                                
+                                                  OUT_SLOT_11 <= not IOBP_Out(5 downto 0);                                                  
+                                             
+                                                  ENA_SLOT_11 <= std_logic_vector'("111111");
+                                                  IOBP_Aktiv_LED_i(11)  <=  not ( IOBP_Masken_Reg6( 5 downto 0) );  -- Register für Sel-LED's vom Slave 12
+                                                  IOBP_Sel_LED(11)  <=  not IOBP_Out(5 downto 0);  
                                                   
-                                                when "00000011" => -- 6 LEMO Input Modul FG902.130 in slot 11
-                                                    AW_IOBP_Input_Reg(6)( 5 downto  0) <=   (Deb_Sync(65 DOWNTO 60) AND not IOBP_Masken_Reg6( 5 downto  0));
-                                                    IOBP_Aktiv_LED_i(11)  <= not ( IOBP_Masken_Reg6(5 downto 0) );  -- Register für Sel-LED's vom Slave 11
-                                                    IOBP_Input(11)  <= (PIO_SYNC(48),PIO_SYNC(38), PIO_SYNC(46), PIO_SYNC(40), PIO_SYNC(44), PIO_SYNC(42));
-                                                    IOBP_Sel_LED(11)  <=   Deb_out(65 DOWNTO 60);  
-
-                                                when "00000100" => -- 6 LWL Input Modul in slot 11
-                                                    AW_IOBP_Input_Reg(6)( 5 downto  0) <=   (Deb_Sync(65 DOWNTO 60) AND not IOBP_Masken_Reg6( 5 downto  0));
-                                                    IOBP_Aktiv_LED_i(11)  <=  not ( IOBP_Masken_Reg6(5 downto 0) );  -- Register für Sel-LED's vom Slave 11
-                                                    IOBP_Input(11)  <= (PIO_SYNC(48),PIO_SYNC(40), PIO_SYNC(38), PIO_SYNC(44), PIO_SYNC(46), PIO_SYNC(42));
-                                                    IOBP_Sel_LED(11)  <=    Deb_out(65 DOWNTO 60); 
-
-                                                when "00000111"   => -- 6 LEMO Input Modul FG902150 in slot 11
-                                                    AW_IOBP_Input_Reg(6)( 5 downto  0) <=   (Deb_Sync(65 DOWNTO 60) AND not IOBP_Masken_Reg6( 5 downto  0));
-                                                    IOBP_Aktiv_LED_i(11)  <=    not ( IOBP_Masken_Reg6(5 downto 0) );  -- Register für Sel-LED's vom Slave 11
-                                                    IOBP_Input(11)  <= not (PIO_SYNC(48),PIO_SYNC(38), PIO_SYNC(46), PIO_SYNC(40), PIO_SYNC(44), PIO_SYNC(42));
-                                                   
-                                                    IOBP_Sel_LED(11)  <= Deb_out(65 DOWNTO 60);  -- Register für Sel-LED's vom Slave 11
+                                              
 
                                                 when others     =>  NULL;
                                               end case;
-
-                                              --IOBP_slot_state <= IOBP_slot12;
-
-              --when IOBP_slot12=>			    
+	    
                                             conf_reg(12)<= IOBP_ID(12);
                                               case conf_reg(12) is
                                                   
                                                   when "00000101"  | "00000110" => -- Output Modul in slot 12
                                                       AW_IOBP_Input_Reg(6)(11 downto  6)<=   (OTHERS => '0');
-                                                    ------------------------------------------------------------------
-                                                    --- AW_Config register assigment to be defined
-                                                    ------------------------------------------------------------------
-                                                     -- if nBLM_out_ena ='0' then -- correct values to be checked
-
-                                                        IOBP_Out <= INTL_Output;
-                                                    --  else
-                                                     --   IOBP_Out <= AW_Output_Reg AND not IOBP_Masken_Reg6(11 downto 6);
-                                                    --  end if;
-                                                      --------------------------------------------------------------------     
-                                                      OUT_SLOT <= not IOBP_Out;                                                  
-                                                      --OUT_SLOT <=IOBP_Input(1); --  not IOBP_Out;
-                                                      ENA_SLOT<= std_logic_vector'("111111");
+                                                      IOBP_Out(11 downto 6) <= INTL_Output(11 downto 6);     
+                                                      OUT_SLOT_12 <= not IOBP_Out(11 downto 6);                                                  
+                                             
+                                                      ENA_SLOT_12<= std_logic_vector'("111111");
                                                       IOBP_Aktiv_LED_i(12)  <=  not ( IOBP_Masken_Reg6( 11 downto 6) );  -- Register für Sel-LED's vom Slave 12
-                                                      IOBP_Sel_LED(12)  <=  not IOBP_Out;  
+                                                      IOBP_Sel_LED(12)  <=  not IOBP_Out(11 downto 6);  
                                                   when others     =>  NULL;
                                               end case;
 
-                                              --IOBP_slot_state <= IOBP_slot_idle;
-
-                   --when others =>           --IOBP_slot_state <= IOBP_slot_idle;
-          --end case;
 
     end if;
    end process ID_Front_Board_proc;

@@ -1,65 +1,123 @@
 LIBRARY IEEE;
 USE IEEE.std_logic_1164.all;
 USE IEEE.numeric_std.all;
+use IEEE.std_logic_misc.all;
 use work.scu_diob_pkg.all;
 
 entity Beam_Loss_check is
     generic (
-    n            : integer range 0 to 110 :=64;        -- counter pool inputs:  hardware inputs plus test signals      
-    WIDTH        : integer := 20     -- Counter width
+    
+    WIDTH        : integer := 30     -- Counter width
        
 );
 port (
     clk_sys           : in std_logic;      -- Clock
     rstn_sys          : in std_logic;      -- Reset
-    pos_threshold     : in std_logic_vector(31 downto 0);
-    neg_threshold     : in std_logic_vector(31 downto 0);
-    BLM_cnt_Reg       : in std_logic_vector(15 downto 0);
-    BLM_out_Reg       : in std_logic_vector(15 downto 0);
-    BLM_in_Reg        : in std_logic_vector(31 downto 0);      
-    Test_In_Mtx       : in std_logic_vector(8 downto 0); 
-    AW_IOBP_Input_Reg : in  t_IO_Reg_1_to_7_Array;
-    INTL_Output       : out std_logic_vector(5 downto 0);
-    BLM_status_Reg    : out t_IO_Reg_0_to_7_Array
+
+   -- IN BLM 
+    BLM_data_in       : in std_logic_vector(53 downto 0);
+    BLM_gate_in       : in std_logic_vector(11 downto 0);
+    BLM_tst_ck_sig    : in std_logic_vector (10 downto 0);
+    IOBP_LED_nr       : in std_logic_vector(3 downto 0);
+    --IN registers
+    pos_threshold           : in t_BLM_th_Array; --t_BLM_th_Array is array (0 to 127) of std_logic_vector(31 downto 0);
+    neg_threshold           : in t_BLM_th_Array ;
+    BLM_wdog_hold_time_Reg  : in std_logic_vector(15 downto 0);
+    BLM_wd_reset            : in std_logic_vector(53 downto 0);
+    BLM_gate_hold_time_Reg  : in  t_BLM_gate_hold_Time_Array;
+    BLM_ctrl_Reg            : in std_logic_vector(15 downto 0);  
+    BLM_gate_sync_rcv : in std_logic_vector(15 downto 0);                                                        
+    BLM_counters_Reg: in std_logic_vector(15 downto 0); --bit 15-2 free
+                                                                   --bit 1 reset from gate CTR_AUTORESET
+                                                                   --bit 0 global counter RESET                                                                -- bit 11-0f or gate_prepare signals
+                                                                  -- 
+    BLM_gate_recover_Reg : in std_logic_vector(15 downto 0); -- bit 15_12 free
+                                                            -- bit 11-0 for gate_recover signals
+    BLM_gate_prep_Reg: in std_logic_vector(15 downto 0);     -- bit 15_12 free
+                                                              -- bit 11-0 for gate_prepare signals
+    BLM_in_sel_Reg          : in t_BLM_reg_Array; --128 x (4 bit for gate ena & 6 bit for up signal ena & 6 for down signal ena)
+    BLM_out_sel_reg : in t_BLM_out_sel_reg_Array;   --- 328 registers
+
+
+    --ev_thr_load: in std_logic;
+
     
+    ev_prepare_reg : in std_logic_vector(11 downto 0);
+    ev_recover_reg: in std_logic_vector(11 downto 0);
+    ev_counter_reset: in std_logic;
+
+   
+  
+                                                    -- + 4 more registers for 6 x 12 input gate (= 72 bits) to be send to the outputs.    
+                                                   --=> 126 registers             
+                                                    --   REg127  (ex Reg121): counter outputs buffering enable (bit 15) and buffered output select (bit 7-0). Bits 14-8 not used     
+    -- OUT register
+   -- BLM_status_Reg    : out t_IO_Reg_0_to_25_Array ;
+   BLM_status_Reg : out t_IO_Reg_0_to_29_Array ;
+   counter_readout_reg: out t_BLM_th_Array  ;
+      -- OUT BLM
+      BLM_Out           : out std_logic_vector(11 downto 0) 
 );
 
 end Beam_Loss_check;
 
 architecture rtl of Beam_Loss_check is
-    
+  
+  signal BLM_test_signal   : std_logic_vector(9 downto 0);  --Test signals + ground  --to reference  Test_In_Mtx
+ 
 
-signal    gate_error:         std_logic_vector(11 downto 0);
-signal    Gate_In_Mtx:        std_logic_vector (11 downto 0):= (OTHERS => '0');  -- gate outputs from the gate timing sequence control
+ -- signal VALUE_IN:  std_logic_vector(57 downto 0);
+ signal VALUE_IN: std_logic_vector(63 downto 0);
+  signal out_wd: std_logic_vector(53 downto 0);
+  --signal out_1wd: std_logic_vector(47 downto 0);
+  signal out_1wd: std_logic_vector(53 downto 0);
+  signal INT_out: std_logic_vector(53 downto 0);
+  signal gate_error: std_logic_vector(11 downto 0);
+  signal Gate_In_Mtx: std_logic_vector (11 downto 0):= (OTHERS => '0');  -- gate outputs from the gate timing sequence control
+  signal UP_OVERFLOW: std_logic_vector(127 downto 0);     
+  signal DOWN_OVERFLOW: std_logic_vector(127 downto 0);  
+  signal gate_sel: integer range 0 to 127;
+  signal cnt_enable: std_logic_vector(127 downto 0);
+  signal BLM_Output_mtx: t_BLM_out_Array;
+  signal gate_output: std_logic_vector (11 downto 0);
+  signal wd_reset: std_logic_vector(53 downto 0);
+  signal BLM_gate_recover: std_logic_vector(11 downto 0);
+  signal BLM_gate_seq_clk_sel: std_logic_vector(2 downto 0);
+  signal BLM_gate_prepare : std_logic_vector(11 downto 0);
+  signal counter_value: t_BLM_counter_Array;
+signal gate_test_value: std_logic_vector(11 downto 0);
+signal gate_sm_error: std_logic_vector(11 downto 0);
+signal gate_sm_output: std_logic_vector(11 downto 0);
+signal gate_recover: std_logic_vector(11 downto 0);
+signal gate_prepare: std_logic_vector(11 downto 0);
+signal gate_hold_time: t_BLM_gate_hold_Time_Array;
+signal gate_state: std_logic_vector(47 downto 0);
+signal gate_sm_state :t_gate_state_nr;
+
+signal UP_OVERFLOW_OUT: std_logic_vector(127 downto 0):=(others => '0');
+signal DOWN_OVERFLOW_OUT: std_logic_vector(127 downto 0):=(others => '0');
+signal direct_gate: std_logic_vector(11 downto 0);
+signal LED_ID_state:  std_logic_vector(3 downto 0);
+signal pos_th, neg_th: t_BLM_th_Array;
+signal ev_pos_neg_thr: std_logic_vector(63 downto 0):=(others => '0');
+signal cnt_nr : integer range 0 to 127;
+signal AUTO_RESET: std_logic; --bit 1 reset from gate
+signal RESET: std_logic;--bit 0 global counter RESET
 
 
-signal    count_enable:       std_logic_vector(9 downto 0); 
-signal    UP_OVERFLOW:        std_logic_vector(255 downto 0); 
-signal    DOWN_OVERFLOW:      std_logic_vector(255 downto 0); 
-
-
-
-signal    in_mux:             t_in_array;
-
-signal    Interlock_wd:       t_in_array;
-signal    watchdog_warn:      std_logic_vector(53 downto 0);
-signal    VALUE_IN:            std_logic_vector(63 downto 0);
-constant ZERO_INTL:  std_logic_vector (watchdog_warn'range) := (others => '0');
-constant ZERO_gate_err:  std_logic_vector (gate_error'range) := (others => '0');
-signal hold_value: integer range 0 to 255;
-
-component BLM_In_Multiplexer is
-
+  component BLM_watchdog is
+  
     port(
-      clk_i : in std_logic;          -- chip-internal pulsed clk signal
-      rstn_i : in std_logic;        -- reset signal
-      AW_IOBP_Input_Reg:  in  t_IO_Reg_1_to_7_Array;
+        clk_i : in std_logic;     -- chip-internal pulsed clk signal
+        rst_i : in std_logic;   -- reset signal
+        wd_reset: in std_logic; -- watchdog reset signal
+        hold: in std_logic_vector(15 downto 0);
+        in_watchdog : in std_logic;     -- input signal
+       -- ena_i : in std_logic;     -- enable '1' for input connected to the counter
+        INTL_out: out std_logic   -- interlock output for signal that doesn't change for a given time 
     
-      watchdog_ena  : in std_logic_vector( 8 downto 0);
-      In_Mtx        : out t_in_array;
-      INTL_out      : out t_in_array
     );
-    end component BLM_In_Multiplexer;
+end component BLM_watchdog;
 
 component BLM_gate_timing_seq is
 
@@ -69,161 +127,276 @@ component BLM_gate_timing_seq is
       n       : integer range 0 TO 12 := 12
     );
     port(
-      clk_i : in std_logic;          -- chip-internal pulsed clk signal
+      clk_i : in std_logic;
       rstn_i : in std_logic;        -- reset signal
       gate_in : in std_logic_vector(n-1 downto 0);        -- input signal
-      gate_seq_ena : in std_logic_vector(11 downto 0);     -- enable '1' for input connected to the counter
-      hold_time : in std_logic_vector(7 downto 0);
-      timeout_error : out std_logic_vector(n-1 downto 0); -- gate doesn't start within the given timeout
+      direct_gate : in std_logic_vector(n-1 downto 0);
+      BLM_gate_recover: in std_logic_vector(11 downto 0); 
+
+      gate_sync_rcv : in std_logic_vector(11 downto 0);
+      BLM_gate_prepare : in std_logic_vector(11 downto 0); 
+      hold_time : in  t_BLM_gate_hold_Time_Array;
+      gate_error : out std_logic_vector(n-1 downto 0); -- gate doesn't start within the given timeout
+    state_nr: out t_gate_state_nr;
       gate_out: out std_logic_vector(n-1 downto 0)        -- out gate signal
     );
     end component BLM_gate_timing_seq;
 
+  component  BLM_ena_in_mux is
+      port (
+          CLK               : in std_logic;      -- Clock
+          nRST              : in std_logic;      -- Reset
+          mux_sel           : in t_BLM_reg_Array;
+          in_mux            : in std_logic_vector(11 downto 0);
+          cnt_enable        : out std_logic_vector(127 downto 0)
+      );
+  end component BLM_ena_in_mux;
+
+
+ component BLM_counter_pool_el is
+
+    generic (      
+        WIDTH        : integer := 32      -- Counter width
+            
+    );
+    port (
+        CLK               : in std_logic;      -- Clock
+        nRST              : in std_logic;      -- Reset
+        gate_reset_ena    : in std_logic;
+        RESET      : in std_logic;      -- global counter reset
+        ENABLE            : in std_logic;      -- Enable count operation (gate signals)
+        pos_threshold     : in std_logic_vector(31 downto 0);
+        neg_threshold     : in std_logic_vector(31 downto 0);
+        in_counter        : in std_logic_vector(63 downto 0);
+        BLM_cnt_Reg     : in std_logic_vector(15 downto 0);  -- bit 5-0 = up_in_counter select, bit 11-6 = down_in_counter select, 15..13 in_ena
+        cnt    : out std_logic_vector (WIDTH-1 downto 0);    -- Counter register
    
-      component BLM_counter_pool is
-        generic (      
-            WIDTH        : integer := 20      -- Counter width
-                
-        );
-        port (
-            CLK               : in std_logic;      -- Clock
-            nRST              : in std_logic;      -- Reset
-            CLEAR             : in std_logic;      -- Clear counter register
-            LOAD              : in std_logic;      -- Load counter register
-            ENABLE            : in std_logic_vector(9 downto 0);      -- Enable count operation
-            pos_threshold     : in std_logic_vector(31 downto 0);
-            neg_threshold     : in std_logic_vector(31 downto 0);
-            in_counter        : in t_in_array;
-            test_in_counter   : in std_logic_vector(8 downto 0); 
-            UP_OVERFLOW       : out std_logic_vector(255 downto 0) ;     -- UP_Counter overflow for the input signals
-            DOWN_OVERFLOW     : out std_logic_vector(255 downto 0)    -- DOWN_Counter overflow for the input signals
+        UP_OVERFLOW       : out std_logic;     -- UP_Counter overflow for the input signals
+        DOWN_OVERFLOW     : out std_logic    -- DOWN_Counter overflow for the input signals
+
+    );
+  end component BLM_counter_pool_el;
+  
+
+  component  BLM_out_el is
     
-        );
-        end component BLM_counter_pool;
-
-        component BLM_Interlock_out is
-
-      
+      port (
+        CLK              : in std_logic;      -- Clock
+        nRST             : in std_logic;      -- Reset
+        BLM_out_sel_reg : in t_BLM_out_sel_reg_Array;   
+        UP_OVERFLOW      : in std_logic_vector(127 downto 0);
+        DOWN_OVERFLOW    : in std_logic_vector(127 downto 0);
         
-          port (
-                  CLK              : in std_logic;      -- Clock
-                  nRST             : in std_logic;      -- Reset
-                 out_mux_sel      : in std_logic_vector(15 downto 0);
-                  UP_OVERFLOW      : in std_logic_vector(255 downto 0);
-                  DOWN_OVERFLOW    : in std_logic_vector(255 downto 0);
-                  gate_error       : in std_logic_vector(11 downto 0);
-                  Interlock_IN     : in std_logic_vector(53 downto 0);
-                  gate_out        : in std_logic_vector (11 downto 0);
-                  INTL_Output      : out std_logic_vector(5 downto 0);
-                  BLM_status_Reg : out t_IO_Reg_0_to_7_Array
-                  );
-         
-          end component BLM_Interlock_out;
+        wd_out           : in std_logic_vector(53 downto 0); 
+        gate_in          : in std_logic_vector(11 downto 0); -- to be sent to the status registers
+        gate_error        : in std_logic_vector (11 downto 0); 
+        gate_out        : in std_logic_vector (11 downto 0); 
+    --    counter_reg: in t_BLM_counter_Array;
+      
+        gate_state: in std_logic_vector(47 downto 0);
+        led_id_state : in std_logic_vector(3 downto 0);
+        BLM_Output      : out std_logic_vector(11 downto 0);
+      --  BLM_status_Reg : out t_IO_Reg_0_to_25_Array 
+      BLM_status_Reg : out t_IO_Reg_0_to_29_Array   
+        );
+     
+    end component BLM_out_el;
+
 
 ---######################################################################################
 
 begin
+--RESET <= BLM_counters_Reg(0);
+--AUTO_RESET <= BLM_counters_Reg(1);
+--VALUE_IN <= BLM_test_signal & BLM_data_in;
+--BLM_gate_recover <= ev_recover_reg or BLM_gate_recover_Reg(11 downto 0);
+--BLM_gate_prepare <= ev_prepare_reg or BLM_gate_prep_Reg(11 downto 0); --ev_prepare_reg or BLM_gate_seq_prep_ck_sel_Reg(11 downto 0);
+--direct_gate <= BLM_ctrl_Reg(5 downto 0) & BLM_ctrl_Reg(11 downto 6);
+
+BLM_test_signal <=  BLM_tst_ck_sig(9) & -- 25 MHz
+                    BLM_tst_ck_sig(8)  & -- 24.9 MHz
+                    BLM_tst_ck_sig(7)  & -- 10 MHz
+                    BLM_tst_ck_sig(2)  & -- 9.9 MHz
+                    BLM_tst_ck_sig(6)  & -- 1 MHz
+                    BLM_tst_ck_sig(1)  & -- 0.99 MHz
+                    BLM_tst_ck_sig(5)  & -- 100 kHz
+                    BLM_tst_ck_sig(0)  & -- 99 kHz
+                    BLM_tst_ck_sig(4)  & -- 10 kHz
+                    '0';                 -- GND
 
 
-  gate_board1: BLM_gate_timing_seq
+Values_in_proc: process (clk_sys, rstn_sys)
+    begin
+      if not rstn_sys='1' then 
+        VALUE_IN <= (others =>'0');
+        AUTO_RESET <= '0';
+        BLM_gate_recover <= (others =>'0');
+        BLM_gate_prepare <= (others =>'0');
+        direct_gate <= (others =>'0');                    
+                               
+      elsif (clk_sys'EVENT AND clk_sys= '1') then 
+        VALUE_IN <= BLM_test_signal & BLM_data_in;
+        RESET <= BLM_counters_Reg(0);
+        AUTO_RESET <= BLM_counters_Reg(1);
+        BLM_gate_recover <= ev_recover_reg or BLM_gate_recover_Reg(11 downto 0);
+        BLM_gate_prepare <= ev_prepare_reg or BLM_gate_prep_Reg(11 downto 0); --ev_prepare_reg or BLM_gate_seq_prep_ck_sel_Reg(11 downto 0);
+        direct_gate <= BLM_ctrl_Reg(5 downto 0) & BLM_ctrl_Reg(11 downto 6);
+      end if;
+    end process;
+                 
+-- for direct Gate operations: if the corresponding BLM_ctrl_Reg (bit +2)='0' then BLM_gate_in signals 
+-- are used as input signal to the multiplexer  (BLM_ena_in_mux) which gives the counter enables.
+
+
+LED_ID_state <= IOBP_LED_nr;
+
+direct_gate_operation: process(BLM_ctrl_Reg, BLM_gate_in, gate_output)
+
+begin
+
+  for i in 0 to 5 loop
+    
+    if BLM_ctrl_Reg(i) = '1' then   --when '0', gate signals are directly sent to the 12 to 126 multiplexer for the counter enables assignments
+      gate_In_Mtx(i)<= BLM_gate_in(i+6);
+    else 
+      gate_IN_Mtx(i) <= gate_output(i+6);
+    end if;
+  end loop;
+  for i in 6 to 11 loop
+    
+    if BLM_ctrl_Reg(i) = '1' then   --when '0', gate signals are directly sent to the 12 to 128 multiplexer for the counter enables assignments
+      gate_In_Mtx(i)<= BLM_gate_in(i-6);
+    else 
+      gate_IN_Mtx(i) <= gate_output(i-6);
+    end if;
+  end loop;
+end process direct_gate_operation;
+
+
+  gate_board: BLM_gate_timing_seq
 
     generic map (
       n        => 12
     )
     port map(
-      clk_i => clk_sys,         -- chip-internal pulsed clk signal
+      clk_i => clk_sys,         --
       rstn_i => rstn_sys,         -- reset signal
-      gate_in => AW_IOBP_Input_Reg(6)(5 downto 0) & AW_IOBP_Input_Reg(5)(11 downto 6),       -- input signal
-      gate_seq_ena => BLM_in_Reg(28 downto 17),  -- enable '1' for input connected to the counter
-      hold_time => BLM_in_Reg(16 downto 9),
-      timeout_error => gate_error, -- gate doesn't start within the given timeout
-      gate_out => gate_In_Mtx       -- out gate signal
-    );
-   
+      gate_in => BLM_gate_in,       -- gate input signals
+      direct_gate => direct_gate,
+      BLM_gate_recover => BLM_gate_recover(5 downto 0)&BLM_gate_recover(11 downto 6),
+      BLM_gate_prepare => BLM_gate_prepare(5 downto 0)&BLM_gate_prepare(11 downto 6),
 
-  
- Input_multiplexer: BLM_In_Multiplexer 
+      gate_sync_rcv  => BLM_gate_sync_rcv(5 downto 0)& BLM_gate_sync_rcv(11 downto 6),
+      hold_time => gate_hold_time,
 
-    port map(
-      clk_i                => clk_sys,
-      rstn_i               => rstn_sys,
-      AW_IOBP_Input_Reg    => AW_IOBP_Input_Reg,
-      watchdog_ena         => BLM_in_Reg(8 downto 0),
-      In_Mtx               => in_mux,
-      INTL_out             =>Interlock_wd
+      gate_error => gate_sm_error, -- gate error
+      state_nr => gate_sm_state,
+      gate_out => gate_sm_output --gate_output
     );
 
+  gate_error <= gate_sm_error;
+  gate_output <= gate_sm_output;
 
----- counter pool ------------------------------------------------------------------------------
+  gate_state <= '0'& gate_sm_state(5) & '0'& gate_sm_state(4)& '0'& gate_sm_state(3)&'0'& gate_sm_state(2) & '0'& gate_sm_state(1)&'0'& gate_sm_state(0)&
+  '0'& gate_sm_state(11) & '0'& gate_sm_state(10)& '0'& gate_sm_state(9)&'0'& gate_sm_state(8) & '0'& gate_sm_state(7)&'0'& gate_sm_state(6);
 
-BLM_counter_pool_inputs: process (rstn_sys, clk_sys)  --54 Inputs + 8 test signals
+
+  gate_hold_time_proc: process(BLM_gate_hold_time_Reg)
+
     begin
-           if not rstn_sys='1' then 
-            count_enable <= (others =>'0');
- --  
-           
-              
-              watchdog_warn <= (others =>'0');
-              
-       elsif (clk_sys'EVENT AND clk_sys = '1') then
+      for i in 0 to 5 loop
+        gate_hold_time(i) <= BLM_gate_hold_time_Reg(i+6);
+      end loop;
+      for i in 6 to 11 loop
+        gate_hold_time(i) <= BLM_gate_hold_time_Reg(i-6);
+      end loop;
 
+    end process gate_hold_time_proc;
+
+       wd_elem_gen: for i in 0 to 47 generate
+
+        input_Watchdog: BLM_watchdog
          
-            watchdog_warn <= Interlock_wd(8) & Interlock_wd(7) & Interlock_wd(6) & Interlock_wd(5) & Interlock_wd(4) & Interlock_wd(3) & Interlock_wd(2) & Interlock_wd(1) & Interlock_wd(0);
-           
-                if ((watchdog_warn = ZERO_INTL) or (gate_error = ZERO_gate_err)) then 
-                count_enable <= BLM_cnt_Reg(9 downto 0);
-                 
-                else
-                count_enable <="0000000000";
-                end if;
-
-            
-        end if;
-    end process;
-            
-
-
-
-
-    BLM_Counter_pool_elem: BLM_counter_pool
-      generic map (
-
-          WIDTH     =>  20      -- Counter width
+          port map(
+            clk_i => clk_sys,  
+            rst_i => rstn_sys,   -- reset signal
+            wd_reset=>  BLM_wd_reset(i), -- watchdog reset signal
+            hold => BLM_wdog_hold_time_Reg,
+            in_watchdog => BLM_data_in(i),
       
-      )
-      port map(
-
-          CLK         => clk_sys,      -- Clock
-          nRST        => rstn_sys,      -- Reset
-          CLEAR       => BLM_cnt_Reg(10),       -- Clear counter register 
-          LOAD        => BLM_cnt_Reg(11),      -- Load counter register
-          ENABLE      => count_enable,     -- Enable count operation
-          pos_threshold =>  pos_threshold,
-          neg_threshold =>  neg_threshold,  
-          in_counter       => in_mux,
-          test_in_counter  =>  Test_In_Mtx,
-          UP_OVERFLOW    => UP_OVERFLOW,    -- UP_Counter overflow
-          DOWN_OVERFLOW  => DOWN_OVERFLOW    -- UP_Counter overflow
-
-      );
+            INTL_out =>   out_1wd(i));
+     
+      end generate wd_elem_gen;
 
 
 
 
-Interlock_output: BLM_Interlock_out 
-
-  port map(
-          CLK          => clk_sys,
-          nRST         => rstn_sys,
-          out_mux_sel  => BLM_out_reg,
-          UP_OVERFLOW    => UP_OVERFLOW,    
-          DOWN_OVERFLOW  => DOWN_OVERFLOW,  
-          gate_error     => gate_error,
-          Interlock_IN   => watchdog_warn,
-          Gate_out       => Gate_In_Mtx,
-          INTL_Output    => INTL_Output,
-         BLM_status_Reg => BLM_status_Reg
+---- counter ena mux ------------------------------------------------------------------------------
+BLM_counter_ena_block:  BLM_ena_in_mux 
+  port  map(
+    CLK            => clk_sys,  
+    nRST           => rstn_sys,
+    mux_sel        => BLM_in_sel_Reg,
+    in_mux         => gate_In_Mtx,
+    cnt_enable     => cnt_enable
   );
 
+
+  ---- counter pool ------------------------------------------------------------------------------
+
+BLM_counter_pool: for i in 0 to 127 generate
+
+BLM_counter_pool_elem: BLM_counter_pool_el
+generic map (      
+      WIDTH  => 32)  -- Counter width
+port map (
+  CLK            => clk_sys,  
+  nRST           => rstn_sys,
+  gate_reset_ena => AUTO_RESET and cnt_enable(i), --BLM_ctrl_reg(14) and cnt_enable(i),
+  RESET          => RESET or ev_counter_reset, --BLM_gate_seq_prep_ck_sel_Reg(12) or ev_counter_reset,
+  ENABLE         => cnt_enable(i),
+  pos_threshold  => pos_threshold(i),
+  neg_threshold  => neg_threshold(i),
+  in_counter     => VALUE_IN,
   
+  BLM_cnt_Reg    => BLM_in_sel_Reg(i),
+  cnt   => counter_value(i),
+
+  UP_OVERFLOW    => UP_OVERFLOW(i),
+  DOWN_OVERFLOW  => DOWN_OVERFLOW(i)
+  );
+      end generate BLM_counter_pool;
+-----------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------
+
+
+BLM_out_section: BLM_out_el 
+     
+  port map(
+    CLK          => clk_sys,
+    nRST           => rstn_sys,   -- Reset
+    -- +++
+    BLM_out_sel_reg => BLM_out_sel_reg, 
+    --
+  UP_OVERFLOW  =>UP_OVERFLOW,
+   DOWN_OVERFLOW   => DOWN_OVERFLOW,
+    wd_out           => out_1wd, --out_wd, --out_1wd,
+    gate_in         => BLM_gate_in(5 downto 0) & BLM_gate_in(11 downto 6),--BLM_gate_in,
+    gate_error        => gate_error(5 downto 0) & gate_error(11 downto 6),
+    gate_out        => gate_output(5 downto 0) & gate_output(11 downto 6),
+    gate_state      => gate_state,
+    led_id_state    => LED_ID_state,
+    BLM_Output      => BLM_out, 
+    BLM_status_Reg  => BLM_status_Reg 
+    );
+
+    counters_readout_proc: process (counter_value)
+    begin
+      for i in 0 to 127 loop
+        counter_readout_reg(i) <=  counter_value(i);
+      end loop;
+      end process counters_readout_proc;
+
+     
   end architecture;
+

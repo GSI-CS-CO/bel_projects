@@ -32,7 +32,7 @@ port(
   IOBP_STR_rot_o         : in std_logic_vector(12 downto 1);  -- LED-Str Red for Slave 12-1
   IOBP_STR_gruen_o       : in std_logic_vector(12 downto 1);  -- LED-Str Green for Slave 12-1
   IOBP_STR_ID_o          : in std_logic_vector(12 downto 1);  -- ID-Str Green for Slave 12-1
-  IOBP_Output            : in std_logic_vector(5 downto 0);   -- Outputs "Slave-Boards 1-12" 
+  IOBP_Output            : in std_logic_vector(11 downto 0);   -- Outputs "Slave-Boards 1-12" 
   IOBP_Input             : in t_IOBP_array;                   -- Inputs "Slave-Boards 1-12"
   Deb66_out              : in std_logic_vector(65 downto 0);
   AW_IOBP_Input_Reg      : in t_IO_Reg_1_to_7_Array;  -- Input-Register of the Piggy's

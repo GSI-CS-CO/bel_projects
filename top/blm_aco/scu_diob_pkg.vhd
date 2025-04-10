@@ -21,7 +21,8 @@ package scu_diob_pkg is
   TYPE    t_BLM_out_Array           is array (0 to 127) of std_logic_vector(5 downto 0);
   TYPE    t_BLM_12_to_6_mux_sel_array   is array (0 to 5) of std_logic_vector(3 downto 0);
   TYPE    t_BLM_mux_reg_Array     is array (0 to 5) of std_logic_vector(15 downto 0);
-  TYPE    t_BLM_out_sel_reg_Array    is array (0 to 191) of std_logic_vector(15 downto 0);
+ TYPE     t_IO_Reg_0_to_16_Array    is array (0 to 16) of std_logic_vector(15 downto 0);
+  TYPE    t_BLM_out_sel_reg_Array    is array (0 to 327) of std_logic_vector(15 downto 0);
   TYPE     t_IO_Reg_0_to_25_Array is array(0 to 25) of std_logic_vector(15 downto 0);
   TYPE     t_IO_Reg_0_to_27_Array     is array (0 to 27)  of std_logic_vector(15 downto 0);
   TYPE     t_BLM_gate_hold_Time_Array  is array (0 to 11)  of std_logic_vector(15 downto 0);
@@ -38,4 +39,5 @@ package scu_diob_pkg is
   TYPE     t_group_Array 		is array (0 to 127) of std_logic_vector(3 downto 0); 
   TYPE    local_set_thr_array        is array (0 to 4095) of  std_logic_vector(31 downto 0);
   TYPE     t_IO_Reg_0_to_23_Array     is array (0 to 23)  of std_logic_vector(15 downto 0);
+
 end scu_diob_pkg;
