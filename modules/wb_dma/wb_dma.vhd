@@ -177,33 +177,33 @@ begin
     --     s_data_in_ack_i => '0'--s_data_in_ack_i
     -- );    
 
-    register_file: wb_dma_ch_rf
-    generic map (
-        g_data_cache_size => 16
-    )
-    port map (
-      clk_i => clk_sys_i,
-      rstn_i => rstn_sys_i,
+    -- register_file: wb_dma_ch_rf
+    -- generic map (
+    --     g_data_cache_size => 16
+    -- )
+    -- port map (
+    --   clk_i => clk_sys_i,
+    --   rstn_i => rstn_sys_i,
   
-      -- module IOs
-      --wb_data_i => (others => '0'), 
-      --wb_data_o => open, 
-      -- read FSM signals
+    --   -- module IOs
+    --   --wb_data_i => (others => '0'), 
+    --   --wb_data_o => open, 
+    --   -- read FSM signals
 
-      s_desc_csr_sz_we  => s_desc_csr_sz_we,
-      s_desc_addr0_we   => s_desc_addr0_we,
-      s_desc_addr1_we   => s_desc_addr1_we,
-      s_pointer_we      => s_pointer_we,
+    --   s_desc_csr_sz_we  => s_desc_csr_sz_we,
+    --   s_desc_addr0_we   => s_desc_addr0_we,
+    --   s_desc_addr1_we   => s_desc_addr1_we,
+    --   s_pointer_we      => s_pointer_we,
 
-      data_in => (others => '0'),--s_data_in_i,
+    --   data_in => (others => '0'),--s_data_in_i,
 
-      cache_we          => '0',
-      data_cache_empty  => open,
+    --   cache_we          => '0',
+    --   data_cache_empty  => open,
   
-      -- write FSM signals
-      cache_re          => '0',
-      data_cache_full   => open
-    );
+    --   -- write FSM signals
+    --   cache_re          => '0',
+    --   data_cache_full   => open
+    -- );
 
     register_file_ram: generic_dpram
     generic map (
