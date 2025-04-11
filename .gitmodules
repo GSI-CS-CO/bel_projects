@@ -1,27 +1,27 @@
 [submodule "ip_cores/fpga-config-space"]
 	path = ip_cores/fpga-config-space
-	url = https://ohwr.org/project/fpga-config-space.git
+	url = https://gitlab.com/ohwr/project/fpga-config-space.git
 [submodule "ip_cores/etherbone-core"]
 	path = ip_cores/etherbone-core
-	url = https://ohwr.org/project/etherbone-core.git
+	url = https://gitlab.com/ohwr/project/etherbone-core.git
 [submodule "ip_cores/general-cores"]
 	path = ip_cores/general-cores
-	url = https://ohwr.org/project/general-cores.git
+	url = https://gitlab.com/ohwr/project/general-cores.git
 [submodule "ip_cores/wr-cores"]
 	path = ip_cores/wr-cores
-	url = https://ohwr.org/project/wr-cores.git
+	url = https://gitlab.com/ohwr/project/wr-cores.git
 [submodule "ip_cores/wrpc-sw"]
 	path = ip_cores/wrpc-sw
-	url = https://ohwr.org/project/wrpc-sw.git
+	url = https://gitlab.com/ohwr/project/wrpc-sw.git
 [submodule "ip_cores/pci-core"]
 	path = ip_cores/pci-core
-	url = https://ohwr.org/project/pci-core.git
+	url = https://gitlab.com/ohwr/project/pci-core.git
+[submodule "ip_cores/hdlmake"]
+	path = ip_cores/hdlmake
+	url = https://gitlab.com/ohwr/project/hdl-make.git
 [submodule "ip_cores/saftlib"]
 	path = ip_cores/saftlib
 	url = https://github.com/GSI-CS-CO/saftlib.git
 [submodule "ip_cores/mtca_mmc_firmware"]
 	path = ip_cores/mtca_mmc_firmware
 	url = https://github.com/GSI-CS-CO/mtca_mmc_firmware.git
-[submodule "ip_cores/hdlmake"]
-	path = ip_cores/hdlmake
-	url = https://ohwr.org/project/hdl-make.git
