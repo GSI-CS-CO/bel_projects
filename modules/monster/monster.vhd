@@ -78,7 +78,7 @@ use work.cellular_ram_pkg.all;
 use work.virtualRAM_pkg.all;
 use work.wb_dma_pkg.all;
 use work.wb_dma_slave_auto_pkg.all;
-use work.wb_read_access_tester_pkg.all;
+use work.wb_master_test_pkg.all;
 
 entity monster is
   generic(
@@ -142,7 +142,7 @@ entity monster is
     g_en_cellular_ram      : boolean;
     g_en_virtualRAM        : boolean;
     g_en_wb_dma            : boolean;
-    g_en_wb_rd_access_test : boolean);
+    g_en_wb_master_test : boolean);
   port(
     -- Required: core signals
     core_clk_20m_vcxo_i    : in    std_logic;
@@ -564,7 +564,7 @@ architecture rtl of monster is
     devs_cellular_ram,
     devs_wb_dma_slv,
     devs_ram,
-    devs_rd_test
+    devs_master_test
   );
   constant c_dev_slaves          : natural := dev_slaves'pos(dev_slaves'right)+1;
 
@@ -613,7 +613,7 @@ architecture rtl of monster is
     dev_slaves'pos(devs_cellular_ram)   => f_sdb_auto_device(f_cellular_ram_sdb(g_cr_bits),    g_en_cellular_ram),
     dev_slaves'pos(devs_wb_dma_slv)     => f_sdb_auto_device(c_wb_dma_slave_data_sdb,          g_en_wb_dma),
     dev_slaves'pos(devs_ram)            => f_sdb_auto_device(c_virtualRAM_sdb,                 g_en_virtualRAM),
-    dev_slaves'pos(devs_rd_test)        => f_sdb_auto_device(c_wb_read_access_tester_sdb,      g_en_wb_rd_access_test));
+    dev_slaves'pos(devs_master_test)        => f_sdb_auto_device(c_wb_master_test_sdb,      g_en_wb_master_test));
   constant c_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_bridge_sdb  : t_sdb_bridge       := f_xwb_bridge_layout_sdb(true, c_dev_layout, c_dev_sdb_address);
@@ -3573,18 +3573,18 @@ end generate;
       );
   end generate;
 
-  wb_rd_access_test_n : if not g_en_wb_rd_access_test generate
-    dev_bus_master_i(dev_slaves'pos(devs_rd_test)) <= cc_dummy_slave_out;
+  wb_rd_access_test_n : if not g_en_wb_master_test generate
+    dev_bus_master_i(dev_slaves'pos(devs_master_test)) <= cc_dummy_slave_out;
   end generate;
 
-  wb_rd_access_test_y : if g_en_wb_rd_access_test generate
-    read_access_test : wb_read_access_tester
+  wb_rd_access_test_y : if g_en_wb_master_test generate
+    read_access_test : wb_master_test
       port map(
         clk_sys_i     => clk_sys,
         rst_sys_n_i    => rstn_sys,
 
-        data_i => dev_bus_master_o(dev_slaves'pos(devs_rd_test)),
-        data_o => dev_bus_master_i(dev_slaves'pos(devs_rd_test))
+        data_i => dev_bus_master_o(dev_slaves'pos(devs_master_test)),
+        data_o => dev_bus_master_i(dev_slaves'pos(devs_master_test))
       );
   end generate;
 

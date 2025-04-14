@@ -141,7 +141,7 @@ package monster_pkg is
       g_en_virtualRAM        : boolean := false;
       g_en_enc_err_counter   : boolean := false;
       g_en_wb_dma            : boolean := false;
-      g_en_wb_rd_access_test : boolean := false
+      g_en_wb_master_test    : boolean := false
     );
     port(
       -- Required: core signals

@@ -58,6 +58,6 @@ modules = {
     "cellular_ram",
     "virtualRAM",
     "wb_dma",
-    "wb_read_access_tester",
+    "wb_master_test",
   ]
 }

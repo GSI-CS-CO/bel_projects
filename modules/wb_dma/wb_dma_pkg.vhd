@@ -35,6 +35,9 @@ package wb_dma_pkg is
   constant c_next_desc    : std_logic_vector (1 downto 0) := "11";
 
   component wb_dma is
+    generic(
+      g_host_ram_size: Integer
+    );
   port(
       clk_sys_i     : in std_logic;
       rstn_sys_i    : in std_logic;
