@@ -381,17 +381,17 @@ entity monster is
     ps_wait                : in    std_logic;
     ps_chip_selector       : out   std_logic_vector(3 downto 0);
     -- g_en_cellular_ram
-    cr_clk                 : out   std_logic := 'Z';
-    cr_addr                : out   std_logic_vector(g_cr_bits-1 downto 0) := (others => 'Z');
-    cr_data                : inout std_logic_vector(15 downto 0);
+    cr_clk_o               : out   std_logic := 'Z';
+    cr_addr_o              : out   std_logic_vector(g_cr_bits-1 downto 0) := (others => 'Z');
+    cr_data_io             : inout std_logic_vector(15 downto 0);
     cr_ubn_o               : out   std_logic := 'Z';
     cr_lbn_o               : out   std_logic := 'Z';
-    cr_cen                 : out   std_logic := 'Z';
-    cr_oen                 : out   std_logic := 'Z';
-    cr_wen                 : out   std_logic := 'Z';
-    cr_cre                 : out   std_logic := 'Z';
-    cr_advn                : out   std_logic := 'Z';
-    cr_wait                : in    std_logic;
+    cr_cen_o               : out   std_logic := 'Z';
+    cr_oen_o               : out   std_logic := 'Z';
+    cr_wen_o               : out   std_logic := 'Z';
+    cr_cre_o               : out   std_logic := 'Z';
+    cr_advn_o              : out   std_logic := 'Z';
+    cr_wait_i              : in    std_logic;
     -- i2c
     i2c_scl_pad_i          : in  std_logic_vector(g_num_i2c_interfaces-1 downto 0);
     i2c_scl_pad_o          : out std_logic_vector(g_num_i2c_interfaces-1 downto 0) := (others => 'Z');
@@ -3328,27 +3328,28 @@ end generate;
   end generate;
 
   cr_n : if not g_en_cellular_ram generate
-    dev_bus_master_i(dev_slaves'pos(devs_psram)) <= cc_dummy_slave_out;
+    dev_bus_master_i(dev_slaves'pos(devs_cellular_ram)) <= cc_dummy_slave_out;
   end generate;
   cr_y : if g_en_cellular_ram generate
       cr : cellular_ram
         generic map(
           g_bits => g_cr_bits)
         port map(
-        clk_i     => clk_sys,
-        rstn_i    => rstn_sys,
-        slave_i   => dev_bus_master_o(dev_slaves'pos(devs_psram)),
-        slave_o   => dev_bus_master_i(dev_slaves'pos(devs_psram)),
-        ps_clk    => ps_clk,
-        ps_addr   => ps_addr,
-        ps_data   => ps_data,
-        ps_seln   => ps_seln,
-        ps_cen    => ps_cen,
-        ps_oen    => ps_oen,
-        ps_wen    => ps_wen,
-        ps_cre    => ps_cre,
-        ps_advn   => ps_advn,
-        ps_wait   => ps_wait);
+        clk_i      => clk_sys,
+        rstn_i     => rstn_sys,
+        slave_i    => dev_bus_master_o(dev_slaves'pos(devs_cellular_ram)),
+        slave_o    => dev_bus_master_i(dev_slaves'pos(devs_cellular_ram)),
+        cr_clk_o   => cr_clk_o,
+        cr_addr_o  => cr_addr_o,
+        cr_data_io => cr_data_io,
+        cr_ubn_o   => cr_ubn_o,
+        cr_lbn_o   => cr_lbn_o,
+        cr_cen_o   => cr_cen_o,
+        cr_oen_o   => cr_oen_o,
+        cr_wen_o   => cr_wen_o,
+        cr_cre_o   => cr_cre_o,
+        cr_advn_o  => cr_advn_o,
+        cr_wait_i  => cr_wait_i);
     end generate;
 
   beam_dump_n : if not g_en_beam_dump generate
