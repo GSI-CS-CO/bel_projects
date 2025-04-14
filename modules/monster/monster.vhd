@@ -73,6 +73,7 @@ use work.beam_dump_pkg.all;
 use work.wb_i2c_wrapper_pkg.all;
 use work.remote_update_pkg.all;
 use work.enc_err_counter_pkg.all;
+use work.cellular_ram_pkg.all;
 
 entity monster is
   generic(
