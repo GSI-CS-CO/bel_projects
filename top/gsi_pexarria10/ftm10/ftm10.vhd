@@ -508,4 +508,6 @@ begin
   OneWire_CB_splz     <= '1'; -- Strong Pull-Up disabled
   OneWire_aux_CB_splz <= '1'; -- Strong Pull-Up disabled
 
+  nres_out_o <= '0';
+
 end rtl;
