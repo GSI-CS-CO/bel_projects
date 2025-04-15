@@ -518,4 +518,6 @@ begin
   OneWire_aux_CB      <= 'Z'; -- Unconnected on pexarria10 (FTM10 only)
   OneWire_aux_CB_splz <= 'Z'; -- Unconnected on pexarria10 (FTM10 only)
 
+  nres_out_o <= '0';
+
 end rtl;
