@@ -239,7 +239,7 @@ architecture rtl of scu4slim is
   constant c_cores        : natural:= 1;
   constant c_initf_name   : string := c_project & "_stub.mif";
   constant c_profile_name : string := "medium_icache_debug";
-  constant c_psram_bits   : natural := 24;
+  constant c_cr_bits      : natural := 24;
 
 begin
 
@@ -248,7 +248,7 @@ begin
       g_family             => c_family,
       g_project            => c_project,
       g_flash_bits         => 25, -- !!! TODO: Check this
-      g_psram_bits         => c_psram_bits,
+      g_cr_bits            => c_cr_bits,
       g_gpio_in            => 5,
       g_gpio_out           => 10,
       --g_lvds_in            => 3,
@@ -263,7 +263,7 @@ begin
       g_en_pcie            => true,
       g_en_tlu             => false,
       g_en_usb             => false,
-      g_en_psram           => true,
+      g_en_cellular_ram    => true,
       g_io_table           => io_mapping_table,
       g_en_tempsens        => false,
       g_en_a10ts           => true,
