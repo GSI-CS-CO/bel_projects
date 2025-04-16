@@ -177,12 +177,12 @@ architecture rtl of ftm10 is
   signal s_lvds_p_o : std_logic_vector(19 downto 0);
   signal s_lvds_n_o : std_logic_vector(19 downto 0);
 
-  signal s_i2c_scl_pad_out  : std_logic_vector(6 downto 1);
-  signal s_i2c_scl_pad_in   : std_logic_vector(6 downto 1);
-  signal s_i2c_scl_padoen   : std_logic_vector(6 downto 1);
-  signal s_i2c_sda_pad_out  : std_logic_vector(6 downto 1);
-  signal s_i2c_sda_pad_in   : std_logic_vector(6 downto 1);
-  signal s_i2c_sda_padoen   : std_logic_vector(6 downto 1);
+  signal s_i2c_scl_pad_out  : std_logic_vector(5 downto 1);
+  signal s_i2c_scl_pad_in   : std_logic_vector(5 downto 1);
+  signal s_i2c_scl_padoen   : std_logic_vector(5 downto 1);
+  signal s_i2c_sda_pad_out  : std_logic_vector(5 downto 1);
+  signal s_i2c_sda_pad_in   : std_logic_vector(5 downto 1);
+  signal s_i2c_sda_padoen   : std_logic_vector(5 downto 1);
 
   signal s_clk_20m_vcxo_i       : std_logic;
   signal s_clk_125m_pllref_i    : std_logic;
@@ -245,7 +245,7 @@ begin
       g_psram_bits         => c_psram_bits,
       g_gpio_inout         => 20,
       g_en_i2c_wrapper     => true,
-      g_num_i2c_interfaces => 6,
+      g_num_i2c_interfaces => 5,
       g_en_pcie            => true,
       g_en_tlu             => false,
       g_en_usb             => true,
