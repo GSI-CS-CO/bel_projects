@@ -4,6 +4,7 @@ set -eu
 # Global variables
 DEVICE="NULL"
 BYTE_SIZE=33554432
+WAIT_SECONDS=0
 
 # Run test
 function run_test() {
@@ -14,10 +15,19 @@ function run_test() {
   dd if=/dev/urandom of=put_file bs=$BYTE_SIZE count=1
 
   echo "Writing to PSRAM ..."
+  t_start_w=$(date +%s.%N)
   eb-put "$DEVICE" "$PSRAM_ADDR" put_file
+  t_end_w=$(date +%s.%N)
+  t_duration_w=$(echo "($t_end_w - $t_start_w) * 1000" | bc)
+  printf "Writing took %.3f ms ...\n" $t_duration_w
 
+  sleep $WAIT_SECONDS
   echo "Reading back from PSRAM ..."
+  t_start_r=$(date +%s.%N)
   eb-get "$DEVICE" "$PSRAM_ADDR/$BYTE_SIZE" get_file
+  t_end_r=$(date +%s.%N)
+  t_duration_r=$(echo "($t_end_r - $t_start_r) * 1000" | bc)
+  printf "Reading took %.3f ms ...\n" $t_duration_r
 
   echo "Comparing files ..."
   if cmp -s put_file get_file; then
@@ -42,13 +52,16 @@ if [ $# -eq 0 ]; then
   exit 1
 fi
 
-while getopts "d:b:h" opt; do
+while getopts "d:b:w:h" opt; do
   case $opt in
     d)
       DEVICE="$OPTARG"
       ;;
     b)
       BYTE_SIZE="$OPTARG"
+      ;;
+    w)
+      WAIT_SECONDS="$OPTARG"
       ;;
     h)
       print_help
