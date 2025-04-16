@@ -5,21 +5,40 @@ set -eu
 DEVICE="NULL"
 BYTE_SIZE=33554432
 WAIT_SECONDS=0
+FILE_WITH_ZEROS="no"
+START_OFFSET="0x0"
+READ_ONLY="no"
 
 # Run test
 function run_test() {
   echo "Searching for PSRAM slave at $DEVICE ..."
   PSRAM_ADDR=$(eb-find "$DEVICE" 0x651 0x169edcb8)
   echo "Found PSRAM at $PSRAM_ADDR ..."
-  echo "Creating test file ..."
-  dd if=/dev/urandom of=put_file bs=$BYTE_SIZE count=1
 
-  echo "Writing to PSRAM ..."
-  t_start_w=$(date +%s.%N)
-  eb-put "$DEVICE" "$PSRAM_ADDR" put_file
-  t_end_w=$(date +%s.%N)
-  t_duration_w=$(echo "($t_end_w - $t_start_w) * 1000" | bc)
-  printf "Writing took %.3f ms ...\n" $t_duration_w
+  # Add offset, remove "0x"
+  PSRAM_ADDR_CLEAN=${PSRAM_ADDR#0x}
+  START_OFFSET_CLEAN=${START_OFFSET#0x}
+  PSRAM_OFFSET_ADDR=$(echo "ibase=16; $PSRAM_ADDR_CLEAN + $START_OFFSET_CLEAN" | bc)
+  PSRAM_ADDR=$(printf "0x%X" $PSRAM_OFFSET_ADDR)
+  echo "Using PSRAM address $PSRAM_ADDR ..."
+
+  if [ "$READ_ONLY" = "no" ]; then
+    echo "Creating test file ..."
+    if [ "$FILE_WITH_ZEROS" = "no" ]; then
+      echo "Using random data ..."
+      dd if=/dev/urandom of=put_file bs=$BYTE_SIZE count=1
+    else
+      echo "Using zeros ..."
+      dd if=/dev/zero of=put_file bs=$BYTE_SIZE count=1
+    fi
+
+    echo "Writing to PSRAM ..."
+    t_start_w=$(date +%s.%N)
+    eb-put "$DEVICE" "$PSRAM_ADDR" put_file
+    t_end_w=$(date +%s.%N)
+    t_duration_w=$(echo "($t_end_w - $t_start_w) * 1000" | bc)
+    printf "Writing took %.3f ms ...\n" $t_duration_w
+  fi
 
   sleep $WAIT_SECONDS
   echo "Reading back from PSRAM ..."
@@ -29,11 +48,14 @@ function run_test() {
   t_duration_r=$(echo "($t_end_r - $t_start_r) * 1000" | bc)
   printf "Reading took %.3f ms ...\n" $t_duration_r
 
-  echo "Comparing files ..."
-  if cmp -s put_file get_file; then
-    echo "Test passed!"
-  else
-    echo "Test failed: Files are not identical."
+
+  if [ "$READ_ONLY" = "no" ]; then
+    echo "Comparing files ..."
+    if cmp -s put_file get_file; then
+      echo "Test passed!"
+    else
+      echo "Test failed: Files are not identical."
+    fi
   fi
 }
 
@@ -52,7 +74,7 @@ if [ $# -eq 0 ]; then
   exit 1
 fi
 
-while getopts "d:b:w:h" opt; do
+while getopts "d:b:w:o:rzh" opt; do
   case $opt in
     d)
       DEVICE="$OPTARG"
@@ -62,6 +84,15 @@ while getopts "d:b:w:h" opt; do
       ;;
     w)
       WAIT_SECONDS="$OPTARG"
+      ;;
+    z)
+      FILE_WITH_ZEROS="yes"
+      ;;
+    o)
+      START_OFFSET="$OPTARG"
+      ;;
+    r)
+      READ_ONLY="yes"
       ;;
     h)
       print_help
@@ -83,7 +114,7 @@ if [ "$DEVICE" = "NULL" ]; then
 fi
 
 # Define an array of required tools
-REQUIRED_TOOLS=("eb-find" "eb-put" "eb-get")
+REQUIRED_TOOLS=("eb-find" "eb-put" "eb-get" "dd" "bc")
 
 # Check for the presence of each tool in the array
 for TOOL in "${REQUIRED_TOOLS[@]}"; do
