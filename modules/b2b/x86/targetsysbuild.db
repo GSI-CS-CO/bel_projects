@@ -20,7 +20,7 @@ CFLAGS      ?=
 endif
 
 ifeq ($(SYSENV), ACC7)
-USRPATH     := /common/usr/timing/b2b/centos7/usr
+USRPATH     := /common/usr/timing/user-dietrich/centos7/usr
 ARCH        := /x86_64
 EB          ?= ../../../ip_cores/etherbone-core/api
 CFLAGS      ?= -Wall -O2 -g
