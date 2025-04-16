@@ -38,16 +38,15 @@ function run_test() {
     t_end_w=$(date +%s.%N)
     t_duration_w=$(echo "($t_end_w - $t_start_w) * 1000" | bc)
     printf "Writing took %.3f ms ...\n" $t_duration_w
+    sleep $WAIT_SECONDS
   fi
 
-  sleep $WAIT_SECONDS
-  echo "Reading back from PSRAM ..."
+  echo "Reading (back) from PSRAM ..."
   t_start_r=$(date +%s.%N)
   eb-get "$DEVICE" "$PSRAM_ADDR/$BYTE_SIZE" get_file
   t_end_r=$(date +%s.%N)
   t_duration_r=$(echo "($t_end_r - $t_start_r) * 1000" | bc)
   printf "Reading took %.3f ms ...\n" $t_duration_r
-
 
   if [ "$READ_ONLY" = "no" ]; then
     echo "Comparing files ..."
