@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 13-feb-2025
+ *  version : 16-Apr-2025
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  NB: units of variables are [ns] unless explicitely mentioned as suffix
@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000805                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000806                                      // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -143,6 +143,9 @@ b2bt_t    cTrigExt_t;                   // correction for extraction trigger
 b2bt_t    cTrigInj_t;                   // correction for injection trigger
 int32_t   nBucketExt;                   // number of bucket for extraction
 int32_t   nBucketInj;                   // number of bucket for injection
+uint32_t  TPhaseShift;                  // time for phase shift [ns]
+float     TPhaseShiftDDS;               // time for phase shift [SI, float]
+uint64_t  kickOffsPShift;               // offset [ns] deadline of kicker trigger events relative to B2BS event when performing phase shifts
 int       fFineTune;                    // flag: uoffse fine tuning
 int       fMBTune;                      // flag: use multi-beat tuning
 uint64_t  tCBS;                         // deadline of CMD_B2B_START
@@ -1086,8 +1089,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   uint32_t pShiftTime;                                        // buffer for phase shift time
   b2bt_t   tPhase0Ext;                                        // time of 0-crossing of h=1 at extraction time
   b2bt_t   tPhase0Inj;                                        // time of 0-crossing of h=1 at extraction time
-  int64_t  tPhase0Ext_as;                                     // ... [us]
-  int64_t  tPhase0Inj_as;                                     // ... [us]
+  int64_t  tPhase0Ext_as;                                     // ... [as]
+  int64_t  tPhase0Inj_as;                                     // ... [as]
   int64_t  tPhaseDiff_as;                                     // phase difference at extraction time
   
 
@@ -1136,6 +1139,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       cTrigInj_t.ps = 0x0;
       nBucketExt    = 0x0;
       nBucketInj    = 0x0;
+      TPhaseShift   = 0x0;
       fFineTune     = 0x0;
       fMBTune       = 0x0;
       tCBS          = 0x0;
@@ -1178,6 +1182,16 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       fFineTune   = setFFinTune[sid];
       fMBTune     = setFMBTune[sid];
 
+      // hacky: set time for phase shift
+      // negative number of buckets: one integer equals 500us; example: -20 -> 10 ms shift time
+      if (nBucketExt >= 0) TPhaseShift = B2B_PHASESHIFTTIME;            // default case
+      else                 TPhaseShift = (-nBucketExt * 1000000) >> 1;  // hacky tweak of phase shift time [ns]
+      if (TPhaseShift > 14000000)
+                           TPhaseShift = 14000000;                      // hacky upper limit of 16 ms flattopzeit + 0.5ms pretrigger - 2ms kickoffsetMin - 0.5ms safety
+      TPhaseShiftDDS = (float)TPhaseShift/1000000000.0;                 // convert to [SI units, float]
+      kickOffsPShift = TPhaseShift +  B2B_KICKOFFSETMIN;                // offset [ns] deadline of kicker trigger events relative to B2BS event when performing phase shifts
+      
+
       cTrigExt_us = fwlib_float2half(fwlib_tps2tfns(cTrigExt_t)/1000.0); // 16 bit float [us]
       cTrigInj_us = fwlib_float2half(fwlib_tps2tfns(cTrigInj_t)/1000.0); // 16 bit float [us]
       cPhase_us   = fwlib_float2half(fwlib_tps2tfns(cPhase_t)/1000.0);   // 16 bit float [us]
@@ -1196,7 +1210,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
         case B2B_MODE_B2EPSHIFT  :   // phase shift followed by fast extraction in bunch gap; maybe useful for testing
         case B2B_MODE_B2BPSHIFTE :   // bunch to bucket using phase shift at extraction machine; this is an OR, no 'break' on purpose
         case B2B_MODE_B2BPSHIFTI :   // bunch to bucket using phase shift at injection machine; this is an OR, no 'break' on purpose
-          tWantExt = tCBS + B2B_KICKOFFSETPSHIFT;
+
           /* tWantExt = tCBS + B2B_KICKOFFSETMIN + 800000; used for measuring phase shift curve; here @80us */
           break;
         default :
@@ -1418,7 +1432,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     pShiftPhase    = (tmp.data & 0x0000ffff) << 16;
     pShiftPhase   |= (tmp.data & 0xffff0000) >> 16;
 
-    tmp.f          = (float)B2B_PHASESHIFTTIMEDDS;                              // time for phase shift [s, float]
+    tmp.f          = TPhaseShiftDDS;                                            // time for phase shift [s, float]
     // change endianess
     pShiftTime     = (tmp.data & 0x0000ffff) << 16;
     pShiftTime    |= (tmp.data & 0xffff0000) >> 16;
@@ -1459,7 +1473,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     pShiftPhase    = (tmp.data & 0x0000ffff) << 16;
     pShiftPhase   |= (tmp.data & 0xffff0000) >> 16;
 
-    tmp.f          = (float)B2B_PHASESHIFTTIMEDDS;                              // time for phase shift [s, float]
+    tmp.f          = TPhaseShiftDDS;                                            // time for phase shift [s, float]
     // change endianess
     pShiftTime     = (tmp.data & 0x0000ffff) << 16;
     pShiftTime    |= (tmp.data & 0xffff0000) >> 16;

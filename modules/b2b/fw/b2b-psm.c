@@ -36,7 +36,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPSM_FW_VERSION 0x000805                                      // make this consistent with makefile
+#define B2BPSM_FW_VERSION 0x000806                                      // make this consistent with makefile
 
 //standard includes
 #include <stdio.h>
