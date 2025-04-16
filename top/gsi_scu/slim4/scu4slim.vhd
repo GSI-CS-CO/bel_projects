@@ -346,17 +346,17 @@ begin
       --usb_pktendn_o           => pa(6),
       --usb_fd_io               => fd,
       -- PSRAM TODO: Multi Chip
-      ps_clk                  => psram_clk,
-      ps_addr                 => psram_a,
-      ps_data                 => psram_dq,
-      ps_seln(0)              => s_psram_lbn,
-      ps_seln(1)              => s_psram_ubn,
-      ps_cen                  => s_psram_cen,
-      ps_oen                  => s_psram_oen,
-      ps_wen                  => s_psram_wen,
-      ps_cre                  => s_psram_cre,
-      ps_advn                 => s_psram_advn,
-      ps_wait                 => s_psram_wait,
+      cr_clk_o                => psram_clk,
+      cr_addr_o               => psram_a,
+      cr_data_io              => psram_dq,
+      cr_lbn_o                => s_psram_lbn,
+      cr_ubn_o                => s_psram_ubn,
+      cr_cen_o                => s_psram_cen,
+      cr_oen_o                => s_psram_oen,
+      cr_wen_o                => s_psram_wen,
+      cr_cre_o                => s_psram_cre,
+      cr_advn_o               => s_psram_advn,
+      cr_wait_i               => s_psram_wait,
       ps_chip_selector        => s_psram_sel,
       hw_version              => x"0000000" & not scu_cb_version);
 
@@ -372,12 +372,12 @@ begin
 
   -- PSRAM #2
   psram_cen(1)  <= '1';
-  psram_cre(1)  <= '0';
-  psram_oen(1)  <= '1';
-  psram_wen(1)  <= '1';
-  psram_lbn(1)  <= '1';
-  psram_ubn(1)  <= '1';
-  psram_advn(1) <= '1';
+  psram_cre(1)  <= 'X';
+  psram_oen(1)  <= 'X';
+  psram_wen(1)  <= 'X';
+  psram_lbn(1)  <= 'X';
+  psram_ubn(1)  <= 'X';
+  psram_advn(1) <= 'X';
 
   -- LEDs
   wr_led_pps    <= s_led_pps;                                             -- white = PPS

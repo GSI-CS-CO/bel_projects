@@ -95,6 +95,7 @@ begin
              cr_data_io <= (others => 'Z');
              r_ram_out  <= f_cellular_ram_set_read;
            end if;
+           r_ack        <= '0';
         else
           cr_data_io  <= (others => 'Z');
           cr_addr_o   <= (others => '0');
@@ -105,7 +106,7 @@ begin
       when S_WRITE =>
         r_counter_w <= r_counter_w + 1;
         if r_counter_w = c_trc then
-          r_state     <= S_IDLE;
+          r_state     <= S_INITIAL;
           r_counter_w <= (others => '0');
           r_ram_out   <= f_cellular_ram_set_standby;
           r_ack       <= '1';
@@ -113,7 +114,7 @@ begin
       when S_READ =>
       r_counter_r <= r_counter_r + 1;
         if r_counter_r = c_tcem then
-          r_state                   <= S_IDLE;
+          r_state                   <= S_INITIAL;
           r_counter_r               <= (others => '0');
           r_ram_out                 <= f_cellular_ram_set_standby;
           r_ack                     <= '1';

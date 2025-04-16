@@ -102,7 +102,7 @@ package body cellular_ram_pkg is
 
   function f_cellular_ram_set_standby return t_cellular_ram_out is
   begin
-    return f_cellular_ram_set_outputs('0','0','0','0','0','0');
+    return f_cellular_ram_set_outputs('0','1','1','1','1','1');
   end function f_cellular_ram_set_standby;
 
   function f_cellular_ram_set_noop return t_cellular_ram_out is
