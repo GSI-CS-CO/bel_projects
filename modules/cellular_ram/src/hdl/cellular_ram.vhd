@@ -29,14 +29,16 @@ end entity;
 
 architecture rtl of cellular_ram is
 
-  type t_state is (S_INITIAL, S_IDLE, S_READ, S_WRITE);
-  signal r_state     : t_state := S_INITIAL;
-  signal r_ram_out   : t_cellular_ram_out;
-  signal r_ack       : std_logic := '0';
-  constant c_trc     : natural := 5;
-  constant c_tcem    : natural := 5;
-  signal r_counter_r : unsigned(f_ceil_log2(c_trc+1)-1 downto 0) := (others => '0');
-  signal r_counter_w : unsigned(f_ceil_log2(c_trc+1)-1 downto 0) := (others => '0');
+  type t_state      is (S_INITIAL, S_IDLE, S_READ, S_WRITE);
+  type t_state_word is (S_LOW_WORD, S_PREP_NEXT_WORD, S_HIGH_WORD);
+  signal r_state      : t_state := S_INITIAL;
+  signal r_state_word : t_state_word := S_LOW_WORD;
+  signal r_ram_out    : t_cellular_ram_out;
+  signal r_ack        : std_logic := '0';
+  constant c_trc      : natural := 5;
+  constant c_tcem     : natural := 5;
+  signal r_counter_r  : unsigned(f_ceil_log2(c_trc+1)-1 downto 0) := (others => '0');
+  signal r_counter_w  : unsigned(f_ceil_log2(c_trc+1)-1 downto 0) := (others => '0');
 
 begin
 
@@ -64,20 +66,22 @@ begin
   begin
     if rstn_i = '0' then
       -- Wishbone
-      r_ack       <= '0';
-      slave_o.dat <= (others => '0');
+      r_ack        <= '0';
+      slave_o.dat  <= (others => '0');
       -- Intenral state machine
-      r_state     <= S_INITIAL;
-      r_counter_r <= (others => '0');
-      r_counter_w <= (others => '0');
+      r_state      <= S_INITIAL;
+      r_state_word <= S_LOW_WORD;
+      r_counter_r  <= (others => '0');
+      r_counter_w  <= (others => '0');
       -- Data and addr
-      cr_data_io  <= (others => 'Z');
-      cr_addr_o   <= (others => '0');
-      r_ram_out   <= f_cellular_ram_set_standby;
+      cr_data_io   <= (others => 'Z');
+      cr_addr_o    <= (others => '0');
+      r_ram_out    <= f_cellular_ram_set_standby;
     elsif rising_edge(clk_i) then
       case r_state is
        when S_INITIAL =>
          r_state      <= S_IDLE;
+         r_state_word <= S_LOW_WORD;
          cr_data_io   <= (others => 'Z');
          cr_addr_o    <= (others => '0');
          r_ram_out    <= f_cellular_ram_set_standby;
@@ -95,31 +99,55 @@ begin
              cr_data_io <= (others => 'Z');
              r_ram_out  <= f_cellular_ram_set_read;
            end if;
+           r_state_word <= S_LOW_WORD;
            r_ack        <= '0';
         else
           cr_data_io  <= (others => 'Z');
           cr_addr_o   <= (others => '0');
           r_ram_out   <= f_cellular_ram_set_standby;
           r_ack       <= '0';
-          slave_o.dat <= (others => '0');
+          --slave_o.dat <= (others => '0');
         end if;
       when S_WRITE =>
         r_counter_w <= r_counter_w + 1;
-        if r_counter_w = c_trc then
-          r_state     <= S_INITIAL;
+        if r_counter_w = c_tcem then
           r_counter_w <= (others => '0');
-          r_ram_out   <= f_cellular_ram_set_standby;
-          r_ack       <= '1';
-        end if;
+          case r_state_word is
+             when S_LOW_WORD =>
+               r_state_word              <= S_PREP_NEXT_WORD;
+               r_ram_out                 <= f_cellular_ram_set_standby;
+               cr_addr_o                 <= std_logic_vector(unsigned(slave_i.adr(g_bits-1 downto 0)) + 2);
+               cr_data_io                <= slave_i.dat(31 downto 16);
+             when S_PREP_NEXT_WORD =>
+               r_state_word              <= S_HIGH_WORD;
+               r_ram_out                 <= f_cellular_ram_set_write;
+             when S_HIGH_WORD =>
+               r_state_word              <= S_LOW_WORD;
+               r_ram_out                 <= f_cellular_ram_set_standby;
+               r_ack                     <= '1';
+               r_state                   <= S_INITIAL;
+            end case;
+          end if;
       when S_READ =>
-      r_counter_r <= r_counter_r + 1;
+        r_counter_r <= r_counter_r + 1;
         if r_counter_r = c_tcem then
-          r_state                   <= S_INITIAL;
-          r_counter_r               <= (others => '0');
-          r_ram_out                 <= f_cellular_ram_set_standby;
-          r_ack                     <= '1';
-          slave_o.dat(15 downto 0)  <= (cr_data_io);
-          slave_o.dat(31 downto 16) <= (others => '0');
+          r_counter_r <= (others => '0');
+          case r_state_word is
+             when S_LOW_WORD =>
+               r_state_word              <= S_PREP_NEXT_WORD;
+               r_ram_out                 <= f_cellular_ram_set_standby;
+               cr_addr_o                 <= std_logic_vector(unsigned(slave_i.adr(g_bits-1 downto 0)) + 2);
+               slave_o.dat(15 downto 0)  <= cr_data_io;
+             when S_PREP_NEXT_WORD =>
+               r_state_word              <= S_HIGH_WORD;
+               r_ram_out                 <= f_cellular_ram_set_read;
+             when S_HIGH_WORD =>
+               r_state_word              <= S_LOW_WORD;
+               r_ram_out                 <= f_cellular_ram_set_standby;
+               slave_o.dat(31 downto 16) <= cr_data_io;
+               r_ack                     <= '1';
+               r_state                   <= S_INITIAL;
+          end case;
         end if;
       end case;
     end if;

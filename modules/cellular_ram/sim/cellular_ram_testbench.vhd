@@ -141,6 +141,22 @@ begin
       cr_advn_o  => s_psram_advn,
       cr_wait_i  => s_psram_wait);
 
+      -- Fake data from PSRAM
+      p_fake_data_stim : process (s_clk)
+      begin
+        if rising_edge(s_clk) then
+          if s_psram_oen = '0' and s_psram_wen = '1' then
+            if s_psram_addr(1) = '0' then
+              s_psram_data <= x"5678";
+            else
+              s_psram_data <= x"1234";
+            end if;
+          else
+            s_psram_data <= (others => 'Z');
+          end if;
+        end if;
+      end process;
+
       -- Wishbone controller
       p_wishbone_stim : process
       begin
@@ -157,6 +173,18 @@ begin
         wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, x"00000000", c_reg_all_zero);
         wait until rising_edge(s_clk);
         -- Delay
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk);
         wait until rising_edge(s_clk);
         wait until rising_edge(s_clk);
         wait until rising_edge(s_clk);
