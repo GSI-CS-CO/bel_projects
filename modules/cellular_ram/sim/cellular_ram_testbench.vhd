@@ -39,6 +39,8 @@ architecture rtl of cellular_ram_testbench is
   signal s_wb_slave_in  : t_wishbone_slave_in;
   signal s_wb_slave_out : t_wishbone_slave_out;
 
+  signal s_psram_dword : std_logic_vector(31 downto 0) := (others => '0');
+
   -- Other constants
   constant c_reg_all_zero                : std_logic_vector(31 downto 0) := x"00000000";
   constant c_cyc_on                      : std_logic := '1';
@@ -47,6 +49,7 @@ architecture rtl of cellular_ram_testbench is
   constant c_str_off                     : std_logic := '0';
   constant c_we_on                       : std_logic := '1';
   constant c_we_off                      : std_logic := '0';
+  constant c_test_data                   : std_logic_vector(31 downto 0) := x"09abcdef";
 
   -- Functions
   -- Function wb_stim -> Helper function to create a human-readable testbench
@@ -144,12 +147,20 @@ begin
       -- Fake data from PSRAM
       p_fake_data_stim : process (s_clk)
       begin
-        if rising_edge(s_clk) then
+        if s_rst_n = '0' then
+           s_psram_dword <= x"12345678";
+        elsif rising_edge(s_clk) then
           if s_psram_oen = '0' and s_psram_wen = '1' then
             if s_psram_addr(1) = '0' then
-              s_psram_data <= x"5678";
+              s_psram_data <= s_psram_dword(15 downto 0);
             else
-              s_psram_data <= x"1234";
+              s_psram_data <= s_psram_dword(31 downto 16);
+            end if;
+          elsif  s_psram_oen = '0' and s_psram_wen = '0' then
+            if s_psram_addr(1) = '0' then
+              s_psram_dword(15 downto 0) <= s_psram_data;
+            else
+              s_psram_dword(31 downto 16) <= s_psram_data;
             end if;
           else
             s_psram_data <= (others => 'Z');
@@ -188,13 +199,32 @@ begin
         wait until rising_edge(s_clk);
         wait until rising_edge(s_clk);
         wait until rising_edge(s_clk);
-        -- Write to address 0x8 0x12345678
-        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, x"00000008", x"12345678");
-        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_on,  x"00000008", x"12345678");
+        -- Write to address 0x8 90abcdef
+        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, x"00000008", x"90abcdef");
+        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_on,  x"00000008", x"90abcdef");
         wait until rising_edge(s_clk);
-        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, x"00000008", x"12345678");
+        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, x"00000008", x"90abcdef");
         wait until rising_edge(s_wb_slave_out.ack);
-        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, x"00000000", x"12345678");
+        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, x"00000000", x"90abcdef");
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk);
+        -- Read from address 0x8
+        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, x"00000008", c_reg_all_zero);
+        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_off, x"00000008", c_reg_all_zero);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, x"00000008", c_reg_all_zero);
+        wait until rising_edge(s_wb_slave_out.ack);
+        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, x"00000000", c_reg_all_zero);
         wait until rising_edge(s_clk);
       end process;
 
