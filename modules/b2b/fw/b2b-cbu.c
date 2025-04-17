@@ -1,9 +1,10 @@
+
 /********************************************************************************************
  *  b2b-cbu.c
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 16-Apr-2025
+ *  version : 17-Apr-2025
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  NB: units of variables are [ns] unless explicitely mentioned as suffix
@@ -143,9 +144,9 @@ b2bt_t    cTrigExt_t;                   // correction for extraction trigger
 b2bt_t    cTrigInj_t;                   // correction for injection trigger
 int32_t   nBucketExt;                   // number of bucket for extraction
 int32_t   nBucketInj;                   // number of bucket for injection
-uint32_t  TPhaseShift;                  // time for phase shift [ns]
+uint64_t  TPhaseShift;                  // time for phase shift [ns]
 float     TPhaseShiftDDS;               // time for phase shift [SI, float]
-uint64_t  kickOffsPShift;               // offset [ns] deadline of kicker trigger events relative to B2BS event when performing phase shifts
+uint64_t  kickOffsPShift;               // offset [ns] deadline of kicker trigger events relative to CBS when performing phase shifts
 int       fFineTune;                    // flag: uoffse fine tuning
 int       fMBTune;                      // flag: use multi-beat tuning
 uint64_t  tCBS;                         // deadline of CMD_B2B_START
@@ -1117,39 +1118,39 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       gid          = (uint32_t)((recId >> 48) & 0x0fff);      // temporary assignment useful for debugging if routine setSubmit() fails
 
       // clear 'local' variables
-      flagsExt      = 0x0;
-      sidExt        = 0x0;
-      bpidExt       = 0x0;
-      paramExt      = 0x0;
-      flagsInj      = 0x0;
-      sidInj        = 0x0;
-      bpidInj       = 0x0;
-      paramInj      = 0x0;
-      mode          = 0x0;
-      nHExt         = 0x0;
-      nHInj         = 0x0;
-      TH1Ext_as     = 0x0;
-      TH1Inj_as     = 0x0;
-      TBeat_as      = 0x0;
-      cPhase_t.ns   = 0x0;
-      cPhase_t.ps   = 0x0;
-      cTrigExt_t.ns = 0x0;
-      cTrigExt_t.ps = 0x0;      
-      cTrigInj_t.ns = 0x0;
-      cTrigInj_t.ps = 0x0;
-      nBucketExt    = 0x0;
-      nBucketInj    = 0x0;
-      TPhaseShift   = 0x0;
-      fFineTune     = 0x0;
-      fMBTune       = 0x0;
-      tCBS          = 0x0;
-      nGExt         = 0x0;
-      nGInj         = 0x0;
-      offsetPrr_us  = 0x0;
+      flagsExt       = 0x0;
+      sidExt         = 0x0;
+      bpidExt        = 0x0;
+      paramExt       = 0x0;
+      flagsInj       = 0x0;
+      sidInj         = 0x0;
+      bpidInj        = 0x0;
+      paramInj       = 0x0;
+      mode           = 0x0;
+      nHExt          = 0x0;
+      nHInj          = 0x0;
+      TH1Ext_as      = 0x0;
+      TH1Inj_as      = 0x0;
+      TBeat_as       = 0x0;
+      cPhase_t.ns    = 0x0;
+      cPhase_t.ps    = 0x0;
+      cTrigExt_t.ns  = 0x0;
+      cTrigExt_t.ps  = 0x0;      
+      cTrigInj_t.ns  = 0x0;
+      cTrigInj_t.ps  = 0x0;
+      nBucketExt     = 0x0;
+      nBucketInj     = 0x0;
+      TPhaseShift    = 0x0;
+      fFineTune      = 0x0;
+      fMBTune        = 0x0;
+      tCBS           = 0x0;
+      nGExt          = 0x0;
+      nGInj          = 0x0;
+      offsetPrr_us   = 0x0;
 
-      transStat    = 0x0;                                     // reset transfer status
+      transStat      = 0x0;                                   // reset transfer status
       nTransfer++;                                            // increment transfer counter
-      status       = COMMON_STATUS_OK;                        // set to 'ok' if a a new transfer starts
+      status         = COMMON_STATUS_OK;                      // set to 'ok' if a a new transfer starts
 
       // submit data and primitive error checks
       if ((status = setSubmit()) != COMMON_STATUS_OK) {mState = B2B_MFSM_NOTHING;          return status;}
@@ -1186,11 +1187,13 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       // negative number of buckets: one integer equals 500us; example: -20 -> 10 ms shift time
       if (nBucketExt >= 0) TPhaseShift = B2B_PHASESHIFTTIME;            // default case
       else                 TPhaseShift = (-nBucketExt * 1000000) >> 1;  // hacky tweak of phase shift time [ns]
-      if (TPhaseShift > 14000000)
-                           TPhaseShift = 14000000;                      // hacky upper limit of 16 ms flattopzeit + 0.5ms pretrigger - 2ms kickoffsetMin - 0.5ms safety
-      TPhaseShiftDDS = (float)TPhaseShift/1000000000.0;                 // convert to [SI units, float]
-      kickOffsPShift = TPhaseShift +  B2B_KICKOFFSETMIN;                // offset [ns] deadline of kicker trigger events relative to B2BS event when performing phase shifts
-      
+
+      // check upper limit
+      if (TPhaseShift > (B2B_KICKOFFSETMAX - B2B_KICKOFFSETMIN))
+        TPhaseShift =    B2B_KICKOFFSETMAX - B2B_KICKOFFSETMIN;
+
+      TPhaseShiftDDS = (float)TPhaseShift/1000000000.0;                  // convert to [SI units, float]
+      kickOffsPShift = TPhaseShift +  B2B_KICKOFFSETMIN;                 // offset [ns] deadline of kicker trigger events relative to CBS when performing phase shifts
 
       cTrigExt_us = fwlib_float2half(fwlib_tps2tfns(cTrigExt_t)/1000.0); // 16 bit float [us]
       cTrigInj_us = fwlib_float2half(fwlib_tps2tfns(cTrigInj_t)/1000.0); // 16 bit float [us]
