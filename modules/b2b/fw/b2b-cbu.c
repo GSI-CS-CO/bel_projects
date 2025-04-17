@@ -560,7 +560,7 @@ void getGeometricHarmonics(uint32_t gid, uint32_t *nExt, uint32_t *nInj)
 
 
 // calculates time for extraction kick (nanoseconds precision is sufficient)
-uint32_t calcExtTime(uint64_t *tExtract, uint64_t tWant)
+uint32_t calcExtTime(uint64_t *tExtract, b2bt_t *tExtractPs, uint64_t tWant)
 {
   b2bt_t tExt;
   
@@ -571,7 +571,8 @@ uint32_t calcExtTime(uint64_t *tExtract, uint64_t tWant)
 
   tExt = fwlib_advanceTimePs(tH1Ext_t, fwlib_tns2tps(tWant), TH1Ext_as);
   
-  *tExtract = fwlib_tps2tns(tExt);
+  *tExtract   = fwlib_tps2tns(tExt);
+  *tExtractPs = tExt;
   //pp_printf("calc ps %4d\n", tH1Ext_t.ps);
   if (*tExtract == 0)                   return COMMON_STATUS_OUTOFRANGE;
 
@@ -1080,6 +1081,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   uint32_t recRes;                                            // reserved bits received
   uint64_t tMatch;                                            // time when phases of injecion and extraction match (beating method)
   uint64_t tTrig;                                             // time when kickers shall be triggered;
+  b2bt_t   tTrigPs;                                           // time when kickers shall be triggered [ps]
   uint64_t tTrigExt;                                          // time when extraction kicker shall be triggered; tTrigExt = tTrig + cTrigExt;
   uint64_t tTrigInj;                                          // time when injection kicker shall be triggered;  tTrigInj = tTrig + cTrigInj;
   uint16_t offsetFin_us;                                      // offset from deadline CBS to time, when extraction trigger is sent [us, hfloat]
@@ -1346,9 +1348,10 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
   // prepare fast extraction at ~tWantExt; calculate time for next positive 0-crossing of h=1 signal
   if (mState == B2B_MFSM_EXT_TNEXTRF_C) {
-    if (errorFlags) tTrig = tWantExt;                                           // plan B
-    else if (calcExtTime(&tTrig, tWantExt) != COMMON_STATUS_OK) {
+    if (errorFlags) {tTrig = tWantExt; tTrigPs.ns = tTrig;}                     // plan B
+    else if (calcExtTime(&tTrig, &tTrigPs, tWantExt) != COMMON_STATUS_OK) {
       tTrig       = tWantExt;                                                   // plan B
+      tTrigPs.ns  = tTrig;
       errorFlags |= B2B_ERRFLAG_CBU;
     } // if NOT STATUS_OK
     transStat |= mState;
@@ -1382,8 +1385,11 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     //tmp32 = tPhase0Inj.ns; pp_printf("phase 0 inj %d\n", tmp32);
     tPhase0Inj_as  =  tPhase0Inj.ns *  one_ns_as +  tPhase0Inj.ps * one_ps_as;         // convert to as
 
+    while (tPhase0Ext_as > tPhase0Inj_as) {tPhase0Ext_as -= TH1Ext_as;}                // make sure phase extraction is smaller than injection
     tPhaseDiff_as  = tPhase0Inj_as - tPhase0Ext_as;                                    // phase difference we need to shift
-    while (tPhaseDiff_as < 0) {tPhaseDiff_as += TH1Ext_as;}                            // keep it simple: only positive phase shifting
+
+    /*while (tPhaseDiff_as < 0) {tPhaseDiff_as += TH1Ext_as;}                            // keep it simple: only positive phase shifting - no longer needed as we shift three lines above*/
+
     pShiftExt.ns   = (uint64_t)tPhaseDiff_as / one_ns_as;                              // convert to ns
     //tmp32          = (uint32_t)pShiftExt.ns; pp_printf("shift ns %d", tmp32);
     pShiftExt.ps   = ((uint64_t)tPhaseDiff_as % one_ns_as) / one_ps_as;                // remaining ps
@@ -1396,18 +1402,17 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   // prepare fast extraction with phase matching between both machines is (here: phase shift method @ injection): calculate phase shift
   if (mState == B2B_MFSM_INJ_PSHIFT_C) {
     // calculate phase difference at extraction time
-    tPhase0Ext     = fwlib_advanceTimePs(tH1Ext_t, fwlib_tns2tps(tTrig), TH1Ext_as);   // exact phase 0 at ~extraction time
+    tPhase0Ext     = tTrigPs;                                                          // exact phase 0 at ~extraction time
     tPhase0Ext.ns -= tCBS;                                                             // relative to tCBS
-    //tmp32 = tPhase0Ext.ns; pp_printf("phase 0 ext %d\n", tmp32);
     tPhase0Ext_as  =  tPhase0Ext.ns *  one_ns_as +  tPhase0Ext.ps * one_ps_as;         // convert to as
 
-    tPhase0Inj     = fwlib_advanceTimePs(tH1Inj_t, fwlib_tns2tps(tTrig), TH1Inj_as);   // exact phase 0 at ~extraction time
+    tPhase0Inj     = fwlib_advanceTimePs(tH1Inj_t, tTrigPs, TH1Inj_as);                // exact phase 0 at ~extraction time
     tPhase0Inj.ns -= tCBS;                                                             // relative to tCBS
-    //tmp32 = tPhase0Inj.ns; pp_printf("phase 0 inj %d\n", tmp32);
     tPhase0Inj_as  =  tPhase0Inj.ns *  one_ns_as +  tPhase0Inj.ps * one_ps_as;         // convert to as
 
+    while (tPhase0Inj_as > tPhase0Ext_as) {tPhase0Inj_as -= TH1Inj_as;}                // make sure phase injection is smaller than extraction
     tPhaseDiff_as  = tPhase0Ext_as - tPhase0Inj_as;                                    // phase difference we need to shift (relative to extraction ring)
-    while (tPhaseDiff_as < 0) {tPhaseDiff_as += TH1Inj_as;}                            // keep it simple: only positive phase shifting
+
     pShiftInj.ns   = (uint64_t)tPhaseDiff_as / one_ns_as;                              // convert to ns
     //tmp32          = (uint32_t)pShiftExt.ns; pp_printf("shift ns %d", tmp32);
     pShiftInj.ps   = ((uint64_t)tPhaseDiff_as % one_ns_as) / one_ps_as;                // remaining ps
