@@ -106,7 +106,6 @@ begin
           cr_addr_o   <= (others => '0');
           r_ram_out   <= f_cellular_ram_set_standby;
           r_ack       <= '0';
-          --slave_o.dat <= (others => '0');
         end if;
       when S_WRITE =>
         r_counter_w <= r_counter_w + 1;
