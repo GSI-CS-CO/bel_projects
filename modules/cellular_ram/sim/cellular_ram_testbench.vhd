@@ -151,13 +151,13 @@ begin
            s_psram_dword <= x"12345678";
         elsif rising_edge(s_clk) then
           if s_psram_oen = '0' and s_psram_wen = '1' then
-            if s_psram_addr(1) = '0' then
+            if s_psram_addr(0) = '0' then
               s_psram_data <= s_psram_dword(15 downto 0);
             else
               s_psram_data <= s_psram_dword(31 downto 16);
             end if;
           elsif  s_psram_oen = '0' and s_psram_wen = '0' then
-            if s_psram_addr(1) = '0' then
+            if s_psram_addr(0) = '0' then
               s_psram_dword(15 downto 0) <= s_psram_data;
             else
               s_psram_dword(31 downto 16) <= s_psram_data;
@@ -223,6 +223,24 @@ begin
         wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_off, x"00000008", c_reg_all_zero);
         wait until rising_edge(s_clk);
         wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, x"00000008", c_reg_all_zero);
+        wait until rising_edge(s_wb_slave_out.ack);
+        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, x"00000000", c_reg_all_zero);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk);
+        -- Read from address 0x0
+        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, x"00000000", c_reg_all_zero);
+        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_off, x"00000000", c_reg_all_zero);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, x"00000000", c_reg_all_zero);
+        wait until rising_edge(s_wb_slave_out.ack);
+        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, x"00000000", c_reg_all_zero);
+        wait until rising_edge(s_clk);
+        -- Read from address 0x7ffffc
+        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, x"00000000", c_reg_all_zero);
+        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_off, x"007FFFFC", c_reg_all_zero);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, x"007FFFFC", c_reg_all_zero);
         wait until rising_edge(s_wb_slave_out.ack);
         wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, x"00000000", c_reg_all_zero);
         wait until rising_edge(s_clk);

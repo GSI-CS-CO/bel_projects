@@ -90,12 +90,12 @@ begin
          if (slave_i.cyc and slave_i.stb) = '1' then
            if slave_i.we = '1' then
              r_state    <= S_WRITE;
-             cr_addr_o  <= slave_i.adr(g_bits-1 downto 0);
+             cr_addr_o  <= '0' & slave_i.adr(g_bits-1 downto 1);
              cr_data_io <= slave_i.dat(15 downto 0);
              r_ram_out  <= f_cellular_ram_set_write;
            else
              r_state    <= S_READ;
-             cr_addr_o  <= slave_i.adr(g_bits-1 downto 0);
+             cr_addr_o  <= '0' & slave_i.adr(g_bits-1 downto 1);
              cr_data_io <= (others => 'Z');
              r_ram_out  <= f_cellular_ram_set_read;
            end if;
@@ -116,7 +116,7 @@ begin
              when S_LOW_WORD =>
                r_state_word              <= S_PREP_NEXT_WORD;
                r_ram_out                 <= f_cellular_ram_set_standby;
-               cr_addr_o                 <= std_logic_vector(unsigned(slave_i.adr(g_bits-1 downto 0)) + 2);
+               cr_addr_o                 <= '0' & std_logic_vector(unsigned(slave_i.adr(g_bits-1 downto 1)) + 1);
                cr_data_io                <= slave_i.dat(31 downto 16);
              when S_PREP_NEXT_WORD =>
                r_state_word              <= S_HIGH_WORD;
@@ -136,7 +136,7 @@ begin
              when S_LOW_WORD =>
                r_state_word              <= S_PREP_NEXT_WORD;
                r_ram_out                 <= f_cellular_ram_set_standby;
-               cr_addr_o                 <= std_logic_vector(unsigned(slave_i.adr(g_bits-1 downto 0)) + 2);
+               cr_addr_o                 <= '0' & std_logic_vector(unsigned(slave_i.adr(g_bits-1 downto 1)) + 1);
                slave_o.dat(15 downto 0)  <= cr_data_io;
              when S_PREP_NEXT_WORD =>
                r_state_word              <= S_HIGH_WORD;
