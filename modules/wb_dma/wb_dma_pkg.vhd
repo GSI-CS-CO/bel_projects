@@ -36,59 +36,62 @@ package wb_dma_pkg is
 
   component wb_dma is
     generic(
-      g_host_ram_size: Integer
+      g_host_ram_size  : Integer := 16;
+      g_dma_transfer_block_size : Integer := 4
     );
-  port(
+    port(
       clk_sys_i     : in std_logic;
       rstn_sys_i    : in std_logic;
-
-      slave_i : in t_wishbone_slave_in;
-      slave_o : out t_wishbone_slave_out
+  
+      slave_i   : in t_wishbone_slave_in;
+      slave_o   : out t_wishbone_slave_out;
+      master_i  : in t_wishbone_master_in;
+      master_o  : out t_wishbone_master_out
       );
   end component;
 
-  component simple_dpram is
-    generic(
-      byte_size                          : natural;
-      numwords_a                         : natural;
-      numwords_b                         : natural;
-      widthad_a                          : natural;
-      widthad_b                          : natural;
-      width_a                            : natural;
-      width_b                            : natural;
-      operation_mode                     : string;
-      read_during_write_mode_mixed_ports : string;
-      read_during_write_mode_port_a      : string;
-      read_during_write_mode_port_b      : string;
-      outdata_reg_a                      : string;
-      outdata_reg_b                      : string;
-      address_reg_b                      : string;
-      wrcontrol_wraddress_reg_b          : string;
-      byteena_reg_b                      : string;
-      indata_reg_b                       : string;
-      rdcontrol_reg_b                    : string;
-      init_file                          : string
-    );
-    port(
-      -- clk       : in std_logic;
-      -- ena       : in std_logic;
-      -- enb       : in std_logic;
-      -- wea       : in std_logic;
-      -- addra     : in std_logic_vector(9 downto 0);
-      -- addrb     : in std_logic_vector(9 downto 0);
-      -- dia       : in std_logic_vector(15 downto 0);
-      -- dob       : out std_logic_vector(15 downto 0);
-      clock0    : in std_logic;
-      wren_a    : in std_logic;
-      address_a : in std_logic_vector(widthad_a-1 downto 0);
-      data_a    : in std_logic_vector(width_a-1 downto 0);
-      q_a       : out std_logic_vector(width_a-1 downto 0);
+  -- component simple_dpram is
+  --   generic(
+  --     byte_size                          : natural;
+  --     numwords_a                         : natural;
+  --     numwords_b                         : natural;
+  --     widthad_a                          : natural;
+  --     widthad_b                          : natural;
+  --     width_a                            : natural;
+  --     width_b                            : natural;
+  --     operation_mode                     : string;
+  --     read_during_write_mode_mixed_ports : string;
+  --     read_during_write_mode_port_a      : string;
+  --     read_during_write_mode_port_b      : string;
+  --     outdata_reg_a                      : string;
+  --     outdata_reg_b                      : string;
+  --     address_reg_b                      : string;
+  --     wrcontrol_wraddress_reg_b          : string;
+  --     byteena_reg_b                      : string;
+  --     indata_reg_b                       : string;
+  --     rdcontrol_reg_b                    : string;
+  --     init_file                          : string
+  --   );
+  --   port(
+  --     -- clk       : in std_logic;
+  --     -- ena       : in std_logic;
+  --     -- enb       : in std_logic;
+  --     -- wea       : in std_logic;
+  --     -- addra     : in std_logic_vector(9 downto 0);
+  --     -- addrb     : in std_logic_vector(9 downto 0);
+  --     -- dia       : in std_logic_vector(15 downto 0);
+  --     -- dob       : out std_logic_vector(15 downto 0);
+  --     clock0    : in std_logic;
+  --     wren_a    : in std_logic;
+  --     address_a : in std_logic_vector(widthad_a-1 downto 0);
+  --     data_a    : in std_logic_vector(width_a-1 downto 0);
+  --     q_a       : out std_logic_vector(width_a-1 downto 0);
 
-      wren_b    : in std_logic;
-      address_b : in std_logic_vector(widthad_b-1 downto 0);
-      data_b    : in std_logic_vector(width_b-1 downto 0);
-      q_b       : out std_logic_vector(width_b-1 downto 0)
-    );
-  end component;
+  --     wren_b    : in std_logic;
+  --     address_b : in std_logic_vector(widthad_b-1 downto 0);
+  --     data_b    : in std_logic_vector(width_b-1 downto 0);
+  --     q_b       : out std_logic_vector(width_b-1 downto 0)
+  --   );
+  -- end component;
 
 end package;

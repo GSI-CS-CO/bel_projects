@@ -283,7 +283,7 @@ begin
       g_en_butis              => false,
       g_en_tlu                => false,
       g_en_virtualRAM         => true,
-      g_en_wb_dma             => false,
+      g_en_wb_dma             => true,
       g_en_wb_master_test     => true
     )
     port map(
