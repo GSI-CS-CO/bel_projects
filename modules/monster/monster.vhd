@@ -438,7 +438,8 @@ architecture rtl of monster is
       topm_vme,
       topm_pmc,
       topm_usb,
-      topm_prioq
+      topm_prioq,
+      topm_dma
     );
   constant c_top_my_masters : natural := top_my_masters'pos(top_my_masters'right)+1;
 
@@ -449,7 +450,8 @@ architecture rtl of monster is
     top_my_masters'pos(topm_vme)     => f_sdb_auto_msi(c_vme_msi,     g_en_vme),
     top_my_masters'pos(topm_pmc)     => f_sdb_auto_msi(c_pmc_msi,     g_en_pmc),
     top_my_masters'pos(topm_usb)     => f_sdb_auto_msi(c_usb_msi,     g_en_usb),
-    top_my_masters'pos(topm_prioq)   => f_sdb_auto_msi(c_null_msi,    false));
+    top_my_masters'pos(topm_prioq)   => f_sdb_auto_msi(c_null_msi,    false),
+    top_my_masters'pos(topm_dma)     => f_sdb_auto_msi(c_null_msi,    false));
 
   -- The FTM adds a bunch of masters to this crossbar
   constant c_ftm_masters : t_sdb_record_array := f_lm32_masters_bridge_msis(g_lm32_cores);
@@ -526,7 +528,6 @@ architecture rtl of monster is
     devs_eca_tap,
     devs_asmi,
     devs_enc_err_counter,
-    devs_wb_dma_slv,
     devs_ram,
     devs_master_test
   );
@@ -573,7 +574,6 @@ architecture rtl of monster is
     dev_slaves'pos(devs_eca_tap)        => f_sdb_auto_device(c_eca_tap_sdb,                    g_en_eca_tap),
     dev_slaves'pos(devs_asmi)           => f_sdb_auto_device(c_wb_asmi_sdb,                    g_en_asmi),
     dev_slaves'pos(devs_enc_err_counter)=> f_sdb_auto_device(c_enc_err_counter_sdb,            g_en_enc_err_counter),
-    dev_slaves'pos(devs_wb_dma_slv)     => f_sdb_auto_device(c_wb_dma_slave_data_sdb,          g_en_wb_dma),
     dev_slaves'pos(devs_ram)            => f_sdb_auto_device(c_virtualRAM_sdb,                 g_en_virtualRAM),
     dev_slaves'pos(devs_master_test)        => f_sdb_auto_device(c_wb_master_test_sdb,      g_en_wb_master_test));
   constant c_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_dev_layout_req_masters, c_dev_layout_req_slaves);
@@ -600,7 +600,8 @@ architecture rtl of monster is
     tops_wr_aux_fast_path,
     tops_ebm,
     tops_beam_dump,
-    tops_emb_cpu
+    tops_emb_cpu,
+    tops_wb_dma_slv
     );
   constant c_top_slaves        : natural := top_slaves'pos(top_slaves'right)+1;
 
@@ -614,7 +615,8 @@ architecture rtl of monster is
    top_slaves'pos(tops_wr_aux_fast_path) => f_sdb_auto_bridge(c_wrcore_aux_bridge_sdb,           g_dual_port_wr),
    top_slaves'pos(tops_ebm)              => f_sdb_auto_device(c_ebm_sdb,                         true),
    top_slaves'pos(tops_emb_cpu)          => f_sdb_auto_device(c_eca_queue_slave_sdb,             g_en_eca),
-   top_slaves'pos(tops_beam_dump)        => f_sdb_embed_device(c_beam_dump_sdb, x"7FFF0000",     g_en_beam_dump));
+   top_slaves'pos(tops_beam_dump)        => f_sdb_embed_device(c_beam_dump_sdb, x"7FFF0000",     g_en_beam_dump),
+   top_slaves'pos(tops_wb_dma_slv)       => f_sdb_auto_device(c_wb_dma_slave_data_sdb,           g_en_wb_dma));
 
   constant c_top_layout      : t_sdb_record_array := f_sdb_auto_layout(c_top_layout_req_masters, c_top_layout_req_slaves);
   constant c_top_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_top_layout_req_masters, c_top_layout_req_slaves);
@@ -3364,18 +3366,26 @@ end generate;
         );
   end generate virtualRAM_y;
 
+  top_msi_master_i(top_my_masters'pos(topm_dma)) <= cc_dummy_slave_out; -- DMA does not accept MSI !!!
+  
   wb_dma_n : if not g_en_wb_dma generate
-    dev_bus_master_i(dev_slaves'pos(devs_wb_dma_slv)) <= cc_dummy_slave_out;
+    top_bus_master_i(top_slaves'pos(tops_wb_dma_slv)) <= cc_dummy_slave_out;
   end generate;
 
   wb_dma_y : if g_en_wb_dma generate
-    wb_dma_test : wb_dma
-      port map(
-        clk_sys_i     => clk_sys,
-        rstn_sys_i    => rstn_sys,
+    wb_dma_module : wb_dma
+    generic map(
+      g_host_ram_size  => 1,
+      g_dma_transfer_block_size => 4
+    )
+    port map(
+      clk_sys_i     => clk_sys,
+      rstn_sys_i    => rstn_sys,
 
-        slave_i => dev_bus_master_o(dev_slaves'pos(devs_wb_dma_slv)),
-        slave_o => dev_bus_master_i(dev_slaves'pos(devs_wb_dma_slv))
+      slave_i   => top_bus_master_o(top_slaves'pos(tops_wb_dma_slv)),
+      slave_o   => top_bus_master_i(top_slaves'pos(tops_wb_dma_slv)),
+      master_i  => top_bus_slave_o(top_my_masters'pos(topm_dma)),
+      master_o  => top_bus_slave_i(top_my_masters'pos(topm_dma))
       );
   end generate;
 

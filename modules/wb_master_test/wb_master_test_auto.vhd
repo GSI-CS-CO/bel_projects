@@ -145,7 +145,7 @@ begin
         r_valid_check <= '0';
         r_error           <= std_logic_vector(to_unsigned(0, 1));
         r_fuse_read       <= (others => '0');
-        r_read_test_reg   <= (others => '0');
+        r_read_test_reg   <= X"12345678";
         r_fuse_write      <= (others => '0');
         r_write_test_reg  <= (others => '0');
       else

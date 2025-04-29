@@ -1,7 +1,7 @@
 --! @file        wb_dma_slave_auto.vhd
 --  DesignUnit   wb_dma_slave_auto
 --! @author      M. Kreider <>
---! @date        14/01/2025
+--! @date        22/04/2025
 --! @version     0.0.1
 --! @copyright   2025 GSI Helmholtz Centre for Heavy Ion Research GmbH
 --!
@@ -43,17 +43,16 @@ generic(
   g_channels  : natural := 16 --Number of DMA channels
 );
 Port(
-  clk_sys_i             : std_logic;                                        -- Clock input for sys domain
-  rst_sys_n_i           : std_logic;                                        -- Reset input (active low) for sys domain
-  error_i               : in  std_logic_vector(1-1 downto 0);               -- Error control
-  stall_i               : in  std_logic_vector(1-1 downto 0);               -- flow control
-  ch_sel_o              : out std_logic_vector(8-1 downto 0);               -- Channel select register
-  channel_csr_o         : out matrix(g_channels-1 downto 0, 32-1 downto 0); -- DMA channel CSR
-  descr_queue_intake_o  : out std_logic_vector(32-1 downto 0);              -- DMA channel descriptor queue intake
-  dma_csr_o             : out std_logic_vector(32-1 downto 0);              -- DMA controller control and status register
+  clk_sys_i         : std_logic;                            -- Clock input for sys domain
+  rst_sys_n_i       : std_logic;                            -- Reset input (active low) for sys domain
+  error_i           : in  std_logic_vector(1-1 downto 0);   -- Error control
+  stall_i           : in  std_logic_vector(1-1 downto 0);   -- flow control
+  dma_csr_o         : out std_logic_vector(32-1 downto 0);  -- DMA controller control and status register
+  start_address_o   : out std_logic_vector(32-1 downto 0);  -- DMA start address, for testing only
+  start_transfer_o  : out std_logic_vector(32-1 downto 0);  -- start transfer, for testing only
   
-  data_i                : in  t_wishbone_slave_in;
-  data_o                : out t_wishbone_slave_out
+  data_i            : in  t_wishbone_slave_in;
+  data_o            : out t_wishbone_slave_out
 
   
 );
@@ -61,31 +60,29 @@ end wb_dma_slave_auto;
 
 architecture rtl of wb_dma_slave_auto is
 
-  signal s_pop, s_push        : std_logic;
-  signal s_empty, s_full      : std_logic;
-  signal r_e_wait, s_e_p      : std_logic;
-  signal s_stall              : std_logic;
+  signal s_pop, s_push    : std_logic;
+  signal s_empty, s_full  : std_logic;
+  signal r_e_wait, s_e_p  : std_logic;
+  signal s_stall          : std_logic;
   signal s_valid,
          s_valid_ok,
-         r_valid_check        : std_logic;
-  signal r_ack                : std_logic;
-  signal r_err                : std_logic;
-  signal s_e, r_e, s_w        : std_logic;
-  signal s_d                  : std_logic_vector(32-1 downto 0);
-  signal s_s                  : std_logic_vector(4-1 downto 0);
-  signal s_a                  : std_logic_vector(2-1 downto 0);
+         r_valid_check    : std_logic;
+  signal r_ack            : std_logic;
+  signal r_err            : std_logic;
+  signal s_e, r_e, s_w    : std_logic;
+  signal s_d              : std_logic_vector(32-1 downto 0);
+  signal s_s              : std_logic_vector(4-1 downto 0);
+  signal s_a              : std_logic_vector(2-1 downto 0);
   signal s_a_ext,
          r_a_ext0,
-         r_a_ext1             : std_logic_vector(4-1 downto 0);
-  signal r_error              : std_logic_vector(1-1 downto 0)                := std_logic_vector(to_unsigned(0, 1)); -- Error
-  signal s_error_i            : std_logic_vector(1-1 downto 0)                := (others => '0');                     -- Error control
-  signal s_stall_i            : std_logic_vector(1-1 downto 0)                := (others => '0');                     -- flow control
-  signal r_dma_csr            : std_logic_vector(32-1 downto 0)               := (others => '0');                     -- DMA controller control and status register
-  signal r_channel_csr        : matrix(g_channels-1 downto 0, 32-1 downto 0)  := (others => (others => '0'));         -- DMA channel CSR
-  signal r_descr_queue_intake : std_logic_vector(32-1 downto 0)               := (others => '0');                     -- DMA channel descriptor queue intake
-  signal r_ch_sel             : std_logic_vector(8-1 downto 0)                := (others => '0');                     -- Channel select register
+         r_a_ext1         : std_logic_vector(4-1 downto 0);
+  signal r_error          : std_logic_vector(1-1 downto 0)  := std_logic_vector(to_unsigned(0, 1)); -- Error
+  signal s_error_i        : std_logic_vector(1-1 downto 0)  := (others => '0');                     -- Error control
+  signal s_stall_i        : std_logic_vector(1-1 downto 0)  := (others => '0');                     -- flow control
+  signal r_dma_csr        : std_logic_vector(32-1 downto 0) := (others => '0');                     -- DMA controller control and status register
+  signal r_start_address  : std_logic_vector(32-1 downto 0) := (others => '0');                     -- DMA start address, for testing only
+  signal r_start_transfer : std_logic_vector(32-1 downto 0) := (others => '0');                     -- start transfer, for testing only
 
-  signal r_p : integer ;
 
 begin
 
@@ -123,12 +120,11 @@ begin
   s_pop           <= s_valid_ok;
   data_o.stall    <= s_stall;
   
-  s_error_i             <= error_i;
-  s_stall_i             <= stall_i;
-  dma_csr_o             <= r_dma_csr;
-  channel_csr_o         <= r_channel_csr;
-  descr_queue_intake_o  <= r_descr_queue_intake;
-  ch_sel_o              <= r_ch_sel;
+  s_error_i         <= error_i;
+  s_stall_i         <= stall_i;
+  dma_csr_o         <= r_dma_csr;
+  start_address_o   <= r_start_address;
+  start_transfer_o  <= r_start_transfer;
   
   data : process(clk_sys_i)
   begin
@@ -137,11 +133,10 @@ begin
         r_e           <= '0';
         r_e_wait      <= '0';
         r_valid_check <= '0';
-        r_error               <= std_logic_vector(to_unsigned(0, 1));
-        r_dma_csr             <= (others => '0');
-        r_channel_csr         <= mrst(r_channel_csr);
-        r_descr_queue_intake  <= (others => '0');
-        r_ch_sel              <= (others => '0');
+        r_error           <= std_logic_vector(to_unsigned(0, 1));
+        r_dma_csr         <= (others => '0');
+        r_start_address   <= (others => '0');
+        r_start_transfer  <= (others => '0');
       else
         r_e           <= s_e;
         r_a_ext0      <= s_a_ext;
@@ -158,35 +153,33 @@ begin
           r_error <= (others => '0');
         end if;
         
-        r_p <= to_integer(unsigned(r_ch_sel));
-
+        
         
         if(s_e = '1') then
           if(s_w = '1') then
             -- WISHBONE WRITE ACTIONS
             case to_integer(unsigned(s_a_ext)) is
-              when c_dma_csr_RW             => r_dma_csr            <= f_wb_wr(r_dma_csr, s_d, s_s, "owr");                   -- 
-              when c_channel_csr_RW         => mset(r_channel_csr, f_wb_wr(mget(r_channel_csr, r_p), s_d, s_s, "owr"), r_p);  -- 
-              when c_descr_queue_intake_OWR => r_descr_queue_intake <= f_wb_wr(r_descr_queue_intake, s_d, s_s, "owr");        -- 
-              when c_ch_sel_RW              => r_ch_sel             <= f_wb_wr(r_ch_sel, s_d, s_s, "owr");                    -- 
-              when others                   => r_error              <= "1";
+              when c_dma_csr_RW         => r_dma_csr        <= f_wb_wr(r_dma_csr, s_d, s_s, "owr");         -- 
+              when c_start_address_RW   => r_start_address  <= f_wb_wr(r_start_address, s_d, s_s, "owr");   -- 
+              when c_start_transfer_RW  => r_start_transfer <= f_wb_wr(r_start_transfer, s_d, s_s, "owr");  -- 
+              when others               => r_error          <= "1";
             end case;
           else
             -- WISHBONE READ ACTIONS
             case to_integer(unsigned(s_a_ext)) is
-              when c_dma_csr_RW     => null;
-              when c_channel_csr_RW => null;
-              when c_ch_sel_RW      => null;
-              when others           => r_error <= "1";
+              when c_dma_csr_RW         => null;
+              when c_start_address_RW   => null;
+              when c_start_transfer_RW  => null;
+              when others               => r_error <= "1";
             end case;
           end if; -- s_w
         end if; -- s_e
         
         case to_integer(unsigned(r_a_ext1)) is
-          when c_dma_csr_RW       => data_o.dat <= std_logic_vector(resize(unsigned(r_dma_csr), data_o.dat'length));                -- 
-          when c_channel_csr_RW   => data_o.dat <= std_logic_vector(resize(unsigned(mget(r_channel_csr, r_p)), data_o.dat'length)); --
-          when c_ch_sel_RW        => data_o.dat <= std_logic_vector(resize(unsigned(r_ch_sel), data_o.dat'length));                 --
-          when others             => data_o.dat <= (others => 'X');
+          when c_dma_csr_RW         => data_o.dat <= std_logic_vector(resize(unsigned(r_dma_csr), data_o.dat'length));          -- 
+          when c_start_address_RW   => data_o.dat <= std_logic_vector(resize(unsigned(r_start_address), data_o.dat'length));    -- 
+          when c_start_transfer_RW  => data_o.dat <= std_logic_vector(resize(unsigned(r_start_transfer), data_o.dat'length));   -- 
+          when others               => data_o.dat <= (others => 'X');
         end case;
 
         
