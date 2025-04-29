@@ -3,17 +3,19 @@ set -eu
 
 # Global variables
 DEVICE="NULL"
-#BYTE_SIZE=33554432
-BYTE_SIZE=16777216
+BYTE_SIZE=33554432
 WAIT_SECONDS=0
 FILE_WITH_ZEROS="no"
 START_OFFSET="0x0"
 READ_ONLY="no"
+SHOW_CMP_FILES="no"
+SDB_GSI_VENDOR_ID="0x651"
+SDB_GSI_DEVICE_ID="0x169edcb8"
 
 # Run test
 function run_test() {
   echo "Searching for PSRAM slave at $DEVICE ..."
-  PSRAM_ADDR=$(eb-find "$DEVICE" 0x651 0x169edcb8)
+  PSRAM_ADDR=$(eb-find "$DEVICE" "$SDB_GSI_VENDOR_ID" "$SDB_GSI_DEVICE_ID")
   echo "Found PSRAM at $PSRAM_ADDR ..."
 
   # Add offset, remove "0x"
@@ -57,6 +59,13 @@ function run_test() {
       echo "Test failed: Files are not identical."
     fi
   fi
+
+  if [ "$SHOW_CMP_FILES" = "yes" ]; then
+    echo "Written data:"
+    hexdump -C put_file -v
+    echo "Read data:"
+    hexdump -C get_file -v
+  fi
 }
 
 # Print Help
@@ -74,7 +83,7 @@ if [ $# -eq 0 ]; then
   exit 1
 fi
 
-while getopts "d:b:w:o:rzh" opt; do
+while getopts "d:b:w:o:rszh" opt; do
   case $opt in
     d)
       DEVICE="$OPTARG"
@@ -93,6 +102,9 @@ while getopts "d:b:w:o:rzh" opt; do
       ;;
     r)
       READ_ONLY="yes"
+      ;;
+    s)
+      SHOW_CMP_FILES="yes"
       ;;
     h)
       print_help
@@ -114,7 +126,7 @@ if [ "$DEVICE" = "NULL" ]; then
 fi
 
 # Define an array of required tools
-REQUIRED_TOOLS=("eb-find" "eb-put" "eb-get" "dd" "bc")
+REQUIRED_TOOLS=("eb-find" "eb-put" "eb-get" "dd" "bc" "hexdump")
 
 # Check for the presence of each tool in the array
 for TOOL in "${REQUIRED_TOOLS[@]}"; do
