@@ -237,10 +237,43 @@ begin
         wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, x"00000000", c_reg_all_zero);
         wait until rising_edge(s_clk);
         -- Read from address 0x7ffffc
-        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, x"00000000", c_reg_all_zero);
+        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, x"007FFFFC" , c_reg_all_zero);
         wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_off, x"007FFFFC", c_reg_all_zero);
         wait until rising_edge(s_clk);
         wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, x"007FFFFC", c_reg_all_zero);
+        wait until rising_edge(s_wb_slave_out.ack);
+        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, x"00000000", c_reg_all_zero);
+        wait until rising_edge(s_clk);
+        -- Read from address 0x00800000
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, x"00800000", c_reg_all_zero);
+        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_off, x"00800000", c_reg_all_zero);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, x"00800000", c_reg_all_zero);
+        wait until rising_edge(s_wb_slave_out.ack);
+        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, x"00000000", c_reg_all_zero);
+        wait until rising_edge(s_clk);
+        -- Read from address 0x01000000
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, x"01000000", c_reg_all_zero);
+        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_off, x"01000000", c_reg_all_zero);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, x"01000000", c_reg_all_zero);
+        wait until rising_edge(s_wb_slave_out.ack);
+        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, x"00000000", c_reg_all_zero);
+        wait until rising_edge(s_clk);
+        -- Read from address 0x01800000
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, x"01800000", c_reg_all_zero);
+        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_on,  c_we_off, x"01800000", c_reg_all_zero);
+        wait until rising_edge(s_clk);
+        wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_on,  c_str_off, c_we_off, x"01800000", c_reg_all_zero);
         wait until rising_edge(s_wb_slave_out.ack);
         wait until rising_edge(s_clk); s_wb_slave_in <= wb_stim(c_cyc_off, c_str_off, c_we_off, x"00000000", c_reg_all_zero);
         wait until rising_edge(s_clk);

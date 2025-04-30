@@ -40,6 +40,8 @@ architecture rtl of cellular_ram is
   signal r_counter_r  : unsigned(f_ceil_log2(c_trc+1)-1 downto 0) := (others => '0');
   signal r_counter_w  : unsigned(f_ceil_log2(c_trc+1)-1 downto 0) := (others => '0');
 
+  signal r_selector   : std_logic_vector(3 downto 0);
+
 begin
 
   -- Wishbone
@@ -58,10 +60,32 @@ begin
   cr_ubn_o  <= r_ram_out.ubn;
   cr_lbn_o  <= r_ram_out.lbn;
 
-  -- Unused cellular RAM
+  -- Unused cellular RAM pins (asynchronous mode)
   cr_clk_o  <= '0';
   cr_advn_o <= '0';
 
+  -- Select RAM 0..3 based on the Wishbone address, see cellular_ram_regs.h
+  p_ram_selector : process(clk_i, rstn_i) is
+  begin
+    if rstn_i = '0' then
+      r_selector <= (others => '0');
+    elsif rising_edge(clk_i) then
+      case slave_i.adr(24 downto 23) is
+        when "00" =>
+          r_selector <= "0001";
+        when "01" =>
+          r_selector <= "0010";
+        when "10" =>
+          r_selector <= "0100";
+        when "11" =>
+          r_selector <= "1000";
+        when others =>
+          r_selector <= (others => '0');
+      end case;
+    end if;
+  end process;
+
+  -- Handle Wishbone requests and read or write from RAM
   p_wishbone_handler : process(clk_i, rstn_i) is
   begin
     if rstn_i = '0' then

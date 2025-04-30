@@ -2,7 +2,7 @@
 TB_NAME="cellular_ram_testbench"
 GHDL_BIN="ghdl"
 GHDL_FLAGS="--ieee=synopsys --warn-no-vital-generic"
-STOP_TIME="10ms"
+STOP_TIME="20us"
 VCD_NAME="$TB_NAME.vcd"
 GHW_NAME="$TB_NAME.ghw"
 VCD_VIEWER="gtkwave"
