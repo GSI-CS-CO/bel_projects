@@ -1,0 +1,5 @@
+psram_testbench
+*.o
+*.vcd
+*.cf
+*.ghw

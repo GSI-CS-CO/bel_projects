@@ -55,5 +55,6 @@ modules = {
     "i2c_wrapper",
     "enc_err_counter",
     "a10vs",
+    "cellular_ram",
   ]
 }

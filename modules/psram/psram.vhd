@@ -70,11 +70,12 @@ architecture rtl of psram is
      others => '0');
   constant c_bcr_time : natural := 5; -- at least 70ns in clocks
 
-  type t_state is (S_RESET, S_IDLE, S_WRITE_REQUEST, S_WRITE_WAIT, S_WRITE_LATCH, S_READ_REQUEST, S_READ_WAIT, S_READ_LATCH, S_BCR_REQUEST, S_BCR_WAIT, S_BCR_GAP, S_BCR_READ);
+  type t_state is (S_INITIAL, S_CHECK_VERSION, S_RESET, S_IDLE, S_WRITE_REQUEST, S_WRITE_WAIT, S_WRITE_LATCH, S_READ_REQUEST, S_READ_WAIT, S_READ_LATCH, S_BCR_REQUEST, S_BCR_WAIT, S_BCR_GAP, S_BCR_READ);
 
   -- PSRAM input path
-  signal r_state   : t_state := S_RESET;
+  signal r_state   : t_state := S_INITIAL;
   signal r_count   : unsigned(f_ceil_log2(c_bcr_time+1)-1 downto 0) := (others => '0');
+  signal r_count_v : unsigned(f_ceil_log2(c_bcr_time+1)-1 downto 0) := (others => '0');
   signal r_adr     : std_logic_vector(g_bits-1 downto 1);
   signal s_adr     : std_logic_vector(g_bits-1 downto 1);
 
@@ -115,10 +116,17 @@ begin
   fsm : process(clk_i, rstn_i) is
   begin
     if rstn_i = '0' then
-      r_state <= S_RESET;
-      r_count <= (others => '0');
+      r_state   <= S_INITIAL;
+      r_count   <= (others => '0');
+      r_count_v <= (others => '0');
     elsif rising_edge(clk_i) then
       case r_state is
+       when S_INITIAL =>
+          r_state <= S_CHECK_VERSION;
+
+        when S_CHECK_VERSION => -- Read DIDR (device ID register)
+          r_state <= S_RESET;
+
         when S_RESET =>
           r_state <= S_BCR_REQUEST;
 
@@ -352,6 +360,16 @@ begin
           ps_wen  <= '1';
           ps_oen  <= '1';
           ps_cre  <= '0';
+
+        when S_INITIAL | S_CHECK_VERSION =>
+          ps_addr <= (18 => '1', others => '0'); -- The DIDR is accessed with CRE HIGH and A[19:18] = 01b
+          ps_data <= (others => 'Z');
+          ps_advn <= '0';
+          ps_cen  <= '0';
+          ps_seln <= (others => '0');
+          ps_wen  <= '1';
+          ps_oen  <= '0';
+          ps_cre  <= '1';
 
         when S_WRITE_REQUEST =>
           ps_addr <= r_adr & "0";

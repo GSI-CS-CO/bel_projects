@@ -249,7 +249,7 @@ architecture rtl of scu4slim is
   constant c_cores        : natural:= 2;
   constant c_initf_name   : string := c_project & ".mif" & ';' & c_project & "_stub.mif";
   constant c_profile_name : string := "medium_icache_debug";
-  constant c_psram_bits   : natural := 24;
+  constant c_cr_bits      : natural := 24;
 
 begin
 
@@ -258,7 +258,7 @@ begin
       g_family             => c_family,
       g_project            => c_project,
       g_flash_bits         => 25, -- !!! TODO: Check this
-      g_psram_bits         => c_psram_bits,
+      g_cr_bits            => c_cr_bits,
       g_gpio_in            => 5,
       g_gpio_out           => 18,
       --g_lvds_in            => 3,
@@ -273,7 +273,7 @@ begin
       g_en_pcie            => true,
       g_en_tlu             => false,
       g_en_usb             => false,
-      g_en_psram           => true,
+      g_en_cellular_ram    => true,
       g_io_table           => io_mapping_table,
       g_en_tempsens        => false,
       g_en_a10ts           => true,
@@ -358,17 +358,17 @@ begin
       --usb_pktendn_o           => pa(6),
       --usb_fd_io               => fd,
       -- PSRAM TODO: Multi Chip
-      ps_clk                  => psram_clk,
-      ps_addr                 => psram_a,
-      ps_data                 => psram_dq,
-      ps_seln(0)              => s_psram_lbn,
-      ps_seln(1)              => s_psram_ubn,
-      ps_cen                  => s_psram_cen,
-      ps_oen                  => s_psram_oen,
-      ps_wen                  => s_psram_wen,
-      ps_cre                  => s_psram_cre,
-      ps_advn                 => s_psram_advn,
-      ps_wait                 => s_psram_wait,
+      cr_clk_o                => psram_clk,
+      cr_addr_o               => psram_a,
+      cr_data_io              => psram_dq,
+      cr_lbn_o                => s_psram_lbn,
+      cr_ubn_o                => s_psram_ubn,
+      cr_cen_o                => s_psram_cen,
+      cr_oen_o                => s_psram_oen,
+      cr_wen_o                => s_psram_wen,
+      cr_cre_o                => s_psram_cre,
+      cr_advn_o               => s_psram_advn,
+      cr_wait_i               => s_psram_wait,
       ps_chip_selector        => s_psram_sel,
       hw_version              => x"0000000" & not scu_cb_version);
 
@@ -384,12 +384,12 @@ begin
 
   -- PSRAM #2
   psram_cen(1)  <= '1';
-  psram_cre(1)  <= '0';
-  psram_oen(1)  <= '1';
-  psram_wen(1)  <= '1';
-  psram_lbn(1)  <= '1';
-  psram_ubn(1)  <= '1';
-  psram_advn(1) <= '1';
+  psram_cre(1)  <= 'X';
+  psram_oen(1)  <= 'X';
+  psram_wen(1)  <= 'X';
+  psram_lbn(1)  <= 'X';
+  psram_ubn(1)  <= 'X';
+  psram_advn(1) <= 'X';
 
   -- LEDs
   wr_led_pps    <= s_led_pps;                                             -- white = PPS
