@@ -17,14 +17,14 @@ entity cellular_ram is
     cr_clk_o   : out   std_logic;
     cr_addr_o  : out   std_logic_vector(g_bits-1 downto 0);
     cr_data_io : inout std_logic_vector(15 downto 0);
-    cr_ubn_o   : out   std_logic;
-    cr_lbn_o   : out   std_logic;
-    cr_cen_o   : out   std_logic;
-    cr_oen_o   : out   std_logic;
-    cr_wen_o   : out   std_logic;
-    cr_cre_o   : out   std_logic;
-    cr_advn_o  : out   std_logic;
-    cr_wait_i  : in    std_logic);
+    cr_ubn_o   : out   std_logic_vector(3 downto 0);
+    cr_lbn_o   : out   std_logic_vector(3 downto 0);
+    cr_cen_o   : out   std_logic_vector(3 downto 0);
+    cr_oen_o   : out   std_logic_vector(3 downto 0);
+    cr_wen_o   : out   std_logic_vector(3 downto 0);
+    cr_cre_o   : out   std_logic_vector(3 downto 0);
+    cr_advn_o  : out   std_logic_vector(3 downto 0);
+    cr_wait_i  : in    std_logic_vector(3 downto 0));
 end entity;
 
 architecture rtl of cellular_ram is
@@ -39,7 +39,6 @@ architecture rtl of cellular_ram is
   constant c_tcem     : natural := 5;
   signal r_counter_r  : unsigned(f_ceil_log2(c_trc+1)-1 downto 0) := (others => '0');
   signal r_counter_w  : unsigned(f_ceil_log2(c_trc+1)-1 downto 0) := (others => '0');
-
   signal r_selector   : std_logic_vector(3 downto 0);
 
 begin
@@ -53,16 +52,18 @@ begin
   slave_o.err <= '0';
 
  -- Cellular RAM
-  cr_cre_o  <= r_ram_out.cre;
-  cr_oen_o  <= r_ram_out.oen;
-  cr_wen_o  <= r_ram_out.wen;
-  cr_cen_o  <= r_ram_out.cen;
-  cr_ubn_o  <= r_ram_out.ubn;
-  cr_lbn_o  <= r_ram_out.lbn;
+  quad_ram : for i in 0 to 3 generate
+    cr_cre_o(i)  <= r_ram_out.cre;
+    cr_oen_o(i)  <= r_ram_out.oen;
+    cr_wen_o(i)  <= r_ram_out.wen;
+    cr_cen_o(i)  <= r_ram_out.cen;
+    cr_ubn_o(i)  <= r_ram_out.ubn;
+    cr_lbn_o(i)  <= r_ram_out.lbn;
+  end generate;
 
   -- Unused cellular RAM pins (asynchronous mode)
   cr_clk_o  <= '0';
-  cr_advn_o <= '0';
+  cr_advn_o <= (others => '0');
 
   -- Select RAM 0..3 based on the Wishbone address, see cellular_ram_regs.h
   p_ram_selector : process(clk_i, rstn_i) is

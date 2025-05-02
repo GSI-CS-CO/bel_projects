@@ -27,14 +27,14 @@ architecture rtl of cellular_ram_testbench is
   signal s_psram_clk  : std_logic;
   signal s_psram_addr : std_logic_vector(23 downto 0);
   signal s_psram_data : std_logic_vector(15 downto 0);
-  signal s_psram_ubn  : std_logic;
-  signal s_psram_lbn  : std_logic;
-  signal s_psram_cen  : std_logic;
-  signal s_psram_oen  : std_logic;
-  signal s_psram_wen  : std_logic;
-  signal s_psram_cre  : std_logic;
-  signal s_psram_advn : std_logic;
-  signal s_psram_wait : std_logic := '0';
+  signal s_psram_ubn  : std_logic_vector(3 downto 0);
+  signal s_psram_lbn  : std_logic_vector(3 downto 0);
+  signal s_psram_cen  : std_logic_vector(3 downto 0);
+  signal s_psram_oen  : std_logic_vector(3 downto 0);
+  signal s_psram_wen  : std_logic_vector(3 downto 0);
+  signal s_psram_cre  : std_logic_vector(3 downto 0);
+  signal s_psram_advn : std_logic_vector(3 downto 0);
+  signal s_psram_wait : std_logic_vector(3 downto 0) := (others => '0');
 
   signal s_wb_slave_in  : t_wishbone_slave_in;
   signal s_wb_slave_out : t_wishbone_slave_out;
@@ -106,21 +106,21 @@ begin
   p_psram_fsm : process(s_clk, s_rst_n) is
   begin
     if s_rst_n = '0' then
-     s_psram_wait <= '0';
+     s_psram_wait <= (others => '0');
      r_state <= S_RESET;
      s_int_delay_counter <= (others => '0');
     elsif rising_edge(s_clk) then
       case r_state is
         when S_RESET =>
           r_state <= S_IDLE;
-          s_psram_wait <= '0';
+          s_psram_wait <= (others => '0');
           s_int_delay_counter <= (others => '0');
         when S_IDLE =>
           r_state <= S_IDLE;
-          s_psram_wait <= '0';
+          s_psram_wait <= (others => '0');
         when S_BCR_WRITE =>
           r_state <= S_IDLE;
-          s_psram_wait <= '0';
+          s_psram_wait <= (others => '0');
       end case;
     end if;
   end process;
@@ -150,13 +150,13 @@ begin
         if s_rst_n = '0' then
            s_psram_dword <= x"12345678";
         elsif rising_edge(s_clk) then
-          if s_psram_oen = '0' and s_psram_wen = '1' then
+          if s_psram_oen(0) = '0' and s_psram_wen(0) = '1' then
             if s_psram_addr(0) = '0' then
               s_psram_data <= s_psram_dword(15 downto 0);
             else
               s_psram_data <= s_psram_dword(31 downto 16);
             end if;
-          elsif  s_psram_oen = '0' and s_psram_wen = '0' then
+          elsif  s_psram_oen(0) = '0' and s_psram_wen(0) = '0' then
             if s_psram_addr(0) = '0' then
               s_psram_dword(15 downto 0) <= s_psram_data;
             else

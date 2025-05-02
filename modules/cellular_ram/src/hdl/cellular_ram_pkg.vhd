@@ -20,14 +20,14 @@ package cellular_ram_pkg is
       cr_clk_o   : out   std_logic;
       cr_addr_o  : out   std_logic_vector(g_bits-1 downto 0);
       cr_data_io : inout std_logic_vector(15 downto 0);
-      cr_ubn_o   : out   std_logic;
-      cr_lbn_o   : out   std_logic;
-      cr_cen_o   : out   std_logic;
-      cr_oen_o   : out   std_logic;
-      cr_wen_o   : out   std_logic;
-      cr_cre_o   : out   std_logic;
-      cr_advn_o  : out   std_logic;
-      cr_wait_i  : in    std_logic);
+      cr_ubn_o   : out   std_logic_vector(3 downto 0);
+      cr_lbn_o   : out   std_logic_vector(3 downto 0);
+      cr_cen_o   : out   std_logic_vector(3 downto 0);
+      cr_oen_o   : out   std_logic_vector(3 downto 0);
+      cr_wen_o   : out   std_logic_vector(3 downto 0);
+      cr_cre_o   : out   std_logic_vector(3 downto 0);
+      cr_advn_o  : out   std_logic_vector(3 downto 0);
+      cr_wait_i  : in    std_logic_vector(3 downto 0));
   end component;
 
   type t_cellular_ram_out is record
@@ -65,7 +65,8 @@ package body cellular_ram_pkg is
     result.wbd_endian    := c_sdb_endian_big;
 
     result.sdb_component.addr_first := (others => '0');
-    result.sdb_component.addr_last  := std_logic_vector(to_unsigned(2**(g_bits+1)-1, 64));
+    result.sdb_component.addr_last := x"000000000200001f"; -- 4 RAMs + configuration registers
+    --result.sdb_component.addr_last  := std_logic_vector(to_unsigned(2**(g_bits+1)-1, 64)); -- One RAM
 
     result.sdb_component.product.vendor_id := x"0000000000000651";
     result.sdb_component.product.device_id := x"169edcb8";
