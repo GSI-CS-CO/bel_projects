@@ -598,7 +598,7 @@ architecture rtl of monster is
     dev_slaves'pos(devs_eca_tap)        => f_sdb_auto_device(c_eca_tap_sdb,                    g_en_eca_tap),
     dev_slaves'pos(devs_asmi)           => f_sdb_auto_device(c_wb_asmi_sdb,                    g_en_asmi),
     dev_slaves'pos(devs_enc_err_counter)=> f_sdb_auto_device(c_enc_err_counter_sdb,            g_en_enc_err_counter),
-    dev_slaves'pos(devs_a10vs)          => f_sdb_auto_device(c_a10vs_sdb,                      g_en_a10vs));
+    dev_slaves'pos(devs_a10vs)          => f_sdb_auto_device(c_a10vs_sdb,                      g_en_a10vs),
     dev_slaves'pos(devs_cellular_ram)   => f_sdb_auto_device(f_cellular_ram_sdb(g_cr_bits),    g_en_cellular_ram));
   constant c_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_dev_layout_req_masters, c_dev_layout_req_slaves);
