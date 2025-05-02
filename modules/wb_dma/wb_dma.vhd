@@ -11,7 +11,7 @@ use work.gencores_pkg.all;
 entity wb_dma is
   generic(
     g_host_ram_size  : Integer := 16;
-    g_dma_transfer_block_size : Integer := 1
+    g_dma_transfer_block_size : Integer := 4
   );
   port(
     clk_sys_i     : in std_logic;
@@ -58,7 +58,7 @@ architecture rtl of wb_dma is
         rstn_i : in std_logic;
     
         -- config signals
-        transfer_size_i : in std_logic_vector(log2_ceil(g_dma_transfer_block_size)-1 downto 0);
+        transfer_size_i : in std_logic_vector(log2_ceil(g_dma_transfer_block_size) downto 0);
         start_address_i : in t_wishbone_address;
     
         -- communication signals
@@ -110,7 +110,7 @@ begin
           rstn_i => rstn_sys_i,
       
           -- config signals
-          transfer_size_i => "01",--std_logic_vector(to_unsigned(g_dma_transfer_block_size, log2_ceil(g_dma_transfer_block_size))),
+          transfer_size_i => "100",--std_logic_vector(to_unsigned(g_dma_transfer_block_size, log2_ceil(g_dma_transfer_block_size))),
           start_address_i => s_start_address,
       
           -- communication signals

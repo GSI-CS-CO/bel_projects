@@ -13,7 +13,7 @@ port(
     clk_i : in std_logic;
     rstn_i : in std_logic;
 
-    upper_limit_i : in std_logic_vector(log2_ceil(g_max_block_size)-1 downto 0) := (others => '0');
+    upper_limit_i : in std_logic_vector(log2_ceil(g_max_block_size) downto 0) := (others => '0');
     limit_reached_o : out std_logic;
 
     cnt_en : in std_logic
@@ -21,7 +21,7 @@ port(
 end entity;
 
 architecture behavioural of limit_counter is
-signal block_counter : unsigned(log2_ceil(g_max_block_size)-1 downto 0) := (others => '0');
+signal block_counter : unsigned(log2_ceil(g_max_block_size) downto 0) := (others => '0');
 begin
 counter: process(clk_i, rstn_i)
 begin
