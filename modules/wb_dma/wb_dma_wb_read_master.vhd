@@ -16,7 +16,7 @@ port(
     rstn_i : in std_logic;
 
     -- config signals
-    transfer_size_i : in std_logic_vector(log2_ceil(g_block_size)-1 downto 0);
+    transfer_size_i : in std_logic_vector(log2_ceil(g_block_size) downto 0);
     start_address_i : in t_wishbone_address;
 
     -- communication signals
@@ -36,7 +36,7 @@ architecture rtl of wb_dma_wb_read_master is
   signal r_send_state : t_send_state := IDLE;
   signal s_send_state_next : t_send_state := IDLE;
 
-  -- signal r_transfer_size : std_logic_vector(log2_ceil(g_block_size)-1 downto 0);
+  -- signal r_transfer_size : std_logic_vector(log2_ceil(g_block_size) downto 0);
 
   signal s_block_done   : std_logic;
   signal s_ack_complete : std_logic;
@@ -51,7 +51,7 @@ architecture rtl of wb_dma_wb_read_master is
     clk_i : in std_logic;
     rstn_i : in std_logic;
 
-    upper_limit_i : in std_logic_vector(log2_ceil(g_max_block_size)-1 downto 0) := (others => '0');
+    upper_limit_i : in std_logic_vector(log2_ceil(g_max_block_size) downto 0) := (others => '0');
     limit_reached_o : out std_logic;
 
     cnt_en : in std_logic
@@ -91,79 +91,84 @@ port map(
   cnt_en => master_i.ACK
 );
 
-p_send_state_transition: process(r_send_state, dma_active_i, descriptor_active_i, master_i.stall, s_block_done, s_ack_complete)
+p_send_state_comb: process(r_send_state, dma_active_i, descriptor_active_i, master_i.stall, s_block_done, s_ack_complete)
 begin
-case r_send_state is
-  when IDLE =>
-    if(dma_active_i and descriptor_active_i) then
+if (rstn_i = '0') then
+  master_o.cyc <= '0'; --r_send_state = SEND or r_send_state = LISTEN or r_send_state = STALL;
+  master_o.stb <= '0'; --r_send_state = SEND or r_send_state = STALL;
+  master_o.sel <= (others => '0');
+  master_o.we  <= '0';
+  master_o.dat <= (others => '0');
+  master_o.adr <= start_address_i;
+
+  s_send_state_next <= IDLE;
+else
+  master_o.cyc <= '0'; --r_send_state = SEND or r_send_state = LISTEN or r_send_state = STALL;
+  master_o.stb <= '0'; --r_send_state = SEND or r_send_state = STALL;
+  master_o.sel <= (others => '0');
+  master_o.we  <= '0';
+  master_o.dat <= (others => '0');
+  master_o.adr <= master_o.adr;
+  
+  case r_send_state is
+    when IDLE =>
+      master_o.adr <= start_address_i;
+  
+      if(dma_active_i and descriptor_active_i) then
+        if(master_i.stall = '1') then
+          s_send_state_next <= STALL;
+        else
+          s_send_state_next <= SEND;
+        end if;
+      else
+        s_send_state_next <= IDLE;
+      end if;
+  
+    -- send address and data if this is a write cycle
+    when SEND =>
+      master_o.cyc <= '1';
+      master_o.adr <= std_logic_vector(unsigned(master_o.adr) + 4); -- don't increment if stall signal is present?
+      
+      if(master_i.stall = '1') then
+        master_o.stb <= '1';
+        s_send_state_next <= STALL;
+      elsif(s_block_done) then
+        master_o.stb <= '0';
+        s_send_state_next <= LISTEN;
+      else
+        master_o.stb <= '1';
+        s_send_state_next <= SEND;
+      end if;
+  
+    -- keep current output until stall goes to 0
+    when STALL =>
+      master_o.cyc <= '1';
+      master_o.stb <= '1';
+  
       if(master_i.stall = '1') then
         s_send_state_next <= STALL;
       else
         s_send_state_next <= SEND;
       end if;
-    else
-      s_send_state_next <= IDLE;
-    end if;
-
-  -- send address and data if this is a write cycle
-  when SEND =>
-
-    if(master_i.stall = '1') then
-      s_send_state_next <= STALL;
-    elsif(s_block_done) then
-      s_send_state_next <= LISTEN;
-    else
-      s_send_state_next <= SEND;
-    end if;
-
-  -- keep current output until stall goes to 0
-  when STALL =>
-    if(master_i.stall = '1') then
-      s_send_state_next <= STALL;
-    else
-      s_send_state_next <= SEND;
-    end if;
-    
-  -- listen to the slave until the count of acknowledge, error and retry signals is correct
-  when LISTEN =>
-    if(s_ack_complete) then
-      s_send_state_next <= IDLE;
-    else
-      s_send_state_next <= LISTEN;
-    end if;
-end case;
+      
+    -- listen to the slave until the count of acknowledge, error and retry signals is correct
+    when LISTEN =>
+      master_o.cyc <= '1';
+  
+      if(s_ack_complete) then
+        s_send_state_next <= IDLE;
+      else
+        s_send_state_next <= LISTEN;
+      end if;
+  end case;
+end if;
 end process;
 
-p_send_fsm : process(clk_i, rstn_i)
+p_send_fsm_synch : process(clk_i, rstn_i)
 begin
-  if (rstn_i = '0') then
-    r_send_state <= IDLE;  
-  else
-    if rising_edge(clk_i) then
-      r_send_state <= s_send_state_next;
-    
-      master_o.cyc <= '0'; --r_send_state = SEND or r_send_state = LISTEN or r_send_state = STALL;
-      master_o.stb <= '0'; --r_send_state = SEND or r_send_state = STALL;
-      master_o.sel <= (others => '0');
-      master_o.we  <= '0';
-      master_o.dat <= (others => '0');
-      master_o.adr <= master_o.adr;
-      case s_send_state_next is
-        when IDLE =>
-          master_o.adr <= start_address_i;
-        when SEND =>
-          master_o.cyc <= '1';
-          master_o.stb <= '1';
-          master_o.adr <= std_logic_vector(unsigned(master_o.adr) + 4); -- don't increment if stall signal is present?
-        when STALL =>
-          master_o.cyc <= '1';
-          master_o.stb <= '1';
-
-        when LISTEN =>
-          master_o.cyc <= '1';
-      end case;
-    end if; --clk_i
-  end if; --rstn_i
+  if rising_edge(clk_i) then
+    r_send_state <= s_send_state_next;
+  end if; --clk_i
 end process;
 
 -- only allow burst length changes when the master is idle, but buffers the signal one cycle --> avoid this to avoid buffering all signals to keep synchronization
