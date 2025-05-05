@@ -53,12 +53,12 @@ begin
 
  -- Cellular RAM
   quad_ram : for i in 0 to 3 generate
-    cr_cre_o(i)  <= r_ram_out.cre;
-    cr_oen_o(i)  <= r_ram_out.oen;
-    cr_wen_o(i)  <= r_ram_out.wen;
-    cr_cen_o(i)  <= r_ram_out.cen;
-    cr_ubn_o(i)  <= r_ram_out.ubn;
-    cr_lbn_o(i)  <= r_ram_out.lbn;
+    cr_cre_o(i) <= r_ram_out.cre and (r_selector(i));
+    cr_oen_o(i) <= r_ram_out.oen and (r_selector(i));
+    cr_wen_o(i) <= r_ram_out.wen and (r_selector(i));
+    cr_cen_o(i) <= r_ram_out.cen and (r_selector(i));
+    cr_ubn_o(i) <= r_ram_out.ubn and (r_selector(i));
+    cr_lbn_o(i) <= r_ram_out.lbn and (r_selector(i));
   end generate;
 
   -- Unused cellular RAM pins (asynchronous mode)
@@ -69,20 +69,22 @@ begin
   p_ram_selector : process(clk_i, rstn_i) is
   begin
     if rstn_i = '0' then
-      r_selector <= (others => '0');
+      r_selector <= "0001";
     elsif rising_edge(clk_i) then
-      case slave_i.adr(24 downto 23) is
-        when "00" =>
-          r_selector <= "0001";
-        when "01" =>
-          r_selector <= "0010";
-        when "10" =>
-          r_selector <= "0100";
-        when "11" =>
-          r_selector <= "1000";
-        when others =>
-          r_selector <= (others => '0');
-      end case;
+      if (slave_i.cyc and slave_i.stb) = '1' then
+        case slave_i.adr(24 downto 23) is
+          when "00" =>
+            r_selector <= "0001";
+          when "01" =>
+            r_selector <= "0010";
+          when "10" =>
+            r_selector <= "0100";
+          when "11" =>
+            r_selector <= "1000";
+          when others =>
+            r_selector <= (others => '0');
+        end case;
+      end if;
     end if;
   end process;
 
