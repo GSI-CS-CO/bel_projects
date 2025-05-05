@@ -53,12 +53,12 @@ begin
 
  -- Cellular RAM
   quad_ram : for i in 0 to 3 generate
-    cr_cre_o(i) <= r_ram_out.cre and (r_selector(i));
-    cr_oen_o(i) <= r_ram_out.oen and (r_selector(i));
-    cr_wen_o(i) <= r_ram_out.wen and (r_selector(i));
-    cr_cen_o(i) <= r_ram_out.cen and (r_selector(i));
-    cr_ubn_o(i) <= r_ram_out.ubn and (r_selector(i));
-    cr_lbn_o(i) <= r_ram_out.lbn and (r_selector(i));
+    cr_cre_o(i) <= r_ram_out.cre when (r_selector(i) = '1') else '1';
+    cr_oen_o(i) <= r_ram_out.oen when (r_selector(i) = '1') else '1';
+    cr_wen_o(i) <= r_ram_out.wen when (r_selector(i) = '1') else '1';
+    cr_cen_o(i) <= r_ram_out.cen when (r_selector(i) = '1') else '1';
+    cr_ubn_o(i) <= r_ram_out.ubn when (r_selector(i) = '1') else '1';
+    cr_lbn_o(i) <= r_ram_out.lbn when (r_selector(i) = '1') else '1';
   end generate;
 
   -- Unused cellular RAM pins (asynchronous mode)
