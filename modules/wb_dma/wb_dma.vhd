@@ -51,26 +51,26 @@ architecture rtl of wb_dma is
 
   component wb_dma_wb_read_master is
     generic(
-        g_block_size : integer
+      g_block_size : integer
     );
     port(
-        clk_i : in std_logic;
-        rstn_i : in std_logic;
-    
-        -- config signals
-        transfer_size_i : in std_logic_vector(log2_ceil(g_dma_transfer_block_size) downto 0);
-        start_address_i : in t_wishbone_address;
-    
-        -- communication signals
-        dma_active_i : in std_logic;
-        descriptor_active_i : in std_logic;
-    
-        master_idle_o : out std_logic;
-    
-        master_i  : in t_wishbone_master_in;
-        master_o  : out t_wishbone_master_out
-    );
-    end component;
+      clk_i : in std_logic;
+      rstn_i : in std_logic;
+  
+      -- config signals
+      transfer_size_i : in std_logic_vector(log2_ceil(g_dma_transfer_block_size) downto 0);
+      start_address_i : in t_wishbone_address;
+  
+      -- communication signals
+      dma_active_i : in std_logic;
+      descriptor_active_i : in std_logic;
+  
+      master_idle_o : out std_logic;
+  
+      master_i  : in t_wishbone_master_in;
+      master_o  : out t_wishbone_master_out
+  );
+  end component;
 
 begin
 
@@ -110,7 +110,7 @@ begin
           rstn_i => rstn_sys_i,
       
           -- config signals
-          transfer_size_i => "100",--std_logic_vector(to_unsigned(g_dma_transfer_block_size, log2_ceil(g_dma_transfer_block_size))),
+          transfer_size_i => s_transfer_size(log2_ceil(g_dma_transfer_block_size) downto 0),--std_logic_vector(to_unsigned(g_dma_transfer_block_size, log2_ceil(g_dma_transfer_block_size))),
           start_address_i => s_start_address,
       
           -- communication signals
@@ -132,7 +132,7 @@ begin
       rst_sys_n_i             => rstn_sys_i, -- Reset input (active low) for sys domain
       error_i                 => (others => '0'),        -- Error control
       stall_i                 => (others => '0'),        -- flow control
-      dma_csr_o               => open,      -- DMA controller control and status register
+      dma_csr_o               => s_transfer_size,      -- DMA controller control and status register
       start_address_o         => s_start_address, -- DMA start address, for testing only
       start_transfer_o        => s_start_transfer, -- start transfer, for testing only
       
