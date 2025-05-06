@@ -48,6 +48,11 @@ architecture rtl of wb_dma is
   -- CONFIG SIGNALS
   ------------------------------------------
   signal s_start_address : t_wishbone_address;
+  signal s_transfer_size : t_wishbone_data;
+
+  -- WISHBONE SIGNALS
+  ------------------------------------------
+  signal s_master_o : t_wishbone_master_out;
 
   component wb_dma_wb_read_master is
     generic(
@@ -71,6 +76,28 @@ architecture rtl of wb_dma is
       master_o  : out t_wishbone_master_out
   );
   end component;
+
+  component wb_dma_data_buffer is
+    generic(
+        g_block_size : integer
+    );
+    
+    port(
+        clk_i   : in std_logic;
+        rstn_i  : in std_logic;
+    
+        buffer_empty_o  : out std_logic;
+        buffer_full_o   : out std_logic;
+        
+        rd_master_i     : in t_wishbone_master_in;
+        rd_master_snoop : in t_wishbone_slave_in;
+    
+        wr_master_i     : in t_wishbone_master_in;
+        wr_master_snoop : in t_wishbone_slave_in;
+
+        buffer_output   : out t_wishbone_data
+    );
+    end component;
 
 begin
 
@@ -120,8 +147,48 @@ begin
           master_idle_o => s_master_idle,
       
           master_i  => master_i,
-          master_o  => master_o
+          master_o  => s_master_o
       );
+
+    master_o <= s_master_o;
+
+    data_buffer : wb_dma_data_buffer
+      generic map(
+        g_block_size => g_dma_transfer_block_size
+      )
+      port map(
+        clk_i   => clk_sys_i,
+        rstn_i  => rstn_sys_i,
+    
+        buffer_empty_o  => open,
+        buffer_full_o   => open,
+        
+        rd_master_i     => master_i,
+        rd_master_snoop => s_master_o,
+    
+        wr_master_i     => c_DUMMY_WB_MASTER_IN, 
+        wr_master_snoop => c_DUMMY_WB_MASTER_OUT,
+
+        buffer_output   => open
+      );
+    
+    -- data_buffer : wb_dma_data_buffer
+    -- generic map(
+    --   g_block_size <= g_dma_transfer_block_size
+    -- )
+    -- port map(
+    --   clk_i   <= clk_sys_i,
+    --   rstn_i  <= rstn_sys_i,
+  
+    --   read_block_done_i   <= 
+    --   write_block_done_i  <=
+  
+    --   buffer_empty_o  <=
+    --   buffer_full_o   <=
+      
+    --   master_i  <= master_i,
+    --   master_o  <= master_o
+    -- );
 
     wishbone_slave : wb_dma_slave_auto
     generic map (
