@@ -45,6 +45,8 @@ architecture rtl of wb_dma is
   signal s_start_transfer     : std_logic_vector(32-1 downto 0);
   signal r_start_transfer_once: std_logic;
 
+  signal s_buffer_empty : std_logic;
+
   -- CONFIG SIGNALS
   ------------------------------------------
   signal s_start_address : t_wishbone_address;
@@ -69,6 +71,7 @@ architecture rtl of wb_dma is
       -- communication signals
       dma_active_i : in std_logic;
       descriptor_active_i : in std_logic;
+      rd_buffer_ready_i   : in std_logic;
   
       master_idle_o : out std_logic;
   
@@ -143,6 +146,7 @@ begin
           -- communication signals
           dma_active_i => s_dma_active,
           descriptor_active_i => s_descriptor_active,
+          rd_buffer_ready_i   => s_buffer_empty,
       
           master_idle_o => s_master_idle,
       
@@ -160,7 +164,7 @@ begin
         clk_i   => clk_sys_i,
         rstn_i  => rstn_sys_i,
     
-        buffer_empty_o  => open,
+        buffer_empty_o  => s_buffer_empty,
         buffer_full_o   => open,
         
         rd_master_i     => master_i,

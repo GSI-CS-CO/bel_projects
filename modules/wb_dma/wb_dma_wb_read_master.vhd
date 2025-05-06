@@ -20,8 +20,9 @@ port(
     start_address_i : in t_wishbone_address;
 
     -- communication signals
-    dma_active_i : in std_logic;
+    dma_active_i        : in std_logic;
     descriptor_active_i : in std_logic;
+    rd_buffer_ready_i     : in std_logic;
 
     master_idle_o : out std_logic;
 
@@ -35,6 +36,8 @@ architecture rtl of wb_dma_wb_read_master is
   type t_send_state is (IDLE, SEND, LISTEN, STALL);
   signal r_send_state : t_send_state := IDLE;
   signal s_send_state_next : t_send_state := IDLE;
+
+  signal s_start_transfer : std_logic;
 
   -- signal r_transfer_size : std_logic_vector(log2_ceil(g_block_size) downto 0);
 
@@ -91,6 +94,20 @@ port map(
   cnt_en => master_i.ACK
 );
 
+p_start_register : process(rstn_i, s_send_state_next, descriptor_active_i, dma_active_i, rd_buffer_ready_i) begin
+if(rstn_i = '0') then
+  s_start_transfer <= '0';
+else
+  if(s_send_state_next = IDLE) then
+    if(dma_active_i <= '1' and descriptor_active_i = '1' and rd_buffer_ready_i = '1') then
+      s_start_transfer <= '1';
+    end if;
+  else
+    s_start_transfer <= '0';
+  end if;
+end if;
+end process;
+
 p_send_state_comb: process(r_send_state, dma_active_i, descriptor_active_i, master_i.stall, s_block_done, s_ack_complete)
 begin
 if (rstn_i = '0') then
@@ -111,7 +128,7 @@ else
   case r_send_state is
     when IDLE =>
   
-      if(dma_active_i and descriptor_active_i) then
+      if(s_start_transfer = '1') then
         if(master_i.stall = '1') then
           s_send_state_next <= STALL;
         else
