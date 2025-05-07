@@ -1,15 +1,15 @@
 [*]
-[*] GTKWave Analyzer v3.3.119 (w)1999-2024 BSI
-[*] Mon May  5 12:01:24 2025
+[*] GTKWave Analyzer v3.3.116 (w)1999-2023 BSI
+[*] Wed May  7 09:16:49 2025
 [*]
-[dumpfile] "/home/alex/workspace/2025/fallout_cram_merge/modules/cellular_ram/sim/cellular_ram_testbench.ghw"
-[dumpfile_mtime] "Mon May  5 12:00:06 2025"
-[dumpfile_size] 22864
-[savefile] "/home/alex/workspace/2025/fallout_cram_merge/modules/cellular_ram/sim/cellular_ram_testbench.gtkw"
-[timestart] 0
+[dumpfile] "/mnt/hdd/usr/alex/2025_05_06_fallout_cram_merge/modules/cellular_ram/sim/cellular_ram_testbench.ghw"
+[dumpfile_mtime] "Tue May  6 15:11:12 2025"
+[dumpfile_size] 22797
+[savefile] "/mnt/hdd/usr/alex/2025_05_06_fallout_cram_merge/modules/cellular_ram/sim/cellular_ram_testbench.gtkw"
+[timestart] 1539000000
 [size] 2211 1227
-[pos] 1480 1022
-*-29.867342 866000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[pos] 1572 938
+*-28.512514 2086000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
 [treeopen] top.cellular_ram_testbench.
 [treeopen] top.cellular_ram_testbench.u_cellular_ram_dut.
@@ -35,6 +35,15 @@ top.cellular_ram_testbench.u_cellular_ram_dut.r_ram_out.cre
 @22
 #{top.cellular_ram_testbench.u_cellular_ram_dut.cr_data_io[15:0]} top.cellular_ram_testbench.u_cellular_ram_dut.cr_data_io[15] top.cellular_ram_testbench.u_cellular_ram_dut.cr_data_io[14] top.cellular_ram_testbench.u_cellular_ram_dut.cr_data_io[13] top.cellular_ram_testbench.u_cellular_ram_dut.cr_data_io[12] top.cellular_ram_testbench.u_cellular_ram_dut.cr_data_io[11] top.cellular_ram_testbench.u_cellular_ram_dut.cr_data_io[10] top.cellular_ram_testbench.u_cellular_ram_dut.cr_data_io[9] top.cellular_ram_testbench.u_cellular_ram_dut.cr_data_io[8] top.cellular_ram_testbench.u_cellular_ram_dut.cr_data_io[7] top.cellular_ram_testbench.u_cellular_ram_dut.cr_data_io[6] top.cellular_ram_testbench.u_cellular_ram_dut.cr_data_io[5] top.cellular_ram_testbench.u_cellular_ram_dut.cr_data_io[4] top.cellular_ram_testbench.u_cellular_ram_dut.cr_data_io[3] top.cellular_ram_testbench.u_cellular_ram_dut.cr_data_io[2] top.cellular_ram_testbench.u_cellular_ram_dut.cr_data_io[1] top.cellular_ram_testbench.u_cellular_ram_dut.cr_data_io[0]
 #{top.cellular_ram_testbench.u_cellular_ram_dut.cr_addr_o[23:0]} top.cellular_ram_testbench.u_cellular_ram_dut.cr_addr_o[23] top.cellular_ram_testbench.u_cellular_ram_dut.cr_addr_o[22] top.cellular_ram_testbench.u_cellular_ram_dut.cr_addr_o[21] top.cellular_ram_testbench.u_cellular_ram_dut.cr_addr_o[20] top.cellular_ram_testbench.u_cellular_ram_dut.cr_addr_o[19] top.cellular_ram_testbench.u_cellular_ram_dut.cr_addr_o[18] top.cellular_ram_testbench.u_cellular_ram_dut.cr_addr_o[17] top.cellular_ram_testbench.u_cellular_ram_dut.cr_addr_o[16] top.cellular_ram_testbench.u_cellular_ram_dut.cr_addr_o[15] top.cellular_ram_testbench.u_cellular_ram_dut.cr_addr_o[14] top.cellular_ram_testbench.u_cellular_ram_dut.cr_addr_o[13] top.cellular_ram_testbench.u_cellular_ram_dut.cr_addr_o[12] top.cellular_ram_testbench.u_cellular_ram_dut.cr_addr_o[11] top.cellular_ram_testbench.u_cellular_ram_dut.cr_addr_o[10] top.cellular_ram_testbench.u_cellular_ram_dut.cr_addr_o[9] top.cellular_ram_testbench.u_cellular_ram_dut.cr_addr_o[8] top.cellular_ram_testbench.u_cellular_ram_dut.cr_addr_o[7] top.cellular_ram_testbench.u_cellular_ram_dut.cr_addr_o[6] top.cellular_ram_testbench.u_cellular_ram_dut.cr_addr_o[5] top.cellular_ram_testbench.u_cellular_ram_dut.cr_addr_o[4] top.cellular_ram_testbench.u_cellular_ram_dut.cr_addr_o[3] top.cellular_ram_testbench.u_cellular_ram_dut.cr_addr_o[2] top.cellular_ram_testbench.u_cellular_ram_dut.cr_addr_o[1] top.cellular_ram_testbench.u_cellular_ram_dut.cr_addr_o[0]
+@800022
+#{top.cellular_ram_testbench.u_cellular_ram_dut.r_selector[3:0]} top.cellular_ram_testbench.u_cellular_ram_dut.r_selector[3] top.cellular_ram_testbench.u_cellular_ram_dut.r_selector[2] top.cellular_ram_testbench.u_cellular_ram_dut.r_selector[1] top.cellular_ram_testbench.u_cellular_ram_dut.r_selector[0]
+@28
+top.cellular_ram_testbench.u_cellular_ram_dut.r_selector[3]
+top.cellular_ram_testbench.u_cellular_ram_dut.r_selector[2]
+top.cellular_ram_testbench.u_cellular_ram_dut.r_selector[1]
+top.cellular_ram_testbench.u_cellular_ram_dut.r_selector[0]
+@1001200
+-group_end
 @200
 -PSRAM Internals
 @420
@@ -53,6 +62,7 @@ top.cellular_ram_testbench.u_cellular_ram_dut.r_state_word
 top.cellular_ram_testbench.s_wb_slave_out.stall
 top.cellular_ram_testbench.s_wb_slave_out.rty
 top.cellular_ram_testbench.s_wb_slave_out.err
+@29
 top.cellular_ram_testbench.s_wb_slave_out.ack
 @22
 #{top.cellular_ram_testbench.s_wb_slave_out.dat[31:0]} top.cellular_ram_testbench.s_wb_slave_out.dat[31] top.cellular_ram_testbench.s_wb_slave_out.dat[30] top.cellular_ram_testbench.s_wb_slave_out.dat[29] top.cellular_ram_testbench.s_wb_slave_out.dat[28] top.cellular_ram_testbench.s_wb_slave_out.dat[27] top.cellular_ram_testbench.s_wb_slave_out.dat[26] top.cellular_ram_testbench.s_wb_slave_out.dat[25] top.cellular_ram_testbench.s_wb_slave_out.dat[24] top.cellular_ram_testbench.s_wb_slave_out.dat[23] top.cellular_ram_testbench.s_wb_slave_out.dat[22] top.cellular_ram_testbench.s_wb_slave_out.dat[21] top.cellular_ram_testbench.s_wb_slave_out.dat[20] top.cellular_ram_testbench.s_wb_slave_out.dat[19] top.cellular_ram_testbench.s_wb_slave_out.dat[18] top.cellular_ram_testbench.s_wb_slave_out.dat[17] top.cellular_ram_testbench.s_wb_slave_out.dat[16] top.cellular_ram_testbench.s_wb_slave_out.dat[15] top.cellular_ram_testbench.s_wb_slave_out.dat[14] top.cellular_ram_testbench.s_wb_slave_out.dat[13] top.cellular_ram_testbench.s_wb_slave_out.dat[12] top.cellular_ram_testbench.s_wb_slave_out.dat[11] top.cellular_ram_testbench.s_wb_slave_out.dat[10] top.cellular_ram_testbench.s_wb_slave_out.dat[9] top.cellular_ram_testbench.s_wb_slave_out.dat[8] top.cellular_ram_testbench.s_wb_slave_out.dat[7] top.cellular_ram_testbench.s_wb_slave_out.dat[6] top.cellular_ram_testbench.s_wb_slave_out.dat[5] top.cellular_ram_testbench.s_wb_slave_out.dat[4] top.cellular_ram_testbench.s_wb_slave_out.dat[3] top.cellular_ram_testbench.s_wb_slave_out.dat[2] top.cellular_ram_testbench.s_wb_slave_out.dat[1] top.cellular_ram_testbench.s_wb_slave_out.dat[0]
@@ -84,14 +94,14 @@ top.cellular_ram_testbench.s_wb_slave_in.cyc
 #{top.cellular_ram_testbench.s_psram_wait[3:0]} top.cellular_ram_testbench.s_psram_wait[3] top.cellular_ram_testbench.s_psram_wait[2] top.cellular_ram_testbench.s_psram_wait[1] top.cellular_ram_testbench.s_psram_wait[0]
 #{top.cellular_ram_testbench.s_psram_advn[3:0]} top.cellular_ram_testbench.s_psram_advn[3] top.cellular_ram_testbench.s_psram_advn[2] top.cellular_ram_testbench.s_psram_advn[1] top.cellular_ram_testbench.s_psram_advn[0]
 #{top.cellular_ram_testbench.s_psram_cre[3:0]} top.cellular_ram_testbench.s_psram_cre[3] top.cellular_ram_testbench.s_psram_cre[2] top.cellular_ram_testbench.s_psram_cre[1] top.cellular_ram_testbench.s_psram_cre[0]
-@c00023
+@c00022
 #{top.cellular_ram_testbench.s_psram_wen[3:0]} top.cellular_ram_testbench.s_psram_wen[3] top.cellular_ram_testbench.s_psram_wen[2] top.cellular_ram_testbench.s_psram_wen[1] top.cellular_ram_testbench.s_psram_wen[0]
 @28
 top.cellular_ram_testbench.s_psram_wen[3]
 top.cellular_ram_testbench.s_psram_wen[2]
 top.cellular_ram_testbench.s_psram_wen[1]
 top.cellular_ram_testbench.s_psram_wen[0]
-@1401201
+@1401200
 -group_end
 @c00022
 #{top.cellular_ram_testbench.s_psram_oen[3:0]} top.cellular_ram_testbench.s_psram_oen[3] top.cellular_ram_testbench.s_psram_oen[2] top.cellular_ram_testbench.s_psram_oen[1] top.cellular_ram_testbench.s_psram_oen[0]

@@ -72,14 +72,14 @@ begin
       r_selector <= "0001";
     elsif rising_edge(clk_i) then
       if (slave_i.cyc and slave_i.stb) = '1' then
-        case slave_i.adr(24 downto 23) is
-          when "00" =>
+        case to_integer(unsigned(slave_i.adr(26 downto 24))) is
+          when 0 to 1 =>
             r_selector <= "0001";
-          when "01" =>
+          when 2 to 3 =>
             r_selector <= "0010";
-          when "10" =>
+          when 4 to 5 =>
             r_selector <= "0100";
-          when "11" =>
+          when 6 to 7 =>
             r_selector <= "1000";
           when others =>
             r_selector <= (others => '0');

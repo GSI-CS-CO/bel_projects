@@ -386,14 +386,14 @@ entity monster is
     cr_clk_o               : out   std_logic := 'Z';
     cr_addr_o              : out   std_logic_vector(g_cr_bits-1 downto 0) := (others => 'Z');
     cr_data_io             : inout std_logic_vector(15 downto 0);
-    cr_ubn_o               : out   std_logic := 'Z';
-    cr_lbn_o               : out   std_logic := 'Z';
-    cr_cen_o               : out   std_logic := 'Z';
-    cr_oen_o               : out   std_logic := 'Z';
-    cr_wen_o               : out   std_logic := 'Z';
-    cr_cre_o               : out   std_logic := 'Z';
-    cr_advn_o              : out   std_logic := 'Z';
-    cr_wait_i              : in    std_logic;
+    cr_ubn_o               : out   std_logic_vector(3 downto 0) := (others => 'Z');
+    cr_lbn_o               : out   std_logic_vector(3 downto 0) := (others => 'Z');
+    cr_cen_o               : out   std_logic_vector(3 downto 0) := (others => 'Z');
+    cr_oen_o               : out   std_logic_vector(3 downto 0) := (others => 'Z');
+    cr_wen_o               : out   std_logic_vector(3 downto 0) := (others => 'Z');
+    cr_cre_o               : out   std_logic_vector(3 downto 0) := (others => 'Z');
+    cr_advn_o              : out   std_logic_vector(3 downto 0) := (others => 'Z');
+    cr_wait_i              : in    std_logic_vector(3 downto 0);
     -- i2c
     i2c_scl_pad_i          : in  std_logic_vector(g_num_i2c_interfaces-1 downto 0);
     i2c_scl_pad_o          : out std_logic_vector(g_num_i2c_interfaces-1 downto 0) := (others => 'Z');

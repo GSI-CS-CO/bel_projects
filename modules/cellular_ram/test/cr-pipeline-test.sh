@@ -70,10 +70,19 @@ function run_test() {
 
 # Print Help
 function print_help() {
-  echo "Example usage:"
+  echo "Cellular RAM test application"
   echo ""
-  echo "$0 -d dev/ttyUSB0"
-  echo "$0 -h"
+  echo "Usage:"
+  echo "  $0 [options]"
+  echo ""
+  echo "Options:"
+  echo "  -d <device>           - select device (dev/wbm0, dev/ttyUSB0, ...)"
+  echo "  -h                    - print help"
+  echo "  -w <seconds>          - wait between write and read"
+  echo "  -z                    - write only zeros"
+  echo "  -o <offset>           - write and read beginning at <offset> (0x0, 0x4, ...)"
+  echo "  -r                    - read only, don't write data to RAM"
+  echo "  -b <bytes>            - write and read <bytes> from RAM"
 }
 
 # Check given arguments
