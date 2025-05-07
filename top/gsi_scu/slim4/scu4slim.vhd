@@ -200,14 +200,14 @@ architecture rtl of scu4slim is
 
   signal s_core_clk_25m     : std_logic;
 
-  signal s_psram_cen        : std_logic;
-  signal s_psram_cre        : std_logic;
-  signal s_psram_advn       : std_logic;
-  signal s_psram_oen        : std_logic;
-  signal s_psram_wen        : std_logic;
-  signal s_psram_ubn        : std_logic;
-  signal s_psram_lbn        : std_logic;
-  signal s_psram_wait       : std_logic;
+  signal s_psram_cen        : std_logic_vector(1 downto 0);
+  signal s_psram_cre        : std_logic_vector(1 downto 0);
+  signal s_psram_advn       : std_logic_vector(1 downto 0);
+  signal s_psram_oen        : std_logic_vector(1 downto 0);
+  signal s_psram_wen        : std_logic_vector(1 downto 0);
+  signal s_psram_ubn        : std_logic_vector(1 downto 0);
+  signal s_psram_lbn        : std_logic_vector(1 downto 0);
+  signal s_psram_wait       : std_logic_vector(1 downto 0);
 
   signal s_psram_sel        : std_logic_vector(3 downto 0);
 
@@ -361,35 +361,28 @@ begin
       cr_clk_o                => psram_clk,
       cr_addr_o               => psram_a,
       cr_data_io              => psram_dq,
-      cr_lbn_o                => s_psram_lbn,
-      cr_ubn_o                => s_psram_ubn,
-      cr_cen_o                => s_psram_cen,
-      cr_oen_o                => s_psram_oen,
-      cr_wen_o                => s_psram_wen,
-      cr_cre_o                => s_psram_cre,
-      cr_advn_o               => s_psram_advn,
-      cr_wait_i               => s_psram_wait,
+      cr_lbn_o(1 downto 0)    => s_psram_lbn,
+      cr_ubn_o(1 downto 0)    => s_psram_ubn,
+      cr_cen_o(1 downto 0)    => s_psram_cen,
+      cr_oen_o(1 downto 0)    => s_psram_oen,
+      cr_wen_o(1 downto 0)    => s_psram_wen,
+      cr_cre_o(1 downto 0)    => s_psram_cre,
+      cr_advn_o(1 downto 0)   => s_psram_advn,
+      cr_wait_i(1 downto 0)   => s_psram_wait,
       ps_chip_selector        => s_psram_sel,
       hw_version              => x"0000000" & not scu_cb_version);
 
-  -- PSRAM #1
-  psram_cen(0)  <= s_psram_cen;
-  psram_cre(0)  <= s_psram_cre;
-  psram_oen(0)  <= s_psram_oen;
-  psram_wen(0)  <= s_psram_wen;
-  psram_lbn(0)  <= s_psram_lbn;
-  psram_ubn(0)  <= s_psram_ubn;
-  psram_advn(0) <= s_psram_advn;
-  s_psram_wait  <= psram_wait(0);
-
-  -- PSRAM #2
-  psram_cen(1)  <= '1';
-  psram_cre(1)  <= 'X';
-  psram_oen(1)  <= 'X';
-  psram_wen(1)  <= 'X';
-  psram_lbn(1)  <= 'X';
-  psram_ubn(1)  <= 'X';
-  psram_advn(1) <= 'X';
+  -- Dual PSRAM
+  dual_ram : for i in 0 to 1 generate
+    psram_cen(i)    <= s_psram_cen(i);
+    psram_cre(i)    <= s_psram_cre(i);
+    psram_oen(i)    <= s_psram_oen(i);
+    psram_wen(i)    <= s_psram_wen(i);
+    psram_lbn(i)    <= s_psram_lbn(i);
+    psram_ubn(i)    <= s_psram_ubn(i);
+    psram_advn(i)   <= s_psram_advn(i);
+    s_psram_wait(i) <= psram_wait(i);
+  end generate;
 
   -- LEDs
   wr_led_pps    <= s_led_pps;                                             -- white = PPS
