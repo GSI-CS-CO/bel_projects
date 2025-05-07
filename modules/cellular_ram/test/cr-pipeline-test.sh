@@ -11,6 +11,8 @@ READ_ONLY="no"
 SHOW_CMP_FILES="no"
 SDB_GSI_VENDOR_ID="0x651"
 SDB_GSI_DEVICE_ID="0x169edcb8"
+RAM_COUNT=1
+RAM_OFFSET="0x02000000"
 
 # Run test
 function run_test() {
@@ -77,12 +79,14 @@ function print_help() {
   echo ""
   echo "Options:"
   echo "  -d <device>           - select device (dev/wbm0, dev/ttyUSB0, ...)"
-  echo "  -h                    - print help"
-  echo "  -w <seconds>          - wait between write and read"
-  echo "  -z                    - write only zeros"
-  echo "  -o <offset>           - write and read beginning at <offset> (0x0, 0x4, ...)"
-  echo "  -r                    - read only, don't write data to RAM"
   echo "  -b <bytes>            - write and read <bytes> from RAM"
+  echo "  -w <seconds>          - wait between write and read"
+  echo "  -o <offset>           - write and read beginning at <offset> (0x0, 0x4, ...)"
+  echo "  -c <count>            - RAM chip(s) to test (1, 2, 3, 4)"
+  echo "  -z                    - write only zeros"
+  echo "  -r                    - read only, don't write data to RAM"
+  echo "  -s                    - show comparison files"
+  echo "  -h                    - print help"
 }
 
 # Check given arguments
@@ -92,7 +96,7 @@ if [ $# -eq 0 ]; then
   exit 1
 fi
 
-while getopts "d:b:w:o:rszh" opt; do
+while getopts "d:b:w:o:c:rszh" opt; do
   case $opt in
     d)
       DEVICE="$OPTARG"
@@ -103,11 +107,14 @@ while getopts "d:b:w:o:rszh" opt; do
     w)
       WAIT_SECONDS="$OPTARG"
       ;;
-    z)
-      FILE_WITH_ZEROS="yes"
-      ;;
     o)
       START_OFFSET="$OPTARG"
+      ;;
+    c)
+      RAM_COUNT="$OPTARG"
+      ;;
+    z)
+      FILE_WITH_ZEROS="yes"
       ;;
     r)
       READ_ONLY="yes"
