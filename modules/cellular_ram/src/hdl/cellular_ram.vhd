@@ -208,8 +208,8 @@ begin
           end if;
         end case;
       -- Access configruation area
-      else -- slave_i.adr(23) = '1'
-        if (slave_i.cyc and slave_i.stb) = '1' then
+      else -- slave_i.adr(27) = '1'
+        if (slave_i.cyc and slave_i.stb and not(r_ack)) = '1'  then
           -- This is a placeholder
           if (slave_i.we = '1') then
             -- Control all pins directly
@@ -228,7 +228,7 @@ begin
         else
           r_ack <= '0';
         end if;
-      end if; -- slave_i.adr(23) = '0' then
+      end if; -- slave_i.adr(27) = '0' then
     end if; -- rising_edge(clk_i)
   end process;
 
