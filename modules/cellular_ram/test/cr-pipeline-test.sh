@@ -20,6 +20,7 @@ WRITE_FILE_NAME_BASE="cr_put_file_"
 VERBOSE_MODE=0
 PSRAM_ALL_ADDR_ARRAY=()
 USE_DIFF="no"
+REMOVE_OLD_FILES="no"
 
 # Run test
 function run_test() {
@@ -97,12 +98,12 @@ function run_test() {
     if [ "$READ_ONLY" = "no" ]; then
       echo "Comparing files ..."
       if cmp -s $WRITE_FILE_NAME $READ_FILE_NAME; then
-        echo "Test passed ($WRITE_FILE_NAME == $READ_FILE_NAME)!"
+        echo "Test passed ("$WRITE_FILE_NAME" = "$READ_FILE_NAME")!"
       else
         echo "Test failed: Files are not identical."
         if [ "$USE_DIFF" = "yes" ]; then
           echo "Preparing debug output ..."
-          colordiff <(xxd $WRITE_FILE_NAME) <(xxd $READ_FILE_NAME) -y --suppress-common-lines
+          diff <(xxd $WRITE_FILE_NAME) <(xxd $READ_FILE_NAME) -y --suppress-common-lines
         fi
         exit 1
       fi
@@ -130,12 +131,12 @@ function run_test() {
         WRITE_FILE_NAME="$WRITE_FILE_NAME_BASE$CURRENT_RAM_ID"
         echo "Comparing files ..."
         if cmp -s $WRITE_FILE_NAME $READ_FILE_NAME_RA; then
-          echo "Test passed ($WRITE_FILE_NAME == $READ_FILE_NAME_RA)!"
+          echo "Test passed ("$WRITE_FILE_NAME" = "$READ_FILE_NAME_RA")!"
         else
           echo "Test failed: Files are not identical."
           if [ "$USE_DIFF" = "yes" ]; then
             echo "Preparing debug output ..."
-            colordiff <(xxd $WRITE_FILE_NAME) <(xxd $READ_FILE_NAME_RA) -y --suppress-common-lines
+            diff <(xxd $WRITE_FILE_NAME) <(xxd $READ_FILE_NAME_RA) -y --suppress-common-lines
           fi
           exit 1
         fi
@@ -163,6 +164,7 @@ function print_help() {
   echo "  -s                    - show comparison files"
   echo "  -v                    - vebose mode, show additional debug information"
   echo "  -y                    - use diff in case of errors"
+  echo "  -x                    - remove old files"
   echo "  -h                    - print help"
 }
 
@@ -173,7 +175,7 @@ if [ $# -eq 0 ]; then
   exit 1
 fi
 
-while getopts "d:b:w:o:c:rszavyh" opt; do
+while getopts "d:b:w:o:c:rszavyxh" opt; do
   case $opt in
     d)
       DEVICE="$OPTARG"
@@ -208,6 +210,9 @@ while getopts "d:b:w:o:c:rszavyh" opt; do
     y)
       USE_DIFF="yes"
       ;;
+    x)
+      REMOVE_OLD_FILES="yes"
+      ;;
     h)
       print_help
       exit 0
@@ -241,6 +246,13 @@ for TOOL in "${REQUIRED_TOOLS[@]}"; do
   fi
 done
 
-run_test
+# Remove old files
+if [ "$REMOVE_OLD_FILES" = "yes" ]; then
+  rm "$READ_FILE_NAME_BASE"* >> /dev/null 2>&1 || true
+  rm "$READ_FILE_NAME_BASE_READ_AGAIN"* >> /dev/null 2>&1 || true
+  rm "$WRITE_FILE_NAME_BASE"* >> /dev/null 2>&1 || true
+fi
 
+run_test
+echo "All tests passed!"
 exit 0
