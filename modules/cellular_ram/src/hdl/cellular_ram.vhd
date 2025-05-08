@@ -8,6 +8,7 @@ use work.cellular_ram_pkg.all;
 
 entity cellular_ram is
   generic(
+    g_rams     : natural := 1;
     g_bits     : natural := 24);
   port(
     clk_i      : in    std_logic;
@@ -38,8 +39,18 @@ architecture rtl of cellular_ram is
   constant c_trc      : natural := 5;
   constant c_tcem     : natural := 5;
   signal r_counter_r  : unsigned(f_ceil_log2(c_trc+1)-1 downto 0) := (others => '0');
-  signal r_counter_w  : unsigned(f_ceil_log2(c_trc+1)-1 downto 0) := (others => '0');
+  signal r_counter_w  : unsigned(f_ceil_log2(c_tcem+1)-1 downto 0) := (others => '0');
   signal r_selector   : std_logic_vector(3 downto 0);
+
+  -- Configuration registers
+  constant c_cfg_reg_ram0_id : std_logic_vector (7 downto 0) := x"00";
+  constant c_cfg_reg_ram1_id : std_logic_vector (7 downto 0) := x"04";
+  constant c_cfg_reg_ram2_id : std_logic_vector (7 downto 0) := x"08";
+  constant c_cfg_reg_ram3_id : std_logic_vector (7 downto 0) := x"0C";
+  constant c_cfg_reg_devices : std_logic_vector (7 downto 0) := x"10";
+  constant c_cfg_reg_trc     : std_logic_vector (7 downto 0) := x"14";
+  constant c_cfg_reg_tcrem   : std_logic_vector (7 downto 0) := x"18";
+  constant c_cfg_reg_debug   : std_logic_vector (7 downto 0) := x"1C";
 
 begin
 
@@ -99,7 +110,7 @@ begin
                 r_selector <= (others => '0');
             end case;
           when others =>
-            -- Mistake 
+            -- Mistake
             r_selector <= (others => '0');
         end case;
       end if;
@@ -199,10 +210,24 @@ begin
       -- Access configruation area
       else -- slave_i.adr(23) = '1'
         if (slave_i.cyc and slave_i.stb) = '1' then
-          r_ack       <= '1';
-          slave_o.dat <= slave_i.adr;
+          -- This is a placeholder
+          if (slave_i.we = '1') then
+            null;
+          else
+            null;
+          end if;
+          -- Controll all pins directly
+          r_ack         <= '1';
+          slave_o.dat   <= std_logic_vector(to_unsigned(g_rams, 32));
+          r_ram_out.cre <= slave_i.dat(31);
+          r_ram_out.oen <= slave_i.dat(30);
+          r_ram_out.wen <= slave_i.dat(29);
+          r_ram_out.cen <= slave_i.dat(28);
+          r_ram_out.ubn <= slave_i.dat(26);
+          r_ram_out.lbn <= slave_i.dat(25);
+          cr_addr_o     <= slave_i.dat(23 downto 0);
         else
-          r_ack       <= '0';
+          r_ack <= '0';
         end if;
       end if; -- slave_i.adr(23) = '0' then
     end if; -- rising_edge(clk_i)
