@@ -72,7 +72,8 @@ begin
       r_selector <= "0001";
     elsif rising_edge(clk_i) then
       if (slave_i.cyc and slave_i.stb) = '1' then
-        case to_integer(unsigned(slave_i.adr(26 downto 24))) is
+        case to_integer(unsigned(slave_i.adr(27 downto 24))) is
+          -- RAM Access
           when 0 to 1 =>
             r_selector <= "0001";
           when 2 to 3 =>
@@ -81,7 +82,24 @@ begin
             r_selector <= "0100";
           when 6 to 7 =>
             r_selector <= "1000";
+          -- Configuration or access
+          when 8 =>
+            case to_integer(unsigned(slave_i.adr(3 downto 2))) is
+              -- Read Chip ID
+              when 0 =>
+                r_selector <= "0001";
+              when 1 =>
+                r_selector <= "0010";
+              when 2 =>
+                r_selector <= "0100";
+              when 3 =>
+                r_selector <= "1000";
+              -- Access configruation registers
+              when others =>
+                r_selector <= (others => '0');
+            end case;
           when others =>
+            -- Mistake 
             r_selector <= (others => '0');
         end case;
       end if;
@@ -105,78 +123,89 @@ begin
       cr_addr_o    <= (others => '0');
       r_ram_out    <= f_cellular_ram_set_standby;
     elsif rising_edge(clk_i) then
-      case r_state is
-       when S_INITIAL =>
-         r_state      <= S_IDLE;
-         r_state_word <= S_LOW_WORD;
-         cr_data_io   <= (others => 'Z');
-         cr_addr_o    <= (others => '0');
-         r_ram_out    <= f_cellular_ram_set_standby;
-         r_ack        <= '0';
-       when S_IDLE =>
-         if (slave_i.cyc and slave_i.stb) = '1' then
-           if slave_i.we = '1' then
-             r_state    <= S_WRITE;
-             cr_addr_o  <= slave_i.adr(g_bits downto 1);
-             cr_data_io <= slave_i.dat(15 downto 0);
-             r_ram_out  <= f_cellular_ram_set_write;
-           else
-             r_state    <= S_READ;
-             cr_addr_o  <= slave_i.adr(g_bits downto 1);
-             cr_data_io <= (others => 'Z');
-             r_ram_out  <= f_cellular_ram_set_read;
+      -- Access RAM
+      if slave_i.adr(27) = '0' then
+        case r_state is
+          when S_INITIAL =>
+            r_state      <= S_IDLE;
+            r_state_word <= S_LOW_WORD;
+            cr_data_io   <= (others => 'Z');
+            cr_addr_o    <= (others => '0');
+            r_ram_out    <= f_cellular_ram_set_standby;
+            r_ack        <= '0';
+          when S_IDLE =>
+            if (slave_i.cyc and slave_i.stb) = '1' then
+              if slave_i.we = '1' then
+              r_state    <= S_WRITE;
+              cr_addr_o  <= slave_i.adr(g_bits downto 1);
+              cr_data_io <= slave_i.dat(15 downto 0);
+              r_ram_out  <= f_cellular_ram_set_write;
+            else
+              r_state    <= S_READ;
+              cr_addr_o  <= slave_i.adr(g_bits downto 1);
+              cr_data_io <= (others => 'Z');
+              r_ram_out  <= f_cellular_ram_set_read;
+            end if;
+            r_state_word <= S_LOW_WORD;
+            r_ack        <= '0';
+          else
+            cr_data_io  <= (others => 'Z');
+            cr_addr_o   <= (others => '0');
+            r_ram_out   <= f_cellular_ram_set_standby;
+            r_ack       <= '0';
+          end if;
+        when S_WRITE =>
+          r_counter_w <= r_counter_w + 1;
+          if r_counter_w = c_tcem then
+            r_counter_w <= (others => '0');
+            case r_state_word is
+              when S_LOW_WORD =>
+                r_state_word              <= S_PREP_NEXT_WORD;
+                r_ram_out                 <= f_cellular_ram_set_standby;
+                cr_addr_o                 <= std_logic_vector(unsigned(slave_i.adr(g_bits downto 1)) + 1);
+                cr_data_io                <= slave_i.dat(31 downto 16);
+              when S_PREP_NEXT_WORD =>
+                r_state_word              <= S_HIGH_WORD;
+                r_ram_out                 <= f_cellular_ram_set_write;
+              when S_HIGH_WORD =>
+                r_state_word              <= S_LOW_WORD;
+                r_ram_out                 <= f_cellular_ram_set_standby;
+                r_ack                     <= '1';
+                r_state                   <= S_INITIAL;
+             end case;
            end if;
-           r_state_word <= S_LOW_WORD;
-           r_ack        <= '0';
-        else
-          cr_data_io  <= (others => 'Z');
-          cr_addr_o   <= (others => '0');
-          r_ram_out   <= f_cellular_ram_set_standby;
-          r_ack       <= '0';
-        end if;
-      when S_WRITE =>
-        r_counter_w <= r_counter_w + 1;
-        if r_counter_w = c_tcem then
-          r_counter_w <= (others => '0');
-          case r_state_word is
-             when S_LOW_WORD =>
-               r_state_word              <= S_PREP_NEXT_WORD;
-               r_ram_out                 <= f_cellular_ram_set_standby;
-               cr_addr_o                 <= std_logic_vector(unsigned(slave_i.adr(g_bits downto 1)) + 1);
-               cr_data_io                <= slave_i.dat(31 downto 16);
-             when S_PREP_NEXT_WORD =>
-               r_state_word              <= S_HIGH_WORD;
-               r_ram_out                 <= f_cellular_ram_set_write;
-             when S_HIGH_WORD =>
-               r_state_word              <= S_LOW_WORD;
-               r_ram_out                 <= f_cellular_ram_set_standby;
-               r_ack                     <= '1';
-               r_state                   <= S_INITIAL;
+         when S_READ =>
+           r_counter_r <= r_counter_r + 1;
+           if r_counter_r = c_tcem then
+             r_counter_r <= (others => '0');
+             case r_state_word is
+               when S_LOW_WORD =>
+                 r_state_word              <= S_PREP_NEXT_WORD;
+                 r_ram_out                 <= f_cellular_ram_set_standby;
+                 cr_addr_o                 <= std_logic_vector(unsigned(slave_i.adr(g_bits downto 1)) + 1);
+                 slave_o.dat(15 downto 0)  <= cr_data_io;
+               when S_PREP_NEXT_WORD =>
+                 r_state_word              <= S_HIGH_WORD;
+                 r_ram_out                 <= f_cellular_ram_set_read;
+               when S_HIGH_WORD =>
+                 r_state_word              <= S_LOW_WORD;
+                 r_ram_out                 <= f_cellular_ram_set_standby;
+                 slave_o.dat(31 downto 16) <= cr_data_io;
+                 r_ack                     <= '1';
+                 r_state                   <= S_INITIAL;
             end case;
           end if;
-      when S_READ =>
-        r_counter_r <= r_counter_r + 1;
-        if r_counter_r = c_tcem then
-          r_counter_r <= (others => '0');
-          case r_state_word is
-             when S_LOW_WORD =>
-               r_state_word              <= S_PREP_NEXT_WORD;
-               r_ram_out                 <= f_cellular_ram_set_standby;
-               cr_addr_o                 <= std_logic_vector(unsigned(slave_i.adr(g_bits downto 1)) + 1);
-               slave_o.dat(15 downto 0)  <= cr_data_io;
-             when S_PREP_NEXT_WORD =>
-               r_state_word              <= S_HIGH_WORD;
-               r_ram_out                 <= f_cellular_ram_set_read;
-             when S_HIGH_WORD =>
-               r_state_word              <= S_LOW_WORD;
-               r_ram_out                 <= f_cellular_ram_set_standby;
-               slave_o.dat(31 downto 16) <= cr_data_io;
-               r_ack                     <= '1';
-               r_state                   <= S_INITIAL;
-          end case;
+        end case;
+      -- Access configruation area
+      else -- slave_i.adr(23) = '1'
+        if (slave_i.cyc and slave_i.stb) = '1' then
+          r_ack       <= '1';
+          slave_o.dat <= slave_i.adr;
+        else
+          r_ack       <= '0';
         end if;
-      end case;
-    end if;
+      end if; -- slave_i.adr(23) = '0' then
+    end if; -- rising_edge(clk_i)
   end process;
 
 end rtl;
