@@ -92,7 +92,7 @@ entity monster is
     g_lvds_in              : natural;
     g_lvds_out             : natural;
     g_fixed                : natural;
-    g_rams                 : natural:
+    g_rams                 : natural;
     g_lvds_invert          : boolean;
     g_en_tlu               : boolean;
     g_en_pcie              : boolean;
