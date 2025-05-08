@@ -18,12 +18,18 @@ READ_FILE_NAME_BASE="cr_get_file_"
 READ_FILE_NAME_BASE_READ_AGAIN="cr_get_file_ra_"
 WRITE_FILE_NAME_BASE="cr_put_file_"
 VERBOSE_MODE=0
+PSRAM_ALL_ADDR_ARRAY=()
+USE_DIFF="no"
 
 # Run test
 function run_test() {
   # Search RAM
   echo "Searching for PSRAM slave at $DEVICE ..."
   PSRAM_ADDR_BASE=$(eb-find "$DEVICE" "$SDB_GSI_VENDOR_ID" "$SDB_GSI_DEVICE_ID")
+  if [ -z "$PSRAM_ADDR_BASE" ]; then
+    echo "Error: PSRAM address base could not be determined."
+    exit 1
+  fi
   echo "Found PSRAM at $PSRAM_ADDR_BASE ..."
 
   # Interrate each RAM
@@ -39,10 +45,8 @@ function run_test() {
 
     # Calculate offset based on RAM ID
     OFFSET_DEC=$((CURRENT_RAM_ID - 1))
-    echo "OFFSET_DEC=$OFFSET_DEC"
     OFFSET_HEX=$(printf "%X" "$OFFSET_DEC")
     PSRAM_OFFSET_ID=$(echo "obase=16; ibase=16; $OFFSET_HEX * $PSRAM_OFFSET_CLEAN" | bc)
-    printf "PSRAM_OFFSET_ID = 0x%08X\n" "$PSRAM_OFFSET_ID"
     PSRAM_OFFSET_ID_CLEAN=${PSRAM_OFFSET_ID#0x}
     PSRAM_OFFSET_ADDR_HEX=$(printf "0x%X" $PSRAM_OFFSET_ID_CLEAN)
 
@@ -93,9 +97,14 @@ function run_test() {
     if [ "$READ_ONLY" = "no" ]; then
       echo "Comparing files ..."
       if cmp -s $WRITE_FILE_NAME $READ_FILE_NAME; then
-        echo "Test passed!"
+        echo "Test passed ($WRITE_FILE_NAME == $READ_FILE_NAME)!"
       else
         echo "Test failed: Files are not identical."
+        if [ "$USE_DIFF" = "yes" ]; then
+          echo "Preparing debug output ..."
+          colordiff <(xxd $WRITE_FILE_NAME) <(xxd $READ_FILE_NAME) -y --suppress-common-lines
+        fi
+        exit 1
       fi
     fi
 
@@ -107,14 +116,30 @@ function run_test() {
     fi
   done # for loop
 
+  # Read all RAMs again
   if [ "$ARG_READ_AGAIN" = "yes" ]; then
     echo "Reading all RAMs again ..."
-    echo ${PSRAM_ALL_ADDR_ARRAY[@]}
-
-
     for CURRENT_RAM_ID in $(seq 1 $RAM_COUNT); do
+      CURRENT_RAM_ID_ALIGNED=$((CURRENT_RAM_ID - 1))
+      READ_CURRENT_ADDRESS=${PSRAM_ALL_ADDR_ARRAY[$CURRENT_RAM_ID_ALIGNED]}
       READ_FILE_NAME_RA="$READ_FILE_NAME_BASE_READ_AGAIN$CURRENT_RAM_ID"
-      eb-get "$DEVICE" "$PSRAM_ALL_ADDR_ARRAY{CURRENT_RAM_ID}/$BYTE_SIZE" "$READ_FILE_NAME_RA"
+      echo "Using PSRAM address $READ_CURRENT_ADDRESS ..."
+      eb-get "$DEVICE" "$READ_CURRENT_ADDRESS/$BYTE_SIZE" "$READ_FILE_NAME_RA"
+
+      if [ "$READ_ONLY" = "no" ]; then
+        WRITE_FILE_NAME="$WRITE_FILE_NAME_BASE$CURRENT_RAM_ID"
+        echo "Comparing files ..."
+        if cmp -s $WRITE_FILE_NAME $READ_FILE_NAME_RA; then
+          echo "Test passed ($WRITE_FILE_NAME == $READ_FILE_NAME_RA)!"
+        else
+          echo "Test failed: Files are not identical."
+          if [ "$USE_DIFF" = "yes" ]; then
+            echo "Preparing debug output ..."
+            colordiff <(xxd $WRITE_FILE_NAME) <(xxd $READ_FILE_NAME_RA) -y --suppress-common-lines
+          fi
+          exit 1
+        fi
+      fi
     done # for loop;
   fi
 }
@@ -137,6 +162,7 @@ function print_help() {
   echo "  -r                    - read only, don't write data to RAM"
   echo "  -s                    - show comparison files"
   echo "  -v                    - vebose mode, show additional debug information"
+  echo "  -y                    - use diff in case of errors"
   echo "  -h                    - print help"
 }
 
@@ -147,7 +173,7 @@ if [ $# -eq 0 ]; then
   exit 1
 fi
 
-while getopts "d:b:w:o:c:rszavh" opt; do
+while getopts "d:b:w:o:c:rszavyh" opt; do
   case $opt in
     d)
       DEVICE="$OPTARG"
@@ -179,6 +205,9 @@ while getopts "d:b:w:o:c:rszavh" opt; do
     v)
       VERBOSE_MODE=1
       ;;
+    y)
+      USE_DIFF="yes"
+      ;;
     h)
       print_help
       exit 0
@@ -200,6 +229,9 @@ fi
 
 # Define an array of required tools
 REQUIRED_TOOLS=("eb-find" "eb-put" "eb-get" "dd" "bc" "hexdump")
+if [ "$USE_DIFF" = "yes" ]; then
+  REQUIRED_TOOLS+=("diff" "xxd")
+fi
 
 # Check for the presence of each tool in the array
 for TOOL in "${REQUIRED_TOOLS[@]}"; do
