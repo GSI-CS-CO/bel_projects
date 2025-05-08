@@ -66,6 +66,8 @@ package body cellular_ram_pkg is
 
     result.sdb_component.addr_first := (others => '0');
     result.sdb_component.addr_last  := std_logic_vector(to_unsigned((((2**(g_bits+1)-1)*4)+80), 64)); -- 4x RAMs + 20 extra registers
+    --result.sdb_component.addr_last  := std_logic_vector(to_unsigned(((2**(g_bits+1)-1)*4), 64)); -- 4x RAMs
+    --result.sdb_component.addr_last  := std_logic_vector(to_unsigned(2**(g_bits+1)-1, 64)); -- 1x RAM
 
     result.sdb_component.product.vendor_id := x"0000000000000651";
     result.sdb_component.product.device_id := x"169edcb8";
