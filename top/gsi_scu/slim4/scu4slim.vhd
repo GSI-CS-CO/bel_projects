@@ -274,6 +274,7 @@ begin
       g_en_tlu             => false,
       g_en_usb             => false,
       g_en_cellular_ram    => true,
+      g_rams               => 2,
       g_io_table           => io_mapping_table,
       g_en_tempsens        => false,
       g_en_a10ts           => true,
