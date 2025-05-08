@@ -212,20 +212,19 @@ begin
         if (slave_i.cyc and slave_i.stb) = '1' then
           -- This is a placeholder
           if (slave_i.we = '1') then
-            null;
+            -- Control all pins directly
+            r_ram_out.cre <= slave_i.dat(31);
+            r_ram_out.oen <= slave_i.dat(30);
+            r_ram_out.wen <= slave_i.dat(29);
+            r_ram_out.cen <= slave_i.dat(28);
+            r_ram_out.ubn <= slave_i.dat(26);
+            r_ram_out.lbn <= slave_i.dat(25);
+            cr_addr_o     <= slave_i.dat(23 downto 0);
           else
-            null;
+            -- Get RAM count
+            slave_o.dat <= std_logic_vector(to_unsigned(g_rams, 32));
           end if;
-          -- Controll all pins directly
-          r_ack         <= '1';
-          slave_o.dat   <= std_logic_vector(to_unsigned(g_rams, 32));
-          r_ram_out.cre <= slave_i.dat(31);
-          r_ram_out.oen <= slave_i.dat(30);
-          r_ram_out.wen <= slave_i.dat(29);
-          r_ram_out.cen <= slave_i.dat(28);
-          r_ram_out.ubn <= slave_i.dat(26);
-          r_ram_out.lbn <= slave_i.dat(25);
-          cr_addr_o     <= slave_i.dat(23 downto 0);
+          r_ack <= '1';
         else
           r_ack <= '0';
         end if;
