@@ -84,6 +84,7 @@ package monster_pkg is
       g_project              : string;
       g_flash_bits           : natural;
       g_psram_bits           : natural := 24;
+      g_cr_bits              : natural := 24;
       g_ram_size             : natural := 131072;
       g_gpio_inout           : natural := 0;
       g_gpio_in              : natural := 0;
@@ -93,6 +94,7 @@ package monster_pkg is
       g_lvds_in              : natural := 0;
       g_lvds_out             : natural := 0;
       g_fixed                : natural := 0;
+      g_rams                 : natural := 1;
       g_lvds_invert          : boolean := false;
       g_en_tlu               : boolean := true;
       g_en_pcie              : boolean := false;
@@ -134,7 +136,8 @@ package monster_pkg is
       g_en_asmi              : boolean := false;
       g_en_psram_delay       : boolean := false;
       g_en_enc_err_counter   : boolean := false;
-      g_en_a10vs             : boolean := false
+      g_en_a10vs             : boolean := false;
+      g_en_cellular_ram      : boolean := false
     );
     port(
       -- Required: core signals
@@ -390,6 +393,18 @@ package monster_pkg is
       ps_advn                : out   std_logic;
       ps_wait                : in    std_logic := '0';
       ps_chip_selector       : out   std_logic_vector(3 downto 0);
+      -- g_en_cellular_ram
+      cr_clk_o               : out   std_logic;
+      cr_addr_o              : out   std_logic_vector(g_cr_bits-1 downto 0);
+      cr_data_io             : inout std_logic_vector(15 downto 0);
+      cr_ubn_o               : out   std_logic_vector(3 downto 0);
+      cr_lbn_o               : out   std_logic_vector(3 downto 0);
+      cr_cen_o               : out   std_logic_vector(3 downto 0);
+      cr_oen_o               : out   std_logic_vector(3 downto 0);
+      cr_wen_o               : out   std_logic_vector(3 downto 0);
+      cr_cre_o               : out   std_logic_vector(3 downto 0);
+      cr_advn_o              : out   std_logic_vector(3 downto 0);
+      cr_wait_i              : in    std_logic_vector(3 downto 0) := (others => '0');
       -- i2c
       i2c_scl_pad_i          : in    std_logic_vector(g_num_i2c_interfaces-1 downto 0) := (others => '0');
       i2c_scl_pad_o          : out   std_logic_vector(g_num_i2c_interfaces-1 downto 0);
