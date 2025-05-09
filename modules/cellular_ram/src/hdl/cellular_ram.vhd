@@ -221,8 +221,11 @@ begin
             r_ram_out.lbn <= slave_i.dat(25);
             cr_addr_o     <= slave_i.dat(23 downto 0);
           else
-            -- Get RAM count
-            slave_o.dat <= std_logic_vector(to_unsigned(g_rams, 32));
+            -- Get current data
+            slave_o.dat(15 downto 0)  <= cr_data_io;
+            slave_o.dat(19 downto 16) <= std_logic_vector(to_unsigned(g_rams, 4));
+            slave_o.dat(23 downto 20) <= cr_wait_i;
+            slave_o.dat(31 downto 24) <= (others => '0');
           end if;
           r_ack <= '1';
         else
