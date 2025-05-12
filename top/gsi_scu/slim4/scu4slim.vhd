@@ -130,11 +130,11 @@ entity scu4slim is
     debug_led  : out std_logic_vector(7 downto 0) := (others => '1');
 
     -----------------------------------------------------------------------
-    -- Pseudo-SRAM (4x 256Mbit)
+    -- Pseudo-SRAM (2x 256Mbit)
     -----------------------------------------------------------------------
     psram_a    : out   std_logic_vector(23 downto 0) := (others => 'Z');
     psram_dq   : inout std_logic_vector(15 downto 0) := (others => 'Z');
-    psram_clk  : out   std_logic := 'Z';
+    psram_clk  : out   std_logic := '0';
     psram_advn : out   std_logic_vector(1 downto 0) := (others => '1');
     psram_cre  : out   std_logic_vector(1 downto 0) := (others => '1');
     psram_cen  : out   std_logic_vector(1 downto 0) := (others => '1');
@@ -142,7 +142,7 @@ entity scu4slim is
     psram_wen  : out   std_logic_vector(1 downto 0) := (others => '1');
     psram_ubn  : out   std_logic_vector(1 downto 0) := (others => '1');
     psram_lbn  : out   std_logic_vector(1 downto 0) := (others => '1');
-    psram_wait : in    std_logic_vector (1 downto 0); -- DDR magic
+    psram_wait : in    std_logic_vector(1 downto 0);
 
     -----------------------------------------------------------------------
     -- SPI Flash User Mode
@@ -358,7 +358,7 @@ begin
       --usb_slwrn_o             => slwr,
       --usb_pktendn_o           => pa(6),
       --usb_fd_io               => fd,
-      -- PSRAM TODO: Multi Chip
+      -- PSRAM
       cr_clk_o                => psram_clk,
       cr_addr_o               => psram_a,
       cr_data_io              => psram_dq,
@@ -370,7 +370,6 @@ begin
       cr_cre_o(1 downto 0)    => s_psram_cre,
       cr_advn_o(1 downto 0)   => s_psram_advn,
       cr_wait_i(1 downto 0)   => s_psram_wait,
-      ps_chip_selector        => s_psram_sel,
       hw_version              => x"0000000" & not scu_cb_version);
 
   -- Dual PSRAM
