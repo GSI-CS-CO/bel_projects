@@ -1,7 +1,6 @@
 #include "aux.h"
 #include "irq.h"
 #include "mini_sdb.h"
-#include "../wb_timer/wb_timer_regs.h"
 
 
 /*
