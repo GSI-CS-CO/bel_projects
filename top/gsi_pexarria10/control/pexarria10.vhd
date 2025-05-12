@@ -9,10 +9,6 @@ use work.altera_lvds_pkg.all;
 use work.altera_networks_pkg.all;
 
 entity pexarria10 is
-  generic(
-    g_quad_mode_psram : boolean := false; -- True: Connect all PSRAMs; False: connect only $g_default_psram PSRAM
-    g_default_psram   : natural := 0 -- Possible values: 0, 1, 2, 3
-  );
   port(
     ------------------------------------------------------------------------
     -- Input clocks
@@ -80,7 +76,7 @@ entity pexarria10 is
     -----------------------------------------------------------------------
     psram_a            : out   std_logic_vector(23 downto 0) := (others => 'Z');
     psram_dq           : inout std_logic_vector(15 downto 0) := (others => 'Z');
-    psram_clk          : out   std_logic := 'Z';
+    psram_clk          : out   std_logic := '0';
     psram_advn         : out   std_logic_vector(3 downto 0) := (others => 'Z');
     psram_cre          : out   std_logic_vector(3 downto 0) := (others => 'Z');
     psram_cen          : out   std_logic_vector(3 downto 0) := (others => '1');
@@ -88,7 +84,7 @@ entity pexarria10 is
     psram_ubn          : out   std_logic_vector(3 downto 0) := (others => 'Z');
     psram_wen          : out   std_logic_vector(3 downto 0) := (others => 'Z');
     psram_lbn          : out   std_logic_vector(3 downto 0) := (others => 'Z');
-    psram_wait         : in    std_logic_vector(3 downto 0); -- DDR magic
+    psram_wait         : in    std_logic_vector(3 downto 0);
 
     -----------------------------------------------------------------------
     -- usb
@@ -180,6 +176,15 @@ architecture rtl of pexarria10 is
   signal s_i2c_sda_pad_in   : std_logic_vector(6 downto 1);
   signal s_i2c_sda_padoen   : std_logic_vector(6 downto 1);
 
+  signal s_psram_cen        : std_logic_vector(3 downto 0);
+  signal s_psram_cre        : std_logic_vector(3 downto 0);
+  signal s_psram_advn       : std_logic_vector(3 downto 0);
+  signal s_psram_oen        : std_logic_vector(3 downto 0);
+  signal s_psram_wen        : std_logic_vector(3 downto 0);
+  signal s_psram_ubn        : std_logic_vector(3 downto 0);
+  signal s_psram_lbn        : std_logic_vector(3 downto 0);
+  signal s_psram_wait       : std_logic_vector(3 downto 0);
+
   signal s_clk_20m_vcxo_i       : std_logic;
   signal s_clk_125m_pllref_i    : std_logic;
   signal s_clk_125m_local_i     : std_logic;
@@ -187,17 +192,6 @@ architecture rtl of pexarria10 is
   signal s_stub_pll_reset       : std_logic;
   signal s_stub_pll_locked      : std_logic;
   signal s_stub_pll_locked_prev : std_logic;
-
-  signal s_psram_ubn     : std_logic;
-  signal s_psram_lbn     : std_logic;
-  signal s_psram_cen     : std_logic;
-  signal s_psram_oen     : std_logic;
-  signal s_psram_wen     : std_logic;
-  signal s_psram_cre     : std_logic;
-  signal s_psram_advn    : std_logic;
-  signal s_psram_wait    : std_logic;
-  signal s_psram_sel     : std_logic_vector(3 downto 0);
-  signal s_psram_wait_or : std_logic; -- Remove this later
 
   constant io_mapping_table : t_io_mapping_table_arg_array(0 to 30) :=
   (
@@ -240,7 +234,7 @@ architecture rtl of pexarria10 is
   constant c_cores         : natural:= 1;
   constant c_initf_name    : string := c_project & "_stub.mif";
   constant c_profile_name  : string := "medium_icache_debug";
-  constant c_psram_bits    : natural := 24;
+  constant c_cr_bits       : natural := 24;
 
 begin
 
@@ -249,14 +243,15 @@ begin
       g_family             => c_family,
       g_project            => c_project,
       g_flash_bits         => 25, -- !!! TODO: Check this
-      g_psram_bits         => c_psram_bits,
+      g_cr_bits            => c_cr_bits,
       g_gpio_inout         => 31,
       g_en_i2c_wrapper     => true,
       g_num_i2c_interfaces => 6,
       g_en_pcie            => true,
       g_en_tlu             => false,
       g_en_usb             => true,
-      g_en_psram           => true,
+      g_en_cellular_ram    => true,
+      g_rams               => 4,
       g_io_table           => io_mapping_table,
       g_en_a10ts           => true,
       g_a10_use_sys_fpll   => false,
@@ -321,57 +316,30 @@ begin
       pcie_rstn_i              => nPCI_RESET_i,
       pcie_rx_i                => pcie_rx_i,
       pcie_tx_o                => pcie_tx_o,
-      --PSRAM TODO: Multi Chip
-      ps_clk                  => psram_clk,
-      ps_addr                 => psram_a,
-      ps_data                 => psram_dq,
-      ps_chip_selector        => s_psram_sel,
-      ps_seln(0)              => s_psram_ubn,
-      ps_seln(1)              => s_psram_lbn,
-      ps_cen                  => s_psram_cen,
-      ps_oen                  => s_psram_oen,
-      ps_wen                  => s_psram_wen,
-      ps_cre                  => s_psram_cre,
-      ps_advn                 => s_psram_advn,
-      ps_wait                 => s_psram_wait_or);
+      --PSRAM
+      cr_clk_o                 => psram_clk,
+      cr_addr_o                => psram_a,
+      cr_data_io               => psram_dq,
+      cr_lbn_o(3 downto 0)     => s_psram_lbn,
+      cr_ubn_o(3 downto 0)     => s_psram_ubn,
+      cr_cen_o(3 downto 0)     => s_psram_cen,
+      cr_oen_o(3 downto 0)     => s_psram_oen,
+      cr_wen_o(3 downto 0)     => s_psram_wen,
+      cr_cre_o(3 downto 0)     => s_psram_cre,
+      cr_advn_o(3 downto 0)    => s_psram_advn,
+      cr_wait_i(3 downto 0)    => s_psram_wait);
 
-  -- Use only one PSRAM (TBD: Multichip support)
-  psram_single : if not(g_quad_mode_psram) generate
-    psram_gen : for i in 0 to 3 generate
-      psram_enable : if (g_default_psram = i) generate
-        s_psram_wait_or <= psram_wait(i);
-        psram_advn(i)   <= s_psram_advn;
-        psram_cre(i)    <= s_psram_cre;
-        psram_cen(i)    <= s_psram_cen;
-        psram_oen(i)    <= s_psram_oen;
-        psram_ubn(i)    <= s_psram_ubn;
-        psram_wen(i)    <= s_psram_wen;
-        psram_lbn(i)    <= s_psram_lbn;
-      end generate; -- psram_enable
-      psram_disable : if not(g_default_psram = i) generate
-        psram_advn(i) <= '0';
-        psram_cre(i)  <= '0';
-        psram_cen(i)  <= '1';
-        psram_oen(i)  <= '1';
-        psram_ubn(i)  <= '0';
-        psram_wen(i)  <= '1';
-        psram_lbn(i)  <= '0';
-      end generate; -- psram_disable
-    end generate; -- psram_gen
-  end generate; -- psram_single
-
-  psram_quad : if (g_quad_mode_psram) generate
-    s_psram_wait_or <= psram_wait(0) or psram_wait(1) or psram_wait(2) or psram_wait(3);
-    psram_quad_gen : for i in 0 to 3 generate
-      psram_advn(i)   <= s_psram_advn;
-      psram_cre(i)    <= s_psram_cre;
-      psram_cen(i)    <= s_psram_cen;
-      psram_oen(i)    <= s_psram_oen;
-      psram_ubn(i)    <= s_psram_ubn;
-      psram_wen(i)    <= s_psram_wen;
-      psram_lbn(i)    <= s_psram_lbn;
-    end generate; -- psram_quad_gen
-  end generate; -- psram_quad
+      -- Quad PSRAM
+  quad_ram : for i in 0 to 3 generate
+    psram_cen(i)    <= s_psram_cen(i);
+    psram_cre(i)    <= s_psram_cre(i);
+    psram_oen(i)    <= s_psram_oen(i);
+    psram_wen(i)    <= s_psram_wen(i);
+    psram_lbn(i)    <= s_psram_lbn(i);
+    psram_ubn(i)    <= s_psram_ubn(i);
+    psram_advn(i)   <= s_psram_advn(i);
+    s_psram_wait(i) <= psram_wait(i);
+  end generate;
 
   -- LEDs
   wr_leds_o(0)                  <= not (s_led_link_act and s_led_link_up);   -- red   = traffic/no-link
