@@ -1,7 +1,7 @@
 --! @file        wb_master_test_auto_pkg.vhd
 --  DesignUnit   wb_master_test_auto
 --! @author      M. Kreider <>
---! @date        11/04/2025
+--! @date        13/05/2025
 --! @version     0.0.1
 --! @copyright   2025 GSI Helmholtz Centre for Heavy Ion Research GmbH
 --!
@@ -41,7 +41,7 @@ package wb_master_test_auto_pkg is
   constant c_fuse_read_GET      : natural := 16#000000000000000000000000000000000000000000000000000000000000000000000000000#; -- ro, 32 b, Fuse to indicate if the register below has been read.
   constant c_read_test_reg_GET  : natural := 16#000000000000000000000000000000000000000000000000000000000000000000000000004#; -- ro, 32 b, Read only register that burns a fuse if it was accessed.
   constant c_fuse_write_GET     : natural := 16#000000000000000000000000000000000000000000000000000000000000000000000000008#; -- ro, 32 b, Fuse to indicate if the register below has been written.
-  constant c_write_test_reg_OWR : natural := 16#00000000000000000000000000000000000000000000000000000000000000000000000000c#; -- wo, 32 b, Write only register that burns a fuse if it was accessed.
+  constant c_write_test_reg_RW  : natural := 16#00000000000000000000000000000000000000000000000000000000000000000000000000c#; -- rw, 32 b, Read/Write register that burns a fuse if it was accessed.
 
   --| Component -------------------- wb_master_test_auto --------------------------------------|
   component wb_master_test_auto is
@@ -54,7 +54,7 @@ package wb_master_test_auto_pkg is
     fuse_write_i      : in  std_logic_vector(32-1 downto 0);  -- Fuse to indicate if the register below has been written.
     fuse_write_V_i    : in  std_logic_vector(1-1 downto 0);   -- Valid flag - fuse_write
     stall_i           : in  std_logic_vector(1-1 downto 0);   -- flow control
-    write_test_reg_o  : out std_logic_vector(32-1 downto 0);  -- Write only register that burns a fuse if it was accessed.
+    write_test_reg_o  : out std_logic_vector(32-1 downto 0);  -- Read/Write register that burns a fuse if it was accessed.
     
     data_i            : in  t_wishbone_slave_in;
     data_o            : out t_wishbone_slave_out
@@ -76,7 +76,7 @@ package wb_master_test_auto_pkg is
   vendor_id     => x"0000000000000651",
   device_id     => x"2ead7e57",
   version       => x"00000001",
-  date          => x"20250411",
+  date          => x"20250513",
   name          => "Wb master test     ")));
 
 end wb_master_test_auto_pkg;
