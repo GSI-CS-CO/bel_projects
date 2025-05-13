@@ -4,7 +4,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-Apr-2025
+ *  version : 13-May-2025
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  NB: units of variables are [ns] unless explicitely mentioned as suffix
@@ -1217,7 +1217,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
         case B2B_MODE_B2BPSHIFTE :   // bunch to bucket using phase shift at extraction machine; this is an OR, no 'break' on purpose
         case B2B_MODE_B2BPSHIFTI :   // bunch to bucket using phase shift at injection machine; this is an OR, no 'break' on purpose
           tWantExt = tCBS + kickOffsPShift;
-          /* tWantExt = tCBS + B2B_KICKOFFSETMIN + 800000; used for measuring phase shift curve; here @80us */
+          //tWantExt = tCBS + B2B_KICKOFFSETMIN + 80000; /* used for measuring phase shift curve; here @80us; use b2b-viewer -> diag -> ext act as get value */
           break;
         default :
           tWantExt = tCBS;

@@ -266,15 +266,15 @@ void buildPrintLine(uint32_t idx)
 
   // destination
   switch (set_mode[idx]) {
-    case B2B_MODE_OFF       : sprintf(mode, "   OFF   ");    sprintf(dest, "---");      flagTCBS = 1; flagOther = 1; flagB2b = 0; flagCphase = 0; flagExtTrig = 0; flagInjTrig = 0; break;
-    case B2B_MODE_BSE       : sprintf(mode, " test 1  ");  sprintf(dest, "kicker");   flagTCBS = 1; flagOther = 1; flagB2b = 0; flagCphase = 0; flagExtTrig = 1; flagInjTrig = 0; break;
+    case B2B_MODE_OFF       : sprintf(mode, "   OFF   "); sprintf(dest, "---");      flagTCBS = 1; flagOther = 1; flagB2b = 0; flagCphase = 0; flagExtTrig = 0; flagInjTrig = 0; break;
+    case B2B_MODE_BSE       : sprintf(mode, " test 1  "); sprintf(dest, "kicker");   flagTCBS = 1; flagOther = 1; flagB2b = 0; flagCphase = 0; flagExtTrig = 1; flagInjTrig = 0; break;
     case B2B_MODE_B2E       : sprintf(mode, "extr fast"); sprintf(dest, "target");   flagTCBS = 1; flagOther = 1; flagB2b = 0; flagCphase = 0; flagExtTrig = 1; flagInjTrig = 0; break;
     case B2B_MODE_B2C       : sprintf(mode, "b2b coast"); sprintf(dest, "%s", tmp1); flagTCBS = 1; flagOther = 1; flagB2b = 0; flagCphase = 0; flagExtTrig = 1; flagInjTrig = 1; break;
     case B2B_MODE_B2BFBEAT  : sprintf(mode, "b2b fbeat"); sprintf(dest, "%s", tmp1); flagTCBS = 1; flagOther = 1; flagB2b = 1; flagCphase = 1; flagExtTrig = 1; flagInjTrig = 1; break;
-    case B2B_MODE_B2EPSHIFT : sprintf(mode, " test 2  ");  sprintf(dest, "target");   flagTCBS = 1; flagOther = 1; flagB2b = 0; flagCphase = 1; flagExtTrig = 1; flagInjTrig = 0; break;
+    case B2B_MODE_B2EPSHIFT : sprintf(mode, " test 2  "); sprintf(dest, "target");   flagTCBS = 1; flagOther = 1; flagB2b = 0; flagCphase = 1; flagExtTrig = 1; flagInjTrig = 0; break;
     case B2B_MODE_B2BPSHIFTE: sprintf(mode, "b2b psext"); sprintf(dest, "%s", tmp1); flagTCBS = 1; flagOther = 1; flagB2b = 1; flagCphase = 1; flagExtTrig = 1; flagInjTrig = 1; break;
     case B2B_MODE_B2BPSHIFTI: sprintf(mode, "b2b psinj"); sprintf(dest, "%s", tmp1); flagTCBS = 1; flagOther = 1; flagB2b = 1; flagCphase = 1; flagExtTrig = 1; flagInjTrig = 1; break;
-    default:                  sprintf(mode, "   ---   ");    sprintf(dest, TXTUNKWN);   flagTCBS = 0; flagOther = 0; flagB2b = 0; flagCphase = 0; flagExtTrig = 0; flagInjTrig = 0; break;
+    default:                  sprintf(mode, "   ---   "); sprintf(dest, TXTUNKWN);   flagTCBS = 0; flagOther = 0; flagB2b = 0; flagCphase = 0; flagExtTrig = 0; flagInjTrig = 0; break;
   } // switch set_mode
 
   // ignore ancient timestamps
