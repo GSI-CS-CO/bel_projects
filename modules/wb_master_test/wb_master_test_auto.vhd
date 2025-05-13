@@ -1,7 +1,7 @@
 --! @file        wb_master_test_auto.vhd
 --  DesignUnit   wb_master_test_auto
 --! @author      M. Kreider <>
---! @date        11/04/2025
+--! @date        13/05/2025
 --! @version     0.0.1
 --! @copyright   2025 GSI Helmholtz Centre for Heavy Ion Research GmbH
 --!
@@ -48,7 +48,7 @@ Port(
   fuse_write_i      : in  std_logic_vector(32-1 downto 0);  -- Fuse to indicate if the register below has been written.
   fuse_write_V_i    : in  std_logic_vector(1-1 downto 0);   -- Valid flag - fuse_write
   stall_i           : in  std_logic_vector(1-1 downto 0);   -- flow control
-  write_test_reg_o  : out std_logic_vector(32-1 downto 0);  -- Write only register that burns a fuse if it was accessed.
+  write_test_reg_o  : out std_logic_vector(32-1 downto 0);  -- Read/Write register that burns a fuse if it was accessed.
   
   data_i            : in  t_wishbone_slave_in;
   data_o            : out t_wishbone_slave_out
@@ -87,7 +87,7 @@ architecture rtl of wb_master_test_auto is
   signal s_fuse_write_V_i : std_logic_vector(1-1 downto 0)  := (others => '0');                     -- Valid flag - fuse_write
   signal r_fuse_write     : std_logic_vector(32-1 downto 0) := (others => '0');                     -- Fuse to indicate if the register below has been written.
   signal s_fuse_write_i   : std_logic_vector(32-1 downto 0) := (others => '0');                     -- Fuse to indicate if the register below has been written.
-  signal r_write_test_reg : std_logic_vector(32-1 downto 0) := (others => '0');                     -- Write only register that burns a fuse if it was accessed.
+  signal r_write_test_reg : std_logic_vector(32-1 downto 0) := (others => '0');                     -- Read/Write register that burns a fuse if it was accessed.
 
 
 begin
@@ -172,7 +172,7 @@ begin
           if(s_w = '1') then
             -- WISHBONE WRITE ACTIONS
             case to_integer(unsigned(s_a_ext)) is
-              when c_write_test_reg_OWR => r_write_test_reg <= f_wb_wr(r_write_test_reg, s_d, s_s, "owr");  -- 
+              when c_write_test_reg_RW  => r_write_test_reg <= f_wb_wr(r_write_test_reg, s_d, s_s, "owr");  -- 
               when others               => r_error          <= "1";
             end case;
           else
@@ -181,15 +181,17 @@ begin
               when c_fuse_read_GET      => null;
               when c_read_test_reg_GET  => null;
               when c_fuse_write_GET     => null;
+              when c_write_test_reg_RW  => null;
               when others               => r_error <= "1";
             end case;
           end if; -- s_w
         end if; -- s_e
         
         case to_integer(unsigned(r_a_ext1)) is
-          when c_fuse_read_GET      => data_o.dat <= std_logic_vector(resize(unsigned(r_fuse_read), data_o.dat'length));      -- 
-          when c_read_test_reg_GET  => data_o.dat <= std_logic_vector(resize(unsigned(r_read_test_reg), data_o.dat'length));  -- 
-          when c_fuse_write_GET     => data_o.dat <= std_logic_vector(resize(unsigned(r_fuse_write), data_o.dat'length));     -- 
+          when c_fuse_read_GET      => data_o.dat <= std_logic_vector(resize(unsigned(r_fuse_read), data_o.dat'length));        -- 
+          when c_read_test_reg_GET  => data_o.dat <= std_logic_vector(resize(unsigned(r_read_test_reg), data_o.dat'length));    -- 
+          when c_fuse_write_GET     => data_o.dat <= std_logic_vector(resize(unsigned(r_fuse_write), data_o.dat'length));       -- 
+          when c_write_test_reg_RW  => data_o.dat <= std_logic_vector(resize(unsigned(r_write_test_reg), data_o.dat'length));   -- 
           when others               => data_o.dat <= (others => 'X');
         end case;
 

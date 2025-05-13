@@ -87,12 +87,12 @@ begin
       s_data_fuse_write_i <= (others => '0');      
     else
       if rising_edge(clk_sys_i) then
-        if(to_integer(unsigned(data_i.adr(2 downto 0))) = c_read_test_reg_GET and data_i.we = '0') then
+        if(to_integer(unsigned(data_i.adr(3 downto 0))) = c_read_test_reg_GET and data_i.we = '0') then
           s_data_fuse_read_V_i <= "1";
           s_data_fuse_read_i <= X"DEADBEEF";
         end if;
   
-        if(to_integer(unsigned(data_i.adr(2 downto 0))) = c_write_test_reg_OWR and data_i.we = '1') then
+        if(to_integer(unsigned(data_i.adr(3 downto 0))) = c_write_test_reg_RW and data_i.we = '1') then
           s_data_fuse_write_V_i <= "1";
           s_data_fuse_write_i <= X"DEADBEEF";
         end if;
