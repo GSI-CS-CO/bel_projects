@@ -31,13 +31,13 @@
 // and has to be configured to one these; 
 // at startup it is unconfigured.
 #define GID_INVALID                     0x0   // invalid GID
-#define PZU_QR                        0x1c0   // LSA UNILAC Source Right
-#define PZU_QL                        0x1c1   // LSA UNILAC Source Left
-#define PZU_QN                        0x1c2   // LSA UNILAC Source High Charge State Injector (HLI)
-#define PZU_UN                        0x1c3   // LSA UNILAC High Charge State Injector (HLI)
-#define PZU_UH                        0x1c4   // LSA UNILAC High Current Injector (HSI)
-#define PZU_AT                        0x1c5   // LSA UNILAC Alvarez Cavities
-#define PZU_TK                        0x1c6   // LSA UNILAC Transfer Line
+#define PZU_QR                        0x250   // LSA UNILAC Source Right                           ; new UR_TO_GUH1MU2
+#define PZU_QL                        0x251   // LSA UNILAC Source Left                            ; new UL_TO_GUH1MU2
+#define PZU_QN                        0x253   // LSA UNILAC Source High Charge State Injector (HLI); new UN_TO_GUN3BC1L
+#define PZU_UN                        0x270   // LSA UNILAC High Charge State Injector (HLI)       ; new GUN3BC1L_TO_GUN6MU2
+#define PZU_UH                        0x261   // LSA UNILAC High Current Injector (HSI)            ; new GUH2BC1L_TO_GUS3MK1
+#define PZU_AT                        0x280   // LSA UNILAC Alvarez Cavities                       ; new GUS4MK6_TO_GUT1MK0
+#define PZU_TK                        0x290   // LSA UNILAC Transfer Line                          ; new GUT1MK1_TO_GTK3MV1
 #define PZU_F50                       0x4c0   // TOS internal: UNILAC 50 Hz synchronization
 #define SIS18_RING                    0x12c   // LSA SIS18 ring
 #define ESR_RING                      0x154   // LSA ESR ring
