@@ -3343,6 +3343,7 @@ end generate;
   cr_y : if g_en_cellular_ram generate
       cr : cellular_ram
         generic map(
+          g_rams => g_rams,
           g_bits => g_cr_bits)
         port map(
         clk_i      => clk_sys,
