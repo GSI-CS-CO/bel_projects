@@ -303,6 +303,7 @@ namespace dnt = DotStr::Node::TypeVal;
       uint8_t cpu;
       AdrType adrType;
       std::tie(cpu, adrType) = at.adrClassification(tmpAdr);
+      cpu=0;
       //TODO this does not cover all possible address types
       //If it is not an adress inside a CPUs shared space, throw an ex for now
       //sLog << "Global Node at: CPU " << (int)cpu << " 0x" << std::hex << tmpAdr << std::endl;

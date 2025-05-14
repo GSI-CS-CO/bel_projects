@@ -30,7 +30,7 @@ void RefLocation::init(EbWrapper* ebd, const uint32_t sharedOffs) {
   for(int i=0; i < ebd->getThrQty(); i++) {
     std::ostringstream oss;
     oss << std::setw(2) << std::setfill('0') << i;
-    ml.insert({dloc::sThrStaging + "_" + oss.str(), sharedOffs + ebd->getCtlAdr(ADRLUT_SHCTL_THR_STA) + i * _T_TS_SIZE_});
+    ml.insert({dloc::sThrStaging + "_" + oss.str(), sharedOffs + ebd->getCtlAdr(ADRLUT_SHCTL_THR_STA) + i * _T_TS_SIZE_ + T_TS_STARTTIME});
   }
 
 
