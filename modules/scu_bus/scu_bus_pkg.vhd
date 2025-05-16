@@ -46,7 +46,8 @@ component wb_scu_bus is
     nSCUB_SRQ_Slaves                   : IN     STD_LOGIC_VECTOR(11 DOWNTO 0);  -- Input of service requests up to 12 SCU_Bus slaves, active low.
     nSCUB_Slave_Sel                    : OUT    STD_LOGIC_VECTOR(11 DOWNTO 0);  -- Output select one or more of 12 SCU_Bus slaves, active low.
     nSCUB_Timing_Cycle                 : OUT    STD_LOGIC;                      -- Strobe to signal a timing cycle on SCU_Bus, active low.
-    nSel_Ext_Data_Drv                  : OUT    STD_LOGIC                       -- select for external data transceiver to the SCU_Bus, active low.
+    nSel_Ext_Data_Drv                  : OUT    STD_LOGIC;                       -- select for external data transceiver to the SCU_Bus, active low.
+    is_scub_backplane                  : in     std_logic
 
     );
 end component;
@@ -192,5 +193,18 @@ constant c_scu_irq_ctrl_sdb : t_sdb_device := (
     version       => x"00000001",
     date          => x"20140528",
     name          => "IRQ_MASTER_CTRL    ")));
+
+component detect_backplane is
+  generic (
+    Clk_in_Hz      : integer;
+    Time_out_in_ms : integer
+  );
+  port (
+    clk_i         : in std_logic;
+    rst_n_i       : in std_logic;
+    trigger       : in std_logic;
+    is_standalone : out std_logic
+  );
+end component;
 
 end package;

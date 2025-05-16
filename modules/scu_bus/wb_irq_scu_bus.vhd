@@ -45,6 +45,7 @@ end entity;
 
 architecture wb_irq_scu_bus_arch of wb_irq_scu_bus is
   signal scu_srq_active : std_logic_vector(11 downto 0);
+  signal is_standalone : std_logic;
 begin
   scub_master : wb_scu_bus 
     generic map(
@@ -70,7 +71,8 @@ begin
      nSCUB_SRQ_Slaves   => nscub_srq_slaves,
      nSCUB_Slave_Sel    => nscub_slave_sel,
      nSCUB_Timing_Cycle => nscub_timing_cycle,
-     nSel_Ext_Data_Drv  => nsel_ext_data_drv);
+     nSel_Ext_Data_Drv  => nsel_ext_data_drv,
+     is_scub_backplane  => not is_standalone);
   
   scub_irq_master: wb_irq_master
   generic map (
@@ -91,4 +93,15 @@ begin
 
     -- irq lines
     irq_i        => scu_srq_active);                    
+
+  scub_or_standalone: detect_backplane
+  generic map (
+    Clk_in_Hz      => 62_500_000,
+    Time_out_in_ms => 3)
+  port map (
+    clk_i         => clk_i,
+    rst_n_i       => rst_n_i,
+    trigger       => nscub_dtack,
+    is_standalone => is_standalone);
+
 end architecture;
