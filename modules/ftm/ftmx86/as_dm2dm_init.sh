@@ -20,7 +20,7 @@ DOTFILE=tmp.dot
 ADRRAWFILE=adrraw.txt
 ADRFILE=adr.txt
 
-TOFFS_MACRO2=8
+TOFFS_MACRO2=5000
 
 CMD_INBOX=registers
 CMD_THR_START=threadControl
@@ -63,37 +63,181 @@ dec_to_hex64() {
 }
 
 # Function to shift left using bc
+#shift_left() {
+#  RESULT=$(awk "BEGIN {print $1 * 2^$2}")
+#  RESULT=$(awk -v A="$1" -v B="$2" 'BEGIN {print A * 2^B}')
+#  echo "$RESULT"
+#}
+
 shift_left() {
-  RESULT=$(awk "BEGIN {print $1 * 2^$2}")
-  echo "$RESULT"
+  awk -v val="$1" -v shift="$2" '
+  function reverse(s,   r,i) {
+    r = ""; for (i = length(s); i > 0; i--) r = r substr(s,i,1)
+    return r
+  }
+  function double(num,   res, carry, i, d) {
+    num = reverse(num)
+    carry = 0
+    res = ""
+    for (i = 1; i <= length(num); i++) {
+      d = substr(num, i, 1) * 2 + carry
+      carry = int(d / 10)
+      res = (d % 10) res
+    }
+    if (carry) res = carry res
+    return res
+  }
+  BEGIN {
+    result = val
+    for (i = 0; i < shift; i++) {
+      result = double(result)
+    }
+    gsub(/^0+/, "", result)
+    if (result == "") result = "0"
+    print result
+  }'
 }
 
 sumHex() {
   DEC_A=$(hex_to_dec "$1")
   DEC_B=$(hex_to_dec "$2")
-  RESULT=$(awk "BEGIN {print $DEC_A + $DEC_B}")
+  RESULT=$(sum $"DEC_A" $"DEC_B")
   dec_to_hex64 "$RESULT"
 }
 
 
+#sum() {
+#  DEC_A=$(hex_to_dec "$1")
+#  DEC_B=$(hex_to_dec "$2")
+#  RESULT=$(awk -v A=ARGV[1] + 0  -v B=ARGV[2] + 0 'BEGIN {print A + B}')
+#  RESULT=$(awk "BEGIN {print $DEC_A + $DEC_B}")
+#  echo "$RESULT"
+#}
+
+#sum() {
+#  awk -v A="$1" -v B="$2" '
+#  function reverse(s,    i,r) {
+#    r = ""
+#    for(i=length(s); i>0; i--) r = r substr(s,i,1)
+#    return r
+#  }
+#  BEGIN {
+#    a = reverse(A)
+#    b = reverse(B)
+#    carry = 0
+#    result = ""
+#    len = (length(a) > length(b)) ? length(a) : length(b)
+#    for (i = 1; i <= len; i++) {
+#      da = (i <= length(a)) ? substr(a,i,1) : 0
+#      db = (i <= length(b)) ? substr(b,i,1) : 0
+#      s = da + db + carry
+#      carry = int(s / 10)
+#      digit = s % 10
+#      result = digit result
+#    }
+#    if (carry > 0) result = carry result
+#    gsub(/^0+/, "", result)
+#    if (result == "") result = "0"
+#    print result
+#  }'
+#}
+
 sum() {
-  DEC_A="$1"
-  DEC_B="$2"
-  RESULT=$(awk "BEGIN {print $DEC_A + $DEC_B}")
-  echo "$RESULT"
+  awk -v A="$1" -v B="$2" '
+  function abs(s) {
+    return (substr(s,1,1) == "-" ? substr(s,2) : s)
+  }
+  function reverse(s,    r,i) {
+    r = ""; for (i=length(s); i>0; i--) r = r substr(s,i,1)
+    return r
+  }
+  function strip_leading_zeros(s) {
+    gsub(/^0+/, "", s)
+    return s == "" ? "0" : s
+  }
+  function compare(x, y,   i) {
+    x = strip_leading_zeros(x)
+    y = strip_leading_zeros(y)
+    if (length(x) != length(y)) return (length(x) > length(y) ? 1 : -1)
+    for (i = 1; i <= length(x); i++) {
+      if (substr(x,i,1) != substr(y,i,1))
+        return (substr(x,i,1) > substr(y,i,1) ? 1 : -1)
+    }
+    return 0
+  }
+  function add(x, y,   i, carry, s, d, result) {
+    x = reverse(x); y = reverse(y)
+    result = ""; carry = 0
+    maxlen = (length(x) > length(y)) ? length(x) : length(y)
+    for (i = 1; i <= maxlen; i++) {
+      da = (i <= length(x)) ? substr(x,i,1) : 0
+      db = (i <= length(y)) ? substr(y,i,1) : 0
+      s = da + db + carry
+      carry = int(s / 10)
+      d = s % 10
+      result = d result
+    }
+    if (carry) result = carry result
+    return strip_leading_zeros(result)
+  }
+  function subtract(x, y,   i, borrow, d, result) {
+    # assumes x >= y
+    x = reverse(x); y = reverse(y)
+    result = ""; borrow = 0
+    for (i = 1; i <= length(x); i++) {
+      da = substr(x,i,1)
+      db = (i <= length(y)) ? substr(y,i,1) : 0
+      d = da - db - borrow
+      if (d < 0) {
+        d += 10
+        borrow = 1
+      } else {
+        borrow = 0
+      }
+      result = d result
+    }
+    return strip_leading_zeros(result)
+  }
+  BEGIN {
+    sgnA = (substr(A,1,1) == "-" ? -1 : 1)
+    sgnB = (substr(B,1,1) == "-" ? -1 : 1)
+    a = abs(A)
+    b = abs(B)
+
+    if (sgnA == sgnB) {
+      # Same sign → just add, preserve sign
+      res = add(a, b)
+      if (sgnA < 0) res = "-" res
+    } else {
+      # Different signs → subtract
+      cmp = compare(a, b)
+      if (cmp == 0) {
+        res = "0"
+      } else if (cmp > 0) {
+        res = subtract(a, b)
+        if (sgnA < 0) res = "-" res
+      } else {
+        res = subtract(b, a)
+        if (sgnB < 0) res = "-" res
+      }
+    }
+
+    print res
+  }'
 }
 
 
-create_TIC() {
 
+create_TIC() {
+#set -x
   A=$(sum  "0" $(shift_left $(hex_to_dec $FID)       60))
   A=$(sum "$A" $(shift_left $(hex_to_dec $GIDBASE)   48))
   A=$(sum "$A" $(shift_left $(hex_to_dec $2)         48)) #dm
   A=$(sum "$A" $(shift_left $(hex_to_dec $EVTNOBASE) 36))
   A=$(sum "$A" $(shift_left $(hex_to_dec $1)         36)) #command
-  A=$(sum "$A" $(shift_left $(hex_to_dec $3)         32)) #cpu
-  A=$(sum "$A" $(shift_left $(hex_to_dec $4)         20)) #thr
-
+  A=$(sum "$A" $(shift_left $3         32)) #cpu
+  A=$(sum "$A" $(shift_left $4         0)) #thr
+#set +x
   echo $(dec_to_hex64 "$A")
 }
 
@@ -187,11 +331,11 @@ get_cmd_sec() { #CMD #CPU #THR
     2)
       SEC="$CMD_INBOX"
       ;;
-    1)
+    0)
       THRSTR=$(printf "%02d" "$LTHR")  
       SEC="$CMD_THR_TIME"_"$THRSTR"
       ;;
-    0)
+    1)
       SEC="$CMD_THR_START"
       ;;
     *)
@@ -354,7 +498,7 @@ else
 fi
 
 # Example usage
-#echo "ID = $ID"
+#echo "THR = $THR"
 #echo "MSK = $MSK"
 #echo "WIDTH = $WIDTH"
 #echo "TOFFS = $TOFFS"
