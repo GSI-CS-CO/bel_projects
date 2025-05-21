@@ -46,7 +46,21 @@ end entity;
 architecture wb_irq_scu_bus_arch of wb_irq_scu_bus is
   signal scu_srq_active : std_logic_vector(11 downto 0);
   signal is_standalone : std_logic;
+  signal scu_slave_o_from_scub : t_wishbone_master_in;
+  signal scu_slave_i_to_scub : t_wishbone_master_out;
 begin
+  mx: scu_bus_mux
+  port map(
+    clk           => clk_i,
+    rst_n_i       => rst_n_i,
+    is_standalone => is_standalone,
+    scu_slave_o   => scu_slave_o,
+    scu_slave_i   => scu_slave_i,
+    ac_output     => x"00000000",
+    scu_slave_out => scu_slave_o_from_scub,
+    scu_slave_in  => scu_slave_i_to_scub
+  );
+
   scub_master : wb_scu_bus 
     generic map(
       g_interface_mode      => g_interface_mode,
@@ -59,8 +73,8 @@ begin
      nrst               => rst_n_i,
      Timing_In          => tag,
      Start_Timing_Cycle => tag_valid,
-     slave_i            => scu_slave_i,
-     slave_o            => scu_slave_o,
+     slave_i            => scu_slave_i_to_scub,
+     slave_o            => scu_slave_o_from_scub,
      srq_active         => scu_srq_active,
      
      SCUB_Data          => scub_data,
