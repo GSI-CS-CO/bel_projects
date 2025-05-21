@@ -23,12 +23,17 @@ architecture arch of detect_backplane is
 begin
   trigger_cnt: process (clk_i, rst_n_i, trigger)
     variable cnt : unsigned(20 downto 0) := to_unsigned(312500, 21);
+    variable cnt_en : std_logic;
   begin
     if rst_n_i = '0' then
       cnt := to_unsigned(312500, 21);
       is_standalone <= '0';
+      cnt_en := '1';
     elsif rising_edge(clk_i) then
-      if trigger = '0' then
+      -- stop counting when timeout is reached
+      if cnt(cnt'high) = '1' then
+        cnt_en := '0';
+      elsif trigger = '0' and cnt_en = '1' then
         cnt := cnt - 1;
       else
         cnt := to_unsigned(312500, 21);
