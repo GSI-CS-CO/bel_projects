@@ -178,10 +178,10 @@ architecture rtl of scu4slim is
 
   signal s_gpio_o    : std_logic_vector(9 downto 0);
   signal s_gpio_i    : std_logic_vector(2 downto 0);
-  --signal s_lvds_p_i  : std_logic_vector(2 downto 0);
-  --signal s_lvds_n_i  : std_logic_vector(2 downto 0);
-  --signal s_lvds_p_o  : std_logic_vector(2 downto 0);
-  --signal s_lvds_term : std_logic_vector(2 downto 0);
+  signal s_lvds_p_i  : std_logic_vector(2 downto 0);
+  signal s_lvds_n_i  : std_logic_vector(2 downto 0);
+  signal s_lvds_p_o  : std_logic_vector(2 downto 0);
+  signal s_lvds_term : std_logic_vector(2 downto 0);
 
   signal s_clk_20m_vcxo_i       : std_logic;
   signal s_clk_125m_pllref_i    : std_logic;
@@ -221,9 +221,9 @@ architecture rtl of scu4slim is
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
     ("LEMO_IN_0  ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
     ("LEMO_IN_1  ",  IO_NONE,         false,   false,  1,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
-    ("FAST_IN_0  ",  IO_NONE,         false,   false,  2,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVDS),
-    ("FAST_IN_1  ",  IO_NONE,         false,   false,  3,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVDS),
-    ("FAST_IN_2  ",  IO_NONE,         false,   false,  4,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVDS),
+    ("FAST_IN_0  ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
+    ("FAST_IN_1  ",  IO_NONE,         false,   false,  1,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
+    ("FAST_IN_2  ",  IO_NONE,         false,   false,  2,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
     ("USER_LED0_R",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("USER_LED0_G",  IO_NONE,         false,   false,  1,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("USER_LED0_B",  IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
@@ -231,17 +231,17 @@ architecture rtl of scu4slim is
     ("LEMO_OUT_1 ",  IO_NONE,         false,   false,  4,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LEMO_OUT_2 ",  IO_NONE,         false,   false,  5,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LEMO_OUT_3 ",  IO_NONE,         false,   false,  6,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("FAST_OUT_0 ",  IO_NONE,         false,   false,  7,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVDS),
-    ("FAST_OUT_1 ",  IO_NONE,         false,   false,  8,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVDS),
-    ("FAST_OUT_2 ",  IO_NONE,         false,   false,  9,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVDS),
-    ("DEBUG_LED_0",  IO_NONE,         false,   false, 10,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("DEBUG_LED_1",  IO_NONE,         false,   false, 11,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("DEBUG_LED_2",  IO_NONE,         false,   false, 12,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("DEBUG_LED_3",  IO_NONE,         false,   false, 13,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("DEBUG_LED_4",  IO_NONE,         false,   false, 14,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("DEBUG_LED_5",  IO_NONE,         false,   false, 15,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("DEBUG_LED_6",  IO_NONE,         false,   false, 16,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("DEBUG_LED_7",  IO_NONE,         false,   false, 17,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL)
+    ("DEBUG_LED_0",  IO_NONE,         false,   false,  7,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("DEBUG_LED_1",  IO_NONE,         false,   false,  8,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("DEBUG_LED_2",  IO_NONE,         false,   false,  9,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("DEBUG_LED_3",  IO_NONE,         false,   false, 10,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("DEBUG_LED_4",  IO_NONE,         false,   false, 11,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("DEBUG_LED_5",  IO_NONE,         false,   false, 12,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("DEBUG_LED_6",  IO_NONE,         false,   false, 13,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("DEBUG_LED_7",  IO_NONE,         false,   false, 14,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("FAST_OUT_0 ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_LVDS,  false,        false,       IO_LVDS),
+    ("FAST_OUT_1 ",  IO_NONE,         false,   false,  1,     IO_OUTPUT,   IO_LVDS,  false,        false,       IO_LVDS),
+    ("FAST_OUT_2 ",  IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_LVDS,  false,        false,       IO_LVDS)
   );
 
   constant c_family       : string := "Arria 10 GX SCU4";
@@ -259,10 +259,10 @@ begin
       g_project            => c_project,
       g_flash_bits         => 25, -- !!! TODO: Check this
       g_cr_bits            => c_cr_bits,
-      g_gpio_in            => 5,
-      g_gpio_out           => 18,
-      --g_lvds_in            => 3,
-      --g_lvds_out           => 3,
+      g_gpio_in            => 2,
+      g_gpio_out           => 15,
+      g_lvds_in            => 3,
+      g_lvds_out           => 3,
       --g_lvds_invert        => true,
       g_en_user_ow         => true,
       g_en_ddr3            => false,
@@ -311,12 +311,11 @@ begin
       sfp_tx_fault_i          => sfp_tx_fault_i,
       sfp_los_i               => sfp_los_i,
       gpio_i(1 downto 0)      => lemo_in,
-      gpio_i(4 downto 2)      => s_gpio_i,
-      gpio_o(9 downto 0)      => s_gpio_o(9 downto 0),
-      gpio_o(17 downto 10)    => s_debug_led,
-      --lvds_p_i                => s_lvds_p_i,
-      --lvds_n_i                => s_lvds_n_i,
-      --lvds_p_o                => s_lvds_p_o,
+      gpio_o(6 downto 0)      => s_gpio_o(6 downto 0),
+      gpio_o(14 downto 7)     => s_debug_led,
+      lvds_p_i                => s_lvds_p_i,
+      lvds_n_i                => s_lvds_n_i,
+      lvds_p_o                => s_lvds_p_o,
       led_link_up_o           => s_led_link_up,
       led_link_act_o          => s_led_link_act,
       led_track_o             => s_led_track,
@@ -393,19 +392,19 @@ begin
 
   -- LEMOs
   lemos : for i in 0 to 2 generate
-    --s_lvds_p_i(i) <= fastIO_p_i(i);
-    --s_lvds_n_i(i) <= fastIO_n_i(i);
-    --fastIO_p_o(i) <= s_lvds_p_o(i);
-    fastIO_p_o <= s_gpio_o(9 downto 7);
+    s_lvds_p_i(i) <= fastIO_p_i(i);
+    s_lvds_n_i(i) <= fastIO_n_i(i);
+    fastIO_p_o(i) <= s_lvds_p_o(i);
+    --fastIO_p_o <= s_gpio_o(9 downto 7);
 
-    lvds_to_single_gpio : altera_lvds_ibuf
-      generic map(
-        g_family  => c_family)
-      port map(
-        datain_b  => fastIO_n_i(i),
-        datain    => fastIO_p_i(i),
-        dataout   => s_gpio_i(i)
-      );
+    --lvds_to_single_gpio : altera_lvds_ibuf
+    --  generic map(
+    --    g_family  => c_family)
+    --  port map(
+    --    datain_b  => fastIO_n_i(i),
+    --    datain    => fastIO_p_i(i),
+    --    dataout   => s_gpio_i(i)
+    --  );
   end generate;
   lemo_out <= s_gpio_o(6 downto 3);
 
