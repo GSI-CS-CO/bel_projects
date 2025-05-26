@@ -279,15 +279,44 @@ architecture rtl of scu_control is
   signal mil_nled_drq_o        : std_logic;
 
 
-  signal s_lemo_io    : std_logic_vector(1 downto 0);
-  signal s_lemo_oe    : std_logic_vector(1 downto 0);
+  signal s_lemo_io    : std_logic_vector(25 downto 0);
+  signal s_lemo_oe    : std_logic_vector(25 downto 0);
   signal s_lemo_input : std_logic_vector(1 downto 0);
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 1) :=
+  signal scub_a    : std_logic_vector(15 downto 0);
+  signal scub_d    : std_logic_vector(15 downto 0);
+  signal scub_nSEL : std_logic_vector(12 downto 1);
+  signal is_rmt    : std_logic;
+
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 25) :=
   (
   -- Name[11 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
-    ("B1         ",  IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_GPIO,  true,         false,       IO_CMOS),
-    ("B2         ",  IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_GPIO,  true,         false,       IO_CMOS)
+    ("B1         ",  IO_NONE,         false,   false,  0,     IO_INOUTPUT,   IO_GPIO,  true,        false,       IO_CMOS),
+    ("B2         ",  IO_NONE,         false,   false,  1,     IO_INOUTPUT,   IO_GPIO,  true,        false,       IO_CMOS),
+    ("RMT0       ",  IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT1       ",  IO_NONE,         false,   false,  3,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT2       ",  IO_NONE,         false,   false,  4,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT3       ",  IO_NONE,         false,   false,  5,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT4       ",  IO_NONE,         false,   false,  6,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT5       ",  IO_NONE,         false,   false,  7,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT6       ",  IO_NONE,         false,   false,  8,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT7       ",  IO_NONE,         false,   false,  9,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT8       ",  IO_NONE,         false,   false,  10,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT9       ",  IO_NONE,         false,   false,  11,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT10      ",  IO_NONE,         false,   false,  12,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT11      ",  IO_NONE,         false,   false,  13,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT12      ",  IO_NONE,         false,   false,  14,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT13      ",  IO_NONE,         false,   false,  15,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT14      ",  IO_NONE,         false,   false,  16,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT15      ",  IO_NONE,         false,   false,  17,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT16      ",  IO_NONE,         false,   false,  18,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT17      ",  IO_NONE,         false,   false,  19,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT18      ",  IO_NONE,         false,   false,  20,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT19      ",  IO_NONE,         false,   false,  21,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT20      ",  IO_NONE,         false,   false,  22,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT21      ",  IO_NONE,         false,   false,  23,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT22      ",  IO_NONE,         false,   false,  24,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT23      ",  IO_NONE,         false,   false,  25,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVTTL)
   );
 
   constant c_family       : string := "Arria II";
@@ -303,27 +332,29 @@ begin
 
   main : monster
     generic map(
-      g_family            => c_family,
-      g_project           => c_project,
-      g_gpio_inout        => 2,
-      g_flash_bits        => 24,
-      g_en_pcie           => true,
-      g_en_scubus         => true,
-      g_en_mil            => true,
-      g_en_oled           => true,
-      g_en_user_ow        => true,
-      g_en_cfi            => true,
-      g_en_ddr3           => true,
-      g_delay_diagnostics => true,
-      g_io_table          => io_mapping_table,
-      g_lm32_cores        => c_cores,
-      g_lm32_ramsizes     => c_lm32_ramsizes/4,
-      g_lm32_init_files   => c_initf,
-      g_lm32_profiles     => f_string_list_repeat(c_profile_name, c_cores),
-      g_en_wd_tmr         => true,
-      g_en_eca_tap        => true,
-      g_en_timer          => true,
-      g_en_asmi           => true
+      g_family             => c_family,
+      g_project            => c_project,
+      g_gpio_out           => 24,
+      g_gpio_inout         => 2,
+      g_flash_bits         => 26,
+      g_en_pcie            => true,
+      g_en_scubus          => true,
+      g_en_mil             => true,
+      g_en_oled            => true,
+      g_en_user_ow         => true,
+      g_en_cfi             => true,
+      g_en_ddr3            => true,
+      g_delay_diagnostics  => true,
+      g_en_enc_err_counter => true,
+      g_io_table           => io_mapping_table,
+      g_lm32_cores         => c_cores,
+      g_lm32_ramsizes      => c_lm32_ramsizes/4,
+      g_lm32_init_files    => c_initf,
+      g_lm32_profiles      => f_string_list_repeat(c_profile_name, c_cores),
+      g_en_wd_tmr          => true,
+      g_en_eca_tap         => true,
+      g_en_timer           => true,
+      g_en_asmi            => false
     )
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
@@ -358,14 +389,14 @@ begin
       pcie_rstn_i            => nPCI_RESET,
       pcie_rx_i              => pcie_rx_i,
       pcie_tx_o              => pcie_tx_o,
-      scubus_a_a             => A_A,
-      scubus_a_d             => A_D,
+      scubus_a_a             => scub_a,
+      scubus_a_d             => scub_d,
       scubus_nsel_data_drv   => nSel_Ext_Data_DRV,
       scubus_a_nds           => A_nDS,
       scubus_a_rnw           => A_RnW,
       scubus_a_ndtack        => A_nDtack,
       scubus_a_nsrq          => A_nSRQ,
-      scubus_a_nsel          => A_nSEL,
+      scubus_a_nsel          => scub_nSEL,
       scubus_a_ntiming_cycle => A_nTiming_Cycle,
       scubus_a_sysclock      => A_SysClock,
       mil_nme_boo_i          => io_2_5v(11),
@@ -440,7 +471,8 @@ begin
       mem_DDR3_CLK_n         => DDR3_CLK_n,
       mem_DDR3_WE_n          => DDR3_WE_n,
       hw_version             => x"0000000" & not scu_cb_version,
-      poweroff_comx          => nPWRBTN);
+      poweroff_comx          => nPWRBTN,
+      is_rmt                 => is_rmt);
 
   -- LPC UART
   lpc_slave: lpc_uart
@@ -508,6 +540,102 @@ begin
         pulse_i    => lemo_io(i),
         extended_o => s_lemo_leds(i));
   end generate;
+
+
+  standalone_backplane : process (is_rmt)
+  begin
+    if (is_rmt = '1') then
+      A_nSEL(12) <= s_lemo_io(2);  -- Slot L1 IO1
+      A_nSEL(7)  <= s_lemo_io(3);  -- Slot L1 IO2
+      A_nSEL(11) <= s_lemo_io(4);  -- Slot L1 IO3
+      A_nSEL(8)  <= s_lemo_io(5);  -- Slot L1 IO4
+      A_nSEL(10) <= s_lemo_io(6);  -- Slot L1 IO5
+      A_nSEL(9)  <= s_lemo_io(7);  -- Slot L1 IO6
+
+      A_D(5)     <= s_lemo_io(8);  -- Slot L2 IO1
+      A_D(1)     <= s_lemo_io(9); -- Slot L2 IO2
+      A_D(4)     <= s_lemo_io(10); -- Slot L2 IO3
+      A_D(0)     <= s_lemo_io(11); -- Slot L2 IO4
+      A_D(3)     <= s_lemo_io(12); -- Slot L2 IO5
+      A_D(2)     <= s_lemo_io(13); -- Slot L2 IO6
+
+      A_D(15)    <= s_lemo_io(14); -- Slot L3 IO1
+      A_D(10)    <= s_lemo_io(15); -- Slot L3 IO2
+      A_D(14)    <= s_lemo_io(16); -- Slot L3 IO3
+      A_D(11)    <= s_lemo_io(17); -- Slot L3 IO4
+      A_D(13)    <= s_lemo_io(18); -- Slot L3 IO5
+      A_D(12)    <= s_lemo_io(19); -- Slot L3 IO6
+
+      A_A(11)    <= s_lemo_io(20); -- Slot R1 IO1
+      A_A(9)     <= s_lemo_io(21); -- Slot R1 IO2
+      A_A(13)    <= s_lemo_io(22); -- Slot R1 IO3
+      A_A(7)     <= s_lemo_io(23); -- Slot R1 IO4
+      A_A(15)    <= s_lemo_io(24); -- Slot R1 IO5
+      A_A(5)     <= s_lemo_io(25); -- Slot R1 IO6
+
+      A_A(8)     <= '0';         -- Slot R2 IO1
+      A_A(10)    <= '0';         -- Slot R2 IO2
+      A_A(6)     <= '0';         -- Slot R2 IO3
+      A_A(12)    <= '0';         -- Slot R2 IO4
+      A_A(4)     <= '0';         -- Slot R2 IO5
+      A_A(14)    <= '0';         -- Slot R2 IO6
+
+      A_nSEL(3)  <= '0';         -- Slot R3 IO1
+      A_nSEL(6)  <= '0';         -- Slot R3 IO2
+      A_nSEL(2)  <= '0';         -- Slot R3 IO3
+      A_nSEL(5)  <= '0';         -- Slot R3 IO4
+      A_nSEL(1)  <= '0';         -- Slot R3 IO5
+      A_nSEL(4)  <= '0';         -- Slot R3 IO6
+    else
+      A_nSEL(12) <= scub_nSEL(12);
+      A_nSEL(7)  <= scub_nSEL(7);
+      A_nSEL(11) <= scub_nSEL(11);
+      A_nSEL(8)  <= scub_nSEL(8);
+      A_nSEL(10) <= scub_nSEL(10);
+      A_nSEL(9)  <= scub_nSEL(9);
+
+      A_D(5)     <= scub_d(5);
+      A_D(1)     <= scub_d(1);
+      A_D(4)     <= scub_d(4);
+      A_D(0)     <= scub_d(0);
+      A_D(3)     <= scub_d(3);
+      A_D(2)     <= scub_d(2);
+
+      A_D(15)    <= scub_d(15);
+      A_D(10)    <= scub_d(10);
+      A_D(14)    <= scub_d(14);
+      A_D(11)    <= scub_d(11);
+      A_D(13)    <= scub_d(13);
+      A_D(12)    <= scub_d(12);
+
+      A_A(11)    <= scub_a(11);
+      A_A(9)     <= scub_a(9);
+      A_A(13)    <= scub_a(13);
+      A_A(7)     <= scub_a(7);
+      A_A(15)    <= scub_a(15);
+      A_A(5)     <= scub_a(5);
+
+      A_A(8)     <= scub_a(8);
+      A_A(10)    <= scub_a(10);
+      A_A(6)     <= scub_a(6);
+      A_A(12)    <= scub_a(12);
+      A_A(4)     <= scub_a(4);
+      A_A(14)    <= scub_a(14);
+
+      A_nSEL(3)  <= scub_nSEL(3);
+      A_nSEL(6)  <= scub_nSEL(6);
+      A_nSEL(2)  <= scub_nSEL(2);
+      A_nSEL(5)  <= scub_nSEL(5);
+      A_nSEL(1)  <= scub_nSEL(1);
+      A_nSEL(4)  <= scub_nSEL(4);
+    end if;
+
+
+
+
+
+
+  end process;
 
   -- MIL Option LEMO Control
 

@@ -438,7 +438,9 @@ package monster_pkg is
       -- g_en_user_ow
       ow_io                  : inout std_logic_vector(1 downto 0) := (others => 'Z');
       hw_version             : in std_logic_vector(31 downto 0) := (others => 'Z');
-      poweroff_comx          : out std_logic);
+      poweroff_comx          : out std_logic;
+      -- rack mount timing receiver
+      is_rmt                 : out   std_logic := 'Z');
   end component;
 
   constant c_user_1wire_sdb : t_sdb_device := (

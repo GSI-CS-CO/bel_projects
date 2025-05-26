@@ -431,7 +431,9 @@ entity monster is
     -- g_en_a10ts
     ge_85_c_o              : out   std_logic;
    -- g_en_tempsens
-    tempsens_clr_out       : out   std_logic);
+    tempsens_clr_out       : out   std_logic;
+    -- rack mount timing receiver
+    is_rmt                 : out   std_logic := '0');
 end monster;
 
 architecture rtl of monster is
@@ -3289,7 +3291,8 @@ end generate;
         nscub_srq_slaves   => scubus_a_nsrq,
         nscub_slave_sel    => scubus_a_nsel,
         nscub_timing_cycle => scubus_a_ntiming_cycle,
-        nsel_ext_data_drv  => scubus_nsel_data_drv);
+        nsel_ext_data_drv  => scubus_nsel_data_drv,
+        is_rmt             => is_rmt);
   end generate;
 
   mil_n : if not g_en_mil generate
