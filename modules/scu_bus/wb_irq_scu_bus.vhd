@@ -39,7 +39,8 @@ entity wb_irq_scu_bus is
         nscub_srq_slaves    : in std_logic_vector(11 downto 0);
         nscub_slave_sel     : out std_logic_vector(11 downto 0);
         nscub_timing_cycle  : out std_logic;
-        nsel_ext_data_drv   : out std_logic);
+        nsel_ext_data_drv   : out std_logic;
+        is_rmt              : out std_logic);
 end entity;
 
 
@@ -118,4 +119,5 @@ begin
     trigger       => nscub_dtack,
     is_standalone => is_standalone);
 
+  is_rmt <= is_standalone;
 end architecture;
