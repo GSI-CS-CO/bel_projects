@@ -283,10 +283,12 @@ architecture rtl of scu_control is
   signal s_lemo_oe    : std_logic_vector(25 downto 0);
   signal s_lemo_input : std_logic_vector(1 downto 0);
 
-  signal scub_a    : std_logic_vector(15 downto 0);
-  signal scub_d    : std_logic_vector(15 downto 0);
-  signal scub_nSEL : std_logic_vector(12 downto 1);
-  signal is_rmt    : std_logic;
+  signal scub_a                 : std_logic_vector(15 downto 0);
+  signal scub_d                 : std_logic_vector(15 downto 0);
+  signal scub_nsel              : std_logic_vector(12 downto 1);
+  signal scub_nsel_ext_data_drv : std_logic;
+  signal scub_A_RnW             : std_logic;
+  signal is_rmt                 : std_logic;
 
   constant io_mapping_table : t_io_mapping_table_arg_array(0 to 25) :=
   (
@@ -391,9 +393,9 @@ begin
       pcie_tx_o              => pcie_tx_o,
       scubus_a_a             => scub_a,
       scubus_a_d             => scub_d,
-      scubus_nsel_data_drv   => nSel_Ext_Data_DRV,
+      scubus_nsel_data_drv   => scub_nSel_Ext_Data_DRV,
       scubus_a_nds           => A_nDS,
-      scubus_a_rnw           => A_RnW,
+      scubus_a_rnw           => scub_A_RnW,
       scubus_a_ndtack        => A_nDtack,
       scubus_a_nsrq          => A_nSRQ,
       scubus_a_nsel          => scub_nSEL,
@@ -545,89 +547,93 @@ begin
   standalone_backplane : process (is_rmt)
   begin
     if (is_rmt = '1') then
-      A_nSEL(12) <= s_lemo_io(2);  -- Slot L1 IO1
-      A_nSEL(7)  <= s_lemo_io(3);  -- Slot L1 IO2
-      A_nSEL(11) <= s_lemo_io(4);  -- Slot L1 IO3
-      A_nSEL(8)  <= s_lemo_io(5);  -- Slot L1 IO4
-      A_nSEL(10) <= s_lemo_io(6);  -- Slot L1 IO5
-      A_nSEL(9)  <= s_lemo_io(7);  -- Slot L1 IO6
+      A_RnW             <= '0';           -- set drivers to output
+      nSel_Ext_Data_DRV <= '0';           -- activate the drivers
+      A_nSEL(12)        <= s_lemo_io(2);  -- Slot L1 IO1
+      A_nSEL(7)         <= s_lemo_io(3);  -- Slot L1 IO2
+      A_nSEL(11)        <= s_lemo_io(4);  -- Slot L1 IO3
+      A_nSEL(8)         <= s_lemo_io(5);  -- Slot L1 IO4
+      A_nSEL(10)        <= s_lemo_io(6);  -- Slot L1 IO5
+      A_nSEL(9)         <= s_lemo_io(7);  -- Slot L1 IO6
 
-      A_D(5)     <= s_lemo_io(8);  -- Slot L2 IO1
-      A_D(1)     <= s_lemo_io(9);  -- Slot L2 IO2
-      A_D(4)     <= s_lemo_io(10); -- Slot L2 IO3
-      A_D(0)     <= s_lemo_io(11); -- Slot L2 IO4
-      A_D(3)     <= s_lemo_io(12); -- Slot L2 IO5
-      A_D(2)     <= s_lemo_io(13); -- Slot L2 IO6
+      A_D(5)            <= s_lemo_io(8);  -- Slot L2 IO1
+      A_D(1)            <= s_lemo_io(9);  -- Slot L2 IO2
+      A_D(4)            <= s_lemo_io(10); -- Slot L2 IO3
+      A_D(0)            <= s_lemo_io(11); -- Slot L2 IO4
+      A_D(3)            <= s_lemo_io(12); -- Slot L2 IO5
+      A_D(2)            <= s_lemo_io(13); -- Slot L2 IO6
 
-      A_D(15)    <= s_lemo_io(14); -- Slot L3 IO1
-      A_D(10)    <= s_lemo_io(15); -- Slot L3 IO2
-      A_D(14)    <= s_lemo_io(16); -- Slot L3 IO3
-      A_D(11)    <= s_lemo_io(17); -- Slot L3 IO4
-      A_D(13)    <= s_lemo_io(18); -- Slot L3 IO5
-      A_D(12)    <= s_lemo_io(19); -- Slot L3 IO6
+      A_D(15)           <= s_lemo_io(14); -- Slot L3 IO1
+      A_D(10)           <= s_lemo_io(15); -- Slot L3 IO2
+      A_D(14)           <= s_lemo_io(16); -- Slot L3 IO3
+      A_D(11)           <= s_lemo_io(17); -- Slot L3 IO4
+      A_D(13)           <= s_lemo_io(18); -- Slot L3 IO5
+      A_D(12)           <= s_lemo_io(19); -- Slot L3 IO6
 
-      A_A(11)    <= s_lemo_io(20); -- Slot R1 IO1
-      A_A(9)     <= s_lemo_io(21); -- Slot R1 IO2
-      A_A(13)    <= s_lemo_io(22); -- Slot R1 IO3
-      A_A(7)     <= s_lemo_io(23); -- Slot R1 IO4
-      A_A(15)    <= s_lemo_io(24); -- Slot R1 IO5
-      A_A(5)     <= s_lemo_io(25); -- Slot R1 IO6
+      A_A(11)           <= s_lemo_io(20); -- Slot R1 IO1
+      A_A(9)            <= s_lemo_io(21); -- Slot R1 IO2
+      A_A(13)           <= s_lemo_io(22); -- Slot R1 IO3
+      A_A(7)            <= s_lemo_io(23); -- Slot R1 IO4
+      A_A(15)           <= s_lemo_io(24); -- Slot R1 IO5
+      A_A(5)            <= s_lemo_io(25); -- Slot R1 IO6
 
-      A_A(8)     <= s_lemo_io(2);  -- Slot R2 IO1
-      A_A(10)    <= s_lemo_io(3);  -- Slot R2 IO2
-      A_A(6)     <= s_lemo_io(4);  -- Slot R2 IO3
-      A_A(12)    <= s_lemo_io(5);  -- Slot R2 IO4
-      A_A(4)     <= s_lemo_io(6);  -- Slot R2 IO5
-      A_A(14)    <= s_lemo_io(7);  -- Slot R2 IO6
+      A_A(8)            <= s_lemo_io(2);  -- Slot R2 IO1
+      A_A(10)           <= s_lemo_io(3);  -- Slot R2 IO2
+      A_A(6)            <= s_lemo_io(4);  -- Slot R2 IO3
+      A_A(12)           <= s_lemo_io(5);  -- Slot R2 IO4
+      A_A(4)            <= s_lemo_io(6);  -- Slot R2 IO5
+      A_A(14)           <= s_lemo_io(7);  -- Slot R2 IO6
 
-      A_nSEL(3)  <= s_lemo_io(8);  -- Slot R3 IO1
-      A_nSEL(6)  <= s_lemo_io(9);  -- Slot R3 IO2
-      A_nSEL(2)  <= s_lemo_io(10); -- Slot R3 IO3
-      A_nSEL(5)  <= s_lemo_io(11); -- Slot R3 IO4
-      A_nSEL(1)  <= s_lemo_io(12); -- Slot R3 IO5
-      A_nSEL(4)  <= s_lemo_io(13); -- Slot R3 IO6
+      A_nSEL(3)         <= s_lemo_io(8);  -- Slot R3 IO1
+      A_nSEL(6)         <= s_lemo_io(9);  -- Slot R3 IO2
+      A_nSEL(2)         <= s_lemo_io(10); -- Slot R3 IO3
+      A_nSEL(5)         <= s_lemo_io(11); -- Slot R3 IO4
+      A_nSEL(1)         <= s_lemo_io(12); -- Slot R3 IO5
+      A_nSEL(4)         <= s_lemo_io(13); -- Slot R3 IO6
     else
-      A_nSEL(12) <= scub_nSEL(12);
-      A_nSEL(7)  <= scub_nSEL(7);
-      A_nSEL(11) <= scub_nSEL(11);
-      A_nSEL(8)  <= scub_nSEL(8);
-      A_nSEL(10) <= scub_nSEL(10);
-      A_nSEL(9)  <= scub_nSEL(9);
+      A_RnW             <= scub_A_RnW;
+      nSel_Ext_Data_DRV <= scub_nsel_ext_data_drv;
+      A_nSEL(12)        <= scub_nSEL(12);
+      A_nSEL(7)         <= scub_nSEL(7);
+      A_nSEL(11)        <= scub_nSEL(11);
+      A_nSEL(8)         <= scub_nSEL(8);
+      A_nSEL(10)        <= scub_nSEL(10);
+      A_nSEL(9)         <= scub_nSEL(9);
 
-      A_D(5)     <= scub_d(5);
-      A_D(1)     <= scub_d(1);
-      A_D(4)     <= scub_d(4);
-      A_D(0)     <= scub_d(0);
-      A_D(3)     <= scub_d(3);
-      A_D(2)     <= scub_d(2);
+      A_D(5)            <= scub_d(5);
+      A_D(1)            <= scub_d(1);
+      A_D(4)            <= scub_d(4);
+      A_D(0)            <= scub_d(0);
+      A_D(3)            <= scub_d(3);
+      A_D(2)            <= scub_d(2);
 
-      A_D(15)    <= scub_d(15);
-      A_D(10)    <= scub_d(10);
-      A_D(14)    <= scub_d(14);
-      A_D(11)    <= scub_d(11);
-      A_D(13)    <= scub_d(13);
-      A_D(12)    <= scub_d(12);
+      A_D(15)           <= scub_d(15);
+      A_D(10)           <= scub_d(10);
+      A_D(14)           <= scub_d(14);
+      A_D(11)           <= scub_d(11);
+      A_D(13)           <= scub_d(13);
+      A_D(12)           <= scub_d(12);
 
-      A_A(11)    <= scub_a(11);
-      A_A(9)     <= scub_a(9);
-      A_A(13)    <= scub_a(13);
-      A_A(7)     <= scub_a(7);
-      A_A(15)    <= scub_a(15);
-      A_A(5)     <= scub_a(5);
+      A_A(11)           <= scub_a(11);
+      A_A(9)            <= scub_a(9);
+      A_A(13)           <= scub_a(13);
+      A_A(7)            <= scub_a(7);
+      A_A(15)           <= scub_a(15);
+      A_A(5)            <= scub_a(5);
 
-      A_A(8)     <= scub_a(8);
-      A_A(10)    <= scub_a(10);
-      A_A(6)     <= scub_a(6);
-      A_A(12)    <= scub_a(12);
-      A_A(4)     <= scub_a(4);
-      A_A(14)    <= scub_a(14);
+      A_A(8)            <= scub_a(8);
+      A_A(10)           <= scub_a(10);
+      A_A(6)            <= scub_a(6);
+      A_A(12)           <= scub_a(12);
+      A_A(4)            <= scub_a(4);
+      A_A(14)           <= scub_a(14);
 
-      A_nSEL(3)  <= scub_nSEL(3);
-      A_nSEL(6)  <= scub_nSEL(6);
-      A_nSEL(2)  <= scub_nSEL(2);
-      A_nSEL(5)  <= scub_nSEL(5);
-      A_nSEL(1)  <= scub_nSEL(1);
-      A_nSEL(4)  <= scub_nSEL(4);
+      A_nSEL(3)         <= scub_nSEL(3);
+      A_nSEL(6)         <= scub_nSEL(6);
+      A_nSEL(2)         <= scub_nSEL(2);
+      A_nSEL(5)         <= scub_nSEL(5);
+      A_nSEL(1)         <= scub_nSEL(1);
+      A_nSEL(4)         <= scub_nSEL(4);
     end if;
 
 
