@@ -553,7 +553,7 @@ begin
       A_nSEL(9)  <= s_lemo_io(7);  -- Slot L1 IO6
 
       A_D(5)     <= s_lemo_io(8);  -- Slot L2 IO1
-      A_D(1)     <= s_lemo_io(9); -- Slot L2 IO2
+      A_D(1)     <= s_lemo_io(9);  -- Slot L2 IO2
       A_D(4)     <= s_lemo_io(10); -- Slot L2 IO3
       A_D(0)     <= s_lemo_io(11); -- Slot L2 IO4
       A_D(3)     <= s_lemo_io(12); -- Slot L2 IO5
@@ -573,19 +573,19 @@ begin
       A_A(15)    <= s_lemo_io(24); -- Slot R1 IO5
       A_A(5)     <= s_lemo_io(25); -- Slot R1 IO6
 
-      A_A(8)     <= '0';         -- Slot R2 IO1
-      A_A(10)    <= '0';         -- Slot R2 IO2
-      A_A(6)     <= '0';         -- Slot R2 IO3
-      A_A(12)    <= '0';         -- Slot R2 IO4
-      A_A(4)     <= '0';         -- Slot R2 IO5
-      A_A(14)    <= '0';         -- Slot R2 IO6
+      A_A(8)     <= s_lemo_io(2);  -- Slot R2 IO1
+      A_A(10)    <= s_lemo_io(3);  -- Slot R2 IO2
+      A_A(6)     <= s_lemo_io(4);  -- Slot R2 IO3
+      A_A(12)    <= s_lemo_io(5);  -- Slot R2 IO4
+      A_A(4)     <= s_lemo_io(6);  -- Slot R2 IO5
+      A_A(14)    <= s_lemo_io(7);  -- Slot R2 IO6
 
-      A_nSEL(3)  <= '0';         -- Slot R3 IO1
-      A_nSEL(6)  <= '0';         -- Slot R3 IO2
-      A_nSEL(2)  <= '0';         -- Slot R3 IO3
-      A_nSEL(5)  <= '0';         -- Slot R3 IO4
-      A_nSEL(1)  <= '0';         -- Slot R3 IO5
-      A_nSEL(4)  <= '0';         -- Slot R3 IO6
+      A_nSEL(3)  <= s_lemo_io(8);  -- Slot R3 IO1
+      A_nSEL(6)  <= s_lemo_io(9);  -- Slot R3 IO2
+      A_nSEL(2)  <= s_lemo_io(10); -- Slot R3 IO3
+      A_nSEL(5)  <= s_lemo_io(11); -- Slot R3 IO4
+      A_nSEL(1)  <= s_lemo_io(12); -- Slot R3 IO5
+      A_nSEL(4)  <= s_lemo_io(13); -- Slot R3 IO6
     else
       A_nSEL(12) <= scub_nSEL(12);
       A_nSEL(7)  <= scub_nSEL(7);
