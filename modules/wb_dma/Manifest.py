@@ -8,5 +8,6 @@ files = [
   "wb_dma_slave_auto.vhd",
   "limit_counter.vhd",
   "wb_dma_wb_read_master.vhd",
+  "wb_dma_wb_write_master.vhd",
   "wb_dma_data_buffer.vhd"
   ]

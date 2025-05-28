@@ -17,6 +17,9 @@ port(
 
     buffer_empty_o  : out std_logic;
     buffer_full_o   : out std_logic;
+
+    buffer_we_i : in std_logic;
+    buffer_rd_i : in std_logic;
     
     rd_master_i     : in t_wishbone_master_in;
     rd_master_snoop : in t_wishbone_master_out;
@@ -34,14 +37,8 @@ port(
 end entity;
 
 architecture rtl of wb_dma_data_buffer is
-signal buffer_we : std_logic;
-signal buffer_re : std_logic;
 
 begin
-
--- FIFO Data Buffer
-buffer_we <= rd_master_snoop.cyc and rd_master_i.ack and not buffer_full_o; -- the buffer should never be full when there is data on the bus as the fsm should wait for the buffer to be empty before starting the read transfer
-buffer_re <= wr_master_snoop.stb and not wr_master_i.stall and not buffer_empty_o; -- the buffer should never be empty before the fsm is done, as it only starts when given a buffer by the read fsm
 
 data_FIFO : generic_sync_fifo
 generic map(
@@ -53,10 +50,10 @@ port map(
     clk_i   => clk_i,
 
     d_i     => rd_master_i.dat,
-    we_i    => buffer_we,
+    we_i    => buffer_we_i,
 
     q_o     => buffer_output,
-    rd_i    => buffer_re,
+    rd_i    => buffer_rd_i,
 
     empty_o => buffer_empty_o,
     full_o  => buffer_full_o,

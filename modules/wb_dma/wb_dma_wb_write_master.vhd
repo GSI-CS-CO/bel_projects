@@ -7,32 +7,34 @@ use work.wishbone_pkg.all;
 use work.wb_dma_pkg.all;
 use work.gencores_pkg.all;
 
-entity wb_dma_wb_read_master is
-generic(
-    g_block_size : integer
-);
-port(
-    clk_i : in std_logic;
-    rstn_i : in std_logic;
+entity wb_dma_wb_write_master is
+  generic(
+      g_block_size : integer
+  );
+  port(
+      clk_i : in std_logic;
+      rstn_i : in std_logic;
+  
+      -- config signals
+      transfer_size_i : in std_logic_vector(log2_ceil(g_block_size) downto 0);
+      start_address_i : in t_wishbone_address;
+  
+      -- communication signals
+      dma_active_i : in std_logic;
+      descriptor_active_i : in std_logic;
+      wr_buffer_ready_i : in std_logic;
+      buffer_rd_o       : out std_logic;
+  
+      master_idle_o : out std_logic;
+  
+      master_i  : in t_wishbone_master_in;
+      master_o  : out t_wishbone_master_out;
 
-    -- config signals
-    transfer_size_i : in std_logic_vector(log2_ceil(g_block_size) downto 0);
-    start_address_i : in t_wishbone_address;
-
-    -- communication signals
-    dma_active_i        : in std_logic;
-    descriptor_active_i : in std_logic;
-    rd_buffer_ready_i   : in std_logic;
-    buffer_we_o         : out std_logic;
-
-    master_idle_o : out std_logic;
-
-    master_i  : in t_wishbone_master_in;
-    master_o  : out t_wishbone_master_out
-);
+      buffer_i  : in t_wishbone_data
+  );
 end entity;
 
-architecture rtl of wb_dma_wb_read_master is
+architecture rtl of wb_dma_wb_write_master is
   -- read FSM signals
   type t_send_state is (IDLE, SEND, LISTEN, STALL);
   signal r_send_state : t_send_state := IDLE;
@@ -95,12 +97,12 @@ port map(
   cnt_en => master_i.ACK
 );
 
-p_start_FSM : process(rstn_i, r_send_state, descriptor_active_i, dma_active_i, rd_buffer_ready_i) begin
+p_start_register : process(rstn_i, r_send_state, s_send_state_next, descriptor_active_i, dma_active_i, wr_buffer_ready_i) begin
 if(rstn_i = '0') then
   s_start_transfer <= '0';
 else
   if(r_send_state = IDLE) then
-    if(dma_active_i <= '1' and descriptor_active_i = '1' and rd_buffer_ready_i = '1') then
+    if(dma_active_i <= '1' and descriptor_active_i = '1' and wr_buffer_ready_i = '1') then
       s_start_transfer <= '1';
     else
       s_start_transfer <= '0';
@@ -119,21 +121,23 @@ if (rstn_i = '0') then
   master_o.sel <= (others => '0');
   master_o.we  <= '0';
   master_o.dat <= (others => '0');
-  buffer_we_o <= '0';
+  buffer_rd_o <= '0';
 
   s_send_state_next <= IDLE;
 else
-  master_o.cyc <= '0'; --r_send_state = SEND or r_send_state = LISTEN or r_send_state = STALL;
-  master_o.stb <= '0'; --r_send_state = SEND or r_send_state = STALL;
-  master_o.sel <= (others => '0');
-  master_o.we  <= '0';
-  master_o.dat <= (others => '0');
-  buffer_we_o <= '0';
+  master_o.cyc  <= '0'; --r_send_state = SEND or r_send_state = LISTEN or r_send_state = STALL;
+  master_o.stb  <= '0'; --r_send_state = SEND or r_send_state = STALL;
+  master_o.sel  <= (others => '0');
+  master_o.we   <= '0';
+  master_o.dat  <= buffer_i;
+  buffer_rd_o   <= '0';
   
   case r_send_state is
     when IDLE =>
   
       if(s_start_transfer = '1') then
+        buffer_rd_o <= '1';
+
         if(master_i.stall = '1') then
           s_send_state_next <= STALL;
         else
@@ -146,6 +150,9 @@ else
     -- send address and data if this is a write cycle
     when SEND =>
       master_o.cyc <= '1';
+      master_o.we  <= '1';
+      master_o.sel  <= b"1111";
+
       if(s_block_done = '1') then
         master_o.stb <= '0';
         s_send_state_next <= LISTEN;
@@ -154,6 +161,8 @@ else
         s_send_state_next <= STALL;
       else
         master_o.stb <= '1';
+        buffer_rd_o <= '1';
+
         s_send_state_next <= SEND;
       end if;
   
@@ -161,6 +170,8 @@ else
     when STALL =>
       master_o.cyc <= '1';
       master_o.stb <= '1';
+      master_o.we  <= '1';
+      master_o.sel  <= b"1111";
   
       if(s_block_done = '1') then
         master_o.stb <= '0';
@@ -168,12 +179,16 @@ else
       elsif(master_i.stall = '1') then
         s_send_state_next <= STALL;
       else
+        buffer_rd_o <= '1';
+
         s_send_state_next <= SEND;
       end if;
       
     -- listen to the slave until the count of acknowledge, error and retry signals is correct
     when LISTEN =>
       master_o.cyc <= '1';
+      master_o.we  <= '1';
+      master_o.sel  <= b"1111";
   
       if(s_ack_complete = '1') then
         s_send_state_next <= IDLE;
@@ -181,10 +196,6 @@ else
         s_send_state_next <= LISTEN;
       end if;
   end case;
-
-  if (master_o.cyc = '1' and master_i.ack = '1') then  -- not checking for full buffer as it should be as big as the max transfer size and after the read gets swapped to the write master
-    buffer_we_o <= '1';
-  end if;
 end if;
 end process;
 
