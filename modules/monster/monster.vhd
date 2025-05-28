@@ -439,7 +439,8 @@ architecture rtl of monster is
       topm_pmc,
       topm_usb,
       topm_prioq,
-      topm_dma
+      topm_dma1,
+      topm_dma2
     );
   constant c_top_my_masters : natural := top_my_masters'pos(top_my_masters'right)+1;
 
@@ -451,7 +452,8 @@ architecture rtl of monster is
     top_my_masters'pos(topm_pmc)     => f_sdb_auto_msi(c_pmc_msi,     g_en_pmc),
     top_my_masters'pos(topm_usb)     => f_sdb_auto_msi(c_usb_msi,     g_en_usb),
     top_my_masters'pos(topm_prioq)   => f_sdb_auto_msi(c_null_msi,    false),
-    top_my_masters'pos(topm_dma)     => f_sdb_auto_msi(c_null_msi,    false));
+    top_my_masters'pos(topm_dma1)    => f_sdb_auto_msi(c_null_msi,    false),
+    top_my_masters'pos(topm_dma2)    => f_sdb_auto_msi(c_null_msi,    false));
 
   -- The FTM adds a bunch of masters to this crossbar
   constant c_ftm_masters : t_sdb_record_array := f_lm32_masters_bridge_msis(g_lm32_cores);
@@ -3366,7 +3368,8 @@ end generate;
         );
   end generate virtualRAM_y;
 
-  top_msi_master_i(top_my_masters'pos(topm_dma)) <= cc_dummy_slave_out; -- DMA does not accept MSI !!!
+  top_msi_master_i(top_my_masters'pos(topm_dma1)) <= cc_dummy_slave_out; -- DMA does not accept MSI !!!
+  top_msi_master_i(top_my_masters'pos(topm_dma2)) <= cc_dummy_slave_out; -- DMA does not accept MSI !!!
   
   wb_dma_n : if not g_en_wb_dma generate
     top_bus_master_i(top_slaves'pos(tops_wb_dma_slv)) <= cc_dummy_slave_out;
@@ -3384,8 +3387,10 @@ end generate;
 
       slave_i   => top_bus_master_o(top_slaves'pos(tops_wb_dma_slv)),
       slave_o   => top_bus_master_i(top_slaves'pos(tops_wb_dma_slv)),
-      master_i  => top_bus_slave_o(top_my_masters'pos(topm_dma)),
-      master_o  => top_bus_slave_i(top_my_masters'pos(topm_dma))
+      master1_i  => top_bus_slave_o(top_my_masters'pos(topm_dma1)),
+      master1_o  => top_bus_slave_i(top_my_masters'pos(topm_dma1)),
+      master2_i  => top_bus_slave_o(top_my_masters'pos(topm_dma2)),
+      master2_o  => top_bus_slave_i(top_my_masters'pos(topm_dma2))
       );
   end generate;
 

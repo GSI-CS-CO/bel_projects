@@ -45,8 +45,10 @@ package wb_dma_pkg is
   
       slave_i   : in t_wishbone_slave_in;
       slave_o   : out t_wishbone_slave_out;
-      master_i  : in t_wishbone_master_in;
-      master_o  : out t_wishbone_master_out
+      master1_i  : in t_wishbone_master_in;
+      master1_o  : out t_wishbone_master_out;
+      master2_i  : in t_wishbone_master_in;
+      master2_o  : out t_wishbone_master_out
       );
   end component;
 
