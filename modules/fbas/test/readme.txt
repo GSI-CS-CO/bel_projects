@@ -36,7 +36,7 @@ directory contents
     test_ttf_high_load.sh - test timing message transmission (with MPS protocol) by Xenabay
                             nwt0297 can be configured with (dot-config_timing_mps_access) or
                             w/o VLANs (dot-config.xenabay)
-    test_ttf_traffic      - measure the data reception rate
+    test_ttf_rx_rate.sh   - measure the data reception rate
                             results are reported in wiki (https://wiki.gsi.de/TOS/Timing/Intern/ProbingMPSEventSignalling)
 
 -- for test setup in HO  (invoked from 'acopc017'):
@@ -49,7 +49,7 @@ directory contents
     *.vmcfg               - XenaBay testbeds
     testbed_*             - directories with schedule, capture filter etc
 
-Devices required for test_ttf_traffic (as of 27.5.2025)
+Devices required for test_ttf_rx_rate.sh (as of 27.5.2025)
 
 - DM: tsl014 with pexaria5 devices
     - dev/wbm0 (pexaria32t)
