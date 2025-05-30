@@ -16,7 +16,7 @@ entity wb_dma_wb_write_master is
       rstn_i : in std_logic;
   
       -- config signals
-      transfer_size_i : in std_logic_vector(log2_ceil(g_block_size) downto 0);
+      transfer_size_i : in std_logic_vector(log2_floor(g_block_size) downto 0);
       start_address_i : in t_wishbone_address;
   
       -- communication signals
@@ -42,7 +42,7 @@ architecture rtl of wb_dma_wb_write_master is
 
   signal s_start_transfer : std_logic;
 
-  -- signal r_transfer_size : std_logic_vector(log2_ceil(g_block_size) downto 0);
+  -- signal r_transfer_size : std_logic_vector(log2_floor(g_block_size) downto 0);
 
   signal s_block_done   : std_logic;
   signal s_ack_complete : std_logic;
@@ -57,7 +57,7 @@ architecture rtl of wb_dma_wb_write_master is
     clk_i : in std_logic;
     rstn_i : in std_logic;
 
-    upper_limit_i : in std_logic_vector(log2_ceil(g_max_block_size) downto 0) := (others => '0');
+    upper_limit_i : in std_logic_vector(log2_floor(g_block_size) downto 0) := (others => '0');
     limit_reached_o : out std_logic;
 
     cnt_en : in std_logic

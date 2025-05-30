@@ -43,7 +43,7 @@ begin
 data_FIFO : generic_sync_fifo
 generic map(
     g_data_width => t_wishbone_data'length,
-    g_size => g_block_size
+    g_size => g_block_size+1
 )
 port map(
     rst_n_i =>  rstn_i,

@@ -16,7 +16,7 @@ port(
     rstn_i : in std_logic;
 
     -- config signals
-    burst_length_i : in std_logic_vector(log2_ceil(g_block_size)-1 downto 0);
+    burst_length_i : in std_logic_vector(log2_floor(g_block_size) downto 0);
     start_address_i : in t_wishbone_address;
     we_i : in std_logic;
 
@@ -36,7 +36,7 @@ architecture rtl of wb_dma_wb_master is
   type t_send_state is (IDLE, SEND, LISTEN, STALL);
   signal r_send_state : t_send_state := IDLE;
 
-  signal r_burst_length : std_logic_vector(log2_ceil(g_block_size)-1 downto 0);
+  signal r_burst_length : std_logic_vector(log2_floor(g_block_size) downto 0);
 
   signal s_block_done   : std_logic;
   signal s_ack_complete : std_logic;
@@ -49,8 +49,8 @@ architecture rtl of wb_dma_wb_master is
     clk_i : in std_logic;
     rstn_i : in std_logic;
 
-    upper_limit : in std_logic_vector(log2_ceil(g_max_block_size)-1 downto 0) := (others => '0');
-    limit_reached : out std_logic;
+    upper_limit_i : in std_logic_vector(log2_floor(g_block_size) downto 0) := (others => '0');
+    limit_reached_o : out std_logic;
 
     cnt_en : in std_logic
   );
@@ -66,8 +66,8 @@ port map(
   clk_i => clk_i,
   rstn_i => rstn_i,
 
-  upper_limit => r_burst_length,
-  limit_reached => s_block_done,
+  upper_limit_i => r_burst_length,
+  limit_reached_o => s_block_done,
 
   cnt_en => master_o.stb = '1' and not master_i.stall = '0'
 );
@@ -81,7 +81,7 @@ port map(
   clk_i => clk_i,
   rstn_i => rstn_i,
 
-  limit_reached => s_ack_complete,
+  limit_reached_o => s_ack_complete,
 
   cnt_en => master_i.ACK = '1'
 );

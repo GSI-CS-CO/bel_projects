@@ -7,11 +7,12 @@ use work.wishbone_pkg.all;
 use work.genram_pkg.all;
 use work.wb_dma_slave_auto_pkg.all;
 use work.gencores_pkg.all;
+use work.wb_dma_pkg.all;
 
 entity wb_dma is
   generic(
     g_host_ram_size  : Integer := 16;
-    g_dma_transfer_block_size : Integer := 4
+    g_dma_transfer_block_size : Integer
   );
   port(
     clk_sys_i     : in std_logic;
@@ -56,7 +57,8 @@ architecture rtl of wb_dma is
 
   -- CONFIG SIGNALS
   ------------------------------------------
-  signal s_start_address : t_wishbone_address;
+  signal s_read_address : t_wishbone_address;
+  signal s_write_address : t_wishbone_address;
   signal s_transfer_size : t_wishbone_data;
 
   -- WISHBONE SIGNALS
@@ -73,7 +75,7 @@ architecture rtl of wb_dma is
       rstn_i : in std_logic;
   
       -- config signals
-      transfer_size_i : in std_logic_vector(log2_ceil(g_dma_transfer_block_size) downto 0);
+      transfer_size_i : in std_logic_vector(log2_floor(g_dma_transfer_block_size) downto 0);
       start_address_i : in t_wishbone_address;
   
       -- communication signals
@@ -98,7 +100,7 @@ architecture rtl of wb_dma is
         rstn_i : in std_logic;
     
         -- config signals
-        transfer_size_i : in std_logic_vector(log2_ceil(g_block_size) downto 0);
+        transfer_size_i : in std_logic_vector(log2_floor(g_dma_transfer_block_size) downto 0);
         start_address_i : in t_wishbone_address;
     
         -- communication signals
@@ -184,8 +186,8 @@ begin
           rstn_i => rstn_sys_i,
       
           -- config signals
-          transfer_size_i => s_transfer_size(log2_ceil(g_dma_transfer_block_size) downto 0),--std_logic_vector(to_unsigned(g_dma_transfer_block_size, log2_ceil(g_dma_transfer_block_size))),
-          start_address_i => s_start_address,
+          transfer_size_i => s_transfer_size(log2_floor(g_dma_transfer_block_size) downto 0),--std_logic_vector(to_unsigned(g_dma_transfer_block_size, log2_floor(g_block_size))),
+          start_address_i => s_read_address,
       
           -- communication signals
           dma_active_i => s_dma_active,
@@ -210,8 +212,8 @@ begin
           rstn_i  => rstn_sys_i,
       
           -- config signals
-          transfer_size_i => s_transfer_size(log2_ceil(g_dma_transfer_block_size) downto 0),--std_logic_vector(to_unsigned(g_dma_transfer_block_size, log2_ceil(g_dma_transfer_block_size))),
-          start_address_i => X"0400001c",
+          transfer_size_i => s_transfer_size(log2_floor(g_dma_transfer_block_size) downto 0),--std_logic_vector(to_unsigned(g_dma_transfer_block_size, log2_floor(g_dma_transfer_block_size))),
+          start_address_i => s_write_address,
       
           -- communication signals
           dma_active_i => s_dma_active,
@@ -281,8 +283,9 @@ begin
       error_i                 => (others => '0'),        -- Error control
       stall_i                 => (others => '0'),        -- flow control
       dma_csr_o               => s_transfer_size,      -- DMA controller control and status register
-      start_address_o         => s_start_address, -- DMA start address, for testing only
+      read_address_o          => s_read_address, -- DMA start address, for testing only
       start_transfer_o        => s_start_transfer, -- start transfer, for testing only
+      write_address_o         => s_write_address,  -- DMA write address, for testing only
       
       data_i                => slave_i,
       data_o                => slave_o

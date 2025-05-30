@@ -1,7 +1,7 @@
 --! @file        wb_dma_slave_auto.vhd
 --  DesignUnit   wb_dma_slave_auto
 --! @author      M. Kreider <>
---! @date        22/04/2025
+--! @date        28/05/2025
 --! @version     0.0.1
 --! @copyright   2025 GSI Helmholtz Centre for Heavy Ion Research GmbH
 --!
@@ -48,8 +48,9 @@ Port(
   error_i           : in  std_logic_vector(1-1 downto 0);   -- Error control
   stall_i           : in  std_logic_vector(1-1 downto 0);   -- flow control
   dma_csr_o         : out std_logic_vector(32-1 downto 0);  -- DMA controller control and status register
-  start_address_o   : out std_logic_vector(32-1 downto 0);  -- DMA start address, for testing only
+  read_address_o    : out std_logic_vector(32-1 downto 0);  -- DMA read address, for testing only
   start_transfer_o  : out std_logic_vector(32-1 downto 0);  -- start transfer, for testing only
+  write_address_o   : out std_logic_vector(32-1 downto 0);  -- DMA write address, for testing only
   
   data_i            : in  t_wishbone_slave_in;
   data_o            : out t_wishbone_slave_out
@@ -80,7 +81,8 @@ architecture rtl of wb_dma_slave_auto is
   signal s_error_i        : std_logic_vector(1-1 downto 0)  := (others => '0');                     -- Error control
   signal s_stall_i        : std_logic_vector(1-1 downto 0)  := (others => '0');                     -- flow control
   signal r_dma_csr        : std_logic_vector(32-1 downto 0) := (others => '0');                     -- DMA controller control and status register
-  signal r_start_address  : std_logic_vector(32-1 downto 0) := (others => '0');                     -- DMA start address, for testing only
+  signal r_read_address   : std_logic_vector(32-1 downto 0) := (others => '0');                     -- DMA read address, for testing only
+  signal r_write_address  : std_logic_vector(32-1 downto 0) := (others => '0');                     -- DMA write address, for testing only
   signal r_start_transfer : std_logic_vector(32-1 downto 0) := (others => '0');                     -- start transfer, for testing only
 
 
@@ -123,7 +125,8 @@ begin
   s_error_i         <= error_i;
   s_stall_i         <= stall_i;
   dma_csr_o         <= r_dma_csr;
-  start_address_o   <= r_start_address;
+  read_address_o    <= r_read_address;
+  write_address_o   <= r_write_address;
   start_transfer_o  <= r_start_transfer;
   
   data : process(clk_sys_i)
@@ -135,7 +138,8 @@ begin
         r_valid_check <= '0';
         r_error           <= std_logic_vector(to_unsigned(0, 1));
         r_dma_csr         <= (others => '0');
-        r_start_address   <= (others => '0');
+        r_read_address    <= (others => '0');
+        r_write_address   <= (others => '0');
         r_start_transfer  <= (others => '0');
       else
         r_e           <= s_e;
@@ -160,7 +164,8 @@ begin
             -- WISHBONE WRITE ACTIONS
             case to_integer(unsigned(s_a_ext)) is
               when c_dma_csr_RW         => r_dma_csr        <= f_wb_wr(r_dma_csr, s_d, s_s, "owr");         -- 
-              when c_start_address_RW   => r_start_address  <= f_wb_wr(r_start_address, s_d, s_s, "owr");   -- 
+              when c_read_address_RW    => r_read_address   <= f_wb_wr(r_read_address, s_d, s_s, "owr");    -- 
+              when c_write_address_RW   => r_write_address  <= f_wb_wr(r_write_address, s_d, s_s, "owr");   -- 
               when c_start_transfer_RW  => r_start_transfer <= f_wb_wr(r_start_transfer, s_d, s_s, "owr");  -- 
               when others               => r_error          <= "1";
             end case;
@@ -168,7 +173,8 @@ begin
             -- WISHBONE READ ACTIONS
             case to_integer(unsigned(s_a_ext)) is
               when c_dma_csr_RW         => null;
-              when c_start_address_RW   => null;
+              when c_read_address_RW    => null;
+              when c_write_address_RW   => null;
               when c_start_transfer_RW  => null;
               when others               => r_error <= "1";
             end case;
@@ -177,7 +183,8 @@ begin
         
         case to_integer(unsigned(r_a_ext1)) is
           when c_dma_csr_RW         => data_o.dat <= std_logic_vector(resize(unsigned(r_dma_csr), data_o.dat'length));          -- 
-          when c_start_address_RW   => data_o.dat <= std_logic_vector(resize(unsigned(r_start_address), data_o.dat'length));    -- 
+          when c_read_address_RW    => data_o.dat <= std_logic_vector(resize(unsigned(r_read_address), data_o.dat'length));     -- 
+          when c_write_address_RW   => data_o.dat <= std_logic_vector(resize(unsigned(r_write_address), data_o.dat'length));    -- 
           when c_start_transfer_RW  => data_o.dat <= std_logic_vector(resize(unsigned(r_start_transfer), data_o.dat'length));   -- 
           when others               => data_o.dat <= (others => 'X');
         end case;

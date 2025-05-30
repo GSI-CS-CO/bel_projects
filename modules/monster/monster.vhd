@@ -3379,7 +3379,7 @@ end generate;
     wb_dma_module : wb_dma
     generic map(
       g_host_ram_size  => 1,
-      g_dma_transfer_block_size => 4
+      g_dma_transfer_block_size => 16
     )
     port map(
       clk_sys_i     => clk_sys,
