@@ -71,7 +71,7 @@ begin
     error_i           => s_data_error_i,
     stall_i           => s_data_stall_i,
     dma_csr_o         => s_data_dma_csr_o,
-    start_address_o   => s_data_start_address_o,
+    write_address_o   => s_data_start_address_o,
     start_transfer_o  => s_data_start_transfer_o,
     data_i            => data_i,
     data_o            => data_o  );

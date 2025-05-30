@@ -96,4 +96,21 @@ package wb_dma_pkg is
   --   );
   -- end component;
 
+  function log2_floor(N       : natural) return positive;
+
 end package;
+
+package body wb_dma_pkg is
+
+  function log2_floor(N : natural) return positive is
+  begin
+    if N <= 2 then
+      return 1;
+    elsif N mod 2 = 0 then
+      return 1 + log2_floor(N/2);
+    else
+      return 1 + log2_floor((N-1)/2);
+    end if;
+  end;
+
+end wb_dma_pkg;

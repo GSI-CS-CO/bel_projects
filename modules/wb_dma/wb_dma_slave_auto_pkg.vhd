@@ -1,7 +1,7 @@
 --! @file        wb_dma_slave_auto_pkg.vhd
 --  DesignUnit   wb_dma_slave_auto
 --! @author      M. Kreider <>
---! @date        22/04/2025
+--! @date        28/05/2025
 --! @version     0.0.1
 --! @copyright   2025 GSI Helmholtz Centre for Heavy Ion Research GmbH
 --!
@@ -38,9 +38,10 @@ use work.wbgenplus_pkg.all;
 use work.genram_pkg.all;
 package wb_dma_slave_auto_pkg is
 
-  constant c_dma_csr_RW         : natural := 16#00000#; -- rw, 32 b, DMA controller control and status register
-  constant c_start_address_RW   : natural := 16#00004#; -- rw, 32 b, DMA start address, for testing only
-  constant c_start_transfer_RW  : natural := 16#00008#; -- rw, 32 b, start transfer, for testing only
+  constant c_dma_csr_RW         : natural := 16#000000000000000000000000000000000000000000000000000000000000000000000000000#; -- rw, 32 b, DMA controller control and status register
+  constant c_read_address_RW    : natural := 16#000000000000000000000000000000000000000000000000000000000000000000000000004#; -- rw, 32 b, DMA read address, for testing only
+  constant c_write_address_RW   : natural := 16#000000000000000000000000000000000000000000000000000000000000000000000000008#; -- rw, 32 b, DMA write address, for testing only
+  constant c_start_transfer_RW  : natural := 16#00000000000000000000000000000000000000000000000000000000000000000000000000c#; -- rw, 32 b, start transfer, for testing only
 
   --| Component --------------------- wb_dma_slave_auto ---------------------------------------|
   component wb_dma_slave_auto is
@@ -53,8 +54,9 @@ package wb_dma_slave_auto_pkg is
     error_i           : in  std_logic_vector(1-1 downto 0);   -- Error control
     stall_i           : in  std_logic_vector(1-1 downto 0);   -- flow control
     dma_csr_o         : out std_logic_vector(32-1 downto 0);  -- DMA controller control and status register
-    start_address_o   : out std_logic_vector(32-1 downto 0);  -- DMA start address, for testing only
+    read_address_o    : out std_logic_vector(32-1 downto 0);  -- DMA read address, for testing only
     start_transfer_o  : out std_logic_vector(32-1 downto 0);  -- start transfer, for testing only
+    write_address_o   : out std_logic_vector(32-1 downto 0);  -- DMA write address, for testing only
     
     data_i            : in  t_wishbone_slave_in;
     data_o            : out t_wishbone_slave_out
@@ -71,12 +73,12 @@ package wb_dma_slave_auto_pkg is
   wbd_width     => x"7", -- 8/16/32-bit port granularity
   sdb_component => (
   addr_first    => x"0000000000000000",
-  addr_last     => x"000000000000000B",
+  addr_last     => x"000000000000000f",
   product => (
   vendor_id     => x"0000000000000651",
   device_id     => x"77646d61",
   version       => x"00000001",
-  date          => x"20250422",
+  date          => x"20250528",
   name          => "DMA Controller Slv ")));
 
 end wb_dma_slave_auto_pkg;
