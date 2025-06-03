@@ -340,7 +340,6 @@ begin
       g_lm32_ramsizes      => c_lm32_ramsizes/4,
       g_lm32_init_files    => f_string_list_repeat(c_initf_name, c_cores),
       g_lm32_profiles      => f_string_list_repeat(c_profile_name, c_cores),
-      g_en_psram_delay     => true,
       g_en_asmi            => true,
       g_en_a10vs           => true
     )
