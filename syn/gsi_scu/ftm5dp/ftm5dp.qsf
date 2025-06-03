@@ -679,6 +679,8 @@ set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/crc8_data8.vhd -
 set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/TimestampDecoder.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/TimestampEncoder.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/wr_serialtimestamp_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/cellular_ram/src/hdl/cellular_ram_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/cellular_ram/src/hdl/cellular_ram.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/cfi_flash/cfi_flash_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/cfi_flash/xwb_cfi_wrapper.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/chopper/Bus_io.vhd -library work

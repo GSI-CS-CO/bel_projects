@@ -303,7 +303,7 @@ architecture rtl of ftm5dp is
   constant c_cores        : natural:= 4;
   constant c_initf_name   : string := c_project & "_stub.mif";
   constant c_profile_name : string := "medium_icache_debug";
-  constant c_psram_bits   : natural := 24;
+  constant c_cr_bits      : natural := 24;
 
 begin
 
@@ -312,7 +312,7 @@ begin
       g_family             => c_family,
       g_project            => c_project,
       g_flash_bits         => 25, -- !!! TODO: Check this
-      g_psram_bits         => c_psram_bits,
+      g_cr_bits            => c_cr_bits,
       g_gpio_in            => 5,
       g_gpio_out           => 10,
       --g_lvds_in            => 3,
@@ -327,7 +327,8 @@ begin
       g_en_pcie            => true,
       g_en_tlu             => false,
       g_en_usb             => true,
-      g_en_psram           => true,
+      g_en_cellular_ram    => true,
+      g_rams               => 4,
       g_io_table           => io_mapping_table,
       g_en_enc_err_counter => true,
       g_en_tempsens        => false,
@@ -438,57 +439,32 @@ begin
       usb_slwrn_o             => usb_slwr,
       usb_pktendn_o           => usb_pa(6),
       usb_fd_io               => usb_fd,
-      -- PSRAM TODO: Multi Chip
-      ps_clk                  => psram_clk,
-      ps_addr                 => psram_a,
-      ps_data                 => psram_dq,
-      ps_seln(0)              => s_psram_lbn(0),
-      ps_seln(1)              => s_psram_ubn(0),
-      ps_cre                  => s_psram_cre(0),
-      ps_cen                  => s_psram_cen(0),
-      ps_oen                  => s_psram_oen(0),
-      ps_wen                  => s_psram_wen(0),
-      ps_advn                 => s_psram_advn(0),
-      ps_wait                 => s_psram_wait(0),
+      -- PSRAM
+      cr_clk_o                => psram_clk,
+      cr_addr_o               => psram_a,
+      cr_data_io              => psram_dq,
+      cr_lbn_o(3 downto 0)    => s_psram_lbn,
+      cr_ubn_o(3 downto 0)    => s_psram_ubn,
+      cr_cen_o(3 downto 0)    => s_psram_cen,
+      cr_oen_o(3 downto 0)    => s_psram_oen,
+      cr_wen_o(3 downto 0)    => s_psram_wen,
+      cr_cre_o(3 downto 0)    => s_psram_cre,
+      cr_advn_o(3 downto 0)   => s_psram_advn,
+      cr_wait_i(3 downto 0)   => s_psram_wait,
       hw_version              => x"0000000" & not scu_cb_version);
 
-  -- PSRAM
-  psram_cre(0) <= s_psram_cre(0);
-  psram_cre(1) <= '0';
-  psram_cre(2) <= '0';
-  psram_cre(3) <= '0';
+  -- Quad PSRAM
+  quad_ram : for i in 0 to 3 generate
+    psram_cen(i)    <= s_psram_cen(i);
+    psram_cre(i)    <= s_psram_cre(i);
+    psram_oen(i)    <= s_psram_oen(i);
+    psram_wen(i)    <= s_psram_wen(i);
+    psram_lbn(i)    <= s_psram_lbn(i);
+    psram_ubn(i)    <= s_psram_ubn(i);
+    psram_advn(i)   <= s_psram_advn(i);
+    s_psram_wait(i) <= psram_wait(i);
+  end generate;
 
-  psram_cen(0) <= s_psram_cen(0);
-  psram_cen(1) <= '1';
-  psram_cen(2) <= '1';
-  psram_cen(3) <= '1';
-
-  psram_oen(0) <= s_psram_oen(0);
-  psram_oen(1) <= '1';
-  psram_oen(2) <= '1';
-  psram_oen(3) <= '1';
-
-  psram_wen(0) <= s_psram_wen(0);
-  psram_wen(1) <= '1';
-  psram_wen(2) <= '1';
-  psram_wen(3) <= '1';
-
-  psram_advn(0) <= s_psram_advn(0);
-  psram_advn(1) <= '1';
-  psram_advn(2) <= '1';
-  psram_advn(3) <= '1';
-
-  psram_lbn(0) <= s_psram_lbn(0);
-  psram_lbn(1) <= '0';
-  psram_lbn(2) <= '0';
-  psram_lbn(3) <= '0';
-
-  psram_ubn(0) <= s_psram_ubn(0);
-  psram_ubn(1) <= '0';
-  psram_ubn(2) <= '0';
-  psram_ubn(3) <= '0';
-
-  s_psram_wait <= psram_wait;
   --user_led_0   <= s_gpio_o(2 downto 0) or s_psram_wait(3 downto 1); -- Keep unused WAIT in pins used, there this laster
   user_led0_r <= s_gpio_o(0);
   user_led0_g <= s_gpio_o(1);
