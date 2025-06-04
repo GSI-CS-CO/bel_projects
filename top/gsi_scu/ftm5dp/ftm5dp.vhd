@@ -62,6 +62,7 @@ entity ftm5dp is
     WDT               : in  std_logic;
     fpga_res_i        : in  std_logic; -- NCB_RESET?
     nSys_Reset        : in  std_logic; -- Reset From ComX
+    nPWRBTN           : out std_logic;
 
     -----------------------------------------------------------------------
     -- SCU Bus
@@ -368,7 +369,6 @@ begin
       wbar_phy_dis_o          => sfp_tx_disable_o,
       sfp_tx_fault_i          => sfp_tx_fault_i,
       sfp_los_i               => sfp_los_i,
-
       wr_aux_sfp_sda_io       => ext_ch(2),
       wr_aux_sfp_scl_io       => ext_ch(3),
       wr_aux_sfp_det_i        => ext_ch(4),
@@ -377,7 +377,6 @@ begin
       sfp_aux_tx_disable_o    => ext_ch(5),
       sfp_aux_tx_fault_i      => ext_ch(6),
       sfp_aux_los_i           => ext_ch(7),
-
       gpio_i(1 downto 0)      => lemo_in,
       gpio_i(4 downto 2)      => s_gpio_i,
       gpio_o(9 downto 0)      => s_gpio_o(9 downto 0),
@@ -407,6 +406,7 @@ begin
       scubus_a_sysclock       => A_SysClock,
       ow_io(0)                => onewire_ext,
       ow_io(1)                => A_OneWire,
+      poweroff_comx           => nPWRBTN,
       pcie_refclk_i           => clk_gxbl1d_n24,
       pcie_rstn_i             => nPCI_RESET_i,
       pcie_rx_i(0)            => gxbl1c_rx_ch3p_v26_pcie0_rx,
