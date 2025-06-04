@@ -200,14 +200,14 @@ architecture rtl of scu4slim is
 
   signal s_core_clk_25m     : std_logic;
 
-  signal s_psram_cen        : std_logic_vector(1 downto 0);
-  signal s_psram_cre        : std_logic_vector(1 downto 0);
-  signal s_psram_advn       : std_logic_vector(1 downto 0);
-  signal s_psram_oen        : std_logic_vector(1 downto 0);
-  signal s_psram_wen        : std_logic_vector(1 downto 0);
-  signal s_psram_ubn        : std_logic_vector(1 downto 0);
-  signal s_psram_lbn        : std_logic_vector(1 downto 0);
-  signal s_psram_wait       : std_logic_vector(1 downto 0);
+  signal s_psram_cen        : std_logic_vector(3 downto 0);
+  signal s_psram_cre        : std_logic_vector(3 downto 0);
+  signal s_psram_advn       : std_logic_vector(3 downto 0);
+  signal s_psram_oen        : std_logic_vector(3 downto 0);
+  signal s_psram_wen        : std_logic_vector(3 downto 0);
+  signal s_psram_ubn        : std_logic_vector(3 downto 0);
+  signal s_psram_lbn        : std_logic_vector(3 downto 0);
+  signal s_psram_wait       : std_logic_vector(3 downto 0);
 
   signal s_psram_sel        : std_logic_vector(3 downto 0);
 
@@ -344,32 +344,18 @@ begin
       i2c_sda_pad_i           => s_i2c_sda_pad_in,
       i2c_sda_pad_o           => s_i2c_sda_pad_out,
       i2c_sda_padoen_o        => s_i2c_sda_padoen,
-      -- FX2 USB
-      --usb_rstn_o              => ures,
-      --usb_ebcyc_i             => pa(3),
-      --usb_speed_i             => pa(0),
-      --usb_shift_i             => pa(1),
-      --usb_readyn_io           => pa(7),
-      --usb_fifoadr_o           => pa(5 downto 4),
-      --usb_sloen_o             => pa(2),
-      --usb_fulln_i             => ctl(1),
-      --usb_emptyn_i            => ctl(2),
-      --usb_slrdn_o             => slrd,
-      --usb_slwrn_o             => slwr,
-      --usb_pktendn_o           => pa(6),
-      --usb_fd_io               => fd,
       -- PSRAM
       cr_clk_o                => psram_clk,
       cr_addr_o               => psram_a,
       cr_data_io              => psram_dq,
-      cr_lbn_o(1 downto 0)    => s_psram_lbn,
-      cr_ubn_o(1 downto 0)    => s_psram_ubn,
-      cr_cen_o(1 downto 0)    => s_psram_cen,
-      cr_oen_o(1 downto 0)    => s_psram_oen,
-      cr_wen_o(1 downto 0)    => s_psram_wen,
-      cr_cre_o(1 downto 0)    => s_psram_cre,
-      cr_advn_o(1 downto 0)   => s_psram_advn,
-      cr_wait_i(1 downto 0)   => s_psram_wait,
+      cr_lbn_o                => s_psram_lbn,
+      cr_ubn_o                => s_psram_ubn,
+      cr_cen_o                => s_psram_cen,
+      cr_oen_o                => s_psram_oen,
+      cr_wen_o                => s_psram_wen,
+      cr_cre_o                => s_psram_cre,
+      cr_advn_o               => s_psram_advn,
+      cr_wait_i               => s_psram_wait,
       hw_version              => x"0000000" & not scu_cb_version);
 
   -- Dual PSRAM
