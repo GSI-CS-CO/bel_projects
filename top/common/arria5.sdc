@@ -34,6 +34,7 @@ create_clock -period 10Mhz  -name microtca_ext_clk_n_in [get_ports {clk_lvtio_n_
 create_clock -period 125Mhz -name pmc_sfp_clk_in        [get_ports {clk_sfp_ref_i}]
 create_clock -period 10Mhz  -name pmc_ext_clk_in        [get_ports {clk_lvtio_i}]
 create_clock -period 30Mhz  -name pmc_pci_clk_in        [get_ports {pmc_clk_i}]
+create_clock -period 10Mhz  -name {monster:main|clk_10m}
 
 #######################################################################################################################
 
