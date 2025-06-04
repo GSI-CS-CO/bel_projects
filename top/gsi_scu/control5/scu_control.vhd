@@ -62,6 +62,7 @@ entity scu_control is
     WDT               : in  std_logic;
     fpga_res_i        : in  std_logic; -- NCB_RESET?
     nSys_Reset        : in  std_logic; -- Reset From ComX
+    nPWRBTN           : out std_logic;
 
     -----------------------------------------------------------------------
     -- SCU Bus
@@ -393,6 +394,7 @@ begin
       scubus_a_sysclock       => A_SysClock,
       ow_io(0)                => onewire_ext,
       ow_io(1)                => A_OneWire,
+      poweroff_comx           => nPWRBTN,
       pcie_refclk_i           => clk_gxbl1d_n24,
       pcie_rstn_i             => nPCI_RESET_i,
       pcie_rx_i(0)            => gxbl1c_rx_ch3p_v26_pcie0_rx,

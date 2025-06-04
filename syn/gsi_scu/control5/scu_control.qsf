@@ -1246,6 +1246,7 @@ set_location_assignment PIN_K9 -to psram_dq[0]
 set_location_assignment PIN_L1 -to sfp_los_i
 set_location_assignment PIN_L27 -to "gxbl1d_tx_ch2p_l28_pciex_tx(n)"
 set_location_assignment PIN_L28 -to gxbl1d_tx_ch2p_l28_pciex_tx
+set_location_assignment PIN_L2 -to nPWRBTN
 set_location_assignment PIN_L4 -to psram_lbn[1]
 set_location_assignment PIN_L6 -to psram_a[19]
 set_location_assignment PIN_L7 -to psram_lbn[2]
