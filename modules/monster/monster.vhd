@@ -683,12 +683,14 @@ architecture rtl of monster is
   signal clk_10m          : std_logic;
 
   -- Ref PLL from clk_125m_pllref_i
-  signal ref_locked       : std_logic;
-  signal clk_ref0         : std_logic;
-  signal clk_ref1         : std_logic;
-  signal clk_ref2         : std_logic;
-  signal clk_ref3         : std_logic;
-  signal clk_ref4         : std_logic;
+  signal ref_locked             : std_logic;
+  signal clk_ref0               : std_logic;
+  signal clk_ref1               : std_logic;
+  signal clk_ref2               : std_logic;
+  signal clk_ref3               : std_logic;
+  signal clk_ref4               : std_logic;
+  signal clk_ref3_dummy_a10_pll : std_logic;
+  signal clk_ref4_dummy_a10_pll : std_logic;
 
   signal clk_ref          : std_logic;
   signal clk_butis        : std_logic;
@@ -1245,6 +1247,8 @@ begin
       outclk_4    => clk_ref2, --   25 MHz
       lvds_clk(0) => clk_ref3, -- 1000 MHz
       loaden(0)   => clk_ref4, -- 125 MHz, 1/8 duty, -1.5ns phase
+      lvds_clk(1) => clk_ref3_dummy_a10_pll,
+      loaden(1)   => clk_ref4_dummy_a10_pll,
       locked      => ref_locked,
       scanclk     => clk_free,
       cntsel      => phase_sel,
