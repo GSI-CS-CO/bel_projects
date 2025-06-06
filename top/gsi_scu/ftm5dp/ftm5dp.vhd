@@ -101,9 +101,9 @@ entity ftm5dp is
     -----------------------------------------------------------------------
     scu_cb_version : in  std_logic_vector(3 downto 0); -- must be assigned with weak pull ups
                                                        -- PIN_P2 VERSION_2_0
-                                                       -- PIN_J2 VERSION_2_1
+                                                       -- PIN_T8 VERSION_2_1
                                                        -- PIN_P4 VERSION_2_2 (ground, no pull up)
-                                                       -- PIN_N2 VERSION_2_3
+                                                       -- PIN_V8 VERSION_2_3
 
     -----------------------------------------------------------------------
     -- LVTTL IOs
