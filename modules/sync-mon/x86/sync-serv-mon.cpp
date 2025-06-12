@@ -3,7 +3,7 @@
  *
  *  created : 2025
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 11-Jun-2025
+ *  version : 12-Jun-2025
  *
  * monitors event activity when checking synchronization between machines
  *
@@ -75,6 +75,7 @@ using namespace std;
 #define GIDUNILACEXT       0x290        // reference group TK, UNILAC, 'extraction'
 #define GIDSIS18INJ        0x12c        // reference group SIS18, 'injection'
 #define CMD_BEAM_ON        0x206        // begin of beam passage
+#define EVT_MB_TRIGGER     0x28         // injection in SIS18
 
 static const char* program;
 
@@ -96,7 +97,6 @@ uint32_t  disCmdClearId     = 0;
 
 
 // local variables
-monval_t  monData[DIMMAXMON];           // monitoring data
 int       nMonData;                     // number of monitoring data
 int       flagClear;                    // flag for clearing diag data;
 
@@ -110,17 +110,17 @@ void clearStats()
   int i;
 
   for (i=0;i<DIMMAXMON; i++) {
-    monData[i].fid      = 0x0;
-    monData[i].gid      = 0x0;
-    monData[i].evtNo    = 0x0;
-    monData[i].flags    = 0x0;
-    monData[i].sid      = 0x0;
-    monData[i].bpid     = 0x0;
-    monData[i].eia      = 0x0;
-    monData[i].param    = 0x0;
-    monData[i].deadline = 0x0;
-    monData[i].dummy    = 0x0;
-    monData[i].counter  = 0;
+    disMonData[i].fid      = 0x0;
+    disMonData[i].gid      = 0x0;
+    disMonData[i].evtNo    = 0x0;
+    disMonData[i].flags    = 0x0;
+    disMonData[i].sid      = 0x0;
+    disMonData[i].bpid     = 0x0;
+    disMonData[i].eia      = 0x0;
+    disMonData[i].param    = 0x0;
+    disMonData[i].deadline = 0x0;
+    disMonData[i].dummy    = 0x0;
+    disMonData[i].counter  = 0;
   } // for i
 } // clearStats
 
@@ -148,17 +148,20 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
   if (mFid != FID)                        return;  // unexpected format of timing message
   if (tag   > (uint32_t)nMonData)         return;  // illegal tag
 
-  monData[tag].fid      = mFid;
-  monData[tag].gid      = mGid;
-  monData[tag].evtNo    = mEvtNo;
-  monData[tag].flags    = mFlags;
-  monData[tag].sid      = mSid;
-  monData[tag].bpid     = mBpid;
-  monData[tag].eia      = mEia;
-  monData[tag].param    = param;
-  monData[tag].deadline = deadline.getTAI();
-  monData[tag].dummy    = 0x0;
-  monData[tag].counter++;
+  disMonData[tag].fid      = mFid;
+  disMonData[tag].gid      = mGid;
+  disMonData[tag].evtNo    = mEvtNo;
+  disMonData[tag].flags    = mFlags;
+  disMonData[tag].sid      = mSid;
+  disMonData[tag].bpid     = mBpid;
+  disMonData[tag].eia      = mEia;
+  disMonData[tag].param    = param;
+  disMonData[tag].deadline = deadline.getTAI();
+  disMonData[tag].dummy    = 0x0;
+  disMonData[tag].counter++;
+
+  dis_update_service(disMonDataId[tag]);
+
 } // timingmessage
 
 
@@ -189,8 +192,8 @@ void disAddServices(char *prefix, char *domainName)
   // monitoring data service
   for (i=0;i<nMonData;i++){
     sprintf(name, "%s_data%02d", prefix, i);
-    sprintf(monData[i].domainName, "%s", domainName);
-    disMonDataId[i] = dis_add_service(name, "I:6;X:2;I:2:C", &(disMonData[i]), sizeof(monval_t), 0, 0);
+    sprintf(disMonData[i].domainName, "%s", domainName);
+    disMonDataId[i] = dis_add_service(name, "I:7;X:2;I:2;C", &(disMonData[i]), sizeof(monval_t), 0, 0);
   }
 
   // command clear
@@ -263,8 +266,8 @@ int main(int argc, char** argv)
         tmpi        = strtoull(optarg, &tail, 0);
         if (*tail != 0) {std::cerr << "Specify a proper number, not " << optarg << "'%s'!" << std::endl; return 1;}
         switch (tmpi) {
-          case 0: gid = GIDUNILACEXT;  sprintf(domainName, "%s", "UNILAC"); break;
-          case 1: gid = GIDSIS18INJ;   sprintf(domainName, "%s", "SIS18");  break;
+          case 0: gid = GIDUNILACEXT;  sprintf(domainName, "%s", "unilac"); nMonData = 1; break;
+          case 1: gid = GIDSIS18INJ;   sprintf(domainName, "%s", "sis18-inj");  nMonData = 1; break;
           default: {std::cerr << "Specify a proper number, not " << tmpi << "'%s'!" << std::endl; return 1;} break;
         } // switch tmpi
         break;
@@ -310,11 +313,11 @@ int main(int argc, char** argv)
 
     clearStats();
     disAddServices(prefix, domainName);
-    
+
     sprintf(disName, "%s", prefix);
     dis_start_serving(disName);
   } // if startServer
-  
+
   try {
     // basic saftd stuff
     std::shared_ptr<SAFTd_Proxy> saftd = SAFTd_Proxy::create();
@@ -340,30 +343,36 @@ int main(int argc, char** argv)
 
     uint32_t tag[nMonData];
     uint32_t tmpTag;
-    uint64_t evtId;
 
     // select timing message to monitor
     switch (gid) {
       case GIDUNILACEXT:
         // transfer from UNILAC
-        nMonData           = 1;
-
+        if (nMonData != 1) std::cerr << "wrong array size" << std::endl;
         tmpTag             = 0;
-        evtId              = 0x0;
-        evtId             |= ((uint64_t)FID << 60);
-        evtId             |= ((uint64_t)gid << 48);
-        evtId             |= ((uint64_t)CMD_BEAM_ON << 36);
+        snoopID            = 0x0;
+        snoopID           |= ((uint64_t)FID << 60);
+        snoopID           |= ((uint64_t)gid << 48);
+        snoopID           |= ((uint64_t)CMD_BEAM_ON << 36);
         condition[tmpTag]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
         tag[tmpTag]        = tmpTag;
 
         break;
       case GIDSIS18INJ:
         // injection into SIS18
-        //...
+        if (nMonData != 1) std::cerr << "wrong array size" << std::endl;
+        tmpTag             = 0;
+        snoopID            = 0x0;
+        snoopID           |= ((uint64_t)FID << 60);
+        snoopID           |= ((uint64_t)gid << 48);
+        snoopID           |= ((uint64_t)EVT_MB_TRIGGER << 36);
+        condition[tmpTag]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+        tag[tmpTag]        = tmpTag;
+
         break;
     } // switch gid
     
-      // let's go!
+    // let's go!
     for (i=0; i<nMonData; i++) {
       condition[i]->setAcceptLate(true);
       condition[i]->setAcceptEarly(true);
@@ -374,15 +383,10 @@ int main(int argc, char** argv)
     } // for i
 
     while(true) {
-      // hier periodisch DIM service aktualisieren bzw. update auf Bildschirm bzw. update MASP
-      saftlib::wait_for_signal(UPDATE_TIME_MS / 10);
-      
-      
-      if (startServer) {
-        // update service data
-        dis_update_service(disVersionId);
-        for (i=0; i<nMonData; i++) dis_update_service(disMonDataId[i]);
-      } // if startServer
+      if (saftlib::wait_for_signal(UPDATE_TIME_MS / 10) == 0) {
+        // timeout
+        // evtl irgendwelchen Krempel auf den Bildschirm schreiben
+      }     
     } // while true
     
   } // try
