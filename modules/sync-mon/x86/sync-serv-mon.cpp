@@ -3,7 +3,7 @@
  *
  *  created : 2025
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 12-Jun-2025
+ *  version : 13-Jun-2025
  *
  * monitors event activity when checking synchronization between machines
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define SYNC_SERV_MON_VERSION 0x000001
+#define SYNC_SERV_MON_VERSION 0x000002
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -63,7 +63,7 @@
 #include "iOwned.h"
 #include "CommonFunctions.h"
 
-// unisis-sync includes
+// sync-mon includes
 #include <common-lib.h>                 // COMMON
 #include <syncmonlib.h>                 // API
 
@@ -72,18 +72,14 @@ using namespace std;
 
 #define UPDATE_TIME_MS     1000         // time for status updates [ms]
 #define FID                0x1          // format ID of timing messages
-#define GIDUNILACEXT       0x290        // reference group TK, UNILAC, 'extraction'
-#define GIDSIS18INJ        0x12c        // reference group SIS18, 'injection'
-#define CMD_BEAM_ON        0x206        // begin of beam passage
-#define EVT_MB_TRIGGER     0x28         // injection in SIS18
 
 static const char* program;
 
 // dim
-#define DIMCHARSIZE 32                  // standard size for char services
-#define DIMMAXSIZE  1024                // max size for service names
-#define DIMMAXMON   32                  // max number of monitored message (rules)
-#define NAMELEN     256                 // max size for names
+#define DIMCHARSIZE        32           // standard size for char services
+#define DIMMAXSIZE         1024         // max size for service names
+#define DIMMAXMON          32           // max number of monitored message (rules)
+#define NAMELEN            256          // max size for names
 
 // services
 char      disVersion[DIMCHARSIZE];      // software version
@@ -109,19 +105,7 @@ void clearStats()
 {
   int i;
 
-  for (i=0;i<DIMMAXMON; i++) {
-    disMonData[i].fid      = 0x0;
-    disMonData[i].gid      = 0x0;
-    disMonData[i].evtNo    = 0x0;
-    disMonData[i].flags    = 0x0;
-    disMonData[i].sid      = 0x0;
-    disMonData[i].bpid     = 0x0;
-    disMonData[i].eia      = 0x0;
-    disMonData[i].param    = 0x0;
-    disMonData[i].deadline = 0x0;
-    disMonData[i].dummy    = 0x0;
-    disMonData[i].counter  = 0;
-  } // for i
+  for (i=0;i<DIMMAXMON; i++) disMonData[i] = smEmptyMonData();
 } // clearStats
 
 
@@ -266,8 +250,8 @@ int main(int argc, char** argv)
         tmpi        = strtoull(optarg, &tail, 0);
         if (*tail != 0) {std::cerr << "Specify a proper number, not " << optarg << "'%s'!" << std::endl; return 1;}
         switch (tmpi) {
-          case 0: gid = GIDUNILACEXT;  sprintf(domainName, "%s", "unilac"); nMonData = 1; break;
-          case 1: gid = GIDSIS18INJ;   sprintf(domainName, "%s", "sis18-inj");  nMonData = 1; break;
+          case 0: gid = GIDUNILACEXT;  sprintf(domainName, "%s", "unilac")   ;  nMonData = 1; break;
+          case 1: gid = GIDSIS18INJ;   sprintf(domainName, "%s", "sis18-inj");  nMonData = 2; break;
           default: {std::cerr << "Specify a proper number, not " << tmpi << "'%s'!" << std::endl; return 1;} break;
         } // switch tmpi
         break;
@@ -348,24 +332,32 @@ int main(int argc, char** argv)
     switch (gid) {
       case GIDUNILACEXT:
         // transfer from UNILAC
-        if (nMonData != 1) std::cerr << "wrong array size" << std::endl;
+        if (nMonData != 1) {std::cerr << "wrong array size" << std::endl; return 1;}
         tmpTag             = 0;
         snoopID            = 0x0;
         snoopID           |= ((uint64_t)FID << 60);
         snoopID           |= ((uint64_t)gid << 48);
-        snoopID           |= ((uint64_t)CMD_BEAM_ON << 36);
+        snoopID           |= ((uint64_t)EVT_BEAM_ON << 36);
         condition[tmpTag]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
         tag[tmpTag]        = tmpTag;
 
         break;
       case GIDSIS18INJ:
         // injection into SIS18
-        if (nMonData != 1) std::cerr << "wrong array size" << std::endl;
+        if (nMonData != 2) {std::cerr << "wrong array size" << std::endl; return 1;}
         tmpTag             = 0;
         snoopID            = 0x0;
         snoopID           |= ((uint64_t)FID << 60);
         snoopID           |= ((uint64_t)gid << 48);
-        snoopID           |= ((uint64_t)EVT_MB_TRIGGER << 36);
+        snoopID           |= ((uint64_t)EVT_RAMP_START << 36);
+        condition[tmpTag]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+        tag[tmpTag]        = tmpTag;
+
+        tmpTag             = 1;
+        snoopID            = 0x0;
+        snoopID           |= ((uint64_t)FID << 60);
+        snoopID           |= ((uint64_t)gid << 48);
+        snoopID           |= ((uint64_t)EVT_MB_TRIGGER<< 36);
         condition[tmpTag]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
         tag[tmpTag]        = tmpTag;
 

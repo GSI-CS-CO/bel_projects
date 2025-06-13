@@ -49,12 +49,16 @@ $(info compiling x86 binaries for $(SYSENV))
 $(info ours CCFLAGS for c code is $(CCFLAGS))
 $(info ours CXFLAGS for c++ code is $(CXFLAGS))
 
-TARGETS     := sync-serv-mon
+TARGETS     := sync-serv-mon sync-mon
 
 all: $(TARGETS)
 
 sync-serv-mon: sync-serv-mon.cpp
-	$(CXX) $(CFLAGS) $(CXFLAGS) ../../common-libs/x86/common-lib.c -o sync-serv-mon sync-serv-mon.cpp $(XLIBS) -ldim -lpthread
+	$(CXX) $(CFLAGS) $(CXFLAGS) ../../common-libs/x86/common-lib.c syncmonlib.c -o sync-serv-mon sync-serv-mon.cpp $(XLIBS) -ldim -lpthread
+
+sync-mon: sync-mon.c
+	$(CC) $(CFLAGS) $(CCFLAGS) ../../common-libs/x86/common-lib.c syncmonlib.c -o sync-mon sync-mon.c $(LIBS) -ldim -lpthread
+
 
 #lib: wrmillib.c
 #	$(CC) $(CFLAGS) $(CCFLAGS) -fPIC -c wrmillib.c ../../common-libs/x86/common-lib.c $(LIBS)

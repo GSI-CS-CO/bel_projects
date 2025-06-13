@@ -44,6 +44,23 @@ extern "C" {
 #define SYNCMON_VERSION 0x000001
 #define SYNCMON_STRLEN  64
 
+#define GIDUNILACEXT       0x290        // reference group TK, UNILAC, 'extraction'
+#define GIDSIS18INJ        0x12c        // reference group SIS18, 'injection'
+
+#define EVT_BEAM_ON        0x006        // valid beam
+#define CMD_BEAM_ON        0x206        // begin of beam passage
+#define EVT_MB_TRIGGER     0x028        // start bumper in SIS18 (injection thread)
+#define EVT_RAMP_START     0x02b        // start acc/dec ramp in magnets
+
+#define DTLIMIT            2000000000   // limit for time difference [ns]
+
+  enum ringMachine{NORING, SIS18, ESR, CRYRING};
+  typedef enum ringMachine ring_t;
+
+  enum evtTag{tagSis18i};
+  typedef enum evtTag evtTag_t;
+
+
   // data type monitoring values; data are in 'native units' used by the ECA
   typedef struct{
     uint32_t  fid;                                       // FID
@@ -61,6 +78,15 @@ extern "C" {
 } monval_t;
 
   // routines ...
+
+  // get name of event
+  void smGetEvtString(uint32_t evtNo,                      // event number
+                    char     *name                       // event name
+                    );
+
+  // returns empty monitoring data set
+  monval_t smEmptyMonData();
+
   
 #ifdef __cplusplus
 }
