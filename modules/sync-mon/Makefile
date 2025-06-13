@@ -3,10 +3,10 @@
 # Set SYSENV to the target system environment (YOCTO, ACC7, ACC9, OPT)
 # Example build:
 #   'make clean'                                                 
-#   'make MASP=NO ENV=int SYSENV=ACC7 PREFIX= all'                                    (hack: leave PREFIX empty for SCU path)
+#   'make ENV=int SYSENV=ACC7 PREFIX= software'                                        (hack: leave PREFIX empty for SCU path)
 # Example deploy (for ASL only):
-#   'make PREFIX= SYSENV=ACC7 STAGING=/common/export/timing-rte/wrmil-dev deploy'      (hack: leave PREFIX empty for SCU path)
-#   'make PREFIX= SYSENV=ACC7 STAGING=/common/export/timing-rte/wrmil deploy'          (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= SYSENV=ACC7 STAGING=/common/export/timing-rte/syncmon-dev deploy     (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= SYSENV=ACC7 STAGING=/common/export/timing-rte/syncmon deploy'        (hack: leave PREFIX empty for SCU path)
 
 # install
 PREFIX      ?= /usr/local
@@ -64,10 +64,10 @@ nfsinit:
 
 clean:
 	$(MAKE) -C $(SW) clean
-	$(MAKE) -C $(FW) clean
-	rm -f nfs-init/wrmil-int*.sh
-	rm -f nfs-init/wrmil-pro*.sh
-	rm -f nfs-init/wrmil-tools.sh
+#	$(MAKE) -C $(FW) clean
+	rm -f nfs-init/syncmon-int*.sh
+	rm -f nfs-init/syncmon-pro*.sh
+	rm -f nfs-init/syncmon-tools.sh
 
 deploy:
 # create folders
@@ -82,19 +82,19 @@ deploy:
 	cp $(NFSINIT)/*.sh $(STAGING)
 
 # tools
-	cp $(SW)/wrmil-ctl $(STAGING)$(ARCH)$(PREFIX)/usr/bin               # '/usr' is a hack
-	cp $(SW)/wrf50-ctl $(STAGING)$(ARCH)$(PREFIX)/usr/bin               # '/usr' is a hack
-	cp -a $(SW)/*.so.* $(STAGING)$(ARCH)$(PREFIX)/usr/lib               # '/usr' is a hack
-	cp -a $(SW)/*.so $(STAGING)$(ARCH)$(PREFIX)/usr/lib                 # '/usr' is a hack
+	cp $(SW)/sync-serv-mon $(STAGING)$(ARCH)$(PREFIX)/usr/bin           # '/usr' is a hack
+	cp $(SW)/sync-mon  $(STAGING)$(ARCH)$(PREFIX)/usr/bin               # '/usr' is a hack
+#	cp -a $(SW)/*.so.* $(STAGING)$(ARCH)$(PREFIX)/usr/lib               # '/usr' is a hack
+#	cp -a $(SW)/*.so $(STAGING)$(ARCH)$(PREFIX)/usr/lib                 # '/usr' is a hack
 	cp $(USRPATH)/lib/libdim.so $(STAGING)$(ARCH)$(PREFIX)/usr/lib      # '/usr' is a hack
-	cp $(SW)/wrmil-serv-mon $(STAGING)$(ARCH)$(PREFIX)/usr/bin          # '/usr' is a hack
-	cp $(SW)/wrmil-client-mon $(STAGING)$(ARCH)$(PREFIX)/usr/bin        # '/usr' is a hack
-	cp $(SW)/wrf50-serv-mon $(STAGING)$(ARCH)$(PREFIX)/usr/bin          # '/usr' is a hack
-	cp $(FW)/*.bin $(STAGING)/firmware
+#	cp $(SW)/wrmil-serv-mon $(STAGING)$(ARCH)$(PREFIX)/usr/bin          # '/usr' is a hack
+#	cp $(SW)/wrmil-client-mon $(STAGING)$(ARCH)$(PREFIX)/usr/bin        # '/usr' is a hack
+#	cp $(SW)/wrf50-serv-mon $(STAGING)$(ARCH)$(PREFIX)/usr/bin          # '/usr' is a hack
+#	cp $(FW)/*.bin $(STAGING)/firmware
 
 # MASP special hack for ACC7
-	cp /lib64/libboost_system-mt.so $(STAGING)$(ARCH)$(PREFIX)/usr/lib
-	cp /lib64/libboost_thread-mt.so.1.53.0 $(STAGING)$(ARCH)$(PREFIX)/usr/lib
+#	cp /lib64/libboost_system-mt.so $(STAGING)$(ARCH)$(PREFIX)/usr/lib
+#	cp /lib64/libboost_thread-mt.so.1.53.0 $(STAGING)$(ARCH)$(PREFIX)/usr/lib
 
 # configuration; the format is 'wrmil-<environment>-<machine>-<room>-<function>_start.sh'
 	cp $(SW)/*.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin                    # '/usr' is a hack
@@ -103,7 +103,7 @@ deploy:
 	cp $(SYSTEMD)/*.service $(STAGING)/$(SYSTEMD)                       # systemd units
 
 # header files, required for building FESA
-	cp $(INC)/wrmillib.h $(STAGING)$(ARCH)$(PREFIX)/usr/include         # '/usr' is a hack	
+	cp $(INC)/syncmonlib.h $(STAGING)$(ARCH)$(PREFIX)/usr/include         # '/usr' is a hack	
 
 .PHONY: all clean
 
