@@ -5,7 +5,7 @@
  *  author  : Dietrich Beck, GSI-Darmstadt
  *  version : 13-jun-2025
  *
- * subscribes to and displays status of many b2b transfers
+ * subscribes to and displays status of tansfers between machines
  *
  * ------------------------------------------------------------------------------------------
  * License Agreement for this software:
@@ -48,7 +48,7 @@
 // dim
 #include <dic.h>
 
-// b2b
+// sync-mon
 #include <common-lib.h>                  // COMMON
 #include <syncmonlib.h>                  // API
 
@@ -118,7 +118,7 @@ static void help(void) {
   fprintf(stderr, "  -h                  display this help and exit\n");
   fprintf(stderr, "  -e                  display version\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "Use this tool to display information on all transfers of the B2B system\n");
+  fprintf(stderr, "Use this tool to display information on transfers\n");
   fprintf(stderr, "Example1: '%s pro'\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
@@ -158,8 +158,8 @@ void idx2RingSid(uint32_t idx, ring_t *ring, uint32_t *sid)
 
 void buildHeader()
 {
-  sprintf(headerK, "| t_last [UTC] | origin | sid|            event |  destn | sid|          event a |      diff a |          event b |     diff b |");
-  sprintf(emptyK,  "|              |        |    |                  |        |    |                  |             |                  |            |");
+  sprintf(headerK, "| t_last [UTC] | origin | sid|            event ||  destn | sid|          event a |      diff a |          event b |      diff b |");
+  sprintf(emptyK,  "|              |        |    |                  ||        |    |                  |             |                  |             |");
   //        printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
 } // buildHeader
 
@@ -219,6 +219,8 @@ void buildPrintLine(uint32_t idx)
 
   // SID of injection machine
   sprintf(injSid, "%2d", monData[idx][1].sid);
+
+  flagInj[idx] = 1;
  
   // injection: beam came from extraction machine
   if (flagInj[idx]) {
@@ -228,8 +230,8 @@ void buildPrintLine(uint32_t idx)
 
     smGetEvtString(monData[idx][1].evtNo, tmp1);
     sprintf(injEvtA, "%16s", tmp1);
-    dtmp = (monData[idx][1].deadline - monData[idx][0].deadline) / 1000.0;
-    if (dtmp > 1000000.0) dtmp = NAN;
+    dtmp = (int64_t)(monData[idx][1].deadline - monData[idx][0].deadline) / 1000.0;
+    if (fabs(dtmp) > 1000000.0) dtmp = NAN;
 
     if (isnan(dtmp)) sprintf(diffA, "%11s"    , "");
     else             sprintf(diffA, "%11.3f", dtmp);
@@ -238,8 +240,8 @@ void buildPrintLine(uint32_t idx)
     if (flagDest2) {
       smGetEvtString(monData[idx][2].evtNo, tmp1);
       sprintf(injEvtB, "%16s", tmp1);
-      dtmp = (monData[idx][2].deadline - monData[idx][0].deadline) / 1000.0;
-      if (dtmp > 1000000.0) dtmp = NAN;
+      dtmp = (int64_t)(monData[idx][2].deadline - monData[idx][0].deadline) / 1000.0;
+      if (fabs(dtmp) > 1000000.0) dtmp = NAN;
 
       if (isnan(dtmp)) sprintf(diffB, "%11s"    , "");
       else             sprintf(diffB, "%11.3f", dtmp);
@@ -259,7 +261,7 @@ void buildPrintLine(uint32_t idx)
     sprintf(diffB  , "%11s", "");
   } // else flagInj
   
-  sprintf(printLineK[idx], "|%12s | %6s | %2s | %16s | %6s | %2s | %16s | %11s | %16s | %11s |", tCBS, origin, extSid, extEvt, dest, injSid, injEvtA, diffA, injEvtB, diffB);
+  sprintf(printLineK[idx], "| %12s | %6s | %2s | %16s || %6s | %2s | %16s | %11s | %16s | %11s |", tCBS, origin, extSid, extEvt, dest, injSid, injEvtA, diffA, injEvtB, diffB);
   //                printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
 
 } //buildPrintLine
@@ -304,6 +306,8 @@ void recSetvalue(long *tag, monval_t *address, int *size)
       break;
   } // switch tag
 
+  //printf("sid %d, evtno%d\n", (*tmp).sid, (*tmp).evtNo);
+
   // get timestamp
   dic_get_timestamp(0, &secs, &(set_msecs[idx]));
   set_secs[idx]      = (time_t)(secs);
@@ -326,17 +330,17 @@ void dicSubscribeServices(char *prefix)
   // UNILAC 'extraction'
   sprintf(name, "%s_unilac-mon_data00", prefix);
   /* printf("name %s\n", name); */
-  dicUnilacE0Id     = dic_info_service_stamped(name, MONITORED, 0, &dicUnilacE0, sizeof(monval_t), recSetvalue, (long)tagSis18i, &no_link_32, sizeof(uint32_t));
+  dicUnilacE0Id     = dic_info_service_stamped(name, MONITORED, 0, &dicUnilacE0, sizeof(monval_t), 0, 0, &no_link_32, sizeof(uint32_t));
 
   // SIS18 injection, main thread
   sprintf(name, "%s_sis18-inj-mon_data00", prefix);
   /* printf("name %s\n", name); */
-  dicSis18I0Id       = dic_info_service_stamped(name, MONITORED, 0, &dicSis18I1 , sizeof(monval_t), 0, 0, &no_link_32, sizeof(uint32_t));
+  dicSis18I0Id       = dic_info_service_stamped(name, MONITORED, 0, &dicSis18I0 , sizeof(monval_t), recSetvalue, (long)tagSis18i, &no_link_32, sizeof(uint32_t));
 
   // SIS18 injection, injection thread
   sprintf(name, "%s_sis18-inj-mon_data01", prefix);
   /* printf("name %s\n", name); */
-  dicSis18I1Id      = dic_info_service_stamped(name, MONITORED, 0, &dicSis18I0 , sizeof(monval_t), 0, 0, &no_link_32, sizeof(uint32_t));
+  dicSis18I1Id       = dic_info_service_stamped(name, MONITORED, 0, &dicSis18I1 , sizeof(monval_t), 0, 0, &no_link_32, sizeof(uint32_t));
 
 } // dicSubscribeServices
 
@@ -396,8 +400,8 @@ void printData(char *name)
   time_date = time(0);
   strftime(buff,53,"%d-%b-%y %H:%M:%S",localtime(&time_date));
   sprintf(unitInfo, "(units [us] unless explicitly given)");
-  sprintf(title,  "\033[7m Sync Monitor %3s ----------------------------------------------------------------------------------------------------------- %s - v%6xs\033[0m", name, unitInfo, SYNC_MON_VERSION);
-  sprintf(footer, "\033[7m exit <q> | toggle inactive <i>, SIS18 <0>, ESR <1>, YR <2> | help <h>                                                           %s\033[0m", buff);
+  sprintf(title,  "\033[7m Sync Monitor %3s ----------------------------------------------------------------- %s - v%06x\033[0m", name, unitInfo, SYNC_MON_VERSION);
+  sprintf(footer, "\033[7m exit <q> | toggle inactive <i>, SIS18 <0>, ESR <1>, YR <2> | help <h>                                          %s\033[0m", buff);
 
   comlib_term_curpos(1,1);
 
@@ -486,11 +490,11 @@ int main(int argc, char** argv)
   } // if optind
 
   if (optind< argc) {
-    sprintf(prefix, "b2b_%s", argv[optind]);
+    sprintf(prefix, "syncserv_%s", argv[optind]);
     sprintf(name, "%s",  argv[optind]);
   } // if optindex
   else {
-    sprintf(prefix, "b2b");
+    sprintf(prefix, "syncser");
     sprintf(name, "none");
   } // else optindex
 
