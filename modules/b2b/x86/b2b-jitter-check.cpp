@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 11-Oct-2023
+ *  version : 28-feb-2025
  *
  * checks jitter between two timing receivers connected via a Lemo cable 
  * the first timing receiver outputs a PPS pulse
@@ -37,7 +37,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_JITTER_CHECK_VERSION 0x000803
+#define B2B_JITTER_CHECK_VERSION 0x000807
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -261,11 +261,14 @@ static void help(void) {
   std::cerr << std::endl;
   std::cerr << "  -p <n>               specify number of IO where PPS is generated (default '1')" << std::endl;
   std::cerr << "  -t <n>               specify number of IO where timestamp is acquired (default '1')" << std::endl;
+  
   std::cerr << "  -h                   display this help and exit" << std::endl;
   std::cerr << std::endl;
   std::cerr << std::endl;
   std::cerr << "This tool uses two timing receivers where IOs are connected via a cable. A PPS pulse is generated on the first" << std::endl;
   std::cerr << "TR, while the a timestamp of the PPS is measured at the second TR. The result is published via DIM." << std::endl;
+  std::cerr << "In case the first (PPS) TR is not used (but something else), the '-p' option can be omitted; in this case" << std::endl;
+  std::cerr << "<device name PPS> shall be identical to <device name TS>" << std::endl;
   std::cerr << std::endl;
   std::cerr << "Example1: '" << program << " tr0 tr1 -p2 -t2'" << std::endl;
   std::cerr << std::endl;
@@ -388,7 +391,6 @@ int main(int argc, char** argv)
   char    *deviceNameTS  = NULL;
   int     ioPPS          = 1;
   int     ioTS           = 1;
-
   
   char    tmp[512];
   char    prefix[NAMELEN];
@@ -404,7 +406,7 @@ int main(int argc, char** argv)
       case 'p' :
         ioPPS = strtol(optarg, &tail, 0);
         if (ioPPS < 0) {
-          std::cerr << "option -t: parameter out of range" << std::endl;
+          std::cerr << "option -p: parameter out of range" << std::endl;
           return 1;
         } // switch optarg
         if (*tail != 0) {

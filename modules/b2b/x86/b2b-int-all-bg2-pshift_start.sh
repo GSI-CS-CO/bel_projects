@@ -13,19 +13,20 @@ export SDPS=tr0
 
 # SCU bus slots
 export SIS18DDS=0x44
-export   ESRDDS=0x48
+export ESRDDS=0x48
 
 # registers
 export  FWVERSION=000c            # FW version; useful when looking for modules on the scu bus
 export  SHIFTPHAS=4000            # phase shift, value [degree, single precision float]
 export  SHIFTTIME=4004            # phase shift, value [s, float]
 export  SHIFTSTRT=4024            # phase shift, start
+export PHASERESET=4026            # phase reset
 export   TAGREGLO=0612            # fg quad, tag config low bits
 export   TAGREGHI=0614            # fg quad, tag config high bits
 export TAGREGCTRL=0600            # fg quad, control register
 
 # values
-export     DDSENABLE=0xcc020000   # fg quad, value written to the control register for enabling phase reset
+export DDSENABLE=0xcc020000       # fg quad, value written to the control register for enabling phase reset
 export DDSTAGRESETLO=4711         # tag value for phase reset, low word
 export DDSTAGRESETHI=4711         # tag value for phase reset, high word
 
@@ -183,36 +184,60 @@ saft-wbm-ctl $SDPS -c 0x13a580a000000000 0xfffffff000000000     0 0x09 -d
 # mode B2B_MODE_B2BPSHIFTI
 # phase shift, phase
 saft-wbm-ctl $SDPS -c 0x13a180b000000000 0xfffffff000000000 40000 0x05 -dg
-saft-wbm-ctl $SDPS -c 0x13a180b000000000 0xfffffff000000000 30000 0x06 -dg 
+saft-wbm-ctl $SDPS -c 0x13a180b000000000 0xfffffff000000000 30000 0x06 -dg
 # phase shift, time
 saft-wbm-ctl $SDPS -c 0x13a180b000000000 0xfffffff000000000 20000 0x07 -dg
 saft-wbm-ctl $SDPS -c 0x13a180b000000000 0xfffffff000000000 10000 0x08 -dg
 # phase shift, start
 saft-wbm-ctl $SDPS -c 0x13a180b000000000 0xfffffff000000000     0 0x09 -d
+# mode B2B_MODE_B2BPSHIFTE
+# phase shift, phase
+saft-wbm-ctl $SDPS -c 0x13a680a000000000 0xfffffff000000000 40000 0x05 -dg
+saft-wbm-ctl $SDPS -c 0x13a680a000000000 0xfffffff000000000 30000 0x06 -dg
+# phase shift, time
+saft-wbm-ctl $SDPS -c 0x13a680a000000000 0xfffffff000000000 20000 0x07 -dg
+saft-wbm-ctl $SDPS -c 0x13a680a000000000 0xfffffff000000000 10000 0x08 -dg
+# phase shift, start
+saft-wbm-ctl $SDPS -c 0x13a680a000000000 0xfffffff000000000     0 0x09 -d
 
-echo -e B2B: configure $SDPS scu bus tag channel, needed for DDS phase reset
-echo -e SIS18, ESR, SIS100
+
+echo -e B2B: configure $SDPS wishbone channel for DDS phase reset
+# phase shifts require resetting the phase; this is due to rounding errors in the PSM module (RRF)
+# the CMD_PHASE_RESET is part of the normal Data Master schedule: here, we just use this
+# command to reset the phase of the PSM 
+echo -e SIS18
+saft-wbm-ctl tr0 -r 0x0a $SIS18DDS$PHASERESET/2 0xff 0x0f
+saft-wbm-ctl tr0 -c 0x112c159000000000 0xfffffff000000000 0 0x0a -d
+#
+echo -e ESR
+saft-wbm-ctl tr0 -r 0x0b $ESRDDS$PHASERESET/2 0xff 0x0f
+saft-wbm-ctl tr0 -c 0x1154159000000000 0xfffffff000000000 0 0x0b -d
+
+
+
+#echo -e B2B: configure $SDPS scu bus tag channel, needed for DDS phase reset
+#echo -e SIS18, ESR, SIS100
 # will be replaced by saft-wbm-ctl
 # configure DDS to react on tag for phase reset
-eb-write $TRPS $SIS18DDS$TAGREGLO/2 0x$DDSTAGRESETLO
-eb-write $TRPS $SIS18DDS$TAGREGHI/2 0x$DDSTAGRESETHI
-eb-write $TRPS $ESRDDS$TAGREGLO/2   0x$DDSTAGRESETLO
-eb-write $TRPS $ESRDDS$TAGREGHI/2   0x$DDSTAGRESETHI
+#eb-write $TRPS $SIS18DDS$TAGREGLO/2 0x$DDSTAGRESETLO
+#eb-write $TRPS $SIS18DDS$TAGREGHI/2 0x$DDSTAGRESETHI
+#eb-write $TRPS $ESRDDS$TAGREGLO/2   0x$DDSTAGRESETLO
+#eb-write $TRPS $ESRDDS$TAGREGHI/2   0x$DDSTAGRESETHI
 # SIS100 ... (to be done)
 #
 # SIS18
 # configure ECA wishbone channel to enable phase reset at DDS, the 'enable' is done 10us prior CMD_PHASE_RESET
-saft-wbm-ctl tr0 -c 0x112c159000000000  0xfffffff000000000 10000 0x0a -dg
-saft-wbm-ctl tr0 -r 0x0a $SIS18DDS$TAGREGCTRL $DDSENABLE 0x0c
-echo $DDSENABLE
+#saft-wbm-ctl tr0 -c 0x112c159000000000  0xfffffff000000000 10000 0x0a -dg
+#saft-wbm-ctl tr0 -r 0x0a $SIS18DDS$TAGREGCTRL $DDSENABLE 0x0c
+#echo $DDSENABLE
 # configure ECA tag channel to write tag upon receiving CMD_PHASE_RESET
-saft-scu-ctl $SDPS -c 0x112c159000000000 0xfffffff000000000 0 0x$DDSTAGRESETHI$DDSTAGRESETLO -d
+#saft-scu-ctl $SDPS -c 0x112c159000000000 0xfffffff000000000 0 0x$DDSTAGRESETHI$DDSTAGRESETLO -d
 # ESR
 # configure ECA wishbone channel to enable phase reset at DDS, the 'enable' is done 10us prior CMD_PHASE_RESET
-saft-wbm-ctl tr0 -c 0x1154159000000000  0xfffffff000000000 10000 0x0b -dg
-saft-wbm-ctl tr0 -r 0x0b $ESRDDS$TAGREGCTRL $DDSENABLE 0x0c
+#saft-wbm-ctl tr0 -c 0x1154159000000000  0xfffffff000000000 10000 0x0b -dg
+#saft-wbm-ctl tr0 -r 0x0b $ESRDDS$TAGREGCTRL $DDSENABLE 0x0c
 # configure ECA tag channel to write tag upon receiving CMD_PHASE_RESET
-saft-scu-ctl $SDPS -c 0x1154159000000000 0xfffffff000000000 0 0x$DDSTAGRESETHI$DDSTAGRESETLO -d
+#saft-scu-ctl $SDPS -c 0x1154159000000000 0xfffffff000000000 0 0x$DDSTAGRESETHI$DDSTAGRESETLO -d
 
 
 

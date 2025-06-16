@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 16-Aug-2023
+ *  version : 02-Apr-2025
  *
  * subscribes to and displays status of a b2b system (CBU, PM, KD ...)
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_CLIENT_SYS_VERSION 0x000804
+#define B2B_CLIENT_SYS_VERSION 0x000807
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -86,7 +86,7 @@ const char * sysClearKeys[] = {
   "A",
   "B",
   "C",
-  "E",
+  "D",
   "E",
   "F",
   "G",
@@ -297,7 +297,7 @@ void printServices(int flagOnce)
   // footer with date and time
   time_date = time(0);
   strftime(buff,50,"%d-%b-%y %H:%M",localtime(&time_date));
-  sprintf(footer, "\033[7m exit <q> | clear status <digit> | print status <s> | help <z>   %s\033[0m", buff);
+  sprintf(footer, "\033[7m exit <q> | clear status <digit> | print status <s> | help <h>   %s\033[0m", buff);
   
   comlib_term_curpos(1,1);
   

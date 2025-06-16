@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 14-feb-2025
+ *  version : 16-Apr-2025
  *
  * subscribes to and displays status of a b2b transfer
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_VIEWER_VERSION 0x000804
+#define B2B_VIEWER_VERSION 0x000807
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -348,7 +348,7 @@ int printSet(uint32_t sid)
       break;
     case B2B_MODE_B2BPSHIFTI :
       sprintf(modeStr, "'bunch 2 bucket inj. phase shift");
-      modeMask = MSKRECMODE6;
+      modeMask = MSKRECMODE7;
       break;
     default :
       sprintf(modeStr, "'unknonwn'");

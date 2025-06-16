@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 19-Aug-2024
+ *  version : 04-Mar-2025
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -42,7 +42,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION      0x000803                                  // make this consistent with makefile
+#define B2BPM_FW_VERSION      0x000807                                  // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -475,7 +475,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint32_t nInput;                                            // # of timestamps
   static uint64_t TH1_as;                                     // h=1 period [as]
   static b2bt_t   tH1_t;                                      // h=1 timestamp of phase ( = 'phase') [ps]
-  uint32_t dt_pss;                                            // uncertainty of h=1 timestamp [ps]
   static uint32_t flagPMError;                                // error flag phase measurement
 
   // diagnostic PM; phase (rf) and match (trigger)

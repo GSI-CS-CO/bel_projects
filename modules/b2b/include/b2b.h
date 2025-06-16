@@ -103,19 +103,20 @@
 #define SIS100_B2B_EXTRACT         0x3b0   // GID: SIS100 simple extraction
 
 // specialities
-#define B2B_PMOFFSET              500000    // offset [ns] for deadline of PMEXT/PMINJ events relative to B2BS event
-#define B2B_KICKOFFSETMIN        2000000    // offset [ns] for earliest deadline of kicker trigger events relative to B2BS event
-#define B2B_KICKOFFSETMAX       10500000    // offset [ns] for last possible deadline of kicker trigger events relative to B2BS event
+#define B2B_TFLATTOP            16000000    // length of flat top (set in ParamModi)
+#define B2B_PMOFFSET              500000    // offset [ns] for deadline of PMEXT/PMINJ events relative to CBS
+#define B2B_KICKOFFSETMIN        2000000    // offset [ns] for earliest deadline of kicker trigger events relative to CBS
+#define B2B_KICKOFFSETMAX   B2B_TFLATTOP    // offset [ns] for last possible deadline of kicker trigger events relative to CBS; chk original value was 10500000
 #define B2B_PRETRIGGERINJKICK     300000    // offset [ns] used as pre-trigger on the injection kick event
 #define B2B_PRETRIGGERPR          250000    // offset [ns] used as pre-trigger on the PRINJ/PREXT event
 #define B2B_PRETRIGGERTR           20000    // offset [ns] used as pre-trigger on the trigger event
-#define B2B_PHASESHIFTTIME       5000000    // time [s] used for phase shifting of low-level rf; DDS uses SI units
-#define B2B_PHASESHIFTTIMEDDS  (float)B2B_PHASESHIFTTIME/1000000000.0 // DDS want SI units
-#define B2B_KICKOFFSETPSHIFT     B2B_PHASESHIFTTIME +  B2B_KICKOFFSETMIN + 1000000 // offset [ns] deadline of kicker trigger events relative to B2BS event when performing phase shifts
+#define B2B_PHASESHIFTTIME      10000000    // default value for length [ns] used for phase shift of low-level rf; remark: DDS uses SI units
+//#define B2B_PHASESHIFTTIMEDDS  // DDS want SI units
+//#define B2B_KICKOFFSETPSHIFT     B2B_PHASESHIFTTIME +  B2B_KICKOFFSETMIN + 1000000 // offset [ns] deadline of kicker trigger events relative to B2BS event when performing phase shifts
 #define B2B_AHEADT                300000    // more aggressive ahead interval for determining the deadline of a timing message
 #define B2B_ACCEPTKMON             10000    // timewindow [us]!!! in which monitor signal  from kicker electronics is expected
 #define B2B_ACCEPTKPROBE             100    // timewindow [us]!!! in which signals from kicker magnet probe are expected
-#define B2B_TDIAGOBS            15900000    // observation interval for phase diagnostic; a bit shorter than length of flat top
+#define B2B_TDIAGOBS B2B_TFLATTOP-100000    // observation interval for phase diagnostic; a bit shorter than length of flat top; chk original value was 15900000
 #define B2B_NSID                      16    // max number of SID settings
 #define B2B_F_CLK              200000000    // clock for DDS, here: BuTiS 200 MHz
 #define B2B_WR_JITTER              30000    // jitter [fs]!!! of White Rabbit clock
