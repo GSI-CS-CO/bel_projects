@@ -250,7 +250,7 @@ int main(int argc, char** argv)
         tmpi        = strtoull(optarg, &tail, 0);
         if (*tail != 0) {std::cerr << "Specify a proper number, not " << optarg << "'%s'!" << std::endl; return 1;}
         switch (tmpi) {
-          case 0: gid = GIDUNILACEXT;  sprintf(domainName, "%s", "unilac")   ;  nMonData = 1; break;
+          case 0: gid = GIDUNILACEXT;  sprintf(domainName, "%s", "unilac")   ;  nMonData = 2; break;
           case 1: gid = GIDSIS18INJ;   sprintf(domainName, "%s", "sis18-inj");  nMonData = 2; break;
           default: {std::cerr << "Specify a proper number, not " << tmpi << "'%s'!" << std::endl; return 1;} break;
         } // switch tmpi
@@ -332,7 +332,7 @@ int main(int argc, char** argv)
     switch (gid) {
       case GIDUNILACEXT:
         // transfer from UNILAC
-        if (nMonData != 1) {std::cerr << "wrong array size" << std::endl; return 1;}
+        if (nMonData != 2) {std::cerr << "wrong array size" << std::endl; return 1;}
         tmpTag             = 0;
         snoopID            = 0x0;
         snoopID           |= ((uint64_t)FID << 60);
@@ -340,6 +340,15 @@ int main(int argc, char** argv)
         snoopID           |= ((uint64_t)EVT_BEAM_ON << 36);
         condition[tmpTag]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
         tag[tmpTag]        = tmpTag;
+
+        // hack to support legacy groups (for testing til July 2025
+        tmpTag             = 1;
+        snoopID            = 0x0;
+        snoopID           |= ((uint64_t)FID << 60);
+        snoopID           |= ((uint64_t)0x1c6 << 48);                    // legacy GID TK
+        snoopID           |= ((uint64_t)EVT_BEAM_ON << 36);
+        condition[tmpTag]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+        tag[tmpTag]        = 0;                                          // hack!
 
         break;
       case GIDSIS18INJ:
