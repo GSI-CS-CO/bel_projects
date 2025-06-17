@@ -3,7 +3,7 @@
  *
  *  created : 2025
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 13-Jun-2025
+ *  version : 17-Jun-2025
  *
  * monitors event activity when checking synchronization between machines
  *
@@ -394,7 +394,7 @@ int main(int argc, char** argv)
         snoopID            = 0x0;
         snoopID           |= ((uint64_t)FID << 60);
         snoopID           |= ((uint64_t)gid << 48);
-        snoopID           |= ((uint64_t)CMD_SEPTUM_CHARGE << 36);
+        snoopID           |= ((uint64_t)CMD_B2B_TRIGGERINJ << 36);
         condition[tmpTag]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
         tag[tmpTag]        = tmpTag;
 
@@ -402,7 +402,7 @@ int main(int argc, char** argv)
         snoopID            = 0x0;
         snoopID           |= ((uint64_t)FID << 60);
         snoopID           |= ((uint64_t)gid << 48);
-        snoopID           |= ((uint64_t)CMD_B2B_TRIGGERINJ << 36);
+        snoopID           |= ((uint64_t)CMD_SEPTUM_CHARGE << 36);
         condition[tmpTag]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
         tag[tmpTag]        = tmpTag;
 

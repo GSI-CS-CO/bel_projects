@@ -56,11 +56,16 @@
 void smGetEvtString(uint32_t evtNo, char *name)
 {
   switch (evtNo) {
-    case EVT_BEAM_ON    : sprintf(name, "%s", "EVT_BEAM_ON")   ; break;
-    case CMD_BEAM_ON    : sprintf(name, "%s", "CMD_BEAM_ON")   ; break;
-    case EVT_MB_TRIGGER : sprintf(name, "%s", "EVT_MB_TRIGGER"); break;
-    case EVT_RAMP_START : sprintf(name, "%s", "EVT_RAMP_START"); break;
-    default             : sprintf(name, "%s", "undefined")     ; break;
+    case EVT_BEAM_ON        : sprintf(name, "%s", "EVT_BEAM_ON")        ; break;
+    case CMD_BEAM_ON        : sprintf(name, "%s", "CMD_BEAM_ON")        ; break;
+    case EVT_MB_TRIGGER     : sprintf(name, "%s", "EVT_MB_TRIGGER")     ; break;
+    case EVT_RAMP_START     : sprintf(name, "%s", "EVT_RAMP_START")     ; break;
+    case EVT_MK_LOAD_1      : sprintf(name, "%s", "EVT_MK_LOAD_1")      ; break;
+    case EVT_MK_LOAD_2      : sprintf(name, "%s", "EVT_MK_LOAD_2")      ; break;
+    case CMD_SEPTUM_CHARGE  : sprintf(name, "%s", "CMD_SEPT_CHARGE")  ; break;
+    case CMD_B2B_TRIGGERINJ : sprintf(name, "%s", "CMD_B2B_TRIGINJ") ; break;
+    case CMD_B2B_START      : sprintf(name, "%s", "CMD_B2B_START")      ; break;
+    default                 : sprintf(name, "%s", "undefined")          ; break;
   } // switch evtNo
 } // smGetEvtString
 

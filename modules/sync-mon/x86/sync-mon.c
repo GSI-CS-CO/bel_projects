@@ -3,7 +3,7 @@
  *
  *  created : 2025
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 13-jun-2025
+ *  version : 17-jun-2025
  *
  * subscribes to and displays status of tansfers between machines
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define SYNC_MON_VERSION 0x000002
+#define SYNC_MON_VERSION 0x000003
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -206,7 +206,7 @@ void buildPrintLine(uint32_t idx)
   // destination
   switch (ringInj) {
     case SIS18   : sprintf(dest, "SIS18") ; sprintf(origin, "UNILAC"); flagDest2 = 1; flagTCBS = 1; break;
-    case ESR     : sprintf(dest, "ESR")   ; sprintf(origin, "SIS18") ; flagDest2 = 0; flagTCBS = 1; break;
+    case ESR     : sprintf(dest, "ESR")   ; sprintf(origin, "SIS18") ; flagDest2 = 1; flagTCBS = 1; break;
     case CRYRING : sprintf(dest, "YR")    ; sprintf(origin, "ESR")   ; flagDest2 = 0; flagTCBS = 1; break;
     default      : sprintf(dest, TXTUNKWN); sprintf(origin, " ")     ; flagDest2 = 0; flagTCBS = 1; break;
   } // switch ringExt
@@ -365,7 +365,7 @@ void dicSubscribeServices(char *prefix)
   // ESR injection, schedule
   sprintf(name, "%s_esr-inj-mon_data00", prefix);
   /* printf("name %s\n", name); */
-  dicEsrI0Id         = dic_info_service_stamped(name, MONITORED, 0, &dicEsrI0   , sizeof(monval_t), 0, 0, &no_link_32, sizeof(uint32_t));
+  dicEsrI0Id         = dic_info_service_stamped(name, MONITORED, 0, &dicEsrI0   , sizeof(monval_t), recSetvalue, (long)tagEsri, &no_link_32, sizeof(uint32_t));
 
   // ESR injection, b2b
   sprintf(name, "%s_esr-inj-mon_data01", prefix);
