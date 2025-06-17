@@ -44,21 +44,30 @@ extern "C" {
 #define SYNCMON_VERSION 0x000001
 #define SYNCMON_STRLEN  64
 
-#define GIDUNILACEXT       0x290        // reference group TK, UNILAC, 'extraction'
-#define GIDSIS18INJ        0x12c        // reference group SIS18, 'injection'
+#define GID_UNILAC         0x290        // reference group TK, UNILAC
+#define GID_SIS18          0x12c        // reference group SIS18
+#define GID_ESR            0x154        // reference group ESR
 
 #define EVT_BEAM_ON        0x006        // valid beam
 #define CMD_BEAM_ON        0x206        // begin of beam passage
 #define EVT_MB_TRIGGER     0x028        // start bumper in SIS18 (injection thread)
 #define EVT_RAMP_START     0x02b        // start acc/dec ramp in magnets
+#define EVT_MK_LOAD_1      0x02f        // magnet kicker load (SIS18: extraction; ESR: injection)
+#define EVT_MK_LOAD_2      0x030        // magnet kicker load (ESR: extraction)
+#define CMD_SEPTUM_CHARGE  0x209        // start septum ramp up
+#define CMD_B2B_TRIGGERINJ 0x805        // B2B: trigger kicker electronics (injection) 
+#define CMD_B2B_START      0x81f        // start B2B procedure
 
 #define DTLIMIT            2000000000   // limit for time difference [ns]
+
+  enum evtTag{tagSis18i, tagEsri};
+  typedef enum evtTag evtTag_t;
 
   enum ringMachine{NORING, SIS18, ESR, CRYRING};
   typedef enum ringMachine ring_t;
 
-  enum evtTag{tagSis18i};
-  typedef enum evtTag evtTag_t;
+  enum actionType{uniExt, sis18Inj, sis18Ext, esrInj, unused};
+  typedef enum actionType action_t;
 
 
   // data type monitoring values; data are in 'native units' used by the ECA

@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define SYNC_SERV_MON_VERSION 0x000002
+#define SYNC_SERV_MON_VERSION 0x000003
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -198,11 +198,13 @@ static void help(void) {
   std::cerr << "  The paremter -s is mandatory"                                                     << std::endl;
   std::cerr << "  -s <what>            specifies what will be monitored; this can be"               << std::endl;
   std::cerr << "                       0: UNILAC Transfer Channel (reference group)"                << std::endl;
-  std::cerr << "                       1: SIS18 injection (injection and main threads)"             << std::endl;     
+  std::cerr << "                       1: SIS18 injection (injection and main threads)"             << std::endl;
+  std::cerr << "                       2: SIS18 extraction"                                         << std::endl;
+  std::cerr << "                       3: ESR injection"                                            << std::endl;
   std::cerr << std::endl;
   std::cerr << "This tool monitors the transfer between machines at GSI and FAIR."                  << std::endl;
   std::cerr << std::endl;
-  std::cerr << "Example1: '" << program << "tr0 -s0 pro'"                                           << std::endl;
+  std::cerr << "Example1: '" << program << " tr0 -s0 -d pro'"                                       << std::endl;
   std::cerr << std::endl;
   std::cerr << "Report bugs to <d.beck@gsi.de> !!!" << std::endl;
   std::cerr << "Version %x06" << SYNC_SERV_MON_VERSION << ". Licensed under the GPL v3." << std::endl;
@@ -221,9 +223,9 @@ int main(int argc, char** argv)
 
   // variables snoop event
   uint64_t snoopID     = 0x0;
-
   int      tmpi;
   int      i;
+  action_t what=unused;
 
   // variables attach, remove
   char    *deviceName = NULL;
@@ -250,9 +252,11 @@ int main(int argc, char** argv)
         tmpi        = strtoull(optarg, &tail, 0);
         if (*tail != 0) {std::cerr << "Specify a proper number, not " << optarg << "'%s'!" << std::endl; return 1;}
         switch (tmpi) {
-          case 0: gid = GIDUNILACEXT;  sprintf(domainName, "%s", "unilac")   ;  nMonData = 2; break;
-          case 1: gid = GIDSIS18INJ;   sprintf(domainName, "%s", "sis18-inj");  nMonData = 2; break;
-          default: {std::cerr << "Specify a proper number, not " << tmpi << "'%s'!" << std::endl; return 1;} break;
+          case 0: what = uniExt  ; gid = GID_UNILAC;    sprintf(domainName, "%s", "unilac")   ;  nMonData = 2; break;  // nMonData '2' is a hack for legacy support til July 2025
+          case 1: what = sis18Inj; gid = GID_SIS18 ;    sprintf(domainName, "%s", "sis18-inj");  nMonData = 2; break;
+          case 2: what = sis18Ext; gid = GID_SIS18 ;    sprintf(domainName, "%s", "sis18-ext");  nMonData = 1; break;
+          case 3: what = esrInj  ; gid = GID_ESR   ;    sprintf(domainName, "%s", "esr-inj")  ;  nMonData = 2; break;
+          default: {std::cerr << "Specify a proper number, not " << tmpi << "'%s'!" << std::endl; return 1;}   break;
         } // switch tmpi
         break;
       case 'h':
@@ -329,8 +333,8 @@ int main(int argc, char** argv)
     uint32_t tmpTag;
 
     // select timing message to monitor
-    switch (gid) {
-      case GIDUNILACEXT:
+    switch (what) {
+      case uniExt:
         // transfer from UNILAC
         if (nMonData != 2) {std::cerr << "wrong array size" << std::endl; return 1;}
         tmpTag             = 0;
@@ -351,7 +355,7 @@ int main(int argc, char** argv)
         tag[tmpTag]        = 0;                                          // hack!
 
         break;
-      case GIDSIS18INJ:
+      case sis18Inj:
         // injection into SIS18
         if (nMonData != 2) {std::cerr << "wrong array size" << std::endl; return 1;}
         tmpTag             = 0;
@@ -371,6 +375,39 @@ int main(int argc, char** argv)
         tag[tmpTag]        = tmpTag;
 
         break;
+      case sis18Ext :
+        // extraction from SIS18
+        if (nMonData != 1) {std::cerr << "wrong array size" << std::endl; return 1;}
+        tmpTag             = 0;
+        snoopID            = 0x0;
+        snoopID           |= ((uint64_t)FID << 60);
+        snoopID           |= ((uint64_t)gid << 48);
+        snoopID           |= ((uint64_t)CMD_B2B_START << 36);
+        condition[tmpTag]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+        tag[tmpTag]        = tmpTag;
+
+        break;
+      case esrInj :
+        // injection into ESR
+        if (nMonData != 2) {std::cerr << "wrong array size" << std::endl; return 1;}
+        tmpTag             = 0;
+        snoopID            = 0x0;
+        snoopID           |= ((uint64_t)FID << 60);
+        snoopID           |= ((uint64_t)gid << 48);
+        snoopID           |= ((uint64_t)CMD_SEPTUM_CHARGE << 36);
+        condition[tmpTag]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+        tag[tmpTag]        = tmpTag;
+
+        tmpTag             = 1;
+        snoopID            = 0x0;
+        snoopID           |= ((uint64_t)FID << 60);
+        snoopID           |= ((uint64_t)gid << 48);
+        snoopID           |= ((uint64_t)CMD_B2B_TRIGGERINJ << 36);
+        condition[tmpTag]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+        tag[tmpTag]        = tmpTag;
+
+        break;
+      default:  {std::cerr << "undefined 'what'" << std::endl; return 1;}
     } // switch gid
     
     // let's go!

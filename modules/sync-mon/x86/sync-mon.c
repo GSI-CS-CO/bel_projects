@@ -71,10 +71,16 @@ char     no_link_str[] = "NO_LINK";
 monval_t  dicUnilacE0;                    // UNILAC 'extraction'
 monval_t  dicSis18I0;                     // SIS18 main thread
 monval_t  dicSis18I1;                     // SIS18 injection thread
+monval_t  dicSis18E0;                     // SIS18 extraction
+monval_t  dicEsrI0;                       // ESR injection (schedule)
+monval_t  dicEsrI1;                       // ESR injectino (b2b)
 
 uint32_t  dicUnilacE0Id;                  // DIM service IDs
 uint32_t  dicSis18I0Id;
 uint32_t  dicSis18I1Id;
+uint32_t  dicSis18E0Id;
+uint32_t  dicEsrI0Id;
+uint32_t  dicEsrI1Id;
 
 #define  TXTNA       "  N/A"
 #define  TXTUNKWN    "UNKWN"
@@ -282,7 +288,8 @@ void recSetvalue(long *tag, monval_t *address, int *size)
   /* printf("tag %lx\n", *tag); */
 
   switch (*tag) {
-    case tagSis18i : idxOffset = 0; break;
+    case tagSis18i : idxOffset =  0; break;
+    case tagEsri   : idxOffset = 16; break;
     default           : return;
   } // switch tag
 
@@ -300,6 +307,14 @@ void recSetvalue(long *tag, monval_t *address, int *size)
       else                                             monData[idx][0] = smEmptyMonData();
       monData[idx][1] = *tmp;
       if ((deadline - dicSis18I1.deadline)  < DTLIMIT) monData[idx][2] = dicSis18I1;
+      else                                             monData[idx][2] = smEmptyMonData();
+      break;
+    case tagEsri :
+      // copy values; only copy values if the separation of deadlines is below DTLIMIT
+      if ((deadline - dicSis18E0.deadline)  < DTLIMIT) monData[idx][0] = dicSis18E0;
+      else                                             monData[idx][0] = smEmptyMonData();
+      monData[idx][1] = *tmp;
+      if ((deadline - dicEsrI1.deadline)    < DTLIMIT) monData[idx][2] = dicEsrI1;
       else                                             monData[idx][2] = smEmptyMonData();
       break;
     default :
@@ -342,6 +357,21 @@ void dicSubscribeServices(char *prefix)
   /* printf("name %s\n", name); */
   dicSis18I1Id       = dic_info_service_stamped(name, MONITORED, 0, &dicSis18I1 , sizeof(monval_t), 0, 0, &no_link_32, sizeof(uint32_t));
 
+  // SIS18 extraction
+  sprintf(name, "%s_sis18-ext-mon_data00", prefix);
+  /* printf("name %s\n", name); */
+  dicSis18E0Id       = dic_info_service_stamped(name, MONITORED, 0, &dicSis18E0 , sizeof(monval_t), 0, 0, &no_link_32, sizeof(uint32_t));
+
+  // ESR injection, schedule
+  sprintf(name, "%s_esr-inj-mon_data00", prefix);
+  /* printf("name %s\n", name); */
+  dicEsrI0Id         = dic_info_service_stamped(name, MONITORED, 0, &dicEsrI0   , sizeof(monval_t), 0, 0, &no_link_32, sizeof(uint32_t));
+
+  // ESR injection, b2b
+  sprintf(name, "%s_esr-inj-mon_data01", prefix);
+  /* printf("name %s\n", name); */
+  dicEsrI1Id         = dic_info_service_stamped(name, MONITORED, 0, &dicEsrI1   , sizeof(monval_t), 0, 0, &no_link_32, sizeof(uint32_t));
+
 } // dicSubscribeServices
 
 
@@ -357,7 +387,7 @@ void clearStatus()
 uint32_t calcFlagPrint()
 {
   int      i;
-  ring_t   ring;
+  ring_t   ring = NORING;
   uint32_t nLines;
 
   uint64_t actNsecs;
@@ -552,17 +582,6 @@ int main(int argc, char** argv)
         case '2' :
           // toggle printing of CRYRING patterns
           flagPrintYr = !flagPrintYr;
-          flagPrintNow = 1;
-          break;
-        case 'd' :
-          // toggle printing of data (kicker data or other data)
-          flagPrintOther = !flagPrintOther;
-          flagPrintNow = 1;
-          break;
-        case 'u' :
-          // toggle printing of units (nanoseconds or degree), 'secret' option
-          flagPrintNs  = !flagPrintNs;
-          for (i=0; i<NALLSID; i++) buildPrintLine(i);
           flagPrintNow = 1;
           break;
         case 'h'         :
