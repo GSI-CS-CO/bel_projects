@@ -3,7 +3,7 @@
 # Set SYSENV to the target system environment (YOCTO, ACC7, ACC9, OPT)
 # Example build:
 #   'make clean'                                                 
-#   'make ENV=int SYSENV=ACC7 PREFIX= software'                                        (hack: leave PREFIX empty for SCU path)
+#   'make ENV=int SYSENV=ACC7 PREFIX= all'                                             (hack: leave PREFIX empty for SCU path)
 # Example deploy (for ASL only):
 #   'make PREFIX= SYSENV=ACC7 STAGING=/common/export/timing-rte/syncmon-dev deploy     (hack: leave PREFIX empty for SCU path)
 #   'make PREFIX= SYSENV=ACC7 STAGING=/common/export/timing-rte/syncmon deploy'        (hack: leave PREFIX empty for SCU path)
@@ -48,7 +48,7 @@ endif
 
 export PRO
 
-TARGETS := firmware software nfsinit
+TARGETS := software nfsinit
 
 all: $(TARGETS)
 
@@ -97,10 +97,10 @@ deploy:
 #	cp /lib64/libboost_thread-mt.so.1.53.0 $(STAGING)$(ARCH)$(PREFIX)/usr/lib
 
 # configuration; the format is 'wrmil-<environment>-<machine>-<room>-<function>_start.sh'
-	cp $(SW)/*.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin                    # '/usr' is a hack
+#	cp $(SW)/*.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin                    # '/usr' is a hack
 
 # systemd
-	cp $(SYSTEMD)/*.service $(STAGING)/$(SYSTEMD)                       # systemd units
+#	cp $(SYSTEMD)/*.service $(STAGING)/$(SYSTEMD)                       # systemd units
 
 # header files, required for building FESA
 	cp $(INC)/syncmonlib.h $(STAGING)$(ARCH)$(PREFIX)/usr/include         # '/usr' is a hack	

@@ -67,7 +67,7 @@ sync-mon: sync-mon.c
 #	ln -sf $(WRMILLIB).1 $(WRMILLIB)
 
 clean:
-	rm -f *.o sync-serv-mon
+	rm -f *.o sync-serv-mon sync-mon
 
 install:
 	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/bin	

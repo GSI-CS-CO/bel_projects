@@ -14,8 +14,4 @@
 # hack for acc7
 export DIM_DNS_NODE=asl105
 
-sync-serv-mon tr0 -d -s1 int &
-sync-serv-mon tr0 -d -s2 int &
-sync-serv-mon tr0 -d -s3 int &
-sync-serv-mon tr0 -d -s4 int &
-sync-serv-mon tr0 -d -s5 int &
+sync-serv-mon tr0 -d -s0 pro &
