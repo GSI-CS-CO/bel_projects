@@ -3,7 +3,7 @@
  *
  *  created : 2025
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 13-Jun-2025
+ *  version : 18-Jun-2025
  *
  * library for sync monitoring
  *
@@ -62,9 +62,10 @@ void smGetEvtString(uint32_t evtNo, char *name)
     case EVT_RAMP_START     : sprintf(name, "%s", "EVT_RAMP_START")     ; break;
     case EVT_MK_LOAD_1      : sprintf(name, "%s", "EVT_MK_LOAD_1")      ; break;
     case EVT_MK_LOAD_2      : sprintf(name, "%s", "EVT_MK_LOAD_2")      ; break;
-    case CMD_SEPTUM_CHARGE  : sprintf(name, "%s", "CMD_SEPT_CHARGE")  ; break;
-    case CMD_B2B_TRIGGERINJ : sprintf(name, "%s", "CMD_B2B_TRIGINJ") ; break;
+    case CMD_SEPTUM_CHARGE  : sprintf(name, "%s", "CMD_SEPT_CHARGE")    ; break;
+    case CMD_B2B_TRIGGERINJ : sprintf(name, "%s", "CMD_B2B_TRIGINJ")    ; break;
     case CMD_B2B_START      : sprintf(name, "%s", "CMD_B2B_START")      ; break;
+    case CMD_BEAM_INJECTION : sprintf(name, "%s", "CMD_BEAM_INJECT")    ; break;
     default                 : sprintf(name, "%s", "undefined")          ; break;
   } // switch evtNo
 } // smGetEvtString

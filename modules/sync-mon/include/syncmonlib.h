@@ -3,7 +3,7 @@
  *
  *  created : 2025
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 10-Jul-2024
+ *  version : 18-Jul-2024
  *
  * library for checking UNILAC SIS18 synchronization
  *
@@ -41,12 +41,13 @@
 extern "C" {
 #endif
 
-#define SYNCMON_VERSION 0x000001
+#define SYNCMON_VERSION 0x000004
 #define SYNCMON_STRLEN  64
 
 #define GID_UNILAC         0x290        // reference group TK, UNILAC
 #define GID_SIS18          0x12c        // reference group SIS18
 #define GID_ESR            0x154        // reference group ESR
+#define GID_YR             0x0d2        // reference group CRYRING
 
 #define EVT_BEAM_ON        0x006        // valid beam
 #define CMD_BEAM_ON        0x206        // begin of beam passage
@@ -57,7 +58,7 @@ extern "C" {
 #define CMD_SEPTUM_CHARGE  0x209        // start septum ramp up
 #define CMD_B2B_TRIGGERINJ 0x805        // B2B: trigger kicker electronics (injection) 
 #define CMD_B2B_START      0x81f        // start B2B procedure
-
+#define CMD_BEAM_INJECTION 0x11b        // injection into a ring machine; played shortly prior to each injection within a sequence
 #define DTLIMIT            2000000000   // limit for time difference [ns]
 
   enum evtTag{tagSis18i, tagEsri};
@@ -66,7 +67,7 @@ extern "C" {
   enum ringMachine{NORING, SIS18, ESR, CRYRING};
   typedef enum ringMachine ring_t;
 
-  enum actionType{uniExt, sis18Inj, sis18Ext, esrInj, unused};
+  enum actionType{unused, uniExt, sis18Inj, sis18Ext, esrInj, esrExt, yrInj};
   typedef enum actionType action_t;
 
 

@@ -3,7 +3,7 @@
  *
  *  created : 2025
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 17-Jun-2025
+ *  version : 18-Jun-2025
  *
  * monitors event activity when checking synchronization between machines
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define SYNC_SERV_MON_VERSION 0x000003
+#define SYNC_SERV_MON_VERSION 0x000004
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -201,6 +201,8 @@ static void help(void) {
   std::cerr << "                       1: SIS18 injection (injection and main threads)"             << std::endl;
   std::cerr << "                       2: SIS18 extraction"                                         << std::endl;
   std::cerr << "                       3: ESR injection"                                            << std::endl;
+  std::cerr << "                       4: ESR extraction"                                           << std::endl;
+  std::cerr << "                       5: CRYRING injection"                                        << std::endl;
   std::cerr << std::endl;
   std::cerr << "This tool monitors the transfer between machines at GSI and FAIR."                  << std::endl;
   std::cerr << std::endl;
@@ -256,6 +258,8 @@ int main(int argc, char** argv)
           case 1: what = sis18Inj; gid = GID_SIS18 ;    sprintf(domainName, "%s", "sis18-inj");  nMonData = 2; break;
           case 2: what = sis18Ext; gid = GID_SIS18 ;    sprintf(domainName, "%s", "sis18-ext");  nMonData = 1; break;
           case 3: what = esrInj  ; gid = GID_ESR   ;    sprintf(domainName, "%s", "esr-inj")  ;  nMonData = 2; break;
+          case 4: what = esrExt  ; gid = GID_ESR   ;    sprintf(domainName, "%s", "esr-ext")  ;  nMonData = 1; break;
+          case 5: what = yrInj   ; gid = GID_YR    ;    sprintf(domainName, "%s", "yr-inj")   ;  nMonData = 2; break;
           default: {std::cerr << "Specify a proper number, not " << tmpi << "'%s'!" << std::endl; return 1;}   break;
         } // switch tmpi
         break;
@@ -403,6 +407,38 @@ int main(int argc, char** argv)
         snoopID           |= ((uint64_t)FID << 60);
         snoopID           |= ((uint64_t)gid << 48);
         snoopID           |= ((uint64_t)CMD_SEPTUM_CHARGE << 36);
+        condition[tmpTag]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+        tag[tmpTag]        = tmpTag;
+
+        break;
+      case esrExt :
+        // extraction from ESR
+        if (nMonData != 1) {std::cerr << "wrong array size" << std::endl; return 1;}
+        tmpTag             = 0;
+        snoopID            = 0x0;
+        snoopID           |= ((uint64_t)FID << 60);
+        snoopID           |= ((uint64_t)gid << 48);
+        snoopID           |= ((uint64_t)CMD_B2B_START << 36);
+        condition[tmpTag]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+        tag[tmpTag]        = tmpTag;
+
+        break;
+      case yrInj :
+        // injection into CRYRING
+        if (nMonData != 2) {std::cerr << "wrong array size" << std::endl; return 1;}
+        tmpTag             = 0;
+        snoopID            = 0x0;
+        snoopID           |= ((uint64_t)FID << 60);
+        snoopID           |= ((uint64_t)gid << 48);
+        snoopID           |= ((uint64_t)CMD_B2B_TRIGGERINJ << 36);
+        condition[tmpTag]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+        tag[tmpTag]        = tmpTag;
+
+        tmpTag             = 1;
+        snoopID            = 0x0;
+        snoopID           |= ((uint64_t)FID << 60);
+        snoopID           |= ((uint64_t)gid << 48);
+        snoopID           |= ((uint64_t)CMD_BEAM_INJECTION << 36);
         condition[tmpTag]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
         tag[tmpTag]        = tmpTag;
 

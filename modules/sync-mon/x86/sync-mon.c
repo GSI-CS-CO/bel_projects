@@ -3,7 +3,7 @@
  *
  *  created : 2025
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 17-jun-2025
+ *  version : 18-jun-2025
  *
  * subscribes to and displays status of tansfers between machines
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define SYNC_MON_VERSION 0x000003
+#define SYNC_MON_VERSION 0x000004
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -73,7 +73,10 @@ monval_t  dicSis18I0;                     // SIS18 main thread
 monval_t  dicSis18I1;                     // SIS18 injection thread
 monval_t  dicSis18E0;                     // SIS18 extraction
 monval_t  dicEsrI0;                       // ESR injection (schedule)
-monval_t  dicEsrI1;                       // ESR injectino (b2b)
+monval_t  dicEsrI1;                       // ESR injection (b2b)
+monval_t  dicEsrE0;                       // ESR extraction
+monval_t  dicYrI0;                        // CRYRING injection (schedule)
+monval_t  dicYrI1;                        // CRYRING injection (b2b)
 
 uint32_t  dicUnilacE0Id;                  // DIM service IDs
 uint32_t  dicSis18I0Id;
@@ -81,6 +84,9 @@ uint32_t  dicSis18I1Id;
 uint32_t  dicSis18E0Id;
 uint32_t  dicEsrI0Id;
 uint32_t  dicEsrI1Id;
+uint32_t  dicEsrE0Id;
+uint32_t  dicYrI0Id;
+uint32_t  dicYrI1Id;
 
 #define  TXTNA       "  N/A"
 #define  TXTUNKWN    "UNKWN"
@@ -207,7 +213,7 @@ void buildPrintLine(uint32_t idx)
   switch (ringInj) {
     case SIS18   : sprintf(dest, "SIS18") ; sprintf(origin, "UNILAC"); flagDest2 = 1; flagTCBS = 1; break;
     case ESR     : sprintf(dest, "ESR")   ; sprintf(origin, "SIS18") ; flagDest2 = 1; flagTCBS = 1; break;
-    case CRYRING : sprintf(dest, "YR")    ; sprintf(origin, "ESR")   ; flagDest2 = 0; flagTCBS = 1; break;
+    case CRYRING : sprintf(dest, "YR")    ; sprintf(origin, "ESR")   ; flagDest2 = 1; flagTCBS = 1; break;
     default      : sprintf(dest, TXTUNKWN); sprintf(origin, " ")     ; flagDest2 = 0; flagTCBS = 1; break;
   } // switch ringExt
 
@@ -371,6 +377,21 @@ void dicSubscribeServices(char *prefix)
   sprintf(name, "%s_esr-inj-mon_data01", prefix);
   /* printf("name %s\n", name); */
   dicEsrI1Id         = dic_info_service_stamped(name, MONITORED, 0, &dicEsrI1   , sizeof(monval_t), 0, 0, &no_link_32, sizeof(uint32_t));
+
+  // ESR extraction
+  sprintf(name, "%s_esr-ext-mon_data00", prefix);
+  /* printf("name %s\n", name); */
+  dicEsrE0Id         = dic_info_service_stamped(name, MONITORED, 0, &dicEsrE0   , sizeof(monval_t), 0, 0, &no_link_32, sizeof(uint32_t));
+
+  // CRYRING injection, schedule
+  sprintf(name, "%s_yr-inj-mon_data00", prefix);
+  /* printf("name %s\n", name); */
+  dicYrI0Id          = dic_info_service_stamped(name, MONITORED, 0, &dicYrI0    , sizeof(monval_t), recSetvalue, (long)tagEsri, &no_link_32, sizeof(uint32_t));
+
+  // CRYRING injection, b2b
+  sprintf(name, "%s_esr-inj-mon_data01", prefix);
+  /* printf("name %s\n", name); */
+  dicYrI1Id          = dic_info_service_stamped(name, MONITORED, 0, &dicYrI1    , sizeof(monval_t), 0, 0, &no_link_32, sizeof(uint32_t));
 
 } // dicSubscribeServices
 
