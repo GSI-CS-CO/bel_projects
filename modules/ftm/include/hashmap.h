@@ -157,6 +157,7 @@ public:
   */
   void debug(std::ostream& os); ///< Debug prints hashmap content
 
+  const size_t getSize()          const { return hm.size(); }
 
 };
 

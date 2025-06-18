@@ -1,6 +1,8 @@
 #include "alloctable.h"
 #include "reflocation.h"
 #include "dotstr.h"
+#include "log.h"
+
 
 namespace dnt = DotStr::Node::TypeVal;
 
@@ -276,25 +278,43 @@ namespace dnt = DotStr::Node::TypeVal;
   }
 
   bool AllocTable::deallocate(uint32_t hash) {
-
+    bool ret = false;
     auto x = lookupHash(hash);
 
-    if (x == a.end()) {
-      //std::cout << "nullptr" << std::endl;
-      return false;}
-    if (vPool.size() <= x->cpu) {
-      //std::cout << "cpu idx out of range" << std::endl;
-      return false;}
+    if (x != a.end()) {
+      log<DEBUG_LVL1>(L"AT entry found for hash %1$#08x \n") % hash;
+    } else {
+      log<DEBUG_LVL0>(L"No AT entry for hash %1$#08x found\n") % hash;
+      return false;
+    }
 
-    if (!(vPool[x->cpu].freeChunk(x->adr))) {
-      //std::cout << "Chunk" << std::endl;
-      return false;}
+    if (x->global == false) {
+
+      if (x->cpu > vPool.size()) {
+        log<DEBUG_LVL0>(L"CPU idx %1% is outside pool size %2% \n") % x->cpu % vPool.size();
+        return false;
+      }
+
+      if (!(vPool[x->cpu].freeChunk(x->adr))) {
+        log<DEBUG_LVL0>(L"Could not free chunk for CPU %1% Adr %2$#08x\n") % x->cpu % x->adr;
+        return false;
+      }
+
+    } else {
+      log<DEBUG_LVL0>(L"This is a global\n");
+      uint32_t adr = adrConv(AdrType::MGMT, AdrType::INT, 0, x->adr);
+      if (!(rt->remove(adr))){
+        log<DEBUG_LVL0>(L"Could not remove %1$#08x adr %2$#08x from RT\n") % hash % x->adr;
+        return false;
+      }
+    }
+
     if (!(removeByHash(hash))) {
-      //std::cout << "AT Hash" << std::endl;
-      return false;}
+      log<DEBUG_LVL0>(L"Could not remove hash %1$#08x\n") % hash;
+      return false;
+    }
+
     return true;
-
-
   }
 
   void AllocTable::syncBmpsToPools()  {for (unsigned int i = 0; i < vPool.size(); i++ ) vPool[i].syncBmpToPool();} // generate BMPs from Pools

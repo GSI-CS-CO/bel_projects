@@ -34,7 +34,9 @@ public:
 
     GlobalRefTable() = default;  // Default constructor
 
-    bool insert(uint32_t adr, uint32_t hash) {auto x = m.insert(std::make_pair(adr, hash)); return x.second; }
+    bool insert(uint32_t adr, uint32_t hash)  {auto x = m.insert(std::make_pair(adr, hash)); return x.second; }
+
+    bool remove(uint32_t adr)                 {auto it = m.erase(adr); return (it != 0);}
 
     uint32_t getHash(uint32_t adr);
 
