@@ -276,8 +276,8 @@ void buildPrintLine(uint32_t idx)
       else             sprintf(diffB, "%11.3f", dtmp);
     } // if flagDest2
     else {
-      sprintf(injEvtB, "%16s", "");
-      sprintf(diffB  , "%11s", "");
+      sprintf(injEvtB, "%16s", "---");
+      sprintf(diffB  , "%11s", "---");
     } // else flagDest2
   } // if flagInj
   else {
@@ -354,6 +354,7 @@ void recSetvalue(long *tag, monval_t *address, int *size)
   // get timestamp
   t2secs(deadline, &secs, &msecs);
   set_secs[idx]      = (time_t)(secs);
+  set_msecs[idx]     = msecs;
 
   // calibrate offset between THIS system time and time of set_values
   actNsecs           = comlib_getSysTime();

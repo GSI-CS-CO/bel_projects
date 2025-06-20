@@ -5,7 +5,7 @@
 #   'make clean'                                                 
 #   'make ENV=int SYSENV=ACC7 PREFIX= all'                                             (hack: leave PREFIX empty for SCU path)
 # Example deploy (for ASL only):
-#   'make PREFIX= SYSENV=ACC7 STAGING=/common/export/timing-rte/syncmon-dev deploy     (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= SYSENV=ACC7 STAGING=/common/export/timing-rte/syncmon-dev deploy'    (hack: leave PREFIX empty for SCU path)
 #   'make PREFIX= SYSENV=ACC7 STAGING=/common/export/timing-rte/syncmon deploy'        (hack: leave PREFIX empty for SCU path)
 
 # install
