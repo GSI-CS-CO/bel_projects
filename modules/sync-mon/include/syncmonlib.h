@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define SYNCMON_VERSION 0x000004
+#define SYNCMON_VERSION 0x000005
 #define SYNCMON_STRLEN  64
 
 #define GID_UNILAC         0x290        // reference group TK, UNILAC

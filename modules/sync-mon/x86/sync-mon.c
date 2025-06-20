@@ -3,7 +3,7 @@
  *
  *  created : 2025
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 18-jun-2025
+ *  version : 20-jun-2025
  *
  * subscribes to and displays status of tansfers between machines
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define SYNC_MON_VERSION 0x000004
+#define SYNC_MON_VERSION 0x000005
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -91,6 +91,7 @@ uint32_t  dicYrI1Id;
 #define  TXTNA       "  N/A"
 #define  TXTUNKWN    "UNKWN"
 #define  TXTERROR    "ERROR"
+#define  TXTNODATA   "no data"
 
 
 // get values
@@ -168,6 +169,13 @@ void idx2RingSid(uint32_t idx, ring_t *ring, uint32_t *sid)
 } // idx2RingSid
 
 
+void t2secs(uint64_t ts, uint32_t *secs, uint32_t *msecs)
+{
+  *msecs = (uint32_t)(ts % 1000000000) / 1000000.0;
+  *secs  = (uint32_t)(ts / 1000000000);
+} // t2secs
+
+
 void buildHeader()
 {
   sprintf(headerK, "| t_last [UTC] | origin | sid|            event ||  destn | sid|          event a |      diff a |          event b |      diff b |");
@@ -229,33 +237,42 @@ void buildPrintLine(uint32_t idx)
   } // if flagTCBS
   else sprintf(tCBS, "---");
 
-  // SID of injection machine
-  sprintf(injSid, "%2d", monData[idx][1].sid);
-
-  flagInj[idx] = 1;
+  // SID of injection machine and data valid
+  if (monData[idx][1].fid != 0) {
+    sprintf(injSid, "%2d", monData[idx][1].sid);
+    flagInj[idx] = 1;
+  }
+  else return;
  
-  // injection: beam came from extraction machine
+  // injection: beam came from extraction machine and data valide
   if (flagInj[idx]) {
-    smGetEvtString(monData[idx][0].evtNo, tmp1);
-    sprintf(extSid , "%2d" , monData[idx][0].sid);
-    sprintf(extEvt , "%16s", tmp1);
+    if (monData[idx][0].fid != 0) {
+      smGetEvtString(monData[idx][0].evtNo, tmp1);
+      sprintf(extSid , "%2d" , monData[idx][0].sid);
+      sprintf(extEvt , "%16s", tmp1);
+    } // if data valid
+    else {
+      sprintf(extSid , "%2d" , -1);
+      sprintf(extEvt , "%16s", TXTNODATA);
+    } // else data valid
+      
 
     smGetEvtString(monData[idx][1].evtNo, tmp1);
     sprintf(injEvtA, "%16s", tmp1);
     dtmp = (int64_t)(monData[idx][1].deadline - monData[idx][0].deadline) / 1000.0;
     if (fabs(dtmp) > 1000000.0) dtmp = NAN;
 
-    if (isnan(dtmp)) sprintf(diffA, "%11s"    , "");
+    if (isnan(dtmp)) sprintf(diffA, "%11s"  , TXTNODATA);
     else             sprintf(diffA, "%11.3f", dtmp);
 
-    // two injection events
-    if (flagDest2) {
+    // two injection events and data valid?
+    if ((flagDest2) && (monData[idx][2].fid != 0)) {
       smGetEvtString(monData[idx][2].evtNo, tmp1);
       sprintf(injEvtB, "%16s", tmp1);
       dtmp = (int64_t)(monData[idx][2].deadline - monData[idx][0].deadline) / 1000.0;
       if (fabs(dtmp) > 1000000.0) dtmp = NAN;
 
-      if (isnan(dtmp)) sprintf(diffB, "%11s"    , "");
+      if (isnan(dtmp)) sprintf(diffB, "%11s"  , TXTNODATA);
       else             sprintf(diffB, "%11.3f", dtmp);
     } // if flagDest2
     else {
@@ -282,11 +299,13 @@ void buildPrintLine(uint32_t idx)
 void recSetvalue(long *tag, monval_t *address, int *size)
 {
   monval_t *tmp;
-  int      secs;
+  uint32_t secs;
+  uint32_t msecs;
   uint32_t idxOffset;
   uint32_t idx;
   int      flagValid;
   uint64_t deadline;
+  uint32_t fid;
 
   uint64_t actNsecs;
   time_t   actT;
@@ -305,6 +324,9 @@ void recSetvalue(long *tag, monval_t *address, int *size)
   tmp      = address;
   idx      = (*tmp).sid + idxOffset;
   deadline = (*tmp).deadline;
+  fid      = (*tmp).fid;
+
+  if (!fid) return;
 
   switch (*tag) {
     case tagSis18i :
@@ -330,7 +352,7 @@ void recSetvalue(long *tag, monval_t *address, int *size)
   //printf("sid %d, evtno%d\n", (*tmp).sid, (*tmp).evtNo);
 
   // get timestamp
-  dic_get_timestamp(0, &secs, &(set_msecs[idx]));
+  t2secs(deadline, &secs, &msecs);
   set_secs[idx]      = (time_t)(secs);
 
   // calibrate offset between THIS system time and time of set_values
@@ -351,47 +373,47 @@ void dicSubscribeServices(char *prefix)
   // UNILAC 'extraction'
   sprintf(name, "%s_unilac-mon_data00", prefix);
   /* printf("name %s\n", name); */
-  dicUnilacE0Id     = dic_info_service_stamped(name, MONITORED, 0, &dicUnilacE0, sizeof(monval_t), 0, 0, &no_link_32, sizeof(uint32_t));
+  dicUnilacE0Id     = dic_info_service(name, MONITORED, 0, &dicUnilacE0, sizeof(monval_t), 0, 0, &no_link_32, sizeof(uint32_t));
 
   // SIS18 injection, main thread
   sprintf(name, "%s_sis18-inj-mon_data00", prefix);
   /* printf("name %s\n", name); */
-  dicSis18I0Id       = dic_info_service_stamped(name, MONITORED, 0, &dicSis18I0 , sizeof(monval_t), recSetvalue, (long)tagSis18i, &no_link_32, sizeof(uint32_t));
+  dicSis18I0Id       = dic_info_service(name, MONITORED, 0, &dicSis18I0 , sizeof(monval_t), recSetvalue, (long)tagSis18i, &no_link_32, sizeof(uint32_t));
 
   // SIS18 injection, injection thread
   sprintf(name, "%s_sis18-inj-mon_data01", prefix);
   /* printf("name %s\n", name); */
-  dicSis18I1Id       = dic_info_service_stamped(name, MONITORED, 0, &dicSis18I1 , sizeof(monval_t), 0, 0, &no_link_32, sizeof(uint32_t));
+  dicSis18I1Id       = dic_info_service(name, MONITORED, 0, &dicSis18I1 , sizeof(monval_t), 0, 0, &no_link_32, sizeof(uint32_t));
 
   // SIS18 extraction
   sprintf(name, "%s_sis18-ext-mon_data00", prefix);
   /* printf("name %s\n", name); */
-  dicSis18E0Id       = dic_info_service_stamped(name, MONITORED, 0, &dicSis18E0 , sizeof(monval_t), 0, 0, &no_link_32, sizeof(uint32_t));
+  dicSis18E0Id       = dic_info_service(name, MONITORED, 0, &dicSis18E0 , sizeof(monval_t), 0, 0, &no_link_32, sizeof(uint32_t));
 
   // ESR injection, schedule
   sprintf(name, "%s_esr-inj-mon_data00", prefix);
   /* printf("name %s\n", name); */
-  dicEsrI0Id         = dic_info_service_stamped(name, MONITORED, 0, &dicEsrI0   , sizeof(monval_t), recSetvalue, (long)tagEsri, &no_link_32, sizeof(uint32_t));
+  dicEsrI0Id         = dic_info_service(name, MONITORED, 0, &dicEsrI0   , sizeof(monval_t), recSetvalue, (long)tagEsri, &no_link_32, sizeof(uint32_t));
 
   // ESR injection, b2b
   sprintf(name, "%s_esr-inj-mon_data01", prefix);
   /* printf("name %s\n", name); */
-  dicEsrI1Id         = dic_info_service_stamped(name, MONITORED, 0, &dicEsrI1   , sizeof(monval_t), 0, 0, &no_link_32, sizeof(uint32_t));
+  dicEsrI1Id         = dic_info_service(name, MONITORED, 0, &dicEsrI1   , sizeof(monval_t), 0, 0, &no_link_32, sizeof(uint32_t));
 
   // ESR extraction
   sprintf(name, "%s_esr-ext-mon_data00", prefix);
   /* printf("name %s\n", name); */
-  dicEsrE0Id         = dic_info_service_stamped(name, MONITORED, 0, &dicEsrE0   , sizeof(monval_t), 0, 0, &no_link_32, sizeof(uint32_t));
+  dicEsrE0Id         = dic_info_service(name, MONITORED, 0, &dicEsrE0   , sizeof(monval_t), 0, 0, &no_link_32, sizeof(uint32_t));
 
   // CRYRING injection, schedule
   sprintf(name, "%s_yr-inj-mon_data00", prefix);
   /* printf("name %s\n", name); */
-  dicYrI0Id          = dic_info_service_stamped(name, MONITORED, 0, &dicYrI0    , sizeof(monval_t), recSetvalue, (long)tagEsri, &no_link_32, sizeof(uint32_t));
+  dicYrI0Id          = dic_info_service(name, MONITORED, 0, &dicYrI0    , sizeof(monval_t), recSetvalue, (long)tagEsri, &no_link_32, sizeof(uint32_t));
 
   // CRYRING injection, b2b
   sprintf(name, "%s_esr-inj-mon_data01", prefix);
   /* printf("name %s\n", name); */
-  dicYrI1Id          = dic_info_service_stamped(name, MONITORED, 0, &dicYrI1    , sizeof(monval_t), 0, 0, &no_link_32, sizeof(uint32_t));
+  dicYrI1Id          = dic_info_service(name, MONITORED, 0, &dicYrI1    , sizeof(monval_t), 0, 0, &no_link_32, sizeof(uint32_t));
 
 } // dicSubscribeServices
 

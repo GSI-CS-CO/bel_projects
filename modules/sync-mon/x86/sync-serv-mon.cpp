@@ -3,7 +3,7 @@
  *
  *  created : 2025
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 18-Jun-2025
+ *  version : 20-Jun-2025
  *
  * monitors event activity when checking synchronization between machines
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define SYNC_SERV_MON_VERSION 0x000004
+#define SYNC_SERV_MON_VERSION 0x000005
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -140,7 +140,7 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
   disMonData[tag].bpid     = mBpid;
   disMonData[tag].eia      = mEia;
   disMonData[tag].param    = param;
-  disMonData[tag].deadline = deadline.getTAI();
+  disMonData[tag].deadline = deadline.getUTC();
   disMonData[tag].dummy    = 0x0;
   disMonData[tag].counter++;
 
