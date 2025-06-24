@@ -4,7 +4,7 @@
 #include <inttypes.h>
 #include <stdint.h>
 #include "irq.h"
-#include "../wb_timer/wb_timer_regs.h"
+#include "wb_timer_regs.h"
 
 #ifndef __GNUC_STDC_INLINE__
 #error NEEDS gnu99 EXTENSIONS - ADD '-std=gnu99' TO THE CFGLAGS OF YOUR Makefile!

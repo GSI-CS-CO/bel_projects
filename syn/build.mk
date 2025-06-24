@@ -11,11 +11,12 @@ SHELL = /bin/sh
 OBJCOPY		=  $(CROSS_COMPILE)objcopy
 GENRAMMIF	?= $(TOP)/ip_cores/wrpc-sw/tools/genrammif
 INCPATH	:= $(TOP)/modules/lm32-include
+WBTIMER_INCL := $(TOP)/modules/wb_timer
 EBPATH  := $(TOP)/ip_cores/etherbone-core/hdl/eb_master_core
 W1    	:= $(TOP)/ip_cores/wrpc-sw
 USRCPUCLK	?= 62500
 CFLAGS	+= 	-mmultiply-enabled -mbarrel-shift-enabled -Os -DUSRCPUCLK=$(USRCPUCLK) -I$(INCPATH) -I$(W1)/include \
-		-I$(W1)/sdb-lib -I$(W1)/pp_printf -I$(EBPATH) -std=gnu99 -DCONFIG_WR_NODE -DCONFIG_PRINT_BUFSIZE=128 -DCONFIG_PRINTF_64BIT -DSDBFS_BIG_ENDIAN
+		-I$(W1)/sdb-lib -I$(W1)/pp_printf -I$(EBPATH) -I$(WBTIMER_INCL) -std=gnu99 -DCONFIG_WR_NODE -DCONFIG_PRINT_BUFSIZE=128 -DCONFIG_PRINTF_64BIT -DSDBFS_BIG_ENDIAN
 
 CFLAGS += -ffunction-sections -fdata-sections -Wl,--gc-sections
 
