@@ -63,6 +63,19 @@ lappend output "OS version  : $build_os"
 lappend output "Quartus     : $quartus(version)"
 lappend output ""
 
+set gitstatus [open "| git status --short" "r"]
+set changes ""
+while {[gets $gitstatus line] >= 0} {
+    append changes $line
+}
+close $gitstatus
+
+if {$changes eq ""} {
+    lappend output "Repository  : clean"
+} else {
+    lappend output "Repository  : dirty"
+}
+
 set gitlog [open "| git log --oneline --decorate=no -n 5" "r"]
 while {[gets $gitlog line] >= 0} { lappend output "  $line" }
 close $gitlog

@@ -53,11 +53,12 @@ CBR_FLGS := $(CFLAGS)
 CBR_KRNL := `uname -mrs`
 CBR_OS   := `lsb_release -d -s | tr -d '"'` 
 CBR_PF   := $(PLATFORM)
+CBR_CLEAN := $(shell [ -z "`git status --short`" ] && echo "clean" || echo "dirty")
 CBR_GIT1  := `git log HEAD~0 --oneline --decorate=no -n 1 | cut -c1-100`
 CBR_GIT2  := `git log HEAD~1 --oneline --decorate=no -n 1 | cut -c1-100`
 CBR_GIT3  := `git log HEAD~2 --oneline --decorate=no -n 1 | cut -c1-100`
 CBR_GIT4  := `git log HEAD~3 --oneline --decorate=no -n 1 | cut -c1-100`
 CBR_GIT5  := `git log HEAD~4 --oneline --decorate=no -n 1 | cut -c1-100`
 
-CBR = "\#define BUILDID __attribute__((section(\".buildid\")))\nconst char BUILDID build_id_rom[] = \""'\\'"\nUserLM32"'\\n\\'"\nStack Status:                                                       "'\\n\\'"\nProject     : $(TARGET)"'\\n\\'"\nVersion     : $(VERSION)"'\\n\\'"\nPlatform    : $(CBR_PF)"'\\n\\'"\nBuild Date  : $(CBR_DATE)"'\\n\\'"\nPrepared by : $(USER) $(CBR_USR) <$(CBR_MAIL)>"'\\n\\'"\nPrepared on : $(CBR_HOST)"'\\n\\'"\nOS Version  : $(CBR_OS) $(CBR_KRNL)"'\\n\\'"\nGCC Version : $(CBR_GCC)"'\\n\\'"\nIntAdrOffs  : $(CONFIG_RAMADDR)"'\\n\\'"\nSharedOffs  : $(SHARED_START)"'\\n\\'"\nSharedSize  : $(SHARED_SIZE)"'\\n\\'"\nFW-ID ROM will contain:"'\\n\\n\\'"\n   $(CBR_GIT1)"'\\n\\'"\n   $(CBR_GIT2)"'\\n\\'"\n   $(CBR_GIT3)"'\\n\\'"\n   $(CBR_GIT4)"'\\n\\'"\n   $(CBR_GIT5)"'\\n\\'"\n\";\n"
+CBR = "\#define BUILDID __attribute__((section(\".buildid\")))\nconst char BUILDID build_id_rom[] = \""'\\'"\nUserLM32"'\\n\\'"\nStack Status:                                                       "'\\n\\'"\nProject     : $(TARGET)"'\\n\\'"\nVersion     : $(VERSION)"'\\n\\'"\nPlatform    : $(CBR_PF)"'\\n\\'"\nBuild Date  : $(CBR_DATE)"'\\n\\'"\nPrepared by : $(USER) $(CBR_USR) <$(CBR_MAIL)>"'\\n\\'"\nPrepared on : $(CBR_HOST)"'\\n\\'"\nOS Version  : $(CBR_OS) $(CBR_KRNL)"'\\n\\'"\nGCC Version : $(CBR_GCC)"'\\n\\'"\nIntAdrOffs  : $(CONFIG_RAMADDR)"'\\n\\'"\nSharedOffs  : $(SHARED_START)"'\\n\\'"\nSharedSize  : $(SHARED_SIZE)"'\\n\\'"\nThreadQty   : $(THR_QTY)"'\\n\\n\\'"\nRepository  : $(CBR_CLEAN)"'\\n\\'"\n   $(CBR_GIT1)"'\\n\\'"\n   $(CBR_GIT2)"'\\n\\'"\n   $(CBR_GIT3)"'\\n\\'"\n   $(CBR_GIT4)"'\\n\\'"\n   $(CBR_GIT5)"'\\n\\'"\n\";\n"
 
