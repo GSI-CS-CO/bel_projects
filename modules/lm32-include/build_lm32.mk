@@ -44,6 +44,12 @@ GCC_BUILD = $(shell strings $(GCC_PATH) /dev/null | grep /share/locale | grep -o
 GCC_VER   := `$(CC) --version | grep gcc`
 CBR_GCC   = "$(GCC_VER) " (build " $(GCC_BUILD)")""
 
+#check git status, filter out modified qsfs and ramsize packages
+GIT_STATUS_FILTERED := $(shell \
+  git status --short | \
+  grep -vE '^ M +(\.qsf|ramsize_package\.vhd)$$' || true \
+)
+
 VERSION  ?= "1.0.0"
 CBR_DATE := `date +"%a %b %d %H:%M:%S %Z %Y"`
 CBR_USR  := `git config user.name`
@@ -53,7 +59,7 @@ CBR_FLGS := $(CFLAGS)
 CBR_KRNL := `uname -mrs`
 CBR_OS   := `lsb_release -d -s | tr -d '"'` 
 CBR_PF   := $(PLATFORM)
-CBR_CLEAN := $(shell [ -z "`git status --short`" ] && echo "clean" || echo "dirty")
+CBR_CLEAN := $(if $(strip $(GIT_STATUS_FILTERED)),dirty,clean)
 CBR_GIT1  := `git log HEAD~0 --oneline --decorate=no -n 1 | cut -c1-100`
 CBR_GIT2  := `git log HEAD~1 --oneline --decorate=no -n 1 | cut -c1-100`
 CBR_GIT3  := `git log HEAD~2 --oneline --decorate=no -n 1 | cut -c1-100`

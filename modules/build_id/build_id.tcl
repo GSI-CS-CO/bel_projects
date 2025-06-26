@@ -66,6 +66,12 @@ lappend output ""
 set gitstatus [open "| git status --short" "r"]
 set changes ""
 while {[gets $gitstatus line] >= 0} {
+    if {[regexp "^ M .*\\.qsf\$" $line]} {
+        continue
+    }
+    if {[regexp "^ M .*ramsize_pkg\\.vhd\$" $line]} {
+        continue
+    }
     append changes $line
 }
 close $gitstatus
