@@ -22,8 +22,6 @@ entity scu4slim is
     clk_125m_tcb_pllref_i : in std_logic; -- 125 MHz PLL reference at tranceiver bank
     clk_125m_tcb_local_i  : in std_logic; -- Local clk from 125Mhz oszillator at tranceiver bank
     clk_125m_tcb_sfpref_i : in std_logic; -- PLL/SFP reference clk from 125Mhz oszillator at tranceiver bank
-	 
-	 clk_125m_bank2a_pAB16_nAA16 : in std_logic;
 
     ------------------------------------------------------------------------
     -- PCI express pins
@@ -284,7 +282,7 @@ begin
     )
     port map(
       core_clk_20m_vcxo_i     => clk_20m_vcxo_i,
-      core_clk_125m_pllref_i  => clk_125m_bank2a_pAB16_nAA16,
+      core_clk_125m_pllref_i  => clk_125m_tcb_pllref_i,
       core_clk_125m_local_i   => clk_125m_tcb_local_i,
       core_clk_125m_sfpref_i  => clk_125m_tcb_pllref_i,
       core_clk_25m_o          => s_core_clk_25m,
