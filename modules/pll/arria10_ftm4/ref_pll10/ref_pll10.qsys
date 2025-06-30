@@ -237,7 +237,7 @@
   <parameter name="gui_output_clock_frequency8" value="100.0" />
   <parameter name="gui_output_clock_frequency9" value="100.0" />
   <parameter name="gui_parameter_table_hex_file" value="seq_params_sim.hex" />
-  <parameter name="gui_phase_shift0" value="0.0" />
+  <parameter name="gui_phase_shift0" value="500.0" />
   <parameter name="gui_phase_shift1" value="7000.0" />
   <parameter name="gui_phase_shift10" value="0.0" />
   <parameter name="gui_phase_shift11" value="0.0" />
