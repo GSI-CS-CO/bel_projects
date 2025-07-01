@@ -45,5 +45,11 @@ jobs:
       - name: Install etherbone
         run: sudo make etherbone-install
 
+      - name: Build saftlib
+        run: make saftlib -j$(nproc)
+
+      - name: Install saftlib
+        run: sudo make saftlib-install
+
       - name: Build timing projects
         run: make test_run_all
