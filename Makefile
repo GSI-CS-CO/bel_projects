@@ -666,3 +666,57 @@ hdlmake_install:
 # Just install hdlmake (even if it's already installed)
 hdlmake_install_locally:
 	@cd ip_cores/hdlmake/ && python setup.py install --user
+
+# #################################################################################################
+# Test cases
+# #################################################################################################
+
+# Compile (and test) projects
+test_run_all: test_install_dim test_build_ftm_shared_map \
+	test_b2b test_wr-mil test_wr-unipz test_dm-unipz test_uni-chop \
+	test_fec_analyzer test_freq-measure \
+	test_lm32_examples
+
+test_install_dim:
+	unzip -n res/dim/dim_v20r37.zip -d res/dim/
+	cd res/dim/ && ln -sf dim_v20r37/dim include
+	cd res/dim/ && ln -sf dim_v20r37/linux lib
+
+test_build_ftm_shared_map:
+	$(MAKE) -C modules/ftm/ftmfw
+
+test_b2b:
+	$(MAKE) -C modules/b2b/fw USRPATH=$(PWD)/res/dim/ TARGET=b2bcbu
+	$(MAKE) -C modules/b2b USRPATH=$(PWD)/res/dim/ firmware
+	$(MAKE) -C modules/b2b USRPATH=$(PWD)/res/dim/ software
+
+test_wr-mil:
+	$(MAKE) -C modules/wr-mil/fw USRPATH=$(PWD)/res/dim/ TARGET=wrmil
+	$(MAKE) -C modules/wr-mil USRPATH=$(PWD)/res/dim/ firmware
+	$(MAKE) -C modules/wr-mil USRPATH=$(PWD)/res/dim/ software
+
+test_wr-unipz:
+	$(MAKE) -C modules/wr-unipz USRPATH=$(PWD)/res/dim/ firmware
+	$(MAKE) -C modules/wr-unipz USRPATH=$(PWD)/res/dim/ software
+
+test_dm-unipz: test_build_ftm_shared_map
+	$(MAKE) -C modules/dm-unipz USRPATH=$(PWD)/res/dim/ firmware
+	$(MAKE) -C modules/dm-unipz USRPATH=$(PWD)/res/dim/ software
+
+test_uni-chop:
+	$(MAKE) -C modules/uni-chop USRPATH=$(PWD)/res/dim/ firmware
+	$(MAKE) -C modules/uni-chop USRPATH=$(PWD)/res/dim/ software
+
+test_fec_analyzer:
+	$(MAKE) -C modules/fec-analyzer/x86
+
+test_freq-measure:
+	$(MAKE) -C modules/freq-measure/x86 USRPATH=$(PWD)/res/dim/
+
+test_lm32_examples:
+	$(MAKE) -C modules/lm32-example
+	$(MAKE) -C modules/lm32-example TARGET=ecaMsiExample
+	$(MAKE) -C modules/lm32-example TARGET=timerExample
+	$(MAKE) -C modules/lm32-example TARGET=example
+#	$(MAKE) -C modules/lm32-example TARGET=milExample
+#	$(MAKE) -C modules/lm32-example TARGET=milSnooper

@@ -53,7 +53,7 @@
 #include "aux.h"
 #include "dbg.h"
 #include "../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"
-#include "../../ip_cores/saftlib/drivers/eca_flags.h"
+#include "../../ip_cores/saftlib/src/eca_flags.h"
 #define  MY_ECA_TAG      0x4 //just define a tag for ECA actions we want to receive
 
 /* register maps for some selected Wishbone devices  */
