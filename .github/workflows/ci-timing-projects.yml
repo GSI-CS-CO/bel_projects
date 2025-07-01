@@ -1,0 +1,49 @@
+name: CI Timing Projects
+
+on:
+  push:
+    branches:
+      - "master"
+      - "proposed_master"
+      - "fallout"
+      - "github-actions-development"
+  pull_request:
+    branches:
+      - "master"
+      - "proposed_master"
+      - "fallout"
+      - "github-actions-development"
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, ubuntu-22.04]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Update
+        run: sudo apt-get update
+
+      - name: Install missing packages
+        run: sudo apt-get -y install automake libreadline-dev build-essential libboost-all-dev docbook-utils pkg-config libsigc++-2.0-dev --fix-missing
+
+      - name: Set PKG_CONFIG_PATH
+        run: export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+
+      - name: Create symlinks
+        run: sudo ln -s /usr/lib/x86_64-linux-gnu/libmpfr.so.6 /usr/lib/x86_64-linux-gnu/libmpfr.so.4
+
+      - name: Setup repository
+        run: make
+
+      - name: Build etherbone
+        run: make etherbone
+
+      - name: Install etherbone
+        run: sudo make etherbone-install
+
+      - name: Build timing projects
+        run: make test_run_all
