@@ -59,13 +59,13 @@ extern "C" {
 #define CMD_B2B_TRIGGERINJ 0x805        // B2B: trigger kicker electronics (injection) 
 #define CMD_B2B_START      0x81f        // start B2B procedure
 #define CMD_BEAM_INJECTION 0x11b        // injection into a ring machine; played shortly prior to each injection within a sequence
-#define DTLIMIT            2000000000   // limit for time difference [ns]
+#define DTLIMIT            100000000    // limit for time difference [ns]
 
-  enum evtTag{tagSis18i, tagEsri};
+  enum evtTag{tagUniE, tagSis18E, tagEsrE};
   typedef enum evtTag evtTag_t;
 
-  enum ringMachine{NORING, SIS18, ESR, CRYRING};
-  typedef enum ringMachine ring_t;
+  enum machine{NOMACHINE, UNILAC, SIS18, ESR, CRYRING};
+  typedef enum machine machine_t;
 
   enum actionType{unused, uniExt, sis18Inj, sis18Ext, esrInj, esrExt, yrInj};
   typedef enum actionType action_t;
