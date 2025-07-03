@@ -3,7 +3,7 @@
  *
  *  created : 2025
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 1-jul-2025
+ *  version : 3-jul-2025
  *
  * subscribes to and displays status of tansfers between machines
  *
@@ -62,6 +62,9 @@ const char* program;
 #define  MAXEVTS     3                    // number of all events monitored
 #define  TINACTIVE   3600                 // [s]; if the previous data is more in the past than this value, the transfer data is considered inactive
 #define  TOLD        3600 * 24            // [s]; if the previous data is more in the past than this value, the transfer data is considered out of date
+#define  EXT         0
+#define  INJA        1
+#define  INJB        2
 
 uint32_t no_link_32    = 0xdeadbeef;
 uint64_t no_link_64    = 0xdeadbeefce420651;
@@ -98,7 +101,6 @@ uint32_t  dicYrI1Id;
 monval_t monData[NALLSID][MAXEVTS];                         // [idx][0: extraction machine; 1,2: injection machine]
 uint32_t flagSetValid[NALLSID];                             // flag: data of this set are valid
 uint32_t flagSetUpdate[NALLSID];                            // flag: update displayed data of this set
-//int      flagInj[NALLSID];                                  // flag: injection from preceeding machine
 int      set_msecs[NALLSID];                                // CBS deadline, fraction [ms]
 time_t   set_secs[NALLSID];                                 // CBS deadline, time [s]
 
@@ -106,7 +108,6 @@ time_t   secsOffset;                                        // offset between ti
 
 // other
 int      flagPrintIdx[NALLSID];                             // flag: print line with given index
-int      flagPrintInactive;                                 // flag: print inactive SIDs too
 int      flagPrintOther;                                    // flag: print alternative data set
 int      flagPrintUnilac;
 int      flagPrintSis18;                                    // flag: print SIDs for SIS18
@@ -238,10 +239,10 @@ void buildPrintLine(uint32_t idx)
   else sprintf(tCBS, "---");
 
   // SID of extraction machine and data valid
-  if (monData[idx][0].fid != 0) {
-    smGetEvtString(monData[idx][0].evtNo, tmp1);
+  if (monData[idx][EXT].fid != 0) {
+    smGetEvtString(monData[idx][EXT].evtNo, tmp1);
     sprintf(extEvt, "%16s", tmp1);
-    sprintf(extSid, "%2d" , monData[idx][0].sid);
+    sprintf(extSid, "%2d" , monData[idx][EXT].sid);
   } // if data of extraction machine valid
   else {
     sprintf(extEvt, "%16s",TXTUNKWN );
@@ -249,31 +250,31 @@ void buildPrintLine(uint32_t idx)
   }
 
   // injection: data valid
-  if (monData[idx][1].fid != 0) {
-    switch (monData[idx][1].gid) {
+  if (monData[idx][INJA].fid != 0) {
+    switch (monData[idx][INJA].gid) {
       case GID_SIS18 : sprintf(dest, "SIS18"); break;
       case GID_ESR   : sprintf(dest, "ESR")  ; break;
       case GID_YR    : sprintf(dest, "YR")   ; break;
       default        : sprintf(dest, "?")    ; break;
     } // switch sid
 
-    smGetEvtString(monData[idx][1].evtNo, tmp1);
+    smGetEvtString(monData[idx][INJA].evtNo, tmp1);
     sprintf(injEvtA, "%16s", tmp1);
-    sprintf(injSid , "%2d" , monData[idx][1].sid);
+    sprintf(injSid , "%2d" , monData[idx][INJA].sid);
 
     
-    smGetEvtString(monData[idx][1].evtNo, tmp1);
+    smGetEvtString(monData[idx][INJA].evtNo, tmp1);
     sprintf(injEvtA, "%16s", tmp1);
-    dtmp = (int64_t)(monData[idx][1].deadline - monData[idx][0].deadline) / 1000.0;
+    dtmp = (int64_t)(monData[idx][INJA].deadline - monData[idx][EXT].deadline) / 1000.0;
 
     if (isnan(dtmp)) sprintf(diffA, "%11s"  , TXTNODATA);
     else             sprintf(diffA, "%11.3f", dtmp);
 
     // two injection events and data valid?
-    if ((flagDest2) && (monData[idx][2].fid != 0)) {
-      smGetEvtString(monData[idx][2].evtNo, tmp1);
+    if ((flagDest2) && (monData[idx][INJB].fid != 0)) {
+      smGetEvtString(monData[idx][INJB].evtNo, tmp1);
       sprintf(injEvtB, "%16s", tmp1);
-      dtmp = (int64_t)(monData[idx][2].deadline - monData[idx][0].deadline) / 1000.0;
+      dtmp = (int64_t)(monData[idx][INJB].deadline - monData[idx][EXT].deadline) / 1000.0;
 
       if (isnan(dtmp)) sprintf(diffB, "%11s"  , TXTNODATA);
       else             sprintf(diffB, "%11.3f", dtmp);
@@ -284,7 +285,6 @@ void buildPrintLine(uint32_t idx)
     } // else flagDest2
   } // if flagInj
   else {
-    sprintf(extEvt , "%16s", "");
     sprintf(injSid , "%2s" , "");
     sprintf(injEvtA, "%16s", "");
     sprintf(diffA  , "%11s", "");
@@ -329,9 +329,9 @@ void recTrigger(long *tag, monval_t *address, int *size)
   deadline = (*tmp).deadline;
   fid      = (*tmp).fid;
 
-  monData[idx][0] = smEmptyMonData();
-  monData[idx][1] = smEmptyMonData();
-  monData[idx][2] = smEmptyMonData();
+  monData[idx][EXT]  = smEmptyMonData();
+  monData[idx][INJA] = smEmptyMonData();
+  monData[idx][INJB] = smEmptyMonData();
 
   if (!fid) return;
 
@@ -341,18 +341,18 @@ void recTrigger(long *tag, monval_t *address, int *size)
   switch (*tag) {
     case tagUniE :
       // copy received value
-      monData[idx][0] = *tmp;
+      monData[idx][EXT] = *tmp;
         
       // copy other values; only copy values if the difference of the deadlines is below DTLIMIT
-      if (abs((*tmp).deadline - dicSis18I0.deadline) < DTLIMIT) monData[idx][1] = dicSis18I0;
-      if (abs((*tmp).deadline - dicSis18I1.deadline) < DTLIMIT) monData[idx][2] = dicSis18I1;
+      if (abs((*tmp).deadline - dicSis18I0.deadline) < DTLIMIT) monData[idx][INJA] = dicSis18I0;
+      if (abs((*tmp).deadline - dicSis18I1.deadline) < DTLIMIT) monData[idx][INJB] = dicSis18I1;
       break;
     case tagSis18E :
-      monData[idx][0] = *tmp;
+      monData[idx][EXT] = *tmp;
       // copy other values; only copy values if the difference of the deadlines is below DTLIMIT
       /* chkhandling SIS100 */
-      if (abs((*tmp).deadline - dicEsrI0.deadline) < DTLIMIT)   monData[idx][1] = dicEsrI0;
-      if (abs((*tmp).deadline - dicEsrI1.deadline) < DTLIMIT)   monData[idx][2] = dicEsrI1;
+      if (abs((*tmp).deadline - dicEsrI0.deadline) < DTLIMIT)   monData[idx][INJA] = dicEsrI0;
+      if (abs((*tmp).deadline - dicEsrI1.deadline) < DTLIMIT)   monData[idx][INJB] = dicEsrI1;
       
       break;
     default :
@@ -429,19 +429,10 @@ void dicSubscribeServices(char *prefix)
 } // dicSubscribeServices
 
 
-// clear status
-void clearStatus()
-{
-  printf("not yet implemented, press any key to continue\n");
-  while (!comlib_term_getChar()) {usleep(200000);}
-} // clearStatus
-
-
 // calc flags for printing
 uint32_t calcFlagPrint()
 {
   int       i;
-  machine_t ring = NOMACHINE;
   uint32_t  nLines;
 
   uint64_t actNsecs;
@@ -453,16 +444,10 @@ uint32_t calcFlagPrint()
 
   for (i=0; i<NALLSID; i++) {
     flagPrintIdx[i] = 1;
-    //idx2RingSid(i, &ring, &sid);
-        
-    if (!flagPrintInactive) {
-      if ((actT - set_secs[i] - secsOffset) > (time_t)TINACTIVE) flagPrintIdx[i] = 0; // ignore old timestamps
-      if (set_secs[i] <= 1)                                      flagPrintIdx[i] = 0; // ignore ancient timestamps
-    } // if !flagPrintActive
-    /*
-    if (!flagPrintSis18)    if (ring == SIS18)                   flagPrintIdx[i] = 0;
-    if (!flagPrintEsr)      if (ring == ESR)                     flagPrintIdx[i] = 0;
-    if (!flagPrintYr)       if (ring == CRYRING)                 flagPrintIdx[i] = 0;*/
+
+    if ((actT - set_secs[i] - secsOffset) > (time_t)TINACTIVE) flagPrintIdx[i] = 0; // ignore old timestamps
+    if (set_secs[i] <= 1)                                      flagPrintIdx[i] = 0; // ignore ancient timestamps
+
     if (flagPrintIdx[i]) nLines++;
   } // for i
 
@@ -486,7 +471,7 @@ void printData(char *name)
   strftime(buff,53,"%d-%b-%y %H:%M:%S",localtime(&time_date));
   sprintf(unitInfo, "(units [us] unless explicitly given)");
   sprintf(title,  "\033[7m Sync Monitor %3s ----------------------------------------------------------------- %s - v%06x\033[0m", name, unitInfo, SYNC_MON_VERSION);
-  sprintf(footer, "\033[7m exit <q> | toggle inactive <i>, SIS18 <0>, ESR <1>, YR <2> | help <h>                                          %s\033[0m", buff);
+  sprintf(footer, "\033[7m exit <q> | help <h>                                                                                            %s\033[0m", buff);
 
   comlib_term_curpos(1,1);
 
@@ -540,7 +525,6 @@ int main(int argc, char** argv)
   getVersion        = 0;
 
   quit              = 0;
-  flagPrintInactive = 0;
   flagPrintSis18    = 1;
   flagPrintEsr      = 1;
   flagPrintYr       = 1;
@@ -615,32 +599,6 @@ int main(int argc, char** argv)
     if (!quit) {
       userInput = comlib_term_getChar();
       switch (userInput) {
-        case 'c' :
-          clearStatus();
-          break;
-        case 'i' :
-          // toggle printing of inactive patterns
-          comlib_term_clear();
-          flagPrintInactive = !flagPrintInactive;
-          flagPrintNow = 1;
-          break;
-          /*
-        case '0' :
-          // toggle printing of SIS18 patterns
-          flagPrintSis18 = !flagPrintSis18;
-          flagPrintNow = 1;
-          break;
-        case '1' :
-          // toggle printing of ESR patterns
-          flagPrintEsr = !flagPrintEsr;
-          flagPrintNow = 1;
-          break;
-        case '2' :
-          // toggle printing of CRYRING patterns
-          flagPrintYr = !flagPrintYr;
-          flagPrintNow = 1;
-          break;
-          */
         case 'h'         :
           printHelpText();
           flagPrintNow = 1;
