@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define SYNC_MON_VERSION 0x000006
+#define SYNC_MON_VERSION 0x000007
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -62,9 +62,9 @@ const char* program;
 #define  MAXEVTS     3                    // number of all events monitored
 #define  TINACTIVE   3600                 // [s]; if the previous data is more in the past than this value, the transfer data is considered inactive
 #define  TOLD        3600 * 24            // [s]; if the previous data is more in the past than this value, the transfer data is considered out of date
-#define  EXT         0
-#define  INJA        1
-#define  INJB        2
+#define  EXT         0                    // index of extraction data
+#define  INJA        1                    // index of 1st injection data
+#define  INJB        2                    // index of 2nd injection data 
 
 uint32_t no_link_32    = 0xdeadbeef;
 uint64_t no_link_64    = 0xdeadbeefce420651;
@@ -98,9 +98,9 @@ uint32_t  dicYrI1Id;
 
 
 // get values
-monval_t monData[NALLSID][MAXEVTS];                         // [idx][0: extraction machine; 1,2: injection machine]
+monval_t monData[NALLSID][MAXEVTS];                         // [idx][0: extraction machine; 1 (main thread),2 (injection thread): injection machine]
 uint32_t flagSetValid[NALLSID];                             // flag: data of this set are valid
-uint32_t flagSetUpdate[NALLSID];                            // flag: update displayed data of this set
+//uint32_t flagSetUpdate[NALLSID];                            // flag: update displayed data of this set
 int      set_msecs[NALLSID];                                // CBS deadline, fraction [ms]
 time_t   set_secs[NALLSID];                                 // CBS deadline, time [s]
 
@@ -108,13 +108,7 @@ time_t   secsOffset;                                        // offset between ti
 
 // other
 int      flagPrintIdx[NALLSID];                             // flag: print line with given index
-int      flagPrintOther;                                    // flag: print alternative data set
-int      flagPrintUnilac;
-int      flagPrintSis18;                                    // flag: print SIDs for SIS18
-int      flagPrintEsr;                                      // flag: print SIDs for ESR
-int      flagPrintYr;                                       // flag: print SIDs for CRYRINg
 int      flagPrintNow;                                      // flag: print stuff to screen NOW
-int      flagPrintNs;                                       // flag: in units of nanoseconds
 
 char     title[SCREENWIDTH+1];                              // title line to be printed
 char     footer[SCREENWIDTH+1];                             // footer line to be printed
@@ -191,7 +185,6 @@ void buildPrintLine(uint32_t idx)
   char      origin[32];
   char      dest[32];
   int       flagTCBS;
-  int       flagDest2;
   char      tCBS[64];
   char      extSid[32];
   char      injSid[32];
@@ -218,12 +211,22 @@ void buildPrintLine(uint32_t idx)
 
   idx2MachineSid(idx, &extRing, &sid);
 
-  // destination
+  sprintf(tCBS   , "---");
+  sprintf(extSid , " ");
+  sprintf(extEvt , " ");
+  sprintf(dest   , " ");
+  sprintf(injSid , " ");
+  sprintf(injEvtA, " ");
+  sprintf(diffA  , " ");
+  sprintf(injEvtB, " ");
+  sprintf(diffB  , " ");
+
+  // extraction ring
   switch (extRing) {
-    case UNILAC : sprintf(dest, "---"), sprintf(origin, "UNILAC"); flagDest2 = 1; flagTCBS = 1; break;
-    case SIS18  : sprintf(dest, "---"), sprintf(origin, "SIS18") ; flagDest2 = 1; flagTCBS = 1; break;
-    case ESR    : sprintf(dest, "---"), sprintf(origin, "ESR")   ; flagDest2 = 1; flagTCBS = 1; break;
-    default     : sprintf(dest, "---"), sprintf(origin, " ")     ; flagDest2 = 0; flagTCBS = 1; break;
+    case UNILAC : sprintf(dest, "---"), sprintf(origin, "UNILAC"); flagTCBS = 1; break;
+    case SIS18  : sprintf(dest, "---"), sprintf(origin, "SIS18") ; flagTCBS = 1; break;
+    case ESR    : sprintf(dest, "---"), sprintf(origin, "ESR")   ; flagTCBS = 1; break;
+    default     : sprintf(dest, "---"), sprintf(origin, " ")     ; flagTCBS = 1; break;
   } // switch ringExt
 
   // ignore ancient timestamps
@@ -236,61 +239,49 @@ void buildPrintLine(uint32_t idx)
       sprintf(tCBS, "%8s.%03d", tmp1, set_msecs[idx]);
     } // else actT
   } // if flagTCBS
-  else sprintf(tCBS, "---");
-
+  
   // SID of extraction machine and data valid
   if (monData[idx][EXT].fid != 0) {
     smGetEvtString(monData[idx][EXT].evtNo, tmp1);
     sprintf(extEvt, "%16s", tmp1);
     sprintf(extSid, "%2d" , monData[idx][EXT].sid);
   } // if data of extraction machine valid
-  else {
-    sprintf(extEvt, "%16s",TXTUNKWN );
-    sprintf(extSid, "%s"  , "--");
-  }
 
-  // injection: data valid
-  if (monData[idx][INJA].fid != 0) {
-    switch (monData[idx][INJA].gid) {
-      case GID_SIS18 : sprintf(dest, "SIS18"); break;
-      case GID_ESR   : sprintf(dest, "ESR")  ; break;
-      case GID_YR    : sprintf(dest, "YR")   ; break;
-      default        : sprintf(dest, "?")    ; break;
+  // injection trigger data valid
+  if (monData[idx][INJB].fid != 0) {
+    switch (monData[idx][INJB].gid) {
+      case GID_SIS18 : sprintf(dest, "SIS18") ; break;
+      case GID_ESR   : sprintf(dest, "ESR")   ; break;
+      case GID_YR    : sprintf(dest, "YR")    ; break;
+      default        : sprintf(dest, TXTUNKWN); break;
     } // switch sid
 
-    smGetEvtString(monData[idx][INJA].evtNo, tmp1);
-    sprintf(injEvtA, "%16s", tmp1);
-    sprintf(injSid , "%2d" , monData[idx][INJA].sid);
+    smGetEvtString(monData[idx][INJB].evtNo, tmp1);
+    sprintf(injEvtB, "%16s", tmp1);
+    sprintf(injSid , "%2d" , monData[idx][INJB].sid);
 
-    
-    smGetEvtString(monData[idx][INJA].evtNo, tmp1);
-    sprintf(injEvtA, "%16s", tmp1);
-    dtmp = (int64_t)(monData[idx][INJA].deadline - monData[idx][EXT].deadline) / 1000.0;
-
-    if (isnan(dtmp)) sprintf(diffA, "%11s"  , TXTNODATA);
-    else             sprintf(diffA, "%11.3f", dtmp);
-
-    // two injection events and data valid?
-    if ((flagDest2) && (monData[idx][INJB].fid != 0)) {
-      smGetEvtString(monData[idx][INJB].evtNo, tmp1);
-      sprintf(injEvtB, "%16s", tmp1);
+    // extraction: data valid
+    if (monData[idx][EXT].fid != 0) {
+      smGetEvtString(monData[idx][EXT].evtNo, tmp1);
+      sprintf(extEvt, "%16s", tmp1);
+      sprintf(extSid, "%2d" , monData[idx][EXT].sid);
       dtmp = (int64_t)(monData[idx][INJB].deadline - monData[idx][EXT].deadline) / 1000.0;
+      sprintf(diffB, "%11.3f", dtmp);
+    } // if extraction data
+  } // if trigger data
 
-      if (isnan(dtmp)) sprintf(diffB, "%11s"  , TXTNODATA);
-      else             sprintf(diffB, "%11.3f", dtmp);
-    } // if flagDest2
-    else {
-      sprintf(injEvtB, "%16s", "---");
-      sprintf(diffB  , "%11s", "---");
-    } // else flagDest2
-  } // if flagInj
-  else {
-    sprintf(injSid , "%2s" , "");
-    sprintf(injEvtA, "%16s", "");
-    sprintf(diffA  , "%11s", "");
-    sprintf(injEvtB, "%16s", "");
-    sprintf(diffB  , "%11s", "");
-  } // else flagInj
+  // injection other data valid
+  if (monData[idx][INJA].fid != 0) {
+    smGetEvtString(monData[idx][INJA].evtNo, tmp1);
+    sprintf(injEvtA, "%16s", tmp1);
+
+    // extraction: data valid
+    if (monData[idx][EXT].fid != 0) {
+      dtmp = (int64_t)(monData[idx][INJA].deadline - monData[idx][EXT].deadline) / 1000.0;
+      sprintf(diffB, "%11.3f", dtmp);
+    } // if extraction data
+  } // if injection other data
+  
   
   sprintf(printLineK[idx], "| %12s | %6s | %2s | %16s || %6s | %2s | %16s | %11s | %16s | %11s |", tCBS, origin, extSid, extEvt, dest, injSid, injEvtA, diffA, injEvtB, diffB);
   //                printf("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
@@ -315,9 +306,9 @@ void recTrigger(long *tag, monval_t *address, int *size)
   /* printf("tag %lx\n", *tag); */
 
   switch (*tag) {
-    case tagUniE   : idxOffset =  0; break;
-    case tagSis18E : idxOffset = 16; break;
-    case tagEsrE   : idxOffset = 32; break;
+    case sis18Inj : idxOffset =  0; break;
+    case esrInj   : idxOffset = 16; break;
+    case yrInj    : idxOffset = 32; break;
     default           : return;
   } // switch tag
 
@@ -336,24 +327,34 @@ void recTrigger(long *tag, monval_t *address, int *size)
   if (!fid) return;
 
   // here we need to find out what belongs together
+  // we trigger in the 'injection' thread (INJB) and need to copy data of main thread (INJA) and extraction (EXT)
   // the decision depends on the difference of deadlines (must be smaller than DTLIMIT)
   
   switch (*tag) {
-    case tagUniE :
+    case sis18Inj :
       // copy received value
-      monData[idx][EXT] = *tmp;
+      monData[idx][INJB] = *tmp;
         
       // copy other values; only copy values if the difference of the deadlines is below DTLIMIT
-      if (abs((*tmp).deadline - dicSis18I0.deadline) < DTLIMIT) monData[idx][INJA] = dicSis18I0;
-      if (abs((*tmp).deadline - dicSis18I1.deadline) < DTLIMIT) monData[idx][INJB] = dicSis18I1;
+      if (abs((*tmp).deadline - dicUnilacE0.deadline ) < DTLIMIT) monData[idx][EXT]  = dicUnilacE0;
+      if (abs((*tmp).deadline - dicSis18I0.deadline  ) < DTLIMIT) monData[idx][INJA] = dicSis18I0;
       break;
-    case tagSis18E :
-      monData[idx][EXT] = *tmp;
+    case esrInj :
+      monData[idx][INJB] = *tmp;
       // copy other values; only copy values if the difference of the deadlines is below DTLIMIT
-      /* chkhandling SIS100 */
-      if (abs((*tmp).deadline - dicEsrI0.deadline) < DTLIMIT)   monData[idx][INJA] = dicEsrI0;
-      if (abs((*tmp).deadline - dicEsrI1.deadline) < DTLIMIT)   monData[idx][INJB] = dicEsrI1;
+      /* chk handling SIS100 */
+      if (abs((*tmp).deadline - dicSis18E0.deadline  ) < DTLIMIT) monData[idx][EXT]  = dicSis18E0;
+      if (abs((*tmp).deadline - dicEsrI0.deadline    ) < DTLIMIT) monData[idx][INJA] = dicEsrI0;
       
+      break;
+    case yrInj :
+      // copy received value
+      monData[idx][INJB] = *tmp;
+        
+      // copy other values; only copy values if the difference of the deadlines is below DTLIMIT
+      if (abs((*tmp).deadline - dicSis18E0.deadline  ) < DTLIMIT) monData[idx][EXT]  = dicEsrE0;
+      if (abs((*tmp).deadline - dicYrI0.deadline     ) < DTLIMIT) monData[idx][INJA] = dicYrI0;
+
       break;
     default :
       break;
@@ -371,8 +372,9 @@ void recTrigger(long *tag, monval_t *address, int *size)
   actT               = (time_t)(actNsecs / 1000000000);
   secsOffset         = actT - set_secs[idx];
 
-  flagSetUpdate[idx] = 1;
+  //  flagSetUpdate[idx] = 1;
   flagPrintNow       = 1;
+  buildPrintLine(idx);
 } // recTrigger
 
 
@@ -384,7 +386,7 @@ void dicSubscribeServices(char *prefix)
   // UNILAC 'extraction'
   sprintf(name, "%s_unilac-mon_data00", prefix);
   /* printf("name %s\n", name); */
-  dicUnilacE0Id     = dic_info_service(name, MONITORED, 0, &dicUnilacE0, sizeof(monval_t), recTrigger, (long)tagUniE, &no_link_32, sizeof(uint32_t));
+  dicUnilacE0Id     = dic_info_service(name, MONITORED, 0, &dicUnilacE0, sizeof(monval_t), 0, 0, &no_link_32, sizeof(uint32_t));
 
   // SIS18 injection, main thread
   sprintf(name, "%s_sis18-inj-mon_data00", prefix);
@@ -394,12 +396,12 @@ void dicSubscribeServices(char *prefix)
   // SIS18 injection, injection thread
   sprintf(name, "%s_sis18-inj-mon_data01", prefix);
   /* printf("name %s\n", name); */
-  dicSis18I1Id       = dic_info_service(name, MONITORED, 0, &dicSis18I1, sizeof(monval_t), 0, 0, &no_link_32, sizeof(uint32_t));
+  dicSis18I1Id       = dic_info_service(name, MONITORED, 0, &dicSis18I1, sizeof(monval_t), recTrigger, (long)sis18Inj, &no_link_32, sizeof(uint32_t));
 
   // SIS18 extraction
   sprintf(name, "%s_sis18-ext-mon_data00", prefix);
   /* printf("name %s\n", name); */
-  dicSis18E0Id       = dic_info_service(name, MONITORED, 0, &dicSis18E0, sizeof(monval_t), recTrigger, (long)tagSis18E, &no_link_32, sizeof(uint32_t));
+  dicSis18E0Id       = dic_info_service(name, MONITORED, 0, &dicSis18E0, sizeof(monval_t), 0, 0, &no_link_32, sizeof(uint32_t));
 
   // ESR injection, schedule
   sprintf(name, "%s_esr-inj-mon_data00", prefix);
@@ -409,12 +411,12 @@ void dicSubscribeServices(char *prefix)
   // ESR injection, b2b
   sprintf(name, "%s_esr-inj-mon_data01", prefix);
   /* printf("name %s\n", name); */
-  dicEsrI1Id         = dic_info_service(name, MONITORED, 0, &dicEsrI1  , sizeof(monval_t), 0, 0, &no_link_32, sizeof(uint32_t));
+  dicEsrI1Id         = dic_info_service(name, MONITORED, 0, &dicEsrI1  , sizeof(monval_t), recTrigger, (long)esrInj, &no_link_32, sizeof(uint32_t));
 
   // ESR extraction
   sprintf(name, "%s_esr-ext-mon_data00", prefix);
   /* printf("name %s\n", name); */
-  dicEsrE0Id         = dic_info_service(name, MONITORED, 0, &dicEsrE0  , sizeof(monval_t), recTrigger, (long)tagEsrE, &no_link_32, sizeof(uint32_t));
+  dicEsrE0Id         = dic_info_service(name, MONITORED, 0, &dicEsrE0  , sizeof(monval_t), 0, 0, &no_link_32, sizeof(uint32_t));
 
   // CRYRING injection, schedule
   sprintf(name, "%s_yr-inj-mon_data00", prefix);
@@ -424,7 +426,7 @@ void dicSubscribeServices(char *prefix)
   // CRYRING injection, b2b
   sprintf(name, "%s_yr-inj-mon_data01", prefix);
   /* printf("name %s\n", name); */
-  dicYrI1Id          = dic_info_service(name, MONITORED, 0, &dicYrI1   , sizeof(monval_t), 0, 0, &no_link_32, sizeof(uint32_t));
+  dicYrI1Id          = dic_info_service(name, MONITORED, 0, &dicYrI1   , sizeof(monval_t), recTrigger, (long)yrInj, &no_link_32, sizeof(uint32_t));
 
 } // dicSubscribeServices
 
@@ -522,14 +524,9 @@ int main(int argc, char** argv)
   int      i;
 
   program           = argv[0];
-  getVersion        = 0;
 
+  getVersion        = 0;
   quit              = 0;
-  flagPrintSis18    = 1;
-  flagPrintEsr      = 1;
-  flagPrintYr       = 1;
-  flagPrintOther    = 0;
-  flagPrintNs       = 0;
 
   while ((opt = getopt(argc, argv, "eh")) != -1) {
     switch (opt) {
@@ -571,11 +568,13 @@ int main(int argc, char** argv)
 
   comlib_term_clear();
   printf("%s: starting client using prefix %s\n", program, prefix);
-  
+
   for (i=0; i<NALLSID; i++) {
-    flagSetUpdate[i] = 0;
+    //    flagSetUpdate[i] = 0;
     sprintf(printLineK[i], "not initialized");
   } // for i
+  
+  
   dicSubscribeServices(prefix);
     
   buildHeader();
@@ -587,6 +586,7 @@ int main(int argc, char** argv)
   while (!quit) {
 
     // check for new data and update text for later printing
+    /*
     for (i=0; i<NALLSID; i++) {
       if (flagSetUpdate[i]) {
         flagSetUpdate[i] = 0;
@@ -594,6 +594,7 @@ int main(int argc, char** argv)
         buildPrintLine(i);
       } // if flagSetUpdate
     } // for i
+    */
     
     if (flagPrintNow) printData(name);
     if (!quit) {

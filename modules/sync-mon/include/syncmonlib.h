@@ -61,9 +61,6 @@ extern "C" {
 #define CMD_BEAM_INJECTION 0x11b        // injection into a ring machine; played shortly prior to each injection within a sequence
 #define DTLIMIT            100000000    // limit for time difference [ns]
 
-  enum evtTag{tagUniE, tagSis18E, tagEsrE};
-  typedef enum evtTag evtTag_t;
-
   enum machine{NOMACHINE, UNILAC, SIS18, ESR, CRYRING};
   typedef enum machine machine_t;
 

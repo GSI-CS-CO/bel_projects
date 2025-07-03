@@ -3,7 +3,7 @@
  *
  *  created : 2025
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 01-Jul-2025
+ *  version : 03-Jul-2025
  *
  * monitors event activity when checking synchronization between machines
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define SYNC_SERV_MON_VERSION 0x000006
+#define SYNC_SERV_MON_VERSION 0x000007
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -355,7 +355,7 @@ int main(int argc, char** argv)
         snoopID           |= ((uint64_t)FID << 60);
         snoopID           |= ((uint64_t)gid << 48);
         snoopID           |= ((uint64_t)EVT_BEAM_ON << 36);
-        condition[tmpTag]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, DTLIMIT));
+        condition[tmpTag]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
         tag[tmpTag]        = tmpTag;
 
         // hack to support legacy groups (for testing til July 2025
@@ -384,7 +384,7 @@ int main(int argc, char** argv)
         snoopID           |= ((uint64_t)FID << 60);
         snoopID           |= ((uint64_t)gid << 48);
         snoopID           |= ((uint64_t)EVT_MB_TRIGGER<< 36);
-        condition[tmpTag]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+        condition[tmpTag]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, DTLIMIT));
         tag[tmpTag]        = tmpTag;
 
         break;
@@ -396,7 +396,7 @@ int main(int argc, char** argv)
         snoopID           |= ((uint64_t)FID << 60);
         snoopID           |= ((uint64_t)gid << 48);
         snoopID           |= ((uint64_t)CMD_B2B_START << 36);
-        condition[tmpTag]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, DTLIMIT));
+        condition[tmpTag]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
         tag[tmpTag]        = tmpTag;
 
         break;
@@ -407,7 +407,7 @@ int main(int argc, char** argv)
         snoopID            = 0x0;
         snoopID           |= ((uint64_t)FID << 60);
         snoopID           |= ((uint64_t)gid << 48);
-        snoopID           |= ((uint64_t)CMD_B2B_TRIGGERINJ << 36);
+        snoopID           |= ((uint64_t)CMD_SEPTUM_CHARGE << 36);
         condition[tmpTag]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
         tag[tmpTag]        = tmpTag;
 
@@ -415,8 +415,8 @@ int main(int argc, char** argv)
         snoopID            = 0x0;
         snoopID           |= ((uint64_t)FID << 60);
         snoopID           |= ((uint64_t)gid << 48);
-        snoopID           |= ((uint64_t)CMD_SEPTUM_CHARGE << 36);
-        condition[tmpTag]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+        snoopID           |= ((uint64_t)CMD_B2B_TRIGGERINJ << 36);
+        condition[tmpTag]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, DTLIMIT));
         tag[tmpTag]        = tmpTag;
 
         break;
@@ -428,7 +428,7 @@ int main(int argc, char** argv)
         snoopID           |= ((uint64_t)FID << 60);
         snoopID           |= ((uint64_t)gid << 48);
         snoopID           |= ((uint64_t)CMD_B2B_START << 36);
-        condition[tmpTag]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, DTLIMIT));
+        condition[tmpTag]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
         tag[tmpTag]        = tmpTag;
 
         break;
@@ -439,7 +439,7 @@ int main(int argc, char** argv)
         snoopID            = 0x0;
         snoopID           |= ((uint64_t)FID << 60);
         snoopID           |= ((uint64_t)gid << 48);
-        snoopID           |= ((uint64_t)CMD_B2B_TRIGGERINJ << 36);
+        snoopID           |= ((uint64_t)CMD_BEAM_INJECTION << 36);
         condition[tmpTag]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
         tag[tmpTag]        = tmpTag;
 
@@ -447,8 +447,8 @@ int main(int argc, char** argv)
         snoopID            = 0x0;
         snoopID           |= ((uint64_t)FID << 60);
         snoopID           |= ((uint64_t)gid << 48);
-        snoopID           |= ((uint64_t)CMD_BEAM_INJECTION << 36);
-        condition[tmpTag]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
+        snoopID           |= ((uint64_t)CMD_B2B_TRIGGERINJ << 36);
+        condition[tmpTag]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, DTLIMIT));
         tag[tmpTag]        = tmpTag;
 
         break;
