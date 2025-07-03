@@ -278,7 +278,7 @@ void buildPrintLine(uint32_t idx)
     // extraction: data valid
     if (monData[idx][EXT].fid != 0) {
       dtmp = (int64_t)(monData[idx][INJA].deadline - monData[idx][EXT].deadline) / 1000.0;
-      sprintf(diffB, "%11.3f", dtmp);
+      sprintf(diffA, "%11.3f", dtmp);
     } // if extraction data
   } // if injection other data
   
@@ -352,7 +352,7 @@ void recTrigger(long *tag, monval_t *address, int *size)
       monData[idx][INJB] = *tmp;
         
       // copy other values; only copy values if the difference of the deadlines is below DTLIMIT
-      if (abs((*tmp).deadline - dicSis18E0.deadline  ) < DTLIMIT) monData[idx][EXT]  = dicEsrE0;
+      if (abs((*tmp).deadline - dicEsrE0.deadline    ) < DTLIMIT) monData[idx][EXT]  = dicEsrE0;
       if (abs((*tmp).deadline - dicYrI0.deadline     ) < DTLIMIT) monData[idx][INJA] = dicYrI0;
 
       break;

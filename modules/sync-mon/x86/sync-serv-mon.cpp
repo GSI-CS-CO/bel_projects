@@ -146,8 +146,8 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
 
   // subtract delay in case of (delayed) trigger events
   switch (mEvtNo) {
-    case CMD_B2B_START:
-    case EVT_MB_TRIGGER:   // this is an OR, no break on purpose
+    case CMD_B2B_TRIGGERINJ :
+    case EVT_MB_TRIGGER     :   // this is an OR, no break on purpose
       disMonData[tag].deadline -= (uint64_t)DTLIMIT;
       break;
     default: ;
