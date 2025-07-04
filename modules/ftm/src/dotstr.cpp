@@ -10,9 +10,12 @@ namespace DotStr {
       const std::string sRegisters  = "registers";
       const std::string sThrCtl     = "threadControl";
       const std::string sThrStaging = "threadStaging";
-      const std::string sThrData    = "threadData";
+      const std::string sThrDataDl  = "threadData"; //change to "threadDeadline"
+      const std::string sThrDataCt  = "threadCurrTime";
       const std::string sThrStart   = "threadStart";
     }
+
+//TODO: Make fields work on both ends of reference edges
     namespace fields {
       const std::string sThrTB      = "threadTimebase";
       const std::string sThrDL      = "threadDeadline";

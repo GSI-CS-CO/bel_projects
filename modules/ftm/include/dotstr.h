@@ -13,7 +13,8 @@ namespace DotStr {
       extern const std::string sRegisters;
 
       extern const std::string sThrCtl;
-      extern const std::string sThrData;
+      extern const std::string sThrDataCt;
+      extern const std::string sThrDataDl;
       extern const std::string sThrStaging;
       extern const std::string sThrStart;
     }
