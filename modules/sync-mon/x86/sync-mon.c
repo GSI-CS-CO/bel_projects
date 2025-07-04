@@ -3,7 +3,7 @@
  *
  *  created : 2025
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 3-jul-2025
+ *  version : 4-jul-2025
  *
  * subscribes to and displays status of tansfers between machines
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define SYNC_MON_VERSION 0x000007
+#define SYNC_MON_VERSION 0x000008
 
 // standard includes 
 #include <unistd.h> // getopt
