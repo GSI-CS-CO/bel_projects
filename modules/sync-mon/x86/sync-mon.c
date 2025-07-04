@@ -336,8 +336,8 @@ void recTrigger(long *tag, monval_t *address, int *size)
       monData[idx][INJB] = *tmp;
         
       // copy other values; only copy values if the difference of the deadlines is below DTLIMIT
-      if (abs((*tmp).deadline - dicUnilacE0.deadline ) < DTLIMIT) monData[idx][EXT]  = dicUnilacE0;
-      if (abs((*tmp).deadline - dicSis18I0.deadline  ) < DTLIMIT) monData[idx][INJA] = dicSis18I0;
+      if (llabs((*tmp).deadline - dicUnilacE0.deadline ) < (uint64_t)DTLIMIT) monData[idx][EXT]  = dicUnilacE0;
+      if (llabs((*tmp).deadline - dicSis18I0.deadline  ) < (uint64_t)DTLIMIT) monData[idx][INJA] = dicSis18I0;
       break;
     case esrInj :
       monData[idx][INJB] = *tmp;
