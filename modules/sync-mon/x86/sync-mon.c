@@ -130,7 +130,7 @@ static void help(void) {
   fprintf(stderr, "Example1: '%s pro'\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
-  fprintf(stderr, "Version %6x. Licensed under the LPL v3.\n", SYNC_MON_VERSION);
+  fprintf(stderr, "Version %06x. Licensed under the LPL v3.\n", SYNC_MON_VERSION);
 } //help
 
 

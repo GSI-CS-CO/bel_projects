@@ -3,7 +3,7 @@
  *
  *  created : 2025
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 03-Jul-2025
+ *  version : 07-Jul-2025
  *
  * monitors event activity when checking synchronization between machines
  *
@@ -218,7 +218,7 @@ static void help(void) {
   std::cerr << "Example1: '" << program << " tr0 -s0 -d pro'"                                       << std::endl;
   std::cerr << std::endl;
   std::cerr << "Report bugs to <d.beck@gsi.de> !!!" << std::endl;
-  std::cerr << "Version %x06" << SYNC_SERV_MON_VERSION << ". Licensed under the GPL v3." << std::endl;
+  fprintf(stderr, "Version %06x. Licensed under the GPL v3.\n",  SYNC_SERV_MON_VERSION);
 } // help
 
 
