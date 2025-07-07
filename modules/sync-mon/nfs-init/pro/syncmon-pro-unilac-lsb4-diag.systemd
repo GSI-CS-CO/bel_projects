@@ -1,0 +1,17 @@
+# yocto; temporarily disabled
+#SERVICEA=bla-a.service
+#SERVICEB=bla-b.service
+#SERVICEC=bla-c.service
+#cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
+#cp -a $MOUNTPOINT/systemd/$SERVICEB /lib/systemd/system
+#cp -a $MOUNTPOINT/systemd/$SERVICEC /lib/systemd/system
+#systemctl daemon-reload
+#
+#systemctl start $SERVICEA
+#systemctl start $SERVICEB
+#systemctl start $SERVICEC
+
+# hack for acc7
+export DIM_DNS_NODE=asl105
+
+sync-serv-mon tr0 -d -s0 pro &
