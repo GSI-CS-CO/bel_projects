@@ -14,6 +14,9 @@ UNAME           := $(shell uname -m)
 EXTRA_FLAGS     ?=
 WISHBONE_SERIAL ?= # Build wishbone-serial? y or leave blank
 YOCTO_BUILD     ?= no
+DIM_VERSION     := dim_v20r37
+DIM_PATH        := res/dim/$(DIM_VERSION)
+USRPATH_DIM     := $(PWD)/res/dim
 export EXTRA_FLAGS
 
 # Set variables that are passed down to sub-makes
@@ -678,43 +681,43 @@ test_run_all: test_install_dim test_build_ftm_shared_map \
 	test_lm32_examples
 
 test_install_dim:
-	unzip -n res/dim/dim_v20r37.zip -d res/dim/
-	cd res/dim/ && ln -sf dim_v20r37/dim include
-	cd res/dim/ && ln -sf dim_v20r37/linux lib
+	unzip -n res/dim/$(DIM_VERSION).zip -d res/dim/
+	cd res/dim/ && ln -sf $(DIM_VERSION)/dim include
+	cd res/dim/ && ln -sf $(DIM_VERSION)/linux lib
 
 test_build_ftm_shared_map:
 	$(MAKE) -C modules/ftm/ftmfw
 
 test_b2b:
-	$(MAKE) -C modules/b2b/fw USRPATH=$(PWD)/res/dim/ TARGET=b2bcbu
-	$(MAKE) -C modules/b2b USRPATH=$(PWD)/res/dim/ firmware
-	$(MAKE) -C modules/b2b USRPATH=$(PWD)/res/dim/ software
+	$(MAKE) -C modules/b2b/fw USRPATH=$(USRPATH_DIM) TARGET=b2bcbu
+	$(MAKE) -C modules/b2b USRPATH=$(USRPATH_DIM) firmware
+	$(MAKE) -C modules/b2b USRPATH=$(USRPATH_DIM) software
 
 test_wr-mil:
-	$(MAKE) -C modules/wr-mil/fw USRPATH=$(PWD)/res/dim/ TARGET=wrmil
-	$(MAKE) -C modules/wr-mil USRPATH=$(PWD)/res/dim/ firmware
-	$(MAKE) -C modules/wr-mil USRPATH=$(PWD)/res/dim/ software
+	$(MAKE) -C modules/wr-mil/fw USRPATH=$(USRPATH_DIM) TARGET=wrmil
+	$(MAKE) -C modules/wr-mil USRPATH=$(USRPATH_DIM) firmware
+	$(MAKE) -C modules/wr-mil USRPATH=$(USRPATH_DIM) software
 
 test_wr-unipz:
-	$(MAKE) -C modules/wr-unipz USRPATH=$(PWD)/res/dim/ firmware
-	$(MAKE) -C modules/wr-unipz USRPATH=$(PWD)/res/dim/ software
+	$(MAKE) -C modules/wr-unipz USRPATH=$(USRPATH_DIM) firmware
+	$(MAKE) -C modules/wr-unipz USRPATH=$(USRPATH_DIM) software
 
 test_dm-unipz:
-	$(MAKE) -C modules/dm-unipz USRPATH=$(PWD)/res/dim/ firmware
-	$(MAKE) -C modules/dm-unipz USRPATH=$(PWD)/res/dim/ software
+	$(MAKE) -C modules/dm-unipz USRPATH=$(USRPATH_DIM) firmware
+	$(MAKE) -C modules/dm-unipz USRPATH=$(USRPATH_DIM) software
 
 test_uni-chop:
-	$(MAKE) -C modules/uni-chop USRPATH=$(PWD)/res/dim/ firmware
-	$(MAKE) -C modules/uni-chop USRPATH=$(PWD)/res/dim/ software
+	$(MAKE) -C modules/uni-chop USRPATH=$(USRPATH_DIM) firmware
+	$(MAKE) -C modules/uni-chop USRPATH=$(USRPATH_DIM) software
 
 test_fec_analyzer:
 	$(MAKE) -C modules/fec-analyzer/x86
 
 test_freq-measure:
-	$(MAKE) -C modules/freq-measure/x86 USRPATH=$(PWD)/res/dim/
+	$(MAKE) -C modules/freq-measure/x86 USRPATH=$(USRPATH_DIM)
 
 test_sync-mon:
-	$(MAKE) -C modules/sync-mon/x86 USRPATH=$(PWD)/res/dim/
+	$(MAKE) -C modules/sync-mon/x86 USRPATH=$(USRPATH_DIM)
 
 test_lm32_examples:
 	$(MAKE) -C modules/lm32-example
