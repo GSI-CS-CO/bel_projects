@@ -899,7 +899,6 @@ set_instance_assignment -name IO_STANDARD "1.8 V" -to altera_reserved_tms
 set_instance_assignment -name IO_STANDARD "1.8 V" -to fpga_res_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to nPCI_RESET_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to nSys_Reset
-set_instance_assignment -name IO_STANDARD "1.8 V" -to pcie_rdy_o
 set_instance_assignment -name IO_STANDARD "1.8 V" -to scu_cb_version[0]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to scu_cb_version[1]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to scu_cb_version[2]
@@ -923,6 +922,7 @@ set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_rgb_led
 set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_rgb_led[0]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_rgb_led[1]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_rgb_led[2]
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to pcie_rdy_o
 set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to usb_clk
 set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to usb_ctl[0]
 set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to usb_ctl[1]
