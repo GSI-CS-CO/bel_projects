@@ -1157,7 +1157,7 @@ begin
       outclk_1 => clk_sys1,           -- 100  MHz +0   ns
       outclk_2 => clk_sys2,           --  20  MHz
       outclk_3 => clk_sys3,           --  10  MHz
-      outclk_4 => clk_sys4,           --  20  MHz
+      outclk_4 => clk_sys4,           --  25  MHz
       locked   => sys_locked);
   end generate;
 
