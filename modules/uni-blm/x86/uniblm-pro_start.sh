@@ -42,7 +42,7 @@ eb-fwload $TRGW u 0x0 uniblm.bin
 
 echo -e UNIBLM: configure firmware for gateway $NGW
 sleep 2
-uniblm-ctl $TRGW -w$MILDEV configure
+uniblm-ctl $TRGW configure
 sleep 2
 uniblm-ctl $TRGW startop
 
