@@ -338,7 +338,7 @@ begin
       g_project            => c_project,
       g_gpio_out           => 24,
       g_gpio_inout         => 2,
-      g_flash_bits         => 26,
+      g_flash_bits         => 24,
       g_en_pcie            => true,
       g_en_scubus          => true,
       g_en_mil             => true,
