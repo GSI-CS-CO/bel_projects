@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Michael Reese GSI-Darmstadt
- *  version : 10-Jul-2024
+ *  version : 22-Jul-2025
  *
  * Command-line interface for wr-f50
  *
@@ -94,7 +94,7 @@ static void help(void) {
   fprintf(stderr, "Use this tool to control the UNILAC 50 Hz synchronization from the command line\n"  );
   fprintf(stderr, "Example1: '%s dev/wbm0 -m 3 configure'\n", program                                  );
   fprintf(stderr, "\n");
-  fprintf(stderr, "For debugging, some messages are available via the ECA with gid 0xfc0. EvtNo:\n"    );
+  fprintf(stderr, "For debugging, some messages are available via the ECA with gid 0x4c0. EvtNo:\n"    );
   fprintf(stderr, "    0xa01: rising and falling edge of HW signal from 50 Hz module\n"                );
   fprintf(stderr, "    0xfc0: start of Data Master cycle\n"                                            );
   fprintf(stderr, "    0xfc1: message to Data Master; set-value of cycle length param field\n"         );

@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 10-Jul-2024
+ *  version : 22-Jul-2025
  *
  *  firmware required for the 50 Hz mains -> WR gateway
  *  
@@ -41,7 +41,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define WRF50_FW_VERSION      0x000100                                  // make this consistent with makefile
+#define WRF50_FW_VERSION      0x000101                                  // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -500,6 +500,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint64_t dmStamp;                                           // timestamp from DM
   uint64_t dmStampNxt;                                        // next timestamp for DM
   uint64_t tmpEvtNo;
+  uint32_t TDMExcess;                                         // this value is set at DM: excess = TDMset -  WRF50_CYCLELEN_MIN;
 
   uint32_t tmpOffsDone;                                       // temporary variable
   
@@ -625,9 +626,12 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       if (getTDMSet < WRF50_CYCLELEN_MIN) getTDMSet = WRF50_CYCLELEN_MIN;
       if (getTDMSet > WRF50_CYCLELEN_MAX) getTDMSet = WRF50_CYCLELEN_MAX;
 
+      // calculate 'excess': cycle length - WRF50_CYCLELEN_MIN (the DM wants this value)
+      TDMExcess      = getTDMSet - WRF50_CYCLELEN_MIN;
+
       // timing message for Data Master
       sendEvtId      = fwlib_buildEvtidV1(PZU_F50, WRF50_ECADO_F50_TUNE, 0x0, 0x0, 0x0, 0x0);
-      sendParam      = (uint64_t)getTDMSet & 0xffffffff;
+      sendParam      = (uint64_t)TDMExcess & 0xffffffff;
       sendDeadline   = tluStamp + (uint64_t)WRF50_TUNE_MSG_DELAY;                                          // send message with a defined offset to 50 Hz mains signal
       
       fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0);                                        // write DM set-value of cycle length to local ECA; helpful for debugging

@@ -37,7 +37,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define WRMIL_FW_VERSION      0x000100    // make this consistent with makefile
+#define WRMIL_FW_VERSION      0x000101    // make this consistent with makefile
 
 #define RESET_INHIBIT_COUNTER    10000    // count so many main ECA timemouts, prior sending fill event
 //#define WR_MIL_GATEWAY_LATENCY 70650    // additional latency in units of nanoseconds
