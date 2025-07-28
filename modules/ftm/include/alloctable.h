@@ -15,6 +15,7 @@
 #include "mempool.h"
 #include "reflocation.h"
 #include "globalreftable.h"
+#include "bmiContainers.h"
 
 #define ALLOC_OK             (0)
 #define ALLOC_NO_SPACE      (-1)
@@ -29,7 +30,7 @@ using namespace boost::multi_index;
 
 enum class AllocPoolMode {WITHOUT_MGMT = 0, WITH_MGMT = 1};
 
-typedef std::map<uint32_t, uint32_t> GlobalRefMap;
+struct RefMeta_set;
 
 struct AllocMeta {
   uint8_t     cpu;
@@ -48,9 +49,7 @@ struct AllocMeta {
 };
 
 
-struct Hash{};
-struct Vertex{};
-struct CpuAdr{};
+
 
 
 typedef boost::multi_index_container<
@@ -115,10 +114,6 @@ class AllocTable {
   uint32_t mgmtGrpSize;
   uint32_t mgmtCovSize;
   uint32_t mgmtRefSize;
-
-
-
-
 
 
 public:

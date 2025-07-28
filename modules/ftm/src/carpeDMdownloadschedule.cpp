@@ -292,24 +292,18 @@ namespace dnt = DotStr::Node::TypeVal;
     unsigned count = 0;
 
     //we already recreated the reftable from the mamagement nodes we downloaded, Now, for each entry in rt, we create the global node and insert into atDown.
-    refIt rtBegin, rtEnd;
-    std::tie(rtBegin, rtEnd) = at.rt->getMapRange();
     
-    for (auto it = rtBegin; it != rtEnd; it++) {
+    for (auto it = at.rt->getTable().begin(); it != at.rt->getTable().end(); it++) {
 
-      uint32_t tmpAdr, hash;
-      std::tie(tmpAdr, hash) = *it;
-      //We do not know the CPU yet. Analyse the address to get it.
-      uint8_t cpu;
+      uint8_t dummy;
       AdrType adrType;
-      std::tie(cpu, adrType) = at.adrClassification(tmpAdr);
-      cpu=0;
-      //TODO this does not cover all possible address types
-      //If it is not an adress inside a CPUs shared space, throw an ex for now
-      //sLog << "Global Node at: CPU " << (int)cpu << " 0x" << std::hex << tmpAdr << std::endl;
+      std::tie(dummy, adrType) = at.adrClassification(it->adr);
       if (adrType != AdrType::INT) {throw std::runtime_error( std::string("Error. GlobalReftable entry contains an address not part of the AdrType::INT"));}
       
-      uint32_t adr = at.adrConv(adrType, AdrType::MGMT, cpu, tmpAdr);
+      uint8_t   cpu  = it->cpu;
+      uint32_t  hash = it->hash;
+      uint32_t  adr  = at.adrConv(adrType, AdrType::MGMT, cpu, it->adr); 
+
       /*
       sLog << "Global Node converted Adr at: CPU " << (int)cpu << " 0x" << std::hex << adr << std::endl;
       at.rl->showMemLocMap();

@@ -37,7 +37,7 @@ namespace dnt = DotStr::Node::TypeVal;
     else { 
       uint32_t rtAdr = adrConv(AdrType::MGMT, AdrType::INT, cpu, adr);
       //std::cout << "Global for adr 0x" << std::hex << adr << " goes down to rt as 0x" << std::hex << rtAdr << std::endl;
-      rt->insert(rtAdr, hash);}
+      rt->insert(cpu, rtAdr, hash);}
     auto x = a.insert({cpu, adr, hash, v, staged, global});
 
     return x.second;
@@ -302,9 +302,8 @@ namespace dnt = DotStr::Node::TypeVal;
 
     } else {
       log<DEBUG_LVL0>(L"This is a global\n");
-      uint32_t adr = adrConv(AdrType::MGMT, AdrType::INT, 0, x->adr);
-      if (!(rt->remove(adr))){
-        log<DEBUG_LVL0>(L"Could not remove %1$#08x adr %2$#08x from RT\n") % hash % x->adr;
+      if (!(rt->removeByHash(hash))){
+        log<DEBUG_LVL0>(L"Could not remove %1$#08x cpu %2% adr %3$#08x from RT\n") % hash % x->cpu % x->adr;
         return false;
       }
     }

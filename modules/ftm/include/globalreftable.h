@@ -5,17 +5,62 @@
 #include <stdint.h>
 #include <string>
 #include <iostream>
-#include <map>
-#include <boost/serialization/map.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/archive/text_iarchive.hpp>
+#include <set>
+#include <boost/optional.hpp>
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/member.hpp>
+#include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index/composite_key.hpp>
+#include <boost/multi_index/hashed_index.hpp>
+#include "common.h"
+#include "bmiContainers.h"
+
+using boost::multi_index_container;
+using namespace boost::multi_index;
 
 
-typedef std::map< uint32_t, uint32_t > refMap;
-typedef refMap::iterator refIt;
+struct RefMeta {
+  uint8_t     cpu;
+  uint32_t    adr;
+  uint32_t    hash;
+
+  RefMeta() : cpu(0), adr(0), hash(0) {};
+  RefMeta(uint8_t cpu, uint32_t adr, uint32_t hash) : cpu(cpu), adr(adr), hash(hash) {};
+
+
+  friend class boost::serialization::access;
+  template<class Archive>
+  void serialize(Archive & ar, const unsigned int version)
+  {
+      ar & cpu;
+      ar & adr;
+      ar & hash;
+ 
+  }
+};
+
+struct RefMeta_set {
+  using type = boost::multi_index_container<
+  RefMeta,
+  indexed_by<
+    hashed_unique<
+      tag<Hash>,  BOOST_MULTI_INDEX_MEMBER(RefMeta,uint32_t,hash)>,
+    ordered_unique<
+      tag<CpuAdr>,
+      composite_key<
+        RefMeta,
+        BOOST_MULTI_INDEX_MEMBER(RefMeta,uint8_t,cpu),
+        BOOST_MULTI_INDEX_MEMBER(RefMeta,uint32_t,adr)
+      >
+    >
+  >
+ >;
+};
+
+typedef RefMeta_set::type::iterator refIt;
 
 class GlobalRefTable {
-    refMap m;
+    
 
 private:
   friend class boost::serialization::access;
@@ -28,23 +73,29 @@ private:
       ar & BOOST_SERIALIZATION_NVP(m);
   }
 
+  RefMeta_set::type m;
 
 public:
     
 
     GlobalRefTable() = default;  // Default constructor
+    ~GlobalRefTable(){};
+    GlobalRefTable(GlobalRefTable const &src) : m(src.m) {};
+    GlobalRefTable &operator=(const GlobalRefTable &src) { m = src.m; return *this; }
 
-    bool insert(uint32_t adr, uint32_t hash)  {auto x = m.insert(std::make_pair(adr, hash)); return x.second; }
+    const RefMeta_set::type& getTable() const { return m; }
 
-    bool remove(uint32_t adr)                 {auto it = m.erase(adr); return (it != 0);}
+    bool insert(uint8_t cpu, uint32_t adr, uint32_t hash) {auto x = m.insert({cpu, adr, hash}); return x.second;}
+  
 
-    uint32_t getHash(uint32_t adr);
-
-    refIt lookupAdr(uint32_t adr) {return m.find(adr);}
-
+    bool removeByAdr(uint8_t cpu, uint32_t adr);
+    bool removeByHash(uint32_t hash);
     void clear() { m.clear(); }
 
-    std::pair<refIt, refIt> getMapRange() { return std::make_pair(m.begin(), m.end());}
+    refIt lookupHash(uint32_t hash, const std::string& exMsg = "")  const;
+    refIt lookupHashNoEx(uint32_t hash) const;
+    refIt lookupAdr(uint8_t cpu, uint32_t adr, const std::string& exMsg = "")    const;
+
 
     bool isOk(refIt it) const {return (it != m.end()); }
 
