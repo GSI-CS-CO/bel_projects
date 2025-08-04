@@ -16,14 +16,16 @@ port(
     rstn_i : in std_logic;
 
     -- config signals
-    transfer_size_i : in std_logic_vector(log2_floor(g_block_size) downto 0);
-    start_address_i : in t_wishbone_address;
+    transfer_size_i       : in std_logic_vector(log2_floor(g_block_size) downto 0);
+    start_address_i       : in t_wishbone_address;
+    descriptor_address_i  : in t_wishbone_address;
 
     -- communication signals
     dma_active_i        : in std_logic;
     descriptor_active_i : in std_logic;
     rd_buffer_ready_i   : in std_logic;
     buffer_we_o         : out std_logic;
+    read_descriptor_i   : in std_logic;
 
     master_idle_o : out std_logic;
 
@@ -40,7 +42,8 @@ architecture rtl of wb_dma_wb_read_master is
 
   signal s_start_transfer : std_logic;
 
-  -- signal r_transfer_size : std_logic_vector(log2_floor(g_block_size) downto 0);
+  signal s_transfer_size : std_logic_vector(log2_floor(g_block_size) downto 0);
+  signal s_start_address : t_wishbone_address;
 
   signal s_block_done   : std_logic;
   signal s_ack_complete : std_logic;
@@ -62,6 +65,21 @@ architecture rtl of wb_dma_wb_read_master is
   );
   end component;
 begin
+
+descriptor_data_switch : process(rstn_i, clk_i) begin
+  if(rstn_i = '0') then
+    s_transfer_size <= (others => '0');
+    s_start_address <= (others => '0');
+  elsif rising_edge(clk_i) then
+    if(read_descriptor_i = '1') then
+      s_transfer_size <= std_logic_vector(to_unsigned(4, s_transfer_size'length));
+      s_start_address <= descriptor_address_i;
+    else
+      s_transfer_size <= transfer_size_i;
+      s_start_address <= start_address_i;
+    end if;
+  end if;
+end process;
 
   -- count the number of sent addresses/data
 sent_counter : limit_counter
@@ -111,7 +129,7 @@ else
 end if;
 end process;
 
-p_send_state_comb: process(r_send_state, dma_active_i, descriptor_active_i, master_i.stall, s_block_done, s_ack_complete)
+p_send_state_comb: process(rstn_i, r_send_state, dma_active_i, descriptor_active_i, master_i.stall, s_block_done, s_ack_complete, s_start_transfer)
 begin
 if (rstn_i = '0') then
   master_o.cyc <= '0'; --r_send_state = SEND or r_send_state = LISTEN or r_send_state = STALL;
@@ -188,7 +206,7 @@ else
 end if;
 end process;
 
-p_send_fsm_synch : process(clk_i, rstn_i)
+p_send_fsm_synch : process(clk_i, rstn_i, start_address_i)
 begin
   if(rstn_i = '0') then
     master_o.adr <= start_address_i;

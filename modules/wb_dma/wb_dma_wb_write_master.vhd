@@ -113,7 +113,7 @@ else
 end if;
 end process;
 
-p_send_state_comb: process(r_send_state, dma_active_i, descriptor_active_i, master_i.stall, s_block_done, s_ack_complete)
+p_send_state_comb: process(rstn_i, r_send_state, dma_active_i, descriptor_active_i, master_i.stall, s_block_done, s_ack_complete, buffer_i, s_start_transfer)
 begin
 if (rstn_i = '0') then
   master_o.cyc <= '0'; --r_send_state = SEND or r_send_state = LISTEN or r_send_state = STALL;
@@ -199,7 +199,7 @@ else
 end if;
 end process;
 
-p_send_fsm_synch : process(clk_i, rstn_i)
+p_send_fsm_synch : process(clk_i, rstn_i, start_address_i)
 begin
   if(rstn_i = '0') then
     master_o.adr <= start_address_i;
