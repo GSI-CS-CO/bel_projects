@@ -296,7 +296,7 @@ begin
         write_enable_i          => s_desc_write_enable,
 
         descriptor_csr_o        => s_descriptor_csr, -- unroll into the relevant data (i.e. transfer size)
-        transfer_size_o         => s_transfer_size(4 downto 0),
+        transfer_size_o         => open, --s_transfer_size(4 downto 0),
         source_address_o        => s_source_address,
         destination_address_o   => s_destination_address,
         next_descriptor_o       => s_next_descriptor,
@@ -314,7 +314,7 @@ begin
       
           -- config signals
           transfer_size_i => s_transfer_size(4 downto 0),--std_logic_vector(to_unsigned(g_dma_transfer_block_size, log2_floor(g_block_size))),
-          start_address_i => s_source_address,
+          start_address_i => s_init_pointer_addr,
           descriptor_address_i => (others => '0'),
       
           -- communication signals
@@ -342,7 +342,7 @@ begin
       
           -- config signals
           transfer_size_i => s_transfer_size(4 downto 0),--std_logic_vector(to_unsigned(g_dma_transfer_block_size, log2_floor(g_dma_transfer_block_size))),
-          start_address_i => s_destination_address,
+          start_address_i => s_write_address,
       
           -- communication signals
           dma_active_i => s_dma_active,
@@ -393,7 +393,7 @@ begin
       rst_sys_n_i             => rstn_sys_i, -- Reset input (active low) for sys domain
       error_i                 => (others => '0'),        -- Error control
       stall_i                 => (others => '0'),        -- flow control
-      dma_csr_o               => open,      -- DMA controller control and status register
+      dma_csr_o               => s_transfer_size,      -- DMA controller control and status register
       read_address_o          => s_init_pointer_addr, -- DMA start address, for testing only
       start_transfer_o        => s_start_transfer, -- start transfer, for testing only
       write_address_o         => s_write_address,  -- DMA write address, for testing only
