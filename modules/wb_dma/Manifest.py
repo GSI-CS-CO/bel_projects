@@ -9,5 +9,7 @@ files = [
   "limit_counter.vhd",
   "wb_dma_wb_read_master.vhd",
   "wb_dma_wb_write_master.vhd",
-  "wb_dma_data_buffer.vhd"
+  "wb_dma_data_buffer.vhd",
+  "wb_dma_RAM_pkg.vhd",
+  "wb_dma_RAM.vhd"
   ]

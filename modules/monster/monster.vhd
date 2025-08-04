@@ -79,6 +79,7 @@ use work.virtualRAM_pkg.all;
 use work.wb_dma_pkg.all;
 use work.wb_dma_slave_auto_pkg.all;
 use work.wb_master_test_pkg.all;
+use work.wb_dma_RAM_pkg.all;
 
 entity monster is
   generic(
@@ -642,7 +643,8 @@ architecture rtl of monster is
     tops_ebm_aux,
     tops_beam_dump,
     tops_emb_cpu,
-    tops_wb_dma_slv
+    tops_wb_dma_slv,
+    tops_wb_dma_ram_slv
     );
   constant c_top_slaves        : natural := top_slaves'pos(top_slaves'right)+1;
 
@@ -658,7 +660,8 @@ architecture rtl of monster is
    top_slaves'pos(tops_ebm_aux)          => f_sdb_auto_device(c_ebm_sdb,                         g_dual_port_wr),
    top_slaves'pos(tops_emb_cpu)          => f_sdb_auto_device(c_eca_queue_slave_sdb,             g_en_eca),
    top_slaves'pos(tops_beam_dump)        => f_sdb_embed_device(c_beam_dump_sdb, x"7FFF0000",     g_en_beam_dump),
-   top_slaves'pos(tops_wb_dma_slv)       => f_sdb_auto_device(c_wb_dma_slave_data_sdb,           g_en_wb_dma));
+   top_slaves'pos(tops_wb_dma_slv)       => f_sdb_auto_device(c_wb_dma_slave_data_sdb,           g_en_wb_dma),
+   top_slaves'pos(tops_wb_dma_ram_slv)   => f_sdb_auto_device(c_wb_dma_ram_sdb,                  g_en_wb_dma));
 
   constant c_top_layout      : t_sdb_record_array := f_sdb_auto_layout(c_top_layout_req_masters, c_top_layout_req_slaves);
   constant c_top_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_top_layout_req_masters, c_top_layout_req_slaves);
@@ -3572,19 +3575,21 @@ end generate;
   wb_dma_y : if g_en_wb_dma generate
     wb_dma_module : wb_dma
     generic map(
-      g_host_ram_size  => 1,
+      g_host_ram_size  => 2048, -- must be the same as in wb_dma_RAM_pkg.vhd
       g_dma_transfer_block_size => 16
     )
     port map(
       clk_sys_i     => clk_sys,
       rstn_sys_i    => rstn_sys,
 
-      slave_i   => top_bus_master_o(top_slaves'pos(tops_wb_dma_slv)),
-      slave_o   => top_bus_master_i(top_slaves'pos(tops_wb_dma_slv)),
-      master1_i  => top_bus_slave_o(top_my_masters'pos(topm_dma1)),
-      master1_o  => top_bus_slave_i(top_my_masters'pos(topm_dma1)),
-      master2_i  => top_bus_slave_o(top_my_masters'pos(topm_dma2)),
-      master2_o  => top_bus_slave_i(top_my_masters'pos(topm_dma2))
+      slave_i     => top_bus_master_o(top_slaves'pos(tops_wb_dma_slv)),
+      slave_o     => top_bus_master_i(top_slaves'pos(tops_wb_dma_slv)),
+      ram_slave_i => top_bus_master_o(top_slaves'pos(tops_wb_dma_ram_slv)),
+      ram_slave_o => top_bus_master_i(top_slaves'pos(tops_wb_dma_ram_slv)),
+      master1_i   => top_bus_slave_o(top_my_masters'pos(topm_dma1)),
+      master1_o   => top_bus_slave_i(top_my_masters'pos(topm_dma1)),
+      master2_i   => top_bus_slave_o(top_my_masters'pos(topm_dma2)),
+      master2_o   => top_bus_slave_i(top_my_masters'pos(topm_dma2))
       );
   end generate;
 
