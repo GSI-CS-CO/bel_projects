@@ -1,0 +1,6 @@
+neorv32_tb_slim.ghw
+build
+neorv32.uart0.sim_mode.text.out
+neorv32_tb_slim
+neorv32.uart0_sim_mode.out
+neorv32_tb.uart0_rx.out
