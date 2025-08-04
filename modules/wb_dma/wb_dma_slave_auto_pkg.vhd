@@ -76,7 +76,7 @@ package wb_dma_slave_auto_pkg is
   addr_last     => x"000000000000000f",
   product => (
   vendor_id     => x"0000000000000651",
-  device_id     => x"77646d61",
+  device_id     => x"434E5453",
   version       => x"00000001",
   date          => x"20250528",
   name          => "DMA Controller Slv ")));
