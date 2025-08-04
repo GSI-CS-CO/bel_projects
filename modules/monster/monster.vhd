@@ -75,6 +75,7 @@ use work.remote_update_pkg.all;
 use work.enc_err_counter_pkg.all;
 use work.a10vs_pkg.all;
 use work.cellular_ram_pkg.all;
+use work.neorv32_shell_pkg.all;
 
 entity monster is
   generic(
@@ -124,6 +125,8 @@ entity monster is
     g_lm32_init_files      : string;
     g_lm32_profiles        : string;
     g_lm32_are_ftm         : boolean;
+    g_en_neorv32           : boolean;
+    g_neorv32_ramsize      : natural;
     g_en_tempsens          : boolean;
     g_en_a10ts             : boolean;
     g_delay_diagnostics    : boolean;
@@ -452,6 +455,46 @@ architecture rtl of monster is
     we  => '0',
     dat => (others => '0'));
 
+    ----------------------------------------------------------------------------------
+    -- Debug -------------------------------------------------------------------------
+    ----------------------------------------------------------------------------------
+
+    function debug_slv_to_hex_str(slv : std_logic_vector) return string is
+      constant hex_chars : string := "0123456789ABCDEF";
+      constant len       : integer := slv'length;
+      variable result    : string(1 to len / 4);
+      variable nibble    : std_logic_vector(3 downto 0);
+      variable i_slv     : integer := len - 1;
+      variable i_str     : integer := 1;
+    begin
+      while i_slv >= 3 loop
+        nibble := slv(i_slv downto i_slv - 3);
+        case nibble is
+          when "0000" => result(i_str) := hex_chars(1);
+          when "0001" => result(i_str) := hex_chars(2);
+          when "0010" => result(i_str) := hex_chars(3);
+          when "0011" => result(i_str) := hex_chars(4);
+          when "0100" => result(i_str) := hex_chars(5);
+          when "0101" => result(i_str) := hex_chars(6);
+          when "0110" => result(i_str) := hex_chars(7);
+          when "0111" => result(i_str) := hex_chars(8);
+          when "1000" => result(i_str) := hex_chars(9);
+          when "1001" => result(i_str) := hex_chars(10);
+          when "1010" => result(i_str) := hex_chars(11);
+          when "1011" => result(i_str) := hex_chars(12);
+          when "1100" => result(i_str) := hex_chars(13);
+          when "1101" => result(i_str) := hex_chars(14);
+          when "1110" => result(i_str) := hex_chars(15);
+          when "1111" => result(i_str) := hex_chars(16);
+          when others => result(i_str) := '?';
+        end case;
+        i_slv := i_slv - 4;
+        i_str := i_str + 1;
+      end loop;
+
+      return result;
+    end function;
+
   ----------------------------------------------------------------------------------
   -- GSI Top Crossbar Masters ------------------------------------------------------
   ----------------------------------------------------------------------------------
@@ -464,7 +507,8 @@ architecture rtl of monster is
       topm_pmc,
       topm_usb,
       topm_ebs_aux,
-      topm_prioq
+      topm_prioq,
+      topm_neorv32
     );
   constant c_top_my_masters : natural := top_my_masters'pos(top_my_masters'right)+1;
 
@@ -476,7 +520,8 @@ architecture rtl of monster is
     top_my_masters'pos(topm_pmc)         => f_sdb_auto_msi(c_pmc_msi,     g_en_pmc),
     top_my_masters'pos(topm_usb)         => f_sdb_auto_msi(c_usb_msi,     g_en_usb),
     top_my_masters'pos(topm_ebs_aux)     => f_sdb_auto_msi(c_ebs_msi,     false),   -- Need to add MSI support !!!
-    top_my_masters'pos(topm_prioq)       => f_sdb_auto_msi(c_null_msi,    false));
+    top_my_masters'pos(topm_prioq)       => f_sdb_auto_msi(c_null_msi,    false),
+    top_my_masters'pos(topm_neorv32)     => f_sdb_auto_msi(c_null_msi,    false));
 
   -- The FTM adds a bunch of masters to this crossbar
   constant c_ftm_masters : t_sdb_record_array := f_lm32_masters_bridge_msis(g_lm32_cores);
@@ -567,40 +612,40 @@ architecture rtl of monster is
   constant c_ftm_slaves : t_sdb_bridge := f_cluster_bridge(c_dev_bridge_msi, g_lm32_cores, g_lm32_ramsizes, g_lm32_are_ftm, g_delay_diagnostics);
 
   constant c_dev_layout_req_slaves : t_sdb_record_array(c_dev_slaves-1 downto 0) :=
-   (dev_slaves'pos(devs_build_id)       => f_sdb_auto_device(c_build_id_sdb,                   true),
-    dev_slaves'pos(devs_watchdog)       => f_sdb_auto_device(c_watchdog_sdb,                   true),
-    dev_slaves'pos(devs_flash)          => f_sdb_auto_device(f_wb_spi_flash_sdb(g_flash_bits), not g_en_asmi),
-    dev_slaves'pos(devs_reset)          => f_sdb_auto_device(c_arria_reset,                    true),
-    dev_slaves'pos(devs_tlu)            => f_sdb_auto_device(c_tlu_sdb,                        c_use_tlu),
-    dev_slaves'pos(devs_eca_ctl)        => f_sdb_auto_device(c_eca_slave_sdb,                  g_en_eca),
-    dev_slaves'pos(devs_eca_aq)         => f_sdb_auto_device(c_eca_queue_slave_sdb,            g_en_eca),
-    dev_slaves'pos(devs_eca_tlu)        => f_sdb_auto_device(c_eca_tlu_slave_sdb,              g_en_eca),
-    dev_slaves'pos(devs_eca_wbm)        => f_sdb_auto_device(c_eca_ac_wbm_slave_sdb,           g_en_eca),
-    dev_slaves'pos(devs_serdes_clk_gen) => f_sdb_auto_device(c_wb_serdes_clk_gen_sdb,          not g_lm32_are_ftm),
-    dev_slaves'pos(devs_control)        => f_sdb_auto_device(c_io_control_sdb,                 true),
-    dev_slaves'pos(devs_ftm_cluster)    => f_sdb_auto_bridge(c_ftm_slaves,                     true),
-    dev_slaves'pos(devs_lcd)            => f_sdb_auto_device(c_wb_serial_lcd_sdb,              g_en_lcd),
-    dev_slaves'pos(devs_oled)           => f_sdb_auto_device(c_oled_display,                   g_en_oled),
-    dev_slaves'pos(devs_scubirq)        => f_sdb_auto_device(c_scu_irq_ctrl_sdb,               g_en_scubus),
-    dev_slaves'pos(devs_mil_ctrl)       => f_sdb_auto_device(c_mil_irq_ctrl_sdb,               g_en_mil),
-    dev_slaves'pos(devs_ow)             => f_sdb_auto_device(c_user_1wire_sdb,                 g_en_user_ow),
-    dev_slaves'pos(devs_nau8811)        => f_sdb_auto_device(c_nau8811_sdb,                    g_en_nau8811),
-    dev_slaves'pos(devs_vme_info)       => f_sdb_auto_device(c_vme_info_sdb,                   g_en_vme),
-    dev_slaves'pos(devs_psram)          => f_sdb_auto_device(f_psram_sdb(g_psram_bits),        g_en_psram),
-    dev_slaves'pos(devs_CfiPFlash)      => f_sdb_auto_device(c_wb_CfiPFlash_sdb,               g_en_cfi),
-    dev_slaves'pos(devs_ssd1325)        => f_sdb_auto_device(c_ssd1325_sdb,                    g_en_ssd1325),
-    dev_slaves'pos(devs_DDR3_if1)       => f_sdb_auto_device(c_wb_DDR3_if1_sdb,                g_en_ddr3),
-    dev_slaves'pos(devs_DDR3_if2)       => f_sdb_auto_device(c_wb_DDR3_if2_sdb,                g_en_ddr3),
-    dev_slaves'pos(devs_DDR3_ctrl)      => f_sdb_auto_device(c_irq_master_ctrl_sdb,            g_en_ddr3),
-    dev_slaves'pos(devs_tempsens)       => f_sdb_auto_device(c_temp_sense_sdb,                 g_en_tempsens),
-    dev_slaves'pos(devs_a10ts)          => f_sdb_auto_device(c_a10ts_sdb,                      g_en_a10ts),
-    dev_slaves'pos(devs_a10_phy_reconf) => f_sdb_auto_device(c_cpri_phy_reconf_sdb,            g_a10_en_phy_reconf),
-    dev_slaves'pos(devs_i2c_wrapper)    => f_sdb_auto_device(c_i2c_wrapper_sdb,                g_en_i2c_wrapper),
-    dev_slaves'pos(devs_eca_tap)        => f_sdb_auto_device(c_eca_tap_sdb,                    g_en_eca_tap),
-    dev_slaves'pos(devs_asmi)           => f_sdb_auto_device(c_wb_asmi_sdb,                    g_en_asmi),
-    dev_slaves'pos(devs_enc_err_counter)=> f_sdb_auto_device(c_enc_err_counter_sdb,            g_en_enc_err_counter),
-    dev_slaves'pos(devs_a10vs)          => f_sdb_auto_device(c_a10vs_sdb,                      g_en_a10vs),
-    dev_slaves'pos(devs_cellular_ram)   => f_sdb_auto_device(f_cellular_ram_sdb(g_cr_bits),    g_en_cellular_ram));
+   (dev_slaves'pos(devs_build_id)       => f_sdb_auto_device(c_build_id_sdb,                       true),
+    dev_slaves'pos(devs_watchdog)       => f_sdb_auto_device(c_watchdog_sdb,                       true),
+    dev_slaves'pos(devs_flash)          => f_sdb_auto_device(f_wb_spi_flash_sdb(g_flash_bits),     not g_en_asmi),
+    dev_slaves'pos(devs_reset)          => f_sdb_auto_device(c_arria_reset,                        true),
+    dev_slaves'pos(devs_tlu)            => f_sdb_auto_device(c_tlu_sdb,                            c_use_tlu),
+    dev_slaves'pos(devs_eca_ctl)        => f_sdb_auto_device(c_eca_slave_sdb,                      g_en_eca),
+    dev_slaves'pos(devs_eca_aq)         => f_sdb_auto_device(c_eca_queue_slave_sdb,                g_en_eca),
+    dev_slaves'pos(devs_eca_tlu)        => f_sdb_auto_device(c_eca_tlu_slave_sdb,                  g_en_eca),
+    dev_slaves'pos(devs_eca_wbm)        => f_sdb_auto_device(c_eca_ac_wbm_slave_sdb,               g_en_eca),
+    dev_slaves'pos(devs_serdes_clk_gen) => f_sdb_auto_device(c_wb_serdes_clk_gen_sdb,              not g_lm32_are_ftm),
+    dev_slaves'pos(devs_control)        => f_sdb_auto_device(c_io_control_sdb,                     true),
+    dev_slaves'pos(devs_ftm_cluster)    => f_sdb_auto_bridge(c_ftm_slaves,                         true),
+    dev_slaves'pos(devs_lcd)            => f_sdb_auto_device(c_wb_serial_lcd_sdb,                  g_en_lcd),
+    dev_slaves'pos(devs_oled)           => f_sdb_auto_device(c_oled_display,                       g_en_oled),
+    dev_slaves'pos(devs_scubirq)        => f_sdb_auto_device(c_scu_irq_ctrl_sdb,                   g_en_scubus),
+    dev_slaves'pos(devs_mil_ctrl)       => f_sdb_auto_device(c_mil_irq_ctrl_sdb,                   g_en_mil),
+    dev_slaves'pos(devs_ow)             => f_sdb_auto_device(c_user_1wire_sdb,                     g_en_user_ow),
+    dev_slaves'pos(devs_nau8811)        => f_sdb_auto_device(c_nau8811_sdb,                        g_en_nau8811),
+    dev_slaves'pos(devs_vme_info)       => f_sdb_auto_device(c_vme_info_sdb,                       g_en_vme),
+    dev_slaves'pos(devs_psram)          => f_sdb_auto_device(f_psram_sdb(g_psram_bits),            g_en_psram),
+    dev_slaves'pos(devs_CfiPFlash)      => f_sdb_auto_device(c_wb_CfiPFlash_sdb,                   g_en_cfi),
+    dev_slaves'pos(devs_ssd1325)        => f_sdb_auto_device(c_ssd1325_sdb,                        g_en_ssd1325),
+    dev_slaves'pos(devs_DDR3_if1)       => f_sdb_auto_device(c_wb_DDR3_if1_sdb,                    g_en_ddr3),
+    dev_slaves'pos(devs_DDR3_if2)       => f_sdb_auto_device(c_wb_DDR3_if2_sdb,                    g_en_ddr3),
+    dev_slaves'pos(devs_DDR3_ctrl)      => f_sdb_auto_device(c_irq_master_ctrl_sdb,                g_en_ddr3),
+    dev_slaves'pos(devs_tempsens)       => f_sdb_auto_device(c_temp_sense_sdb,                     g_en_tempsens),
+    dev_slaves'pos(devs_a10ts)          => f_sdb_auto_device(c_a10ts_sdb,                          g_en_a10ts),
+    dev_slaves'pos(devs_a10_phy_reconf) => f_sdb_auto_device(c_cpri_phy_reconf_sdb,                g_a10_en_phy_reconf),
+    dev_slaves'pos(devs_i2c_wrapper)    => f_sdb_auto_device(c_i2c_wrapper_sdb,                    g_en_i2c_wrapper),
+    dev_slaves'pos(devs_eca_tap)        => f_sdb_auto_device(c_eca_tap_sdb,                        g_en_eca_tap),
+    dev_slaves'pos(devs_asmi)           => f_sdb_auto_device(c_wb_asmi_sdb,                        g_en_asmi),
+    dev_slaves'pos(devs_enc_err_counter)=> f_sdb_auto_device(c_enc_err_counter_sdb,                g_en_enc_err_counter),
+    dev_slaves'pos(devs_a10vs)          => f_sdb_auto_device(c_a10vs_sdb,                          g_en_a10vs),
+    dev_slaves'pos(devs_cellular_ram)   => f_sdb_auto_device(f_cellular_ram_sdb(g_cr_bits),        g_en_cellular_ram));
   constant c_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_bridge_sdb  : t_sdb_bridge       := f_xwb_bridge_layout_sdb(true, c_dev_layout, c_dev_sdb_address);
@@ -626,22 +671,26 @@ architecture rtl of monster is
     tops_wr_aux_fast_path,
     tops_ebm_aux,
     tops_beam_dump,
-    tops_emb_cpu
+    tops_emb_cpu,
+    tops_neorv32_ram
     );
   constant c_top_slaves        : natural := top_slaves'pos(top_slaves'right)+1;
 
+  constant c_neorv32_ram_addr : t_wishbone_address := x"71000000";
+
   constant c_top_layout_req_slaves : t_sdb_record_array(c_top_slaves-1 downto 0) :=
-   (top_slaves'pos(tops_eca_event)       => f_sdb_embed_device(c_eca_event_sdb, x"7FFFFFF0",     g_en_eca), -- must be located at fixed address
-   top_slaves'pos(tops_scubus)           => f_sdb_auto_device(c_scu_bus_master,                  g_en_scubus),
-   top_slaves'pos(tops_mbox)             => f_sdb_auto_device(c_mbox_sdb,                        true),
-   top_slaves'pos(tops_dev)              => f_sdb_auto_bridge(c_dev_bridge_sdb,                  true),
-   top_slaves'pos(tops_mil)              => f_sdb_auto_device(c_xwb_gsi_mil_scu,                 g_en_mil),
-   top_slaves'pos(tops_wr_fast_path)     => f_sdb_auto_bridge(c_wrcore_bridge_sdb,               true),
-   top_slaves'pos(tops_ebm)              => f_sdb_auto_device(c_ebm_sdb,                         true),
-   top_slaves'pos(tops_wr_aux_fast_path) => f_sdb_auto_bridge(c_wrcore_aux_bridge_sdb,           g_dual_port_wr),
-   top_slaves'pos(tops_ebm_aux)          => f_sdb_auto_device(c_ebm_sdb,                         g_dual_port_wr),
-   top_slaves'pos(tops_emb_cpu)          => f_sdb_auto_device(c_eca_queue_slave_sdb,             g_en_eca),
-   top_slaves'pos(tops_beam_dump)        => f_sdb_embed_device(c_beam_dump_sdb, x"7FFF0000",     g_en_beam_dump));
+   (top_slaves'pos(tops_eca_event)       => f_sdb_embed_device(c_eca_event_sdb, x"7FFFFFF0",                             g_en_eca), -- must be located at fixed address
+   top_slaves'pos(tops_scubus)           => f_sdb_auto_device(c_scu_bus_master,                                          g_en_scubus),
+   top_slaves'pos(tops_mbox)             => f_sdb_auto_device(c_mbox_sdb,                                                true),
+   top_slaves'pos(tops_dev)              => f_sdb_auto_bridge(c_dev_bridge_sdb,                                          true),
+   top_slaves'pos(tops_mil)              => f_sdb_auto_device(c_xwb_gsi_mil_scu,                                         g_en_mil),
+   top_slaves'pos(tops_wr_fast_path)     => f_sdb_auto_bridge(c_wrcore_bridge_sdb,                                       true),
+   top_slaves'pos(tops_ebm)              => f_sdb_auto_device(c_ebm_sdb,                                                 true),
+   top_slaves'pos(tops_wr_aux_fast_path) => f_sdb_auto_bridge(c_wrcore_aux_bridge_sdb,                                   g_dual_port_wr),
+   top_slaves'pos(tops_ebm_aux)          => f_sdb_auto_device(c_ebm_sdb,                                                 g_dual_port_wr),
+   top_slaves'pos(tops_emb_cpu)          => f_sdb_auto_device(c_eca_queue_slave_sdb,                                     g_en_eca),
+   top_slaves'pos(tops_beam_dump)        => f_sdb_embed_device(c_beam_dump_sdb, x"70000000",                             g_en_beam_dump),
+   top_slaves'pos(tops_neorv32_ram)      => f_sdb_embed_device(f_neorv32_ram_sdb(g_neorv32_ramsize), c_neorv32_ram_addr, g_en_neorv32));
 
   constant c_top_layout      : t_sdb_record_array := f_sdb_auto_layout(c_top_layout_req_masters, c_top_layout_req_slaves);
   constant c_top_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_top_layout_req_masters, c_top_layout_req_slaves);
@@ -769,9 +818,11 @@ architecture rtl of monster is
   signal eb_aux_snk_out : t_wrf_sink_out;
   signal eb_aux_snk_in  : t_wrf_sink_in;
 
-  signal uart_usb : std_logic; -- from usb
-  signal uart_mux : std_logic; -- either usb or external
-  signal uart_wrc : std_logic; -- from wrc
+  signal uart_usb           : std_logic; -- from usb
+  signal uart_mux           : std_logic; -- either usb or external
+  signal uart_wrc           : std_logic; -- from wrc
+  signal s_neorv32_uart_out : std_logic; -- from neorv32
+  signal uart_to_usb        : std_logic;
 
   signal uart_aux_mux : std_logic;
   signal uart_aux_wrc : std_logic;
@@ -779,7 +830,8 @@ architecture rtl of monster is
   signal s_usb_fd_o   : std_logic_vector(7 downto 0);
   signal s_usb_fd_oen : std_logic;
 
-  signal s_lm32_rstn : std_logic_vector(g_lm32_cores-1 downto 0);
+  signal s_lm32_rstn    : std_logic_vector(g_lm32_cores-1 downto 0);
+  signal s_neorv32_rstn : std_logic;
 
   signal a10vs_slave_i : t_wishbone_slave_in;
   signal a10vs_slave_o : t_wishbone_slave_out;
@@ -1753,7 +1805,7 @@ end generate;
         msi_slave_i => top_msi_master_o(top_my_masters'pos(topm_usb)),
         msi_slave_o => top_msi_master_i(top_my_masters'pos(topm_usb)),
         uart_o    => uart_usb,
-        uart_i    => uart_wrc,
+        uart_i    => uart_to_usb,
         rstn_o    => usb_rstn_o,
         ebcyc_i   => usb_ebcyc_i,
         speed_i   => usb_speed_i,
@@ -1774,8 +1826,34 @@ end generate;
   sdb_dummy_top <= f_report_wishbone_address(c_top_sdb_address, "SDB TOP");
   sdb_dummy_dev <= f_report_wishbone_address(c_dev_sdb_address, "SDB DEV");
 
-  wr_uart_o <= uart_wrc;
-  uart_mux <= uart_usb and wr_uart_i;
+  wr_uart_o   <= uart_wrc or s_neorv32_uart_out;
+  uart_to_usb <= s_neorv32_uart_out;
+  uart_mux    <= uart_usb and wr_uart_i;
+
+  neorv32_n : if not g_en_neorv32 generate
+    top_bus_slave_i (top_my_masters'pos(topm_neorv32)) <= cc_dummy_master_out;
+    top_msi_master_i(top_my_masters'pos(topm_neorv32)) <= cc_dummy_slave_out;
+  end generate;
+  neorv32_y : if g_en_neorv32 generate
+  begin
+    neorv32_shell_wrapper : neorv32_shell
+    generic map(
+      g_clock_frequency        => 62500000,
+      g_mem_wishbone_imem_size => g_neorv32_ramsize,
+      g_mem_wishbone_imem_addr => std_ulogic_vector(c_neorv32_ram_addr),
+      g_sdb_addr               => c_top_sdb_address
+    )
+    port map(
+      clk_i       => clk_sys,
+      rstn_i      => rstn_sys,
+      rstn_ext_i  => s_neorv32_rstn,
+      slave_i     => top_bus_master_o(top_slaves'pos(tops_neorv32_ram)),
+      slave_o     => top_bus_master_i(top_slaves'pos(tops_neorv32_ram)),
+      master_i    => top_bus_slave_o(top_my_masters'pos(topm_neorv32)),
+      master_o    => top_bus_slave_i(top_my_masters'pos(topm_neorv32)),
+      uart_o      => s_neorv32_uart_out
+    );
+  end generate;
 
   -- END OF Wishbone masters
   ----------------------------------------------------------------------------------
@@ -2461,20 +2539,21 @@ end generate;
       clk_in_hz    => 62_500_000,
       en_wd_tmr    => g_en_wd_tmr)
     port map(
-      clk_sys_i     => clk_sys,
-      rstn_sys_i    => rstn_sys,
-      clk_upd_i     => clk_update,
-      rstn_upd_i    => rstn_update,
-      hw_version    => hw_version,
-      slave_o       => dev_bus_master_i(dev_slaves'pos(devs_reset)),
-      slave_i       => dev_bus_master_o(dev_slaves'pos(devs_reset)),
-      phy_rst_o     => wbar_phy_rst,
-      phy_aux_rst_o => wbar_phy_aux_rst,
-      phy_dis_o     => wbar_phy_dis,
-      phy_aux_dis_o => wbar_phy_aux_dis,
-      psram_sel_o   => ps_chip_selector,
-      rstn_o        => s_lm32_rstn,
-      poweroff_comx => poweroff_comx);
+      clk_sys_i      => clk_sys,
+      rstn_sys_i     => rstn_sys,
+      clk_upd_i      => clk_update,
+      rstn_upd_i     => rstn_update,
+      hw_version     => hw_version,
+      slave_o        => dev_bus_master_i(dev_slaves'pos(devs_reset)),
+      slave_i        => dev_bus_master_o(dev_slaves'pos(devs_reset)),
+      phy_rst_o      => wbar_phy_rst,
+      phy_aux_rst_o  => wbar_phy_aux_rst,
+      phy_dis_o      => wbar_phy_dis,
+      phy_aux_dis_o  => wbar_phy_aux_dis,
+      psram_sel_o    => ps_chip_selector,
+      neorv32_rstn_o => s_neorv32_rstn,
+      rstn_o         => s_lm32_rstn,
+      poweroff_comx  => poweroff_comx);
 
       wbar_phy_dis_o     <= wbar_phy_dis;
       wbar_phy_aux_dis_o <= wbar_phy_aux_dis;

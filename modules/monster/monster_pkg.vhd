@@ -126,6 +126,8 @@ package monster_pkg is
       g_lm32_init_files      : string; -- multiple init files must be seperated by a semicolon ';'
       g_lm32_profiles        : string; -- multiple profiles must be seperated by a semicolon ';'
       g_lm32_are_ftm         : boolean := false;
+      g_en_neorv32           : boolean := false;
+      g_neorv32_ramsize      : natural := 131072/4; -- in 32b words
       g_en_tempsens          : boolean := false;
       g_en_a10ts             : boolean := false;
       g_delay_diagnostics    : boolean := false;
