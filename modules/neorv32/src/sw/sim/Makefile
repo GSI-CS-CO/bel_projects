@@ -58,7 +58,7 @@ compile: $(OBJS)
 transform:
 	$(RISC_V_COMPILER)-objcopy -O binary program.elf program.bin
 	$(RISC_V_COMPILER)-objdump -d program.elf > program.dis
-	python3 bin2mif.py
+	python3 ../../scripts/bin2mif.py
 
 clean:
 	rm -f *.o *.dis *.bin *.elf *.mif
