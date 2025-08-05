@@ -922,7 +922,7 @@ set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_rgb_led
 set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_rgb_led[0]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_rgb_led[1]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_rgb_led[2]
-set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to pcie_rdy_o
+set_instance_assignment -name IO_STANDARD "1.8 V" -to pcie_rdy_o
 set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to usb_clk
 set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to usb_ctl[0]
 set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to usb_ctl[1]
@@ -1230,7 +1230,7 @@ set_location_assignment PIN_D4 -to psram_a[19]
 set_location_assignment PIN_D5 -to psram_a[13]
 set_location_assignment PIN_D8 -to avr_sda
 set_location_assignment PIN_E15 -to "clk_125m_local_d15(n)"
-set_location_assignment PIN_E16 -to pcie_rdy_o
+set_location_assignment PIN_M1 -to pcie_rdy_o
 set_location_assignment PIN_E19 -to usb_pa[3]
 set_location_assignment PIN_E20 -to usb_pa[7]
 set_location_assignment PIN_E21 -to usb_pa[5]
