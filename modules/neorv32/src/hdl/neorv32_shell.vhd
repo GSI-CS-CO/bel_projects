@@ -147,11 +147,11 @@ begin
       slave2_i  => slave_i,
       slave2_o  => slave_o);
 
-  s_wb_ram_neorv32_i.cyc <= s_xbus_cyc;
-  s_wb_ram_neorv32_i.stb <= s_xbus_stb;
+  s_wb_ram_neorv32_i.cyc <= s_xbus_cyc and s_instruction;
+  s_wb_ram_neorv32_i.stb <= s_xbus_stb and s_instruction;
   s_wb_ram_neorv32_i.adr <= std_logic_vector(s_xbus_adr);
   s_wb_ram_neorv32_i.sel <= std_logic_vector(s_xbus_sel);
-  s_wb_ram_neorv32_i.we  <= s_xbus_we;
+  s_wb_ram_neorv32_i.we  <= s_xbus_we and s_instruction;
   s_wb_ram_neorv32_i.dat <= std_logic_vector(s_xbus_dat_out);
 
   master_o.cyc <= s_xbus_cyc and not(s_instruction);
