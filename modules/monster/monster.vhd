@@ -1836,6 +1836,7 @@ end generate;
   end generate;
   neorv32_y : if g_en_neorv32 generate
   begin
+    top_msi_master_i(top_my_masters'pos(topm_neorv32)) <= cc_dummy_slave_out;
     neorv32_shell_wrapper : neorv32_shell
     generic map(
       g_clock_frequency        => 62500000,
