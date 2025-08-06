@@ -1841,7 +1841,8 @@ end generate;
       g_clock_frequency        => 62500000,
       g_mem_wishbone_imem_size => g_neorv32_ramsize,
       g_mem_wishbone_imem_addr => std_ulogic_vector(c_neorv32_ram_addr),
-      g_sdb_addr               => c_top_sdb_address
+      g_sdb_addr               => c_top_sdb_address,
+      g_mem_wishbone_init_file => "../../../modules/neorv32/src/sw/idle-init/program.mif"
     )
     port map(
       clk_i       => clk_sys,
