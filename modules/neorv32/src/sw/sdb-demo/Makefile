@@ -16,6 +16,8 @@ endif
 # Directories and includes
 NEORV32_INC_FILES_DIR := ../../../../../ip_cores/neorv32/sw/lib/include/
 NEORV32_SRC_FILES_DIR := ../../../../../ip_cores/neorv32/sw/lib/source/
+LM32_COMMON_DIR := ../../../../../modules/lm32-include/
+NEORV32_COMMON_DIR := ../common/
 PICOLIBC_INC := /usr/lib/picolibc/$(RISC_V_COMPILER)/include
 PICOLIBC_LIB := /usr/lib/picolibc/$(RISC_V_COMPILER)/lib/rv32i/ilp32
 
@@ -24,7 +26,8 @@ ARCH_ABI_FLAGS := -march=rv32izicsr -mabi=ilp32
 
 # Flags
 COMMON_CFLAGS := $(ARCH_ABI_FLAGS) -ffunction-sections -fdata-sections \
-                 -I$(NEORV32_INC_FILES_DIR) -I$(PICOLIBC_INC)
+                 -I$(NEORV32_INC_FILES_DIR) -I$(NEORV32_COMMON_DIR) -I$(LM32_COMMON_DIR) -I$(PICOLIBC_INC) \
+                 -D NEORV32
 COMMON_ASFLAGS := $(ARCH_ABI_FLAGS)
 LINKER_FLAGS := -nostartfiles -nostdlib $(ARCH_ABI_FLAGS) -T linker.ld \
                 -Wl,--build-id=none -lgcc -lc -L$(PICOLIBC_LIB) -Wl,--gc-sections
@@ -35,7 +38,10 @@ C_SOURCES := \
   $(NEORV32_SRC_FILES_DIR)neorv32_uart.c \
   $(NEORV32_SRC_FILES_DIR)neorv32_aux.c \
   $(NEORV32_SRC_FILES_DIR)neorv32_cpu.c \
-  $(NEORV32_SRC_FILES_DIR)neorv32_rte.c
+  $(NEORV32_SRC_FILES_DIR)neorv32_rte.c \
+  $(LM32_COMMON_DIR)mini_sdb.c \
+  $(NEORV32_COMMON_DIR)sdb_add_neorv32.c
+
 
 ASM_SOURCES := start.s
 
