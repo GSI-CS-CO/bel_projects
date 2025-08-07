@@ -61,7 +61,9 @@ PORT(
   Timing_In                          : in std_logic_vector(31 downto 0)  := (others => '0');
   Start_Timing_Cycle                 : in std_logic                      := '0';
 
-  SCUB_Data                          : inout std_logic_vector(15 downto 0);
+  SCUB_Data_Out                      : out std_logic_vector(15 downto 0);
+  SCUB_Data_In                       : in std_logic_vector(15 downto 0);
+  SCUB_Data_Tri_Out                  : out std_logic;
   nSCUB_DS                           : out std_logic;                      -- SCU_Bus Data Strobe, low active.
   nSCUB_Dtack                        : in  std_logic;                      -- SCU_Bus Data Acknowledge, low active.
   SCUB_Addr                          : out std_logic_vector(15 downto 0);  -- Address Bus of SCU_Bus
@@ -776,7 +778,7 @@ begin
           S_SCUB_DS <= '1';
           IF S_nSync_Dtack(0) = '0' THEN          -- wait for Dtack
             IF Test = 0 THEN
-              ext_rd_data <= SCUB_Data;           -- during production: read the SCUB_Data bidir buffer
+              ext_rd_data <= SCUB_Data_In;           -- during production: read the SCUB_Data bidir buffer
             ELSE
               ext_rd_data <= S_Wr_Data;           -- during test: return the last written data
             END IF;
@@ -1014,13 +1016,14 @@ p_intr: PROCESS (clk, s_reset)
 P_SCUB_Tri_State: PROCESS (SCUB_SM, S_Wr_Data, tag_fifo_q)
   BEGIN
     IF (SCUB_SM = S_Wr_Cyc) OR (SCUB_SM = Wr_Cyc) THEN
-      SCUB_Data <= S_Wr_Data;
+      SCUB_Data_Out <= S_Wr_Data;
     ELSIF (SCUB_SM = Ti_Cyc) OR (SCUB_SM = E_Ti_Cyc) THEN
-      SCUB_Data <= tag_fifo_q(15 DOWNTO 0);
-    ELSE
-      SCUB_Data <= (OTHERS => 'Z');
+      SCUB_Data_Out <= tag_fifo_q(15 DOWNTO 0);
+    --ELSE
+      --SCUB_Data <= (OTHERS => 'Z');
     END IF;
   END PROCESS P_SCUB_Tri_State;
+  SCUB_Data_Tri_Out <= '1' when (SCUB_SM = S_Wr_Cyc) OR (SCUB_SM = Wr_Cyc) OR (SCUB_SM = Ti_Cyc) OR (SCUB_SM = E_Ti_Cyc) else '0';
 
 
 p_time_out: PROCESS (Clk, s_reset)
