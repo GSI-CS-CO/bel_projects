@@ -1,4 +1,4 @@
---! @file monster_pkg.vhd
+  --! @file monster_pkg.vhd
 --! @brief Monster (all your top are belong to BEL) package
 --! @author Wesley W. Terpstra <w.terpstra@gsi.de>
 --!
@@ -277,7 +277,9 @@ package monster_pkg is
       usb_fd_io              : inout std_logic_vector(7 downto 0) := (others => 'Z');
       -- g_en_scubus
       scubus_a_a             : out   std_logic_vector(15 downto 0);
-      scubus_a_d             : inout std_logic_vector(15 downto 0) := (others => 'Z');
+      scubus_a_d_out         : out   std_logic_vector(15 downto 0);
+      scubus_a_d_in          : in    std_logic_vector(15 downto 0);
+      scubus_a_d_tri_out     : out   std_logic;
       scubus_nsel_data_drv   : out   std_logic;
       scubus_a_nds           : out   std_logic;
       scubus_a_rnw           : out   std_logic;

@@ -31,7 +31,9 @@ entity wb_irq_scu_bus is
         scu_slave_o         : buffer t_wishbone_slave_out;
         scu_slave_i         : in t_wishbone_slave_in;
         
-        scub_data           : inout std_logic_vector(15 downto 0);
+        scub_data_out       : out std_logic_vector(15 downto 0);
+        scub_data_in        : in std_logic_vector(15 downto 0);
+        scub_data_tri_out   : out std_logic;
         nscub_ds            : out std_logic;
         nscub_dtack         : in std_logic;
         scub_addr           : out std_logic_vector(15 downto 0);
@@ -78,7 +80,9 @@ begin
      slave_o            => scu_slave_o_from_scub,
      srq_active         => scu_srq_active,
      
-     SCUB_Data          => scub_data,
+     SCUB_Data_Out      => scub_data_out,
+     SCUB_Data_In       => scub_data_in,
+     SCUB_Data_Tri_Out  => scub_data_tri_out,
      nSCUB_DS           => nscub_ds,
      nSCUB_Dtack        => nscub_dtack,
      SCUB_Addr          => scub_addr,

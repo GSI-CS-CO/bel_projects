@@ -273,14 +273,16 @@ entity monster is
     usb_pktendn_o          : out   std_logic := 'Z';
     usb_fd_io              : inout std_logic_vector(7 downto 0);
     -- g_en_scubus
-    scubus_a_a             : out   std_logic_vector(15 downto 0) := (others => 'Z');
-    scubus_a_d             : inout std_logic_vector(15 downto 0);
+    scubus_a_a             : out   std_logic_vector(15 downto 0)  := (others => 'Z');
+    scubus_a_d_out         : out   std_logic_vector(15 downto 0);
+    scubus_a_d_in          : in    std_logic_vector(15 downto 0);
+    scubus_a_d_tri_out     : out   std_logic;
     scubus_nsel_data_drv   : out   std_logic := 'Z';
     scubus_a_nds           : out   std_logic := 'Z';
     scubus_a_rnw           : out   std_logic := 'Z';
     scubus_a_ndtack        : in    std_logic;
     scubus_a_nsrq          : in    std_logic_vector(12 downto 1);
-    scubus_a_nsel          : out   std_logic_vector(12 downto 1) := (others => 'Z');
+    scubus_a_nsel          : out   std_logic_vector(12 downto 1)  := (others => 'Z');
     scubus_a_ntiming_cycle : out   std_logic := 'Z';
     scubus_a_sysclock      : out   std_logic := 'Z';
     -- g_en_mil
@@ -3261,7 +3263,6 @@ end generate;
     top_bus_master_i(top_slaves'pos(tops_scubus))  <= cc_dummy_slave_out;
     dev_bus_master_i(dev_slaves'pos(devs_scubirq)) <= cc_dummy_slave_out;
     dev_msi_slave_i (dev_slaves'pos(devs_scubirq)) <= cc_dummy_master_out;
-    scubus_a_d <= (others => 'Z');
   end generate;
   scub_y : if g_en_scubus generate
     scubus_a_sysclock <= clk_12_5;
@@ -3283,7 +3284,9 @@ end generate;
         ctrl_irq_i         => dev_bus_master_o(dev_slaves'pos(devs_scubirq)),
         scu_slave_o        => top_bus_master_i(top_slaves'pos(tops_scubus)),
         scu_slave_i        => top_bus_master_o(top_slaves'pos(tops_scubus)),
-        scub_data          => scubus_a_d,
+        scub_data_out      => scubus_a_d_out,
+        scub_data_in       => scubus_a_d_in,
+        scub_data_tri_out  => scubus_a_d_tri_out,
         nscub_ds           => scubus_a_nds,
         nscub_dtack        => scubus_a_ndtack,
         scub_addr          => scubus_a_a,
