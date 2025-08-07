@@ -37,7 +37,9 @@ component wb_scu_bus is
     Timing_In                          : in std_logic_vector(31 downto 0) := (others => '0');
     Start_Timing_Cycle                 : in std_logic := '0';
 
-    SCUB_Data                          : INOUT  STD_LOGIC_VECTOR(15 DOWNTO 0);
+    SCUB_Data_Out                      : out std_logic_vector(15 downto 0);
+    SCUB_Data_In                       : in std_logic_vector(15 downto 0);
+    SCUB_Data_Tri_Out                  : out std_logic;
     nSCUB_DS                           : OUT    STD_LOGIC;                      -- SCU_Bus Data Strobe, low active.
     nSCUB_Dtack                        : IN     STD_LOGIC;                      -- SCU_Bus Data Acknowledge, low active.
     SCUB_Addr                          : OUT    STD_LOGIC_VECTOR(15 DOWNTO 0);  -- Address Bus of SCU_Bus
@@ -76,7 +78,9 @@ component wb_irq_scu_bus is
     scu_slave_o         : buffer t_wishbone_slave_out;
     scu_slave_i         : in t_wishbone_slave_in;
 
-    scub_data           : inout std_logic_vector(15 downto 0);
+    scub_data_out       : out std_logic_vector(15 downto 0);
+    scub_data_in        : in std_logic_vector(15 downto 0);
+    scub_data_tri_out   : out std_logic;
     nscub_ds            : out std_logic;
     nscub_dtack         : in std_logic;
     scub_addr           : out std_logic_vector(15 downto 0);

@@ -284,11 +284,14 @@ architecture rtl of scu_control is
   signal s_lemo_input : std_logic_vector(1 downto 0);
 
   signal scub_a                 : std_logic_vector(15 downto 0);
-  signal scub_d                 : std_logic_vector(15 downto 0);
+  signal scub_d_out             : std_logic_vector(15 downto 0);
+  signal scub_d_in              : std_logic_vector(15 downto 0);
+  signal scub_d_tri_out         : std_logic;
   signal scub_nsel              : std_logic_vector(12 downto 1);
   signal scub_nsel_ext_data_drv : std_logic;
   signal scub_A_RnW             : std_logic;
   signal is_rmt                 : std_logic;
+  signal A_D_mux                : std_logic_vector(15 downto 0);
 
   constant io_mapping_table : t_io_mapping_table_arg_array(0 to 25) :=
   (
@@ -392,7 +395,9 @@ begin
       pcie_rx_i              => pcie_rx_i,
       pcie_tx_o              => pcie_tx_o,
       scubus_a_a             => scub_a,
-      scubus_a_d             => scub_d,
+      scubus_a_d_out         => scub_d_out,
+      scubus_a_d_in          => scub_d_in,
+      scubus_a_d_tri_out     => scub_d_tri_out,
       scubus_nsel_data_drv   => scub_nSel_Ext_Data_DRV,
       scubus_a_nds           => A_nDS,
       scubus_a_rnw           => scub_A_RnW,
@@ -543,6 +548,15 @@ begin
         extended_o => s_lemo_leds(i));
   end generate;
 
+  tri_state_a_d: process (A_D, scub_d_tri_out)
+  begin
+    if (scub_d_tri_out = '1' ) then
+      A_D <= A_D_mux;
+    else
+      A_D <= (others => 'Z');
+    end if;
+  end process;
+
 
   standalone_backplane : process (is_rmt)
   begin
@@ -556,19 +570,19 @@ begin
       A_nSEL(10)        <= s_lemo_io(6);  -- Slot L1 IO5
       A_nSEL(9)         <= s_lemo_io(7);  -- Slot L1 IO6
 
-      A_D(5)            <= s_lemo_io(8);  -- Slot L2 IO1
-      A_D(1)            <= s_lemo_io(9);  -- Slot L2 IO2
-      A_D(4)            <= s_lemo_io(10); -- Slot L2 IO3
-      A_D(0)            <= s_lemo_io(11); -- Slot L2 IO4
-      A_D(3)            <= s_lemo_io(12); -- Slot L2 IO5
-      A_D(2)            <= s_lemo_io(13); -- Slot L2 IO6
+      A_D_mux(5)        <= s_lemo_io(8);  -- Slot L2 IO1
+      A_D_mux(1)        <= s_lemo_io(9);  -- Slot L2 IO2
+      A_D_mux(4)        <= s_lemo_io(10); -- Slot L2 IO3
+      A_D_mux(0)        <= s_lemo_io(11); -- Slot L2 IO4
+      A_D_mux(3)        <= s_lemo_io(12); -- Slot L2 IO5
+      A_D_mux(2)        <= s_lemo_io(13); -- Slot L2 IO6
 
-      A_D(15)           <= s_lemo_io(14); -- Slot L3 IO1
-      A_D(10)           <= s_lemo_io(15); -- Slot L3 IO2
-      A_D(14)           <= s_lemo_io(16); -- Slot L3 IO3
-      A_D(11)           <= s_lemo_io(17); -- Slot L3 IO4
-      A_D(13)           <= s_lemo_io(18); -- Slot L3 IO5
-      A_D(12)           <= s_lemo_io(19); -- Slot L3 IO6
+      A_D_mux(15)       <= s_lemo_io(14); -- Slot L3 IO1
+      A_D_mux(10)       <= s_lemo_io(15); -- Slot L3 IO2
+      A_D_mux(14)       <= s_lemo_io(16); -- Slot L3 IO3
+      A_D_mux(11)       <= s_lemo_io(17); -- Slot L3 IO4
+      A_D_mux(13)       <= s_lemo_io(18); -- Slot L3 IO5
+      A_D_mux(12)       <= s_lemo_io(19); -- Slot L3 IO6
 
       A_A(11)           <= s_lemo_io(20); -- Slot R1 IO1
       A_A(9)            <= s_lemo_io(21); -- Slot R1 IO2
@@ -593,26 +607,26 @@ begin
     else
       A_RnW             <= scub_A_RnW;
       nSel_Ext_Data_DRV <= scub_nsel_ext_data_drv;
-      A_nSEL(12)        <= scub_nSEL(12);
       A_nSEL(7)         <= scub_nSEL(7);
-      A_nSEL(11)        <= scub_nSEL(11);
       A_nSEL(8)         <= scub_nSEL(8);
-      A_nSEL(10)        <= scub_nSEL(10);
       A_nSEL(9)         <= scub_nSEL(9);
+      A_nSEL(10)        <= scub_nSEL(10);
+      A_nSEL(11)        <= scub_nSEL(11);
+      A_nSEL(12)        <= scub_nSEL(12);
 
-      A_D(5)            <= scub_d(5);
-      A_D(1)            <= scub_d(1);
-      A_D(4)            <= scub_d(4);
-      A_D(0)            <= scub_d(0);
-      A_D(3)            <= scub_d(3);
-      A_D(2)            <= scub_d(2);
+      A_D_mux(0)        <= scub_d_out(0);
+      A_D_mux(1)        <= scub_d_out(1);
+      A_D_mux(2)        <= scub_d_out(2);
+      A_D_mux(3)        <= scub_d_out(3);
+      A_D_mux(4)        <= scub_d_out(4);
+      A_D_mux(5)        <= scub_d_out(5);
 
-      A_D(15)           <= scub_d(15);
-      A_D(10)           <= scub_d(10);
-      A_D(14)           <= scub_d(14);
-      A_D(11)           <= scub_d(11);
-      A_D(13)           <= scub_d(13);
-      A_D(12)           <= scub_d(12);
+      A_D_mux(10)       <= scub_d_out(10);
+      A_D_mux(11)       <= scub_d_out(11);
+      A_D_mux(12)       <= scub_d_out(12);
+      A_D_mux(13)       <= scub_d_out(13);
+      A_D_mux(14)       <= scub_d_out(14);
+      A_D_mux(15)       <= scub_d_out(15);
 
       A_A(11)           <= scub_a(11);
       A_A(9)            <= scub_a(9);
@@ -636,10 +650,12 @@ begin
       A_nSEL(4)         <= scub_nSEL(4);
     end if;
 
+    A_D_mux(6) <= scub_d_out(6);
+    A_D_mux(7) <= scub_d_out(7);
+    A_D_mux(8) <= scub_d_out(8);
+    A_D_mux(9) <= scub_d_out(9);
 
-
-
-
+    scub_d_in <= A_D_mux;
 
   end process;
 
