@@ -18,7 +18,8 @@ entity neorv32_shell is
     g_mem_wishbone_imem_addr    : std_ulogic_vector(31 downto 0) := x"71000000"; -- imem RAM start address
     g_mem_wishbone_init_file    : string := "";                                  -- init file Wishbone instruction memory
     g_mem_int_imem_size         : natural := 8*1024;                             -- size of processor-internal instruction memory in bytes
-    g_mem_int_dmem_size         : natural := 8*1024                              -- size of processor-internal data memory in bytes
+    g_mem_int_dmem_size         : natural := 8*1024;                             -- size of processor-internal data memory in bytes
+    g_use_wb_adapter            : boolean := true                                -- use wishbone slave adapter CLASSIC/PIPELINED
   );
   port (
     -- Global control
@@ -73,6 +74,8 @@ architecture rtl of neorv32_shell is
   attribute keep                 : boolean;
   signal wb_imem_addr            : std_logic := '0';
   attribute keep of wb_imem_addr : signal is true;
+
+  signal s_arbited_master : t_wishbone_master_out;
 
 begin
 
@@ -154,12 +157,42 @@ begin
   s_wb_ram_neorv32_i.we  <= s_xbus_we and s_instruction;
   s_wb_ram_neorv32_i.dat <= std_logic_vector(s_xbus_dat_out);
 
-  master_o.cyc <= s_xbus_cyc and not(s_instruction);
-  master_o.stb <= s_xbus_stb and not(s_instruction);
-  master_o.adr <= std_logic_vector(s_xbus_adr);
-  master_o.sel <= std_logic_vector(s_xbus_sel);
-  master_o.we  <= s_xbus_we and not(s_instruction);
-  master_o.dat <= std_logic_vector(s_xbus_dat_out);
+  s_arbited_master.cyc <= s_xbus_cyc and not(s_instruction);
+  s_arbited_master.stb <= s_xbus_stb and not(s_instruction);
+  s_arbited_master.adr <= std_logic_vector(s_xbus_adr);
+  s_arbited_master.sel <= std_logic_vector(s_xbus_sel);
+  s_arbited_master.we  <= s_xbus_we and not(s_instruction);
+  s_arbited_master.dat <= std_logic_vector(s_xbus_dat_out);
+
+  n_g_use_wb_adapter: if not g_use_wb_adapter generate
+    master_o <= s_arbited_master;
+  end generate;
+
+  y_g_use_wb_adapter: if g_use_wb_adapter generate
+    signal r_master_o       : t_wishbone_master_out;
+  begin
+    master_o <= r_master_o;
+
+    stall_register : process (clk_i, rstn_i) -- this should only apply in cycle mode '000' (single access)
+    begin
+      if(rstn_i = '0') then
+        r_master_o.cyc <= '0';
+        r_master_o.stb <= '0';
+        r_master_o.adr <= (others => '0');
+        r_master_o.sel <= (others => '0');
+        r_master_o.we  <= '0';
+        r_master_o.dat <= (others => '0');
+      elsif rising_edge(clk_i) then
+        if(master_i.STALL = '1' and s_arbited_master.stb = '1') then -- when the crossbar stalls, keep any strobe from the master
+          r_master_o <= s_arbited_master;
+        elsif ( master_i.STALL = '1' and r_master_o.stb = '1') then -- keep the signals until the stall ends
+          r_master_o <= r_master_o;
+        else
+          r_master_o <= s_arbited_master;
+        end if;
+      end if;
+    end process;
+  end generate;
 
   -- Wishbone arbiter (read from own RAM or access the whole Wishbone space)
   s_instruction <= '1' when
