@@ -29,6 +29,9 @@ int main(void)
   neorv32_rte_setup();
   neorv32_uart0_setup(BAUD_RATE, 0);
   neorv32_uart0_puts("Hello world!\n");
+  *cfs_register_0 = enable;
+  neorv32_uart0_printf("Got 0x%x\n", *(RAM_base_address + 0xc));
+  *cfs_register_0 = disable;
 
   /* Test return to start.s */
   return 0;
