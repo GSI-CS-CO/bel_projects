@@ -27,8 +27,8 @@ entity neorv32_shell is
     rstn_i     : in std_logic;
     rstn_ext_i : in std_logic;
     -- Peripherals
-    gpio_o     : out std_logic_vector(31 downto 0);
-    gpio_i     : in  std_logic_vector(31 downto 0) := (others => '0');
+    -- gpio_o     : out std_logic_vector(31 downto 0);
+    -- gpio_i     : in  std_logic_vector(31 downto 0) := (others => '0');
     uart_o     : out std_logic;
     -- Wishbone
     slave_i    : in  t_wishbone_slave_in;
@@ -123,10 +123,10 @@ begin
     MEM_INT_DMEM_EN   => true,
     MEM_INT_DMEM_SIZE => g_mem_int_dmem_size,
     IO_GPIO_NUM       => 32,
-    IO_UART0_EN       => true,
-    IO_CFS_EN         => true,
-    IO_CFS_IN_SIZE    => 33,  -- 32 data bits, 1 communication bit for the hardware
-    IO_CFS_OUT_SIZE   => 1    -- communication bit for the hardware (start burst)
+    IO_UART0_EN       => true --,
+    -- IO_CFS_EN         => true,
+    -- IO_CFS_IN_SIZE    => 33,  -- 32 data bits, 1 communication bit for the hardware
+    -- IO_CFS_OUT_SIZE   => 1    -- communication bit for the hardware (start burst)
   )
   port map (
     clk_i       => clk_i,
@@ -143,9 +143,9 @@ begin
     xbus_err_i  => s_xbus_err,
     gpio_o      => s_gpio_out,
     gpio_i      => s_gpio_in,
-    uart0_txd_o => uart_o,
-    cfs_in_i    => s_cfs_in,
-    cfs_out_o   => s_cfs_out
+    uart0_txd_o => uart_o --,
+    -- cfs_in_i    => s_cfs_in,
+    -- cfs_out_o   => s_cfs_out
   );
 
   -- Reset logic
@@ -165,7 +165,7 @@ begin
   end process;
 
   -- GPIOs
-  gpio_o <= std_logic_vector(s_gpio_out);
+  -- gpio_o <= std_logic_vector(s_gpio_out);
 
   -- Wishbone RAM
   neorv32_wb_ext_ram : xwb_dpram
@@ -212,9 +212,9 @@ begin
     signal s_block_rd     : std_logic;
   begin
 
-    p_output_demux: process (s_cfs_out, r_master_o, s_fifo_empty, s_fifo_out)
+    p_output_demux: process (s_gpio_out, r_master_o, s_fifo_empty, s_fifo_out)
     begin
-    if(s_cfs_out(0) = '0') then
+    if(s_gpio_out(0) = '0') then
       master_o <= r_master_o;
     else
       if(s_fifo_empty = '1') then  -- as long as there is no bus request from the processor keep the cycle open with a dummy output
@@ -222,7 +222,7 @@ begin
       else
         master_o <= to_master_out(s_fifo_out); -- when the ECA block cycle is active, it takes control of the bus until the transfer is done
         report "FIFO has request loaded"
-        severity warning;
+        severity note;
       end if;
     end if;
     end process;
@@ -240,7 +240,7 @@ begin
       g_with_almost_empty       => true
     )
     port map(
-      rst_n_i => s_cfs_out(0), -- if the burst mode signal is low the FIFO gets reset so it is empty for the next transfer
+      rst_n_i => s_gpio_out(0), -- if the burst mode signal is low the FIFO gets reset so it is empty for the next transfer
       clk_i   => clk_i,
       d_i     => to_vector(s_arbited_master), -- the whole wishbone transfer 
       we_i    => s_block_we,
