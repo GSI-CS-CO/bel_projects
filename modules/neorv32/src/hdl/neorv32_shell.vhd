@@ -221,8 +221,6 @@ begin
         master_o <= to_master_out(s_burst_dummy_master);
       else
         master_o <= to_master_out(s_fifo_out); -- when the ECA block cycle is active, it takes control of the bus until the transfer is done
-        report "FIFO has request loaded"
-        severity note;
       end if;
     end if;
     end process;
