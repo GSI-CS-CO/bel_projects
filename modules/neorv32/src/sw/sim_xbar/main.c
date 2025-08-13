@@ -9,26 +9,29 @@ int add_test(int a, int b);
 
 int main(void)
 {
-  int foo = 0;
-  int * p_foo = (int*) 0x00000000;
-  int foo_read = 0;
-  int test = 0x12345678;
+  int * cfs_register_0 = (int*) 0xffeb0000;
+  int enable = 0x00000001;
+  int disable = 0x00000000;
+  int * RAM_base_address = (int*) 0x00000000;
 
   /* Test Wishbone access */
-  *p_foo = 0xffffabcd;
-  foo_read = *p_foo;
+  *cfs_register_0 = enable;
+  *(RAM_base_address)   = 0x00000001;
+  *(RAM_base_address + 0x4)   = 0x00000002;
+  *(RAM_base_address + 0x8)   = 0x00000003;
+  *(RAM_base_address + 0xc)   = 0x00000004;
+  *(RAM_base_address + 0x10)  = 0x00000005;
+  *(RAM_base_address + 0x14)  = 0x00000006;
 
-  /* Test function call */
-  foo = add_test(5,4);
+  *cfs_register_0 = disable;
 
   /* Test UART */
   neorv32_rte_setup();
   neorv32_uart0_setup(BAUD_RATE, 0);
   neorv32_uart0_puts("Hello world!\n");
-  neorv32_uart0_printf("Got 0x%x\n", foo_read);
 
   /* Test return to start.s */
-  return foo_read;
+  return 0;
 }
 
 /* Simple test function with arguments */

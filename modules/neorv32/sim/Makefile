@@ -92,7 +92,9 @@ HDL_RTE_WISHBONE_FILES:=$(HDL_GEN_CORES_OFFSET)/modules/wishbone/wishbone_pkg.vh
                         $(HDL_GEN_CORES_OFFSET)/modules/wishbone/wb_slave_adapter/wb_slave_adapter.vhd\
 						$(HDL_GEN_CORES_OFFSET)/modules/wishbone/wb_crossbar/sdb_rom.vhd \
 						$(HDL_GEN_CORES_OFFSET)/modules/wishbone/wb_crossbar/xwb_crossbar.vhd \
-						$(HDL_GEN_CORES_OFFSET)/modules/wishbone/wb_crossbar/xwb_sdb_crossbar.vhd
+						$(HDL_GEN_CORES_OFFSET)/modules/wishbone/wb_crossbar/xwb_sdb_crossbar.vhd \
+						$(HDL_GEN_CORES_OFFSET)/modules/genrams/generic/generic_sync_fifo.vhd \
+						$(HDL_GEN_CORES_OFFSET)/modules/genrams/common/inferred_sync_fifo.vhd
 
 # Targets
 # ==============================================================================

@@ -39,6 +39,30 @@ end neorv32_shell;
 
 architecture rtl of neorv32_shell is
 
+  function to_vector(i : t_wishbone_master_out) return std_logic_vector is
+  variable v : std_logic_vector(c_wishbone_data_width + 1 + (c_wishbone_address_width/8) + c_wishbone_address_width + 1 downto 0);
+  begin
+    v(c_wishbone_data_width + 1 + (c_wishbone_address_width/8) + c_wishbone_address_width + 1)                                                                  := i.cyc;
+    v(c_wishbone_data_width + 1 + (c_wishbone_address_width/8) + c_wishbone_address_width)                                                                      := i.stb;
+    v(c_wishbone_data_width + 1 + (c_wishbone_address_width/8) + c_wishbone_address_width - 1 downto c_wishbone_data_width + 1 + (c_wishbone_address_width/8))  := i.adr;
+    v(c_wishbone_data_width + 1 + (c_wishbone_address_width/8) - 1 downto c_wishbone_address_width + 1)                                                         := i.sel;
+    v(c_wishbone_address_width)                                                                                                                                 := i.we;
+    v(c_wishbone_data_width-1 downto 0)                                                                                                                         := i.dat;
+    return v;
+  end function;
+
+  function to_master_out(i : std_logic_vector) return t_wishbone_master_out is
+  variable v : t_wishbone_master_out;
+  begin
+    v.cyc := '1';
+    v.stb := i(c_wishbone_data_width + 1 + (c_wishbone_address_width/8) + c_wishbone_address_width + 1);
+    v.adr := i(c_wishbone_data_width + 1 + (c_wishbone_address_width/8) + c_wishbone_address_width - 1 downto c_wishbone_data_width + 1 + (c_wishbone_address_width/8));
+    v.sel := i(c_wishbone_data_width + 1 + (c_wishbone_address_width/8) - 1 downto c_wishbone_address_width + 1);
+    v.we  := i(c_wishbone_address_width);
+    v.dat := i(c_wishbone_data_width-1 downto 0);
+    return v;
+  end function;
+
   constant c_wb_imem_base    : unsigned(31 downto 0) := unsigned(g_mem_wishbone_imem_addr);
   constant c_wb_imem_size    : unsigned(31 downto 0) := to_unsigned(g_mem_wishbone_imem_size, 32);
   constant c_wb_imem_end     : unsigned(31 downto 0) := c_wb_imem_base + c_wb_imem_size;
@@ -60,6 +84,12 @@ architecture rtl of neorv32_shell is
 
   signal s_gpio_out     : std_ulogic_vector(31 downto 0);
   signal s_gpio_in      : std_ulogic_vector(31 downto 0);
+
+  signal s_cfs_in       : std_ulogic_vector(32 downto 0);
+  signal s_cfs_out      : std_ulogic_vector(0 downto 0);
+
+  signal s_fifo_empty   : std_ulogic;
+  signal s_burst_dummy_master : std_logic_vector(1 + 1 + c_wishbone_address_width + (c_wishbone_address_width/8) + 1 + c_wishbone_data_width - 1 downto 0) := (others => '0');
 
   signal s_wb_ram_neorv32_i : t_wishbone_slave_in;
   signal s_wb_ram_neorv32_o : t_wishbone_slave_out;
@@ -93,7 +123,10 @@ begin
     MEM_INT_DMEM_EN   => true,
     MEM_INT_DMEM_SIZE => g_mem_int_dmem_size,
     IO_GPIO_NUM       => 32,
-    IO_UART0_EN       => true
+    IO_UART0_EN       => true,
+    IO_CFS_EN         => true,
+    IO_CFS_IN_SIZE    => 33,  -- 32 data bits, 1 communication bit for the hardware
+    IO_CFS_OUT_SIZE   => 1    -- communication bit for the hardware (start burst)
   )
   port map (
     clk_i       => clk_i,
@@ -110,7 +143,9 @@ begin
     xbus_err_i  => s_xbus_err,
     gpio_o      => s_gpio_out,
     gpio_i      => s_gpio_in,
-    uart0_txd_o => uart_o
+    uart0_txd_o => uart_o,
+    cfs_in_i    => s_cfs_in,
+    cfs_out_o   => s_cfs_out
   );
 
   -- Reset logic
@@ -170,10 +205,55 @@ begin
 
   y_g_use_wb_adapter: if g_use_wb_adapter generate
     signal r_master_o       : t_wishbone_master_out;
-  begin
-    master_o <= r_master_o;
 
-    stall_register : process (clk_i, rstn_i) -- this should only apply in cycle mode '000' (single access)
+    signal s_fifo_out     : std_logic_vector(1 + 1 + c_wishbone_address_width + (c_wishbone_address_width/8) + 1 + c_wishbone_data_width - 1 downto 0);
+    signal s_block_almost_empty  : std_logic;
+    signal s_block_we     : std_logic;
+    signal s_block_rd     : std_logic;
+  begin
+
+    p_output_demux: process (s_cfs_out, r_master_o, s_fifo_empty, s_fifo_out)
+    begin
+    if(s_cfs_out(0) = '0') then
+      master_o <= r_master_o;
+    else
+      if(s_fifo_empty = '1') then  -- as long as there is no bus request from the processor keep the cycle open with a dummy output
+        master_o <= to_master_out(s_burst_dummy_master);
+      else
+        master_o <= to_master_out(s_fifo_out); -- when the ECA block cycle is active, it takes control of the bus until the transfer is done
+        report "FIFO has request loaded"
+        severity warning;
+      end if;
+    end if;
+    end process;
+
+    s_block_we  <= s_arbited_master.stb;-- or s_block_almost_empty;
+    s_block_rd  <= not master_i.STALL;
+
+    block_transfer_FIFO: generic_sync_fifo
+    generic map(
+      g_data_width  => 1 + 1 + c_wishbone_address_width + (c_wishbone_address_width/8) + 1 + c_wishbone_data_width, -- size of all master out bus signals
+      g_size        => 6, -- number of transfers in an ECA burst
+      g_with_empty  => true,
+      g_with_full   => false,
+      g_show_ahead  => true,  -- so that no rd_i is necessary to see the first datum 
+      g_with_almost_empty       => true
+    )
+    port map(
+      rst_n_i => s_cfs_out(0), -- if the burst mode signal is low the FIFO gets reset so it is empty for the next transfer
+      clk_i   => clk_i,
+      d_i     => to_vector(s_arbited_master), -- the whole wishbone transfer 
+      we_i    => s_block_we,
+      q_o     => s_fifo_out,
+      rd_i    => s_block_rd,
+      empty_o => s_fifo_empty,
+      full_o  => open,
+      almost_empty_o  => s_block_almost_empty,
+      almost_full_o   => open,
+      count_o         => open
+    );
+
+    p_single_access : process (clk_i, rstn_i) -- single access wishbone adapter
     begin
       if(rstn_i = '0') then
         r_master_o.cyc <= '0';
