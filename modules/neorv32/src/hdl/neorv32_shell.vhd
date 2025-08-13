@@ -27,8 +27,8 @@ entity neorv32_shell is
     rstn_i     : in std_logic;
     rstn_ext_i : in std_logic;
     -- Peripherals
-    -- gpio_o     : out std_logic_vector(31 downto 0);
-    -- gpio_i     : in  std_logic_vector(31 downto 0) := (others => '0');
+    gpio_o     : out std_logic_vector(31 downto 0);
+    gpio_i     : in  std_logic_vector(31 downto 0) := (others => '0');
     uart_o     : out std_logic;
     -- Wishbone
     slave_i    : in  t_wishbone_slave_in;
@@ -39,6 +39,7 @@ end neorv32_shell;
 
 architecture rtl of neorv32_shell is
 
+  -- helper function to save the whole transfer request in one FIFO
   function to_vector(i : t_wishbone_master_out) return std_logic_vector is
   variable v : std_logic_vector(c_wishbone_data_width + 1 + (c_wishbone_address_width/8) + c_wishbone_address_width + 1 downto 0);
   begin
@@ -51,6 +52,7 @@ architecture rtl of neorv32_shell is
     return v;
   end function;
 
+  -- helper function to save the whole transfer request in one FIFO
   function to_master_out(i : std_logic_vector) return t_wishbone_master_out is
   variable v : t_wishbone_master_out;
   begin
@@ -88,7 +90,6 @@ architecture rtl of neorv32_shell is
   signal s_cfs_in       : std_ulogic_vector(32 downto 0);
   signal s_cfs_out      : std_ulogic_vector(0 downto 0);
 
-  signal s_fifo_empty   : std_ulogic;
   signal s_burst_dummy_master : std_logic_vector(1 + 1 + c_wishbone_address_width + (c_wishbone_address_width/8) + 1 + c_wishbone_data_width - 1 downto 0) := (others => '0');
 
   signal s_wb_ram_neorv32_i : t_wishbone_slave_in;
@@ -123,10 +124,7 @@ begin
     MEM_INT_DMEM_EN   => true,
     MEM_INT_DMEM_SIZE => g_mem_int_dmem_size,
     IO_GPIO_NUM       => 32,
-    IO_UART0_EN       => true --,
-    -- IO_CFS_EN         => true,
-    -- IO_CFS_IN_SIZE    => 33,  -- 32 data bits, 1 communication bit for the hardware
-    -- IO_CFS_OUT_SIZE   => 1    -- communication bit for the hardware (start burst)
+    IO_UART0_EN       => true
   )
   port map (
     clk_i       => clk_i,
@@ -143,9 +141,7 @@ begin
     xbus_err_i  => s_xbus_err,
     gpio_o      => s_gpio_out,
     gpio_i      => s_gpio_in,
-    uart0_txd_o => uart_o --,
-    -- cfs_in_i    => s_cfs_in,
-    -- cfs_out_o   => s_cfs_out
+    uart0_txd_o => uart_o
   );
 
   -- Reset logic
@@ -165,7 +161,7 @@ begin
   end process;
 
   -- GPIOs
-  -- gpio_o <= std_logic_vector(s_gpio_out);
+  gpio_o <= std_logic_vector(s_gpio_out);
 
   -- Wishbone RAM
   neorv32_wb_ext_ram : xwb_dpram
@@ -207,35 +203,35 @@ begin
     signal r_master_o       : t_wishbone_master_out;
 
     signal s_fifo_out     : std_logic_vector(1 + 1 + c_wishbone_address_width + (c_wishbone_address_width/8) + 1 + c_wishbone_data_width - 1 downto 0);
-    signal s_block_almost_empty  : std_logic;
     signal s_block_we     : std_logic;
     signal s_block_rd     : std_logic;
+    signal s_fifo_empty   : std_logic;
   begin
 
     p_output_demux: process (s_gpio_out, r_master_o, s_fifo_empty, s_fifo_out)
     begin
     if(s_gpio_out(0) = '0') then
       master_o <= r_master_o;
-    else
+    else -- when the ECA block cycle is active, it takes control of the bus until the transfer is done
       if(s_fifo_empty = '1') then  -- as long as there is no bus request from the processor keep the cycle open with a dummy output
         master_o <= to_master_out(s_burst_dummy_master);
       else
-        master_o <= to_master_out(s_fifo_out); -- when the ECA block cycle is active, it takes control of the bus until the transfer is done
+        master_o <= to_master_out(s_fifo_out); 
       end if;
     end if;
     end process;
 
-    s_block_we  <= s_arbited_master.stb;-- or s_block_almost_empty;
+    s_block_we  <= s_arbited_master.stb;
     s_block_rd  <= not master_i.STALL;
 
+    -- FIFO to stall transfers that are requested during a stall cycle 
     block_transfer_FIFO: generic_sync_fifo
     generic map(
       g_data_width  => 1 + 1 + c_wishbone_address_width + (c_wishbone_address_width/8) + 1 + c_wishbone_data_width, -- size of all master out bus signals
-      g_size        => 6, -- number of transfers in an ECA burst
+      g_size        => 8, -- number of transfers in an ECA burst, thus the assumed maximum transfers per cycle
       g_with_empty  => true,
       g_with_full   => false,
-      g_show_ahead  => true,  -- so that no rd_i is necessary to see the first datum 
-      g_with_almost_empty       => true
+      g_show_ahead  => true  -- so that no rd_i is necessary to see the first datum 
     )
     port map(
       rst_n_i => s_gpio_out(0), -- if the burst mode signal is low the FIFO gets reset so it is empty for the next transfer
@@ -246,7 +242,7 @@ begin
       rd_i    => s_block_rd,
       empty_o => s_fifo_empty,
       full_o  => open,
-      almost_empty_o  => s_block_almost_empty,
+      almost_empty_o  => open,
       almost_full_o   => open,
       count_o         => open
     );
