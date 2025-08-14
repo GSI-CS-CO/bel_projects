@@ -548,7 +548,7 @@ begin
         extended_o => s_lemo_leds(i));
   end generate;
 
-  tri_state_a_d: process (A_D, scub_d_tri_out)
+  tri_state_a_d: process (A_D, scub_d_tri_out, A_D_mux)
   begin
     if (scub_d_tri_out = '1' ) then
       A_D <= A_D_mux;
@@ -558,7 +558,7 @@ begin
   end process;
 
 
-  standalone_backplane : process (is_rmt)
+  standalone_backplane : process (is_rmt, s_lemo_io, A_D_mux, scub_A_RnW, scub_nSEL, scub_d_out, scub_a, scub_nsel_ext_data_drv, A_D)
   begin
     if (is_rmt = '1') then
       A_RnW             <= '0';           -- set drivers to output
@@ -655,7 +655,12 @@ begin
     A_D_mux(8) <= scub_d_out(8);
     A_D_mux(9) <= scub_d_out(9);
 
-    scub_d_in <= A_D_mux;
+    A_A(0) <= scub_a(0);
+    A_A(1) <= scub_a(1);
+    A_A(2) <= scub_a(2);
+    A_A(3) <= scub_a(3);
+
+    scub_d_in <= A_D;
 
   end process;
 
