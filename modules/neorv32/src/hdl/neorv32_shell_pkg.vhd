@@ -31,8 +31,8 @@ package neorv32_shell_pkg is
       rstn_i     : in std_logic;
       rstn_ext_i : in std_logic;
       -- Peripherals
-      gpio_o     : out std_logic_vector(31 downto 0);
-      gpio_i     : in  std_logic_vector(31 downto 0) := (others => '0');
+      -- gpio_o     : out std_logic_vector(31 downto 0);
+      -- gpio_i     : in  std_logic_vector(31 downto 0) := (others => '0');
       uart_o     : out std_logic;
       -- Wishbone
       slave_i    : in  t_wishbone_slave_in;

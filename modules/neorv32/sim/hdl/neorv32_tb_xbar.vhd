@@ -80,8 +80,8 @@ begin
     slave_o    => s_dummy_slave_o,
     master_i   => cbar_slave_o(0),
     master_o   => cbar_slave_i(0),
-    gpio_o     => s_gpio_out,
-    gpio_i     => s_gpio_in,
+    -- gpio_o     => s_gpio_out,
+    -- gpio_i     => s_gpio_in,
     uart_o     => s_uart_out
   );
 

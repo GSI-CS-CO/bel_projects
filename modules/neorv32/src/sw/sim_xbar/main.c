@@ -2,37 +2,35 @@
 #include <stdlib.h>
 #include <neorv32.h>
 #include <neorv32_uart.h>
+#include <neorv32_gpio.h>
 
-#define BAUD_RATE 921600
+// 1152000 for real hardware, 921600 for simulation
+#define BAUD_RATE 921600 
 
-int add_test(int a, int b);
+#define deadlineHigh  0x00000101
+#define deadlineLow   0xc9a08560;
+#define evtIDHigh     0x00000000;
+#define evtIDLow      0x00236ba9;
+#define paramHigh     0x00000000;
+#define paramLow      0x133358a4;
 
 int main(void)
 {
-  int foo = 0;
-  int * p_foo = (int*) 0x00000000;
-  int foo_read = 0;
-  int test = 0x12345678;
+  int * eca_queue = (int*) 0x7ffffff0;
 
-  /* Test Wishbone access */
-  *p_foo = 0xffffabcd;
-  foo_read = *p_foo;
+  /* Test ECA queue injection */
+  neorv32_gpio_pin_set(0, 1);
 
-  /* Test function call */
-  foo = add_test(5,4);
+  *(eca_queue)   = evtIDHigh;
+  *(eca_queue)   = evtIDLow;
+  *(eca_queue)   = paramHigh;
+  *(eca_queue)   = paramLow;
+  *(eca_queue)   = 0x0;
+  *(eca_queue)   = 0x0;
+  *(eca_queue)   = deadlineHigh;
+  *(eca_queue)   = deadlineLow;
 
-  /* Test UART */
-  neorv32_rte_setup();
-  neorv32_uart0_setup(BAUD_RATE, 0);
-  neorv32_uart0_puts("Hello world!\n");
-  neorv32_uart0_printf("Got 0x%x\n", foo_read);
+  neorv32_gpio_pin_set(0, 0);
 
-  /* Test return to start.s */
-  return foo_read;
-}
-
-/* Simple test function with arguments */
-int add_test(int a, int b)
-{
-  return a+b;
+  return 0;
 }

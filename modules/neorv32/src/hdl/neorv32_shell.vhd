@@ -39,6 +39,32 @@ end neorv32_shell;
 
 architecture rtl of neorv32_shell is
 
+  -- helper function to save the whole transfer request in one FIFO
+  function to_vector(i : t_wishbone_master_out) return std_logic_vector is
+  variable v : std_logic_vector(c_wishbone_data_width + 1 + (c_wishbone_address_width/8) + c_wishbone_address_width + 1 downto 0);
+  begin
+    v(c_wishbone_data_width + 1 + (c_wishbone_address_width/8) + c_wishbone_address_width + 1)                                                                  := i.cyc;
+    v(c_wishbone_data_width + 1 + (c_wishbone_address_width/8) + c_wishbone_address_width)                                                                      := i.stb;
+    v(c_wishbone_data_width + 1 + (c_wishbone_address_width/8) + c_wishbone_address_width - 1 downto c_wishbone_data_width + 1 + (c_wishbone_address_width/8))  := i.adr;
+    v(c_wishbone_data_width + 1 + (c_wishbone_address_width/8) - 1 downto c_wishbone_address_width + 1)                                                         := i.sel;
+    v(c_wishbone_address_width)                                                                                                                                 := i.we;
+    v(c_wishbone_data_width-1 downto 0)                                                                                                                         := i.dat;
+    return v;
+  end function;
+
+  -- helper function to save the whole transfer request in one FIFO
+  function to_master_out(i : std_logic_vector) return t_wishbone_master_out is
+  variable v : t_wishbone_master_out;
+  begin
+    v.cyc := '1';
+    v.stb := i(c_wishbone_data_width + 1 + (c_wishbone_address_width/8) + c_wishbone_address_width + 1);
+    v.adr := i(c_wishbone_data_width + 1 + (c_wishbone_address_width/8) + c_wishbone_address_width - 1 downto c_wishbone_data_width + 1 + (c_wishbone_address_width/8));
+    v.sel := i(c_wishbone_data_width + 1 + (c_wishbone_address_width/8) - 1 downto c_wishbone_address_width + 1);
+    v.we  := i(c_wishbone_address_width);
+    v.dat := i(c_wishbone_data_width-1 downto 0);
+    return v;
+  end function;
+
   constant c_wb_imem_base    : unsigned(31 downto 0) := unsigned(g_mem_wishbone_imem_addr);
   constant c_wb_imem_size    : unsigned(31 downto 0) := to_unsigned(g_mem_wishbone_imem_size, 32);
   constant c_wb_imem_end     : unsigned(31 downto 0) := c_wb_imem_base + c_wb_imem_size;
@@ -60,6 +86,11 @@ architecture rtl of neorv32_shell is
 
   signal s_gpio_out     : std_ulogic_vector(31 downto 0);
   signal s_gpio_in      : std_ulogic_vector(31 downto 0);
+
+  signal s_cfs_in       : std_ulogic_vector(32 downto 0);
+  signal s_cfs_out      : std_ulogic_vector(0 downto 0);
+
+  signal s_burst_dummy_master : std_logic_vector(1 + 1 + c_wishbone_address_width + (c_wishbone_address_width/8) + 1 + c_wishbone_data_width - 1 downto 0) := (others => '0');
 
   signal s_wb_ram_neorv32_i : t_wishbone_slave_in;
   signal s_wb_ram_neorv32_o : t_wishbone_slave_out;
@@ -170,10 +201,53 @@ begin
 
   y_g_use_wb_adapter: if g_use_wb_adapter generate
     signal r_master_o       : t_wishbone_master_out;
-  begin
-    master_o <= r_master_o;
 
-    stall_register : process (clk_i, rstn_i) -- this should only apply in cycle mode '000' (single access)
+    signal s_fifo_out     : std_logic_vector(1 + 1 + c_wishbone_address_width + (c_wishbone_address_width/8) + 1 + c_wishbone_data_width - 1 downto 0);
+    signal s_block_we     : std_logic;
+    signal s_block_rd     : std_logic;
+    signal s_fifo_empty   : std_logic;
+  begin
+
+    p_output_demux: process (s_gpio_out, r_master_o, s_fifo_empty, s_fifo_out)
+    begin
+    if(s_gpio_out(0) = '0') then
+      master_o <= r_master_o;
+    else -- when the ECA block cycle is active, it takes control of the bus until the transfer is done
+      if(s_fifo_empty = '1') then  -- as long as there is no bus request from the processor keep the cycle open with a dummy output
+        master_o <= to_master_out(s_burst_dummy_master);
+      else
+        master_o <= to_master_out(s_fifo_out); 
+      end if;
+    end if;
+    end process;
+
+    s_block_we  <= s_arbited_master.stb;
+    s_block_rd  <= not master_i.STALL;
+
+    -- FIFO to stall transfers that are requested during a stall cycle 
+    block_transfer_FIFO: generic_sync_fifo
+    generic map(
+      g_data_width  => 1 + 1 + c_wishbone_address_width + (c_wishbone_address_width/8) + 1 + c_wishbone_data_width, -- size of all master out bus signals
+      g_size        => 8, -- number of transfers in an ECA burst, thus the assumed maximum transfers per cycle
+      g_with_empty  => true,
+      g_with_full   => false,
+      g_show_ahead  => true  -- so that no rd_i is necessary to see the first datum 
+    )
+    port map(
+      rst_n_i => s_gpio_out(0), -- if the burst mode signal is low the FIFO gets reset so it is empty for the next transfer
+      clk_i   => clk_i,
+      d_i     => to_vector(s_arbited_master), -- the whole wishbone transfer 
+      we_i    => s_block_we,
+      q_o     => s_fifo_out,
+      rd_i    => s_block_rd,
+      empty_o => s_fifo_empty,
+      full_o  => open,
+      almost_empty_o  => open,
+      almost_full_o   => open,
+      count_o         => open
+    );
+
+    p_single_access : process (clk_i, rstn_i) -- single access wishbone adapter
     begin
       if(rstn_i = '0') then
         r_master_o.cyc <= '0';
