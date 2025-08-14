@@ -1019,8 +1019,8 @@ P_SCUB_Tri_State: PROCESS (SCUB_SM, S_Wr_Data, tag_fifo_q)
       SCUB_Data_Out <= S_Wr_Data;
     ELSIF (SCUB_SM = Ti_Cyc) OR (SCUB_SM = E_Ti_Cyc) THEN
       SCUB_Data_Out <= tag_fifo_q(15 DOWNTO 0);
-    --ELSE
-      --SCUB_Data <= (OTHERS => 'Z');
+    ELSE
+      SCUB_Data_Out <= (OTHERS => '0');
     END IF;
   END PROCESS P_SCUB_Tri_State;
   SCUB_Data_Tri_Out <= '1' when (SCUB_SM = S_Wr_Cyc) OR (SCUB_SM = Wr_Cyc) OR (SCUB_SM = Ti_Cyc) OR (SCUB_SM = E_Ti_Cyc) else '0';
