@@ -26,16 +26,18 @@ begin
 
   mx: process (clk, rst_n_i, is_standalone, scu_slave_i)
   begin
-    if is_standalone = '1' then
-      scu_slave_o.ack   <= '0';
-      scu_slave_o.stall <= '0';
-      if rising_edge(clk) then
+    if rising_edge(clk) then
+      if is_standalone = '1' then
+        scu_slave_o.ack   <= '0';
+        scu_slave_o.stall <= '0';
         scu_slave_o.err <= scu_slave_i.cyc and scu_slave_i.stb;
         scu_slave_o.dat <= x"deadbeef";
+      else
+        scu_slave_o <= scu_slave_out;
+        scu_slave_in <= scu_slave_i;
       end if;
-    else
-      scu_slave_o <= scu_slave_out;
-      scu_slave_in <= scu_slave_i;
     end if;
+
   end process;
+
 end architecture;
