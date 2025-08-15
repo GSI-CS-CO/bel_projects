@@ -1839,11 +1839,12 @@ end generate;
     top_msi_master_i(top_my_masters'pos(topm_neorv32)) <= cc_dummy_slave_out;
     neorv32_shell_wrapper : neorv32_shell
     generic map(
-      g_clock_frequency        => 62500000,
-      g_mem_wishbone_imem_size => g_neorv32_ramsize,
-      g_mem_wishbone_imem_addr => std_ulogic_vector(c_neorv32_ram_addr),
-      g_sdb_addr               => c_top_sdb_address,
-      g_mem_wishbone_init_file => "../../../modules/neorv32/src/sw/idle-init/program.mif"
+      g_clock_frequency         => 62500000,
+      g_mem_wishbone_imem_size  => g_neorv32_ramsize,
+      g_mem_wishbone_imem_addr  => std_ulogic_vector(c_neorv32_ram_addr),
+      g_sdb_addr                => c_top_sdb_address,
+      g_mem_wishbone_init_file  => "../../../../../modules/neorv32/src/sw/idle-init/program.mif",
+      g_use_wb_adapter          => true
     )
     port map(
       clk_i       => clk_sys,
