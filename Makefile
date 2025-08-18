@@ -724,5 +724,5 @@ test_lm32_examples:
 	$(MAKE) -C modules/lm32-example TARGET=ecaMsiExample
 	$(MAKE) -C modules/lm32-example TARGET=timerExample
 	$(MAKE) -C modules/lm32-example TARGET=example
-#	$(MAKE) -C modules/lm32-example TARGET=milExample
-#	$(MAKE) -C modules/lm32-example TARGET=milSnooper
+	$(MAKE) -C modules/lm32-example TARGET=milExample
+	$(MAKE) -C modules/lm32-example TARGET=milSnooper
