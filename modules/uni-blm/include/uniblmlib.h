@@ -125,8 +125,7 @@ extern "C" {
   
   // get info from firmware, returns error code
   uint32_t uniblm_info_read(uint64_t ebDevice,                   // EB device
-                            uint32_t *getC,                      // get value C
-                            uint32_t *getD,                      // get value D
+                            uint32_t *getReloadCounter,          // get value ReloadCounter
                             int printFlag                        // print info to screen
                             );
 
@@ -144,7 +143,7 @@ extern "C" {
   
   // uploads configuration, returns error code
   uint32_t uniblm_upload(uint64_t ebDevice,                      // EB device
-                          uint32_t setA                          // bogus parameter
+                          uint32_t setEventKey                   // bogus parameter
                          );
 
   // commands requesting state transitions

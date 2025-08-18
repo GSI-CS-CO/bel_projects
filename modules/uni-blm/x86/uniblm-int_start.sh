@@ -47,12 +47,9 @@ sleep 2
 uniblm-ctl $TRGW startop
 
 ###########################################
-# configure ECA
+# configuration of the ECA is done dynamically
+# by the userspace application
 ###########################################
-
-# lm32 listens to timing messages
-# UNIBLM_ECADO_EVT_BEAM_ON: listen to beam on
-saft-ecpu-ctl $SDGW -c 0x1250006000000000 0xfffffff000000000 0 0x006 -d
 
 ###########################################
 # reset diagnostics

@@ -17,13 +17,11 @@
 // activity requested by ECA Handler, the relevant codes are also used as "tags"
 #define UNIBLM_ECADO_TIMEOUT    COMMON_ECADO_TIMEOUT
 #define UNIBLM_ECADO_UNKOWN                   1   // unkown activity requested (unexpected action by ECA)
-#define UNIBLM_ECADO_EVT_BEAM_ON          0x006   // EVT_BEAM_ON
 
 // commands from the outside
 
 // GIDs
 #define GID_INVALID                         0x0   // invalid GID
-#define GID_PZU_QR                        0x250   // UNILAC Timing - Source Right
 
 // constants
 
@@ -35,15 +33,13 @@
 
 // offsets
 // set values
-#define UNIBLM_SHARED_SET_A                 (COMMON_SHARED_END                  + _32b_SIZE_)  // set value A
-#define UNIBLM_SHARED_SET_B                 (UNIBLM_SHARED_SET_A                + _32b_SIZE_)  // set value B
+#define UNIBLM_SHARED_SET_EVENT_KEY         (COMMON_SHARED_END                  + _32b_SIZE_)  // set event key
 
 
 // get values
-#define UNIBLM_SHARED_GET_C                 (UNIBLM_SHARED_SET_B                + _32b_SIZE_)  // get value C
-#define UNIBLM_SHARED_GET_D                 (UNIBLM_SHARED_GET_C                + _32b_SIZE_)  // get value D
+#define UNIBLM_SHARED_GET_RELOAD_COUNTER    (UNIBLM_SHARED_SET_EVENT_KEY        + _32b_SIZE_)  // get counter of reload events
 
 // diagnosis: end of used shared memory
-#define UNIBLM_SHARED_END                   (UNIBLM_SHARED_GET_D                + _32b_SIZE_) 
+#define UNIBLM_SHARED_END                   (UNIBLM_SHARED_GET_RELOAD_COUNTER   + _32b_SIZE_)
 
 #endif

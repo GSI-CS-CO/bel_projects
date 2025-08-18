@@ -41,7 +41,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include <math.h>
 #include <time.h>
 
 // Etherbone
@@ -72,7 +71,7 @@ static void help(void) {
   fprintf(stderr, "  -h                  display this help and exit\n"                                 );
   fprintf(stderr, "  -e                  display version\n"                                            );
   fprintf(stderr, "  -i                  show blm information\n"                                       );
-  fprintf(stderr, "  -w <setA>           set parameter AO\n"                                           );
+  fprintf(stderr, "  -w <eventKey>       set parameter eventKey\n"                                           );
   fprintf(stderr, "                      \n");
   fprintf(stderr, "\n");
   fprintf(stderr, "  configure           command requests state change from IDLE or CONFIGURED -> CONFIGURED\n");
@@ -120,12 +119,11 @@ int main(int argc, char** argv) {
   uint32_t cpu;
   uint32_t status;
 
-  uint32_t setA;
-  uint32_t getC;
-  uint32_t getD;
+  uint32_t setEventKey;
+  uint32_t getReloadCounter;
    
   program = argv[0];
-  setA    = 42;
+  setEventKey = 42;
   
 
   while ((opt = getopt(argc, argv, "w:hei")) != -1) {
@@ -137,7 +135,7 @@ int main(int argc, char** argv) {
         getInfo = 1;
         break;
       case 'w':
-        setA = strtol(optarg, &tail, 0);
+        setEventKey = strtol(optarg, &tail, 0);
         if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1;}
         break;
       case 'h':
@@ -184,7 +182,7 @@ int main(int argc, char** argv) {
 
     uniblm_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, &nLate, 0);
 
-    uniblm_info_read(ebDevice, &getC, &getD, 0);
+    uniblm_info_read(ebDevice, &getReloadCounter, 0);
     
     // print set status bits (except OK)
     for (i = COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
@@ -200,7 +198,7 @@ int main(int argc, char** argv) {
     if (!strcasecmp(command, "configure")) {
       if ((state != COMMON_STATE_CONFIGURED) && (state != COMMON_STATE_IDLE)) printf("uni-blm: WARNING command has no effect (not in state CONFIGURED or IDLE)\n");
       else {
-        if (uniblm_upload(ebDevice, setA) != COMMON_STATUS_OK) die("uni-blm upload", status);
+        if (uniblm_upload(ebDevice, setEventKey) != COMMON_STATUS_OK) die("uni-blm upload", status);
         uniblm_cmd_configure(ebDevice);
       } // else state
     } // "configure"
@@ -237,7 +235,7 @@ int main(int argc, char** argv) {
         if ((statusArray >> i) & 0x1)  printf("    status bit is set : %s\n", uniblm_status_text(i));
       } // for i
 
-      uniblm_info_read(ebDevice, &getC, &getD, 1);
+      uniblm_info_read(ebDevice, &getReloadCounter, 1);
     } // "diag"    
   } //if command
 
