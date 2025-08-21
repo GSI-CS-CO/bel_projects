@@ -14,6 +14,8 @@ prefix="/usr/bin"
 fw_rxscu="fbas16.scucontrol.bin"      # default LM32 FW for RX SCU
 script_rxscu="$prefix/setup_local.sh" # shell script on remote host
 
+ssh_cmd="ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10"
+
 usage() {
     echo "Usage: $0 [OPTION]"
     echo "Run basic test to check timing message transfer between 2 SCUs."
@@ -42,6 +44,14 @@ report_check() {
     fi
 }
 
+run_remote() {
+    # $1 - remote host name
+    # $@ - commands for the remote host
+
+    local host=$1; shift
+    timeout 20 sshpass -p "$userpasswd" $ssh_cmd $username@$host "$@"
+}
+
 main() {
     # parse script arguments
     unset option username userpasswd verbose
@@ -64,7 +74,7 @@ main() {
     fi
 
     if [ -z "$userpasswd" ]; then
-        read -rsp "password for '$username' : " userpasswd
+        read -rsp "password for '$username' : " userpasswd; echo
     fi
 
     echo "check deployment"
@@ -73,19 +83,18 @@ main() {
     filenames="$fw_rxscu $script_rxscu"
 
     for filename in $filenames; do
-        timeout 10 sshpass -p "$userpasswd" ssh $username@$rxscu "if [ ! -f $filename ]; then echo $filename not found on ${rxscu}; exit 2; fi"
-        result=$?
-        report_check $result $filename $rxscu
+        run_remote $rxscu "if [ ! -f $filename ]; then echo $filename not found on ${rxscu}; exit 2; fi"
+        report_check $? $filename $rxscu
     done
 
     echo -e "\nset up nodes\n------------"
-    timeout 20 sshpass -p "$userpasswd" ssh $username@$rxscu "source setup_local.sh && setup_mpsrx $fw_rxscu SENDER_ALL"
-    timeout 20 sshpass -p "$userpasswd" ssh $username@$txscu "source setup_local.sh && setup_mpstx"
+    run_remote $rxscu "source setup_local.sh && setup_mpsrx $fw_rxscu SENDER_ALL"
+    run_remote $txscu "source setup_local.sh && setup_mpstx"
 
     echo 'start test4 (RX, TX)'
     echo "-----------"
-    timeout 20 sshpass -p "$userpasswd" ssh $username@$rxscu "source setup_local.sh && start_test4 \$rx_node_dev"
-    timeout 20 sshpass -p "$userpasswd" ssh $username@$txscu "source setup_local.sh && start_test4 \$tx_node_dev"
+    run_remote $rxscu "source setup_local.sh && start_test4 \$rx_node_dev"
+    run_remote $txscu "source setup_local.sh && start_test4 \$tx_node_dev"
 
     echo "wait $sleep_sec seconds (start Xenabay schedule now)"
     echo "------------"
@@ -94,19 +103,18 @@ main() {
     echo 'stop test4 (TX, RX)'
     echo "----------"
     echo -n "TX: "
-    timeout 20 sshpass -p "$userpasswd" ssh $username@$txscu "source setup_local.sh && stop_test4 \$tx_node_dev && \
+    run_remote $txscu "source setup_local.sh && stop_test4 \$tx_node_dev && \
         read_counters \$tx_node_dev $verbose"
     echo -n "RX: "
-    timeout 20 sshpass -p "$userpasswd" ssh $username@$rxscu "source setup_local.sh && stop_test4 \$rx_node_dev && \
+    run_remote $rxscu "source setup_local.sh && stop_test4 \$rx_node_dev && \
         read_counters \$rx_node_dev $verbose && result_msg_delay \$rx_node_dev $verbose"
 }
 
 export -f report_check
 
-while getopts 's' c
-do
-    case $c in
-        s) echo "sourced ${BASH_SOURCE[0]}" ;;  # source script, do not run it!
-        *) main "$@" ;;                         # run script
-    esac
-done
+# source script, if '-s' option is given, otherwise, run script!
+if [ "$1" = "-s" ]; then
+    echo "sourced ${BASH_SOURCE[0]}" # do not run it!
+else
+    main "$@"
+fi
