@@ -472,10 +472,8 @@ setup_mpsrx() {
     load_node_fw "$node_dev_label" "$1"
 
     echo "CONFIGURE state "
-    if [ $# -gt 2 ]; then
-        shift
-        configure_node "$node_dev_label" "$@"
-    fi
+    shift
+    configure_node "$node_dev_label" "$@"
 
     echo "OPREADY state "
     make_node_ready "$node_dev_label"

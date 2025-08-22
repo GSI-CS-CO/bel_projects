@@ -81,14 +81,31 @@ main() {
     echo "----------------"
 
     filenames="$fw_rxscu $script_rxscu"
+    scus="$rxscu $txscu"
 
-    for filename in $filenames; do
-        run_remote $rxscu "if [ ! -f $filename ]; then echo $filename not found on ${rxscu}; exit 2; fi"
-        report_check $? $filename $rxscu
+    for scu in $scus; do
+        for filename in $filenames; do
+            run_remote $scu "if [ ! -f $filename ]; then echo $filename not found on ${scu}; exit 2; fi"
+            report_check $? $filename $scu
+        done
     done
 
     echo -e "\nset up nodes\n------------"
-    run_remote $rxscu "source setup_local.sh && setup_mpsrx $fw_rxscu SENDER_ALL"
+
+    # set up the sender options (SENDER_ALL or SENDER_TX with MAC address)
+    sender_opts="SENDER_ALL"                             # default for all senders
+    mac_addr=$(run_remote $txscu "eb-mon -m dev/wbm0")   # get MAC address of the sender
+    ret_code=$?
+    if [ $ret_code -eq 0 ]; then
+        sender_opts="SENDER_TX $mac_addr"
+    else
+        echo "$0: warning: Could not obtain the MAC address of $txscu and it might cause following issue:"
+        echo "$0: - MAC address is needed to register $txscu as sender."
+        echo "$0: - Un-registered sender may not send the timing messages (EvtID: 0x1fcbfcb000000000)."
+        echo "$0: - Hence, test may fail!"
+    fi
+
+    run_remote $rxscu "source setup_local.sh && setup_mpsrx $fw_rxscu $sender_opts"
     run_remote $txscu "source setup_local.sh && setup_mpstx"
 
     echo 'start test4 (RX, TX)'
