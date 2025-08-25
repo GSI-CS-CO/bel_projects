@@ -31,15 +31,19 @@
 // DP RAM
 // ****************************************************************************************
 
+// BLM gateware does support this amount of counter groups
+#define UNIBLM_NUMBER_OF_COUNTER_GROUPS 16
+
 // offsets
 // set values
 #define UNIBLM_SHARED_SET_EVENT_KEY         (COMMON_SHARED_END                  + _32b_SIZE_)  // set event key
 
+// get values of the 16 groups
+//                   _________
+#define UNIBLM_SHARED_GET_RELOAD_COUNTER_0  (UNIBLM_SHARED_SET_EVENT_KEY        + _32b_SIZE_)  // get counter of reload events
 
-// get values
-#define UNIBLM_SHARED_GET_RELOAD_COUNTER    (UNIBLM_SHARED_SET_EVENT_KEY        + _32b_SIZE_)  // get counter of reload events
 
 // diagnosis: end of used shared memory
-#define UNIBLM_SHARED_END                   (UNIBLM_SHARED_GET_RELOAD_COUNTER   + _32b_SIZE_)
+#define UNIBLM_SHARED_END                   (UNIBLM_SHARED_GET_RELOAD_COUNTER_0 + (UNIBLM_NUMBER_OF_COUNTER_GROUPS*_32b_SIZE_))
 
 #endif

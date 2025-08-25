@@ -80,7 +80,7 @@ uint64_t SHARED  dummy = 0;
 // global variables 
 volatile uint32_t *pShared;                // pointer to begin of shared memory region
 volatile uint32_t *pSharedSetEventKey;     // pointer to a "user defined" u32 register; here: set event key
-volatile uint32_t *pSharedGetReloadCounter; // pointer to a "user defined" u32 register; here: get counter of reload events
+volatile uint32_t *pSharedGetReloadCounters[UNIBLM_NUMBER_OF_COUNTER_GROUPS]; // pointers to "user defined" u32 registers; here: get counter of reload events for counter groups.
 
 uint32_t *cpuRamExternal;                  // external address (seen from host bridge) of this CPU's RAM
 
@@ -93,7 +93,7 @@ int32_t  maxComLatency;                    // max of com latency
 uint32_t maxOffsDone;                      // max of offset done
 
 uint32_t eventKey;                         // used by the BLM diob gateware to filter incoming ECA events (Not used yet)
-uint32_t reloadCounter;                    // counts number of valid ECA actions
+uint32_t reloadCounters[UNIBLM_NUMBER_OF_COUNTER_GROUPS];
 
 
 void init() // typical init for lm32
@@ -118,7 +118,9 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
 
   // get address to data
   pSharedSetEventKey         = (uint32_t *)(pShared + (UNIBLM_SHARED_SET_EVENT_KEY         >> 2));
-  pSharedGetReloadCounter    = (uint32_t *)(pShared + (UNIBLM_SHARED_GET_RELOAD_COUNTER    >> 2));
+  for(unsigned int counterIndex=0; counterIndex<UNIBLM_NUMBER_OF_COUNTER_GROUPS; ++counterIndex) {
+    pSharedGetReloadCounters[counterIndex] = (uint32_t *)(pShared + ((UNIBLM_SHARED_GET_RELOAD_COUNTER_0+(_32b_SIZE_*counterIndex)) >> 2));
+  }
 
   // find address of CPU from external perspective
   idx = 0;
@@ -166,7 +168,7 @@ void extern_clearDiag()
   comLatency    = 0x0;
   maxComLatency = 0x0;
   maxOffsDone   = 0x0;
-  reloadCounter = 0x0;
+  memset(reloadCounters, 0, sizeof(reloadCounters));
 } // extern_clearDiag 
 
 
@@ -205,14 +207,16 @@ uint32_t extern_entryActionOperation()
   DBPRINT1("uni-blm: ECA queue flushed - removed %u pending entries from ECA queue\n", i);
     
   // init get values
-  *pSharedGetReloadCounter  = 0x0;
+  for(unsigned int counterIndex=0; counterIndex<UNIBLM_NUMBER_OF_COUNTER_GROUPS; ++counterIndex) {
+    *pSharedGetReloadCounters[counterIndex] = 0;
+  }
 
   nEvtsLate                 = 0;
   offsDone                  = 0;
   comLatency                = 0;
   maxComLatency             = 0;
   maxOffsDone               = 0;
-  reloadCounter             = 0;
+  memset(reloadCounters, 0, sizeof(reloadCounters));
 
   return COMMON_STATUS_OK;
 } // extern_entryActionOperation
@@ -255,14 +259,15 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       {
         recSid = (uint32_t)((recEvtId >> 20) & 0x00000fff);
 
+        unsigned int counterGroup = receivedTag & 0xf; // counter group at bit pos 8. It is taken from the received tag
         uint16_t registerValue = recSid & 0xff; // Sequence Id equals Dataset at bit pos 0
-        registerValue |= (receivedTag & 0xf) << 8; // counter group at bit pos 8. It is taken from the received tag
+        registerValue |= counterGroup << 8;
         registerValue |= 0x1000; // trigger
 
         pScuBaseAddress[BUS_SLAVE_OFFSET(diobSlotNumber)+EVENT_THRESHOLD_RELOAD_REGISTER] = registerValue;
         pScuBaseAddress[BUS_SLAVE_OFFSET(diobSlotNumber)+EVENT_THRESHOLD_RELOAD_REGISTER] = 0;
 
-        reloadCounter++;
+        reloadCounters[counterGroup]++;
         offsDone = getSysTime() - recDeadline;
       }
       break;
@@ -300,7 +305,7 @@ int main(void) {
   status         = COMMON_STATUS_OK;
 
   eventKey = 0;
-  reloadCounter  = 0;
+  memset(reloadCounters, 0, UNIBLM_NUMBER_OF_COUNTER_GROUPS*sizeof(reloadCounters[0]));
   nEvtsLate      = 0;
 
   init();                                                                     // initialize stuff for lm32
@@ -351,7 +356,10 @@ int main(void) {
     if (offsDone   > maxOffsDone)   maxOffsDone   = offsDone;
     fwlib_publishTransferStatus(0, 0, 0, nEvtsLate, maxOffsDone, maxComLatency);
 
-    *pSharedGetReloadCounter = reloadCounter;
+    for(unsigned int counterIndex=0; counterIndex<UNIBLM_NUMBER_OF_COUNTER_GROUPS; ++counterIndex) {
+      *pSharedGetReloadCounters[counterIndex] = reloadCounters[counterIndex];
+    }
+
   } // while
 
   return(1); // this should never happen ...

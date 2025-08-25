@@ -66,12 +66,10 @@ uint32_t     uniblm_flagDebug = 0;         // flag debug
 
 // application specific stuff
 // set values
-eb_address_t uniblm_set_setEventKey;              // bogus set value
-eb_address_t uniblm_set_setB;              // bogus set value
+eb_address_t uniblm_set_setEventKey;       // eventkey the diob listens to
 
 // get values
-eb_address_t uniblm_get_getReloadCounter;  // bogus get value
-eb_address_t uniblm_get_getD;              // bogus get value
+eb_address_t uniblm_get_getReloadCounters[UNIBLM_NUMBER_OF_COUNTER_GROUPS];  // one reload event counter for each counter groupbogus get value
 
 #define WAITCMDDONE COMMON_DEFAULT_TIMEOUT * 1000 // use default timeout and convert to us to be sure the command is processed
 
@@ -153,7 +151,9 @@ uint32_t uniblm_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t 
   comlib_initShared(lm32_base, SHARED_OFFS);
   uniblm_cmd              = lm32_base + SHARED_OFFS + COMMON_SHARED_CMD;
   uniblm_set_setEventKey  = lm32_base + SHARED_OFFS + UNIBLM_SHARED_SET_EVENT_KEY;
-  uniblm_get_getReloadCounter = lm32_base + SHARED_OFFS + UNIBLM_SHARED_GET_RELOAD_COUNTER;
+  for(unsigned int counterIndex=0; counterIndex<UNIBLM_NUMBER_OF_COUNTER_GROUPS; ++counterIndex) {
+    uniblm_get_getReloadCounters[counterIndex] = lm32_base + SHARED_OFFS + UNIBLM_SHARED_GET_RELOAD_COUNTER_0 + (counterIndex * _32b_SIZE_);
+  }
 
   // do this just at the very end
   *ebDevice = (uint64_t)eb_device;
@@ -203,15 +203,17 @@ uint32_t uniblm_version_library(uint32_t *version)
 } // uniblm_version_library
 
 
-void uniblm_printDiag(uint32_t getReloadCounter)
+void uniblm_printDiag(uint32_t *getReloadCounters, unsigned int count)
 {
   printf("uniblm: info  ...\n\n");
   
-  printf("getReloadCounter                    : %15d\n"        , getReloadCounter);
+  for(unsigned int counterIndex=0; counterIndex<count; ++counterIndex) {
+    printf("getReloadCounter %u                 : %15d\n"        , counterIndex, getReloadCounters[counterIndex]);
+  }
 } // uniblm_printDiag
 
 
-uint32_t uniblm_info_read(uint64_t ebDevice, uint32_t *getReloadCounter, int printFlag)
+uint32_t uniblm_info_read(uint64_t ebDevice, uint32_t *getReloadCounters, unsigned int count, int printFlag)
 {
   eb_cycle_t   eb_cycle;
   eb_status_t  eb_status;
@@ -222,12 +224,16 @@ uint32_t uniblm_info_read(uint64_t ebDevice, uint32_t *getReloadCounter, int pri
   eb_device = (eb_device_t)ebDevice;
 
   if ((eb_status = eb_cycle_open(eb_device, 0, eb_block, &eb_cycle)) != EB_OK) return COMMON_STATUS_EB;
-  eb_cycle_read(eb_cycle, uniblm_get_getReloadCounter        , EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
+  for(unsigned int counterIndex=0; counterIndex<count; ++counterIndex) {
+    eb_cycle_read(eb_cycle, uniblm_get_getReloadCounters[counterIndex], EB_BIG_ENDIAN|EB_DATA32, &(data[counterIndex]));
+  }
   if ((eb_status = eb_cycle_close(eb_cycle)) != EB_OK) return COMMON_STATUS_EB;
 
-  *getReloadCounter = data[0];
+  for(unsigned int counterIndex=0; counterIndex<count; ++counterIndex) {
+    getReloadCounters[counterIndex] = data[counterIndex];
+  }
 
-  if (printFlag) uniblm_printDiag(*getReloadCounter);
+  if (printFlag) uniblm_printDiag(getReloadCounters, count);
   
   return COMMON_STATUS_OK;
 } // uniblm_info_read

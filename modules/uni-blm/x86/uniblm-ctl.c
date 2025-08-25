@@ -120,8 +120,8 @@ int main(int argc, char** argv) {
   uint32_t status;
 
   uint32_t setEventKey;
-  uint32_t getReloadCounter;
-   
+  uint32_t getReloadCounters[UNIBLM_NUMBER_OF_COUNTER_GROUPS];
+
   program = argv[0];
   setEventKey = 42;
   
@@ -182,8 +182,8 @@ int main(int argc, char** argv) {
 
     uniblm_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, &nLate, 0);
 
-    uniblm_info_read(ebDevice, &getReloadCounter, 0);
-    
+    uniblm_info_read(ebDevice, getReloadCounters, UNIBLM_NUMBER_OF_COUNTER_GROUPS, 0);
+
     // print set status bits (except OK)
     for (i = COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
       if ((statusArray >> i) & 0x1)  printf("  ------ status bit is set : %s\n", uniblm_status_text(i));
@@ -235,7 +235,7 @@ int main(int argc, char** argv) {
         if ((statusArray >> i) & 0x1)  printf("    status bit is set : %s\n", uniblm_status_text(i));
       } // for i
 
-      uniblm_info_read(ebDevice, &getReloadCounter, 1);
+      uniblm_info_read(ebDevice, getReloadCounters, UNIBLM_NUMBER_OF_COUNTER_GROUPS, 1);
     } // "diag"    
   } //if command
 
