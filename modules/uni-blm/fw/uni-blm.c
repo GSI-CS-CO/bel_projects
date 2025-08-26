@@ -36,7 +36,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define UNIBLM_FW_VERSION      0x000001  // make this consistent with makefile
+#define UNIBLM_FW_VERSION      0x000002  // make this consistent with makefile
 
 // standard includes
 #include <string.h>
