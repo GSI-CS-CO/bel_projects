@@ -175,6 +175,7 @@ static status_t initSharedMem(uint32_t *const sharedStart)
   DBPRINT2("fbas%d: FBAS_GET_AVG 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_GET_AVG >> 2)), (pSharedExt + (FBAS_SHARED_GET_AVG >> 2)));
   DBPRINT2("fbas%d: FBAS_ECA_VLD 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_ECA_VLD >> 2)), (pSharedExt + (FBAS_SHARED_ECA_VLD >> 2)));
   DBPRINT2("fbas%d: FBAS_ECA_OVF 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_ECA_OVF >> 2)), (pSharedExt + (FBAS_SHARED_ECA_OVF >> 2)));
+  DBPRINT2("fbas%d: FBAS_BAD_MSG 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_BAD_MSG_CNT >> 2)), (pSharedExt + (FBAS_SHARED_BAD_MSG_CNT >> 2)));
   DBPRINT2("fbas%d: FBAS_SENDERID 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_SENDERID >> 2)), (pSharedExt + (FBAS_SHARED_SENDERID >> 2)));
 
   // clear the app-spec region of the shared memory
@@ -573,6 +574,10 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, msgCtrl_t*
               measureSummarize(MSR_MSG_DLY, ecaDeadline, now, DISABLE_VERBOSITY);
               measureExportSummary(MSR_MSG_DLY, pSharedApp, FBAS_SHARED_MSG_DLY_AVG);
             }
+          }
+          else
+          {
+            *(pSharedApp + (FBAS_SHARED_BAD_MSG_CNT >> 2)) = measureCountEvt(BAD_MSG_CNT, 1);
           }
 
           // count received timing messages with MPS flag or MPS event
