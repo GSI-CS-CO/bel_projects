@@ -48,8 +48,8 @@ if scp -O $0 /dev/null &>/dev/null; then
     scp_opts+=" -O"
 fi
 
-res_header_wiki="| *msg period, [us]* | *msg rate, [KHz]* | *data rate, [Mbps]* | *valid msg* | *overflow msg* | *avg messaging delay, [ns]* | *min messaging delay, [ns]* | *max messaging delay, [ns]* | *valid msr* | *total msr* | *overflow* |"
-res_header_console="| t_period | msg rate | data rate | valid msg | ovf msg | average | min | max | valid msr | total msr | ovf |"
+res_header_wiki="| *msg period, [us]* | *msg rate, [KHz]* | *data rate, [Mbps]* | *valid eca* | *overflow eca* | *avg messaging delay, [ns]* | *min messaging delay, [ns]* | *max messaging delay, [ns]* | *valid* | *total* | *overflow* |"
+res_header_console="| t_period | msg rate | data rate | valid eca | ovf eca | average | min | max | valid | total | ovf |"
 
 # timing message rates that should be measured
 primary_msg_rates=(300 600 1000 1200 1500 3000 6000) # fixed tmg msg rates [Hz]
