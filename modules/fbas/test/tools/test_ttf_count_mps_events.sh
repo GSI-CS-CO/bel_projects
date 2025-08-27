@@ -42,12 +42,7 @@ setup_node() {
 
     filenames="$fw_scu_def $fw_scu_multi $script_rxscu $fn_mps_events"
 
-    for filename in $filenames; do
-        output=$(run_remote $rxscu \
-            "if [ ! -f $filename ]; then echo $filename not found on ${rxscu}; exit 2; fi")
-        ret_code=$?
-        report_check $ret_code $filename $rxscu
-    done
+    check_deployment $rxscu $filenames
 
     echo -e "\n load FW ($fw_scu_multi) & configure\n"
 

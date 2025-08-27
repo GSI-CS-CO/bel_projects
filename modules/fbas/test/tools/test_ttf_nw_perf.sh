@@ -80,18 +80,7 @@ setup_nodes() {
         fi
 
         # check deployment
-        for filename in $filenames; do
-            run_remote $scu "source setup_local.sh && print_file_info $filename"
-            ret_code=$?
-
-            if [ $ret_code -eq 124 ]; then
-                echo "access to $scu timed out. Exit!"
-                exit 1
-            elif [ $ret_code -ne 0 ]; then
-                echo "$filename not found on ${scu}. Exit!"
-                exit 2
-            fi
-        done
+        check_deployment $scu $filenames
 
         # set up TX nodes
         if [ "$scu" != "$rxscu" ]; then

@@ -80,14 +80,7 @@ exit_on_fail() {
 check_tr() {
     filenames="$fw_rxscu $script_rxscu"
 
-    for filename in $filenames; do
-        run_remote $rxscu \
-            "if [ ! -f $filename ]; then \
-            echo $filename not found on ${rxscu}. Exit!; \
-            exit 2; fi"
-        ret_code=$?
-        report_check $ret_code $filename $rxscu
-    done
+    check_deployment $rxscu $filenames
 }
 
 setup_tr() {

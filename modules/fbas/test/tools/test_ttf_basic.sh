@@ -28,28 +28,38 @@ usage() {
     echo "  -h                     display this help and exit"
 }
 
-report_check() {
-    # $1 - result
-    # $2 - filename
-    # $3 - remote host name
-
-    if [ $1 -eq 124 ]; then
-        echo "access to $3 timed out. Exit!"
-        exit 1
-    elif [ $1 -ne 0 ]; then
-        echo "$2 not found on ${3}. Exit!"
-        exit 2
-    else
-        echo "$2 is available on $3"
-    fi
-}
-
 run_remote() {
     # $1 - remote host name
     # $@ - commands for the remote host
 
     local host=$1; shift
     timeout 20 sshpass -p "$userpasswd" $ssh_cmd $username@$host "$@"
+}
+
+check_deployment() {
+    # $1 - remote host name
+    # $@ - filenames
+
+    local scu=$1; shift
+    local filenames=$@
+
+    # keep in mind: 'filenames' is local variable, but 'filename' is remote variable
+    run_remote $scu "for filename in $filenames; do \
+        if [ ! -f \$filename ]; then echo "\$filename not found on $scu. Exit!"; exit 2; fi \
+        done"
+    ret_code=$?
+
+    if [ $ret_code -eq 124 ]; then
+        echo "access to $scu timed out. Exit!"
+        exit 1
+    elif [ $ret_code -ne 0 ]; then
+        # one or all file(s) not found
+        exit 2
+    else
+        # print the file info
+        run_remote $scu "source setup_local.sh && for filename in $filenames; do \
+            print_file_info \$filename; done"
+    fi
 }
 
 main() {
@@ -84,10 +94,7 @@ main() {
     scus="$rxscu $txscu"
 
     for scu in $scus; do
-        for filename in $filenames; do
-            run_remote $scu "if [ ! -f $filename ]; then echo $filename not found on ${scu}; exit 2; fi"
-            report_check $? $filename $scu
-        done
+        check_deployment $scu $filenames
     done
 
     echo -e "\nset up nodes\n------------"
@@ -127,8 +134,8 @@ main() {
         read_counters \$rx_node_dev $verbose && result_msg_delay \$rx_node_dev $verbose"
 }
 
-export -f report_check
 export -f run_remote
+export -f check_deployment
 
 # source script, if '-s' option is given, otherwise, run script!
 if [ "$1" = "-s" ]; then

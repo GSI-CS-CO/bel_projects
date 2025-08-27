@@ -50,11 +50,7 @@ echo "----------------"
 
 filenames="$fw_rxscu $script_rxscu"
 
-for filename in $filenames; do
-    run_remote $rxscu "if [ ! -f $filename ]; then echo $filename not found on ${rxscu}; exit 2; fi"
-    result=$?
-    report_check $result $filename $rxscu
-done
+check_deployment $rxscu $filenames
 
 echo -e "\nset up '${rxscu%%.*}'\n------------"
 output=$(run_remote $rxscu "source setup_local.sh && setup_mpsrx $fw_rxscu SENDER_ALL")
