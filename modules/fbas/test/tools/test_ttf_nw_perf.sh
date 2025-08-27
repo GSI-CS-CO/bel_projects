@@ -57,7 +57,12 @@ pre_check() {
 
 setup_nodes() {
 
-    filenames="$fw_scu_def $fw_scu_multi $script_rxscu"
+    filenames="$fw_scu_def $script_rxscu"
+
+    if [ "$fw_scu_multi" != "$fw_scu_def" ]; then
+        filenames="$fw_scu_multi $filenames"
+    fi
+
     mac_txscu=()
     all_scu=(${txscu[@]} "$rxscu")
 
