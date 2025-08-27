@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define WRF50_SERV_MON_VERSION 0x000101
+#define WRF50_SERV_MON_VERSION 0x000102
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -470,14 +470,14 @@ int main(int argc, char** argv)
   bool     getVersion     = false;
   bool     startServer    = false;
 
-  char    *tail;
+  // char    *tail;
 
 
   // variables snoop event
   uint64_t snoopID     = 0x0;
   int      nCondition  = 2;
 
-  char     tmp[752];
+  // char     tmp[752];
   int      i;
 
   // variables attach, remove
