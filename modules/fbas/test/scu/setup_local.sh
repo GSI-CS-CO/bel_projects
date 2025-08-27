@@ -295,8 +295,8 @@ set_senderid() {
     # $[3:] - sender ID(s) of SENDER_TX (without leading 0x)
 
     # SENDER_TX - only TX node
-    # SENDER_ANY - only any nodes
-    # SENDER_ALL - TX and any nodes
+    # SENDER_ANY - only any node
+    # SENDER_ALL - any node + TX node
 
     device=$1
     sender_grp="$2"
@@ -308,41 +308,43 @@ set_senderid() {
         senderid="$senderid 0x$mac"   # format to hexadecimal number (for arithmetic calc.)
     done
 
-    first_idx=1
-    last_idx=15
     unset idx_mac_list  # list with idx_mac
 
-    if [ "$sender_grp" == "SENDER_TX" ]; then
-        # Structure of the MPS message buffer: 'sender id', 'index' and 'MPS flag'.
-        # The buffer can keep the MPS flag of up to 16 TX nodes.
-        # The 'index' is used to identify channels of the same sender, therefore
-        # it's set to zero if each sender has only one MPS channel.
-        i=0
-        for sender in $senderid; do
-            idx=$(( $i << 48 ))
-            idx_mac=$(( $idx + $sender ))
-            idx_mac=$(printf "0x%x" $idx_mac)
-            idx_mac_list="$idx_mac_list $idx_mac"
-        done
-    elif [ "$sender_grp" == "SENDER_ALL" ] || [ "$sender_grp" == "SENDER_ANY" ]; then
-        if [ "$sender_grp" == "SENDER_ALL" ]; then
-            idx_mac_list="$senderid"
-            first_idx=$(( $first_idx - 1 ))
-            last_idx=$(( $last_idx - 1 ))
-        else
-            idx_mac_list="$mac_any_node"
-        fi
+    # Structure of the MPS message buffer: 'sender id', 'index' and 'MPS flag'.
+    # The buffer can keep the MPS flag of up to 16 TX nodes.
+    # The 'index' is used to identify channels of the same sender, therefore
+    # it's set to zero if each sender has only one MPS channel.
+    for sender in $senderid; do
+        idx=0
+        idx_mac=$(( $idx + $sender ))
+        idx_mac=$(printf "0x%x" $idx_mac)
+        idx_mac_list="$idx_mac_list $idx_mac"
+    done
 
-        # idx is used to specify an MPS channel of the same sender
-        for i in $(seq $first_idx $last_idx); do
-            idx=$(( $i << 48 ))
+    case "$sender_grp" in
+        "SENDER_TX")
+            # do nothing, idx_mac_list is already built
+            ;;
+
+        "SENDER_ALL")
+            # add any node (0xffffffffffff) on top of idx_mac_list
+
+            idx=0
             idx_mac=$(( $idx + $mac_any_node ))
             idx_mac=$(printf "0x%x" $idx_mac)
-            idx_mac_list="$idx_mac_list $idx_mac"
-        done
-    else
-        return
-    fi
+            idx_mac_list="$idx_mac $idx_mac_list"
+            ;;
+
+        "SENDER_ANY")
+            # only one node
+
+            idx_mac_list="$mac_any_node"
+            ;;
+
+        *)
+            return
+            ;;
+    esac
 
     echo "set the sender IDs: $sender_grp $idx_mac_list"
 
