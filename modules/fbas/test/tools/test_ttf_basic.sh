@@ -128,6 +128,7 @@ main() {
 }
 
 export -f report_check
+export -f run_remote
 
 # source script, if '-s' option is given, otherwise, run script!
 if [ "$1" = "-s" ]; then

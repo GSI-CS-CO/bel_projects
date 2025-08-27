@@ -81,8 +81,7 @@ check_tr() {
     filenames="$fw_rxscu $script_rxscu"
 
     for filename in $filenames; do
-        timeout 10 sshpass -p "$userpasswd" \
-            ssh $username@$rxscu \
+        run_remote $rxscu \
             "if [ ! -f $filename ]; then \
             echo $filename not found on ${rxscu}. Exit!; \
             exit 2; fi"
@@ -92,7 +91,7 @@ check_tr() {
 }
 
 setup_tr() {
-    output=$(timeout 20 sshpass -p "$userpasswd" ssh "$username@$rxscu" \
+    output=$(run_remote $rxscu \
         "source setup_local.sh && setup_mpsrx $fw_rxscu SENDER_ANY")
     ret_code=$?
     report_code $ret_code
@@ -100,7 +99,7 @@ setup_tr() {
 }
 
 reset_tr_ecpu() {
-    output=$(timeout 20 sshpass -p "$userpasswd" ssh "$username@$rxscu" \
+    output=$(run_remote $rxscu \
         "source setup_local.sh && reset_node rx_node_dev SENDER_ANY")
     ret_code=$?
     report_code $ret_code
@@ -108,7 +107,7 @@ reset_tr_ecpu() {
 }
 
 enable_tr_mps() {
-    output=$(timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" \
+    output=$(run_remote $rxscu \
         "source setup_local.sh && start_test4 \$rx_node_dev")
     ret_code=$?
     report_code $ret_code
@@ -116,7 +115,7 @@ enable_tr_mps() {
 }
 
 disable_tr_mps() {
-    output=$(timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" \
+    output=$(run_remote $rxscu \
         "source setup_local.sh && stop_test4 \$rx_node_dev")
     ret_code=$?
     report_code $ret_code
@@ -273,7 +272,7 @@ for rate in ${all_msg_rates[*]}; do
 
     # obtain stats from TR
     echo -en " obtain stats from '$rxscu_name': "
-    counts=$(timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" \
+    counts=$(run_remote $rxscu \
         "source setup_local.sh && \
         read_counters \$rx_node_dev && \
         result_msg_delay \$rx_node_dev")

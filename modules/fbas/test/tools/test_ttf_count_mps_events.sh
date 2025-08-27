@@ -43,7 +43,7 @@ setup_node() {
     filenames="$fw_scu_def $fw_scu_multi $script_rxscu $fn_mps_events"
 
     for filename in $filenames; do
-        output=$(timeout 10 sshpass -p "$userpasswd" ssh $username@$rxscu \
+        output=$(run_remote $rxscu \
             "if [ ! -f $filename ]; then echo $filename not found on ${rxscu}; exit 2; fi")
         ret_code=$?
         report_check $ret_code $filename $rxscu
@@ -52,14 +52,13 @@ setup_node() {
     echo -e "\n load FW ($fw_scu_multi) & configure\n"
 
     unset sender_opts
-    mac_rxscu=$(timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" \
-        "eb-mon -m dev/wbm0")
+    mac_rxscu=$(run_remote $rxscu "eb-mon -m dev/wbm0")
     ret_code=$?
     if [ $ret_code -ne 0 ]; then
         echo "FAIL ($ret_code): sender ID of $rxscu is unknown. Exit!"
         exit 1
     fi
-    output=$(timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" \
+    output=$(run_remote $rxscu \
         "source setup_local.sh && \
         setup_mpsrx $fw_scu_multi SENDER_TX $mac_rxscu")
     ret_code=$?
@@ -74,23 +73,23 @@ inject_events() {
     # $2 - filename with schedule for the MPS events
 
     echo -e "\n enable MPS operation (RX=$rxscu_name)"
-    output=$(sshpass -p "$userpasswd" ssh $username@$rxscu \
+    output=$(run_remote $rxscu \
         "source setup_local.sh && enable_mps \$rx_node_dev")
 
     # start local injection of MPS events
     echo -e " inject MPS events\n"
-    sshpass -p "$userpasswd" ssh $username@$rxscu \
+    run_remote $rxscu \
         "source setup_local.sh && inject_mps_events $1 $2"
 
     echo -e "\n disable MPS operation (RX=$rxscu_name)"
-    output=$(sshpass -p "$userpasswd" ssh "$username@$rxscu" \
+    output=$(run_remote $rxscu \
         "source setup_local.sh && disable_mps \$rx_node_dev")
 }
 
 show_rx_stats() {
     # report test result
     echo -en "\nRX: "
-    sshpass -p "$userpasswd" ssh "$username@$rxscu" \
+    run_remote $rxscu \
         "source setup_local.sh && \
         read_counters \$rx_node_dev $verbose && \
         result_msg_delay \$rx_node_dev $verbose && \

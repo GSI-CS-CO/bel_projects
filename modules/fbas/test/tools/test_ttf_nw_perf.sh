@@ -63,7 +63,7 @@ setup_nodes() {
 
     for scu in "${all_scu[@]}"; do
         # get MAC address
-        mac_scu=$(timeout 10 sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" "eb-mon -m dev/wbm0")
+        mac_scu=$(run_remote $scu "eb-mon -m dev/wbm0")
         ret_code=$?
         if [ $ret_code -eq 0 ]; then
             if [ "$scu" != "$rxscu" ]; then
@@ -76,7 +76,7 @@ setup_nodes() {
 
         # check deployment
         for filename in $filenames; do
-            timeout 10 sshpass -p "$userpasswd" ssh $ssh_opts $username@$scu "source setup_local.sh && print_file_info $filename"
+            run_remote $scu "source setup_local.sh && print_file_info $filename"
             ret_code=$?
 
             if [ $ret_code -eq 124 ]; then
@@ -90,7 +90,7 @@ setup_nodes() {
 
         # set up TX nodes
         if [ "$scu" != "$rxscu" ]; then
-            output=$(timeout 10 sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" "source setup_local.sh && setup_mpstx")
+            output=$(run_remote $scu "source setup_local.sh && setup_mpstx")
             ret_code=$?
             if [ $ret_code -ne 0 ]; then
                 echo "Error ($ret_code): cannot set up $scu"
@@ -108,7 +108,7 @@ setup_nodes() {
         sender_opts="SENDER_TX ${mac_txscu[@]}"
     fi
 
-    output=$(timeout 10 sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && setup_mpsrx $fw_scu_multi $sender_opts")
+    output=$(run_remote $rxscu "source setup_local.sh && setup_mpsrx $fw_scu_multi $sender_opts")
     ret_code=$?
     if [ $ret_code -ne 0 ]; then
         echo "Error ($ret_code): cannot set up $rxscu_name"
@@ -120,7 +120,7 @@ setup_nodes() {
 
 measure_nw_perf() {
     echo -e "start the measurements\n"
-    output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && enable_mps \$rx_node_dev")
+    output=$(run_remote $rxscu "source setup_local.sh && enable_mps \$rx_node_dev")
 
     # use local script to print info
     output=$(source $dir_name/../scu/setup_local.sh && info_nw_perf $events)
@@ -133,10 +133,10 @@ measure_nw_perf() {
         echo ${txscu[$i]}
 
         # enable MPS operation, start test => keep process ID
-        output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@${txscu[$i]}" "source setup_local.sh && enable_mps \$tx_node_dev")
+        output=$(run_remote ${txscu[$i]} "source setup_local.sh && enable_mps \$tx_node_dev")
 
         # start test sub-process and keep its process ID
-        sshpass -p "$userpasswd" ssh $ssh_opts "$username@${txscu[$i]}" "source setup_local.sh && start_nw_perf $events" &
+        run_remote ${txscu[$i]} "source setup_local.sh && start_nw_perf $events" &
         pids[$i]=$!
     done
 
@@ -155,10 +155,10 @@ measure_nw_perf() {
 
     echo -e "stop the measurements, runtime $runtime seconds\n"
     for scu in ${txscu[@]}; do
-        output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" "source setup_local.sh && disable_mps \$tx_node_dev")
+        output=$(run_remote $scu "source setup_local.sh && disable_mps \$tx_node_dev")
     done
 
-    output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && disable_mps \$rx_node_dev")
+    output=$(run_remote $rxscu "source setup_local.sh && disable_mps \$rx_node_dev")
 
     # report test result
     echo "measurement stats of MPS signaling"
@@ -170,7 +170,7 @@ measure_nw_perf() {
 
     sum_tx_cnt=0
     for scu in ${txscu[@]}; do
-        cnt=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" \
+        cnt=$(run_remote $scu \
             "source setup_local.sh && \
             read_counters \$tx_node_dev $verbose")
         echo "TX (${scu%%.*}): $cnt"
@@ -178,7 +178,7 @@ measure_nw_perf() {
 	sum_tx_cnt=$(( $sum_tx_cnt + $tx_cnt ))
     done
 
-    cnt=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" \
+    cnt=$(run_remote $rxscu \
         "source setup_local.sh && \
         read_counters \$rx_node_dev $verbose")
     echo "RX (${rxscu%%.*}): $cnt"
@@ -206,7 +206,7 @@ measure_nw_perf() {
         echo "TX (${scu%%.*}):"
 
         # read command output line by line
-        sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" \
+        run_remote $scu \
             "source setup_local.sh && \
             result_sg_latency \$tx_node_dev $verbose && \
             result_tx_delay \$tx_node_dev $verbose && \
@@ -223,7 +223,7 @@ measure_nw_perf() {
 
     i=0
     echo "RX (${rxscu%%.*}):"
-    sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" \
+    run_remote $rxscu \
         "source setup_local.sh && \
         result_msg_delay \$rx_node_dev $verbose && \
         result_ttl_ival \$rx_node_dev $verbose && \
@@ -240,7 +240,7 @@ measure_nw_perf() {
 
 measure_ttl() {
     echo -e "start the measurement\n"
-    output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && enable_mps \$rx_node_dev")
+    output=$(run_remote $rxscu "source setup_local.sh && enable_mps \$rx_node_dev")
 
     n_toggle=10
     echo -e "toggle MPS operation (n=$n_toggle): TX=${txscu_name[@]}"
@@ -248,24 +248,24 @@ measure_ttl() {
         echo -en " $i: enable \r"
 
         for scu in ${txscu[@]}; do
-            output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" "source setup_local.sh && enable_mps \$tx_node_dev")
+            output=$(run_remote $scu "source setup_local.sh && enable_mps \$tx_node_dev")
         done
 
         sleep 1
         echo -en " $i: disable\r"
 
         for scu in ${txscu[@]}; do
-            output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" "source setup_local.sh && disable_mps \$tx_node_dev")
+            output=$(run_remote $scu "source setup_local.sh && disable_mps \$tx_node_dev")
         done
 
         sleep 1
     done
 
     echo -e "\nstop the measurement\n"
-    output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && disable_mps \$rx_node_dev")
+    output=$(run_remote $rxscu "source setup_local.sh && disable_mps \$rx_node_dev")
 
     echo -e "measurement stats: TTL\n"
-    sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && result_ttl_ival \$rx_node_dev \$addr_cnt1 $verbose"
+    run_remote $rxscu "source setup_local.sh && result_ttl_ival \$rx_node_dev \$addr_cnt1 $verbose"
 }
 
 unset username userpasswd events exclude_ttl auto verbose
