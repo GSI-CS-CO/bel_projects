@@ -13,10 +13,10 @@ source $dir_name/test_ttf_basic.sh -s  # source the specified script
 
 domain=$(hostname -d)             # domain name of local host
 rxscu_name="scuxl0497"            # name of RX SCU
-rxscu="scuxl0497.$domain"         # full name of RX SCU, name=${rxscu%%.*}
+rxscu="$rxscu_name.$domain"       # full name of RX SCU, name=${rxscu%%.*}
 datamaster="tsl014"               # Data Master
 login_dm="root@$datamaster"       # pubkey login (alias 'backdoor') is used for login
-mngmasters=( tsl001 tsl101 )      # Management Masters
+mngmasters=( tsl101 )             # Management Masters
 localhost=$(hostname -s)          # local host
 
 fw_rxscu="fbas16.scucontrol.bin"  # default LM32 FW for RX SCU
@@ -186,7 +186,7 @@ usage() {
     echo "  -m                     limited only with primary message rates"
     echo "  -h                     display this help and exit"
     echo
-    echo "Example (@tsl001): ./test_ttf_rx_rate.sh -s my_mps_rx_rate_1.dot -f fbas16.scucontrol.bin"
+    echo "Example: $0 -s my_mps_rx_rate_1.dot -f $fw_rxscu"
 }
 
 unset username userpasswd sched_filename is_msg_rate_limited
@@ -317,7 +317,7 @@ for rate in ${all_msg_rates[*]}; do
 
 done
 
-echo -e "\n$sched_filename@$datamaster $fw_rxscu@$rxscu $localhost ($(date))\n"
+echo -e "\n$datamaster:$sched_filename $rxscu:$fw_rxscu host:$localhost ($(date))\n"
 echo "$res_header_console"
 #echo "$res_header_wiki"
 chars=${#res_header_console}
