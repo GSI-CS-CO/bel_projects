@@ -8,10 +8,9 @@ domain=$(hostname -d)
 rxscu_name="scuxl0411"
 rxscu="$rxscu_name.$domain"
 
-fw_scu_def="fbas16.scucontrol.bin"    # default FW that supports up to 16 TX nodes, each has 1 MPS channel
-fw_scu_multi="fbas16.scucontrol.bin"
+fw_scu_def="fbas128.scucontrol.bin"     # default FW that supports up to 16 TX nodes, each has 1 MPS channel
 fn_mps_events="simple_mps_events.sched" # filename with schedule for the MPS events
-n_repeat=1                            # number of repeatations of the schedule
+n_repeat=1                              # number of repeatations of the schedule
 
 usage() {
 
@@ -40,11 +39,11 @@ user_approval() {
 setup_node() {
     echo -e "\n check deployment\n"
 
-    filenames="$fw_scu_def $fw_scu_multi $script_rxscu $fn_mps_events"
+    filenames="$fw_scu_def $script_rxscu $fn_mps_events"
 
     check_deployment $rxscu $filenames
 
-    echo -e "\n load FW ($fw_scu_multi) & configure\n"
+    echo -e "\n load FW ($fw_scu_def) & configure\n"
 
     unset sender_opts
     mac_rxscu=$(run_remote $rxscu "eb-mon -m dev/wbm0")
@@ -55,7 +54,7 @@ setup_node() {
     fi
     output=$(run_remote $rxscu \
         "source setup_local.sh && \
-        setup_mpsrx $fw_scu_multi SENDER_TX $mac_rxscu")
+        setup_mpsrx $fw_scu_def SENDER_TX $mac_rxscu")
     ret_code=$?
     if [ $ret_code -ne 0 ]; then
         echo "FAIL ($ret_code): cannot set up $rxscu_name. Exit!"

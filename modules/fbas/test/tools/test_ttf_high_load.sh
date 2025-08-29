@@ -10,7 +10,7 @@ source $dir_name/test_ttf_basic.sh -s  # source the specified script
 domain=$(hostname -d)
 rxscu="scuxl0497.$domain"
 sleep_sec=20
-fw_rxscu="fbas16.scucontrol.bin"    # default LM32 FW for RX SCU
+fw_rxscu="fbas128.scucontrol.bin"    # default LM32 FW for RX SCU
 
 usage() {
     echo "Usage: $0 [OPTION]"

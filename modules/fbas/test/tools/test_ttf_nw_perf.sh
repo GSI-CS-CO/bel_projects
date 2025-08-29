@@ -11,7 +11,6 @@ txscu_name=()                         # array with transmitter names
 rxscu="scuxl0497.$domain"
 txscu=()                              # array with transmitter domain names
 fw_scu_def="fbas128.scucontrol.bin"   # FW that supports up to 16 TX nodes, each has 8 MPS channels
-fw_scu_multi="fbas128.scucontrol.bin"
 ssh_opts="-o StrictHostKeyChecking=no"   # no hostkey checking
 getopt_opts="u:p:t:r:n:eyvh"          # user options
 
@@ -59,10 +58,6 @@ setup_nodes() {
 
     filenames="$fw_scu_def $script_rxscu"
 
-    if [ "$fw_scu_multi" != "$fw_scu_def" ]; then
-        filenames="$fw_scu_multi $filenames"
-    fi
-
     mac_txscu=()
     all_scu=(${txscu[@]} "$rxscu")
 
@@ -102,7 +97,7 @@ setup_nodes() {
         sender_opts="SENDER_TX ${mac_txscu[@]}"
     fi
 
-    output=$(run_remote $rxscu "source setup_local.sh && setup_mpsrx $fw_scu_multi $sender_opts")
+    output=$(run_remote $rxscu "source setup_local.sh && setup_mpsrx $fw_scu_def $sender_opts")
     ret_code=$?
     if [ $ret_code -ne 0 ]; then
         echo "Error ($ret_code): cannot set up $rxscu_name"

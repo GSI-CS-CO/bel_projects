@@ -19,7 +19,7 @@ login_dm="root@$datamaster"       # pubkey login (alias 'backdoor') is used for 
 mngmasters=( tsl101 )             # Management Masters
 localhost=$(hostname -s)          # local host
 
-fw_rxscu="fbas16.scucontrol.bin"  # default LM32 FW for RX SCU
+fw_rxscu="fbas128.scucontrol.bin" # default LM32 FW for RX SCU
 
 sched_dir="${dir_name%/*}/dm"     # directory with DM schedules
 
