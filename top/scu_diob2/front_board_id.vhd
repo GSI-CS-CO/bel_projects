@@ -86,7 +86,7 @@ begin
                 IOBP_Sel_LED(1)                    <= Deb_out( 5 DOWNTO 0);
 
 
-            when "00000101"|"00000110"   => -- 6 LWL Output Modul FG902120 or 6 LEMO Output Modul FG902140
+            when "00000101"|"00000110" | "00001000"    => -- 6 LWL Output Modul FG902120 or 6 LEMO Output Modul FG902140 or 6 SSR Output Modul FG902160
                 
                 AW_Input_Reg(1)( 5 downto 0)       <= (OTHERS => '0');
                 IOBP_Output(1)                     <= (AW_Output_Reg(1)(5 downto 0) AND not IOBP_Masken_Reg1( 5 downto 0));
@@ -132,7 +132,7 @@ begin
                 IOBP_Sel_LED(2)                   <=   Deb_out(11 DOWNTO 6); 
 
 
-            when "00000101"|"00000110"   => -- 6 LWL Output Modul FG902120 or 6 LEMO Output Modul FG902140
+            when "00000101"|"00000110" | "00001000"    => -- 6 LWL Output Modul FG902120 or 6 LEMO Output Modul FG902140 or 6 SSR Output Modul FG902160
                                                       
                 AW__Input_Reg(1)( 11 downto  6)   <= (OTHERS => '0');
                 IOBP_Output(2)                    <= (AW_Output_Reg(1)(11 downto 6) AND not IOBP_Masken_Reg1(11 downto 6));
@@ -178,7 +178,7 @@ begin
                 IOBP_Sel_LED(3)                  <= Deb_out(17 DOWNTO 12);  
 
 
-            when "00000101"|"00000110"   => -- 6 LWL Output Modul FG902120 or 6 LEMO Output Modul FG902140
+            when "00000101"|"00000110" | "00001000"    => -- 6 LWL Output Modul FG902120 or 6 LEMO Output Modul FG902140 or 6 SSR Output Modul FG902160
 
                 AW_Input_Reg(2)( 5 downto  0)    <= (OTHERS => '0');
                 IOBP_Output(3)                   <= (AW_Output_Reg(2)(5 downto 0) AND not IOBP_Masken_Reg2(5 downto 0));      
@@ -223,7 +223,7 @@ begin
                 IOBP_Sel_LED(4)                  <= Deb_out(23 DOWNTO 18);  
 
             
-            when "00000101"|"00000110"   => -- 6 LWL Output Modul FG902120 or 6 LEMO Output Modul FG902140
+            when "00000101"|"00000110" | "00001000"    => -- 6 LWL Output Modul FG902120 or 6 LEMO Output Modul FG902140 or 6 SSR Output Modul FG902160
 
                 AW_Input_Reg(2)(11 downto  6)    <= (OTHERS => '0');
                 IOBP_Output(4)                   <= AW_Output_Reg(2)(11 downto 6) AND not IOBP_Masken_Reg2(11 downto 6);    
@@ -268,7 +268,7 @@ begin
                 IOBP_Output(5)                    <=  (OTHERS => '0');
                 IOBP_Sel_LED(5)                   <=  Deb_out(29 DOWNTO 24); 
 
-            when "00000101"|"00000110"   => -- 6 LWL Output Modul FG902120 or 6 LEMO Output Modul FG902140
+            when "00000101"|"00000110" | "00001000"    => -- 6 LWL Output Modul FG902120 or 6 LEMO Output Modul FG902140 or 6 SSR Output Modul FG902160
                                                       
                 AW_Input_Reg(3)( 5 downto 0)      <= (OTHERS => '0');
                 IOBP_Output(5)                    <= AW_Output_Reg(3)(5 downto  0) AND not IOBP_Masken_Reg3(5 downto 0); 
@@ -315,7 +315,7 @@ begin
                     IOBP_Sel_LED(6)               <=  Deb_out(35 DOWNTO 30);
 
 
-                when "00000101"|"00000110"   => -- 6 LWL Output Modul FG902120 or 6 LEMO Output Modul FG902140
+                when "00000101"|"00000110" | "00001000"    => -- 6 LWL Output Modul FG902120 or 6 LEMO Output Modul FG902140 or 6 SSR Output Modul FG902160
                     
                     AW_Input_Reg(3)(11 downto 6)  <= (OTHERS => '0');
                     IOBP_Output(6)                <= AW_Output_Reg(3)(11 downto 6) AND not IOBP_Masken_Reg3(11 downto 6);
@@ -363,7 +363,7 @@ begin
                     IOBP_Sel_LED(7)               <= Deb_out(41 DOWNTO 36);
 
 
-                when "00000101"|"00000110"   => -- 6 LWL Output Modul FG902120 or 6 LEMO Output Modul FG902140
+                when "00000101"|"00000110" | "00001000"    => -- 6 LWL Output Modul FG902120 or 6 LEMO Output Modul FG902140 or 6 SSR Output Modul FG902160
                                         
                     AW_Input_Reg(4)( 5 downto 0)  <= (OTHERS => '0');
                     IOBP_Output(7)                <= AW_Output_Reg(4)(5 downto 0) AND not IOBP_Masken_Reg4(5 downto 0);
@@ -409,7 +409,7 @@ begin
                     IOBP_Sel_LED(8)             <= Deb_out(47 DOWNTO 42);
 
 
-                when "00000101"|"00000110"   => -- 6 LWL Output Modul FG902120 or 6 LEMO Output Modul FG902140
+                when "00000101"|"00000110" | "00001000"    => -- 6 LWL Output Modul FG902120 or 6 LEMO Output Modul FG902140 or 6 SSR Output Modul FG902160
 
                     AW_Input_Reg(4)(11 downto 6)<= (OTHERS => '0');
                     IOBP_Output(8)              <= AW_Output_Reg(4)(11 downto 6) AND not IOBP_Masken_Reg4(11 downto 6);
@@ -456,7 +456,7 @@ begin
 
                                                       
                  
-                when "00000101"|"00000110"   => -- 6 LWL Output Modul FG902120 or 6 LEMO Output Modul FG902140
+                when "00000101"|"00000110" | "00001000"    => -- 6 LWL Output Modul FG902120 or 6 LEMO Output Modul FG902140 or 6 SSR Output Modul FG902160
                                                       
                     AW_Input_Reg(5)(5 downto 0) <= (OTHERS => '0');
                     IOBP_Output(9)              <= AW_Output_Reg(5)(5 downto 0) AND not IOBP_Masken_Reg5(5 downto 0);
@@ -502,7 +502,7 @@ begin
                     IOBP_Sel_LED(10)            <= Deb_out(59 DOWNTO 54);
 
                
-                when "00000101"|"00000110"   => -- 6 LWL Output Modul FG902120 or 6 LEMO Output Modul FG902140
+                when "00000101"|"00000110" | "00001000"    => -- 6 LWL Output Modul FG902120 or 6 LEMO Output Modul FG902140 or 6 SSR Output Modul FG902160
 
                     AW_Input_Reg(5)(11 downto 6)<= (OTHERS => '0');
                     IOBP_Output(10)             <= AW_Output_Reg(5)(11 downto 6) AND not IOBP_Masken_Reg5(11 downto 6);
@@ -547,7 +547,7 @@ begin
                     IOBP_Sel_LED(11)            <= Deb_out(65 DOWNTO 60);
                                                      
 
-                when "00000101"|"00000110"   => -- 6 LWL Output Modul FG902120 or 6 LEMO Output Modul FG902140
+                when "00000101"|"00000110" | "00001000"    => -- 6 LWL Output Modul FG902120 or 6 LEMO Output Modul FG902140 or 6 SSR Output Modul FG902160
                                                       
                     AW_Input_Reg(6)(5 downto 0) <= (OTHERS => '0');
                     IOBP_Output(11)             <= AW_Output_Reg(6)(5 downto 0) AND not IOBP_Masken_Reg6(5 downto 0);
@@ -594,7 +594,7 @@ begin
                     IOBP_Sel_LED(12)            <= Deb_out(71 DOWNTO 66);
 
 
-                when "00000101"|"00000110"   => -- 6 LWL Output Modul FG902120 or 6 LEMO Output Modul FG902140
+                when "00000101"|"00000110" | "00001000"    => -- 6 LWL Output Modul FG902120 or 6 LEMO Output Modul FG902140 or 6 SSR Output Modul FG902160
                                                       
                     AW_Input_Reg(6)(11 downto 6)<= (OTHERS => '0');
                     IOBP_Output(12)             <= AW_Output_Reg(6)(11 downto  6) AND not IOBP_Masken_Reg6(11 downto 6);

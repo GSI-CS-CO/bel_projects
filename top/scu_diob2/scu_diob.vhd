@@ -279,6 +279,9 @@ architecture scu_diob_arch of scu_diob is
     CONSTANT c_BP_6LWLO1 :     ID_CID:= (x"05", 76);   ---- SUB-Piggy-ID(Codierung), B"0000_0101", FG902.120 -- 6x opt Out,  -> neue Zwischenbackplane
     CONSTANT c_BP_6LEMO1 :     ID_CID:= (x"06", 77);   ---- SUB-Piggy-ID(Codierung), B"0000_0110", FG902.140 -- 6x lemo Out,  -> neue Zwischenbackplane
     CONSTANT c_BP_6DGIN1 :     ID_CID:= (x"07", 78);   ---- SUB-Piggy-ID(Codierung), B"0000_0111", FG902.150 -- 6x lemo In DigIn1 ,  -> neue Zwischenbackplane
+    CONSTANT C_BP_6SSROUT:     ID_CID:= (x"08", 79);   ---- SUB-Piggy-ID(Codierung), B"0000_1000", FG902.160 -- 6x SSR Out ,  -> neue Zwischenbackplane
+    CONSTANT C_BP_6OPTOIN:     ID_CID:= (x"09", 80);   ---- SUB-Piggy_ID(Codierung), B"0000_1001", FG902.170 -- 6x opt isolated In -> neue Zwischenbackplane
+
     --  CONSTANT c_AW:            ID_CID:= (x"0F", 00);   ---- Piggy-ID(Codierung), B"0000_1111",
 
 
