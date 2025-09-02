@@ -1629,31 +1629,6 @@ type   t_reg_array         is array (1 to 12) of std_logic_vector(7 downto 0);
 signal conf_reg:           t_reg_array;
 signal AW_SK_Input_Reg:            t_IO_Reg_1_to_7_Array;  -- Input-Register von den Piggy's
 signal IOBP_SK_Aktiv_LED_i:  t_led_array;
-signal PIO_ENA_SLOT_1: std_logic_vector(5 downto 0):= (OTHERS => '0');
-signal PIO_ENA_SLOT_2: std_logic_vector(5 downto 0):= (OTHERS => '0');
-signal PIO_ENA_SLOT_3: std_logic_vector(5 downto 0):= (OTHERS => '0');
-signal PIO_ENA_SLOT_4: std_logic_vector(5 downto 0):= (OTHERS => '0');
-signal PIO_ENA_SLOT_5: std_logic_vector(5 downto 0):= (OTHERS => '0');
-signal PIO_ENA_SLOT_6: std_logic_vector(5 downto 0):= (OTHERS => '0');
-signal PIO_ENA_SLOT_7: std_logic_vector(5 downto 0):= (OTHERS => '0');
-signal PIO_ENA_SLOT_8: std_logic_vector(5 downto 0):= (OTHERS => '0');
-signal PIO_ENA_SLOT_9: std_logic_vector(5 downto 0):= (OTHERS => '0');
-signal PIO_ENA_SLOT_10: std_logic_vector(5 downto 0):= (OTHERS => '0');
-signal PIO_ENA_SLOT_11: std_logic_vector(5 downto 0):= (OTHERS => '0');
-signal PIO_ENA_SLOT_12: std_logic_vector(5 downto 0):= (OTHERS => '0');
-
-signal PIO_OUT_SLOT_1: std_logic_vector(5 downto 0):= (OTHERS => '0');
-signal PIO_OUT_SLOT_2: std_logic_vector(5 downto 0):= (OTHERS => '0');
-signal PIO_OUT_SLOT_3: std_logic_vector(5 downto 0):= (OTHERS => '0');
-signal PIO_OUT_SLOT_4: std_logic_vector(5 downto 0):= (OTHERS => '0');
-signal PIO_OUT_SLOT_5: std_logic_vector(5 downto 0):= (OTHERS => '0');
-signal PIO_OUT_SLOT_6: std_logic_vector(5 downto 0):= (OTHERS => '0');
-signal PIO_OUT_SLOT_7: std_logic_vector(5 downto 0):= (OTHERS => '0');
-signal PIO_OUT_SLOT_8: std_logic_vector(5 downto 0):= (OTHERS => '0');
-signal PIO_OUT_SLOT_9: std_logic_vector(5 downto 0):= (OTHERS => '0');
-signal PIO_OUT_SLOT_10: std_logic_vector(5 downto 0):= (OTHERS => '0');
-signal PIO_OUT_SLOT_11: std_logic_vector(5 downto 0):= (OTHERS => '0');
-signal PIO_OUT_SLOT_12: std_logic_vector(5 downto 0):= (OTHERS => '0');
 
 signal quench_sk_out:  std_logic_vector(23 downto 0):=(others=>'0');
 
@@ -1661,8 +1636,8 @@ signal quench_sk_enable_signal: std_logic_vector(53 downto 0):=(others=>'0');
 signal TM_out_delay: std_logic_vector(23 downto 0):=(others=>'0');
 signal quench_out_sel: std_logic_vector(5 downto 0) := (others=>'0');
 
-signal OUT_SLOT: t_IOBP_array;
-signal ENA_SLOT: t_IOBP_array;
+signal OUT_SLOT: t_IOBP_array:= (others=>(others=>'0'));
+signal ENA_SLOT: t_IOBP_array:= (others=>(others=>'0'));
 --  +============================================================================================================================+
 --  |                                   Übergabe-Signale für Anwender-IO: Out16   -- FG901_010                                   |
 --  +============================================================================================================================+
@@ -4185,49 +4160,7 @@ Port map( clk            => clk_sys,
 );
 end front_board_id ; 
 
-slot_process: process (clk_sys, rstn_sys)
 
-  begin
-
-      if (not  rstn_sys= '1')    then
-          for i in 1 to 12 loop
-
-              ENA_SLOT(i)<= (others => '0' );
-              OUT_SLOT(i)<= (others => '0' );
-
-          end loop;
-
-         
-      elsif (clk_sys'EVENT AND clk_sys = '1') then
-
-          ENA_SLOT(1) <= PIO_ENA_SLOT_1;
-          ENA_SLOT(2) <= PIO_ENA_SLOT_2;
-          ENA_SLOT(3) <= PIO_ENA_SLOT_3;
-          ENA_SLOT(4) <= PIO_ENA_SLOT_4;
-          ENA_SLOT(5) <= PIO_ENA_SLOT_5;
-          ENA_SLOT(6) <= PIO_ENA_SLOT_6;
-          ENA_SLOT(7) <= PIO_ENA_SLOT_7;
-          ENA_SLOT(8) <= PIO_ENA_SLOT_8;
-          ENA_SLOT(9) <= PIO_ENA_SLOT_9;
-          ENA_SLOT(10) <= PIO_ENA_SLOT_10;
-          ENA_SLOT(11) <= PIO_ENA_SLOT_11;
-          ENA_SLOT(12) <= PIO_ENA_SLOT_12;
-
-          OUT_SLOT(1) <= PIO_OUT_SLOT_1;
-          OUT_SLOT(2) <= PIO_OUT_SLOT_2;
-          OUT_SLOT(3) <= PIO_OUT_SLOT_3;
-          OUT_SLOT(4) <= PIO_OUT_SLOT_4;
-          OUT_SLOT(5) <= PIO_OUT_SLOT_5;
-          OUT_SLOT(6) <= PIO_OUT_SLOT_6;
-          OUT_SLOT(7) <= PIO_OUT_SLOT_7;
-          OUT_SLOT(8) <= PIO_OUT_SLOT_8;
-          OUT_SLOT(9) <= PIO_OUT_SLOT_9;
-          OUT_SLOT(10) <= PIO_OUT_SLOT_10;
-          OUT_SLOT(11) <= PIO_OUT_SLOT_11;
-          OUT_SLOT(12) <= PIO_OUT_SLOT_12;
-
-    end if;
-   end process slot_process;
 
 --  +============================================================================================================================+
 --  |                                          Anwender-IO: Out16  -- FG901_010                                                  |
@@ -7281,27 +7214,27 @@ END IF;
 
 
 -----------------------------------------------------------------------------------------------------------------------------------------
-( PIO_ENA(56),  PIO_ENA(62),  PIO_ENA(54),  PIO_ENA(60),  PIO_ENA(52),  PIO_ENA(58)) <= PIO_ENA_SLOT_1;
-( PIO_ENA(96),  PIO_ENA(102), PIO_ENA(94),  PIO_ENA(100), PIO_ENA(92),  PIO_ENA(98)) <= PIO_ENA_SLOT_2;
-( PIO_ENA(73),  PIO_ENA(79),  PIO_ENA(71),  PIO_ENA(77),  PIO_ENA(69),  PIO_ENA(75)) <= PIO_ENA_SLOT_3;
-( PIO_ENA(101), PIO_ENA(93),  PIO_ENA(103), PIO_ENA(91),  PIO_ENA(105), PIO_ENA(89)) <= PIO_ENA_SLOT_4;
-( PIO_ENA(53),  PIO_ENA(63),  PIO_ENA(55),  PIO_ENA(61),  PIO_ENA(57),  PIO_ENA(59)) <= PIO_ENA_SLOT_5;
-( PIO_ENA(119), PIO_ENA(111), PIO_ENA(121), PIO_ENA(109), PIO_ENA(123), PIO_ENA(107))<= PIO_ENA_SLOT_6;
-( PIO_ENA(35),  PIO_ENA(45),  PIO_ENA(37),  PIO_ENA(43),  PIO_ENA(39),  PIO_ENA(41)) <= PIO_ENA_SLOT_7;
-( PIO_ENA(137), PIO_ENA(129), PIO_ENA(139), PIO_ENA(127), PIO_ENA(141), PIO_ENA(125))<= PIO_ENA_SLOT_8;
-( PIO_ENA(30),  PIO_ENA(20),  PIO_ENA(28),  PIO_ENA(22),  PIO_ENA(26),  PIO_ENA(24)) <= PIO_ENA_SLOT_9;
-( PIO_ENA(130), PIO_ENA(138), PIO_ENA(128), PIO_ENA(140), PIO_ENA(126), PIO_ENA(142))<= PIO_ENA_SLOT_10;
-( PIO_ENA(48),  PIO_ENA(38),  PIO_ENA(46),  PIO_ENA(40),  PIO_ENA(44),  PIO_ENA(42)) <= PIO_ENA_SLOT_11;
-( PIO_ENA(112), PIO_ENA(120), PIO_ENA(110), PIO_ENA(122), PIO_ENA(108), PIO_ENA(124))<= PIO_ENA_SLOT_12;
+( PIO_ENA(56),  PIO_ENA(62),  PIO_ENA(54),  PIO_ENA(60),  PIO_ENA(52),  PIO_ENA(58)) <= ENA_SLOT(1);
+( PIO_ENA(96),  PIO_ENA(102), PIO_ENA(94),  PIO_ENA(100), PIO_ENA(92),  PIO_ENA(98)) <= ENA_SLOT(2);
+( PIO_ENA(73),  PIO_ENA(79),  PIO_ENA(71),  PIO_ENA(77),  PIO_ENA(69),  PIO_ENA(75)) <= ENA_SLOT(3);
+( PIO_ENA(101), PIO_ENA(93),  PIO_ENA(103), PIO_ENA(91),  PIO_ENA(105), PIO_ENA(89)) <= ENA_SLOT(4);
+( PIO_ENA(53),  PIO_ENA(63),  PIO_ENA(55),  PIO_ENA(61),  PIO_ENA(57),  PIO_ENA(59)) <= ENA_SLOT(5);
+( PIO_ENA(119), PIO_ENA(111), PIO_ENA(121), PIO_ENA(109), PIO_ENA(123), PIO_ENA(107))<= ENA_SLOT(6);
+( PIO_ENA(35),  PIO_ENA(45),  PIO_ENA(37),  PIO_ENA(43),  PIO_ENA(39),  PIO_ENA(41)) <= ENA_SLOT(7);
+( PIO_ENA(137), PIO_ENA(129), PIO_ENA(139), PIO_ENA(127), PIO_ENA(141), PIO_ENA(125))<= ENA_SLOT(8);
+( PIO_ENA(30),  PIO_ENA(20),  PIO_ENA(28),  PIO_ENA(22),  PIO_ENA(26),  PIO_ENA(24)) <= ENA_SLOT(9);
+( PIO_ENA(130), PIO_ENA(138), PIO_ENA(128), PIO_ENA(140), PIO_ENA(126), PIO_ENA(142))<= ENA_SLOT(10);
+( PIO_ENA(48),  PIO_ENA(38),  PIO_ENA(46),  PIO_ENA(40),  PIO_ENA(44),  PIO_ENA(42)) <= ENA_SLOT(11);
+( PIO_ENA(112), PIO_ENA(120), PIO_ENA(110), PIO_ENA(122), PIO_ENA(108), PIO_ENA(124))<= ENA_SLOT(12);
 
-( PIO_OUT(56),  PIO_OUT(62),  PIO_OUT(54),  PIO_OUT(60),  PIO_OUT(52),  PIO_OUT(58)) <= PIO_OUT_SLOT_1;
-( PIO_OUT(96),  PIO_OUT(102), PIO_OUT(94), PIO_OUT(100),  PIO_OUT(92),  PIO_OUT(98)) <= PIO_OUT_SLOT_2;
-( PIO_OUT(73),  PIO_OUT(79),  PIO_OUT(71),  PIO_OUT(77),  PIO_OUT(69),  PIO_OUT(75)) <= PIO_OUT_SLOT_3;
-( PIO_OUT(101), PIO_OUT(93),  PIO_OUT(103), PIO_OUT(91),  PIO_OUT(105), PIO_OUT(89)) <= PIO_OUT_SLOT_4;
-( PIO_OUT(53),  PIO_OUT(63),  PIO_OUT(55),  PIO_OUT(61),  PIO_OUT(57),  PIO_OUT(59)) <= PIO_OUT_SLOT_5;
-( PIO_OUT(119), PIO_OUT(111), PIO_OUT(121), PIO_OUT(109), PIO_OUT(123), PIO_OUT(107))<= PIO_OUT_SLOT_6;
-( PIO_OUT(35),  PIO_OUT(45),  PIO_OUT(37),  PIO_OUT(43),  PIO_OUT(39),  PIO_OUT(41)) <= PIO_OUT_SLOT_7;
-( PIO_OUT(137), PIO_OUT(129), PIO_OUT(139), PIO_OUT(127), PIO_OUT(141), PIO_OUT(125))<= PIO_OUT_SLOT_8;
+( PIO_OUT(56),  PIO_OUT(62),  PIO_OUT(54),  PIO_OUT(60),  PIO_OUT(52),  PIO_OUT(58)) <= OUT_SLOT(1);
+( PIO_OUT(96),  PIO_OUT(102), PIO_OUT(94), PIO_OUT(100),  PIO_OUT(92),  PIO_OUT(98)) <= OUT_SLOT(2);
+( PIO_OUT(73),  PIO_OUT(79),  PIO_OUT(71),  PIO_OUT(77),  PIO_OUT(69),  PIO_OUT(75)) <= OUT_SLOT(3);
+( PIO_OUT(101), PIO_OUT(93),  PIO_OUT(103), PIO_OUT(91),  PIO_OUT(105), PIO_OUT(89)) <= OUT_SLOT(4);
+( PIO_OUT(53),  PIO_OUT(63),  PIO_OUT(55),  PIO_OUT(61),  PIO_OUT(57),  PIO_OUT(59)) <= OUT_SLOT(5);
+( PIO_OUT(119), PIO_OUT(111), PIO_OUT(121), PIO_OUT(109), PIO_OUT(123), PIO_OUT(107))<= OUT_SLOT(6);
+( PIO_OUT(35),  PIO_OUT(45),  PIO_OUT(37),  PIO_OUT(43),  PIO_OUT(39),  PIO_OUT(41)) <= OUT_SLOT(7);
+( PIO_OUT(137), PIO_OUT(129), PIO_OUT(139), PIO_OUT(127), PIO_OUT(141), PIO_OUT(125))<= OUT_SLOT(8);
 
 case AW_Config2 is
   when x"DEDE" => --Quench Detection Development
@@ -7328,10 +7261,10 @@ IOBP_Sel_Led(12)<= not quench_sk_out(5 downto 0);
    when OTHERS =>
    
 
- ( PIO_OUT(30),  PIO_OUT(20),  PIO_OUT(28),  PIO_OUT(22),  PIO_OUT(26),  PIO_OUT(24)) <= PIO_OUT_SLOT_9;
- ( PIO_OUT(130), PIO_OUT(138), PIO_OUT(128), PIO_OUT(140), PIO_OUT(126), PIO_OUT(142))<= PIO_OUT_SLOT_10;
- ( PIO_OUT(48),  PIO_OUT(38),  PIO_OUT(46),  PIO_OUT(40),  PIO_OUT(44),  PIO_OUT(42)) <= PIO_OUT_SLOT_11;
- ( PIO_OUT(112), PIO_OUT(120), PIO_OUT(110), PIO_OUT(122), PIO_OUT(108), PIO_OUT(124))<= PIO_OUT_SLOT_12;
+ ( PIO_OUT(30),  PIO_OUT(20),  PIO_OUT(28),  PIO_OUT(22),  PIO_OUT(26),  PIO_OUT(24)) <= OUT_SLOT(9);
+ ( PIO_OUT(130), PIO_OUT(138), PIO_OUT(128), PIO_OUT(140), PIO_OUT(126), PIO_OUT(142))<= OUT_SLOT(10);
+ ( PIO_OUT(48),  PIO_OUT(38),  PIO_OUT(46),  PIO_OUT(40),  PIO_OUT(44),  PIO_OUT(42)) <= OUT_SLOT(11);
+ ( PIO_OUT(112), PIO_OUT(120), PIO_OUT(110), PIO_OUT(122), PIO_OUT(108), PIO_OUT(124))<= OUT_SLOT(12);
 
  IOBP_Output_Readback(4) <= "0000" & IOBP_SK_Output(10) & IOBP_SK_Output(9);
 IOBP_Output_Readback(5) <= "0000" & IOBP_SK_Output(12) & IOBP_SK_Output(11);
