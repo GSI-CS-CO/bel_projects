@@ -52,8 +52,12 @@ setup_node() {
         echo "FAIL ($ret_code): sender ID of $rxscu is unknown. Exit!"
         exit 1
     fi
+
+    # update the parameter field of timing messages with MAC of local SCU and
+    # configure the local SCU firmware with this MAC
     output=$(run_remote $rxscu \
-        "source setup_local.sh && \
+        "sed -i \"s|00267b0006d7|$mac_rxscu|g\" $fn_mps_events; \
+        source setup_local.sh && \
         setup_mpsrx $fw_scu_def SENDER_TX $mac_rxscu")
     ret_code=$?
     if [ $ret_code -ne 0 ]; then
@@ -111,7 +115,7 @@ if [ -z "$username" ]; then
 fi
 
 if [ -z "$userpasswd" ]; then
-    read -rsp "password for '$username' : " userpasswd
+    read -rsp "password for '$username@$rxscu_name': " userpasswd
 fi
 
 # set up RX node
