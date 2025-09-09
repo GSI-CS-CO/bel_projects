@@ -97,6 +97,18 @@ begin
                 IOBP_Sel_LED(1)                    <= IOBP_Output(1);
 
 
+            when "00000001"|"00000010" => -- 5 In/1 Out Modul opt FG902011 or LEMO FG902021
+
+                AW_IOBP_Input_Reg(1)( 4 downto  0)  <= (Deb_Sync( 4 downto  0) AND not IOBP_Masken_Reg1( 4 downto  0));
+                AW_IOBP_Input_Reg(1)(5)             <= '0';
+                IOBP_Aktiv_LED_i(1)                 <= not ( IOBP_Masken_Reg7( 0) & IOBP_Masken_Reg1( 4 downto  0) ); 
+                IOBP_Input(1) (4 downto 0)          <= ( PIO_SYNC(62),  PIO_SYNC(54),  PIO_SYNC(60),  PIO_SYNC(52),  PIO_SYNC(58));
+                IOBP_Output(1)(5)                   <= (AW_Output_Reg(1)( 5) AND not IOBP_Masken_Reg7( 0));
+                PIO_OUT_SLOT(1)                     <= IOBP_Output(1);
+                PIO_ENA_SLOT(1)                     <= std_logic_vector'("100000");
+                IOBP_Sel_LED(1)                     <= (IOBP_Output(1)(5) & Deb_out( 4 DOWNTO  0)); 
+
+
             when others     =>  NULL;
 
         end case;
@@ -143,6 +155,17 @@ begin
                 IOBP_Sel_LED(2)                   <=  IOBP_Output(2);
 
 
+            when "00000001"|"00000010" => -- 5 In/1 Out Modul opt FG902011 or LEMO FG902021
+                
+                AW_Input_Reg(1)(10 downto 6)    <= (Deb_Sync(10 downto 6) AND not IOBP_Masken_Reg1(10 downto 6));
+                AW_Input_Reg(1)(11)             <= '0';
+                IOBP_Aktiv_LED_i(2)             <= not ( IOBP_Masken_Reg7(1) & IOBP_Masken_Reg1( 10 downto  6) );  
+                IOBP_Input(2)(4 downto 0)       <= ( PIO_SYNC(102), PIO_SYNC(94), PIO_SYNC(100),  PIO_SYNC(92),  PIO_SYNC(98));
+                IOBP_Output(2)(5)               <= (AW_Output_Reg(1)( 11) AND not IOBP_Masken_Reg7(1));
+                PIO_OUT_SLOT(2)                 <= IOBP_Output(2);
+                PIO_ENA_SLOT(2)                 <= std_logic_vector'("100000");
+                IOBP_Sel_LED(2)                 <= (IOBP_Output(2)(5) & Deb_out(10 DOWNTO 6));  
+
             when others =>  NULL;
 
         end case;
@@ -182,13 +205,24 @@ begin
 
                 AW_Input_Reg(2)( 5 downto  0)    <= (OTHERS => '0');
                 IOBP_Output(3)                   <= (AW_Output_Reg(2)(5 downto 0) AND not IOBP_Masken_Reg2(5 downto 0));      
-                PIO_OUT_SLOT(3)                   <= IOBP_Output(3);
-                PIO_ENA_SLOT(3)                   <= std_logic_vector'("111111");
-                IOBP_Aktiv_LED_i(3)              <= not(IOBP_Masken_Reg2( 5 downto 0));  -- Register für Sel-LED's vom Slave 3
+                PIO_OUT_SLOT(3)                  <= IOBP_Output(3);
+                PIO_ENA_SLOT(3)                  <= std_logic_vector'("111111");
+                IOBP_Aktiv_LED_i(3)              <= not(IOBP_Masken_Reg2( 5 downto 0));  
                 IOBP_Input(3)                    <= (OTHERS => '0');
                 IOBP_Sel_LED(3)                  <= IOBP_Output(3);
 
 
+            when "00000001"|"00000010" => -- 5 In/1 Out Modul opt FG902011 or LEMO FG902021
+
+                AW_Input_Reg(2)(4 downto 0)     <= (Deb_Sync(16 downto 12) AND not IOBP_Masken_Reg2(4 downto 0)); 
+                AW_Input_Reg(2)(5)              <= '0';
+                IOBP_Aktiv_LED_i(3)             <= not(IOBP_Masken_Reg7( 2) & IOBP_Masken_Reg2(4 downto 0)); 
+                IOBP_Input(3)(4 downto 0)       <= (PIO_SYNC(79), PIO_SYNC(71), PIO_SYNC(77), PIO_SYNC(69), PIO_SYNC(75));
+                IOBP_Output(3)(5)               <= (AW_Output_Reg(2)( 5) AND not IOBP_Masken_Reg7( 2));
+                PIO_OUT_SLOT(3)                 <= IOBP_Output(3);
+                PIO_ENA_SLOT(3)                 <= std_logic_vector'("100000");
+                IOBP_Sel_LED(3)                 <= (IOBP_Output(3)(5) & Deb_out( 16 DOWNTO  12));
+ 
             when others     =>   NULL;
 
         end case;
@@ -233,6 +267,17 @@ begin
                 IOBP_Input(4)                    <= (OTHERS => '0');
                 IOBP_Sel_LED(4)                  <=  IOBP_Output(4);
 
+
+            when "00000001"|"00000010" => -- 5 In/1 Out Modul opt FG902011 or LEMO FG902021
+
+                AW_Input_Reg(2)(10 downto 6)    <= (Deb_Sync(22 downto 18) AND not IOBP_Masken_Reg2(10 downto 6)); 
+                AW_Input_Reg(2)(11)             <='0';
+                IOBP_Aktiv_LED_i(4)             <= not(IOBP_Masken_Reg7(3) & IOBP_Masken_Reg2(10 downto 6)); 
+                IOBP_Input(4)(4 downto 0)       <= (PIO_SYNC(93), PIO_SYNC(103), PIO_SYNC(91), PIO_SYNC(105), PIO_SYNC(89));
+                IOBP_Output(4)(5)               <= (AW_Output_Reg(2)( 11) AND not IOBP_Masken_Reg7(3));
+                PIO_OUT_SLOT(4)                 <= IOBP_Output(4);
+                PIO_ENA_SLOt(4)                 <= std_logic_vector'("100000");
+                IOBP_Sel_LED(4)                 <= (IOBP_Output(4)(5) & Deb_out(22 DOWNTO 18));
 
            when others     =>   NULL;
         
@@ -279,6 +324,17 @@ begin
                 IOBP_Sel_LED(5)                   <= IOBP_Output(5); 
 
 
+            when "00000001"|"00000010" => -- 5 In/1 Out Modul opt FG902011 or LEMO FG902021
+ 
+                AW_Input_Reg(3)(4 downto 0)     <= (Deb_Sync(28 downto 24) AND not IOBP_Masken_Reg3(4 downto 0));
+                AW_Input_Reg(3)(5)              <='0';
+                IOBP_Aktiv_LED_i(5)             <= not (IOBP_Masken_Reg7(4) & IOBP_Masken_Reg3( 4 downto 0)); 
+                IOBP_Input(5)(4 downto 0)       <= ( PIO_SYNC(63),  PIO_SYNC(55),  PIO_SYNC(61),  PIO_SYNC(57),  PIO_SYNC(59));
+                IOBP_Output(5)(5)               <= (AW_Output_Reg(3)( 5) AND not IOBP_Masken_Reg7(4));
+                PIO_OUT_SLOT(5)                 <= IOBP_Output(5);
+                PIO_ENA_SLOT(5)                 <= std_logic_vector'("100000");
+                IOBP_Sel_LED(5)                 <= (IOBP_Output(5)(5) & Deb_out(28 DOWNTO 24));
+
             when others     =>  NULL;
 
         end case;
@@ -324,6 +380,18 @@ begin
                     IOBP_Aktiv_LED_i(6)           <= not(IOBP_Masken_Reg3(11 downto 6));  
                     IOBP_Input(6)                 <= (OTHERS => '0');
                     IOBP_Sel_LED(6)               <= IOBP_Output(6);
+
+
+                when "00000001"|"00000010" => -- 5 In/1 Out Modul opt FG902011 or LEMO FG902021
+            
+                    AW_Input_Reg(3)(10 downto 6)    <= (Deb_Sync(34 downto 30) AND not IOBP_Masken_Reg3(10 downto 6)); 
+                    AW_Input_Reg(3)(11)             <='0';
+                    IOBP_Aktiv_LED_i(6)             <=  not (IOBP_Masken_Reg7( 5) & IOBP_Masken_Reg3(10 downto 6));
+                    IOBP_Input(6)(4 downto 0)       <= ( PIO_SYNC(111), PIO_SYNC(121), PIO_SYNC(109), PIO_SYNC(123), PIO_SYNC(107));
+                    IOBP_Output(6)(5)               <= (AW_Output_Reg(3)(11) AND not IOBP_Masken_Reg7(5));
+                    PIO_OUT_SLOT(6)                 <= IOBP_Output(6);
+                    PIO_ENA_SLOT(6)                 <= std_logic_vector'("100000");
+                    IOBP_Sel_LED(6)                 <= (IOBP_Output(6)(5) & Deb_out(34 DOWNTO 30));  
 
 
                 when others     =>  NULL;
@@ -373,6 +441,18 @@ begin
                     IOBP_Input(7)                 <= (OTHERS => '0');
                     IOBP_Sel_LED(7)               <= IOBP_Output(7);
 
+
+                when "00000001"|"00000010" => -- 5 In/1 Out Modul opt FG902011 or LEMO FG902021
+
+                    AW_Input_Reg(4)(4 downto 0) <= (Deb_Sync(40 downto 36) AND not IOBP_Masken_Reg4(4 downto 0)); 
+                    AW_Input_Reg(4)(5)          <= '0';
+                    IOBP_Aktiv_LED_i(7)         <= not(IOBP_Masken_Reg7(6) & IOBP_Masken_Reg4(4 downto 0)); 
+                    IOBP_Input(7)(4 downto 0)   <= ( PIO_SYNC(45),  PIO_SYNC(37),  PIO_SYNC(43),  PIO_SYNC(39),  PIO_SYNC(41));
+                    IOBP_Output(7)(5)           <= (AW_Output_Reg(4)( 5) AND not IOBP_Masken_Reg7(6));
+                    PIO_OUT_SLOT(7)             <= IOBP_Output(7);
+                    PIO_ENA_SLOT(7)             <= std_logic_vector'("100000");
+                    IOBP_Sel_LED(7)             <= (IOBP_Output(7)(5) & DeB_out(40 DOWNTO 36)); 
+
                  when others     =>  NULL;
 
             end case;  
@@ -418,8 +498,19 @@ begin
                     IOBP_Aktiv_LED_i(8)         <= not(IOBP_Masken_Reg4(11 downto 6) ); 
                     IOBP_Input(8)               <= (OTHERS => '0');
                     IOBP_Sel_LED(8)             <= IOBP_Output(8);
+  
 
-                
+                when "00000001"|"00000010" => -- 5 In/1 Out Modul opt FG902011 or LEMO FG902021
+
+                    AW_Input_Reg(4)(10 downto 6)<= (Deb_Sync(46 downto 42) AND not IOBP_Masken_Reg4(10 downto 6)); 
+                    AW_Input_Reg(4)(11)         <= '0';
+                    IOBP_Aktiv_LED_i(8)         <= not (IOBP_Masken_Reg7(7) & IOBP_Masken_Reg4( 10 downto 6));
+                    IOBP_Input(8)(4 downto 0)   <= ( PIO_SYNC(129), PIO_SYNC(139), PIO_SYNC(127), PIO_SYNC(141), PIO_SYNC(125));
+                    IOBP_Output(8)(5)           <= (AW_Output_Reg(4)( 11) AND not IOBP_Masken_Reg7(7));
+                    PIO_OUT_SLOT(8)             <= IOBP_Output(8);
+                    PIO_ENA_SLOT(8)             <= std_logic_vector'("100000");
+                    IOBP_Sel_LED(8)             <= (IOBP_Output(8)(5) & Deb_out(46 DOWNTO 42)); 
+     
                 when others     =>  NULL;
 
             end case;    
@@ -467,6 +558,17 @@ begin
                     IOBP_Sel_LED(9)             <= IOBP_Output(9);
 
 
+                when "00000001"|"00000010" => -- 5 In/1 Out Modul opt FG902011 or LEMO FG902021
+
+                    AW_Input_Reg(5)(4 downto 0) <= (Deb_Sync(52 downto 48) AND not IOBP_Masken_Reg5(4 downto 0));  
+                    AW_Input_Reg(5)(5)          <='0';
+                    IOBP_Aktiv_LED_i(9)         <= not(IOBP_Masken_Reg7(8) & IOBP_Masken_Reg5(4 downto 0));  
+                    IOBP_Input(9)(4 downto 0)   <= (PIO_SYNC(20), PIO_SYNC(28), PIO_SYNC(22), PIO_SYNC(26), PIO_SYNC(24));
+                    IOBP_Output(9)(5)           <= (AW_Output_Reg(5)(5) AND not IOBP_Masken_Reg7(8));
+                    PIO_OUT_SLOT(9)             <= IOBP_Output(9);
+                    PIO_ENA_SLOT(9)             <= std_logic_vector'("100000");
+                    IOBP_Sel_LED(9)             <= (IOBP_Output(9)(5) & Deb_out(52 DOWNTO 48));  
+
                 when others     =>  NULL;
             
             end case;
@@ -512,6 +614,18 @@ begin
                     IOBP_Input(10)              <= (OTHERS => '0');
                     IOBP_Sel_LED(10)            <=  IOBP_Output(10); 
 
+
+                when "00000001"|"00000010" => -- 5 In/1 Out Modul opt FG902011 or LEMO FG902021
+
+                    AW_Input_Reg(5)(10 downto 6)<= (Deb_Sync(58 downto 54) AND not IOBP_Masken_Reg5( 10 downto  6)); 
+                    AW_Input_Reg(5)(11)         <= '0';
+                    IOBP_Aktiv_LED_i(10)        <= not (IOBP_Masken_Reg7( 9) & IOBP_Masken_Reg5( 10 downto  6)); 
+                    IOBP_Input(10)(4 downto 0)  <= (PIO_SYNC(138), PIO_SYNC(128), PIO_SYNC(140), PIO_SYNC(126), PIO_SYNC(142));
+                    IOBP_Output(10)(5)          <= (AW_Output_Reg(5)( 11) AND not IOBP_Masken_Reg7(9));
+                    PIO_OUT_SLOT(10)            <= IOBP_Output(10);
+                    PIO_ENA_SLOT(10)            <= std_logic_vector'("100000");
+                    IOBP_Sel_LED(10)            <= (IOBP_Output(10)(5) &  Deb_out( 58 DOWNTO  54));  
+
                 when others     =>  NULL;
                                               
             end case;       
@@ -555,8 +669,20 @@ begin
                     PIO_ENA_SLOT(11)            <= std_logic_vector'("111111");
                     IOBP_Aktiv_LED_i(11)        <= not(IOBP_Masken_Reg6(5 downto 0) );
                     IOBP_Input(11)              <= (OTHERS => '0');
-                    IOBP_Sel_LED(11)            <=  IOBP_SK_Output(11); 
+                    IOBP_Sel_LED(11)            <=  IOBP_Output(11); 
 
+                
+                when "00000001"|"00000010" => -- 5 In/1 Out Modul opt FG902011 or LEMO FG902021
+            
+
+                    AW_Input_Reg(6)(4 downto 0) <= (Deb_Sync(64 downto 60) AND not IOBP_Masken_Reg6(4 downto 0)); 
+                    AWInput_Reg(6)(5)           <='0';
+                    IOBP_Aktiv_LED_i(11)        <= not (IOBP_Masken_Reg7( 10) & IOBP_Masken_Reg6( 4 downto  0) ); 
+                    IOBP_Input(11)(4 downto 0)  <= (PIO_SYNC(38), PIO_SYNC(46), PIO_SYNC(40), PIO_SYNC(44), PIO_SYNC(42));
+                    IOBP_Output(11)(5)          <= (AW_Output_Reg(6)( 5) AND not IOBP_Masken_Reg7(10));
+                    PIO_OUT_SLOT(11)            <= IOBP_Output(11);
+                    PIO_ENA_SLOT(11)            <= std_logic_vector'("100000");
+                    IOBP_Sel_LED(11)            <= (IOBP_Output(11)(5) & Deb_out(64 DOWNTO 60));
 
                 when others     =>  NULL;
 
@@ -603,6 +729,18 @@ begin
                     IOBP_Aktiv_LED_i(12)        <= not(IOBP_Masken_Reg6(11 downto 6)); 
                     IOBP_Input(12)              <= (OTHERS => '0');
                     IOBP_Sel_LED(12)            <= IOBP_Output(12);
+
+
+                when "00000001"|"00000010" => -- 5 In/1 Out Modul opt FG902011 or LEMO FG902021
+
+                    AW_Input_Reg(6)(10 downto 6)<= (Deb_Sync(70 downto 66) AND not IOBP_Masken_Reg6(10 downto 6));  
+                    AW_Input_Reg(6)(11)         <= '0';
+                    IOBP_Aktiv_LED_i(12)        <=  not (IOBP_Masken_Reg7( 11) & IOBP_Masken_Reg6(10 downto 6));  
+                    IOBP_Input(12)(4 downto 0)  <= (PIO_SYNC(120), PIO_SYNC(110), PIO_SYNC(122), PIO_SYNC(108), PIO_SYNC(124));
+                    IOBP_Output(12)(5)          <= (AW_Output_Reg(6)( 11) AND not IOBP_Masken_Reg7(11));
+                    PIO_OUT_SLOT(12)            <= IOBP_Output(12);
+                    PIO_ENA_SLOT(12)            <= std_logic_vector'("100000");
+                    IOBP_Sel_LED(12)            <= (IOBP_Output(12)(5) & Deb_out( 70 DOWNTO 66));  
 
                 when others     =>  NULL;
                                               
