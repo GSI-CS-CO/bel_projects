@@ -76,10 +76,11 @@ begin
     clk_sys_i => clk_sys_i,
     rst_n_i   => rst_n_i,
 
-    slave1_i => proc_slave_i,
-    slave1_o => proc_slave_o,
-    slave2_i => wb_slave_i,
-    slave2_o => wb_slave_o
+    -- the two ports don't seem to behave identically. When swapped the DMA doesn't work as expected.
+    slave1_i => wb_slave_i,
+    slave1_o => wb_slave_o,
+    slave2_i => proc_slave_i,
+    slave2_o => proc_slave_o
   );
 
 end architecture;
