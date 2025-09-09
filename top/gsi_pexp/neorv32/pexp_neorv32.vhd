@@ -294,7 +294,8 @@ begin
       g_lm32_cores         => c_cores,
       g_lm32_ramsizes      => c_lm32_ramsizes/4,
       g_lm32_init_files    => f_string_list_repeat(c_initf_name, c_cores),
-      g_lm32_profiles      => f_string_list_repeat(c_profile_name, c_cores)
+      g_lm32_profiles      => f_string_list_repeat(c_profile_name, c_cores),
+      g_en_virtual_jtag    => true
     )
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
