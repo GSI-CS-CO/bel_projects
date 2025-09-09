@@ -4,7 +4,7 @@ read_start_address=0x04004000
 write_start_address=0x04004400
 transfer_size=16
 
-eb-put dev/ttyUSB0 $(printf "0x%X" "$read_start_address") RAM.bin
+eb-put dev/ttyUSB0 $(printf "0x%X" "$read_start_address") addressRAM.bin
 eb-write dev/ttyUSB0 0x0/4 $(printf "0x%X" "$transfer_size")
 eb-write dev/ttyUSB0 0x4/4 $(printf "0x%X" "$read_start_address")
 eb-write dev/ttyUSB0 0x8/4 $(printf "0x%X" "$write_start_address")
