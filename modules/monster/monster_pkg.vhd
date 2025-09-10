@@ -139,7 +139,6 @@ package monster_pkg is
       g_en_a10vs             : boolean := false;
       g_en_cellular_ram      : boolean := false;
       g_en_virtualRAM        : boolean := false;
-      g_en_enc_err_counter   : boolean := false;
       g_en_wb_dma            : boolean := false;
       g_en_wb_master_test    : boolean := false
     );
