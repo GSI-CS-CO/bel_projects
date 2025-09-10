@@ -33,6 +33,8 @@ architecture wb_dma_engine_arch of wb_dma_engine is
   signal s_next_state : t_engine_state;
 begin
 
+
+  -- TODO: make the FSM dynamic to account for loading delays over wishbone.
 p_engine : process (rstn_i, r_engine_state, init_transfer_i) begin
 if(rstn_i = '0') then
   s_next_state <= IDLE;
