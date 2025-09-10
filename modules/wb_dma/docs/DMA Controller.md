@@ -22,3 +22,7 @@ Memory can only be addressed in byte mode because the eb tools are written with 
 - second FIFO in the channel so the read and write master can work simultaneously
 - descriptor controlled transfers
     - loading descriptors until the end of the linked list is reached.
+    - where to solve the descriptor loading word selection? FSM in the channel, the engine or the read master?
+    - when the DMA is idle because it finished all it's previous transfers, how to reactivate it when a new descriptor is available and tell the DMA where the new descriptor is saved
+- integrate RISCV cpu -> talk to Alex
+- test the DMA under heavy crossbar load. Does it get stuck, does it stall the bus, etc...
