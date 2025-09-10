@@ -40,6 +40,14 @@ If all descriptors need to be finished before changing the channel it gets even 
 
 Each channel only has one descriptor active. If the amount of channels is too little the firmware will have to stall and write the new descriptors as soon as a channel has cleared.
 
+## Descriptor Loading
+
+The descriptor gets loaded with the read master and should be saved in the channel. Right now that connection does not exist yet as the interface is wrong and the control logic is not implemented in the read master and channel. The channel should accept data when an ACK arrives and then skip to the next data word.
+
+## Buffer Architecture
+
+The data buffer is only implemented once and is shared by all descriptors. This means a transfer shouldn't be paused (if it doesn't get repeated?). The channels should contain the descriptor data and any benchmarking or information registers.
+
 # “Flow Chart”
 
 ## New Data from Host
