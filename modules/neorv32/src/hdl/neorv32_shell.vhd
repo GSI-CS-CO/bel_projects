@@ -19,7 +19,7 @@ entity neorv32_shell is
     g_mem_wishbone_init_file    : string := "";                                  -- init file Wishbone instruction memory
     g_mem_int_imem_size         : natural := 16*1024;                             -- size of processor-internal instruction memory in bytes
     g_mem_int_dmem_size         : natural := 16*1024;                             -- size of processor-internal data memory in bytes
-    g_use_wb_adapter            : boolean := true                                -- use wishbone slave adapter CLASSIC/PIPELINED
+    g_use_wb_adapter            : boolean := false                                -- use wishbone slave adapter CLASSIC/PIPELINED
   );
   port (
     -- Global control
@@ -124,7 +124,8 @@ begin
     MEM_INT_DMEM_EN   => true,
     MEM_INT_DMEM_SIZE => g_mem_int_dmem_size,
     IO_GPIO_NUM       => 32,
-    IO_UART0_EN       => true
+    IO_UART0_EN       => true,
+    XBUS_TIMEOUT      => 0
   )
   port map (
     clk_i       => clk_i,

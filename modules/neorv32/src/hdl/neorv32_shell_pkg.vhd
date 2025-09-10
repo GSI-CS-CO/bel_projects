@@ -23,7 +23,7 @@ package neorv32_shell_pkg is
       g_mem_wishbone_init_file    : string := "";                                  -- init file Wishbone instruction memory
       g_mem_int_imem_size         : natural := 16*1024;                             -- size of processor-internal instruction memory in bytes
       g_mem_int_dmem_size         : natural := 16*1024;                              -- size of processor-internal data memory in bytes
-      g_use_wb_adapter            : boolean := true                               -- use wishbone slave adapter CLASSIC/PIPELINED
+      g_use_wb_adapter            : boolean := false                               -- use wishbone slave adapter CLASSIC/PIPELINED
     );
     port (
       -- Global control
