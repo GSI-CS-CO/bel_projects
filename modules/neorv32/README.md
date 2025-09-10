@@ -58,3 +58,19 @@ cd sim
 make
 make view # this will open GTKWave
 ```
+# Wishbone Adapter
+
+The xbus interface of the neorv32 project does not fully conform to the wishbone standard, especially the pipelined mode. To make it compatible an adapter was implemented in the shell (wrapper). 
+
+## Single Access Adapter
+
+In single access mode the adapter only handles stalls from the crossbar by registering the bus signals until the stall is over.
+
+## Burst Mode Adapter (ECA message)
+
+At least to enable insertions into the ECA queue a block transfer/pipelined mode is necessary. As there exists no stall signal from the xbus interface the messages during a stall need to be registered in the adapter. The FIFO is sized to be able to fit the full ECA message.
+
+# JTAG
+
+To connect the jtag adapter to the RISCV core a “virtual JTAG” adapter is added from the IP library from quartus.
+As per the neorv32 documentation I tried OpenOCD, but haven’t gotten it to work yet. The target and the config file have to be modified. The gdb commands seem to be wrong and only work when adding an underscore.

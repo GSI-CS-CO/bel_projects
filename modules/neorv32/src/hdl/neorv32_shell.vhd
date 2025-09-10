@@ -17,9 +17,10 @@ entity neorv32_shell is
     g_mem_wishbone_imem_size    : natural := 4*8000;                             -- memory size in bytes
     g_mem_wishbone_imem_addr    : std_ulogic_vector(31 downto 0) := x"71000000"; -- imem RAM start address
     g_mem_wishbone_init_file    : string := "";                                  -- init file Wishbone instruction memory
-    g_mem_int_imem_size         : natural := 16*1024;                             -- size of processor-internal instruction memory in bytes
-    g_mem_int_dmem_size         : natural := 16*1024;                             -- size of processor-internal data memory in bytes
-    g_use_wb_adapter            : boolean := false                                -- use wishbone slave adapter CLASSIC/PIPELINED
+    g_mem_int_imem_size         : natural := 16*1024;                            -- size of processor-internal instruction memory in bytes
+    g_mem_int_dmem_size         : natural := 16*1024;                            -- size of processor-internal data memory in bytes
+    g_use_wb_adapter            : boolean := false;                              -- use wishbone slave adapter CLASSIC/PIPELINED
+    g_en_debugging              : boolean := false                               -- enable OCD debugging
   );
   port (
     -- Global control
@@ -34,7 +35,11 @@ entity neorv32_shell is
     slave_i    : in  t_wishbone_slave_in;
     slave_o    : out t_wishbone_slave_out;
     master_i   : in  t_wishbone_master_in;
-    master_o   : out t_wishbone_master_out);
+    master_o   : out t_wishbone_master_out;
+    jtag_tck_i : in std_logic;
+    jtag_tdi_i : in std_logic;
+    jtag_tdo_o : out std_logic;
+    jtag_tms_i : in std_logic);
 end neorv32_shell;
 
 architecture rtl of neorv32_shell is
@@ -125,7 +130,8 @@ begin
     MEM_INT_DMEM_SIZE => g_mem_int_dmem_size,
     IO_GPIO_NUM       => 32,
     IO_UART0_EN       => true,
-    XBUS_TIMEOUT      => 0
+    XBUS_TIMEOUT      => 0,
+    OCD_EN            => g_en_debugging
   )
   port map (
     clk_i       => clk_i,
@@ -142,7 +148,11 @@ begin
     xbus_err_i  => s_xbus_err,
     gpio_o      => s_gpio_out,
     gpio_i      => s_gpio_in,
-    uart0_txd_o => uart_o
+    uart0_txd_o => uart_o,
+    jtag_tck_i  => jtag_tck_i,
+    jtag_tdi_i  => jtag_tdi_i,
+    jtag_tdo_o  => jtag_tdo_o,
+    jtag_tms_i  => jtag_tms_i
   );
 
   -- Reset logic

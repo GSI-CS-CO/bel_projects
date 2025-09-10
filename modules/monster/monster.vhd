@@ -138,7 +138,8 @@ entity monster is
     g_en_psram_delay       : boolean;
     g_en_enc_err_counter   : boolean;
     g_en_a10vs             : boolean;
-    g_en_cellular_ram      : boolean);
+    g_en_cellular_ram      : boolean;
+    g_en_virtual_jtag      : boolean);
   port(
     -- Required: core signals
     core_clk_20m_vcxo_i    : in    std_logic;
@@ -1087,6 +1088,52 @@ architecture rtl of monster is
   signal asmi_i : t_wishbone_slave_in;
   signal asmi_o : t_wishbone_slave_out;
 
+
+  ----------------------------------------------------------------------------------
+  -- JTAG component and signals ----------------------------------------------------
+  ----------------------------------------------------------------------------------
+
+  component virtual_jtag is
+		port (
+			tdi                : out std_logic;                                       -- tdi
+			tdo                : in  std_logic                    := 'X';             -- tdo
+			ir_in              : out std_logic_vector(0 downto 0);                    -- ir_in
+			ir_out             : in  std_logic_vector(0 downto 0) := (others => 'X'); -- ir_out
+			virtual_state_cdr  : out std_logic;                                       -- virtual_state_cdr
+			virtual_state_sdr  : out std_logic;                                       -- virtual_state_sdr
+			virtual_state_e1dr : out std_logic;                                       -- virtual_state_e1dr
+			virtual_state_pdr  : out std_logic;                                       -- virtual_state_pdr
+			virtual_state_e2dr : out std_logic;                                       -- virtual_state_e2dr
+			virtual_state_udr  : out std_logic;                                       -- virtual_state_udr
+			virtual_state_cir  : out std_logic;                                       -- virtual_state_cir
+			virtual_state_uir  : out std_logic;                                       -- virtual_state_uir
+			tms                : out std_logic;                                       -- tms
+			jtag_state_tlr     : out std_logic;                                       -- jtag_state_tlr
+			jtag_state_rti     : out std_logic;                                       -- jtag_state_rti
+			jtag_state_sdrs    : out std_logic;                                       -- jtag_state_sdrs
+			jtag_state_cdr     : out std_logic;                                       -- jtag_state_cdr
+			jtag_state_sdr     : out std_logic;                                       -- jtag_state_sdr
+			jtag_state_e1dr    : out std_logic;                                       -- jtag_state_e1dr
+			jtag_state_pdr     : out std_logic;                                       -- jtag_state_pdr
+			jtag_state_e2dr    : out std_logic;                                       -- jtag_state_e2dr
+			jtag_state_udr     : out std_logic;                                       -- jtag_state_udr
+			jtag_state_sirs    : out std_logic;                                       -- jtag_state_sirs
+			jtag_state_cir     : out std_logic;                                       -- jtag_state_cir
+			jtag_state_sir     : out std_logic;                                       -- jtag_state_sir
+			jtag_state_e1ir    : out std_logic;                                       -- jtag_state_e1ir
+			jtag_state_pir     : out std_logic;                                       -- jtag_state_pir
+			jtag_state_e2ir    : out std_logic;                                       -- jtag_state_e2ir
+			jtag_state_uir     : out std_logic;                                       -- jtag_state_uir
+			tck                : out std_logic                                        -- clk
+		);
+	end component virtual_jtag;
+
+  signal s_tdi    : std_logic;
+  signal s_tdo    : std_logic;
+  signal s_tms    : std_logic; 
+  signal s_tck    : std_logic;
+
+
 begin
 
   ----------------------------------------------------------------------------------
@@ -1844,7 +1891,8 @@ end generate;
       g_mem_wishbone_imem_addr  => std_ulogic_vector(c_neorv32_ram_addr),
       g_sdb_addr                => c_top_sdb_address,
       g_mem_wishbone_init_file  => "../../../../../modules/neorv32/src/sw/idle-init/program.mif",
-      g_use_wb_adapter          => true
+      g_use_wb_adapter          => true,
+      g_en_debugging            => true
     )
     port map(
       clk_i       => clk_sys,
@@ -1854,7 +1902,11 @@ end generate;
       slave_o     => top_bus_master_i(top_slaves'pos(tops_neorv32_ram)),
       master_i    => top_bus_slave_o(top_my_masters'pos(topm_neorv32)),
       master_o    => top_bus_slave_i(top_my_masters'pos(topm_neorv32)),
-      uart_o      => s_neorv32_uart_out
+      uart_o      => s_neorv32_uart_out,
+      jtag_tck_i  => s_tck,
+      jtag_tdi_i  => s_tdi,
+      jtag_tdo_o  => s_tdo,
+      jtag_tms_i  => s_tms
     );
   end generate;
 
@@ -3610,5 +3662,50 @@ end generate;
 
   -- END OF Wishbone slaves
   ----------------------------------------------------------------------------------
+
+  virtual_jtag_n : if not g_en_virtual_jtag generate
+    s_tdi <= '0';
+    s_tdo <= '0';
+    s_tms <= '0';
+    s_tck <= '0';
+  end generate;
+
+  virtual_jtag_y : if g_en_virtual_jtag generate
+
+  virtual_jtag_inst : component virtual_jtag
+		port map (
+      tdi                => s_tdi,
+			tdo                => s_tdo,
+			ir_in              => open,
+		  ir_out             => open,
+			virtual_state_cdr  => open, 
+			virtual_state_sdr  => open,
+			virtual_state_e1dr => open,
+			virtual_state_pdr  => open,
+			virtual_state_e2dr => open,
+			virtual_state_udr  => open,
+			virtual_state_cir  => open,
+			virtual_state_uir  => open,
+			tms                => s_tms,
+			jtag_state_tlr     => open,
+			jtag_state_rti     => open,
+			jtag_state_sdrs    => open,
+			jtag_state_cdr     => open,
+			jtag_state_sdr     => open,
+			jtag_state_e1dr    => open,
+			jtag_state_pdr     => open,
+			jtag_state_e2dr    => open,
+			jtag_state_udr     => open,
+			jtag_state_sirs    => open,
+			jtag_state_cir     => open,
+			jtag_state_sir     => open,
+			jtag_state_e1ir    => open,
+			jtag_state_pir     => open,
+			jtag_state_e2ir    => open,
+			jtag_state_uir     => open,
+			tck                => s_tck
+    );
+
+  end generate;
 
 end rtl;

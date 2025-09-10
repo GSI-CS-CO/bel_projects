@@ -16,14 +16,15 @@ package neorv32_shell_pkg is
 
   component neorv32_shell is
     generic (
-      g_clock_frequency           : natural := 62500000;                           -- clock frequency of clk_i in Hz
-      g_sdb_addr                  : t_wishbone_address := x"00001000";             -- base SDB record
-      g_mem_wishbone_imem_size    : natural := 4*8000;                             -- memory size in bytes
-      g_mem_wishbone_imem_addr    : std_ulogic_vector(31 downto 0) := x"71000000"; -- imem RAM start address
-      g_mem_wishbone_init_file    : string := "";                                  -- init file Wishbone instruction memory
+      g_clock_frequency           : natural := 62500000;                            -- clock frequency of clk_i in Hz
+      g_sdb_addr                  : t_wishbone_address := x"00001000";              -- base SDB record
+      g_mem_wishbone_imem_size    : natural := 4*8000;                              -- memory size in bytes
+      g_mem_wishbone_imem_addr    : std_ulogic_vector(31 downto 0) := x"71000000";  -- imem RAM start address
+      g_mem_wishbone_init_file    : string := "";                                   -- init file Wishbone instruction memory
       g_mem_int_imem_size         : natural := 16*1024;                             -- size of processor-internal instruction memory in bytes
-      g_mem_int_dmem_size         : natural := 16*1024;                              -- size of processor-internal data memory in bytes
-      g_use_wb_adapter            : boolean := false                               -- use wishbone slave adapter CLASSIC/PIPELINED
+      g_mem_int_dmem_size         : natural := 16*1024;                             -- size of processor-internal data memory in bytes
+      g_use_wb_adapter            : boolean := false;                               -- use wishbone slave adapter CLASSIC/PIPELINED
+      g_en_debugging              : boolean := false                                -- enable OCD debugging
     );
     port (
       -- Global control
@@ -38,8 +39,12 @@ package neorv32_shell_pkg is
       slave_i    : in  t_wishbone_slave_in;
       slave_o    : out t_wishbone_slave_out;
       master_i   : in  t_wishbone_master_in;
-      master_o   : out t_wishbone_master_out);
-  end component;
+      master_o   : out t_wishbone_master_out;
+      jtag_tck_i : in std_logic;
+      jtag_tdi_i : in std_logic;
+      jtag_tdo_o : out std_logic;
+      jtag_tms_i : in std_logic);
+    end component;
 
 end package;
 

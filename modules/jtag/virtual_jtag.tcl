@@ -1,0 +1,1 @@
+qmegawiz { virtual_jtag/synthesis/virtual_jtag }
