@@ -2599,10 +2599,11 @@ end generate;
 
   wb_reset : wb_arria_reset
     generic map(
-      arria_family => g_family,
-      rst_channels => g_lm32_cores,
-      clk_in_hz    => 62_500_000,
-      en_wd_tmr    => g_en_wd_tmr)
+      arria_family   => g_family,
+      rst_channels   => g_lm32_cores,
+      clk_in_hz      => 62_500_000,
+      en_wd_tmr      => g_en_wd_tmr,
+      gpio_out_width => c_eca_gpio)
     port map(
       clk_sys_i      => clk_sys,
       rstn_sys_i     => rstn_sys,
@@ -2618,7 +2619,8 @@ end generate;
       psram_sel_o    => ps_chip_selector,
       neorv32_rstn_o => s_neorv32_rstn,
       rstn_o         => s_lm32_rstn,
-      poweroff_comx  => poweroff_comx);
+      poweroff_comx  => poweroff_comx,
+      gpio_out_led   => s_gpio_out_gated);
 
       wbar_phy_dis_o     <= wbar_phy_dis;
       wbar_phy_aux_dis_o <= wbar_phy_aux_dis;
