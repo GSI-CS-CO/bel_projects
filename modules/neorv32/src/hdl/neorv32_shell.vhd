@@ -123,13 +123,12 @@ begin
     BOOT_MODE_SELECT  => 1,
     XBUS_EN           => true,
     BOOT_ADDR_CUSTOM  => BOOT_ADDR_CUSTOM_C, -- Keep Quartus happy
-    MEM_INT_IMEM_EN   => false,
-    MEM_INT_IMEM_SIZE => g_mem_int_imem_size,
-    MEM_INT_DMEM_EN   => true,
-    MEM_INT_DMEM_SIZE => g_mem_int_dmem_size,
+    IMEM_EN           => false,
+    IMEM_SIZE         => g_mem_int_imem_size,
+    DMEM_EN           => true,
+    DMEM_SIZE         => g_mem_int_dmem_size,
     IO_GPIO_NUM       => 32,
     IO_UART0_EN       => true,
-    XBUS_TIMEOUT      => 1,
     OCD_EN            => g_en_debugging
   )
   port map (

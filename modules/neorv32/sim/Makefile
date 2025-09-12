@@ -35,10 +35,10 @@ HDL_SHELL_FILES:=../src/hdl/neorv32_shell_pkg.vhd \
 
 HDL_RTE_CORE_FILES:= \
 $(HDL_NEORV32_BASE)/neorv32_package.vhd \
-$(HDL_NEORV32_BASE)/neorv32_fifo.vhd \
 $(HDL_NEORV32_BASE)/neorv32_application_image.vhd \
 $(HDL_NEORV32_BASE)/neorv32_bootloader_image.vhd \
 $(HDL_NEORV32_BASE)/neorv32_boot_rom.vhd \
+$(HDL_NEORV32_BASE)/neorv32_prim.vhd \
 $(HDL_NEORV32_BASE)/neorv32_cache.vhd \
 $(HDL_NEORV32_BASE)/neorv32_cfs.vhd \
 $(HDL_NEORV32_BASE)/neorv32_cpu_cp_shifter.vhd \
@@ -48,6 +48,7 @@ $(HDL_NEORV32_BASE)/neorv32_cpu_cp_fpu.vhd \
 $(HDL_NEORV32_BASE)/neorv32_cpu_cp_cfu.vhd \
 $(HDL_NEORV32_BASE)/neorv32_cpu_cp_cond.vhd \
 $(HDL_NEORV32_BASE)/neorv32_cpu_cp_crypto.vhd \
+$(HDL_NEORV32_BASE)/neorv32_cpu_hwtrig.vhd \
 $(HDL_NEORV32_BASE)/neorv32_cpu_alu.vhd \
 $(HDL_NEORV32_BASE)/neorv32_cpu_decompressor.vhd \
 $(HDL_NEORV32_BASE)/neorv32_cpu_control.vhd \
@@ -57,7 +58,6 @@ $(HDL_NEORV32_BASE)/neorv32_cpu_regfile.vhd \
 $(HDL_NEORV32_BASE)/neorv32_cpu_frontend.vhd \
 $(HDL_NEORV32_BASE)/neorv32_cpu_counters.vhd \
 $(HDL_NEORV32_BASE)/neorv32_cpu.vhd \
-$(HDL_NEORV32_BASE)/neorv32_crc.vhd \
 $(HDL_NEORV32_BASE)/neorv32_debug_auth.vhd \
 $(HDL_NEORV32_BASE)/neorv32_debug_dm.vhd \
 $(HDL_NEORV32_BASE)/neorv32_debug_dtm.vhd \
@@ -82,6 +82,7 @@ $(HDL_NEORV32_BASE)/neorv32_imem.vhd \
 $(HDL_NEORV32_BASE)/neorv32_dmem.vhd \
 $(HDL_NEORV32_BASE)/neorv32_twd.vhd \
 $(HDL_NEORV32_BASE)/neorv32_clint.vhd \
+$(HDL_NEORV32_BASE)/neorv32_tracer.vhd \
 $(HDL_NEORV32_BASE)/neorv32_top.vhd
 
 HDL_RTE_GENRAM_FILES:=$(HDL_GEN_CORES_OFFSET)/modules/genrams/genram_pkg.vhd \
