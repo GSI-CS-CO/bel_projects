@@ -52,7 +52,7 @@ end component;
 component wb_arria_reset is
   generic (
             arria_family : string                := "Arria II";
-            rst_channels : integer range 1 to 32 := 2;
+            rst_channels : integer range 0 to 32 := 2;
             clk_in_hz    : integer;
             en_wd_tmr    : boolean               := false
           );

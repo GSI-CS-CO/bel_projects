@@ -79,7 +79,7 @@ use arria10_reset_altera_remote_update_181.arria10_reset_pkg.all;
 entity wb_arria_reset is
   generic (
     arria_family : string := "none";
-    rst_channels : integer range 1 to 32 := 2;
+    rst_channels : integer range 0 to 32 := 2;
     clk_in_hz    : integer;
     en_wd_tmr    : boolean
   );
