@@ -80,9 +80,11 @@ begin
     slave_o    => s_dummy_slave_o,
     master_i   => cbar_slave_o(0),
     master_o   => cbar_slave_i(0),
-    -- gpio_o     => s_gpio_out,
-    -- gpio_i     => s_gpio_in,
-    uart_o     => s_uart_out
+    uart_o     => s_uart_out,
+    jtag_tck_i => '0',
+    jtag_tdi_i => '0',
+    jtag_tdo_o => open,
+    jtag_tms_i => '0'
   );
 
   sim_rx_uart0: entity work.sim_uart_rx
@@ -132,5 +134,5 @@ begin
       slave1_o  => cbar_master_i(0),
       -- Second port disconnected
       slave2_i  => cc_dummy_slave_in, -- CYC always low
-      slave2_o  => open);  
+      slave2_o  => open);
 end;
