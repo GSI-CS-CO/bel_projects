@@ -17,8 +17,6 @@ architecture rtl of neorv32_tb_slim is
 
   signal s_clk      : std_logic;
   signal s_rstn     : std_logic;
-  signal s_gpio_out : std_logic_vector(31 downto 0);
-  signal s_gpio_in  : std_logic_vector(31 downto 0);
   signal s_uart_out : std_logic := '0';
 
   signal s_dummy_slave_i  : t_wishbone_slave_in := cc_dummy_slave_in;
@@ -65,9 +63,11 @@ begin
     slave_o    => s_dummy_slave_o,
     master_i   => s_dummy_master_i,
     master_o   => s_dummy_master_o,
-    gpio_o     => s_gpio_out,
-    gpio_i     => s_gpio_in,
-    uart_o     => s_uart_out
+    uart_o     => s_uart_out,
+    jtag_tck_i => '0',
+    jtag_tdi_i => '0',
+    jtag_tdo_o => open,
+    jtag_tms_i => '0'
   );
 
   sim_rx_uart0: entity work.sim_uart_rx
