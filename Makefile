@@ -676,7 +676,8 @@ hdlmake_install_locally:
 
 # Compile (and test) projects
 test_run_all: test_install_dim test_build_ftm_shared_map \
-	test_b2b test_wr-mil test_wr-unipz test_dm-unipz test_uni-chop \
+	test_b2b test_wr-mil test_wr-unipz test_dm-unipz \
+	test_uni-blm test_uni-chop \
 	test_fec_analyzer test_freq-measure test_sync-mon \
 	test_lm32_examples
 
@@ -705,6 +706,10 @@ test_wr-unipz:
 test_dm-unipz:
 	$(MAKE) -C modules/dm-unipz USRPATH=$(USRPATH_DIM) firmware
 	$(MAKE) -C modules/dm-unipz USRPATH=$(USRPATH_DIM) software
+
+test_uni-blm:
+	$(MAKE) -C modules/uni-blm USRPATH=$(USRPATH_DIM) firmware
+	$(MAKE) -C modules/uni-blm USRPATH=$(USRPATH_DIM) software
 
 test_uni-chop:
 	$(MAKE) -C modules/uni-chop USRPATH=$(USRPATH_DIM) firmware
