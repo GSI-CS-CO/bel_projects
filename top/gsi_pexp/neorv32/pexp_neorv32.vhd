@@ -233,7 +233,7 @@ architecture rtl of pexp_neorv32 is
 
   constant c_family     : string := "Arria V";
   constant c_project    : string := "pexp_neorv32";
-  constant c_cores      : natural:= 1;
+  constant c_cores      : natural:= 0;
   constant c_initf_name : string := c_project & "_stub.mif";
   constant c_profile_name : string := "medium_icache_debug";
 
