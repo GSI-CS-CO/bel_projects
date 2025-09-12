@@ -1130,7 +1130,7 @@ architecture rtl of monster is
 
   signal s_tdi    : std_logic;
   signal s_tdo    : std_logic;
-  signal s_tms    : std_logic; 
+  signal s_tms    : std_logic;
   signal s_tck    : std_logic;
 
 
@@ -1873,9 +1873,15 @@ end generate;
   sdb_dummy_top <= f_report_wishbone_address(c_top_sdb_address, "SDB TOP");
   sdb_dummy_dev <= f_report_wishbone_address(c_dev_sdb_address, "SDB DEV");
 
-  wr_uart_o   <= uart_wrc or s_neorv32_uart_out;
-  uart_to_usb <= s_neorv32_uart_out;
-  uart_mux    <= uart_usb and wr_uart_i;
+  wr_uart_o <= uart_wrc;
+  neorv32_uart_n : if not g_en_neorv32 generate
+    uart_to_usb <= uart_wrc;
+    uart_mux    <= uart_usb and wr_uart_i;
+  end generate;
+  neorv32_uart_y : if g_en_neorv32 generate
+    uart_to_usb <= s_neorv32_uart_out;
+    uart_mux    <= uart_usb;
+  end generate;
 
   neorv32_n : if not g_en_neorv32 generate
     top_bus_slave_i (top_my_masters'pos(topm_neorv32)) <= cc_dummy_master_out;
@@ -3678,7 +3684,7 @@ end generate;
 			tdo                => s_tdo,
 			ir_in              => open,
 		  ir_out             => open,
-			virtual_state_cdr  => open, 
+			virtual_state_cdr  => open,
 			virtual_state_sdr  => open,
 			virtual_state_e1dr => open,
 			virtual_state_pdr  => open,
