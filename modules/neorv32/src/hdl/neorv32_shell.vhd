@@ -36,10 +36,11 @@ entity neorv32_shell is
     slave_o    : out t_wishbone_slave_out;
     master_i   : in  t_wishbone_master_in;
     master_o   : out t_wishbone_master_out;
-    jtag_tck_i : in std_logic;
-    jtag_tdi_i : in std_logic;
+    -- JTAG
+    jtag_tck_i : in  std_logic;
+    jtag_tdi_i : in  std_logic;
     jtag_tdo_o : out std_logic;
-    jtag_tms_i : in std_logic);
+    jtag_tms_i : in  std_logic);
 end neorv32_shell;
 
 architecture rtl of neorv32_shell is
@@ -121,8 +122,6 @@ begin
     CLOCK_FREQUENCY   => g_clock_frequency,
     BOOT_MODE_SELECT  => 1,
     XBUS_EN           => true,
-    --BOOT_ADDR_CUSTOM  => std_ulogic_vector(unsigned(g_mem_wishbone_imem_addr)),
-    --BOOT_ADDR_CUSTOM => std_ulogic_vector(to_unsigned(g_mem_wishbone_imem_addr, 32)),
     BOOT_ADDR_CUSTOM  => BOOT_ADDR_CUSTOM_C, -- Keep Quartus happy
     MEM_INT_IMEM_EN   => false,
     MEM_INT_IMEM_SIZE => g_mem_int_imem_size,
@@ -130,7 +129,7 @@ begin
     MEM_INT_DMEM_SIZE => g_mem_int_dmem_size,
     IO_GPIO_NUM       => 32,
     IO_UART0_EN       => true,
-    XBUS_TIMEOUT      => 0,
+    XBUS_TIMEOUT      => 1,
     OCD_EN            => g_en_debugging
   )
   port map (
@@ -170,9 +169,6 @@ begin
       s_gpio_in <= std_ulogic_vector(unsigned(g_sdb_addr));
     end if;
   end process;
-
-  -- GPIOs
-  gpio_o <= std_logic_vector(s_gpio_out);
 
   -- Wishbone RAM
   neorv32_wb_ext_ram : xwb_dpram
@@ -227,7 +223,7 @@ begin
       if(s_fifo_empty = '1') then  -- as long as there is no bus request from the processor keep the cycle open with a dummy output
         master_o <= to_master_out(s_burst_dummy_master);
       else
-        master_o <= to_master_out(s_fifo_out); 
+        master_o <= to_master_out(s_fifo_out);
       end if;
     end if;
     end process;
@@ -235,19 +231,19 @@ begin
     s_block_we  <= s_arbited_master.stb;
     s_block_rd  <= not master_i.STALL;
 
-    -- FIFO to stall transfers that are requested during a stall cycle 
+    -- FIFO to stall transfers that are requested during a stall cycle
     block_transfer_FIFO: generic_sync_fifo
     generic map(
       g_data_width  => 1 + 1 + c_wishbone_address_width + (c_wishbone_address_width/8) + 1 + c_wishbone_data_width, -- size of all master out bus signals
       g_size        => 8, -- number of transfers in an ECA burst, thus the assumed maximum transfers per cycle
       g_with_empty  => true,
       g_with_full   => false,
-      g_show_ahead  => true  -- so that no rd_i is necessary to see the first datum 
+      g_show_ahead  => true  -- so that no rd_i is necessary to see the first datum
     )
     port map(
       rst_n_i => s_gpio_out(0), -- if the burst mode signal is low the FIFO gets reset so it is empty for the next transfer
       clk_i   => clk_i,
-      d_i     => to_vector(s_arbited_master), -- the whole wishbone transfer 
+      d_i     => to_vector(s_arbited_master), -- the whole wishbone transfer
       we_i    => s_block_we,
       q_o     => s_fifo_out,
       rd_i    => s_block_rd,

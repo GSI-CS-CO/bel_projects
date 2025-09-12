@@ -32,18 +32,17 @@ package neorv32_shell_pkg is
       rstn_i     : in std_logic;
       rstn_ext_i : in std_logic;
       -- Peripherals
-      -- gpio_o     : out std_logic_vector(31 downto 0);
-      -- gpio_i     : in  std_logic_vector(31 downto 0) := (others => '0');
       uart_o     : out std_logic;
       -- Wishbone
       slave_i    : in  t_wishbone_slave_in;
       slave_o    : out t_wishbone_slave_out;
       master_i   : in  t_wishbone_master_in;
       master_o   : out t_wishbone_master_out;
-      jtag_tck_i : in std_logic;
-      jtag_tdi_i : in std_logic;
+      -- JTAG
+      jtag_tck_i : in  std_logic;
+      jtag_tdi_i : in  std_logic;
       jtag_tdo_o : out std_logic;
-      jtag_tms_i : in std_logic);
+      jtag_tms_i : in  std_logic);
     end component;
 
 end package;
@@ -57,7 +56,6 @@ end package;
       report "NEORV32: SDB address (dec)            = " & integer'image(to_integer(unsigned(sdb_addr)));
       return '0';
     end f_neorv32_report_wb_range;
-
 
     function f_neorv32_ram_sdb(g_ram_size : natural) return t_sdb_device
     is
