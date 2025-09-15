@@ -69,11 +69,10 @@ PORT(
   SCUB_Addr                          : out std_logic_vector(15 downto 0);  -- Address Bus of SCU_Bus
   SCUB_RDnWR                         : out std_logic;                      -- Read/Write Signal of SCU_Bus. Read is active high.
   -- Direction seen from this marco.
-  nSCUB_SRQ_Slaves                   : in std_logic_vector(11 downto 0);      -- Input of service requests up to 12 SCU_Bus slaves, active low.
-  nSCUB_Slave_Sel                    : out std_logic_vector(11 downto 0);      -- Output select one or more of 12 SCU_Bus slaves, active low.
-  nSCUB_Timing_Cycle                 : out std_logic;                          -- Strobe to signal a timing cycle on SCU_Bus, active low.
-  nSel_Ext_Data_Drv                  : out std_logic;                          -- select for external data transceiver to the SCU_Bus, active low.
-  is_scub_backplane                  : in std_logic
+  nSCUB_SRQ_Slaves                   : in std_logic_vector(11 downto 0);   -- Input of service requests up to 12 SCU_Bus slaves, active low.
+  nSCUB_Slave_Sel                    : out std_logic_vector(11 downto 0);  -- Output select one or more of 12 SCU_Bus slaves, active low.
+  nSCUB_Timing_Cycle                 : out std_logic;                      -- Strobe to signal a timing cycle on SCU_Bus, active low.
+  nSel_Ext_Data_Drv                  : out std_logic                       -- select for external data transceiver to the SCU_Bus, active low.
   );
 
 END wb_scu_bus;
@@ -363,7 +362,7 @@ P_Reset:  PROCESS (clk, nrst)
 
 
 
-S_Status(15)  <= is_scub_backplane;
+S_Status(15)  <= '0';
 S_Status(14)  <= '0';
 S_Status(13)  <= '0';
 S_Status(12)  <= '0';
