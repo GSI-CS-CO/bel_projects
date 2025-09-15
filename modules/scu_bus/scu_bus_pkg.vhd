@@ -48,8 +48,7 @@ component wb_scu_bus is
     nSCUB_SRQ_Slaves                   : IN     STD_LOGIC_VECTOR(11 DOWNTO 0);  -- Input of service requests up to 12 SCU_Bus slaves, active low.
     nSCUB_Slave_Sel                    : OUT    STD_LOGIC_VECTOR(11 DOWNTO 0);  -- Output select one or more of 12 SCU_Bus slaves, active low.
     nSCUB_Timing_Cycle                 : OUT    STD_LOGIC;                      -- Strobe to signal a timing cycle on SCU_Bus, active low.
-    nSel_Ext_Data_Drv                  : OUT    STD_LOGIC;                       -- select for external data transceiver to the SCU_Bus, active low.
-    is_scub_backplane                  : in     std_logic
+    nSel_Ext_Data_Drv                  : OUT    STD_LOGIC                       -- select for external data transceiver to the SCU_Bus, active low.
 
     );
 end component;
