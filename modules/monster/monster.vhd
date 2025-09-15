@@ -1000,6 +1000,7 @@ architecture rtl of monster is
 
   signal  tag        : std_logic_vector(31 downto 0);
   signal  tag_valid  : std_logic;
+  signal  s_is_rmt   : std_logic;
 
   -- SCU bus signals
   ----------------------------------------------------------------------------------
@@ -2610,6 +2611,7 @@ end generate;
       clk_upd_i      => clk_update,
       rstn_upd_i     => rstn_update,
       hw_version     => hw_version,
+      is_rmt         => s_is_rmt,
       slave_o        => dev_bus_master_i(dev_slaves'pos(devs_reset)),
       slave_i        => dev_bus_master_o(dev_slaves'pos(devs_reset)),
       phy_rst_o      => wbar_phy_rst,
@@ -3297,8 +3299,10 @@ end generate;
         nscub_slave_sel    => scubus_a_nsel,
         nscub_timing_cycle => scubus_a_ntiming_cycle,
         nsel_ext_data_drv  => scubus_nsel_data_drv,
-        is_rmt             => is_rmt);
+        is_rmt             => s_is_rmt);
   end generate;
+
+  is_rmt <= s_is_rmt;
 
   mil_n : if not g_en_mil generate
     top_bus_master_i(top_slaves'pos(tops_mil))      <= cc_dummy_slave_out;

@@ -90,7 +90,8 @@ entity wb_arria_reset is
     clk_upd_i      : in std_logic;
     rstn_upd_i     : in std_logic;
 
-    hw_version     : in std_logic_vector(31 downto 0);
+    hw_version    : in std_logic_vector(31 downto 0);
+    is_rmt        : in std_logic;
 
     slave_o        : out t_wishbone_slave_out;
     slave_i        : in  t_wishbone_slave_in;
@@ -305,6 +306,7 @@ begin
               when 1 => slave_o.dat <= '0' & reset_reg(reset_reg'left downto 1);
               when 2 => slave_o.dat <= hw_version;
               when 3 => slave_o.dat <= x"0000000" & "000" & not disable_wd;
+              when 4 => slave_o.dat <= x"0000000" & "000" & is_rmt;
               when 5 => slave_o.dat <= x"0000000" & phy_aux_dis & phy_dis & phy_aux_rst & phy_rst;
               when 6 => slave_o.dat <= x"0000000" & s_psram_sel;
               when 7 => slave_o.dat <= x"0000000" & "000" & s_poweroff_comx;
