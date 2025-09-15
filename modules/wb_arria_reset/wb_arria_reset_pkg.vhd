@@ -64,6 +64,7 @@ component wb_arria_reset is
     clk_upd_i     : in std_logic;
     rstn_upd_i    : in std_logic;
     hw_version    : in std_logic_vector(31 downto 0);
+    is_rmt        : in std_logic;
     slave_o       : out t_wishbone_slave_out;
     slave_i       : in  t_wishbone_slave_in;
     phy_rst_o     : out std_logic;
