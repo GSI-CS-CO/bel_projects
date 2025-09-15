@@ -90,8 +90,8 @@ begin
      nSCUB_SRQ_Slaves   => nscub_srq_slaves,
      nSCUB_Slave_Sel    => nscub_slave_sel,
      nSCUB_Timing_Cycle => nscub_timing_cycle,
-     nSel_Ext_Data_Drv  => nsel_ext_data_drv,
-     is_scub_backplane  => not is_standalone);
+     nSel_Ext_Data_Drv  => nsel_ext_data_drv
+   );
   
   scub_irq_master: wb_irq_master
   generic map (
