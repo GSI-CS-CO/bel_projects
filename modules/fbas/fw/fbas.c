@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define FBAS_FW_VERSION 0x010300        // make this consistent with makefile
+#define FBAS_FW_VERSION 0x010301        // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -608,7 +608,7 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, msgCtrl_t*
               // unicast the reg. response
               fwlib_setEbmDstAddr(nodeId, BROADCAST_IP);
               msgRegisterNode(myMac, REG_RSP, idx);
-              DBPRINT1("reg OK: MAC=%llx\n", nodeId);
+              DBPRINT1("reg OK: TX MAC=%llx\n", nodeId);
             }
           }
         }
@@ -616,7 +616,7 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, msgCtrl_t*
           if (regCmd == REG_RSP) {
             dstNwAddr[DST_ADDR_RXNODE].mac = nodeId;
             myIdx = info;
-            DBPRINT3("reg.rsp: RX MAC=%llx\n", dstNwAddr[DST_ADDR_RXNODE].mac);
+            DBPRINT1("reg OK: RX MAC=%llx\n", dstNwAddr[DST_ADDR_RXNODE].mac);
             *mpsTask |= TSK_REG_COMPLETE;
           }
         }
