@@ -54,7 +54,8 @@
 
 /** @name Global hardcoded parameters. Bus access and scheduler parameters
  */
-//@{ 
+//@{
+#define MAX_RD_RETRIES          5
 #define PREPTIME_DEFAULT 		1000000ULL // standard preptime offset, sets lead to 1 ms
 #define WORLD_BASE_ADR          0x80000000 ///< Base address leading from the CPU cluster to top crossbar ('world')
 //#define _THR_QTY_               32 ///< Maximum number of threads
@@ -250,6 +251,15 @@
 #define SHCTL_STATUS_DM_INIT_POS        3
 #define SHCTL_STATUS_DM_INIT_SMSK       (SHCTL_STATUS_DM_INIT_MSK << SHCTL_STATUS_DM_INIT_POS)
 //@}
+
+/** @name Status register - Too many unstable reads status bit */
+//@{
+#define SHCTL_STATUS_DM_UNSTABLE_RD_MSK       0x1
+#define SHCTL_STATUS_DM_UNSTABLE_RD_POS       4
+#define SHCTL_STATUS_DM_UNSTABLE_RD_SMSK      (SHCTL_STATUS_DM_UNSTABLE_RD_MSK << SHCTL_STATUS_DM_UNSTABLE_RD_POS)
+//@}
+
+
 
 /** @name Global status register - Error status bit */
 //@{

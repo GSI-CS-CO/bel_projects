@@ -6,6 +6,10 @@
 #include <inttypes.h>
 #include <stdint.h>
 
+struct {
+   unsigned int age : 3;
+} Age;
+
 /** @name Priority Queue - mode register
  *  Bit definitions for the Mode register of the Priority Queue 
  */
@@ -96,8 +100,15 @@ extern actionFuncPtr      actionFuncs[_ACT_TYPE_END_];  ///< Function pointer ar
 /** @name Compilation of nodes referencing fields from others during runtime.
  *  This is in fact not references but done by value copy, the node handler function is always given a 'static' node to work with. Thus, this is RO, changes will not propagate back.
  */
-//@{ 
-extern uint32_t              nodeTmp[_MEM_BLOCK_SIZE / _32b_SIZE_]; ///< Staging area when a node is constructed from references
+//@{
+typedef enum {
+    NODE_TMP_BAK = 0,        
+    NODE_TMP_OLD, 
+    NODE_TMP_NEW, 
+
+} node_tmp_t; 
+
+uint32_t* const nodeTmps[3 * _MEM_BLOCK_SIZE / _32b_SIZE_];      ///< Staging area when a node is constructed from references. BACKUP, OLD, NEW
 extern uint32_t* dynamicNodeStaging(uint32_t* node, uint32_t* thrData);     ///< Returns ptr to the original node if all fields are immediates or ptr to nodeTmp if a dynamic verion was compiled
 //@}
 
@@ -126,6 +137,8 @@ extern uint32_t* const badwaitcnt;      ///< ptr to bad waittime count
  */
 //@{ 
 extern uint32_t* const start;           ///< ptr to thread control - start bits
+extern uint32_t* const startRemote;     ///< ptr to thread control - start bits remote (ECA)
+
 extern uint32_t* const running;         ///< ptr to thread control - running bits
 extern uint32_t* const abort1;          ///< ptr to thread control - abort bits (name awkwardly chosen to avoid clash with WR global)
 extern uint32_t** const hp;             ///< ptr array of EDF scheduler heap
@@ -191,6 +204,47 @@ static char* print64(uint64_t x, int align)
                         sprintf(buf, "%u%09u", h_half, l_half);
         }
         return buf;
+}
+
+inline uint64_t safeRead64(volatile uint64_t* a, uint32_t* state) {
+  uint64_t read = *a;
+  int8_t    cnt = MAX_RD_RETRIES;
+
+  while (read != *a) {
+    read = *a;
+    if (--cnt < 0) {*status |= SHCTL_STATUS_DM_ERROR_SMSK | SHCTL_STATUS_DM_UNSTABLE_RD_SMSK; return -1ULL;}
+  }
+  
+  return read;
+}
+
+inline void deRefNode(uint32_t* nodeSrc, uint32_t* nodeDst) {
+  uint32_t wordFormats = nodeSrc[NODE_OPT_DYN >> 2]; //load word description
+  // tells us if its 32/64 and if a word is an immediate, value (dynamically generated at compile time, static now), reference, or a double reference
+
+  for(unsigned i = 0; i < 9; i++) { // a memory block has 13 words, not 9 - but last four (dyn, hash, flags, nextPtr) must not be changed.
+    if ((wordFormats & DYN_MODE_MSK) >= DYN_MODE_REF) { // Is current word a kind of reference? yay, let's dynamically copy stuff in!
+      
+      uint64_t val = ((wordFormats & DYN_MODE_MSK) == DYN_MODE_REF2) ?  **(volatile uint64_t**)nodeSrc : *(volatile uint64_t*)nodeSrc; //reference or reference 2 reference?
+      nodeDst[i+0] = (uint32_t)(val>>32);
+      nodeDst[i+1] = (wordFormats & DYN_WIDTH64_SMSK) ?  (uint32_t)(val) : 0; //It's MSB first, so the adr can be 64b high word or 32b word. if its 64b, fill in low word at i+1
+      
+    } 
+    wordFormats >>= 3; //shift right by 3 bits to get next wordFormat
+  }
+}
+
+
+inline uint8_t matchNode(volatile uint32_t* node0, volatile uint32_t* node1) {
+  // Compare reads
+  uint8_t match = 1;
+  for(int i = 0; i < 9; i++) {
+      if(node0[i] != node1[i]) {
+          match = 0;
+          break;
+      }
+  }
+  return match;
 }
 
 inline uint32_t hiW(uint64_t dword) {return (uint32_t)(dword >> 32);} ///< Returns high word of 64b value

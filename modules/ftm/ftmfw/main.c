@@ -210,8 +210,11 @@ void main(void) {
   DBPRINT1("#%02u: Base shared ram 0x%08x\n", cpuId, (uint32_t*)&_startshared);
 
    while (1) {
+    //TODO
+    //check WR, EBM and PQ state. If bad, send MSI to host and UART message cycle until good
 
-
+    if (*status & SHCTL_STATUS_DM_ERROR_SMSK) {mprintf("#%02u: Fatal Error bit set - sleep cycling for safety \n", cpuId); for (j = 0; j < ((125000000/4)); ++j) { asm("nop"); }; continue;}
+    
     // Hard abort is an emergency and gets priority over everything else
     if (*abort1) {
       *running &= ~(*abort1);   // clear all aborted running bits
@@ -225,7 +228,10 @@ void main(void) {
 
     //the workhorse. check if most urgent node is due and process it if this is the case.
     uint8_t thrIdx = *(uint32_t*)(pT(hp) + (T_TD_FLAGS >> 2));
-    if (DL(pT(hp))  <= getSysTime() + *(uint64_t*)(p + (( SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME   ) >> 2) )) {
+
+    uint64_t prepTime = safeRead64((volatile uint64_t*)( p + ((SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME) >> 2) ), status); // reads until stable 64b value to avoid Hi/Lo word racecon (ECA writes)
+
+    if (DL(pT(hp))  <= getSysTime() + prepTime) {
       //node is due. Execute it, then update cursor and deadline, return control to scheduler
       backlog++;
 
@@ -252,40 +258,48 @@ void main(void) {
       *backlogmax   = ((backlog > *backlogmax) ? backlog : *backlogmax);
       backlog = 0;
 
-      if(*start) { //check start bitfield for any request
+      //FIXME this is all a cheesy workaround for real cmd queue. direct reg access is not supposed to be multi producer. but let's do the best we can
+      uint32_t startAll = (*start | *startRemote); //this way, host can't overwrite eca and eca is less likely to overwrite self
+
+      if(startAll) { //check start bitfield for any request
+        *start = 0; *startRemote = 0; //we copied pending starts, clear input regs asap.
+
         for(i=0;i<_THR_QTY_;i++) { //iterate
-          if (*start & (1<<i)) {
+          if (startAll & (1<<i)) { // if its pending, try to start it 
+            if (~(*running) & (1<<i)) { // If it is already running, we cant start it. Skip
+              //current thread base pointers
+              uint8_t* thrStart  = (uint8_t*)&p[( SHCTL_THR_STA + i * _T_TS_SIZE_) >> 2]; // thread Start array
+              uint8_t* thrData   = (uint8_t*)&p[( SHCTL_THR_DAT + i * _T_TD_SIZE_) >> 2]; // thread Data array
 
-            //current thread base pointers
-            uint8_t* thrStart  = (uint8_t*)&p[( SHCTL_THR_STA + i * _T_TS_SIZE_) >> 2]; // thread Start array
-            uint8_t* thrData   = (uint8_t*)&p[( SHCTL_THR_DAT + i * _T_TD_SIZE_) >> 2]; // thread Data array
+        //pointers to start fields
+              uint64_t* pStartTime = (uint64_t*)&thrStart[T_TS_STARTTIME];
+              uint64_t* pPrepTime  = (uint64_t*)&thrStart[T_TS_PREPTIME];
+              uint32_t* origin    = (uint32_t*)&thrStart[T_TS_NODE_PTR];
 
-      //pointers to start fields
-            uint64_t* startTime = (uint64_t*)&thrStart[T_TS_STARTTIME];
-            uint64_t* prepTime  = (uint64_t*)&thrStart[T_TS_PREPTIME];
-            uint32_t* origin    = (uint32_t*)&thrStart[T_TS_NODE_PTR];
+        //pointers to data fields
+              uint64_t* currTime  = (uint64_t*)&thrData[T_TD_CURRTIME];
+              uint64_t* deadline  = (uint64_t*)&thrData[T_TD_DEADLINE];
+              uint32_t* cursor    = (uint32_t*)&thrData[T_TD_NODE_PTR];
+              uint32_t* msgcnt    = (uint32_t*)&thrData[T_TD_MSG_CNT];
 
-      //pointers to data fields
-            uint64_t* currTime  = (uint64_t*)&thrData[T_TD_CURRTIME];
-            uint64_t* deadline  = (uint64_t*)&thrData[T_TD_DEADLINE];
-            uint32_t* cursor    = (uint32_t*)&thrData[T_TD_NODE_PTR];
-            uint32_t* msgcnt    = (uint32_t*)&thrData[T_TD_MSG_CNT];
+              DBPRINT1("#%02u: ThrIdx %u, Preptime: %s\n", cpuId, i, print64(*prepTime, 0));
 
-            DBPRINT1("#%02u: ThrIdx %u, Preptime: %s\n", cpuId, i, print64(*prepTime, 0));
+              //init fields
+              uint64_t startTime  = safeRead64((volatile uint64_t*)pStartTime, status); // reads until stable 64b value to avoid Hi/Lo word racecon (ECA writes)
+              uint64_t prepTime   = safeRead64((volatile uint64_t*)pPrepTime, status); // reads until stable 64b value to avoid Hi/Lo word racecon (ECA writes)
 
-      //init fields
-            if (!(*startTime)) {*currTime = getSysTime() + (*prepTime << 1); } // if 0, set to now + 2 * preptime
-            else                *currTime = *startTime;
+              if (startTime == 0) {*currTime = getSysTime() + (prepTime << 1); } // if 0, set to now + 2 * preptime
+              else                {*currTime = startTime;}
 
-            *cursor   = *origin;          // Set cursor to origin node
-            *deadline = *currTime;        // Set the deadline to first blockstart
-            //if first node is an event, starttime must be increment by its offset. Call deadline update function to handle this
-            *deadline = (uint64_t)deadlineFuncs[getNodeType((uint32_t*)*cursor)]((uint32_t*)*cursor, (uint32_t*)thrData);
+              *cursor   = *origin;          // Set cursor to origin node
+              *deadline = *currTime;        // Set the deadline to first blockstart
+              //if first node is an event, starttime must be increment by its offset. Call deadline update function to handle this
+              *deadline = (uint64_t)deadlineFuncs[getNodeType((uint32_t*)*cursor)]((uint32_t*)*cursor, (uint32_t*)thrData);
 
-
-            *running |= *start & (1<<i);  // copy this start bit to running bits
-            *start   &= ~(1 << i);        // clear this start bit
-            *msgcnt   = 0;                // clear msg counter
+              *running |= (startAll & (1<<i));  // copy this start bit to running bits
+              *msgcnt   = 0;                // clear msg counter
+            }
+            startAll  &= ~(1 << i);           // clear the pending start bit regardless if thread was already running or not
           }
         }
 

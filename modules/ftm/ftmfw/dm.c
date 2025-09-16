@@ -76,11 +76,12 @@ uint64_t* const diffwts   = (uint64_t*) &_startshared[(SHCTL_DIAG + T_DIAG_WAR_1
 uint32_t* const backlogmax = (uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_BCKLOG_STRK )  >> 2];  
 uint32_t* const badwaitcnt = (uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_BAD_WAIT_CNT )  >> 2];
 #endif
-uint32_t* const start   = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_START)   >> 2];          
+uint32_t* const start   = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_START)   >> 2];
+uint32_t* const startRemote = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_CEASE) >> 2]; //FIXME Experimental fix abusing unused CEASE register as START_REMOTE
 uint32_t* const running = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_RUNNING) >> 2];          
 uint32_t* const abort1  = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_ABORT)   >> 2];          
 uint32_t** const hp     = (uint32_t**)&_startshared[SHCTL_HEAP >> 2];                             
-uint32_t nodeTmp[_MEM_BLOCK_SIZE / _32b_SIZE_]; 
+uint32_t* const nodeTmps[3 * _MEM_BLOCK_SIZE / _32b_SIZE_];     ///< Staging area when a node is constructed from references. BACKUP, OLD, NEW 
 
 void prioQueueInit()
 {
@@ -681,43 +682,35 @@ void heapReplace(uint32_t src) {
 
 
 
+
 uint32_t* dynamicNodeStaging(uint32_t* node, uint32_t* thrData) {
   uint32_t* ret;
-  memcpy(nodeTmp, node, _MEM_BLOCK_SIZE); //make a copy of the original node we can edit
+  //create our pristine copy
+  memcpy(nodeTmps[NODE_TMP_BAK], node, _MEM_BLOCK_SIZE); //make a copy of the original node we can edit
       
-  // tells us if its 32/64 and if a word is an immediate, value (dynamically generated at compile time, static now), reference, or a double reference
-  uint32_t wordFormats = nodeTmp[NODE_OPT_DYN >> 2]; //load word description
-  
+  // first dereferencing pass, fill in nodeTmps[OLD]
+  deRefNode(nodeTmps[NODE_TMP_BAK], nodeTmps[NODE_TMP_OLD]);
 
-  for(unsigned i = 0; i < 9; i++) { // a memory block has 13 words, not 9 - but last four (dyn, hash, flags, nextPtr) must not be changed.
-    if ((wordFormats & DYN_MODE_MSK) >= DYN_MODE_REF) { // Is current word a kind of reference? yay, let's dynamically copy stuff in!
-      uint64_t val;
-      if ((wordFormats & DYN_MODE_MSK) == DYN_MODE_REF2)  {
-        val = **(uint64_t**)node[i];
-        DBPRINT2("#%02u: REF2REF. Word %u is a ref2ref, adr is 0x%08x, ptr is 0x%08x, value is 0x%08x%08x\n", cpuId, i, &node[i], *(uint32_t*)node[i], (uint32_t)(val>>32), (uint32_t)val);
-      } //reference or reference 2 reference?
-      else                                                {
-        DBPRINT2("#%02u: REF. Word %u is a ref, adr is 0x%08x, value is 0x%08x%08x\n", cpuId, i, &node[i], (uint32_t)(val>>32), (uint32_t)val);
-        val =  *(uint64_t*) node[i];
-      }
-
-      
-      
-      nodeTmp[i] = (uint32_t)(val>>32);
-      //mprintf("#%02u: Current Wordformat is 0x%08x, Mask is 0x%08x\n", cpuId, wordFormats, DYN_WIDTH64_SMSK);
-      if (wordFormats & DYN_WIDTH64_SMSK) {
-        DBPRINT2("#%02u: Ref is a 64b word\n", cpuId);
-        nodeTmp[i+1] = (uint32_t)(val); //It's MSB first, so the adr can be 64b high word or 32b word. if its 64b, fill in low word at i+1
-      }
-    } //ELSE - it's a IM or ADR, we leave the original value in, regardless if its 32 or 64b
-    wordFormats >>= 3; //shift right by 3 bits to get next wordFormat
-  }
+  //abort if we read something different 5 times
+  int8_t readCnt = 0;
+  while (readCnt++ < MAX_RD_RETRIES) {
+    // 2nd to n-th dereferencing pass, fill in nodeTmps[NEW]
+    deRefNode(nodeTmps[NODE_TMP_BAK], nodeTmps[NODE_TMP_NEW]);
+    
+    //check if NEW dataset matches OLD from last pass. If so, we are consistent and done. If not, increase warning counter
+    if(matchNode(nodeTmps[NODE_TMP_OLD], nodeTmps[NODE_TMP_NEW])) {break;}
+    
+    //Copy current NEW to OLD for next comparison. Rinse and repeat
+    memcpy(nodeTmps[NODE_TMP_OLD], nodeTmps[NODE_TMP_NEW], _MEM_BLOCK_SIZE);
+  } 
+  if(readCnt >= MAX_RD_RETRIES) {*status |= SHCTL_STATUS_DM_ERROR_SMSK | SHCTL_STATUS_DM_UNSTABLE_RD_SMSK; return LM32_NULL_PTR;}
   
+  uint32_t* nodeTmp = nodeTmps[NODE_TMP_NEW];
   //call handler function
   ret = nodeFuncs[getNodeType(nodeTmp)](nodeTmp, thrData); 
   
   //copy back all changes to immediate/val fields
-  wordFormats = nodeTmp[NODE_OPT_DYN >> 2]; //reload description
+  uint32_t wordFormats = nodeTmp[NODE_OPT_DYN >> 2]; //reload description
   for(unsigned i = 0; i < 9; i++) {
     if ((wordFormats & DYN_MODE_MSK) < DYN_MODE_REF) { node[i] = nodeTmp[i]; } // immediate/adr ?
     wordFormats >>= 3; //shift right by 3 bits to get next wordFormat
@@ -727,4 +720,4 @@ uint32_t* dynamicNodeStaging(uint32_t* node, uint32_t* thrData) {
   if (ret != nodeTmp) return ret;
   else                return node;
 
-}  
+}
