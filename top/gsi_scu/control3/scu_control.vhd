@@ -550,7 +550,7 @@ begin
 
   tri_state_a_d: process (A_D, scub_d_tri_out, A_D_mux)
   begin
-    if (scub_d_tri_out = '1' ) then
+    if (scub_d_tri_out = '1' or is_rmt = '1') then
       A_D <= A_D_mux;
     else
       A_D <= (others => 'Z');
