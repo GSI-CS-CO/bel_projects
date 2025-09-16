@@ -52,25 +52,26 @@ end component;
 component wb_arria_reset is
   generic (
             arria_family : string                := "Arria II";
-            rst_channels : integer range 1 to 32 := 2;
+            rst_channels : integer range 0 to 32 := 2;
             clk_in_hz    : integer;
             en_wd_tmr    : boolean               := false
           );
   port (
-    clk_sys_i     : in std_logic;
-    rstn_sys_i    : in std_logic;
-    clk_upd_i     : in std_logic;
-    rstn_upd_i    : in std_logic;
-    hw_version    : in std_logic_vector(31 downto 0);
-    slave_o       : out t_wishbone_slave_out;
-    slave_i       : in  t_wishbone_slave_in;
-    phy_rst_o     : out std_logic;
-    phy_aux_rst_o : out std_logic;
-    phy_dis_o     : out std_logic;
-    phy_aux_dis_o : out std_logic;
-    psram_sel_o   : out std_logic_vector(3 downto 0);
-    rstn_o        : out std_logic_vector(rst_channels-1 downto 0);
-    poweroff_comx : out std_logic);
+    clk_sys_i      : in std_logic;
+    rstn_sys_i     : in std_logic;
+    clk_upd_i      : in std_logic;
+    rstn_upd_i     : in std_logic;
+    hw_version     : in std_logic_vector(31 downto 0);
+    slave_o        : out t_wishbone_slave_out;
+    slave_i        : in  t_wishbone_slave_in;
+    phy_rst_o      : out std_logic;
+    phy_aux_rst_o  : out std_logic;
+    phy_dis_o      : out std_logic;
+    phy_aux_dis_o  : out std_logic;
+    psram_sel_o    : out std_logic_vector(3 downto 0);
+    neorv32_rstn_o : out std_logic;
+    rstn_o         : out std_logic_vector(rst_channels-1 downto 0);
+    poweroff_comx  : out std_logic);
 end component;
 
 constant c_arria_reset : t_sdb_device := (

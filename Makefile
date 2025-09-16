@@ -44,6 +44,7 @@ CHECK_MICROTCA         = ./syn/gsi_microtca/control/microtca_control
 CHECK_PEXP             = ./syn/gsi_pexp/control/pexp_control
 CHECK_PEXP_SDR         = ./syn/gsi_pexp/sdr/pexp_control_sdr
 CHECK_PEXP_PPS         = ./syn/gsi_pexp/pps/pexp_pps
+CHECK_PEXP_NEORV32     = ./syn/gsi_pexp/neorv32/pexp_neorv32
 CHECK_SCU5             = ./syn/gsi_scu/control5/scu_control
 CHECK_FTM5DP           = ./syn/gsi_scu/ftm5dp/ftm5dp
 CHECK_SCU4             = ./syn/gsi_scu/control4/scu_control
@@ -69,6 +70,7 @@ PATH_MICROTCA          = syn/gsi_microtca/control
 PATH_PEXP              = syn/gsi_pexp/control
 PATH_PEXP_SDR          = syn/gsi_pexp/sdr
 PATH_PEXP_PPS          = syn/gsi_pexp/pps
+PATH_PEXP_NEORV32      = syn/gsi_pexp/neorv32
 PATH_SCU5              = syn/gsi_scu/control5
 PATH_FTM5DP            = syn/gsi_scu/ftm5dp
 PATH_SCU4              = syn/gsi_scu/control4
@@ -546,6 +548,18 @@ pexp-pps-sort:
 
 pexp-pps-check:
 	$(call check_timing, $(CHECK_PEXP_PPS))
+
+pexp-neorv32:	firmware
+	$(MAKE) -C $(PATH_PEXP_NEORV32) all
+
+pexp-neorv32-clean::
+	$(MAKE) -C $(PATH_PEXP_NEORV32) clean
+
+pexp-neorv32-sort:
+	$(call sort_file, $(CHECK_PEXP_NEORV32))
+
+pexp-neorv32-check:
+	$(call check_timing, $(CHECK_PEXP_NEORV32))
 
 avsoc:		firmware
 	$(MAKE) -C syn/gsi_avsoc/av_rocket_board all

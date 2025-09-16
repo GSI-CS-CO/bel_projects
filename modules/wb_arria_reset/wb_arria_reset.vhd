@@ -49,6 +49,18 @@
 -- 2016-01-7  1.2      srauch 	- added register for hw version number
 --			        - read from address offset 0x8
 -------------------------------------------------------------------------------
+-- address decoding for dummies
+-- WBA/Vector   765432 10
+-- 0x00 => 0    000000 00
+-- 0x04 => 1    000001 00
+-- 0x08 => 2    000011 00
+-- 0x0c => 3    000100 00
+-- 0x10 => 4    000101 00
+-- 0x14 => 5    000110 00
+-- 0x18 => 6    000111 00
+-- 0x1c => 7    001000 00
+-- 0x20 => 8    001001 00
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -67,30 +79,32 @@ use arria10_reset_altera_remote_update_181.arria10_reset_pkg.all;
 entity wb_arria_reset is
   generic (
     arria_family : string := "none";
-    rst_channels : integer range 1 to 32 := 2;
+    rst_channels : integer range 0 to 32 := 2;
     clk_in_hz    : integer;
     en_wd_tmr    : boolean
   );
   port (
-    clk_sys_i     : in std_logic;
-    rstn_sys_i    : in std_logic;
-    clk_upd_i     : in std_logic;
-    rstn_upd_i    : in std_logic;
+    clk_sys_i      : in std_logic;
+    rstn_sys_i     : in std_logic;
+    clk_upd_i      : in std_logic;
+    rstn_upd_i     : in std_logic;
 
-    hw_version    : in std_logic_vector(31 downto 0);
+    hw_version     : in std_logic_vector(31 downto 0);
 
-    slave_o       : out t_wishbone_slave_out;
-    slave_i       : in  t_wishbone_slave_in;
+    slave_o        : out t_wishbone_slave_out;
+    slave_i        : in  t_wishbone_slave_in;
 
-    phy_rst_o     : out std_logic;
-    phy_aux_rst_o : out std_logic;
-    phy_dis_o     : out std_logic;
-    phy_aux_dis_o : out std_logic;
+    phy_rst_o      : out std_logic;
+    phy_aux_rst_o  : out std_logic;
+    phy_dis_o      : out std_logic;
+    phy_aux_dis_o  : out std_logic;
 
-    psram_sel_o   : out std_logic_vector(3 downto 0);
+    psram_sel_o    : out std_logic_vector(3 downto 0);
 
-    rstn_o        : out std_logic_vector(rst_channels-1 downto 0);
-    poweroff_comx : out std_logic
+    neorv32_rstn_o : out std_logic;
+
+    rstn_o         : out std_logic_vector(rst_channels-1 downto 0);
+    poweroff_comx  : out std_logic
   );
 end entity;
 
@@ -112,6 +126,7 @@ architecture wb_arria_reset_arch of wb_arria_reset is
   signal phy_dis_sync     : std_logic;
   signal phy_aux_dis_sync : std_logic;
   signal s_psram_sel_sync : std_logic_vector(3 downto 0);
+  signal s_neorv32_rstn   : std_logic;
   signal s_poweroff_comx  : std_logic;
   constant cnt_value      : integer := 1000 * 60 * 10; -- 10 min with 1ms granularity
   constant cnt_width      : integer := integer(ceil(log2(real(cnt_value)))) + 1;
@@ -203,6 +218,8 @@ begin
 
   psram_sel_o   <= s_psram_sel_sync;
 
+  neorv32_rstn_o <= s_neorv32_rstn;
+
   wb_reg: process(clk_sys_i)
   begin
     if rising_edge(clk_sys_i) then
@@ -218,6 +235,7 @@ begin
         phy_aux_dis     <= '0';
         s_psram_sel     <= "0001";
         s_poweroff_comx <= '1';
+        s_neorv32_rstn  <= '1';
         reset_reg       <= (others => '0');
       else
         retrg_wd <= '0';
@@ -257,6 +275,8 @@ begin
                 elsif(slave_i.dat = x"CAFEBAB1") then
                   s_poweroff_comx <= slave_i.dat(0);
                 end if;
+              when 8 =>
+                s_neorv32_rstn <= slave_i.dat(0);
               when others => null;
             end case;
           else -- read
@@ -267,6 +287,7 @@ begin
               when 5 => slave_o.dat <= x"0000000" & phy_aux_dis & phy_dis & phy_aux_rst & phy_rst;
               when 6 => slave_o.dat <= x"0000000" & s_psram_sel;
               when 7 => slave_o.dat <= x"0000000" & "000" & s_poweroff_comx;
+              when 8 => slave_o.dat <= x"0000000" & "000" & s_neorv32_rstn;
               when others => null;
             end case;
           end if;

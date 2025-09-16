@@ -1,0 +1,189 @@
+#!/bin/bash
+set -eu
+
+# Arguments
+v_nrv_device="NULL"
+v_nrv_program="NULL"
+v_nrv_stop=false
+v_nrv_start=false
+v_nrv_restart=false
+v_nrv_keep_reset=false
+v_nrv_help=false
+v_nrv_vebose=0
+
+# Settings
+declare -r v_nrv_sdb_gsi_vendor_id="0x651"
+declare -r v_nrv_sdb_gsi_ram_id="0x83075320"
+declare -r v_nrv_sdb_gsi_rst_ctl_id="0x3a362063"
+declare -r v_nrv_reset_offset="0x20"
+declare -r v_nrv_reset_neorv32_stop="0x0"
+declare -r v_nrv_reset_neorv32_start="0x1"
+
+# Internal parameters
+v_nrv_ram_addr="NULL"
+v_nrv_reset_ctl_addr="NULL"
+v_nrv_reset_ctl_neorv32_addr="NULL"
+
+# Functions
+f_log() {
+  local level="$1"
+  local msg="$2"
+  case "$level" in
+    INFO)  [ $v_nrv_vebose -ge 1 ] && echo "Info: $msg" ;;
+    ERROR) echo "Error: $msg" >&2 ;;
+  esac
+}
+
+function f_find_neorv32_ram() {
+  v_nrv_ram_addr=$(eb-find "$v_nrv_device" "$v_nrv_sdb_gsi_vendor_id" "$v_nrv_sdb_gsi_ram_id")
+  if [ $? -ne 0 ] || [ -z "$v_nrv_ram_addr" ]; then
+    f_log ERROR "NEORV32 RAM address base could not be determined!"
+    exit 1
+  fi
+  f_log INFO "Found NEORV32 RAM address $v_nrv_ram_addr ..."
+}
+
+function f_find_reset_ctl() {
+  v_nrv_reset_ctl_addr=$(eb-find "$v_nrv_device" "$v_nrv_sdb_gsi_vendor_id" "$v_nrv_sdb_gsi_rst_ctl_id")
+  if [ $? -ne 0 ] || [ -z "$v_nrv_reset_ctl_addr" ]; then
+    f_log ERROR "Reset controller address base could not be determined!"
+    exit 1
+  fi
+  f_log INFO "Found reset controller address $v_nrv_reset_ctl_addr ..."
+  v_nrv_reset_ctl_neorv32_addr=$(printf "0x%x" $(( $v_nrv_reset_ctl_addr + $v_nrv_reset_offset )))
+  f_log INFO "Using NEORV32 reset address $v_nrv_reset_ctl_neorv32_addr ..."
+}
+
+function f_upload_program() {
+  if [ "$v_nrv_program" != "NULL" ]; then
+    if [ -f "$v_nrv_program" ]; then
+      f_stop_neorv32
+      f_log INFO "Using file $v_nrv_program to program the CPU ..."
+      eb-put -l -q "$v_nrv_device" "$v_nrv_ram_addr" "$v_nrv_program"
+      if [ $? -ne 0 ]; then
+        f_log ERROR "Failed to upload program $v_nrv_program!"
+        exit 1
+      fi
+      if [ "$v_nrv_keep_reset" = false ]; then
+        f_start_neorv32
+      fi
+    else
+      f_log ERROR "Can't find file $v_nrv_program!"
+      exit 1
+    fi
+  else
+    f_ctl_mode
+  fi
+}
+
+function f_stop_neorv32() {
+  f_log INFO "Stopping NEORV32 ..."
+  eb-write "$v_nrv_device" "$v_nrv_reset_ctl_neorv32_addr"/4 "$v_nrv_reset_neorv32_stop"
+  if [ $? -ne 0 ]; then
+    f_log ERROR "Failed to stop NEORV32!"
+    exit 1
+  fi
+}
+
+function f_start_neorv32() {
+  f_log INFO "Starting NEORV32 ..."
+  eb-write "$v_nrv_device" "$v_nrv_reset_ctl_neorv32_addr"/4 "$v_nrv_reset_neorv32_start"
+  if [ $? -ne 0 ]; then
+    f_log ERROR "Failed to start NEORV32!"
+    exit 1
+  fi
+}
+
+function f_ctl_mode() {
+  # Validate mutually exclusive options
+  if [[ "$v_nrv_start" == true && "$v_nrv_stop" == true ]] || \
+     [[ "$v_nrv_start" == true && "$v_nrv_restart" == true ]] || \
+     [[ "$v_nrv_stop" == true && "$v_nrv_restart" == true ]]; then
+    f_log ERROR "Options -s, -t, and -r are mutually exclusive!" >&2
+    exit 1
+  fi
+  if [ "$v_nrv_start" = true ]; then
+    f_start_neorv32
+  fi
+  if [ "$v_nrv_stop" = true ]; then
+    f_stop_neorv32
+  fi
+  if [ "$v_nrv_restart" = true ]; then
+    f_stop_neorv32
+    f_start_neorv32
+  fi  
+}
+
+function f_print_help() {
+  cat << EOF
+Usage: $(basename "$0") [OPTIONS] DEVICE
+
+Control and program NEORV32 CPU.
+
+Options:
+  -f FILE      Program file to upload
+  -k           Keep CPU in reset after programming
+  -t           Stop the CPU
+  -s           Start the CPU
+  -r           Restart the CPU
+  -v           Enable verbose output
+  -h           Show this help message
+
+Example:
+  $(basename "$0") -v -f program.bin /dev/ttyUSB0
+EOF
+}
+
+# Process arguments
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -k)
+      v_nrv_keep_reset=true
+      shift
+      ;;
+    -t)
+      v_nrv_stop=true
+      shift
+      ;;
+    -s)
+      v_nrv_start=true
+      shift
+      ;;
+    -r)
+      v_nrv_restart=true
+      shift
+      ;;
+    -h)
+      v_nrv_help=true
+      shift
+      ;;
+    -f)
+      v_nrv_program=$2
+      shift 2
+      ;;
+    -v)
+      v_nrv_vebose=1
+      shift
+      ;;
+    -*)
+      f_log ERROR "Unknown argument: $1"
+      exit 1
+      ;;
+    *)
+      v_nrv_device="$1"
+      shift
+      ;;
+    esac
+done
+
+if [ "$v_nrv_help" = true ]; then
+  f_print_help
+  exit 0
+else
+  # Find device
+  f_find_neorv32_ram
+  f_find_reset_ctl
+  # Program and control CPU
+  f_upload_program
+fi
+exit 0
