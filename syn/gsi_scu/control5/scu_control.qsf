@@ -501,6 +501,56 @@ set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_tlp.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_wb_pkg.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_wb.vhd" -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_application_image.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_bootloader_image.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_boot_rom.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_bus.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cache.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cfs.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_clint.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_alu.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_control.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_counters.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_cp_bitmanip.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_cp_cfu.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_cp_cond.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_cp_crypto.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_cp_fpu.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_cp_muldiv.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_cp_shifter.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_decompressor.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_frontend.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_hwtrig.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_lsu.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_pmp.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_regfile.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_debug_auth.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_debug_dm.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_debug_dtm.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_dma.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_dmem.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_gpio.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_gptmr.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_imem.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_neoled.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_onewire.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_package.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_prim.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_pwm.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_sdi.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_slink.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_spi.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_sysinfo.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_sys.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_top.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_tracer.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_trng.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_twd.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_twi.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_uart.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_wdt.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_xbus.vhd -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/pci-core/src/hdl/wb_pci_pkg.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/pci-core/src/hdl/wb_pmc_host_bridge_pkg.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/pci-core/src/hdl/wb_pmc_host_bridge.vhd" -library work
@@ -787,6 +837,8 @@ set_global_assignment -name VHDL_FILE ../../../modules/monster/monster_iodir.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/monster/monster_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/monster/monster.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/nau8811/src/hdl/wb_nau8811_audio_driver_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/neorv32/src/hdl/neorv32_shell_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/neorv32/src/hdl/neorv32_shell.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/oled_display/char_render.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/oled_display/display_console.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/oled_display/Display_RAM_Ini_v01.vhd -library work
@@ -899,6 +951,7 @@ set_instance_assignment -name IO_STANDARD "1.8 V" -to altera_reserved_tms
 set_instance_assignment -name IO_STANDARD "1.8 V" -to fpga_res_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to nPCI_RESET_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to nSys_Reset
+set_instance_assignment -name IO_STANDARD "1.8 V" -to pcie_rdy_o
 set_instance_assignment -name IO_STANDARD "1.8 V" -to scu_cb_version[0]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to scu_cb_version[1]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to scu_cb_version[2]
@@ -922,7 +975,6 @@ set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_rgb_led
 set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_rgb_led[0]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_rgb_led[1]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_rgb_led[2]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to pcie_rdy_o
 set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to usb_clk
 set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to usb_ctl[0]
 set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to usb_ctl[1]
@@ -1059,6 +1111,7 @@ set_location_assignment PIN_A18 -to rear_in[0]
 set_location_assignment PIN_A19 -to rear_in[1]
 set_location_assignment PIN_A21 -to OneWire_CB_splz
 set_location_assignment PIN_A22 -to A_nSEL[3]
+set_location_assignment PIN_A27 -to A_nSRQ[1]
 set_location_assignment PIN_A2 -to psram_a[22]
 set_location_assignment PIN_A3 -to psram_wait[2]
 set_location_assignment PIN_A4 -to psram_a[3]
@@ -1138,7 +1191,6 @@ set_location_assignment PIN_AE27 -to "gxbl1c_tx_ch1p_ae28(n)"
 set_location_assignment PIN_AE28 -to gxbl1c_tx_ch1p_ae28
 set_location_assignment PIN_AE2 -to ext_ch[8]
 set_location_assignment PIN_AE4 -to lemo_led[3]
-set_location_assignment PIN_AE5 -to A_nSRQ[1]
 set_location_assignment PIN_AE6 -to nFPGA_Res_Out
 set_location_assignment PIN_AF11 -to A_D[0]
 set_location_assignment PIN_AF12 -to ser0_txd
@@ -1230,7 +1282,6 @@ set_location_assignment PIN_D4 -to psram_a[19]
 set_location_assignment PIN_D5 -to psram_a[13]
 set_location_assignment PIN_D8 -to avr_sda
 set_location_assignment PIN_E15 -to "clk_125m_local_d15(n)"
-set_location_assignment PIN_M1 -to pcie_rdy_o
 set_location_assignment PIN_E19 -to usb_pa[3]
 set_location_assignment PIN_E20 -to usb_pa[7]
 set_location_assignment PIN_E21 -to usb_pa[5]
@@ -1304,6 +1355,7 @@ set_location_assignment PIN_L4 -to psram_oen[0]
 set_location_assignment PIN_L6 -to psram_lbn[3]
 set_location_assignment PIN_L8 -to psram_cre[2]
 set_location_assignment PIN_L9 -to psram_wen[2]
+set_location_assignment PIN_M1 -to pcie_rdy_o
 set_location_assignment PIN_M25 -to "gxbl1d_rx_ch1p_m26_pcie3_rx(n)"
 set_location_assignment PIN_M26 -to gxbl1d_rx_ch1p_m26_pcie3_rx
 set_location_assignment PIN_M3 -to psram_wait[0]
