@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 18-Oct-2023
+ *  version : 13-feb-2025
  *
  * analyzes and publishes get values
  * 
@@ -36,7 +36,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_ANALYZER_VERSION 0x000702
+#define B2B_ANALYZER_VERSION 0x000807
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -333,14 +333,14 @@ void calcStats(double *meanNew,         // new mean value, please remember for l
 // calculate DDS frequency from observed phase offset and uncertainty for a single measurement
 int calcNue(double  *nue,               // frequency value [Hz]
             double  *nueErr,            // estimated uncertainty [Hz]
-            double   obsOffset,         // observed mean value of deviation from 'soll value'
+            double   obsOffset,         // observed mean value of deviation from 'soll value'; should be within +/- half of rf period - if not, it will be corrected
             uint64_t TObs,              // observation interval
             uint64_t TH1As,             // H=1 gDDS period [as],
             double   sysmax             // max systematic error of phase measurement [ns]
             )
 {
   int64_t  nPeriod;                     // # of rf periods within T
-  uint64_t half;
+  int64_t  half;
   int64_t  offsetAs;                    // offset [as]
   int64_t  TAs;                         // TObs [as]
   int64_t  TH1ObsAs;                    // observed TH1 [as]
@@ -355,8 +355,13 @@ int calcNue(double  *nue,               // frequency value [Hz]
     TAs       = TObs * 1000000000;
     half      = TH1As >> 1;
     nPeriod   = TAs / TH1As;
-    if ((TAs % TH1As) > half) nPeriod++;              
+    if ((TAs % TH1As) > half) nPeriod++;
+
     offsetAs  = (int64_t)(obsOffset * 1000000000.0);
+    // fix offsetAs to be within +- half;
+    while (offsetAs + half < 0) offsetAs += TH1As;
+    while (offsetAs - half > 0) offsetAs -= TH1As;
+    
     TH1ObsAs  = TH1As + offsetAs / (double)nPeriod;
     TH1ObsNs  = (double)TH1ObsAs / 1000000000.0;
     *nue      = 1000000000.0 / TH1ObsNs;
@@ -511,7 +516,9 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
 
     // rf frequency diagnostics; theoretical value is set value
     if (!isnan(disDiagval[sid].ext_rfOffAct)) {
-      calcNue(&act, &actErr, disDiagval[sid].ext_rfOffAct, (double)B2B_TDIAGOBS, dicSetval[sid].ext_T, dicGetval[sid].ext_phaseSysmaxErr);
+      if (isnan(dicGetval[sid].ext_phaseShift)) tmp = disDiagval[sid].ext_rfOffAct;
+      else                                      tmp = disDiagval[sid].ext_rfOffAct - dicGetval[sid].ext_phaseShift;
+      calcNue(&act, &actErr, tmp, (double)B2B_TDIAGOBS, dicSetval[sid].ext_T, dicGetval[sid].ext_phaseSysmaxErr);
       if (dicSetval[sid].ext_T != 0) tmp = 1000000000000000000.0 /  (double)(dicSetval[sid].ext_T);
       else                           tmp = 0.0;
       n   = ++(ext_rfNueN[sid]);
@@ -652,7 +659,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
 
   } // if mode B2B_MODE_B2E
 
-  if (mode >= B2B_MODE_B2C) {
+  if ((mode >= B2B_MODE_B2C) && (mode != B2B_MODE_B2EPSHIFT)){
     // offset from deadline CBS to KTI
     if (!isnan(dicGetval[sid].ktiOff)) {
       act = dicGetval[sid].ktiOff;
@@ -721,8 +728,14 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
 
     // rf frequency diagnostics; theoretical value is '0'
     if (!isnan(disDiagval[sid].inj_rfOffAct) && (dicSetval[sid].inj_T != -1)) {
-      calcNue(&act, &actErr, disDiagval[sid].inj_rfOffAct, (double)B2B_TDIAGOBS, dicSetval[sid].inj_T, dicGetval[sid].inj_phaseSysmaxErr);
-      tmp = 1000000000000000000.0 /  (double)(dicSetval[sid].inj_T);
+      if (isnan(dicGetval[sid].inj_phaseShift)) tmp = disDiagval[sid].inj_rfOffAct;
+      else                                      tmp = disDiagval[sid].inj_rfOffAct - dicGetval[sid].inj_phaseShift;
+      calcNue(&act, &actErr, tmp, (double)B2B_TDIAGOBS, dicSetval[sid].inj_T, dicGetval[sid].inj_phaseSysmaxErr);
+      /*if (isnan(dicGetval[sid].inj_phaseShift)) tmp = (double)B2B_TDIAGOBS;
+      else                                      tmp = (double)B2B_TDIAGOBS;// - dicGetval[sid].inj_phaseShift;
+      calcNue(&act, &actErr, disDiagval[sid].inj_rfOffAct, tmp, dicSetval[sid].inj_T, dicGetval[sid].inj_phaseSysmaxErr);*/
+      if (dicSetval[sid].inj_T != 0) tmp = 1000000000000000000.0 /  (double)(dicSetval[sid].inj_T);
+      else                           tmp = 0.0;
       n   = ++(inj_rfNueN[sid]);
       
       // statistics
@@ -763,7 +776,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
     
   } // if mode B2B_MODE_B2C
 
-  if (mode == B2B_MODE_B2B) {
+  if ((mode == B2B_MODE_B2BFBEAT) || (mode == B2B_MODE_B2BPSHIFTE) || (mode == B2B_MODE_B2BPSHIFTI)) {
 
     // match diagnostics; theoretical value is '0'
     if (!isnan(dicGetval[sid].inj_diagMatch) && !isnan(dicSetval[sid].cPhase) && !isnan(dicSetval[sid].inj_cTrig) && (dicSetval[sid].inj_T != -1)) { 

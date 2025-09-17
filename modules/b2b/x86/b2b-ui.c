@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-May-2023
+ *  version : 19-Aug-2024
  *
  *  user interface for B2B
  *
@@ -234,7 +234,7 @@ void submitSid(uint64_t ebDevice, ring_t ring, uint32_t sid)
   errorFlag = 0;
   status    = COMMON_STATUS_OK;
   if (!errorFlag)   if ((status = b2b_context_ext_upload(ebDevice, sid, gid, mode, fH1Ext, 1, nHExt, cTrigExt, 1, cPhase, 1, 1)) != COMMON_STATUS_OK) errorFlag = 1;
-  if (mode > B2B_MODE_B2E) 
+  if (mode == B2B_MODE_B2C || mode == B2B_MODE_B2BFBEAT || mode == B2B_MODE_B2BPSHIFTE || mode == B2B_MODE_B2BPSHIFTI) 
     if (!errorFlag) if ((status = b2b_context_inj_upload(ebDevice, sid, ringInj, 3, 4, 0x42, fH1Inj, 1, nHInj, cTrigInj, 1)) != COMMON_STATUS_OK) errorFlag = 1;
 
   if (errorFlag) {
@@ -492,7 +492,6 @@ void menuMonitor(uint64_t ebDevice, ring_t ring)
   uint32_t sid, gid, mode, nHExt, nHInj;
   uint64_t TH1Ext, TH1Inj, TBeat;
   double   cPhase, cTrigExt, cTrigInj;
-  int32_t  comLatency;
   int      j=0;
 
   static struct termios oldt, newt;
@@ -526,7 +525,7 @@ void menuMonitor(uint64_t ebDevice, ring_t ring)
     // read and display data
     j++;
     printf("%d ...\n\n", j);
-    b2b_info_read(ebDevice, &sid, &gid, &mode, &TH1Ext, &nHExt, &TH1Inj, &nHInj, &TBeat, &cPhase, &cTrigExt, &cTrigInj, &comLatency, 1);
+    b2b_info_read(ebDevice, &sid, &gid, &mode, &TH1Ext, &nHExt, &TH1Inj, &nHInj, &TBeat, &cPhase, &cTrigExt, &cTrigInj, 1);
 
     // check for any character....
     // get current terminal settings
@@ -566,7 +565,6 @@ void menuRing(ring_t ring)
   uint64_t dummy64a, dummy64b, dummy64c;
   uint32_t dummy32a, dummy32b, dummy32c, dummy32d, dummy32e;
   double   dummy32f, dummy32g, dummy32h;
-  int32_t  dummy32i;
 
   // open connection to firmware
   getEbDevice(ring, ebDevName);
@@ -602,7 +600,7 @@ void menuRing(ring_t ring)
         break;
       case 3 :
         b2b_common_read(ebDevice, &dummy64a, &dummy32a, &dummy32b, &dummy32c, &dummy32d, &dummy32e, 1);
-        b2b_info_read(ebDevice, &dummy32a, &dummy32b, &dummy32c, &dummy64a, &dummy32d, &dummy64b, &dummy32e, &dummy64c, &dummy32f, &dummy32g, &dummy32h, &dummy32i, 1);
+        b2b_info_read(ebDevice, &dummy32a, &dummy32b, &dummy32c, &dummy64a, &dummy32d, &dummy64b, &dummy32e, &dummy64c, &dummy32f, &dummy32g, &dummy32h, 1);
         getchar();
         break;
       case 4 :

@@ -29,12 +29,12 @@ ARCH        ?=
 endif
 
 ifeq ($(SYSENV), YOCTO)
-USRPATH     := /common/usr/timing/b2b/yocto/usr
+USRPATH     := /common/usr/timing/user-dietrich/yocto/usr
 ARCH        := /x86_64
 endif
 
 ifeq ($(SYSENV), ACC7)
-USRPATH     := /common/usr/timing/b2b/centos7/usr/
+USRPATH     := /common/usr/timing/user-dietrich/centos7/usr/
 ARCH        := /x86_64
 endif
 
@@ -58,6 +58,7 @@ firmware:
 	$(MAKE) TARGET=b2bpm -C $(FW)
 	$(MAKE) TARGET=b2bkd -C $(FW)
 	$(MAKE) TARGET=b2bpmstub -C $(FW)
+	$(MAKE) TARGET=b2bpsm -C $(FW)
 
 nfsinit:
 	echo $(shell cd $(NFSINIT); $(GENNFSINIT)/generate-main.sh $(ENV); cd ..)

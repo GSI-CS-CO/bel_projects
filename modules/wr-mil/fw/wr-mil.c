@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Micheal Reese, Mathias Kreider GSI-Darmstadt
- *  version : 10-Jul-2024
+ *  version : 19-Mar-2025
  *
  *  firmware required for the White Rabbit -> MIL Gateways
  *  
@@ -37,7 +37,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define WRMIL_FW_VERSION      0x000011    // make this consistent with makefile
+#define WRMIL_FW_VERSION      0x000102    // make this consistent with makefile
 
 #define RESET_INHIBIT_COUNTER    10000    // count so many main ECA timemouts, prior sending fill event
 //#define WR_MIL_GATEWAY_LATENCY 70650    // additional latency in units of nanoseconds
@@ -224,7 +224,7 @@ void extern_clearDiag()
   comLatency    = 0x0;
   maxOffsDone   = 0x0;
   maxComLatency = 0x0;
-  resetEventErrCntMil(pMilRec);
+  resetEventErrCntMil(pMilRec, 0);
 } // extern_clearDiag 
 
 
@@ -235,25 +235,25 @@ uint32_t configMILEvents(int enable_fifo)
   uint32_t fifo_mask;
 
   // initialize status and command register with initial values; disable event filtering; clear filter RAM
-  if (writeCtrlStatRegEvtMil(pMilRec, MIL_CTRL_STAT_ENDECODER_FPGA | MIL_CTRL_STAT_INTR_DEB_ON) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+  if (writeCtrlStatRegEvtMil(pMilRec, 0, MIL_CTRL_STAT_ENDECODER_FPGA | MIL_CTRL_STAT_INTR_DEB_ON) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
 
   // clean up 
-  if (disableLemoEvtMil(pMilRec, 1) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
-  if (disableLemoEvtMil(pMilRec, 2) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
-  if (disableFilterEvtMil(pMilRec)  != MIL_STAT_OK) return COMMON_STATUS_ERROR; 
-  if (clearFilterEvtMil(pMilRec)    != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+  if (disableLemoEvtMil(pMilRec, 0, 1) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+  if (disableLemoEvtMil(pMilRec, 0, 2) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+  if (disableFilterEvtMil(pMilRec, 0)  != MIL_STAT_OK) return COMMON_STATUS_ERROR; 
+  if (clearFilterEvtMil(pMilRec, 0)    != MIL_STAT_OK) return COMMON_STATUS_ERROR;
 
   if (enable_fifo) fifo_mask = MIL_FILTER_EV_TO_FIFO;
   else             fifo_mask = 0x0;
 
   for (i=0; i<(0xf+1); i++) { 
     for (j=0; j<(0xff+1); j++) {
-      if (setFilterEvtMil(pMilRec, j, i, fifo_mask | MIL_FILTER_EV_PULS1_S) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+      if (setFilterEvtMil(pMilRec, 0, j, i, fifo_mask | MIL_FILTER_EV_PULS1_S) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
     } // for j
   } // for i
 
   // configure LEMO1 for pulse generation
-  if (configLemoPulseEvtMil(pMilRec, 1) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+  if (configLemoPulseEvtMil(pMilRec, 0, 1) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
 
   return COMMON_STATUS_OK;
 } // configMILEvents
@@ -286,7 +286,7 @@ uint32_t extern_entryActionConfigured()
   } // else SetMilDev
 
   // reset MIL sender and wait
-  if ((status = resetPiggyDevMil(pMilSend))  != MIL_STAT_OK) {
+  if ((status = resetDevMil(pMilSend, 0))  != MIL_STAT_OK) {
     DBPRINT1("wr-mil: ERROR - can't reset MIL device; sender\n");
     return WRMIL_STATUS_MIL;
   }  // if reset
@@ -301,7 +301,7 @@ uint32_t extern_entryActionConfigured()
     } // if !pMilRec
 
     // reset MIL receiver and wait
-    if ((status = resetPiggyDevMil(pMilRec))  != MIL_STAT_OK) {
+    if ((status = resetDevMil(pMilRec, 0))  != MIL_STAT_OK) {
       DBPRINT1("wr-mil: ERROR - can't reset MIL device; receiver\n");
       return WRMIL_STATUS_MIL;
     }  // if reset
@@ -379,8 +379,8 @@ uint32_t extern_entryActionOperation()
     }  // if configMILevents
 
     //---- arm MIL Piggy 
-    enableFilterEvtMil(pMilRec);                                             // enable filter @ MIL piggy
-    clearFifoEvtMil(pMilRec);                                                // get rid of junk in FIFO @ MIL piggy
+    enableFilterEvtMil(pMilRec, 0);                                          // enable filter @ MIL piggy
+    clearFifoEvtMil(pMilRec, 0);                                             // get rid of junk in FIFO @ MIL piggy
   } // if mil_mon
 
   return COMMON_STATUS_OK;
@@ -568,7 +568,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   
   status    = actStatus;
 
-  ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
+  // one loop is around 37us => wait 963us only)
+  ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 963, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
 
   switch (ecaAction) {
     // received WR timing message from Data Master that shall be sent as a MIL telegram
@@ -604,7 +605,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       prepMilTelegramEca(milTelegram, &sendEvtId, &sendParam);
 
       // clear MIL FIFO and write to ECA
-      if (mil_mon) clearFifoEvtMil(pMilRec);
+      if (mil_mon) clearFifoEvtMil(pMilRec, 0);
       fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 1);
 
       nEvtsSnd++;
@@ -668,7 +669,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       } // if mil_mon
 
       // read number of received 'broken' MIL telegrams
-      readEventErrCntMil(pMilRec, &nEvtsErr);
+      readEventErrCntMil(pMilRec, 0, &nEvtsErr);
 
       nEvtsRecT++;
       
@@ -689,12 +690,12 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       // so lets send the fill event and reset inhibit counter
       // deadline
       sendDeadline  = getSysTime();
-      sendDeadline += COMMON_AHEADT;
+      sendDeadline += WRMIL_MILSEND_MININTERVAL;                                                   // be as fast as possible to avoid collisions with messages if DM restarts 'schedule'
       // evtID
       sendEvtId     = fwlib_buildEvtidV1(mil_domain, WRMIL_DFLT_MIL_EVT_FILL, 0x0, 0x0, 0x0, 0x0); // chk
       convert_WReventID_to_milTelegram(sendEvtId, &milTelegram);                                   // --> MIL format
       prepMilTelegramEca(milTelegram, &sendEvtId, &sendParam);                                     // --> EvtId for internal use
-      fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 0);                                // --> ECA
+      fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 1);                                // --> ECA
       nEvtsSnd++;
       inhibit_fill_events = RESET_INHIBIT_COUNTER;
     } // if not inhibit fill events

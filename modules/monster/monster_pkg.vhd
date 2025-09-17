@@ -84,6 +84,7 @@ package monster_pkg is
       g_project              : string;
       g_flash_bits           : natural;
       g_psram_bits           : natural := 24;
+      g_cr_bits              : natural := 24;
       g_ram_size             : natural := 131072;
       g_gpio_inout           : natural := 0;
       g_gpio_in              : natural := 0;
@@ -93,6 +94,7 @@ package monster_pkg is
       g_lvds_in              : natural := 0;
       g_lvds_out             : natural := 0;
       g_fixed                : natural := 0;
+      g_rams                 : natural := 1;
       g_lvds_invert          : boolean := false;
       g_en_tlu               : boolean := true;
       g_en_pcie              : boolean := false;
@@ -124,6 +126,8 @@ package monster_pkg is
       g_lm32_init_files      : string; -- multiple init files must be seperated by a semicolon ';'
       g_lm32_profiles        : string; -- multiple profiles must be seperated by a semicolon ';'
       g_lm32_are_ftm         : boolean := false;
+      g_en_neorv32           : boolean := false;
+      g_neorv32_ramsize      : natural := 131072/4; -- in 32b words
       g_en_tempsens          : boolean := false;
       g_en_a10ts             : boolean := false;
       g_delay_diagnostics    : boolean := false;
@@ -132,7 +136,11 @@ package monster_pkg is
       g_en_timer             : boolean := false;
       g_en_eca_tap           : boolean := false;
       g_en_asmi              : boolean := false;
-      g_en_psram_delay       : boolean := false
+      g_en_psram_delay       : boolean := false;
+      g_en_enc_err_counter   : boolean := false;
+      g_en_a10vs             : boolean := false;
+      g_en_cellular_ram      : boolean := false;
+      g_en_virtual_jtag      : boolean := false
     );
     port(
       -- Required: core signals
@@ -192,6 +200,16 @@ package monster_pkg is
       phy_aux_tx_ready_o     : out   std_logic;
       phy_debug_o            : out   std_logic;
       phy_debug_i            : in    std_logic_vector(7 downto 0) := (others => '0');
+      aux_clk_20m_vcxo_i     : in    std_logic := '0';
+      aux_clk_125m_pllref_i  : in    std_logic := '0';
+      aux_clk_125m_sfpref_i  : in    std_logic := '0';
+      -- Debug
+      debug_sys_locked_o     : out   std_logic := '0';
+      debug_ge_85_c_o        : out   std_logic := '0';
+      debug_ref1_locked_o    : out   std_logic := '0';
+      debug_dmtd1_locked_o   : out   std_logic := '0';
+      debug_ref2_locked_o    : out   std_logic := '0';
+      debug_dmtd2_locked_o   : out   std_logic := '0';
       -- GPIO for the board (inouts start at 0, dedicated in/outs come after)
       gpio_i                 : in    std_logic_vector(f_sub1(g_gpio_inout+g_gpio_in)  downto 0) := (others => '1');
       gpio_o                 : out   std_logic_vector(f_sub1(g_gpio_inout+g_gpio_out) downto 0);
@@ -224,6 +242,7 @@ package monster_pkg is
       pcie_rstn_i            : in    std_logic := '0';
       pcie_rx_i              : in    std_logic_vector(3 downto 0) := (others => '0');
       pcie_tx_o              : out   std_logic_Vector(3 downto 0);
+      pcie_ready_o           : out   std_logic := '0';
       -- g_en_vme
       vme_as_n_i             : in    std_logic := '0';
       vme_rst_n_i            : in    std_logic := '0';
@@ -377,6 +396,18 @@ package monster_pkg is
       ps_advn                : out   std_logic;
       ps_wait                : in    std_logic := '0';
       ps_chip_selector       : out   std_logic_vector(3 downto 0);
+      -- g_en_cellular_ram
+      cr_clk_o               : out   std_logic;
+      cr_addr_o              : out   std_logic_vector(g_cr_bits-1 downto 0);
+      cr_data_io             : inout std_logic_vector(15 downto 0);
+      cr_ubn_o               : out   std_logic_vector(3 downto 0);
+      cr_lbn_o               : out   std_logic_vector(3 downto 0);
+      cr_cen_o               : out   std_logic_vector(3 downto 0);
+      cr_oen_o               : out   std_logic_vector(3 downto 0);
+      cr_wen_o               : out   std_logic_vector(3 downto 0);
+      cr_cre_o               : out   std_logic_vector(3 downto 0);
+      cr_advn_o              : out   std_logic_vector(3 downto 0);
+      cr_wait_i              : in    std_logic_vector(3 downto 0) := (others => '0');
       -- i2c
       i2c_scl_pad_i          : in    std_logic_vector(g_num_i2c_interfaces-1 downto 0) := (others => '0');
       i2c_scl_pad_o          : out   std_logic_vector(g_num_i2c_interfaces-1 downto 0);
@@ -403,9 +434,12 @@ package monster_pkg is
       pmc_inta_o             : out   std_logic;
       pmc_req_o              : out   std_logic;
       pmc_gnt_i              : in    std_logic := '1';
+      -- g_en_a10ts
+      ge_85_c_o              : out   std_logic;
       -- g_en_user_ow
       ow_io                  : inout std_logic_vector(1 downto 0) := (others => 'Z');
-      hw_version             : in std_logic_vector(31 downto 0) := (others => 'Z'));
+      hw_version             : in std_logic_vector(31 downto 0) := (others => 'Z');
+      poweroff_comx          : out std_logic);
   end component;
 
   constant c_user_1wire_sdb : t_sdb_device := (

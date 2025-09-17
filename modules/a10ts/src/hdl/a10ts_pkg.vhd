@@ -32,6 +32,7 @@ package a10ts_pkg is
       clk_i     : in  std_logic := '0';
       rst_n_i   : in  std_logic := '1';
       clk_20m_i : in  std_logic := '0';
+      ge_85_c_o : out std_logic := '0';
       slave_i   : in  t_wishbone_slave_in;
       slave_o   : out t_wishbone_slave_out);
   end component;

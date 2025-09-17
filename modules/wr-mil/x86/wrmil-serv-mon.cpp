@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 10-Jul-2024
+ *  version : 27-Nov-2024
  *
  * monitors WR-MIL gateway
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define WRMIL_SERV_MON_VERSION 0x000011
+#define WRMIL_SERV_MON_VERSION 0x000102
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -150,21 +150,6 @@ uint64_t  offsetStop;                   // correction to be used for different m
 uint64_t  one_us_ns = 1000;
 uint64_t  one_ms_ns = 1000000;
 
-/*uint32_t  nNotSnd           = 0;
-uint32_t  nBadEvt           = 0;
-uint32_t  badEvt            = 0xfff;
-uint64_t  tStartOld         = 0;
-uint64_t  dStartMin         = 1000000000;
-uint64_t  tStopOld          = 0;
-uint64_t  dStopMin          = 1000000000;
-#define   NMONI 400
-int       nMon              = 0;
-uint64_t  deadlineMon[NMONI];
-uint32_t  evtNoMon[NMONI];
-uint32_t  tagMon[NMONI];
-uint32_t  flagsMon[NMONI];
-*/
-
 
 // calc basic statistic properties
 void calcStats(double *meanNew,         // new mean value, please remember for later
@@ -225,7 +210,7 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
   static uint32_t     sndEvtNo;        // evtNo of MIL event sent
   
   uint32_t            mFid;            // FID 
-  uint32_t            mGid;            // GID
+  // uint32_t            mGid;            // GID
   uint32_t            mEvtNo;          // event number
 
   double              tDiff;           // time difference between stop and start; must be smaller than match window
@@ -235,27 +220,11 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
   double              dummy;
 
   mFid        = ((evtId  & 0xf000000000000000) >> 60);
-  mGid        = ((evtId  & 0x0fff000000000000) >> 48);
+  // mGid        = ((evtId  & 0x0fff000000000000) >> 48);
   mEvtNo      = ((evtId  & 0x0000fff000000000) >> 36);
 
   stream      = 0;
   sdev        = 0;
-
-  /*
-  deadlineMon[nMon] = deadline.getTAI();
-  evtNoMon[nMon]    = mEvtNo;
-  tagMon[nMon]      = tag;
-  flagsMon[nMon]    = flags;
-  nMon++;
-  if (nMon == NMONI) {
-    for (int i=0; i<NMONI; i++) 
-      printf("tag %d, evt %2x, deadline %lu, flags %u\n", tagMon[i], evtNoMon[i], deadlineMon[i], flagsMon[i]);
-    exit(1);
-  }
-  */
-  /*
-  printf("tag %d, evt %2x, deadline %lu, flags %u\n", tag, mEvtNo, deadline.getTAI(), flags);
-  */
 
   // check ranges
   if (mFid != FID)                        return;  // unexpected format of timing message
@@ -318,22 +287,8 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
       break;
     default         :
       ;
-  } // switch tag
-  
-  //printf("out tag %d, bpid %d\n", tag, bpid);
+  } // switch tag 
 } // timingmessage
-
-
-// this will be called when receiving ECA actions from software action queue
-// informative: this routine is presently not used, as the softare action queue does not support the TEF field
-/*static void recTimingMessage(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags, uint32_t tag)
-{
-  int                 flagLate;
-
-  flagLate    = flags & 0x1;
-
-  timingMessage(tag, deadline, id, param, 0x0, flagLate, 0, 0, 0);
-} // recTimingMessag*/
 
 
 // callback for command
@@ -427,12 +382,15 @@ int main(int argc, char** argv)
 
   char    *tail;
 
+  // variables logging
+  uint32_t actState = COMMON_STATE_UNKNOWN;    // actual state of of gateway
+  uint64_t actStatus      = 0;                 // actual status of gateway
+  int      printFlag      = 0;
 
   // variables snoop event
   uint64_t snoopID     = 0x0;
   int      nCondition  = 2;
 
-  char     tmp[752];
   int      tmpi;
   int      i;
 
@@ -440,8 +398,9 @@ int main(int argc, char** argv)
   char    *deviceName = NULL;
 
   char     domainName[NAMELEN];          // name of MIL domain
-  char     prefix[NAMELEN*2];            // prefix DIM services
+  char     prefix[NAMELEN*3];            // prefix DIM services
   char     disName[DIMMAXSIZE];          // name of DIM server
+  char     environment[NAMELEN];         // environment, typically either int or pro
   uint32_t verLib;                       // library version
   uint32_t verFw;                        // firmware version
   
@@ -528,8 +487,12 @@ int main(int argc, char** argv)
   deviceName = argv[optind];
   gethostname(disHostname, 32);
   
-  if (optind+1 < argc) sprintf(prefix, "wrmil_%s_%s-mon", argv[++optind], domainName);
-  else                 sprintf(prefix, "wrmil_%s-mon", domainName);
+  if (optind+1 < argc) {
+    sprintf(environment, "%s", argv[++optind]);
+    sprintf(prefix, "wrmil_%s_%s-mon", environment, domainName);
+  } // if optind
+  else
+    sprintf(prefix, "wrmil_%s-mon", domainName);
 
   if (startServer) {
     printf("%s: starting server using prefix %s\n", program, prefix);
@@ -587,20 +550,6 @@ int main(int argc, char** argv)
     std::shared_ptr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
     std::shared_ptr<SoftwareCondition_Proxy> condition[nCondition];
 
-    /*
-    // search for embedded CPU channel
-     map<std::string, std::string> e_cpus = receiver->getInterfaces()["EmbeddedCPUActionSink"];
-    if (e_cpus.size() != 1)
-    {
-      std::cerr << "Device '" << receiver->getName() << "' has no embedded CPU!" << std::endl;
-      return (-1);
-    }
-    // connect to embedded CPU
-    std::shared_ptr<EmbeddedCPUActionSink_Proxy> e_cpu = EmbeddedCPUActionSink_Proxy::create(e_cpus.begin()->second);
-
-    // create action sink for ecpu
-    std::shared_ptr<EmbeddedCPUCondition_Proxy> condition[nCondition];
-    */
     uint32_t tag[nCondition];
     uint32_t tmpTag;
 
@@ -686,28 +635,17 @@ int main(int argc, char** argv)
     } // if modeCompare
 
     saftlib::Time deadline_t;
-    uint64_t      t_new, t_old;
-    uint32_t      tmp32a, tmp32b, tmp32c, tmp32d, tmp32e, tmp32f, tmp32g, tmp32h, tmp32i;
+    uint64_t      t_new, t_old, t_lastlog;
+    uint32_t      tmp32a, tmp32b, tmp32c, tmp32f, tmp32g, tmp32h;
     int32_t       stmp32a;
     uint64_t      tmp64a;
-    uint32_t      fwGid, fwEvtsRecErr, fwEvtsBurst, fwState, fwVersion;
+    uint32_t      fwGid, fwEvtsRecErr, fwEvtsBurst, fwState, fwVersion, nBadStatus, nBadState;
     uint64_t      fwEvtsSnd, fwEvtsRecT, fwEvtsRecD, fwStatus;
 
-    t_old = comlib_getSysTime();
+    t_old     = comlib_getSysTime();
+    t_lastlog = comlib_getSysTime();
     while(true) {
-      /*
-      t1 = comlib_getSysTime();
-      ecaStatus = comlib_wait4ECAEvent(1, device, ecaq_base, &recTag, &deadline, &evtId, &param, &tef, &isLate, &isEarly, &isConflict, &isDelayed);
-      t2 = comlib_getSysTime();
-      tmp32 = t2 - t1; 
-      if (tmp32 > 10000000) printf("%s: reading from ECA Q took %u [us]\n", program, tmp32 / 1000);
-      if (ecaStatus == COMMON_STATUS_EB) { printf("eca EB error, device %x, address %x\n", device, (uint32_t)ecaq_base);}
-      if (ecaStatus == COMMON_STATUS_OK) {
-        deadline_t = saftlib::makeTimeTAI(deadline);
-        //t2         = comlib_getSysTime(); printf("msg: tag %x, id %lx, tef %lx, dtu %lu\n", recTag, evtId, tef, (uint32_t)(t2 -t1));
-        timingMessage(recTag, deadline_t, evtId, param, tef, isLate, isEarly, isConflict, isDelayed);
-        }*/
-      // irgendwo hier periodisch DIM service aktualisieren bzw. update auf Bildschirm bzw. update MASP
+      // hier periodisch DIM service aktualisieren bzw. update auf Bildschirm bzw. update MASP
       monData.gid   = gid;
       monData.cMode = modeCompare;
       saftlib::wait_for_signal(UPDATE_TIME_MS / 10);
@@ -717,7 +655,7 @@ int main(int argc, char** argv)
         t_old      = t_new;
 
         // update firmware data
-        wrmil_common_read(ebDevice, &fwStatus, &fwState, &tmp32a, &tmp32b, &fwVersion, &tmp32c, 0);
+        wrmil_common_read(ebDevice, &fwStatus, &fwState, &nBadStatus, &nBadState, &fwVersion, &tmp32c, 0);
         wrmil_info_read(ebDevice, &tmp32a, &tmp32b, &tmp32c, &fwGid, &stmp32a, &tmp64a, &tmp32f, &tmp32g, &tmp32h, &fwEvtsSnd, &fwEvtsRecT, &fwEvtsRecD, &fwEvtsRecErr, &fwEvtsBurst, 0);
         if (fwGid != gid) fwStatus |= COMMON_STATUS_OUTOFRANGE; // signal an error
 
@@ -743,7 +681,47 @@ int main(int argc, char** argv)
           dis_update_service(disMonDataId);
         } // if startServer
 
-        //printf("wrmil-mon: fw snd %ld, recD %ld, recT %ld; mon snd %ld, rec %ld, match %ld, act %f, ave %f, sdev %f, min %f, max %f\n", monData.nFwSnd, monData.nFwRecT, monData.nFwRecT, monData.nStart, monData.nStop, monData.nMatch, monData.tAct, monData.tAve, monData.tSdev, monData.tMin, monData.tMax);
+
+        // logging
+        printFlag      = 0;
+
+        if (actState != fwState) {
+          printFlag    = 1;
+          actState     = fwState;
+        } // if actstate
+        if (actStatus  != fwStatus) {
+          printFlag    = 1;
+          actStatus    = fwStatus;
+        } // if actstatus
+
+        if (((t_new - t_lastlog) / one_ms_ns) > 60000) { // update once per minute
+          printFlag = 1;
+          t_lastlog = t_new;
+        } // if lastlog
+
+      if (printFlag) {
+        // grrrr.... logger omits white spaces, thus the formatting becomes lousy
+        // the following lines do padding with a dedicated character 
+#define LENGID 11                                        // GID name with most characters is SIS18_RING requiring a MIL gateway
+        char fill[LENGID+1];
+        int  len;
+        for (int i=0;i<LENGID;i++) fill[i] = '.';
+        len = strlen(domainName);
+        if (len < LENGID) sprintf(&(fill[LENGID - len]), "%s", domainName);
+
+        // print to screen (with optional piping to logger)
+        printf("env %s, gid %s", environment, fill);
+        printf(", nSent %012lu", fwEvtsSnd);
+         printf(", %s (%06u), ",  comlib_stateText(fwState), nBadState);
+         if ((fwStatus >> COMMON_STATUS_OK) & 0x1) printf("OK   (%06u)\n", nBadStatus);
+         else printf("NOTOK(%06u)\n", nBadStatus);
+         // print set status bits (except OK)
+         for (i= COMMON_STATUS_OK + 1; i<(int)(sizeof(fwStatus)*8); i++) {
+           if ((fwStatus >> i) & 0x1)  printf("  ------ status bit is set : %s\n", wrmil_status_text(i));
+         } // for i
+         fflush(stdout);
+      } // if printFlag
+        
 
 #ifdef USEMASP
       if (fwState  == COMMON_STATE_OPREADY) maspSigOpReady  = true;

@@ -65,7 +65,7 @@
  <module
    name="iopll_0"
    kind="altera_iopll"
-   version="18.1"
+   version="23.1"
    enabled="1"
    autoexport="1">
   <parameter name="gui_active_clk" value="false" />
@@ -201,7 +201,7 @@
   <parameter name="gui_output_clock_frequency17" value="100.0" />
   <parameter name="gui_output_clock_frequency2" value="20.0" />
   <parameter name="gui_output_clock_frequency3" value="10.0" />
-  <parameter name="gui_output_clock_frequency4" value="50.0" />
+  <parameter name="gui_output_clock_frequency4" value="25.0" />
   <parameter name="gui_output_clock_frequency5" value="100.0" />
   <parameter name="gui_output_clock_frequency6" value="100.0" />
   <parameter name="gui_output_clock_frequency7" value="100.0" />

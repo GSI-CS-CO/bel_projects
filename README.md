@@ -1,4 +1,5 @@
 # Project bel_projects
+
 GSI Timing Gateware and Tools
 
 # Table of Contents
@@ -16,6 +17,7 @@ GSI Timing Gateware and Tools
     - [LM32 Cluster Testbench](#lm32-cluster-testbench)
 - [FAQ and Common Problems](#faq-and-common-problems)
   - [Synthesis](#synthesis)
+    - [Quartus Setup](#quartus-setup)
     - [Quartus Version](#quartus-version)
     - [Library libpng12](#library-libpng12)
       - [Ubuntu](#ubuntu)
@@ -32,6 +34,7 @@ GSI Timing Gateware and Tools
     - [Python not found](#python-not-found)
     - [No module named pkg_resources](#no-module-named-pkg_resources)
     - [Setuptools not found](#setuptools-not-found)
+    - [Python Six](#python-six)
     - [Compiling Saftlib](#compiling-saftlib)
     - [CC not found](#cc-not-found)
     - [Rocky-9](#rocky-9)
@@ -40,6 +43,7 @@ GSI Timing Gateware and Tools
   - [Git](#git)
     - [CAfile](#cafile)
   - [JTAG and Programming](#jtag-and-programming)
+    - [JTAG Overview](#jtag-overview)
     - [USB-Blaster Issues](#usb-blaster-issues)
     - [Altera/Intel USB Blaster](#alteraintel-usb-blaster)
     - [Xilinx Platform Cable II](#xilinx-platform-cable-ii)
@@ -58,7 +62,7 @@ GSI Timing Gateware and Tools
 
 Just clone our project.
 
-```
+```shell
 git clone https://github.com/GSI-CS-CO/bel_projects.git
 ```
 
@@ -66,7 +70,7 @@ git clone https://github.com/GSI-CS-CO/bel_projects.git
 
 Make will take care of all submodules and additional toolchains.
 
-```
+```shell
 make
 ```
 
@@ -76,37 +80,37 @@ Important: Please don't mess around using the "git submodule --fancy option" com
 
 This will build VME and PCI(e) drivers.
 
-```
+```shell
 make driver
-(optional) make driver-install
-(optional - build wishbone-serial.ko) make driver/driver-install WISHBONE_SERIAL=y
+make driver-install # optional
+make driver/driver-install WISHBONE_SERIAL=y # optional - build wishbone-serial.ko
 ```
 
 ## Etherbone
 
 Builds basic Etherbone tools and library.
 
-```
+```shell
 make etherbone
-(optional) make etherbone-install
+make etherbone-install # optional
 ```
 
 ## Tools (Monitoring and EB-Tools)
 
 Additional tools like eb-console and eb-flash.
 
-```
+```shell
 make tools
-(optional) make tools-install
+make tools-install # optional
 ```
 
 ## Saftlib
 
 Builds basic Saftlib tools and library.
 
-```
+```shell
 make saftlib
-(optional) make saftlib-install
+make saftlib-install # optional
 ```
 
 For detailed information check ip_cores/saftlib/CompileAndConfigureSaftlib.md.
@@ -115,7 +119,7 @@ For detailed information check ip_cores/saftlib/CompileAndConfigureSaftlib.md.
 
 Currently we support a few different form factors.
 
-```
+```shell
 make scu2               # Arria II
 make scu3               # Arria II
 make vetar2a            # Arria II
@@ -126,13 +130,12 @@ make exploder5          # Arria V
 make pmc                # Arria V
 make microtca           # Arria V
 make pexp               # Arria V
-make scu4               # Arria 10
 make scu4slim           # Arria 10
 make pexarria10         # Arria 10
 make ftm10              # Arria 10
-make ftm4               # Arria 10 - optional FTM4 development
-make ftm4dp             # Arria 10 - optional FTM4 dual port development
-make a10gx_pcie         # Arria 10 - Intel evaluation board
+make scu5               # Arria 10
+make ftm5               # Arria 10
+make ftm5dp             # Arria 10
 ```
 
 ## Additional Targets
@@ -156,17 +159,34 @@ make exploder5-sort # example
 ```
 make lm32-cluster-testbench-run
 ```
+
 [Click here for additional information.](testbench/lm32_cluster/test/REAME.md)
 
 # FAQ and Common Problems
 
 ## Synthesis
 
+### Quartus Setup
+
+```shell
+export QSYS_ROOTDIR=$CFG_QUARTUS_VERSION/quartus/sopc_builder/bin
+export QUARTUS_ROOTDIR=$CFG_QUARTUS_VERSION/quartus
+export QUARTUS=$QUARTUS_ROOTDIR
+export QUARTUS_64BIT=1
+export PATH=$PATH:$QUARTUS
+export PATH=$PATH:$QSYS_ROOTDIR
+```
+
+Please adjust your `$CFG_QUARTUS_VERSION` variable.
+
 ### Quartus Version
 
 Question: Which Version of Quartus Do I Need?
 
-Answer: We recommend to use Quartus 18.1.0 (Build 625 09/12/2018 SJ)
+Answer:
+
+- Arria II/Arria V: Quartus 18.1.0 (Build 625 09/12/2018 SJ) Standard Edition
+- Arria 10: Quartus 23.1.1 (Build 993 05/14/2024 SC) Standard Edition
 
 ### Library libpng12
 
@@ -180,10 +200,22 @@ Get the package from here: https://packages.ubuntu.com/xenial/amd64/libpng12-0/d
 
 #### Mint
 
-```
+```shell
 sudo add-apt-repository ppa:linuxuprising/libpng12
 sudo apt update
 sudo apt install libpng12-0
+```
+
+If this PPA can't be added, you need to compile the library:
+
+```shell
+cd res/ubuntu-22-and-later
+tar xf libpng_1.2.54.orig.tar
+cd libpng-1.2.54
+./autogen
+./configure
+make
+sudo make install
 ```
 
 #### Backup Plan
@@ -199,7 +231,7 @@ Error: Executing qmegawiz: child process exited abnormally + Time value XXX,YYYM
 
 Solution: Change your LC_NUMERIC setting:
 
-```
+```shell
 export LC_NUMERIC="en_US.UTF-8"
 ```
 
@@ -209,11 +241,15 @@ Error: (23035) Tcl error: couldn't execute "qsys-generate": no such file or dire
 
 Solution: Adjust your PATH variable like this:
 
-```
+```shell
 export QUARTUS=/opt/quartus/
 export QSYS_ROOTDIR=$QUARTUS/sopc_builder/bin
 export PATH=$PATH:$QUARTUS_ROOTDIR:$QSYS_ROOTDIR
 ```
+
+Error: (293007): Current module quartus_sh ended unexpectedly. Verify that you have sufficient memory available to compile your design.
+
+Solution: Use the right Quartus version for your project.
 
 ### Permission denied
 
@@ -247,6 +283,16 @@ Answer: You need to have installed the following packages before you can configu
 
 ‡ Ubuntu 22.04 and later: libsigc++-2.0-dev
 
+For `apt` that means
+```shell
+apt install docbook-utils libglib2.0-dev autotools-dev autoconf libtool build-essential automake libreadline-dev libsigc++-2.0-dev libboost-dev pkg-config xsltproc libz-dev python-is-python3
+```
+
+For `pacman` that would be
+```shell
+pacman -S docbook-utils autoconf automake libtool readline libsigc++ pkgconf libxslt glibmm boost
+```
+
 ### Library libmpfr
 
 Error: error while loading shared libraries: libmpfr.so.4: cannot open shared object file: No such file or directory [Ubuntu/Mint/...]
@@ -255,7 +301,7 @@ Error: lm32-* permission denied /dev/stdout
 
 Solution: Create a new symlink:
 
-```
+```shell
 sudo ln -s /usr/lib/x86_64-linux-gnu/libmpfr.so.6 /usr/lib/x86_64-linux-gnu/libmpfr.so.4
 ```
 
@@ -265,7 +311,7 @@ Error: hdlmake AttributeError: module object has no attribute vendor or hdlmake 
 
 Solution: In case a simple "make" does not fix this:
 
-```
+```shell
 make hdlmake_install
 ```
 
@@ -275,7 +321,7 @@ Error: /bin/sh: 1: hdlmake: not found
 
 Solution: You should run "make" to install hdlmake locally and adjust your PATH variable:
 
-```
+```shell
 export PATH=$PATH:$HOME/.local/bin
 ```
 
@@ -284,20 +330,21 @@ Error: cd ip_cores/hdlmake/ && python setup.py install --user /bin/sh: 1: python
 
 Solution: In case you are running Ubuntu:
 
-```
+```shell
 sudo apt-get install python-is-python3
 ```
 
 Optional (python-is-python3 not found):
 
-```
+```shell
 sudo ln -s /usr/bin/python3 /etc/python
 sudo apt-get install python-setuptools
+sudo apt-get install python3-setuptools
 ```
 
 In case you have no sudo rights:
 
-```
+```shell
 ln -s /usr/bin/python3 python
 export PATH=$PATH:$(pwd)
 ```
@@ -310,7 +357,7 @@ Error: ImportError: No module named pkg_resources
 
 Solution:
 
-```
+```shell
 sudo apt-get install python-pkg-resources
 sudo apt-get install --reinstall python-pkg-resources # if already installed
 ```
@@ -321,9 +368,20 @@ Error: ModuleNotFoundError: No module named 'setuptools'
 
 Solution: Just install the right setuptools:
 
-```
+```shell
 sudo apt-get install python3-setuptools # Python 3.X
 sudo apt-get install python-setuptools # Python 2.X
+```
+
+### Python Six
+
+Error: ModuleNotFoundError: No module named 'six'
+
+Solution:
+
+```shell
+sudo apt-get install python-six
+sudo apt-get install python3-six
 ```
 
 ### Compiling Saftlib
@@ -332,7 +390,7 @@ Error: Compilation: "Error message: ./configure: line 16708: syntax error near u
 
 Solution:
 
-```
+```shell
 sudo apt-get install pkg-config
 export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 ```
@@ -382,7 +440,7 @@ Error: make[1]: cc: No such file or directory
 
 Solution:
 
-```
+```shell
 which cc # cc: Command not found.
 update-alternatives --list cc
 which cc # /usr/bin/cc
@@ -396,7 +454,7 @@ which cc # /usr/bin/cc
 
 #### Etherbone & Saftlib
 
-```
+```shell
 unset LD_LIBRARY_PATH
 source /common/usr/embedded/yocto/sdk/environment-setup-core2-64-ffos-linux
 make etherbone YOCTO_BUILD=yes
@@ -427,12 +485,30 @@ Error: Cloning into 'dir'... - fatal: unable to access 'https://ohwr.org/project
 
 Solution: Systems with outdated trust databases (root CA certificate Let's Encrypt) will be unable to validate the certificate of the site. Update ca-certificates to fix this:
 
-```
+```shell
 sudo apt update
 sudo apt upgrade ca-certificates
 ```
 
 ## JTAG and Programming
+
+### JTAG Overview
+
+| Timing Receiver         | JTAG Adapter(s)                | JTAG Adapter Configuration   |
+| ----------------------- | ------------------------------ | ---------------------------- |
+| SCU2 & SCU3             | Promo 11 (Micro-USB)           | - |
+| Vetar2a                 | Promo 11 (Micro-USB) <br> Promo 5 | Promo 5: SEL1 0x1 - SEL2 0x4 |
+| Pexarria5               | Promo 5 <br> Promo 12          | FPGA Promo 5: SEL1 0x2 - SEL2 0x8 <br> CPLD Promo 5: SEL1 0x1 - SEL2 0x4 <br> FPGA Promo 12: SEL1 0x2 - SEL2 0x8 (?) <br> CPLD Promo 12: SEL1 0x1 - SEL2 0x4 (?) |
+| Exploder5               | Promo 11 (Micro-USB) <br> Promo 5 <br> Promo 12 | FPGA Promo 5: SEL1 0x1 - SEL2 0x4 <br> CPLD Promo 5: SEL1 0x2 - SEL2 0x8 <br> FPGA Promo 12: SEL1 0x1 - SEL2 0x4 (?) <br> CPLD Promo 12: SEL1 0x2 - SEL2 0x8 (?) |
+| MicroTCA/AMC            | Promo 11 (Micro-USB)           | FPGA/CPLD JTAG chain |
+| PMC                     | Promo 11 (Micro-USB)           | FPGA/CPLD JTAG chain |
+| PEXP                    | Promo 11 (Micro-USB)           | FPGA/CPLD JTAG chain |
+| SCU4 & FTM4             | Promo 11 (Micro-USB)           | - |
+| SCU4.1 (SCU4SLIM)       | Promo 11 (Micro-USB)           | USB-Blaster II only :warning: |
+| Pexarria10 & FTM10      | Promo 11 (Micro-USB)           | Optional USB to JTAG adapter † |
+| SCU5                    | Promo 11 (Micro-USB)           | Optional USB to JTAG adapter † |
+
+† If attached: [FPGA USB-Programmer2 JTAG (Arrow)](https://shop.trenz-electronic.de/de/TEI0004-02-FPGA-USB-Programmer2-JTAG-Arrow-fuer-die-Entwicklung-mit-Intel-FPGAs?c=26)
 
 ### USB-Blaster Issues
 
@@ -440,7 +516,7 @@ Error: quartus: USB-Blaster can't find FPGA [Ubuntu/Mint/...]
 
 Solution: Create a new symlink:
 
-```
+```shell
 sudo ln -sf /lib/x86_64-linux-gnu/libudev.so.1 /lib/x86_64-linux-gnu/libudev.so.0
 ```
 
@@ -458,7 +534,7 @@ See [doc/arrow_usb_programmer/readme.md](doc/arrow_usb_programmer/readme.md)
 
 ### Altera/Intel Ethernet Blaster
 
-```
+```shell
 Default user: admin
 Default password: password
 Default server port (programmer GUI): 1309
@@ -470,20 +546,20 @@ Default server port (programmer GUI): 1309
 
 Configure the SPI flash chip:
 
-```
+```shell
 eb-config-nv $device 10 4
 ```
 
 Format the 1-wire EEPROM:
 
-```
+```shell
 cd bel_projects/ip_cores/wrpc-sw/tools
 eb-w1-write $device 0 320 < sdb-wrpc.bin
 ```
 
 Program FPGA from command line:
 
-```
+```shell
 quartus_pgm -c 1 -m jtag -o 'p;device.sof'
 ```
 
@@ -494,33 +570,34 @@ Problem: Flashing might fail sometimes on certain devices and host combinations.
 Solution: If you have such a device please use eb-flash (with additional arguments) to flash the timing receiver:
 
 Optional (BEFORE using eb-flash):
-```
+
+```shell
 eb-reset $device wddisable # disable watchdog timer
 eb-reset $device cpuhalt 0xff # stop all embedded CPUs
 ```
 
 Optional (AFTER using eb-flash):
-```
+```shell
 eb-reset $device fpgareset # reset FPGA
 ```
 
 #### Arria2 Devices
 
-```
+```shell
 (problematic devices) eb-flash -s 0x40000 -w 3 $device $gateware.rpd # <VETAR2A/VETAR2A-EE-BUTIS/SCU2/SCU3>
 (unproblematic devices) eb-flash $device $gateware.rpd # <VETAR2A/VETAR2A-EE-BUTIS/SCU2/SCU3>
 ```
 
 #### ArriaV Devices
 
-```
+```shell
 (problematic devices) eb-flash -s 0x10000 -w 3 $device $gateware.rpd # <PEXP/PEXARRIA5/PMC/MICROTCA/EXPLODER5>
 (unproblematic devices) eb-flash $device $gateware.rpd # <PEXP/PEXARRIA5/PMC/MICROTCA/EXPLODER5>
 ```
 
 #### Arria10 Devices
 
-```
+```shell
 eb-asmi $device -w $gateware.rpd (write)
 eb-asmi $device -v $gateware.rpd (verify)
 ```

@@ -1,0 +1,4 @@
+sim/*
+src/hdl/a10vs_ip/.qsys_edit/
+src/hdl/a10vs_ip/a10vs_ip.sopcinfo
+src/hdl/a10vs_ip/a10vs_ip/*

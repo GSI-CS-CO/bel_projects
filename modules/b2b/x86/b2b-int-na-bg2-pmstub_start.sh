@@ -54,7 +54,7 @@ echo -e b2b: configure $SDPM for phase measurement TLU
 # configure PM
 ###########################################
 # lm32 listens to TLU
-saft-ecpu-ctl $SDPM -c 0xffffa03000000001 0xffffffffffffffff 0 0xa03 -d
+#saft-ecpu-ctl $SDPM -c 0xffffa03000000001 0xffffffffffffffff 0 0xa03 -d
 
 # SIS18 CBU
 # lm32 listens to CMD_B2B_PMEXT message from SIS18 CBU
@@ -93,7 +93,7 @@ saft-ecpu-ctl $SDPM -c 0xffffa03000000001 0xffffffffffffffff 0 0xa03 -d
 saft-ecpu-ctl $SDPM -c 0x13a6801000000000 0xfffffff000000000 0 0x801 -d
 
 # lm32 listens to CMD_B2B_TRIGGERINJ message from ESR CBU - match diagnostic
-saft-ecpu-ctl $SDPM -c 0x1154805000000000 0xfffffff000000000 20000 0x805 -dg
+saft-ecpu-ctl $SDPM -c 0x10d2805000000000 0xfffffff000000000 20000 0x805 -dg
 
 # lm32 listens to >>delayed<< (CMD_B2B_PMINJ) message from ESR CBU: B2B_ECADO_B2B_PDINJ - phase diagnostic
 saft-ecpu-ctl $SDPM -c 0x13a6801000000000 0xfffffff000000000 15900000 0x821  -d
@@ -109,11 +109,11 @@ saft-ecpu-ctl $SDPM -c 0x10d2804000000000 0xfffffff000000000 20000 0x804 -dg
 saft-ecpu-ctl $SDPM -c 0x13aa800000000000 0xfffffff000000000 15900000 0x820 -d
 
 # diag: generate pulse upon CMD_B2B_TRIGGEREXT message from SIS18 CBU
-saft-io-ctl $SDPM -n IO1 -o 1 -t 0
+#saft-io-ctl $SDPM -n IO1 -o 1 -t 0
 #saft-io-ctl $SDPM -n IO1 -c 0x112c804000000000 0xfffffff000000000 0 0x0 1 -u
 #saft-io-ctl $SDPM -n IO1 -c 0x112c804000000000 0xfffffff000000000 10000000 0x0 0 -u
 #saft-io-ctl $SDPM -n IO1 -c 0x1154804000000000 0xfffffff000000000 0 0x0 1 -u
 #saft-io-ctl $SDPM -n IO1 -c 0x1154804000000000 0xfffffff000000000 10000000 0x0 0 -u
-saft-io-ctl $SDPM -n IO1 -c 0x10d2804000000000 0xfffffff000000000 0 0x0 1 -u
-saft-io-ctl $SDPM -n IO1 -c 0x10d2804000000000 0xfffffff000000000 10000000 0x0 0 -u
+#saft-io-ctl $SDPM -n IO1 -c 0x10d2804000000000 0xfffffff000000000 0 0x0 1 -u
+#saft-io-ctl $SDPM -n IO1 -c 0x10d2804000000000 0xfffffff000000000 10000000 0x0 0 -u
 

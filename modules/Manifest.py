@@ -53,5 +53,9 @@ modules = {
     "diob",
     "wb_timer",
     "i2c_wrapper",
+    "enc_err_counter",
+    "a10vs",
+    "cellular_ram",
+    "neorv32",
   ]
 }

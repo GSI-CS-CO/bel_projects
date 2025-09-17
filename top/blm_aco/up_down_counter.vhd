@@ -6,7 +6,7 @@ USE IEEE.numeric_std.all;
 entity up_down_counter is
     generic (
     	--c            : integer :=1;        -- Counter_input width
-        WIDTH        : integer := 30      -- Counter width
+        WIDTH        : integer := 32      -- Counter width
 
         
     );
@@ -96,11 +96,11 @@ begin
             elsif ( ENABLE = '1') then   
        
 ----------------------------
-            if up_input ='1' then 
+            if (up_input ='1') and (down_input ='0') then 
 
                 int_count <= int_count +1;
 
-            elsif down_input ='1' then
+            elsif (down_input ='1') and (up_input ='0') then
     
                 int_count <= int_count -1;
 

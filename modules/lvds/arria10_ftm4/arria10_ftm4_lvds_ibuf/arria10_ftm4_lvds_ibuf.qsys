@@ -6,8 +6,8 @@
    version="1.0"
    description=""
    tags="INTERNAL_COMPONENT=true"
-   categories="" />
- <parameter name="bonusData"><![CDATA[bonusData
+   categories="System" />
+ <parameter name="bonusData"><![CDATA[bonusData 
 {
    element gpio_0
    {
@@ -52,10 +52,10 @@
  <module
    name="gpio_0"
    kind="altera_gpio"
-   version="18.1"
+   version="23.1"
    enabled="1"
    autoexport="1">
-  <parameter name="AUTO_DEVICE" value="10AX027E3F29E2SG" />
+  <parameter name="AUTO_DEVICE" value="10AX048E3F29E2SG" />
   <parameter name="AUTO_DEVICE_SPEEDGRADE" value="2" />
   <parameter name="EXT_DRIVER_PARAM" value="false" />
   <parameter name="GENERATE_SDC_FILE" value="false" />

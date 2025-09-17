@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-Nov-2023
+ *  version : 04-Mar-2025
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -38,7 +38,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPMSTUB_FW_VERSION 0x000703                                   // make this consistent with makefile
+#define B2BPMSTUB_FW_VERSION 0x000807                                   // make this consistent with makefile
 
 //standard includes
 #include <stdio.h>
@@ -75,7 +75,6 @@ volatile uint32_t *pSharedGetSid;       // pointer to a "user defined" u32 regis
 volatile uint32_t *pSharedGetTH1Hi;     // pointer to a "user defined" u32 register; here: period of h=1, high bits
 volatile uint32_t *pSharedGetTH1Lo;     // pointer to a "user defined" u32 register; here: period of h=1, low bits
 volatile uint32_t *pSharedGetNH;        // pointer to a "user defined" u32 register; here: harmonic number
-volatile int32_t  *pSharedGetComLatency;// pointer to a "user defined" u32 register; here: latency for messages received via ECA
 
 uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM            
 
@@ -115,7 +114,6 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
   pSharedGetTH1Hi         = (uint32_t *)(pShared + (B2B_SHARED_GET_TH1EXTHI   >> 2));   // for simplicity: use 'EXT' for data
   pSharedGetTH1Lo         = (uint32_t *)(pShared + (B2B_SHARED_GET_TH1EXTLO   >> 2));
   pSharedGetNH            = (uint32_t *)(pShared + (B2B_SHARED_GET_NHEXT      >> 2));
-  pSharedGetComLatency    =  (int32_t *)(pShared + (B2B_SHARED_GET_COMLATENCY >> 2));
 
   // find address of CPU from external perspective
   idx = 0;
@@ -209,7 +207,6 @@ uint32_t extern_entryActionOperation()
   *pSharedGetNH          = 0x0;
   *pSharedGetGid         = 0x0; 
   *pSharedGetSid         = 0x0;
-  *pSharedGetComLatency  = 0x0;
 
   return COMMON_STATUS_OK;
 } // extern_entryActionOperation
@@ -235,25 +232,15 @@ void insertionSort(uint64_t *stamps, int n) {
 
 
 // 'fit' phase value
- uint32_t phaseFit(uint64_t period, uint32_t nSamples, uint64_t *phase_125ps, uint32_t *dt, uint64_t *confidence_as)
+uint32_t phaseFit(uint64_t period_as, uint32_t nSamples, b2bt_t *phase)
 {
-  int      i;
   int      usedIdx;      // index of used timestamp
-  int32_t  diff;         // difference of two neighboring timestamps [ns]
-  int32_t  delta;        // difference from expected period [ns]
-  int32_t  periodNs;     // period [ns]
-  uint32_t maxDelta;     // max deviation of measured period [ns]
-  
-  uint64_t phaseTmp;     // intermediate value;
-  uint64_t tmp;          // helper variable
-
-  int32_t  test;
-  uint64_t t1,t2;
 
   // dummy implementation
-  *phase_125ps   = tStamp[1] << 3;      // use 2nd stamp and convert to [125 ps]
-  *dt            = (*phase_125ps) / 100;
-  *confidence_as = 1000000000;
+  usedIdx        = 1;
+  (*phase).ns  = tStamp[usedIdx]; 
+  (*phase).ps  = 200;    // bogus
+  (*phase).dps = 2000;               
   
   return COMMON_STATUS_OK;
 } //phaseFit
@@ -266,21 +253,15 @@ int acquireTimestamps(uint64_t *ts,                           // array of timest
                       uint32_t *nRec,                         // number of received timestamps
                       uint32_t interval,                      // interval for receiving timestamps [us]
                       uint32_t io,                            // number of IO 0..n
-                      uint32_t tag                            // expected event tag
+                      uint32_t tag,                           // expected event tag
+                      uint64_t TH1_as
                       )
 {
-  uint32_t ecaAction;                                         // action triggered by ECA
-  uint64_t recDeadline;                                       // received deadline
-  uint64_t recEvtId;                                          // received EvtId
-  uint64_t recParam;                                          // received Parameter
-  uint32_t recTEF;                                            // received TEF
-  uint32_t flagIsLate;                                        // is late?
-
   // dummy implementation 
   *nRec = 3;
   ts[0] = getSysTime();
-  ts[1] = ts[0] + 1000;
-  ts[2] = ts[1] + 1000;
+  ts[1] = ts[0] + TH1_as / (uint64_t)1000000000;
+  ts[2] = ts[1] + TH1_as / (uint64_t)1000000000;
   
   return COMMON_STATUS_OK;
 } // acquireTimestamps                  
@@ -307,21 +288,19 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint64_t sendDeadline;                                      // deadline to send
   uint64_t sendEvtId;                                         // evtid to send
   uint64_t sendParam;                                         // parameter to send
+  uint32_t sendTEF;                                           // TEF to send
   uint32_t sendEvtNo;                                         // EvtNo to send
   
   uint32_t nInput;                                            // # of timestamps
   static uint64_t TH1_as;                                     // h=1 period [as]
-  static uint64_t tH1_125ps;                                  // h=1 timestamp of phase ( = 'phase') [125 ps]
-  uint32_t dt;                                                // uncertainty of h=1 timestamp
-  uint64_t confidence_as;                                     // measure for the confidence of the sub-ns part of the phase fit 
+  static b2bt_t   tH1_t;                                      // h=1 timestamp of phase ( = 'phase') [ps]
   static uint32_t flagPMError;                                // error flag phase measurement
 
   // diagnostic PM; phase (rf) and match (trigger)
   static uint32_t flagMatchDone;                              // flag: match measurement done
   static uint32_t flagPhaseDone;                              // flag: phase meausrement done
-  uint64_t tH1Match_125ps;                                    // h=1 timestamp of match diagnostic [125 ps]
-  uint64_t tH1Phase_125ps;                                    // h=1 timestamp of phase diagnostic [125 ps]
-  int64_t  Dt;                                                // difference of the two timestamps
+  b2bt_t   tH1Match_t;                                        // h=1 timestamp of match diagnostic [ps]
+  b2bt_t   tH1Phase_t;                                        // h=1 timestamp of phase diagnostic [ps]
   uint64_t remainder;                                         // remainder
   static int64_t dtMatch_as;                                  // deviation of trigger from expected timestamp [as]
   int64_t  dtPhase_as;                                        // deviation of phase from expected timestamp [as]
@@ -343,6 +322,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
   ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate, &flagEarly, &flagConflict, &flagDelayed);
 
+  if (ecaAction != B2B_ECADO_TIMEOUT) comLatency = (int32_t)(getSysTime() - recDeadline);
+
   switch (ecaAction) {
     // the following two cases handle H=1 group DDS phase measurement
     case B2B_ECADO_B2B_PMEXT :                                        // this is an OR, no 'break' on purpose
@@ -350,8 +331,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     case B2B_ECADO_B2B_PMINJ :
       if (!sendEvtNo) sendEvtNo = B2B_ECADO_B2B_PRINJ;
 
-      comLatency       = (int32_t)(getSysTime() - recDeadline);
-      
       *pSharedGetTH1Hi = (uint32_t)((recParam >> 32) & 0x00ffffff);   // lower 56 bit used as period
       *pSharedGetTH1Lo = (uint32_t)( recParam        & 0xffffffff);
       *pSharedGetNH    = (uint32_t)((recParam>> 56)  & 0xff      );   // upper 8 bit used as harmonic number
@@ -372,11 +351,10 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       TMeas_us        = (int32_t)(TMeas / 1000) + 1;                 // add 1 us to avoid a too short window
       
       nInput = 0;
-      acquireTimestamps(tStamp, nSamples, &nInput, TMeas_us, 2, B2B_ECADO_TLUINPUT3);
+      acquireTimestamps(tStamp, nSamples, &nInput, TMeas_us, 2, B2B_ECADO_TLUINPUT3, TH1_as);
 
       if (nInput > 2) insertionSort(tStamp, nInput);                  // for 11 timestamps, this is below 10us
-      if ((nInput < 3) || (phaseFit(TH1_as, nInput, &tH1_125ps, &dt, &confidence_as) != COMMON_STATUS_OK)) {
-        tH1_125ps = 0x7fffffffffffffff;
+      if ((nInput < 3) || (phaseFit(TH1_as, nInput, &tH1_t) != COMMON_STATUS_OK)) {
         if (sendEvtNo ==  B2B_ECADO_B2B_PREXT) flagPMError = B2B_ERRFLAG_PMEXT;
         else                                   flagPMError = B2B_ERRFLAG_PMINJ;
         if (nInput < 3) status = B2B_STATUS_NORF;
@@ -385,17 +363,19 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
       // send command: transmit measured phase value to the network
       sendEvtId    = fwlib_buildEvtidV1(recGid, sendEvtNo, 0, recSid, recBpid, flagPMError);
-      sendParam    = tH1_125ps;
+      sendParam    = tH1_t.ns;
+      sendTEF      = (uint32_t)( (int16_t)(tH1_t.ps)  & 0xffff);
+      sendTEF     |= (uint32_t)((uint16_t)(tH1_t.dps) & 0xffff) << 16; 
       sendDeadline = getSysTime() + (uint64_t)B2B_AHEADT;              // use a more aggressive deadline < COMMON_AHEADT
       fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0, 0);
 
       // send the confidence value of the phase fit to ECA (for monitoring purposes)
       sendEvtId    = fwlib_buildEvtidV1(0xfff, ecaAction, 0, recSid, recBpid, 0x0);
-      sendParam    = confidence_as;
+      sendParam    = 0xdeadbeef;
       sendDeadline = getSysTime();                                    // produces a late action but allows explicit monitoring of processing time   
       fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0, 1);     // force late message
-
-      transStat    = dt;
+      sendParam    = 0xdeadbeef;
+      transStat    = tH1_t.dps;
       nTransfer++;
       //flagIsLate = 0; /* chk */      
       break; // case  B2B_ECADO_B2B_PMEXT
@@ -404,40 +384,15 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     case B2B_ECADO_B2B_TRIGGEREXT :                                   // this is an OR, no 'break' on purpose
     case B2B_ECADO_B2B_TRIGGERINJ :                                   // this case only makes sense if cases B2B_ECADO_B2B_PMEXT/INJ succeeded
       if (!flagPMError) {
-
-        reqDeadline = recDeadline + (uint64_t)B2B_PRETRIGGERTR;       // ECA is configured to pre-trigger ahead of time!!!
-        nInput   = 0;
-        TWait    = (int64_t)((reqDeadline - (TMeas >> 1)) - getSysTime());  // time how long we should wait before starting the measurement
-        TWait_us = (TWait / 1000 - 10);                               // the '-10' is a fudge thing
-        if (TWait_us > 0) uwait(TWait_us);
-        acquireTimestamps(tStamp, nSamples, &nInput, TMeas_us, 2, B2B_ECADO_TLUINPUT3);
-        //pp_printf("TMeas %u, TMeasUs %u\n", (uint32_t)TMeas, (uint32_t)TMeasUs);
-
-        // find closest timestamp
-        if (nInput > 2) {
-          insertionSort(tStamp, nInput);                              // need at least two timestamps
-          if (phaseFit(TH1_as, nInput, &tH1Match_125ps, &dt, &confidence_as) == COMMON_STATUS_OK) {
-            Dt          = (reqDeadline * 8 - tH1Match_125ps);         // difference to trigger [125 ps]
-            // tmp1 = (int32_t)Dt / 8; pp_printf("match1 [ns] %08d\n", tmp1);            
-            Dt          = Dt * 125000000;                             // difference [as]
-            remainder   =  Dt % TH1_as;                               // remainder [as]
-            if (remainder > (TH1_as >> 1)) dtMatch_as = remainder - TH1_as;
-            else                           dtMatch_as = remainder;
-            // hack
-            dtMatch_as = Dt;
-            // hack
-            flagMatchDone = 1;
-            // tmp1 = (int32_t)(dtMatch_as / 1000000); pp_printf("match2 %08d\n", tmp1);
-          } // if phasefit
-        } // if nInput
+        // super simple: just use a difference of exactly 1 ns
+        dtMatch_as  = 1;                                          // ns
+        //pp_printf("match ns %4d, ps %4d, ", (int32_t)dtMatch_as, (int32_t)tH1Match_t.ps);
+        dtMatch_as  = dtMatch_as * 1000;                          // ps
+        //pp_printf("match ps %d\n", (int32_t)dtMatch_as);
+        dtMatch_as *= 1000000;                                    // difference [as]
         
-        // send the confidence value of the phase fit to ECA (for monitoring purposes)
-        sendEvtId    = fwlib_buildEvtidV1(0xfff, ecaAction, 0, recSid, recBpid, 0x0);
-        sendParam    = confidence_as;
-        sendDeadline = getSysTime();                                  // produces a late action but allows explicit monitoring of processing time
-        fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0, 1);   // force late message
+        flagMatchDone = 1;
       } // if not pm error
-      //flagIsLate = 0; /* chk */
       
       break; // case  B2B_ECADO_B2B_TRIGGEREXT/INJ
 
@@ -447,45 +402,39 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     case B2B_ECADO_B2B_PDINJ :
       if (!sendEvtNo) 
         sendEvtNo = B2B_ECADO_B2B_DIAGINJ;
+      
+      recGid          = (uint32_t)((recEvtId >> 48) & 0xfff     );
+      recSid          = (uint32_t)((recEvtId >> 20) & 0xfff     );
+      recBpid         = (uint32_t)((recEvtId >>  6) & 0x3fff    );
+      
+      // super simple: just use a difference of exactly 100 as
+      
+      dtPhase_as      = (uint64_t)100 * (uint64_t)1000000;            // difference [as]
 
-        recGid          = (uint32_t)((recEvtId >> 48) & 0xfff     );
-        recSid          = (uint32_t)((recEvtId >> 20) & 0xfff     );
-        recBpid         = (uint32_t)((recEvtId >>  6) & 0x3fff    );
-
-        nInput          = 0;
-
-        acquireTimestamps(tStamp, nSamples, &nInput, TMeas_us, 2, B2B_ECADO_TLUINPUT3);
-        // find closest timestamp
-        if (nInput > 2) {
-          insertionSort(tStamp, nInput);                              // need at least two timestamps
-          if (phaseFit(TH1_as, nInput, &tH1Phase_125ps, &dt, &confidence_as) == COMMON_STATUS_OK) {
-            Dt          = (tH1Phase_125ps - tH1_125ps) * 125000000;   // difference [as]
-            remainder   =  Dt % TH1_as;                               // remainder [as]
-            if (remainder > (TH1_as >> 1)) dtPhase_as = remainder - TH1_as;
-            else                           dtPhase_as = remainder;
-            flagPhaseDone = 1;
-          } // if phasefit
-        } // if nInput
-
-        // send command: transmit diagnostic information to the network
-        sendEvtId    = fwlib_buildEvtidV1(recGid, sendEvtNo, 0, recSid, recBpid, 0);
-        if (flagPhaseDone) tmp.f = (float)dtPhase_as / 1000000000.0; // convert to float [ns]
-        else               tmp.data = 0x7fffffff;                    // mark as invalid
-        sendParam    = (uint64_t)(tmp.data & 0xffffffff) << 32;      // high word; phase diagnostic
-        if (flagMatchDone) tmp.f = (float)dtMatch_as / 1000000000.0; // convert to float [ns]
-        else               tmp.data = 0x7fffffff;                    // mark as invalid
-        sendParam   |= (uint64_t)(tmp.data & 0xffffffff);            // low word; match diagnostic
-        sendDeadline = getSysTime() + (uint64_t)COMMON_AHEADT;       // use the more conservativ deadline
-        fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0, 0);
-
-        // send the confidence value of the phase fit to ECA (for monitoring purposes)
-        sendEvtId    = fwlib_buildEvtidV1(0xfff, ecaAction, 0, recSid, recBpid, 0x0);
-        sendParam    = confidence_as;
-        sendDeadline = getSysTime();                                 // produces a late action but allows explicit monitoring of processing time
-        fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0, 1);  // force late message
+      flagPhaseDone = 1;          
+      
+      // send command: transmit diagnostic information to the network
+      sendEvtId    = fwlib_buildEvtidV1(recGid, sendEvtNo, 0, recSid, recBpid, 0);
+      if (flagPhaseDone) tmp.f = (float)dtPhase_as / 1000000000.0;    // convert to float [ns]
+      else               tmp.data = 0x7fffffff;                       // mark as invalid
+      sendParam    = (uint64_t)(tmp.data & 0xffffffff) << 32;         // high word; phase diagnostic
+      if (flagMatchDone) tmp.f = (float)dtMatch_as / 1000000000.0;    // convert to float [ns]
+      else               tmp.data = 0x7fffffff;                       // mark as invalid
+      
+      //tmp1 = (int32_t)(dtMatch_as / 1000000); pp_printf("match3 [ps] %08d\n", tmp1); //pp_printf("match3 [hex float ns] %08x\n", tmp.data);
+      
+      sendParam   |= (uint64_t)(tmp.data & 0xffffffff);               // low word; match diagnostic
+      sendDeadline = getSysTime() + (uint64_t)COMMON_AHEADT;          // use a more conservative deadline
+      fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0, 0);
+      
+      // send something to ECA (for monitoring purposes) chk do something useful here
+      sendEvtId    = fwlib_buildEvtidV1(0xfff, ecaAction, 0, recSid, recBpid, 0x0);
+      sendParam    = 0xdeadbeef;
+      sendDeadline = getSysTime();                                    // produces a late action but allows explicit monitoring of processing time
+      fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0, 1);     // force late message
       //flagIsLate = 0; /* chk */
       break; // case  B2B_ECADO_B2B_PDEXT/INJ
-
+      
     default :                                                         // flush ECA queue
       flagIsLate = 0;                                                 // ingore late events
   } // switch ecaAction
@@ -557,8 +506,7 @@ int main(void) {
     fwlib_publishStatusArray(statusArray);
     pubState = actState;
     fwlib_publishState(pubState);
-    fwlib_publishTransferStatus(nTransfer, 0x0, transStat);
-    *pSharedGetComLatency = comLatency;
+    fwlib_publishTransferStatus(nTransfer, 0x0, transStat, 0x0, 0x0, comLatency); /* chk: set values of nLate and offsDone */
   } // while
 
   return(1); // this should never happen ...

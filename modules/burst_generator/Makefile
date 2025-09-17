@@ -35,7 +35,8 @@ DEBUGLVL    	= 1
 EXTRA_FLAGS	?=
 CFLAGS 	        =  -I$(PATHFW) -I$(PATHSCU) \
 		   -I$(PATHFW)/../common-libs/include \
-		   -DDEBUGLEVEL=$(DEBUGLVL) $(EXTRA_FLAGS)
+		   -DDEBUGLEVEL=$(DEBUGLVL) $(EXTRA_FLAGS) \
+		   -DBG_FW_VERSION=0x$(subst .,,$(VERSION))
 
 SRC_FILES       = $(PATHFW)/$(TARGET).c \
 		  $(PATHFW)/../common-libs/fw/common-fwlib.c \

@@ -1,9 +1,9 @@
 //////////////////////////////////////////////////////////////////////////////////////////////
-// wb_api.cpp
+// wb_api.c
 //
 //  created : Apr 10, 2013
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 24-Jul-2024
+//  version : 31-Mar-2025
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API,
 // but only a temporary solution.
@@ -279,6 +279,50 @@ eb_status_t wb_wr_get_time(eb_device_t device, int devIndex, uint64_t *nsecs)
 } // wb_wr_get_time
 
 
+eb_status_t wb_wr_get_dualnic_time(eb_device_t  device, int devIndex, uint64_t *nsecs)
+{
+  eb_data_t    data1;
+  eb_data_t    data2;
+  eb_data_t    data3;
+  eb_data_t    data4;
+  eb_status_t  status;
+  eb_cycle_t   cycle;
+
+  uint64_t     secs;
+  uint64_t     nanosecs;
+  uint64_t     one_s_ns   = 1000000000;
+
+#ifdef WB_SIMULATE
+  *nsecs = 1000000123456789;
+
+  return EB_OK;
+#endif
+
+  // get time from PPS GEN
+  *nsecs = 0;
+  if ((status = wb_check_device(device, WR_PPS_GEN_VENDOR, WR_PPS_GEN_PRODUCT, WR_PPS_GEN_VMAJOR, WR_PPS_GEN_VMINOR, devIndex, &pps_addr)) != EB_OK) return status;
+  do {
+    if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;
+    eb_cycle_read(cycle, pps_addr + WR_PPS_GEN_CNTR_UTCHI, EB_BIG_ENDIAN|EB_DATA32, &data1);
+    eb_cycle_read(cycle, pps_addr + WR_PPS_GEN_CNTR_UTCLO, EB_BIG_ENDIAN|EB_DATA32, &data2);
+    eb_cycle_read(cycle, pps_addr + WR_PPS_GEN_CNTR_NSEC , EB_BIG_ENDIAN|EB_DATA32, &data3);
+    eb_cycle_read(cycle, pps_addr + WR_PPS_GEN_CNTR_UTCHI, EB_BIG_ENDIAN|EB_DATA32, &data4);
+    if ((status = eb_cycle_close(cycle)) != EB_OK) return status;
+  } while (data1 != data4);
+  
+  secs     = (uint64_t)data1 & 0xff;
+  secs     = secs << 32 | (uint64_t)data2;
+  nanosecs = (uint64_t)data3;
+  while (nanosecs >= one_s_ns) {
+    nanosecs =- one_s_ns;
+    secs++;
+  } // while 
+  *nsecs  = secs * one_s_ns + nanosecs;
+
+  return EB_OK;
+} //  wb_wr_get_dualnic_time
+
+
 eb_status_t wb_wr_get_mac(eb_device_t device, int devIndex, uint64_t *mac )
 {
   eb_data_t    hidata;
@@ -364,10 +408,10 @@ eb_status_t wb_wr_get_ip_state(eb_device_t device, int devIndex, uint32_t buildN
   eb_address_t address;
   eb_address_t offset;
   eb_status_t  status;
-  
+
 #ifdef WB_SIMULATE
   *ipState = 1;
-    
+
   return EB_OK;
 #endif
 
@@ -386,11 +430,11 @@ eb_status_t wb_wr_get_ip_state(eb_device_t device, int devIndex, uint32_t buildN
       break;
     case 0x060201 :
       offset = WB4_BLOCKRAM_IPSTATE_060201;
-      break;    
+      break;
     default : return EB_OK;
   } // switch
 
-  if ((status = wb_check_device(device, WB4_BLOCKRAM_VENDOR, WB4_BLOCKRAM_PRODUCT, WB4_BLOCKRAM_VMAJOR, WB4_BLOCKRAM_VMINOR, devIndex, &wb4_ram)) != EB_OK) return status; 
+  if ((status = wb_check_device(device, WB4_BLOCKRAM_VENDOR, WB4_BLOCKRAM_PRODUCT, WB4_BLOCKRAM_VMAJOR, WB4_BLOCKRAM_VMINOR, devIndex, &wb4_ram)) != EB_OK) return status;
 
   address = wb4_ram + offset;
   if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block)) != EB_OK) return status;
@@ -844,7 +888,7 @@ eb_status_t wb_wr_reset(eb_device_t device, int devIndex, uint32_t value, int fl
   return EB_OK;
 #endif
 
-  status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR, devIndex, &reset_addr);
+  status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR_RESET, devIndex, &reset_addr);
   if ((status != EB_OK)  && (status != EB_ABI)) return status;
   if ((status == EB_ABI) && !flagForce)         return status;
 
@@ -855,6 +899,119 @@ eb_status_t wb_wr_reset(eb_device_t device, int devIndex, uint32_t value, int fl
 
   return status;
 } // wb_wr_reset
+
+
+eb_status_t wb_wr_read_enc_err_counter(eb_device_t device, int devIndex, int phyIndex, uint32_t *nError, int *flagOverflow)
+{
+  eb_address_t counterAddress;
+  eb_address_t overflowAddress;
+  eb_status_t  status;
+  eb_address_t eec_addr = EB_NULL;
+  eb_data_t    counter;
+  eb_data_t    overflowFlag;
+
+
+#ifdef WB_SIMULATE
+  return EB_OK;
+#endif
+
+  if ((status = wb_check_device(device, ENC_ERR_COUNTER_VENDOR, ENC_ERR_COUNTER_PRODUCT, ENC_ERR_COUNTER_VMAJOR, ENC_ERR_COUNTER_VMINOR, devIndex, &eec_addr)) != EB_OK) return status;
+
+  if(phyIndex == 1) {
+    if ((status = wb_check_second_phy_interface(device, devIndex, eec_addr)) != EB_OK) return status;
+  }
+
+  switch (phyIndex) {
+  case 0:
+    counterAddress  = eec_addr + ENC_ERR_COUNTER_COUNTER1_GET;
+    overflowAddress = eec_addr + ENC_ERR_COUNTER_OVERFLOW1_GET;
+    break;
+
+  case 1:
+    counterAddress  = eec_addr + ENC_ERR_COUNTER_COUNTER2_GET;
+    overflowAddress = eec_addr + ENC_ERR_COUNTER_OVERFLOW2_GET;
+    break;
+
+  default:
+    return EB_OOM; // there are a maximum of 2 phy interfaces, no valid index given
+    break;
+  } // switch phyIndex
+
+  if ((status = eb_device_read(device, counterAddress,  EB_BIG_ENDIAN|EB_DATA32, &counter,      0, eb_block)) != EB_OK) return status;
+  if ((status = eb_device_read(device, overflowAddress, EB_BIG_ENDIAN|EB_DATA32, &overflowFlag, 0, eb_block)) != EB_OK) return status;
+
+  *nError       = counter;
+  *flagOverflow = (int)overflowFlag;
+
+  return status;
+} // wb_wr_read_enc_err_counter
+
+
+eb_status_t wb_wr_reset_enc_err_counter(eb_device_t device, int devIndex, int phyIndex)
+{
+  eb_data_t    data;
+  eb_address_t address;
+  eb_status_t  status;
+  eb_address_t eec_addr = EB_NULL;
+
+
+#ifdef WB_SIMULATE
+  return EB_OK;
+#endif
+
+  if ((status = wb_check_device(device, ENC_ERR_COUNTER_VENDOR, ENC_ERR_COUNTER_PRODUCT, ENC_ERR_COUNTER_VMAJOR, ENC_ERR_COUNTER_VMINOR, devIndex, &eec_addr)) != EB_OK) return status;
+
+  if(phyIndex == 1) {
+    if ((status = wb_check_second_phy_interface(device, devIndex, eec_addr)) != EB_OK) return status;
+  }
+
+  switch (phyIndex)
+  {
+  case 0:
+    address = eec_addr + ENC_ERR_COUNTER_RESET1;
+    break;
+
+  case 1:
+    address = eec_addr + ENC_ERR_COUNTER_RESET2;
+    break;
+
+  default:
+    return EB_OOM; // there are a maximum of 2 phy interfaces, no valid index given
+    break;
+  }
+  data = (eb_data_t)1;
+
+  if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, data, 0, eb_block)) != EB_OK) return status;
+
+  data = (eb_data_t)0;
+
+  if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, data, 0, eb_block)) != EB_OK) return status;
+
+  return status;
+} // wb_wr_reset_enc_err_counter
+
+
+eb_status_t wb_check_second_phy_interface(eb_device_t device, int devIndex, eb_address_t address)
+{
+  eb_status_t  status;
+
+
+  #ifdef WB_SIMULATE
+    return EB_OK;
+  #endif
+
+  eb_address_t flagAddress = address + ENC_ERR_COUNTER_AUX_PHY_FLAG;
+
+  eb_data_t aux_phy_flag;
+  if ((status = eb_device_read(device, flagAddress, EB_BIG_ENDIAN|EB_DATA32, &aux_phy_flag, 0, eb_block)) != EB_OK) return status;
+  if (aux_phy_flag != 0x00000001) {
+    //fprintf(stderr, "The auxiliary phy interface (phy#2) doesn't exist!\n");
+    return EB_OOM; // second phy interface does not exist
+  } else {
+    return EB_OK;
+  }
+  return EB_OK;
+} // wb_check_second_phy_interface
 
 
 eb_status_t wb_wr_watchdog(eb_device_t device, int devIndex, int enable)
@@ -868,7 +1025,7 @@ eb_status_t wb_wr_watchdog(eb_device_t device, int devIndex, int enable)
   return EB_OK;
 #endif
 
-  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR, devIndex, &reset_addr)) != EB_OK) return status;
+  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR_RESET, devIndex, &reset_addr)) != EB_OK) return status;
 
   address = reset_addr + FPGA_RESET_WATCHDOG_DISABLE;
   if (enable) data = (eb_data_t)0xcafebab0;
@@ -891,7 +1048,7 @@ eb_status_t wb_wr_watchdog_retrigger(eb_device_t device, int devIndex)
   return EB_OK;
 #endif
 
-  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR, devIndex, &reset_addr)) != EB_OK) return status;
+  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR_RESET, devIndex, &reset_addr)) != EB_OK) return status;
 
   address = reset_addr + FPGA_RESET_WATCHDOG_TRG;
   data = (eb_data_t)0xcafebabe;
@@ -914,7 +1071,7 @@ eb_status_t wb_wr_watchdog_status(eb_device_t device, int devIndex, int *flagEna
   return EB_OK;
 #endif
 
-  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR, devIndex, &reset_addr)) != EB_OK) return status;
+  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR_RESET, devIndex, &reset_addr)) != EB_OK) return status;
 
   address      = reset_addr + FPGA_RESET_WATCHDOG_STAT;
 
@@ -924,51 +1081,66 @@ eb_status_t wb_wr_watchdog_status(eb_device_t device, int devIndex, int *flagEna
   return status;
 } // wb_wr_watchdog_status
 
+
 // reset the SFP
-eb_status_t wb_wr_sfp_reset(eb_device_t device, int devIndex)
+eb_status_t wb_wr_sfp_reset(eb_device_t device, int devIndex, int phyIndex)
 {
   eb_address_t address;
   eb_status_t  status;
+  uint32_t     regValue;
 
 #ifdef WB_SIMULATE
   *value = 0x0;
   return EB_OK;
 #endif
-
-  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR, devIndex, &reset_addr)) != EB_OK) return status;
+  switch (phyIndex) {
+    case 0 : regValue = FPGA_RESET_PHY_SFP_DIS_WR ; break;
+    case 1 : regValue = FPGA_RESET_PHY_SFP_DIS_AUX; break;
+    default: return EB_OOM;
+  } // switch phyIndex
 
   // get address of RESET controller
+  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR_RESET, devIndex, &reset_addr)) != EB_OK) return status;  
   address      = reset_addr + FPGA_RESET_PHY_RESET;
-
+  
   // turn SFP off and on
-  if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, FPGA_RESET_PHY_SFP_DIS_WR, 0, eb_block)) != EB_OK) return status;
-  if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, 0, 0, eb_block)) != EB_OK) return status;
+  if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, regValue, 0, eb_block)) != EB_OK) return status;
+  usleep(750000);
+  if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, 0       , 0, eb_block)) != EB_OK) return status;
 
  return status;
 } // wb_wr_sfp_reset
 
+
 // reset the PHY
-eb_status_t wb_wr_phy_reset(eb_device_t device, int devIndex)
+eb_status_t wb_wr_phy_reset(eb_device_t device, int devIndex, int phyIndex)
 {
   eb_address_t address;
   eb_status_t  status;
+  uint32_t     regValue;
 
 #ifdef WB_SIMULATE
   *value = 0x0;
   return EB_OK;
 #endif
 
-  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR, devIndex, &reset_addr)) != EB_OK) return status;
+  switch (phyIndex) {
+    case 0 : regValue = FPGA_RESET_PHY_DROP_LINK_WR ; break;
+    case 1 : regValue = FPGA_RESET_PHY_DROP_LINK_AUX; break;
+    default: return EB_ADDRESS;
+  } // switch phyIndex
 
-  // get address of RESET controller
+  // get address of RESET controller 
+  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR_RESET, devIndex, &reset_addr)) != EB_OK) return status;
   address      = reset_addr + FPGA_RESET_PHY_RESET;
 
   // reset PHY and PLLs
-  if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, FPGA_RESET_PHY_DROP_LINK_WR, 0, eb_block)) != EB_OK) return status;
-  if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, 0, 0, eb_block)) != EB_OK) return status;
+  if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, regValue, 0, eb_block)) != EB_OK) return status;
+  if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, 0       , 0, eb_block)) != EB_OK) return status;
 
  return status;
 } // wb_wr_phy_reset
+
 
 eb_status_t wb_cpu_halt(eb_device_t device, int devIndex, uint32_t value)
 {
@@ -986,13 +1158,13 @@ eb_status_t wb_cpu_halt(eb_device_t device, int devIndex, uint32_t value)
   if ((status = wb_get_device_address(device, LM32_RAM_USER_VENDOR, LM32_RAM_USER_PRODUCT, LM32_RAM_USER_VMAJOR, LM32_RAM_USER_VMINOR, 0, &tmpAddr, &nLM32)) != EB_OK) return status;
 
   // get address of RESET controller
-  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR, devIndex, &reset_addr)) != EB_OK) return status;
+  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR_ECPU, devIndex, &reset_addr)) != EB_OK) return status;
   address = reset_addr + FPGA_RESET_USERLM32_SET;
 
   // reset individual lm32 or all lm32?
   switch (value) {
   case 0 ... 31 :
-    if (value >= nLM32) return EB_OOM; // request CPU does not exist
+    if (value >= nLM32) return EB_OOM; // requested CPU does not exist
     data = (eb_data_t)(1 << value);
     break;
   case 0xff :
@@ -1019,7 +1191,7 @@ eb_status_t wb_cpu_resume(eb_device_t device, int devIndex, uint32_t value)
   return EB_OK;
 #endif
 
-  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR, devIndex, &reset_addr)) != EB_OK) return status;
+  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR_ECPU, devIndex, &reset_addr)) != EB_OK) return status;
 
   address = reset_addr + FPGA_RESET_USERLM32_CLEAR;
   switch (value) {
@@ -1051,7 +1223,7 @@ eb_status_t wb_cpu_status(eb_device_t device, int devIndex, uint32_t *value)
   return EB_OK;
 #endif
 
-  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR, devIndex, &reset_addr)) != EB_OK) return status;
+  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR_ECPU, devIndex, &reset_addr)) != EB_OK) return status;
 
   address = reset_addr + FPGA_RESET_USERLM32_GET;
 
@@ -1060,6 +1232,45 @@ eb_status_t wb_cpu_status(eb_device_t device, int devIndex, uint32_t *value)
 
   return status;
 } // wb_cpu_status
+
+
+eb_status_t wb_comx_power(eb_device_t device, int devIndex, uint32_t value)
+{
+  eb_data_t    data;
+  eb_address_t address;
+  eb_status_t  status;
+  uint32_t     tSleep;
+
+
+#ifdef WB_SIMULATE
+  return EB_OK;
+#endif
+  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR_PWRBUTTON, devIndex, &reset_addr)) != EB_OK) return status;
+
+  address = reset_addr + FPGA_RESET_COMX_PWRBUTTON;
+
+  
+  switch (value) {
+    case 0 :                 
+      tSleep = 6000000;      // long press: power off
+      break;
+    case 1:
+      tSleep = 1000000;      // short press: power on
+      break;
+    default:
+      return EB_OOM;
+      break;
+  } // switch value
+
+  // push and relase button
+  data = (eb_data_t)(FPGA_RESET_COMX_PWRBUTTON_PUSH);
+  if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, data, 0, eb_block)) != EB_OK) return status;
+  usleep(tSleep);
+  data = (eb_data_t)(FPGA_RESET_COMX_PWRBUTTON_REL);
+  if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, data, 0, eb_block)) != EB_OK) return status;
+  
+  return status;
+} // wb_comx_power
 
 
 eb_status_t wb_get_build_type(eb_device_t device, int size, char *buildType, uint32_t *buildNumber)
@@ -1124,7 +1335,7 @@ eb_status_t wb_get_build_type(eb_device_t device, int size, char *buildType, uin
     *buildNumber = 0xffffffff;
   } // if sscanf
   else {
-    // limit sub-numbers to 255 
+    // limit sub-numbers to 255
     major = major & 0xff;
     minor = minor & 0xff;
     micro = micro & 0xff;

@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-May-2023
+ *  version : 20-Aug-2024
  *
  * Command-line interface for b2b
  *
@@ -130,26 +130,6 @@ void printTransfer(uint32_t nTransfer, uint32_t sid, uint32_t gid, uint32_t mode
 } // printTransfer
 
 
-void printDiags(uint32_t sid, uint32_t gid, uint32_t mode, uint64_t TH1Ext, uint32_t nHExt, uint64_t TH1Inj, uint32_t nHInj, uint64_t TBeat, double cPhase, double cTrigExt, double cTrigInj, int32_t comLatency)
-{
-  printf("\n\n");
-  printf("b2b: statistics ...\n\n");
-
-  printf("GID                   : %012u\n"     , gid);
-  printf("SID                   : %012u\n"     , sid);
-  printf("mode                  : %012u\n"     , mode);
-  printf("period h=1 extraction : %012.6f ns\n", (double)TH1Ext/1000000000.0);
-  printf("period h=1 injection  : %012.6f ns\n", (double)TH1Inj/1000000000.0);
-  printf("harmonic number extr. : %012d\n"     , nHExt);
-  printf("harmonic number inj.  : %012d\n"     , nHInj);
-  printf("period of beating     : %012.6f us\n", (double)TBeat/1000000000000.0);
-  printf("corr. matching        : %012.3f\n"   , cPhase);
-  printf("corr. trigger extr    : %012.3f\n"   , cTrigExt);
-  printf("corr. trigger inj     : %012.3f\n"   , cTrigInj);
-  printf("communication latency : %012.3f us\n", (double)comLatency/1000.0);
-} // printDiags
-
-
 int main(int argc, char** argv) {
   const char* devName;
   const char* command;
@@ -175,7 +155,6 @@ int main(int argc, char** argv) {
   double   getcTrigExt;                        // trigger correction extraction
   double   getcTrigInj;                        // trigger correction injection
   uint64_t getTBeat;                           // period [as] of frequency beating
-  int32_t  getcomLatency;                      // message latency from ECA
 
   uint32_t actState = COMMON_STATE_UNKNOWN;    // actual state of gateway
   uint32_t actNTransfer;                       // actual number of transfers
@@ -254,7 +233,7 @@ int main(int argc, char** argv) {
 
   if (getInfo) {
     // status
-    b2b_info_read(ebDevice, &getsid, &getgid, &getmode, &getTH1Ext, &getnHExt, &getTH1Inj, &getnHInj, &getTBeat, &getcPhase, &getcTrigExt, &getcTrigInj, &getcomLatency, 0);
+    b2b_info_read(ebDevice, &getsid, &getgid, &getmode, &getTH1Ext, &getnHExt, &getTH1Inj, &getnHInj, &getTBeat, &getcPhase, &getcTrigExt, &getcTrigInj, 0);
     b2b_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
 
     printTransferHeader();
@@ -309,8 +288,7 @@ int main(int argc, char** argv) {
       for (i = COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
         if ((statusArray >> i) & 0x1)  printf("    status bit is set : %s\n", b2b_status_text(i));
       } // for i
-      b2b_info_read(ebDevice, &getsid, &getgid, &getmode, &getTH1Ext, &getnHExt, &getTH1Inj, &getnHInj, &getTBeat, &getcPhase, &getcTrigExt, &getcTrigInj, &getcomLatency, 0);
-      printDiags(getsid, getgid, getmode, getTH1Ext, getnHExt, getTH1Inj, getnHInj, getTBeat, getcPhase, getcTrigExt, getcTrigInj, getcomLatency);
+      b2b_info_read(ebDevice, &getsid, &getgid, &getmode, &getTH1Ext, &getnHExt, &getTH1Inj, &getnHInj, &getTBeat, &getcPhase, &getcTrigExt, &getcTrigInj, 1);
     } // "diag"
 
     if (!strcasecmp(command, "submit")) {
@@ -352,7 +330,7 @@ if (snoop) {
       if ((actNTransfer   != nTransfer)    && (logLevel <= COMMON_LOGLEVEL_ONCE))    {printFlag = 1; actNTransfer   = nTransfer;}
 
       if (printFlag) {
-        b2b_info_read(ebDevice, &getsid, &getgid, &getmode, &getTH1Ext, &getnHExt, &getTH1Inj, &getnHInj, &getTBeat, &getcPhase, &getcTrigExt, &getcTrigInj, &getcomLatency, 0);
+        b2b_info_read(ebDevice, &getsid, &getgid, &getmode, &getTH1Ext, &getnHExt, &getTH1Inj, &getnHInj, &getTBeat, &getcPhase, &getcTrigExt, &getcTrigInj, 0);
         printTransfer(nTransfer, getsid, getgid, getmode); 
         printf(", %s (%6u), ",  comlib_stateText(state), nBadState);
         if ((statusArray >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);

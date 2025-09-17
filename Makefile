@@ -14,6 +14,9 @@ UNAME           := $(shell uname -m)
 EXTRA_FLAGS     ?=
 WISHBONE_SERIAL ?= # Build wishbone-serial? y or leave blank
 YOCTO_BUILD     ?= no
+DIM_VERSION     := dim_v20r37
+DIM_PATH        := res/dim/$(DIM_VERSION)
+USRPATH_DIM     := $(PWD)/res/dim
 export EXTRA_FLAGS
 
 # Set variables that are passed down to sub-makes
@@ -40,6 +43,10 @@ CHECK_PMC              = ./syn/gsi_pmc/control/pci_pmc
 CHECK_MICROTCA         = ./syn/gsi_microtca/control/microtca_control
 CHECK_PEXP             = ./syn/gsi_pexp/control/pexp_control
 CHECK_PEXP_SDR         = ./syn/gsi_pexp/sdr/pexp_control_sdr
+CHECK_PEXP_PPS         = ./syn/gsi_pexp/pps/pexp_pps
+CHECK_PEXP_NEORV32     = ./syn/gsi_pexp/neorv32/pexp_neorv32
+CHECK_SCU5             = ./syn/gsi_scu/control5/scu_control
+CHECK_FTM5DP           = ./syn/gsi_scu/ftm5dp/ftm5dp
 CHECK_SCU4             = ./syn/gsi_scu/control4/scu_control
 CHECK_FTM4             = ./syn/gsi_scu/ftm4/ftm4
 CHECK_FTM4DP           = ./syn/gsi_scu/ftm4dp/ftm4dp
@@ -62,6 +69,10 @@ PATH_PMC               = syn/gsi_pmc/control
 PATH_MICROTCA          = syn/gsi_microtca/control
 PATH_PEXP              = syn/gsi_pexp/control
 PATH_PEXP_SDR          = syn/gsi_pexp/sdr
+PATH_PEXP_PPS          = syn/gsi_pexp/pps
+PATH_PEXP_NEORV32      = syn/gsi_pexp/neorv32
+PATH_SCU5              = syn/gsi_scu/control5
+PATH_FTM5DP            = syn/gsi_scu/ftm5dp
 PATH_SCU4              = syn/gsi_scu/control4
 PATH_FTM4              = syn/gsi_scu/ftm4
 PATH_FTM4DP            = syn/gsi_scu/ftm4dp
@@ -81,6 +92,9 @@ define sort_file
 endef
 
 define check_timing
+	@test -f $(1).fit.rpt || echo "Error: Report file is missing!"
+	@ls -l $(1).fit.rpt
+	@cat $(1).fit.rpt | grep "Critical Warning" || exit 0
 	@test -f $(1).sta.rpt || echo "Error: Report file is missing!"
 	@ls -l $(1).sta.rpt
 	@cat $(1).sta.rpt | grep "Timing requirements not met" && exit 1 || { exit 0; }
@@ -379,41 +393,29 @@ ftm-check:
 # Arria 10 devices
 # #################################################################################################
 
-scu4:		firmware
-	$(MAKE) -C $(PATH_SCU4) all
+scu5:		firmware
+	$(MAKE) -C $(PATH_SCU5) all
 
-scu4-sort:
-	$(call sort_file, $(CHECK_SCU4))
+scu5-sort:
+	$(call sort_file, $(CHECK_SCU5))
 
-scu4-check:
-	$(call check_timing, $(CHECK_SCU4))
+scu5-check:
+		$(call check_timing, $(CHECK_SCU5))
 
-scu4-clean::
-	$(MAKE) -C $(PATH_SCU4) clean
+scu5-clean::
+	$(MAKE) -C $(PATH_SCU5) clean
 
-ftm4:		firmware
-	$(MAKE) -C $(PATH_FTM4) all
+ftm5dp:		firmware
+	$(MAKE) -C $(PATH_FTM5DP) all
 
-ftm4-sort:
-	$(call sort_file, $(CHECK_FTM4))
+ftm5dp-sort:
+	$(call sort_file, $(CHECK_FTM5DP))
 
-ftm4-check:
-	$(call check_timing, $(CHECK_FTM4))
+ftm5dp-check:
+	$(call check_timing, $(CHECK_FTM5DP))
 
-ftm4-clean::
-	$(MAKE) -C $(PATH_FTM4) clean
-
-ftm4dp:		firmware
-	$(MAKE) -C $(PATH_FTM4DP) all
-
-ftm4dp-sort:
-	$(call sort_file, $(CHECK_FTM4DP))
-
-ftm4dp-check:
-	$(call check_timing, $(CHECK_FTM4DP))
-
-ftm4dp-clean::
-	$(MAKE) -C $(PATH_FTM4DP) clean
+ftm5dp-clean::
+	$(MAKE) -C $(PATH_FTM5DP) clean
 
 pexarria10:	firmware
 	$(MAKE) -C $(PATH_PEXARRIA10) all
@@ -535,6 +537,30 @@ pexp-sdr-sort:
 pexp-sdr-check:
 	$(call check_timing, $(CHECK_PEXP_SDR))
 
+pexp-pps:	firmware
+	$(MAKE) -C $(PATH_PEXP_PPS) all
+
+pexp-pps-clean::
+	$(MAKE) -C $(PATH_PEXP_PPS) clean
+
+pexp-pps-sort:
+	$(call sort_file, $(CHECK_PEXP_PPS))
+
+pexp-pps-check:
+	$(call check_timing, $(CHECK_PEXP_PPS))
+
+pexp-neorv32:	firmware
+	$(MAKE) -C $(PATH_PEXP_NEORV32) all
+
+pexp-neorv32-clean::
+	$(MAKE) -C $(PATH_PEXP_NEORV32) clean
+
+pexp-neorv32-sort:
+	$(call sort_file, $(CHECK_PEXP_NEORV32))
+
+pexp-neorv32-check:
+	$(call check_timing, $(CHECK_PEXP_NEORV32))
+
 avsoc:		firmware
 	$(MAKE) -C syn/gsi_avsoc/av_rocket_board all
 
@@ -583,6 +609,56 @@ idrogen-sort:
 idrogen-check:
 	$(call check_timing, $(CHECK_IDROGEN))
 
+scu4:		firmware
+	$(MAKE) -C $(PATH_SCU4) all
+
+scu4-sort:
+	$(call sort_file, $(CHECK_SCU4))
+
+scu4-check:
+	$(call check_timing, $(CHECK_SCU4))
+
+scu4-clean::
+	$(MAKE) -C $(PATH_SCU4) clean
+
+ftm4:		firmware
+	$(MAKE) -C $(PATH_FTM4) all
+
+ftm4-sort:
+	$(call sort_file, $(CHECK_FTM4))
+
+ftm4-check:
+	$(call check_timing, $(CHECK_FTM4))
+
+ftm4-clean::
+	$(MAKE) -C $(PATH_FTM4) clean
+
+ftm4dp:		firmware
+	$(MAKE) -C $(PATH_FTM4DP) all
+
+ftm4dp-sort:
+	$(call sort_file, $(CHECK_FTM4DP))
+
+ftm4dp-check:
+	$(call check_timing, $(CHECK_FTM4DP))
+
+ftm4dp-clean::
+	$(MAKE) -C $(PATH_FTM4DP) clean
+
+# #################################################################################################
+# Build flow targets
+# #################################################################################################
+
+# Set NUM_PARALLEL_PROCESSORS to ALL in each QSF file
+set_max_parallel_processors:
+	@find . -type f -name "*.qsf" | while read -r file; do \
+			if grep -q "set_global_assignment -name NUM_PARALLEL_PROCESSORS" "$$file"; then \
+					sed -i 's/set_global_assignment -name NUM_PARALLEL_PROCESSORS [0-9]\+/set_global_assignment -name NUM_PARALLEL_PROCESSORS ALL/' "$$file"; \
+			else \
+					echo 'set_global_assignment -name NUM_PARALLEL_PROCESSORS ALL' >> "$$file"; \
+			fi; \
+	done
+
 # We need to run ./fix-git.sh and ./install-hdlmake.sh: make them a prerequisite for Makefile
 Makefile: prereq-rule
 
@@ -607,3 +683,65 @@ hdlmake_install:
 # Just install hdlmake (even if it's already installed)
 hdlmake_install_locally:
 	@cd ip_cores/hdlmake/ && python setup.py install --user
+
+# #################################################################################################
+# Test cases
+# #################################################################################################
+
+# Compile (and test) projects
+test_run_all: test_install_dim test_build_ftm_shared_map \
+	test_b2b test_wr-mil test_wr-unipz test_dm-unipz \
+	test_uni-blm test_uni-chop \
+	test_fec_analyzer test_freq-measure test_sync-mon \
+	test_lm32_examples
+
+test_install_dim:
+	unzip -n res/dim/$(DIM_VERSION).zip -d res/dim/
+	cd res/dim/ && ln -sf $(DIM_VERSION)/dim include
+	cd res/dim/ && ln -sf $(DIM_VERSION)/linux lib
+
+test_build_ftm_shared_map:
+	$(MAKE) -C modules/ftm/ftmfw
+
+test_b2b:
+	$(MAKE) -C modules/b2b/fw USRPATH=$(USRPATH_DIM) TARGET=b2bcbu
+	$(MAKE) -C modules/b2b USRPATH=$(USRPATH_DIM) firmware
+	$(MAKE) -C modules/b2b USRPATH=$(USRPATH_DIM) software
+
+test_wr-mil:
+	$(MAKE) -C modules/wr-mil/fw USRPATH=$(USRPATH_DIM) TARGET=wrmil
+	$(MAKE) -C modules/wr-mil USRPATH=$(USRPATH_DIM) firmware
+	$(MAKE) -C modules/wr-mil USRPATH=$(USRPATH_DIM) software
+
+test_wr-unipz:
+	$(MAKE) -C modules/wr-unipz USRPATH=$(USRPATH_DIM) firmware
+	$(MAKE) -C modules/wr-unipz USRPATH=$(USRPATH_DIM) software
+
+test_dm-unipz:
+	$(MAKE) -C modules/dm-unipz USRPATH=$(USRPATH_DIM) firmware
+	$(MAKE) -C modules/dm-unipz USRPATH=$(USRPATH_DIM) software
+
+test_uni-blm:
+	$(MAKE) -C modules/uni-blm USRPATH=$(USRPATH_DIM) firmware
+	$(MAKE) -C modules/uni-blm USRPATH=$(USRPATH_DIM) software
+
+test_uni-chop:
+	$(MAKE) -C modules/uni-chop USRPATH=$(USRPATH_DIM) firmware
+	$(MAKE) -C modules/uni-chop USRPATH=$(USRPATH_DIM) software
+
+test_fec_analyzer:
+	$(MAKE) -C modules/fec-analyzer/x86
+
+test_freq-measure:
+	$(MAKE) -C modules/freq-measure/x86 USRPATH=$(USRPATH_DIM)
+
+test_sync-mon:
+	$(MAKE) -C modules/sync-mon/x86 USRPATH=$(USRPATH_DIM)
+
+test_lm32_examples:
+	$(MAKE) -C modules/lm32-example
+	$(MAKE) -C modules/lm32-example TARGET=ecaMsiExample
+	$(MAKE) -C modules/lm32-example TARGET=timerExample
+	$(MAKE) -C modules/lm32-example TARGET=example
+	$(MAKE) -C modules/lm32-example TARGET=milExample
+	$(MAKE) -C modules/lm32-example TARGET=milSnooper

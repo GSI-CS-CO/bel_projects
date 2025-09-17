@@ -6,8 +6,8 @@
    version="1.0"
    description=""
    tags="INTERNAL_COMPONENT=true"
-   categories="" />
- <parameter name="bonusData"><![CDATA[bonusData
+   categories="System" />
+ <parameter name="bonusData"><![CDATA[bonusData 
 {
    element lvds_0
    {
@@ -75,7 +75,7 @@
  <module
    name="lvds_0"
    kind="altera_lvds"
-   version="18.1"
+   version="23.1"
    enabled="1"
    autoexport="1">
   <parameter name="CPA_ENABLED" value="false" />
@@ -100,7 +100,7 @@
   <parameter name="RX_INCLOCK_PHASE_SHIFT" value="0" />
   <parameter name="RX_RCCS_VAL" value="0.0" />
   <parameter name="RX_USE_BITSLIP" value="false" />
-  <parameter name="SYS_INFO_DEVICE" value="10AX027E3F29E2SG" />
+  <parameter name="SYS_INFO_DEVICE" value="10AX048E3F29E2SG" />
   <parameter name="SYS_INFO_DEVICE_FAMILY" value="Arria 10" />
   <parameter name="SYS_INFO_DEVICE_SPEEDGRADE" value="2" />
   <parameter name="TX_EXPORT_CORECLOCK" value="true" />

@@ -54,7 +54,6 @@ extern uint32_t*       _startshared[];
 
 /* id number to identify the LM32 firmware for burst generator */
 #define BG_FW_ID          0xb2b2b2b2UL
-#define BG_FW_VERSION     0x000100   // 0xMMmmRR, M-major, m-minor, R-revision
 #define BG_TAG            "bg"
 
 #define N_BURSTS          17    // maximum number of bursts can be generated, but bursts 1..N_BURSTS-1 are used

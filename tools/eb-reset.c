@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 25-Jul-2024
+ *  version : 21-Mar-2025
  *
  * Command-line interface for resetting a FPGA. This forces a restart using the image stored
  * in the local flash of the timing receiver.
@@ -36,7 +36,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 01-December-2017
  ********************************************************************************************/
-#define EBRESET_VERSION "1.3.1"
+#define EBRESET_VERSION "01.05.00"
 
 // standard includes
 #include <unistd.h> // getopt
@@ -73,26 +73,33 @@ static void help(void) {
   fprintf(stderr, "  -p<t>            after FPGA reset, wait for the specified time [s] and probe device\n");
   fprintf(stderr, "  -f               force 'fpgareset' of FPGA with incompatible FPGA gateware\n");
   fprintf(stderr, "                   use the 'force' option at your own risk: this might brick your device\n");
+  fprintf(stderr, "  -n<NIC index>    specify NIC when using dual SFP boards (0: 1st NIC; 1: 2nd NIC; default: n0)\n");
   fprintf(stderr, "  -h               display this help and exit\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "  wddisable        disables the watchdog (preventing automated FPGA reset permanently)\n");
   fprintf(stderr, "  wdenable         enables the watchdog (automated FPGA reset after 'some time')\n");
   fprintf(stderr, "  wdretrigger      retriggers an enabled watchdog (preventing automated FPGA reset for 'some time')\n");
   fprintf(stderr, "  wdstatus         gets the status of the watchdog; '1': enabled, '0': disabled\n");
-  fprintf(stderr, "  phyreset         resets the PHY (recommended for experts and developers)\n");
-  fprintf(stderr, "  sfpreset         resets the SFP (recommended for users)\n");
-  fprintf(stderr, "  cpuhalt <cpu>    halts a user lm32 CPU\n");
+  fprintf(stderr, "  phyreset         resets the PHY (recommended for experts and developers); use option '-n' for dual NIC boards\n");
+  fprintf(stderr, "  sfpreset         resets the SFP (recommended for users); use option '-n' for dual NIC boards\n");
+  fprintf(stderr, "  cpuhalt  <cpu>   halts a user lm32 CPU\n");
   fprintf(stderr, "                   specify a single CPU (0..31) or all CPUs (0xff)\n");
   fprintf(stderr, "  cpureset <cpu>   resets a user lm32 CPU, firmware restarts.\n");
   fprintf(stderr, "                   specify a single CPU (0..31) or all CPUs (0xff)\n");
   fprintf(stderr, "  cpustatus        get the 'halt status' of all user lm32 (rightmost bit: CPU 0)\n");
   fprintf(stderr, "  fpgareset        resets the entire FPGA (see below)\n");
+  fprintf(stderr, "  comxpcyc         performs a power cycle of the SCUs COM Express module (see below)\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "Use this tool to reset a FPGA or lm32 user CPU(s).\n");
+  fprintf(stderr, "Use this tool to reset a FPGA or lm32 user CPU(s) or to power cycle a COM Express module.\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "The command 'fpgareset' forces a restart of the entire FPGA using the image stored in the \n");
   fprintf(stderr, "flash of the device. Don't use this command unless the flash contains a valid image (otherwise\n");
   fprintf(stderr, "your devices becomes bricked).\n");
+  fprintf(stderr, "\n");
+  fprintf(stderr, "The command 'comxpcyc' performs a power cycle of the SCUs COM Express board.\n");
+  fprintf(stderr, "Warning: Don't use the command from the COM Express board (or via socat) itself; if you ignore\n");
+  fprintf(stderr, "this warning, your COM Express board will power off leaving the 'power button' in an\n");
+  fprintf(stderr, "undefined state. Only use this command remotely (USB, timing network ...).\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
   fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", EBRESET_VERSION);
@@ -112,6 +119,7 @@ int main(int argc, char** argv) {
   int         flagForce       = 0;
   int         probeAfterReset = 0;
   int         waitTime        = 1;
+  int         nicIndex        = 0;
   int         exitCode        = 0;
   uint32_t    nCPU;
   uint64_t    i;
@@ -124,7 +132,7 @@ int main(int argc, char** argv) {
 
   program = argv[0];
 
-  while ((opt = getopt(argc, argv, "p:feh")) != -1) {
+  while ((opt = getopt(argc, argv, "p:n:feh")) != -1) {
     switch (opt) {
       case 'p' :
         probeAfterReset=1;
@@ -139,6 +147,13 @@ int main(int argc, char** argv) {
         break;
       case 'f':
         flagForce = 1;
+        break;
+      case 'n':
+        nicIndex = strtol(optarg, &tail, 0);
+        if (!(nicIndex == 0 || nicIndex == 1)) {
+          fprintf(stderr, "NIC index has to be 0 or 1, not %d!\n", nicIndex);
+          exit(1);
+        } // if nicIndex
         break;
       case 'h':
         help();
@@ -242,7 +257,7 @@ int main(int argc, char** argv) {
     if (!strcasecmp(command, "phyreset")) {
       cmdExecuted = 1;
 
-      status = wb_wr_phy_reset(device, devIndex);
+      status = wb_wr_phy_reset(device, devIndex, nicIndex);
       if (status != EB_OK)  die("eb-reset: ", status);
     } // reset PHY
 
@@ -250,7 +265,7 @@ int main(int argc, char** argv) {
     if (!strcasecmp(command, "sfpreset")) {
       cmdExecuted = 1;
 
-      status = wb_wr_sfp_reset(device, devIndex);
+      status = wb_wr_sfp_reset(device, devIndex, nicIndex);
       if (status != EB_OK)  die("eb-reset: ", status);
     } // reset SFP
 
@@ -293,6 +308,28 @@ int main(int argc, char** argv) {
       printf("\n");
     } // get lm32 CPU status
 
+    // power cycle com x board
+    if (!strcasecmp(command, "comxpcyc")) {
+      cmdExecuted = 1;
+
+      if (strstr(devName, "dev/wbm") != 0) die("eb-reset: refusing to power cycle myself", EB_OOM);
+
+      // perform power off-on sequence
+      printf("eb-reset: powering off com express\n");
+      status = wb_comx_power(device, devIndex, 0);
+      printf("... done\n");
+
+      printf("eb-reset: just a moment ...\n");
+      sleep(2);
+
+      printf("eb-reset: powering on com express\n");
+      status = wb_comx_power(device, devIndex, 1);
+      printf("... done\n");
+
+      printf("eb-reset: com express should be booting now; check host in a minute or so\n");
+      if (status != EB_OK)  die("eb-reset: ", status);
+    } // power cycle com x board
+    
     wb_close(device, socket);
 
     if (!cmdExecuted) printf("eb-reset: unknonwn command %s\n", command);

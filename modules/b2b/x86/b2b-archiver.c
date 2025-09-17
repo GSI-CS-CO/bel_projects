@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 19-Jan-2024
+ *  version : 23-dec-2024
  *
  * archives set and get values to data files
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_ARCHIVER_VERSION 0x000703
+#define B2B_ARCHIVER_VERSION 0x000807
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -69,15 +69,11 @@ char       nan_str[]     = "nan";
 setval_t   dicSetval[B2B_NSID]; 
 getval_t   dicGetval[B2B_NSID];
 diagval_t  dicDiagval[B2B_NSID];
-double     dicKickLenExt[B2B_NSID];       // hackish, should be integrated into s.th. like getval
-double     dicKickCompLvlExt[B2B_NSID];   // hackish, should be integrated into s.th. like getval
 char       dicPName[B2B_NSID][DIMMAXSIZE];
 
 uint32_t   dicSetvalId[B2B_NSID];
 uint32_t   dicGetvalId[B2B_NSID];
 uint32_t   dicDiagvalId[B2B_NSID];
-uint32_t   dicKickLenExtId[B2B_NSID];
-uint32_t   dicKickCompLvlExtId[B2B_NSID];
 uint32_t   dicPNameId[B2B_NSID];
 
 // global variables
@@ -109,7 +105,7 @@ static void help(void) {
 // header String for file
 char * headerString()
 {
-  return "patternName; time_CBS_UTC; sid; mode; ext_T [as]; ext_h; ext_cTrig; inj_T; inj_h; inj_cTrig; cPhase; ext_phase; ext_phaseFract; ext_phaseErr; ext_maxsysErr; ext_dKickMon; ext_kickCompLvl; ext_dkickProb; ext_kickLen; ext_diagPhase; ext_diag_Match; inj_phase; inj_phaseFract; inj_phaseErr; inj_maxsysErr; inj_dKickMon; inj_dKickProb; inj_diagPhase; inj_diagMatch; received PME; PMI; PRE; PRI; KTE; KTI; KDE; KDI; PDE; PDI; error PME; PMI; PRE; PRI; KTE; KTI; KDE; KDI; PDE; PDI; late PME; PMI; PRE; PRI; KTE; KTI; KDE; KDI; PDE; PDI; fin-CBS; prr-CBS; t0E-CBS; t0I-CBS; kte-CBS; kti-CBS; ext_nueGet; ext_dNueGet; inj_nueGet; inj_dNueGet";
+  return "patternName; time_CBS_UTC; ext_gid; ext_sid; mode; ext_T [as]; ext_h; ext_cTrig; inj_T; inj_h; inj_cTrig; cPhase; ext_phase; ext_phaseFract; ext_phaseErr; ext_maxsysErr; ext_dKickMon; ext_dkickProb; ext_kickLen; ext_kickLevel; ext_diagPhase; ext_diag_Match; inj_gid; inj_sid; inj_phase; inj_phaseFract; inj_phaseErr; inj_maxsysErr; inj_dKickMon; inj_dKickProb; inj_kickLen; inj_kickLevel; inj_diagPhase; inj_diagMatch; received PME; PMI; PRE; PRI; PSE; PSI; KTE; KTI; KDE; KDI; PDE; PDI; error PME; PMI; PRE; PRI; PSE; PSI; KTE; KTI; KDE; KDI; PDE; PDI; late PME; PMI; PRE; PRI; PSE; PSI; KTE; KTI; KDE; KDI; PDE; PDI; fin-CBS; prr-CBS; t0E-CBS; t0I-CBS; kte-CBS; kti-CBS; ext_nueGet; ext_dNueGet; inj_nueGet; inj_dNueGet";
 } // headerString
 
 // receive get values
@@ -117,7 +113,6 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
 {
 #define STRMAXLEN 2048
   uint32_t  sid;
-  uint32_t  mode;
   double    cor;
   double    act;
   char      tCBS[256];;
@@ -138,14 +133,12 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   if ((sid < 0) || (sid >= B2B_NSID)) return;
   if (!flagSetValid[sid])             return;
   flagGetValid[sid] = (*size != sizeof(uint32_t));
-  mode = dicSetval[sid].mode;
-  //if (mode <  1) return;                                    // b2b 'off', no need to write data; but maybe it is interesting to see when facility was executed withouot b2b
-
+  
   strftime(tCBS, 52, "%d-%b-%Y_%H:%M:%S", gmtime(&(utc_secs[sid])));
 
   // set values
   new  = strSetval;
-  new += sprintf(new, "%s.%03d; %d; %d", tCBS, utc_msecs[sid], sid, mode);
+  new += sprintf(new, "%s.%03d; 0x%x; %d; %d", tCBS, utc_msecs[sid], dicSetval[sid].ext_gid, sid, dicSetval[sid].mode);
   if (dicSetval[sid].ext_T == -1) new += sprintf(new, "; %s"    , nan_str);
   else new += sprintf(new, "; %lu"   , dicSetval[sid].ext_T);
   if (dicSetval[sid].ext_h == -1) new += sprintf(new, "; %s"    , nan_str);
@@ -161,14 +154,14 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   // get values
   new  = strGetval;
   if (dicGetval[sid].ext_phase == -1) new += sprintf(new, "; %s"   , nan_str);
-  else new += sprintf(new, "; %lu"  , dicGetval[sid].ext_phase);
-  new += sprintf(new, "; %7.3f"    ,  dicGetval[sid].ext_phaseFract);
-  new += sprintf(new, "; %7.3f"    ,  dicGetval[sid].ext_phaseErr);
-  new += sprintf(new, "; %5.3f"    ,  dicGetval[sid].ext_phaseSysmaxErr);
-  new += sprintf(new, "; %7.1f"    ,  dicGetval[sid].ext_dKickMon);
-  new += sprintf(new, "; %7.3f"    ,  dicKickCompLvlExt[sid]);
-  new += sprintf(new, "; %7.1f"    ,  dicGetval[sid].ext_dKickProb);
-  new += sprintf(new, "; %7.1f"    ,  dicKickLenExt[sid]);
+  else new += sprintf(new, "; %lu" , dicGetval[sid].ext_phase);
+  new += sprintf(new, "; %7.3f"    , dicGetval[sid].ext_phaseFract);
+  new += sprintf(new, "; %7.3f"    , dicGetval[sid].ext_phaseErr);
+  new += sprintf(new, "; %5.3f"    , dicGetval[sid].ext_phaseSysmaxErr);
+  new += sprintf(new, "; %7.1f"    , dicGetval[sid].ext_dKickMon);
+  new += sprintf(new, "; %7.1f"    , dicGetval[sid].ext_dKickProb);
+  new += sprintf(new, "; %7.1f"    , dicGetval[sid].ext_dKickProbLen);
+  new += sprintf(new, "; %7.3f"    , dicGetval[sid].ext_dKickProbLevel);
 
   if (isnan(dicGetval[sid].ext_diagPhase) || (dicSetval[sid].ext_T == -1)) new += sprintf(new, "; %s"    , nan_str);
   else {
@@ -184,6 +177,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
     new += sprintf(new, "; %8.3f", act);
   } // else isnan
 
+  new += sprintf(new, "; 0x%x; %d", dicSetval[sid].inj_gid, dicSetval[sid].inj_sid);
   if (dicGetval[sid].inj_phase == -1) new += sprintf(new, "; %s"   , nan_str);
   else new += sprintf(new, "; %lu", dicGetval[sid].inj_phase);
   new += sprintf(new, "; %7.3f"   , dicGetval[sid].inj_phaseFract);
@@ -191,6 +185,8 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   new += sprintf(new, "; %5.3f"   , dicGetval[sid].inj_phaseSysmaxErr);
   new += sprintf(new, "; %7.1f"   , dicGetval[sid].inj_dKickMon);
   new += sprintf(new, "; %7.1f"   , dicGetval[sid].inj_dKickProb);
+  new += sprintf(new, "; %7.1f"   , dicGetval[sid].inj_dKickProbLen);
+  new += sprintf(new, "; %7.3f"   , dicGetval[sid].inj_dKickProbLevel);
 
   if (isnan(dicGetval[sid].inj_diagPhase) || (dicSetval[sid].inj_T == -1)) new += sprintf(new, "; %s"   , nan_str);
   else {
@@ -206,9 +202,9 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
     new += sprintf(new, "; %8.3f",  act);
   } // else isnan
 
-  for (i=0; i<10; i++) new += sprintf(new, "; %d", ((dicGetval[sid].flagEvtRec  >> i) & 0x1));
-  for (i=0; i<10; i++) new += sprintf(new, "; %d", ((dicGetval[sid].flagEvtErr  >> i) & 0x1));
-  for (i=0; i<10; i++) new += sprintf(new, "; %d", ((dicGetval[sid].flagEvtLate >> i) & 0x1));
+  for (i=0; i<tagStart; i++) new += sprintf(new, "; %d", ((dicGetval[sid].flagEvtRec  >> i) & 0x1));
+  for (i=0; i<tagStart; i++) new += sprintf(new, "; %d", ((dicGetval[sid].flagEvtErr  >> i) & 0x1));
+  for (i=0; i<tagStart; i++) new += sprintf(new, "; %d", ((dicGetval[sid].flagEvtLate >> i) & 0x1));
   new += sprintf(new, "; %f; %f; %f; %f; %f; %f", dicGetval[sid].finOff, dicGetval[sid].prrOff, dicGetval[sid].preOff, dicGetval[sid].priOff, dicGetval[sid].kteOff, dicGetval[sid].ktiOff);
 
   // frequency values; chk: in principle we should check the timestammp of the service too?
@@ -257,12 +253,6 @@ void dicSubscribeServices(char *prefix)
 
     sprintf(name, "%s-cal_diag_sid%02d", prefix, i);
     dicDiagvalId[i]    = dic_info_service_stamped(name, MONITORED, 0, &(dicDiagval[i]), sizeof(diagval_t), 0, 0, &no_link_32, sizeof(uint32_t));
-
-    sprintf(name, "%s-kdde_sid%02d_len", prefix, i);
-    dicKickLenExtId[i] = dic_info_service_stamped(name, MONITORED, 0, &(dicKickLenExt[i]), sizeof(double), 0 , 0, &no_link_dbl, sizeof(double));
-
-    sprintf(name, "%s-kse_setlevel", prefix);
-    dicKickCompLvlExtId[i] = dic_info_service_stamped(name, MONITORED, 0, &(dicKickCompLvlExt[i]), sizeof(double), 0 , 0, &no_link_dbl, sizeof(double));
 
     sleep (2);  // data is taken upon callback of set-values; wait a bit until the other services have connected to their servers
 

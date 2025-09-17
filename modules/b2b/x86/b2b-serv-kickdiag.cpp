@@ -3,10 +3,10 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 17-Nov-2023
+ *  version : 16-dec-2024
  *
  * publishes additional diagnostic data of the kicker
- 
+ *
  * this is experimental, as this information is not retrieved via a timing message (sent by 
  * the b2b system) but it is obtained from local ECA actions at the kicker frontend
  *
@@ -37,7 +37,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_KICKD_VERSION 0x000702
+#define B2B_SERV_KICKD_VERSION 0x000807
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -88,15 +88,18 @@ static const char* program;
 // tags for kicker diag
 enum evtKTag{tagKRising, tagKFalling, tagKStart, tagKStop};
 
-// services
+double    no_link_dbl   = NAN;          // indicates "no link" for missing DIM services of type double
+
+// published services
 char      disVersion[DIMCHARSIZE];
 char      disHostname[DIMCHARSIZE];
 uint32_t  disNTransfer;
-double    disRisingOffs[B2B_NSID];       // offset of first rising edge to B2B_TRIGGER
-double    disFallingOffs[B2B_NSID];      // offset of first falling edge to B2B_TRIGGER
-uint32_t  disRisingN[B2B_NSID];          // number of rising edges; expectation value is 1
-uint32_t  disFallingN[B2B_NSID];         // number of falling edges; expectation value is 1
-double    disLen[B2B_NSID];              // lengh of signal
+double    disRisingOffs[B2B_NSID];      // offset of first rising edge to B2B_TRIGGER
+double    disFallingOffs[B2B_NSID];     // offset of first falling edge to B2B_TRIGGER
+uint32_t  disRisingN[B2B_NSID];         // number of rising edges; expectation value is 1
+uint32_t  disFallingN[B2B_NSID];        // number of falling edges; expectation value is 1
+double    disLen[B2B_NSID];             // lengh of signal
+double    disSetLevel[B2B_NSID];        // set level of comparator for detection of probe signals
 
 uint32_t  disVersionId      = 0;
 uint32_t  disHostnameId     = 0;
@@ -105,7 +108,13 @@ uint32_t  disRisingOffsId[B2B_NSID];
 uint32_t  disFallingOffsId[B2B_NSID];
 uint32_t  disRisingNId[B2B_NSID];
 uint32_t  disFallingNId[B2B_NSID];
-uint32_t  disLenId[B2B_NSID];        
+uint32_t  disLenId[B2B_NSID];
+uint32_t  disSetLevelId[B2B_NSID];
+
+// subscribed services
+double    dicSetLevel;                  // set level of comparator value for detection of probe signals
+
+uint32_t  dicSetLevelId; 
 
 
 // local variables
@@ -122,6 +131,7 @@ void initValues(uint32_t sid)
   disRisingN[sid]      = 0;
   disFallingN[sid]     = 0;
   disLen[sid]          = NAN;
+  disSetLevel[sid]     = NAN;
 } // initValues
 
 
@@ -133,6 +143,7 @@ void disUpdateValues(uint32_t sid)
   dis_update_service(disRisingNId[sid]);
   dis_update_service(disFallingNId[sid]);
   dis_update_service(disLenId[sid]);
+  dis_update_service(disSetLevelId[sid]);
   
   disNTransfer++;
   dis_update_service(disNTransferId);
@@ -161,19 +172,24 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       tStart                       = deadline.getTAI();
       flagActive                   = 1;
       initValues(sid);
+      //      printf("start %d\n", sid);
       break;
     case tagKStop    :
       flagActive                   = 0;
       if ((disRisingN[sid] > 0) && (disFallingN[sid] > 0)) disLen[sid] = disFallingOffs[sid] - disRisingOffs[sid];
+      disSetLevel[sid]             = dicSetLevel;
       disUpdateValues(sid);
+      //printf("stop %d, level %f\n", sid, disSetLevel[sid]);
       break;
     case tagKRising  :
       disRisingN[sid]++;
       if (disRisingN[sid] == 1)  disRisingOffs[sid]  = (float)(deadline.getTAI() - tStart);
+      //      printf("rising %d\n", sid);
       break;
     case tagKFalling :
       disFallingN[sid]++;
       if (disFallingN[sid] == 1) disFallingOffs[sid] = (float)(deadline.getTAI() - tStart);
+      //      printf("falling, sid %d,  N %d, offset %f\n", sid, disFallingN[sid], disFallingOffs[sid]);
       break;
     default         :
       ;
@@ -221,22 +237,35 @@ void disAddServices(char *prefix)
 
   // values
   for (i=0; i< B2B_NSID; i++) {
-    sprintf(name, "%s_sid%02d_risingoffs", prefix, i);
-    disRisingOffsId[i]  = dis_add_service(name, "D:1", &(disRisingOffs[i]), sizeof(double), 0, 0);
+    sprintf(name, "%s_sid%02d_risingoffs",  prefix, i);
+    disRisingOffsId[i]  = dis_add_service(name, "D:1", &(disRisingOffs[i]),  sizeof(double), 0, 0);
 
-    sprintf(name, "%s_sid%02d_risingN", prefix, i);
-    disRisingNId[i]     = dis_add_service(name, "I:1", &(disRisingN[i]), sizeof(uint32_t), 0, 0);
+    sprintf(name, "%s_sid%02d_risingN",     prefix, i);
+    disRisingNId[i]     = dis_add_service(name, "I:1", &(disRisingN[i]),     sizeof(uint32_t), 0, 0);
 
     sprintf(name, "%s_sid%02d_fallingoffs", prefix, i);
     disFallingOffsId[i] = dis_add_service(name, "D:1", &(disFallingOffs[i]), sizeof(double), 0, 0);
 
-    sprintf(name, "%s_sid%02d_fallingN", prefix, i);
-    disFallingNId[i]    = dis_add_service(name, "I:1", &(disFallingN[i]), sizeof(uint32_t), 0, 0);
+    sprintf(name, "%s_sid%02d_fallingN",    prefix, i);
+    disFallingNId[i]    = dis_add_service(name, "I:1", &(disFallingN[i]),    sizeof(uint32_t), 0, 0);
 
-    sprintf(name, "%s_sid%02d_len", prefix, i);
-    disLenId[i]         = dis_add_service(name, "D:1", &(disLen[i]), sizeof(double), 0, 0);
+    sprintf(name, "%s_sid%02d_len",         prefix, i);
+    disLenId[i]         = dis_add_service(name, "D:1", &(disLen[i]),         sizeof(double), 0, 0);
+
+    sprintf(name, "%s_sid%02d_level",       prefix, i);
+    disSetLevelId[i]    = dis_add_service(name, "D:1", &(disSetLevel[i]),    sizeof(double), 0, 0);
   } // for i
 } // disAddServices
+
+
+// add all dim services
+void dicSubscribeServices(char *prefix)
+{
+  char name[DIMMAXSIZE];
+
+    sprintf(name, "%s_setlevel", prefix);
+    dicSetLevelId      = dic_info_service_stamped(name, MONITORED, 0, &dicSetLevel, sizeof(double), 0, 0, &no_link_dbl, sizeof(double));
+} // dicSubscribeServices
 
                         
 using namespace saftlib;
@@ -277,10 +306,12 @@ int main(int argc, char** argv)
 
   // variables attach, remove
   char    *deviceName = NULL;
+  char    *envName    = NULL;
 
   // 
   char     ringName[NAMELEN];
   char     prefix[NAMELEN*2];
+  char     comparatorPrefix[NAMELEN*2];
   char     disName[DIMMAXSIZE];
 
   reqRing  = SIS18_RING;                // gid SIS18
@@ -359,7 +390,10 @@ int main(int argc, char** argv)
     return 0;
   } // if optind
 
+  if (!(optind+1 < argc)) return 1;
+  
   deviceName = argv[optind];
+  envName    = argv[optind+1];
   gethostname(disHostname, 32);
 
   switch(reqRing) {
@@ -397,18 +431,22 @@ int main(int argc, char** argv)
   disNTransfer          = 0;
   for (i=0; i< B2B_NSID; i++ ) initValues(i);
  
-  if (optind+1 < argc) { 
-    if (!reqMode) sprintf(prefix, "b2b_%s_%s-kdde", argv[++optind], ringName);  // extraction
-    else          sprintf(prefix, "b2b_%s_%s-kddi", argv[++optind], ringName);  // injection
-  }
-  else            sprintf(prefix, "b2b_%s", ringName);
-
+  if (!reqMode) sprintf(prefix, "b2b_%s_%s-kdde", envName, ringName);  // extraction
+  else          sprintf(prefix, "b2b_%s_%s-kddi", envName, ringName);  // injection
+  
   printf("%s: starting server using prefix %s\n", program, prefix);
 
   disAddServices(prefix);
   
   sprintf(disName, "%s", prefix);
   dis_start_serving(disName);
+
+  if (!reqMode) sprintf(comparatorPrefix, "b2b_%s_%s-kse", envName, ringName);  // extraction
+  else          sprintf(comparatorPrefix, "b2b_%s_%s-ksi", envName, ringName);  // injection
+
+  printf("%s: subscribing to comparator server using prefix %s\n", program, comparatorPrefix);
+
+  dicSubscribeServices(comparatorPrefix);
   
   try {
     // basic saftd stuff
@@ -435,16 +473,16 @@ int main(int argc, char** argv)
 
     // define conditions (ECA filter rules)
 
-    // CMD_B2B_EXTTRIG, signals start of data collection
+    // CMD_B2B_TRIGGER..., signals start of data collection
     tmpTag        = tagKStart;
     snoopID       = ((uint64_t)FID << 60) | ((uint64_t)reqRing  << 48) | ((uint64_t)reqEvtNo << 36);
     condition[0]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 0));
     tag[0]        = tmpTag;
   
-    // CMD_B2B_EXTTRIG, +100ms (!), signals stop of data collection
+    // CMD_B2B_TRIGGER..., +100us (!), signals stop of data collection
     tmpTag        = tagKStop;        
     snoopID       = ((uint64_t)FID << 60) | ((uint64_t)reqRing  << 48) | ((uint64_t)reqEvtNo << 36);
-    condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 100000000));
+    condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, 0xfffffff000000000, 100000));
     tag[1]        = tmpTag;
 
     // IO input rising edge

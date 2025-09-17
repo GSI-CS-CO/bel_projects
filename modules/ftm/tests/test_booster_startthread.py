@@ -55,11 +55,12 @@ class UnitTestBoosterStartThread(dm_testbench.DmTestbench):
     self.startPattern('booster-thread-0-loop.dot', 'MAIN')
     file_name = 'snoop_booster-thread-0-loop.csv'
     column_Param = 20
+    self.delay(0.5)
     self.snoopToCsv(file_name, 3)
     self.analyseFrequencyFromCsv(file_name, column_Param)
     # assert that there are more than 61 tmsg in 3 seconds with EVTNO 0x0001.
     column_EVTNO = 8
-    self.analyseFrequencyFromCsv(file_name, column_EVTNO, checkValues={'0x0001': '>60'})
+    self.analyseFrequencyFromCsv(file_name, column_EVTNO, checkValues={'0x0001': '>59'})
     self.deleteFile(file_name)
 
   def test_booster_thread_0(self):

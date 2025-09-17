@@ -54,15 +54,16 @@
 
 // activity requested by ECA Handler, the relevant codes are also used as "tags"
 #define  DMUNIPZ_ECADO_TIMEOUT    COMMON_ECADO_TIMEOUT
-#define  DMUNIPZ_ECADO_UNKOWN     1           // unnkown activity requested (unexpected action by ECA)
-#define  DMUNIPZ_ECADO_REQTK      2           // request the transfer channel (TK), carries info on DM wait after beam request
-#define  DMUNIPZ_ECADO_REQBEAM    3           // request beam at UNIPZ, terminate waiting block and start thread at DM
-#define  DMUNIPZ_ECADO_RELTK      4           // release the transfer channel (TK)
-#define  DMUNIPZ_ECADO_PREPDM     5           // dedicated message from DM, carries info on DM wait after TK request (deprecated)
-#define  DMUNIPZ_ECADO_READY2SIS  6           // received EVT_READY_TO_SIS via TLU
-#define  DMUNIPZ_ECADO_MBTRIGGER  7           // received EVT_MB_TRIGGER via TLU
-#define  DMUNIPZ_ECADO_PREPBEAM   8           // prepare beam at UNIPZ (preceedes 'REQBEAM')
-#define  DMUNIPZ_ECADO_REQBEAMNW  9           // request beam at UNIPZ, start thread at DM
+#define  DMUNIPZ_ECADO_UNKOWN     0x1         // unnkown activity requested (unexpected action by ECA)
+#define  DMUNIPZ_ECADO_REQTK      0x2         // request the transfer channel (TK), carries info on DM wait after beam request
+#define  DMUNIPZ_ECADO_REQBEAM    0x3         // request beam at UNIPZ, terminate waiting block and start thread at DM
+#define  DMUNIPZ_ECADO_RELTK      0x4         // release the transfer channel (TK)
+#define  DMUNIPZ_ECADO_PREPDM     0x5         // dedicated message from DM, carries info on DM wait after TK request (deprecated)
+#define  DMUNIPZ_ECADO_READY2SIS  0x6         // received EVT_READY_TO_SIS via TLU
+#define  DMUNIPZ_ECADO_MBTRIGGER  0x7         // received EVT_MB_TRIGGER via TLU
+#define  DMUNIPZ_ECADO_PREPBEAM   0x8         // prepare beam at UNIPZ (preceedes 'REQBEAM')
+#define  DMUNIPZ_ECADO_REQBEAMNW  0x9         // request beam at UNIPZ, start thread at DM
+#define  DMUNIPZ_ECADO_READY2SIS2 0xa         // received EVT_READY_TO_SIS via timing message (intended for testing, don't ask)
 
 // status of transfer (status bits)
 #define DMUNIPZ_TRANS_REQTK       0           // TK requested

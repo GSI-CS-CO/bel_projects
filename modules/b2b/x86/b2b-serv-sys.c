@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 17-May-2023
+ *  version : 25-feb-2025
  *
  * publishes status of a b2b system (CBU, PM, KD ...)
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERVSYS_VERSION 0x000702
+#define B2B_SERVSYS_VERSION 0x000807
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -144,7 +144,6 @@ int main(int argc, char** argv) {
   uint32_t state;
   uint32_t nBadStatus;
   uint32_t nBadState;
-  uint32_t nTransfer;
 
   uint32_t actState = COMMON_STATE_UNKNOWN;    // actual state of gateway
   uint32_t verLib;
@@ -154,12 +153,30 @@ int main(int argc, char** argv) {
   uint32_t cpu;
   uint32_t status;
 
+  // most of this is just dummuy
+  uint64_t mac;
+  uint32_t ip;
+  uint64_t tDiag;
+  uint64_t tS0;
+  uint32_t nTransfer;
+  uint32_t nInjection;
+  uint32_t statTrans;
+  uint32_t nLate;
+  uint32_t offsDone;
+  uint32_t comLatency;
+  uint32_t usedSize;
+
+  // pointer that points to the relevant number
+  uint32_t *nTransferPub;
+
   char     prefix[DIMMAXSIZE];
   char     disName[DIMMAXSIZE];
 
-  program    = argv[0];
-  getVersion = 0;
-  snoop      = 0;
+  program        = argv[0];
+  getVersion     = 0;
+  snoop          = 0;
+  nTransferPub   = 0x0;
+  
 
   while ((opt = getopt(argc, argv, "seh")) != -1) {
     switch (opt) {
@@ -216,13 +233,24 @@ int main(int argc, char** argv) {
     sprintf(disName, "%s", prefix);
     dis_start_serving(disName);
 
+    
+
     b2b_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
     sprintf(disVersion, "%s", b2b_version_text(verFw));
     dis_update_service(disVersionId);
     verFwOld = verFw;
 
+    // standard systems (CBU, PM, ....)
+    nTransferPub = &nTransfer;
+    // system is PSM, misuse unused values from common
+    if (strstr(prefix, "sis18-psm"))  nTransferPub = &nTransfer;
+    if (strstr(prefix, "esr-psm"))    nTransferPub = &nInjection;
+    if (strstr(prefix, "yr-psm"))     nTransferPub = &nInjection;
+    if (strstr(prefix, "sis100-psm")) nTransferPub = &statTrans;;
+
     while (1) {
-      b2b_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
+      // misuse nTransfer...statTrans for counting PSM activity
+      comlib_readDiag(ebDevice, &statusArray, &state, &verFw, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &nLate, &offsDone, &comLatency, &usedSize, 0);
       if (actState != state) {
         actState = state;
         sprintf(disState, "%s", b2b_state_text(state));
@@ -234,8 +262,8 @@ int main(int argc, char** argv) {
         dis_update_service(disStatusId);
       } // if disStatus
 
-      if (disNTransfer != nTransfer) {
-        disNTransfer = nTransfer;
+      if (disNTransfer != *nTransferPub) {
+        disNTransfer = *nTransferPub;
         dis_update_service(disNTransferId);
       } // if disNTransfer  
 

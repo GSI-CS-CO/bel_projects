@@ -9,9 +9,9 @@
 //            -- Wesley W. Terpstra <w.terpstra@gsi.de>
 //            -- Alessandro Rubini <rubini@gnudd.com>
 //            -- Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
-//  version : 21-Jun-2023
+//  version : 31-Mar-2025
 //
-#define WB_API_VERSION "0.17.0"
+#define WB_API_VERSION "0.20.02"
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API.
 //
@@ -87,6 +87,13 @@ eb_status_t wb_wr_get_time(eb_device_t  device,                // EB device
                            int devIndex,                       // 0,1,2... - there may be more than 1 device on the WB bus
                            uint64_t *nsecs                     // timestamp [ns]
                            );
+
+// gets the actual UTC or TAI time (depends on configuration of clock master) for TR with two White Rabbit ports
+// this is a very special routine to be used by Dr K + wing*wo*man only
+eb_status_t wb_wr_get_dualnic_time(eb_device_t  device,        // EB device
+                                   int devIndex,               // 0,1,2... - there may be more than 1 device on the WB bus
+                                   uint64_t *nsecs             // timestamp [ns]
+                                   );
 
 // gets MAC of White Rabbit port
 eb_status_t wb_wr_get_mac(eb_device_t device,                  // EB device
@@ -215,6 +222,26 @@ eb_status_t wb_wr_reset(eb_device_t device,                    // EB device
                         int flagForce                          // 1: force reset even with incompatible gateware; 0: don't force reset
                         );
 
+// read the counter and overflow flag of the encoder error counter on the device at phyIndex
+eb_status_t wb_wr_read_enc_err_counter(eb_device_t device,     // EB device
+                                       int devIndex,           // 0,1,2... - there may be more than 1 device on the WB bus
+                                       int phyIndex,           // 0,1      - index of the interface to be read
+                                       uint32_t *nError,       // # of encoder errors
+                                       int *flagOverflow       // flags counter overflow
+                                       );
+
+// reset the counter of the encoder error counter on the device at phyIndex
+eb_status_t wb_wr_reset_enc_err_counter(eb_device_t device,    // EB device
+                        int devIndex,                          // 0,1,2... - there may be more than 1 device on the WB bus
+                        int phyIndex                           // 0,1      - index of the interface to be reset
+                        );
+
+eb_status_t wb_check_second_phy_interface(
+                        eb_device_t device,                    // EB device
+                        int devIndex,                          // 0,1,2... - there may be more than 1 device on the WB bus
+                        eb_address_t address
+                        );
+
 // disable or enable the watchdog for automated FPGA reset
 eb_status_t wb_wr_watchdog(eb_device_t device,                 // EB device
                            int devIndex,                       // 0,1,2... - there may be more than 1 device on the WB bus
@@ -233,13 +260,15 @@ eb_status_t wb_wr_watchdog_status(eb_device_t device,          // EB device
                                   );
 
 // reset the SFP
-eb_status_t wb_wr_sfp_reset(eb_device_t device,                 // EB device
-                            int devIndex                        // 0,1,2... - there may be more than 1 device on the WB bus
+eb_status_t wb_wr_sfp_reset(eb_device_t device,                // EB device
+                            int devIndex,                      // 0,1,2... - there may be more than 1 device on the WB bus
+                            int phyIndex                       // 0,1      - index of the interface to be reset
                             );
 
 // reset the PHY
-eb_status_t wb_wr_phy_reset(eb_device_t device,                 // EB device
-                            int devIndex                        // 0,1,2... - there may be more than 1 device on the WB bus
+eb_status_t wb_wr_phy_reset(eb_device_t device,                // EB device
+                            int devIndex,                      // 0,1,2... - there may be more than 1 device on the WB bus
+                            int phyIndex                       // 0,1      - index of the interface to be reset
                             );
 
 // put user lm32 into reset state
@@ -258,6 +287,12 @@ eb_status_t wb_cpu_resume(eb_device_t device,                  // EB device
 eb_status_t wb_cpu_status(eb_device_t device,                  // EB device
                           int devIndex,                        // 0,1,2... - there may be more than 1 device on the WB bus
                           uint32_t *value                      // one bit per CPU; CPU 0 is rightmost bit
+                          );
+
+// power on/off com express board
+eb_status_t wb_comx_power(eb_device_t device,                  // EB device
+                          int devIndex,                        // 0,1,2... - there may be more than 1 device on the WB bus
+                          uint32_t value                       // 0: power off; 1: power on
                           );
 
 // get gateware build type

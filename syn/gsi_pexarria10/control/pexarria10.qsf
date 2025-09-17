@@ -142,7 +142,7 @@ set_global_assignment -name FAMILY "Arria 10"
 set_global_assignment -name FINAL_PLACEMENT_OPTIMIZATION ALWAYS
 set_global_assignment -name FITTER_AGGRESSIVE_ROUTABILITY_OPTIMIZATION AUTOMATICALLY
 set_global_assignment -name FITTER_EFFORT "STANDARD FIT"
-set_global_assignment -name LAST_QUARTUS_VERSION "18.1.0 Standard Edition"
+set_global_assignment -name LAST_QUARTUS_VERSION "23.1std.1 Standard Edition"
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 100
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name NUM_PARALLEL_PROCESSORS 8
@@ -165,6 +165,7 @@ set_global_assignment -name PLACEMENT_EFFORT_MULTIPLIER 100
 set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
 set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
 set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:pexarria10.tcl"
+set_global_assignment -name PRESERVE_UNUSED_XCVR_CHANNEL ON
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:00:25 FEBRUARY 13, 2012"
 set_global_assignment -name QSYS_FILE "../../../ip_cores/general-cores/platform/altera/networks/arria10gx/dual_region/dual_region.qsys"
 set_global_assignment -name QSYS_FILE "../../../ip_cores/general-cores/platform/altera/networks/arria10gx/global_region/global_region.qsys"
@@ -181,6 +182,7 @@ set_global_assignment -name QSYS_FILE "../../../ip_cores/wr-cores/platform/alter
 set_global_assignment -name QSYS_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria10_phy/wr_arria10_scu4_phy/wr_arria10_scu4_phy/wr_arria10_scu4_phy.qsys"
 set_global_assignment -name QSYS_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria10_phy/wr_arria10_scu4_phy/wr_arria10_scu4_rst_ctl/wr_arria10_scu4_rst_ctl.qsys"
 set_global_assignment -name QSYS_FILE ../../../modules/a10ts/src/hdl/a10ts_ip/a10ts_ip.qsys
+set_global_assignment -name QSYS_FILE ../../../modules/a10vs/src/hdl/a10vs_ip/a10vs_ip.qsys
 set_global_assignment -name QSYS_FILE ../../../modules/lvds/arria10_pex10/arria10_pex10_lvds_ibuf/arria10_pex10_lvds_ibuf.qsys
 set_global_assignment -name QSYS_FILE ../../../modules/lvds/arria10_pex10/arria10_pex10_lvds_obuf/arria10_pex10_lvds_obuf.qsys
 set_global_assignment -name QSYS_FILE ../../../modules/lvds/arria10_pex10/arria10_pex10_lvds_pll/arria10_pex10_lvds_pll.qsys
@@ -288,8 +290,6 @@ set_global_assignment -name VERILOG_FILE ../../../modules/cfi_flash/cfi_ctrl_eng
 set_global_assignment -name VERILOG_FILE ../../../modules/cfi_flash/cfi_ctrl.v -library work
 set_global_assignment -name VERILOG_FILE ../../../modules/lpc_uart/serirq_defines.v -library work
 set_global_assignment -name VERILOG_FILE ../../../modules/lpc_uart/serirq_slave.v -library work
-set_global_assignment -name VERILOG_FILE ../../../modules/remote_update/asmi10/asmi10/altera_asmi_parallel_181/synth/asmi10_altera_asmi_parallel_181_gdoqleq.v -library work
-set_global_assignment -name VERILOG_FILE ../../../modules/remote_update/asmi10/asmi10/altera_asmi_parallel_181/synth/asmi10_altera_asmi_parallel_181_svbigkq.v -library work
 set_global_assignment -name VERILOG_FILE ../../../modules/remote_update/asmi5/asmi5/synthesis/submodules/asmi5_asmi_parallel_0.v -library work
 set_global_assignment -name VERILOG_FILE ../../../modules/remote_update/asmi_arriaII/asmi_arriaII/synthesis/submodules/asmi_arriaII_asmi_parallel_0.v -library work
 set_global_assignment -name VERILOG_FILE ../../../modules/stub_pll/stub_pll/altera_iopll_160/synth/stub_pll_altera_iopll_160_z2kwsvq.v -library work
@@ -621,6 +621,11 @@ set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/platform/alter
 set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/platform/altera/xwrc_platform_altera.vhd" -library work
 set_global_assignment -name VHDL_FILE ../../../modules/a10ts/src/hdl/a10ts_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/a10ts/src/hdl/a10ts.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/a10vs/src/hdl/a10vs_ip/a10vs_ip/altera_voltage_sensor_231/synth/a10vs_ip_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/a10vs/src/hdl/a10vs_ip/a10vs_ip/synth/a10vs_ip.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/a10vs/src/hdl/a10vs_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/a10vs/src/hdl/a10vs.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/a10vs/src/hdl/a10vs_wb.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/ad7606/ad7606.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/ad7606/adc_modul_bus.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/ad7606/adc_pkg.vhd -library work
@@ -649,6 +654,8 @@ set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/crc8_data8.vhd -
 set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/TimestampDecoder.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/TimestampEncoder.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/wr_serialtimestamp_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/cellular_ram/src/hdl/cellular_ram_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/cellular_ram/src/hdl/cellular_ram.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/cfi_flash/cfi_flash_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/cfi_flash/xwb_cfi_wrapper.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/chopper/Bus_io.vhd -library work
@@ -668,9 +675,13 @@ set_global_assignment -name VHDL_FILE ../../../modules/daq/daq.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/daq/Zeitbasis_daq.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/ddr3/ddr3_wrapper_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/ddr3/ddr3_wrapper.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/diob/del_quench_detection.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/diob/hw_interlock.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/diob/QuD_masken_reg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/diob/qud_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/diob/quench_detection.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/diob/spill_abort.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/diob/TM_quench_detection.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/dm_diag/dm_diag_auto_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/dm_diag/dm_diag_auto.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/dm_diag/dm_diag.vhd -library work
@@ -678,6 +689,8 @@ set_global_assignment -name VHDL_FILE ../../../modules/eca_tap/eca_tap_auto_pkg.
 set_global_assignment -name VHDL_FILE ../../../modules/eca_tap/eca_tap_auto.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/eca_tap/eca_tap_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/eca_tap/eca_tap.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/enc_err_counter/enc_err_counter_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/enc_err_counter/enc_err_counter.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/flash_loader/flash_loader_v01.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_lm32_cluster.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_lm32.vhd -library work
@@ -777,7 +790,7 @@ set_global_assignment -name VHDL_FILE ../../../modules/prioq2/queue_unit.vhd -li
 set_global_assignment -name VHDL_FILE ../../../modules/psram/psram_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/psram/psram.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/remote_update/altasmi.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/remote_update/asmi10/asmi10/altera_asmi_parallel_181/synth/asmi10_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/remote_update/asmi10/asmi10/altera_asmi_parallel_231/synth/asmi10_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/remote_update/asmi10/asmi10/synth/asmi10.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/remote_update/asmi5/asmi5/synthesis/asmi5.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/remote_update/asmi_arriaII/asmi_arriaII/synthesis/asmi_arriaII.vhd -library work
@@ -823,7 +836,7 @@ set_global_assignment -name VHDL_FILE ../../../modules/uart/uart_receiver.vhd -l
 set_global_assignment -name VHDL_FILE ../../../modules/uart/uart_transmitter.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/watchdog/watchdog_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/watchdog/watchdog.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria10_reset/arria10_reset/altera_remote_update_181/synth/arria10_reset_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria10_reset/arria10_reset/altera_remote_update_231/synth/arria10_reset_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria10_reset/arria10_reset/synth/arria10_reset.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria5_reset.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria_reset.vhd -library work
@@ -881,7 +894,6 @@ set_instance_assignment -name IO_STANDARD "1.8 V" -to i2c_sda_pad_io[4]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to i2c_sda_pad_io[5]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to nPCI_RESET_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to nres_out_o
-set_instance_assignment -name IO_STANDARD "1.8 V" -to nuser_pb_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to OneWire_aux_CB
 set_instance_assignment -name IO_STANDARD "1.8 V" -to OneWire_aux_CB_splz
 set_instance_assignment -name IO_STANDARD "1.8 V" -to OneWire_CB

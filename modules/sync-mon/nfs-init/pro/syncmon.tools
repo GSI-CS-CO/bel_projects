@@ -1,0 +1,12 @@
+# libraries
+cp -a $MOUNTPOINT/$ARCH/usr/lib/* /usr/lib/
+ldconfig
+# software
+cp -a $MOUNTPOINT/$ARCH/usr/bin/sync-serv-mon /usr/bin/
+cp -a $MOUNTPOINT/$ARCH/usr/bin/sync-mon /usr/bin/
+
+# firmware
+#cp -a $MOUNTPOINT/firmware/* /
+
+
+

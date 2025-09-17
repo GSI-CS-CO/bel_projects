@@ -1,0 +1,7 @@
+TARGET		= scu_control
+DEVICE		= 10AX027E3
+FLASH		= MT25QU512
+SPI_LANES	= ASx4
+RAM_SIZE	= 262144
+
+include ../../build.mk

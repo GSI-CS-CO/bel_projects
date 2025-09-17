@@ -238,6 +238,9 @@
 
 
 
+
+
+
 set_global_assignment -name AHDL_FILE ../../modules/modulbus/i2c.tdf
 set_global_assignment -name ALM_REGISTER_PACKING_EFFORT HIGH
 set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
@@ -740,9 +743,13 @@ set_global_assignment -name VHDL_FILE ../../modules/daq/daq.vhd -library work
 set_global_assignment -name VHDL_FILE ../../modules/daq/Zeitbasis_daq.vhd -library work
 set_global_assignment -name VHDL_FILE ../../modules/ddr3/ddr3_wrapper_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../modules/ddr3/ddr3_wrapper.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/diob/del_quench_detection.vhd -library work
 set_global_assignment -name VHDL_FILE ../../modules/diob/hw_interlock.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/diob/QuD_masken_reg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/diob/qud_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../modules/diob/quench_detection.vhd -library work
 set_global_assignment -name VHDL_FILE ../../modules/diob/spill_abort.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/diob/TM_quench_detection.vhd -library work
 set_global_assignment -name VHDL_FILE ../../modules/dm_diag/dm_diag_auto_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../modules/dm_diag/dm_diag_auto.vhd -library work
 set_global_assignment -name VHDL_FILE ../../modules/dm_diag/dm_diag.vhd -library work
@@ -918,7 +925,7 @@ set_global_assignment -name VHDL_FILE ../../top/blm_aco/atr_puls_ctrl.vhd -libra
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/atr_puls_n.vhd -library work
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/atr_timeout.vhd -library work
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/aw_io_reg.vhd -library work
-set_global_assignment -name VHDL_FILE ../../top/blm_aco/Beam_Loss_check_v1.2.vhd -library work
+set_global_assignment -name VHDL_FILE ../../top/blm_aco/Beam_Loss_check_v2.vhd -library work
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/blm_24_9_9_9pll.vhd -library work
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/blm_aco_v1.0.vhd -library work
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/BLM_cnt_pulse_former.vhd -library work
@@ -932,6 +939,7 @@ set_global_assignment -name VHDL_FILE ../../top/blm_aco/BLM_watchdog_v1.0.vhd -l
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/config_status.vhd -library work
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/diob_debounce.vhd -library work
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/diob_sync.vhd -library work
+set_global_assignment -name VHDL_FILE ../../top/blm_aco/event_ctrl_el.vhd -library work
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/fg901040.vhd -library work
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/flanke.vhd -library work
 set_global_assignment -name VHDL_FILE ../../top/blm_aco/front_board_id_v0.vhd -library work

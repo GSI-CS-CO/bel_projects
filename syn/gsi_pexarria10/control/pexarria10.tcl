@@ -9,3 +9,4 @@ source ../../../modules/lvds/arria10_pex10/arria10_pex10_lvds.tcl
 source ../../../modules/remote_update/asmi10.tcl
 source ../../../modules/wb_arria_reset/arria10_reset.tcl
 source ../../../modules/a10ts/src/hdl/a10ts_generate.tcl
+source ../../../modules/a10vs/src/hdl/a10vs.tcl

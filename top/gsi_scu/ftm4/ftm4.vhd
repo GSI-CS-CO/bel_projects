@@ -39,10 +39,10 @@ entity ftm4 is
     -----------------------------------------------------------------------
     -- OneWire
     -----------------------------------------------------------------------
-    OneWire_CB : inout std_logic;
-    onewire_ext: inout std_logic;        -- to extension board
-    onewire_ext_splz: out std_logic;  --Strong Pull-Up for Onewire
-    OneWire_CB_splz : out std_logic;  --Strong Pull-Up for Onewire
+    OneWire_CB       : inout std_logic;
+    onewire_ext      : inout std_logic;  -- to extension board
+    onewire_ext_splz : out std_logic;  --Strong Pull-Up for Onewire
+    OneWire_CB_splz  : out std_logic;  --Strong Pull-Up for Onewire
 
     -----------------------------------------------------------------------
     -- ComExpress signals
@@ -181,6 +181,7 @@ architecture rtl of ftm4 is
   signal s_stub_pll_reset       : std_logic;
   signal s_stub_pll_locked      : std_logic;
   signal s_stub_pll_locked_prev : std_logic;
+  signal rstn_ref               : std_logic;
 
   signal s_i2c_scl_pad_out  : std_logic_vector(1 downto 1);
   signal s_i2c_scl_pad_in   : std_logic_vector(1 downto 1);
@@ -205,7 +206,7 @@ architecture rtl of ftm4 is
 
   constant c_family       : string  := "Arria 10 GX FTM4";
   constant c_project      : string  := "scu_control";
-  constant c_initf_name   : string  := c_project & "_stub.mif";
+  constant c_initf_name   : string  := "ftm4" & "_stub.mif";
   constant c_profile_name : string  := "medium_icache_debug";
   constant c_psram_bits   : natural := 24;
   constant c_cores        : natural := 8;
@@ -245,6 +246,7 @@ begin
       core_clk_125m_pllref_i  => clk_125m_tcb_pllref_i,
       core_clk_125m_local_i   => clk_125m_tcb_local_i,
       core_clk_125m_sfpref_i  => clk_125m_tcb_pllref_i,
+      core_rstn_wr_ref_o      => rstn_ref,
       wr_onewire_io           => OneWire_CB,
       wr_sfp_sda_io           => sfp_mod2_io,
       wr_sfp_scl_io           => sfp_mod1_io,
@@ -336,5 +338,8 @@ begin
   avr_sda             <= s_i2c_sda_pad_out(1) when (s_i2c_sda_padoen(1) = '0') else 'Z';
   s_i2c_scl_pad_in(1) <= avr_scl;
   s_i2c_sda_pad_in(1) <= avr_sda;
+
+  -- Resets
+  nFPGA_Res_Out <= rstn_ref; -- To ComExpress
 
 end rtl;

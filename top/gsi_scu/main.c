@@ -23,7 +23,11 @@
 #include "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"
 #include "../../ip_cores/saftlib/src/eca_flags.h"
 #include "history.h"
-#include "scu_control_shared_mmap.h"
+#ifdef SCU4SLIM
+  #include "scu4slim_shared_mmap.h"
+#else
+  #include "scu_control_shared_mmap.h"
+#endif
 
 #define MSI_SLAVE 0
 #define MSI_WB_FG 2

@@ -52,7 +52,7 @@ set_global_assignment -name QIP_FILE ../../../modules/pll/arria2/dmtd_pll.qip
 set_global_assignment -name QIP_FILE ../../../modules/pll/arria2/ref_pll.qip
 set_global_assignment -name QIP_FILE ../../../modules/pll/arria2/sys_pll.qip
 set_global_assignment -name SDC_FILE ../../../top/gsi_vetar2a/ee_butis/vetar2a_ee_butis.sdc
-set_global_assignment -name SEED 17
+set_global_assignment -name SEED 106
 set_global_assignment -name SMART_RECOMPILE ON
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
 set_global_assignment -name STRATIXII_CONFIGURATION_DEVICE EPCS128

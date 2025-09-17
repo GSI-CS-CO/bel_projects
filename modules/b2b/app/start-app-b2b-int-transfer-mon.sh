@@ -11,4 +11,4 @@ BASEDIR=$(cd "${SCRIPTDIR}/.." >/dev/null; pwd)
 # script for starting the b2b system viewer on INT
 export DIM_DNS_NODE=asl105
 export LD_LIBRARY_PATH=${BASEDIR}/lib
-xterm -T 'b2b monitor' -fa monaco -fs 10 -geometry 166x24 -e ${BASEDIR}/bin/b2b-mon int
+xterm -T 'b2b monitor' -fa monaco -fs 10 -geometry 176x24 -e ${BASEDIR}/bin/b2b-mon int
