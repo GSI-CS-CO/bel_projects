@@ -51,7 +51,12 @@ TARGETS := firmware software nfsinit
 all: $(TARGETS)
 
 software:: 
+ifeq ($(SYSENV), YOCTO)
+# I really hate this hack, but I found no simpler solution
+	bash x86/make-yocto-software-all
+else
 	$(MAKE) -C $(SW) all
+endif 
 
 firmware:
 	$(MAKE) TARGET=b2bcbu -C $(FW)
