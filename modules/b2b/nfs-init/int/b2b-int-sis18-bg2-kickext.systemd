@@ -1,20 +1,20 @@
 # yocto; temporarily disabled
-#SERVICEA=b2b-servsys-int-sis18-kickext.service
-#SERVICEB=b2b-servraw-int-sis18.service
-#SERVICEC=b2b-analyzer-int-sis18.service
-#cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
-#cp -a $MOUNTPOINT/systemd/$SERVICEB /lib/systemd/system
-#cp -a $MOUNTPOINT/systemd/$SERVICEC /lib/systemd/system
-#systemctl daemon-reload
-#
-#systemctl start $SERVICEA
-#systemctl start $SERVICEB
-#systemctl start $SERVICEC
+SERVICEA=b2b-servsys-int-sis18-kickext.service
+SERVICEB=b2b-servraw-int-sis18.service
+SERVICEC=b2b-analyzer-int-sis18.service
+cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
+cp -a $MOUNTPOINT/systemd/$SERVICEB /lib/systemd/system
+cp -a $MOUNTPOINT/systemd/$SERVICEC /lib/systemd/system
+systemctl daemon-reload
+
+systemctl start $SERVICEA
+systemctl start $SERVICEB
+systemctl start $SERVICEC
 
 # hack for acc7
-export DIM_DNS_NODE=asl105
+#export DIM_DNS_NODE=asl105
 
-b2b-serv-sys dev/wbm0 -s int_sis18-kde &
-b2b-serv-raw tr1 -e0 int &
-b2b-analyzer int_sis18 &
-b2b-serv-kickdiag tr0 -r0 -m0 -i1 int &
+#b2b-serv-sys dev/wbm0 -s int_sis18-kde &
+#b2b-serv-raw tr1 -e0 int &
+#b2b-analyzer int_sis18 &
+#b2b-serv-kickdiag tr0 -r0 -m0 -i1 int &
