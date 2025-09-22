@@ -1474,3 +1474,5 @@ set_location_assignment PLLOUTPUTCOUNTER_X0_Y67_N1 -to "monster:main|sys_pll5:\\
 set_location_assignment PLLOUTPUTCOUNTER_X43_Y61_N1 -to "monster:main|ref_pll5:\\ref_a5:ref_inst|ref_pll5_0002:ref_pll5_inst|altera_pll:altera_pll_i|altera_arriav_pll:arriav_pll|cascade_wire[2]"
 set_location_assignment PLLOUTPUTCOUNTER_X43_Y62_N1 -to "monster:main|ref_pll5:\\ref_a5:ref_inst|ref_pll5_0002:ref_pll5_inst|altera_pll:altera_pll_i|altera_arriav_pll:arriav_pll|cascade_wire[1]"
 set_location_assignment PLLOUTPUTCOUNTER_X43_Y63_N1 -to "monster:main|ref_pll5:\\ref_a5:ref_inst|ref_pll5_0002:ref_pll5_inst|altera_pll:altera_pll_i|altera_arriav_pll:arriav_pll|cascade_wire[0]"
+
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to wakeup
