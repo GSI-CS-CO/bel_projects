@@ -281,7 +281,7 @@ architecture rtl of scu_control is
 
   signal s_lemo_io    : std_logic_vector(25 downto 0);
   signal s_lemo_oe    : std_logic_vector(25 downto 0);
-  signal s_lemo_input : std_logic_vector(1 downto 0);
+  signal s_lemo_input : std_logic_vector(13 downto 0);
 
   signal scub_a                 : std_logic_vector(15 downto 0);
   signal scub_d_out             : std_logic_vector(15 downto 0);
@@ -293,11 +293,11 @@ architecture rtl of scu_control is
   signal is_rmt                 : std_logic;
   signal A_D_mux                : std_logic_vector(15 downto 0);
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 25) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 37) :=
   (
   -- Name[11 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
-    ("B1         ",  IO_NONE,         false,   false,  0,     IO_INOUTPUT,   IO_GPIO,  true,        false,       IO_CMOS),
-    ("B2         ",  IO_NONE,         false,   false,  1,     IO_INOUTPUT,   IO_GPIO,  true,        false,       IO_CMOS),
+    ("B1         ",  IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_GPIO,  true,         false,       IO_CMOS),
+    ("B2         ",  IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_GPIO,  true,         false,       IO_CMOS),
     ("RMT0       ",  IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVTTL),
     ("RMT1       ",  IO_NONE,         false,   false,  3,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVTTL),
     ("RMT2       ",  IO_NONE,         false,   false,  4,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVTTL),
@@ -339,6 +339,7 @@ begin
     generic map(
       g_family             => c_family,
       g_project            => c_project,
+      g_gpio_in            => 12,
       g_gpio_out           => 24,
       g_gpio_inout         => 2,
       g_flash_bits         => 24,
@@ -550,7 +551,7 @@ begin
 
   tri_state_a_d: process (A_D, scub_d_tri_out, A_D_mux)
   begin
-    if (scub_d_tri_out = '1' or is_rmt = '1') then
+    if (scub_d_tri_out = '1') then
       A_D <= A_D_mux;
     else
       A_D <= (others => 'Z');
@@ -558,52 +559,52 @@ begin
   end process;
 
 
-  standalone_backplane : process (is_rmt, s_lemo_io, A_D_mux, scub_A_RnW, scub_nSEL, scub_d_out, scub_a, scub_nsel_ext_data_drv, A_D)
+  standalone_backplane : process (is_rmt, s_lemo_io, A_D_mux, scub_A_RnW, scub_nSEL, scub_d_out, scub_a, scub_nsel_ext_data_drv, scub_d_in)
   begin
     if (is_rmt = '1') then
-      A_RnW             <= '0';           -- set drivers to output
-      nSel_Ext_Data_DRV <= '0';           -- activate the drivers
-      A_nSEL(12)        <= s_lemo_io(2);  -- Slot L1 IO1
-      A_nSEL(7)         <= s_lemo_io(3);  -- Slot L1 IO2
-      A_nSEL(11)        <= s_lemo_io(4);  -- Slot L1 IO3
-      A_nSEL(8)         <= s_lemo_io(5);  -- Slot L1 IO4
-      A_nSEL(10)        <= s_lemo_io(6);  -- Slot L1 IO5
-      A_nSEL(9)         <= s_lemo_io(7);  -- Slot L1 IO6
+      A_RnW             <= '1';          -- set drivers to input for the data lines
+      nSel_Ext_Data_DRV <= '0';          -- activate the drivers
+      A_nSEL(12)       <= s_lemo_io(2);  -- Slot L1 IO1
+      A_nSEL(7)        <= s_lemo_io(3);  -- Slot L1 IO2
+      A_nSEL(11)       <= s_lemo_io(4);  -- Slot L1 IO3
+      A_nSEL(8)        <= s_lemo_io(5);  -- Slot L1 IO4
+      A_nSEL(10)       <= s_lemo_io(6);  -- Slot L1 IO5
+      A_nSEL(9)        <= s_lemo_io(7);  -- Slot L1 IO6
 
-      A_D_mux(5)        <= s_lemo_io(8);  -- Slot L2 IO1
-      A_D_mux(1)        <= s_lemo_io(9);  -- Slot L2 IO2
-      A_D_mux(4)        <= s_lemo_io(10); -- Slot L2 IO3
-      A_D_mux(0)        <= s_lemo_io(11); -- Slot L2 IO4
-      A_D_mux(3)        <= s_lemo_io(12); -- Slot L2 IO5
-      A_D_mux(2)        <= s_lemo_io(13); -- Slot L2 IO6
+      s_lemo_input(2)  <= scub_d_in(5);  -- Slot L2 IO1
+      s_lemo_input(3)  <= scub_d_in(1);  -- Slot L2 IO2
+      s_lemo_input(4)  <= scub_d_in(4);  -- Slot L2 IO3
+      s_lemo_input(5)  <= scub_d_in(0);  -- Slot L2 IO4
+      s_lemo_input(6)  <= scub_d_in(3);  -- Slot L2 IO5
+      s_lemo_input(7)  <= scub_d_in(2);  -- Slot L2 IO6
 
-      A_D_mux(15)       <= s_lemo_io(14); -- Slot L3 IO1
-      A_D_mux(10)       <= s_lemo_io(15); -- Slot L3 IO2
-      A_D_mux(14)       <= s_lemo_io(16); -- Slot L3 IO3
-      A_D_mux(11)       <= s_lemo_io(17); -- Slot L3 IO4
-      A_D_mux(13)       <= s_lemo_io(18); -- Slot L3 IO5
-      A_D_mux(12)       <= s_lemo_io(19); -- Slot L3 IO6
+      s_lemo_input(8)  <= scub_d_in(15); -- Slot L3 IO1
+      s_lemo_input(9)  <= scub_d_in(10); -- Slot L3 IO2
+      s_lemo_input(10) <= scub_d_in(14); -- Slot L3 IO3
+      s_lemo_input(11) <= scub_d_in(11); -- Slot L3 IO4
+      s_lemo_input(12) <= scub_d_in(13); -- Slot L3 IO5
+      s_lemo_input(13) <= scub_d_in(12); -- Slot L3 IO6
 
-      A_A(11)           <= s_lemo_io(20); -- Slot R1 IO1
-      A_A(9)            <= s_lemo_io(21); -- Slot R1 IO2
-      A_A(13)           <= s_lemo_io(22); -- Slot R1 IO3
-      A_A(7)            <= s_lemo_io(23); -- Slot R1 IO4
-      A_A(15)           <= s_lemo_io(24); -- Slot R1 IO5
-      A_A(5)            <= s_lemo_io(25); -- Slot R1 IO6
+      A_A(11)          <= s_lemo_io(8);  -- Slot R1 IO1
+      A_A(9)           <= s_lemo_io(9);  -- Slot R1 IO2
+      A_A(13)          <= s_lemo_io(10); -- Slot R1 IO3
+      A_A(7)           <= s_lemo_io(11); -- Slot R1 IO4
+      A_A(15)          <= s_lemo_io(12); -- Slot R1 IO5
+      A_A(5)           <= s_lemo_io(13); -- Slot R1 IO6
 
-      A_A(8)            <= s_lemo_io(2);  -- Slot R2 IO1
-      A_A(10)           <= s_lemo_io(3);  -- Slot R2 IO2
-      A_A(6)            <= s_lemo_io(4);  -- Slot R2 IO3
-      A_A(12)           <= s_lemo_io(5);  -- Slot R2 IO4
-      A_A(4)            <= s_lemo_io(6);  -- Slot R2 IO5
-      A_A(14)           <= s_lemo_io(7);  -- Slot R2 IO6
+      A_A(8)           <= s_lemo_io(14); -- Slot R2 IO1
+      A_A(10)          <= s_lemo_io(15); -- Slot R2 IO2
+      A_A(6)           <= s_lemo_io(16); -- Slot R2 IO3
+      A_A(12)          <= s_lemo_io(17); -- Slot R2 IO4
+      A_A(4)           <= s_lemo_io(18); -- Slot R2 IO5
+      A_A(14)          <= s_lemo_io(19); -- Slot R2 IO6
 
-      A_nSEL(3)         <= s_lemo_io(8);  -- Slot R3 IO1
-      A_nSEL(6)         <= s_lemo_io(9);  -- Slot R3 IO2
-      A_nSEL(2)         <= s_lemo_io(10); -- Slot R3 IO3
-      A_nSEL(5)         <= s_lemo_io(11); -- Slot R3 IO4
-      A_nSEL(1)         <= s_lemo_io(12); -- Slot R3 IO5
-      A_nSEL(4)         <= s_lemo_io(13); -- Slot R3 IO6
+      A_nSEL(3)        <= s_lemo_io(20); -- Slot R3 IO1
+      A_nSEL(6)        <= s_lemo_io(21); -- Slot R3 IO2
+      A_nSEL(2)        <= s_lemo_io(22); -- Slot R3 IO3
+      A_nSEL(5)        <= s_lemo_io(23); -- Slot R3 IO4
+      A_nSEL(1)        <= s_lemo_io(24); -- Slot R3 IO5
+      A_nSEL(4)        <= s_lemo_io(25); -- Slot R3 IO6
     else
       A_RnW             <= scub_A_RnW;
       nSel_Ext_Data_DRV <= scub_nsel_ext_data_drv;
