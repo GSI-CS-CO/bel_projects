@@ -23,6 +23,7 @@ files = [
   "../../ip_cores/neorv32/rtl/core/neorv32_cpu_lsu.vhd",
   "../../ip_cores/neorv32/rtl/core/neorv32_cpu_pmp.vhd",
   "../../ip_cores/neorv32/rtl/core/neorv32_cpu_regfile.vhd",
+  "../../ip_cores/neorv32/rtl/core/neorv32_cpu_trace.vhd",
   "../../ip_cores/neorv32/rtl/core/neorv32_cpu.vhd",
   "../../ip_cores/neorv32/rtl/core/neorv32_debug_auth.vhd",
   "../../ip_cores/neorv32/rtl/core/neorv32_debug_dm.vhd",
