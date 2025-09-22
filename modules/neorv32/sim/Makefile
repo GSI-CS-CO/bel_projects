@@ -57,6 +57,8 @@ $(HDL_NEORV32_BASE)/neorv32_cpu_pmp.vhd \
 $(HDL_NEORV32_BASE)/neorv32_cpu_regfile.vhd \
 $(HDL_NEORV32_BASE)/neorv32_cpu_frontend.vhd \
 $(HDL_NEORV32_BASE)/neorv32_cpu_counters.vhd \
+$(HDL_NEORV32_BASE)/neorv32_tracer.vhd \
+$(HDL_NEORV32_BASE)/neorv32_cpu_trace.vhd \
 $(HDL_NEORV32_BASE)/neorv32_cpu.vhd \
 $(HDL_NEORV32_BASE)/neorv32_debug_auth.vhd \
 $(HDL_NEORV32_BASE)/neorv32_debug_dm.vhd \
@@ -82,7 +84,6 @@ $(HDL_NEORV32_BASE)/neorv32_imem.vhd \
 $(HDL_NEORV32_BASE)/neorv32_dmem.vhd \
 $(HDL_NEORV32_BASE)/neorv32_twd.vhd \
 $(HDL_NEORV32_BASE)/neorv32_clint.vhd \
-$(HDL_NEORV32_BASE)/neorv32_tracer.vhd \
 $(HDL_NEORV32_BASE)/neorv32_top.vhd
 
 HDL_RTE_GENRAM_FILES:=$(HDL_GEN_CORES_OFFSET)/modules/genrams/genram_pkg.vhd \
@@ -91,11 +92,11 @@ HDL_RTE_GENRAM_FILES:=$(HDL_GEN_CORES_OFFSET)/modules/genrams/genram_pkg.vhd \
 HDL_RTE_WISHBONE_FILES:=$(HDL_GEN_CORES_OFFSET)/modules/wishbone/wishbone_pkg.vhd \
                         $(HDL_GEN_CORES_OFFSET)/modules/wishbone/wb_dpram/xwb_dpram.vhd \
                         $(HDL_GEN_CORES_OFFSET)/modules/wishbone/wb_slave_adapter/wb_slave_adapter.vhd\
-						$(HDL_GEN_CORES_OFFSET)/modules/wishbone/wb_crossbar/sdb_rom.vhd \
-						$(HDL_GEN_CORES_OFFSET)/modules/wishbone/wb_crossbar/xwb_crossbar.vhd \
-						$(HDL_GEN_CORES_OFFSET)/modules/wishbone/wb_crossbar/xwb_sdb_crossbar.vhd \
-						$(HDL_GEN_CORES_OFFSET)/modules/genrams/generic/generic_sync_fifo.vhd \
-						$(HDL_GEN_CORES_OFFSET)/modules/genrams/common/inferred_sync_fifo.vhd
+                        $(HDL_GEN_CORES_OFFSET)/modules/wishbone/wb_crossbar/sdb_rom.vhd \
+                        $(HDL_GEN_CORES_OFFSET)/modules/wishbone/wb_crossbar/xwb_crossbar.vhd \
+                        $(HDL_GEN_CORES_OFFSET)/modules/wishbone/wb_crossbar/xwb_sdb_crossbar.vhd \
+                        $(HDL_GEN_CORES_OFFSET)/modules/genrams/generic/generic_sync_fifo.vhd \
+                        $(HDL_GEN_CORES_OFFSET)/modules/genrams/common/inferred_sync_fifo.vhd
 
 # Targets
 # ==============================================================================

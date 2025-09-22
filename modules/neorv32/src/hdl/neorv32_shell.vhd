@@ -127,6 +127,7 @@ begin
     IMEM_SIZE         => g_mem_int_imem_size,
     DMEM_EN           => true,
     DMEM_SIZE         => g_mem_int_dmem_size,
+    XBUS_TIMEOUT      => 0,
     IO_GPIO_NUM       => 32,
     IO_UART0_EN       => true,
     OCD_EN            => g_en_debugging
