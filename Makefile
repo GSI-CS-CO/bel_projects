@@ -27,7 +27,9 @@ export TLU
 ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca
 export ECA
 PATH:=$(PWD)/toolchain/bin:$(PATH)
-PATH:=$(PWD)/riscv-toolchain/bin:$(PATH)
+export PATH
+CROSS_COMPILE_RISCV:="$(PWD)/riscv-toolchain/bin/riscv32-unknown-elf-"
+export CROSS_COMPILE_RISCV
 
 # This is mainly used to sort QSF files. After sorting it adds and deletes a "GIT marker" which will mark the file as changed.
 # Additionally all empty lines will be removed.
@@ -245,14 +247,14 @@ riscv-toolchain-download:
 
 riscv-toolchain:	riscv-toolchain-download
 	test -d riscv-toolchain || tar xvJf riscv_gcc.tar.xz
-	mv riscv riscv-toolchain || true
+	test -d risc-v && mv riscv riscv-toolchain || true
 
 riscv-toolchain-clean::
 	rm -rf riscv-toolchain
 
 wrpc-sw-config::
 	test -s ip_cores/wrpc-sw/.config || \
-		$(MAKE) -C ip_cores/wrpc-sw/ gsi_defconfig
+		$(MAKE) -C ip_cores/wrpc-sw/ gsi_defconfig-wrpc-v5
 
 firmware:	sdbfs etherbone toolchain riscv-toolchain wrpc-sw-config
 ifeq ($(UNAME), x86_64)
