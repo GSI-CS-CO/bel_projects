@@ -146,7 +146,11 @@ saftlib::
 	cd ip_cores/saftlib; ./configure $(CONFIGURE_FLAGS) --prefix=$(PREFIX) --sysconfdir=$(SYSCONFDIR)
 	$(MAKE) -C ip_cores/saftlib
 
+<<<<<<< HEAD
 saftlib-clean::
+=======
+saftlib-clean:: 
+>>>>>>> 7ad2a9959 (saftlib submodule pointer update and wr-mil-gw port to saftlib3)
 	$(MAKE) -C ip_cores/saftlib clean
 
 saftlib-install::
