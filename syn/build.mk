@@ -10,7 +10,6 @@ CC		=  $(CROSS_COMPILE)gcc
 SHELL = /bin/sh
 OBJCOPY		=  $(CROSS_COMPILE)objcopy
 GENRAMMIF	?= $(TOP)/ip_cores/wrpc-sw/tools/genrammif
-
 INCPATH	:= $(TOP)/modules/lm32-include
 WBTIMER_INCL := $(TOP)/modules/wb_timer
 EBPATH  := $(TOP)/ip_cores/etherbone-core/hdl/eb_master_core
@@ -19,11 +18,6 @@ WR_DEV	:= $(WR_INC)/dev
 WR_BOARD	:= $(W1)/boards/generic/board.h
 WR_LIB	:= $(W1)/lib
 WR_INC  := $(W1)/include
-WR_IMPORT := $(INCPATH)/wrpc-import
-WR_HW_IMPORT := $(INCPATH)/wrpc-import/hw
-WR_LIB_IMPORT := $(INCPATH)/wrpc-import/lib
-WR_DEV_IMPORT := $(INCPATH)/wrpc-import/dev
-
 USRCPUCLK	?= 62500
 
 CFLAGS	+= 	-mmultiply-enabled -mbarrel-shift-enabled -Os \
@@ -34,22 +28,20 @@ CFLAGS	+= 	-mmultiply-enabled -mbarrel-shift-enabled -Os \
 	-I$(W1)/include \
 	-I$(W1)/sdb-lib \
 	-I$(W1)/pp_printf \
-	-I$(EBPATH)
+	-I$(EBPATH) \
 	-I$(WBTIMER_INCL) \
 	-DCONFIG_ARCH_LM32 \
 	-std=gnu99 \
-	-DCONFIG_WR_NODE
+	-DCONFIG_WR_NODE \
 	-DCONFIG_PRINT_BUFSIZE=128 \
 	-DCONFIG_PRINTF_64BIT \
 	-DSDBFS_BIG_ENDIAN
 
-CFLAGS += -ffunction-sections -fdata-sections -Wl,--gc-sections -std=gnu99 -pedantic
+CFLAGS += -ffunction-sections -fdata-sections -Wl,--gc-sections
 
 STUBD	?= $(TOP)/modules/lm32_stub
 STUBS	?= $(STUBD)/stubs.c $(STUBD)/crt0.S
-INCLUDES  += $(WR_IMPORT)/uart.c $(WR_IMPORT)/timer.c $(WR_IMPORT)/vsprintf-full.c $(WR_IMPORT)/div64.c $(WR_IMPORT)/printf.c \
-						$(INCPATH)/dbg.c $(INCPATH)/aux.c $(INCPATH)/irq.c $(INCPATH)/mini_sdb.c $(INCPATH)/sdb_add.c $(INCPATH)/assert.c \
-						$(INCPATH)/stack-check.c $(WR_LIB_IMPORT)/usleep.c $(WR_DEV_IMPORT)/w1-hw.c $(WR_DEV_IMPORT)/w1.c $(WR_DEV_IMPORT)/w1-temp.c
+INCLUDES  +=
 LDFLAGS		?= -nostdlib -T ram.ld -lgcc -lc
 
 ifndef RAM_SIZE
