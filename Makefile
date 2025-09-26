@@ -664,8 +664,6 @@ ftm4dp-clean::
 # #################################################################################################
 # Build flow targets
 # #################################################################################################
-
-# Set NUM_PARALLEL_PROCESSORS to ALL in each QSF file
 set_max_parallel_processors:
 	@find . -type f -name "*.qsf" | while read -r file; do \
 			if grep -q "set_global_assignment -name NUM_PARALLEL_PROCESSORS" "$$file"; then \
