@@ -245,10 +245,10 @@ lm32-cluster-testbench-clean:: lm32-toolchain hdlmake_install
 	make -C testbench/lm32_cluster/test clean
 
 riscv-toolchain-download:
-	test -f riscv_gcc.tgz || wget https://ohwr.org/project/wrpc-sw/wikis/uploads/9f9224d2249848ed3e854636de9c08dc/riscv-11.2-small.tgz -O riscv_gcc.tgz
+	test -f riscv_gcc.tgz || wget -c https://gitlab.com/ohwr/project/wrpc-sw/-/wikis/uploads/9f9224d2249848ed3e854636de9c08dc/riscv-11.2-small.tgz
 
 riscv-toolchain:	riscv-toolchain-download
-	test -d riscv-toolchain || tar zxvf riscv_gcc.tgz -o
+	test -d riscv-toolchain || tar zxvf riscv-11.2-small.tgz -o
 	test -d riscv-11.2-small && mv riscv-11.2-small riscv-toolchain || true
 
 riscv-toolchain-clean::
