@@ -446,7 +446,6 @@ update-alternatives --list cc
 which cc # /usr/bin/cc
 ```
 
-<<<<<<< HEAD
 ### Rocky-9
 
 [Click here for additional information.](res/rocky-9)
@@ -478,10 +477,8 @@ Solution:
 export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 ```
 =======
-### Rocky Linux
-
-For Rocky Linux v9.x support please check this file: [README.md](#res/rocky-9/README.md)
->>>>>>> a97b45185 (README.md: add rocky-9 note)
+For Rocky Linux v9.x support please check this file: [README.md](res/rocky-9/README.md)
+>>>>>>> 4a9e6e810 (Update README.md)
 
 ## Git
 
