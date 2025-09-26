@@ -2,7 +2,7 @@
 #include "mini_sdb.h"
 #ifndef NEORV32
 #include "dbg.h"
-#include "hw/memlayout.h"
+#include "memlayout.h"
 #include "sdb_add.h"
 #else
 #include <sdb_add_neorv32.h>
