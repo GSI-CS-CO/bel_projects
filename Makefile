@@ -109,13 +109,13 @@ define ldconfig_note
 	@echo "***************************************************************************"
 endef
 
-all:		hdlmake_install etherbone tools sdbfs lm32-toolchain firmware
+all:		hdlmake_install etherbone tools sdbfs toolchain riscv-toolchain firmware driver
 
 gateware:	all pexarria5 exploder5 vetar2a vetar2a-ee-butis scu2 scu3 pmc microtca pexp
 
 install:	etherbone-install tools-install driver-install
 
-clean::		etherbone-clean tools-clean tlu-clean sdbfs-clean driver-clean lm32-toolchain-clean firmware-clean scu2-clean scu3-clean vetar2a-clean vetar2a-ee-butis-clean exploder5-clean pexarria5-clean sio3-clean ecatools-clean pmc-clean microtca-clean
+clean::		etherbone-clean tools-clean tlu-clean sdbfs-clean driver-clean toolchain-clean riscv-toolchain-clean firmware-clean scu2-clean scu3-clean vetar2a-clean vetar2a-ee-butis-clean exploder5-clean pexarria5-clean sio3-clean ecatools-clean pmc-clean microtca-clean bg-clean
 
 distclean::	clean
 	git clean -xfd .
@@ -241,11 +241,11 @@ lm32-cluster-testbench-clean:: lm32-toolchain hdlmake_install
 	make -C testbench/lm32_cluster/test clean
 
 riscv-toolchain-download:
-	wget https://ohwr.org/project/wrpc-sw/wikis/uploads/e445916c27cc49cc62a370aded9cacb2/riscv_gcc_11_1_0.tar.xz -O riscv_gcc.tar.xz
+	test -f riscv_gcc.tar.xz || wget https://ohwr.org/project/wrpc-sw/wikis/uploads/e445916c27cc49cc62a370aded9cacb2/riscv_gcc_11_1_0.tar.xz -O riscv_gcc.tar.xz
 
 riscv-toolchain:	riscv-toolchain-download
-	tar xvJf riscv_gcc.tar.xz
-	mv riscv riscv-toolchain
+	test -d riscv-toolchain || tar xvJf riscv_gcc.tar.xz
+	mv riscv riscv-toolchain || true
 
 riscv-toolchain-clean::
 	rm -rf riscv-toolchain
@@ -258,7 +258,7 @@ firmware:	sdbfs etherbone toolchain riscv-toolchain wrpc-sw-config
 ifeq ($(UNAME), x86_64)
 	$(MAKE) -C ip_cores/wrpc-sw SDBFS=$(PWD)/ip_cores/fpga-config-space/sdbfs/userspace all
 else
-	@echo "Info: Skipping WRPC-SW build (LM32 toolchain does not support your architecture)..."
+	@echo "Info: Skipping WRPC-SW build (LM32/RISCV toolchain does not support your architecture)..."
 endif
 
 firmware-clean:
