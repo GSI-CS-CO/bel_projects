@@ -27,6 +27,11 @@ export TLU
 ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca
 export ECA
 PATH:=$(PWD)/toolchain/bin:$(PATH)
+export PATH
+CROSS_COMPILE_RISCV:="$(PWD)/riscv-toolchain/bin/riscv32-elf-"
+export CROSS_COMPILE_RISCV
+EB_TOOLS_WRPC_SW=no
+export EB_TOOLS_WRPC_SW
 
 # This is mainly used to sort QSF files. After sorting it adds and deletes a "GIT marker" which will mark the file as changed.
 # Additionally all empty lines will be removed.
@@ -239,15 +244,26 @@ lm32-cluster-testbench-run:: lm32-toolchain hdlmake_install
 lm32-cluster-testbench-clean:: lm32-toolchain hdlmake_install
 	make -C testbench/lm32_cluster/test clean
 
+riscv-toolchain-download:
+	test -f riscv_gcc.tgz || wget https://ohwr.org/project/wrpc-sw/wikis/uploads/9f9224d2249848ed3e854636de9c08dc/riscv-11.2-small.tgz -O riscv_gcc.tgz
+
+riscv-toolchain:	riscv-toolchain-download
+	test -d riscv-toolchain || tar zxvf riscv_gcc.tgz -o
+	test -d riscv-11.2-small && mv riscv-11.2-small riscv-toolchain || true
+
+riscv-toolchain-clean::
+	rm -rf riscv_gcc.tgz || true
+	rm -rf riscv-toolchain || true
+
 wrpc-sw-config::
 	test -s ip_cores/wrpc-sw/.config || \
 		$(MAKE) -C ip_cores/wrpc-sw/ gsi_defconfig
 
-firmware:	sdbfs etherbone toolchain wrpc-sw-config
+firmware:	sdbfs etherbone toolchain riscv-toolchain wrpc-sw-config
 ifeq ($(UNAME), x86_64)
 	$(MAKE) -C ip_cores/wrpc-sw SDBFS=$(PWD)/ip_cores/fpga-config-space/sdbfs/userspace all
 else
-	@echo "Info: Skipping WRPC-SW build (LM32 toolchain does not support your architecture)..."
+	@echo "Skipping WRPC-SW build (LM32/RISCV toolchain does not support your architecture)..."
 endif
 
 firmware-clean:
