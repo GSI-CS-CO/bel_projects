@@ -9,6 +9,7 @@ WBDIR   ?= .
 TARGETS := eb-flash eb-info eb-console eb-config-nv eb-time eb-sflash eb-iflash eb-daq-dump eb-fwload eb-i2c-master eb-asmi eb-fg-statistic
 EXTRA_I := eb-flash-secure
 USE_RPATH ?= yes
+YOCTO_BUILD ?= no
 
 EXTRA_FLAGS ?=
 CFLAGS      ?= $(EXTRA_FLAGS) -std=gnu99 -Wall -O2 -I $(EB)
