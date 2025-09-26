@@ -476,9 +476,6 @@ Solution:
 ```
 export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 ```
-=======
-For Rocky Linux v9.x support please check this file: [README.md](res/rocky-9/README.md)
->>>>>>> 4a9e6e810 (Update README.md)
 
 ## Git
 
