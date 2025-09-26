@@ -303,6 +303,7 @@ begin
 
   main : monster
     generic map(
+<<<<<<< HEAD
       g_family             => c_family,
       g_project            => c_project,
       g_gpio_inout         => 2,
@@ -325,6 +326,29 @@ begin
       g_en_eca_tap         => true,
       g_en_timer           => true,
       g_en_asmi            => false
+=======
+      g_family            => c_family,
+      g_project           => c_project,
+      g_gpio_inout        => 2,
+      g_flash_bits        => 24,
+      g_en_pcie           => true,
+      g_en_scubus         => true,
+      g_en_mil            => true,
+      g_en_oled           => true,
+      g_en_user_ow        => true,
+      g_en_cfi            => true,
+      g_en_ddr3           => true,
+      g_delay_diagnostics => true,
+      g_io_table          => io_mapping_table,
+      g_lm32_cores        => c_cores,
+      g_lm32_ramsizes     => c_lm32_ramsizes/4,
+      g_lm32_init_files   => c_initf,
+      g_lm32_profiles     => f_string_list_repeat(c_profile_name, c_cores),
+      g_en_wd_tmr         => true,
+      g_en_eca_tap        => true,
+      g_en_timer          => true,
+      g_en_asmi           => true
+>>>>>>> 9ec80e7aa (scu3: enable asmi, update qsf, update ramsize_pkg)
     )
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
