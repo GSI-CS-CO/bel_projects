@@ -14,18 +14,34 @@ INCPATH	:= $(TOP)/modules/lm32-include
 WBTIMER_INCL := $(TOP)/modules/wb_timer
 EBPATH  := $(TOP)/ip_cores/etherbone-core/hdl/eb_master_core
 W1    	:= $(TOP)/ip_cores/wrpc-sw
+WR_DEV	:= $(WR_INC)/dev
+WR_BOARD	:= $(W1)/boards/generic/board.h
+WR_LIB	:= $(W1)/lib
+WR_INC  := $(W1)/include
 USRCPUCLK	?= 62500
-CFLAGS	+= 	-mmultiply-enabled -mbarrel-shift-enabled -Os -DUSRCPUCLK=$(USRCPUCLK) -I$(INCPATH) -I$(W1)/include \
-		-I$(W1)/sdb-lib -I$(W1)/pp_printf -I$(EBPATH) -I$(WBTIMER_INCL) -DCONFIG_ARCH_LM32 -std=gnu99 -DCONFIG_WR_NODE -DCONFIG_PRINT_BUFSIZE=128 -DCONFIG_PRINTF_64BIT -DSDBFS_BIG_ENDIAN
+
+CFLAGS	+= 	-mmultiply-enabled -mbarrel-shift-enabled -Os \
+	-DUSRCPUCLK=$(USRCPUCLK) \
+	-I$(INCPATH) \
+	-I$(EBPATH) \
+	-I$(WR_INC) \
+	-I$(W1)/include \
+	-I$(W1)/sdb-lib \
+	-I$(W1)/pp_printf \
+	-I$(EBPATH)
+	-I$(WBTIMER_INCL) \
+	-DCONFIG_ARCH_LM32 \
+	-std=gnu99 \
+	-DCONFIG_WR_NODE
+	-DCONFIG_PRINT_BUFSIZE=128 \
+	-DCONFIG_PRINTF_64BIT \
+	-DSDBFS_BIG_ENDIAN
 
 CFLAGS += -ffunction-sections -fdata-sections -Wl,--gc-sections
 
 STUBD	?= $(TOP)/modules/lm32_stub
 STUBS	?= $(STUBD)/stubs.c $(STUBD)/crt0.S
-INCLUDES  += 	$(INCPATH)/dbg.c $(INCPATH)/aux.c $(INCPATH)/irq.c $(INCPATH)/mini_sdb.c \
-		$(W1)/tools/uart-bootloader/uart.c $(W1)/lib/usleep.c $(W1)/dev/syscon.c $(W1)/pp_printf/printf.c \
-		$(W1)/pp_printf/vsprintf-full.c $(W1)/pp_printf/div64.c $(INCPATH)/sdb_add.c \
-		$(INCPATH)/assert.c $(INCPATH)/stack-check.c
+INCLUDES  +=
 LDFLAGS		?= -nostdlib -T ram.ld -lgcc -lc
 
 ifndef RAM_SIZE
