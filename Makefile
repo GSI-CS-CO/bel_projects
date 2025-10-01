@@ -229,7 +229,7 @@ sdbfs-clean::
 	$(MAKE) -C ip_cores/fpga-config-space/sdbfs DIRS="lib userspace" clean
 
 lm32-toolchain-download :
-	test -f lm32-gcc.tar.xz || wget https://github.com/GSI-CS-CO/lm32-toolchain/releases/download/v1.1-2023-04-04/lm32-gcc-4.5.3.tar.xz -O lm32-gcc.tar.xz
+	test -f lm32-gcc.tar.xz || wget -c https://github.com/GSI-CS-CO/lm32-toolchain/releases/download/v1.1-2023-04-04/lm32-gcc-4.5.3.tar.xz -O lm32-gcc.tar.xz
 
 lm32-toolchain:	lm32-toolchain-download
 	test -d lm32-gcc || tar -xf lm32-gcc.tar.xz
@@ -245,7 +245,7 @@ lm32-cluster-testbench-clean:: lm32-toolchain hdlmake_install
 	make -C testbench/lm32_cluster/test clean
 
 riscv-toolchain-download:
-	test -f riscv_gcc.tgz || wget -c https://gitlab.com/ohwr/project/wrpc-sw/-/wikis/uploads/9f9224d2249848ed3e854636de9c08dc/riscv-11.2-small.tgz
+	test -f riscv-11.2-small.tgz || wget -c https://gitlab.com/ohwr/project/wrpc-sw/-/wikis/uploads/9f9224d2249848ed3e854636de9c08dc/riscv-11.2-small.tgz
 
 riscv-toolchain:	riscv-toolchain-download
 	test -d riscv-toolchain || tar zxvf riscv-11.2-small.tgz -o
@@ -596,10 +596,10 @@ exploder-clean::
 	$(MAKE) -C syn/gsi_exploder/wr_core_demo clean
 
 pexarria10_soc::	firmware
-	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/lm-32toolchain/bin:$(PATH) all
+	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/lm32-toolchain/bin:$(PATH) all
 
 pexarria10_soc-clean::
-	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/lm-32toolchain/bin:$(PATH) clean
+	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/lm32-toolchain/bin:$(PATH) clean
 
 a10gx_pcie::	firmware
 	$(MAKE) -C $(PATH_A10GX) all
