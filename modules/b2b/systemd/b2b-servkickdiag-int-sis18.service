@@ -1,0 +1,14 @@
+[Unit]
+Description = b2b kick diagnostics for INT SIS18
+Requires = saftbus.service
+After = saftbus.service
+
+[Service]
+CPUSchedulingPolicy=rr
+CPUSchedulingPriority=1
+Type = simple
+Environment="DIM_DNS_NODE=asl105"
+ExecStart = b2b-serv-kickdiag tr0 -r0 -m0 -i1 int
+
+[Install]
+WantedBy = multi-user.target

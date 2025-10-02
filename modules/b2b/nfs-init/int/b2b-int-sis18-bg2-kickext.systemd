@@ -1,15 +1,17 @@
-# yocto; temporarily disabled
 SERVICEA=b2b-servsys-int-sis18-kickext.service
 SERVICEB=b2b-servraw-int-sis18.service
 SERVICEC=b2b-analyzer-int-sis18.service
+SERVICED=b2b-servkickdiag-int-sis18.service
 cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
 cp -a $MOUNTPOINT/systemd/$SERVICEB /lib/systemd/system
 cp -a $MOUNTPOINT/systemd/$SERVICEC /lib/systemd/system
+cp -a $MOUNTPOINT/systemd/$SERVICED /lib/systemd/system
 systemctl daemon-reload
 
 systemctl start $SERVICEA
 systemctl start $SERVICEB
 systemctl start $SERVICEC
+systemctl start $SERVICED
 
 # hack for acc7
 #export DIM_DNS_NODE=asl105
