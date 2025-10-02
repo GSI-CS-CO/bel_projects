@@ -1,7 +1,7 @@
 [Unit]
 Description = b2b data acquisition for INT ESR
-Requires = saftd.service
-After = saftd.service
+Requires = saftbus.service
+After = saftbus.service
 
 [Service]
 CPUSchedulingPolicy=rr
