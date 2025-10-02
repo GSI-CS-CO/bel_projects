@@ -1,0 +1,12 @@
+[Unit]
+Description = b2b system monitor for INT SIS100 phase shift module
+Requires = dev-wbm0.device
+After = dev-wbm0.device
+
+[Service]
+Type = simple
+Environment="DIM_DNS_NODE=asl105"
+ExecStart = b2b-serv-sys dev/wbm0 -s int_sis100-psm
+
+[Install]
+WantedBy = multi-user.target
