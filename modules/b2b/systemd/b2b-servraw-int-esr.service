@@ -5,9 +5,10 @@ After = saftbus.service
 
 [Service]
 CPUSchedulingPolicy=rr
-CPUSchedulingPriority=1
+CPUSchedulingPriority=2
 Type = simple
 Environment="DIM_DNS_NODE=asl105"
 ExecStart = b2b-serv-raw tr1 -e1 int
+
 [Install]
 WantedBy = multi-user.target
