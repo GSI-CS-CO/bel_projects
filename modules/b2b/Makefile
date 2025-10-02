@@ -1,3 +1,4 @@
+
 # PREFIX  controls where programs and libraries get installed
 # Note: during compile (all), PREFIX must be set to the final installation path
 # Set SYSENV to the target system environment (YOCTO, ACC7, ACC9, OPT)
@@ -74,6 +75,7 @@ clean:
 	rm -f nfs-init/b2b-int*.sh
 	rm -f nfs-init/b2b-pro*.sh
 	rm -f nfs-init/b2b-tools.sh
+	rm -f nfs-init/b2b-yocto-tweak-tools.sh
 
 deploy:
 # create folders
