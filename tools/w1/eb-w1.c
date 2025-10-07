@@ -12,6 +12,10 @@
 #include <w1.h>
 #include <sockit_owm_regs.h>
 
+#define WB_CLOCK   62500000
+#define CLK_DIV_NOR (WB_CLOCK / 200000 - 1)	/* normal mode */
+#define CLK_DIV_OVD (WB_CLOCK / 1000000 - 1)	/* overdrive mode (not used) */
+
 extern eb_address_t BASE_ONEWIRE;
 extern eb_device_t  device;
 
@@ -66,9 +70,6 @@ static void w1_write_bit(struct w1_bus *bus, int bit)
 	__wait_cycle(device);
 }
 
-#define WB_CLOCK   62500000
-#define CLK_DIV_NOR (WB_CLOCK / 200000 - 1)	/* normal mode */
-#define CLK_DIV_OVD (WB_CLOCK / 1000000 - 1)	/* overdrive mode (not used) */
 void wrpc_w1_init(void)
 {
     eb_data_t data = ((CLK_DIV_NOR & SOCKIT_OWM_CDR_N_MSK) |
