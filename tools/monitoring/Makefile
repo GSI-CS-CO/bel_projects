@@ -10,7 +10,7 @@ TARGETS     := eb-mon eb-massmon
 USE_RPATH ?= yes
 
 EXTRA_FLAGS ?=
-CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -I $(EB) -I $(WRPC)/include -I $(WRPC)/pp_printf
+CCFLAGS     ?= $(EXTRA_FLAGS) -Wall -O2 -I $(EB) -I $(WRPC)/include -I $(WRPC)/pp_printf
 ifeq ($(USE_RPATH),yes)
 LIBS        ?= -L $(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm
 else
@@ -25,10 +25,10 @@ WBFLAG  += -I$(WBDIR)
 all: $(TARGETS)
 
 eb-mon: eb-mon.c
-	$(CC) $(CFLAGS) $(WBFLAG) $(WBDIR)/wb_api.c $(WRPC)/dev/w1.c $(WRPC)/dev/w1-temp.c $(WRPC)/dev/w1-eeprom.c $(WRPC)/tools/eb-w1.c -o eb-mon eb-mon.c $(LIBS)
+	$(CC) $(CCFLAGS) $(WBFLAG) $(WBDIR)/wb_api.c $(WRPC)/dev/w1.c $(WRPC)/dev/w1-temp.c $(WRPC)/dev/w1-eeprom.c $(WRPC)/tools/eb-w1.c -o eb-mon eb-mon.c $(LIBS)
 
 eb-massmon: eb-massmon.c
-	$(CC) $(CFLAGS) $(WBFLAG) $(WBDIR)/wb_api.c $(WRPC)/dev/w1.c $(WRPC)/dev/w1-temp.c $(WRPC)/dev/w1-eeprom.c $(WRPC)/tools/eb-w1.c -o eb-massmon eb-massmon.c $(LIBS)
+	$(CC) $(CCFLAGS) $(WBFLAG) $(WBDIR)/wb_api.c $(WRPC)/dev/w1.c $(WRPC)/dev/w1-temp.c $(WRPC)/dev/w1-eeprom.c $(WRPC)/tools/eb-w1.c -o eb-massmon eb-massmon.c $(LIBS)
 
 clean:
 	rm -f *.o eb-mon eb-massmon

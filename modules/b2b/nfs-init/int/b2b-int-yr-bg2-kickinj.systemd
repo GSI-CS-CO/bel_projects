@@ -1,19 +1,19 @@
-# yocto; temporarily disabled
-#SERVICEA=b2b-servsys-int-yr-kickinj.service
-#SERVICEB=b2b-servraw-int-yr.service
-#SERVICEC=b2b-analyzer-int-yr.service
-#cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
-#cp -a $MOUNTPOINT/systemd/$SERVICEB /lib/systemd/system
-#cp -a $MOUNTPOINT/systemd/$SERVICEC /lib/systemd/system
-#systemctl daemon-reload
-#
-#systemctl start $SERVICEA
-#systemctl start $SERVICEB
-#systemctl start $SERVICEC
+# yocto
+SERVICEA=b2b-servsys-int-yr-kickinj.service
+SERVICEB=b2b-servraw-int-yr.service
+SERVICEC=b2b-analyzer-int-yr.service
+cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
+cp -a $MOUNTPOINT/systemd/$SERVICEB /lib/systemd/system
+cp -a $MOUNTPOINT/systemd/$SERVICEC /lib/systemd/system
+systemctl daemon-reload
+
+systemctl start $SERVICEA
+systemctl start $SERVICEB
+systemctl start $SERVICEC
 
 # hack for acc7
-export DIM_DNS_NODE=asl105
-
-b2b-serv-sys dev/wbm0 -s int_yr-kdi &
-b2b-serv-raw tr1 -e2 int &
-b2b-analyzer int_yr &
+#export DIM_DNS_NODE=asl105
+#
+#b2b-serv-sys dev/wbm0 -s int_yr-kdi &
+#b2b-serv-raw tr1 -e2 int &
+#b2b-analyzer int_yr &
