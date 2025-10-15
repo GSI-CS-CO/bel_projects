@@ -681,9 +681,8 @@ prereq-rule::
 		(echo "Downloading submodules..."; ./fix-git.sh)
 
 git_apply_patches::
-	echo "Applying git patches..."
-	cp patches/wr-cores/* ip_cores/wr-cores
-	cd ip_cores/wr-cores && git apply *.patch && rm *.patch
+	@test -f ip_cores/wr-cores/*.patch || \
+		(echo "Applying git patches..."; cp patches/wr-cores/* ip_cores/wr-cores; cd ip_cores/wr-cores && git apply *.patch)
 
 git_submodules_update:
 	@git submodule update --recursive
