@@ -9,7 +9,7 @@
   void GlobalRefTable::debug(std::ostream& os) {
       os << "Global Reftable Entries:" << std::endl;
       for (refIt x = m.begin(); x != m.end(); x++) {
-        os << "Cpu " << x->cpu << "Adr 0x" << std::hex << x->adr << " Hash: " << std::hex <<  x->hash << std::endl;
+        os << "Cpu " << +x->cpu << "Adr 0x" << std::hex << x->adr << " Hash: " << std::hex <<  x->hash << std::endl;
       }
   }
 

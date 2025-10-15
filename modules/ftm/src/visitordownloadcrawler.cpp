@@ -307,8 +307,8 @@ void VisitorDownloadCrawler::setRefLinks() const {
       
       try {
         //Subtract the Target word offset from tmpAdr and we get the node adress
-        uint32_t nodeAdr = tmpAdr - oTarget;
-        log<DEBUG_LVL2>(L"Trying lookup for tmpAdr %1$#08x Split: node adr: %2$#08x Offset Target: %3$#08x") % tmpAdr % nodeAdr % oTarget;
+	uint32_t nodeAdr = at.adrConv(AdrType::MGMT, AdrType::INT, cpu, tmpAdr - oTarget);
+      	log<DEBUG_LVL2>(L"Trying lookup for tmpAdr %1$#08x Split: node adr: %2$#08x Offset Target: %3$#08x") % tmpAdr % nodeAdr % oTarget;
         //lookup hash for cpu/addr combo from reflocation table, use the found hash as key to alloctable
         //TODO: make this support arbitrary addresses and multiple nodes with the same global address
 
