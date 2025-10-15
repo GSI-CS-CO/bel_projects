@@ -157,6 +157,8 @@ void VisitorDownloadCrawler::visit(const Flow& el) const  {
 
   if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(targetCpu, tmpAdr))))->v, myEdge(det::sCmdFlowDst),   g);
 
+  setRefLinks();
+
 }
 
 void VisitorDownloadCrawler::visit(const Switch& el) const  {

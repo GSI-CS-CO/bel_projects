@@ -103,6 +103,10 @@ void Flow::deserialise(uint8_t* b)  {
 void Flow::serialise(const mVal &m, uint8_t* b) const {
   Command::serialise(m, b);
   writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_FLOW_DEST, m.at(CMD_FLOW_DEST));
+
+  for (auto it = m.begin(); it != m.end(); it++) { 
+    writeLeNumberToBeBytes(b + (ptrdiff_t)it->first, it->second); 
+  }
 }
 
 void Wait::deserialise(uint8_t* b)  {

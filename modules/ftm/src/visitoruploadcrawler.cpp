@@ -29,7 +29,7 @@ void VisitorUploadCrawler::visit(const TimingMsg& el) const  {
 }
 
 void VisitorUploadCrawler::visit(const Flow& el) const  {
-  el.serialise( getDefDst() + getCmdTarget((Command&)el) + getFlowDst(), b);
+  el.serialise( getDefDst() + getCmdTarget((Command&)el) + getFlowDst() + getRefLinks(), b);
 }
 
 void VisitorUploadCrawler::visit(const Switch& el) const {
