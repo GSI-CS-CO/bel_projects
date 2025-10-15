@@ -14,6 +14,8 @@
 #include <boost/multi_index/hashed_index.hpp>
 #include "common.h"
 #include "bmiContainers.h"
+#include <boost/serialization/serialization.hpp>
+#include <boost/serialization/nvp.hpp>
 
 using boost::multi_index_container;
 using namespace boost::multi_index;
