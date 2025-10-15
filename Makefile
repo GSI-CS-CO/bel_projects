@@ -674,11 +674,16 @@ set_max_parallel_processors:
 	done
 
 # We need to run ./fix-git.sh and ./install-hdlmake.sh: make them a prerequisite for Makefile
-Makefile: prereq-rule
+Makefile: prereq-rule git_apply_patches
 
 prereq-rule::
 	@test -d .git/modules/ip_cores/wrpc-sw/modules/ppsi || \
-		(echo "Downloading submodules"; ./fix-git.sh)
+		(echo "Downloading submodules..."; ./fix-git.sh)
+
+git_apply_patches::
+	echo "Applying git patches..."
+	cp patches/wr-cores/* ip_cores/wr-cores
+	cd ip_cores/wr-cores && git apply *.patch && rm *.patch
 
 git_submodules_update:
 	@git submodule update --recursive

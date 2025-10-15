@@ -1,0 +1,25 @@
+From 22d85cd279d8f8efcc5e2d1e2906023d7563a121 Mon Sep 17 00:00:00 2001
+From: "A. Hahn" <a.hahn@gsi.de>
+Date: Wed, 15 Oct 2025 14:51:57 +0200
+Subject: [PATCH] wrc_urv_wrapper: remove entity work....
+
+---
+ modules/wrc_core/wrc_urv_wrapper.vhd | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/modules/wrc_core/wrc_urv_wrapper.vhd b/modules/wrc_core/wrc_urv_wrapper.vhd
+index d217b389..3871b702 100644
+--- a/modules/wrc_core/wrc_urv_wrapper.vhd
++++ b/modules/wrc_core/wrc_urv_wrapper.vhd
+@@ -127,7 +127,7 @@ begin
+ 
+   dwb_o <= dwb_out;
+ 
+-  U_cpu_core : entity work.urv_cpu
++  U_cpu_core : urv_cpu
+     generic map (
+       g_with_hw_debug => 1,
+       g_with_hw_mulh => 1,
+-- 
+2.43.0
+
