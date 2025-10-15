@@ -35,6 +35,9 @@ void init() {
         cRules.insert(ConstellationRule(n::sCmdFlow,     e::sDefDst,     cNonMeta, 0, 1  ));
         cRules.insert(ConstellationRule(n::sCmdFlow,     e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},  0, 1  ));
         cRules.insert(ConstellationRule(n::sCmdFlow,     e::sCmdFlowDst, cNonMeta, 0, 1  ));
+        cRules.insert(ConstellationRule(n::sCmdFlow,     e::sDyn[DYN_MODE_ADR], cNonMeta,  0, MaxOccurrance::REF  ));
+        cRules.insert(ConstellationRule(n::sCmdFlow,     e::sDyn[DYN_MODE_REF], cNonMeta,  0, MaxOccurrance::REF  ));
+        cRules.insert(ConstellationRule(n::sCmdFlow,     e::sDyn[DYN_MODE_REF2], cNonMeta,  0, MaxOccurrance::REF  ));
         cRules.insert(ConstellationRule(n::sSwitch,      e::sDefDst,     cNonMeta, 0, 1  ));
         cRules.insert(ConstellationRule(n::sSwitch,      e::sSwitchTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},  0, 1  ));
         cRules.insert(ConstellationRule(n::sSwitch,      e::sSwitchDst, cNonMeta, 0, 1  ));
