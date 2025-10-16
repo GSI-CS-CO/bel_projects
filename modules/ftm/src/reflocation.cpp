@@ -22,9 +22,14 @@ void RefLocation::init(EbWrapper* ebd, const uint32_t sharedOffs) {
   ml.clear();
   mf.clear();
 
-  ml.insert({dmv::sZero, 0x0 });                                                      //zero as an always working trst
-  ml.insert({dloc::sThrCtl,     sharedOffs + SHCTL_THR_CTL});                         //allows thread start/halt from other platfroms
-  ml.insert({dloc::sRegisters,  sharedOffs + ebd->getCtlAdr(ADRLUT_SHCTL_REGS)});     //'mail boxes' for interplatform communication
+  ml.insert({dmv::sZero, 0x0 });                                                          //zero as an always working trst
+  ml.insert({dloc::sThrCtl,     sharedOffs + SHCTL_THR_CTL});                             //allows thread start/halt from other platfroms
+  ml.insert({dloc::sRegisters,  sharedOffs + ebd->getCtlAdr(ADRLUT_SHCTL_REGS) + 0 * _32b_SIZE_});     //'mail boxe' 0 for interplatform communication
+  
+  //HACK - Field offsets here don't work, so we gotta name everything.
+  //Yes we could do it Suffixes with sRegisters like we did with sThrDataDl etc, but that would break Unilac 50Hz Sync.
+  //Fuck it all, assign new name and good riddance, DMv2 will make it all good.
+  ml.insert({dloc::sInbox,  sharedOffs + ebd->getCtlAdr(ADRLUT_SHCTL_REGS) + 1 * _32b_SIZE_});         //'mail box' 1 for interplatform communication
 
   //Thread staging areas (pretime, starttime etc). Allows remote manipulation of these parameters (be)for(e) thread starts
   for(int i=0; i < ebd->getThrQty(); i++) {

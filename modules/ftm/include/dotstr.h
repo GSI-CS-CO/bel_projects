@@ -18,6 +18,7 @@ namespace DotStr {
       extern const std::string sThrDataDl;
       extern const std::string sThrStaging;
       extern const std::string sThrStart;
+      extern const std::string sInbox;
     }
     namespace fields {
       extern const std::string sThrTB;

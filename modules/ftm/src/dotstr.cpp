@@ -13,6 +13,7 @@ namespace DotStr {
       const std::string sThrDataDl  = "threadData"; //change to "threadDeadline"
       const std::string sThrDataCt  = "threadCurrTime";
       const std::string sThrStart   = "threadStart";
+      const std::string sInbox      = "inbox";
     }
 
 //TODO: Make fields work on both ends of reference edges
