@@ -228,15 +228,16 @@ sdbfs::
 sdbfs-clean::
 	$(MAKE) -C ip_cores/fpga-config-space/sdbfs DIRS="lib userspace" clean
 
-lm32-toolchain-download :
-	test -f lm32-gcc.tar.xz || wget -c https://github.com/GSI-CS-CO/lm32-toolchain/releases/download/v1.1-2023-04-04/lm32-gcc-4.5.3.tar.xz -O lm32-gcc.tar.xz
+lm32-toolchain-download:
+	test -f lm32-toolchain.tar.xz || wget -c https://github.com/GSI-CS-CO/lm32-toolchain/releases/download/v1.1-2023-04-04/lm32-gcc-4.5.3.tar.xz -O lm32-toolchain.tar.xz
 
 lm32-toolchain:	lm32-toolchain-download
-	test -d lm32-gcc || tar -xf lm32-gcc.tar.xz
+	test -d lm32-toolchain || tar -xf lm32-toolchain.tar.xz
 	test -d lm32-gcc-4.5.3 && mv lm32-gcc-4.5.3 lm32-toolchain || true
 
 lm32-toolchain-clean::
-	rm -rf lm32-toolchain
+	rm -rf lm32-toolchain.tar.xz || true
+	rm -rf lm32-toolchain || true
 
 lm32-cluster-testbench-run:: lm32-toolchain hdlmake_install
 	make -C testbench/lm32_cluster/test run
@@ -252,7 +253,7 @@ riscv-toolchain:	riscv-toolchain-download
 	test -d riscv-11.2-small && mv riscv-11.2-small riscv-toolchain || true
 
 riscv-toolchain-clean::
-	rm -rf riscv_gcc.tgz || true
+	rm -rf riscv-11.2-small.tgz || true
 	rm -rf riscv-toolchain || true
 
 wrpc-sw-config::
