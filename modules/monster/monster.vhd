@@ -1543,8 +1543,8 @@ begin
       msi_slave_o   => dev_msi_slave_o);
 
   top2dev_bus : xwb_register_link
-    --generic map(
-    --  g_wb_adapter  => false)
+    generic map(
+      g_wb_adapter  => false)
     port map(
       clk_sys_i     => clk_sys,
       rst_n_i       => rstn_sys,
@@ -1554,8 +1554,8 @@ begin
       master_o      => dev_bus_slave_i (c_devm_top));
 
   dev2top_msi : xwb_register_link
-    --generic map(
-    --  g_wb_adapter  => false)
+    generic map(
+      g_wb_adapter  => false)
     port map(
       clk_sys_i     => clk_sys,
       rst_n_i       => rstn_sys,
@@ -1565,8 +1565,8 @@ begin
       master_o      => top_msi_slave_i (top_slaves'pos(tops_dev)));
 
   top2wrc_bus : xwb_register_link
-    --generic map(
-    --  g_wb_adapter  => false)
+    generic map(
+      g_wb_adapter  => false)
     port map(
       clk_sys_i     => clk_sys,
       rst_n_i       => rstn_sys,
@@ -1576,8 +1576,8 @@ begin
       master_o      => wrc_slave_i);
 
   top2wrc_aux_bus : xwb_register_link
-    --generic map(
-    --  g_wb_adapter  => false)
+    generic map(
+      g_wb_adapter  => false)
     port map(
       clk_sys_i     => clk_sys,
       rst_n_i       => rstn_sys,
