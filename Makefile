@@ -683,7 +683,9 @@ prereq-rule::
 
 git_apply_patches::
 	@test -f ip_cores/wr-cores/*.patch || \
-		(echo "Applying git patches..."; cp patches/wr-cores/* ip_cores/wr-cores; cd ip_cores/wr-cores && git apply *.patch)
+		(echo "Applying wr-cores git patches..."; cp patches/wr-cores/* ip_cores/wr-cores; cd ip_cores/wr-cores && git apply *.patch)
+	@test -f ip_cores/general-cores/*.patch || \
+		(echo "Applying general-cores git patches..."; cp patches/wr-cores/* ip_cores/wr-cores; cd ip_cores/wr-cores && git apply *.patch)
 
 git_submodules_update:
 	@git submodule update --recursive
