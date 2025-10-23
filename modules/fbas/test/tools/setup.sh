@@ -35,16 +35,16 @@ setup_fbasrx() {
 }
 
 ##########################################################
-# Test 3:
-# TX SCU sends MPS flag periodically in timing msg with event ID=0x1fcbfcb00 and
-# sends MPS event immediately in timing msg with event ID=0x1fccfcc00.
+# Basic test:
+# TX SCU sends MPS flag periodically in timing msg with event ID=0x1fcbfcb0 and
+# sends MPS event immediately in timing msg with event ID=0x1fccfcc0.
 #
 # RX SCU drive its IO1 output according to MPS flag or on time-out.
 #
 # IO connection with LEMO: RX:IO1 -> TX:IO2
 ##########################################################
 
-precheck_test3() {
+precheck_basic() {
     echo "Step 1: test TLU action for TX"
     echo "Snoop TLU event (for IO action) on 1st terminal invoke command given below:"
     echo "saft-ctl fbastx -xv snoop $evt_tlu $evt_id_mask 0"
@@ -60,7 +60,7 @@ precheck_test3() {
     echo "if on 1st terminal some events like 'tDeadline: 2020-11-02 17:24:49.591537414 FID: 0xf GID: 0x0fff EVTNO: 0x0100 Other: 0x000000001 Param: 0x0000000000000000!late (by 8186 ns)' is displayed, then it's ready for next step"
 }
 
-start_test3() {
+start_basic() {
 
     verbosity="verbose"
 
@@ -75,11 +75,11 @@ start_test3() {
     echo "send OK and NOK each $total times -> $(( $total * 2)) MPS events ($(( $total * 4 )) transmissions)"
     for i in $(seq 1 $total); do
         echo "idx = 0xff, flag = OK(1)  -> 1x MPS event (1x transmission)"
-        saft-ctl fbastx -p inject $evt_mps_flag_ok 0x0 1000000
+        saft-ctl fbastx -p inject $evt_mps_1_ok 0x0 1000000
         wait_seconds 1
 
         echo "idx = 0xff, flag = NOK(2) -> 1x MPS event (3x transmissions)"
-        saft-ctl fbastx -p inject $evt_mps_flag_nok 0x0 1000000
+        saft-ctl fbastx -p inject $evt_mps_1_nok 0x0 1000000
         wait_seconds 1
     done
 
@@ -101,7 +101,7 @@ start_test3() {
     echo "Disable MPS task on TX and RX nodes"
     disable_mps_all
 
-    cnt=$(eb-read $tx_node_dev $addr_cnt1/4)
+    cnt=$(eb-read $tx_node_dev $addr_cnt/4)
     cnt_dec=$(printf "%d" 0x$cnt)
     echo "MPS msgs (TX): $cnt ($cnt_dec)"
 
@@ -114,13 +114,13 @@ start_test3() {
     echo "MPS overflow msgs (RX): $cnt ($cnt_dec)"
 
     echo -n "MPS event handling: "
-    read_measurement_results $tx_node_dev $instr_st_tx_mps_handle $addr_msr1 $verbosity
+    read_measurement_results $tx_node_dev $instr_st_eca_handle $addr_avg $verbosity
 
     echo -n "Transmission delay: "
-    read_measurement_results $tx_node_dev $instr_st_tx_dly $addr_msr1 $verbosity
+    read_measurement_results $tx_node_dev $instr_st_tx_dly $addr_avg $verbosity
 
     echo -n "Signalling latency: "
-    read_measurement_results $tx_node_dev $instr_st_sg_lty $addr_msr1 $verbosity
+    read_measurement_results $tx_node_dev $instr_st_sg_lty $addr_avg $verbosity
 
     result_ttl_ival $rx_node_dev $verbosity
 

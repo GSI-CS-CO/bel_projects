@@ -8,10 +8,9 @@ domain=$(hostname -d)
 rxscu_name="scuxl0411"
 rxscu="$rxscu_name.$domain"
 
-fw_scu_def="fbas.scucontrol.bin"      # default LM32 FW for TX/RX SCUs
-fw_scu_multi="fbas16.scucontrol.bin"  # supports up to 16 MPS channels
+fw_scu_def="fbas128.scucontrol.bin"     # default FW that supports up to 16 TX nodes, each has 1 MPS channel
 fn_mps_events="simple_mps_events.sched" # filename with schedule for the MPS events
-n_repeat=1                            # number of repeatations of the schedule
+n_repeat=1                              # number of repeatations of the schedule
 
 usage() {
 
@@ -40,28 +39,26 @@ user_approval() {
 setup_node() {
     echo -e "\n check deployment\n"
 
-    filenames="$fw_scu_def $fw_scu_multi $script_rxscu $fn_mps_events"
+    filenames="$fw_scu_def $script_rxscu $fn_mps_events"
 
-    for filename in $filenames; do
-        output=$(timeout 10 sshpass -p "$userpasswd" ssh $username@$rxscu \
-            "if [ ! -f $filename ]; then echo $filename not found on ${rxscu}; exit 2; fi")
-        ret_code=$?
-        report_check $ret_code $filename $rxscu
-    done
+    check_deployment $rxscu $filenames
 
-    echo -e "\n load FW ($fw_scu_multi) & configure\n"
+    echo -e "\n load FW ($fw_scu_def) & configure\n"
 
     unset sender_opts
-    mac_rxscu=$(timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" \
-        "eb-mon -m dev/wbm0")
+    mac_rxscu=$(run_remote $rxscu "eb-mon -m dev/wbm0")
     ret_code=$?
     if [ $ret_code -ne 0 ]; then
         echo "FAIL ($ret_code): sender ID of $rxscu is unknown. Exit!"
         exit 1
     fi
-    output=$(timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" \
-        "source setup_local.sh && \
-        setup_mpsrx $fw_scu_multi SENDER_TX $mac_rxscu")
+
+    # update the parameter field of timing messages with MAC of local SCU and
+    # configure the local SCU firmware with this MAC
+    output=$(run_remote $rxscu \
+        "sed -i \"s|00267b0006d7|$mac_rxscu|g\" $fn_mps_events; \
+        source setup_local.sh && \
+        setup_mpsrx $fw_scu_def SENDER_TX $mac_rxscu")
     ret_code=$?
     if [ $ret_code -ne 0 ]; then
         echo "FAIL ($ret_code): cannot set up $rxscu_name. Exit!"
@@ -74,23 +71,23 @@ inject_events() {
     # $2 - filename with schedule for the MPS events
 
     echo -e "\n enable MPS operation (RX=$rxscu_name)"
-    output=$(sshpass -p "$userpasswd" ssh $username@$rxscu \
+    output=$(run_remote $rxscu \
         "source setup_local.sh && enable_mps \$rx_node_dev")
 
     # start local injection of MPS events
     echo -e " inject MPS events\n"
-    sshpass -p "$userpasswd" ssh $username@$rxscu \
+    run_remote $rxscu \
         "source setup_local.sh && inject_mps_events $1 $2"
 
     echo -e "\n disable MPS operation (RX=$rxscu_name)"
-    output=$(sshpass -p "$userpasswd" ssh "$username@$rxscu" \
+    output=$(run_remote $rxscu \
         "source setup_local.sh && disable_mps \$rx_node_dev")
 }
 
 show_rx_stats() {
     # report test result
     echo -en "\nRX: "
-    sshpass -p "$userpasswd" ssh "$username@$rxscu" \
+    run_remote $rxscu \
         "source setup_local.sh && \
         read_counters \$rx_node_dev $verbose && \
         result_msg_delay \$rx_node_dev $verbose && \
@@ -118,7 +115,7 @@ if [ -z "$username" ]; then
 fi
 
 if [ -z "$userpasswd" ]; then
-    read -rsp "password for '$username' : " userpasswd
+    read -rsp "password for '$username@$rxscu_name': " userpasswd
 fi
 
 # set up RX node

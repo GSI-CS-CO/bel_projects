@@ -14,6 +14,7 @@ enum MSR_CNT {
   TX_EVT_CNT,
   ECA_VLD_ACT,
   ECA_OVF_ACT,
+  BAD_MSG_CNT,
   N_MSR_CNT,
 };
 
