@@ -3,7 +3,7 @@
 # Prerequisites: working ssh tunnel (eg., using sshuttle)
 
 # Deploy test artifacts to the management host (ie., tsl101)
-# - LM32 firmware:      fw/fbas.scucontrol.bin
+# - LM32 firmware:      fw/fbas*.scucontrol.bin
 # - SCU tools/scripts:  scu/setup_local.sh
 
 username="$USER"
@@ -56,7 +56,7 @@ fi
 hostname+=.$domain
 
 # local deployment
-output=$(rsync $rsync_opts --include='fbas.*.bin' --include='fbas16.*.bin' \
+output=$(rsync $rsync_opts --include='fbas*.scucontrol.bin' \
     --include='sb_scan*.bin' --exclude='*' "$build_dir/" "$lm32_fw_dir/")
 
 if [ $? -ne 0 ]; then

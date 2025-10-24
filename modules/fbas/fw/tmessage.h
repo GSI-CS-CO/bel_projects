@@ -66,23 +66,22 @@ struct nw_addr {
   uint32_t ip;
 };
 
-extern mpsMsg_t bufMpsMsg[N_MPS_CHANNELS];         // buffer for MPS messages
-extern timedItr_t rdItr;                           // read-access iterator for MPS flags
+extern mpsMsg_t bufMpsMsg[N_MAX_MPS_CHANNELS];     // buffer for MPS messages
+extern msgCtrl_t  mpsMsgCtrl;                      // MPS messaging control structure
 
-void      initItr(timedItr_t *const itr, const uint8_t total, const uint64_t now, const uint32_t freq);
-void      resetItr(timedItr_t* itr, const uint64_t now);
-uint32_t  msgSendPeriodicMps(timedItr_t* itr, const uint64_t evtid);
-uint32_t  msgSendSpecificMps(const timedItr_t* itr, mpsMsg_t *const buf, const uint64_t evtid, const uint8_t extra);
-uint32_t  sendMpsMsgBlock(size_t len, timedItr_t* itr, uint64_t evtId);
-mpsMsg_t* msgFetchMps(const uint64_t evt);
-int       msgStoreMpsMsg(const uint64_t *raw, const uint64_t *ts, const timedItr_t* itr);
+void      msgInitMsgCtrl(msgCtrl_t *const ctrl, const uint8_t total, const uint64_t now, const uint32_t freq);
+uint32_t  msgSignalMpsEvent(const msgCtrl_t* msgCtrl, mpsMsg_t *const buf, const uint64_t evtid, const uint8_t extra);
+uint32_t  msgSendMpsFlag(msgCtrl_t* ctrl, uint64_t evtId);
+mpsMsg_t* msgFetchMps(const uint8_t idx, const uint64_t evt, const uint64_t ts);
+int       msgStoreMpsMsg(const uint64_t *raw, const uint64_t *ts, const msgCtrl_t* msgCtrl);
 mpsMsg_t* evalMpsMsgTtl(uint64_t now, int idx);
-void      msgInitMpsMsgBuf(uint64_t *const pId);
-void      resetMpsMsg(const size_t len, mpsMsg_t *const buf);
-void      msgSetSenderId(const int offset, uint64_t *const pId, uint8_t verbose);
+void      msgInitMpsMsg(const uint64_t *id);
+void      msgResetMpsBuf(const uint8_t idx, const uint8_t *pId, const uint8_t flag);
+void      msgForceHigh(mpsMsg_t *const buf);
+void      msgUpdateMpsBuf(const uint64_t *pId);
 
-status_t  msgRegisterNode(const uint64_t id, const regCmd_t cmd);
-bool      msgIsSenderIdKnown(uint64_t *const pId);
+status_t  msgRegisterNode(const uint64_t id, const regCmd_t cmd, const uint8_t info);
+int8_t    msgGetNodeIndex(const uint64_t *pId);
 
 void      ioPrintMpsBuf(void);
 

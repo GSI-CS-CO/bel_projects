@@ -10,7 +10,7 @@ source $dir_name/test_ttf_basic.sh -s  # source the specified script
 domain=$(hostname -d)
 rxscu="scuxl0497.$domain"
 sleep_sec=20
-fw_rxscu="fbas16.scucontrol.bin"    # default LM32 FW for RX SCU
+fw_rxscu="fbas128.scucontrol.bin"    # default LM32 FW for RX SCU
 
 usage() {
     echo "Usage: $0 [OPTION]"
@@ -50,22 +50,18 @@ echo "----------------"
 
 filenames="$fw_rxscu $script_rxscu"
 
-for filename in $filenames; do
-    timeout 10 sshpass -p "$userpasswd" ssh $username@$rxscu "if [ ! -f $filename ]; then echo $filename not found on ${rxscu}; exit 2; fi"
-    result=$?
-    report_check $result $filename $rxscu
-done
+check_deployment $rxscu $filenames
 
 echo -e "\nset up '${rxscu%%.*}'\n------------"
-output=$(timeout 20 sshpass -p "$userpasswd" ssh $username@$rxscu "source setup_local.sh && setup_mpsrx $fw_rxscu SENDER_ALL")
+output=$(run_remote $rxscu "source setup_local.sh && setup_mpsrx $fw_rxscu SENDER_ALL")
 
 # enable MPS task of rxscu
-timeout 20 sshpass -p "$userpasswd" ssh $username@$rxscu "source setup_local.sh && start_test4 \$rx_node_dev"
+run_remote $rxscu "source setup_local.sh && start_test4 \$rx_node_dev"
 
 echo "wait $sleep_sec seconds (start Xenabay schedule now)"
 echo "------------"
 sleep $sleep_sec  # wait for given seconds
 
 # disable MPX task of rxscu"
-timeout 20 sshpass -p "$userpasswd" ssh $username@$rxscu "source setup_local.sh && stop_test4 \$rx_node_dev && \
+run_remote $rxscu "source setup_local.sh && stop_test4 \$rx_node_dev && \
     read_counters \$rx_node_dev $verbose && result_msg_delay \$rx_node_dev $verbose"
