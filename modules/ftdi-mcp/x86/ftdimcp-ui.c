@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define FTDIMCP_UI_VERSION 0x000006
+#define FTDIMCP_UI_VERSION 0x000008
 
 // standard includes 
 #include <unistd.h> // getopt

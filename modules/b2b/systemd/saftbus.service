@@ -4,7 +4,7 @@ Requires = dev-wbm0.device
 After = dev-wbm0.device
 
 [Service]
-CPUSchedulingPolicy=fifo
+CPUSchedulingPolicy=rr
 CPUSchedulingPriority=20
 Type = simple
 Restart=always
