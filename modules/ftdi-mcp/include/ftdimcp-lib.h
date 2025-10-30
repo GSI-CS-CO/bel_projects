@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 07-Mar-2024
+ *  version : 20-Oct-2025
  * 
  * x86 routines for a MCP4725 connected via FT232H
  * as an example, this can be used to set the level of a comparator circuit
@@ -38,7 +38,7 @@
 #ifndef _FTDIMCP_LIB_H_
 #define _FTDIMCP_LIB_H_
 
-#define FTDIMCP_LIB_VERSION 0x000007
+#define FTDIMCP_LIB_VERSION 0x000008
 
 // ftdi, i2c
 #include <ftd2xx.h>

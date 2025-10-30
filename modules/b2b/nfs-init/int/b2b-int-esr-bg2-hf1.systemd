@@ -1,6 +1,20 @@
-# this is a hack for sl7
-export DIM_DNS_NODE=asl105
+# yocto
+SERVICEA=b2b-servsys-int-esr-pm.service
+SERVICEB=b2b-servsys-int-esr-cbu.service
+SERVICEC=b2b-jittercheck-int-esr-pm.service
+cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
+cp -a $MOUNTPOINT/systemd/$SERVICEB /lib/systemd/system
+cp -a $MOUNTPOINT/systemd/$SERVICEC /lib/systemd/system
+systemctl daemon-reload
 
-b2b-serv-sys dev/wbm0 -s int_esr-pm &
-b2b-serv-sys dev/wbm1 -s int_esr-cbu &
-b2b-jitter-check tr1 tr0 -p1 -t1 int_esr-pm &
+systemctl start $SERVICEA
+systemctl start $SERVICEB
+systemctl start $SERVICEC
+
+
+# this is a hack for sl7
+#export DIM_DNS_NODE=asl105
+#
+#b2b-serv-sys dev/wbm0 -s int_esr-pm &
+#b2b-serv-sys dev/wbm1 -s int_esr-cbu &
+#b2b-jitter-check tr1 tr0 -p1 -t1 int_esr-pm &

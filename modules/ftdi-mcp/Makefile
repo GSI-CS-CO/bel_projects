@@ -29,12 +29,12 @@ ARCH        ?=
 endif
 
 ifeq ($(SYSENV), YOCTO)
-USRPATH     := /common/usr/timing/b2b/yocto/usr
+USRPATH     := /common/usr/timing/user-dietrich/yocto/usr
 ARCH        := /x86_64
 endif
 
 ifeq ($(SYSENV), ACC7)
-USRPATH     := /common/usr/timing/b2b/centos7/usr
+USRPATH     := /common/usr/timing/user-dietrich/centos7/usr
 ARCH        := /x86_64
 endif
 
@@ -51,7 +51,12 @@ TARGETS := software nfsinit
 all: $(TARGETS)
 
 software:: 
+ifeq ($(SYSENV), YOCTO)
+# I really hate this hack, but I found no simpler solution
+	bash x86/make-yocto-software-all
+else
 	$(MAKE) -C $(SW) all
+endif 
 
 nfsinit:
 	echo $(shell cd $(NFSINIT); $(GENNFSINIT)/generate-main.sh $(ENV); cd ..)
@@ -84,7 +89,7 @@ deploy:
 #	cp $(SW)/*.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin                    # '/usr' is a hack
 
 # systemd
-#	cp $(SYSTEMD)/*.service $(STAGING)/$(SYSTEMD)                       # systemd units
+	cp $(SYSTEMD)/*.service $(STAGING)/$(SYSTEMD)                       # systemd units
 
 .PHONY: all clean
 

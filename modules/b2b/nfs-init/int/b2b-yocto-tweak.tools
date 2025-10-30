@@ -18,3 +18,6 @@ systemctl stop saftbus
 cp -a $MOUNTPOINT/systemd/saftbus.service /lib/systemd/system
 systemctl daemon-reload
 systemctl start saftbus
+
+logger "wait 20s to let things calm down ..."
+sleep 20 
