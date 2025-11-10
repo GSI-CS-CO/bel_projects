@@ -19,8 +19,7 @@ files = [
    "atr_puls_n.vhd",
    "atr_timeout.vhd",
    "fg901040.vhd",
-   "in_reg.vhd",
-   "front_board_id.vhd"
+   "in_reg.vhd"
 ]
 
 modules = {
