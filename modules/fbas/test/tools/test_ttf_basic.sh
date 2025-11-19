@@ -33,7 +33,7 @@ run_remote() {
     # $@ - commands for the remote host
 
     local host=$1; shift
-    timeout 20 sshpass -p "$userpasswd" $ssh_cmd $username@$host "$@"
+    sshpass -p "$userpasswd" $ssh_cmd $username@$host "$@"
 }
 
 check_deployment() {
