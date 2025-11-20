@@ -5,8 +5,12 @@
 #include <string.h>
 #include <stack.h>
 
+#if 0
 #include "syscon.h"
+#endif
+#if 0
 #include "hw/memlayout.h"
+#endif
 #include "mprintf.h"
 #include "display.h"
 #include "irq.h"
@@ -15,7 +19,9 @@
 #include "mini_sdb.h"
 #include "board.h"
 #include "uart.h"
+#if 0
 #include "w1.h"
+#endif
 #include "fg.h"
 #include "cb.h"
 #include "scu_mil.h"
@@ -649,6 +655,7 @@ void disable_channel(unsigned int channel) {
 /** @brief updates the temperatur information in the shared section
  */
 void updateTemp() {
+#if 0
   BASE_ONEWIRE = (unsigned char *)wr_1wire_base;
   wrpc_w1_init();
   ReadTempDevices(0, &board_id, &board_temp);
@@ -658,6 +665,7 @@ void updateTemp() {
   ReadTempDevices(1, &backplane_id, &backplane_temp);
   BASE_ONEWIRE = (unsigned char *)wr_1wire_base; // important for PTP deamon
   wrpc_w1_init();
+#endif
 }
 
 /** @brief initialize the irq table and set the irq mask
@@ -1347,7 +1355,9 @@ int main(void) {
     mprintf("SYS_CON found on adr: 0x%x\n", BASE_SYSCON);
 
   timer_init(1); //needed by usleep_init()
+#if 0
   usleep_init();
+#endif
 
   if((int)cpu_info_base == ERROR_NOT_FOUND) {
     mprintf("no CPU INFO ROM found!\n");

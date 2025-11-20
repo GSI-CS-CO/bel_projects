@@ -1,6 +1,8 @@
 #include "scu_bus.h"
 #include "display.h"
+#if 0
 #include "w1.h"
+#endif
 #include "inttypes.h"
 #include "pp-printf.h"
 #include "dow_crc.h"
@@ -21,10 +23,10 @@ void probe_scu_bus(volatile unsigned short* bus_addr, unsigned short system_addr
   for (slot = 1; slot <= MAX_SCU_SLAVES; slot++) {
     cid_sys = bus_addr[(slot<<16) + CID_SYS];     //CID system addr from slave
     cid_group = bus_addr[(slot<<16) + CID_GROUP]; //CID group addr from slave
-    if (cid_sys == system_addr && cid_group == group_addr) 
-      *(slaves++) = slot;  
+    if (cid_sys == system_addr && cid_group == group_addr)
+      *(slaves++) = slot;
   }
-  *slaves = 0; // end of device list 
+  *slaves = 0; // end of device list
 }
 
 /** @brief read temperature from all temp sensors on the bus
@@ -33,6 +35,7 @@ void probe_scu_bus(volatile unsigned short* bus_addr, unsigned short system_addr
  *  @param temp the temperatur value of the 1Wire device
  */
 void ReadTempDevices(int bus, uint64_t *id, uint32_t *temp) {
+#if 0
   struct w1_dev *d;
   int i;
   int tvalue;
@@ -64,4 +67,5 @@ void ReadTempDevices(int bus, uint64_t *id, uint32_t *temp) {
     pp_printf("no devices found on bus %d\n", wrpc_w1_bus.detail);
     #endif
   }
-} 
+#endif
+}
