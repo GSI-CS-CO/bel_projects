@@ -11,6 +11,7 @@ SHELL = /bin/sh
 OBJCOPY		=  $(CROSS_COMPILE)objcopy
 GENRAMMIF	?= $(TOP)/ip_cores/wrpc-sw/tools/genrammif
 INCPATH	:= $(TOP)/modules/lm32-include
+WRPC_IMPORT := $(TOP)/modules/lm32-include/wrpc-import
 WBTIMER_INCL := $(TOP)/modules/wb_timer
 EBPATH  := $(TOP)/ip_cores/etherbone-core/hdl/eb_master_core
 W1    	:= $(TOP)/ip_cores/wrpc-sw
