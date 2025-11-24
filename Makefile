@@ -681,15 +681,21 @@ prereq-rule::
 	@test -d .git/modules/ip_cores/wrpc-sw/modules/ppsi || \
 		(echo "Downloading submodules..."; ./fix-git.sh)
 
-git_apply_patches:
+git_apply_patches::
 	@for core in wr-cores general-cores; do \
-		if [ ! -f ip_cores/$$core/*.patch ]; then \
-			echo "Applying $$core git patches..."; \
-			cp patches/$$core/* ip_cores/$$core; \
-			cd ip_cores/$$core && git apply *.patch; \
-			cd - >/dev/null; \
+	  if [ ! -f patches/done ]; then \
+		  if [ ! -f ip_cores/$$core/*.patch ]; then \
+			  echo "Applying $$core git patches..."; \
+			  cp patches/$$core/* ip_cores/$$core; \
+			  cd ip_cores/$$core && git apply *.patch; \
+			  cd - >/dev/null; \
+		  fi; \
+		else \
+		  echo "Skipping git patches for $$core..."; \
 		fi; \
 	done
+	@test -f patches/done || \
+		(touch patches/done)
 
 git_submodules_update:
 	@git submodule update --recursive
