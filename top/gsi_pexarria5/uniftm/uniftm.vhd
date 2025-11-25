@@ -6,7 +6,7 @@ library work;
 use work.monster_pkg.all;
 use work.ramsize_pkg.c_lm32_ramsizes;
 
-entity ftm is
+entity uniftm is
   port(
     clk_20m_vcxo_i    : in std_logic;  -- 20MHz VCXO clock
     clk_125m_pllref_i : in std_logic;  -- 125 MHz PLL reference
@@ -206,9 +206,9 @@ entity ftm is
     sfp4_mod0         : in    std_logic; -- grounded by module
     sfp4_mod1         : inout std_logic; -- SCL
     sfp4_mod2         : inout std_logic); -- SDA
-end ftm;
+end uniftm;
 
-architecture rtl of ftm is
+architecture rtl of uniftm is
 
   signal led_link_up  : std_logic;
   signal led_link_act : std_logic;
@@ -249,10 +249,10 @@ architecture rtl of ftm is
   );
 
   constant c_family       : string  := "Arria V";
-  constant c_project      : string  := "ftm";
+  constant c_project      : string  := "uniftm";
   constant c_initf_name   : string  := c_project & ".mif";
   constant c_profile_name : string  := "medium_icache";
-  constant c_cores        : natural := 4;
+  constant c_cores        : natural := 1;
 
 begin
 
