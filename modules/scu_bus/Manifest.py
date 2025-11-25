@@ -5,5 +5,7 @@ files = [
   "scu_bus_slave_pkg.vhd",
   "scu_bus_slave.vhd",
   "housekeeping.vhd",
-  "scu_to_wb.vhd"
+  "scu_to_wb.vhd",
+  "detect_backplane.vhd",
+  "scu_bus_mux.vhd"
 ]

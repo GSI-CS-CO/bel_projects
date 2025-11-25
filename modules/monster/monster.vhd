@@ -273,14 +273,16 @@ entity monster is
     usb_pktendn_o          : out   std_logic := 'Z';
     usb_fd_io              : inout std_logic_vector(7 downto 0);
     -- g_en_scubus
-    scubus_a_a             : out   std_logic_vector(15 downto 0) := (others => 'Z');
-    scubus_a_d             : inout std_logic_vector(15 downto 0);
+    scubus_a_a             : out   std_logic_vector(15 downto 0)  := (others => 'Z');
+    scubus_a_d_out         : out   std_logic_vector(15 downto 0);
+    scubus_a_d_in          : in    std_logic_vector(15 downto 0);
+    scubus_a_d_tri_out     : out   std_logic;
     scubus_nsel_data_drv   : out   std_logic := 'Z';
     scubus_a_nds           : out   std_logic := 'Z';
     scubus_a_rnw           : out   std_logic := 'Z';
     scubus_a_ndtack        : in    std_logic;
     scubus_a_nsrq          : in    std_logic_vector(12 downto 1);
-    scubus_a_nsel          : out   std_logic_vector(12 downto 1) := (others => 'Z');
+    scubus_a_nsel          : out   std_logic_vector(12 downto 1)  := (others => 'Z');
     scubus_a_ntiming_cycle : out   std_logic := 'Z';
     scubus_a_sysclock      : out   std_logic := 'Z';
     -- g_en_mil
@@ -431,7 +433,9 @@ entity monster is
     -- g_en_a10ts
     ge_85_c_o              : out   std_logic;
    -- g_en_tempsens
-    tempsens_clr_out       : out   std_logic);
+    tempsens_clr_out       : out   std_logic;
+    -- rack mount timing receiver
+    is_rmt                 : out   std_logic := '0');
 end monster;
 
 architecture rtl of monster is
@@ -996,6 +1000,7 @@ architecture rtl of monster is
 
   signal  tag        : std_logic_vector(31 downto 0);
   signal  tag_valid  : std_logic;
+  signal  s_is_rmt   : std_logic;
 
   -- SCU bus signals
   ----------------------------------------------------------------------------------
@@ -2595,16 +2600,18 @@ end generate;
 
   wb_reset : wb_arria_reset
     generic map(
-      arria_family => g_family,
-      rst_channels => g_lm32_cores,
-      clk_in_hz    => 62_500_000,
-      en_wd_tmr    => g_en_wd_tmr)
+      arria_family   => g_family,
+      rst_channels   => g_lm32_cores,
+      clk_in_hz      => 62_500_000,
+      en_wd_tmr      => g_en_wd_tmr,
+      gpio_out_width => c_eca_gpio)
     port map(
       clk_sys_i      => clk_sys,
       rstn_sys_i     => rstn_sys,
       clk_upd_i      => clk_update,
       rstn_upd_i     => rstn_update,
       hw_version     => hw_version,
+      is_rmt         => s_is_rmt,
       slave_o        => dev_bus_master_i(dev_slaves'pos(devs_reset)),
       slave_i        => dev_bus_master_o(dev_slaves'pos(devs_reset)),
       phy_rst_o      => wbar_phy_rst,
@@ -2614,7 +2621,8 @@ end generate;
       psram_sel_o    => ps_chip_selector,
       neorv32_rstn_o => s_neorv32_rstn,
       rstn_o         => s_lm32_rstn,
-      poweroff_comx  => poweroff_comx);
+      poweroff_comx  => poweroff_comx,
+      gpio_out_led   => s_gpio_out_gated);
 
       wbar_phy_dis_o     <= wbar_phy_dis;
       wbar_phy_aux_dis_o <= wbar_phy_aux_dis;
@@ -3259,7 +3267,6 @@ end generate;
     top_bus_master_i(top_slaves'pos(tops_scubus))  <= cc_dummy_slave_out;
     dev_bus_master_i(dev_slaves'pos(devs_scubirq)) <= cc_dummy_slave_out;
     dev_msi_slave_i (dev_slaves'pos(devs_scubirq)) <= cc_dummy_master_out;
-    scubus_a_d <= (others => 'Z');
   end generate;
   scub_y : if g_en_scubus generate
     scubus_a_sysclock <= clk_12_5;
@@ -3281,7 +3288,9 @@ end generate;
         ctrl_irq_i         => dev_bus_master_o(dev_slaves'pos(devs_scubirq)),
         scu_slave_o        => top_bus_master_i(top_slaves'pos(tops_scubus)),
         scu_slave_i        => top_bus_master_o(top_slaves'pos(tops_scubus)),
-        scub_data          => scubus_a_d,
+        scub_data_out      => scubus_a_d_out,
+        scub_data_in       => scubus_a_d_in,
+        scub_data_tri_out  => scubus_a_d_tri_out,
         nscub_ds           => scubus_a_nds,
         nscub_dtack        => scubus_a_ndtack,
         scub_addr          => scubus_a_a,
@@ -3289,8 +3298,11 @@ end generate;
         nscub_srq_slaves   => scubus_a_nsrq,
         nscub_slave_sel    => scubus_a_nsel,
         nscub_timing_cycle => scubus_a_ntiming_cycle,
-        nsel_ext_data_drv  => scubus_nsel_data_drv);
+        nsel_ext_data_drv  => scubus_nsel_data_drv,
+        is_rmt             => s_is_rmt);
   end generate;
+
+  is_rmt <= s_is_rmt;
 
   mil_n : if not g_en_mil generate
     top_bus_master_i(top_slaves'pos(tops_mil))      <= cc_dummy_slave_out;

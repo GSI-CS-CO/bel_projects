@@ -50,27 +50,29 @@ ENTITY wb_scu_bus IS
 PORT(
 
   -- Wishbone
-  slave_i                 : in  t_wishbone_slave_in;
-  slave_o                 : out t_wishbone_slave_out;
+  slave_i                            : in  t_wishbone_slave_in;
+  slave_o                            : out t_wishbone_slave_out;
 
-  srq_active              : out std_logic_vector(11 downto 0);    -- vector of slave service requests
+  srq_active                         : out std_logic_vector(11 downto 0);    -- vector of slave service requests
 
-  clk                     : in    std_logic;
-  nrst                    : in    std_logic;
+  clk                                : in std_logic;
+  nrst                               : in std_logic;
 
-  Timing_In               : in  std_logic_vector(31 downto 0) := (others => '0');
-  Start_Timing_Cycle      : in  std_logic := '0';
+  Timing_In                          : in std_logic_vector(31 downto 0)  := (others => '0');
+  Start_Timing_Cycle                 : in std_logic                      := '0';
 
-  SCUB_Data               : INOUT   STD_LOGIC_VECTOR(15 DOWNTO 0);
-  nSCUB_DS                : OUT   STD_LOGIC;                      -- SCU_Bus Data Strobe, low active.
-  nSCUB_Dtack             : IN    STD_LOGIC;                      -- SCU_Bus Data Acknowledge, low active.
-  SCUB_Addr               : OUT   STD_LOGIC_VECTOR(15 DOWNTO 0);  -- Address Bus of SCU_Bus
-  SCUB_RDnWR              : OUT   STD_LOGIC;                      -- Read/Write Signal of SCU_Bus. Read is active high.
-                                                                  -- Direction seen from this marco.
-  nSCUB_SRQ_Slaves    : IN    STD_LOGIC_VECTOR(11 DOWNTO 0);      -- Input of service requests up to 12 SCU_Bus slaves, active low.
-  nSCUB_Slave_Sel     : OUT   STD_LOGIC_VECTOR(11 DOWNTO 0);      -- Output select one or more of 12 SCU_Bus slaves, active low.
-  nSCUB_Timing_Cycle  : OUT   STD_LOGIC;                          -- Strobe to signal a timing cycle on SCU_Bus, active low.
-  nSel_Ext_Data_Drv   : OUT   STD_LOGIC                           -- select for external data transceiver to the SCU_Bus, active low.
+  SCUB_Data_Out                      : out std_logic_vector(15 downto 0);
+  SCUB_Data_In                       : in std_logic_vector(15 downto 0);
+  SCUB_Data_Tri_Out                  : out std_logic;
+  nSCUB_DS                           : out std_logic;                      -- SCU_Bus Data Strobe, low active.
+  nSCUB_Dtack                        : in  std_logic;                      -- SCU_Bus Data Acknowledge, low active.
+  SCUB_Addr                          : out std_logic_vector(15 downto 0);  -- Address Bus of SCU_Bus
+  SCUB_RDnWR                         : out std_logic;                      -- Read/Write Signal of SCU_Bus. Read is active high.
+  -- Direction seen from this marco.
+  nSCUB_SRQ_Slaves                   : in std_logic_vector(11 downto 0);   -- Input of service requests up to 12 SCU_Bus slaves, active low.
+  nSCUB_Slave_Sel                    : out std_logic_vector(11 downto 0);  -- Output select one or more of 12 SCU_Bus slaves, active low.
+  nSCUB_Timing_Cycle                 : out std_logic;                      -- Strobe to signal a timing cycle on SCU_Bus, active low.
+  nSel_Ext_Data_Drv                  : out std_logic                       -- select for external data transceiver to the SCU_Bus, active low.
   );
 
 END wb_scu_bus;
@@ -775,7 +777,7 @@ begin
           S_SCUB_DS <= '1';
           IF S_nSync_Dtack(0) = '0' THEN          -- wait for Dtack
             IF Test = 0 THEN
-              ext_rd_data <= SCUB_Data;           -- during production: read the SCUB_Data bidir buffer
+              ext_rd_data <= SCUB_Data_In;           -- during production: read the SCUB_Data bidir buffer
             ELSE
               ext_rd_data <= S_Wr_Data;           -- during test: return the last written data
             END IF;
@@ -1013,13 +1015,14 @@ p_intr: PROCESS (clk, s_reset)
 P_SCUB_Tri_State: PROCESS (SCUB_SM, S_Wr_Data, tag_fifo_q)
   BEGIN
     IF (SCUB_SM = S_Wr_Cyc) OR (SCUB_SM = Wr_Cyc) THEN
-      SCUB_Data <= S_Wr_Data;
+      SCUB_Data_Out <= S_Wr_Data;
     ELSIF (SCUB_SM = Ti_Cyc) OR (SCUB_SM = E_Ti_Cyc) THEN
-      SCUB_Data <= tag_fifo_q(15 DOWNTO 0);
+      SCUB_Data_Out <= tag_fifo_q(15 DOWNTO 0);
     ELSE
-      SCUB_Data <= (OTHERS => 'Z');
+      SCUB_Data_Out <= (OTHERS => '0');
     END IF;
   END PROCESS P_SCUB_Tri_State;
+  SCUB_Data_Tri_Out <= '1' when (SCUB_SM = S_Wr_Cyc) OR (SCUB_SM = Wr_Cyc) OR (SCUB_SM = Ti_Cyc) OR (SCUB_SM = E_Ti_Cyc) else '0';
 
 
 p_time_out: PROCESS (Clk, s_reset)
