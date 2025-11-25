@@ -280,11 +280,11 @@ architecture rtl of scu_control is
     ("B2         ",  IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_GPIO,  true,         false,       IO_CMOS)
   );
 
-  constant c_family  : string := "Arria II";
-  constant c_project : string := "scu_control";
-  constant c_cores   : natural := 1;
-  constant c_profile_name  : string := "medium_icache_debug";
-  constant c_initf   : string := c_project & ".mif" & ';' & c_project & "_stub.mif";
+  constant c_family       : string := "Arria II";
+  constant c_project      : string := "scu_control";
+  constant c_cores        : natural := 1;
+  constant c_profile_name : string := "medium_icache_debug";
+  constant c_initf        : string := c_project & ".mif" & ';' & c_project & "_stub.mif";
   -- projectname is standard to ensure a stub mif that prevents unwanted scanning of the bus
   -- multiple init files for n processors are to be seperated by semicolon ';'
 
@@ -313,7 +313,7 @@ begin
       g_en_wd_tmr          => true,
       g_en_eca_tap         => true,
       g_en_timer           => true,
-      g_en_asmi            => false
+      g_en_asmi            => true
     )
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
