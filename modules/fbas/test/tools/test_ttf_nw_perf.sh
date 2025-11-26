@@ -289,7 +289,17 @@ if [ -z "$username" ]; then
 fi
 
 if [ -z "$userpasswd" ]; then
+<<<<<<< HEAD
     read -rsp "password for '$username@{$rxscu_name, ${txscu_name[@]}}': " userpasswd; echo
+=======
+    read -rsp "password for '$username@$rxscu_name': " userpasswd; echo
+fi
+
+# get the default transmitter SCU name
+if [ ${#txscu_name[@]} -eq 0 ]; then
+    txscu_name+=("$def_txscu_name")
+    txscu+=("$def_txscu_name.$domain")
+>>>>>>> 0ff9e8019 (fbas: make clean password prompt)
 fi
 
 # set the number of events
