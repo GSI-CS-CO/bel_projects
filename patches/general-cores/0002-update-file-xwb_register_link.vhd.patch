@@ -1,0 +1,24 @@
+From f53a827c4029551e6f2180b63f4fcadae3add7cb Mon Sep 17 00:00:00 2001
+From: Alexander Hahn <a.hahn@gsi.de>
+Date: Fri, 17 Oct 2025 15:22:04 +0000
+Subject: [PATCH] Update file xwb_register_link.vhd
+
+---
+ modules/wishbone/wb_register/xwb_register_link.vhd | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/modules/wishbone/wb_register/xwb_register_link.vhd b/modules/wishbone/wb_register/xwb_register_link.vhd
+index 120fd9e..a4f1124 100644
+--- a/modules/wishbone/wb_register/xwb_register_link.vhd
++++ b/modules/wishbone/wb_register/xwb_register_link.vhd
+@@ -33,6 +33,7 @@ use work.wishbone_pkg.all;
+ 
+ entity xwb_register_link is
+   generic (
++    g_wb_adapter         : boolean := true;
+     g_WB_IN_MODE         : t_wishbone_interface_mode      := PIPELINED;
+     g_WB_IN_GRANULARITY  : t_wishbone_address_granularity := BYTE;
+     g_WB_OUT_MODE        : t_wishbone_interface_mode      := PIPELINED;
+-- 
+2.43.0
+

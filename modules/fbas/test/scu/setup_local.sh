@@ -44,8 +44,8 @@ case $platform in
 
         export module_dir="${PWD/fbas*/fbas}"
         export fw_dir="$module_dir/fw"
-        export fw_tx="fbas.pcicontrol.bin"
-        export fw_rx="fbas.pcicontrol.bin"
+        export fw_tx="fbas128.pcicontrol.bin"
+        export fw_rx="fbas128.pcicontrol.bin"
         ;;
     "SCU")
         export node_tlu_input="B2"
@@ -55,22 +55,22 @@ case $platform in
         export rx_node_name="tr0"
 
         export fw_dir="."
-        export fw_tx="fbas.scucontrol.bin"
-        export fw_rx="fbas.scucontrol.bin"
+        export fw_tx="fbas128.scucontrol.bin"
+        export fw_rx="fbas128.scucontrol.bin"
         ;;
 esac
 
 # Declare platform-specific user RAM ranges of TR
 case $platform in
     "PC")
-        export addr_set_node_type="0x04060820"      # user RAM range in Pexp/Pexaria
-        export addr_get_node_type="0x04060830"
+        export addr_set_node_type="0x04060694"      # user RAM range in Pexp/Pexaria
+        export addr_get_node_type="0x040606a4"
         export addr_cmd="0x04060508"     # shared memory location for command buffer
-        export addr_cnt="0x04060934"     # shared memory location for transmitted message counter
-        export addr_avg="0x04060968"     # shared memory location for measurement results
-        export addr_eca_vld="0x04060990" # shared memory location of counter for valid actions
-        export addr_eca_ovf="0x04060994" # shared memory location of counter for overflow actions
-        export addr_senderid="0x04060998" # shared memory location of sender ID
+        export addr_cnt="0x040607a8"     # shared memory location for transmitted message counter
+        export addr_avg="0x040607dc"     # shared memory location for measurement results
+        export addr_eca_vld="0x04060804" # shared memory location of counter for valid actions
+        export addr_eca_ovf="0x04060808" # shared memory location of counter for overflow actions
+        export addr_senderid="0x0406080c" # shared memory location of sender ID
 
         export mac_tx_node="0x00267b0004da" # sender ID of TX node
         ;;
@@ -109,10 +109,14 @@ export instr_st_ttl_ival=0x35   # store the TTL interval measurement results to 
 export instr_st_eca_handle=0x37 # store the measurement result of the ECA handling delay
 
 export     mac_any_node="0xffffffffffff"      # MAC address of any node
+# Raw event data (bits 63-16 = event ID, 15-8 = channel, 7-0 = flag)
 export evt_mps_flag_any="0xffffeeee00000000"  # generator event for MPS flags
-export  evt_mps_flag_ok="0xffffeeee00000001"  # event to generate the MPS OK flag
-export evt_mps_flag_nok="0xffffeeee00000002"  # event to generate the MPS NOK flag
-export evt_mps_flag_tst="0xffffeeee00000003"  # event to generate the MPS TEST flag
+export     evt_mps_1_ok="0xffffeeee00000001"  # event to generate the MPS OK flag (1st channel)
+export    evt_mps_1_nok="0xffffeeee00000002"  # event to generate the MPS NOK flag (1st channel)
+export    evt_mps_1_tst="0xffffeeee00000003"  # event to generate the MPS TEST flag (1st channel)
+export     evt_mps_2_ok="0xffffeeee00000101"  # event to generate the MPS OK flag (2nd channel)
+export    evt_mps_2_nok="0xffffeeee00000102"  # event to generate the MPS NOK flag (2nd channel)
+export    evt_mps_2_tst="0xffffeeee00000103"  # event to generate the MPS TEST flag (2nd channel)
 export evt_mps_prot_std="0x1fcbfcb000000000"  # event with MPS protocol (regular)
 export evt_mps_prot_chg="0x1fccfcc000000000"  # event with MPS protocol (change in flag)
 export          evt_tlu="0xffff100000000000"  # TLU event (used to catch the signal change at IO port)
@@ -163,21 +167,6 @@ list_dev_ram() {
 
     # 12.14          0000000000000651:10041000           4040000  LM32-CB-Cluster
     # 12.14.5        0000000000000651:54111351           4060000  LM32-RAM-User
-}
-
-read_shared_mem() {
-    # $1 - device
-    # $2 - memory address
-
-    eb-read $1 $2/4
-}
-
-write_shared_mem() {
-    # $1 - device
-    # $2 - memory address
-    # $3 - value
-
-    eb-write $1 $2/4 $3
 }
 
 start_saftd() {
@@ -306,8 +295,8 @@ set_senderid() {
     # $[3:] - sender ID(s) of SENDER_TX (without leading 0x)
 
     # SENDER_TX - only TX node
-    # SENDER_ANY - only any nodes
-    # SENDER_ALL - TX and any nodes
+    # SENDER_ANY - only any node
+    # SENDER_ALL - any node + TX node
 
     device=$1
     sender_grp="$2"
@@ -319,41 +308,43 @@ set_senderid() {
         senderid="$senderid 0x$mac"   # format to hexadecimal number (for arithmetic calc.)
     done
 
-    first_idx=1
-    last_idx=15
     unset idx_mac_list  # list with idx_mac
 
-    if [ "$sender_grp" == "SENDER_TX" ]; then
-        # Structure of the MPS message buffer: 'sender id', 'index' and 'MPS flag'.
-        # The buffer can keep the MPS flag of up to 16 TX nodes.
-        # The 'index' is used to identify channels of the same sender, therefore
-        # it's set to zero if each sender has only one MPS channel.
-        i=0
-        for sender in $senderid; do
-            idx=$(( $i << 48 ))
-            idx_mac=$(( $idx + $sender ))
-            idx_mac=$(printf "0x%x" $idx_mac)
-            idx_mac_list="$idx_mac_list $idx_mac"
-        done
-    elif [ "$sender_grp" == "SENDER_ALL" ] || [ "$sender_grp" == "SENDER_ANY" ]; then
-        if [ "$sender_grp" == "SENDER_ALL" ]; then
-            idx_mac_list="$senderid"
-            first_idx=$(( $first_idx - 1 ))
-            last_idx=$(( $last_idx - 1 ))
-        else
-            idx_mac_list="$mac_any_node"
-        fi
+    # Structure of the MPS message buffer: 'sender id', 'index' and 'MPS flag'.
+    # The buffer can keep the MPS flag of up to 16 TX nodes.
+    # The 'index' is used to identify channels of the same sender, therefore
+    # it's set to zero if each sender has only one MPS channel.
+    for sender in $senderid; do
+        idx=0
+        idx_mac=$(( $idx + $sender ))
+        idx_mac=$(printf "0x%x" $idx_mac)
+        idx_mac_list="$idx_mac_list $idx_mac"
+    done
 
-        # idx is used to specify an MPS channel of the same sender
-        for i in $(seq $first_idx $last_idx); do
-            idx=$(( $i << 48 ))
+    case "$sender_grp" in
+        "SENDER_TX")
+            # do nothing, idx_mac_list is already built
+            ;;
+
+        "SENDER_ALL")
+            # add any node (0xffffffffffff) on top of idx_mac_list
+
+            idx=0
             idx_mac=$(( $idx + $mac_any_node ))
             idx_mac=$(printf "0x%x" $idx_mac)
-            idx_mac_list="$idx_mac_list $idx_mac"
-        done
-    else
-        return
-    fi
+            idx_mac_list="$idx_mac $idx_mac_list"
+            ;;
+
+        "SENDER_ANY")
+            # only one node
+
+            idx_mac_list="$mac_any_node"
+            ;;
+
+        *)
+            return
+            ;;
+    esac
 
     echo "set the sender IDs: $sender_grp $idx_mac_list"
 
@@ -483,10 +474,8 @@ setup_mpsrx() {
     load_node_fw "$node_dev_label" "$1"
 
     echo "CONFIGURE state "
-    if [ $# -gt 2 ]; then
-        shift
-        configure_node "$node_dev_label" "$@"
-    fi
+    shift
+    configure_node "$node_dev_label" "$@"
 
     echo "OPREADY state "
     make_node_ready "$node_dev_label"
@@ -501,7 +490,7 @@ setup_mpsrx() {
 
 do_inject_fbas_event() {
 
-    saft-ctl tr0 -p inject $evt_mps_flag_tst 0 1000000
+    saft-ctl tr0 -p inject $evt_mps_1_tst 0 1000000
 }
 
 ##########################################################
@@ -561,9 +550,11 @@ info_nw_perf() {
     n=$1
 
     echo "TX: generating the MPS events locally ..."
-    echo "TX: $n events ($evt_mps_flag_nok, flag=NOK(2), $((3 * n)) transmissions)"
-    echo "TX: $n events ($evt_mps_flag_ok, flag=OK(1), $n transmissions)"
-    echo -e "TX: $(( n * 2 - 1))x IO events must be snooped by 'saft-ctl tr0 -vx snoop $evt_tlu $evt_id_mask 0'\n"
+    echo "TX: $n events ($evt_mps_1_nok, flag=NOK(2), $((3 * n)) MPS msgs)"
+    echo "TX: $n events ($evt_mps_2_nok, flag=NOK(2), $((3 * n)) MPS msgs)"
+    echo "TX: $n events ($evt_mps_1_ok, flag=OK(1), $n msgs)"
+    echo "TX: $n events ($evt_mps_2_ok, flag=OK(1), $n msgs)"
+    echo -e "TX: $(( n * 4 - 2 ))x IO events must be snooped by 'saft-ctl tr0 -vx snoop $evt_tlu $evt_id_mask 0'\n"
 }
 
 ##########################################################
@@ -590,13 +581,17 @@ start_nw_perf() {
     offset_ns=0
     for i in $(seq $n); do
 
-        saft-ctl tr0 inject $evt_mps_flag_nok $param $offset_ns
         echo -en " $i: NOK\r"
-        sleep 1
+        saft-ctl tr0 inject $evt_mps_1_nok $param $offset_ns
+        sleep 0.5
+        saft-ctl tr0 inject $evt_mps_2_nok $param $offset_ns
+        sleep 0.5
 
-        saft-ctl tr0 inject $evt_mps_flag_ok $param $offset_ns
         echo -en " $i:  OK\r"
-        sleep 1
+        saft-ctl tr0 inject $evt_mps_1_ok $param $offset_ns
+        sleep 0.5
+        saft-ctl tr0 inject $evt_mps_2_ok $param $offset_ns
+        sleep 0.5
     done
 }
 
@@ -752,7 +747,7 @@ read_measurement_results() {
 
 do_test2() {
     echo "injectg timing messages to tx_node_dev that simulate the FBAS class 2 signals"
-    saft-ctl $tx_node_name -p inject $evt_mps_flag_tst 0x0 1000000
+    saft-ctl $tx_node_name -p inject $evt_mps_1_tst 0x0 1000000
 
     # Case 1: consider the ahead time of 500 us (flagForceLate=0)
     # wrc output (TX)
@@ -798,7 +793,7 @@ do_test2() {
 
 reset_node() {
     # $1 - node device label
-    # $2 - sender node groups
+    # $[2:] - sender node groups
 
     check_node "$1"
 
@@ -809,7 +804,7 @@ reset_node() {
     sleep 1
 
     echo "CONFIGURE state "
-    configure_node "$1" "$2"
+    configure_node "$@"
 
     echo "OPREADY state "
     make_node_ready "$1"

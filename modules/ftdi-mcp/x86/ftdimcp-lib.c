@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 07-Mar-2024
+ *  version : 21-Oct-2025
  *
  *  x86 routines for MCP4725 connected via FT232H
  * 
@@ -48,8 +48,11 @@ FT_STATUS ftdimcp_open(int cIdx, FT_HANDLE *cHandle, int flagDebug)
     printf("no channel found; # of channels is %d\n", nChannels);
     printf("possible reasons\n");
     printf(" - uninitialized EEPROM; please program it using FT_PROG from FTDI\n");
-    printf(" - kernel driver ftdi_sio is active -> rmmod ftdi_sio, rmmod usbserial\n");
+    printf(" - kernel driver ftdi_sio is active; try one of the following\n");
+    printf(" -- rmmod ftdi_sio, rmmod usbserial\n");
+    printf(" -- echo -n 1-3:1.0 > /sys/bus/usb/drivers/ftdi_sio/unbind (replace with proper ID)\n");
     printf(" - insufficient privileges -> try 'sudo' or 'chmod'\n");
+    printf(" - another program using the device already running (only one is supported)?\n");
   } // if nChannels
 
   if ((ftStatus = I2C_OpenChannel(0, cHandle)) != FT_OK) {

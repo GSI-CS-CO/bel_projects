@@ -25,3 +25,6 @@
 [submodule "ip_cores/mtca_mmc_firmware"]
 	path = ip_cores/mtca_mmc_firmware
 	url = https://github.com/GSI-CS-CO/mtca_mmc_firmware.git
+[submodule "ip_cores/neorv32"]
+	path = ip_cores/neorv32
+	url = https://github.com/GSI-CS-CO/neorv32.git

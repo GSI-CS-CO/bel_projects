@@ -1,8 +1,39 @@
 #include <stdio.h>
 #include "mini_sdb.h"
+#ifndef NEORV32
 #include "dbg.h"
-#include "hw/memlayout.h"
+#include "memlayout.h"
 #include "sdb_add.h"
+#else
+#include <sdb_add_neorv32.h>
+volatile uint32_t* pTlu;
+volatile uint32_t* pEbm;
+volatile uint32_t* pEbCfg;
+volatile uint32_t* pEbmLast;
+volatile uint32_t* pOledDisplay;
+volatile uint32_t* pFpqCtrl;
+volatile uint32_t* pFpqData;
+volatile uint32_t* pEca;
+volatile uint32_t* pCpuId;
+volatile uint32_t* pCpuIrqSlave;
+volatile uint32_t* pCpuAtomic;
+volatile uint32_t* pCpuSysTime;
+volatile uint32_t* pCluInfo;
+volatile uint32_t* pCpuMsiBox;
+volatile uint32_t* pMyMsi;
+volatile uint32_t* pUart;
+volatile uint32_t* pPps;
+volatile uint32_t* pCluCB;
+volatile uint32_t* pOneWire;
+volatile uint32_t* pCpuWbTimer;
+volatile uint32_t* pCfiPFlash;
+volatile uint32_t* pDDR3_if1;
+volatile uint32_t* pDDR3_if2;
+/* Avoid using WRC files if possible */
+volatile unsigned char *BASE_UART;
+volatile unsigned char *BASE_SYSCON;
+#endif
+
 
 sdb_location *find_sdb_deep(sdb_record_t *parent_sdb, sdb_location *found_sdb, uint32_t base, uint32_t msi_base,  uint32_t msi_last, uint32_t *idx, uint32_t qty, uint32_t venId, uint32_t devId)
 {
@@ -11,28 +42,30 @@ sdb_location *find_sdb_deep(sdb_record_t *parent_sdb, sdb_location *found_sdb, u
   uint32_t i;
   uint32_t msi_cnt = 0;
   uint32_t msi_adr = 0;
-    
-  
+
+
 
   record  = parent_sdb;
   records = record->interconnect.sdb_records;
   //discover MSI address before moving on to possible next Crossbar
   for (i = 0; i < records; ++i, ++record) {
-    
+
     if(record->empty.record_type == SDB_MSI) {
 
       if (record->msi.msi_flags & OWN_MSI) {
-        //mprintf("adr: 0x%08x, i : %u type %u own: 0x%08x msi_addr %08x \n", base, i, record->empty.record_type, record->msi.msi_flags, record->msi.sdb_component.addr_first.low);  
+        //mprintf("adr: 0x%08x, i : %u type %u own: 0x%08x msi_addr %08x \n", base, i, record->empty.record_type, record->msi.msi_flags, record->msi.sdb_component.addr_first.low);
         if((msi_base == NO_MSI) || (record->msi.sdb_component.product.vendor_id.low == 0 && record->msi.sdb_component.product.device_id == 0)) msi_base = NO_MSI;
         else msi_adr = record->msi.sdb_component.addr_first.low;
         msi_cnt++;
-      }  
+      }
     }
   }
   if( msi_cnt > 1) {
   //This is an error, the CB layout is messed up
+#ifndef NEORV32
     DBPRINT1("Found more than 1 MSI at 0x%08x par 0x%08x\n", (unsigned int)base, (unsigned int)(unsigned char*)parent_sdb);
-    *idx = 0;      
+#endif
+    *idx = 0;
     return found_sdb;
   }
 
@@ -43,27 +76,31 @@ sdb_location *find_sdb_deep(sdb_record_t *parent_sdb, sdb_location *found_sdb, u
 
         if (record->bridge.sdb_component.product.vendor_id.low == venId &&
         record->bridge.sdb_component.product.device_id == devId) {
+#ifndef NEORV32
            DBPRINT2("Target BRG at base 0x%08x 0x%08x  entry %u\n", base, base+record->bridge.sdb_component.addr_first.low, *idx);
+#endif
            found_sdb[(*idx)].sdb = record;
            found_sdb[(*idx)].adr = base;
            found_sdb[(*idx)].msi_first = msi_base + msi_adr;
-           found_sdb[(*idx)].msi_last  = msi_base + msi_adr + msi_last;   
+           found_sdb[(*idx)].msi_last  = msi_base + msi_adr + msi_last;
            (*idx)++;
-        }  
+        }
 
         find_sdb_deep((sdb_record_t *)(base+record->bridge.sdb_child.low), found_sdb, base+record->bridge.sdb_component.addr_first.low, msi_base+msi_adr, msi_last, idx, qty, venId, devId );
      }
-     
-     
+
+
 
      if (record->empty.record_type == SDB_DEVICE) {
         if (record->device.sdb_component.product.vendor_id.low == venId &&
         record->device.sdb_component.product.device_id == devId) {
+#ifndef NEORV32
            DBPRINT2("Target DEV at 0x%08x\n", base + record->device.sdb_component.addr_first.low);
+#endif
            found_sdb[(*idx)].sdb = record;
            found_sdb[(*idx)].adr = base;
            found_sdb[(*idx)].msi_first = msi_base + msi_adr;
-           found_sdb[(*idx)].msi_last  = msi_base + msi_adr + msi_last; 
+           found_sdb[(*idx)].msi_last  = msi_base + msi_adr + msi_last;
            (*idx)++;
         }
      }
@@ -72,19 +109,21 @@ sdb_location *find_sdb_deep(sdb_record_t *parent_sdb, sdb_location *found_sdb, u
      if (record->empty.record_type == SDB_MSI) {
         if (record->msi.sdb_component.product.vendor_id.low == venId &&
         record->msi.sdb_component.product.device_id == devId) {
+#ifndef NEORV32
            DBPRINT2("Target MSI at 0x%08x\n", base + record->msi.sdb_component.addr_first.low);
+#endif
            found_sdb[(*idx)].sdb = record;
            found_sdb[(*idx)].adr = base;
            found_sdb[(*idx)].msi_first = msi_base + msi_adr;
-           found_sdb[(*idx)].msi_last  = msi_base + msi_adr + msi_last;  
+           found_sdb[(*idx)].msi_last  = msi_base + msi_adr + msi_last;
            (*idx)++;
         }
-     } 
+     }
      if(*idx >= qty) {
       return found_sdb;
     }
   }
-  
+
   return found_sdb;
   }
 
@@ -94,16 +133,16 @@ uint32_t getMsiUpperRange() {
   uint32_t records    = record->interconnect.sdb_records;
   uint32_t i;
   uint32_t msi_adr    = 0;
-  
-  //get upper range of MSI target  
-  for (i = 0; i < records; ++i, ++record) {  
+
+  //get upper range of MSI target
+  for (i = 0; i < records; ++i, ++record) {
     if(record->empty.record_type == SDB_MSI) {
       if (record->msi.msi_flags == OWN_MSI) {
         msi_adr = record->msi.sdb_component.addr_last.low;
-        break;  
-      }  
+        break;
+      }
     }
-  } 
+  }
 
   return msi_adr;
 }
@@ -116,12 +155,12 @@ uint32_t getMsiUpperRange() {
 // convenience wrappers
 sdb_location* find_device_multi(sdb_location *found_sdb, uint32_t *idx, uint32_t qty, uint32_t venId, uint32_t devId)
 {
-  uint32_t root = sdb_add();  
+  uint32_t root = sdb_add();
   sdb_record_t *pRoot = (sdb_record_t *)((uint32_t)(root));
 
 
   return find_sdb_deep(pRoot, found_sdb, 0, 0, getMsiUpperRange(), idx, qty, venId, devId);
-  
+
 }
 
 uint32_t* find_device_adr(uint32_t venId, uint32_t devId)
@@ -129,10 +168,10 @@ uint32_t* find_device_adr(uint32_t venId, uint32_t devId)
    sdb_location found_sdb;
    uint32_t idx = 0;
    uint32_t* adr = (uint32_t*)ERROR_NOT_FOUND;
-   
+
    find_device_multi(&found_sdb, &idx, 1, venId, devId);
    if(idx > 0) adr = (uint32_t*)getSdbAdr(&found_sdb);
-   
+
    return adr;
 }
 
@@ -158,19 +197,19 @@ uint32_t getSdbAdr(sdb_location *loc)
 {
    if       (loc->sdb->empty.record_type == SDB_DEVICE ) return loc->adr + loc->sdb->device.sdb_component.addr_first.low;
    else if  (loc->sdb->empty.record_type == SDB_BRIDGE ) return loc->adr + loc->sdb->bridge.sdb_component.addr_first.low;
-   else return ERROR_NOT_FOUND; 
+   else return ERROR_NOT_FOUND;
 }
 
 uint32_t getMsiAdr(sdb_location *loc)
 {
    return loc->msi_first;
-   
+
 }
 
 uint32_t getMsiAdrLast(sdb_location *loc)
 {
    return loc->msi_last;
-   
+
 }
 
 uint32_t getSdbAdrLast(sdb_location *loc)
@@ -203,13 +242,13 @@ void discoverPeriphery(void)
   uint32_t idx = 0;
   uint32_t idx_w1 = 0;
   pCpuMsiBox      = NULL;
-  pMyMsi          = NULL; 
+  pMyMsi          = NULL;
 
-  pUart           = find_device_adr(CERN, WR_UART);
-  //pUart          = (uint32_t*)0x84060500;
-  BASE_UART       = (char *)pUart; //make WR happy ...
-  
- 
+  //pUart           = find_device_adr(CERN, WR_UART);
+  pUart          = (uint32_t*)0x80040500;
+  //BASE_UART       = (char *)pUart; //make WR happy ...
+
+
   pCpuId          = find_device_adr(GSI, CPU_INFO_ROM);
   pCpuAtomic      = find_device_adr(GSI, CPU_ATOM_ACC);
   pCpuSysTime     = find_device_adr(GSI, CPU_SYSTEM_TIME);
@@ -218,18 +257,18 @@ void discoverPeriphery(void)
 
   idx = 0;
 
-  find_device_multi(&found_sdb[0], &idx, 1, GSI, MSI_MSG_BOX);   
+  find_device_multi(&found_sdb[0], &idx, 1, GSI, MSI_MSG_BOX);
   if(idx) {
-    pCpuMsiBox    = (uint32_t*)getSdbAdr(&found_sdb[0]); 
-    pMyMsi        = (uint32_t*)getMsiAdr(&found_sdb[0]); 
-  } 
+    pCpuMsiBox    = (uint32_t*)getSdbAdr(&found_sdb[0]);
+    pMyMsi        = (uint32_t*)getMsiAdr(&found_sdb[0]);
+  }
   pCluCB          = find_device_adr(GSI, LM32_CB_CLUSTER);
   pCluInfo        = find_device_adr(GSI, CLU_INFO_ROM);
-  pFpqCtrl        = find_device_adr(GSI, FTM_PRIOQ_CTRL); 
-  pFpqData        = find_device_adr(GSI, FTM_PRIOQ_DATA); 
-  
-    
-  pOledDisplay    = find_device_adr(GSI, OLED_DISPLAY);  
+  pFpqCtrl        = find_device_adr(GSI, FTM_PRIOQ_CTRL);
+  pFpqData        = find_device_adr(GSI, FTM_PRIOQ_DATA);
+
+
+  pOledDisplay    = find_device_adr(GSI, OLED_DISPLAY);
   idx = 0;
   find_device_multi(&found_sdb[0], &idx, 20, GSI, ETHERBONE_MASTER);
   pEbm            = (uint32_t*)getSdbAdr(&found_sdb[0]);
@@ -238,18 +277,19 @@ void discoverPeriphery(void)
   pEca            = find_device_adr(GSI, ECA_EVENT);
   pTlu            = find_device_adr(GSI, TLU);
 
-  
+
   pCfiPFlash      = find_device_adr(GSI, WR_CFIPFlash);
-  
+
   pDDR3_if1       = find_device_adr(GSI, WB_DDR3_if1);
   pDDR3_if2       = find_device_adr(GSI, WB_DDR3_if2);
-  
+
+  pIOC            = find_device_adr(GSI, IO_CONTROL);
+
   // Get the second onewire/w1 record (0=white rabbit w1 unit, 1=user w1 unit)
   find_device_multi(&found_sdb_w1[0], &idx_w1, 2, CERN, WR_1Wire);
   pOneWire        = (uint32_t*)getSdbAdr(&found_sdb_w1[1]);
 
-  BASE_SYSCON     = (char *)find_device_adr(CERN, WR_SYS_CON); //probably the same reason as BASE_UART is of type char*
+  //BASE_SYSCON     = (char *)find_device_adr(CERN, WR_SYS_CON); //probably the same reason as BASE_UART is of type char*
   pPps            = (uint32_t *)find_device_adr(CERN, WR_PPS_GEN);
 
 }
-

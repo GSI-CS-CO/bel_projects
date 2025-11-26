@@ -22,12 +22,15 @@ typedef uint32_t status_t;
 #define PSCR_1S_TIM_1MS    1000  // prescaler for 1 second (at 1ms timer period)
 
 // MPS definitions
+#define N_MAX_TX_NODES     16  // maximum number of the TX nodes
+
 #ifdef MULTI_MPS_CH
-  #define N_MPS_CHANNELS   16  // total number of MPS channels
+  #define N_MPS_CHANNELS   8   // MPS channels supported by a single TX node
 #else
-  #define N_MPS_CHANNELS   1   // total number of MPS channels
+  #define N_MPS_CHANNELS   1
 #endif
-#define N_MPS_FLAGS        1   // MPS flags in an Ethernet frame
+
+#define N_MAX_MPS_CHANNELS ((N_MAX_TX_NODES) * (N_MPS_CHANNELS))   // total number of MPS channels
 #define N_EXTRA_MPS_NOK    2   // extra transmissions of MPS NOK event
 #define F_MPS_BCAST        30  // frequency to broadcast MPS flags [MPS_FS_530]
 
@@ -76,11 +79,10 @@ struct mpsMsg {
   uint8_t  pending;         // flag change indicator (RX)
 };
 
-// iterator used to access available MPS flags
-typedef struct timedItr timedItr_t;
-struct timedItr {
-  uint8_t idx;       // index of current element
-  uint8_t total;     // total number of elements
+// control structure for MPS messaging
+typedef struct msgCtrl msgCtrl_t;
+struct msgCtrl {
+  uint8_t  total;    // total number of elements
   uint64_t last;     // timestamp of last access
   uint64_t period;   // time period between accesses
   uint8_t  ttl;      // TTL value used to evaluate validity

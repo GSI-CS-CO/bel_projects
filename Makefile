@@ -27,6 +27,11 @@ export TLU
 ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca
 export ECA
 PATH:=$(PWD)/lm32-toolchain/bin:$(PATH)
+export PATH
+CROSS_COMPILE_RISCV:="$(PWD)/riscv-toolchain/bin/riscv32-elf-"
+export CROSS_COMPILE_RISCV
+EB_TOOLS_WRPC_SW=no
+export EB_TOOLS_WRPC_SW
 
 # This is mainly used to sort QSF files. After sorting it adds and deletes a "GIT marker" which will mark the file as changed.
 # Additionally all empty lines will be removed.
@@ -44,6 +49,7 @@ CHECK_MICROTCA         = ./syn/gsi_microtca/control/microtca_control
 CHECK_PEXP             = ./syn/gsi_pexp/control/pexp_control
 CHECK_PEXP_SDR         = ./syn/gsi_pexp/sdr/pexp_control_sdr
 CHECK_PEXP_PPS         = ./syn/gsi_pexp/pps/pexp_pps
+CHECK_PEXP_NEORV32     = ./syn/gsi_pexp/neorv32/pexp_neorv32
 CHECK_SCU5             = ./syn/gsi_scu/control5/scu_control
 CHECK_FTM5DP           = ./syn/gsi_scu/ftm5dp/ftm5dp
 CHECK_SCU4             = ./syn/gsi_scu/control4/scu_control
@@ -69,6 +75,7 @@ PATH_MICROTCA          = syn/gsi_microtca/control
 PATH_PEXP              = syn/gsi_pexp/control
 PATH_PEXP_SDR          = syn/gsi_pexp/sdr
 PATH_PEXP_PPS          = syn/gsi_pexp/pps
+PATH_PEXP_NEORV32      = syn/gsi_pexp/neorv32
 PATH_SCU5              = syn/gsi_scu/control5
 PATH_FTM5DP            = syn/gsi_scu/ftm5dp
 PATH_SCU4              = syn/gsi_scu/control4
@@ -106,13 +113,13 @@ define ldconfig_note
 	@echo "***************************************************************************"
 endef
 
-all:		hdlmake_install etherbone tools sdbfs lm32-toolchain firmware
+all:		hdlmake_install etherbone tools sdbfs lm32-toolchain riscv-toolchain firmware
 
 gateware:	all pexarria5 exploder5 vetar2a vetar2a-ee-butis scu2 scu3 pmc microtca pexp
 
 install:	etherbone-install tools-install driver-install
 
-clean::		etherbone-clean tools-clean tlu-clean sdbfs-clean driver-clean lm32-toolchain-clean firmware-clean scu2-clean scu3-clean vetar2a-clean vetar2a-ee-butis-clean exploder5-clean pexarria5-clean sio3-clean ecatools-clean pmc-clean microtca-clean
+clean::		etherbone-clean tools-clean tlu-clean sdbfs-clean driver-clean lm32-toolchain-clean firmware-clean scu2-clean scu3-clean vetar2a-clean vetar2a-ee-butis-clean exploder5-clean pexarria5-clean sio3-clean ecatools-clean pmc-clean microtca-clean bg-clean
 
 distclean::	clean
 	git clean -xfd .
@@ -221,15 +228,16 @@ sdbfs::
 sdbfs-clean::
 	$(MAKE) -C ip_cores/fpga-config-space/sdbfs DIRS="lib userspace" clean
 
-lm32-toolchain-download :
-	test -f lm32-gcc.tar.xz || wget https://github.com/GSI-CS-CO/lm32-toolchain/releases/download/v1.1-2023-04-04/lm32-gcc-4.5.3.tar.xz -O lm32-gcc.tar.xz
+lm32-toolchain-download:
+	test -f lm32-toolchain.tar.xz || wget -c https://github.com/GSI-CS-CO/lm32-toolchain/releases/download/v1.1-2023-04-04/lm32-gcc-4.5.3.tar.xz -O lm32-toolchain.tar.xz
 
 lm32-toolchain:	lm32-toolchain-download
-	test -d lm32-gcc || tar -xf lm32-gcc.tar.xz
+	test -d lm32-toolchain || tar -xf lm32-toolchain.tar.xz
 	test -d lm32-gcc-4.5.3 && mv lm32-gcc-4.5.3 lm32-toolchain || true
 
 lm32-toolchain-clean::
-	rm -rf lm32-toolchain
+	rm -rf lm32-toolchain.tar.xz || true
+	rm -rf lm32-toolchain || true
 
 lm32-cluster-testbench-run:: lm32-toolchain hdlmake_install
 	make -C testbench/lm32_cluster/test run
@@ -237,15 +245,26 @@ lm32-cluster-testbench-run:: lm32-toolchain hdlmake_install
 lm32-cluster-testbench-clean:: lm32-toolchain hdlmake_install
 	make -C testbench/lm32_cluster/test clean
 
+riscv-toolchain-download:
+	test -f riscv-11.2-small.tgz || wget -c https://gitlab.com/ohwr/project/wrpc-sw/-/wikis/uploads/9f9224d2249848ed3e854636de9c08dc/riscv-11.2-small.tgz
+
+riscv-toolchain:	riscv-toolchain-download
+	test -d riscv-toolchain || tar zxvf riscv-11.2-small.tgz -o
+	test -d riscv-11.2-small && mv riscv-11.2-small riscv-toolchain || true
+
+riscv-toolchain-clean::
+	rm -rf riscv-11.2-small.tgz || true
+	rm -rf riscv-toolchain || true
+
 wrpc-sw-config::
 	test -s ip_cores/wrpc-sw/.config || \
 		$(MAKE) -C ip_cores/wrpc-sw/ gsi_defconfig
 
-firmware:	sdbfs etherbone lm32-toolchain wrpc-sw-config
+firmware:	sdbfs etherbone lm32-toolchain riscv-toolchain wrpc-sw-config
 ifeq ($(UNAME), x86_64)
 	$(MAKE) -C ip_cores/wrpc-sw SDBFS=$(PWD)/ip_cores/fpga-config-space/sdbfs/userspace all
 else
-	@echo "Info: Skipping WRPC-SW build (LM32 toolchain does not support your architecture)..."
+	@echo "Skipping WRPC-SW build (LM32/RISCV toolchain does not support your architecture)..."
 endif
 
 firmware-clean:
@@ -547,6 +566,18 @@ pexp-pps-sort:
 pexp-pps-check:
 	$(call check_timing, $(CHECK_PEXP_PPS))
 
+pexp-neorv32:	firmware
+	$(MAKE) -C $(PATH_PEXP_NEORV32) all
+
+pexp-neorv32-clean::
+	$(MAKE) -C $(PATH_PEXP_NEORV32) clean
+
+pexp-neorv32-sort:
+	$(call sort_file, $(CHECK_PEXP_NEORV32))
+
+pexp-neorv32-check:
+	$(call check_timing, $(CHECK_PEXP_NEORV32))
+
 avsoc:		firmware
 	$(MAKE) -C syn/gsi_avsoc/av_rocket_board all
 
@@ -566,10 +597,10 @@ exploder-clean::
 	$(MAKE) -C syn/gsi_exploder/wr_core_demo clean
 
 pexarria10_soc::	firmware
-	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/lm-32toolchain/bin:$(PATH) all
+	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/lm32-toolchain/bin:$(PATH) all
 
 pexarria10_soc-clean::
-	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/lm-32toolchain/bin:$(PATH) clean
+	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/lm32-toolchain/bin:$(PATH) clean
 
 a10gx_pcie::	firmware
 	$(MAKE) -C $(PATH_A10GX) all
@@ -634,8 +665,6 @@ ftm4dp-clean::
 # #################################################################################################
 # Build flow targets
 # #################################################################################################
-
-# Set NUM_PARALLEL_PROCESSORS to ALL in each QSF file
 set_max_parallel_processors:
 	@find . -type f -name "*.qsf" | while read -r file; do \
 			if grep -q "set_global_assignment -name NUM_PARALLEL_PROCESSORS" "$$file"; then \
@@ -646,11 +675,27 @@ set_max_parallel_processors:
 	done
 
 # We need to run ./fix-git.sh and ./install-hdlmake.sh: make them a prerequisite for Makefile
-Makefile: prereq-rule
+Makefile: prereq-rule git_apply_patches
 
 prereq-rule::
 	@test -d .git/modules/ip_cores/wrpc-sw/modules/ppsi || \
-		(echo "Downloading submodules"; ./fix-git.sh)
+		(echo "Downloading submodules..."; ./fix-git.sh)
+
+git_apply_patches::
+	@for core in wr-cores general-cores; do \
+	  if [ ! -f patches/done ]; then \
+		  if [ ! -f ip_cores/$$core/*.patch ]; then \
+			  echo "Applying $$core git patches..."; \
+			  cp patches/$$core/* ip_cores/$$core; \
+			  cd ip_cores/$$core && git apply *.patch; \
+			  cd - >/dev/null; \
+		  fi; \
+		else \
+		  echo "Skipping git patches for $$core..."; \
+		fi; \
+	done
+	@test -f patches/done || \
+		(touch patches/done)
 
 git_submodules_update:
 	@git submodule update --recursive
@@ -676,7 +721,8 @@ hdlmake_install_locally:
 
 # Compile (and test) projects
 test_run_all: test_install_dim test_build_ftm_shared_map \
-	test_b2b test_wr-mil test_wr-unipz test_dm-unipz test_uni-chop \
+	test_b2b test_wr-mil test_wr-unipz test_dm-unipz \
+	test_uni-blm test_uni-chop \
 	test_fec_analyzer test_freq-measure test_sync-mon \
 	test_lm32_examples
 
@@ -706,6 +752,10 @@ test_dm-unipz:
 	$(MAKE) -C modules/dm-unipz USRPATH=$(USRPATH_DIM) firmware
 	$(MAKE) -C modules/dm-unipz USRPATH=$(USRPATH_DIM) software
 
+test_uni-blm:
+	$(MAKE) -C modules/uni-blm USRPATH=$(USRPATH_DIM) firmware
+	$(MAKE) -C modules/uni-blm USRPATH=$(USRPATH_DIM) software
+
 test_uni-chop:
 	$(MAKE) -C modules/uni-chop USRPATH=$(USRPATH_DIM) firmware
 	$(MAKE) -C modules/uni-chop USRPATH=$(USRPATH_DIM) software
@@ -724,5 +774,5 @@ test_lm32_examples:
 	$(MAKE) -C modules/lm32-example TARGET=ecaMsiExample
 	$(MAKE) -C modules/lm32-example TARGET=timerExample
 	$(MAKE) -C modules/lm32-example TARGET=example
-#	$(MAKE) -C modules/lm32-example TARGET=milExample
-#	$(MAKE) -C modules/lm32-example TARGET=milSnooper
+	$(MAKE) -C modules/lm32-example TARGET=milExample
+	$(MAKE) -C modules/lm32-example TARGET=milSnooper

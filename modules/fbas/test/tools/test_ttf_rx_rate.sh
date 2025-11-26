@@ -13,13 +13,13 @@ source $dir_name/test_ttf_basic.sh -s  # source the specified script
 
 domain=$(hostname -d)             # domain name of local host
 rxscu_name="scuxl0497"            # name of RX SCU
-rxscu="scuxl0497.$domain"         # full name of RX SCU, name=${rxscu%%.*}
+rxscu="$rxscu_name.$domain"       # full name of RX SCU, name=${rxscu%%.*}
 datamaster="tsl014"               # Data Master
 login_dm="root@$datamaster"       # pubkey login (alias 'backdoor') is used for login
-mngmasters=( tsl001 tsl101 )      # Management Masters
+mngmasters=( tsl101 )             # Management Masters
 localhost=$(hostname -s)          # local host
 
-fw_rxscu="fbas.scucontrol.bin"    # default LM32 FW for RX SCU
+fw_rxscu="fbas128.scucontrol.bin" # default LM32 FW for RX SCU
 
 sched_dir="${dir_name%/*}/dm"     # directory with DM schedules
 
@@ -48,8 +48,8 @@ if scp -O $0 /dev/null &>/dev/null; then
     scp_opts+=" -O"
 fi
 
-res_header_wiki="| *msg period, [us]* | *msg rate, [KHz]* | *data rate, [Mbps]* | *valid msg* | *overflow msg* | *avg messaging delay, [ns]* | *min messaging delay, [ns]* | *max messaging delay, [ns]* | *valid msr* | *total msr* | *overflow* |"
-res_header_console="| t_period | msg rate | data rate | valid msg | ovf msg | average | min | max | valid msr | total msr | ovf |"
+res_header_wiki="| *msg period, [us]* | *msg rate, [KHz]* | *data rate, [Mbps]* | *valid eca* | *overflow eca* | *avg messaging delay, [ns]* | *min messaging delay, [ns]* | *max messaging delay, [ns]* | *valid* | *total* | *overflow* |"
+res_header_console="| t_period | msg rate | data rate | valid eca | ovf eca | average | min | max | valid | total | ovf |"
 
 # timing message rates that should be measured
 primary_msg_rates=(300 600 1000 1200 1500 3000 6000) # fixed tmg msg rates [Hz]
@@ -80,19 +80,11 @@ exit_on_fail() {
 check_tr() {
     filenames="$fw_rxscu $script_rxscu"
 
-    for filename in $filenames; do
-        timeout 10 sshpass -p "$userpasswd" \
-            ssh $username@$rxscu \
-            "if [ ! -f $filename ]; then \
-            echo $filename not found on ${rxscu}. Exit!; \
-            exit 2; fi"
-        ret_code=$?
-        report_check $ret_code $filename $rxscu
-    done
+    check_deployment $rxscu $filenames
 }
 
 setup_tr() {
-    output=$(timeout 20 sshpass -p "$userpasswd" ssh "$username@$rxscu" \
+    output=$(run_remote $rxscu \
         "source setup_local.sh && setup_mpsrx $fw_rxscu SENDER_ANY")
     ret_code=$?
     report_code $ret_code
@@ -100,7 +92,7 @@ setup_tr() {
 }
 
 reset_tr_ecpu() {
-    output=$(timeout 20 sshpass -p "$userpasswd" ssh "$username@$rxscu" \
+    output=$(run_remote $rxscu \
         "source setup_local.sh && reset_node rx_node_dev SENDER_ANY")
     ret_code=$?
     report_code $ret_code
@@ -108,7 +100,7 @@ reset_tr_ecpu() {
 }
 
 enable_tr_mps() {
-    output=$(timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" \
+    output=$(run_remote $rxscu \
         "source setup_local.sh && start_test4 \$rx_node_dev")
     ret_code=$?
     report_code $ret_code
@@ -116,7 +108,7 @@ enable_tr_mps() {
 }
 
 disable_tr_mps() {
-    output=$(timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" \
+    output=$(run_remote $rxscu \
         "source setup_local.sh && stop_test4 \$rx_node_dev")
     ret_code=$?
     report_code $ret_code
@@ -194,7 +186,7 @@ usage() {
     echo "  -m                     limited only with primary message rates"
     echo "  -h                     display this help and exit"
     echo
-    echo "Example (@tsl001): ./test_ttf_rx_rate.sh -s my_mps_rx_rate_1.dot -f fbas.scucontrol.bin"
+    echo "Example: $0 -s my_mps_rx_rate_1.dot -f $fw_rxscu"
 }
 
 unset username userpasswd sched_filename is_msg_rate_limited
@@ -273,7 +265,7 @@ for rate in ${all_msg_rates[*]}; do
 
     # obtain stats from TR
     echo -en " obtain stats from '$rxscu_name': "
-    counts=$(timeout 10 sshpass -p "$userpasswd" ssh "$username@$rxscu" \
+    counts=$(run_remote $rxscu \
         "source setup_local.sh && \
         read_counters \$rx_node_dev && \
         result_msg_delay \$rx_node_dev")
@@ -325,7 +317,7 @@ for rate in ${all_msg_rates[*]}; do
 
 done
 
-echo -e "\n$sched_filename@$datamaster $fw_rxscu@$rxscu $localhost ($(date))\n"
+echo -e "\n$datamaster:$sched_filename $rxscu:$fw_rxscu host:$localhost ($(date))\n"
 echo "$res_header_console"
 #echo "$res_header_wiki"
 chars=${#res_header_console}

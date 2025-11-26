@@ -1,4 +1,4 @@
---! @file monster_pkg.vhd
+  --! @file monster_pkg.vhd
 --! @brief Monster (all your top are belong to BEL) package
 --! @author Wesley W. Terpstra <w.terpstra@gsi.de>
 --!
@@ -96,7 +96,7 @@ package monster_pkg is
       g_fixed                : natural := 0;
       g_rams                 : natural := 1;
       g_lvds_invert          : boolean := false;
-      g_en_tlu               : boolean := true;
+      g_en_tlu               : boolean := false;
       g_en_pcie              : boolean := false;
       g_en_vme               : boolean := false;
       g_en_usb               : boolean := false;
@@ -113,6 +113,7 @@ package monster_pkg is
       g_en_beam_dump         : boolean := false;
       g_en_i2c_wrapper       : boolean := false;
       g_num_i2c_interfaces   : integer := 1;
+      g_num_pwm_channels     : integer := 8;
       g_dual_port_wr         : boolean := false;
       g_io_table             : t_io_mapping_table_arg_array(natural range <>);
       g_en_pmc               : boolean := false;
@@ -121,11 +122,12 @@ package monster_pkg is
       g_a10_en_phy_reconf    : boolean := false;
       g_en_butis             : boolean := true;
       g_lm32_cores           : natural := 1;
-      g_lm32_MSIs            : natural := 1;
       g_lm32_ramsizes        : natural := 131072/4; -- in 32b words
       g_lm32_init_files      : string; -- multiple init files must be seperated by a semicolon ';'
       g_lm32_profiles        : string; -- multiple profiles must be seperated by a semicolon ';'
       g_lm32_are_ftm         : boolean := false;
+      g_en_neorv32           : boolean := false;
+      g_neorv32_ramsize      : natural := 131072/4; -- in 32b words
       g_en_tempsens          : boolean := false;
       g_en_a10ts             : boolean := false;
       g_delay_diagnostics    : boolean := false;
@@ -136,9 +138,11 @@ package monster_pkg is
       g_en_eca_tap           : boolean := false;
       g_en_asmi              : boolean := false;
       g_en_psram_delay       : boolean := false;
+      g_en_pwm               : boolean := true;
       g_en_enc_err_counter   : boolean := false;
       g_en_a10vs             : boolean := false;
-      g_en_cellular_ram      : boolean := false
+      g_en_cellular_ram      : boolean := false;
+      g_en_virtual_jtag      : boolean := false
     );
     port(
       -- Required: core signals
@@ -276,7 +280,9 @@ package monster_pkg is
       usb_fd_io              : inout std_logic_vector(7 downto 0) := (others => 'Z');
       -- g_en_scubus
       scubus_a_a             : out   std_logic_vector(15 downto 0);
-      scubus_a_d             : inout std_logic_vector(15 downto 0) := (others => 'Z');
+      scubus_a_d_out         : out   std_logic_vector(15 downto 0);
+      scubus_a_d_in          : in    std_logic_vector(15 downto 0) := (others => '0');
+      scubus_a_d_tri_out     : out   std_logic;
       scubus_nsel_data_drv   : out   std_logic;
       scubus_a_nds           : out   std_logic;
       scubus_a_rnw           : out   std_logic;
@@ -436,8 +442,10 @@ package monster_pkg is
       ge_85_c_o              : out   std_logic;
       -- g_en_user_ow
       ow_io                  : inout std_logic_vector(1 downto 0) := (others => 'Z');
-      hw_version             : in std_logic_vector(31 downto 0) := (others => 'Z');
-      poweroff_comx          : out std_logic);
+      hw_version             : in    std_logic_vector(31 downto 0) := (others => 'Z');
+      poweroff_comx          : out   std_logic;
+      -- rack mount timing receiver
+      is_rmt                 : out   std_logic := 'Z');
   end component;
 
   constant c_user_1wire_sdb : t_sdb_device := (

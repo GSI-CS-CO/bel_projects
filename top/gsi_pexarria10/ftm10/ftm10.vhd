@@ -261,7 +261,6 @@ begin
       g_delay_diagnostics  => true,
       g_en_enc_err_counter => true,
       g_lm32_are_ftm       => true,
-      g_lm32_MSIs          => 1,
       g_lm32_cores         => c_cores,
       g_lm32_ramsizes      => c_lm32_ramsizes/4,
       g_lm32_init_files    => f_string_list_repeat(c_initf_name, c_cores),

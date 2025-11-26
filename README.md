@@ -283,6 +283,8 @@ Answer: You need to have installed the following packages before you can configu
 
 ‡ Ubuntu 22.04 and later: libsigc++-2.0-dev
 
+‡ Ubuntu 22.04 and later: libsigc++-2.0-dev
+
 For `apt` that means
 ```shell
 apt install docbook-utils libglib2.0-dev autotools-dev autoconf libtool build-essential automake libreadline-dev libsigc++-2.0-dev libboost-dev pkg-config xsltproc libz-dev python-is-python3

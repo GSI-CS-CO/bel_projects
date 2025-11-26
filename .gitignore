@@ -1,6 +1,10 @@
 gcc-4.5.3-lm32.tar.xz
 lm32-elf-gcc.tar.xz
+riscv_gcc.tar.xz
+riscv_gcc.tgz
 toolchain/
+lm32-toolchain/
+riscv-toolchain/
 bin/
 lib/
 tags
@@ -41,3 +45,5 @@ lm32-gcc-4.5.3.tar.xz
 lm32-toolchain
 lm32-gcc.tar.xz
 lm32-gcc-4.5.3/
+riscv-11.2-small.tgz
+lm32-toolchain.tar.xz

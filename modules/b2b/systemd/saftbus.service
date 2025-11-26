@@ -1,0 +1,15 @@
+[Unit]
+Description = IPC server to access FAIR Timing Receiver Hardware (db tweak)
+Requires = dev-wbm0.device
+After = dev-wbm0.device
+
+[Service]
+CPUSchedulingPolicy=rr
+CPUSchedulingPriority=20
+Type = simple
+Restart=always
+RestartSec=11
+ExecStart = /usr/bin/saftbusd libsaft-service.so.10 tr*:dev/wbm*
+
+[Install]
+WantedBy = multi-user.target

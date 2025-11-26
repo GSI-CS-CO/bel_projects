@@ -63,7 +63,7 @@
 
 #define ECA_EVENT             0x8752bf45
 #define ECA_CTRL              0x8752bf44
-#define TLU                   0x10051981 
+#define TLU                   0x10051981
 #define WR_UART               0xe2d13d04
 #define WR_PPS_GEN            0xde0d8ced
 #define SCU_BUS_MASTER        0x9602eb6f
@@ -79,19 +79,20 @@
 #define WR_CFIPFlash          0x12122121
 #define WB_DDR3_if1           0x20150828
 #define WB_DDR3_if2           0x20160525
-#define WR_SYS_CON            0xff07fc47  
+#define WR_SYS_CON            0xff07fc47
 #define WB_REMOTE_UPDATE      0x38956271
 #define WB_ASMI               0x48526423
 #define WB_SCU_REG            0xe2d13d04
-
+#define IO_CONTROL            0x10c05791
 
 //periphery device pointers
-volatile uint32_t* pTlu; 
+#ifndef NEORV32
+volatile uint32_t* pTlu;
 volatile uint32_t* pEbm;
 volatile uint32_t* pEbCfg;
 
 volatile uint32_t* pEbmLast;
-volatile uint32_t* pOledDisplay;     
+volatile uint32_t* pOledDisplay;
 volatile uint32_t* pFpqCtrl;
 volatile uint32_t* pFpqData;
 volatile uint32_t* pEca;
@@ -113,6 +114,36 @@ volatile uint32_t* pCfiPFlash;
 
 volatile uint32_t* pDDR3_if1;
 volatile uint32_t* pDDR3_if2;
+#else
+extern volatile uint32_t* pTlu;
+extern volatile uint32_t* pEbm;
+extern volatile uint32_t* pEbCfg;
+extern volatile uint32_t* pEbmLast;
+extern volatile uint32_t* pOledDisplay;
+extern volatile uint32_t* pFpqCtrl;
+extern volatile uint32_t* pFpqData;
+extern volatile uint32_t* pEca;
+extern volatile uint32_t* pCpuId;
+extern volatile uint32_t* pCpuIrqSlave;
+extern volatile uint32_t* pCpuAtomic;
+extern volatile uint32_t* pCpuSysTime;
+extern volatile uint32_t* pCluInfo;
+extern volatile uint32_t* pCpuMsiBox;
+extern volatile uint32_t* pMyMsi;
+extern volatile uint32_t* pUart;
+extern volatile uint32_t* pPps;
+extern volatile uint32_t* pCluCB;
+extern volatile uint32_t* pOneWire;
+extern volatile uint32_t* pCpuWbTimer;
+extern volatile uint32_t* pCfiPFlash;
+extern volatile uint32_t* pDDR3_if1;
+extern volatile uint32_t* pDDR3_if2;
+/* Avoid using WRC files if possible */
+extern volatile unsigned char *BASE_UART;
+extern volatile unsigned char *BASE_SYSCON;
+#endif
+
+volatile uint32_t* pIOC;
 
 
 typedef struct pair64 {

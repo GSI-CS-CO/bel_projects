@@ -4,6 +4,8 @@ EB      ?= ../ip_cores/etherbone-core/api
 ECA	?= ../ip_cores/wr-cores/modules/wr_eca
 TLU	?= ../ip_cores/wr-cores/modules/wr_tlu
 WRPC    ?= ../ip_cores/wrpc-sw
+WRPC_IMPORT ?= ../modules/lm32-include/wrpc-import
+WRPC_LEGACY_HEADER ?= w1
 WBDIR   ?= .
 TARGETS := eb-flash eb-info eb-console eb-config-nv eb-time eb-sflash eb-iflash eb-reset eb-daq-dump eb-fwload eb-i2c-master eb-asmi eb-fg-statistic
 EXTRA_I := eb-flash-secure
@@ -59,7 +61,7 @@ io-test: io-test.cpp
 	g++ $(CFLAGS) -I $(ECA) -I $(TLU) -o io-test io-test.cpp -L $(ECA) -L $(TLU) $(LIBS) -leca -ltlu
 
 eb-reset: eb-reset.c
-	$(CC) $(CFLAGS) -I$(WBDIR) -I$(WRPC)/include -I$(WRPC)/pp_printf $(WBDIR)/wb_api.c  $(WRPC)/dev/w1.c $(WRPC)/dev/w1-temp.c $(WRPC)/dev/w1-eeprom.c $(WRPC)/tools/eb-w1.c -o eb-reset eb-reset.c $(LIBS)
+	$(CC) $(CFLAGS) -I$(WBDIR) -I$(WRPC_IMPORT) -I$(WRPC_IMPORT)/dev -I$(WBDIR)/w1 $(WRPC_IMPORT)/dev/w1.c $(WRPC_IMPORT)/dev/w1-temp.c $(WBDIR)/wb_api.c $(WBDIR)/w1/eb-w1.c -o eb-reset eb-reset.c $(LIBS)
 
 eb-asmi: eb-asmi.c
 	$(CC) $(CFLAGS) -I$(WBDIR) -o eb-asmi eb-asmi.c crc8.c crc32.c $(LIBS)

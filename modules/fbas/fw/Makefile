@@ -8,7 +8,7 @@ export PATH          := $(PWD)/../../../toolchain/bin:$(PATH)
 # common settings
 export SHARED_SIZE   ?= 8K
 export USRCPUCLK     ?= 125000
-export VERSION       = 01.01.00
+export VERSION       = 01.03.01
 export PATHFW        = .
 export DEBUGLVL      = 2
 export EXTRA_FLAGS   ?=

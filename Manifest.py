@@ -1,6 +1,7 @@
 modules = {
   "local" : [
     "modules",
+    "ip_cores/",
     "ip_cores/etherbone-core",
     "ip_cores/general-cores",
     "ip_cores/pci-core",

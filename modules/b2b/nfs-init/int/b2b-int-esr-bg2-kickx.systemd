@@ -1,22 +1,27 @@
-# yocto; temporarily disabled
-#SERVICEA=b2b-servsys-int-esr-kick.service
-#SERVICEB=b2b-servraw-int-esr.service
-#SERVICEC=b2b-analyzer-int-esr.service
-#cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
-#cp -a $MOUNTPOINT/systemd/$SERVICEB /lib/systemd/system
-#cp -a $MOUNTPOINT/systemd/$SERVICEC /lib/systemd/system
-#systemctl daemon-reload
+SERVICEA=b2b-servsys-int-esr-kick.service
+SERVICEB=b2b-servraw-int-esr.service
+SERVICEC=b2b-analyzer-int-esr.service
+SERVICED=b2b-servkickdiaginj-int-esr.service
+SERVICEE=b2b-servkickdiagext-int-esr.service
+cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
+cp -a $MOUNTPOINT/systemd/$SERVICEB /lib/systemd/system
+cp -a $MOUNTPOINT/systemd/$SERVICEC /lib/systemd/system
+cp -a $MOUNTPOINT/systemd/$SERVICED /lib/systemd/system
+cp -a $MOUNTPOINT/systemd/$SERVICEE /lib/systemd/system
+systemctl daemon-reload
 
-#systemctl start $SERVICEA
-#systemctl start $SERVICEB
-#systemctl start $SERVICEC
+systemctl start $SERVICEA
+systemctl start $SERVICEB
+systemctl start $SERVICEC
+systemctl start $SERVICED
+systemctl start $SERVICEE
 
 # hack for acc7
-export DIM_DNS_NODE=asl105
+#export DIM_DNS_NODE=asl105
 
-b2b-serv-sys dev/wbm0 -s int_esr-kdx &
-b2b-serv-raw tr1 -e1 int &
-b2b-analyzer int_esr &
-b2b-serv-kickdiag tr0 -r1 -m1 -i1 int &
-b2b-serv-kickdiag tr0 -r1 -m0 -i1 int &
+#b2b-serv-sys dev/wbm0 -s int_esr-kdx &
+#b2b-serv-raw tr1 -e1 int &
+#b2b-analyzer int_esr &
+#b2b-serv-kickdiag tr0 -r1 -m1 -i1 int &
+#b2b-serv-kickdiag tr0 -r1 -m0 -i1 int &
 

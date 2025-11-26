@@ -15,7 +15,7 @@ STAGING     ?=
 # relative paths
 
 # include common Makefile stuff
-include ../../b2b/x86/targetsysbuild.db
+include ../../ftdi-mcp/x86/targetsysbuild.db
 
 ifeq ($(DIM), YES)
 # DIM headers should be installed in USRPATH/include
@@ -28,8 +28,9 @@ EXTRA_FLAGS ?= $(USEDIM)
 CCFLAGS     ?= $(EXTRA_FLAGS) -I$(EB) -I../include -I$(USRPATH)/include -I../../common-libs/include
 LIBS        ?= -L. -L$(USRPATH)/lib -Wl,-rpath,$(PREFIX)/lib -lm -lftd2xx -lmpsse $(DIMLIB) -lpthread -lb2blib
 
-$(info    CCFLAGS is $(CCFLAGS))
-$(info     CFLAGS is $(CFLAGS))
+$(info ours/theirs CFLAGS is $(CFLAGS))
+$(info compiling x86 binaries for $(SYSENV))
+$(info ours CCFLAGS for c code is $(CCFLAGS))
 
 TARGETS     := ftdimcp-ctl ftdimcp-ui
 

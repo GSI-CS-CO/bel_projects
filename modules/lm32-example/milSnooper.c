@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-May-2018
+ *  version : 15-Aug-2024
  *
  *  example program for lm32 softcore on GSI timing receivers
  * 
@@ -64,6 +64,7 @@ volatile uint32_t *pMILPiggy;    // WB address of MIL piggy on SCU
 volatile uint32_t *pShared;      // pointer to begin of shared memory region
 uint32_t *pCpuRamExternal;       // external address (seen from host bridge) of this CPU's RAM
 
+#define MILSLOT 0                // SCU bus slot, 0: MILPiggy, 1..N: SIO in slot 1..N
 void init()
 {
   discoverPeriphery();   // mini-sdb: get info on important Wishbone infrastructure, such as (this) CPU, flash, EB Master, ...
@@ -132,15 +133,15 @@ void MILEvtHandler(uint32_t nOfEvents){
   uint32_t virtAcc;            // virtual accelerator
   uint32_t beamStat;           // beam status               
   uint32_t evtTime, evtTime1, evtTime2, evtTime3; // EVT_TIME (time in 10ms since UTC 0000 current day)
-  uint32_t secsUTC, msecsUTC, UTC1, UTC2, UTC3, UTC4, UTC5; //TIME_UTC, time since 1 Jan 2008
+  uint32_t secsUTC, msecsUTC, UTC1, UTC2, UTC3, UTC4, UTC5; //TIME_UTC, time since 1 Jan 2008gs
   uint32_t help1, help2; 
   int i;
 
   i = 0;
   while (i < 500) {
-    if (fifoNotemptyEvtMil(pMILPiggy)) {
+    if (fifoNotemptyEvtMil(pMILPiggy, MILSLOT)) {
       i++;
-      popFifoEvtMil(pMILPiggy, &evtData);
+      popFifoEvtMil(pMILPiggy, MILSLOT, &evtData);
       evtCode  = evtData & 0x000000ff;
       help1   = (evtData >> 8);
       switch (evtCode) {
@@ -208,7 +209,7 @@ void main(void) {
   
   findMILPiggy();                                  // find Wishbone address of MIL piggy on SCU     
 
-  writeCtrlStatRegEvtMil(pMILPiggy, MIL_CTRL_STAT_ENDECODER_FPGA | MIL_CTRL_STAT_INTR_DEB_ON);   // write initial values to control register
+  writeCtrlStatRegEvtMil(pMILPiggy, MILSLOT, MIL_CTRL_STAT_ENDECODER_FPGA | MIL_CTRL_STAT_INTR_DEB_ON);   // write initial values to control register
 
   while(1) MILEvtHandler(100);
 } /* main */

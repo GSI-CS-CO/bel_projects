@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define WRMIL_SERV_MON_VERSION 0x000100
+#define WRMIL_SERV_MON_VERSION 0x000102
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -210,7 +210,7 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
   static uint32_t     sndEvtNo;        // evtNo of MIL event sent
   
   uint32_t            mFid;            // FID 
-  uint32_t            mGid;            // GID
+  // uint32_t            mGid;            // GID
   uint32_t            mEvtNo;          // event number
 
   double              tDiff;           // time difference between stop and start; must be smaller than match window
@@ -220,7 +220,7 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
   double              dummy;
 
   mFid        = ((evtId  & 0xf000000000000000) >> 60);
-  mGid        = ((evtId  & 0x0fff000000000000) >> 48);
+  // mGid        = ((evtId  & 0x0fff000000000000) >> 48);
   mEvtNo      = ((evtId  & 0x0000fff000000000) >> 36);
 
   stream      = 0;
