@@ -76,6 +76,7 @@ use work.enc_err_counter_pkg.all;
 use work.a10vs_pkg.all;
 use work.cellular_ram_pkg.all;
 use work.neorv32_shell_pkg.all;
+use work.pwm_pkg.all;
 
 entity monster is
   generic(
@@ -112,6 +113,7 @@ entity monster is
     g_en_beam_dump         : boolean;
     g_en_i2c_wrapper       : boolean;
     g_num_i2c_interfaces   : integer;
+    g_num_pwm_channels     : integer;
     g_dual_port_wr         : boolean;
     g_io_table             : t_io_mapping_table_arg_array;
     g_en_pmc               : boolean;
@@ -135,6 +137,7 @@ entity monster is
     g_en_eca_tap           : boolean;
     g_en_asmi              : boolean;
     g_en_psram_delay       : boolean;
+    g_en_pwm               : boolean;
     g_en_enc_err_counter   : boolean;
     g_en_a10vs             : boolean;
     g_en_cellular_ram      : boolean;
@@ -435,7 +438,9 @@ entity monster is
    -- g_en_tempsens
     tempsens_clr_out       : out   std_logic;
     -- rack mount timing receiver
-    is_rmt                 : out   std_logic := '0');
+    is_rmt                 : out   std_logic := '0';
+    -- g_en_pwm
+    pwm_o                  : out    std_logic_vector(7 downto 0));
 end monster;
 
 architecture rtl of monster is
@@ -603,7 +608,8 @@ architecture rtl of monster is
     devs_asmi,
     devs_enc_err_counter,
     devs_a10vs,
-    devs_cellular_ram
+    devs_cellular_ram,
+    devs_pwm
   );
   constant c_dev_slaves          : natural := dev_slaves'pos(dev_slaves'right)+1;
 
@@ -650,7 +656,8 @@ architecture rtl of monster is
     dev_slaves'pos(devs_asmi)           => f_sdb_auto_device(c_wb_asmi_sdb,                        g_en_asmi),
     dev_slaves'pos(devs_enc_err_counter)=> f_sdb_auto_device(c_enc_err_counter_sdb,                g_en_enc_err_counter),
     dev_slaves'pos(devs_a10vs)          => f_sdb_auto_device(c_a10vs_sdb,                          g_en_a10vs),
-    dev_slaves'pos(devs_cellular_ram)   => f_sdb_auto_device(f_cellular_ram_sdb(g_cr_bits),        g_en_cellular_ram));
+    dev_slaves'pos(devs_cellular_ram)   => f_sdb_auto_device(f_cellular_ram_sdb(g_cr_bits),        g_en_cellular_ram),
+    dev_slaves'pos(devs_pwm)            => f_sdb_auto_device(c_pwm_sdb,                            g_en_pwm));
   constant c_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_bridge_sdb  : t_sdb_bridge       := f_xwb_bridge_layout_sdb(true, c_dev_layout, c_dev_sdb_address);
@@ -812,6 +819,9 @@ architecture rtl of monster is
 
   signal cellular_ram_slave_i : t_wishbone_slave_in;
   signal cellular_ram_slave_o : t_wishbone_slave_out;
+
+  signal pwm_device_i   : t_wishbone_slave_in;
+  signal pwm_device_o   : t_wishbone_slave_out;
 
   signal eb_src_out : t_wrf_source_out;
   signal eb_src_in  : t_wrf_source_in;
@@ -1049,6 +1059,7 @@ architecture rtl of monster is
   signal s_gpio_src_ioc       : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
   signal s_gpio_src_wr_pps    : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
   signal s_gpio_src_butis_t0  : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
+  signal s_gpio_src_pwm       : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
 
   signal s_gpio_mux           : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
   signal s_lvds_mux           : std_logic_vector(f_sub1(c_eca_lvds) downto 0);
@@ -1138,6 +1149,12 @@ architecture rtl of monster is
   signal s_tms    : std_logic;
   signal s_tck    : std_logic;
 
+
+  ----------------------------------------------------------------------------------
+  -- pwm signals ------------------------------------------------------------------
+  ----------------------------------------------------------------------------------
+  signal s_pwm_dummy_vector : std_logic_vector((c_eca_gpio-g_num_pwm_channels-1) downto 0) := (others => '0');
+  signal s_pwm_pps_dummy    : std_logic := '0';
 
 begin
 
@@ -2683,7 +2700,7 @@ end generate;
     s_gpio_src_wr_pps(i) <= '0' when s_gpio_pps_mux(i)='0' else ext_pps;
   end generate;
 
-  s_gpio_out <= s_gpio_src_eca or s_gpio_src_ioc or s_gpio_src_butis_t0 or s_gpio_src_wr_pps;
+  s_gpio_out <= s_gpio_src_eca or s_gpio_src_ioc or s_gpio_src_butis_t0 or s_gpio_src_wr_pps or s_gpio_src_pwm;
   process(clk_ref, rstn_ref)
   begin
     if(rstn_ref = '0') then
@@ -3675,6 +3692,40 @@ end generate;
         rst_n_i    => rstn_sys,
         slave_i    => a10vs_slave_i,
         slave_o    => a10vs_slave_o
+      );
+  end generate;
+
+  pwm_n : if not g_en_pwm generate
+    dev_bus_master_i(dev_slaves'pos(devs_pwm)) <= cc_dummy_slave_out;
+  end generate;
+    
+  pwm_y : if g_en_pwm generate
+    xwb_system_to_pwm : xwb_clock_crossing
+      generic map (g_size => 32)
+      port map(
+        -- Slave control port
+        slave_clk_i    => clk_sys,
+        slave_rst_n_i  => rstn_sys,
+        slave_i        => dev_bus_master_o(dev_slaves'pos(devs_pwm)),
+        slave_o        => dev_bus_master_i(dev_slaves'pos(devs_pwm)),
+        -- Master reader port
+        master_clk_i   => clk_ref0,
+        master_rst_n_i => rstn_sys,
+        master_i       => pwm_device_o,
+        master_o       => pwm_device_i
+        );
+
+    pwm_pwm : pwm
+    generic map (
+        g_pwm_channel_num => c_eca_gpio
+      )
+      port map (
+        clk_sys_i         => clk_sys,
+        rst_sys_n_i       => rstn_sys,
+        t_wb_o            => pwm_device_o,
+        t_wb_i            => pwm_device_i,
+        pwm_latch_i       => pps,
+        pwm_o             => s_gpio_src_pwm((c_eca_gpio-1) downto 0)
       );
   end generate;
 

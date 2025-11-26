@@ -113,6 +113,7 @@ package monster_pkg is
       g_en_beam_dump         : boolean := false;
       g_en_i2c_wrapper       : boolean := false;
       g_num_i2c_interfaces   : integer := 1;
+      g_num_pwm_channels     : integer := 8;
       g_dual_port_wr         : boolean := false;
       g_io_table             : t_io_mapping_table_arg_array(natural range <>);
       g_en_pmc               : boolean := false;
@@ -136,6 +137,7 @@ package monster_pkg is
       g_en_eca_tap           : boolean := false;
       g_en_asmi              : boolean := false;
       g_en_psram_delay       : boolean := false;
+      g_en_pwm               : boolean := true;
       g_en_enc_err_counter   : boolean := false;
       g_en_a10vs             : boolean := false;
       g_en_cellular_ram      : boolean := false;
@@ -439,8 +441,8 @@ package monster_pkg is
       ge_85_c_o              : out   std_logic;
       -- g_en_user_ow
       ow_io                  : inout std_logic_vector(1 downto 0) := (others => 'Z');
-      hw_version             : in std_logic_vector(31 downto 0) := (others => 'Z');
-      poweroff_comx          : out std_logic;
+      hw_version             : in    std_logic_vector(31 downto 0) := (others => 'Z');
+      poweroff_comx          : out   std_logic;
       -- rack mount timing receiver
       is_rmt                 : out   std_logic := 'Z');
   end component;
