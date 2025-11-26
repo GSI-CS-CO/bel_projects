@@ -413,13 +413,13 @@ begin
 
   -- LVDS outputs
   n25 <= lvds_n_o(0); -- TTLIO1
-  n27 <= lvds_n_o(1); -- TTLIO2
-  n28 <= lvds_n_o(2); -- TTLIO3
+  --n27 <= lvds_n_o(1); -- TTLIO2
+  --n28 <= lvds_n_o(2); -- TTLIO3
   --n19 <= lvds_n_o(3); -- LVDS_3 / CK200 -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
   --n24 <= lvds_n_o(4); -- LVDS_4 / SYOU  -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
   p25 <= lvds_p_o(0); -- TTLIO1
-  p27 <= lvds_p_o(1); -- TTLIO2
-  p28 <= lvds_p_o(2); -- TTLIO3
+  --p27 <= lvds_p_o(1); -- TTLIO2
+  --p28 <= lvds_p_o(2); -- TTLIO3
   --p19 <= lvds_p_o(3); -- LVDS_3 / CK200 -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
   --p24 <= lvds_p_o(4); -- LVDS_4 / SYOU  -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
 
