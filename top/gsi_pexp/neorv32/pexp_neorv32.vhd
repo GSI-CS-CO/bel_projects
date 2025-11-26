@@ -288,7 +288,7 @@ begin
       g_en_enc_err_counter => true,
       g_en_timer           => true,
       g_en_eca_tap         => true,
-      g_en_asmi            => false,
+      g_en_asmi            => true,
       g_en_neorv32         => true,
       g_io_table           => io_mapping_table,
       g_lm32_cores         => c_cores,
