@@ -281,7 +281,7 @@ if [ -z "$username" ]; then
 fi
 
 if [ -z "$userpasswd" ]; then
-    read -rsp "password for '$username' : " userpasswd
+    read -rsp "password for '$username@$rxscu_name': " userpasswd; echo
 fi
 
 # get the default transmitter SCU name

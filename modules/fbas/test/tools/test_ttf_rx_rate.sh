@@ -209,7 +209,7 @@ if [ -z "$username" ]; then
 fi
 
 if [ -z "$userpasswd" ]; then
-    read -rsp "password for '$username' : " userpasswd
+    read -rsp "password for '$username@$rxscu_name': " userpasswd
 fi
 
 # get name of an external file with DM schedule
