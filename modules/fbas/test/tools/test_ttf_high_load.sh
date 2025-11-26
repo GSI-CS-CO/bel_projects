@@ -8,9 +8,10 @@ dir_name=${abs_path%/*}
 source $dir_name/test_ttf_basic.sh -s  # source the specified script
 
 domain=$(hostname -d)
-sleep_sec=20
 rxscu_name="scuxl0497" # 00:26:7b:00:06:c5
 rxscu="$rxscu_name.$domain"
+
+duration_sec=20
 fw_rxscu="fbas128.scucontrol.bin"    # default LM32 FW for RX SCU
 
 usage() {
@@ -19,6 +20,7 @@ usage() {
     echo "Used SCUs: $rxscu_name (RX)"
     echo
     echo "OPTION:"
+    echo "  -d <duration>          test duration, in seconds (10 seconds by default)"
     echo "  -u <username>          user name to log in to SCUs"
     echo "  -p <userpasswd>        user password"
     echo "  -v                     enable verbosity"
@@ -28,8 +30,9 @@ usage() {
 unset username userpasswd verbose
 unset OPTIND
 
-while getopts 'hu:p:vs' c; do
+while getopts 'd:hu:p:vs' c; do
     case $c in
+        d) duration_sec=$OPTARG ;;
         h) usage; exit 1 ;;
         u) username=$OPTARG ;;
         p) userpasswd=$OPTARG ;;
@@ -59,9 +62,9 @@ output=$(run_remote $rxscu "source setup_local.sh && setup_mpsrx $fw_rxscu SENDE
 # enable MPS task of rxscu
 run_remote $rxscu "source setup_local.sh && start_test4 \$rx_node_dev"
 
-echo "wait $sleep_sec seconds (start Xenabay schedule now)"
+echo "wait $duration_sec seconds (start Xenabay schedule now)"
 echo "------------"
-sleep $sleep_sec  # wait for given seconds
+sleep $duration_sec  # wait for given seconds
 
 # disable MPX task of rxscu"
 run_remote $rxscu "source setup_local.sh && stop_test4 \$rx_node_dev && \
