@@ -6,9 +6,11 @@
 # - TX SCU (scuxl0396)
 
 domain=$(hostname -d)
-rxscu="scuxl0497.$domain" # 00:26:7b:00:06:c5
-txscu="scuxl0396.$domain" # 00:26:7b:00:06:d7
 sleep_sec=10
+rxscu_name="scuxl0497" # 00:26:7b:00:06:c5
+txscu_name="scuxl0396" # 00:26:7b:00:06:d7
+rxscu="$rxscu_name.$domain"
+txscu="$txscu_name.$domain"
 
 prefix="/usr/bin"
 fw_rxscu="fbas128.scucontrol.bin"      # default LM32 FW for RX SCU
@@ -80,11 +82,11 @@ main() {
 
     # get username and password to access SCUs
     if [ -z "$username" ]; then
-        read -rp "username to access '${rxscu%%.*}, ${txscu%%.*}': " username
+        read -rp "username to access '{$rxscu_name, $txscu_name': " username
     fi
 
     if [ -z "$userpasswd" ]; then
-        read -rsp "password for '$username' : " userpasswd; echo
+        read -rsp "password for '$username@{$rxscu_name, $txscu_name}': " userpasswd; echo
     fi
 
     echo "check deployment"
