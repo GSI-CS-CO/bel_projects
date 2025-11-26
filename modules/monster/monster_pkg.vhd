@@ -278,7 +278,7 @@ package monster_pkg is
       -- g_en_scubus
       scubus_a_a             : out   std_logic_vector(15 downto 0);
       scubus_a_d_out         : out   std_logic_vector(15 downto 0);
-      scubus_a_d_in          : in    std_logic_vector(15 downto 0);
+      scubus_a_d_in          : in    std_logic_vector(15 downto 0) := (others => '0');
       scubus_a_d_tri_out     : out   std_logic;
       scubus_nsel_data_drv   : out   std_logic;
       scubus_a_nds           : out   std_logic;
