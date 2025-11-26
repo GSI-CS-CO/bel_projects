@@ -16,10 +16,10 @@ entity pci_control is
     -----------------------------------------
     -- PCI express pins
     -----------------------------------------
-    --pcie_refclk_i  : in  std_logic;
-    --pcie_rx_i      : in  std_logic_vector(3 downto 0);
-    --pcie_tx_o      : out std_logic_vector(3 downto 0);
-    --nPCI_RESET     : in std_logic;
+    pcie_refclk_i  : in  std_logic;
+    pcie_rx_i      : in  std_logic_vector(3 downto 0);
+    pcie_tx_o      : out std_logic_vector(3 downto 0);
+    nPCI_RESET     : in std_logic;
 
     pe_smdat        : inout std_logic; -- !!!
     pe_snclk        : out std_logic;   -- !!!
@@ -322,10 +322,10 @@ begin
       led_link_act_o          => led_link_act,
       led_track_o             => led_track,
       led_pps_o               => led_pps,
-      --pcie_refclk_i           => pcie_refclk_i,
-      --pcie_rstn_i             => nPCI_RESET,
-      --pcie_rx_i               => pcie_rx_i,
-      --pcie_tx_o               => pcie_tx_o,
+      pcie_refclk_i           => pcie_refclk_i,
+      pcie_rstn_i             => nPCI_RESET,
+      pcie_rx_i               => pcie_rx_i,
+      pcie_tx_o               => pcie_tx_o,
       usb_rstn_o              => ures,
       usb_ebcyc_i             => pa(3),
       usb_speed_i             => pa(0),
@@ -413,13 +413,13 @@ begin
 
   -- LVDS outputs
   n25 <= lvds_n_o(0); -- TTLIO1
-  -- n27 <= lvds_n_o(1); -- TTLIO2
-  -- n28 <= lvds_n_o(2); -- TTLIO3
+  n27 <= lvds_n_o(1); -- TTLIO2
+  n28 <= lvds_n_o(2); -- TTLIO3
   --n19 <= lvds_n_o(3); -- LVDS_3 / CK200 -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
   --n24 <= lvds_n_o(4); -- LVDS_4 / SYOU  -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
   p25 <= lvds_p_o(0); -- TTLIO1
-  -- p27 <= lvds_p_o(1); -- TTLIO2
-  -- p28 <= lvds_p_o(2); -- TTLIO3
+  p27 <= lvds_p_o(1); -- TTLIO2
+  p28 <= lvds_p_o(2); -- TTLIO3
   --p19 <= lvds_p_o(3); -- LVDS_3 / CK200 -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
   --p24 <= lvds_p_o(4); -- LVDS_4 / SYOU  -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
 
