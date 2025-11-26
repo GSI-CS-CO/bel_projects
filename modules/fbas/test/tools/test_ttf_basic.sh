@@ -6,12 +6,11 @@
 # - TX SCU (scuxl0396)
 
 domain=$(hostname -d)
+sleep_sec=10
 rxscu_name="scuxl0497" # 00:26:7b:00:06:c5
 txscu_name="scuxl0396" # 00:26:7b:00:06:d7
 rxscu="$rxscu_name.$domain"
 txscu="$txscu_name.$domain"
-
-duration_sec=10
 
 prefix="/usr/bin"
 fw_rxscu="fbas128.scucontrol.bin"      # default LM32 FW for RX SCU
@@ -24,7 +23,6 @@ usage() {
     echo "Run basic test to check timing message transfer between 2 SCUs."
     echo
     echo "OPTION:"
-    echo "  -d <duration>          test duration, in seconds (10 seconds by default)"
     echo "  -u <username>          user name to log in to SCUs"
     echo "  -p <userpasswd>        user password"
     echo "  -y                     'yes' to all prompts"
@@ -37,7 +35,7 @@ run_remote() {
     # $@ - commands for the remote host
 
     local host=$1; shift
-    timeout 20 sshpass -p "$userpasswd" $ssh_cmd $username@$host "$@"
+    sshpass -p "$userpasswd" $ssh_cmd $username@$host "$@"
 }
 
 check_deployment() {
@@ -71,16 +69,14 @@ main() {
     unset option username userpasswd verbose
     unset OPTIND  # unsetting OPTIND avoids unexpected behaviour when invoking the function multiple times
 
-    while getopts 'd:hyu:p:v' c
+    while getopts 'hyu:p:v' c
     do
         case $c in
-            d) duration_sec=$OPTARG ;;
             h) usage; exit 0 ;;
             u) username=$OPTARG ;;
             p) userpasswd=$OPTARG ;;
             y) option="auto" ;;
             v) verbose="yes" ;;
-            *) usage; exit 1 ;;
         esac
     done
 
@@ -127,24 +123,18 @@ main() {
     run_remote $rxscu "source setup_local.sh && start_test4 \$rx_node_dev"
     run_remote $txscu "source setup_local.sh && start_test4 \$tx_node_dev"
 
-    echo "wait $duration_sec seconds (start Xenabay schedule now)"
+    echo "wait $sleep_sec seconds (start Xenabay schedule now)"
     echo "------------"
-    sleep $duration_sec  # wait for given seconds
+    sleep $sleep_sec  # wait for given seconds
 
     echo 'stop test4 (TX, RX)'
     echo "----------"
     echo -n "TX: "
     run_remote $txscu "source setup_local.sh && stop_test4 \$tx_node_dev && \
-        result_eca_delay \$tx_node_dev $verbose && \
-        result_tx_delay \$tx_node_dev $verbose && \
-        result_ml_period \$tx_node_dev $verbose && \
         read_counters \$tx_node_dev $verbose"
     echo -n "RX: "
     run_remote $rxscu "source setup_local.sh && stop_test4 \$rx_node_dev && \
-        result_eca_delay \$rx_node_dev $verbose && \
-        result_msg_delay \$rx_node_dev $verbose && \
-        result_ml_period \$rx_node_dev $verbose && \
-        read_counters \$rx_node_dev $verbose"
+        read_counters \$rx_node_dev $verbose && result_msg_delay \$rx_node_dev $verbose"
 }
 
 export -f run_remote
