@@ -270,6 +270,7 @@ begin
       g_en_lcd             => true,
       g_en_user_ow         => true,
       g_en_tempsens        => true,
+      g_en_tlu             => true,
       g_delay_diagnostics  => true,
       g_en_enc_err_counter => true,
       g_en_timer           => true,
