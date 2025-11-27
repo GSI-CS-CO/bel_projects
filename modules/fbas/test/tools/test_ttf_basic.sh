@@ -80,6 +80,7 @@ main() {
             p) userpasswd=$OPTARG ;;
             y) option="auto" ;;
             v) verbose="yes" ;;
+            *) usage; exit 1 ;;
         esac
     done
 

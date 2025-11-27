@@ -99,13 +99,13 @@ unset OPTIND
 
 while getopts 'hys:u:p:vn:' c; do
     case $c in
-        h) usage; exit 1 ;;
+        h) usage; exit 0 ;;
         s) rxscu_name=$OPTARG; rxscu="$rxscu_name.$domain" ;;
         u) username=$OPTARG ;;
         p) userpasswd=$OPTARG ;;
         v) verbose="yes" ;;
         n) n_repeat=$OPTARG ;;
-        *) ;;
+        *) usage; exit 1 ;;
     esac
 done
 
