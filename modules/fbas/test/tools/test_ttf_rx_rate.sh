@@ -194,12 +194,13 @@ unset OPTIND
 
 while getopts 'hu:p:s:f:m' c; do
     case $c in
-        h) usage; exit 1 ;;
+        h) usage; exit 0 ;;
         u) username=$OPTARG ;;
         p) userpasswd=$OPTARG ;;
         s) sched_filename=$OPTARG ;;
         f) fw_rxscu=$OPTARG ;;
         m) is_msg_rate_limited="y" ;;
+        *) usage; exit 1 ;;
     esac
 done
 
