@@ -167,7 +167,7 @@ start_dm_schedule() {
     output=$(ssh "$login_dm" \
         "source ./${dst_test_dir}/tools/dm.sh && \
         set_value $sched_filename tperiod $t_period && \
-        run_pattern $sched_filename")
+        run_finite_schedule $sched_filename")
     ret_code=$?
     report_code $ret_code
     exit_on_fail $ret_code
