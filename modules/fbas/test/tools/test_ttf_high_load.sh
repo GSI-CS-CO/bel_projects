@@ -33,10 +33,11 @@ unset OPTIND
 while getopts 'd:hu:p:vs' c; do
     case $c in
         d) duration_sec=$OPTARG ;;
-        h) usage; exit 1 ;;
+        h) usage; exit 0 ;;
         u) username=$OPTARG ;;
         p) userpasswd=$OPTARG ;;
         v) verbose="yes" ;;
+        *) usage; exit 1 ;;
     esac
 done
 
