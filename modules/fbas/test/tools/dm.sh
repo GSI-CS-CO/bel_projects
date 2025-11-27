@@ -218,10 +218,10 @@ get_value() {
 }
 
 ######################
-## Run a pattern
+## Run a schedule/pattern
 ######################
 
-run_pattern() {
+run_finite_schedule() {
     # $1 - external file with schedule (ie., my_mps_rx_rate_16.dot)
 
     if [ ! -f $patt_loc/$1 ]; then
