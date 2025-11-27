@@ -53,7 +53,7 @@
 # 6. TTF traffic test - uses the remote datamaster and receiver
 #
 # senders: datamaster (remote, tsl014)
-# receivers: SCU3 (remote, scuxl0497 - specified in test_ttf_rx_rate.sh)
+# receivers: SCU3 (remote, scuxl0497 - specified in measure_ttf_rx_rate.sh)
 #
 # This test setup can be used for testing new WRS software.
 
@@ -329,4 +329,4 @@ restart_fbasdm_run_pattern:
 	@source dm.sh && run_pattern ${sched_def} && echo
 
 test_ttf_traffic:
-	./test_ttf_rx_rate.sh -s my_mps_rx_rate_1.dot -f ${fw_rxscu} -m
+	./measure_ttf_rx_rate.sh -s my_mps_rx_rate_1.dot -f ${fw_rxscu} -m
