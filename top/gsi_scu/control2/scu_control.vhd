@@ -343,6 +343,7 @@ begin
       g_gpio_in            => 12,
       g_gpio_out           => 24,
       g_gpio_inout         => 2,
+      g_en_pwm             => true,
       g_flash_bits         => 24,
       g_en_pcie            => true,
       g_en_scubus          => true,
