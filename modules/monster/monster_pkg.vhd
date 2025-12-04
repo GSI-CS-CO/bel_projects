@@ -138,7 +138,7 @@ package monster_pkg is
       g_en_eca_tap           : boolean := false;
       g_en_asmi              : boolean := false;
       g_en_psram_delay       : boolean := false;
-      g_en_pwm               : boolean := true;
+      g_en_pwm               : boolean := false;
       g_en_enc_err_counter   : boolean := false;
       g_en_a10vs             : boolean := false;
       g_en_cellular_ram      : boolean := false;
