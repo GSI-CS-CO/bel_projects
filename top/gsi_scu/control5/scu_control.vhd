@@ -319,6 +319,7 @@ begin
       g_lvds_in            => 3,
       g_lvds_out           => 3,
       g_lvds_invert        => false,
+      g_en_pwm             => true,
       g_en_user_ow         => true,
       g_en_ddr3            => false,
       g_en_cfi             => false,
