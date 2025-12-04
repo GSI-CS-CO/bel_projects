@@ -322,18 +322,18 @@ architecture rtl of scu_control is
     ("RMT21      ",  IO_NONE,         false,   false,  23,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVTTL),
     ("RMT22      ",  IO_NONE,         false,   false,  24,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVTTL),
     ("RMT23      ",  IO_NONE,         false,   false,  25,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVTTL),
-    ("RMT24      ",  IO_NONE,         false,   false,  26,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL),
-    ("RMT25      ",  IO_NONE,         false,   false,  27,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL),
-    ("RMT26      ",  IO_NONE,         false,   false,  28,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL),
-    ("RMT27      ",  IO_NONE,         false,   false,  29,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL),
-    ("RMT28      ",  IO_NONE,         false,   false,  30,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL),
-    ("RMT29      ",  IO_NONE,         false,   false,  31,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL),
-    ("RMT30      ",  IO_NONE,         false,   false,  32,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL),
-    ("RMT31      ",  IO_NONE,         false,   false,  33,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL),
-    ("RMT32      ",  IO_NONE,         false,   false,  34,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL),
-    ("RMT33      ",  IO_NONE,         false,   false,  35,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL),
-    ("RMT34      ",  IO_NONE,         false,   false,  36,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL),
-    ("RMT35      ",  IO_NONE,         false,   false,  37,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL)
+    ("RMT24      ",  IO_NONE,         false,   false,  2,      IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT25      ",  IO_NONE,         false,   false,  3,      IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT26      ",  IO_NONE,         false,   false,  4,      IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT27      ",  IO_NONE,         false,   false,  5,      IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT28      ",  IO_NONE,         false,   false,  6,      IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT29      ",  IO_NONE,         false,   false,  7,      IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT30      ",  IO_NONE,         false,   false,  8,      IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT31      ",  IO_NONE,         false,   false,  9,      IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT32      ",  IO_NONE,         false,   false,  10,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT33      ",  IO_NONE,         false,   false,  11,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT34      ",  IO_NONE,         false,   false,  12,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL),
+    ("RMT35      ",  IO_NONE,         false,   false,  13,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL)
   );
 
   constant c_family       : string := "Arria II";
