@@ -380,6 +380,10 @@ uint32_t* dummyNodeFunc (uint32_t* node, uint32_t* thrData);
   * @return null
   */ 
 
+uint8_t safeRead64_with_retry(volatile uint64_t* addr, uint64_t* dest);
+
+uint8_t safeRead64(volatile uint64_t* addr, uint64_t* dest);
+
 uint32_t* dynamicNodeFunc (uint32_t* node, uint32_t* thrData);
 
 /// Dummy deadline function, used to catch bad node types
