@@ -787,7 +787,7 @@ uint32_t* dynamicNodeStaging(uint32_t* node, uint32_t* thrData) {
   }
 
   uint32_t wordformatOriginal = nodeTmp[NODE_OPT_DYN >> 2]; //save original wordformat
-  uint32_t hash = nodeTmp[NODE_HASH]; //save original hash for diagnostics
+  uint32_t hash = nodeTmp[NODE_HASH >> 2]; //save original hash for diagnostics
   
   for(unsigned i = 0; i < 9; i++) { // a memory block has 13 words / fields. The first 9 can have be references to other memory locations and must be derefenced for use. The last 4 fields (dyn, hash, flags, nextPtr) must not be changed.
     uint32_t wordFormats = wordformatOriginal >> (i*3); //load word description
@@ -857,16 +857,19 @@ uint32_t* dynamicNodeStaging(uint32_t* node, uint32_t* thrData) {
   //call handler function
   ret = nodeFuncs[getNodeType(nodeTmp)](nodeTmp, thrData); 
   
-  //copy back all changes to immediate/val fields 
+  //copy back all changes to immediate/val fields
   for(unsigned i = 0; i < 9; i++) {
     uint32_t wordFormats = wordformatOriginal >> (i*3);
     
     if (((wordFormats & DYN_MODE_MSK) == DYN_MODE_IM) || ((wordFormats & DYN_MODE_MSK) == DYN_MODE_ADR)) { 
-      node[i] = nodeTmp[i];
       DBPRINT3("#%02u: Node # 0x%08x - copy back - overwriting word %u 0x%08x with new value 0x%08x\n", cpuId, hash, i, node[i], nodeTmp[i]);
+      node[i] = nodeTmp[i];
     } // immediate/adr ?
+    else {
+      DBPRINT3("#%02u: Node # 0x%08x - is dynamic - keeping word %u 0x%08x\n", cpuId, hash, i, node[i]);
+    }
     //also copy back node flags. Yes, this would not catch illegal changes to nodetype, but if THAT can happen in a handler at all, we're screwed anyway. And besides, we need the set or unset flags back.
-    node[NODE_FLAGS] = nodeTmp[NODE_FLAGS];
+    node[NODE_FLAGS >> 2] = nodeTmp[NODE_FLAGS >> 2];
   }
 
   //we must never return nodeTmp, as the object only exists within this function. however, we cannot just return node on principle, as the handler most likely returns a pointer to the successor node, not to the same node again.
