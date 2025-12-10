@@ -1,4 +1,3 @@
-
 # PREFIX  controls where programs and libraries get installed
 # Note: during compile (all), PREFIX must be set to the final installation path
 # Set SYSENV to the target system environment (YOCTO, ACC7, ACC9, OPT)
