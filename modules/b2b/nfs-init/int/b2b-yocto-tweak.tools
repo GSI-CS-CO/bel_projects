@@ -1,5 +1,7 @@
 # tweak yocto ramdisk
 
+logger "start b2b-yocto-tweaks"
+
 # governour
 # script below pirated from Timo M.
 logger "Set power governor to 'performance'"
@@ -13,19 +15,24 @@ done
 sleep 1
 
 # deactivate RT Throtteling
+logger "deactivate RT throtteling"
 echo -1 >/proc/sys/kernel/sched_rt_runtime_us
 
 sleep 1
 
-# print info on c-states for cpu0 
+# print info on c-states for cpu0
+logger "print info on c-states for cpu0"
 cd /sys/devices/system/cpu/cpu0/cpuidle
 for state in state* ; do logger c-$state `cat $state/name` `cat $state/latency` ; done
 
 # saftlib to realtime prio using my own saftbus systemd unit
+logger "saftlib to realtime prios"
 systemctl stop saftbus
 cp -a $MOUNTPOINT/systemd/saftbus.service /lib/systemd/system
 systemctl daemon-reload
 systemctl start saftbus
 
 logger "wait 20s to let things calm down ..."
-sleep 20 
+sleep 20
+
+logger "finished b2b-yocto-tweaks"
