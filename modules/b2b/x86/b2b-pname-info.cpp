@@ -2,12 +2,14 @@
  *  b2b-pname-info.c
  *
  *  created : 2021
- *  author  : Michael Reese, GSI-Darmstadt
- *  version : 10-May-2023
+ *  author  : Michael Reese, Dietrich Beck GSI-Darmstadt
+ *  version : 12-Dec-2025
  *
  * a hackish solution providing pattern name information for relevant Sequence IDs
  *
  *********************************************************************************************/
+#define B2B_PNAME_VERSION 0x000808
+
 #include <dis.h>
 #include <cstdio>
 #include <iostream>
@@ -18,6 +20,26 @@
 #include <map>
 #include <algorithm>
 #include <stdexcept>
+
+static const char* program;
+
+// display help
+static void help(void) {
+  std::cout << std::endl << "Usage: " << program << " <environment> [OPTIONS]" << std::endl;
+  std::cout << std::endl;
+  std::cout << "  -h                   display this help and exit" << std::endl;
+  std::cout << std::endl;
+  std::cout << std::endl;
+  std::cout << "This tool queries pattern / chain names using the 'residump' script and publishes information via DIM" << std::endl;
+  std::cout << std::endl;
+  std::cout << "Exampe: 'b2b-pname-info pro' for PRO system" << std::endl << std::endl;
+  std::cout << std::endl;
+  std::cout << "Report bugs to <d.beck@gsi.de> !!!" << std::endl;
+  printf("Version %x. Licensed under the GPL v3.", B2B_PNAME_VERSION);
+  std::cout << std::endl;
+} // help
+
+
 
 // run the command, read the output (stdout, not stderr) and return it as a std::string
 std::string execute_and_capture_output(const std::string& command) {
@@ -106,35 +128,76 @@ struct PatternNameService {
 	}
 };
 
-int main()  
+int main(int argc, char** argv)
 {
-	try {
-		std::string dim_server_name = "b2b_pro_ring_pnames";
-		std::vector<PatternNameService> b2b_pro_ring_pnames_services;
-		b2b_pro_ring_pnames_services.push_back(PatternNameService("b2b_pro_sis18", "T=300", "S="));
-		b2b_pro_ring_pnames_services.push_back(PatternNameService("b2b_pro_esr",   "T=340", "S="));
-		b2b_pro_ring_pnames_services.push_back(PatternNameService("b2b_pro_yr",    "T=210", "S="));
+  // variables
+  std::string  envName = "";
+  int          opt;
+  
+  // parse for options
+  program = argv[0];
+  while ((opt = getopt(argc, argv, "h")) != -1) {
+    switch (opt) {
+      case 'h':
+        help();
+        return 0;
+      default:
+        std::cerr << program << ": bad getopt result" << std::endl;
+        return 1;
+    } // switch opt
+  }   // while opt
 
-		if (!dis_start_serving(dim_server_name.c_str())) {
-			throw std::runtime_error("cannot start DIM server");
-		}
+  if (optind >= argc) {
+    std::cerr << program << " expecting one non-optional argument: <environmet>" << std::endl;
+    help();
+    return 1;
+  }
+  envName = argv[optind];
+  
+        
+  
+  try {
+    std::string dim_server_name   = "b2b_" + envName + "_ring_pnames";
+    std::string dim_sis18_service = "b2b_" + envName + "_sis18";
+    std::string dim_esr_service   = "b2b_" + envName + "_esr";
+    std::string dim_yr_service    = "b2b_" + envName + "_yr";
 
-                std::string magic_command = "/common/usr/cscoap/bin/lsa_residump -t";
-                // std::string magic_command = "cat test.txt";
-		for(;;) { 
-                  	std::string script_output = execute_and_capture_output(magic_command);
-			for(auto &service: b2b_pro_ring_pnames_services) {
-				service.process_script_output(script_output);
-				// write the buffer content to stderr 
-				// for (int sid = 0; sid < service.buffers.size(); ++sid) {
-				// 	std::cerr << service.service_names[sid] << " : " << &service.buffers[sid][0] << std::endl;
-				// }
-                                }
-			sleep(60);  
-                        }  
-	} catch (std::runtime_error &e) {
-		std::cerr << "error in DIM server for ring pattern names: " << e.what() << std::endl;
-		return 1;
-	}
-	return 0;
-}  
+    std::vector<PatternNameService> b2b_ring_pnames_services;
+    b2b_ring_pnames_services.push_back(PatternNameService(dim_sis18_service, "T=300", "S="));
+    b2b_ring_pnames_services.push_back(PatternNameService(dim_esr_service  , "T=340", "S="));
+    b2b_ring_pnames_services.push_back(PatternNameService(dim_yr_service   , "T=210", "S="));
+
+    if (!dis_start_serving(dim_server_name.c_str())) {
+      throw std::runtime_error("cannot start DIM server");
+    }
+
+    std::string magic_command_pro = "/common/usr/cscoap/bin/lsa_residump -t --config=PRO | grep EXTRACTION_FAST";
+    std::string magic_command_int = "/common/usr/cscoap/bin/lsa_residump -t --config=INT | grep EXTRACTION_FAST";
+    std::string magic_command = "";
+
+    if       (envName == "pro") magic_command = magic_command_pro;
+    else if  (envName == "int") magic_command = magic_command_int;
+    else {
+        std::cerr << "illegal environment: " << envName << std::endl;
+        return 1;
+      } // else
+    // std::string magic_command = "cat test.txt";
+    // std::cout << magic_command << std::endl;
+    for(;;) {
+      
+      std::string script_output = execute_and_capture_output(magic_command);
+      for(auto &service: b2b_ring_pnames_services) {
+        service.process_script_output(script_output);
+        // write the buffer content to stderr 
+        // for (int sid = 0; sid < service.buffers.size(); ++sid) {
+        // 	std::cerr << service.service_names[sid] << " : " << &service.buffers[sid][0] << std::endl;
+        // }
+      }
+      sleep(60);  
+    }  
+  } catch (std::runtime_error &e) {
+    std::cerr << "error in DIM server for ring pattern names: " << e.what() << std::endl;
+    return 1;
+  }
+  return 0;
+}  // main 
