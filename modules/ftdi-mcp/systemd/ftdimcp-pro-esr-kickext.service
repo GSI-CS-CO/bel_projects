@@ -1,0 +1,10 @@
+[Unit]
+Description = ftdi-mcp service for PRO ESR extraction kicker
+
+[Service]
+Type = simple
+Environment="DIM_DNS_NODE=asl105"
+ExecStart = ftdimcp-ctl 0 -d b2b_pro_esr-kse -a 0x60 -l 51.5
+
+[Install]
+WantedBy = multi-user.target

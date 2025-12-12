@@ -1,0 +1,10 @@
+[Unit]
+Description = ftdi-mcp service for PRO YR injection kicker
+
+[Service]
+Type = simple
+Environment="DIM_DNS_NODE=asl105"
+ExecStart = ftdimcp-ctl 0 -d b2b_pro_yr-ksi -l 44.5
+
+[Install]
+WantedBy = multi-user.target
