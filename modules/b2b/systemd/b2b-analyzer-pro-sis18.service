@@ -1,0 +1,10 @@
+[Unit]
+Description = b2b data analysis for PRO SIS18
+
+[Service]
+Type = simple
+Environment="DIM_DNS_NODE=asl105"
+ExecStart = b2b-analyzer pro_sis18
+
+[Install]
+WantedBy = multi-user.target

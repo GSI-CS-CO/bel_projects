@@ -1,15 +1,27 @@
 # yocto; temporarily disabled
-#SERVICEA=b2b-servsys-pro-yr-kickext.service
-#cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
-#systemctl daemon-reload
-#
-#systemctl start $SERVICEA
+SERVICEA=b2b-servsys-pro-sis18-kickext.service
+SERVICEB=b2b-servraw-pro-sis18.service
+SERVICEC=b2b-jittercheck-pro-sis18-kick.service
+SERVICED=b2b-analyzer-pro-sis18.service
+SERVICEE=b2b-servkickdiag-pro-sis18.service
+cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
+cp -a $MOUNTPOINT/systemd/$SERVICEB /lib/systemd/system
+cp -a $MOUNTPOINT/systemd/$SERVICEC /lib/systemd/system
+cp -a $MOUNTPOINT/systemd/$SERVICED /lib/systemd/system
+cp -a $MOUNTPOINT/systemd/$SERVICEE /lib/systemd/system
+systemctl daemon-reload
+
+systemctl start $SERVICEA
+systemctl start $SERVICEB
+systemctl start $SERVICEC
+systemctl start $SERVICED
+systemctl start $SERVICEE
 
 # hack for acc7
-export DIM_DNS_NODE=asl105
-
-b2b-serv-sys dev/wbm0 -s pro_sis18-kde &
-b2b-serv-raw tr1 -e0 pro &
-b2b-jitter-check tr1 tr0 -p3 -t5 pro_sis18-kde &
-b2b-analyzer pro_sis18 &
-b2b-serv-kickdiag tr0 -r0 -m0 -i1 pro &
+#export DIM_DNS_NODE=asl105
+#
+#b2b-serv-sys dev/wbm0 -s pro_sis18-kde &
+#b2b-serv-raw tr1 -e0 pro &
+#b2b-jitter-check tr1 tr0 -p3 -t5 pro_sis18-kde &
+#b2b-analyzer pro_sis18 &
+#b2b-serv-kickdiag tr0 -r0 -m0 -i1 pro &
