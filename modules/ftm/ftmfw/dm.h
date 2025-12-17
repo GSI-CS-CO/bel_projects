@@ -5,6 +5,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include <stdint.h>
+#include "ftm_common.h"
 
 /** @name Priority Queue - mode register
  *  Bit definitions for the Mode register of the Priority Queue 
@@ -98,7 +99,6 @@ extern actionFuncPtr      actionFuncs[_ACT_TYPE_END_];  ///< Function pointer ar
  */
 //@{ 
 extern uint32_t              nodeTmp[_MEM_BLOCK_SIZE / _32b_SIZE_]; ///< Staging area when a node is constructed from references
-extern uint32_t* dynamicNodeStaging(uint32_t* node, uint32_t* thrData);     ///< Returns ptr to the original node if all fields are immediates or ptr to nodeTmp if a dynamic verion was compiled
 //@}
 
 /** @name Ptrs to diagnostic data
@@ -380,11 +380,14 @@ uint32_t* dummyNodeFunc (uint32_t* node, uint32_t* thrData);
   * @return null
   */ 
 
+
+uint8_t dynField(uint32_t wordFormats, volatile uint32_t* src, volatile uint32_t* dst);
+
 uint8_t safeRead64_with_retry(volatile uint64_t* addr, uint64_t* dest);
 
-uint8_t safeRead64(volatile uint64_t* addr, uint64_t* dest);
+uint8_t safeRead64(volatile uint64_t* addr1st, volatile uint64_t* addr2nd, uint64_t* dest);
 
-uint32_t* dynamicNodeFunc (uint32_t* node, uint32_t* thrData);
+uint32_t* dynamicNodeStaging (uint32_t* node, uint32_t* thrData);
 
 /// Dummy deadline function, used to catch bad node types
 /** Reports bad/unknown node type to error register and calls the handler for a null node deadline
