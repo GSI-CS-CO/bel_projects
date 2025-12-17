@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 11-Nov-2024
+ *  version : 17-Dec-2025
  *
  * library for wr-mil
  *
@@ -509,13 +509,14 @@ uint32_t wrmil_common_read(uint64_t ebDevice, uint64_t *statusArray, uint32_t *s
   eb_device_t eb_device;
 
   uint64_t    dummy64a, dummy64b, dummy64c;
-  uint32_t    dummy32a, dummy32c, dummy32d, dummy32e, dummy32f, dummy32g, dummy32h;
+  uint32_t    dummy32a, dummy32c, dummy32d, dummy32e, dummy32f, dummy32g, dummy32h, dummy32i, dummy32j, dummy32k, dummy32l, dummy32m;
 
   if (!ebDevice) return COMMON_STATUS_EB;
   eb_device = (eb_device_t)ebDevice;
 
   if ((eb_status = comlib_readDiag(eb_device, statusArray, state, version, &dummy64a, &dummy32a, nBadStatus, nBadState, &dummy64b, &dummy64c,
-                                   nTransfer, &dummy32c, &dummy32d, &dummy32e, &dummy32f, &dummy32g, &dummy32h, printDiag)) != COMMON_STATUS_OK) return COMMON_STATUS_EB;
+                                   nTransfer, &dummy32c, &dummy32d, &dummy32e, &dummy32f, &dummy32g, &dummy32h, &dummy32i, &dummy32j, &dummy32k,
+                                   &dummy32l, &dummy32m, printDiag)) != COMMON_STATUS_OK) return COMMON_STATUS_EB;
 
   return COMMON_STATUS_OK;
 } // wrmil_status_read

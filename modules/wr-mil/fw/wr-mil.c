@@ -105,12 +105,17 @@ uint64_t nEvtsRecD;                     // # of received MIL telegrams (data)
 uint32_t nEvtsErr;                      // # of late messages with errors
 uint32_t nEvtsBurst;                    // # of detected 'high frequency bursts'
 uint32_t nEvtsLate;                     // # of late messages
+uint32_t nEvtsEarly;                    // # of early messages
+uint32_t nEvtsConflict;                 // # of conflict messages
+uint32_t nEvtsDelayed;                  // # of delayed messages
+uint32_t nEvtsMissed;                   // # of missed messages
+uint32_t offsMissed;                    // offset for missed messages
+uint32_t comLatency;                    // latency for getting the messages from the ECA
 uint32_t offsDone;                      // offset deadline WR message to time when we are done [ns]
-int32_t  comLatency;                    // latency for messages received via ECA
 
+int32_t  maxOffsMissed;
 int32_t  maxComLatency;
 uint32_t maxOffsDone;
-
 
 uint32_t utc_trigger;
 int32_t  utc_utc_delay;
@@ -220,10 +225,17 @@ void extern_clearDiag()
   nEvtsErr      = 0x0;
   nEvtsBurst    = 0x0;
   nEvtsLate     = 0x0;
-  offsDone      = 0x0;
+  nEvtsEarly    = 0x0;
+  nEvtsConflict = 0x0;
+  nEvtsDelayed  = 0x0;
+  nEvtsMissed   = 0x0;
+  offsMissed    = 0x0;
   comLatency    = 0x0;
+  
+  offsDone      = 0x0;
   maxOffsDone   = 0x0;
   maxComLatency = 0x0;
+  maxOffsMissed = 0x0;
   resetEventErrCntMil(pMilRec, 0);
 } // extern_clearDiag 
 
@@ -363,9 +375,16 @@ uint32_t extern_entryActionOperation()
   nEvtsErr             = 0;
   nEvtsBurst           = 0;
   nEvtsLate            = 0;
-  offsDone             = 0;
+  nEvtsEarly           = 0;
+  nEvtsConflict        = 0;
+  nEvtsDelayed         = 0;
+  nEvtsMissed          = 0;
+  offsMissed           = 0;
   comLatency           = 0;
+  
+  offsDone             = 0;
   maxOffsDone          = 0;
+  maxOffsMissed        = 0;
   maxComLatency        = 0;
 
   // configure MIL receiver for timing events for all 16 virtual accelerators
@@ -539,6 +558,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint32_t flagIsEarly;                                       // flag 'early'
   uint32_t flagIsConflict;                                    // flag 'conflict'
   uint32_t flagIsDelayed;                                     // flag 'delayed'
+  uint32_t flagIsMissed;                                      // flag 'missed' from 'wait4eca'
   uint32_t ecaAction;                                         // action triggered by event received from ECA
   uint64_t recDeadline;                                       // deadline received from ECA
   uint64_t reqDeadline;                                       // deadline requested by sender
@@ -569,12 +589,12 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   status    = actStatus;
 
   // one loop is around 37us => wait 963us only)
-  ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 963, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
+  ecaAction = fwlib_wait4ECAEvent2(COMMON_ECATIMEOUT * 963, &recDeadline, &recEvtId, &recParam, &recTEF,
+                                   &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed, &flagIsMissed, &offsMissed, &comLatency);
 
   switch (ecaAction) {
     // received WR timing message from Data Master that shall be sent as a MIL telegram
     case WRMIL_ECADO_MIL_EVT:
-      comLatency   = (int32_t)(getSysTime() - recDeadline);
       recGid       = (uint32_t)((recEvtId >> 48) & 0x00000fff);
       recEvtNo     = (uint32_t)((recEvtId >> 36) & 0x00000fff);
       recSid       = (uint32_t)((recEvtId >> 20) & 0x00000fff);
@@ -676,7 +696,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       break;
 
     default :                                                         // flush ECA Queue
-      flagIsLate = 0;                                                 // ignore late events
+      flagIsLate = 0;                                                 // ignore late events as there is special treatment when sending MIL messages
   } // switch ecaAction
 
   // send fill events if inactive for a long time
@@ -706,6 +726,12 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     status = WRMIL_STATUS_LATEMESSAGE;
     nEvtsLate++;
   } // if flagIslate
+
+  // check for other statistics
+  if (flagIsEarly)    nEvtsEarly++;
+  if (flagIsConflict) nEvtsConflict++;
+  if (flagIsDelayed)  nEvtsDelayed++;
+  if (flagIsMissed)   nEvtsMissed++;
   
   // check WR sync state
   if (fwlib_wrCheckSyncState() == COMMON_STATUS_WRBADSYNC) return COMMON_STATUS_WRBADSYNC;
@@ -775,7 +801,8 @@ int main(void) {
 
     if (comLatency > maxComLatency) maxComLatency = comLatency;
     if (offsDone   > maxOffsDone)   maxOffsDone   = offsDone;
-    fwlib_publishTransferStatus(0, 0, 0, nEvtsLate, maxOffsDone, maxComLatency);
+    if (offsMissed > maxOffsMissed) maxOffsMissed = offsMissed;
+    fwlib_publishTransferStatus2(0, 0, 0, nEvtsLate, nEvtsEarly, nEvtsConflict, nEvtsDelayed, nEvtsMissed, maxOffsMissed, maxComLatency, maxOffsDone);
     
     *pSharedGetNEvtsSndHi  = (uint32_t)(nEvtsSnd >> 32);
     *pSharedGetNEvtsSndLo  = (uint32_t)(nEvtsSnd & 0xffffffff);
