@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 10-Jul-2024
+ *  version : 17-Dec-2025
  *
  *  common functions used by various firmware projects
  *
@@ -97,9 +97,14 @@ uint32_t *pSharedTS0Lo;                 // pointer to a "user defined" u32 regis
 uint32_t *pSharedNTransfer;             // pointer to a "user defined" u32 register; here: # of transfers
 uint32_t *pSharedNInject;               // pointer to a "user defined" u32 register; here: # of injections within current transfer
 uint32_t *pSharedTransStat;             // pointer to a "user defined" u32 register; here: status of transfer
-uint32_t *pSharedNLate;                 // pointer to a "user defined" u32 register; here: number of messages that could not be delivered in time
+uint32_t *pSharedNLate;                 // pointer to a "user defined" u32 register; here: number of ECA 'late' incidents                                            
+uint32_t *pSharedNEarly;                // pointer to a "user defined" u32 register; here: number of ECA 'early' incidents                                           
+uint32_t *pSharedNConflict;             // pointer to a "user defined" u32 register; here: number of ECA 'conflict' incidents                                        
+uint32_t *pSharedNDelayed;              // pointer to a "user defined" u32 register; here: number of ECA 'delayed' incidents                                         
+uint32_t *pSharedNMissed;               // pointer to a "user defined" u32 register; here: number of incidents, when 'wait4eca' was called after the deadline        
+uint32_t *pSharedOffsMissed;            // pointer to a "user defined" u32 register; here: if 'missed': offset deadline to start wait4eca; else '0'                  
+uint32_t *pSharedComLatency;            // pointer to a "user defined" u32 register; here: if 'missed': offset start to stop wait4eca; else deadline to stop wait4eca
 uint32_t *pSharedOffsDone;              // pointer to a "user defined" u32 register; here: offset event deadline to time when we are done [ns]
-uint32_t *pSharedComLatency;            // pointer to a "user defined" u32 register; here: latency for messages received from via ECA (tDeadline - tNow)) [ns]
 uint32_t *pSharedUsedSize;              // pointer to a "user defined" u32 register; here: size of (used) shared memory
 
 uint32_t *cpuRamExternalData4EB;        // external address (seen from host bridge) of this CPU's RAM: field for EB return values
@@ -618,8 +623,13 @@ void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t shared
   pSharedNInject          = (uint32_t *)(pShared + (COMMON_SHARED_NINJECT >> 2));
   pSharedTransStat        = (uint32_t *)(pShared + (COMMON_SHARED_TRANSSTAT >> 2));
   pSharedNLate            = (uint32_t *)(pShared + (COMMON_SHARED_NLATE >> 2));
-  pSharedOffsDone         = (uint32_t *)(pShared + (COMMON_SHARED_OFFSDONE >> 2));
+  pSharedNEarly           = (uint32_t *)(pShared + (COMMON_SHARED_NEARLY >> 2));
+  pSharedNConflict        = (uint32_t *)(pShared + (COMMON_SHARED_NCONFLICT >> 2));
+  pSharedNDelayed         = (uint32_t *)(pShared + (COMMON_SHARED_NDELAYED >> 2));
+  pSharedNMissed          = (uint32_t *)(pShared + (COMMON_SHARED_NMISSED >> 2));
+  pSharedOffsMissed       = (uint32_t *)(pShared + (COMMON_SHARED_OFFSMISSED >> 2));
   pSharedComLatency       = (uint32_t *)(pShared + (COMMON_SHARED_COMLATENCY >> 2));
+  pSharedOffsDone         = (uint32_t *)(pShared + (COMMON_SHARED_OFFSDONE >> 2));
   pSharedUsedSize         = (uint32_t *)(pShared + (COMMON_SHARED_USEDSIZE >> 2));
 
   // clear shared mem
@@ -724,14 +734,108 @@ uint32_t fwlib_wait4ECAEvent(uint32_t timeout_us, uint64_t *deadline, uint64_t *
     } // if data is valid
   } // while not timed out
 
-  *deadline = 0x0;
-  *evtId    = 0x0;
-  *param    = 0x0;
-  *tef      = 0x0;
-  *isLate   = 0x0;
+  *deadline   = 0x0;
+  *evtId      = 0x0;
+  *param      = 0x0;
+  *tef        = 0x0;
+  *isLate     = 0x0;
+  *isEarly    = 0x0;
+  *isConflict = 0x0;
+  *isDelayed  = 0x0;
 
   return COMMON_ECADO_TIMEOUT;
 } // fwlib_wait4ECAEvent
+
+
+uint32_t fwlib_wait4ECAEvent2(uint32_t timeout_us, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *tef, // 1. query ECA for actions, 2. trigger activity
+                              uint32_t *isLate, uint32_t *isEarly, uint32_t *isConflict, uint32_t *isDelayed,
+                              uint32_t *isMissed, uint32_t *offsMissed, uint32_t *comLatency)  
+{
+  uint32_t *pECAFlag;           // address of ECA flag
+  uint32_t ecaFlag;             // ECA flag
+  uint32_t evtIdHigh;           // high 32bit of eventID
+  uint32_t evtIdLow;            // low 32bit of eventID
+  uint32_t evtDeadlHigh;        // high 32bit of deadline
+  uint32_t evtDeadlLow;         // low 32bit of deadline
+  uint32_t evtParamHigh;        // high 32 bit of parameter field
+  uint32_t evtParamLow ;        // low 32 bit of parameter field
+  uint32_t actTag;              // tag of action
+  uint32_t nextAction;          // describes what to do next
+  uint64_t timeoutT;            // when to time out
+  uint64_t timeout;             // timeout [ns]
+  uint64_t startT;              // time when starting this routine
+  uint64_t stopT;               // time when finishing this routine
+
+
+  pECAFlag    = (uint32_t *)(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));   // address of ECA flag
+
+  // conversion from ns -> us: use shift by 10 bits instead of multiplication by '1000'
+  // reduces time per read from ~6.5 us to ~4.8 us
+  //timeout     = ((uint64_t)timeout_us + 1) * 1000;
+  timeout     = ((uint64_t)timeout_us + 1) << 10;
+  startT      = getSysTime();
+  timeoutT    = startT + timeout;
+
+  while (getSysTime() < timeoutT) {
+    ecaFlag = *pECAFlag;                                            // we'll need this value more than once per iteration
+    if (ecaFlag & (0x0001 << ECA_VALID)) {                          // if ECA data is valid
+
+      // read data
+      evtIdHigh    = *(pECAQ + (ECA_QUEUE_EVENT_ID_HI_GET >> 2));
+      evtIdLow     = *(pECAQ + (ECA_QUEUE_EVENT_ID_LO_GET >> 2));
+      evtDeadlHigh = *(pECAQ + (ECA_QUEUE_DEADLINE_HI_GET >> 2));
+      evtDeadlLow  = *(pECAQ + (ECA_QUEUE_DEADLINE_LO_GET >> 2));
+      actTag       = *(pECAQ + (ECA_QUEUE_TAG_GET >> 2));
+      evtParamHigh = *(pECAQ + (ECA_QUEUE_PARAM_HI_GET >> 2));
+      evtParamLow  = *(pECAQ + (ECA_QUEUE_PARAM_LO_GET >> 2));
+      *tef         = *(pECAQ + (ECA_QUEUE_TEF_GET >> 2));
+
+      *isLate      = ecaFlag & (0x0001 << ECA_LATE);
+      *isEarly     = ecaFlag & (0x0001 << ECA_EARLY);
+      *isConflict  = ecaFlag & (0x0001 << ECA_CONFLICT);
+      *isDelayed   = ecaFlag & (0x0001 << ECA_DELAYED);
+      *deadline    = ((uint64_t)evtDeadlHigh << 32) + (uint64_t)evtDeadlLow;
+      *evtId       = ((uint64_t)evtIdHigh    << 32) + (uint64_t)evtIdLow;
+      *param       = ((uint64_t)evtParamHigh << 32) + (uint64_t)evtParamLow;
+
+      // pop action from channel
+      *(pECAQ + (ECA_QUEUE_POP_OWR >> 2)) = 0x1;
+
+      stopT        = getSysTime();
+
+      // monitoring stuff
+      if (*deadline < startT) {
+        *isMissed   = 1;
+        *offsMissed = (uint32_t)(startT - *deadline);
+        *comLatency = (uint32_t)(stopT - startT);
+      } // if missed
+      else {
+        *isMissed   = 0;
+        *offsMissed = 0;
+        *comLatency = (uint32_t)(stopT - *deadline);
+      } // else missed
+
+      // here: do s.th. according to tag
+      nextAction = actTag;
+
+      return nextAction;
+    } // if data is valid
+  } // while not timed out
+
+  *deadline   = 0x0;
+  *evtId      = 0x0;
+  *param      = 0x0;
+  *tef        = 0x0;
+  *isLate     = 0x0;
+  *isEarly    = 0x0;
+  *isConflict = 0x0;
+  *isDelayed  = 0x0;
+  *isMissed   = 0x0;
+  *offsMissed = 0x0;
+  *comLatency = 0x0;
+
+  return COMMON_ECADO_TIMEOUT;
+} // fwlib_wait4ECAEvent2
 
 
 // wait for MIL event or timeout
@@ -888,6 +992,23 @@ void fwlib_publishTransferStatus(uint32_t nTransfer, uint32_t nInject, uint32_t 
   *pSharedOffsDone   = offsDone;
   *pSharedComLatency = comLatency;
 } // fwlib_publishTransferStatus
+
+
+void fwlib_publishTransferStatus2(uint32_t nTransfer, uint32_t nInject, uint32_t transStat, uint32_t nLate, uint32_t nEarly, uint32_t nConflict,
+                                 uint32_t nDelayed, uint32_t nMissed, uint32_t offsMissed, uint32_t comLatency, uint32_t offsDone)
+{
+  *pSharedNTransfer  = nTransfer;
+  *pSharedNInject    = nInject;
+  *pSharedTransStat  = transStat;
+  *pSharedNLate      = nLate;
+  *pSharedNEarly     = nEarly;
+  *pSharedNConflict  = nConflict;
+  *pSharedNDelayed   = nDelayed;
+  *pSharedNMissed    = nMissed;
+  *pSharedOffsMissed = offsMissed;
+  *pSharedComLatency = comLatency;
+  *pSharedOffsDone   = offsDone;
+} // fwlib_publishTransferStatus2
 
 
 void fwlib_incBadStatusCnt()

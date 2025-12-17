@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 29-Aug-2024
+ *  version : 17-Dec-2025
  *
  * common x86 routines for firmware
  *
@@ -37,7 +37,7 @@
 #ifndef _COMMON_LIB_H_
 #define _COMMON_LIB_H_
 
-#define COMMON_LIB_VERSION "0.04.01"
+#define COMMON_LIB_VERSION "0.05.00"
 
 #include <etherbone.h>
 
@@ -82,9 +82,14 @@ int comlib_readDiag(eb_device_t device,                // Etherbone device
                     uint32_t    *nTransfer,            // # of transfers                                ; PSM: # phase shifts SIS18
                     uint32_t    *nInjection,           // # of injection within ongoing transfers       ; PSM: # phase shifts ESR, CRYRING
                     uint32_t    *statTrans,            // status bits of transfer (application specific); PSM: # phase shifts SIS100
-                    uint32_t    *nLate,                // number of messages that could not be delivered in time
+                    uint32_t    *nLate,                // number of ECA 'late' incidents                                            
+                    uint32_t    *nEarly,               // number of ECA 'early' incidents                                           
+                    uint32_t    *nConflict,            // number of ECA 'conflict' incidents                                        
+                    uint32_t    *nDelayed,             // number of ECA 'delayed' incidents                                         
+                    uint32_t    *nMissed,              // number of incidents, when 'wait4eca' was called after the deadline        
+                    uint32_t    *offsMissed,           // if 'missed': offset deadline to start wait4eca; else '0'                  
+                    uint32_t    *comLatency,           // if 'missed': offset start to stop wait4eca; else deadline to stop wait4eca
                     uint32_t    *offsDone,             // offset event deadline to time when we are done [ns]
-                    uint32_t    *comLatency,           // latency for messages received from via ECA (tDeadline - tNow)) [ns]
                     uint32_t    *usedSize,             // used size of shared memory
                     int         printFlag              // '1' print information to stdout
                     );
@@ -102,9 +107,14 @@ void comlib_printDiag(uint64_t  statusArray,           // array with status bits
                       uint32_t  nTransfer,             // # of transfers
                       uint32_t  nInjection,            // # of injection within ongoing transfers
                       uint32_t  statTrans,             // status bits of transfer (application specific)
-                      uint32_t  nLate,                 // number of messages that could not be delivered in time
+                      uint32_t  nLate,                 // number of ECA 'late' incidents                                            
+                      uint32_t  nEarly,                // number of ECA 'early' incidents                                           
+                      uint32_t  nConflict,             // number of ECA 'conflict' incidents                                        
+                      uint32_t  nDelayed,              // number of ECA 'delayed' incidents                                         
+                      uint32_t  nMissed,               // number of incidents, when 'wait4eca' was called after the deadline        
+                      uint32_t  offsMissed,            // if 'missed': offset deadline to start wait4eca; else '0'                  
+                      uint32_t  comLatency,            // if 'missed': offset start to stop wait4eca; else deadline to stop wait4eca
                       uint32_t  offsDone,              // offset event deadline to time when we are done [ns]
-                      uint32_t  comLatency,            // latency for messages received from via ECA (tDeadline - tNow)) [ns]
                       uint32_t  usedSize               // used size of shared memory
                       );
 

@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 19-Sep-2024
+ *  version : 17-Dec-2025
  *
  *  common x86 routines useful for CLIs handling firmware
  * 
@@ -41,9 +41,14 @@ eb_address_t common_state;        // state, read
 eb_address_t common_transfers;    // # of transfers from UNILAC to SIS, read
 eb_address_t common_injections;   // # of injections in ongoing transfer
 eb_address_t common_statTrans;    // status of ongoing or last transfer, read
-eb_address_t common_nLate;        // number of messages that could not be delivered in time
+eb_address_t common_nLate;        // number of ECA 'late' incidents                                             
+eb_address_t common_nEarly;       // number of ECA 'early' incidents                                           
+eb_address_t common_nConflict;    // number of ECA 'conflict' incidents                                        
+eb_address_t common_nDelayed;     // number of ECA 'delayed' incidents                                         
+eb_address_t common_nMissed;      // number of incidents, when 'wait4eca' was called after the deadline        
+eb_address_t common_offsMissed;   // if 'missed': offset deadline to start wait4eca; else '0'                  
+eb_address_t common_comLatency;   // if 'missed': offset start to stop wait4eca; else deadline to stop wait4eca
 eb_address_t common_offsDone;     // offset event deadline to time when we are done [ns]
-eb_address_t common_comLatency;   // latency for messages received from via ECA (tDeadline - tNow)) [ns]
 eb_address_t common_cmd;          // command, write
 eb_address_t common_version;      // version, read
 eb_address_t common_nBadStatus;   // # of bad status ("ERROR") incidents
@@ -212,14 +217,20 @@ void comlib_initShared(eb_address_t lm32_base, eb_address_t sharedOffset)
   common_injections   = lm32_base + sharedOffset + COMMON_SHARED_NINJECT;
   common_statTrans    = lm32_base + sharedOffset + COMMON_SHARED_TRANSSTAT;
   common_nLate        = lm32_base + sharedOffset + COMMON_SHARED_NLATE;
-  common_offsDone     = lm32_base + sharedOffset + COMMON_SHARED_OFFSDONE;
+  common_nEarly       = lm32_base + sharedOffset + COMMON_SHARED_NEARLY;
+  common_nConflict    = lm32_base + sharedOffset + COMMON_SHARED_NCONFLICT;
+  common_nDelayed     = lm32_base + sharedOffset + COMMON_SHARED_NDELAYED;
+  common_nMissed      = lm32_base + sharedOffset + COMMON_SHARED_NMISSED;
+  common_offsMissed   = lm32_base + sharedOffset + COMMON_SHARED_OFFSMISSED;
   common_comLatency   = lm32_base + sharedOffset + COMMON_SHARED_COMLATENCY;
+  common_offsDone     = lm32_base + sharedOffset + COMMON_SHARED_OFFSDONE;
   common_usedSize     = lm32_base + sharedOffset + COMMON_SHARED_USEDSIZE;
 } // comlib_initShared
 
 
 void comlib_printDiag(uint64_t statusArray, uint32_t state, uint32_t version, uint64_t mac, uint32_t ip, uint32_t nBadStatus, uint32_t nBadState, uint64_t tDiag, uint64_t tS0,
-                      uint32_t nTransfer, uint32_t nInjection, uint32_t statTrans, uint32_t nLate, uint32_t offsDone, uint32_t comLatency, uint32_t usedSize)
+                      uint32_t nTransfer, uint32_t nInjection, uint32_t statTrans, uint32_t nLate, uint32_t nEarly, uint32_t nConflict, uint32_t nDelayed, uint32_t nMissed,
+                      uint32_t offsMissed, uint32_t comLatency, uint32_t offsDone, uint32_t usedSize)
 {
   const struct tm* tm;
   char             timestr[60];
@@ -246,8 +257,13 @@ void comlib_printDiag(uint64_t statusArray, uint32_t state, uint32_t version, ui
   printf("# of injections                     : %012u\n"    , nInjection);  
   printf("status of act transfer              : 0x%x\n"     , statTrans);
   printf("# late events                       : %012u\n"    , nLate);
-  printf("'offset done' (processing time) [us]: %12.3f\n"   , (double)offsDone/1000.0);
+  printf("# early events                      : %012u\n"    , nEarly);
+  printf("# conflict events                   : %012u\n"    , nConflict);
+  printf("# delayed events                    : %012u\n"    , nDelayed);
+  printf("# missed events                     : %012u\n"    , nMissed);
+  printf("'offset missed' (wait too late) [us]: %12.3f\n"   , (double)offsMissed/1000.0);
   printf("communication latency [us]          : %12.3f\n"   , (double)comLatency/1000.0);
+  printf("'offset done' (total time) [us]     : %12.3f\n"   , (double)offsDone/1000.0);
   printf("sum status (# changes)              : 0x%" PRIx64 " (%u)\n"     , statusArray, nBadStatus);
   if ((statusArray >> COMMON_STATUS_OK) & 0x1)
     printf("overall status                      : OK\n");
@@ -262,7 +278,7 @@ void comlib_printDiag(uint64_t statusArray, uint32_t state, uint32_t version, ui
 
 int comlib_readDiag(eb_device_t device, uint64_t  *statusArray, uint32_t  *state, uint32_t  *version, uint64_t  *mac, uint32_t  *ip, uint32_t  *nBadStatus,
                     uint32_t *nBadState, uint64_t  *tDiag, uint64_t  *tS0, uint32_t  *nTransfer, uint32_t  *nInjection, uint32_t  *statTrans,
-                    uint32_t *nLate, uint32_t *offsDone, uint32_t *comLatency, uint32_t *usedSize, int  printFlag)
+                    uint32_t *nLate, uint32_t *nEarly, uint32_t *nConflict, uint32_t *nDelayed, uint32_t *nMissed, uint32_t *offsMissed, uint32_t *comLatency, uint32_t *offsDone, uint32_t *usedSize, int  printFlag)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;
@@ -286,9 +302,14 @@ int comlib_readDiag(eb_device_t device, uint64_t  *statusArray, uint32_t  *state
   eb_cycle_read(cycle, common_injections,  EB_BIG_ENDIAN|EB_DATA32, &(data[14]));  
   eb_cycle_read(cycle, common_statTrans,   EB_BIG_ENDIAN|EB_DATA32, &(data[15]));
   eb_cycle_read(cycle, common_nLate,       EB_BIG_ENDIAN|EB_DATA32, &(data[16]));
-  eb_cycle_read(cycle, common_offsDone,    EB_BIG_ENDIAN|EB_DATA32, &(data[17]));
-  eb_cycle_read(cycle, common_comLatency,  EB_BIG_ENDIAN|EB_DATA32, &(data[18]));
-  eb_cycle_read(cycle, common_usedSize,    EB_BIG_ENDIAN|EB_DATA32, &(data[19]));
+  eb_cycle_read(cycle, common_nEarly,      EB_BIG_ENDIAN|EB_DATA32, &(data[17]));
+  eb_cycle_read(cycle, common_nConflict,   EB_BIG_ENDIAN|EB_DATA32, &(data[18]));
+  eb_cycle_read(cycle, common_nDelayed,    EB_BIG_ENDIAN|EB_DATA32, &(data[19]));
+  eb_cycle_read(cycle, common_nMissed,     EB_BIG_ENDIAN|EB_DATA32, &(data[20]));
+  eb_cycle_read(cycle, common_offsMissed,  EB_BIG_ENDIAN|EB_DATA32, &(data[21]));
+  eb_cycle_read(cycle, common_comLatency,  EB_BIG_ENDIAN|EB_DATA32, &(data[22]));
+  eb_cycle_read(cycle, common_offsDone,    EB_BIG_ENDIAN|EB_DATA32, &(data[23]));
+  eb_cycle_read(cycle, common_usedSize,    EB_BIG_ENDIAN|EB_DATA32, &(data[24]));
   if ((eb_status = eb_cycle_close(cycle)) != EB_OK) return eb_status;
 
   *statusArray   = ((uint64_t)(data[0]) << 32) | (uint64_t)(data[1]);
@@ -304,11 +325,17 @@ int comlib_readDiag(eb_device_t device, uint64_t  *statusArray, uint32_t  *state
   *nInjection    = data[14];
   *statTrans     = data[15];
   *nLate         = data[16];
-  *offsDone      = data[17];
-  *comLatency    = data[18];
-  *usedSize      = data[19];
+  *nEarly        = data[17];
+  *nConflict     = data[18];
+  *nDelayed      = data[19];
+  *nMissed       = data[20];
+  *offsMissed    = data[21];
+  *comLatency    = data[22];
+  *offsDone      = data[23];
+  *usedSize      = data[24];
 
-  if (printFlag) comlib_printDiag(*statusArray, *state, *version, *mac, *ip, *nBadStatus, *nBadState, *tDiag, *tS0, *nTransfer, *nInjection, *statTrans, *nLate, *offsDone, *comLatency, *usedSize);
+  if (printFlag) comlib_printDiag(*statusArray, *state, *version, *mac, *ip, *nBadStatus, *nBadState, *tDiag, *tS0, *nTransfer, *nInjection, *statTrans,
+                                  *nLate, *nEarly, *nConflict, *nDelayed, *nMissed, *offsMissed, *comLatency, *offsDone, *usedSize);
 
   return eb_status;
 } // comlib_readDiag
