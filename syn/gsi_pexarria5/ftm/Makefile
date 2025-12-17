@@ -2,8 +2,8 @@ TARGET			= ftm
 DEVICE			= 5AGXMA3D4
 FLASH			= EPCQ256
 SPI_LANES		= ASx4
-RAM_SIZE		= 131072
-SHARED_SIZE     = 98304
+RAM_SIZE		= 524288
+SHARED_SIZE     = 475136
 USRCPUCLK       = 125000
 VERSION         = 9.0.1
 RELEASE         = Fallout
@@ -32,6 +32,10 @@ install:
 
 
 $(TARGET).elf: $(PATHFW)/main.c $(PATHFW)/dm.c $(INCPATH)/ebm.c
+
+test-dyn.elf:  $(PATHFW)/dm.c $(INCPATH)/ebm.c $(PATHFW)/unity.c $(PATHFW)/syscalls.c $(PATHFW)/tests_dynamicNodeStaging.c
+
+test-saferd.elf:  $(PATHFW)/dm.c $(INCPATH)/ebm.c $(PATHFW)/unity.c $(PATHFW)/syscalls.c $(PATHFW)/tests_dm.c
 
 clean::
 	rm -f $(PATHFW)/*.o $(PATHFW)/*.a $(PATHFW)/*.elf $(PATHFW)/*.bin dm-sched dm-cmd libcarpedm.so
