@@ -54,6 +54,7 @@
 #include "dbg.h"
 #include "ftm_shared_mmap.h"
 
+
 uint64_t SHARED dummy = 0; ///< dummy using the SHARED type so nothing gets optimized away
 
 deadlineFuncPtr deadlineFuncs[_NODE_TYPE_END_]; 
@@ -696,7 +697,7 @@ uint8_t safeRead64_with_retry(volatile uint64_t* addr, uint64_t* dest) {
  
   
   for (uint8_t attempt = 0; attempt < SAFEREAD64_MAX_RETRIES; attempt++) {
-    if (safeRead64(addr, dest) == 0) {
+    if (safeRead64(addr, addr, dest) == 0) {
       // Success on this attempt
       return 0;
     }
@@ -718,7 +719,7 @@ uint8_t safeRead64_with_retry(volatile uint64_t* addr, uint64_t* dest) {
  * @param dest Pointer to destination buffer for consistent 64-bit result
  * @return 0 on success (consistent read), 1 on failure (inconsistent/NULL)
  */
-uint8_t safeRead64(volatile uint64_t* addr, uint64_t* dest) {
+uint8_t safeRead64(volatile uint64_t* addr1st,  volatile uint64_t* addr2nd, uint64_t* dest) {
   // RAM is a 32 bit dual port RAM. 32b reads are atomic, but 64b reads are not.
   // This function safely reads a 64b value from RAM by validating consistency.
   // CRITICAL: Uses volatile to prevent compiler from caching reads.
@@ -726,7 +727,7 @@ uint8_t safeRead64(volatile uint64_t* addr, uint64_t* dest) {
   uint8_t ret = 1;  // return 0 on success, 1 on failure
   
   // === Input validation ===
-  if (addr == LM32_NULL_PTR) {
+  if ( (addr1st == LM32_NULL_PTR) || (addr2nd == LM32_NULL_PTR) ) {
     DBPRINT1("#%02u: safeRead64 detected null addr pointer\n", cpuId);
     return 1;
   }
@@ -740,19 +741,20 @@ uint8_t safeRead64(volatile uint64_t* addr, uint64_t* dest) {
   // CRITICAL: Cast to volatile pointer to force actual memory reads
   // Without volatile, compiler caches reads and consistency check fails
   
-  volatile uint32_t* addr_32bit = (volatile uint32_t*)addr;
+  volatile uint32_t* addr_32bit1st = (volatile uint32_t*)addr1st;
+  volatile uint32_t* addr_32bit2nd = (volatile uint32_t*)addr2nd;
   
   // Read 1: High 32 bits (first time)
   // volatile forces actual memory read, not register cache
-  uint32_t high_read_1st = addr_32bit[0];
+  uint32_t high_read_1st = addr_32bit1st[0];
   
   // Read 2: Low 32 bits
   // volatile forces actual memory read
-  uint32_t low_read = addr_32bit[1];
+  uint32_t low_read = addr_32bit1st[1];
   
   // Read 3: High 32 bits (second time) - consistency check
   // volatile forces ANOTHER actual memory read, not cached value
-  uint32_t high_read_2nd = addr_32bit[0];
+  uint32_t high_read_2nd = addr_32bit2nd[0];
   
   // === Consistency check ===
   if (high_read_1st == high_read_2nd) {
@@ -777,6 +779,75 @@ uint8_t safeRead64(volatile uint64_t* addr, uint64_t* dest) {
   return ret;
 }
 
+uint8_t dynField(uint32_t wordFormats, volatile uint32_t* src, volatile uint32_t* dst) {
+  uint8_t ret = 0;
+
+  if (((wordFormats & DYN_MODE_MSK) == DYN_MODE_REF) || ((wordFormats & DYN_MODE_MSK) == DYN_MODE_REF2)) { // Is current word a kind of reference? yay, let's dynamically copy stuff in!
+      uint64_t val = 0;
+
+      if (wordFormats & DYN_WIDTH64_SMSK) {
+        //this is a 64b pointer
+
+        volatile uint64_t* tmpPtr64 = (uint64_t*)src;
+        if (tmpPtr64 != LM32_NULL_PTR) {
+          if ((wordFormats & DYN_MODE_MSK) == DYN_MODE_REF2) {
+            //mprintf("Decoding 64B R2R\n");
+            if (*(uint64_t**)tmpPtr64 != LM32_NULL_PTR) {
+              if(safeRead64_with_retry(*(uint64_t**)tmpPtr64, (uint64_t*)&val) != 0) {
+                mprintf("#%02u: ERROR: Failed %u times in a row to read consistent 64b value from adr 0x%08x via 0x%08x (ptr2ptr)\n", cpuId, SAFEREAD64_MAX_RETRIES, *(uint64_t**)tmpPtr64, tmpPtr64);
+              return 1;
+              }
+            } else { 
+              mprintf("#%02u: ERROR: 64B R2R Dereferencing NULL pointer\n", cpuId);
+              return 1; //bail out here, as we cannot continue dereferencing a NULL pointer. This will cause scheduler to halt this thread.
+            }
+          } else {
+
+            if(safeRead64_with_retry(tmpPtr64, (uint64_t*)&val) != 0) { 
+              mprintf("#%02u: ERROR: Failed %u times in a row to read consistent 64b value from adr 0x%08x\n", cpuId, SAFEREAD64_MAX_RETRIES, tmpPtr64);
+              return 1;
+            }
+          }
+        } else {
+          mprintf("#%02u: ERROR: 64b dereferencing NULL pointer\n", cpuId);
+          return 1; //bail out here, as we cannot continue dereferencing a NULL pointer. This will cause scheduler to halt this thread.
+        }
+        //mprintf("Decoding 64B\n");
+        dst[0]    = (uint32_t)(val>>32);
+        dst[0+1]  = (uint32_t)(val);
+        return 0;
+
+
+      } else {
+        //this is a 32b pointer
+        volatile uint32_t* tmpPtr32 = src;
+        if (tmpPtr32 != LM32_NULL_PTR) {
+          if ((wordFormats & DYN_MODE_MSK) == DYN_MODE_REF2) {
+            //mprintf("Decoding 32B R2R\n");
+            if (*(uint32_t**)tmpPtr32 != LM32_NULL_PTR) {
+              val = **(uint32_t**)tmpPtr32;
+            } else { 
+              mprintf("#%02u: ERROR: 32b R2R dereferencing NULL pointer\n", cpuId);
+              return 1; //bail out here, as we cannot continue dereferencing a NULL pointer. This will cause scheduler to halt this thread.
+            }
+          } else {
+            val = *tmpPtr32;
+          }
+
+        } else {
+          mprintf("#%02u: ERROR: 32B dereferencing NULL pointer\n", cpuId);
+          return 1; //bail out here, as we cannot continue dereferencing a NULL pointer. This will cause scheduler to halt this thread.
+        }
+        //mprintf("Decoding 32B\n");
+        dst[0] = (uint32_t)(val);
+        return 0;
+      }    
+    } //else { //this field is an immediate or adr, leave as is  }
+    //mprintf("IM or ADR\n");
+    return 0;
+}
+
+
 uint32_t* dynamicNodeStaging(uint32_t* node, uint32_t* thrData) {
   uint32_t* ret;
   if (node != LM32_NULL_PTR) {
@@ -788,79 +859,27 @@ uint32_t* dynamicNodeStaging(uint32_t* node, uint32_t* thrData) {
 
   uint32_t wordformatOriginal = nodeTmp[NODE_OPT_DYN >> 2]; //save original wordformat
   uint32_t hash = nodeTmp[NODE_HASH >> 2]; //save original hash for diagnostics
-  
+
   for(unsigned i = 0; i < 9; i++) { // a memory block has 13 words / fields. The first 9 can have be references to other memory locations and must be derefenced for use. The last 4 fields (dyn, hash, flags, nextPtr) must not be changed.
     uint32_t wordFormats = wordformatOriginal >> (i*3); //load word description
     // tells us if its 32/64 and if a word is an immediate, value (dynamically generated at compile time, static now), reference, or a double reference
 
-    if (((wordFormats & DYN_MODE_MSK) == DYN_MODE_REF) || ((wordFormats & DYN_MODE_MSK) == DYN_MODE_REF2)) { // Is current word a kind of reference? yay, let's dynamically copy stuff in!
-      uint64_t val = 0;
+    if ((i>= 8) && (wordFormats & DYN_WIDTH64_SMSK)) { //boundary check to prevent overflow when 64b value encoutered at index 8
+        DBPRINT1("#%02u: ERROR: Node # 0x%08x word %u cannot fit 64b value here! Check your node definition!\n", cpuId, hash, i);
+        return LM32_NULL_PTR; //bail out here, as we cannot continue dereferencing a NULL pointer. This will cause scheduler to halt this thread.
+    }
 
-      if (wordFormats & DYN_WIDTH64_SMSK) {
-        //this is a 64b pointer
+    if(dynField(wordFormats, (uint32_t*)&node[i], (uint32_t*)&nodeTmp[i]) != 0) return LM32_NULL_PTR;
 
-        volatile uint64_t* tmpPtr64 = (uint64_t*)node[i];
-        if (tmpPtr64 != LM32_NULL_PTR) {
-          if ((wordFormats & DYN_MODE_MSK) == DYN_MODE_REF2) {
-            if (*(uint64_t**)tmpPtr64 != LM32_NULL_PTR) {
-              if(safeRead64_with_retry(*(uint64_t**)tmpPtr64, (uint64_t*)&val) != 0) {
-                DBPRINT1("#%02u: ERROR: Failed %u times in a row to read consistent 64b value from adr 0x%08x via 0x%08x (ptr2ptr)\n", cpuId, SAFEREAD64_MAX_RETRIES, *(uint64_t**)tmpPtr64, tmpPtr64);
-              return LM32_NULL_PTR;
-              }
-            } else { 
-              DBPRINT1("#%02u: ERROR: Node # 0x%08x word %u is dereferencing NULL pointer\n", cpuId, hash, i);
-              return LM32_NULL_PTR; //bail out here, as we cannot continue dereferencing a NULL pointer. This will cause scheduler to halt this thread.
-            }
-          } else {
-            if(safeRead64_with_retry(tmpPtr64, (uint64_t*)&val) != 0) { 
-              DBPRINT1("#%02u: ERROR: Failed %u times in a row to read consistent 64b value from adr 0x%08x\n", cpuId, SAFEREAD64_MAX_RETRIES, tmpPtr64);
-              return LM32_NULL_PTR;
-            }
-          }
-        } else {
-          DBPRINT1("#%02u: ERROR: Node # 0x%08x word %u is dereferencing NULL pointer\n", cpuId, hash, i);
-          return LM32_NULL_PTR; //bail out here, as we cannot continue dereferencing a NULL pointer. This will cause scheduler to halt this thread.
-        }
-        if (i < 8) { //boundary check to prevent overflow when 64b value encoutered at index 8
-          //assign 64b to 32b words. Big Endian, MSB first
-          nodeTmp[i]    = (uint32_t)(val>>32);
-          nodeTmp[i+1]  = (uint32_t)(val);
-        } else { 
-          DBPRINT1("#%02u: ERROR: Node # 0x%08x word %u cannot fit 64b value here! Check your node definition!\n", cpuId, hash, i);
-          return LM32_NULL_PTR; //bail out here, as we cannot continue dereferencing a NULL pointer. This will cause scheduler to halt this thread.
-        }
-        
-      } else {
-        //this is a 32b pointer
-        volatile uint32_t* tmpPtr32 = (uint32_t*)node[i];
-        if (tmpPtr32 != LM32_NULL_PTR) {
-          if ((wordFormats & DYN_MODE_MSK) == DYN_MODE_REF2) {
-            if (*(uint32_t**)tmpPtr32 != LM32_NULL_PTR) {
-              val = **(uint32_t**)tmpPtr32;
-            } else { 
-              DBPRINT1("#%02u: ERROR: Node # 0x%08x word %u is dereferencing NULL pointer\n", cpuId, hash, i);
-              return LM32_NULL_PTR; //bail out here, as we cannot continue dereferencing a NULL pointer. This will cause scheduler to halt this thread.
-            }
-          } else {
-            val = *tmpPtr32;
-          }
-          
-        } else {
-          DBPRINT1("#%02u: ERROR: Node # 0x%08x word %u is dereferencing NULL pointer\n", cpuId, hash, i);
-          return LM32_NULL_PTR; //bail out here, as we cannot continue dereferencing a NULL pointer. This will cause scheduler to halt this thread.
-        }
-        nodeTmp[i] = (uint32_t)(val);
-      }    
-    } //else { //this field is an immediate or adr, leave as is  }
-  } //for - handle field 0-8 in node 
+  } //for - handle field 0-8 in node
 
   //call handler function
-  ret = nodeFuncs[getNodeType(nodeTmp)](nodeTmp, thrData); 
-  
+  ret = nodeFuncs[getNodeType(nodeTmp)](nodeTmp, thrData);
+
   //copy back all changes to immediate/val fields
   for(unsigned i = 0; i < 9; i++) {
     uint32_t wordFormats = wordformatOriginal >> (i*3);
-    
+
     if (((wordFormats & DYN_MODE_MSK) == DYN_MODE_IM) || ((wordFormats & DYN_MODE_MSK) == DYN_MODE_ADR)) { 
       DBPRINT3("#%02u: Node # 0x%08x - copy back - overwriting word %u 0x%08x with new value 0x%08x\n", cpuId, hash, i, node[i], nodeTmp[i]);
       node[i] = nodeTmp[i];
