@@ -766,14 +766,13 @@ uint32_t fwlib_wait4ECAEvent2(uint32_t timeout_us, uint64_t *deadline, uint64_t 
   uint64_t startT;              // time when starting this routine
   uint64_t stopT;               // time when finishing this routine
 
-
   pECAFlag    = (uint32_t *)(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));   // address of ECA flag
 
   // conversion from ns -> us: use shift by 10 bits instead of multiplication by '1000'
   // reduces time per read from ~6.5 us to ~4.8 us
   //timeout     = ((uint64_t)timeout_us + 1) * 1000;
-  timeout     = ((uint64_t)timeout_us + 1) << 10;
   startT      = getSysTime();
+  timeout     = ((uint64_t)timeout_us + 1) << 10;
   timeoutT    = startT + timeout;
 
   while (getSysTime() < timeoutT) {
