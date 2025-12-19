@@ -45,9 +45,9 @@ eb_address_t common_nLate;        // number of ECA 'late' incidents
 eb_address_t common_nEarly;       // number of ECA 'early' incidents                                           
 eb_address_t common_nConflict;    // number of ECA 'conflict' incidents                                        
 eb_address_t common_nDelayed;     // number of ECA 'delayed' incidents                                         
-eb_address_t common_nMissed;      // number of incidents, when 'wait4eca' was called after the deadline        
-eb_address_t common_offsMissed;   // if 'missed': offset deadline to start wait4eca; else '0'                  
-eb_address_t common_comLatency;   // if 'missed': offset start to stop wait4eca; else deadline to stop wait4eca
+eb_address_t common_nSlow;      // number of incidents, when 'wait4eca' was called after the deadline        
+eb_address_t common_offsSlow;   // if 'slow': offset deadline to start wait4eca; else '0'                  
+eb_address_t common_comLatency;   // if 'slow': offset start to stop wait4eca; else deadline to stop wait4eca
 eb_address_t common_offsDone;     // offset event deadline to time when we are done [ns]
 eb_address_t common_cmd;          // command, write
 eb_address_t common_version;      // version, read
@@ -220,8 +220,8 @@ void comlib_initShared(eb_address_t lm32_base, eb_address_t sharedOffset)
   common_nEarly       = lm32_base + sharedOffset + COMMON_SHARED_NEARLY;
   common_nConflict    = lm32_base + sharedOffset + COMMON_SHARED_NCONFLICT;
   common_nDelayed     = lm32_base + sharedOffset + COMMON_SHARED_NDELAYED;
-  common_nMissed      = lm32_base + sharedOffset + COMMON_SHARED_NMISSED;
-  common_offsMissed   = lm32_base + sharedOffset + COMMON_SHARED_OFFSMISSED;
+  common_nSlow        = lm32_base + sharedOffset + COMMON_SHARED_NSLOW;
+  common_offsSlow     = lm32_base + sharedOffset + COMMON_SHARED_OFFSSLOW;
   common_comLatency   = lm32_base + sharedOffset + COMMON_SHARED_COMLATENCY;
   common_offsDone     = lm32_base + sharedOffset + COMMON_SHARED_OFFSDONE;
   common_usedSize     = lm32_base + sharedOffset + COMMON_SHARED_USEDSIZE;
@@ -229,8 +229,8 @@ void comlib_initShared(eb_address_t lm32_base, eb_address_t sharedOffset)
 
 
 void comlib_printDiag(uint64_t statusArray, uint32_t state, uint32_t version, uint64_t mac, uint32_t ip, uint32_t nBadStatus, uint32_t nBadState, uint64_t tDiag, uint64_t tS0,
-                      uint32_t nTransfer, uint32_t nInjection, uint32_t statTrans, uint32_t nLate, uint32_t nEarly, uint32_t nConflict, uint32_t nDelayed, uint32_t nMissed,
-                      uint32_t offsMissed, uint32_t comLatency, uint32_t offsDone, uint32_t usedSize)
+                      uint32_t nTransfer, uint32_t nInjection, uint32_t statTrans, uint32_t nLate, uint32_t nEarly, uint32_t nConflict, uint32_t nDelayed, uint32_t nSlow,
+                      uint32_t offsSlow, uint32_t comLatency, uint32_t offsDone, uint32_t usedSize)
 {
   const struct tm* tm;
   char             timestr[60];
@@ -260,8 +260,8 @@ void comlib_printDiag(uint64_t statusArray, uint32_t state, uint32_t version, ui
   printf("# early events                      : %012u\n"    , nEarly);
   printf("# conflict events                   : %012u\n"    , nConflict);
   printf("# delayed events                    : %012u\n"    , nDelayed);
-  printf("# missed events                     : %012u\n"    , nMissed);
-  printf("offset missed (wait too late) [us]  : %12.3f\n"   , (double)offsMissed/1000.0);
+  printf("# missed events                     : %012u\n"    , nSlow);
+  printf("offset missed (wait too late) [us]  : %12.3f\n"   , (double)offsSlow/1000.0);
   printf("communication latency [us]          : %12.3f\n"   , (double)comLatency/1000.0);
   printf("processing time  [us]               : %12.3f\n"   , (double)offsDone/1000.0);
   printf("sum status (# changes)              : 0x%" PRIx64 " (%u)\n"     , statusArray, nBadStatus);
@@ -278,7 +278,7 @@ void comlib_printDiag(uint64_t statusArray, uint32_t state, uint32_t version, ui
 
 int comlib_readDiag(eb_device_t device, uint64_t  *statusArray, uint32_t  *state, uint32_t  *version, uint64_t  *mac, uint32_t  *ip, uint32_t  *nBadStatus,
                     uint32_t *nBadState, uint64_t  *tDiag, uint64_t  *tS0, uint32_t  *nTransfer, uint32_t  *nInjection, uint32_t  *statTrans,
-                    uint32_t *nLate, uint32_t *nEarly, uint32_t *nConflict, uint32_t *nDelayed, uint32_t *nMissed, uint32_t *offsMissed, uint32_t *comLatency, uint32_t *offsDone, uint32_t *usedSize, int  printFlag)
+                    uint32_t *nLate, uint32_t *nEarly, uint32_t *nConflict, uint32_t *nDelayed, uint32_t *nSlow, uint32_t *offsSlow, uint32_t *comLatency, uint32_t *offsDone, uint32_t *usedSize, int  printFlag)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;
@@ -305,8 +305,8 @@ int comlib_readDiag(eb_device_t device, uint64_t  *statusArray, uint32_t  *state
   eb_cycle_read(cycle, common_nEarly,      EB_BIG_ENDIAN|EB_DATA32, &(data[17]));
   eb_cycle_read(cycle, common_nConflict,   EB_BIG_ENDIAN|EB_DATA32, &(data[18]));
   eb_cycle_read(cycle, common_nDelayed,    EB_BIG_ENDIAN|EB_DATA32, &(data[19]));
-  eb_cycle_read(cycle, common_nMissed,     EB_BIG_ENDIAN|EB_DATA32, &(data[20]));
-  eb_cycle_read(cycle, common_offsMissed,  EB_BIG_ENDIAN|EB_DATA32, &(data[21]));
+  eb_cycle_read(cycle, common_nSlow,       EB_BIG_ENDIAN|EB_DATA32, &(data[20]));
+  eb_cycle_read(cycle, common_offsSlow,    EB_BIG_ENDIAN|EB_DATA32, &(data[21]));
   eb_cycle_read(cycle, common_comLatency,  EB_BIG_ENDIAN|EB_DATA32, &(data[22]));
   eb_cycle_read(cycle, common_offsDone,    EB_BIG_ENDIAN|EB_DATA32, &(data[23]));
   eb_cycle_read(cycle, common_usedSize,    EB_BIG_ENDIAN|EB_DATA32, &(data[24]));
@@ -328,14 +328,14 @@ int comlib_readDiag(eb_device_t device, uint64_t  *statusArray, uint32_t  *state
   *nEarly        = data[17];
   *nConflict     = data[18];
   *nDelayed      = data[19];
-  *nMissed       = data[20];
-  *offsMissed    = data[21];
+  *nSlow         = data[20];
+  *offsSlow      = data[21];
   *comLatency    = data[22];
   *offsDone      = data[23];
   *usedSize      = data[24];
 
   if (printFlag) comlib_printDiag(*statusArray, *state, *version, *mac, *ip, *nBadStatus, *nBadState, *tDiag, *tS0, *nTransfer, *nInjection, *statTrans,
-                                  *nLate, *nEarly, *nConflict, *nDelayed, *nMissed, *offsMissed, *comLatency, *offsDone, *usedSize);
+                                  *nLate, *nEarly, *nConflict, *nDelayed, *nSlow, *offsSlow, *comLatency, *offsDone, *usedSize);
 
   return eb_status;
 } // comlib_readDiag

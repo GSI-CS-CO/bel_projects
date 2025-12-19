@@ -74,9 +74,9 @@ uint32_t fwlib_wait4ECAEvent2(uint32_t usTimeout,      // timeout [us]
                               uint32_t *isEarly,       // eca flag 'early'
                               uint32_t *isConflict,    // eca flag 'conflict'
                               uint32_t *isDelayed,     // eca flag 'delayed
-                              uint32_t *isMissed,      // flag deadline < start wait4eca
-                              uint32_t *offsMissed,    // if 'missed': offset deadline to start wait4eca; else '0'
-                              uint32_t *comLatency     // if 'missed': offset start to stop wait4eca; else deadline to stop wait4eca
+                              uint32_t *isSlow,        // flag deadline < start wait4eca
+                              uint32_t *offsSlow,      // if 'slow': offset deadline to start wait4eca; else '0'
+                              uint32_t *comLatency     // if 'slow': offset start to stop wait4eca; else deadline to stop wait4eca
                               );
 
 // wait for MIL event or timeout, returns (error) status
@@ -152,9 +152,9 @@ void fwlib_publishTransferStatus2(uint32_t nTransfer,   // # of transfers;      
                                   uint32_t nEarly,      // number of ECA 'early' incidents                                           
                                   uint32_t nConflict,   // number of ECA 'conflict' incidents                                        
                                   uint32_t nDelayed,    // number of ECA 'delayed' incidents                                         
-                                  uint32_t nMissed,     // number of incidents, when 'wait4eca' was called after the deadline        
-                                  uint32_t offsMissed,  // if 'missed': offset deadline to start wait4eca; else '0'                  
-                                  uint32_t comLatency,  // if 'missed': offset start to stop wait4eca; else deadline to stop wait4eca
+                                  uint32_t nSlow,       // number of incidents, when 'wait4eca' was called after the deadline        
+                                  uint32_t offsSlow,    // if 'slow': offset deadline to start wait4eca; else '0'                  
+                                  uint32_t comLatency,  // if 'slow': offset start to stop wait4eca; else deadline to stop wait4eca
                                   uint32_t offsDone     // offset event deadline to time when we are done [ns]
                                   );
 
