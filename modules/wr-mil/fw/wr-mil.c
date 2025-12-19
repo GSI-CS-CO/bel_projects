@@ -37,7 +37,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define WRMIL_FW_VERSION      0x000104    // make this consistent with makefile
+#define WRMIL_FW_VERSION      0x000105    // make this consistent with makefile
 
 #define RESET_INHIBIT_COUNTER    10000    // count so many main ECA timemouts, prior sending fill event
 //#define WR_MIL_GATEWAY_LATENCY 70650    // additional latency in units of nanoseconds
@@ -585,11 +585,9 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint64_t one_us_ns = 1000;
   uint64_t sysTime;
   uint64_t startTime;
-  uint64_t preStartT;
   uint32_t tmp32;
   
   status    = actStatus;
-  preStartT = getSysTime();
 
   // one loop is around 37us => wait 963us only)
   ecaAction = fwlib_wait4ECAEvent2(COMMON_ECATIMEOUT * 963, &recDeadline, &recEvtId, &recParam, &recTEF,
@@ -649,8 +647,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       } // if systime
       else flagIsLate = 0;
 
-      // offsDone = sysTime - startTime;
-
       // handle UTC events; here the UTC time (- offset) is distributed as a series of MIL telegrams
       if (recEvtNo == utc_trigger) {
         // send EVT_UTC_1/2/3/4/5 telegrams
@@ -664,13 +660,11 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
           sendEvtId |= (uint64_t)(0x0e0 + i) << 36;
           fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 1);
           nEvtsSnd++;
-        } // for i
+        } // for i        
       } // if utc_trigger
 
       // reset inhibit counter for fill events
       inhibit_fill_events = RESET_INHIBIT_COUNTER;
-
-      offsDone = getSysTime() - startTime;
 
       break;
 
@@ -726,7 +720,9 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       inhibit_fill_events = RESET_INHIBIT_COUNTER;
     } // if not inhibit fill events
   } // if request_fill_evt
-    
+
+  offsDone = getSysTime() - startTime;
+
   // check for late event
   if ((status == COMMON_STATUS_OK) && flagIsLate) {
     status = WRMIL_STATUS_LATEMESSAGE;
@@ -822,7 +818,7 @@ int main(void) {
 
     if (comLatency > maxComLatency) maxComLatency = comLatency;
     if (offsDone   > maxOffsDone)   maxOffsDone   = offsDone;
-    if (offsSlow > maxOffsSlow)     maxOffsSlow = offsSlow;
+    if (offsSlow   > maxOffsSlow)   maxOffsSlow = offsSlow;
     fwlib_publishTransferStatus2(0, 0, 0, nEvtsLate, nEvtsEarly, nEvtsConflict, nEvtsDelayed, nEvtsSlow, maxOffsSlow, maxComLatency, maxOffsDone);
     
     *pSharedGetNEvtsSndHi  = (uint32_t)(nEvtsSnd >> 32);

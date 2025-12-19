@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 18-Dec-2025
+ *  version : 19-Dec-2025
  *
  *  common x86 routines useful for CLIs handling firmware
  * 
@@ -255,7 +255,7 @@ void comlib_printDiag(uint64_t statusArray, uint32_t state, uint32_t version, ui
   printf("state (# of changes)                : %s (%u)\n"  , comlib_stateText(state), nBadState);
   printf("# of transfers                      : %012u\n"    , nTransfer);
   printf("# of injections                     : %012u\n"    , nInjection);  
-  printf("status of act transfer              : %012u\n"    , statTrans);
+  printf("status of act transfer              : 0x%x\n"     , statTrans);
   printf("# late events                       : %012u\n"    , nLate);
   printf("# early events                      : %012u\n"    , nEarly);
   printf("# conflict events                   : %012u\n"    , nConflict);
