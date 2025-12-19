@@ -260,8 +260,8 @@ void comlib_printDiag(uint64_t statusArray, uint32_t state, uint32_t version, ui
   printf("# early events                      : %012u\n"    , nEarly);
   printf("# conflict events                   : %012u\n"    , nConflict);
   printf("# delayed events                    : %012u\n"    , nDelayed);
-  printf("# missed events                     : %012u\n"    , nSlow);
-  printf("offset missed (wait too late) [us]  : %12.3f\n"   , (double)offsSlow/1000.0);
+  printf("# slow events (wait too late)       : %012u\n"    , nSlow);
+  printf("offset slow [us]                    : %12.3f\n"   , (double)offsSlow/1000.0);
   printf("communication latency [us]          : %12.3f\n"   , (double)comLatency/1000.0);
   printf("processing time  [us]               : %12.3f\n"   , (double)offsDone/1000.0);
   printf("sum status (# changes)              : 0x%" PRIx64 " (%u)\n"     , statusArray, nBadStatus);
