@@ -570,7 +570,7 @@ uint32_t fwlib_ecaWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uin
 
 
 uint32_t fwlib_wrCheckSyncState() //check status of White Rabbit (link up, tracking)
-{/*
+{
   // hackish: just check
   // a. WR time is not entirely off and
   // b. WR time is progressing monotonically
@@ -582,8 +582,8 @@ uint32_t fwlib_wrCheckSyncState() //check status of White Rabbit (link up, track
 
   if ((wr_time > wr_time_prev) && (wr_time > WHITERABBIT_MIN_TIME)) return COMMON_STATUS_OK;
   else                                                              return COMMON_STATUS_WRBADSYNC;
- */
-  /* The following code may jeopardize real-time performance and has been commented  */
+ 
+  /* The following code may jeopardize real-time performance and has been commented 
   uint32_t syncState;
      
   syncState =  *(pPPSGen + (WR_PPS_GEN_ESCR >> 2));                         // read status
@@ -591,6 +591,7 @@ uint32_t fwlib_wrCheckSyncState() //check status of White Rabbit (link up, track
 
   if ((syncState == WR_PPS_GEN_ESCR_MASK)) return COMMON_STATUS_OK;         // check if all relevant bits are set
   else                                     return COMMON_STATUS_WRBADSYNC;
+  */
 } //fwlib_wrCheckStatus
 
 

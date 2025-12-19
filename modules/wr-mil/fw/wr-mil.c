@@ -113,8 +113,8 @@ uint32_t offsSlow;                      // offset for slow messages
 uint32_t comLatency;                    // latency for getting the messages from the ECA
 uint32_t offsDone;                      // offset deadline WR message to time when we are done [ns]
 
-int32_t  maxOffsSlow;
-int32_t  maxComLatency;
+uint32_t maxOffsSlow;
+uint32_t maxComLatency;
 uint32_t maxOffsDone;
 
 uint32_t utc_trigger;
