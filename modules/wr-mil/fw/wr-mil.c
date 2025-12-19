@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Micheal Reese, Mathias Kreider GSI-Darmstadt
- *  version : 18-Dec-2025
+ *  version : 19-Dec-2025
  *
  *  firmware required for the White Rabbit -> MIL Gateways
  *  
@@ -108,22 +108,14 @@ uint32_t nEvtsLate;                     // # of late messages
 uint32_t nEvtsEarly;                    // # of early messages
 uint32_t nEvtsConflict;                 // # of conflict messages
 uint32_t nEvtsDelayed;                  // # of delayed messages
-uint32_t nEvtsMissed;                   // # of missed messages
-uint32_t offsMissed;                    // offset for missed messages
+uint32_t nEvtsSlow;                     // # of slow messages
+uint32_t offsSlow;                      // offset for slow messages
 uint32_t comLatency;                    // latency for getting the messages from the ECA
 uint32_t offsDone;                      // offset deadline WR message to time when we are done [ns]
 
-int32_t  maxOffsMissed;
+int32_t  maxOffsSlow;
 int32_t  maxComLatency;
 uint32_t maxOffsDone;
-
-uint32_t debugA;                        // debug helper
-uint32_t debugB;                        // debug helper
-uint32_t debugC;                        // debug helper
-uint32_t prevEvtNo;                     // debug helper
-uint32_t prevComLatency;                // debug helper
-uint32_t prevOffsDone;                  // debug helper
-uint64_t prevDeadline;                  // debug helper
 
 uint32_t utc_trigger;
 int32_t  utc_utc_delay;
@@ -236,19 +228,15 @@ void extern_clearDiag()
   nEvtsEarly    = 0x0;
   nEvtsConflict = 0x0;
   nEvtsDelayed  = 0x0;
-  nEvtsMissed   = 0x0;
-  offsMissed    = 0x0;
+  nEvtsSlow     = 0x0;
+  offsSlow      = 0x0;
   comLatency    = 0x0;
   
   offsDone      = 0x0;
   maxOffsDone   = 0x0;
   maxComLatency = 0x0;
-  maxOffsMissed = 0x0;
+  maxOffsSlow   = 0x0;
   resetEventErrCntMil(pMilRec, 0);
-
-  debugA        = 0x0;
-  debugB        = 0x0;
-  debugC        = 0x0;
 } // extern_clearDiag 
 
 
@@ -390,18 +378,14 @@ uint32_t extern_entryActionOperation()
   nEvtsEarly           = 0;
   nEvtsConflict        = 0;
   nEvtsDelayed         = 0;
-  nEvtsMissed          = 0;
-  offsMissed           = 0;
+  nEvtsSlow            = 0;
+  offsSlow             = 0;
   comLatency           = 0;
   
   offsDone             = 0;
   maxOffsDone          = 0;
-  maxOffsMissed        = 0;
+  maxOffsSlow          = 0;
   maxComLatency        = 0;
-
-  debugA               = 0;
-  debugB               = 0;
-  debugC               = 0;
 
   // configure MIL receiver for timing events for all 16 virtual accelerators
   // if mil_mon == 2, the FIFO for event data monitoring must be enabled
@@ -574,7 +558,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint32_t flagIsEarly;                                       // flag 'early'
   uint32_t flagIsConflict;                                    // flag 'conflict'
   uint32_t flagIsDelayed;                                     // flag 'delayed'
-  uint32_t flagIsMissed;                                      // flag 'missed' from 'wait4eca'
+  uint32_t flagIsSlow;                                        // flag 'slow' from 'wait4eca'
   uint32_t ecaAction;                                         // action triggered by event received from ECA
   uint64_t recDeadline;                                       // deadline received from ECA
   uint64_t reqDeadline;                                       // deadline requested by sender
@@ -609,7 +593,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
   // one loop is around 37us => wait 963us only)
   ecaAction = fwlib_wait4ECAEvent2(COMMON_ECATIMEOUT * 963, &recDeadline, &recEvtId, &recParam, &recTEF,
-                                   &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed, &flagIsMissed, &offsMissed, &comLatency);
+                                   &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed, &flagIsSlow, &offsSlow, &comLatency);
   startTime = getSysTime();
 
   switch (ecaAction) {
@@ -753,28 +737,18 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   if (flagIsEarly)    nEvtsEarly++;
   if (flagIsConflict) nEvtsConflict++;
   if (flagIsDelayed)  nEvtsDelayed++;
-  if (flagIsMissed)   {
-    nEvtsMissed++;
-    debugA         = recEvtNo;                                                                     // evtno of this routine call
-    debugB         = prevEvtNo;                                                                    // evtno of previous routine call
-    debugC         = (uint32_t)(preStartT - prevDeadline);                                         // time difference from deadline of last routine call to start of this routine call
+  if (flagIsSlow) {
+    nEvtsSlow++;
     
-    maxOffsMissed  = offsMissed;
-    maxComLatency  = prevComLatency;
-    maxOffsDone    = prevOffsDone;
-    
-  } // if flag missed
-
-  if (ecaAction) {
-    prevEvtNo      = recEvtNo;
-    prevComLatency = comLatency;
-    prevOffsDone   = offsDone;
-    prevDeadline   = recDeadline;
-  } // if eca action
+    maxOffsSlow   = offsSlow;
+    maxComLatency = comLatency;
+    maxOffsDone   = offsDone;
+  } // if flag slow
 
   // check WR sync state
   if (fwlib_wrCheckSyncState() == COMMON_STATUS_WRBADSYNC) return COMMON_STATUS_WRBADSYNC;
   else                                                     return status;
+  //return status;
 } // doActionOperation
 
 
@@ -848,8 +822,8 @@ int main(void) {
 
     if (comLatency > maxComLatency) maxComLatency = comLatency;
     if (offsDone   > maxOffsDone)   maxOffsDone   = offsDone;
-    if (offsMissed > maxOffsMissed) maxOffsMissed = offsMissed;
-    fwlib_publishTransferStatus2(debugA, debugB, debugC, nEvtsLate, nEvtsEarly, nEvtsConflict, nEvtsDelayed, nEvtsMissed, maxOffsMissed, maxComLatency, maxOffsDone);
+    if (offsSlow > maxOffsSlow)     maxOffsSlow = offsSlow;
+    fwlib_publishTransferStatus2(0, 0, 0, nEvtsLate, nEvtsEarly, nEvtsConflict, nEvtsDelayed, nEvtsSlow, maxOffsSlow, maxComLatency, maxOffsDone);
     
     *pSharedGetNEvtsSndHi  = (uint32_t)(nEvtsSnd >> 32);
     *pSharedGetNEvtsSndLo  = (uint32_t)(nEvtsSnd & 0xffffffff);

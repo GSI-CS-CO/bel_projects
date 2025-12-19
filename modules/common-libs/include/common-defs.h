@@ -106,9 +106,9 @@ typedef union {                                // easier copying of bytes float 
 #define COMMON_SHARED_NEARLY          (COMMON_SHARED_NLATE        + _32b_SIZE_)         // number of ECA 'early' incidents
 #define COMMON_SHARED_NCONFLICT       (COMMON_SHARED_NEARLY       + _32b_SIZE_)         // number of ECA 'conflict' incidents
 #define COMMON_SHARED_NDELAYED        (COMMON_SHARED_NCONFLICT    + _32b_SIZE_)         // number of ECA 'delayed' incidents
-#define COMMON_SHARED_NMISSED         (COMMON_SHARED_NDELAYED     + _32b_SIZE_)         // number of incidents, when 'wait4eca' was called after the deadline
-#define COMMON_SHARED_OFFSMISSED      (COMMON_SHARED_NMISSED      + _32b_SIZE_)         // if 'missed': offset deadline to start wait4eca; else '0'
-#define COMMON_SHARED_COMLATENCY      (COMMON_SHARED_OFFSMISSED   + _32b_SIZE_)         // if 'missed': offset start to stop wait4eca; else deadline to stop wait4eca
+#define COMMON_SHARED_NSLOW           (COMMON_SHARED_NDELAYED     + _32b_SIZE_)         // number of incidents, when 'wait4eca' was called after the deadline (too slow)
+#define COMMON_SHARED_OFFSSLOW        (COMMON_SHARED_NSLOW        + _32b_SIZE_)         // if 'slow': offset deadline to 'start wait4eca'; else '0'
+#define COMMON_SHARED_COMLATENCY      (COMMON_SHARED_OFFSSLOW     + _32b_SIZE_)         // if 'slow': offset start to stop wait4eca; else deadline to stop wait4eca
 #define COMMON_SHARED_OFFSDONE        (COMMON_SHARED_COMLATENCY   + _32b_SIZE_)         // offset event deadline to time when we are done [ns]
 #define COMMON_SHARED_DATA_4EB        (COMMON_SHARED_OFFSDONE     + _32b_SIZE_)         // shared area for EB return values
 #define COMMON_SHARED_USEDSIZE        (COMMON_SHARED_DATA_4EB     + (COMMON_DATA4EBSIZE << 2))  // used size of shared memory [bytes] /* chk */

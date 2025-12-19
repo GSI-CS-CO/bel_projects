@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 17-Dec-2025
+ *  version : 19-Dec-2025
  *
  * common x86 routines for firmware
  *
@@ -86,9 +86,9 @@ int comlib_readDiag(eb_device_t device,                // Etherbone device
                     uint32_t    *nEarly,               // number of ECA 'early' incidents                                           
                     uint32_t    *nConflict,            // number of ECA 'conflict' incidents                                        
                     uint32_t    *nDelayed,             // number of ECA 'delayed' incidents                                         
-                    uint32_t    *nMissed,              // number of incidents, when 'wait4eca' was called after the deadline        
-                    uint32_t    *offsMissed,           // if 'missed': offset deadline to start wait4eca; else '0'                  
-                    uint32_t    *comLatency,           // if 'missed': offset start to stop wait4eca; else deadline to stop wait4eca
+                    uint32_t    *nSlow,                // number of incidents, when 'wait4eca' was called after the deadline        
+                    uint32_t    *offsSlow,             // if 'slow': offset deadline to start wait4eca; else '0'                  
+                    uint32_t    *comLatency,           // if 'slow': offset start to stop wait4eca; else deadline to stop wait4eca
                     uint32_t    *offsDone,             // offset event deadline to time when we are done [ns]
                     uint32_t    *usedSize,             // used size of shared memory
                     int         printFlag              // '1' print information to stdout
@@ -111,9 +111,9 @@ void comlib_printDiag(uint64_t  statusArray,           // array with status bits
                       uint32_t  nEarly,                // number of ECA 'early' incidents                                           
                       uint32_t  nConflict,             // number of ECA 'conflict' incidents                                        
                       uint32_t  nDelayed,              // number of ECA 'delayed' incidents                                         
-                      uint32_t  nMissed,               // number of incidents, when 'wait4eca' was called after the deadline        
-                      uint32_t  offsMissed,            // if 'missed': offset deadline to start wait4eca; else '0'                  
-                      uint32_t  comLatency,            // if 'missed': offset start to stop wait4eca; else deadline to stop wait4eca
+                      uint32_t  nSlow,                 // number of incidents, when 'wait4eca' was called after the deadline        
+                      uint32_t  offsSlow,              // if 'slow': offset deadline to start wait4eca; else '0'                  
+                      uint32_t  comLatency,            // if 'slow': offset start to stop wait4eca; else deadline to stop wait4eca
                       uint32_t  offsDone,              // offset event deadline to time when we are done [ns]
                       uint32_t  usedSize               // used size of shared memory
                       );
