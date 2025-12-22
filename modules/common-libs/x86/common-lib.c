@@ -229,8 +229,15 @@ void comlib_initShared(eb_address_t lm32_base, eb_address_t sharedOffset)
 
 
 void comlib_printDiag(uint64_t statusArray, uint32_t state, uint32_t version, uint64_t mac, uint32_t ip, uint32_t nBadStatus, uint32_t nBadState, uint64_t tDiag, uint64_t tS0,
-                      uint32_t nTransfer, uint32_t nInjection, uint32_t statTrans, uint32_t nLate, uint32_t nEarly, uint32_t nConflict, uint32_t nDelayed, uint32_t nSlow,
-                      uint32_t offsSlow, uint32_t comLatency, uint32_t offsDone, uint32_t usedSize)
+                      uint32_t nTransfer, uint32_t nInjection, uint32_t statTrans, uint32_t nLate, uint32_t offsDone, uint32_t comLatency, uint32_t usedSize)
+{
+  comlib_printDiag2(statusArray, state, version, mac, ip, nBadStatus, nBadState, tDiag, tS0, nTransfer, nInjection, statTrans, nLate, 0, 0, 0, 0, 0, comLatency, offsDone, usedSize);
+} // comlib_printDiag
+
+
+void comlib_printDiag2(uint64_t statusArray, uint32_t state, uint32_t version, uint64_t mac, uint32_t ip, uint32_t nBadStatus, uint32_t nBadState, uint64_t tDiag, uint64_t tS0,
+                       uint32_t nTransfer, uint32_t nInjection, uint32_t statTrans, uint32_t nLate, uint32_t nEarly, uint32_t nConflict, uint32_t nDelayed, uint32_t nSlow,
+                       uint32_t offsSlow, uint32_t comLatency, uint32_t offsDone, uint32_t usedSize)
 {
   const struct tm* tm;
   char             timestr[60];
@@ -273,12 +280,27 @@ void comlib_printDiag(uint64_t statusArray, uint32_t state, uint32_t version, ui
     if ((statusArray >> i) & 0x1)
       printf("    status bit is set               : %s\n", comlib_statusText(i));
   } // for i
-} // comlib_printDiag;
+} // comlib_printDiag2;
 
 
 int comlib_readDiag(eb_device_t device, uint64_t  *statusArray, uint32_t  *state, uint32_t  *version, uint64_t  *mac, uint32_t  *ip, uint32_t  *nBadStatus,
                     uint32_t *nBadState, uint64_t  *tDiag, uint64_t  *tS0, uint32_t  *nTransfer, uint32_t  *nInjection, uint32_t  *statTrans,
-                    uint32_t *nLate, uint32_t *nEarly, uint32_t *nConflict, uint32_t *nDelayed, uint32_t *nSlow, uint32_t *offsSlow, uint32_t *comLatency, uint32_t *offsDone, uint32_t *usedSize, int  printFlag)
+                    uint32_t *nLate, uint32_t *offsDone, uint32_t *comLatency, uint32_t *usedSize, int  printFlag)
+{
+  uint32_t nEarly;
+  uint32_t nConflict;
+  uint32_t nDelayed;
+  uint32_t nSlow;
+  uint32_t offsSlow;
+  
+  return(comlib_readDiag2(device, statusArray, state, version, mac, ip, nBadStatus,  nBadState, tDiag, tS0, nTransfer, nInjection, statTrans,
+                          nLate, &nEarly, &nConflict, &nDelayed, &nSlow, &offsSlow, comLatency, offsDone, usedSize, printFlag));
+} // comlib_readDiag
+
+
+int comlib_readDiag2(eb_device_t device, uint64_t  *statusArray, uint32_t  *state, uint32_t  *version, uint64_t  *mac, uint32_t  *ip, uint32_t  *nBadStatus,
+                     uint32_t *nBadState, uint64_t  *tDiag, uint64_t  *tS0, uint32_t  *nTransfer, uint32_t  *nInjection, uint32_t  *statTrans,
+                     uint32_t *nLate, uint32_t *nEarly, uint32_t *nConflict, uint32_t *nDelayed, uint32_t *nSlow, uint32_t *offsSlow, uint32_t *comLatency, uint32_t *offsDone, uint32_t *usedSize, int  printFlag)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;
@@ -334,11 +356,11 @@ int comlib_readDiag(eb_device_t device, uint64_t  *statusArray, uint32_t  *state
   *offsDone      = data[23];
   *usedSize      = data[24];
 
-  if (printFlag) comlib_printDiag(*statusArray, *state, *version, *mac, *ip, *nBadStatus, *nBadState, *tDiag, *tS0, *nTransfer, *nInjection, *statTrans,
-                                  *nLate, *nEarly, *nConflict, *nDelayed, *nSlow, *offsSlow, *comLatency, *offsDone, *usedSize);
+  if (printFlag) comlib_printDiag2(*statusArray, *state, *version, *mac, *ip, *nBadStatus, *nBadState, *tDiag, *tS0, *nTransfer, *nInjection, *statTrans,
+                                   *nLate, *nEarly, *nConflict, *nDelayed, *nSlow, *offsSlow, *comLatency, *offsDone, *usedSize);
 
   return eb_status;
-} // comlib_readDiag
+} // comlib_readDiag2
 
 
 uint32_t comlib_ecaq_open(const char* devName, uint32_t qIdx, eb_device_t *device, eb_address_t *ecaq_base)

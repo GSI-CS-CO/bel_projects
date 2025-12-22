@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  *********************************************************************************************/
-#define EXAMPLE_X86_VERSION  "00.00.01"
+#define EXAMPLE_X86_VERSION  "00.00.02"
 
 // standard includes 
 #include <unistd.h> // getopt

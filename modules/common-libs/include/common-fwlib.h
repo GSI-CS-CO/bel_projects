@@ -53,6 +53,7 @@ uint32_t fwlib_wrCheckSyncState();
 //uint32_t findWREp();
 
 // 1. query ECA for actions, 2. trigger activity, returns ECA action (=tag, a value of '0' is reserved for signaling a timeout
+// ABI compatibility wrapper
 uint32_t fwlib_wait4ECAEvent(uint32_t usTimeout,      // timeout [us]
                              uint64_t *deadline,      // deadline of action
                              uint64_t *evtId,         // event ID
@@ -65,6 +66,7 @@ uint32_t fwlib_wait4ECAEvent(uint32_t usTimeout,      // timeout [us]
                              );
 
 // 1. query ECA for actions, 2. trigger activity, returns ECA action (=tag, a value of '0' is reserved for signaling a timeout
+// new routine
 uint32_t fwlib_wait4ECAEvent2(uint32_t usTimeout,      // timeout [us]
                               uint64_t *deadline,      // deadline of action
                               uint64_t *evtId,         // event ID
@@ -135,7 +137,7 @@ void fwlib_publishState(uint32_t state                 // state
 void fwlib_publishStatusArray(uint64_t statusArray     // status array (each bit represents one status information)
                               );
 
-// publish status of ongoing transfer
+// publish status of ongoing transfer, ABI compatibility wrapper
 void fwlib_publishTransferStatus(uint32_t nTransfer,   // # of transfers;                          PSM: # of phase shifts @ SIS18
                                  uint32_t nInject,     // # of injections within current transfer; PSM: # of phase shifts @ ESR or CRYRING
                                  uint32_t transStat,   // status of ongoing transfer;              PSM: # of phase shifts @ SIS100
@@ -144,7 +146,7 @@ void fwlib_publishTransferStatus(uint32_t nTransfer,   // # of transfers;       
                                  uint32_t comLatency   // latency for messages received from via ECA (tDeadline - tNow)) [ns]
                                  );
                               
-// publish status of ongoing transfer, extended version
+// publish status of ongoing transfer, new routine
 void fwlib_publishTransferStatus2(uint32_t nTransfer,   // # of transfers;                          PSM: # of phase shifts @ SIS18
                                   uint32_t nInject,     // # of injections within current transfer; PSM: # of phase shifts @ ESR or CRYRING
                                   uint32_t transStat,   // status of ongoing transfer;              PSM: # of phase shifts @ SIS100

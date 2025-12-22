@@ -79,7 +79,7 @@ void init()
 
 
 // determine address and clear shared mem
-void initSharedMem() 
+void initSharedMem( uint32_t *sharedSize) 
 {
   uint32_t idx;
   uint32_t *pSharedTemp;
@@ -101,14 +101,19 @@ void initSharedMem()
   find_device_multi_in_subtree(&found_clu, &found_sdb[0], &idx, c_Max_Rams, GSI, LM32_RAM_USER);
   if(idx >= cpuId) cpuRamExternal           = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
 
-  DBPRINT2("wr-unipz: CPU RAM External 0x%8x, begin shared 0x%08x\n", pCpuRamExternal, SHARED_OFFS);
+  DBPRINT2("example: CPU RAM External 0x%8x, begin shared 0x%08x\n", pCpuRamExternal, SHARED_OFFS);
+  DBPRINT2("example: fw common shared begin   0x%08x\n", pShared);
+  DBPRINT2("example: fw common shared end     0x%08x\n", pShared + (COMMON_SHARED_END >> 2));
 
   // clear shared mem
   i = 0;
-  pSharedTemp        = (uint32_t *)(pShared + (COMMON_SHARED_BEGIN >> 2 ));
-  DBPRINT2("wr-unipz: COMMON_SHARED_BEGIN 0x%08x\n", pSharedTemp);
+  pSharedTemp        = (uint32_t *)(pShared + (COMMON_SHARED_END >> 2 ) + 1);
+  DBPRINT2("example: fw specific shared begin 0x%08x\n", pSharedTemp);
+
   // ... insert code here to clear shared RAM
-  DBPRINT2("wr-unipz: used size of shared mem is %d words (uint32_t), begin %x, end %x\n", i, pShared, pSharedTemp-1);
+
+  *sharedSize        = (uint32_t)(pSharedTemp - pShared) << 2;
+  DBPRINT2("example: used size of shared mem is %d words (uint32_t), begin %x, end %x\n", i, pShared, pSharedTemp-1);
 } // initSharedMem 
 
 
@@ -184,6 +189,7 @@ int main(void) {
   uint32_t actState;                                          // actual FSM state
   uint32_t pubState;                                          // value of published state
   uint32_t reqState;                                          // requested FSM state
+  uint32_t sharedSize;                                        // size of shared memory
   uint32_t *buildID;
 
   // init local variables
@@ -195,8 +201,8 @@ int main(void) {
 
   // init 
   init();                                                              // initialize stuff for lm32
-  initSharedMem();                                                     // initialize shared memory
-  fwlib_init((uint32_t *)_startshared, cpuRamExternal, SHARED_OFFS, "example", EXAMPLE_FW_VERSION); // init common stuff
+  initSharedMem(&sharedSize);                                          // initialize shared memory
+  fwlib_init((uint32_t *)_startshared, cpuRamExternal, SHARED_OFFS, sharedSize, "example", EXAMPLE_FW_VERSION); // init common stuff
   fwlib_clearDiag();                                                   // clear common diagnostic data
 
   while (1) {
@@ -233,7 +239,9 @@ int main(void) {
     fwlib_publishStatusArray(statusArray);
     pubState             = actState;
     fwlib_publishState(pubState);
-    // ... insert code here
+    
+    // ... insert code here to publish your stuff
+    
   } // while
 
   return(1);

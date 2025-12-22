@@ -12,7 +12,7 @@ RAM_SIZE        := $(shell cat 	$(PLATFMAKEFILE) | grep -m1 RAM_SIZE  | cut -d'=
 
 SHARED_SIZE    	?= 4K
 USRCPUCLK      	?= 125000
-VERSION  	= 00.00.01
+VERSION  	= 00.00.02
 
 .DEFAULT_GOAL	:= fwbin
 

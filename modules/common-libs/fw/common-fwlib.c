@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-Dec-2025
+ *  version : 22-Dec-2025
  *
  *  common functions used by various firmware projects
  *
@@ -694,70 +694,11 @@ void fwlib_clearOLED()
 
 uint32_t fwlib_wait4ECAEvent(uint32_t timeout_us, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *tef, uint32_t *isLate, uint32_t *isEarly, uint32_t *isConflict, uint32_t *isDelayed)  // 1. query ECA for actions, 2. trigger activity
 {
-  uint32_t *pECAFlag;           // address of ECA flag
-  uint32_t ecaFlag;             // ECA flag
-  uint32_t evtIdHigh;           // high 32bit of eventID
-  uint32_t evtIdLow;            // low 32bit of eventID
-  uint32_t evtDeadlHigh;        // high 32bit of deadline
-  uint32_t evtDeadlLow;         // low 32bit of deadline
-  uint32_t evtParamHigh;        // high 32 bit of parameter field
-  uint32_t evtParamLow ;        // low 32 bit of parameter field
-  uint32_t actTag;              // tag of action
-  uint32_t nextAction;          // describes what to do next
-  uint64_t timeoutT;            // when to time out
-  uint64_t timeout;             // timeout [ns]
+  uint32_t isSlow;
+  uint32_t offsSlow;
+  uint32_t comLatency;
 
-
-  pECAFlag    = (uint32_t *)(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));   // address of ECA flag
-
-  // conversion from ns -> us: use shift by 10 bits instead of multiplication by '1000'
-  // reduces time per read from ~6.5 us to ~4.8 us
-  //timeout     = ((uint64_t)timeout_us + 1) * 1000;
-  timeout     = ((uint64_t)timeout_us + 1) << 10;
-  timeoutT    = getSysTime() + timeout;
-
-  while (getSysTime() < timeoutT) {
-    ecaFlag = *pECAFlag;                                            // we'll need this value more than once per iteration
-    if (ecaFlag & (0x0001 << ECA_VALID)) {                          // if ECA data is valid
-
-      // read data
-      evtIdHigh    = *(pECAQ + (ECA_QUEUE_EVENT_ID_HI_GET >> 2));
-      evtIdLow     = *(pECAQ + (ECA_QUEUE_EVENT_ID_LO_GET >> 2));
-      evtDeadlHigh = *(pECAQ + (ECA_QUEUE_DEADLINE_HI_GET >> 2));
-      evtDeadlLow  = *(pECAQ + (ECA_QUEUE_DEADLINE_LO_GET >> 2));
-      actTag       = *(pECAQ + (ECA_QUEUE_TAG_GET >> 2));
-      evtParamHigh = *(pECAQ + (ECA_QUEUE_PARAM_HI_GET >> 2));
-      evtParamLow  = *(pECAQ + (ECA_QUEUE_PARAM_LO_GET >> 2));
-      *tef         = *(pECAQ + (ECA_QUEUE_TEF_GET >> 2));
-
-      *isLate      = ecaFlag & (0x0001 << ECA_LATE);
-      *isEarly     = ecaFlag & (0x0001 << ECA_EARLY);
-      *isConflict  = ecaFlag & (0x0001 << ECA_CONFLICT);
-      *isDelayed   = ecaFlag & (0x0001 << ECA_DELAYED);
-      *deadline    = ((uint64_t)evtDeadlHigh << 32) + (uint64_t)evtDeadlLow;
-      *evtId       = ((uint64_t)evtIdHigh    << 32) + (uint64_t)evtIdLow;
-      *param       = ((uint64_t)evtParamHigh << 32) + (uint64_t)evtParamLow;
-
-      // pop action from channel
-      *(pECAQ + (ECA_QUEUE_POP_OWR >> 2)) = 0x1;
-
-      // here: do s.th. according to tag
-      nextAction = actTag;
-
-      return nextAction;
-    } // if data is valid
-  } // while not timed out
-
-  *deadline   = 0x0;
-  *evtId      = 0x0;
-  *param      = 0x0;
-  *tef        = 0x0;
-  *isLate     = 0x0;
-  *isEarly    = 0x0;
-  *isConflict = 0x0;
-  *isDelayed  = 0x0;
-
-  return COMMON_ECADO_TIMEOUT;
+  return (fwlib_wait4ECAEvent2(timeout_us, deadline, evtId, param, tef, isLate, isEarly, isConflict, isDelayed, &isSlow, &offsSlow, &comLatency));
 } // fwlib_wait4ECAEvent
 
 
@@ -998,12 +939,7 @@ void fwlib_publishStatusArray(uint64_t statusArray)
 
 void fwlib_publishTransferStatus(uint32_t nTransfer, uint32_t nInject, uint32_t transStat, uint32_t nLate, uint32_t offsDone, uint32_t comLatency)
 {
-  *pSharedNTransfer  = nTransfer;
-  *pSharedNInject    = nInject;
-  *pSharedTransStat  = transStat;
-  *pSharedNLate      = nLate;
-  *pSharedOffsDone   = offsDone;
-  *pSharedComLatency = comLatency;
+  fwlib_publishTransferStatus2(nTransfer, nInject, transStat, nLate, 0, 0, 0, 0, 0, comLatency, offsDone);
 } // fwlib_publishTransferStatus
 
 
@@ -1017,8 +953,8 @@ void fwlib_publishTransferStatus2(uint32_t nTransfer, uint32_t nInject, uint32_t
   *pSharedNEarly     = nEarly;
   *pSharedNConflict  = nConflict;
   *pSharedNDelayed   = nDelayed;
-  *pSharedNSlow    = nSlow;
-  *pSharedOffsSlow = offsSlow;
+  *pSharedNSlow      = nSlow;
+  *pSharedOffsSlow   = offsSlow;
   *pSharedComLatency = comLatency;
   *pSharedOffsDone   = offsDone;
 } // fwlib_publishTransferStatus2
