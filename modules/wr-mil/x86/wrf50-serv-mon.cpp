@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define WRF50_SERV_MON_VERSION 0x000106
+#define WRF50_SERV_MON_VERSION 0x000107
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
