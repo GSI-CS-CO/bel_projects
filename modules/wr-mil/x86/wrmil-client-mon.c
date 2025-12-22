@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define WRMIL_CLIENT_MON_VERSION 0x000106
+#define WRMIL_CLIENT_MON_VERSION 0x000107
 
 // standard includes 
 #include <unistd.h> // getopt
