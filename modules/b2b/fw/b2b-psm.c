@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 25-Feb-2025
+ *  version : 23-Dec-2025
  *
  *  firmware for the psm module
  *  
@@ -36,7 +36,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPSM_FW_VERSION 0x000808                                      // make this consistent with makefile
+#define B2BPSM_FW_VERSION 0x000809                                      // make this consistent with makefile
 
 //standard includes
 #include <stdio.h>
@@ -80,7 +80,20 @@ uint64_t statusArray;                   // all status infos are ORed bit-wise in
 uint32_t nPsmSIS18;                     // # of phase shifts in SIS18
 uint32_t nPsmSIS100;                    // # of phase shifts in SIS100
 uint32_t nPsmStori;                     // # of phase shifts in storage ring (ESR, CRYRING) 
-int32_t  comLatency;                    // latency for messages received via ECA
+
+uint32_t  nLate;                        // # of late messages
+uint32_t  nEarly;                       // # of early messages
+uint32_t  nConflict;                    // # of conflict messages
+uint32_t  nDelayed;                     // # of delayed messages
+uint32_t  nSlow;                        // # of slow messages
+uint32_t  offsSlow;                     // offset of slow messages
+uint32_t  comLatency;                   // latency for getting the messages from the ECA           
+uint32_t  offsDone;                     // offset deadline WR message to time when we are done [ns]
+
+uint32_t  maxOffsSlow;
+uint32_t  maxComLatency;
+uint32_t  maxOffsDone;
+
 
 // for phase measurement
 #define NSAMPLES 11                     // # of timestamps for sampling h=1
@@ -161,7 +174,19 @@ void extern_clearDiag()
   nPsmSIS18    = 0;
   nPsmSIS100   = 0;
   nPsmStori    = 0;
-  comLatency   = 0x0;
+
+  nLate         = 0x0;
+  nEarly        = 0x0;
+  nConflict     = 0x0;
+  nDelayed      = 0x0;
+  nSlow         = 0x0;
+  offsSlow      = 0x0;
+  comLatency    = 0x0;
+  
+  offsDone      = 0x0;
+  maxOffsDone   = 0x0;
+  maxComLatency = 0x0;
+  maxOffsSlow   = 0x0;
 } // extern_clearDiag
   
 
@@ -265,6 +290,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint32_t flagEarly;                                         // flag indicating that a 'early event' was received from data master
   uint32_t flagConflict;                                      // flag indicating that a 'conflict event' was received from data master
   uint32_t flagDelayed;                                       // flag indicating that a 'delayed event' was received from data master
+  uint32_t flagSlow;                                          // 'wait4eca' yielded a slow event
   uint32_t ecaAction;                                         // action triggered by event received from ECA
   uint64_t recDeadline;                                       // deadline received from ECA
   uint64_t reqDeadline;                                       // deadline requested by sender
@@ -280,12 +306,15 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint32_t sendEvtNo;                                         // EvtNo to send
    
   uint64_t t1,t2;
-
+  uint64_t startTime;
+  
   status    = actStatus;
   sendEvtNo = 0x0;
 
-  ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate, &flagEarly, &flagConflict, &flagDelayed);
-
+  ecaAction = fwlib_wait4ECAEvent2(COMMON_ECATIMEOUT * 1000, &recDeadline, &recEvtId, &recParam, &recTEF,
+                                   &flagIsLate, &flagEarly, &flagConflict, &flagDelayed, &flagSlow, &offsSlow, &comLatency);
+  startTime = getSysTime();
+  
   if (ecaAction != B2B_ECADO_TIMEOUT) comLatency = (int32_t)(getSysTime() - recDeadline);
 
   recGid       = (uint32_t)((recEvtId >> 48) & 0x0fff);
@@ -314,9 +343,26 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       default :                                                       // flush ECA queue
       flagIsLate = 0;                                                 // ingore late events
   } // switch ecaAction
+
+  offsDone = getSysTime() - startTime;
  
   // check for late event
-  if ((status == COMMON_STATUS_OK) && flagIsLate) status = B2B_STATUS_LATEMESSAGE;
+  if ((status == COMMON_STATUS_OK) && flagIsLate) {
+    status = B2B_STATUS_LATEMESSAGE;
+    nLate++;
+  } // if status
+
+  // check for other statistics
+  if (flagEarly)    nEarly++;
+  if (flagConflict) nConflict++;
+  if (flagDelayed)  nDelayed++;
+  if (flagSlow) {
+    nSlow++;
+    
+    maxOffsSlow   = offsSlow;
+    maxComLatency = comLatency;
+    maxOffsDone   = offsDone;
+  } // if flag slow
   
   // check WR sync state
   if (fwlib_wrCheckSyncState() == COMMON_STATUS_WRBADSYNC) return COMMON_STATUS_WRBADSYNC;
@@ -384,7 +430,11 @@ int main(void) {
     fwlib_publishStatusArray(statusArray);
     pubState = actState;
     fwlib_publishState(pubState);
-    fwlib_publishTransferStatus(nPsmSIS18, nPsmStori, nPsmSIS100, 0x0, 0x0, comLatency); /* chk: set values of nLate and offsDone */
+
+    if (comLatency > maxComLatency) maxComLatency = comLatency;
+    if (offsDone   > maxOffsDone)   maxOffsDone   = offsDone;
+    if (offsSlow   > maxOffsSlow)   maxOffsSlow = offsSlow;
+    fwlib_publishTransferStatus2(nPsmSIS18, nPsmStori, nPsmSIS100, nLate, nEarly, nConflict, nDelayed, nSlow, maxOffsSlow, maxComLatency, maxOffsDone);
   } // while
 
   return(1); // this should never happen ...
