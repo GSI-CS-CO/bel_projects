@@ -360,7 +360,7 @@ uint64_t fwlib_wrGetMac()  // get my own MAC
   uint64_t mac;
 
   macHi = (*(pWREp + (WR_ENDPOINT_MACHI >> 2))) & 0xffff;
-  macLo = *(pWREp + (WR_ENDPOINT_MACLO >> 2));
+  macLo =  *(pWREp + (WR_ENDPOINT_MACLO >> 2));
 
   mac = macHi;
   mac = (mac << 32);
@@ -759,13 +759,13 @@ uint32_t fwlib_wait4ECAEvent2(uint32_t timeout_us, uint64_t *deadline, uint64_t 
 
       // monitoring stuff
       if (*deadline < startT) {
-        *isSlow   = 1;
-        *offsSlow = (uint32_t)(startT - *deadline);
+        *isSlow     = 1;
+        *offsSlow   = (uint32_t)(startT - *deadline);
         *comLatency = (uint32_t)(stopT - startT);
       } // if missed
       else {
-        *isSlow   = 0;
-        *offsSlow = 0;
+        *isSlow     = 0;
+        *offsSlow   = 0;
         *comLatency = (uint32_t)(stopT - *deadline);
       } // else missed
 
