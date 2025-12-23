@@ -1,10 +1,9 @@
-
 /********************************************************************************************
  *  b2b-cbu.c
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 13-May-2025
+ *  version : 23-Dec-2025
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  NB: units of variables are [ns] unless explicitely mentioned as suffix
@@ -36,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000808                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000809                                      // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -168,7 +167,6 @@ uint32_t  sidInj;                       // LSA SID injection
 uint32_t  bpidInj;                      // LSA BPID injection
 uint64_t  paramInj;                     // LSA param injection
 
-
 b2bt_t    tH1Ext_t;                     // h=1 phase of extraction machine
 b2bt_t    tH1Inj_t;                     // h=1 phase of injection machine
 int32_t   nPhaseResult;                 // number of received phase result, required to resolve diamond structure in mini FSM
@@ -176,12 +174,20 @@ int32_t   nPhaseResult;                 // number of received phase result, requ
 uint64_t  statusArray;                  // all status infos are ORed bit-wise into statusArray, statusArray is then published
 uint32_t  nTransfer;                    // # of transfers
 uint32_t  transStat;                    // status of ongoing transfer
-uint32_t  mState;                       // state of 'miniFSM' 
-int32_t   comLatency;                   // latency for messages received via ECA [ns]
-int32_t   offsDone;                     // offset deadline WR message to time when we are done [ns]
-int32_t   maxComLatency;
-uint32_t  maxOffsDone;
+uint32_t  mState;                       // state of 'miniFSM'
+
 uint32_t  nLate;                        // # of late messages
+uint32_t  nEarly;                       // # of early messages
+uint32_t  nConflict;                    // # of conflict messages
+uint32_t  nDelayed;                     // # of delayed messages
+uint32_t  nSlow;                        // # of slow messages
+uint32_t  offsSlow;                     // offset of slow messages
+uint32_t  comLatency;                   // latency for getting the messages from the ECA           
+uint32_t  offsDone;                     // offset deadline WR message to time when we are done [ns]
+
+uint32_t  maxOffsSlow;
+uint32_t  maxComLatency;
+uint32_t  maxOffsDone;
 
 // flags
 uint32_t  flagClearAllSid;              // data for all SIDs shall be cleared
@@ -299,11 +305,19 @@ void extern_clearDiag()
   statusArray   = 0x0;
   nTransfer     = 0x0;
   transStat     = 0x0;
+  
   nLate         = 0x0;
+  nEarly        = 0x0;
+  nConflict     = 0x0;
+  nDelayed      = 0x0;
+  nSlow         = 0x0;
+  offsSlow      = 0x0;
   comLatency    = 0x0;
-  maxComLatency = 0x0;
+  
   offsDone      = 0x0;
   maxOffsDone   = 0x0;
+  maxComLatency = 0x0;
+  maxOffsSlow   = 0x0;
 } // extern_clearDiag 
 
 
@@ -484,12 +498,6 @@ uint32_t extern_entryActionOperation()
   *pSharedGetCTrigInj    = 0x0;
   *pSharedGetTBeatHi     = 0x0;
   *pSharedGetTBeatLo     = 0x0;
-
-  nLate                  = 0x0;
-  comLatency             = 0x0;
-  maxComLatency          = 0x0;
-  offsDone               = 0x0;
-  maxOffsDone            = 0x0;
 
   return COMMON_STATUS_OK;
 } // extern_entryActionOperation
@@ -1063,6 +1071,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   uint32_t flagIsEarly;                                       // flag 'early'
   uint32_t flagIsConflict;                                    // flag 'conflict'
   uint32_t flagIsDelayed;                                     // flag 'delayed'
+  uint32_t flagIsSlow;                                        // flag 'slow'
   uint32_t ecaAction;                                         // action triggered by event received from ECA
   uint64_t sendDeadline;                                      // deadline to send
   uint64_t sendEvtId;                                         // evtID to send
@@ -1092,23 +1101,24 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   int64_t  tPhase0Ext_as;                                     // ... [as]
   int64_t  tPhase0Inj_as;                                     // ... [as]
   int64_t  tPhaseDiff_as;                                     // phase difference at extraction time
+  int32_t  extTrigDone;                                       // time tCBS to till sending ext trig message
   
 
   uint32_t tmp32;
   float    tmpf;
   fdat_t   tmp;
   uint64_t t1, t2;
-  
+  uint64_t startTime;
 
   status = actStatus;
 
-  ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recId, &recParam, &recTef, &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
-
+  ecaAction = fwlib_wait4ECAEvent2(COMMON_ECATIMEOUT * 1000, &recDeadline, &recId, &recParam, &recTef,
+                                   &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed, &flagIsSlow, &offsSlow, &comLatency);
+  startTime = getSysTime();
+  
   switch (ecaAction) {
 
     case B2B_ECADO_B2B_START :                                // received: CMD_B2B_START from DM; B2B transfer starts
-      comLatency   = (int32_t)(getSysTime() - recDeadline); 
-
       recGid       = (uint32_t)((recId >> 48) & 0x0fff);
       recSid       = (uint32_t)((recId >> 20) & 0x0fff);
       recBpid      = (uint32_t)((recId >>  6) & 0x3fff);
@@ -1246,7 +1256,6 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
     case B2B_ECADO_B2B_PREXT :                                 // received: measured phase from extraction machine
       if (mode < B2B_MODE_B2E) return status;                  // ignore informative phase result
-      comLatency   = (int32_t)(getSysTime() - recDeadline);
        
       tmpf         = (float)(getSysTime() - tCBS) / 1000.0;    // time from CBS to now [us]
       offsetPrr_us = fwlib_float2half(tmpf);                   // -> half precision
@@ -1273,7 +1282,6 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
     case B2B_ECADO_B2B_PRINJ :                                 // received: measured phase from injection machine
       if (mode <  B2B_MODE_B2BFBEAT) return status;            // ignore informative phase result
-      comLatency    = (int32_t)(getSysTime() - recDeadline);
       tmpf          = (float)(getSysTime() - tCBS) / 1000.0;   // time from CBS to now [us]
       offsetPrr_us  = fwlib_float2half(tmpf);                  // -> half precision
       recGid        = (uint32_t)((recId >> 48) & 0xfff     );
@@ -1510,8 +1518,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     if (!sendGid) return COMMON_STATUS_OUTOFRANGE;
     //tmp32 = (uint32_t)pShiftExt.ns; pp_printf("sid %d, pshift @ trigger %d\n", sidExt, tmp32);
     tTrigExt     = tTrig.ns + cTrigExt_t.ns;                                  // trigger correction; ns are sufficient
-    offsDone     = getSysTime() - tCBS;
-    tmpf         = (float)offsDone / 1000.0;                                  // time from CBS to now [us]
+    extTrigDone  = getSysTime() - tCBS;
+    tmpf         = (float)extTrigDone / 1000.0;                               // time from CBS to now [us]
     //tmp32 = (uint32_t)tmpf; pp_printf("sid %d, fin-cbs %u\n", sid, tmp32);
     offsetFin_us = fwlib_float2half(tmpf);
     if (tTrigExt < getSysTime() + (uint64_t)(COMMON_LATELIMIT)) {             // we are too late!
@@ -1547,11 +1555,25 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   
   if (flagClearAllSid) {clearAllSid(); flagClearAllSid = 0;}
 
+  offsDone = getSysTime() - startTime;
+
   // check for late event
   if ((status == COMMON_STATUS_OK) && flagIsLate) {
     status = B2B_STATUS_LATEMESSAGE;
     nLate++;
   } // if status
+
+  // check for other statistics
+  if (flagIsEarly)    nEarly++;
+  if (flagIsConflict) nConflict++;
+  if (flagIsDelayed)  nDelayed++;
+  if (flagIsSlow) {
+    nSlow++;
+    
+    maxOffsSlow   = offsSlow;
+    maxComLatency = comLatency;
+    maxOffsDone   = offsDone;
+  } // if flag slow
   
   // check WR sync state; worst case, do this last
   if (fwlib_wrCheckSyncState() == COMMON_STATUS_WRBADSYNC) return COMMON_STATUS_WRBADSYNC;
@@ -1618,9 +1640,11 @@ int main(void) {
     fwlib_publishStatusArray(statusArray);
     pubState        = actState;
     fwlib_publishState(pubState);
+
     if (comLatency > maxComLatency) maxComLatency = comLatency;
     if (offsDone   > maxOffsDone)   maxOffsDone   = offsDone;
-    fwlib_publishTransferStatus(nTransfer, 0x0, transStat, nLate, maxOffsDone, maxComLatency); 
+    if (offsSlow   > maxOffsSlow)   maxOffsSlow = offsSlow;
+    fwlib_publishTransferStatus2(nTransfer, 0x0, transStat, nLate, nEarly, nConflict, nDelayed, nSlow, maxOffsSlow, maxComLatency, maxOffsDone);
 
     // update get values
     *pSharedGetGid        = gid;
