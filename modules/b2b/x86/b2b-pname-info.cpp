@@ -8,7 +8,7 @@
  * a hackish solution providing pattern name information for relevant Sequence IDs
  *
  *********************************************************************************************/
-#define B2B_PNAME_VERSION 0x000808
+#define B2B_PNAME_VERSION 0x000809
 
 #include <dis.h>
 #include <cstdio>

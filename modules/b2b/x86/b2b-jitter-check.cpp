@@ -37,7 +37,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_JITTER_CHECK_VERSION 0x000808
+#define B2B_JITTER_CHECK_VERSION 0x000809
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
