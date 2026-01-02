@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-March-2020
+ *  version : 02-jan-2026
  *
  *  command-line interface for example firmware
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  *********************************************************************************************/
-#define EXAMPLE_X86_VERSION  "00.00.02"
+#define EXAMPLE_X86_VERSION  "00.00.03"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -138,7 +138,11 @@ int main(int argc, char** argv) {
   uint32_t nTransfer;                     // # of transfers
   uint32_t nInjection;                    // # of injections
   uint32_t statTrans;                     // status bits of transfer (application specific)
-
+  uint32_t nLate;                         // number of messages that could not be delivered in time
+  uint32_t offsDone;                      // offset event deadline to time when we are done [ns]
+  uint32_t comLatency;                    // latency for messages received from via ECA (tDeadline - tNow)) [ns]
+  uint32_t usedSize;                      // used size of shared memory
+                                          // '1' print information to stdout                                                                                                               
   program = argv[0];    
 
   while ((opt = getopt(argc, argv, "s:ceih")) != -1) {
@@ -205,13 +209,13 @@ int main(int argc, char** argv) {
   // ... add more code here
 
   if (getVersion) {
-    comlib_readDiag(device, &sumStatus, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, 0);
+    comlib_readDiag(device, &sumStatus, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &nLate, &offsDone, &comLatency, &usedSize, 0);
     printf("example: software (firmware) version %s (%06x)\n",  EXAMPLE_X86_VERSION, version);     
   } // if getEBVersion
 
   if (command) {
     // state required to give proper warnings
-    comlib_readDiag(device, &sumStatus, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, 0);
+    comlib_readDiag(device, &sumStatus, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &nLate, &offsDone, &comLatency, &usedSize, 0);
 
     // request state changes
     if (!strcasecmp(command, "configure")) {
@@ -241,7 +245,7 @@ int main(int argc, char** argv) {
       if (state != COMMON_STATE_OPREADY) printf("example: WARNING command has no effect (not in state OPREADY)\n");
     } // "cleardiag"
     if (!strcasecmp(command, "diag")) {
-      comlib_readDiag(device, &sumStatus, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, 1);
+      comlib_readDiag(device, &sumStatus, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &nLate, &offsDone, &comLatency, &usedSize, 1);
     } // "diag"
 
   } //if command

@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 19-Dec-2025
+ *  version : 02-Jan-2026
  *
  * common x86 routines for firmware
  *
@@ -37,7 +37,7 @@
 #ifndef _COMMON_LIB_H_
 #define _COMMON_LIB_H_
 
-#define COMMON_LIB_VERSION "0.05.00"
+#define COMMON_LIB_VERSION "0.05.01"
 
 #include <etherbone.h>
 
@@ -108,9 +108,15 @@ int comlib_readDiag2(eb_device_t device,                // Etherbone device
                      uint32_t    *nConflict,            // number of ECA 'conflict' incidents                                        
                      uint32_t    *nDelayed,             // number of ECA 'delayed' incidents                                         
                      uint32_t    *nSlow,                // number of incidents, when 'wait4eca' was called after the deadline        
-                     uint32_t    *offsSlow,             // if 'slow': offset deadline to start wait4eca; else '0'                  
-                     uint32_t    *comLatency,           // if 'slow': offset start to stop wait4eca; else deadline to stop wait4eca
+                     uint32_t    *offsSlow,             // if 'slow': offset deadline to start wait4eca; else '0' [ns]
+                     uint32_t    *offsSlowMax,          // if 'slow': offset deadline to start wait4eca; else '0' [ns]; max
+                     uint32_t    *offsSlowMin,          // if 'slow': offset deadline to start wait4eca; else '0' [ns]; min
+                     uint32_t    *comLatency,           // if 'slow': offset start to stop wait4eca; else deadline to stop wait4eca [ns]
+                     uint32_t    *comLatencyMax,        // if 'slow': offset start to stop wait4eca; else deadline to stop wait4eca [ns]; max
+                     uint32_t    *comLatencyMin,        // if 'slow': offset start to stop wait4eca; else deadline to stop wait4eca [ns]; min
                      uint32_t    *offsDone,             // offset event deadline to time when we are done [ns]
+                     uint32_t    *offsDoneMax,          // offset event deadline to time when we are done [ns]; max
+                     uint32_t    *offsDoneMin,          // offset event deadline to time when we are done [ns]; min
                      uint32_t    *usedSize,             // used size of shared memory
                      int         printFlag              // '1' print information to stdout
                     );
@@ -152,9 +158,15 @@ void comlib_printDiag2(uint64_t  statusArray,           // array with status bit
                        uint32_t  nConflict,             // number of ECA 'conflict' incidents                                        
                        uint32_t  nDelayed,              // number of ECA 'delayed' incidents                                         
                        uint32_t  nSlow,                 // number of incidents, when 'wait4eca' was called after the deadline        
-                       uint32_t  offsSlow,              // if 'slow': offset deadline to start wait4eca; else '0'                  
-                       uint32_t  comLatency,            // if 'slow': offset start to stop wait4eca; else deadline to stop wait4eca
+                       uint32_t  offsSlow,              // if 'slow': offset deadline to start wait4eca; else '0' [ns]
+                       uint32_t  offsSlowMax,           // if 'slow': offset deadline to start wait4eca; else '0' [ns]; max
+                       uint32_t  offsSlowMin,           // if 'slow': offset deadline to start wait4eca; else '0' [ns]; min
+                       uint32_t  comLatency,            // if 'slow': offset start to stop wait4eca; else deadline to stop wait4eca [ns]
+                       uint32_t  comLatencyMax,         // if 'slow': offset start to stop wait4eca; else deadline to stop wait4eca [ns]; max
+                       uint32_t  comLatencyMin,         // if 'slow': offset start to stop wait4eca; else deadline to stop wait4eca [ns]; min
                        uint32_t  offsDone,              // offset event deadline to time when we are done [ns]
+                       uint32_t  offsDoneMax,           // offset event deadline to time when we are done [ns]; max
+                       uint32_t  offsDoneMin,           // offset event deadline to time when we are done [ns]; min
                        uint32_t  usedSize               // used size of shared memory
                        );
 

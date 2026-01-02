@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 19-Dec-2025
+ *  version : 02-Jan-2025
  *
  *  common x86 routines useful for CLIs handling firmware
  * 
@@ -35,32 +35,38 @@
 #include "../../../ip_cores/saftlib/src/eca_flags.h"                    // definitions for ECA queue
 
 // public variables
-eb_address_t common_statusLo;     // common status, read (low word)
-eb_address_t common_statusHi;     // common status, read (high word)
-eb_address_t common_state;        // state, read
-eb_address_t common_transfers;    // # of transfers from UNILAC to SIS, read
-eb_address_t common_injections;   // # of injections in ongoing transfer
-eb_address_t common_statTrans;    // status of ongoing or last transfer, read
-eb_address_t common_nLate;        // number of ECA 'late' incidents                                             
-eb_address_t common_nEarly;       // number of ECA 'early' incidents                                           
-eb_address_t common_nConflict;    // number of ECA 'conflict' incidents                                        
-eb_address_t common_nDelayed;     // number of ECA 'delayed' incidents                                         
-eb_address_t common_nSlow;      // number of incidents, when 'wait4eca' was called after the deadline        
-eb_address_t common_offsSlow;   // if 'slow': offset deadline to start wait4eca; else '0'                  
-eb_address_t common_comLatency;   // if 'slow': offset start to stop wait4eca; else deadline to stop wait4eca
-eb_address_t common_offsDone;     // offset event deadline to time when we are done [ns]
-eb_address_t common_cmd;          // command, write
-eb_address_t common_version;      // version, read
-eb_address_t common_nBadStatus;   // # of bad status ("ERROR") incidents
-eb_address_t common_nBadState;    // # of bad state ("not in operation") incidents
-eb_address_t common_macHi;        // MAC address, high word
-eb_address_t common_macLo;        // MAC address, low word
-eb_address_t common_Ip;           // IP
-eb_address_t common_tDiagHi;      // time when diagnostics was cleared, high bits
-eb_address_t common_tDiagLo;      // time when diagnostics was cleared, low bits
-eb_address_t common_tS0Hi;        // time when FW was in S0 state (start of FW), high bits
-eb_address_t common_tS0Lo;        // time when FW was in S0 state (start of FW), low bits
-eb_address_t common_usedSize;     // used size of DP RAM
+eb_address_t common_statusLo;       // common status, read (low word)
+eb_address_t common_statusHi;       // common status, read (high word)
+eb_address_t common_state;          // state, read
+eb_address_t common_transfers;      // # of transfers from UNILAC to SIS, read
+eb_address_t common_injections;     // # of injections in ongoing transfer
+eb_address_t common_statTrans;      // status of ongoing or last transfer, read
+eb_address_t common_nLate;          // number of ECA 'late' incidents                                             
+eb_address_t common_nEarly;         // number of ECA 'early' incidents                                           
+eb_address_t common_nConflict;      // number of ECA 'conflict' incidents                                        
+eb_address_t common_nDelayed;       // number of ECA 'delayed' incidents                                         
+eb_address_t common_nSlow;          // number of incidents, when 'wait4eca' was called after the deadline        
+eb_address_t common_offsSlow;       // if 'slow': offset deadline to start wait4eca; else '0' [ns]
+eb_address_t common_offsSlowMax;    // if 'slow': offset deadline to start wait4eca; else '0' [ns]; max
+eb_address_t common_offsSlowMin;    // if 'slow': offset deadline to start wait4eca; else '0' [ns]; min
+eb_address_t common_comLatency;     // if 'slow': offset start to stop wait4eca; else deadline to stop wait4eca [ns]
+eb_address_t common_comLatencyMax;  // if 'slow': offset start to stop wait4eca; else deadline to stop wait4eca [ns]; max
+eb_address_t common_comLatencyMin;  // if 'slow': offset start to stop wait4eca; else deadline to stop wait4eca [ns]; min
+eb_address_t common_offsDone;       // offset event deadline to time when we are done [ns]
+eb_address_t common_offsDoneMax;    // offset event deadline to time when we are done [ns]; max
+eb_address_t common_offsDoneMin;    // offset event deadline to time when we are done [ns]; min
+eb_address_t common_cmd;            // command, write
+eb_address_t common_version;        // version, read
+eb_address_t common_nBadStatus;     // # of bad status ("ERROR") incidents
+eb_address_t common_nBadState;      // # of bad state ("not in operation") incidents
+eb_address_t common_macHi;          // MAC address, high word
+eb_address_t common_macLo;          // MAC address, low word
+eb_address_t common_Ip;             // IP
+eb_address_t common_tDiagHi;        // time when diagnostics was cleared, high bits
+eb_address_t common_tDiagLo;        // time when diagnostics was cleared, low bits
+eb_address_t common_tS0Hi;          // time when FW was in S0 state (start of FW), high bits
+eb_address_t common_tS0Lo;          // time when FW was in S0 state (start of FW), low bits
+eb_address_t common_usedSize;       // used size of DP RAM
 
 // public variables
 eb_socket_t  common_socket;       // EB socket
@@ -199,45 +205,52 @@ const char* comlib_statusText(uint32_t bit)
 // init for communicaiton with shared mem
 void comlib_initShared(eb_address_t lm32_base, eb_address_t sharedOffset)
 {
-  common_statusLo     = lm32_base + sharedOffset + COMMON_SHARED_STATUSLO;
-  common_statusHi     = lm32_base + sharedOffset + COMMON_SHARED_STATUSHI;
-  common_cmd          = lm32_base + sharedOffset + COMMON_SHARED_CMD;
-  common_state        = lm32_base + sharedOffset + COMMON_SHARED_STATE;
-  common_version      = lm32_base + sharedOffset + COMMON_SHARED_VERSION;
-  common_macHi        = lm32_base + sharedOffset + COMMON_SHARED_MACHI;
-  common_macLo        = lm32_base + sharedOffset + COMMON_SHARED_MACLO;
-  common_Ip           = lm32_base + sharedOffset + COMMON_SHARED_IP;
-  common_nBadStatus   = lm32_base + sharedOffset + COMMON_SHARED_NBADSTATUS;
-  common_nBadState    = lm32_base + sharedOffset + COMMON_SHARED_NBADSTATE;
-  common_tDiagHi      = lm32_base + sharedOffset + COMMON_SHARED_TDIAGHI;
-  common_tDiagLo      = lm32_base + sharedOffset + COMMON_SHARED_TDIAGLO;
-  common_tS0Hi        = lm32_base + sharedOffset + COMMON_SHARED_TS0HI;
-  common_tS0Lo        = lm32_base + sharedOffset + COMMON_SHARED_TS0LO;
-  common_transfers    = lm32_base + sharedOffset + COMMON_SHARED_NTRANSFER;
-  common_injections   = lm32_base + sharedOffset + COMMON_SHARED_NINJECT;
-  common_statTrans    = lm32_base + sharedOffset + COMMON_SHARED_TRANSSTAT;
-  common_nLate        = lm32_base + sharedOffset + COMMON_SHARED_NLATE;
-  common_nEarly       = lm32_base + sharedOffset + COMMON_SHARED_NEARLY;
-  common_nConflict    = lm32_base + sharedOffset + COMMON_SHARED_NCONFLICT;
-  common_nDelayed     = lm32_base + sharedOffset + COMMON_SHARED_NDELAYED;
-  common_nSlow        = lm32_base + sharedOffset + COMMON_SHARED_NSLOW;
-  common_offsSlow     = lm32_base + sharedOffset + COMMON_SHARED_OFFSSLOW;
-  common_comLatency   = lm32_base + sharedOffset + COMMON_SHARED_COMLATENCY;
-  common_offsDone     = lm32_base + sharedOffset + COMMON_SHARED_OFFSDONE;
-  common_usedSize     = lm32_base + sharedOffset + COMMON_SHARED_USEDSIZE;
+  common_statusLo      = lm32_base + sharedOffset + COMMON_SHARED_STATUSLO;
+  common_statusHi      = lm32_base + sharedOffset + COMMON_SHARED_STATUSHI;
+  common_cmd           = lm32_base + sharedOffset + COMMON_SHARED_CMD;
+  common_state         = lm32_base + sharedOffset + COMMON_SHARED_STATE;
+  common_version       = lm32_base + sharedOffset + COMMON_SHARED_VERSION;
+  common_macHi         = lm32_base + sharedOffset + COMMON_SHARED_MACHI;
+  common_macLo         = lm32_base + sharedOffset + COMMON_SHARED_MACLO;
+  common_Ip            = lm32_base + sharedOffset + COMMON_SHARED_IP;
+  common_nBadStatus    = lm32_base + sharedOffset + COMMON_SHARED_NBADSTATUS;
+  common_nBadState     = lm32_base + sharedOffset + COMMON_SHARED_NBADSTATE;
+  common_tDiagHi       = lm32_base + sharedOffset + COMMON_SHARED_TDIAGHI;
+  common_tDiagLo       = lm32_base + sharedOffset + COMMON_SHARED_TDIAGLO;
+  common_tS0Hi         = lm32_base + sharedOffset + COMMON_SHARED_TS0HI;
+  common_tS0Lo         = lm32_base + sharedOffset + COMMON_SHARED_TS0LO;
+  common_transfers     = lm32_base + sharedOffset + COMMON_SHARED_NTRANSFER;
+  common_injections    = lm32_base + sharedOffset + COMMON_SHARED_NINJECT;
+  common_statTrans     = lm32_base + sharedOffset + COMMON_SHARED_TRANSSTAT;
+  common_nLate         = lm32_base + sharedOffset + COMMON_SHARED_NLATE;
+  common_nEarly        = lm32_base + sharedOffset + COMMON_SHARED_NEARLY;
+  common_nConflict     = lm32_base + sharedOffset + COMMON_SHARED_NCONFLICT;
+  common_nDelayed      = lm32_base + sharedOffset + COMMON_SHARED_NDELAYED;
+  common_nSlow         = lm32_base + sharedOffset + COMMON_SHARED_NSLOW;
+  common_offsSlow      = lm32_base + sharedOffset + COMMON_SHARED_OFFSSLOW;
+  common_offsSlowMax   = lm32_base + sharedOffset + COMMON_SHARED_OFFSSLOWMAX;
+  common_offsSlowMin   = lm32_base + sharedOffset + COMMON_SHARED_OFFSSLOWMIN;
+  common_comLatency    = lm32_base + sharedOffset + COMMON_SHARED_COMLATENCY;
+  common_comLatencyMax = lm32_base + sharedOffset + COMMON_SHARED_COMLATENCYMAX;
+  common_comLatencyMin = lm32_base + sharedOffset + COMMON_SHARED_COMLATENCYMIN;
+  common_offsDone      = lm32_base + sharedOffset + COMMON_SHARED_OFFSDONE;
+  common_offsDoneMax   = lm32_base + sharedOffset + COMMON_SHARED_OFFSDONEMAX;
+  common_offsDoneMin   = lm32_base + sharedOffset + COMMON_SHARED_OFFSDONEMIN;
+  common_usedSize      = lm32_base + sharedOffset + COMMON_SHARED_USEDSIZE;
 } // comlib_initShared
 
 
 void comlib_printDiag(uint64_t statusArray, uint32_t state, uint32_t version, uint64_t mac, uint32_t ip, uint32_t nBadStatus, uint32_t nBadState, uint64_t tDiag, uint64_t tS0,
                       uint32_t nTransfer, uint32_t nInjection, uint32_t statTrans, uint32_t nLate, uint32_t offsDone, uint32_t comLatency, uint32_t usedSize)
 {
-  comlib_printDiag2(statusArray, state, version, mac, ip, nBadStatus, nBadState, tDiag, tS0, nTransfer, nInjection, statTrans, nLate, 0, 0, 0, 0, 0, comLatency, offsDone, usedSize);
+  comlib_printDiag2(statusArray, state, version, mac, ip, nBadStatus, nBadState, tDiag, tS0, nTransfer, nInjection, statTrans, nLate, 0, 0, 0, 0, 0, 0, 0, comLatency, 0, 0, offsDone, 0, 0, usedSize);
 } // comlib_printDiag
 
 
 void comlib_printDiag2(uint64_t statusArray, uint32_t state, uint32_t version, uint64_t mac, uint32_t ip, uint32_t nBadStatus, uint32_t nBadState, uint64_t tDiag, uint64_t tS0,
                        uint32_t nTransfer, uint32_t nInjection, uint32_t statTrans, uint32_t nLate, uint32_t nEarly, uint32_t nConflict, uint32_t nDelayed, uint32_t nSlow,
-                       uint32_t offsSlow, uint32_t comLatency, uint32_t offsDone, uint32_t usedSize)
+                       uint32_t offsSlow, uint32_t offsSlowMax, uint32_t offsSlowMin, uint32_t comLatency, uint32_t comLatencyMax, uint32_t comLatencyMin,
+                       uint32_t offsDone, uint32_t offsDoneMax, uint32_t offsDoneMin, uint32_t usedSize)
 {
   const struct tm* tm;
   char             timestr[60];
@@ -268,9 +281,15 @@ void comlib_printDiag2(uint64_t statusArray, uint32_t state, uint32_t version, u
   printf("# conflict events                   : %012u\n"    , nConflict);
   printf("# delayed events                    : %012u\n"    , nDelayed);
   printf("# slow events (wait too late)       : %012u\n"    , nSlow);
-  printf("offset slow [us]                    : %12.3f\n"   , (double)offsSlow/1000.0);
-  printf("communication latency [us]          : %12.3f\n"   , (double)comLatency/1000.0);
-  printf("processing time  [us]               : %12.3f\n"   , (double)offsDone/1000.0);
+  printf("offset slow     [us]                : %12.3f\n"   , (double)offsSlow/1000.0);
+  printf("offset slow max [us]                : %12.3f\n"   , (double)offsSlowMax/1000.0);
+  printf("offset slow min [us]                : %12.3f\n"   , (double)offsSlowMin/1000.0);
+  printf("communication latency     [us]      : %12.3f\n"   , (double)comLatency/1000.0);
+  printf("communication latency max [us]      : %12.3f\n"   , (double)comLatencyMax/1000.0);
+  printf("communication latency min [us]      : %12.3f\n"   , (double)comLatencyMin/1000.0);
+  printf("processing time     [us]            : %12.3f\n"   , (double)offsDone/1000.0);
+  printf("processing time max [us]            : %12.3f\n"   , (double)offsDoneMax/1000.0);
+  printf("processing time min [us]            : %12.3f\n"   , (double)offsDoneMin/1000.0);
   printf("sum status (# changes)              : 0x%" PRIx64 " (%u)\n"     , statusArray, nBadStatus);
   if ((statusArray >> COMMON_STATUS_OK) & 0x1)
     printf("overall status                      : OK\n");
@@ -292,72 +311,94 @@ int comlib_readDiag(eb_device_t device, uint64_t  *statusArray, uint32_t  *state
   uint32_t nDelayed;
   uint32_t nSlow;
   uint32_t offsSlow;
+  uint32_t offsSlowMax;
+  uint32_t offsSlowMin;
+  uint32_t comLatencyMax;
+  uint32_t comLatencyMin;
+  uint32_t offsDoneMax;
+  uint32_t offsDoneMin;
   
   return(comlib_readDiag2(device, statusArray, state, version, mac, ip, nBadStatus,  nBadState, tDiag, tS0, nTransfer, nInjection, statTrans,
-                          nLate, &nEarly, &nConflict, &nDelayed, &nSlow, &offsSlow, comLatency, offsDone, usedSize, printFlag));
+                          nLate, &nEarly, &nConflict, &nDelayed, &nSlow, &offsSlow, &offsSlowMax, &offsSlowMin, comLatency, &comLatencyMax, &comLatencyMin,
+                          offsDone, &offsDoneMax, &offsDoneMin, usedSize, printFlag));
 } // comlib_readDiag
 
 
 int comlib_readDiag2(eb_device_t device, uint64_t  *statusArray, uint32_t  *state, uint32_t  *version, uint64_t  *mac, uint32_t  *ip, uint32_t  *nBadStatus,
                      uint32_t *nBadState, uint64_t  *tDiag, uint64_t  *tS0, uint32_t  *nTransfer, uint32_t  *nInjection, uint32_t  *statTrans,
-                     uint32_t *nLate, uint32_t *nEarly, uint32_t *nConflict, uint32_t *nDelayed, uint32_t *nSlow, uint32_t *offsSlow, uint32_t *comLatency, uint32_t *offsDone, uint32_t *usedSize, int  printFlag)
+                     uint32_t *nLate, uint32_t *nEarly, uint32_t *nConflict, uint32_t *nDelayed, uint32_t *nSlow, uint32_t *offsSlow, uint32_t *offsSlowMax,
+                     uint32_t *offsSlowMin, uint32_t *comLatency, uint32_t *comLatencyMax, uint32_t *comLatencyMin, uint32_t *offsDone, uint32_t *offsDoneMax,
+                     uint32_t *offsDoneMin, uint32_t *usedSize, int  printFlag)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;
-  eb_data_t   data[30];
+  eb_data_t   data[31];
   
   if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return eb_status;
-  eb_cycle_read(cycle, common_statusHi,    EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
-  eb_cycle_read(cycle, common_statusLo,    EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
-  eb_cycle_read(cycle, common_state,       EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
-  eb_cycle_read(cycle, common_version,     EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
-  eb_cycle_read(cycle, common_macHi,       EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
-  eb_cycle_read(cycle, common_macLo,       EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
-  eb_cycle_read(cycle, common_Ip,          EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
-  eb_cycle_read(cycle, common_nBadStatus,  EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
-  eb_cycle_read(cycle, common_nBadState,   EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
-  eb_cycle_read(cycle, common_tDiagHi,     EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
-  eb_cycle_read(cycle, common_tDiagLo,     EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
-  eb_cycle_read(cycle, common_tS0Hi,       EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
-  eb_cycle_read(cycle, common_tS0Lo,       EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
-  eb_cycle_read(cycle, common_transfers,   EB_BIG_ENDIAN|EB_DATA32, &(data[13]));
-  eb_cycle_read(cycle, common_injections,  EB_BIG_ENDIAN|EB_DATA32, &(data[14]));  
-  eb_cycle_read(cycle, common_statTrans,   EB_BIG_ENDIAN|EB_DATA32, &(data[15]));
-  eb_cycle_read(cycle, common_nLate,       EB_BIG_ENDIAN|EB_DATA32, &(data[16]));
-  eb_cycle_read(cycle, common_nEarly,      EB_BIG_ENDIAN|EB_DATA32, &(data[17]));
-  eb_cycle_read(cycle, common_nConflict,   EB_BIG_ENDIAN|EB_DATA32, &(data[18]));
-  eb_cycle_read(cycle, common_nDelayed,    EB_BIG_ENDIAN|EB_DATA32, &(data[19]));
-  eb_cycle_read(cycle, common_nSlow,       EB_BIG_ENDIAN|EB_DATA32, &(data[20]));
-  eb_cycle_read(cycle, common_offsSlow,    EB_BIG_ENDIAN|EB_DATA32, &(data[21]));
-  eb_cycle_read(cycle, common_comLatency,  EB_BIG_ENDIAN|EB_DATA32, &(data[22]));
-  eb_cycle_read(cycle, common_offsDone,    EB_BIG_ENDIAN|EB_DATA32, &(data[23]));
-  eb_cycle_read(cycle, common_usedSize,    EB_BIG_ENDIAN|EB_DATA32, &(data[24]));
+  eb_cycle_read(cycle, common_statusHi,       EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
+  eb_cycle_read(cycle, common_statusLo,       EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
+  eb_cycle_read(cycle, common_state,          EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
+  eb_cycle_read(cycle, common_version,        EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
+  eb_cycle_read(cycle, common_macHi,          EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
+  eb_cycle_read(cycle, common_macLo,          EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
+  eb_cycle_read(cycle, common_Ip,             EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
+  eb_cycle_read(cycle, common_nBadStatus,     EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
+  eb_cycle_read(cycle, common_nBadState,      EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
+  eb_cycle_read(cycle, common_tDiagHi,        EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
+  eb_cycle_read(cycle, common_tDiagLo,        EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
+  eb_cycle_read(cycle, common_tS0Hi,          EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
+  eb_cycle_read(cycle, common_tS0Lo,          EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
+  eb_cycle_read(cycle, common_transfers,      EB_BIG_ENDIAN|EB_DATA32, &(data[13]));
+  eb_cycle_read(cycle, common_injections,     EB_BIG_ENDIAN|EB_DATA32, &(data[14]));  
+  eb_cycle_read(cycle, common_statTrans,      EB_BIG_ENDIAN|EB_DATA32, &(data[15]));
+  eb_cycle_read(cycle, common_nLate,          EB_BIG_ENDIAN|EB_DATA32, &(data[16]));
+  eb_cycle_read(cycle, common_nEarly,         EB_BIG_ENDIAN|EB_DATA32, &(data[17]));
+  eb_cycle_read(cycle, common_nConflict,      EB_BIG_ENDIAN|EB_DATA32, &(data[18]));
+  eb_cycle_read(cycle, common_nDelayed,       EB_BIG_ENDIAN|EB_DATA32, &(data[19]));
+  eb_cycle_read(cycle, common_nSlow,          EB_BIG_ENDIAN|EB_DATA32, &(data[20]));
+  eb_cycle_read(cycle, common_offsSlow,       EB_BIG_ENDIAN|EB_DATA32, &(data[21]));
+  eb_cycle_read(cycle, common_offsSlowMax,    EB_BIG_ENDIAN|EB_DATA32, &(data[22]));
+  eb_cycle_read(cycle, common_offsSlowMin,    EB_BIG_ENDIAN|EB_DATA32, &(data[23]));
+  eb_cycle_read(cycle, common_comLatency,     EB_BIG_ENDIAN|EB_DATA32, &(data[24]));
+  eb_cycle_read(cycle, common_comLatencyMax,  EB_BIG_ENDIAN|EB_DATA32, &(data[25]));
+  eb_cycle_read(cycle, common_comLatencyMin,  EB_BIG_ENDIAN|EB_DATA32, &(data[26]));
+  eb_cycle_read(cycle, common_offsDone,       EB_BIG_ENDIAN|EB_DATA32, &(data[27]));
+  eb_cycle_read(cycle, common_offsDoneMax,    EB_BIG_ENDIAN|EB_DATA32, &(data[28]));
+  eb_cycle_read(cycle, common_offsDoneMin,    EB_BIG_ENDIAN|EB_DATA32, &(data[29]));
+  eb_cycle_read(cycle, common_usedSize,       EB_BIG_ENDIAN|EB_DATA32, &(data[30]));
   if ((eb_status = eb_cycle_close(cycle)) != EB_OK) return eb_status;
 
-  *statusArray   = ((uint64_t)(data[0]) << 32) | (uint64_t)(data[1]);
-  *state         = data[2];
-  *version       = data[3];
-  *mac           = ((uint64_t)(data[4]) << 32) | (uint64_t)(data[5]);
-  *ip            = data[6];
-  *nBadStatus    = data[7];
-  *nBadState     = data[8];
-  *tDiag         = ((uint64_t)(data[9])  << 32) | (uint64_t)(data[10]);
-  *tS0           = ((uint64_t)(data[11]) << 32) | (uint64_t)(data[12]);
-  *nTransfer     = data[13];
-  *nInjection    = data[14];
-  *statTrans     = data[15];
-  *nLate         = data[16];
-  *nEarly        = data[17];
-  *nConflict     = data[18];
-  *nDelayed      = data[19];
-  *nSlow         = data[20];
-  *offsSlow      = data[21];
-  *comLatency    = data[22];
-  *offsDone      = data[23];
-  *usedSize      = data[24];
+  *statusArray      = ((uint64_t)(data[0]) << 32) | (uint64_t)(data[1]);
+  *state            = data[2];
+  *version          = data[3];
+  *mac              = ((uint64_t)(data[4]) << 32) | (uint64_t)(data[5]);
+  *ip               = data[6];
+  *nBadStatus       = data[7];
+  *nBadState        = data[8];
+  *tDiag            = ((uint64_t)(data[9])  << 32) | (uint64_t)(data[10]);
+  *tS0              = ((uint64_t)(data[11]) << 32) | (uint64_t)(data[12]);
+  *nTransfer        = data[13];
+  *nInjection       = data[14];
+  *statTrans        = data[15];
+  *nLate            = data[16];
+  *nEarly           = data[17];
+  *nConflict        = data[18];
+  *nDelayed         = data[19];
+  *nSlow            = data[20];
+  *offsSlow         = data[21];
+  *offsSlowMax      = data[22];
+  *offsSlowMin      = data[23];
+  *comLatency       = data[24];
+  *comLatencyMax    = data[25];
+  *comLatencyMin    = data[26];
+  *offsDone         = data[27];
+  *offsDoneMax      = data[28];
+  *offsDoneMin      = data[29];
+  *usedSize         = data[30];
 
   if (printFlag) comlib_printDiag2(*statusArray, *state, *version, *mac, *ip, *nBadStatus, *nBadState, *tDiag, *tS0, *nTransfer, *nInjection, *statTrans,
-                                   *nLate, *nEarly, *nConflict, *nDelayed, *nSlow, *offsSlow, *comLatency, *offsDone, *usedSize);
+                                   *nLate, *nEarly, *nConflict, *nDelayed, *nSlow, *offsSlow, *offsSlowMax, *offsSlowMin,
+                                   *comLatency, *comLatencyMax, *comLatencyMin, *offsDone, *offsDoneMax, *offsDoneMin, *usedSize);
 
   return eb_status;
 } // comlib_readDiag2

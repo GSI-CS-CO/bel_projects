@@ -147,17 +147,23 @@ void fwlib_publishTransferStatus(uint32_t nTransfer,   // # of transfers;       
                                  );
                               
 // publish status of ongoing transfer, new routine
-void fwlib_publishTransferStatus2(uint32_t nTransfer,   // # of transfers;                          PSM: # of phase shifts @ SIS18
-                                  uint32_t nInject,     // # of injections within current transfer; PSM: # of phase shifts @ ESR or CRYRING
-                                  uint32_t transStat,   // status of ongoing transfer;              PSM: # of phase shifts @ SIS100
-                                  uint32_t nLate,       // number of ECA 'late' incidents                                            
-                                  uint32_t nEarly,      // number of ECA 'early' incidents                                           
-                                  uint32_t nConflict,   // number of ECA 'conflict' incidents                                        
-                                  uint32_t nDelayed,    // number of ECA 'delayed' incidents                                         
-                                  uint32_t nSlow,       // number of incidents, when 'wait4eca' was called after the deadline        
-                                  uint32_t offsSlow,    // if 'slow': offset deadline to start wait4eca; else '0'                  
-                                  uint32_t comLatency,  // if 'slow': offset start to stop wait4eca; else deadline to stop wait4eca
-                                  uint32_t offsDone     // offset event deadline to time when we are done [ns]
+void fwlib_publishTransferStatus2(uint32_t nTransfer,      // # of transfers;                          PSM: # of phase shifts @ SIS18
+                                  uint32_t nInject,        // # of injections within current transfer; PSM: # of phase shifts @ ESR or CRYRING
+                                  uint32_t transStat,      // status of ongoing transfer;              PSM: # of phase shifts @ SIS100
+                                  uint32_t nLate,          // number of ECA 'late' incidents                                            
+                                  uint32_t nEarly,         // number of ECA 'early' incidents                                           
+                                  uint32_t nConflict,      // number of ECA 'conflict' incidents                                        
+                                  uint32_t nDelayed,       // number of ECA 'delayed' incidents                                         
+                                  uint32_t nSlow,          // number of incidents, when 'wait4eca' was called after the deadline
+                                  uint32_t offsSlow,       // if 'slow': offset deadline to start wait4eca; else '0'                  
+                                  uint32_t offsSlowMax,    // if 'slow': offset deadline to start wait4eca; else '0'                  
+                                  uint32_t offsSlowMin,    // if 'slow': offset deadline to start wait4eca; else '0'                  
+                                  uint32_t comLatency,     // if 'slow': offset start to stop wait4eca; else deadline to stop wait4eca
+                                  uint32_t comLatencyMax,  // if 'slow': offset start to stop wait4eca; else deadline to stop wait4eca
+                                  uint32_t comLatencyMin,  // if 'slow': offset start to stop wait4eca; else deadline to stop wait4eca
+                                  uint32_t offsDone,       // offset event deadline to time when we are done [ns]
+                                  uint32_t offsDoneMax,    // offset event deadline to time when we are done [ns]
+                                  uint32_t offsDoneMin     // offset event deadline to time when we are done [ns]
                                   );
 
 // publish number of bad status incidents
