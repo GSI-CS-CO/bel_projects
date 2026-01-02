@@ -565,9 +565,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint32_t flagIsConflict;                                    // flag 'conflict'
   uint32_t flagIsDelayed;                                     // flag 'delayed'
   uint32_t flagIsSlow;                                        // flag 'slow' from 'wait4eca'
-  uint32_t offsSlowAct;                                       // 'slow' time
-  uint32_t comLatencyAct;                                     // communication latency
-  uint32_t offsDoneAct;                                       // offset 'done' 
+  uint32_t offsSlowAct;                                       // offset slow event, act value
+  uint32_t comLatencyAct;                                     // communication latency act value
   uint32_t ecaAction;                                         // action triggered by event received from ECA
   uint64_t recDeadline;                                       // deadline received from ECA
   uint64_t reqDeadline;                                       // deadline requested by sender
@@ -730,7 +729,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     } // if not inhibit fill events
   } // if request_fill_evt
 
-  offsDoneAct = getSysTime() - startTime;
 
   // check for late event
   if ((status == COMMON_STATUS_OK) && flagIsLate) {
@@ -739,16 +737,25 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   } // if flagIslate
 
   // check for other statistics
-  if (flagIsEarly)    nEvtsEarly++;
-  if (flagIsConflict) nEvtsConflict++;
-  if (flagIsDelayed)  nEvtsDelayed++;
-  if (flagIsSlow) {
-    nEvtsSlow++;
-    
-    offsSlow   = offsSlowAct;
+  if (ecaAction) {
     comLatency = comLatencyAct;
-    offsDone   = offsDoneAct;
-  } // if flag slow
+    offsDone   = getSysTime() - startTime;
+    
+    if (flagIsEarly)    nEvtsEarly++;
+    if (flagIsConflict) nEvtsConflict++;
+    if (flagIsDelayed)  nEvtsDelayed++;
+    if (flagIsSlow) {
+      nEvtsSlow++;
+      offsSlow = offsSlowAct;
+    } // if ecaAction
+
+    if (comLatency > comLatencyMax) comLatencyMax = comLatency;
+    if (offsDone   > offsDoneMax)   offsDoneMax   = offsDone;
+    if (offsSlow   > offsSlowMax)   offsSlowMax   = offsSlow;
+    if (comLatency < comLatencyMin) comLatencyMin = comLatency;
+    if (offsDone   < offsDoneMin)   offsDoneMin   = offsDone;
+    if (offsSlow   < offsSlowMin)   offsSlowMin   = offsSlow;
+  } // if eca action
 
   // check WR sync state
   if (fwlib_wrCheckSyncState() == COMMON_STATUS_WRBADSYNC) return COMMON_STATUS_WRBADSYNC;
@@ -824,14 +831,7 @@ int main(void) {
     fwlib_publishStatusArray(statusArray);
     pubState = actState;
     fwlib_publishState(pubState);
-
-    if (comLatency > comLatencyMax) comLatencyMax = comLatency;
-    if (offsDone   > offsDoneMax)   offsDoneMax   = offsDone;
-    if (offsSlow   > offsSlowMax)   offsSlowMax   = offsSlow;
-    if (comLatency < comLatencyMin) comLatencyMin = comLatency;
-    if (offsDone   < offsDoneMin)   offsDoneMin   = offsDone;
-    if (offsSlow   < offsSlowMin)   offsSlowMin   = offsSlow;
-    
+  
     fwlib_publishTransferStatus2(0, 0, 0, nEvtsLate, nEvtsEarly, nEvtsConflict, nEvtsDelayed, nEvtsSlow, offsSlow, offsSlowMax, offsSlowMin,
                                  comLatency, comLatencyMax, comLatencyMin, offsDone, offsDoneMax, offsDoneMin);
     
