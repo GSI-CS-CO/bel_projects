@@ -257,6 +257,11 @@ void comlib_printDiag2(uint64_t statusArray, uint32_t state, uint32_t version, u
   time_t           secs;
   int              i;
 
+  // display min offset values as '0' not as '4e9'
+  if (offsSlowMin   == 0xffffffff) offsSlowMin   = 0;
+  if (comLatencyMin == 0xffffffff) comLatencyMin = 0;
+  if (offsDoneMin   == 0xffffffff) offsDoneMin   = 0;
+
   printf("common: diags ...\n");
 
   secs     = (unsigned long)((double)tS0 / 1000000000.0);
