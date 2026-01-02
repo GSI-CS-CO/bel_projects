@@ -747,14 +747,14 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     if (flagIsSlow) {
       nEvtsSlow++;
       offsSlow = offsSlowAct;
+      if (offsSlow   < offsSlowMin)   offsSlowMin   = offsSlow;
+      if (offsSlow   > offsSlowMax)   offsSlowMax   = offsSlow;
     } // if ecaAction
 
-    if (comLatency > comLatencyMax) comLatencyMax = comLatency;
-    if (offsDone   > offsDoneMax)   offsDoneMax   = offsDone;
-    if (offsSlow   > offsSlowMax)   offsSlowMax   = offsSlow;
-    if (comLatency < comLatencyMin) comLatencyMin = comLatency;
-    if (offsDone   < offsDoneMin)   offsDoneMin   = offsDone;
-    if (offsSlow   < offsSlowMin)   offsSlowMin   = offsSlow;
+    if (comLatency > comLatencyMax)   comLatencyMax = comLatency;
+    if (comLatency < comLatencyMin)   comLatencyMin = comLatency;
+    if (offsDone   > offsDoneMax)     offsDoneMax   = offsDone;
+    if (offsDone   < offsDoneMin)     offsDoneMin   = offsDone;
   } // if eca action
 
   // check WR sync state
