@@ -654,8 +654,8 @@ void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t shared
   pSharedComLatencyMax    = (uint32_t *)(pShared + (COMMON_SHARED_COMLATENCYMAX >> 2));
   pSharedComLatencyMin    = (uint32_t *)(pShared + (COMMON_SHARED_COMLATENCYMIN >> 2));
   pSharedOffsDone         = (uint32_t *)(pShared + (COMMON_SHARED_OFFSDONE >> 2));
-  pSharedOffsDone         = (uint32_t *)(pShared + (COMMON_SHARED_OFFSDONEMAX >> 2));
-  pSharedOffsDone         = (uint32_t *)(pShared + (COMMON_SHARED_OFFSDONEMIN >> 2));
+  pSharedOffsDoneMax      = (uint32_t *)(pShared + (COMMON_SHARED_OFFSDONEMAX >> 2));
+  pSharedOffsDoneMin      = (uint32_t *)(pShared + (COMMON_SHARED_OFFSDONEMIN >> 2));
   pSharedUsedSize         = (uint32_t *)(pShared + (COMMON_SHARED_USEDSIZE >> 2));
 
   // clear shared mem
@@ -796,9 +796,9 @@ uint32_t fwlib_wait4ECAEvent2(uint32_t timeout_us, uint64_t *deadline, uint64_t 
   *isEarly    = 0x0;
   *isConflict = 0x0;
   *isDelayed  = 0x0;
-  *isSlow   = 0x0;
-  *offsSlow = 0x0;
-  *comLatency = 0x0;
+  *isSlow     = 0x0;
+  *offsSlow   = 0x0;
+  *comLatency = 0x0; 
 
   return COMMON_ECADO_TIMEOUT;
 } // fwlib_wait4ECAEvent2
@@ -955,7 +955,7 @@ void fwlib_publishTransferStatus(uint32_t nTransfer, uint32_t nInject, uint32_t 
 
 
 void fwlib_publishTransferStatus2(uint32_t nTransfer, uint32_t nInject, uint32_t transStat, uint32_t nLate, uint32_t nEarly, uint32_t nConflict,
-                                  uint32_t nDelayed, uint32_t nSlow, uint32_t offsSlow, uint32_t offSlowMax, uint32_t offSlowMin,
+                                  uint32_t nDelayed, uint32_t nSlow, uint32_t offsSlow, uint32_t offsSlowMax, uint32_t offsSlowMin,
                                   uint32_t comLatency, uint32_t comLatencyMax, uint32_t comLatencyMin, uint32_t offsDone, uint32_t offsDoneMax, uint32_t offsDoneMin)
 {
   *pSharedNTransfer     = nTransfer;
@@ -967,8 +967,8 @@ void fwlib_publishTransferStatus2(uint32_t nTransfer, uint32_t nInject, uint32_t
   *pSharedNDelayed      = nDelayed;
   *pSharedNSlow         = nSlow;
   *pSharedOffsSlow      = offsSlow;
-  *pSharedOffsSlowMax   = offsSlow;
-  *pSharedOffsSlowMin   = offsSlow;
+  *pSharedOffsSlowMax   = offsSlowMax;
+  *pSharedOffsSlowMin   = offsSlowMin;
   *pSharedComLatency    = comLatency;
   *pSharedComLatencyMax = comLatencyMax;
   *pSharedComLatencyMin = comLatencyMin;
