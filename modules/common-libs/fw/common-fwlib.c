@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 02-Jan-2026
+ *  version : 03-Jan-2026
  *
  *  common functions used by various firmware projects
  *
@@ -744,13 +744,13 @@ uint32_t fwlib_wait4ECAEvent2(uint32_t timeout_us, uint64_t *deadline, uint64_t 
 
   while (getSysTime() < timeoutT) {
     ecaFlag = *pECAFlag;                                            // we'll need this value more than once per iteration
-    if (ecaFlag & (0x0001 << ECA_VALID)) {                          // if ECA data is valid
+    if (ecaFlag & (0x0001 << ECA_VALID)) {                          // if ECA data is valid ...
 
       // read data; don't use atomic_on/off (increases latency) 
-      evtDeadlHigh = *(pECAQ + (ECA_QUEUE_DEADLINE_HI_GET >> 2));   // read deadline first for more accurate offsSlow
-      evtDeadlLow  = *(pECAQ + (ECA_QUEUE_DEADLINE_LO_GET >> 2));
       evtIdHigh    = *(pECAQ + (ECA_QUEUE_EVENT_ID_HI_GET >> 2));
       evtIdLow     = *(pECAQ + (ECA_QUEUE_EVENT_ID_LO_GET >> 2));
+      evtDeadlHigh = *(pECAQ + (ECA_QUEUE_DEADLINE_HI_GET >> 2));  
+      evtDeadlLow  = *(pECAQ + (ECA_QUEUE_DEADLINE_LO_GET >> 2));
       actTag       = *(pECAQ + (ECA_QUEUE_TAG_GET >> 2));
       evtParamHigh = *(pECAQ + (ECA_QUEUE_PARAM_HI_GET >> 2));
       evtParamLow  = *(pECAQ + (ECA_QUEUE_PARAM_LO_GET >> 2));
