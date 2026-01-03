@@ -746,7 +746,7 @@ uint32_t fwlib_wait4ECAEvent2(uint32_t timeout_us, uint64_t *deadline, uint64_t 
     ecaFlag = *pECAFlag;                                            // we'll need this value more than once per iteration
     if (ecaFlag & (0x0001 << ECA_VALID)) {                          // if ECA data is valid
 
-      // read data
+      // read data; don't use atomic_on/off (increases latency) 
       evtDeadlHigh = *(pECAQ + (ECA_QUEUE_DEADLINE_HI_GET >> 2));   // read deadline first for more accurate offsSlow
       evtDeadlLow  = *(pECAQ + (ECA_QUEUE_DEADLINE_LO_GET >> 2));
       evtIdHigh    = *(pECAQ + (ECA_QUEUE_EVENT_ID_HI_GET >> 2));
