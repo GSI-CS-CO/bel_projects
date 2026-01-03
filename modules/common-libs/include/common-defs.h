@@ -23,8 +23,9 @@ typedef union {                                // easier copying of bytes float 
 #define  COMMON_ECATIMEOUT       1            // timeout for querying ECA action [ms]
 #define  COMMON_MILTIMEOUT       100          // timeout for querying MIL events [ms]
 #define  COMMON_AHEADT           500000       // ahead interval for sending timing messages [ns]
-#define  COMMON_LATELIMIT        250000       // if below this limit [ns], messages are considered to be delivered 'late'
+#define  COMMON_LATELIMIT        250000       // if below this limit [ns], messages to be sent are considered to be delivered 'late'
 #define  COMMON_ECA_ADDRESS      0x7ffffff0   // address of ECA input
+#define  COMMON_LATENCYBOGUS     3142         // communication latency for reading from ECA, us pi as bogus value [ns]
 #define  COMMON_EB_HACKISH       0x12345678   // value for EB read handshake
 
 // (error) status
