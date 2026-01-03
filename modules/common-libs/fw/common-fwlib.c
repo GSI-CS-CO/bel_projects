@@ -773,7 +773,12 @@ uint32_t fwlib_wait4ECAEvent2(uint32_t timeout_us, uint64_t *deadline, uint64_t 
       if (*deadline < startT) {
         *isSlow     = 1;
         *offsSlow   = (uint32_t)(startT - *deadline);
-        *comLatency = (uint32_t)(stopT - startT);
+        // if late or delayed, the message deadline will be prior tStart
+        // although we might have waited already for quite some time
+        // this might lead to erronously large values for comLatency
+        // the hackish solution right now is to use a defined bogus value
+        if (*isLate || *isDelayed) *comLatency = COMMON_LATENCYBOGUS;
+        else                       *comLatency = (uint32_t)(stopT - startT);
       } // if missed
       else {
         *isSlow     = 0;
