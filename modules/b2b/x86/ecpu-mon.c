@@ -49,7 +49,8 @@
 #include <dic.h>
 
 // common
-#include <common-lib.h>                  // COMMON
+#include <common-defs.h>                 // COMMON  
+#include <common-lib.h>
 //#include <b2blib.h>                      // API
 //#include <b2b.h>                         // FW
 
@@ -285,7 +286,7 @@ void dicCmdClearDiag(char *environment, uint32_t indexServer)
 {
   char name[DIMMAXSIZE];
 
-  sprintf(name, "%s_%s_%s_cmd_cleardiag", projNames[i], sysShortNames[indexServer]);
+  sprintf(name, "%s_%s_%s_cmd_cleardiag", projNames[indexServer], environment, sysShortNames[indexServer]);
   dic_cmnd_service(name, 0, 0);
 } // dicCmdClearDiag
 
@@ -300,11 +301,9 @@ void printServices(int flagOnce)
   char     cVersion[9];
   char     cState[11];
   char     cHost[19];
-  char     cJitter[5];
   char     buff[100];
   time_t   time_date;
   uint32_t *tmp;
-  double   maxmin;
 
   //printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890\n");
 
@@ -331,19 +330,8 @@ void printServices(int flagOnce)
     tmp = (uint32_t *)(&(dicSystem[i].hostname));
     if (*tmp == no_link_32)                      sprintf(cHost,   "%16s",          no_link_str);
     else                                         sprintf(cHost,   "%16s",          dicSystem[i].hostname);
-    tmp = (uint32_t *)(&(dicSystem[i].jitter));
-    if (*tmp == no_link_32)                      sprintf(cJitter, "   ");          // no link, just 'blank' as not all processes have a jitter check
-    else  {
-      if (isnan(dicSystem[i].jitter.ppsAct))     sprintf(cJitter, " err");         // bad state, no WR lock or not PPS signal detected
-      else {
-      // check for fluctations
-        maxmin = dicSystem[i].jitter.ppsMax - dicSystem[i].jitter.ppsMin;
-        if ( maxmin <= 0.1)                      sprintf(cJitter, "  ok");         // good
-        if ((maxmin > 0.1) && (maxmin < 1.1))    sprintf(cJitter, " ~ok");         // hm, up to 1ns is in principle possible
-        if ( maxmin >= 1.1)                      sprintf(cJitter, "%4d", (int)maxmin);
-      } // else isnan
-    } // else nolink
-    printf(" %2s %6s %3s %8s %10s %9s %13s %4s %16s\n", sysClearKeys[i], ringNames[i], typeNames[i], cVersion, cState, cTransfer, cStatus, cJitter, cHost);
+
+    printf(" %2s %6s %3s %8s %10s %9s %13s %4s %16s\n", sysClearKeys[i], ringNames[i], typeNames[i], cVersion, cState, cTransfer, cStatus, "bla", cHost);
   } // for i
 
   //for (i=0; i<2; i++) printf("%s\n", empty);
@@ -362,7 +350,7 @@ void printStatusText()
     if ((status != 0x1) && (status != no_link_64)) {
       printf(" %6s %3s:\n", ringNames[i], typeNames[i]);
       for (j = COMMON_STATUS_OK + 1; j<(int)(sizeof(status)*8); j++) {
-        if ((status >> j) & 0x1)  printf("  ---------- status bit is set : %s\n", comlib_status_text(j));
+        if ((status >> j) & 0x1)  printf("  ---------- status bit is set : %s\n", comlib_statusText(j));
       } // for j
     } // if status
   } // for i
@@ -439,8 +427,7 @@ int main(int argc, char** argv) {
   } // if optind
 
   if (optind< argc) sprintf(environment, "%s", argv[optind]);
-  else              sprintf(environment, "na");
-  } // else optind
+  else              sprintf(environment, "%s", "na");
 
   comlib_term_clear();
   buildHeader(environment);
