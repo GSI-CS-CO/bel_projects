@@ -84,7 +84,7 @@ lib: b2blib.c
 	ln -sf $(B2BLIB).1 $(B2BLIB)
 
 clean:
-	rm -f *.o b2b-mon b2b-pname-info b2b-ctl b2b-ui b2b-serv-sys b2b-client-sys b2b-analyzer b2b-viewer b2b-serv-raw b2b-archiver b2b-jitter-check b2b-serv-kickdiag b2b-sim libb2blib.so*
+	rm -f *.o b2b-mon b2b-pname-info b2b-ctl b2b-ui b2b-serv-sys b2b-client-sys b2b-analyzer b2b-viewer b2b-serv-raw b2b-archiver b2b-jitter-check b2b-serv-kickdiag b2b-sim libb2blib.so* ecpu-mon
 
 install:
 	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/bin	
