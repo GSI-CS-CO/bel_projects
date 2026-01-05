@@ -184,11 +184,9 @@ void disAddServices(char *prefix)
   sprintf(name, "%s_tdiag", prefix);
   disTDiagId          = dis_add_service(name, "X", &disTDiag, sizeof(disTDiag), 0, 0);
 
-  sprintf(name, "%s_tdiag", prefix);
+  sprintf(name, "%s_ts0", prefix);
   disTS0Id            = dis_add_service(name, "X", &disTS0, sizeof(disTS0), 0, 0);
 
-  sprintf(name, "%s_tdiag", prefix);
-  
   sprintf(name, "%s_ntransfer", prefix);
   disNTransferId      = dis_add_service(name, "I", &disNTransfer, sizeof(disNTransfer), 0 , 0);
 
@@ -473,17 +471,17 @@ int main(int argc, char** argv) {
       } // if nSlowMin
 
       if (disComLatency != comLatency) {
-        disComLatencyId = comLatency;
+        disComLatency = comLatency;
         dis_update_service(disComLatencyId);
       } // if comLatency
 
       if (disComLatencyMax != comLatencyMax) {
-        disComLatencyMaxId = comLatencyMax;
+        disComLatencyMax = comLatencyMax;
         dis_update_service(disComLatencyMaxId);
       } // if comLatencyMax
 
       if (disComLatencyMin != comLatencyMin) {
-        disComLatencyMinId = comLatencyMin;
+        disComLatencyMin = comLatencyMin;
         dis_update_service(disComLatencyMinId);
       } // if comLatencyMin
 
