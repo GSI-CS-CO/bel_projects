@@ -149,7 +149,7 @@ const char* b2b_version_text(uint32_t number)
 {
   static char    version[32];
 
-  sprintf(version, "%02x.%02x.%02x", (number & 0x00ff0000) >> 16, (number & 0x0000ff00) >> 8, number & 0x000000ff);
+  sprintf(version, "%s", comlib_version_text(number));
 
   return version;
 } // b2b_version_text
