@@ -23,8 +23,9 @@ typedef union {                                // easier copying of bytes float 
 #define  COMMON_ECATIMEOUT       1            // timeout for querying ECA action [ms]
 #define  COMMON_MILTIMEOUT       100          // timeout for querying MIL events [ms]
 #define  COMMON_AHEADT           500000       // ahead interval for sending timing messages [ns]
-#define  COMMON_LATELIMIT        250000       // if below this limit [ns], messages are considered to be delivered 'late'
+#define  COMMON_LATELIMIT        250000       // if below this limit [ns], messages to be sent are considered to be delivered 'late'
 #define  COMMON_ECA_ADDRESS      0x7ffffff0   // address of ECA input
+#define  COMMON_LATENCYBOGUS     3142         // communication latency for reading from ECA, us pi as bogus value [ns]
 #define  COMMON_EB_HACKISH       0x12345678   // value for EB read handshake
 
 // (error) status
@@ -86,36 +87,42 @@ typedef union {                                // easier copying of bytes float 
 // simple values
 #define COMMON_SHARED_BEGIN            0x0                                              // begin of used shared memory
 #define COMMON_SHARED_STATUSLO         COMMON_SHARED_BEGIN                              // status array, LO word; all actual error bits are ORed into here
-#define COMMON_SHARED_STATUSHI        (COMMON_SHARED_STATUSLO     + _32b_SIZE_)         // status array, HI word
-#define COMMON_SHARED_CMD             (COMMON_SHARED_STATUSHI     + _32b_SIZE_)         // input of 32bit command
-#define COMMON_SHARED_STATE           (COMMON_SHARED_CMD          + _32b_SIZE_)         // state of state machine
-#define COMMON_SHARED_VERSION         (COMMON_SHARED_STATE        + _32b_SIZE_)         // version of firmware
-#define COMMON_SHARED_MACHI           (COMMON_SHARED_VERSION      + _32b_SIZE_)         // WR MAC of wrunipz, bits 31..16 unused
-#define COMMON_SHARED_MACLO           (COMMON_SHARED_MACHI        + _32b_SIZE_)         // WR MAC of wrunipz
-#define COMMON_SHARED_IP              (COMMON_SHARED_MACLO        + _32b_SIZE_)         // IP of wrunipz
-#define COMMON_SHARED_NBADSTATUS      (COMMON_SHARED_IP           + _32b_SIZE_)         // # of bad status (=error) incidents
-#define COMMON_SHARED_NBADSTATE       (COMMON_SHARED_NBADSTATUS   + _32b_SIZE_)         // # of bad state (=FATAL, ERROR, UNKNOWN) incidents
-#define COMMON_SHARED_TDIAGHI         (COMMON_SHARED_NBADSTATE    + _32b_SIZE_)         // time when diagnostics was cleared, high bits
-#define COMMON_SHARED_TDIAGLO         (COMMON_SHARED_TDIAGHI      + _32b_SIZE_)         // time when diagnostics was cleared, low bits
-#define COMMON_SHARED_TS0HI           (COMMON_SHARED_TDIAGLO      + _32b_SIZE_)         // time when FW was in S0 state (start of FW), high bits
-#define COMMON_SHARED_TS0LO           (COMMON_SHARED_TS0HI        + _32b_SIZE_)         // time when FW was in S0 state (start of FW), low bits
-#define COMMON_SHARED_NTRANSFER       (COMMON_SHARED_TS0LO        + _32b_SIZE_)         // # of transfers
-#define COMMON_SHARED_NINJECT         (COMMON_SHARED_NTRANSFER    + _32b_SIZE_)         // # of injections (within current transfer)
-#define COMMON_SHARED_TRANSSTAT       (COMMON_SHARED_NINJECT      + _32b_SIZE_)         // bitwise state of ongoing transfer
-#define COMMON_SHARED_NLATE           (COMMON_SHARED_TRANSSTAT    + _32b_SIZE_)         // number of ECA 'late' incidents
-#define COMMON_SHARED_NEARLY          (COMMON_SHARED_NLATE        + _32b_SIZE_)         // number of ECA 'early' incidents
-#define COMMON_SHARED_NCONFLICT       (COMMON_SHARED_NEARLY       + _32b_SIZE_)         // number of ECA 'conflict' incidents
-#define COMMON_SHARED_NDELAYED        (COMMON_SHARED_NCONFLICT    + _32b_SIZE_)         // number of ECA 'delayed' incidents
-#define COMMON_SHARED_NSLOW           (COMMON_SHARED_NDELAYED     + _32b_SIZE_)         // number of incidents, when 'wait4eca' was called after the deadline (too slow)
-#define COMMON_SHARED_OFFSSLOW        (COMMON_SHARED_NSLOW        + _32b_SIZE_)         // if 'slow': offset deadline to 'start wait4eca'; else '0'
-#define COMMON_SHARED_COMLATENCY      (COMMON_SHARED_OFFSSLOW     + _32b_SIZE_)         // if 'slow': offset start to stop wait4eca; else deadline to stop wait4eca
-#define COMMON_SHARED_OFFSDONE        (COMMON_SHARED_COMLATENCY   + _32b_SIZE_)         // offset event deadline to time when we are done [ns]
-#define COMMON_SHARED_RESERVED1       (COMMON_SHARED_OFFSDONE     + _32b_SIZE_)         // reserved
-#define COMMON_SHARED_RESERVED2       (COMMON_SHARED_RESERVED1    + _32b_SIZE_)         // reserved
-#define COMMON_SHARED_RESERVED3       (COMMON_SHARED_RESERVED2    + _32b_SIZE_)         // reserved
-#define COMMON_SHARED_RESERVED4       (COMMON_SHARED_RESERVED3    + _32b_SIZE_)         // reserved
-#define COMMON_SHARED_DATA_4EB        (COMMON_SHARED_RESERVED4    + _32b_SIZE_)         // shared area for EB return values
-#define COMMON_SHARED_USEDSIZE        (COMMON_SHARED_DATA_4EB     + (COMMON_DATA4EBSIZE << 2))  // used size of shared memory [bytes] /* chk */
-#define COMMON_SHARED_END             (COMMON_SHARED_USEDSIZE     + _32b_SIZE_)         // here the common part of the shared memory ends
+#define COMMON_SHARED_STATUSHI        (COMMON_SHARED_STATUSLO       + _32b_SIZE_)         // status array, HI word
+#define COMMON_SHARED_CMD             (COMMON_SHARED_STATUSHI       + _32b_SIZE_)         // input of 32bit command
+#define COMMON_SHARED_STATE           (COMMON_SHARED_CMD            + _32b_SIZE_)         // state of state machine
+#define COMMON_SHARED_VERSION         (COMMON_SHARED_STATE          + _32b_SIZE_)         // version of firmware
+#define COMMON_SHARED_MACHI           (COMMON_SHARED_VERSION        + _32b_SIZE_)         // WR MAC of wrunipz, bits 31..16 unused
+#define COMMON_SHARED_MACLO           (COMMON_SHARED_MACHI          + _32b_SIZE_)         // WR MAC of wrunipz
+#define COMMON_SHARED_IP              (COMMON_SHARED_MACLO          + _32b_SIZE_)         // IP of wrunipz
+#define COMMON_SHARED_NBADSTATUS      (COMMON_SHARED_IP             + _32b_SIZE_)         // # of bad status (=error) incidents
+#define COMMON_SHARED_NBADSTATE       (COMMON_SHARED_NBADSTATUS     + _32b_SIZE_)         // # of bad state (=FATAL, ERROR, UNKNOWN) incidents
+#define COMMON_SHARED_TDIAGHI         (COMMON_SHARED_NBADSTATE      + _32b_SIZE_)         // time when diagnostics was cleared, high bits
+#define COMMON_SHARED_TDIAGLO         (COMMON_SHARED_TDIAGHI        + _32b_SIZE_)         // time when diagnostics was cleared, low bits
+#define COMMON_SHARED_TS0HI           (COMMON_SHARED_TDIAGLO        + _32b_SIZE_)         // time when FW was in S0 state (start of FW), high bits
+#define COMMON_SHARED_TS0LO           (COMMON_SHARED_TS0HI          + _32b_SIZE_)         // time when FW was in S0 state (start of FW), low bits
+#define COMMON_SHARED_NTRANSFER       (COMMON_SHARED_TS0LO          + _32b_SIZE_)         // # of transfers
+#define COMMON_SHARED_NINJECT         (COMMON_SHARED_NTRANSFER      + _32b_SIZE_)         // # of injections (within current transfer)
+#define COMMON_SHARED_TRANSSTAT       (COMMON_SHARED_NINJECT        + _32b_SIZE_)         // bitwise state of ongoing transfer
+#define COMMON_SHARED_NLATE           (COMMON_SHARED_TRANSSTAT      + _32b_SIZE_)         // number of ECA 'late' incidents
+#define COMMON_SHARED_NEARLY          (COMMON_SHARED_NLATE          + _32b_SIZE_)         // number of ECA 'early' incidents
+#define COMMON_SHARED_NCONFLICT       (COMMON_SHARED_NEARLY         + _32b_SIZE_)         // number of ECA 'conflict' incidents
+#define COMMON_SHARED_NDELAYED        (COMMON_SHARED_NCONFLICT      + _32b_SIZE_)         // number of ECA 'delayed' incidents
+#define COMMON_SHARED_NSLOW           (COMMON_SHARED_NDELAYED       + _32b_SIZE_)         // number of incidents, when 'wait4eca' was called after the deadline (too slow)
+#define COMMON_SHARED_OFFSSLOW        (COMMON_SHARED_NSLOW          + _32b_SIZE_)         // if 'slow': offset deadline to 'start wait4eca'; else '0' [ns]
+#define COMMON_SHARED_OFFSSLOWMAX     (COMMON_SHARED_OFFSSLOW       + _32b_SIZE_)         // if 'slow': offset deadline to 'start wait4eca'; else '0' [ns]; max
+#define COMMON_SHARED_OFFSSLOWMIN     (COMMON_SHARED_OFFSSLOWMAX    + _32b_SIZE_)         // if 'slow': offset deadline to 'start wait4eca'; else '0' [ns]; min
+#define COMMON_SHARED_COMLATENCY      (COMMON_SHARED_OFFSSLOWMIN    + _32b_SIZE_)         // if 'slow': offset start to stop wait4eca; else deadline to stop wait4eca [ns]
+#define COMMON_SHARED_COMLATENCYMAX   (COMMON_SHARED_COMLATENCY     + _32b_SIZE_)         // if 'slow': offset start to stop wait4eca; else deadline to stop wait4eca [ns]; max
+#define COMMON_SHARED_COMLATENCYMIN   (COMMON_SHARED_COMLATENCYMAX  + _32b_SIZE_)         // if 'slow': offset start to stop wait4eca; else deadline to stop wait4eca [ns]; min
+#define COMMON_SHARED_OFFSDONE        (COMMON_SHARED_COMLATENCYMIN  + _32b_SIZE_)         // offset event deadline to time when we are done [ns]
+#define COMMON_SHARED_OFFSDONEMAX     (COMMON_SHARED_OFFSDONE       + _32b_SIZE_)         // offset event deadline to time when we are done [ns]; max
+#define COMMON_SHARED_OFFSDONEMIN     (COMMON_SHARED_OFFSDONEMAX    + _32b_SIZE_)         // offset event deadline to time when we are done [ns]; min
+#define COMMON_SHARED_RESERVED1       (COMMON_SHARED_OFFSDONEMIN    + _32b_SIZE_)         // reserved
+#define COMMON_SHARED_RESERVED2       (COMMON_SHARED_RESERVED1      + _32b_SIZE_)         // reserved
+#define COMMON_SHARED_RESERVED3       (COMMON_SHARED_RESERVED2      + _32b_SIZE_)         // reserved
+#define COMMON_SHARED_RESERVED4       (COMMON_SHARED_RESERVED3      + _32b_SIZE_)         // reserved
+#define COMMON_SHARED_DATA_4EB        (COMMON_SHARED_RESERVED4      + _32b_SIZE_)         // shared area for EB return values
+#define COMMON_SHARED_USEDSIZE        (COMMON_SHARED_DATA_4EB       + (COMMON_DATA4EBSIZE << 2))  // used size of shared memory [bytes] /* chk */
+#define COMMON_SHARED_END             (COMMON_SHARED_USEDSIZE       + _32b_SIZE_)         // here the common part of the shared memory ends
 
 #endif 
