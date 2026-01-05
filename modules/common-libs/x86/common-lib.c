@@ -177,6 +177,16 @@ const char* comlib_stateText(uint32_t code)
 } // comlib_stateText
 
 
+const char* comlib_version_text(uint32_t number)
+{
+  static char    version[32];
+
+  sprintf(version, "%02x.%02x.%02x", (number & 0x00ff0000) >> 16, (number & 0x0000ff00) >> 8, number & 0x000000ff);
+
+  return version;
+} // comlib_version_text
+
+
 // returns status text
 const char* comlib_statusText(uint32_t bit)
 {  

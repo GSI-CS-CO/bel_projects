@@ -63,6 +63,11 @@ const char* comlib_stateText(uint32_t  bit             // state code
 // convert status code to status text
 const char* comlib_statusText(uint32_t  bit            // status code
                               );
+
+// convert numeric version number to string
+const char* comlib_version_text(uint32_t number        // version number
+                                );
+
 // init for communicaiton with shared mem
 void comlib_initShared(eb_address_t lm32_base,         // base address of lm32
                        eb_address_t sharedOffset       // offset of shared area
