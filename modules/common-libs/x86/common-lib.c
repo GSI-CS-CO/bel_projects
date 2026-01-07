@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 02-Jan-2025
+ *  version : 07-Jan-2025
  *
  *  common x86 routines useful for CLIs handling firmware
  * 
@@ -461,7 +461,20 @@ uint32_t comlib_ecaq_close(eb_device_t device)
 } // comlib_ecaq_close
 
 
-uint32_t comlib_wait4ECAEvent(uint32_t timeout_ms,  eb_device_t device, eb_address_t ecaq_base, uint32_t *tag, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *tef, uint32_t *isLate, uint32_t *isEarly, uint32_t *isConflict, uint32_t *isDelayed)
+uint32_t comlib_wait4ECAEvent(uint32_t timeout_ms,  eb_device_t device, eb_address_t ecaq_base, uint32_t *tag, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *tef,
+                              uint32_t *isLate, uint32_t *isEarly, uint32_t *isConflict, uint32_t *isDelayed)
+{
+  uint32_t isSlow;
+  uint32_t offsSlow;
+  uint32_t comLatency;
+
+  return  comlib_wait4ECAEvent2(timeout_ms,  device, ecaq_base, tag, deadline, evtId, param, tef, isLate, isEarly, isConflict, isDelayed, &isSlow, &offsSlow, &comLatency);
+} // comlib_wait4ECAEvent
+
+
+uint32_t comlib_wait4ECAEvent2(uint32_t timeout_ms,  eb_device_t device, eb_address_t ecaq_base, uint32_t *tag, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *tef,
+                               uint32_t *isLate, uint32_t *isEarly, uint32_t *isConflict, uint32_t *isDelayed,
+                               uint32_t *isSlow, uint32_t *offsSlow, uint32_t *comLatency)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;
@@ -475,9 +488,11 @@ uint32_t comlib_wait4ECAEvent(uint32_t timeout_ms,  eb_device_t device, eb_addre
   uint32_t    evtParamLow ;        // low 32 bit of parameter field
   uint64_t    timeoutT;            // when to time out
   uint64_t    timeout;             // timeout
-  //int32_t     t1, t2;
+  uint64_t startT;                 // time when starting this routine
+  uint64_t stopT;                  // time when finishing this routine
 
   timeout  = ((uint64_t)timeout_ms + 1) * 1000000;
+  startT   = comlib_getSysTime();
   timeoutT = comlib_getSysTime() + timeout;
 
   while (comlib_getSysTime() < timeoutT) {
@@ -523,7 +538,26 @@ uint32_t comlib_wait4ECAEvent(uint32_t timeout_ms,  eb_device_t device, eb_addre
       *deadline    = ((uint64_t)evtDeadlHigh << 32) + (uint64_t)evtDeadlLow;
       *evtId       = ((uint64_t)evtIdHigh    << 32) + (uint64_t)evtIdLow;
       *param       = ((uint64_t)evtParamHigh << 32) + (uint64_t)evtParamLow;
-      
+
+      stopT        = comlib_getSysTime();
+
+      // monitoring stuff
+      if (*deadline < startT) {
+        *isSlow     = 1;
+        *offsSlow   = (uint32_t)(startT - *deadline);
+        // if late or delayed, the message deadline will be prior tStart
+        // although we might have waited already for quite some time
+        // this might lead to erronously large values for comLatency
+        // the hackish solution right now is to use a defined bogus value
+        if (*isLate || *isDelayed) *comLatency = COMMON_LATENCYBOGUS;
+        else                       *comLatency = (uint32_t)(stopT - startT);
+      } // if missed
+      else {
+        *isSlow     = 0;
+        *offsSlow   = 0;
+        *comLatency = (uint32_t)(stopT - *deadline);
+      } // else missed
+
       return COMMON_STATUS_OK;
     } // if data is valid
     
@@ -539,11 +573,12 @@ uint32_t comlib_wait4ECAEvent(uint32_t timeout_ms,  eb_device_t device, eb_addre
   *isEarly    = 0x0;
   *isConflict = 0x0;
   *isDelayed  = 0x0;
+  *isSlow     = 0x0;
+  *offsSlow   = 0x0;
+  *comLatency = 0x0;  
 
-  //t2 = comlib_getSysTime(); printf("eca wait, timeout [ns] %ld\n", (int32_t)(t2 - timeoutT_ns));
-  
   return COMMON_STATUS_TIMEDOUT;
-} // comlib_wait4ECAEvent
+} // comlib_wait4ECAEvent2
 
 
 uint16_t comlib_float2half(float f)

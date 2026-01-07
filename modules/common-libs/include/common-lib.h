@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 02-Jan-2026
+ *  version : 07-Jan-2026
  *
  * common x86 routines for firmware
  *
@@ -37,7 +37,7 @@
 #ifndef _COMMON_LIB_H_
 #define _COMMON_LIB_H_
 
-#define COMMON_LIB_VERSION "0.05.02"
+#define COMMON_LIB_VERSION "0.05.03"
 
 #include <etherbone.h>
 
@@ -186,7 +186,7 @@ uint32_t comlib_ecaq_open(const char* devName,         // EB device name such as
 uint32_t comlib_ecaq_close(eb_device_t device          // EB device
                            );
 
-// directly reads messages from an ECA queue via Etherbone (not via saftlib)
+// directly reads messages from an ECA queue via Etherbone (not via saftlib), compatibility wrapper
 uint32_t comlib_wait4ECAEvent(uint32_t     timeout_ms, // timeout [ms]
                               eb_device_t  device,     // EB device 
                               eb_address_t ecaq_base,  // EB address
@@ -201,9 +201,29 @@ uint32_t comlib_wait4ECAEvent(uint32_t     timeout_ms, // timeout [ms]
                               uint32_t     *isDelayed
                               );
 
+
+// directly reads messages from an ECA queue via Etherbone (not via saftlib), compatibility wrapper
+uint32_t comlib_wait4ECAEvent2(uint32_t     timeout_ms, // timeout [ms]
+                               eb_device_t  device,     // EB device 
+                               eb_address_t ecaq_base,  // EB address
+                               uint32_t     *tag,       // tag
+                               uint64_t     *deadline,  // messages deadline
+                               uint64_t     *evtId,     // EvtId
+                               uint64_t     *param,     // parameter field
+                               uint32_t     *tef,       // TEF field
+                               uint32_t     *isLate,    // flags ...
+                               uint32_t     *isEarly,
+                               uint32_t     *isConflict,
+                               uint32_t     *isDelayed,
+                               uint32_t     *isSlow,    // flag, our code is slow and missses the deadline
+                               uint32_t     *offsSlow,  // 'slowness'
+                               uint32_t     *comLatency // communication latency
+                               );
+
 // converts half precision float to single precision float
 float comlib_half2float(uint16_t h                     // half precision float
                         );
+
 // converts single precision float to half precision float
 uint16_t comlib_float2half(float f                     // single precision float
                            );
