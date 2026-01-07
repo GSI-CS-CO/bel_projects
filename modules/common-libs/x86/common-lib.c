@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-Jan-2026
+ *  version : 07-Jan-2025
  *
  *  common x86 routines useful for CLIs handling firmware
  * 
@@ -512,19 +512,12 @@ uint32_t comlib_wait4ECAEvent2(uint32_t timeout_ms,  eb_device_t device, eb_addr
   uint32_t    evtParamLow ;        // low 32 bit of parameter field
   uint64_t    timeoutT;            // when to time out
   uint64_t    timeout;             // timeout
-  uint64_t    startT;              // time when starting this routine
-  uint64_t    startT2;             // time when reading message data from the ECA
-  uint64_t    stopT;               // time when finishing this routine
-  uint64_t    deadlineUTC;         // assumption: system time is UTC
+  uint64_t startT;                 // time when starting this routine
+  uint64_t stopT;                  // time when finishing this routine
 
-  // required for cheap autocalibration of UTC offset
-  static uint64_t UTCOffset = 37000000000;
-  static uint32_t firstTime = 1;
-  uint32_t    estLatency;          // estimated latency
-
-  timeout    = ((uint64_t)timeout_ms + 1) * 1000000;
-  startT     = comlib_getSysTime();
-  timeoutT   = startT + timeout;
+  timeout  = ((uint64_t)timeout_ms + 1) * 1000000;
+  startT   = comlib_getSysTime();
+  timeoutT = comlib_getSysTime() + timeout;
 
   while (comlib_getSysTime() < timeoutT) {
     // read flag from ECA queue
@@ -572,35 +565,24 @@ uint32_t comlib_wait4ECAEvent2(uint32_t timeout_ms,  eb_device_t device, eb_addr
       *evtId       = ((uint64_t)evtIdHigh    << 32) + (uint64_t)evtIdLow;
       *param       = ((uint64_t)evtParamHigh << 32) + (uint64_t)evtParamLow;
 
-      deadlineUTC  = *deadline - UTCOffset;
-
       stopT        = comlib_getSysTime();
-      estLatency   = (uint32_t)(stopT - startT2) * 2;  // factor 2 is hackish; assumption: reading ecaFlag takes as long as the all the other data
 
       // monitoring stuff
-      if ((deadlineUTC < startT - estLatency) && !firstTime) {
+      if (*deadline < startT) {
         *isSlow     = 1;
-        *offsSlow   = (uint32_t)(startT - deadlineUTC);
+        *offsSlow   = (uint32_t)(startT - *deadline);
         // if late or delayed, the message deadline will be prior tStart
         // although we might have waited already for quite some time
         // this might lead to erronously large values for comLatency
         // the hackish solution right now is to use a defined bogus value
-        if (*isLate || *isDelayed) *comLatency = estLatency; 
+        if (*isLate || *isDelayed) *comLatency = COMMON_LATENCYBOGUS;
         else                       *comLatency = (uint32_t)(stopT - startT);
       } // if missed
       else {
-        firstTime   = 0;
         *isSlow     = 0;
         *offsSlow   = 0;
-        *comLatency = estLatency;
-
-        // cheap calibration of UTC offset for next iteration
-        if (!(*isLate || *isEarly || *isDelayed || *isConflict)) {
-          if (*deadline > startT2) UTCOffset = *deadline - startT2;
-        } // if isLate etc
+        *comLatency = (uint32_t)(stopT - *deadline);
       } // else missed
-
-      //printf("comlatency %u, utcoffset %u, latency %u\n", *comLatency, (uint32_t)(UTCOffset/1000), (uint32_t)latency);
 
       return COMMON_STATUS_OK;
     } // if data is valid
