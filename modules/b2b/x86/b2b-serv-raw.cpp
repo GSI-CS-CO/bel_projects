@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 14-feb-2025
+ *  version : 07-jan-2026
  *
  * publishes raw data of the b2b system
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000810
+#define B2B_SERV_RAW_VERSION 0x000811
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -92,14 +92,43 @@ uint64_t  disStatus;
 uint32_t  disNTransfer;
 setval_t  disSetval[B2B_NSID];
 getval_t  disGetval[B2B_NSID];
+uint32_t  disNLate;
+uint32_t  disNEarly;
+uint32_t  disNConflict;
+uint32_t  disNDelayed;
+uint32_t  disNSlow;
+uint32_t  disOffsSlow;
+uint32_t  disOffsSlowMax;
+uint32_t  disOffsSlowMin;
+uint32_t  disComLatency;
+uint32_t  disComLatencyMax;
+uint32_t  disComLatencyMin;
+uint32_t  disOffsDone;
+uint32_t  disOffsDoneMax;
+uint32_t  disOffsDoneMin;
 
-uint32_t  disVersionId      = 0;
-uint32_t  disStateId        = 0;
-uint32_t  disHostnameId     = 0;
-uint32_t  disStatusId       = 0;
-uint32_t  disNTransferId    = 0;
+uint32_t  disVersionId       = 0;
+uint32_t  disStateId         = 0;
+uint32_t  disHostnameId      = 0;
+uint32_t  disStatusId        = 0;
+uint32_t  disNTransferId     = 0;
 uint32_t  disSetvalId[B2B_NSID];
 uint32_t  disGetvalId[B2B_NSID];
+uint32_t  disNLateId         = 0;
+uint32_t  disNEarlyId        = 0;
+uint32_t  disNConflictId     = 0;
+uint32_t  disNDelayedId      = 0;
+uint32_t  disNSlowId         = 0;
+uint32_t  disOffsSlowId      = 0;
+uint32_t  disOffsSlowMaxId   = 0;
+uint32_t  disOffsSlowMinId   = 0xffffffff;
+uint32_t  disComLatencyId    = 0;
+uint32_t  disComLatencyMaxId = 0;
+uint32_t  disComLatencyMinId = 0xffffffff;
+uint32_t  disOffsDoneId      = 0;
+uint32_t  disOffsDoneMaxId   = 0;
+uint32_t  disOffsDoneMinId   = 0xffffffff;
+
 
 // services subscribed
 // 
@@ -198,7 +227,7 @@ void initGetval(getval_t *getval)
 } // initGetval
 
 
-// update set value
+// set value
 void disUpdateSetval(uint32_t sid, uint64_t tStart, setval_t setval)
 {
   uint32_t secs;
@@ -213,6 +242,8 @@ void disUpdateSetval(uint32_t sid, uint64_t tStart, setval_t setval)
   
   disNTransfer++;
   dis_update_service(disNTransferId);
+  dis_update_service(disComLatencyId);
+  dis_update_service(disOffsDoneId);
 } // disUpdateSetval
  
 
@@ -433,7 +464,23 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
 class RecvCommand : public DimCommand
 {
   int  reset;
-  void commandHandler() {disNTransfer = 0;}
+  void commandHandler() {
+    disNTransfer       = 0;
+    disNLateId         = 0;         
+    disNEarlyId        = 0;         
+    disNConflictId     = 0;         
+    disNDelayedId      = 0;         
+    disNSlowId         = 0;         
+    disOffsSlowId      = 0;         
+    disOffsSlowMaxId   = 0;         
+    disOffsSlowMinId   = 0xffffffff;
+    disComLatencyId    = 0;         
+    disComLatencyMaxId = 0;         
+    disComLatencyMinId = 0xffffffff;
+    disOffsDoneId      = 0;         
+    disOffsDoneMaxId   = 0;         
+    disOffsDoneMinId   = 0xffffffff;
+  } // commandHandler
 public :
   RecvCommand(const char *name) : DimCommand(name,"C"){}
 }; 
@@ -1001,12 +1048,16 @@ int main(int argc, char** argv)
     uint32_t      isEarly;
     uint32_t      isConflict;
     uint32_t      isDelayed;
+    uint32_t      isSlow;
+    uint32_t      offsSlow;
+    uint32_t      comLatency;
     saftlib::Time deadline_t;
     uint32_t      ecaStatus;
     eb_status_t   ebStatus;
     uint32_t      qIdx = 0;
     uint64_t      t1, t2;
     uint32_t      tmp32;
+    uint64_t      startTime;
 
     sprintf(ebPath, "%s", receiver->getEtherbonePath().c_str());
     if ((ebStatus = comlib_ecaq_open(ebPath, qIdx, &device, &ecaq_base)) != EB_OK) {
@@ -1017,22 +1068,44 @@ int main(int argc, char** argv)
     while(true) {
       //      saftlib::wait_for_signal();
       t1 = comlib_getSysTime();
-      ecaStatus = comlib_wait4ECAEvent(1, device, ecaq_base, &recTag, &deadline, &evtId, &param, &tef, &isLate, &isEarly, &isConflict, &isDelayed);
+      ecaStatus = comlib_wait4ECAEvent2(1, device, ecaq_base, &recTag, &deadline, &evtId, &param, &tef, &isLate, &isEarly, &isConflict, &isDelayed, &isSlow, &offsSlow, &comLatency);
       t2 = comlib_getSysTime();
       tmp32 = t2 - t1; 
       if (tmp32 > 10000000) printf("%s: reading from ECA Q took %u [us]\n", program, tmp32 / 1000);
       if (ecaStatus == COMMON_STATUS_EB) { printf("eca EB error, device %x, address %x\n", device, (uint32_t)ecaq_base);}
       if (ecaStatus == COMMON_STATUS_OK) {
+        startTime  = t2;
         deadline_t = saftlib::makeTimeTAI(deadline);
         //t2         = comlib_getSysTime(); printf("msg: tag %x, id %lx, tef %lx, dtu %lu\n", recTag, evtId, tef, (uint32_t)(t2 -t1));
         timingMessage(recTag, deadline_t, evtId, param, tef, isLate, isEarly, isConflict, isDelayed);
-      }
+
+        // these two get updated with each updateSetVal
+        disComLatency = comLatency;
+        disOffsDone   = comlib_getSysTime() - startTime;
+        
+        if (isLate)     {disNLate++;     dis_update_service(disNLateId);}
+        if (isEarly)    {disNEarly++;    dis_update_service(disNEarlyId);}
+        if (isConflict) {disNConflict++; dis_update_service(disNConflictId);}
+        if (isDelayed)  {disNDelayed++;  dis_update_service(disNDelayedId);}
+        if (isSlow) {
+          disNSlow++;                    dis_update_service(disNSlowId);
+          disOffsSlow = offsSlow;        dis_update_service(disOffsSlowId);
+          if (offsSlow   < disOffsSlowMin)   {disOffsSlowMin   = offsSlow;    dis_update_service(disOffsSlowMinId);}
+          if (offsSlow   > disOffsSlowMax)   {disOffsSlowMax   = offsSlow;    dis_update_service(disOffsSlowMaxId);}
+        } // if flagIsSlow
+
+        if (comLatency   > disComLatencyMax) {disComLatencyMax = comLatency;  dis_update_service(disComLatencyMaxId);}
+        if (comLatency   < disComLatencyMin) {disComLatencyMin = comLatency;  dis_update_service(disComLatencyMin);}
+        if (disOffsDone  > disOffsDoneMax)   {disOffsDoneMax   = disOffsDone; dis_update_service(disOffsDoneMaxId);}
+        if (disOffsDone  < disOffsDoneMin)   {disOffsDoneMin   = disOffsDone; dis_update_service(disOffsDoneMinId);}
+      } // if eca action
     } // while true
     comlib_ecaq_close(device);
     
   } // try
   catch (const saftbus::Error& error) {
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
+
   }
   
   return 0;
