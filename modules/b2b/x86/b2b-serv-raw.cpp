@@ -1135,7 +1135,7 @@ int main(int argc, char** argv)
         } // if flagIsSlow
 
         if (comLatency   > disComLatencyMax) {disComLatencyMax = comLatency;  dis_update_service(disComLatencyMaxId);}
-        if (comLatency   < disComLatencyMin) {disComLatencyMin = comLatency;  dis_update_service(disComLatencyMin);}
+        if (comLatency   < disComLatencyMin) {disComLatencyMin = comLatency;  dis_update_service(disComLatencyMinId);}
         if (disOffsDone  > disOffsDoneMax)   {disOffsDoneMax   = disOffsDone; dis_update_service(disOffsDoneMaxId);}
         if (disOffsDone  < disOffsDoneMin)   {disOffsDoneMin   = disOffsDone; dis_update_service(disOffsDoneMinId);}
       } // if eca action
