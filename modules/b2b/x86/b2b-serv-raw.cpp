@@ -92,6 +92,8 @@ uint64_t  disStatus          = 0x0;
 uint32_t  disNTransfer       = 0;
 setval_t  disSetval[B2B_NSID];
 getval_t  disGetval[B2B_NSID];
+uint64_t  disTDiag           = 0;
+uint64_t  disTS0             = 0;
 uint32_t  disNLate           = 0;
 uint32_t  disNEarly          = 0;
 uint32_t  disNConflict       = 0;
@@ -114,6 +116,8 @@ uint32_t  disStatusId        = 0;
 uint32_t  disNTransferId     = 0;
 uint32_t  disSetvalId[B2B_NSID];
 uint32_t  disGetvalId[B2B_NSID];
+uint64_t  disTDiagId         = 0;
+uint64_t  disTS0Id           = 0;
 uint32_t  disNLateId         = 0;
 uint32_t  disNEarlyId        = 0;
 uint32_t  disNConflictId     = 0;
@@ -243,6 +247,8 @@ void disUpdateSetval(uint32_t sid, uint64_t tStart, setval_t setval)
   dis_update_service(disNTransferId);
   dis_update_service(disComLatencyId);
   dis_update_service(disOffsDoneId);
+  dis_update_service(disTDiagId);
+  dis_update_service(disStatusId);
 } // disUpdateSetval
  
 
@@ -464,6 +470,7 @@ class RecvCommand : public DimCommand
 {
   int  reset;
   void commandHandler() {
+    disStatus          = 0;
     disNTransfer       = 0;
     disNLate           = 0;         
     disNEarly          = 0;         
@@ -479,6 +486,7 @@ class RecvCommand : public DimCommand
     disOffsDone        = 0;         
     disOffsDoneMax     = 0;         
     disOffsDoneMin     = 0xffffffff;
+    disTDiag           = comlib_getSysTime();
   } // commandHandler
 public :
   RecvCommand(const char *name) : DimCommand(name,"C"){}
@@ -509,6 +517,12 @@ void disAddServices(char *prefix)
   sprintf(name, "%s-raw_ntransfer",    prefix);
   disNTransferId     = dis_add_service(name, "I", &disNTransfer,     sizeof(disNTransfer), 0 , 0);
 
+  sprintf(name, "%s-raw_tdiag",       prefix);
+  disTDiagId         = dis_add_service(name, "X", &disTDiag,         sizeof(disTDiag), 0 , 0);
+
+  sprintf(name, "%s-raw_ts0",       prefix);
+  disTS0Id           = dis_add_service(name, "X", &disTS0,           sizeof(disTS0), 0 , 0);
+ 
   sprintf(name, "%s-raw_nlate",        prefix);
   disNLateId         = dis_add_service(name, "I", &disNLate,         sizeof(disNLate), 0 , 0);
  
@@ -731,6 +745,8 @@ int main(int argc, char** argv)
     initSetval(&(disSetval[i]));
     initGetval(&(disGetval[i]));
   } // for i
+  disTDiag = comlib_getSysTime();
+  disTS0   = comlib_getSysTime();
   
   // create service and start server
   sprintf(prefix, "b2b_%s_%s", envName, ringName);
@@ -1112,7 +1128,10 @@ int main(int argc, char** argv)
       t2 = comlib_getSysTime();
       tmp32 = t2 - t1; 
       if (tmp32 > 10000000) printf("%s: reading from ECA Q took %u [us]\n", program, tmp32 / 1000);
-      if (ecaStatus == COMMON_STATUS_EB) { printf("eca EB error, device %x, address %x\n", device, (uint32_t)ecaq_base);}
+      if (ecaStatus == COMMON_STATUS_EB) {
+        printf("eca EB error, device %x, address %x\n", device, (uint32_t)ecaq_base);
+        disStatus = disStatus | (0x1 << ecaStatus);   
+      } // if eca STATUS_EB
       if (ecaStatus == COMMON_STATUS_OK) {
         startTime  = t2;
         deadline_t = saftlib::makeTimeTAI(deadline);
@@ -1122,6 +1141,7 @@ int main(int argc, char** argv)
         // these two get updated with each updateSetVal
         disComLatency = comLatency;
         disOffsDone   = comlib_getSysTime() - startTime;
+        disStatus     = disStatus | (0x1 << ecaStatus);
 
         if (isLate)     {disNLate++;     dis_update_service(disNLateId);}
         if (isEarly)    {disNEarly++;    dis_update_service(disNEarlyId);}
@@ -1138,7 +1158,7 @@ int main(int argc, char** argv)
         if (comLatency   < disComLatencyMin) {disComLatencyMin = comLatency;  dis_update_service(disComLatencyMinId);}
         if (disOffsDone  > disOffsDoneMax)   {disOffsDoneMax   = disOffsDone; dis_update_service(disOffsDoneMaxId);}
         if (disOffsDone  < disOffsDoneMin)   {disOffsDoneMin   = disOffsDone; dis_update_service(disOffsDoneMinId);}
-      } // if eca action
+      } // if eca STATUS_OK
     } // while true
     comlib_ecaq_close(device);
     

@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 13-feb-2025
+ *  version : 08-jan-2026
  *
  * analyzes and publishes get values
  * 
@@ -36,7 +36,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_ANALYZER_VERSION 0x000810
+#define B2B_ANALYZER_VERSION 0x000811
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -75,6 +75,8 @@ char       disState[DIMCHARSIZE];
 char       disHostname[DIMCHARSIZE];
 uint64_t   disStatus;
 uint32_t   disNTransfer;
+uint64_t   disTDiag;
+uint64_t   disTS0;
 setval_t   dicSetval[B2B_NSID];
 getval_t   dicGetval[B2B_NSID];
 diagval_t  disDiagval[B2B_NSID];
@@ -86,6 +88,8 @@ uint32_t   disStateId        = 0;
 uint32_t   disHostnameId     = 0;
 uint32_t   disStatusId       = 0;
 uint32_t   disNTransferId    = 0;
+uint64_t   disTDiagId        = 0;
+uint64_t   disTS0Id          = 0;
 uint32_t   dicSetvalId[B2B_NSID];
 uint32_t   dicGetvalId[B2B_NSID];
 uint32_t   disDiagvalId[B2B_NSID];
@@ -420,6 +424,8 @@ void cmdClearDiag(long *tag, uint32_t *address, int *size)
   sid = (uint32_t)(*address);
 
   clearStats(sid);
+  disTDiag = comlib_getSysTime();
+  dis_update_service(disTDiagId);
 } // cmdClearDiag
 
 
@@ -872,19 +878,26 @@ void disAddServices(char *prefix)
   sprintf(disVersion, "%s",  b2b_version_text(B2B_ANALYZER_VERSION));
   disVersionId   = dis_add_service(name, "C", disVersion, 8, 0 , 0);
 
-  sprintf(name, "%s-cal_state", prefix);
+  sprintf(name, "%s-cal_state",      prefix);
   sprintf(disState, "%s", b2b_state_text(COMMON_STATE_OPREADY));
   disStateId      = dis_add_service(name, "C", disState, 10, 0 , 0);
 
-  sprintf(name, "%s-cal_hostname", prefix);
+  sprintf(name, "%s-cal_hostname",   prefix);
   disHostnameId   = dis_add_service(name, "C", &disHostname, 32, 0 , 0);
 
-  sprintf(name, "%s-cal_status", prefix);
+  sprintf(name, "%s-cal_status",     prefix);
   disStatus       = 0x1;   
-  disStatusId     = dis_add_service(name, "X", &disStatus, sizeof(disStatus), 0 , 0);
+  disStatusId     = dis_add_service(name, "X", &disStatus,    sizeof(disStatus), 0 , 0);
 
-  sprintf(name, "%s-cal_ntransfer", prefix);
+  sprintf(name, "%s-cal_ntransfer",  prefix);
   disNTransferId  = dis_add_service(name, "I", &disNTransfer, sizeof(disNTransfer), 0 , 0);
+
+  sprintf(name, "%s-cal_tdiag",      prefix);
+  disTDiagId      = dis_add_service(name, "X", &disTDiag,     sizeof(disTDiag), 0 , 0);
+
+  sprintf(name, "%s-cal_ts0",        prefix);
+  disTS0Id        = dis_add_service(name, "X", &disTS0,       sizeof(disTS0), 0 , 0);
+
   
   for (i=0; i<B2B_NSID; i++) {
     sprintf(name, "%s-cal_diag_sid%02d", prefix, i);
@@ -946,7 +959,9 @@ int main(int argc, char** argv) {
   gethostname(disHostname, 32);
   if (optind< argc) sprintf(prefix, "b2b_%s", argv[optind]);
   else              sprintf(prefix, "b2b_%s", disHostname);
-   sprintf(disName, "%s-cal", prefix);
+  sprintf(disName, "%s-cal", prefix);
+  disTDiag = comlib_getSysTime();
+  disTS0   = comlib_getSysTime();
 
   if (getVersion) printf("%s: version %s\n", program, b2b_version_text(B2B_ANALYZER_VERSION));
 
