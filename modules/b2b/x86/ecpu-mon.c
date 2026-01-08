@@ -3,7 +3,7 @@
  *
  *  created : 2026
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 06-jan-2026
+ *  version : 08-jan-2026
  *
  * subscribes to and displays status of a ecpu systems based on common lib
  * (requires a server such as 'b2b-serv-sys' on each local host)
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define ECPU_MON_VERSION 0x000810
+#define ECPU_MON_VERSION 0x000811
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -280,6 +280,7 @@ struct ecpuSystem_t {
   uint32_t  nBadStatus;
   uint64_t  tS0;
   uint64_t  tDiag;
+  uint32_t  nTransfer;
   uint32_t  usedSize;
   uint32_t  nLate;
   uint32_t  nEarly;
@@ -304,6 +305,7 @@ struct ecpuSystem_t {
   uint32_t  nBadStatusId;
   uint32_t  tS0Id;
   uint32_t  tDiagId;
+  uint32_t  nTransferId;
   uint32_t  usedSizeId;
   uint32_t  nLateId;
   uint32_t  nEarlyId;
@@ -344,7 +346,7 @@ void buildHeader(char * environment)
 {
   sprintf(title, "\033[7m ECPU System Status %3s ------------------------------------------------------------------------------------------------ (units [us] unless explicitly given) - v%8s\033[0m", environment, comlib_version_text(ECPU_MON_VERSION));
   sprintf(header0, "  #   ring sys  version     state  #badState        status #badStats      fwBootTime     fwDiagReset  fwSize    #fwLate   #fwEarly #fwCnflict #fwDelayed             node");
-  sprintf(header1, "  #   ring sys    #fwSlow  offsSlow  offsSMax  offsSMin  comLtncy  ltncyMax  ltncyMin  offsDone  offsDMax  offsDMin                                                  node");
+  sprintf(header1, "  #   ring sys    #fwSlow  offsSlow  offsSMax  offsSMin  comLtncy  ltncyMax  ltncyMin  offsDone  offsDMax  offsDMin  #transfer                                       node");
   sprintf(empty ,  "                                                                                                                                                                         ");
   //       printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
 } // buildHeader
@@ -371,6 +373,8 @@ void dicSubscribeServices(char *environment)
     dicSystem[i].nBadStatusId    = dic_info_service(name, MONITORED, 0, &(dicSystem[i].nBadStatus),    sizeof(dicSystem[i].nBadStatus),    0, 0, &no_link_32, sizeof(no_link_32));
     sprintf(name, "%s_%s_%s_ts0",           projNames[i], environment, sysShortNames[i]);
     dicSystem[i].tS0Id           = dic_info_service(name, MONITORED, 0, &(dicSystem[i].tS0),           sizeof(dicSystem[i].tS0),           0, 0, &no_link_64, sizeof(no_link_64));
+    sprintf(name, "%s_%s_%s_ntransfer",     projNames[i], environment, sysShortNames[i]);
+    dicSystem[i].nTransferId     = dic_info_service(name, MONITORED, 0, &(dicSystem[i].nTransfer),     sizeof(dicSystem[i].nTransfer),     0, 0, &no_link_32, sizeof(no_link_32));
     sprintf(name, "%s_%s_%s_tdiag",         projNames[i], environment, sysShortNames[i]);
     dicSystem[i].tDiagId         = dic_info_service(name, MONITORED, 0, &(dicSystem[i].tDiag),         sizeof(dicSystem[i].tDiag),         0, 0, &no_link_64, sizeof(no_link_64));
     sprintf(name, "%s_%s_%s_usedsize",      projNames[i], environment, sysShortNames[i]);
@@ -444,6 +448,7 @@ void printServices(int flagOnce)
   char     cOffsDone[10];
   char     cOffsDoneMax[10];
   char     cOffsDoneMin[10];
+  char     cNTransfer[11];
 
   char     cHost[19];
 
@@ -545,9 +550,12 @@ void printServices(int flagOnce)
         itmp = dicSystem[i].offsDoneMin;
         if (itmp == 0xffffffff) itmp = 0;             sprintf(cOffsDoneMin,   "%9.3f",        (double)itmp/1000.0);
       } // data valid
+      if (dicSystem[i].nTransfer     == no_link_32)   sprintf(cNTransfer,     "%10s",         no_link_str);
+      else                                            sprintf(cNTransfer,     "%10u",         dicSystem[i].nTransfer);
 
-      printf(" %2s %6s %3s %10s %9s %9s %9s %9s %9s %9s %9s %9s %9s                                      %16s\n", sysClearKeys[i], ringNames[i], typeNames[i], cNSlow, cOffsSlow, cOffsSlowMax, cOffsSlowMin,
-             cComLatency, cComLatencyMax, cComLatencyMin, cOffsDone, cOffsDoneMax, cOffsDoneMin, cHost);
+
+      printf(" %2s %6s %3s %10s %9s %9s %9s %9s %9s %9s %9s %9s %9s %10s                           %16s\n", sysClearKeys[i], ringNames[i], typeNames[i], cNSlow, cOffsSlow, cOffsSlowMax, cOffsSlowMin,
+             cComLatency, cComLatencyMax, cComLatencyMin, cOffsDone, cOffsDoneMax, cOffsDoneMin, cNTransfer, cHost);
     }  // flagPrintOther
   } // for i
 

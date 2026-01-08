@@ -496,7 +496,8 @@ uint32_t comlib_wait4ECAEvent2(uint32_t timeout_ms,  eb_device_t device, eb_addr
 
   // required for cheap autocalibration of UTC offset
   static uint64_t UTCOffset = 37000000000;
-  static uint64_t latency   =       30000;
+  static uint32_t firstTime = 1;
+  uint32_t    estLatency;          // estimated latency
 
   timeout    = ((uint64_t)timeout_ms + 1) * 1000000;
   startT     = comlib_getSysTime();
@@ -551,29 +552,32 @@ uint32_t comlib_wait4ECAEvent2(uint32_t timeout_ms,  eb_device_t device, eb_addr
       deadlineUTC  = *deadline - UTCOffset;
 
       stopT        = comlib_getSysTime();
+      estLatency   = (uint32_t)(stopT - startT2) * 2;  // factor 2 is hackish; assumption: reading ecaFlag takes as long as the all the other data
 
       // monitoring stuff
-      if (deadlineUTC < startT - latency) {
+      if ((deadlineUTC < startT - estLatency) && !firstTime) {
         *isSlow     = 1;
         *offsSlow   = (uint32_t)(startT - deadlineUTC);
         // if late or delayed, the message deadline will be prior tStart
         // although we might have waited already for quite some time
         // this might lead to erronously large values for comLatency
         // the hackish solution right now is to use a defined bogus value
-        if (*isLate || *isDelayed) *comLatency = (uint32_t)(stopT - startT2) * 2; // factor 2 is hackish; assumption: reading ecaFlag takes as long as the all the other data
+        if (*isLate || *isDelayed) *comLatency = estLatency; 
         else                       *comLatency = (uint32_t)(stopT - startT);
       } // if missed
       else {
+        firstTime   = 0;
         *isSlow     = 0;
         *offsSlow   = 0;
-        *comLatency = (uint32_t)(stopT - startT2) * 2;                            // factor 2 is hackish; assumption: reading ecaFlag takes as long as the all the other data
+        *comLatency = estLatency;
 
         // cheap calibration of UTC offset for next iteration
         if (!(*isLate || *isEarly || *isDelayed || *isConflict)) {
-          UTCOffset = *deadline - startT2;
-          latency   = *comLatency * 2;
+          if (*deadline > startT2) UTCOffset = *deadline - startT2;
         } // if isLate etc
       } // else missed
+
+      //printf("comlatency %u, utcoffset %u, latency %u\n", *comLatency, (uint32_t)(UTCOffset/1000), (uint32_t)latency);
 
       return COMMON_STATUS_OK;
     } // if data is valid
