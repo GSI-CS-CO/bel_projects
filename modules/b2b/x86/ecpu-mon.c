@@ -671,7 +671,7 @@ int main(int argc, char** argv) {
       sysId = 0xffff;
       userInput = comlib_term_getChar();
       switch (userInput) {
-        case 'A' ... 'O' :
+        case 'A' ... 'Z' :
           sysId = userInput - 55;                 // no break on purpose
         case '0' ... '9' :
           if (sysId == 0xffff) sysId = userInput - 48; // ugly

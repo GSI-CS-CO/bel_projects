@@ -5,7 +5,7 @@
  *  author  : Dietrich Beck, GSI-Darmstadt
  *  version : 10-Jul-2024
  *
- * monitors WR-MIL gateway
+ * monitors UNILAC 50 Hz synchronization
  *
  * ------------------------------------------------------------------------------------------
  * License Agreement for this software:
