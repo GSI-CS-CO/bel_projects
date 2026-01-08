@@ -157,89 +157,89 @@ void disAddServices(char *prefix)
 {
   char name[DIMMAXSIZE];
   
-  sprintf(name, "%s_version_fw", prefix);
-  disVersionId        = dis_add_service(name, "C", disVersion, 8, 0 , 0);
+  sprintf(name, "%s_version_fw",    prefix);
+  disVersionId        = dis_add_service(name, "C", disVersion,        8                       , 0, 0);
 
-  sprintf(name, "%s_state", prefix);
-  disStateId          = dis_add_service(name, "C", disState, 10, 0 , 0);
+  sprintf(name, "%s_state",         prefix);
+  disStateId          = dis_add_service(name, "C", disState,          10                      , 0, 0);
 
-  sprintf(name, "%s_hostname", prefix);
-  disHostnameId       = dis_add_service(name, "C", disHostname, DIMCHARSIZE, 0 , 0);
+  sprintf(name, "%s_hostname",      prefix);
+  disHostnameId       = dis_add_service(name, "C", disHostname,       DIMCHARSIZE             , 0, 0);
 
-  sprintf(name, "%s_status", prefix);
-  disStatusId         = dis_add_service(name, "X", &disStatus, sizeof(disStatus), 0 , 0);
+  sprintf(name, "%s_status",        prefix);
+  disStatusId         = dis_add_service(name, "X", &disStatus,        sizeof(disStatus)       , 0, 0);
 
-  sprintf(name, "%s_mac", prefix);
-  disMacId            = dis_add_service(name, "X", &disMac, sizeof(disMac), 0 ,0);
+  sprintf(name, "%s_mac",           prefix);
+  disMacId            = dis_add_service(name, "X", &disMac,           sizeof(disMac)          , 0, 0);
 
-  sprintf(name, "%s_ip", prefix);
-  disIpId             = dis_add_service(name, "I", &disIp, sizeof(disIp), 0, 0);
+  sprintf(name, "%s_ip",            prefix);
+  disIpId             = dis_add_service(name, "I", &disIp,            sizeof(disIp)           , 0, 0);
 
-  sprintf(name, "%s_nbadstatus", prefix);
-  disNBadStatusId     = dis_add_service(name, "I", &disNBadStatus, sizeof(disNBadStatus), 0, 0);
+  sprintf(name, "%s_nbadstatus",    prefix);
+  disNBadStatusId     = dis_add_service(name, "I", &disNBadStatus,    sizeof(disNBadStatus)   , 0, 0);
 
-  sprintf(name, "%s_nbadstate", prefix);
-  disNBadStateId      = dis_add_service(name, "I", &disNBadState, sizeof(disNBadState), 0, 0);
+  sprintf(name, "%s_nbadstate",     prefix);
+  disNBadStateId      = dis_add_service(name, "I", &disNBadState,     sizeof(disNBadState)    , 0, 0);
 
-  sprintf(name, "%s_tdiag", prefix);
-  disTDiagId          = dis_add_service(name, "X", &disTDiag, sizeof(disTDiag), 0, 0);
+  sprintf(name, "%s_tdiag",         prefix);
+  disTDiagId          = dis_add_service(name, "X", &disTDiag,         sizeof(disTDiag)        , 0, 0);
 
-  sprintf(name, "%s_ts0", prefix);
-  disTS0Id            = dis_add_service(name, "X", &disTS0, sizeof(disTS0), 0, 0);
+  sprintf(name, "%s_ts0",           prefix);
+  disTS0Id            = dis_add_service(name, "X", &disTS0,           sizeof(disTS0)          , 0, 0);
 
-  sprintf(name, "%s_ntransfer", prefix);
-  disNTransferId      = dis_add_service(name, "I", &disNTransfer, sizeof(disNTransfer), 0 , 0);
+  sprintf(name, "%s_ntransfer",     prefix);
+  disNTransferId      = dis_add_service(name, "I", &disNTransfer,     sizeof(disNTransfer)    , 0, 0);
 
-  sprintf(name, "%s_ninjection", prefix);
-  disNInjectionId     = dis_add_service(name, "I", &disNInjection, sizeof(disNInjection), 0, 0);
+  sprintf(name, "%s_ninjection",    prefix);
+  disNInjectionId     = dis_add_service(name, "I", &disNInjection,    sizeof(disNInjection)   , 0, 0);
 
-  sprintf(name, "%s_stattrans", prefix);
-  disStatTransId      = dis_add_service(name, "I", &disStatTrans, sizeof(disStatTrans), 0, 0);
+  sprintf(name, "%s_stattrans",     prefix);
+  disStatTransId      = dis_add_service(name, "I", &disStatTrans,     sizeof(disStatTrans)    , 0, 0);
 
-  sprintf(name, "%s_nlate", prefix);
-  disNLateId          = dis_add_service(name, "I", &disNLate, sizeof(disNLate), 0 , 0);
+  sprintf(name, "%s_nlate",         prefix);
+  disNLateId          = dis_add_service(name, "I", &disNLate,         sizeof(disNLate)        , 0, 0);
 
-  sprintf(name, "%s_nearly", prefix);
-  disNEarlyId         = dis_add_service(name, "I", &disNEarly, sizeof(disNEarly), 0 , 0);
+  sprintf(name, "%s_nearly",        prefix);
+  disNEarlyId         = dis_add_service(name, "I", &disNEarly,        sizeof(disNEarly)       , 0, 0);
 
-  sprintf(name, "%s_nconflict", prefix);
-  disNConflictId      = dis_add_service(name, "I", &disNConflict, sizeof(disNConflict), 0 , 0);
+  sprintf(name, "%s_nconflict",     prefix);
+  disNConflictId      = dis_add_service(name, "I", &disNConflict,     sizeof(disNConflict)    , 0, 0);
 
-  sprintf(name, "%s_ndelayed", prefix);
-  disNDelayedId       = dis_add_service(name, "I", &disNDelayed, sizeof(disNDelayed), 0 , 0);
+  sprintf(name, "%s_ndelayed",      prefix);
+  disNDelayedId       = dis_add_service(name, "I", &disNDelayed,      sizeof(disNDelayed)     , 0, 0);
 
-  sprintf(name, "%s_nslow", prefix);
-  disNSlowId          = dis_add_service(name, "I", &disNSlow, sizeof(disNSlow), 0 , 0);
+  sprintf(name, "%s_nslow",         prefix);
+  disNSlowId          = dis_add_service(name, "I", &disNSlow,         sizeof(disNSlow)        , 0, 0);
 
-  sprintf(name, "%s_offsslow", prefix);
-  disOffsSlowId       = dis_add_service(name, "I", &disOffsSlow, sizeof(disOffsSlow), 0 , 0);
+  sprintf(name, "%s_offsslow",      prefix);
+  disOffsSlowId       = dis_add_service(name, "I", &disOffsSlow,      sizeof(disOffsSlow)     , 0, 0);
 
-  sprintf(name, "%s_offsslowmax", prefix);
-  disOffsSlowMaxId    = dis_add_service(name, "I", &disOffsSlowMax, sizeof(disOffsSlowMax), 0 , 0);
+  sprintf(name, "%s_offsslowmax",   prefix);
+  disOffsSlowMaxId    = dis_add_service(name, "I", &disOffsSlowMax,   sizeof(disOffsSlowMax)  , 0, 0);
 
-  sprintf(name, "%s_offsslowmin", prefix);
-  disOffsSlowMinId    = dis_add_service(name, "I", &disOffsSlowMin, sizeof(disOffsSlowMin), 0 , 0);
+  sprintf(name, "%s_offsslowmin",   prefix);
+  disOffsSlowMinId    = dis_add_service(name, "I", &disOffsSlowMin,   sizeof(disOffsSlowMin)  , 0, 0);
 
-  sprintf(name, "%s_comlatency", prefix);
-  disComLatencyId     = dis_add_service(name, "I", &disComLatency, sizeof(disComLatency), 0 , 0);
+  sprintf(name, "%s_comlatency",    prefix);
+  disComLatencyId     = dis_add_service(name, "I", &disComLatency,    sizeof(disComLatency)   , 0, 0);
 
   sprintf(name, "%s_comlatencymax", prefix);
-  disComLatencyMaxId  = dis_add_service(name, "I", &disComLatencyMax, sizeof(disComLatencyMax), 0 , 0);
+  disComLatencyMaxId  = dis_add_service(name, "I", &disComLatencyMax, sizeof(disComLatencyMax), 0, 0);
 
   sprintf(name, "%s_comlatencymin", prefix);
-  disComLatencyMinId  = dis_add_service(name, "I", &disComLatencyMin, sizeof(disComLatencyMin), 0 , 0);
+  disComLatencyMinId  = dis_add_service(name, "I", &disComLatencyMin, sizeof(disComLatencyMin), 0, 0);
 
-  sprintf(name, "%s_offsdone", prefix);
-  disOffsDoneId       = dis_add_service(name, "I", &disOffsDone, sizeof(disOffsDone), 0 , 0);
+  sprintf(name, "%s_offsdone",      prefix);
+  disOffsDoneId       = dis_add_service(name, "I", &disOffsDone,      sizeof(disOffsDone)     , 0, 0);
 
-  sprintf(name, "%s_offsdonemax", prefix);
-  disOffsDoneMaxId    = dis_add_service(name, "I", &disOffsDoneMax, sizeof(disOffsDoneMax), 0 , 0);
+  sprintf(name, "%s_offsdonemax",   prefix);
+  disOffsDoneMaxId    = dis_add_service(name, "I", &disOffsDoneMax,   sizeof(disOffsDoneMax)  , 0, 0);
 
-  sprintf(name, "%s_offsdonemin", prefix);
-  disOffsDoneMinId    = dis_add_service(name, "I", &disOffsDoneMin, sizeof(disOffsDoneMin), 0 , 0);
+  sprintf(name, "%s_offsdonemin",   prefix);
+  disOffsDoneMinId    = dis_add_service(name, "I", &disOffsDoneMin,   sizeof(disOffsDoneMin)  , 0, 0);
 
-  sprintf(name, "%s_usedsize", prefix);
-  disUsedSizeId       = dis_add_service(name, "I", &disUsedSize, sizeof(disUsedSize), 0 , 0);
+  sprintf(name, "%s_usedsize",      prefix);
+  disUsedSizeId       = dis_add_service(name, "I", &disUsedSize,      sizeof(disUsedSize)     , 0, 0);
   
   sprintf(name, "%s_cmd_cleardiag", prefix);
   dicClearDiagId =  dis_add_cmnd(name, 0, cmdClearDiag, 0);
