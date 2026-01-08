@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 07-Jan-2025
+ *  version : 08-Jan-2025
  *
  *  common x86 routines useful for CLIs handling firmware
  * 
@@ -84,16 +84,17 @@ uint64_t comlib_getSysTime()
 {
   uint64_t t;
   
-  struct timeval tv;
+  /* struct timeval tv; 
+  
   gettimeofday(&tv,NULL);
-  t = tv.tv_sec*(uint64_t)1000000000+tv.tv_usec*1000;
+  t = tv.tv_sec*(uint64_t)1000000000+tv.tv_usec*1000 + tv.tv_nsec; */
 
   // argh: timespec not supported with old gcc on sl7
-  //struct timespec ts;
+  struct timespec ts;
 
-  //timespec_get(&ts, TIME_UTC);
+  timespec_get(&ts, TIME_UTC);
 
-  //t = 1000000000 * (uint64_t)(ts.tv_sec) + (uint64_t)(ts.tv_nsec);
+  t = 1000000000 * (uint64_t)(ts.tv_sec) + (uint64_t)(ts.tv_nsec);
 
   return t;
 } // comlib_getSysTime()
@@ -488,12 +489,18 @@ uint32_t comlib_wait4ECAEvent2(uint32_t timeout_ms,  eb_device_t device, eb_addr
   uint32_t    evtParamLow ;        // low 32 bit of parameter field
   uint64_t    timeoutT;            // when to time out
   uint64_t    timeout;             // timeout
-  uint64_t startT;                 // time when starting this routine
-  uint64_t stopT;                  // time when finishing this routine
+  uint64_t    startT;              // time when starting this routine
+  uint64_t    startT2;             // time when reading message data from the ECA
+  uint64_t    stopT;               // time when finishing this routine
+  uint64_t    deadlineUTC;         // assumption: system time is UTC
 
-  timeout  = ((uint64_t)timeout_ms + 1) * 1000000;
-  startT   = comlib_getSysTime();
-  timeoutT = comlib_getSysTime() + timeout;
+  // required for cheap autocalibration of UTC offset
+  static uint64_t UTCOffset = 37000000000;
+  static uint64_t latency   =       30000;
+
+  timeout    = ((uint64_t)timeout_ms + 1) * 1000000;
+  startT     = comlib_getSysTime();
+  timeoutT   = startT + timeout;
 
   while (comlib_getSysTime() < timeoutT) {
     // read flag from ECA queue
@@ -504,6 +511,8 @@ uint32_t comlib_wait4ECAEvent2(uint32_t timeout_ms,  eb_device_t device, eb_addr
    
     if (ecaFlag & (0x0001 << ECA_VALID)) {                          // if ECA data is valid
 
+      startT2 = comlib_getSysTime();
+      
       // read data
       if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return COMMON_STATUS_EB;
       eb_cycle_read(cycle,  ecaq_base + ECA_QUEUE_EVENT_ID_HI_GET, EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
@@ -539,23 +548,31 @@ uint32_t comlib_wait4ECAEvent2(uint32_t timeout_ms,  eb_device_t device, eb_addr
       *evtId       = ((uint64_t)evtIdHigh    << 32) + (uint64_t)evtIdLow;
       *param       = ((uint64_t)evtParamHigh << 32) + (uint64_t)evtParamLow;
 
+      deadlineUTC  = *deadline - UTCOffset;
+
       stopT        = comlib_getSysTime();
 
       // monitoring stuff
-      if (*deadline < startT) {
+      if (deadlineUTC < startT - latency) {
         *isSlow     = 1;
-        *offsSlow   = (uint32_t)(startT - *deadline);
+        *offsSlow   = (uint32_t)(startT - deadlineUTC);
         // if late or delayed, the message deadline will be prior tStart
         // although we might have waited already for quite some time
         // this might lead to erronously large values for comLatency
         // the hackish solution right now is to use a defined bogus value
-        if (*isLate || *isDelayed) *comLatency = COMMON_LATENCYBOGUS;
+        if (*isLate || *isDelayed) *comLatency = (uint32_t)(stopT - startT2) * 2; // factor 2 is hackish; assumption: reading ecaFlag takes as long as the all the other data
         else                       *comLatency = (uint32_t)(stopT - startT);
       } // if missed
       else {
         *isSlow     = 0;
         *offsSlow   = 0;
-        *comLatency = (uint32_t)(stopT - *deadline);
+        *comLatency = (uint32_t)(stopT - startT2) * 2;                            // factor 2 is hackish; assumption: reading ecaFlag takes as long as the all the other data
+
+        // cheap calibration of UTC offset for next iteration
+        if (!(*isLate || *isEarly || *isDelayed || *isConflict)) {
+          UTCOffset = *deadline - startT2;
+          latency   = *comLatency * 2;
+        } // if isLate etc
       } // else missed
 
       return COMMON_STATUS_OK;
