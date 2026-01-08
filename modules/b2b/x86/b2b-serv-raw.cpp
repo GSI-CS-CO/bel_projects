@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 07-jan-2026
+ *  version : 08-jan-2026
  *
  * publishes raw data of the b2b system
  *
@@ -1122,7 +1122,7 @@ int main(int argc, char** argv)
         // these two get updated with each updateSetVal
         disComLatency = comLatency;
         disOffsDone   = comlib_getSysTime() - startTime;
-        
+
         if (isLate)     {disNLate++;     dis_update_service(disNLateId);}
         if (isEarly)    {disNEarly++;    dis_update_service(disNEarlyId);}
         if (isConflict) {disNConflict++; dis_update_service(disNConflictId);}
