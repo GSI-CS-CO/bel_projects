@@ -736,8 +736,8 @@ int main(int argc, char** argv)
         
 
 #ifdef USEMASP
-      if (fwState  == COMMON_STATE_OPREADY) maspSigOpReady  = true;
-      else                                  maspSigOpReady  = false;
+      if (state  == COMMON_STATE_OPREADY) maspSigOpReady  = true;
+      else                                maspSigOpReady  = false;
 
       maspSigTransfer = true;   // ok, this is dummy for now, e.g. in case of MIL troubles or so
       
