@@ -225,9 +225,10 @@ void disUpdateSetval(uint32_t sid, uint64_t tStart, setval_t setval)
   msecs  /= 1000000;
   
   disGetval[sid] = getval;
+  disDiagData.nTransfer++;
+  
   dis_set_timestamp(disGetvalId[sid], secs, msecs);
   dis_update_service(disGetvalId[sid]);
-
   dis_update_service(disStatusArrayId);
   dis_update_service(disDiagDataId);  
 } // disUpdateGetval
@@ -485,7 +486,7 @@ void disAddServices(char *prefix)
   sprintf(name, "%s-raw_status",     prefix);
   disStatusArrayId = dis_add_service(name, "X",                &disStatusArray, sizeof(disStatusArray), 0, 0);
 
-  sprintf(name, "%s_comlib_diag",    prefix);
+  sprintf(name, "%s-raw_comlib_diag",    prefix);
   disDiagDataId    = dis_add_service(name, "X:1;I:3;X:2;I:18", &disDiagData,    sizeof(disDiagData),    0, 0);
 
   // set values
@@ -593,8 +594,8 @@ int main(int argc, char** argv)
   char     kickerPrefix[NAMELEN*2];
   char     disName[DIMMAXSIZE];
 
-  reqExtRing  = SIS18_RING;
-  flagDiagDataClear  = 0;
+  reqExtRing         = SIS18_RING;
+  flagDiagDataClear  = 1;
 
   // parse for options
   program = argv[0];
@@ -1042,7 +1043,7 @@ int main(int argc, char** argv)
       std::cerr << program << ": can't open lm32 ECA queue" << std::endl;
       exit(1);
     } // if ebStatus
-    
+
     while(true) {
       if (flagDiagDataClear) {
         clearData();
@@ -1068,7 +1069,7 @@ int main(int argc, char** argv)
         // data get updated with each updateGetVal
         disStatusArray         = disStatusArray | (0x1 << ecaStatus);
         disDiagData.comLatency = comLatency;
-        disDiagData.offsDone   = comlib_getSysTime() - startTime;
+        disDiagData.offsDone   = (uint32_t)(comlib_getSysTime() - startTime);
 
         if (isLate)     disDiagData.nLate++;
         if (isEarly)    disDiagData.nEarly++;
