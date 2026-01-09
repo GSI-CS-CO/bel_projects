@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 08-jan-2026
+ *  version : 09-jan-2026
  *
  * publishes raw data of the b2b system
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000811
+#define B2B_SERV_RAW_VERSION 0x000812
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -85,53 +85,23 @@ static const char* program;
 double    no_link_dbl   = NAN;          // indicates "no link" for missing DIM services of type double
 
 // services published
-char      disVersion[DIMCHARSIZE];
-char      disState[DIMCHARSIZE];
-char      disHostname[DIMCHARSIZE];
-uint64_t  disStatus          = 0x0;
-uint32_t  disNTransfer       = 0;
-setval_t  disSetval[B2B_NSID];
-getval_t  disGetval[B2B_NSID];
-uint64_t  disTDiag           = 0;
-uint64_t  disTS0             = 0;
-uint32_t  disNLate           = 0;
-uint32_t  disNEarly          = 0;
-uint32_t  disNConflict       = 0;
-uint32_t  disNDelayed        = 0;
-uint32_t  disNSlow           = 0;
-uint32_t  disOffsSlow        = 0;
-uint32_t  disOffsSlowMax     = 0;
-uint32_t  disOffsSlowMin     = 0xffffffff;
-uint32_t  disComLatency      = 0;
-uint32_t  disComLatencyMax   = 0;
-uint32_t  disComLatencyMin   = 0xffffffff;
-uint32_t  disOffsDone        = 0;
-uint32_t  disOffsDoneMax     = 0;
-uint32_t  disOffsDoneMin     = 0xffffffff;
+char          disHostname[DIMCHARSIZE];
+char          disState[DIMCHARSIZE];
+char          disVersion[DIMCHARSIZE];
+uint64_t      disStatusArray     = 0x0;
+comlib_diag_t disDiagData; 
+setval_t      disSetval[B2B_NSID];
+getval_t      disGetval[B2B_NSID];
 
-uint32_t  disVersionId       = 0;
-uint32_t  disStateId         = 0;
-uint32_t  disHostnameId      = 0;
-uint32_t  disStatusId        = 0;
-uint32_t  disNTransferId     = 0;
-uint32_t  disSetvalId[B2B_NSID];
-uint32_t  disGetvalId[B2B_NSID];
-uint64_t  disTDiagId         = 0;
-uint64_t  disTS0Id           = 0;
-uint32_t  disNLateId         = 0;
-uint32_t  disNEarlyId        = 0;
-uint32_t  disNConflictId     = 0;
-uint32_t  disNDelayedId      = 0;
-uint32_t  disNSlowId         = 0;
-uint32_t  disOffsSlowId      = 0;
-uint32_t  disOffsSlowMaxId   = 0;
-uint32_t  disOffsSlowMinId   = 0;
-uint32_t  disComLatencyId    = 0;
-uint32_t  disComLatencyMaxId = 0;
-uint32_t  disComLatencyMinId = 0;
-uint32_t  disOffsDoneId      = 0;
-uint32_t  disOffsDoneMaxId   = 0;
-uint32_t  disOffsDoneMinId   = 0;
+uint32_t      disHostnameId      = 0;
+uint32_t      disStateId         = 0;
+uint32_t      disVersionId       = 0;
+uint32_t      disStatusArrayId   = 0;
+uint32_t      disDiagDataId      = 0;
+uint32_t      disSetvalId[B2B_NSID];
+uint32_t      disGetvalId[B2B_NSID];
+
+int           flagDiagDataClear;
 
 // services subscribed
 // 
@@ -242,13 +212,6 @@ void disUpdateSetval(uint32_t sid, uint64_t tStart, setval_t setval)
   disSetval[sid] = setval;
   dis_set_timestamp(disSetvalId[sid], secs, msecs);
   dis_update_service(disSetvalId[sid]);
-  
-  disNTransfer++;
-  dis_update_service(disNTransferId);
-  dis_update_service(disComLatencyId);
-  dis_update_service(disOffsDoneId);
-  dis_update_service(disTDiagId);
-  dis_update_service(disStatusId);
 } // disUpdateSetval
  
 
@@ -264,6 +227,9 @@ void disUpdateSetval(uint32_t sid, uint64_t tStart, setval_t setval)
   disGetval[sid] = getval;
   dis_set_timestamp(disGetvalId[sid], secs, msecs);
   dis_update_service(disGetvalId[sid]);
+
+  dis_update_service(disStatusArrayId);
+  dis_update_service(disDiagDataId);  
 } // disUpdateGetval
 
 
@@ -470,28 +436,33 @@ class RecvCommand : public DimCommand
 {
   int  reset;
   void commandHandler() {
-    disStatus          = 0;
-    disNTransfer       = 0;
-    disNLate           = 0;         
-    disNEarly          = 0;         
-    disNConflict       = 0;         
-    disNDelayed        = 0;         
-    disNSlow           = 0;         
-    disOffsSlow        = 0;         
-    disOffsSlowMax     = 0;         
-    disOffsSlowMin     = 0xffffffff;
-    disComLatency      = 0;         
-    disComLatencyMax   = 0;         
-    disComLatencyMin   = 0xffffffff;
-    disOffsDone        = 0;         
-    disOffsDoneMax     = 0;         
-    disOffsDoneMin     = 0xffffffff;
-    disTDiag           = comlib_getSysTime();
+    flagDiagDataClear = 1;
   } // commandHandler
 public :
   RecvCommand(const char *name) : DimCommand(name,"C"){}
 }; 
 
+
+void clearData()
+{
+    disStatusArray              = 0x0;
+    disDiagData.nTransfer       = 0;
+    disDiagData.nLate           = 0;         
+    disDiagData.nEarly          = 0;         
+    disDiagData.nConflict       = 0;         
+    disDiagData.nDelayed        = 0;         
+    disDiagData.nSlow           = 0;         
+    disDiagData.offsSlow        = 0;         
+    disDiagData.offsSlowMax     = 0;         
+    disDiagData.offsSlowMin     = 0xffffffff;
+    disDiagData.comLatency      = 0;         
+    disDiagData.comLatencyMax   = 0;         
+    disDiagData.comLatencyMin   = 0xffffffff;
+    disDiagData.offsDone        = 0;         
+    disDiagData.offsDoneMax     = 0;         
+    disDiagData.offsDoneMin     = 0xffffffff;
+    disDiagData.tDiag           = comlib_getSysTime();
+} // clearData
 
 // add all dim services
 void disAddServices(char *prefix)
@@ -500,70 +471,22 @@ void disAddServices(char *prefix)
   int  i;
 
   // 'generic' services
-  sprintf(name, "%s-raw_version_fw",   prefix);
+  sprintf(name, "%s-raw_version_fw", prefix);
   sprintf(disVersion, "%s",  b2b_version_text(B2B_SERV_RAW_VERSION));
-  disVersionId       = dis_add_service(name, "C", disVersion, 8, 0 , 0);
+  disVersionId       = dis_add_service(name, "C",              disVersion,      8,                      0, 0);
 
-  sprintf(name, "%s-raw_state",        prefix);
+  sprintf(name, "%s-raw_state",      prefix);
   sprintf(disState, "%s", b2b_state_text(COMMON_STATE_OPREADY));
-  disStateId         = dis_add_service(name, "C", disState, 10, 0 , 0);
+  disStateId         = dis_add_service(name, "C",              disState,        10,                     0, 0);
 
-  sprintf(name, "%s-raw_hostname",     prefix);
-  disHostnameId      = dis_add_service(name, "C", disHostname, DIMCHARSIZE, 0 , 0);
+  sprintf(name, "%s-raw_hostname",   prefix);
+  disHostnameId      = dis_add_service(name, "C",              disHostname,     DIMCHARSIZE,            0, 0);
 
-  sprintf(name, "%s-raw_status",       prefix);
-  disStatusId        = dis_add_service(name, "X", &disStatus,        sizeof(disStatus), 0 , 0);
+  sprintf(name, "%s-raw_status",     prefix);
+  disStatusArrayId = dis_add_service(name, "X",                &disStatusArray, sizeof(disStatusArray), 0, 0);
 
-  sprintf(name, "%s-raw_ntransfer",    prefix);
-  disNTransferId     = dis_add_service(name, "I", &disNTransfer,     sizeof(disNTransfer), 0 , 0);
-
-  sprintf(name, "%s-raw_tdiag",       prefix);
-  disTDiagId         = dis_add_service(name, "X", &disTDiag,         sizeof(disTDiag), 0 , 0);
-
-  sprintf(name, "%s-raw_ts0",       prefix);
-  disTS0Id           = dis_add_service(name, "X", &disTS0,           sizeof(disTS0), 0 , 0);
- 
-  sprintf(name, "%s-raw_nlate",        prefix);
-  disNLateId         = dis_add_service(name, "I", &disNLate,         sizeof(disNLate), 0 , 0);
- 
-  sprintf(name, "%s-raw_nearly",       prefix);
-  disNEarlyId        = dis_add_service(name, "I", &disNEarly,        sizeof(disNEarly), 0 , 0);
-
-  sprintf(name, "%s-raw_nconflict",    prefix);
-  disNConflictId     = dis_add_service(name, "I", &disNConflict,     sizeof(disNConflict), 0 , 0);
-
-  sprintf(name, "%s-raw_ndelayed",     prefix);
-  disNDelayedId      = dis_add_service(name, "I", &disNDelayed,      sizeof(disNDelayed), 0 , 0);
-
-  sprintf(name, "%s-raw_nslow",        prefix);
-  disNSlowId         = dis_add_service(name, "I", &disNSlow,         sizeof(disNSlow), 0 , 0);
-
-  sprintf(name, "%s-raw_offsslow",     prefix);
-  disOffsSlowId      = dis_add_service(name, "I", &disOffsSlow,      sizeof(disOffsSlow), 0 , 0);
-
-  sprintf(name, "%s-raw_offsslowmax",   prefix);
-  disOffsSlowMaxId   = dis_add_service(name, "I", &disOffsSlowMax,   sizeof(disOffsSlow), 0 , 0);
-
-  sprintf(name, "%s-raw_offsslowmin",  prefix);
-  disOffsSlowMinId   = dis_add_service(name, "I", &disOffsSlowMin,   sizeof(disOffsSlowMin), 0 , 0);
-
-  sprintf(name, "%s-raw_comlatency",    prefix);
-  disComLatencyId    = dis_add_service(name, "I", &disComLatency,    sizeof(disComLatency), 0 , 0);
-
-  sprintf(name, "%s-raw_comlatencymax", prefix);
-  disComLatencyMaxId = dis_add_service(name, "I", &disComLatencyMax, sizeof(disComLatencyMax), 0 , 0);
-
-  sprintf(name, "%s-raw_comlatencymin", prefix);
-  disComLatencyMinId = dis_add_service(name, "I", &disComLatencyMin, sizeof(disComLatencyMin), 0 , 0);
-
-  sprintf(name, "%s-raw_offsdone",      prefix);
-  disOffsDoneId      = dis_add_service(name, "I", &disOffsDone,      sizeof(disOffsDone), 0 , 0);
-
-  sprintf(name, "%s-raw_offsdonemax",   prefix);
-  disOffsDoneMaxId   = dis_add_service(name, "I", &disOffsDoneMax,   sizeof(disOffsDoneMax), 0 , 0);
-
-  sprintf(name, "%s-raw_offsdonemin",   prefix);
-  disOffsDoneMinId   = dis_add_service(name, "I", &disOffsDoneMin,   sizeof(disOffsDoneMin), 0 , 0);  
+  sprintf(name, "%s_comlib_diag",    prefix);
+  disDiagDataId    = dis_add_service(name, "X:1;I:3;X:2;I:18", &disDiagData,    sizeof(disDiagData),    0, 0);
 
   // set values
   for (i=0; i< B2B_NSID; i++) {
@@ -670,9 +593,8 @@ int main(int argc, char** argv)
   char     kickerPrefix[NAMELEN*2];
   char     disName[DIMMAXSIZE];
 
-
   reqExtRing  = SIS18_RING;
-
+  flagDiagDataClear  = 0;
 
   // parse for options
   program = argv[0];
@@ -745,8 +667,8 @@ int main(int argc, char** argv)
     initSetval(&(disSetval[i]));
     initGetval(&(disGetval[i]));
   } // for i
-  disTDiag = comlib_getSysTime();
-  disTS0   = comlib_getSysTime();
+  disDiagData.tDiag = comlib_getSysTime();
+  disDiagData.tS0   = comlib_getSysTime();
   
   // create service and start server
   sprintf(prefix, "b2b_%s_%s", envName, ringName);
@@ -1122,6 +1044,11 @@ int main(int argc, char** argv)
     } // if ebStatus
     
     while(true) {
+      if (flagDiagDataClear) {
+        clearData();
+        flagDiagDataClear = 0;
+      } // if flagdiagdataclear
+
       //      saftlib::wait_for_signal();
       t1 = comlib_getSysTime();
       ecaStatus = comlib_wait4ECAEvent2(1, device, ecaq_base, &recTag, &deadline, &evtId, &param, &tef, &isLate, &isEarly, &isConflict, &isDelayed, &isSlow, &offsSlow, &comLatency);
@@ -1130,7 +1057,7 @@ int main(int argc, char** argv)
       if (tmp32 > 10000000) printf("%s: reading from ECA Q took %u [us]\n", program, tmp32 / 1000);
       if (ecaStatus == COMMON_STATUS_EB) {
         printf("eca EB error, device %x, address %x\n", device, (uint32_t)ecaq_base);
-        disStatus = disStatus | (0x1 << ecaStatus);   
+        disStatusArray = disStatusArray | (0x1 << ecaStatus);   
       } // if eca STATUS_EB
       if (ecaStatus == COMMON_STATUS_OK) {
         startTime  = t2;
@@ -1138,28 +1065,29 @@ int main(int argc, char** argv)
         //t2         = comlib_getSysTime(); printf("msg: tag %x, id %lx, tef %lx, dtu %lu\n", recTag, evtId, tef, (uint32_t)(t2 -t1));
         timingMessage(recTag, deadline_t, evtId, param, tef, isLate, isEarly, isConflict, isDelayed);
 
-        // these two get updated with each updateSetVal
-        disComLatency = comLatency;
-        disOffsDone   = comlib_getSysTime() - startTime;
-        disStatus     = disStatus | (0x1 << ecaStatus);
+        // data get updated with each updateGetVal
+        disStatusArray         = disStatusArray | (0x1 << ecaStatus);
+        disDiagData.comLatency = comLatency;
+        disDiagData.offsDone   = comlib_getSysTime() - startTime;
 
-        if (isLate)     {disNLate++;     dis_update_service(disNLateId);}
-        if (isEarly)    {disNEarly++;    dis_update_service(disNEarlyId);}
-        if (isConflict) {disNConflict++; dis_update_service(disNConflictId);}
-        if (isDelayed)  {disNDelayed++;  dis_update_service(disNDelayedId);}
+        if (isLate)     disDiagData.nLate++;
+        if (isEarly)    disDiagData.nEarly++;
+        if (isConflict) disDiagData.nConflict++;
+        if (isDelayed)  disDiagData.nDelayed++;
         if (isSlow) {
-          disNSlow++;                    dis_update_service(disNSlowId);
-          disOffsSlow = offsSlow;        dis_update_service(disOffsSlowId);
-          if (offsSlow   < disOffsSlowMin)   {disOffsSlowMin   = offsSlow;    dis_update_service(disOffsSlowMinId);}
-          if (offsSlow   > disOffsSlowMax)   {disOffsSlowMax   = offsSlow;    dis_update_service(disOffsSlowMaxId);}
+          disDiagData.nSlow++;           
+          disDiagData.offsSlow = offsSlow;   
+          if (offsSlow   < disDiagData.offsSlowMin)   disDiagData.offsSlowMin            = offsSlow;
+          if (offsSlow   > disDiagData.offsSlowMax)   disDiagData.offsSlowMax            = offsSlow;
         } // if flagIsSlow
 
-        if (comLatency   > disComLatencyMax) {disComLatencyMax = comLatency;  dis_update_service(disComLatencyMaxId);}
-        if (comLatency   < disComLatencyMin) {disComLatencyMin = comLatency;  dis_update_service(disComLatencyMinId);}
-        if (disOffsDone  > disOffsDoneMax)   {disOffsDoneMax   = disOffsDone; dis_update_service(disOffsDoneMaxId);}
-        if (disOffsDone  < disOffsDoneMin)   {disOffsDoneMin   = disOffsDone; dis_update_service(disOffsDoneMinId);}
+        if (comLatency            > disDiagData.comLatencyMax) disDiagData.comLatencyMax = comLatency;
+        if (comLatency            < disDiagData.comLatencyMin) disDiagData.comLatencyMin = comLatency;
+        if (disDiagData.offsDone  > disDiagData.offsDoneMax)   disDiagData.offsDoneMax   = disDiagData.offsDone;
+        if (disDiagData.offsDone  < disDiagData.offsDoneMin)   disDiagData.offsDoneMin   = disDiagData.offsDone;
       } // if eca STATUS_OK
     } // while true
+    
     comlib_ecaq_close(device);
     
   } // try
