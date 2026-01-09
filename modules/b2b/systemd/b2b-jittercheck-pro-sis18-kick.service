@@ -6,7 +6,7 @@ After = saftbus.service
 [Service]
 Type = simple
 Environment="DIM_DNS_NODE=asl105"
-ExecStart = b2b-jitter-check tr1 tr0 -p3 -t5 pro_sis18-kde
+ExecStart = b2b-jitter-check tr1 tr0 -p5 -t5 pro_sis18-kde
 
 [Install]
 WantedBy = multi-user.target
