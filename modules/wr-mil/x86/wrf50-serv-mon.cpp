@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 10-Jul-2024
+ *  version : 09-jan-2026
  *
  * monitors UNILAC 50 Hz synchronization
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define WRF50_SERV_MON_VERSION 0x000108
+#define WRF50_SERV_MON_VERSION 0x000109
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -123,18 +123,20 @@ static const char* program;
 #define NAMELEN     256                 // max size for names
 
 // services
-char      disVersion[DIMCHARSIZE];      // firmware version
-char      disState[DIMCHARSIZE];        // firmware state
-char      disHostname[DIMCHARSIZE];     // hostname
-uint64_t  disStatus;                    // firmware status
-monval_t  disMonData;
+char          disVersion[DIMCHARSIZE];      // firmware version
+char          disState[DIMCHARSIZE];        // firmware state
+char          disHostname[DIMCHARSIZE];     // hostname
+uint64_t      disStatus;                    // firmware status
+comlib_diag_t disDiagData;
+monval_t      disMonData;
 
-uint32_t  disVersionId      = 0;
-uint32_t  disStateId        = 0;
-uint32_t  disStatusId       = 0;
-uint32_t  disHostnameId     = 0;
-uint32_t  disMonDataId      = 0;
-uint32_t  disCmdClearId     = 0;
+uint32_t      disVersionId      = 0;
+uint32_t      disStateId        = 0;
+uint32_t      disHostnameId     = 0;
+uint32_t      disStatusId       = 0;
+uint32_t      disDiagDataId     = 0;
+uint32_t      disMonDataId      = 0;
+uint32_t      disCmdClearId     = 0;
 
 typedef struct {
   int32_t     flag;                     // flag: a limit has been exceeded
@@ -418,24 +420,27 @@ void disAddServices(char *prefix)
   char name[DIMMAXSIZE];
 
   // 'generic' services
-  sprintf(name, "%s_version_fw", prefix);
+  sprintf(name, "%s_version_fw",    prefix);
   sprintf(disVersion, "%s",  wrmil_version_text(WRF50_SERV_MON_VERSION));
-  disVersionId   = dis_add_service(name, "C", disVersion, 8, 0 , 0);
+  disVersionId  = dis_add_service(name, "C",                      disVersion,     8,                   0, 0);
 
-  sprintf(name, "%s_state", prefix);
+  sprintf(name, "%s_state",         prefix);
   sprintf(disState, "%s", wrmil_state_text(COMMON_STATE_OPREADY));
-  disStateId      = dis_add_service(name, "C", disState, 10, 0 , 0);
+  disStateId    = dis_add_service(name, "C",                       disState,      10,                  0, 0);
 
-  sprintf(name, "%s_hostname", prefix);
-  disHostnameId   = dis_add_service(name, "C", disHostname, DIMCHARSIZE, 0 , 0);
+  sprintf(name, "%s_hostname",      prefix);
+  disHostnameId = dis_add_service(name, "C",                       disHostname,   DIMCHARSIZE,         0, 0);
 
-  sprintf(name, "%s_status", prefix);
-  disStatus       = 0x1;   
-  disStatusId     = dis_add_service(name, "X", &disStatus, sizeof(disStatus), 0 , 0);
+  sprintf(name, "%s_status",        prefix);
+  disStatus     = 0x1;   
+  disStatusId   = dis_add_service(name, "X",                       &disStatus,    sizeof(disStatus),   0, 0);
+
+  sprintf(name, "%s_comlib_diag",   prefix);
+  disDiagDataId = dis_add_service(name, "X:1;I:3;X:2;I:18",        &disDiagData,  sizeof(disDiagData), 0, 0);
 
   // monitoring data service
-  sprintf(name, "%s_data", prefix);
-  disMonDataId  = dis_add_service(name, "I:2;X:3;I:2;X:3;I:3;D:5", &(disMonData), sizeof(monval_t), 0, 0);
+  sprintf(name, "%s_data",          prefix);
+  disMonDataId  = dis_add_service(name, "I:2;X:3;I:2;X:3;I:3;D:5", &(disMonData), sizeof(monval_t),    0, 0);
 
   // command clear
   sprintf(name, "%s_cmd_cleardiag", prefix);
@@ -468,7 +473,6 @@ int main(int argc, char** argv)
   int      opt;
   bool     useFirstDev    = false;
   bool     getVersion     = false;
-  bool     startServer    = false;
 
   // char    *tail;
 
@@ -505,7 +509,7 @@ int main(int argc, char** argv)
         useFirstDev = true;
         break;
       case 'd' :
-        startServer = true;
+        // chk, keep for compatibility reasons, remove at some time
         break;
 #ifdef USEMASP
         maspNomen = std::string("U_WRF50_SYNC");    break;
@@ -548,15 +552,13 @@ int main(int argc, char** argv)
   if (optind+1 < argc) sprintf(prefix, "wrmil_%s_%s-mon", argv[++optind], domainName);
   else                 sprintf(prefix, "wrmil_%s-mon", domainName);
 
-  if (startServer) {
-    printf("wr-f50: starting server %s using prefix %s\n", program, prefix);
+  // start server
+  printf("wr-f50: starting server %s using prefix %s\n", program, prefix);
 
-    clearStats();
-    disAddServices(prefix);
-    
-    sprintf(disName, "%s", prefix);
-    dis_start_serving(disName);
-  } // if startServer
+  clearStats();
+  disAddServices(prefix);
+  sprintf(disName, "%s", prefix);
+  dis_start_serving(disName);
 
   try {
     // basic saftd stuff
@@ -656,6 +658,7 @@ int main(int argc, char** argv)
       if (((t_new - t_old) / one_ms_ns) > UPDATE_TIME_MS) {
         // update firmware data
         wrmil_common_read(ebDevice, &fwStatus, &fwState, &tmp32a, &tmp32b, &fwVersion, &tmp32c, 0);
+        comlib_readDiag2(ebDevice, &fwState, &fwVersion, &fwStatus, &disDiagData, 0);
         wrf50_info_read(ebDevice, &offsetMains, &fwMode , &fwTMainsAct, &tmp32b, &tmp32c, &stmp32a, &stmp32b, &stmp32c, &stmp32g, &stmp32h, &stmp32i, &stmp32d, &stmp32e, &stmp32f, &fwLockState, &fwLockDate, &fwNLocked,
                         &fwNCycles, &fwNSent, 0);
         
@@ -682,13 +685,12 @@ int main(int argc, char** argv)
         if (disMonData.tMin ==  INITMINMAX) disMonData.tMin = NAN;
         if (disMonData.tMax == -INITMINMAX) disMonData.tMax = NAN;
 
-        if (startServer) {
-          // update service data
-          dis_update_service(disStatusId);
-          dis_update_service(disStateId);
-          dis_update_service(disVersionId);
-          dis_update_service(disMonDataId);
-        } // if startServer
+        // update service data
+        dis_update_service(disStatusId);
+        dis_update_service(disStateId);
+        dis_update_service(disVersionId);
+        dis_update_service(disDiagDataId);
+        dis_update_service(disMonDataId);
 
         //printf("wrmil-mon: fw snd %ld, recD %ld, recT %ld; mon snd %ld, rec %ld, match %ld, act %f, ave %f, sdev %f, min %f, max %f\n", monData.nFwSnd, monData.nFwRecT, monData.nFwRecT, monData.nStart, monData.nStop, monData.nMatch, monData.tAct, monData.tAve, monData.tSdev, monData.tMin, monData.tMax);
 
