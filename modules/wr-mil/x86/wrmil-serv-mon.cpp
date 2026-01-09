@@ -3,9 +3,9 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 08-jan-2025
+ *  version : 09-jan-2025
  *
- * monitors WR-MIL gateway
+ * monitors WR-MIL gateway (server part)
  *
  * ------------------------------------------------------------------------------------------
  * License Agreement for this software:
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define WRMIL_SERV_MON_VERSION 0x000109
+#define WRMIL_SERV_MON_VERSION 0x000110
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -121,65 +121,19 @@ static const char* program;
 #define NAMELEN     256                 // max size for names
 
 // services
-char      disVersion[DIMCHARSIZE];      // firmware version
-char      disState[DIMCHARSIZE];        // firmware state
-char      disHostname[DIMCHARSIZE];     // hostname
-monval_t  disMonData;
-uint64_t  disStatus;
-uint64_t  disMac;
-uint32_t  disIp;
-uint32_t  disNBadStatus;
-uint32_t  disNBadState;
-uint64_t  disTDiag;
-uint64_t  disTS0;
-uint32_t  disNTransfer;
-uint32_t  disNInjection;
-uint32_t  disStatTrans;
-uint32_t  disNLate;
-uint32_t  disNEarly;
-uint32_t  disNConflict;
-uint32_t  disNDelayed;
-uint32_t  disNSlow;
-uint32_t  disOffsSlow;
-uint32_t  disOffsSlowMax;
-uint32_t  disOffsSlowMin;
-uint32_t  disComLatency;
-uint32_t  disComLatencyMax;
-uint32_t  disComLatencyMin;
-uint32_t  disOffsDone;
-uint32_t  disOffsDoneMax;
-uint32_t  disOffsDoneMin;
-uint32_t  disUsedSize;
+char          disHostname[DIMCHARSIZE];     // hostname
+char          disState[DIMCHARSIZE];        // firmware state
+char          disVersion[DIMCHARSIZE];      // firmware version
+uint64_t      disStatusArray;               // array with status bits
+monval_t      disMonData;                   // monitoring data
+comlib_diag_t disDiagData;                  // common diagnostic data
 
-uint32_t  disVersionId       = 0;
-uint32_t  disStateId         = 0;
-uint32_t  disStatusId        = 0;
 uint32_t  disHostnameId      = 0;
+uint32_t  disStateId         = 0;
+uint32_t  disVersionId       = 0;
+uint32_t  disStatusArrayId   = 0;
 uint32_t  disMonDataId       = 0;
-uint32_t  disMacId           = 0;
-uint32_t  disIpId            = 0;
-uint32_t  disNBadStatusId    = 0;
-uint32_t  disNBadStateId     = 0;
-uint32_t  disTDiagId         = 0;
-uint32_t  disTS0Id           = 0;
-uint32_t  disNInjectionId    = 0;
-uint32_t  disStatTransId     = 0;
-uint32_t  disNTransferId     = 0;
-uint32_t  disNLateId         = 0;
-uint32_t  disNEarlyId        = 0;
-uint32_t  disNConflictId     = 0;
-uint32_t  disNDelayedId      = 0;
-uint32_t  disNSlowId         = 0;
-uint32_t  disOffsSlowId      = 0;
-uint32_t  disOffsSlowMaxId   = 0;
-uint32_t  disOffsSlowMinId   = 0;
-uint32_t  disComLatencyId    = 0;
-uint32_t  disComLatencyMaxId = 0;
-uint32_t  disComLatencyMinId = 0;
-uint32_t  disOffsDoneId      = 0;
-uint32_t  disOffsDoneMaxId   = 0;
-uint32_t  disOffsDoneMinId   = 0;
-uint32_t  disUsedSizeId      = 0;
+uint32_t  disDiagDataId      = 0;
 uint32_t  disCmdClearId      = 0;
 
 // local variables
@@ -191,8 +145,6 @@ uint32_t  matchWindow       = MATCH_WIN_US;
 uint32_t  modeCompare       = 0;
 uint64_t  offsetStart;                  // correction to be used for different monitoring types
 uint64_t  offsetStop;                   // correction to be used for different monitoring types
-
-
 
 uint64_t  one_us_ns = 1000;
 uint64_t  one_ms_ns = 1000000;
@@ -351,101 +303,31 @@ void disAddServices(char *prefix)
   char name[DIMMAXSIZE];
 
   // 'generic' services
-  sprintf(name, "%s_version_fw",    prefix);
-  sprintf(disVersion, "%s",  wrmil_version_text(WRMIL_SERV_MON_VERSION));
-  disVersionId        = dis_add_service(name, "C", disVersion, 8                              , 0, 0);
+  sprintf(name, "%s_hostname",      prefix);
+  disHostnameId    = dis_add_service(name, "C",                       disHostname,     DIMCHARSIZE,           0, 0);
 
   sprintf(name, "%s_state",         prefix);
   sprintf(disState, "%s", wrmil_state_text(COMMON_STATE_OPREADY));
-  disStateId          = dis_add_service(name, "C", disState, 10                               , 0, 0);
+  disStateId       = dis_add_service(name, "C",                       disState,        10,                    0, 0);
 
-  sprintf(name, "%s_hostname",      prefix);
-  disHostnameId       = dis_add_service(name, "C", disHostname,       DIMCHARSIZE             , 0, 0);
+  sprintf(name, "%s_version_fw",    prefix);
+  sprintf(disVersion, "%s",  wrmil_version_text(WRMIL_SERV_MON_VERSION));
+  disVersionId     = dis_add_service(name, "C",                       disVersion,      8,                     0, 0);
 
-  sprintf(name, "%s_status",        prefix);
-  disStatus           = 0x1;   
-  disStatusId         = dis_add_service(name, "X", &disStatus,        sizeof(disStatus)       , 0, 0);
+  sprintf(name, "%s_status",    prefix);
+  disStatusArray       = 0x1;
+  disStatusArrayId = dis_add_service(name, "X",                       &disStatusArray, sizeof(disStatusArray), 0, 0);
 
-  sprintf(name, "%s_mac",           prefix);
-  disMacId            = dis_add_service(name, "X", &disMac,           sizeof(disMac)          , 0, 0);
-
-  sprintf(name, "%s_ip",            prefix);
-  disIpId             = dis_add_service(name, "I", &disIp,            sizeof(disIp)           , 0, 0);
-
-  sprintf(name, "%s_nbadstatus",    prefix);
-  disNBadStatusId     = dis_add_service(name, "I", &disNBadStatus,    sizeof(disNBadStatus)   , 0, 0);
-
-  sprintf(name, "%s_nbadstate",     prefix);
-  disNBadStateId      = dis_add_service(name, "I", &disNBadState,     sizeof(disNBadState)    , 0, 0);
-
-  sprintf(name, "%s_tdiag",         prefix);
-  disTDiagId          = dis_add_service(name, "X", &disTDiag,         sizeof(disTDiag)        , 0, 0);
-
-  sprintf(name, "%s_ts0",           prefix);
-  disTS0Id            = dis_add_service(name, "X", &disTS0,           sizeof(disTS0)          , 0, 0);
-
-  sprintf(name, "%s_ntransfer",     prefix);
-  disNTransferId      = dis_add_service(name, "I", &disNTransfer,     sizeof(disNTransfer)    , 0, 0);
-
-  sprintf(name, "%s_ninjection",    prefix);
-  disNInjectionId     = dis_add_service(name, "I", &disNInjection,    sizeof(disNInjection)   , 0, 0);
-
-  sprintf(name, "%s_stattrans",     prefix);
-  disStatTransId      = dis_add_service(name, "I", &disStatTrans,     sizeof(disStatTrans)    , 0, 0);
-
-  sprintf(name, "%s_nlate",         prefix);
-  disNLateId          = dis_add_service(name, "I", &disNLate,         sizeof(disNLate)        , 0, 0);
-
-  sprintf(name, "%s_nearly",        prefix);
-  disNEarlyId         = dis_add_service(name, "I", &disNEarly,        sizeof(disNEarly)       , 0, 0);
-
-  sprintf(name, "%s_nconflict",     prefix);
-  disNConflictId      = dis_add_service(name, "I", &disNConflict,     sizeof(disNConflict)    , 0, 0);
-
-  sprintf(name, "%s_ndelayed",      prefix);
-  disNDelayedId       = dis_add_service(name, "I", &disNDelayed,      sizeof(disNDelayed)     , 0, 0);
-
-  sprintf(name, "%s_nslow",         prefix);
-  disNSlowId          = dis_add_service(name, "I", &disNSlow,         sizeof(disNSlow)        , 0, 0);
-
-  sprintf(name, "%s_offsslow",      prefix);
-  disOffsSlowId       = dis_add_service(name, "I", &disOffsSlow,      sizeof(disOffsSlow)     , 0, 0);
-
-  sprintf(name, "%s_offsslowmax",   prefix);
-  disOffsSlowMaxId    = dis_add_service(name, "I", &disOffsSlowMax,   sizeof(disOffsSlowMax)  , 0, 0);
-
-  sprintf(name, "%s_offsslowmin",   prefix);
-  disOffsSlowMinId    = dis_add_service(name, "I", &disOffsSlowMin,   sizeof(disOffsSlowMin)  , 0, 0);
-
-  sprintf(name, "%s_comlatency",    prefix);
-  disComLatencyId     = dis_add_service(name, "I", &disComLatency,    sizeof(disComLatency)   , 0, 0);
-
-  sprintf(name, "%s_comlatencymax", prefix);
-  disComLatencyMaxId  = dis_add_service(name, "I", &disComLatencyMax, sizeof(disComLatencyMax), 0, 0);
-
-  sprintf(name, "%s_comlatencymin", prefix);
-  disComLatencyMinId  = dis_add_service(name, "I", &disComLatencyMin, sizeof(disComLatencyMin), 0, 0);
-
-  sprintf(name, "%s_offsdone",      prefix);
-  disOffsDoneId       = dis_add_service(name, "I", &disOffsDone,      sizeof(disOffsDone)     , 0, 0);
-
-  sprintf(name, "%s_offsdonemax",   prefix);
-  disOffsDoneMaxId    = dis_add_service(name, "I", &disOffsDoneMax,   sizeof(disOffsDoneMax)  , 0, 0);
-
-  sprintf(name, "%s_offsdonemin",   prefix);
-  disOffsDoneMinId    = dis_add_service(name, "I", &disOffsDoneMin,   sizeof(disOffsDoneMin)  , 0, 0);
-
-  sprintf(name, "%s_usedsize",      prefix);
-  disUsedSizeId       = dis_add_service(name, "I", &disUsedSize,      sizeof(disUsedSize)     , 0, 0);
-  
+  sprintf(name, "%s_comlib_diag",   prefix);
+  disDiagDataId    = dis_add_service(name, "X:1;I:3;X:2;I:18",        &disDiagData,    sizeof(disDiagData),   0, 0);
 
   // monitoring data service
   sprintf(name, "%s_data", prefix);
-  disMonDataId  = dis_add_service(name, "I:2;X:3;I:2;X:3;I:3;D:5", &(disMonData), sizeof(monval_t), 0, 0);
+  disMonDataId     = dis_add_service(name, "I:2;X:3;I:2;X:3;I:3;D:5", &(disMonData),   sizeof(disMonData),    0, 0);
 
   // command clear
   sprintf(name, "%s_cmd_cleardiag", prefix);
-  disCmdClearId = dis_add_cmnd(name, 0, dis_cmd_clear, 17);
+  disCmdClearId    = dis_add_cmnd(name, 0, dis_cmd_clear, 17);
 } // disAddServices
 
                         
@@ -493,7 +375,6 @@ int main(int argc, char** argv)
   int      opt;
   bool     useFirstDev    = false;
   bool     getVersion     = false;
-  bool     startServer    = false;        // dummy no longer used, chk remove
   uint32_t gid=0xffffffff;                // gid for gateway
   uint32_t gidStart;                      // relevant to select the type of messages used as a start
   uint64_t idStop;                        // relevant to select the type of messages used as a stop
@@ -523,37 +404,15 @@ int main(int argc, char** argv)
 
   uint64_t statusArray;
   uint32_t state;
-  uint32_t nBadStatus;
-  uint32_t nBadState;
+  uint32_t nBadStatus = 0;
+  uint32_t nBadState  = 0;;
 
   uint32_t actState = COMMON_STATE_UNKNOWN;    // actual state of gateway
-  uint32_t verLib;                       // library version
-  uint32_t verFw;                        // firmware version
-  uint32_t verFwOld = 0x0;
+  uint64_t actStatusArray = 0x0;               // actual status array of gateway
+  uint32_t verLib;                             // library version
+  uint32_t verFw;                              // firmware version
 
-   // most of this is just dummuy
-  uint64_t mac;
-  uint32_t ip;
-  uint64_t tDiag;
-  uint64_t tS0;
-  uint32_t nTransfer;
-  uint32_t nInjection;
-  uint32_t statTrans;
-  uint32_t nLate;
-  uint32_t nEarly;
-  uint32_t nConflict;
-  uint32_t nDelayed;
-  uint32_t nSlow;
-  uint32_t offsSlow;
-  uint32_t offsSlowMax;
-  uint32_t offsSlowMin;
-  uint32_t comLatency;
-  uint32_t comLatencyMax;
-  uint32_t comLatencyMin;
-  uint32_t offsDone;
-  uint32_t offsDoneMax;
-  uint32_t offsDoneMin;
-  uint32_t usedSize;
+  comlib_diag_t diagData;
   
   char     ebPath[1024];
   uint64_t ebDevice;
@@ -571,7 +430,7 @@ int main(int argc, char** argv)
         useFirstDev = true;
         break;
       case 'd' :
-        startServer = true; // dummy, chk remove option
+        // dummy, chk remove option
         break;
       case 's' :
         tmpi        = strtoull(optarg, &tail, 0);
@@ -807,17 +666,10 @@ int main(int argc, char** argv)
         // update firmware data
         //wrmil_common_read(ebDevice, &fwStatus, &fwState, &nBadStatus, &nBadState, &fwVersion, &tmp32c, 0);
 
-        comlib_readDiag2(ebDevice, &statusArray, &state, &verFw, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &nLate, &nEarly, &nConflict, &nDelayed, &nSlow,
-                         &offsSlow, &offsSlowMax, &offsSlowMin, &comLatency, &comLatencyMax, &comLatencyMin, &offsDone, &offsDoneMax, &offsDoneMin, &usedSize, 0);
-
-
+        comlib_readDiag2(ebDevice, &state, &verFw, &statusArray, &diagData, 0);
         wrmil_info_read(ebDevice, &tmp32a, &tmp32b, &tmp32c, &fwGid, &stmp32a, &tmp64a, &tmp32f, &tmp32g, &tmp32h, &fwEvtsSnd, &fwEvtsRecT, &fwEvtsRecD, &fwEvtsRecErr, &fwEvtsBurst, 0);
         // if (fwGid != gid) statusArray |= COMMON_STATUS_OUTOFRANGE; // signal an error, buggy? better not use
-
-        //disStatus  = fwStatus;
-        //sprintf(disState  , "%s", wrmil_state_text(fwState));
-        //sprintf(disVersion, "%s", wrmil_version_text(fwVersion));
-               
+        
         // update monitoring data
         monData.nFwSnd    = fwEvtsSnd;
         monData.nFwRecT   = fwEvtsRecT;
@@ -828,155 +680,31 @@ int main(int argc, char** argv)
         if (disMonData.tMin ==  INITMINMAX) disMonData.tMin = NAN;
         if (disMonData.tMax == -INITMINMAX) disMonData.tMax = NAN;
 
-        // update service data
-        //dis_update_service(disStatusId);
-        //dis_update_service(disStateId);
-        //dis_update_service(disVersionId);
+        // update comlib diagnostic data
+        disStatusArray = statusArray;
+        sprintf(disState  , "%s", wrmil_state_text(state));
+        sprintf(disVersion, "%s", wrmil_version_text(verFw));
+        disDiagData    = diagData;
+
+        // update services
+        dis_update_service(disStatusArrayId);
+        dis_update_service(disStateId);
+        dis_update_service(disVersionId);
+        dis_update_service(disDiagDataId);
         dis_update_service(disMonDataId);
 
         // logging
         printFlag      = 0;
                    
         if (actState != state) {
-          printFlag    = 1;
-          actState = state;
-          sprintf(disState, "%s", wrmil_state_text(state));
-          dis_update_service(disStateId);
+          printFlag      = 1;
+          actState       = state;
         } // if state has changed
 
-        if (disStatus != statusArray) {
-          printFlag    = 1;
-          disStatus = statusArray;
-          dis_update_service(disStatusId);
+        if (actStatusArray != statusArray) {
+          printFlag      = 1;
+          actStatusArray = statusArray;
         } // if disStatus
-
-        if (disMac != mac) {
-          disMac = mac;
-          dis_update_service(disMacId);
-        } // if mac
-
-        if (disIp != ip) {
-          disIp = ip;
-          dis_update_service(disIpId);
-        } // if ip
-
-        if (disNBadStatus != nBadStatus) {
-          disNBadStatus = nBadStatus;
-          dis_update_service(disNBadStatusId);
-        } // if nBadStatus
-
-        if (disNBadState != nBadState) {
-          disNBadState = nBadState;
-          dis_update_service(disNBadStateId);
-        } // if nBadState
-
-        if (disTDiag != tDiag) {
-          disTDiag = tDiag;
-          dis_update_service(disTDiagId);
-        } // if tDiag
-
-        if (disTS0 != tS0) {
-          disTS0 = tS0;
-          dis_update_service(disTS0Id);
-        } // if tS0
-
-        if (disNTransfer != nTransfer) {
-          disNTransfer = nTransfer;
-          dis_update_service(disNTransferId);
-        } // if disNTransfer
-
-        if (disNInjection != nInjection) {
-          disNInjection = nInjection;
-          dis_update_service(disNInjectionId);
-        } // if nInjection
-
-        if (disNLate != nLate) {
-          disNLate = nLate;
-          dis_update_service(disNLateId);
-        } // if nLate
-
-        if (disNEarly != nEarly) {
-          disNEarly = nEarly;
-          dis_update_service(disNEarlyId);
-        } // if nEarly
-      
-        if (disNConflict != nConflict) {
-          disNConflict = nConflict;
-          dis_update_service(disNConflictId);
-        } // if nConflict
-
-        if (disNDelayed != nDelayed) {
-          disNDelayed = nDelayed;
-          dis_update_service(disNDelayedId);
-        } // if nDelayed
-
-        if (disNSlow != nSlow) {
-          disNSlow = nSlow;
-          dis_update_service(disNSlowId);
-        } // if nSlow
-
-        if (disOffsSlow != offsSlow) {
-          disOffsSlow = offsSlow;
-          dis_update_service(disOffsSlowId);
-        } // if nSlow
-
-        if (disOffsSlowMax != offsSlowMax) {
-          disOffsSlowMax = offsSlowMax;
-          dis_update_service(disOffsSlowMaxId);
-        } // if nSlowMax
-
-        if (disOffsSlowMin != offsSlowMin) {
-          disOffsSlowMin = offsSlowMin;
-          dis_update_service(disOffsSlowMinId);
-        } // if nSlowMin
-
-        if (disComLatency != comLatency) {
-          disComLatency = comLatency;
-          dis_update_service(disComLatencyId);
-        } // if comLatency
-
-        if (disComLatencyMax != comLatencyMax) {
-          disComLatencyMax = comLatencyMax;
-          dis_update_service(disComLatencyMaxId);
-        } // if comLatencyMax
-
-        if (disComLatencyMin != comLatencyMin) {
-          disComLatencyMin = comLatencyMin;
-          dis_update_service(disComLatencyMinId);
-        } // if comLatencyMin
-
-        if (disOffsDone != offsDone) {
-          disOffsDone = offsDone;
-          dis_update_service(disOffsDoneId);
-        } // if offsDone
-
-        if (disOffsDoneMax != offsDoneMax) {
-          disOffsDoneMax = offsDoneMax;
-          dis_update_service(disOffsDoneMaxId);
-        } // if offsDoneMax
-
-        if (disOffsDoneMin != offsDoneMin) {
-          disOffsDoneMin = offsDoneMin;
-          dis_update_service(disOffsDoneMinId);
-        } // if offsDoneMin
-
-        if (disUsedSize != usedSize) {
-          disUsedSize = usedSize;
-          dis_update_service(disUsedSizeId);
-        } // if usedSize
-
-        if (verFw != verFwOld) {
-          sprintf(disVersion, "%s", wrmil_version_text(verFw));
-          dis_update_service(disVersionId);
-          verFwOld = verFw;
-        } // if verFw 
-
-        /*
-        if (actStatus  != fwStatus) {
-          printFlag    = 1;
-          actStatus    = fwStatus;
-        } // if actstatus
-        */
 
         if (((t_new - t_lastlog) / one_ms_ns) > 60000) { // update once per minute
           printFlag = 1;

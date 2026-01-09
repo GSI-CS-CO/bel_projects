@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 08-Jan-2025
+ *  version : 09-Jan-2025
  *
  *  common x86 routines useful for CLIs handling firmware
  * 
@@ -254,14 +254,38 @@ void comlib_initShared(eb_address_t lm32_base, eb_address_t sharedOffset)
 void comlib_printDiag(uint64_t statusArray, uint32_t state, uint32_t version, uint64_t mac, uint32_t ip, uint32_t nBadStatus, uint32_t nBadState, uint64_t tDiag, uint64_t tS0,
                       uint32_t nTransfer, uint32_t nInjection, uint32_t statTrans, uint32_t nLate, uint32_t offsDone, uint32_t comLatency, uint32_t usedSize)
 {
-  comlib_printDiag2(statusArray, state, version, mac, ip, nBadStatus, nBadState, tDiag, tS0, nTransfer, nInjection, statTrans, nLate, 0, 0, 0, 0, 0, 0, 0, comLatency, 0, 0, offsDone, 0, 0, usedSize);
+  comlib_diag_t data;
+
+  data.mac           = mac;
+  data.ip            = ip;
+  data.nBadStatus    = nBadStatus;
+  data.nBadState     = nBadState;
+  data.tDiag         = tDiag;
+  data.tS0           = tS0;
+  data.nTransfer     = nTransfer;
+  data.nInjection    = nInjection;
+  data.statTrans     = statTrans;
+  data.nLate         = nLate;
+  data.nEarly        = 0;
+  data.nConflict     = 0;
+  data.nDelayed      = 0;
+  data.nSlow         = 0;
+  data.offsSlow      = 0;
+  data.offsSlowMax   = 0;
+  data.offsSlowMin   = 0;
+  data.comLatency    = comLatency;
+  data.comLatencyMax = 0;
+  data.comLatencyMin = 0;
+  data.offsDone      = offsDone;
+  data.offsDoneMax   = 0;
+  data.offsDoneMin   = 0;
+  data.usedSize      = usedSize;
+  
+  comlib_printDiag2(statusArray, state, version, data);
 } // comlib_printDiag
 
 
-void comlib_printDiag2(uint64_t statusArray, uint32_t state, uint32_t version, uint64_t mac, uint32_t ip, uint32_t nBadStatus, uint32_t nBadState, uint64_t tDiag, uint64_t tS0,
-                       uint32_t nTransfer, uint32_t nInjection, uint32_t statTrans, uint32_t nLate, uint32_t nEarly, uint32_t nConflict, uint32_t nDelayed, uint32_t nSlow,
-                       uint32_t offsSlow, uint32_t offsSlowMax, uint32_t offsSlowMin, uint32_t comLatency, uint32_t comLatencyMax, uint32_t comLatencyMin,
-                       uint32_t offsDone, uint32_t offsDoneMax, uint32_t offsDoneMin, uint32_t usedSize)
+void comlib_printDiag2(uint32_t state, uint32_t version, uint64_t statusArray, comlib_diag_t data) 
 {
   const struct tm* tm;
   char             timestr[60];
@@ -269,44 +293,44 @@ void comlib_printDiag2(uint64_t statusArray, uint32_t state, uint32_t version, u
   int              i;
 
   // display min offset values as '0' not as '4e9'
-  if (offsSlowMin   == 0xffffffff) offsSlowMin   = 0;
-  if (comLatencyMin == 0xffffffff) comLatencyMin = 0;
-  if (offsDoneMin   == 0xffffffff) offsDoneMin   = 0;
+  if (data.offsSlowMin   == 0xffffffff) data.offsSlowMin   = 0;
+  if (data.comLatencyMin == 0xffffffff) data.comLatencyMin = 0;
+  if (data.offsDoneMin   == 0xffffffff) data.offsDoneMin   = 0;
 
   printf("common: diags ...\n");
 
-  secs     = (unsigned long)((double)tS0 / 1000000000.0);
+  secs     = (unsigned long)((double)(data.tS0) / 1000000000.0);
   tm = gmtime(&secs);
   strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S TAI", tm);
   printf("firmware boot at                    : %s\n", timestr);
 
-  secs     = (unsigned long)((double)tDiag / 1000000000.0);
+  secs     = (unsigned long)((double)(data.tDiag) / 1000000000.0);
   tm = gmtime(&secs);
   strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S TAI", tm);
   printf("diagnostics reset at                : %s\n"       , timestr);
   printf("version                             : %06x\n"     , version);
-  printf("mac                                 : 0x%012" PRIx64 "\n", mac);
-  printf("ip                                  : %03d.%03d.%03d.%03d\n", (ip & 0xff000000) >> 24, (ip & 0x00ff0000) >> 16, (ip & 0x0000ff00) >> 8, (ip & 0x000000ff));
-  printf("used shared mem [byte]              : %u\n"       , usedSize);
-  printf("state (# of changes)                : %s (%u)\n"  , comlib_stateText(state), nBadState);
-  printf("# of transfers                      : %012u\n"    , nTransfer);
-  printf("# of injections                     : %012u\n"    , nInjection);  
-  printf("status of act transfer              : 0x%x\n"     , statTrans);
-  printf("# late events                       : %012u\n"    , nLate);
-  printf("# early events                      : %012u\n"    , nEarly);
-  printf("# conflict events                   : %012u\n"    , nConflict);
-  printf("# delayed events                    : %012u\n"    , nDelayed);
-  printf("# slow events (wait too late)       : %012u\n"    , nSlow);
-  printf("offset slow     [us]                : %12.3f\n"   , (double)offsSlow/1000.0);
-  printf("offset slow max [us]                : %12.3f\n"   , (double)offsSlowMax/1000.0);
-  printf("offset slow min [us]                : %12.3f\n"   , (double)offsSlowMin/1000.0);
-  printf("communication latency     [us]      : %12.3f\n"   , (double)comLatency/1000.0);
-  printf("communication latency max [us]      : %12.3f\n"   , (double)comLatencyMax/1000.0);
-  printf("communication latency min [us]      : %12.3f\n"   , (double)comLatencyMin/1000.0);
-  printf("processing time     [us]            : %12.3f\n"   , (double)offsDone/1000.0);
-  printf("processing time max [us]            : %12.3f\n"   , (double)offsDoneMax/1000.0);
-  printf("processing time min [us]            : %12.3f\n"   , (double)offsDoneMin/1000.0);
-  printf("sum status (# changes)              : 0x%" PRIx64 " (%u)\n"     , statusArray, nBadStatus);
+  printf("mac                                 : 0x%012" PRIx64 "\n", data.mac);
+  printf("ip                                  : %03d.%03d.%03d.%03d\n", (data.ip & 0xff000000) >> 24, (data.ip & 0x00ff0000) >> 16, (data.ip & 0x0000ff00) >> 8, (data.ip & 0x000000ff));
+  printf("used shared mem [byte]              : %u\n"       , data.usedSize);
+  printf("state (# of changes)                : %s (%u)\n"  , comlib_stateText(state), data.nBadState);
+  printf("# of transfers                      : %012u\n"    , data.nTransfer);
+  printf("# of injections                     : %012u\n"    , data.nInjection);  
+  printf("status of act transfer              : 0x%x\n"     , data.statTrans);
+  printf("# late events                       : %012u\n"    , data.nLate);
+  printf("# early events                      : %012u\n"    , data.nEarly);
+  printf("# conflict events                   : %012u\n"    , data.nConflict);
+  printf("# delayed events                    : %012u\n"    , data.nDelayed);
+  printf("# slow events (wait too late)       : %012u\n"    , data.nSlow);
+  printf("offset slow     [us]                : %12.3f\n"   , (double)(data.offsSlow)/1000.0);
+  printf("offset slow max [us]                : %12.3f\n"   , (double)(data.offsSlowMax)/1000.0);
+  printf("offset slow min [us]                : %12.3f\n"   , (double)(data.offsSlowMin)/1000.0);
+  printf("communication latency     [us]      : %12.3f\n"   , (double)(data.comLatency)/1000.0);
+  printf("communication latency max [us]      : %12.3f\n"   , (double)(data.comLatencyMax)/1000.0);
+  printf("communication latency min [us]      : %12.3f\n"   , (double)(data.comLatencyMin)/1000.0);
+  printf("processing time     [us]            : %12.3f\n"   , (double)(data.offsDone)/1000.0);
+  printf("processing time max [us]            : %12.3f\n"   , (double)(data.offsDoneMax)/1000.0);
+  printf("processing time min [us]            : %12.3f\n"   , (double)(data.offsDoneMin)/1000.0);
+  printf("sum status (# changes)              : 0x%" PRIx64 " (%u)\n", statusArray, data.nBadStatus);
   if ((statusArray >> COMMON_STATUS_OK) & 0x1)
     printf("overall status                      : OK\n");
   else
@@ -322,29 +346,30 @@ int comlib_readDiag(eb_device_t device, uint64_t  *statusArray, uint32_t  *state
                     uint32_t *nBadState, uint64_t  *tDiag, uint64_t  *tS0, uint32_t  *nTransfer, uint32_t  *nInjection, uint32_t  *statTrans,
                     uint32_t *nLate, uint32_t *offsDone, uint32_t *comLatency, uint32_t *usedSize, int  printFlag)
 {
-  uint32_t nEarly;
-  uint32_t nConflict;
-  uint32_t nDelayed;
-  uint32_t nSlow;
-  uint32_t offsSlow;
-  uint32_t offsSlowMax;
-  uint32_t offsSlowMin;
-  uint32_t comLatencyMax;
-  uint32_t comLatencyMin;
-  uint32_t offsDoneMax;
-  uint32_t offsDoneMin;
-  
-  return(comlib_readDiag2(device, statusArray, state, version, mac, ip, nBadStatus,  nBadState, tDiag, tS0, nTransfer, nInjection, statTrans,
-                          nLate, &nEarly, &nConflict, &nDelayed, &nSlow, &offsSlow, &offsSlowMax, &offsSlowMin, comLatency, &comLatencyMax, &comLatencyMin,
-                          offsDone, &offsDoneMax, &offsDoneMin, usedSize, printFlag));
+  comlib_diag_t data;
+  int           status;
+
+  status = comlib_readDiag2(device, state, version, statusArray, &data, printFlag);
+
+  *mac     = data.mac;
+  *ip      = data.ip;
+  *nBadStatus = data.nBadStatus;
+  *nBadState  = data.nBadState;
+  *tDiag      = data.tDiag;
+  *tS0        = data.tS0;
+  *nTransfer  = data.nTransfer;
+  *nInjection = data.nInjection;
+  *statTrans  = data.statTrans;
+  *nLate      = data.nLate;
+  *offsDone   = data.offsDone;
+  *comLatency = data.comLatency;
+  *usedSize   = data.usedSize;
+
+  return status;
 } // comlib_readDiag
 
 
-int comlib_readDiag2(eb_device_t device, uint64_t  *statusArray, uint32_t  *state, uint32_t  *version, uint64_t  *mac, uint32_t  *ip, uint32_t  *nBadStatus,
-                     uint32_t *nBadState, uint64_t  *tDiag, uint64_t  *tS0, uint32_t  *nTransfer, uint32_t  *nInjection, uint32_t  *statTrans,
-                     uint32_t *nLate, uint32_t *nEarly, uint32_t *nConflict, uint32_t *nDelayed, uint32_t *nSlow, uint32_t *offsSlow, uint32_t *offsSlowMax,
-                     uint32_t *offsSlowMin, uint32_t *comLatency, uint32_t *comLatencyMax, uint32_t *comLatencyMin, uint32_t *offsDone, uint32_t *offsDoneMax,
-                     uint32_t *offsDoneMin, uint32_t *usedSize, int  printFlag)
+int comlib_readDiag2(eb_device_t device, uint32_t  *state, uint32_t  *version, uint64_t  *statusArray, comlib_diag_t *diagData, int  printFlag)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;
@@ -384,37 +409,35 @@ int comlib_readDiag2(eb_device_t device, uint64_t  *statusArray, uint32_t  *stat
   eb_cycle_read(cycle, common_usedSize,       EB_BIG_ENDIAN|EB_DATA32, &(data[30]));
   if ((eb_status = eb_cycle_close(cycle)) != EB_OK) return eb_status;
 
-  *statusArray      = ((uint64_t)(data[0]) << 32) | (uint64_t)(data[1]);
-  *state            = data[2];
-  *version          = data[3];
-  *mac              = ((uint64_t)(data[4]) << 32) | (uint64_t)(data[5]);
-  *ip               = data[6];
-  *nBadStatus       = data[7];
-  *nBadState        = data[8];
-  *tDiag            = ((uint64_t)(data[9])  << 32) | (uint64_t)(data[10]);
-  *tS0              = ((uint64_t)(data[11]) << 32) | (uint64_t)(data[12]);
-  *nTransfer        = data[13];
-  *nInjection       = data[14];
-  *statTrans        = data[15];
-  *nLate            = data[16];
-  *nEarly           = data[17];
-  *nConflict        = data[18];
-  *nDelayed         = data[19];
-  *nSlow            = data[20];
-  *offsSlow         = data[21];
-  *offsSlowMax      = data[22];
-  *offsSlowMin      = data[23];
-  *comLatency       = data[24];
-  *comLatencyMax    = data[25];
-  *comLatencyMin    = data[26];
-  *offsDone         = data[27];
-  *offsDoneMax      = data[28];
-  *offsDoneMin      = data[29];
-  *usedSize         = data[30];
+  *statusArray               = ((uint64_t)(data[0]) << 32) | (uint64_t)(data[1]);
+  *state                     = data[2];
+  *version                   = data[3];
+  diagData->mac              = ((uint64_t)(data[4]) << 32) | (uint64_t)(data[5]);
+  diagData->ip               = data[6];
+  diagData->nBadStatus       = data[7];
+  diagData->nBadState        = data[8];
+  diagData->tDiag            = ((uint64_t)(data[9])  << 32) | (uint64_t)(data[10]);
+  diagData->tS0              = ((uint64_t)(data[11]) << 32) | (uint64_t)(data[12]);
+  diagData->nTransfer        = data[13];
+  diagData->nInjection       = data[14];
+  diagData->statTrans        = data[15];
+  diagData->nLate            = data[16];
+  diagData->nEarly           = data[17];
+  diagData->nConflict        = data[18];
+  diagData->nDelayed         = data[19];
+  diagData->nSlow            = data[20];
+  diagData->offsSlow         = data[21];
+  diagData->offsSlowMax      = data[22];
+  diagData->offsSlowMin      = data[23];
+  diagData->comLatency       = data[24];
+  diagData->comLatencyMax    = data[25];
+  diagData->comLatencyMin    = data[26];
+  diagData->offsDone         = data[27];
+  diagData->offsDoneMax      = data[28];
+  diagData->offsDoneMin      = data[29];
+  diagData->usedSize         = data[30];
 
-  if (printFlag) comlib_printDiag2(*statusArray, *state, *version, *mac, *ip, *nBadStatus, *nBadState, *tDiag, *tS0, *nTransfer, *nInjection, *statTrans,
-                                   *nLate, *nEarly, *nConflict, *nDelayed, *nSlow, *offsSlow, *offsSlowMax, *offsSlowMin,
-                                   *comLatency, *comLatencyMax, *comLatencyMin, *offsDone, *offsDoneMax, *offsDoneMin, *usedSize);
+  if (printFlag) comlib_printDiag2(*state, *version, *statusArray, *diagData);
 
   return eb_status;
 } // comlib_readDiag2
