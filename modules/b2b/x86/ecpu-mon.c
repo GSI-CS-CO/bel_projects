@@ -3,7 +3,7 @@
  *
  *  created : 2026
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 08-jan-2026
+ *  version : 09-jan-2026
  *
  * subscribes to and displays status of a ecpu systems based on common lib
  * (requires a server such as 'b2b-serv-sys' on each local host)
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define ECPU_MON_VERSION 0x000811
+#define ECPU_MON_VERSION 0x000812
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -272,55 +272,17 @@ const char * typeNames[] = {
 };
 
 struct ecpuSystem_t {
-  char      version[DIMCHARSIZE];
-  char      state[DIMCHARSIZE];
-  char      hostname[DIMCHARSIZE];
-  uint64_t  status;
-  uint32_t  nBadState;
-  uint32_t  nBadStatus;
-  uint64_t  tS0;
-  uint64_t  tDiag;
-  uint32_t  nTransfer;
-  uint32_t  usedSize;
-  uint32_t  nLate;
-  uint32_t  nEarly;
-  uint32_t  nConflict;
-  uint32_t  nDelayed;
-  uint32_t  nSlow;
-  uint32_t  offsSlow;
-  uint32_t  offsSlowMax;
-  uint32_t  offsSlowMin;
-  uint32_t  comLatency;
-  uint32_t  comLatencyMax;
-  uint32_t  comLatencyMin;
-  uint32_t  offsDone;
-  uint32_t  offsDoneMax;
-  uint32_t  offsDoneMin;
-
-  uint32_t  versionId;
-  uint32_t  stateId;
-  uint32_t  hostnameId;
-  uint32_t  statusId;
-  uint32_t  nBadStateId;
-  uint32_t  nBadStatusId;
-  uint32_t  tS0Id;
-  uint32_t  tDiagId;
-  uint32_t  nTransferId;
-  uint32_t  usedSizeId;
-  uint32_t  nLateId;
-  uint32_t  nEarlyId;
-  uint32_t  nConflictId;
-  uint32_t  nDelayedId;
-  uint32_t  nSlowId;
-  uint32_t  offsSlowId;
-  uint32_t  offsSlowMaxId;
-  uint32_t  offsSlowMinId;
-  uint32_t  comLatencyId;
-  uint32_t  comLatencyMaxId;
-  uint32_t  comLatencyMinId;  
-  uint32_t  offsDoneId;
-  uint32_t  offsDoneMaxId;
-  uint32_t  offsDoneMinId;
+  char          version[DIMCHARSIZE];
+  char          state[DIMCHARSIZE];
+  char          hostname[DIMCHARSIZE];
+  uint64_t      status;
+  comlib_diag_t diagData;
+  
+  uint32_t      versionId;
+  uint32_t      stateId;
+  uint32_t      hostnameId;
+  uint32_t      statusId;
+  uint32_t      diagDataId;
 }; // struct ecpuSystem
 
 struct ecpuSystem_t dicSystem[ECPUNSYS];
@@ -366,47 +328,9 @@ void dicSubscribeServices(char *environment)
     sprintf(name, "%s_%s_%s_hostname",      projNames[i], environment, sysShortNames[i]);
     dicSystem[i].hostnameId      = dic_info_service(name, MONITORED, 0, (dicSystem[i].hostname),       DIMCHARSIZE,                        0, 0, &no_link_32, sizeof(no_link_32));
     sprintf(name, "%s_%s_%s_status",        projNames[i], environment, sysShortNames[i]);
-    dicSystem[i].statusId        = dic_info_service(name, MONITORED, 0, &(dicSystem[i].status),        sizeof(uint64_t),                   0, 0, &no_link_64, sizeof(no_link_64));
-    sprintf(name, "%s_%s_%s_nbadstate",     projNames[i], environment, sysShortNames[i]);
-    dicSystem[i].nBadStateId     = dic_info_service(name, MONITORED, 0, &(dicSystem[i].nBadState),     sizeof(dicSystem[i].nBadState),     0, 0, &no_link_32, sizeof(no_link_32));
-    sprintf(name, "%s_%s_%s_nbadstatus",    projNames[i], environment, sysShortNames[i]);
-    dicSystem[i].nBadStatusId    = dic_info_service(name, MONITORED, 0, &(dicSystem[i].nBadStatus),    sizeof(dicSystem[i].nBadStatus),    0, 0, &no_link_32, sizeof(no_link_32));
-    sprintf(name, "%s_%s_%s_ts0",           projNames[i], environment, sysShortNames[i]);
-    dicSystem[i].tS0Id           = dic_info_service(name, MONITORED, 0, &(dicSystem[i].tS0),           sizeof(dicSystem[i].tS0),           0, 0, &no_link_64, sizeof(no_link_64));
-    sprintf(name, "%s_%s_%s_ntransfer",     projNames[i], environment, sysShortNames[i]);
-    dicSystem[i].nTransferId     = dic_info_service(name, MONITORED, 0, &(dicSystem[i].nTransfer),     sizeof(dicSystem[i].nTransfer),     0, 0, &no_link_32, sizeof(no_link_32));
-    sprintf(name, "%s_%s_%s_tdiag",         projNames[i], environment, sysShortNames[i]);
-    dicSystem[i].tDiagId         = dic_info_service(name, MONITORED, 0, &(dicSystem[i].tDiag),         sizeof(dicSystem[i].tDiag),         0, 0, &no_link_64, sizeof(no_link_64));
-    sprintf(name, "%s_%s_%s_usedsize",      projNames[i], environment, sysShortNames[i]);
-    dicSystem[i].usedSizeId      = dic_info_service(name, MONITORED, 0, &(dicSystem[i].usedSize),      sizeof(dicSystem[i].usedSize),      0, 0, &no_link_32, sizeof(no_link_32));
-    sprintf(name, "%s_%s_%s_nlate",         projNames[i], environment, sysShortNames[i]);
-    dicSystem[i].nLateId         = dic_info_service(name, MONITORED, 0, &(dicSystem[i].nLate),         sizeof(dicSystem[i].nLate),         0, 0, &no_link_32, sizeof(no_link_32));
-    sprintf(name, "%s_%s_%s_nearly",        projNames[i], environment, sysShortNames[i]);
-    dicSystem[i].nEarlyId        = dic_info_service(name, MONITORED, 0, &(dicSystem[i].nEarly),        sizeof(dicSystem[i].nEarly),        0, 0, &no_link_32, sizeof(no_link_32));
-    sprintf(name, "%s_%s_%s_nconflict",     projNames[i], environment, sysShortNames[i]);
-    dicSystem[i].nConflictId     = dic_info_service(name, MONITORED, 0, &(dicSystem[i].nConflict),     sizeof(dicSystem[i].nConflict),     0, 0, &no_link_32, sizeof(no_link_32));
-    sprintf(name, "%s_%s_%s_ndelayed",      projNames[i], environment, sysShortNames[i]);
-    dicSystem[i].nDelayedId      = dic_info_service(name, MONITORED, 0, &(dicSystem[i].nDelayed),      sizeof(dicSystem[i].nDelayed),      0, 0, &no_link_32, sizeof(no_link_32));
-    sprintf(name, "%s_%s_%s_nslow",         projNames[i], environment, sysShortNames[i]);
-    dicSystem[i].nSlowId         = dic_info_service(name, MONITORED, 0, &(dicSystem[i].nSlow),         sizeof(dicSystem[i].nSlow),         0, 0, &no_link_32, sizeof(no_link_32));
-    sprintf(name, "%s_%s_%s_offsslow",      projNames[i], environment, sysShortNames[i]);
-    dicSystem[i].offsSlowId      = dic_info_service(name, MONITORED, 0, &(dicSystem[i].offsSlow),      sizeof(dicSystem[i].offsSlow),      0, 0, &no_link_32, sizeof(no_link_32));
-    sprintf(name, "%s_%s_%s_offsslowmax",   projNames[i], environment, sysShortNames[i]);
-    dicSystem[i].offsSlowMaxId   = dic_info_service(name, MONITORED, 0, &(dicSystem[i].offsSlowMax),   sizeof(dicSystem[i].offsSlowMax),   0, 0, &no_link_32, sizeof(no_link_32));
-    sprintf(name, "%s_%s_%s_offsslowmin",   projNames[i], environment, sysShortNames[i]);
-    dicSystem[i].offsSlowMinId   = dic_info_service(name, MONITORED, 0, &(dicSystem[i].offsSlowMin),   sizeof(dicSystem[i].offsSlowMin),   0, 0, &no_link_32, sizeof(no_link_32));
-    sprintf(name, "%s_%s_%s_comlatency",    projNames[i], environment, sysShortNames[i]);
-    dicSystem[i].comLatencyId    = dic_info_service(name, MONITORED, 0, &(dicSystem[i].comLatency),    sizeof(dicSystem[i].comLatency),    0, 0, &no_link_32, sizeof(no_link_32));
-    sprintf(name, "%s_%s_%s_comlatencymax", projNames[i], environment, sysShortNames[i]);
-    dicSystem[i].comLatencyMaxId = dic_info_service(name, MONITORED, 0, &(dicSystem[i].comLatencyMax), sizeof(dicSystem[i].comLatencyMax), 0, 0, &no_link_32, sizeof(no_link_32));
-    sprintf(name, "%s_%s_%s_comlatencymin", projNames[i], environment, sysShortNames[i]);
-    dicSystem[i].comLatencyMinId = dic_info_service(name, MONITORED, 0, &(dicSystem[i].comLatencyMin), sizeof(dicSystem[i].comLatencyMin), 0, 0, &no_link_32, sizeof(no_link_32));
-    sprintf(name, "%s_%s_%s_offsdone",      projNames[i], environment, sysShortNames[i]);
-    dicSystem[i].offsDoneId      = dic_info_service(name, MONITORED, 0, &(dicSystem[i].offsDone),      sizeof(dicSystem[i].offsDone),      0, 0, &no_link_32, sizeof(no_link_32));
-    sprintf(name, "%s_%s_%s_offsdonemax",   projNames[i], environment, sysShortNames[i]);
-    dicSystem[i].offsDoneMaxId   = dic_info_service(name, MONITORED, 0, &(dicSystem[i].offsDoneMax),   sizeof(dicSystem[i].offsDoneMax),   0, 0, &no_link_32, sizeof(no_link_32));
-    sprintf(name, "%s_%s_%s_offsdonemin",   projNames[i], environment, sysShortNames[i]);
-    dicSystem[i].offsDoneId      = dic_info_service(name, MONITORED, 0, &(dicSystem[i].offsDoneMin),   sizeof(dicSystem[i].offsDoneMin),   0, 0, &no_link_32, sizeof(no_link_32));
+    dicSystem[i].statusId        = dic_info_service(name, MONITORED, 0, &(dicSystem[i].status),        sizeof(dicSystem[i].status),        0, 0, &no_link_64, sizeof(no_link_64));
+    sprintf(name, "%s_%s_%s_comlib_diag",   projNames[i], environment, sysShortNames[i]);
+    dicSystem[i].diagDataId      = dic_info_service(name, MONITORED, 0, &(dicSystem[i].diagData),      sizeof(dicSystem[i].diagData),      0, 0, &no_link_32, sizeof(no_link_32));
   } // for i
 } // dicSubscribeServices
 
@@ -474,84 +398,87 @@ void printServices(int flagOnce)
   for (i=0; i<ECPUNSYS; i++) {
     // print hostname always
     tmp = (uint32_t *)(&(dicSystem[i].hostname));
-    if (*tmp == no_link_32)                      sprintf(cHost,        "%16s",         no_link_str);
-    else                                         sprintf(cHost,        "%16s",         dicSystem[i].hostname);
+    if (*tmp == no_link_32)                      sprintf(cHost,                       "%16s",         no_link_str);
+    else                                         sprintf(cHost,                       "%16s",         dicSystem[i].hostname);
 
     // standard data
     if (!flagPrintOther) {
-      if (dicSystem[i].tDiag      == no_link_64)   sprintf(buff,       "%15s",         no_link_str);
+      if (dicSystem[i].diagData.tDiag         == no_link_64)   sprintf(buff,          "%15s",         no_link_str);
       else {
-        time_date = (time_t)(dicSystem[i].tDiag / 1000000000);
+        time_date = (time_t)(dicSystem[i].diagData.tDiag / 1000000000);
         strftime(buff,50,"%d-%b-%y %H:%M",localtime(&time_date));
       } // else: valid
       sprintf(cTDiag,     "%15s",         buff);
-      if (dicSystem[i].tS0        == no_link_64)   sprintf(buff,       "%15s",         no_link_str);
+      if (dicSystem[i].diagData.tS0           == no_link_64)   sprintf(buff,           "%15s",         no_link_str);
       else {
-        time_date = (time_t)(dicSystem[i].tS0   / 1000000000);
+        time_date = (time_t)(dicSystem[i].diagData.tS0   / 1000000000);
         strftime(buff,50,"%d-%b-%y %H:%M",localtime(&time_date));
       } // else: valid
-      sprintf(cTBoot,     "%15s",         buff);
-      if (dicSystem[i].nLate         == no_link_32)   sprintf(cNLate,         "%10s",         no_link_str);
-      else                                            sprintf(cNLate,         "%10u",         dicSystem[i].nLate);
-      if (dicSystem[i].nEarly        == no_link_32)   sprintf(cNEarly,        "%10s",         no_link_str);
-      else                                            sprintf(cNEarly,        "%10u",         dicSystem[i].nEarly);
-      if (dicSystem[i].nConflict     == no_link_32)   sprintf(cNConflict,     "%10s",         no_link_str);
-      else                                            sprintf(cNConflict,     "%10u",         dicSystem[i].nConflict);
-      if (dicSystem[i].nDelayed      == no_link_32)   sprintf(cNDelayed,      "%10s",         no_link_str);
-      else                                            sprintf(cNDelayed,      "%10u",         dicSystem[i].nDelayed);
-      if (dicSystem[i].usedSize      == no_link_32)   sprintf(cUsedSize,       "%7s",         no_link_str);
-      else                                            sprintf(cUsedSize,       "%7u",         dicSystem[i].usedSize);
-      if (dicSystem[i].nBadStatus    == no_link_32)   sprintf(cNBadStatus,     "%9s",         no_link_str);
-      else                                            sprintf(cNBadStatus,     "%9u",         dicSystem[i].nBadStatus);
-      if (dicSystem[i].nBadState     == no_link_32)   sprintf(cNBadState,      "%9s",         no_link_str);
-      else                                            sprintf(cNBadState,      "%9u",         dicSystem[i].nBadState);
-      if (dicSystem[i].status        == no_link_64)   sprintf(cStatus,        "%13s",         no_link_str);
-      else                                            sprintf(cStatus, "%13"PRIx64"",         dicSystem[i].status);
+                                                               sprintf(cTBoot,         "%15s",         buff);
+      if (dicSystem[i].diagData.nLate         == no_link_32)   sprintf(cNLate,         "%10s",         no_link_str);
+      else                                                     sprintf(cNLate,         "%10u",         dicSystem[i].diagData.nLate);
+      if (dicSystem[i].diagData.nEarly        == no_link_32)   sprintf(cNEarly,        "%10s",         no_link_str);
+      else                                                     sprintf(cNEarly,        "%10u",         dicSystem[i].diagData.nEarly);
+      if (dicSystem[i].diagData.nConflict     == no_link_32)   sprintf(cNConflict,     "%10s",         no_link_str);
+      else                                                     sprintf(cNConflict,     "%10u",         dicSystem[i].diagData.nConflict);
+      if (dicSystem[i].diagData.nDelayed      == no_link_32)   sprintf(cNDelayed,      "%10s",         no_link_str);
+      else                                                     sprintf(cNDelayed,      "%10u",         dicSystem[i].diagData.nDelayed);
+      if (dicSystem[i].diagData.usedSize      == no_link_32)   sprintf(cUsedSize,       "%7s",         no_link_str);
+      else                                                     sprintf(cUsedSize,       "%7u",         dicSystem[i].diagData.usedSize);
+      if (dicSystem[i].diagData.nBadStatus    == no_link_32)   sprintf(cNBadStatus,     "%9s",         no_link_str);
+      else                                                     sprintf(cNBadStatus,     "%9u",         dicSystem[i].diagData.nBadStatus);
+      if (dicSystem[i].diagData.nBadState     == no_link_32)   sprintf(cNBadState,      "%9s",         no_link_str);
+      else                                                     sprintf(cNBadState,      "%9u",         dicSystem[i].diagData.nBadState);
+      if (dicSystem[i].status                 == no_link_64)   sprintf(cStatus,        "%13s",         no_link_str);
+      else                                                     sprintf(cStatus, "%13"PRIx64"",         dicSystem[i].status);
       tmp = (uint32_t *)(&(dicSystem[i].state));
-      if (*tmp == no_link_32)                         sprintf(cState,         "%10s",         no_link_str);
-      else                                            sprintf(cState,         "%10s",         dicSystem[i].state); 
+      if (*tmp == no_link_32)                                  sprintf(cState,         "%10s",         no_link_str);
+      else                                                     sprintf(cState,         "%10s",         dicSystem[i].state);
       tmp = (uint32_t *)(&(dicSystem[i].version));
-      if (*tmp == no_link_32)                         sprintf(cVersion,        "%8s",         no_link_str);
-      else                                            sprintf(cVersion,        "%8s",         dicSystem[i].version); 
+      if (*tmp == no_link_32)                                  sprintf(cVersion,        "%8s",         no_link_str);
+      else                                                     sprintf(cVersion,        "%8s",         dicSystem[i].version); 
       
       printf(" %2s %6s %3s %8s %10s %9s %13s %9s %15s %15s %7s %10s %10s %10s %10s %16s\n", sysClearKeys[i], ringNames[i], typeNames[i], cVersion, cState, cNBadState, cStatus,
              cNBadStatus, cTBoot, cTDiag, cUsedSize, cNLate, cNEarly, cNConflict, cNDelayed, cHost);
     } // if !flagPrintOther
     // other data
     else { 
-      if (dicSystem[i].nSlow         == no_link_32)   sprintf(cNSlow,          "%10s",        no_link_str);
-      else                                            sprintf(cNSlow,          "%10u",        dicSystem[i].nSlow);
-      if (dicSystem[i].offsSlow      == no_link_32)   sprintf(cOffsSlow,        "%9s",        no_link_str);
-      else                                            sprintf(cOffsSlow,      "%9.3f",        (double)(dicSystem[i].offsSlow)/1000.0);
-      if (dicSystem[i].offsSlowMax   == no_link_32)   sprintf(cOffsSlowMax,     "%9s",        no_link_str);
-      else                                            sprintf(cOffsSlowMax,   "%9.3f",        (double)(dicSystem[i].offsSlowMax)/1000.0);
-      if (dicSystem[i].offsSlowMin   == no_link_32)   sprintf(cOffsSlowMin,     "%9s",        no_link_str);
+      if (dicSystem[i].diagData.nSlow         == no_link_32)   sprintf(cNSlow,          "%10s",        no_link_str);
+      else                                                     sprintf(cNSlow,          "%10u",        dicSystem[i].diagData.nSlow);
+      if (dicSystem[i].diagData.offsSlow      == no_link_32)   sprintf(cOffsSlow,        "%9s",        no_link_str);
+      else                                                     sprintf(cOffsSlow,      "%9.3f",        (double)(dicSystem[i].diagData.offsSlow)/1000.0);
+      if (dicSystem[i].diagData.offsSlowMax   == no_link_32)   sprintf(cOffsSlowMax,     "%9s",        no_link_str);
+      else                                                     sprintf(cOffsSlowMax,   "%9.3f",        (double)(dicSystem[i].diagData.offsSlowMax)/1000.0);
+      if (dicSystem[i].diagData.offsSlowMin   == no_link_32)   sprintf(cOffsSlowMin,     "%9s",        no_link_str);
       else { // display 0xffffffff (no min value) as '0'
-        itmp = dicSystem[i].offsSlowMin;
-        if (itmp == 0xffffffff) itmp = 0;             sprintf(cOffsSlowMin,   "%9.3f",        (double)itmp/1000.0);
+        itmp = dicSystem[i].diagData.offsSlowMin;
+        if (itmp == 0xffffffff) itmp = 0;
+                                                               sprintf(cOffsSlowMin,   "%9.3f",        (double)itmp/1000.0);
       } // data valid
 
-      if (dicSystem[i].comLatency    == no_link_32)   sprintf(cComLatency,      "%9s",        no_link_str);
-      else                                            sprintf(cComLatency,    "%9.3f",        (double)(dicSystem[i].comLatency)/1000.0);
-      if (dicSystem[i].comLatencyMax == no_link_32)   sprintf(cComLatencyMax,   "%9s",        no_link_str);
-      else                                            sprintf(cComLatencyMax, "%9.3f",        (double)(dicSystem[i].comLatencyMax)/1000.0);
-      if (dicSystem[i].comLatencyMin == no_link_32)   sprintf(cComLatencyMin,   "%9s",        no_link_str);
+      if (dicSystem[i].diagData.comLatency    == no_link_32)   sprintf(cComLatency,      "%9s",        no_link_str);
+      else                                                     sprintf(cComLatency,    "%9.3f",        (double)(dicSystem[i].diagData.comLatency)/1000.0);
+      if (dicSystem[i].diagData.comLatencyMax == no_link_32)   sprintf(cComLatencyMax,   "%9s",        no_link_str);
+      else                                                     sprintf(cComLatencyMax, "%9.3f",        (double)(dicSystem[i].diagData.comLatencyMax)/1000.0);
+      if (dicSystem[i].diagData.comLatencyMin == no_link_32)   sprintf(cComLatencyMin,   "%9s",        no_link_str);
       else { // display 0xffffffff (no min value) as '0'
-        itmp = dicSystem[i].comLatencyMin;
-        if (itmp == 0xffffffff) itmp = 0;             sprintf(cComLatencyMin, "%9.3f",        (double)itmp/1000.0);
+        itmp = dicSystem[i].diagData.comLatencyMin;
+        if (itmp == 0xffffffff) itmp = 0;
+                                                               sprintf(cComLatencyMin, "%9.3f",        (double)itmp/1000.0);
       } // data valid
 
-      if (dicSystem[i].offsDone      == no_link_32)   sprintf(cOffsDone,        "%9s",        no_link_str);
-      else                                            sprintf(cOffsDone,      "%9.3f",        (double)(dicSystem[i].offsDone)/1000.0);
-      if (dicSystem[i].offsDoneMax   == no_link_32)   sprintf(cOffsDoneMax,     "%9s",        no_link_str);
-      else                                            sprintf(cOffsDoneMax,   "%9.3f",        (double)(dicSystem[i].offsDoneMax)/1000.0);
-      if (dicSystem[i].offsDoneMin   == no_link_32)   sprintf(cOffsDoneMin,     "%9s",        no_link_str);
+      if (dicSystem[i].diagData.offsDone      == no_link_32)   sprintf(cOffsDone,        "%9s",        no_link_str);
+      else                                                     sprintf(cOffsDone,      "%9.3f",        (double)(dicSystem[i].diagData.offsDone)/1000.0);
+      if (dicSystem[i].diagData.offsDoneMax   == no_link_32)   sprintf(cOffsDoneMax,     "%9s",        no_link_str);
+      else                                                     sprintf(cOffsDoneMax,   "%9.3f",        (double)(dicSystem[i].diagData.offsDoneMax)/1000.0);
+      if (dicSystem[i].diagData.offsDoneMin   == no_link_32)   sprintf(cOffsDoneMin,     "%9s",        no_link_str);
       else { // display 0xffffffff (no min value) as '0'
-        itmp = dicSystem[i].offsDoneMin;
-        if (itmp == 0xffffffff) itmp = 0;             sprintf(cOffsDoneMin,   "%9.3f",        (double)itmp/1000.0);
+        itmp = dicSystem[i].diagData.offsDoneMin;
+        if (itmp == 0xffffffff) itmp = 0;
+                                                               sprintf(cOffsDoneMin,   "%9.3f",        (double)itmp/1000.0);
       } // data valid
-      if (dicSystem[i].nTransfer     == no_link_32)   sprintf(cNTransfer,     "%10s",         no_link_str);
-      else                                            sprintf(cNTransfer,     "%10u",         dicSystem[i].nTransfer);
+      if (dicSystem[i].diagData.nTransfer     == no_link_32)   sprintf(cNTransfer,      "%10s",        no_link_str);
+      else                                                     sprintf(cNTransfer,      "%10u",        dicSystem[i].diagData.nTransfer);
 
 
       printf(" %2s %6s %3s %10s %9s %9s %9s %9s %9s %9s %9s %9s %9s %10s                           %16s\n", sysClearKeys[i], ringNames[i], typeNames[i], cNSlow, cOffsSlow, cOffsSlowMax, cOffsSlowMin,
