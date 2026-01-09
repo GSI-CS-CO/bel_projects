@@ -87,7 +87,7 @@ uint64_t comlib_getSysTime()
   /* struct timeval tv; 
   
   gettimeofday(&tv,NULL);
-  t = tv.tv_sec*(uint64_t)1000000000+tv.tv_usec*1000 + tv.tv_nsec; */
+  t = tv.tv_sec*(uint64_t)1000000000+tv.tv_usec*1000; */
 
   // argh: timespec not supported with old gcc on sl7
   struct timespec ts;
