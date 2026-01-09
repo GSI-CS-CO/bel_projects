@@ -405,7 +405,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0, 0);
 
-    offsDone               = sysTime - reqDeadline;
     *pSharedGettKickDMon   = dKickMon;
     *pSharedGettKickDProbe = dKickProbe;
     transStat              = flagsError;
