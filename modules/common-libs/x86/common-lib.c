@@ -351,8 +351,8 @@ int comlib_readDiag(eb_device_t device, uint64_t  *statusArray, uint32_t  *state
 
   status = comlib_readDiag2(device, state, version, statusArray, &data, printFlag);
 
-  *mac     = data.mac;
-  *ip      = data.ip;
+  *mac        = data.mac;
+  *ip         = data.ip;
   *nBadStatus = data.nBadStatus;
   *nBadState  = data.nBadState;
   *tDiag      = data.tDiag;
