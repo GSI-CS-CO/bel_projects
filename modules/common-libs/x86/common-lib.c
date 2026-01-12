@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-Jan-2025
+ *  version : 09-Jan-2026
  *
  *  common x86 routines useful for CLIs handling firmware
  * 
