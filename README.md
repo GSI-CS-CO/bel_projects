@@ -512,6 +512,17 @@ sudo apt upgrade ca-certificates
 
 † If attached: [FPGA USB-Programmer2 JTAG (Arrow)](https://shop.trenz-electronic.de/de/TEI0004-02-FPGA-USB-Programmer2-JTAG-Arrow-fuer-die-Entwicklung-mit-Intel-FPGAs?c=26)
 
+‡ Programming a JIC file: You need to add the CPLD device using the proper ID. Add a "User Defined" device:
+
+```
+Name: COOLRUNNER-II
+Instruction length: 8
+ID: 0x06D48093
+Mask: 0xFFFFFFFF
+```
+
+Click "Auto Detect" and edit/change the unknown device to COOLRUNNER-II.
+
 ### USB-Blaster Issues
 
 Error: quartus: USB-Blaster can't find FPGA [Ubuntu/Mint/...]
