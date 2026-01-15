@@ -48,8 +48,18 @@ if scp -O $0 /dev/null &>/dev/null; then
     scp_opts+=" -O"
 fi
 
-res_header_wiki="| *msg period, [us]* | *msg rate, [KHz]* | *data rate, [Mbps]* | *valid eca* | *overflow eca* | *avg messaging delay, [ns]* | *min messaging delay, [ns]* | *max messaging delay, [ns]* | *valid* | *total* | *overflow* |"
-res_header_console="| t_period | msg rate | data rate | valid eca | ovf eca | average | min | max | valid | total | ovf |"
+# | period    | msg rate  | data rate |vld eca|ovf eca| avg   | min   | max   | valid | total | ovf |
+res_header_console+=$(printf "|%10s " "period")     # msg period, us (right-aligned, field-width=11)
+res_header_console+=$(printf "|%10s " "msg rate")   # msg rate, KHz
+res_header_console+=$(printf "|%10s " "data rate")  # data rate, Mbps
+res_header_console+=$(printf "|%7s"  "vld eca")     # valid eca
+res_header_console+=$(printf "|%7s"  "ovf eca")     # overflow eca
+res_header_console+=$(printf "|%6s "  "avg")        # average delay, us
+res_header_console+=$(printf "|%6s "  "min")        # min delay, us
+res_header_console+=$(printf "|%6s "  "max")        # max delay, us
+res_header_console+=$(printf "|%6s "  "valid")      # number of valid messages
+res_header_console+=$(printf "|%6s "  "total")      # total messages
+res_header_console+=$(printf "| %5s"  "ovf |")      # overflow flag
 
 # timing message rates that should be measured
 primary_msg_rates=(300 600 1000 1200 1500 3000 6000) # fixed tmg msg rates [Hz]
@@ -173,6 +183,130 @@ start_dm_schedule() {
     exit_on_fail $ret_code
 }
 
+get_tr_stats() {
+
+    # $1 - return/reply variable
+    # $2 - target TR
+
+    local -n ret="$1"
+    shift
+
+    local output
+    output=$(run_remote $1 \
+    "source setup_local.sh && \
+    read_counters \$rx_node_dev && \
+    result_msg_delay \$rx_node_dev")
+    ret_code=$?
+    exit_on_fail $ret_code
+
+    # 'output' before processing:
+    #0 6000 0
+    #
+    #14 3 35 6000 6000
+
+    output=${output//$'\n'/}           # remove all 'newline'
+    output=$(echo $output | tr -s ' ') # remove consecutive spaces
+
+    # 'output' after processing:
+    #0 6000 0 14 3 35 6000 6000
+
+    ret="$output"
+}
+
+str_to_int() {
+
+    # $1 - return/reply variable
+    # $2 - string
+
+    local -n ret="$1"
+    shift
+    ret=$(( 10#${1} ))
+}
+
+format_stats() {
+
+    # $1 - return/reply variable
+    # $2 - t_period
+    # $3 - rate
+    # $4 - tmg_msg_len
+    # $@ - array with measurement values (in string)
+
+    local -n ret="$1"
+    shift
+
+    local t_period=$1
+    local rate=$2
+    local tmg_msg_len=$3
+    shift # 3 times to reach the array with measurement values
+    shift
+    shift
+    local output="$@"
+
+    # format values
+    t_period_float=$(printf "|%10.3f " "$((10**3 * $t_period/1000))e-3")           # message period [us]
+    rate_float=$(printf "|%10.3f " "$((10**3 * $rate/1000))e-3")                   # message rate [KHz]
+    d_rate_float=$(printf "|%10.3f" "$((10**3 * $rate*$tmg_msg_len/1000000))e-3")  # data rate [Mbps]
+
+    sel_output=$(echo $output | cut -d' ' -f2-8)                                   # ignore 1st element (number of TX msgs)
+
+    local line
+
+    line+=$t_period_float
+    line+=$rate_float
+    line+=$d_rate_float
+    line=${line//./,}                     # replace all 'dot' with 'comma' (decimal separator for floating-point numbers)
+    line+=$(printf " | %5s" $sel_output)  # right-aligned, field-width=5, separated with ' | '
+
+    eca_overflow=$(echo "$output" | cut -d' ' -f3)
+    eca_overflow=$(( 10#$eca_overflow ))
+
+    if [ $eca_overflow -ne 0 ]; then
+        line+=" | yes |\n"
+    else
+        line+=" | no  |\n"
+    fi
+
+    # line: |  3333,333 |     0,300 |     0,264 |  6000 |     0 |    16 |     3 |    89 |  6000 |  6000 | no  |
+    ret="$line"
+}
+
+is_measurement_failed() {
+
+    # $1 - return/reply variable
+    # $@ - string with stats
+    # example stats: 0 6000 0 13 3 27 6000 6000
+
+    # stats[2] - eca valid, expected non-zero count
+    # stats[3] - eca overflow, expected zero count
+    # stats[4] - average messaging delay, expected below 1 ms
+
+    local -n ret="$1"
+    shift
+    local output="$@"
+    local failed=0 # false
+
+    eca_valid=$(echo "$output" | cut -d' ' -f2)
+    eca_valid=$(( 10#$eca_valid ))  # convert a string to integer
+
+    eca_overflow=$(echo "$output" | cut -d' ' -f3)
+    eca_overflow=$(( 10#$eca_overflow ))
+
+    # failure: if the 'ECA overflow' counter has non-zero or
+    # 'ECA valid' counter has zero value
+    if [ $eca_overflow -ne 0 ] || [ $eca_valid -eq 0 ]; then
+        failed=1 # true
+    fi
+
+    # failure: if the 'average messaging delay' is higher than 1 ms
+    avg_owd=$(echo "$output" | cut -d' ' -f4)
+    avg_owd=$(( 10#$avg_owd ))     # convert a string to integer
+    if [ $avg_owd -gt 1000000 ]; then
+        failed=2 # true
+    fi
+
+    ret=$failed
+}
+
 usage() {
     echo "Usage: $0 [OPTION]"
     echo "Test to determine the maximum data rate for receiver"
@@ -264,55 +398,21 @@ for rate in ${all_msg_rates[*]}; do
     echo -en " disable MPS operation of '$rxscu_name': "
     disable_tr_mps
 
-    # obtain stats from TR
+    # obtain statistics from TR
     echo -en " obtain stats from '$rxscu_name': "
-    counts=$(run_remote $rxscu \
-        "source setup_local.sh && \
-        read_counters \$rx_node_dev && \
-        result_msg_delay \$rx_node_dev")
-    ret_code=$?
-    report_code $ret_code
-    exit_on_fail $ret_code
+    get_tr_stats stats $rxscu       # store return value in 'stats'
+    [[ -z "$stats" ]] && echo "FAIL" || echo "OK"
 
-    counts=${counts//$'\n'/}           # remove all 'newline'
-    counts=$(echo $counts | tr -s ' ') # remove consecutive spaces
+    # process statistics from TR
+    echo -en " process stats from '$rxscu_name': "
+    format_stats new_line $t_period $rate $tmg_msg_len "$stats"
+    [[ -z "$new_line" ]] && echo "FAIL" || echo "OK"
 
-    # format values
-    t_period_float=$(printf "|%10.3f " "$((10**3 * $t_period/1000))e-3")           # message period [us]
-    rate_float=$(printf "|%10.3f " "$((10**3 * $rate/1000))e-3")                   # message rate [KHz]
-    d_rate_float=$(printf "|%10.3f" "$((10**3 * $rate*$tmg_msg_len/1000000))e-3")  # data rate [Mbps]
-    sel_counts=$(echo $counts | cut -d' ' -f2-8)                                   # ignore 1st element (number of TX msgs)
+    results+="$new_line"
 
-    unset new_line
-    new_line+=$t_period_float
-    new_line+=$rate_float
-    new_line+=$d_rate_float
-    new_line=${new_line//./,}                # replace all 'dot' with 'comma' (decimal separator for floating-point numbers)
-    new_line+=$(printf " | %s" $sel_counts)
-
-    eca_valid=$(echo "$counts" | cut -d' ' -f2)
-    eca_valid=$(( 10#$eca_valid ))  # convert a string to integer
-
-    eca_overflow=$(echo "$counts" | cut -d' ' -f3)
-    eca_overflow=$(( 10#$eca_overflow ))  # convert a string to integer
-    if [ $eca_overflow -ne 0 ]; then
-        new_line+=" | yes |\n"
-    else
-        new_line+=" | no |\n"
-    fi
-
-    results+=$new_line
-
-    # break loop if the 'ECA overflow' counter has non-zero or
-    # 'ECA valid' counter has zero value
-    if [ $eca_overflow -ne 0 ] || [ $eca_valid -eq 0 ]; then
-        break
-    fi
-
-    # break loop if the 'average messaging delay' is higher than 1 ms
-    avg_owd=$(echo "$counts" | cut -d' ' -f4)
-    avg_owd=$(( 10#$avg_owd ))     # convert a string to integer
-    if [ $avg_owd -gt 1000000 ]; then
+    # break loop if the measurement fails (ECA overflow, ECA validity, longer messaging delay)
+    is_measurement_failed break_loop "$stats"
+    if [ $break_loop -ne 0 ]; then
         break
     fi
 
@@ -320,7 +420,6 @@ done
 
 echo -e "\n$datamaster:$sched_filename $rxscu:$fw_rxscu host:$localhost ($(date))\n"
 echo "$res_header_console"
-#echo "$res_header_wiki"
 chars=${#res_header_console}
 printf "%0.s-" $(seq 1 $chars) # one-liner to print a given number of '-' [1]
 printf "\n"
