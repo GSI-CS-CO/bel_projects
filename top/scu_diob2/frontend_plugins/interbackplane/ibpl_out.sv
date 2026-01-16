@@ -17,8 +17,8 @@ module ibpl_out #(
 assign diob_dir		= 6'h3F;
 assign diob_out		= internal_out[5:0];
 assign internal_in	= 8'b0;
-assign diob_led1	= {2'b0, output_enable[5:0]};
-assign diob_led2	= {2'b0, output_act[5:0]};
+assign diob_led2	= {2'b0, output_enable[5:0]};
+assign diob_led1	= {2'b0, output_act[5:0]};
 
 	// Generate module error if ANY of the signals has input enabled but output disabled
 assign plugin_error = |((input_enable & ~output_enable) & 'h3F);

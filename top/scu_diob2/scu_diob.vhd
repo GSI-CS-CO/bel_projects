@@ -81,7 +81,7 @@ architecture scu_diob_arch of scu_diob is
 --  |                                 Firmware_Version/Firmware_Release und Basis-Adressen                                       |
 --  +============================================================================================================================+
 
-    CONSTANT c_Firmware_Version:    Integer := 1;      -- Firmware_Version
+    CONSTANT c_Firmware_Version:    Integer := 16#0100#;      -- Firmware_Version
     CONSTANT c_Firmware_Release:    Integer := 0;     -- Firmware_release Stand 19.05.2021 ( + neuer Zwischen-Backplane )
 
     CONSTANT clk_switch_status_cntrl_addr:       unsigned := x"0030";
@@ -91,8 +91,6 @@ architecture scu_diob_arch of scu_diob is
 --  |                                                 CONSTANT                                                                   |
 --  +============================================================================================================================+
 
-
-    CONSTANT c_cid_system:     integer range 0 to 16#FFFF#:= 55;     -- extension card: cid_system, CSCOHW=55
 
     constant  Clk_in_ns:      integer  :=  1000000000 /  clk_sys_in_Hz;          -- (=8ns,    bei 125MHz)
     CONSTANT  CLK_sys_in_ps:  INTEGER  := (1000000000 / (CLK_sys_in_Hz / 1000));  -- muss eigentlich clk-halbe sein
@@ -137,8 +135,7 @@ generic(
 		event_trg:              in std_logic;									
     
     dtack:                  out std_logic;--(Dtack_to_SCUB)
-		data_r_act:             out std_logic ;--(Reg_rd_active)	
-    test_out:               out	std_logic_vector(15 downto 0)	-- blackbox	test_out signals
+		data_r_act:             out std_logic --(Reg_rd_active)	
     );
   end component io_blackbox;
 
@@ -183,9 +180,6 @@ generic(
   signal Timing_Pattern_LA:   std_logic_vector(31 downto 0);--  latched timing pattern from SCU_Bus for external user functions
   signal Timing_Pattern_RCV:  std_logic;----------------------  timing pattern received
 
-  signal extension_cid_system:  integer range 0 to 16#FFFF#;  -- in,  extension card: cid_system
-  signal extension_cid_group:   integer range 0 to 16#FFFF#;  --in, extension card: cid_group
-
   signal Data_to_SCUB:       std_logic_vector(15 downto 0);
 
   signal owr_pwren_o:        std_logic_vector(1 downto 0);
@@ -209,7 +203,7 @@ generic(
   signal b_box_rd_data: std_logic_vector(15 downto 0);
   signal bb_dtack: std_logic;
   signal b_backplane:std_logic_vector(15 downto 0);
-  signal test_out_s_array: std_logic_vector(15 downto 0);
+ 
 
 begin
 
@@ -269,8 +263,6 @@ begin
   -- open drain buffer for one wire
   owr_i(0) <= A_OneWire;
   A_OneWire <= owr_pwren_o(0) when (owr_pwren_o(0) = '1' or owr_en_o(0) = '1') else 'Z';
-  extension_cid_system <= c_cid_system;  
-  extension_cid_group         <= 0;   -- extension card: cid_group
 
   SCU_Slave: SCU_Bus_Slave
   generic map (
@@ -296,8 +288,8 @@ begin
                                & '0' & '0' & '0',                       -- bit 3..1
       User_Ready              => '1',
       CID_GROUP               => 26,                                    -- important: => "FG900500_SCU_Diob1"
-      extension_cid_system    => extension_cid_system,                  -- in, extension card: cid_system
-      extension_cid_group     => extension_cid_group,                   -- in, extension card: cid_group
+      extension_cid_system    => 0,                                    -- in, extension card: cid_system
+      extension_cid_group     => 0,                                    -- in, extension card: cid_group
       Data_from_SCUB_LA       => Data_from_SCUB_LA,                     -- out, latched data from SCU_Bus for external user functions
       ADR_from_SCUB_LA        => ADR_from_SCUB_LA,                      -- out, latched address from SCU_Bus for external user functions
       Timing_Pattern_LA       => Timing_Pattern_LA,                     -- out, latched timing pattern from SCU_Bus for external user functions
@@ -386,8 +378,18 @@ begin
     A_nSRQ   <= not(SCUB_SRQ);
 
 
-UIO(15 downto 1) <= test_out_s_array(15 downto 1);
-UIO(0) <= Ext_Adr_Val;
+UIO(15)<= Ext_Adr_Val;
+UIO(14) <= Ext_Rd_active;
+UIO(13) <= Ext_Wr_active;
+UIO(12) <= bb_dtack;
+UIO(11) <= b_box_rd_active;
+UIO(10) <= wb_scu_dtack;
+UIO(9) <= wb_scu_rd_active;
+UIO(8) <= Dtack_to_SCUB;
+UIO(7) <= not rstn_sys;
+UIO(6) <= clk_sys;
+UIO(5) <= not A_nEvent_Str;
+UIO(4 downto 0) <= ADR_from_SCUB_LA(11 downto 7);
 
 io_blackbox_el: io_blackbox 
 generic map(
@@ -425,8 +427,7 @@ generic map(
 		event_trg            => not A_nEvent_Str,   									
     
     dtack                => bb_dtack, --(Dtack_to_SCUB)
-		data_r_act           => b_box_rd_active, --(Reg_rd_active)	
-    test_out             => test_out_s_array          
+		data_r_act           => b_box_rd_active --(Reg_rd_active)	
     );
 end architecture;
 

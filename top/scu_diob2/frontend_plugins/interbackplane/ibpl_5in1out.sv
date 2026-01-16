@@ -16,9 +16,9 @@ module ibpl_5in1out #(
 	
 assign diob_dir		= 6'h20;
 assign diob_out		= {internal_out[5], 5'b0};
-assign internal_in	= {3'b0, diob_in[4:0]};
-assign diob_led1	= {2'b0, output_enable[5], input_enable[4:0]};
-assign diob_led2	= {2'b0, output_act[5], input_act[4:0]};
+assign internal_in	= {3'b0, ~diob_in[4:0]};
+assign diob_led2	= {2'b0, output_enable[5], input_enable[4:0]};
+assign diob_led1	= {2'b0, output_act[5], input_act[4:0]};
 
 	// Generate module error if ay of signals 4-0 has output enabled but input disabled, ...
 	// or channel 5 has input enabled but output disabled

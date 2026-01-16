@@ -19,12 +19,12 @@ module frontend_interbackplane #(
 	);
 
 // Check parameters
-/*
-generate
-	if (nr_status_bits < 128)
-		$error("Number of status bits insufficient!");	//works only with sv...
-endgenerate
-*/
+
+//generate
+//	if (nr_status_bits < 128)
+//		$error("Number of status bits insufficient!");	
+//endgenerate
+
 
 localparam base_pin			= 16;	// pin number for first I/O
 
@@ -34,7 +34,7 @@ genvar		gi;
 // ********** Define actual number of plugins **********
 	
 // *** BEGIN generated code ***
-localparam nr_cardlet_plugins 		= 4;
+localparam nr_cardlet_plugins 		= 6;
 // *** END generated code ***
 localparam int_cardlet_sel_bits 	= $clog2(nr_cardlet_plugins);
 
@@ -588,7 +588,7 @@ begin
 				LEDB_STATE_STR1_1:		// *** Set LEDs with strobe 1 - phase 1
 				begin
 					cardlets_ledb_dir	<= 'hFF;
-					cardlets_ledb		<= cardlet_led1[ledb_cardlet_nr];
+					cardlets_ledb		<= ~cardlet_led1[ledb_cardlet_nr];
 					cardlet_str[ledb_cardlet_nr]	<= 'b01;
 					ledb_state			<= LEDB_STATE_STR1_2;
 				end
@@ -602,7 +602,7 @@ begin
 				LEDB_STATE_STR2_1:		// *** Set LEDs with strobe 2 - phase 1
 				begin
 					cardlets_ledb_dir	<= 'hFF;
-					cardlets_ledb		<= cardlet_led2[ledb_cardlet_nr];
+					cardlets_ledb		<= ~cardlet_led2[ledb_cardlet_nr];
 					cardlet_str[ledb_cardlet_nr]	<= 'b10;
 					ledb_state			<= LEDB_STATE_STR2_2;
 				end
@@ -658,19 +658,27 @@ generate
 					int_cardlet_plugin_select[gi] <= 1;	// typ_5in1out
 					cardlet_plugin_default_selected[gi] <= 0;
 				end	
-					4,		// lwlin
-					3,		// lemoin
 					7,		// digin
 					9:		// optoin
 				begin	
 					int_cardlet_plugin_select[gi] <= 2;	// typ_in
 					cardlet_plugin_default_selected[gi] <= 0;
 				end	
+					3:		// lemoin
+				begin	
+					int_cardlet_plugin_select[gi] <= 3;	// inverted_in
+					cardlet_plugin_default_selected[gi] <= 0;
+				end	
+					4:		// lwlin
+				begin	
+					int_cardlet_plugin_select[gi] <= 4;	// lwl_in
+					cardlet_plugin_default_selected[gi] <= 0;
+				end	
 					5,		// lwlout
 					6,		// lemoout
 					8:		// ssrout
 				begin	
-					int_cardlet_plugin_select[gi] <= 3;	// typ_out
+					int_cardlet_plugin_select[gi] <= 5;	// typ_out
 					cardlet_plugin_default_selected[gi] <= 0;
 				end	
 				default: 
@@ -779,7 +787,9 @@ generate
 
 		);			
 
-		ibpl_out cardlet_inst_typ_out (
+		ibpl_in #(
+			.invert_signals	(1)
+		) cardlet_inst_inverted_in (
 			.clock       	(clock),
 			.reset       	(reset),
 
@@ -794,6 +804,50 @@ generate
 		
 			.internal_out	(`slice(internal_out, 8, gi)),
 			.internal_in	(internal_in_array[gi][3]),
+			.output_enable	(`slice(output_enable, 8, gi)),
+			.input_enable	(`slice(input_enable, 8, gi)),
+			.output_act		(`slice(output_act, 8, gi)),
+			.input_act		(`slice(input_act, 8, gi))
+
+		);			
+
+		ibpl_lwlin cardlet_inst_lwl_in (
+			.clock       	(clock),
+			.reset       	(reset),
+
+			.plugin_enable	(int_cardlet_plugin_select[gi] == 4 ? 1'b1 : 1'b0),
+			.plugin_error	(cardlet_error_array[4][gi]),
+		
+			.diob_in		(cardlet_in[gi]),
+			.diob_out		(cardlet_out_array[gi][4]),
+			.diob_dir		(cardlet_dir_array[gi][4]),
+			.diob_led1		(cardlet_led1_array[gi][4]),
+			.diob_led2		(cardlet_led2_array[gi][4]),
+		
+			.internal_out	(`slice(internal_out, 8, gi)),
+			.internal_in	(internal_in_array[gi][4]),
+			.output_enable	(`slice(output_enable, 8, gi)),
+			.input_enable	(`slice(input_enable, 8, gi)),
+			.output_act		(`slice(output_act, 8, gi)),
+			.input_act		(`slice(input_act, 8, gi))
+
+		);			
+
+		ibpl_out cardlet_inst_typ_out (
+			.clock       	(clock),
+			.reset       	(reset),
+
+			.plugin_enable	(int_cardlet_plugin_select[gi] == 5 ? 1'b1 : 1'b0),
+			.plugin_error	(cardlet_error_array[5][gi]),
+		
+			.diob_in		(cardlet_in[gi]),
+			.diob_out		(cardlet_out_array[gi][5]),
+			.diob_dir		(cardlet_dir_array[gi][5]),
+			.diob_led1		(cardlet_led1_array[gi][5]),
+			.diob_led2		(cardlet_led2_array[gi][5]),
+		
+			.internal_out	(`slice(internal_out, 8, gi)),
+			.internal_in	(internal_in_array[gi][5]),
 			.output_enable	(`slice(output_enable, 8, gi)),
 			.input_enable	(`slice(input_enable, 8, gi)),
 			.output_act		(`slice(output_act, 8, gi)),
