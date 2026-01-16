@@ -31,7 +31,7 @@ module flex_hub #(
 		output 	wire	data_r_act,											// (Reg_rd_active)
 
 			//Slave connections
-		input		wire	[nr_slaves*data_bus_width-1 : 0]	sec_data_r,		// (Data_to_SCUB)
+		input	wire	[nr_slaves*data_bus_width-1 : 0]	sec_data_r,		// (Data_to_SCUB)
 		input 	wire	[nr_slaves-1 : 0]					sec_dtack,		// (Dtack_to_SCUB)
 		input 	wire	[nr_slaves-1 : 0]					sec_data_r_act	// (Reg_rd_active)
 	);
@@ -52,7 +52,7 @@ end
 
 assign data_r = sec_data_r[(selector+1)*data_bus_width - 1 -: data_bus_width];
 assign data_r_act = |sec_data_r_act;
-assign dtack = |sec_dtack;
+assign dtack = | sec_dtack;
 	
 endmodule
 	

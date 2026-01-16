@@ -8,8 +8,7 @@
 `include "interbackplane_helpers.vh"
 
 
-module ibpl_in #(
-		parameter invert_signals = 0,
+module ibpl_lwlin #(
 		`STD_CARDLET_PARAMS
 	)(
 		`STD_CARDLET_PORTS
@@ -17,7 +16,8 @@ module ibpl_in #(
 	
 assign diob_dir		= 6'h00;
 assign diob_out		= 6'h00;
-assign internal_in	= {2'b0, invert_signals ? ~diob_in : diob_in};
+//assign internal_in	= {2'b0, !diob_in[5], !diob_in[3], !diob_in[1], !diob_in[4], !diob_in[2], !diob_in[0]};
+assign internal_in	= {2'b0, !diob_in[5], !diob_in[2], !diob_in[4], !diob_in[1], !diob_in[3], !diob_in[0]};
 assign diob_led2 	= {2'b0, input_enable[5:0]};
 assign diob_led1 	= {2'b0, input_act[5:0]};
 

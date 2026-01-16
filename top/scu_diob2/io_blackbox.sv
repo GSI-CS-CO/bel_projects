@@ -42,7 +42,7 @@ genvar i;
 // ********** Define actual number of plugins **********
 	
 // *** BEGIN generated code ***
-localparam nr_frontend_plugins 		= 2;
+localparam nr_frontend_plugins 		= 3;
 localparam nr_proc_plugins 			= 5;
 localparam nr_user_plugins 			= 1;
 // *** END generated code ***
@@ -105,6 +105,7 @@ reg [int_frontend_sel_bits-1: 0] 		int_frontend_plugin_select;
 reg [int_proc_sel_bits-1: 0] 			int_proc_plugin_select[nr_virt_ios-1:0];
 reg [int_user_sel_bits-1: 0] 			int_user_plugin_select;
 reg										frontend_plugin_default_selected;
+reg	[nr_virt_ios-1:0]					proc_plugin_default_selected;
 reg										user_plugin_default_selected;
 
 // -----------------------------------------------------------------------------
@@ -126,6 +127,12 @@ begin
 			int_frontend_plugin_select <= 1;	// interbackplane
 			frontend_plugin_default_selected <= 0;
 		end	
+			4,		// ocio1
+			14:		// ocio2
+		begin	
+			int_frontend_plugin_select <= 2;	// ocio
+			frontend_plugin_default_selected <= 0;
+		end	
 		default: 
 		begin
 			int_frontend_plugin_select <= 0;	// default: unknown
@@ -145,17 +152,35 @@ generate
 			case (selector)
 				// *** BEGIN generated code ***
 				0:	
+				begin
 					int_proc_plugin_select[i] <= 0;	// disable
+					proc_plugin_default_selected[i] <= 0;
+				end	
 				1:	
+				begin
 					int_proc_plugin_select[i] <= 1;	// pass
+					proc_plugin_default_selected[i] <= 0;
+				end	
 				2:	
+				begin
 					int_proc_plugin_select[i] <= 2;	// in_debounce2
+					proc_plugin_default_selected[i] <= 0;
+				end	
 				3:	
+				begin
 					int_proc_plugin_select[i] <= 3;	// in_debounce4
+					proc_plugin_default_selected[i] <= 0;
+				end	
 				4:	
+				begin
 					int_proc_plugin_select[i] <= 4;	// in_debounce125
+					proc_plugin_default_selected[i] <= 0;
+				end	
 				default: 
+				begin
 					int_proc_plugin_select[i] <= 0;	// default: disable	
+					proc_plugin_default_selected[i] <= 1;
+				end	
 				// *** END generated code ***
 			endcase
 		end
@@ -247,10 +272,11 @@ endgenerate
 //             |*******************************************************| 
 //             \-------------------------------------------------------/ 
 
-localparam nr_internal_bus_slaves 	= 2;
+localparam nr_internal_bus_slaves 	= 3;
 localparam nr_all_bus_slaves 		= nr_internal_bus_slaves + nr_user_plugins;		// Number of devices on secondary bus
 
-wire								INTaddr_strobe;	// (Ext_Adr_Val)
+wire								INTaddr_strobe;	
+wire								USRaddr_strobe;	
 
 `MAKE_SEC_BUS(SEC, nr_all_bus_slaves, addr_bus_width, data_bus_width)
 
@@ -305,39 +331,63 @@ flex_superhub #(
 	.sec_data_r_act	(SECdata_r_act)
 );
 
-// ********** Version + statusblock ********** 
+// ********** Address filter for user plugins ********** 
+
+flex_filterplus #(
+	.addr_bus_width	(addr_bus_width),
+	.lower_bound (`BB_BASE_user_area)
+) flex_filterplus_user (
+	.clock			(clock),
+	.reset			(reset),
+	
+	.addr			(addr),
+	.addr_strobe	(SECaddr_strobe),
+	.sec_addr_strobe(USRaddr_strobe)
+);
+
+// ********** Info block ********** 
 // +00: Version: 8 MSBs are major version, 8 LSBs are minor version
-// +01: Status: 3 LSBs user_plugin_default_selected, frontend_plugin_default_selected,  frontend_error
-// +02: Frontend plugin selection
-// +03: Frontend plugin status
+// +01: Blackbox configuration number
+// +02:	12'b0, user_plugin_default_selected, |proc_plugin_default_selected, frontend_plugin_default_selected,  frontend_error
+// +03: Frontend plugin selection
 
 wire [7:0] bb_version_major = `BB_VERSION_MAJOR;
 wire [7:0] bb_version_minor = `BB_VERSION_MINOR;
-wire [7:0] bb_config		= 0;
-wire [15:0] fps16 = frontend_plugin_select;
+wire [15:0] bb_config		= 0;
+wire [15:0] fps16 			= frontend_plugin_select;
 
-wire [frontend_status_bits+48 - 1 : 0] status_info;
-assign status_info = {	frontend_status, 																		// Frontend status
-						fps16,																					// Frontend plugin selection
-						5'b0, user_plugin_default_selected, frontend_plugin_default_selected,  frontend_error,  // status (5e+3b)
-						bb_config,																				// Config (8b)
-						bb_version_major, bb_version_minor};
+wire [63 : 0] status_info;
+assign status_info = {	fps16,																					// Frontend plugin selection
+						12'b0, user_plugin_default_selected, |proc_plugin_default_selected, frontend_plugin_default_selected,  frontend_error,  // status (12e+4b)
+						bb_config,																				// Config (16b)
+						bb_version_major, bb_version_minor};													// Blackbox versions
 
 `FLEX_IN(0, 
-		flex_in_version, 
+		flex_in_info, 
 		SEC, 
-		`BB_BASE_status, 
-		`ceildiv(frontend_status_bits + 48, data_bus_width), 
+		`BB_BASE_info, 
+		`ceildiv(64, data_bus_width), 
 		addr_bus_width, 
 		data_bus_width, 
 		status_info)
+
+// ********** Frontend status **********
+
+`FLEX_IN(1, 
+		flex_in_frontend_status, 
+		SEC, 
+		`BB_BASE_frontend_status, 
+		`ceildiv(frontend_status_bits, data_bus_width), 
+		addr_bus_width, 
+		data_bus_width, 
+		frontend_status)
 
 // ********** User plugin selection **********
 
 wire [data_bus_width-1 : 0] ups16;
 assign user_plugin_select = ups16;
 
-`FLEX_OUT(1, 
+`FLEX_OUT(2, 
 		flex_out_user_sel, 
 		SEC, 
 		`BB_BASE_user_sel, 
@@ -392,6 +442,27 @@ frontend_interbackplane #(
 	.diob_dir    	(diob_dir_array[1]),
 	.internal_out	(internal_out),
 	.internal_in 	(internal_in_array[1]),
+	.output_enable 	(internal_oe),
+	.input_enable  	(internal_ie),
+	.output_act    	(internal_oe & virtual_out),
+	.input_act    	(internal_ie & virtual_in)
+);
+	
+frontend_ocio #(
+	.nr_diob_ios	(nr_diob_ios),
+	.nr_virt_ios	(nr_virt_ios),
+	.nr_status_bits	(frontend_status_bits)
+) frontend_inst_ocio (
+	.clock       	(clock),
+	.reset       	(reset),
+	.plugin_enable	(int_frontend_plugin_select == 2 ? 1'b1 : 1'b0),
+	.plugin_error	(frontend_error_array[2]),
+	.plugin_status	(frontend_status_array[2]),
+	.diob_in     	(diob_in_buf2),
+	.diob_out    	(diob_out_array[2]),
+	.diob_dir    	(diob_dir_array[2]),
+	.internal_out	(internal_out),
+	.internal_in 	(internal_in_array[2]),
 	.output_enable 	(internal_oe),
 	.input_enable  	(internal_ie),
 	.output_act    	(internal_oe & virtual_out),
@@ -498,6 +569,7 @@ user_gpio #(
 	.virtual_in 		(virtual_in),
 	.virtual_out		(virtual_out_array[0]),
 	.proc_plugin_select	(proc_plugin_select_array[0]), 
+	.proc_plugin_default_selected (proc_plugin_default_selected),
 	.backplane_in 		(backplane_in),
 	.backplane_out		(backplane_out_array[0]),
 	.backplane_dir		(backplane_dir_array[0]),
@@ -505,7 +577,7 @@ user_gpio #(
 	.addr				(SECaddr),
 	.data_w				(SECdata_w),
 	.data_r				(`slice(SECdata_r, `BB_ADDR_BUS_WIDTH, 0+nr_internal_bus_slaves)),
-	.addr_strobe		(int_user_plugin_select == 0 ? SECaddr_strobe : 1'b0),
+	.addr_strobe		(int_user_plugin_select == 0 ? USRaddr_strobe : 1'b0),
 	.read_trg			(SECread_trg),
 	.write_trg			(SECwrite_trg),
 	.read_fin			(SECread_fin),
