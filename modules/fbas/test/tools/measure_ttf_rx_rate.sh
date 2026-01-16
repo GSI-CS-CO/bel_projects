@@ -94,8 +94,11 @@ check_tr() {
 }
 
 setup_tr() {
+
+    # $@ - sender IDs
+
     output=$(run_remote $rxscu \
-        "source setup_local.sh && setup_mpsrx $fw_rxscu SENDER_ANY")
+        "source setup_local.sh && setup_mpsrx $fw_rxscu SENDER_TX $@")
     ret_code=$?
     report_code $ret_code
     exit_on_fail $ret_code
@@ -103,7 +106,7 @@ setup_tr() {
 
 reset_tr_ecpu() {
     output=$(run_remote $rxscu \
-        "source setup_local.sh && reset_node rx_node_dev SENDER_ANY")
+        "source setup_local.sh && reset_node rx_node_dev SENDER_TX $@")
     ret_code=$?
     report_code $ret_code
     exit_on_fail $ret_code
@@ -307,6 +310,32 @@ is_measurement_failed() {
     ret=$failed
 }
 
+sender_ids() {
+    # parse the 'parameter' attribute in DOT schedule file
+    # and return the sender IDs
+
+    # $1 - return/reply variable
+
+    local -n ret="$1"
+    local par_values=()
+
+    echo "Sender IDs in $sched_dir/$sched_filename"
+    while IFS= read -r line; do
+        # extract the value of "par="
+        val=$(printf "%s\n" "$line" | sed -n 's/.*par="\([^"]*\)".*/\1/p')
+
+        if [[ -n "$val" ]]; then
+            # extract the sender ID
+            val=${val:2:12}
+            par_values+=("$val")
+        fi
+    done < "$sched_dir/$sched_filename"
+
+    printf "%s\n" "${par_values[@]}"
+
+    ret=("${par_values[@]}")
+}
+
 usage() {
     echo "Usage: $0 [OPTION]"
     echo "Test to determine the maximum data rate for receiver"
@@ -369,7 +398,10 @@ echo -e "\n--- 3. Check DM schedule in '$sched_filename' ---\n"
 check_dm_schedule
 
 echo -e "\n--- 4. Set up TR=$rxscu_name ---\n"
-setup_tr
+sender_ids ids  # extract the sender IDs from $sched_dir/$sched_filename
+if [[ -n "${ids[@]}" ]]; then
+    setup_tr "${ids[@]}"
+fi
 
 # start measurements
 echo -e "\n--- 5. Start the measurements ---\n"
@@ -384,7 +416,7 @@ for rate in ${all_msg_rates[*]}; do
 
     # reset the FW in receiver node
     echo -en " reset eCPU (LM32) of '$rxscu_name': "
-    reset_tr_ecpu
+    reset_tr_ecpu "${ids[@]}"
 
     # enable MPS task of rxscu
     echo -en " enable MPS operation of '$rxscu_name': "
