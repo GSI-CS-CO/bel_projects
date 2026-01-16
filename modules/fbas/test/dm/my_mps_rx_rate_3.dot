@@ -27,9 +27,9 @@ node [cpu="0", pattern=PatA, patentry=0, patexit=0,  style     = "filled", fillc
 edge [type="defdst"];
 
 C_A0 [type="flow",  patentry=1, toffs=0, qty="1999", tvalid="0", vabs="true"];
-M_A1 [type="tmsg",  patentry=1, toffs=0, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffffff0001"];
-M_A2 [type="tmsg",              toffs=0, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffffff0101"];
-M_A3 [type="tmsg",              toffs=0, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffffff0201"];
+M_A1 [type="tmsg",  patentry=1, toffs=0, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff010001"];
+M_A2 [type="tmsg",              toffs=0, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff020001"];
+M_A3 [type="tmsg",              toffs=0, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff030001"];
 B_A3 [type="block", patexit=1,  tperiod=100000, qlo="true"];
 
 C_A0 -> M_A1 -> M_A2 -> M_A3 -> B_A3;

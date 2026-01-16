@@ -189,7 +189,7 @@ start_dm_synchron() {
 }
 
 ######################
-## Get a value of given variable
+## Set a value of given variable
 ######################
 
 set_value() {
