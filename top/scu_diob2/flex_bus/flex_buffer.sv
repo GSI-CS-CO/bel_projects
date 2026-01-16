@@ -6,7 +6,7 @@
 		- Address bus width: typ. 16 bits
 		- Data bus width: typ. 16 bits
 		
-	Tis unit doesn't perform any logic operations on signals. 
+	This unit doesn't perform any logic operations on signals. 
 	All down- and/or upstream signals get delayed by one clock cycle.
 */
 

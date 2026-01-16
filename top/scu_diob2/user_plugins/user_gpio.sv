@@ -17,7 +17,7 @@ module user_gpio #(
 
 // ********** Some defines **********
 
-localparam nr_bus_slaves 			= 6;
+localparam nr_bus_slaves 			= 7;
 
 localparam nr_registers 			= `ceildiv(nr_virt_ios, data_bus_width);
 localparam nr_config_registers 		= nr_registers * proc_sel_bits;
@@ -43,16 +43,20 @@ localparam nr_backplane_registers 	= `ceildiv(nr_backplane_ios, data_bus_width);
 
 `FLEX_OUT(2, flex_out_proc_plugin_select, SEC, `BB_BASE_gpio_proc_sel, nr_config_registers, addr_bus_width, data_bus_width, proc_plugin_select)
 
+// ********** Proc default selected flag ********** 
+
+`FLEX_IN(3, flex_in_ppds, SEC, `BB_BASE_gpio_proc_default_selected, nr_registers, addr_bus_width, data_bus_width, proc_plugin_default_selected)
+
 // ********** Backplane input ********** 
 
-`FLEX_IN(3, flex_in_bp, SEC, `BB_BASE_gpio_bp_in_reg, nr_backplane_registers, addr_bus_width, data_bus_width, backplane_in)
+`FLEX_IN(4, flex_in_bp, SEC, `BB_BASE_gpio_bp_in_reg, nr_backplane_registers, addr_bus_width, data_bus_width, backplane_in)
 
 // ********** Backplane output ********** 
 
-`FLEX_OUT(4, flex_out_bp, SEC, `BB_BASE_gpio_bp_out_reg, nr_backplane_registers, addr_bus_width, data_bus_width, backplane_out)
+`FLEX_OUT(5, flex_out_bp, SEC, `BB_BASE_gpio_bp_out_reg, nr_backplane_registers, addr_bus_width, data_bus_width, backplane_out)
 
 // ********** Backplane direction ********** 
 
-`FLEX_OUT(5, flex_out_bpdir, SEC, `BB_BASE_gpio_bp_dir_reg, nr_backplane_registers, addr_bus_width, data_bus_width, backplane_dir)
+`FLEX_OUT(6, flex_out_bpdir, SEC, `BB_BASE_gpio_bp_dir_reg, nr_backplane_registers, addr_bus_width, data_bus_width, backplane_dir)
 
 endmodule

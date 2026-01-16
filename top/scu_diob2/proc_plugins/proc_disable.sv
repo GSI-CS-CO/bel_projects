@@ -16,8 +16,8 @@ module proc_disable #(
 
 assign internal_out 	= 0;
 assign virtual_in 		= 0;
-assign output_enable	= 1;
-assign input_enable		= 1;
+assign output_enable	= 0;
+assign input_enable		= 0;
 
 
 endmodule

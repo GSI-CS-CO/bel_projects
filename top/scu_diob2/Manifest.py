@@ -15,6 +15,7 @@ files = [
        # Frontend plugins
    "frontend_plugins/frontend_unknown.sv",  
    "frontend_plugins/interbackplane/frontend_interbackplane.sv",  
+   "frontend_plugins/frontend_ocio.sv",  
        # Proc plugins
    "proc_plugins/proc_disable.sv",  
    "proc_plugins/proc_pass.sv",  
@@ -27,6 +28,8 @@ files = [
    "frontend_plugins/interbackplane/ibpl_empty.sv",  
    "frontend_plugins/interbackplane/ibpl_5in1out.sv",  
    "frontend_plugins/interbackplane/ibpl_in.sv",  
+   "frontend_plugins/interbackplane/ibpl_in.sv",  
+   "frontend_plugins/interbackplane/ibpl_lwlin.sv",  
    "frontend_plugins/interbackplane/ibpl_out.sv",  
 
        # Environment
