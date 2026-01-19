@@ -4,13 +4,14 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 package blackbox_config_pkg is
-	constant BB_VERSION_MAJOR : integer := 1;
-	constant BB_VERSION_MINOR : integer := 0;
+	constant BB_VERSION_MAJOR : integer := 0;
+	constant BB_VERSION_MINOR : integer := 1;
 	constant BB_ADDR_BUS_WIDTH : integer := 16;
 	constant BB_DATA_BUS_WIDTH : integer := 16;
 	constant BB_NR_DIOB_IOS : integer := 127;
 	constant BB_NR_VIRT_IOS : integer := 128;
 	constant BB_NR_BACKPLANE_IOS : integer := 16;
+	constant BB_NR_IRQ_LINES : integer := 16;
 	constant BB_MAX_FRONTEND_PLUGINS : integer := 256;
 	constant BB_MAX_PROC_PLUGINS : integer := 16;
 	constant BB_MAX_USER_PLUGINS : integer := 256;

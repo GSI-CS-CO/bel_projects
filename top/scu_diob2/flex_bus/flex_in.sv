@@ -95,7 +95,7 @@ begin
 			begin
 				if (selected)
 				begin
-					if (read_trg)
+					if (read_trg && (reg_sel < nr_registers))
 					begin
 						reg_data_r 		<= in_registers[reg_sel];
 						reg_dtack 		<= 1;
