@@ -29,7 +29,7 @@ jobs:
         run: sudo apt-get -y install automake libreadline-dev build-essential libboost-all-dev docbook-utils pkg-config libsigc++-2.0-dev --fix-missing
 
       - name: Set PKG_CONFIG_PATH
-        run: export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$(pwd)/res/librtpi && echo $PKG_CONFIG_PATH
+        run: export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 
       - name: Create symlinks
         run: sudo ln -s /usr/lib/x86_64-linux-gnu/libmpfr.so.6 /usr/lib/x86_64-linux-gnu/libmpfr.so.4
@@ -61,8 +61,11 @@ jobs:
       - name: Build real-time priority inheritance Library
         run: make librtpi
 
-      - name: Install real-time priority inheritance Library
+      - name: Install real-time priority inheritance library
         run: sudo make librtpi-install
+
+      - name: Install real-time priority inheritance Library PC file
+        run: sudo cp $(pwd)/res/librtpi/librtpi.pc /usr/local/lib/pkgconfig
 
       - name: Build saftlib
         run: make saftlib -j$(nproc)
