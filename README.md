@@ -40,6 +40,7 @@ GSI Timing Gateware and Tools
     - [Rocky-9](#rocky-9)
     - [Yocto](#yocto)
     - [Package Requirements Etherbone](#package-requirements-etherbone)
+    - [Package Requirements RTPI](#package-requirements-rtpi)
   - [Git](#git)
     - [CAfile](#cafile)
   - [JTAG and Programming](#jtag-and-programming)
@@ -475,6 +476,19 @@ Solution:
 
 ```
 export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+```
+
+### Package Requirements RTPI
+
+Error: configure: error: Package requirements (librtpi >= 1.0.X) were not met:
+
+Solution:
+
+```
+make librtpi
+sudo make librtpi-install
+export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$(pwd)/res/librtpi # Option 1, use option 1 if this does not work
+sudo cp $(pwd)/res/librtpi/librtpi.pc /usr/local/lib/pkgconfig     # Option 2
 ```
 
 ## Git
