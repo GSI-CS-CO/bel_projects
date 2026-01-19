@@ -1,0 +1,378 @@
+{
+	"frontend_plugins": {
+		"unknown": {
+			"devices": {
+				"default": {
+					"id": 255,
+					"cid_system": 0,
+					"cid_group": 0,
+					"fg": "None",
+					"description": "Default"
+				}
+			},
+			"unit": "frontend_unknown",
+			"file": "frontend_unknown.sv",
+			"parameters": {},
+			"description": "Default for empty/unknown frontend - disconnect everything"
+		},
+		"p37io": {
+			"devices": {
+				"p37io1": {
+					"id": 1,
+					"cid_system": 55,
+					"cid_group": 27,
+					"fg": "FG900.700",
+					"description": "P37IO1"
+				}
+			},
+			"unit": "frontend_unknown",
+			"file": "frontend_unknown.sv",
+			"parameters": {},
+			"description": "P37IO: 1 x D-SUB 37M - 10out 16inn; 3 x Lemo - 2in, 1out; 1 x Reset button"
+		},
+		"p25io": {
+			"devices": {
+				"p25io1": {
+					"id": 2,
+					"cid_system": 55,
+					"cid_group": 28,
+					"fg": "FG900.710",
+					"description": "P25IO1"
+				}
+			},
+			"unit": "frontend_unknown",
+			"file": "frontend_unknown.sv",
+			"parameters": {},
+			"description": "P25IO: AD-Out from HOLEC and digital Out - DA-In from HOLEC"
+		},
+		"ocin": {
+			"devices": {
+				"ocin1": {
+					"id": 3,
+					"cid_system": 55,
+					"cid_group": 29,
+					"fg": "FG900.720",
+					"description": "OCIN1"
+				}
+			},
+			"unit": "frontend_unknown",
+			"file": "frontend_unknown.sv",
+			"parameters": {},
+			"description": "OCIN: digital IO - control and status, 12 Channel 50V, 10 A (OCEM)"
+		},
+		"ocio": {
+			"devices": {
+				"ocio1": {
+					"id": 4,
+					"cid_system": 55,
+					"cid_group": 30,
+					"fg": "FG900.730",
+					"description": "OCIO1"
+				},
+				"ocio2": {
+					"id": 14,
+					"cid_system": 55,
+					"cid_group": 61,
+					"fg": "FG900.731",
+					"description": "OCIO2"
+				}
+			},
+			"unit": "frontend_ocio",
+			"file": "frontend_ocio.sv",
+			"parameters": {},
+			"description": "OCIO: digital IO - control and status, 12 Channel 35 V, 10 A ('PAAL')"
+		},
+		"uio": {
+			"devices": {
+				"ui011": {
+					"id": 5,
+					"cid_system": 55,
+					"cid_group": 31,
+					"fg": "FG900.740",
+					"description": "UIO1"
+				}
+			},
+			"unit": "frontend_unknown",
+			"file": "frontend_unknown.sv",
+			"parameters": {},
+			"description": "UIO1: digital IO - programmable direction"
+		},
+		"da": {
+			"devices": {
+				"da1": {
+					"id": 6,
+					"cid_system": 55,
+					"cid_group": 32,
+					"fg": "FG900.750",
+					"description": "DA1"
+				},
+				"da2": {
+					"id": 15,
+					"cid_system": 55,
+					"cid_group": 72,
+					"fg": "FG900.751",
+					"description": "DA2"
+				}
+			},
+			"unit": "frontend_unknown",
+			"file": "frontend_unknown.sv",
+			"parameters": {},
+			"description": "DA: 2-channel DAC"
+		},
+		"atr1": {
+			"devices": {
+				"atr1": {
+					"id": 7,
+					"cid_system": 55,
+					"cid_group": 73,
+					"fg": "FG900.760",
+					"description": "ATR1"
+				}
+			},
+			"unit": "frontend_unknown",
+			"file": "frontend_unknown.sv",
+			"parameters": {},
+			"description": "ATR1: 8-channel analog trigger with programmable thresholds"
+		},
+		"spsio": {
+			"devices": {
+				"spsio1": {
+					"id": 8,
+					"cid_system": 55,
+					"cid_group": 33,
+					"fg": "FG900.770",
+					"description": "SPSIO1: High Side Out"
+				},
+				"spsioi1": {
+					"id": 10,
+					"cid_system": 55,
+					"cid_group": 68,
+					"fg": "FG901.770",
+					"description": "SPSIOI1: Low Side Out"
+				}
+			},
+			"unit": "frontend_unknown",
+			"file": "frontend_unknown.sv",
+			"parameters": {},
+			"description": "SPSIO: digital IO - control and status, SPS-Interface"
+		},
+		"hfio": {
+			"devices": {
+				"hfio1": {
+					"id": 9,
+					"cid_system": 55,
+					"cid_group": 34,
+					"fg": "FG900.780",
+					"description": "HFIO1"
+				}
+			},
+			"unit": "frontend_unknown",
+			"file": "frontend_unknown.sv",
+			"parameters": {},
+			"description": "HFIO: Digital I/O"
+		},		
+
+		"interbackplane": {
+			"devices": {
+				"inlb12s1": {
+					"id": 19,
+					"cid_system": 55,
+					"cid_group": 67,
+					"fg": "FG902.050",
+					"description": "INLB12S1"
+				}
+			},
+			"unit": "frontend_interbackplane",
+			"file": "interbackplane/frontend_interbackplane.sv",
+			"parameters": {},
+			"description": "INLB12S: Interbackplane for connecting up to 12 6-channel modules"
+		},
+		"16out": {
+			"devices": {
+				"16out2": {
+					"id": 12,
+					"cid_system": 55,
+					"cid_group": 70,
+					"fg": "FG901.010",
+					"description": "16OUT2"
+				}
+			},
+			"unit": "frontend_unknown",
+			"file": "frontend_unknown.sv",
+			"parameters": {},
+			"description": "16OUT: 1 x D-SUB 25F - 17out; 1 x Lemo in"
+		},
+		"16in": {
+			"devices": {
+				"16in2": {
+					"id": 13,
+					"cid_system": 55,
+					"cid_group": 71,
+					"fg": "FG901.020",
+					"description": "16IN2"
+				}
+			},
+			"unit": "frontend_unknown",
+			"file": "frontend_unknown.sv",
+			"parameters": {},
+			"description": "16IN: 1 x D-SUB 25F - 17out, 1in; 1 x Lemo in"
+		},
+		"ad": {
+			"devices": {
+				"ad1": {
+					"id": 16,
+					"cid_system": 55,
+					"cid_group": 80,
+					"fg": "FG901.040",
+					"description": "AD1"
+				}
+			},
+			"unit": "frontend_unknown",
+			"file": "frontend_unknown.sv",
+			"parameters": {},
+			"description": "AD1: Mystery"
+		},
+		"atr2": {
+			"devices": {
+				"default": {
+					"id": 17,
+					"cid_system": 55,
+					"cid_group": 81,
+					"fg": "FG900.761",
+					"description": "Default"
+				}
+			},
+			"unit": "frontend_unknown",
+			"file": "frontend_unknown.sv",
+			"parameters": {},
+			"description": "ATR2: 8-channel analog trigger with programmable thresholds"
+		},	
+		"8in8out": {
+			"devices": {
+				"8in8out1": {
+					"id": 18,
+					"cid_system": 55,
+					"cid_group": 88,
+					"fg": "FG901.050",
+					"description": "8IN8OUT2"
+				}
+			},
+			"unit": "frontend_unknown",
+			"file": "frontend_unknown.sv",
+			"parameters": {},
+			"description": "8IN8OUT: 8 x LEMO in; 8 x LEMO out"
+		}	
+	},
+	"proc_plugins": {
+		"disable": {
+			"id": 0,
+			"unit": "proc_disable",
+			"file": "proc_disable.sv",
+			"parameters": {},
+			"description": "Block all signals"
+		},
+		"pass": {
+			"id": 1,
+			"unit": "proc_pass",
+			"file": "proc_pass.sv",
+			"parameters": {},
+			"description": "Forward all signals in both directions"
+		},
+		"in_debounce2": {
+			"id": 2,
+			"unit": "proc_in_debounce",
+			"file": "proc_in_debounce.sv",
+			"parameters": {"nr_stages": 2},
+			"description": "Debounce incoming signals within 2 clock periods. Forward outgoing signals."
+		},
+		"in_debounce4": {
+			"id": 3,
+			"unit": "proc_in_debounce",
+			"file": "proc_in_debounce.sv",
+			"parameters": {"nr_stages": 4},
+			"description": "Debounce incoming signals within 4 clock periods. Forward outgoing signals."
+		},
+		"in_debounce125": {
+			"id": 4,
+			"unit": "proc_in_long_debounce",
+			"file": "proc_in_long_debounce.sv",
+			"parameters": {"count_ticks": 125},
+			"description": "Debounce incoming signals  within 125 clock periods. Forward outgoing signals."
+		},
+		"modem": {
+			"id": 5,
+			"unit": "proc_modem",
+			"file": "proc_modem.sv",
+			"parameters": {},
+			"description": "4MHz modulator/demodulator for FBAS/MPS"
+		}
+
+	},
+	"user_plugins": {
+		"gpio": {	
+			"id": 0,
+			"unit": "user_gpio",
+			"file": "user_gpio.sv",
+			"parameters": {},
+			"description": "A simple PIO to read/write all signals",
+			"registers": {
+				"proc_sel": 				"0x1000",
+				"proc_default_selected":	"0x1040",
+				"in_reg":					"0x1050",
+				"out_reg":					"0x1060",
+				"bp_in_reg":				"0x1100",
+				"bp_out_reg":				"0x1104",
+				"bp_dir_reg":				"0x1108"
+			}
+		}
+	},	
+	"configurations": {
+		"default": {
+			"id": 0,
+			"frontend_plugins": ["unknown", "ocio", "interbackplane"],
+			"proc_plugins": ["disable", "pass", "in_debounce2", "in_debounce4", "in_debounce125"],
+			"user_plugins": ["gpio"],
+			"interbackplane": "default",
+			"description": "Example default configuration"
+		},
+		"test": {
+			"id": 1,
+			"frontend_plugins": ["unknown", "interbackplane"],
+			"proc_plugins": ["disable", "pass", "in_debounce2", "in_debounce4", "in_debounce125"],
+			"user_plugins": ["gpio"],
+			"interbackplane": "default",
+			"description": "Test configuration"
+		}
+	},
+	"defines": {
+		"Versions": {
+			"VERSION_MAJOR":		0,
+			"VERSION_MINOR":		1
+		},
+		"Bus widths": {
+			"ADDR_BUS_WIDTH":		16,
+			"DATA_BUS_WIDTH":		16
+		},
+		"Amounts of resources": {
+			"NR_DIOB_IOS":			127,
+			"NR_VIRT_IOS":			128,
+			"NR_BACKPLANE_IOS":		16,
+			"NR_IRQ_LINES":			16,
+			"MAX_FRONTEND_PLUGINS":	256,
+			"MAX_PROC_PLUGINS": 	16,
+			"MAX_USER_PLUGINS":		256,
+			"FRONTEND_STATUS_BITS": 128
+		},
+		"Base addresses": {
+			"BASE_blackbox":		"0x0200",
+			"BASE_info":			"0x0200",
+			"BASE_frontend_status":	"0x0210",
+			"BASE_user_sel":		"0x0220",
+			"BASE_user_area":		"0x0400"
+		},
+		"Clock speed": {
+			"CLOCK":				125000000
+		}	
+	}
+}
+

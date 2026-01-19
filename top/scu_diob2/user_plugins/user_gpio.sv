@@ -1,6 +1,5 @@
 /*
 	A simple PIO to read/write all signals.
-
 */
 
 `timescale 1 ps / 1 ps
@@ -41,11 +40,11 @@ localparam nr_backplane_registers 	= `ceildiv(nr_backplane_ios, data_bus_width);
 
 // ********** Proc plugin selection ********** 
 
-`FLEX_OUT(2, flex_out_proc_plugin_select, SEC, `BB_BASE_gpio_proc_sel, nr_config_registers, addr_bus_width, data_bus_width, proc_plugin_select)
+`FLEX_OUT(2, flex_out_proc_plugin_select, SEC, `BB_BASE_gpio_proc_sel, nr_config_registers, addr_bus_width, data_bus_width, proc_sel)
 
 // ********** Proc default selected flag ********** 
 
-`FLEX_IN(3, flex_in_ppds, SEC, `BB_BASE_gpio_proc_default_selected, nr_registers, addr_bus_width, data_bus_width, proc_plugin_default_selected)
+`FLEX_IN(3, flex_in_ppds, SEC, `BB_BASE_gpio_proc_default_selected, nr_registers, addr_bus_width, data_bus_width, proc_default)
 
 // ********** Backplane input ********** 
 
@@ -59,4 +58,7 @@ localparam nr_backplane_registers 	= `ceildiv(nr_backplane_ios, data_bus_width);
 
 `FLEX_OUT(6, flex_out_bpdir, SEC, `BB_BASE_gpio_bp_dir_reg, nr_backplane_registers, addr_bus_width, data_bus_width, backplane_dir)
 
+// ********** Interrupts - not used ********** 
+
+assign irq = 0;
 endmodule

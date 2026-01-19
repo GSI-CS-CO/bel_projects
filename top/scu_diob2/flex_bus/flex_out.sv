@@ -98,14 +98,14 @@ begin
 			begin
 				if (selected)
 				begin
-					if (read_trg)
+					if (read_trg && (reg_sel < nr_registers))
 					begin
 						reg_data_r 		<= out_registers[reg_sel];
 						reg_dtack 		<= 1;
 						reg_data_r_act 	<= 1;
 						state 			<= STATE_WAIT;
 					end
-					else if (write_trg)
+					else if (write_trg && (reg_sel < nr_registers))
 					begin
 						out_registers[reg_sel] 	<= data_w;
 						reg_dtack 		<= 1;
