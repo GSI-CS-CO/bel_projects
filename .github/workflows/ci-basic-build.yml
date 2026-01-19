@@ -28,17 +28,8 @@ jobs:
       - name: Install missing packages
         run: sudo apt-get -y install automake libreadline-dev build-essential libboost-all-dev docbook-utils pkg-config libsigc++-2.0-dev --fix-missing
 
-      - name: Compile and install librtpi
-        run: git clone https://github.com/GSI-CS-CO/librtpi.git \
-             cd librtpi \
-             git checkout 1.0.1 \
-             autoreconf --install \
-             ./configure \
-             make \
-             sudo make install
-
       - name: Set PKG_CONFIG_PATH
-        run: export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+        run: export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$(pwd)/res/librtpi
 
       - name: Create symlinks
         run: sudo ln -s /usr/lib/x86_64-linux-gnu/libmpfr.so.6 /usr/lib/x86_64-linux-gnu/libmpfr.so.4
@@ -66,6 +57,12 @@ jobs:
 
       - name: Build phtif
         run: make phtif
+
+       -name: Build real-time priority inheritance Library
+       -run: make librtpi
+
+       -name: Build real-time priority inheritance Library
+       -run: sudo make librtpi-inbstall
 
       - name: Build saftlib
         run: make saftlib -j$(nproc)

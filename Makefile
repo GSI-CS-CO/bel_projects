@@ -261,6 +261,22 @@ phtif:
 phtif-clean:
 	$(MAKE) -C tools/phtif clean
 
+librtpi:
+	git clone https://github.com/GSI-CS-CO/librtpi.git && \
+	cd librtpi && \
+	git checkout 1.0.1 && \
+	autoreconf --install && \
+	./configure && \
+	make
+
+librtpi-install:
+	cd librtpi && \
+	sudo make install && \
+	cd ..
+
+librtpi-clean:
+	rm -rf librtpi || true
+
 # #################################################################################################
 # Arria 2 devices
 # #################################################################################################
