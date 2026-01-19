@@ -62,7 +62,7 @@ jobs:
        -run: make librtpi
 
        -name: Build real-time priority inheritance Library
-       -run: sudo make librtpi-inbstall
+       -run: sudo make librtpi-install
 
       - name: Build saftlib
         run: make saftlib -j$(nproc)
