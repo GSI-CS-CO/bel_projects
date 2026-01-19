@@ -58,11 +58,11 @@ jobs:
       - name: Build phtif
         run: make phtif
 
-       -name: Build real-time priority inheritance Library
-       -run: make librtpi
+      - name: Build real-time priority inheritance Library
+        run: make librtpi
 
-       -name: Build real-time priority inheritance Library
-       -run: sudo make librtpi-install
+      - name: Install real-time priority inheritance Library
+        run: sudo make librtpi-install
 
       - name: Build saftlib
         run: make saftlib -j$(nproc)
