@@ -14,8 +14,8 @@ files = [
    "flex_bus/flex_filter.sv",
        # Frontend plugins
    "frontend_plugins/frontend_unknown.sv",  
-   "frontend_plugins/interbackplane/frontend_interbackplane.sv",  
    "frontend_plugins/frontend_ocio.sv",  
+   "frontend_plugins/interbackplane/frontend_interbackplane.sv",  
        # Proc plugins
    "proc_plugins/proc_disable.sv",  
    "proc_plugins/proc_pass.sv",  
@@ -25,12 +25,12 @@ files = [
        # User plugins
    "user_plugins/user_gpio.sv",  
        # Interbackplane stuff
-   "frontend_plugins/interbackplane/ibpl_empty.sv",  
-   "frontend_plugins/interbackplane/ibpl_5in1out.sv",  
-   "frontend_plugins/interbackplane/ibpl_in.sv",  
-   "frontend_plugins/interbackplane/ibpl_in.sv",  
-   "frontend_plugins/interbackplane/ibpl_lwlin.sv",  
-   "frontend_plugins/interbackplane/ibpl_out.sv",  
+   "frontend_plugins/interbackplane/cardlet_plugins/ibpl_empty.sv",  
+   "frontend_plugins/interbackplane/cardlet_plugins/ibpl_5in1out.sv",  
+   "frontend_plugins/interbackplane/cardlet_plugins/ibpl_in.sv",  
+   "frontend_plugins/interbackplane/cardlet_plugins/ibpl_in.sv",  
+   "frontend_plugins/interbackplane/cardlet_plugins/ibpl_lwlin.sv",  
+   "frontend_plugins/interbackplane/cardlet_plugins/ibpl_out.sv",  
 
        # Environment
    "scu_diob.vhd",

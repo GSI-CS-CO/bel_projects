@@ -13,6 +13,7 @@ module io_blackbox #(
 		parameter		nr_diob_ios 			= `BB_NR_DIOB_IOS,
 		parameter		nr_virt_ios 			= `BB_NR_VIRT_IOS,
 		parameter		nr_backplane_ios 		= `BB_NR_BACKPLANE_IOS,
+		parameter		nr_irq_lines			= `BB_NR_IRQ_LINES,
 		parameter		max_frontend_plugins 	= `BB_MAX_FRONTEND_PLUGINS,
 		parameter		max_proc_plugins 		= `BB_MAX_PROC_PLUGINS,
 		parameter		max_user_plugins 		= `BB_MAX_USER_PLUGINS,
@@ -33,6 +34,8 @@ module io_blackbox #(
 		inout	wire	[nr_backplane_ios-1:0]	backplane_io,			// Backplane input/output fed (almost) directly	to user plugin
 			// SCU-bus
 		`MAKE_PRI_BUS(addr_bus_width, data_bus_width),
+			// Interrupts
+		output	wire	[nr_irq_lines-1:0]		irq,	
 			// Debugging purposes
 		output	wire	[15:0]					test_out
 	);
@@ -97,6 +100,9 @@ wire [nr_backplane_ios-1:0] backplane_out;
 wire [nr_backplane_ios-1:0] backplane_dir;   								
 wire [nr_backplane_ios-1:0] backplane_in;  	
 
+	// Interrupt signals
+wire [nr_irq_lines-1:0]		irq_array[nr_user_plugins-1:0];
+
 	//Plugin selectors
 wire [nr_virt_ios*proc_sel_bits-1:0]	proc_plugin_select_array[nr_user_plugins-1:0];				
 wire [nr_virt_ios*proc_sel_bits-1:0]	proc_plugin_select;					// Processing plugin selection - flattened clog2(nr_proc_plugins) * nr_ios bits
@@ -122,15 +128,15 @@ begin
 			int_frontend_plugin_select <= 0;	// unknown
 			frontend_plugin_default_selected <= 0;
 		end	
-			19:		// inlb12s1
-		begin	
-			int_frontend_plugin_select <= 1;	// interbackplane
-			frontend_plugin_default_selected <= 0;
-		end	
 			4,		// ocio1
 			14:		// ocio2
 		begin	
-			int_frontend_plugin_select <= 2;	// ocio
+			int_frontend_plugin_select <= 1;	// ocio
+			frontend_plugin_default_selected <= 0;
+		end	
+			19:		// inlb12s1
+		begin	
+			int_frontend_plugin_select <= 2;	// interbackplane
 			frontend_plugin_default_selected <= 0;
 		end	
 		default: 
@@ -266,6 +272,10 @@ generate
 	end
 endgenerate
 
+// ********** Interrupt signals - demultiplexing ********** 
+
+assign irq = irq_array[int_user_plugin_select];
+
 //             /-------------------------------------------------------\ 
 //             |*******************************************************| 
 //             |*                      SCU BUS                        *| 
@@ -351,10 +361,10 @@ flex_filterplus #(
 // +02:	12'b0, user_plugin_default_selected, |proc_plugin_default_selected, frontend_plugin_default_selected,  frontend_error
 // +03: Frontend plugin selection
 
-wire [7:0] bb_version_major = `BB_VERSION_MAJOR;
-wire [7:0] bb_version_minor = `BB_VERSION_MINOR;
-wire [15:0] bb_config		= 0;
-wire [15:0] fps16 			= frontend_plugin_select;
+wire [11:0] bb_version_major	= `BB_VERSION_MAJOR;
+wire [3:0] bb_version_minor		= `BB_VERSION_MINOR;
+wire [15:0] bb_config			= 0;
+wire [15:0] fps16 				= frontend_plugin_select;
 
 wire [63 : 0] status_info;
 assign status_info = {	fps16,																					// Frontend plugin selection
@@ -427,11 +437,11 @@ frontend_unknown #(
 	.input_act    	(internal_ie & virtual_in)
 );
 	
-frontend_interbackplane #(
+frontend_ocio #(
 	.nr_diob_ios	(nr_diob_ios),
 	.nr_virt_ios	(nr_virt_ios),
 	.nr_status_bits	(frontend_status_bits)
-) frontend_inst_interbackplane (
+) frontend_inst_ocio (
 	.clock       	(clock),
 	.reset       	(reset),
 	.plugin_enable	(int_frontend_plugin_select == 1 ? 1'b1 : 1'b0),
@@ -448,11 +458,11 @@ frontend_interbackplane #(
 	.input_act    	(internal_ie & virtual_in)
 );
 	
-frontend_ocio #(
+frontend_interbackplane #(
 	.nr_diob_ios	(nr_diob_ios),
 	.nr_virt_ios	(nr_virt_ios),
 	.nr_status_bits	(frontend_status_bits)
-) frontend_inst_ocio (
+) frontend_inst_interbackplane (
 	.clock       	(clock),
 	.reset       	(reset),
 	.plugin_enable	(int_frontend_plugin_select == 2 ? 1'b1 : 1'b0),
@@ -564,15 +574,17 @@ user_gpio #(
 	.plugin_enable		(int_user_plugin_select == 0 ? 1'b1 : 1'b0),
 	.frontend_error		(frontend_error),
 	.frontend_sel		(frontend_plugin_select),
+	.frontend_default	(frontend_plugin_default_selected),
 	.frontend_status	(frontend_status),
 		//I/O
 	.virtual_in 		(virtual_in),
 	.virtual_out		(virtual_out_array[0]),
-	.proc_plugin_select	(proc_plugin_select_array[0]), 
-	.proc_plugin_default_selected (proc_plugin_default_selected),
+	.proc_sel			(proc_plugin_select_array[0]), 
+	.proc_default		(proc_plugin_default_selected),
 	.backplane_in 		(backplane_in),
 	.backplane_out		(backplane_out_array[0]),
 	.backplane_dir		(backplane_dir_array[0]),
+	.irq				(irq_array[0]),
 		//Bus
 	.addr				(SECaddr),
 	.data_w				(SECdata_w),
