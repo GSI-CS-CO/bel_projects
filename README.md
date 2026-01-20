@@ -279,6 +279,7 @@ Answer: You need to have installed the following packages before you can configu
 - pkgconfig (saftlib) †
 - xsltproc (saftlib)
 - libz-dev (saftlib)
+- librtpi (saftlib)
 
 † Ubuntu 22.04 and later: pkg-config
 
@@ -487,7 +488,7 @@ Solution:
 ```
 make librtpi
 sudo make librtpi-install
-export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$(pwd)/res/librtpi # Option 1, use option 1 if this does not work
+export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$(pwd)/res/librtpi # Option 1, use option 2 if this does not work
 sudo cp $(pwd)/res/librtpi/librtpi.pc /usr/local/lib/pkgconfig     # Option 2
 ```
 
