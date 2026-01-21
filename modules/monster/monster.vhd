@@ -3704,6 +3704,7 @@ end generate;
 
   pwm_n : if not g_en_pwm generate
     dev_bus_master_i(dev_slaves'pos(devs_pwm)) <= cc_dummy_slave_out;
+    s_gpio_src_pwm                             <= (others => '0');
   end generate;
 
   pwm_y : if g_en_pwm generate
