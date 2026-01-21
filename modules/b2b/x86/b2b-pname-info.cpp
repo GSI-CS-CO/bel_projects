@@ -3,12 +3,12 @@
  *
  *  created : 2021
  *  author  : Michael Reese, Dietrich Beck GSI-Darmstadt
- *  version : 12-Dec-2025
+ *  version : 21-jan-2026
  *
  * a hackish solution providing pattern name information for relevant Sequence IDs
  *
  *********************************************************************************************/
-#define B2B_PNAME_VERSION 0x000812
+#define B2B_PNAME_VERSION 0x000813
 
 #include <dis.h>
 #include <cstdio>
@@ -171,8 +171,8 @@ int main(int argc, char** argv)
       throw std::runtime_error("cannot start DIM server");
     }
 
-    std::string magic_command_pro = "/common/usr/cscoap/bin/lsa_residump -t --config=PRO | grep EXTRACTION_FAST";
-    std::string magic_command_int = "/common/usr/cscoap/bin/lsa_residump -t --config=INT | grep EXTRACTION_FAST";
+    std::string magic_command_pro = "/common/usr/cscoap/bin/lsa_residump -t --config=PRO | grep RING_EXTRACTION";
+    std::string magic_command_int = "/common/usr/cscoap/bin/lsa_residump -t --config=INT | grep RING_EXTRACTION";
     std::string magic_command = "";
 
     if       (envName == "pro") magic_command = magic_command_pro;
