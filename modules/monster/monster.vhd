@@ -1114,39 +1114,39 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
 
   component virtual_jtag is
-		port (
-			tdi                : out std_logic;                                       -- tdi
-			tdo                : in  std_logic                    := 'X';             -- tdo
-			ir_in              : out std_logic_vector(0 downto 0);                    -- ir_in
-			ir_out             : in  std_logic_vector(0 downto 0) := (others => 'X'); -- ir_out
-			virtual_state_cdr  : out std_logic;                                       -- virtual_state_cdr
-			virtual_state_sdr  : out std_logic;                                       -- virtual_state_sdr
-			virtual_state_e1dr : out std_logic;                                       -- virtual_state_e1dr
-			virtual_state_pdr  : out std_logic;                                       -- virtual_state_pdr
-			virtual_state_e2dr : out std_logic;                                       -- virtual_state_e2dr
-			virtual_state_udr  : out std_logic;                                       -- virtual_state_udr
-			virtual_state_cir  : out std_logic;                                       -- virtual_state_cir
-			virtual_state_uir  : out std_logic;                                       -- virtual_state_uir
-			tms                : out std_logic;                                       -- tms
-			jtag_state_tlr     : out std_logic;                                       -- jtag_state_tlr
-			jtag_state_rti     : out std_logic;                                       -- jtag_state_rti
-			jtag_state_sdrs    : out std_logic;                                       -- jtag_state_sdrs
-			jtag_state_cdr     : out std_logic;                                       -- jtag_state_cdr
-			jtag_state_sdr     : out std_logic;                                       -- jtag_state_sdr
-			jtag_state_e1dr    : out std_logic;                                       -- jtag_state_e1dr
-			jtag_state_pdr     : out std_logic;                                       -- jtag_state_pdr
-			jtag_state_e2dr    : out std_logic;                                       -- jtag_state_e2dr
-			jtag_state_udr     : out std_logic;                                       -- jtag_state_udr
-			jtag_state_sirs    : out std_logic;                                       -- jtag_state_sirs
-			jtag_state_cir     : out std_logic;                                       -- jtag_state_cir
-			jtag_state_sir     : out std_logic;                                       -- jtag_state_sir
-			jtag_state_e1ir    : out std_logic;                                       -- jtag_state_e1ir
-			jtag_state_pir     : out std_logic;                                       -- jtag_state_pir
-			jtag_state_e2ir    : out std_logic;                                       -- jtag_state_e2ir
-			jtag_state_uir     : out std_logic;                                       -- jtag_state_uir
-			tck                : out std_logic                                        -- clk
-		);
-	end component virtual_jtag;
+    port (
+      tdi                : out std_logic;                                       -- tdi
+      tdo                : in  std_logic                    := 'X';             -- tdo
+      ir_in              : out std_logic_vector(0 downto 0);                    -- ir_in
+      ir_out             : in  std_logic_vector(0 downto 0) := (others => 'X'); -- ir_out
+      virtual_state_cdr  : out std_logic;                                       -- virtual_state_cdr
+      virtual_state_sdr  : out std_logic;                                       -- virtual_state_sdr
+      virtual_state_e1dr : out std_logic;                                       -- virtual_state_e1dr
+      virtual_state_pdr  : out std_logic;                                       -- virtual_state_pdr
+      virtual_state_e2dr : out std_logic;                                       -- virtual_state_e2dr
+      virtual_state_udr  : out std_logic;                                       -- virtual_state_udr
+      virtual_state_cir  : out std_logic;                                       -- virtual_state_cir
+      virtual_state_uir  : out std_logic;                                       -- virtual_state_uir
+      tms                : out std_logic;                                       -- tms
+      jtag_state_tlr     : out std_logic;                                       -- jtag_state_tlr
+      jtag_state_rti     : out std_logic;                                       -- jtag_state_rti
+      jtag_state_sdrs    : out std_logic;                                       -- jtag_state_sdrs
+      jtag_state_cdr     : out std_logic;                                       -- jtag_state_cdr
+      jtag_state_sdr     : out std_logic;                                       -- jtag_state_sdr
+      jtag_state_e1dr    : out std_logic;                                       -- jtag_state_e1dr
+      jtag_state_pdr     : out std_logic;                                       -- jtag_state_pdr
+      jtag_state_e2dr    : out std_logic;                                       -- jtag_state_e2dr
+      jtag_state_udr     : out std_logic;                                       -- jtag_state_udr
+      jtag_state_sirs    : out std_logic;                                       -- jtag_state_sirs
+      jtag_state_cir     : out std_logic;                                       -- jtag_state_cir
+      jtag_state_sir     : out std_logic;                                       -- jtag_state_sir
+      jtag_state_e1ir    : out std_logic;                                       -- jtag_state_e1ir
+      jtag_state_pir     : out std_logic;                                       -- jtag_state_pir
+      jtag_state_e2ir    : out std_logic;                                       -- jtag_state_e2ir
+      jtag_state_uir     : out std_logic;                                       -- jtag_state_uir
+      tck                : out std_logic                                        -- clk
+    );
+  end component virtual_jtag;
 
   signal s_tdi    : std_logic;
   signal s_tdo    : std_logic;
@@ -3743,37 +3743,37 @@ end generate;
   virtual_jtag_y : if g_en_virtual_jtag generate
 
   virtual_jtag_inst : component virtual_jtag
-		port map (
+    port map (
       tdi                => s_tdi,
-			tdo                => s_tdo,
-			ir_in              => open,
-		  ir_out             => open,
-			virtual_state_cdr  => open,
-			virtual_state_sdr  => open,
-			virtual_state_e1dr => open,
-			virtual_state_pdr  => open,
-			virtual_state_e2dr => open,
-			virtual_state_udr  => open,
-			virtual_state_cir  => open,
-			virtual_state_uir  => open,
-			tms                => s_tms,
-			jtag_state_tlr     => open,
-			jtag_state_rti     => open,
-			jtag_state_sdrs    => open,
-			jtag_state_cdr     => open,
-			jtag_state_sdr     => open,
-			jtag_state_e1dr    => open,
-			jtag_state_pdr     => open,
-			jtag_state_e2dr    => open,
-			jtag_state_udr     => open,
-			jtag_state_sirs    => open,
-			jtag_state_cir     => open,
-			jtag_state_sir     => open,
-			jtag_state_e1ir    => open,
-			jtag_state_pir     => open,
-			jtag_state_e2ir    => open,
-			jtag_state_uir     => open,
-			tck                => s_tck
+      tdo                => s_tdo,
+      ir_in              => open,
+      ir_out             => open,
+      virtual_state_cdr  => open,
+      virtual_state_sdr  => open,
+      virtual_state_e1dr => open,
+      virtual_state_pdr  => open,
+      virtual_state_e2dr => open,
+      virtual_state_udr  => open,
+      virtual_state_cir  => open,
+      virtual_state_uir  => open,
+      tms                => s_tms,
+      jtag_state_tlr     => open,
+      jtag_state_rti     => open,
+      jtag_state_sdrs    => open,
+      jtag_state_cdr     => open,
+      jtag_state_sdr     => open,
+      jtag_state_e1dr    => open,
+      jtag_state_pdr     => open,
+      jtag_state_e2dr    => open,
+      jtag_state_udr     => open,
+      jtag_state_sirs    => open,
+      jtag_state_cir     => open,
+      jtag_state_sir     => open,
+      jtag_state_e1ir    => open,
+      jtag_state_pir     => open,
+      jtag_state_e2ir    => open,
+      jtag_state_uir     => open,
+      tck                => s_tck
     );
 
   end generate;
