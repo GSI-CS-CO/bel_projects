@@ -29,7 +29,7 @@ jobs:
         run: sudo apt-get -y install automake libreadline-dev build-essential libboost-all-dev docbook-utils pkg-config libsigc++-2.0-dev --fix-missing
 
       - name: Set PKG_CONFIG_PATH
-        run: export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+        run: export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$(pwd)/res/librtpi
 
       - name: Create symlinks
         run: sudo ln -s /usr/lib/x86_64-linux-gnu/libmpfr.so.6 /usr/lib/x86_64-linux-gnu/libmpfr.so.4

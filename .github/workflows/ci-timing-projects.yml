@@ -43,6 +43,15 @@ jobs:
       - name: Install etherbone
         run: sudo make etherbone-install
 
+      - name: Build real-time priority inheritance Library
+        run: make librtpi
+
+      - name: Install real-time priority inheritance Library
+        run: sudo make librtpi-install
+
+      - name: Install real-time priority inheritance Library PC file
+        run: sudo cp $(pwd)/res/librtpi/librtpi.pc /usr/local/lib/pkgconfig
+
       - name: Build saftlib
         run: make saftlib -j$(nproc)
 
