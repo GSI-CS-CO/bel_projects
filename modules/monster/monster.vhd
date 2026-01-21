@@ -619,8 +619,8 @@ architecture rtl of monster is
 
   -- We have to specify the values for WRC as they provide no function for this
   -- Why is there an additional 0xc00 offset? Check wr_core.vhd and look for this constant: c_secbar_sdb_address : t_wishbone_address := x"00000c00";
-  constant c_wrcore_bridge_sdb     : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030c00");
-  constant c_wrcore_aux_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030c00");
+  constant c_wrcore_bridge_sdb     : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00000c00");
+  constant c_wrcore_aux_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00000c00");
   constant c_ftm_slaves : t_sdb_bridge := f_cluster_bridge(c_dev_bridge_msi, g_lm32_cores, g_lm32_ramsizes, g_lm32_are_ftm, g_delay_diagnostics);
 
   constant c_dev_layout_req_slaves : t_sdb_record_array(c_dev_slaves-1 downto 0) :=
@@ -3705,7 +3705,7 @@ end generate;
   pwm_n : if not g_en_pwm generate
     dev_bus_master_i(dev_slaves'pos(devs_pwm)) <= cc_dummy_slave_out;
   end generate;
-    
+
   pwm_y : if g_en_pwm generate
     xwb_system_to_pwm : xwb_clock_crossing
       generic map (g_size => 32)
