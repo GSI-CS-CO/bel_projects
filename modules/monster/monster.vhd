@@ -3718,7 +3718,7 @@ end generate;
         slave_o        => dev_bus_master_i(dev_slaves'pos(devs_pwm)),
         -- Master reader port
         master_clk_i   => clk_ref0,
-        master_rst_n_i => rstn_sys,
+        master_rst_n_i => rstn_ref,
         master_i       => pwm_device_o,
         master_o       => pwm_device_i
         );
