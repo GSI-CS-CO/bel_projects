@@ -1153,13 +1153,6 @@ architecture rtl of monster is
   signal s_tms    : std_logic;
   signal s_tck    : std_logic;
 
-
-  ----------------------------------------------------------------------------------
-  -- pwm signals ------------------------------------------------------------------
-  ----------------------------------------------------------------------------------
-  signal s_pwm_dummy_vector : std_logic_vector((c_eca_gpio-g_num_pwm_channels-1) downto 0) := (others => '0');
-  signal s_pwm_pps_dummy    : std_logic := '0';
-
 begin
 
   ----------------------------------------------------------------------------------
