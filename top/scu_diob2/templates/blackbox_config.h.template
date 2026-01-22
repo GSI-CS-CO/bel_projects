@@ -1,0 +1,59 @@
+/*
+	Blackbox configuration file: certain data from json are presented here as `defines.
+*/
+
+// ATTENTION: *.v.template file is the one to edit. *.v is automatically generated!
+// See https://docs.makotemplates.org/en/latest/syntax.html for template syntax.
+
+<%!
+tab = 30
+tab2 = 10
+%>
+
+#ifndef BLACKBOX_CONFIG_H
+#define BLACKBOX_CONFIG_H
+	
+	// Defines translated from json configuration
+% for name, mp in data["defines"].items():
+
+		// ${name}
+%for name, value in mp.items():	
+#define ${("BB_" + name).ljust(tab)}    ${str(value)}
+%endfor	
+%endfor	
+	
+	// Currently used configuration
+#define BB_ID_config                      ${data["configurations"][configuration]["id"]}
+
+	// Frontend plugin IDs
+% for i, mp in enumerate(data["configurations"][configuration]["frontend_plugins"]):
+% for name, device in data["frontend_plugins"][mp]["devices"].items():
+#define ${("BB_ID_frontend_"+mp+"_"+name).ljust(tab)}    ${str(device["id"]).ljust(tab2)}    // ${data["frontend_plugins"][mp]["description"]}: ${device["description"]}
+%endfor
+%endfor
+	// Default frontend ID
+#define BB_ID_frontend_default            ${next(iter(data["frontend_plugins"][data["configurations"][configuration]["frontend_plugins"][0]]["devices"].values()))["id"]}
+
+	// Proc plugin IDs
+% for i, mp in enumerate(data["configurations"][configuration]["proc_plugins"]):
+#define ${("BB_ID_proc_"+mp).ljust(tab)}    ${str(data["proc_plugins"][mp]["id"]).ljust(tab2)}    // ${data["proc_plugins"][mp]["description"]}
+%endfor
+	// Default proc ID
+#define BB_ID_proc_default                ${data["proc_plugins"][data["configurations"][configuration]["proc_plugins"][0]]["id"]}
+
+	// User plugin IDs
+% for i, mp in enumerate(data["configurations"][configuration]["user_plugins"]):
+#define ${("BB_ID_user_"+mp).ljust(tab)}    ${str(data["user_plugins"][mp]["id"]).ljust(tab2)}    // ${data["user_plugins"][mp]["description"]}
+%endfor
+	// Default user ID
+#define BB_ID_user_default                ${data["user_plugins"][data["configurations"][configuration]["user_plugins"][0]]["id"]}
+
+	// User plugin register maps
+% for i, mp in enumerate(data["configurations"][configuration]["user_plugins"]):
+		// ${mp}
+%for name, value in data["user_plugins"][mp]["registers"].items():
+#define ${("BB_BASE_"+mp+"_"+name).ljust(tab)}    ${str(value)}	
+%endfor
+%endfor
+
+#endif

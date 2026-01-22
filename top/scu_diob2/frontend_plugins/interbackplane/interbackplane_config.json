@@ -1,0 +1,173 @@
+{
+	"cardlet_plugins": {
+		"empty": {	
+			"devices": {
+				"default": {
+					"id": 255,
+					"cid_system" : 0,
+					"cid_group" : 0,
+					"fg": "None",
+					"description": "Default"
+				}
+			},
+			"unit": "ibpl_empty",
+			"file": "ibpl_empty.sv",
+			"parameters": {},
+			"description": "Default for empty/unknown cardlet"
+		},
+		"typ_5in1out": {	
+			"devices": {
+				"lwlio": {
+					"id": 1,
+					"cid_system" : 55,
+					"cid_group" : 65,
+					"fg": "FG902.01x",
+					"description": "LWLIO - Fiber I/O with ST connector"
+				},
+				"lemoio": {
+					"id": 2,
+					"cid_system" : 55,
+					"cid_group" : 66,
+					"fg": "FG902.02x",
+					"description": "LEMOIO - LEMO/TTL I/O"
+				}
+			},
+			"unit": "ibpl_5in1out",
+			"file": "ibpl_5in1out.sv",
+			"parameters": {},
+			"description": "Typical 5in 1out modules"
+		},
+		"typ_in": {	
+			"devices": {
+				"digin": {
+					"id": 7,
+					"cid_system" : 55,
+					"cid_group" : 126,
+					"fg": "FG902.15x",
+					"description": "DIGIN - Fast LEMO/TTL input"
+				},
+				"optoin": {
+					"id": 9,
+					"cid_system" : 55,
+					"cid_group" : 134,
+					"fg": "FG902.17x",
+					"description": "OPTOIN - Isolated 24V input"
+				}
+			},
+			"unit": "ibpl_in",
+			"file": "ibpl_in.sv",
+			"parameters": {},
+			"description": "Typical input modules"
+		},
+		"inverted_in": {	
+			"devices": {
+				"lemoin": {
+					"id": 3,
+					"cid_system" : 55,
+					"cid_group" : 74,
+					"fg": "FG902.13x",
+					"description": "LEMOLIN - Isolated LEMO/TTL input"
+				}
+			},
+			"unit": "ibpl_in",
+			"file": "ibpl_in.sv",
+			"parameters": {
+				"invert_signals": 1
+			},
+			"description": "Input modules with inverted signals"
+		},
+		"lwl_in": {	
+			"devices": {
+				"lwlin": {
+					"id": 4,
+					"cid_system" : 55,
+					"cid_group" : 75,
+					"fg": "FG902.11x",
+					"description": "LWLIN - Fiber input with ST connector"
+				}
+			},
+			"unit": "ibpl_lwlin",
+			"file": "ibpl_lwlin.sv",
+			"parameters": {},
+			"description": "LWL in module"
+		},
+		"typ_out": {	
+			"devices": {
+				"lwlout": {
+					"id": 5,
+					"cid_system" : 55,
+					"cid_group" : 76,
+					"fg": "FG902.12x",
+					"description": "LWLOUT - Fiber output with ST connector"
+				},
+				"lemoout": {
+					"id": 6,
+					"cid_system" : 55,
+					"cid_group" : 77,
+					"fg": "FG902.14x",
+					"description": "LEMOOUT - LEMO/TTL output"
+				},
+				"ssrout": {
+					"id": 8,
+					"cid_system" : 55,
+					"cid_group" : 133,
+					"fg": "FG902.16x",
+					"description": "SSROUT - Isolated (dry-contact) Solid State Relay output"
+				}
+			},
+			"unit": "ibpl_out",
+			"file": "ibpl_out.sv",
+			"parameters": {},
+			"description": "Typical output modules"
+		}
+	},
+	"configurations": {
+		"default": {
+			"id": 0,
+			"cardlet_plugins": ["empty", "typ_5in1out", "typ_in", "inverted_in", "lwl_in", "typ_out"],
+			"description": "Example default configuration"
+		}
+	},
+	"pinouts": {
+		"cardlets": [
+			{ "mode": 68, 
+			   "str": [64, 66],
+			    "io": [58, 52, 60, 54, 62, 56] },
+			{ "mode": 90, 
+			   "str": [104, 106],
+			    "io": [98, 92, 100, 94, 102, 96] },		
+			{ "mode": 85, 
+			   "str": [81, 83],
+			    "io": [75, 69, 77, 71, 79, 73] },		
+			{ "mode": 95, 
+			   "str": [97, 99],
+			    "io": [89, 105, 91, 103, 93, 101] },
+			{ "mode": 65, 
+			   "str": [67, 51],
+			    "io": [59, 57, 61, 55, 63, 53] },
+			{ "mode": 113, 
+			   "str": [115, 117],
+			    "io": [107, 123, 109, 121, 111, 119] },
+			{ "mode": 47, 
+			   "str": [49, 33],
+			    "io": [41, 39, 43, 37, 45, 35] },
+			{ "mode": 131, 
+			   "str": [133, 135],
+			    "io": [125, 141, 127, 139, 129, 137] },
+			{ "mode": 18, 
+			   "str": [16, 32],
+			    "io": [24, 26, 22, 28, 20, 30] },
+			{ "mode": 136, 
+			   "str": [134, 132],
+			    "io": [142, 126, 140, 128, 138, 130] },
+			{ "mode": 36, 
+			   "str": [34, 50],
+			    "io": [42, 44, 40, 46, 38, 48] },
+			{ "mode": 118, 
+			   "str": [116, 114],
+			    "io": [124, 108, 122, 110, 120, 112] }
+		],
+		"oe": [86, 88],
+		"ledb": [84, 82, 80, 78, 76, 74, 72, 70]
+	}
+}
