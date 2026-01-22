@@ -1,0 +1,5 @@
+% if ("interbackplane" in data["configurations"][configuration]):
+${data["configurations"][configuration]["interbackplane"]}
+% else:
+default
+% endif

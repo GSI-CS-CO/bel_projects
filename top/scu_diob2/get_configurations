@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+# Local directory
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+
+# Generate a list of available configurations
+python $SCRIPT_DIR/parse_template.py templates/available_configurations.tmp.template available_configurations.tmp $SCRIPT_DIR/blackbox_config.json --dir $SCRIPT_DIR > /dev/null
+cat $SCRIPT_DIR/available_configurations.tmp
+rm $SCRIPT_DIR/available_configurations.tmp
