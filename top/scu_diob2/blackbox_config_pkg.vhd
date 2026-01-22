@@ -1,9 +1,17 @@
+<<<<<<< HEAD
 -- Auto-generated VHDL package from /home/arusso/bel_projects/top/scu_diob2/blackbox_config.vh
+=======
+-- Auto-generated VHDL package from blackbox_config.vh
+>>>>>>> 27c2471bbf3f48ad31dc46e1a76a8ff6e3dad267
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+<<<<<<< HEAD
 package /home/arusso/bel_projects/top/scu_diob2/blackbox_config_pkg is
+=======
+package blackbox_config_pkg is
+>>>>>>> 27c2471bbf3f48ad31dc46e1a76a8ff6e3dad267
 	constant BB_VERSION_MAJOR : integer := 0;
 	constant BB_VERSION_MINOR : integer := 1;
 	constant BB_ADDR_BUS_WIDTH : integer := 16;
@@ -23,7 +31,14 @@ package /home/arusso/bel_projects/top/scu_diob2/blackbox_config_pkg is
 	constant BB_ID_user_default : integer := 0;
 
 	-- Note: macros need manual translation (e.g., `slice`)
+<<<<<<< HEAD
 end package /home/arusso/bel_projects/top/scu_diob2/blackbox_config_pkg;
 
 package body /home/arusso/bel_projects/top/scu_diob2/blackbox_config_pkg is
 end package body /home/arusso/bel_projects/top/scu_diob2/blackbox_config_pkg;
+=======
+end package blackbox_config_pkg;
+
+package body blackbox_config_pkg is
+end package body blackbox_config_pkg;
+>>>>>>> 27c2471bbf3f48ad31dc46e1a76a8ff6e3dad267
