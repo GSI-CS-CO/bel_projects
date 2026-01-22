@@ -40,12 +40,7 @@
 #define FBAS_SHARED_ECA_VLD        (FBAS_SHARED_GET_ALL        + 2 * _32b_SIZE_)   // number of the valid actions output by ECA
 #define FBAS_SHARED_ECA_OVF        (FBAS_SHARED_ECA_VLD        + _32b_SIZE_)       // number of the overflow actions output by ECA
 #define FBAS_SHARED_SENDERID       (FBAS_SHARED_ECA_OVF        + _32b_SIZE_)       // location of valid sender ID that is passed to RX node
-#define FBAS_SHARED_ECA_DLY_AVG    (FBAS_SHARED_SENDERID       + 2 * _32b_SIZE_)   // ECA event handling, avg
-#define FBAS_SHARED_ECA_DLY_MIN    (FBAS_SHARED_ECA_DLY_AVG    + 2 * _32b_SIZE_)   // min
-#define FBAS_SHARED_ECA_DLY_MAX    (FBAS_SHARED_ECA_DLY_MIN    + 2 * _32b_SIZE_)   // max
-#define FBAS_SHARED_ECA_DLY_VLD    (FBAS_SHARED_ECA_DLY_MAX    + 2 * _32b_SIZE_)   // valid count
-#define FBAS_SHARED_ECA_DLY_ALL    (FBAS_SHARED_ECA_DLY_VLD    + _32b_SIZE_)       // all/total count
-#define FBAS_SHARED_TX_DLY_AVG     (FBAS_SHARED_ECA_DLY_ALL    + _32b_SIZE_)       // transmitter delay
+#define FBAS_SHARED_TX_DLY_AVG     (FBAS_SHARED_SENDERID       + 2 * _32b_SIZE_)   // transmitter delay
 #define FBAS_SHARED_TX_DLY_MIN     (FBAS_SHARED_TX_DLY_AVG     + 2 * _32b_SIZE_)   // min
 #define FBAS_SHARED_TX_DLY_MAX     (FBAS_SHARED_TX_DLY_MIN     + 2 * _32b_SIZE_)   // max
 #define FBAS_SHARED_TX_DLY_VLD     (FBAS_SHARED_TX_DLY_MAX     + 2 * _32b_SIZE_)   // valid count
@@ -75,7 +70,13 @@
 #define FBAS_SHARED_ML_PRD_MAX     (FBAS_SHARED_ML_PRD_MIN     + 2 * _32b_SIZE_)   // max
 #define FBAS_SHARED_ML_PRD_VLD     (FBAS_SHARED_ML_PRD_MAX     + 2 * _32b_SIZE_)   // valid count
 #define FBAS_SHARED_ML_PRD_ALL     (FBAS_SHARED_ML_PRD_VLD     + _32b_SIZE_)       // all/total count
-#define FBAS_SHARED_END            (FBAS_SHARED_ML_PRD_ALL     + _32b_SIZE_)       // end of the app-spec region
+#define FBAS_SHARED_BAD_MSG_CNT    (FBAS_SHARED_ML_PRD_ALL     + _32b_SIZE_)       // bad message count
+#define FBAS_SHARED_RX_DLY_AVG     (FBAS_SHARED_BAD_MSG_CNT    + 2 * _32b_SIZE_)   // receiver delay
+#define FBAS_SHARED_RX_DLY_MIN     (FBAS_SHARED_RX_DLY_AVG     + 2 * _32b_SIZE_)   // min
+#define FBAS_SHARED_RX_DLY_MAX     (FBAS_SHARED_RX_DLY_MIN     + 2 * _32b_SIZE_)   // max
+#define FBAS_SHARED_RX_DLY_VLD     (FBAS_SHARED_RX_DLY_MAX     + 2 * _32b_SIZE_)   // valid count
+#define FBAS_SHARED_RX_DLY_ALL     (FBAS_SHARED_RX_DLY_VLD     + _32b_SIZE_)       // all/total count
+#define FBAS_SHARED_END            (FBAS_SHARED_RX_DLY_ALL     + _32b_SIZE_)       // end of the app-spec region
 
 // valid value for data fields in the MPS payload
 #define MPS_VID_FBAS     105   // VLAN ID for FBAS

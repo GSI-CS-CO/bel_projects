@@ -186,7 +186,7 @@ start_dm_schedule() {
     exit_on_fail $ret_code
 }
 
-get_tr_stats() {
+get_tr_measurements() {
 
     # $1 - return/reply variable
     # $2 - target TR
@@ -198,100 +198,64 @@ get_tr_stats() {
     output=$(run_remote $1 \
     "source setup_local.sh && \
     read_counters \$rx_node_dev && \
-    result_msg_delay \$rx_node_dev")
+    result_rx_delay \$rx_node_dev && \
+    result_msg_delay \$rx_node_dev && \
+    result_ttl_ival \$rx_node_dev && \
+    result_ml_period \$rx_node_dev && \
+    result_eca_delay \$rx_node_dev")
     ret_code=$?
     exit_on_fail $ret_code
 
-    # 'output' before processing:
-    #0 6000 0
-    #
-    #14 3 35 6000 6000
-
-    output=${output//$'\n'/}           # remove all 'newline'
+    output=${output//$'\n'/ }          # replace all 'newline' with a space
     output=$(echo $output | tr -s ' ') # remove consecutive spaces
-
-    # 'output' after processing:
-    #0 6000 0 14 3 35 6000 6000
 
     ret="$output"
 }
 
-str_to_int() {
+format_measurements() {
 
     # $1 - return/reply variable
-    # $2 - string
-
-    local -n ret="$1"
-    shift
-    ret=$(( 10#${1} ))
-}
-
-format_stats() {
-
-    # $1 - return/reply variable
-    # $2 - t_period
-    # $3 - rate
-    # $4 - tmg_msg_len
     # $@ - array with measurement values (in string)
 
     local -n ret="$1"
     shift
 
-    local t_period=$1
-    local rate=$2
-    local tmg_msg_len=$3
-    shift # 3 times to reach the array with measurement values
-    shift
-    shift
-    local output="$@"
-
-    # format values
-    t_period_float=$(printf "|%10.3f " "$((10**3 * $t_period/1000))e-3")           # message period [us]
-    rate_float=$(printf "|%10.3f " "$((10**3 * $rate/1000))e-3")                   # message rate [KHz]
-    d_rate_float=$(printf "|%10.3f" "$((10**3 * $rate*$tmg_msg_len/1000000))e-3")  # data rate [Mbps]
-
-    sel_output=$(echo $output | cut -d' ' -f2-8)                                   # ignore 1st element (number of TX msgs)
-
+    local output=($@) # make string to array
     local line
 
-    line+=$t_period_float
-    line+=$rate_float
-    line+=$d_rate_float
-    line=${line//./,}                     # replace all 'dot' with 'comma' (decimal separator for floating-point numbers)
-    line+=$(printf " | %5s" $sel_output)  # right-aligned, field-width=5, separated with ' | '
+    # counters
+    line+="\tRX msgs    : ${output[1]}\n"    # 2nd element
+    line+="\tOvf msgs   : ${output[2]}\n"    # 3rd element
 
-    eca_overflow=$(echo "$output" | cut -d' ' -f3)
-    eca_overflow=$(( 10#$eca_overflow ))
+    # delays
+    line+="\t--- delays, us (avg, min, max, valid, all)\n"
+    line+="\tECA delay  : ${output[@]:23:5}\n" # get 5 elements starting at index 23
+    line+="\tRX delay   : ${output[@]:3:5}\n"  # get 5 elements starting at index 3
+    line+="\tMsg delay  : ${output[@]:8:5}\n"  # get 5 elements starting at index 8
+    line+="\tTTL period : ${output[@]:13:5}\n" # get 5 elements starting at index 13
+    line+="\tLoop period: ${output[@]:18:5}\n" # get 5 elements starting at index 18
 
-    if [ $eca_overflow -ne 0 ]; then
-        line+=" | yes |\n"
-    else
-        line+=" | no  |\n"
-    fi
-
-    # line: |  3333,333 |     0,300 |     0,264 |  6000 |     0 |    16 |     3 |    89 |  6000 |  6000 | no  |
     ret="$line"
 }
 
 is_measurement_failed() {
 
     # $1 - return/reply variable
-    # $@ - string with stats
-    # example stats: 0 6000 0 13 3 27 6000 6000
+    # $@ - string with measurements
 
-    # stats[2] - eca valid, expected non-zero count
-    # stats[3] - eca overflow, expected zero count
-    # stats[4] - average messaging delay, expected below 1 ms
+    # measurements[1] - eca valid, expected non-zero count
+    # measurements[2] - eca overflow, expected zero count
+    # measurements[8] - average messaging delay, expected below 1 ms
 
     local -n ret="$1"
     shift
-    local output="$@"
+    local output=($@)  # make array
     local failed=0 # false
 
-    eca_valid=$(echo "$output" | cut -d' ' -f2)
+    eca_valid=${output[1]}
     eca_valid=$(( 10#$eca_valid ))  # convert a string to integer
 
-    eca_overflow=$(echo "$output" | cut -d' ' -f3)
+    eca_overflow=${output[2]}
     eca_overflow=$(( 10#$eca_overflow ))
 
     # failure: if the 'ECA overflow' counter has non-zero or
@@ -301,9 +265,9 @@ is_measurement_failed() {
     fi
 
     # failure: if the 'average messaging delay' is higher than 1 ms
-    avg_owd=$(echo "$output" | cut -d' ' -f4)
-    avg_owd=$(( 10#$avg_owd ))     # convert a string to integer
-    if [ $avg_owd -gt 1000000 ]; then
+    avg_msg_dly=${output[8]}
+    avg_msg_dly=$(( 10#$avg_msg_dly ))     # convert a string to integer
+    if [ $avg_msg_dly -gt 1000000 ]; then
         failed=2 # true
     fi
 
@@ -407,12 +371,17 @@ fi
 echo -e "\n--- 5. Start the measurements ---\n"
 
 unset results
-for rate in ${all_msg_rates[*]}; do
+for i in ${!all_msg_rates[@]}; do
 
+    rate=${all_msg_rates[$i]}
     t_msg=$(( 1000000000 / $rate ))               # period of single tmg msg [ns], not used
     t_period=$(( $d_block * 1000000000 / $rate )) # period of tmg msgs block [ns]
 
-    echo "Measurement: msg rate=$rate tperiod=$t_period"
+    header="$(printf "%6s | msg rate=%s Hz, period=%s ns" $i $rate $t_period)"
+    echo "Measurement: $header"
+    dashed_line="$(printf "%0.s-" $(seq 1 ${#header}))" # print a given number of '-'
+    results+="$header\n"
+    results+="$dashed_line\n"
 
     # reset the FW in receiver node
     echo -en " reset eCPU (LM32) of '$rxscu_name': "
@@ -430,29 +399,20 @@ for rate in ${all_msg_rates[*]}; do
     echo -en " disable MPS operation of '$rxscu_name': "
     disable_tr_mps
 
-    # obtain statistics from TR
-    echo -en " obtain stats from '$rxscu_name': "
-    get_tr_stats stats $rxscu       # store return value in 'stats'
-    [[ -z "$stats" ]] && echo "FAIL" || echo "OK"
+    # obtain TR measurements
+    echo -en " obtain measurements from '$rxscu_name': "
+    get_tr_measurements measures $rxscu
+    [[ -z "$measures" ]] && echo "FAIL" || echo "OK"
 
-    # process statistics from TR
-    echo -en " process stats from '$rxscu_name': "
-    format_stats new_line $t_period $rate $tmg_msg_len "$stats"
-    [[ -z "$new_line" ]] && echo "FAIL" || echo "OK"
+    format_measurements new_line "$measures"
+    results+="$new_line\n"
+    results+="$dashed_line\n"
 
-    results+="$new_line"
-
-    # break loop if the measurement fails (ECA overflow, ECA validity, longer messaging delay)
-    is_measurement_failed break_loop "$stats"
-    if [ $break_loop -ne 0 ]; then
-        break
-    fi
+    # break loop if the measurement fails (ECA overflow, messaging delay > 1ms)
+    is_measurement_failed break_loop "$measures"
+    [[ $break_loop -ne 0 ]] && break
 
 done
 
 echo -e "\n$datamaster:$sched_filename $rxscu:$fw_rxscu host:$localhost ($(date))\n"
-echo "$res_header_console"
-chars=${#res_header_console}
-printf "%0.s-" $(seq 1 $chars) # one-liner to print a given number of '-' [1]
-printf "\n"
 echo -e "$results"

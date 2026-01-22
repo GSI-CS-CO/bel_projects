@@ -527,11 +527,11 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, msgCtrl_t*
             // send the PC event
             uint32_t count = msgSendPcEvent(pMsgCtrl, *head, FBAS_FLG_EID, N_EXTRA_MPS_NOK);
             // count sent PC events
-            *(pSharedApp + (FBAS_SHARED_TX_MSG_CNT >> 2)) = measureCountEvt(TX_EVT_CNT, count);
+            *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = measureCountEvt(TX_EVT_CNT, count);
 
             // measure the ECA delay
             measureSummarize(MSR_ECA_DLY, ecaDeadline, now, DISABLE_VERBOSITY);
-            measureExportSummary(MSR_ECA_DLY, pSharedApp, FBAS_SHARED_ECA_DLY_AVG);
+            measureExportSummary(MSR_ECA_DLY, pSharedApp, FBAS_SHARED_ECA_HNDL_AVG);
 
             // measure the handler delay
             measureSummarize(MSR_TX_DLY, now, getSysTime(), DISABLE_VERBOSITY);
@@ -557,10 +557,6 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, msgCtrl_t*
                 measureSummarize(MSR_MSG_DLY, now, getSysTime(), DISABLE_VERBOSITY);
                 measureExportSummary(MSR_MSG_DLY, pSharedApp, FBAS_SHARED_MSG_DLY_AVG);
               }
-              else {
-                // count the old messages
-                *(pSharedApp + (FBAS_SHARED_OLD_MSG_CNT >> 2)) = measureCountEvt(OLD_MSG_CNT, 1);
-              }
             }
 
             // known MPS msg -> measure the receiver delay
@@ -581,7 +577,7 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, msgCtrl_t*
 
           // measure the ECA delay
           measureSummarize(MSR_ECA_DLY, ecaDeadline, now, DISABLE_VERBOSITY);
-          measureExportSummary(MSR_ECA_DLY, pSharedApp, FBAS_SHARED_ECA_DLY_AVG);
+          measureExportSummary(MSR_ECA_DLY, pSharedApp, FBAS_SHARED_ECA_HNDL_AVG);
         }
         break;
 
