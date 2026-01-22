@@ -12,6 +12,7 @@
 #include "ftm_common.h"
 #include "dm.h"
 
+
 /** \mainpage DM Firmware Documentation
  *
  * \section intro_sec Introduction
@@ -171,6 +172,11 @@ void init()
     4. Whole EDF heap is sorted
     */
 
+
+
+
+
+
 void main(void) {
 
 
@@ -209,6 +215,11 @@ void main(void) {
 
   DBPRINT1("#%02u: Base shared ram 0x%08x\n", cpuId, (uint32_t*)&_startshared);
 
+
+  for (j = 0; j < ((125000000/4)); ++j) { asm("nop"); }
+
+
+
    while (1) {
 
 
@@ -235,12 +246,12 @@ void main(void) {
         //FIXME Why not pncN(hp) = nodeFuncs[ ...?
         *pncN(hp)   = (uint32_t)nodeFuncs[getNodeType(pN(hp))](pN(hp), pT(hp));       //process node and return thread's next node
       } else {
-        /*We got some dynamic fields. Now:
-         * do a copy of original node
-         * insert all dynamic fields
-         * call appropriate node handler
-         * write back all changes of immediate/val fields to original
-        */ 
+        //We got some dynamic fields. Now:
+        // do a copy of original node
+        // insert all dynamic fields
+        // call appropriate node handler
+        // write back all changes of immediate/val fields to original
+        //
         *pncN(hp)   = (uint32_t)dynamicNodeStaging(pN(hp), pT(hp));  
       }
       DL(pT(hp))  = (uint64_t)deadlineFuncs[getNodeType(pN(hp))](pN(hp), pT(hp));   // return thread's next deadline (returns infinity on upcoming NULL ptr)
@@ -251,19 +262,26 @@ void main(void) {
       //nothing due right now. Check for requests of new threads to be started
       *backlogmax   = ((backlog > *backlogmax) ? backlog : *backlogmax);
       backlog = 0;
+      uint64_t snapshotSysTime = getSysTime();
 
       if(*start) { //check start bitfield for any request
         for(i=0;i<_THR_QTY_;i++) { //iterate
           if (*start & (1<<i)) {
+
+            if(*running & (1<<i)){
+              //already running, error
+              *status |= SHCTL_STATUS_THR_RESTART_ERROR_TYPE_SMSK;
+              break;
+            }
 
             //current thread base pointers
             uint8_t* thrStart  = (uint8_t*)&p[( SHCTL_THR_STA + i * _T_TS_SIZE_) >> 2]; // thread Start array
             uint8_t* thrData   = (uint8_t*)&p[( SHCTL_THR_DAT + i * _T_TD_SIZE_) >> 2]; // thread Data array
 
       //pointers to start fields
-            uint64_t* startTime = (uint64_t*)&thrStart[T_TS_STARTTIME];
-            uint64_t* prepTime  = (uint64_t*)&thrStart[T_TS_PREPTIME];
-            uint32_t* origin    = (uint32_t*)&thrStart[T_TS_NODE_PTR];
+            volatile uint64_t* startTime = (uint64_t*)&thrStart[T_TS_STARTTIME];
+            volatile uint64_t* prepTime  = (uint64_t*)&thrStart[T_TS_PREPTIME];
+            volatile uint32_t* origin    = (uint32_t*)&thrStart[T_TS_NODE_PTR];
 
       //pointers to data fields
             uint64_t* currTime  = (uint64_t*)&thrData[T_TD_CURRTIME];
@@ -273,9 +291,16 @@ void main(void) {
 
             DBPRINT1("#%02u: ThrIdx %u, Preptime: %s\n", cpuId, i, print64(*prepTime, 0));
 
-      //init fields
-            if (!(*startTime)) {*currTime = getSysTime() + (*prepTime << 1); } // if 0, set to now + 2 * preptime
-            else                *currTime = *startTime;
+            //init fields
+            uint64_t snapshotStartTime = *startTime;
+            if (!(snapshotStartTime)) { *currTime = snapshotSysTime + (*prepTime << 1); } // if 0, set to now + 2 * preptime
+            else                        *currTime = snapshotStartTime;
+
+            if(*currTime < snapshotSysTime) {
+              //late start detected
+              *status |= SHCTL_STATUS_LATE_START_ERROR_TYPE_SMSK;
+              break;
+            }
 
             *cursor   = *origin;          // Set cursor to origin node
             *deadline = *currTime;        // Set the deadline to first blockstart
@@ -292,5 +317,6 @@ void main(void) {
         heapify(); // re-sort all threads in schedulder (necessary because multiple threads may have been started)
       }
     }
+
   }
 }

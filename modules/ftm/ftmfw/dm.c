@@ -77,9 +77,9 @@ uint64_t* const diffwts   = (uint64_t*) &_startshared[(SHCTL_DIAG + T_DIAG_WAR_1
 uint32_t* const backlogmax = (uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_BCKLOG_STRK )  >> 2];  
 uint32_t* const badwaitcnt = (uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_BAD_WAIT_CNT )  >> 2];
 #endif
-uint32_t* const start   = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_START)   >> 2];          
-uint32_t* const running = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_RUNNING) >> 2];          
-uint32_t* const abort1  = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_ABORT)   >> 2];          
+volatile uint32_t* const start   = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_START)   >> 2];          
+volatile uint32_t* const running = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_RUNNING) >> 2];          
+volatile uint32_t* const abort1  = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_ABORT)   >> 2];          
 uint32_t** const hp     = (uint32_t**)&_startshared[SHCTL_HEAP >> 2];                             
 uint32_t nodeTmp[_MEM_BLOCK_SIZE / _32b_SIZE_]; 
 
