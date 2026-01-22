@@ -37,12 +37,13 @@ struct msrSumStats {
  * \brief List of measured items
 */
 typedef enum MSR_ITEMS {
-  MSR_TX_DLY,  // transmission delay (requires feedback via LEMO cabling)
-  MSR_SG_LTY,  // signalling latency (requires feedback via LEMO cabling)
+  MSR_ECA_DLY, // ECA handling delay
+  MSR_TX_DLY,  // transmitter handler delay
+  MSR_RX_DLY,  // receiver handler delay
+  MSR_SG_LTY,  // signalling latency
   MSR_MSG_DLY, // messaging delay
   MSR_TTL,     // TTL threshold/interval
-  MSR_ECA_HANDLE,    // ECA handling delay
-  MSR_MAIN_LOOP_PRD, // period of the main loop
+  MSR_ML_PRD,  // period of the main loop
   N_MSR_ITEMS,
 } msrItem_t;
 

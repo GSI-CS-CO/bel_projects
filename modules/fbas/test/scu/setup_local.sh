@@ -75,14 +75,14 @@ case $platform in
         export mac_tx_node="0x00267b0004da" # sender ID of TX node
         ;;
     "SCU")
-        export addr_set_node_type="0x20140694"     # user RAM range in SCU
-        export addr_get_node_type="0x201406a4"
         export addr_cmd="0x20140508"     # shared memory location for command buffer
-        export addr_cnt="0x201407a8"     # shared memory location for transmitted message counter
-        export addr_avg="0x201407dc"     # shared memory location for measurement results
-        export addr_eca_vld="0x20140804" # shared memory location of counter for valid actions
-        export addr_eca_ovf="0x20140808" # shared memory location of counter for overflow actions
-        export addr_senderid="0x2014080c" # shared memory location of sender ID
+        export addr_set_node_type="0x201406a0"
+        export addr_get_node_type="0x201406b0"
+        export addr_cnt="0x201407b4"     # shared memory location for transmitted message counter
+        export addr_avg="0x201407e8"     # shared memory location for measurement results
+        export addr_eca_vld="0x20140810" # shared memory location of counter for valid actions
+        export addr_eca_ovf="0x20140814" # shared memory location of counter for overflow actions
+        export addr_senderid="0x20140818" # shared memory location of sender ID
         ;;
 esac
 
@@ -102,11 +102,13 @@ export instr_probe_sb_user=0x21 # probe a given slave (sys and group IDs are exp
 
 export instr_en_mps=0x30        # enable MPS signalling
 export instr_dis_mps=0x31       # disable MPS signalling
-export instr_st_tx_dly=0x32     # store the transmission delay measurement results to shared memory
+export instr_st_tx_dly=0x32     # store the TX handler delay measurement results to shared memory
 export instr_st_msg_dly=0x33    # store the measurement results of the messaging delay
 export instr_st_sg_lty=0x34     # store the signalling latency measurement results to shared memory
 export instr_st_ttl_ival=0x35   # store the TTL interval measurement results to shared memory
-export instr_st_eca_handle=0x37 # store the measurement result of the ECA handling delay
+export instr_st_eca_dly=0x37    # store the measurement result of the ECA handling delay
+export instr_st_rx_dly=0x39     # store the RX handler delay measurement results to shared memory
+export instr_st_ml_prd=0x3a     # store the main loop period measurement results to shared memory
 
 export     mac_any_node="0xffffffffffff"      # MAC address of any node
 # Raw event data (bits 63-16 = event ID, 15-8 = channel, 7-0 = flag)
@@ -598,7 +600,7 @@ start_nw_perf() {
 result_event_count() {
     # sent/received event count
 
-    # $1 - dev/wbmo
+    # $1 - dev/wbm0
     # $2 - event counter
     # $3 - verbosity
 
@@ -611,7 +613,7 @@ result_event_count() {
 }
 
 result_tx_delay() {
-    # $1 - dev/wbmo
+    # $1 - dev/wbm0
     # $2 - verbosity
 
     if [ -n "$2" ]; then
@@ -620,8 +622,18 @@ result_tx_delay() {
     read_measurement_results $1 $instr_st_tx_dly $addr_avg $2
 }
 
+result_rx_delay() {
+    # $1 - dev/wbm0
+    # $2 - verbosity
+
+    if [ -n "$2" ]; then
+        echo -n "RX dly: "
+    fi
+    read_measurement_results $1 $instr_st_rx_dly $addr_avg $2
+}
+
 result_sg_latency() {
-    # $1 - dev/wbmo
+    # $1 - dev/wbm0
     # $2 - verbosity
 
     if [ -n "$2" ]; then
@@ -631,7 +643,7 @@ result_sg_latency() {
 }
 
 result_msg_delay() {
-    # $1 - dev/wbmo
+    # $1 - dev/wbm0
     # $2 - verbosity
 
     if [ -n "$2" ]; then
@@ -641,7 +653,7 @@ result_msg_delay() {
 }
 
 result_ttl_ival() {
-    # $1 - dev/wbmo
+    # $1 - dev/wbm0
     # $2 - verbosity
 
     if [ -n "$2" ]; then
@@ -650,14 +662,24 @@ result_ttl_ival() {
     read_measurement_results $1 $instr_st_ttl_ival $addr_avg $2
 }
 
-result_eca_handle() {
-    # $1 - dev/wbmo
+result_eca_delay() {
+    # $1 - dev/wbm0
     # $2 - verbosity
 
     if [ -n "$2" ]; then
-        echo -n "ECA hdl: "
+        echo -n "ECA dly: "
     fi
-    read_measurement_results $1 $instr_st_eca_handle $addr_avg $2
+    read_measurement_results $1 $instr_st_eca_dly $addr_avg $2
+}
+
+result_ml_period() {
+    # $1 - dev/wbm0
+    # $2 - verbosity
+
+    if [ -n "$2" ]; then
+        echo -n "loop prd: "
+    fi
+    read_measurement_results $1 $instr_st_ml_prd $addr_avg $2
 }
 
 disable_mps() {

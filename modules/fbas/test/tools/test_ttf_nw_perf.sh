@@ -186,8 +186,8 @@ measure_nw_perf() {
     if [ -z "$verbose" ]; then
         echo -e "Delay:  avg min max [us] vld all [])\n"
         # declare measurement entries
-        tx_delay_entries=("sig lty" "tx  dly" "mps hdl")
-        rx_delay_entries=("msg dly" "ttl    " "eca hdl")
+        tx_delay_entries=("tx dly " "ml prd " "eca dly")
+        rx_delay_entries=("rx dly " "msg dly" "ttl    " "ml prd " "eca dly")
     fi
 
     i=0
@@ -197,9 +197,9 @@ measure_nw_perf() {
         # read command output line by line
         run_remote $scu \
             "source setup_local.sh && \
-            result_sg_latency \$tx_node_dev $verbose && \
             result_tx_delay \$tx_node_dev $verbose && \
-            result_eca_handle \$tx_node_dev $verbose" |
+            result_ml_period \$tx_node_dev $verbose && \
+            result_eca_delay \$tx_node_dev $verbose" |
         while IFS= read -r line; do
             delay_entry="${tx_delay_entries[$i]}"
             if [ -n "$delay_entry" ]; then
@@ -214,9 +214,11 @@ measure_nw_perf() {
     echo "RX (${rxscu%%.*}):"
     run_remote $rxscu \
         "source setup_local.sh && \
+        result_rx_delay \$rx_node_dev $verbose && \
         result_msg_delay \$rx_node_dev $verbose && \
         result_ttl_ival \$rx_node_dev $verbose && \
-        result_eca_handle \$rx_node_dev $verbose" |
+        result_ml_period \$rx_node_dev $verbose && \
+        result_eca_delay \$rx_node_dev $verbose" |
     while IFS= read -r line; do
         delay_entry="${rx_delay_entries[$i]}"
         if [ -n "$delay_entry" ]; then

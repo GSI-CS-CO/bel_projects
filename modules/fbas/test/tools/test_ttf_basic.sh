@@ -135,10 +135,16 @@ main() {
     echo "----------"
     echo -n "TX: "
     run_remote $txscu "source setup_local.sh && stop_test4 \$tx_node_dev && \
+        result_eca_delay \$tx_node_dev $verbose && \
+        result_tx_delay \$tx_node_dev $verbose && \
+        result_ml_period \$tx_node_dev $verbose && \
         read_counters \$tx_node_dev $verbose"
     echo -n "RX: "
     run_remote $rxscu "source setup_local.sh && stop_test4 \$rx_node_dev && \
-        read_counters \$rx_node_dev $verbose && result_msg_delay \$rx_node_dev $verbose"
+        result_eca_delay \$rx_node_dev $verbose && \
+        result_msg_delay \$rx_node_dev $verbose && \
+        result_ml_period \$rx_node_dev $verbose && \
+        read_counters \$rx_node_dev $verbose"
 }
 
 export -f run_remote

@@ -148,19 +148,21 @@ uint32_t msgSendMpsFlag(msgCtrl_t* ctrl, uint64_t evtId)
 }
 
 /**
- * \brief Signal a new MPS event
+ * \brief Send PC event
+ *
+ * Send the PC event as a timing message. (use)
  *
  * Upon flag change to NOK, there shall be 2 extra events within 50 us. [MPS_FS_530]
- * In case of new cycle, do not signal any MPS event. [MPS_FS_630]
+ * In case of new cycle, do not send any PC event. [MPS_FS_630]
  *
- * \param ctrl  Pointer to the MPS messaging controller
- * \param buf   Pointer to a specific MPS message
- * \param evtid Event ID used to send a timing message
+ * \param ctrl  Pointer to the messaging controller
+ * \param buf   Location of the message buffer (holding PC event)
+ * \param evtid Event ID for a timing message
  * \param extra Number of extra messages
  *
  * \return   Number of sent messages
  **/
-uint32_t msgSignalMpsEvent(const msgCtrl_t* ctrl, mpsMsg_t *const buf, const uint64_t evtid, const uint8_t extra)
+uint32_t msgSendPcEvent(const msgCtrl_t* ctrl, mpsMsg_t *const buf, const uint64_t evtid, const uint8_t extra)
 {
   uint32_t count = 0;
   uint32_t tef = 0;
@@ -169,12 +171,12 @@ uint32_t msgSignalMpsEvent(const msgCtrl_t* ctrl, mpsMsg_t *const buf, const uin
   if (ctrl->last >= now) // delayed by a new cycle
     return count;
 
-  // send a specified MPS event with ahead timestamp
-  uint64_t deadline = now + FBAS_AHEAD_TIME;
+  // send a specified PC event with ahead timestamp
+  uint64_t deadline = buf->tsRx + FBAS_AHEAD_TIME;
   if (fwlib_ebmWriteTM(deadline, evtid, buf->param, tef, 1) == COMMON_STATUS_OK)
     ++count;
 
-  // NOK flag shall be sent as extra events
+  // NOK flag shall be sent as burst
   if (buf->prot.flag == MPS_FLAG_NOK) {
     for (uint8_t i = 0; i < extra; ++i) {
       if (fwlib_ebmWriteTM(deadline, evtid, buf->param, tef, 1) == COMMON_STATUS_OK)
@@ -186,23 +188,24 @@ uint32_t msgSignalMpsEvent(const msgCtrl_t* ctrl, mpsMsg_t *const buf, const uin
 }
 
 /**
- * \brief fetch MPS event
+ * \brief Store the fetched PC event
  *
- * MPS event is fetched from ECA and stored in the dedicated buffer.
+ * Store the PC (Power Converter) event fetched from ECA
+ * in the dedicated MPS message buffer.
  *
- * \param idx Base index for TX node
- * \param evt Raw event data (bits 63-16 = event ID, 15-8 = channel, 7-0 = flag)
- * \param dl  Event timestamp
+ * \param idx Index (if TX node manages multiple PCs)
+ * \param evt Raw ECA data (bits 63-16 = event ID, 15-8 = channel, 7-0 = flag)
+ * \param ts  Timestamp
  *
- * \return Pointer to the message buffer with the MPS event/flag
+ * \return Pointer to the message buffer location
  **/
-mpsMsg_t* msgFetchMps(const uint8_t idx, const uint64_t evt, const uint64_t ts)
+mpsMsg_t* msgStorePcEvent(const uint8_t idx, const uint64_t evt, const uint64_t ts)
 {
-  // evaluate MPS channel and MPS flag
+  // parse the PC channel and PC flag
   uint8_t ch = (uint8_t)(evt >> 8);
   uint8_t flag = (uint8_t)evt;
 
-  // keep the MPS flag and deadline(timestamp)
+  // keep the PC flag and timestamp
   (headBufMps+ch)->prot.flag = flag;
   (headBufMps+ch)->tsRx = ts;
 
