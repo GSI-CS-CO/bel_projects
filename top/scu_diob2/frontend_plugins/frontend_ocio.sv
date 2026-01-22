@@ -232,7 +232,7 @@ outputs:
 inputs:
 71-64  pa
 87-80  pc
-104-96  pd
+103-96  pd
 112    plugin_enable
 */
 
