@@ -417,12 +417,14 @@ void test_dynField_32b_immediate_no_memory_access(void) {
 
 
 void setUp(void) {
-
+    //Necessary for printf to complete before next test starts (if text is dropped, increase loop).
+    //TODO Should be in print itself, but this is a workaround for now.
+    for (uint32_t j = 0; j < ((125000000/4)); ++j) { asm("nop"); }
 }
 
 void tearDown(void) {
     /* Cleanup if needed */
-    for (uint32_t j = 0; j < ((125000000/4)); ++j) { asm("nop"); }
+   
 }
 
 /* ============================================
