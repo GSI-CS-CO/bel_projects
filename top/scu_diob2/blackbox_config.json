@@ -55,8 +55,8 @@
 					"description": "OCIN1"
 				}
 			},
-			"unit": "frontend_unknown",
-			"file": "frontend_unknown.sv",
+			"unit": "frontend_ocin",
+			"file": "frontend_ocin.sv",
 			"parameters": {},
 			"description": "OCIN: digital IO - control and status, 12 Channel 50V, 10 A (OCEM)"
 		},
@@ -329,7 +329,7 @@
 	"configurations": {
 		"default": {
 			"id": 0,
-			"frontend_plugins": ["unknown", "ocio", "interbackplane"],
+			"frontend_plugins": ["unknown", "ocio", "ocin", "interbackplane"],
 			"proc_plugins": ["disable", "pass", "in_debounce2", "in_debounce4", "in_debounce125"],
 			"user_plugins": ["gpio"],
 			"interbackplane": "default",

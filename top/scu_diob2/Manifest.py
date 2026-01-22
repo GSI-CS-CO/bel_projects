@@ -15,6 +15,7 @@ files = [
        # Frontend plugins
    "frontend_plugins/frontend_unknown.sv",  
    "frontend_plugins/frontend_ocio.sv",  
+   "frontend_plugins/frontend_ocin.sv",  
    "frontend_plugins/interbackplane/frontend_interbackplane.sv",  
        # Proc plugins
    "proc_plugins/proc_disable.sv",  

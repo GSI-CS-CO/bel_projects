@@ -45,7 +45,7 @@ genvar i;
 // ********** Define actual number of plugins **********
 	
 // *** BEGIN generated code ***
-localparam nr_frontend_plugins 		= 3;
+localparam nr_frontend_plugins 		= 4;
 localparam nr_proc_plugins 			= 5;
 localparam nr_user_plugins 			= 1;
 // *** END generated code ***
@@ -134,9 +134,14 @@ begin
 			int_frontend_plugin_select <= 1;	// ocio
 			frontend_plugin_default_selected <= 0;
 		end	
+			3:		// ocin1
+		begin	
+			int_frontend_plugin_select <= 2;	// ocin
+			frontend_plugin_default_selected <= 0;
+		end	
 			19:		// inlb12s1
 		begin	
-			int_frontend_plugin_select <= 2;	// interbackplane
+			int_frontend_plugin_select <= 3;	// interbackplane
 			frontend_plugin_default_selected <= 0;
 		end	
 		default: 
@@ -458,11 +463,11 @@ frontend_ocio #(
 	.input_act    	(internal_ie & virtual_in)
 );
 	
-frontend_interbackplane #(
+frontend_ocin #(
 	.nr_diob_ios	(nr_diob_ios),
 	.nr_virt_ios	(nr_virt_ios),
 	.nr_status_bits	(frontend_status_bits)
-) frontend_inst_interbackplane (
+) frontend_inst_ocin (
 	.clock       	(clock),
 	.reset       	(reset),
 	.plugin_enable	(int_frontend_plugin_select == 2 ? 1'b1 : 1'b0),
@@ -473,6 +478,27 @@ frontend_interbackplane #(
 	.diob_dir    	(diob_dir_array[2]),
 	.internal_out	(internal_out),
 	.internal_in 	(internal_in_array[2]),
+	.output_enable 	(internal_oe),
+	.input_enable  	(internal_ie),
+	.output_act    	(internal_oe & virtual_out),
+	.input_act    	(internal_ie & virtual_in)
+);
+	
+frontend_interbackplane #(
+	.nr_diob_ios	(nr_diob_ios),
+	.nr_virt_ios	(nr_virt_ios),
+	.nr_status_bits	(frontend_status_bits)
+) frontend_inst_interbackplane (
+	.clock       	(clock),
+	.reset       	(reset),
+	.plugin_enable	(int_frontend_plugin_select == 3 ? 1'b1 : 1'b0),
+	.plugin_error	(frontend_error_array[3]),
+	.plugin_status	(frontend_status_array[3]),
+	.diob_in     	(diob_in_buf2),
+	.diob_out    	(diob_out_array[3]),
+	.diob_dir    	(diob_dir_array[3]),
+	.internal_out	(internal_out),
+	.internal_in 	(internal_in_array[3]),
 	.output_enable 	(internal_oe),
 	.input_enable  	(internal_ie),
 	.output_act    	(internal_oe & virtual_out),
