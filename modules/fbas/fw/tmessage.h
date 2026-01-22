@@ -70,9 +70,9 @@ extern mpsMsg_t bufMpsMsg[N_MAX_MPS_CHANNELS];     // buffer for MPS messages
 extern msgCtrl_t  mpsMsgCtrl;                      // MPS messaging control structure
 
 void      msgInitMsgCtrl(msgCtrl_t *const ctrl, const uint8_t total, const uint64_t now, const uint32_t freq);
-uint32_t  msgSignalMpsEvent(const msgCtrl_t* msgCtrl, mpsMsg_t *const buf, const uint64_t evtid, const uint8_t extra);
+uint32_t  msgSendPcEvent(const msgCtrl_t* msgCtrl, mpsMsg_t *const buf, const uint64_t evtid, const uint8_t extra);
 uint32_t  msgSendMpsFlag(msgCtrl_t* ctrl, uint64_t evtId);
-mpsMsg_t* msgFetchMps(const uint8_t idx, const uint64_t evt, const uint64_t ts);
+mpsMsg_t* msgStorePcEvent(const uint8_t idx, const uint64_t evt, const uint64_t ts);
 int       msgStoreMpsMsg(const uint64_t *raw, const uint64_t *ts, const msgCtrl_t* msgCtrl);
 mpsMsg_t* evalMpsMsgTtl(uint64_t now, int idx);
 void      msgInitMpsMsg(const uint64_t *id);
