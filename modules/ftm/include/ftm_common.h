@@ -272,8 +272,19 @@
 #define SHCTL_STATUS_BAD_ACT_TYPE_SMSK  (SHCTL_STATUS_BAD_ACT_TYPE_MSK << SHCTL_STATUS_BAD_ACT_TYPE_POS)
 //@}
 
+/** @name Global status register - thread restart error status bit */
+//@{
+#define SHCTL_STATUS_THR_RESTART_ERROR_TYPE_MSK   0x1
+#define SHCTL_STATUS_THR_RESTART_ERROR_TYPE_POS   14
+#define SHCTL_STATUS_THR_RESTART_ERROR_TYPE_SMSK  (SHCTL_STATUS_THR_RESTART_ERROR_TYPE_MSK << SHCTL_STATUS_THR_RESTART_ERROR_TYPE_POS)
+//@}
 
-
+/** @name Global status register - late start error status bit */
+//@{
+#define SHCTL_STATUS_LATE_START_ERROR_TYPE_MSK   0x1
+#define SHCTL_STATUS_LATE_START_ERROR_TYPE_POS   15
+#define SHCTL_STATUS_LATE_START_ERROR_TYPE_SMSK  (SHCTL_STATUS_LATE_START_ERROR_TYPE_MSK << SHCTL_STATUS_LATE_START_ERROR_TYPE_POS)
+//@}
 
 
 /** @name Generic node layout definitions. Goes for all nodes */

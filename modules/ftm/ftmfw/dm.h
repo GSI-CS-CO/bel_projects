@@ -125,9 +125,9 @@ extern uint32_t* const badwaitcnt;      ///< ptr to bad waittime count
  *  Provides a shorthand to the scheduler's start, running and abort registers used for thread control
  */
 //@{ 
-extern uint32_t* const start;           ///< ptr to thread control - start bits
-extern uint32_t* const running;         ///< ptr to thread control - running bits
-extern uint32_t* const abort1;          ///< ptr to thread control - abort bits (name awkwardly chosen to avoid clash with WR global)
+extern volatile uint32_t* const start;           ///< ptr to thread control - start bits
+extern volatile uint32_t* const running;         ///< ptr to thread control - running bits
+extern volatile uint32_t* const abort1;          ///< ptr to thread control - abort bits (name awkwardly chosen to avoid clash with WR global)
 extern uint32_t** const hp;             ///< ptr array of EDF scheduler heap
 //@}
 
