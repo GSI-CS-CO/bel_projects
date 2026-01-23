@@ -260,7 +260,7 @@ counts=$(echo $counts | tr -s ' ') # remove consecutive spaces
 t_period_float=$(printf "|%10.3f " "$((10**3 * $t_period/1000))e-3")           # message period [us]
 rate_float=$(printf "|%10.3f " "$((10**3 * $dm_bc_rate/1000))e-3")                   # message rate [KHz]
 d_rate_float=$(printf "|%10.3f" "$((10**3 * $dm_bc_rate*$tmg_msg_len/1000000))e-3")  # data rate [Mbps]
-sel_counts=$(echo $counts | cut -d' ' -f2-8)                                   # ignore 1st element (number of TX msgs)
+sel_counts=$(echo $counts | cut -d' ' -f1,4-5 --complement)                          # ignore 1st, 4th and 5th elements (tx, bad, old counts)
 
 unset new_line
 new_line+=$t_period_float

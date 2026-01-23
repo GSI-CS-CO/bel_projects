@@ -74,7 +74,8 @@
 #define FBAS_SHARED_RX_DLY_MAX     (FBAS_SHARED_RX_DLY_MIN     + 2 * _32b_SIZE_)   // max
 #define FBAS_SHARED_RX_DLY_VLD     (FBAS_SHARED_RX_DLY_MAX     + 2 * _32b_SIZE_)   // valid count
 #define FBAS_SHARED_RX_DLY_ALL     (FBAS_SHARED_RX_DLY_VLD     + _32b_SIZE_)       // all/total count
-#define FBAS_SHARED_END            (FBAS_SHARED_RX_DLY_ALL     + _32b_SIZE_)       // end of the app-spec region
+#define FBAS_SHARED_OLD_MSG_CNT    (FBAS_SHARED_RX_DLY_ALL     + _32b_SIZE_)       // old message count
+#define FBAS_SHARED_END            (FBAS_SHARED_OLD_MSG_CNT    + _32b_SIZE_)       // end of the app-spec region
 
 // valid value for data fields in the MPS payload
 #define MPS_VID_FBAS     105   // VLAN ID for FBAS

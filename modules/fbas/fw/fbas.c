@@ -177,6 +177,7 @@ static status_t initSharedMem(uint32_t *const sharedStart)
   DBPRINT2("fbas%d: FBAS_ECA_OVF 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_ECA_OVF >> 2)), (pSharedExt + (FBAS_SHARED_ECA_OVF >> 2)));
   DBPRINT2("fbas%d: FBAS_BAD_MSG 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_BAD_MSG_CNT >> 2)), (pSharedExt + (FBAS_SHARED_BAD_MSG_CNT >> 2)));
   DBPRINT2("fbas%d: FBAS_SENDERID 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_SENDERID >> 2)), (pSharedExt + (FBAS_SHARED_SENDERID >> 2)));
+  DBPRINT2("fbas%d: FBAS_OLD_MSG 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_OLD_MSG_CNT >> 2)), (pSharedExt + (FBAS_SHARED_OLD_MSG_CNT >> 2)));
 
   // clear the app-spec region of the shared memory
   pSharedTemp = (uint32_t *)(pSharedApp + (FBAS_SHARED_END >> 2 ));
@@ -554,6 +555,10 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, msgCtrl_t*
                 // measure the handler delay
                 measureSummarize(MSR_MSG_DLY, now, getSysTime(), DISABLE_VERBOSITY);
                 measureExportSummary(MSR_MSG_DLY, pSharedApp, FBAS_SHARED_MSG_DLY_AVG);
+              }
+              else {
+                // count the old messages
+                *(pSharedApp + (FBAS_SHARED_OLD_MSG_CNT >> 2)) = measureCountEvt(OLD_MSG_CNT, 1);
               }
             }
 
