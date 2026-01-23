@@ -53,7 +53,7 @@ if scp -O $0 /dev/null &>/dev/null; then
 fi
 
 res_header_wiki="| *msg period, [us]* | *msg rate, [KHz]* | *data rate, [Mbps]* | *valid eca* | *overflow eca* | *avg messaging delay, [ns]* | *min messaging delay, [ns]* | *max messaging delay, [ns]* | *valid* | *total* | *overflow* |"
-res_header_console="| t_period | msg rate | data rate | valid eca | ovf eca | average | min | max | valid | total | ovf |"
+res_header_console="| t_period | msg rate | data rate | valid eca | ovf eca | avg | min | max | valid | total | ovf |"
 
 # timing message rates that should be measured
 dm_bc_rate=1000 # default timing msg rate [Hz]
@@ -85,9 +85,37 @@ check_tr() {
     check_deployment $rxscu $filenames
 }
 
+sender_ids() {
+    # parse the 'parameter' attribute in DOT schedule file
+    # and return the sender IDs
+
+    # $1 - return/reply variable
+
+    local -n ret="$1"
+    local par_values=()
+
+    echo "Sender IDs in $sched_dir/$sched_filename"
+    while IFS= read -r line; do
+        # extract the value of "par="
+        val=$(printf "%s\n" "$line" | sed -n 's/.*par="\([^"]*\)".*/\1/p')
+
+        if [[ -n "$val" ]]; then
+            # extract the sender ID
+            val=${val:2:12}
+            par_values+=("$val")
+        fi
+    done < "$sched_dir/$sched_filename"
+
+    printf "%s\n" "${par_values[@]}"
+
+    ret=("${par_values[@]}")
+}
+
 setup_tr() {
+    # $@ - sender IDs
+
     output=$(run_remote $rxscu \
-        "source setup_local.sh && setup_mpsrx $fw_rxscu SENDER_ANY")
+        "source setup_local.sh && setup_mpsrx $fw_rxscu SENDER_TX $@")
     ret_code=$?
     report_code $ret_code
     exit_on_fail $ret_code
@@ -95,7 +123,7 @@ setup_tr() {
 
 reset_tr_ecpu() {
     output=$(run_remote $rxscu \
-        "source setup_local.sh && reset_node rx_node_dev SENDER_ANY")
+        "source setup_local.sh && reset_node rx_node_dev SENDER_TX $@")
     ret_code=$?
     report_code $ret_code
     exit_on_fail $ret_code
@@ -210,7 +238,10 @@ echo -e "\n--- 2. Check deployment in TR=$rxscu_name ---\n"
 check_tr
 
 echo -e "\n--- 3. Set up TR=$rxscu_name ---\n"
-setup_tr
+sender_ids ids  # extract the sender IDs from $sched_dir/$sched_filename
+if [[ -n "${ids[@]}" ]]; then
+    setup_tr "${ids[@]}"
+fi
 
 # start measurements
 echo -e "\n--- 4. Start the measurements ---\n"
@@ -223,7 +254,7 @@ echo "Measurement: msg rate=$dm_bc_rate tperiod=$t_period"
 
 # reset the FW in receiver node
 echo -en " reset eCPU (LM32) of '$rxscu_name': "
-reset_tr_ecpu
+reset_tr_ecpu "${ids[@]}"
 
 # enable MPS task of rxscu
 echo -en " enable MPS operation of '$rxscu_name': "
@@ -296,6 +327,8 @@ if [ $avg_owd -gt 1000000 ]; then
 fi
 
 echo -e "\n$datamaster:$sched_filename $rxscu:$fw_rxscu host:$localhost ($(date))\n"
+
+echo "Messaging delay, us"
 echo "$res_header_console"
 
 chars=${#res_header_console}
