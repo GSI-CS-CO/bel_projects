@@ -226,14 +226,16 @@ format_measurements() {
     # counters
     line+="\tRX msgs    : ${output[1]}\n"    # 2nd element
     line+="\tOvf msgs   : ${output[2]}\n"    # 3rd element
+    line+="\tBad msgs   : ${output[3]}\n"    # 4th element
+    line+="\tOld msgs   : ${output[4]}\n"    # 5th element
 
     # delays
     line+="\t--- delays, us (avg, min, max, valid, all)\n"
-    line+="\tECA delay  : ${output[@]:23:5}\n" # get 5 elements starting at index 23
-    line+="\tRX delay   : ${output[@]:3:5}\n"  # get 5 elements starting at index 3
-    line+="\tMsg delay  : ${output[@]:8:5}\n"  # get 5 elements starting at index 8
-    line+="\tTTL period : ${output[@]:13:5}\n" # get 5 elements starting at index 13
-    line+="\tLoop period: ${output[@]:18:5}\n" # get 5 elements starting at index 18
+    line+="\tECA delay  : ${output[@]:25:5}\n" # get 5 elements starting at index 25
+    line+="\tRX delay   : ${output[@]:5:5}\n"  # get 5 elements starting at index 5
+    line+="\tMsg delay  : ${output[@]:10:5}\n" # get 5 elements starting at index 10
+    line+="\tTTL period : ${output[@]:15:5}\n" # get 5 elements starting at index 15
+    line+="\tLoop period: ${output[@]:20:5}\n" # get 5 elements starting at index 20
 
     ret="$line"
 }
