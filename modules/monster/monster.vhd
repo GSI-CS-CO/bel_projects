@@ -439,9 +439,7 @@ entity monster is
    -- g_en_tempsens
     tempsens_clr_out       : out   std_logic;
     -- rack mount timing receiver
-    is_rmt                 : out   std_logic := '0';
-    -- g_en_pwm
-    pwm_o                  : out    std_logic_vector(7 downto 0));
+    is_rmt                 : out   std_logic := '0');
 end monster;
 
 architecture rtl of monster is
