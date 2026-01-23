@@ -83,6 +83,8 @@ case $platform in
         export addr_eca_vld="0x20140810" # shared memory location of counter for valid actions
         export addr_eca_ovf="0x20140814" # shared memory location of counter for overflow actions
         export addr_senderid="0x20140818" # shared memory location of sender ID
+        export addr_bad_cnt="0x201408e0"  # shared memory location of bad message count
+        export addr_old_cnt="0x20140908"  # shared memory location of old message count
         ;;
 esac
 
@@ -515,7 +517,7 @@ read_counters() {
 
     device=$1
     verbose=$2
-    addr_val="$addr_cnt $addr_eca_vld $addr_eca_ovf" # reg addresses as string
+    addr_val="$addr_cnt $addr_eca_vld $addr_eca_ovf $addr_bad_cnt $addr_old_cnt" # reg addresses as string
     unset counts
 
     for addr in $addr_val; do
@@ -524,7 +526,7 @@ read_counters() {
         counts="${counts}$cnt_dec "
     done
     if [ -n "$verbose" ]; then
-        counts="${counts}(tx_msg rx_vld rx_ovf)\n"
+        counts="${counts}(tx_msg rx_vld rx_ovf bad old)\n"
     else
         counts="${counts}\n"
     fi
