@@ -1,3 +1,0 @@
-% for i, mp in enumerate(data["configurations"][configuration]["cardlet_plugins"]):
-   "frontend_plugins/interbackplane/cardlet_plugins/${data["cardlet_plugins"][mp]["file"]}",  
-%endfor  
