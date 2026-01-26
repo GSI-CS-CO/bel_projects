@@ -226,8 +226,8 @@ format_measurements() {
     # counters
     line+="\tRX msgs    : ${output[1]}\n"    # 2nd element
     line+="\tOvf msgs   : ${output[2]}\n"    # 3rd element
-    line+="\tBad msgs   : ${output[3]}\n"    # 4th element
-    line+="\tOld msgs   : ${output[4]}\n"    # 5th element
+    line+="\tOld msgs   : ${output[3]}\n"    # 4th element
+    line+="\tBad msgs   : ${output[4]}\n"    # 5th element
 
     # delays
     line+="\t--- delays, us (avg, min, max, valid, all)\n"
