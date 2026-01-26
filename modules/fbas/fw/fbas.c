@@ -178,7 +178,7 @@ static status_t initSharedMem(uint32_t *const sharedStart)
   DBPRINT2("fbas%d: FBAS_OLD_MSG 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_OLD_MSG_CNT >> 2)), (pSharedExt + (FBAS_SHARED_OLD_MSG_CNT >> 2)));
   DBPRINT2("fbas%d: FBAS_BAD_MSG 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_BAD_MSG_CNT >> 2)), (pSharedExt + (FBAS_SHARED_BAD_MSG_CNT >> 2)));
   DBPRINT2("fbas%d: FBAS_SENDERID 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_SENDERID >> 2)), (pSharedExt + (FBAS_SHARED_SENDERID >> 2)));
-  DBPRINT2("fbas%d: FBAS_OLD_MSG 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_OLD_MSG_CNT >> 2)), (pSharedExt + (FBAS_SHARED_OLD_MSG_CNT >> 2)));
+
 
 
   // clear the app-spec region of the shared memory
@@ -528,11 +528,11 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, msgCtrl_t*
             // send the PC event
             uint32_t count = msgSendPcEvent(pMsgCtrl, *head, FBAS_FLG_EID, N_EXTRA_MPS_NOK);
             // count sent PC events
-            *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = measureCountEvt(TX_EVT_CNT, count);
+            *(pSharedApp + (FBAS_SHARED_TX_MSG_CNT >> 2)) = measureCountEvt(TX_EVT_CNT, count);
 
             // measure the ECA delay
             measureSummarize(MSR_ECA_DLY, ecaDeadline, now, DISABLE_VERBOSITY);
-            measureExportSummary(MSR_ECA_DLY, pSharedApp, FBAS_SHARED_ECA_HNDL_AVG);
+            measureExportSummary(MSR_ECA_DLY, pSharedApp, FBAS_SHARED_ECA_DLY_AVG);
 
             // measure the handler delay
             measureSummarize(MSR_TX_DLY, now, getSysTime(), DISABLE_VERBOSITY);
@@ -582,7 +582,7 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, msgCtrl_t*
 
           // measure the ECA delay
           measureSummarize(MSR_ECA_DLY, ecaDeadline, now, DISABLE_VERBOSITY);
-          measureExportSummary(MSR_ECA_DLY, pSharedApp, FBAS_SHARED_ECA_HNDL_AVG);
+          measureExportSummary(MSR_ECA_DLY, pSharedApp, FBAS_SHARED_ECA_DLY_AVG);
         }
         break;
 
