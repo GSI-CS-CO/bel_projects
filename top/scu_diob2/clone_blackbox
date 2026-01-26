@@ -1,0 +1,4 @@
+# A script which clones the diob2-planning repo int blackbox/
+
+git clone https://git.gsi.de/hel-developers/diob2-planning blackbox
+

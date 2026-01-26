@@ -1,3 +1,0 @@
-% for config_name in data["configurations"]:
-${config_name}
-% endfor
