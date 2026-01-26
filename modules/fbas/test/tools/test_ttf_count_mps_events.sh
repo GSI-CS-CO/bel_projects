@@ -22,7 +22,6 @@ usage() {
     echo "  -u <username>          user name to log in to SCU"
     echo "  -p <userpassd>         user password"
     echo "  -n <number>            repeat the schedule, by default 1"
-    echo "  -y                     'yes' to all prompts"
     echo "  -v                     verbosity for the measurement results"
     echo "  -h                     display this help and exit"
 }
@@ -97,7 +96,7 @@ show_rx_stats() {
 unset username userpasswd verbose
 unset OPTIND
 
-while getopts 'hys:u:p:vn:' c; do
+while getopts 'hs:u:p:vn:' c; do
     case $c in
         h) usage; exit 0 ;;
         s) rxscu_name=$OPTARG; rxscu="$rxscu_name.$domain" ;;

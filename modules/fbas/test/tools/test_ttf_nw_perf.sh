@@ -186,8 +186,8 @@ measure_nw_perf() {
     if [ -z "$verbose" ]; then
         echo -e "Delay:  avg min max [us] vld all [])\n"
         # declare measurement entries
-        tx_delay_entries=("tx dly " "ml prd " "eca dly")
-        rx_delay_entries=("rx dly " "msg dly" "ttl    " "ml prd " "eca dly")
+        tx_delay_entries=("eca dly" "tx dly " "ml prd ")
+        rx_delay_entries=("eca dly" "rx dly " "msg dly" "ml prd " "ttl    ")
     fi
 
     i=0
@@ -197,9 +197,9 @@ measure_nw_perf() {
         # read command output line by line
         run_remote $scu \
             "source setup_local.sh && \
+            result_eca_delay \$tx_node_dev $verbose && \
             result_tx_delay \$tx_node_dev $verbose && \
-            result_ml_period \$tx_node_dev $verbose && \
-            result_eca_delay \$tx_node_dev $verbose" |
+            result_ml_period \$tx_node_dev $verbose" |
         while IFS= read -r line; do
             delay_entry="${tx_delay_entries[$i]}"
             if [ -n "$delay_entry" ]; then
@@ -214,11 +214,11 @@ measure_nw_perf() {
     echo "RX (${rxscu%%.*}):"
     run_remote $rxscu \
         "source setup_local.sh && \
+        result_eca_delay \$rx_node_dev $verbose && \
         result_rx_delay \$rx_node_dev $verbose && \
         result_msg_delay \$rx_node_dev $verbose && \
-        result_ttl_ival \$rx_node_dev $verbose && \
         result_ml_period \$rx_node_dev $verbose && \
-        result_eca_delay \$rx_node_dev $verbose" |
+        result_ttl_ival \$rx_node_dev $verbose" |
     while IFS= read -r line; do
         delay_entry="${rx_delay_entries[$i]}"
         if [ -n "$delay_entry" ]; then
@@ -277,19 +277,19 @@ while getopts $getopt_opts c; do
     esac
 done
 
+# get the default transmitter SCU name
+if [ ${#txscu_name[@]} -eq 0 ]; then
+    txscu_name+=("$def_txscu_name")
+    txscu+=("$def_txscu_name.$domain")
+fi
+
 # get username and password to access SCUs
 if [ -z "$username" ]; then
     read -rp "username to access '$rxscu_name, ${txscu_name[@]}': " username
 fi
 
 if [ -z "$userpasswd" ]; then
-    read -rsp "password for '$username@$rxscu_name': " userpasswd; echo
-fi
-
-# get the default transmitter SCU name
-if [ ${#txscu_name[@]} -eq 0 ]; then
-    txscu_name+=("$def_txscu_name")
-    txscu+=("$def_txscu_name.$domain")
+    read -rsp "password for '$username@{$rxscu_name, ${txscu_name[@]}}': " userpasswd; echo
 fi
 
 # set the number of events

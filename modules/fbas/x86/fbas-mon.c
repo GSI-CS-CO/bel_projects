@@ -373,7 +373,7 @@ uint32_t wb_init_shared_regs(const eb_device_t device, struct shared_reg_s *reg)
 
   reg->node         = reg->base + SHARED_OFFS + FBAS_SHARED_GET_NODETYPE;
   reg->sb_slaves    = reg->base + SHARED_OFFS + FBAS_SHARED_GET_SBSLAVES;
-  reg->cnt          = reg->base + SHARED_OFFS + FBAS_SHARED_GET_CNT;
+  reg->cnt          = reg->base + SHARED_OFFS + FBAS_SHARED_TX_MSG_CNT;
   reg->ts1          = reg->base + SHARED_OFFS + FBAS_SHARED_GET_TS1;
   reg->ts2          = reg->base + SHARED_OFFS + FBAS_SHARED_GET_TS2;
   reg->ts3          = reg->base + SHARED_OFFS + FBAS_SHARED_GET_TS3;
@@ -391,19 +391,19 @@ uint32_t wb_init_shared_regs(const eb_device_t device, struct shared_reg_s *reg)
   reg->sg_lty.avg   = reg->base + SHARED_OFFS + FBAS_SHARED_SG_LTY_AVG;
   reg->msg_dly.avg  = reg->base + SHARED_OFFS + FBAS_SHARED_MSG_DLY_AVG;
   reg->ttl_prd.avg  = reg->base + SHARED_OFFS + FBAS_SHARED_TTL_PRD_AVG;
-  reg->eca_hndl.avg = reg->base + SHARED_OFFS + FBAS_SHARED_ECA_HNDL_AVG;
+  reg->eca_hndl.avg = reg->base + SHARED_OFFS + FBAS_SHARED_ECA_DLY_AVG;
   reg->ml_prd.avg   = reg->base + SHARED_OFFS + FBAS_SHARED_ML_PRD_AVG;
   reg->tx_dly.min   = reg->base + SHARED_OFFS + FBAS_SHARED_TX_DLY_MIN;
   reg->sg_lty.min   = reg->base + SHARED_OFFS + FBAS_SHARED_SG_LTY_MIN;
   reg->msg_dly.min  = reg->base + SHARED_OFFS + FBAS_SHARED_MSG_DLY_MIN;
   reg->ttl_prd.min  = reg->base + SHARED_OFFS + FBAS_SHARED_TTL_PRD_MIN;
-  reg->eca_hndl.min = reg->base + SHARED_OFFS + FBAS_SHARED_ECA_HNDL_MIN;
+  reg->eca_hndl.min = reg->base + SHARED_OFFS + FBAS_SHARED_ECA_DLY_MIN;
   reg->ml_prd.min   = reg->base + SHARED_OFFS + FBAS_SHARED_ML_PRD_MIN;
   reg->tx_dly.max   = reg->base + SHARED_OFFS + FBAS_SHARED_TX_DLY_MAX;
   reg->sg_lty.max   = reg->base + SHARED_OFFS + FBAS_SHARED_SG_LTY_MAX;
   reg->msg_dly.max  = reg->base + SHARED_OFFS + FBAS_SHARED_MSG_DLY_MAX;
   reg->ttl_prd.max  = reg->base + SHARED_OFFS + FBAS_SHARED_TTL_PRD_MAX;
-  reg->eca_hndl.max = reg->base + SHARED_OFFS + FBAS_SHARED_ECA_HNDL_MAX;
+  reg->eca_hndl.max = reg->base + SHARED_OFFS + FBAS_SHARED_ECA_DLY_MAX;
   reg->ml_prd.max   = reg->base + SHARED_OFFS + FBAS_SHARED_ML_PRD_MAX;
 
   return COMMON_STATUS_OK;
@@ -1077,7 +1077,7 @@ int main(int argc, char** argv) {
     secs = (unsigned long)((double)stallTS / 1000000000.0);
     tm = gmtime(&secs);
     strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S %Z", tm);
-    fprintf(stdout, "---- TS of 'time max' : %s\n", timestr); 
+    fprintf(stdout, "---- TS of 'time max' : %s\n", timestr);
   } // if getCPUStall
 
   if (getECATap) {

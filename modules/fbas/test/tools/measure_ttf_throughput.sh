@@ -250,7 +250,8 @@ unset results
 
 t_period=$(( 1000000000 / $dm_bc_rate )) # period of tmg msgs block [ns]
 
-echo "Measurement: msg rate=$dm_bc_rate tperiod=$t_period"
+header="$(printf "msg rate=%s Hz, period=%s ns" $dm_bc_rate $t_period)"
+echo "Measurement: $header"
 
 # reset the FW in receiver node
 echo -en " reset eCPU (LM32) of '$rxscu_name': "
@@ -276,7 +277,7 @@ disable_tr_mps
 
 # obtain stats from TR
 echo -en " obtain stats from '$rxscu_name': "
-counts=$(run_remote $rxscu \
+output=$(run_remote $rxscu \
     "source setup_local.sh && \
     read_counters \$rx_node_dev && \
     result_msg_delay \$rx_node_dev")
@@ -284,54 +285,19 @@ ret_code=$?
 report_code $ret_code
 exit_on_fail $ret_code
 
-counts=${counts//$'\n'/}           # remove all 'newline'
-counts=$(echo $counts | tr -s ' ') # remove consecutive spaces
+output=${output//$'\n'/ }          # replace all 'newline' with a space
+output=$(echo $output | tr -s ' ') # remove consecutive spaces
+arr=($output)                      # create an array
 
-# format values
-t_period_float=$(printf "|%10.3f " "$((10**3 * $t_period/1000))e-3")           # message period [us]
-rate_float=$(printf "|%10.3f " "$((10**3 * $dm_bc_rate/1000))e-3")                   # message rate [KHz]
-d_rate_float=$(printf "|%10.3f" "$((10**3 * $dm_bc_rate*$tmg_msg_len/1000000))e-3")  # data rate [Mbps]
-sel_counts=$(echo $counts | cut -d' ' -f1,4-5 --complement)                          # ignore 1st, 4th and 5th elements (tx, bad, old counts)
+# format counters
+lines+="RX msgs    : ${arr[1]}\n"    # 2nd element
+lines+="Ovf msgs   : ${arr[2]}\n"    # 3rd element
+lines+="Old msgs   : ${arr[3]}\n"    # 4th element
+lines+="Bad msgs   : ${arr[4]}\n"    # 5th element
 
-unset new_line
-new_line+=$t_period_float
-new_line+=$rate_float
-new_line+=$d_rate_float
-new_line=${new_line//./,}                # replace all 'dot' with 'comma' (decimal separator for floating-point numbers)
-new_line+=$(printf " | %s" $sel_counts)
-
-eca_valid=$(echo "$counts" | cut -d' ' -f2)
-eca_valid=$(( 10#$eca_valid ))  # convert a string to integer
-
-eca_overflow=$(echo "$counts" | cut -d' ' -f3)
-eca_overflow=$(( 10#$eca_overflow ))  # convert a string to integer
-if [ $eca_overflow -ne 0 ]; then
-    new_line+=" | yes |\n"
-else
-    new_line+=" | no |\n"
-fi
-
-results+=$new_line
-
-# break loop if the 'ECA overflow' counter has non-zero or
-# 'ECA valid' counter has zero value
-if [ $eca_overflow -ne 0 ] || [ $eca_valid -eq 0 ]; then
-    break
-fi
-
-# break loop if the 'average messaging delay' is higher than 1 ms
-avg_owd=$(echo "$counts" | cut -d' ' -f4)
-avg_owd=$(( 10#$avg_owd ))     # convert a string to integer
-if [ $avg_owd -gt 1000000 ]; then
-    break
-fi
+# format delays
+lines+="--- delays, us (avg, min, max, valid, all)\n"
+lines+="Msg delay  : ${arr[@]:5:5}\n" # get 5 elements starting at index 5
 
 echo -e "\n$datamaster:$sched_filename $rxscu:$fw_rxscu host:$localhost ($(date))\n"
-
-echo "Messaging delay, us"
-echo "$res_header_console"
-
-chars=${#res_header_console}
-printf "%0.s-" $(seq 1 $chars) # one-liner to print a given number of '-' [1]
-printf "\n"
-echo -e "$results"
+echo -e "$lines"

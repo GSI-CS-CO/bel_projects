@@ -66,7 +66,7 @@ case $platform in
         export addr_set_node_type="0x04060694"      # user RAM range in Pexp/Pexaria
         export addr_get_node_type="0x040606a4"
         export addr_cmd="0x04060508"     # shared memory location for command buffer
-        export addr_cnt="0x040607a8"     # shared memory location for transmitted message counter
+        export addr_tx_cnt="0x040607a8"  # shared memory location for transmitted message counter
         export addr_avg="0x040607dc"     # shared memory location for measurement results
         export addr_eca_vld="0x04060804" # shared memory location of counter for valid actions
         export addr_eca_ovf="0x04060808" # shared memory location of counter for overflow actions
@@ -76,15 +76,16 @@ case $platform in
         ;;
     "SCU")
         export addr_cmd="0x20140508"     # shared memory location for command buffer
-        export addr_set_node_type="0x201406a0"
-        export addr_get_node_type="0x201406b0"
-        export addr_cnt="0x201407b4"     # shared memory location for transmitted message counter
-        export addr_avg="0x201407e8"     # shared memory location for measurement results
-        export addr_eca_vld="0x20140810" # shared memory location of counter for valid actions
-        export addr_eca_ovf="0x20140814" # shared memory location of counter for overflow actions
-        export addr_senderid="0x20140818" # shared memory location of sender ID
-        export addr_bad_cnt="0x201408e0"  # shared memory location of bad message count
-        export addr_old_cnt="0x20140908"  # shared memory location of old message count
+        export addr_fbas="0x20140698"    # begin of shared memory range for application specific data
+        export addr_set_node_type="$(printf "0x%x" $((addr_fbas + 8)))"
+        export addr_get_node_type="$(printf "0x%x" $((addr_fbas + 24)))"
+        export addr_tx_cnt="$(printf "0x%x" $((addr_fbas + 284)))"   # transmitted message count
+        export addr_old_cnt="$(printf "0x%x" $((addr_fbas + 288)))"  # old message count
+        export addr_bad_cnt="$(printf "0x%x" $((addr_fbas + 292)))"  # bad message count
+        export addr_avg="$(printf "0x%x" $((addr_fbas + 344)))"      # average value of requested measurement
+        export addr_eca_vld="$(printf "0x%x" $((addr_fbas + 384)))"  # ECA valid action count
+        export addr_eca_ovf="$(printf "0x%x" $((addr_fbas + 388)))"  # ECA overflow action count
+        export addr_senderid="$(printf "0x%x" $((addr_fbas + 392)))" # sender ID
         ;;
 esac
 
@@ -517,7 +518,7 @@ read_counters() {
 
     device=$1
     verbose=$2
-    addr_val="$addr_cnt $addr_eca_vld $addr_eca_ovf $addr_bad_cnt $addr_old_cnt" # reg addresses as string
+    addr_val="$addr_tx_cnt $addr_eca_vld $addr_eca_ovf $addr_old_cnt $addr_bad_cnt" # reg addresses as string
     unset counts
 
     for addr in $addr_val; do
@@ -526,7 +527,7 @@ read_counters() {
         counts="${counts}$cnt_dec "
     done
     if [ -n "$verbose" ]; then
-        counts="${counts}(tx_msg rx_vld rx_ovf bad old)\n"
+        counts="${counts}(tx rx ovf old bad)\n"
     else
         counts="${counts}\n"
     fi
