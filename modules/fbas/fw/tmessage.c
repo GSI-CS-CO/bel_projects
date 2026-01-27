@@ -356,7 +356,7 @@ void msgResetMpsBuf(const uint8_t idx, const uint8_t *pId, const uint8_t flag)
  **/
 void msgUpdateMpsBuf(const uint64_t *pId)
 {
-  uint8_t idx = (uint8_t)(*pId >> 56);  // index (for nodeIds[])
+  uint8_t idx = (uint8_t)(*pId >> 56);  // index (or base index for multiple channels support)
   uint8_t *id = (uint8_t*)pId;          // point to sender node ID (lower 6 bytes)
   id+=2;
   uint8_t buf_idx;                      // base index for MPS message buffer
@@ -367,20 +367,18 @@ void msgUpdateMpsBuf(const uint64_t *pId)
       memset(&nodeIds[i][0], 0, ETH_ALEN);
     }
 
-    buf_idx = i * N_MPS_CHANNELS;
-    if (!(memcmp(bufMpsMsg[buf_idx].prot.addr, id, ETH_ALEN))) {
+    if (!(memcmp(bufMpsMsg[i].prot.addr, id, ETH_ALEN))) {
       for (int j = 0; j < N_MPS_CHANNELS; j++)
-        msgResetMpsBuf(j + buf_idx, 0, MPS_FLAG_TEST);
+        msgResetMpsBuf(i+j, 0, MPS_FLAG_TEST);
     }
   }
 
   // update the node ID array and MPS message buffer
   memcpy(&nodeIds[idx][0], id, ETH_ALEN);
 
-  buf_idx = idx * N_MPS_CHANNELS;
   for (int j = 0; j < N_MPS_CHANNELS; j++) {
-    msgResetMpsBuf(j + buf_idx, id, MPS_FLAG_OK);
-    bufMpsMsg[j + buf_idx].prot.idx = j + idx;
+    msgResetMpsBuf(idx+j, id, MPS_FLAG_OK);
+    bufMpsMsg[idx+j].prot.idx = idx + j;
   }
 
   // node ID array and MPS message buffer must match
