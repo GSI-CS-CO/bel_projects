@@ -355,7 +355,7 @@ void msgResetMpsBuf(const uint8_t idx, const uint8_t *pId, const uint8_t flag)
  **/
 void msgUpdateMpsBuf(const uint64_t *pId)
 {
-  uint8_t idx = (uint8_t)(*pId >> 56);  // index
+  uint8_t idx = (uint8_t)(*pId >> 56);  // index (or base index for multiple channels support)
   uint8_t *id = (uint8_t*)pId;          // point to sender node ID (lower 6 bytes)
   id+=2;
 
@@ -366,19 +366,22 @@ void msgUpdateMpsBuf(const uint64_t *pId)
     }
 
     if (!(memcmp(bufMpsMsg[i].prot.addr, id, ETH_ALEN))) {
-      msgResetMpsBuf(i, 0, MPS_FLAG_TEST);
+      for (int j = 0; j < N_MPS_CHANNELS; j++)
+        msgResetMpsBuf(i+j, 0, MPS_FLAG_TEST);
     }
   }
 
   // update the node ID array and MPS message buffer
   memcpy(&nodeIds[idx][0], id, ETH_ALEN);
 
-  msgResetMpsBuf(idx, id, MPS_FLAG_OK);
-  bufMpsMsg[idx].prot.idx = idx;
+  for (int j = 0; j < N_MPS_CHANNELS; j++) {
+    msgResetMpsBuf(idx+j, id, MPS_FLAG_OK);
+    bufMpsMsg[idx+j].prot.idx = idx + j;
+  }
 
   // node ID array and MPS message buffer must match
   if (!(memcmp(&nodeIds[idx][0], &bufMpsMsg[idx].prot.addr[0], ETH_ALEN))) {
-    DBPRINT1("tmessage: sender %x: ", idx);
+    DBPRINT1("sender: idx=%x: ", idx);
     for (int i = 0; i < ETH_ALEN; i++)
       DBPRINT1("%02x", bufMpsMsg[idx].prot.addr[i]);
     DBPRINT1(" (id: %016llx)\n", *pId);
