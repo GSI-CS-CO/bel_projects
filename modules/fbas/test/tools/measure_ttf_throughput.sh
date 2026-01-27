@@ -92,9 +92,15 @@ sender_ids() {
     # $1 - return/reply variable
 
     local -n ret="$1"
+    local filepath="$2"
     local par_values=()
 
-    echo "Sender IDs in $sched_dir/$sched_filename"
+    if [ ! -f "$filepath" ]; then
+        echo "Error: File not found: $filepath" >&2
+        exit 1
+    fi
+
+    echo "Sender IDs in $filepath"
     while IFS= read -r line; do
         # extract the value of "par="
         val=$(printf "%s\n" "$line" | sed -n 's/.*par="\([^"]*\)".*/\1/p')
@@ -102,9 +108,21 @@ sender_ids() {
         if [[ -n "$val" ]]; then
             # extract the sender ID
             val=${val:2:12}
-            par_values+=("$val")
+
+            # check if sender ID is known
+            for v in ${par_values[@]}; do
+                if [[ "$v" == "$val" ]]; then
+                    val=""  # ID is kwown -> not needed
+                    break
+                fi
+            done
+
+            # add the sender ID to array
+            if [[ -n "$val" ]]; then
+                par_values+=("$val")
+            fi
         fi
-    done < "$sched_dir/$sched_filename"
+    done < "$filepath"
 
     printf "%s\n" "${par_values[@]}"
 
@@ -195,7 +213,7 @@ usage() {
     echo "Example: $0 -r 1000 -s my_mps_basic_loop.dot -f $fw_rxscu"
 }
 
-unset username userpasswd sched_filename
+unset username userpasswd sched_filename sched_filepath
 unset OPTIND
 
 while getopts 'hu:p:r:s:f:' c; do
@@ -204,11 +222,17 @@ while getopts 'hu:p:r:s:f:' c; do
         u) username=$OPTARG ;;
         p) userpasswd=$OPTARG ;;
         r) dm_bc_rate=$OPTARG ;;
-        s) sched_filename=$OPTARG ;;
+        s) sched_filename=$OPTARG; sched_filepath="$sched_dir/$sched_filename" ;;
         f) fw_rxscu=$OPTARG ;;
         *) usage; exit 1 ;;
     esac
 done
+
+# check if the specified schedule file exists
+if [ ! -f "$sched_filepath" ]; then
+    echo "Error: File not found: '$sched_filepath'. Exit"
+    exit 1
+fi
 
 # get username and password to access SCUs
 if [ -z "$username" ]; then
@@ -224,12 +248,6 @@ if [ -z "$sched_filename" ]; then
     read -rp "DOT file with DM schedule: " sched_filename
 fi
 
-# check if the specified schedule file exists
-if [ ! -f $sched_dir/$sched_filename ]; then
-    echo "'$sched_filename' not found in '$sched_dir'. Exit"
-    exit 1
-fi
-
 # setup everything
 echo -e "\n--- 1. Set up DM=$datamaster ---\n"
 setup_dm
@@ -238,7 +256,7 @@ echo -e "\n--- 2. Check deployment in TR=$rxscu_name ---\n"
 check_tr
 
 echo -e "\n--- 3. Set up TR=$rxscu_name ---\n"
-sender_ids ids  # extract the sender IDs from $sched_dir/$sched_filename
+sender_ids ids "$sched_filepath" # extract the sender IDs from a given file
 if [[ -n "${ids[@]}" ]]; then
     setup_tr "${ids[@]}"
 fi

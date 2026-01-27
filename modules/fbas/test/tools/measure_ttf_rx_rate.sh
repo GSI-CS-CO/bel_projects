@@ -281,11 +281,18 @@ sender_ids() {
     # and return the sender IDs
 
     # $1 - return/reply variable
+    # $2 - schedule file path
 
     local -n ret="$1"
+    local filepath="$2"
     local par_values=()
 
-    echo "Sender IDs in $sched_dir/$sched_filename"
+    if [ ! -f "$filepath" ]; then
+        echo "Error: File not found: $filepath" >&2
+        exit 1
+    fi
+
+    echo "Sender IDs in $filepath"
     while IFS= read -r line; do
         # extract the value of "par="
         val=$(printf "%s\n" "$line" | sed -n 's/.*par="\([^"]*\)".*/\1/p')
@@ -293,9 +300,21 @@ sender_ids() {
         if [[ -n "$val" ]]; then
             # extract the sender ID
             val=${val:2:12}
-            par_values+=("$val")
+
+            # check if sender ID is known
+            for v in ${par_values[@]}; do
+                if [[ "$v" == "$val" ]]; then
+                    val=""  # ID is kwown -> not needed
+                    break
+                fi
+            done
+
+            # add the sender ID to array
+            if [[ -n "$val" ]]; then
+                par_values+=("$val")
+            fi
         fi
-    done < "$sched_dir/$sched_filename"
+    done < "$filepath"
 
     printf "%s\n" "${par_values[@]}"
 
@@ -326,12 +345,18 @@ while getopts 'hu:p:s:f:m' c; do
         h) usage; exit 0 ;;
         u) username=$OPTARG ;;
         p) userpasswd=$OPTARG ;;
-        s) sched_filename=$OPTARG ;;
+        s) sched_filename=$OPTARG; sched_filepath="$sched_dir/$sched_filename" ;;
         f) fw_rxscu=$OPTARG ;;
         m) is_msg_rate_limited="y" ;;
         *) usage; exit 1 ;;
     esac
 done
+
+# check if the specified schedule file exists
+if [ ! -f "$sched_filepath" ]; then
+    echo "Error: File not found: '$sched_filepath'. Exit"
+    exit 1
+fi
 
 # get username and password to access SCUs
 if [ -z "$username" ]; then
@@ -347,12 +372,6 @@ if [ -z "$sched_filename" ]; then
     read -rp "DOT file with DM schedule: " sched_filename
 fi
 
-# check if the specified schedule file exists
-if [ ! -f $sched_dir/$sched_filename ]; then
-    echo "'$sched_filename' not found in '$sched_dir'. Exit"
-    exit 1
-fi
-
 # setup everything
 echo -e "\n--- 1. Set up DM=$datamaster ---\n"
 setup_dm
@@ -364,7 +383,7 @@ echo -e "\n--- 3. Check DM schedule in '$sched_filename' ---\n"
 check_dm_schedule
 
 echo -e "\n--- 4. Set up TR=$rxscu_name ---\n"
-sender_ids ids  # extract the sender IDs from $sched_dir/$sched_filename
+sender_ids ids "$sched_filepath" # extract the sender IDs from a given file
 if [[ -n "${ids[@]}" ]]; then
     setup_tr "${ids[@]}"
 fi
