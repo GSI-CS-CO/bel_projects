@@ -372,6 +372,38 @@ set_senderid() {
 
 }
 
+register_senders() {
+    # $1 - node device
+    # $2 - number of channels for each sender
+    # $[3:] - sender ID(s) (without leading 0x)
+
+    local device=$1
+    local channels=$2
+    shift                   # re-set positional parameters
+    shift
+
+    # Register request is in 'parameter' field of timing message (sender id, channels, reg. request).
+    # The 'channels' indicates the number of channels supported by each sender.
+
+    unset parameters
+    local reg_cmd=128
+
+    #set -- "${@/#/0x}"      # add prefix (0x) to all positional parameters
+
+    # Construct the parameters with registration request
+    for mac in "$@"; do
+        param=$(printf "0x%012x%02x%02x" 0x$mac $channels $reg_cmd)
+        parameters="$parameters $param"
+    done
+
+    echo "Req. requests: $parameters"
+
+    for reg_req in $parameters; do
+        saft-ctl tr0 inject $evt_mps_node_reg $reg_req 0
+        sleep 0.3
+    done
+}
+
 make_node_ready() {
     # $1 - node device label
 
