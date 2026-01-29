@@ -62,7 +62,7 @@ res_header_console+=$(printf "|%6s "  "total")      # total messages
 res_header_console+=$(printf "| %5s"  "ovf |")      # overflow flag
 
 # timing message rates that should be measured
-primary_msg_rates=(300 600 1000 1200 1500 3000 6000) # fixed tmg msg rates [Hz]
+primary_msg_rates=(300 600 1000 1500 3000 6000) # fixed tmg msg rates [Hz]
 adv_msg_rates=(10000 100000)             # advanced range of tmg msg rates [Hz]
 all_msg_rates=() # all msg rates
 
