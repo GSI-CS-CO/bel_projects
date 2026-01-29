@@ -100,16 +100,27 @@ setup_tr() {
     output=$(run_remote $rxscu \
         "source setup_local.sh && setup_mpsrx $fw_rxscu SENDER_TX $@")
     ret_code=$?
+
+    echo -n " Setup TR: "
     report_code $ret_code
     exit_on_fail $ret_code
+
+    # register senders (local injection by saft-ctl)
+    register_senders "$@"
 }
 
 reset_tr_ecpu() {
+
+    # $@ - sender IDs
+
     output=$(run_remote $rxscu \
         "source setup_local.sh && reset_node rx_node_dev SENDER_TX $@")
     ret_code=$?
     report_code $ret_code
     exit_on_fail $ret_code
+
+    # register senders (local injection by saft-ctl)
+    register_senders "$@"
 }
 
 enable_tr_mps() {
@@ -324,6 +335,25 @@ sender_ids() {
     printf "%s\n" "${par_values[@]}"
 
     ret=("${par_values[@]}")
+}
+
+register_senders() {
+
+    # $@ - sender IDs
+
+    # Register senders: inject timing messages with registration request locally (use saft-ctl)
+
+    local channels=1
+    if [[ "$fw_rxscu"=="fbas128.scucontrol.bin" ]]; then
+        channels=8
+    fi
+    output=$(run_remote $rxscu \
+        "source setup_local.sh && register_senders rx_node_dev $channels $@")
+    ret_code=$?
+
+    echo -n " Sender registration: "
+    report_code $ret_code
+    exit_on_fail $ret_code
 }
 
 usage() {
