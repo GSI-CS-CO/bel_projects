@@ -161,12 +161,17 @@ check_dm_schedule() {
         done
     fi
 
-    # determine the depth of timing message block [messages]
+    # determine the depth of timing message block [messages with the same timestamp]
     # the depth of block is obtained from a given schedule filename
     # ie., depth of block is 1 for 'my_mps_rx_rate_1.dot'
     d_block=${sched_filename%%\.dot} # remove file suffix '.dot'
     d_block=${d_block##*_}           # remove all leading characters until last '_'
     d_block=$(( 10#$d_block ))       # convert string to decimal
+
+    if [ $? -ne 0 ]; then
+        echo "Error: Filename must end with numbers indicating msg blocks: $sched_filename. Exit"
+        exit 2
+    fi
 
     echo -e "Timing message block depth: $d_block [messages]"
 
