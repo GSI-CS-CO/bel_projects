@@ -232,20 +232,21 @@ mpsMsg_t* msgStorePcEvent(const uint8_t idx, const uint64_t evt, const uint64_t 
  **/
 int msgStoreMpsMsg(const uint64_t *raw, const uint64_t *ts, const msgCtrl_t* ctrl)
 {
-  uint8_t idx  = (uint8_t)(*raw >> 8);
+  uint8_t idx  = (uint8_t)(*raw >> 8);      // index for nodeIds[]
+  uint8_t buf_idx  = idx * N_MPS_CHANNELS;  // base index for MPS msg buffer
   uint8_t flag = (uint8_t)*raw;
 
   // node ID match
-  if (!memcmp(raw, (headBufMps+idx)->prot.addr, ETH_ALEN)) {
+  if (!memcmp(raw, (headBufMps+buf_idx)->prot.addr, ETH_ALEN)) {
     // MPS channel match
-    if ((headBufMps+idx)->prot.idx == idx) {
+    if ((headBufMps+buf_idx)->prot.idx == idx) {
       // new MPS msg
-      if (*ts != (headBufMps+idx)->tsRx) {
+      if (*ts != (headBufMps+buf_idx)->tsRx) {
         flag = (uint8_t)*raw;
-        (headBufMps+idx)->pending = (headBufMps+idx)->prot.flag ^ flag;
-        (headBufMps+idx)->prot.flag = flag;
-        (headBufMps+idx)->ttl = ctrl->ttl;
-        (headBufMps+idx)->tsRx = *ts;
+        (headBufMps+buf_idx)->pending = (headBufMps+buf_idx)->prot.flag ^ flag;
+        (headBufMps+buf_idx)->prot.flag = flag;
+        (headBufMps+buf_idx)->ttl = ctrl->ttl;
+        (headBufMps+buf_idx)->tsRx = *ts;
       }
       else {
         // repeated MPS msg
@@ -355,28 +356,31 @@ void msgResetMpsBuf(const uint8_t idx, const uint8_t *pId, const uint8_t flag)
  **/
 void msgUpdateMpsBuf(const uint64_t *pId)
 {
-  uint8_t idx = (uint8_t)(*pId >> 56);  // index (or base index for multiple channels support)
+  uint8_t idx = (uint8_t)(*pId >> 56);  // index (for nodeIds[])
   uint8_t *id = (uint8_t*)pId;          // point to sender node ID (lower 6 bytes)
   id+=2;
+  uint8_t buf_idx;                      // base index for MPS message buffer
 
-  // if the same ID exists, remove it from the node ID array and MPS message buffer
+  // if the same ID exists, remote it (node ID array and MPS message buffer)
   for (int i = 0; i < N_MAX_TX_NODES; ++i) {
     if (!(memcmp(&nodeIds[i][0], id, ETH_ALEN))) {
       memset(&nodeIds[i][0], 0, ETH_ALEN);
     }
 
-    if (!(memcmp(bufMpsMsg[i].prot.addr, id, ETH_ALEN))) {
+    buf_idx = i * N_MPS_CHANNELS;
+    if (!(memcmp(bufMpsMsg[buf_idx].prot.addr, id, ETH_ALEN))) {
       for (int j = 0; j < N_MPS_CHANNELS; j++)
-        msgResetMpsBuf(i+j, 0, MPS_FLAG_TEST);
+        msgResetMpsBuf(j + buf_idx, 0, MPS_FLAG_TEST);
     }
   }
 
   // update the node ID array and MPS message buffer
   memcpy(&nodeIds[idx][0], id, ETH_ALEN);
 
+  buf_idx = idx * N_MPS_CHANNELS;
   for (int j = 0; j < N_MPS_CHANNELS; j++) {
-    msgResetMpsBuf(idx+j, id, MPS_FLAG_OK);
-    bufMpsMsg[idx+j].prot.idx = idx + j;
+    msgResetMpsBuf(j + buf_idx, id, MPS_FLAG_OK);
+    bufMpsMsg[j + buf_idx].prot.idx = j + idx;
   }
 
   // node ID array and MPS message buffer must match
