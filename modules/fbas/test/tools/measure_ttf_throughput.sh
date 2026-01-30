@@ -11,191 +11,23 @@
 # when the stream is transmitted from 1-to-N or from N-to-1 port, measuring the capability
 # of the switch device to forward frames without losses.
 
-abs_path=$(readlink -f "$0")
-dir_name=${abs_path%/*}
-source $dir_name/test_ttf_basic.sh -s  # source the specified script
-
-domain=$(hostname -d)             # domain name of local host
-rxscu_name="scuxl0497"            # name of RX SCU
-rxscu="$rxscu_name.$domain"       # full name of RX SCU, name=${rxscu%%.*}
-datamaster="tsl014"               # Data Master
-login_dm="root@$datamaster"       # pubkey login (alias 'backdoor') is used for login
-mngmasters=( tsl101 )             # Management Masters
-localhost=$(hostname -s)          # local host
-
-fw_rxscu="fbas128.scucontrol.bin" # default LM32 FW for RX SCU
-
-sched_dir="${dir_name%/*}/dm"     # directory with DM schedules
-
-# determine if a local host is a management master (alias tslhost)
-unset tslhost
-for mm in "${mngmasters[@]}"; do
-    if [ "$localhost" == "$mm" ]; then
-        tslhost="$mm"
-        break
-    fi
-done
-
-# for non-tslhosts, locate a proper DM schedule path
-if [ -z "$tslhost" ]; then
-    sched_dir="${PWD/fbas*/fbas}/test/dm"
+# source and init commons
+script_dir=$(dirname "$(readlink -f "$0")")
+if source "$script_dir/common.sh"; then
+    echo "sourced $script_dir/common.sh"
+else
+    echo "failed to source $script_dir/common.sh. Exit!" >&2
+    exit 1
 fi
 
-dst_test_dir="fbas_test"          # destination directory for DM scripts
-src_test_dir="${dir_name%/*}"     # source test directory
-
-ssh_opts="-o StrictHostKeyChecking=no"
-scp_opts="-r"                     # -r: recursive copy
-
-# Check if scp supports the '-O' option (use the legacy SCP protocol), required to access hosts, SCUs with older SSH
-if scp -O $0 /dev/null &>/dev/null; then
-    scp_opts+=" -O"
-fi
-
-res_header_wiki="| *msg period, [us]* | *msg rate, [KHz]* | *data rate, [Mbps]* | *valid eca* | *overflow eca* | *avg messaging delay, [ns]* | *min messaging delay, [ns]* | *max messaging delay, [ns]* | *valid* | *total* | *overflow* |"
-res_header_console="| t_period | msg rate | data rate | valid eca | ovf eca | avg | min | max | valid | total | ovf |"
+# initialize everything
+setup_dirs
+setup_infra
+setup_sched_dir
+setup_ssh_opts
 
 # timing message rates that should be measured
 dm_bc_rate=1000 # default timing msg rate [Hz]
-
-tmg_msg_len=880  # timing message length [bits]
-
-report_code() {
-    # $1 - return code ($?)
-    ret_code=$1
-    if [ $ret_code -eq 0 ]; then
-        echo "OK"
-    else
-        echo "FAIL ($ret_code)"
-    fi
-}
-
-exit_on_fail() {
-    # $1 - return code ($?)
-    ret_code=$1
-    if [ $ret_code -ne 0 ]; then
-        echo "Exit!"
-        exit 2
-    fi
-}
-
-check_tr() {
-    filenames="$fw_rxscu $script_rxscu"
-
-    check_deployment $rxscu $filenames
-}
-
-sender_ids() {
-    # parse the 'parameter' attribute in DOT schedule file
-    # and return the sender IDs
-
-    # $1 - return/reply variable
-
-    local -n ret="$1"
-    local filepath="$2"
-    local par_values=()
-
-    if [ ! -f "$filepath" ]; then
-        echo "Error: File not found: $filepath" >&2
-        exit 1
-    fi
-
-    echo "Sender IDs in $filepath"
-    while IFS= read -r line; do
-        # extract the value of "par="
-        val=$(printf "%s\n" "$line" | sed -n 's/.*par="\([^"]*\)".*/\1/p')
-
-        if [[ -n "$val" ]]; then
-            # extract the sender ID
-            val=${val:2:12}
-
-            # check if sender ID is known
-            for v in ${par_values[@]}; do
-                if [[ "$v" == "$val" ]]; then
-                    val=""  # ID is kwown -> not needed
-                    break
-                fi
-            done
-
-            # add the sender ID to array
-            if [[ -n "$val" ]]; then
-                par_values+=("$val")
-            fi
-        fi
-    done < "$filepath"
-
-    printf "%s\n" "${par_values[@]}"
-
-    ret=("${par_values[@]}")
-}
-
-setup_tr() {
-    # $@ - sender IDs
-
-    output=$(run_remote $rxscu \
-        "source setup_local.sh && setup_mpsrx $fw_rxscu SENDER_TX $@")
-    ret_code=$?
-    report_code $ret_code
-    exit_on_fail $ret_code
-}
-
-reset_tr_ecpu() {
-    output=$(run_remote $rxscu \
-        "source setup_local.sh && reset_node rx_node_dev SENDER_TX $@")
-    ret_code=$?
-    report_code $ret_code
-    exit_on_fail $ret_code
-}
-
-enable_tr_mps() {
-    output=$(run_remote $rxscu \
-        "source setup_local.sh && start_test4 \$rx_node_dev")
-    ret_code=$?
-    report_code $ret_code
-    exit_on_fail $ret_code
-}
-
-disable_tr_mps() {
-    output=$(run_remote $rxscu \
-        "source setup_local.sh && stop_test4 \$rx_node_dev")
-    ret_code=$?
-    report_code $ret_code
-    exit_on_fail $ret_code
-}
-
-setup_dm() {
-    output=$(timeout 10 ssh "$login_dm" \
-        "if [ ! -d "./$dst_test_dir" ]; then mkdir -p ./$dst_test_dir; fi")
-    ret_code=$?
-    if [ $ret_code -eq 0 ]; then
-        output=$(scp $scp_opts "$src_test_dir/tools" "$src_test_dir/dm" \
-            $login_dm:./$dst_test_dir/)
-    else
-        echo "FAIL ($ret_code): could not deploy '$dst_test_dir' on $datamaster. Exit!"
-        exit 2
-    fi
-    echo -e "Test artifacts are deployed in '$datamaster:./$dst_test_dir'"
-}
-
-start_dm_schedule() {
-    output=$(ssh "$login_dm" \
-        "source ./${dst_test_dir}/tools/dm.sh && \
-        set_value $sched_filename tperiod $t_period && \
-        start_loop_schedule $sched_filename")
-    ret_code=$?
-    report_code $ret_code
-    exit_on_fail $ret_code
-}
-
-stop_dm_schedule() {
-
-    output=$(ssh "$login_dm" \
-        "source ./${dst_test_dir}/tools/dm.sh && \
-        stop_loop_schedule $sched_filename")
-    ret_code=$?
-    report_code $ret_code
-    exit_on_fail $ret_code
-}
 
 usage() {
     echo "Usage: $0 [OPTION]"
@@ -228,25 +60,8 @@ while getopts 'hu:p:r:s:f:' c; do
     esac
 done
 
-# check if the specified schedule file exists
-if [ ! -f "$sched_filepath" ]; then
-    echo "Error: File not found: '$sched_filepath'. Exit"
-    exit 1
-fi
-
-# get username and password to access SCUs
-if [ -z "$username" ]; then
-    read -rp "username to access '$rxscu_name: " username
-fi
-
-if [ -z "$userpasswd" ]; then
-    read -rsp "password for '$username@$rxscu_name': " userpasswd; echo
-fi
-
-# get name of an external file with DM schedule
-if [ -z "$sched_filename" ]; then
-    read -rp "DOT file with DM schedule: " sched_filename
-fi
+validate_sched_file "$sched_filepath"
+validate_user username userpasswd      # pass variable references to validate and populate them
 
 # setup everything
 echo -e "\n--- 1. Set up DM=$datamaster ---\n"
