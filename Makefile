@@ -492,11 +492,13 @@ diob-clean::
 	$(MAKE) -C syn/scu_diob clean
 	
 diob2:		firmware
-	$(MAKE) -C syn/scu_diob2 all
+	$(MAKE) -C syn/scu_diob2 all_gen-default
 
 diob2-clean::
 	$(MAKE) -C syn/scu_diob2 clean
 
+diob2-%:	firmware
+	$(MAKE) -C syn/scu_diob2 all_gen-$*
 
 sio3:		firmware
 	$(MAKE) -C syn/scu_sio3 all

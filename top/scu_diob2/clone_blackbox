@@ -1,4 +1,11 @@
+#!/usr/bin/env bash
+
 # A script which clones the diob2-planning repo int blackbox/
 
-git clone https://git.gsi.de/hel-developers/diob2-planning blackbox
+# Local directory
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+
+
+
+git clone https://git.gsi.de/hel-developers/diob2-planning $SCRIPT_DIR/blackbox
 
