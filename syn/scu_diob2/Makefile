@@ -17,10 +17,10 @@ housekeeping.elf: $(PHK)/main.c $(W1)/dev/w1.c $(W1)/dev/w1-temp.c $(W1)/dev/w1-
 check_blackbox:
 	@if [ ! -d ../../top/scu_diob2/blackbox ]; then \
 		echo ""; \
-		echo -e "\033[31m ************************************************* \033[0m"; \
-		echo -e "\033[31m        Blackbox directory does not exist!         \033[0m"; \
-		echo -e "\033[31m  Will be created now, prepare your gsi git login! \033[0m"; \
-		echo -e "\033[31m **************************************************\033[0m"; \
+		echo "\033[31m ************************************************* \033[0m"; \
+		echo "\033[31m        Blackbox directory does not exist!         \033[0m"; \
+		echo "\033[31m  Will be created now, prepare your gsi git login! \033[0m"; \
+		echo "\033[31m **************************************************\033[0m"; \
 		echo ""; \
 		../../top/scu_diob2/clone_blackbox; \
 	fi
@@ -30,12 +30,10 @@ generate-%: check_blackbox
 
 all_gen-%: generate-%
 	@echo ""
-	@echo -e "\033[93m *******************************************\033[0m"
-	@echo -e "\033[93m Compiling Blackbox with configuration: $* \033[0m"
-	@echo -e "\033[93m *******************************************\033[0m"
-	@echo ""
-
-	
+	@echo "\033[93m *******************************************\033[0m"
+	@echo "\033[93m Compiling Blackbox with configuration: $* \033[0m"
+	@echo "\033[93m *******************************************\033[0m"
+	@echo ""	
 	$(MAKE) all
 
 clean::
