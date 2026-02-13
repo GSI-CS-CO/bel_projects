@@ -262,6 +262,7 @@ phtif-clean:
 	$(MAKE) -C tools/phtif clean
 
 librtpi:
+	cd res/librtpi && \
 	git clone https://github.com/GSI-CS-CO/librtpi.git && \
 	cd librtpi && \
 	git checkout 1.0.1 && \
@@ -269,13 +270,13 @@ librtpi:
 	./configure && \
 	make
 
-librtpi-install: librtpi
-	cd librtpi && \
+librtpi-install:
+	cd res/librtpi/librtpi && \
 	sudo make install
 	$(call ldconfig_note)
 
 librtpi-clean:
-	rm -rf librtpi || true
+	rm -rf res/librtpi/librtpi || true
 
 libpng12:
 	cd res/ubuntu-22-and-later && \
@@ -285,7 +286,7 @@ libpng12:
 	./configure && \
 	make
 
-libpng12-install: libpng12
+libpng12-install:
 	cd res/ubuntu-22-and-later/libpng-1.2.54 && \
 	make install
 	$(call ldconfig_note)
