@@ -269,7 +269,7 @@ librtpi:
 	./configure && \
 	make
 
-librtpi-install:
+librtpi-install: librtpi
 	cd librtpi && \
 	sudo make install
 	$(call ldconfig_note)
@@ -285,7 +285,7 @@ libpng12:
 	./configure && \
 	make
 
-libpng12-install:
+libpng12-install: libpng12
 	cd res/ubuntu-22-and-later/libpng-1.2.54 && \
 	make install
 	$(call ldconfig_note)
