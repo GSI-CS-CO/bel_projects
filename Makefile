@@ -271,11 +271,27 @@ librtpi:
 
 librtpi-install:
 	cd librtpi && \
-	sudo make install && \
-	cd ..
+	sudo make install
+	$(call ldconfig_note)
 
 librtpi-clean:
 	rm -rf librtpi || true
+
+libpng12:
+	cd res/ubuntu-22-and-later && \
+	tar xf libpng_1.2.54.orig.tar && \
+	cd libpng-1.2.54 && \
+	./autogen.sh && \
+	./configure && \
+	make
+
+libpng12-install:
+	cd res/ubuntu-22-and-later/libpng-1.2.54 && \
+	make install
+	$(call ldconfig_note)
+
+libpng12-clean:
+	rm -rf res/ubuntu-22-and-later/libpng-1.2.54 || true
 
 # #################################################################################################
 # Arria 2 devices
