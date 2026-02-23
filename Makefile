@@ -17,6 +17,7 @@ YOCTO_BUILD     ?= no
 DIM_VERSION     := dim_v20r37
 DIM_PATH        := res/dim/$(DIM_VERSION)
 USRPATH_DIM     := $(PWD)/res/dim
+BUILD_ARTIFACT  ?= no # Build artifacts? yes or leave blank
 export EXTRA_FLAGS
 
 # Set variables that are passed down to sub-makes
@@ -106,6 +107,24 @@ define check_timing
 	@echo "Success! All Timing requirements were met!"
 endef
 
+GIT_BRANCH := $(or $(BRANCH_NAME),$(shell git symbolic-ref --short -q HEAD))
+GIT_COMMIT := $(shell git rev-parse --short HEAD)
+GIT_BRANCH_NAME := $(GIT_BRANCH)-$(GIT_COMMIT)
+FILE_TYPES = jic rpd sof
+
+define copy_release
+@sh -c '\
+if [ "$(BUILD_ARTIFACT)" = "yes" ] || [ "$(BUILD_ARTIFACT)" = "y" ]; then \
+    for ext in $(FILE_TYPES); do \
+        cp "$(strip $(1)).$$ext" "$(strip $(2))/$(strip $(3))-$(GIT_BRANCH_NAME).$$ext"; \
+        mv "$(strip $(2))/$(strip $(3))-$(GIT_BRANCH_NAME).$$ext" artifacts/; \
+    done; \
+    echo "Generated artifact files!"; \
+else \
+    echo "BUILD_ARTIFACT is not set to yes/y – skipping artifact generation."; \
+fi'
+endef
+
 define ldconfig_note
 	@echo ""
 	@echo "***************************************************************************"
@@ -124,6 +143,9 @@ clean::		etherbone-clean tools-clean tlu-clean sdbfs-clean driver-clean lm32-too
 distclean::	clean
 	git clean -xfd .
 	for i in etherbone-core fpga-config-space general-cores wr-cores wrpc-sw; do cd ip_cores/$$i; git clean -xfd .; cd ../..; done
+
+artifacts-clean:
+	rm artifacts/* || true
 
 etherbone::
 	test -f ip_cores/etherbone-core/api/Makefile.in || ./ip_cores/etherbone-core/api/autogen.sh
@@ -294,6 +316,22 @@ librtpi-install:
 librtpi-clean:
 	rm -rf librtpi || true
 
+libpng12:
+	cd res/ubuntu-22-and-later && \
+	tar xf libpng_1.2.54.orig.tar && \
+	cd libpng-1.2.54 && \
+	./autogen.sh && \
+	./configure && \
+	make
+
+libpng12-install:
+	cd res/ubuntu-22-and-later/libpng-1.2.54 && \
+	make install
+	$(call ldconfig_note)
+
+libpng12-clean:
+	rm -rf res/ubuntu-22-and-later/libpng-1.2.54 || true
+
 # #################################################################################################
 # Arria 2 devices
 # #################################################################################################
@@ -309,6 +347,7 @@ scu2-sort:
 
 scu2-check:
 	$(call check_timing, $(CHECK_SCU2))
+	$(call copy_release, $(CHECK_SCU2), $(PATH_SCU2), gw-scu2)
 
 scu3:		firmware
 	$(MAKE) -C $(PATH_SCU3) all
@@ -321,6 +360,7 @@ scu3-sort:
 
 scu3-check:
 	$(call check_timing, $(CHECK_SCU3))
+	$(call copy_release, $(CHECK_SCU3), $(PATH_SCU3), gw-scu3)
 
 vetar2a:	firmware
 	$(MAKE) -C $(PATH_VETAR2A) all
@@ -333,6 +373,7 @@ vetar2a-sort:
 
 vetar2a-check:
 	$(call check_timing, $(CHECK_VETAR2A))
+	$(call copy_release, $(CHECK_VETAR2A), $(PATH_VETAR2A), gw-vetar2a)
 
 vetar2a-ee-butis:	firmware
 	$(MAKE) -C $(PATH_VETAR2A_EE_BUTIS) all
@@ -345,6 +386,7 @@ vetar2a-ee-butis-sort:
 
 vetar2a-ee-butis-check:
 	$(call check_timing, $(CHECK_VETAR2A_EE_BUTIS))
+	$(call copy_release, $(CHECK_VETAR2A_EE_BUTIS), $(PATH_VETAR2A_EE_BUTIS), gw-vetar2a-ee-butis)
 
 # #################################################################################################
 # Arria 5 devices
@@ -361,6 +403,7 @@ pexarria5-sort:
 
 pexarria5-check:
 	$(call check_timing, $(CHECK_PEXARRIA5))
+	$(call copy_release, $(CHECK_PEXARRIA5), $(PATH_PEXARRIA5), gw-pexarria5)
 
 microtca::	firmware
 	$(MAKE) -C $(PATH_MICROTCA) all
@@ -373,6 +416,7 @@ microtca-sort:
 
 microtca-check:
 	$(call check_timing, $(CHECK_MICROTCA))
+	$(call copy_release, $(CHECK_MICROTCA), $(PATH_MICROTCA), gw-microtca-amc)
 
 exploder5:	firmware
 	$(MAKE) -C $(PATH_EXPLODER5) all
@@ -385,6 +429,7 @@ exploder5-sort:
 
 exploder5-check:
 	$(call check_timing, $(CHECK_EXPLODER5))
+	$(call copy_release, $(CHECK_EXPLODER5), $(PATH_EXPLODER5), gw-exploder5)
 
 pmc:	firmware
 	$(MAKE) -C $(PATH_PMC) all
@@ -397,6 +442,7 @@ pmc-sort:
 
 pmc-check:
 	$(call check_timing, $(CHECK_PMC))
+	$(call copy_release, $(CHECK_PMC), $(PATH_PMC), gw-pmc)
 
 pexp:	firmware
 	$(MAKE) -C $(PATH_PEXP) all
@@ -409,6 +455,7 @@ pexp-sort:
 
 pexp-check:
 	$(call check_timing, $(CHECK_PEXP))
+	$(call copy_release, $(CHECK_PEXP), $(PATH_PEXP), gw-pexp)
 
 ftm:	firmware
 	$(MAKE) -C $(PATH_FTM) all
@@ -421,6 +468,7 @@ ftm-sort:
 
 ftm-check:
 	$(call check_timing, $(CHECK_FTM))
+	$(call copy_release, $(CHECK_FTM), $(PATH_FTM), gw-ftm)
 
 # #################################################################################################
 # Arria 10 devices
@@ -429,26 +477,28 @@ ftm-check:
 scu5:		firmware
 	$(MAKE) -C $(PATH_SCU5) all
 
+scu5-clean::
+	$(MAKE) -C $(PATH_SCU5) clean
+
 scu5-sort:
 	$(call sort_file, $(CHECK_SCU5))
 
 scu5-check:
-		$(call check_timing, $(CHECK_SCU5))
-
-scu5-clean::
-	$(MAKE) -C $(PATH_SCU5) clean
+	$(call check_timing, $(CHECK_SCU5))
+	$(call copy_release, $(CHECK_SCU5), $(PATH_SCU5), gw-scu5)
 
 ftm5dp:		firmware
 	$(MAKE) -C $(PATH_FTM5DP) all
+
+ftm5dp-clean::
+	$(MAKE) -C $(PATH_FTM5DP) clean
 
 ftm5dp-sort:
 	$(call sort_file, $(CHECK_FTM5DP))
 
 ftm5dp-check:
 	$(call check_timing, $(CHECK_FTM5DP))
-
-ftm5dp-clean::
-	$(MAKE) -C $(PATH_FTM5DP) clean
+	$(call copy_release, $(CHECK_FTM5DP), $(PATH_FTM5DP), gw-ftm5dp)
 
 pexarria10:	firmware
 	$(MAKE) -C $(PATH_PEXARRIA10) all
@@ -461,6 +511,7 @@ pexarria10-sort:
 
 pexarria10-check:
 	$(call check_timing, $(CHECK_PEXARRIA10))
+	$(call copy_release, $(CHECK_PEXARRIA10), $(PATH_PEXARRIA10), gw-pexarria10)
 
 ftm10:	firmware
 	$(MAKE) -C $(PATH_FTM10) all
@@ -473,18 +524,72 @@ ftm10-sort:
 
 ftm10-check:
 	$(call check_timing, $(CHECK_FTM10))
+	$(call copy_release, $(CHECK_FTM10), $(PATH_FTM10), gw-ftm10-ftm10dp)
 
 scu4slim:		firmware
 	$(MAKE) -C $(PATH_SCU4SLIM) all
+
+scu4slim-clean::
+	$(MAKE) -C $(PATH_SCU4SLIM) clean
 
 scu4slim-sort:
 	$(call sort_file, $(CHECK_SCU4SLIM))
 
 scu4slim-check:
 	$(call check_timing, $(CHECK_SCU4SLIM))
+	$(call copy_release, $(CHECK_SCU4SLIM), $(PATH_SCU4SLIM), gw-scu4slim-scu4dot1)
 
-scu4slim-clean::
-	$(MAKE) -C $(PATH_SCU4SLIM) clean
+pexarria5-sdr:	firmware
+	$(MAKE) -C $(PATH_PEXARRIA5_SDR) all
+
+pexarria5-sdr-clean::
+	$(MAKE) -C $(PATH_PEXARRIA5_SDR) clean
+
+pexarria5-sdr-sort:
+	$(call sort_file, $(CHECK_PEXARRIA5_SDR))
+
+pexarria5-sdr-check:
+	$(call check_timing, $(CHECK_PEXARRIA5_SDR))
+	$(call copy_release, $(CHECK_PEXARRIA5_SDR), $(PATH_PEXARRIA5_SDR), gw-pexarria5-sdr)
+
+pexp-sdr:	firmware
+	$(MAKE) -C $(PATH_PEXP_SDR) all
+
+pexp-sdr-clean::
+	$(MAKE) -C $(PATH_PEXP_SDR) clean
+
+pexp-sdr-sort:
+	$(call sort_file, $(CHECK_PEXP_SDR))
+
+pexp-sdr-check:
+	$(call check_timing, $(CHECK_PEXP_SDR))
+	$(call copy_release, $(CHECK_PEXP_SDR), $(PATH_PEXP_SDR), gw-pexp-sdr)
+
+pexp-pps:	firmware
+	$(MAKE) -C $(PATH_PEXP_PPS) all
+
+pexp-pps-clean::
+	$(MAKE) -C $(PATH_PEXP_PPS) clean
+
+pexp-pps-sort:
+	$(call sort_file, $(CHECK_PEXP_PPS))
+
+pexp-pps-check:
+	$(call check_timing, $(CHECK_PEXP_PPS))
+	$(call copy_release, $(CHECK_PEXP_PPS), $(PATH_PEXP_PPS), gw-pexp-pps)
+
+pexp-neorv32:	firmware
+	$(MAKE) -C $(PATH_PEXP_NEORV32) all
+
+pexp-neorv32-clean::
+	$(MAKE) -C $(PATH_PEXP_NEORV32) clean
+
+pexp-neorv32-sort:
+	$(call sort_file, $(CHECK_PEXP_NEORV32))
+
+pexp-neorv32-check:
+	$(call check_timing, $(CHECK_PEXP_NEORV32))
+	$(call copy_release, $(CHECK_PEXP_NEORV32), $(PATH_PEXP_NEORV32), gw-pexp-neorv32)
 
 # #################################################################################################
 # SCU slaves
@@ -526,73 +631,33 @@ blm:		firmware
 blm-clean::
 	$(MAKE) -C syn/blm_aco clean
 
-# #################################################################################################
-# LM32 firmware
-# #################################################################################################
+##################################################################################################
+#LM32 firmware
+##################################################################################################
 
 fw-bg: lm32-toolchain
 	$(MAKE) -C modules/burst_generator
+ifeq ($(BUILD_ARTIFACT),yes)
+	cp modules/burst_generator/burstgen.bin modules/burst_generator/fw-bg-pexp-pmc-amc-pex5-exp5-$(GIT_BRANCH_NAME).bin
+	mv modules/burst_generator/fw-bg-pexp-pmc-amc-pex5-exp5-*.bin artifacts/
+endif
 
 fw-bg-clean::
 	$(MAKE) -C modules/burst_generator clean
 
 fw-fg-scu2-scu3: lm32-toolchain
 	$(MAKE) -C syn/gsi_scu/control2 scu_control.bin
+ifeq ($(BUILD_ARTIFACT),yes)
+	cp syn/gsi_scu/control2/scu_control.bin syn/gsi_scu/control2/fw-fg-scu2-scu3-$(GIT_BRANCH_NAME).bin
+	mv syn/gsi_scu/control2/fw-fg-scu2-scu3-*.bin artifacts/
+endif
 
 fw-fg-scu2-scu3-clean::
 	$(MAKE) -C syn/gsi_scu/control2 clean
 
-# #################################################################################################
-# Legacy and unmaintained devices
-# #################################################################################################
-
-pexarria5-sdr:	firmware
-	$(MAKE) -C $(PATH_PEXARRIA5_SDR) all
-
-pexarria5-sdr-clean::
-	$(MAKE) -C $(PATH_PEXARRIA5_SDR) clean
-
-pexarria5-sdr-sort:
-	$(call sort_file, $(CHECK_PEXARRIA5_SDR))
-
-pexarria5-sdr-check:
-	$(call check_timing, $(CHECK_PEXARRIA5_SDR))
-
-pexp-sdr:	firmware
-	$(MAKE) -C $(PATH_PEXP_SDR) all
-
-pexp-sdr-clean::
-	$(MAKE) -C $(PATH_PEXP_SDR) clean
-
-pexp-sdr-sort:
-	$(call sort_file, $(CHECK_PEXP_SDR))
-
-pexp-sdr-check:
-	$(call check_timing, $(CHECK_PEXP_SDR))
-
-pexp-pps:	firmware
-	$(MAKE) -C $(PATH_PEXP_PPS) all
-
-pexp-pps-clean::
-	$(MAKE) -C $(PATH_PEXP_PPS) clean
-
-pexp-pps-sort:
-	$(call sort_file, $(CHECK_PEXP_PPS))
-
-pexp-pps-check:
-	$(call check_timing, $(CHECK_PEXP_PPS))
-
-pexp-neorv32:	firmware
-	$(MAKE) -C $(PATH_PEXP_NEORV32) all
-
-pexp-neorv32-clean::
-	$(MAKE) -C $(PATH_PEXP_NEORV32) clean
-
-pexp-neorv32-sort:
-	$(call sort_file, $(CHECK_PEXP_NEORV32))
-
-pexp-neorv32-check:
-	$(call check_timing, $(CHECK_PEXP_NEORV32))
+##################################################################################################
+#Legacy and unmaintained devices
+##################################################################################################
 
 avsoc:		firmware
 	$(MAKE) -C syn/gsi_avsoc/av_rocket_board all
@@ -613,10 +678,10 @@ exploder-clean::
 	$(MAKE) -C syn/gsi_exploder/wr_core_demo clean
 
 pexarria10_soc::	firmware
-	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/lm32-toolchain/bin:$(PATH) all
+	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/lm-32toolchain/bin:$(PATH) all
 
 pexarria10_soc-clean::
-	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/lm32-toolchain/bin:$(PATH) clean
+	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/lm-32toolchain/bin:$(PATH) clean
 
 a10gx_pcie::	firmware
 	$(MAKE) -C $(PATH_A10GX) all
@@ -694,6 +759,7 @@ set_max_parallel_processors:
 Makefile: prereq-rule git_apply_patches
 
 prereq-rule::
+	@mkdir -p artifacts
 	@test -d .git/modules/ip_cores/wrpc-sw/modules/ppsi || \
 		(echo "Downloading submodules..."; ./fix-git.sh)
 
@@ -730,6 +796,24 @@ hdlmake_install:
 # Just install hdlmake (even if it's already installed)
 hdlmake_install_locally:
 	@cd ip_cores/hdlmake/ && python setup.py install --user
+
+# Print debug data
+debug:
+	@hdlmake -v 2>&1 | grep -v SyntaxWarning || true
+	@$(foreach var, \
+		GIT_BRANCH_NAME \
+		QSYS_ROOTDIR \
+		QUARTUS_ROOTDIR \
+		QUARTUS \
+		QUARTUS_64BIT \
+		PKG_CONFIG_PATH \
+		LC_NUMERIC \
+		PATH, \
+		echo "$(var) = $($(var))";)
+	@git log -n 5 --oneline
+	@git remote -v
+	@ls -lah Makefile
+	@uname -a
 
 # #################################################################################################
 # Test cases
