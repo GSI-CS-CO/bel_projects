@@ -43,3 +43,5 @@ lm32-gcc.tar.xz
 lm32-gcc-4.5.3/
 librtpi
 res/ubuntu-22-and-later/libpng-1.2.54/
+releases/
+artifacts
