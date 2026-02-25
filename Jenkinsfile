@@ -84,10 +84,10 @@ pipeline {
        buildDiscarder(logRotator(numToKeepStr: '7', artifactNumToKeepStr: '7'))
    }
    triggers {
-       // Poll the repository every 5 minutes (no webhook needed)
-       pollSCM('H/5 * * * *')
-       // Daily build at 21:00
-       cron('0 21 * * *')
+       // Poll the repository every 15 minutes (no webhook needed)
+       pollSCM('H/15 * * * *')
+       // Daily build at 23:00
+       cron('0 23 * * *')
    }
    environment {
        // Git repository upstream URL
