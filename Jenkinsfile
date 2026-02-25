@@ -86,8 +86,8 @@ pipeline {
    triggers {
        // Poll the repository every 15 minutes (no webhook needed)
        pollSCM('H/15 * * * *')
-       // Daily build at 23:00
-       cron('0 23 * * *')
+       // Daily build between 20:00 and 23:00
+       cron('H H(20-23) * * *')
    }
    environment {
        // Git repository upstream URL
