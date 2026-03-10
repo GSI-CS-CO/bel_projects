@@ -2242,6 +2242,24 @@ end generate;
   end generate;
 
   dual_port_wr_core : if g_dual_port_wr generate
+
+    U_DAC_ARB : spec_serial_dac_arb
+      generic map (
+        g_invert_sclk    => false,
+        g_num_extra_bits => 8) -- AD DACs with 24bit interface
+      port map (
+        clk_i         => clk_sys,
+        rst_n_i       => rstn_sys,
+        val1_i        => dac_dpll_data_aux,
+        load1_i       => dac_dpll_load_p1_aux,
+        val2_i        => dac_hpll_data_aux,
+        load2_i       => dac_hpll_load_p1_aux,
+        dac_cs_n_o(0) => wr_aux_ndac_cs_o(1),
+        dac_cs_n_o(1) => wr_aux_ndac_cs_o(2),
+        dac_clr_n_o   => open,
+        dac_sclk_o    => wr_aux_dac_sclk_o,
+        dac_din_o     => wr_aux_dac_din_o);
+
     wr_a10 : if c_is_arria10 generate
     U_WR_CORE : xwr_core
 
@@ -2330,6 +2348,7 @@ end generate;
         rst_aux_n_o          => open,
         link_ok_o            => s_link_ok);
     end generate;
+
 end generate;
 
   U_DAC_ARB : spec_serial_dac_arb
