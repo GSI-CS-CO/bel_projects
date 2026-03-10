@@ -279,11 +279,12 @@ architecture rtl of ftm5dp is
   signal rstn_ref           : std_logic;
   signal clk_ref            : std_logic;
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 14) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 15) :=
   (
     -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
     ("LEMO_IN_0  ",    IO_NONE,         false,   false,  0,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
     ("LEMO_IN_1  ",    IO_NONE,         false,   false,  1,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("SATA_PR_DE ",    IO_NONE,         false,   false,  2,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
     ("USER_LED0_R",    IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("USER_LED0_G",    IO_NONE,         false,   false,  1,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("USER_LED0_B",    IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
@@ -314,7 +315,7 @@ begin
       g_project            => c_project,
       g_flash_bits         => 25, -- !!! TODO: Check this
       g_cr_bits            => c_cr_bits,
-      g_gpio_in            => 2,
+      g_gpio_in            => 3,
       g_gpio_out           => 7,
       g_lvds_in            => 3,
       g_lvds_out           => 3,
@@ -369,15 +370,25 @@ begin
       wbar_phy_dis_o          => sfp_tx_disable_o,
       sfp_tx_fault_i          => sfp_tx_fault_i,
       sfp_los_i               => sfp_los_i,
-      wr_aux_sfp_sda_io       => ext_ch(2),
-      wr_aux_sfp_scl_io       => ext_ch(3),
-      wr_aux_sfp_det_i        => ext_ch(4),
       wr_aux_sfp_tx_o         => gxbl1c_tx_ch1p_ae28,
       wr_aux_sfp_rx_i         => gxbl1c_rx_ch1p_ad26,
-      sfp_aux_tx_disable_o    => ext_ch(5),
-      sfp_aux_tx_fault_i      => ext_ch(6),
-      sfp_aux_los_i           => ext_ch(7),
+      wr_aux_ndac_cs_o(2)     => ext_ch(0),
+      sfp_aux_tx_disable_o    => ext_ch(2),
+      sfp_aux_tx_fault_i      => ext_ch(3),
+      sfp_aux_los_i           => ext_ch(4),
+      wr_aux_dac_din_o        => ext_ch(8),
+      wr_aux_dac_sclk_o       => ext_ch(9),
+      wr_aux_ndac_cs_o(1)     => ext_ch(10),
+      wr_aux_onewire_io       => ext_ch(11),
+      wr_aux_sfp_sda_io       => ext_ch(12),
+      wr_aux_sfp_scl_io       => ext_ch(13),
+      wr_aux_sfp_det_i        => ext_ch(16),
+      led_aux_link_up_o       => ext_ch(17),
+      led_aux_link_act_o      => ext_ch(19),
+      led_aux_track_o         => ext_ch(18),
+      led_aux_pps_o           => ext_ch(20),
       gpio_i(1 downto 0)      => lemo_in,
+      gpio_i(2)               => ext_ch(21),
       gpio_o(6 downto 0)      => s_gpio_o(6 downto 0),
       lvds_p_i                => s_lvds_p_i,
       lvds_n_i                => s_lvds_n_i,
@@ -524,9 +535,9 @@ begin
   OneWire_CB_splz   <= '1';  --Strong Pull-Up disabled
 
   --Extension Piggy
-  ext_ch(0) <= s_led_pps;
-  ext_ch(1) <= s_core_clk_25m;
-  ext_ch(21 downto 8) <= (others => 'Z');
+  ext_ch(1) <= '0'; -- SFP Rate Sel
+  ext_ch(7 downto 5) <= (others => 'Z'); -- Unused
+  ext_ch(15 downto 14) <= (others => 'Z'); -- Unused
 
   -- I2C to ATXMEGA
   avr_scl             <= s_i2c_scl_pad_out(1) when (s_i2c_scl_padoen(1) = '0') else 'Z';
