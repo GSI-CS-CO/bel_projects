@@ -180,6 +180,9 @@ package monster_pkg is
       wr_aux_sfp_det_i       : in    std_logic := '0';
       wr_aux_sfp_tx_o        : out   std_logic;
       wr_aux_sfp_rx_i        : in    std_logic := '0';
+      wr_aux_dac_sclk_o      : out   std_logic;
+      wr_aux_dac_din_o       : out   std_logic;
+      wr_aux_ndac_cs_o       : out   std_logic_vector(2 downto 1);
       -- Optional WR features
       wr_ext_clk_i           : in    std_logic := '0'; -- 10MHz
       wr_ext_pps_i           : in    std_logic := '0';
