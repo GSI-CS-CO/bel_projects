@@ -451,7 +451,6 @@ begin
     s_psram_wait(i) <= psram_wait(i);
   end generate;
 
-  --user_led_0   <= s_gpio_o(2 downto 0) or s_psram_wait(3 downto 1); -- Keep unused WAIT in pins used, there this laster
   user_led0_r <= s_gpio_o(0);
   user_led0_g <= s_gpio_o(1);
   user_led0_b <= s_gpio_o(2);
@@ -461,7 +460,6 @@ begin
   wr_rgb_led(0) <= s_led_link_act;                                        -- WR-RGB Red
   wr_rgb_led(1) <= s_led_track;                                           -- WR-RGB Green
   wr_rgb_led(2) <= '1' when (not s_led_track and s_led_link_up) else '0'; -- WR-RGB Blue
-  --user_led_0    <= s_gpio_o(2 downto 0); -> See PSRAM
 
   lemos : for i in 0 to 2 generate
     s_lvds_p_i(i) <= fastIO_p_i(i);
