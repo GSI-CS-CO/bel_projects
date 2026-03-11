@@ -241,6 +241,7 @@ architecture rtl of ftm5dp is
   signal s_led_link_act : std_logic;
   signal s_led_track    : std_logic;
   signal s_led_pps      : std_logic;
+  signal s_led_pps_aux  : std_logic;
   signal s_lemo_led     : std_logic_vector (5 downto 0);
 
   signal s_gpio_o    : std_logic_vector(6 downto 0);
@@ -290,14 +291,14 @@ architecture rtl of ftm5dp is
     ("USER_LED0_B",    IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LEMO_OUT_0 ",    IO_NONE,         false,   false,  3,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LEMO_OUT_1 ",    IO_NONE,         false,   false,  4,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LEMO_OUT_2 ",    IO_NONE,         false,   false,  5,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LEMO_OUT_3 ",    IO_NONE,         false,   false,  6,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("FAST_IN_0  ",    IO_NONE,         false,   false,  0,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
     ("FAST_IN_1  ",    IO_NONE,         false,   false,  1,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
     ("FAST_IN_2  ",    IO_NONE,         false,   false,  2,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
     ("FAST_OUT_0 ",    IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_LVDS,  false,        false,       IO_LVDS),
     ("FAST_OUT_1 ",    IO_NONE,         false,   false,  1,     IO_OUTPUT,   IO_LVDS,  false,        false,       IO_LVDS),
-    ("FAST_OUT_2 ",    IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_LVDS,  false,        false,       IO_LVDS)
+    ("FAST_OUT_2 ",    IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_LVDS,  false,        false,       IO_LVDS),
+    ("L2_PPS_DEF ",    IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_TTL),
+    ("L3_PPS_DMC ",    IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_TTL)
   );
 
   constant c_family       : string := "Arria 10 GX FTM4";
@@ -315,8 +316,9 @@ begin
       g_project            => c_project,
       g_flash_bits         => 25, -- !!! TODO: Check this
       g_cr_bits            => c_cr_bits,
+      g_fixed              => 2,
       g_gpio_in            => 3,
-      g_gpio_out           => 7,
+      g_gpio_out           => 5,
       g_lvds_in            => 3,
       g_lvds_out           => 3,
       g_lvds_invert        => false,
@@ -370,8 +372,8 @@ begin
       wbar_phy_dis_o          => sfp_tx_disable_o,
       sfp_tx_fault_i          => sfp_tx_fault_i,
       sfp_los_i               => sfp_los_i,
-      wr_aux_sfp_tx_o         => gxbl1c_tx_ch1p_ae28,
-      wr_aux_sfp_rx_i         => gxbl1c_rx_ch1p_ad26,
+      wr_aux_sfp_tx_o         => gxbl1d_tx_ch2p_l28_pciex_tx,
+      wr_aux_sfp_rx_i         => gxbl1d_rx_ch2p_k26_pciex_rx,
       wr_aux_ndac_cs_o(2)     => ext_ch(0),
       sfp_aux_tx_disable_o    => ext_ch(2),
       sfp_aux_tx_fault_i      => ext_ch(3),
@@ -386,10 +388,10 @@ begin
       led_aux_link_up_o       => ext_ch(17),
       led_aux_link_act_o      => ext_ch(19),
       led_aux_track_o         => ext_ch(18),
-      led_aux_pps_o           => ext_ch(20),
+      led_aux_pps_o           => s_led_pps_aux,
       gpio_i(1 downto 0)      => lemo_in,
       gpio_i(2)               => ext_ch(21),
-      gpio_o(6 downto 0)      => s_gpio_o(6 downto 0),
+      gpio_o(4 downto 0)      => s_gpio_o(4 downto 0),
       lvds_p_i                => s_lvds_p_i,
       lvds_n_i                => s_lvds_n_i,
       lvds_p_o                => s_lvds_p_o,
@@ -474,7 +476,6 @@ begin
     s_psram_wait(i) <= psram_wait(i);
   end generate;
 
-  --user_led_0   <= s_gpio_o(2 downto 0) or s_psram_wait(3 downto 1); -- Keep unused WAIT in pins used, there this laster
   user_led0_r <= s_gpio_o(0);
   user_led0_g <= s_gpio_o(1);
   user_led0_b <= s_gpio_o(2);
@@ -484,14 +485,15 @@ begin
   wr_rgb_led(0) <= s_led_link_act;                                        -- WR-RGB Red
   wr_rgb_led(1) <= s_led_track;                                           -- WR-RGB Green
   wr_rgb_led(2) <= '1' when (not s_led_track and s_led_link_up) else '0'; -- WR-RGB Blue
-  --user_led_0    <= s_gpio_o(2 downto 0); -> See PSRAM
 
   lemos : for i in 0 to 2 generate
     s_lvds_p_i(i) <= fastIO_p_i(i);
     --s_lvds_n_i(i) <= fastIO_n_i(i);
     fastIO_p_o(i) <= s_lvds_p_o(i);
   end generate;
-  lemo_out <= s_gpio_o(6 downto 3);
+  lemo_out(1 downto 0) <= s_gpio_o(4 downto 3);
+  lemo_out(2) <= s_led_pps;
+  lemo_out(3) <= s_led_pps_aux;
 
   -- LEMOs
   --lemos : for i in 0 to 2 generate
@@ -512,12 +514,10 @@ begin
   --lemo_out <= s_gpio_o(6 downto 3);
 
   -- Lemo LEDs
-  s_lemo_led (3 downto 0) <= s_gpio_o(6 downto 3);
-  s_lemo_led (5 downto 4) <= lemo_in;
-
-  -- Lemo LEDs
-  s_lemo_led (3 downto 0) <= s_gpio_o(6 downto 3);
-  s_lemo_led (5 downto 4) <= lemo_in;
+  s_lemo_led(1 downto 0) <= s_gpio_o(3 downto 2);
+  s_lemo_led(2) <= s_led_pps;
+  s_lemo_led(3) <= s_led_pps_aux;
+  s_lemo_led(5 downto 4) <= lemo_in;
 
   -- Extend LEMO input/outputs to LEDs at 20Hz
   lemo_leds : for i in 0 to 5 generate
@@ -538,6 +538,7 @@ begin
   ext_ch(1) <= '0'; -- SFP Rate Sel
   ext_ch(7 downto 5) <= (others => 'Z'); -- Unused
   ext_ch(15 downto 14) <= (others => 'Z'); -- Unused
+  ext_ch(20) <= s_led_pps_aux;
 
   -- I2C to ATXMEGA
   avr_scl             <= s_i2c_scl_pad_out(1) when (s_i2c_scl_padoen(1) = '0') else 'Z';
