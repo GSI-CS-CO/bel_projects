@@ -114,7 +114,7 @@ start_basic() {
     echo "MPS overflow msgs (RX): $cnt ($cnt_dec)"
 
     echo -n "MPS event handling: "
-    read_measurement_results $tx_node_dev $instr_st_eca_handle $addr_avg $verbosity
+    read_measurement_results $tx_node_dev $instr_st_eca_dly $addr_avg $verbosity
 
     echo -n "Transmission delay: "
     read_measurement_results $tx_node_dev $instr_st_tx_dly $addr_avg $verbosity

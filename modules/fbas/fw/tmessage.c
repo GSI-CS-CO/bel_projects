@@ -148,19 +148,21 @@ uint32_t msgSendMpsFlag(msgCtrl_t* ctrl, uint64_t evtId)
 }
 
 /**
- * \brief Signal a new MPS event
+ * \brief Send PC event
+ *
+ * Send the PC event as a timing message. (use)
  *
  * Upon flag change to NOK, there shall be 2 extra events within 50 us. [MPS_FS_530]
- * In case of new cycle, do not signal any MPS event. [MPS_FS_630]
+ * In case of new cycle, do not send any PC event. [MPS_FS_630]
  *
- * \param ctrl  Pointer to the MPS messaging controller
- * \param buf   Pointer to a specific MPS message
- * \param evtid Event ID used to send a timing message
+ * \param ctrl  Pointer to the messaging controller
+ * \param buf   Location of the message buffer (holding PC event)
+ * \param evtid Event ID for a timing message
  * \param extra Number of extra messages
  *
  * \return   Number of sent messages
  **/
-uint32_t msgSignalMpsEvent(const msgCtrl_t* ctrl, mpsMsg_t *const buf, const uint64_t evtid, const uint8_t extra)
+uint32_t msgSendPcEvent(const msgCtrl_t* ctrl, mpsMsg_t *const buf, const uint64_t evtid, const uint8_t extra)
 {
   uint32_t count = 0;
   uint32_t tef = 0;
@@ -169,12 +171,12 @@ uint32_t msgSignalMpsEvent(const msgCtrl_t* ctrl, mpsMsg_t *const buf, const uin
   if (ctrl->last >= now) // delayed by a new cycle
     return count;
 
-  // send a specified MPS event with ahead timestamp
-  uint64_t deadline = now + FBAS_AHEAD_TIME;
+  // send a specified PC event with ahead timestamp
+  uint64_t deadline = buf->tsRx + FBAS_AHEAD_TIME;
   if (fwlib_ebmWriteTM(deadline, evtid, buf->param, tef, 1) == COMMON_STATUS_OK)
     ++count;
 
-  // NOK flag shall be sent as extra events
+  // NOK flag shall be sent as burst
   if (buf->prot.flag == MPS_FLAG_NOK) {
     for (uint8_t i = 0; i < extra; ++i) {
       if (fwlib_ebmWriteTM(deadline, evtid, buf->param, tef, 1) == COMMON_STATUS_OK)
@@ -186,23 +188,24 @@ uint32_t msgSignalMpsEvent(const msgCtrl_t* ctrl, mpsMsg_t *const buf, const uin
 }
 
 /**
- * \brief fetch MPS event
+ * \brief Store the fetched PC event
  *
- * MPS event is fetched from ECA and stored in the dedicated buffer.
+ * Store the PC (Power Converter) event fetched from ECA
+ * in the dedicated MPS message buffer.
  *
- * \param idx Base index for TX node
- * \param evt Raw event data (bits 63-16 = event ID, 15-8 = channel, 7-0 = flag)
- * \param dl  Event timestamp
+ * \param idx Index (if TX node manages multiple PCs)
+ * \param evt Raw ECA data (bits 63-16 = event ID, 15-8 = channel, 7-0 = flag)
+ * \param ts  Timestamp
  *
- * \return Pointer to the message buffer with the MPS event/flag
+ * \return Pointer to the message buffer location
  **/
-mpsMsg_t* msgFetchMps(const uint8_t idx, const uint64_t evt, const uint64_t ts)
+mpsMsg_t* msgStorePcEvent(const uint8_t idx, const uint64_t evt, const uint64_t ts)
 {
-  // evaluate MPS channel and MPS flag
+  // parse the PC channel and PC flag
   uint8_t ch = (uint8_t)(evt >> 8);
   uint8_t flag = (uint8_t)evt;
 
-  // keep the MPS flag and deadline(timestamp)
+  // keep the PC flag and timestamp
   (headBufMps+ch)->prot.flag = flag;
   (headBufMps+ch)->tsRx = ts;
 
@@ -229,20 +232,21 @@ mpsMsg_t* msgFetchMps(const uint8_t idx, const uint64_t evt, const uint64_t ts)
  **/
 int msgStoreMpsMsg(const uint64_t *raw, const uint64_t *ts, const msgCtrl_t* ctrl)
 {
-  uint8_t idx  = (uint8_t)(*raw >> 8);
+  uint8_t idx  = (uint8_t)(*raw >> 8);      // index for nodeIds[]
+  uint8_t buf_idx  = idx * N_MPS_CHANNELS;  // base index for MPS msg buffer
   uint8_t flag = (uint8_t)*raw;
 
   // node ID match
-  if (!memcmp(raw, (headBufMps+idx)->prot.addr, ETH_ALEN)) {
+  if (!memcmp(raw, (headBufMps+buf_idx)->prot.addr, ETH_ALEN)) {
     // MPS channel match
-    if ((headBufMps+idx)->prot.idx == idx) {
+    if ((headBufMps+buf_idx)->prot.idx == idx) {
       // new MPS msg
-      if (*ts != (headBufMps+idx)->tsRx) {
+      if (*ts != (headBufMps+buf_idx)->tsRx) {
         flag = (uint8_t)*raw;
-        (headBufMps+idx)->pending = (headBufMps+idx)->prot.flag ^ flag;
-        (headBufMps+idx)->prot.flag = flag;
-        (headBufMps+idx)->ttl = ctrl->ttl;
-        (headBufMps+idx)->tsRx = *ts;
+        (headBufMps+buf_idx)->pending = (headBufMps+buf_idx)->prot.flag ^ flag;
+        (headBufMps+buf_idx)->prot.flag = flag;
+        (headBufMps+buf_idx)->ttl = ctrl->ttl;
+        (headBufMps+buf_idx)->tsRx = *ts;
       }
       else {
         // repeated MPS msg
@@ -352,30 +356,36 @@ void msgResetMpsBuf(const uint8_t idx, const uint8_t *pId, const uint8_t flag)
  **/
 void msgUpdateMpsBuf(const uint64_t *pId)
 {
-  uint8_t idx = (uint8_t)(*pId >> 56);  // index
+  uint8_t idx = (uint8_t)(*pId >> 56);  // index (for nodeIds[])
   uint8_t *id = (uint8_t*)pId;          // point to sender node ID (lower 6 bytes)
   id+=2;
+  uint8_t buf_idx;                      // base index for MPS message buffer
 
-  // if the same ID exists, remove it from the node ID array and MPS message buffer
+  // if the same ID exists, remote it (node ID array and MPS message buffer)
   for (int i = 0; i < N_MAX_TX_NODES; ++i) {
     if (!(memcmp(&nodeIds[i][0], id, ETH_ALEN))) {
       memset(&nodeIds[i][0], 0, ETH_ALEN);
     }
 
-    if (!(memcmp(bufMpsMsg[i].prot.addr, id, ETH_ALEN))) {
-      msgResetMpsBuf(i, 0, MPS_FLAG_TEST);
+    buf_idx = i * N_MPS_CHANNELS;
+    if (!(memcmp(bufMpsMsg[buf_idx].prot.addr, id, ETH_ALEN))) {
+      for (int j = 0; j < N_MPS_CHANNELS; j++)
+        msgResetMpsBuf(j + buf_idx, 0, MPS_FLAG_TEST);
     }
   }
 
   // update the node ID array and MPS message buffer
   memcpy(&nodeIds[idx][0], id, ETH_ALEN);
 
-  msgResetMpsBuf(idx, id, MPS_FLAG_OK);
-  bufMpsMsg[idx].prot.idx = idx;
+  buf_idx = idx * N_MPS_CHANNELS;
+  for (int j = 0; j < N_MPS_CHANNELS; j++) {
+    msgResetMpsBuf(j + buf_idx, id, MPS_FLAG_OK);
+    bufMpsMsg[j + buf_idx].prot.idx = j + idx;
+  }
 
   // node ID array and MPS message buffer must match
   if (!(memcmp(&nodeIds[idx][0], &bufMpsMsg[idx].prot.addr[0], ETH_ALEN))) {
-    DBPRINT1("tmessage: sender %x: ", idx);
+    DBPRINT1("sender: idx=%x: ", idx);
     for (int i = 0; i < ETH_ALEN; i++)
       DBPRINT1("%02x", bufMpsMsg[idx].prot.addr[i]);
     DBPRINT1(" (id: %016llx)\n", *pId);

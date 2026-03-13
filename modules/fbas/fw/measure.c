@@ -43,11 +43,13 @@ struct outlierStat_s {
 };
 
 static struct outlierStat_s outlierStat[N_MSR_ITEMS] = {
-  {100000, 0},    // transmission delay, ns
-  {100000, 0},    // signalling latency, ns
-  {100000, 0},    // messaging delay, ns
-  {101000000, 0}, // TTL, ns
-  {10000, 0}      // ECA event handling, ns
+  {10000, 0},     // ECA handling delay, MSR_ECA_DLY < 10 us
+  {20000, 0},     // transmitter handler delay, MSR_TX_DLY < 20 us
+  {20000, 0},     // receiver handler delay, MSR_RX_DLY < 20 us
+  {200000, 0},    // (obsolote) signalling latency, MSR_SG_LTY
+  {200000, 0},    // messaging delay, MSR_MSG_DLY < 200 us
+  {101000000, 0}, // TTL threshold/interval, MSR_TTL < 1,01 ms
+  {200000, 0}     // period of the main loop, MSR_ML_PRD < 200 us
 };
 
 static msrSumStats_t sumStats[N_MSR_ITEMS];  // buffer for summary statistics
@@ -167,11 +169,14 @@ void measureSummarize(msrItem_t item, uint64_t from, uint64_t now, verbosity_t v
 void measurePrintSummary(msrItem_t item) {
   msrSumStats_t* pStats = &sumStats[item];
 
-  DBPRINT2("%d avg=%llu min=%lli max=%llu cnt=%lu/%lu\n",
+  DBPRINT2("%d avg=%llu min=%lli max=%llu cnt=%lu/%lu",
     item,
     pStats->avg, pStats->min, pStats->max, pStats->cntValid, pStats->cntTotal);
 
-  DBPRINT2("lmt=%lu\n", outlierStat[item].cnt);
+  if (outlierStat[item].cnt)
+    DBPRINT2(" lmt=%lu/%lu\n", outlierStat[item].cnt, outlierStat[item].threshold);
+  else
+    DBPRINT2("\n");
 }
 
 /**

@@ -164,6 +164,9 @@ status_t driveOutPort(io_port_t *const pOutPort, const uint8_t value)
  **/
 status_t ioDriveOutput(mpsMsg_t *const pBuf, const uint8_t bufIdx)
 {
+  // TODO: return OK to ignore actual port map
+  return COMMON_STATUS_OK;
+
   if (pBuf == 0)
     return COMMON_STATUS_ERROR;
 

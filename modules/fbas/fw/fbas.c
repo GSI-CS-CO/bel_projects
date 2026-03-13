@@ -171,12 +171,14 @@ static status_t initSharedMem(uint32_t *const sharedStart)
   DBPRINT2("fbas%d: FBAS_BEGIN 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_BEGIN >> 2)), (pSharedExt + (FBAS_SHARED_BEGIN >> 2)));
   DBPRINT2("fbas%d: FBAS_SET_NODETYPE 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_SET_NODETYPE >> 2)), (pSharedExt + (FBAS_SHARED_SET_NODETYPE >> 2)));
   DBPRINT2("fbas%d: FBAS_GET_NODETYPE 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_GET_NODETYPE >> 2)), (pSharedExt + (FBAS_SHARED_GET_NODETYPE >> 2)));
-  DBPRINT2("fbas%d: FBAS_GET_CNT 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_GET_CNT >> 2)), (pSharedExt + (FBAS_SHARED_GET_CNT >> 2)));
   DBPRINT2("fbas%d: FBAS_GET_AVG 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_GET_AVG >> 2)), (pSharedExt + (FBAS_SHARED_GET_AVG >> 2)));
   DBPRINT2("fbas%d: FBAS_ECA_VLD 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_ECA_VLD >> 2)), (pSharedExt + (FBAS_SHARED_ECA_VLD >> 2)));
   DBPRINT2("fbas%d: FBAS_ECA_OVF 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_ECA_OVF >> 2)), (pSharedExt + (FBAS_SHARED_ECA_OVF >> 2)));
+  DBPRINT2("fbas%d: FBAS_TX_MSG 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_TX_MSG_CNT >> 2)), (pSharedExt + (FBAS_SHARED_TX_MSG_CNT >> 2)));
+  DBPRINT2("fbas%d: FBAS_OLD_MSG 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_OLD_MSG_CNT >> 2)), (pSharedExt + (FBAS_SHARED_OLD_MSG_CNT >> 2)));
   DBPRINT2("fbas%d: FBAS_BAD_MSG 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_BAD_MSG_CNT >> 2)), (pSharedExt + (FBAS_SHARED_BAD_MSG_CNT >> 2)));
   DBPRINT2("fbas%d: FBAS_SENDERID 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_SENDERID >> 2)), (pSharedExt + (FBAS_SHARED_SENDERID >> 2)));
+
 
   // clear the app-spec region of the shared memory
   pSharedTemp = (uint32_t *)(pSharedApp + (FBAS_SHARED_END >> 2 ));
@@ -505,10 +507,10 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, msgCtrl_t*
 
       case FBAS_GEN_EVT:
         if (nodeType == FBAS_NODE_TX) {// only FBAS TX node handles the MPS events
-          // fetch the detected MPS event
-          *head = msgFetchMps(myIdx, ecaEvtId, ecaDeadline);
+          // store the PC event
+          *head = msgStorePcEvent(myIdx, ecaEvtId, ecaDeadline);
 
-          // forward the fetched MPS event
+          // forward the fetched PC event
           if (*head && (*mpsTask & TSK_TX_MPS_EVENTS)) {
             // select the transmission type (broadcast: not registered or NOK flag, unicast: otherwise)
             uint32_t status;
@@ -518,46 +520,32 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, msgCtrl_t*
               status = setEndpDstAddr(DST_ADDR_RXNODE);
 
             if (status != COMMON_STATUS_OK) {
-              DBPRINT1("Err - nothing sent! TODO: set failed status\n");
+              DBPRINT1("Err - unable to send PC event\n");
               break;
             }
 
-            // send MPS event
-            uint32_t count = msgSignalMpsEvent(pMsgCtrl, *head, FBAS_FLG_EID, N_EXTRA_MPS_NOK);
-            // count sent timing messages with MPS event
-            *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = measureCountEvt(TX_EVT_CNT, count);
+            // send the PC event
+            uint32_t count = msgSendPcEvent(pMsgCtrl, *head, FBAS_FLG_EID, N_EXTRA_MPS_NOK);
+            // count sent PC events
+            *(pSharedApp + (FBAS_SHARED_TX_MSG_CNT >> 2)) = measureCountEvt(TX_EVT_CNT, count);
 
-            // measure ECA handling delay
-            measureSummarize(MSR_ECA_HANDLE, ecaDeadline, now, DISABLE_VERBOSITY);
-            measureExportSummary(MSR_ECA_HANDLE, pSharedApp, FBAS_SHARED_ECA_HNDL_AVG);
+            // measure the ECA delay
+            measureSummarize(MSR_ECA_DLY, ecaDeadline, now, DISABLE_VERBOSITY);
+            measureExportSummary(MSR_ECA_DLY, pSharedApp, FBAS_SHARED_ECA_DLY_AVG);
 
-            // store timestamps to measure delays
-            measurePutTimestamp(MSR_TX_DLY, now);
-            measurePutTimestamp(MSR_SG_LTY, ecaDeadline);
+            // measure the handler delay
+            measureSummarize(MSR_TX_DLY, now, getSysTime(), DISABLE_VERBOSITY);
+            measureExportSummary(MSR_TX_DLY, pSharedApp, FBAS_SHARED_TX_DLY_AVG);
           }
         }
         break;
       case FBAS_TLU_EVT:
         /* FBAS TX node handles the TLU events.
-        TLU events (configured externally by saft-ctl-io) are used to detect the feedback
-        by the RX node on reception of the timing messages with the MPS flag/event. */
-        if (nodeType == FBAS_NODE_TX && *mpsTask & TSK_TX_MPS_EVENTS) {
-          // measure transmission delay (from timing message transmission at TX to timing message reception at RX node)
-          ts = measureGetTimestamp(MSR_TX_DLY);
-          measureSummarize(MSR_TX_DLY, ts, ecaDeadline, DISABLE_VERBOSITY);
-          measureExportSummary(MSR_TX_DLY, pSharedApp, FBAS_SHARED_TX_DLY_AVG);
-
-          /* signaling latency
-          Time period measured with the ECA timestamps between MPS event generation and
-          associated feedback IO event at a TX node. */
-          ts = measureGetTimestamp(MSR_SG_LTY);
-          measureSummarize(MSR_SG_LTY, ts, ecaDeadline, DISABLE_VERBOSITY);
-          measureExportSummary(MSR_SG_LTY, pSharedApp, FBAS_SHARED_SG_LTY_AVG);
-        }
+        TLU events (configured externally by saft-ctl-io) are reserved real PC signals. */
         break;
       case FBAS_WR_EVT:
       case FBAS_WR_FLG:
-        if (nodeType == FBAS_NODE_RX) { // FBAS RX generates MPS class 2 signals
+        if (nodeType == FBAS_NODE_RX) { // FBAS RX re-generates MPS class 2 signals
           // store and handle received MPS flag
           offset = msgStoreMpsMsg(&ecaParam, &ecaDeadline, pMsgCtrl);
           if (offset >= 0) {
@@ -565,15 +553,19 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, msgCtrl_t*
             if (offset < N_MAX_MPS_CHANNELS) {
               // drive the assigned output port
               if (ioDriveOutput((mpsMsg_t*)(*head + offset), offset) == COMMON_STATUS_OK) {
-                // measure the ECA handling delay
-                measureSummarize(MSR_ECA_HANDLE, ecaDeadline, now, DISABLE_VERBOSITY);
-                measureExportSummary(MSR_ECA_HANDLE, pSharedApp, FBAS_SHARED_MSG_DLY_AVG);
+                // measure the handler delay
+                measureSummarize(MSR_MSG_DLY, now, getSysTime(), DISABLE_VERBOSITY);
+                measureExportSummary(MSR_MSG_DLY, pSharedApp, FBAS_SHARED_MSG_DLY_AVG);
               }
-
-              // measure the average messaging delay
-              measureSummarize(MSR_MSG_DLY, ecaDeadline, now, DISABLE_VERBOSITY);
-              measureExportSummary(MSR_MSG_DLY, pSharedApp, FBAS_SHARED_MSG_DLY_AVG);
+              else {
+                // count the old messages
+                *(pSharedApp + (FBAS_SHARED_OLD_MSG_CNT >> 2)) = measureCountEvt(OLD_MSG_CNT, 1);
+              }
             }
+
+            // known MPS msg -> measure the receiver delay
+            measureSummarize(MSR_RX_DLY, now, getSysTime(), DISABLE_VERBOSITY);
+            measureExportSummary(MSR_RX_DLY, pSharedApp, FBAS_SHARED_RX_DLY_AVG);
           }
           else
           {
@@ -586,6 +578,10 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, msgCtrl_t*
 
           if (COMMON_STATUS_OK == fwlib_getEcaOverflowCnt(&actions)) // number of the overflow actions
             *(pSharedApp + (FBAS_SHARED_ECA_OVF >> 2)) = measureCountEvt(ECA_OVF_ACT, actions);
+
+          // measure the ECA delay
+          measureSummarize(MSR_ECA_DLY, ecaDeadline, now, DISABLE_VERBOSITY);
+          measureExportSummary(MSR_ECA_DLY, pSharedApp, FBAS_SHARED_ECA_DLY_AVG);
         }
         break;
 
@@ -804,9 +800,13 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd)
         timerStart(pTimerConsole);     // start timer
         DBPRINT2("fbas%d: disabled MPS %lx\n", nodeType, mpsTask);
         break;
-      case FBAS_CMD_PRINT_NW_DLY:
+      case FBAS_CMD_PRINT_TX_DLY:
         measurePrintSummary(MSR_TX_DLY);
         measureExportSummary(MSR_TX_DLY, pSharedApp, FBAS_SHARED_GET_AVG);
+        break;
+      case FBAS_CMD_PRINT_RX_DLY:
+        measurePrintSummary(MSR_RX_DLY);
+        measureExportSummary(MSR_RX_DLY, pSharedApp, FBAS_SHARED_GET_AVG);
         break;
       case FBAS_CMD_PRINT_SG_LTY:
         measurePrintSummary(MSR_SG_LTY);
@@ -820,9 +820,13 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd)
         measurePrintSummary(MSR_TTL);
         measureExportSummary(MSR_TTL, pSharedApp, FBAS_SHARED_GET_AVG);
         break;
-      case FBAS_CMD_PRINT_ECA_HANDLE:
-        measurePrintSummary(MSR_ECA_HANDLE);
-        measureExportSummary(MSR_ECA_HANDLE, pSharedApp, FBAS_SHARED_GET_AVG);
+      case FBAS_CMD_PRINT_ECA_DLY:
+        measurePrintSummary(MSR_ECA_DLY);
+        measureExportSummary(MSR_ECA_DLY, pSharedApp, FBAS_SHARED_GET_AVG);
+        break;
+      case FBAS_CMD_PRINT_ML_PRD:
+        measurePrintSummary(MSR_ML_PRD);
+        measureExportSummary(MSR_ML_PRD, pSharedApp, FBAS_SHARED_GET_AVG);
         break;
       case FBAS_CMD_CLR_SUM_STATS:
         measureClearSummary(ENABLE_VERBOSITY);
@@ -910,7 +914,7 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
         if (setEndpDstAddr(DST_ADDR_RXNODE) == COMMON_STATUS_OK) {
           uint32_t count = msgSendMpsFlag(pMsgCtrl, FBAS_FLG_EID);
           // export the counter of sent timing messages
-          *(pSharedApp + (FBAS_SHARED_GET_CNT >> 2)) = measureCountEvt(TX_EVT_CNT, count);
+          *(pSharedApp + (FBAS_SHARED_TX_MSG_CNT >> 2)) = measureCountEvt(TX_EVT_CNT, count);
         }
         else {
           DBPRINT1("Err - nothing sent! TODO: set failed status\n");
@@ -946,12 +950,12 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
 
   // measure the period of the main loop
   now = getSysTime();
-  last = measureGetTimestamp(MSR_MAIN_LOOP_PRD);
+  last = measureGetTimestamp(MSR_ML_PRD);
   if (last) {
-    measureSummarize(MSR_MAIN_LOOP_PRD, last, now, DISABLE_VERBOSITY);
-    measureExportSummary(MSR_MAIN_LOOP_PRD, pSharedApp, FBAS_SHARED_ML_PRD_AVG);
+    measureSummarize(MSR_ML_PRD, last, now, DISABLE_VERBOSITY);
+    measureExportSummary(MSR_ML_PRD, pSharedApp, FBAS_SHARED_ML_PRD_AVG);
   }
-  measurePutTimestamp(MSR_MAIN_LOOP_PRD, now);
+  measurePutTimestamp(MSR_ML_PRD, now);
 
   return status;
 }

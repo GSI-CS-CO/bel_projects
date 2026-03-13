@@ -15,13 +15,15 @@ directory contents
 - tools: test scripts invoked from x86 hosts (acopc017, tsl101)
 
 -- prerequisites:
-    all TRs must have their IP addresses
+    none
 
 -- for test setup in TTF and BG2A.A9 (invoked from 'tsl101'):
 
-    test_ttf_nw_perf.sh   - measure network performance using a small testbed with RX/TX SCUs and a WRS.
-                            WRS must be configured with a corresponding dot-config (ie., dot-config_timing_mps_access).
-                            LEMO cabling between the RX and TX SCUs is necessary (RX:B1 - TX:B2).
+    test_ttf_nw_perf.sh   - measure FBAS system performance using a small testbed with
+                            single TX SCU, RX SCU and WRS.
+                            MPS events are injected locally.
+                            WRS must be configured with a corresponding dot-config
+                            (ie., dot-config_timing_fbas_access).
                             Applicable testbeds:
                                 TTF:
                                     nwt0297: scuxl0497 (RX, wri2), scuxl0396 (TX, wri10)
@@ -29,14 +31,15 @@ directory contents
                                     nwt0470: scuxl0321 (RX, wri2), scuxl0264 (TX, wri10)
                                     nwt0471: scuxl0411 (RX, wri2), scuxl0329 (TX, wri10)
                                     nwt0472: scuxl0305 (RX, wri2), scuxl0339 (TX, wri10)
+                            Example: ./test_ttf_nw_perf.sh -u root -e -y -v
     test_ttf_basic.sh     - test timing message transmission (with MPS protocol) between
-                            TX and RX nodes that are connected to nwt0297
-                            It's intended to be used by Makefile.
-                            For stand-alone run, launch it: ./test_ttf_basic.sh -u root
+                            TX and RX SCUs connected to nwt0297.
+                            No MPS event is injected locally.
+                            Example: ./test_ttf_basic.sh -u root -y -v
     test_ttf_high_load.sh - test timing message transmission (with MPS protocol) by Xenabay
                             nwt0297 can be configured with (dot-config_timing_mps_access) or
                             w/o VLANs (dot-config.xenabay)
-    test_ttf_rx_rate.sh   - measure the data reception rate
+    measure_ttf_rx_rate.sh - measure the data reception rate
                             results are reported in wiki (https://wiki.gsi.de/TOS/Timing/Intern/ProbingMPSEventSignalling)
 
 -- for test setup in HO  (invoked from 'acopc017'):
@@ -49,7 +52,7 @@ directory contents
     *.vmcfg               - XenaBay testbeds
     testbed_*             - directories with schedule, capture filter etc
 
-Devices required for test_ttf_rx_rate.sh (as of 27.5.2025)
+Devices required for measure_ttf_rx_rate.sh (as of 27.5.2025)
 
 - DM: tsl014 with pexaria5 devices
     - dev/wbm0 (pexaria32t)

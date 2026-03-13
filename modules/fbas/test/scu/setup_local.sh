@@ -66,7 +66,7 @@ case $platform in
         export addr_set_node_type="0x04060694"      # user RAM range in Pexp/Pexaria
         export addr_get_node_type="0x040606a4"
         export addr_cmd="0x04060508"     # shared memory location for command buffer
-        export addr_cnt="0x040607a8"     # shared memory location for transmitted message counter
+        export addr_tx_cnt="0x040607a8"  # shared memory location for transmitted message counter
         export addr_avg="0x040607dc"     # shared memory location for measurement results
         export addr_eca_vld="0x04060804" # shared memory location of counter for valid actions
         export addr_eca_ovf="0x04060808" # shared memory location of counter for overflow actions
@@ -75,14 +75,17 @@ case $platform in
         export mac_tx_node="0x00267b0004da" # sender ID of TX node
         ;;
     "SCU")
-        export addr_set_node_type="0x20140694"     # user RAM range in SCU
-        export addr_get_node_type="0x201406a4"
         export addr_cmd="0x20140508"     # shared memory location for command buffer
-        export addr_cnt="0x201407a8"     # shared memory location for transmitted message counter
-        export addr_avg="0x201407dc"     # shared memory location for measurement results
-        export addr_eca_vld="0x20140804" # shared memory location of counter for valid actions
-        export addr_eca_ovf="0x20140808" # shared memory location of counter for overflow actions
-        export addr_senderid="0x2014080c" # shared memory location of sender ID
+        export addr_fbas="0x20140698"    # begin of shared memory range for application specific data
+        export addr_set_node_type="$(printf "0x%x" $((addr_fbas + 8)))"
+        export addr_get_node_type="$(printf "0x%x" $((addr_fbas + 24)))"
+        export addr_tx_cnt="$(printf "0x%x" $((addr_fbas + 284)))"   # transmitted message count
+        export addr_old_cnt="$(printf "0x%x" $((addr_fbas + 288)))"  # old message count
+        export addr_bad_cnt="$(printf "0x%x" $((addr_fbas + 292)))"  # bad message count
+        export addr_avg="$(printf "0x%x" $((addr_fbas + 344)))"      # average value of requested measurement
+        export addr_eca_vld="$(printf "0x%x" $((addr_fbas + 384)))"  # ECA valid action count
+        export addr_eca_ovf="$(printf "0x%x" $((addr_fbas + 388)))"  # ECA overflow action count
+        export addr_senderid="$(printf "0x%x" $((addr_fbas + 392)))" # sender ID
         ;;
 esac
 
@@ -102,11 +105,13 @@ export instr_probe_sb_user=0x21 # probe a given slave (sys and group IDs are exp
 
 export instr_en_mps=0x30        # enable MPS signalling
 export instr_dis_mps=0x31       # disable MPS signalling
-export instr_st_tx_dly=0x32     # store the transmission delay measurement results to shared memory
+export instr_st_tx_dly=0x32     # store the TX handler delay measurement results to shared memory
 export instr_st_msg_dly=0x33    # store the measurement results of the messaging delay
 export instr_st_sg_lty=0x34     # store the signalling latency measurement results to shared memory
 export instr_st_ttl_ival=0x35   # store the TTL interval measurement results to shared memory
-export instr_st_eca_handle=0x37 # store the measurement result of the ECA handling delay
+export instr_st_eca_dly=0x37    # store the measurement result of the ECA handling delay
+export instr_st_rx_dly=0x39     # store the RX handler delay measurement results to shared memory
+export instr_st_ml_prd=0x3a     # store the main loop period measurement results to shared memory
 
 export     mac_any_node="0xffffffffffff"      # MAC address of any node
 # Raw event data (bits 63-16 = event ID, 15-8 = channel, 7-0 = flag)
@@ -367,6 +372,38 @@ set_senderid() {
 
 }
 
+register_senders() {
+    # $1 - node device
+    # $2 - number of channels for each sender
+    # $[3:] - sender ID(s) (without leading 0x)
+
+    local device=$1
+    local channels=$2
+    shift                   # re-set positional parameters
+    shift
+
+    # Register request is in 'parameter' field of timing message (sender id, channels, reg. request).
+    # The 'channels' indicates the number of channels supported by each sender.
+
+    unset parameters
+    local reg_cmd=128
+
+    #set -- "${@/#/0x}"      # add prefix (0x) to all positional parameters
+
+    # Construct the parameters with registration request
+    for mac in "$@"; do
+        param=$(printf "0x%012x%02x%02x" 0x$mac $channels $reg_cmd)
+        parameters="$parameters $param"
+    done
+
+    echo "Req. requests: $parameters"
+
+    for reg_req in $parameters; do
+        saft-ctl tr0 inject $evt_mps_node_reg $reg_req 0
+        sleep 0.3
+    done
+}
+
 make_node_ready() {
     # $1 - node device label
 
@@ -513,7 +550,7 @@ read_counters() {
 
     device=$1
     verbose=$2
-    addr_val="$addr_cnt $addr_eca_vld $addr_eca_ovf" # reg addresses as string
+    addr_val="$addr_tx_cnt $addr_eca_vld $addr_eca_ovf $addr_old_cnt $addr_bad_cnt" # reg addresses as string
     unset counts
 
     for addr in $addr_val; do
@@ -522,7 +559,7 @@ read_counters() {
         counts="${counts}$cnt_dec "
     done
     if [ -n "$verbose" ]; then
-        counts="${counts}(tx_msg rx_vld rx_ovf)\n"
+        counts="${counts}(tx rx ovf old bad)\n"
     else
         counts="${counts}\n"
     fi
@@ -598,7 +635,7 @@ start_nw_perf() {
 result_event_count() {
     # sent/received event count
 
-    # $1 - dev/wbmo
+    # $1 - dev/wbm0
     # $2 - event counter
     # $3 - verbosity
 
@@ -611,7 +648,7 @@ result_event_count() {
 }
 
 result_tx_delay() {
-    # $1 - dev/wbmo
+    # $1 - dev/wbm0
     # $2 - verbosity
 
     if [ -n "$2" ]; then
@@ -620,8 +657,18 @@ result_tx_delay() {
     read_measurement_results $1 $instr_st_tx_dly $addr_avg $2
 }
 
+result_rx_delay() {
+    # $1 - dev/wbm0
+    # $2 - verbosity
+
+    if [ -n "$2" ]; then
+        echo -n "RX dly: "
+    fi
+    read_measurement_results $1 $instr_st_rx_dly $addr_avg $2
+}
+
 result_sg_latency() {
-    # $1 - dev/wbmo
+    # $1 - dev/wbm0
     # $2 - verbosity
 
     if [ -n "$2" ]; then
@@ -631,7 +678,7 @@ result_sg_latency() {
 }
 
 result_msg_delay() {
-    # $1 - dev/wbmo
+    # $1 - dev/wbm0
     # $2 - verbosity
 
     if [ -n "$2" ]; then
@@ -641,7 +688,7 @@ result_msg_delay() {
 }
 
 result_ttl_ival() {
-    # $1 - dev/wbmo
+    # $1 - dev/wbm0
     # $2 - verbosity
 
     if [ -n "$2" ]; then
@@ -650,14 +697,24 @@ result_ttl_ival() {
     read_measurement_results $1 $instr_st_ttl_ival $addr_avg $2
 }
 
-result_eca_handle() {
-    # $1 - dev/wbmo
+result_eca_delay() {
+    # $1 - dev/wbm0
     # $2 - verbosity
 
     if [ -n "$2" ]; then
-        echo -n "ECA hdl: "
+        echo -n "ECA dly: "
     fi
-    read_measurement_results $1 $instr_st_eca_handle $addr_avg $2
+    read_measurement_results $1 $instr_st_eca_dly $addr_avg $2
+}
+
+result_ml_period() {
+    # $1 - dev/wbm0
+    # $2 - verbosity
+
+    if [ -n "$2" ]; then
+        echo -n "loop prd: "
+    fi
+    read_measurement_results $1 $instr_st_ml_prd $addr_avg $2
 }
 
 disable_mps() {
