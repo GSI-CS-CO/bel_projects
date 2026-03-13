@@ -303,7 +303,7 @@ architecture rtl of ftm5dp is
 
   constant c_family       : string := "Arria 10 GX FTM4";
   constant c_project      : string := "scu_control";
-  constant c_cores        : natural:= 4;
+  constant c_cores        : natural:= 1;
   constant c_initf_name   : string := "ftm5dp.mif";
   constant c_profile_name : string := "medium_icache_debug";
   constant c_cr_bits      : natural := 24;
@@ -416,7 +416,8 @@ begin
       scubus_a_nsel           => A_nSEL,
       scubus_a_ntiming_cycle  => A_nTiming_Cycle,
       scubus_a_sysclock       => A_SysClock,
-      ow_io(0)                => A_OneWire,
+      --ow_io(0)                => onewire_ext,
+      --ow_io(1)                => A_OneWire,
       poweroff_comx           => nPWRBTN,
       pcie_refclk_i           => clk_gxbl1d_n24,
       pcie_rstn_i             => nPCI_RESET_i,
