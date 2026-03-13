@@ -524,6 +524,7 @@ set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32
 set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_lsu.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_pmp.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_regfile.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_trace.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_debug_auth.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_debug_dm.vhd -library work
