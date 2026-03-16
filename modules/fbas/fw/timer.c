@@ -238,7 +238,7 @@ status_t timerSetupHw(uint32_t interval_ns)
     DBPRINT3("WB timer preset %d\n", preset);
   }
   else {
-    DBPRINT2("lm32 timer not found!\n");
+    DBPRINT1("lm32 timer not found!\n");
     status = COMMON_STATUS_ERROR;
   }
 
@@ -259,7 +259,7 @@ status_t timerEnableHw(void)
     DBPRINT3("WB timer started.\n");
   }
   else {
-    DBPRINT2("lm32 timer not found!\n");
+    DBPRINT1("lm32 timer not found!\n");
     status = COMMON_STATUS_ERROR;
   }
 
@@ -280,7 +280,7 @@ status_t timerDisableHw(void)
     DBPRINT3("WB timer stopped.\n");
   }
   else {
-    DBPRINT2("lm32 timer not found!\n");
+    DBPRINT1("lm32 timer not found!\n");
     status = COMMON_STATUS_ERROR;
   }
 

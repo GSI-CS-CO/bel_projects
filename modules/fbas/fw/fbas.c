@@ -159,7 +159,7 @@ static status_t initSharedMem(uint32_t *const sharedStart)
 
   // print WB addresses to WR console (shared RAM, begin of common shared region)
   pSharedExt = pCpuRamExternal + ((SHARED_OFFS + COMMON_SHARED_BEGIN) >> 2);
-  DBPRINT2("fbas: CPU RAM: 0x%8p, common shared: 0x%8p\n", pCpuRamExternal, pSharedExt);
+  DBPRINT1("fbas: CPU RAM: 0x%8p, common shared: 0x%8p\n", pCpuRamExternal, pSharedExt);
 
   // init common shared region
   pSharedTemp = (uint32_t *)(pSharedApp + (FBAS_SHARED_END >> 2 ));
@@ -167,17 +167,17 @@ static status_t initSharedMem(uint32_t *const sharedStart)
   fwlib_init(pSharedApp, pCpuRamExternal, SHARED_OFFS, sharedSize, "fbas", FBAS_FW_VERSION);
 
   // print application-specific register set (in shared mem)
-  DBPRINT2("fbas%d: COMMON_CMD 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (COMMON_SHARED_CMD >> 2)), (pSharedExt + (COMMON_SHARED_CMD >> 2)));
-  DBPRINT2("fbas%d: FBAS_BEGIN 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_BEGIN >> 2)), (pSharedExt + (FBAS_SHARED_BEGIN >> 2)));
-  DBPRINT2("fbas%d: FBAS_SET_NODETYPE 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_SET_NODETYPE >> 2)), (pSharedExt + (FBAS_SHARED_SET_NODETYPE >> 2)));
-  DBPRINT2("fbas%d: FBAS_GET_NODETYPE 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_GET_NODETYPE >> 2)), (pSharedExt + (FBAS_SHARED_GET_NODETYPE >> 2)));
-  DBPRINT2("fbas%d: FBAS_GET_AVG 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_GET_AVG >> 2)), (pSharedExt + (FBAS_SHARED_GET_AVG >> 2)));
-  DBPRINT2("fbas%d: FBAS_ECA_VLD 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_ECA_VLD >> 2)), (pSharedExt + (FBAS_SHARED_ECA_VLD >> 2)));
-  DBPRINT2("fbas%d: FBAS_ECA_OVF 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_ECA_OVF >> 2)), (pSharedExt + (FBAS_SHARED_ECA_OVF >> 2)));
-  DBPRINT2("fbas%d: FBAS_TX_MSG 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_TX_MSG_CNT >> 2)), (pSharedExt + (FBAS_SHARED_TX_MSG_CNT >> 2)));
-  DBPRINT2("fbas%d: FBAS_OLD_MSG 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_OLD_MSG_CNT >> 2)), (pSharedExt + (FBAS_SHARED_OLD_MSG_CNT >> 2)));
-  DBPRINT2("fbas%d: FBAS_BAD_MSG 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_BAD_MSG_CNT >> 2)), (pSharedExt + (FBAS_SHARED_BAD_MSG_CNT >> 2)));
-  DBPRINT2("fbas%d: FBAS_SENDERID 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_SENDERID >> 2)), (pSharedExt + (FBAS_SHARED_SENDERID >> 2)));
+  DBPRINT1("fbas%d: COMMON_CMD 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (COMMON_SHARED_CMD >> 2)), (pSharedExt + (COMMON_SHARED_CMD >> 2)));
+  DBPRINT1("fbas%d: FBAS_BEGIN 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_BEGIN >> 2)), (pSharedExt + (FBAS_SHARED_BEGIN >> 2)));
+  DBPRINT1("fbas%d: FBAS_SET_NODETYPE 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_SET_NODETYPE >> 2)), (pSharedExt + (FBAS_SHARED_SET_NODETYPE >> 2)));
+  DBPRINT1("fbas%d: FBAS_GET_NODETYPE 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_GET_NODETYPE >> 2)), (pSharedExt + (FBAS_SHARED_GET_NODETYPE >> 2)));
+  DBPRINT1("fbas%d: FBAS_GET_AVG 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_GET_AVG >> 2)), (pSharedExt + (FBAS_SHARED_GET_AVG >> 2)));
+  DBPRINT1("fbas%d: FBAS_ECA_VLD 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_ECA_VLD >> 2)), (pSharedExt + (FBAS_SHARED_ECA_VLD >> 2)));
+  DBPRINT1("fbas%d: FBAS_ECA_OVF 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_ECA_OVF >> 2)), (pSharedExt + (FBAS_SHARED_ECA_OVF >> 2)));
+  DBPRINT1("fbas%d: FBAS_TX_MSG 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_TX_MSG_CNT >> 2)), (pSharedExt + (FBAS_SHARED_TX_MSG_CNT >> 2)));
+  DBPRINT1("fbas%d: FBAS_OLD_MSG 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_OLD_MSG_CNT >> 2)), (pSharedExt + (FBAS_SHARED_OLD_MSG_CNT >> 2)));
+  DBPRINT1("fbas%d: FBAS_BAD_MSG 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_BAD_MSG_CNT >> 2)), (pSharedExt + (FBAS_SHARED_BAD_MSG_CNT >> 2)));
+  DBPRINT1("fbas%d: FBAS_SENDERID 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_SENDERID >> 2)), (pSharedExt + (FBAS_SHARED_SENDERID >> 2)));
 
 
   // clear the app-spec region of the shared memory
@@ -267,7 +267,7 @@ static void printSrcAddr()
   uint32_t octet2 = octet0 << 16;
   uint32_t octet3 = octet0 << 24;
 
-  DBPRINT1("fbas%d: MAC=%02lx:%02lx:%02lx:%02lx:%02lx:%02lx, IP=%lu.%lu.%lu.%lu\n", nodeType,
+  DBPRINT2("fbas%d: MAC=%02lx:%02lx:%02lx:%02lx:%02lx:%02lx, IP=%lu.%lu.%lu.%lu\n", nodeType,
       (*pSharedMacHi & octet1) >> 8, (*pSharedMacHi & octet0),
       (*pSharedMacLo & octet3) >> 24,(*pSharedMacLo & octet2) >> 16,
       (*pSharedMacLo & octet1) >> 8, (*pSharedMacLo & octet0),
@@ -342,8 +342,10 @@ static status_t setEndpDstAddr(int idx)
   uint32_t status = COMMON_STATUS_OK;
 
   // check index
-  if ((idx < 0) || idx >= N_DST_ADDR)  // invalid or out of range
+  if ((idx < 0) || idx >= N_DST_ADDR) {  // invalid or out of range
+    DBPRINT1("setEndpDstAddr(): invalid idx: %d\n", idx);
     return COMMON_STATUS_ERROR;
+  }
 
   // check the desired address is already set (do not consider IP address)
   if ((dstNwAddr[DST_ADDR_EBM].mac == dstNwAddr[idx].mac))
@@ -485,7 +487,7 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, msgCtrl_t*
           clearError(N_MAX_MPS_CHANNELS, *head);
         }
         ts = getSysTime();
-        DBPRINT2("%lli\n", (ts - now));
+        // summarize it, if required DBPRINT2("%lli\n", (ts - now));
         break;
 
       case FBAS_AUX_OPMODE:
@@ -502,7 +504,7 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, msgCtrl_t*
           testOutput(N_MAX_MPS_CHANNELS, *head);
         }
         ts = getSysTime();
-        DBPRINT2("%lli\n", (ts - now));
+        // summarize it, if required DBPRINT2("%lli\n", (ts - now));
         break;
 
       case FBAS_GEN_EVT:
@@ -604,7 +606,7 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, msgCtrl_t*
               // unicast the reg. response
               fwlib_setEbmDstAddr(nodeId, BROADCAST_IP);
               msgRegisterNode(myMac, REG_RSP, idx);
-              DBPRINT1("reg OK: TX MAC=%llx\n", nodeId);
+              DBPRINT2("reg OK: TX MAC=%llx\n", nodeId);
             }
           }
         }
@@ -612,7 +614,7 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, msgCtrl_t*
           if (regCmd == REG_RSP) {
             dstNwAddr[DST_ADDR_RXNODE].mac = nodeId;
             myIdx = info;
-            DBPRINT1("reg OK: RX MAC=%llx\n", dstNwAddr[DST_ADDR_RXNODE].mac);
+            DBPRINT2("reg OK: RX MAC=%llx\n", dstNwAddr[DST_ADDR_RXNODE].mac);
             *mpsTask |= TSK_REG_COMPLETE;
           }
         }
@@ -640,7 +642,7 @@ static void wrConsolePeriodic(void)
 
   uint64_t now = getSysTime();
 
-  DBPRINT1("timer avg: %lli min: %lli max: %lli, call %lli\n",
+  DBPRINT2("timer avg: %lli min: %lli max: %lli, call %lli\n",
             timerDbg.period.avg, timerDbg.period.min, timerDbg.period.max, (now - lastSysTime));
   lastSysTime = now;
 }
@@ -665,7 +667,7 @@ uint32_t extern_entryActionConfigured()
 
   DBPRINT2("fbas%d: pIOCtrl=0x%8p, pECAQ=0x%8p\n", nodeType, pIOCtrl, pECAQ);
 
-  DBPRINT1("fbas%d: designated platform = %s\n", nodeType, MYPLATFORM);
+  DBPRINT2("fbas%d: designated platform = %s\n", nodeType, MYPLATFORM);
   if (strcmp(MYPLATFORM, "pcicontrol") == 0) {   // re-set the default output port ( LVDS for Pexiara)
     outPortCfg.type = IO_CFG_CHANNEL_LVDS;
     outPortCfg.total= N_OUT_LEMO_PEXARIA;
@@ -709,15 +711,12 @@ uint32_t extern_entryActionOperation()
   int i = 0;
   while (fwlib_wait4ECAEvent(1000, &t64, &t64, &t64, &t32, &t32, &t32, &t32, &t32) != COMMON_ECADO_TIMEOUT)
     {i++;}
-  DBPRINT1("ECA eCPU queue flushed - cleared %d pending actions\n", i);
 
   // initiate node registry
   if (nodeType == FBAS_NODE_TX) {
     if (!(mpsTask & TSK_REG_COMPLETE)) {
       if (setEndpDstAddr(DST_ADDR_BROADCAST) == COMMON_STATUS_OK)
         msgRegisterNode(myMac, REG_REQ, N_MPS_CHANNELS);
-      else
-        DBPRINT1("Err - nothing sent! TODO: set failed status\n");
     }
   }
 
@@ -904,8 +903,6 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
             *pMpsTask &= ~TSK_REG_PER_OVER;
             if (setEndpDstAddr(DST_ADDR_BROADCAST) == COMMON_STATUS_OK)
               msgRegisterNode(myMac, REG_REQ, N_MPS_CHANNELS);
-            else
-              DBPRINT1("Err - nothing sent! TODO: set failed status\n");
           }
           break;
         }
@@ -915,9 +912,6 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
           uint32_t count = msgSendMpsFlag(pMsgCtrl, FBAS_FLG_EID);
           // export the counter of sent timing messages
           *(pSharedApp + (FBAS_SHARED_TX_MSG_CNT >> 2)) = measureCountEvt(TX_EVT_CNT, count);
-        }
-        else {
-          DBPRINT1("Err - nothing sent! TODO: set failed status\n");
         }
       }
       else if (timerIsExpired(pTimerConsole)) {
