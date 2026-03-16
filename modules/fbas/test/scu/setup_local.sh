@@ -711,6 +711,19 @@ result_ml_period() {
     read_measurement_results $1 $instr_st_ml_prd $addr_avg $2
 }
 
+result_rx() {
+    # $1 - dev/wbm0
+    # $2 - verbosity
+
+    echo -n "Counts: " && \
+	read_counters $1 $2 && \
+	result_eca_delay $1 $2 && \
+	result_rx_delay $1 $2 && \
+	result_msg_delay $1 $2 && \
+	result_ttl_ival $1 $2 && \
+	result_ml_period $1 $2
+}
+
 disable_mps() {
     echo "Stop MPS on $1"
     eb-write $1 $addr_cmd/4 $instr_dis_mps
