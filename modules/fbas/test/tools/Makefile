@@ -319,14 +319,20 @@ restart_two_senders_multi_finite: clear_fbasdm set_multi_msgs_per_frame
 	@$(MAKE) stop_two_senders
 
 restart_test_rx_rate:
-	@$(MAKE) prepare_fbasdm_broadcast
-	@source dm.sh && run_pattern ${sched_def} && echo
-	@$(MAKE) show_fbasdm_result
-	@echo -n "Msg delay: " && source setup.sh && result_msg_delay $$rx_node_dev
-
-restart_fbasdm_run_pattern:
 	@$(MAKE) clear_fbasdm
-	@source dm.sh && run_pattern ${sched_def} && echo
+# get the sender IDs by parsing the schedule file, register sender IDs at RX node
+	@source dm.sh && filepath="$$patt_loc/${sched_def}" && \
+	source common.sh && sender_ids ids $$filepath && \
+	source setup.sh && setup_fbasrx ${fw_rxpci} SENDER_TX $${ids[@]}
+	@$(MAKE) enable_rx_node
+	@source dm.sh && run_finite_schedule ${sched_def} && echo
+	@source setup.sh && disable_mps $$rx_node_dev
+	@$(MAKE) show_fbasdm_result
+	@source setup.sh && result_rx $$rx_node_dev "verbose"
+
+restart_fbasdm_run_finite_schedule:
+	@$(MAKE) clear_fbasdm
+	@source dm.sh && run_finite_schedule ${sched_def} && echo
 
 test_ttf_traffic:
 	./measure_ttf_rx_rate.sh -s my_mps_rx_rate_1.dot -f ${fw_rxscu} -m
