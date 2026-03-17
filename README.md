@@ -83,8 +83,9 @@ This will build VME and PCI(e) drivers.
 
 ```shell
 make driver
-make driver-install # optional
-make driver/driver-install WISHBONE_SERIAL=y # optional - build wishbone-serial.ko
+make driver-install
+make driver WISHBONE_SERIAL=y         # optional - build wishbone-serial.ko
+make driver-install WISHBONE_SERIAL=y # optional - build wishbone-serial.ko
 ```
 
 ## Etherbone
@@ -208,6 +209,7 @@ sudo apt install libpng12-0
 ```
 
 If this PPA can't be added, you need to compile the library:
+
 
 ```shell
 make libpng12
