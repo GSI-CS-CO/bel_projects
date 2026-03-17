@@ -212,6 +212,9 @@ static void initMpsData()
   // initialize the MPS messaging controller
   msgInitMsgCtrl(&mpsMsgCtrl, N_MPS_CHANNELS, 0, F_MPS_BCAST);
 
+  // clear the statistics
+  measureClearSummary(ENABLE_VERBOSITY);
+
   //TODO: include function call below in fwlib_doActionS0()
   // if (findEcaCtl() != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
   if (findEcaCtl() != COMMON_STATUS_OK) {
