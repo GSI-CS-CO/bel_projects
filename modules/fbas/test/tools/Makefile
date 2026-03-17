@@ -179,6 +179,12 @@ show_fbasdm_result:
 	@$(eval dm_msg=$(shell source dm.sh && cnt_dm_msg))
 	@source setup.sh && report_two_senders_result ${rx_msg} 0 ${dm_msg}
 
+register_senders:
+# sched_filename is export by make
+	@source dm.sh && filepath="$$patt_loc/$$sched_filename" && \
+	source common.sh && sender_ids ids $$filepath && \
+	source setup.sh && setup_fbasrx ${fw_rxpci} SENDER_TX $${ids[@]}
+
 # used in restart_fbasdm_loop/finite tests
 prepare_fbasdm_broadcast:
 	@$(MAKE) clear_fbasdm
@@ -321,12 +327,10 @@ restart_two_senders_multi_finite: clear_fbasdm set_multi_msgs_per_frame
 restart_test_rx_rate:
 	@$(MAKE) clear_fbasdm
 # get the sender IDs by parsing the schedule file, register sender IDs at RX node
-	@source dm.sh && filepath="$$patt_loc/${sched_def}" && \
-	source common.sh && sender_ids ids $$filepath && \
-	source setup.sh && setup_fbasrx ${fw_rxpci} SENDER_TX $${ids[@]}
+	@export sched_filename="${sched_def}"; $(MAKE) register_senders
 	@$(MAKE) enable_rx_node
 	@source dm.sh && run_finite_schedule ${sched_def} && echo
-	@source setup.sh && disable_mps $$rx_node_dev
+	@$(MAKE) disable_rx_node
 	@$(MAKE) show_fbasdm_result
 	@source setup.sh && result_rx $$rx_node_dev "verbose"
 
@@ -335,4 +339,4 @@ restart_fbasdm_run_finite_schedule:
 	@source dm.sh && run_finite_schedule ${sched_def} && echo
 
 test_ttf_traffic:
-	./measure_ttf_rx_rate.sh -s my_mps_rx_rate_1.dot -f ${fw_rxscu} -m
+	./measure_ttf_rx_rate.sh -s ${sched_def} -f ${fw_rxscu} -m
