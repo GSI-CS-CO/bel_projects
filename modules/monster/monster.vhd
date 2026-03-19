@@ -185,6 +185,7 @@ entity monster is
     -- Optional WR features
     wr_ext_clk_i           : in    std_logic; -- 10MHz
     wr_ext_pps_i           : in    std_logic;
+    wr_ext_pps_aux_i       : in    std_logic;
     wr_uart_o              : out   std_logic;
     wr_uart_i              : in    std_logic;
     wr_pps_out_o           : out   std_logic;
@@ -860,6 +861,7 @@ architecture rtl of monster is
   signal  phy16_aux_i         : t_phy_16bits_from_wrc := c_dummy_phy16_from_wrc;
 
   signal s_link_ok        : std_logic;
+  signal s_link_ok_aux    : std_logic;
 
   signal dac_hpll_load_p1 : std_logic;
   signal dac_dpll_load_p1 : std_logic;
@@ -928,6 +930,9 @@ architecture rtl of monster is
 
   signal owr_pwren : std_logic_vector(1 downto 0);
   signal owr_en    : std_logic_vector(1 downto 0);
+
+  signal owr_pwren_aux : std_logic_vector(1 downto 0);
+  signal owr_en_aux    : std_logic_vector(1 downto 0);
 
   signal sfp_scl_o : std_logic;
   signal sfp_sda_o : std_logic;
@@ -2271,7 +2276,7 @@ end generate;
         clk_dmtd_i           => clk_dmtd_aux,
         clk_ref_i            => clk_ref_aux,
         clk_aux_i            => (others => '0'),
-        pps_ext_i            => wr_ext_pps_i,
+        pps_ext_i            => wr_ext_pps_aux_i,
         rst_n_i              => rstn_sys,
         dac_hpll_load_p1_o   => dac_hpll_load_p1_aux,
         dac_hpll_data_o      => dac_hpll_data_aux,
@@ -2301,6 +2306,10 @@ end generate;
         phy16_i              => phy16_aux_o,
         led_act_o            => link_act_aux,
         led_link_o           => link_up_aux,
+        scl_o                => open, -- Our ROM is on onewire, not i2c
+        scl_i                => '0',
+        sda_i                => '0',
+        sda_o                => open,
         sfp_scl_i            => wr_aux_sfp_scl_io,
         sfp_sda_i            => wr_aux_sfp_sda_io,
         sfp_scl_o            => sfp_aux_scl_o,
@@ -2310,10 +2319,10 @@ end generate;
         btn2_i               => '0',
         uart_rxd_i           => uart_aux_mux,
         uart_txd_o           => uart_aux_wrc,
-        --owr_pwren_o          => owr_pwren,
-        --owr_en_o             => owr_en,
-        --owr_i(0)             => wr_onewire_io,
-        --owr_i(1)             => '0',
+        owr_pwren_o          => owr_pwren_aux,
+        owr_en_o             => owr_en_aux,
+        owr_i(0)             => wr_aux_onewire_io,
+        owr_i(1)             => '0',
         slave_i              => wrc_aux_slave_i,
         slave_o              => wrc_aux_slave_o,
         aux_master_o         => wrc_aux_master_o,
@@ -2327,19 +2336,18 @@ end generate;
         tm_dac_wr_o          => open,
         tm_clk_aux_lock_en_i => (others => '0'),
         tm_clk_aux_locked_o  => open,
-        tm_time_valid_o      => open,
+        tm_time_valid_o      => tm_valid_aux,
         tm_tai_o             => open,
         tm_cycles_o          => open,
         pps_p_o              => pps_aux,
         rst_aux_n_o          => open,
-        link_ok_o            => s_link_ok);
+        link_ok_o            => s_link_ok_aux);
     end generate;
 
 end generate;
 
   U_DAC_ARB : spec_serial_dac_arb
-    generic map (
-      g_invert_sclk    => false,
+    generic map (      g_invert_sclk    => false,
       g_num_extra_bits => 8) -- AD DACs with 24bit interface
     port map (
       clk_i         => clk_sys,
@@ -2536,6 +2544,7 @@ end generate;
   wr_sfp_scl_io <= '0' when sfp_scl_o = '0' else 'Z';
   wr_sfp_sda_io <= '0' when sfp_sda_o = '0' else 'Z';
 
+  wr_aux_onewire_io <= owr_pwren_aux(0) when (owr_pwren_aux(0) = '1' or owr_en_aux(0) = '1') else 'Z';
   wr_aux_sfp_scl_io <= '0' when sfp_aux_scl_o = '0' else 'Z';
   wr_aux_sfp_sda_io <= '0' when sfp_aux_sda_o = '0' else 'Z';
 
@@ -2547,7 +2556,7 @@ end generate;
   led_aux_link_up_o  <= link_up_aux;
   led_aux_link_act_o <= link_act_aux;
   led_aux_track_o    <= tm_valid_aux;
-  led_aux_pps_o      <= ext_pps_aux;
+  led_aux_pps_o      <= pps_aux;
 
   -- END OF White Rabbit
   ----------------------------------------------------------------------------------
