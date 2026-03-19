@@ -303,7 +303,7 @@ architecture rtl of ftm5dp is
 
   constant c_family       : string := "Arria 10 GX FTM4";
   constant c_project      : string := "scu_control";
-  constant c_cores        : natural:= 4;
+  constant c_cores        : natural:= 1;
   constant c_initf_name   : string := "ftm5dp.mif";
   constant c_profile_name : string := "medium_icache_debug";
   constant c_cr_bits      : natural := 24;
@@ -372,8 +372,8 @@ begin
       wbar_phy_dis_o          => sfp_tx_disable_o,
       sfp_tx_fault_i          => sfp_tx_fault_i,
       sfp_los_i               => sfp_los_i,
-      wr_aux_sfp_tx_o         => gxbl1d_tx_ch2p_l28_pciex_tx,
-      wr_aux_sfp_rx_i         => gxbl1d_rx_ch2p_k26_pciex_rx,
+      wr_aux_sfp_tx_o         => gxbl1c_tx_ch1p_ae28,
+      wr_aux_sfp_rx_i         => gxbl1c_rx_ch1p_ad26,
       wr_aux_ndac_cs_o(2)     => ext_ch(0),
       sfp_aux_tx_disable_o    => ext_ch(2),
       sfp_aux_tx_fault_i      => ext_ch(3),
@@ -416,8 +416,7 @@ begin
       scubus_a_nsel           => A_nSEL,
       scubus_a_ntiming_cycle  => A_nTiming_Cycle,
       scubus_a_sysclock       => A_SysClock,
-      --ow_io(0)                => onewire_ext,
-      --ow_io(1)                => A_OneWire,
+      ow_io(0)                => A_OneWire,
       poweroff_comx           => nPWRBTN,
       pcie_refclk_i           => clk_gxbl1d_n24,
       pcie_rstn_i             => nPCI_RESET_i,
