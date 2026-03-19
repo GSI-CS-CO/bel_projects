@@ -2602,7 +2602,7 @@ end generate;
   led_aux_link_up_o  <= link_up_aux;
   led_aux_link_act_o <= link_act_aux;
   led_aux_track_o    <= tm_valid_aux;
-  led_aux_pps_o      <= ext_pps_aux;
+  led_aux_pps_o      <= pps_aux;
 
   -- END OF White Rabbit
   ----------------------------------------------------------------------------------
