@@ -187,6 +187,7 @@ package monster_pkg is
       -- Optional WR features
       wr_ext_clk_i           : in    std_logic := '0'; -- 10MHz
       wr_ext_pps_i           : in    std_logic := '0';
+      wr_ext_pps_aux_i       : in    std_logic := '0';
       wr_uart_o              : out   std_logic;
       wr_uart_i              : in    std_logic := '1';
       wr_pps_out_o           : out   std_logic;
