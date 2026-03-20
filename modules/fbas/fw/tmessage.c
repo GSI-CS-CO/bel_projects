@@ -348,9 +348,11 @@ void msgResetMpsBuf(const uint8_t idx, const uint8_t *pId, const uint8_t flag)
 }
 
 /**
- * \brief Update the node ID array and MPS message buffer
+ * \brief Update the node ID array and MPS message buffer with
+ * a valid node identification provided by user
  *
- * \param pId  Pointer to the full node ID (idx + reserved + MAC address)
+ * \param pId  Pointer to the shared memory location,
+ * which holds user input of a valid node (idx + reserved + MAC address)
  *
  * \return None
  **/
@@ -361,7 +363,7 @@ void msgUpdateMpsBuf(const uint64_t *pId)
   id+=2;
   uint8_t buf_idx;                      // base index for MPS message buffer
 
-  // if the same ID exists, remote it (node ID array and MPS message buffer)
+  // if the same ID exists, remove it (node ID array and MPS message buffer)
   for (int i = 0; i < N_MAX_TX_NODES; ++i) {
     if (!(memcmp(&nodeIds[i][0], id, ETH_ALEN))) {
       memset(&nodeIds[i][0], 0, ETH_ALEN);
@@ -383,13 +385,22 @@ void msgUpdateMpsBuf(const uint64_t *pId)
     bufMpsMsg[j + buf_idx].prot.idx = j + idx;
   }
 
+  // print node ID array index and MPS message buffer content
+  DBPRINT1("sender: idx=%x: ", idx);
+  for (int i = 0; i < ETH_ALEN; i++)
+    DBPRINT1("%02x", bufMpsMsg[buf_idx].prot.addr[i]);
+
   // node ID array and MPS message buffer must match
-  if (!(memcmp(&nodeIds[idx][0], &bufMpsMsg[idx].prot.addr[0], ETH_ALEN))) {
-    DBPRINT1("sender: idx=%x: ", idx);
-    for (int i = 0; i < ETH_ALEN; i++)
-      DBPRINT1("%02x", bufMpsMsg[idx].prot.addr[i]);
-    DBPRINT1(" (id: %016llx)\n", *pId);
+  if (memcmp(&nodeIds[idx][0], &bufMpsMsg[buf_idx].prot.addr[0], ETH_ALEN)) {
+    // mismatch
+    DBPRINT1(" ! ");
+  } else {
+    // match
+    DBPRINT1(" = ", *pId);
   }
+
+  // valid node identification in the shared memory (provided by user)
+  DBPRINT1("(id: %016llx)\n", *pId);
 }
 
 /**
