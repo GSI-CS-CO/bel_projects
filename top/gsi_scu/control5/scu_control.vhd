@@ -528,7 +528,7 @@ begin
 
   -- other fixed signals
   sfp_rate_sel_o <= '0';
-  A_OneWire_stpz <= '0';
+  A_OneWire_stpz <= '1'; -- Strong pull-up disabled
   debug_leds(7)  <= nPCI_RESET_i;
 
 end rtl;
