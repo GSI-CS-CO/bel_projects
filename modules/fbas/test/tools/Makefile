@@ -158,8 +158,7 @@ stop_fbasdm_1_loop_pattern:
 
 show_rx_stats:
 	@echo "RX stats"
-	@echo -n "ECA valid cnt:    "; source setup.sh && eb-read $$rx_node_dev $$addr_eca_vld/4
-	@echo -n "ECA overflow cnt: "; source setup.sh && eb-read $$rx_node_dev $$addr_eca_ovf/4
+	@source setup.sh && result_rx $$rx_node_dev "verbose"
 	@echo
 
 show_tx_stats:
@@ -181,6 +180,7 @@ show_fbasdm_result:
 	@$(eval rx_msg=$(shell source setup.sh && eb-read $$rx_node_dev $$addr_eca_vld/4))
 	@$(eval dm_msg=$(shell source dm.sh && cnt_dm_msg))
 	@source setup.sh && report_two_senders_result ${rx_msg} 0 ${dm_msg}
+	@$(MAKE) show_rx_stats
 
 register_senders:
 # sched_filename & tx_node_id are exported by make
@@ -344,7 +344,6 @@ restart_test_rx_rate:
 	@source dm.sh && run_finite_schedule ${sched_def} && echo
 	@$(MAKE) disable_rx_node
 	@$(MAKE) show_fbasdm_result
-	@source setup.sh && result_rx $$rx_node_dev "verbose"
 
 restart_fbasdm_run_finite_schedule:
 	@$(MAKE) clear_fbasdm
