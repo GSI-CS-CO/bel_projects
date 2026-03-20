@@ -2429,6 +2429,15 @@ end generate;
         phy_tx_clk <= clk_ref;
   end generate phy_a5;
 
+  pps_ext_aux : gc_extend_pulse
+    generic map(
+      g_width => 10000000)
+    port map(
+      clk_i      => clk_ref,
+      rst_n_i    => rstn_ref,
+      pulse_i    => pps_aux,
+      extended_o => ext_pps_aux);
+
   phy_a10 : if c_is_arria10 generate
     phy : wr_arria10_transceiver
       generic map (
@@ -2570,7 +2579,7 @@ end generate;
   led_aux_link_up_o  <= link_up_aux;
   led_aux_link_act_o <= link_act_aux;
   led_aux_track_o    <= tm_valid_aux;
-  led_aux_pps_o      <= pps_aux;
+  led_aux_pps_o      <= ext_pps_aux;
 
   -- END OF White Rabbit
   ----------------------------------------------------------------------------------
