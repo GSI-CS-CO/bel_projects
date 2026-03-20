@@ -57,6 +57,12 @@ CHECK_FTM10            = ./syn/gsi_pexarria10/ftm10/ftm10
 CHECK_A10GX            = ./syn/gsi_a10gx_pcie/control/pci_control
 CHECK_IDROGEN          = ./syn/in2p3_idrogen/control/idrogen
 CHECK_SCU4SLIM         = ./syn/gsi_scu/slim4/scu4slim
+CHECK_DIOB             = ./syn/scu_diob/scu_diob
+CHECK_ADDAC            = ./syn/gsi_addac/scu_addac
+CHECK_ADDAC2           = ./syn/gsi_addac2/scu_addac2
+CHECK_SIO3             = ./syn/scu_sio3/scu_sio3
+CHECK_IFA8             = ./syn/gsi_ifa8/ifa8
+CHECK_BLM              = ./syn/blm_aco/blm_aco
 
 # Project paths
 PATH_SCU2              = syn/gsi_scu/control2
@@ -83,6 +89,12 @@ PATH_FTM10             = syn/gsi_pexarria10/ftm10
 PATH_A10GX             = syn/gsi_a10gx_pcie/control
 PATH_IDROGEN           = syn/in2p3_idrogen/control
 PATH_SCU4SLIM          = syn/gsi_scu/slim4
+PATH_DIOB              = syn/scu_diob
+PATH_ADDAC             = syn/gsi_addac
+PATH_ADDAC2            = syn/gsi_addac2
+PATH_SIO3              = syn/scu_sio3
+PATH_IFA8              = syn/gsi_ifa8
+PATH_BLM               = syn/blm_aco
 
 define sort_file
 	sort $(1).qsf >> temp_sorted
@@ -585,11 +597,19 @@ addac:		firmware
 addac-clean::
 	$(MAKE) -C syn/gsi_addac clean
 
+addac-check:
+	$(call check_timing, $(CHECK_ADDAC))
+	$(call copy_release, $(CHECK_ADDAC), $(PATH_ADDAC), gw-scu-slave-addac)
+
 addac2:		firmware
 	$(MAKE) -C syn/gsi_addac2 all
 
 addac2-clean::
 	$(MAKE) -C syn/gsi_addac2 clean
+
+addac2-check:
+	$(call check_timing, $(CHECK_ADDAC2))
+	$(call copy_release, $(CHECK_ADDAC2), $(PATH_ADDAC2), gw-scu-slave-addac2)
 
 diob:		firmware
 	$(MAKE) -C syn/scu_diob all
@@ -597,23 +617,39 @@ diob:		firmware
 diob-clean::
 	$(MAKE) -C syn/scu_diob clean
 
+diob-check:
+	$(call check_timing, $(CHECK_DIOB))
+	$(call copy_release, $(CHECK_DIOB), $(PATH_DIOB), gw-scu-slave-diob)
+
 sio3:		firmware
 	$(MAKE) -C syn/scu_sio3 all
 
 sio3-clean::
 	$(MAKE) -C syn/scu_sio3 clean
 
-ifa8:		firmware
+sio3-check:
+	$(call check_timing, $(CHECK_SIO3))
+	$(call copy_release, $(CHECK_SIO3), $(PATH_SIO3), gw-scu-slave-sio3)
+
+ifa8:		firmware # cyclone
 	$(MAKE) -C syn/gsi_ifa8 all
 
 ifa8-clean::
 	$(MAKE) -C syn/gsi_ifa8 clean
+
+ifa8-check:
+	$(call check_timing, $(CHECK_IFA8))
+	$(call copy_release, $(CHECK_IFA8), $(PATH_IFA8), gw-scu-slave-ifa8)
 
 blm:		firmware
 	$(MAKE) -C syn/blm_aco all
 
 blm-clean::
 	$(MAKE) -C syn/blm_aco clean
+
+blm-check:
+	$(call check_timing, $(CHECK_BLM))
+	$(call copy_release, $(CHECK_BLM), $(PATH_BLM), gw-scu-slave-blm)
 
 # #################################################################################################
 # LM32 firmware
