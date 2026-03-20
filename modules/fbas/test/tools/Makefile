@@ -304,7 +304,7 @@ continue_fbasdm_single_msg:
 restart_two_senders_loop:
 	@$(MAKE) clear_fbasdm
 	@$(MAKE) set_single_msg_per_frame
-	@$(MAKE) sched_filename="${sched_loop}"; tx_node_id="00267b0004da"; $(MAKE) register_senders
+	@export sched_filename="${sched_loop}"; export tx_node_id="00267b0004da"; $(MAKE) register_senders
 	@$(MAKE) setup_tx_node
 	@$(MAKE) enable_rx_tx_nodes
 	@$(MAKE) start_fbasdm_1_loop_pattern
@@ -317,7 +317,7 @@ restart_two_senders_loop:
 restart_two_senders_multi_loop:
 	@$(MAKE) clear_fbasdm
 	@$(MAKE) set_multi_msgs_per_frame
-	@$(MAKE) sched_filename="my_mps_loop.dot"; tx_node_id="00267b0004da"; $(MAKE) register_senders
+	@export sched_filename="my_mps_loop.dot"; export tx_node_id="00267b0004da"; $(MAKE) register_senders
 	@$(MAKE) setup_tx_node
 	@$(MAKE) enable_rx_tx_nodes
 	@$(MAKE) load_fbasdm_multi_loop_patterns
@@ -329,7 +329,7 @@ restart_two_senders_multi_loop:
 restart_two_senders_multi_finite:
 	@$(MAKE) clear_fbasdm
 	@$(MAKE) set_multi_msgs_per_frame
-	@$(MAKE) sched_filename="my_mps_pata.dot"; tx_node_id="00267b0004da"; $(MAKE) register_senders
+	@export sched_filename="my_mps_pata.dot"; export tx_node_id="00267b0004da"; $(MAKE) register_senders
 	@$(MAKE) setup_tx_node
 	@$(MAKE) enable_rx_tx_nodes
 	@$(MAKE) load_fbasdm_multi_finite_patterns
