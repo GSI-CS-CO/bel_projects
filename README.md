@@ -189,6 +189,7 @@ Answer:
 
 - Arria II/Arria V: Quartus 18.1.0 (Build 625 09/12/2018 SJ) Standard Edition
 - Arria 10: Quartus 23.1.1 (Build 993 05/14/2024 SC) Standard Edition
+- Cyclone EPC20 (IFA8 only): Quartus-13.1.0 (Build 162) Standard Edition
 
 ### Library libpng12
 
