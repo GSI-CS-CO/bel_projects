@@ -80,9 +80,9 @@ architecture scu_diob_arch of scu_diob is
 --  +============================================================================================================================+
 --  |                                 Firmware_Version/Firmware_Release und Basis-Adressen                                       |
 --  +============================================================================================================================+
-
+    
     CONSTANT c_Firmware_Version:    Integer := 16#0100#;      -- Firmware_Version
-    CONSTANT c_Firmware_Release:    Integer := 0;     -- Firmware_release Stand 19.05.2021 ( + neuer Zwischen-Backplane )
+    CONSTANT c_Firmware_Release:    Integer := BB_VERSION_MAJOR*16 + BB_VERSION_MINOR;     -- Firmware_release Stand 19.05.2021 ( + neuer Zwischen-Backplane )
 
     CONSTANT clk_switch_status_cntrl_addr:       unsigned := x"0030";
     CONSTANT c_lm32_ow_Base_Addr:   unsigned(15 downto 0):=  x"0040";  -- housekeeping/LM32
