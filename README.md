@@ -254,7 +254,7 @@ Solution: Use the right Quartus version for your project.
 
 Error: /bin/sh: 1: cannot create /ramsize_pkg.vhd: Permission denied
 
-Solution: Check all your (changed) Manifest.py files.
+Solution: Check all your (changed) Manifest.py files. After fixing your Manifest.py files, it's a good idea to run `make <target>-clean`.
 
 ## Build Flow
 
