@@ -87,7 +87,7 @@ check_tr() {
     check_deployment $rxscu $filenames
 }
 
-sender_ids() {
+get_sender_ids() {
     # parse the 'parameter' attribute in DOT schedule file
     # and return the sender IDs
 
@@ -128,7 +128,7 @@ sender_ids() {
 
     printf "%s\n" "${par_values[@]}"
 
-    ret=("${par_values[@]}")
+    ret+=("${par_values[@]}")
 }
 
 register_senders() {
