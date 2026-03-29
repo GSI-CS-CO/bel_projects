@@ -182,10 +182,12 @@ show_fbasdm_result:
 	@source setup.sh && report_two_senders_result ${rx_msg} 0 ${dm_msg}
 	@$(MAKE) show_rx_stats
 
-register_senders:
-# sched_filename & tx_node_id are exported by make
-	@source dm.sh && filepath="$$patt_loc/$$sched_filename" && \
-	source common.sh && sender_ids ids $$filepath && \
+
+init_fbasrx:
+	@for f in $${sched_files[@]}; do \
+		source dm.sh && filepath="$$patt_loc/$$f" && \
+		source common.sh && get_sender_ids ids $$filepath; \
+	done; \
 	source setup.sh && setup_fbasrx ${fw_rxpci} SENDER_TX $${ids[@]} $$tx_node_id
 
 # used in restart_fbasdm_loop/finite tests
@@ -220,14 +222,14 @@ continue_basic:
 
 restart_fbasdm_finite:
 	@$(MAKE) clear_fbasdm
-	@export sched_filename="${sched_finite}"; $(MAKE) register_senders
+	@export sched_files="${sched_finite}"; $(MAKE) init_fbasrx
 	@$(MAKE) enable_rx_node
 	@source dm.sh && load_dm_patt ${sched_finite} && start_dm_patt ${pattern_finite}
 	@$(MAKE) stop_fbasdm_test
 
 restart_fbasdm_loop:
 	@$(MAKE) clear_fbasdm
-	@export sched_filename="${sched_loop}"; $(MAKE) register_senders
+	@export sched_files="${sched_loop}"; $(MAKE) init_fbasrx
 	@$(MAKE) enable_rx_node
 	@$(MAKE) start_fbasdm_1_loop_pattern
 	@echo "started DM broadcast, wait for ${sleep_period}" && source setup.sh && wait_print_seconds ${sleep_period}
@@ -240,7 +242,7 @@ restart_fbasdm_multi_loop:
 	@$(MAKE) clear_fbasdm
 	@$(MAKE) load_fbasdm_multi_loop_patterns
 	@$(MAKE) print_fbasdm_pattern
-	@export sched_filename="my_mps_loop.dot";  $(MAKE) register_senders
+	@export sched_files="my_mps_loop.dot my_mps_loop1.dot my_mps_loop2.dot my_mps_loop3.dot";  $(MAKE) init_fbasrx
 	@$(MAKE) enable_rx_node
 	@source dm.sh && start_dm_synchron $$cmd_file_start_loop
 	@echo "started DM broadcast, wait for ${sleep_period}" && source setup.sh && wait_print_seconds ${sleep_period}
@@ -254,7 +256,7 @@ restart_fbasdm_multi_finite:
 	@$(MAKE) clear_fbasdm
 	@$(MAKE) load_fbasdm_multi_finite_patterns
 	@$(MAKE) print_fbasdm_pattern
-	@export sched_filename="my_mps_pata.dot";  $(MAKE) register_senders
+	@export sched_files="my_mps_pata.dot my_mps_patb.dot my_mps_patc.dot my_mps_patd.dot";  $(MAKE) init_fbasrx
 	@$(MAKE) enable_rx_node
 	@source dm.sh && start_dm_synchron $$cmd_file_start_finite
 	@echo "started DM broadcast, wait for 1" && source setup.sh && wait_print_seconds 1
@@ -283,7 +285,7 @@ restart_fbasdm_multi_max_loop_msg:
 # Datamaster sends a single timing message
 restart_fbasdm_single_msg:
 	@$(MAKE) clear_fbasdm
-	@export sched_filename="${sched_single}"; $(MAKE) register_senders
+	@export sched_files="${sched_single}"; $(MAKE) init_fbasrx
 	@$(MAKE) enable_rx_node
 	@source dm.sh && load_dm_patt ${sched_single}
 	@$(MAKE) continue_fbasdm_single_msg
@@ -304,7 +306,7 @@ continue_fbasdm_single_msg:
 restart_two_senders_loop:
 	@$(MAKE) clear_fbasdm
 	@$(MAKE) set_single_msg_per_frame
-	@export sched_filename="${sched_loop}"; export tx_node_id="00267b0004da"; $(MAKE) register_senders
+	@export sched_files="${sched_loop}"; export tx_node_id="00267b0004da"; $(MAKE) init_fbasrx
 	@$(MAKE) setup_tx_node
 	@$(MAKE) enable_rx_tx_nodes
 	@$(MAKE) start_fbasdm_1_loop_pattern
@@ -317,7 +319,7 @@ restart_two_senders_loop:
 restart_two_senders_multi_loop:
 	@$(MAKE) clear_fbasdm
 	@$(MAKE) set_multi_msgs_per_frame
-	@export sched_filename="my_mps_loop.dot"; export tx_node_id="00267b0004da"; $(MAKE) register_senders
+	@export sched_files="my_mps_loop.dot"; export tx_node_id="00267b0004da"; $(MAKE) init_fbasrx
 	@$(MAKE) setup_tx_node
 	@$(MAKE) enable_rx_tx_nodes
 	@$(MAKE) load_fbasdm_multi_loop_patterns
@@ -329,7 +331,7 @@ restart_two_senders_multi_loop:
 restart_two_senders_multi_finite:
 	@$(MAKE) clear_fbasdm
 	@$(MAKE) set_multi_msgs_per_frame
-	@export sched_filename="my_mps_pata.dot"; export tx_node_id="00267b0004da"; $(MAKE) register_senders
+	@export sched_files="my_mps_pata.dot"; export tx_node_id="00267b0004da"; $(MAKE) init_fbasrx
 	@$(MAKE) setup_tx_node
 	@$(MAKE) enable_rx_tx_nodes
 	@$(MAKE) load_fbasdm_multi_finite_patterns
@@ -339,7 +341,7 @@ restart_two_senders_multi_finite:
 restart_test_rx_rate:
 	@$(MAKE) clear_fbasdm
 # get the sender IDs by parsing the schedule file, register sender IDs at RX node
-	@export sched_filename="${sched_def}"; $(MAKE) register_senders
+	@export sched_files="${sched_def}"; $(MAKE) init_fbasrx
 	@$(MAKE) enable_rx_node
 	@source dm.sh && run_finite_schedule ${sched_def} && echo
 	@$(MAKE) disable_rx_node
