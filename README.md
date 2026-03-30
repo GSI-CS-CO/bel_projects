@@ -52,6 +52,7 @@ GSI Timing Gateware and Tools
     - [Altera/Intel Ethernet Blaster](#alteraintel-ethernet-blaster)
   - [Timing Receiver](#timing-receiver)
     - [Commissioning](#commissioning)
+    - [Gateware Files](#gateware-files)
     - [Flashing](#flashing)
       - [Arria2 Devices](#arria2-devices)
       - [ArriaV Devices](#arriav-devices)
@@ -586,6 +587,15 @@ Program FPGA from command line:
 ```shell
 quartus_pgm -c 1 -m jtag -o 'p;device.sof'
 ```
+
+### Gateware Files
+
+| File Extension | Meaning | Usage | Example | Persistent | Reconfigures FPGA |
+| - | - | - | - | - | - |
+| JIC | JTAG Indirect Configuration | Programs the external configuration flash via JTAG. Quartus temporarily configures the FPGA to enable programming of the attached EPCQ/EPCS/QSPI flash. After power-up, the FPGA loads its configuration from that flash.              | Quartus: GUI → Programmer → Load JIC file                                                                    | Yes        | Yes               |
+| SOF | SRAM Object File | Direct FPGA configuration file, typically loaded via JTAG. Resides in the volatile FPGA SRAM and is lost when power is off.                                                                                                            | Shell: `quartus_pgm -c 1 -m jtag -o 'p;device.sof'` <br> Quartus: GUI → Programmer                           | No         | Yes               |
+| RPD | Raw Programming Data | Contains raw FPGA configuration data for writing directly into attached flash memory. Typically used with **EB tools** (`eb-flash`, `eb-asmi`) and supports remote or local flash programming. Does not reconfigure the FPGA directly. | Older devices: `eb-flash dev/$device gateware.rpd` <br> Newer devices: `eb-asmi dev/$device -w gateware.rpd` | Yes        | No                |
+
 
 ### Flashing
 
