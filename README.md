@@ -199,11 +199,12 @@ Error: Quartus error while loading shared libraries: libpng12-0.0: ... [Ubuntu/M
 
 Solution: Install the missing package
 
-#### Ubuntu
+```shell
+make libpng12
+sudo make libpng12-install
+```
 
-Get the package from here: https://packages.ubuntu.com/xenial/amd64/libpng12-0/download
-
-#### Mint
+If you can't compile libpng12, use this instead:
 
 ```shell
 sudo add-apt-repository ppa:linuxuprising/libpng12
@@ -211,6 +212,7 @@ sudo apt update
 sudo apt install libpng12-0
 ```
 
+<<<<<<< HEAD
 If this PPA can't be added, you need to compile the library:
 
 
@@ -223,6 +225,9 @@ cd libpng-1.2.54
 make
 sudo make install
 ```
+=======
+If this PPA can't be added, you need to compile the library.
+>>>>>>> 849c3b89e (README.md: Revise libpng12 installation steps in README)
 
 #### Backup Plan
 
