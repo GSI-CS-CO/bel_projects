@@ -1,18 +1,28 @@
 #!/bin/bash
+<<<<<<< HEAD:tools/eb-neorv32-ctl
 set -u
+=======
+set -eu
+>>>>>>> 5892495de (eb-neorv32-ctl: fix logging):modules/neorv32/tools/eb-neorv32-ctl
 
 # Arguments
 v_nrv_device="NULL"
 v_nrv_program="NULL"
+<<<<<<< HEAD:tools/eb-neorv32-ctl
 v_nrv_compare="NULL"
+=======
+>>>>>>> 5892495de (eb-neorv32-ctl: fix logging):modules/neorv32/tools/eb-neorv32-ctl
 v_nrv_stop=false
 v_nrv_start=false
 v_nrv_restart=false
 v_nrv_keep_reset=false
 v_nrv_help=false
 v_nrv_vebose=0
+<<<<<<< HEAD:tools/eb-neorv32-ctl
 v_nrv_examine=false
 v_nrv_preserve=false
+=======
+>>>>>>> 5892495de (eb-neorv32-ctl: fix logging):modules/neorv32/tools/eb-neorv32-ctl
 
 # Settings
 declare -r v_nrv_sdb_gsi_vendor_id="0x651"
@@ -21,8 +31,11 @@ declare -r v_nrv_sdb_gsi_rst_ctl_id="0x3a362063"
 declare -r v_nrv_reset_offset="0x20"
 declare -r v_nrv_reset_neorv32_stop="0x0"
 declare -r v_nrv_reset_neorv32_start="0x1"
+<<<<<<< HEAD:tools/eb-neorv32-ctl
 declare -r v_nrv_dpram_neorv32="0x71000000"
 declare -r v_nrv_readback_neorv32="firmware-neorv32.bin"
+=======
+>>>>>>> 5892495de (eb-neorv32-ctl: fix logging):modules/neorv32/tools/eb-neorv32-ctl
 
 # Internal parameters
 v_nrv_ram_addr="NULL"
@@ -70,6 +83,7 @@ function f_upload_program() {
         f_log ERROR "Failed to upload program $v_nrv_program!"
         exit 3
       fi
+<<<<<<< HEAD:tools/eb-neorv32-ctl
       f_log INFO "[SUCCESS] Neorv32 DPRAM programmed with $v_nrv_program."
       
       if [ "$v_nrv_examine" == true ]; then
@@ -100,6 +114,11 @@ function f_upload_program() {
           f_start_neorv32
       fi
       
+=======
+      if [ "$v_nrv_keep_reset" = false ]; then
+        f_start_neorv32
+      fi
+>>>>>>> 5892495de (eb-neorv32-ctl: fix logging):modules/neorv32/tools/eb-neorv32-ctl
     else
       f_log ERROR "Can't find file $v_nrv_program!"
       exit 4
@@ -109,6 +128,7 @@ function f_upload_program() {
   fi
 }
 
+<<<<<<< HEAD:tools/eb-neorv32-ctl
 function f_compare_program(){
   if [ "$v_nrv_compare" != "NULL" ]; then
     if [ -f "$v_nrv_compare" ]; then
@@ -139,6 +159,8 @@ function f_compare_program(){
   fi
 }
 
+=======
+>>>>>>> 5892495de (eb-neorv32-ctl: fix logging):modules/neorv32/tools/eb-neorv32-ctl
 function f_stop_neorv32() {
   f_log INFO "Stopping NEORV32 ..."
   eb-write "$v_nrv_device" "$v_nrv_reset_ctl_neorv32_addr"/4 "$v_nrv_reset_neorv32_stop"
@@ -185,12 +207,17 @@ Control and program NEORV32 CPU.
 
 Options:
   -f FILE      Program file to upload
+<<<<<<< HEAD:tools/eb-neorv32-ctl
   -c FILE      Compare file with the RAM content
   -k           Keep CPU in reset after programming 
+=======
+  -k           Keep CPU in reset after programming
+>>>>>>> 5892495de (eb-neorv32-ctl: fix logging):modules/neorv32/tools/eb-neorv32-ctl
   -t           Stop the CPU
   -s           Start the CPU
   -r           Restart the CPU
   -v           Enable verbose output
+<<<<<<< HEAD:tools/eb-neorv32-ctl
   -e           Verify the RAM content after programming (only works with -f FILE)
   -p           Preserve the downloaded RAM content in readback file
   -h           Show this help message
@@ -201,6 +228,12 @@ Example:
   Preserve the downloaded RAM content after verifying  : $(basename "$0") dev/ttyUSB0 -v -f program.bin -e -p
   Compare file with NEORV32 RAM content                : $(basename "$0") dev/ttyUSB0 -v -c sample.bin
   Preserve the downloaded RAM content after comparing  : $(basename "$0") dev/ttyUSB0 -v -c sample.bin -p
+=======
+  -h           Show this help message
+
+Example:
+  $(basename "$0") -v -f program.bin /dev/ttyUSB0
+>>>>>>> 5892495de (eb-neorv32-ctl: fix logging):modules/neorv32/tools/eb-neorv32-ctl
 EOF
 }
 
@@ -235,6 +268,7 @@ while [[ $# -gt 0 ]]; do
       v_nrv_vebose=1
       shift
       ;;
+<<<<<<< HEAD:tools/eb-neorv32-ctl
     -c)
       if [ $# -lt 2 ] || [[ "$2" == -* ]]; then
         f_log ERROR "Option -c requires a file argument."
@@ -251,11 +285,14 @@ while [[ $# -gt 0 ]]; do
       v_nrv_preserve=true
       shift
       ;;
+=======
+>>>>>>> 5892495de (eb-neorv32-ctl: fix logging):modules/neorv32/tools/eb-neorv32-ctl
     -*)
       f_log ERROR "Unknown argument: $1"
       exit 11
       ;;
     *)
+<<<<<<< HEAD:tools/eb-neorv32-ctl
       if [ "$v_nrv_device" == "NULL" ];then
         v_nrv_device="$1"
         shift
@@ -263,6 +300,10 @@ while [[ $# -gt 0 ]]; do
         f_log ERROR "Too many input argument: $1 (Already using device $v_nrv_device)"
         exit 12
       fi
+=======
+      v_nrv_device="$1"
+      shift
+>>>>>>> 5892495de (eb-neorv32-ctl: fix logging):modules/neorv32/tools/eb-neorv32-ctl
       ;;
     esac
 done
@@ -276,7 +317,10 @@ else
   f_find_reset_ctl
   # Program and control CPU
   f_upload_program
+<<<<<<< HEAD:tools/eb-neorv32-ctl
   # Compare the file from user with the RAM content
   f_compare_program 
+=======
+>>>>>>> 5892495de (eb-neorv32-ctl: fix logging):modules/neorv32/tools/eb-neorv32-ctl
 fi
 exit 0
