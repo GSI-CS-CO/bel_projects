@@ -32,13 +32,14 @@ f_log() {
     INFO)  [ $v_nrv_vebose -ge 1 ] && echo "Info: $msg" ;;
     ERROR) echo "Error: $msg" >&2 ;;
   esac
+  return 0
 }
 
 function f_find_neorv32_ram() {
   v_nrv_ram_addr=$(eb-find "$v_nrv_device" "$v_nrv_sdb_gsi_vendor_id" "$v_nrv_sdb_gsi_ram_id")
   if [ $? -ne 0 ] || [ -z "$v_nrv_ram_addr" ]; then
     f_log ERROR "NEORV32 RAM address base could not be determined!"
-    exit 1
+    exit 10
   fi
   f_log INFO "Found NEORV32 RAM address $v_nrv_ram_addr ..."
 }
@@ -47,7 +48,7 @@ function f_find_reset_ctl() {
   v_nrv_reset_ctl_addr=$(eb-find "$v_nrv_device" "$v_nrv_sdb_gsi_vendor_id" "$v_nrv_sdb_gsi_rst_ctl_id")
   if [ $? -ne 0 ] || [ -z "$v_nrv_reset_ctl_addr" ]; then
     f_log ERROR "Reset controller address base could not be determined!"
-    exit 1
+    exit 2
   fi
   f_log INFO "Found reset controller address $v_nrv_reset_ctl_addr ..."
   v_nrv_reset_ctl_neorv32_addr=$(printf "0x%x" $(( $v_nrv_reset_ctl_addr + $v_nrv_reset_offset )))
@@ -62,14 +63,14 @@ function f_upload_program() {
       eb-put -l -q "$v_nrv_device" "$v_nrv_ram_addr" "$v_nrv_program"
       if [ $? -ne 0 ]; then
         f_log ERROR "Failed to upload program $v_nrv_program!"
-        exit 1
+        exit 3
       fi
       if [ "$v_nrv_keep_reset" = false ]; then
         f_start_neorv32
       fi
     else
       f_log ERROR "Can't find file $v_nrv_program!"
-      exit 1
+      exit 4
     fi
   else
     f_ctl_mode
@@ -81,7 +82,7 @@ function f_stop_neorv32() {
   eb-write "$v_nrv_device" "$v_nrv_reset_ctl_neorv32_addr"/4 "$v_nrv_reset_neorv32_stop"
   if [ $? -ne 0 ]; then
     f_log ERROR "Failed to stop NEORV32!"
-    exit 1
+    exit 5
   fi
 }
 
@@ -90,7 +91,7 @@ function f_start_neorv32() {
   eb-write "$v_nrv_device" "$v_nrv_reset_ctl_neorv32_addr"/4 "$v_nrv_reset_neorv32_start"
   if [ $? -ne 0 ]; then
     f_log ERROR "Failed to start NEORV32!"
-    exit 1
+    exit 6
   fi
 }
 
@@ -100,7 +101,7 @@ function f_ctl_mode() {
      [[ "$v_nrv_start" == true && "$v_nrv_restart" == true ]] || \
      [[ "$v_nrv_stop" == true && "$v_nrv_restart" == true ]]; then
     f_log ERROR "Options -s, -t, and -r are mutually exclusive!" >&2
-    exit 1
+    exit 7
   fi
   if [ "$v_nrv_start" = true ]; then
     f_start_neorv32
@@ -111,7 +112,7 @@ function f_ctl_mode() {
   if [ "$v_nrv_restart" = true ]; then
     f_stop_neorv32
     f_start_neorv32
-  fi  
+  fi
 }
 
 function f_print_help() {
@@ -167,7 +168,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -*)
       f_log ERROR "Unknown argument: $1"
-      exit 1
+      exit 11
       ;;
     *)
       v_nrv_device="$1"
