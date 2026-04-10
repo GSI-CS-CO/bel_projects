@@ -70,7 +70,7 @@ function f_upload_program() {
         f_log ERROR "Failed to upload program $v_nrv_program!"
         exit 3
       fi
-      f_log Info "[SUCCESS] Neorv32 DPRAM programmed with $v_nrv_program."
+      f_log INFO "[SUCCESS] Neorv32 DPRAM programmed with $v_nrv_program."
       if [ "$v_nrv_keep_reset" = false ]; then
         f_start_neorv32
       fi
