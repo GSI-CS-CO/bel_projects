@@ -1,15 +1,18 @@
 #!/bin/bash
-set -eu
+set -u
 
 # Arguments
 v_nrv_device="NULL"
 v_nrv_program="NULL"
+v_nrv_compare="NULL"
 v_nrv_stop=false
 v_nrv_start=false
 v_nrv_restart=false
 v_nrv_keep_reset=false
 v_nrv_help=false
 v_nrv_vebose=0
+v_nrv_examine=false
+v_nrv_preserve=false
 
 # Settings
 declare -r v_nrv_sdb_gsi_vendor_id="0x651"
@@ -18,6 +21,8 @@ declare -r v_nrv_sdb_gsi_rst_ctl_id="0x3a362063"
 declare -r v_nrv_reset_offset="0x20"
 declare -r v_nrv_reset_neorv32_stop="0x0"
 declare -r v_nrv_reset_neorv32_start="0x1"
+declare -r v_nrv_dpram_neorv32="0x71000000"
+declare -r v_nrv_readback_neorv32="firmware-neorv32.bin"
 
 # Internal parameters
 v_nrv_ram_addr="NULL"
@@ -65,8 +70,31 @@ function f_upload_program() {
         f_log ERROR "Failed to upload program $v_nrv_program!"
         exit 3
       fi
+      f_log Info "[SUCCESS] Neorv32 DPRAM programmed with $v_nrv_program."
       if [ "$v_nrv_keep_reset" = false ]; then
         f_start_neorv32
+      fi
+      if [ "$v_nrv_examine" == true ]; then
+        f_log INFO "Verifying the RAM content against the program file..."
+        v_nrv_program_size=$(wc -c < "$v_nrv_program")
+        eb-get -l -q "$v_nrv_device" "$v_nrv_dpram_neorv32"/"$v_nrv_program_size" "$v_nrv_readback_neorv32"
+        if [ $? -ne 0 ]; then
+          f_log ERROR "Failed to readback firmware image from $v_nrv_device!"
+          exit 8
+        fi
+        cmp "$v_nrv_readback_neorv32" "$v_nrv_program"
+        v_nrv_cmp_status=$?
+        if [ "$v_nrv_preserve" == true ]; then
+          f_log INFO "Preserve the readback file $v_nrv_readback_neorv32 from RAM"
+        else
+          rm -f "$v_nrv_readback_neorv32"
+        fi
+        if [ $v_nrv_cmp_status -ne 0 ]; then
+          f_log ERROR "Verification failed, the program file and RAM content mismatch!" 
+        else
+          f_log INFO "[SUCCESS] Program uploaded and verified."
+        fi
+        [ $v_nrv_cmp_status -ne 0 ] && exit 9 
       fi
     else
       f_log ERROR "Can't find file $v_nrv_program!"
@@ -74,6 +102,33 @@ function f_upload_program() {
     fi
   else
     f_ctl_mode
+  fi
+}
+
+function f_compare_program(){
+  if [ "$v_nrv_compare" != "NULL" ]; then
+    if [ -f "$v_nrv_compare" ]; then
+      f_log INFO "Comparing the file $v_nrv_compare with the RAM content..."
+      v_nrv_program_size=$(wc -c < "$v_nrv_compare")
+      eb-get -l -q "$v_nrv_device" "$v_nrv_dpram_neorv32"/"$v_nrv_program_size" "$v_nrv_readback_neorv32"
+      if [ $? -ne 0 ]; then
+        f_log ERROR "Failed to readback firmware image from $v_nrv_device!"
+        exit 13
+      fi
+      cmp "$v_nrv_readback_neorv32" "$v_nrv_compare"
+      v_nrv_cmp_status=$?
+      if [ "$v_nrv_preserve" == true ]; then
+        f_log INFO "Preserve the readback file $v_nrv_readback_neorv32 from RAM"
+      else
+        rm -f "$v_nrv_readback_neorv32"
+      fi
+      if [ $v_nrv_cmp_status -ne 0 ]; then
+        f_log ERROR "The file and RAM content mismatch!" 
+      else
+        f_log INFO "[SUCCESS] The file and RAM content match."
+      fi
+      [ $v_nrv_cmp_status -ne 0 ] && exit 14
+    fi
   fi
 }
 
@@ -123,15 +178,22 @@ Control and program NEORV32 CPU.
 
 Options:
   -f FILE      Program file to upload
-  -k           Keep CPU in reset after programming
+  -c FILE      Compare file with the RAM content
+  -k           Keep CPU in reset after programming 
   -t           Stop the CPU
   -s           Start the CPU
   -r           Restart the CPU
   -v           Enable verbose output
+  -e           Verify the RAM content after programming (only works with -f FILE)
+  -p           Preserve the downloaded RAM content in readback file
   -h           Show this help message
 
 Example:
-  $(basename "$0") -v -f program.bin /dev/ttyUSB0
+  Program NEORV32                                      : $(basename "$0") -v -f program.bin /dev/ttyUSB0
+  Program NEORV32 and verify                           : $(basename "$0") /dev/ttyUSB0 -v -f program.bin -e
+  Preserve the downloaded RAM content after verifying  : $(basename "$0") /dev/ttyUSB0 -v -f program.bin -e -p
+  Compare file with NEORV32 RAM content                : $(basename "$0") /dev/ttyUSB0 -v -c sample.bin
+  Preserve the downloaded RAM content after comparing  : $(basename "$0") /dev/ttyUSB0 -v -c sample.bin -p
 EOF
 }
 
@@ -166,13 +228,30 @@ while [[ $# -gt 0 ]]; do
       v_nrv_vebose=1
       shift
       ;;
+    -c)
+      v_nrv_compare=$2
+      shift 2
+      ;;
+    -e)            
+      v_nrv_examine=true
+      shift
+      ;;   
+    -p)
+      v_nrv_preserve=true
+      shift
+      ;;
     -*)
       f_log ERROR "Unknown argument: $1"
       exit 11
       ;;
     *)
-      v_nrv_device="$1"
-      shift
+      if [ "$v_nrv_device" == "NULL" ];then
+        v_nrv_device="$1"
+        shift
+      else
+        f_log ERROR "Too many input argument: $1 (Already using device $v_nrv_device)"
+        exit 12
+      fi
       ;;
     esac
 done
@@ -186,5 +265,7 @@ else
   f_find_reset_ctl
   # Program and control CPU
   f_upload_program
+  # Compare the file from user with the RAM content
+  f_compare_program 
 fi
 exit 0
