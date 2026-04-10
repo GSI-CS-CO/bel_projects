@@ -10,6 +10,5 @@ files = [
   "modulbus_loader.vhd",
   "modulbus_v5.vhd",
   "Rd_mb_ld.vhd",
-  "rdram.vhd",
-  "i2c.tdf"
+  "rdram.vhd"
 ]
