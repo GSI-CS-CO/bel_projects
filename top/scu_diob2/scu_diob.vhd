@@ -131,13 +131,15 @@ generic(
 	  read_trg:               in std_logic; -- (Ext_Rd_active)
 		write_trg:              in std_logic; -- (Ext_Wr_active)
 		read_fin:               in std_logic; -- (Ext_Rd_fin)
-		write_fin:              in std_logic;	-- (Ext_Wr_fin)
-		event_trg:              in std_logic;									
+		write_fin:              in std_logic;	-- (Ext_Wr_fin)				
     
     dtack:                  out std_logic;--(Dtack_to_SCUB)
-		data_r_act:             out std_logic --(Reg_rd_active)	
+		data_r_act:             out std_logic; --(Reg_rd_active)	
+
+    event_trg:              in std_logic;					
+    event_bus:              in std_logic_vector(31 downto 0)
     );
-  end component io_blackbox;
+  end component io_blackbox; 
 
 
 --  +============================================================================================================================+
@@ -203,7 +205,7 @@ generic(
   signal b_box_rd_data: std_logic_vector(15 downto 0);
   signal bb_dtack: std_logic;
   signal b_backplane:std_logic_vector(15 downto 0);
- 
+  signal event_bus: std_logic_vector(31 downto 0);
 
 begin
 
@@ -424,10 +426,13 @@ generic map(
 		write_trg            => Ext_Wr_active, -- (Ext_Wr_active)
 		read_fin             => Ext_Rd_fin, -- (Ext_Rd_fin)
 		write_fin            => Ext_Wr_fin,	-- (Ext_Wr_fin)
-		event_trg            => not A_nEvent_Str,   									
+								
     
     dtack                => bb_dtack, --(Dtack_to_SCUB)
-		data_r_act           => b_box_rd_active --(Reg_rd_active)	
+		data_r_act           => b_box_rd_active, --(Reg_rd_active)	
+
+    event_trg            => not A_nEvent_Str,   			
+    event_bus            => ADR_from_SCUB_LA & Data_from_SCUB_LA
     );
 end architecture;
 
