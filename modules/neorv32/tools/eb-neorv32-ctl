@@ -232,6 +232,10 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     -c)
+      if [ $# -lt 2 ] || [[ "$2" == -* ]]; then
+        f_log ERROR "Option -c requires a file argument."
+        exit 16
+      fi
       v_nrv_compare=$2
       shift 2
       ;;
