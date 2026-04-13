@@ -85,7 +85,6 @@ function f_upload_program() {
       fi
 <<<<<<< HEAD:tools/eb-neorv32-ctl
       f_log INFO "[SUCCESS] Neorv32 DPRAM programmed with $v_nrv_program."
-      
       if [ "$v_nrv_examine" == true ]; then
         f_log INFO "Verifying the RAM content against the program file..."
         v_nrv_program_size=$(wc -c < "$v_nrv_program")
@@ -107,7 +106,9 @@ function f_upload_program() {
           f_log INFO "[SUCCESS] Program uploaded and verified."
         fi
         [ $v_nrv_cmp_status -ne 0 ] && exit 9
-       
+        if [ "$v_nrv_keep_reset" = false ]; then
+          f_start_neorv32
+        fi
       fi
       
       if [ "$v_nrv_keep_reset" = false ]; then
