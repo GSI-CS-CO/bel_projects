@@ -9,7 +9,7 @@
 
 #define BAUD_RATE 115200
 #define CLOCK_HZ 62500000
-#define IDLE_MS 1000
+#define IDLE_MS 2500
 
 int main(void)
 {
