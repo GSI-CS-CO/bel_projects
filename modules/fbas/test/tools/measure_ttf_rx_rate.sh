@@ -158,7 +158,7 @@ m_rates=()
 check_dm_schedule "$sched_filename" "$enable_high_rates" m_rates m_block
 
 echo -e "\n--- 4. Set up TR=$rxscu_name ---\n"
-sender_ids ids "$sched_filepath" # extract the sender IDs from a given file
+get_sender_ids ids "$sched_filepath" # extract the sender IDs from a given file
 if [[ -n "${ids[@]}" ]]; then
     setup_tr "${ids[@]}"
 fi
