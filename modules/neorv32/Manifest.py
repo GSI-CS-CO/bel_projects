@@ -53,3 +53,5 @@ files = [
   "src/hdl/neorv32_shell_pkg.vhd",
   "src/hdl/neorv32_shell.vhd",
 ]
+
+library = "neorv32"
