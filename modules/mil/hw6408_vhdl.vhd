@@ -117,12 +117,12 @@ BEGIN
     dsc_cnt      <= 0;
     hw6408_rdy   <='0';   
   ELSIF rising_edge(dsc) THEN
-    IF dsc_cnt < dsc_cnt'high THEN   
+    IF dsc_cnt < 15 THEN
       dsc_cnt    <= dsc_cnt + 1;   -- keep ready low for 16 µsek
       hw6408_rdy <='0';
     ELSE
       hw6408_rdy <='1';
-      dsc_cnt    <= dsc_cnt'high;  -- stay at 15 until next reset
+      dsc_cnt    <= 15;  -- stay at 15 until next reset
     END IF;
   END IF;
 END PROCESS p_hw6408_rdy; 
