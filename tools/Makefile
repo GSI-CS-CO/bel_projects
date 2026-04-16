@@ -6,7 +6,7 @@ TLU	?= ../ip_cores/wr-cores/modules/wr_tlu
 WRPC    ?= ../ip_cores/wrpc-sw
 WBDIR   ?= .
 TARGETS := eb-flash eb-info eb-console eb-config-nv eb-time eb-sflash eb-iflash eb-reset eb-daq-dump eb-fwload eb-i2c-master eb-asmi eb-fg-statistic
-EXTRA_I := eb-flash-secure
+EXTRA_TARGETS := eb-flash-secure eb-neorv32-ctl
 USE_RPATH ?= yes
 
 EXTRA_FLAGS ?=
@@ -25,6 +25,7 @@ clean:  monitoring-clean
 install: monitoring-install
 	mkdir -p $(STAGING)$(PREFIX)/bin
 	cp $(TARGETS) $(STAGING)$(PREFIX)/bin
+	cp $(EXTRA_TARGETS) $(STAGING)$(PREFIX)/bin
 
 %:	%.c
 	$(CC) $(CFLAGS) -o $@ $< $(LIBS)
@@ -99,6 +100,9 @@ eb-tools-install-tools:
 	install -d $(DESTDIR)$(BINDIR)
 	for ITEM in $(EB_TOOLS_TO_BUILD); do \
 		install -m 0755 $$ITEM $(DESTDIR)$(BINDIR); \
+	done
+	for EXTRA_ITEM in $(EXTRA_TARGETS); do \
+		install -m 0755 $$EXTRA_ITEM $(DESTDIR)$(BINDIR); \
 	done
 
 eb-tools-install-simple-display:
