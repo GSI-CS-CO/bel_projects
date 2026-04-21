@@ -143,6 +143,26 @@ pipeline {
        }
        failure {
            echo "Some builds failed."
+
+           emailext (
+               subject: "Build failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+               body: """
+                   The build has failed.
+
+                   Job: ${env.JOB_NAME}
+                   Build Number: ${env.BUILD_NUMBER}
+                   Branch: ${env.BRANCH_NAME}
+
+                   Please check the build details here:
+                   ${env.BUILD_URL}
+
+                   The failure may be related to recent commits included in this build.
+               """,
+               recipientProviders: [
+                   [$class: 'CulpritsRecipientProvider'],
+                   [$class: 'DevelopersRecipientProvider']
+               ]
+           )
        }
        success {
            echo "All builds succeeded!"
