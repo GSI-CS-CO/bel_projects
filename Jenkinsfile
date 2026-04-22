@@ -120,7 +120,7 @@ pipeline {
                        [name: "addac", quartus: "18"],
                        [name: "addac2", quartus: "18"],
                        [name: "diob", quartus: "18"],
-                       [name: "sio", quartus: "18"],
+                       [name: "sio3", quartus: "18"],
                        [name: "pexarria10", quartus: "23"],
                        [name: "ftm10", quartus: "23"],
                        [name: "scu4slim", quartus: "23"],
