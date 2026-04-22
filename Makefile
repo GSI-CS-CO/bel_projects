@@ -128,7 +128,7 @@ if [ "$(BUILD_ARTIFACT)" = "yes" ] || [ "$(BUILD_ARTIFACT)" = "y" ]; then \
     done; \
     echo "Generated artifact files!"; \
 else \
-    echo "BUILD_ARTIFACT is not set to yes/y – skipping artifact generation."; \
+    echo "BUILD_ARTIFACT is not set to yes/y - skipping artifact generation."; \
 fi'
 endef
 
