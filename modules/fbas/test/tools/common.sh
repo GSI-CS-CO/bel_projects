@@ -224,26 +224,22 @@ check_dm_schedule() {
     local -n msg_block="$4"
 
     # timing message rates used for measurements
-    local std_rates=(100 300 600 1000 1500 3000 6000) # standard rates, Hz
-    local high_rates=(10000 100000)                   # high rates, Hz
-    local all_rates=()                                # all rates, Hz
+    # Aggregate message reception frequency at receiver, Hz
+    #
+    # | TX rate, ms |        sender(s)         |
+    # |             | 1    | 4   | 8    | 16   |
+    # |----------------------------------------|
+    # | 100         | 10   | 40  | 80   | 160  |
+    # | 80          | 12,5 | 50  | 100  | 200  | -> recommended to probe
+    # | 50          | 20   | 80  | 160  | 320  |
+    # | 33,3        | 30   | 120 | 240  | 480  | -> specified in FBAS specs
+    # | 20          | 50   | 200 | 400  | 800  |
+    # | 10          | 100  | 400 | 800  | 1600 |
+    # | 5           | 200  | 800 | 1600 | 3200 |
 
-    local index=0
-    for rate in "${std_rates[@]}" ; do
-        all_rates[index]=$rate
-        index=$(( $index + 1 ))
-    done
-
-    if [ "$enable_high_rates" = "y" ]; then
-        for first in "${high_rates[@]}"; do
-            step=$first               # iteration step
-            last=$(( 10 * $first ))   # last value
-            for rate in $(seq $first $step $last); do
-                all_rates[index]=$rate
-                index=$(( $index + 1 ))
-            done
-        done
-    fi
+    local std_periods=(100000 80000 50000 33333 20000 10000 5000) # default messaging periods [us]
+    local high_periods=(2000 1000)                                # additional higher messaging periods [us]
+    local all_rates=()                                            # all allowed message reception rates [Hz]
 
     # determine the timing message block depth: number of messages with the same timestamp
     # the block depth is obtained from a given schedule filename
@@ -257,9 +253,24 @@ check_dm_schedule() {
         exit 2
     fi
 
+    # calculate the aggregate message reception rates (for RX node)
+
+    local index=0
+    for period in "${std_periods[@]}" ; do
+        all_rates[index]=$(bc <<< "scale=1; 1000000/$period * $block") # floating-point arithmetic
+        index=$(( $index + 1 ))
+    done
+
+    if [ "$enable_high_rates" = "y" ]; then
+        for period in "${high_periods[@]}"; do
+            all_rates[index]=$(bc <<< "scale=1; 1000000/$period * $block")
+            index=$(( $index + 1 ))
+        done
+    fi
+
     echo -e "Timing message block depth: $block [messages]"
 
-    echo "Measurements will be done with following message rates [Hz]:"
+    echo "Measurements will be done for the following message reception rates [Hz]:"
     for rate in ${all_rates[*]}; do
         echo $rate
     done
