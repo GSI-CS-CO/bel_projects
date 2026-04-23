@@ -170,8 +170,7 @@ unset results
 for i in ${!m_rates[@]}; do
 
     rate=${m_rates[$i]}
-    t_msg=$(( 1000000000 / $rate ))               # period of single tmg msg [ns], not used
-    t_period=$(( $m_block * 1000000000 / $rate )) # period of tmg msgs block [ns]
+    t_period=$(bc <<< "1000000000 / $rate * $m_block") # period of tmg msgs block [ns]
 
     header="$(printf "%6s | msg rate=%s Hz, period=%s ns" $i $rate $t_period)"
     echo "Measurement: $header"
