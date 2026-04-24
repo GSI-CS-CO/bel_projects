@@ -1,3 +1,8 @@
+def __helper():
+  dirs = []
+  dirs.extend(["src/hdl"])
+  return dirs
+
 files = [
   "../../ip_cores/neorv32/rtl/core/neorv32_application_image.vhd",
   "../../ip_cores/neorv32/rtl/core/neorv32_bootloader_image.vhd",
@@ -49,9 +54,8 @@ files = [
   "../../ip_cores/neorv32/rtl/core/neorv32_uart.vhd",
   "../../ip_cores/neorv32/rtl/core/neorv32_wdt.vhd",
   "../../ip_cores/neorv32/rtl/core/neorv32_tracer.vhd",
-  "../../ip_cores/neorv32/rtl/core/neorv32_xbus.vhd",
-  "src/hdl/neorv32_shell_pkg.vhd",
-  "src/hdl/neorv32_shell.vhd",
+  "../../ip_cores/neorv32/rtl/core/neorv32_xbus.vhd"
 ]
-
 library = "neorv32"
+
+modules = {"local": __helper() }
