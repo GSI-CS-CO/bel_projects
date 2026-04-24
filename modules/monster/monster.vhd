@@ -71,11 +71,14 @@ use work.endpoint_pkg.all;
 use work.cpri_phy_reconf_pkg.all;
 use work.beam_dump_pkg.all;
 use work.wb_i2c_wrapper_pkg.all;
-use work.remote_update_pkg.all;
 use work.enc_err_counter_pkg.all;
 use work.a10vs_pkg.all;
 use work.cellular_ram_pkg.all;
 use work.neorv32_shell_pkg.all;
+use work.remote_update_pkg.all;
+
+--library altera_remote_update_231;
+--use altera_remote_update_231.remote_update_pkg.all;
 
 entity monster is
   generic(
