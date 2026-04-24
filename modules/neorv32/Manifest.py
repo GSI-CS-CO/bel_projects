@@ -1,7 +1,6 @@
 library="neorv32"
 
 files = [
-  "../../ip_cores/neorv32/rtl/core/neorv32_package.vhd",
   "../../ip_cores/neorv32/rtl/core/neorv32_bootrom_image.vhd",
   "../../ip_cores/neorv32/rtl/core/neorv32_bootrom_rom.vhd",
   "../../ip_cores/neorv32/rtl/core/neorv32_bootrom.vhd",
@@ -42,6 +41,7 @@ files = [
   "../../ip_cores/neorv32/rtl/core/neorv32_imem.vhd",
   "../../ip_cores/neorv32/rtl/core/neorv32_neoled.vhd",
   "../../ip_cores/neorv32/rtl/core/neorv32_onewire.vhd",
+  "../../ip_cores/neorv32/rtl/core/neorv32_package.vhd",
   "../../ip_cores/neorv32/rtl/core/neorv32_prim.vhd",
   "../../ip_cores/neorv32/rtl/core/neorv32_pwm.vhd",
   "../../ip_cores/neorv32/rtl/core/neorv32_sdi.vhd",
