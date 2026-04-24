@@ -1,14 +1,48 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<system name="$${FILENAME}">
- <component
-   name="$${FILENAME}"
-   displayName="$${FILENAME}"
-   version="1.0"
-   description=""
-   tags="INTERNAL_COMPONENT=true"
-   categories="System" />
- <parameter name="bonusData"><![CDATA[bonusData 
+<?xml version="1.0" ?>
+<!--Your use of Intel Corporation's design tools, logic functions 
+and other software and tools, and any partner logic 
+functions, and any output files from any of the foregoing 
+(including device programming or simulation files), and any 
+associated documentation or information are expressly subject 
+to the terms and conditions of the Intel Program License 
+Subscription Agreement, the Intel Quartus Prime License Agreement,
+the Intel FPGA IP License Agreement, or other applicable license
+agreement, including, without limitation, that your use is for
+the sole purpose of programming logic devices manufactured by
+Intel and sold by Intel or its authorized distributors.  Please
+refer to the applicable agreement for further details, at
+https://fpgasoftware.intel.com/eula.-->
+<ipxact:design xmlns:altera="http://www.altera.com/XMLSchema/IPXact2014/extensions" xmlns:ipxact="http://www.accellera.org/XMLSchema/IPXACT/1685-2014">
+  <ipxact:vendor>Altera Corporation</ipxact:vendor>
+  <ipxact:library>asmi10</ipxact:library>
+  <ipxact:name>asmi10</ipxact:name>
+  <ipxact:version>1.0</ipxact:version>
+  <ipxact:componentInstances></ipxact:componentInstances>
+  <ipxact:vendorExtensions>
+    <altera:catalog_card_info>
+      <altera:name>$${FILENAME}</altera:name>
+      <altera:displayName>$${FILENAME}</altera:displayName>
+      <altera:version>1.0</altera:version>
+      <altera:description></altera:description>
+      <altera:tags>AUTHORSHIP=Altera /// INTERNAL_COMPONENT=true</altera:tags>
+      <altera:categories>System</altera:categories>
+      <altera:tool>QsysStandard</altera:tool>
+    </altera:catalog_card_info>
+    <altera:altera_system_parameters>
+      <ipxact:parameters>
+        <ipxact:parameter parameterId="board" type="string">
+          <ipxact:name>board</ipxact:name>
+          <ipxact:displayName>Board</ipxact:displayName>
+          <ipxact:value>default</ipxact:value>
+        </ipxact:parameter>
+        <ipxact:parameter parameterId="bonusData" type="string">
+          <ipxact:name>bonusData</ipxact:name>
+          <ipxact:displayName>bonusData</ipxact:displayName>
+          <ipxact:value>bonusData 
 {
+   element $system
+   {
+   }
    element asmi_parallel_0
    {
       datum _sortIndex
@@ -18,202 +52,353 @@
       }
    }
 }
-]]></parameter>
- <parameter name="clockCrossingAdapter" value="HANDSHAKE" />
- <parameter name="device" value="10AX027E3F29E2SG" />
- <parameter name="deviceFamily" value="Arria 10" />
- <parameter name="deviceSpeedGrade" value="2" />
- <parameter name="fabricMode" value="QSYS" />
- <parameter name="generateLegacySim" value="false" />
- <parameter name="generationId" value="0" />
- <parameter name="globalResetBus" value="false" />
- <parameter name="hdlLanguage" value="VERILOG" />
- <parameter name="hideFromIPCatalog" value="true" />
- <parameter name="lockedInterfaceDefinition" value="" />
- <parameter name="maxAdditionalLatency" value="1" />
- <parameter name="projectName" value="" />
- <parameter name="sopcBorderPoints" value="false" />
- <parameter name="systemHash" value="0" />
- <parameter name="testBenchDutName" value="" />
- <parameter name="timeStamp" value="0" />
- <parameter name="useTestBenchNamingPattern" value="false" />
- <instanceScript></instanceScript>
- <interface name="addr" internal="asmi_parallel_0.addr" type="conduit" dir="end">
-  <port name="addr" internal="addr" />
- </interface>
- <interface name="busy" internal="asmi_parallel_0.busy" type="conduit" dir="end">
-  <port name="busy" internal="busy" />
- </interface>
- <interface name="clkin" internal="asmi_parallel_0.clkin" type="clock" dir="end">
-  <port name="clkin" internal="clkin" />
- </interface>
- <interface
-   name="data_valid"
-   internal="asmi_parallel_0.data_valid"
-   type="conduit"
-   dir="end">
-  <port name="data_valid" internal="data_valid" />
- </interface>
- <interface
-   name="datain"
-   internal="asmi_parallel_0.datain"
-   type="conduit"
-   dir="end">
-  <port name="datain" internal="datain" />
- </interface>
- <interface
-   name="dataout"
-   internal="asmi_parallel_0.dataout"
-   type="conduit"
-   dir="end">
-  <port name="dataout" internal="dataout" />
- </interface>
- <interface
-   name="en4b_addr"
-   internal="asmi_parallel_0.en4b_addr"
-   type="conduit"
-   dir="end">
-  <port name="en4b_addr" internal="en4b_addr" />
- </interface>
- <interface
-   name="ex4b_addr"
-   internal="asmi_parallel_0.ex4b_addr"
-   type="conduit"
-   dir="end">
-  <port name="ex4b_addr" internal="ex4b_addr" />
- </interface>
- <interface
-   name="fast_read"
-   internal="asmi_parallel_0.fast_read"
-   type="conduit"
-   dir="end">
-  <port name="fast_read" internal="fast_read" />
- </interface>
- <interface
-   name="illegal_erase"
-   internal="asmi_parallel_0.illegal_erase"
-   type="conduit"
-   dir="end">
-  <port name="illegal_erase" internal="illegal_erase" />
- </interface>
- <interface
-   name="illegal_write"
-   internal="asmi_parallel_0.illegal_write"
-   type="conduit"
-   dir="end">
-  <port name="illegal_write" internal="illegal_write" />
- </interface>
- <interface name="rden" internal="asmi_parallel_0.rden" type="conduit" dir="end">
-  <port name="rden" internal="rden" />
- </interface>
- <interface
-   name="rdid_out"
-   internal="asmi_parallel_0.rdid_out"
-   type="conduit"
-   dir="end">
-  <port name="rdid_out" internal="rdid_out" />
- </interface>
- <interface name="read" internal="asmi_parallel_0.read" />
- <interface
-   name="read_address"
-   internal="asmi_parallel_0.read_address"
-   type="conduit"
-   dir="end">
-  <port name="read_address" internal="read_address" />
- </interface>
- <interface
-   name="read_dummyclk"
-   internal="asmi_parallel_0.read_dummyclk"
-   type="conduit"
-   dir="end">
-  <port name="read_dummyclk" internal="read_dummyclk" />
- </interface>
- <interface
-   name="read_rdid"
-   internal="asmi_parallel_0.read_rdid"
-   type="conduit"
-   dir="end">
-  <port name="read_rdid" internal="read_rdid" />
- </interface>
- <interface
-   name="read_status"
-   internal="asmi_parallel_0.read_status"
-   type="conduit"
-   dir="end">
-  <port name="read_status" internal="read_status" />
- </interface>
- <interface name="reset" internal="asmi_parallel_0.reset" type="reset" dir="end">
-  <port name="reset" internal="reset" />
- </interface>
- <interface name="sce" internal="asmi_parallel_0.sce" type="conduit" dir="end">
-  <port name="sce" internal="sce" />
- </interface>
- <interface
-   name="sector_erase"
-   internal="asmi_parallel_0.sector_erase"
-   type="conduit"
-   dir="end">
-  <port name="sector_erase" internal="sector_erase" />
- </interface>
- <interface
-   name="shift_bytes"
-   internal="asmi_parallel_0.shift_bytes"
-   type="conduit"
-   dir="end">
-  <port name="shift_bytes" internal="shift_bytes" />
- </interface>
- <interface
-   name="status_out"
-   internal="asmi_parallel_0.status_out"
-   type="conduit"
-   dir="end">
-  <port name="status_out" internal="status_out" />
- </interface>
- <interface name="wren" internal="asmi_parallel_0.wren" type="conduit" dir="end">
-  <port name="wren" internal="wren" />
- </interface>
- <interface
-   name="write"
-   internal="asmi_parallel_0.write"
-   type="conduit"
-   dir="end">
-  <port name="write" internal="write" />
- </interface>
- <module
-   name="asmi_parallel_0"
-   kind="altera_asmi_parallel"
-   version="23.1"
-   enabled="1"
-   autoexport="1">
-  <parameter name="CBX_AUTO_BLACKBOX" value="ALL" />
-  <parameter name="DATA_WIDTH" value="QUAD" />
-  <parameter name="DEVICE_FAMILY" value="Arria 10" />
-  <parameter name="ENABLE_SIM" value="false" />
-  <parameter name="EPCS_TYPE" value="MT25QU512" />
-  <parameter name="FLASH_RSTPIN" value="FALSE" />
-  <parameter name="INTENDED_DEVICE_FAMILY" value="Arria 10" />
-  <parameter name="PAGE_SIZE" value="256" />
-  <parameter name="WRITE_DUMMY_CLK" value="0" />
-  <parameter name="gui_bulk_erase" value="false" />
-  <parameter name="gui_die_erase" value="false" />
-  <parameter name="gui_ex4b_addr" value="true" />
-  <parameter name="gui_fast_read" value="true" />
-  <parameter name="gui_page_write" value="true" />
-  <parameter name="gui_read_address" value="true" />
-  <parameter name="gui_read_dummyclk" value="true" />
-  <parameter name="gui_read_rdid" value="true" />
-  <parameter name="gui_read_sid" value="false" />
-  <parameter name="gui_read_status" value="true" />
-  <parameter name="gui_sector_erase" value="true" />
-  <parameter name="gui_sector_protect" value="false" />
-  <parameter name="gui_single_write" value="false" />
-  <parameter name="gui_use_asmiblock" value="false" />
-  <parameter name="gui_use_eab" value="false" />
-  <parameter name="gui_wren" value="false" />
-  <parameter name="gui_write" value="true" />
- </module>
- <interconnectRequirement for="$system" name="qsys_mm.clockCrossingAdapter" value="HANDSHAKE" />
- <interconnectRequirement for="$system" name="qsys_mm.enableEccProtection" value="FALSE" />
- <interconnectRequirement for="$system" name="qsys_mm.insertDefaultSlave" value="FALSE" />
- <interconnectRequirement for="$system" name="qsys_mm.maxAdditionalLatency" value="1" />
-</system>
+</ipxact:value>
+        </ipxact:parameter>
+        <ipxact:parameter parameterId="cpuInfo" type="string">
+          <ipxact:name>cpuInfo</ipxact:name>
+          <ipxact:displayName>cpuInfo</ipxact:displayName>
+          <ipxact:value></ipxact:value>
+        </ipxact:parameter>
+        <ipxact:parameter parameterId="designId" type="string">
+          <ipxact:name>designId</ipxact:name>
+          <ipxact:displayName>designId</ipxact:displayName>
+          <ipxact:value></ipxact:value>
+        </ipxact:parameter>
+        <ipxact:parameter parameterId="device" type="string">
+          <ipxact:name>device</ipxact:name>
+          <ipxact:displayName>Device</ipxact:displayName>
+          <ipxact:value>10AX027E3F29E2SG</ipxact:value>
+        </ipxact:parameter>
+        <ipxact:parameter parameterId="deviceFamily" type="string">
+          <ipxact:name>deviceFamily</ipxact:name>
+          <ipxact:displayName>Device family</ipxact:displayName>
+          <ipxact:value>Arria 10</ipxact:value>
+        </ipxact:parameter>
+        <ipxact:parameter parameterId="deviceSpeedGrade" type="string">
+          <ipxact:name>deviceSpeedGrade</ipxact:name>
+          <ipxact:displayName>Device Speed Grade</ipxact:displayName>
+          <ipxact:value>2</ipxact:value>
+        </ipxact:parameter>
+        <ipxact:parameter parameterId="dflBitArray" type="string">
+          <ipxact:name>dflBitArray</ipxact:name>
+          <ipxact:displayName>dflBitArray</ipxact:displayName>
+          <ipxact:value></ipxact:value>
+        </ipxact:parameter>
+        <ipxact:parameter parameterId="fabricMode" type="string">
+          <ipxact:name>fabricMode</ipxact:name>
+          <ipxact:displayName>fabricMode</ipxact:displayName>
+          <ipxact:value>QSYS</ipxact:value>
+        </ipxact:parameter>
+        <ipxact:parameter parameterId="generateLegacySim" type="bit">
+          <ipxact:name>generateLegacySim</ipxact:name>
+          <ipxact:displayName>generateLegacySim</ipxact:displayName>
+          <ipxact:value>false</ipxact:value>
+        </ipxact:parameter>
+        <ipxact:parameter parameterId="generationId" type="int">
+          <ipxact:name>generationId</ipxact:name>
+          <ipxact:displayName>Generation Id</ipxact:displayName>
+          <ipxact:value>0</ipxact:value>
+        </ipxact:parameter>
+        <ipxact:parameter parameterId="globalResetBus" type="bit">
+          <ipxact:name>globalResetBus</ipxact:name>
+          <ipxact:displayName>Global reset</ipxact:displayName>
+          <ipxact:value>false</ipxact:value>
+        </ipxact:parameter>
+        <ipxact:parameter parameterId="hdlLanguage" type="string">
+          <ipxact:name>hdlLanguage</ipxact:name>
+          <ipxact:displayName>hdlLanguage</ipxact:displayName>
+          <ipxact:value>VERILOG</ipxact:value>
+        </ipxact:parameter>
+        <ipxact:parameter parameterId="hideFromIPCatalog" type="bit">
+          <ipxact:name>hideFromIPCatalog</ipxact:name>
+          <ipxact:displayName>Hide from IP Catalog</ipxact:displayName>
+          <ipxact:value>true</ipxact:value>
+        </ipxact:parameter>
+        <ipxact:parameter parameterId="lockedInterfaceDefinition" type="string">
+          <ipxact:name>lockedInterfaceDefinition</ipxact:name>
+          <ipxact:displayName>lockedInterfaceDefinition</ipxact:displayName>
+          <ipxact:value></ipxact:value>
+        </ipxact:parameter>
+        <ipxact:parameter parameterId="sopcBorderPoints" type="bit">
+          <ipxact:name>sopcBorderPoints</ipxact:name>
+          <ipxact:displayName>Use SOPC Builder port naming</ipxact:displayName>
+          <ipxact:value>false</ipxact:value>
+        </ipxact:parameter>
+        <ipxact:parameter parameterId="systemHash" type="longint">
+          <ipxact:name>systemHash</ipxact:name>
+          <ipxact:displayName>systemHash</ipxact:displayName>
+          <ipxact:value>0</ipxact:value>
+        </ipxact:parameter>
+        <ipxact:parameter parameterId="systemInfos" type="string">
+          <ipxact:name>systemInfos</ipxact:name>
+          <ipxact:displayName>systemInfos</ipxact:displayName>
+          <ipxact:value>&lt;systemInfosDefinition&gt;
+    &lt;connPtSystemInfos/&gt;
+&lt;/systemInfosDefinition&gt;</ipxact:value>
+        </ipxact:parameter>
+        <ipxact:parameter parameterId="systemScripts" type="string">
+          <ipxact:name>systemScripts</ipxact:name>
+          <ipxact:displayName>systemScripts</ipxact:displayName>
+          <ipxact:value></ipxact:value>
+        </ipxact:parameter>
+        <ipxact:parameter parameterId="testBenchDutName" type="string">
+          <ipxact:name>testBenchDutName</ipxact:name>
+          <ipxact:displayName>Use Test Bench Naming Pattern</ipxact:displayName>
+          <ipxact:value></ipxact:value>
+        </ipxact:parameter>
+        <ipxact:parameter parameterId="timeStamp" type="longint">
+          <ipxact:name>timeStamp</ipxact:name>
+          <ipxact:displayName>timeStamp</ipxact:displayName>
+          <ipxact:value>0</ipxact:value>
+        </ipxact:parameter>
+        <ipxact:parameter parameterId="useTestBenchNamingPattern" type="bit">
+          <ipxact:name>useTestBenchNamingPattern</ipxact:name>
+          <ipxact:displayName>Use Test Bench Naming Pattern</ipxact:displayName>
+          <ipxact:value>false</ipxact:value>
+        </ipxact:parameter>
+      </ipxact:parameters>
+    </altera:altera_system_parameters>
+    <altera:instance_parameters></altera:instance_parameters>
+    <altera:instance_script></altera:instance_script>
+    <altera:modules>
+      <altera:module altera:enabled="true" altera:auto_export="true">
+        <altera:entity_info>
+          <ipxact:vendor>Altera</ipxact:vendor>
+          <ipxact:library>asmi_parallel_0</ipxact:library>
+          <ipxact:name>altera_asmi_parallel</ipxact:name>
+          <ipxact:version>19.1.0</ipxact:version>
+        </altera:entity_info>
+        <altera:altera_module_parameters>
+          <ipxact:parameters>
+            <ipxact:parameter parameterId="CBX_AUTO_BLACKBOX" type="string">
+              <ipxact:name>CBX_AUTO_BLACKBOX</ipxact:name>
+              <ipxact:displayName>CBX_AUTO_BLACKBOX</ipxact:displayName>
+              <ipxact:value>ALL</ipxact:value>
+            </ipxact:parameter>
+            <ipxact:parameter parameterId="DATA_WIDTH" type="string">
+              <ipxact:name>DATA_WIDTH</ipxact:name>
+              <ipxact:displayName>Choose I/O mode</ipxact:displayName>
+              <ipxact:value>QUAD</ipxact:value>
+            </ipxact:parameter>
+            <ipxact:parameter parameterId="DEVICE_FAMILY" type="string">
+              <ipxact:name>DEVICE_FAMILY</ipxact:name>
+              <ipxact:displayName>DEVICE_FAMILY</ipxact:displayName>
+              <ipxact:value>Arria 10</ipxact:value>
+            </ipxact:parameter>
+            <ipxact:parameter parameterId="ENABLE_SIM" type="bit">
+              <ipxact:name>ENABLE_SIM</ipxact:name>
+              <ipxact:displayName>Enable simulation</ipxact:displayName>
+              <ipxact:value>false</ipxact:value>
+            </ipxact:parameter>
+            <ipxact:parameter parameterId="EPCS_TYPE" type="string">
+              <ipxact:name>EPCS_TYPE</ipxact:name>
+              <ipxact:displayName>Configuration device type</ipxact:displayName>
+              <ipxact:value>MT25QU512</ipxact:value>
+            </ipxact:parameter>
+            <ipxact:parameter parameterId="FLASH_RSTPIN" type="string">
+              <ipxact:name>FLASH_RSTPIN</ipxact:name>
+              <ipxact:displayName>FLASH_RSTPIN</ipxact:displayName>
+              <ipxact:value>FALSE</ipxact:value>
+            </ipxact:parameter>
+            <ipxact:parameter parameterId="INTENDED_DEVICE_FAMILY" type="string">
+              <ipxact:name>INTENDED_DEVICE_FAMILY</ipxact:name>
+              <ipxact:displayName>INTENDED_DEVICE_FAMILY</ipxact:displayName>
+              <ipxact:value>Arria 10</ipxact:value>
+            </ipxact:parameter>
+            <ipxact:parameter parameterId="PAGE_SIZE" type="int">
+              <ipxact:name>PAGE_SIZE</ipxact:name>
+              <ipxact:displayName>'page write' size</ipxact:displayName>
+              <ipxact:value>256</ipxact:value>
+            </ipxact:parameter>
+            <ipxact:parameter parameterId="WRITE_DUMMY_CLK" type="int">
+              <ipxact:name>WRITE_DUMMY_CLK</ipxact:name>
+              <ipxact:displayName>WRITE_DUMMY_CLK</ipxact:displayName>
+              <ipxact:value>0</ipxact:value>
+            </ipxact:parameter>
+            <ipxact:parameter parameterId="gui_bulk_erase" type="bit">
+              <ipxact:name>gui_bulk_erase</ipxact:name>
+              <ipxact:displayName>Use 'bulk_erase' port</ipxact:displayName>
+              <ipxact:value>false</ipxact:value>
+            </ipxact:parameter>
+            <ipxact:parameter parameterId="gui_die_erase" type="bit">
+              <ipxact:name>gui_die_erase</ipxact:name>
+              <ipxact:displayName>Use 'die_erase' port</ipxact:displayName>
+              <ipxact:value>false</ipxact:value>
+            </ipxact:parameter>
+            <ipxact:parameter parameterId="gui_ex4b_addr" type="bit">
+              <ipxact:name>gui_ex4b_addr</ipxact:name>
+              <ipxact:displayName>Use 'ex4b_addr' port</ipxact:displayName>
+              <ipxact:value>true</ipxact:value>
+            </ipxact:parameter>
+            <ipxact:parameter parameterId="gui_fast_read" type="bit">
+              <ipxact:name>gui_fast_read</ipxact:name>
+              <ipxact:displayName>Use 'fast_read' port</ipxact:displayName>
+              <ipxact:value>true</ipxact:value>
+            </ipxact:parameter>
+            <ipxact:parameter parameterId="gui_page_write" type="bit">
+              <ipxact:name>gui_page_write</ipxact:name>
+              <ipxact:displayName>Page write</ipxact:displayName>
+              <ipxact:value>true</ipxact:value>
+            </ipxact:parameter>
+            <ipxact:parameter parameterId="gui_read_address" type="bit">
+              <ipxact:name>gui_read_address</ipxact:name>
+              <ipxact:displayName>Use 'read_address' port</ipxact:displayName>
+              <ipxact:value>true</ipxact:value>
+            </ipxact:parameter>
+            <ipxact:parameter parameterId="gui_read_dummyclk" type="bit">
+              <ipxact:name>gui_read_dummyclk</ipxact:name>
+              <ipxact:displayName>Read device dummy clock</ipxact:displayName>
+              <ipxact:value>true</ipxact:value>
+            </ipxact:parameter>
+            <ipxact:parameter parameterId="gui_read_rdid" type="bit">
+              <ipxact:name>gui_read_rdid</ipxact:name>
+              <ipxact:displayName>Use 'read_rdid' and rdid_out' ports</ipxact:displayName>
+              <ipxact:value>true</ipxact:value>
+            </ipxact:parameter>
+            <ipxact:parameter parameterId="gui_read_sid" type="bit">
+              <ipxact:name>gui_read_sid</ipxact:name>
+              <ipxact:displayName>Use 'read_sid' port</ipxact:displayName>
+              <ipxact:value>false</ipxact:value>
+            </ipxact:parameter>
+            <ipxact:parameter parameterId="gui_read_status" type="bit">
+              <ipxact:name>gui_read_status</ipxact:name>
+              <ipxact:displayName>Use 'read_status' port</ipxact:displayName>
+              <ipxact:value>true</ipxact:value>
+            </ipxact:parameter>
+            <ipxact:parameter parameterId="gui_sector_erase" type="bit">
+              <ipxact:name>gui_sector_erase</ipxact:name>
+              <ipxact:displayName>Use 'sector_erase' port</ipxact:displayName>
+              <ipxact:value>true</ipxact:value>
+            </ipxact:parameter>
+            <ipxact:parameter parameterId="gui_sector_protect" type="bit">
+              <ipxact:name>gui_sector_protect</ipxact:name>
+              <ipxact:displayName>Use 'sector_protect' port</ipxact:displayName>
+              <ipxact:value>false</ipxact:value>
+            </ipxact:parameter>
+            <ipxact:parameter parameterId="gui_single_write" type="bit">
+              <ipxact:name>gui_single_write</ipxact:name>
+              <ipxact:displayName>Single byte write</ipxact:displayName>
+              <ipxact:value>false</ipxact:value>
+            </ipxact:parameter>
+            <ipxact:parameter parameterId="gui_use_asmiblock" type="bit">
+              <ipxact:name>gui_use_asmiblock</ipxact:name>
+              <ipxact:displayName>Disable dedicated Active Serial interface</ipxact:displayName>
+              <ipxact:value>false</ipxact:value>
+            </ipxact:parameter>
+            <ipxact:parameter parameterId="gui_use_eab" type="bit">
+              <ipxact:name>gui_use_eab</ipxact:name>
+              <ipxact:displayName>Store 'page write' data in logic elements</ipxact:displayName>
+              <ipxact:value>false</ipxact:value>
+            </ipxact:parameter>
+            <ipxact:parameter parameterId="gui_wren" type="bit">
+              <ipxact:name>gui_wren</ipxact:name>
+              <ipxact:displayName>Use 'wren' port</ipxact:displayName>
+              <ipxact:value>false</ipxact:value>
+            </ipxact:parameter>
+            <ipxact:parameter parameterId="gui_write" type="bit">
+              <ipxact:name>gui_write</ipxact:name>
+              <ipxact:displayName>Enable write operation</ipxact:displayName>
+              <ipxact:value>true</ipxact:value>
+            </ipxact:parameter>
+          </ipxact:parameters>
+        </altera:altera_module_parameters>
+        <altera:altera_ecc_parameter_mappings altera:parentModule=""></altera:altera_ecc_parameter_mappings>
+      </altera:module>
+    </altera:modules>
+    <altera:connections></altera:connections>
+    <altera:interconnect_requirements></altera:interconnect_requirements>
+    <altera:wire_level_connections></altera:wire_level_connections>
+    <altera:hdl_parameters></altera:hdl_parameters>
+    <altera:hdl_parameter_mappings></altera:hdl_parameter_mappings>
+    <altera:preserved_ports_for_debug></altera:preserved_ports_for_debug>
+    <altera:altera_group_hierarchy_contents></altera:altera_group_hierarchy_contents>
+    <altera:altera_interface_boundary>
+      <altera:interface_mapping altera:name="addr" altera:internal="asmi_parallel_0.addr" altera:type="conduit" altera:dir="end">
+        <altera:port_mapping altera:name="addr" altera:internal="addr"></altera:port_mapping>
+      </altera:interface_mapping>
+      <altera:interface_mapping altera:name="busy" altera:internal="asmi_parallel_0.busy" altera:type="conduit" altera:dir="end">
+        <altera:port_mapping altera:name="busy" altera:internal="busy"></altera:port_mapping>
+      </altera:interface_mapping>
+      <altera:interface_mapping altera:name="clkin" altera:internal="asmi_parallel_0.clkin" altera:type="clock" altera:dir="end">
+        <altera:port_mapping altera:name="clkin" altera:internal="clkin"></altera:port_mapping>
+      </altera:interface_mapping>
+      <altera:interface_mapping altera:name="data_valid" altera:internal="asmi_parallel_0.data_valid" altera:type="conduit" altera:dir="end">
+        <altera:port_mapping altera:name="data_valid" altera:internal="data_valid"></altera:port_mapping>
+      </altera:interface_mapping>
+      <altera:interface_mapping altera:name="datain" altera:internal="asmi_parallel_0.datain" altera:type="conduit" altera:dir="end">
+        <altera:port_mapping altera:name="datain" altera:internal="datain"></altera:port_mapping>
+      </altera:interface_mapping>
+      <altera:interface_mapping altera:name="dataout" altera:internal="asmi_parallel_0.dataout" altera:type="conduit" altera:dir="end">
+        <altera:port_mapping altera:name="dataout" altera:internal="dataout"></altera:port_mapping>
+      </altera:interface_mapping>
+      <altera:interface_mapping altera:name="en4b_addr" altera:internal="asmi_parallel_0.en4b_addr" altera:type="conduit" altera:dir="end">
+        <altera:port_mapping altera:name="en4b_addr" altera:internal="en4b_addr"></altera:port_mapping>
+      </altera:interface_mapping>
+      <altera:interface_mapping altera:name="ex4b_addr" altera:internal="asmi_parallel_0.ex4b_addr" altera:type="conduit" altera:dir="end">
+        <altera:port_mapping altera:name="ex4b_addr" altera:internal="ex4b_addr"></altera:port_mapping>
+      </altera:interface_mapping>
+      <altera:interface_mapping altera:name="fast_read" altera:internal="asmi_parallel_0.fast_read" altera:type="conduit" altera:dir="end">
+        <altera:port_mapping altera:name="fast_read" altera:internal="fast_read"></altera:port_mapping>
+      </altera:interface_mapping>
+      <altera:interface_mapping altera:name="illegal_erase" altera:internal="asmi_parallel_0.illegal_erase" altera:type="conduit" altera:dir="end">
+        <altera:port_mapping altera:name="illegal_erase" altera:internal="illegal_erase"></altera:port_mapping>
+      </altera:interface_mapping>
+      <altera:interface_mapping altera:name="illegal_write" altera:internal="asmi_parallel_0.illegal_write" altera:type="conduit" altera:dir="end">
+        <altera:port_mapping altera:name="illegal_write" altera:internal="illegal_write"></altera:port_mapping>
+      </altera:interface_mapping>
+      <altera:interface_mapping altera:name="rden" altera:internal="asmi_parallel_0.rden" altera:type="conduit" altera:dir="end">
+        <altera:port_mapping altera:name="rden" altera:internal="rden"></altera:port_mapping>
+      </altera:interface_mapping>
+      <altera:interface_mapping altera:name="rdid_out" altera:internal="asmi_parallel_0.rdid_out" altera:type="conduit" altera:dir="end">
+        <altera:port_mapping altera:name="rdid_out" altera:internal="rdid_out"></altera:port_mapping>
+      </altera:interface_mapping>
+      <altera:interface_mapping altera:name="read" altera:internal="asmi_parallel_0.read"></altera:interface_mapping>
+      <altera:interface_mapping altera:name="read_address" altera:internal="asmi_parallel_0.read_address" altera:type="conduit" altera:dir="end">
+        <altera:port_mapping altera:name="read_address" altera:internal="read_address"></altera:port_mapping>
+      </altera:interface_mapping>
+      <altera:interface_mapping altera:name="read_dummyclk" altera:internal="asmi_parallel_0.read_dummyclk" altera:type="conduit" altera:dir="end">
+        <altera:port_mapping altera:name="read_dummyclk" altera:internal="read_dummyclk"></altera:port_mapping>
+      </altera:interface_mapping>
+      <altera:interface_mapping altera:name="read_rdid" altera:internal="asmi_parallel_0.read_rdid" altera:type="conduit" altera:dir="end">
+        <altera:port_mapping altera:name="read_rdid" altera:internal="read_rdid"></altera:port_mapping>
+      </altera:interface_mapping>
+      <altera:interface_mapping altera:name="read_status" altera:internal="asmi_parallel_0.read_status" altera:type="conduit" altera:dir="end">
+        <altera:port_mapping altera:name="read_status" altera:internal="read_status"></altera:port_mapping>
+      </altera:interface_mapping>
+      <altera:interface_mapping altera:name="reset" altera:internal="asmi_parallel_0.reset" altera:type="reset" altera:dir="end">
+        <altera:port_mapping altera:name="reset" altera:internal="reset"></altera:port_mapping>
+      </altera:interface_mapping>
+      <altera:interface_mapping altera:name="sce" altera:internal="asmi_parallel_0.sce" altera:type="conduit" altera:dir="end">
+        <altera:port_mapping altera:name="sce" altera:internal="sce"></altera:port_mapping>
+      </altera:interface_mapping>
+      <altera:interface_mapping altera:name="sector_erase" altera:internal="asmi_parallel_0.sector_erase" altera:type="conduit" altera:dir="end">
+        <altera:port_mapping altera:name="sector_erase" altera:internal="sector_erase"></altera:port_mapping>
+      </altera:interface_mapping>
+      <altera:interface_mapping altera:name="shift_bytes" altera:internal="asmi_parallel_0.shift_bytes" altera:type="conduit" altera:dir="end">
+        <altera:port_mapping altera:name="shift_bytes" altera:internal="shift_bytes"></altera:port_mapping>
+      </altera:interface_mapping>
+      <altera:interface_mapping altera:name="status_out" altera:internal="asmi_parallel_0.status_out" altera:type="conduit" altera:dir="end">
+        <altera:port_mapping altera:name="status_out" altera:internal="status_out"></altera:port_mapping>
+      </altera:interface_mapping>
+      <altera:interface_mapping altera:name="wren" altera:internal="asmi_parallel_0.wren" altera:type="conduit" altera:dir="end">
+        <altera:port_mapping altera:name="wren" altera:internal="wren"></altera:port_mapping>
+      </altera:interface_mapping>
+      <altera:interface_mapping altera:name="write" altera:internal="asmi_parallel_0.write" altera:type="conduit" altera:dir="end">
+        <altera:port_mapping altera:name="write" altera:internal="write"></altera:port_mapping>
+      </altera:interface_mapping>
+    </altera:altera_interface_boundary>
+    <ipxact:components>
+      <ipxact:component>
+        <ipxact:vendor>Intel Corporation</ipxact:vendor>
+        <ipxact:library>addressMap</ipxact:library>
+        <ipxact:name>addressMap</ipxact:name>
+        <ipxact:version>1.0</ipxact:version>
+        <ipxact:busInterfaces></ipxact:busInterfaces>
+        <ipxact:addressSpaces></ipxact:addressSpaces>
+        <ipxact:memoryMaps></ipxact:memoryMaps>
+      </ipxact:component>
+    </ipxact:components>
+    <altera:altera_has_warnings>false</altera:altera_has_warnings>
+    <altera:altera_has_errors>false</altera:altera_has_errors>
+  </ipxact:vendorExtensions>
+</ipxact:design>

@@ -10,8 +10,8 @@ use work.aux_functions_pkg.all;
 use work.monster_pkg.all;
 use work.ep_crc32_pkg.all;
 
-library altera_asmi_parallel_181;
-use altera_asmi_parallel_181.asmi10_pkg.all;
+--library asmi10_altera_asmi_parallel_1910;
+----use asmi10_altera_asmi_parallel_1910.asmi10_pkg.all;
 
 entity wb_asmi is
   generic (
@@ -138,7 +138,7 @@ architecture arch of wb_asmi is
     );
   end component;
   -- changes the endianess BIG <-> LITTLE
-  function ChangeEndian(vec : std_ulogic_vector) return std_ulogic_vector is
+  function ChangeEndianu(vec : std_ulogic_vector) return std_ulogic_vector is
     variable vRet      : std_ulogic_vector(vec'range);
     constant cNumBytes : natural := vec'length / 8;
   begin
@@ -149,12 +149,12 @@ architecture arch of wb_asmi is
     end loop;  -- i
 
     return vRet;
-  end function ChangeEndian;
+  end function ChangeEndianu;
 
 
   function ChangeEndian(vec : std_logic_vector) return std_logic_vector is
   begin
-    return std_logic_vector(ChangeEndian(std_ulogic_vector(vec)));
+    return std_logic_vector(ChangeEndianu(std_ulogic_vector(vec)));
   end function ChangeEndian;
 
 begin
