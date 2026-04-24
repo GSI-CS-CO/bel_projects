@@ -1,157 +1,163 @@
+# Invalid assignment in <Version 25.3> "set_global_assignment -name SMART_RECOMPILE OFF"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[0] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[0] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[10] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[10] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[11] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[11] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[12] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[12] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[13] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[13] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[14] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[14] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[15] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[15] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[16] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[16] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[17] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[17] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[18] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[18] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[19] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[19] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[1] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[1] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[20] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[20] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[21] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[21] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[22] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[22] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[23] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[23] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[2] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[2] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[3] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[3] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[4] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[4] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[5] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[5] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[6] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[6] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[7] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[7] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[8] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[8] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[9] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[9] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_advn[0] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_advn[0] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_advn[1] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_advn[1] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_advn[2] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_advn[2] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_advn[3] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_advn[3] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cen[0] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cen[0] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cen[1] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cen[1] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cen[2] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cen[2] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cen[3] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cen[3] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_clk -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_clk -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cre[0] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cre[0] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cre[1] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cre[1] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cre[2] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cre[2] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cre[3] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cre[3] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[0] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[0] -section_id PSRAM_GROUP_INOUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[10] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[10] -section_id PSRAM_GROUP_INOUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[11] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[11] -section_id PSRAM_GROUP_INOUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[12] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[12] -section_id PSRAM_GROUP_INOUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[13] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[13] -section_id PSRAM_GROUP_INOUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[14] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[14] -section_id PSRAM_GROUP_INOUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[15] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[15] -section_id PSRAM_GROUP_INOUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[1] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[1] -section_id PSRAM_GROUP_INOUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[2] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[2] -section_id PSRAM_GROUP_INOUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[3] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[3] -section_id PSRAM_GROUP_INOUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[4] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[4] -section_id PSRAM_GROUP_INOUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[5] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[5] -section_id PSRAM_GROUP_INOUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[6] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[6] -section_id PSRAM_GROUP_INOUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[7] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[7] -section_id PSRAM_GROUP_INOUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[8] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[8] -section_id PSRAM_GROUP_INOUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[9] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[9] -section_id PSRAM_GROUP_INOUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_lbn -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_lbn -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_oen[0] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_oen[0] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_oen[1] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_oen[1] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_oen[2] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_oen[2] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_oen[3] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_oen[3] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_ubn -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_ubn -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wait[0] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wait[0] -section_id PSRAM_GROUP_IN"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wait[1] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wait[1] -section_id PSRAM_GROUP_IN"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wait[2] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wait[2] -section_id PSRAM_GROUP_IN"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wait[3] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wait[3] -section_id PSRAM_GROUP_IN"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wen[0] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wen[0] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wen[1] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wen[1] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wen[2] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wen[2] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wen[3] -section_id PSRAM_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wen[3] -section_id PSRAM_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_clk -section_id USB_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_clk -section_id USB_GROUP_IN"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_slrd -section_id USB_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_slrd -section_id USB_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_slwr -section_id USB_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_slwr -section_id USB_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_uclk -section_id USB_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_uclk -section_id USB_GROUP_IN"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_ures -section_id USB_GROUP"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_ures -section_id USB_GROUP_OUT"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name ECO_OPTIMIZE_TIMING ON"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top"
+# Obsolete assignment in <Version 25.3> "set_global_assignment -name PHYSICAL_SYNTHESIS_EFFORT EXTRA"
+# Obsolete assignment in <Version 25.3> "set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top"
 set_global_assignment -name ACTIVE_SERIAL_CLOCK FREQ_100MHZ
 set_global_assignment -name ADV_NETLIST_OPT_SYNTH_WYSIWYG_REMAP OFF
-set_global_assignment -name AHDL_FILE ../../../modules/modulbus/i2c.tdf
 set_global_assignment -name ALLOW_POWER_UP_DONT_CARE OFF
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[0] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[0] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[10] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[10] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[11] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[11] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[12] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[12] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[13] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[13] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[14] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[14] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[15] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[15] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[16] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[16] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[17] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[17] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[18] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[18] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[19] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[19] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[1] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[1] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[20] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[20] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[21] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[21] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[22] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[22] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[23] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[23] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[2] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[2] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[3] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[3] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[4] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[4] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[5] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[5] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[6] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[6] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[7] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[7] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[8] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[8] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[9] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[9] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_advn[0] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_advn[0] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_advn[1] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_advn[1] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_advn[2] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_advn[2] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_advn[3] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_advn[3] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cen[0] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cen[0] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cen[1] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cen[1] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cen[2] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cen[2] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cen[3] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cen[3] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_clk -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_clk -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cre[0] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cre[0] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cre[1] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cre[1] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cre[2] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cre[2] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cre[3] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cre[3] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[0] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[0] -section_id PSRAM_GROUP_INOUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[10] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[10] -section_id PSRAM_GROUP_INOUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[11] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[11] -section_id PSRAM_GROUP_INOUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[12] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[12] -section_id PSRAM_GROUP_INOUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[13] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[13] -section_id PSRAM_GROUP_INOUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[14] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[14] -section_id PSRAM_GROUP_INOUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[15] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[15] -section_id PSRAM_GROUP_INOUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[1] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[1] -section_id PSRAM_GROUP_INOUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[2] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[2] -section_id PSRAM_GROUP_INOUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[3] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[3] -section_id PSRAM_GROUP_INOUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[4] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[4] -section_id PSRAM_GROUP_INOUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[5] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[5] -section_id PSRAM_GROUP_INOUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[6] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[6] -section_id PSRAM_GROUP_INOUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[7] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[7] -section_id PSRAM_GROUP_INOUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[8] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[8] -section_id PSRAM_GROUP_INOUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[9] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[9] -section_id PSRAM_GROUP_INOUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_lbn -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_lbn -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_oen[0] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_oen[0] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_oen[1] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_oen[1] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_oen[2] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_oen[2] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_oen[3] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_oen[3] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_ubn -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_ubn -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wait[0] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wait[0] -section_id PSRAM_GROUP_IN
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wait[1] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wait[1] -section_id PSRAM_GROUP_IN
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wait[2] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wait[2] -section_id PSRAM_GROUP_IN
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wait[3] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wait[3] -section_id PSRAM_GROUP_IN
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wen[0] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wen[0] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wen[1] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wen[1] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wen[2] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wen[2] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wen[3] -section_id PSRAM_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wen[3] -section_id PSRAM_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_clk -section_id USB_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_clk -section_id USB_GROUP_IN
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_slrd -section_id USB_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_slrd -section_id USB_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_slwr -section_id USB_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_slwr -section_id USB_GROUP_OUT
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_uclk -section_id USB_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_uclk -section_id USB_GROUP_IN
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_ures -section_id USB_GROUP
-set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_ures -section_id USB_GROUP_OUT
 set_global_assignment -name AUTO_SHIFT_REGISTER_RECOGNITION OFF
+set_global_assignment -name BOARD default
 set_global_assignment -name CRC_ERROR_OPEN_DRAIN OFF
 set_global_assignment -name CVP_CONFDONE_OPEN_DRAIN OFF
 set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
-set_global_assignment -name DEVICE 10ax027e3f29e2sg
-set_global_assignment -name ECO_OPTIMIZE_TIMING ON
+set_global_assignment -name DEVICE 10AX027E3F29E2SG
 set_global_assignment -name EDA_BOARD_DESIGN_BOUNDARY_SCAN_TOOL "<None>"
 set_global_assignment -name EDA_OUTPUT_DATA_FORMAT NONE -section_id eda_board_design_boundary_scan
 set_global_assignment -name EDA_OUTPUT_DATA_FORMAT NONE -section_id eda_simulation
@@ -167,7 +173,7 @@ set_global_assignment -name FAMILY "Arria 10"
 set_global_assignment -name FINAL_PLACEMENT_OPTIMIZATION ALWAYS
 set_global_assignment -name FITTER_AGGRESSIVE_ROUTABILITY_OPTIMIZATION AUTOMATICALLY
 set_global_assignment -name FITTER_EFFORT "STANDARD FIT"
-set_global_assignment -name LAST_QUARTUS_VERSION "23.1std.1 Standard Edition"
+set_global_assignment -name LAST_QUARTUS_VERSION "25.3.0 SP0.27 Pro Edition"
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 100
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name NOMINAL_CORE_SUPPLY_VOLTAGE 0.95V
@@ -183,10 +189,6 @@ set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -
 set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -rise
 set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -fall
 set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -rise
-set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
-set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
-set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
-set_global_assignment -name PHYSICAL_SYNTHESIS_EFFORT EXTRA
 set_global_assignment -name PHYSICAL_SYNTHESIS ON
 set_global_assignment -name PLACEMENT_EFFORT_MULTIPLIER 100
 set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
@@ -220,7 +222,6 @@ set_global_assignment -name QSYS_FILE ../../../modules/wb_arria_reset/arria10_re
 set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
 set_global_assignment -name SDC_FILE ../../../top/common/arria10.sdc
 set_global_assignment -name SEED 27
-set_global_assignment -name SMART_RECOMPILE OFF
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "1.8 V"
 set_global_assignment -name STRATIXII_CONFIGURATION_DEVICE EPCQ256
 set_global_assignment -name STRATIXIII_CONFIGURATION_SCHEME "ACTIVE SERIAL"
@@ -315,9 +316,9 @@ set_global_assignment -name VERILOG_FILE ../../../modules/cfi_flash/cfi_ctrl_eng
 set_global_assignment -name VERILOG_FILE ../../../modules/cfi_flash/cfi_ctrl.v -library work
 set_global_assignment -name VERILOG_FILE ../../../modules/lpc_uart/serirq_defines.v -library work
 set_global_assignment -name VERILOG_FILE ../../../modules/lpc_uart/serirq_slave.v -library work
-set_global_assignment -name VERILOG_FILE ../../../modules/remote_update/asmi5/asmi5/synthesis/submodules/asmi5_asmi_parallel_0.v -library work
-set_global_assignment -name VERILOG_FILE ../../../modules/remote_update/asmi_arriaII/asmi_arriaII/synthesis/submodules/asmi_arriaII_asmi_parallel_0.v -library work
-set_global_assignment -name VERILOG_FILE ../../../modules/stub_pll/stub_pll/altera_iopll_160/synth/stub_pll_altera_iopll_160_z2kwsvq.v -library work
+set_global_assignment -name VERILOG_FILE ../../../modules/remote_update/asmi10/asmi10/altera_asmi_parallel_1910/synth/asmi10_altera_asmi_parallel_1910_de5u44q.v -library asmi10_altera_asmi_parallel_1910
+set_global_assignment -name VERILOG_FILE ../../../modules/remote_update/asmi10/asmi10/synth/asmi10.v -library asmi10_altera_asmi_parallel_1910
+set_global_assignment -name VERILOG_FILE ../../../modules/stub_pll/stub_pll/altera_iopll_160/synth/stub_pll_altera_iopll_160_z2kwsvq.v -library stub_pll_altera_iopll_160
 set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_commit_len_fifo.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_framer.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_master_eth_tx.vhd" -library work
@@ -501,56 +502,57 @@ set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_tlp.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_wb_pkg.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_wb.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_application_image.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_bootloader_image.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_boot_rom.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_bus.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cache.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cfs.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_clint.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_alu.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_control.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_counters.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_cp_bitmanip.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_cp_cfu.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_cp_cond.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_cp_crypto.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_cp_fpu.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_cp_muldiv.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_cp_shifter.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_decompressor.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_frontend.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_hwtrig.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_lsu.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_pmp.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_regfile.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_debug_auth.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_debug_dm.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_debug_dtm.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_dma.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_dmem.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_gpio.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_gptmr.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_imem.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_neoled.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_onewire.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_package.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_prim.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_pwm.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_sdi.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_slink.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_spi.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_sysinfo.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_sys.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_top.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_tracer.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_trng.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_twd.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_twi.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_uart.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_wdt.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_xbus.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_application_image.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_bootloader_image.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_boot_rom.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_bus.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cache.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cfs.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_clint.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_alu.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_control.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_counters.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_cp_bitmanip.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_cp_cfu.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_cp_cond.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_cp_crypto.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_cp_fpu.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_cp_muldiv.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_cp_shifter.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_decompressor.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_frontend.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_hwtrig.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_lsu.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_pmp.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_regfile.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_trace.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_debug_auth.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_debug_dm.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_debug_dtm.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_dma.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_dmem.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_gpio.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_gptmr.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_imem.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_neoled.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_onewire.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_package.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_prim.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_pwm.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_sdi.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_slink.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_spi.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_sysinfo.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_sys.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_top.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_tracer.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_trng.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_twd.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_twi.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_uart.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_wdt.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_xbus.vhd -library neorv32
 set_global_assignment -name VHDL_FILE "../../../ip_cores/pci-core/src/hdl/wb_pci_pkg.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/pci-core/src/hdl/wb_pmc_host_bridge_pkg.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/pci-core/src/hdl/wb_pmc_host_bridge.vhd" -library work
@@ -692,12 +694,10 @@ set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_tlu
 set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_tlu/tlu_pkg.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_tlu/tlu.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/platform/altera/wr_altera_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria10_phy/wr_arria10_phy.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/platform/altera/xwrc_platform_altera.vhd" -library work
 set_global_assignment -name VHDL_FILE ../../../modules/a10ts/src/hdl/a10ts_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/a10ts/src/hdl/a10ts.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/a10vs/src/hdl/a10vs_ip/a10vs_ip/altera_voltage_sensor_231/synth/a10vs_ip_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/a10vs/src/hdl/a10vs_ip/a10vs_ip/synth/a10vs_ip.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/a10vs/src/hdl/a10vs_ip/a10vs_ip/altera_voltage_sensor_231/synth/a10vs_ip_pkg.vhd -library altera_voltage_sensor_231
 set_global_assignment -name VHDL_FILE ../../../modules/a10vs/src/hdl/a10vs_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/a10vs/src/hdl/a10vs.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/a10vs/src/hdl/a10vs_wb.vhd -library work
@@ -866,11 +866,6 @@ set_global_assignment -name VHDL_FILE ../../../modules/prioq2/prio.vhd -library 
 set_global_assignment -name VHDL_FILE ../../../modules/prioq2/queue_unit.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/psram/psram_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/psram/psram.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/remote_update/altasmi.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/remote_update/asmi10/asmi10/altera_asmi_parallel_231/synth/asmi10_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/remote_update/asmi10/asmi10/synth/asmi10.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/remote_update/asmi5/asmi5/synthesis/asmi5.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/remote_update/asmi_arriaII/asmi_arriaII/synthesis/asmi_arriaII.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/remote_update/remote_update_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/remote_update/remote_update.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/remote_update/wb_asmi_slave.vhd -library work
@@ -892,8 +887,8 @@ set_global_assignment -name VHDL_FILE ../../../modules/ssd1325/src/hdl/generic_s
 set_global_assignment -name VHDL_FILE ../../../modules/ssd1325/src/hdl/generic_serial_master.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/ssd1325/src/hdl/wb_ssd1325_serial_driver_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/ssd1325/src/hdl/wb_ssd1325_serial_driver.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/stub_pll/stub_pll/altera_iopll_160/synth/stub_pll_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/stub_pll/stub_pll/synth/stub_pll.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/stub_pll/stub_pll/altera_iopll_160/synth/stub_pll_pkg.vhd -library stub_pll_altera_iopll_160
+set_global_assignment -name VHDL_FILE ../../../modules/stub_pll/stub_pll/synth/stub_pll.vhd -library stub_pll_altera_iopll_160
 set_global_assignment -name VHDL_FILE ../../../modules/temp_sens/hdl/wb_temp_sense_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/transceiver_prbs/trans_loop.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/transceiver_prbs/trans_rcfg.vhd -library work
@@ -913,8 +908,7 @@ set_global_assignment -name VHDL_FILE ../../../modules/uart/uart_receiver.vhd -l
 set_global_assignment -name VHDL_FILE ../../../modules/uart/uart_transmitter.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/watchdog/watchdog_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/watchdog/watchdog.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria10_reset/arria10_reset/altera_remote_update_231/synth/arria10_reset_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria10_reset/arria10_reset/synth/arria10_reset.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria10_reset/arria10_reset/altera_remote_update_181/synth/arria10_reset_pkg.vhd -library arria10_reset_altera_remote_update_181
 set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria5_reset.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria_reset.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/wb_arria_reset_pkg.vhd -library work
@@ -1040,14 +1034,13 @@ set_instance_assignment -name IO_STANDARD LVDS -to fastIO_p_i[2]
 set_instance_assignment -name IO_STANDARD LVDS -to fastIO_p_o[0]
 set_instance_assignment -name IO_STANDARD LVDS -to fastIO_p_o[1]
 set_instance_assignment -name IO_STANDARD LVDS -to fastIO_p_o[2]
-set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_ac_wbm:c1"
-set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_queue:c0"
-set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_queue:c2"
-set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_tlu:ecatlu"
-set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_wb_event:ecawb"
-set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|ftm_lm32_cluster:lm32*"
-set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|wr_eca:eca"
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
+set_instance_assignment -name MAX_FANOUT 64 -to "main|c0"
+set_instance_assignment -name MAX_FANOUT 64 -to "main|c1"
+set_instance_assignment -name MAX_FANOUT 64 -to "main|c2"
+set_instance_assignment -name MAX_FANOUT 64 -to "main|eca"
+set_instance_assignment -name MAX_FANOUT 64 -to "main|ecatlu"
+set_instance_assignment -name MAX_FANOUT 64 -to "main|ecawb"
+set_instance_assignment -name MAX_FANOUT 64 -to "main|lm32"
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to scu_cb_version
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to scu_cb_version[0]
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to scu_cb_version[1]
