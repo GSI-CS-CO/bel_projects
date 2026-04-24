@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <neorv32.h>
 #include <neorv32_uart.h>
+#include <stdbool.h>
 
 // 1152000 for real hardware, 921600 for simulation
 #define BAUD_RATE 115200
@@ -36,10 +37,10 @@ int main(void)
 
     neorv32_gpio_pin_set(0, 1);
     for(int i = 0; i < N; i++) {
-      nums_test[i] = *(RAM_base_address + i*4);  
+      nums_test[i] = *(RAM_base_address + i*4);
     }
     neorv32_gpio_pin_set(0, 0);
-    
+
     for(int i = 0; i < N; i++) {
       if(nums[i] != nums_test[i]) {
         neorv32_uart0_printf("Data at address 0x%x is not correct, expected 0x%x, got 0x%x\n", (RAM_base_address + i*4), nums[i], nums_test[i]);
