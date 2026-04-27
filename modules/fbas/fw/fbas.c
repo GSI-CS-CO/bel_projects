@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define FBAS_FW_VERSION 0x010301        // make this consistent with makefile
+#define FBAS_FW_VERSION 0x010302        // make this consistent with makefile -> export VERSION
 
 // standard includes
 #include <stdio.h>
@@ -114,7 +114,7 @@ static void clearError(size_t len, mpsMsg_t* buf);
 static void setOpMode(uint64_t mode);
 static void cmdHandler(uint32_t *reqState, uint32_t cmd);
 static void timerHandler(void);
-static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, msgCtrl_t* pMsgCtrl, mpsMsg_t** head);
+static uint32_t handleEcaEvent(uint32_t pollTimeout, uint32_t* mpsTask, msgCtrl_t* pMsgCtrl, mpsMsg_t** head);
 static void wrConsolePeriodic(void);
 
 /**
@@ -178,6 +178,7 @@ static status_t initSharedMem(uint32_t *const sharedStart)
   DBPRINT1("fbas%d: FBAS_OLD_MSG 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_OLD_MSG_CNT >> 2)), (pSharedExt + (FBAS_SHARED_OLD_MSG_CNT >> 2)));
   DBPRINT1("fbas%d: FBAS_BAD_MSG 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_BAD_MSG_CNT >> 2)), (pSharedExt + (FBAS_SHARED_BAD_MSG_CNT >> 2)));
   DBPRINT1("fbas%d: FBAS_SENDERID 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_SENDERID >> 2)), (pSharedExt + (FBAS_SHARED_SENDERID >> 2)));
+  DBPRINT1("fbas%d: FBAS_ACT_RATE 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_ACT_RATE >> 2)), (pSharedExt + (FBAS_SHARED_ACT_RATE >> 2)));
 
 
   // clear the app-spec region of the shared memory
@@ -440,14 +441,14 @@ static void setOpMode(uint64_t mode) {
  *
  * On FBAS_WR_EVT or FBAS_WR_FLG event the effective logic output is driven.
  *
- * \param usTimeout Maximum interval in microseconds to poll ECA
+ * \param pollTimeout Maximum period in microseconds to poll ECA
  * \param mpsTask   Pointer to MPS-relevant task flag
  * \param pMsgCtrl  Pointer to the MPS messaging controller
  * \param head      Pointer to pointer to the head of the MPS message buffer
  *
  * \return ECA action tag (COMMON_ECADO_TIMEOUT on timeout, otherwise non-zero tag)
  **/
-static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, msgCtrl_t* pMsgCtrl, mpsMsg_t** head)
+static uint32_t handleEcaEvent(uint32_t pollTimeout, uint32_t* mpsTask, msgCtrl_t* pMsgCtrl, mpsMsg_t** head)
 {
   uint32_t nextAction;    // action triggered by received ECA event
   uint64_t ecaDeadline;   // deadline of received ECA event
@@ -462,7 +463,7 @@ static uint32_t handleEcaEvent(uint32_t usTimeout, uint32_t* mpsTask, msgCtrl_t*
   uint64_t ts;            // temporary timestamp
   uint32_t actions;
 
-  nextAction = fwlib_wait4ECAEvent(usTimeout, &ecaDeadline, &ecaEvtId, &ecaParam, &ecaTef,
+  nextAction = fwlib_wait4ECAEvent(pollTimeout, &ecaDeadline, &ecaEvtId, &ecaParam, &ecaTef,
     &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
 
   if (nextAction != COMMON_ECADO_TIMEOUT) {
@@ -830,6 +831,9 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd)
         measurePrintSummary(MSR_ML_PRD);
         measureExportSummary(MSR_ML_PRD, pSharedApp, FBAS_SHARED_GET_AVG);
         break;
+      case FBAS_CMD_PRINT_ACT_RATE:
+        measureExportActionRate((pSharedApp + (FBAS_SHARED_ACT_RATE >> 2)));
+        break;
       case FBAS_CMD_CLR_SUM_STATS:
         measureClearSummary(ENABLE_VERBOSITY);
         break;
@@ -871,22 +875,36 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
                            uint32_t actStatus)          // actual status of firmware
 {
   uint32_t status;                                            // status returned by routines
-  uint32_t usTimeout = 0;                                     // time-out in microseconds
-  uint32_t action;                                            // ECA action tag
+  uint32_t pollTimeout = 15;                                  // ECA polling time-out [us]
+  uint32_t actionTimeout = 90;                                // action handler time-out [us]
+  uint32_t actionTag;                                         // ECA action tag
   mpsMsg_t* buf = pBufMpsMsg;                                 // pointer to MPS message buffer
   uint64_t now, last;                                         // used to measure the period of the main loop
+  uint16_t actionCnt = 0;                                     // counter for non-zero action tags
+  uint64_t handleActionsUntil = getSysTime() + (actionTimeout << 10);  // allowed time period to handle multiple actions (main loop budget < 125 us)
 
   status = actStatus;
 
-  // action driven by ECA event, blocking poll up to usTimeout [us]
-  action = handleEcaEvent(usTimeout, pMpsTask, pMsgCtrl, &buf);   // handle ECA event
+  while (getSysTime() < handleActionsUntil) {
+    // action driven by ECA event, blocking poll up to pollTimeout [us]
+    actionTag = handleEcaEvent(pollTimeout, pMpsTask, pMsgCtrl, &buf);   // handle ECA event
+
+    // count the handled actions
+    if ((actionTag == FBAS_WR_FLG) || (actionTag == FBAS_WR_EVT)) {
+      actionCnt++;
+    }
+  }
+
+  // calculate the action rate
+  measureActionRate(actionCnt);
 
   // check periodic timer events
-  if (mpsTask & TSK_MONIT_MPS_TTL)
+  if (mpsTask & TSK_MONIT_MPS_TTL) {
     if (timerIsExpired(pTimerMpsTtl)) {
       mpsTask |= TSK_EVAL_MPS_TTL;
       timerStart(pTimerMpsTtl);
     }
+  }
 
   if (timerIsExpired(pTimerRegistr)) {
     mpsTask |= TSK_REG_PER_OVER;

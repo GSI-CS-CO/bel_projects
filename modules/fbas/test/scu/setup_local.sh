@@ -82,6 +82,7 @@ export addr_avg="$(printf "0x%x" $((addr_fbas + 344)))"      # average value of 
 export addr_eca_vld="$(printf "0x%x" $((addr_fbas + 384)))"  # ECA valid action count
 export addr_eca_ovf="$(printf "0x%x" $((addr_fbas + 388)))"  # ECA overflow action count
 export addr_senderid="$(printf "0x%x" $((addr_fbas + 392)))" # sender ID
+export addr_array_8="$(printf "0x%x" $((addr_fbas + 624)))"  # uint32_t array[8]
 
 # Declare common constants
 
@@ -106,6 +107,7 @@ export instr_st_ttl_ival=0x35   # store the TTL interval measurement results to 
 export instr_st_eca_dly=0x37    # store the measurement result of the ECA handling delay
 export instr_st_rx_dly=0x39     # store the RX handler delay measurement results to shared memory
 export instr_st_ml_prd=0x3a     # store the main loop period measurement results to shared memory
+export instr_st_array=0x3b      # store the uint32_t array[8] to the reserved location of the shared memory
 
 export     mac_any_node="0xffffffffffff"      # MAC address of any node
 # Raw event data (bits 63-16 = event ID, 15-8 = channel, 7-0 = flag)
@@ -801,6 +803,26 @@ read_measurement_results() {
     else
         echo
     fi
+}
+
+read_array() {
+    # $1 - node device (dev/wbm0)
+    # $2 - array length
+
+    local device=$1
+    local shared=$addr_array_8
+    local length=$2
+    local my_array=()
+
+    eb-write $device $addr_cmd/4 $instr_st_array
+
+    for i in $(seq $length); do
+        hex_val=$(eb-read $device $shared/4)
+        my_array+=($(printf "%d" 0x$hex_val))
+        shared=$(( $shared + 4 ))
+    done
+
+    echo "${my_array[@]}"
 }
 
 ##########################################################
