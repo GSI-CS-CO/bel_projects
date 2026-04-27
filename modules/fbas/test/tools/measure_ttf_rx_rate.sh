@@ -38,7 +38,8 @@ get_tr_measurements() {
     result_msg_delay \$rx_node_dev && \
     result_ttl_ival \$rx_node_dev && \
     result_ml_period \$rx_node_dev && \
-    result_eca_delay \$rx_node_dev")
+    result_eca_delay \$rx_node_dev && \
+    read_array \$rx_node_dev 8")
     ret_code=$?
     exit_on_fail $ret_code
 
@@ -72,6 +73,8 @@ format_measurements() {
     line+="\tMsg delay  : ${output[@]:10:5}\n" # get 5 elements starting at index 10
     line+="\tTTL period : ${output[@]:15:5}\n" # get 5 elements starting at index 15
     line+="\tLoop period: ${output[@]:20:5}\n" # get 5 elements starting at index 20
+    line+="\t--- action handling rate\n"
+    line+="\t${output[@]:30:8}\n"              # get 8 elements starting at index 30
 
     ret="$line"
 }

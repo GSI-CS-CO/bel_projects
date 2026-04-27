@@ -58,4 +58,7 @@ void measurePrintSummary(msrItem_t item);
 uint32_t measureCountEvt(unsigned name, uint32_t value);
 uint32_t measureSetCounter(unsigned name, uint32_t value);
 
+void measureActionRate(unsigned cnt);
+void measureExportActionRate(uint32_t* base);
+
 #endif
