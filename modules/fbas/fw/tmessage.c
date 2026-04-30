@@ -42,6 +42,9 @@ uint8_t    nodeIds[N_MAX_TX_NODES][ETH_ALEN];   // sender node ID list
 mpsMsg_t   bufMpsMsg[N_MAX_MPS_CHANNELS];       // buffer for MPS timing messages
 mpsMsg_t *const headBufMps = &bufMpsMsg[0]; // head of the MPS message buffer
 msgCtrl_t  mpsMsgCtrl;                          // MPS messaging control structure
+const uint32_t txMsgRates[N_TX_RATES] = {       // TX messaging rates, [us]
+              33333, 100000, 80000, 50000,      // 30, 10, 12.5, 20 [Hz]
+              20000, 10000, 5000, 2000, 1000};  // 50, 100, 200, 500, 1000 [Hz]
 
 static int addr_equal(uint8_t a[ETH_ALEN], uint8_t b[ETH_ALEN]); // wr-switch-sw/userspace/libwr
 static uint8_t *addr_copy(uint8_t dst[ETH_ALEN], uint8_t src[ETH_ALEN]);
@@ -56,19 +59,19 @@ static uint8_t *addr_copy(uint8_t dst[ETH_ALEN], uint8_t src[ETH_ALEN]);
  * \param ctrl  Pointer to the MPS messaging controller
  * \param total Total number of the MPS channels
  * \param now   Timestamp of access
- * \param freq  Messaging frequency, [Hz]
+ * \param period Messaging period, [us]
  *
  * \return None
  **/
-void msgInitMsgCtrl(msgCtrl_t *const ctrl, const uint8_t total, const uint64_t now, const uint32_t freq)
+void msgInitMsgCtrl(msgCtrl_t *const ctrl, const uint8_t total, const uint64_t now, const uint32_t period)
 {
   ctrl->total = total;
   ctrl->last = now;
-  ctrl->period = TIM_1000_MS;
+  ctrl->period = txMsgRates[0];          // default period of 33,3 ms (30 Hz)
 
   // set the iteration period
-  if (freq && ctrl->total) {
-    ctrl->period /=freq;                 // eg., 33312 us for 30 Hz (30.0192 Hz)
+  if (period && ctrl->total) {
+    ctrl->period = period * 1000;        // us -> ns
 
     ctrl->ttl = TIM_100_MS/TIM_1_MS + 1; // TTL value = 101 milliseconds
   }

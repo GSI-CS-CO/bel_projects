@@ -69,7 +69,10 @@ struct nw_addr {
 extern mpsMsg_t bufMpsMsg[N_MAX_MPS_CHANNELS];     // buffer for MPS messages
 extern msgCtrl_t  mpsMsgCtrl;                      // MPS messaging control structure
 
-void      msgInitMsgCtrl(msgCtrl_t *const ctrl, const uint8_t total, const uint64_t now, const uint32_t freq);
+#define N_TX_RATES         9                       // TX message rates: 10, 12.5, 20, 30, 50, 100, 200, 500, 1000 [Hz]]
+extern const uint32_t txMsgRates[N_TX_RATES];      // TX messaging rates, [Hz]
+
+void      msgInitMsgCtrl(msgCtrl_t *const ctrl, const uint8_t total, const uint64_t now, const uint32_t period);
 uint32_t  msgSendPcEvent(const msgCtrl_t* msgCtrl, mpsMsg_t *const buf, const uint64_t evtid, const uint8_t extra);
 uint32_t  msgSendMpsFlag(msgCtrl_t* ctrl, uint64_t evtId);
 mpsMsg_t* msgStorePcEvent(const uint8_t idx, const uint64_t evt, const uint64_t ts);
