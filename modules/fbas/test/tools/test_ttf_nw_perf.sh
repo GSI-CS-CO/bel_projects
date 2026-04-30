@@ -283,13 +283,14 @@ if [ ${#txscu_name[@]} -eq 0 ]; then
     txscu+=("$def_txscu_name.$domain")
 fi
 
+scu_names="$rxscu_name, ${txscu_name[*]}"
 # get username and password to access SCUs
 if [ -z "$username" ]; then
-    read -rp "username to access '$rxscu_name, ${txscu_name[@]}': " username
+    read -rp "username to access '$scu_names': " username
 fi
 
 if [ -z "$userpasswd" ]; then
-    read -rsp "password for '$username@{$rxscu_name, ${txscu_name[@]}}': " userpasswd; echo
+    read -rsp "password for '$username@{$scu_names}': " userpasswd; echo
 fi
 
 # set the number of events
@@ -297,18 +298,18 @@ if [ -z "$events" ]; then
     events=10
 fi
 
-echo -e "\n--- Step 1: set up nodes (RX=$rxscu_name, TX=${txscu_name[@]}) ---\n"
+echo -e "\n--- Step 1: set up nodes (RX=$rxscu_name, TX=${txscu_name[*]}) ---\n"
 setup_nodes
 
 # optional pre-check before real test
-echo -e "\n--- Step 2: pre-check (RX=$rxscu_name, TX=${txscu_name[@]}) ---\n"
+echo -e "\n--- Step 2: pre-check (RX=$rxscu_name, TX=${txscu_name[*]}) ---\n"
 pre_check
 
 if [ -z "$auto" ]; then
     user_approval
 fi
 
-echo -e "\n--- Step 3: measure network performance (RX=$rxscu_name, TX=${txscu_name[@]}) ---\n"
+echo -e "\n--- Step 3: measure network performance (RX=$rxscu_name, TX=${txscu_name[*]}) ---\n"
 measure_nw_perf
 
 if [ -n "$exclude_ttl" ]; then
@@ -316,5 +317,5 @@ if [ -n "$exclude_ttl" ]; then
 fi
 
 # TTL measurement
-echo -e "\n--- Step 4: measure TTL (RX=$rxscu_name, TX=${txscu_name[@]}) ---\n"
+echo -e "\n--- Step 4: measure TTL (RX=$rxscu_name, TX=${txscu_name[*]}) ---\n"
 measure_ttl
