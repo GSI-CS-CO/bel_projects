@@ -211,7 +211,7 @@ static void initMpsData()
   msgInitMpsMsg(&myMac);
 
   // initialize the MPS messaging controller
-  msgInitMsgCtrl(&mpsMsgCtrl, N_MPS_CHANNELS, 0, F_MPS_BCAST);
+  msgInitMsgCtrl(&mpsMsgCtrl, N_MPS_CHANNELS, 0, txMsgRates[0]);
 
   // clear the statistics
   measureClearSummary(ENABLE_VERBOSITY);
@@ -482,7 +482,7 @@ static uint32_t handleEcaEvent(uint32_t pollTimeout, uint32_t* mpsTask, msgCtrl_
 
           // init the MPS messaging controller so that next messaging is delayed for 52 ms [MPS_FS_630]
           now += TIM_52_MS;
-          msgInitMsgCtrl(pMsgCtrl, N_MPS_CHANNELS, now, F_MPS_BCAST);
+          msgInitMsgCtrl(pMsgCtrl, N_MPS_CHANNELS, now, txMsgRates[0]);
 
         } else if (nodeType == FBAS_NODE_RX) { // it takes 2480/31048 ns for 2/32 MPS channels
           // force effective logic input to HIGH bit (delay for 52 ms) [MPS_FS_630]
@@ -837,10 +837,15 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd)
       case FBAS_CMD_CLR_SUM_STATS:
         measureClearSummary(ENABLE_VERBOSITY);
         break;
-
       case FBAS_CMD_PRINT_MPS_BUF:
         ioPrintMpsBuf();
         ioPrintPortMap();
+        break;
+      case FBAS_CMD_SET_TX_RATE:
+        u32val = *(pSharedApp + (FBAS_SHARED_SET_NODETYPE >> 2));
+        if (u32val < N_TX_RATES) {
+          msgInitMsgCtrl(&mpsMsgCtrl, N_MPS_CHANNELS, 0, txMsgRates[u32val]);
+        }
         break;
       default:
         DBPRINT2("fbas%d: received unknown command '0x%08lx'\n", nodeType, cmd);

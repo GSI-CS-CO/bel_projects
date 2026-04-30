@@ -129,6 +129,7 @@ typedef enum {
 #define FBAS_CMD_PRINT_RX_DLY   0x39   // print result of RX handler delay measurement
 #define FBAS_CMD_PRINT_ML_PRD   0x3a   // print result of the main loop period measurement
 #define FBAS_CMD_PRINT_ACT_RATE 0x3b   // print the action rate
+#define FBAS_CMD_SET_TX_RATE    0x3c   // set the TX messaging rate
 
 // mask bit for MPS-relevant tasks (up to 31)
 #define TSK_TX_MPS_FLAGS        0x10000000 // transmit MPS flags
