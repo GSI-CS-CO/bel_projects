@@ -12,7 +12,7 @@ rxscu="$rxscu_name.$domain"
 txscu=()                              # array with transmitter domain names
 fw_scu_def="fbas128.scucontrol.bin"   # FW that supports up to 16 TX nodes, each has 8 MPS channels
 ssh_opts="-o StrictHostKeyChecking=no"   # no hostkey checking
-getopt_opts="u:p:t:r:n:eyvh"          # user options
+getopt_opts="u:p:t:r:n:m:eyvh"        # user options
 
 usage() {
 
@@ -27,6 +27,7 @@ usage() {
     echo "  -t <TX SCU>            transmitter SCU, by default $def_txscu_name"
     echo "  -r <RX SCU>            receiver SCU, by default $rxscu_name"
     echo "  -n <MPS events>        number of MPS events, 10 by default"
+    echo "  -m <TX msg period>     index of the TX messaging period (0..8, 0 = 33,3 ms)"
     echo "  -e                     exclude TTL measurement"
     echo "  -y                     'yes' to all prompts"
     echo "  -v                     verbosity for the measurement results"
@@ -79,7 +80,7 @@ setup_nodes() {
 
         # set up TX nodes
         if [ "$scu" != "$rxscu" ]; then
-            output=$(run_remote $scu "source setup_local.sh && setup_mpstx")
+            output=$(run_remote $scu "source setup_local.sh && setup_mpstx $idx_msg_period")
             ret_code=$?
             if [ $ret_code -ne 0 ]; then
                 echo "Error ($ret_code): cannot set up $scu"
@@ -259,7 +260,7 @@ measure_ttl() {
     run_remote $rxscu "source setup_local.sh && result_ttl_ival \$rx_node_dev \$addr_cnt1 $verbose"
 }
 
-unset username userpasswd events exclude_ttl auto verbose
+unset username userpasswd events idx_msg_period exclude_ttl auto verbose
 unset OPTIND
 
 while getopts $getopt_opts c; do
@@ -269,6 +270,7 @@ while getopts $getopt_opts c; do
         t) txscu_name+=("$OPTARG"); txscu+=("$OPTARG.$domain") ;;
         r) rxscu_name=$OPTARG; rxscu=$OPTARG.$domain ;;
         n) events=$OPTARG ;;
+        m) idx_msg_period=$OPTARG ;;
         e) exclude_ttl="exclude_ttl" ;;
         y) auto="auto" ;;
         v) verbose="yes" ;;
@@ -276,6 +278,15 @@ while getopts $getopt_opts c; do
         *) usage; exit 1 ;;
     esac
 done
+
+# check the index of the TX messaging period
+if [ "$idx_msg_period" ]; then
+    num=$(($idx_msg_period)) 2>/dev/null # 0..8
+    if [ $num -gt 8 ]; then
+        echo "Error: invalid index for TX messaging period: $num (expects 0..8). Exit!"
+        usage; exit 1
+    fi
+fi
 
 # get the default transmitter SCU name
 if [ ${#txscu_name[@]} -eq 0 ]; then

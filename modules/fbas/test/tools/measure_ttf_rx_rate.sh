@@ -125,7 +125,7 @@ usage() {
     echo "  -p <userpasswd>        user password"
     echo "  -s <DM schedule>       external file with DM schedule"
     echo "  -f <LM32 firmware>     firmware binary file"
-    echo "  -m                     enable higher message rates (> 10KHz)"
+    echo "  -m                     enable higher message rates (up to 1 KHz)"
     echo "  -h                     display this help and exit"
     echo
     echo "Example: $0 -s my_mps_rx_rate_1.dot -f $fw_rxscu"

@@ -260,8 +260,11 @@ load_node_fw() {
 
 configure_node() {
     # $1 - node device label
-    # $2 - sender node groups (SENDER_TX or SENDER_ANY or SENDER_ALL)
-    # $[3:] - sender ID(s) of SENDER_TX
+    # for TX node
+    #   $2 - optional, index of the TX messaging period (0..8)
+    # for RX node
+    #   $2 - sender node groups (SENDER_TX or SENDER_ANY or SENDER_ALL)
+    #   $[3:] - sender ID(s) of SENDER_TX
 
     check_node "$1"
 
@@ -287,6 +290,19 @@ configure_node() {
             shift
             set_senderid "$device" "$@"
         fi
+    elif [ "$1" == "tx_node_dev" ]; then
+
+        local idx=0
+        if [[ -n "$2" ]]; then
+            idx=$(($2)) 2>/dev/null   # force arithmetic evaluation (accept non-numeric input)
+        fi
+        eb-write $device $addr_set_node_type/4 $idx
+        wait_seconds 1
+
+        eb-write $device $addr_cmd/4 0x3c
+        wait_seconds 1
+
+        echo "TX messaging period: $idx"
     fi
 }
 
@@ -476,6 +492,7 @@ set_eca_rules() {
 ######################
 
 setup_mpstx() {
+    # $1 - optional, index of the TX messaging period (0..8)
 
     node_dev_label="tx_node_dev"
     echo "load firmware"
@@ -483,7 +500,7 @@ setup_mpstx() {
     load_node_fw "$node_dev_label"
 
     echo "CONFIGURE state "
-    configure_node "$node_dev_label"
+    configure_node "$node_dev_label" "$1"
 
     echo "OPREADY state "
     make_node_ready "$node_dev_label"
