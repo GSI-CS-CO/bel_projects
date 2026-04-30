@@ -31,7 +31,7 @@ generate-%: check_blackbox
 all_gen-%: generate-%
 	@echo ""
 	@echo "\033[93m *******************************************\033[0m"
-	@echo "\033[93m Compiling Blackbox with configuration: $* \033[0m"
+	@echo "\033[93m Compiling Blackbox variant: $* \033[0m"
 	@echo "\033[93m *******************************************\033[0m"
 	@echo ""	
 	$(MAKE) all
