@@ -251,22 +251,36 @@ void measureExportSummary(msrItem_t item, uint32_t* base, uint32_t offset) {
 /**
  * \brief Clear the summary statistics
  *
+ * \param item    measured item
  * \param verbose verbosity
  *
  * \return none
 */
-void measureClearSummary(verbosity_t verbose) {
-  msrItem_t item;
+void measureClearSummary(msrItem_t item, verbosity_t verbose) {
+  msrItem_t firstItem;
+  msrItem_t lastItem;
 
-  for (item = 0; item < N_MSR_ITEMS; ++item) {
-    memset(&sumStats[item], 0, sizeof(msrSumStats_t));
-    outlierStat[item].cnt = 0;
+  if (item == N_MSR_ITEMS) { // all items
+    firstItem = 0;
+    lastItem = N_MSR_ITEMS;
+  }
+  else if (item < N_MSR_ITEMS) { // chosen item
+    firstItem = item;
+    lastItem = item;
+  }
+  else {
+    return;
+  }
+
+  for (msrItem_t i = firstItem; i < lastItem; ++i) {
+    memset(&sumStats[i], 0, sizeof(msrSumStats_t));
+    outlierStat[i].cnt = 0;
 
     if (verbose)
-      // implement in 2 calls, otherwise 'max' has garbage
-      DBPRINT2("%d @0x%p ", item, &sumStats[item]);
+      // print in 2 calls, otherwise 'max' has garbage
+      DBPRINT2("%d @0x%p ", i, &sumStats[i]);
       DBPRINT2("avg=%llu min=%lli max=%llu val=%lu all=%lu\n",
-        sumStats[item].avg, sumStats[item].min, sumStats[item].max,
-        sumStats[item].cntValid, sumStats[item].cntTotal);
+        sumStats[i].avg, sumStats[i].min, sumStats[i].max,
+        sumStats[i].cntValid, sumStats[i].cntTotal);
   }
 }
