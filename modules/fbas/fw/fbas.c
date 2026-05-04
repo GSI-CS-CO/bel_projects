@@ -214,7 +214,7 @@ static void initMpsData()
   msgInitMsgCtrl(&mpsMsgCtrl, N_MPS_CHANNELS, 0, txMsgRates[0]);
 
   // clear the statistics
-  measureClearSummary(ENABLE_VERBOSITY);
+  measureClearSummary(N_MSR_ITEMS, ENABLE_VERBOSITY);
 
   //TODO: include function call below in fwlib_doActionS0()
   // if (findEcaCtl() != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
@@ -794,6 +794,7 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd)
         timerStart(pTimerMpsTtl);     // start timers
         timerStart(pTimerRegistr);
         DBPRINT2("fbas%d: enabled MPS %lx\n", nodeType, mpsTask);
+        measurePutTimestamp(MSR_ML_PRD, getSysTime());
         break;
       case FBAS_CMD_DIS_MPS_FWD:
         mpsTask &= ~TSK_TX_MPS_FLAGS;  // disable transmission of the MPS flags
@@ -802,6 +803,8 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd)
         mpsTask &= ~TSK_REG_COMPLETE;  // reset the node registration
         timerStart(pTimerConsole);     // start timer
         DBPRINT2("fbas%d: disabled MPS %lx\n", nodeType, mpsTask);
+        measurePutTimestamp(MSR_ML_PRD, 0);
+        measureClearSummary(MSR_ML_PRD, ENABLE_VERBOSITY);
         break;
       case FBAS_CMD_PRINT_TX_DLY:
         measurePrintSummary(MSR_TX_DLY);
@@ -835,7 +838,7 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd)
         measureExportActionRate((pSharedApp + (FBAS_SHARED_ACT_RATE >> 2)));
         break;
       case FBAS_CMD_CLR_SUM_STATS:
-        measureClearSummary(ENABLE_VERBOSITY);
+        measureClearSummary(N_MSR_ITEMS, ENABLE_VERBOSITY);
         break;
       case FBAS_CMD_PRINT_MPS_BUF:
         ioPrintMpsBuf();
