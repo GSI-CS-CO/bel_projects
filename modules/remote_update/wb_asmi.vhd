@@ -580,8 +580,9 @@ begin
             s_rden        <= '1';
             if slave_i.cyc = '1' and slave_i.stb = '1' and slave_i.adr(7 downto 0) = BUSY_CHECK then
               slave_o.ack <= '1';
+            end if;
             -- check if data valid ever comes
-            elsif v_read_tmo = TIMEOUT then
+            if v_read_tmo = TIMEOUT then
               wb_state <= err;
               v_read_tmo := 0;
             -- valid data on the output
