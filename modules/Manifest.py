@@ -57,5 +57,6 @@ modules = {
     "cellular_ram",
     "neorv32",
     "pwm",
+    "wb_register_ada_gen",
   ]
 }

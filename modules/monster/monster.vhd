@@ -77,6 +77,7 @@ use work.a10vs_pkg.all;
 use work.cellular_ram_pkg.all;
 use work.neorv32_shell_pkg.all;
 use work.pwm_pkg.all;
+use work.xwb_register_link_ada_gen_pkg.all;
 
 entity monster is
   generic(
@@ -1559,7 +1560,7 @@ begin
       msi_slave_i   => dev_msi_slave_i,
       msi_slave_o   => dev_msi_slave_o);
 
-  top2dev_bus : xwb_register_link
+  top2dev_bus : xwb_register_link_ada_gen
     generic map(
       g_wb_adapter  => false)
     port map(
@@ -1570,7 +1571,7 @@ begin
       master_i      => dev_bus_slave_o (c_devm_top),
       master_o      => dev_bus_slave_i (c_devm_top));
 
-  dev2top_msi : xwb_register_link
+  dev2top_msi : xwb_register_link_ada_gen
     generic map(
       g_wb_adapter  => false)
     port map(
@@ -1581,7 +1582,7 @@ begin
       master_i      => top_msi_slave_o (top_slaves'pos(tops_dev)),
       master_o      => top_msi_slave_i (top_slaves'pos(tops_dev)));
 
-  top2wrc_bus : xwb_register_link
+  top2wrc_bus : xwb_register_link_ada_gen
     generic map(
       g_wb_adapter  => false)
     port map(
@@ -1592,7 +1593,7 @@ begin
       master_i      => wrc_slave_o,
       master_o      => wrc_slave_i);
 
-  top2wrc_aux_bus : xwb_register_link
+  top2wrc_aux_bus : xwb_register_link_ada_gen
     generic map(
       g_wb_adapter  => false)
     port map(

@@ -764,7 +764,7 @@ prereq-rule::
 		(echo "Downloading submodules..."; ./fix-git.sh)
 
 git_apply_patches::
-	@for core in wr-cores general-cores; do \
+	@for core in wr-cores; do \
 	  if [ ! -f patches/done ]; then \
 		  if [ ! -f ip_cores/$$core/*.patch ]; then \
 			  echo "Applying $$core git patches..."; \
