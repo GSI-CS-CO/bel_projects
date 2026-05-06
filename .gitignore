@@ -48,3 +48,5 @@ lm32-gcc-4.5.3/
 riscv-11.2-small.tgz
 lm32-toolchain.tar.xz
 artifacts
+res/librtpi/librtpi/
+res/ubuntu-22-and-later/libpng-1.2.54/
