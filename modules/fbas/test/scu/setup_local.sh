@@ -36,6 +36,7 @@ fi
 # Declare platform-specific variables
 case $platform in
     "PC")
+        export node_pps_output="IO1"
         export node_tlu_input="IO2"
         export tx_node_dev="dev/wbm0"  # label for node device
         export rx_node_dev="dev/wbm2"
@@ -48,6 +49,7 @@ case $platform in
         export fw_rx="fbas128.pcicontrol.bin"
         ;;
     "SCU")
+        export node_pps_output="B1"
         export node_tlu_input="B2"
         export tx_node_dev="dev/wbm0"
         export rx_node_dev="dev/wbm0"
@@ -85,6 +87,13 @@ export addr_senderid="$(printf "0x%x" $((addr_fbas + 392)))" # sender ID
 export addr_array_8="$(printf "0x%x" $((addr_fbas + 624)))"  # uint32_t array[8]
 
 # Declare common constants
+
+export eca_tag_c2_event=0x24
+export eca_tag_c2_flag=0x25
+export eca_tag_aux_newcycle=0x26
+export eca_tag_aux_opmode=0x27
+export eca_tag_pc_event=0x42
+export eca_tag_node_reg=0x45
 
 export instr_fsm_configure=0x01 # FSM CONFIGURE state
 export instr_fsm_opready=0x02   # FSM OPREADY state
@@ -456,28 +465,25 @@ set_eca_rules() {
     echo "disable all events from IO inputs to ECA"
     saft-io-ctl $node_name -w
 
-    echo "configure ECA ($node_name): listen to the node registration messages ($evt_mps_node_reg), tag 0x45"
-    saft-ecpu-ctl $node_name -c $evt_mps_node_reg $evt_id_mask 0 0x45 -d
+    echo "configure ECA ($node_name): listen to the node registration messages ($evt_mps_node_reg), tag $eca_tag_node_reg"
+    saft-ecpu-ctl $node_name -c $evt_mps_node_reg $evt_id_mask 0 $eca_tag_node_reg -d
 
-    echo "configure ECA ($node_name): listen for FBAS_AUX_CYCLE event ($evt_new_cycle), tag 0x26"
-    saft-ecpu-ctl $node_name -c $evt_new_cycle $evt_id_mask 0 0x26 -d
+    echo "configure ECA ($node_name): listen for FBAS_AUX_CYCLE event ($evt_new_cycle), tag $eca_tag_aux_newcycle"
+    saft-ecpu-ctl $node_name -c $evt_new_cycle $evt_id_mask 0 $eca_tag_aux_newcycle -d
 
     if [ "$1" == "tx_node_dev" ]; then
-        echo "configure ECA ($node_name): set FBAS_GEN_EVT ($evt_mps_flag_any) for LM32 channel, tag 0x42"
-        saft-ecpu-ctl $node_name -c $evt_mps_flag_any $evt_id_mask 0 0x42 -d
+        echo "configure ECA ($node_name): handle the TLU events ($evt_tlu) as the PC events, tag $eca_tag_pc_event"
+        saft-ecpu-ctl $node_name -c $evt_tlu $evt_id_mask 0 $eca_tag_pc_event -d
 
-        echo "configure ECA ($node_name): listen for TLU event ($evt_tlu), tag 0x43"
-        saft-ecpu-ctl $node_name -c $evt_tlu $evt_id_mask 0 0x43 -d
-
-        echo "configure TLU ($node_name): timing event ($evt_tlu) is generated on signal transition at $node_tlu_input input"
+        echo "configure ECA ($node_name): TLU event ($evt_tlu) is generated on signal transition at $node_tlu_input input"
         saft-io-ctl $node_name -n $node_tlu_input -b $evt_tlu
 
-        echo "now events can be snooped with a following command: saft-ctl $node_name -xv snoop 0 0 0"
-        echo "or events can be presented by the LM32 firmware if WR console is active: $ eb-console $node_device"
+        echo "snoop TLU events by using the saft tool: saft-ctl $node_name -xv snoop $evt_tlu $evt_id_mask 0"
+        echo "or by using eb tool and the dedicated LM32 firmware: eb-console $node_device"
     else
-        echo "configure ECA ($node_name): set FBAS_WR_FLG ($evt_mps_prot_std), FBAS_WR_EVT ($evt_mps_prot_chg) for LM32 channel, tag 0x24 and 0x25"
-        saft-ecpu-ctl $node_name -c $evt_mps_prot_std $evt_id_mask 0 0x24 -d
-        saft-ecpu-ctl $node_name -c $evt_mps_prot_chg $evt_id_mask 0 0x25 -d
+        echo "configure ECA ($node_name): set FBAS_WR_FLG ($evt_mps_prot_std), FBAS_WR_EVT ($evt_mps_prot_chg) for LM32 channel, tag $eca_tag_c2_event and $eca_tag_c2_flag"
+        saft-ecpu-ctl $node_name -c $evt_mps_prot_std $evt_id_mask 0 $eca_tag_c2_event -d
+        saft-ecpu-ctl $node_name -c $evt_mps_prot_chg $evt_id_mask 0 $eca_tag_c2_flag -d
     fi
 
     echo "show actual ECA conditions"
@@ -599,22 +605,18 @@ info_nw_perf() {
 
     n=$1
 
-    echo "TX: generating the MPS events locally ..."
-    echo "TX: $n events ($evt_mps_1_nok, flag=NOK(2), $((3 * n)) MPS msgs)"
-    echo "TX: $n events ($evt_mps_2_nok, flag=NOK(2), $((3 * n)) MPS msgs)"
-    echo "TX: $n events ($evt_mps_1_ok, flag=OK(1), $n msgs)"
-    echo "TX: $n events ($evt_mps_2_ok, flag=OK(1), $n msgs)"
-    echo -e "TX: $(( n * 4 - 2 ))x IO events must be snooped by 'saft-ctl tr0 -vx snoop $evt_tlu $evt_id_mask 0'\n"
+    echo "TX: generating the PC events from PPS ($n seconds)"
 }
 
 ##########################################################
 # Test 3: measure network performance
-# TX SCU sends MPS flag periodically in timing msg with event ID=0x1fcbfcb00 and
-# sends MPS event immediately in timing msg with event ID=0x1fccfcc00.
 #
-# RX SCU drive its B1 output according to MPS flag or on time-out.
+# TX SCU sends the C2 flag periodically and the C2 event
+# immediately in timing msgs with different IDs:
+# C2 flag  -> 0x1fcbfcb00
+# C2 event -> 0x1fccfcc00
 #
-# IO connection with LEMO: RX:B1 -> TX:B2
+# LEMO cable connection at emitter SCU: B1->B2
 ##########################################################
 
 start_nw_perf() {
@@ -625,24 +627,13 @@ start_nw_perf() {
         n=$1
     fi
 
-    # info_nw_perf $n
+    # enable PPS generation at the output port
+    saft-io-ctl tr0 -n $node_pps_output -o 1 -p 1
 
-    param=0
-    offset_ns=0
-    for i in $(seq $n); do
+    wait_print_seconds $n
 
-        echo -en " $i: NOK\r"
-        saft-ctl tr0 inject $evt_mps_1_nok $param $offset_ns
-        sleep 0.5
-        saft-ctl tr0 inject $evt_mps_2_nok $param $offset_ns
-        sleep 0.5
-
-        echo -en " $i:  OK\r"
-        saft-ctl tr0 inject $evt_mps_1_ok $param $offset_ns
-        sleep 0.5
-        saft-ctl tr0 inject $evt_mps_2_ok $param $offset_ns
-        sleep 0.5
-    done
+    # disable PPS generation at the output port
+    saft-io-ctl tr0 -n $node_pps_output -o 0 -p 0
 }
 
 result_event_count() {
