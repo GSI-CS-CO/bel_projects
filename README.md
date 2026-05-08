@@ -534,6 +534,8 @@ ID: 0x06D48093
 Mask: 0xFFFFFFFF
 ```
 
+![JTAG Chain](res/readme/jtag_chain.png)
+
 Click "Auto Detect" and edit/change the unknown device to COOLRUNNER-II.
 
 ### USB-Blaster Issues
