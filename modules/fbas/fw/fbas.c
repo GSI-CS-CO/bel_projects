@@ -610,7 +610,7 @@ static uint32_t handleEcaEvent(uint32_t pollTimeout, uint32_t* mpsTask, msgCtrl_
               // unicast the reg. response
               fwlib_setEbmDstAddr(nodeId, BROADCAST_IP);
               msgRegisterNode(myMac, REG_RSP, idx);
-              DBPRINT2("reg OK: TX MAC=%llx\n", nodeId);
+              //DBPRINT2("reg OK: TX MAC=%llx\n", nodeId);
             }
           }
         }
@@ -618,7 +618,7 @@ static uint32_t handleEcaEvent(uint32_t pollTimeout, uint32_t* mpsTask, msgCtrl_
           if (regCmd == REG_RSP) {
             dstNwAddr[DST_ADDR_RXNODE].mac = nodeId;
             myIdx = info;
-            DBPRINT2("reg OK: RX MAC=%llx\n", dstNwAddr[DST_ADDR_RXNODE].mac);
+            //DBPRINT2("reg OK: RX MAC=%llx\n", dstNwAddr[DST_ADDR_RXNODE].mac);
             *mpsTask |= TSK_REG_COMPLETE;
           }
         }
@@ -793,7 +793,7 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd)
         // clear ECA queue by polling it => done in extern_entryActionOperation()
         timerStart(pTimerMpsTtl);     // start timers
         timerStart(pTimerRegistr);
-        DBPRINT2("fbas%d: enabled MPS %lx\n", nodeType, mpsTask);
+        //DBPRINT2("fbas%d: enabled MPS %lx\n", nodeType, mpsTask);
         measurePutTimestamp(MSR_ML_PRD, getSysTime());
         break;
       case FBAS_CMD_DIS_MPS_FWD:
@@ -802,7 +802,7 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd)
         mpsTask &= ~TSK_MONIT_MPS_TTL; // disable lifetime monitoring of the MPS flags
         mpsTask &= ~TSK_REG_COMPLETE;  // reset the node registration
         timerStart(pTimerConsole);     // start timer
-        DBPRINT2("fbas%d: disabled MPS %lx\n", nodeType, mpsTask);
+        //DBPRINT2("fbas%d: disabled MPS %lx\n", nodeType, mpsTask);
         measurePutTimestamp(MSR_ML_PRD, 0);
         measureClearSummary(MSR_ML_PRD, ENABLE_VERBOSITY);
         break;
