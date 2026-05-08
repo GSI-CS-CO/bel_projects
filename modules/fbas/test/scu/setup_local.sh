@@ -95,8 +95,13 @@ export eca_tag_aux_opmode=0x27
 export eca_tag_pc_event=0x42
 export eca_tag_node_reg=0x45
 
-export instr_fsm_configure=0x01 # FSM CONFIGURE state
-export instr_fsm_opready=0x02   # FSM OPREADY state
+# common-libs commands (common-defs.h)
+export instr_fsm_nocmd=0x00     # FSM no command
+export instr_fsm_configure=0x01 # FSM configure
+export instr_fsm_startop=0x02   # FSM start operation
+export instr_fsm_stopop=0x03    # FSM stop operation
+export instr_fsm_idle=0x04      # FSM request the idle state
+export instr_fsm_recover=0x05   # FSM recover from the error state
 
 export instr_set_nodetype=0x15  # set node type
 export instr_set_io_oe=0x16     # set IO output enable
@@ -432,7 +437,7 @@ make_node_ready() {
 
     device=$(eval echo "\$$1")  # reference node device label (string) as variable
 
-    eb-write $device $addr_cmd/4 $instr_fsm_opready
+    eb-write $device $addr_cmd/4 $instr_fsm_startop
     wait_seconds 1
 }
 
@@ -491,6 +496,24 @@ set_eca_rules() {
 
     echo "list all IO conditions in ECA"
     saft-io-ctl $node_name -l
+}
+
+stop_operation() {
+    # $1 - device (dev/wbm0)
+
+    eb-write $1 $addr_cmd/4 $instr_dis_mps
+    sleep 0.1
+    eb-write $1 $addr_cmd/4 $instr_fsm_stopop
+    sleep 0.1
+    echo "Stopped operation on $1"
+}
+
+start_operation() {
+    # $1 - device (dev/wbm0)
+
+    eb-write $1 $addr_cmd/4 $instr_fsm_startop
+    sleep 0.1
+    echo "Started operation on $1"
 }
 
 ######################

@@ -145,10 +145,10 @@ measure_nw_perf() {
 
     echo -e "stop the measurements, runtime $runtime seconds\n"
     for scu in ${txscu[@]}; do
-        output=$(run_remote $scu "source setup_local.sh && disable_mps \$tx_node_dev")
+        output=$(run_remote $scu "source setup_local.sh && stop_operation \$tx_node_dev")
     done
 
-    output=$(run_remote $rxscu "source setup_local.sh && disable_mps \$rx_node_dev")
+    output=$(run_remote $rxscu "source setup_local.sh && stop_operation \$rx_node_dev")
 
     # report test result
     echo "measurement stats of MPS signaling"
@@ -231,11 +231,19 @@ measure_nw_perf() {
 }
 
 measure_ttl() {
+    echo -e "RX: start the FW operation\n"
+    output=$(run_remote $rxscu "source setup_local.sh && start_operation \$rx_node_dev")
+
+    echo -e "TX: start the FW operation: TX=${txscu_name[*]}"
+    for scu in ${txscu[@]}; do
+        output=$(run_remote $scu "source setup_local.sh && start_operation \$tx_node_dev")
+    done
+
     echo -e "start the measurement\n"
     output=$(run_remote $rxscu "source setup_local.sh && enable_mps \$rx_node_dev")
 
     n_toggle=10
-    echo -e "toggle MPS operation (n=$n_toggle): TX=${txscu_name[@]}"
+    echo -e "toggle MPS operation (n=$n_toggle): TX=${txscu_name[*]}"
     for i in $(seq 1 $n_toggle); do
         echo -en " $i: enable \r"
 
