@@ -65,7 +65,7 @@ architecture arch of wb_asmi is
   signal  s_status_out    : std_logic_vector(7 downto 0);
 
 
-  type    t_wb_cyc  is (idle, stall, busy_wait, read_valid, cycle_end, err, write_addr_ready, read_addr_ready, erase_stall);
+  type    t_wb_cyc  is (idle, stall1, stall2, busy_wait, read_valid, cycle_end, err, write_addr_ready, read_addr_ready, erase_stall);
   signal  wb_state      : t_wb_cyc;
 
   signal  s_rden_ext    : std_logic;
@@ -91,6 +91,7 @@ architecture arch of wb_asmi is
   signal  illegal_write     : std_logic;
   signal  busy              : std_logic;
   signal  data_valid        : std_logic;
+  signal  dataout           : std_logic_vector(7 downto 0);
   
   signal read_fifo_in    : std_logic_vector(7 downto 0);
   signal read_fifo_out   : std_logic_vector(7 downto 0);
@@ -218,7 +219,7 @@ begin
   a2: if g_family(1 to 7) = "Arria 1" generate
     asmi_10: asmi10
       port map (
-        clkin         => not clk_flash_i,
+        clkin         => clk_flash_i,
         fast_read     => s_read,
         rden          => s_rden,
         addr          => s_addr,
@@ -233,7 +234,7 @@ begin
         ex4b_addr     => s_ex4b,
         reset         => not rst_n_i,
         sce           => "000", -- select flash at nCSO[0]
-        dataout       => s_dataout,
+        dataout       => dataout,
         busy          => busy,
         data_valid    => data_valid,
         status_out    => s_status_out,
@@ -241,7 +242,7 @@ begin
         illegal_erase => illegal_erase,
         read_address  => s_read10_addr,
         rdid_out      => s_rdid_out,
-        read_dummyclk => s_read_dclk
+        read_dummyclk => '0'   -- set to low, according to User Guide 18.0
       );
   end generate;
 
@@ -342,6 +343,7 @@ begin
       s_busy            <= busy;
       s_illegal_write   <= illegal_write;
       s_illegal_erase   <= illegal_erase;
+      s_dataout         <= dataout;
     end if;
    
   
@@ -406,7 +408,7 @@ begin
 
               -- enable 4byte address mode
               elsif (slave_i.adr(7 downto 0) = SET_4BMODE) then
-                wb_state <= stall;
+                wb_state <= stall1;
                 slave_o.stall <= '1';
                 if slave_i.we = '1' and slave_i.sel = x"f" then
                   if slave_i.dat(0) = '1' then
@@ -419,7 +421,7 @@ begin
 
               -- read dummyclock 
               elsif (slave_i.adr(7 downto 0) = READ_DCLK) then
-                wb_state <= stall;
+                wb_state <= stall1;
                 slave_o.stall <= '1';
                 if slave_i.we = '1' and slave_i.sel = x"f" then
                   s_read_dclk <= '1';
@@ -427,7 +429,7 @@ begin
               
               -- read status from epcs
               elsif (slave_i.adr(7 downto 0) = READ_STATUS) then
-                wb_state      <= stall;
+                wb_state      <= stall1;
                 slave_o.stall <= '1';
                 if slave_i.we = '0' then
                   s_read_status <= '1';
@@ -451,7 +453,7 @@ begin
                 
               -- read memory capacity id from epcs
               elsif (slave_i.adr(7 downto 0) = READ_ID) then
-                wb_state      <= stall;
+                wb_state      <= stall1;
                 slave_o.stall <= '1';
                 if slave_i.we = '0' then
                   s_rdid <= '1';
@@ -570,7 +572,7 @@ begin
             s_wren        <= '1';
             s_write       <= '1';
             slave_o.stall <= '1';
-            wb_state      <= stall;
+            wb_state      <= stall1;
              
           -- multi byte read
           when read_valid =>
@@ -578,8 +580,9 @@ begin
             s_rden        <= '1';
             if slave_i.cyc = '1' and slave_i.stb = '1' and slave_i.adr(7 downto 0) = BUSY_CHECK then
               slave_o.ack <= '1';
+            end if;
             -- check if data valid ever comes
-            elsif v_read_tmo = TIMEOUT then
+            if v_read_tmo = TIMEOUT then
               wb_state <= err;
               v_read_tmo := 0;
             -- valid data on the output
@@ -601,13 +604,22 @@ begin
               v_read_tmo := v_read_tmo + 1;
             end if;
           
-          when stall =>
+          when stall1 =>
+            slave_o.stall   <= '1';
+            if s_illegal_write = '1' or s_illegal_erase = '1' then
+              wb_state <= err;
+            else
+              wb_state <= stall2;
+            end if;
+
+          when stall2 =>
             slave_o.stall   <= '1';
             if s_illegal_write = '1' or s_illegal_erase = '1' then
               wb_state <= err;
             else
               wb_state <= busy_wait;
             end if;
+
 
           when erase_stall =>
             slave_o.stall   <= '1';
