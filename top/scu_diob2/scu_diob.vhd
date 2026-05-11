@@ -101,9 +101,9 @@ architecture scu_diob_arch of scu_diob is
 --  +============================================================================================================================+
 component io_blackbox 
 generic(
-		nr_diob_ios:           integer; -- range 0 to 256:=256;
+		nr_front_ios:           integer; -- range 0 to 256:=256;
 		nr_virt_ios:           integer; -- range 0 to 96;
-		nr_backplane_ios:       integer; -- range 0 to 16;
+		nr_rear_ios:         integer; -- range 0 to 16;
 		max_frontend_plugins:  integer; --
 		max_proc_plugins: 		 integer;
 		max_user_plugins: 	   integer;
@@ -119,9 +119,9 @@ generic(
 		clock:                  in    std_logic;            								
 		reset:                  in    std_logic;             								  
 		-- Frontend
-		diob_io:                inout	std_logic_vector(nr_diob_ios-1 downto 0); 		    -- Connection to DIOB I/O
+		front_io:                inout	std_logic_vector(nr_front_ios-1 downto 0); 		    -- Connection to DIOB I/O
 		frontend_plugin_select: in	  std_logic_vector(frontend_sel_bits-1 downto 0); --I/O plugin selection
-		backplane_io:           inout	std_logic_vector(nr_backplane_ios-1 downto 0); --Backplane input/output fed (almost) directly	to user plugin
+	  rear_io:           inout	std_logic_vector(nr_rear_ios-1 downto 0); --Backplane input/output fed (almost) directly	to user plugin
 		-- SCU-bus
     addr:                   in std_logic_vector(addr_bus_width-1 downto 0);	    --(Adr_from_SCUB_LA)
 		data_w:                 in std_logic_vector(data_bus_width-1 downto 0);   -- (Data_from_SCUB_LA)
@@ -395,9 +395,9 @@ UIO(4 downto 0) <= ADR_from_SCUB_LA(11 downto 7);
 
 io_blackbox_el: io_blackbox 
 generic map(
-		nr_diob_ios          => BB_NR_DIOB_IOS,
+		nr_front_ios          => BB_NR_FRONT_IOS,
 		nr_virt_ios          =>	BB_NR_VIRT_IOS,
-		nr_backplane_ios      => BB_NR_BACKPLANE_IOS,
+		nr_rear_ios          => BB_NR_REAR_IOS,
 		max_frontend_plugins => BB_MAX_FRONTEND_PLUGINS,
 		max_proc_plugins     => BB_MAX_PROC_PLUGINS,
 		max_user_plugins     => BB_MAX_USER_PLUGINS,
@@ -413,9 +413,9 @@ generic map(
 		clock                => clk_sys,          								
 		reset                => not rstn_sys,           								  
 		-- Frontend
-		diob_io              => PIO(142 downto 16),     -- Connection to DIOB I/O 
+		front_io              => PIO(142 downto 16),     -- Connection to DIOB I/O 
 		frontend_plugin_select => PIO(150 downto 143),  --I/O plugin selection
-		backplane_io         => b_backplane, --UIO(15 downto 0),       --Backplane input/output fed (almost) directly	to user plugin
+	  rear_io         => b_backplane, --UIO(15 downto 0),       --Backplane input/output fed (almost) directly	to user plugin
 		-- SCU-bus
     addr                 => ADR_from_SCUB_LA,	    --(Adr_from_SCUB_LA)
 		data_w               => Data_from_SCUB_LA,   -- (Data_from_SCUB_LA)
