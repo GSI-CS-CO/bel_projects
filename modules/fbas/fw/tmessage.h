@@ -14,7 +14,7 @@
 #include "fbas_common.h"
 
 // Ahead time
-#define FBAS_AHEAD_TIME    100000ULL // ahead time for deadline, 100 us
+#define FBAS_AHEAD_TIME    0ULL      // no ahead time for deadline
 
 // FBAS timing messages
 #define FBAS_FLG_FID       0x1ULL    // format ID, 2-bit
