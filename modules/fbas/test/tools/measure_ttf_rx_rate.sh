@@ -193,9 +193,9 @@ for i in ${!m_rates[@]}; do
     echo -en " start a schedule on '$datamaster': "
     run_finite_dm_schedule
 
-    # disable MPX task of rxscu"
-    echo -en " disable MPS operation of '$rxscu_name': "
-    disable_tr_mps
+    # stop the operation of rxscu"
+    echo -en " stop operation of '$rxscu_name': "
+    stop_rx_operation
 
     # obtain TR measurements
     echo -en " obtain measurements from '$rxscu_name': "

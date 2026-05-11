@@ -104,9 +104,9 @@ read -p " press 'Enter' to stop the DM schedule ..."
 echo -en " stop the running schedule on '$datamaster': "
 stop_dm_schedule
 
-# disable MPX task of rxscu"
-echo -en " disable MPS operation of '$rxscu_name': "
-disable_tr_mps
+# stop the operation of rxscu"
+echo -en " stop operation of '$rxscu_name': "
+stop_rx_operation
 
 # obtain stats from TR
 echo -en " obtain stats from '$rxscu_name': "

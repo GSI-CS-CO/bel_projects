@@ -188,7 +188,7 @@ enable_tr_mps() {
     exit_on_fail $ret_code
 }
 
-disable_tr_mps() {
+stop_rx_operation() {
     output=$(run_remote $rxscu \
         "source setup_local.sh && stop_test4 \$rx_node_dev")
     ret_code=$?
