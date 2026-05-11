@@ -632,7 +632,7 @@ stop_test4() {
 }
 
 info_nw_perf() {
-    # $1 - number of iterations
+    # $1 - event generation duration
 
     n=$1
 
