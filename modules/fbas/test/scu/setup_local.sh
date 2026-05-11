@@ -622,15 +622,13 @@ read_counters() {
 start_test4() {
     # $1 - dev/wbm0
 
-    echo -e "\nEnable MPS task on $1"
     enable_mps $1
 }
 
 stop_test4() {
     # $1 - dev/wbm0
 
-    echo -e "\nDisable MPS task on $1"
-    disable_mps $1
+    stop_operation $1
 }
 
 info_nw_perf() {
