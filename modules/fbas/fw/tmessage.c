@@ -208,6 +208,14 @@ mpsMsg_t* msgStorePcEvent(const uint8_t idx, const uint64_t evt, const uint64_t 
   uint8_t ch = (uint8_t)(evt >> 8);
   uint8_t flag = (uint8_t)evt;
 
+  // PC events simulated by TLU can only have values 1 and 0, therefore
+  // map these values into the valid PC flags: 0->OK, 1->NOK, other->TEST
+  switch ((uint8_t)evt) {
+    case MPS_FLAG_OK :  flag = MPS_FLAG_OK;   break;
+    case MPS_FLAG_NOK:  flag = MPS_FLAG_NOK;  break;
+    default:            flag = MPS_FLAG_TEST;
+  }
+
   // keep the PC flag and timestamp
   (headBufMps+ch)->prot.flag = flag;
   (headBufMps+ch)->tsRx = ts;
