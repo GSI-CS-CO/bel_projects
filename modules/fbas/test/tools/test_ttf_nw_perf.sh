@@ -12,7 +12,7 @@ rxscu="$rxscu_name.$domain"
 txscu=()                              # array with transmitter domain names
 fw_scu_def="fbas128.scucontrol.bin"   # FW that supports up to 16 TX nodes, each has 8 MPS channels
 ssh_opts="-o StrictHostKeyChecking=no"   # no hostkey checking
-getopt_opts="u:p:t:r:n:m:eyvh"        # user options
+getopt_opts="u:p:t:r:g:m:eyvh"        # user options
 
 usage() {
 
@@ -26,8 +26,8 @@ usage() {
     echo "  -p <userpassd>         user password"
     echo "  -t <TX SCU>            transmitter SCU, by default $def_txscu_name"
     echo "  -r <RX SCU>            receiver SCU, by default $rxscu_name"
-    echo "  -n <MPS events>        number of MPS events, 10 by default"
-    echo "  -m <TX msg period>     index of the TX messaging period (0..8, 0 = 33,3 ms)"
+    echo "  -g <event gen period>  pseudo event generation period (10 seconds by default)"
+    echo "  -m <messaging index>   index of the TX messaging period (0..8, 0 = 33,3 ms)"
     echo "  -e                     exclude TTL measurement"
     echo "  -y                     'yes' to all prompts"
     echo "  -v                     verbosity for the measurement results"
@@ -46,13 +46,9 @@ user_approval() {
 pre_check() {
     echo "TX: snoop TLU event (for IO action):"
     echo "    saft-ctl tr0 -xv snoop 0 0 0"
-    echo "TX: events expected, when B1 output is driven on RX:"
+    echo "TX: expected events at a chosen input port (B2/IO2):"
     echo "    GID: 0x0fff EVTNO: 0x0100 Other: 0x000000001"
     echo "    GID: 0x0fff EVTNO: 0x0100 Other: 0x000000000"
-
-    echo "RX: drive B1 output:"
-    echo "      saft-io-ctl tr0 -n B1 -o 1 -d 1"
-    echo "      saft-io-ctl tr0 -n B1 -o 1 -d 0"
 }
 
 setup_nodes() {
@@ -113,7 +109,7 @@ measure_nw_perf() {
     output=$(run_remote $rxscu "source setup_local.sh && enable_mps \$rx_node_dev")
 
     # use local script to print info
-    output=$(source $dir_name/../scu/setup_local.sh && info_nw_perf $events)
+    output=$(source $dir_name/../scu/setup_local.sh && info_nw_perf $gen_period)
     echo -e "$output\n"
 
     # enable simultaneous operation of TX nodes
@@ -126,7 +122,7 @@ measure_nw_perf() {
         output=$(run_remote ${txscu[$i]} "source setup_local.sh && enable_mps \$tx_node_dev")
 
         # start test sub-process and keep its process ID
-        run_remote ${txscu[$i]} "source setup_local.sh && start_nw_perf $events" &
+        run_remote ${txscu[$i]} "source setup_local.sh && start_nw_perf $gen_period" &
         pids[$i]=$!
     done
 
@@ -268,7 +264,7 @@ measure_ttl() {
     run_remote $rxscu "source setup_local.sh && result_ttl_ival \$rx_node_dev \$addr_cnt1 $verbose"
 }
 
-unset username userpasswd events idx_msg_period exclude_ttl auto verbose
+unset username userpasswd gen_period idx_msg_period exclude_ttl auto verbose
 unset OPTIND
 
 while getopts $getopt_opts c; do
@@ -277,7 +273,7 @@ while getopts $getopt_opts c; do
         p) userpasswd=$OPTARG ;;
         t) txscu_name+=("$OPTARG"); txscu+=("$OPTARG.$domain") ;;
         r) rxscu_name=$OPTARG; rxscu=$OPTARG.$domain ;;
-        n) events=$OPTARG ;;
+        g) gen_period=$OPTARG ;;
         m) idx_msg_period=$OPTARG ;;
         e) exclude_ttl="exclude_ttl" ;;
         y) auto="auto" ;;
@@ -312,9 +308,9 @@ if [ -z "$userpasswd" ]; then
     read -rsp "password for '$username@{$scu_names}': " userpasswd; echo
 fi
 
-# set the number of events
-if [ -z "$events" ]; then
-    events=10
+# set the pseudo event generation period
+if [ -z "$gen_period" ]; then
+    gen_period=10
 fi
 
 echo -e "\n--- Step 1: set up nodes (RX=$rxscu_name, TX=${txscu_name[*]}) ---\n"
