@@ -16,7 +16,7 @@ digraph G {
 // where:
 // - sender ID: MAC address
 // - index: MPS channel index
-// - MPS_flag: OK (=1), NOK (=2), TEST (=3)
+// - MPS_flag: OK (=0), NOK (=1), TEST (=3)
 
 // NOK->OK event by 16 senders is simulated with the given schedule:
 // 2 blocks of 16 timing messages (M_A1..M_A16, M_A17..M_A32), each with different dev_ID,
@@ -31,38 +31,38 @@ node [cpu="0", pattern=PatA, patentry=0, patexit=0,  style     = "filled", fillc
 edge [type="defdst"];
 
 C_A0 [type="flow",  patentry=1, toffs=0, qty="374", tvalid="0", vabs="true"];
-M_A1 [type="tmsg",  patentry=1, toffs=0, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff010002"];
-M_A2 [type="tmsg",              toffs=1000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff020102"];
-M_A3 [type="tmsg",              toffs=2000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff030202"];
-M_A4 [type="tmsg",              toffs=3000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff040302"];
-M_A5 [type="tmsg",              toffs=4000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff050402"];
-M_A6 [type="tmsg",              toffs=5000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff060502"];
-M_A7 [type="tmsg",              toffs=6000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff070602"];
-M_A8 [type="tmsg",              toffs=7000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff080702"];
-M_A9 [type="tmsg",              toffs=8000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff090802"];
-M_A10 [type="tmsg",             toffs=9000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff0a0902"];
-M_A11 [type="tmsg",             toffs=10000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff0b0a02"];
-M_A12 [type="tmsg",             toffs=11000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff0c0b02"];
-M_A13 [type="tmsg",             toffs=12000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff0d0c02"];
-M_A14 [type="tmsg",             toffs=13000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff0e0d02"];
-M_A15 [type="tmsg",             toffs=14000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff0f0e02"];
-M_A16 [type="tmsg",             toffs=15000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff100f02"];
-M_A17 [type="tmsg",             toffs=16000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff010001"];
-M_A18 [type="tmsg",             toffs=17000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff020101"];
-M_A19 [type="tmsg",             toffs=18000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff030201"];
-M_A20 [type="tmsg",             toffs=19000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff040301"];
-M_A21 [type="tmsg",             toffs=20000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff050401"];
-M_A22 [type="tmsg",             toffs=21000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff060501"];
-M_A23 [type="tmsg",             toffs=22000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff070601"];
-M_A24 [type="tmsg",             toffs=23000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff080701"];
-M_A25 [type="tmsg",             toffs=24000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff090801"];
-M_A26 [type="tmsg",             toffs=25000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff0a0901"];
-M_A27 [type="tmsg",             toffs=26000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff0b0a01"];
-M_A28 [type="tmsg",             toffs=27000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff0c0b01"];
-M_A29 [type="tmsg",             toffs=28000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff0d0c01"];
-M_A30 [type="tmsg",             toffs=29000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff0e0d01"];
-M_A31 [type="tmsg",             toffs=30000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff0f0e01"];
-M_A32 [type="tmsg",             toffs=31000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff100f01"];
+M_A1 [type="tmsg",  patentry=1, toffs=0, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff010001"];
+M_A2 [type="tmsg",              toffs=1000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff020101"];
+M_A3 [type="tmsg",              toffs=2000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff030201"];
+M_A4 [type="tmsg",              toffs=3000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff040301"];
+M_A5 [type="tmsg",              toffs=4000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff050401"];
+M_A6 [type="tmsg",              toffs=5000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff060501"];
+M_A7 [type="tmsg",              toffs=6000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff070601"];
+M_A8 [type="tmsg",              toffs=7000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff080701"];
+M_A9 [type="tmsg",              toffs=8000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff090801"];
+M_A10 [type="tmsg",             toffs=9000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff0a0901"];
+M_A11 [type="tmsg",             toffs=10000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff0b0a01"];
+M_A12 [type="tmsg",             toffs=11000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff0c0b01"];
+M_A13 [type="tmsg",             toffs=12000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff0d0c01"];
+M_A14 [type="tmsg",             toffs=13000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff0e0d01"];
+M_A15 [type="tmsg",             toffs=14000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff0f0e01"];
+M_A16 [type="tmsg",             toffs=15000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff100f01"];
+M_A17 [type="tmsg",             toffs=16000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff010000"];
+M_A18 [type="tmsg",             toffs=17000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff020100"];
+M_A19 [type="tmsg",             toffs=18000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff030200"];
+M_A20 [type="tmsg",             toffs=19000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff040300"];
+M_A21 [type="tmsg",             toffs=20000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff050400"];
+M_A22 [type="tmsg",             toffs=21000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff060500"];
+M_A23 [type="tmsg",             toffs=22000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff070600"];
+M_A24 [type="tmsg",             toffs=23000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff080700"];
+M_A25 [type="tmsg",             toffs=24000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff090800"];
+M_A26 [type="tmsg",             toffs=25000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff0a0900"];
+M_A27 [type="tmsg",             toffs=26000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff0b0a00"];
+M_A28 [type="tmsg",             toffs=27000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff0c0b00"];
+M_A29 [type="tmsg",             toffs=28000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff0d0c00"];
+M_A30 [type="tmsg",             toffs=29000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff0e0d00"];
+M_A31 [type="tmsg",             toffs=30000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff0f0e00"];
+M_A32 [type="tmsg",             toffs=31000, fid=1, gid=4043, evtno=4043, sid="0", bpid="0", par="0xffffffffff100f00"];
 B_A16 [type="block",            tperiod=26666666, qlo="true"];
 
 C_A0 -> M_A1 -> M_A2 -> M_A3 -> M_A4 -> M_A5 -> M_A6 -> M_A7 -> M_A8 ->
