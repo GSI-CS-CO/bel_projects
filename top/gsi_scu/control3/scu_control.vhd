@@ -338,7 +338,7 @@ architecture rtl of scu_control is
 
   constant c_family  : string := "Arria II";
   constant c_project : string := "scu_control";
-  constant c_cores   : natural := 2;
+  constant c_cores   : natural := 1;
   constant c_profile_name  : string := "medium_icache_debug";
   constant c_initf   : string := c_project & ".mif" & ';' & c_project & "_stub.mif";
 
