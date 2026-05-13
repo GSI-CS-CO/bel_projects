@@ -845,7 +845,7 @@ architecture rtl of monster is
   signal uart_mux           : std_logic; -- either usb or external
   signal uart_wrc           : std_logic; -- from wrc
   signal s_neorv32_uart0_out: std_logic; -- from neorv32
-  signal s_neorv32_uart0_in : std_logic;
+  signal s_neorv32_uart0_in : std_logic; 
   signal s_neorv32_uart1_out: std_logic;
   signal s_neorv32_uart1_in : std_logic;
   signal uart_to_usb        : std_logic;
