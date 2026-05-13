@@ -30,7 +30,10 @@ entity neorv32_shell is
     -- Peripherals
     gpio_o     : out std_logic_vector(31 downto 0);
     gpio_i     : in  std_logic_vector(31 downto 0) := (others => '0');
-    uart_o     : out std_logic;
+    uart0_o    : out std_logic;
+    uart0_i    : in  std_logic;
+    uart1_o    : out std_logic;
+    uart1_i    : in  std_logic;
     -- Wishbone
     slave_i    : in  t_wishbone_slave_in;
     slave_o    : out t_wishbone_slave_out;
@@ -130,6 +133,7 @@ begin
     XBUS_TIMEOUT      => 0,
     IO_GPIO_NUM       => 32,
     IO_UART0_EN       => true,
+    IO_UART1_EN       => false,
     OCD_EN            => g_en_debugging
   )
   port map (
@@ -147,7 +151,10 @@ begin
     xbus_err_i  => s_xbus_err,
     gpio_o      => s_gpio_out,
     gpio_i      => s_gpio_in,
-    uart0_txd_o => uart_o,
+    uart0_txd_o => uart0_o,
+    uart0_rxd_i => uart0_i,
+    uart1_txd_o => uart1_o,
+    uart1_rxd_i => uart1_i,
     jtag_tck_i  => jtag_tck_i,
     jtag_tdi_i  => jtag_tdi_i,
     jtag_tdo_o  => jtag_tdo_o,
