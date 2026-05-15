@@ -71,6 +71,7 @@ function f_upload_program() {
         exit 3
       fi
       f_log INFO "[SUCCESS] Neorv32 DPRAM programmed with $v_nrv_program."
+      
       if [ "$v_nrv_examine" == true ]; then
         f_log INFO "Verifying the RAM content against the program file..."
         v_nrv_program_size=$(wc -c < "$v_nrv_program")
@@ -92,10 +93,13 @@ function f_upload_program() {
           f_log INFO "[SUCCESS] Program uploaded and verified."
         fi
         [ $v_nrv_cmp_status -ne 0 ] && exit 9
-        if [ "$v_nrv_keep_reset" = false ]; then
-          f_start_neorv32
-        fi
+       
       fi
+      
+      if [ "$v_nrv_keep_reset" = false ]; then
+          f_start_neorv32
+      fi
+      
     else
       f_log ERROR "Can't find file $v_nrv_program!"
       exit 4
@@ -192,11 +196,11 @@ Options:
   -h           Show this help message
 
 Example:
-  Program NEORV32                                      : $(basename "$0") -v -f program.bin /dev/ttyUSB0
-  Program NEORV32 and verify                           : $(basename "$0") /dev/ttyUSB0 -v -f program.bin -e
-  Preserve the downloaded RAM content after verifying  : $(basename "$0") /dev/ttyUSB0 -v -f program.bin -e -p
-  Compare file with NEORV32 RAM content                : $(basename "$0") /dev/ttyUSB0 -v -c sample.bin
-  Preserve the downloaded RAM content after comparing  : $(basename "$0") /dev/ttyUSB0 -v -c sample.bin -p
+  Program NEORV32                                      : $(basename "$0") -v -f program.bin dev/ttyUSB0
+  Program NEORV32 and verify                           : $(basename "$0") dev/ttyUSB0 -v -f program.bin -e
+  Preserve the downloaded RAM content after verifying  : $(basename "$0") dev/ttyUSB0 -v -f program.bin -e -p
+  Compare file with NEORV32 RAM content                : $(basename "$0") dev/ttyUSB0 -v -c sample.bin
+  Preserve the downloaded RAM content after comparing  : $(basename "$0") dev/ttyUSB0 -v -c sample.bin -p
 EOF
 }
 

@@ -10,13 +10,13 @@
 
 #define BAUD_RATE 115200
 #define CLOCK_HZ 62500000
-#define IDLE_MS 2500
 
 int main(void)
 {
   uint32_t ui_SDBroot = 0;
   uint32_t ui_IMemSize = 0;
   uint32_t ui_DMemSize = 0;
+  char keyin;
 
   /* Set up UART */
   neorv32_rte_setup();
@@ -26,13 +26,16 @@ int main(void)
   ui_SDBroot = (uint32_t) sdb_add();
 
   /* Start endless loop */
+  neorv32_aux_print_logo();
+  neorv32_aux_print_hw_config();
+  neorv32_uart0_puts("NEORV32: Hello world!\n");
+  neorv32_uart0_printf("NEORV32: Found SDB root at 0x%x\n", ui_SDBroot);
+  
   while (true)
   {
-    neorv32_aux_print_logo();
-    neorv32_aux_print_hw_config();
-    neorv32_uart0_puts("NEORV32: Hello world!\n");
-    neorv32_uart0_printf("NEORV32: Found SDB root at 0x%x\n", ui_SDBroot);
-    neorv32_aux_delay_ms(CLOCK_HZ, IDLE_MS);
+    neorv32_uart0_puts("\nNEORV32: Press any key to continue\n");
+    keyin = neorv32_uart0_getc(); 
+    neorv32_uart0_printf("User keyin: %c\n", keyin);
   }
 
   /* Test return to start.s */

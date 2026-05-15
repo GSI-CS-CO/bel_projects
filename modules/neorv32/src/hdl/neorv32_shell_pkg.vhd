@@ -32,7 +32,10 @@ package neorv32_shell_pkg is
       rstn_i     : in std_logic;
       rstn_ext_i : in std_logic;
       -- Peripherals
-      uart_o     : out std_logic;
+      uart0_o    : out std_logic;
+      uart0_i    : in  std_logic;
+      uart1_o    : out std_logic;
+      uart1_i    : in  std_logic;
       -- Wishbone
       slave_i    : in  t_wishbone_slave_in;
       slave_o    : out t_wishbone_slave_out;
