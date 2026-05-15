@@ -71,7 +71,6 @@ function f_upload_program() {
         exit 3
       fi
       f_log INFO "[SUCCESS] Neorv32 DPRAM programmed with $v_nrv_program."
-      f_start_neorv32
       
       if [ "$v_nrv_examine" == true ]; then
         f_log INFO "Verifying the RAM content against the program file..."
@@ -94,10 +93,13 @@ function f_upload_program() {
           f_log INFO "[SUCCESS] Program uploaded and verified."
         fi
         [ $v_nrv_cmp_status -ne 0 ] && exit 9
-        if [ "$v_nrv_keep_reset" = false ]; then
-          f_start_neorv32
-        fi
+       
       fi
+      
+      if [ "$v_nrv_keep_reset" = false ]; then
+          f_start_neorv32
+      fi
+      
     else
       f_log ERROR "Can't find file $v_nrv_program!"
       exit 4
