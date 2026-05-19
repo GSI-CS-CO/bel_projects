@@ -122,7 +122,7 @@ set_global_assignment -name POWER_USE_DEVICE_CHARACTERISTICS MAXIMUM
 set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:pexp_neorv32.tcl"
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:00:25 FEBRUARY 13, 2012"
 set_global_assignment -name RELEASE_CLEARS_BEFORE_TRI_STATES ON
-set_global_assignment -name SEED 224
+set_global_assignment -name SEED 206
 set_global_assignment -name SLD_NODE_CREATOR_ID 110 -section_id auto_signaltap_0
 set_global_assignment -name SLD_NODE_ENTITY_NAME sld_signaltap -section_id auto_signaltap_0
 set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_ADVANCED_TRIGGER_ENTITY=basic,1," -section_id auto_signaltap_0
