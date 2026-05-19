@@ -827,7 +827,10 @@ architecture rtl of monster is
   signal uart_usb           : std_logic; -- from usb
   signal uart_mux           : std_logic; -- either usb or external
   signal uart_wrc           : std_logic; -- from wrc
-  signal s_neorv32_uart_out : std_logic; -- from neorv32
+  signal s_neorv32_uart0_out: std_logic; -- from neorv32
+  signal s_neorv32_uart0_in : std_logic; 
+  signal s_neorv32_uart1_out: std_logic;
+  signal s_neorv32_uart1_in : std_logic;
   signal uart_to_usb        : std_logic;
 
   signal uart_aux_mux : std_logic;
@@ -1891,8 +1894,8 @@ end generate;
     uart_mux    <= uart_usb and wr_uart_i;
   end generate;
   neorv32_uart_y : if g_en_neorv32 generate
-    uart_to_usb <= s_neorv32_uart_out;
-    uart_mux    <= uart_usb;
+    uart_to_usb <= s_neorv32_uart0_out;
+    s_neorv32_uart0_in    <= uart_usb;
   end generate;
 
   neorv32_n : if not g_en_neorv32 generate
@@ -1920,7 +1923,10 @@ end generate;
       slave_o     => top_bus_master_i(top_slaves'pos(tops_neorv32_ram)),
       master_i    => top_bus_slave_o(top_my_masters'pos(topm_neorv32)),
       master_o    => top_bus_slave_i(top_my_masters'pos(topm_neorv32)),
-      uart_o      => s_neorv32_uart_out,
+      uart0_o     => s_neorv32_uart0_out,
+      uart0_i     => s_neorv32_uart0_in,
+      uart1_o     => s_neorv32_uart1_out,
+      uart1_i     => s_neorv32_uart1_in,
       jtag_tck_i  => s_tck,
       jtag_tdi_i  => s_tdi,
       jtag_tdo_o  => s_tdo,
