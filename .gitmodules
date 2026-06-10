@@ -28,3 +28,6 @@
 [submodule "ip_cores/neorv32"]
 	path = ip_cores/neorv32
 	url = https://github.com/GSI-CS-CO/neorv32.git
+[submodule "ip_cores/blackbox"]
+	path = ip_cores/blackbox
+	url = git@git.gsi.de:hel-public/blackbox.git
