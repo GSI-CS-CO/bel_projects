@@ -13,6 +13,7 @@ txscu=()                              # array with transmitter domain names
 fw_scu_def="fbas128.scucontrol.bin"   # FW that supports up to 16 TX nodes, each has 8 MPS channels
 ssh_opts="-o StrictHostKeyChecking=no"   # no hostkey checking
 getopt_opts="u:p:t:r:g:i:eyvh"        # user options
+n_tx_rates=12                         # TX messaging rates
 
 usage() {
 
@@ -287,9 +288,9 @@ done
 
 # check the index of the TX messaging period
 if [ "$idx_msg_period" ]; then
-    num=$(($idx_msg_period)) 2>/dev/null # 0..8
-    if [ $num -gt 8 ]; then
-        echo "Error: invalid index for TX messaging period: $num (expects 0..8). Exit!"
+    num=$(($idx_msg_period)) 2>/dev/null
+    if [ $num -ge $n_tx_rates ]; then
+        echo "Error: invalid index for TX messaging period: $num (valid index is less than $n_tx_rates). Exit!"
         usage; exit 1
     fi
 fi

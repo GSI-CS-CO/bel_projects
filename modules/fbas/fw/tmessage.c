@@ -44,7 +44,8 @@ mpsMsg_t *const headBufMps = &bufMpsMsg[0]; // head of the MPS message buffer
 msgCtrl_t  mpsMsgCtrl;                          // MPS messaging control structure
 const uint32_t txMsgRates[N_TX_RATES] = {       // TX messaging rates, [us]
               33333, 100000, 80000, 50000,      // 30, 10, 12.5, 20 [Hz]
-              20000, 10000, 5000, 2000, 1000};  // 50, 100, 200, 500, 1000 [Hz]
+              20000, 10000, 5000, 2000,         // 50, 100, 200, 500 [Hz]
+              1000, 500, 200, 100};             // 1000, 2000, 5000, 10000 [Hz]
 
 static int addr_equal(uint8_t a[ETH_ALEN], uint8_t b[ETH_ALEN]); // wr-switch-sw/userspace/libwr
 static uint8_t *addr_copy(uint8_t dst[ETH_ALEN], uint8_t src[ETH_ALEN]);
