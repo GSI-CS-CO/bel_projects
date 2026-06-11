@@ -29,7 +29,7 @@ component wb_scu_bus is
     slave_i                            : in  t_wishbone_slave_in;
     slave_o                            : out t_wishbone_slave_out;
     
-    srq_active                         : out std_logic_vector(11 downto 0);    -- vector of slave service requests
+    srq_active                         : out std_logic_vector(12 downto 0);    -- vector of slave service requests
 
     clk                                : IN STD_LOGIC;
     nrst                               : IN STD_LOGIC;
@@ -45,8 +45,8 @@ component wb_scu_bus is
     SCUB_Addr                          : OUT    STD_LOGIC_VECTOR(15 DOWNTO 0);  -- Address Bus of SCU_Bus
     SCUB_RDnWR                         : OUT    STD_LOGIC;                      -- Read/Write Signal of SCU_Bus. Read is active high.
     -- Direction seen from this marco.
-    nSCUB_SRQ_Slaves                   : IN     STD_LOGIC_VECTOR(11 DOWNTO 0);  -- Input of service requests up to 12 SCU_Bus slaves, active low.
-    nSCUB_Slave_Sel                    : OUT    STD_LOGIC_VECTOR(11 DOWNTO 0);  -- Output select one or more of 12 SCU_Bus slaves, active low.
+    nSCUB_SRQ_Slaves                   : IN     STD_LOGIC_VECTOR(12 DOWNTO 0);  -- Input of service requests up to 12 SCU_Bus slaves, active low.
+    nSCUB_Slave_Sel                    : OUT    STD_LOGIC_VECTOR(12 DOWNTO 0);  -- Output select one or more of 12 SCU_Bus slaves, active low.
     nSCUB_Timing_Cycle                 : OUT    STD_LOGIC;                      -- Strobe to signal a timing cycle on SCU_Bus, active low.
     nSel_Ext_Data_Drv                  : OUT    STD_LOGIC                       -- select for external data transceiver to the SCU_Bus, active low.
 

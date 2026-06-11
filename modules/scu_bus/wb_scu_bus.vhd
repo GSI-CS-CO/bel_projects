@@ -53,7 +53,7 @@ PORT(
   slave_i                            : in  t_wishbone_slave_in;
   slave_o                            : out t_wishbone_slave_out;
 
-  srq_active                         : out std_logic_vector(11 downto 0);    -- vector of slave service requests
+  srq_active                         : out std_logic_vector(12 downto 0);    -- vector of slave service requests
 
   clk                                : in std_logic;
   nrst                               : in std_logic;
@@ -69,8 +69,8 @@ PORT(
   SCUB_Addr                          : out std_logic_vector(15 downto 0);  -- Address Bus of SCU_Bus
   SCUB_RDnWR                         : out std_logic;                      -- Read/Write Signal of SCU_Bus. Read is active high.
   -- Direction seen from this marco.
-  nSCUB_SRQ_Slaves                   : in std_logic_vector(11 downto 0);   -- Input of service requests up to 12 SCU_Bus slaves, active low.
-  nSCUB_Slave_Sel                    : out std_logic_vector(11 downto 0);  -- Output select one or more of 12 SCU_Bus slaves, active low.
+  nSCUB_SRQ_Slaves                   : in std_logic_vector(12 downto 0);   -- Input of service requests up to 12 SCU_Bus slaves, active low.
+  nSCUB_Slave_Sel                    : out std_logic_vector(12 downto 0);  -- Output select one or more of 12 SCU_Bus slaves, active low.
   nSCUB_Timing_Cycle                 : out std_logic;                      -- Strobe to signal a timing cycle on SCU_Bus, active low.
   nSel_Ext_Data_Drv                  : out std_logic                       -- select for external data transceiver to the SCU_Bus, active low.
   );
@@ -609,7 +609,7 @@ begin
               S_SRQ_Ena <= Wr_Data(nSCUB_SRQ_Slaves'range);
         elsif rd_acc = '1' then
               s_int_ack <= '1';
-              int_rd_data <= ("0000" & S_SRQ_Ena);
+              int_rd_data <= ("000" & S_SRQ_Ena);
       end if;
 
       when C_Srq_active_Adr =>
@@ -617,7 +617,7 @@ begin
               S_Invalid_Intern_Acc <= '1';
         elsif rd_acc = '1' then
               s_int_ack <= '1';
-              int_rd_data <= ("0000" & S_SRQ_Active);
+              int_rd_data <= ("000" & S_SRQ_Active);
             end if;
 
       when C_Srq_In_Adr =>
@@ -625,7 +625,7 @@ begin
               S_Invalid_Intern_Acc <= '1';
         elsif rd_acc = '1' then
               s_int_ack <= '1';
-              int_rd_data <= ("0000" & S_SRQ_Sync);
+              int_rd_data <= ("000" & S_SRQ_Sync);
             end if;
 
       when C_Vers_Revi_Adr =>
@@ -642,7 +642,7 @@ begin
               S_Multi_Slave_Sel <= Wr_Data(nSCUB_Slave_Sel'range);
         elsif rd_acc = '1' then
               s_int_ack <= '1';
-              int_rd_data <= ("0000" & S_Multi_Slave_Sel);
+              int_rd_data <= ("000" & S_Multi_Slave_Sel);
             end if;
 
       when C_Bus_master_intern_Echo_1_Adr =>
@@ -768,7 +768,7 @@ begin
         S_Sel_Ext_Data_Drv <= '1';
         S_Last_Cycle_Timing <= '0';               -- last SCU_Bus cycle is a data transfer cycle
         IF S_Sel_dly_cnt(S_Sel_dly_cnt'high) = '1' THEN
-          S_SCUB_Slave_Sel <= S_Slave_Sel(11 DOWNTO 0);   -- select slave
+          S_SCUB_Slave_Sel <= S_Slave_Sel(12 DOWNTO 0);   -- select slave
           SCUB_SM <= Rd_Cyc;                      -- jump to active read cycle
         END IF;
 
@@ -807,7 +807,7 @@ begin
         S_Last_Cycle_Timing <= '0';               -- last SCU_Bus cycle is a data transfer cycle
         S_Sel_Ext_Data_Drv <= '1';
         IF S_Sel_dly_cnt(S_Sel_dly_cnt'high) = '1' THEN
-          S_SCUB_Slave_Sel <= S_Slave_Sel(11 DOWNTO 0);   -- select slave
+          S_SCUB_Slave_Sel <= S_Slave_Sel(12 DOWNTO 0);   -- select slave
           SCUB_SM <= Wr_Cyc;                      -- jump to active write cycle
         END IF;
 
@@ -903,44 +903,45 @@ END PROCESS P_SCUB_SM;
 p_board_sel:  PROCESS (clk, s_reset)
   BEGIN
     IF s_reset = '0' THEN
-      S_Slave_Sel <= "000000000000";            -- no board select
+      S_Slave_Sel <= "0000000000000";            -- no board select
     ELSIF rising_edge(clk) THEN
       CASE S_Slave_Nr IS
-        WHEN X"0" =>  S_Slave_Sel <= "000000000000";
-        WHEN X"1" =>  S_Slave_Sel <= "000000000001";  -- select board 1
-        WHEN X"2" =>  S_Slave_Sel <= "000000000010";
-        WHEN X"3" =>  S_Slave_Sel <= "000000000100";
-        WHEN X"4" =>  S_Slave_Sel <= "000000001000";
-        WHEN X"5" =>  S_Slave_Sel <= "000000010000";
-        WHEN X"6" =>  S_Slave_Sel <= "000000100000";
-        WHEN X"7" =>  S_Slave_Sel <= "000001000000";
-        WHEN X"8" =>  S_Slave_Sel <= "000010000000";
-        WHEN X"9" =>  S_Slave_Sel <= "000100000000";
-        WHEN X"A" =>  S_Slave_Sel <= "001000000000";
-        WHEN X"B" =>  S_Slave_Sel <= "010000000000";
-        WHEN X"C" =>  S_Slave_Sel <= "100000000000";  -- select board 12
+        WHEN X"0" =>  S_Slave_Sel <= "0000000000000";
+        WHEN X"1" =>  S_Slave_Sel <= "0000000000001";  -- select board 1
+        WHEN X"2" =>  S_Slave_Sel <= "0000000000010";
+        WHEN X"3" =>  S_Slave_Sel <= "0000000000100";
+        WHEN X"4" =>  S_Slave_Sel <= "0000000001000";
+        WHEN X"5" =>  S_Slave_Sel <= "0000000010000";
+        WHEN X"6" =>  S_Slave_Sel <= "0000000100000";
+        WHEN X"7" =>  S_Slave_Sel <= "0000001000000";
+        WHEN X"8" =>  S_Slave_Sel <= "0000010000000";
+        WHEN X"9" =>  S_Slave_Sel <= "0000100000000";
+        WHEN X"A" =>  S_Slave_Sel <= "0001000000000";
+        WHEN X"B" =>  S_Slave_Sel <= "0010000000000";
+        WHEN X"C" =>  S_Slave_Sel <= "0100000000000";  -- select board 12
         WHEN c_multicast_slave_acc =>
                 IF S_Start_SCUB_Wr = '1' THEN -- select boardcast
                   S_Slave_Sel <= S_Multi_Slave_Sel;
                 ELSE
-                  S_Slave_Sel <= "000000000000";
+                  S_Slave_Sel <= "0000000000000";
                 END IF;
-        WHEN OTHERS =>  S_Slave_Sel <= "000000000000";  -- no board select
+        WHEN X"E" =>  S_Slave_Sel <= "1000000000000";  -- select virtual slave
+        WHEN OTHERS =>  S_Slave_Sel <= "0000000000000";  -- no board select
       END CASE;
     END IF;
   END PROCESS p_board_sel;
 
 
 irq_deglitch: process(clk, s_reset)
-  type cnt_array is array (0 to 11) of integer range 0 to 5;
+  type cnt_array is array (0 to 12) of integer range 0 to 5;
   variable cnt : cnt_array;
-  type regarray is array (0 to 11) of std_logic_vector(4 downto 0);
+  type regarray is array (0 to 12) of std_logic_vector(4 downto 0);
   variable shiftreg : regarray;
 begin
   if rising_edge(clk) then
 
     if s_reset = '0' then
-      for i in 0 to 11 loop
+      for i in 0 to 12 loop
         cnt(i) := 0;
         shiftreg(i) := (others => '0');
       end loop;
@@ -969,8 +970,8 @@ end process;
 p_intr: PROCESS (clk, s_reset)
   BEGIN
     IF s_reset = '0' THEN
-      S_SRQ_Sync    <= "000000000000";          -- clear synchronized SRQs
-      S_SRQ_active  <= "000000000000";          -- clear active SRQs
+      S_SRQ_Sync    <= "0000000000000";          -- clear synchronized SRQs
+      S_SRQ_active  <= "0000000000000";          -- clear active SRQs
       S_one_or_more_SRQs_act <= '0';
       Intr      <= '0';
 
