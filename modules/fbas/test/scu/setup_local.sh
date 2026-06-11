@@ -531,7 +531,7 @@ start_operation() {
 ######################
 
 setup_mpstx() {
-    # $1 - optional, index of the TX messaging period (0..8)
+    # $1 - optional, index of the TX messaging period (0..11)
 
     node_dev_label="tx_node_dev"
     echo "load firmware"
