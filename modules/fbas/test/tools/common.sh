@@ -238,7 +238,7 @@ check_dm_schedule() {
     # | 5           | 200  | 800 | 1600 | 3200 |
 
     local std_periods=(100000 80000 50000 33333 20000 10000 5000) # default messaging periods [us]
-    local high_periods=(2000 1000)                                # additional higher messaging periods [us]
+    local high_periods=(2000 1000 500 200 100 80 50)              # additional higher messaging periods [us]
     local all_rates=()                                            # all allowed message reception rates [Hz]
 
     # determine the timing message block depth: number of messages with the same timestamp
