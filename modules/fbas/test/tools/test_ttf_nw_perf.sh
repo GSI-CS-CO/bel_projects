@@ -12,7 +12,7 @@ rxscu="$rxscu_name.$domain"
 txscu=()                              # array with transmitter domain names
 fw_scu_def="fbas128.scucontrol.bin"   # FW that supports up to 16 TX nodes, each has 8 MPS channels
 ssh_opts="-o StrictHostKeyChecking=no"   # no hostkey checking
-getopt_opts="u:p:t:r:g:m:eyvh"        # user options
+getopt_opts="u:p:t:r:g:i:eyvh"        # user options
 
 usage() {
 
@@ -27,7 +27,9 @@ usage() {
     echo "  -t <TX SCU>            transmitter SCU, by default $def_txscu_name"
     echo "  -r <RX SCU>            receiver SCU, by default $rxscu_name"
     echo "  -g <event gen period>  pseudo event generation period (10 seconds by default)"
-    echo "  -m <messaging index>   index of the TX messaging period (0..8, 0 = 33,3 ms)"
+    echo "  -i <index of TX rate>  index of the TX messaging rate (by default m=0 or 30Hz)"
+    echo "                         0:30Hz, 1:10Hz, 2:12.5Hz, 3:20Hz, 4:50Hz, 5:100Hz"
+    echo "                         6:200Hz, 7:500Hz, 8:1KHz, 9:2KHz, 10:5KHz, 11:10KHz"
     echo "  -e                     exclude TTL measurement"
     echo "  -y                     'yes' to all prompts"
     echo "  -v                     verbosity for the measurement results"
@@ -274,7 +276,7 @@ while getopts $getopt_opts c; do
         t) txscu_name+=("$OPTARG"); txscu+=("$OPTARG.$domain") ;;
         r) rxscu_name=$OPTARG; rxscu=$OPTARG.$domain ;;
         g) gen_period=$OPTARG ;;
-        m) idx_msg_period=$OPTARG ;;
+        i) idx_msg_period=$OPTARG ;;
         e) exclude_ttl="exclude_ttl" ;;
         y) auto="auto" ;;
         v) verbose="yes" ;;
