@@ -419,6 +419,15 @@ begin
   s_lemo_led (3 downto 0) <= s_gpio_o(6 downto 3);
   s_lemo_led (5 downto 4) <= lemo_in;
 
+  tri_state_a_d: process (A_D, scub_d_tri_out, A_D_mux)
+  begin
+    if (scub_d_tri_out = '1') then
+      A_D <= A_D_mux;
+    else
+      A_D <= (others => 'Z');
+    end if;
+  end process;
+
   standalone_backplane : process (is_rmt, s_lemo_io, A_D_mux, scub_A_RnW, scub_nSEL, scub_d_out, scub_a, scub_nsel_ext_data_drv, scub_d_in)
   begin
     if (is_rmt = '1') then
