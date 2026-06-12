@@ -7,32 +7,34 @@ export FLASH     := $(shell grep -m1 FLASH     $(PLATFMAKEFILE) | cut -d'=' -f2 
 export SPI_LANES := $(shell grep -m1 SPI_LANES $(PLATFMAKEFILE) | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
 export RAM_SIZE  := $(shell grep -m1 RAM_SIZE  $(PLATFMAKEFILE) | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
 
-# obtain the total number of MPS channels
-CC_SRC            = fbas_common.h
-CC_FLAGS          = -dM -E
-ifneq ($(MPS_CH),)
-	CC_FLAGS     += -D$(MPS_CH)
+ifeq ($(TARGET),fbas)
+  # obtain the total number of MPS channels
+  CC_SRC            = fbas_common.h
+  CC_FLAGS          = -dM -E
+    ifneq ($(MPS_CH),)
+	  CC_FLAGS     += -D$(MPS_CH)
+    endif
+
+  N_MAX_TX_NODES := $(shell $(CC) $(CC_FLAGS) $(CC_SRC) | sed -n 's|.*\sN_MAX_TX_NODES\s*||p')
+  $(if $(N_MAX_TX_NODES),,$(error failed to evaluate $(CC_SRC)))
+
+  N_MPS_CHANNELS := $(shell $(CC) $(CC_FLAGS) $(CC_SRC) | sed -n 's|.*\sN_MPS_CHANNELS\s*||p')
+  $(if $(N_MPS_CHANNELS),,$(error failed to evaluate $(CC_SRC)))
+
+  N_MAX_MPS_CH   := $(shell echo $$(( $(N_MAX_TX_NODES) * $(N_MPS_CHANNELS) )))
 endif
-
-N_MAX_TX_NODES := $(shell $(CC) $(CC_FLAGS) $(CC_SRC) | sed -n 's|.*\sN_MAX_TX_NODES\s*||p')
-$(if $(N_MAX_TX_NODES),,$(error failed to evaluate $(CC_SRC)))
-
-N_MPS_CHANNELS := $(shell $(CC) $(CC_FLAGS) $(CC_SRC) | sed -n 's|.*\sN_MPS_CHANNELS\s*||p')
-$(if $(N_MPS_CHANNELS),,$(error failed to evaluate $(CC_SRC)))
-
-N_MAX_MPS_CH   := $(shell echo $$(( $(N_MAX_TX_NODES) * $(N_MPS_CHANNELS) )))
 
 CFLAGS        = -I../include -I../../common-libs/include -I../../wb_timer -I../../../ip_cores/saftlib/src -I$(PATHFW) \
                 -DPLATFORM=$(PLATFORM) -DDEBUGLEVEL=$(DEBUGLVL) $(EXTRA_FLAGS)
-
-ifneq ($(MPS_CH),)
-  CFLAGS += -D$(MPS_CH)
-endif
 
 SRC_FILES     = $(PATHFW)/$(TARGET).c  \
 		$(PATHFW)/fwlib.c $(INCPATH)/ebm.c $(PATHFW)/../../common-libs/fw/common-fwlib.c
 
 ifeq ($(TARGET),fbas)
+  ifneq ($(MPS_CH),)
+    CFLAGS += -D$(MPS_CH)
+  endif
+
   SRC_FILES  += $(PATHFW)/tmessage.c $(PATHFW)/ioctl.c $(PATHFW)/measure.c $(PATHFW)/timer.c
 endif
 
