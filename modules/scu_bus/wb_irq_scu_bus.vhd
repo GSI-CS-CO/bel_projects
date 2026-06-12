@@ -52,6 +52,7 @@ architecture wb_irq_scu_bus_arch of wb_irq_scu_bus is
   signal is_standalone         : std_logic;
   signal scu_slave_o_from_scub : t_wishbone_master_in;
   signal scu_slave_i_to_scub   : t_wishbone_master_out;
+  signal s_scub_data           : std_logic_vector(15 downto 0);
   signal s_scub_addr           : std_logic_vector(15 downto 0);
   signal s_scub_rdnwr          : std_logic;
   signal s_nscub_ds            : std_logic;
@@ -130,6 +131,7 @@ begin
     trigger       => nscub_dtack,
     is_standalone => is_standalone);
 
+  s_scub_data <= scub_data_out when scub_data_tri_out = '1' else (others => 'Z');
   scub_virtual_slave: scu_bus_slave
   generic map (
     Clk_in_Hz        => 62_500_000,
@@ -140,7 +142,7 @@ begin
   port map (
     SCUB_Addr          => s_scub_addr,
     nSCUB_Timing_Cyc   => tag_valid,
-    SCUB_Data          => x"0000",
+    SCUB_Data          => s_scub_data,
     nSCUB_Slave_Sel    => s_nscub_slave_sel(12),
     nSCUB_DS           => s_nscub_ds,
     SCUB_RDnWR         => s_scub_rdnwr,
