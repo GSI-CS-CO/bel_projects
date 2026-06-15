@@ -7,5 +7,4 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
 
 
-git clone https://git.gsi.de/hel-developers/diob2-planning $SCRIPT_DIR/blackbox
-
+ git clone https://git.gsi.de/hel-public/blackbox $SCRIPT_DIR/blackbox
