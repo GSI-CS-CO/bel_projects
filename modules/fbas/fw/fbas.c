@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define FBAS_FW_VERSION 0x010302        // make this consistent with makefile -> export VERSION
+#define FBAS_FW_VERSION 0x010401        // make this consistent with makefile -> export VERSION
 
 // standard includes
 #include <stdio.h>
@@ -62,6 +62,7 @@
 #include "timer.h"                      // timer functions
 #include "measure.h"                    // measurement of elapsed time, delays
 #include "fwlib.h"                      // extension to fwlib
+#include "sbctl.h"                      // SCU bus functions
 
 // stuff required for environment
 #define  SHARED  __attribute__((section(".shared")))
@@ -128,6 +129,7 @@ static void init()
   discoverPeriphery();        // mini-sdb ...
   uart_init_hw();             // needed by WR console
   cpuId = getCpuIdx();
+  sbInit();                   // init the pointer to the SCU bus master
 } // init
 
 /**
@@ -180,6 +182,7 @@ static status_t initSharedMem(uint32_t *const sharedStart)
   DBPRINT1("fbas%d: FBAS_SENDERID 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_SENDERID >> 2)), (pSharedExt + (FBAS_SHARED_SENDERID >> 2)));
   DBPRINT1("fbas%d: FBAS_ACT_RATE 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_ACT_RATE >> 2)), (pSharedExt + (FBAS_SHARED_ACT_RATE >> 2)));
 
+  sbInitSharedMemory(pSharedApp);
 
   // clear the app-spec region of the shared memory
   pSharedTemp = (uint32_t *)(pSharedApp + (FBAS_SHARED_END >> 2 ));
@@ -849,6 +852,10 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd)
         if (u32val < N_TX_RATES) {
           msgInitMsgCtrl(&mpsMsgCtrl, N_MPS_CHANNELS, 0, txMsgRates[u32val]);
         }
+        break;
+      case FBAS_CMD_PROBE_SB_DIOB:
+      case FBAS_CMD_PROBE_SB_USER:
+        sbCmdHandler(cmd);
         break;
       default:
         DBPRINT2("fbas%d: received unknown command '0x%08lx'\n", nodeType, cmd);

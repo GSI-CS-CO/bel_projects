@@ -36,6 +36,7 @@ ifeq ($(TARGET),fbas)
   endif
 
   SRC_FILES  += $(PATHFW)/tmessage.c $(PATHFW)/ioctl.c $(PATHFW)/measure.c $(PATHFW)/timer.c
+  SRC_FILES  += $(PATHFW)/sbctl.c
 endif
 
 $(info    >>>>)
