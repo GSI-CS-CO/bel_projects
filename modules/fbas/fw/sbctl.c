@@ -294,7 +294,7 @@ void exportSbSlaveConfig(volatile uint16_t* pMaster, const uint32_t sbSlaves)
     u32val = (sbSlaves >> i) & 0x01;
 
     if (u32val) {
-      u32val <<= 16;                   // offset for a SCU bus slave
+      u32val <<= 16;                 // offset of a SCU bus slot
       pSlave = pMaster + u32val;     // address of slave device on the SCU bus
 
       retval = readSbSlaveReg(pSlave, &regSet[DIOB_CFG], configDiob);  // get the DIOB configuration
@@ -359,4 +359,39 @@ void sbCmdHandler(const uint32_t cmd)
   } else {
     DBPRINT1("sbctl: invalid CIDs (sys=%x, grp=%x)\n", cid_sys_id, cid_grp_id);
   }
+}
+
+/**
+ * \brief Write data to a given DIOB register
+ *
+ * 16-bit data contains the current PC signal state from 16 emitters.
+ * - "0"=OK, "1"=NOK
+ * - bit0 is for emitter1 (or channel1)
+ *
+ * \param pData   Pointer to the 16-bit data buffer
+ * \param reg     given DIOB register (offset)
+ *
+ * \return status Returns zero on success, otherwise non-zero
+ **/
+status_t sbWriteDiob(const uint16_t* pData, const uint16_t reg)
+{
+  int i;
+  uint32_t u32val;
+  volatile uint16_t *pDiob;
+
+  if (!pData || !sbDiobs)
+    return COMMON_STATUS_ERROR;
+
+  for (int i = 1; i < N_SB_SLOTS; ++i) {
+    u32val = (sbDiobs >> i) & 0x01;
+
+    if (u32val) {
+      u32val <<= 16;                 // offset of a current SCU bus slot
+      pDiob = pSbMaster + u32val;    // address of a DIOB on the SCU bus
+
+      *(pDiob + reg) = *pData;       // write data to the given DIOB register
+    }
+  }
+
+  return COMMON_STATUS_OK;
 }
