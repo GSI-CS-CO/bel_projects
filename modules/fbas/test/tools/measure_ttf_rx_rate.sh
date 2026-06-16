@@ -38,7 +38,8 @@ get_tr_measurements() {
     result_msg_delay \$rx_node_dev && \
     result_ttl_ival \$rx_node_dev && \
     result_ml_period \$rx_node_dev && \
-    result_eca_delay \$rx_node_dev")
+    result_eca_delay \$rx_node_dev && \
+    read_array \$rx_node_dev 8")
     ret_code=$?
     exit_on_fail $ret_code
 
@@ -72,6 +73,8 @@ format_measurements() {
     line+="\tMsg delay  : ${output[@]:10:5}\n" # get 5 elements starting at index 10
     line+="\tTTL period : ${output[@]:15:5}\n" # get 5 elements starting at index 15
     line+="\tLoop period: ${output[@]:20:5}\n" # get 5 elements starting at index 20
+    line+="\t--- action handling rate\n"
+    line+="\t${output[@]:30:8}\n"              # get 8 elements starting at index 30
 
     ret="$line"
 }
@@ -122,7 +125,7 @@ usage() {
     echo "  -p <userpasswd>        user password"
     echo "  -s <DM schedule>       external file with DM schedule"
     echo "  -f <LM32 firmware>     firmware binary file"
-    echo "  -m                     enable higher message rates (> 10KHz)"
+    echo "  -m                     enable higher TX messagging rates (up to 20KHz)"
     echo "  -h                     display this help and exit"
     echo
     echo "Example: $0 -s my_mps_rx_rate_1.dot -f $fw_rxscu"
@@ -158,7 +161,7 @@ m_rates=()
 check_dm_schedule "$sched_filename" "$enable_high_rates" m_rates m_block
 
 echo -e "\n--- 4. Set up TR=$rxscu_name ---\n"
-sender_ids ids "$sched_filepath" # extract the sender IDs from a given file
+get_sender_ids ids "$sched_filepath" # extract the sender IDs from a given file
 if [[ -n "${ids[@]}" ]]; then
     setup_tr "${ids[@]}"
 fi
@@ -170,8 +173,7 @@ unset results
 for i in ${!m_rates[@]}; do
 
     rate=${m_rates[$i]}
-    t_msg=$(( 1000000000 / $rate ))               # period of single tmg msg [ns], not used
-    t_period=$(( $m_block * 1000000000 / $rate )) # period of tmg msgs block [ns]
+    t_period=$(bc <<< "1000000000 / $rate * $m_block") # period of tmg msgs block [ns]
 
     header="$(printf "%6s | msg rate=%s Hz, period=%s ns" $i $rate $t_period)"
     echo "Measurement: $header"
@@ -191,9 +193,9 @@ for i in ${!m_rates[@]}; do
     echo -en " start a schedule on '$datamaster': "
     run_finite_dm_schedule
 
-    # disable MPX task of rxscu"
-    echo -en " disable MPS operation of '$rxscu_name': "
-    disable_tr_mps
+    # stop the operation of rxscu"
+    echo -en " stop operation of '$rxscu_name': "
+    stop_rx_operation
 
     # obtain TR measurements
     echo -en " obtain measurements from '$rxscu_name': "

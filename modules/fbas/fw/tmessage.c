@@ -42,6 +42,10 @@ uint8_t    nodeIds[N_MAX_TX_NODES][ETH_ALEN];   // sender node ID list
 mpsMsg_t   bufMpsMsg[N_MAX_MPS_CHANNELS];       // buffer for MPS timing messages
 mpsMsg_t *const headBufMps = &bufMpsMsg[0]; // head of the MPS message buffer
 msgCtrl_t  mpsMsgCtrl;                          // MPS messaging control structure
+const uint32_t txMsgRates[N_TX_RATES] = {       // TX messaging rates, [us]
+              33333, 100000, 80000, 50000,      // 30, 10, 12.5, 20 [Hz]
+              20000, 10000, 5000, 2000,         // 50, 100, 200, 500 [Hz]
+              1000, 500, 200, 100};             // 1000, 2000, 5000, 10000 [Hz]
 
 static int addr_equal(uint8_t a[ETH_ALEN], uint8_t b[ETH_ALEN]); // wr-switch-sw/userspace/libwr
 static uint8_t *addr_copy(uint8_t dst[ETH_ALEN], uint8_t src[ETH_ALEN]);
@@ -56,19 +60,19 @@ static uint8_t *addr_copy(uint8_t dst[ETH_ALEN], uint8_t src[ETH_ALEN]);
  * \param ctrl  Pointer to the MPS messaging controller
  * \param total Total number of the MPS channels
  * \param now   Timestamp of access
- * \param freq  Messaging frequency, [Hz]
+ * \param period Messaging period, [us]
  *
  * \return None
  **/
-void msgInitMsgCtrl(msgCtrl_t *const ctrl, const uint8_t total, const uint64_t now, const uint32_t freq)
+void msgInitMsgCtrl(msgCtrl_t *const ctrl, const uint8_t total, const uint64_t now, const uint32_t period)
 {
   ctrl->total = total;
   ctrl->last = now;
-  ctrl->period = TIM_1000_MS;
+  ctrl->period = txMsgRates[0];          // default period of 33,3 ms (30 Hz)
 
   // set the iteration period
-  if (freq && ctrl->total) {
-    ctrl->period /=freq;                 // eg., 33312 us for 30 Hz (30.0192 Hz)
+  if (period && ctrl->total) {
+    ctrl->period = period * 1000;        // us -> ns
 
     ctrl->ttl = TIM_100_MS/TIM_1_MS + 1; // TTL value = 101 milliseconds
   }
@@ -204,6 +208,14 @@ mpsMsg_t* msgStorePcEvent(const uint8_t idx, const uint64_t evt, const uint64_t 
   // parse the PC channel and PC flag
   uint8_t ch = (uint8_t)(evt >> 8);
   uint8_t flag = (uint8_t)evt;
+
+  // PC events simulated by TLU can only have values 1 and 0, therefore
+  // map these values into the valid PC flags: 0->OK, 1->NOK, other->TEST
+  switch ((uint8_t)evt) {
+    case MPS_FLAG_OK :  flag = MPS_FLAG_OK;   break;
+    case MPS_FLAG_NOK:  flag = MPS_FLAG_NOK;  break;
+    default:            flag = MPS_FLAG_TEST;
+  }
 
   // keep the PC flag and timestamp
   (headBufMps+ch)->prot.flag = flag;
@@ -348,9 +360,11 @@ void msgResetMpsBuf(const uint8_t idx, const uint8_t *pId, const uint8_t flag)
 }
 
 /**
- * \brief Update the node ID array and MPS message buffer
+ * \brief Update the node ID array and MPS message buffer with
+ * a valid node identification provided by user
  *
- * \param pId  Pointer to the full node ID (idx + reserved + MAC address)
+ * \param pId  Pointer to the shared memory location,
+ * which holds user input of a valid node (idx + reserved + MAC address)
  *
  * \return None
  **/
@@ -361,7 +375,7 @@ void msgUpdateMpsBuf(const uint64_t *pId)
   id+=2;
   uint8_t buf_idx;                      // base index for MPS message buffer
 
-  // if the same ID exists, remote it (node ID array and MPS message buffer)
+  // if the same ID exists, remove it (node ID array and MPS message buffer)
   for (int i = 0; i < N_MAX_TX_NODES; ++i) {
     if (!(memcmp(&nodeIds[i][0], id, ETH_ALEN))) {
       memset(&nodeIds[i][0], 0, ETH_ALEN);
@@ -383,13 +397,22 @@ void msgUpdateMpsBuf(const uint64_t *pId)
     bufMpsMsg[j + buf_idx].prot.idx = j + idx;
   }
 
+  // print node ID array index and MPS message buffer content
+  DBPRINT1("sender: idx=%x: ", idx);
+  for (int i = 0; i < ETH_ALEN; i++)
+    DBPRINT1("%02x", bufMpsMsg[buf_idx].prot.addr[i]);
+
   // node ID array and MPS message buffer must match
-  if (!(memcmp(&nodeIds[idx][0], &bufMpsMsg[idx].prot.addr[0], ETH_ALEN))) {
-    DBPRINT1("sender: idx=%x: ", idx);
-    for (int i = 0; i < ETH_ALEN; i++)
-      DBPRINT1("%02x", bufMpsMsg[idx].prot.addr[i]);
-    DBPRINT1(" (id: %016llx)\n", *pId);
+  if (memcmp(&nodeIds[idx][0], &bufMpsMsg[buf_idx].prot.addr[0], ETH_ALEN)) {
+    // mismatch
+    DBPRINT1(" ! ");
+  } else {
+    // match
+    DBPRINT1(" = ", *pId);
   }
+
+  // valid node identification in the shared memory (provided by user)
+  DBPRINT1("(id: %016llx)\n", *pId);
 }
 
 /**

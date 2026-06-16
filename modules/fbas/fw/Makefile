@@ -8,7 +8,7 @@ export PATH          := $(PWD)/../../../toolchain/bin:$(PATH)
 # common settings
 export SHARED_SIZE   ?= 8K
 export USRCPUCLK     ?= 125000
-export VERSION       = 01.03.01
+export VERSION       = 01.04.01
 export PATHFW        = .
 export DEBUGLVL      = 2
 export EXTRA_FLAGS   ?=
@@ -21,8 +21,10 @@ PLATFPATHPEX5       := ../../../syn/gsi_pexarria5/control
 fwbin:
 	@echo --- build $(TARGET) specific to $(PLATFPATHSCU3)
 	$(MAKE) -f platform.mk PLATFPATH=$(PLATFPATHSCU3) $@
-	$(MAKE) -f platform.mk PLATFPATH=$(PLATFPATHSCU3) MPS_CH=MULTI_MPS_CH $@
+
+# build more FW binaries for FBAS (with multiple channels and for pexaria5)
 ifeq ($(TARGET),fbas)
+	$(MAKE) -f platform.mk PLATFPATH=$(PLATFPATHSCU3) MPS_CH=MULTI_MPS_CH $@
 	@echo --- build $(TARGET) specific to $(PLATFPATHPEX5)
 	$(MAKE) -f platform.mk PLATFPATH=$(PLATFPATHPEX5) $@
 	$(MAKE) -f platform.mk PLATFPATH=$(PLATFPATHPEX5) MPS_CH=MULTI_MPS_CH $@

@@ -31,7 +31,7 @@ typedef uint32_t status_t;
 #endif
 
 #define N_MAX_MPS_CHANNELS ((N_MAX_TX_NODES) * (N_MPS_CHANNELS))   // total number of MPS channels
-#define N_EXTRA_MPS_NOK    2   // extra transmissions of MPS NOK event
+#define N_EXTRA_MPS_NOK    0   // extra transmissions of MPS NOK event
 #define F_MPS_BCAST        30  // frequency to broadcast MPS flags [MPS_FS_530]
 
 // MPS flags

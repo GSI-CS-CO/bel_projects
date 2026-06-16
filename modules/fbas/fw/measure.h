@@ -50,12 +50,15 @@ typedef enum MSR_ITEMS {
 
 void measurePutTimestamp(msrItem_t item, uint64_t ts);
 uint64_t measureGetTimestamp(msrItem_t item);
-void measureClearSummary(verbosity_t verbose);
+void measureClearSummary(msrItem_t item, verbosity_t verbose);
 void measureSummarize(msrItem_t item, uint64_t from, uint64_t now, verbosity_t verbose);
 void measureExportSummary(msrItem_t item, uint32_t* base, uint32_t offset);
 void measurePrintSummary(msrItem_t item);
 
 uint32_t measureCountEvt(unsigned name, uint32_t value);
 uint32_t measureSetCounter(unsigned name, uint32_t value);
+
+void measureActionRate(unsigned cnt);
+void measureExportActionRate(uint32_t* base);
 
 #endif
