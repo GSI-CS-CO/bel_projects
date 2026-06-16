@@ -301,7 +301,12 @@ void exportSbSlaveConfig(volatile uint16_t* pMaster, const uint32_t sbSlaves)
     u32val = (sbSlaves >> i) & 0x01;
 
     if (u32val) {
+<<<<<<< HEAD
       pSlave = pMaster + (i << 16);  // slave base address on the SCU bus
+=======
+      u32val <<= 16;                 // offset of a SCU bus slot
+      pSlave = pMaster + u32val;     // address of slave device on the SCU bus
+>>>>>>> 5ba2f61ef (fbas: add function to write 16-bit data to a given DIOB register)
 
       retval = readSbSlaveReg(pSlave, &regSet[DIOB_CFG], configDiob);  // get the DIOB configuration
       retval |= readSbSlaveReg(pSlave, &regSet[DIOB_STS], statusDiob);  // get the DIOB status
@@ -370,32 +375,57 @@ void sbCmdHandler(const uint32_t cmd)
 /**
  * \brief Write data to a given DIOB register
  *
+<<<<<<< HEAD
  * \param data   16-bit data
  * \param reg    DIOB register (offset)
  *
  * \return status Returns zero on success, otherwise non-zero
  **/
 status_t writeDiobReg(const uint16_t data, const uint16_t reg)
+=======
+ * 16-bit data contains the current PC signal state from 16 emitters.
+ * - "0"=OK, "1"=NOK
+ * - bit0 is for emitter1 (or channel1)
+ *
+ * \param pData   Pointer to the 16-bit data buffer
+ * \param reg     given DIOB register (offset)
+ *
+ * \return status Returns zero on success, otherwise non-zero
+ **/
+status_t sbWriteDiob(const uint16_t* pData, const uint16_t reg)
+>>>>>>> 5ba2f61ef (fbas: add function to write 16-bit data to a given DIOB register)
 {
   int i;
   uint32_t u32val;
   volatile uint16_t *pDiob;
 
+<<<<<<< HEAD
   if (!sbDiobs)
+=======
+  if (!pData || !sbDiobs)
+>>>>>>> 5ba2f61ef (fbas: add function to write 16-bit data to a given DIOB register)
     return COMMON_STATUS_ERROR;
 
   for (int i = 1; i < N_SB_SLOTS; ++i) {
     u32val = (sbDiobs >> i) & 0x01;
 
     if (u32val) {
+<<<<<<< HEAD
       pDiob = pSbMaster + (i << 16); // DIOB base address on the SCU bus
 
       *(pDiob + reg) = data;         // write data to the given DIOB register
+=======
+      u32val <<= 16;                 // offset of a current SCU bus slot
+      pDiob = pSbMaster + u32val;    // address of a DIOB on the SCU bus
+
+      *(pDiob + reg) = *pData;       // write data to the given DIOB register
+>>>>>>> 5ba2f61ef (fbas: add function to write 16-bit data to a given DIOB register)
     }
   }
 
   return COMMON_STATUS_OK;
 }
+<<<<<<< HEAD
 
 /**
  * \brief Send the bit-wise MPS flags to a dedicated DIOB register
@@ -422,3 +452,5 @@ status_t sbPutMpsFlags(const uint16_t* pData)
 
   return COMMON_STATUS_OK;
 }
+=======
+>>>>>>> 5ba2f61ef (fbas: add function to write 16-bit data to a given DIOB register)
