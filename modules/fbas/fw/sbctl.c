@@ -47,6 +47,7 @@ uint32_t *pSharedGetSbStd;              // "user defined" u32 reg: standard regi
 
 // SCU bus specific variables
 uint32_t sbSlaves = 0;                  // SCU bus slaves (bit1=slot1)
+uint32_t sbDiobs = 0;                   // DIOB cards in SCU bus (bit1=slot1)
 uint16_t configDiob[N_DIOB_CFG] = {0};  // configuration registers of DIOB
 uint16_t statusDiob[N_DIOB_STS] = {0};  // status registers of DIOB
 uint16_t configUser[N_USR_CFG] = {0};   // configuration registers of user interface (extension) card
@@ -93,6 +94,9 @@ void sbInit(void)
 {
   // init the SCU bus master
   pSbMaster = (uint16_t*)fwlib_getSbMaster();
+
+  // probe all DIOB cards
+  probeSbSlaves(pSbMaster, CID_SYS_DIOB, CID_GRP_DIOB, &sbDiobs);
 }
 
 /**
