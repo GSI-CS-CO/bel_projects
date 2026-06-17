@@ -998,11 +998,17 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
             }
           }
         }
+<<<<<<< HEAD
         now = getSysTime();
         // build & write the MPS flags represenation to the echo register of DIOB card
         flags = (uint16_t)msgRepresentMpsFlags();
         sbPutMpsFlags(&flags);
         measureSummarize(MSR_DIOB_DLY, now, getSysTime(), DISABLE_VERBOSITY);
+=======
+        // build & write the MPS flags represenation to the echo register of DIOB card
+        flags = (uint16_t)msgRepresentMpsFlags();
+        sbWriteDiob(&flags, SBS_ECHO);
+>>>>>>> 1353f5bf7 (fbas: write a data representing the MPS flags to the DIOB echo register)
       }
       break;
 
