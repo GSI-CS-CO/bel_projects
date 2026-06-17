@@ -897,6 +897,7 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
   uint64_t now, last;                                         // used to measure the period of the main loop
   uint16_t actionCnt = 0;                                     // counter for non-zero action tags
   uint64_t handleActionsUntil = getSysTime() + (actionTimeout << 10);  // allowed time period to handle multiple actions (main loop budget < 125 us)
+  uint16_t flags;                                             // bit-wise representation of the MPS flags
 
   status = actStatus;
 
@@ -971,6 +972,9 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
             }
           }
         }
+        // build & write the MPS flags represenation to the echo register of DIOB card
+        flags = (uint16_t)msgRepresentMpsFlags();
+        sbWriteDiob(&flags, SBS_ECHO);
       }
       break;
 
