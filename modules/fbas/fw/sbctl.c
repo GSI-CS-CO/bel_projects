@@ -215,8 +215,11 @@ status_t probeSbSlaves(volatile uint16_t* pMaster, uint16_t sysId, uint16_t grpI
   int slot;
   uint16_t cidSys, cidGrp, u16val;
 
-  if (!pMaster || !slaves || !sysId || !grpId)
+  if (!pMaster || !slaves || !sysId || !grpId) {
+    DBPRINT1("sbctl: bad arguments to probe SCU bus slaves: 0x%08x, 0x%04x, 0x%04x, 0x%08x\n",
+      pMaster, sysId, grpId, slaves);
     return COMMON_STATUS_ERROR;
+  }
 
   for (slot = 1; slot <= N_SB_SLOTS; slot++) {
     cidSys = *(pMaster + (slot << 16) + SBS_CID_SYS); // get CID system ID of a SCU bus slave

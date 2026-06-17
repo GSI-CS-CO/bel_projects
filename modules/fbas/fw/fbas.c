@@ -129,7 +129,6 @@ static void init()
   discoverPeriphery();        // mini-sdb ...
   uart_init_hw();             // needed by WR console
   cpuId = getCpuIdx();
-  sbInit();                   // init the pointer to the SCU bus master
 } // init
 
 /**
@@ -679,6 +678,8 @@ uint32_t extern_entryActionConfigured()
     outPortCfg.type = IO_CFG_CHANNEL_LVDS;
     outPortCfg.total= N_OUT_LEMO_PEXARIA;
   }
+
+  sbInit(); // probe SCU bus
 
   // app specific IO setup (TX: B2 as input, all output disabled)
   fwlib_ioCtrlSetGate(0, 2);        // disable input gate
