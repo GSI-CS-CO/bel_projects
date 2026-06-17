@@ -87,5 +87,6 @@ status_t  msgRegisterNode(const uint64_t id, const regCmd_t cmd, const uint8_t i
 int8_t    msgGetNodeIndex(const uint64_t *pId);
 
 void      ioPrintMpsBuf(void);
+uint32_t  msgRepresentMpsFlags(void);
 
 #endif
