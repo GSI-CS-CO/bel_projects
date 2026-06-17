@@ -117,6 +117,7 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd);
 static void timerHandler(void);
 static uint32_t handleEcaEvent(uint32_t pollTimeout, uint32_t* mpsTask, msgCtrl_t* pMsgCtrl, mpsMsg_t** head);
 static void wrConsolePeriodic(void);
+static void setErrorFlag(uint8_t error);
 
 /**
  * \brief init for lm32
@@ -180,6 +181,7 @@ static status_t initSharedMem(uint32_t *const sharedStart)
   DBPRINT1("fbas%d: FBAS_BAD_MSG 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_BAD_MSG_CNT >> 2)), (pSharedExt + (FBAS_SHARED_BAD_MSG_CNT >> 2)));
   DBPRINT1("fbas%d: FBAS_SENDERID 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_SENDERID >> 2)), (pSharedExt + (FBAS_SHARED_SENDERID >> 2)));
   DBPRINT1("fbas%d: FBAS_ACT_RATE 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_ACT_RATE >> 2)), (pSharedExt + (FBAS_SHARED_ACT_RATE >> 2)));
+  DBPRINT1("fbas%d: FBAS_ERROR_FLAG 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_ERROR_FLAG >> 2)), (pSharedExt + (FBAS_SHARED_ERROR_FLAG >> 2)));
 
   sbInitSharedMemory(pSharedApp);
 
@@ -651,6 +653,24 @@ static void wrConsolePeriodic(void)
   DBPRINT2("timer avg: %lli min: %lli max: %lli, call %lli\n",
             timerDbg.period.avg, timerDbg.period.min, timerDbg.period.max, (now - lastSysTime));
   lastSysTime = now;
+}
+
+/**
+ * \brief Set a given error flag
+ *
+ * An error flag is set, when function call returns an error.
+ * Error flags can be used to diagnose the function calls.
+ *
+ * \param error  Error flag
+ *
+ * \return None
+ **/
+static void setErrorFlag(uint8_t error)
+{
+  if (!pSharedApp)
+    return;
+
+  *(pSharedApp + (FBAS_SHARED_ERROR_FLAG >> 2)) |= (1 << error);
 }
 
 // clears all statistics
