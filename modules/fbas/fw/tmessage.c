@@ -532,3 +532,34 @@ void ioPrintMpsBuf(void)
         bufMpsMsg[i].ttl,
         bufMpsMsg[i].pending);
 }
+
+/**
+ * \brief Build a bit-wise representation of the MPS flags
+ *
+ * Build a simple data representing the current MPS flags.
+ * MPS flags are stored in the MPS message buffer.
+ * Each bit represents a MPS flag from each emitter:
+ * - bit 0 corresponds to emitter 1
+ * - logic 1 = NOK, logic 0 = OK
+ *
+ * Up to 16 TX nodes are supported, then lower 16 bits are
+ * effectively present the MPS flags.
+ *
+ * \return Returns data representing the MPS flags
+ *
+ **/
+uint32_t msgRepresentMpsFlags(void)
+{
+  int i, j, step = 1;
+  uint32_t flags = 0;
+
+  if (N_MAX_MPS_CHANNELS != N_MAX_TX_NODES)
+    step = N_MPS_CHANNELS; // 8 channels for each node
+
+  for (i = 0, j = 0; i < N_MAX_MPS_CHANNELS; i+=step, j++) {
+    if (bufMpsMsg[i].prot.flag == MPS_FLAG_NOK)
+      flags|= (1 << j);
+  }
+
+  return flags;
+}
