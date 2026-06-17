@@ -76,7 +76,8 @@
 #define FBAS_SHARED_ML_PRD_VLD     (FBAS_SHARED_ML_PRD_MAX     + 2 * _32b_SIZE_)   // valid count
 #define FBAS_SHARED_ML_PRD_ALL     (FBAS_SHARED_ML_PRD_VLD     + _32b_SIZE_)       // all/total count
 #define FBAS_SHARED_ACT_RATE       (FBAS_SHARED_ML_PRD_ALL     + _32b_SIZE_)       // buffer for 8 elements
-#define FBAS_SHARED_END            (FBAS_SHARED_ACT_RATE       + 8 * _32b_SIZE_)   // end of the app-spec region
+#define FBAS_SHARED_ERROR_FLAG     (FBAS_SHARED_ACT_RATE       + 8 * _32b_SIZE_)   // error flag
+#define FBAS_SHARED_END            (FBAS_SHARED_ERROR_FLAG     + _32b_SIZE_)       // end of the app-spec region
 
 // valid value for data fields in the MPS payload
 #define MPS_VID_FBAS     105   // VLAN ID for FBAS
