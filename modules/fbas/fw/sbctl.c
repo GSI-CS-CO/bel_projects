@@ -297,8 +297,7 @@ void exportSbSlaveConfig(volatile uint16_t* pMaster, const uint32_t sbSlaves)
     u32val = (sbSlaves >> i) & 0x01;
 
     if (u32val) {
-      u32val <<= 16;                 // offset of a SCU bus slot
-      pSlave = pMaster + u32val;     // address of slave device on the SCU bus
+      pSlave = pMaster + (i << 16);  // slave base address on the SCU bus
 
       retval = readSbSlaveReg(pSlave, &regSet[DIOB_CFG], configDiob);  // get the DIOB configuration
       retval |= readSbSlaveReg(pSlave, &regSet[DIOB_STS], statusDiob);  // get the DIOB status
@@ -389,8 +388,7 @@ status_t sbWriteDiob(const uint16_t* pData, const uint16_t reg)
     u32val = (sbDiobs >> i) & 0x01;
 
     if (u32val) {
-      u32val <<= 16;                 // offset of a current SCU bus slot
-      pDiob = pSbMaster + u32val;    // address of a DIOB on the SCU bus
+      pDiob = pSbMaster + (i << 16); // DIOB base address on the SCU bus
 
       *(pDiob + reg) = *pData;       // write data to the given DIOB register
     }
