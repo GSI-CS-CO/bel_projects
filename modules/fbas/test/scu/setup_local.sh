@@ -121,6 +121,7 @@ export instr_st_ttl_ival=0x35   # store the TTL interval measurement results to 
 export instr_st_eca_dly=0x37    # store the measurement result of the ECA handling delay
 export instr_st_rx_dly=0x39     # store the RX handler delay measurement results to shared memory
 export instr_st_ml_prd=0x3a     # store the main loop period measurement results to shared memory
+export instr_st_diob_dly=0x3d   # store the DIOB access delay measurement results to the shared memory
 export instr_st_array=0x3b      # store the uint32_t array[8] to the reserved location of the shared memory
 export instr_set_tx_rate=0x3c   # set the TX messaging rate: FBAS_CMD_SET_TX_RATE
 
@@ -750,6 +751,16 @@ result_ml_period() {
         echo -n "loop prd: "
     fi
     read_measurement_results $1 $instr_st_ml_prd $addr_avg $2
+}
+
+result_diob_delay() {
+    # $1 - dev/wbm0
+    # $2 - verbosity
+
+    if [ -n "$2" ]; then
+        echo -n "DIOB dly: "
+    fi
+    read_measurement_results $1 $instr_st_diob_dly $addr_avg $2
 }
 
 result_rx() {
