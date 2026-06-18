@@ -80,6 +80,7 @@ status_t writeSbSlaveReg(volatile uint16_t* pSlave, regset_t* regset, uint16_t *
 status_t probeSbSlaveExt(volatile uint16_t* pMaster, uint32_t slot, uint32_t* pDst);
 status_t probeSbSlaves(volatile uint16_t* pMaster, uint16_t sysId, uint16_t grpId, uint32_t* slaves);
 void exportSbSlaveConfig(volatile uint16_t* pMaster, const uint32_t sbSlaves);
+status_t writeDiobReg(const uint16_t data, const uint16_t reg);
 
 /**
  * \brief Initialize the pointer to the SCU bus master
@@ -97,6 +98,9 @@ void sbInit(void)
 
   // probe all DIOB cards
   probeSbSlaves(pSbMaster, CID_SYS_DIOB, CID_GRP_DIOB, &sbDiobs);
+
+  // init the DIOB echo register
+  writeDiobReg(0, SBS_ECHO);
 }
 
 /**
@@ -366,22 +370,18 @@ void sbCmdHandler(const uint32_t cmd)
 /**
  * \brief Write data to a given DIOB register
  *
- * 16-bit data contains the current PC signal state from 16 emitters.
- * - "0"=OK, "1"=NOK
- * - bit0 is for emitter1 (or channel1)
- *
- * \param pData   Pointer to the 16-bit data buffer
- * \param reg     given DIOB register (offset)
+ * \param data   16-bit data
+ * \param reg    DIOB register (offset)
  *
  * \return status Returns zero on success, otherwise non-zero
  **/
-status_t sbWriteDiob(const uint16_t* pData, const uint16_t reg)
+status_t writeDiobReg(const uint16_t data, const uint16_t reg)
 {
   int i;
   uint32_t u32val;
   volatile uint16_t *pDiob;
 
-  if (!pData || !sbDiobs)
+  if (!sbDiobs)
     return COMMON_STATUS_ERROR;
 
   for (int i = 1; i < N_SB_SLOTS; ++i) {
@@ -390,8 +390,34 @@ status_t sbWriteDiob(const uint16_t* pData, const uint16_t reg)
     if (u32val) {
       pDiob = pSbMaster + (i << 16); // DIOB base address on the SCU bus
 
-      *(pDiob + reg) = *pData;       // write data to the given DIOB register
+      *(pDiob + reg) = data;         // write data to the given DIOB register
     }
+  }
+
+  return COMMON_STATUS_OK;
+}
+
+/**
+ * \brief Send the bit-wise MPS flags to a dedicated DIOB register
+ *
+ * MPS flags are represented in 16-bit data, where each bit corresponds
+ * to the current PC signal state from its emitter.
+ * - "0"=OK, "1"=NOK
+ * - bit0 is for emitter1 (or channel1)
+ *
+ * The dedicated DIOB register is updated only in case of new MPS flags.
+ *
+ * \param pData   Pointer to the 16-bit data source
+ *
+ * \return status Returns zero on success, otherwise non-zero
+ **/
+status_t sbPutMpsFlags(const uint16_t* pData)
+{
+  static uint16_t flags = 0xff;
+
+  if (flags != *pData) {
+    flags = *pData;
+    return writeDiobReg(flags, SBS_ECHO);
   }
 
   return COMMON_STATUS_OK;

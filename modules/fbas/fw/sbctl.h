@@ -144,6 +144,6 @@ typedef struct regset {
 void     sbInit(void);
 void     sbInitSharedMemory(const uint32_t* pSharedApp);
 void     sbCmdHandler(const uint32_t cmd);
-status_t sbWriteDiob(const uint16_t* pData, const uint16_t reg);
+status_t sbPutMpsFlags(const uint16_t* pData);
 
 #endif

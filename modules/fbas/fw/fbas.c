@@ -1000,7 +1000,7 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
         now = getSysTime();
         // build & write the MPS flags represenation to the echo register of DIOB card
         flags = (uint16_t)msgRepresentMpsFlags();
-        sbWriteDiob(&flags, SBS_ECHO);
+        sbPutMpsFlags(&flags);
         measureSummarize(MSR_DIOB_DLY, now, getSysTime(), DISABLE_VERBOSITY);
       }
       break;
