@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define FBAS_FW_VERSION 0x010401        // make this consistent with makefile -> export VERSION
+#define FBAS_FW_VERSION 0x010402        // make this consistent with makefile -> export VERSION
 
 // standard includes
 #include <stdio.h>
