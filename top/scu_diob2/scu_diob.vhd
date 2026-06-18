@@ -422,7 +422,7 @@ generic map(
 		addr_strobe          => Ext_Adr_Val, -- (Ext_Adr_Val)
 	  read_trg             => Ext_Rd_active, -- (Ext_Rd_active)
 		write_trg            => Ext_Wr_active, -- (Ext_Wr_active)
-								
+
     
     dtack                => bb_dtack, --(Dtack_to_SCUB)
 		data_r_act           => b_box_rd_active, --(Reg_rd_active)	
