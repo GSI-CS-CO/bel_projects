@@ -144,10 +144,6 @@ typedef struct regset {
 void     sbInit(void);
 void     sbInitSharedMemory(const uint32_t* pSharedApp);
 void     sbCmdHandler(const uint32_t cmd);
-<<<<<<< HEAD
 status_t sbPutMpsFlags(const uint16_t* pData);
-=======
-status_t sbWriteDiob(const uint16_t* pData, const uint16_t reg);
->>>>>>> 5ba2f61ef (fbas: add function to write 16-bit data to a given DIOB register)
 
 #endif
