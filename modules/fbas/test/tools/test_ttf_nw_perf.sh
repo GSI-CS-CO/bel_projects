@@ -218,6 +218,7 @@ measure_nw_perf() {
         result_rx_delay \$rx_node_dev $verbose && \
         result_msg_delay \$rx_node_dev $verbose && \
         result_ml_period \$rx_node_dev $verbose && \
+        result_diob_delay \$rx_node_dev $verbose && \
         result_ttl_ival \$rx_node_dev $verbose" |
     while IFS= read -r line; do
         delay_entry="${rx_delay_entries[$i]}"

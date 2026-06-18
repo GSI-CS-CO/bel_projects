@@ -38,6 +38,7 @@ get_tr_measurements() {
     result_msg_delay \$rx_node_dev && \
     result_ttl_ival \$rx_node_dev && \
     result_ml_period \$rx_node_dev && \
+    result_diob_delay \$rx_node_dev && \
     result_eca_delay \$rx_node_dev && \
     read_array \$rx_node_dev 8")
     ret_code=$?
