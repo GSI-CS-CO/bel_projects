@@ -45,6 +45,7 @@ typedef enum MSR_ITEMS {
   MSR_MSG_DLY, // messaging delay
   MSR_TTL,     // TTL threshold/interval
   MSR_ML_PRD,  // period of the main loop
+  MSR_DIOB_DLY,// DIOB access delay
   N_MSR_ITEMS,
 } msrItem_t;
 
