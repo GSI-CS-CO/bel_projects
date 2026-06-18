@@ -130,8 +130,6 @@ generic(
 		addr_strobe:            in std_logic;	-- (Ext_Adr_Val)
 	  read_trg:               in std_logic; -- (Ext_Rd_active)
 		write_trg:              in std_logic; -- (Ext_Wr_active)
-		read_fin:               in std_logic; -- (Ext_Rd_fin)
-		write_fin:              in std_logic;	-- (Ext_Wr_fin)				
     
     dtack:                  out std_logic;--(Dtack_to_SCUB)
 		data_r_act:             out std_logic; --(Reg_rd_active)	
@@ -424,8 +422,6 @@ generic map(
 		addr_strobe          => Ext_Adr_Val, -- (Ext_Adr_Val)
 	  read_trg             => Ext_Rd_active, -- (Ext_Rd_active)
 		write_trg            => Ext_Wr_active, -- (Ext_Wr_active)
-		read_fin             => Ext_Rd_fin, -- (Ext_Rd_fin)
-		write_fin            => Ext_Wr_fin,	-- (Ext_Wr_fin)
 								
     
     dtack                => bb_dtack, --(Dtack_to_SCUB)
