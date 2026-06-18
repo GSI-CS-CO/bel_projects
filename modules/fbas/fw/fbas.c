@@ -858,6 +858,10 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd)
         measurePrintSummary(MSR_ML_PRD);
         measureExportSummary(MSR_ML_PRD, pSharedApp, FBAS_SHARED_GET_AVG);
         break;
+      case FBAS_CMD_PRINT_DIOB_DLY:
+        measurePrintSummary(MSR_DIOB_DLY);
+        measureExportSummary(MSR_DIOB_DLY, pSharedApp, FBAS_SHARED_GET_AVG);
+        break;
       case FBAS_CMD_PRINT_ACT_RATE:
         measureExportActionRate((pSharedApp + (FBAS_SHARED_ACT_RATE >> 2)));
         break;
@@ -993,9 +997,11 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
             }
           }
         }
+        now = getSysTime();
         // build & write the MPS flags represenation to the echo register of DIOB card
         flags = (uint16_t)msgRepresentMpsFlags();
         sbWriteDiob(&flags, SBS_ECHO);
+        measureSummarize(MSR_DIOB_DLY, now, getSysTime(), DISABLE_VERBOSITY);
       }
       break;
 
