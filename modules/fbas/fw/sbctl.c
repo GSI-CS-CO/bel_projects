@@ -384,7 +384,7 @@ status_t writeDiobReg(const uint16_t data, const uint16_t reg)
   if (!sbDiobs)
     return COMMON_STATUS_ERROR;
 
-  for (int i = 1; i < N_SB_SLOTS; ++i) {
+  for (int i = 1; i <= N_SB_SLOTS; ++i) {
     u32val = (sbDiobs >> i) & 0x01;
 
     if (u32val) {
