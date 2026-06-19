@@ -69,13 +69,14 @@ format_measurements() {
 
     # delays
     line+="\t--- delays, us (avg, min, max, valid, all)\n"
-    line+="\tECA delay  : ${output[@]:25:5}\n" # get 5 elements starting at index 25
+    line+="\tECA delay  : ${output[@]:30:5}\n" # get 5 elements starting at index 30
     line+="\tRX delay   : ${output[@]:5:5}\n"  # get 5 elements starting at index 5
     line+="\tMsg delay  : ${output[@]:10:5}\n" # get 5 elements starting at index 10
+    line+="\tDIOB delay : ${output[@]:25:5}\n" # get 5 elements starting at index 25
     line+="\tTTL period : ${output[@]:15:5}\n" # get 5 elements starting at index 15
     line+="\tLoop period: ${output[@]:20:5}\n" # get 5 elements starting at index 20
     line+="\t--- action handling rate\n"
-    line+="\t${output[@]:30:8}\n"              # get 8 elements starting at index 30
+    line+="\t${output[@]:35:8}\n"              # get 8 elements starting at index 35
 
     ret="$line"
 }
