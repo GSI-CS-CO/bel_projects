@@ -414,8 +414,10 @@ status_t writeDiobReg(const uint16_t data, const uint16_t reg)
 status_t sbPutMpsFlags(const uint16_t* pData)
 {
   static uint16_t flags = 0xff;
+  static uint8_t initialized = 0;
 
-  if (flags != *pData) {
+  if (!initialized || flags != *pData) {
+    initialized = 1;
     flags = *pData;
     return writeDiobReg(flags, SBS_ECHO);
   }
