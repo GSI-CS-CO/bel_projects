@@ -78,6 +78,8 @@ begin
     scu_slave_in  => scu_slave_i_to_scub
   );
 
+  scub_data_in_to_master <= data_from_virtual_slave when s_nscub_slave_sel(12) = '0' else scub_data_in;
+
   scub_master : wb_scu_bus 
     generic map(
       g_interface_mode      => g_interface_mode,
@@ -89,16 +91,16 @@ begin
      clk                => clk_sys_i,
      nrst               => rst_n_i,
      Timing_In          => tag,
-     Start_Timing_Cycle => tag_valid,
+     Start_Timing_Cycle => s_ntag_valid,
      slave_i            => scu_slave_i_to_scub,
      slave_o            => scu_slave_o_from_scub,
      srq_active         => scu_srq_active,
      
      SCUB_Data_Out      => scub_data_out,
-     SCUB_Data_In       => scub_data_in,
+     SCUB_Data_In       => scub_data_in_to_master,
      SCUB_Data_Tri_Out  => scub_data_tri_out,
      nSCUB_DS           => s_nscub_ds,
-     nSCUB_Dtack        => nscub_dtack or s_nscub_dtack,
+     nSCUB_Dtack        => nscub_dtack and s_nscub_dtack,
      SCUB_Addr          => s_scub_addr,
      SCUB_RDnWR         => s_scub_rdnwr,
      nSCUB_SRQ_Slaves   => virtual_scub_srq & nscub_srq_slaves,
@@ -137,7 +139,9 @@ begin
     trigger       => nscub_dtack,
     is_standalone => is_standalone);
 
-  s_scub_data <= scub_data_out when scub_data_tri_out = '1' else (others => 'Z');
+  s_scub_data   <= scub_data_out when scub_data_tri_out = '1' else (others => 'Z');
+  s_ntag_valid  <= not tag_valid;
+  s_nscub_dtack <= not s_scub_dtack;
   scub_virtual_slave: scu_bus_slave
   generic map (
     Clk_in_Hz        => 125_000_000,
@@ -147,8 +151,9 @@ begin
     Intr_Enable      => b"0000_0000_0000_0001")
   port map (
     SCUB_Addr          => s_scub_addr,
-    nSCUB_Timing_Cyc   => tag_valid,
+    nSCUB_Timing_Cyc   => s_ntag_valid,
     SCUB_Data          => s_scub_data,
+    SCUB_Data_out      => data_from_virtual_slave,
     nSCUB_Slave_Sel    => s_nscub_slave_sel(12),
     nSCUB_DS           => s_nscub_ds,
     SCUB_RDnWR         => s_scub_rdnwr,
@@ -165,13 +170,13 @@ begin
     Timing_Pattern_RCV => open,                -- out,   timing pattern received
     nSCUB_Dtack_Opdrn  => open,                -- out,   for direct connect to SCU_Bus opendrain signal
                                                --        '0' => slave give dtack to SCU master
-    SCUB_Dtack         => s_nscub_dtack,       -- out,   for connect via ext. open collector driver
+    SCUB_Dtack         => s_scub_dtack,        -- out,   for connect via ext. open collector driver
                                                --        '1' => slave give dtack to SCU master
     nSCUB_SRQ_Opdrn    => open,                -- out,   for direct connect to SCU_Bus opendrain signal
                                                --        '0' => slave service request to SCU ma
     SCUB_SRQ           => virtual_scub_srq,    -- out,   for connect via ext. open collector driver
                                                --        '1' => slave service request to SCU master
-    nSel_Ext_Data_Drv  => open,                -- out,   '0' => select the external data driver on the SCU_Bus slave
+    nSel_Ext_Data_Drv  => s_drv_en,            -- out,   '0' => select the external data driver on the SCU_Bus slave
     Ext_Data_Drv_Rd    => open,                -- out,   '1' => direction of the external data driver on the
                                                --        SCU_Bus slave is to the SCU_Bus
     Standard_Reg_Acc   => open,                -- out,   '1' => mark the access to register of this macro

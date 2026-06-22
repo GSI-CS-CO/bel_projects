@@ -342,13 +342,16 @@ generic
     This_macro_vers_dont_change_from_outside: integer range 0 to 16#FF# := 5;
     
     -- change only here! increment by minor changes of this macro
-    This_macro_revi_dont_change_from_outside: integer range 0 to 16#FF# := 2
+    This_macro_revi_dont_change_from_outside: integer range 0 to 16#FF# := 2;
+    with_tristate_control: boolean := true
     );
 port
     (
     SCUB_Addr:          in    std_logic_vector(15 DOWNTO 0);  -- SCU_Bus: address bus
     nSCUB_Timing_Cyc:   in    std_logic;                      -- SCU_Bus signal: low active SCU_Bus runs timing cycle
     SCUB_Data:          inout std_logic_vector(15 DOWNTO 0);  -- SCU_Bus: data bus (FPGA tri state buffer)
+    SCUB_Data_in:       in    std_logic_vector(15 DOWNTO 0);  -- SCU_Bus: data in (without tri state buffer)
+    SCUB_Data_out:      out   std_logic_vector(15 DOWNTO 0);  -- SCU_Bus: data out (without tri state buffer)
     nSCUB_Slave_Sel:    in    std_logic;                      -- SCU_Bus: '0' => SCU master select slave
     nSCUB_DS:           in    std_logic;                      -- SCU_Bus: '0' => SCU master activate data strobe
     SCUB_RDnWR:         in    std_logic;                      -- SCU_Bus: '1' => SCU master read slave
@@ -721,25 +724,32 @@ P_Intr: process (clk, S_nReset, S_Powerup_Done)
 
   end process P_Intr;
 
+  tri_y: if with_tristate_control generate
 
-P_Tri_Buff: process (S_nReset, SCUB_RDnWR, nSCUB_DS, nSCUB_Slave_Sel, S_Read_Out)
-  begin
-    if S_nReset = '0' then
-      SCUB_Data <= (others => 'Z');
-      nSel_Ext_Data_Drv <= '1';
-    elsif nSCUB_Slave_Sel = '0' then  -- setzt voraus, dass der SCU_BusMaster während eines Timing-Cycles
-                                      -- die nSCUB_Slave_Sel bedient.
-      nSel_Ext_Data_Drv <= '0';
-      if SCUB_RDnWR = '1' and nSCUB_DS = '0' then
-        SCUB_Data <= S_Read_Out;
+  P_Tri_Buff: process (S_nReset, SCUB_RDnWR, nSCUB_DS, nSCUB_Slave_Sel, S_Read_Out)
+    begin
+      if S_nReset = '0' then
+        SCUB_Data <= (others => 'Z');
+        nSel_Ext_Data_Drv <= '1';
+      elsif nSCUB_Slave_Sel = '0' then  -- setzt voraus, dass der SCU_BusMaster während eines Timing-Cycles
+                                        -- die nSCUB_Slave_Sel bedient.
+        nSel_Ext_Data_Drv <= '0';
+        if SCUB_RDnWR = '1' and nSCUB_DS = '0' then
+          SCUB_Data <= S_Read_Out;
+        else
+          SCUB_Data <= (others => 'Z');
+        end if;
       else
+        nSel_Ext_Data_Drv <= '1';
         SCUB_Data <= (others => 'Z');
       end if;
-    else
-      nSel_Ext_Data_Drv <= '1';
-      SCUB_Data <= (others => 'Z');
-    end if;
-  end process P_Tri_Buff;
+    end process P_Tri_Buff;
+  end generate;
+
+  tri_n: if not with_tristate_control generate
+    SCUB_Data_out <= S_Read_Out;
+    SCUB_Data     <= (others => 'Z');
+  end generate;
   
 
 P_no_fin_sig_overap: process (clk, S_nReset)
@@ -1004,5 +1014,7 @@ Standard_Reg_Acc <= S_Standard_Reg_Acc;
 Deb_SCUB_Reset_out <= S_Deb_Reset;  -- Vers_2_Revi_4: das Reset-Signal des SCU-Busses 'nSCUB_Reset_In' wird entprellt
                                     -- und für andere Macros zur Verfügung gestellt
 Powerup_Done <= S_Powerup_Done;
+
+SCUB_Data_out <= S_Read_Out;
 
 end Arch_SCU_Bus_Slave;

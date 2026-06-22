@@ -40,6 +40,7 @@ port
     SCUB_Addr:          in    std_logic_vector(15 DOWNTO 0);  -- SCU_Bus: address bus
     nSCUB_Timing_Cyc:   in    std_logic;                      -- SCU_Bus signal: low active SCU_Bus runs timing cycle
     SCUB_Data:          inout std_logic_vector(15 DOWNTO 0);  -- SCU_Bus: data bus (FPGA tri state buffer)
+    SCUB_Data_out:      out   std_logic_vector(15 DOWNTO 0);  -- SCU_Bus: data out (without tri state buffer)
     nSCUB_Slave_Sel:    in    std_logic;                      -- SCU_Bus: '0' => SCU master select slave
     nSCUB_DS:           in    std_logic;                      -- SCU_Bus: '0' => SCU master activate data strobe
     SCUB_RDnWR:         in    std_logic;                      -- SCU_Bus: '1' => SCU master read slave
