@@ -61,7 +61,8 @@ component wb_irq_scu_bus is
     time_out_in_ns        : integer := 250;
     test                  : integer range 0 to 1 := 0);
   port (
-    clk_i               : std_logic;
+    clk_sys_i           : std_logic;
+    clk_ref_i           : std_logic;
     rst_n_i             : std_logic;
 
     tag                 : in std_logic_vector(31 downto 0);

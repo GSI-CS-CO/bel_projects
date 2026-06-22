@@ -17,7 +17,8 @@ entity wb_irq_scu_bus is
             time_out_in_ns        : integer := 250;
             test                  : integer range 0 to 1 := 0);
   port (
-        clk_i               : std_logic;
+        clk_sys_i           : std_logic;
+        clk_ref_i           : std_logic;
         rst_n_i             : std_logic;
         
         tag                 : in std_logic_vector(31 downto 0);
@@ -48,21 +49,26 @@ end entity;
 
 
 architecture wb_irq_scu_bus_arch of wb_irq_scu_bus is
-  signal scu_srq_active        : std_logic_vector(12 downto 0);
-  signal is_standalone         : std_logic;
-  signal scu_slave_o_from_scub : t_wishbone_master_in;
-  signal scu_slave_i_to_scub   : t_wishbone_master_out;
-  signal s_scub_data           : std_logic_vector(15 downto 0);
-  signal s_scub_addr           : std_logic_vector(15 downto 0);
-  signal s_scub_rdnwr          : std_logic;
-  signal s_nscub_ds            : std_logic;
-  signal s_nscub_dtack         : std_logic;
-  signal virtual_scub_srq      : std_logic;
-  signal s_nscub_slave_sel     : std_logic_vector(12 downto 0);
+  signal scu_srq_active          : std_logic_vector(12 downto 0);
+  signal is_standalone           : std_logic;
+  signal scu_slave_o_from_scub   : t_wishbone_master_in;
+  signal scu_slave_i_to_scub     : t_wishbone_master_out;
+  signal s_scub_data             : std_logic_vector(15 downto 0);
+  signal s_scub_addr             : std_logic_vector(15 downto 0);
+  signal s_scub_rdnwr            : std_logic;
+  signal s_nscub_ds              : std_logic;
+  signal s_nscub_dtack           : std_logic;
+  signal virtual_scub_srq        : std_logic;
+  signal s_nscub_slave_sel       : std_logic_vector(12 downto 0);
+  signal s_ntag_valid            : std_logic;
+  signal s_scub_dtack            : std_logic;
+  signal data_from_virtual_slave : std_logic_vector(15 downto 0);
+  signal s_drv_en                : std_logic;
+  signal scub_data_in_to_master  : std_logic_vector(15 downto 0);
 begin
   mx: scu_bus_mux
   port map(
-    clk           => clk_i,
+    clk           => clk_sys_i,
     rst_n_i       => rst_n_i,
     is_standalone => is_standalone,
     scu_slave_o   => scu_slave_o,
@@ -80,7 +86,7 @@ begin
       Test                  => 0,
       Time_Out_in_ns        => 350)
    port map(
-     clk                => clk_i,
+     clk                => clk_sys_i,
      nrst               => rst_n_i,
      Timing_In          => tag,
      Start_Timing_Cycle => tag_valid,
@@ -107,7 +113,7 @@ begin
     g_round_rb => true,
     g_det_edge => true) 
   port map (
-    clk_i   => clk_i,
+    clk_i   => clk_sys_i,
     rst_n_i => rst_n_i,
     
     -- msi if
@@ -126,7 +132,7 @@ begin
     Clk_in_Hz      => 62_500_000,
     Time_out_in_ms => 3)
   port map (
-    clk_i         => clk_i,
+    clk_i         => clk_sys_i,
     rst_n_i       => rst_n_i,
     trigger       => nscub_dtack,
     is_standalone => is_standalone);
@@ -134,7 +140,7 @@ begin
   s_scub_data <= scub_data_out when scub_data_tri_out = '1' else (others => 'Z');
   scub_virtual_slave: scu_bus_slave
   generic map (
-    Clk_in_Hz        => 62_500_000,
+    Clk_in_Hz        => 125_000_000,
     Firmware_Release => 1,
     Firmware_Version => 1,
     CID_System       => 55,
@@ -146,7 +152,7 @@ begin
     nSCUB_Slave_Sel    => s_nscub_slave_sel(12),
     nSCUB_DS           => s_nscub_ds,
     SCUB_RDnWR         => s_scub_rdnwr,
-    clk                => clk_i,
+    clk                => clk_ref_i,
     nSCUB_Reset_in     => rst_n_i,
     Data_to_SCUB       => x"0000",
     Dtack_to_SCUB      => '0',
