@@ -457,7 +457,7 @@ begin
           s_stall <= '1';
           if s_slave_nr = x"0" then                               -- internal access
             wb_state <= int_acc;
-          elsif s_slave_nr >= x"1" and s_slave_nr <= x"c" then    -- external bus access
+          elsif s_slave_nr >= x"1" and s_slave_nr <= x"e" then    -- external bus access
             if Wr = '1' then
               S_Start_SCUB_Wr <= '1';                             -- store write request
               --S_Wr_Data <= Wr_Data;                               -- store write pattern
