@@ -302,6 +302,11 @@
 --     einzustellen ( z.B. SIO1, SIO2, SIO3). Damit kann die SW nicht nur über 1Wire ID die Variante bestimmen      --
 ----------------------------------------------------------------------------------------------------------------------
 
+----------------------------------------------------------------------------------------------------------------------
+-- Vers_5_Revi_4: changed 23.06.2026, Author: S.Rauch                                                               --
+-- changed tristate buffer control, depending on the generic "with_tristate_control"                                --
+----------------------------------------------------------------------------------------------------------------------
+
 library IEEE;
 USE IEEE.std_logic_1164.all;
 USE IEEE.numeric_std.all;
@@ -342,7 +347,7 @@ generic
     This_macro_vers_dont_change_from_outside: integer range 0 to 16#FF# := 5;
     
     -- change only here! increment by minor changes of this macro
-    This_macro_revi_dont_change_from_outside: integer range 0 to 16#FF# := 2;
+    This_macro_revi_dont_change_from_outside: integer range 0 to 16#FF# := 4;
     with_tristate_control: boolean := true
     );
 port
