@@ -3353,7 +3353,14 @@ end generate;
         nscub_slave_sel    => scubus_a_nsel,
         nscub_timing_cycle => scubus_a_ntiming_cycle,
         nsel_ext_data_drv  => scubus_nsel_data_drv,
-        is_rmt             => s_is_rmt);
+        is_rmt             => s_is_rmt,
+        front_in           => x"00000000000000000" & '0',
+        front_out          => open,
+        front_dir          => open,
+        rear_in            => x"00000000000000000" & '0',
+        rear_out           => open,
+        rear_dir           => open
+      );
   end generate;
 
   is_rmt <= s_is_rmt;
