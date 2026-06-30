@@ -7,5 +7,6 @@ files = [
 modules = {
   "local" : [
     "../../..",
+    "../../../ip_cores/blackbox/hdl",
   ]
 }

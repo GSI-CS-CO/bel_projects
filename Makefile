@@ -523,7 +523,7 @@ ftm10-check:
 	$(call copy_release, $(CHECK_FTM10), $(PATH_FTM10), gw-ftm10-ftm10dp)
 
 scu4slim:		firmware
-	$(MAKE) -C $(PATH_SCU4SLIM) all
+	$(MAKE) -C $(PATH_SCU4SLIM) all_gen
 
 scu4slim-clean::
 	$(MAKE) -C $(PATH_SCU4SLIM) clean

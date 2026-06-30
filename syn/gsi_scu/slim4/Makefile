@@ -21,3 +21,15 @@ $(TARGET).elf: $(PATHSCU)/main.c  $(INCPATH)/display.c  $(PATHSCU)/cb.c \
 
 clean::
 	rm -f $(PATHSCU)/main.o $(W1)/dev/*.o
+
+generate:
+	pwd
+	../../../ip_cores/blackbox/hdl/generate_all scu default
+
+all_gen: generate
+	@echo ""
+	@echo "\033[93m *******************************************\033[0m"
+	@echo "\033[93m Compiling Blackbox variant: default \033[0m"
+	@echo "\033[93m *******************************************\033[0m"
+	@echo ""
+	$(MAKE) all
