@@ -89,7 +89,14 @@ component wb_irq_scu_bus is
     nscub_slave_sel     : out std_logic_vector(11 downto 0);
     nscub_timing_cycle  : out std_logic;
     nsel_ext_data_drv   : out std_logic;
-    is_rmt              : out std_logic);
+    is_rmt              : out std_logic;
+    front_in            : in std_logic_vector(68 downto 0);
+    front_out           : out std_logic_vector(68 downto 0);
+    front_dir           : out std_logic_vector(68 downto 0);
+    rear_in             : in std_logic_vector(68 downto 0);
+    rear_out            : out std_logic_vector(68 downto 0);
+    rear_dir            : out std_logic_vector(68 downto 0)
+);
 end component;
 
 component scu_bus_slave_v2r1
@@ -225,5 +232,52 @@ component scu_bus_mux is
         scu_slave_in        : out t_wishbone_slave_in
        );
 end component;
+
+--  +============================================================================================================================+
+--  |                                                       component                                                            |
+--  +============================================================================================================================+
+component io_blackbox_embd
+generic(
+  nr_front_ios         : integer; -- range 0 to 256 : =256;
+  nr_virt_ios          : integer; -- range 0 to 96;
+  nr_rear_ios          : integer; -- range 0 to 16;
+  max_frontend_plugins : integer; --
+  max_proc_plugins     : integer;
+  max_user_plugins     : integer;
+  frontend_status_bits : integer;
+  frontend_sel_bits    : integer;
+  proc_sel_bits        : integer;
+  user_sel_bits        : integer;
+  addr_bus_width       : integer;
+  data_bus_width       : integer
+	);
+port(
+  -- Common
+  clock                  : in    std_logic;
+  reset                  : in    std_logic;
+  -- Frontend
+  front_in                : in  std_logic_vector(nr_front_ios-1 downto 0); -- Connection to DIOB I/O
+  front_out                : out  std_logic_vector(nr_front_ios-1 downto 0); -- Connection to DIOB I/O
+  front_dir              : out  std_logic_vector(nr_front_ios-1 downto 0); -- Connection to DIOB I/O
+  frontend_plugin_select : in     std_logic_vector(frontend_sel_bits-1 downto 0); --I/O plugin selection
+  rear_in                 : in  std_logic_vector(nr_rear_ios-1 downto 0); --Backplane input/output fed (almost) directly        to user plugin
+  rear_out                 : out  std_logic_vector(nr_rear_ios-1 downto 0); --Backplane input/output fed (almost) directly        to user plugin
+  rear_dir               : out  std_logic_vector(nr_rear_ios-1 downto 0); --Backplane input/output fed (almost) directly        to user plugin
+  -- SCU-bus
+  addr                   : in std_logic_vector(addr_bus_width-1 downto 0);   --(Adr_from_SCUB_LA)
+  data_w                 : in std_logic_vector(data_bus_width-1 downto 0);   -- (Data_from_SCUB_LA)
+  data_r                 : out std_logic_vector(data_bus_width-1 downto 0);  --(Data_to_SCUB)
+
+  addr_strobe            : in std_logic; -- (Ext_Adr_Val)
+  read_trg               : in std_logic; -- (Ext_Rd_active)
+  write_trg              : in std_logic; -- (Ext_Wr_active)
+
+  dtack                  : out std_logic; --(Dtack_to_SCUB)
+  data_r_act             : out std_logic; --(Reg_rd_active)
+
+  event_trg              : in std_logic;
+  event_bus              : in std_logic_vector(31 downto 0)
+  );
+end component io_blackbox_embd;
 
 end package;

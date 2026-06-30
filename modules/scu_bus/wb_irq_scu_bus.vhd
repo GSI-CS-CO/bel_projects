@@ -1,6 +1,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use ieee.math_real.all;
 
 library work;
 
@@ -8,6 +9,7 @@ use work.wishbone_pkg.all;
 use work.wb_irq_pkg.all;
 use work.scu_bus_pkg.all;
 use work.scu_bus_slave_pkg.all;
+use work.blackbox_config_pkg.all;
 
 entity wb_irq_scu_bus is
   generic (
@@ -44,7 +46,13 @@ entity wb_irq_scu_bus is
         nscub_slave_sel     : out std_logic_vector(11 downto 0);
         nscub_timing_cycle  : out std_logic;
         nsel_ext_data_drv   : out std_logic;
-        is_rmt              : out std_logic);
+        is_rmt              : out std_logic;
+        front_in            : in std_logic_vector(68 downto 0);
+        front_out           : out std_logic_vector(68 downto 0);
+        front_dir           : out std_logic_vector(68 downto 0);
+        rear_in             : in std_logic_vector(68 downto 0);
+        rear_out            : out std_logic_vector(68 downto 0);
+        rear_dir            : out std_logic_vector(68 downto 0));
 end entity;
 
 
@@ -65,6 +73,18 @@ architecture wb_irq_scu_bus_arch of wb_irq_scu_bus is
   signal data_from_virtual_slave : std_logic_vector(15 downto 0);
   signal s_drv_en                : std_logic;
   signal scub_data_in_to_master  : std_logic_vector(15 downto 0);
+  signal Ext_Adr_Val             : std_logic;
+  signal Ext_Rd_active           : std_logic;
+  signal Ext_Wr_active           : std_logic;
+  signal Ext_Rd_fin              : std_logic;
+  signal Ext_Wr_fin              : std_logic;
+  signal ADR_from_SCUB_LA        : std_logic_vector(15 downto 0);
+  signal Timing_Pattern_LA       : std_logic_vector(31 downto 0);
+  signal Timing_Pattern_RCV      : std_logic;
+  signal Data_from_SCUB_LA       : std_logic_vector(15 downto 0);
+  signal Data_to_SCUB            : std_logic_vector(15 downto 0);
+  signal Dtack_to_SCUB           : std_logic;
+  signal bb_irq                  : std_logic_vector(15 downto 0);
 begin
   mx: scu_bus_mux
   port map(
@@ -159,15 +179,15 @@ begin
     SCUB_RDnWR         => s_scub_rdnwr,
     clk                => clk_ref_i,
     nSCUB_Reset_in     => rst_n_i,
-    Data_to_SCUB       => x"0000",
-    Dtack_to_SCUB      => '0',
-    Intr_In            => b"0000_0000_0000_000",
+    Data_to_SCUB       => Data_to_SCUB,
+    Dtack_to_SCUB      => Dtack_to_SCUB,
+    Intr_In            => bb_irq(15 downto 1),
     User_Ready         => '1',
     CID_Group          => 55,
-    Data_from_SCUB_LA  => open,                -- out,   latched data from SCU_Bus for external user functions
-    ADR_from_SCUB_LA   => open,                -- out,   latched address from SCU_Bus for external user functions
-    Timing_Pattern_LA  => open,                -- out,   latched timing pattern from SCU_Bus for external user functions
-    Timing_Pattern_RCV => open,                -- out,   timing pattern received
+    Data_from_SCUB_LA  => Data_from_SCUB_LA,                -- out,   latched data from SCU_Bus for external user functions
+    ADR_from_SCUB_LA   => ADR_from_SCUB_LA,    -- out,   latched address from SCU_Bus for external user functions
+    Timing_Pattern_LA  => Timing_Pattern_LA,   -- out,   latched timing pattern from SCU_Bus for external user functions
+    Timing_Pattern_RCV => Timing_Pattern_RCV,  -- out,   timing pattern received
     nSCUB_Dtack_Opdrn  => open,                -- out,   for direct connect to SCU_Bus opendrain signal
                                                --        '0' => slave give dtack to SCU master
     SCUB_Dtack         => s_scub_dtack,        -- out,   for connect via ext. open collector driver
@@ -180,14 +200,14 @@ begin
     Ext_Data_Drv_Rd    => open,                -- out,   '1' => direction of the external data driver on the
                                                --        SCU_Bus slave is to the SCU_Bus
     Standard_Reg_Acc   => open,                -- out,   '1' => mark the access to register of this macro
-    Ext_Adr_Val        => open,                -- out,   for external user functions: '1' => "ADR_from_SCUB_LA" is valid
-    Ext_Rd_active      => open,                -- out,   '1' => Rd-Cycle to external user register is active
-    Ext_Rd_fin         => open,                -- out,   marks end of read cycle, active one for one clock period
+    Ext_Adr_Val        => Ext_Adr_Val,                -- out,   for external user functions: '1' => "ADR_from_SCUB_LA" is valid
+    Ext_Rd_active      => Ext_Rd_active,                -- out,   '1' => Rd-Cycle to external user register is active
+    Ext_Rd_fin         => Ext_Rd_fin,                -- out,   marks end of read cycle, active one for one clock period
                                                --        of clk past cycle end (no overlap)
     Ext_Rd_Fin_ovl     => open,                -- out,   marks end of read cycle, active one for one clock period
                                                --        of clk during cycle end (overlap)
-    Ext_Wr_active      => open,                -- out,   '1' => Wr-Cycle to external user register is active
-    Ext_Wr_fin         => open,                -- out,   marks end of write cycle, active high for one clock period
+    Ext_Wr_active      => Ext_Wr_active,                -- out,   '1' => Wr-Cycle to external user register is active
+    Ext_Wr_fin         => Ext_Wr_fin,                -- out,   marks end of write cycle, active high for one clock period
                                                --        of clk past cycle end (no overlap)
     Ext_Wr_fin_ovl     => open,                -- out,   marks end of write cycle, active high for one clock period
                                                --        of clk before write cycle finished (with overlap)
@@ -198,6 +218,51 @@ begin
     Powerup_Done       => open                 -- out    this memory is set to one if an Powerup is done.
                                                --        Only the SCUB-Master can clear this bit.
     );
+
+  io_blackbox_scu: io_blackbox_embd
+  generic map (
+    nr_front_ios           => BB_NR_FRONT_IOS,
+    nr_virt_ios            => BB_NR_VIRT_IOS,
+    nr_rear_ios            => BB_NR_REAR_IOS,
+    max_frontend_plugins   => BB_MAX_FRONTEND_PLUGINS,
+    max_proc_plugins       => BB_MAX_PROC_PLUGINS,
+    max_user_plugins       => BB_MAX_USER_PLUGINS,
+    frontend_status_bits   => BB_FRONTEND_STATUS_BITS,
+    frontend_sel_bits      => integer(ceil (log2(real(BB_MAX_FRONTEND_PLUGINS)))),
+    proc_sel_bits          => integer(ceil (log2(real(BB_MAX_PROC_PLUGINS)))),
+    user_sel_bits          => integer(ceil (log2(real(BB_MAX_USER_PLUGINS)))),
+    addr_bus_width         => BB_ADDR_BUS_WIDTH,
+    data_bus_width         => BB_DATA_BUS_WIDTH
+  )
+  port map(
+    -- Common
+    clock                  => clk_sys_i,
+    reset                  => not rst_n_i,
+    -- Frontend
+    front_in               => x"00000000000000000" & '0',     -- Connection to DIOB I/O
+    front_out              => open,     -- Connection to DIOB I/O
+    front_dir              => open,     -- Connection to DIOB I/O
+    frontend_plugin_select => "00",  --I/O plugin selection
+    rear_in                => x"000000000000", --UIO(15 downto 0),       --Backplane input/output fed (almost) directly      to user plugin
+    rear_out               => open, --UIO(15 downto 0),       --Backplane input/output fed (almost) directly      to user plugin
+    rear_dir               => open, --UIO(15 downto 0),       --Backplane input/output fed (almost) directly      to user plugin
+    -- SCU-bus
+    addr                   => ADR_from_SCUB_LA,       --(Adr_from_SCUB_LA)
+    data_w                 => Data_from_SCUB_LA,   -- (Data_from_SCUB_LA)
+    data_r                 => Data_to_SCUB,          --(Data_to_SCUB)
+
+    addr_strobe            => Ext_Adr_Val, -- (Ext_Adr_Val)
+    read_trg               => Ext_Rd_active, -- (Ext_Rd_active)
+    write_trg              => Ext_Wr_active, -- (Ext_Wr_active)
+    dtack                  => Dtack_to_SCUB, --(Dtack_to_SCUB)
+    data_r_act             => open, --(Reg_rd_active)
+
+    event_trg              => Timing_Pattern_RCV,
+    event_bus              => Timing_Pattern_LA,
+    irq                    => bb_irq
+    );
+
+
    
   is_rmt          <= is_standalone;
   scub_addr       <= s_scub_addr;
