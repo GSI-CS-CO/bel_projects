@@ -256,12 +256,12 @@ port(
   clock                  : in    std_logic;
   reset                  : in    std_logic;
   -- Frontend
-  front_in                : in  std_logic_vector(nr_front_ios-1 downto 0); -- Connection to DIOB I/O
-  front_out                : out  std_logic_vector(nr_front_ios-1 downto 0); -- Connection to DIOB I/O
+  front_in               : in  std_logic_vector(nr_front_ios-1 downto 0); -- Connection to DIOB I/O
+  front_out              : out  std_logic_vector(nr_front_ios-1 downto 0); -- Connection to DIOB I/O
   front_dir              : out  std_logic_vector(nr_front_ios-1 downto 0); -- Connection to DIOB I/O
   frontend_plugin_select : in     std_logic_vector(frontend_sel_bits-1 downto 0); --I/O plugin selection
-  rear_in                 : in  std_logic_vector(nr_rear_ios-1 downto 0); --Backplane input/output fed (almost) directly        to user plugin
-  rear_out                 : out  std_logic_vector(nr_rear_ios-1 downto 0); --Backplane input/output fed (almost) directly        to user plugin
+  rear_in                : in  std_logic_vector(nr_rear_ios-1 downto 0); --Backplane input/output fed (almost) directly        to user plugin
+  rear_out               : out  std_logic_vector(nr_rear_ios-1 downto 0); --Backplane input/output fed (almost) directly        to user plugin
   rear_dir               : out  std_logic_vector(nr_rear_ios-1 downto 0); --Backplane input/output fed (almost) directly        to user plugin
   -- SCU-bus
   addr                   : in std_logic_vector(addr_bus_width-1 downto 0);   --(Adr_from_SCUB_LA)
@@ -276,7 +276,8 @@ port(
   data_r_act             : out std_logic; --(Reg_rd_active)
 
   event_trg              : in std_logic;
-  event_bus              : in std_logic_vector(31 downto 0)
+  event_bus              : in std_logic_vector(31 downto 0);
+  irq                    : out std_logic_vector(15 downto 0)
   );
 end component io_blackbox_embd;
 
