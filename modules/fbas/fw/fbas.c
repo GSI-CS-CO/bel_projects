@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define FBAS_FW_VERSION 0x010401        // make this consistent with makefile -> export VERSION
+#define FBAS_FW_VERSION 0x010402        // make this consistent with makefile -> export VERSION
 
 // standard includes
 #include <stdio.h>
@@ -117,6 +117,7 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd);
 static void timerHandler(void);
 static uint32_t handleEcaEvent(uint32_t pollTimeout, uint32_t* mpsTask, msgCtrl_t* pMsgCtrl, mpsMsg_t** head);
 static void wrConsolePeriodic(void);
+static void setErrorFlag(uint8_t error);
 
 /**
  * \brief init for lm32
@@ -129,7 +130,6 @@ static void init()
   discoverPeriphery();        // mini-sdb ...
   uart_init_hw();             // needed by WR console
   cpuId = getCpuIdx();
-  sbInit();                   // init the pointer to the SCU bus master
 } // init
 
 /**
@@ -181,6 +181,7 @@ static status_t initSharedMem(uint32_t *const sharedStart)
   DBPRINT1("fbas%d: FBAS_BAD_MSG 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_BAD_MSG_CNT >> 2)), (pSharedExt + (FBAS_SHARED_BAD_MSG_CNT >> 2)));
   DBPRINT1("fbas%d: FBAS_SENDERID 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_SENDERID >> 2)), (pSharedExt + (FBAS_SHARED_SENDERID >> 2)));
   DBPRINT1("fbas%d: FBAS_ACT_RATE 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_ACT_RATE >> 2)), (pSharedExt + (FBAS_SHARED_ACT_RATE >> 2)));
+  DBPRINT1("fbas%d: FBAS_ERROR_FLAG 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_ERROR_FLAG >> 2)), (pSharedExt + (FBAS_SHARED_ERROR_FLAG >> 2)));
 
   sbInitSharedMemory(pSharedApp);
 
@@ -654,6 +655,24 @@ static void wrConsolePeriodic(void)
   lastSysTime = now;
 }
 
+/**
+ * \brief Set a given error flag
+ *
+ * An error flag is set, when function call returns an error.
+ * Error flags can be used to diagnose the function calls.
+ *
+ * \param error  Error flag
+ *
+ * \return None
+ **/
+static void setErrorFlag(uint8_t error)
+{
+  if (!pSharedApp)
+    return;
+
+  *(pSharedApp + (FBAS_SHARED_ERROR_FLAG >> 2)) |= (1 << error);
+}
+
 // clears all statistics
 void extern_clearDiag()
 {
@@ -679,6 +698,8 @@ uint32_t extern_entryActionConfigured()
     outPortCfg.type = IO_CFG_CHANNEL_LVDS;
     outPortCfg.total= N_OUT_LEMO_PEXARIA;
   }
+
+  sbInit(); // probe SCU bus
 
   // app specific IO setup (TX: B2 as input, all output disabled)
   fwlib_ioCtrlSetGate(0, 2);        // disable input gate
@@ -837,6 +858,10 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd)
         measurePrintSummary(MSR_ML_PRD);
         measureExportSummary(MSR_ML_PRD, pSharedApp, FBAS_SHARED_GET_AVG);
         break;
+      case FBAS_CMD_PRINT_DIOB_DLY:
+        measurePrintSummary(MSR_DIOB_DLY);
+        measureExportSummary(MSR_DIOB_DLY, pSharedApp, FBAS_SHARED_GET_AVG);
+        break;
       case FBAS_CMD_PRINT_ACT_RATE:
         measureExportActionRate((pSharedApp + (FBAS_SHARED_ACT_RATE >> 2)));
         break;
@@ -897,6 +922,7 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
   uint64_t now, last;                                         // used to measure the period of the main loop
   uint16_t actionCnt = 0;                                     // counter for non-zero action tags
   uint64_t handleActionsUntil = getSysTime() + (actionTimeout << 10);  // allowed time period to handle multiple actions (main loop budget < 125 us)
+  uint16_t flags;                                             // bit-wise representation of the MPS flags
 
   status = actStatus;
 
@@ -971,6 +997,11 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
             }
           }
         }
+        now = getSysTime();
+        // build & write the MPS flags represenation to the echo register of DIOB card
+        flags = (uint16_t)msgRepresentMpsFlags();
+        sbPutMpsFlags(&flags);
+        measureSummarize(MSR_DIOB_DLY, now, getSysTime(), DISABLE_VERBOSITY);
       }
       break;
 

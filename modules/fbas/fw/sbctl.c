@@ -47,6 +47,7 @@ uint32_t *pSharedGetSbStd;              // "user defined" u32 reg: standard regi
 
 // SCU bus specific variables
 uint32_t sbSlaves = 0;                  // SCU bus slaves (bit1=slot1)
+uint32_t sbDiobs = 0;                   // DIOB cards in SCU bus (bit1=slot1)
 uint16_t configDiob[N_DIOB_CFG] = {0};  // configuration registers of DIOB
 uint16_t statusDiob[N_DIOB_STS] = {0};  // status registers of DIOB
 uint16_t configUser[N_USR_CFG] = {0};   // configuration registers of user interface (extension) card
@@ -79,6 +80,7 @@ status_t writeSbSlaveReg(volatile uint16_t* pSlave, regset_t* regset, uint16_t *
 status_t probeSbSlaveExt(volatile uint16_t* pMaster, uint32_t slot, uint32_t* pDst);
 status_t probeSbSlaves(volatile uint16_t* pMaster, uint16_t sysId, uint16_t grpId, uint32_t* slaves);
 void exportSbSlaveConfig(volatile uint16_t* pMaster, const uint32_t sbSlaves);
+status_t writeDiobReg(const uint16_t data, const uint16_t reg);
 
 /**
  * \brief Initialize the pointer to the SCU bus master
@@ -93,6 +95,12 @@ void sbInit(void)
 {
   // init the SCU bus master
   pSbMaster = (uint16_t*)fwlib_getSbMaster();
+
+  // probe all DIOB cards
+  probeSbSlaves(pSbMaster, CID_SYS_DIOB, CID_GRP_DIOB, &sbDiobs);
+
+  // init the DIOB echo register
+  writeDiobReg(0, SBS_ECHO);
 }
 
 /**
@@ -211,8 +219,11 @@ status_t probeSbSlaves(volatile uint16_t* pMaster, uint16_t sysId, uint16_t grpI
   int slot;
   uint16_t cidSys, cidGrp, u16val;
 
-  if (!pMaster || !slaves || !sysId || !grpId)
+  if (!pMaster || !slaves || !sysId || !grpId) {
+    DBPRINT1("sbctl: bad arguments to probe SCU bus slaves: 0x%08x, 0x%04x, 0x%04x, 0x%08x\n",
+      pMaster, sysId, grpId, slaves);
     return COMMON_STATUS_ERROR;
+  }
 
   for (slot = 1; slot <= N_SB_SLOTS; slot++) {
     cidSys = *(pMaster + (slot << 16) + SBS_CID_SYS); // get CID system ID of a SCU bus slave
@@ -290,8 +301,7 @@ void exportSbSlaveConfig(volatile uint16_t* pMaster, const uint32_t sbSlaves)
     u32val = (sbSlaves >> i) & 0x01;
 
     if (u32val) {
-      u32val <<= 16;                   // offset for a SCU bus slave
-      pSlave = pMaster + u32val;     // address of slave device on the SCU bus
+      pSlave = pMaster + (i << 16);  // slave base address on the SCU bus
 
       retval = readSbSlaveReg(pSlave, &regSet[DIOB_CFG], configDiob);  // get the DIOB configuration
       retval |= readSbSlaveReg(pSlave, &regSet[DIOB_STS], statusDiob);  // get the DIOB status
@@ -355,4 +365,62 @@ void sbCmdHandler(const uint32_t cmd)
   } else {
     DBPRINT1("sbctl: invalid CIDs (sys=%x, grp=%x)\n", cid_sys_id, cid_grp_id);
   }
+}
+
+/**
+ * \brief Write data to a given DIOB register
+ *
+ * \param data   16-bit data
+ * \param reg    DIOB register (offset)
+ *
+ * \return status Returns zero on success, otherwise non-zero
+ **/
+status_t writeDiobReg(const uint16_t data, const uint16_t reg)
+{
+  int i;
+  uint32_t u32val;
+  volatile uint16_t *pDiob;
+
+  if (!sbDiobs)
+    return COMMON_STATUS_ERROR;
+
+  for (int i = 1; i <= N_SB_SLOTS; ++i) {
+    u32val = (sbDiobs >> i) & 0x01;
+
+    if (u32val) {
+      pDiob = pSbMaster + (i << 16); // DIOB base address on the SCU bus
+
+      *(pDiob + reg) = data;         // write data to the given DIOB register
+    }
+  }
+
+  return COMMON_STATUS_OK;
+}
+
+/**
+ * \brief Send the bit-wise MPS flags to a dedicated DIOB register
+ *
+ * MPS flags are represented in 16-bit data, where each bit corresponds
+ * to the current PC signal state from its emitter.
+ * - "0"=OK, "1"=NOK
+ * - bit0 is for emitter1 (or channel1)
+ *
+ * The dedicated DIOB register is updated only in case of new MPS flags.
+ *
+ * \param pData   Pointer to the 16-bit data source
+ *
+ * \return status Returns zero on success, otherwise non-zero
+ **/
+status_t sbPutMpsFlags(const uint16_t* pData)
+{
+  static uint16_t flags = 0xff;
+  static uint8_t initialized = 0;
+
+  if (!initialized || flags != *pData) {
+    initialized = 1;
+    flags = *pData;
+    return writeDiobReg(flags, SBS_ECHO);
+  }
+
+  return COMMON_STATUS_OK;
 }
