@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-jan-2026
+ *  version : 03-jul-2026
  *
  * monitors UNILAC 50 Hz synchronization
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define WRF50_SERV_MON_VERSION 0x000109
+#define WRF50_SERV_MON_VERSION 0x000110
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -456,7 +456,6 @@ static void help(void) {
   std::cerr << "  -h                   display this help and exit"                                  << std::endl;
   std::cerr << "  -e                   display version"                                             << std::endl;
   std::cerr << "  -f                   use the first attached device (and ignore <device name>)"    << std::endl;
-  std::cerr << "  -d                   start server publishing data"                                << std::endl;
   std::cerr << std::endl;
   std::cerr << "This tool monitors a UNILAC 50 Hz synchronisation unit (wrf50)"                     << std::endl;
   std::cerr << std::endl;
@@ -641,6 +640,7 @@ int main(int argc, char** argv)
     int32_t       stmp32a, stmp32b, stmp32c, stmp32d, stmp32e, stmp32f, stmp32g, stmp32h, stmp32i;
     uint32_t      fwTMainsAct, fwState, fwVersion, fwLockState, fwNLocked, fwNCycles, fwNSent, fwMode;
     uint64_t      fwStatus, fwLockDate;
+    comlib_diag_t tmpDiagData;
     int           nUpdate = 0;
 
     t_old = comlib_getSysTime();
@@ -658,7 +658,7 @@ int main(int argc, char** argv)
       if (((t_new - t_old) / one_ms_ns) > UPDATE_TIME_MS) {
         // update firmware data
         wrmil_common_read(ebDevice, &fwStatus, &fwState, &tmp32a, &tmp32b, &fwVersion, &tmp32c, 0);
-        comlib_readDiag2(ebDevice, &fwState, &fwVersion, &fwStatus, &disDiagData, 0);
+        if (comlib_readDiag2(ebDevice, &fwState, &fwVersion, &fwStatus, &tmpDiagData, 0) ==  COMMON_STATUS_OK) disDiagData = tmpDiagData;
         wrf50_info_read(ebDevice, &offsetMains, &fwMode , &fwTMainsAct, &tmp32b, &tmp32c, &stmp32a, &stmp32b, &stmp32c, &stmp32g, &stmp32h, &stmp32i, &stmp32d, &stmp32e, &stmp32f, &fwLockState, &fwLockDate, &fwNLocked,
                         &fwNCycles, &fwNSent, 0);
         

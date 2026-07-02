@@ -41,7 +41,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define WRF50_FW_VERSION      0x000109                                  // make this consistent with makefile
+#define WRF50_FW_VERSION      0x000110                                  // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -132,7 +132,6 @@ uint32_t getOffsDoneMax;                   // offset deadline WR message to time
 uint32_t getOffsDoneMin;                   // offset deadline WR message to time when we are done [ns]; min
 
 uint64_t statusArray;                      // all status infos are ORed bit-wise into statusArray, statusArray is then published
-uint32_t nEvtsLate;                        // # of late messages
 
 // constants (as variables to have a defined type)
 uint64_t  one_us_ns = 1000;
@@ -261,6 +260,7 @@ void extern_clearDiag()
   getNEvtsLate     = 0x0;
   getNEvtsEarly    = 0x0;
   getNEvtsConflict = 0x0;
+  getNEvtsDelayed  = 0x0;
   getNEvtsSlow     = 0x0;
   getOffsSlow      = 0x0;
   getOffsSlowMax   = 0x0;
@@ -273,7 +273,6 @@ void extern_clearDiag()
   getOffsDoneMin   = 0xffffffff;
 
   statusArray      = 0x0;
-  nEvtsLate        = 0x0;
 } // extern_clearDiag 
 
 
@@ -680,7 +679,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   // check for late event
   if ((status == COMMON_STATUS_OK) && flagIsLate) {
     status = WRF50_STATUS_LATEMESSAGE;
-    nEvtsLate++;
+    getNEvtsLate++;
   } // if flagIslate
 
   // check for other statistics

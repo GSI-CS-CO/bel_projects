@@ -40,7 +40,7 @@ saft-wbm-ctl $SDGW -x
 echo -e WRF50: load firmware 
 eb-fwload $TRGW u 0x0 wrf50.bin
 
-echo -e WRF50: configure firmware for gateway $NGW
+echo -e WRF50: configure firmware for gateway
 sleep 2
 wrf50-ctl -m4 $TRGW configure
 sleep 2

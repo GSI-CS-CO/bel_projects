@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Micheal Reese, Mathias Kreider GSI-Darmstadt
- *  version : 02-jan-2026
+ *  version : 02-jul-2026
  *
  *  firmware required for the White Rabbit -> MIL Gateways
  *  
@@ -37,7 +37,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define WRMIL_FW_VERSION      0x000109    // make this consistent with makefile
+#define WRMIL_FW_VERSION      0x000110    // make this consistent with makefile
 
 #define RESET_INHIBIT_COUNTER    10000    // count so many main ECA timemouts, prior sending fill event
 //#define WR_MIL_GATEWAY_LATENCY 70650    // additional latency in units of nanoseconds
@@ -649,11 +649,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       // write the MIL message in time.
       // note: we add 20us in the comparison taking into account the time it takes to write
       // the message to the ECA and the time it takes the ECA to process that message
-      if (sysTime + 20000 > sendDeadline) {
-        nEvtsLate++;
-        flagIsLate    = 1;
-      } // if systime
-      else flagIsLate = 0;
+      if (sysTime + 20000 > sendDeadline) flagIsLate = 1;
+      else                                flagIsLate = 0;
 
       // handle UTC events; here the UTC time (- offset) is distributed as a series of MIL telegrams
       if (recEvtNo == utc_trigger) {
