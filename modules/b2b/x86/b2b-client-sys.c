@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-jan-2026
+ *  version : 03-jul-2026
  *
  * subscribes to and displays status of a b2b system (CBU, PM, KD ...)
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_CLIENT_SYS_VERSION 0x000812
+#define B2B_CLIENT_SYS_VERSION 0x000813
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -280,7 +280,7 @@ void printServices(int flagOnce)
 {
   int i;
 
-  char     cTransfer[10];
+  char     cTransfer[11];
   char     cStatus[17];
   char     cVersion[9];
   char     cState[11];
@@ -304,8 +304,8 @@ void printServices(int flagOnce)
   printf("%s\n", header);
   for (i=0; i<B2BNSYS; i++) {
     tmp = (uint32_t *)(&(dicSystem[i].state));
-    if (*tmp == no_link_32)                      sprintf(cTransfer,  "%9s",       no_link_str);
-    else                                         sprintf(cTransfer,  "%9u",       dicSystem[i].diagData.nTransfer);
+    if (*tmp == no_link_32)                      snprintf(cTransfer, sizeof(cTransfer), "%9s", no_link_str);
+    else                                         snprintf(cTransfer, sizeof(cTransfer), "%9u", dicSystem[i].diagData.nTransfer);
     if (dicSystem[i].status    == no_link_64)    sprintf(cStatus,   "%13s",       no_link_str);
     else                                         sprintf(cStatus, "%13"PRIx64"",  dicSystem[i].status);
     tmp = (uint32_t *)(&(dicSystem[i].state));

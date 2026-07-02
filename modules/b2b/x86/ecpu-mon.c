@@ -3,7 +3,7 @@
  *
  *  created : 2026
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-jan-2026
+ *  version : 03-jul-2026
  *
  * subscribes to and displays status of a ecpu systems based on common lib
  * (requires a server such as 'b2b-serv-sys' on each local host)
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define ECPU_MON_VERSION 0x000812
+#define ECPU_MON_VERSION 0x000813
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -585,8 +585,8 @@ int main(int argc, char** argv) {
     return 0;
   } // if optind
 
-  if (optind< argc) sprintf(environment, "%s", argv[optind]);
-  else              sprintf(environment, "%s", "na");
+  if (optind< argc) snprintf(environment, sizeof(environment), "%s", argv[optind]);
+  else              snprintf(environment, sizeof(environment), "%s", "na");
 
   comlib_term_clear();
   buildHeader(environment);

@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-jan-2026
+ *  version : 03-jul-2026
  *
  * analyzes and publishes get values
  * 
@@ -36,7 +36,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_ANALYZER_VERSION 0x000812
+#define B2B_ANALYZER_VERSION 0x000813
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -875,18 +875,18 @@ void disAddServices(char *prefix)
   sprintf(disVersion, "%s",  b2b_version_text(B2B_ANALYZER_VERSION));
   disVersionId     = dis_add_service(name, "C",              disVersion,        8, 0 , 0);
 
-  sprintf(name, "%s-cal_state",       prefix);
+  snprintf(name, sizeof(name), "%s-cal_state", prefix);
   sprintf(disState, "%s", b2b_state_text(COMMON_STATE_OPREADY));
   disStateId       = dis_add_service(name, "C",               disState,         10,                     0, 0);
 
-  sprintf(name, "%s-cal_hostname",    prefix);
+  snprintf(name, sizeof(name), "%s-cal_hostname", prefix);
   disHostnameId    = dis_add_service(name, "C",               &disHostname,     32,                     0, 0);
 
-  sprintf(name, "%s-cal_status",      prefix);
+  snprintf(name, sizeof(name), "%s-cal_status", prefix);
   disStatusArray   = 0x1;
   disStatusArrayId = dis_add_service(name, "X",                &disStatusArray, sizeof(disStatusArray), 0, 0);
 
-  sprintf(name, "%s-cal_comlib_diag", prefix);
+  snprintf(name, sizeof(name), "%s-cal_comlib_diag", prefix);
   disDiagDataId    = dis_add_service(name, "X:1;I:3;X:2;I:18", &disDiagData,    sizeof(disDiagData),    0, 0);
   
   for (i=0; i<B2B_NSID; i++) {

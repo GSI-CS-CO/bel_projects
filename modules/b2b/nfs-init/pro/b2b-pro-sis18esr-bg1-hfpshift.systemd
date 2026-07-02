@@ -1,4 +1,4 @@
-# yocto; temporarily disabled
+# yocto
 SERVICEA=b2b-servsys-pro-sis18-psm.service
 SERVICEB=b2b-servsys-pro-esr-psm.service
 cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
@@ -8,7 +8,7 @@ systemctl daemon-reload
 systemctl start $SERVICEA
 systemctl start $SERVICEB
 
-# hack for acc7
+# hack for acc7; disabled
 #export DIM_DNS_NODE=asl105
 #
 #b2b-serv-sys dev/wbm0 -s pro_sis18-psm &
