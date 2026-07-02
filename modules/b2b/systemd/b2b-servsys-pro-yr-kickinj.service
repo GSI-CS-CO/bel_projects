@@ -1,0 +1,12 @@
+[Unit]
+Description = b2b system monitor for PRO CRYRING injection kicker 
+Requires = dev-wbm0.device
+After = dev-wbm0.device
+
+[Service]
+Type = simple
+Environment="DIM_DNS_NODE=asl105"
+ExecStart = b2b-serv-sys dev/wbm0 -s pro_yr-kdi
+
+[Install]
+WantedBy = multi-user.target

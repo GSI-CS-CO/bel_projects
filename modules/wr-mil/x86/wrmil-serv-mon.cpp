@@ -3,9 +3,9 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 27-Nov-2024
+ *  version : 09-jan-2025
  *
- * monitors WR-MIL gateway
+ * monitors WR-MIL gateway (server part)
  *
  * ------------------------------------------------------------------------------------------
  * License Agreement for this software:
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define WRMIL_SERV_MON_VERSION 0x000102
+#define WRMIL_SERV_MON_VERSION 0x000110
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -121,19 +121,20 @@ static const char* program;
 #define NAMELEN     256                 // max size for names
 
 // services
-char      disVersion[DIMCHARSIZE];      // firmware version
-char      disState[DIMCHARSIZE];        // firmware state
-char      disHostname[DIMCHARSIZE];     // hostname
-uint64_t  disStatus;                    // firmware status
-monval_t  disMonData;
+char          disHostname[DIMCHARSIZE];     // hostname
+char          disState[DIMCHARSIZE];        // firmware state
+char          disVersion[DIMCHARSIZE];      // firmware version
+uint64_t      disStatusArray;               // array with status bits
+monval_t      disMonData;                   // monitoring data
+comlib_diag_t disDiagData;                  // common diagnostic data
 
-uint32_t  disVersionId      = 0;
-uint32_t  disStateId        = 0;
-uint32_t  disStatusId       = 0;
-uint32_t  disHostnameId     = 0;
-uint32_t  disMonDataId      = 0;
-uint32_t  disCmdClearId     = 0;
-
+uint32_t  disHostnameId      = 0;
+uint32_t  disStateId         = 0;
+uint32_t  disVersionId       = 0;
+uint32_t  disStatusArrayId   = 0;
+uint32_t  disMonDataId       = 0;
+uint32_t  disDiagDataId      = 0;
+uint32_t  disCmdClearId      = 0;
 
 // local variables
 monval_t  monData;                      // monitoring data
@@ -144,8 +145,6 @@ uint32_t  matchWindow       = MATCH_WIN_US;
 uint32_t  modeCompare       = 0;
 uint64_t  offsetStart;                  // correction to be used for different monitoring types
 uint64_t  offsetStop;                   // correction to be used for different monitoring types
-
-
 
 uint64_t  one_us_ns = 1000;
 uint64_t  one_ms_ns = 1000000;
@@ -304,28 +303,31 @@ void disAddServices(char *prefix)
   char name[DIMMAXSIZE];
 
   // 'generic' services
-  sprintf(name, "%s_version_fw", prefix);
-  sprintf(disVersion, "%s",  wrmil_version_text(WRMIL_SERV_MON_VERSION));
-  disVersionId   = dis_add_service(name, "C", disVersion, 8, 0 , 0);
+  sprintf(name, "%s_hostname",      prefix);
+  disHostnameId    = dis_add_service(name, "C",                       disHostname,     DIMCHARSIZE,           0, 0);
 
-  sprintf(name, "%s_state", prefix);
+  sprintf(name, "%s_state",         prefix);
   sprintf(disState, "%s", wrmil_state_text(COMMON_STATE_OPREADY));
-  disStateId      = dis_add_service(name, "C", disState, 10, 0 , 0);
+  disStateId       = dis_add_service(name, "C",                       disState,        10,                    0, 0);
 
-  sprintf(name, "%s_hostname", prefix);
-  disHostnameId   = dis_add_service(name, "C", disHostname, DIMCHARSIZE, 0 , 0);
+  sprintf(name, "%s_version_fw",    prefix);
+  sprintf(disVersion, "%s",  wrmil_version_text(WRMIL_SERV_MON_VERSION));
+  disVersionId     = dis_add_service(name, "C",                       disVersion,      8,                     0, 0);
 
-  sprintf(name, "%s_status", prefix);
-  disStatus       = 0x1;   
-  disStatusId     = dis_add_service(name, "X", &disStatus, sizeof(disStatus), 0 , 0);
+  sprintf(name, "%s_status",    prefix);
+  disStatusArray       = 0x1;
+  disStatusArrayId = dis_add_service(name, "X",                       &disStatusArray, sizeof(disStatusArray), 0, 0);
+
+  sprintf(name, "%s_comlib_diag",   prefix);
+  disDiagDataId    = dis_add_service(name, "X:1;I:3;X:2;I:18",        &disDiagData,    sizeof(disDiagData),   0, 0);
 
   // monitoring data service
   sprintf(name, "%s_data", prefix);
-  disMonDataId  = dis_add_service(name, "I:2;X:3;I:2;X:3;I:3;D:5", &(disMonData), sizeof(monval_t), 0, 0);
+  disMonDataId     = dis_add_service(name, "I:2;X:3;I:2;X:3;I:3;D:5", &(disMonData),   sizeof(disMonData),    0, 0);
 
   // command clear
   sprintf(name, "%s_cmd_cleardiag", prefix);
-  disCmdClearId = dis_add_cmnd(name, 0, dis_cmd_clear, 17);
+  disCmdClearId    = dis_add_cmnd(name, 0, dis_cmd_clear, 17);
 } // disAddServices
 
                         
@@ -373,7 +375,6 @@ int main(int argc, char** argv)
   int      opt;
   bool     useFirstDev    = false;
   bool     getVersion     = false;
-  bool     startServer    = false;
   uint32_t gid=0xffffffff;                // gid for gateway
   uint32_t gidStart;                      // relevant to select the type of messages used as a start
   uint64_t idStop;                        // relevant to select the type of messages used as a stop
@@ -383,8 +384,7 @@ int main(int argc, char** argv)
   char    *tail;
 
   // variables logging
-  uint32_t actState = COMMON_STATE_UNKNOWN;    // actual state of of gateway
-  uint64_t actStatus      = 0;                 // actual status of gateway
+  //uint64_t actStatus      = 0;                 // actual status of gateway
   int      printFlag      = 0;
 
   // variables snoop event
@@ -401,8 +401,18 @@ int main(int argc, char** argv)
   char     prefix[NAMELEN*3];            // prefix DIM services
   char     disName[DIMMAXSIZE];          // name of DIM server
   char     environment[NAMELEN];         // environment, typically either int or pro
-  uint32_t verLib;                       // library version
-  uint32_t verFw;                        // firmware version
+
+  uint64_t statusArray;
+  uint32_t state;
+  uint32_t nBadStatus = 0;
+  uint32_t nBadState  = 0;;
+
+  uint32_t actState = COMMON_STATE_UNKNOWN;    // actual state of gateway
+  uint64_t actStatusArray = 0x0;               // actual status array of gateway
+  uint32_t verLib;                             // library version
+  uint32_t verFw;                              // firmware version
+
+  comlib_diag_t diagData;
   
   char     ebPath[1024];
   uint64_t ebDevice;
@@ -420,7 +430,7 @@ int main(int argc, char** argv)
         useFirstDev = true;
         break;
       case 'd' :
-        startServer = true;
+        // dummy, chk remove option
         break;
       case 's' :
         tmpi        = strtoull(optarg, &tail, 0);
@@ -494,15 +504,14 @@ int main(int argc, char** argv)
   else
     sprintf(prefix, "wrmil_%s-mon", domainName);
 
-  if (startServer) {
-    printf("%s: starting server using prefix %s\n", program, prefix);
+  // start dim server
+  printf("%s: starting server using prefix %s\n", program, prefix);
 
-    clearStats();
-    disAddServices(prefix);
+  clearStats();
+  disAddServices(prefix);
     
-    sprintf(disName, "%s", prefix);
-    dis_start_serving(disName);
-  } // if startServer
+  sprintf(disName, "%s", prefix);
+  dis_start_serving(disName);
   
   try {
     // basic saftd stuff
@@ -639,8 +648,8 @@ int main(int argc, char** argv)
     uint32_t      tmp32a, tmp32b, tmp32c, tmp32f, tmp32g, tmp32h;
     int32_t       stmp32a;
     uint64_t      tmp64a;
-    uint32_t      fwGid, fwEvtsRecErr, fwEvtsBurst, fwState, fwVersion, nBadStatus, nBadState;
-    uint64_t      fwEvtsSnd, fwEvtsRecT, fwEvtsRecD, fwStatus;
+    uint32_t      fwGid, fwEvtsRecErr, fwEvtsBurst/*, fwState, fwVersion, nBadStatus, nBadState*/;
+    uint64_t      fwEvtsSnd, fwEvtsRecT, fwEvtsRecD/*, fwStatus*/;
 
     t_old     = comlib_getSysTime();
     t_lastlog = comlib_getSysTime();
@@ -655,14 +664,12 @@ int main(int argc, char** argv)
         t_old      = t_new;
 
         // update firmware data
-        wrmil_common_read(ebDevice, &fwStatus, &fwState, &nBadStatus, &nBadState, &fwVersion, &tmp32c, 0);
-        wrmil_info_read(ebDevice, &tmp32a, &tmp32b, &tmp32c, &fwGid, &stmp32a, &tmp64a, &tmp32f, &tmp32g, &tmp32h, &fwEvtsSnd, &fwEvtsRecT, &fwEvtsRecD, &fwEvtsRecErr, &fwEvtsBurst, 0);
-        if (fwGid != gid) fwStatus |= COMMON_STATUS_OUTOFRANGE; // signal an error
+        //wrmil_common_read(ebDevice, &fwStatus, &fwState, &nBadStatus, &nBadState, &fwVersion, &tmp32c, 0);
 
-        disStatus  = fwStatus;
-        sprintf(disState  , "%s", wrmil_state_text(fwState));
-        sprintf(disVersion, "%s", wrmil_version_text(fwVersion));
-               
+        comlib_readDiag2(ebDevice, &state, &verFw, &statusArray, &diagData, 0);
+        wrmil_info_read(ebDevice, &tmp32a, &tmp32b, &tmp32c, &fwGid, &stmp32a, &tmp64a, &tmp32f, &tmp32g, &tmp32h, &fwEvtsSnd, &fwEvtsRecT, &fwEvtsRecD, &fwEvtsRecErr, &fwEvtsBurst, 0);
+        // if (fwGid != gid) statusArray |= COMMON_STATUS_OUTOFRANGE; // signal an error, buggy? better not use
+        
         // update monitoring data
         monData.nFwSnd    = fwEvtsSnd;
         monData.nFwRecT   = fwEvtsRecT;
@@ -673,26 +680,31 @@ int main(int argc, char** argv)
         if (disMonData.tMin ==  INITMINMAX) disMonData.tMin = NAN;
         if (disMonData.tMax == -INITMINMAX) disMonData.tMax = NAN;
 
-        if (startServer) {
-          // update service data
-          dis_update_service(disStatusId);
-          dis_update_service(disStateId);
-          dis_update_service(disVersionId);
-          dis_update_service(disMonDataId);
-        } // if startServer
+        // update comlib diagnostic data
+        disStatusArray = statusArray;
+        sprintf(disState  , "%s", wrmil_state_text(state));
+        sprintf(disVersion, "%s", wrmil_version_text(verFw));
+        disDiagData    = diagData;
 
+        // update services
+        dis_update_service(disStatusArrayId);
+        dis_update_service(disStateId);
+        dis_update_service(disVersionId);
+        dis_update_service(disDiagDataId);
+        dis_update_service(disMonDataId);
 
         // logging
         printFlag      = 0;
+                   
+        if (actState != state) {
+          printFlag      = 1;
+          actState       = state;
+        } // if state has changed
 
-        if (actState != fwState) {
-          printFlag    = 1;
-          actState     = fwState;
-        } // if actstate
-        if (actStatus  != fwStatus) {
-          printFlag    = 1;
-          actStatus    = fwStatus;
-        } // if actstatus
+        if (actStatusArray != statusArray) {
+          printFlag      = 1;
+          actStatusArray = statusArray;
+        } // if disStatus
 
         if (((t_new - t_lastlog) / one_ms_ns) > 60000) { // update once per minute
           printFlag = 1;
@@ -712,20 +724,20 @@ int main(int argc, char** argv)
         // print to screen (with optional piping to logger)
         printf("env %s, gid %s", environment, fill);
         printf(", nSent %012lu", fwEvtsSnd);
-         printf(", %s (%06u), ",  comlib_stateText(fwState), nBadState);
-         if ((fwStatus >> COMMON_STATUS_OK) & 0x1) printf("OK   (%06u)\n", nBadStatus);
-         else printf("NOTOK(%06u)\n", nBadStatus);
-         // print set status bits (except OK)
-         for (i= COMMON_STATUS_OK + 1; i<(int)(sizeof(fwStatus)*8); i++) {
-           if ((fwStatus >> i) & 0x1)  printf("  ------ status bit is set : %s\n", wrmil_status_text(i));
-         } // for i
-         fflush(stdout);
+        printf(", %s (%06u), ",  comlib_stateText(state), nBadState);
+        if ((statusArray >> COMMON_STATUS_OK) & 0x1) printf("OK   (%06u)\n", nBadStatus);
+        else printf("NOTOK(%06u)\n", nBadStatus);
+        // print set status bits (except OK)
+        for (i= COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
+          if ((statusArray >> i) & 0x1)  printf("  ------ status bit is set : %s\n", wrmil_status_text(i));
+        } // for i
+        fflush(stdout);
       } // if printFlag
         
 
 #ifdef USEMASP
-      if (fwState  == COMMON_STATE_OPREADY) maspSigOpReady  = true;
-      else                                  maspSigOpReady  = false;
+      if (state  == COMMON_STATE_OPREADY) maspSigOpReady  = true;
+      else                                maspSigOpReady  = false;
 
       maspSigTransfer = true;   // ok, this is dummy for now, e.g. in case of MIL troubles or so
       

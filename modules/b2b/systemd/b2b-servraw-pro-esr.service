@@ -1,0 +1,12 @@
+[Unit]
+Description = b2b data acquisition for PRO ESR
+Requires = saftbus.service
+After = saftbus.service
+
+[Service]
+Type = simple
+Environment="DIM_DNS_NODE=asl105"
+ExecStart = b2b-serv-raw tr1 -e1 pro
+
+[Install]
+WantedBy = multi-user.target

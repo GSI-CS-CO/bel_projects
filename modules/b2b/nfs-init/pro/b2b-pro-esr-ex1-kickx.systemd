@@ -1,22 +1,31 @@
-# yocto; temporarily disabled
-#SERVICEA=b2b-servsys-pro-yr-kickinj.service
-#SERVICEB=b2b-servraw-pro-yr.service
-#SERVICEC=b2b-analyzer-pro-yr.service
-#cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
-#cp -a $MOUNTPOINT/systemd/$SERVICEB /lib/systemd/system
-#cp -a $MOUNTPOINT/systemd/$SERVICEC /lib/systemd/system
-#systemctl daemon-reload
-#
-#systemctl start $SERVICEA
-#systemctl start $SERVICEB
-#systemctl start $SERVICEC
+# yocto
+SERVICEA=b2b-servsys-pro-esr-kick.service
+SERVICEB=b2b-servraw-pro-esr.service
+SERVICEC=b2b-jittercheck-pro-esr-kick.service
+SERVICED=b2b-analyzer-pro-esr.service
+SERVICEE=b2b-servkickdiagext-pro-esr.service
+SERVICEF=b2b-servkickdiaginj-pro-esr.service
+cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
+cp -a $MOUNTPOINT/systemd/$SERVICEB /lib/systemd/system
+cp -a $MOUNTPOINT/systemd/$SERVICEC /lib/systemd/system
+cp -a $MOUNTPOINT/systemd/$SERVICED /lib/systemd/system
+cp -a $MOUNTPOINT/systemd/$SERVICEE /lib/systemd/system
+cp -a $MOUNTPOINT/systemd/$SERVICEF /lib/systemd/system
+systemctl daemon-reload
+
+systemctl start $SERVICEA
+systemctl start $SERVICEB
+systemctl start $SERVICEC
+systemctl start $SERVICED
+systemctl start $SERVICEE
+systemctl start $SERVICEF
 
 # hack for acc7
-export DIM_DNS_NODE=asl105
-
-b2b-serv-sys dev/wbm0 -s pro_esr-kdx &
-b2b-serv-raw tr1 -e1 pro &
-b2b-jitter-check tr1 tr0 -p5 -t5 pro_esr-kdx &
-b2b-analyzer pro_esr &
-b2b-serv-kickdiag tr0 -r1 -m0 -i1 pro &
-b2b-serv-kickdiag tr0 -r1 -m1 -i1 pro &
+#export DIM_DNS_NODE=asl105
+#
+#b2b-serv-sys dev/wbm0 -s pro_esr-kdx &
+#b2b-serv-raw tr1 -e1 pro &
+#b2b-jitter-check tr1 tr0 -p5 -t5 pro_esr-kdx &
+#b2b-analyzer pro_esr &
+#b2b-serv-kickdiag tr0 -r1 -m0 -i1 pro &
+#b2b-serv-kickdiag tr0 -r1 -m1 -i1 pro &

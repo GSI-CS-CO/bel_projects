@@ -4,8 +4,6 @@ Requires = saftbus.service
 After = saftbus.service
 
 [Service]
-CPUSchedulingPolicy=rr
-CPUSchedulingPriority=2
 Type = simple
 Environment="DIM_DNS_NODE=asl105"
 ExecStart = b2b-serv-raw tr1 -e0 int

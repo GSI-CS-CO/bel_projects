@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 11-Nov-2024
+ *  version : 02-jan-2026
  *
  * library for wr-mil
  *
@@ -505,17 +505,20 @@ uint32_t wrf50_info_read(uint64_t ebDevice, int32_t  *f50Offs, uint32_t *mode, u
 
 uint32_t wrmil_common_read(uint64_t ebDevice, uint64_t *statusArray, uint32_t *state, uint32_t *nBadStatus, uint32_t *nBadState, uint32_t *version, uint32_t *nTransfer, int printDiag)
 {
-  eb_status_t eb_status;
-  eb_device_t eb_device;
+  eb_status_t   eb_status;
+  eb_device_t   eb_device;
+  comlib_diag_t data;
 
-  uint64_t    dummy64a, dummy64b, dummy64c;
-  uint32_t    dummy32a, dummy32c, dummy32d, dummy32e, dummy32f, dummy32g, dummy32h;
 
   if (!ebDevice) return COMMON_STATUS_EB;
   eb_device = (eb_device_t)ebDevice;
 
-  if ((eb_status = comlib_readDiag(eb_device, statusArray, state, version, &dummy64a, &dummy32a, nBadStatus, nBadState, &dummy64b, &dummy64c,
-                                   nTransfer, &dummy32c, &dummy32d, &dummy32e, &dummy32f, &dummy32g, &dummy32h, printDiag)) != COMMON_STATUS_OK) return COMMON_STATUS_EB;
+  if ((eb_status = comlib_readDiag2(eb_device, state, version, statusArray, &data, printDiag)) != COMMON_STATUS_OK) {
+    *nBadStatus = data.nBadStatus;
+    *nBadState  = data.nBadState;
+    *nTransfer  = data.nTransfer;
+    return COMMON_STATUS_EB;
+  } // if eb_status
 
   return COMMON_STATUS_OK;
 } // wrmil_status_read

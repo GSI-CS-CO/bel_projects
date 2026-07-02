@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Micheal Reese, Mathias Kreider GSI-Darmstadt
- *  version : 19-Mar-2025
+ *  version : 02-jan-2026
  *
  *  firmware required for the White Rabbit -> MIL Gateways
  *  
@@ -37,7 +37,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define WRMIL_FW_VERSION      0x000102    // make this consistent with makefile
+#define WRMIL_FW_VERSION      0x000109    // make this consistent with makefile
 
 #define RESET_INHIBIT_COUNTER    10000    // count so many main ECA timemouts, prior sending fill event
 //#define WR_MIL_GATEWAY_LATENCY 70650    // additional latency in units of nanoseconds
@@ -105,12 +105,19 @@ uint64_t nEvtsRecD;                     // # of received MIL telegrams (data)
 uint32_t nEvtsErr;                      // # of late messages with errors
 uint32_t nEvtsBurst;                    // # of detected 'high frequency bursts'
 uint32_t nEvtsLate;                     // # of late messages
+uint32_t nEvtsEarly;                    // # of early messages
+uint32_t nEvtsConflict;                 // # of conflict messages
+uint32_t nEvtsDelayed;                  // # of delayed messages
+uint32_t nEvtsSlow;                     // # of slow messages
+uint32_t offsSlow;                      // offset for slow messages [ns]
+uint32_t offsSlowMax;                   // offset for slow messages [ns]; max
+uint32_t offsSlowMin;                   // offset for slow messages [ns]; min
+uint32_t comLatency;                    // latency for getting the messages from the ECA [ns]
+uint32_t comLatencyMax;                 // latency for getting the messages from the ECA [ns]; max
+uint32_t comLatencyMin;                 // latency for getting the messages from the ECA [ns]; min
 uint32_t offsDone;                      // offset deadline WR message to time when we are done [ns]
-int32_t  comLatency;                    // latency for messages received via ECA
-
-int32_t  maxComLatency;
-uint32_t maxOffsDone;
-
+uint32_t offsDoneMax;                   // offset deadline WR message to time when we are done [ns]; max
+uint32_t offsDoneMin;                   // offset deadline WR message to time when we are done [ns]; min
 
 uint32_t utc_trigger;
 int32_t  utc_utc_delay;
@@ -220,10 +227,19 @@ void extern_clearDiag()
   nEvtsErr      = 0x0;
   nEvtsBurst    = 0x0;
   nEvtsLate     = 0x0;
-  offsDone      = 0x0;
+  nEvtsEarly    = 0x0;
+  nEvtsConflict = 0x0;
+  nEvtsDelayed  = 0x0;
+  nEvtsSlow     = 0x0;
+  offsSlow      = 0x0;
+  offsSlowMax   = 0x0;
+  offsSlowMin   = 0xffffffff;
   comLatency    = 0x0;
-  maxOffsDone   = 0x0;
-  maxComLatency = 0x0;
+  comLatencyMax = 0x0;
+  comLatencyMin = 0xffffffff; 
+  offsDone      = 0x0;
+  offsDoneMax   = 0x0;
+  offsDoneMin   = 0xffffffff;
   resetEventErrCntMil(pMilRec, 0);
 } // extern_clearDiag 
 
@@ -363,10 +379,19 @@ uint32_t extern_entryActionOperation()
   nEvtsErr             = 0;
   nEvtsBurst           = 0;
   nEvtsLate            = 0;
-  offsDone             = 0;
+  nEvtsEarly           = 0;
+  nEvtsConflict        = 0;
+  nEvtsDelayed         = 0;
+  nEvtsSlow            = 0;
+  offsSlow             = 0;
+  offsSlowMax          = 0;
+  offsSlowMin          = 0xffffffff;
   comLatency           = 0;
-  maxOffsDone          = 0;
-  maxComLatency        = 0;
+  comLatencyMax        = 0;
+  comLatencyMin        = 0xffffffff;;
+  offsDone             = 0;
+  offsDoneMax          = 0;
+  offsDoneMin          = 0xffffffff;;
 
   // configure MIL receiver for timing events for all 16 virtual accelerators
   // if mil_mon == 2, the FIFO for event data monitoring must be enabled
@@ -539,6 +564,9 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint32_t flagIsEarly;                                       // flag 'early'
   uint32_t flagIsConflict;                                    // flag 'conflict'
   uint32_t flagIsDelayed;                                     // flag 'delayed'
+  uint32_t flagIsSlow;                                        // flag 'slow' from 'wait4eca'
+  uint32_t offsSlowAct;                                       // offset slow event, act value
+  uint32_t comLatencyAct;                                     // communication latency act value
   uint32_t ecaAction;                                         // action triggered by event received from ECA
   uint64_t recDeadline;                                       // deadline received from ECA
   uint64_t reqDeadline;                                       // deadline requested by sender
@@ -564,17 +592,19 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   int      i;
   uint64_t one_us_ns = 1000;
   uint64_t sysTime;
+  uint64_t startTime;
   uint32_t tmp32;
   
   status    = actStatus;
 
   // one loop is around 37us => wait 963us only)
-  ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 963, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
+  ecaAction = fwlib_wait4ECAEvent2(COMMON_ECATIMEOUT * 963, &recDeadline, &recEvtId, &recParam, &recTEF,
+                                   &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed, &flagIsSlow, &offsSlowAct, &comLatencyAct);
+  startTime = getSysTime();
 
   switch (ecaAction) {
     // received WR timing message from Data Master that shall be sent as a MIL telegram
     case WRMIL_ECADO_MIL_EVT:
-      comLatency   = (int32_t)(getSysTime() - recDeadline);
       recGid       = (uint32_t)((recEvtId >> 48) & 0x00000fff);
       recEvtNo     = (uint32_t)((recEvtId >> 36) & 0x00000fff);
       recSid       = (uint32_t)((recEvtId >> 20) & 0x00000fff);
@@ -625,8 +655,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       } // if systime
       else flagIsLate = 0;
 
-      offsDone = sysTime - recDeadline;
-
       // handle UTC events; here the UTC time (- offset) is distributed as a series of MIL telegrams
       if (recEvtNo == utc_trigger) {
         // send EVT_UTC_1/2/3/4/5 telegrams
@@ -640,7 +668,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
           sendEvtId |= (uint64_t)(0x0e0 + i) << 36;
           fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 1);
           nEvtsSnd++;
-        } // for i
+        } // for i        
       } // if utc_trigger
 
       // reset inhibit counter for fill events
@@ -676,7 +704,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       break;
 
     default :                                                         // flush ECA Queue
-      flagIsLate = 0;                                                 // ignore late events
+      flagIsLate = 0;                                                 // ignore late events as there is special treatment when sending MIL messages
   } // switch ecaAction
 
   // send fill events if inactive for a long time
@@ -700,16 +728,39 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       inhibit_fill_events = RESET_INHIBIT_COUNTER;
     } // if not inhibit fill events
   } // if request_fill_evt
-    
+
+
   // check for late event
   if ((status == COMMON_STATUS_OK) && flagIsLate) {
     status = WRMIL_STATUS_LATEMESSAGE;
     nEvtsLate++;
   } // if flagIslate
-  
+
+  // check for other statistics
+  if (ecaAction) {
+    comLatency = comLatencyAct;
+    offsDone   = getSysTime() - startTime;
+    
+    if (flagIsEarly)    nEvtsEarly++;
+    if (flagIsConflict) nEvtsConflict++;
+    if (flagIsDelayed)  nEvtsDelayed++;
+    if (flagIsSlow) {
+      nEvtsSlow++;
+      offsSlow = offsSlowAct;
+      if (offsSlow   < offsSlowMin)   offsSlowMin   = offsSlow;
+      if (offsSlow   > offsSlowMax)   offsSlowMax   = offsSlow;
+    } // if ecaAction
+
+    if (comLatency > comLatencyMax)   comLatencyMax = comLatency;
+    if (comLatency < comLatencyMin)   comLatencyMin = comLatency;
+    if (offsDone   > offsDoneMax)     offsDoneMax   = offsDone;
+    if (offsDone   < offsDoneMin)     offsDoneMin   = offsDone;
+  } // if eca action
+
   // check WR sync state
   if (fwlib_wrCheckSyncState() == COMMON_STATUS_WRBADSYNC) return COMMON_STATUS_WRBADSYNC;
   else                                                     return status;
+  //return status;
 } // doActionOperation
 
 
@@ -722,6 +773,9 @@ int main(void) {
   uint32_t dummy1;                              // dummy parameter
   uint32_t sharedSize;                          // size of shared memory
   uint32_t *buildID;                            // build ID of lm32 firmware
+  uint64_t tStart;                              // start time
+  uint64_t tStop;                               // stop time
+  uint32_t offsDone2;                           // another helper
 
   // init local variables
   buildID        = (uint32_t *)(INT_BASE_ADR + BUILDID_OFFS);                 // required for 'stack check'  
@@ -738,6 +792,8 @@ int main(void) {
   initSharedMem(&reqState, &sharedSize);                                      // initialize shared memory
   fwlib_init((uint32_t *)_startshared, cpuRamExternal, SHARED_OFFS, sharedSize, "wr-mil", WRMIL_FW_VERSION); // init common stuff
   fwlib_clearDiag();                                                          // clear common diagnostics data
+
+  //tStart = getSysTime();
   
   while (1) {
     check_stack_fwid(buildID);                                                // check stack status
@@ -748,7 +804,10 @@ int main(void) {
     status = fwlib_changeState(&actState, &reqState, status);                 // handle requested state changes
     switch(actState) {                                                        // state specific do actions
       case COMMON_STATE_OPREADY :
+        //tStop = getSysTime();
+        //offsDone2 = (uint32_t)(tStop - tStart);
         status = doActionOperation(&tActMessage, status);
+        //tStart = getSysTime();
         if (status == COMMON_STATUS_WRBADSYNC)      reqState = COMMON_STATE_ERROR;
         if (status == COMMON_STATUS_ERROR)          reqState = COMMON_STATE_ERROR;
         break;
@@ -772,10 +831,9 @@ int main(void) {
     fwlib_publishStatusArray(statusArray);
     pubState = actState;
     fwlib_publishState(pubState);
-
-    if (comLatency > maxComLatency) maxComLatency = comLatency;
-    if (offsDone   > maxOffsDone)   maxOffsDone   = offsDone;
-    fwlib_publishTransferStatus(0, 0, 0, nEvtsLate, maxOffsDone, maxComLatency);
+  
+    fwlib_publishTransferStatus2(0, 0, 0, nEvtsLate, nEvtsEarly, nEvtsConflict, nEvtsDelayed, nEvtsSlow, offsSlow, offsSlowMax, offsSlowMin,
+                                 comLatency, comLatencyMax, comLatencyMin, offsDone, offsDoneMax, offsDoneMin);
     
     *pSharedGetNEvtsSndHi  = (uint32_t)(nEvtsSnd >> 32);
     *pSharedGetNEvtsSndLo  = (uint32_t)(nEvtsSnd & 0xffffffff);

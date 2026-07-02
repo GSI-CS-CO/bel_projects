@@ -3,10 +3,10 @@
 # Set SYSENV to the target system environment (YOCTO, ACC7, ACC9, OPT)
 # Example build:
 #   'make clean'                                                 
-#   'make ENV=int SYSENV=ACC7 DIM=YES PREFIX= all'                                             (hack: leave PREFIX empty for SCU path)
+#   'make ENV=int SYSENV=YOCTO DIM=YES PREFIX= all'                                             (hack: leave PREFIX empty for SCU path)
 # Example deploy (for ASL only):
-#   'make PREFIX= SYSENV=ACC7 STAGING=/common/export/timing-rte/ftdimcp-dev deploy'    (hack: leave PREFIX empty for SCU path)
-#   'make PREFIX= SYSENV=ACC7 STAGING=/common/export/timing-rte/ftdimcp deploy'        (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= SYSENV=YOCTO STAGING=/common/export/timing-rte/ftdimcp-dev-yocto deploy'      (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= SYSENV=YOCTO STAGING=/common/export/timing-rte/ftdimcp-yocto deploy'          (hack: leave PREFIX empty for SCU path)
 
 # install
 PREFIX      ?= /usr/local
