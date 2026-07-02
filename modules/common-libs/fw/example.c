@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 14-May-2020
+ *  version : 03-jul-2026
  *
  *  lm32 example program using common libraries
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define EXAMPLE_FW_VERSION 0x000003                                     // make this consistent with makefile
+#define EXAMPLE_FW_VERSION 0x000005                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -101,7 +101,7 @@ void initSharedMem( uint32_t *sharedSize)
   find_device_multi_in_subtree(&found_clu, &found_sdb[0], &idx, c_Max_Rams, GSI, LM32_RAM_USER);
   if(idx >= cpuId) cpuRamExternal           = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
 
-  DBPRINT2("example: CPU RAM External 0x%8x, begin shared 0x%08x\n", pCpuRamExternal, SHARED_OFFS);
+  DBPRINT2("example: CPU RAM External 0x%8x, begin shared 0x%08x\n", cpuRamExternal, SHARED_OFFS);
   DBPRINT2("example: fw common shared begin   0x%08x\n", pShared);
   DBPRINT2("example: fw common shared end     0x%08x\n", pShared + (COMMON_SHARED_END >> 2));
 
@@ -163,7 +163,7 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
     switch (cmd) {                       // do action according to command
       // ... insert code here
       default:
-        DBPRINT3("wr-unipz: received unknown command '0x%08x'\n", cmd);
+        DBPRINT3("example: received unknown command '0x%08x'\n", cmd);
         break;
     } // switch 
   } // if command 

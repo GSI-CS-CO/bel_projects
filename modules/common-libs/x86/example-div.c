@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  *********************************************************************************************/
-#define DIV_X86_VERSION  "00.00.03"
+#define DIV_X86_VERSION  "00.00.05"
 
 // standard includes 
 #include <unistd.h> // getopt
