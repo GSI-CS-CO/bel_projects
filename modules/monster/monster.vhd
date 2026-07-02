@@ -441,7 +441,12 @@ entity monster is
    -- g_en_tempsens
     tempsens_clr_out       : out   std_logic;
     -- rack mount timing receiver
-    is_rmt                 : out   std_logic := '0');
+    is_rmt                 : out   std_logic := '0';
+    front_in               : in  std_logic_vector(68 downto 0);
+    front_out              : out std_logic_vector(68 downto 0);
+    front_dir              : out std_logic_vector(68 downto 0);
+    frontend_plugin_select : in std_logic_vector(1 downto 0)
+);
 end monster;
 
 architecture rtl of monster is
@@ -3354,12 +3359,13 @@ end generate;
         nscub_timing_cycle => scubus_a_ntiming_cycle,
         nsel_ext_data_drv  => scubus_nsel_data_drv,
         is_rmt             => s_is_rmt,
-        front_in           => x"00000000000000000" & '0',
-        front_out          => open,
+        front_in           => front_in,
+        front_out          => front_out,
         front_dir          => open,
         rear_in            => x"00000000000000000" & '0',
         rear_out           => open,
-        rear_dir           => open
+        rear_dir           => open,
+        frontend_plugin_select => frontend_plugin_select
       );
   end generate;
 

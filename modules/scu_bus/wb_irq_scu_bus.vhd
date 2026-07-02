@@ -19,40 +19,41 @@ entity wb_irq_scu_bus is
             time_out_in_ns        : integer := 250;
             test                  : integer range 0 to 1 := 0);
   port (
-        clk_sys_i           : std_logic;
-        clk_ref_i           : std_logic;
-        rst_n_i             : std_logic;
+        clk_sys_i              : std_logic;
+        clk_ref_i              : std_logic;
+        rst_n_i                : std_logic;
         
-        tag                 : in std_logic_vector(31 downto 0);
-        tag_valid           : in std_logic;
+        tag                    : in std_logic_vector(31 downto 0);
+        tag_valid              : in std_logic;
         
-        irq_master_o        : out t_wishbone_master_out;
-        irq_master_i        : in t_wishbone_master_in;
+        irq_master_o           : out t_wishbone_master_out;
+        irq_master_i           : in t_wishbone_master_in;
 
-        ctrl_irq_o          : out t_wishbone_slave_out;
-        ctrl_irq_i          : in t_wishbone_slave_in;
+        ctrl_irq_o             : out t_wishbone_slave_out;
+        ctrl_irq_i             : in t_wishbone_slave_in;
         
-        scu_slave_o         : buffer t_wishbone_slave_out;
-        scu_slave_i         : in t_wishbone_slave_in;
+        scu_slave_o            : buffer t_wishbone_slave_out;
+        scu_slave_i            : in t_wishbone_slave_in;
         
-        scub_data_out       : out std_logic_vector(15 downto 0);
-        scub_data_in        : in std_logic_vector(15 downto 0);
-        scub_data_tri_out   : out std_logic;
-        nscub_ds            : out std_logic;
-        nscub_dtack         : in std_logic;
-        scub_addr           : out std_logic_vector(15 downto 0);
-        scub_rdnwr          : out std_logic;
-        nscub_srq_slaves    : in std_logic_vector(11 downto 0);
-        nscub_slave_sel     : out std_logic_vector(11 downto 0);
-        nscub_timing_cycle  : out std_logic;
-        nsel_ext_data_drv   : out std_logic;
-        is_rmt              : out std_logic;
-        front_in            : in std_logic_vector(68 downto 0);
-        front_out           : out std_logic_vector(68 downto 0);
-        front_dir           : out std_logic_vector(68 downto 0);
-        rear_in             : in std_logic_vector(68 downto 0);
-        rear_out            : out std_logic_vector(68 downto 0);
-        rear_dir            : out std_logic_vector(68 downto 0));
+        scub_data_out          : out std_logic_vector(15 downto 0);
+        scub_data_in           : in std_logic_vector(15 downto 0);
+        scub_data_tri_out      : out std_logic;
+        nscub_ds               : out std_logic;
+        nscub_dtack            : in std_logic;
+        scub_addr              : out std_logic_vector(15 downto 0);
+        scub_rdnwr             : out std_logic;
+        nscub_srq_slaves       : in std_logic_vector(11 downto 0);
+        nscub_slave_sel        : out std_logic_vector(11 downto 0);
+        nscub_timing_cycle     : out std_logic;
+        nsel_ext_data_drv      : out std_logic;
+        is_rmt                 : out std_logic;
+        front_in               : in std_logic_vector(68 downto 0);
+        front_out              : out std_logic_vector(68 downto 0);
+        front_dir              : out std_logic_vector(68 downto 0);
+        rear_in                : in std_logic_vector(68 downto 0);
+        rear_out               : out std_logic_vector(68 downto 0);
+        rear_dir               : out std_logic_vector(68 downto 0);
+        frontend_plugin_select : in std_logic_vector(1 downto 0));
 end entity;
 
 
@@ -239,10 +240,10 @@ begin
     clock                  => clk_sys_i,
     reset                  => not rst_n_i,
     -- Frontend
-    front_in               => x"00000000000000000" & '0',     -- Connection to DIOB I/O
-    front_out              => open,     -- Connection to DIOB I/O
-    front_dir              => open,     -- Connection to DIOB I/O
-    frontend_plugin_select => "00",  --I/O plugin selection
+    front_in               => front_in,               -- Connection to DIOB I/O
+    front_out              => front_out,              -- Connection to DIOB I/O
+    front_dir              => open,                   -- Connection to DIOB I/O
+    frontend_plugin_select => frontend_plugin_select, -- I/O plugin selection
     rear_in                => x"000000000000", --UIO(15 downto 0),       --Backplane input/output fed (almost) directly      to user plugin
     rear_out               => open, --UIO(15 downto 0),       --Backplane input/output fed (almost) directly      to user plugin
     rear_dir               => open, --UIO(15 downto 0),       --Backplane input/output fed (almost) directly      to user plugin
