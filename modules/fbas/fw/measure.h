@@ -34,6 +34,12 @@ struct msrSumStats {
   uint32_t cntTotal;     // number of total measurement
 };
 
+typedef struct welford_s {
+  uint32_t n;         // sample count
+  double   mean;      // mean
+  double   M2;        // sum/accumulated variance
+} onlineStats_t;
+
 /**
  * \brief List of measured items
 */
