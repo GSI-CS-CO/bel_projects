@@ -227,8 +227,14 @@ architecture rtl of scu4slim is
   signal scub_nsel              : std_logic_vector(12 downto 1);
   signal scub_nsel_ext_data_drv : std_logic;
   signal scub_A_RnW             : std_logic;
+  signal scub_A_nDS             : std_logic;
+  signal scub_ntiming_cycle     : std_logic;
   signal is_rmt                 : std_logic;
   signal A_D_mux                : std_logic_vector(15 downto 0);
+
+  signal s_front_in             : std_logic_vector(68 downto 0);
+  signal s_front_out            : std_logic_vector(68 downto 0);
+  signal s_front_dir            : std_logic_vector(68 downto 0);
 
   constant io_mapping_table : t_io_mapping_table_arg_array(0 to 14) :=
   (
@@ -337,12 +343,12 @@ begin
       scubus_a_d_in           => scub_d_in,
       scubus_a_d_tri_out      => scub_d_tri_out,
       scubus_nsel_data_drv    => scub_nsel_ext_data_drv,
-      scubus_a_nds            => A_nDS,
+      scubus_a_nds            => scub_A_nDS,
       scubus_a_rnw            => scub_A_RnW,
       scubus_a_ndtack         => A_nDtack,
       scubus_a_nsrq           => A_nSRQ,
       scubus_a_nsel           => scub_nSEL,
-      scubus_a_ntiming_cycle  => A_nTiming_Cycle,
+      scubus_a_ntiming_cycle  => scub_ntiming_cycle,
       scubus_a_sysclock       => A_SysClock,
       ow_io(0)                => onewire_ext,
       ow_io(1)                => A_OneWire,
@@ -369,7 +375,13 @@ begin
       cr_cre_o                => s_psram_cre,
       cr_advn_o               => s_psram_advn,
       cr_wait_i               => s_psram_wait,
-      hw_version              => x"0000000" & not scu_cb_version);
+      hw_version              => x"0000000" & not scu_cb_version,
+      -- blackbox
+      front_in                => s_front_in,
+      front_out               => s_front_out,
+      front_dir               => s_front_dir,
+      frontend_plugin_select  => rear_in(1) & rear_in(0)
+    );
 
   -- Dual PSRAM
   dual_ram : for i in 0 to 1 generate
@@ -431,104 +443,37 @@ begin
   standalone_backplane : process (is_rmt, s_lemo_io, A_D_mux, scub_A_RnW, scub_nSEL, scub_d_out, scub_a, scub_nsel_ext_data_drv, scub_d_in)
   begin
     if (is_rmt = '1') then
-      A_RnW             <= '1';          -- set drivers to input for the data lines
       nSel_Ext_Data_DRV <= '0';          -- activate the drivers
-      A_nSEL(12)       <= s_lemo_io(2);  -- Slot L1 IO1
-      A_nSEL(7)        <= s_lemo_io(3);  -- Slot L1 IO2
-      A_nSEL(11)       <= s_lemo_io(4);  -- Slot L1 IO3
-      A_nSEL(8)        <= s_lemo_io(5);  -- Slot L1 IO4
-      A_nSEL(10)       <= s_lemo_io(6);  -- Slot L1 IO5
-      A_nSEL(9)        <= s_lemo_io(7);  -- Slot L1 IO6
 
-      s_lemo_input(2)  <= scub_d_in(5);  -- Slot L2 IO1
-      s_lemo_input(3)  <= scub_d_in(1);  -- Slot L2 IO2
-      s_lemo_input(4)  <= scub_d_in(4);  -- Slot L2 IO3
-      s_lemo_input(5)  <= scub_d_in(0);  -- Slot L2 IO4
-      s_lemo_input(6)  <= scub_d_in(3);  -- Slot L2 IO5
-      s_lemo_input(7)  <= scub_d_in(2);  -- Slot L2 IO6
 
-      s_lemo_input(8)  <= scub_d_in(15); -- Slot L3 IO1
-      s_lemo_input(9)  <= scub_d_in(10); -- Slot L3 IO2
-      s_lemo_input(10) <= scub_d_in(14); -- Slot L3 IO3
-      s_lemo_input(11) <= scub_d_in(11); -- Slot L3 IO4
-      s_lemo_input(12) <= scub_d_in(13); -- Slot L3 IO5
-      s_lemo_input(13) <= scub_d_in(12); -- Slot L3 IO6
+      s_front_in(56)           <= serial_cb_in(0);            -- Serial_CB_In1
+      s_front_in(57)           <= serial_cb_in(1);            -- Serial_CB_In2
+      serial_cb_out(0)         <= s_front_out(58);            -- Serial_CB_Out1
+      serial_cb_out(1)         <= s_front_out(59);            -- Serial_CB_Out2
+      rear_out(0)              <= s_front_out(60);            -- Rear_Out0
+      rear_out(1)              <= s_front_out(61);            -- Rear_Out1
+      A_nDS                    <= s_front_out(62);            -- nDS
+      A_nTiming_Cycle          <= s_front_out(63);            -- nTimingCycle
+      A_RnW                    <= s_front_out(64);            -- R/W
+      ADR_TO_SCUB              <= s_front_out(68);            -- Direction for A0 - A15
+      A_Spare                  <= s_front_out(66 downto 65);  -- Spare0, Spare1
 
-      A_A(11)          <= s_lemo_io(8);  -- Slot R1 IO1
-      A_A(9)           <= s_lemo_io(9);  -- Slot R1 IO2
-      A_A(13)          <= s_lemo_io(10); -- Slot R1 IO3
-      A_A(7)           <= s_lemo_io(11); -- Slot R1 IO4
-      A_A(15)          <= s_lemo_io(12); -- Slot R1 IO5
-      A_A(5)           <= s_lemo_io(13); -- Slot R1 IO6
+      A_nSEL(12 downto 1)      <= s_front_out(43 downto 32);  -- nBoardSel1 - nBoardSel12
+      s_front_in(31 downto 16) <= A_D(15 downto 0);           -- D0 - D15
+      A_A(15 downto 0)         <= s_front_out(15 downto 0);   -- A0 - A15
+      s_front_in(55 downto 44) <= A_nSRQ(12 downto 1);        -- SRQ1 - SRQ12
 
-      A_A(8)           <= s_lemo_io(14); -- Slot R2 IO1
-      A_A(10)          <= s_lemo_io(15); -- Slot R2 IO2
-      A_A(6)           <= s_lemo_io(16); -- Slot R2 IO3
-      A_A(12)          <= s_lemo_io(17); -- Slot R2 IO4
-      A_A(4)           <= s_lemo_io(18); -- Slot R2 IO5
-      A_A(14)          <= s_lemo_io(19); -- Slot R2 IO6
-
-      A_nSEL(3)        <= s_lemo_io(20); -- Slot R3 IO1
-      A_nSEL(6)        <= s_lemo_io(21); -- Slot R3 IO2
-      A_nSEL(2)        <= s_lemo_io(22); -- Slot R3 IO3
-      A_nSEL(5)        <= s_lemo_io(23); -- Slot R3 IO4
-      A_nSEL(1)        <= s_lemo_io(24); -- Slot R3 IO5
-      A_nSEL(4)        <= s_lemo_io(25); -- Slot R3 IO6
     else
+      ADR_TO_SCUB       <= '1';
+      A_nTiming_Cycle   <= scub_ntiming_cycle;
       A_RnW             <= scub_A_RnW;
       nSel_Ext_Data_DRV <= scub_nsel_ext_data_drv;
-      A_nSEL(7)         <= scub_nSEL(7);
-      A_nSEL(8)         <= scub_nSEL(8);
-      A_nSEL(9)         <= scub_nSEL(9);
-      A_nSEL(10)        <= scub_nSEL(10);
-      A_nSEL(11)        <= scub_nSEL(11);
-      A_nSEL(12)        <= scub_nSEL(12);
+      A_nSEL            <= scub_nSEL;
+      A_D_mux           <= scub_d_out;
+      A_A               <= scub_a;
+      A_nDS             <= scub_A_nDS;
 
-      A_D_mux(0)        <= scub_d_out(0);
-      A_D_mux(1)        <= scub_d_out(1);
-      A_D_mux(2)        <= scub_d_out(2);
-      A_D_mux(3)        <= scub_d_out(3);
-      A_D_mux(4)        <= scub_d_out(4);
-      A_D_mux(5)        <= scub_d_out(5);
-
-      A_D_mux(10)       <= scub_d_out(10);
-      A_D_mux(11)       <= scub_d_out(11);
-      A_D_mux(12)       <= scub_d_out(12);
-      A_D_mux(13)       <= scub_d_out(13);
-      A_D_mux(14)       <= scub_d_out(14);
-      A_D_mux(15)       <= scub_d_out(15);
-
-      A_A(11)           <= scub_a(11);
-      A_A(9)            <= scub_a(9);
-      A_A(13)           <= scub_a(13);
-      A_A(7)            <= scub_a(7);
-      A_A(15)           <= scub_a(15);
-      A_A(5)            <= scub_a(5);
-
-      A_A(8)            <= scub_a(8);
-      A_A(10)           <= scub_a(10);
-      A_A(6)            <= scub_a(6);
-      A_A(12)           <= scub_a(12);
-      A_A(4)            <= scub_a(4);
-      A_A(14)           <= scub_a(14);
-
-      A_nSEL(3)         <= scub_nSEL(3);
-      A_nSEL(6)         <= scub_nSEL(6);
-      A_nSEL(2)         <= scub_nSEL(2);
-      A_nSEL(5)         <= scub_nSEL(5);
-      A_nSEL(1)         <= scub_nSEL(1);
-      A_nSEL(4)         <= scub_nSEL(4);
     end if;
-
-    A_D_mux(6) <= scub_d_out(6);
-    A_D_mux(7) <= scub_d_out(7);
-    A_D_mux(8) <= scub_d_out(8);
-    A_D_mux(9) <= scub_d_out(9);
-
-    A_A(0) <= scub_a(0);
-    A_A(1) <= scub_a(1);
-    A_A(2) <= scub_a(2);
-    A_A(3) <= scub_a(3);
 
     scub_d_in <= A_D;
 
@@ -566,9 +511,7 @@ begin
   nFPGA_Res_Out <= rstn_ref;
 
   -- fixed scubus signals
-  ADR_TO_SCUB <= '1';
   nADR_EN     <= '0';
-  A_Spare     <= (others => 'Z');
   --A_OneWire   <= 'Z';
 
   -- SFP
