@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-jan-2025
+ *  version : 03-jul-2026
  *
  * monitors WR-MIL gateway (server part)
  *
@@ -676,6 +676,8 @@ int main(int argc, char** argv)
         monData.nFwRecErr = fwEvtsRecErr;
         monData.nFwBurst  = fwEvtsBurst;
         monData.nFwRecD   = fwEvtsRecD;
+        nBadStatus        = diagData.nBadStatus;
+        nBadState         = diagData.nBadState;
         disMonData        = monData;
         if (disMonData.tMin ==  INITMINMAX) disMonData.tMin = NAN;
         if (disMonData.tMax == -INITMINMAX) disMonData.tMax = NAN;
