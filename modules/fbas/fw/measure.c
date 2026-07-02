@@ -36,6 +36,7 @@
  ********************************************************************************************/
 
 #include "measure.h"
+#include <math.h>
 
 struct outlierStat_s {
   uint32_t threshold; // threshold, ns
@@ -52,11 +53,16 @@ static struct outlierStat_s outlierStat[N_MSR_ITEMS] = {
   {200000, 0}     // period of the main loop, MSR_ML_PRD < 200 us
 };
 
+static onlineStats_t onlineStats[N_MSR_ITEMS];  // (online) statistical metrics
 static msrSumStats_t sumStats[N_MSR_ITEMS];  // buffer for summary statistics
 static msrCnt_t      cnt[N_MSR_CNT];         // event and action counters
 
 #define MAX_ACTIONS 8                        // max number of actions that can be handled in the main loop
 static uint32_t actionCnt[MAX_ACTIONS] = {0};// number of actions handled in the main loop
+
+// function declarations
+static void initOnlineStats(onlineStats_t *s);
+static uint32_t doOnlineStats(const int64_t sample, msrSumStats_t *const pStats, onlineStats_t *const s);
 
 /**
  * \brief Count events
@@ -136,7 +142,7 @@ void measureExportActionRate(uint32_t* base) {
  *
  * \param value  measured value for calculation
  * \param pStats pointer to summary statistics buffer
- * \ret   count  total number of measurements
+ * \return  Total number of measurements
  **/
 static uint32_t calculateSumStats(const int64_t value, msrSumStats_t *const pStats) {
 
@@ -195,8 +201,9 @@ void measureSummarize(msrItem_t item, uint64_t from, uint64_t now, verbosity_t v
   if (verbose)
     DBPRINT2("%d: %lli\n", item, period);
 
-  // calculate and store the summed average
-  calculateSumStats(period, &sumStats[item]);
+  // calculate the statistical metrics on a given sample
+  doOnlineStats(period, &sumStats[item], &onlineStats[item]);
+  //calculateSumStats(period, &sumStats[item]);
 
   // count outliers
   if (period > outlierStat[item].threshold)
@@ -273,6 +280,9 @@ void measureClearSummary(msrItem_t item, verbosity_t verbose) {
   }
 
   for (msrItem_t i = firstItem; i < lastItem; ++i) {
+
+    initOnlineStats(&onlineStats[i]);  // init online statistics states
+
     memset(&sumStats[i], 0, sizeof(msrSumStats_t));
     outlierStat[i].cnt = 0;
 
@@ -283,4 +293,98 @@ void measureClearSummary(msrItem_t item, verbosity_t verbose) {
         sumStats[i].avg, sumStats[i].min, sumStats[i].max,
         sumStats[i].cntValid, sumStats[i].cntTotal);
   }
+}
+
+/**
+ * \brief Initialize the internal states
+ *
+ * Reset the sample count, mean, sum of variance.
+ *
+ * \return none
+ */
+static void initOnlineStats(onlineStats_t *s)
+{
+  s->n = 0;
+  s->mean = 0;
+  s->M2 = 0;
+}
+
+/**
+ * \brief Update the statistical metrics
+ *
+ * Update the mean value and accumulated variance.
+ *
+ * \return none
+ */
+static void updateOnlineStats(onlineStats_t *s, double x)
+{
+  s->n++;                           // count sample
+  double delta = x - s->mean;       // difference from the current mean
+  s->mean += delta/s->n;            // update the mean
+  s->M2   += delta * (x - s->mean); // update the accumulated variance
+}
+
+/**
+ * \brief Get the mean value
+ *
+ * Return the mean value calculated online.
+ *
+ * \return Mean value
+ */
+static double meanOnlineStats(const onlineStats_t *s)
+{
+  return s->mean;
+}
+
+/**
+ * \brief Get the variance
+ *
+ * Return the variance calculated online.
+ *
+ * \return Variance value
+ */
+static double varianceOnlineStats(const onlineStats_t *s)
+{
+  return (s->n > 1) ? s->M2 /(s->n - 1) : 0.0;
+}
+
+/**
+ * \brief Get the standard deviation
+ *
+ * Return the standard deviation.
+ *
+ * \return Standard deviation
+ */
+static double stddevOnlineStats(const onlineStats_t *s)
+{
+  return sqrt(varianceOnlineStats(s));
+}
+
+/**
+ * \brief Do statistics on a given sample online
+ *
+ * Use the Welford's algorithm to calculate the mean value.
+ * Store the mean, min, max values.
+ *
+ * \param sample  Measured sample
+ * \param pStats  Pointer to the statistics summary
+ * \param s       Pointer to the online statistics
+ *
+ * \return Number of the samples
+ */
+static uint32_t doOnlineStats(const int64_t sample, msrSumStats_t *const pStats, onlineStats_t *const s)
+{
+  if (sample > 0) {
+    updateOnlineStats(s, sample);
+    pStats->avg = meanOnlineStats(s);
+    ++pStats->cntValid;
+
+    if (sample > pStats->max)
+      pStats->max = sample;
+
+    if (sample < pStats->min || !pStats->min)
+      pStats->min = sample;
+  }
+
+  return ++pStats->cntTotal;
 }
