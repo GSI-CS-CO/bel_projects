@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-Jan-2026
+ *  version : 03-Jul-2026
  *
  *  common x86 routines useful for CLIs handling firmware
  * 
@@ -281,7 +281,7 @@ void comlib_printDiag(uint64_t statusArray, uint32_t state, uint32_t version, ui
   data.offsDoneMin   = 0;
   data.usedSize      = usedSize;
   
-  comlib_printDiag2(statusArray, state, version, data);
+  comlib_printDiag2(state, version, statusArray, data);
 } // comlib_printDiag
 
 
@@ -346,7 +346,7 @@ int comlib_readDiag(eb_device_t device, uint64_t  *statusArray, uint32_t  *state
                     uint32_t *nBadState, uint64_t  *tDiag, uint64_t  *tS0, uint32_t  *nTransfer, uint32_t  *nInjection, uint32_t  *statTrans,
                     uint32_t *nLate, uint32_t *offsDone, uint32_t *comLatency, uint32_t *usedSize, int  printFlag)
 {
-  comlib_diag_t data;
+  comlib_diag_t data = {0};
   int           status;
 
   status = comlib_readDiag2(device, state, version, statusArray, &data, printFlag);
@@ -374,6 +374,8 @@ int comlib_readDiag2(eb_device_t device, uint32_t  *state, uint32_t  *version, u
   eb_cycle_t  cycle;
   eb_status_t eb_status;
   eb_data_t   data[31];
+
+  // fill with '0', just in case ...
   
   if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return eb_status;
   eb_cycle_read(cycle, common_statusHi,       EB_BIG_ENDIAN|EB_DATA32, &(data[0]));

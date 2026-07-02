@@ -37,7 +37,7 @@
 #ifndef _COMMON_LIB_H_
 #define _COMMON_LIB_H_
 
-#define COMMON_LIB_VERSION "0.05.04"
+#define COMMON_LIB_VERSION "0.05.05"
 
 #include <etherbone.h>
 
