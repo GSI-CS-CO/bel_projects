@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 05-jan-2026
+ *  version : 03-jul-2026
  *
  *  firmware required for kicker and related diagnostics
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 19-November-2020
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000812                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000813                                       // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -266,6 +266,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint32_t offsSlowAct;                                       // offset slow event, act value
   uint32_t comLatencyAct;                                     // communication latency act value
   uint32_t ecaAction;                                         // action triggered by event received from ECA
+  uint32_t ecaAction2;                                        // action triggered by event received from ECA
   uint64_t recDeadline;                                       // deadline received
   static uint64_t reqDeadline;                                // deadline requested by sender
   uint64_t recEvtId;                                          // evt ID received
@@ -334,8 +335,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       flagRecMon         = 1;
 
       // check, if there is a rising edge of the probe signal 
-      ecaAction = fwlib_wait4ECAEvent(B2B_ACCEPTKPROBE, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
-      if ((ecaAction == B2B_ECADO_TLUINPUT1) || (ecaAction == B2B_ECADO_TLUINPUT4)) {
+      ecaAction2 = fwlib_wait4ECAEvent(B2B_ACCEPTKPROBE, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
+      if ((ecaAction2 == B2B_ECADO_TLUINPUT1) || (ecaAction2 == B2B_ECADO_TLUINPUT4)) {
         tKickProbe   = recDeadline - (uint64_t)B2B_PRETRIGGERTR;
         flagRecProbe = 1;
       } // if TLUINPUT
