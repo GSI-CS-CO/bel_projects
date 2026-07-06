@@ -3362,7 +3362,7 @@ end generate;
         front_in           => front_in,
         front_out          => front_out,
         front_dir          => open,
-        rear_in            => x"00000000000000000" & '0',
+        rear_in            => x"000000000000",
         rear_out           => open,
         rear_dir           => open,
         frontend_plugin_select => frontend_plugin_select

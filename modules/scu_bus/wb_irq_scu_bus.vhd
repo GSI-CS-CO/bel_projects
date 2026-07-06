@@ -50,9 +50,9 @@ entity wb_irq_scu_bus is
         front_in               : in std_logic_vector(68 downto 0);
         front_out              : out std_logic_vector(68 downto 0);
         front_dir              : out std_logic_vector(68 downto 0);
-        rear_in                : in std_logic_vector(68 downto 0);
-        rear_out               : out std_logic_vector(68 downto 0);
-        rear_dir               : out std_logic_vector(68 downto 0);
+        rear_in                : in std_logic_vector(47 downto 0);
+        rear_out               : out std_logic_vector(47 downto 0);
+        rear_dir               : out std_logic_vector(47 downto 0);
         frontend_plugin_select : in std_logic_vector(1 downto 0));
 end entity;
 
@@ -247,9 +247,9 @@ begin
     front_out              => front_out,              -- Connection to DIOB I/O
     front_dir              => open,                   -- Connection to DIOB I/O
     frontend_plugin_select => frontend_plugin_select, -- I/O plugin selection
-    rear_in                => x"000000000000", --UIO(15 downto 0),       --Backplane input/output fed (almost) directly      to user plugin
-    rear_out               => open, --UIO(15 downto 0),       --Backplane input/output fed (almost) directly      to user plugin
-    rear_dir               => open, --UIO(15 downto 0),       --Backplane input/output fed (almost) directly      to user plugin
+    rear_in                => rear_in, --UIO(15 downto 0),       --Backplane input/output fed (almost) directly      to user plugin
+    rear_out               => rear_out, --UIO(15 downto 0),       --Backplane input/output fed (almost) directly      to user plugin
+    rear_dir               => rear_dir, --UIO(15 downto 0),       --Backplane input/output fed (almost) directly      to user plugin
     -- SCU-bus
     addr                   => ADR_from_SCUB_LA,       --(Adr_from_SCUB_LA)
     data_w                 => Data_from_SCUB_LA,   -- (Data_from_SCUB_LA)

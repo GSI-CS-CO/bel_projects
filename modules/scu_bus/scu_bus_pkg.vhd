@@ -94,9 +94,9 @@ component wb_irq_scu_bus is
     front_out              : out std_logic_vector(68 downto 0);
     front_dir              : out std_logic_vector(68 downto 0);
     frontend_plugin_select : in std_logic_vector(1 downto 0);
-    rear_in                : in std_logic_vector(68 downto 0);
-    rear_out               : out std_logic_vector(68 downto 0);
-    rear_dir               : out std_logic_vector(68 downto 0)
+    rear_in                : in std_logic_vector(47 downto 0);
+    rear_out               : out std_logic_vector(47 downto 0);
+    rear_dir               : out std_logic_vector(47 downto 0)
 );
 end component;
 
