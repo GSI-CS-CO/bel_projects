@@ -27,7 +27,7 @@ begin
   mx: process (clk, rst_n_i, is_standalone, scu_slave_i)
   begin
     if rising_edge(clk) then
-      if is_standalone = '1' then
+      if is_standalone = '1' and scu_slave_i.adr(20 downto 17) < x"e" then
         scu_slave_o.ack   <= '0';
         scu_slave_o.stall <= '0';
         scu_slave_o.err <= scu_slave_i.cyc and scu_slave_i.stb;

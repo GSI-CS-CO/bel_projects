@@ -86,10 +86,11 @@ architecture wb_irq_scu_bus_arch of wb_irq_scu_bus is
   signal Data_to_SCUB            : std_logic_vector(15 downto 0);
   signal Dtack_to_SCUB           : std_logic;
   signal bb_irq                  : std_logic_vector(15 downto 0);
+  signal ext_nscub_dtack         : std_logic;
 begin
   mx: scu_bus_mux
   port map(
-    clk           => clk_sys_i,
+    clk           => clk_ref_i,
     rst_n_i       => rst_n_i,
     is_standalone => is_standalone,
     scu_slave_o   => scu_slave_o,
@@ -100,6 +101,8 @@ begin
   );
 
   scub_data_in_to_master <= data_from_virtual_slave when s_nscub_slave_sel(12) = '0' else scub_data_in;
+  -- scu bus mode: passthrough, standalone mode: masked
+  ext_nscub_dtack        <= nscub_dtack             when is_standalone = '0' else '1';
 
   scub_master : wb_scu_bus 
     generic map(
@@ -121,7 +124,7 @@ begin
      SCUB_Data_In       => scub_data_in_to_master,
      SCUB_Data_Tri_Out  => scub_data_tri_out,
      nSCUB_DS           => s_nscub_ds,
-     nSCUB_Dtack        => nscub_dtack and s_nscub_dtack,
+     nSCUB_Dtack        => ext_nscub_dtack and s_nscub_dtack,
      SCUB_Addr          => s_scub_addr,
      SCUB_RDnWR         => s_scub_rdnwr,
      nSCUB_SRQ_Slaves   => virtual_scub_srq & nscub_srq_slaves,
@@ -185,7 +188,7 @@ begin
     Intr_In            => bb_irq(15 downto 1),
     User_Ready         => '1',
     CID_Group          => 55,
-    Data_from_SCUB_LA  => Data_from_SCUB_LA,                -- out,   latched data from SCU_Bus for external user functions
+    Data_from_SCUB_LA  => Data_from_SCUB_LA,   -- out,   latched data from SCU_Bus for external user functions
     ADR_from_SCUB_LA   => ADR_from_SCUB_LA,    -- out,   latched address from SCU_Bus for external user functions
     Timing_Pattern_LA  => Timing_Pattern_LA,   -- out,   latched timing pattern from SCU_Bus for external user functions
     Timing_Pattern_RCV => Timing_Pattern_RCV,  -- out,   timing pattern received
