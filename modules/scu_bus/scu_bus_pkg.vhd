@@ -216,7 +216,7 @@ component detect_backplane is
     clk_i         : in std_logic;
     rst_n_i       : in std_logic;
     trigger       : in std_logic;
-    is_standalone : out std_logic
+    is_rmt        : out std_logic
   );
 end component;
 
@@ -224,7 +224,7 @@ component scu_bus_mux is
   port (
         clk                 : in std_logic;
         rst_n_i             : in std_logic;
-        is_standalone       : in std_logic;
+        is_rmt              : in std_logic;
         scu_slave_o         : buffer t_wishbone_slave_out;
         scu_slave_i         : in t_wishbone_slave_in;
         ac_output           : in std_logic_vector(31 downto 0);

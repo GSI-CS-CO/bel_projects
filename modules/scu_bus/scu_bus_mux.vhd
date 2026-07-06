@@ -11,7 +11,7 @@ entity scu_bus_mux is
   port (
         clk                 : in std_logic;
         rst_n_i             : in std_logic;
-        is_standalone       : in std_logic;
+        is_rmt              : in std_logic;
         scu_slave_o         : buffer t_wishbone_slave_out;
         scu_slave_i         : in t_wishbone_slave_in;
         ac_output           : in std_logic_vector(31 downto 0);
@@ -24,10 +24,10 @@ end entity;
 architecture arch of scu_bus_mux is
 begin
 
-  mx: process (clk, rst_n_i, is_standalone, scu_slave_i)
+  mx: process (clk, rst_n_i, is_rmt, scu_slave_i)
   begin
     if rising_edge(clk) then
-      if is_standalone = '1' and scu_slave_i.adr(20 downto 17) < x"e" then
+      if is_rmt = '1' and scu_slave_i.adr(20 downto 17) < x"e" then
         scu_slave_o.ack   <= '0';
         scu_slave_o.stall <= '0';
         scu_slave_o.err <= scu_slave_i.cyc and scu_slave_i.stb;

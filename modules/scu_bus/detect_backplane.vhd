@@ -14,7 +14,7 @@ entity detect_backplane is
     clk_i         : in std_logic;
     rst_n_i       : in std_logic;
     trigger       : in std_logic;
-    is_standalone : out std_logic
+    is_rmt        : out std_logic
   );
 end entity;
 
@@ -27,7 +27,7 @@ begin
   begin
     if rst_n_i = '0' then
       cnt := to_unsigned(312500, 21);
-      is_standalone <= '0';
+      is_rmt <= '0';
       cnt_en := '1';
     elsif rising_edge(clk_i) then
       -- stop counting when timeout is reached
@@ -38,7 +38,7 @@ begin
       else
         cnt := to_unsigned(312500, 21);
       end if;
-    is_standalone <= cnt(cnt'high);
+    is_rmt <= cnt(cnt'high);
     end if;
   end process;
 
