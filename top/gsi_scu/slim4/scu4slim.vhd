@@ -377,6 +377,7 @@ begin
       cr_wait_i               => s_psram_wait,
       hw_version              => x"0000000" & not scu_cb_version,
       -- blackbox
+      is_rmt                  => is_rmt,
       front_in                => s_front_in,
       front_out               => s_front_out,
       front_dir               => s_front_dir,
