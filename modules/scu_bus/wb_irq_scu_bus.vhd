@@ -240,7 +240,7 @@ begin
   )
   port map(
     -- Common
-    clock                  => clk_sys_i,
+    clock                  => clk_ref_i,
     reset                  => not rst_n_i,
     -- Frontend
     front_in               => front_in,               -- Connection to DIOB I/O
