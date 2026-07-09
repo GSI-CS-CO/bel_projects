@@ -442,9 +442,9 @@ entity monster is
     tempsens_clr_out       : out   std_logic;
     -- rack mount timing receiver
     is_rmt                 : out   std_logic := '0';
-    front_in               : in  std_logic_vector(68 downto 0);
-    front_out              : out std_logic_vector(68 downto 0);
-    front_dir              : out std_logic_vector(68 downto 0);
+    front_in               : in  std_logic_vector(74 downto 0);
+    front_out              : out std_logic_vector(74 downto 0);
+    front_dir              : out std_logic_vector(74 downto 0);
     frontend_plugin_select : in std_logic_vector(1 downto 0)
 );
 end monster;

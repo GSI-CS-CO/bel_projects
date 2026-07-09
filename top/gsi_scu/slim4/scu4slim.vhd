@@ -232,9 +232,9 @@ architecture rtl of scu4slim is
   signal is_rmt                 : std_logic;
   signal A_D_mux                : std_logic_vector(15 downto 0);
 
-  signal s_front_in             : std_logic_vector(68 downto 0);
-  signal s_front_out            : std_logic_vector(68 downto 0);
-  signal s_front_dir            : std_logic_vector(68 downto 0);
+  signal s_front_in             : std_logic_vector(74 downto 0);
+  signal s_front_out            : std_logic_vector(74 downto 0);
+  signal s_front_dir            : std_logic_vector(74 downto 0);
 
   constant io_mapping_table : t_io_mapping_table_arg_array(0 to 14) :=
   (
@@ -455,7 +455,7 @@ begin
       rear_out(1)              <= s_front_out(61);            -- Rear_Out1
       A_nDS                    <= s_front_out(62);            -- nDS
       A_nTiming_Cycle          <= s_front_out(63);            -- nTimingCycle
-      A_RnW                    <= s_front_out(67);            -- R/W
+      A_RnW                    <= not s_front_out(67);            -- R/W
       ADR_TO_SCUB              <= s_front_out(68);            -- Direction for A0 - A15
       A_Spare                  <= s_front_out(66 downto 65);  -- Spare0, Spare1
 

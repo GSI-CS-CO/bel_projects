@@ -90,9 +90,9 @@ component wb_irq_scu_bus is
     nscub_timing_cycle     : out std_logic;
     nsel_ext_data_drv      : out std_logic;
     is_rmt                 : out std_logic;
-    front_in               : in std_logic_vector(68 downto 0);
-    front_out              : out std_logic_vector(68 downto 0);
-    front_dir              : out std_logic_vector(68 downto 0);
+    front_in               : in std_logic_vector(74 downto 0);
+    front_out              : out std_logic_vector(74 downto 0);
+    front_dir              : out std_logic_vector(74 downto 0);
     frontend_plugin_select : in std_logic_vector(1 downto 0);
     rear_in                : in std_logic_vector(47 downto 0);
     rear_out               : out std_logic_vector(47 downto 0);

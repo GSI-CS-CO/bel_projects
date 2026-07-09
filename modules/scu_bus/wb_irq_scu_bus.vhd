@@ -47,9 +47,9 @@ entity wb_irq_scu_bus is
         nscub_timing_cycle     : out std_logic;
         nsel_ext_data_drv      : out std_logic;
         is_rmt                 : out std_logic;
-        front_in               : in std_logic_vector(68 downto 0);
-        front_out              : out std_logic_vector(68 downto 0);
-        front_dir              : out std_logic_vector(68 downto 0);
+        front_in               : in std_logic_vector(74 downto 0);
+        front_out              : out std_logic_vector(74 downto 0);
+        front_dir              : out std_logic_vector(74 downto 0);
         rear_in                : in std_logic_vector(47 downto 0);
         rear_out               : out std_logic_vector(47 downto 0);
         rear_dir               : out std_logic_vector(47 downto 0);
@@ -246,7 +246,7 @@ begin
     front_in               => front_in,               -- Connection to DIOB I/O
     front_out              => front_out,              -- Connection to DIOB I/O
     front_dir              => open,                   -- Connection to DIOB I/O
-    frontend_plugin_select => frontend_plugin_select, -- I/O plugin selection
+    frontend_plugin_select => s_is_rmt & frontend_plugin_select, -- I/O plugin selection
     rear_in                => rear_in, --UIO(15 downto 0),       --Backplane input/output fed (almost) directly      to user plugin
     rear_out               => rear_out, --UIO(15 downto 0),       --Backplane input/output fed (almost) directly      to user plugin
     rear_dir               => rear_dir, --UIO(15 downto 0),       --Backplane input/output fed (almost) directly      to user plugin
