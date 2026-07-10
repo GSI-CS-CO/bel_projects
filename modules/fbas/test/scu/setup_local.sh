@@ -66,12 +66,12 @@ esac
 case $platform in
     "PC")
         export addr_cmd="0x04060508"     # shared memory location for command buffer
-        export addr_fbas="0x04060698"    # begin of shared memory range for application specific data
+        export addr_fbas="0x201406d4"    # begin of shared memory range for application specific data
         export mac_tx_node="0x00267b0004da" # sender ID of TX node
         ;;
     "SCU")
         export addr_cmd="0x20140508"     # shared memory location for command buffer
-        export addr_fbas="0x20140698"    # begin of shared memory range for application specific data
+        export addr_fbas="0x201406d4"    # begin of shared memory range for application specific data
         ;;
 esac
 
