@@ -179,85 +179,85 @@ architecture Arch_SCU_Bus_Master of wb_scu_bus is
 
 
 
-  signal    s_reset         : std_logic;
-  signal    S_First_Sync_Reset    : std_logic;
+  signal    s_reset                 : std_logic;
+  signal    S_First_Sync_Reset      : std_logic;
 
-  signal    S_SCUB_Addr       : std_logic_vector(15 downto 0);
-  signal    S_SCUB_RDnWR      : std_logic;
-  signal    S_SCUB_DS       : std_logic;
+  signal    S_SCUB_Addr             : std_logic_vector(15 downto 0);
+  signal    S_SCUB_RDnWR            : std_logic;
+  signal    S_SCUB_DS               : std_logic;
 
-  signal    S_Slave_Nr        : std_logic_vector(3 downto 0);
-  signal    S_SCUB_Slave_Sel    : std_logic_vector(nSCUB_Slave_Sel'range);
-  signal    S_Slave_Sel       : std_logic_vector(nSCUB_Slave_Sel'range);
-  signal    S_Multi_Slave_Sel   : std_logic_vector(nSCUB_Slave_Sel'range);
-  signal    S_Multi_Wr_Flag     : std_logic;
+  signal    S_Slave_Nr              : std_logic_vector(3 downto 0);
+  signal    S_SCUB_Slave_Sel        : std_logic_vector(nSCUB_Slave_Sel'range);
+  signal    S_Slave_Sel             : std_logic_vector(nSCUB_Slave_Sel'range);
+  signal    S_Multi_Slave_Sel       : std_logic_vector(nSCUB_Slave_Sel'range);
+  signal    S_Multi_Wr_Flag         : std_logic;
 
-  signal    S_Start_Cycle     : std_logic;
+  signal    S_Start_Cycle           : std_logic;
 
-  signal    S_Sel_Ext_Data_Drv    : std_logic;
+  signal    S_Sel_Ext_Data_Drv      : std_logic;
 
-  signal    ext_rd_data       : std_logic_vector(15 downto 0);
-  signal    int_rd_data       : std_logic_vector(15 downto 0);
+  signal    ext_rd_data             : std_logic_vector(15 downto 0);
+  signal    int_rd_data             : std_logic_vector(15 downto 0);
 
-  signal    S_Start_SCUB_Rd     : std_logic;
+  signal    S_Start_SCUB_Rd         : std_logic;
 
-  signal    S_Start_SCUB_Wr       : std_logic;
-  signal    S_Wr_Data             : std_logic_vector(15 downto 0);  -- store write pattern
+  signal    S_Start_SCUB_Wr         : std_logic;
+  signal    S_Wr_Data               : std_logic_vector(15 downto 0);  -- store write pattern
 
-  signal    S_Ti_Cy               : std_logic_vector(1 downto 0);   -- shift reg to generate pulse
-  signal    S_Start_Ti_Cy         : std_logic;
+  signal    S_Ti_Cy                 : std_logic_vector(1 downto 0);   -- shift reg to generate pulse
+  signal    S_Start_Ti_Cy           : std_logic;
 
-  signal    S_nSync_Dtack         : std_logic_vector(1 downto 0);
-  signal    S_Last_Cycle_Timing   : std_logic;
-  signal    S_SCUB_Timing_Cycle   : std_logic;
+  signal    S_nSync_Dtack           : std_logic_vector(1 downto 0);
+  signal    S_Last_Cycle_Timing     : std_logic;
+  signal    S_SCUB_Timing_Cycle     : std_logic;
 
   signal    S_SCUB_Rd_Err_no_Dtack  : std_logic;
   signal    S_SCUB_Wr_Err_no_Dtack  : std_logic;
 
-  signal    S_Ti_Cyc_Err      : std_logic;
-  signal    S_Timing_In       : std_logic_vector(31 downto 0);  -- store input timing_in
-  signal    S_SCUB_Ti_Fin     : std_logic;
+  signal    S_Ti_Cyc_Err            : std_logic;
+  signal    S_Timing_In             : std_logic_vector(31 downto 0);  -- store input timing_in
+  signal    S_SCUB_Ti_Fin           : std_logic;
 
-  signal    S_SRQ_Ena       : std_logic_vector(nSCUB_SRQ_Slaves'range);
-  signal    S_SRQ_Sync        : std_logic_vector(nSCUB_SRQ_Slaves'range);
-  signal    S_SRQ_active      : std_logic_vector(nSCUB_SRQ_Slaves'range);
+  signal    S_SRQ_Ena               : std_logic_vector(nSCUB_SRQ_Slaves'range);
+  signal    S_SRQ_Sync              : std_logic_vector(nSCUB_SRQ_Slaves'range);
+  signal    S_SRQ_active            : std_logic_vector(nSCUB_SRQ_Slaves'range);
   signal    S_one_or_more_SRQs_act  : std_logic;
 
-  signal    S_Status        : std_logic_vector(15 downto 0);
+  signal    S_Status                : std_logic_vector(15 downto 0);
 
-  signal    S_SCUB_Version      : std_logic_vector(7 downto 0);
-  signal    S_SCUB_Revision     : std_logic_vector(7 downto 0);
+  signal    S_SCUB_Version          : std_logic_vector(7 downto 0);
+  signal    S_SCUB_Revision         : std_logic_vector(7 downto 0);
 
   signal    S_SCU_Bus_Access_Active : std_logic;
-  signal    s_stall     : std_logic;
+  signal    s_stall                 : std_logic;
 
-  signal    S_Invalid_Slave_Nr    : std_logic;
-  signal    S_Invalid_Intern_Acc  : std_logic;
+  signal    S_Invalid_Slave_Nr      : std_logic;
+  signal    S_Invalid_Intern_Acc    : std_logic;
 
-  signal    S_Intern_Echo_1     : std_logic_vector(15 downto 0);
+  signal    S_Intern_Echo_1         : std_logic_vector(15 downto 0);
 
-  signal    s_global_intr_ena   : std_logic_vector(15 downto 0);
-  signal    s_sw_tag_low        : std_logic_vector(15 downto 0);
-  signal    s_sw_tag_high       : std_logic_vector(15 downto 0);
+  signal    s_global_intr_ena       : std_logic_vector(15 downto 0);
+  signal    s_sw_tag_low            : std_logic_vector(15 downto 0);
+  signal    s_sw_tag_high           : std_logic_vector(15 downto 0);
 
-  signal    s_int_ack           : std_logic;
-  signal    s_ext_ack           : std_logic;
-  signal    s_ext_read_err      : std_logic;
-  signal    s_adr               : std_logic_vector(15 downto 0);
-  signal    s_ack               : std_logic;
-  signal    s_err               : std_logic;
+  signal    s_int_ack               : std_logic;
+  signal    s_ext_ack               : std_logic;
+  signal    s_ext_read_err          : std_logic;
+  signal    s_adr                   : std_logic_vector(15 downto 0);
+  signal    s_ack                   : std_logic;
+  signal    s_err                   : std_logic;
 
-  signal    wr_acc              : std_logic;
-  signal    rd_acc              : std_logic;
+  signal    wr_acc                  : std_logic;
+  signal    rd_acc                  : std_logic;
 
-  signal    tag_fifo_we         : std_logic;
-  signal    tag_fifo_rd         : std_logic;
-  signal    tag_fifo_empty      : std_logic;
-  signal    tag_fifo_full       : std_logic;
-  signal    tag_fifo_q          : std_logic_vector(31 downto 0);
-  signal    tag_fifo_in         : std_logic_vector(31 downto 0);
+  signal    tag_fifo_we             : std_logic;
+  signal    tag_fifo_rd             : std_logic;
+  signal    tag_fifo_empty          : std_logic;
+  signal    tag_fifo_full           : std_logic;
+  signal    tag_fifo_q              : std_logic_vector(31 downto 0);
+  signal    tag_fifo_in             : std_logic_vector(31 downto 0);
 
-  signal    s_sw_tag            : std_logic;
+  signal    s_sw_tag                : std_logic;
 
   type  T_SCUB_SM is  (
               Idle,
@@ -283,12 +283,12 @@ architecture Arch_SCU_Bus_Master of wb_scu_bus is
 
   signal wb_state : wb_ctrl_type;
 
-  constant  bit_scub_wr_err:    integer := 0;
-  constant  bit_scub_rd_err:    integer := 1;
-  constant  bit_ti_cyc_err:     integer := 2;
-  constant  bit_inval_intern_acc: integer := 3;
-  constant  bit_inval_slave_nr:   integer := 4;
-  constant  bit_scub_srqs_active: integer := 5;
+  constant  bit_scub_wr_err      : integer := 0;
+  constant  bit_scub_rd_err      : integer := 1;
+  constant  bit_ti_cyc_err       : integer := 2;
+  constant  bit_inval_intern_acc : integer := 3;
+  constant  bit_inval_slave_nr   : integer := 4;
+  constant  bit_scub_srqs_active : integer := 5;
 
 begin
 
