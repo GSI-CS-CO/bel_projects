@@ -307,9 +307,9 @@
 -- changed tristate buffer control, depending on the generic "with_tristate_control"                                --
 ----------------------------------------------------------------------------------------------------------------------
 
-library IEEE;
-USE IEEE.std_logic_1164.all;
-USE IEEE.numeric_std.all;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 use ieee.math_real.all;
 
 library work;
@@ -341,7 +341,7 @@ generic
 
     -- the bit positions are corresponding to Intr_In. A '1' enable Intr_In(n), '0' disable Intr_In(n)
     -- The least significant bit don't care, because it represent the powerup interrupt. This interrupt is always enabled.
-    Intr_Enable:      std_logic_vector(15 DOWNTO 0) := B"0000_0000_0000_0000";
+    Intr_Enable:      std_logic_vector(15 downto 0) := B"0000_0000_0000_0000";
                                                                               
     -- change only here! increment by major changes of this macro
     This_macro_vers_dont_change_from_outside: integer range 0 to 16#FF# := 5;
@@ -352,21 +352,21 @@ generic
     );
 port
     (
-    SCUB_Addr:          in    std_logic_vector(15 DOWNTO 0);  -- SCU_Bus: address bus
+    SCUB_Addr:          in    std_logic_vector(15 downto 0);  -- SCU_Bus: address bus
     nSCUB_Timing_Cyc:   in    std_logic;                      -- SCU_Bus signal: low active SCU_Bus runs timing cycle
-    SCUB_Data:          inout std_logic_vector(15 DOWNTO 0);  -- SCU_Bus: data bus (FPGA tri state buffer)
-    SCUB_Data_in:       in    std_logic_vector(15 DOWNTO 0);  -- SCU_Bus: data in (without tri state buffer)
-    SCUB_Data_out:      out   std_logic_vector(15 DOWNTO 0);  -- SCU_Bus: data out (without tri state buffer)
+    SCUB_Data:          inout std_logic_vector(15 downto 0);  -- SCU_Bus: data bus (FPGA tri state buffer)
+    SCUB_Data_in:       in    std_logic_vector(15 downto 0);  -- SCU_Bus: data in (without tri state buffer)
+    SCUB_Data_out:      out   std_logic_vector(15 downto 0);  -- SCU_Bus: data out (without tri state buffer)
     nSCUB_Slave_Sel:    in    std_logic;                      -- SCU_Bus: '0' => SCU master select slave
     nSCUB_DS:           in    std_logic;                      -- SCU_Bus: '0' => SCU master activate data strobe
     SCUB_RDnWR:         in    std_logic;                      -- SCU_Bus: '1' => SCU master read slave
     clk:                in    std_logic;                      -- clock of "SCU_Bus_Slave"
     nSCUB_Reset_in:     in    std_logic;                      -- SCU_Bus-Signal: '0' => 'nSCUB_Reset_In' is active
-    Data_to_SCUB:       in    std_logic_vector(15 DOWNTO 0);  -- connect read sources from external user functions
+    Data_to_SCUB:       in    std_logic_vector(15 downto 0);  -- connect read sources from external user functions
     Dtack_to_SCUB:      in    std_logic;                      -- connect Dtack from from external user functions
 
     -- 15 interrupts from external user functions
-    Intr_In:            in    std_logic_vector(15 DOWNTO 1);
+    Intr_In:            in    std_logic_vector(15 downto 1);
     
     -- '1' => the user function(s), device, is ready to work with the control system
     User_Ready:         in    std_logic;
@@ -383,13 +383,13 @@ port
     extension_cid_group:  in    integer range 0 to 16#FFFF# := 0;
   
     -- latched data from SCU_Bus for external user functions
-    Data_from_SCUB_LA:  out   std_logic_vector(15 DOWNTO 0);
+    Data_from_SCUB_LA:  out   std_logic_vector(15 downto 0);
 
     -- latched address from SCU_Bus for external user functions
-    ADR_from_SCUB_LA:   out   std_logic_vector(15 DOWNTO 0);
+    ADR_from_SCUB_LA:   out   std_logic_vector(15 downto 0);
 
     -- latched timing pattern from SCU_Bus for external user functions
-    Timing_Pattern_LA:  out   std_logic_vector(31 DOWNTO 0);
+    Timing_Pattern_LA:  out   std_logic_vector(31 downto 0);
 
     Timing_Pattern_RCV: out   std_logic;    -- timing pattern received
     nSCUB_Dtack_Opdrn:  out   std_logic;    -- for direct connect to SCU_Bus opendrain signal - '0' => slave give
@@ -541,43 +541,41 @@ port
   end SCU_Bus_Slave;
 
 
-ARCHITECTURE Arch_SCU_Bus_Slave OF SCU_Bus_Slave IS
-
-
+architecture Arch_SCU_Bus_Slave of SCU_Bus_Slave is
 begin
 
-ASSERT NOT (Clk_in_Hz < 100000000)
-  REPORT "Achtung Generic Clk_in_Hz ist auf " & integer'image(Clk_in_Hz)
+assert NOT (Clk_in_Hz < 100000000)
+  report "Achtung Generic Clk_in_Hz ist auf " & integer'image(Clk_in_Hz)
       & " gesetzt. Mit der Periodendauer von " & integer'image(Clk_in_ns)
       & " ns laesst sich kein schnelles Slaveinterface realisieren"
-SEVERITY Warning;
+severity warning;
 
-ASSERT false
-  REPORT "Das SCUB-Signal nSCUB_Reset_in wird mit "
+assert false
+  report "Das SCUB-Signal nSCUB_Reset_in wird mit "
       & integer'image(C_Debounce_nReset_in_ns) & " ns entprellt."   -- Vers_2_Revi_2
-SEVERITY NOTE;
+severity note;
 
-ASSERT false
-  REPORT "'Der SCU_Bus_Slave'-Makro hat die Version: "
+assert false
+  report "'Der SCU_Bus_Slave'-Makro hat die Version: "
       & integer'image(This_macro_vers_dont_change_from_outside)
       & " und die Revision: "
       & integer'image(This_macro_revi_dont_change_from_outside)     -- ab Vers_3_Revi_0
-SEVERITY NOTE;
+severity note;
 
-ASSERT  false
-  REPORT "S_Dtack_to_SCUB_Dly length:  " & integer'image(S_Dtack_to_SCUB_Dly'length)
-SEVERITY note;
+assert  false
+  report "S_Dtack_to_SCUB_Dly length:  " & integer'image(S_Dtack_to_SCUB_Dly'length)
+severity note;
 
 
 Res <= not nSCUB_Reset_in; -- Modelsim kann kein not in der Signalzuweisung
 
 Deb_nReset: Debounce
-GENERIC MAP
+generic map
     (
     -- Vers_2_Revi_2: Count (DB_Cnt) für die Entprellung (C_Debounce_nReset_in_ns / clk_in_ns)
     DB_Cnt => C_Debounce_nReset_in_ns / clk_in_ns
     )
-PORT MAP
+port map
     (                         -- Vers_2_Revi_2
     DB_In   => Res,
     Reset   => S_Powerup_Res,
@@ -718,7 +716,7 @@ P_Intr: process (clk, S_nReset, S_Powerup_Done)
           intr_reactivate(i) <= '0';
         end if;
         
-      end LOOP;
+      end loop;
 
       if unsigned(S_Intr_Active) /= 0 OR S_Powerup_Done = '1' then
         S_SRQ <= '1';
@@ -991,35 +989,34 @@ P_Standard_Reg: process (clk, S_nReset)
   end process P_Standard_Reg;
   
 
-nSCUB_Dtack_Opdrn <= '0' when (S_SCUB_Dtack = '1' and nSCUB_Slave_Sel = '0') else 'Z';
-SCUB_Dtack      <= '1' when (S_SCUB_Dtack = '1' and nSCUB_Slave_Sel = '0') else '0';
+nSCUB_Dtack_Opdrn  <= '0' when (S_SCUB_Dtack = '1' and nSCUB_Slave_Sel = '0') else 'Z';
+SCUB_Dtack         <= '1' when (S_SCUB_Dtack = '1' and nSCUB_Slave_Sel = '0') else '0';
 
-ADR_from_SCUB_LA <= S_ADR_from_SCUB_LA;
+ADR_from_SCUB_LA   <= S_ADR_from_SCUB_LA;
 
-Data_from_SCUB_LA <= S_Data_from_SCUB_LA;
+Data_from_SCUB_LA  <= S_Data_from_SCUB_LA;
 
-Timing_Pattern_LA <= S_Timing_Pattern_LA;
+Timing_Pattern_LA  <= S_Timing_Pattern_LA;
 Timing_Pattern_RCV <= S_Timing_Pat_RCV_Dly;
 
-nSCUB_SRQ_Opdrn <= '0' when (S_SRQ = '1') else 'Z';
-SCUB_SRQ    <= '1' when (S_SRQ = '1') else '0';
+nSCUB_SRQ_Opdrn    <= '0' when (S_SRQ = '1') else 'Z';
+SCUB_SRQ           <= '1' when (S_SRQ = '1') else '0';
 
-Ext_Adr_Val <= S_Adr_Val;
+Ext_Adr_Val        <= S_Adr_Val;
 
-Ext_Rd_active <= is_ext_rd_cycle;
+Ext_Rd_active      <= is_ext_rd_cycle;
 
-Ext_Wr_active <= is_ext_wr_cycle and S_DS_Val;
+Ext_Wr_active      <= is_ext_wr_cycle and S_DS_Val;
 
-nPowerup_Res <= not S_Powerup_Res;
+nPowerup_Res       <= not S_Powerup_Res;
 
-Ext_Data_Drv_Rd <= SCUB_RDnWR;
+Ext_Data_Drv_Rd    <= SCUB_RDnWR;
 
-Standard_Reg_Acc <= S_Standard_Reg_Acc;
+Standard_Reg_Acc   <= S_Standard_Reg_Acc;
 
-Deb_SCUB_Reset_out <= S_Deb_Reset;  -- Vers_2_Revi_4: das Reset-Signal des SCU-Busses 'nSCUB_Reset_In' wird entprellt
-                                    -- und für andere Macros zur Verfügung gestellt
-Powerup_Done <= S_Powerup_Done;
+Deb_SCUB_Reset_out <= S_Deb_Reset;  -- Vers_2_Revi_4: das Reset-Signal des SCU-Busses 'nSCUB_Reset_In' wird entprellt  und für andere Macros zur Verfügung gestellt
+Powerup_Done       <= S_Powerup_Done;
 
-SCUB_Data_out <= S_Read_Out;
+SCUB_Data_out      <= S_Read_Out;
 
 end Arch_SCU_Bus_Slave;
