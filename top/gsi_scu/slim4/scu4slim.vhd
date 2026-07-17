@@ -176,7 +176,7 @@ architecture rtl of scu4slim is
   signal s_led_pps      : std_logic;
   signal s_lemo_led     : std_logic_vector (5 downto 0);
 
-  signal s_gpio_o    : std_logic_vector(12 downto 0);
+  signal s_gpio_o    : std_logic_vector(30 downto 0);
   signal s_gpio_i    : std_logic_vector(2 downto 0);
   signal s_lvds_p_i  : std_logic_vector(2 downto 0);
   signal s_lvds_n_i  : std_logic_vector(2 downto 0);
@@ -238,7 +238,7 @@ architecture rtl of scu4slim is
   signal s_rear_in              : std_logic_vector(47 downto 0);
   signal s_rear_out             : std_logic_vector(47 downto 0);
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 26) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 44) :=
   (
     -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
     ("LEMO_IN_0  ",    IO_NONE,         false,   false,  0,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
@@ -262,6 +262,24 @@ architecture rtl of scu4slim is
     ("RMT_OUT_3  ",    IO_NONE,         false,   false, 10,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("RMT_OUT_4  ",    IO_NONE,         false,   false, 11,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("RMT_OUT_5  ",    IO_NONE,         false,   false, 12,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_6  ",    IO_NONE,         false,   false, 13,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_7  ",    IO_NONE,         false,   false, 14,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_8  ",    IO_NONE,         false,   false, 15,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_9  ",    IO_NONE,         false,   false, 16,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_10 ",    IO_NONE,         false,   false, 17,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_11 ",    IO_NONE,         false,   false, 18,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_12 ",    IO_NONE,         false,   false, 19,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_13 ",    IO_NONE,         false,   false, 20,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_14 ",    IO_NONE,         false,   false, 21,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_15 ",    IO_NONE,         false,   false, 22,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_16 ",    IO_NONE,         false,   false, 23,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_17 ",    IO_NONE,         false,   false, 24,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_18 ",    IO_NONE,         false,   false, 25,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_19 ",    IO_NONE,         false,   false, 26,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_20 ",    IO_NONE,         false,   false, 27,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_21 ",    IO_NONE,         false,   false, 28,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_22 ",    IO_NONE,         false,   false, 29,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_23 ",    IO_NONE,         false,   false, 30,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("FAST_IN_0  ",    IO_NONE,         false,   false,  0,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
     ("FAST_IN_1  ",    IO_NONE,         false,   false,  1,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
     ("FAST_IN_2  ",    IO_NONE,         false,   false,  2,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
@@ -286,7 +304,7 @@ begin
       g_flash_bits         => 25, -- !!! TODO: Check this
       g_cr_bits            => c_cr_bits,
       g_gpio_in            => 8,
-      g_gpio_out           => 13,
+      g_gpio_out           => 31,
       g_lvds_in            => 3,
       g_lvds_out           => 3,
       g_lvds_invert        => false,
@@ -337,7 +355,7 @@ begin
       sfp_tx_fault_i          => sfp_tx_fault_i,
       sfp_los_i               => sfp_los_i,
       gpio_i(7 downto 0)      => s_rear_in(5 downto 0) & lemo_in,
-      gpio_o(12 downto 0)     => s_gpio_o,
+      gpio_o(30 downto 0)     => s_gpio_o,
       lvds_p_i                => s_lvds_p_i,
       lvds_n_i                => s_lvds_n_i,
       lvds_p_o                => s_lvds_p_o,
