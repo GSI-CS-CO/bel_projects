@@ -444,7 +444,8 @@ entity monster is
     is_rmt                 : out   std_logic := '0';
     front_in               : in  std_logic_vector(74 downto 0);
     front_out              : out std_logic_vector(74 downto 0);
-    front_dir              : out std_logic_vector(74 downto 0);
+    rear_in                : in  std_logic_vector(47 downto 0);
+    rear_out               : out std_logic_vector(47 downto 0);
     frontend_plugin_select : in std_logic_vector(1 downto 0)
 );
 end monster;
@@ -3361,10 +3362,8 @@ end generate;
         is_rmt             => s_is_rmt,
         front_in           => front_in,
         front_out          => front_out,
-        front_dir          => open,
-        rear_in            => x"000000000000",
-        rear_out           => open,
-        rear_dir           => open,
+        rear_in            => rear_in,
+        rear_out           => rear_out,
         frontend_plugin_select => frontend_plugin_select
       );
   end generate;

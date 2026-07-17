@@ -249,7 +249,7 @@ begin
     frontend_plugin_select => s_is_rmt & frontend_plugin_select, -- I/O plugin selection
     rear_in                => rear_in, --UIO(15 downto 0),       --Backplane input/output fed (almost) directly      to user plugin
     rear_out               => rear_out, --UIO(15 downto 0),       --Backplane input/output fed (almost) directly      to user plugin
-    rear_dir               => rear_dir, --UIO(15 downto 0),       --Backplane input/output fed (almost) directly      to user plugin
+    rear_dir               => open, --UIO(15 downto 0),       --Backplane input/output fed (almost) directly      to user plugin
     -- SCU-bus
     addr                   => ADR_from_SCUB_LA,       --(Adr_from_SCUB_LA)
     data_w                 => Data_from_SCUB_LA,   -- (Data_from_SCUB_LA)

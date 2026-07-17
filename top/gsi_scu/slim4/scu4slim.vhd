@@ -176,7 +176,7 @@ architecture rtl of scu4slim is
   signal s_led_pps      : std_logic;
   signal s_lemo_led     : std_logic_vector (5 downto 0);
 
-  signal s_gpio_o    : std_logic_vector(6 downto 0);
+  signal s_gpio_o    : std_logic_vector(12 downto 0);
   signal s_gpio_i    : std_logic_vector(2 downto 0);
   signal s_lvds_p_i  : std_logic_vector(2 downto 0);
   signal s_lvds_n_i  : std_logic_vector(2 downto 0);
@@ -235,12 +235,20 @@ architecture rtl of scu4slim is
   signal s_front_in             : std_logic_vector(74 downto 0);
   signal s_front_out            : std_logic_vector(74 downto 0);
   signal s_front_dir            : std_logic_vector(74 downto 0);
+  signal s_rear_in              : std_logic_vector(47 downto 0);
+  signal s_rear_out             : std_logic_vector(47 downto 0);
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 14) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 26) :=
   (
     -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
     ("LEMO_IN_0  ",    IO_NONE,         false,   false,  0,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
     ("LEMO_IN_1  ",    IO_NONE,         false,   false,  1,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_IN_0   ",    IO_NONE,         false,   false,  2,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_IN_1   ",    IO_NONE,         false,   false,  3,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_IN_2   ",    IO_NONE,         false,   false,  4,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_IN_3   ",    IO_NONE,         false,   false,  5,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_IN_4   ",    IO_NONE,         false,   false,  6,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_IN_5   ",    IO_NONE,         false,   false,  7,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
     ("USER_LED0_R",    IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("USER_LED0_G",    IO_NONE,         false,   false,  1,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("USER_LED0_B",    IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
@@ -248,6 +256,12 @@ architecture rtl of scu4slim is
     ("LEMO_OUT_1 ",    IO_NONE,         false,   false,  4,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LEMO_OUT_2 ",    IO_NONE,         false,   false,  5,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LEMO_OUT_3 ",    IO_NONE,         false,   false,  6,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_0  ",    IO_NONE,         false,   false,  7,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_1  ",    IO_NONE,         false,   false,  8,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_2  ",    IO_NONE,         false,   false,  9,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_3  ",    IO_NONE,         false,   false, 10,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_4  ",    IO_NONE,         false,   false, 11,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_5  ",    IO_NONE,         false,   false, 12,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("FAST_IN_0  ",    IO_NONE,         false,   false,  0,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
     ("FAST_IN_1  ",    IO_NONE,         false,   false,  1,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
     ("FAST_IN_2  ",    IO_NONE,         false,   false,  2,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
@@ -271,8 +285,8 @@ begin
       g_project            => c_project,
       g_flash_bits         => 25, -- !!! TODO: Check this
       g_cr_bits            => c_cr_bits,
-      g_gpio_in            => 2,
-      g_gpio_out           => 7,
+      g_gpio_in            => 8,
+      g_gpio_out           => 13,
       g_lvds_in            => 3,
       g_lvds_out           => 3,
       g_lvds_invert        => false,
@@ -322,8 +336,8 @@ begin
       wbar_phy_dis_o          => sfp_tx_disable_o,
       sfp_tx_fault_i          => sfp_tx_fault_i,
       sfp_los_i               => sfp_los_i,
-      gpio_i(1 downto 0)      => lemo_in,
-      gpio_o(6 downto 0)      => s_gpio_o(6 downto 0),
+      gpio_i(7 downto 0)      => s_rear_in(5 downto 0) & lemo_in,
+      gpio_o(12 downto 0)     => s_gpio_o,
       lvds_p_i                => s_lvds_p_i,
       lvds_n_i                => s_lvds_n_i,
       lvds_p_o                => s_lvds_p_o,
@@ -380,7 +394,8 @@ begin
       is_rmt                  => is_rmt,
       front_in                => s_front_in,
       front_out               => s_front_out,
-      front_dir               => s_front_dir,
+      rear_in                 => s_rear_in,
+      rear_out                => s_rear_out,
       frontend_plugin_select  => rear_in(1) & rear_in(0)
     );
 
@@ -450,16 +465,24 @@ begin
       s_front_in(56)           <= serial_cb_in(0);            -- Serial_CB_In1
       s_front_in(57)           <= serial_cb_in(1);            -- Serial_CB_In2
       serial_cb_out(0)         <= s_front_out(58);            -- Serial_CB_Out1
+      s_front_in(58)           <= s_front_out(58);            -- feedback
       serial_cb_out(1)         <= s_front_out(59);            -- Serial_CB_Out2
+      s_front_in(59)           <= s_front_out(59);            -- feedback
       rear_out(0)              <= s_front_out(60);            -- Rear_Out0
+      s_front_in(60)           <= s_front_out(60);            -- feedback
       rear_out(1)              <= s_front_out(61);            -- Rear_Out1
+      s_front_in(61)           <= s_front_out(61);            -- feedback
       A_nDS                    <= s_front_out(62);            -- nDS
+      s_front_in(62)           <= s_front_out(62);            -- feedback
       A_nTiming_Cycle          <= s_front_out(63);            -- nTimingCycle
-      A_RnW                    <= not s_front_out(67);            -- R/W
+      s_front_in(63)           <= s_front_out(63);            -- feedback
+      A_RnW                    <= not s_front_out(67);        -- R/W
       ADR_TO_SCUB              <= s_front_out(68);            -- Direction for A0 - A15
       A_Spare                  <= s_front_out(66 downto 65);  -- Spare0, Spare1
+      s_front_in(66 downto 65) <= s_front_out(66 downto 65);  -- feedback
 
       A_nSEL(12 downto 1)      <= s_front_out(43 downto 32);  -- nBoardSel1 - nBoardSel12
+      s_front_in(43 downto 32) <= s_front_out(43 downto 32);  -- feedback
       s_front_in(31 downto 16) <= A_D(15 downto 0);           -- D0 - D15
       A_A(15 downto 0)         <= s_front_out(15 downto 0);   -- A0 - A15
       s_front_in(55 downto 44) <= A_nSRQ(12 downto 1);        -- SRQ1 - SRQ12
