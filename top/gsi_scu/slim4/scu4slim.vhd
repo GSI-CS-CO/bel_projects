@@ -238,7 +238,7 @@ architecture rtl of scu4slim is
   signal s_rear_in              : std_logic_vector(47 downto 0);
   signal s_rear_out             : std_logic_vector(47 downto 0);
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 44) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 50) :=
   (
     -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
     ("LEMO_IN_0  ",    IO_NONE,         false,   false,  0,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
@@ -249,6 +249,12 @@ architecture rtl of scu4slim is
     ("RMT_IN_3   ",    IO_NONE,         false,   false,  5,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
     ("RMT_IN_4   ",    IO_NONE,         false,   false,  6,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
     ("RMT_IN_5   ",    IO_NONE,         false,   false,  7,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_IN_6   ",    IO_NONE,         false,   false,  8,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_IN_7   ",    IO_NONE,         false,   false,  9,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_IN_8   ",    IO_NONE,         false,   false,  10,    IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_IN_9   ",    IO_NONE,         false,   false,  11,    IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_IN_10  ",    IO_NONE,         false,   false,  12,    IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_IN_11  ",    IO_NONE,         false,   false,  13,    IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
     ("USER_LED0_R",    IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("USER_LED0_G",    IO_NONE,         false,   false,  1,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("USER_LED0_B",    IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
@@ -303,7 +309,7 @@ begin
       g_project            => c_project,
       g_flash_bits         => 25, -- !!! TODO: Check this
       g_cr_bits            => c_cr_bits,
-      g_gpio_in            => 8,
+      g_gpio_in            => 14,
       g_gpio_out           => 31,
       g_lvds_in            => 3,
       g_lvds_out           => 3,
@@ -354,7 +360,7 @@ begin
       wbar_phy_dis_o          => sfp_tx_disable_o,
       sfp_tx_fault_i          => sfp_tx_fault_i,
       sfp_los_i               => sfp_los_i,
-      gpio_i(7 downto 0)      => s_rear_in(5 downto 0) & lemo_in,
+      gpio_i(13 downto 0)      => s_rear_out(35 downto 24) & lemo_in,
       gpio_o(30 downto 0)     => s_gpio_o,
       lvds_p_i                => s_lvds_p_i,
       lvds_n_i                => s_lvds_n_i,
@@ -465,6 +471,9 @@ begin
   s_lemo_led (3 downto 0) <= s_gpio_o(6 downto 3);
   s_lemo_led (5 downto 4) <= lemo_in;
 
+  -- ECA to gpio
+  s_rear_in(23 downto 0) <= s_gpio_o(30 downto 7);
+
   tri_state_a_d: process (A_D, scub_d_tri_out, A_D_mux)
   begin
     if (scub_d_tri_out = '1') then
@@ -478,7 +487,6 @@ begin
   begin
     if (is_rmt = '1') then
       nSel_Ext_Data_DRV <= '0';          -- activate the drivers
-
 
       s_front_in(56)           <= serial_cb_in(0);            -- Serial_CB_In1
       s_front_in(57)           <= serial_cb_in(1);            -- Serial_CB_In2
