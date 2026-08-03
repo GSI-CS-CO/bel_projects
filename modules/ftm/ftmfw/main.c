@@ -2,16 +2,12 @@
 #include <string.h>
 #include <inttypes.h>
 #include <stdint.h>
-#include <pp-printf.h>
-#include "mprintf.h"
-#include "mini_sdb.h"
-#include "irq.h"
-#include "ebm.h"
-#include "aux.h"
 #include "dbg.h"
 #include "ftm_common.h"
 #include "dm.h"
-
+#include "dm_hal.h"
+//#include "config.h"
+#include "uart.h"
 
 /** \mainpage DM Firmware Documentation
  *
@@ -56,15 +52,14 @@ uint8_t cpuQty;
 /** Shows and MSI's msg, address and byte select words */
 void show_msi()
 {
-  mprintf(" Msg:\t%08x\nAdr:\t%08x\nSel:\t%01x\n", global_msi.msg, global_msi.adr, global_msi.sel);
-
+  halShowMsi();
 }
 
 /// Interrupt Handler 0 (not used)
 /** IRQ handler 0, shows handler number and msi content on console. Not used in DM */
 void isr0()
 {
-   mprintf("ISR0\n");
+   pp_printf("ISR0\n");
    show_msi();
 }
 
@@ -72,7 +67,7 @@ void isr0()
 /** IRQ handler 1, shows handler number and msi content on console. Not used in DM */
 void isr1()
 {
-   mprintf("ISR1\n");
+   pp_printf("ISR1\n");
    show_msi();
 }
 
@@ -81,18 +76,13 @@ void isr1()
 /** EBM init. Waits for WR core to receive IP from bootp and then sets src & dst MAC and IP addresses in EBM. */
 void ebmInit()
 {
+   pp_printf("#%02u: DM cores Waiting for IP from WRC...\n", cpuId);
+   halEbmWaitForIp();
 
-   int j;
-
-   while (*(pEbCfg + (EBC_SRC_IP>>2)) == EBC_DEFAULT_IP) {
-     for (j = 0; j < (125000000/2); ++j) { asm("nop"); }
-     pp_printf("#%02u: DM cores Waiting for IP from WRC...\n", cpuId);
-   }
-
-   ebm_init();
-   ebm_config_meta(1500, 42, EBM_NOREPLY );                                         //MTU, max EB msgs, flags
-   ebm_config_if(DESTINATION, 0xffffffffffff, 0xffffffff,                0xebd0);   //Dst: EB broadcast
-   ebm_config_if(SOURCE,      0xd15ea5edbeef, *(pEbCfg + (EBC_SRC_IP>>2)), 0xebd0); //Src: bogus mac (will be replaced by WR), WR IP
+   halEbmInit();
+   halEbmConfigMeta(1500, 42, HAL_EBM_NOREPLY);                                                    //MTU, max EB msgs, flags
+   halEbmConfigIf(HAL_EBM_DESTINATION, 0xffffffffffff, 0xffffffff,                0xebd0);         //Dst: EB broadcast
+   halEbmConfigIf(HAL_EBM_SOURCE,      0xd15ea5edbeef, halEbmGetSrcIp(), 0xebd0);                  //Src: bogus mac (will be replaced by WR), WR IP
 
 }
 
@@ -100,12 +90,13 @@ void ebmInit()
 /** Global init. Discovers periphery, initialises EBM and PQ, checks WR, inits DM and diagnostics and signals readiness on console. */
 void init()
 {
+  dmInitSharedMemPointers();
+
   *status = 0;
   *count  = 0;
 
 
-  discoverPeriphery();
-  cpuId = getCpuIdx();
+  halInitPeriphery();
 
   p[(SHCTL_ADR_TAB >> 2) + ADRLUT_SHCTL_THR_STA] = SHCTL_THR_STA;
   p[(SHCTL_ADR_TAB >> 2) + ADRLUT_SHCTL_THR_DAT] = SHCTL_THR_DAT;
@@ -116,9 +107,9 @@ void init()
 
   if (cpuId == 0) {
     //TODO replace bogus system status flags by real ones
-    uart_init_hw();   *status |= SHCTL_STATUS_UART_INIT_SMSK;
-    ebmInit();        *status |= SHCTL_STATUS_EBM_INIT_SMSK ;
-    prioQueueInit();  *status |= SHCTL_STATUS_PQ_INIT_SMSK;
+    halUartInitHw();   *status |= SHCTL_STATUS_UART_INIT_SMSK;
+    ebmInit();         *status |= SHCTL_STATUS_EBM_INIT_SMSK ;
+    halPrioQueueInit(); *status |= SHCTL_STATUS_PQ_INIT_SMSK;
     //mprintf("#%02u: Got IP from WRC. Configured EBM and PQ\n", cpuId);
   } else {
     *status |= SHCTL_STATUS_UART_INIT_SMSK;
@@ -129,19 +120,17 @@ void init()
   int j;
 
 
-  while(!wrTimeValid()) {
+  while(!halWrTimeValid()) {
     for (j = 0; j < (125000000/2); ++j) { asm("nop"); }
-    if (cpuId == 0) mprintf("#%02u: DM cores Waiting for WRC synchronisation...\n", cpuId);
+    if (cpuId == 0) pp_printf("#%02u: DM cores Waiting for WRC synchronisation...\n", cpuId);
   }
-  if (cpuId == 0) mprintf("#%02u: WR time now in sync\n", cpuId);
+  if (cpuId == 0) pp_printf("#%02u: WR time now in sync\n", cpuId);
 
-  isr_table_clr();
-  irq_set_mask(0x01);
-  irq_disable();
+  halIrqSetup(0x01);
 
   dmInit();
   *status  |= SHCTL_STATUS_DM_INIT_SMSK;
-  *boottime = getSysTime();
+  *boottime = halGetSysTime();
 
 }
 
@@ -172,19 +161,10 @@ void init()
     4. Whole EDF heap is sorted
     */
 
-
-
-
-
-
 void main(void) {
 
 
-  int i,j;
-
-  uint32_t* tp;
-  uint32_t** np;
-  uint32_t backlog = 0;
+  int j;
 
 
   init();
@@ -192,131 +172,30 @@ void main(void) {
   //FIXME why is uart_hw_init here twice ???
   // wait 1s + cpuIdx * 1/10s
   for (j = 0; j < ((125000000/4)+(cpuId*2500000)); ++j) { asm("nop"); }
-  if (cpuId != 0) uart_init_hw();   *status |= SHCTL_STATUS_UART_INIT_SMSK;
+  if (cpuId != 0) halUartInitHw();   *status |= SHCTL_STATUS_UART_INIT_SMSK;
 
-  atomic_on();
+  halAtomicOn();
 
-  mprintf("#%02u: Rdy\n", cpuId);
+  pp_printf("#%02u: Rdy\n", cpuId);
   #if DEBUGLEVEL != 0
-    mprintf("#%02u: Debuglevel %u. Don't expect timeley delivery with console outputs on!\n", cpuId, DEBUGLEVEL);
+    pp_printf("#%02u: Debuglevel %u. Don't expect timeley delivery with console outputs on!\n", cpuId, DEBUGLEVEL);
   #endif
   #if DEBUGTIME == 1
-    mprintf("#%02u: Debugtime mode ON. Par Field of Msgs will be overwritten be dispatch time at lm32\n", cpuId);
+    pp_printf("#%02u: Debugtime mode ON. Par Field of Msgs will be overwritten be dispatch time at lm32\n", cpuId);
   #endif
   #if DEBUGPRIOQ == 1
-    mprintf("#%02u: Priority Queue Debugmode ON, timestamps will be written to 0x%08x on receivers", cpuId, DEBUGPRIOQDST);
+    pp_printf("#%02u: Priority Queue Debugmode ON, timestamps will be written to 0x%08x on receivers", cpuId, DEBUGPRIOQDST);
   #endif
   //mprintf("Found MsgBox at 0x%08x. MSI Path is 0x%08x\n", (uint32_t)pCpuMsiBox, (uint32_t)pMyMsi);
-  mprintf("#%02u: This is %s DM FW %s \n", cpuId, DM_RELEASE, DM_VERSION);
+  pp_printf("#%02u: This is %s DM FW %s \n", cpuId, DM_RELEASE, DM_VERSION);
 
-  atomic_off();
+  halAtomicOff();
 
-  if (getMsiBoxCpuSlot(cpuId, 0) == -1) {mprintf("#%02u: Mail box slot acquisition failed\n", cpuId);}
+  if (halGetMsiBoxCpuSlot(cpuId, 0) == -1) {pp_printf("#%02u: Mail box slot acquisition failed\n", cpuId);}
 
-  DBPRINT1("#%02u: Base shared ram 0x%08x\n", cpuId, (uint32_t*)&_startshared);
+  DBPRINT1("#%02u: Base shared ram 0x%08x\n", cpuId, halGetSharedMemBase());
 
-
-  for (j = 0; j < ((125000000/4)); ++j) { asm("nop"); }
-
-
-
-   while (1) {
-
-
-    // Hard abort is an emergency and gets priority over everything else
-    if (*abort1) {
-      *running &= ~(*abort1);   // clear all aborted running bits
-      for(i=0; i<_THR_QTY_; i++) {
-        uint64_t* deadline  = (uint64_t*)&p[( SHCTL_THR_DAT + i * _T_TD_SIZE_ + T_TD_DEADLINE ) >> 2];
-        *deadline |= (~((uint64_t)*abort1 >> i) & 1) -1;  // if abort bit was set, move deadline to infinity
-      }
-      heapify(); // re-sort all threads in schedulder (necessary because multiple threads may have been aborted
-      *abort1 = 0; // clear abort bits
-    }
-
-    //the workhorse. check if most urgent node is due and process it if this is the case.
-    uint8_t thrIdx = *(uint32_t*)(pT(hp) + (T_TD_FLAGS >> 2));
-    if (DL(pT(hp))  <= getSysTime() + *(uint64_t*)(p + (( SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME   ) >> 2) )) {
-      //node is due. Execute it, then update cursor and deadline, return control to scheduler
-      backlog++;
-
-      ///check if the node uses fields with references
-      if (!hasNodeDynamicFields(pN(hp))) {
-        //no dynamic fields. do go as normal on, nothing to see here
-        //FIXME Why not pncN(hp) = nodeFuncs[ ...?
-        *pncN(hp)   = (uint32_t)nodeFuncs[getNodeType(pN(hp))](pN(hp), pT(hp));       //process node and return thread's next node
-      } else {
-        //We got some dynamic fields. Now:
-        // do a copy of original node
-        // insert all dynamic fields
-        // call appropriate node handler
-        // write back all changes of immediate/val fields to original
-        //
-        *pncN(hp)   = (uint32_t)dynamicNodeStaging(pN(hp), pT(hp));  
-      }
-      DL(pT(hp))  = (uint64_t)deadlineFuncs[getNodeType(pN(hp))](pN(hp), pT(hp));   // return thread's next deadline (returns infinity on upcoming NULL ptr)
-      *running   &= ~((DL(pT(hp)) == -1ULL) << thrIdx);                             // clear running bit if deadline is at infinity
-      heapReplace(0);                                                               // call scheduler, re-sort only current thread
-
-    } else {
-      //nothing due right now. Check for requests of new threads to be started
-      *backlogmax   = ((backlog > *backlogmax) ? backlog : *backlogmax);
-      backlog = 0;
-      uint64_t snapshotSysTime = getSysTime();
-
-      if(*start) { //check start bitfield for any request
-        for(i=0;i<_THR_QTY_;i++) { //iterate
-          if (*start & (1<<i)) {
-
-            if(*running & (1<<i)){
-              //already running, error
-              *status |= SHCTL_STATUS_THR_RESTART_ERROR_TYPE_SMSK;
-              break;
-            }
-
-            //current thread base pointers
-            uint8_t* thrStart  = (uint8_t*)&p[( SHCTL_THR_STA + i * _T_TS_SIZE_) >> 2]; // thread Start array
-            uint8_t* thrData   = (uint8_t*)&p[( SHCTL_THR_DAT + i * _T_TD_SIZE_) >> 2]; // thread Data array
-
-      //pointers to start fields
-            volatile uint64_t* startTime = (uint64_t*)&thrStart[T_TS_STARTTIME];
-            volatile uint64_t* prepTime  = (uint64_t*)&thrStart[T_TS_PREPTIME];
-            volatile uint32_t* origin    = (uint32_t*)&thrStart[T_TS_NODE_PTR];
-
-      //pointers to data fields
-            uint64_t* currTime  = (uint64_t*)&thrData[T_TD_CURRTIME];
-            uint64_t* deadline  = (uint64_t*)&thrData[T_TD_DEADLINE];
-            uint32_t* cursor    = (uint32_t*)&thrData[T_TD_NODE_PTR];
-            uint32_t* msgcnt    = (uint32_t*)&thrData[T_TD_MSG_CNT];
-
-            DBPRINT1("#%02u: ThrIdx %u, Preptime: %s\n", cpuId, i, print64(*prepTime, 0));
-
-            //init fields
-            uint64_t snapshotStartTime = *startTime;
-            if (!(snapshotStartTime)) { *currTime = snapshotSysTime + (*prepTime << 1); } // if 0, set to now + 2 * preptime
-            else                        *currTime = snapshotStartTime;
-
-            if(*currTime < snapshotSysTime) {
-              //late start detected
-              *status |= SHCTL_STATUS_LATE_START_ERROR_TYPE_SMSK;
-              break;
-            }
-
-            *cursor   = *origin;          // Set cursor to origin node
-            *deadline = *currTime;        // Set the deadline to first blockstart
-            //if first node is an event, starttime must be increment by its offset. Call deadline update function to handle this
-            *deadline = (uint64_t)deadlineFuncs[getNodeType((uint32_t*)*cursor)]((uint32_t*)*cursor, (uint32_t*)thrData);
-
-
-            *running |= *start & (1<<i);  // copy this start bit to running bits
-            *start   &= ~(1 << i);        // clear this start bit
-            *msgcnt   = 0;                // clear msg counter
-          }
-        }
-
-        heapify(); // re-sort all threads in schedulder (necessary because multiple threads may have been started)
-      }
-    }
-
+  for (;;) {
+    dmSchedulerStep();
   }
 }

@@ -5,7 +5,6 @@
 #include <string.h>
 #include <inttypes.h>
 #include <stdint.h>
-#include "ftm_common.h"
 
 /** @name Priority Queue - mode register
  *  Bit definitions for the Mode register of the Priority Queue 
@@ -74,13 +73,18 @@ extern uint8_t cpuQty; ///< total number of cpus on the DM
 
 
 /** @name Shorthands for accessing shared memory area
- *  Provides a shorthand to the start and end of the shared memory area used for host/inter cpu communication
+ *  Provides a shorthand to the start of the shared memory area used for host/inter cpu communication.
+ *  Set at runtime by dmInitSharedMemPointers() (via halGetSharedMemBase()) rather than being a
+ *  compile-time constant, so the same dm.c can run against either the real shared RAM (firmware
+ *  build) or a HAL-owned fake buffer (host test build).
  */
 //@{ 
-extern uint32_t* const _startshared[]; ///< ptr to start of shared memory area
-extern uint32_t* const _endshared[];   ///< ptr to end of shared memory area
-extern uint32_t* const p;              ///< the short shortcut to the start of shared memory area, basis for most ptr arithmetic
+extern uint32_t* p;              ///< the short shortcut to the start of shared memory area, basis for most ptr arithmetic
 //@}
+
+/// Initialises p and all derived shared-memory pointers (status, count, boottime, diagnostics,
+/// start/running/abort1, hp) from halGetSharedMemBase(). Must be called before any of them are used.
+void dmInitSharedMemPointers();
 
 /** @name Function ptr arrays to node/deadline/action handlers
  *  Provides a shorthand to the handler functions for different node types, next deadline calculation and command action execution
@@ -99,25 +103,26 @@ extern actionFuncPtr      actionFuncs[_ACT_TYPE_END_];  ///< Function pointer ar
  */
 //@{ 
 extern uint32_t              nodeTmp[_MEM_BLOCK_SIZE / _32b_SIZE_]; ///< Staging area when a node is constructed from references
+extern uint32_t* dynamicNodeStaging(uint32_t* node, uint32_t* thrData);     ///< Returns ptr to the original node if all fields are immediates or ptr to nodeTmp if a dynamic verion was compiled
 //@}
 
 /** @name Ptrs to diagnostic data
  *  Provides a shorthand to the diagnostic buffers for msg count, dispatch delta, late warnings, backlog etc
  */
 //@{ 
-extern uint32_t* const status;          ///< ptr to status register
-extern uint64_t* const count;           ///< ptr to global message count register        
-extern uint64_t* const boottime;        ///< ptr to bootime registers
+extern uint32_t* status;          ///< ptr to status register
+extern uint64_t* count;           ///< ptr to global message count register        
+extern uint64_t* boottime;        ///< ptr to bootime registers
 //#ifdef DIAGNOSTICS
-extern int64_t*  const diffsum;         ///< ptr to dispatch delta sum
-extern int64_t*  const diffmax;         ///< ptr to dispatch delta max
-extern int64_t*  const diffmin;         ///< ptr to dispatch delta min        
-extern int64_t*  const diffwth;         ///< ptr to dispatch delta warning threshold
-extern uint32_t* const diffwcnt;        ///< ptr to dispatch delta warning count
-extern uint32_t* const diffwhash;       ///< ptr to dispatch delta warning node hash of 1st occurrence
-extern uint64_t* const diffwts;         ///< ptr to dispatch delta warning timestamp of 1st occurrence
-extern uint32_t* const backlogmax;       ///< ptr to backlog max
-extern uint32_t* const badwaitcnt;      ///< ptr to bad waittime count
+extern int64_t*  diffsum;         ///< ptr to dispatch delta sum
+extern int64_t*  diffmax;         ///< ptr to dispatch delta max
+extern int64_t*  diffmin;         ///< ptr to dispatch delta min        
+extern int64_t*  diffwth;         ///< ptr to dispatch delta warning threshold
+extern uint32_t* diffwcnt;        ///< ptr to dispatch delta warning count
+extern uint32_t* diffwhash;       ///< ptr to dispatch delta warning node hash of 1st occurrence
+extern uint64_t* diffwts;         ///< ptr to dispatch delta warning timestamp of 1st occurrence
+extern uint32_t* backlogmax;       ///< ptr to backlog max
+extern uint32_t* badwaitcnt;      ///< ptr to bad waittime count
 //#endif
 //@}
 
@@ -125,10 +130,10 @@ extern uint32_t* const badwaitcnt;      ///< ptr to bad waittime count
  *  Provides a shorthand to the scheduler's start, running and abort registers used for thread control
  */
 //@{ 
-extern volatile uint32_t* const start;           ///< ptr to thread control - start bits
-extern volatile uint32_t* const running;         ///< ptr to thread control - running bits
-extern volatile uint32_t* const abort1;          ///< ptr to thread control - abort bits (name awkwardly chosen to avoid clash with WR global)
-extern uint32_t** const hp;             ///< ptr array of EDF scheduler heap
+extern uint32_t* start;           ///< ptr to thread control - start bits
+extern uint32_t* running;         ///< ptr to thread control - running bits
+extern uint32_t* abort1;          ///< ptr to thread control - abort bits (name awkwardly chosen to avoid clash with WR global)
+extern uint32_t** hp;             ///< ptr array of EDF scheduler heap
 //@}
 
 /** @name Auxiliary functions
@@ -200,16 +205,6 @@ inline uint8_t hasNodeDynamicFields(uint32_t* node) {
   return (node[NODE_OPT_DYN  >> 2] > 0);
 }
 
-
-/// Validate WR time
-/** Checks WR module status bits for valid PPS signal and timestamp  
- * @return 1 if WR time is valid, 0 if not
- */
-uint8_t wrTimeValid();
-
-/// Initialiser for the priority queue
-/** Init priority queue so it knows where to find the ECA and set message and time limits */
-void prioQueueInit();
 
 /// Initialiser for the data master
 /** Init data master function pointer arrays. Clear heap, thread control data and diagnostic infos. */
@@ -380,14 +375,7 @@ uint32_t* dummyNodeFunc (uint32_t* node, uint32_t* thrData);
   * @return null
   */ 
 
-
-uint8_t dynField(uint32_t wordFormats, volatile uint32_t* src, volatile uint32_t* dst);
-
-uint8_t safeRead64_with_retry(volatile uint64_t* addr, uint64_t* dest);
-
-uint8_t safeRead64(volatile uint64_t* addr1st, volatile uint64_t* addr2nd, uint64_t* dest);
-
-uint32_t* dynamicNodeStaging (uint32_t* node, uint32_t* thrData);
+uint32_t* dynamicNodeFunc (uint32_t* node, uint32_t* thrData);
 
 /// Dummy deadline function, used to catch bad node types
 /** Reports bad/unknown node type to error register and calls the handler for a null node deadline
@@ -428,5 +416,10 @@ void heapify();
 void heapReplace(uint32_t src);
 //@}
 
+/// Executes a single iteration of the EDF scheduler loop (abort handling, due-node processing,
+/// thread start handling - see main()'s former while(1) body for the exact algorithm). Extracted
+/// so it is directly callable/testable (e.g. from Unity tests) without needing a real main().
+/// @return current backlog count (nodes processed since the last idle iteration)
+uint32_t dmSchedulerStep();
 
 #endif

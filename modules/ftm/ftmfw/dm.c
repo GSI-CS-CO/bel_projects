@@ -42,18 +42,12 @@
 #include <string.h>
 #include <inttypes.h>
 #include <stdint.h>
-#include "mprintf.h"
-#include "mini_sdb.h"
-#include "irq.h"
-#include "ebm.h"
-#include "aux.h"
 #include "dbg.h"
 #include "ftm_common.h"
 #include "dm.h"
-#include "prio_regs.h"
-#include "dbg.h"
+#include "dm_hal.h"
 #include "ftm_shared_mmap.h"
-
+//#include "config.h"
 
 uint64_t SHARED dummy = 0; ///< dummy using the SHARED type so nothing gets optimized away
 
@@ -61,41 +55,53 @@ deadlineFuncPtr deadlineFuncs[_NODE_TYPE_END_];
 nodeFuncPtr     nodeFuncs[_NODE_TYPE_END_];     
 actionFuncPtr   actionFuncs[_ACT_TYPE_END_];    
 
-// Assigning pointer shortcuts into shared memory area
-uint32_t* const p         = (uint32_t*)&_startshared;                                             
-uint32_t* const status    = (uint32_t*)&_startshared[SHCTL_STATUS >> 2];                          
-uint64_t* const count     = (uint64_t*)&_startshared[(SHCTL_DIAG  + T_DIAG_MSG_CNT)  >> 2];       
-uint64_t* const boottime  = (uint64_t*)&_startshared[(SHCTL_DIAG  + T_DIAG_BOOT_TS)  >> 2];       
+// Pointer shortcuts into shared memory area - initialised at runtime by dmInitSharedMemPointers()
+// (via halGetSharedMemBase()) instead of a compile-time constant, so this file can address either
+// real shared RAM (firmware build) or a HAL-owned fake buffer (host test build).
+uint32_t* p         = 0;
+uint32_t* status    = 0;
+uint64_t* count     = 0;
+uint64_t* boottime  = 0;
 #ifdef DIAGNOSTICS      
-int64_t* const diffsum    = (int64_t*) &_startshared[(SHCTL_DIAG  + T_DIAG_DIF_SUM ) >> 2];       
-int64_t* const diffmax    = (int64_t*) &_startshared[(SHCTL_DIAG  + T_DIAG_DIF_MAX ) >> 2];       
-int64_t* const diffmin    = (int64_t*) &_startshared[(SHCTL_DIAG  + T_DIAG_DIF_MIN ) >> 2];       
-int64_t* const diffwth    = (int64_t*) &_startshared[(SHCTL_DIAG  + T_DIAG_DIF_WTH ) >> 2];       
-uint32_t* const diffwcnt  = (uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_WAR_CNT ) >> 2];       
-uint32_t* const diffwhash = (uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_WAR_1ST_HASH ) >> 2];  
-uint64_t* const diffwts   = (uint64_t*) &_startshared[(SHCTL_DIAG + T_DIAG_WAR_1ST_TS ) >> 2];    
-uint32_t* const backlogmax = (uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_BCKLOG_STRK )  >> 2];  
-uint32_t* const badwaitcnt = (uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_BAD_WAIT_CNT )  >> 2];
+int64_t* diffsum    = 0;
+int64_t* diffmax    = 0;
+int64_t* diffmin    = 0;
+int64_t* diffwth    = 0;
+uint32_t* diffwcnt  = 0;
+uint32_t* diffwhash = 0;
+uint64_t* diffwts   = 0;
+uint32_t* backlogmax = 0;
+uint32_t* badwaitcnt = 0;
 #endif
-volatile uint32_t* const start   = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_START)   >> 2];          
-volatile uint32_t* const running = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_RUNNING) >> 2];          
-volatile uint32_t* const abort1  = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_ABORT)   >> 2];          
-uint32_t** const hp     = (uint32_t**)&_startshared[SHCTL_HEAP >> 2];                             
+uint32_t* start   = 0;
+uint32_t* running = 0;
+uint32_t* abort1  = 0;
+uint32_t** hp     = 0;
 uint32_t nodeTmp[_MEM_BLOCK_SIZE / _32b_SIZE_]; 
 
-void prioQueueInit()
+void dmInitSharedMemPointers()
 {
-  #ifndef USE_SW_TX_CONTROL
-    pFpqCtrl[PRIO_RESET_OWR>>2]      = 1;
-    pFpqCtrl[PRIO_MODE_CLR>>2]       = 0xffffffff;
-    pFpqCtrl[PRIO_ECA_ADR_RW>>2]     = ECA_GLOBAL_ADR;
-    pFpqCtrl[PRIO_EBM_ADR_RW>>2]     = ((uint32_t)pEbm & ~0x80000000);
-    pFpqCtrl[PRIO_TX_MAX_MSGS_RW>>2] = 40;
-    pFpqCtrl[PRIO_TX_MAX_WAIT_RW>>2] = loW((uint64_t)(50000));
-    pFpqCtrl[PRIO_MODE_SET>>2]       = PRIO_BIT_ENABLE     |
-                                       PRIO_BIT_MSG_LIMIT  |
-                                       PRIO_BIT_TIME_LIMIT;
-  #endif                                    
+  uint32_t* base = halGetSharedMemBase();
+
+  p         = base;
+  status    = (uint32_t*)&base[SHCTL_STATUS >> 2];
+  count     = (uint64_t*)&base[(SHCTL_DIAG  + T_DIAG_MSG_CNT)  >> 2];
+  boottime  = (uint64_t*)&base[(SHCTL_DIAG  + T_DIAG_BOOT_TS)  >> 2];
+  #ifdef DIAGNOSTICS
+  diffsum    = (int64_t*) &base[(SHCTL_DIAG  + T_DIAG_DIF_SUM ) >> 2];
+  diffmax    = (int64_t*) &base[(SHCTL_DIAG  + T_DIAG_DIF_MAX ) >> 2];
+  diffmin    = (int64_t*) &base[(SHCTL_DIAG  + T_DIAG_DIF_MIN ) >> 2];
+  diffwth    = (int64_t*) &base[(SHCTL_DIAG  + T_DIAG_DIF_WTH ) >> 2];
+  diffwcnt   = (uint32_t*) &base[(SHCTL_DIAG + T_DIAG_WAR_CNT ) >> 2];
+  diffwhash  = (uint32_t*) &base[(SHCTL_DIAG + T_DIAG_WAR_1ST_HASH ) >> 2];
+  diffwts    = (uint64_t*) &base[(SHCTL_DIAG + T_DIAG_WAR_1ST_TS ) >> 2];
+  backlogmax = (uint32_t*) &base[(SHCTL_DIAG + T_DIAG_BCKLOG_STRK )  >> 2];
+  badwaitcnt = (uint32_t*) &base[(SHCTL_DIAG + T_DIAG_BAD_WAIT_CNT )  >> 2];
+  #endif
+  start   = (uint32_t*)&base[(SHCTL_THR_CTL + T_TC_START)   >> 2];
+  running = (uint32_t*)&base[(SHCTL_THR_CTL + T_TC_RUNNING) >> 2];
+  abort1  = (uint32_t*)&base[(SHCTL_THR_CTL + T_TC_ABORT)   >> 2];
+  hp      = (uint32_t**)&base[SHCTL_HEAP >> 2];
 }
 
 void dmInit() {
@@ -171,20 +177,9 @@ void dmInit() {
     *diffwts   = 0;
     *backlogmax = 0;
     *badwaitcnt = 0;
-    *boottime  = getSysTime();
+    *boottime  = halGetSysTime();
   #endif
 
-
-}
-
-uint8_t wrTimeValid() {
-
-  const uint32_t STATE_REG       = 0x1C;
-  const uint32_t PPS_VALID_MSK   = (1<<2);
-  const uint32_t TS_VALID_MSK    = (1<<3);
-  const uint32_t STATE_MSK       = PPS_VALID_MSK | TS_VALID_MSK;
-
-  return  ( (pPps[STATE_REG  >> 2] & STATE_MSK) != 0);
 
 }
 
@@ -199,14 +194,18 @@ uint64_t  dummyDeadlineFunc (uint32_t* node, uint32_t* thrData)               { 
 uint32_t* dummyActionFunc (uint32_t* node, uint32_t* cmd, uint32_t* thrData)  { *status |= SHCTL_STATUS_BAD_ACT_TYPE_SMSK;  return LM32_NULL_PTR;}
 
 uint8_t getNodeType(uint32_t* node) {
-  uint8_t type = NODE_TYPE_UNKNOWN;
+  uint32_t* tmpType;
+  uint32_t msk;
+  uint32_t type = NODE_TYPE_UNKNOWN;
 
   if (node != LM32_NULL_PTR) {
-    uint8_t tmpType = (node[NODE_FLAGS >> 2] >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
-    //boundary check
-    if (tmpType <= _NODE_TYPE_END_) type = tmpType;
+    tmpType   = node + (NODE_FLAGS >> 2);
+    type      = (*tmpType >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
+    DBPRINT2("#%02u: Node Type b4 boundary check: %u\n", cpuId, type);
+    msk       = -(type < _NODE_TYPE_END_);
+    type     &= msk; //optional boundary check, if out of bounds, type will equal NODE_TYPE_UNKNOWN
   } else {
-    DBPRINT1("#%02u: getNodeType detected null ptr\n", cpuId);
+    DBPRINT2("#%02u: Null ptr detected \n", cpuId);
     return NODE_TYPE_NULL;
   }
 
@@ -274,12 +273,12 @@ uint32_t* execWait(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
   // the block period is added in blockFixed or blockAligned.
   // we must therefore subtract it here if we modify current time, as execWait is optional
 
-  uint64_t  tWait = *(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] - *(uint64_t*)&node[BLOCK_PERIOD >> 2]; // auxiliary wait time. The block handler adds its period, so to avoid corner case, subtract period here.
+  uint64_t  tWait = *(uint64_t*)&cmd[T_CMD_WAIT_TIME / 2] - *(uint64_t*)&node[BLOCK_PERIOD >> 2]; // auxiliary wait time. The block handler adds its period, so to avoid corner case, subtract period here.
   uint64_t*  tCur = (uint64_t*)&thrData[T_TD_CURRTIME >> 2]; // current TAI in ns
   uint32_t    act = cmd[T_CMD_ACT >> 2]; // command action field
   if ( act & ACT_WAIT_ABS_SMSK) {
     // absolute wait time. Replaces current time sum
-    if ( getSysTime() < tWait ) { *tCur = tWait; } //1.1 if wait time is greater than Now, proceed
+    if ( halGetSysTime() < tWait ) { *tCur = tWait; } //1.1 if wait time is greater than Now, proceed
     else                        { (*badwaitcnt)++; } //1.2 wait time is in the past, this is bad. Skip and increase bad wait warning counter
   } else {
     // relative wait time. replaces current block period
@@ -397,9 +396,9 @@ uint32_t* tmsg(uint32_t* node, uint32_t* thrData) {
   uint64_t tmpPar = *(uint64_t*)&node[TMSG_PAR >> 2];
 
   #ifdef DIAGNOSTICS
-    int64_t now = getSysTime();
+    int64_t now = halGetSysTime();
     //Diagnostic Event? insert PQ Message counter. Different device, can't be placed inside atomic!
-    if (*(uint64_t*)&node[TMSG_ID >> 2] == DIAG_PQ_MSG_CNT) tmpPar = *(uint64_t*)&pFpqCtrl[PRIO_CNT_OUT_ALL_GET_0>>2];
+    if (*(uint64_t*)&node[TMSG_ID >> 2] == DIAG_PQ_MSG_CNT) tmpPar = halPrioQueueGetMsgCount();
     int64_t diff  = *(uint64_t*)&thrData[T_TD_DEADLINE >> 2] - now;
     uint8_t overflow = (diff >= 0) & (*diffsum >= 0) & ((diff + *diffsum)  < 0)
                      | (diff <  0) & (*diffsum <  0) & ((diff + *diffsum) >= 0);
@@ -414,30 +413,24 @@ uint32_t* tmsg(uint32_t* node, uint32_t* thrData) {
   #endif
 
   //disptach timing message to priority queue
-  atomic_on();
+  HalTimingMsg msg;
+  msg.idHi  = node[TMSG_ID_HI >> 2];
+  msg.idLo  = node[TMSG_ID_LO >> 2];
+  msg.parHi = hiW(tmpPar);
+  msg.parLo = loW(tmpPar);
+  msg.res   = node[TMSG_RES >> 2];
+  msg.tef   = node[TMSG_TEF >> 2];
+  msg.tsHi  = thrData[T_TD_DEADLINE_HI >> 2];
+  msg.tsLo  = thrData[T_TD_DEADLINE_LO >> 2];
+
+  halAtomicOn();
   #ifdef USE_SW_TX_CONTROL
     #pragma message ( "HW Priority Queue deactivated, using software access to EBM!" )
-    ebm_hi(ECA_GLOBAL_ADR);
-    ebm_op(ECA_GLOBAL_ADR, node[TMSG_ID_HI  >> 2],          EBM_WRITE);
-    ebm_op(ECA_GLOBAL_ADR, node[TMSG_ID_LO  >> 2],          EBM_WRITE);
-    ebm_op(ECA_GLOBAL_ADR, hiW(tmpPar),                     EBM_WRITE);
-    ebm_op(ECA_GLOBAL_ADR, loW(tmpPar),                     EBM_WRITE);
-    ebm_op(ECA_GLOBAL_ADR, node[TMSG_RES    >> 2],          EBM_WRITE);
-    ebm_op(ECA_GLOBAL_ADR, node[TMSG_TEF    >> 2],          EBM_WRITE);
-    ebm_op(ECA_GLOBAL_ADR, thrData[T_TD_DEADLINE_HI >> 2],  EBM_WRITE);
-    ebm_op(ECA_GLOBAL_ADR, thrData[T_TD_DEADLINE_LO >> 2],  EBM_WRITE);
-    ebm_flush();
+    halEbmSend(&msg);
   #else
-    *(pFpqData + (PRIO_DAT_STD   >> 2))  = node[TMSG_ID_HI  >> 2];
-    *(pFpqData + (PRIO_DAT_STD   >> 2))  = node[TMSG_ID_LO  >> 2];
-    *(pFpqData + (PRIO_DAT_STD   >> 2))  = hiW(tmpPar);
-    *(pFpqData + (PRIO_DAT_STD   >> 2))  = loW(tmpPar);
-    *(pFpqData + (PRIO_DAT_STD   >> 2))  = node[TMSG_RES    >> 2];
-    *(pFpqData + (PRIO_DAT_STD   >> 2))  = node[TMSG_TEF    >> 2];
-    *(pFpqData + (PRIO_DAT_TS_HI >> 2))  = thrData[T_TD_DEADLINE_HI >> 2];
-    *(pFpqData + (PRIO_DAT_TS_LO >> 2))  = thrData[T_TD_DEADLINE_LO >> 2];
+    halPrioQueueSend(&msg);
   #endif   
-  atomic_off();
+  halAtomicOff();
 
   ++(*((uint64_t*)&thrData[T_TD_MSG_CNT >> 2])); //increment thread message counter
   ++(*count); //increment cpu message counter
@@ -493,14 +486,14 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
           cmd     = (uint32_t*)&b[elOffs  >> 2];                                                  // pointer to active command data
   
           // if this command is already valid, leave check loop and execute it.
-          if (getSysTime() >= *((uint64_t*)((void*)cmd + T_CMD_TIME))) break;
+          if (halGetSysTime() >= *((uint64_t*)((void*)cmd + T_CMD_TIME))) break;
                       
           
         }
       }
     }
       
-    if (getSysTime() < *((uint64_t*)((void*)cmd + T_CMD_TIME))) return ret;                 // if no command is yet valid, take default successor.
+    if (halGetSysTime() < *((uint64_t*)((void*)cmd + T_CMD_TIME))) return ret;                 // if no command is yet valid, take default successor.
 
     act     = (uint32_t*)&cmd[T_CMD_ACT >> 2];          //pointer to command's action
     actTmp  = *act;                                     //create working copy of action word
@@ -678,222 +671,138 @@ void heapReplace(uint32_t src) {
 
 
 
-
-
-/**
- * Safely read a 64-bit value from dual-port RAM with retry logic
- * 
- * Attempts up to MAX_RETRIES times to get a consistent read.
- * If value is too volatile, eventually gives up and fails.
- * 
- * @param addr Pointer to 64-bit value in RAM
- * @param dest Pointer to destination buffer
- * @return 0 on success, 1 on failure (all retries exhausted)
- */
-#define SAFEREAD64_MAX_RETRIES 5
-
-uint8_t safeRead64_with_retry(volatile uint64_t* addr, uint64_t* dest) {
-  uint8_t ret = 1;
- 
-  
-  for (uint8_t attempt = 0; attempt < SAFEREAD64_MAX_RETRIES; attempt++) {
-    if (safeRead64(addr, addr, dest) == 0) {
-      // Success on this attempt
-      return 0;
-    }
-    // Read was inconsistent, retry
-  }
-  
-  // All retries exhausted
-  return 1;
-}
-
-/**
- * Safely read a 64-bit value from dual-port RAM with consistency validation
- * 
- * Uses volatile to prevent compiler from caching reads.
- * The hardware (dual-port RAM) can modify values concurrently,
- * so we must force actual memory reads each time (no register caching).
- * 
- * @param addr Pointer to 64-bit value in RAM
- * @param dest Pointer to destination buffer for consistent 64-bit result
- * @return 0 on success (consistent read), 1 on failure (inconsistent/NULL)
- */
-uint8_t safeRead64(volatile uint64_t* addr1st,  volatile uint64_t* addr2nd, uint64_t* dest) {
-  // RAM is a 32 bit dual port RAM. 32b reads are atomic, but 64b reads are not.
-  // This function safely reads a 64b value from RAM by validating consistency.
-  // CRITICAL: Uses volatile to prevent compiler from caching reads.
-  
-  uint8_t ret = 1;  // return 0 on success, 1 on failure
-  
-  // === Input validation ===
-  if ( (addr1st == LM32_NULL_PTR) || (addr2nd == LM32_NULL_PTR) ) {
-    DBPRINT1("#%02u: safeRead64 detected null addr pointer\n", cpuId);
-    return 1;
-  }
-  
-  if (dest == LM32_NULL_PTR) {
-    DBPRINT1("#%02u: safeRead64 detected null dest pointer\n", cpuId);
-    return 1;
-  }
-  
-  // === Three-read consistency validation with volatile ===
-  // CRITICAL: Cast to volatile pointer to force actual memory reads
-  // Without volatile, compiler caches reads and consistency check fails
-  
-  volatile uint32_t* addr_32bit1st = (volatile uint32_t*)addr1st;
-  volatile uint32_t* addr_32bit2nd = (volatile uint32_t*)addr2nd;
-  
-  // Read 1: High 32 bits (first time)
-  // volatile forces actual memory read, not register cache
-  uint32_t high_read_1st = addr_32bit1st[0];
-  
-  // Read 2: Low 32 bits
-  // volatile forces actual memory read
-  uint32_t low_read = addr_32bit1st[1];
-  
-  // Read 3: High 32 bits (second time) - consistency check
-  // volatile forces ANOTHER actual memory read, not cached value
-  uint32_t high_read_2nd = addr_32bit2nd[0];
-  
-  // === Consistency check ===
-  if (high_read_1st == high_read_2nd) {
-    // SUCCESS: High bits unchanged between reads
-    // This ACTUALLY checked RAM (not cached values)
-    // Guarantees high and low form a consistent pair
-    
-    *dest = ((uint64_t)high_read_1st << 32) | (uint64_t)low_read;
-    ret = 0;
-    
-    DBPRINT3("#%02u: safeRead64 SUCCESS: 0x%08x%08x\n", 
-             cpuId, high_read_1st, low_read);
-  } else {
-    // FAILURE: High bits changed mid-read
-    // This ACTUALLY detected change in RAM (thanks to volatile)
-    
-    DBPRINT3("#%02u: safeRead64 FAILED - inconsistent read. High: 0x%08x -> 0x%08x, Low: 0x%08x\n",
-             cpuId, high_read_1st, high_read_2nd, low_read);
-    ret = 1;
-  }
-  
-  return ret;
-}
-
-uint8_t dynField(uint32_t wordFormats, volatile uint32_t* src, volatile uint32_t* dst) {
-  uint8_t ret = 0;
-
-  if (((wordFormats & DYN_MODE_MSK) == DYN_MODE_REF) || ((wordFormats & DYN_MODE_MSK) == DYN_MODE_REF2)) { // Is current word a kind of reference? yay, let's dynamically copy stuff in!
-      uint64_t val = 0;
-
-      if (wordFormats & DYN_WIDTH64_SMSK) {
-        //this is a 64b pointer
-
-        volatile uint64_t* tmpPtr64 = (uint64_t*)src;
-        if (tmpPtr64 != LM32_NULL_PTR) {
-          if ((wordFormats & DYN_MODE_MSK) == DYN_MODE_REF2) {
-            //mprintf("Decoding 64B R2R\n");
-            if (*(uint64_t**)tmpPtr64 != LM32_NULL_PTR) {
-              if(safeRead64_with_retry(*(uint64_t**)tmpPtr64, (uint64_t*)&val) != 0) {
-                mprintf("#%02u: ERROR: Failed %u times in a row to read consistent 64b value from adr 0x%08x via 0x%08x (ptr2ptr)\n", cpuId, SAFEREAD64_MAX_RETRIES, *(uint64_t**)tmpPtr64, tmpPtr64);
-              return 1;
-              }
-            } else { 
-              mprintf("#%02u: ERROR: 64B R2R Dereferencing NULL pointer\n", cpuId);
-              return 1; //bail out here, as we cannot continue dereferencing a NULL pointer. This will cause scheduler to halt this thread.
-            }
-          } else {
-
-            if(safeRead64_with_retry(tmpPtr64, (uint64_t*)&val) != 0) { 
-              mprintf("#%02u: ERROR: Failed %u times in a row to read consistent 64b value from adr 0x%08x\n", cpuId, SAFEREAD64_MAX_RETRIES, tmpPtr64);
-              return 1;
-            }
-          }
-        } else {
-          mprintf("#%02u: ERROR: 64b dereferencing NULL pointer\n", cpuId);
-          return 1; //bail out here, as we cannot continue dereferencing a NULL pointer. This will cause scheduler to halt this thread.
-        }
-        //mprintf("Decoding 64B\n");
-        dst[0]    = (uint32_t)(val>>32);
-        dst[0+1]  = (uint32_t)(val);
-        return 0;
-
-
-      } else {
-        //this is a 32b pointer
-        volatile uint32_t* tmpPtr32 = src;
-        if (tmpPtr32 != LM32_NULL_PTR) {
-          if ((wordFormats & DYN_MODE_MSK) == DYN_MODE_REF2) {
-            //mprintf("Decoding 32B R2R\n");
-            if (*(uint32_t**)tmpPtr32 != LM32_NULL_PTR) {
-              val = **(uint32_t**)tmpPtr32;
-            } else { 
-              mprintf("#%02u: ERROR: 32b R2R dereferencing NULL pointer\n", cpuId);
-              return 1; //bail out here, as we cannot continue dereferencing a NULL pointer. This will cause scheduler to halt this thread.
-            }
-          } else {
-            val = *tmpPtr32;
-          }
-
-        } else {
-          mprintf("#%02u: ERROR: 32B dereferencing NULL pointer\n", cpuId);
-          return 1; //bail out here, as we cannot continue dereferencing a NULL pointer. This will cause scheduler to halt this thread.
-        }
-        //mprintf("Decoding 32B\n");
-        dst[0] = (uint32_t)(val);
-        return 0;
-      }    
-    } //else { //this field is an immediate or adr, leave as is  }
-    //mprintf("IM or ADR\n");
-    return 0;
-}
-
-
 uint32_t* dynamicNodeStaging(uint32_t* node, uint32_t* thrData) {
   uint32_t* ret;
-  if (node != LM32_NULL_PTR) {
-    memcpy(nodeTmp, node, _MEM_BLOCK_SIZE); //make a copy of the original node we can edit
-  } else {
-    DBPRINT1("#%02u: ERROR: dynamicNodeStaging was passed a null ptr instead of a node\n", cpuId);
-    return LM32_NULL_PTR; //bail out here, as we cannot continue dereferencing a NULL pointer. This will cause scheduler to halt this thread.  
+  memcpy(nodeTmp, node, _MEM_BLOCK_SIZE); //make a copy of the original node we can edit
+      
+  // tells us if its 32/64 and if a word is an immediate, value (dynamically generated at compile time, static now), reference, or a double reference
+  uint32_t wordFormats = nodeTmp[NODE_OPT_DYN >> 2]; //load word description
+  
+
+  for(unsigned i = 0; i < 9; i++) { // a memory block has 13 words, not 9 - but last four (dyn, hash, flags, nextPtr) must not be changed.
+    if ((wordFormats & DYN_MODE_MSK) >= DYN_MODE_REF) { // Is current word a kind of reference? yay, let's dynamically copy stuff in!
+      uint64_t val;
+      if ((wordFormats & DYN_MODE_MSK) == DYN_MODE_REF2)  {
+        val = **(uint64_t**)node[i];
+        DBPRINT2("#%02u: REF2REF. Word %u is a ref2ref, adr is 0x%08x, ptr is 0x%08x, value is 0x%08x%08x\n", cpuId, i, &node[i], *(uint32_t*)node[i], (uint32_t)(val>>32), (uint32_t)val);
+      } //reference or reference 2 reference?
+      else                                                {
+        DBPRINT2("#%02u: REF. Word %u is a ref, adr is 0x%08x, value is 0x%08x%08x\n", cpuId, i, &node[i], (uint32_t)(val>>32), (uint32_t)val);
+        val =  *(uint64_t*) node[i];
+      }
+
+      
+      
+      nodeTmp[i] = (uint32_t)(val>>32);
+      //mprintf("#%02u: Current Wordformat is 0x%08x, Mask is 0x%08x\n", cpuId, wordFormats, DYN_WIDTH64_SMSK);
+      if (wordFormats & DYN_WIDTH64_SMSK) {
+        DBPRINT2("#%02u: Ref is a 64b word\n", cpuId);
+        nodeTmp[i+1] = (uint32_t)(val); //It's MSB first, so the adr can be 64b high word or 32b word. if its 64b, fill in low word at i+1
+      }
+    } //ELSE - it's a IM or ADR, we leave the original value in, regardless if its 32 or 64b
+    wordFormats >>= 3; //shift right by 3 bits to get next wordFormat
   }
-
-  uint32_t wordformatOriginal = nodeTmp[NODE_OPT_DYN >> 2]; //save original wordformat
-  uint32_t hash = nodeTmp[NODE_HASH >> 2]; //save original hash for diagnostics
-
-  for(unsigned i = 0; i < 9; i++) { // a memory block has 13 words / fields. The first 9 can have be references to other memory locations and must be derefenced for use. The last 4 fields (dyn, hash, flags, nextPtr) must not be changed.
-    uint32_t wordFormats = wordformatOriginal >> (i*3); //load word description
-    // tells us if its 32/64 and if a word is an immediate, value (dynamically generated at compile time, static now), reference, or a double reference
-
-    if ((i>= 8) && (wordFormats & DYN_WIDTH64_SMSK)) { //boundary check to prevent overflow when 64b value encoutered at index 8
-        DBPRINT1("#%02u: ERROR: Node # 0x%08x word %u cannot fit 64b value here! Check your node definition!\n", cpuId, hash, i);
-        return LM32_NULL_PTR; //bail out here, as we cannot continue dereferencing a NULL pointer. This will cause scheduler to halt this thread.
-    }
-
-    if(dynField(wordFormats, (uint32_t*)&node[i], (uint32_t*)&nodeTmp[i]) != 0) return LM32_NULL_PTR;
-
-  } //for - handle field 0-8 in node
-
+  
   //call handler function
-  ret = nodeFuncs[getNodeType(nodeTmp)](nodeTmp, thrData);
-
+  ret = nodeFuncs[getNodeType(nodeTmp)](nodeTmp, thrData); 
+  
   //copy back all changes to immediate/val fields
+  wordFormats = nodeTmp[NODE_OPT_DYN >> 2]; //reload description
   for(unsigned i = 0; i < 9; i++) {
-    uint32_t wordFormats = wordformatOriginal >> (i*3);
-
-    if (((wordFormats & DYN_MODE_MSK) == DYN_MODE_IM) || ((wordFormats & DYN_MODE_MSK) == DYN_MODE_ADR)) { 
-      DBPRINT3("#%02u: Node # 0x%08x - copy back - overwriting word %u 0x%08x with new value 0x%08x\n", cpuId, hash, i, node[i], nodeTmp[i]);
-      node[i] = nodeTmp[i];
-    } // immediate/adr ?
-    else {
-      DBPRINT3("#%02u: Node # 0x%08x - is dynamic - keeping word %u 0x%08x\n", cpuId, hash, i, node[i]);
-    }
-    //also copy back node flags. Yes, this would not catch illegal changes to nodetype, but if THAT can happen in a handler at all, we're screwed anyway. And besides, we need the set or unset flags back.
-    node[NODE_FLAGS >> 2] = nodeTmp[NODE_FLAGS >> 2];
+    if ((wordFormats & DYN_MODE_MSK) < DYN_MODE_REF) { node[i] = nodeTmp[i]; } // immediate/adr ?
+    wordFormats >>= 3; //shift right by 3 bits to get next wordFormat
   }
 
-  //we must never return nodeTmp, as the object only exists within this function. however, we cannot just return node on principle, as the handler most likely returns a pointer to the successor node, not to the same node again.
-  //if handler wants to return a pointer to nodeTmp, return pointer to original node instead.
+  //we must never return nodeTmp, as this is not threadsafe. if handler wants to return nodeTmp, return original node instead.
   if (ret != nodeTmp) return ret;
   else                return node;
 
 }
+
+uint32_t dmSchedulerStep() {
+  static uint32_t backlog = 0;
+  int i;
+
+  // Hard abort is an emergency and gets priority over everything else
+  if (*abort1) {
+    *running &= ~(*abort1);   // clear all aborted running bits
+    for(i=0; i<_THR_QTY_; i++) {
+      uint64_t* deadline  = (uint64_t*)&p[( SHCTL_THR_DAT + i * _T_TD_SIZE_ + T_TD_DEADLINE ) >> 2];
+      *deadline |= (~((uint64_t)*abort1 >> i) & 1) -1;  // if abort bit was set, move deadline to infinity
+    }
+    heapify(); // re-sort all threads in schedulder (necessary because multiple threads may have been aborted
+    *abort1 = 0; // clear abort bits
+  }
+
+  //the workhorse. check if most urgent node is due and process it if this is the case.
+  uint8_t thrIdx = *(uint32_t*)(pT(hp) + (T_TD_FLAGS >> 2));
+  if (DL(pT(hp))  <= halGetSysTime() + *(uint64_t*)(p + (( SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME   ) >> 2) )) {
+    //node is due. Execute it, then update cursor and deadline, return control to scheduler
+    backlog++;
+
+    ///check if the node uses fields with references
+    if (!hasNodeDynamicFields(pN(hp))) {
+      //no dynamic fields. do go as normal on, nothing to see here
+      //FIXME Why not pncN(hp) = nodeFuncs[ ...?
+      *pncN(hp)   = (uint32_t)nodeFuncs[getNodeType(pN(hp))](pN(hp), pT(hp));       //process node and return thread's next node
+    } else {
+      /*We got some dynamic fields. Now:
+       * do a copy of original node
+       * insert all dynamic fields
+       * call appropriate node handler
+       * write back all changes of immediate/val fields to original
+      */ 
+      *pncN(hp)   = (uint32_t)dynamicNodeStaging(pN(hp), pT(hp));  
+    }
+    DL(pT(hp))  = (uint64_t)deadlineFuncs[getNodeType(pN(hp))](pN(hp), pT(hp));   // return thread's next deadline (returns infinity on upcoming NULL ptr)
+    *running   &= ~((DL(pT(hp)) == -1ULL) << thrIdx);                             // clear running bit if deadline is at infinity
+    heapReplace(0);                                                               // call scheduler, re-sort only current thread
+
+  } else {
+    //nothing due right now. Check for requests of new threads to be started
+    *backlogmax   = ((backlog > *backlogmax) ? backlog : *backlogmax);
+    backlog = 0;
+
+    if(*start) { //check start bitfield for any request
+      for(i=0;i<_THR_QTY_;i++) { //iterate
+        if (*start & (1<<i)) {
+
+          //current thread base pointers
+          uint8_t* thrStart  = (uint8_t*)&p[( SHCTL_THR_STA + i * _T_TS_SIZE_) >> 2]; // thread Start array
+          uint8_t* thrData   = (uint8_t*)&p[( SHCTL_THR_DAT + i * _T_TD_SIZE_) >> 2]; // thread Data array
+
+          //pointers to start fields
+          uint64_t* startTime = (uint64_t*)&thrStart[T_TS_STARTTIME];
+          uint64_t* prepTime  = (uint64_t*)&thrStart[T_TS_PREPTIME];
+          uint32_t* origin    = (uint32_t*)&thrStart[T_TS_NODE_PTR];
+
+          //pointers to data fields
+          uint64_t* currTime  = (uint64_t*)&thrData[T_TD_CURRTIME];
+          uint64_t* deadline  = (uint64_t*)&thrData[T_TD_DEADLINE];
+          uint32_t* cursor    = (uint32_t*)&thrData[T_TD_NODE_PTR];
+          uint32_t* msgcnt    = (uint32_t*)&thrData[T_TD_MSG_CNT];
+
+          DBPRINT1("#%02u: ThrIdx %u, Preptime: %s\n", cpuId, i, print64(*prepTime, 0));
+
+          //init fields
+          if (!(*startTime)) {*currTime = halGetSysTime() + (*prepTime << 1); } // if 0, set to now + 2 * preptime
+          else                *currTime = *startTime;
+
+          *cursor   = *origin;          // Set cursor to origin node
+          *deadline = *currTime;        // Set the deadline to first blockstart
+          //if first node is an event, starttime must be increment by its offset. Call deadline update function to handle this
+          *deadline = (uint64_t)deadlineFuncs[getNodeType((uint32_t*)*cursor)]((uint32_t*)*cursor, (uint32_t*)thrData);
+
+
+          *running |= *start & (1<<i);  // copy this start bit to running bits
+          *start   &= ~(1 << i);        // clear this start bit
+          *msgcnt   = 0;                // clear msg counter
+        }
+      }
+
+      heapify(); // re-sort all threads in schedulder (necessary because multiple threads may have been started)
+    }
+  }
+
+  return backlog;
+}  
