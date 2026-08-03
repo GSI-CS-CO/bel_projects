@@ -170,8 +170,8 @@ begin
   generic map (
     Clk_in_Hz        => 125_000_000,
     Firmware_Release => 1,
-    Firmware_Version => 1,
-    CID_System       => 55,
+    Firmware_Version => 0,
+    CID_System       => 55,   -- ACO
     Intr_Enable      => b"0000_0000_0000_0001")
   port map (
     SCUB_Addr          => s_scub_addr,
@@ -187,7 +187,7 @@ begin
     Dtack_to_SCUB      => Dtack_to_SCUB,
     Intr_In            => bb_irq(15 downto 1),
     User_Ready         => '1',
-    CID_Group          => 55,
+    CID_Group          => 130,                 -- SCU4.1
     Data_from_SCUB_LA  => Data_from_SCUB_LA,   -- out,   latched data from SCU_Bus for external user functions
     ADR_from_SCUB_LA   => ADR_from_SCUB_LA,    -- out,   latched address from SCU_Bus for external user functions
     Timing_Pattern_LA  => Timing_Pattern_LA,   -- out,   latched timing pattern from SCU_Bus for external user functions
