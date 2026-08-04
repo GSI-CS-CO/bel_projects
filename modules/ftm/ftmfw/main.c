@@ -6,7 +6,7 @@
 #include "ftm_common.h"
 #include "dm.h"
 #include "dm_hal.h"
-//#include "config.h"
+// #include "config.h"
 #include "uart.h"
 
 /** \mainpage DM Firmware Documentation
@@ -42,11 +42,8 @@
  * The content of these commands influences the schedule runtime behaviour, in particular the block's specificfunction, returned successor and deadline. (see execFlow(), execFlush() ...)
  */
 
-
 uint8_t cpuId;
 uint8_t cpuQty;
-
-
 
 /// Debug Interrupt console output
 /** Shows and MSI's msg, address and byte select words */
@@ -59,31 +56,29 @@ void show_msi()
 /** IRQ handler 0, shows handler number and msi content on console. Not used in DM */
 void isr0()
 {
-   pp_printf("ISR0\n");
-   show_msi();
+  pp_printf("ISR0\n");
+  show_msi();
 }
 
 /// Interrupt Handler 1 (not used)
 /** IRQ handler 1, shows handler number and msi content on console. Not used in DM */
 void isr1()
 {
-   pp_printf("ISR1\n");
-   show_msi();
+  pp_printf("ISR1\n");
+  show_msi();
 }
-
 
 /// Etherbone Master init routine
 /** EBM init. Waits for WR core to receive IP from bootp and then sets src & dst MAC and IP addresses in EBM. */
 void ebmInit()
 {
-   pp_printf("#%02u: DM cores Waiting for IP from WRC...\n", cpuId);
-   halEbmWaitForIp();
+  pp_printf("#%02u: DM cores Waiting for IP from WRC...\n", cpuId);
+  halEbmWaitForIp();
 
-   halEbmInit();
-   halEbmConfigMeta(1500, 42, HAL_EBM_NOREPLY);                                                    //MTU, max EB msgs, flags
-   halEbmConfigIf(HAL_EBM_DESTINATION, 0xffffffffffff, 0xffffffff,                0xebd0);         //Dst: EB broadcast
-   halEbmConfigIf(HAL_EBM_SOURCE,      0xd15ea5edbeef, halEbmGetSrcIp(), 0xebd0);                  //Src: bogus mac (will be replaced by WR), WR IP
-
+  halEbmInit();
+  halEbmConfigMeta(1500, 42, HAL_EBM_NOREPLY);                              // MTU, max EB msgs, flags
+  halEbmConfigIf(HAL_EBM_DESTINATION, 0xffffffffffff, 0xffffffff, 0xebd0);  // Dst: EB broadcast
+  halEbmConfigIf(HAL_EBM_SOURCE, 0xd15ea5edbeef, halEbmGetSrcIp(), 0xebd0); // Src: bogus mac (will be replaced by WR), WR IP
 }
 
 /// Global init. Discovers periphery and inits all modules.
@@ -93,48 +88,54 @@ void init()
   dmInitSharedMemPointers();
 
   *status = 0;
-  *count  = 0;
-
+  *count = 0;
 
   halInitPeriphery();
 
   p[(SHCTL_ADR_TAB >> 2) + ADRLUT_SHCTL_THR_STA] = SHCTL_THR_STA;
   p[(SHCTL_ADR_TAB >> 2) + ADRLUT_SHCTL_THR_DAT] = SHCTL_THR_DAT;
-  p[(SHCTL_ADR_TAB >> 2) + ADRLUT_SHCTL_HEAP]    = SHCTL_HEAP;
-  p[(SHCTL_ADR_TAB >> 2) + ADRLUT_SHCTL_REGS]    = SHCTL_REGS;
-  p[(SHCTL_ADR_TAB >> 2) + ADRLUT_SHCTL_END]     = _SHCTL_END_;
+  p[(SHCTL_ADR_TAB >> 2) + ADRLUT_SHCTL_HEAP] = SHCTL_HEAP;
+  p[(SHCTL_ADR_TAB >> 2) + ADRLUT_SHCTL_REGS] = SHCTL_REGS;
+  p[(SHCTL_ADR_TAB >> 2) + ADRLUT_SHCTL_END] = _SHCTL_END_;
 
-
-  if (cpuId == 0) {
-    //TODO replace bogus system status flags by real ones
-    halUartInitHw();   *status |= SHCTL_STATUS_UART_INIT_SMSK;
-    ebmInit();         *status |= SHCTL_STATUS_EBM_INIT_SMSK ;
-    halPrioQueueInit(); *status |= SHCTL_STATUS_PQ_INIT_SMSK;
-    //mprintf("#%02u: Got IP from WRC. Configured EBM and PQ\n", cpuId);
-  } else {
+  if (cpuId == 0)
+  {
+    // TODO replace bogus system status flags by real ones
+    halUartInitHw();
     *status |= SHCTL_STATUS_UART_INIT_SMSK;
-    *status |= SHCTL_STATUS_EBM_INIT_SMSK ;
+    ebmInit();
+    *status |= SHCTL_STATUS_EBM_INIT_SMSK;
+    halPrioQueueInit();
+    *status |= SHCTL_STATUS_PQ_INIT_SMSK;
+    // mprintf("#%02u: Got IP from WRC. Configured EBM and PQ\n", cpuId);
+  }
+  else
+  {
+    *status |= SHCTL_STATUS_UART_INIT_SMSK;
+    *status |= SHCTL_STATUS_EBM_INIT_SMSK;
     *status |= SHCTL_STATUS_PQ_INIT_SMSK;
   }
 
   int j;
 
-
-  while(!halWrTimeValid()) {
-    for (j = 0; j < (125000000/2); ++j) { asm("nop"); }
-    if (cpuId == 0) pp_printf("#%02u: DM cores Waiting for WRC synchronisation...\n", cpuId);
+  while (!halWrTimeValid())
+  {
+    for (j = 0; j < (125000000 / 2); ++j)
+    {
+      asm("nop");
+    }
+    if (cpuId == 0)
+      pp_printf("#%02u: DM cores Waiting for WRC synchronisation...\n", cpuId);
   }
-  if (cpuId == 0) pp_printf("#%02u: WR time now in sync\n", cpuId);
+  if (cpuId == 0)
+    pp_printf("#%02u: WR time now in sync\n", cpuId);
 
   halIrqSetup(0x01);
 
   dmInit();
-  *status  |= SHCTL_STATUS_DM_INIT_SMSK;
+  *status |= SHCTL_STATUS_DM_INIT_SMSK;
   *boottime = halGetSysTime();
-
 }
-
-
 
 /// Data master main routine. Inits everything and then runs EDF scheduler loop forever.
 /** Data master main routine. Inits and the runs EDF scheduler loop, while heeding thread control bits.
@@ -161,41 +162,50 @@ void init()
     4. Whole EDF heap is sorted
     */
 
-void main(void) {
-
+void main(void)
+{
 
   int j;
 
-
   init();
 
-  //FIXME why is uart_hw_init here twice ???
-  // wait 1s + cpuIdx * 1/10s
-  for (j = 0; j < ((125000000/4)+(cpuId*2500000)); ++j) { asm("nop"); }
-  if (cpuId != 0) halUartInitHw();   *status |= SHCTL_STATUS_UART_INIT_SMSK;
+  // FIXME why is uart_hw_init here twice ???
+  //  wait 1s + cpuIdx * 1/10s
+  for (j = 0; j < ((125000000 / 4) + (cpuId * 2500000)); ++j)
+  {
+    asm("nop");
+  }
+  if (cpuId != 0)
+    halUartInitHw();
+  *status |= SHCTL_STATUS_UART_INIT_SMSK;
 
   halAtomicOn();
 
   pp_printf("#%02u: Rdy\n", cpuId);
-  #if DEBUGLEVEL != 0
-    pp_printf("#%02u: Debuglevel %u. Don't expect timeley delivery with console outputs on!\n", cpuId, DEBUGLEVEL);
-  #endif
-  #if DEBUGTIME == 1
-    pp_printf("#%02u: Debugtime mode ON. Par Field of Msgs will be overwritten be dispatch time at lm32\n", cpuId);
-  #endif
-  #if DEBUGPRIOQ == 1
-    pp_printf("#%02u: Priority Queue Debugmode ON, timestamps will be written to 0x%08x on receivers", cpuId, DEBUGPRIOQDST);
-  #endif
-  //mprintf("Found MsgBox at 0x%08x. MSI Path is 0x%08x\n", (uint32_t)pCpuMsiBox, (uint32_t)pMyMsi);
+#if DEBUGLEVEL != 0
+  pp_printf("#%02u: Debuglevel %u. Don't expect timeley delivery with console outputs on!\n", cpuId, DEBUGLEVEL);
+#endif
+#if DEBUGTIME == 1
+  pp_printf("#%02u: Debugtime mode ON. Par Field of Msgs will be overwritten be dispatch time at lm32\n", cpuId);
+#endif
+#if DEBUGPRIOQ == 1
+  pp_printf("#%02u: Priority Queue Debugmode ON, timestamps will be written to 0x%08x on receivers", cpuId, DEBUGPRIOQDST);
+#endif
+  // mprintf("Found MsgBox at 0x%08x. MSI Path is 0x%08x\n", (uint32_t)pCpuMsiBox, (uint32_t)pMyMsi);
   pp_printf("#%02u: This is %s DM FW %s \n", cpuId, DM_RELEASE, DM_VERSION);
 
   halAtomicOff();
 
-  if (halGetMsiBoxCpuSlot(cpuId, 0) == -1) {pp_printf("#%02u: Mail box slot acquisition failed\n", cpuId);}
+  if (halGetMsiBoxCpuSlot(cpuId, 0) == -1)
+  {
+    pp_printf("#%02u: Mail box slot acquisition failed\n", cpuId);
+  }
 
   DBPRINT1("#%02u: Base shared ram 0x%08x\n", cpuId, halGetSharedMemBase());
 
-  for (;;) {
+  for (;;)
+  {
     dmSchedulerStep();
+    halOnlyMockDoesStuff();
   }
 }

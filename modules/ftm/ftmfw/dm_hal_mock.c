@@ -13,6 +13,7 @@
  ********************************************************************************************/
 #include <stdio.h>
 #include <string.h>
+
 #include "dm_hal.h"
 
 /// Fake shared-memory buffer backing halGetSharedMemBase().
@@ -20,29 +21,35 @@
  *  (_SHCTL_END_) is generated per-project by the firmware build and not available on
  *  host, so a fixed, sufficiently large buffer is used instead. */
 #define HAL_MOCK_SHARED_MEM_SIZE (4 * 1024)
-extern uint32_t* const _startshared[];
-uint32_t* sharedMem = (uint32_t *)_startshared;
+extern uint32_t *const _startshared[];
+uint32_t *sharedMem = (uint32_t *)_startshared;
+
+extern uint8_t cpuId;
 
 static uint64_t fakeSysTime = 0;
-static uint8_t  fakeWrTimeValid = 1;
+static uint8_t fakeWrTimeValid = 1;
 
 static HalTimingMsg lastEbmMsg;
-static uint8_t      ebmMsgSent = 0;
+static uint8_t ebmMsgSent = 0;
 static HalTimingMsg lastPrioQueueMsg;
-static uint8_t      prioQueueMsgSent = 0;
-static uint64_t     fakePrioQueueMsgCount = 0;
-static uint32_t     fakeEbmSrcIp = 0x0a000001; ///< fake WR-assigned source IP (10.0.0.1)
+static uint8_t prioQueueMsgSent = 0;
+static uint64_t fakePrioQueueMsgCount = 0;
+static uint32_t fakeEbmSrcIp = 0x0a000001; ///< fake WR-assigned source IP (10.0.0.1)
 
 static uint32_t atomicNestCount = 0;
 
 void halInitPeriphery(void)
 {
-  memset(sharedMem, 0, sizeof(HAL_MOCK_SHARED_MEM_SIZE));
-  fakeSysTime      = 0;
-  fakeWrTimeValid  = 1;
-  ebmMsgSent       = 0;
+
+  cpuId = halInitCpuId();
+
+  memset(sharedMem, 0, HAL_MOCK_SHARED_MEM_SIZE);
+
+  fakeSysTime = 1000;
+  fakeWrTimeValid = 1;
+  ebmMsgSent = 0;
   prioQueueMsgSent = 0;
-  atomicNestCount  = 0;
+  atomicNestCount = 0;
   fakePrioQueueMsgCount = 0;
 }
 
@@ -71,34 +78,31 @@ uint8_t halWrTimeValid(void)
   return fakeWrTimeValid;
 }
 
-void halUartInitHw(void)
-{
-  // no-op in mock
-}
-
-int halConsoleWrite(const char* text)
-{
-  return fputs(text, stdout);
-}
-
 void halEbmInit(void)
 {
   // no-op in mock
+  pp_printf("EBM init done\n");
 }
 
 void halEbmConfigMeta(uint32_t mtu, uint32_t hiBits, uint32_t ebOps)
 {
-  (void)mtu; (void)hiBits; (void)ebOps; // no-op in mock
+  (void)mtu;
+  (void)hiBits;
+  (void)ebOps; // no-op in mock
 }
 
 void halEbmConfigIf(uint8_t conf, uint64_t mac, uint32_t ip, uint16_t port)
 {
-  (void)conf; (void)mac; (void)ip; (void)port; // no-op in mock
+  (void)conf;
+  (void)mac;
+  (void)ip;
+  (void)port; // no-op in mock
 }
 
 void halEbmWaitForIp(void)
 {
   // returns immediately in mock, no busy-loop needed
+  pp_printf("EBM ip wait done\n");
 }
 
 uint32_t halEbmGetSrcIp(void)
@@ -106,7 +110,7 @@ uint32_t halEbmGetSrcIp(void)
   return fakeEbmSrcIp;
 }
 
-void halEbmSend(const HalTimingMsg* msg)
+void halEbmSend(const HalTimingMsg *msg)
 {
   lastEbmMsg = *msg;
   ebmMsgSent = 1;
@@ -115,9 +119,10 @@ void halEbmSend(const HalTimingMsg* msg)
 void halPrioQueueInit(void)
 {
   // no-op in mock
+  pp_printf("Prio init done\n");
 }
 
-void halPrioQueueSend(const HalTimingMsg* msg)
+void halPrioQueueSend(const HalTimingMsg *msg)
 {
   lastPrioQueueMsg = *msg;
   prioQueueMsgSent = 1;
@@ -131,7 +136,12 @@ uint64_t halPrioQueueGetMsgCount(void)
 
 void halIrqSetup(uint32_t mask)
 {
-  (void)mask; // no-op in mock
+  return;
+  /*
+  isr_table_clr();
+  irq_set_mask(mask);
+  irq_disable();
+  */
 }
 
 void halAtomicOn(void)
@@ -155,7 +165,7 @@ void halShowMsi(void)
   // no-op in mock
 }
 
-uint32_t* halGetSharedMemBase(void)
+uint32_t *halGetSharedMemBase(void)
 {
   return sharedMem;
 }

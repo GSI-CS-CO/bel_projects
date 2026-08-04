@@ -25,7 +25,7 @@
 
 /// Shared RAM region base, provided by the linker script (ram.ld.S). Owned by the HAL;
 /// dm.c/main.c must go through halGetSharedMemBase() instead of referencing this directly.
-extern uint32_t* const _startshared[];
+extern uint32_t *const _startshared[];
 
 void halInitPeriphery(void)
 {
@@ -55,10 +55,10 @@ void halDecSysTime(uint64_t time)
 
 uint8_t halWrTimeValid(void)
 {
-  const uint32_t STATE_REG     = 0x1C;
+  const uint32_t STATE_REG = 0x1C;
   const uint32_t PPS_VALID_MSK = (1 << 2);
-  const uint32_t TS_VALID_MSK  = (1 << 3);
-  const uint32_t STATE_MSK     = PPS_VALID_MSK | TS_VALID_MSK;
+  const uint32_t TS_VALID_MSK = (1 << 3);
+  const uint32_t STATE_MSK = PPS_VALID_MSK | TS_VALID_MSK;
 
   return ((pPps[STATE_REG >> 2] & STATE_MSK) != 0);
 }
@@ -68,7 +68,7 @@ void halUartInitHw(void)
   uart_init_hw();
 }
 
-int halConsoleWrite(const char* text)
+int halConsoleWrite(const char *text)
 {
   return uart_write_string(text);
 }
@@ -91,8 +91,12 @@ void halEbmConfigIf(uint8_t conf, uint64_t mac, uint32_t ip, uint16_t port)
 void halEbmWaitForIp(void)
 {
   int j;
-  while (*(pEbCfg + (EBC_SRC_IP >> 2)) == EBC_DEFAULT_IP) {
-    for (j = 0; j < (125000000 / 2); ++j) { asm("nop"); }
+  while (*(pEbCfg + (EBC_SRC_IP >> 2)) == EBC_DEFAULT_IP)
+  {
+    for (j = 0; j < (125000000 / 2); ++j)
+    {
+      asm("nop");
+    }
   }
 }
 
@@ -101,7 +105,7 @@ uint32_t halEbmGetSrcIp(void)
   return *(pEbCfg + (EBC_SRC_IP >> 2));
 }
 
-void halEbmSend(const HalTimingMsg* msg)
+void halEbmSend(const HalTimingMsg *msg)
 {
   ebm_hi(ECA_GLOBAL_ADR);
   ebm_op(ECA_GLOBAL_ADR, msg->idHi, EBM_WRITE);
@@ -117,32 +121,32 @@ void halEbmSend(const HalTimingMsg* msg)
 
 void halPrioQueueInit(void)
 {
-  pFpqCtrl[PRIO_RESET_OWR >> 2]      = 1;
-  pFpqCtrl[PRIO_MODE_CLR >> 2]       = 0xffffffff;
-  pFpqCtrl[PRIO_ECA_ADR_RW >> 2]     = ECA_GLOBAL_ADR;
-  pFpqCtrl[PRIO_EBM_ADR_RW >> 2]     = ((uint32_t)pEbm & ~0x80000000);
+  pFpqCtrl[PRIO_RESET_OWR >> 2] = 1;
+  pFpqCtrl[PRIO_MODE_CLR >> 2] = 0xffffffff;
+  pFpqCtrl[PRIO_ECA_ADR_RW >> 2] = ECA_GLOBAL_ADR;
+  pFpqCtrl[PRIO_EBM_ADR_RW >> 2] = ((uint32_t)pEbm & ~0x80000000);
   pFpqCtrl[PRIO_TX_MAX_MSGS_RW >> 2] = 40;
   pFpqCtrl[PRIO_TX_MAX_WAIT_RW >> 2] = loW((uint64_t)(50000));
-  pFpqCtrl[PRIO_MODE_SET >> 2]       = PRIO_BIT_ENABLE     |
-                                        PRIO_BIT_MSG_LIMIT  |
-                                        PRIO_BIT_TIME_LIMIT;
+  pFpqCtrl[PRIO_MODE_SET >> 2] = PRIO_BIT_ENABLE |
+                                 PRIO_BIT_MSG_LIMIT |
+                                 PRIO_BIT_TIME_LIMIT;
 }
 
-void halPrioQueueSend(const HalTimingMsg* msg)
+void halPrioQueueSend(const HalTimingMsg *msg)
 {
-  *(pFpqData + (PRIO_DAT_STD   >> 2)) = msg->idHi;
-  *(pFpqData + (PRIO_DAT_STD   >> 2)) = msg->idLo;
-  *(pFpqData + (PRIO_DAT_STD   >> 2)) = msg->parHi;
-  *(pFpqData + (PRIO_DAT_STD   >> 2)) = msg->parLo;
-  *(pFpqData + (PRIO_DAT_STD   >> 2)) = msg->res;
-  *(pFpqData + (PRIO_DAT_STD   >> 2)) = msg->tef;
+  *(pFpqData + (PRIO_DAT_STD >> 2)) = msg->idHi;
+  *(pFpqData + (PRIO_DAT_STD >> 2)) = msg->idLo;
+  *(pFpqData + (PRIO_DAT_STD >> 2)) = msg->parHi;
+  *(pFpqData + (PRIO_DAT_STD >> 2)) = msg->parLo;
+  *(pFpqData + (PRIO_DAT_STD >> 2)) = msg->res;
+  *(pFpqData + (PRIO_DAT_STD >> 2)) = msg->tef;
   *(pFpqData + (PRIO_DAT_TS_HI >> 2)) = msg->tsHi;
   *(pFpqData + (PRIO_DAT_TS_LO >> 2)) = msg->tsLo;
 }
 
 uint64_t halPrioQueueGetMsgCount(void)
 {
-  return *(uint64_t*)&pFpqCtrl[PRIO_CNT_OUT_ALL_GET_0 >> 2];
+  return *(uint64_t *)&pFpqCtrl[PRIO_CNT_OUT_ALL_GET_0 >> 2];
 }
 
 void halIrqSetup(uint32_t mask)
@@ -172,7 +176,7 @@ void halShowMsi(void)
   pp_printf(" Msg:\t%08x\nAdr:\t%08x\nSel:\t%01x\n", global_msi.msg, global_msi.adr, global_msi.sel);
 }
 
-uint32_t* halGetSharedMemBase(void)
+uint32_t *halGetSharedMemBase(void)
 {
-  return (uint32_t*)&_startshared;
+  return (uint32_t *)&_startshared;
 }
