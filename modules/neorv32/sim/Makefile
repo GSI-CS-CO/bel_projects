@@ -6,13 +6,12 @@ GTWK_BIN=gtkwave
 
 # Simulation settings
 # ==============================================================================
-STOP_TIME="1000us"
+STOP_TIME="3000us"
 WORK_DIR=build
 GHW_NAME="neorv32_tb_slim.ghw"
 GTKW_NAME="neorv32_tb_slim.gtkw"
 GHW_NAME_XBAR="neorv32_tb_xbar.ghw"
 GTKW_NAME_XBAR="neorv32_tb_xbar.gtkw"
-
 
 # Files
 # ==============================================================================
@@ -119,7 +118,6 @@ compile_code:
 
 compile_code_xbar:
 	make -C ../src/sw/sim_xbar
-
 
 analyze:
 	@echo "Analyzing ..."

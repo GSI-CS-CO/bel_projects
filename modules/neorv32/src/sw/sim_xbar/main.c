@@ -11,35 +11,42 @@
 
 int main(void)
 {
-  //int * RAM_base_address = (int*) 0x04060000;
-  int * RAM_base_address = (int*) 0x200000; // for simulation
+  int * RAM_base_address = (int*) 0x04060000;
+  //int * RAM_base_address = (int*) 0x00200000; // for simulation
 
 
-  int nums[N];
-  int nums_test[N];
+  int nums[N] = {0};
+  int nums_test[N] = {0};
   bool failed;
 
   /* Test block write access */
   neorv32_rte_setup();
   neorv32_uart0_setup(BAUD_RATE, 0);
   neorv32_uart0_printf("Starting the loop.\n");
+
   while(true) {
     failed = false;
     for(int i = 0; i < N; i++) {
-      nums[i] = neorv32_aux_xorshift32();
+      nums[i] = i*4; // neorv32_aux_xorshift32();
     }
 
-    neorv32_gpio_pin_set(0, 1);
+    neorv32_uart0_printf("#1.\n");
+
+    //neorv32_gpio_pin_set(0, 1);
     for(int i = 0; i < N; i++) {
       *(RAM_base_address + i*4)   = nums[i];
     }
-    neorv32_gpio_pin_set(0, 0);
+    //neorv32_gpio_pin_set(0, 0);
 
-    neorv32_gpio_pin_set(0, 1);
+    neorv32_uart0_printf("#2.\n");
+
+    //neorv32_gpio_pin_set(0, 1);
     for(int i = 0; i < N; i++) {
       nums_test[i] = *(RAM_base_address + i*4);
     }
-    neorv32_gpio_pin_set(0, 0);
+    //neorv32_gpio_pin_set(0, 0);
+
+    neorv32_uart0_printf("#3.\n");
 
     for(int i = 0; i < N; i++) {
       if(nums[i] != nums_test[i]) {
@@ -48,9 +55,14 @@ int main(void)
       }
     }
 
-    // if(!failed) {
-    //   neorv32_uart0_printf("Data transfers successfull, no data lost.\n");
-    // }
+    if(!failed) {
+       neorv32_uart0_printf("Data transfers successfull, no data lost.\n");
+       for(int i = 0; i < N; i++) {
+         if(nums[i] == nums_test[i]) {
+           neorv32_uart0_printf("Expected 0x%x, got 0x%x\n", nums[i], nums_test[i]);
+         }
+       }
+    }
   }
 
   return 0;
