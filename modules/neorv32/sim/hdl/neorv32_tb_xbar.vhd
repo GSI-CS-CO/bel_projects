@@ -39,7 +39,7 @@ architecture rtl of neorv32_tb_xbar is
   constant RAM_SIZE : natural := 131072/4;
 
   constant c_layout : t_sdb_record_array(0 downto 0) :=
-    (0 => f_sdb_embed_device(f_xwb_dpram(RAM_SIZE), x"00000000"));
+    (0 => f_sdb_embed_device(f_xwb_dpram(RAM_SIZE), x"04060000"));
   constant c_sdb_address : t_wishbone_address := x"00200000";
 
   -- constant c_master_layout : t_sdb_record_array(0 downto 0) :=
@@ -72,6 +72,7 @@ begin
   neorv32_shell_inst: neorv32_shell
   generic map (
     g_sdb_addr               => x"12345678",
+    g_use_wb_adapter         => true,
     g_mem_wishbone_init_file => "../src/sw/sim_xbar/program.mif"
   )
   port map (
