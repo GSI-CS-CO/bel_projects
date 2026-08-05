@@ -45,17 +45,21 @@ typedef enum MSR_ITEMS {
   MSR_MSG_DLY, // messaging delay
   MSR_TTL,     // TTL threshold/interval
   MSR_ML_PRD,  // period of the main loop
+  MSR_DIOB_DLY,// DIOB access delay
   N_MSR_ITEMS,
 } msrItem_t;
 
 void measurePutTimestamp(msrItem_t item, uint64_t ts);
 uint64_t measureGetTimestamp(msrItem_t item);
-void measureClearSummary(verbosity_t verbose);
+void measureClearSummary(msrItem_t item, verbosity_t verbose);
 void measureSummarize(msrItem_t item, uint64_t from, uint64_t now, verbosity_t verbose);
 void measureExportSummary(msrItem_t item, uint32_t* base, uint32_t offset);
 void measurePrintSummary(msrItem_t item);
 
 uint32_t measureCountEvt(unsigned name, uint32_t value);
 uint32_t measureSetCounter(unsigned name, uint32_t value);
+
+void measureActionRate(unsigned cnt);
+void measureExportActionRate(uint32_t* base);
 
 #endif

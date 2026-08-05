@@ -830,7 +830,7 @@ test_run_all: test_install_dim test_build_ftm_shared_map \
 	test_b2b test_wr-mil test_wr-unipz test_dm-unipz \
 	test_uni-blm test_uni-chop \
 	test_fec_analyzer test_freq-measure test_sync-mon \
-	test_lm32_examples
+	test_lm32_examples test_fbas
 
 test_install_dim:
 	unzip -n res/dim/$(DIM_VERSION).zip -d res/dim/
@@ -882,3 +882,6 @@ test_lm32_examples:
 	$(MAKE) -C modules/lm32-example TARGET=example
 	$(MAKE) -C modules/lm32-example TARGET=milExample
 	$(MAKE) -C modules/lm32-example TARGET=milSnooper
+
+test_fbas:
+	$(MAKE) -C modules/fbas/fw

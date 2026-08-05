@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 29-Aug-2024
+ *  version : 09-Jan-2026
  *
  * common x86 routines for firmware
  *
@@ -37,9 +37,37 @@
 #ifndef _COMMON_LIB_H_
 #define _COMMON_LIB_H_
 
-#define COMMON_LIB_VERSION "0.04.01"
+#define COMMON_LIB_VERSION "0.05.04"
 
 #include <etherbone.h>
+
+// data type diagnostic values; data are in 'native units' used by the lm32 firmware; NAN of unsigned integers is signaled by all bits set
+typedef struct {
+  uint64_t  mac;                   // WR MAC
+  uint32_t  ip;                    // WR IP
+  uint32_t  nBadStatus;            // # of bad status incidents
+  uint32_t  nBadState;             // # of bad state incidents
+  uint64_t  tDiag;                 // time, when diag data was reset
+  uint64_t  tS0;                   // time, when entering S0 state (firmware boot)
+  uint32_t  nTransfer;             // # of transfers
+  uint32_t  nInjection;            // # of injection within ongoing transfers
+  uint32_t  statTrans;             // status bits of transfer (application specific)
+  uint32_t  nLate;                 // number of ECA 'late' incidents                                            
+  uint32_t  nEarly;                // number of ECA 'early' incidents                                           
+  uint32_t  nConflict;             // number of ECA 'conflict' incidents                                        
+  uint32_t  nDelayed;              // number of ECA 'delayed' incidents                                         
+  uint32_t  nSlow;                 // number of incidents, when 'wait4eca' was called after the deadline        
+  uint32_t  offsSlow;              // if 'slow': offset deadline to start wait4eca; else '0' [ns]
+  uint32_t  offsSlowMax;           // if 'slow': offset deadline to start wait4eca; else '0' [ns]; max
+  uint32_t  offsSlowMin;           // if 'slow': offset deadline to start wait4eca; else '0' [ns]; min
+  uint32_t  comLatency;            // if 'slow': offset start to stop wait4eca; else deadline to stop wait4eca [ns]
+  uint32_t  comLatencyMax;         // if 'slow': offset start to stop wait4eca; else deadline to stop wait4eca [ns]; max
+  uint32_t  comLatencyMin;         // if 'slow': offset start to stop wait4eca; else deadline to stop wait4eca [ns]; min
+  uint32_t  offsDone;              // offset event deadline to time when we are done [ns]
+  uint32_t  offsDoneMax;           // offset event deadline to time when we are done [ns]; max
+  uint32_t  offsDoneMin;           // offset event deadline to time when we are done [ns]; min
+  uint32_t  usedSize;              // used size of shared memory
+} comlib_diag_t;
 
 // small helper function; actual time [ns]
 uint64_t comlib_getSysTime();
@@ -63,50 +91,71 @@ const char* comlib_stateText(uint32_t  bit             // state code
 // convert status code to status text
 const char* comlib_statusText(uint32_t  bit            // status code
                               );
+
+// convert numeric version number to string
+const char* comlib_version_text(uint32_t number        // version number
+                                );
+
 // init for communicaiton with shared mem
 void comlib_initShared(eb_address_t lm32_base,         // base address of lm32
                        eb_address_t sharedOffset       // offset of shared area
                        );
 
-// read (and print) diagnostic data, returns eb_status
-int comlib_readDiag(eb_device_t device,                // Etherbone device
-                    uint64_t    *statusArray,          // array with status bits
-                    uint32_t    *state,                // state
-                    uint32_t    *version,              // firmware version
-                    uint64_t    *mac,                  // WR MAC
-                    uint32_t    *ip,                   // WR IP
-                    uint32_t    *nBadStatus,           // # of bad status incidents
-                    uint32_t    *nBadState,            // # of bad state incidents
-                    uint64_t    *tDiag,                // time, when diag data was reset
-                    uint64_t    *tS0,                  // time, when entering S0 state (firmware boot)
-                    uint32_t    *nTransfer,            // # of transfers                                ; PSM: # phase shifts SIS18
-                    uint32_t    *nInjection,           // # of injection within ongoing transfers       ; PSM: # phase shifts ESR, CRYRING
-                    uint32_t    *statTrans,            // status bits of transfer (application specific); PSM: # phase shifts SIS100
-                    uint32_t    *nLate,                // number of messages that could not be delivered in time
-                    uint32_t    *offsDone,             // offset event deadline to time when we are done [ns]
-                    uint32_t    *comLatency,           // latency for messages received from via ECA (tDeadline - tNow)) [ns]
-                    uint32_t    *usedSize,             // used size of shared memory
-                    int         printFlag              // '1' print information to stdout
+// read (and print) diagnostic data, returns eb_status, ABI compatibiliy wrapper
+int comlib_readDiag(eb_device_t device,                // Etherbone device                                                                                                                              
+                    uint64_t    *statusArray,          // array with status bits                                                                                                                        
+                    uint32_t    *state,                // state                                                                                                                                         
+                    uint32_t    *version,              // firmware version                                                                                                                              
+                    uint64_t    *mac,                  // WR MAC                                                                                                                                        
+                    uint32_t    *ip,                   // WR IP                                                                                                                                         
+                    uint32_t    *nBadStatus,           // # of bad status incidents                                                                                                                     
+                    uint32_t    *nBadState,            // # of bad state incidents                                                                                                                      
+                    uint64_t    *tDiag,                // time, when diag data was reset                                                                                                                
+                    uint64_t    *tS0,                  // time, when entering S0 state (firmware boot)                                                                                                  
+                    uint32_t    *nTransfer,            // # of transfers                                ; PSM: # phase shifts SIS18                                                                     
+                    uint32_t    *nInjection,           // # of injection within ongoing transfers       ; PSM: # phase shifts ESR, CRYRING                                                              
+                    uint32_t    *statTrans,            // status bits of transfer (application specific); PSM: # phase shifts SIS100                                                                    
+                    uint32_t    *nLate,                // number of messages that could not be delivered in time                                                                                        
+                    uint32_t    *offsDone,             // offset event deadline to time when we are done [ns]                                                                                           
+                    uint32_t    *comLatency,           // latency for messages received from via ECA (tDeadline - tNow)) [ns]                                                                           
+                    uint32_t    *usedSize,             // used size of shared memory                                                                                                                    
+                    int         printFlag              // '1' print information to stdout                                                                                                               
                     );
 
-// prints diagnostic data
-void comlib_printDiag(uint64_t  statusArray,           // array with status bits
-                      uint32_t  state,                 // state
-                      uint32_t  version,               // firmware version
-                      uint64_t  mac,                   // WR MAC
-                      uint32_t  ip,                    // WR IP
-                      uint32_t  nBadStatus,            // # of bad status incidents
-                      uint32_t  nBadState,             // # of bad state incidents
-                      uint64_t  tDiag,                 // time, when diag data was reset
-                      uint64_t  tS0,                   // time, when entering S0 state (firmware boot)
-                      uint32_t  nTransfer,             // # of transfers
-                      uint32_t  nInjection,            // # of injection within ongoing transfers
-                      uint32_t  statTrans,             // status bits of transfer (application specific)
-                      uint32_t  nLate,                 // number of messages that could not be delivered in time
-                      uint32_t  offsDone,              // offset event deadline to time when we are done [ns]
-                      uint32_t  comLatency,            // latency for messages received from via ECA (tDeadline - tNow)) [ns]
-                      uint32_t  usedSize               // used size of shared memory
+// read (and print) diagnostic data, returns eb_status, new routine
+int comlib_readDiag2(eb_device_t   device,             // Etherbone device
+                     uint32_t      *state,             // state
+                     uint32_t      *version,           // firmware version
+                     uint64_t      *statusArray,       // array with status bits
+                     comlib_diag_t *diagData,          // diagnostic data
+                     int            printFlag          // '1' print information to stdout
+                    );
+
+// prints diagnostic data, ABI compatibiliy wrapper
+void comlib_printDiag(uint64_t  statusArray,           // array with status bits                                                                                                                        
+                      uint32_t  state,                 // state                                                                                                                                         
+                      uint32_t  version,               // firmware version                                                                                                                              
+                      uint64_t  mac,                   // WR MAC                                                                                                                                        
+                      uint32_t  ip,                    // WR IP                                                                                                                                         
+                      uint32_t  nBadStatus,            // # of bad status incidents                                                                                                                     
+                      uint32_t  nBadState,             // # of bad state incidents                                                                                                                      
+                      uint64_t  tDiag,                 // time, when diag data was reset                                                                                                                
+                      uint64_t  tS0,                   // time, when entering S0 state (firmware boot)                                                                                                  
+                      uint32_t  nTransfer,             // # of transfers                                                                                                                                
+                      uint32_t  nInjection,            // # of injection within ongoing transfers                                                                                                       
+                      uint32_t  statTrans,             // status bits of transfer (application specific)                                                                                                
+                      uint32_t  nLate,                 // number of messages that could not be delivered in time                                                                                        
+                      uint32_t  offsDone,              // offset event deadline to time when we are done [ns]                                                                                           
+                      uint32_t  comLatency,            // latency for messages received from via ECA (tDeadline - tNow)) [ns]                                                                           
+                      uint32_t  usedSize               // used size of shared memory                                                                                                                    
                       );
+
+// prints diagnostic data, new routine
+void comlib_printDiag2(uint32_t      state,            // state
+                       uint32_t      version,          // firmware version
+                       uint64_t      statusArray,      // array with status bits
+                       comlib_diag_t diagData          // diagnostic data
+                       );
 
 // open Etherbone connection to ECA queue
 uint32_t comlib_ecaq_open(const char* devName,         // EB device name such as dev/wbm0
@@ -119,7 +168,7 @@ uint32_t comlib_ecaq_open(const char* devName,         // EB device name such as
 uint32_t comlib_ecaq_close(eb_device_t device          // EB device
                            );
 
-// directly reads messages from an ECA queue via Etherbone(not via saftlib)
+// directly reads messages from an ECA queue via Etherbone (not via saftlib), compatibility wrapper
 uint32_t comlib_wait4ECAEvent(uint32_t     timeout_ms, // timeout [ms]
                               eb_device_t  device,     // EB device 
                               eb_address_t ecaq_base,  // EB address
@@ -134,9 +183,29 @@ uint32_t comlib_wait4ECAEvent(uint32_t     timeout_ms, // timeout [ms]
                               uint32_t     *isDelayed
                               );
 
+
+// directly reads messages from an ECA queue via Etherbone (not via saftlib), compatibility wrapper
+uint32_t comlib_wait4ECAEvent2(uint32_t     timeout_ms, // timeout [ms]
+                               eb_device_t  device,     // EB device 
+                               eb_address_t ecaq_base,  // EB address
+                               uint32_t     *tag,       // tag
+                               uint64_t     *deadline,  // messages deadline
+                               uint64_t     *evtId,     // EvtId
+                               uint64_t     *param,     // parameter field
+                               uint32_t     *tef,       // TEF field
+                               uint32_t     *isLate,    // flags ...
+                               uint32_t     *isEarly,
+                               uint32_t     *isConflict,
+                               uint32_t     *isDelayed,
+                               uint32_t     *isSlow,    // flag, our code is slow and missses the deadline
+                               uint32_t     *offsSlow,  // 'slowness'
+                               uint32_t     *comLatency // communication latency
+                               );
+
 // converts half precision float to single precision float
 float comlib_half2float(uint16_t h                     // half precision float
                         );
+
 // converts single precision float to half precision float
 uint16_t comlib_float2half(float f                     // single precision float
                            );

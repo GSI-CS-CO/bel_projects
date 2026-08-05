@@ -1,15 +1,19 @@
-# yocto; temporarily disabled
-#SERVICEA=b2b-servsys-int-sis18-kickext.service
-#cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
-#systemctl daemon-reload
-#
-#systemctl start $SERVICEA
+# yocto
+SERVICEA=ftdimcp-pro-esr-kickext.service
+SERVICEB=ftdimcp-pro-esr-kickinj.service
+cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
+cp -a $MOUNTPOINT/systemd/$SERVICEB /lib/systemd/system
+systemctl daemon-reload
+
+systemctl start $SERVICEA
+sleep 2
+systemctl start $SERVICEB
 
 # hack for acc7
-export DIM_DNS_NODE=asl105
-
-ftdimcp-ctl 0 -d b2b_pro_esr-kse -a 0x60 -l 51.5 &
-
-sleep 2
-
-ftdimcp-ctl 1 -d b2b_pro_esr-ksi -l 52.5 &
+#export DIM_DNS_NODE=asl105
+#
+#ftdimcp-ctl 0 -d b2b_pro_esr-kse -a 0x60 -l 51.5 &
+#
+#sleep 2
+#
+#ftdimcp-ctl 1 -d b2b_pro_esr-ksi -l 52.5 &

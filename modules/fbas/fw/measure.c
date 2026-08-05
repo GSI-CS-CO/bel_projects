@@ -55,6 +55,9 @@ static struct outlierStat_s outlierStat[N_MSR_ITEMS] = {
 static msrSumStats_t sumStats[N_MSR_ITEMS];  // buffer for summary statistics
 static msrCnt_t      cnt[N_MSR_CNT];         // event and action counters
 
+#define MAX_ACTIONS 8                        // max number of actions that can be handled in the main loop
+static uint32_t actionCnt[MAX_ACTIONS] = {0};// number of actions handled in the main loop
+
 /**
  * \brief Count events
  *
@@ -84,6 +87,47 @@ uint32_t measureSetCounter(unsigned name, uint32_t value)
 
   return cnt[name].val;
 }
+
+/**
+ * \brief Measure the action handler rate
+ *
+ * \param cnt Number of actions handled in the main loop
+ *
+ * Action handler rate is the number of actions handled
+ * in the single main loop. All rates higher than
+ * expected threshold are treated as invalid.
+ *
+ */
+void measureActionRate(unsigned cnt)
+{
+  if (!cnt)             // ignore zero count
+    return;
+
+  if (cnt < MAX_ACTIONS)
+    actionCnt[cnt]++;   // expected rate
+  else
+    actionCnt[0]++;     // invalid (higher than expected)
+}
+
+/**
+ * \brief Print the action handler rate
+ */
+void measureExportActionRate(uint32_t* base) {
+
+  DBPRINT2("actions: ");
+
+  for (int i = 0; i < MAX_ACTIONS; i++) {
+    if (actionCnt[i])
+      DBPRINT2("%d: %d, ", i, actionCnt[i]);
+
+    *(base + i) = actionCnt[i];  // store to the shared memory
+
+    actionCnt[i] = 0;  // reset counter after read-out
+  }
+
+  DBPRINT2("\n");
+}
+
 
 /**
  * \brief calculate summary statistics
@@ -207,22 +251,36 @@ void measureExportSummary(msrItem_t item, uint32_t* base, uint32_t offset) {
 /**
  * \brief Clear the summary statistics
  *
+ * \param item    measured item
  * \param verbose verbosity
  *
  * \return none
 */
-void measureClearSummary(verbosity_t verbose) {
-  msrItem_t item;
+void measureClearSummary(msrItem_t item, verbosity_t verbose) {
+  msrItem_t firstItem;
+  msrItem_t lastItem;
 
-  for (item = 0; item < N_MSR_ITEMS; ++item) {
-    memset(&sumStats[item], 0, sizeof(msrSumStats_t));
-    outlierStat[item].cnt = 0;
+  if (item == N_MSR_ITEMS) { // all items
+    firstItem = 0;
+    lastItem = N_MSR_ITEMS;
+  }
+  else if (item < N_MSR_ITEMS) { // chosen item
+    firstItem = item;
+    lastItem = item;
+  }
+  else {
+    return;
+  }
+
+  for (msrItem_t i = firstItem; i < lastItem; ++i) {
+    memset(&sumStats[i], 0, sizeof(msrSumStats_t));
+    outlierStat[i].cnt = 0;
 
     if (verbose)
-      // implement in 2 calls, otherwise 'max' has garbage
-      DBPRINT2("%d @0x%p ", item, &sumStats[item]);
+      // print in 2 calls, otherwise 'max' has garbage
+      DBPRINT2("%d @0x%p ", i, &sumStats[i]);
       DBPRINT2("avg=%llu min=%lli max=%llu val=%lu all=%lu\n",
-        sumStats[item].avg, sumStats[item].min, sumStats[item].max,
-        sumStats[item].cntValid, sumStats[item].cntTotal);
+        sumStats[i].avg, sumStats[i].min, sumStats[i].max,
+        sumStats[i].cntValid, sumStats[i].cntTotal);
   }
 }

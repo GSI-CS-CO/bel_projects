@@ -6,6 +6,9 @@
  *  version : 24-February-2021, 14-May-2020
  *
  *  LM32 firmware for SCU bus scanner
+ *  Compilation: make TARGET=sb_scan
+ *  Load: eb-fwload dev/wbm0 u 0 sb_scan.scucontrol.bin
+ *  Scan slaves: eb-write dev/wbm0 <cmd_buf> 0x20
  *
  * -------------------------------------------------------------------------------------------
  * License Agreement for this software:
@@ -146,6 +149,9 @@ status_t probeSbSlave(volatile uint16_t* pMaster, uint16_t sysId, uint16_t grpId
 
       DBPRINT1("sb_scan: slot=%d, sys=0x%x, grp=0x%x detected\n",
           slot, sysId, grpId);
+
+      // base address of the current slot
+      DBPRINT1("\t base adr=0x%08x\n", (pMaster + (slot << 16)));
 
       // standard register values of a chosen SCU bus slave
       u16val  = *(pMaster + (slot << 16) + SBS_SLAVE_ID); // get slave ID

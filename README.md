@@ -23,6 +23,7 @@ GSI Timing Gateware and Tools
     - [Tool qmegawiz](#tool-qmegawiz)
     - [Tool qsys-generate](#tool-qsys-generate)
     - [Permission denied](#permission-denied)
+    - [Undefined entity](#undefined-entity)
   - [Build Flow](#build-flow)
     - [Required Packages](#required-packages)
     - [Library libmpfr](#library-libmpfr)
@@ -239,7 +240,7 @@ export QSYS_ROOTDIR=$QUARTUS/sopc_builder/bin
 export PATH=$PATH:$QUARTUS_ROOTDIR:$QSYS_ROOTDIR
 ```
 
-Error: (293007): Current module quartus_sh ended unexpectedly. Verify that you have sufficient memory available to compile your design.
+Error: (293007) Current module quartus_sh ended unexpectedly. Verify that you have sufficient memory available to compile your design.
 
 Solution: Use the right Quartus version for your project.
 
@@ -248,6 +249,12 @@ Solution: Use the right Quartus version for your project.
 Error: /bin/sh: 1: cannot create /ramsize_pkg.vhd: Permission denied
 
 Solution: Check all your (changed) Manifest.py files. After fixing your Manifest.py files, it's a good idea to run `make <target>-clean`.
+
+### Undefined entity
+
+Error: (12006) Node instance "X" instantiates undefined entity "single_region"/"global_region". Ensure that required library paths are specified correctly, define the specified entity.
+
+Solution: Install x11vnc `sudo apt-get install -y x11vnc` and clone the repository again or clean up manually.
 
 ## Build Flow
 

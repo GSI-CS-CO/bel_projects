@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 14-feb-2025
+ *  version : 09-jan-2026
  *
  * publishes raw data of the b2b system
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000807
+#define B2B_SERV_RAW_VERSION 0x000812
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -85,21 +85,23 @@ static const char* program;
 double    no_link_dbl   = NAN;          // indicates "no link" for missing DIM services of type double
 
 // services published
-char      disVersion[DIMCHARSIZE];
-char      disState[DIMCHARSIZE];
-char      disHostname[DIMCHARSIZE];
-uint64_t  disStatus;
-uint32_t  disNTransfer;
-setval_t  disSetval[B2B_NSID];
-getval_t  disGetval[B2B_NSID];
+char          disHostname[DIMCHARSIZE];
+char          disState[DIMCHARSIZE];
+char          disVersion[DIMCHARSIZE];
+uint64_t      disStatusArray     = 0x0;
+comlib_diag_t disDiagData; 
+setval_t      disSetval[B2B_NSID];
+getval_t      disGetval[B2B_NSID];
 
-uint32_t  disVersionId      = 0;
-uint32_t  disStateId        = 0;
-uint32_t  disHostnameId     = 0;
-uint32_t  disStatusId       = 0;
-uint32_t  disNTransferId    = 0;
-uint32_t  disSetvalId[B2B_NSID];
-uint32_t  disGetvalId[B2B_NSID];
+uint32_t      disHostnameId      = 0;
+uint32_t      disStateId         = 0;
+uint32_t      disVersionId       = 0;
+uint32_t      disStatusArrayId   = 0;
+uint32_t      disDiagDataId      = 0;
+uint32_t      disSetvalId[B2B_NSID];
+uint32_t      disGetvalId[B2B_NSID];
+
+int           flagDiagDataClear;
 
 // services subscribed
 // 
@@ -198,7 +200,7 @@ void initGetval(getval_t *getval)
 } // initGetval
 
 
-// update set value
+// set value
 void disUpdateSetval(uint32_t sid, uint64_t tStart, setval_t setval)
 {
   uint32_t secs;
@@ -210,9 +212,6 @@ void disUpdateSetval(uint32_t sid, uint64_t tStart, setval_t setval)
   disSetval[sid] = setval;
   dis_set_timestamp(disSetvalId[sid], secs, msecs);
   dis_update_service(disSetvalId[sid]);
-  
-  disNTransfer++;
-  dis_update_service(disNTransferId);
 } // disUpdateSetval
  
 
@@ -226,8 +225,12 @@ void disUpdateSetval(uint32_t sid, uint64_t tStart, setval_t setval)
   msecs  /= 1000000;
   
   disGetval[sid] = getval;
+  disDiagData.nTransfer++;
+  
   dis_set_timestamp(disGetvalId[sid], secs, msecs);
   dis_update_service(disGetvalId[sid]);
+  dis_update_service(disStatusArrayId);
+  dis_update_service(disDiagDataId);  
 } // disUpdateGetval
 
 
@@ -433,11 +436,34 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
 class RecvCommand : public DimCommand
 {
   int  reset;
-  void commandHandler() {disNTransfer = 0;}
+  void commandHandler() {
+    flagDiagDataClear = 1;
+  } // commandHandler
 public :
   RecvCommand(const char *name) : DimCommand(name,"C"){}
 }; 
 
+
+void clearData()
+{
+    disStatusArray              = 0x0;
+    disDiagData.nTransfer       = 0;
+    disDiagData.nLate           = 0;         
+    disDiagData.nEarly          = 0;         
+    disDiagData.nConflict       = 0;         
+    disDiagData.nDelayed        = 0;         
+    disDiagData.nSlow           = 0;         
+    disDiagData.offsSlow        = 0;         
+    disDiagData.offsSlowMax     = 0;         
+    disDiagData.offsSlowMin     = 0xffffffff;
+    disDiagData.comLatency      = 0;         
+    disDiagData.comLatencyMax   = 0;         
+    disDiagData.comLatencyMin   = 0xffffffff;
+    disDiagData.offsDone        = 0;         
+    disDiagData.offsDoneMax     = 0;         
+    disDiagData.offsDoneMin     = 0xffffffff;
+    disDiagData.tDiag           = comlib_getSysTime();
+} // clearData
 
 // add all dim services
 void disAddServices(char *prefix)
@@ -448,21 +474,20 @@ void disAddServices(char *prefix)
   // 'generic' services
   sprintf(name, "%s-raw_version_fw", prefix);
   sprintf(disVersion, "%s",  b2b_version_text(B2B_SERV_RAW_VERSION));
-  disVersionId   = dis_add_service(name, "C", disVersion, 8, 0 , 0);
+  disVersionId       = dis_add_service(name, "C",              disVersion,      8,                      0, 0);
 
-  sprintf(name, "%s-raw_state", prefix);
+  sprintf(name, "%s-raw_state",      prefix);
   sprintf(disState, "%s", b2b_state_text(COMMON_STATE_OPREADY));
-  disStateId      = dis_add_service(name, "C", disState, 10, 0 , 0);
+  disStateId         = dis_add_service(name, "C",              disState,        10,                     0, 0);
 
-  sprintf(name, "%s-raw_hostname", prefix);
-  disHostnameId   = dis_add_service(name, "C", disHostname, DIMCHARSIZE, 0 , 0);
+  sprintf(name, "%s-raw_hostname",   prefix);
+  disHostnameId      = dis_add_service(name, "C",              disHostname,     DIMCHARSIZE,            0, 0);
 
-  sprintf(name, "%s-raw_status", prefix);
-  disStatus       = 0x1;   
-  disStatusId     = dis_add_service(name, "X", &disStatus, sizeof(disStatus), 0 , 0);
+  sprintf(name, "%s-raw_status",     prefix);
+  disStatusArrayId = dis_add_service(name, "X",                &disStatusArray, sizeof(disStatusArray), 0, 0);
 
-  sprintf(name, "%s-raw_ntransfer", prefix);
-  disNTransferId  = dis_add_service(name, "I", &disNTransfer, sizeof(disNTransfer), 0 , 0);
+  sprintf(name, "%s-raw_comlib_diag",    prefix);
+  disDiagDataId    = dis_add_service(name, "X:1;I:3;X:2;I:18", &disDiagData,    sizeof(disDiagData),    0, 0);
 
   // set values
   for (i=0; i< B2B_NSID; i++) {
@@ -569,9 +594,8 @@ int main(int argc, char** argv)
   char     kickerPrefix[NAMELEN*2];
   char     disName[DIMMAXSIZE];
 
-
-  reqExtRing  = SIS18_RING;
-
+  reqExtRing         = SIS18_RING;
+  flagDiagDataClear  = 1;
 
   // parse for options
   program = argv[0];
@@ -644,6 +668,8 @@ int main(int argc, char** argv)
     initSetval(&(disSetval[i]));
     initGetval(&(disGetval[i]));
   } // for i
+  disDiagData.tDiag = comlib_getSysTime();
+  disDiagData.tS0   = comlib_getSysTime();
   
   // create service and start server
   sprintf(prefix, "b2b_%s_%s", envName, ringName);
@@ -1001,38 +1027,74 @@ int main(int argc, char** argv)
     uint32_t      isEarly;
     uint32_t      isConflict;
     uint32_t      isDelayed;
+    uint32_t      isSlow;
+    uint32_t      offsSlow;
+    uint32_t      comLatency;
     saftlib::Time deadline_t;
     uint32_t      ecaStatus;
     eb_status_t   ebStatus;
     uint32_t      qIdx = 0;
     uint64_t      t1, t2;
     uint32_t      tmp32;
+    uint64_t      startTime;
 
     sprintf(ebPath, "%s", receiver->getEtherbonePath().c_str());
     if ((ebStatus = comlib_ecaq_open(ebPath, qIdx, &device, &ecaq_base)) != EB_OK) {
       std::cerr << program << ": can't open lm32 ECA queue" << std::endl;
       exit(1);
     } // if ebStatus
-    
+
     while(true) {
+      if (flagDiagDataClear) {
+        clearData();
+        flagDiagDataClear = 0;
+      } // if flagdiagdataclear
+
       //      saftlib::wait_for_signal();
       t1 = comlib_getSysTime();
-      ecaStatus = comlib_wait4ECAEvent(1, device, ecaq_base, &recTag, &deadline, &evtId, &param, &tef, &isLate, &isEarly, &isConflict, &isDelayed);
+      ecaStatus = comlib_wait4ECAEvent2(1, device, ecaq_base, &recTag, &deadline, &evtId, &param, &tef, &isLate, &isEarly, &isConflict, &isDelayed, &isSlow, &offsSlow, &comLatency);
       t2 = comlib_getSysTime();
       tmp32 = t2 - t1; 
       if (tmp32 > 10000000) printf("%s: reading from ECA Q took %u [us]\n", program, tmp32 / 1000);
-      if (ecaStatus == COMMON_STATUS_EB) { printf("eca EB error, device %x, address %x\n", device, (uint32_t)ecaq_base);}
+      if (ecaStatus == COMMON_STATUS_EB) {
+        printf("eca EB error, device %x, address %x\n", device, (uint32_t)ecaq_base);
+        disStatusArray = disStatusArray | (0x1 << ecaStatus);   
+      } // if eca STATUS_EB
       if (ecaStatus == COMMON_STATUS_OK) {
+        startTime  = t2;
         deadline_t = saftlib::makeTimeTAI(deadline);
         //t2         = comlib_getSysTime(); printf("msg: tag %x, id %lx, tef %lx, dtu %lu\n", recTag, evtId, tef, (uint32_t)(t2 -t1));
         timingMessage(recTag, deadline_t, evtId, param, tef, isLate, isEarly, isConflict, isDelayed);
-      }
+
+        // data get updated with each updateGetVal
+        disStatusArray         = disStatusArray | (0x1 << ecaStatus);
+        disDiagData.comLatency = comLatency;
+        disDiagData.offsDone   = (uint32_t)(comlib_getSysTime() - startTime);
+
+        if (isLate)     disDiagData.nLate++;
+        if (isEarly)    disDiagData.nEarly++;
+        if (isConflict) disDiagData.nConflict++;
+        if (isDelayed)  disDiagData.nDelayed++;
+        if (isSlow) {
+          disDiagData.nSlow++;           
+          disDiagData.offsSlow = offsSlow;   
+          if (offsSlow   < disDiagData.offsSlowMin)   disDiagData.offsSlowMin            = offsSlow;
+          if (offsSlow   > disDiagData.offsSlowMax)   disDiagData.offsSlowMax            = offsSlow;
+        } // if flagIsSlow
+
+        if (comLatency            > disDiagData.comLatencyMax) disDiagData.comLatencyMax = comLatency;
+        if (comLatency            < disDiagData.comLatencyMin) disDiagData.comLatencyMin = comLatency;
+        if (disDiagData.offsDone  > disDiagData.offsDoneMax)   disDiagData.offsDoneMax   = disDiagData.offsDone;
+        if (disDiagData.offsDone  < disDiagData.offsDoneMin)   disDiagData.offsDoneMin   = disDiagData.offsDone;
+      } // if eca STATUS_OK
     } // while true
+    
     comlib_ecaq_close(device);
     
   } // try
   catch (const saftbus::Error& error) {
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
+
   }
   
   return 0;

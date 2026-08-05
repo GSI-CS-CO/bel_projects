@@ -1,13 +1,12 @@
-
 # PREFIX  controls where programs and libraries get installed
 # Note: during compile (all), PREFIX must be set to the final installation path
 # Set SYSENV to the target system environment (YOCTO, ACC7, ACC9, OPT)
 # Example build:
 #   'make clean'                                                 
-#   'make ENV=int SYSENV=ACC7 PREFIX= all'                                             (hack: leave PREFIX empty for SCU path)
+#   'make ENV=int SYSENV=YOCTO PREFIX= all'                                             (hack: leave PREFIX empty for SCU path)
 # Example deploy (for ASL only):
-#   'make PREFIX= SYSENV=ACC7 STAGING=/common/export/timing-rte/b2b-dev deploy'        (hack: leave PREFIX empty for SCU path)
-#   'make PREFIX= SYSENV=ACC7 STAGING=/common/export/timing-rte/b2b deploy'            (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= SYSENV=YOCTO STAGING=/common/export/timing-rte/b2b-dev-yocto deploy'  (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= SYSENV=YOCTO STAGING=/common/export/timing-rte/b2b-yocto deploy'      (hack: leave PREFIX empty for SCU path)
 
 # install
 PREFIX      ?= /usr/local
@@ -105,6 +104,7 @@ deploy:
 	cp $(SW)/b2b-archiver $(STAGING)$(ARCH)$(PREFIX)/usr/bin            # '/usr' is a hack
 	cp $(SW)/b2b-jitter-check $(STAGING)$(ARCH)$(PREFIX)/usr/bin        # '/usr' is a hack
 	cp $(SW)/b2b-serv-kickdiag $(STAGING)$(ARCH)$(PREFIX)/usr/bin       # '/usr' is a hack
+	cp $(SW)/ecpu-mon $(STAGING)$(ARCH)$(PREFIX)/usr/bin                # '/usr' is a hack
 	cp $(FW)/*.bin $(STAGING)/firmware                   
 #	cp $(SW)/b2b-pname-info $(STAGING)$(ARCH)$(PREFIX)/usr/bin          # '/usr' is a hack; this is special and works only on ASL
 

@@ -1,9 +1,9 @@
-/********************************************************************************************
+/********************************************************************************************en
  *  wr-f50.c
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 26-Aug-2025
+ *  version : 02-jan-2026
  *
  *  firmware required for the 50 Hz mains -> WR gateway
  *  
@@ -41,7 +41,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define WRF50_FW_VERSION      0x000102                                  // make this consistent with makefile
+#define WRF50_FW_VERSION      0x000109                                  // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -117,11 +117,19 @@ uint32_t getNLocked;
 uint32_t getNCycles;
 uint32_t getNSent;
 uint32_t getNEvtsLate;
-uint32_t getOffsDone;
-int32_t  getComLatency;
-
-int32_t  maxComLatency;
-uint32_t maxOffsDone;
+uint32_t getNEvtsEarly;
+uint32_t getNEvtsConflict;
+uint32_t getNEvtsDelayed;
+uint32_t getNEvtsSlow;
+uint32_t getOffsSlow;                      // offset for slow messages [ns]
+uint32_t getOffsSlowMax;                   // offset for slow messages [ns]; max
+uint32_t getOffsSlowMin;                   // offset for slow messages [ns]; min
+uint32_t getComLatency;                    // latency for getting the messages from the ECA [ns]
+uint32_t getComLatencyMax;                 // latency for getting the messages from the ECA [ns]; max
+uint32_t getComLatencyMin;                 // latency for getting the messages from the ECA [ns]; min
+uint32_t getOffsDone;                      // offset deadline WR message to time when we are done [ns]
+uint32_t getOffsDoneMax;                   // offset deadline WR message to time when we are done [ns]; max
+uint32_t getOffsDoneMin;                   // offset deadline WR message to time when we are done [ns]; min
 
 uint64_t statusArray;                      // all status infos are ORed bit-wise into statusArray, statusArray is then published
 uint32_t nEvtsLate;                        // # of late messages
@@ -233,32 +241,39 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
 // clear project specific diagnostics
 void extern_clearDiag()
 {
-  getTMainsAct    = 0x0;    
-  getTDMAct       = 0x0;       
-  getTDMSet       = 0x0;       
-  getOffsDMAct    = 0x0;    
-  getOffsDMMin    = 0x7fffffff;
-  getOffsDMMax    = 0x80000000;
-  getDTDMAct      = 0x00000000;
-  getDTDMMin      = 0x7fffffff;
-  getDTDMMax      = 0x80000000;
-  getOffsMainsAct = 0x0; 
-  getOffsMainsMin = 0x7fffffff;
-  getOffsMainsMax = 0x80000000;
-  getLockState    = WRF50_SLOCK_UNKWN;
-  getLockDate     = 0x0;
-  getNLocked      = 0x0;
+  getTMainsAct     = 0x0;    
+  getTDMAct        = 0x0;       
+  getTDMSet        = 0x0;       
+  getOffsDMAct     = 0x0;    
+  getOffsDMMin     = 0x7fffffff;
+  getOffsDMMax     = 0x80000000;
+  getDTDMAct       = 0x00000000;
+  getDTDMMin       = 0x7fffffff;
+  getDTDMMax       = 0x80000000;
+  getOffsMainsAct  = 0x0; 
+  getOffsMainsMin  = 0x7fffffff;
+  getOffsMainsMax  = 0x80000000;
+  getLockState     = WRF50_SLOCK_UNKWN;
+  getLockDate      = 0x0;
+  getNLocked       = 0x0;
   if (getNCycles > WRF50_N_STAMPS) getNCycles = WRF50_N_STAMPS;
-  getNSent        = 0x0;
-  getNEvtsLate    = 0x0;
-  getOffsDone     = 0x0;
-  getComLatency   = 0x0;
-  maxOffsDone     = 0x0;
-  maxComLatency   = 0x0;
+  getNSent         = 0x0;
+  getNEvtsLate     = 0x0;
+  getNEvtsEarly    = 0x0;
+  getNEvtsConflict = 0x0;
+  getNEvtsSlow     = 0x0;
+  getOffsSlow      = 0x0;
+  getOffsSlowMax   = 0x0;
+  getOffsSlowMin   = 0xffffffff;
+  getComLatency    = 0x0;
+  getComLatencyMax = 0x0;
+  getComLatencyMin = 0xffffffff; 
+  getOffsDone      = 0x0;
+  getOffsDoneMax   = 0x0;
+  getOffsDoneMin   = 0xffffffff;
 
-
-  statusArray     = 0x0;
-  nEvtsLate       = 0x0;
+  statusArray      = 0x0;
+  nEvtsLate        = 0x0;
 } // extern_clearDiag 
 
 
@@ -483,6 +498,9 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint32_t flagIsEarly;                                       // flag 'early'
   uint32_t flagIsConflict;                                    // flag 'conflict'
   uint32_t flagIsDelayed;                                     // flag 'delayed'
+  uint32_t flagIsSlow;                                        // flag 'slow' from 'wait4eca'
+  uint32_t offsSlowAct;                                       // offset slow event actual
+  uint32_t comLatencyAct;                                     // communication latency actual
   uint32_t ecaAction;                                         // action triggered by event received from ECA
   uint64_t recDeadline;                                       // deadline received from ECA
   uint64_t reqDeadline;                                       // deadline requested by sender
@@ -504,17 +522,17 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint64_t tmpEvtNo;
   uint32_t TDMExcess;                                         // this value is set at DM: excess = TDMset -  WRF50_CYCLELEN_MIN;
 
-  uint32_t tmpOffsDone;                                       // temporary variable
-  
-  
+  uint64_t startTime;
+
   status    = actStatus;
 
-  ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
+  ecaAction = fwlib_wait4ECAEvent2(COMMON_ECATIMEOUT * 1000, &recDeadline, &recEvtId, &recParam, &recTEF,
+                                   &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed, &flagIsSlow, &offsSlowAct, &comLatencyAct);
+  startTime = getSysTime();
 
   switch (ecaAction) {
     // received WR timing message from Data Master (cycle start)
     case WRF50_ECADO_F50_DM:
-      getComLatency = (int32_t)(getSysTime() - recDeadline);
       recGid        = (uint32_t)((recEvtId >> 48) & 0x00000fff);
       recEvtNo      = (uint32_t)((recEvtId >> 36) & 0x00000fff);
       
@@ -547,7 +565,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     // as this happens with a posttrigger of 500us, this should always (chk ?) happen after receiving the WR timing message from Data Master  
     case WRF50_ECADO_F50_TLU:
       // basic checks
-      getComLatency = (int32_t)(getSysTime() - recDeadline);
       recGid        = (uint32_t)((recEvtId >> 48) & 0x00000fff);
       recEvtNo      = (uint32_t)((recEvtId >> 36) & 0x00000fff);
       if (recGid != PZU_F50) return WRF50_STATUS_BADSETTING;
@@ -654,7 +671,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
       
       getNSent++;
-      getOffsDone    = (uint32_t)(getSysTime() - recDeadline);
                                             
       break;
     default :                                                         // flush ECA Queue
@@ -662,8 +678,33 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   } // switch ecaAction
 
   // check for late event
-  if ((status == COMMON_STATUS_OK) && flagIsLate) status = WRF50_STATUS_LATEMESSAGE;
+  if ((status == COMMON_STATUS_OK) && flagIsLate) {
+    status = WRF50_STATUS_LATEMESSAGE;
+    nEvtsLate++;
+  } // if flagIslate
+
+  // check for other statistics
+  if (ecaAction) {
+    getComLatency = comLatencyAct;
+    getOffsDone   = getSysTime() - startTime;
+
   
+    if (flagIsEarly)    getNEvtsEarly++;
+    if (flagIsConflict) getNEvtsConflict++;
+    if (flagIsDelayed)  getNEvtsDelayed++;
+    if (flagIsSlow) {
+      getNEvtsSlow++;
+      getOffsSlow    = offsSlowAct;
+      if (getOffsSlow   > getOffsSlowMax)   getOffsSlowMax   = getOffsSlow;
+      if (getOffsSlow   < getOffsSlowMin)   getOffsSlowMin   = getOffsSlow;
+    } // if flag slow
+
+    if (getComLatency > getComLatencyMax)   getComLatencyMax = getComLatency;
+    if (getOffsDone   > getOffsDoneMax)     getOffsDoneMax   = getOffsDone;
+    if (getComLatency < getComLatencyMin)   getComLatencyMin = getComLatency;
+    if (getOffsDone   < getOffsDoneMin)     getOffsDoneMin   = getOffsDone;
+  } // if eca action
+     
   // check WR sync state
   if (fwlib_wrCheckSyncState() == COMMON_STATUS_WRBADSYNC) return COMMON_STATUS_WRBADSYNC;
   else                                                     return status;
@@ -728,11 +769,9 @@ int main(void) {
     pubState = actState;
     fwlib_publishState(pubState);
 
-    if (getComLatency > maxComLatency) maxComLatency = getComLatency;
-    if (getOffsDone   > maxOffsDone)   maxOffsDone   = getOffsDone;
-
-    fwlib_publishTransferStatus(0, 0, 0, nEvtsLate, maxOffsDone, maxComLatency);
-    
+    fwlib_publishTransferStatus2(0, 0, 0, getNEvtsLate, getNEvtsEarly, getNEvtsConflict, getNEvtsDelayed, getNEvtsSlow, getOffsSlow, getOffsSlowMax, getOffsSlowMin,
+                                 getComLatency, getComLatencyMax, getComLatencyMin, getOffsDone, getOffsDoneMax, getOffsDoneMin);
+        
     *pSharedGetTMainsAct      = getTMainsAct;
     *pSharedGetTDMAct         = getTDMAct;
     *pSharedGetTDMSet         = getTDMSet;

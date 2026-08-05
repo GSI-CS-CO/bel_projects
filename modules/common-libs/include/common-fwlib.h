@@ -10,7 +10,6 @@ typedef struct{
   uint32_t dps;                                       // uncertainty [ps]
 } b2bt_t;
 
-
 // adjusts ns such, that ps part remains small 
 b2bt_t fwlib_cleanB2bt(b2bt_t t_ps                    // time [ps]
                        );
@@ -54,6 +53,7 @@ uint32_t fwlib_wrCheckSyncState();
 //uint32_t findWREp();
 
 // 1. query ECA for actions, 2. trigger activity, returns ECA action (=tag, a value of '0' is reserved for signaling a timeout
+// ABI compatibility wrapper
 uint32_t fwlib_wait4ECAEvent(uint32_t usTimeout,      // timeout [us]
                              uint64_t *deadline,      // deadline of action
                              uint64_t *evtId,         // event ID
@@ -64,6 +64,22 @@ uint32_t fwlib_wait4ECAEvent(uint32_t usTimeout,      // timeout [us]
                              uint32_t *isConflict,    // flag 'conflict'
                              uint32_t *isDelayed      // flag 'delayed'
                              );
+
+// 1. query ECA for actions, 2. trigger activity, returns ECA action (=tag, a value of '0' is reserved for signaling a timeout
+// new routine
+uint32_t fwlib_wait4ECAEvent2(uint32_t usTimeout,      // timeout [us]
+                              uint64_t *deadline,      // deadline of action
+                              uint64_t *evtId,         // event ID
+                              uint64_t *param,         // parameter field
+                              uint32_t *tef,           // TEF field
+                              uint32_t *isLate,        // eca flag 'late'
+                              uint32_t *isEarly,       // eca flag 'early'
+                              uint32_t *isConflict,    // eca flag 'conflict'
+                              uint32_t *isDelayed,     // eca flag 'delayed
+                              uint32_t *isSlow,        // flag deadline < start wait4eca
+                              uint32_t *offsSlow,      // if 'slow': offset deadline to start wait4eca; else '0'
+                              uint32_t *comLatency     // if 'slow': offset start to stop wait4eca; else deadline to stop wait4eca
+                              );
 
 // wait for MIL event or timeout, returns (error) status
 uint32_t fwlib_wait4MILEvent(uint32_t usTimeout,      // timeout [us]
@@ -121,7 +137,7 @@ void fwlib_publishState(uint32_t state                 // state
 void fwlib_publishStatusArray(uint64_t statusArray     // status array (each bit represents one status information)
                               );
 
-// publish status of ongoing transfer
+// publish status of ongoing transfer, ABI compatibility wrapper
 void fwlib_publishTransferStatus(uint32_t nTransfer,   // # of transfers;                          PSM: # of phase shifts @ SIS18
                                  uint32_t nInject,     // # of injections within current transfer; PSM: # of phase shifts @ ESR or CRYRING
                                  uint32_t transStat,   // status of ongoing transfer;              PSM: # of phase shifts @ SIS100
@@ -129,6 +145,26 @@ void fwlib_publishTransferStatus(uint32_t nTransfer,   // # of transfers;       
                                  uint32_t offsDone,    // offset event deadline to time when we are done [ns]
                                  uint32_t comLatency   // latency for messages received from via ECA (tDeadline - tNow)) [ns]
                                  );
+                              
+// publish status of ongoing transfer, new routine
+void fwlib_publishTransferStatus2(uint32_t nTransfer,      // # of transfers;                          PSM: # of phase shifts @ SIS18
+                                  uint32_t nInject,        // # of injections within current transfer; PSM: # of phase shifts @ ESR or CRYRING
+                                  uint32_t transStat,      // status of ongoing transfer;              PSM: # of phase shifts @ SIS100
+                                  uint32_t nLate,          // number of ECA 'late' incidents                                            
+                                  uint32_t nEarly,         // number of ECA 'early' incidents                                           
+                                  uint32_t nConflict,      // number of ECA 'conflict' incidents                                        
+                                  uint32_t nDelayed,       // number of ECA 'delayed' incidents                                         
+                                  uint32_t nSlow,          // number of incidents, when 'wait4eca' was called after the deadline
+                                  uint32_t offsSlow,       // if 'slow': offset deadline to start wait4eca; else '0'                  
+                                  uint32_t offsSlowMax,    // if 'slow': offset deadline to start wait4eca; else '0'                  
+                                  uint32_t offsSlowMin,    // if 'slow': offset deadline to start wait4eca; else '0'                  
+                                  uint32_t comLatency,     // if 'slow': offset start to stop wait4eca; else deadline to stop wait4eca
+                                  uint32_t comLatencyMax,  // if 'slow': offset start to stop wait4eca; else deadline to stop wait4eca
+                                  uint32_t comLatencyMin,  // if 'slow': offset start to stop wait4eca; else deadline to stop wait4eca
+                                  uint32_t offsDone,       // offset event deadline to time when we are done [ns]
+                                  uint32_t offsDoneMax,    // offset event deadline to time when we are done [ns]
+                                  uint32_t offsDoneMin     // offset event deadline to time when we are done [ns]
+                                  );
 
 // publish number of bad status incidents
 void fwlib_incBadStatusCnt();

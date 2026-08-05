@@ -65,7 +65,7 @@
 	print_fbasdm_status print_fbasdm_pattern \
 	clear_fbasdm load_fbasdm_multi_finite_patterns load_fbasdm_multi_loop_patterns stop_fbasdm_multi_loop_patterns \
 	show_rx_stats show_tx_stats show_fbasdm_result \
-	prepare_fbasdm_broadcast stop_fbasdm_test \
+	stop_fbasdm_test \
 	restart_fbasdm_finite restart_fbasdm_loop \
 	restart_fbasdm_multi_finite restart_fbasdm_multi_loop \
 	restart_fbasdm_multi_msg restart_fbasdm_multi_max_msg restart_fbasdm_multi_max_loop_msg \
@@ -97,6 +97,9 @@ mytest:
 
 setup_tx_rx_nodes:
 	@source setup.sh && setup_fbastx && setup_fbasrx ${fw_rxpci} SENDER_TX 00267b0004da # dev/wbm0 (TX)
+
+setup_tx_node:
+	@source setup.sh && setup_fbastx
 
 disable_tx_node:
 	@source setup.sh && disable_mps $$tx_node_dev
@@ -155,8 +158,7 @@ stop_fbasdm_1_loop_pattern:
 
 show_rx_stats:
 	@echo "RX stats"
-	@echo -n "ECA valid cnt:    "; source setup.sh && eb-read $$rx_node_dev $$addr_eca_vld/4
-	@echo -n "ECA overflow cnt: "; source setup.sh && eb-read $$rx_node_dev $$addr_eca_ovf/4
+	@source setup.sh && result_rx $$rx_node_dev "verbose"
 	@echo
 
 show_tx_stats:
@@ -178,22 +180,21 @@ show_fbasdm_result:
 	@$(eval rx_msg=$(shell source setup.sh && eb-read $$rx_node_dev $$addr_eca_vld/4))
 	@$(eval dm_msg=$(shell source dm.sh && cnt_dm_msg))
 	@source setup.sh && report_two_senders_result ${rx_msg} 0 ${dm_msg}
+	@$(MAKE) show_rx_stats
 
-# used in restart_fbasdm_loop/finite tests
-prepare_fbasdm_broadcast:
-	@$(MAKE) clear_fbasdm
-	@source setup.sh && setup_fbasrx ${fw_rxpci} SENDER_TX 00267b0004dc # dev/wbm1 (DM)
-	@$(MAKE) enable_rx_node
+
+init_fbasrx:
+	@for f in $${sched_files[@]}; do \
+		source dm.sh && filepath="$$patt_loc/$$f" && \
+		source common.sh && get_sender_ids ids $$filepath; \
+	done; \
+	source setup.sh && setup_fbasrx ${fw_rxpci} SENDER_TX $${ids[@]} $$tx_node_id
 
 # used in restart_fbasdm_loop/finite tests
 stop_fbasdm_test:
 	@$(MAKE) disable_rx_node
 	@$(MAKE) print_fbasdm_status
 	@$(MAKE) show_fbasdm_result
-
-# used in restart_two_senders_*
-prepare_two_senders:
-	@source setup.sh && setup_fbastx && setup_fbasrx ${fw_rxpci} SENDER_TX 00267b0004da 00267b0004dc # dev/wbm0 (TX), dev/wbm1 (DM)
 
 # used in restart_two_senders_*
 stop_two_senders:
@@ -220,12 +221,16 @@ continue_basic:
 	@source setup.sh && start_basic
 
 restart_fbasdm_finite:
-	@$(MAKE) prepare_fbasdm_broadcast
+	@$(MAKE) clear_fbasdm
+	@export sched_files="${sched_finite}"; $(MAKE) init_fbasrx
+	@$(MAKE) enable_rx_node
 	@source dm.sh && load_dm_patt ${sched_finite} && start_dm_patt ${pattern_finite}
 	@$(MAKE) stop_fbasdm_test
 
 restart_fbasdm_loop:
-	@$(MAKE) prepare_fbasdm_broadcast
+	@$(MAKE) clear_fbasdm
+	@export sched_files="${sched_loop}"; $(MAKE) init_fbasrx
+	@$(MAKE) enable_rx_node
 	@$(MAKE) start_fbasdm_1_loop_pattern
 	@echo "started DM broadcast, wait for ${sleep_period}" && source setup.sh && wait_print_seconds ${sleep_period}
 	@$(MAKE) stop_fbasdm_1_loop_pattern
@@ -234,9 +239,11 @@ restart_fbasdm_loop:
 # Datamaster sends a set of patterns (timing messages) with the same deadline.
 # Arbitrary number of patterns are sent.
 restart_fbasdm_multi_loop:
-	@$(MAKE) prepare_fbasdm_broadcast
+	@$(MAKE) clear_fbasdm
 	@$(MAKE) load_fbasdm_multi_loop_patterns
 	@$(MAKE) print_fbasdm_pattern
+	@export sched_files="my_mps_loop.dot my_mps_loop1.dot my_mps_loop2.dot my_mps_loop3.dot";  $(MAKE) init_fbasrx
+	@$(MAKE) enable_rx_node
 	@source dm.sh && start_dm_synchron $$cmd_file_start_loop
 	@echo "started DM broadcast, wait for ${sleep_period}" && source setup.sh && wait_print_seconds ${sleep_period}
 	@$(MAKE) stop_fbasdm_multi_loop_patterns
@@ -246,9 +253,11 @@ restart_fbasdm_multi_loop:
 # Datamaster sends a set of patterns (timing messages) with the same deadline.
 # Finite number of patterns are sent.
 restart_fbasdm_multi_finite:
-	@$(MAKE) prepare_fbasdm_broadcast
+	@$(MAKE) clear_fbasdm
 	@$(MAKE) load_fbasdm_multi_finite_patterns
 	@$(MAKE) print_fbasdm_pattern
+	@export sched_files="my_mps_pata.dot my_mps_patb.dot my_mps_patc.dot my_mps_patd.dot";  $(MAKE) init_fbasrx
+	@$(MAKE) enable_rx_node
 	@source dm.sh && start_dm_synchron $$cmd_file_start_finite
 	@echo "started DM broadcast, wait for 1" && source setup.sh && wait_print_seconds 1
 	@$(MAKE) disable_rx_node
@@ -275,7 +284,9 @@ restart_fbasdm_multi_max_loop_msg:
 
 # Datamaster sends a single timing message
 restart_fbasdm_single_msg:
-	@$(MAKE) prepare_fbasdm_broadcast
+	@$(MAKE) clear_fbasdm
+	@export sched_files="${sched_single}"; $(MAKE) init_fbasrx
+	@$(MAKE) enable_rx_node
 	@source dm.sh && load_dm_patt ${sched_single}
 	@$(MAKE) continue_fbasdm_single_msg
 
@@ -292,8 +303,11 @@ continue_fbasdm_single_msg:
 # numbers given in a table) and tx_node_dev (hexadecimal number) against
 # the number of messages received by rx_node_dev (last hexadecimal output).
 # If they match, then test is passed, otherwise test is failed.
-restart_two_senders_loop: clear_fbasdm set_single_msg_per_frame
-	@$(MAKE) prepare_two_senders
+restart_two_senders_loop:
+	@$(MAKE) clear_fbasdm
+	@$(MAKE) set_single_msg_per_frame
+	@export sched_files="${sched_loop}"; export tx_node_id="00267b0004da"; $(MAKE) init_fbasrx
+	@$(MAKE) setup_tx_node
 	@$(MAKE) enable_rx_tx_nodes
 	@$(MAKE) start_fbasdm_1_loop_pattern
 	@echo "started DM/TX transmission, wait for ${sleep_period}" && source setup.sh && wait_print_seconds ${sleep_period}
@@ -302,8 +316,11 @@ restart_two_senders_loop: clear_fbasdm set_single_msg_per_frame
 
 # datamaster sends EB frame with multiple timing messages
 # rx_node_dev is getting started to loose timing messages at transmission period of 180us
-restart_two_senders_multi_loop: clear_fbasdm set_multi_msgs_per_frame
-	@$(MAKE) prepare_two_senders
+restart_two_senders_multi_loop:
+	@$(MAKE) clear_fbasdm
+	@$(MAKE) set_multi_msgs_per_frame
+	@export sched_files="my_mps_loop.dot"; export tx_node_id="00267b0004da"; $(MAKE) init_fbasrx
+	@$(MAKE) setup_tx_node
 	@$(MAKE) enable_rx_tx_nodes
 	@$(MAKE) load_fbasdm_multi_loop_patterns
 	@source dm.sh && start_dm_synchron $$cmd_file_start_loop
@@ -311,22 +328,28 @@ restart_two_senders_multi_loop: clear_fbasdm set_multi_msgs_per_frame
 	@$(MAKE) stop_fbasdm_multi_loop_patterns
 	@$(MAKE) stop_two_senders
 
-restart_two_senders_multi_finite: clear_fbasdm set_multi_msgs_per_frame
-	@$(MAKE) prepare_two_senders
+restart_two_senders_multi_finite:
+	@$(MAKE) clear_fbasdm
+	@$(MAKE) set_multi_msgs_per_frame
+	@export sched_files="my_mps_pata.dot"; export tx_node_id="00267b0004da"; $(MAKE) init_fbasrx
+	@$(MAKE) setup_tx_node
 	@$(MAKE) enable_rx_tx_nodes
 	@$(MAKE) load_fbasdm_multi_finite_patterns
 	@source dm.sh && start_dm_synchron $$cmd_file_start_finite
 	@$(MAKE) stop_two_senders
 
 restart_test_rx_rate:
-	@$(MAKE) prepare_fbasdm_broadcast
-	@source dm.sh && run_pattern ${sched_def} && echo
-	@$(MAKE) show_fbasdm_result
-	@echo -n "Msg delay: " && source setup.sh && result_msg_delay $$rx_node_dev
-
-restart_fbasdm_run_pattern:
 	@$(MAKE) clear_fbasdm
-	@source dm.sh && run_pattern ${sched_def} && echo
+# get the sender IDs by parsing the schedule file, register sender IDs at RX node
+	@export sched_files="${sched_def}"; $(MAKE) init_fbasrx
+	@$(MAKE) enable_rx_node
+	@source dm.sh && run_finite_schedule ${sched_def} && echo
+	@$(MAKE) disable_rx_node
+	@$(MAKE) show_fbasdm_result
+
+restart_fbasdm_run_finite_schedule:
+	@$(MAKE) clear_fbasdm
+	@source dm.sh && run_finite_schedule ${sched_def} && echo
 
 test_ttf_traffic:
-	./measure_ttf_rx_rate.sh -s my_mps_rx_rate_1.dot -f ${fw_rxscu} -m
+	./measure_ttf_rx_rate.sh -s ${sched_def} -f ${fw_rxscu} -m

@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 16-Aug-2024
+ *  version : 05-jan-2026
  *
  *  firmware required for kicker and related diagnostics
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 19-November-2020
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000807                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000812                                       // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -78,12 +78,22 @@ uint32_t *cpuRamExternal;                  // external address (seen from host b
 uint64_t statusArray;                      // all status infos are ORed bit-wise into statusArray, statusArray is then published
 uint32_t nTransfer;                        // # of transfers
 uint32_t transStat;                        // status of transfer, here: meanDelta of 'poor mans fit'
-int32_t  comLatency;                       // latency for messages received via ECA [ns]
-int32_t  offsDone;                         // offset deadline WR message to time when we are done [ns]
-int32_t  maxComLatency;
-uint32_t maxOffsDone;
-uint32_t nLate;                            // # of late messages
 
+uint32_t  nLate;                        // # of late messages
+uint32_t  nEarly;                       // # of early messages
+uint32_t  nConflict;                    // # of conflict messages
+uint32_t  nDelayed;                     // # of delayed messages
+uint32_t  nSlow;                        // # of slow messages
+
+uint32_t offsSlow;                      // offset for slow messages [ns]
+uint32_t offsSlowMax;                   // offset for slow messages [ns]; max
+uint32_t offsSlowMin;                   // offset for slow messages [ns]; min
+uint32_t comLatency;                    // latency for getting the messages from the ECA [ns]
+uint32_t comLatencyMax;                 // latency for getting the messages from the ECA [ns]; max
+uint32_t comLatencyMin;                 // latency for getting the messages from the ECA [ns]; min
+uint32_t offsDone;                      // offset deadline WR message to time when we are done [ns]
+uint32_t offsDoneMax;                   // offset deadline WR message to time when we are done [ns]; max
+uint32_t offsDoneMin;                   // offset deadline WR message to time when we are done [ns]; min
 
 // typical init for lm32
 void init()
@@ -159,12 +169,22 @@ void extern_clearDiag()
   statusArray   = 0x0; 
   nTransfer     = 0;
   transStat     = 0;
-  nLate         = 0x0;
-  comLatency    = 0x0;
-  maxComLatency = 0x0;
-  offsDone      = 0x0;
-  maxOffsDone   = 0x0;
 
+  nLate         = 0x0;
+  nEarly        = 0x0;
+  nConflict     = 0x0;
+  nDelayed      = 0x0;
+  nSlow         = 0x0;
+
+  offsSlow      = 0x0;
+  offsSlowMax   = 0x0;
+  offsSlowMin   = 0xffffffff;
+  comLatency    = 0x0;
+  comLatencyMax = 0x0;
+  comLatencyMin = 0xffffffff; 
+  offsDone      = 0x0;
+  offsDoneMax   = 0x0;
+  offsDoneMin   = 0xffffffff;
 } // extern_clearDiag
   
 
@@ -222,12 +242,6 @@ uint32_t extern_entryActionOperation()
   *pSharedGetKickSid      = 0x0;
   *pSharedGetKickGid      = 0x0;
 
-  nLate                   = 0x0;
-  comLatency              = 0x0;
-  maxComLatency           = 0x0;
-  offsDone                = 0x0;
-  maxOffsDone             = 0x0;
-
   return COMMON_STATUS_OK;
 } // extern_entryActionOperation
 
@@ -248,6 +262,9 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint32_t flagIsEarly;                                       // flag 'early'
   uint32_t flagIsConflict;                                    // flag 'conflict'
   uint32_t flagIsDelayed;                                     // flag 'delayed'
+  uint32_t flagIsSlow;                                        // flag 'slow'
+  uint32_t offsSlowAct;                                       // offset slow event, act value
+  uint32_t comLatencyAct;                                     // communication latency act value
   uint32_t ecaAction;                                         // action triggered by event received from ECA
   uint64_t recDeadline;                                       // deadline received
   static uint64_t reqDeadline;                                // deadline requested by sender
@@ -277,12 +294,15 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   int64_t  dKickMon;                                          // delay of kicker monitor signal with respect to kicker trigger signal 
   int64_t  dKickProbe;                                        // delay of kicker probe signal with respect to kicker trigger signal
   uint64_t sysTime;                                           // helper variable
+  uint64_t startTime;
   
   status    = actStatus;
   transStat = 0x0;
 
-  ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT*1000, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
-
+  ecaAction = fwlib_wait4ECAEvent2(COMMON_ECATIMEOUT*1000, &recDeadline, &recEvtId, &recParam, &recTEF,
+                                   &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed, &flagIsSlow, &offsSlowAct, &comLatencyAct);
+  startTime = getSysTime();
+  
   // this switch statement mainly serves for collecting data; received data are marked by flags
   switch (ecaAction) {
     case B2B_ECADO_B2B_TRIGGEREXT :                           // this is an OR, no 'break' on purpose
@@ -291,8 +311,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       if (ecaAction == B2B_ECADO_B2B_TRIGGEREXT) flagIsExt = 1;
       else                                       flagIsExt = 0;
 
-      comLatency = (int32_t)(getSysTime() - recDeadline);
-      
       reqDeadline = recDeadline + (uint64_t)B2B_PRETRIGGERTR;// ECA is configured to pre-trigger ahead of time!!!
 
       recGid                 = (uint32_t)((recEvtId >> 48) & 0xfff);
@@ -312,7 +330,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       break; //  B2B_ECADO_B2B_TRIGGERINJ
 
     case B2B_ECADO_TLUINPUT2 :                               // received monitor signal from kicker electronics
-      comLatency         = (int32_t)(getSysTime() - recDeadline);
       tKickMon           = recDeadline;
       flagRecMon         = 1;
 
@@ -328,6 +345,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
     default : ;
   } // switch ecaAction
+  
 
   // in each iteration we decide to do based on the flags that mark received data
   // - send a message, if trigger event and monitor signal have been received
@@ -387,21 +405,39 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0, 0);
 
-    offsDone               = sysTime - reqDeadline;
     *pSharedGettKickDMon   = dKickMon;
     *pSharedGettKickDProbe = dKickProbe;
     transStat              = flagsError;
 
     flagSendMessage = 0;
   } // if flagSendMessage
-    
+
   // check for late event
-    // check for late event
   if ((status == COMMON_STATUS_OK) && flagIsLate) {
     status = B2B_STATUS_LATEMESSAGE;
     nLate++;
   } // if status
 
+  // check for other statistics
+  if (ecaAction) {
+    comLatency = comLatencyAct;
+    offsDone   = getSysTime() - startTime;
+    
+    if (flagIsEarly)    nEarly++;
+    if (flagIsConflict) nConflict++;
+    if (flagIsDelayed)  nDelayed++;
+    if (flagIsSlow) {
+      nSlow++;
+      offsSlow = offsSlowAct;
+      if (offsSlow   < offsSlowMin)   offsSlowMin   = offsSlow;
+      if (offsSlow   > offsSlowMax)   offsSlowMax   = offsSlow;
+    } // if ecaAction
+
+    if (comLatency > comLatencyMax)   comLatencyMax = comLatency;
+    if (comLatency < comLatencyMin)   comLatencyMin = comLatency;
+    if (offsDone   > offsDoneMax)     offsDoneMax   = offsDone;
+    if (offsDone   < offsDoneMin)     offsDoneMin   = offsDone;
+  } // if eca action
   // check WR sync state
   if (fwlib_wrCheckSyncState() == COMMON_STATUS_WRBADSYNC) return COMMON_STATUS_WRBADSYNC;
   else                                                     return status;
@@ -466,9 +502,9 @@ int main(void) {
     fwlib_publishStatusArray(statusArray);
     pubState              = actState;
     fwlib_publishState(pubState);
-    if (comLatency > maxComLatency) maxComLatency = comLatency;
-    if (offsDone   > maxOffsDone)   maxOffsDone   = offsDone;
-    fwlib_publishTransferStatus(nTransfer, 0x0, transStat, nLate, maxOffsDone, maxComLatency); 
+    
+    fwlib_publishTransferStatus2(nTransfer, 0x0, transStat, nLate, nEarly, nConflict, nDelayed, nSlow, offsSlow, offsSlowMax, offsSlowMin,
+                                 comLatency, comLatencyMax, comLatencyMin, offsDone, offsDoneMax, offsDoneMin);
   } // while
 
   return(1); // this should never happen ...
