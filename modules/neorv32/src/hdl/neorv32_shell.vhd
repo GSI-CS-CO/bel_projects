@@ -31,9 +31,9 @@ entity neorv32_shell is
     gpio_o     : out std_logic_vector(31 downto 0);
     gpio_i     : in  std_logic_vector(31 downto 0) := (others => '0');
     uart0_o    : out std_logic;
-    uart0_i    : in  std_logic;
+    uart0_i    : in  std_logic := '0';
     uart1_o    : out std_logic;
-    uart1_i    : in  std_logic;
+    uart1_i    : in  std_logic := '0';
     -- Wishbone
     slave_i    : in  t_wishbone_slave_in;
     slave_o    : out t_wishbone_slave_out;

@@ -80,7 +80,7 @@ begin
     slave_o    => s_dummy_slave_o,
     master_i   => cbar_slave_o(0),
     master_o   => cbar_slave_i(0),
-    uart_o     => s_uart_out,
+    uart0_o     => s_uart_out,
     jtag_tck_i => '0',
     jtag_tdi_i => '0',
     jtag_tdo_o => open,
