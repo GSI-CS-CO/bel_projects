@@ -63,7 +63,7 @@ begin
     slave_o    => s_dummy_slave_o,
     master_i   => s_dummy_master_i,
     master_o   => s_dummy_master_o,
-    uart_o     => s_uart_out,
+    uart0_o     => s_uart_out,
     jtag_tck_i => '0',
     jtag_tdi_i => '0',
     jtag_tdo_o => open,
