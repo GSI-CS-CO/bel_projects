@@ -5,14 +5,14 @@
 #include <stdbool.h>
 
 // 1152000 for real hardware, 921600 for simulation
-#define BAUD_RATE 115200
+#define BAUD_RATE 921600
 
 #define N 6
 
 int main(void)
 {
-  int * RAM_base_address = (int*) 0x04060000;
-
+  //int * RAM_base_address = (int*) 0x04060000;
+  int * RAM_base_address = (int*) 0x200000; // for simulation
 
 
   int nums[N];
