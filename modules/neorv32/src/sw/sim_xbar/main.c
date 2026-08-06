@@ -6,20 +6,17 @@
 #include <gsi_wishbone_neorv32.h>
 #include <stdbool.h>
 
-// 1152000 for real hardware, 921600 for simulation
-#define BAUD_RATE 921600
+#define BAUD_RATE 921600 /* 1152000 for real hardware, 921600 for simulation */
 #define SEED 0x12345678
 #define N 6
 
 int main(void)
 {
   int * RAM_base_address = (int*) 0x04060000;
-  //int * RAM_base_address = (int*) 0x00200000; // for simulation
-
 
   int nums[N] = {0};
   int nums_test[N] = {0};
-  bool failed;
+  bool failed = false;
   bool stop = false;
 
   /* Test block write access */
