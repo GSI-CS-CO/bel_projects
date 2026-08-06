@@ -6,7 +6,7 @@
 #   'make MASP=NO ENV=int SYSENV=YOCTO PREFIX= all'                                      (hack: leave PREFIX empty for SCU path)
 # Example deploy (for ASL only):
 #   'make PREFIX= SYSENV=YOCTO STAGING=/common/export/timing-rte/wrmil-dev-yocto deploy' (hack: leave PREFIX empty for SCU path)
-#   'make PREFIX= SYSENV=YOCTOSTAGING=/common/export/timing-rte/wrmil-yocto deploy'      (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= SYSENV=YOCTO STAGING=/common/export/timing-rte/wrmil-yocto deploy'     (hack: leave PREFIX empty for SCU path)
 
 # install
 PREFIX      ?= /usr/local
