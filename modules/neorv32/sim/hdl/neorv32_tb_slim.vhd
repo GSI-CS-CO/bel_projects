@@ -1,6 +1,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use std.env.all;
 
 library neorv32;
 use neorv32.neorv32_package.all;
@@ -27,9 +28,13 @@ architecture rtl of neorv32_tb_slim is
   signal s_dummy_master_o : t_wishbone_master_out;
   signal s_dummy_dff_data : std_logic_vector(31 downto 0);
 
+  signal s_test_failed : std_logic;
+  signal s_test_passed : std_logic;
+
   constant g_low_phase  : time := 8 ns;
   constant g_high_phase : time := 8 ns;
   constant c_reset_time : time := (g_high_phase+g_low_phase)*10;
+  constant c_timeout    : time := 10000 us;
 
 begin
 
@@ -58,20 +63,22 @@ begin
     g_mem_wishbone_init_file => "../src/sw/sim/program.mif"
   )
   port map (
-    clk_i      => s_clk,
-    rstn_i     => s_rstn,
-    rstn_ext_i => '1',
-    slave_i    => s_dummy_slave_i,
-    slave_o    => s_dummy_slave_o,
-    master_i   => s_dummy_master_i,
-    master_o   => s_dummy_master_o,
-    uart0_o    => s_uart_out,
-    uart0_i    => s_uart0_in,
-    uart1_i    => s_uart1_in,
-    jtag_tck_i => '0',
-    jtag_tdi_i => '0',
-    jtag_tdo_o => open,
-    jtag_tms_i => '0'
+    clk_i         => s_clk,
+    rstn_i        => s_rstn,
+    rstn_ext_i    => '1',
+    slave_i       => s_dummy_slave_i,
+    slave_o       => s_dummy_slave_o,
+    master_i      => s_dummy_master_i,
+    master_o      => s_dummy_master_o,
+    uart0_o       => s_uart_out,
+    uart0_i       => s_uart0_in,
+    uart1_i       => s_uart1_in,
+    test_failed_o => s_test_failed,
+    test_passed_o => s_test_passed,
+    jtag_tck_i    => '0',
+    jtag_tdi_i    => '0',
+    jtag_tdo_o    => open,
+    jtag_tms_i    => '0'
   );
 
   sim_rx_uart0: entity work.sim_uart_rx
@@ -106,6 +113,28 @@ begin
          s_dummy_master_i.ack <= '0';
        end if;
     end if;
+  end process;
+
+  -- Testbench logic
+  p_watchdog : process
+  begin
+    wait for c_timeout;
+    report "Test timeout!" severity failure;
+    stop(2);
+  end process;
+
+  p_test_failed : process
+  begin
+    wait until s_test_failed = '1';
+    report "Test failed!" severity failure;
+    stop(1);
+  end process;
+
+  p_test_passed : process
+  begin
+    wait until s_test_passed = '1';
+    report "Test passed!" severity note;
+    stop(0);
   end process;
 
 end;

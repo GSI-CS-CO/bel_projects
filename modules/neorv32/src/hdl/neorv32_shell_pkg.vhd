@@ -41,6 +41,9 @@ package neorv32_shell_pkg is
       slave_o    : out t_wishbone_slave_out;
       master_i   : in  t_wishbone_master_in;
       master_o   : out t_wishbone_master_out;
+      -- Test
+      test_failed_o : out std_logic := '0';
+      test_passed_o : out std_logic := '0';
       -- JTAG
       jtag_tck_i : in  std_logic;
       jtag_tdi_i : in  std_logic;

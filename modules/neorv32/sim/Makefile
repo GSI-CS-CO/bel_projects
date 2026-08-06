@@ -1,12 +1,12 @@
 # Generic settings
 # ==============================================================================
 GHDL_BIN=ghdl
-GHDL_FLAGS="--ieee=synopsys --warn-no-vital-generic --std=08 --Wall
+GHDL_FLAGS=-Wno-hide -fsynopsys --ieee=synopsys --warn-no-vital-generic -fexplicit --std=08 -frelaxed
 GTWK_BIN=gtkwave
 
 # Simulation settings
 # ==============================================================================
-STOP_TIME="3000us"
+STOP_TIME="10000us"
 WORK_DIR=build
 GHW_NAME="neorv32_tb_slim.ghw"
 GTKW_NAME="neorv32_tb_slim.gtkw"
@@ -122,34 +122,42 @@ compile_code_xbar:
 analyze:
 	@echo "Analyzing ..."
 	# Building Altera MF ...
-	$(GHDL_BIN) -a --work=altera_mf --workdir=build -Wno-hide -fsynopsys --ieee=synopsys --warn-no-vital-generic -fexplicit \
+	$(GHDL_BIN) -a --work=altera_mf --workdir=build $(GHDL_FLAGS) \
 	$(ALTERA_MF_FILES)
 	# Building NEORV32 ...
-	$(GHDL_BIN) -a --work=neorv32 --workdir=build -Whide -fsynopsys --ieee=synopsys --warn-no-vital-generic -fexplicit -Pbuild \
+	$(GHDL_BIN) -a --work=neorv32 --workdir=build $(GHDL_FLAGS) -Pbuild \
 	$(HDL_RTE_CORE_FILES)
 	# Building testbench
-	$(GHDL_BIN) -a --work=work --workdir=build -Whide -fsynopsys --ieee=synopsys --warn-no-vital-generic -fexplicit -Pbuild \
+	$(GHDL_BIN) -a --work=work --workdir=build $(GHDL_FLAGS) -Pbuild \
 	$(HDL_RTE_GENRAM_FILES) $(HDL_RTE_WISHBONE_FILES) $(HDL_SHELL_FILES) $(HDL_UART_SIM_FILES) $(HDL_TB_FILES)
 
 analyze_xbar:
 	@echo "Analyzing ..."
 	# Building Altera MF ...
-	$(GHDL_BIN) -a --work=altera_mf --workdir=build -Wno-hide -fsynopsys --ieee=synopsys --warn-no-vital-generic -fexplicit \
+	$(GHDL_BIN) -a --work=altera_mf --workdir=build $(GHDL_FLAGS) \
 	$(ALTERA_MF_FILES)
 	# Building NEORV32 ...
-	$(GHDL_BIN) -a --work=neorv32 --workdir=build -Whide -fsynopsys --ieee=synopsys --warn-no-vital-generic -fexplicit -Pbuild \
+	$(GHDL_BIN) -a --work=neorv32 --workdir=build $(GHDL_FLAGS) -Pbuild \
 	$(HDL_RTE_CORE_FILES)
 	# Building testbench
-	$(GHDL_BIN) -a --work=work --workdir=build -Whide -fsynopsys --ieee=synopsys --warn-no-vital-generic -fexplicit -Pbuild \
+	$(GHDL_BIN) -a --work=work --workdir=build $(GHDL_FLAGS) -Pbuild \
 	$(HDL_RTE_GENRAM_FILES) $(HDL_RTE_WISHBONE_FILES) $(HDL_SHELL_FILES) $(HDL_UART_SIM_FILES) $(HDL_TB_FILES_XBAR)
 
 elaborate_run:
-	@echo "Elaborating ..."
-	$(GHDL_BIN) --elab-run -fexplicit -fsynopsys -Pbuild --workdir=build work.neorv32_tb_slim --stop-time=$(STOP_TIME) --wave=$(WORK_DIR)/$(GHW_NAME) --ieee-asserts=disable
+	@echo "Elaborating + Running ..."
+	$(GHDL_BIN) --elab-run $(GHDL_FLAGS) -Pbuild --workdir=build \
+		neorv32_tb_slim \
+		--stop-time=$(STOP_TIME) \
+		--wave=$(WORK_DIR)/$(GHW_NAME) \
+		--ieee-asserts=disable
 
 elaborate_run_xbar:
-	@echo "Elaborating ..."
-	$(GHDL_BIN) --elab-run -fexplicit -fsynopsys -Pbuild --workdir=build work.neorv32_tb_xbar --stop-time=$(STOP_TIME) --wave=$(WORK_DIR)/$(GHW_NAME_XBAR) --ieee-asserts=disable
+	@echo "Elaborating + Running ..."
+	$(GHDL_BIN) --elab-run $(GHDL_FLAGS) -Pbuild --workdir=build \
+		neorv32_tb_xbar \
+		--stop-time=$(STOP_TIME) \
+		--wave=$(WORK_DIR)/$(GHW_NAME_XBAR) \
+		--ieee-asserts=disable
 
 view: all
 	$(GTWK_BIN) $(WORK_DIR)/$(GHW_NAME) $(GTKW_NAME)

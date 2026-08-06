@@ -24,26 +24,29 @@ entity neorv32_shell is
   );
   port (
     -- Global control
-    clk_i      : in std_logic;
-    rstn_i     : in std_logic;
-    rstn_ext_i : in std_logic;
+    clk_i         : in std_logic;
+    rstn_i        : in std_logic;
+    rstn_ext_i    : in std_logic;
     -- Peripherals
-    gpio_o     : out std_logic_vector(31 downto 0);
-    gpio_i     : in  std_logic_vector(31 downto 0) := (others => '0');
-    uart0_o    : out std_logic;
-    uart0_i    : in  std_logic := '0';
-    uart1_o    : out std_logic;
-    uart1_i    : in  std_logic := '0';
+    gpio_o        : out std_logic_vector(31 downto 0);
+    gpio_i        : in  std_logic_vector(31 downto 0) := (others => '0');
+    uart0_o       : out std_logic;
+    uart0_i       : in  std_logic := '0';
+    uart1_o       : out std_logic;
+    uart1_i       : in  std_logic := '0';
     -- Wishbone
-    slave_i    : in  t_wishbone_slave_in;
-    slave_o    : out t_wishbone_slave_out;
-    master_i   : in  t_wishbone_master_in;
-    master_o   : out t_wishbone_master_out;
+    slave_i       : in  t_wishbone_slave_in;
+    slave_o       : out t_wishbone_slave_out;
+    master_i      : in  t_wishbone_master_in;
+    master_o      : out t_wishbone_master_out;
+    -- Test
+    test_failed_o : out std_logic := '0';
+    test_passed_o : out std_logic := '0';
     -- JTAG
-    jtag_tck_i : in  std_logic;
-    jtag_tdi_i : in  std_logic;
-    jtag_tdo_o : out std_logic;
-    jtag_tms_i : in  std_logic);
+    jtag_tck_i    : in  std_logic;
+    jtag_tdi_i    : in  std_logic;
+    jtag_tdo_o    : out std_logic;
+    jtag_tms_i    : in  std_logic);
 end neorv32_shell;
 
 architecture rtl of neorv32_shell is
@@ -292,5 +295,9 @@ begin
   s_xbus_dat_in <= std_ulogic_vector(s_wb_ram_neorv32_o.dat) when (s_instruction = '1') else std_ulogic_vector(master_i.dat);
   s_xbus_ack    <= s_wb_ram_neorv32_o.ack when (s_instruction = '1') else std_ulogic(master_i.ack);
   s_xbus_err    <= s_wb_ram_neorv32_o.err when (s_instruction = '1') else std_ulogic(master_i.err);
+
+  -- Testbench / Simulation
+  test_failed_o <= s_gpio_out(30);
+  test_passed_o <= s_gpio_out(31);
 
 end rtl;
