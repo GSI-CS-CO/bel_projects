@@ -25,12 +25,12 @@ logger "print info on c-states for cpu0"
 cd /sys/devices/system/cpu/cpu0/cpuidle
 for state in state* ; do logger c-$state `cat $state/name` `cat $state/latency` ; done
 
-# saftlib to realtime prio using my own saftbus systemd unit
-logger "saftlib to realtime prios"
-systemctl stop saftbus
-cp -a $MOUNTPOINT/systemd/saftbus.service /lib/systemd/system
-systemctl daemon-reload
-systemctl start saftbus
+# saftlib to realtime prio using my own saftbus systemd unit, no longer needed
+# logger "saftlib to realtime prios"
+# systemctl stop saftbus
+# cp -a $MOUNTPOINT/systemd/saftbus.service /lib/systemd/system
+# systemctl daemon-reload
+# systemctl start saftbus
 
 logger "wait 20s to let things calm down ..."
 sleep 20
