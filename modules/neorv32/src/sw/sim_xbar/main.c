@@ -27,14 +27,14 @@ int main(void)
   while(true) {
     failed = false;
     for(int i = 0; i < N; i++) {
-      nums[i] = i*4; // neorv32_aux_xorshift32();
+      nums[i] = i; // neorv32_aux_xorshift32();
     }
 
     neorv32_uart0_printf("#1.\n");
 
     //neorv32_gpio_pin_set(0, 1);
     for(int i = 0; i < N; i++) {
-      *(RAM_base_address + i*4)   = nums[i];
+      *(RAM_base_address + i)   = nums[i];
     }
     //neorv32_gpio_pin_set(0, 0);
 
@@ -42,7 +42,7 @@ int main(void)
 
     //neorv32_gpio_pin_set(0, 1);
     for(int i = 0; i < N; i++) {
-      nums_test[i] = *(RAM_base_address + i*4);
+      nums_test[i] = *(RAM_base_address + i);
     }
     //neorv32_gpio_pin_set(0, 0);
 
@@ -50,7 +50,7 @@ int main(void)
 
     for(int i = 0; i < N; i++) {
       if(nums[i] != nums_test[i]) {
-        neorv32_uart0_printf("Data at address 0x%x is not correct, expected 0x%x, got 0x%x\n", (RAM_base_address + i*4), nums[i], nums_test[i]);
+        neorv32_uart0_printf("Data at address 0x%x is not correct, expected 0x%x, got 0x%x\n", (RAM_base_address + i), nums[i], nums_test[i]);
         failed = true;
       }
     }
