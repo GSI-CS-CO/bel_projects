@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 03-jul-2026
+ *  version : 07-aug-2026
  *
  * analyzes and publishes get values
  * 
@@ -36,7 +36,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_ANALYZER_VERSION 0x000813
+#define B2B_ANALYZER_VERSION 0x000814
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -947,8 +947,8 @@ int main(int argc, char** argv) {
   } // if optind
 
   gethostname(disHostname, 32);
-  if (optind< argc) sprintf(prefix, "b2b_%s", argv[optind]);
-  else              sprintf(prefix, "b2b_%s", disHostname);
+  if (optind< argc) snprintf(prefix, sizeof(prefix), "b2b_%s", argv[optind]);
+  else              snprintf(prefix, sizeof(prefix), "b2b_%s", disHostname);
   sprintf(disName, "%s-cal", prefix);
   disDiagData.tDiag = comlib_getSysTime();
   disDiagData.tS0   = comlib_getSysTime();
