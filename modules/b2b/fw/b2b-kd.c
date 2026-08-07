@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 03-jul-2026
+ *  version : 07-aug-2026
  *
  *  firmware required for kicker and related diagnostics
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 19-November-2020
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000813                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000814                                       // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -263,6 +263,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint32_t flagIsConflict;                                    // flag 'conflict'
   uint32_t flagIsDelayed;                                     // flag 'delayed'
   uint32_t flagIsSlow;                                        // flag 'slow'
+  uint32_t flagDummy1, flagDummy2, flagDummy3, flagDummy4;    // ECA dummy flags when detecting rising I/O input edges
   uint32_t offsSlowAct;                                       // offset slow event, act value
   uint32_t comLatencyAct;                                     // communication latency act value
   uint32_t ecaAction;                                         // action triggered by event received from ECA
@@ -335,7 +336,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       flagRecMon         = 1;
 
       // check, if there is a rising edge of the probe signal 
-      ecaAction2 = fwlib_wait4ECAEvent(B2B_ACCEPTKPROBE, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
+      ecaAction2 = fwlib_wait4ECAEvent(B2B_ACCEPTKPROBE, &recDeadline, &recEvtId, &recParam, &recTEF, &flagDummy1, &flagDummy2, &flagDummy3, &flagDummy4);
       if ((ecaAction2 == B2B_ECADO_TLUINPUT1) || (ecaAction2 == B2B_ECADO_TLUINPUT4)) {
         tKickProbe   = recDeadline - (uint64_t)B2B_PRETRIGGERTR;
         flagRecProbe = 1;
