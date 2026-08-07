@@ -60,7 +60,7 @@ begin
   begin
     s_clk <= '0';
     wait for g_low_phase;
-    s_clk <= '1' and s_rstn;
+    s_clk <= '1';
     wait for g_high_phase;
   end process;
 
