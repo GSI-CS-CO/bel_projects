@@ -1,0 +1,52 @@
+name: CI NEORV32 Projects
+
+on:
+  push:
+    branches: [master, proposed_master, github-actions-development]
+  pull_request:
+    branches: [master, proposed_master, github-actions-development]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-22.04]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install --fix-missing \
+            automake libreadline-dev build-essential \
+            libboost-all-dev docbook-utils pkg-config \
+            libsigc++-2.0-dev \
+            ghdl \
+            binutils-riscv64-unknown-elf \
+            gcc-riscv64-unknown-elf \
+            picolibc-riscv64-unknown-elf
+
+      - name: Set PKG_CONFIG_PATH
+        run: echo "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig" >> $GITHUB_ENV
+
+      - name: Create mpfr symlink (if needed)
+        run: |
+          if [ -f /usr/lib/x86_64-linux-gnu/libmpfr.so.6 ] && [ ! -e /usr/lib/x86_64-linux-gnu/libmpfr.so.4 ]; then
+            sudo ln -s /usr/lib/x86_64-linux-gnu/libmpfr.so.6 /usr/lib/x86_64-linux-gnu/libmpfr.so.4
+          fi
+
+      - name: Setup repository
+        run: make
+
+      - name: Build & install etherbone
+        run: |
+          make etherbone
+          sudo make etherbone-install
+
+      - name: Build and run NEORV32 projects
+        run: |
+          make -C modules/neorv32/sim/
+          make -C modules/neorv32/sim/ xbar
