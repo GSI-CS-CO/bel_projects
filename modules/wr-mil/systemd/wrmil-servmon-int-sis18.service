@@ -1,0 +1,10 @@
+[Unit]
+Description = wrmil monitoring server for INT SIS18
+
+[Service]
+Type = simple
+Environment="DIM_DNS_NODE=asl105"
+ExecStart = wrmil-serv-mon tr0 -s7 -m25 -d int -c1
+
+[Install]
+WantedBy = multi-user.target

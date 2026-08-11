@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 03-Jan-2026
+ *  version : 03-Jul-2026
  *
  *  common functions used by various firmware projects
  *
@@ -586,8 +586,12 @@ uint32_t fwlib_wrCheckSyncState() //check status of White Rabbit (link up, track
 
   wr_time = getSysTime();
 
-  if ((wr_time > wr_time_prev) && (wr_time > WHITERABBIT_MIN_TIME)) return COMMON_STATUS_OK;
-  else                                                              return COMMON_STATUS_WRBADSYNC;
+  if ((wr_time > wr_time_prev) && (wr_time > WHITERABBIT_MIN_TIME)) {
+    wr_time_prev = wr_time;
+    return COMMON_STATUS_OK;
+  }
+
+  return COMMON_STATUS_WRBADSYNC;
  
   /* The following code may jeopardize real-time performance and has been commented 
   uint32_t syncState;
@@ -783,7 +787,9 @@ uint32_t fwlib_wait4ECAEvent2(uint32_t timeout_us, uint64_t *deadline, uint64_t 
       else {
         *isSlow     = 0;
         *offsSlow   = 0;
-        *comLatency = (uint32_t)(stopT - *deadline);
+        // paranoid: check for the case where sysTime and ecaTime are out of sync
+        if (stopT >= *deadline) *comLatency = (uint32_t)(stopT - *deadline);
+        else                    *comLatency = COMMON_LATENCYBOGUS;
       } // else missed
 
       // here: do s.th. according to tag

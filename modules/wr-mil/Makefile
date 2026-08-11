@@ -3,10 +3,10 @@
 # Set SYSENV to the target system environment (YOCTO, ACC7, ACC9, OPT)
 # Example build:
 #   'make clean'                                                 
-#   'make MASP=NO ENV=int SYSENV=ACC7 PREFIX= all'                                    (hack: leave PREFIX empty for SCU path)
+#   'make MASP=NO ENV=int SYSENV=YOCTO PREFIX= all'                                      (hack: leave PREFIX empty for SCU path)
 # Example deploy (for ASL only):
-#   'make PREFIX= SYSENV=ACC7 STAGING=/common/export/timing-rte/wrmil-dev deploy'      (hack: leave PREFIX empty for SCU path)
-#   'make PREFIX= SYSENV=ACC7 STAGING=/common/export/timing-rte/wrmil deploy'          (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= SYSENV=YOCTO STAGING=/common/export/timing-rte/wrmil-dev-yocto deploy' (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= SYSENV=YOCTO STAGING=/common/export/timing-rte/wrmil-yocto deploy'     (hack: leave PREFIX empty for SCU path)
 
 # install
 PREFIX      ?= /usr/local
@@ -52,8 +52,13 @@ TARGETS := firmware software nfsinit
 
 all: $(TARGETS)
 
-software:: 
+software::
+ifeq ($(SYSENV), YOCTO)
+# I really hate this hack, but I found no simpler solution
+	bash x86/make-yocto-software-all
+else
 	$(MAKE) -C $(SW) all
+endif
 
 firmware:
 	$(MAKE) TARGET=wrmil -C $(FW)
@@ -68,6 +73,7 @@ clean:
 	rm -f nfs-init/wrmil-int*.sh
 	rm -f nfs-init/wrmil-pro*.sh
 	rm -f nfs-init/wrmil-tools.sh
+	rm -f nfs-init/wrmil-yocto-tweak-tools.sh
 
 deploy:
 # create folders
@@ -93,8 +99,8 @@ deploy:
 	cp $(FW)/*.bin $(STAGING)/firmware
 
 # MASP special hack for ACC7
-	cp /lib64/libboost_system-mt.so $(STAGING)$(ARCH)$(PREFIX)/usr/lib
-	cp /lib64/libboost_thread-mt.so.1.53.0 $(STAGING)$(ARCH)$(PREFIX)/usr/lib
+#	cp /lib64/libboost_system-mt.so $(STAGING)$(ARCH)$(PREFIX)/usr/lib
+#	cp /lib64/libboost_thread-mt.so.1.53.0 $(STAGING)$(ARCH)$(PREFIX)/usr/lib
 
 # configuration; the format is 'wrmil-<environment>-<machine>-<room>-<function>_start.sh'
 	cp $(SW)/*.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin                    # '/usr' is a hack

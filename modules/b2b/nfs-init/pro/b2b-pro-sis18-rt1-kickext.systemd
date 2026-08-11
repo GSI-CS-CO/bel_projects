@@ -1,4 +1,4 @@
-# yocto; temporarily disabled
+# yocto
 SERVICEA=b2b-servsys-pro-sis18-kickext.service
 SERVICEB=b2b-servraw-pro-sis18.service
 SERVICEC=b2b-jittercheck-pro-sis18-kick.service
@@ -17,7 +17,7 @@ systemctl start $SERVICEC
 systemctl start $SERVICED
 systemctl start $SERVICEE
 
-# hack for acc7
+# hack for acc7; disabled
 #export DIM_DNS_NODE=asl105
 #
 #b2b-serv-sys dev/wbm0 -s pro_sis18-kde &

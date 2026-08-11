@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-jan-2025
+ *  version : 08-aug-2026
  *
  * monitors WR-MIL gateway (server part)
  *
@@ -666,7 +666,7 @@ int main(int argc, char** argv)
         // update firmware data
         //wrmil_common_read(ebDevice, &fwStatus, &fwState, &nBadStatus, &nBadState, &fwVersion, &tmp32c, 0);
 
-        comlib_readDiag2(ebDevice, &state, &verFw, &statusArray, &diagData, 0);
+        comlib_readDiag2(ebDevice, &state, &verFw, &statusArray, &diagData, 0); // quick and dirty, no error checking
         wrmil_info_read(ebDevice, &tmp32a, &tmp32b, &tmp32c, &fwGid, &stmp32a, &tmp64a, &tmp32f, &tmp32g, &tmp32h, &fwEvtsSnd, &fwEvtsRecT, &fwEvtsRecD, &fwEvtsRecErr, &fwEvtsBurst, 0);
         // if (fwGid != gid) statusArray |= COMMON_STATUS_OUTOFRANGE; // signal an error, buggy? better not use
         
@@ -676,6 +676,8 @@ int main(int argc, char** argv)
         monData.nFwRecErr = fwEvtsRecErr;
         monData.nFwBurst  = fwEvtsBurst;
         monData.nFwRecD   = fwEvtsRecD;
+        nBadStatus        = diagData.nBadStatus;
+        nBadState         = diagData.nBadState;
         disMonData        = monData;
         if (disMonData.tMin ==  INITMINMAX) disMonData.tMin = NAN;
         if (disMonData.tMax == -INITMINMAX) disMonData.tMax = NAN;

@@ -37,7 +37,7 @@
 #ifndef _COMMON_CORE_H_
 #define _COMMON_CORE_H_
 
-#define COMMON_CORE_VERSION "00.05.03"
+#define COMMON_CORE_VERSION "00.05.05"
 
 // non-optimed routine for converting single precision to half precision float
 // IEEE 754 but no support for subnormal numbers

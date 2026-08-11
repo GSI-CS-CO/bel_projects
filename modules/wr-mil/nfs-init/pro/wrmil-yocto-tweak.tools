@@ -1,6 +1,6 @@
 # tweak yocto ramdisk
 
-logger "start b2b-yocto-tweaks"
+logger "start wrmil-yocto-tweaks"
 
 # governour
 # script below pirated from Timo M.
@@ -35,4 +35,4 @@ for state in state* ; do logger c-$state `cat $state/name` `cat $state/latency` 
 logger "wait 20s to let things calm down ..."
 sleep 20
 
-logger "finished b2b-yocto-tweaks"
+logger "finished wrmil-yocto-tweaks"
