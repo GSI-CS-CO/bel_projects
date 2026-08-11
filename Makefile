@@ -885,3 +885,7 @@ test_lm32_examples:
 
 test_fbas:
 	$(MAKE) -C modules/fbas/fw
+
+test_neorv32:
+	$(MAKE) -C modules/neorv32/sim
+	$(MAKE) -C modules/neorv32/sim xbar
