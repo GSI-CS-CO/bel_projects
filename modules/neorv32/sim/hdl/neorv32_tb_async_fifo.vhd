@@ -8,17 +8,18 @@ use neorv32.neorv32_package.all;
 library work;
 use work.wishbone_pkg.all;
 use work.genram_pkg.all;
+--use work.gencores_pkg.all;
 use work.neorv32_shell_pkg.all;
+use work.xwb_async_fifo_wrapper_pkg.all;  -- under src/hdl
 
-entity neorv32_tb_xbar is
+entity neorv32_tb_async_fifo is
 end entity;
 
-architecture rtl of neorv32_tb_xbar is
 
-  signal s_clk      : std_logic;
-  signal s_rstn     : std_logic;
-  signal s_gpio_out : std_logic_vector(31 downto 0);
-  signal s_gpio_in  : std_logic_vector(31 downto 0);
+architecture rtl of neorv32_tb_async_fifo is
+
+  signal s_clk      : std_logic := '0';
+  signal s_rstn     : std_logic := '0';
   signal s_uart_out : std_logic := '0';
   signal s_uart0_in : std_logic;
   signal s_uart1_in : std_logic;
@@ -31,22 +32,21 @@ architecture rtl of neorv32_tb_xbar is
   constant g_high_phase : time := 8 ns;
   constant c_reset_time : time := (g_high_phase+g_low_phase)*10;
 
+
   signal cbar_slave_i  : t_wishbone_slave_in_array (0 downto 0);
   signal cbar_slave_o  : t_wishbone_slave_out_array(0 downto 0);
-  signal cbar_master_i : t_wishbone_master_in_array(0 downto 0);
-  signal cbar_master_o : t_wishbone_master_out_array(0 downto 0);
+  signal cbar_master_i : t_wishbone_master_in_array(1 downto 0);
+  signal cbar_master_o : t_wishbone_master_out_array(1 downto 0);
 
-  constant RAM_SIZE : natural := 131072/4;
+  constant FIFO_SIZE : natural := 8;
 
-  constant c_layout : t_sdb_record_array(0 downto 0) :=
-    (0 => f_sdb_embed_device(f_xwb_dpram(RAM_SIZE), x"00000000"));
-  constant c_sdb_address : t_wishbone_address := x"00200000";
-
-  -- constant c_master_layout : t_sdb_record_array(0 downto 0) :=
-  --   (0 => f_sdb_auto_msi(c_null_msi,    false));
-
-  -- constant c_layout      : t_sdb_record_array := f_sdb_auto_layout(c_master_layout, c_slave_layout);
-
+  constant c_layout : t_sdb_record_array(1 downto 0) := 
+    (0 => f_sdb_embed_device(c_fifo_wrapper_sdb, x"60000000"),
+     1 => f_sdb_embed_device(c_fifo_wrapper_sdb, x"65000000")
+    );
+  
+  constant c_sdb_address : t_wishbone_address := x"00200000";    --xbar address
+  
 
 begin
 
@@ -55,7 +55,8 @@ begin
   begin
     s_clk <= '0';
     wait for g_low_phase;
-    s_clk <= '1' and s_rstn;
+    --s_clk <= '1' and s_rstn;
+    s_clk <= '1';
     wait for g_high_phase;
   end process;
 
@@ -72,7 +73,8 @@ begin
   neorv32_shell_inst: neorv32_shell
   generic map (
     g_sdb_addr               => x"12345678",
-    g_mem_wishbone_init_file => "../src/sw/mem_access/main_exe.mif"
+    g_use_wb_adapter         => true,     --enable arbiter inside neorv32 and outside crossbar
+    g_mem_wishbone_init_file => "../src/sw/sim_async_fifo/main_exe.mif"
   )
   port map (
     clk_i      => s_clk,
@@ -80,8 +82,8 @@ begin
     rstn_ext_i => '1',
     slave_i    => s_dummy_slave_i,
     slave_o    => s_dummy_slave_o,
-    master_i   => cbar_slave_o(0),
-    master_o   => cbar_slave_i(0),
+    master_i   => cbar_slave_o(0),            --wb_miso,
+    master_o   => cbar_slave_i(0),            --wb_mosi
     uart0_o    => s_uart_out,
     uart0_i    => s_uart0_in,
     uart1_i    => s_uart1_in,
@@ -105,7 +107,7 @@ begin
   WB_CON : xwb_sdb_crossbar
     generic map(
       g_num_masters => 1,
-      g_num_slaves  => 1,
+      g_num_slaves  => 2,
       g_registered  => true,
       g_wraparound  => true,
       g_layout      => c_layout,
@@ -123,20 +125,25 @@ begin
       master_o  => cbar_master_o
       );
 
-  RAM : xwb_dpram
+  FIFO: xwb_async_fifo_wrapper
     generic map(
-      g_size                  => RAM_SIZE,
-      g_slave1_interface_mode => PIPELINED,
-      g_slave2_interface_mode => PIPELINED,
-      g_slave1_granularity    => BYTE,
-      g_slave2_granularity    => BYTE)
+      g_fifo_size             => FIFO_SIZE,
+      g_show_ahead            => true,
+      g_with_rd_almost_empty  => true,
+      g_with_rd_almost_full   => true,
+      g_with_wr_almost_empty  => true,
+      g_with_wr_almost_full   => true,
+      g_almost_empty_thres    => 2,
+      g_almost_full_thres     => 6
+    )
     port map(
-      clk_sys_i => s_clk,
-      rst_n_i   => s_rstn,
-      -- First port connected to the crossbar
-      slave1_i  => cbar_master_o(0),
-      slave1_o  => cbar_master_i(0),
-      -- Second port disconnected
-      slave2_i  => cc_dummy_slave_in, -- CYC always low
-      slave2_o  => open);
+      rstn_i            => s_rstn,
+      clk_i             => s_clk,
+      slave0_i           => cbar_master_o(0),
+      slave0_o           => cbar_master_i(0),
+      slave1_i           => cbar_master_o(1),
+      slave1_o           => cbar_master_i(1)   
+    );
+
+
 end;

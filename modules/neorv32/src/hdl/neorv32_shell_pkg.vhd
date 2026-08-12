@@ -21,7 +21,7 @@ package neorv32_shell_pkg is
       g_mem_wishbone_imem_size    : natural := 4*8000;                              -- memory size in bytes
       g_mem_wishbone_imem_addr    : std_ulogic_vector(31 downto 0) := x"71000000";  -- imem RAM start address
       g_mem_wishbone_init_file    : string := "";                                   -- init file Wishbone instruction memory
-      g_mem_int_imem_size         : natural := 16*1024;                             -- size of processor-internal instruction memory in bytes
+      g_mem_int_imem_size         : natural := 32*1024;                             -- size of processor-internal instruction memory in bytes --origin: 16*1024
       g_mem_int_dmem_size         : natural := 16*1024;                             -- size of processor-internal data memory in bytes
       g_use_wb_adapter            : boolean := false;                               -- use wishbone slave adapter CLASSIC/PIPELINED
       g_en_debugging              : boolean := false                                -- enable OCD debugging

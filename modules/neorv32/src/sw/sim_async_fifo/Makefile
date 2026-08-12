@@ -1,16 +1,26 @@
+C_SOURCES += \
+	main.c \
+	$(NEORV32_SRC_FILES_DIR)neorv32_uart.c \
+	$(NEORV32_SRC_FILES_DIR)neorv32_aux.c \
+	$(NEORV32_SRC_FILES_DIR)neorv32_cpu.c \
+	$(NEORV32_SRC_FILES_DIR)neorv32_rte.c \
+	$(NEORV32_SRC_FILES_DIR)neorv32_gpio.c
+
+# include ../common/Makefile.common
+
 # Toolchain detection
 RISC_V_ELF_GCC := $(shell command -v riscv64-unknown-elf-gcc 2>/dev/null)
 RISC_V_LINUX_GCC := $(shell command -v riscv64-linux-gnu-gcc 2>/dev/null)
 
 ifeq ($(RISC_V_ELF_GCC),)
-  ifeq ($(RISC_V_LINUX_GCC),)
-    $(error "No suitable RISC-V compiler found!")
-  else
-    RISC_V_COMPILER = riscv64-linux-gnu
-    $(warning Using Linux userland RISC-V compiler!)
-  endif
+	ifeq ($(RISC_V_LINUX_GCC),)
+		$(error "No suitable RISC-V compiler found!")
+	else
+		RISC_V_COMPILER = riscv64-linux-gnu
+		$(warning Using Linux userland RISC-V compiler!)
+	endif
 else
-  RISC_V_COMPILER = riscv64-unknown-elf
+	RISC_V_COMPILER = riscv64-unknown-elf
 endif
 
 # Default target name (can be overridden in project Makefile)
@@ -32,12 +42,12 @@ ARCH_ABI_FLAGS := -march=rv32i_zicsr_zifencei -mabi=ilp32
 
 # Flags
 COMMON_CFLAGS := $(ARCH_ABI_FLAGS) -ffunction-sections -fdata-sections \
-                 -I$(NEORV32_INC_FILES_DIR) -I$(NEORV32_COMMON_DIR) -I$(LM32_COMMON_DIR) -I$(PICOLIBC_INC) \
-                 -D NEORV32
+								 -I$(NEORV32_INC_FILES_DIR) -I$(NEORV32_COMMON_DIR) -I$(LM32_COMMON_DIR) -I$(PICOLIBC_INC) \
+								 -D NEORV32
 COMMON_ASFLAGS := $(ARCH_ABI_FLAGS)
 LINKER_FLAGS := -nostartfiles -nostdlib $(ARCH_ABI_FLAGS) -T $(LINKER_SCRIPT) \
-                -Wl,--build-id=none -lgcc -lc -L$(PICOLIBC_LIB) -Wl,--gc-sections \
-                -Wl,--defsym,__neorv32_rom_base=0x90000000
+								-Wl,--build-id=none -lgcc -lc -L$(PICOLIBC_LIB) -Wl,--gc-sections \
+								-Wl,--defsym,__neorv32_rom_base=0x90000000
 
 # Source files (project can override or extend)
 ASM_SOURCES ?= start.s
@@ -46,7 +56,7 @@ ASM_SOURCES ?= start.s
 OBJS := $(ASM_SOURCES:.s=.o) $(C_SOURCES:.c=.o)
 
 # Default targets
-all: compile transform
+all: clean compile transform
 
 compile: $(OBJS)
 	$(RISC_V_COMPILER)-gcc $(OBJS) -o $(TARGET).elf $(LINKER_FLAGS)
@@ -60,7 +70,8 @@ compile: $(OBJS)
 transform:
 	$(RISC_V_COMPILER)-objcopy -O binary $(TARGET).elf $(TARGET).bin
 	$(RISC_V_COMPILER)-objdump -d $(TARGET).elf > $(TARGET).dis
-	python3 ../../scripts/bin2mif.py
+	./image_gen -i program.elf -o main_exe.bin -t exe
+	python3 bin2mif.py
 
 clean:
 	rm -f *.o *.dis *.bin *.elf *.mif

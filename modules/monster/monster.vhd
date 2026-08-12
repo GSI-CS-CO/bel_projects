@@ -1911,7 +1911,7 @@ end generate;
       g_mem_wishbone_imem_size  => g_neorv32_ramsize,
       g_mem_wishbone_imem_addr  => std_ulogic_vector(c_neorv32_ram_addr),
       g_sdb_addr                => c_top_sdb_address,
-      g_mem_wishbone_init_file  => "../../../../../modules/neorv32/src/sw/idle-init/program.mif",
+      g_mem_wishbone_init_file  => "../../../../../modules/neorv32/src/sw/mem_access/main_exe.mif",   --"../../../../../modules/neorv32/src/sw/idle-init/program.mif"
       g_use_wb_adapter          => true,
       g_en_debugging            => true
     )

@@ -17,7 +17,7 @@ entity neorv32_shell is
     g_mem_wishbone_imem_size    : natural := 4*8000;                             -- memory size in bytes
     g_mem_wishbone_imem_addr    : std_ulogic_vector(31 downto 0) := x"71000000"; -- imem RAM start address
     g_mem_wishbone_init_file    : string := "";                                  -- init file Wishbone instruction memory
-    g_mem_int_imem_size         : natural := 16*1024;                            -- size of processor-internal instruction memory in bytes
+    g_mem_int_imem_size         : natural := 32*1024;                            -- size of processor-internal instruction memory in bytes
     g_mem_int_dmem_size         : natural := 16*1024;                            -- size of processor-internal data memory in bytes
     g_use_wb_adapter            : boolean := false;                              -- use wishbone slave adapter CLASSIC/PIPELINED
     g_en_debugging              : boolean := false                               -- enable OCD debugging
@@ -81,6 +81,7 @@ architecture rtl of neorv32_shell is
   constant c_stack_start     : unsigned(31 downto 0) := unsigned(c_stack_start_slv);
 
   constant BOOT_ADDR_CUSTOM_C : std_ulogic_vector(31 downto 0) := g_mem_wishbone_imem_addr;
+  constant IMEM_BASE_CUSTOM_C : std_ulogic_vector(31 downto 0) := x"90000000";  --align to 0x4000
 
   signal s_xbus_adr     : std_ulogic_vector(31 downto 0);
   signal s_xbus_dat_out : std_ulogic_vector(31 downto 0);
@@ -123,10 +124,11 @@ begin
   neorv32_top_inst : neorv32_top
   generic map (
     CLOCK_FREQUENCY   => g_clock_frequency,
-    BOOT_MODE_SELECT  => 1,
+    BOOT_MODE_SELECT  => 0,                  -- origin: 1 , test
     XBUS_EN           => true,
     BOOT_ADDR_CUSTOM  => BOOT_ADDR_CUSTOM_C, -- Keep Quartus happy
-    IMEM_EN           => false,
+    IMEM_EN           => true,               -- origin: false  , test
+    IMEM_BASE         => IMEM_BASE_CUSTOM_C,  --test customized base imem address
     IMEM_SIZE         => g_mem_int_imem_size,
     DMEM_EN           => true,
     DMEM_SIZE         => g_mem_int_dmem_size,
@@ -135,6 +137,7 @@ begin
     IO_UART0_EN       => true,
     IO_UART1_EN       => false,
     OCD_EN            => g_en_debugging
+
   )
   port map (
     clk_i       => clk_i,
@@ -208,6 +211,8 @@ begin
   s_arbited_master.sel <= std_logic_vector(s_xbus_sel);
   s_arbited_master.we  <= s_xbus_we and not(s_instruction);
   s_arbited_master.dat <= std_logic_vector(s_xbus_dat_out);
+
+
 
   n_g_use_wb_adapter: if not g_use_wb_adapter generate
     master_o <= s_arbited_master;

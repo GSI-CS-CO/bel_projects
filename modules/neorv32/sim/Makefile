@@ -6,12 +6,19 @@ GTWK_BIN=gtkwave
 
 # Simulation settings
 # ==============================================================================
-STOP_TIME="1000us"
+STOP_TIME="5000us"   #1000us
 WORK_DIR=build
 GHW_NAME="neorv32_tb_slim.ghw"
 GTKW_NAME="neorv32_tb_slim.gtkw"
 GHW_NAME_XBAR="neorv32_tb_xbar.ghw"
 GTKW_NAME_XBAR="neorv32_tb_xbar.gtkw"
+GHW_NAME_FIFO="neorv32_tb_fifo.ghw"
+GTKW_NAME_FIFO="neorv32_tb_fifo.gtkw"
+GHW_NAME_ASYNC_FIFO="neorv32_tb_asyn_fifo.ghw"
+GTKW_NAME_ASYNC_FIFO="neorv32_tb_async_fifo.gtkw"
+GHW_NAME_2PORT_FIFO="neorv32_tb_2port_fifo.ghw"
+GTKW_NAME_2PORT_FIFO="neorv32_tb_2port_fifo.gtkw"
+
 
 
 # Files
@@ -27,11 +34,20 @@ HDL_GEN_CORES_OFFSET:=../../../ip_cores/general-cores
 
 HDL_TB_FILES:=hdl/neorv32_tb_slim.vhd
 HDL_TB_FILES_XBAR:=hdl/neorv32_tb_xbar.vhd
+HDL_TB_FILES_FIFO:=hdl/neorv32_tb_fifo.vhd
+HDL_TB_FILES_ASYNC_FIFO:=hdl/neorv32_tb_async_fifo.vhd
+HDL_TB_FILES_2PORT_FIFO:=hdl/neorv32_tb_2port_fifo.vhd
 
 HDL_UART_SIM_FILES:=$(HDL_OFFSET)sim/sim_uart_rx.vhd
 
 HDL_SHELL_FILES:=../src/hdl/neorv32_shell_pkg.vhd \
-../src/hdl/neorv32_shell.vhd
+../src/hdl/neorv32_shell.vhd \
+../src/hdl/xwb_fifo_wrapper_pkg.vhd \
+../src/hdl/xwb_fifo_wrapper.vhd	\
+../src/hdl/xwb_async_fifo_wrapper_pkg.vhd	\
+../src/hdl/xwb_async_fifo_wrapper.vhd \
+../src/hdl/xwb_2port_fifo_wrapper_pkg.vhd	\
+../src/hdl/xwb_2port_fifo_wrapper.vhd
 
 HDL_RTE_CORE_FILES:= \
 $(HDL_NEORV32_BASE)/neorv32_package.vhd \
@@ -92,22 +108,31 @@ $(HDL_NEORV32_BASE)/neorv32_clint.vhd \
 $(HDL_NEORV32_BASE)/neorv32_top.vhd
 
 HDL_RTE_GENRAM_FILES:=$(HDL_GEN_CORES_OFFSET)/modules/genrams/genram_pkg.vhd \
-                      $(HDL_GEN_CORES_OFFSET)/modules/genrams/altera/generic_dpram.vhd
+                      $(HDL_GEN_CORES_OFFSET)/modules/genrams/altera/generic_dpram.vhd \
+											$(HDL_GEN_CORES_OFFSET)/modules/genrams/generic/generic_sync_fifo.vhd \
+                      $(HDL_GEN_CORES_OFFSET)/modules/genrams/common/inferred_sync_fifo.vhd	\
+#											$(HDL_GEN_CORES_OFFSET)/modules/genrams/generic/generic_async_fifo.vhd \
+                      $(HDL_GEN_CORES_OFFSET)/modules/genrams/common/inferred_async_fifo.vhd
 
 HDL_RTE_WISHBONE_FILES:=$(HDL_GEN_CORES_OFFSET)/modules/wishbone/wishbone_pkg.vhd \
                         $(HDL_GEN_CORES_OFFSET)/modules/wishbone/wb_dpram/xwb_dpram.vhd \
                         $(HDL_GEN_CORES_OFFSET)/modules/wishbone/wb_slave_adapter/wb_slave_adapter.vhd\
                         $(HDL_GEN_CORES_OFFSET)/modules/wishbone/wb_crossbar/sdb_rom.vhd \
                         $(HDL_GEN_CORES_OFFSET)/modules/wishbone/wb_crossbar/xwb_crossbar.vhd \
-                        $(HDL_GEN_CORES_OFFSET)/modules/wishbone/wb_crossbar/xwb_sdb_crossbar.vhd \
-                        $(HDL_GEN_CORES_OFFSET)/modules/genrams/generic/generic_sync_fifo.vhd \
-                        $(HDL_GEN_CORES_OFFSET)/modules/genrams/common/inferred_sync_fifo.vhd
+                        $(HDL_GEN_CORES_OFFSET)/modules/wishbone/wb_crossbar/xwb_sdb_crossbar.vhd 
+
 
 # Targets
 # ==============================================================================
 all: compile_code prepare analyze elaborate_run
 
 xbar: compile_code_xbar prepare analyze_xbar elaborate_run_xbar
+
+fifo: clean compile_code_fifo prepare analyze_fifo elaborate_run_fifo
+
+2port_fifo: clean compile_code_2port_fifo prepare analyze_2port_fifo elaborate_run_2port_fifo
+
+async_fifo: clean compile_code_async_fifo prepare analyze_async_fifo elaborate_run_async_fifo
 
 prepare:
 	@if [ ! -d "$(WORK_DIR)" ]; then \
@@ -119,6 +144,15 @@ compile_code:
 
 compile_code_xbar:
 	make -C ../src/sw/sim_xbar
+
+compile_code_fifo:
+	make -C ../src/sw/sim_fifo
+
+compile_code_2port_fifo:
+	make -C ../src/sw/sim_2port_fifo
+
+compile_code_async_fifo:
+	make -C ../src/sw/sim_async_fifo
 
 
 analyze:
@@ -145,6 +179,43 @@ analyze_xbar:
 	$(GHDL_BIN) -a --work=work --workdir=build -Whide -fsynopsys --ieee=synopsys --warn-no-vital-generic -fexplicit -Pbuild \
 	$(HDL_RTE_GENRAM_FILES) $(HDL_RTE_WISHBONE_FILES) $(HDL_SHELL_FILES) $(HDL_UART_SIM_FILES) $(HDL_TB_FILES_XBAR)
 
+analyze_fifo:
+	@echo "Analyzing ..."
+	# Building Altera MF ...
+	$(GHDL_BIN) -a --work=altera_mf --workdir=build -Wno-hide -fsynopsys --ieee=synopsys --warn-no-vital-generic -fexplicit \
+	$(ALTERA_MF_FILES)
+	# Building NEORV32 ...
+	$(GHDL_BIN) -a --work=neorv32 --workdir=build -Whide -fsynopsys --ieee=synopsys --warn-no-vital-generic -fexplicit -Pbuild \
+	$(HDL_RTE_CORE_FILES)
+	# Building testbench
+	$(GHDL_BIN) -a --work=work --workdir=build -Whide -fsynopsys --ieee=synopsys --warn-no-vital-generic -fexplicit -Pbuild \
+	$(HDL_RTE_GENRAM_FILES) $(HDL_RTE_WISHBONE_FILES) $(HDL_SHELL_FILES) $(HDL_UART_SIM_FILES) $(HDL_TB_FILES_FIFO)
+
+analyze_2port_fifo:
+	@echo "Analyzing ..."
+	# Building Altera MF ...
+	$(GHDL_BIN) -a --work=altera_mf --workdir=build -Wno-hide -fsynopsys --ieee=synopsys --warn-no-vital-generic -fexplicit \
+	$(ALTERA_MF_FILES)
+	# Building NEORV32 ...
+	$(GHDL_BIN) -a --work=neorv32 --workdir=build -Whide -fsynopsys --ieee=synopsys --warn-no-vital-generic -fexplicit -Pbuild \
+	$(HDL_RTE_CORE_FILES)
+	# Building testbench
+	$(GHDL_BIN) -a --work=work --workdir=build -Whide -fsynopsys --ieee=synopsys --warn-no-vital-generic -fexplicit -Pbuild \
+	$(HDL_RTE_GENRAM_FILES) $(HDL_RTE_WISHBONE_FILES) $(HDL_SHELL_FILES) $(HDL_UART_SIM_FILES) $(HDL_TB_FILES_2PORT_FIFO)
+
+analyze_async_fifo:
+	@echo "Analyzing ..."
+	# Building Altera MF ...
+	$(GHDL_BIN) -a --work=altera_mf --workdir=build -Wno-hide -fsynopsys --ieee=synopsys --warn-no-vital-generic -fexplicit \
+	$(ALTERA_MF_FILES)
+	# Building NEORV32 ...
+	$(GHDL_BIN) -a --work=neorv32 --workdir=build -Whide -fsynopsys --ieee=synopsys --warn-no-vital-generic -fexplicit -Pbuild \
+	$(HDL_RTE_CORE_FILES)
+	# Building testbench
+	$(GHDL_BIN) -a --work=work --workdir=build -Whide -fsynopsys --ieee=synopsys --warn-no-vital-generic -fexplicit -Pbuild \
+	$(HDL_RTE_CORE_FILES) $(HDL_RTE_GENRAM_FILES) $(HDL_RTE_WISHBONE_FILES) $(HDL_SHELL_FILES) $(HDL_UART_SIM_FILES) $(HDL_TB_FILES_ASYNC_FIFO)
+
+
 elaborate_run:
 	@echo "Elaborating ..."
 	$(GHDL_BIN) --elab-run -fexplicit -fsynopsys -Pbuild --workdir=build work.neorv32_tb_slim --stop-time=$(STOP_TIME) --wave=$(WORK_DIR)/$(GHW_NAME) --ieee-asserts=disable
@@ -153,15 +224,40 @@ elaborate_run_xbar:
 	@echo "Elaborating ..."
 	$(GHDL_BIN) --elab-run -fexplicit -fsynopsys -Pbuild --workdir=build work.neorv32_tb_xbar --stop-time=$(STOP_TIME) --wave=$(WORK_DIR)/$(GHW_NAME_XBAR) --ieee-asserts=disable
 
+elaborate_run_fifo:
+	@echo "Elaborating ..."
+	$(GHDL_BIN) --elab-run -fexplicit -fsynopsys -Pbuild --workdir=build work.neorv32_tb_fifo --stop-time=$(STOP_TIME) --wave=$(WORK_DIR)/$(GHW_NAME_FIFO) --ieee-asserts=disable
+
+elaborate_run_2port_fifo:
+	@echo "Elaborating ..."
+	$(GHDL_BIN) --elab-run -fexplicit -fsynopsys -Pbuild --workdir=build work.neorv32_tb_2port_fifo --stop-time=$(STOP_TIME) --wave=$(WORK_DIR)/$(GHW_NAME_2PORT_FIFO) --ieee-asserts=disable
+
+elaborate_run_async_fifo:
+	@echo "Elaborating ..."
+	$(GHDL_BIN) --elab-run -fexplicit -fsynopsys -Pbuild --workdir=build work.neorv32_tb_async_fifo --stop-time=$(STOP_TIME) --wave=$(WORK_DIR)/$(GHW_NAME_ASYNC_FIFO) --ieee-asserts=disable
+
+
 view: all
 	$(GTWK_BIN) $(WORK_DIR)/$(GHW_NAME) $(GTKW_NAME)
 
 view_xbar: xbar
 	$(GTWK_BIN) $(WORK_DIR)/$(GHW_NAME_XBAR) $(GTKW_NAME_XBAR)
+	
+view_fifo: fifo
+	$(GTWK_BIN) $(WORK_DIR)/$(GHW_NAME_FIFO) $(GTKW_NAME_FIFO)
+
+view_2port_fifo: 2port_fifo
+	$(GTWK_BIN) $(WORK_DIR)/$(GHW_NAME_2PORT_FIFO) $(GTKW_NAME_2PORT_FIFO)
+
+view_async_fifo: async_fifo
+	$(GTWK_BIN) $(WORK_DIR)/$(GHW_NAME_ASYNC_FIFO) $(GTKW_NAME_ASYNC_FIFO)
 
 clean:
 	make -C ../src/sw/sim clean
 	make -C ../src/sw/sim_xbar clean
+	make -C ../src/sw/sim_fifo clean
+	make -C ../src/sw/sim_2port_fifo clean
+	make -C ../src/sw/sim_async_fifo clean
 	rm -rf build || true
 	rm *ghw || true
 	rm *text.out || true
