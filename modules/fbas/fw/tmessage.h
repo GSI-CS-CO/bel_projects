@@ -83,7 +83,7 @@ void      msgResetMpsBuf(const uint8_t idx, const uint8_t *pId, const uint8_t fl
 void      msgForceHigh(mpsMsg_t *const buf);
 void      msgUpdateMpsBuf(const uint64_t *pId);
 
-status_t  msgRegisterNode(const uint64_t id, const regCmd_t cmd, const uint8_t info);
+status_t  msgRegisterNode(const uint64_t node_id, const uint8_t bic_id, const uint8_t ch_id);
 int8_t    msgGetNodeIndex(const uint64_t *pId);
 
 void      ioPrintMpsBuf(void);
