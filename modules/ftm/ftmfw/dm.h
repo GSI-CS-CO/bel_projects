@@ -103,7 +103,12 @@ extern actionFuncPtr      actionFuncs[_ACT_TYPE_END_];  ///< Function pointer ar
  */
 //@{ 
 extern uint32_t              nodeTmp[_MEM_BLOCK_SIZE / _32b_SIZE_]; ///< Staging area when a node is constructed from references
-extern uint32_t* dynamicNodeStaging(uint32_t* node, uint32_t* thrData);     ///< Returns ptr to the original node if all fields are immediates or ptr to nodeTmp if a dynamic verion was compiled
+uint8_t safeRead64_with_retry(volatile uint64_t* addr, uint64_t* dest); ///< reads a 64b value from two 32b registers, returns 0 on success, 1 on error (inconsistent read). Retries up to SAFEREAD64_MAX_RETRIES times
+uint8_t safeRead64(volatile uint64_t* addr1st,  volatile uint64_t* addr2nd, uint64_t* dest); ///< reads a 64b value from two 32b registers, returns 0 on success, 1 on error (inconsistent read)
+uint8_t dynField(uint32_t wordFormats, volatile uint32_t* src, volatile uint32_t* dst); ///< dereferences a field of a node if it is a reference and copies the value to the staging area. Returns 0 on success, 1 on error (null ptr or invalid wordformat)
+
+uint32_t* dynamicNodeStaging(uint32_t* node, uint32_t* thrData);     ///< Returns ptr to the original node if all fields are immediates or ptr to nodeTmp if a dynamic verion was compiled
+
 //@}
 
 /** @name Ptrs to diagnostic data

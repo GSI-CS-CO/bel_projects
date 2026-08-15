@@ -310,7 +310,7 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
   uint32_t bufOffs; // buffer's offset in buffer list
   uint32_t elOffs;  // element's offset in buffer
   node[NODE_FLAGS >> 2] |= NFLG_PAINT_LM32_SMSK; // set paint bit to mark this node as visited
-  //mprintf("tg 0x%08x adrpre 0x%08x INTB 0x%08x\n", (uint32_t)tg, adrPrefix, INT_BASE_ADR);
+  //pp_printf("tg 0x%08x adrpre 0x%08x INTB 0x%08x\n", (uint32_t)tg, adrPrefix, INT_BASE_ADR);
   if(tg == LM32_NULL_PTR) { // check if the target is a null pointer. Used to allow removal of pattern containing target nodes
     return ret;
   }
@@ -669,51 +669,224 @@ void heapReplace(uint32_t src) {
   hp[choice]    = moving; 
 }
 
+/**
+ * Safely read a 64-bit value from dual-port RAM with retry logic
+ * 
+ * Attempts up to MAX_RETRIES times to get a consistent read.
+ * If value is too volatile, eventually gives up and fails.
+ * 
+ * @param addr Pointer to 64-bit value in RAM
+ * @param dest Pointer to destination buffer
+ * @return 0 on success, 1 on failure (all retries exhausted)
+ */
+#define SAFEREAD64_MAX_RETRIES 5
+
+uint8_t safeRead64_with_retry(volatile uint64_t* addr, uint64_t* dest) {
+  uint8_t ret = 1;
+ 
+  
+  for (uint8_t attempt = 0; attempt < SAFEREAD64_MAX_RETRIES; attempt++) {
+    if (safeRead64(addr, addr, dest) == 0) {
+      // Success on this attempt
+      return 0;
+    }
+    // Read was inconsistent, retry
+  }
+  
+  // All retries exhausted
+  return 1;
+}
+
+/**
+ * Safely read a 64-bit value from dual-port RAM with consistency validation
+ * 
+ * Uses volatile to prevent compiler from caching reads.
+ * The hardware (dual-port RAM) can modify values concurrently,
+ * so we must force actual memory reads each time (no register caching).
+ * 
+ * @param addr Pointer to 64-bit value in RAM
+ * @param dest Pointer to destination buffer for consistent 64-bit result
+ * @return 0 on success (consistent read), 1 on failure (inconsistent/NULL)
+ */
+uint8_t safeRead64(volatile uint64_t* addr1st,  volatile uint64_t* addr2nd, uint64_t* dest) {
+  // RAM is a 32 bit dual port RAM. 32b reads are atomic, but 64b reads are not.
+  // This function safely reads a 64b value from RAM by validating consistency.
+  // CRITICAL: Uses volatile to prevent compiler from caching reads.
+  
+  uint8_t ret = 1;  // return 0 on success, 1 on failure
+  
+  // === Input validation ===
+  if ( (addr1st == LM32_NULL_PTR) || (addr2nd == LM32_NULL_PTR) ) {
+    DBPRINT1("#%02u: safeRead64 detected null addr pointer\n", cpuId);
+    return 1;
+  }
+  
+  if (dest == LM32_NULL_PTR) {
+    DBPRINT1("#%02u: safeRead64 detected null dest pointer\n", cpuId);
+    return 1;
+  }
+  
+  // === Three-read consistency validation with volatile ===
+  // CRITICAL: Cast to volatile pointer to force actual memory reads
+  // Without volatile, compiler caches reads and consistency check fails
+  
+  volatile uint32_t* addr_32bit1st = (volatile uint32_t*)addr1st;
+  volatile uint32_t* addr_32bit2nd = (volatile uint32_t*)addr2nd;
+  
+  // Read 1: High 32 bits (first time)
+  // volatile forces actual memory read, not register cache
+  uint32_t high_read_1st = addr_32bit1st[0];
+  
+  // Read 2: Low 32 bits
+  // volatile forces actual memory read
+  uint32_t low_read = addr_32bit1st[1];
+  
+  // Read 3: High 32 bits (second time) - consistency check
+  // volatile forces ANOTHER actual memory read, not cached value
+  uint32_t high_read_2nd = addr_32bit2nd[0];
+  
+  // === Consistency check ===
+  if (high_read_1st == high_read_2nd) {
+    // SUCCESS: High bits unchanged between reads
+    // This ACTUALLY checked RAM (not cached values)
+    // Guarantees high and low form a consistent pair
+    
+    *dest = ((uint64_t)high_read_1st << 32) | (uint64_t)low_read;
+    ret = 0;
+    
+    DBPRINT3("#%02u: safeRead64 SUCCESS: 0x%08x%08x\n", 
+             cpuId, high_read_1st, low_read);
+  } else {
+    // FAILURE: High bits changed mid-read
+    // This ACTUALLY detected change in RAM (thanks to volatile)
+    
+    DBPRINT3("#%02u: safeRead64 FAILED - inconsistent read. High: 0x%08x -> 0x%08x, Low: 0x%08x\n",
+             cpuId, high_read_1st, high_read_2nd, low_read);
+    ret = 1;
+  }
+  
+  return ret;
+}
+
+uint8_t dynField(uint32_t wordFormats, volatile uint32_t* src, volatile uint32_t* dst) {
+  uint8_t ret = 0;
+
+  if (((wordFormats & DYN_MODE_MSK) == DYN_MODE_REF) || ((wordFormats & DYN_MODE_MSK) == DYN_MODE_REF2)) { // Is current word a kind of reference? yay, let's dynamically copy stuff in!
+      uint64_t val = 0;
+
+      // src is the address of the field slot itself (&node[i]); only REF/REF2 fields hold a
+      // reference at that slot, so only here do we dereference it once to get the actual target.
+      volatile uint32_t* ref = (volatile uint32_t*)(*src);
+
+      if (wordFormats & DYN_WIDTH64_SMSK) {
+        //this is a 64b pointer
+
+        volatile uint64_t* tmpPtr64 = (uint64_t*)ref;
+        if (tmpPtr64 != LM32_NULL_PTR) {
+          if ((wordFormats & DYN_MODE_MSK) == DYN_MODE_REF2) {
+            //pp_printf("Decoding 64B R2R\n");
+            if (*(uint64_t**)tmpPtr64 != LM32_NULL_PTR) {
+              if(safeRead64_with_retry(*(uint64_t**)tmpPtr64, (uint64_t*)&val) != 0) {
+                pp_printf("#%02u: ERROR: Failed %u times in a row to read consistent 64b value from adr 0x%08x via 0x%08x (ptr2ptr)\n", cpuId, SAFEREAD64_MAX_RETRIES, *(uint64_t**)tmpPtr64, tmpPtr64);
+              return 1;
+              }
+            } else { 
+              pp_printf("#%02u: ERROR: 64B R2R Dereferencing NULL pointer\n", cpuId);
+              return 1; //bail out here, as we cannot continue dereferencing a NULL pointer. This will cause scheduler to halt this thread.
+            }
+          } else {
+
+            if(safeRead64_with_retry(tmpPtr64, (uint64_t*)&val) != 0) { 
+              pp_printf("#%02u: ERROR: Failed %u times in a row to read consistent 64b value from adr 0x%08x\n", cpuId, SAFEREAD64_MAX_RETRIES, tmpPtr64);
+              return 1;
+            }
+          }
+        } else {
+          pp_printf("#%02u: ERROR: 64b dereferencing NULL pointer\n", cpuId);
+          return 1; //bail out here, as we cannot continue dereferencing a NULL pointer. This will cause scheduler to halt this thread.
+        }
+        //pp_printf("Decoding 64B\n");
+        dst[0]    = (uint32_t)(val>>32);
+        dst[0+1]  = (uint32_t)(val);
+        return 0;
+
+
+      } else {
+        //this is a 32b pointer
+        volatile uint32_t* tmpPtr32 = ref;
+        if (tmpPtr32 != LM32_NULL_PTR) {
+          if ((wordFormats & DYN_MODE_MSK) == DYN_MODE_REF2) {
+            //pp_printf("Decoding 32B R2R\n");
+            if (*(uint32_t**)tmpPtr32 != LM32_NULL_PTR) {
+              val = **(uint32_t**)tmpPtr32;
+            } else { 
+              pp_printf("#%02u: ERROR: 32b R2R dereferencing NULL pointer\n", cpuId);
+              return 1; //bail out here, as we cannot continue dereferencing a NULL pointer. This will cause scheduler to halt this thread.
+            }
+          } else {
+            val = *tmpPtr32;
+          }
+
+        } else {
+          pp_printf("#%02u: ERROR: 32B dereferencing NULL pointer\n", cpuId);
+          return 1; //bail out here, as we cannot continue dereferencing a NULL pointer. This will cause scheduler to halt this thread.
+        }
+        //pp_printf("Decoding 32B\n");
+        dst[0] = (uint32_t)(val);
+        return 0;
+      }    
+    } //else { //this field is an immediate or adr, leave as is  }
+    //pp_printf("IM or ADR\n");
+    return 0;
+}
 
 
 uint32_t* dynamicNodeStaging(uint32_t* node, uint32_t* thrData) {
   uint32_t* ret;
-  memcpy(nodeTmp, node, _MEM_BLOCK_SIZE); //make a copy of the original node we can edit
-      
-  // tells us if its 32/64 and if a word is an immediate, value (dynamically generated at compile time, static now), reference, or a double reference
-  uint32_t wordFormats = nodeTmp[NODE_OPT_DYN >> 2]; //load word description
-  
-
-  for(unsigned i = 0; i < 9; i++) { // a memory block has 13 words, not 9 - but last four (dyn, hash, flags, nextPtr) must not be changed.
-    if ((wordFormats & DYN_MODE_MSK) >= DYN_MODE_REF) { // Is current word a kind of reference? yay, let's dynamically copy stuff in!
-      uint64_t val;
-      if ((wordFormats & DYN_MODE_MSK) == DYN_MODE_REF2)  {
-        val = **(uint64_t**)node[i];
-        DBPRINT2("#%02u: REF2REF. Word %u is a ref2ref, adr is 0x%08x, ptr is 0x%08x, value is 0x%08x%08x\n", cpuId, i, &node[i], *(uint32_t*)node[i], (uint32_t)(val>>32), (uint32_t)val);
-      } //reference or reference 2 reference?
-      else                                                {
-        DBPRINT2("#%02u: REF. Word %u is a ref, adr is 0x%08x, value is 0x%08x%08x\n", cpuId, i, &node[i], (uint32_t)(val>>32), (uint32_t)val);
-        val =  *(uint64_t*) node[i];
-      }
-
-      
-      
-      nodeTmp[i] = (uint32_t)(val>>32);
-      //mprintf("#%02u: Current Wordformat is 0x%08x, Mask is 0x%08x\n", cpuId, wordFormats, DYN_WIDTH64_SMSK);
-      if (wordFormats & DYN_WIDTH64_SMSK) {
-        DBPRINT2("#%02u: Ref is a 64b word\n", cpuId);
-        nodeTmp[i+1] = (uint32_t)(val); //It's MSB first, so the adr can be 64b high word or 32b word. if its 64b, fill in low word at i+1
-      }
-    } //ELSE - it's a IM or ADR, we leave the original value in, regardless if its 32 or 64b
-    wordFormats >>= 3; //shift right by 3 bits to get next wordFormat
+  if (node != LM32_NULL_PTR) {
+    memcpy(nodeTmp, node, _MEM_BLOCK_SIZE); //make a copy of the original node we can edit
+  } else {
+    DBPRINT1("#%02u: ERROR: dynamicNodeStaging was passed a null ptr instead of a node\n", cpuId);
+    return LM32_NULL_PTR; //bail out here, as we cannot continue dereferencing a NULL pointer. This will cause scheduler to halt this thread.  
   }
-  
+
+  uint32_t wordformatOriginal = nodeTmp[NODE_OPT_DYN >> 2]; //save original wordformat
+  uint32_t hash = nodeTmp[NODE_HASH >> 2]; //save original hash for diagnostics
+
+  for(unsigned i = 0; i < 9; i++) { // a memory block has 13 words / fields. The first 9 can have be references to other memory locations and must be derefenced for use. The last 4 fields (dyn, hash, flags, nextPtr) must not be changed.
+    uint32_t wordFormats = wordformatOriginal >> (i*3); //load word description
+    // tells us if its 32/64 and if a word is an immediate, value (dynamically generated at compile time, static now), reference, or a double reference
+
+    if ((i>= 8) && (wordFormats & DYN_WIDTH64_SMSK)) { //boundary check to prevent overflow when 64b value encoutered at index 8
+        DBPRINT1("#%02u: ERROR: Node # 0x%08x word %u cannot fit 64b value here! Check your node definition!\n", cpuId, hash, i);
+        return LM32_NULL_PTR; //bail out here, as we cannot continue dereferencing a NULL pointer. This will cause scheduler to halt this thread.
+    }
+
+    //
+    if(dynField(wordFormats, (uint32_t*)&node[i], (uint32_t*)&nodeTmp[i]) != 0) return LM32_NULL_PTR;
+
+  } //for - handle field 0-8 in node
+
   //call handler function
-  ret = nodeFuncs[getNodeType(nodeTmp)](nodeTmp, thrData); 
-  
+  ret = nodeFuncs[getNodeType(nodeTmp)](nodeTmp, thrData);
+
   //copy back all changes to immediate/val fields
-  wordFormats = nodeTmp[NODE_OPT_DYN >> 2]; //reload description
   for(unsigned i = 0; i < 9; i++) {
-    if ((wordFormats & DYN_MODE_MSK) < DYN_MODE_REF) { node[i] = nodeTmp[i]; } // immediate/adr ?
-    wordFormats >>= 3; //shift right by 3 bits to get next wordFormat
+    uint32_t wordFormats = wordformatOriginal >> (i*3);
+
+    if (((wordFormats & DYN_MODE_MSK) == DYN_MODE_IM) || ((wordFormats & DYN_MODE_MSK) == DYN_MODE_ADR)) { 
+      DBPRINT3("#%02u: Node # 0x%08x - copy back - overwriting word %u 0x%08x with new value 0x%08x\n", cpuId, hash, i, node[i], nodeTmp[i]);
+      node[i] = nodeTmp[i];
+    } // immediate/adr ?
+    else {
+      DBPRINT3("#%02u: Node # 0x%08x - is dynamic - keeping word %u 0x%08x\n", cpuId, hash, i, node[i]);
+    }
+    //also copy back node flags. Yes, this would not catch illegal changes to nodetype, but if THAT can happen in a handler at all, we're screwed anyway. And besides, we need the set or unset flags back.
+    node[NODE_FLAGS >> 2] = nodeTmp[NODE_FLAGS >> 2];
   }
 
-  //we must never return nodeTmp, as this is not threadsafe. if handler wants to return nodeTmp, return original node instead.
+  //we must never return nodeTmp, as the object only exists within this function. however, we cannot just return node on principle, as the handler most likely returns a pointer to the successor node, not to the same node again.
+  //if handler wants to return a pointer to nodeTmp, return pointer to original node instead.
   if (ret != nodeTmp) return ret;
   else                return node;
 
