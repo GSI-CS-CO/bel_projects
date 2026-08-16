@@ -104,6 +104,7 @@ extern actionFuncPtr      actionFuncs[_ACT_TYPE_END_];  ///< Function pointer ar
 //@{ 
 extern uint32_t              nodeTmp[_MEM_BLOCK_SIZE / _32b_SIZE_]; ///< Staging area when a node is constructed from references
 uint8_t safeRead64_with_retry(volatile uint64_t* addr, uint64_t* dest); ///< reads a 64b value from two 32b registers, returns 0 on success, 1 on error (inconsistent read). Retries up to SAFEREAD64_MAX_RETRIES times
+extern volatile uint64_t* (*safeRead64RetryTestHook)(uint8_t attempt, volatile uint64_t* addr); ///< test-only hook: when non-NULL, overrides addr2nd per retry attempt inside safeRead64_with_retry. NULL in production - no behaviour change.
 uint8_t safeRead64(volatile uint64_t* addr1st,  volatile uint64_t* addr2nd, uint64_t* dest); ///< reads a 64b value from two 32b registers, returns 0 on success, 1 on error (inconsistent read)
 uint8_t dynField(uint32_t wordFormats, volatile uint32_t* src, volatile uint32_t* dst); ///< dereferences a field of a node if it is a reference and copies the value to the staging area. Returns 0 on success, 1 on error (null ptr or invalid wordformat)
 

@@ -681,18 +681,26 @@ void heapReplace(uint32_t src) {
  */
 #define SAFEREAD64_MAX_RETRIES 5
 
+/* Test-only hook: when non-NULL, called once per attempt inside the retry
+ * loop below to pick which address safeRead64() uses as addr2nd, letting a
+ * test simulate a value that changes between attempts without any real
+ * concurrent writer. NULL (the default, always the case in production)
+ * means "use addr for both", i.e. no behaviour change outside tests. */
+volatile uint64_t* (*safeRead64RetryTestHook)(uint8_t attempt, volatile uint64_t* addr) = LM32_NULL_PTR;
+
 uint8_t safeRead64_with_retry(volatile uint64_t* addr, uint64_t* dest) {
-  uint8_t ret = 1;
- 
-  
   for (uint8_t attempt = 0; attempt < SAFEREAD64_MAX_RETRIES; attempt++) {
-    if (safeRead64(addr, addr, dest) == 0) {
+    volatile uint64_t* addr2nd = addr;
+    if (safeRead64RetryTestHook != LM32_NULL_PTR) {
+      addr2nd = safeRead64RetryTestHook(attempt, addr);
+    }
+    if (safeRead64(addr, addr2nd, dest) == 0) {
       // Success on this attempt
       return 0;
     }
     // Read was inconsistent, retry
   }
-  
+
   // All retries exhausted
   return 1;
 }
@@ -726,45 +734,57 @@ uint8_t safeRead64(volatile uint64_t* addr1st,  volatile uint64_t* addr2nd, uint
     return 1;
   }
   
-  // === Three-read consistency validation with volatile ===
+  // === Four-read consistency validation with volatile ===
   // CRITICAL: Cast to volatile pointer to force actual memory reads
   // Without volatile, compiler caches reads and consistency check fails
-  
+  //
+  // We re-read BOTH words, not just the high word: a writer is free to update
+  // either half first (write order is fixed by hardware config today, but
+  // this check must not depend on that assumption). Comparing only the high
+  // word would miss a torn read where a concurrent write only touches the
+  // low word between our two samples - re-reading and comparing both words
+  // catches a change to either half, regardless of write order.
+
   volatile uint32_t* addr_32bit1st = (volatile uint32_t*)addr1st;
   volatile uint32_t* addr_32bit2nd = (volatile uint32_t*)addr2nd;
-  
+
   // Read 1: High 32 bits (first time)
   // volatile forces actual memory read, not register cache
   uint32_t high_read_1st = addr_32bit1st[0];
-  
-  // Read 2: Low 32 bits
+
+  // Read 2: Low 32 bits (first time)
   // volatile forces actual memory read
-  uint32_t low_read = addr_32bit1st[1];
-  
+  uint32_t low_read_1st = addr_32bit1st[1];
+
   // Read 3: High 32 bits (second time) - consistency check
   // volatile forces ANOTHER actual memory read, not cached value
   uint32_t high_read_2nd = addr_32bit2nd[0];
-  
+
+  // Read 4: Low 32 bits (second time) - consistency check
+  // volatile forces ANOTHER actual memory read, not cached value
+  uint32_t low_read_2nd = addr_32bit2nd[1];
+
   // === Consistency check ===
-  if (high_read_1st == high_read_2nd) {
-    // SUCCESS: High bits unchanged between reads
+  if ((high_read_1st == high_read_2nd) && (low_read_1st == low_read_2nd)) {
+    // SUCCESS: Both halves unchanged between reads
     // This ACTUALLY checked RAM (not cached values)
-    // Guarantees high and low form a consistent pair
-    
-    *dest = ((uint64_t)high_read_1st << 32) | (uint64_t)low_read;
+    // Guarantees high and low form a consistent pair, regardless of which
+    // half a concurrent writer updates first
+
+    *dest = ((uint64_t)high_read_1st << 32) | (uint64_t)low_read_1st;
     ret = 0;
-    
-    DBPRINT3("#%02u: safeRead64 SUCCESS: 0x%08x%08x\n", 
-             cpuId, high_read_1st, low_read);
+
+    DBPRINT3("#%02u: safeRead64 SUCCESS: 0x%08x%08x\n",
+             cpuId, high_read_1st, low_read_1st);
   } else {
-    // FAILURE: High bits changed mid-read
+    // FAILURE: High and/or low half changed mid-read
     // This ACTUALLY detected change in RAM (thanks to volatile)
-    
-    DBPRINT3("#%02u: safeRead64 FAILED - inconsistent read. High: 0x%08x -> 0x%08x, Low: 0x%08x\n",
-             cpuId, high_read_1st, high_read_2nd, low_read);
+
+    DBPRINT3("#%02u: safeRead64 FAILED - inconsistent read. High: 0x%08x -> 0x%08x, Low: 0x%08x -> 0x%08x\n",
+             cpuId, high_read_1st, high_read_2nd, low_read_1st, low_read_2nd);
     ret = 1;
   }
-  
+
   return ret;
 }
 
