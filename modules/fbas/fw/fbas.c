@@ -473,7 +473,7 @@ static uint32_t handleEcaEvent(uint32_t pollTimeout, uint32_t* mpsTask, msgCtrl_
   if (nextAction != COMMON_ECADO_TIMEOUT) {
     now = getSysTime();
 
-    uint64_t nodeId;  // node ID (MAC address), higher 6 bytes in the 'param' field
+    uint64_t node_id; // node ID (MAC address), higher 6 bytes in the 'param' field
     uint8_t  bic_id;  // BIC ID (beam interlock controller), 1 byte in the 'param' field
     uint8_t  ch_id;   // channel ID, 4-bit (0..15 for C2 signalling)
     uint8_t  flag;    // PC/registration flag (power converter), 4-bit, 0=OK, 1=NOK, 0xF=registration
@@ -517,9 +517,9 @@ static uint32_t handleEcaEvent(uint32_t pollTimeout, uint32_t* mpsTask, msgCtrl_
         break;
 
       case FBAS_GEN_EVT:
-        if (nodeType == FBAS_NODE_TX) {// only FBAS TX node handles the MPS events
+        if (nodeType == FBAS_NODE_TX) {// only FBAS emitter node handles the PC events
           // store the PC event
-          *head = msgStorePcEvent(myIdx, ecaEvtId, ecaDeadline);
+          *head = msgStorePcEvent(ecaEvtId, ecaDeadline);
 
           // forward the fetched PC event
           if (*head && (*mpsTask & TSK_TX_MPS_EVENTS)) {
@@ -601,26 +601,26 @@ static uint32_t handleEcaEvent(uint32_t pollTimeout, uint32_t* mpsTask, msgCtrl_
         if (!(*mpsTask & TSK_TX_MPS_EVENTS))
           break;
 
-        nodeId = ecaParam >> 16;                  // node ID (MAC address)
+        node_id = ecaParam >> 16;                 // node ID (MAC address)
         bic_id = (uint8_t)(ecaParam >> 8);        // BIC ID (beam interlock controller)
         ch_id  = (uint8_t)(ecaParam >> 4) && 0xF; // C2 channel ID
         flag   = (uint8_t)(ecaParam) && 0xF;      // PC/registration flag (power converter)
 
         if (nodeType == FBAS_NODE_RX) {  // registration request from TX
           if (flag == REG_FLAG) {
-            // find the given sender node ID in the dedicated array and return its channel ID
-            int8_t idx = msgGetNodeIndex(&nodeId);
-            if ((0 <= idx) && (idx < N_MAX_TX_NODES)) {
+            // find the node ID of a given sender in the dedicated array and return its channel ID
+            int8_t ch_id = msgGetSenderIndex(&node_id);
+            if ((0 <= ch_id) && (ch_id < N_MAX_TX_NODES)) {
               // unicast the reg. response
-              fwlib_setEbmDstAddr(nodeId, BROADCAST_IP);
-              msgRegisterNode(myMac, BIC_MSK, idx);
-              //DBPRINT2("reg OK: TX MAC=%llx\n", nodeId);
+              fwlib_setEbmDstAddr(node_id, BROADCAST_IP);
+              msgRegisterNode(myMac, BIC_MSK, ch_id);
+              //DBPRINT2("reg OK: TX MAC=%llx\n", node_id);
             }
           }
         }
         else if (nodeType == FBAS_NODE_TX) { // registration response from RX
           if (flag == REG_FLAG) {
-            dstNwAddr[DST_ADDR_RXNODE].mac = nodeId;
+            dstNwAddr[DST_ADDR_RXNODE].mac = node_id;
             myIdx = ch_id;
             //DBPRINT2("reg OK: RX MAC=%llx\n", dstNwAddr[DST_ADDR_RXNODE].mac);
             *mpsTask |= TSK_REG_COMPLETE;
@@ -869,7 +869,7 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd)
         measureClearSummary(N_MSR_ITEMS, ENABLE_VERBOSITY);
         break;
       case FBAS_CMD_PRINT_MPS_BUF:
-        ioPrintMpsBuf();
+        msgPrintMpsBuf();
         ioPrintPortMap();
         break;
       case FBAS_CMD_SET_TX_RATE:
@@ -969,9 +969,9 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
           break;
         }
 
-        // periodic messaging of the MPS flags (unicast transmission)
+        // periodic messaging of the stored PC flag (unicast transmission)
         if (setEndpDstAddr(DST_ADDR_RXNODE) == COMMON_STATUS_OK) {
-          uint32_t count = msgSendMpsFlag(pMsgCtrl, FBAS_FLG_EID);
+          uint32_t count = msgSendPcFlag(pMsgCtrl, FBAS_FLG_EID);
           // export the counter of sent timing messages
           *(pSharedApp + (FBAS_SHARED_TX_MSG_CNT >> 2)) = measureCountEvt(TX_EVT_CNT, count);
         }

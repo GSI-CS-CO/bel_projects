@@ -38,10 +38,11 @@
 #include "tmessage.h"
 
 // application-specific variables
-uint8_t    nodeIds[N_MAX_TX_NODES][ETH_ALEN];   // sender node ID list
-mpsMsg_t   bufMpsMsg[N_MAX_MPS_CHANNELS];       // buffer for MPS timing messages
-mpsMsg_t *const headBufMps = &bufMpsMsg[0]; // head of the MPS message buffer
-msgCtrl_t  mpsMsgCtrl;                          // MPS messaging control structure
+uint8_t    senders[N_MAX_TX_NODES][ETH_ALEN];   // sender list
+mpsMsg_t   bufMpsMsg[N_MAX_MPS_CHANNELS];       // buffer for the C2 message
+mpsMsg_t *const headBufMps = &bufMpsMsg[0];     // head of the C2 message buffer
+mpsMsg_t   bufPcEvent;                          // buffer for the PC event
+msgCtrl_t  mpsMsgCtrl;                          // C2 messaging control structure
 const uint32_t txMsgRates[N_TX_RATES] = {       // TX messaging rates, [us]
               33333, 100000, 80000, 50000,      // 30, 10, 12.5, 20 [Hz]
               20000, 10000, 5000, 2000,         // 50, 100, 200, 500 [Hz]
@@ -51,13 +52,12 @@ static int addr_equal(uint8_t a[ETH_ALEN], uint8_t b[ETH_ALEN]); // wr-switch-sw
 static uint8_t *addr_copy(uint8_t dst[ETH_ALEN], uint8_t src[ETH_ALEN]);
 
 /**
- * \brief Initialize the MPS messaging controller
+ * \brief Initialize the C2 messaging controller
  *
- * In TX nodes, MPS flags are sent to RX node in
- * the given interval. A dedicated control structure
- * is used to manage such periodic messaging.
+ * Control structure for messaging the C2 (class 2) protocol periodically.
+ * Emitter nodes use it.
  *
- * \param ctrl  Pointer to the MPS messaging controller
+ * \param ctrl  Pointer to the C2 messaging controller
  * \param total Total number of the MPS channels
  * \param now   Timestamp of access
  * \param period Messaging period, [us]
@@ -79,16 +79,16 @@ void msgInitMsgCtrl(msgCtrl_t *const ctrl, const uint8_t total, const uint64_t n
 }
 
 /**
- * \brief Send stored MPS flags
+ * \brief Send stored the PC flag
  *
- * Send all MPS flags stored in the MPS message buffer
+ * Send the PC (Power Converter) flag stored in the PC event buffer
  *
- * \param ctrl  Pointer to the MPS messaging controller
+ * \param ctrl  Pointer to the C2 messaging controller
  * \param evtId Event ID for timing messages
  *
  * \return Number of sent messages
  **/
-uint32_t msgSendMpsFlag(msgCtrl_t* ctrl, uint64_t evtId)
+uint32_t msgSendPcFlag(msgCtrl_t* ctrl, uint64_t evtId)
 {
   uint32_t count = 0;
   uint32_t res, tef;                // temporary variables for bit shifting etc
@@ -152,15 +152,15 @@ uint32_t msgSendMpsFlag(msgCtrl_t* ctrl, uint64_t evtId)
 }
 
 /**
- * \brief Send PC event
+ * \brief Send the PC event
  *
- * Send the PC event as a timing message. (use)
+ * Send an PC (Power Converter) event immediatelly.
  *
  * Upon flag change to NOK, there shall be 2 extra events within 50 us. [MPS_FS_530]
  * In case of new cycle, do not send any PC event. [MPS_FS_630]
  *
  * \param ctrl  Pointer to the messaging controller
- * \param buf   Location of the message buffer (holding PC event)
+ * \param buf   Location of the PC event buffer
  * \param evtid Event ID for a timing message
  * \param extra Number of extra messages
  *
@@ -194,19 +194,16 @@ uint32_t msgSendPcEvent(const msgCtrl_t* ctrl, mpsMsg_t *const buf, const uint64
 /**
  * \brief Store the fetched PC event
  *
- * Store the PC (Power Converter) event fetched from ECA
- * in the dedicated MPS message buffer.
+ * Store the PC (Power Converter) event fetched from ECA in the buffer.
  *
- * \param idx Index (if TX node manages multiple PCs)
- * \param evt Raw ECA data (bits 63-16 = event ID, 15-8 = channel, 7-0 = flag)
+ * \param evt Raw ECA data (bits 63-16 = event ID, 0 = flag)
  * \param ts  Timestamp
  *
- * \return Pointer to the message buffer location
+ * \return Pointer to the PC event buffer
  **/
-mpsMsg_t* msgStorePcEvent(const uint8_t idx, const uint64_t evt, const uint64_t ts)
+mpsMsg_t* msgStorePcEvent(const uint64_t evt, const uint64_t ts)
 {
-  // parse the PC channel and PC flag
-  uint8_t ch = (uint8_t)(evt >> 8);
+  // parse the PC flag
   uint8_t flag = (uint8_t)evt;
 
   // PC events simulated by TLU can only have values 1 and 0, therefore
@@ -218,53 +215,49 @@ mpsMsg_t* msgStorePcEvent(const uint8_t idx, const uint64_t evt, const uint64_t 
   }
 
   // keep the PC flag and timestamp
-  (headBufMps+ch)->prot.flag = flag;
-  (headBufMps+ch)->tsRx = ts;
-
-  // set the MPS msg index
-  (headBufMps+ch)->prot.idx = idx + ch;
+  bufPcEvent.prot.flag = flag;
+  bufPcEvent.tsRx = ts;
 
   // return the message buffer
-  return (headBufMps+ch);
+  return &bufPcEvent;
 }
 
 /**
- * \brief store recieved MPS message
+ * \brief Store the recieved C2 message
  *
- * Store a received MPS message only if its timestamp is actual.
- * The reason is that the NOK flag is transmitted 3 times
- * with the same timestamp.
+ * Store a received C2 message only if its timestamp is actual.
+ * The reason is that the NOK flag is transmitted 3 times with the same timestamp.
  *
- * \param raw Raw MPS protocol (bits 63-16 = node ID, 15-8 = index, 7-0 = flag)
- * \param ts  Timestamp of the MPS protocol
+ * \param raw Raw C2 protocol data (bits 63-16 = node ID, 15-8 = bic_id, 7-4 = ch_id, 3-0 = flag)
+ * \param ts  Timestamp of the C2 message
  * \param ctrl Read-access iterator
  *
- * \return Offset to the MPS msg buffer on reception of an actual MPS msg,
- * or N_MAX_MPS_CHANNELS on reception of a repeated MPS msg, otherwise negative integer.
+ * \return Channel ID of a sender node on reception of the new/actual C2 message,
+ * or N_MAX_MPS_CHANNELS on reception of a repeated C2 message, otherwise negative integer.
  **/
 int msgStoreMpsMsg(const uint64_t *raw, const uint64_t *ts, const msgCtrl_t* ctrl)
 {
-  uint8_t idx  = (uint8_t)(*raw >> 8);      // index for nodeIds[]
-  uint8_t buf_idx  = idx * N_MPS_CHANNELS;  // base index for MPS msg buffer
-  uint8_t flag = (uint8_t)*raw;
+  uint8_t ch_id  = (uint8_t)(*raw >> 4) & CH_MSK;    // channel ID of the sender
+  uint8_t offset  = ch_id * N_MPS_CHANNELS;          // offset of expected C2 message buffer
+  uint8_t flag = (uint8_t)*raw & FLAG_MSK;
 
-  // node ID match
-  if (!memcmp(raw, (headBufMps+buf_idx)->prot.addr, ETH_ALEN)) {
-    // MPS channel match
-    if ((headBufMps+buf_idx)->prot.idx == idx) {
-      // new MPS msg
-      if (*ts != (headBufMps+buf_idx)->tsRx) {
+  // sender ID match
+  if (!memcmp(raw, (headBufMps+offset)->prot.addr, ETH_ALEN)) {
+    // node channel match
+    if ((headBufMps+offset)->prot.ch_id == ch_id) {
+      // actual C2 protocol
+      if (*ts != (headBufMps+offset)->tsRx) {
         flag = (uint8_t)*raw;
-        (headBufMps+buf_idx)->pending = (headBufMps+buf_idx)->prot.flag ^ flag;
-        (headBufMps+buf_idx)->prot.flag = flag;
-        (headBufMps+buf_idx)->ttl = ctrl->ttl;
-        (headBufMps+buf_idx)->tsRx = *ts;
+        (headBufMps+offset)->pending = (headBufMps+offset)->prot.flag ^ flag;
+        (headBufMps+offset)->prot.flag = flag;
+        (headBufMps+offset)->ttl = ctrl->ttl;
+        (headBufMps+offset)->tsRx = *ts;
       }
       else {
-        // repeated MPS msg
+        // or repeated C2 protocol
         return N_MAX_MPS_CHANNELS;
       }
-      return idx;
+      return ch_id;
     }
   }
 
@@ -272,11 +265,11 @@ int msgStoreMpsMsg(const uint64_t *raw, const uint64_t *ts, const msgCtrl_t* ctr
 }
 
 /**
- * \brief Evaluate the lifetime of received MPS protocols [MPS_FS_600]
+ * \brief Evaluate the lifetime of received C2 messages [MPS_FS_600]
  *
- * \param idx Index of the MPS protocol
+ * \param idx Index of the C2 message buffer
  *
- * \ret   ptr Pointer to expired MPS protocol
+ * \ret   ptr Pointer to expired C2 message buffer
  **/
 mpsMsg_t* evalMpsMsgTtl(uint64_t now, int idx) {
   mpsMsg_t* buf = 0;
@@ -294,24 +287,24 @@ mpsMsg_t* evalMpsMsgTtl(uint64_t now, int idx) {
 }
 
 /**
- * \brief Initialize MPS message buffer
+ * \brief Initialize the C2 message buffer
  *
- * \param id Pointer to node ID (MAC address)
+ * \param id Pointer to the sender ID (MAC address)
  *
- * \return none
+ * \return None
 */
 void msgInitMpsMsg(const uint64_t *id)
 {
   uint8_t *mac = (uint8_t *)id;
-  mac+=2;
+  mac+=2;                         // lower 6-byte is MAC address
 
   for (int i = 0; i < N_MAX_MPS_CHANNELS; ++i)
   {
     msgResetMpsBuf(i, mac, MPS_FLAG_TEST);
-    DBPRINT1("%x: mac=%x:%x:%x:%x:%x:%x idx=%x flag=%x @0x%8p\n",
+    DBPRINT1("%x: mac=%x:%x:%x:%x:%x:%x bic_id=%x ch_id=%x flag=%x @0x%8p\n",
              i, bufMpsMsg[i].prot.addr[0], bufMpsMsg[i].prot.addr[1], bufMpsMsg[i].prot.addr[2],
              bufMpsMsg[i].prot.addr[3], bufMpsMsg[i].prot.addr[4], bufMpsMsg[i].prot.addr[5],
-             bufMpsMsg[i].prot.idx, bufMpsMsg[i].prot.flag, &bufMpsMsg[i]);
+             bufMpsMsg[i].prot.bic_id, bufMpsMsg[i].prot.ch_id, bufMpsMsg[i].prot.flag, &bufMpsMsg[i]);
   }
 }
 
@@ -337,73 +330,76 @@ void msgForceHigh(mpsMsg_t *const buf)
 }
 
 /**
- * \brief reset MPS message buffer
+ * \brief Reset the C2 message buffer
  *
- * \param idx  Index of the MPS message buffer
- * \param pId  Pointer to the sender node ID (MAC address)
- * \param flag MPS flag
+ * \param ch_id Channel ID of a sender node
+ * \param pId   Pointer to the sender ID (MAC address)
+ * \param flag  PC flag
  *
  * \return None
  *
  **/
-void msgResetMpsBuf(const uint8_t idx, const uint8_t *pId, const uint8_t flag)
+void msgResetMpsBuf(const uint8_t ch_id, const uint8_t *pId, const uint8_t flag)
 {
   if (pId)
-    memcpy(bufMpsMsg[idx].prot.addr, pId, ETH_ALEN);
+    memcpy(bufMpsMsg[ch_id].prot.addr, pId, ETH_ALEN);
   else
-    memset(bufMpsMsg[idx].prot.addr, 0, ETH_ALEN);
+    memset(bufMpsMsg[ch_id].prot.addr, 0, ETH_ALEN);
 
-  bufMpsMsg[idx].prot.flag = flag;
-  bufMpsMsg[idx].prot.idx = 0;
-  bufMpsMsg[idx].ttl = 0;
-  bufMpsMsg[idx].tsRx = 0;
+  bufMpsMsg[ch_id].prot.flag = flag;
+  bufMpsMsg[ch_id].prot.bic_id = 0;
+  bufMpsMsg[ch_id].prot.ch_id = ch_id;
+  bufMpsMsg[ch_id].ttl = 0;
+  bufMpsMsg[ch_id].tsRx = 0;
 }
 
 /**
- * \brief Update the node ID array and MPS message buffer with
- * a valid node identification provided by user
+ * \brief Update the sender ID array and C2 message buffer.
+ *
+ * Update the sender ID array and C2 message buffer, when
+ * a valid node identification provided by user.
  *
  * \param pId  Pointer to the shared memory location,
- * which holds user input of a valid node (idx + reserved + MAC address)
+ * which holds user input of a valid node (ch_id + reserved + MAC address)
  *
  * \return None
  **/
 void msgUpdateMpsBuf(const uint64_t *pId)
 {
-  uint8_t idx = (uint8_t)(*pId >> 56);  // index (for nodeIds[])
-  uint8_t *id = (uint8_t*)pId;          // point to sender node ID (lower 6 bytes)
-  id+=2;
-  uint8_t buf_idx;                      // base index for MPS message buffer
+  uint8_t ch_id = (uint8_t)(*pId >> 56);  // channel ID (for senders[], 0..15)
+  uint8_t *node_id = (uint8_t*)pId;       // point to sender ID (lower 6 bytes)
+  node_id+=2;
+  uint8_t offset;                         // offset to the C2 message buffer
 
-  // if the same ID exists, remove it (node ID array and MPS message buffer)
+  // if the same sender ID already exists, then remove it
   for (int i = 0; i < N_MAX_TX_NODES; ++i) {
-    if (!(memcmp(&nodeIds[i][0], id, ETH_ALEN))) {
-      memset(&nodeIds[i][0], 0, ETH_ALEN);
+    if (!(memcmp(&senders[i][0], node_id, ETH_ALEN))) {
+      memset(&senders[i][0], 0, ETH_ALEN);
     }
 
-    buf_idx = i * N_MPS_CHANNELS;
-    if (!(memcmp(bufMpsMsg[buf_idx].prot.addr, id, ETH_ALEN))) {
+    offset = i * N_MPS_CHANNELS;
+    if (!(memcmp(bufMpsMsg[offset].prot.addr, node_id, ETH_ALEN))) {
       for (int j = 0; j < N_MPS_CHANNELS; j++)
-        msgResetMpsBuf(j + buf_idx, 0, MPS_FLAG_TEST);
+        msgResetMpsBuf(j + offset, 0, MPS_FLAG_TEST);
     }
   }
 
-  // update the node ID array and MPS message buffer
-  memcpy(&nodeIds[idx][0], id, ETH_ALEN);
+  // update the sender ID array and C2 message buffer
+  memcpy(&senders[ch_id][0], node_id, ETH_ALEN);
 
-  buf_idx = idx * N_MPS_CHANNELS;
+  offset = ch_id * N_MPS_CHANNELS;
   for (int j = 0; j < N_MPS_CHANNELS; j++) {
-    msgResetMpsBuf(j + buf_idx, id, MPS_FLAG_OK);
-    bufMpsMsg[j + buf_idx].prot.idx = j + idx;
+    msgResetMpsBuf(j + offset, node_id, MPS_FLAG_OK);
+    bufMpsMsg[j + offset].prot.ch_id = j + ch_id;
   }
 
   // print node ID array index and MPS message buffer content
-  DBPRINT1("sender: idx=%x: ", idx);
+  DBPRINT1("sender: ch_id=%x: ", ch_id);
   for (int i = 0; i < ETH_ALEN; i++)
-    DBPRINT1("%02x", bufMpsMsg[buf_idx].prot.addr[i]);
+    DBPRINT1("%02x", bufMpsMsg[offset].prot.addr[i]);
 
   // node ID array and MPS message buffer must match
-  if (memcmp(&nodeIds[idx][0], &bufMpsMsg[buf_idx].prot.addr[0], ETH_ALEN)) {
+  if (memcmp(&senders[ch_id][0], &bufMpsMsg[offset].prot.addr[0], ETH_ALEN)) {
     // mismatch
     DBPRINT1(" ! ");
   } else {
@@ -472,17 +468,17 @@ status_t msgRegisterNode(const uint64_t node_id, const uint8_t bic_id, const uin
 }
 
 /**
- * \brief Get the index of the given sender node ID
+ * \brief Get the index of the given sender node
  *
- * An array of TX node IDs is provided to the RX node during setup.
- * This function searches the ID of a given sender node in
+ * An array of senders is provided to a collector node during setup.
+ * This function searches the ID (MAC address) of a given sender node in
  * that array and returns its index if the ID is found.
  *
- * \param pId   Pointer to the sender node ID (MAC address)
+ * \param pId   Pointer to the sender ID (MAC address)
  *
- * \return  Returns the list index, otherwise negative value
+ * \return  Returns the array index, otherwise negative value
  **/
-int8_t msgGetNodeIndex(const uint64_t *pId)
+int8_t msgGetSenderIndex(const uint64_t *pId)
 {
   uint8_t *p = (uint8_t*)pId; // lower 6 bytes hold the sender ID
   p+=2;                       // seek the start of the sender ID
@@ -491,11 +487,11 @@ int8_t msgGetNodeIndex(const uint64_t *pId)
   int unknown = true;
 
   while (unknown && i < N_MAX_TX_NODES) {
-    unknown = memcmp(&nodeIds[i][0], p, ETH_ALEN);
+    unknown = memcmp(&senders[i][0], p, ETH_ALEN);
     if (unknown)
       DBPRINT3("cmp: %x%x%x%x%x%x - %x%x%x%x%x%x\n",
-        nodeIds[i][0], nodeIds[i][1], nodeIds[i][2],
-        nodeIds[i][3], nodeIds[i][4], nodeIds[i][5],
+        senders[i][0], senders[i][1], senders[i][2],
+        senders[i][3], senders[i][4], senders[i][5],
         *p, *(p+1), *(p+2), *(p+3), *(p+4), *(p+5));
     ++i;
   }
@@ -507,15 +503,15 @@ int8_t msgGetNodeIndex(const uint64_t *pId)
 }
 
 /**
- * \brief Print the MPS message buffer
+ * \brief Print the contents of the C2 message buffer
  *
- * MPS message buffer contains MPS protocols
+ * Output the content of the C2 message buffer to console.
  *
  **/
-void ioPrintMpsBuf(void)
+void msgPrintMpsBuf(void)
 {
   DBPRINT2("bufMpsMsg\n");
-  DBPRINT2("buf_idx: protocol (MAC - idx - flag), msg (tsRx - ttl - pending)\n");
+  DBPRINT2("offset: protocol (MAC - ch_id - flag), msg (tsRx - ttl - pending)\n");
 
   for (int i = 0; i < N_MAX_MPS_CHANNELS; ++i)
      DBPRINT2("%x: %02x%02x%02x%02x%02x%02x - %x - %x, %llx - %x - %x\n",
@@ -523,26 +519,39 @@ void ioPrintMpsBuf(void)
         bufMpsMsg[i].prot.addr[0], bufMpsMsg[i].prot.addr[1],
         bufMpsMsg[i].prot.addr[2], bufMpsMsg[i].prot.addr[3],
         bufMpsMsg[i].prot.addr[4], bufMpsMsg[i].prot.addr[5],
-        bufMpsMsg[i].prot.idx,
+        bufMpsMsg[i].prot.ch_id,
         bufMpsMsg[i].prot.flag,
         bufMpsMsg[i].tsRx,
         bufMpsMsg[i].ttl,
         bufMpsMsg[i].pending);
+
+  DBPRINT2("bufPcEvent\n");
+  DBPRINT2("protocol (MAC - ch_id - flag), msg (tsRx - ttl - pending)\n");
+
+  DBPRINT2("%02x%02x%02x%02x%02x%02x - %x - %x, %llx - %x - %x\n",
+    bufPcEvent.prot.addr[0], bufPcEvent.prot.addr[1],
+    bufPcEvent.prot.addr[2], bufPcEvent.prot.addr[3],
+    bufPcEvent.prot.addr[4], bufPcEvent.prot.addr[5],
+    bufPcEvent.prot.ch_id,
+    bufPcEvent.prot.flag,
+    bufPcEvent.tsRx,
+    bufPcEvent.ttl,
+    bufPcEvent.pending);
 }
 
 /**
- * \brief Build a bit-wise representation of the MPS flags
+ * \brief Build a bit-wise representation of the PC flags
  *
- * Build a simple data representing the current MPS flags.
- * MPS flags are stored in the MPS message buffer.
- * Each bit represents a MPS flag from each emitter:
+ * Build a simple data representing the current PC (Power Converter) flags.
+ * PC flags are stored in the C2 message buffer.
+ * Each bit represents a PC flag from each emitter:
  * - bit 0 corresponds to emitter 1
  * - logic 1 = NOK, logic 0 = OK
  *
- * Up to 16 TX nodes are supported, then lower 16 bits are
- * effectively present the MPS flags.
+ * Up to 16 emitters are supported, then lower 16 bits are
+ * effectively present the PC flags.
  *
- * \return Returns data representing the MPS flags
+ * \return Returns data representing the PC flags
  *
  **/
 uint32_t msgRepresentMpsFlags(void)

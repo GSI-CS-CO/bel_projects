@@ -55,7 +55,7 @@ enum DST_ADDR {
 typedef struct mpsProtocol mpsProtocol_t;
 struct mpsProtocol {
   uint8_t  addr[ETH_ALEN];  // Ethernet MAC addr
-  uint8_t  idx;             // BIC ID
+  uint8_t  bic_id;          // BIC ID
   uint8_t  ch_id  :4;       // C2 channel ID
   uint8_t  flag   :4;       // PC flag
 };
@@ -63,6 +63,7 @@ struct mpsProtocol {
 // definitions for the node registration
 #define BIC_MSK             0xFF  // BIC ID mask
 #define CH_MSK              0xF   // channel ID mask
+#define FLAG_MSK            0xF   // PC/registration flag mask
 #define REG_FLAG            0xF   // node registration flag
 
 typedef struct mpsMsg mpsMsg_t;

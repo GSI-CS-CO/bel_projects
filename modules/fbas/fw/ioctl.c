@@ -175,14 +175,14 @@ status_t ioDriveOutput(mpsMsg_t *const pBuf, const uint8_t bufIdx)
   // handle MPS flag if it's changed or expired
   if (pBuf->pending) {
     pBuf->pending = 0;
-    DBPRINT3("pend: %x %x %x\n", pBuf->prot.addr[0], pBuf->prot.idx, pBuf->prot.flag);
+    DBPRINT3("pend: %x %x %x\n", pBuf->prot.addr[0], pBuf->prot.ch_id, pBuf->prot.flag);
     if (pBuf->prot.flag == MPS_FLAG_OK)
       ioVal = MPS_SIGNAL_HIGH;
     else
       ioVal = MPS_SIGNAL_LOW;
   } else if (!pBuf->ttl) {
     ioVal = MPS_SIGNAL_LOW;
-    DBPRINT3("ttl: %x %x %x\n", pBuf->prot.addr[0], pBuf->prot.idx, pBuf->prot.flag);
+    DBPRINT3("ttl: %x %x %x\n", pBuf->prot.addr[0], pBuf->prot.ch_id, pBuf->prot.flag);
   }
 
   if (ioVal == MPS_SIGNAL_INVALID)

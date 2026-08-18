@@ -74,8 +74,8 @@ extern const uint32_t txMsgRates[N_TX_RATES];      // TX messaging rates, [Hz]
 
 void      msgInitMsgCtrl(msgCtrl_t *const ctrl, const uint8_t total, const uint64_t now, const uint32_t period);
 uint32_t  msgSendPcEvent(const msgCtrl_t* msgCtrl, mpsMsg_t *const buf, const uint64_t evtid, const uint8_t extra);
-uint32_t  msgSendMpsFlag(msgCtrl_t* ctrl, uint64_t evtId);
-mpsMsg_t* msgStorePcEvent(const uint8_t idx, const uint64_t evt, const uint64_t ts);
+uint32_t  msgSendPcFlag(msgCtrl_t* ctrl, uint64_t evtId);
+mpsMsg_t* msgStorePcEvent(const uint64_t evt, const uint64_t ts);
 int       msgStoreMpsMsg(const uint64_t *raw, const uint64_t *ts, const msgCtrl_t* msgCtrl);
 mpsMsg_t* evalMpsMsgTtl(uint64_t now, int idx);
 void      msgInitMpsMsg(const uint64_t *id);
@@ -84,9 +84,9 @@ void      msgForceHigh(mpsMsg_t *const buf);
 void      msgUpdateMpsBuf(const uint64_t *pId);
 
 status_t  msgRegisterNode(const uint64_t node_id, const uint8_t bic_id, const uint8_t ch_id);
-int8_t    msgGetNodeIndex(const uint64_t *pId);
+int8_t    msgGetSenderIndex(const uint64_t *pId);
 
-void      ioPrintMpsBuf(void);
+void      msgPrintMpsBuf(void);
 uint32_t  msgRepresentMpsFlags(void);
 
 #endif
