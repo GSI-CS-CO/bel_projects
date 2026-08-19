@@ -622,7 +622,7 @@ static uint32_t handleEcaEvent(uint32_t pollTimeout, uint32_t* mpsTask, msgCtrl_
           if (flag == REG_FLAG) {
             dstNwAddr[DST_ADDR_RXNODE].mac = node_id;
             myIdx = ch_id;
-            //DBPRINT2("reg OK: RX MAC=%llx\n", dstNwAddr[DST_ADDR_RXNODE].mac);
+            DBPRINT2("reg OK: RX MAC=%llx\n", dstNwAddr[DST_ADDR_RXNODE].mac);
             *mpsTask |= TSK_REG_COMPLETE;
           }
         }
@@ -744,7 +744,10 @@ uint32_t extern_entryActionOperation()
   if (nodeType == FBAS_NODE_TX) {
     if (!(mpsTask & TSK_REG_COMPLETE)) {
       if (setEndpDstAddr(DST_ADDR_BROADCAST) == COMMON_STATUS_OK)
+      {
+        DBPRINT2("reg: send req\n");
         msgRegisterNode(myMac, BIC_MSK, CH_MSK);
+      }
     }
   }
 
