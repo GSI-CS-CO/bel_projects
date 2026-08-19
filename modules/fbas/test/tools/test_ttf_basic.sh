@@ -14,7 +14,7 @@ txscu="$txscu_name.$domain"
 duration_sec=10
 
 prefix="/usr/bin"
-fw_rxscu="fbas128.scucontrol.bin"      # default LM32 FW for RX SCU
+fw_rxscu="fbas16.scucontrol.bin"      # default LM32 FW for RX SCU
 script_rxscu="$prefix/setup_local.sh" # shell script on remote host
 
 ssh_cmd="ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10"

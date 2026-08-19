@@ -45,8 +45,8 @@ case $platform in
 
         export module_dir="${PWD/fbas*/fbas}"
         export fw_dir="$module_dir/fw"
-        export fw_tx="fbas128.pcicontrol.bin"
-        export fw_rx="fbas128.pcicontrol.bin"
+        export fw_tx="fbas16.pcicontrol.bin"
+        export fw_rx="fbas16.pcicontrol.bin"
         ;;
     "SCU")
         export node_pps_output="B1"
@@ -57,8 +57,8 @@ case $platform in
         export rx_node_name="tr0"
 
         export fw_dir="."
-        export fw_tx="fbas128.scucontrol.bin"
-        export fw_rx="fbas128.scucontrol.bin"
+        export fw_tx="fbas16.scucontrol.bin"
+        export fw_rx="fbas16.scucontrol.bin"
         ;;
 esac
 
