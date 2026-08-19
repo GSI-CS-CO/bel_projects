@@ -40,8 +40,7 @@
 // application-specific variables
 uint8_t    senders[N_MAX_TX_NODES][ETH_ALEN];   // sender list
 mpsMsg_t   bufMpsMsg[N_MAX_MPS_CHANNELS];       // buffer for the C2 message
-mpsMsg_t *const headBufMps = &bufMpsMsg[0];     // head of the C2 message buffer
-mpsMsg_t   bufPcEvent;                          // buffer for the PC event
+mpsMsg_t *const bufPcEvent = &bufMpsMsg[0];     // head of the C2 message buffer (used as the PC event buffer for TX node)
 msgCtrl_t  mpsMsgCtrl;                          // C2 messaging control structure
 const uint32_t txMsgRates[N_TX_RATES] = {       // TX messaging rates, [us]
               33333, 100000, 80000, 50000,      // 30, 10, 12.5, 20 [Hz]
@@ -116,30 +115,24 @@ uint32_t msgSendPcFlag(msgCtrl_t* ctrl, uint64_t evtId)
     // start EB operation
     ebm_hi(COMMON_ECA_ADDRESS);
 
-    // send a block of MPS flags
     atomic_on();
-    for (uint8_t i = 0; i < N_MPS_CHANNELS; ++i) {
-      // always send the first MPS protocol, check the rest => ignore MPS protocol if its timestamp is zero
-      if (i && (!(bufMpsMsg[i].tsRx)))
-        continue;
 
-      // get MPS protocol
-      paramHi  = (uint32_t)((bufMpsMsg[i].param >> 32) & 0xffffffff);
-      paramLo  = (uint32_t)(bufMpsMsg[i].param         & 0xffffffff);
+    paramHi  = (uint32_t)((bufPcEvent->param >> 32) & 0xffffffff);
+    paramLo  = (uint32_t)(bufPcEvent->param         & 0xffffffff);
 
-      // build a timing message
-      ebm_op(COMMON_ECA_ADDRESS, idHi,       EBM_WRITE);
-      ebm_op(COMMON_ECA_ADDRESS, idLo,       EBM_WRITE);
-      ebm_op(COMMON_ECA_ADDRESS, paramHi,    EBM_WRITE);
-      ebm_op(COMMON_ECA_ADDRESS, paramLo,    EBM_WRITE);
-      ebm_op(COMMON_ECA_ADDRESS, tef,        EBM_WRITE);
-      ebm_op(COMMON_ECA_ADDRESS, res,        EBM_WRITE);
-      ebm_op(COMMON_ECA_ADDRESS, deadlineHi, EBM_WRITE);
-      ebm_op(COMMON_ECA_ADDRESS, deadlineLo, EBM_WRITE);
+    // build a timing message
+    ebm_op(COMMON_ECA_ADDRESS, idHi,       EBM_WRITE);
+    ebm_op(COMMON_ECA_ADDRESS, idLo,       EBM_WRITE);
+    ebm_op(COMMON_ECA_ADDRESS, paramHi,    EBM_WRITE);
+    ebm_op(COMMON_ECA_ADDRESS, paramLo,    EBM_WRITE);
+    ebm_op(COMMON_ECA_ADDRESS, tef,        EBM_WRITE);
+    ebm_op(COMMON_ECA_ADDRESS, res,        EBM_WRITE);
+    ebm_op(COMMON_ECA_ADDRESS, deadlineHi, EBM_WRITE);
+    ebm_op(COMMON_ECA_ADDRESS, deadlineLo, EBM_WRITE);
 
-      ++count;
-    }
     atomic_off();
+
+    ++count;
 
     // send timing messages
     ebm_flush();
@@ -194,7 +187,7 @@ uint32_t msgSendPcEvent(const msgCtrl_t* ctrl, mpsMsg_t *const buf, const uint64
 /**
  * \brief Store the fetched PC event
  *
- * Store the PC (Power Converter) event fetched from ECA in the buffer.
+ * Store the PC (Power Converter) event fetched from ECA in the dedicated buffer.
  *
  * \param evt Raw ECA data (bits 63-16 = event ID, 0 = flag)
  * \param ts  Timestamp
@@ -215,11 +208,11 @@ mpsMsg_t* msgStorePcEvent(const uint64_t evt, const uint64_t ts)
   }
 
   // keep the PC flag and timestamp
-  bufPcEvent.prot.flag = flag;
-  bufPcEvent.tsRx = ts;
+  bufPcEvent->prot.flag = flag;
+  bufPcEvent->tsRx = ts;
 
   // return the message buffer
-  return &bufPcEvent;
+  return bufPcEvent;
 }
 
 /**
@@ -238,20 +231,19 @@ mpsMsg_t* msgStorePcEvent(const uint64_t evt, const uint64_t ts)
 int msgStoreMpsMsg(const uint64_t *raw, const uint64_t *ts, const msgCtrl_t* ctrl)
 {
   uint8_t ch_id  = (uint8_t)(*raw >> 4) & CH_MSK;    // channel ID of the sender
-  uint8_t offset  = ch_id * N_MPS_CHANNELS;          // offset of expected C2 message buffer
   uint8_t flag = (uint8_t)*raw & FLAG_MSK;
 
   // sender ID match
-  if (!memcmp(raw, (headBufMps+offset)->prot.addr, ETH_ALEN)) {
+  if (!memcmp(raw, (bufMpsMsg+ch_id)->prot.addr, ETH_ALEN)) {
     // node channel match
-    if ((headBufMps+offset)->prot.ch_id == ch_id) {
+    if ((bufMpsMsg+ch_id)->prot.ch_id == ch_id) {
       // actual C2 protocol
-      if (*ts != (headBufMps+offset)->tsRx) {
+      if (*ts != (bufMpsMsg+ch_id)->tsRx) {
         flag = (uint8_t)*raw;
-        (headBufMps+offset)->pending = (headBufMps+offset)->prot.flag ^ flag;
-        (headBufMps+offset)->prot.flag = flag;
-        (headBufMps+offset)->ttl = ctrl->ttl;
-        (headBufMps+offset)->tsRx = *ts;
+        (bufMpsMsg+ch_id)->pending = (bufMpsMsg+ch_id)->prot.flag ^ flag;
+        (bufMpsMsg+ch_id)->prot.flag = flag;
+        (bufMpsMsg+ch_id)->ttl = ctrl->ttl;
+        (bufMpsMsg+ch_id)->tsRx = *ts;
       }
       else {
         // or repeated C2 protocol
@@ -293,7 +285,7 @@ mpsMsg_t* evalMpsMsgTtl(uint64_t now, int idx) {
  *
  * \return None
 */
-void msgInitMpsMsg(const uint64_t *id)
+void msgInitMpsMsgBuf(const uint64_t *id)
 {
   uint8_t *mac = (uint8_t *)id;
   mac+=2;                         // lower 6-byte is MAC address
@@ -306,6 +298,27 @@ void msgInitMpsMsg(const uint64_t *id)
              bufMpsMsg[i].prot.addr[3], bufMpsMsg[i].prot.addr[4], bufMpsMsg[i].prot.addr[5],
              bufMpsMsg[i].prot.bic_id, bufMpsMsg[i].prot.ch_id, bufMpsMsg[i].prot.flag, &bufMpsMsg[i]);
   }
+}
+
+/**
+ * \brief Initialize the PC event buffer
+ *
+ * \param id    Pointer to the sender ID (MAC address)
+ * \param ch_id PC event channel
+ *
+ * \return None
+*/
+void msgInitPcEventBuf(const uint64_t *id, uint8_t ch_id)
+{
+  uint8_t *mac = (uint8_t *)id;
+  mac+=2;                         // lower 6-byte is MAC address
+  memcpy(bufPcEvent->prot.addr, mac, ETH_ALEN);
+
+  bufPcEvent->prot.flag = MPS_FLAG_TEST;
+  bufPcEvent->prot.bic_id = 0;
+  bufPcEvent->prot.ch_id = ch_id;
+  bufPcEvent->ttl = 0;
+  bufPcEvent->tsRx = 0;
 }
 
 /**
@@ -373,33 +386,27 @@ void msgUpdateMpsBuf(const uint64_t *pId)
 
   // if the same sender ID already exists, then remove it
   for (int i = 0; i < N_MAX_TX_NODES; ++i) {
-    if (!(memcmp(&senders[i][0], node_id, ETH_ALEN))) {
-      memset(&senders[i][0], 0, ETH_ALEN);
+    if (!(memcmp(senders[i], node_id, ETH_ALEN))) {
+      memset(senders[i], 0, ETH_ALEN);
     }
 
-    offset = i * N_MPS_CHANNELS;
-    if (!(memcmp(bufMpsMsg[offset].prot.addr, node_id, ETH_ALEN))) {
-      for (int j = 0; j < N_MPS_CHANNELS; j++)
-        msgResetMpsBuf(j + offset, 0, MPS_FLAG_TEST);
+    if (!(memcmp(bufMpsMsg[i].prot.addr, node_id, ETH_ALEN))) {
+        msgResetMpsBuf(i, 0, MPS_FLAG_TEST);
     }
   }
 
   // update the sender ID array and C2 message buffer
-  memcpy(&senders[ch_id][0], node_id, ETH_ALEN);
-
-  offset = ch_id * N_MPS_CHANNELS;
-  for (int j = 0; j < N_MPS_CHANNELS; j++) {
-    msgResetMpsBuf(j + offset, node_id, MPS_FLAG_OK);
-    bufMpsMsg[j + offset].prot.ch_id = j + ch_id;
-  }
+  memcpy(senders[ch_id], node_id, ETH_ALEN);
+  msgResetMpsBuf(ch_id, node_id, MPS_FLAG_OK);
+  bufMpsMsg[ch_id].prot.ch_id = ch_id;
 
   // print node ID array index and MPS message buffer content
   DBPRINT1("sender: ch_id=%x: ", ch_id);
   for (int i = 0; i < ETH_ALEN; i++)
-    DBPRINT1("%02x", bufMpsMsg[offset].prot.addr[i]);
+    DBPRINT1("%02x", bufMpsMsg[ch_id].prot.addr[i]);
 
   // node ID array and MPS message buffer must match
-  if (memcmp(&senders[ch_id][0], &bufMpsMsg[offset].prot.addr[0], ETH_ALEN)) {
+  if (memcmp(senders[ch_id], bufMpsMsg[ch_id].prot.addr, ETH_ALEN)) {
     // mismatch
     DBPRINT1(" ! ");
   } else {
@@ -524,19 +531,6 @@ void msgPrintMpsBuf(void)
         bufMpsMsg[i].tsRx,
         bufMpsMsg[i].ttl,
         bufMpsMsg[i].pending);
-
-  DBPRINT2("bufPcEvent\n");
-  DBPRINT2("protocol (MAC - ch_id - flag), msg (tsRx - ttl - pending)\n");
-
-  DBPRINT2("%02x%02x%02x%02x%02x%02x - %x - %x, %llx - %x - %x\n",
-    bufPcEvent.prot.addr[0], bufPcEvent.prot.addr[1],
-    bufPcEvent.prot.addr[2], bufPcEvent.prot.addr[3],
-    bufPcEvent.prot.addr[4], bufPcEvent.prot.addr[5],
-    bufPcEvent.prot.ch_id,
-    bufPcEvent.prot.flag,
-    bufPcEvent.tsRx,
-    bufPcEvent.ttl,
-    bufPcEvent.pending);
 }
 
 /**
@@ -559,10 +553,7 @@ uint32_t msgRepresentMpsFlags(void)
   int i, j, step = 1;
   uint32_t flags = 0;
 
-  if (N_MAX_MPS_CHANNELS != N_MAX_TX_NODES)
-    step = N_MPS_CHANNELS; // 8 channels for each node
-
-  for (i = 0, j = 0; i < N_MAX_MPS_CHANNELS; i+=step, j++) {
+  for (i = 0, j = 0; i < N_MAX_TX_NODES; i++, j++) {
     if (bufMpsMsg[i].prot.flag == MPS_FLAG_NOK)
       flags|= (1 << j);
   }

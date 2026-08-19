@@ -211,8 +211,9 @@ static void initMpsData()
   // - TX node: sender ID is its MAC address
   convertMacToU64(&myMac, pSharedMacHi, pSharedMacLo);
 
-  // initialize the MPS message buffer
-  msgInitMpsMsg(&myMac);
+  // initialize the MPS message buffer and PC event buffer
+  msgInitMpsMsgBuf(&myMac);
+  msgInitPcEventBuf(&myMac, 0);
 
   // initialize the MPS messaging controller
   msgInitMsgCtrl(&mpsMsgCtrl, N_MPS_CHANNELS, 0, txMsgRates[0]);
@@ -622,6 +623,7 @@ static uint32_t handleEcaEvent(uint32_t pollTimeout, uint32_t* mpsTask, msgCtrl_
           if (flag == REG_FLAG) {
             dstNwAddr[DST_ADDR_RXNODE].mac = node_id;
             myIdx = ch_id;
+            msgInitPcEventBuf(&myMac, myIdx);
             DBPRINT2("reg OK: RX MAC=%llx\n", dstNwAddr[DST_ADDR_RXNODE].mac);
             *mpsTask |= TSK_REG_COMPLETE;
           }
