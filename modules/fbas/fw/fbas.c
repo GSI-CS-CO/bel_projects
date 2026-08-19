@@ -603,17 +603,17 @@ static uint32_t handleEcaEvent(uint32_t pollTimeout, uint32_t* mpsTask, msgCtrl_
 
         node_id = ecaParam >> 16;                 // node ID (MAC address)
         bic_id = (uint8_t)(ecaParam >> 8);        // BIC ID (beam interlock controller)
-        ch_id  = (uint8_t)(ecaParam >> 4) && 0xF; // C2 channel ID
-        flag   = (uint8_t)(ecaParam) && 0xF;      // PC/registration flag (power converter)
+        ch_id  = (uint8_t)(ecaParam >> 4) & CH_MSK; // C2 channel ID
+        flag   = (uint8_t)(ecaParam) & FLAG_MSK;    // PC/registration flag (power converter)
 
         if (nodeType == FBAS_NODE_RX) {  // registration request from TX
           if (flag == REG_FLAG) {
             // find the node ID of a given sender in the dedicated array and return its channel ID
-            int8_t ch_id = msgGetSenderIndex(&node_id);
-            if ((0 <= ch_id) && (ch_id < N_MAX_TX_NODES)) {
+            int8_t idx = msgGetSenderIndex(&node_id);
+            if ((0 <= idx) && (idx < N_MAX_TX_NODES)) {
               // unicast the reg. response
               fwlib_setEbmDstAddr(node_id, BROADCAST_IP);
-              msgRegisterNode(myMac, BIC_MSK, ch_id);
+              msgRegisterNode(myMac, BIC_MSK, idx);
               //DBPRINT2("reg OK: TX MAC=%llx\n", node_id);
             }
           }
