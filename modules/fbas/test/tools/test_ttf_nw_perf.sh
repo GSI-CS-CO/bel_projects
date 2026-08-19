@@ -10,7 +10,7 @@ def_txscu_name="scuxl0396"
 txscu_name=()                         # array with transmitter names
 rxscu="$rxscu_name.$domain"
 txscu=()                              # array with transmitter domain names
-fw_scu_def="fbas128.scucontrol.bin"   # FW that supports up to 16 TX nodes, each has 8 MPS channels
+fw_scu_def="fbas16.scucontrol.bin"    # FW that supports up to 16 TX nodes, each has 1 MPS channels
 ssh_opts="-o StrictHostKeyChecking=no"   # no hostkey checking
 getopt_opts="u:p:t:r:g:i:eyvh"        # user options
 n_tx_rates=12                         # TX messaging rates

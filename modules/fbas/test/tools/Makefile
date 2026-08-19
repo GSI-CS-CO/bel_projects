@@ -82,8 +82,8 @@ MAKEFLAGS += --no-print-directory
 
 SHELL=/bin/bash
 sleep_period=20                        # seconds
-fw_rxpci="fbas128.pcicontrol.bin"      # default LM32 FW for RX node (pexaria)
-fw_rxscu="fbas128.scucontrol.bin"      # default LM32 FW for RX node (scu)
+fw_rxpci="fbas16.pcicontrol.bin"       # default LM32 FW for RX node (pexaria)
+fw_rxscu="fbas16.scucontrol.bin"       # default LM32 FW for RX node (scu)
 sched_def="my_mps_rx_rate_1.dot"       # default DM schedule
 sched_loop="my_mps_loop.dot"           # DM schedule with loop
 pattern_loop="PatLoop"                 # pattern name of the loop schedule

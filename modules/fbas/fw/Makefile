@@ -24,10 +24,10 @@ fwbin:
 
 # build more FW binaries for FBAS (with multiple channels and for pexaria5)
 ifeq ($(TARGET),fbas)
-	$(MAKE) -f platform.mk PLATFPATH=$(PLATFPATHSCU3) MPS_CH=MULTI_MPS_CH $@
+#	$(MAKE) -f platform.mk PLATFPATH=$(PLATFPATHSCU3) MPS_CH=MULTI_MPS_CH $@
 	@echo --- build $(TARGET) specific to $(PLATFPATHPEX5)
 	$(MAKE) -f platform.mk PLATFPATH=$(PLATFPATHPEX5) $@
-	$(MAKE) -f platform.mk PLATFPATH=$(PLATFPATHPEX5) MPS_CH=MULTI_MPS_CH $@
+#	$(MAKE) -f platform.mk PLATFPATH=$(PLATFPATHPEX5) MPS_CH=MULTI_MPS_CH $@
 endif
 
 # ram.ld is built recursively from platform.mk

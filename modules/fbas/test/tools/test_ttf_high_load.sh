@@ -12,7 +12,7 @@ rxscu_name="scuxl0497" # 00:26:7b:00:06:c5
 rxscu="$rxscu_name.$domain"
 
 duration_sec=20
-fw_rxscu="fbas128.scucontrol.bin"    # default LM32 FW for RX SCU
+fw_rxscu="fbas16.scucontrol.bin"    # default LM32 FW for RX SCU
 
 usage() {
     echo "Usage: $0 [OPTION]"
