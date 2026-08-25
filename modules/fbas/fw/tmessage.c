@@ -233,6 +233,9 @@ int msgStoreMpsMsg(const uint64_t *raw, const uint64_t *ts, const msgCtrl_t* ctr
   uint8_t ch_id  = (uint8_t)(*raw >> 4) & CH_MSK;    // channel ID of the sender
   uint8_t flag = (uint8_t)*raw & FLAG_MSK;
 
+  if (ch_id >= N_MAX_MPS_CHANNELS)
+    return -1;
+
   // sender ID match
   if (!memcmp(raw, (bufMpsMsg+ch_id)->prot.addr, ETH_ALEN)) {
     // node channel match
