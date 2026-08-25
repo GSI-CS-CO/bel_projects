@@ -788,7 +788,7 @@ git_submodules_init:
 # Check if hdlmake 3.3 is already installed
 hdlmake_install:
 	@rm .hdlmake 2>/dev/null || true
-	@hdlmake --version 2>/dev/null | grep 3.3 && echo "Info: Found hdlmake, skipping installation..." || echo "Info: Installing hdlmake..." > .hdlmake
+	@hdlmake --version 2>/dev/null | grep 4.0 && echo "Info: Found hdlmake, skipping installation..." || echo "Info: Installing hdlmake..." > .hdlmake
 	@test -f .hdlmake && cd ip_cores/hdlmake/ && python setup.py install --user || true
 	@rm .hdlmake 2>/dev/null || true
 	@export PATH=$$PATH:$$HOME/.local/bin
