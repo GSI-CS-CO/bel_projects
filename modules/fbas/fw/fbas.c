@@ -612,7 +612,7 @@ static uint32_t handleEcaEvent(uint32_t pollTimeout, uint32_t* mpsTask, msgCtrl_
             // find the node ID of a given sender in the dedicated array and return its channel ID
             int8_t idx = msgGetSenderIndex(&node_id);
             if ((0 <= idx) && (idx < N_MAX_TX_NODES)) {
-              // unicast the reg. response
+              // unicast the reg. response (do not care broadcast IP)
               fwlib_setEbmDstAddr(node_id, BROADCAST_IP);
               msgRegisterNode(myMac, BIC_MSK, idx, REG_RSP);
               //DBPRINT2("reg OK: TX MAC=%llx\n", node_id);

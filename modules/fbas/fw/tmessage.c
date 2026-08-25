@@ -453,7 +453,7 @@ static uint8_t *addr_copy(uint8_t dst[ETH_ALEN], uint8_t src[ETH_ALEN])
  * to their maximum value (0xF, 0xFF). The transmission type should be broadcast.
  *
  * Collector node responds with its bic_id and emitter's channel ID. The transmission
- * should be both in broadcast (for system log) and unicast.
+ * should be unicast.
  *
  *
  * \param node_id  Node ID
