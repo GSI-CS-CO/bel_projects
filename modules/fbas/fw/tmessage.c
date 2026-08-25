@@ -239,7 +239,6 @@ int msgStoreMpsMsg(const uint64_t *raw, const uint64_t *ts, const msgCtrl_t* ctr
     if ((bufMpsMsg+ch_id)->prot.ch_id == ch_id) {
       // actual C2 protocol
       if (*ts != (bufMpsMsg+ch_id)->tsRx) {
-        flag = (uint8_t)*raw;
         (bufMpsMsg+ch_id)->pending = (bufMpsMsg+ch_id)->prot.flag ^ flag;
         (bufMpsMsg+ch_id)->prot.flag = flag;
         (bufMpsMsg+ch_id)->ttl = ctrl->ttl;
