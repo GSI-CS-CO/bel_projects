@@ -56,6 +56,7 @@ modules = {
     "a10vs",
     "cellular_ram",
     "neorv32",
+    "neorv32/src/hdl",
     "pwm",
     "wb_register_ada_gen",
   ]

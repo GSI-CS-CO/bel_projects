@@ -1,4 +1,6 @@
-files = [
+if syn_device[:1] == "5": files = [ "src/hdl/a10vs_pkg.vhd" ]
+if syn_device[:4] == "ep2a": files = [ "src/hdl/a10vs_pkg.vhd" ]
+if syn_device[:2] == "10": files = [
     "src/hdl/a10vs_pkg.vhd",
     "src/hdl/a10vs_wb.vhd",
     "src/hdl/a10vs.vhd",
