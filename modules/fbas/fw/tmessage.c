@@ -230,6 +230,7 @@ mpsMsg_t* msgStorePcEvent(const uint64_t evt, const uint64_t ts)
  **/
 int msgStoreMpsMsg(const uint64_t *raw, const uint64_t *ts, const msgCtrl_t* ctrl)
 {
+  uint8_t bic_id  = (uint8_t)(*raw >> 8) & BIC_MSK;  // BIC ID of the receiver
   uint8_t ch_id  = (uint8_t)(*raw >> 4) & CH_MSK;    // channel ID of the sender
   uint8_t flag = (uint8_t)*raw & FLAG_MSK;
 
@@ -238,8 +239,9 @@ int msgStoreMpsMsg(const uint64_t *raw, const uint64_t *ts, const msgCtrl_t* ctr
 
   // sender ID match
   if (!memcmp(raw, (bufMpsMsg+ch_id)->prot.addr, ETH_ALEN)) {
-    // node channel match
-    if ((bufMpsMsg+ch_id)->prot.ch_id == ch_id) {
+    // channel ID and BIC ID match
+    if (((bufMpsMsg+ch_id)->prot.ch_id == ch_id) &&
+      (bufMpsMsg+ch_id)->prot.bic_id == bic_id) {
       // actual C2 protocol
       if (*ts != (bufMpsMsg+ch_id)->tsRx) {
         (bufMpsMsg+ch_id)->pending = (bufMpsMsg+ch_id)->prot.flag ^ flag;
@@ -305,19 +307,20 @@ void msgInitMpsMsgBuf(const uint64_t *id)
 /**
  * \brief Initialize the PC event buffer
  *
- * \param id    Pointer to the sender ID (MAC address)
- * \param ch_id PC event channel
+ * \param id     Pointer to the sender ID (MAC address)
+ * \param bic_id BIC ID  of the collector
+ * \param ch_id  PC event channel
  *
  * \return None
 */
-void msgInitPcEventBuf(const uint64_t *id, uint8_t ch_id)
+void msgInitPcEventBuf(const uint64_t *id, uint8_t bic_id, uint8_t ch_id)
 {
   uint8_t *mac = (uint8_t *)id;
   mac+=2;                         // lower 6-byte is MAC address
   memcpy(bufPcEvent->prot.addr, mac, ETH_ALEN);
 
   bufPcEvent->prot.flag = MPS_FLAG_TEST;
-  bufPcEvent->prot.bic_id = 0;
+  bufPcEvent->prot.bic_id = bic_id;
   bufPcEvent->prot.ch_id = ch_id;
   bufPcEvent->ttl = 0;
   bufPcEvent->tsRx = 0;
@@ -362,7 +365,6 @@ void msgResetMpsBuf(const uint8_t ch_id, const uint8_t *pId, const uint8_t flag)
     memset(bufMpsMsg[ch_id].prot.addr, 0, ETH_ALEN);
 
   bufMpsMsg[ch_id].prot.flag = flag;
-  bufMpsMsg[ch_id].prot.bic_id = 0;
   bufMpsMsg[ch_id].prot.ch_id = ch_id;
   bufMpsMsg[ch_id].ttl = 0;
   bufMpsMsg[ch_id].tsRx = 0;
@@ -418,6 +420,22 @@ void msgUpdateMpsBuf(const uint64_t *pId)
 
   // valid node identification in the shared memory (provided by user)
   DBPRINT1("(id: %016llx)\n", *pId);
+}
+
+/**
+ * \brief Set the BIC ID
+ *
+ * Set the BIC ID in the C2 message buffer.
+ * BIC ID can be used to validate the received C2 message.
+ *
+ * \param id  BIC ID of the collector
+ *
+ * \return None
+ **/
+void msgSetBic(const uint8_t id)
+{
+  for (int i = 0; i < N_MAX_TX_NODES; ++i)
+    bufMpsMsg[i].prot.bic_id = id;
 }
 
 /**
@@ -520,14 +538,15 @@ int8_t msgGetSenderIndex(const uint64_t *pId)
 void msgPrintMpsBuf(void)
 {
   DBPRINT2("bufMpsMsg\n");
-  DBPRINT2("offset: protocol (MAC - ch_id - flag), msg (tsRx - ttl - pending)\n");
+  DBPRINT2("offset: protocol (MAC - bic - ch - flag), msg (tsRx - ttl - pending)\n");
 
   for (int i = 0; i < N_MAX_MPS_CHANNELS; ++i)
-     DBPRINT2("%x: %02x%02x%02x%02x%02x%02x - %x - %x, %llx - %x - %x\n",
+     DBPRINT2("%x: %02x%02x%02x%02x%02x%02x - %2x - %x - %x, %llx - %x - %x\n",
         i,
         bufMpsMsg[i].prot.addr[0], bufMpsMsg[i].prot.addr[1],
         bufMpsMsg[i].prot.addr[2], bufMpsMsg[i].prot.addr[3],
         bufMpsMsg[i].prot.addr[4], bufMpsMsg[i].prot.addr[5],
+        bufMpsMsg[i].prot.bic_id,
         bufMpsMsg[i].prot.ch_id,
         bufMpsMsg[i].prot.flag,
         bufMpsMsg[i].tsRx,

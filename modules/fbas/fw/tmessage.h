@@ -79,10 +79,11 @@ mpsMsg_t* msgStorePcEvent(const uint64_t evt, const uint64_t ts);
 int       msgStoreMpsMsg(const uint64_t *raw, const uint64_t *ts, const msgCtrl_t* msgCtrl);
 mpsMsg_t* evalMpsMsgTtl(uint64_t now, int idx);
 void      msgInitMpsMsgBuf(const uint64_t *id);
-void      msgInitPcEventBuf(const uint64_t *id, uint8_t ch_id);
+void      msgInitPcEventBuf(const uint64_t *id, uint8_t bic_id, uint8_t ch_id);
 void      msgResetMpsBuf(const uint8_t idx, const uint8_t *pId, const uint8_t flag);
 void      msgForceHigh(mpsMsg_t *const buf);
 void      msgUpdateMpsBuf(const uint64_t *pId);
+void      msgSetBic(const uint8_t id);
 
 status_t  msgRegisterNode(const uint64_t node_id, const uint8_t bic_id, const uint8_t ch_id, const uint8_t flag);
 int8_t    msgGetSenderIndex(const uint64_t *pId);
