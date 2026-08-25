@@ -77,6 +77,7 @@ extern uint32_t *pSharedIp;             // pointer to a "user defined" u32 regis
 
 uint64_t myMac;                         // own MAC address
 uint8_t  myIdx;                         // base index of TX node (used for MPS messaging)
+uint8_t  myBic;                         // BIC ID of RX node
 
 // shared memory layout
 static uint32_t *pCpuRamExternal;       // external address (seen from host bridge) of this CPU's RAM
@@ -213,7 +214,7 @@ static void initMpsData()
 
   // initialize the MPS message buffer and PC event buffer
   msgInitMpsMsgBuf(&myMac);
-  msgInitPcEventBuf(&myMac, 0);
+  msgInitPcEventBuf(&myMac, 0, 0);
 
   // initialize the MPS messaging controller
   msgInitMsgCtrl(&mpsMsgCtrl, N_MPS_CHANNELS, 0, txMsgRates[0]);
@@ -614,7 +615,7 @@ static uint32_t handleEcaEvent(uint32_t pollTimeout, uint32_t* mpsTask, msgCtrl_
             if ((0 <= idx) && (idx < N_MAX_TX_NODES)) {
               // unicast the reg. response (do not care broadcast IP)
               fwlib_setEbmDstAddr(node_id, BROADCAST_IP);
-              msgRegisterNode(myMac, BIC_MSK, idx, REG_RSP);
+              msgRegisterNode(myMac, myBic, idx, REG_RSP);
               //DBPRINT2("reg OK: TX MAC=%llx\n", node_id);
             }
           }
@@ -623,7 +624,7 @@ static uint32_t handleEcaEvent(uint32_t pollTimeout, uint32_t* mpsTask, msgCtrl_
           if (flag == REG_RSP) {
             dstNwAddr[DST_ADDR_RXNODE].mac = node_id;
             myIdx = ch_id;
-            msgInitPcEventBuf(&myMac, myIdx);
+            msgInitPcEventBuf(&myMac, bic_id, ch_id);
             DBPRINT2("reg OK: RX MAC=%llx\n", dstNwAddr[DST_ADDR_RXNODE].mac);
             *mpsTask |= TSK_REG_COMPLETE;
           }
@@ -796,6 +797,7 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd)
         // read sender node ID (MAC, idx) from the shared memory and
         // assign output port for signaling latency measurement
         readNodeId(pSharedApp, FBAS_SHARED_SENDERID);
+        msgSetBic(myBic);
         break;
       case FBAS_CMD_SET_IO_OE:
         u8val = 0;   // index = 0, by default
