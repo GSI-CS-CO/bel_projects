@@ -608,19 +608,19 @@ static uint32_t handleEcaEvent(uint32_t pollTimeout, uint32_t* mpsTask, msgCtrl_
         flag   = (uint8_t)(ecaParam) & FLAG_MSK;    // PC/registration flag (power converter)
 
         if (nodeType == FBAS_NODE_RX) {  // registration request from TX
-          if (flag == REG_FLAG) {
+          if (flag == REG_REQ) {
             // find the node ID of a given sender in the dedicated array and return its channel ID
             int8_t idx = msgGetSenderIndex(&node_id);
             if ((0 <= idx) && (idx < N_MAX_TX_NODES)) {
               // unicast the reg. response
               fwlib_setEbmDstAddr(node_id, BROADCAST_IP);
-              msgRegisterNode(myMac, BIC_MSK, idx);
+              msgRegisterNode(myMac, BIC_MSK, idx, REG_RSP);
               //DBPRINT2("reg OK: TX MAC=%llx\n", node_id);
             }
           }
         }
         else if (nodeType == FBAS_NODE_TX) { // registration response from RX
-          if (flag == REG_FLAG) {
+          if (flag == REG_RSP) {
             dstNwAddr[DST_ADDR_RXNODE].mac = node_id;
             myIdx = ch_id;
             msgInitPcEventBuf(&myMac, myIdx);
@@ -748,7 +748,7 @@ uint32_t extern_entryActionOperation()
       if (setEndpDstAddr(DST_ADDR_BROADCAST) == COMMON_STATUS_OK)
       {
         DBPRINT2("reg: send req\n");
-        msgRegisterNode(myMac, BIC_MSK, CH_MSK);
+        msgRegisterNode(myMac, BIC_MSK, CH_MSK, REG_REQ);
       }
     }
   }
@@ -969,7 +969,7 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
           if (*pMpsTask & TSK_REG_PER_OVER) {
             *pMpsTask &= ~TSK_REG_PER_OVER;
             if (setEndpDstAddr(DST_ADDR_BROADCAST) == COMMON_STATUS_OK)
-              msgRegisterNode(myMac, BIC_MSK, CH_MSK);
+              msgRegisterNode(myMac, BIC_MSK, CH_MSK, REG_REQ);
           }
           break;
         }

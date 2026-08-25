@@ -460,11 +460,11 @@ static uint8_t *addr_copy(uint8_t dst[ETH_ALEN], uint8_t src[ETH_ALEN])
  *
  * \return status   Returns zero on success, otherwise non-zero
  **/
-status_t msgRegisterNode(const uint64_t node_id, const uint8_t bic_id, const uint8_t ch_id)
+status_t msgRegisterNode(const uint64_t node_id, const uint8_t bic_id, const uint8_t ch_id, const uint8_t flag)
 {
   uint32_t tef = 0;
   uint32_t forceLate = 1;
-  uint64_t param = (node_id << 16) | (bic_id << 8) | (ch_id << 4) | REG_FLAG;
+  uint64_t param = (node_id << 16) | (bic_id << 8) | (ch_id << 4) | flag;
   uint64_t deadline = getSysTime() + FBAS_AHEAD_TIME;
 
   status_t status = fwlib_ebmWriteTM(deadline, FBAS_REG_EID, param, tef, forceLate);

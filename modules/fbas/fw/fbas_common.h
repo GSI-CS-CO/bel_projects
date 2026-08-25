@@ -64,7 +64,8 @@ struct mpsProtocol {
 #define BIC_MSK             0xFF  // BIC ID mask
 #define CH_MSK              0xF   // channel ID mask
 #define FLAG_MSK            0xF   // PC/registration flag mask
-#define REG_FLAG            0xF   // node registration flag
+#define REG_REQ             0xF   // node registration request by emitters
+#define REG_RSP             0xE   // node registration response by colllector
 
 typedef struct mpsMsg mpsMsg_t;
 struct mpsMsg {
