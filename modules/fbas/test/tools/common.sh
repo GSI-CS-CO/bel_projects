@@ -26,7 +26,7 @@ setup_infra() {
     export login_dm="root@$datamaster"       # pubkey login (alias 'backdoor') is used for login
     export mngmasters=( tsl101 )             # Management Masters
 
-    export fw_rxscu="fbas128.scucontrol.bin" # default LM32 FW for RX SCU
+    export fw_rxscu="fbas16.scucontrol.bin"  # default LM32 FW for RX SCU
     export tmg_msg_len=880                   # timing message length [bits]
 }
 
@@ -138,7 +138,7 @@ register_senders() {
     # Register senders: inject timing messages with registration request locally (use saft-ctl)
 
     local channels=1
-    if [[ "$fw_rxscu"=="fbas128.scucontrol.bin" ]]; then
+    if [[ "$fw_rxscu" == "fbas128.scucontrol.bin" ]]; then
         channels=8
     fi
     output=$(run_remote $rxscu \
