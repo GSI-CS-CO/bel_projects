@@ -138,7 +138,7 @@ register_senders() {
     # Register senders: inject timing messages with registration request locally (use saft-ctl)
 
     local channels=1
-    if [[ "$fw_rxscu"=="fbas128.scucontrol.bin" ]]; then
+    if [[ "$fw_rxscu" == "fbas128.scucontrol.bin" ]]; then
         channels=8
     fi
     output=$(run_remote $rxscu \
