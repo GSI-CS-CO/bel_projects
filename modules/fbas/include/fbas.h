@@ -5,8 +5,10 @@
 // DP RAM layout (offsets)
 // ****************************************************************************************
 
-// set values for data supply
-#define FBAS_SHARED_BEGIN          (COMMON_SHARED_END          + _32b_SIZE_)       // begin of the app-spec region
+#define FBAS_SHARED_OFFS           (0x300)                                         // offset from COMMON_SHARED_BEGIN
+
+// set values for data supplyi
+#define FBAS_SHARED_BEGIN          (COMMON_SHARED_BEGIN        + FBAS_SHARED_OFFS) // begin of the app-spec region
 #define FBAS_SHARED_SET_ID         (FBAS_SHARED_BEGIN          + _32b_SIZE_)       // reserved
 #define FBAS_SHARED_SET_NODETYPE   (FBAS_SHARED_SET_ID         + _32b_SIZE_)       // FBAS node type
 #define FBAS_SHARED_SET_SBSLAVES   (FBAS_SHARED_SET_NODETYPE   + _32b_SIZE_)       // SCU bus slaves (bit1=slot1, 1-12)
@@ -79,9 +81,6 @@
 #define FBAS_SHARED_ERROR_FLAG     (FBAS_SHARED_ACT_RATE       + 8 * _32b_SIZE_)   // error flag
 #define FBAS_SHARED_END            (FBAS_SHARED_ERROR_FLAG     + _32b_SIZE_)       // end of the app-spec region
 
-// valid value for data fields in the MPS payload
-#define MPS_VID_FBAS     105   // VLAN ID for FBAS
-
 // macro defintions
 // gcc.gnu.org/onlinedocs/cpp/Stringizing.html#Stringizing
 #define XSTR(s) STR(s)
@@ -93,6 +92,14 @@
 
 #ifdef PLATFORM
   #define MYPLATFORM XSTR(PLATFORM)
+#endif
+
+// compile-time check shared memory regions
+#if FBAS_SHARED_BEGIN < COMMON_SHARED_END
+  #error Overlapped shared memory regions: increase FBAS_SHARED_OFFS!
+  #pragma message "FBAS_SHARED_OFFS  = " XSTR(FBAS_SHARED_OFFS)
+  #pragma message "FBAS_SHARED_BEGIN = " XSTR(FBAS_SHARED_BEGIN)
+  #pragma message "COMMON_SHARED_END = " XSTR(COMMON_SHARED_END)
 #endif
 
 // node type
