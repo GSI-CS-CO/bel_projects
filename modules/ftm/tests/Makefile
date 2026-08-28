@@ -9,7 +9,7 @@ CARPEDM_PATH ?= ../lib/
 TEST_DM_CMD ?= ../bin/dm-cmd
 TEST_DM_SCHED ?= ../bin/dm-sched
 # folders to ignore (no tests inside)
-IGNORE = --ignore=blockAlign/ --ignore=dmPerformance/ --ignore=dmThreads/ --ignore=messageCounter/ --ignore=other/ --ignore=schedules/ --ignore=singleEdgeTest/
+IGNORE = --ignore=dmPerformance/ --ignore=messageCounter/ --ignore=other/ --ignore=schedules/ --ignore=singleEdgeTest/ --ignore=tools/
 # pass the command line arguments to pytest
 # Example: OPTIONS=--runslow   this runs also the slow tests.
 # Example: OPTIONS="-rP"       show stdout for all tests.
@@ -35,6 +35,11 @@ test-all:
 		SNOOP_COMMAND="$(SNOOP)" DATAMASTER="$(DATAMASTER)" TEST_SCHEDULES=schedules/ \
 		python3 -m pytest $(IGNORE) --runslow $(OPTIONS)
 
+test-32-threads:
+	TEST_BINARY_DM_CMD="$(TEST_DM_CMD)" TEST_BINARY_DM_SCHED="$(TEST_DM_SCHED)" LD_LIBRARY_PATH="$(CARPEDM_PATH):$(LD_LIBRARY_PATH)" \
+		SNOOP_COMMAND="$(SNOOP)" DATAMASTER="$(DATAMASTER)" TEST_SCHEDULES=schedules/ \
+		python3 -m pytest $(IGNORE) --runslow --runthread32 $(OPTIONS)
+
 all: test-all dmPerformance dmThreads pps singleEdgeTest
 
 dmPerformance:
@@ -51,7 +56,7 @@ pps:
 singleEdgeTest:
 	test -d dot/ || mkdir dot/
 	$(MAKE) -C singleEdgeTest/
-	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(CARPEDM_PATH) ./singleEdgeTest/SingleEdgeTest > singleEdgeTest/result.txt
+	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(CARPEDM_PATH) ./singleEdgeTest/singleEdgeTest > singleEdgeTest/result.txt
 	diff --color singleEdgeTest/result.txt singleEdgeTest/expected-result.txt
 	rm -f singleEdgeTest/result.txt
 	rm -r dot/
@@ -59,6 +64,10 @@ singleEdgeTest:
 prepare:
 	$(MAKE) -C ../ftmx86/ clean
 	$(MAKE) -C ../ftmx86/
+	$(MAKE) -C ../analysis/scheduleCompare/main/ clean
+	$(MAKE) -C ../analysis/scheduleCompare/main/
+	$(MAKE) -C singleEdgeTest/ clean
+	$(MAKE) -C singleEdgeTest/
 
 prepare-all:
 	$(MAKE) -C ../ftmx86/ clean
@@ -71,4 +80,10 @@ prepare-all:
 	$(MAKE) -C singleEdgeTest/
 	$(MAKE) -C singleEdgeTest/ install
 
-.PHONY: dmPerformance dmThreads pps remote singleEdgeTest test test-default remote test-all prepare prepare-all
+checkEnvironment:
+	./tools/getBoostVersion.sh
+	gcc --version
+	python --version
+	python3 -m pytest -VV
+
+.PHONY: dmPerformance dmThreads pps remote singleEdgeTest test test-default remote test-all prepare prepare-all checkEnvironment

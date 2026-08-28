@@ -23,15 +23,16 @@ class TestReplaceChain(common_scheduleCompare.CommonScheduleCompare):
     process = subprocess.Popen([*arguments], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
     # get command output and error
     stdout, stderr = process.communicate()
+    stderrLines = stderr.decode('utf-8').splitlines()
+    stdoutLines = stdout.decode('utf-8').splitlines()
     if expectedReturnCode > -1:
       self.assertEqual(process.returncode, expectedReturnCode,
-        f'wrong return code {process.returncode}, Command line: {arguments}\nstderr: {stderr.decode("utf-8").splitlines()}\nstdout: {stdout.decode("utf-8").splitlines()}')
+        f'wrong return code {process.returncode}, Command line: {arguments}\nstderr: {stderrLines}\nstdout: {stdoutLines}')
     if linesCerr > -1:
-      lines = stderr.decode('utf-8').splitlines()
-      self.assertEqual(len(lines), linesCerr, f'wrong stderr, expected {linesCerr} lines, Command line: {arguments}\nstderr: {lines}\nstdout: {stdout.decode("utf-8").splitlines()}')
+      self.assertEqual(len(stderrLines), linesCerr, f'wrong stderr, expected {linesCerr} lines, Command line: {arguments}\nstderr: {stderrLines}\nstdout: {stdoutLines}')
     if linesCout > -1:
-      lines = stdout.decode('utf-8').splitlines()
-      self.assertEqual(len(lines), linesCout, f'wrong stdout, expected {linesCout} lines, Command line: {arguments}\nstderr: {stderr.decode("utf-8").splitlines()}\nstdout: {lines}')
+      self.assertEqual(len(stdoutLines), linesCout, f'wrong stdout, expected {linesCout} lines, Command line: {arguments}\nstderr: {stderrLines}\nstdout: {stdoutLines}')
+    return stdoutLines, stderrLines
 
   def compareExpectedResult(self, fileCurrent, fileExpected, exclude=''):
     """Compare a file with a test result with an expected result contained in <fileExpected>.
@@ -59,6 +60,36 @@ class TestReplaceChain(common_scheduleCompare.CommonScheduleCompare):
     """Test the version message.
     """
     self.callReplaceChain([self.binary, '-V'], expectedReturnCode=19, linesCerr=1, linesCout=0)
+
+  def test_commandlineBlocksSeparated(self):
+    """Test the command line parsing.
+    """
+    out, err = self.callReplaceChain([self.binary, '-vv', '-b', '-V'], expectedReturnCode=19, linesCerr=1, linesCout=17)
+    self.assertTrue('blocksSeparated: 1' in out[5], f'blockSeparated not parsed: {out} .')
+
+  def test_commandlineOverwrite(self):
+    """Test the command line parsing.
+    """
+    out, err = self.callReplaceChain([self.binary, '-vv', '-w', '-V'], expectedReturnCode=19, linesCerr=1, linesCout=17)
+    self.assertTrue('overwrite: 1' in out[10], f'overwrite not parsed: {out}.')
+
+  def test_commandlineOutputFile(self):
+    """Test the command line parsing.
+    """
+    out, err = self.callReplaceChain([self.binary, '-vv', '-o', 'file1.dot', '-V'], expectedReturnCode=19, linesCerr=1, linesCout=18)
+    self.assertTrue('outputFile: file1.dot' in out[10], f'outputFile not parsed: {out}.')
+
+  def test_commandlineFirstVersion(self):
+    """Test the command line parsing.
+    """
+    out, err = self.callReplaceChain([self.binary, '-vv', '-1', '-V'], expectedReturnCode=19, linesCerr=1, linesCout=17)
+    self.assertTrue('firstVersion: 1' in out[4], f'firstVersion not parsed: {out}.')
+
+  def test_commandlineChainCount(self):
+    """Test the command line parsing.
+    """
+    out, err = self.callReplaceChain([self.binary, '-vv', '-c', '17', '-V'], expectedReturnCode=19, linesCerr=1, linesCout=18)
+    self.assertTrue('chainCount: 17' in out[8], f'chainCount not parsed: {out}.')
 
   def test_usage_message(self):
     """Test the usage message.
@@ -295,6 +326,39 @@ class TestReplaceChain(common_scheduleCompare.CommonScheduleCompare):
     """Compact a four element star. Nothing to do.
     """
     self.replaceChain2('replaceChain/star4.dot', 0)
+
+  def test_replaceChainBlockChain22(self):
+    """Compact a four element chain with two block and two events.
+    """
+    self.replaceChain2('replaceChain/blockChain22.dot', 0)
+
+  def test_replaceChainBlockChain22BlocksSeparated(self):
+    """Compact a four element chain with two block and two events.
+    Blocks separated.
+    """
+    self.replaceChainBlocksSeparated('replaceChain/blockChain22.dot', 0)
+
+  def test_replaceChainEsrStacking(self):
+    """Compact a schedule for ESR stacking (part of larger schedule).
+    """
+    self.replaceChain2('replaceChain/EsrStacking.dot', 0)
+
+  def test_replaceChainEsrStackingBlocksSeparated(self):
+    """Compact a schedule for ESR stacking (part of larger schedule).
+    Blocks separated.
+    """
+    self.replaceChainBlocksSeparated('replaceChain/EsrStacking.dot', 0)
+
+  def test_replaceChainEsrSnoopy(self):
+    """Compact a schedule for ESR stacking (the larger schedule).
+    """
+    self.replaceChain2('replaceChain/snoopy.dot', 0)
+
+  def test_replaceChainEsrSnoopyBlocksSeparated(self):
+    """Compact a schedule for ESR stacking (the larger schedule).
+    Blocks separated.
+    """
+    self.replaceChainBlocksSeparated('replaceChain/snoopy.dot', 0)
 
   def test_replaceChainTsl020Sis100(self):
     """Compact a schedule from tsl020.

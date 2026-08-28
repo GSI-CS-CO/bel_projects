@@ -1,31 +1,325 @@
 digraph g {
-name="helloadv";
+name="multi";
 
 graph []
-edge  [type="defdst"]
-//node [qLo="1", qHi="1", qIl="1"];
-
-subgraph cpu0 {
-  node  [cpu="0"];
+edge  [type="defdst"];
+node  [cpu="0", pattern="PPS"];
 
 
-  Evt_PPS   [type="tmsg",   toffs=          0,   fid=0, gid=5, evtno=205, sid=2, bpid=8, par="0x123"];
-  B_PPS     [type="block",  tperiod=1000000000];
-  Evt_PPSA  [type="tmsg",   toffs=          0,   fid=0, gid=5, evtno=205, sid=2, bpid=8, par="0x1"];
 
-  Evt_PPS   -> B_PPS;
-  B_PPS->Evt_PPSA  -> Evt_PPS;
+
+
+Evt_0     [type="tmsg", toffs=0, fid=1, par="0x0"];
+Evt_1     [type="tmsg", toffs=0, fid=1, par="0x1"];
+Evt_2     [type="tmsg", toffs=0, fid=1, par="0x2"];
+Evt_3     [type="tmsg", toffs=0, fid=1, par="0x3"];
+Evt_4     [type="tmsg", toffs=0, fid=1, par="0x4"];
+Evt_5     [type="tmsg", toffs=0, fid=1, par="0x5"];
+Evt_6     [type="tmsg", toffs=0, fid=1, par="0x6"];
+Evt_7     [type="tmsg", toffs=0, fid=1, par="0x7"];
+Evt_8     [type="tmsg", toffs=0, fid=1, par="0x8"];
+Evt_9     [type="tmsg", toffs=0, fid=1, par="0x9"];
+Evt_10    [type="tmsg", toffs=0, fid=1, par="0xA"];
+Evt_11    [type="tmsg", toffs=0, fid=1, par="0xB"];
+Evt_12     [type="tmsg", toffs=0, fid=1, par="0xC"];
+Evt_13     [type="tmsg", toffs=0, fid=1, par="0xD"];
+Evt_14     [type="tmsg", toffs=0, fid=1, par="0xE"];
+Evt_15     [type="tmsg", toffs=0, fid=1, par="0xF"];
+Evt_16     [type="tmsg", toffs=0, fid=1, par="0x10"];
+Evt_17     [type="tmsg", toffs=0, fid=1, par="0x11"];
+Evt_18     [type="tmsg", toffs=0, fid=1, par="0x12"];
+Evt_19     [type="tmsg", toffs=0, fid=1, par="0x13"];
+Evt_100     [type="tmsg", toffs=0, fid=1, par="0x0"];
+Evt_101     [type="tmsg", toffs=0, fid=1, par="0x1"];
+Evt_102     [type="tmsg", toffs=0, fid=1, par="0x2"];
+Evt_103     [type="tmsg", toffs=0, fid=1, par="0x3"];
+Evt_104     [type="tmsg", toffs=0, fid=1, par="0x4"];
+Evt_105     [type="tmsg", toffs=0, fid=1, par="0x5"];
+Evt_106     [type="tmsg", toffs=0, fid=1, par="0x6"];
+Evt_107     [type="tmsg", toffs=0, fid=1, par="0x7"];
+Evt_108     [type="tmsg", toffs=0, fid=1, par="0x8"];
+Evt_109     [type="tmsg", toffs=0, fid=1, par="0x9"];
+Evt_1010    [type="tmsg", toffs=0, fid=1, par="0xA"];
+Evt_1011    [type="tmsg", toffs=0, fid=1, par="0xB"];
+Evt_1012     [type="tmsg", toffs=0, fid=1, par="0xC"];
+Evt_1013     [type="tmsg", toffs=0, fid=1, par="0xD"];
+Evt_1014     [type="tmsg", toffs=0, fid=1, par="0xE"];
+Evt_1015     [type="tmsg", toffs=0, fid=1, par="0xF"];
+Evt_1016     [type="tmsg", toffs=0, fid=1, par="0x10"];
+Evt_1017     [type="tmsg", toffs=0, fid=1, par="0x11"];
+Evt_1018     [type="tmsg", toffs=0, fid=1, par="0x12"];
+Evt_1019     [type="tmsg", toffs=0, fid=1, par="0x13"];
+Evt_200     [type="tmsg", toffs=0, fid=1, par="0x0"];
+Evt_201     [type="tmsg", toffs=0, fid=1, par="0x1"];
+Evt_202     [type="tmsg", toffs=0, fid=1, par="0x2"];
+Evt_203     [type="tmsg", toffs=0, fid=1, par="0x3"];
+Evt_204     [type="tmsg", toffs=0, fid=1, par="0x4"];
+Evt_205     [type="tmsg", toffs=0, fid=1, par="0x5"];
+Evt_206     [type="tmsg", toffs=0, fid=1, par="0x6"];
+Evt_207     [type="tmsg", toffs=0, fid=1, par="0x7"];
+Evt_208     [type="tmsg", toffs=0, fid=1, par="0x8"];
+Evt_209     [type="tmsg", toffs=0, fid=1, par="0x9"];
+Evt_2010    [type="tmsg", toffs=0, fid=1, par="0xA"];
+Evt_2011    [type="tmsg", toffs=0, fid=1, par="0xB"];
+Evt_2012     [type="tmsg", toffs=0, fid=1, par="0xC"];
+Evt_2013     [type="tmsg", toffs=0, fid=1, par="0xD"];
+Evt_2014     [type="tmsg", toffs=0, fid=1, par="0xE"];
+Evt_2015     [type="tmsg", toffs=0, fid=1, par="0xF"];
+Evt_2016     [type="tmsg", toffs=0, fid=1, par="0x10"];
+Evt_2017     [type="tmsg", toffs=0, fid=1, par="0x11"];
+Evt_2018     [type="tmsg", toffs=0, fid=1, par="0x12"];
+Evt_2019     [type="tmsg", toffs=0, fid=1, par="0x13"];
+Evt_300     [type="tmsg", toffs=0, fid=1, par="0x0"];
+Evt_301     [type="tmsg", toffs=0, fid=1, par="0x1"];
+Evt_302     [type="tmsg", toffs=0, fid=1, par="0x2"];
+Evt_303     [type="tmsg", toffs=0, fid=1, par="0x3"];
+Evt_304     [type="tmsg", toffs=0, fid=1, par="0x4"];
+Evt_305     [type="tmsg", toffs=0, fid=1, par="0x5"];
+Evt_306     [type="tmsg", toffs=0, fid=1, par="0x6"];
+Evt_307     [type="tmsg", toffs=0, fid=1, par="0x7"];
+Evt_308     [type="tmsg", toffs=0, fid=1, par="0x8"];
+Evt_309     [type="tmsg", toffs=0, fid=1, par="0x9"];
+Evt_3010    [type="tmsg", toffs=0, fid=1, par="0xA"];
+Evt_3011    [type="tmsg", toffs=0, fid=1, par="0xB"];
+Evt_3012     [type="tmsg", toffs=0, fid=1, par="0xC"];
+Evt_3013     [type="tmsg", toffs=0, fid=1, par="0xD"];
+Evt_3014     [type="tmsg", toffs=0, fid=1, par="0xE"];
+Evt_3015     [type="tmsg", toffs=0, fid=1, par="0xF"];
+Evt_3016     [type="tmsg", toffs=0, fid=1, par="0x10"];
+Evt_3017     [type="tmsg", toffs=0, fid=1, par="0x11"];
+Evt_3018     [type="tmsg", toffs=0, fid=1, par="0x12"];
+Evt_3019     [type="tmsg", toffs=0, fid=1, par="0x13"];
+Evt_400     [type="tmsg", toffs=0, fid=1, par="0x0"];
+Evt_401     [type="tmsg", toffs=0, fid=1, par="0x1"];
+Evt_402     [type="tmsg", toffs=0, fid=1, par="0x2"];
+Evt_403     [type="tmsg", toffs=0, fid=1, par="0x3"];
+Evt_404     [type="tmsg", toffs=0, fid=1, par="0x4"];
+Evt_405     [type="tmsg", toffs=0, fid=1, par="0x5"];
+Evt_406     [type="tmsg", toffs=0, fid=1, par="0x6"];
+Evt_407     [type="tmsg", toffs=0, fid=1, par="0x7"];
+Evt_408     [type="tmsg", toffs=0, fid=1, par="0x8"];
+Evt_409     [type="tmsg", toffs=0, fid=1, par="0x9"];
+Evt_4010    [type="tmsg", toffs=0, fid=1, par="0xA"];
+Evt_4011    [type="tmsg", toffs=0, fid=1, par="0xB"];
+Evt_4012     [type="tmsg", toffs=0, fid=1, par="0xC"];
+Evt_4013     [type="tmsg", toffs=0, fid=1, par="0xD"];
+Evt_4014     [type="tmsg", toffs=0, fid=1, par="0xE"];
+Evt_4015     [type="tmsg", toffs=0, fid=1, par="0xF"];
+Evt_4016     [type="tmsg", toffs=0, fid=1, par="0x10"];
+Evt_4017     [type="tmsg", toffs=0, fid=1, par="0x11"];
+Evt_4018     [type="tmsg", toffs=0, fid=1, par="0x12"];
+Evt_4019     [type="tmsg", toffs=0, fid=1, par="0x13"];
+
+B_ENTRY   [type="block", patentry="1", tperiod=100, qLo="1"];
+B_PPS     [type="block",  patexit="1", tperiod=1000000000, qLo="1"];
+
+B_ENTRY -> Evt_0 [type="altdst"];
+B_ENTRY -> Evt_1 [type="altdst"];
+B_ENTRY -> Evt_2 [type="altdst"];
+B_ENTRY -> Evt_3 [type="altdst"];
+B_ENTRY -> Evt_4 [type="defdst"];
+B_ENTRY -> Evt_5 [type="altdst"];
+B_ENTRY -> Evt_6 [type="altdst"];
+B_ENTRY -> Evt_7 [type="altdst"];
+B_ENTRY -> Evt_8 [type="altdst"];
+B_ENTRY -> Evt_9 [type="altdst"];
+B_ENTRY -> Evt_10 [type="altdst"];
+B_ENTRY -> Evt_11 [type="altdst"];
+B_ENTRY -> Evt_12 [type="altdst"];
+B_ENTRY -> Evt_13 [type="altdst"];
+B_ENTRY -> Evt_14 [type="altdst"];
+B_ENTRY -> Evt_15 [type="altdst"];
+B_ENTRY -> Evt_16 [type="altdst"];
+B_ENTRY -> Evt_17 [type="altdst"];
+B_ENTRY -> Evt_18 [type="altdst"];
+B_ENTRY -> Evt_19 [type="altdst"];
+B_ENTRY -> Evt_100 [type="altdst"];
+B_ENTRY -> Evt_101 [type="altdst"];
+B_ENTRY -> Evt_102 [type="altdst"];
+B_ENTRY -> Evt_103 [type="altdst"];
+B_ENTRY -> Evt_104 [type="altdst"];
+B_ENTRY -> Evt_105 [type="altdst"];
+B_ENTRY -> Evt_106 [type="altdst"];
+B_ENTRY -> Evt_107 [type="altdst"];
+B_ENTRY -> Evt_108 [type="altdst"];
+B_ENTRY -> Evt_109 [type="altdst"];
+B_ENTRY -> Evt_1010 [type="altdst"];
+B_ENTRY -> Evt_1011 [type="altdst"];
+B_ENTRY -> Evt_1012 [type="altdst"];
+B_ENTRY -> Evt_1013 [type="altdst"];
+B_ENTRY -> Evt_1014 [type="altdst"];
+B_ENTRY -> Evt_1015 [type="altdst"];
+B_ENTRY -> Evt_1016 [type="altdst"];
+B_ENTRY -> Evt_1017 [type="altdst"];
+B_ENTRY -> Evt_1018 [type="altdst"];
+B_ENTRY -> Evt_1019 [type="altdst"];
+B_ENTRY -> Evt_200 [type="altdst"];
+B_ENTRY -> Evt_201 [type="altdst"];
+B_ENTRY -> Evt_202 [type="altdst"];
+B_ENTRY -> Evt_203 [type="altdst"];
+B_ENTRY -> Evt_204 [type="altdst"];
+B_ENTRY -> Evt_205 [type="altdst"];
+B_ENTRY -> Evt_206 [type="altdst"];
+B_ENTRY -> Evt_207 [type="altdst"];
+B_ENTRY -> Evt_208 [type="altdst"];
+B_ENTRY -> Evt_209 [type="altdst"];
+B_ENTRY -> Evt_2010 [type="altdst"];
+B_ENTRY -> Evt_2011 [type="altdst"];
+B_ENTRY -> Evt_2012 [type="altdst"];
+B_ENTRY -> Evt_2013 [type="altdst"];
+B_ENTRY -> Evt_2014 [type="altdst"];
+B_ENTRY -> Evt_2015 [type="altdst"];
+B_ENTRY -> Evt_2016 [type="altdst"];
+B_ENTRY -> Evt_2017 [type="altdst"];
+B_ENTRY -> Evt_2018 [type="altdst"];
+B_ENTRY -> Evt_2019 [type="altdst"];
+B_ENTRY -> Evt_300 [type="altdst"];
+B_ENTRY -> Evt_301 [type="altdst"];
+B_ENTRY -> Evt_302 [type="altdst"];
+B_ENTRY -> Evt_303 [type="altdst"];
+B_ENTRY -> Evt_304 [type="altdst"];
+B_ENTRY -> Evt_305 [type="altdst"];
+B_ENTRY -> Evt_306 [type="altdst"];
+B_ENTRY -> Evt_307 [type="altdst"];
+B_ENTRY -> Evt_308 [type="altdst"];
+B_ENTRY -> Evt_309 [type="altdst"];
+B_ENTRY -> Evt_3010 [type="altdst"];
+B_ENTRY -> Evt_3011 [type="altdst"];
+B_ENTRY -> Evt_3012 [type="altdst"];
+B_ENTRY -> Evt_3013 [type="altdst"];
+B_ENTRY -> Evt_3014 [type="altdst"];
+B_ENTRY -> Evt_3015 [type="altdst"];
+B_ENTRY -> Evt_3016 [type="altdst"];
+B_ENTRY -> Evt_3017 [type="altdst"];
+B_ENTRY -> Evt_3018 [type="altdst"];
+B_ENTRY -> Evt_3019 [type="altdst"];
+B_ENTRY -> Evt_400 [type="altdst"];
+B_ENTRY -> Evt_401 [type="altdst"];
+B_ENTRY -> Evt_402 [type="altdst"];
+B_ENTRY -> Evt_403 [type="altdst"];
+B_ENTRY -> Evt_404 [type="altdst"];
+B_ENTRY -> Evt_405 [type="altdst"];
+B_ENTRY -> Evt_406 [type="altdst"];
+B_ENTRY -> Evt_407 [type="altdst"];
+B_ENTRY -> Evt_408 [type="altdst"];
+B_ENTRY -> Evt_409 [type="altdst"];
+B_ENTRY -> Evt_4010 [type="altdst"];
+B_ENTRY -> Evt_4011 [type="altdst"];
+B_ENTRY -> Evt_4012 [type="altdst"];
+B_ENTRY -> Evt_4013 [type="altdst"];
+B_ENTRY -> Evt_4014 [type="altdst"];
+B_ENTRY -> Evt_4015 [type="altdst"];
+B_ENTRY -> Evt_4016 [type="altdst"];
+B_ENTRY -> Evt_4017 [type="altdst"];
+B_ENTRY -> Evt_4018 [type="altdst"];
+B_ENTRY -> Evt_4019 [type="altdst"];
+
+Evt_0 -> B_PPS
+Evt_1 -> B_PPS
+Evt_2 -> B_PPS
+Evt_3 -> B_PPS
+Evt_4 -> B_PPS
+Evt_5 -> B_PPS
+Evt_6 -> B_PPS
+Evt_7 -> B_PPS
+Evt_8 -> B_PPS
+Evt_9 -> B_PPS
+Evt_10 -> B_PPS
+Evt_11 -> B_PPS
+Evt_12 -> B_PPS
+Evt_13 -> B_PPS
+Evt_14 -> B_PPS
+Evt_15 -> B_PPS
+Evt_16 -> B_PPS
+Evt_17 -> B_PPS
+Evt_18 -> B_PPS
+Evt_19 -> B_PPS
+Evt_100 -> B_PPS
+Evt_101 -> B_PPS
+Evt_102 -> B_PPS
+Evt_103 -> B_PPS
+Evt_104 -> B_PPS
+Evt_105 -> B_PPS
+Evt_106 -> B_PPS
+Evt_107 -> B_PPS
+Evt_108 -> B_PPS
+Evt_109 -> B_PPS
+Evt_1010 -> B_PPS
+Evt_1011 -> B_PPS
+Evt_1012 -> B_PPS
+Evt_1013 -> B_PPS
+Evt_1014 -> B_PPS
+Evt_1015 -> B_PPS
+Evt_1016 -> B_PPS
+Evt_1017 -> B_PPS
+Evt_1018 -> B_PPS
+Evt_1019 -> B_PPS
+Evt_200 -> B_PPS
+Evt_201 -> B_PPS
+Evt_202 -> B_PPS
+Evt_203 -> B_PPS
+Evt_204 -> B_PPS
+Evt_205 -> B_PPS
+Evt_206 -> B_PPS
+Evt_207 -> B_PPS
+Evt_208 -> B_PPS
+Evt_209 -> B_PPS
+Evt_2010 -> B_PPS
+Evt_2011 -> B_PPS
+Evt_2012 -> B_PPS
+Evt_2013 -> B_PPS
+Evt_2014 -> B_PPS
+Evt_2015 -> B_PPS
+Evt_2016 -> B_PPS
+Evt_2017 -> B_PPS
+Evt_2018 -> B_PPS
+Evt_2019 -> B_PPS
+Evt_300 -> B_PPS
+Evt_301 -> B_PPS
+Evt_302 -> B_PPS
+Evt_303 -> B_PPS
+Evt_304 -> B_PPS
+Evt_305 -> B_PPS
+Evt_306 -> B_PPS
+Evt_307 -> B_PPS
+Evt_308 -> B_PPS
+Evt_309 -> B_PPS
+Evt_3010 -> B_PPS
+Evt_3011 -> B_PPS
+Evt_3012 -> B_PPS
+Evt_3013 -> B_PPS
+Evt_3014 -> B_PPS
+Evt_3015 -> B_PPS
+Evt_3016 -> B_PPS
+Evt_3017 -> B_PPS
+Evt_3018 -> B_PPS
+Evt_3019 -> B_PPS
+Evt_400 -> B_PPS
+Evt_401 -> B_PPS
+Evt_402 -> B_PPS
+Evt_403 -> B_PPS
+Evt_404 -> B_PPS
+Evt_405 -> B_PPS
+Evt_406 -> B_PPS
+Evt_407 -> B_PPS
+Evt_408 -> B_PPS
+Evt_409 -> B_PPS
+Evt_4010 -> B_PPS
+Evt_4011 -> B_PPS
+Evt_4012 -> B_PPS
+Evt_4013 -> B_PPS
+Evt_4014 -> B_PPS
+Evt_4015 -> B_PPS
+Evt_4016 -> B_PPS
+Evt_4017 -> B_PPS
+Evt_4018 -> B_PPS
+Evt_4019 -> B_PPS
+
+B_PPS -> B_ENTRY;
+
+
+
+
 
 }
 
-subgraph cpu1 {
-  node  [cpu="1"];
-
-  Evt_Bla [type="tmsg",   toffs=           0, id="0x0000000000000001", par="0x0"];
-  B_Bla   [type="block",  tperiod=1000000000];
-
-  Evt_Bla -> B_Bla;
-
-}
-
-}

@@ -1,0 +1,35 @@
+digraph G {
+name = "blink2";
+graph [label="Blink", root="Evt_POLICE0", rankdir=TB, nodesep=0.6, mindist=0.6, ranksep=0.6, overlap=false]
+node [type=tmsg, shape="rectangle", style="filled", fillcolor="white", color="black", cpu=0 fid=1]
+edge [type="defdst", color="red"]
+Evt0 [type=tmsg pattern=ping patentry=1 toffs=0 par=1 evtno=1]
+Block0 [type=block pattern=ping patexit=1 tperiod=100000]
+Evt0 -> Block0
+
+subgraph G0 {
+Evt_POLICE0 [type=tmsg, pattern=police toffs=0, patentry=1 evtno="0x110", par="0x123", shape="oval", fillcolor="orange"]
+Evt_POLICE1 [type=tmsg, pattern=police toffs=25000000, evtno="0x110", par="0x456", shape="oval"]
+Cmd_CALL_FIREF [shape="oval", toffs=50000000, type=flow, pattern=police color="magenta", tvalid=0, qty=1]
+B_POLICE [type=block, pattern=police patexit=1 tperiod=100000000 qlo=1]
+Evt_POLICE0 -> Evt_POLICE1 -> Cmd_CALL_FIREF -> B_POLICE -> B_POLICE
+B_POLICE -> Evt_POLICE0 [type="altdst", color="black"]
+color = "none"
+label = "Thread 0"
+}
+
+subgraph G1 {
+Evt_FIREF0 [type=tmsg, pattern=firefighter toffs=0, patentry=1 evtno="0x112", par="0x789", shape="oval", fillcolor="orange"]
+Evt_FIREF1 [type=tmsg, pattern=firefighter toffs=50000000, evtno="0x112", par="0xABC", shape="oval"]
+Cmd_CALL_POLICE [shape="oval", toffs=100000000, type=flow, pattern=firefighter color="magenta", tvalid=0, qty=1]
+B_FIREF [type=block, pattern=firefighter patexit=1 tperiod=200000000 qlo=1]
+Evt_FIREF0 -> Evt_FIREF1 -> Cmd_CALL_POLICE -> B_FIREF -> B_FIREF
+B_FIREF -> Evt_FIREF0 [type="altdst", color="black"]
+color = "none"
+label = "Thread 1"
+}
+Cmd_CALL_POLICE -> B_POLICE [type="target", color="grey", label="change dest..."]
+Cmd_CALL_POLICE -> Evt_POLICE0 [type="flowdst", color="grey", label="...to"]
+Cmd_CALL_FIREF -> B_FIREF [type="target", color="grey", label="change dest..."]
+Cmd_CALL_FIREF -> Evt_FIREF0 [type="flowdst", color="grey", label="...to"]
+}

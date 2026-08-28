@@ -15,6 +15,8 @@
 #include "covenanttable.h"
 #include "validation.h"
 #include "lockmanager.h"
+#include "reflocation.h"
+#include "globalreftable.h"
 
 
 
@@ -36,9 +38,11 @@ private:
   HashMap hm;
   GroupTable gt;
   CovenantTable ct;
-  AllocTable atUp;
+  GlobalRefTable rt;
+  RefLocation rl;
+  AllocTable atUp = AllocTable(rl, rt);
   Graph gUp;
-  AllocTable atDown;
+  AllocTable atDown = AllocTable(rl, rt);
   Graph gDown;
 
   uint64_t modTime;
@@ -52,14 +56,17 @@ private:
   std::ostream& sLog;
   std::ostream& sErr;
 
+
+
   EbWrapper ebd = EbWrapper(sLog, sErr, verbose, debug);
+
   LockManager lm = LockManager(ebd, hm, ct, atDown); //get us an instance of the lock manager
 
   void updateListDstStaging(vertex_t v);
   void updateStaging(vertex_t v, edge_t e);
   void pushMetaNeighbours(vertex_t v, Graph& g, vertex_set_t& s);
-  void generateBlockMeta(Graph& g);
-  void generateDstLst(Graph& g, vertex_t v);
+  void generateBlockMeta(Graph& g, bool doGenerateDstLst=true);
+  void generateDstLst(Graph& g, vertex_t v, unsigned multiDst);
   void generateQmeta(Graph& g, vertex_t v, int prio);
   void generateMgmtData();
 
@@ -139,6 +146,7 @@ private:
   vBuf decompress(const vBuf& in);
 
   void readMgmtLLMeta();
+  unsigned recreateGlobalRefs();
 
 
   vEbwrs& setThrDeadline(vEbwrs& ew, uint8_t cpuIdx, uint8_t thrIdx, uint64_t t);
@@ -393,6 +401,8 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
                void dirtyCtShow() {ct.debug(sLog);}
                void showCpuList() {return ebd.showCpuList();}
             uint8_t getCpuQty() {return ebd.getCpuQty();}
+            uint8_t getThrQty() {return ebd.getThrQty();}
+            uint32_t getCtlAdr(const uint8_t& idx) {return ebd.getCtlAdr(idx);}
                bool isCpuIdxValid(uint8_t cpuIdx) {return ebd.isCpuIdxValid(cpuIdx);}
                void showMemSpace();
                void lockManagerClear() {lm.clear();}

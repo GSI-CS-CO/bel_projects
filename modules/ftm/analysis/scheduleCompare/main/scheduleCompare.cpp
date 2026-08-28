@@ -10,7 +10,7 @@ int main(int argc, char* argv[]) {
   int opt;
   char* program = argv[0];
   configuration config;
-  while ((opt = getopt(argc, argv, "chnstvV")) != -1) {
+  while ((opt = getopt(argc, argv, "chnstuvV")) != -1) {
     switch (opt) {
       case 'v':
         if (config.silent) {
@@ -42,6 +42,9 @@ int main(int argc, char* argv[]) {
         break;
       case 'c':
         config.check = true;
+        break;
+      case 'u':
+        config.undefinedAsEmpty = true;
         break;
       case 't':
         config.test = true;
@@ -78,6 +81,7 @@ void usage(char* program) {
   std::cerr << "        -n: do not compare names of vertices. Not applicable with option -t." << std::endl;
   std::cerr << "        -s: silent mode, no output, only return code. Usefull for automated tests." << std::endl;
   std::cerr << "        -t: test a single graph: compare each vertex with itself. This tests the vertex comparator." << std::endl;
+  std::cerr << "        -u: handle attribute value 'undefined' as an empty string." << std::endl;
   std::cerr << "        -v: verbose output." << std::endl;
   std::cerr << "        -vv: super verbose, more output than verbose." << std::endl;
   std::cerr << "        -V: print version and exit." << std::endl;
@@ -98,5 +102,5 @@ void usage(char* program) {
 }
 
 void version(char* program) {
-  std::cerr << program << ", version 1.0.0" << std::endl;
+  std::cerr << program << ", version 1.0.1" << std::endl;
 }

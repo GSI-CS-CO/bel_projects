@@ -11,23 +11,7 @@
 #include "alloctable.h"
 
 
-class Event;
-class Block;
-class Meta;
-
-class Command;
-class Noop;
-class TimingMsg;
-class Flow;
-class Switch;
-class Origin;
-class StartThread;
-class Flush;
-class Wait;
-
-class CmdQMeta;
-class CmdQBuffer;
-class DestList;
+#include "visitorclasslist.h"
 
 
 
@@ -59,6 +43,7 @@ class VisitorValidation {
     virtual void visit(const CmdQMeta& el) const;
     virtual void visit(const CmdQBuffer& el) const;
     virtual void visit(const DestList& el) const;
+    virtual void visit(const Global& el) const;
 
   };
 

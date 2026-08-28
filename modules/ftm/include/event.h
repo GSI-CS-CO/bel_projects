@@ -33,7 +33,7 @@ public:
   virtual void accept(const VisitorValidation& v)         const = 0;
   const uint64_t getTOffs() const {return this->tOffs;}
   bool isEvent(void) const {return true;}
-  virtual void serialise(const vAdr &va, uint8_t* b) const;
+  virtual void serialise(const mVal &m, uint8_t* b) const;
   virtual void deserialise(uint8_t* b);
 
 };
@@ -58,7 +58,7 @@ public:
 
   void show(void)                                       const;
   void show(uint32_t cnt, const char* sPrefix)          const;
-  void serialise(const vAdr &va, uint8_t* b) const;
+  void serialise(const mVal &m, uint8_t* b) const;
   void deserialise(uint8_t* b);
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
@@ -89,7 +89,7 @@ public:
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
   virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
   virtual void accept(const VisitorValidation& v)       const override { v.visit(*this); }
-  virtual void serialise(const vAdr &va, uint8_t* b) const;
+  virtual void serialise(const mVal &m, uint8_t* b) const;
   virtual void deserialise(uint8_t* b);
   node_ptr clone() const override { return boost::make_shared<Switch>(Switch(*this)); }
 };
@@ -111,7 +111,7 @@ public:
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
   virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
   virtual void accept(const VisitorValidation& v)       const override { v.visit(*this); }
-  void serialise(const vAdr &va, uint8_t* b) const;
+  void serialise(const mVal &m, uint8_t* b) const;
   void deserialise(uint8_t* b);
   node_ptr clone() const override { return boost::make_shared<Origin>(Origin(*this)); }
 };
@@ -136,7 +136,7 @@ public:
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
   virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
   virtual void accept(const VisitorValidation& v)       const override { v.visit(*this); }
-  void serialise(const vAdr &va, uint8_t* b) const;
+  void serialise(const mVal &m, uint8_t* b) const;
   void deserialise(uint8_t* b);
   node_ptr clone() const override { return boost::make_shared<StartThread>(StartThread(*this)); }
 };
@@ -163,7 +163,7 @@ public:
   virtual void accept(const VisitorUploadCrawler& v)    const = 0;
   virtual void accept(const VisitorDownloadCrawler& v)  const = 0;
   virtual void accept(const VisitorValidation& v)       const = 0;
-  virtual void serialise(const vAdr &va, uint8_t* b) const;
+  virtual void serialise(const mVal &m, uint8_t* b) const;
   virtual void deserialise(uint8_t* b);
   virtual const uint64_t getTValid()  const {return this->tValid;}
   virtual const uint32_t getAct()     const {return this->act;}
@@ -190,7 +190,7 @@ public:
 
   void show(void) const;
   void show(uint32_t cnt, const char* sPrefix) const;
-  void serialise(const vAdr &va, uint8_t* b) const;
+  void serialise(const mVal &m, uint8_t* b) const;
   void deserialise(uint8_t* b);
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
@@ -213,7 +213,7 @@ public:
 
   void show(void) const;
   void show(uint32_t cnt, const char* sPrefix) const;
-  void serialise(const vAdr &va, uint8_t* b) const;
+  void serialise(const mVal &m, uint8_t* b) const;
   void deserialise(uint8_t* b);
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
@@ -237,7 +237,7 @@ public:
   void show(void) const;
   void show(uint32_t cnt, const char* sPrefix) const;
   virtual const uint64_t getTWait()  const {return this->tWait;}
-  void serialise(const vAdr &va, uint8_t* b) const;
+  void serialise(const mVal &m, uint8_t* b) const;
   void deserialise(uint8_t* b);
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
@@ -275,7 +275,7 @@ public:
   const uint8_t getMode(void)       const {return ((this->act >> ACT_FLUSH_MODE_POS) & ACT_FLUSH_MODE_MSK);}
   const uint16_t getRng(uint8_t q) const;
 
-  void serialise(const vAdr &va, uint8_t* b) const;
+  void serialise(const mVal &m, uint8_t* b) const;
   void deserialise(uint8_t* b);
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }

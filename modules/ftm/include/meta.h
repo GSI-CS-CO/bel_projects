@@ -21,7 +21,7 @@ public:
   virtual void accept(const VisitorValidation& v)       const = 0;
   virtual void show(void)                               const = 0;
   virtual void show(uint32_t cnt, const char* sPrefix)  const = 0;
-  virtual void serialise(const vAdr &va, uint8_t* b) const;
+  virtual void serialise(const mVal &m, uint8_t* b) const;
   void deserialise(uint8_t* b) {};
   bool isMeta(void) const {return true;}
 
@@ -49,7 +49,7 @@ public:
 
   void show(void)       const;
   void show(uint32_t cnt, const char* sPrefix) const;
-  void serialise(const vAdr &va, uint8_t* b) const;
+  void serialise(const mVal &m, uint8_t* b) const;
 
 };
 
@@ -71,7 +71,7 @@ public:
 
   void show(void)       const;
   void show(uint32_t cnt, const char* sPrefix)  const;
-  void serialise(const vAdr &va, uint8_t* b) const;
+  void serialise(const mVal &m, uint8_t* b) const;
 
 };
 
@@ -92,10 +92,9 @@ public:
 
   void show(void)       const;
   void show(uint32_t cnt, const char* sPrefix)  const;
-  void serialise(const vAdr &va, uint8_t* b) const;
+  void serialise(const mVal &m, uint8_t* b) const;
 
 };
-
 
 
 #endif

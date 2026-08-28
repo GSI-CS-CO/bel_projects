@@ -17,6 +17,10 @@ void ScheduleVertex::switchCompareNames(const bool flag){
   this->compareNames = flag;
 }
 
+void ScheduleVertex::switchUndefinedAsEmpty(const bool flag){
+  this->undefinedAsEmpty = flag;
+}
+
 int ScheduleVertex::compare(const ScheduleVertex& v1, const ScheduleVertex& v2) {
   //~ std::cout << "--V " << v1.name << ", " << v2.name << " | " << v1.protocol << std::endl;
   if (!v1.compareNames || v1.name == v2.name) {
@@ -48,6 +52,8 @@ int ScheduleVertex::compare(const ScheduleVertex& v1, const ScheduleVertex& v2) 
         return compareTmsg(v1, v2);
       } else if ("wait" == v1.type) {
         return compareWait(v1, v2);
+      } else if ("global" == v1.type) {
+        return compareGlobal(v1, v2);
       } else {
         return -1;
       }
@@ -198,6 +204,19 @@ int ScheduleVertex::compareFlush(const ScheduleVertex& v1, const ScheduleVertex&
   return result;
 }
 
+int ScheduleVertex::compareGlobal(const ScheduleVertex& v1, const ScheduleVertex& v2) {
+  int result = compareValues(v1.pattern, v2.pattern, "pattern", valueType::STRING);
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.cpu, v2.cpu, "cpu", valueType::STRING);
+  if (result != 0) {
+    return result;
+  }
+  result = compareValues(v1.section, v2.section, "section", valueType::STRING);
+  return result;
+}
+
 int ScheduleVertex::compareListdst(const ScheduleVertex& v1, const ScheduleVertex& v2) {
   int result = compareValues(v1.pattern, v2.pattern, "pattern", valueType::STRING);
   if (result != 0) {
@@ -336,7 +355,7 @@ int ScheduleVertex::compareTmsg(const ScheduleVertex& v1, const ScheduleVertex& 
   if (result != 0) {
     return result;
   }
-  result = compareValues(v1.tef, v2.tef, "tef", valueType::STRING);
+  result = compareValues(v1.tef, v2.tef, "tef", valueType::HEX);
   if (result != 0) {
     return result;
   }
@@ -344,7 +363,7 @@ int ScheduleVertex::compareTmsg(const ScheduleVertex& v1, const ScheduleVertex& 
   if (result != 0) {
     return result;
   }
-  result = compareValues(v1.id, v2.id, "id", valueType::STRING);
+  result = compareValues(v1.id, v2.id, "id", valueType::HEX);
   if (result != 0) {
     return result;
   }
@@ -356,7 +375,7 @@ int ScheduleVertex::compareTmsg(const ScheduleVertex& v1, const ScheduleVertex& 
   if (result != 0) {
     return result;
   }
-  result = compareValues(v1.evtno, v2.evtno, "evtno", valueType::STRING);
+  result = compareValues(v1.evtno, v2.evtno, "evtno", valueType::HEX);
   if (result != 0) {
     return result;
   }
@@ -419,8 +438,11 @@ int ScheduleVertex::compareBoolean(const std::string& bool1, const std::string& 
   }
 }
 
-int ScheduleVertex::compareHex(const std::string& hex1, const std::string& hex2) {
+int ScheduleVertex::compareHex(const std::string& inHex1, const std::string& inHex2) {
+  std::string hex1 = (inHex1.empty()) ? "0" : inHex1;
+  std::string hex2 = (inHex2.empty()) ? "0" : inHex2;
   if (startsWith(hex1, "0x", false) && startsWith(hex2, "0X", false)) {
+    // hex1 and hex2 are hexadecimal numbers
     unsigned long x1;
     unsigned long x2;
     std::stringstream hexStream1;
@@ -437,6 +459,7 @@ int ScheduleVertex::compareHex(const std::string& hex1, const std::string& hex2)
       return 0;
     }
   } else if (startsWith(hex1, "0x", false) && !startsWith(hex2, "0X", false)) {
+    // hex1 is a hexadecimal number, hex2 is a decimal number
     unsigned long x1;
     unsigned long x2;
     std::stringstream hexStream1;
@@ -453,6 +476,7 @@ int ScheduleVertex::compareHex(const std::string& hex1, const std::string& hex2)
       return 0;
     }
   } else if (!startsWith(hex1, "0x", false) && startsWith(hex2, "0X", false)) {
+    // hex1 is a decimal number, hex2 is a hexadecimal number
     unsigned long x1;
     unsigned long x2;
     std::stringstream stream1;
@@ -479,11 +503,25 @@ int ScheduleVertex::compareValues(const std::string& value1, const std::string& 
     result = compareBoolean(value1, value2);
   } else if (type == valueType::HEX) {
     result = compareHex(value1, value2);
-  } else {
+  } else if (type == valueType::STRING) {
     result = value1.compare(value2);
+    if (result != 0 && this->undefinedAsEmpty) {
+      // when value1 and value2 are both "undefined", result == 0 and no further handling needed.
+      if (value1.compare("") == 0 && value2.compare("undefined") == 0) {
+        result = 0;
+      } else if (value1.compare("undefined") == 0 && value2.compare("") == 0) {
+        result = 0;
+      } else if (value1.compare("") == 0 && value2.compare("0") == 0) {
+        result = 0;
+      } else if (value1.compare("0") == 0 && value2.compare("") == 0) {
+        result = 0;
+      }
+    }
+  } else {
+    // unknown valueType
   }
   if (result != 0) {
-    protocol += " compare: " + std::to_string(result) + ", key: " + key + ", value1: '" + value1 + "', value2: '" + value2 + "'.";
+    protocol += " compare: " + std::to_string(result) + ", type: " + std::to_string(int(type)) + ", key: " + key + ", value1: '" + value1 + "', value2: '" + value2 + "'.";
   }
   return result;
 }

@@ -17,6 +17,8 @@
 #include "dotstr.h"
 #include "idformat.h"
 
+#include "log.h"
+
 namespace dnt = DotStr::Node::TypeVal;
 
 
@@ -98,32 +100,49 @@ namespace dnt = DotStr::Node::TypeVal;
     if(verbose) sLog << "Mgmt found " << std::dec << found << " data chunks. Total " << nodeCnt << " nodes scanned. Trying to recover GroupTable ..." << std::endl;
 
     // recover container
-    vBuf aux = atDown.recoverMgmt();
+    vBuf aux = at.recoverMgmt();
     vBuf tmpMgmtRecovery = decompress(aux);
 
-    if(verbose) sLog << "Bytes expected: " << std::dec << atDown.getMgmtTotalSize() << ", recovered: " << std::dec << aux.size() << std::endl << std::endl;
+    if(verbose) sLog << "Bytes expected: " << std::dec << at.getMgmtTotalSize() << ", recovered: " << std::dec << aux.size() << std::endl << std::endl;
     if (tmpMgmtRecovery.size()) {
       // Rebuild Grouptable
 
+      //FIXME: Code quality is horrible in this, why the hell did my younger self write such dross? Clean. this. up.
+
+      auto strBegin = tmpMgmtRecovery.begin();
+
       GroupTable gtTmp;
-      std::string tmpStrGrouptab = std::string(tmpMgmtRecovery.begin(), tmpMgmtRecovery.begin() + atDown.getMgmtGrpSize());
-      if (tmpStrGrouptab.size()) gtTmp.load(tmpStrGrouptab);
-      gt = gtTmp;
+      std::string tmpStrGrouptab = std::string(strBegin, strBegin + at.getMgmtGrpSize());
+      if (tmpStrGrouptab.size()) { gtTmp.load(tmpStrGrouptab); gt = gtTmp;}
       // Rebuild HashMap from Grouptable
       hm.clear();
       for(auto& it : gt.getTable()) {
         hm.add(it.node);
       }
+      strBegin += at.getMgmtGrpSize();
+
       // Rebuild Covenanttable
+
       CovenantTable ctTmp;
-      std::string tmpStrCovtab = std::string(tmpMgmtRecovery.begin() + atDown.getMgmtGrpSize(), tmpMgmtRecovery.end());
-      if (tmpStrCovtab.size()) ctTmp.load(tmpStrCovtab);
-      ct = ctTmp;
+      std::string tmpStrCovtab = std::string(strBegin, strBegin + at.getMgmtCovSize());
+      if (tmpStrCovtab.size()) {ctTmp.load(tmpStrCovtab); ct = ctTmp;}
+      strBegin += at.getMgmtCovSize();
+
+      // Rebuild Reftable
+      GlobalRefTable rtTmp;
+      std::string tmpStrReftab = std::string(strBegin, strBegin + at.getMgmtRefSize());
+
+      if (tmpStrReftab.size()) {rtTmp.load(tmpStrReftab); rt = rtTmp; }  
+
+      
+
+
+      //rt.debug(sLog);
     } else {
       if(verbose) sLog << "Management recovery returned empty, this happens when accessing a virgin DM FW memory. Skip Grouptable and Covenant Table creation" << std::endl;
     }
     // clean up - remove now obsolete management data (we need a fresh set anyway once upload data is set)
-    atDown.deallocateAllMgmt();
+    at.deallocateAllMgmt();
     // Tables and Pools match Bitmap again. As far as parseDownloadData is concerned, we were never here.
 
   }
@@ -194,7 +213,7 @@ namespace dnt = DotStr::Node::TypeVal;
           //vHexDump("TEST ****", test);
 
 
-          if (!(at.insert(cpu, adr, hash, v, false))) {
+          if (!(at.insert(cpu, adr, hash, v, false, false))) {
             sLog << "Offending Node at: CPU " << (int)cpu << " 0x" << std::hex << adr << std::endl;
             hexDump("Dump", (char*)&downloadData[localAdr], _MEM_BLOCK_SIZE );
             throw std::runtime_error( std::string("Hash or address collision when adding node ") + name);
@@ -223,6 +242,7 @@ namespace dnt = DotStr::Node::TypeVal;
             case NODE_TYPE_QUEUE        : g[v].np = (node_ptr) new   CmdQMeta(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sQInfo;      g[v].np->deserialise((uint8_t*)x->b); break;
             case NODE_TYPE_ALTDST       : g[v].np = (node_ptr) new   DestList(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sDstList;    g[v].np->deserialise((uint8_t*)x->b); break;
             case NODE_TYPE_QBUF         : g[v].np = (node_ptr) new CmdQBuffer(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sQBuf; break;
+            //   NODE_TYPE_GLOBAL can never occur here, similar to management nodes. Don't list it. 
             case NODE_TYPE_UNKNOWN      : sErr << "not yet implemented " << g[v].type << std::endl; break;
             default                     : sErr << "Node type 0x" << std::hex << type << " not supported! " << std::endl;
           }
@@ -240,7 +260,7 @@ namespace dnt = DotStr::Node::TypeVal;
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // create edges
-    //Two-pass for edges. First, iterate all non meta-types to establish block -> dstList parenthood
+    //Three-pass for edges. First, iterate all non meta-types to establish block -> dstList parenthood
     for(auto& it : at.getTable().get<Hash>()) {
       // handled by visitor
       if (g[it.v].np == nullptr) {throw std::runtime_error( std::string("Node ") + g[it.v].name + std::string("not initialised")); return;
@@ -248,8 +268,6 @@ namespace dnt = DotStr::Node::TypeVal;
       } else {
 
         if  (!(g[it.v].np->isMeta())) {
-          //g[it.v].np->show();
-          //hexDump("\nDEBUG_Dump_of_node_in_readback_buffer_from_FPGA", (const char*)it.b, _MEM_BLOCK_SIZE );
           g[it.v].np->accept(VisitorDownloadCrawler(g, it.v, at, ct, sLog, sErr));
         }  
       }
@@ -268,7 +286,77 @@ namespace dnt = DotStr::Node::TypeVal;
 
   }
 
-    //TODO assign to CPUs/threads
+  unsigned CarpeDM::CarpeDMimpl::recreateGlobalRefs() {
+    Graph& g = gDown;
+    AllocTable& at = atDown;
+    unsigned count = 0;
+
+    //we already recreated the reftable from the mamagement nodes we downloaded, Now, for each entry in rt, we create the global node and insert into atDown.
+    refIt rtBegin, rtEnd;
+    std::tie(rtBegin, rtEnd) = at.rt->getMapRange();
+    
+    for (auto it = rtBegin; it != rtEnd; it++) {
+
+      uint32_t tmpAdr, hash;
+      std::tie(tmpAdr, hash) = *it;
+      //We do not know the CPU yet. Analyse the address to get it.
+      uint8_t cpu;
+      AdrType adrType;
+      std::tie(cpu, adrType) = at.adrClassification(tmpAdr);
+      //TODO this does not cover all possible address types
+      //If it is not an adress inside a CPUs shared space, throw an ex for now
+      //sLog << "Global Node at: CPU " << (int)cpu << " 0x" << std::hex << tmpAdr << std::endl;
+      if (adrType != AdrType::INT) {throw std::runtime_error( std::string("Error. GlobalReftable entry contains an address not part of the AdrType::INT"));}
+      
+      uint32_t adr = at.adrConv(adrType, AdrType::MGMT, cpu, tmpAdr);
+      /*
+      sLog << "Global Node converted Adr at: CPU " << (int)cpu << " 0x" << std::hex << adr << std::endl;
+      at.rl->showMemLocMap();
+      at.rt->debug(sLog);
+      */
+      std::string section = at.rl->getLocName(adr);
+
+      //sLog << "RLSearch: section " << section << std::endl;
+      //throw std::runtime_error( std::string("HALT after lookup"));
+      //To create the node, we need a few things from the group table. The hashmap has already been recreated.
+      //This is the same as for the normal nodes, but since globals are not part of the occupation bitmaps, we need to do it here
+      std::stringstream stream;
+      stream.str(""); stream.clear();
+      stream << "0x" << std::setfill ('0') << std::setw(sizeof(uint32_t)*2) << std::hex << hash;
+      std::string name  = hm.contains(hash) ? hm.lookup(hash) : DotStr::Misc::sHashType + stream.str();
+      auto xPat  = gt.getTable().get<Groups::Node>().equal_range(name);
+      std::string pattern   = (xPat.first != xPat.second ? xPat.first->pattern : DotStr::Misc::sUndefined);
+      auto xBp  = gt.getTable().get<Groups::Node>().equal_range(name);
+      std::string beamproc  = (xBp.first != xBp.second ? xPat.first->beamproc : DotStr::Misc::sUndefined);
+
+      //sLog << "Found the following from hm and gt: name " << name << " pattern " << pattern << " beamprocs " << beamproc << std::endl;
+
+      //create node  
+      vertex_t v = boost::add_vertex(myVertex(name, pattern, beamproc, std::to_string(cpu), hash, nullptr, "", DotStr::Misc::sZero), g);
+      g[v].type     = dnt::sGlobal;
+      g[v].section  = section;    
+      g[v].bpEntry  = std::to_string(false);
+      g[v].bpExit   = std::to_string(false);
+      g[v].patEntry = std::to_string(false);
+      g[v].patExit  = std::to_string(false);
+
+      //allocate node
+       if (!(at.insert(cpu, adr, hash, v, false, true))) {
+        sLog << "Offending Global Node at: CPU " << (int)cpu << " 0x" << std::hex << adr << std::endl;
+        throw std::runtime_error( std::string("Hash or address collision when adding node ") + name);
+      };
+      
+      //add object
+      g[v].np = (node_ptr) new Global(g[v].name, g[v].patName, g[v].bpName, hash, cpu, 0, g[v].section);
+
+      //sLog << "Added Global Node " << name << " @ CPU #" << (int)cpu << " 0x" << std::hex << adr << std::endl;
+      count++;
+    }
+
+    return count;
+  }
+
+
 
   void CarpeDM::CarpeDMimpl::readMgmtLLMeta() {
     vEbrds er;
@@ -278,16 +366,18 @@ namespace dnt = DotStr::Node::TypeVal;
     er.va.push_back(modAdrBase + T_META_CON_SIZE);
     er.va.push_back(modAdrBase + T_META_GRPTAB_SIZE);
     er.va.push_back(modAdrBase + T_META_COVTAB_SIZE);
-    er.vcs += leadingOne(4);
+    er.va.push_back(modAdrBase + T_META_REFTAB_SIZE);
+    er.vcs += leadingOne(er.va.size());
 
     vDl = ebd.readCycle(er.va, er.vcs);
     atDown.setMgmtLLstartAdr(writeBeBytesToLeNumber<uint32_t>((uint8_t*)&vDl[T_META_START_PTR]));
 
-    uint32_t grp, cov;
+    uint32_t grp, cov, ref;
     atDown.setMgmtTotalSize(writeBeBytesToLeNumber<uint32_t>((uint8_t*)&vDl[T_META_CON_SIZE]));
     grp = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&vDl[T_META_GRPTAB_SIZE]);
     cov = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&vDl[T_META_COVTAB_SIZE]);
-    atDown.setMgmtLLSizes(grp, cov);
+    ref = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&vDl[T_META_REFTAB_SIZE]);
+    atDown.setMgmtLLSizes(grp, cov, ref);
 
 
 
@@ -326,9 +416,15 @@ namespace dnt = DotStr::Node::TypeVal;
 
     if(verbose) sLog << "Done." << std::endl << "Calling parser for Mgmt Meta" << std::endl ;
     readMgmtLLMeta(); // we have to do this before parsing
+      
+    
+
     if(verbose) sLog << "returned." << std::endl << "Calling parser for Mgmt Data" << std::endl ;
     parseDownloadMgmt(vDlD);
     if(verbose) sLog << "returned." << std::endl << "Calling parser for Download Meta" << std::endl ;
+
+    recreateGlobalRefs();
+
     parseDownloadData(vDlD);
     if(verbose) sLog << "returned." << std::endl;
 

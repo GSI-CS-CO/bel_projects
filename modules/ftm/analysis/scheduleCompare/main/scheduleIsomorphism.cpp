@@ -95,7 +95,7 @@ int scheduleIsomorphic(std::string dotFile1, std::string dotFile2, configuration
     parse1 = parseSchedule(dotFile1, graph1, dp1, config);
     printSchedule("Graph 1:", graph1, dp1, config);
   } catch (boost::property_not_found &excep) {
-    std::cerr << "Parsing graph1: Property not found" << excep.what() << std::endl;
+    std::cerr << "Parsing graph1: Property not found " << excep.what() << std::endl;
     result = PARSE_ERROR;
   } catch (boost::bad_graphviz_syntax &excep) {
     std::cerr << "Parsing graph1: Bad Graphviz syntax: " << excep.what() << std::endl;
@@ -106,7 +106,7 @@ int scheduleIsomorphic(std::string dotFile1, std::string dotFile2, configuration
     parse2 = parseSchedule(dotFile2, graph2, dp2, config);
     printSchedule("Graph 2:", graph2, dp2, config);
   } catch (boost::property_not_found &excep) {
-    std::cerr << "Parsing graph2: Property not found" << excep.what() << std::endl;
+    std::cerr << "Parsing graph2: Property not found " << excep.what() << std::endl;
     result = PARSE_ERROR;
   } catch (boost::bad_graphviz_syntax &excep) {
     std::cerr << "Parsing graph2: Bad Graphviz syntax: " << excep.what() << std::endl;
@@ -117,6 +117,9 @@ int scheduleIsomorphic(std::string dotFile1, std::string dotFile2, configuration
     // set the flag for comparing the names on all vertices of both graphs.
     switchCompareNames(graph1, config.compareNames);
     switchCompareNames(graph2, config.compareNames);
+    // set the flag for handling "undefined" as empty string on all vertices of both graphs.
+    switchUndefinedAsEmpty(graph1, config.undefinedAsEmpty);
+    switchUndefinedAsEmpty(graph2, config.undefinedAsEmpty);
     // Use the smaller graph as graph1.
     ScheduleGraph *ref1, *ref2;
     std::string *refName1, *refName2;
@@ -195,7 +198,7 @@ int testSingleGraph(std::string dotFile1, configuration& config) {
     parse1 = parseSchedule(dotFile1, graph1, dp1, config);
     printSchedule("Graph:", graph1, dp1, config);
   } catch (boost::property_not_found &excep) {
-    std::cerr << "Parsing graph: Property not found" << excep.what() << std::endl;
+    std::cerr << "Parsing graph: Property not found " << excep.what() << std::endl;
     result = PARSE_ERROR;
   } catch (boost::bad_graphviz_syntax &excep) {
     std::cerr << "Parsing graph: Bad Graphviz syntax: " << excep.what() << std::endl;
@@ -247,5 +250,12 @@ void switchCompareNames(ScheduleGraph& graph, const bool flag) {
   auto vertex_pair = vertices(graph);
   for (auto iter = vertex_pair.first; iter != vertex_pair.second; iter++) {
     graph[*iter].switchCompareNames(flag);
+  }
+}
+
+void switchUndefinedAsEmpty(ScheduleGraph& graph, const bool flag) {
+  auto vertex_pair = vertices(graph);
+  for (auto iter = vertex_pair.first; iter != vertex_pair.second; iter++) {
+    graph[*iter].switchUndefinedAsEmpty(flag);
   }
 }

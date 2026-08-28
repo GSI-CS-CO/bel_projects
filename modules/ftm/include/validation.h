@@ -96,9 +96,12 @@ typedef boost::multi_index_container<
  > ConstellationCnt_set;
 
 
-namespace MaxDepth {
+namespace MaxOccurrance {
   const unsigned META   = 2;
   const unsigned EVENT  = 1000;
+  const unsigned DST    = 110;
+  const unsigned DSTLL  = 8;
+  const unsigned REF    = 3;
 };
 
 extern const children_t cNonMeta;
@@ -111,6 +114,7 @@ void init(); //workaround for boost v1.53 which doesn't support aggregate inital
 void eventSequenceCheck(vertex_t v, Graph& g, bool force); //check if event sequence is well behaved
 void metaSequenceCheck(vertex_t v, Graph& g); //check if meta tree is well behaved
 void neighbourhoodCheck(vertex_t v, Graph& g); //check if all outedge (nodetype/edgetype/childtype) tupels are valid and occurrence count is within valid bounds
+void neighbourhoodCheckCpu(vertex_t v, Graph& g); // check that outedges of type defdst, altdst have targets on the same CPU.
 
   namespace Aux {
     void metaSequenceCheckAux(vertex_t v, vertex_t vcurrent, Graph& g, unsigned int recursionLvl = 0);

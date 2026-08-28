@@ -1,7 +1,5 @@
 digraph G {
-graph [
-name="-compact"
-]
+  graph [mindist=1.0 name="-compact" nodesep=0.6 overlap=false rankdir=TB ranksep=1.0 root=Demo]
 SA_20220620094802208_DEFAULT_ALIGN [beamproc=undefined, bpentry=false, bpexit=false, color=black, fillcolor=green, patentry=false, patexit=false, pattern=SA_20220620094802208_DEFAULT, qhi=false, qil=false, qlo=false, shape=rectangle, style="dotted, filled", tperiod=10000, type=blockalign];
 SA_20220620094802208_DEFAULT_BLOCK [beamproc=undefined, bpentry=false, bpexit=false, color=black, fillcolor=green, patentry=false, patexit=false, pattern=SA_20220620094802208_DEFAULT, qhi=false, qil=false, qlo=false, shape=rectangle, style=filled, tperiod=1000000000, type=block];
 SA_20220620094802208_DEFAULT_ENTRY [beamproc=undefined, bpentry=false, bpexit=false, color=darkorange3, fillcolor=green, patentry=true, patexit=false, pattern=SA_20220620094802208_DEFAULT, penwidth=2, qhi=false, qil=false, qlo=true, shape=rectangle, style=filled, tperiod=10000, type=block];
@@ -17,7 +15,7 @@ SIS100_PROTON_REPCOUNT_FLOW [beamproc=undefined, bpentry=false, bpexit=false, co
 ...(18)
 SIS100_PROTON_020" [color=black, fillcolor=green, label="SIS100_PROTON_001
 ...(18)
-SIS100_PROTON_020", pattern=SIS100_PROTON, shape=oval, style=filled];
+SIS100_PROTON_020", pattern=SIS100_PROTON, shape=oval, style=filled, type=tmsg];
 SA_20220620094802208_DEFAULT_BLOCK->SA_20220620094802208_DEFAULT_EXIT  [color=red, type=defdst];
 SA_20220620094802208_DEFAULT_ALIGN->SA_20220620094802208_DEFAULT_BLOCK  [color=red, type=defdst];
 SA_20220620094802208_DEFAULT_ENTRY->SA_20220620094802208_DEFAULT_ALIGN  [color=red, type=defdst];

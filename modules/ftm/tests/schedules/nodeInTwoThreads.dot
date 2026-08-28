@@ -17,12 +17,12 @@ Origin1 [type=origin thread=1]
 Origin2 [type=origin thread=2]
 
 // the blocks are 10ms long.
-Block0 [type=block tperiod=10000000 pattern=A patexit=1]
+Block0 [type=block tperiod=10000000 pattern=A patexit=1 qlo=1]
 // the block is 5ms long.
 Block3 [type=block tperiod=5000000 pattern=B patexit=1]
 
-Startthread1 [type=startthread thread=1 startoffs=0]
-Startthread2 [type=startthread thread=2 startoffs=0]
+Startthread1 [type=startthread thread="0x2" startoffs=0]
+Startthread2 [type=startthread thread="0x4" startoffs=0]
 
 // loop to start tread 1,2 every 10ms
 Tmsg0 -> Origin1 -> Startthread1 -> Origin2 -> Startthread2 -> Block0 -> Tmsg0

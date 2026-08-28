@@ -18,6 +18,7 @@
 #include "node.h"
 #include "block.h"
 #include "meta.h"
+#include "global.h"
 #include "event.h"
 #include "dotstr.h"
 
@@ -445,7 +446,7 @@ void CarpeDM::CarpeDMimpl::dumpNode(const std::string& name) {
   if (hm.contains(name)) {
     auto it = atDown.lookupHash(hm.lookup(name));
     auto* x = (AllocMeta*)&(*it);
-    hexDump(g[x->v].name.c_str(), (const char*)x->b, _MEM_BLOCK_SIZE);
+    sLog << hexDump(g[x->v].name.c_str(), (const char*)x->b, _MEM_BLOCK_SIZE);
   }
 }
 
@@ -474,24 +475,28 @@ void CarpeDM::CarpeDMimpl::inspectHeap(uint8_t cpuIdx) {
 
 
   uint32_t baseAdr = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs;
-  uint32_t heapAdr = baseAdr + SHCTL_HEAP;
-  uint32_t thrAdr  = baseAdr + SHCTL_THR_DAT;
+  uint32_t heapAdr = baseAdr + ebd.getCtlAdr(ADRLUT_SHCTL_HEAP);
+  uint32_t thrAdr  = baseAdr + ebd.getCtlAdr(ADRLUT_SHCTL_THR_DAT);
 
-  for(int i=0; i<_THR_QTY_; i++) vRa.push_back(heapAdr + i * _PTR_SIZE_);
+  for(int i=0; i<ebd.getThrQty(); i++) vRa.push_back(heapAdr + i * _PTR_SIZE_);
   heap = ebd.readCycle(vRa);
 
 
-  sLog << std::setfill(' ') << std::setw(4) << "Rank  " << std::setfill(' ') << std::setw(5) << "Thread  " << std::setfill(' ') << std::setw(21)
+  sLog << std::setfill(' ') << "CPU " << "Rank  " << std::setfill(' ') << std::setw(5) << "Thread  " << std::setfill(' ') << std::setw(21)
   << "Deadline  " << std::setfill(' ') << std::setw(21) << "Origin  " << std::setfill(' ') << std::setw(21) << "Cursor" << std::endl;
 
 
 
-  for(int i=0; i<_THR_QTY_; i++) {
+  for(int i=0; i<ebd.getThrQty(); i++) {
 
     uint8_t thrIdx = (writeBeBytesToLeNumber<uint32_t>((uint8_t*)&heap[i * _PTR_SIZE_])  - atDown.adrConv(AdrType::EXT, AdrType::INT,cpuIdx, thrAdr)) / _T_TD_SIZE_;
-    sLog << std::dec << std::setfill(' ') << std::setw(4) << i << std::setfill(' ') << std::setw(8) << (int)thrIdx
-    << std::setfill(' ') << std::setw(21) << getThrDeadline(cpuIdx, thrIdx)   << std::setfill(' ') << std::setw(21)
-    << getThrOrigin(cpuIdx, thrIdx)  << std::setfill(' ') << std::setw(21) << getThrCursor(cpuIdx, thrIdx) << std::endl;
+    sLog << std::dec
+    << std::setfill(' ') << std::setw(3) << (int)cpuIdx
+    << std::setfill(' ') << std::setw(5) << i
+    << std::setfill(' ') << std::setw(8) << (int)thrIdx
+    << std::setfill(' ') << std::setw(21) << getThrDeadline(cpuIdx, thrIdx)
+    << std::setfill(' ') << std::setw(21) << getThrOrigin(cpuIdx, thrIdx)
+    << std::setfill(' ') << std::setw(21) << getThrCursor(cpuIdx, thrIdx) << std::endl;
   }
 }
 
@@ -518,7 +523,7 @@ vEbwrs& CarpeDM::CarpeDMimpl::clearHealth(vEbwrs& ew, uint8_t cpuIdx) {
 
   //reset thread message counters
   //printf("VA size before %u, VCS size \n", ew.va.size(), ew.vcs.size());
-  for (uint8_t thrIdx = 0; thrIdx < _THR_QTY_; thrIdx++) {
+  for (uint8_t thrIdx = 0; thrIdx < ebd.getThrQty(); thrIdx++) {
 
     resetThrMsgCnt(ew, cpuIdx, thrIdx);
     //printf("VA size %u, VCS size \n", ew.va.size(), ew.vcs.size());

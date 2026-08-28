@@ -5,6 +5,8 @@
 #include "carpeDMimpl.h"
 #include "dotstr.h"
 
+#include "configuration.h"
+
 namespace dnt = DotStr::Node::TypeVal;
 
 extern std::map<std::string, int> nodeMap;
@@ -29,25 +31,27 @@ class SingleEdgeGraph : public Graph {
   /** The created graph. */
   Graph g1;
   /** Memorize the nodes for later use. node1 is stored in v1 an so on.*/
-  vertex_t v1, v2, v3, v4, v5;
+  vertex_t v1, v2, v3, v4, v5, v6;
   /** Complete the myVertex nodes with a valid node pointer depending on the type. */
-  void setNodePointer(myVertex* vertex, std::string type, uint32_t flags);
+  void setNodePointer(configuration& config, myVertex* vertex, std::string type, uint32_t flags);
   /** Extend graphs with forbiddden childless nodes. If node2 is of type event or qinfo, it may not be childless. */
-  void extendWithChild();
+  void extendWithChild(configuration& config, std::string edgeT);
   /** Extend graphs with forbidden orphan nodes. If node1 is of type meta, it may not be orphan. */
-  void extendOrphanNode();
+  void extendOrphanNode(configuration& config);
   /** Extend graphs with a second qbuf node if node1 has type qinfo. */
-  void extendSecondQbuf();
+  void extendSecondQbuf(configuration& config);
   /** Generate the meta nodes for blocks*/
-  void generateQmeta(Graph& g, vertex_t v, int prio);
+  void generateQmeta(configuration& config, Graph& g, vertex_t v, int prio);
 
  public:
   /** Create a graph from given node and edge types.
+\param cdm CarpeDM instance.
+\param config configuration from command line options.
 \param nodeT1 Type of node1. Allowed values from namespace DotStr::Node::TypeVal.
 \param nodeT2 Type of node2. Allowed values from namespace DotStr::Node::TypeVal.
 \param edgeT Type of edge from node1 to node2. Allowed values from namespace DotStr::Edge::TypeVal.
   */
-  SingleEdgeGraph(CarpeDM::CarpeDMimpl* cdm, std::string nodeT1, std::string nodeT2, std::string edgeT);
+  SingleEdgeGraph(CarpeDM::CarpeDMimpl* cdm, configuration& config, std::string nodeT1, std::string nodeT2, std::string edgeT);
   /** Return the graph stored in this object. */
   Graph getGraph() { return g1; };
   /** Print the graph as nodes and edges to stdout. */

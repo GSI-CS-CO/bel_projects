@@ -1,0 +1,5 @@
+digraph G {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+BlockA[cpu="1", flags="0x00108107", type="block", tperiod="100000000", pattern="A", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green", penwidth=2, color = "purple"];
+}

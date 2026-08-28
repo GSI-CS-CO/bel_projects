@@ -1,38 +1,38 @@
 digraph threadsStartStop {
-// Thread 0 assigns TmsgX and BlockX to thread 1,2,3 and starts these.
-// then start pattern B (Tmsg4 and Block4) to show that this does not stop the other threads.
-// Stop pattern A1 which stops thread 1
-// Stop pattern A which stops thread 3
-// Stop node Block2 which stops thread 2 (there is no pattern on this thread)
+// Thread 0 assigns TmsgX and BlockX to thread X = 1,2,3 and starts these.
+// Then start pattern D (Tmsg4 and Block4) to show that this does not stop the other threads.
+// Stop pattern A which stops thread 1.
+// Stop pattern C which stops thread 3.
+// Stop node Block2 which stops thread 2.
 
-node [cpu=0 fid=1 toffs=0]
-edge [type=defdst]
+node [cpu=0 fid=1 toffs=0 style=filled fillcolor=white color=black]
 
-Tmsg0 [type=tmsg par=0 pattern=A patentry=1]
+Tmsg0 [type=tmsg par=0 pattern=X patentry=1 toffs=0 color=darkorange3]
 // offset 1ms
-Tmsg1 [type=tmsg par=1 toffs=1000000 pattern=A1 patentry=1]
+Tmsg1 [type=tmsg par=1 pattern=A patentry=1 toffs=1000000 color=darkorange3]
 // offset 2ms
-Tmsg2 [type=tmsg par=2 toffs=2000000]
+Tmsg2 [type=tmsg par=2 pattern=B patentry=1 toffs=2000000 color=darkorange3]
 // offset 3ms
-Tmsg3 [type=tmsg par=3 toffs=3000000 pattern=A]
-Tmsg4 [type=tmsg par=4 pattern=B patentry=1]
+Tmsg3 [type=tmsg par=3 pattern=C patentry=1 toffs=3000000 color=darkorange3]
+Tmsg4 [type=tmsg par=4 pattern=D patentry=1 toffs=0 color=darkorange3]
 
-Origin1 [type=origin thread=1]
-Origin2 [type=origin thread=2]
-Origin3 [type=origin thread=3]
+Origin1 [type=origin thread=1 pattern=A shape=octagon color=cyan]
+Origin2 [type=origin thread=2 pattern=B shape=octagon color=cyan]
+Origin3 [type=origin thread=3 pattern=C shape=octagon color=cyan]
 
 // the blocks are 10ms long.
 // most blocks have a low prio queue to enable stop command.
-Block0 [type=block tperiod=10000000 pattern=A]
-Block1 [type=block tperiod=10000000 pattern=A1 patexit=1 qlo=1]
-Block2 [type=block tperiod=10000000 patexit=1 qlo=1]
-Block3 [type=block tperiod=10000000 pattern=A patexit=1 qlo=1]
-Block4 [type=block tperiod=10000000 pattern=B patexit=1 qlo=1]
+Block0 [type=block tperiod=10000000 pattern=X patexit=1 qlo=1 shape=rectangle color=purple]
+Block1 [type=block tperiod=10000000 pattern=A patexit=1 qlo=1 shape=rectangle color=purple]
+Block2 [type=block tperiod=10000000 pattern=B patexit=1 qlo=1 shape=rectangle color=purple]
+Block3 [type=block tperiod=10000000 pattern=C patexit=1 qlo=1 shape=rectangle color=purple]
+Block4 [type=block tperiod=10000000 pattern=D patexit=1 qlo=1 shape=rectangle color=purple]
 
-Startthread1 [type=startthread thread=1 startoffs=0]
-Startthread2 [type=startthread thread=2 startoffs=0]
-Startthread3 [type=startthread thread=3 startoffs=0]
+Startthread1 [type=startthread thread="0x2" startoffs=0 pattern=A shape=triangle color=cyan]
+Startthread2 [type=startthread thread="0x4" startoffs=0 pattern=B shape=triangle color=cyan]
+Startthread3 [type=startthread thread="0x8" startoffs=0 pattern=C shape=triangle color=cyan]
 
+edge [type=defdst color=red]
 // sequence to start threads 1,2,3
 Tmsg0 -> Origin1 -> Startthread1 -> Origin2 -> Startthread2 -> Origin3 -> Startthread3 -> Block0
 // loop on thread 1
@@ -41,10 +41,10 @@ Tmsg1 -> Block1 -> Tmsg1
 Tmsg2 -> Block2 -> Tmsg2
 // loop on thread 3
 Tmsg3 -> Block3 -> Tmsg3
-// extra pattern B
+// extra pattern D
 Tmsg4 -> Block4
 
-Origin1 -> Tmsg1 [type=origindst]
-Origin2 -> Tmsg2 [type=origindst]
-Origin3 -> Tmsg3 [type=origindst]
+Origin1 -> Tmsg1 [type=origindst color=grey]
+Origin2 -> Tmsg2 [type=origindst color=grey]
+Origin3 -> Tmsg3 [type=origindst color=grey]
 }

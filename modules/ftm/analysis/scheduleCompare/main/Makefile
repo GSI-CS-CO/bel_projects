@@ -1,19 +1,22 @@
-############################
-# ASL build paths          #
-############################
 
-ifeq ($(findstring asl75,$(shell hostname)),asl75)
-  BOOSTPATH	=/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation
+EBPATH ?= ../../../../ip_cores/etherbone-core/api/
+BOOSTPATH ?= .
+
+# assume that Boost is installed on the maschine. Use BOOSTPATH if the global installed version should not be used.
+# set BOOST_FLAGS depending on the Boost version
+ifeq (,$(wildcard $(BOOSTPATH)/include/boost/version.hpp))
+  BOOST_VERSION:=$(shell grep 'BOOST_LIB_VERSION "' /usr/include/boost/version.hpp | cut -b28-31)
 else
-ifeq ($(findstring asl,$(shell hostname)),asl)
-  BOOSTPATH	=/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation
+  BOOST_VERSION:=$(shell grep 'BOOST_LIB_VERSION "' $(BOOSTPATH)/include/boost/version.hpp | cut -b28-31)
 endif
+ifeq ($(BOOST_VERSION),1_75)
+  BOOST_FLAGS=-DBOOST_ALLOW_DEPRECATED_HEADERS -Wno-nonnull
 endif
 
-CXX = g++
-CXXFLAGS = -g -std=c++11 -fPIC -Wall -I../../include -I$(BOOSTPATH)/include
+CXX ?= g++
+CXXFLAGS = -g -std=c++11 -fPIC -Wall -I../../include -I$(BOOSTPATH)/include $(BOOST_FLAGS)
 
-LDFLAGS = -Wl,-rpath,/usr/local/lib,-rpath,$(BOOSTPATH)/lib
+#LDFLAGS = -Wl,-rpath,/usr/local/lib,-rpath,$(BOOSTPATH)/lib
 LDLIBS = -Wl,-rpath,$(BOOSTPATH)/lib -L$(BOOSTPATH)/lib -lstdc++ -lboost_serialization -lboost_graph -lboost_regex
 
 # check that make runs with  sudo rights
@@ -52,7 +55,7 @@ ScheduleGraph.o: ScheduleGraph.h
 
 scheduleCompact.o: scheduleCompact.h scheduleCompare.h scheduleIsomorphism.h printSchedule.h
 
-replaceChain.o: replaceChain.h configuration.h
+replaceChain.o: replaceChain.h configuration.h ScheduleEdge.h ScheduleVertex.h ScheduleGraph.h printSchedule.h parseSchedule.h scheduleCompact.h
 
 replaceChainImpl.o: replaceChainImpl.h replaceChain.h configuration.h
 

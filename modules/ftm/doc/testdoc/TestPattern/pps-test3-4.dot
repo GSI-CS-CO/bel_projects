@@ -1,0 +1,18 @@
+digraph "pps-test3-4" {
+  name="pps-test3-4"
+  subgraph subgraph4 {
+    node [cpu=1 pattern=A tperiod=100000000 toffs=0 fid=1 gid=5 sid=2 bpid=8 style=filled color=black fillcolor=white penwidth=2 shape=oval]
+    B_0 [type=block qlo=1 shape=rectangle]
+    Evt_0 [type=tmsg evtno=0 par=0]
+    B_A [type=block patexit=1 shape=rectangle color=purple]
+    Evt_A [type=tmsg patentry=1 evtno="0x000f" par=31 color=darkorange3]
+    B_C [type=block pattern=C patexit=1 shape=rectangle color=purple]
+    Evt_C [type=tmsg pattern=C patentry=1 evtno="0x0fff" par=33 color=darkorange3]
+    edge [type=defdst color=red]
+    Evt_C -> B_C -> Evt_0
+    Evt_A -> B_A -> Evt_0 -> B_0
+    edge [type=altdst color=black]
+    B_0 -> Evt_A
+    B_0 -> Evt_C
+  }
+}

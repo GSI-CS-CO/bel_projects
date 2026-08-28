@@ -1,0 +1,36 @@
+
+Download Table
+
+Idx   S/R   Cpu   Name                  Hash         Int. Adr     Ext. Adr  
+   0    0     0   BLOCK_A               0x84075cd6   0x10000f6c   0x04120f6c
+   1    0     0   BLOCK_B               0x5e04e26d   0x10000fa0   0x04120fa0
+   2    0     0   BLOCK_IN0             0x886e00bc   0x10000fd4   0x04120fd4
+   3    0     0   BLOCK_IN1             0xae707b25   0x10001008   0x04121008
+   4    0     0   BLOCK_IN0_QBl_Il      0x15a86432   0x1000103c   0x0412103c
+   5    0     0   BLOCK_IN0_Qb_Il0      0x1ae2682e   0x10001070   0x04121070
+   6    0     0   BLOCK_IN0_Qb_Il1      0x40e4e297   0x100010a4   0x041210a4
+   7    0     0   BLOCK_IN0_QBl_Hi      0xa61f9308   0x100010d8   0x041210d8
+   8    0     0   BLOCK_IN0_Qb_Hi0      0x7faab9b0   0x1000110c   0x0412110c
+   9    0     0   BLOCK_IN0_Qb_Hi1      0xa5ad3419   0x10001140   0x04121140
+  10    0     0   BLOCK_IN0_QBl_Lo      0xf4509052   0x10001174   0x04121174
+  11    0     0   BLOCK_IN0_Qb_Lo0      0x23b48f4e   0x100011a8   0x041211a8
+  12    0     0   BLOCK_IN0_Qb_Lo1      0x49b709b7   0x100011dc   0x041211dc
+  13    0     0   BLOCK_IN0_ListDst_0   0x7be183b9   0x10001210   0x04121210
+  14    0     0   BLOCK_IN1_QBl_Il      0xcd9a5cc1   0x10001244   0x04121244
+  15    0     0   BLOCK_IN1_Qb_Il0      0xbebd5221   0x10001278   0x04121278
+  16    0     0   BLOCK_IN1_Qb_Il1      0x98bad7b8   0x100012ac   0x041212ac
+  17    0     0   BLOCK_IN1_QBl_Hi      0x4cc00d83   0x100012e0   0x041212e0
+  18    0     0   BLOCK_IN1_Qb_Hi0      0x6824ac27   0x10001314   0x04121314
+  19    0     0   BLOCK_IN1_Qb_Hi1      0x422231be   0x10001348   0x04121348
+  20    0     0   BLOCK_IN1_QBl_Lo      0xeef230a1   0x1000137c   0x0412137c
+  21    0     0   BLOCK_IN1_Qb_Lo0      0x02a0bdd5   0x100013b0   0x041213b0
+  22    0     0   BLOCK_IN1_Qb_Lo1      0xdc9e436c   0x100013e4   0x041213e4
+  23    0     0   BLOCK_IN1_ListDst_0   0x99ad5c6c   0x10001418   0x04121418
+
+
+Patterns Entry     Exit
+A        BLOCK_A   BLOCK_A
+B        BLOCK_B   BLOCK_B
+IN0      BLOCK_IN0 BLOCK_IN0
+IN1      BLOCK_IN1 BLOCK_IN1
+

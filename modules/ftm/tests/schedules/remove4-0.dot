@@ -1,0 +1,13 @@
+digraph "remove4-0" {
+  BlockX [type=block cpu=0 tperiod=100000000 pattern=X patexit=1 style=filled color=purple fillcolor=white penwidth=2 shape=rectangle]
+  EvtX [type=tmsg fid=1 cpu=0 par=1023 patentry=1 pattern=X toffs=0 id="0x1000000000000000" style=filled color=darkorange3 fillcolor=white shape=oval]
+  EvtX -> BlockX [type=defdst color=red]
+  BlockY [type=block cpu=3 tperiod=100000000 pattern=Y patexit=1 style=filled color=purple fillcolor=white penwidth=2 shape=rectangle]
+  EvtY [type=tmsg fid=1 cpu=3 par=4095 patentry=1 pattern=Y toffs=0 id="0x1000000000000000" style=filled color=darkorange3 fillcolor=white shape=oval]
+  EvtY -> BlockY [type=defdst color=red]
+  node [cpu=1 pattern=A tperiod=100000000 toffs=0 fid=1 gid=5 sid=2 bpid=8 style=filled color=black fillcolor=white penwidth=2 shape=oval]
+  EvtA [type=tmsg patentry=1 evtno=0 par=1 id="0x1005000000200200" color=darkorange3]
+  BlockA [type=block patexit=1 qlo=1 shape=rectangle color=purple]
+  edge [type=defdst color=red]
+  EvtA -> BlockA -> EvtA
+}

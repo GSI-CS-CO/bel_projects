@@ -1,7 +1,5 @@
 digraph G {
-graph [
-name="chain5Block1-compact"
-]
+  graph [name="chain5Block1-compact"]
 a [shape=rectangle, type=block];
 "b
 ...(2)

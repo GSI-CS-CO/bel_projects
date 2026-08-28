@@ -9,7 +9,7 @@ name="booster-thread-0"
 edge [type=defdst]
 node [cpu=0 fillcolor=white style=filled pattern=MAIN toffs=0]
 
-StThrT0 [type=startthread patentry=1 thread=0 startoffs=1000000]
+StThrT0 [type=startthread patentry=1 thread="0x1" startoffs=1000000]
 
 Evt_MAIN [type=tmsg fid=1 evtno=1 par=1]
 B_MAIN [type=block patexit=1 tperiod=100000000 qlo=1]
