@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.116 (w)1999-2023 BSI
-[*] Wed Aug  5 12:53:03 2026
+[*] Fri Aug 28 07:08:47 2026
 [*]
-[dumpfile] "/mnt/hdd/usr/alex/2026_06_09_SCU5_Cosylab_List/modules/neorv32/sim/build/neorv32_tb_xbar.ghw"
-[dumpfile_mtime] "Wed Aug  5 12:49:21 2026"
-[dumpfile_size] 234996944
-[savefile] "/mnt/hdd/usr/alex/2026_06_09_SCU5_Cosylab_List/modules/neorv32/sim/neorv32_tb_xbar.gtkw"
-[timestart] 688800000000
-[size] 1280 1353
+[dumpfile] "/mnt/hdd/usr/alex/2026_08_28_neorv32_adapter_check/modules/neorv32/sim/build/neorv32_tb_xbar.ghw"
+[dumpfile_mtime] "Fri Aug 28 07:05:34 2026"
+[dumpfile_size] 146268121
+[savefile] "/mnt/hdd/usr/alex/2026_08_28_neorv32_adapter_check/modules/neorv32/sim/neorv32_tb_xbar.gtkw"
+[timestart] 0
+[size] 2560 1353
 [pos] 1440 924
-*-36.643185 417235100000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-37.431824 265100000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
 [treeopen] top.neorv32_tb_xbar.
 [treeopen] top.neorv32_tb_xbar.cbar_master_o.[0].
@@ -24,19 +24,11 @@
 [treeopen] top.neorv32_tb_xbar.neorv32_shell_inst.neorv32_wb_ext_ram.u_adapter1.master_i.
 [treeopen] top.neorv32_tb_xbar.neorv32_shell_inst.neorv32_wb_ext_ram.u_adapter1.master_in.
 [treeopen] top.neorv32_tb_xbar.neorv32_shell_inst.y_g_use_wb_adapter.block_transfer_fifo.
-[treeopen] top.neorv32_tb_xbar.ram.
-[treeopen] top.neorv32_tb_xbar.ram.slave1_i.
-[treeopen] top.neorv32_tb_xbar.ram.slave1_in.
-[treeopen] top.neorv32_tb_xbar.ram.slave1_o.
-[treeopen] top.neorv32_tb_xbar.ram.slave1_out.
-[treeopen] top.neorv32_tb_xbar.ram.u_dpram.
-[treeopen] top.neorv32_tb_xbar.ram.u_dpram.case_be_single.
-[treeopen] top.neorv32_tb_xbar.ram.u_dpram.case_be_single.memory.
-[treeopen] top.neorv32_tb_xbar.wb_con.rom.
+[treeopen] top.neorv32_tb_xbar.wb_con.
+[treeopen] top.neorv32_tb_xbar.wb_con.master_o.
 [treeopen] top.neorv32_tb_xbar.wb_con.rom.cmp_sdb_wb_adapter.
-[treeopen] top.neorv32_tb_xbar.wb_con.slave_i.
 [treeopen] top.neorv32_tb_xbar.wb_con.slave_i.[0].
-[treeopen] top.neorv32_tb_xbar.wb_con.slave_o.
+[treeopen] top.neorv32_tb_xbar.wb_con.slave_o.[0].
 [sst_width] 260
 [signals_width] 308
 [sst_expanded] 1
@@ -120,6 +112,22 @@ top.neorv32_tb_xbar.wb_con.slave_i[0].cyc
 top.neorv32_tb_xbar.wb_con.sdb_sel[0]
 @200
 -SDB-Entry
+-CROSSBAR SWITCH
+@29
+[color] 7
+top.neorv32_tb_xbar.wb_con.master_o[0].cyc
+[color] 7
+top.neorv32_tb_xbar.wb_con.master_o[0].we
+[color] 7
+top.neorv32_tb_xbar.wb_con.master_o[0].stb
+@28
+[color] 3
+top.neorv32_tb_xbar.wb_con.master_o[1].cyc
+[color] 3
+top.neorv32_tb_xbar.wb_con.master_o[1].we
+[color] 3
+top.neorv32_tb_xbar.wb_con.master_o[1].stb
+@200
 -Device Record with SDB Magic
 @22
 #{top.neorv32_tb_xbar.wb_con.rom.rom[0][31:0]} top.neorv32_tb_xbar.wb_con.rom.rom[0][31] top.neorv32_tb_xbar.wb_con.rom.rom[0][30] top.neorv32_tb_xbar.wb_con.rom.rom[0][29] top.neorv32_tb_xbar.wb_con.rom.rom[0][28] top.neorv32_tb_xbar.wb_con.rom.rom[0][27] top.neorv32_tb_xbar.wb_con.rom.rom[0][26] top.neorv32_tb_xbar.wb_con.rom.rom[0][25] top.neorv32_tb_xbar.wb_con.rom.rom[0][24] top.neorv32_tb_xbar.wb_con.rom.rom[0][23] top.neorv32_tb_xbar.wb_con.rom.rom[0][22] top.neorv32_tb_xbar.wb_con.rom.rom[0][21] top.neorv32_tb_xbar.wb_con.rom.rom[0][20] top.neorv32_tb_xbar.wb_con.rom.rom[0][19] top.neorv32_tb_xbar.wb_con.rom.rom[0][18] top.neorv32_tb_xbar.wb_con.rom.rom[0][17] top.neorv32_tb_xbar.wb_con.rom.rom[0][16] top.neorv32_tb_xbar.wb_con.rom.rom[0][15] top.neorv32_tb_xbar.wb_con.rom.rom[0][14] top.neorv32_tb_xbar.wb_con.rom.rom[0][13] top.neorv32_tb_xbar.wb_con.rom.rom[0][12] top.neorv32_tb_xbar.wb_con.rom.rom[0][11] top.neorv32_tb_xbar.wb_con.rom.rom[0][10] top.neorv32_tb_xbar.wb_con.rom.rom[0][9] top.neorv32_tb_xbar.wb_con.rom.rom[0][8] top.neorv32_tb_xbar.wb_con.rom.rom[0][7] top.neorv32_tb_xbar.wb_con.rom.rom[0][6] top.neorv32_tb_xbar.wb_con.rom.rom[0][5] top.neorv32_tb_xbar.wb_con.rom.rom[0][4] top.neorv32_tb_xbar.wb_con.rom.rom[0][3] top.neorv32_tb_xbar.wb_con.rom.rom[0][2] top.neorv32_tb_xbar.wb_con.rom.rom[0][1] top.neorv32_tb_xbar.wb_con.rom.rom[0][0]
@@ -149,9 +157,7 @@ top.neorv32_tb_xbar.wb_con.sdb_sel[0]
 #{top.neorv32_tb_xbar.wb_con.rom.rom[20][31:0]} top.neorv32_tb_xbar.wb_con.rom.rom[20][31] top.neorv32_tb_xbar.wb_con.rom.rom[20][30] top.neorv32_tb_xbar.wb_con.rom.rom[20][29] top.neorv32_tb_xbar.wb_con.rom.rom[20][28] top.neorv32_tb_xbar.wb_con.rom.rom[20][27] top.neorv32_tb_xbar.wb_con.rom.rom[20][26] top.neorv32_tb_xbar.wb_con.rom.rom[20][25] top.neorv32_tb_xbar.wb_con.rom.rom[20][24] top.neorv32_tb_xbar.wb_con.rom.rom[20][23] top.neorv32_tb_xbar.wb_con.rom.rom[20][22] top.neorv32_tb_xbar.wb_con.rom.rom[20][21] top.neorv32_tb_xbar.wb_con.rom.rom[20][20] top.neorv32_tb_xbar.wb_con.rom.rom[20][19] top.neorv32_tb_xbar.wb_con.rom.rom[20][18] top.neorv32_tb_xbar.wb_con.rom.rom[20][17] top.neorv32_tb_xbar.wb_con.rom.rom[20][16] top.neorv32_tb_xbar.wb_con.rom.rom[20][15] top.neorv32_tb_xbar.wb_con.rom.rom[20][14] top.neorv32_tb_xbar.wb_con.rom.rom[20][13] top.neorv32_tb_xbar.wb_con.rom.rom[20][12] top.neorv32_tb_xbar.wb_con.rom.rom[20][11] top.neorv32_tb_xbar.wb_con.rom.rom[20][10] top.neorv32_tb_xbar.wb_con.rom.rom[20][9] top.neorv32_tb_xbar.wb_con.rom.rom[20][8] top.neorv32_tb_xbar.wb_con.rom.rom[20][7] top.neorv32_tb_xbar.wb_con.rom.rom[20][6] top.neorv32_tb_xbar.wb_con.rom.rom[20][5] top.neorv32_tb_xbar.wb_con.rom.rom[20][4] top.neorv32_tb_xbar.wb_con.rom.rom[20][3] top.neorv32_tb_xbar.wb_con.rom.rom[20][2] top.neorv32_tb_xbar.wb_con.rom.rom[20][1] top.neorv32_tb_xbar.wb_con.rom.rom[20][0]
 #{top.neorv32_tb_xbar.wb_con.rom.rom[21][31:0]} top.neorv32_tb_xbar.wb_con.rom.rom[21][31] top.neorv32_tb_xbar.wb_con.rom.rom[21][30] top.neorv32_tb_xbar.wb_con.rom.rom[21][29] top.neorv32_tb_xbar.wb_con.rom.rom[21][28] top.neorv32_tb_xbar.wb_con.rom.rom[21][27] top.neorv32_tb_xbar.wb_con.rom.rom[21][26] top.neorv32_tb_xbar.wb_con.rom.rom[21][25] top.neorv32_tb_xbar.wb_con.rom.rom[21][24] top.neorv32_tb_xbar.wb_con.rom.rom[21][23] top.neorv32_tb_xbar.wb_con.rom.rom[21][22] top.neorv32_tb_xbar.wb_con.rom.rom[21][21] top.neorv32_tb_xbar.wb_con.rom.rom[21][20] top.neorv32_tb_xbar.wb_con.rom.rom[21][19] top.neorv32_tb_xbar.wb_con.rom.rom[21][18] top.neorv32_tb_xbar.wb_con.rom.rom[21][17] top.neorv32_tb_xbar.wb_con.rom.rom[21][16] top.neorv32_tb_xbar.wb_con.rom.rom[21][15] top.neorv32_tb_xbar.wb_con.rom.rom[21][14] top.neorv32_tb_xbar.wb_con.rom.rom[21][13] top.neorv32_tb_xbar.wb_con.rom.rom[21][12] top.neorv32_tb_xbar.wb_con.rom.rom[21][11] top.neorv32_tb_xbar.wb_con.rom.rom[21][10] top.neorv32_tb_xbar.wb_con.rom.rom[21][9] top.neorv32_tb_xbar.wb_con.rom.rom[21][8] top.neorv32_tb_xbar.wb_con.rom.rom[21][7] top.neorv32_tb_xbar.wb_con.rom.rom[21][6] top.neorv32_tb_xbar.wb_con.rom.rom[21][5] top.neorv32_tb_xbar.wb_con.rom.rom[21][4] top.neorv32_tb_xbar.wb_con.rom.rom[21][3] top.neorv32_tb_xbar.wb_con.rom.rom[21][2] top.neorv32_tb_xbar.wb_con.rom.rom[21][1] top.neorv32_tb_xbar.wb_con.rom.rom[21][0]
 #{top.neorv32_tb_xbar.wb_con.rom.rom[22][31:0]} top.neorv32_tb_xbar.wb_con.rom.rom[22][31] top.neorv32_tb_xbar.wb_con.rom.rom[22][30] top.neorv32_tb_xbar.wb_con.rom.rom[22][29] top.neorv32_tb_xbar.wb_con.rom.rom[22][28] top.neorv32_tb_xbar.wb_con.rom.rom[22][27] top.neorv32_tb_xbar.wb_con.rom.rom[22][26] top.neorv32_tb_xbar.wb_con.rom.rom[22][25] top.neorv32_tb_xbar.wb_con.rom.rom[22][24] top.neorv32_tb_xbar.wb_con.rom.rom[22][23] top.neorv32_tb_xbar.wb_con.rom.rom[22][22] top.neorv32_tb_xbar.wb_con.rom.rom[22][21] top.neorv32_tb_xbar.wb_con.rom.rom[22][20] top.neorv32_tb_xbar.wb_con.rom.rom[22][19] top.neorv32_tb_xbar.wb_con.rom.rom[22][18] top.neorv32_tb_xbar.wb_con.rom.rom[22][17] top.neorv32_tb_xbar.wb_con.rom.rom[22][16] top.neorv32_tb_xbar.wb_con.rom.rom[22][15] top.neorv32_tb_xbar.wb_con.rom.rom[22][14] top.neorv32_tb_xbar.wb_con.rom.rom[22][13] top.neorv32_tb_xbar.wb_con.rom.rom[22][12] top.neorv32_tb_xbar.wb_con.rom.rom[22][11] top.neorv32_tb_xbar.wb_con.rom.rom[22][10] top.neorv32_tb_xbar.wb_con.rom.rom[22][9] top.neorv32_tb_xbar.wb_con.rom.rom[22][8] top.neorv32_tb_xbar.wb_con.rom.rom[22][7] top.neorv32_tb_xbar.wb_con.rom.rom[22][6] top.neorv32_tb_xbar.wb_con.rom.rom[22][5] top.neorv32_tb_xbar.wb_con.rom.rom[22][4] top.neorv32_tb_xbar.wb_con.rom.rom[22][3] top.neorv32_tb_xbar.wb_con.rom.rom[22][2] top.neorv32_tb_xbar.wb_con.rom.rom[22][1] top.neorv32_tb_xbar.wb_con.rom.rom[22][0]
-@23
 #{top.neorv32_tb_xbar.wb_con.rom.rom[23][31:0]} top.neorv32_tb_xbar.wb_con.rom.rom[23][31] top.neorv32_tb_xbar.wb_con.rom.rom[23][30] top.neorv32_tb_xbar.wb_con.rom.rom[23][29] top.neorv32_tb_xbar.wb_con.rom.rom[23][28] top.neorv32_tb_xbar.wb_con.rom.rom[23][27] top.neorv32_tb_xbar.wb_con.rom.rom[23][26] top.neorv32_tb_xbar.wb_con.rom.rom[23][25] top.neorv32_tb_xbar.wb_con.rom.rom[23][24] top.neorv32_tb_xbar.wb_con.rom.rom[23][23] top.neorv32_tb_xbar.wb_con.rom.rom[23][22] top.neorv32_tb_xbar.wb_con.rom.rom[23][21] top.neorv32_tb_xbar.wb_con.rom.rom[23][20] top.neorv32_tb_xbar.wb_con.rom.rom[23][19] top.neorv32_tb_xbar.wb_con.rom.rom[23][18] top.neorv32_tb_xbar.wb_con.rom.rom[23][17] top.neorv32_tb_xbar.wb_con.rom.rom[23][16] top.neorv32_tb_xbar.wb_con.rom.rom[23][15] top.neorv32_tb_xbar.wb_con.rom.rom[23][14] top.neorv32_tb_xbar.wb_con.rom.rom[23][13] top.neorv32_tb_xbar.wb_con.rom.rom[23][12] top.neorv32_tb_xbar.wb_con.rom.rom[23][11] top.neorv32_tb_xbar.wb_con.rom.rom[23][10] top.neorv32_tb_xbar.wb_con.rom.rom[23][9] top.neorv32_tb_xbar.wb_con.rom.rom[23][8] top.neorv32_tb_xbar.wb_con.rom.rom[23][7] top.neorv32_tb_xbar.wb_con.rom.rom[23][6] top.neorv32_tb_xbar.wb_con.rom.rom[23][5] top.neorv32_tb_xbar.wb_con.rom.rom[23][4] top.neorv32_tb_xbar.wb_con.rom.rom[23][3] top.neorv32_tb_xbar.wb_con.rom.rom[23][2] top.neorv32_tb_xbar.wb_con.rom.rom[23][1] top.neorv32_tb_xbar.wb_con.rom.rom[23][0]
-@22
 #{top.neorv32_tb_xbar.wb_con.rom.rom[24][31:0]} top.neorv32_tb_xbar.wb_con.rom.rom[24][31] top.neorv32_tb_xbar.wb_con.rom.rom[24][30] top.neorv32_tb_xbar.wb_con.rom.rom[24][29] top.neorv32_tb_xbar.wb_con.rom.rom[24][28] top.neorv32_tb_xbar.wb_con.rom.rom[24][27] top.neorv32_tb_xbar.wb_con.rom.rom[24][26] top.neorv32_tb_xbar.wb_con.rom.rom[24][25] top.neorv32_tb_xbar.wb_con.rom.rom[24][24] top.neorv32_tb_xbar.wb_con.rom.rom[24][23] top.neorv32_tb_xbar.wb_con.rom.rom[24][22] top.neorv32_tb_xbar.wb_con.rom.rom[24][21] top.neorv32_tb_xbar.wb_con.rom.rom[24][20] top.neorv32_tb_xbar.wb_con.rom.rom[24][19] top.neorv32_tb_xbar.wb_con.rom.rom[24][18] top.neorv32_tb_xbar.wb_con.rom.rom[24][17] top.neorv32_tb_xbar.wb_con.rom.rom[24][16] top.neorv32_tb_xbar.wb_con.rom.rom[24][15] top.neorv32_tb_xbar.wb_con.rom.rom[24][14] top.neorv32_tb_xbar.wb_con.rom.rom[24][13] top.neorv32_tb_xbar.wb_con.rom.rom[24][12] top.neorv32_tb_xbar.wb_con.rom.rom[24][11] top.neorv32_tb_xbar.wb_con.rom.rom[24][10] top.neorv32_tb_xbar.wb_con.rom.rom[24][9] top.neorv32_tb_xbar.wb_con.rom.rom[24][8] top.neorv32_tb_xbar.wb_con.rom.rom[24][7] top.neorv32_tb_xbar.wb_con.rom.rom[24][6] top.neorv32_tb_xbar.wb_con.rom.rom[24][5] top.neorv32_tb_xbar.wb_con.rom.rom[24][4] top.neorv32_tb_xbar.wb_con.rom.rom[24][3] top.neorv32_tb_xbar.wb_con.rom.rom[24][2] top.neorv32_tb_xbar.wb_con.rom.rom[24][1] top.neorv32_tb_xbar.wb_con.rom.rom[24][0]
 #{top.neorv32_tb_xbar.wb_con.rom.rom[25][31:0]} top.neorv32_tb_xbar.wb_con.rom.rom[25][31] top.neorv32_tb_xbar.wb_con.rom.rom[25][30] top.neorv32_tb_xbar.wb_con.rom.rom[25][29] top.neorv32_tb_xbar.wb_con.rom.rom[25][28] top.neorv32_tb_xbar.wb_con.rom.rom[25][27] top.neorv32_tb_xbar.wb_con.rom.rom[25][26] top.neorv32_tb_xbar.wb_con.rom.rom[25][25] top.neorv32_tb_xbar.wb_con.rom.rom[25][24] top.neorv32_tb_xbar.wb_con.rom.rom[25][23] top.neorv32_tb_xbar.wb_con.rom.rom[25][22] top.neorv32_tb_xbar.wb_con.rom.rom[25][21] top.neorv32_tb_xbar.wb_con.rom.rom[25][20] top.neorv32_tb_xbar.wb_con.rom.rom[25][19] top.neorv32_tb_xbar.wb_con.rom.rom[25][18] top.neorv32_tb_xbar.wb_con.rom.rom[25][17] top.neorv32_tb_xbar.wb_con.rom.rom[25][16] top.neorv32_tb_xbar.wb_con.rom.rom[25][15] top.neorv32_tb_xbar.wb_con.rom.rom[25][14] top.neorv32_tb_xbar.wb_con.rom.rom[25][13] top.neorv32_tb_xbar.wb_con.rom.rom[25][12] top.neorv32_tb_xbar.wb_con.rom.rom[25][11] top.neorv32_tb_xbar.wb_con.rom.rom[25][10] top.neorv32_tb_xbar.wb_con.rom.rom[25][9] top.neorv32_tb_xbar.wb_con.rom.rom[25][8] top.neorv32_tb_xbar.wb_con.rom.rom[25][7] top.neorv32_tb_xbar.wb_con.rom.rom[25][6] top.neorv32_tb_xbar.wb_con.rom.rom[25][5] top.neorv32_tb_xbar.wb_con.rom.rom[25][4] top.neorv32_tb_xbar.wb_con.rom.rom[25][3] top.neorv32_tb_xbar.wb_con.rom.rom[25][2] top.neorv32_tb_xbar.wb_con.rom.rom[25][1] top.neorv32_tb_xbar.wb_con.rom.rom[25][0]
 #{top.neorv32_tb_xbar.wb_con.rom.rom[26][31:0]} top.neorv32_tb_xbar.wb_con.rom.rom[26][31] top.neorv32_tb_xbar.wb_con.rom.rom[26][30] top.neorv32_tb_xbar.wb_con.rom.rom[26][29] top.neorv32_tb_xbar.wb_con.rom.rom[26][28] top.neorv32_tb_xbar.wb_con.rom.rom[26][27] top.neorv32_tb_xbar.wb_con.rom.rom[26][26] top.neorv32_tb_xbar.wb_con.rom.rom[26][25] top.neorv32_tb_xbar.wb_con.rom.rom[26][24] top.neorv32_tb_xbar.wb_con.rom.rom[26][23] top.neorv32_tb_xbar.wb_con.rom.rom[26][22] top.neorv32_tb_xbar.wb_con.rom.rom[26][21] top.neorv32_tb_xbar.wb_con.rom.rom[26][20] top.neorv32_tb_xbar.wb_con.rom.rom[26][19] top.neorv32_tb_xbar.wb_con.rom.rom[26][18] top.neorv32_tb_xbar.wb_con.rom.rom[26][17] top.neorv32_tb_xbar.wb_con.rom.rom[26][16] top.neorv32_tb_xbar.wb_con.rom.rom[26][15] top.neorv32_tb_xbar.wb_con.rom.rom[26][14] top.neorv32_tb_xbar.wb_con.rom.rom[26][13] top.neorv32_tb_xbar.wb_con.rom.rom[26][12] top.neorv32_tb_xbar.wb_con.rom.rom[26][11] top.neorv32_tb_xbar.wb_con.rom.rom[26][10] top.neorv32_tb_xbar.wb_con.rom.rom[26][9] top.neorv32_tb_xbar.wb_con.rom.rom[26][8] top.neorv32_tb_xbar.wb_con.rom.rom[26][7] top.neorv32_tb_xbar.wb_con.rom.rom[26][6] top.neorv32_tb_xbar.wb_con.rom.rom[26][5] top.neorv32_tb_xbar.wb_con.rom.rom[26][4] top.neorv32_tb_xbar.wb_con.rom.rom[26][3] top.neorv32_tb_xbar.wb_con.rom.rom[26][2] top.neorv32_tb_xbar.wb_con.rom.rom[26][1] top.neorv32_tb_xbar.wb_con.rom.rom[26][0]

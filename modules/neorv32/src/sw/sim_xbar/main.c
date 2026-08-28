@@ -13,6 +13,8 @@
 
 void run_test(bool atomic);
 
+void test_second_ram(void);
+
 int main(void)
 {
   /* Test block write access */
@@ -20,6 +22,8 @@ int main(void)
   neorv32_uart0_setup(BAUD_RATE, 0);
 
   run_test(false);
+  run_test(true);
+  test_second_ram();
   gsi_test_passed();
 
   return 0;
@@ -67,5 +71,16 @@ void run_test(bool atomic)
        }
     }
     stop = true;
+  }
+}
+
+void test_second_ram(void)
+{
+  int * RAM_base_address = (int*) 0x05060000;
+  *RAM_base_address = SEED_0;
+
+  if (*RAM_base_address != SEED_0)
+  {
+    gsi_test_failed();
   }
 }
