@@ -38,13 +38,14 @@ architecture rtl of neorv32_tb_xbar is
 
   signal cbar_slave_i  : t_wishbone_slave_in_array (0 downto 0);
   signal cbar_slave_o  : t_wishbone_slave_out_array(0 downto 0);
-  signal cbar_master_i : t_wishbone_master_in_array(0 downto 0);
-  signal cbar_master_o : t_wishbone_master_out_array(0 downto 0);
+  signal cbar_master_i : t_wishbone_master_in_array(1 downto 0);
+  signal cbar_master_o : t_wishbone_master_out_array(1 downto 0);
 
   constant RAM_SIZE : natural := 131072/4;
 
-  constant c_layout : t_sdb_record_array(0 downto 0) :=
-    (0 => f_sdb_embed_device(f_xwb_dpram(RAM_SIZE), x"04060000"));
+  constant c_layout : t_sdb_record_array(1 downto 0) :=
+    (0 => f_sdb_embed_device(f_xwb_dpram(RAM_SIZE), x"04060000"),
+     1 => f_sdb_embed_device(f_xwb_dpram(RAM_SIZE), x"05060000"));
   constant c_sdb_address : t_wishbone_address := x"00200000";
 
   -- constant c_master_layout : t_sdb_record_array(0 downto 0) :=
@@ -113,7 +114,7 @@ begin
   WB_CON : xwb_sdb_crossbar
     generic map(
       g_num_masters => 1,
-      g_num_slaves  => 1,
+      g_num_slaves  => 2,
       g_registered  => true,
       g_wraparound  => true,
       g_layout      => c_layout,
@@ -131,7 +132,7 @@ begin
       master_o  => cbar_master_o
       );
 
-  RAM : xwb_dpram
+  RAM_ONE : xwb_dpram
     generic map(
       g_size                  => RAM_SIZE,
       g_slave1_interface_mode => PIPELINED,
@@ -144,6 +145,23 @@ begin
       -- First port connected to the crossbar
       slave1_i  => cbar_master_o(0),
       slave1_o  => cbar_master_i(0),
+      -- Second port disconnected
+      slave2_i  => cc_dummy_slave_in, -- CYC always low
+      slave2_o  => open);
+
+  RAM_TWO : xwb_dpram
+    generic map(
+      g_size                  => RAM_SIZE,
+      g_slave1_interface_mode => PIPELINED,
+      g_slave2_interface_mode => PIPELINED,
+      g_slave1_granularity    => BYTE,
+      g_slave2_granularity    => BYTE)
+    port map(
+      clk_sys_i => s_clk,
+      rst_n_i   => s_rstn,
+      -- First port connected to the crossbar
+      slave1_i  => cbar_master_o(1),
+      slave1_o  => cbar_master_i(1),
       -- Second port disconnected
       slave2_i  => cc_dummy_slave_in, -- CYC always low
       slave2_o  => open);
