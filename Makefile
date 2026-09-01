@@ -756,7 +756,7 @@ set_max_parallel_processors:
 	done
 
 # We need to run ./fix-git.sh and ./install-hdlmake.sh: make them a prerequisite for Makefile
-Makefile: prereq-rule git_apply_patches
+Makefile: prereq-rule
 
 prereq-rule::
 	@mkdir -p artifacts
