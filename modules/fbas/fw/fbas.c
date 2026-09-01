@@ -119,7 +119,7 @@ static void timerHandler(void);
 static uint32_t handleEcaEvent(uint32_t pollTimeout, uint32_t* mpsTask, msgCtrl_t* pMsgCtrl, mpsMsg_t** head);
 static void wrConsolePeriodic(void);
 static void setErrorFlag(uint8_t error);
-static status_t doMemoryScuBusTransfer(uint32_t* src, uint16_t* dst, int count);
+static status_t doMemoryScuBusTransfer(uint32_t* src, int count);
 
 /**
  * \brief init for lm32
@@ -1001,6 +1001,10 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
       break;
 
     case FBAS_NODE_RX:
+
+      if (*pMpsTask & TSK_TX_MPS_FLAGS) {
+        doMemoryScuBusTransfer((pSharedApp + FBAS_SHARED_C2_MSG_BEGIN), N_MAX_TX_NODES);
+      }
       if (*pMpsTask & TSK_EVAL_MPS_TTL) {
         // evaluate lifetime of the MPS protocols and handle expired MPS protocols
         *pMpsTask &= ~TSK_EVAL_MPS_TTL;
@@ -1047,28 +1051,25 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
  * transfer the actual value to a designated SCU bus slave.
  *
  * \param src   Source address in the shared memory
- * \param dst   Destination address of the SCU bus slave
  * \param count Number of transfer
  *
  * \return status Returns zero on success, otherwise non-zero
  */
-static status_t doMemoryScuBusTransfer(uint32_t* src, uint16_t* dst, int count)
+static status_t doMemoryScuBusTransfer(uint32_t* src, int count)
 {
   uint64_t parameter;
   uint64_t timestamp;
   int status;
   uint16_t flags;
   uint64_t now = getSysTime();
+  uint32_t* record;
 
-  for (int i = 0; i < N_MAX_TX_NODES; i++) {
+  for (int i = 0; i < count; i++) {
 
     // get the parameter and timestamp (from shared memory)
-    parameter = *(src + i + 4);
-    parameter <<= 32;
-    parameter |= *(src + i);
-    timestamp = *(src + i + 12);
-    timestamp <<= 32;
-    timestamp |= *(src + i + 8);
+    record = src + (i << 2);
+    parameter = ((uint64_t)record[0] << 32) | record[1];
+    timestamp = ((uint64_t)record[2] << 32) | record[3];
 
     status = msgCacheMpsMsg(i, &parameter, &timestamp);
     switch (status) {
