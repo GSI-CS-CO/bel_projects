@@ -66,12 +66,14 @@ esac
 case $platform in
     "PC")
         export addr_cmd="0x04060508"     # shared memory location for command buffer
-        export addr_fbas="0x20140840"    # begin of shared memory range for application specific data
+        export addr_c2="0x20140800"      # begin of shared memory range for the C2 messages
+        export addr_fbas="0x20140900"    # begin of shared memory range for application specific data
         export mac_tx_node="0x00267b0004da" # sender ID of TX node
         ;;
     "SCU")
         export addr_cmd="0x20140508"     # shared memory location for command buffer
-        export addr_fbas="0x20140840"    # begin of shared memory range for application specific data
+        export addr_c2="0x20140800"      # begin of shared memory range for the C2 messages
+        export addr_fbas="0x20140900"    # begin of shared memory range for application specific data
         ;;
 esac
 
@@ -140,6 +142,8 @@ export          evt_tlu="0xffff100000000000"  # TLU event (used to catch the sig
 export    evt_new_cycle="0xffffdddd00000000"  # event for new cycle
 export evt_mps_node_reg="0x1fcdfcd000000000"  # event ID for the node registration messages
 export      evt_id_mask="0xffffffff00000000"  # event mask
+
+export   n_max_tx_nodes=16                    # maximum number of TX nodes
 
 user_approval() {
     echo -en "\nCONITNUE (Y/n)? "
@@ -478,8 +482,11 @@ set_eca_rules() {
     esac
 
     # configure ECA: general rules for both nodes
-    echo "destroy all unowned ECA conditions"
+    echo "remove all unowned ECA conditions for eCPU channel"
     saft-ecpu-ctl $node_name -x
+
+    echo "remove all unowned ECA conditions for WB channel"
+    saft-wbm-ctl $node_name -x
 
     echo "disable all events from IO inputs to ECA"
     saft-io-ctl $node_name -w
@@ -500,9 +507,28 @@ set_eca_rules() {
         echo "snoop TLU events by using the saft tool: saft-ctl $node_name -xv snoop $evt_tlu $evt_id_mask 0"
         echo "or by using eb tool and the dedicated LM32 firmware: eb-console $node_device"
     else
-        echo "configure ECA ($node_name): set FBAS_WR_FLG ($evt_mps_prot_std), FBAS_WR_EVT ($evt_mps_prot_chg) for LM32 channel, tag $eca_tag_c2_event and $eca_tag_c2_flag"
-        saft-ecpu-ctl $node_name -c $evt_mps_prot_std $evt_id_mask 0 $eca_tag_c2_event -d
-        saft-ecpu-ctl $node_name -c $evt_mps_prot_chg $evt_id_mask 0 $eca_tag_c2_flag -d
+        echo "configure ECA WB channel of $node_name"
+        echo "create $((n_max_tx_nodes * 4)) conditions starting with event ID $evt_mps_prot_std"
+
+        idx=1 # macro index
+        for i in $(seq 0 $(( n_max_tx_nodes - 1))); do
+            evt_id=$(( evt_mps_prot_std + i - 1 ))
+            saft-wbm-ctl $node_name -c $evt_id $evt_id_mask 0 $idx -d; idx=$(( idx + 1))
+            saft-wbm-ctl $node_name -c $evt_id $evt_id_mask 0 $idx -d; idx=$(( idx + 1))
+            saft-wbm-ctl $node_name -c $evt_id $evt_id_mask 0 $idx -d; idx=$(( idx + 1))
+            saft-wbm-ctl $node_name -c $evt_id $evt_id_mask 0 $idx -d; idx=$(( idx + 1))
+        done
+
+        echo "create $((n_max_tx_nodes * 4)) macros for recording the parameter and timestamp at memory location starting $addr_c2"
+
+        idx=1 # macro index
+        for i in $(seq 0 $(( n_max_tx_nodes - 1))); do
+            offset=$(( i << 4))  # store 16 bytes data from each message
+            saft-wbm-ctl $node_name -r $idx $((addr_c2 + offset +  0)) 0 0x4f; idx=$(( idx + 1))  # high-bits of the parameter field
+            saft-wbm-ctl $node_name -r $idx $((addr_c2 + offset +  4)) 0 0x5f; idx=$(( idx + 1))  # low-bits of the parameter field
+            saft-wbm-ctl $node_name -r $idx $((addr_c2 + offset +  8)) 0 0x8f; idx=$(( idx + 1))  # high-bits of the timestamp field
+            saft-wbm-ctl $node_name -r $idx $((addr_c2 + offset + 12)) 0 0x9f; idx=$(( idx + 1))  # low-bits of the timestamp field
+        done
     fi
 
     echo "show actual ECA conditions"
