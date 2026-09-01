@@ -549,7 +549,7 @@ static uint32_t handleEcaEvent(uint32_t pollTimeout, uint32_t* mpsTask, msgCtrl_
             }
 
             // send the PC event
-            uint32_t count = msgSendPcEvent(pMsgCtrl, *head, FBAS_FLG_EID, N_EXTRA_MPS_NOK);
+            uint32_t count = msgSendPcEvent(pMsgCtrl, *head, (FBAS_FLG_EID + myIdx), N_EXTRA_MPS_NOK);
             // count sent PC events
             *(pSharedApp + (FBAS_SHARED_TX_MSG_CNT >> 2)) = measureCountEvt(TX_EVT_CNT, count);
 
@@ -989,7 +989,7 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
 
         // periodic messaging of the stored PC flag (unicast transmission)
         if (setEndpDstAddr(DST_ADDR_RXNODE) == COMMON_STATUS_OK) {
-          uint32_t count = msgSendPcFlag(pMsgCtrl, FBAS_FLG_EID);
+          uint32_t count = msgSendPcFlag(pMsgCtrl, (FBAS_FLG_EID + myIdx));
           // export the counter of sent timing messages
           *(pSharedApp + (FBAS_SHARED_TX_MSG_CNT >> 2)) = measureCountEvt(TX_EVT_CNT, count);
         }
