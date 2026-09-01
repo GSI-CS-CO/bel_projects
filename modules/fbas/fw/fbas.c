@@ -184,6 +184,8 @@ static status_t initSharedMem(uint32_t *const sharedStart)
   DBPRINT1("fbas%d: FBAS_SENDERID 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_SENDERID >> 2)), (pSharedExt + (FBAS_SHARED_SENDERID >> 2)));
   DBPRINT1("fbas%d: FBAS_ACT_RATE 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_ACT_RATE >> 2)), (pSharedExt + (FBAS_SHARED_ACT_RATE >> 2)));
   DBPRINT1("fbas%d: FBAS_ERROR_FLAG 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_ERROR_FLAG >> 2)), (pSharedExt + (FBAS_SHARED_ERROR_FLAG >> 2)));
+  DBPRINT1("fbas%d: FBAS_C2_MSG_BEGIN 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_C2_MSG_BEGIN >> 2)), (pSharedExt + (FBAS_SHARED_C2_MSG_BEGIN >> 2)));
+  DBPRINT1("fbas%d: FBAS_C2_MSG_END 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_C2_MSG_END >> 2)), (pSharedExt + (FBAS_SHARED_C2_MSG_END >> 2)));
 
   sbInitSharedMemory(pSharedApp);
 
@@ -216,6 +218,14 @@ static void initMpsData()
   // initialize the MPS message buffer and PC event buffer
   msgInitMpsMsgBuf(&myMac);
   msgInitPcEventBuf(&myMac, 0, 0);
+
+  // initialize the shared memory locations allocated for the C2 protocols
+  for (int i = 0; i < N_MAX_TX_NODES; i++) {
+    *(pSharedApp + (FBAS_SHARED_C2_MSG_BEGIN >> 2) + (i << 2) + 0) = 0; // parameter (high bytes)
+    *(pSharedApp + (FBAS_SHARED_C2_MSG_BEGIN >> 2) + (i << 2) + 1) = 0; // parameter (low bytes)
+    *(pSharedApp + (FBAS_SHARED_C2_MSG_BEGIN >> 2) + (i << 2) + 2) = 0; // timestamp (high bytes)
+    *(pSharedApp + (FBAS_SHARED_C2_MSG_BEGIN >> 2) + (i << 2) + 3) = 0; // timestamp (low bytes)
+  }
 
   // initialize the MPS messaging controller
   msgInitMsgCtrl(&mpsMsgCtrl, N_MPS_CHANNELS, 0, txMsgRates[0]);

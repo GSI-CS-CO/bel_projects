@@ -7,8 +7,12 @@
 
 #define FBAS_SHARED_OFFS           (0x300)                                         // offset from COMMON_SHARED_BEGIN
 
-// set values for data supplyi
-#define FBAS_SHARED_BEGIN          (COMMON_SHARED_BEGIN        + FBAS_SHARED_OFFS) // begin of the app-spec region
+// C2 message buffer (parameter and timestamp for 16 senders)
+#define FBAS_SHARED_C2_MSG_BEGIN   (COMMON_SHARED_BEGIN        + FBAS_SHARED_OFFS) // begin of the C2 message buffer (16*4)
+#define FBAS_SHARED_C2_MSG_END     (FBAS_SHARED_C2_MSG_BEGIN   + 64 * _32b_SIZE_)  // end of the C2 message buffer
+
+// set values for data supply
+#define FBAS_SHARED_BEGIN          (FBAS_SHARED_C2_MSG_END     + 0)                // begin of the app-spec region
 #define FBAS_SHARED_SET_ID         (FBAS_SHARED_BEGIN          + _32b_SIZE_)       // reserved
 #define FBAS_SHARED_SET_NODETYPE   (FBAS_SHARED_SET_ID         + _32b_SIZE_)       // FBAS node type
 #define FBAS_SHARED_SET_SBSLAVES   (FBAS_SHARED_SET_NODETYPE   + _32b_SIZE_)       // SCU bus slaves (bit1=slot1, 1-12)
