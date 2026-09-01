@@ -141,7 +141,7 @@ export evt_mps_prot_chg="0x1fccfcc000000000"  # event with MPS protocol (change 
 export          evt_tlu="0xffff100000000000"  # TLU event (used to catch the signal change at IO port)
 export    evt_new_cycle="0xffffdddd00000000"  # event for new cycle
 export evt_mps_node_reg="0x1fcdfcd000000000"  # event ID for the node registration messages
-export      evt_id_mask="0xffffffff00000000"  # event mask
+export      evt_id_mask="0xffffffffffffffff"  # event mask
 
 export   n_max_tx_nodes=16                    # maximum number of TX nodes
 
