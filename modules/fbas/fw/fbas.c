@@ -119,6 +119,7 @@ static void timerHandler(void);
 static uint32_t handleEcaEvent(uint32_t pollTimeout, uint32_t* mpsTask, msgCtrl_t* pMsgCtrl, mpsMsg_t** head);
 static void wrConsolePeriodic(void);
 static void setErrorFlag(uint8_t error);
+static status_t doMemoryScuBusTransfer(uint32_t* src, uint16_t* dst, int count);
 
 /**
  * \brief init for lm32
@@ -1026,6 +1027,68 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
   measurePutTimestamp(MSR_ML_PRD, now);
 
   return status;
+}
+
+/**
+ * \brief Memory to SCU bus transfer
+ *
+ * Read a shared memory location allocated for the emitters and
+ * compare its content with the cache value. If they differ, then
+ * transfer the actual value to a designated SCU bus slave.
+ *
+ * \param src   Source address in the shared memory
+ * \param dst   Destination address of the SCU bus slave
+ * \param count Number of transfer
+ *
+ * \return status Returns zero on success, otherwise non-zero
+ */
+static status_t doMemoryScuBusTransfer(uint32_t* src, uint16_t* dst, int count)
+{
+  uint64_t parameter;
+  uint64_t timestamp;
+  int status;
+  uint16_t flags;
+  uint64_t now = getSysTime();
+
+  for (int i = 0; i < N_MAX_TX_NODES; i++) {
+
+    // get the parameter and timestamp (from shared memory)
+    parameter = *(src + i + 4);
+    parameter <<= 32;
+    parameter |= *(src + i);
+    timestamp = *(src + i + 12);
+    timestamp <<= 32;
+    timestamp |= *(src + i + 8);
+
+    status = msgCacheMpsMsg(i, &parameter, &timestamp);
+    switch (status) {
+      case 0:  // new message
+        // TODO: transfer to the SCU bus slave
+
+        // measure the receiver delay
+        measureSummarize(MSR_RX_DLY, timestamp, getSysTime(), DISABLE_VERBOSITY);
+        measureExportSummary(MSR_RX_DLY, pSharedApp, FBAS_SHARED_RX_DLY_AVG);
+
+        // count received messages
+        // TODO: do it in other way, do not use fwlib_getEcaValidCnt() to get the ECA channel valid count => it returns zero value
+        *(pSharedApp + (FBAS_SHARED_ECA_VLD >> 2)) = measureCountEvt(ECA_VLD_ACT, 1);
+        break;
+      case 1:  // old message
+        break;
+      case 3:  // unknown sender
+        *(pSharedApp + (FBAS_SHARED_BAD_MSG_CNT >> 2)) = measureCountEvt(BAD_MSG_CNT, 1);
+        break;
+      default: // bad things (index, flag etc)
+        break;
+    }
+  }
+
+  // for demonstration write to the SCU bus slave echo register
+  flags = (uint16_t)msgRepresentMpsFlags();
+  sbPutMpsFlags(&flags);
+  measureSummarize(MSR_DIOB_DLY, now, getSysTime(), DISABLE_VERBOSITY);
+
+  return COMMON_STATUS_OK;
 }
 
 int main(void) {
