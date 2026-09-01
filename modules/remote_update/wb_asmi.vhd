@@ -10,9 +10,6 @@ use work.aux_functions_pkg.all;
 use work.monster_pkg.all;
 use work.ep_crc32_pkg.all;
 
-library altera_asmi_parallel_181;
-use altera_asmi_parallel_181.asmi10_pkg.all;
-
 entity wb_asmi is
   generic (
     pagesize : integer;
