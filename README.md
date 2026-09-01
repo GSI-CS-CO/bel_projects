@@ -24,6 +24,7 @@ GSI Timing Gateware and Tools
       - [Mint](#mint)
       - [Backup Plan](#backup-plan)
     - [Tool qmegawiz](#tool-qmegawiz)
+      - [Headless qmegawiz](#headless-qmegawiz)
     - [Tool qsys-generate](#tool-qsys-generate)
     - [Permission denied](#permission-denied)
   - [Build Flow](#build-flow)
@@ -235,6 +236,23 @@ Solution: Change your LC_NUMERIC setting:
 ```shell
 export LC_NUMERIC="en_US.UTF-8"
 ```
+
+#### Headless qmegawiz
+
+Error: Executing qmegawiz: child process exited abnormally
+
+Error (293007): Current module quartus_sh ended unexpectedly. Verify that you have sufficient memory available to compile your design.
+
+`qmegawiz` needs an X server even with `-silent`. Jenkins provides that via `wrap(Xvnc)`. On a machine without a working display (typical container setup: `DISPLAY` set, but no `XAUTHORITY` cookie), MegaWizard exits and Quartus reports 293007.
+
+Solution: Install `xvfb` and opt in to the headless path in `syn/autogen.tcl`:
+
+```shell
+sudo apt install xvfb
+make vetar2a QMEGAWIZ_HEADLESS=1
+```
+
+Without `QMEGAWIZ_HEADLESS` the old `qmegawiz` call is unchanged (Jenkins/Xvnc and local GUIs). The variable also regenerates empty leftover `.qip` files from a previous failed MegaWizard run.
 
 ### Tool qsys-generate
 
