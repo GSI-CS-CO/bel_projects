@@ -512,7 +512,7 @@ set_eca_rules() {
 
         idx=1 # macro index
         for i in $(seq 0 $(( n_max_tx_nodes - 1))); do
-            evt_id=$(( evt_mps_prot_std + i - 1 ))
+            evt_id=$(( evt_mps_prot_std + i ))
             saft-wbm-ctl $node_name -c $evt_id $evt_id_mask 0 $idx -d; idx=$(( idx + 1))
             saft-wbm-ctl $node_name -c $evt_id $evt_id_mask 0 $idx -d; idx=$(( idx + 1))
             saft-wbm-ctl $node_name -c $evt_id $evt_id_mask 0 $idx -d; idx=$(( idx + 1))
