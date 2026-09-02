@@ -1003,7 +1003,7 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
     case FBAS_NODE_RX:
 
       if (*pMpsTask & TSK_TX_MPS_FLAGS) {
-        doMemoryScuBusTransfer((pSharedApp + FBAS_SHARED_C2_MSG_BEGIN), N_MAX_TX_NODES);
+        doMemoryScuBusTransfer((pSharedApp + (FBAS_SHARED_C2_MSG_BEGIN >> 2)), N_MAX_TX_NODES);
       }
       if (*pMpsTask & TSK_EVAL_MPS_TTL) {
         // evaluate lifetime of the MPS protocols and handle expired MPS protocols
