@@ -636,7 +636,7 @@ static uint32_t handleEcaEvent(uint32_t pollTimeout, uint32_t* mpsTask, msgCtrl_
             dstNwAddr[DST_ADDR_RXNODE].mac = node_id;
             myIdx = ch_id;
             msgInitPcEventBuf(&myMac, bic_id, ch_id);
-            DBPRINT2("reg OK: RX MAC=%llx\n", dstNwAddr[DST_ADDR_RXNODE].mac);
+            DBPRINT2("reg OK: idx=%x RX MAC=%llx\n", myIdx, dstNwAddr[DST_ADDR_RXNODE].mac);
             *mpsTask |= TSK_REG_COMPLETE;
           }
         }
