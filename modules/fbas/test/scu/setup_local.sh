@@ -144,7 +144,7 @@ export evt_mps_node_reg="0x1fcdfcd000000000"  # event ID for the node registrati
 export      evt_id_mask="0xffffffff00000000"  # event mask
 export     reg_evt_mask="0xffffffffffffffff"  # registration event mask
 
-export   n_max_tx_nodes=16                    # maximum number of TX nodes
+export   n_max_tx_nodes=4                     # maximum number of TX nodes
 
 user_approval() {
     echo -en "\nCONITNUE (Y/n)? "
