@@ -141,7 +141,8 @@ export evt_mps_prot_chg="0x1fccfcc000000000"  # event with MPS protocol (change 
 export          evt_tlu="0xffff100000000000"  # TLU event (used to catch the signal change at IO port)
 export    evt_new_cycle="0xffffdddd00000000"  # event for new cycle
 export evt_mps_node_reg="0x1fcdfcd000000000"  # event ID for the node registration messages
-export      evt_id_mask="0xffffffffffffffff"  # event mask
+export      evt_id_mask="0xffffffff00000000"  # event mask
+export     reg_evt_mask="0xffffffffffffffff"  # registration event mask
 
 export   n_max_tx_nodes=16                    # maximum number of TX nodes
 
@@ -513,10 +514,10 @@ set_eca_rules() {
         idx=1 # macro index
         for i in $(seq 0 $(( n_max_tx_nodes - 1))); do
             evt_id=$(( evt_mps_prot_std + i ))
-            saft-wbm-ctl $node_name -c $evt_id $evt_id_mask 0 $idx -d; idx=$(( idx + 1))
-            saft-wbm-ctl $node_name -c $evt_id $evt_id_mask 0 $idx -d; idx=$(( idx + 1))
-            saft-wbm-ctl $node_name -c $evt_id $evt_id_mask 0 $idx -d; idx=$(( idx + 1))
-            saft-wbm-ctl $node_name -c $evt_id $evt_id_mask 0 $idx -d; idx=$(( idx + 1))
+            saft-wbm-ctl $node_name -c $evt_id $reg_evt_mask 0 $idx -d; idx=$(( idx + 1))
+            saft-wbm-ctl $node_name -c $evt_id $reg_evt_mask 0 $idx -d; idx=$(( idx + 1))
+            saft-wbm-ctl $node_name -c $evt_id $reg_evt_mask 0 $idx -d; idx=$(( idx + 1))
+            saft-wbm-ctl $node_name -c $evt_id $reg_evt_mask 0 $idx -d; idx=$(( idx + 1))
         done
 
         echo "create $((n_max_tx_nodes * 4)) macros for recording the parameter and timestamp at memory location starting $addr_c2"
