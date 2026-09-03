@@ -1071,6 +1071,9 @@ static status_t doMemoryScuBusTransfer(uint32_t* src, int count)
     parameter = ((uint64_t)record[0] << 32) | record[1];
     timestamp = ((uint64_t)record[2] << 32) | record[3];
 
+    if (!parameter || !timestamp)
+      continue;
+
     status = msgCacheMpsMsg(i, &parameter, &timestamp);
     switch (status) {
       case 0:  // new message
@@ -1085,11 +1088,13 @@ static status_t doMemoryScuBusTransfer(uint32_t* src, int count)
         *(pSharedApp + (FBAS_SHARED_ECA_VLD >> 2)) = measureCountEvt(ECA_VLD_ACT, 1);
         break;
       case 1:  // old message
+        *(pSharedApp + (FBAS_SHARED_OLD_MSG_CNT >> 2)) = measureCountEvt(OLD_MSG_CNT, 1);
         break;
-      case 3:  // unknown sender
+      case 2:  // unknown sender
+      case 3:  // invalid flag
         *(pSharedApp + (FBAS_SHARED_BAD_MSG_CNT >> 2)) = measureCountEvt(BAD_MSG_CNT, 1);
         break;
-      default: // bad things (index, flag etc)
+      default: // bad index
         break;
     }
   }
