@@ -281,21 +281,21 @@ int msgCacheMpsMsg(int idx, const uint64_t* parameter, const uint64_t* timestamp
   if (idx >= N_MAX_TX_NODES)
     return 4;  // bad index
 
-  if (((memcmp(parameter, (bufMpsMsg+ch_id)->prot.addr, ETH_ALEN)) || // sender ID mismatch or
-      ((bufMpsMsg+ch_id)->prot.ch_id != ch_id) ||                     // channel ID mismatch or
-      (bufMpsMsg+ch_id)->prot.bic_id != bic_id))                      // BIC ID mismatch
-        return 3; // unknown sender
-
   if (flag > MPS_FLAG_OK)
-    return 2;  // bad flag
+    return 3;  // invalid flag
 
-  if (*timestamp == (bufMpsMsg+ch_id)->tsRx)   // old (timestamp) message
+  if (memcmp((uint8_t*)parameter, (bufMpsMsg+idx)->prot.addr, ETH_ALEN) || // sender ID mismatch or
+      ((bufMpsMsg+idx)->prot.ch_id != ch_id) ||                      // channel ID mismatch or
+      ((bufMpsMsg+idx)->prot.bic_id != bic_id))                      // BIC ID mismatch
+      return 2; // unknown sender
+
+  if (*timestamp == (bufMpsMsg+idx)->tsRx)   // old (timestamp) message
     return 1;
 
   // new message
-  (bufMpsMsg+ch_id)->pending = (bufMpsMsg+ch_id)->prot.flag ^ flag;
-  (bufMpsMsg+ch_id)->prot.flag = flag;
-  (bufMpsMsg+ch_id)->tsRx = *timestamp;
+  (bufMpsMsg+idx)->pending = (bufMpsMsg+idx)->prot.flag ^ flag;
+  (bufMpsMsg+idx)->prot.flag = flag;
+  (bufMpsMsg+idx)->tsRx = *timestamp;
   return 0;
 }
 
