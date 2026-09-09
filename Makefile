@@ -28,13 +28,6 @@ export TLU
 ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca
 export ECA
 PATH:=$(PWD)/res/bin:$(PWD)/lm32-toolchain/bin:$(PATH)
-export PATH
-CROSS_COMPILE_RISCV:="$(PWD)/riscv-toolchain/bin/riscv32-elf-"
-export CROSS_COMPILE_RISCV
-EB_TOOLS_WRPC_SW=no
-export EB_TOOLS_WRPC_SW
-PYTHONUSERBASE:=$(PWD)/res
-export PYTHONUSERBASE
 
 # This is mainly used to sort QSF files. After sorting it adds and deletes a "GIT marker" which will mark the file as changed.
 # Additionally all empty lines will be removed.
@@ -823,10 +816,15 @@ git_submodules_update:
 git_submodules_init:
 	@./fix-git.sh
 
+# Use the hdlmake copy from this checkout (ip_cores/hdlmake) via res/bin/hdlmake.
+# That way branch 3.3 vs 4 does not fight over $HOME/.local, and the submodule stays clean.
 hdlmake_install:
 	@test -d ip_cores/hdlmake/hdlmake || { echo "Error: ip_cores/hdlmake is missing. Run ./fix-git.sh"; exit 1; }
-	@cd ip_cores/hdlmake && python3 setup.py install --user
+	@test -x res/bin/hdlmake || { echo "Error: res/bin/hdlmake is missing"; exit 1; }
+	@echo "Info: Using in-tree hdlmake ($(PWD)/res/bin/hdlmake)"
+	@res/bin/hdlmake --version
 
+# Alias kept for existing docs / habits; nothing is copied into the user site.
 hdlmake_install_locally: hdlmake_install
 
 # Print debug data
