@@ -1,4 +1,4 @@
-name: CI NEORV32
+name: CI Basic Build
 
 on:
   push:
@@ -17,9 +17,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        # ubuntu-22.04 gcc-riscv64-unknown-elf assembler rejects
-        # -march=rv32i_zicsr_zifencei ("unknown z ISA extension: zifencei")
-        os: [ubuntu-24.04]
+        os: [ubuntu-24.04, ubuntu-22.04]
 
     steps:
       - uses: actions/checkout@v3
@@ -42,5 +40,5 @@ jobs:
       - name: Install missing packages for RISC-V and simulation
         run: sudo apt-get -y install binutils-riscv64-unknown-elf gcc-riscv64-unknown-elf picolibc-riscv64-unknown-elf ghdl
 
-      - name: Run NEORV32 tests
+       -name: Run NEORV32 tests
         run: make test_neorv32 NO_QUARTUS=yes
