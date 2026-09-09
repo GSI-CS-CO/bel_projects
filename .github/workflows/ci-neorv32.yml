@@ -1,4 +1,4 @@
-name: CI Basic Build
+name: CI NEORV32
 
 on:
   push:
