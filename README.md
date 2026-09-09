@@ -348,6 +348,7 @@ export PATH="$PWD/res/bin:$PATH"
 Do not `pip install --user` / `python setup.py install --user` a global hdlmake: other branches need a different version.
 
 ### Python not found
+
 Error: python3: not found / python: not found (from `res/bin/hdlmake`)
 
 Solution: In case you are running Ubuntu:
