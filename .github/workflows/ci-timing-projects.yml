@@ -34,6 +34,9 @@ jobs:
       - name: Create symlinks
         run: sudo ln -s /usr/lib/x86_64-linux-gnu/libmpfr.so.6 /usr/lib/x86_64-linux-gnu/libmpfr.so.4
 
+      - name: Install hdlmake
+        run: make hdlmake_install
+
       - name: Setup repository
         run: make
 
