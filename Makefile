@@ -27,7 +27,7 @@ TLU=$(PWD)/ip_cores/wr-cores/modules/wr_tlu
 export TLU
 ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca
 export ECA
-PATH:=$(PWD)/lm32-toolchain/bin:$(PATH):$(PWD)/res/bin:
+PATH:=$(PWD)/res/bin:$(PWD)/lm32-toolchain/bin:$(PATH)
 export PATH
 CROSS_COMPILE_RISCV:="$(PWD)/riscv-toolchain/bin/riscv32-elf-"
 export CROSS_COMPILE_RISCV
