@@ -872,3 +872,10 @@ test_lm32_examples:
 	$(MAKE) -C modules/lm32-example TARGET=example
 	$(MAKE) -C modules/lm32-example TARGET=milExample
 	$(MAKE) -C modules/lm32-example TARGET=milSnooper
+
+test_fbas:
+	$(MAKE) -C modules/fbas/fw
+
+test_neorv32:
+	$(MAKE) -C modules/neorv32/sim
+	$(MAKE) -C modules/neorv32/sim xbar
