@@ -309,6 +309,8 @@ sudo ln -s /usr/lib/x86_64-linux-gnu/libmpfr.so.6 /usr/lib/x86_64-linux-gnu/libm
 
 Error: hdlmake AttributeError: module object has no attribute vendor or hdlmake not found
 
+`hdlmake` is not installed into `$HOME/.local`. `make` prepends `res/bin`, and that launcher uses the `ip_cores/hdlmake` of this checkout (3.3 or 4, depending on the branch).
+
 Solution: In case a simple "make" does not fix this:
 
 ```shell
@@ -319,14 +321,16 @@ make hdlmake_install
 
 Error: /bin/sh: 1: hdlmake: not found
 
-Solution: You should run "make" to install hdlmake locally and adjust your PATH variable:
+Solution: Run `make` (or `make hdlmake_install`) from the bel_projects root. If you call `hdlmake` outside of make, add the in-tree launcher to `PATH`:
 
 ```shell
-export PATH=$PATH:$HOME/.local/bin
+export PATH="$PWD/res/bin:$PATH"
 ```
 
+Do not `pip install --user` / `python setup.py install --user` a global hdlmake: other branches need a different version.
+
 ### Python not found
-Error: cd ip_cores/hdlmake/ && python setup.py install --user /bin/sh: 1: python: not found
+Error: python3: not found / python: not found (from `res/bin/hdlmake`)
 
 Solution: In case you are running Ubuntu:
 
