@@ -27,7 +27,7 @@ TLU=$(PWD)/ip_cores/wr-cores/modules/wr_tlu
 export TLU
 ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca
 export ECA
-PATH:=$(PWD)/lm32-toolchain/bin:$(PATH)
+PATH:=$(PWD)/lm32-toolchain/bin:$(PATH):$(PWD)/res/bin:
 export PATH
 CROSS_COMPILE_RISCV:="$(PWD)/riscv-toolchain/bin/riscv32-elf-"
 export CROSS_COMPILE_RISCV
@@ -785,17 +785,24 @@ git_submodules_update:
 git_submodules_init:
 	@./fix-git.sh
 
-# Check if hdlmake 3.3 is already installed
+# Use the hdlmake copy from this checkout (ip_cores/hdlmake) via res/bin/hdlmake.
+# That way branch 3.3 vs 4 does not fight over $HOME/.local, and the submodule stays clean.
 hdlmake_install:
+<<<<<<< HEAD
 	@rm .hdlmake 2>/dev/null || true
 	@hdlmake --version 2>/dev/null | grep 4.0 && echo "Info: Found hdlmake, skipping installation..." || echo "Info: Installing hdlmake..." > .hdlmake
 	@test -f .hdlmake && cd ip_cores/hdlmake/ && python setup.py install --user || true
 	@rm .hdlmake 2>/dev/null || true
 	@export PATH=$$PATH:$$HOME/.local/bin
+=======
+	@test -d ip_cores/hdlmake/hdlmake || { echo "Error: ip_cores/hdlmake is missing. Run ./fix-git.sh"; exit 1; }
+	@test -x res/bin/hdlmake || { echo "Error: res/bin/hdlmake is missing"; exit 1; }
+	@echo "Info: Using in-tree hdlmake ($(PWD)/res/bin/hdlmake)"
+	@res/bin/hdlmake --version
+>>>>>>> 04f88e8fb (build flow: switch to local hdlmake installation (inside res/bin))
 
-# Just install hdlmake (even if it's already installed)
-hdlmake_install_locally:
-	@cd ip_cores/hdlmake/ && python setup.py install --user
+# Alias kept for existing docs / habits; nothing is copied into the user site.
+hdlmake_install_locally: hdlmake_install
 
 # Print debug data
 debug:
