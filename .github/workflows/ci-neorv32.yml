@@ -40,5 +40,5 @@ jobs:
       - name: Install missing packages for RISC-V and simulation
         run: sudo apt-get -y install binutils-riscv64-unknown-elf gcc-riscv64-unknown-elf picolibc-riscv64-unknown-elf ghdl
 
-       -name: Run NEORV32 tests
+      - name: Run NEORV32 tests
         run: make test_neorv32 NO_QUARTUS=yes
