@@ -50,4 +50,4 @@ lm32-toolchain.tar.xz
 artifacts
 res/librtpi/librtpi/
 res/ubuntu-22-and-later/libpng-1.2.54/
-res/bin/hdlmake
+res/bin/*
