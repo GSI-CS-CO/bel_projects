@@ -16,7 +16,7 @@ def buildGateware(gateware, branchName) {
                "QSYS_ROOTDIR=${quartus}/sopc_builder/bin",
                "QUARTUS_64BIT=1",
                // Extend PATH and LD_LIBRARY_PATH for Quartus and project scripts
-               "PATH=${WORKSPACE}/res/bin:${PATH}:${quartus}/sopc_builder/bin:${HOME}/.local/bin:${WORKSPACE}/res/rocky-9",
+               "PATH=${WORKSPACE}/res/bin:${PATH}:${quartus}/sopc_builder/bin:${WORKSPACE}/res/rocky-9",
                "LD_LIBRARY_PATH=${WORKSPACE}/res/rocky-9",
            ]) {
 
@@ -41,6 +41,7 @@ def buildGateware(gateware, branchName) {
                    sh "cd res/rocky-9 && ./generate_soft_links.sh"
                    sh "git config --global user.name \"Timing Group Jenkins\""
                    sh "git config --global user.email \"tos-service@gsi.de\""
+                   sh "make hdlmake_install"
                }
 
                // -----------------------------
