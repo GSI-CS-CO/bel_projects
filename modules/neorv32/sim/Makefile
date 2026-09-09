@@ -15,8 +15,14 @@ GTKW_NAME_XBAR="neorv32_tb_xbar.gtkw"
 
 # Files
 # ==============================================================================
-ALTERA_MF_FILES:=	$(QUARTUS)/eda/sim_lib/altera_mf_components.vhd \
+NO_QUARTUS ?= no
+ifeq ($(NO_QUARTUS),yes)
+  ALTERA_MF_FILES := ../../../modules/altera_vendor_libs/quartus_files/altera_mf_components.vhd \
+                     ../../../modules/altera_vendor_libs/quartus_files/altera_mf.vhd
+else
+  ALTERA_MF_FILES:=	$(QUARTUS)/eda/sim_lib/altera_mf_components.vhd \
 $(QUARTUS)/eda/sim_lib/altera_mf.vhd
+endif
 
 HDL_NEORV32_BASE:="../../../ip_cores/neorv32/rtl/core"
 
