@@ -41,7 +41,6 @@ def buildGateware(gateware, branchName) {
                    sh "cd res/rocky-9 && ./generate_soft_links.sh"
                    sh "git config --global user.name \"Timing Group Jenkins\""
                    sh "git config --global user.email \"tos-service@gsi.de\""
-                   sh "make hdlmake_install"
                }
 
                // -----------------------------
