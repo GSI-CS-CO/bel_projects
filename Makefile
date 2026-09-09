@@ -789,17 +789,23 @@ git_submodules_init:
 # That way branch 3.3 vs 4 does not fight over $HOME/.local, and the submodule stays clean.
 hdlmake_install:
 <<<<<<< HEAD
+<<<<<<< HEAD
 	@rm .hdlmake 2>/dev/null || true
 	@hdlmake --version 2>/dev/null | grep 4.0 && echo "Info: Found hdlmake, skipping installation..." || echo "Info: Installing hdlmake..." > .hdlmake
 	@test -f .hdlmake && cd ip_cores/hdlmake/ && python setup.py install --user || true
 	@rm .hdlmake 2>/dev/null || true
 	@export PATH=$$PATH:$$HOME/.local/bin
 =======
+=======
+>>>>>>> ee06933ab (build flow: switch to local hdlmake installation (inside res/bin))
 	@test -d ip_cores/hdlmake/hdlmake || { echo "Error: ip_cores/hdlmake is missing. Run ./fix-git.sh"; exit 1; }
 	@test -x res/bin/hdlmake || { echo "Error: res/bin/hdlmake is missing"; exit 1; }
 	@echo "Info: Using in-tree hdlmake ($(PWD)/res/bin/hdlmake)"
 	@res/bin/hdlmake --version
+<<<<<<< HEAD
 >>>>>>> 04f88e8fb (build flow: switch to local hdlmake installation (inside res/bin))
+=======
+>>>>>>> ee06933ab (build flow: switch to local hdlmake installation (inside res/bin))
 
 # Alias kept for existing docs / habits; nothing is copied into the user site.
 hdlmake_install_locally: hdlmake_install
