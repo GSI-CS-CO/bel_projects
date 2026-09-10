@@ -524,6 +524,12 @@ set_eca_rules() {
             idx=$((i + 1))
             saft-wbm-ctl $node_name -r $idx $addr_scu_echo 0 $flag
         done
+
+        echo "enable capture on ECA tap: $node_device"
+        eb-mon $node_device ecatapenable
+        eb-mon $node_device wrstatreset 8 50000
+        eb-mon $node_device ecatapreset 0
+        eb-mon $node_device ecatapclear 0xf
     fi
 
     echo "show actual ECA conditions"
@@ -539,6 +545,9 @@ stop_operation() {
     write_cmd $1 $instr_dis_mps
     write_cmd $1 $instr_fsm_stopop
     echo "Stopped operation on $1"
+
+    echo "disable ECA tap capture: $1"
+    eb-mon $1 ecatapdisable
 }
 
 start_operation() {
@@ -795,6 +804,35 @@ result_rx() {
 	result_msg_delay $1 $2 && \
 	result_ttl_ival $1 $2 && \
 	result_ml_period $1 $2
+}
+
+stats_eca_tap() {
+    # $1 - dev/wbm0
+    # $2 - verbosity
+
+    if [ -n "$2" ]; then
+        echo -n " eca tap: "
+    fi
+
+    stats=$(eb-mon $1 -k)
+    tmp=${stats#*# of messages}
+    tmp=${tmp#*: }
+    n_msg=${tmp%%$'\n'*}
+
+    tmp=${stats#*# of late messages}
+    tmp=${tmp#*: }
+    n_late_msg=${tmp%%$'\n'*}
+
+    tmp=${stats#*calc latency}
+    tmp=${tmp#*: }
+    latency=${tmp%%$'\n'*}
+
+    echo -n "$n_msg $n_late_msg $latency"
+    if [ -n "$2" ]; then
+        echo " (msg late_msg latency [ns])"
+    else
+        echo
+    fi
 }
 
 disable_mps() {

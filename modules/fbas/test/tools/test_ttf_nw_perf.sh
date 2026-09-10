@@ -228,6 +228,10 @@ measure_nw_perf() {
         echo "$delay_entry $line"
         i=$((i +  1))
     done
+
+    run_remote $rxscu \
+        "source setup_local.sh && \
+        stats_eca_tap \$rx_node_dev $verbose"
 }
 
 measure_ttl() {
