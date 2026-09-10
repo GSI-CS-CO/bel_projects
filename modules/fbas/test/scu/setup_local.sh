@@ -74,6 +74,7 @@ case $platform in
         export addr_cmd="0x20140508"     # shared memory location for command buffer
         export addr_c2="0x20140800"      # begin of shared memory range for the C2 messages
         export addr_fbas="0x20140900"    # begin of shared memory range for application specific data
+        export addr_scu_echo="0x440020"  # echo register in DIOB (SCU bus slave in slot 2, scuxl0411)
         ;;
 esac
 
@@ -509,26 +510,19 @@ set_eca_rules() {
         echo "or by using eb tool and the dedicated LM32 firmware: eb-console $node_device"
     else
         echo "configure ECA WB channel of $node_name"
-        echo "create $((n_max_tx_nodes * 4)) conditions starting with event ID $evt_mps_prot_std"
+        echo "create $n_max_tx_nodes ECA conditions starting with event ID $evt_mps_prot_std"
 
-        idx=1 # macro index
         for i in $(seq 0 $(( n_max_tx_nodes - 1))); do
             evt_id=$(( evt_mps_prot_std + i ))
-            saft-wbm-ctl $node_name -c $evt_id $reg_evt_mask 0 $idx -d; idx=$(( idx + 1))
-            saft-wbm-ctl $node_name -c $evt_id $reg_evt_mask 0 $idx -d; idx=$(( idx + 1))
-            saft-wbm-ctl $node_name -c $evt_id $reg_evt_mask 0 $idx -d; idx=$(( idx + 1))
-            saft-wbm-ctl $node_name -c $evt_id $reg_evt_mask 0 $idx -d; idx=$(( idx + 1))
+            idx=$((i + 1))
+            saft-wbm-ctl $node_name -c $evt_id $reg_evt_mask 0 $idx -d
         done
 
-        echo "create $((n_max_tx_nodes * 4)) macros for recording the parameter and timestamp at memory location starting $addr_c2"
-
-        idx=1 # macro index
+        echo "create $n_max_tx_nodes macros for transferring high 16 bits of the parameter to the echo register $addr_scu_echo"
+        flag=0x4c    # write high 16 bits of the upper 32 bits in the parameter field
         for i in $(seq 0 $(( n_max_tx_nodes - 1))); do
-            offset=$(( i << 4))  # store 16 bytes data from each message
-            saft-wbm-ctl $node_name -r $idx $((addr_c2 + offset +  0)) 0 0x4f; idx=$(( idx + 1))  # high-bits of the parameter field
-            saft-wbm-ctl $node_name -r $idx $((addr_c2 + offset +  4)) 0 0x5f; idx=$(( idx + 1))  # low-bits of the parameter field
-            saft-wbm-ctl $node_name -r $idx $((addr_c2 + offset +  8)) 0 0x8f; idx=$(( idx + 1))  # high-bits of the timestamp field
-            saft-wbm-ctl $node_name -r $idx $((addr_c2 + offset + 12)) 0 0x9f; idx=$(( idx + 1))  # low-bits of the timestamp field
+            idx=$((i + 1))
+            saft-wbm-ctl $node_name -r $idx $addr_scu_echo 0 $flag
         done
     fi
 
