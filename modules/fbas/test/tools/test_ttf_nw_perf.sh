@@ -28,7 +28,7 @@ usage() {
     echo "  -t <TX SCU>            transmitter SCU, by default $def_txscu_name"
     echo "  -r <RX SCU>            receiver SCU, by default $rxscu_name"
     echo "  -g <event gen period>  pseudo event generation period (10 seconds by default)"
-    echo "  -i <index of TX rate>  index of the TX messaging rate (by default m=0 or 30Hz)"
+    echo "  -i <index of TX rate>  index of the TX messaging rate (by default i=0 or 30Hz)"
     echo "                         0:30Hz, 1:10Hz, 2:12.5Hz, 3:20Hz, 4:50Hz, 5:100Hz"
     echo "                         6:200Hz, 7:500Hz, 8:1KHz, 9:2KHz, 10:5KHz, 11:10KHz"
     echo "  -e                     exclude TTL measurement"
