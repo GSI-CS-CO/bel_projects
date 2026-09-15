@@ -77,7 +77,6 @@ uint32_t  msgSendPcEvent(const msgCtrl_t* msgCtrl, mpsMsg_t *const buf, const ui
 uint32_t  msgSendPcFlag(msgCtrl_t* ctrl, uint64_t evtId);
 mpsMsg_t* msgStorePcEvent(const uint64_t evt, const uint64_t ts);
 int       msgStoreMpsMsg(const uint64_t *raw, const uint64_t *ts, const msgCtrl_t* msgCtrl);
-int       msgCacheMpsMsg(int idx, const uint64_t* parameter, const uint64_t* timestamp);
 mpsMsg_t* evalMpsMsgTtl(uint64_t now, int idx);
 void      msgInitMpsMsgBuf(const uint64_t *id);
 void      msgInitPcEventBuf(const uint64_t *id, uint8_t bic_id, uint8_t ch_id);

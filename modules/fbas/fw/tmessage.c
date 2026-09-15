@@ -261,45 +261,6 @@ int msgStoreMpsMsg(const uint64_t *raw, const uint64_t *ts, const msgCtrl_t* ctr
 }
 
 /**
- * \brief Cache the received C2 messages
- *
- * Verify the sender of the received C2 message and
- * store it in the internal cache.
- *
- * \param idx        Sender index (channel ID)
- * \param parameter  Parameter value of the received C2 message
- * \param timestamp  Timestamp value of the received C2 message
- *
- * \return status    Zero for cache update, non-zero for others
- */
-int msgCacheMpsMsg(int idx, const uint64_t* parameter, const uint64_t* timestamp)
-{
-  uint8_t bic_id  = (uint8_t)(*parameter >> 8) & BIC_MSK;  // BIC ID of the receiver
-  uint8_t ch_id  = (uint8_t)(*parameter >> 4) & CH_MSK;    // channel ID of the sender
-  uint8_t flag = (uint8_t)*parameter & FLAG_MSK;
-
-  if (idx >= N_MAX_TX_NODES)
-    return 4;  // bad index
-
-  if (flag > MPS_FLAG_NOK)
-    return 3;  // invalid flag
-
-  if (memcmp((uint8_t*)parameter, (bufMpsMsg+idx)->prot.addr, ETH_ALEN) || // sender ID mismatch or
-      ((bufMpsMsg+idx)->prot.ch_id != ch_id) ||                      // channel ID mismatch or
-      ((bufMpsMsg+idx)->prot.bic_id != bic_id))                      // BIC ID mismatch
-      return 2; // unknown sender
-
-  if (*timestamp == (bufMpsMsg+idx)->tsRx)   // old (timestamp) message
-    return 1;
-
-  // new message
-  (bufMpsMsg+idx)->pending = (bufMpsMsg+idx)->prot.flag ^ flag;
-  (bufMpsMsg+idx)->prot.flag = flag;
-  (bufMpsMsg+idx)->tsRx = *timestamp;
-  return 0;
-}
-
-/**
  * \brief Evaluate the lifetime of received C2 messages [MPS_FS_600]
  *
  * \param idx Index of the C2 message buffer

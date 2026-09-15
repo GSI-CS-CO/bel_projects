@@ -119,7 +119,6 @@ static void timerHandler(void);
 static uint32_t handleEcaEvent(uint32_t pollTimeout, uint32_t* mpsTask, msgCtrl_t* pMsgCtrl, mpsMsg_t** head);
 static void wrConsolePeriodic(void);
 static void setErrorFlag(uint8_t error);
-static status_t doMemoryScuBusTransfer(uint32_t* src, int count);
 
 /**
  * \brief init for lm32
@@ -1002,9 +1001,6 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
 
     case FBAS_NODE_RX:
 
-      if (*pMpsTask & TSK_TX_MPS_FLAGS) {
-        doMemoryScuBusTransfer((pSharedApp + (FBAS_SHARED_C2_MSG_BEGIN >> 2)), N_MAX_TX_NODES);
-      }
       if (*pMpsTask & TSK_EVAL_MPS_TTL) {
         // evaluate lifetime of the MPS protocols and handle expired MPS protocols
         *pMpsTask &= ~TSK_EVAL_MPS_TTL;
@@ -1041,70 +1037,6 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
   measurePutTimestamp(MSR_ML_PRD, now);
 
   return status;
-}
-
-/**
- * \brief Memory to SCU bus transfer
- *
- * Read a shared memory location allocated for the emitters and
- * compare its content with the cache value. If they differ, then
- * transfer the actual value to a designated SCU bus slave.
- *
- * \param src   Source address in the shared memory
- * \param count Number of transfer
- *
- * \return status Returns zero on success, otherwise non-zero
- */
-static status_t doMemoryScuBusTransfer(uint32_t* src, int count)
-{
-  uint64_t parameter;
-  uint64_t timestamp;
-  int status;
-  uint16_t flags;
-  uint64_t now = getSysTime();
-  uint32_t* record;
-
-  for (int i = 0; i < count; i++) {
-
-    // get the parameter and timestamp (from shared memory)
-    record = src + (i << 2);
-    parameter = ((uint64_t)record[0] << 32) | record[1];
-    timestamp = ((uint64_t)record[2] << 32) | record[3];
-
-    if (!parameter || !timestamp)
-      continue;
-
-    status = msgCacheMpsMsg(i, &parameter, &timestamp);
-    switch (status) {
-      case 0:  // new message
-        // TODO: transfer to the SCU bus slave
-
-        // measure the receiver delay
-        measureSummarize(MSR_RX_DLY, timestamp, getSysTime(), DISABLE_VERBOSITY);
-        measureExportSummary(MSR_RX_DLY, pSharedApp, FBAS_SHARED_RX_DLY_AVG);
-
-        // count received messages
-        // TODO: do it in other way, do not use fwlib_getEcaValidCnt() to get the ECA channel valid count => it returns zero value
-        *(pSharedApp + (FBAS_SHARED_ECA_VLD >> 2)) = measureCountEvt(ECA_VLD_ACT, 1);
-        break;
-      case 1:  // old message
-        *(pSharedApp + (FBAS_SHARED_OLD_MSG_CNT >> 2)) = measureCountEvt(OLD_MSG_CNT, 1);
-        break;
-      case 2:  // unknown sender
-      case 3:  // invalid flag
-        *(pSharedApp + (FBAS_SHARED_BAD_MSG_CNT >> 2)) = measureCountEvt(BAD_MSG_CNT, 1);
-        break;
-      default: // bad index
-        break;
-    }
-  }
-
-  // for demonstration write to the SCU bus slave echo register
-  flags = (uint16_t)msgRepresentMpsFlags();
-  sbPutMpsFlags(&flags);
-  measureSummarize(MSR_DIOB_DLY, now, getSysTime(), DISABLE_VERBOSITY);
-
-  return COMMON_STATUS_OK;
 }
 
 int main(void) {
