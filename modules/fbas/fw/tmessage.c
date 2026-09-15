@@ -281,7 +281,7 @@ int msgCacheMpsMsg(int idx, const uint64_t* parameter, const uint64_t* timestamp
   if (idx >= N_MAX_TX_NODES)
     return 4;  // bad index
 
-  if (flag > MPS_FLAG_OK)
+  if (flag > MPS_FLAG_NOK)
     return 3;  // invalid flag
 
   if (memcmp((uint8_t*)parameter, (bufMpsMsg+idx)->prot.addr, ETH_ALEN) || // sender ID mismatch or
