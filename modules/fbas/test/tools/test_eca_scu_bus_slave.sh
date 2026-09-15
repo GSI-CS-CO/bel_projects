@@ -101,7 +101,7 @@ usage() {
     echo "  -s <DM schedule>       external file with DM schedule"
     echo "  -f <LM32 firmware>     firmware binary file"
     echo "  -r <target_rxscu>      target RX SCU (by default $rxscu_name is chosen)"
-    echo "  -m                     enable higher TX messagging rates (up to 20KHz)"
+    echo "  -m                     enable higher messagging rates (up to 50KHz)"
     echo "  -h                     display this help and exit"
     echo
     echo "Example: $0 -s my_mps_rx_rate_1.dot -f $fw_rxscu"
