@@ -94,11 +94,12 @@ echo "### Examine the ECA to SCU bus transfer ###"
 echo "- clear all existing conditions and macros"
 saft-wbm-ctl $TR -x
 
-echo "- create ECA conditions for following events: $EVT_ID_0 .. $EVT_ID_5"
+echo "- create ECA conditions for following events: $EVT_ID_0 .. $EVT_ID_8"
 
+evt_id=$EVT_ID_0
 for i in $(seq 0 $(($N_EVT - 1))); do
-    evt_name="EVT_ID_$i"
-    saft-wbm-ctl $TR -c ${!evt_name} $EVT_MASK 0 $((i + 1)) -d
+    evt_id=$(( evt_id + i ))
+    saft-wbm-ctl $TR -c $evt_id $EVT_MASK 0 $((i + 1)) -d
 done
 
 echo "- create macros"
@@ -171,12 +172,13 @@ done
 # inject events and verify the ECA to SCU bus transfer
 
 passed=0
+evt_id=$EVT_ID_0
 for i in $(seq 0 $(($N_EVT - 1))); do
     echo -e "\n- set the echo register at SCU bus address $ECHO_REG=$ECHO_INIT_VAL"
     reset_echo_reg $ECHO_INIT_VAL
-    evt_name="EVT_ID_$i"
-    echo "- inject ${!evt_name} with parameter $EVT_PARAM"
-    saft-ctl $TR inject ${!evt_name} $EVT_PARAM 0
+    evt_id=$(( evt_id + i ))
+    echo "- inject $(printf 0x%x $evt_id) with parameter $EVT_PARAM"
+    saft-ctl $TR inject $evt_id $EVT_PARAM 0
 
     case $i in
         0)
