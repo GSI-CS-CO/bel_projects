@@ -59,7 +59,10 @@ format_measurements() {
     # counters
     line+="\tRX msgs    : ${output[0]}\n"    # 1st element
     line+="\tLate msgs  : ${output[1]}\n"    # 2nd element
-    line+="\tLatency    : ${output[2]}\n"    # 3rd element
+    line+="\tAvg latency: ${output[2]}\n"    # 3rd element
+    line+="\tMin latency: ${output[3]}\n"    # 4th element
+    line+="\tMax latency: ${output[4]}\n"    # 5th element
+    line+="\tCal latency: ${output[5]}\n"    # last element
 
     ret="$line"
 }

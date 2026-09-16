@@ -825,11 +825,23 @@ stats_eca_tap() {
 
     tmp=${stats#*calc latency}
     tmp=${tmp#*: }
-    latency=${tmp%%$'\n'*}
+    cal_latency=${tmp%%$'\n'*}
 
-    echo -n "$n_msg $n_late_msg $latency"
+    tmp=${stats#*ave (dl - ts)}
+    tmp=${tmp#*: }
+    avg_latency=${tmp%%$'\n'*}
+
+    tmp=${stats#*min (dl - ts)}
+    tmp=${tmp#*: }
+    min_latency=${tmp%%$'\n'*}
+
+    tmp=${stats#*max (dl - ts)}
+    tmp=${tmp#*: }
+    max_latency=${tmp%%$'\n'*}
+
+    echo -n "$n_msg $n_late_msg $avg_latency $min_latency $max_latency $cal_latency"
     if [ -n "$2" ]; then
-        echo " (msg late_msg latency [ns])"
+        echo " (msg late_msg avg_latency min_latency max_latency calc_latency [ns])"
     else
         echo
     fi
