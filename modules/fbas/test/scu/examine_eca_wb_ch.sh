@@ -108,55 +108,55 @@ for i in $(seq 0 $(($N_EVT - 1))); do
         0)
             flag=0x5c
             val16="${EVT_PARAM##0x}"
-            val16="${val16:8:4}"
+            val16="$(echo $val16 | cut -c9-12)"
             echo "- on event=$EVT_ID_0 parameter=$EVT_PARAM: $val16 -> $ECHO_REG (write high 16 bits of low 32 bits in parameter to the echo register)"
             ;;
         1)
             flag=0x58
             val16="${EVT_PARAM##0x}"
-            val16="${val16:8:2}.."
+            val16="$(echo $val16 | cut -c9-10).."
             echo "- on event=$EVT_ID_1 parameter=$EVT_PARAM: $val16 -> $ECHO_REG (write high byte of high 16 bits of low 32 bits in parameter to the echo register)"
             ;;
         2)
             flag=0x54
             val16="${EVT_PARAM##0x}"
-            val16="..${val16:10:2}"
+            val16="..$(echo $val16 | cut -c11-12)"
             echo "- on event=$EVT_ID_2 parameter=$EVT_PARAM: $val16 -> $ECHO_REG (write low byte of high 16 bits of low 32 bits in parameter to the echo register)"
             ;;
         3)
             flag=0x53
             val16="${EVT_PARAM##0x}"
-            val16="${val16:12}"
+            val16="$(echo $val16 | cut -c13-16)"
             echo "- on event=$EVT_ID_3 parameter=$EVT_PARAM: $val16 -> $ECHO_REG (write low 16 bits of low 32 bits in parameter to the next 16-bit address of the echo register -> it will fail, cannot write to the status register)"
             ;;
         4)
             flag=0x52
             val16="${EVT_PARAM##0x}"
-            val16="${val16:12:2}.."
+            val16="$(echo $val16 | cut -c13-14).."
             echo "- on event=$EVT_ID_4 parameter=$EVT_PARAM: $val16 -> $ECHO_REG (write high byte of low 16 bits of low 32 bits in parameter to the next 16-bit address of the echo register -> it will fail, cannot write to the status register)"
             ;;
         5)
             flag=0x51
             val16="${EVT_PARAM##0x}"
-            val16="..${val16:14}"
+            val16="..$(echo $val16 | cut -c15-16)"
             echo "- on event=$EVT_ID_5 parameter=$EVT_PARAM: $val16 -> $ECHO_REG (write low byte of low 16 bits of low 32 bits in parameter to the next 16-bit address of the echo register -> it will fail, cannot write to the status register)"
             ;;
         6)
             flag=0x4c
             val16="${EVT_PARAM##0x}"
-            val16="${val16:0:4}"
+            val16="$(echo $val16 | cut -c1-4)"
             echo "- on event=$EVT_ID_6 parameter=$EVT_PARAM: $val16 -> $ECHO_REG (write high 16 bits of upper 32 bits in parameter to the echo register)"
             ;;
         7)
             flag=0x48
             val16="${EVT_PARAM##0x}"
-            val16="${val16:0:2}.."
+            val16="$(echo $val16 | cut -c1-2).."
             echo "- on event=$EVT_ID_7 parameter=$EVT_PARAM: $val16 -> $ECHO_REG (write high byte of high 16 bits of upper 32 bits in parameter to the echo register)"
             ;;
         8)
             flag=0x44
             val16="${EVT_PARAM##0x}"
-            val16="..${val16:2:2}"
+            val16="..$(echo $val16 | cut -c3-4)"
             echo "- on event=$EVT_ID_8 parameter=$EVT_PARAM: $val16 -> $ECHO_REG (write low byte of high 16 bits of upper 32 bits in parameter to the echo register)"
             ;;
         *)
@@ -172,7 +172,8 @@ done
 
 passed=0
 for i in $(seq 0 $(($N_EVT - 1))); do
-    echo -e "\n- set the echo register at SCU bus address $ECHO_REG=$ECHO_INIT_VAL"
+    echo
+    echo "- set the echo register at SCU bus address $ECHO_REG=$ECHO_INIT_VAL"
     reset_echo_reg $ECHO_INIT_VAL
     evt_id=$(( EVT_ID_0 + i ))
     echo "- inject $(printf 0x%x $evt_id) with parameter $EVT_PARAM"
@@ -181,82 +182,90 @@ for i in $(seq 0 $(($N_EVT - 1))); do
     case $i in
         0)
             val16="${EVT_PARAM##0x}"
-            val16="${val16:8:4}"
+            val16="$(echo $val16 | cut -c9-12)"
             echo "- read the value from $ECHO_REG ($val16 is expected)"
             reg_val=$(eb-read $DEV $ECHO_REG/2)
-            if [[ "$reg_val" == "$val16" ]]; then
+            if [ "$reg_val" != "$val16" ]; then
+                echo "- FAIL: $reg_val != $val16"
+            else
                 echo "+ PASS: $reg_val == $val16"
                 passed=$((passed + 1))
-            else
-                echo "- FAIL: $reg_val != $val16"
             fi
             ;;
         1)
             val16="${EVT_PARAM##0x}"
-            val16="${val16:8:2}.."
+            val16="$(echo $val16 | cut -c9-10).."
             echo "- read the value from $ECHO_REG ($val16 is expected)"
             reg_val=$(eb-read $DEV $ECHO_REG/2)
-            if [[ "${reg_val:0:2}" == "${val16:0:2}" ]]; then
-                echo "+ PASS: ${reg_val:0:2}.. (of $reg_val) == $val16"
-                passed=$((passed + 1))
+            reg_val_hi="$(echo $reg_val | cut -c1-2)"
+            val16_hi="$(echo $val16 | cut -c1-2)"
+            if [ "$reg_val_hi" != "$val16_hi" ]; then
+                echo "- FAIL: ${reg_val_hi}.. (of $reg_val) != $val16"
             else
-                echo "- FAIL: ${reg_val:0:2}.. (of $reg_val) != $val16"
+                echo "+ PASS: ${reg_val_hi}.. (of $reg_val) == $val16"
+                passed=$((passed + 1))
             fi
             ;;
         2)
             val16="${EVT_PARAM##0x}"
-            val16="..${val16:10:2}"
+            val16="..$(echo $val16 | cut -c11-12)"
             echo "- read the value from $ECHO_REG ($val16 is expected)"
             reg_val=$(eb-read $DEV $ECHO_REG/2)
-            if [[ "${reg_val:2}" == "${val16:2}" ]]; then
-                echo "+ PASS: ..${reg_val:2} (of $reg_val) == $val16"
-                passed=$((passed + 1))
+            reg_val_lo="$(echo $reg_val | cut -c3-4)"
+            val16_lo="$(echo $val16 | cut -c3-4)"
+            if [ "$reg_val_lo" != "$val16_lo" ]; then
+                echo "- FAIL: ..${reg_val_lo} (of $reg_val) != $val16"
             else
-                echo "- FAIL: ..${reg_val:2} (of $reg_val) != $val16"
+                echo "+ PASS: ..${reg_val_lo} (of $reg_val) == $val16"
+                passed=$((passed + 1))
             fi
             ;;
         3)
             val16="${EVT_PARAM##0x}"
-            val16="${val16:12}"
+            val16="$(echo $val16 | cut -c13-16)"
             echo "- read the value from $STATUS_REG ($val16 is expected)"
             reg_val=$(eb-read $DEV $STATUS_REG/2)
-            if [[ "$reg_val" == "$val16" ]]; then
+            if [ "$reg_val" != "$val16" ]; then
+                echo "- FAIL: $reg_val != $val16"
+            else
                 echo "+ PASS: $reg_val == $val16"
                 passed=$((passed + 1))
-            else
-                echo "- FAIL: $reg_val != $val16"
             fi
             ;;
         4)
             val16="${EVT_PARAM##0x}"
-            val16="${val16:12:2}.."
+            val16="$(echo $val16 | cut -c13-14).."
             echo "- read the value from $STATUS_REG ($val16 is expected)"
             reg_val=$(eb-read $DEV $STATUS_REG/2)
-            if [[ "${reg_val:0:2}" == "${val16:0:2}" ]]; then
-                echo "+ PASS: ${reg_val:0:2}.. (of $reg_val) == $val16"
-                passed=$((passed + 1))
+            reg_val_hi="$(echo $reg_val | cut -c1-2)"
+            val16_hi="$(echo $val16 | cut -c1-2)"
+            if [ "$reg_val_hi" != "$val16_hi" ]; then
+                echo "- FAIL: ${reg_val_hi}.. (of $reg_val) != $val16"
             else
-                echo "- FAIL: ${reg_val:0:2}.. (of $reg_val) != $val16"
+                echo "+ PASS: ${reg_val_hi}.. (of $reg_val) == $val16"
+                passed=$((passed + 1))
             fi
             ;;
         5)
             val16="${EVT_PARAM##0x}"
-            val16="..${val16:14}"
+            val16="..$(echo $val16 | cut -c15-16)"
             echo "- read the value from $STATUS_REG ($val16 is expected)"
             reg_val=$(eb-read $DEV $STATUS_REG/2)
-            if [[ "${reg_val:2}" == "${val16:2}" ]]; then
-                echo "+ PASS: ..${reg_val:2} (of $reg_val) == $val16"
-                passed=$((passed + 1))
+            reg_val_lo="$(echo $reg_val | cut -c3-4)"
+            val16_lo="$(echo $val16 | cut -c3-4)"
+            if [ "$reg_val_lo" != "$val16_lo" ]; then
+                echo "- FAIL: ..${reg_val_lo} (of $reg_val) != $val16"
             else
-                echo "- FAIL: ..${reg_val:2} (of $reg_val) != $val16"
+                echo "+ PASS: ..${reg_val_lo} (of $reg_val) == $val16"
+                passed=$((passed + 1))
             fi
             ;;
         6)
             val16="${EVT_PARAM##0x}"
-            val16="${val16:0:4}"
+            val16="$(echo $val16 | cut -c1-4)"
             echo "- read the value from $ECHO_REG ($val16 is expected)"
             reg_val=$(eb-read $DEV $ECHO_REG/2)
-            if [[ "$reg_val" == "$val16" ]]; then
+            if [ "$reg_val" = "$val16" ]; then
                 echo "+ PASS: $reg_val == $val16"
                 passed=$((passed + 1))
             else
@@ -265,26 +274,30 @@ for i in $(seq 0 $(($N_EVT - 1))); do
             ;;
         7)
             val16="${EVT_PARAM##0x}"
-            val16="${val16:0:2}.."
+            val16="$(echo $val16 | cut -c1-2).."
             echo "- read the value from $ECHO_REG ($val16 is expected)"
             reg_val=$(eb-read $DEV $ECHO_REG/2)
-            if [[ "${reg_val:0:2}" == "${val16:0:2}" ]]; then
-                echo "+ PASS: ${reg_val:0:2}.. (of $reg_val) == $val16"
+            reg_val_hi="$(echo $reg_val | cut -c1-2)"
+            val16_hi="$(echo $val16 | cut -c1-2)"
+            if [ "$reg_val_hi" = "$val16_hi" ]; then
+                echo "+ PASS: ${reg_val_hi}.. (of $reg_val) == $val16"
                 passed=$((passed + 1))
             else
-                echo "- FAIL: ${reg_val:0:2}.. (of $reg_val) != $val16"
+                echo "- FAIL: ${reg_val_hi}.. (of $reg_val) != $val16"
             fi
             ;;
         8)
             val16="${EVT_PARAM##0x}"
-            val16="..${val16:2:2}"
+            val16="..$(echo $val16 | cut -c3-4)"
             echo "- read the value from $ECHO_REG ($val16 is expected)"
             reg_val=$(eb-read $DEV $ECHO_REG/2)
-            if [[ "${reg_val:2}" == "${val16:2}" ]]; then
-                echo "+ PASS: ..${reg_val:2} (of $reg_val) == $val16"
+            reg_val_lo="$(echo $reg_val | cut -c3-4)"
+            val16_lo="$(echo $val16 | cut -c3-4)"
+            if [ "$reg_val_lo" = "$val16_lo" ]; then
+                echo "+ PASS: ..${reg_val_lo} (of $reg_val) == $val16"
                 passed=$((passed + 1))
             else
-                echo "- FAIL: ..${reg_val:2} (of $reg_val) != $val16"
+                echo "- FAIL: ..${reg_val_lo} (of $reg_val) != $val16"
             fi
             ;;
         *)
@@ -294,4 +307,5 @@ for i in $(seq 0 $(($N_EVT - 1))); do
 
 done
 
-echo -e "\n- passes: $passed of $N_EVT"
+echo
+echo "- passes: $passed of $N_EVT"
