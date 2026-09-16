@@ -118,17 +118,13 @@ while getopts 'hu:p:r:s:f:m' c; do
         h) usage; exit 0 ;;
         u) username=$OPTARG ;;
         p) userpasswd=$OPTARG ;;
-        r) target_rxscu=$OPTARG ;;
+        r) export rxscu_name=$OPTARG; export rxscu="$rxscu_name.$domain" ;;
         s) sched_filename=$OPTARG; sched_filepath="$sched_dir/$sched_filename" ;;
-        f) fw_rxscu=$OPTARG ;;
+        f) export fw_rxscu=$OPTARG ;;
         m) enable_high_rates="y" ;;
         *) usage; exit 1 ;;
     esac
 done
-
-if [[ -n "$target_rxscu" ]]; then
-    rxscu_name="$target_rxscu"
-fi
 
 validate_sched_file "$sched_filepath"
 validate_user username userpasswd      # pass variable references to validate and populate them
