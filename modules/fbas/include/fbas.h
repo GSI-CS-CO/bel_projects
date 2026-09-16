@@ -99,7 +99,7 @@
 #endif
 
 // compile-time check shared memory regions
-#if FBAS_SHARED_BEGIN < COMMON_SHARED_END
+#if FBAS_SHARED_C2_MSG_BEGIN < COMMON_SHARED_END
   #error Overlapped shared memory regions: increase FBAS_SHARED_OFFS!
   #pragma message "FBAS_SHARED_OFFS  = " XSTR(FBAS_SHARED_OFFS)
   #pragma message "FBAS_SHARED_BEGIN = " XSTR(FBAS_SHARED_BEGIN)
