@@ -2745,7 +2745,6 @@ end generate;
   end generate;
 
   -- Instantiate SERDES clock generator
-  genSerdes : if not g_lm32_are_ftm generate
   cmp_serdes_clk_gen : xwb_serdes_clk_gen
     generic map(
       g_num_serdes_bits       => 8,
@@ -2761,11 +2760,6 @@ end generate;
       rst_ref_n_i  => rstn_ref,
       eca_time_i   => ref_tai8ns,
       serdes_dat_o => lvds_dat_fr_clk_gen);
-  end generate;
-
-  genNoSerdes : if g_lm32_are_ftm generate
-    lvds_dat_fr_clk_gen <= (others => (others => '0'));
-  end generate;
 
   -- LVDS component data input is OR between ECA chan output and SERDES clk. gen.
   gen_lvds_dat : for i in lvds_dat'range generate
