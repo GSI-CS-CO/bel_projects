@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 24-Oct-2023
+ *  version : 21-Oct-2025
  *
  *  x86 routines for MCP4725 connected via FT232H
  * 
@@ -48,8 +48,11 @@ FT_STATUS ftdimcp_open(int cIdx, FT_HANDLE *cHandle, int flagDebug)
     printf("no channel found; # of channels is %d\n", nChannels);
     printf("possible reasons\n");
     printf(" - uninitialized EEPROM; please program it using FT_PROG from FTDI\n");
-    printf(" - kernel driver ftdi_sio is active -> rmmod ftdi_sio, rmmod usbserial\n");
+    printf(" - kernel driver ftdi_sio is active; try one of the following\n");
+    printf(" -- rmmod ftdi_sio, rmmod usbserial\n");
+    printf(" -- echo -n 1-3:1.0 > /sys/bus/usb/drivers/ftdi_sio/unbind (replace with proper ID)\n");
     printf(" - insufficient privileges -> try 'sudo' or 'chmod'\n");
+    printf(" - another program using the device already running (only one is supported)?\n");
   } // if nChannels
 
   if ((ftStatus = I2C_OpenChannel(0, cHandle)) != FT_OK) {
@@ -116,7 +119,7 @@ FT_STATUS ftdimcp_init(FT_HANDLE cHandle)
 
 
 // sets level of comparator
-FT_STATUS ftdimcp_setLevel(FT_HANDLE cHandle, double dacLevel, int flagEeprom, int flagDebug)
+FT_STATUS ftdimcp_setLevel(FT_HANDLE cHandle, uint32_t dacAddr, double dacLevel, int flagEeprom, int flagDebug)
 {
   FT_STATUS ftStatus;
   uint32_t  i2cAddr;
@@ -149,7 +152,7 @@ FT_STATUS ftdimcp_setLevel(FT_HANDLE cHandle, double dacLevel, int flagEeprom, i
   else            cmdByte = 0x40;  // write to DAC only
   
   nTx      = 3;
-  i2cAddr  = FTDIMCP_I2CADDR;
+  i2cAddr  = dacAddr;;
 
   
   // command register
@@ -169,7 +172,7 @@ FT_STATUS ftdimcp_setLevel(FT_HANDLE cHandle, double dacLevel, int flagEeprom, i
 
 
 // gets level of comparator
-FT_STATUS ftdimcp_getLevel(FT_HANDLE cHandle)
+FT_STATUS ftdimcp_getLevel(FT_HANDLE cHandle, uint32_t dacAddr)
 {
   FT_STATUS ftStatus;
   uint32_t  nRx;                   // number of bytes to write
@@ -184,7 +187,7 @@ FT_STATUS ftdimcp_getLevel(FT_HANDLE cHandle)
   // data transfer options
   transOpt = 0x3;
   nRx      = 5;
-  i2cAddr  = FTDIMCP_I2CADDR;
+  i2cAddr  = dacAddr;
 
   printf("try reading from DAC\n");
   data[0] = data[1] = data[2] = data[3] = data[4] = 0x0;

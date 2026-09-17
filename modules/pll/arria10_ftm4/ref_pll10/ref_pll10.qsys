@@ -7,7 +7,7 @@
    description=""
    tags="INTERNAL_COMPONENT=true"
    categories="System" />
- <parameter name="bonusData"><![CDATA[bonusData
+ <parameter name="bonusData"><![CDATA[bonusData 
 {
    element iopll_0
    {
@@ -94,7 +94,7 @@
  <module
    name="iopll_0"
    kind="altera_iopll"
-   version="18.1"
+   version="23.1"
    enabled="1"
    autoexport="1">
   <parameter name="gui_active_clk" value="false" />
@@ -237,7 +237,7 @@
   <parameter name="gui_output_clock_frequency8" value="100.0" />
   <parameter name="gui_output_clock_frequency9" value="100.0" />
   <parameter name="gui_parameter_table_hex_file" value="seq_params_sim.hex" />
-  <parameter name="gui_phase_shift0" value="0.0" />
+  <parameter name="gui_phase_shift0" value="500.0" />
   <parameter name="gui_phase_shift1" value="7000.0" />
   <parameter name="gui_phase_shift10" value="0.0" />
   <parameter name="gui_phase_shift11" value="0.0" />
@@ -315,7 +315,7 @@
   <parameter name="gui_usr_device_speed_grade" value="1" />
   <parameter name="gui_vco_frequency" value="1000.0" />
   <parameter name="hp_qsys_scripting_mode" value="false" />
-  <parameter name="system_info_device_component" value="10AX027E3F29E2SG" />
+  <parameter name="system_info_device_component" value="10AX048E3F29E2SG" />
   <parameter name="system_info_device_family" value="Arria 10" />
   <parameter name="system_info_device_speed_grade" value="2" />
   <parameter name="system_part_trait_speed_grade" value="2" />

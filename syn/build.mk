@@ -1,7 +1,7 @@
 TOP		:= $(dir $(lastword $(MAKEFILE_LIST)))..
 QUARTUS		?= /opt/quartus
 QUARTUS_BIN	=  $(QUARTUS)/bin
-HDLMAKE := PATH=$(TOP)/bin:$(QUARTUS_BIN):$(PATH) PYTHONPATH=$(TOP)/lib/python2.7/site-packages hdlmake
+HDLMAKE := PATH=$(TOP)/res/bin:$(QUARTUS_BIN):$(PATH) PYTHONPATH=$(TOP)/ip_cores/hdlmake hdlmake
 PATHPKG		?= $(shell $(HDLMAKE) list-mods | grep -G '^[^\#]' | grep top | grep -o '^\S*')
 SPI_LANES	?= ASx1
 
@@ -11,11 +11,12 @@ SHELL = /bin/sh
 OBJCOPY		=  $(CROSS_COMPILE)objcopy
 GENRAMMIF	?= $(TOP)/ip_cores/wrpc-sw/tools/genrammif
 INCPATH	:= $(TOP)/modules/lm32-include
+WBTIMER_INCL := $(TOP)/modules/wb_timer
 EBPATH  := $(TOP)/ip_cores/etherbone-core/hdl/eb_master_core
 W1    	:= $(TOP)/ip_cores/wrpc-sw
 USRCPUCLK	?= 62500
 CFLAGS	+= 	-mmultiply-enabled -mbarrel-shift-enabled -Os -DUSRCPUCLK=$(USRCPUCLK) -I$(INCPATH) -I$(W1)/include \
-		-I$(W1)/sdb-lib -I$(W1)/pp_printf -I$(EBPATH) -std=gnu99 -DCONFIG_WR_NODE -DCONFIG_PRINT_BUFSIZE=128 -DCONFIG_PRINTF_64BIT -DSDBFS_BIG_ENDIAN
+		-I$(W1)/sdb-lib -I$(W1)/pp_printf -I$(EBPATH) -I$(WBTIMER_INCL) -std=gnu99 -DCONFIG_WR_NODE -DCONFIG_PRINT_BUFSIZE=128 -DCONFIG_PRINTF_64BIT -DSDBFS_BIG_ENDIAN
 
 CFLAGS += -ffunction-sections -fdata-sections -Wl,--gc-sections
 
@@ -97,11 +98,7 @@ prog:
 
 %.jic:	%.sof %.opt
 ifndef SKIP_JIC
-ifeq ($(ARRIA10_JIC), yes)
-	$(QUARTUS_BIN)/quartus_cpf -c -d $(FLASH) -s $(DEVICE) $< $@
-else
 	$(QUARTUS_BIN)/quartus_cpf -c -o $*.opt -d $(FLASH) -s $(DEVICE) $< $@
-endif
 endif
 ifdef SKIP_JIC
 	echo "Skipping JIC file..."

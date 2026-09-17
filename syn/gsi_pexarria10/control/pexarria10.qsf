@@ -2,6 +2,128 @@ set_global_assignment -name ACTIVE_SERIAL_CLOCK FREQ_100MHZ
 set_global_assignment -name ADV_NETLIST_OPT_SYNTH_WYSIWYG_REMAP OFF
 set_global_assignment -name AHDL_FILE ../../../modules/modulbus/i2c.tdf
 set_global_assignment -name ALLOW_POWER_UP_DONT_CARE OFF
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[0] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[0] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[10] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[10] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[11] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[11] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[12] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[12] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[13] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[13] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[14] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[14] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[15] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[15] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[16] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[16] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[17] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[17] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[18] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[18] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[19] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[19] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[1] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[1] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[20] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[20] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[21] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[21] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[22] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[22] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[23] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[23] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[2] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[2] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[3] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[3] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[4] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[4] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[5] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[5] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[6] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[6] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[7] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[7] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[8] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[8] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[9] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_a[9] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_advn -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_advn -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cen[0] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cen[0] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cen[1] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cen[1] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cen[2] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cen[2] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cen[3] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cen[3] -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_clk -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_clk -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cre -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_cre -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[0] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[0] -section_id PSRAM_GROUP_INOUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[10] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[10] -section_id PSRAM_GROUP_INOUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[11] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[11] -section_id PSRAM_GROUP_INOUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[12] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[12] -section_id PSRAM_GROUP_INOUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[13] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[13] -section_id PSRAM_GROUP_INOUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[14] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[14] -section_id PSRAM_GROUP_INOUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[15] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[15] -section_id PSRAM_GROUP_INOUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[1] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[1] -section_id PSRAM_GROUP_INOUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[2] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[2] -section_id PSRAM_GROUP_INOUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[3] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[3] -section_id PSRAM_GROUP_INOUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[4] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[4] -section_id PSRAM_GROUP_INOUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[5] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[5] -section_id PSRAM_GROUP_INOUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[6] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[6] -section_id PSRAM_GROUP_INOUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[7] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[7] -section_id PSRAM_GROUP_INOUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[8] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[8] -section_id PSRAM_GROUP_INOUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[9] -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_dq[9] -section_id PSRAM_GROUP_INOUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_lbn -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_lbn -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_oen -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_oen -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_ubn -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_ubn -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wait -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wait -section_id PSRAM_GROUP_IN
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wen -section_id PSRAM_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER psram_wen -section_id PSRAM_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_clk_i -section_id USB_GROUP_IN
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_ctl_i -section_id USB_GROUP_IN
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_fd_io -section_id USB_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_fd_io -section_id USB_GROUP_INOUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_pa_io -section_id USB_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_pa_io -section_id USB_GROUP_INOUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_slrd_o -section_id USB_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_slrd -section_id USB_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_slrd -section_id USB_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_slwr_o -section_id USB_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_slwr -section_id USB_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_slwr -section_id USB_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_uclk_i -section_id USB_GROUP_IN
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_uclk -section_id USB_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_uclk -section_id USB_GROUP_IN
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_ures_o -section_id USB_GROUP_OUT
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_ures -section_id USB_GROUP
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER usb_ures -section_id USB_GROUP_OUT
 set_global_assignment -name AUTO_SHIFT_REGISTER_RECOGNITION OFF
 set_global_assignment -name CRC_ERROR_OPEN_DRAIN ON
 set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
@@ -20,7 +142,7 @@ set_global_assignment -name FAMILY "Arria 10"
 set_global_assignment -name FINAL_PLACEMENT_OPTIMIZATION ALWAYS
 set_global_assignment -name FITTER_AGGRESSIVE_ROUTABILITY_OPTIMIZATION AUTOMATICALLY
 set_global_assignment -name FITTER_EFFORT "STANDARD FIT"
-set_global_assignment -name LAST_QUARTUS_VERSION "18.1.0 Standard Edition"
+set_global_assignment -name LAST_QUARTUS_VERSION "23.1std.1 Standard Edition"
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 100
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name NUM_PARALLEL_PROCESSORS 8
@@ -43,6 +165,7 @@ set_global_assignment -name PLACEMENT_EFFORT_MULTIPLIER 100
 set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
 set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
 set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:pexarria10.tcl"
+set_global_assignment -name PRESERVE_UNUSED_XCVR_CHANNEL ON
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:00:25 FEBRUARY 13, 2012"
 set_global_assignment -name QSYS_FILE "../../../ip_cores/general-cores/platform/altera/networks/arria10gx/dual_region/dual_region.qsys"
 set_global_assignment -name QSYS_FILE "../../../ip_cores/general-cores/platform/altera/networks/arria10gx/global_region/global_region.qsys"
@@ -58,6 +181,8 @@ set_global_assignment -name QSYS_FILE "../../../ip_cores/wr-cores/platform/alter
 set_global_assignment -name QSYS_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria10_phy/wr_arria10_scu4_phy/wr_arria10_scu4_det_phy/wr_arria10_scu4_det_phy.qsys"
 set_global_assignment -name QSYS_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria10_phy/wr_arria10_scu4_phy/wr_arria10_scu4_phy/wr_arria10_scu4_phy.qsys"
 set_global_assignment -name QSYS_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria10_phy/wr_arria10_scu4_phy/wr_arria10_scu4_rst_ctl/wr_arria10_scu4_rst_ctl.qsys"
+set_global_assignment -name QSYS_FILE ../../../modules/a10ts/src/hdl/a10ts_ip/a10ts_ip.qsys
+set_global_assignment -name QSYS_FILE ../../../modules/a10vs/src/hdl/a10vs_ip/a10vs_ip.qsys
 set_global_assignment -name QSYS_FILE ../../../modules/lvds/arria10_pex10/arria10_pex10_lvds_ibuf/arria10_pex10_lvds_ibuf.qsys
 set_global_assignment -name QSYS_FILE ../../../modules/lvds/arria10_pex10/arria10_pex10_lvds_obuf/arria10_pex10_lvds_obuf.qsys
 set_global_assignment -name QSYS_FILE ../../../modules/lvds/arria10_pex10/arria10_pex10_lvds_pll/arria10_pex10_lvds_pll.qsys
@@ -165,8 +290,6 @@ set_global_assignment -name VERILOG_FILE ../../../modules/cfi_flash/cfi_ctrl_eng
 set_global_assignment -name VERILOG_FILE ../../../modules/cfi_flash/cfi_ctrl.v -library work
 set_global_assignment -name VERILOG_FILE ../../../modules/lpc_uart/serirq_defines.v -library work
 set_global_assignment -name VERILOG_FILE ../../../modules/lpc_uart/serirq_slave.v -library work
-set_global_assignment -name VERILOG_FILE ../../../modules/remote_update/asmi10/asmi10/altera_asmi_parallel_181/synth/asmi10_altera_asmi_parallel_181_gdoqleq.v -library work
-set_global_assignment -name VERILOG_FILE ../../../modules/remote_update/asmi10/asmi10/altera_asmi_parallel_181/synth/asmi10_altera_asmi_parallel_181_svbigkq.v -library work
 set_global_assignment -name VERILOG_FILE ../../../modules/remote_update/asmi5/asmi5/synthesis/submodules/asmi5_asmi_parallel_0.v -library work
 set_global_assignment -name VERILOG_FILE ../../../modules/remote_update/asmi_arriaII/asmi_arriaII/synthesis/submodules/asmi_arriaII_asmi_parallel_0.v -library work
 set_global_assignment -name VERILOG_FILE ../../../modules/stub_pll/stub_pll/altera_iopll_160/synth/stub_pll_altera_iopll_160_z2kwsvq.v -library work
@@ -496,6 +619,13 @@ set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_tlu
 set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/platform/altera/wr_altera_pkg.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria10_phy/wr_arria10_phy.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/platform/altera/xwrc_platform_altera.vhd" -library work
+set_global_assignment -name VHDL_FILE ../../../modules/a10ts/src/hdl/a10ts_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/a10ts/src/hdl/a10ts.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/a10vs/src/hdl/a10vs_ip/a10vs_ip/altera_voltage_sensor_231/synth/a10vs_ip_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/a10vs/src/hdl/a10vs_ip/a10vs_ip/synth/a10vs_ip.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/a10vs/src/hdl/a10vs_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/a10vs/src/hdl/a10vs.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/a10vs/src/hdl/a10vs_wb.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/ad7606/ad7606.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/ad7606/adc_modul_bus.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/ad7606/adc_pkg.vhd -library work
@@ -524,6 +654,8 @@ set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/crc8_data8.vhd -
 set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/TimestampDecoder.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/TimestampEncoder.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/wr_serialtimestamp_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/cellular_ram/src/hdl/cellular_ram_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/cellular_ram/src/hdl/cellular_ram.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/cfi_flash/cfi_flash_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/cfi_flash/xwb_cfi_wrapper.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/chopper/Bus_io.vhd -library work
@@ -543,9 +675,13 @@ set_global_assignment -name VHDL_FILE ../../../modules/daq/daq.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/daq/Zeitbasis_daq.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/ddr3/ddr3_wrapper_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/ddr3/ddr3_wrapper.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/diob/del_quench_detection.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/diob/hw_interlock.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/diob/QuD_masken_reg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/diob/qud_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/diob/quench_detection.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/diob/spill_abort.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/diob/TM_quench_detection.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/dm_diag/dm_diag_auto_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/dm_diag/dm_diag_auto.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/dm_diag/dm_diag.vhd -library work
@@ -553,6 +689,8 @@ set_global_assignment -name VHDL_FILE ../../../modules/eca_tap/eca_tap_auto_pkg.
 set_global_assignment -name VHDL_FILE ../../../modules/eca_tap/eca_tap_auto.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/eca_tap/eca_tap_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/eca_tap/eca_tap.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/enc_err_counter/enc_err_counter_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/enc_err_counter/enc_err_counter.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/flash_loader/flash_loader_v01.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_lm32_cluster.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_lm32.vhd -library work
@@ -652,7 +790,7 @@ set_global_assignment -name VHDL_FILE ../../../modules/prioq2/queue_unit.vhd -li
 set_global_assignment -name VHDL_FILE ../../../modules/psram/psram_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/psram/psram.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/remote_update/altasmi.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/remote_update/asmi10/asmi10/altera_asmi_parallel_181/synth/asmi10_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/remote_update/asmi10/asmi10/altera_asmi_parallel_231/synth/asmi10_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/remote_update/asmi10/asmi10/synth/asmi10.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/remote_update/asmi5/asmi5/synthesis/asmi5.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/remote_update/asmi_arriaII/asmi_arriaII/synthesis/asmi_arriaII.vhd -library work
@@ -698,7 +836,7 @@ set_global_assignment -name VHDL_FILE ../../../modules/uart/uart_receiver.vhd -l
 set_global_assignment -name VHDL_FILE ../../../modules/uart/uart_transmitter.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/watchdog/watchdog_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/watchdog/watchdog.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria10_reset/arria10_reset/altera_remote_update_181/synth/arria10_reset_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria10_reset/arria10_reset/altera_remote_update_231/synth/arria10_reset_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria10_reset/arria10_reset/synth/arria10_reset.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria5_reset.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria_reset.vhd -library work
@@ -716,6 +854,18 @@ set_global_assignment -name VHDL_FILE ../../../top/gsi_pexarria10/control/pexarr
 set_global_assignment -name VHDL_FILE ../../../top/gsi_pexarria10/control/ramsize_pkg.vhd -library work
 set_global_assignment -name VHDL_INPUT_VERSION VHDL_2008
 set_global_assignment -name VHDL_SHOW_LMF_MAPPING_MESSAGES OFF
+set_instance_assignment -name FAST_INPUT_REGISTER ON -to PSRAM_GROUP_IN
+set_instance_assignment -name FAST_INPUT_REGISTER ON -to PSRAM_GROUP_INOUT
+set_instance_assignment -name FAST_INPUT_REGISTER ON -to USB_GROUP_IN
+set_instance_assignment -name FAST_INPUT_REGISTER ON -to USB_GROUP_INOUT
+set_instance_assignment -name FAST_OUTPUT_ENABLE_REGISTER ON -to PSRAM_GROUP_INOUT
+set_instance_assignment -name FAST_OUTPUT_ENABLE_REGISTER ON -to PSRAM_GROUP_OUT
+set_instance_assignment -name FAST_OUTPUT_ENABLE_REGISTER ON -to USB_GROUP_INOUT
+set_instance_assignment -name FAST_OUTPUT_ENABLE_REGISTER ON -to USB_GROUP_OUT
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to PSRAM_GROUP_INOUT
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to PSRAM_GROUP_OUT
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to USB_GROUP_INOUT
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to USB_GROUP_OUT
 set_instance_assignment -name IO_STANDARD "1.8 V" -to altera_reserved_ntrst
 set_instance_assignment -name IO_STANDARD "1.8 V" -to altera_reserved_tck
 set_instance_assignment -name IO_STANDARD "1.8 V" -to altera_reserved_tdi
@@ -744,7 +894,6 @@ set_instance_assignment -name IO_STANDARD "1.8 V" -to i2c_sda_pad_io[4]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to i2c_sda_pad_io[5]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to nPCI_RESET_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to nres_out_o
-set_instance_assignment -name IO_STANDARD "1.8 V" -to nuser_pb_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to OneWire_aux_CB
 set_instance_assignment -name IO_STANDARD "1.8 V" -to OneWire_aux_CB_splz
 set_instance_assignment -name IO_STANDARD "1.8 V" -to OneWire_CB
@@ -884,14 +1033,102 @@ set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_wb_event:ecawb
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|ftm_lm32_cluster:lm32*"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|wr_eca:eca"
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
+set_instance_assignment -name SLEW_RATE 1 -to psram_a[0]
+set_instance_assignment -name SLEW_RATE 1 -to psram_a[1]
+set_instance_assignment -name SLEW_RATE 1 -to psram_a[10]
+set_instance_assignment -name SLEW_RATE 1 -to psram_a[11]
+set_instance_assignment -name SLEW_RATE 1 -to psram_a[12]
+set_instance_assignment -name SLEW_RATE 1 -to psram_a[13]
+set_instance_assignment -name SLEW_RATE 1 -to psram_a[14]
+set_instance_assignment -name SLEW_RATE 1 -to psram_a[15]
+set_instance_assignment -name SLEW_RATE 1 -to psram_a[16]
+set_instance_assignment -name SLEW_RATE 1 -to psram_a[17]
+set_instance_assignment -name SLEW_RATE 1 -to psram_a[18]
+set_instance_assignment -name SLEW_RATE 1 -to psram_a[19]
+set_instance_assignment -name SLEW_RATE 1 -to psram_a[2]
+set_instance_assignment -name SLEW_RATE 1 -to psram_a[20]
+set_instance_assignment -name SLEW_RATE 1 -to psram_a[21]
+set_instance_assignment -name SLEW_RATE 1 -to psram_a[22]
+set_instance_assignment -name SLEW_RATE 1 -to psram_a[23]
+set_instance_assignment -name SLEW_RATE 1 -to psram_a[3]
+set_instance_assignment -name SLEW_RATE 1 -to psram_a[4]
+set_instance_assignment -name SLEW_RATE 1 -to psram_a[5]
+set_instance_assignment -name SLEW_RATE 1 -to psram_a[6]
+set_instance_assignment -name SLEW_RATE 1 -to psram_a[7]
+set_instance_assignment -name SLEW_RATE 1 -to psram_a[8]
+set_instance_assignment -name SLEW_RATE 1 -to psram_a[9]
+set_instance_assignment -name SLEW_RATE 1 -to psram_advn[0]
+set_instance_assignment -name SLEW_RATE 1 -to psram_advn[1]
+set_instance_assignment -name SLEW_RATE 1 -to psram_advn[2]
+set_instance_assignment -name SLEW_RATE 1 -to psram_advn[3]
+set_instance_assignment -name SLEW_RATE 1 -to psram_cen[0]
+set_instance_assignment -name SLEW_RATE 1 -to psram_cen[1]
+set_instance_assignment -name SLEW_RATE 1 -to psram_cen[2]
+set_instance_assignment -name SLEW_RATE 1 -to psram_cen[3]
+set_instance_assignment -name SLEW_RATE 1 -to psram_clk
+set_instance_assignment -name SLEW_RATE 1 -to psram_cre[0]
+set_instance_assignment -name SLEW_RATE 1 -to psram_cre[1]
+set_instance_assignment -name SLEW_RATE 1 -to psram_cre[2]
+set_instance_assignment -name SLEW_RATE 1 -to psram_cre[3]
+set_instance_assignment -name SLEW_RATE 1 -to psram_dq[0]
+set_instance_assignment -name SLEW_RATE 1 -to psram_dq[1]
+set_instance_assignment -name SLEW_RATE 1 -to psram_dq[10]
+set_instance_assignment -name SLEW_RATE 1 -to psram_dq[11]
+set_instance_assignment -name SLEW_RATE 1 -to psram_dq[12]
+set_instance_assignment -name SLEW_RATE 1 -to psram_dq[13]
+set_instance_assignment -name SLEW_RATE 1 -to psram_dq[14]
+set_instance_assignment -name SLEW_RATE 1 -to psram_dq[15]
+set_instance_assignment -name SLEW_RATE 1 -to psram_dq[2]
+set_instance_assignment -name SLEW_RATE 1 -to psram_dq[3]
+set_instance_assignment -name SLEW_RATE 1 -to psram_dq[4]
+set_instance_assignment -name SLEW_RATE 1 -to psram_dq[5]
+set_instance_assignment -name SLEW_RATE 1 -to psram_dq[6]
+set_instance_assignment -name SLEW_RATE 1 -to psram_dq[7]
+set_instance_assignment -name SLEW_RATE 1 -to psram_dq[8]
+set_instance_assignment -name SLEW_RATE 1 -to psram_dq[9]
+set_instance_assignment -name SLEW_RATE 1 -to psram_lbn[0]
+set_instance_assignment -name SLEW_RATE 1 -to psram_lbn[1]
+set_instance_assignment -name SLEW_RATE 1 -to psram_lbn[2]
+set_instance_assignment -name SLEW_RATE 1 -to psram_lbn[3]
+set_instance_assignment -name SLEW_RATE 1 -to psram_oen[0]
+set_instance_assignment -name SLEW_RATE 1 -to psram_oen[1]
+set_instance_assignment -name SLEW_RATE 1 -to psram_oen[2]
+set_instance_assignment -name SLEW_RATE 1 -to psram_oen[3]
+set_instance_assignment -name SLEW_RATE 1 -to psram_ubn[0]
+set_instance_assignment -name SLEW_RATE 1 -to psram_ubn[1]
+set_instance_assignment -name SLEW_RATE 1 -to psram_ubn[2]
+set_instance_assignment -name SLEW_RATE 1 -to psram_ubn[3]
+set_instance_assignment -name SLEW_RATE 1 -to psram_wen[0]
+set_instance_assignment -name SLEW_RATE 1 -to psram_wen[1]
+set_instance_assignment -name SLEW_RATE 1 -to psram_wen[2]
+set_instance_assignment -name SLEW_RATE 1 -to psram_wen[3]
+set_instance_assignment -name SLEW_RATE 1 -to usb_fd_io[0]
+set_instance_assignment -name SLEW_RATE 1 -to usb_fd_io[1]
+set_instance_assignment -name SLEW_RATE 1 -to usb_fd_io[2]
+set_instance_assignment -name SLEW_RATE 1 -to usb_fd_io[3]
+set_instance_assignment -name SLEW_RATE 1 -to usb_fd_io[4]
+set_instance_assignment -name SLEW_RATE 1 -to usb_fd_io[5]
+set_instance_assignment -name SLEW_RATE 1 -to usb_fd_io[6]
+set_instance_assignment -name SLEW_RATE 1 -to usb_fd_io[7]
+set_instance_assignment -name SLEW_RATE 1 -to usb_pa_io[0]
+set_instance_assignment -name SLEW_RATE 1 -to usb_pa_io[1]
+set_instance_assignment -name SLEW_RATE 1 -to usb_pa_io[2]
+set_instance_assignment -name SLEW_RATE 1 -to usb_pa_io[3]
+set_instance_assignment -name SLEW_RATE 1 -to usb_pa_io[4]
+set_instance_assignment -name SLEW_RATE 1 -to usb_pa_io[5]
+set_instance_assignment -name SLEW_RATE 1 -to usb_pa_io[6]
+set_instance_assignment -name SLEW_RATE 1 -to usb_pa_io[7]
+set_instance_assignment -name SLEW_RATE 1 -to usb_slrd_o
+set_instance_assignment -name SLEW_RATE 1 -to usb_slwr_o
+set_instance_assignment -name SLEW_RATE 1 -to usb_ures_o
 set_instance_assignment -name XCVR_VCCR_VCCT_VOLTAGE 1_0V -to sfp_rxp_i
 set_instance_assignment -name XCVR_VCCR_VCCT_VOLTAGE 1_0V -to "sfp_rxp_i(n)"
 set_instance_assignment -name XCVR_VCCR_VCCT_VOLTAGE 1_0V -to sfp_txp_o
 set_instance_assignment -name XCVR_VCCR_VCCT_VOLTAGE 1_0V -to "sfp_txp_o(n)"
 set_location_assignment PIN_A18 -to psram_a[20]
-set_location_assignment PIN_A19 -to psram_a[2]
-set_location_assignment PIN_A20 -to psram_a[19]
-set_location_assignment PIN_A21 -to psram_cen[2]
+set_location_assignment PIN_A19 -to psram_cen[2]
+set_location_assignment PIN_A20 -to psram_a[2]
+set_location_assignment PIN_A21 -to psram_a[19]
 set_location_assignment PIN_A23 -to psram_dq[1]
 set_location_assignment PIN_A24 -to psram_dq[11]
 set_location_assignment PIN_A25 -to psram_dq[9]
@@ -932,7 +1169,6 @@ set_location_assignment PIN_AE12 -to usb_clk_i
 #set_location_assignment PIN_AE12 -to usb_uclkin_i
 set_location_assignment PIN_AE16 -to nPCI_RESET_i
 set_location_assignment PIN_AE1 -to usbc_tx4_en[5]
-#set_location_assignment PIN_AE23 -to usb_uclk_i
 set_location_assignment PIN_AE23 -to usb_uclk_i
 set_location_assignment PIN_AE24 -to usb_fd_io[3]
 set_location_assignment PIN_AE29 -to "pcie_rx_i[0](n)"
@@ -959,8 +1195,6 @@ set_location_assignment PIN_AG3 -to usbc_tx3_en[5]
 set_location_assignment PIN_AG5 -to i2c_scl_pad_io[1]
 set_location_assignment PIN_AG6 -to i2c_sda_pad_io[1]
 set_location_assignment PIN_AH10 -to nres_out_o
-#set_location_assignment PIN_AH18 -to clk_125m_sfpref_alt_i
-#set_location_assignment PIN_AH19 -to "clk_125m_sfpref_alt_i(n)"
 set_location_assignment PIN_AH23 -to UM_AS_D[0]
 set_location_assignment PIN_AH25 -to usb_fd_io[6]
 set_location_assignment PIN_AH26 -to usb_pa_io[0]
@@ -1030,18 +1264,18 @@ set_location_assignment PIN_AP26 -to usb_pa_io[7]
 set_location_assignment PIN_AP27 -to usb_pa_io[6]
 set_location_assignment PIN_AP31 -to "sfp_txp_o(n)"
 set_location_assignment PIN_AP32 -to sfp_txp_o
-set_location_assignment PIN_B18 -to psram_a[23]
-set_location_assignment PIN_B20 -to psram_a[18]
-set_location_assignment PIN_B21 -to psram_a[6]
-set_location_assignment PIN_B22 -to psram_a[3]
+set_location_assignment PIN_B18 -to psram_a[7]
+set_location_assignment PIN_B20 -to psram_a[6]
+set_location_assignment PIN_B21 -to psram_a[3]
+set_location_assignment PIN_B22 -to psram_a[18]
 set_location_assignment PIN_B23 -to psram_dq[10]
 set_location_assignment PIN_B25 -to psram_dq[12]
 set_location_assignment PIN_B26 -to psram_dq[14]
 set_location_assignment PIN_B27 -to psram_dq[5]
 set_location_assignment PIN_C18 -to psram_a[21]
 set_location_assignment PIN_C19 -to psram_a[4]
-set_location_assignment PIN_C20 -to psram_a[7]
-set_location_assignment PIN_C22 -to psram_a[0]
+set_location_assignment PIN_C20 -to psram_a[0]
+set_location_assignment PIN_C22 -to psram_cen[1]
 set_location_assignment PIN_C23 -to psram_dq[2]
 set_location_assignment PIN_C24 -to psram_oen[2]
 set_location_assignment PIN_C25 -to psram_dq[15]
@@ -1051,7 +1285,7 @@ set_location_assignment PIN_D19 -to psram_a[17]
 set_location_assignment PIN_D20 -to psram_a[1]
 set_location_assignment PIN_D21 -to psram_a[8]
 set_location_assignment PIN_D22 -to psram_a[13]
-set_location_assignment PIN_D24 -to psram_dq[3]
+set_location_assignment PIN_D24 -to psram_lbn[2]
 set_location_assignment PIN_D25 -to psram_oen[1]
 set_location_assignment PIN_D26 -to psram_wen[1]
 set_location_assignment PIN_D27 -to psram_dq[0]
@@ -1063,60 +1297,56 @@ set_location_assignment PIN_E23 -to clk_125m_local_i
 set_location_assignment PIN_E24 -to "clk_125m_local_i(n)"
 set_location_assignment PIN_E26 -to psram_lbn[0]
 set_location_assignment PIN_F18 -to psram_a[12]
-set_location_assignment PIN_F19 -to psram_a[10]
-set_location_assignment PIN_F20 -to psram_a[11]
-set_location_assignment PIN_F21 -to psram_a[15]
-set_location_assignment PIN_F23 -to psram_ubn[0]
+set_location_assignment PIN_F19 -to psram_cre[0]
+set_location_assignment PIN_F20 -to psram_a[15]
+set_location_assignment PIN_F21 -to psram_cre[1]
+set_location_assignment PIN_F23 -to psram_ubn[3]
 set_location_assignment PIN_F24 -to psram_wait[0]
 set_location_assignment PIN_F25 -to psram_wen[0]
-#set_location_assignment PIN_F26 -to "clk_125m_pllref_i(n)"
 set_location_assignment PIN_G17 -to psram_a[9]
 set_location_assignment PIN_G18 -to psram_advn[0]
 set_location_assignment PIN_G20 -to psram_cen[3]
-set_location_assignment PIN_G21 -to psram_a[22]
 set_location_assignment PIN_G22 -to psram_dq[4]
-set_location_assignment PIN_G23 -to psram_wen[2]
-set_location_assignment PIN_G25 -to psram_dq[8]
-#set_location_assignment PIN_G26 -to clk_125m_pllref_i
+set_location_assignment PIN_G23 -to psram_dq[3]
+set_location_assignment PIN_G25 -to psram_advn[1]
 set_location_assignment PIN_G27 -to psram_dq[7]
-set_location_assignment PIN_H17 -to psram_cen[1]
+set_location_assignment PIN_H17 -to psram_a[11]
 set_location_assignment PIN_H18 -to psram_cen[0]
 set_location_assignment PIN_H20 -to psram_clk
-set_location_assignment PIN_H22 -to psram_advn[3]
+set_location_assignment PIN_H22 -to psram_lbn[3]
 set_location_assignment PIN_H25 -to psram_wait[1]
-set_location_assignment PIN_H27 -to psram_ubn[3]
-set_location_assignment PIN_J17 -to psram_cre[0]
+set_location_assignment PIN_H27 -to psram_wen[2]
+set_location_assignment PIN_J17 -to psram_a[22]
 set_location_assignment PIN_J1 -to usbc_rx2_p[3]
-set_location_assignment PIN_J20 -to psram_cre[1]
-set_location_assignment PIN_J22 -to psram_lbn[2]
-set_location_assignment PIN_J24 -to psram_oen[0]
-set_location_assignment PIN_J25 -to psram_ubn[1]
+set_location_assignment PIN_J20 -to psram_a[23]
+set_location_assignment PIN_J21 -to psram_cre[2]
+set_location_assignment PIN_J22 -to psram_wen[3]
+set_location_assignment PIN_J24 -to psram_lbn[1]
+set_location_assignment PIN_J25 -to psram_ubn[0]
 set_location_assignment PIN_J26 -to psram_wait[2]
 set_location_assignment PIN_J27 -to psram_wait[3]
 set_location_assignment PIN_J2 -to usbc_rx2_n[3]
 set_location_assignment PIN_J4 -to usbc_rx1_p[5]
 set_location_assignment PIN_J5 -to usbc_rx1_n[5]
+set_location_assignment PIN_K18 -to OneWire_aux_CB
 set_location_assignment PIN_K19 -to psram_cre[3]
 set_location_assignment PIN_K1 -to usbc_rx2_p[1]
-set_location_assignment PIN_K22 -to psram_wen[3]
-set_location_assignment PIN_K23 -to psram_lbn[1]
-set_location_assignment PIN_K24 -to psram_ubn[2]
-set_location_assignment PIN_K25 -to psram_lbn[3]
+set_location_assignment PIN_K22 -to psram_advn[3]
+set_location_assignment PIN_K23 -to psram_ubn[2]
+set_location_assignment PIN_K24 -to psram_oen[0]
+set_location_assignment PIN_K25 -to psram_dq[8]
 set_location_assignment PIN_K2 -to usbc_rx2_n[1]
 set_location_assignment PIN_K3 -to usbc_rx1_n[2]
 set_location_assignment PIN_K4 -to usbc_rx1_n[1]
-#set_location_assignment PIN_K6 -to clk_125m_pllref_alt_i
+set_location_assignment PIN_L18 -to OneWire_aux_CB_splz
+set_location_assignment PIN_L19 -to psram_a[10]
 set_location_assignment PIN_L1 -to usbc_rx2_n[5]
-set_location_assignment PIN_L20 -to psram_cre[2]
-set_location_assignment PIN_L23 -to psram_advn[1]
+set_location_assignment PIN_L23 -to psram_ubn[1]
 set_location_assignment PIN_L3 -to usbc_rx1_p[2]
 set_location_assignment PIN_L4 -to usbc_rx1_p[1]
-#set_location_assignment PIN_L6 -to "clk_125m_pllref_alt_i(n)"
-set_location_assignment PIN_M17 -to OneWire_CB
-set_location_assignment PIN_M18 -to OneWire_CB_splz
+set_location_assignment PIN_M17 -to OneWire_CB_splz
+set_location_assignment PIN_M18 -to OneWire_CB
 set_location_assignment PIN_M1 -to usbc_rx2_p[5]
-set_location_assignment PIN_M20 -to OneWire_aux_CB
-set_location_assignment PIN_M21 -to OneWire_aux_CB_splz
 set_location_assignment PIN_M23 -to psram_advn[2]
 set_location_assignment PIN_M2 -to usbc_rx2_p[2]
 set_location_assignment PIN_M3 -to usbc_rx2_n[2]
@@ -1167,8 +1397,6 @@ set_location_assignment PIN_V7 -to usbc_rx4_p[4]
 set_location_assignment PIN_V8 -to usbc_rx4_n[1]
 set_location_assignment PIN_V9 -to usbc_rx4_p[1]
 set_location_assignment PIN_W10 -to usbc_rx4_p[5]
-#set_location_assignment PIN_W1 -to clk_125m_sfpref_i
-#set_location_assignment PIN_W2 -to "clk_125m_sfpref_i(n)"
 set_location_assignment PIN_W4 -to usbc_tx3_p[2]
 set_location_assignment PIN_W5 -to "usbc_tx3_p[2](n)"
 set_location_assignment PIN_W6 -to usbc_tx4_p[5]

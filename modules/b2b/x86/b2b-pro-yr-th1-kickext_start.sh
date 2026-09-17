@@ -8,7 +8,7 @@ set -x
 # KD : dev/wbm0, tr0
 export TRTRIG=dev/wbm0
 export SDTRIG=tr0
-export SDKICK=tr1
+export SDKICK=tr0
 ###########################################
 # setting for development
 # ! don't forget to (un)comment test pulses
@@ -77,8 +77,8 @@ saft-ecpu-ctl $SDTRIG -c  0x10d2804000000000 0xfffffff000000000 20000 0x804 -d -
 
 echo -e b2b: configure outputs
 # generate pulse upon CMD_B2B_TRIGGEREXT
-saft-io-ctl $SDKICK -n IO1 -o 1 -t 0 -a 1
-saft-io-ctl $SDKICK -n IO1 -c 0x10d2804000000000 0xfffffff000000000 0 0x0 1 -u
-saft-io-ctl $SDKICK -n IO1 -c 0x10d2804000000000 0xfffffff000000000 1000 0x0 0 -u 
+saft-io-ctl $SDKICK -n IO3 -o 1 -t 0 -a 1
+saft-io-ctl $SDKICK -n IO3 -c 0x10d2804000000000 0xfffffff000000000 0 0x0 1 -u
+saft-io-ctl $SDKICK -n IO3 -c 0x10d2804000000000 0xfffffff000000000 1000 0x0 0 -u 
 
 # generate test pulses upon CMD_B2B_TRIGGEREXT, postponed until we have a PEXP

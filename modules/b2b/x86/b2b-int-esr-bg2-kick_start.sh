@@ -101,6 +101,8 @@ saft-io-ctl $SDTRIGTEST -n IO1 -c 0x1154805000000000 0xfffffff000000000 4400 0x0
 saft-io-ctl $SDTRIGTEST -n IO2 -o 1 -t 0 -a 1
 saft-io-ctl $SDTRIGTEST -n IO2 -c 0x1154804000000000 0xfffffff000000000 6400 0x0 1 -u
 saft-io-ctl $SDTRIGTEST -n IO2 -c 0x1154804000000000 0xfffffff000000000 6600 0x0 0 -u
-# config test pulse for probe extraction
-# config test pulse for probe extraction
+saft-io-ctl $SDTRIGTEST -n IO1 -o 1 -t 0 -a 1
+saft-io-ctl $SDTRIGTEST -n IO1 -c 0x1154804000000000 0xfffffff000000000 7200 0x0 1 -u
+saft-io-ctl $SDTRIGTEST -n IO1 -c 0x1154804000000000 0xfffffff000000000 7400 0x0 0 -u
+
 # config test pulse for probe extraction

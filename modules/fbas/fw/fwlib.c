@@ -113,3 +113,21 @@ status_t fwlib_getEcaFailureCnt(uint32_t flag, uint32_t *buffer)
 
   return COMMON_STATUS_OK;
 }
+
+/**
+ * \brief set the Etherbone master's destination addresses
+ *
+ * Analogue to fwlib_ebmInit(), source addresses are not checked
+ *
+ * \param dstMac  destination MAC address
+ * \param dstIp   destination IP address
+ *
+ * \return none
+*/
+void fwlib_setEbmDstAddr(uint64_t dstMac, uint32_t dstIp)
+{
+  ebm_init();
+  ebm_config_if(DESTINATION, dstMac, dstIp, 0xebd0);
+  ebm_config_meta(1500, 0x0, EBM_NOREPLY);
+  ebm_clr();
+}

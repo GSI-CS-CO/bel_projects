@@ -1,7 +1,8 @@
-library IEEE;
-use IEEE.STD_LOGIC_1164.all;
-use IEEE.STD_LOGIC_arith.all;
-use IEEE.STD_LOGIC_unsigned.all;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+use ieee.math_real.all;
+
 
 entity Mil_dec_edge_timed is
 --+-------------------------------------------------------------------------------------------------------------------------------------+
@@ -45,7 +46,9 @@ entity Mil_dec_edge_timed is
     Rcv_Rdy:            out std_logic;    -- '1' es wurde ein Kommand oder Datum empfangen.
                                           -- Wenn Rcv_Cmd = '0' => Datum. Wenn Rcv_Cmd = '1' => Kommando
     Mil_Rcv_Data:       out std_logic_vector(15 downto 0);  -- Empfangenes Datum oder Komando
-    Mil_Decoder_Diag:   out std_logic_vector(15 downto 0)   -- Diagnoseausgaenge fuer Logikanalysator
+    Mil_Decoder_Diag:   out std_logic_vector(15 downto 0);   -- Diagnoseausgaenge fuer Logikanalysator
+    mil_err_cnt:        out std_logic_vector(31 downto 0);
+    clr_mil_err_cnt:    in  std_logic
     );
 
 end Mil_dec_edge_timed;
@@ -116,7 +119,7 @@ architecture Arch_Mil_dec_edge_timed of Mil_dec_edge_timed is
   --------------------------------------------------
   -- Zaehler misst die Zeit zwischen zwei Flanken --
   --------------------------------------------------
-  signal  S_Time_between_2_Edges_cnt  : std_logic_vector(C_Time_between_2_Edges_cnt_width-1 downto 0);
+  signal  S_Time_between_2_Edges_cnt  : unsigned(C_Time_between_2_Edges_cnt_width-1 downto 0);
 
   signal  S_Is_Sync:              std_logic;
   signal  S_Clr_Is_Sync:          std_logic;
@@ -156,6 +159,9 @@ architecture Arch_Mil_dec_edge_timed of Mil_dec_edge_timed is
   signal  S_Parity_Ok:            std_logic;
 
   signal  S_Rcv_Error:            std_logic;
+
+  -- error counter for the state "err"
+  signal  s_err_count: unsigned(31 downto 0);
   
 
 --+-----------------------------------------------------+
@@ -322,7 +328,7 @@ P_Mil_Rcv_Shift_Reg:  process (clk)
     if rising_edge(clk) then
       if RCV_SM = RCV_Idle then
         S_Mil_Parity_Tst <= '0';
-        S_Mil_Rcv_Shift_Reg <= conv_std_logic_vector(1, S_Mil_Rcv_Shift_Reg'length); 
+        S_Mil_Rcv_Shift_Reg <= std_logic_vector(to_unsigned(1, S_Mil_Rcv_Shift_Reg'length)); 
       elsif S_Shift_Ena = '1' then
         if Receive_pos_lane = 1 then
           S_Mil_Rcv_Shift_Reg <= (S_Mil_Rcv_Shift_Reg(S_Mil_Rcv_Shift_Reg'high-1 downto 0) & S_Manchester_Sync(2));
@@ -367,6 +373,8 @@ P_RCV_SM: process (clk, Res, S_Is_Timeout)
       S_Clr_Is_Bit_Long <= '1';
       S_Clr_Is_Bit_Short <= '1';
       S_Is_Cmd <= '0';
+    elsif Res = '1' or clr_mil_err_cnt = '1' then
+      s_err_count <= (others => '0');
 
     elsif rising_edge(clk) then
       S_Shift_Ena <= '0';
@@ -436,9 +444,11 @@ P_RCV_SM: process (clk, Res, S_Is_Timeout)
                 RCV_SM <= Data;
               elsif S_Is_Bit_long = '1' and S_Next_Short = '1' then
                 S_Clr_Is_Bit_Long <= '1';
+                s_err_count <= s_err_count + 1;
                 RCV_SM <= Err;
               else
                 S_Clr_Is_Bit_Long <= '1';
+                s_err_count <= s_err_count + 1;
                 RCV_SM <= Err;
               end if;
             else
@@ -585,5 +595,8 @@ P_Diag: process (
     Mil_Decoder_Diag(1)   <=  S_Is_Bit_long;
     Mil_Decoder_Diag(0)   <=  S_Is_Bit_short;
   end process P_Diag;
+
+mil_err_cnt <= std_logic_vector(s_err_count);
+
   
 end Arch_Mil_dec_edge_timed;

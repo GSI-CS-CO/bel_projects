@@ -66,6 +66,8 @@ volatile uint32_t *pMILPiggy;    // WB address of MIL piggy on SCU
 volatile uint32_t *pShared;      // pointer to begin of shared memory region
 uint32_t *pCpuRamExternal;       // external address (seen from host bridge) of this CPU's RAM
 
+#define MILSLOT 0                // SCU bus slot, 0: MILPiggy, 1..N: SIO in slot 1..N
+
 void init()
 {
   discoverPeriphery();   // mini-sdb: get info on important Wishbone infrastructure, such as (this) CPU, flash, EB Master, ...
@@ -140,9 +142,9 @@ void MILEvtHandler(uint32_t nOfEvents){
 
   i = 0;
   while (i < 500) {
-    if (fifoNotemptyEvtMil(pMILPiggy)) {
+    if (fifoNotemptyEvtMil(pMILPiggy, MILSLOT)) {
       i++;
-      popFifoEvtMil(pMILPiggy, &evtData);
+      popFifoEvtMil(pMILPiggy, MILSLOT, &evtData);
       evtCode  = evtData & 0x000000ff;
       help1   = (evtData >> 8);
       switch (evtCode) {
@@ -209,10 +211,10 @@ void echoTestMILDevice(uint16_t wData, uint8_t ifbAddr)
   int16_t  busStatus;
   uint16_t rData = 0x0;
 
-  busStatus = writeDevMil(pMILPiggy, ifbAddr, FC_WR_IFC_ECHO, wData);
+  busStatus = writeDevMil(pMILPiggy, MILSLOT, ifbAddr, FC_WR_IFC_ECHO, wData);
   if (busStatus != MIL_STAT_OK) mprintf("echo test on MIL: ERROR\n");
 
-  busStatus = readDevMil(pMILPiggy, ifbAddr, FC_RD_IFC_ECHO, &rData);
+  busStatus = readDevMil(pMILPiggy, MILSLOT, ifbAddr, FC_RD_IFC_ECHO, &rData);
   if (busStatus != MIL_STAT_OK) mprintf("echo test on MIL: ERROR\n");
 
   if (wData != rData)  mprintf("echo test on MIL: ERROR\n");
@@ -237,23 +239,23 @@ void main(void) {
   findMILPiggy();                                  // find Wishbone address of MIL piggy on SCU     
   echoTestMILDevice(0xbabe, ifbAddr);              // write/read to echo register of MIL device
 
-  writeCtrlStatRegEvtMil(pMILPiggy, MIL_CTRL_STAT_ENDECODER_FPGA | MIL_CTRL_STAT_INTR_DEB_ON);   // write initial values to control register
+  writeCtrlStatRegEvtMil(pMILPiggy, MILSLOT, MIL_CTRL_STAT_ENDECODER_FPGA | MIL_CTRL_STAT_INTR_DEB_ON);   // write initial values to control register
 
-  disableFilterEvtMil(pMILPiggy);                  // disable event filtering
+  disableFilterEvtMil(pMILPiggy, MILSLOT);         // disable event filtering
 
-  clearFilterEvtMil(pMILPiggy);                                                      // clear filter RAM by setting all filters to 0x0
-  setFilterEvtMil(pMILPiggy,  1, 15, MIL_FILTER_EV_TO_FIFO);                         // filter on event code 1 and accelerator 15; FIFO
-  setFilterEvtMil(pMILPiggy, 12, 15, MIL_FILTER_EV_TO_FIFO | MIL_FILTER_EV_PULS2_S); // filter on event code 12 and accelerator 15; FIFO and pulse on LEMO2
-  configLemoPulseEvtMil(pMILPiggy, 2);                                               // configure LEMO2 for pulsing mode
-  setFilterEvtMil(pMILPiggy, 18, 15, MIL_FILTER_EV_TO_FIFO);                         // filter on event code 1 and accelerator 15; FIFO
-  setFilterEvtMil(pMILPiggy, 24, 15, MIL_FILTER_EV_TO_FIFO);                         // filter on event code 1 and accelerator 15; FIFO
-  setFilterEvtMil(pMILPiggy, 25, 15, MIL_FILTER_EV_TO_FIFO);                         // filter on event code 1 and accelerator 15; FIFO
-  setFilterEvtMil(pMILPiggy, 26, 15, MIL_FILTER_EV_TO_FIFO);                         // filter on event code 1 and accelerator 15; FIFO
-  setFilterEvtMil(pMILPiggy, 27, 15, MIL_FILTER_EV_TO_FIFO | MIL_FILTER_EV_PULS1_S); // filter on event code 1 and accelerator 15; FIFO and pulse on LEMO1
-  configLemoPulseEvtMil(pMILPiggy, 1);                                               // configure LEMO1 for pulsing mode
+  clearFilterEvtMil(pMILPiggy, MILSLOT);                                                      // clear filter RAM by setting all filters to 0x0
+  setFilterEvtMil(pMILPiggy, MILSLOT,  1, 15, MIL_FILTER_EV_TO_FIFO);                         // filter on event code 1 and accelerator 15; FIFO
+  setFilterEvtMil(pMILPiggy, MILSLOT, 12, 15, MIL_FILTER_EV_TO_FIFO | MIL_FILTER_EV_PULS2_S); // filter on event code 12 and accelerator 15; FIFO and pulse on LEMO2
+  configLemoPulseEvtMil(pMILPiggy, MILSLOT, 2);                                               // configure LEMO2 for pulsing mode
+  setFilterEvtMil(pMILPiggy, MILSLOT, 18, 15, MIL_FILTER_EV_TO_FIFO);                         // filter on event code 1 and accelerator 15; FIFO
+  setFilterEvtMil(pMILPiggy, MILSLOT, 24, 15, MIL_FILTER_EV_TO_FIFO);                         // filter on event code 1 and accelerator 15; FIFO
+  setFilterEvtMil(pMILPiggy, MILSLOT, 25, 15, MIL_FILTER_EV_TO_FIFO);                         // filter on event code 1 and accelerator 15; FIFO
+  setFilterEvtMil(pMILPiggy, MILSLOT, 26, 15, MIL_FILTER_EV_TO_FIFO);                         // filter on event code 1 and accelerator 15; FIFO
+  setFilterEvtMil(pMILPiggy, MILSLOT, 27, 15, MIL_FILTER_EV_TO_FIFO | MIL_FILTER_EV_PULS1_S); // filter on event code 1 and accelerator 15; FIFO and pulse on LEMO1
+  configLemoPulseEvtMil(pMILPiggy, MILSLOT, 1);                                               // configure LEMO1 for pulsing mode
 
-  clearFifoEvtMil(pMILPiggy);                      // clear the FIFO to remove possible junk
-  enableFilterEvtMil(pMILPiggy);                   // enable filtering 
+  clearFifoEvtMil(pMILPiggy, MILSLOT);             // clear the FIFO to remove possible junk
+  enableFilterEvtMil(pMILPiggy, MILSLOT);          // enable filtering 
 
   MILEvtHandler(100);
 } /* main */

@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 05-Oct-2023
+ *  version : 05-jan-2026
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -42,7 +42,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION      0x000700                                  // make this consistent with makefile
+#define B2BPM_FW_VERSION      0x000813                                  // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -79,14 +79,28 @@ volatile uint32_t *pSharedGetSid;       // pointer to a "user defined" u32 regis
 volatile uint32_t *pSharedGetTH1Hi;     // pointer to a "user defined" u32 register; here: period of h=1, high bits
 volatile uint32_t *pSharedGetTH1Lo;     // pointer to a "user defined" u32 register; here: period of h=1, low bits
 volatile uint32_t *pSharedGetNH;        // pointer to a "user defined" u32 register; here: harmonic number
-volatile int32_t  *pSharedGetComLatency;// pointer to a "user defined" u32 register; here: latency for messages received via ECA
 
 uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM            
 
 uint64_t statusArray;                   // all status infos are ORed bit-wise into statusArray, statusArray is then published
 uint32_t nTransfer;                     // # of transfers
 uint32_t transStat;                     // status of transfer, here: meanDelta of 'poor mans fit'
-int32_t  comLatency;                    // latency for messages received via ECA
+
+uint32_t nLate;                        // # of late messages
+uint32_t nEarly;                       // # of early messages
+uint32_t nConflict;                    // # of conflict messages
+uint32_t nDelayed;                     // # of delayed messages
+uint32_t nSlow;                        // # of slow messages
+
+uint32_t offsSlow;                      // offset for slow messages [ns]
+uint32_t offsSlowMax;                   // offset for slow messages [ns]; max
+uint32_t offsSlowMin;                   // offset for slow messages [ns]; min
+uint32_t comLatency;                    // latency for getting the messages from the ECA [ns]
+uint32_t comLatencyMax;                 // latency for getting the messages from the ECA [ns]; max
+uint32_t comLatencyMin;                 // latency for getting the messages from the ECA [ns]; min
+uint32_t offsDone;                      // offset deadline WR message to time when we are done [ns]
+uint32_t offsDoneMax;                   // offset deadline WR message to time when we are done [ns]; max
+uint32_t offsDoneMin;                   // offset deadline WR message to time when we are done [ns]; min
 
 // for phase measurement
 uint64_t tStamp[B2B_NSAMPLES];          // timestamp samples
@@ -122,7 +136,7 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
   pSharedGetTH1Hi         = (uint32_t *)(pShared + (B2B_SHARED_GET_TH1EXTHI   >> 2));   // for simplicity: use 'EXT' for data
   pSharedGetTH1Lo         = (uint32_t *)(pShared + (B2B_SHARED_GET_TH1EXTLO   >> 2));
   pSharedGetNH            = (uint32_t *)(pShared + (B2B_SHARED_GET_NHEXT      >> 2));
-  pSharedGetComLatency    =  (int32_t *)(pShared + (B2B_SHARED_GET_COMLATENCY >> 2));
+
   // find address of CPU from external perspective
   idx = 0;
   find_device_multi(&found_clu, &idx, 1, GSI, LM32_CB_CLUSTER);
@@ -165,10 +179,25 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
 // clear project specific diagnostics
 void extern_clearDiag()
 {
-  statusArray  = 0x0; 
-  nTransfer    = 0;
-  transStat    = 0;
-  comLatency   = 0x0;
+  statusArray   = 0x0; 
+  nTransfer     = 0;
+  transStat     = 0;
+
+  nLate         = 0x0;
+  nEarly        = 0x0;
+  nConflict     = 0x0;
+  nDelayed      = 0x0;
+  nSlow         = 0x0;
+
+  offsSlow      = 0x0;
+  offsSlowMax   = 0x0;
+  offsSlowMin   = 0xffffffff;
+  comLatency    = 0x0;
+  comLatencyMax = 0x0;
+  comLatencyMin = 0xffffffff; 
+  offsDone      = 0x0;
+  offsDoneMax   = 0x0;
+  offsDoneMin   = 0xffffffff;
 } // extern_clearDiag
   
 
@@ -217,7 +246,6 @@ uint32_t extern_entryActionOperation()
   *pSharedGetNH          = 0x0;
   *pSharedGetGid         = 0x0; 
   *pSharedGetSid         = 0x0;
-  *pSharedGetComLatency  = 0x0;
 
   return COMMON_STATUS_OK;
 } // extern_entryActionOperation
@@ -442,6 +470,9 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint32_t flagIsEarly;                                       // flag 'early'
   uint32_t flagIsConflict;                                    // flag 'conflict'
   uint32_t flagIsDelayed;                                     // flag 'delayed'
+  uint32_t flagIsSlow;                                        // flag 'slow'
+  uint32_t offsSlowAct;                                       // offset slow event, act value
+  uint32_t comLatencyAct;                                     // communication latency act value
   uint32_t ecaAction;                                         // action triggered by event received from ECA
   uint64_t recDeadline;                                       // deadline received from ECA
   uint64_t reqDeadline;                                       // deadline requested by sender
@@ -456,12 +487,12 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint64_t sendParam;                                         // parameter to send
   uint32_t sendTEF;                                           // TEF to send
   uint32_t sendEvtNo;                                         // EvtNo to send
+  uint64_t sysTime; 
   
   // phase measurement
   uint32_t nInput;                                            // # of timestamps
   static uint64_t TH1_as;                                     // h=1 period [as]
   static b2bt_t   tH1_t;                                      // h=1 timestamp of phase ( = 'phase') [ps]
-  uint32_t dt_pss;                                            // uncertainty of h=1 timestamp [ps]
   static uint32_t flagPMError;                                // error flag phase measurement
 
   // diagnostic PM; phase (rf) and match (trigger)
@@ -481,11 +512,16 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   int32_t  TWait_us;                                          // time till measurement start [us]
 
   fdat_t   tmp;                                               // for copying of data
+  uint32_t startTime; 
   
   status    = actStatus;
   sendEvtNo = 0x0;
 
-  ecaAction = fwlib_wait4ECAEvent(COMMON_ECATIMEOUT * 1000, &recDeadline, &recEvtId, &recParam, &recTEF, &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed);
+  ecaAction = fwlib_wait4ECAEvent2(COMMON_ECATIMEOUT * 1000, &recDeadline, &recEvtId, &recParam, &recTEF,
+                                   &flagIsLate, &flagIsEarly, &flagIsConflict, &flagIsDelayed, &flagIsSlow, &offsSlowAct, &comLatencyAct);
+  startTime = getSysTime();
+
+  //if (ecaAction != B2B_ECADO_TIMEOUT) comLatency = (int32_t)(getSysTime() - recDeadline);
 
   switch (ecaAction) {
     // the following two cases handle h=1 group DDS phase measurement
@@ -493,9 +529,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       sendEvtNo   = B2B_ECADO_B2B_PREXT;
     case B2B_ECADO_B2B_PMINJ :
       if (!sendEvtNo) sendEvtNo = B2B_ECADO_B2B_PRINJ;
+
       //t1 = getSysTime();
-      comLatency       = (int32_t)(getSysTime() - recDeadline);
-      
       *pSharedGetTH1Hi = (uint32_t)((recParam >> 32) & 0x000fffff);   // lower 52 bit used as period
       *pSharedGetTH1Lo = (uint32_t)( recParam        & 0xffffffff);
       *pSharedGetNH    = (uint32_t)((recParam>> 56)  & 0xff      );   // upper 8 bit used as harmonic number
@@ -510,7 +545,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       flagPMError      = 0x0;
       tH1_t.ns         = 0x6fffffffffffffff;                          // bogus number, might help for debugging chk
 
-      
       nSamples                              = B2B_NSAMPLES;               
       if (TH1_as >  2500000000000) nSamples = B2B_NSAMPLES >> 1;      // use only 1/2 for nue < 400 kHz: 80us@400kHz and B2B_NSAMPLES=32
       if (TH1_as >  5000000000000) nSamples = B2B_NSAMPLES >> 2;      // use only 1/4 for nue < 200 kHz: 80us@200kHz and B2B_NSAMPLES=32
@@ -536,15 +570,17 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       sendParam    = tH1_t.ns;
       sendTEF      = (uint32_t)( (int16_t)(tH1_t.ps)  & 0xffff);
       sendTEF     |= (uint32_t)((uint16_t)(tH1_t.dps) & 0xffff) << 16; 
-      sendDeadline = recDeadline + (uint64_t)COMMON_AHEADT;
+      sendDeadline = getSysTime() + (uint64_t)B2B_AHEADT;             // use a more aggressive deadline < COMMON_AHEADT
       fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, sendTEF, 0);
       //t2 = getSysTime();
       // send something to ECA (for monitoring purposes) chk do something useful here
+      sysTime      = getSysTime();
       sendEvtId    = fwlib_buildEvtidV1(0xfff, ecaAction, 0, recSid, recBpid, 0x0);
       sendParam    = 0xdeadbeef;
-      sendDeadline = getSysTime();                                    // produces a late action but allows explicit monitoring of processing time   
+      sendDeadline = sysTime;                                         // produces a late action but allows explicit monitoring of processing time   
       fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0, 1);     // force late message
 
+      offsDone     = sysTime - recDeadline;
       transStat    = tH1_t.dps;
       nTransfer++;
 
@@ -558,7 +594,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     case B2B_ECADO_B2B_TRIGGEREXT :                                   // this is an OR, no 'break' on purpose
     case B2B_ECADO_B2B_TRIGGERINJ :                                   // this case only makes sense if cases B2B_ECADO_B2B_PMEXT/INJ succeeded
       if (!flagPMError) {
-
         reqDeadline = recDeadline + (uint64_t)B2B_PRETRIGGERTR;       // ECA is configured to pre-trigger ahead of time!!!
         nInput   = 0;
         TWait    = (int64_t)((reqDeadline - (TMeas >> 1)) - getSysTime());  // time how long we should wait before starting the measurement
@@ -602,9 +637,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     case B2B_ECADO_B2B_PDEXT :                                        // this is an OR, no 'break' on purpose
       sendEvtNo   = B2B_ECADO_B2B_DIAGEXT;
     case B2B_ECADO_B2B_PDINJ :
-      if (!sendEvtNo) 
-        sendEvtNo = B2B_ECADO_B2B_DIAGINJ;
-
+      if (!sendEvtNo) sendEvtNo = B2B_ECADO_B2B_DIAGINJ;
+            
       recGid          = (uint32_t)((recEvtId >> 48) & 0xfff     );
       recSid          = (uint32_t)((recEvtId >> 20) & 0xfff     );
       recBpid         = (uint32_t)((recEvtId >>  6) & 0x3fff    );
@@ -637,7 +671,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       //tmp1 = (int32_t)(dtMatch_as / 1000000); pp_printf("match3 [ps] %08d\n", tmp1); //pp_printf("match3 [hex float ns] %08x\n", tmp.data);
       
       sendParam   |= (uint64_t)(tmp.data & 0xffffffff);               // low word; match diagnostic
-      sendDeadline = recDeadline + (uint64_t)COMMON_AHEADT;
+      sendDeadline = getSysTime() + (uint64_t)COMMON_AHEADT;          // use a more conservative deadline
       fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0, 0);
       
       // send something to ECA (for monitoring purposes) chk do something useful here
@@ -649,11 +683,35 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       break; // case  B2B_ECADO_B2B_PDEXT/INJ
       
     default :                                                         // flush ECA queue
-      flagIsLate = 0;                                                 // ingore late events
+      flagIsLate = 0;                                                 // ignore late events in this case
   } // switch ecaAction
- 
+
   // check for late event
-  if ((status == COMMON_STATUS_OK) && flagIsLate) status = B2B_STATUS_LATEMESSAGE;
+  if ((status == COMMON_STATUS_OK) && flagIsLate) {
+    status = B2B_STATUS_LATEMESSAGE;
+    nLate++;
+  } // if status
+
+  // check for other statistics
+  if (ecaAction) {
+    comLatency = comLatencyAct;
+    offsDone   = getSysTime() - startTime;
+    
+    if (flagIsEarly)    nEarly++;
+    if (flagIsConflict) nConflict++;
+    if (flagIsDelayed)  nDelayed++;
+    if (flagIsSlow) {
+      nSlow++;
+      offsSlow = offsSlowAct;
+      if (offsSlow   < offsSlowMin)   offsSlowMin   = offsSlow;
+      if (offsSlow   > offsSlowMax)   offsSlowMax   = offsSlow;
+    } // if ecaAction
+
+    if (comLatency > comLatencyMax)   comLatencyMax = comLatency;
+    if (comLatency < comLatencyMin)   comLatencyMin = comLatency;
+    if (offsDone   > offsDoneMax)     offsDoneMax   = offsDone;
+    if (offsDone   < offsDoneMin)     offsDoneMin   = offsDone;
+  } // if eca action
   
   // check WR sync state
   if (fwlib_wrCheckSyncState() == COMMON_STATUS_WRBADSYNC) return COMMON_STATUS_WRBADSYNC;
@@ -718,8 +776,10 @@ int main(void) {
     fwlib_publishStatusArray(statusArray);
     pubState = actState;
     fwlib_publishState(pubState);
-    fwlib_publishTransferStatus(nTransfer, 0x0, transStat);
-    *pSharedGetComLatency = comLatency;
+
+    fwlib_publishTransferStatus2(nTransfer, 0x0, transStat, nLate, nEarly, nConflict, nDelayed, nSlow, offsSlow, offsSlowMax, offsSlowMin,
+                                 comLatency, comLatencyMax, comLatencyMin, offsDone, offsDoneMax, offsDoneMin);
+    
   } // while
 
   return(1); // this should never happen ...

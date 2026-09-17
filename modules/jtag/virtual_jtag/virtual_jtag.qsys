@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<system name="$${FILENAME}">
+ <component
+   name="$${FILENAME}"
+   displayName="$${FILENAME}"
+   version="1.0"
+   description=""
+   tags="INTERNAL_COMPONENT=true"
+   categories="System" />
+ <parameter name="bonusData"><![CDATA[bonusData 
+{
+   element virtual_jtag_0
+   {
+      datum _sortIndex
+      {
+         value = "0";
+         type = "int";
+      }
+   }
+}
+]]></parameter>
+ <parameter name="clockCrossingAdapter" value="HANDSHAKE" />
+ <parameter name="device" value="5AGXMA3D4F27I3" />
+ <parameter name="deviceFamily" value="Arria V" />
+ <parameter name="deviceSpeedGrade" value="3_H4" />
+ <parameter name="fabricMode" value="QSYS" />
+ <parameter name="generateLegacySim" value="false" />
+ <parameter name="generationId" value="0" />
+ <parameter name="globalResetBus" value="false" />
+ <parameter name="hdlLanguage" value="VERILOG" />
+ <parameter name="hideFromIPCatalog" value="true" />
+ <parameter name="lockedInterfaceDefinition" value="" />
+ <parameter name="maxAdditionalLatency" value="1" />
+ <parameter name="projectName" value="" />
+ <parameter name="sopcBorderPoints" value="false" />
+ <parameter name="systemHash" value="0" />
+ <parameter name="testBenchDutName" value="" />
+ <parameter name="timeStamp" value="0" />
+ <parameter name="useTestBenchNamingPattern" value="false" />
+ <instanceScript></instanceScript>
+ <interface name="jtag" internal="virtual_jtag_0.jtag" type="conduit" dir="end">
+  <port name="tdi" internal="tdi" />
+  <port name="tdo" internal="tdo" />
+  <port name="ir_in" internal="ir_in" />
+  <port name="ir_out" internal="ir_out" />
+  <port name="virtual_state_cdr" internal="virtual_state_cdr" />
+  <port name="virtual_state_sdr" internal="virtual_state_sdr" />
+  <port name="virtual_state_e1dr" internal="virtual_state_e1dr" />
+  <port name="virtual_state_pdr" internal="virtual_state_pdr" />
+  <port name="virtual_state_e2dr" internal="virtual_state_e2dr" />
+  <port name="virtual_state_udr" internal="virtual_state_udr" />
+  <port name="virtual_state_cir" internal="virtual_state_cir" />
+  <port name="virtual_state_uir" internal="virtual_state_uir" />
+  <port name="tms" internal="tms" />
+  <port name="jtag_state_tlr" internal="jtag_state_tlr" />
+  <port name="jtag_state_rti" internal="jtag_state_rti" />
+  <port name="jtag_state_sdrs" internal="jtag_state_sdrs" />
+  <port name="jtag_state_cdr" internal="jtag_state_cdr" />
+  <port name="jtag_state_sdr" internal="jtag_state_sdr" />
+  <port name="jtag_state_e1dr" internal="jtag_state_e1dr" />
+  <port name="jtag_state_pdr" internal="jtag_state_pdr" />
+  <port name="jtag_state_e2dr" internal="jtag_state_e2dr" />
+  <port name="jtag_state_udr" internal="jtag_state_udr" />
+  <port name="jtag_state_sirs" internal="jtag_state_sirs" />
+  <port name="jtag_state_cir" internal="jtag_state_cir" />
+  <port name="jtag_state_sir" internal="jtag_state_sir" />
+  <port name="jtag_state_e1ir" internal="jtag_state_e1ir" />
+  <port name="jtag_state_pir" internal="jtag_state_pir" />
+  <port name="jtag_state_e2ir" internal="jtag_state_e2ir" />
+  <port name="jtag_state_uir" internal="jtag_state_uir" />
+ </interface>
+ <interface name="tck" internal="virtual_jtag_0.tck" type="clock" dir="start">
+  <port name="tck" internal="tck" />
+ </interface>
+ <module
+   name="virtual_jtag_0"
+   kind="altera_virtual_jtag"
+   version="18.1"
+   enabled="1"
+   autoexport="1">
+  <parameter name="CREATE_PRIMITIVE_JTAG_STATE_SIGNAL_PORTS" value="true" />
+  <parameter name="device_family" value="Arria V" />
+  <parameter name="gui_use_auto_index" value="true" />
+  <parameter name="sld_instance_index" value="0" />
+  <parameter name="sld_ir_width" value="1" />
+ </module>
+ <interconnectRequirement for="$system" name="qsys_mm.clockCrossingAdapter" value="HANDSHAKE" />
+ <interconnectRequirement for="$system" name="qsys_mm.enableEccProtection" value="FALSE" />
+ <interconnectRequirement for="$system" name="qsys_mm.insertDefaultSlave" value="FALSE" />
+ <interconnectRequirement for="$system" name="qsys_mm.maxAdditionalLatency" value="1" />
+</system>

@@ -7,7 +7,7 @@
    description=""
    tags="INTERNAL_COMPONENT=true"
    categories="System" />
- <parameter name="bonusData"><![CDATA[bonusData
+ <parameter name="bonusData"><![CDATA[bonusData 
 {
    element xcvr_fpll_a10_0
    {
@@ -98,11 +98,11 @@
  <module
    name="xcvr_fpll_a10_0"
    kind="altera_xcvr_fpll_a10"
-   version="18.1"
+   version="23.1"
    enabled="1"
    autoexport="1">
-  <parameter name="base_device" value="NIGHTFURY2" />
-  <parameter name="device" value="10AX027E3F29E2SG" />
+  <parameter name="base_device" value="NIGHTFURY3" />
+  <parameter name="device" value="10AX048E3F29E2SG" />
   <parameter name="enable_analog_resets" value="0" />
   <parameter name="enable_bonding_clks" value="0" />
   <parameter name="enable_ext_lockdetect_ports" value="0" />

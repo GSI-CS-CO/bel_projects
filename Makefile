@@ -12,8 +12,12 @@ SYSCONFDIR      ?= /etc
 PWD             := $(shell pwd)
 UNAME           := $(shell uname -m)
 EXTRA_FLAGS     ?=
-WISHBONE_SERIAL ?= # Build wishbone-serial? y or leave blank
+WISHBONE_SERIAL ?= # Build wishbone-serial? yes or leave blank
 YOCTO_BUILD     ?= no
+DIM_VERSION     := dim_v20r37
+DIM_PATH        := res/dim/$(DIM_VERSION)
+USRPATH_DIM     := $(PWD)/res/dim
+BUILD_ARTIFACT  ?= no # Build artifacts? yes or leave blank
 export EXTRA_FLAGS
 
 # Set variables that are passed down to sub-makes
@@ -23,7 +27,9 @@ TLU=$(PWD)/ip_cores/wr-cores/modules/wr_tlu
 export TLU
 ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca
 export ECA
-PATH:=$(PWD)/lm32-toolchain/bin:$(PATH)
+PATH:=$(PWD)/res/bin:$(PWD)/lm32-toolchain/bin:$(PATH)
+PYTHONUSERBASE:=$(PWD)/res
+export PYTHONUSERBASE
 
 # This is mainly used to sort QSF files. After sorting it adds and deletes a "GIT marker" which will mark the file as changed.
 # Additionally all empty lines will be removed.
@@ -34,10 +40,16 @@ CHECK_SCU3             = ./syn/gsi_scu/control3/scu_control
 CHECK_VETAR2A          = ./syn/gsi_vetar2a/wr_core_demo/vetar2a
 CHECK_VETAR2A_EE_BUTIS = ./syn/gsi_vetar2a/ee_butis/vetar2a
 CHECK_PEXARRIA5        = ./syn/gsi_pexarria5/control/pci_control
+CHECK_PEXARRIA5_SDR    = ./syn/gsi_pexarria5/sdr/pci_control_sdr
 CHECK_EXPLODER5        = ./syn/gsi_exploder5/exploder5_csco_tr/exploder5_csco_tr
 CHECK_PMC              = ./syn/gsi_pmc/control/pci_pmc
 CHECK_MICROTCA         = ./syn/gsi_microtca/control/microtca_control
 CHECK_PEXP             = ./syn/gsi_pexp/control/pexp_control
+CHECK_PEXP_SDR         = ./syn/gsi_pexp/sdr/pexp_control_sdr
+CHECK_PEXP_PPS         = ./syn/gsi_pexp/pps/pexp_pps
+CHECK_PEXP_NEORV32     = ./syn/gsi_pexp/neorv32/pexp_neorv32
+CHECK_SCU5             = ./syn/gsi_scu/control5/scu_control
+CHECK_FTM5DP           = ./syn/gsi_scu/ftm5dp/ftm5dp
 CHECK_SCU4             = ./syn/gsi_scu/control4/scu_control
 CHECK_FTM4             = ./syn/gsi_scu/ftm4/ftm4
 CHECK_FTM4DP           = ./syn/gsi_scu/ftm4dp/ftm4dp
@@ -47,6 +59,13 @@ CHECK_PEXARRIA10       = ./syn/gsi_pexarria10/control/pexarria10
 CHECK_FTM10            = ./syn/gsi_pexarria10/ftm10/ftm10
 CHECK_A10GX            = ./syn/gsi_a10gx_pcie/control/pci_control
 CHECK_IDROGEN          = ./syn/in2p3_idrogen/control/idrogen
+CHECK_SCU4SLIM         = ./syn/gsi_scu/slim4/scu4slim
+CHECK_DIOB             = ./syn/scu_diob/scu_diob
+CHECK_ADDAC            = ./syn/gsi_addac/scu_addac
+CHECK_ADDAC2           = ./syn/gsi_addac2/scu_addac2
+CHECK_SIO3             = ./syn/scu_sio3/scu_sio3
+CHECK_IFA8             = ./syn/gsi_ifa8/ifa8
+CHECK_BLM              = ./syn/blm_aco/blm_aco
 
 # Project paths
 PATH_SCU2              = syn/gsi_scu/control2
@@ -54,10 +73,16 @@ PATH_SCU3              = syn/gsi_scu/control3
 PATH_VETAR2A           = syn/gsi_vetar2a/wr_core_demo
 PATH_VETAR2A_EE_BUTIS  = syn/gsi_vetar2a/ee_butis
 PATH_PEXARRIA5         = syn/gsi_pexarria5/control
+PATH_PEXARRIA5_SDR     = syn/gsi_pexarria5/sdr
 PATH_EXPLODER5         = syn/gsi_exploder5/exploder5_csco_tr
 PATH_PMC               = syn/gsi_pmc/control
 PATH_MICROTCA          = syn/gsi_microtca/control
 PATH_PEXP              = syn/gsi_pexp/control
+PATH_PEXP_SDR          = syn/gsi_pexp/sdr
+PATH_PEXP_PPS          = syn/gsi_pexp/pps
+PATH_PEXP_NEORV32      = syn/gsi_pexp/neorv32
+PATH_SCU5              = syn/gsi_scu/control5
+PATH_FTM5DP            = syn/gsi_scu/ftm5dp
 PATH_SCU4              = syn/gsi_scu/control4
 PATH_FTM4              = syn/gsi_scu/ftm4
 PATH_FTM4DP            = syn/gsi_scu/ftm4dp
@@ -67,6 +92,13 @@ PATH_PEXARRIA10        = syn/gsi_pexarria10/control
 PATH_FTM10             = syn/gsi_pexarria10/ftm10
 PATH_A10GX             = syn/gsi_a10gx_pcie/control
 PATH_IDROGEN           = syn/in2p3_idrogen/control
+PATH_SCU4SLIM          = syn/gsi_scu/slim4
+PATH_DIOB              = syn/scu_diob
+PATH_ADDAC             = syn/gsi_addac
+PATH_ADDAC2            = syn/gsi_addac2
+PATH_SIO3              = syn/scu_sio3
+PATH_IFA8              = syn/gsi_ifa8
+PATH_BLM               = syn/blm_aco
 
 define sort_file
 	sort $(1).qsf >> temp_sorted
@@ -77,10 +109,31 @@ define sort_file
 endef
 
 define check_timing
+	@test -f $(1).fit.rpt || echo "Error: Report file is missing!"
+	@ls -l $(1).fit.rpt
+	#@cat $(1).fit.rpt | grep "Critical Warning" && exit 1 || { exit 0; }
 	@test -f $(1).sta.rpt || echo "Error: Report file is missing!"
 	@ls -l $(1).sta.rpt
 	@cat $(1).sta.rpt | grep "Timing requirements not met" && exit 1 || { exit 0; }
 	@echo "Success! All Timing requirements were met!"
+endef
+
+GIT_BRANCH := $(or $(BRANCH_NAME),$(shell git symbolic-ref --short -q HEAD))
+GIT_COMMIT := $(shell git rev-parse --short HEAD)
+GIT_BRANCH_NAME := $(GIT_BRANCH)-$(GIT_COMMIT)
+FILE_TYPES = jic rpd sof
+
+define copy_release
+@sh -c '\
+if [ "$(BUILD_ARTIFACT)" = "yes" ] || [ "$(BUILD_ARTIFACT)" = "y" ]; then \
+    for ext in $(FILE_TYPES); do \
+        cp "$(strip $(1)).$$ext" "$(strip $(2))/$(strip $(3))-$(GIT_BRANCH_NAME).$$ext"; \
+        mv "$(strip $(2))/$(strip $(3))-$(GIT_BRANCH_NAME).$$ext" artifacts/; \
+    done; \
+    echo "Generated artifact files!"; \
+else \
+    echo "BUILD_ARTIFACT is not set to yes/y - skipping artifact generation."; \
+fi'
 endef
 
 define ldconfig_note
@@ -96,11 +149,14 @@ gateware:	all pexarria5 exploder5 vetar2a vetar2a-ee-butis scu2 scu3 pmc microtc
 
 install:	etherbone-install tools-install driver-install
 
-clean::		etherbone-clean tools-clean tlu-clean sdbfs-clean driver-clean lm32-toolchain-clean firmware-clean scu2-clean scu3-clean vetar2a-clean vetar2a-ee-butis-clean exploder5-clean pexarria5-clean sio3-clean ecatools-clean pmc-clean microtca-clean bg-clean
+clean::		etherbone-clean tools-clean tlu-clean sdbfs-clean driver-clean lm32-toolchain-clean firmware-clean scu2-clean scu3-clean vetar2a-clean vetar2a-ee-butis-clean exploder5-clean pexarria5-clean sio3-clean ecatools-clean pmc-clean microtca-clean
 
 distclean::	clean
 	git clean -xfd .
 	for i in etherbone-core fpga-config-space general-cores wr-cores wrpc-sw; do cd ip_cores/$$i; git clean -xfd .; cd ../..; done
+
+artifacts-clean:
+	rm artifacts/* || true
 
 etherbone::
 	test -f ip_cores/etherbone-core/api/Makefile.in || ./ip_cores/etherbone-core/api/autogen.sh
@@ -138,6 +194,15 @@ tools-clean::
 
 tools-install::
 	$(MAKE) -C tools install
+
+simple-display::		etherbone
+	$(MAKE) -C tools/display all
+
+simple-display-clean::
+	$(MAKE) -C tools/display clean
+
+simple-display-install::
+	$(MAKE) -C tools/display install
 
 ecatools: 	etherbone eca tlu
 	$(MAKE) -C tools ecatools
@@ -228,6 +293,45 @@ ifeq ($(UNAME), x86_64)
 	$(MAKE) -C ip_cores/wrpc-sw SDBFS=$(PWD)/ip_cores/fpga-config-space/sdbfs/userspace clean
 endif
 
+phtif:
+	$(MAKE) -C tools/phtif
+
+phtif-clean:
+	$(MAKE) -C tools/phtif clean
+
+librtpi:
+	cd res/librtpi && \
+	git clone https://github.com/GSI-CS-CO/librtpi.git && \
+	cd librtpi && \
+	git checkout 1.0.1 && \
+	autoreconf --install && \
+	./configure && \
+	make
+
+librtpi-install:
+	cd res/librtpi/librtpi && \
+	sudo make install
+	$(call ldconfig_note)
+
+librtpi-clean:
+	rm -rf res/librtpi/librtpi || true
+
+libpng12:
+	cd res/ubuntu-22-and-later && \
+	tar xf libpng_1.2.54.orig.tar && \
+	cd libpng-1.2.54 && \
+	./autogen.sh && \
+	./configure && \
+	make
+
+libpng12-install:
+	cd res/ubuntu-22-and-later/libpng-1.2.54 && \
+	make install
+	$(call ldconfig_note)
+
+libpng12-clean:
+	rm -rf res/ubuntu-22-and-later/libpng-1.2.54 || true
+
 # #################################################################################################
 # Arria 2 devices
 # #################################################################################################
@@ -243,6 +347,7 @@ scu2-sort:
 
 scu2-check:
 	$(call check_timing, $(CHECK_SCU2))
+	$(call copy_release, $(CHECK_SCU2), $(PATH_SCU2), gw-scu2)
 
 scu3:		firmware
 	$(MAKE) -C $(PATH_SCU3) all
@@ -255,6 +360,7 @@ scu3-sort:
 
 scu3-check:
 	$(call check_timing, $(CHECK_SCU3))
+	$(call copy_release, $(CHECK_SCU3), $(PATH_SCU3), gw-scu3)
 
 vetar2a:	firmware
 	$(MAKE) -C $(PATH_VETAR2A) all
@@ -267,6 +373,7 @@ vetar2a-sort:
 
 vetar2a-check:
 	$(call check_timing, $(CHECK_VETAR2A))
+	$(call copy_release, $(CHECK_VETAR2A), $(PATH_VETAR2A), gw-vetar2a)
 
 vetar2a-ee-butis:	firmware
 	$(MAKE) -C $(PATH_VETAR2A_EE_BUTIS) all
@@ -279,6 +386,7 @@ vetar2a-ee-butis-sort:
 
 vetar2a-ee-butis-check:
 	$(call check_timing, $(CHECK_VETAR2A_EE_BUTIS))
+	$(call copy_release, $(CHECK_VETAR2A_EE_BUTIS), $(PATH_VETAR2A_EE_BUTIS), gw-vetar2a-ee-butis)
 
 # #################################################################################################
 # Arria 5 devices
@@ -295,6 +403,7 @@ pexarria5-sort:
 
 pexarria5-check:
 	$(call check_timing, $(CHECK_PEXARRIA5))
+	$(call copy_release, $(CHECK_PEXARRIA5), $(PATH_PEXARRIA5), gw-pexarria5)
 
 microtca::	firmware
 	$(MAKE) -C $(PATH_MICROTCA) all
@@ -307,6 +416,7 @@ microtca-sort:
 
 microtca-check:
 	$(call check_timing, $(CHECK_MICROTCA))
+	$(call copy_release, $(CHECK_MICROTCA), $(PATH_MICROTCA), gw-microtca-amc)
 
 exploder5:	firmware
 	$(MAKE) -C $(PATH_EXPLODER5) all
@@ -319,6 +429,7 @@ exploder5-sort:
 
 exploder5-check:
 	$(call check_timing, $(CHECK_EXPLODER5))
+	$(call copy_release, $(CHECK_EXPLODER5), $(PATH_EXPLODER5), gw-exploder5)
 
 pmc:	firmware
 	$(MAKE) -C $(PATH_PMC) all
@@ -331,6 +442,7 @@ pmc-sort:
 
 pmc-check:
 	$(call check_timing, $(CHECK_PMC))
+	$(call copy_release, $(CHECK_PMC), $(PATH_PMC), gw-pmc)
 
 pexp:	firmware
 	$(MAKE) -C $(PATH_PEXP) all
@@ -343,6 +455,7 @@ pexp-sort:
 
 pexp-check:
 	$(call check_timing, $(CHECK_PEXP))
+	$(call copy_release, $(CHECK_PEXP), $(PATH_PEXP), gw-pexp)
 
 ftm:	firmware
 	$(MAKE) -C $(PATH_FTM) all
@@ -355,6 +468,7 @@ ftm-sort:
 
 ftm-check:
 	$(call check_timing, $(CHECK_FTM))
+	$(call copy_release, $(CHECK_FTM), $(PATH_FTM), gw-ftm)
 
 uniftm:	firmware
 	$(MAKE) -C $(PATH_UNIFTM) all
@@ -372,41 +486,31 @@ uniftm-check:
 # Arria 10 devices
 # #################################################################################################
 
-scu4:		firmware
-	$(MAKE) -C $(PATH_SCU4) all
+scu5:		firmware
+	$(MAKE) -C $(PATH_SCU5) all
 
-scu4-sort:
-	$(call sort_file, $(CHECK_SCU4))
+scu5-clean::
+	$(MAKE) -C $(PATH_SCU5) clean
 
-scu4-check:
-	$(call check_timing, $(CHECK_SCU4))
+scu5-sort:
+	$(call sort_file, $(CHECK_SCU5))
 
-scu4-clean::
-	$(MAKE) -C $(PATH_SCU4) clean
+scu5-check:
+	$(call check_timing, $(CHECK_SCU5))
+	$(call copy_release, $(CHECK_SCU5), $(PATH_SCU5), gw-scu5)
 
-ftm4:		firmware
-	$(MAKE) -C $(PATH_FTM4) all
+ftm5dp:		firmware
+	$(MAKE) -C $(PATH_FTM5DP) all
 
-ftm4-sort:
-	$(call sort_file, $(CHECK_FTM4))
+ftm5dp-clean::
+	$(MAKE) -C $(PATH_FTM5DP) clean
 
-ftm4-check:
-	$(call check_timing, $(CHECK_FTM4))
+ftm5dp-sort:
+	$(call sort_file, $(CHECK_FTM5DP))
 
-ftm4-clean::
-	$(MAKE) -C $(PATH_FTM4) clean
-
-ftm4dp:		firmware
-	$(MAKE) -C $(PATH_FTM4DP) all
-
-ftm4dp-sort:
-	$(call sort_file, $(CHECK_FTM4DP))
-
-ftm4dp-check:
-	$(call check_timing, $(CHECK_FTM4DP))
-
-ftm4dp-clean::
-	$(MAKE) -C $(PATH_FTM4DP) clean
+ftm5dp-check:
+	$(call check_timing, $(CHECK_FTM5DP))
+	$(call copy_release, $(CHECK_FTM5DP), $(PATH_FTM5DP), gw-ftm5dp)
 
 pexarria10:	firmware
 	$(MAKE) -C $(PATH_PEXARRIA10) all
@@ -419,6 +523,7 @@ pexarria10-sort:
 
 pexarria10-check:
 	$(call check_timing, $(CHECK_PEXARRIA10))
+	$(call copy_release, $(CHECK_PEXARRIA10), $(PATH_PEXARRIA10), gw-pexarria10)
 
 ftm10:	firmware
 	$(MAKE) -C $(PATH_FTM10) all
@@ -431,6 +536,72 @@ ftm10-sort:
 
 ftm10-check:
 	$(call check_timing, $(CHECK_FTM10))
+	$(call copy_release, $(CHECK_FTM10), $(PATH_FTM10), gw-ftm10-ftm10dp)
+
+scu4slim:		firmware
+	$(MAKE) -C $(PATH_SCU4SLIM) all
+
+scu4slim-clean::
+	$(MAKE) -C $(PATH_SCU4SLIM) clean
+
+scu4slim-sort:
+	$(call sort_file, $(CHECK_SCU4SLIM))
+
+scu4slim-check:
+	$(call check_timing, $(CHECK_SCU4SLIM))
+	$(call copy_release, $(CHECK_SCU4SLIM), $(PATH_SCU4SLIM), gw-scu4slim-scu4dot1)
+
+pexarria5-sdr:	firmware
+	$(MAKE) -C $(PATH_PEXARRIA5_SDR) all
+
+pexarria5-sdr-clean::
+	$(MAKE) -C $(PATH_PEXARRIA5_SDR) clean
+
+pexarria5-sdr-sort:
+	$(call sort_file, $(CHECK_PEXARRIA5_SDR))
+
+pexarria5-sdr-check:
+	$(call check_timing, $(CHECK_PEXARRIA5_SDR))
+	$(call copy_release, $(CHECK_PEXARRIA5_SDR), $(PATH_PEXARRIA5_SDR), gw-pexarria5-sdr)
+
+pexp-sdr:	firmware
+	$(MAKE) -C $(PATH_PEXP_SDR) all
+
+pexp-sdr-clean::
+	$(MAKE) -C $(PATH_PEXP_SDR) clean
+
+pexp-sdr-sort:
+	$(call sort_file, $(CHECK_PEXP_SDR))
+
+pexp-sdr-check:
+	$(call check_timing, $(CHECK_PEXP_SDR))
+	$(call copy_release, $(CHECK_PEXP_SDR), $(PATH_PEXP_SDR), gw-pexp-sdr)
+
+pexp-pps:	firmware
+	$(MAKE) -C $(PATH_PEXP_PPS) all
+
+pexp-pps-clean::
+	$(MAKE) -C $(PATH_PEXP_PPS) clean
+
+pexp-pps-sort:
+	$(call sort_file, $(CHECK_PEXP_PPS))
+
+pexp-pps-check:
+	$(call check_timing, $(CHECK_PEXP_PPS))
+	$(call copy_release, $(CHECK_PEXP_PPS), $(PATH_PEXP_PPS), gw-pexp-pps)
+
+pexp-neorv32:	firmware
+	$(MAKE) -C $(PATH_PEXP_NEORV32) all
+
+pexp-neorv32-clean::
+	$(MAKE) -C $(PATH_PEXP_NEORV32) clean
+
+pexp-neorv32-sort:
+	$(call sort_file, $(CHECK_PEXP_NEORV32))
+
+pexp-neorv32-check:
+	$(call check_timing, $(CHECK_PEXP_NEORV32))
+	$(call copy_release, $(CHECK_PEXP_NEORV32), $(PATH_PEXP_NEORV32), gw-pexp-neorv32)
 
 # #################################################################################################
 # SCU slaves
@@ -442,11 +613,19 @@ addac:		firmware
 addac-clean::
 	$(MAKE) -C syn/gsi_addac clean
 
+addac-check:
+	$(call check_timing, $(CHECK_ADDAC))
+	$(call copy_release, $(CHECK_ADDAC), $(PATH_ADDAC), gw-scu-slave-addac)
+
 addac2:		firmware
 	$(MAKE) -C syn/gsi_addac2 all
 
 addac2-clean::
 	$(MAKE) -C syn/gsi_addac2 clean
+
+addac2-check:
+	$(call check_timing, $(CHECK_ADDAC2))
+	$(call copy_release, $(CHECK_ADDAC2), $(PATH_ADDAC2), gw-scu-slave-addac2)
 
 diob:		firmware
 	$(MAKE) -C syn/scu_diob all
@@ -454,27 +633,63 @@ diob:		firmware
 diob-clean::
 	$(MAKE) -C syn/scu_diob clean
 
+diob-check:
+	$(call check_timing, $(CHECK_DIOB))
+	$(call copy_release, $(CHECK_DIOB), $(PATH_DIOB), gw-scu-slave-diob)
+
 sio3:		firmware
 	$(MAKE) -C syn/scu_sio3 all
 
 sio3-clean::
 	$(MAKE) -C syn/scu_sio3 clean
 
-ifa8:		firmware
+sio3-check:
+	$(call check_timing, $(CHECK_SIO3))
+	$(call copy_release, $(CHECK_SIO3), $(PATH_SIO3), gw-scu-slave-sio3)
+
+ifa8:		firmware # cyclone
 	$(MAKE) -C syn/gsi_ifa8 all
 
 ifa8-clean::
 	$(MAKE) -C syn/gsi_ifa8 clean
 
+ifa8-check:
+	$(call check_timing, $(CHECK_IFA8))
+	$(call copy_release, $(CHECK_IFA8), $(PATH_IFA8), gw-scu-slave-ifa8)
+
+blm:		firmware
+	$(MAKE) -C syn/blm_aco all
+
+blm-clean::
+	$(MAKE) -C syn/blm_aco clean
+
+blm-check:
+	$(call check_timing, $(CHECK_BLM))
+	$(call copy_release, $(CHECK_BLM), $(PATH_BLM), gw-scu-slave-blm)
+
 # #################################################################################################
 # LM32 firmware
 # #################################################################################################
 
-bg: lm32-toolchain
+fw-bg: lm32-toolchain
 	$(MAKE) -C modules/burst_generator
+ifeq ($(BUILD_ARTIFACT),yes)
+	cp modules/burst_generator/burstgen.bin modules/burst_generator/fw-bg-pexp-pmc-amc-pex5-exp5-$(GIT_BRANCH_NAME).bin
+	mv modules/burst_generator/fw-bg-pexp-pmc-amc-pex5-exp5-*.bin artifacts/
+endif
 
-bg-clean::
+fw-bg-clean::
 	$(MAKE) -C modules/burst_generator clean
+
+fw-fg-scu2-scu3: lm32-toolchain
+	$(MAKE) -C syn/gsi_scu/control2 scu_control.bin
+ifeq ($(BUILD_ARTIFACT),yes)
+	cp syn/gsi_scu/control2/scu_control.bin syn/gsi_scu/control2/fw-fg-scu2-scu3-$(GIT_BRANCH_NAME).bin
+	mv syn/gsi_scu/control2/fw-fg-scu2-scu3-*.bin artifacts/
+endif
+
+fw-fg-scu2-scu3-clean::
+	$(MAKE) -C syn/gsi_scu/control2 clean
 
 # #################################################################################################
 # Legacy and unmaintained devices
@@ -528,10 +743,61 @@ idrogen-sort:
 idrogen-check:
 	$(call check_timing, $(CHECK_IDROGEN))
 
+scu4:		firmware
+	$(MAKE) -C $(PATH_SCU4) all
+
+scu4-sort:
+	$(call sort_file, $(CHECK_SCU4))
+
+scu4-check:
+	$(call check_timing, $(CHECK_SCU4))
+
+scu4-clean::
+	$(MAKE) -C $(PATH_SCU4) clean
+
+ftm4:		firmware
+	$(MAKE) -C $(PATH_FTM4) all
+
+ftm4-sort:
+	$(call sort_file, $(CHECK_FTM4))
+
+ftm4-check:
+	$(call check_timing, $(CHECK_FTM4))
+
+ftm4-clean::
+	$(MAKE) -C $(PATH_FTM4) clean
+
+ftm4dp:		firmware
+	$(MAKE) -C $(PATH_FTM4DP) all
+
+ftm4dp-sort:
+	$(call sort_file, $(CHECK_FTM4DP))
+
+ftm4dp-check:
+	$(call check_timing, $(CHECK_FTM4DP))
+
+ftm4dp-clean::
+	$(MAKE) -C $(PATH_FTM4DP) clean
+
+# #################################################################################################
+# Build flow targets
+# #################################################################################################
+
+# Set NUM_PARALLEL_PROCESSORS to ALL in each QSF file
+set_max_parallel_processors:
+	@find . -type f -name "*.qsf" | while read -r file; do \
+			if grep -q "set_global_assignment -name NUM_PARALLEL_PROCESSORS" "$$file"; then \
+					sed -i 's/set_global_assignment -name NUM_PARALLEL_PROCESSORS [0-9]\+/set_global_assignment -name NUM_PARALLEL_PROCESSORS ALL/' "$$file"; \
+			else \
+					echo 'set_global_assignment -name NUM_PARALLEL_PROCESSORS ALL' >> "$$file"; \
+			fi; \
+	done
+
 # We need to run ./fix-git.sh and ./install-hdlmake.sh: make them a prerequisite for Makefile
 Makefile: prereq-rule
 
 prereq-rule::
+	@mkdir -p artifacts
 	@test -d .git/modules/ip_cores/wrpc-sw/modules/ppsi || \
 		(echo "Downloading submodules"; ./fix-git.sh)
 
@@ -541,14 +807,95 @@ git_submodules_update:
 git_submodules_init:
 	@./fix-git.sh
 
-# Check if hdlmake 3.3 is already installed
 hdlmake_install:
-	@rm .hdlmake 2>/dev/null || true
-	@hdlmake --version 2>/dev/null | grep 3.3 && echo "Info: Found hdlmake, skipping installation..." || echo "Info: Installing hdlmake..." > .hdlmake
-	@test -f .hdlmake && cd ip_cores/hdlmake/ && python setup.py install --user || true
-	@rm .hdlmake 2>/dev/null || true
-	@export PATH=$$PATH:$$HOME/.local/bin
+	@test -d ip_cores/hdlmake/hdlmake || { echo "Error: ip_cores/hdlmake is missing. Run ./fix-git.sh"; exit 1; }
+	@cd ip_cores/hdlmake && python3 setup.py install --user
 
-# Just install hdlmake (even if it's already installed)
-hdlmake_install_locally:
-	@cd ip_cores/hdlmake/ && python setup.py install --user
+hdlmake_install_locally: hdlmake_install
+
+# Print debug data
+debug:
+	@hdlmake -v 2>&1 | grep -v SyntaxWarning || true
+	@$(foreach var, \
+		GIT_BRANCH_NAME \
+		QSYS_ROOTDIR \
+		QUARTUS_ROOTDIR \
+		QUARTUS \
+		QUARTUS_64BIT \
+		PKG_CONFIG_PATH \
+		LC_NUMERIC \
+		PATH, \
+		echo "$(var) = $($(var))";)
+	@git log -n 5 --oneline
+	@git remote -v
+	@ls -lah Makefile
+	@uname -a
+
+# #################################################################################################
+# Test cases
+# #################################################################################################
+
+# Compile (and test) projects
+test_run_all: test_install_dim test_build_ftm_shared_map \
+	test_b2b test_wr-mil test_wr-unipz test_dm-unipz \
+	test_uni-blm test_uni-chop \
+	test_fec_analyzer test_freq-measure test_sync-mon \
+	test_lm32_examples test_fbas
+
+test_install_dim:
+	unzip -n res/dim/$(DIM_VERSION).zip -d res/dim/
+	cd res/dim/ && ln -sf $(DIM_VERSION)/dim include
+	cd res/dim/ && ln -sf $(DIM_VERSION)/linux lib
+
+test_build_ftm_shared_map:
+	$(MAKE) -C modules/ftm/ftmfw
+
+test_b2b:
+	$(MAKE) -C modules/b2b/fw USRPATH=$(USRPATH_DIM) TARGET=b2bcbu
+	$(MAKE) -C modules/b2b USRPATH=$(USRPATH_DIM) firmware
+	$(MAKE) -C modules/b2b USRPATH=$(USRPATH_DIM) software
+
+test_wr-mil:
+	$(MAKE) -C modules/wr-mil/fw USRPATH=$(USRPATH_DIM) TARGET=wrmil
+	$(MAKE) -C modules/wr-mil USRPATH=$(USRPATH_DIM) firmware
+	$(MAKE) -C modules/wr-mil USRPATH=$(USRPATH_DIM) software
+
+test_wr-unipz:
+	$(MAKE) -C modules/wr-unipz USRPATH=$(USRPATH_DIM) firmware
+	$(MAKE) -C modules/wr-unipz USRPATH=$(USRPATH_DIM) software
+
+test_dm-unipz:
+	$(MAKE) -C modules/dm-unipz USRPATH=$(USRPATH_DIM) firmware
+	$(MAKE) -C modules/dm-unipz USRPATH=$(USRPATH_DIM) software
+
+test_uni-blm:
+	$(MAKE) -C modules/uni-blm USRPATH=$(USRPATH_DIM) firmware
+	$(MAKE) -C modules/uni-blm USRPATH=$(USRPATH_DIM) software
+
+test_uni-chop:
+	$(MAKE) -C modules/uni-chop USRPATH=$(USRPATH_DIM) firmware
+	$(MAKE) -C modules/uni-chop USRPATH=$(USRPATH_DIM) software
+
+test_fec_analyzer:
+	$(MAKE) -C modules/fec-analyzer/x86
+
+test_freq-measure:
+	$(MAKE) -C modules/freq-measure/x86 USRPATH=$(USRPATH_DIM)
+
+test_sync-mon:
+	$(MAKE) -C modules/sync-mon/x86 USRPATH=$(USRPATH_DIM)
+
+test_lm32_examples:
+	$(MAKE) -C modules/lm32-example
+	$(MAKE) -C modules/lm32-example TARGET=ecaMsiExample
+	$(MAKE) -C modules/lm32-example TARGET=timerExample
+	$(MAKE) -C modules/lm32-example TARGET=example
+	$(MAKE) -C modules/lm32-example TARGET=milExample
+	$(MAKE) -C modules/lm32-example TARGET=milSnooper
+
+test_fbas:
+	$(MAKE) -C modules/fbas/fw
+
+test_neorv32:
+	$(MAKE) -C modules/neorv32/sim
+	$(MAKE) -C modules/neorv32/sim xbar

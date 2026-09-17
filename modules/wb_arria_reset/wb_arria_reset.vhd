@@ -47,19 +47,31 @@
 --                                        individual LM32 reset lines
 -------------------------------------------------------------------------------
 -- 2016-01-7  1.2      srauch 	- added register for hw version number
---					                    - read from address offset 0x8
+--			        - read from address offset 0x8
 -------------------------------------------------------------------------------
+-- address decoding for dummies
+-- WBA/Vector   765432 10
+-- 0x00 => 0    000000 00
+-- 0x04 => 1    000001 00
+-- 0x08 => 2    000011 00
+-- 0x0c => 3    000100 00
+-- 0x10 => 4    000101 00
+-- 0x14 => 5    000110 00
+-- 0x18 => 6    000111 00
+-- 0x1c => 7    001000 00
+-- 0x20 => 8    001001 00
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use ieee.math_real.all;
-
 
 library work;
 use work.wishbone_pkg.all;
 use work.wb_arria_reset_pkg.all;
 use work.aux_functions_pkg.all;
 use work.monster_pkg.all;
+use work.gencores_pkg.all;
 
 library arria10_reset_altera_remote_update_181;
 use arria10_reset_altera_remote_update_181.arria10_reset_pkg.all;
@@ -67,27 +79,32 @@ use arria10_reset_altera_remote_update_181.arria10_reset_pkg.all;
 entity wb_arria_reset is
   generic (
     arria_family : string := "none";
-    rst_channels : integer range 1 to 32 := 2;
+    rst_channels : integer range 0 to 32 := 2;
     clk_in_hz    : integer;
     en_wd_tmr    : boolean
   );
   port (
-    clk_sys_i     : in std_logic;
-    rstn_sys_i    : in std_logic;
-    clk_upd_i     : in std_logic;
-    rstn_upd_i    : in std_logic;
+    clk_sys_i      : in std_logic;
+    rstn_sys_i     : in std_logic;
+    clk_upd_i      : in std_logic;
+    rstn_upd_i     : in std_logic;
 
-    hw_version    : in std_logic_vector(31 downto 0);
+    hw_version     : in std_logic_vector(31 downto 0);
 
-    slave_o       : out t_wishbone_slave_out;
-    slave_i       : in t_wishbone_slave_in;
+    slave_o        : out t_wishbone_slave_out;
+    slave_i        : in  t_wishbone_slave_in;
 
-    phy_rst_o     : out std_logic;
-    phy_aux_rst_o : out std_logic;
-    phy_dis_o     : out std_logic;
-    phy_aux_dis_o : out std_logic;
+    phy_rst_o      : out std_logic;
+    phy_aux_rst_o  : out std_logic;
+    phy_dis_o      : out std_logic;
+    phy_aux_dis_o  : out std_logic;
 
-    rstn_o        : out std_logic_vector(rst_channels-1 downto 0)
+    psram_sel_o    : out std_logic_vector(3 downto 0);
+
+    neorv32_rstn_o : out std_logic;
+
+    rstn_o         : out std_logic_vector(rst_channels-1 downto 0);
+    poweroff_comx  : out std_logic
   );
 end entity;
 
@@ -103,6 +120,14 @@ architecture wb_arria_reset_arch of wb_arria_reset is
   signal phy_aux_rst      : std_logic;
   signal phy_dis          : std_logic;
   signal phy_aux_dis      : std_logic;
+  signal s_psram_sel      : std_logic_vector(3 downto 0);
+  signal phy_rst_sync     : std_logic;
+  signal phy_aux_rst_sync : std_logic;
+  signal phy_dis_sync     : std_logic;
+  signal phy_aux_dis_sync : std_logic;
+  signal s_psram_sel_sync : std_logic_vector(3 downto 0);
+  signal s_neorv32_rstn   : std_logic;
+  signal s_poweroff_comx  : std_logic;
   constant cnt_value      : integer := 1000 * 60 * 10; -- 10 min with 1ms granularity
   constant cnt_width      : integer := integer(ceil(log2(real(cnt_value)))) + 1;
 begin
@@ -186,10 +211,14 @@ begin
   slave_o.err   <= '0';
   slave_o.stall <= '0';
 
-  phy_rst_o     <= phy_rst;
-  phy_aux_rst_o <= phy_aux_rst;
-  phy_dis_o     <= phy_dis;
-  phy_aux_dis_o <= phy_aux_dis;
+  phy_rst_o     <= phy_rst_sync;
+  phy_aux_rst_o <= phy_aux_rst_sync;
+  phy_dis_o     <= phy_dis_sync;
+  phy_aux_dis_o <= phy_aux_dis_sync;
+
+  psram_sel_o   <= s_psram_sel_sync;
+
+  neorv32_rstn_o <= s_neorv32_rstn;
 
   wb_reg: process(clk_sys_i)
   begin
@@ -198,13 +227,16 @@ begin
       slave_o.dat <= (others => '0');
 
       if rstn_sys_i = '0' then
-        disable_wd  <= '0';
-        retrg_wd    <= '0';
-        phy_rst     <= '0';
-        phy_aux_rst <= '0';
-        phy_dis     <= '0';
-        phy_aux_dis <= '0';
-        reset_reg   <= (others => '0');
+        disable_wd      <= '0';
+        retrg_wd        <= '0';
+        phy_rst         <= '0';
+        phy_aux_rst     <= '0';
+        phy_dis         <= '0';
+        phy_aux_dis     <= '0';
+        s_psram_sel     <= "0001";
+        s_poweroff_comx <= '1';
+        s_neorv32_rstn  <= '1';
+        reset_reg       <= (others => '0');
       else
         retrg_wd <= '0';
         -- Detect a write to the register byte
@@ -235,6 +267,16 @@ begin
                 phy_aux_rst <= slave_i.dat(1);
                 phy_dis     <= slave_i.dat(2);
                 phy_aux_dis <= slave_i.dat(3);
+              when 6 =>
+                s_psram_sel <= slave_i.dat(3 downto 0);
+              when 7 =>
+                if(slave_i.dat = x"CAFEBAB0") then
+                  s_poweroff_comx <= slave_i.dat(0);
+                elsif(slave_i.dat = x"CAFEBAB1") then
+                  s_poweroff_comx <= slave_i.dat(0);
+                end if;
+              when 8 =>
+                s_neorv32_rstn <= slave_i.dat(0);
               when others => null;
             end case;
           else -- read
@@ -243,6 +285,9 @@ begin
               when 2 => slave_o.dat <= hw_version;
               when 3 => slave_o.dat <= x"0000000" & "000" & not disable_wd;
               when 5 => slave_o.dat <= x"0000000" & phy_aux_dis & phy_dis & phy_aux_rst & phy_rst;
+              when 6 => slave_o.dat <= x"0000000" & s_psram_sel;
+              when 7 => slave_o.dat <= x"0000000" & "000" & s_poweroff_comx;
+              when 8 => slave_o.dat <= x"0000000" & "000" & s_neorv32_rstn;
               when others => null;
             end case;
           end if;
@@ -251,4 +296,50 @@ begin
       end if; -- of sync reset
     end if; -- of rising_edge
   end process;
+
+  -- Try to avoid timing violations, these signals are used as outputs.
+  relax_phy_rst : gc_sync_ffs
+  port map (
+    clk_i    => clk_sys_i,
+    rst_n_i  => rstn_sys_i,
+    data_i   => phy_rst,
+    synced_o => phy_rst_sync
+  );
+
+  relax_aux_phy_rst : gc_sync_ffs
+  port map (
+    clk_i    => clk_sys_i,
+    rst_n_i  => rstn_sys_i,
+    data_i   => phy_aux_rst,
+    synced_o => phy_aux_rst_sync
+  );
+
+  relax_phy_dis : gc_sync_ffs
+  port map (
+    clk_i    => clk_sys_i,
+    rst_n_i  => rstn_sys_i,
+    data_i   => phy_dis,
+    synced_o => phy_dis_sync
+  );
+
+  relax_aux_phy_dis : gc_sync_ffs
+  port map (
+    clk_i    => clk_sys_i,
+    rst_n_i  => rstn_sys_i,
+    data_i   => phy_aux_dis,
+    synced_o => phy_aux_dis_sync
+  );
+
+  ps_ram_sel_generate : for index in 0 to 3 generate
+    ps_ram_sel_sync : gc_sync_ffs
+    port map (
+      clk_i    => clk_sys_i,
+      rst_n_i  => rstn_sys_i,
+      data_i   => s_psram_sel(index),
+      synced_o => s_psram_sel_sync(index)
+    );
+
+  poweroff_comx <= s_poweroff_comx;
+  end generate;
+
 end architecture;

@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 19-Apr-2021
+ *  version : 29-Apr-2024
  *
  *  Poor Humans TIF; this is a quick and dirty hack for the 2021 beam time; configure pulses
  *  for certain Event IDs.
@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2021
  *********************************************************************************************/
-#define PHTIF_X86_VERSION 0x000002
+#define PHTIF_X86_VERSION 0x000003
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -59,6 +59,7 @@
 
 const char*  program;
 char path[MAXLEN];
+int  flagScu;
 
 
 static void die(const char* where, uint32_t  status) {
@@ -73,7 +74,8 @@ static void help(void)
   fprintf(stderr, "Usage: %s [OPTION]\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "  -h                  display this help and exit\n");
-  fprintf(stderr, "  -p <path>           specify alternative location for menu settings\n");  
+  fprintf(stderr, "  -p <path>           specify alternative location for menu settings\n");
+  fprintf(stderr, "  -s                  target is an SCU; default is non-SCU\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool as quick and dirty hack to configure IOs \n");
   fprintf(stderr, "\n");
@@ -209,7 +211,8 @@ void cmdCreateCondition(char *parname)
 
   // configure output
   // build and execute command
-  sprintf(cmd, "saft-io-ctl %s -n IO%d -o1 -t0 -a1", device, io);
+  if (flagScu) sprintf(cmd, "saft-io-ctl %s -n B%d  -o1 -a1"    , device, io);
+  else         sprintf(cmd, "saft-io-ctl %s -n IO%d -o1 -t0 -a1", device, io);
   executeCommand(cmd, out);
   if (strlen(out) > 1) {
     printf("result:\n%s\npress RETURN to continue\n", out); 
@@ -279,7 +282,8 @@ void cmdCreateCondition(char *parname)
   if (offset < 0) sprintf(negFlag, "-g");
   else            sprintf(negFlag, " ");
 
-  sprintf(cmd, "saft-io-ctl %s -n IO%d -c 0x%lx 0x%lx %d 0x0 1 -u %s", device, io, evtId, mask, abs(offset), negFlag);
+  if (flagScu) sprintf(cmd, "saft-io-ctl %s -n B%d -c 0x%lx 0x%lx %d 0x0 1 -u %s" , device, io, evtId, mask, abs(offset), negFlag);
+  else         sprintf(cmd, "saft-io-ctl %s -n IO%d -c 0x%lx 0x%lx %d 0x0 1 -u %s", device, io, evtId, mask, abs(offset), negFlag);
   executeCommand(cmd, out);
   if (strlen(out) > 1) {
     printf("result:\n%s\npress RETURN to continue\n", out); 
@@ -291,7 +295,8 @@ void cmdCreateCondition(char *parname)
   if ((offset + length) < 0) sprintf(negFlag, "-g");
   else                       sprintf(negFlag, " ");
 
-  sprintf(cmd, "saft-io-ctl %s -n IO%d -c 0x%lx 0x%lx %d 0x0 0 -u %s", device, io, evtId, mask, abs(offset+length), negFlag);
+  if (flagScu) sprintf(cmd, "saft-io-ctl %s -n B%d -c 0x%lx 0x%lx %d 0x0 0 -u %s" , device, io, evtId, mask, abs(offset+length), negFlag);
+  else         sprintf(cmd, "saft-io-ctl %s -n IO%d -c 0x%lx 0x%lx %d 0x0 0 -u %s", device, io, evtId, mask, abs(offset+length), negFlag);
   executeCommand(cmd, out);
   if (strlen(out) > 1) {
     printf("result:\n%s\npress RETURN to continue\n", out); 
@@ -405,16 +410,20 @@ int main(int argc, char** argv)
   char   txtname[MAXLEN];
   
   // local variables
-  program = argv[0];                      
+  program = argv[0];         
   sprintf(path, "/tmp/phtifivt");
+  flagScu = 0;
 
-  while ((opt = getopt(argc, argv, "p:h")) != -1) {
+  while ((opt = getopt(argc, argv, "p:hs")) != -1) {
     switch (opt) {
       case 'h':
         help();
         return 0;
       case 'p':
         sprintf(path, "%s", optarg);
+        break;
+      case 's':
+        flagScu = 1;
         break;
       case ':':
       case '?':

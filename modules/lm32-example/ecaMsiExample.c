@@ -67,7 +67,7 @@
 
 /* register maps for some selected Wishbone devices  */
 #include "../../tools/wb_slaves.h" /* this is a hack */
-#include "../../ip_cores/saftlib/drivers/eca_flags.h"
+#include "../../ip_cores/saftlib/src/eca_flags.h"
 #include "../../ip_cores/wr-cores/modules/wr_eca/eca_regs.h"
 #include "../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"
 

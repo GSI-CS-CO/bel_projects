@@ -3,10 +3,10 @@
 # Set SYSENV to the target system environment (YOCTO, ACC7, ACC9, OPT)
 # Example build:
 #   'make clean'                                                 
-#   'make ENV=int SYSENV=ACC7 DIM=YES PREFIX= all'                                             (hack: leave PREFIX empty for SCU path)
+#   'make ENV=int SYSENV=YOCTO DIM=YES PREFIX= all'                                             (hack: leave PREFIX empty for SCU path)
 # Example deploy (for ASL only):
-#   'make PREFIX= SYSENV=ACC7 STAGING=/common/export/timing-rte/ftdimcp-dev deploy'    (hack: leave PREFIX empty for SCU path)
-#   'make PREFIX= SYSENV=ACC7 STAGING=/common/export/timing-rte/ftdimcp deploy'        (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= SYSENV=YOCTO STAGING=/common/export/timing-rte/ftdimcp-dev-yocto deploy'      (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= SYSENV=YOCTO STAGING=/common/export/timing-rte/ftdimcp-yocto deploy'          (hack: leave PREFIX empty for SCU path)
 
 # install
 PREFIX      ?= /usr/local
@@ -29,12 +29,12 @@ ARCH        ?=
 endif
 
 ifeq ($(SYSENV), YOCTO)
-USRPATH     := /common/usr/timing/b2b/yocto/usr
+USRPATH     := /common/usr/timing/user-dietrich/yocto/usr
 ARCH        := /x86_64
 endif
 
 ifeq ($(SYSENV), ACC7)
-USRPATH     := /common/usr/timing/b2b/centos7/usr
+USRPATH     := /common/usr/timing/user-dietrich/centos7/usr
 ARCH        := /x86_64
 endif
 
@@ -51,7 +51,12 @@ TARGETS := software nfsinit
 all: $(TARGETS)
 
 software:: 
+ifeq ($(SYSENV), YOCTO)
+# I really hate this hack, but I found no simpler solution
+	bash x86/make-yocto-software-all
+else
 	$(MAKE) -C $(SW) all
+endif 
 
 nfsinit:
 	echo $(shell cd $(NFSINIT); $(GENNFSINIT)/generate-main.sh $(ENV); cd ..)
@@ -84,7 +89,7 @@ deploy:
 #	cp $(SW)/*.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin                    # '/usr' is a hack
 
 # systemd
-#	cp $(SYSTEMD)/*.service $(STAGING)/$(SYSTEMD)                       # systemd units
+	cp $(SYSTEMD)/*.service $(STAGING)/$(SYSTEMD)                       # systemd units
 
 .PHONY: all clean
 

@@ -6,7 +6,7 @@
 # './buildApp.sh $HOME/consoleApps/b2b b2b-pro-transfer-mon b2b-mon'
 
 SW=../x86
-USRPATH=/common/usr/timing/b2b/centos7
+USRPATH=/common/usr/timing/user-dietrich/rocky9
 APPBUILD=$1/$2/current
 NAME=$2
 BIN=$3

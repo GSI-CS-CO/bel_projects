@@ -18,8 +18,12 @@ mkdir /tmp/phtifivt
 cp -a /opt/$NAME/$ARCH/tmp/phtifivt/* /tmp/phtifivt
 chmod a+w -R /tmp/phtifivt/
 
-log 'creating phtif user'
-touch /etc/phtif
+#log 'creating phtif user'
+#touch /etc/phtif
 
-adduser --disabled-password --shell /bin/sh --home / phtif
-echo "phtif:phtif" | chpasswd
+#adduser --disabled-password --shell /bin/sh --home / phtif
+#echo "phtif:phtif" | chpasswd
+
+# there is an issue with user phtif we can't fix; lets be nasty
+log 'change pw to phtif'
+echo "root:phtif" | chpasswd

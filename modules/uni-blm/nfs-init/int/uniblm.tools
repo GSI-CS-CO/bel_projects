@@ -1,0 +1,9 @@
+# libraries
+cp -a $MOUNTPOINT/$ARCH/usr/lib/* /usr/lib/
+ldconfig
+# software
+cp -a $MOUNTPOINT/$ARCH/usr/bin/uniblm-ctl /usr/bin/
+
+# firmware
+cp -a $MOUNTPOINT/firmware/* /
+

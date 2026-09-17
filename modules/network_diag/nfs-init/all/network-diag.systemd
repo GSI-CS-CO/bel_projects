@@ -1,5 +1,0 @@
-SERVICEA=network-diag.service
-cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
-systemctl daemon-reload
-
-systemctl start $SERVICEA

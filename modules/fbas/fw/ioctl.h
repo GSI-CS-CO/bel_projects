@@ -16,16 +16,22 @@ enum {
   MPS_SIGNAL_INVALID    // invalid
 };
 
-// LEMO output ports
-enum {
-  N_LEMO_OUT_SCU = 2,     // number of LEMO outputs in SCU
-  N_LEMO_OUT_PEXARIA = 3  // Pexaria
+// number of the LEMO ports
+enum LEMO_OUTPUTS {
+  N_OUT_LEMO_SCU = 2,     // SCU3
+  N_OUT_LEMO_PEXARIA = 3  // Pexaria
 };
 
 typedef struct io_port_struct io_port_t;
 struct io_port_struct {
-  uint32_t type;          // port channel type
-  uint8_t  idx;           // port channel index
+  uint8_t type;  // port type (GPIO or LVDS)
+  uint8_t idx;   // port internal index
+};
+
+typedef struct out_port_config_struct out_port_config_t;
+struct out_port_config_struct {
+  uint8_t type;   // output type (GPIO, LVDS)
+  uint8_t total;  // total number of avaialable IO pins
 };
 
 // For IO control operations look in ip_cores/saftlib/drivers/InoutImpl.cpp
@@ -52,16 +58,18 @@ struct io_port_struct {
 #define IO_GPIO_GET_INBEGIN   0xc000
 #define IO_LVDS_GET_INBEGIN   0xd000
 
-extern volatile uint32_t *pIOCtrl;             // WB address of IO Control
+extern volatile uint32_t *pIOCtrl;   // WB address of IO Control
+extern out_port_config_t outPortCfg; // default output port configuration (GPIO, SCU3)
 
-status_t setIoOe(uint32_t channel, uint32_t idx, bool val);
-uint32_t getIoOe(uint32_t channel);
-void setupEffLogOut(uint8_t buf_idx, uint32_t ch_type, uint8_t ch_idx);
-status_t getEffLogOut(uint8_t buf_idx, io_port_t* port);
-void driveEffLogOut(mpsMsg_t* buf, uint8_t offset);
-void driveOutPort(uint32_t channel, uint8_t idx, uint8_t value);
+void     ioInitPortMap(void);
+status_t ioSetOutEnable(const uint8_t index, const bool enable);
+status_t ioIsOutEnabled(const uint8_t index, uint32_t *pReg);
+status_t ioMapOutput(const uint8_t bufIdx, const uint8_t portIdx);
+status_t ioDriveOutput(mpsMsg_t *const pBuf, const uint8_t bufIdx);
+status_t driveOutPort(io_port_t *const pOutPort, const uint8_t value);
+void     ioPrintPortMap(void);
+
 void qualifyInput(size_t len, mpsMsg_t* buf);
 void testOutput(size_t len, mpsMsg_t* buf);
 
-void diagPrintMapIoMsgIdx(void);
 #endif

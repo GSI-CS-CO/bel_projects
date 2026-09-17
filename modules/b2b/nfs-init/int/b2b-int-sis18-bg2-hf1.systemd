@@ -1,19 +1,19 @@
-# yocto; temporarily disabled
-#SERVICEA=b2b-servsys-int-sis18-pm.service
-#SERVICEB=b2b-servsys-int-sis18-cbu.service
-#SERVICEC= jitter check service
-#cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
-#cp -a $MOUNTPOINT/systemd/$SERVICEB /lib/systemd/system
-#cp -a $MOUNTPOINT/systemd/$SERVICEC /lib/systemd/system
-#systemctl daemon-reload
-#
-#systemctl start $SERVICEA
-#systemctl start $SERVICEB
-#systemctl start $SERVICEC
+# yocto
+SERVICEA=b2b-servsys-int-sis18-pm.service
+SERVICEB=b2b-servsys-int-sis18-cbu.service
+SERVICEC=b2b-jittercheck-int-sis18-pm.service
+cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
+cp -a $MOUNTPOINT/systemd/$SERVICEB /lib/systemd/system
+cp -a $MOUNTPOINT/systemd/$SERVICEC /lib/systemd/system
+systemctl daemon-reload
+
+systemctl start $SERVICEA
+systemctl start $SERVICEB
+systemctl start $SERVICEC
 
 # hack for acc7
-export DIM_DNS_NODE=asl105
-
-b2b-serv-sys dev/wbm0 -s int_sis18-pm &
-b2b-serv-sys dev/wbm1 -s int_sis18-cbu &
-b2b-jitter-check tr1 tr0 -p1 -t1 int_sis18-pm &
+#export DIM_DNS_NODE=asl105
+#
+#b2b-serv-sys dev/wbm0 -s int_sis18-pm &
+#b2b-serv-sys dev/wbm1 -s int_sis18-cbu &
+#b2b-jitter-check tr1 tr0 -p1 -t1 int_sis18-pm &

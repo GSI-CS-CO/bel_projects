@@ -1,0 +1,10 @@
+[Unit]
+Description = ftdi-mcp service for INT SIS18 extraction kicker
+
+[Service]
+Type = simple
+Environment="DIM_DNS_NODE=asl105"
+ExecStart = ftdimcp-ctl 0 -d b2b_int_sis18-kse -l 52.0
+
+[Install]
+WantedBy = multi-user.target

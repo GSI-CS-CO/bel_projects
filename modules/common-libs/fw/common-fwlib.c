@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 14-Mar-2023
+ *  version : 03-Jul-2026
  *
  *  common functions used by various firmware projects
  *
@@ -76,7 +76,7 @@ volatile uint32_t *pWREp;               // WB address of WR Endpoint
 volatile uint32_t *pIOCtrl;             // WB address of IO Control
 volatile uint32_t *pMILPiggy;           // WB address of MIL device bus (MIL piggy)
 volatile uint32_t *pOLED;               // WB address of OLED (display)
-volatile uint16_t *pSbMaster;           // WB address of SCU bus master
+volatile uint32_t *pSbMaster;           // WB address of SCU bus master
 
 // global variables
 uint32_t *pSharedVersion;               // pointer to a "user defined" u32 register; here: publish version
@@ -86,7 +86,7 @@ uint32_t *pSharedNBadStatus;            // pointer to a "user defined" u32 regis
 uint32_t *pSharedNBadState;             // pointer to a "user defined" u32 register; here: publish # of bad state (=FATAL, ERROR, UNKNOWN) incidents
 volatile uint32_t *pSharedCmd;          // pointer to a "user defined" u32 register; here: get command from host
 uint32_t *pSharedState;                 // pointer to a "user defined" u32 register; here: publish status
-volatile uint32_t *pSharedData4EB;      // pointer to a n x u32 register; here: memory region for receiving EB return values
+volatile uint32_t *pSharedData4EB;      // pointer to a "user defined" u32 register; here: memory region for receiving EB return values
 uint32_t *pSharedMacHi;                 // pointer to a "user defined" u32 register; here: high bits of MAC
 uint32_t *pSharedMacLo;                 // pointer to a "user defined" u32 register; here: low bits of MAC
 uint32_t *pSharedIp;                    // pointer to a "user defined" u32 register; here: IP
@@ -97,6 +97,20 @@ uint32_t *pSharedTS0Lo;                 // pointer to a "user defined" u32 regis
 uint32_t *pSharedNTransfer;             // pointer to a "user defined" u32 register; here: # of transfers
 uint32_t *pSharedNInject;               // pointer to a "user defined" u32 register; here: # of injections within current transfer
 uint32_t *pSharedTransStat;             // pointer to a "user defined" u32 register; here: status of transfer
+uint32_t *pSharedNLate;                 // pointer to a "user defined" u32 register; here: number of ECA 'late' incidents                                            
+uint32_t *pSharedNEarly;                // pointer to a "user defined" u32 register; here: number of ECA 'early' incidents                                           
+uint32_t *pSharedNConflict;             // pointer to a "user defined" u32 register; here: number of ECA 'conflict' incidents                                        
+uint32_t *pSharedNDelayed;              // pointer to a "user defined" u32 register; here: number of ECA 'delayed' incidents                                         
+uint32_t *pSharedNSlow;                 // pointer to a "user defined" u32 register; here: number of incidents, when 'wait4eca' was called after the deadline        
+uint32_t *pSharedOffsSlow;              // pointer to a "user defined" u32 register; here: if 'missed': offset deadline to start wait4eca; else '0'                  
+uint32_t *pSharedOffsSlowMax;           // pointer to a "user defined" u32 register; here: if 'missed': offset deadline to start wait4eca; else '0'; max
+uint32_t *pSharedOffsSlowMin;           // pointer to a "user defined" u32 register; here: if 'missed': offset deadline to start wait4eca; else '0'; min
+uint32_t *pSharedComLatency;            // pointer to a "user defined" u32 register; here: if 'missed': offset start to stop wait4eca; else deadline to stop wait4eca
+uint32_t *pSharedComLatencyMax;         // pointer to a "user defined" u32 register; here: if 'missed': offset start to stop wait4eca; else deadline to stop wait4eca; max
+uint32_t *pSharedComLatencyMin;         // pointer to a "user defined" u32 register; here: if 'missed': offset start to stop wait4eca; else deadline to stop wait4eca; min
+uint32_t *pSharedOffsDone;              // pointer to a "user defined" u32 register; here: offset event deadline to time when we are done [ns]
+uint32_t *pSharedOffsDoneMax;           // pointer to a "user defined" u32 register; here: offset event deadline to time when we are done [ns]; max
+uint32_t *pSharedOffsDoneMin;           // pointer to a "user defined" u32 register; here: offset event deadline to time when we are done [ns]; min
 uint32_t *pSharedUsedSize;              // pointer to a "user defined" u32 register; here: size of (used) shared memory
 
 uint32_t *cpuRamExternalData4EB;        // external address (seen from host bridge) of this CPU's RAM: field for EB return values
@@ -206,7 +220,7 @@ uint32_t findSbMaster() //find WB address of SCU bus master
   pSbMaster = 0x0;
 
   // get Wishbone address for SCU bus master
-  pSbMaster = (uint16_t *)find_device_adr(GSI, SCU_BUS_MASTER);
+  pSbMaster = find_device_adr(GSI, SCU_BUS_MASTER);
 
   if (!pSbMaster) {DBPRINT1("common-fwlib: can't find SCU bus master\n"); return COMMON_STATUS_ERROR;}
   else                                                      return COMMON_STATUS_OK;
@@ -352,7 +366,7 @@ uint64_t fwlib_wrGetMac()  // get my own MAC
   uint64_t mac;
 
   macHi = (*(pWREp + (WR_ENDPOINT_MACHI >> 2))) & 0xffff;
-  macLo = *(pWREp + (WR_ENDPOINT_MACLO >> 2));
+  macLo =  *(pWREp + (WR_ENDPOINT_MACLO >> 2));
 
   mac = macHi;
   mac = (mac << 32);
@@ -563,13 +577,31 @@ uint32_t fwlib_ecaWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param, uin
 
 uint32_t fwlib_wrCheckSyncState() //check status of White Rabbit (link up, tracking)
 {
-  uint32_t syncState;
+  // hackish: just check
+  // a. WR time is not entirely off and
+  // b. WR time is progressing monotonically
+#define WHITERABBIT_MIN_TIME 0x188298e369bb0c80                             // bogus, december 2025
+  static uint64_t wr_time_prev;                                             // actual
+  uint64_t        wr_time;
 
+  wr_time = getSysTime();
+
+  if ((wr_time > wr_time_prev) && (wr_time > WHITERABBIT_MIN_TIME)) {
+    wr_time_prev = wr_time;
+    return COMMON_STATUS_OK;
+  }
+
+  return COMMON_STATUS_WRBADSYNC;
+ 
+  /* The following code may jeopardize real-time performance and has been commented 
+  uint32_t syncState;
+     
   syncState =  *(pPPSGen + (WR_PPS_GEN_ESCR >> 2));                         // read status
   syncState = syncState & WR_PPS_GEN_ESCR_MASK;                             // apply mask
 
   if ((syncState == WR_PPS_GEN_ESCR_MASK)) return COMMON_STATUS_OK;         // check if all relevant bits are set
   else                                     return COMMON_STATUS_WRBADSYNC;
+  */
 } //fwlib_wrCheckStatus
 
 
@@ -614,6 +646,20 @@ void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t shared
   pSharedNTransfer        = (uint32_t *)(pShared + (COMMON_SHARED_NTRANSFER >> 2));
   pSharedNInject          = (uint32_t *)(pShared + (COMMON_SHARED_NINJECT >> 2));
   pSharedTransStat        = (uint32_t *)(pShared + (COMMON_SHARED_TRANSSTAT >> 2));
+  pSharedNLate            = (uint32_t *)(pShared + (COMMON_SHARED_NLATE >> 2));
+  pSharedNEarly           = (uint32_t *)(pShared + (COMMON_SHARED_NEARLY >> 2));
+  pSharedNConflict        = (uint32_t *)(pShared + (COMMON_SHARED_NCONFLICT >> 2));
+  pSharedNDelayed         = (uint32_t *)(pShared + (COMMON_SHARED_NDELAYED >> 2));
+  pSharedNSlow            = (uint32_t *)(pShared + (COMMON_SHARED_NSLOW >> 2));
+  pSharedOffsSlow         = (uint32_t *)(pShared + (COMMON_SHARED_OFFSSLOW >> 2));
+  pSharedOffsSlowMax      = (uint32_t *)(pShared + (COMMON_SHARED_OFFSSLOWMAX >> 2));
+  pSharedOffsSlowMin      = (uint32_t *)(pShared + (COMMON_SHARED_OFFSSLOWMIN >> 2));
+  pSharedComLatency       = (uint32_t *)(pShared + (COMMON_SHARED_COMLATENCY >> 2));
+  pSharedComLatencyMax    = (uint32_t *)(pShared + (COMMON_SHARED_COMLATENCYMAX >> 2));
+  pSharedComLatencyMin    = (uint32_t *)(pShared + (COMMON_SHARED_COMLATENCYMIN >> 2));
+  pSharedOffsDone         = (uint32_t *)(pShared + (COMMON_SHARED_OFFSDONE >> 2));
+  pSharedOffsDoneMax      = (uint32_t *)(pShared + (COMMON_SHARED_OFFSDONEMAX >> 2));
+  pSharedOffsDoneMin      = (uint32_t *)(pShared + (COMMON_SHARED_OFFSDONEMIN >> 2));
   pSharedUsedSize         = (uint32_t *)(pShared + (COMMON_SHARED_USEDSIZE >> 2));
 
   // clear shared mem
@@ -664,6 +710,18 @@ void fwlib_clearOLED()
 
 uint32_t fwlib_wait4ECAEvent(uint32_t timeout_us, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *tef, uint32_t *isLate, uint32_t *isEarly, uint32_t *isConflict, uint32_t *isDelayed)  // 1. query ECA for actions, 2. trigger activity
 {
+  uint32_t isSlow;
+  uint32_t offsSlow;
+  uint32_t comLatency;
+
+  return (fwlib_wait4ECAEvent2(timeout_us, deadline, evtId, param, tef, isLate, isEarly, isConflict, isDelayed, &isSlow, &offsSlow, &comLatency));
+} // fwlib_wait4ECAEvent
+
+
+uint32_t fwlib_wait4ECAEvent2(uint32_t timeout_us, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *tef, // 1. query ECA for actions, 2. trigger activity
+                              uint32_t *isLate, uint32_t *isEarly, uint32_t *isConflict, uint32_t *isDelayed,
+                              uint32_t *isSlow, uint32_t *offsSlow, uint32_t *comLatency)  
+{
   uint32_t *pECAFlag;           // address of ECA flag
   uint32_t ecaFlag;             // ECA flag
   uint32_t evtIdHigh;           // high 32bit of eventID
@@ -676,7 +734,8 @@ uint32_t fwlib_wait4ECAEvent(uint32_t timeout_us, uint64_t *deadline, uint64_t *
   uint32_t nextAction;          // describes what to do next
   uint64_t timeoutT;            // when to time out
   uint64_t timeout;             // timeout [ns]
-
+  uint64_t startT;              // time when starting this routine
+  uint64_t stopT;               // time when finishing this routine
 
   pECAFlag    = (uint32_t *)(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));   // address of ECA flag
 
@@ -684,16 +743,17 @@ uint32_t fwlib_wait4ECAEvent(uint32_t timeout_us, uint64_t *deadline, uint64_t *
   // reduces time per read from ~6.5 us to ~4.8 us
   //timeout     = ((uint64_t)timeout_us + 1) * 1000;
   timeout     = ((uint64_t)timeout_us + 1) << 10;
-  timeoutT    = getSysTime() + timeout;
+  startT      = getSysTime();
+  timeoutT    = startT + timeout;
 
   while (getSysTime() < timeoutT) {
     ecaFlag = *pECAFlag;                                            // we'll need this value more than once per iteration
-    if (ecaFlag & (0x0001 << ECA_VALID)) {                          // if ECA data is valid
+    if (ecaFlag & (0x0001 << ECA_VALID)) {                          // if ECA data is valid ...
 
-      // read data
+      // read data; don't use atomic_on/off (increases latency) 
       evtIdHigh    = *(pECAQ + (ECA_QUEUE_EVENT_ID_HI_GET >> 2));
       evtIdLow     = *(pECAQ + (ECA_QUEUE_EVENT_ID_LO_GET >> 2));
-      evtDeadlHigh = *(pECAQ + (ECA_QUEUE_DEADLINE_HI_GET >> 2));
+      evtDeadlHigh = *(pECAQ + (ECA_QUEUE_DEADLINE_HI_GET >> 2));  
       evtDeadlLow  = *(pECAQ + (ECA_QUEUE_DEADLINE_LO_GET >> 2));
       actTag       = *(pECAQ + (ECA_QUEUE_TAG_GET >> 2));
       evtParamHigh = *(pECAQ + (ECA_QUEUE_PARAM_HI_GET >> 2));
@@ -711,6 +771,27 @@ uint32_t fwlib_wait4ECAEvent(uint32_t timeout_us, uint64_t *deadline, uint64_t *
       // pop action from channel
       *(pECAQ + (ECA_QUEUE_POP_OWR >> 2)) = 0x1;
 
+      stopT        = getSysTime();
+
+      // monitoring stuff
+      if (*deadline < startT) {
+        *isSlow     = 1;
+        *offsSlow   = (uint32_t)(startT - *deadline);
+        // if late or delayed, the message deadline will be prior tStart
+        // although we might have waited already for quite some time
+        // this might lead to erronously large values for comLatency
+        // the hackish solution right now is to use a defined bogus value
+        if (*isLate || *isDelayed) *comLatency = COMMON_LATENCYBOGUS;
+        else                       *comLatency = (uint32_t)(stopT - startT);
+      } // if missed
+      else {
+        *isSlow     = 0;
+        *offsSlow   = 0;
+        // paranoid: check for the case where sysTime and ecaTime are out of sync
+        if (stopT >= *deadline) *comLatency = (uint32_t)(stopT - *deadline);
+        else                    *comLatency = COMMON_LATENCYBOGUS;
+      } // else missed
+
       // here: do s.th. according to tag
       nextAction = actTag;
 
@@ -718,14 +799,20 @@ uint32_t fwlib_wait4ECAEvent(uint32_t timeout_us, uint64_t *deadline, uint64_t *
     } // if data is valid
   } // while not timed out
 
-  *deadline = 0x0;
-  *evtId    = 0x0;
-  *param    = 0x0;
-  *tef      = 0x0;
-  *isLate   = 0x0;
+  *deadline   = 0x0;
+  *evtId      = 0x0;
+  *param      = 0x0;
+  *tef        = 0x0;
+  *isLate     = 0x0;
+  *isEarly    = 0x0;
+  *isConflict = 0x0;
+  *isDelayed  = 0x0;
+  *isSlow     = 0x0;
+  *offsSlow   = 0x0;
+  *comLatency = 0x0; 
 
   return COMMON_ECADO_TIMEOUT;
-} // fwlib_wait4ECAEvent
+} // fwlib_wait4ECAEvent2
 
 
 // wait for MIL event or timeout
@@ -743,11 +830,12 @@ uint32_t fwlib_wait4MILEvent(uint32_t usTimeout, uint32_t *evtData, uint32_t *ev
   *virtAcc    = 0xffff;
   *evtData    = 0xffff;
   *evtCode    = 0xffff;
-  valid       = 0;
+  if (nValidEvtCodes == 0) valid = 1;           // just return with the first element read from FIFO
+  else                     valid = 0;           // only return if element read from FIFO matches one of the validEvtcodes
 
   while(getSysTime() < timeoutT) {              // while not timed out...
-    while (fifoNotemptyEvtMil(pMILPiggy)) {     // while fifo contains data
-      popFifoEvtMil(pMILPiggy, &evtRec);
+    while (fifoNotemptyEvtMil(pMILPiggy, 0)) {  // while fifo contains data
+      popFifoEvtMil(pMILPiggy, 0, &evtRec);
       evtCodeRec  = evtRec & 0x000000ff;        // extract event code
       virtAccRec  = (evtRec >> 8)  & 0x0f;      // extract virtual accelerator
       evtDataRec  = (evtRec >> 12) & 0x0f;      // extract event data
@@ -774,9 +862,9 @@ void fwlib_milPulseLemo(uint32_t nLemo) // pulse lemo for debugging with scope
 {
   uint32_t i;
 
-  setLemoOutputEvtMil(pMILPiggy, nLemo, 1);
+  setLemoOutputEvtMil(pMILPiggy, 0, nLemo, 1);
   for (i=0; i< 10 * COMMON_US_ASMNOP; i++) asm("nop");
-  setLemoOutputEvtMil(pMILPiggy, nLemo, 0);
+  setLemoOutputEvtMil(pMILPiggy, 0, nLemo, 0);
 } // fwlib_milPulseLemo
 
 
@@ -798,7 +886,6 @@ void fwlib_clearDiag()// clears all statistics
   now = getSysTime();
   *pSharedTDiagHi = (uint32_t)(now >> 32);
   *pSharedTDiagLo = (uint32_t)now & 0xffffffff;
-
 } // fwlib_clearDiag
 
 
@@ -838,7 +925,7 @@ volatile uint32_t* fwlib_getOLED()
   return pOLED;
 } // fwlib_getMilOLED
 
-volatile uint16_t* fwlib_getSbMaster()
+volatile uint32_t* fwlib_getSbMaster()
 {
   return pSbMaster;
 } // fwlib_getSbMaster
@@ -872,12 +959,34 @@ void fwlib_publishStatusArray(uint64_t statusArray)
 } // fwlib_publishStatusArray
 
 
-void fwlib_publishTransferStatus(uint32_t nTransfer, uint32_t nInject, uint32_t transStat)
+void fwlib_publishTransferStatus(uint32_t nTransfer, uint32_t nInject, uint32_t transStat, uint32_t nLate, uint32_t offsDone, uint32_t comLatency)
 {
-  *pSharedNTransfer = nTransfer;
-  *pSharedNInject   = nInject;
-  *pSharedTransStat = transStat;
+  fwlib_publishTransferStatus2(nTransfer, nInject, transStat, nLate, 0, 0, 0, 0, 0, 0, 0, comLatency, 0, 0, offsDone, 0, 0);
 } // fwlib_publishTransferStatus
+
+
+void fwlib_publishTransferStatus2(uint32_t nTransfer, uint32_t nInject, uint32_t transStat, uint32_t nLate, uint32_t nEarly, uint32_t nConflict,
+                                  uint32_t nDelayed, uint32_t nSlow, uint32_t offsSlow, uint32_t offsSlowMax, uint32_t offsSlowMin,
+                                  uint32_t comLatency, uint32_t comLatencyMax, uint32_t comLatencyMin, uint32_t offsDone, uint32_t offsDoneMax, uint32_t offsDoneMin)
+{
+  *pSharedNTransfer     = nTransfer;
+  *pSharedNInject       = nInject;
+  *pSharedTransStat     = transStat;
+  *pSharedNLate         = nLate;
+  *pSharedNEarly        = nEarly;
+  *pSharedNConflict     = nConflict;
+  *pSharedNDelayed      = nDelayed;
+  *pSharedNSlow         = nSlow;
+  *pSharedOffsSlow      = offsSlow;
+  *pSharedOffsSlowMax   = offsSlowMax;
+  *pSharedOffsSlowMin   = offsSlowMin;
+  *pSharedComLatency    = comLatency;
+  *pSharedComLatencyMax = comLatencyMax;
+  *pSharedComLatencyMin = comLatencyMin;
+  *pSharedOffsDone      = offsDone;
+  *pSharedOffsDoneMax   = offsDoneMax;
+  *pSharedOffsDoneMin   = offsDoneMin;
+} // fwlib_publishTransferStatus2
 
 
 void fwlib_incBadStatusCnt()

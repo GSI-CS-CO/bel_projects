@@ -251,26 +251,21 @@ int main(int argc, char** argv) {
       exit(1);
     }
  
-    if ((status = eb_cycle_open(device,0, eb_block, &cycle)) != EB_OK)
-      die("EP eb_cycle_open", status);
-     
-    len = SLV_INFO_ROM_SIZE;
-    
     if ((data = malloc(len * sizeof(eb_data_t))) == 0)
       die("malloc", EB_OOM);
-  
-    for (i = 0; i < len; ++i)
-      eb_cycle_read(cycle, scu_bus + slave_id * (1<<17) + SLV_INFO_ROM + i*2, EB_DATA16|EB_BIG_ENDIAN, &data[i]);
-  
-    if ((status = eb_cycle_close(cycle)) != EB_OK) {
-      printf ("no INFO_ROM found on this slave!\n");
-      exit(1);
+    len = SLV_INFO_ROM_SIZE;
+    
+    // use only one read per etherbone cycle to grant LM32 access priority
+    for (i = 0; i < len; ++i) {
+      if ((eb_device_read(device, scu_bus + slave_id * (1<<17) + SLV_INFO_ROM + i*2, EB_DATA16|EB_BIG_ENDIAN, &data[i], 0, eb_block)) != EB_OK) {
+        printf("INFO_ROM read failed!\n");
+        exit(1);
+      }
+
     }
 
     for (i = 0; i < len; ++i) {
-      printf("%c%c%c%c", 
-        (char)(data[i] >> 24) & 0xff, 
-        (char)(data[i] >> 16) & 0xff, 
+      printf("%c%c", 
         (char)(data[i] >>  8) & 0xff,
         (char)(data[i]      ) & 0xff);
     }

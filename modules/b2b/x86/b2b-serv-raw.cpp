@@ -1,9 +1,9 @@
 /*******************************************************************************************
- *  b2b-serv-raw.c
+ *  b2b-serv-raw.cpp
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 18-Oct-2023
+ *  version : 09-jan-2026
  *
  * publishes raw data of the b2b system
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000700
+#define B2B_SERV_RAW_VERSION 0x000813
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -82,22 +82,61 @@ static const char* program;
 #define DIMMAXSIZE  1024                // max size for service names
 #define NAMELEN     256                 // max size for names
 
-// services
-char      disVersion[DIMCHARSIZE];
-char      disState[DIMCHARSIZE];
-char      disHostname[DIMCHARSIZE];
-uint64_t  disStatus;
-uint32_t  disNTransfer;
-setval_t  disSetval[B2B_NSID];
-getval_t  disGetval[B2B_NSID];
+double    no_link_dbl   = NAN;          // indicates "no link" for missing DIM services of type double
 
-uint32_t  disVersionId      = 0;
-uint32_t  disStateId        = 0;
-uint32_t  disHostnameId     = 0;
-uint32_t  disStatusId       = 0;
-uint32_t  disNTransferId    = 0;
-uint32_t  disSetvalId[B2B_NSID];
-uint32_t  disGetvalId[B2B_NSID];
+// services published
+char          disHostname[DIMCHARSIZE];
+char          disState[DIMCHARSIZE];
+char          disVersion[DIMCHARSIZE];
+uint64_t      disStatusArray     = 0x0;
+comlib_diag_t disDiagData; 
+setval_t      disSetval[B2B_NSID];
+getval_t      disGetval[B2B_NSID];
+
+uint32_t      disHostnameId      = 0;
+uint32_t      disStateId         = 0;
+uint32_t      disVersionId       = 0;
+uint32_t      disStatusArrayId   = 0;
+uint32_t      disDiagDataId      = 0;
+uint32_t      disSetvalId[B2B_NSID];
+uint32_t      disGetvalId[B2B_NSID];
+
+int           flagDiagDataClear;
+
+// services subscribed
+// 
+// aehem ...
+// its a bit difficult to organize all combinations of injection machines; moreover, there are always new requirements
+// let's use the brute force approach and subscribe to kicker information of all ring machines at GSI
+double    dicKickLevelSIS18Ext[B2B_NSID];
+double    dicKickLevelESRInj[B2B_NSID];
+double    dicKickLevelESRExt[B2B_NSID];
+double    dicKickLevelYRInj[B2B_NSID];
+double    dicKickLevelYRExt[B2B_NSID];
+double    dicKickLevelSIS100Inj[B2B_NSID];
+double    dicKickLevelSIS100Ext[B2B_NSID];
+double    dicKickLenSIS18Ext[B2B_NSID];
+double    dicKickLenESRInj[B2B_NSID];
+double    dicKickLenESRExt[B2B_NSID];
+double    dicKickLenYRInj[B2B_NSID];
+double    dicKickLenYRExt[B2B_NSID];
+double    dicKickLenSIS100Inj[B2B_NSID];
+double    dicKickLenSIS100Ext[B2B_NSID];
+
+uint32_t  dicKickLevelSIS18ExtId[B2B_NSID];
+uint32_t  dicKickLevelESRInjId[B2B_NSID];
+uint32_t  dicKickLevelESRExtId[B2B_NSID];
+uint32_t  dicKickLevelYRInjId[B2B_NSID];
+uint32_t  dicKickLevelYRExtId[B2B_NSID];
+uint32_t  dicKickLevelSIS100InjId[B2B_NSID];
+uint32_t  dicKickLevelSIS100ExtId[B2B_NSID];
+uint32_t  dicKickLenSIS18ExtId[B2B_NSID];
+uint32_t  dicKickLenESRInjId[B2B_NSID];
+uint32_t  dicKickLenESRExtId[B2B_NSID];
+uint32_t  dicKickLenYRInjId[B2B_NSID];
+uint32_t  dicKickLenYRExtId[B2B_NSID];
+uint32_t  dicKickLenSIS100InjId[B2B_NSID];
+uint32_t  dicKickLenSIS100ExtId[B2B_NSID];
 
 // local variables
 uint32_t reqExtRing;                    // requested extraction ring
@@ -106,7 +145,62 @@ uint32_t sid;                           // Sequence ID
 uint32_t bpid;                          // Beam Process ID
 
 
-// update set value
+// init setval
+void initSetval(setval_t *setval)
+{
+  setval->mode                  = -1;
+  setval->ext_T                 = -1;
+  setval->ext_h                 = -1;
+  setval->ext_cTrig             = NAN;
+  setval->ext_sid               = -1;
+  setval->ext_gid               = -1;
+  setval->inj_T                 = -1;
+  setval->inj_h                 = -1;
+  setval->inj_cTrig             = NAN;
+  setval->inj_sid               = -1;
+  setval->inj_gid               = -1;
+  setval->cPhase                = NAN;
+} // initSetval
+
+// init getval
+void initGetval(getval_t *getval)
+{
+  getval->ext_phase             = -1;
+  getval->ext_phaseFract        = NAN;
+  getval->ext_phaseErr          = NAN;
+  getval->ext_phaseSysmaxErr    = NAN;
+  getval->ext_dKickMon          = NAN;
+  getval->ext_dKickProb         = NAN;
+  getval->ext_dKickProbLen      = NAN;
+  getval->ext_dKickProbLevel    = NAN;
+  getval->ext_diagPhase         = NAN;
+  getval->ext_diagMatch         = NAN;
+  getval->ext_phaseShift        = NAN;
+  getval->inj_phase             = -1;
+  getval->inj_phaseFract        = NAN;
+  getval->inj_phaseErr          = NAN;
+  getval->inj_phaseSysmaxErr    = NAN;
+  getval->inj_dKickMon          = NAN;
+  getval->inj_dKickProb         = NAN;
+  getval->inj_dKickProbLen      = NAN;
+  getval->inj_dKickProbLevel    = NAN;
+  getval->inj_diagPhase         = NAN;
+  getval->inj_diagMatch         = NAN;
+  getval->inj_phaseShift        = NAN;
+  getval->flagEvtRec            = 0;
+  getval->flagEvtErr            = 0;
+  getval->flagEvtLate           = 0;
+  getval->tCBS                  = -1;
+  getval->finOff                = NAN;
+  getval->prrOff                = NAN;
+  getval->preOff                = NAN;
+  getval->priOff                = NAN;
+  getval->kteOff                = NAN;
+  getval->ktiOff                = NAN;
+} // initGetval
+
+
+// set value
 void disUpdateSetval(uint32_t sid, uint64_t tStart, setval_t setval)
 {
   uint32_t secs;
@@ -118,9 +212,6 @@ void disUpdateSetval(uint32_t sid, uint64_t tStart, setval_t setval)
   disSetval[sid] = setval;
   dis_set_timestamp(disSetvalId[sid], secs, msecs);
   dis_update_service(disSetvalId[sid]);
-  
-  disNTransfer++;
-  dis_update_service(disNTransferId);
 } // disUpdateSetval
  
 
@@ -134,8 +225,12 @@ void disUpdateSetval(uint32_t sid, uint64_t tStart, setval_t setval)
   msecs  /= 1000000;
   
   disGetval[sid] = getval;
+  disDiagData.nTransfer++;
+  
   dis_set_timestamp(disGetvalId[sid], secs, msecs);
   dis_update_service(disGetvalId[sid]);
+  dis_update_service(disStatusArrayId);
+  dis_update_service(disDiagDataId);  
 } // disUpdateGetval
 
 
@@ -143,6 +238,7 @@ void disUpdateSetval(uint32_t sid, uint64_t tStart, setval_t setval)
 static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, uint64_t param, uint32_t tef, uint32_t isLate, uint32_t isEarly, uint32_t isConflict, uint32_t isDelayed)
 {
   uint32_t            recSid;          // received SID
+  uint32_t            recGid;          // receiver GID
   int                 flagErr;
 
   static int          flagActive;      // flag: b2b is active
@@ -150,12 +246,13 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
   static getval_t     getval;          // get values
   static uint64_t     tStart;          // time of transfer
 
-  //uint64_t one_ns_as = 1000000000;
+  uint64_t one_ns_as = 1000000000;
   fdat_t   tmp;
   float    tmpf;
   uint32_t tmpu;
 
   recSid      = ((evtId  & 0x00000000fff00000) >> 20);
+  recGid      = ((evtId  & 0x0fff000000000000) >> 48);
 
   // check ranges
   if (recSid  > B2B_NSID)                 return;
@@ -164,47 +261,23 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
   //printf("tag %d\n", tag);
   // mark message as received
   getval.flagEvtRec  |= 0x1 << tag;
-  getval.flagEvtLate |= isLate << tag;;
+  getval.flagEvtLate |= isLate << tag;
   
   switch (tag) {
     case tagStart   :
       sid                          = recSid;
       tStart                       = deadline.getUTC();
       flagActive                   = 1;
-      setval.mode                  = 0;      // there is no illegal value for 'mode', in the simplest case it is '0' (OFF)
-      setval.ext_T                 = -1;
-      setval.ext_h                 = -1;
-      setval.ext_cTrig             = NAN;
-      setval.inj_T                 = -1;
-      setval.inj_h                 = -1;
-      setval.inj_cTrig             = NAN;
-      setval.cPhase                = NAN;
-      getval.ext_phase             = -1;
-      getval.ext_phaseFract        = NAN;
-      getval.ext_phaseErr          = NAN;
-      getval.ext_phaseSysmaxErr    = NAN;
-      getval.ext_dKickMon          = NAN;
-      getval.ext_dKickProb         = NAN;
-      getval.ext_diagPhase         = NAN;
-      getval.ext_diagMatch         = NAN;
-      getval.inj_phase             = -1;
-      getval.inj_phaseFract        = NAN;
-      getval.inj_phaseErr          = NAN;
-      getval.inj_phaseSysmaxErr    = NAN;
-      getval.inj_dKickMon          = NAN;
-      getval.inj_dKickProb         = NAN;
-      getval.inj_diagPhase         = NAN;
-      getval.inj_diagMatch         = NAN;
+      
+      initSetval(&setval);
+      setval.mode                  = B2B_MODE_OFF;    // in the simplest case
+      setval.ext_sid               = sid;
+      setval.ext_gid               = recGid;
+
+      initGetval(&getval);
       getval.flagEvtRec            = 0x1 << tag;
-      getval.flagEvtErr            = 0;
       getval.flagEvtLate           = isLate << tag;
       getval.tCBS                  = deadline.getTAI();
-      getval.finOff                = NAN;
-      getval.prrOff                = NAN;
-      getval.preOff                = NAN;
-      getval.priOff                = NAN;
-      getval.kteOff                = NAN;
-      getval.ktiOff                = NAN;
       break;
     case tagStop    :
       flagActive       = 0;
@@ -213,23 +286,30 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       break;
     case tagPme     :
       setval.mode              = ((param & 0x00f0000000000000) >> 52);
+      switch(recGid) {
+        case SIS18_B2B_ESR    : setval.inj_gid = ESR_RING;     break;
+        case SIS18_B2B_SIS100 : setval.inj_gid = SIS100_RING;  break;
+        case ESR_B2B_CRYRING  : setval.inj_gid = CRYRING_RING; break;
+        default               : setval.inj_gid = -1;           break;
+      } // switch gid
+      
       setval.ext_h             = ((param & 0xff00000000000000) >> 56);
       setval.ext_T             = ((param & 0x000fffffffffffff));    // [as]
-      if (setval.mode > 0) {
+      if (setval.mode > B2B_MODE_OFF) {
         tmpf                   = comlib_half2float((uint16_t)((tef & 0xffff0000)  >> 16)); // [us, hfloat]; chk for NAN?
         setval.ext_cTrig       = tmpf * 1000.0;                     // [ns]
       } // if mode
-      if (setval.mode > 2) {
+      if ((setval.mode >  B2B_MODE_B2E) && (setval.mode != B2B_MODE_B2C)) {
         tmpf                   = comlib_half2float((uint16_t)( tef & 0x0000ffff));         // [us, hfloat]; chk for NAN?
-        setval.inj_cTrig        = tmpf * 1000.0;                     // [ns]
+        setval.cPhase          = tmpf  * 1000;                      // [ns]
       } // if mode
       break;
     case tagPmi     :
       setval.inj_h             = ((param & 0xff00000000000000) >> 56);
       setval.inj_T             = ((param & 0x000fffffffffffff));    // [as]
-      if (setval.mode > 3) {
+      if (setval.mode > B2B_MODE_B2E) {
         tmpf                   = comlib_half2float((uint16_t)((tef & 0xffff0000) >> 16));              // [us, hfloat]]
-        setval.cPhase          = tmpf  * 1000;                      // [ns]
+        setval.inj_cTrig       = tmpf * 1000.0;                     // [ns]
       } // if mode
       break;
     case tagPre     :
@@ -249,7 +329,7 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       getval.inj_phaseSysmaxErr = (float)b2b_calc_max_sysdev_ps(setval.inj_T, B2B_NSAMPLES, 0) / 1000.0;
       flagErr                   = ((evtId & B2B_ERRFLAG_PMINJ) != 0);
       getval.flagEvtErr        |= flagErr << tag;
-      break;     
+      break;
     case tagKte     :
       getval.kteOff            = deadline.getTAI() - getval.tCBS;
       tmpf                     = comlib_half2float((uint16_t)((tef & 0xffff0000) >> 16));        // [us, hfloat]
@@ -260,6 +340,7 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       getval.flagEvtErr       |= flagErr << tag;
       break;
     case tagKti     :
+      setval.inj_sid           = recSid;;
       getval.ktiOff            = deadline.getTAI() - getval.tCBS;
       flagErr                  = ((evtId    & 0x0000000000000010) >> 4);
       getval.flagEvtErr       |= flagErr << tag;
@@ -273,6 +354,14 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       else                    getval.ext_dKickMon  = tmpu;
       flagErr                  = ((evtId & B2B_ERRFLAG_KDEXT) != 0);
       getval.flagEvtErr       |= flagErr << tag;
+
+      switch(setval.ext_gid) {
+        case SIS18_RING   : getval.ext_dKickProbLen = dicKickLenSIS18Ext[setval.ext_sid]; getval.ext_dKickProbLevel = dicKickLevelSIS18Ext[setval.ext_sid]; break;
+        case ESR_RING     : getval.ext_dKickProbLen = dicKickLenESRExt[setval.ext_sid];   getval.ext_dKickProbLevel = dicKickLevelESRExt[setval.ext_sid];   break;
+        case CRYRING_RING : getval.ext_dKickProbLen = dicKickLenYRExt[setval.ext_sid];    getval.ext_dKickProbLevel = dicKickLevelYRExt[setval.ext_sid];    break;
+        default           : getval.ext_dKickProbLen = -1;                                 getval.ext_dKickProbLevel = -1;                                   break;
+      } // switch setval ext_gid
+      
       break;
     case tagKdi     :          // data types within parameter field are 'int' as this a. should be easy for the users b. granularity is 1ns only
       tmpu                     = (uint32_t)(param & 0x00000000ffffffff);
@@ -283,6 +372,13 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       else                    getval.inj_dKickMon  = tmpu;
       flagErr                  = ((evtId & B2B_ERRFLAG_KDINJ) != 0);
       getval.flagEvtErr       |= flagErr << tag;
+
+      switch(setval.inj_gid) {
+        case ESR_RING     : getval.inj_dKickProbLen = dicKickLenESRInj[setval.inj_sid];   getval.inj_dKickProbLevel = dicKickLevelESRInj[setval.inj_sid];   break;
+        case CRYRING_RING : getval.inj_dKickProbLen = dicKickLenYRInj[setval.inj_sid];    getval.inj_dKickProbLevel = dicKickLevelYRInj[setval.inj_sid];    break;
+        default           : getval.inj_dKickProbLen = -1;                                 getval.inj_dKickProbLevel = -1;                                   break;
+      } // switch setval ext_gid
+      
       break;
     case tagPde     :         // chk: consider changing 0x7fffffff to NAN in b2b-pm.c after beam time 2024
       tmp.data                 = ((param & 0x00000000ffffffff));
@@ -299,6 +395,22 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       tmp.data                 = ((param & 0xffffffff00000000) >> 32);
       if (tmp.data == 0x7fffffff) getval.inj_diagPhase = NAN;
       else                        getval.inj_diagPhase = (double)tmp.f;
+      break;
+    case tagPse     :
+      tmpu                     = ((param & 0x00000000ffffffff));
+      // revert endianess hack
+      tmp.data                 = ((tmpu & 0x0000ffff) << 16);
+      tmp.data                |= ((tmpu & 0xffff0000) >> 16);
+      if (!isnan(tmp.f)) tmp.f = tmp.f / 360.0 * (setval.ext_T / (float)one_ns_as);
+      getval.ext_phaseShift    = tmp.f;
+      break;
+    case tagPsi     :
+      tmpu                     = ((param & 0x00000000ffffffff));
+      // revert endianess hack
+      tmp.data                 = ((tmpu & 0x0000ffff) << 16);
+      tmp.data                |= ((tmpu & 0xffff0000) >> 16);
+      if (!isnan(tmp.f)) tmp.f = tmp.f / 360.0 * (setval.inj_T / (float)one_ns_as);
+      getval.inj_phaseShift    = tmp.f;
       break;
     default         :
       ;
@@ -324,11 +436,34 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
 class RecvCommand : public DimCommand
 {
   int  reset;
-  void commandHandler() {disNTransfer = 0;}
+  void commandHandler() {
+    flagDiagDataClear = 1;
+  } // commandHandler
 public :
   RecvCommand(const char *name) : DimCommand(name,"C"){}
 }; 
 
+
+void clearData()
+{
+    disStatusArray              = 0x0;
+    disDiagData.nTransfer       = 0;
+    disDiagData.nLate           = 0;         
+    disDiagData.nEarly          = 0;         
+    disDiagData.nConflict       = 0;         
+    disDiagData.nDelayed        = 0;         
+    disDiagData.nSlow           = 0;         
+    disDiagData.offsSlow        = 0;         
+    disDiagData.offsSlowMax     = 0;         
+    disDiagData.offsSlowMin     = 0xffffffff;
+    disDiagData.comLatency      = 0;         
+    disDiagData.comLatencyMax   = 0;         
+    disDiagData.comLatencyMin   = 0xffffffff;
+    disDiagData.offsDone        = 0;         
+    disDiagData.offsDoneMax     = 0;         
+    disDiagData.offsDoneMin     = 0xffffffff;
+    disDiagData.tDiag           = comlib_getSysTime();
+} // clearData
 
 // add all dim services
 void disAddServices(char *prefix)
@@ -339,36 +474,76 @@ void disAddServices(char *prefix)
   // 'generic' services
   sprintf(name, "%s-raw_version_fw", prefix);
   sprintf(disVersion, "%s",  b2b_version_text(B2B_SERV_RAW_VERSION));
-  disVersionId   = dis_add_service(name, "C", disVersion, 8, 0 , 0);
+  disVersionId       = dis_add_service(name, "C",              disVersion,      8,                      0, 0);
 
-  sprintf(name, "%s-raw_state", prefix);
+  sprintf(name, "%s-raw_state",      prefix);
   sprintf(disState, "%s", b2b_state_text(COMMON_STATE_OPREADY));
-  disStateId      = dis_add_service(name, "C", disState, 10, 0 , 0);
+  disStateId         = dis_add_service(name, "C",              disState,        10,                     0, 0);
 
-  sprintf(name, "%s-raw_hostname", prefix);
-  disHostnameId   = dis_add_service(name, "C", disHostname, DIMCHARSIZE, 0 , 0);
+  sprintf(name, "%s-raw_hostname",   prefix);
+  disHostnameId      = dis_add_service(name, "C",              disHostname,     DIMCHARSIZE,            0, 0);
 
-  sprintf(name, "%s-raw_status", prefix);
-  disStatus       = 0x1;   
-  disStatusId     = dis_add_service(name, "X", &disStatus, sizeof(disStatus), 0 , 0);
+  sprintf(name, "%s-raw_status",     prefix);
+  disStatusArrayId = dis_add_service(name, "X",                &disStatusArray, sizeof(disStatusArray), 0, 0);
 
-  sprintf(name, "%s-raw_ntransfer", prefix);
-  disNTransferId  = dis_add_service(name, "I", &disNTransfer, sizeof(disNTransfer), 0 , 0);
+  sprintf(name, "%s-raw_comlib_diag",    prefix);
+  disDiagDataId    = dis_add_service(name, "X:1;I:3;X:2;I:18", &disDiagData,    sizeof(disDiagData),    0, 0);
 
   // set values
   for (i=0; i< B2B_NSID; i++) {
     sprintf(name, "%s-raw_sid%02d_setval", prefix, i);
-    disSetvalId[i]  = dis_add_service(name, "I:1;X:1;I:1;F:1;X:1;I:1;F:2", &(disSetval[i]), sizeof(setval_t), 0, 0);
+    disSetvalId[i]  = dis_add_service(name, "I:1;X:1;I:1;F:1;I:2;X:1;I:1;F:1;I:2;F:1", &(disSetval[i]), sizeof(setval_t), 0, 0);
     dis_set_timestamp(disSetvalId[i], 1, 0);
   } // for i
 
   // set values
   for (i=0; i< B2B_NSID; i++) {
     sprintf(name, "%s-raw_sid%02d_getval", prefix, i);
-    disGetvalId[i]  = dis_add_service(name, "X:1;F:7;X:1;F:7;I:3;X:1;F:6", &(disGetval[i]), sizeof(getval_t), 0, 0);
+    disGetvalId[i]  = dis_add_service(name, "X:1;F:10;X:1;F:10;I:3;X:1;F:6", &(disGetval[i]), sizeof(getval_t), 0, 0);
     dis_set_timestamp(disGetvalId[i], 1, 0);
   } // for i
 } // disAddServices
+
+
+// add all dim services
+void dicSubscribeServices(char *prefix)
+{
+  char name[DIMMAXSIZE];
+  int  i;
+
+  for (i=0; i<B2B_NSID; i++) {
+    sprintf(name, "%s_sis18-kdde_sid%02d_len",    prefix, i);
+    //printf("prefix %s, name %s\n", prefix, name);
+    dicKickLenSIS18ExtId[i] = dic_info_service_stamped(   name, MONITORED, 0, &(dicKickLenSIS18Ext[i]),    sizeof(double), 0 , 0, &no_link_dbl, sizeof(double));
+    sprintf(name, "%s_esr-kdde_sid%02d_len",      prefix, i);
+    dicKickLenESRExtId[i] = dic_info_service_stamped(     name, MONITORED, 0, &(dicKickLenESRExt[i]),      sizeof(double), 0 , 0, &no_link_dbl, sizeof(double));
+    sprintf(name, "%s_esr-kddi_sid%02d_len",      prefix, i);
+    dicKickLenESRInjId[i] = dic_info_service_stamped(     name, MONITORED, 0, &(dicKickLenESRInj[i]),      sizeof(double), 0 , 0, &no_link_dbl, sizeof(double));
+    sprintf(name, "%s_yr-kdde_sid%02d_len",       prefix, i);
+    dicKickLenYRExtId[i] = dic_info_service_stamped(      name, MONITORED, 0, &(dicKickLenYRExt[i]),       sizeof(double), 0 , 0, &no_link_dbl, sizeof(double));
+    sprintf(name, "%s_yr-kddi_sid%02d_len",       prefix, i);
+    dicKickLenYRInjId[i] = dic_info_service_stamped(      name, MONITORED, 0, &(dicKickLenYRInj[i]),       sizeof(double), 0 , 0, &no_link_dbl, sizeof(double));
+    sprintf(name, "%s_sis100-kdde_sid%02d_len",   prefix, i);
+    dicKickLenSIS100ExtId[i] = dic_info_service_stamped(  name, MONITORED, 0, &(dicKickLenSIS100Ext[i]),   sizeof(double), 0 , 0, &no_link_dbl, sizeof(double));
+    sprintf(name, "%s_sis100-kddi_sid%02d_len",   prefix, i);
+    dicKickLenSIS100InjId[i] = dic_info_service_stamped(  name, MONITORED, 0, &(dicKickLenSIS100Inj[i]),   sizeof(double), 0 , 0, &no_link_dbl, sizeof(double));
+
+    sprintf(name, "%s_sis18-kdde_sid%02d_level",  prefix, i);
+    dicKickLevelSIS18ExtId[i] = dic_info_service_stamped( name, MONITORED, 0, &(dicKickLevelSIS18Ext[i]),  sizeof(double), 0 , 0, &no_link_dbl, sizeof(double));
+    sprintf(name, "%s_esr-kdde_sid%02d_level",    prefix, i);
+    dicKickLevelESRExtId[i] = dic_info_service_stamped(   name, MONITORED, 0, &(dicKickLevelESRExt[i]),    sizeof(double), 0 , 0, &no_link_dbl, sizeof(double));
+    sprintf(name, "%s_esr-kddi_sid%02d_level",    prefix, i);
+    dicKickLevelESRInjId[i] = dic_info_service_stamped(   name, MONITORED, 0, &(dicKickLevelESRInj[i]),    sizeof(double), 0 , 0, &no_link_dbl, sizeof(double));
+    sprintf(name, "%s_yr-kdde_sid%02d_level",     prefix, i);
+    dicKickLevelYRExtId[i] = dic_info_service_stamped(    name, MONITORED, 0, &(dicKickLevelYRExt[i]),     sizeof(double), 0 , 0, &no_link_dbl, sizeof(double));
+    sprintf(name, "%s_yr-kddi_sid%02d_level",     prefix, i);
+    dicKickLevelYRInjId[i] = dic_info_service_stamped(    name, MONITORED, 0, &(dicKickLevelYRInj[i]),     sizeof(double), 0 , 0, &no_link_dbl, sizeof(double));
+    sprintf(name, "%s_sis100-kdde_sid%02d_level", prefix, i);
+    dicKickLevelSIS100ExtId[i] = dic_info_service_stamped(name, MONITORED, 0, &(dicKickLevelSIS100Ext[i]), sizeof(double), 0 , 0, &no_link_dbl, sizeof(double));
+    sprintf(name, "%s_sis100-kddi_sid%02d_level", prefix, i);
+    dicKickLevelSIS100InjId[i] = dic_info_service_stamped(name, MONITORED, 0, &(dicKickLevelSIS100Inj[i]), sizeof(double), 0 , 0, &no_link_dbl, sizeof(double));
+  } // for i
+} // dicSubscribeServices
 
                         
 //using namespace saftlib;
@@ -412,14 +587,15 @@ int main(int argc, char** argv)
 
   // variables attach, remove
   char    *deviceName = NULL;
+  char    *envName    = NULL;
 
   char     ringName[NAMELEN];
   char     prefix[NAMELEN*2];
+  char     kickerPrefix[NAMELEN*2];
   char     disName[DIMMAXSIZE];
 
-
-  reqExtRing  = SIS18_RING;
-
+  reqExtRing         = SIS18_RING;
+  flagDiagDataClear  = 1;
 
   // parse for options
   program = argv[0];
@@ -463,16 +639,19 @@ int main(int argc, char** argv)
     return 0;
   } // if optind
 
+  if (!(optind+1 < argc)) return 1;
+  
   deviceName = argv[optind];
+  envName    = argv[optind+1];
   gethostname(disHostname, 32);
 
   switch(reqExtRing) {
     case SIS18_RING :
-      nCondition = 15;
+      nCondition = 18;
       sprintf(ringName, "sis18");
       break;
     case ESR_RING :
-      nCondition = 15;
+      nCondition = 18;
       sprintf(ringName, "esr");
       break;
     case CRYRING_RING :
@@ -484,10 +663,16 @@ int main(int argc, char** argv)
         return -1;;
   } // switch extRing
   
-
+  // init DIM service data
+  for (i=0; i< B2B_NSID; i++ ) {
+    initSetval(&(disSetval[i]));
+    initGetval(&(disGetval[i]));
+  } // for i
+  disDiagData.tDiag = comlib_getSysTime();
+  disDiagData.tS0   = comlib_getSysTime();
   
-  if (optind+1 < argc) sprintf(prefix, "b2b_%s_%s", argv[++optind], ringName);
-  else                 sprintf(prefix, "b2b_%s", ringName);
+  // create service and start server
+  sprintf(prefix, "b2b_%s_%s", envName, ringName);
 
   printf("%s: starting server using prefix %s\n", program, prefix);
 
@@ -498,6 +683,13 @@ int main(int argc, char** argv)
   
   sprintf(disName, "%s-raw", prefix);
   dis_start_serving(disName);
+
+  // subscribe to services at kicker diagnostic
+  sprintf(kickerPrefix, "b2b_%s", envName);
+
+  printf("%s: subscribing to services using prefix %s\n", program, kickerPrefix);  
+
+  dicSubscribeServices(kickerPrefix);
   
   try {
     // basic saftd stuff
@@ -569,6 +761,8 @@ int main(int argc, char** argv)
         condition[4]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
         //tag[4]        = tmpTag;
 
+        // SIS18 to extraction, continues further down ...
+
         // SIS18 to ESR, PMEXT
         tmpTag        = tagPme;       
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_B2B_ESR << 48) | ((uint64_t)B2B_ECADO_B2B_PMEXT << 36);
@@ -628,7 +822,26 @@ int main(int argc, char** argv)
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_RING << 48) | ((uint64_t)B2B_ECADO_B2B_DIAGKICKINJ << 36);
         condition[14] = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
         //tag[14]       = tmpTag;
-        
+
+        // SIS18 to extraction, phase shift extraction
+        tmpTag        = tagPse;
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_B2B_EXTRACT << 48) | ((uint64_t)B2B_ECADO_B2B_PSHIFTEXT << 36);
+        condition[15] = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[15]        = tmpTag;
+
+        // SIS18 to ESR, phase shift extraction
+        tmpTag        = tagPse;
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_B2B_ESR << 48) | ((uint64_t)B2B_ECADO_B2B_PSHIFTEXT << 36);
+        condition[16] = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[16]        = tmpTag;
+
+        // SIS18 to ESR, phase shift injection
+        tmpTag        = tagPsi;
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS18_B2B_ESR << 48) | ((uint64_t)B2B_ECADO_B2B_PSHIFTINJ << 36);
+        condition[17] = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[17]        = tmpTag;
+
+
         break;
       case ESR_RING : 
 
@@ -722,6 +935,24 @@ int main(int argc, char** argv)
         condition[14] = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
         //tag[14]       = tmpTag;
 
+        // ESR to extraction, phase shift extraction
+        tmpTag        = tagPse;
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_B2B_EXTRACT << 48) | ((uint64_t)B2B_ECADO_B2B_PSHIFTEXT << 36);
+        condition[15] = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[15]        = tmpTag;
+
+        // ESR to CRYRING, phase shift extraction
+        tmpTag        = tagPse;
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_B2B_CRYRING << 48) | ((uint64_t)B2B_ECADO_B2B_PSHIFTEXT << 36);
+        condition[16] = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[16]        = tmpTag;
+
+        // ESR to CRYRING, phase shift injection
+        tmpTag        = tagPsi;
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)ESR_B2B_CRYRING << 48) | ((uint64_t)B2B_ECADO_B2B_PSHIFTINJ << 36);
+        condition[17] = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[17]        = tmpTag;
+
         break;
       case CRYRING_RING : 
 
@@ -796,38 +1027,74 @@ int main(int argc, char** argv)
     uint32_t      isEarly;
     uint32_t      isConflict;
     uint32_t      isDelayed;
+    uint32_t      isSlow;
+    uint32_t      offsSlow;
+    uint32_t      comLatency;
     saftlib::Time deadline_t;
     uint32_t      ecaStatus;
     eb_status_t   ebStatus;
     uint32_t      qIdx = 0;
     uint64_t      t1, t2;
     uint32_t      tmp32;
+    uint64_t      startTime;
 
     sprintf(ebPath, "%s", receiver->getEtherbonePath().c_str());
     if ((ebStatus = comlib_ecaq_open(ebPath, qIdx, &device, &ecaq_base)) != EB_OK) {
       std::cerr << program << ": can't open lm32 ECA queue" << std::endl;
       exit(1);
     } // if ebStatus
-    
+
     while(true) {
+      if (flagDiagDataClear) {
+        clearData();
+        flagDiagDataClear = 0;
+      } // if flagdiagdataclear
+
       //      saftlib::wait_for_signal();
       t1 = comlib_getSysTime();
-      ecaStatus = comlib_wait4ECAEvent(1, device, ecaq_base, &recTag, &deadline, &evtId, &param, &tef, &isLate, &isEarly, &isConflict, &isDelayed);
+      ecaStatus = comlib_wait4ECAEvent2(1, device, ecaq_base, &recTag, &deadline, &evtId, &param, &tef, &isLate, &isEarly, &isConflict, &isDelayed, &isSlow, &offsSlow, &comLatency);
       t2 = comlib_getSysTime();
       tmp32 = t2 - t1; 
       if (tmp32 > 10000000) printf("%s: reading from ECA Q took %u [us]\n", program, tmp32 / 1000);
-      if (ecaStatus == COMMON_STATUS_EB) { printf("eca EB error, device %x, address %x\n", device, (uint32_t)ecaq_base);}
+      if (ecaStatus == COMMON_STATUS_EB) {
+        printf("eca EB error, device %x, address %x\n", device, (uint32_t)ecaq_base);
+        disStatusArray = disStatusArray | (0x1 << ecaStatus);   
+      } // if eca STATUS_EB
       if (ecaStatus == COMMON_STATUS_OK) {
+        startTime  = t2;
         deadline_t = saftlib::makeTimeTAI(deadline);
         //t2         = comlib_getSysTime(); printf("msg: tag %x, id %lx, tef %lx, dtu %lu\n", recTag, evtId, tef, (uint32_t)(t2 -t1));
         timingMessage(recTag, deadline_t, evtId, param, tef, isLate, isEarly, isConflict, isDelayed);
-      }
+
+        // data get updated with each updateGetVal
+        disStatusArray         = disStatusArray | (0x1 << ecaStatus);
+        disDiagData.comLatency = comLatency;
+        disDiagData.offsDone   = (uint32_t)(comlib_getSysTime() - startTime);
+
+        if (isLate)     disDiagData.nLate++;
+        if (isEarly)    disDiagData.nEarly++;
+        if (isConflict) disDiagData.nConflict++;
+        if (isDelayed)  disDiagData.nDelayed++;
+        if (isSlow) {
+          disDiagData.nSlow++;           
+          disDiagData.offsSlow = offsSlow;   
+          if (offsSlow   < disDiagData.offsSlowMin)   disDiagData.offsSlowMin            = offsSlow;
+          if (offsSlow   > disDiagData.offsSlowMax)   disDiagData.offsSlowMax            = offsSlow;
+        } // if flagIsSlow
+
+        if (comLatency            > disDiagData.comLatencyMax) disDiagData.comLatencyMax = comLatency;
+        if (comLatency            < disDiagData.comLatencyMin) disDiagData.comLatencyMin = comLatency;
+        if (disDiagData.offsDone  > disDiagData.offsDoneMax)   disDiagData.offsDoneMax   = disDiagData.offsDone;
+        if (disDiagData.offsDone  < disDiagData.offsDoneMin)   disDiagData.offsDoneMin   = disDiagData.offsDone;
+      } // if eca STATUS_OK
     } // while true
+    
     comlib_ecaq_close(device);
     
   } // try
   catch (const saftbus::Error& error) {
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
+
   }
   
   return 0;

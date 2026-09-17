@@ -98,7 +98,7 @@
  <module
    name="xcvr_fpll_a10_0"
    kind="altera_xcvr_fpll_a10"
-   version="18.1"
+   version="23.1"
    enabled="1"
    autoexport="1">
   <parameter name="base_device" value="NIGHTFURY2" />

@@ -3,10 +3,10 @@
 # Set SYSENV to the target system environment (YOCTO, ACC7, ACC9, OPT)
 # Example build:
 #   'make clean'                                                 
-#   'make ENV=int SYSENV=ACC7 PREFIX= all'                                             (hack: leave PREFIX empty for SCU path)
+#   'make ENV=int SYSENV=YOCTO PREFIX= all'                                             (hack: leave PREFIX empty for SCU path)
 # Example deploy (for ASL only):
-#   'make PREFIX= SYSENV=ACC7 STAGING=/common/export/timing-rte/b2b-dev deploy'        (hack: leave PREFIX empty for SCU path)
-#   'make PREFIX= SYSENV=ACC7 STAGING=/common/export/timing-rte/b2b deploy'            (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= SYSENV=YOCTO STAGING=/common/export/timing-rte/b2b-dev-yocto deploy'  (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= SYSENV=YOCTO STAGING=/common/export/timing-rte/b2b-yocto deploy'      (hack: leave PREFIX empty for SCU path)
 
 # install
 PREFIX      ?= /usr/local
@@ -29,12 +29,12 @@ ARCH        ?=
 endif
 
 ifeq ($(SYSENV), YOCTO)
-USRPATH     := /common/usr/timing/b2b/yocto/usr
+USRPATH     := /common/usr/timing/user-dietrich/yocto/usr
 ARCH        := /x86_64
 endif
 
 ifeq ($(SYSENV), ACC7)
-USRPATH     := /common/usr/timing/b2b/centos7/usr/
+USRPATH     := /common/usr/timing/user-dietrich/centos7/usr/
 ARCH        := /x86_64
 endif
 
@@ -51,13 +51,19 @@ TARGETS := firmware software nfsinit
 all: $(TARGETS)
 
 software:: 
+ifeq ($(SYSENV), YOCTO)
+# I really hate this hack, but I found no simpler solution
+	bash x86/make-yocto-software-all
+else
 	$(MAKE) -C $(SW) all
+endif 
 
 firmware:
 	$(MAKE) TARGET=b2bcbu -C $(FW)
 	$(MAKE) TARGET=b2bpm -C $(FW)
 	$(MAKE) TARGET=b2bkd -C $(FW)
 	$(MAKE) TARGET=b2bpmstub -C $(FW)
+	$(MAKE) TARGET=b2bpsm -C $(FW)
 
 nfsinit:
 	echo $(shell cd $(NFSINIT); $(GENNFSINIT)/generate-main.sh $(ENV); cd ..)
@@ -68,6 +74,7 @@ clean:
 	rm -f nfs-init/b2b-int*.sh
 	rm -f nfs-init/b2b-pro*.sh
 	rm -f nfs-init/b2b-tools.sh
+	rm -f nfs-init/b2b-yocto-tweak-tools.sh
 
 deploy:
 # create folders
@@ -96,6 +103,8 @@ deploy:
 	cp $(SW)/b2b-viewer $(STAGING)$(ARCH)$(PREFIX)/usr/bin              # '/usr' is a hack 
 	cp $(SW)/b2b-archiver $(STAGING)$(ARCH)$(PREFIX)/usr/bin            # '/usr' is a hack
 	cp $(SW)/b2b-jitter-check $(STAGING)$(ARCH)$(PREFIX)/usr/bin        # '/usr' is a hack
+	cp $(SW)/b2b-serv-kickdiag $(STAGING)$(ARCH)$(PREFIX)/usr/bin       # '/usr' is a hack
+	cp $(SW)/ecpu-mon $(STAGING)$(ARCH)$(PREFIX)/usr/bin                # '/usr' is a hack
 	cp $(FW)/*.bin $(STAGING)/firmware                   
 #	cp $(SW)/b2b-pname-info $(STAGING)$(ARCH)$(PREFIX)/usr/bin          # '/usr' is a hack; this is special and works only on ASL
 

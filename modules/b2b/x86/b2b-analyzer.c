@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 18-Oct-2023
+ *  version : 07-aug-2026
  *
  * analyzes and publishes get values
  * 
@@ -36,7 +36,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_ANALYZER_VERSION 0x000700
+#define B2B_ANALYZER_VERSION 0x000814
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -70,30 +70,31 @@ uint32_t   no_link_32    = 0xdeadbeef;
 uint64_t   no_link_64    = 0xdeadbeefce420651;
 char       no_link_str[] = "NO_LINK";
 
-char       disVersion[DIMCHARSIZE];
-char       disState[DIMCHARSIZE];
-char       disHostname[DIMCHARSIZE];
-uint64_t   disStatus;
-uint32_t   disNTransfer;
-setval_t   dicSetval[B2B_NSID];
-getval_t   dicGetval[B2B_NSID];
-diagval_t  disDiagval[B2B_NSID];
-diagstat_t disDiagstat[B2B_NSID];
+char          disHostname[DIMCHARSIZE];
+char          disState[DIMCHARSIZE];
+char          disVersion[DIMCHARSIZE];
+uint64_t      disStatusArray;
+comlib_diag_t disDiagData;
+setval_t      dicSetval[B2B_NSID];
+getval_t      dicGetval[B2B_NSID];
+diagval_t     disDiagval[B2B_NSID];
+diagstat_t    disDiagstat[B2B_NSID];
 
 
-uint32_t   disVersionId      = 0;
-uint32_t   disStateId        = 0;
-uint32_t   disHostnameId     = 0;
-uint32_t   disStatusId       = 0;
-uint32_t   disNTransferId    = 0;
-uint32_t   dicSetvalId[B2B_NSID];
-uint32_t   dicGetvalId[B2B_NSID];
-uint32_t   disDiagvalId[B2B_NSID];
-uint32_t   disDiagstatId[B2B_NSID];
-uint32_t   disClearDiagId;
+uint32_t      disHostnameId     = 0;
+uint32_t      disStateId        = 0;
+uint32_t      disVersionId      = 0;
+uint32_t      disStatusArrayId  = 0;
+uint32_t      disDiagDataId     = 0;
+uint32_t      dicSetvalId[B2B_NSID];
+uint32_t      dicGetvalId[B2B_NSID];
+uint32_t      disDiagvalId[B2B_NSID];
+uint32_t      disDiagstatId[B2B_NSID];
+uint32_t      disClearDiagId;
 
-int        flagSetValid[B2B_NSID];
-int        flagGetValid[B2B_NSID];
+int           flagSetValid[B2B_NSID];
+int           flagGetValid[B2B_NSID];
+int           flagDiagDataClear;
 
 // extraction DDS match
 uint32_t  ext_ddsOffN[B2B_NSID];
@@ -214,7 +215,7 @@ static void help(void) {
 // clears diag data
 void clearStats(uint32_t sid)
 {
-  disNTransfer             = 0;
+  disDiagData.nTransfer    = 0;
   
   ext_ddsOffN[sid]         = 0;
   ext_ddsOffMax[sid]       = FLTMIN;
@@ -333,14 +334,14 @@ void calcStats(double *meanNew,         // new mean value, please remember for l
 // calculate DDS frequency from observed phase offset and uncertainty for a single measurement
 int calcNue(double  *nue,               // frequency value [Hz]
             double  *nueErr,            // estimated uncertainty [Hz]
-            double   obsOffset,         // observed mean value of deviation from 'soll value'
+            double   obsOffset,         // observed mean value of deviation from 'soll value'; should be within +/- half of rf period - if not, it will be corrected
             uint64_t TObs,              // observation interval
             uint64_t TH1As,             // H=1 gDDS period [as],
             double   sysmax             // max systematic error of phase measurement [ns]
             )
 {
   int64_t  nPeriod;                     // # of rf periods within T
-  uint64_t half;
+  int64_t  half;
   int64_t  offsetAs;                    // offset [as]
   int64_t  TAs;                         // TObs [as]
   int64_t  TH1ObsAs;                    // observed TH1 [as]
@@ -355,8 +356,13 @@ int calcNue(double  *nue,               // frequency value [Hz]
     TAs       = TObs * 1000000000;
     half      = TH1As >> 1;
     nPeriod   = TAs / TH1As;
-    if ((TAs % TH1As) > half) nPeriod++;              
+    if ((TAs % TH1As) > half) nPeriod++;
+
     offsetAs  = (int64_t)(obsOffset * 1000000000.0);
+    // fix offsetAs to be within +- half;
+    while (offsetAs + half < 0) offsetAs += TH1As;
+    while (offsetAs - half > 0) offsetAs -= TH1As;
+    
     TH1ObsAs  = TH1As + offsetAs / (double)nPeriod;
     TH1ObsNs  = (double)TH1ObsAs / 1000000000.0;
     *nue      = 1000000000.0 / TH1ObsNs;
@@ -415,6 +421,8 @@ void cmdClearDiag(long *tag, uint32_t *address, int *size)
   sid = (uint32_t)(*address);
 
   clearStats(sid);
+  disDiagData.tDiag = comlib_getSysTime();
+  dis_update_service(disDiagDataId);
 } // cmdClearDiag
 
 
@@ -463,7 +471,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
  
   if (mode >=  B2B_MODE_OFF) {
 
-    disNTransfer++;
+    disDiagData.nTransfer++;
 
     // offset from deadline CBS to measured extraction phase
     if (!isnan(dicGetval[sid].preOff)) {
@@ -511,7 +519,9 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
 
     // rf frequency diagnostics; theoretical value is set value
     if (!isnan(disDiagval[sid].ext_rfOffAct)) {
-      calcNue(&act, &actErr, disDiagval[sid].ext_rfOffAct, (double)B2B_TDIAGOBS, dicSetval[sid].ext_T, dicGetval[sid].ext_phaseSysmaxErr);
+      if (isnan(dicGetval[sid].ext_phaseShift)) tmp = disDiagval[sid].ext_rfOffAct;
+      else                                      tmp = disDiagval[sid].ext_rfOffAct - dicGetval[sid].ext_phaseShift;
+      calcNue(&act, &actErr, tmp, (double)B2B_TDIAGOBS, dicSetval[sid].ext_T, dicGetval[sid].ext_phaseSysmaxErr);
       if (dicSetval[sid].ext_T != 0) tmp = 1000000000000000000.0 /  (double)(dicSetval[sid].ext_T);
       else                           tmp = 0.0;
       n   = ++(ext_rfNueN[sid]);
@@ -652,7 +662,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
 
   } // if mode B2B_MODE_B2E
 
-  if (mode >= B2B_MODE_B2C) {
+  if ((mode >= B2B_MODE_B2C) && (mode != B2B_MODE_B2EPSHIFT)){
     // offset from deadline CBS to KTI
     if (!isnan(dicGetval[sid].ktiOff)) {
       act = dicGetval[sid].ktiOff;
@@ -721,8 +731,14 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
 
     // rf frequency diagnostics; theoretical value is '0'
     if (!isnan(disDiagval[sid].inj_rfOffAct) && (dicSetval[sid].inj_T != -1)) {
-      calcNue(&act, &actErr, disDiagval[sid].inj_rfOffAct, (double)B2B_TDIAGOBS, dicSetval[sid].inj_T, dicGetval[sid].inj_phaseSysmaxErr);
-      tmp = 1000000000000000000.0 /  (double)(dicSetval[sid].inj_T);
+      if (isnan(dicGetval[sid].inj_phaseShift)) tmp = disDiagval[sid].inj_rfOffAct;
+      else                                      tmp = disDiagval[sid].inj_rfOffAct - dicGetval[sid].inj_phaseShift;
+      calcNue(&act, &actErr, tmp, (double)B2B_TDIAGOBS, dicSetval[sid].inj_T, dicGetval[sid].inj_phaseSysmaxErr);
+      /*if (isnan(dicGetval[sid].inj_phaseShift)) tmp = (double)B2B_TDIAGOBS;
+      else                                      tmp = (double)B2B_TDIAGOBS;// - dicGetval[sid].inj_phaseShift;
+      calcNue(&act, &actErr, disDiagval[sid].inj_rfOffAct, tmp, dicSetval[sid].inj_T, dicGetval[sid].inj_phaseSysmaxErr);*/
+      if (dicSetval[sid].inj_T != 0) tmp = 1000000000000000000.0 /  (double)(dicSetval[sid].inj_T);
+      else                           tmp = 0.0;
       n   = ++(inj_rfNueN[sid]);
       
       // statistics
@@ -763,7 +779,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
     
   } // if mode B2B_MODE_B2C
 
-  if (mode == B2B_MODE_B2B) {
+  if ((mode == B2B_MODE_B2BFBEAT) || (mode == B2B_MODE_B2BPSHIFTE) || (mode == B2B_MODE_B2BPSHIFTI)) {
 
     // match diagnostics; theoretical value is '0'
     if (!isnan(dicGetval[sid].inj_diagMatch) && !isnan(dicSetval[sid].cPhase) && !isnan(dicSetval[sid].inj_cTrig) && (dicSetval[sid].inj_T != -1)) { 
@@ -815,7 +831,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   
   dis_update_service(disDiagvalId[sid]);
   dis_update_service(disDiagstatId[sid]);
-  dis_update_service(disNTransferId);
+  dis_update_service(disDiagDataId);
 } // recGetvalue
   
 // receive set values
@@ -857,21 +873,21 @@ void disAddServices(char *prefix)
     // 'generic' services
   sprintf(name, "%s-cal_version_fw", prefix);
   sprintf(disVersion, "%s",  b2b_version_text(B2B_ANALYZER_VERSION));
-  disVersionId   = dis_add_service(name, "C", disVersion, 8, 0 , 0);
+  disVersionId     = dis_add_service(name, "C",              disVersion,        8, 0 , 0);
 
-  sprintf(name, "%s-cal_state", prefix);
+  snprintf(name, sizeof(name), "%s-cal_state", prefix);
   sprintf(disState, "%s", b2b_state_text(COMMON_STATE_OPREADY));
-  disStateId      = dis_add_service(name, "C", disState, 10, 0 , 0);
+  disStateId       = dis_add_service(name, "C",               disState,         10,                     0, 0);
 
-  sprintf(name, "%s-cal_hostname", prefix);
-  disHostnameId   = dis_add_service(name, "C", &disHostname, 32, 0 , 0);
+  snprintf(name, sizeof(name), "%s-cal_hostname", prefix);
+  disHostnameId    = dis_add_service(name, "C",               &disHostname,     32,                     0, 0);
 
-  sprintf(name, "%s-cal_status", prefix);
-  disStatus       = 0x1;   
-  disStatusId     = dis_add_service(name, "X", &disStatus, sizeof(disStatus), 0 , 0);
+  snprintf(name, sizeof(name), "%s-cal_status", prefix);
+  disStatusArray   = 0x1;
+  disStatusArrayId = dis_add_service(name, "X",                &disStatusArray, sizeof(disStatusArray), 0, 0);
 
-  sprintf(name, "%s-cal_ntransfer", prefix);
-  disNTransferId  = dis_add_service(name, "I", &disNTransfer, sizeof(disNTransfer), 0 , 0);
+  snprintf(name, sizeof(name), "%s-cal_comlib_diag", prefix);
+  disDiagDataId    = dis_add_service(name, "X:1;I:3;X:2;I:18", &disDiagData,    sizeof(disDiagData),    0, 0);
   
   for (i=0; i<B2B_NSID; i++) {
     sprintf(name, "%s-cal_diag_sid%02d", prefix, i);
@@ -931,9 +947,11 @@ int main(int argc, char** argv) {
   } // if optind
 
   gethostname(disHostname, 32);
-  if (optind< argc) sprintf(prefix, "b2b_%s", argv[optind]);
-  else              sprintf(prefix, "b2b_%s", disHostname);
-   sprintf(disName, "%s-cal", prefix);
+  if (optind< argc) snprintf(prefix, sizeof(prefix), "b2b_%s", argv[optind]);
+  else              snprintf(prefix, sizeof(prefix), "b2b_%s", disHostname);
+  sprintf(disName, "%s-cal", prefix);
+  disDiagData.tDiag = comlib_getSysTime();
+  disDiagData.tS0   = comlib_getSysTime();
 
   if (getVersion) printf("%s: version %s\n", program, b2b_version_text(B2B_ANALYZER_VERSION));
 

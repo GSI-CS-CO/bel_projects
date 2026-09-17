@@ -4,3 +4,4 @@ arria10_ftm4_lvds_pll/arria10_ftm4_lvds_pll/*
 arria10_ftm4_lvds_rx/arria10_ftm4_lvds_rx/*
 arria10_ftm4_lvds_tx/arria10_ftm4_lvds_tx/*
 *.sopcinfo
+.qsys_edit

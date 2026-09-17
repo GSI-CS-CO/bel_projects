@@ -1,0 +1,12 @@
+[Unit]
+Description = b2b kick diagnostics for PRO SIS18
+Requires = saftbus.service
+After = saftbus.service
+
+[Service]
+Type = simple
+Environment="DIM_DNS_NODE=asl105"
+ExecStart = b2b-serv-kickdiag tr0 -r0 -m0 -i1 pro
+
+[Install]
+WantedBy = multi-user.target

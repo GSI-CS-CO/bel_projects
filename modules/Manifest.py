@@ -46,11 +46,16 @@ modules = {
     "prioq2",
     "stub_pll",
     "temp_sens",
+    "a10ts",
     "eca_tap",
     "beam_dump",
     "daq",
     "diob",
     "wb_timer",
     "i2c_wrapper",
+    "enc_err_counter",
+    "a10vs",
+    "cellular_ram",
+    "neorv32",
   ]
 }

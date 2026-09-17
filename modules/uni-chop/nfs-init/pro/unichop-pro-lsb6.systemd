@@ -1,0 +1,11 @@
+# yocto
+SERVICEA=unichop-servmon-pro-lsb6.service
+cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
+systemctl daemon-reload
+
+systemctl start $SERVICEA
+
+# hack for acc7
+#export DIM_DNS_NODE=asl105
+
+#unichop-serv-mon tr0 ... &

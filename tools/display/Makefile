@@ -27,8 +27,10 @@ simple-display: $(SOURCES)
 
 install:
 	cp $(TARGETS) $(STAGING)$(PREFIX)/bin
+
 clean:
 	rm -f $(TARGETS)
+
 # =================================================================================================
 # END OF ASL DEPLOYMENT
 # =================================================================================================
@@ -71,6 +73,9 @@ simple-display.bin: simple-display.elf
 
 simple-display.elf: crt0.o simple-display.o main-lm32.o
 	$(CC) $(CFLAGS) -o $@ -nostdlib -T linker.ld $^
+
+install:
+	cp simple-display $(STAGING)$(PREFIX)/bin
 
 clean:
 	rm -f *.o *.elf *.bin simple-display

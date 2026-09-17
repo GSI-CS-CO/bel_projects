@@ -22,13 +22,16 @@ typedef uint32_t status_t;
 #define PSCR_1S_TIM_1MS    1000  // prescaler for 1 second (at 1ms timer period)
 
 // MPS definitions
+#define N_MAX_TX_NODES     16  // maximum number of the TX nodes
+
 #ifdef MULTI_MPS_CH
-  #define N_MPS_CHANNELS   16  // total number of MPS channels
+  #define N_MPS_CHANNELS   8   // MPS channels supported by a single TX node
 #else
-  #define N_MPS_CHANNELS   1   // total number of MPS channels
+  #define N_MPS_CHANNELS   1
 #endif
-#define N_MPS_FLAGS        1   // MPS flags in an Ethernet frame
-#define N_EXTRA_MPS_NOK    2   // extra transmissions of MPS NOK event
+
+#define N_MAX_MPS_CHANNELS ((N_MAX_TX_NODES) * (N_MPS_CHANNELS))   // total number of MPS channels
+#define N_EXTRA_MPS_NOK    0   // extra transmissions of MPS NOK event
 #define F_MPS_BCAST        30  // frequency to broadcast MPS flags [MPS_FS_530]
 
 // MPS flags
@@ -52,34 +55,42 @@ enum DST_ADDR {
 typedef struct mpsProtocol mpsProtocol_t;
 struct mpsProtocol {
   uint8_t  addr[ETH_ALEN];  // Ethernet MAC addr
-  uint8_t  idx;             // index (0-127: MPS flag, 128-255: refer to index_t)
-  uint8_t  flag;            // MPS flag
+  uint8_t  bic_id;          // BIC ID
+  uint8_t  ch_id  :4;       // C2 channel ID
+  uint8_t  flag   :4;       // PC flag
 };
 
-// index field in the MPS protocol (for intern usage)
-typedef enum {
-  IDX_REG_REQ  = 128,       // registration request (by TX)
-  IDX_REG_RSP  = 129,       // registration response (by RX)
-  IDX_REG_EREQ = 192,       // extended registration request (with sender ID)
-  IDX_UNDEF                 // undefined
-} index_t;
+// definitions for the node registration
+#define BIC_MSK             0xFF  // BIC ID mask
+#define CH_MSK              0xF   // channel ID mask
+#define FLAG_MSK            0xF   // PC/registration flag mask
+#define REG_REQ             0xF   // node registration request by emitters
+#define REG_RSP             0xE   // node registration response by colllector
 
 typedef struct mpsMsg mpsMsg_t;
 struct mpsMsg {
-  mpsProtocol_t prot;       // MPS protocol
+  union {
+    uint64_t      param;    // 'param' field of timing message
+    mpsProtocol_t prot;     // MPS protocol
+  };
+
   uint64_t tsRx;            // reception timestamp (RX)
   uint8_t  ttl;             // time-to-live (RX)
   uint8_t  pending;         // flag change indicator (RX)
 };
 
-// iterator used to access available MPS flags
-typedef struct timedItr timedItr_t;
-struct timedItr {
-  uint8_t idx;       // index of current element
-  uint8_t total;     // total number of elements
+// control structure for MPS messaging
+typedef struct msgCtrl msgCtrl_t;
+struct msgCtrl {
+  uint8_t  total;    // total number of elements
   uint64_t last;     // timestamp of last access
   uint64_t period;   // time period between accesses
   uint8_t  ttl;      // TTL value used to evaluate validity
 };
+
+typedef enum VERBOSITY {
+  DISABLE_VERBOSITY = 0,
+  ENABLE_VERBOSITY
+} verbosity_t;
 
 #endif

@@ -1,0 +1,12 @@
+[Unit]
+Description = b2b jitter check for SIS18 PM
+Requires = saftbus.service
+After = saftbus.service
+
+[Service]
+Type = simple
+Environment="DIM_DNS_NODE=asl105"
+ExecStart = b2b-jitter-check tr1 tr0 -p1 -t1 int_sis18-pm
+
+[Install]
+WantedBy = multi-user.target

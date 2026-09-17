@@ -4,7 +4,7 @@
 #include <common-defs.h>
 
 // !!!!!
-// experimental: let's try the same header and DP RAM layout for ALL B2B firmwares....
+// experimental: let's try the same header and DP RAM layout for ALL firmwares....
 // !!!!!
 
 // this file is structured in two parts
@@ -24,9 +24,11 @@
 #define WRUNIPZ_UNILACPERIODMIN   19800000    // min length of one UNILAC cylce [ns]
 
 #define WRUNIPZ_MAXPREPOFFSET         2000    // max offset of a prep event within UNILAC cycle [us]; all with events a smaller offset will be predicted from previous cycles
-#define WRUNIPZ_MILCALIBOFFSET       29000    // calibration offset to MIL event bus [ns]; MIL events are always 'late' due its protocol; this offset must be added to WR deadlines
-#define WRUNIPZ_QQOFFSET               500    // offset for sending special service event for QQ [us] /* chk: QQ is breaking the concept of WR */
-#define WRUNIPZ_A4OFFSET               500    // offset for sending special service event for A4 [us] /* chk: A4 is breaking the concept of WR */
+#define WRUNIPZ_MILCALIBOFFSET       27000    // calibration offset to MIL event bus [ns]; MIL events are always 'late' due its protocol; this offset must be added to WR deadlines
+#define WRUNIPZ_QQOFFSET               250    // offset for sending special service event for QQ [us] /* chk: QQ is breaking the concept of WR */
+#define WRUNIPZ_A4OFFSET               250    // offset for sending special service event for A4 [us] /* chk: A4 is breaking the concept of WR */
+#define WRUNIPZ_NOBEAMOFFSET          1320    // offset for sending special service event for EVT_BEAM_OFF [us] /* chk: EVT_NO_BEAM is breaking the concept of WR */
+#define WRUNIPZ_TDIFFMIL                45    // minimmum time difference [us] between sending telegrams to the MIL bus; 25us is enough, but UNIPZ sends service events 45us after last event
 
 // numbers for UNIPZ
 #define WRUNIPZ_NEVT                    20    // # of events per virt acc
@@ -65,15 +67,16 @@
 */
 
 // event codes from Super PZ received via internal bus (bits 0..7)
-#define WRUNIPZ_EVT_PZ1                  1    // next cycle PZ 1
-#define WRUNIPZ_EVT_PZ2                  2    // next cycle PZ 2
-#define WRUNIPZ_EVT_PZ3                  3    // next cycle PZ 3
-#define WRUNIPZ_EVT_PZ4                  4    // next cycle PZ 4
-#define WRUNIPZ_EVT_PZ5                  5    // next cycle PZ 5
-#define WRUNIPZ_EVT_PZ6                  6    // next cycle PZ 6
-#define WRUNIPZ_EVT_PZ7                  7    // next cycle PZ 7
-#define WRUNIPZ_EVT_SYNCH_DATA          32    // commit event for transaction
-#define WRUNIPZ_EVT_50HZ_SYNCH          33    // 50 Hz trigger, cycle start
+#define WRUNIPZ_EVT_PZ1                0x1    // next cycle PZ 1
+#define WRUNIPZ_EVT_PZ2                0x2    // next cycle PZ 2
+#define WRUNIPZ_EVT_PZ3                0x3    // next cycle PZ 3
+#define WRUNIPZ_EVT_PZ4                0x4    // next cycle PZ 4
+#define WRUNIPZ_EVT_PZ5                0x5    // next cycle PZ 5
+#define WRUNIPZ_EVT_PZ6                0x6    // next cycle PZ 6
+#define WRUNIPZ_EVT_PZ7                0x7    // next cycle PZ 7
+#define WRUNIPZ_EVT_SYNCH_DATA        0x20    // commit event for transaction
+#define WRUNIPZ_EVT_50HZ_SYNCH        0x21    // 50 Hz trigger, cycle start
+#define WRUNIPZ_EVT_NO_BEAM           0x89    // 'there is no beam ...', speciality by UNIPZ (prov. comm. P. Kainberger)
 
 // event data from Super PZ received via internal bus (bits 12..15)
 #define WRUNIPZ_EVTDATA_CHANNEL        0x1    // bit 12 - channel number: there are only two channels -> channel number coded in one bit
@@ -86,10 +89,12 @@
 #define WRUNIPZ_EVTDATA_PREPACC        0xe    // service event: execute preparation event for virt acc 
 #define WRUNIPZ_EVTDATA_ZEROACC        0xf    // set all magnets to zero value
 
-// event codes for service events (sent by wr-unipz)
+// event codes for events (sent by wr-unipz)
 #define EVT_AUX_PRP_NXT_ACC           0x11    // set values in magnet prep. cycles
 #define EVT_UNLOCK_ALVAREZ            0x15    // unlock A4 for next pulse 
 #define EVT_MAGN_DOWN                 0x19    // set magnets to zero current
+#define EVT_NO_BEAM                   0x89    // signal 'no beam'
+#define EVT_COMMAND                   0xff    // event command
 
 
 typedef struct dataTable {                    // table with _one_ virtAcc for _one_ Pulszentrale
@@ -97,8 +102,15 @@ typedef struct dataTable {                    // table with _one_ virtAcc for _o
   uint32_t prepFlags;                         // if bit 'n' is set, data[n] is prep data
   uint32_t evtFlags;                          // if bit 'n' is set, data[n] is event data  
   uint32_t data[WRUNIPZ_NEVT];                // bits 0..7 'event code', bits 8..11 reserved, bits 12..15 'event data', bits 16..31 offset [us]
-                                              // 'event data' is _not_ as desribed in https://www-acc.gsi.de/data/documentation/eq-models/pzus/gm-pzus.pdf (page 72)
-                                              // instead: bit 15 ('high current'), bit 14 ('no chopper'), bit 13 ('high brho'), bit 12 (reserved)
+                                              // 'event data':
+                                              // WRUNIPZ_EVT_PZ1..PZ7: bit 15 (n/a), bit 14 ('short chopper'/ unused (?)), bit 13 ('no chopper'), bit 12 ('channel')
+                                              // EVT_Prep_Next_Acc   : https://www-acc.gsi.de/data/documentation/eq-models/pzus/gm-pzus.pdf (page 72)
+                                              //                       bit 15 ('high current'), bit 14 (unused)      , bit 13 (short chopper), bit 12 (no chopper)
+                                              // Beam Status (??)    : bit 15 ('high current'), bit 14 ('no chopper'), bit 13 ('high brho')  , bit 12 (reserved)
+                                              // EVT_COMMAND         : PZ-Kennung: 1(SIS), 2(ESR), 9(QR), 10(QL), 11(QN), 12(UN), 13(UH), 14(UA), 15(TK)
+                                              // Commands, 0d200..208: ??
+                                              // UTC (0xe0..e4)      : UTC time in special format, see code or documentation
+                                              // all anderen Evts    : 0x0
 } dataTable;
 
 // ****************************************************************************************
@@ -120,8 +132,7 @@ typedef struct dataTable {                    // table with _one_ virtAcc for _o
 #define WRUNIPZ_SHARED_DTMIN          (WRUNIPZ_SHARED_DTMAX      + _32b_SIZE_)          // delta T min (actTime - deadline)
 #define WRUNIPZ_SHARED_CYCJMPMAX      (WRUNIPZ_SHARED_DTMIN      + _32b_SIZE_)          // delta T max (expected and actual start of UNILAC cycle)
 #define WRUNIPZ_SHARED_CYCJMPMIN      (WRUNIPZ_SHARED_CYCJMPMAX  + _32b_SIZE_)          // delta T min (expected and actual start of UNILAC cycle)
-#define WRUNIPZ_SHARED_NLATE          (WRUNIPZ_SHARED_CYCJMPMIN  + _32b_SIZE_)          // # of late messages
-#define WRUNIPZ_SHARED_VACCAVG        (WRUNIPZ_SHARED_NLATE      + _32b_SIZE_)          // virt accs used (past second) bits 0..15 (normal), 16-31 (verkuerzt)
+#define WRUNIPZ_SHARED_VACCAVG        (WRUNIPZ_SHARED_CYCJMPMIN  + _32b_SIZE_)          // virt accs used (past second) bits 0..15 (normal), 16-31 (verkuerzt)
 #define WRUNIPZ_SHARED_PZAVG          (WRUNIPZ_SHARED_VACCAVG    + _32b_SIZE_)          // PZ used (past second) bits 0..6
 
 // shared memory for submitting new 'event tables'                                      

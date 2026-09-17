@@ -1,0 +1,12 @@
+[Unit]
+Description = unichop monitoring server for PRO
+Requires = saftbus.service
+After = saftbus.service
+
+[Service]
+Type = simple
+Environment="DIM_DNS_NODE=asl105"
+ExecStart = unichop-serv-mon tr0 -d pro
+
+[Install]
+WantedBy = multi-user.target

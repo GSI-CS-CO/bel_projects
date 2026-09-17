@@ -13,6 +13,9 @@
 #include "common-defs.h"
 #include "fbas_common.h"
 
+// Ahead time
+#define FBAS_AHEAD_TIME    0ULL      // no ahead time for deadline
+
 // FBAS timing messages
 #define FBAS_FLG_FID       0x1ULL    // format ID, 2-bit
 #define FBAS_FLG_GID       0xfcbULL  // group ID = 4043, 12-bit
@@ -63,28 +66,29 @@ struct nw_addr {
   uint32_t ip;
 };
 
-extern uint64_t myMac;                             // own MAC address
-extern mpsMsg_t bufMpsMsg[N_MPS_CHANNELS];         // buffer for MPS messages
-extern timedItr_t rdItr;                           // read-access iterator for MPS flags
+extern mpsMsg_t bufMpsMsg[N_MAX_MPS_CHANNELS];     // buffer for MPS messages
+extern msgCtrl_t  mpsMsgCtrl;                      // MPS messaging control structure
 
-void initItr(timedItr_t* itr, uint8_t total, uint64_t now, uint32_t freq);
-void resetItr(timedItr_t* itr, uint64_t now);
-uint32_t sendMpsMsgPeriodic(timedItr_t* itr, uint64_t evtid);
-uint32_t sendMpsMsgSpecific(timedItr_t* itr, mpsMsg_t* buf, uint64_t evtid, uint8_t extra);
-uint32_t sendMpsMsgBlock(size_t len, timedItr_t* itr, uint64_t evtId);
-mpsMsg_t* updateMpsMsg(mpsMsg_t* buf, uint64_t evt);
-status_t storeMpsMsg(uint64_t raw, uint64_t ts, timedItr_t* itr, int* offset);
+#define N_TX_RATES         12                      // TX message rates: 10, 12.5, 20, 30, 50, 100, 200, 500, 1000, 2000, 5000, 10000 [Hz]]
+extern const uint32_t txMsgRates[N_TX_RATES];      // TX messaging rates, [Hz]
+
+void      msgInitMsgCtrl(msgCtrl_t *const ctrl, const uint8_t total, const uint64_t now, const uint32_t period);
+uint32_t  msgSendPcEvent(const msgCtrl_t* msgCtrl, mpsMsg_t *const buf, const uint64_t evtid, const uint8_t extra);
+uint32_t  msgSendPcFlag(msgCtrl_t* ctrl, uint64_t evtId);
+mpsMsg_t* msgStorePcEvent(const uint64_t evt, const uint64_t ts);
+int       msgStoreMpsMsg(const uint64_t *raw, const uint64_t *ts, const msgCtrl_t* msgCtrl);
 mpsMsg_t* evalMpsMsgTtl(uint64_t now, int idx);
-void resetMpsMsg(size_t len, mpsMsg_t* buf);
-void setMpsMsgSenderId(mpsMsg_t* msg, uint64_t raw, uint8_t verbose);
+void      msgInitMpsMsgBuf(const uint64_t *id);
+void      msgInitPcEventBuf(const uint64_t *id, uint8_t bic_id, uint8_t ch_id);
+void      msgResetMpsBuf(const uint8_t idx, const uint8_t *pId, const uint8_t flag);
+void      msgForceHigh(mpsMsg_t *const buf);
+void      msgUpdateMpsBuf(const uint64_t *pId);
+void      msgSetBic(const uint8_t id);
 
-status_t sendRegReq(int req);
-status_t sendRegRsp(void);
-bool isSenderKnown(uint64_t raw);
+status_t  msgRegisterNode(const uint64_t node_id, const uint8_t bic_id, const uint8_t ch_id, const uint8_t flag);
+int8_t    msgGetSenderIndex(const uint64_t *pId);
 
-int addr_equal(uint8_t a[ETH_ALEN], uint8_t b[ETH_ALEN]); // wr-switch-sw/userspace/libwr
-uint8_t *addr_copy(uint8_t dst[ETH_ALEN], uint8_t src[ETH_ALEN]);
-
-void diagPrintMpsMsgBuf(void);
+void      msgPrintMpsBuf(void);
+uint32_t  msgRepresentMpsFlags(void);
 
 #endif

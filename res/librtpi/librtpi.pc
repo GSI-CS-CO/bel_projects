@@ -1,0 +1,11 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: librtpi
+Description: Real-Time Priority Inheritance Library
+Version: 1.0.2
+Libs: -L${libdir} -lrtpi
+Cflags: -I${includedir}
+

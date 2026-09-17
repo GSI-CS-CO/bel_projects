@@ -36,6 +36,7 @@ fi
 # Declare platform-specific variables
 case $platform in
     "PC")
+        export node_pps_output="IO1"
         export node_tlu_input="IO2"
         export tx_node_dev="dev/wbm0"  # label for node device
         export rx_node_dev="dev/wbm2"
@@ -44,10 +45,11 @@ case $platform in
 
         export module_dir="${PWD/fbas*/fbas}"
         export fw_dir="$module_dir/fw"
-        export fw_tx="fbas.pcicontrol.bin"
-        export fw_rx="fbas.pcicontrol.bin"
+        export fw_tx="fbas16.pcicontrol.bin"
+        export fw_rx="fbas16.pcicontrol.bin"
         ;;
     "SCU")
+        export node_pps_output="B1"
         export node_tlu_input="B2"
         export tx_node_dev="dev/wbm0"
         export rx_node_dev="dev/wbm0"
@@ -55,41 +57,51 @@ case $platform in
         export rx_node_name="tr0"
 
         export fw_dir="."
-        export fw_tx="fbas.scucontrol.bin"
-        export fw_rx="fbas.scucontrol.bin"
+        export fw_tx="fbas16.scucontrol.bin"
+        export fw_rx="fbas16.scucontrol.bin"
         ;;
 esac
 
 # Declare platform-specific user RAM ranges of TR
 case $platform in
     "PC")
-        export addr_set_node_type="0x04060820"      # user RAM range in Pexp/Pexaria
-        export addr_get_node_type="0x04060830"
         export addr_cmd="0x04060508"     # shared memory location for command buffer
-        export addr_cnt1="0x04060934"    # shared memory location for transmitted message counter
-        export addr_msr1="0x04060968"    # shared memory location for measurement results
-        export addr_eca_vld="0x04060990" # shared memory location of counter for valid actions
-        export addr_eca_ovf="0x04060994" # shared memory location of counter for overflow actions
-        export addr_senderid="0x04060998" # shared memory location of sender ID
-
+        export addr_fbas="0x201406d4"    # begin of shared memory range for application specific data
         export mac_tx_node="0x00267b0004da" # sender ID of TX node
         ;;
     "SCU")
-        export addr_set_node_type="0x20140820"     # user RAM range in SCU
-        export addr_get_node_type="0x20140830"
         export addr_cmd="0x20140508"     # shared memory location for command buffer
-        export addr_cnt1="0x20140934"    # shared memory location for transmitted message counter
-        export addr_msr1="0x20140968"    # shared memory location for measurement results
-        export addr_eca_vld="0x20140990" # shared memory location of counter for valid actions
-        export addr_eca_ovf="0x20140994" # shared memory location of counter for overflow actions
-        export addr_senderid="0x20140998" # shared memory location of sender ID
+        export addr_fbas="0x201406d4"    # begin of shared memory range for application specific data
         ;;
 esac
 
+export addr_set_node_type="$(printf "0x%x" $((addr_fbas + 8)))"
+export addr_get_node_type="$(printf "0x%x" $((addr_fbas + 24)))"
+export addr_tx_cnt="$(printf "0x%x" $((addr_fbas + 284)))"   # transmitted message count
+export addr_old_cnt="$(printf "0x%x" $((addr_fbas + 288)))"  # old message count
+export addr_bad_cnt="$(printf "0x%x" $((addr_fbas + 292)))"  # bad message count
+export addr_avg="$(printf "0x%x" $((addr_fbas + 344)))"      # average value of requested measurement
+export addr_eca_vld="$(printf "0x%x" $((addr_fbas + 384)))"  # ECA valid action count
+export addr_eca_ovf="$(printf "0x%x" $((addr_fbas + 388)))"  # ECA overflow action count
+export addr_senderid="$(printf "0x%x" $((addr_fbas + 392)))" # sender ID
+export addr_array_8="$(printf "0x%x" $((addr_fbas + 624)))"  # uint32_t array[8]
+
 # Declare common constants
 
-export instr_fsm_configure=0x01 # FSM CONFIGURE state
-export instr_fsm_opready=0x02   # FSM OPREADY state
+export eca_tag_c2_event=0x24
+export eca_tag_c2_flag=0x25
+export eca_tag_aux_newcycle=0x26
+export eca_tag_aux_opmode=0x27
+export eca_tag_pc_event=0x42
+export eca_tag_node_reg=0x45
+
+# common-libs commands (common-defs.h)
+export instr_fsm_nocmd=0x00     # FSM no command
+export instr_fsm_configure=0x01 # FSM configure
+export instr_fsm_startop=0x02   # FSM start operation
+export instr_fsm_stopop=0x03    # FSM stop operation
+export instr_fsm_idle=0x04      # FSM request the idle state
+export instr_fsm_recover=0x05   # FSM recover from the error state
 
 export instr_set_nodetype=0x15  # set node type
 export instr_set_io_oe=0x16     # set IO output enable
@@ -102,16 +114,26 @@ export instr_probe_sb_user=0x21 # probe a given slave (sys and group IDs are exp
 
 export instr_en_mps=0x30        # enable MPS signalling
 export instr_dis_mps=0x31       # disable MPS signalling
-export instr_st_tx_dly=0x32     # store the transmission delay measurement results to shared memory
-export instr_st_ow_dly=0x33     # store the one-way delay measurement results to shared memory
+export instr_st_tx_dly=0x32     # store the TX handler delay measurement results to shared memory
+export instr_st_msg_dly=0x33    # store the measurement results of the messaging delay
 export instr_st_sg_lty=0x34     # store the signalling latency measurement results to shared memory
 export instr_st_ttl_ival=0x35   # store the TTL interval measurement results to shared memory
+export instr_st_eca_dly=0x37    # store the measurement result of the ECA handling delay
+export instr_st_rx_dly=0x39     # store the RX handler delay measurement results to shared memory
+export instr_st_ml_prd=0x3a     # store the main loop period measurement results to shared memory
+export instr_st_diob_dly=0x3d   # store the DIOB access delay measurement results to the shared memory
+export instr_st_array=0x3b      # store the uint32_t array[8] to the reserved location of the shared memory
+export instr_set_tx_rate=0x3c   # set the TX messaging rate: FBAS_CMD_SET_TX_RATE
 
 export     mac_any_node="0xffffffffffff"      # MAC address of any node
+# Raw event data (bits 63-16 = event ID, 15-8 = channel, 7-0 = flag)
 export evt_mps_flag_any="0xffffeeee00000000"  # generator event for MPS flags
-export  evt_mps_flag_ok="0xffffeeee00000001"  # event to generate the MPS OK flag
-export evt_mps_flag_nok="0xffffeeee00000002"  # event to generate the MPS NOK flag
-export evt_mps_flag_tst="0xffffeeee00000003"  # event to generate the MPS TEST flag
+export     evt_mps_1_ok="0xffffeeee00000001"  # event to generate the MPS OK flag (1st channel)
+export    evt_mps_1_nok="0xffffeeee00000002"  # event to generate the MPS NOK flag (1st channel)
+export    evt_mps_1_tst="0xffffeeee00000003"  # event to generate the MPS TEST flag (1st channel)
+export     evt_mps_2_ok="0xffffeeee00000101"  # event to generate the MPS OK flag (2nd channel)
+export    evt_mps_2_nok="0xffffeeee00000102"  # event to generate the MPS NOK flag (2nd channel)
+export    evt_mps_2_tst="0xffffeeee00000103"  # event to generate the MPS TEST flag (2nd channel)
 export evt_mps_prot_std="0x1fcbfcb000000000"  # event with MPS protocol (regular)
 export evt_mps_prot_chg="0x1fccfcc000000000"  # event with MPS protocol (change in flag)
 export          evt_tlu="0xffff100000000000"  # TLU event (used to catch the signal change at IO port)
@@ -128,9 +150,23 @@ user_approval() {
     fi
 }
 
-wait_seconds() {
-    #echo "wait $1 seconds ..."
-    sleep $1
+write_cmd() {
+    # $1 - device (dev/wbm0)
+    # $2 - command code
+
+    if [ "$#" -ne 2 ]; then
+        echo "wrong argument: $@. Exit!"
+        exit 1
+    fi
+
+    status=$(printf %d $2)
+    eb-write $1 $addr_cmd/4 $(($2)) # write a command code to the command buffer
+
+    while [ "$status" -ne 0 ]; do   # and wait for a while so that command code is read by LM32
+        sleep 0.1
+        status=$(eb-read $1 $addr_cmd/4)
+        status=$(printf "%d" 0x$status)
+    done
 }
 
 wait_print_seconds() {
@@ -145,7 +181,7 @@ wait_print_seconds() {
         v=$[ $1 - $i ]
         v=$(printf "%*d\r" "8" $v)          # print numbers in 8 digits leading with spaces
         echo -ne "time left (seconds): $v"  # overwrite previous output
-        wait_seconds 1
+        sleep 1
     done
 
 }
@@ -164,21 +200,6 @@ list_dev_ram() {
     # 12.14.5        0000000000000651:54111351           4060000  LM32-RAM-User
 }
 
-read_shared_mem() {
-    # $1 - device
-    # $2 - memory address
-
-    eb-read $1 $2/4
-}
-
-write_shared_mem() {
-    # $1 - device
-    # $2 - memory address
-    # $3 - value
-
-    eb-write $1 $2/4 $3
-}
-
 start_saftd() {
     echo "terminate SAFT daemon if it's running"
     sudo killall saftd
@@ -187,7 +208,7 @@ start_saftd() {
         echo "wait until SAFT daemon terminates"
         for i in $(seq 1 10); do
             echo -ne "time left (seconds): $[ 10 - $i ]\r"
-            wait_seconds 1
+            sleep 1
         done
     fi
 
@@ -209,7 +230,7 @@ start_saftbusd() {
         echo "wait until watchdog is released"
         for i in $(seq 1 10); do
             echo -ne "time left (seconds): $[ 10 - $i ]\r"
-            wait_seconds 1
+            sleep 1
         done
     fi
 
@@ -264,38 +285,54 @@ load_node_fw() {
         echo "Error: failed to load LM32 FW '$fw_filename'. Exit!"
         exit 1
     fi
-    wait_seconds 1
+    sleep 1
 }
 
 configure_node() {
     # $1 - node device label
-    # $2 - sender node groups (SENDER_TX or SENDER_ANY or SENDER_ALL)
-    # $[3:] - sender ID(s) of SENDER_TX
+    # for TX node
+    #   $2 - optional, index of the TX messaging period (0..8)
+    # for RX node
+    #   $2 - sender node groups (SENDER_TX or SENDER_ANY or SENDER_ALL)
+    #   $[3:] - sender ID(s) of SENDER_TX
 
     check_node "$1"
 
     device=$(eval echo "\$$1")  # reference node device label (string) as variable
 
-    eb-write $device $addr_cmd/4 $instr_fsm_configure
-    wait_seconds 1
+    write_cmd $device $instr_fsm_configure
 
     if [ "$1" == "rx_node_dev" ]; then
         echo "set node type to RX (0x1)"
         eb-write $device $addr_set_node_type/4 0x1
-        wait_seconds 1
 
         echo "tell LM32 to set the node type"
-        eb-write $device $addr_cmd/4 $instr_set_nodetype
-        wait_seconds 1
+        write_cmd $device $instr_set_nodetype
 
         echo "verify the actual node type (expected 0x1)"
-        eb-read $device $addr_get_node_type/4
-        wait_seconds 1
+        type=$(eb-read $device $addr_get_node_type/4)
+        type=$(printf "%d" 0x$type)
+
+        if [ "$type" -ne 1 ]; then
+            echo "failed to set node type to RX: $type (expected 1). Exit!"
+            exit 1
+        fi
 
         if [ $# -gt 1 ]; then
             shift
             set_senderid "$device" "$@"
         fi
+    elif [ "$1" == "tx_node_dev" ]; then
+
+        local idx=0
+        if [[ -n "$2" ]]; then
+            idx=$(($2)) 2>/dev/null   # force arithmetic evaluation (accept non-numeric input)
+        fi
+        eb-write $device $addr_set_node_type/4 $idx
+
+        write_cmd $device $instr_set_tx_rate
+
+        echo "TX messaging period: $idx"
     fi
 }
 
@@ -305,8 +342,8 @@ set_senderid() {
     # $[3:] - sender ID(s) of SENDER_TX (without leading 0x)
 
     # SENDER_TX - only TX node
-    # SENDER_ANY - only any nodes
-    # SENDER_ALL - TX and any nodes
+    # SENDER_ANY - only any node
+    # SENDER_ALL - any node + TX node
 
     device=$1
     sender_grp="$2"
@@ -318,41 +355,43 @@ set_senderid() {
         senderid="$senderid 0x$mac"   # format to hexadecimal number (for arithmetic calc.)
     done
 
-    first_idx=1
-    last_idx=15
     unset idx_mac_list  # list with idx_mac
 
-    if [ "$sender_grp" == "SENDER_TX" ]; then
-        # Structure of the MPS message buffer: 'sender id', 'index' and 'MPS flag'.
-        # The buffer can keep the MPS flag of up to 16 TX nodes.
-        # The 'index' is used to identify channels of the same sender, therefore
-        # it's set to zero if each sender has only one MPS channel.
-        i=0
-        for sender in $senderid; do
-            idx=$(( $i << 48 ))
-            idx_mac=$(( $idx + $sender ))
-            idx_mac=$(printf "0x%x" $idx_mac)
-            idx_mac_list="$idx_mac_list $idx_mac"
-        done
-    elif [ "$sender_grp" == "SENDER_ALL" ] || [ "$sender_grp" == "SENDER_ANY" ]; then
-        if [ "$sender_grp" == "SENDER_ALL" ]; then
-            idx_mac_list="$senderid"
-            first_idx=$(( $first_idx - 1 ))
-            last_idx=$(( $last_idx - 1 ))
-        else
-            idx_mac_list="$mac_any_node"
-        fi
+    # Structure of the MPS message buffer: 'sender id', 'index' and 'MPS flag'.
+    # The buffer can keep the MPS flag of up to 16 TX nodes.
+    # The 'index' is used to identify channels of the same sender, therefore
+    # it's set to zero if each sender has only one MPS channel.
+    for sender in $senderid; do
+        idx=0
+        idx_mac=$(( $idx + $sender ))
+        idx_mac=$(printf "0x%x" $idx_mac)
+        idx_mac_list="$idx_mac_list $idx_mac"
+    done
 
-        # idx is used to specify an MPS channel of the same sender
-        for i in $(seq $first_idx $last_idx); do
-            idx=$(( $i << 48 ))
+    case "$sender_grp" in
+        "SENDER_TX")
+            # do nothing, idx_mac_list is already built
+            ;;
+
+        "SENDER_ALL")
+            # add any node (0xffffffffffff) on top of idx_mac_list
+
+            idx=0
             idx_mac=$(( $idx + $mac_any_node ))
             idx_mac=$(printf "0x%x" $idx_mac)
-            idx_mac_list="$idx_mac_list $idx_mac"
-        done
-    else
-        return
-    fi
+            idx_mac_list="$idx_mac $idx_mac_list"
+            ;;
+
+        "SENDER_ANY")
+            # only one node
+
+            idx_mac_list="$mac_any_node"
+            ;;
+
+        *)
+            return
+            ;;
+    esac
 
     echo "set the sender IDs: $sender_grp $idx_mac_list"
 
@@ -361,13 +400,49 @@ set_senderid() {
         pos=$(( $i << 56 ))                               # position in RX buffer
         senderid=$(( $pos + $idx_mac ))                   # sender ID = position + (idx + MAC)
         senderid=$(printf "0x%x" $senderid)
-        eb-write -q $device $addr_senderid/8 $senderid
-        eb-read -q $device $addr_senderid/8
-        eb-write $device $addr_cmd/4 $instr_load_senderid
+        addr_id=$addr_senderid
+        id_32=$(($senderid >> 32))                        # high 32-bit of sender ID
+        eb-write $device $addr_id/4 $id_32
+        addr_id=$(($addr_id + 4))
+        id_32=$(($senderid & 0xffffffff))                 # low 32-bit of sender ID
+        eb-write $device $addr_id/4 $id_32
+
+        write_cmd $device $instr_load_senderid
         i=$(( $i + 1 ))
-        sleep 0.2
     done
 
+}
+
+register_senders() {
+    # $1 - node device
+    # $2 - number of channels for each sender
+    # $[3:] - sender ID(s) (without leading 0x)
+
+    local device=$1
+    local channels=$2
+    shift                   # re-set positional parameters
+    shift
+
+    # Register request is in 'parameter' field of timing message (sender id, channels, reg. request).
+    # The 'channels' indicates the number of channels supported by each sender.
+
+    unset parameters
+    local reg_cmd=128
+
+    #set -- "${@/#/0x}"      # add prefix (0x) to all positional parameters
+
+    # Construct the parameters with registration request
+    for mac in "$@"; do
+        param=$(printf "0x%012x%02x%02x" 0x$mac $channels $reg_cmd)
+        parameters="$parameters $param"
+    done
+
+    echo "Req. requests: $parameters"
+
+    for reg_req in $parameters; do
+        saft-ctl tr0 inject $evt_mps_node_reg $reg_req 0
+        sleep 0.3
+    done
 }
 
 make_node_ready() {
@@ -377,8 +452,7 @@ make_node_ready() {
 
     device=$(eval echo "\$$1")  # reference node device label (string) as variable
 
-    eb-write $device $addr_cmd/4 $instr_fsm_opready
-    wait_seconds 1
+    write_cmd $device $instr_fsm_startop
 }
 
 configure_eca() {
@@ -410,28 +484,25 @@ set_eca_rules() {
     echo "disable all events from IO inputs to ECA"
     saft-io-ctl $node_name -w
 
-    echo "configure ECA ($node_name): listen to the node registration messages ($evt_mps_node_reg), tag 0x45"
-    saft-ecpu-ctl $node_name -c $evt_mps_node_reg $evt_id_mask 0 0x45 -d
+    echo "configure ECA ($node_name): listen to the node registration messages ($evt_mps_node_reg), tag $eca_tag_node_reg"
+    saft-ecpu-ctl $node_name -c $evt_mps_node_reg $evt_id_mask 0 $eca_tag_node_reg -d
 
-    echo "configure ECA ($node_name): listen for FBAS_AUX_CYCLE event ($evt_new_cycle), tag 0x26"
-    saft-ecpu-ctl $node_name -c $evt_new_cycle $evt_id_mask 0 0x26 -d
+    echo "configure ECA ($node_name): listen for FBAS_AUX_CYCLE event ($evt_new_cycle), tag $eca_tag_aux_newcycle"
+    saft-ecpu-ctl $node_name -c $evt_new_cycle $evt_id_mask 0 $eca_tag_aux_newcycle -d
 
     if [ "$1" == "tx_node_dev" ]; then
-        echo "configure ECA ($node_name): set FBAS_GEN_EVT ($evt_mps_flag_any) for LM32 channel, tag 0x42"
-        saft-ecpu-ctl $node_name -c $evt_mps_flag_any $evt_id_mask 0 0x42 -d
+        echo "configure ECA ($node_name): handle the TLU events ($evt_tlu) as the PC events, tag $eca_tag_pc_event"
+        saft-ecpu-ctl $node_name -c $evt_tlu $evt_id_mask 0 $eca_tag_pc_event -d
 
-        echo "configure ECA ($node_name): listen for TLU event ($evt_tlu), tag 0x43"
-        saft-ecpu-ctl $node_name -c $evt_tlu $evt_id_mask 0 0x43 -d
-
-        echo "configure TLU ($node_name): timing event ($evt_tlu) is generated on signal transition at $node_tlu_input input"
+        echo "configure ECA ($node_name): TLU event ($evt_tlu) is generated on signal transition at $node_tlu_input input"
         saft-io-ctl $node_name -n $node_tlu_input -b $evt_tlu
 
-        echo "now events can be snooped with a following command: saft-ctl $node_name -xv snoop 0 0 0"
-        echo "or events can be presented by the LM32 firmware if WR console is active: $ eb-console $node_device"
+        echo "snoop TLU events by using the saft tool: saft-ctl $node_name -xv snoop $evt_tlu $evt_id_mask 0"
+        echo "or by using eb tool and the dedicated LM32 firmware: eb-console $node_device"
     else
-        echo "configure ECA ($node_name): set FBAS_WR_FLG ($evt_mps_prot_std), FBAS_WR_EVT ($evt_mps_prot_chg) for LM32 channel, tag 0x24 and 0x25"
-        saft-ecpu-ctl $node_name -c $evt_mps_prot_std $evt_id_mask 0 0x24 -d
-        saft-ecpu-ctl $node_name -c $evt_mps_prot_chg $evt_id_mask 0 0x25 -d
+        echo "configure ECA ($node_name): set FBAS_WR_FLG ($evt_mps_prot_std), FBAS_WR_EVT ($evt_mps_prot_chg) for LM32 channel, tag $eca_tag_c2_event and $eca_tag_c2_flag"
+        saft-ecpu-ctl $node_name -c $evt_mps_prot_std $evt_id_mask 0 $eca_tag_c2_event -d
+        saft-ecpu-ctl $node_name -c $evt_mps_prot_chg $evt_id_mask 0 $eca_tag_c2_flag -d
     fi
 
     echo "show actual ECA conditions"
@@ -441,11 +512,27 @@ set_eca_rules() {
     saft-io-ctl $node_name -l
 }
 
+stop_operation() {
+    # $1 - device (dev/wbm0)
+
+    write_cmd $1 $instr_dis_mps
+    write_cmd $1 $instr_fsm_stopop
+    echo "Stopped operation on $1"
+}
+
+start_operation() {
+    # $1 - device (dev/wbm0)
+
+    write_cmd $1 $instr_fsm_startop
+    echo "Started operation on $1"
+}
+
 ######################
 ## Make 'mpstx' ready
 ######################
 
 setup_mpstx() {
+    # $1 - optional, index of the TX messaging period (0..11)
 
     node_dev_label="tx_node_dev"
     echo "load firmware"
@@ -453,7 +540,7 @@ setup_mpstx() {
     load_node_fw "$node_dev_label"
 
     echo "CONFIGURE state "
-    configure_node "$node_dev_label"
+    configure_node "$node_dev_label" "$1"
 
     echo "OPREADY state "
     make_node_ready "$node_dev_label"
@@ -477,10 +564,8 @@ setup_mpsrx() {
     load_node_fw "$node_dev_label" "$1"
 
     echo "CONFIGURE state "
-    if [ $# -gt 2 ]; then
-        shift
-        configure_node "$node_dev_label" "$@"
-    fi
+    shift
+    configure_node "$node_dev_label" "$@"
 
     echo "OPREADY state "
     make_node_ready "$node_dev_label"
@@ -495,7 +580,7 @@ setup_mpsrx() {
 
 do_inject_fbas_event() {
 
-    saft-ctl tr0 -p inject $evt_mps_flag_tst 0 1000000
+    saft-ctl tr0 -p inject $evt_mps_1_tst 0 1000000
 }
 
 ##########################################################
@@ -518,7 +603,7 @@ read_counters() {
 
     device=$1
     verbose=$2
-    addr_val="$addr_cnt1 $addr_eca_vld $addr_eca_ovf" # reg addresses as string
+    addr_val="$addr_tx_cnt $addr_eca_vld $addr_eca_ovf $addr_old_cnt $addr_bad_cnt" # reg addresses as string
     unset counts
 
     for addr in $addr_val; do
@@ -527,7 +612,7 @@ read_counters() {
         counts="${counts}$cnt_dec "
     done
     if [ -n "$verbose" ]; then
-        counts="${counts}(tx_msg rx_vld rx_ovf)\n"
+        counts="${counts}(tx rx ovf old bad)\n"
     else
         counts="${counts}\n"
     fi
@@ -538,25 +623,32 @@ read_counters() {
 start_test4() {
     # $1 - dev/wbm0
 
-    echo -e "\nEnable MPS task on $1"
     enable_mps $1
 }
 
 stop_test4() {
     # $1 - dev/wbm0
 
-    echo -e "\nDisable MPS task on $1"
-    disable_mps $1
+    stop_operation $1
+}
+
+info_nw_perf() {
+    # $1 - event generation duration
+
+    n=$1
+
+    echo "TX: generating the PC events from PPS ($n seconds)"
 }
 
 ##########################################################
 # Test 3: measure network performance
-# TX SCU sends MPS flag periodically in timing msg with event ID=0x1fcbfcb00 and
-# sends MPS event immediately in timing msg with event ID=0x1fccfcc00.
 #
-# RX SCU drive its B1 output according to MPS flag or on time-out.
+# TX SCU sends the C2 flag periodically and the C2 event
+# immediately in timing msgs with different IDs:
+# C2 flag  -> 0x1fcbfcb00
+# C2 event -> 0x1fccfcc00
 #
-# IO connection with LEMO: RX:B1 -> TX:B2
+# LEMO cable connection at emitter SCU: B1->B2
 ##########################################################
 
 start_nw_perf() {
@@ -567,27 +659,19 @@ start_nw_perf() {
         n=$1
     fi
 
-    echo "TX: generating the MPS events locally ..."
-    echo "TX: $n events ($evt_mps_flag_nok, flag=NOK(2), $(( $n * 3)) transmissions)"
-    echo "TX: $n events ($evt_mps_flag_ok, flag=OK(1), $n transmissions)"
-    echo -e "TX: $(( $n * 2 - 1))x IO events must be snooped by 'saft-ctl tr0 -vx snoop $evt_tlu $evt_id_mask 0'\n"
+    # enable PPS generation at the output port
+    saft-io-ctl tr0 -n $node_pps_output -o 1 -p 1
 
-    for i in $(seq $n); do
+    wait_print_seconds $n
 
-        saft-ctl tr0 -p inject $evt_mps_flag_nok 0x0 0
-        echo -en " $i: NOK\r"
-        sleep 1
-
-        saft-ctl tr0 -p inject $evt_mps_flag_ok 0x0 0
-        echo -en " $i:  OK\r"
-        sleep 1
-    done
+    # disable PPS generation at the output port
+    saft-io-ctl tr0 -n $node_pps_output -o 0 -p 0
 }
 
 result_event_count() {
     # sent/received event count
 
-    # $1 - dev/wbmo
+    # $1 - dev/wbm0
     # $2 - event counter
     # $3 - verbosity
 
@@ -600,55 +684,106 @@ result_event_count() {
 }
 
 result_tx_delay() {
-    # $1 - dev/wbmo
+    # $1 - dev/wbm0
     # $2 - verbosity
 
     if [ -n "$2" ]; then
-        echo -n "Transmit delay: "
+        echo -n "TX dly: "
     fi
-    read_measurement_results $1 $instr_st_tx_dly $addr_msr1 $2
+    read_measurement_results $1 $instr_st_tx_dly $addr_avg $2
+}
+
+result_rx_delay() {
+    # $1 - dev/wbm0
+    # $2 - verbosity
+
+    if [ -n "$2" ]; then
+        echo -n "RX dly: "
+    fi
+    read_measurement_results $1 $instr_st_rx_dly $addr_avg $2
 }
 
 result_sg_latency() {
-    # $1 - dev/wbmo
+    # $1 - dev/wbm0
     # $2 - verbosity
 
     if [ -n "$2" ]; then
-        echo -n "Signalling latency:   "
+        echo -n "MPS lty: "
     fi
-    read_measurement_results $1 $instr_st_sg_lty $addr_msr1 $2
+    read_measurement_results $1 $instr_st_sg_lty $addr_avg $2
 }
 
-result_ow_delay() {
-    # $1 - dev/wbmo
+result_msg_delay() {
+    # $1 - dev/wbm0
     # $2 - verbosity
 
     if [ -n "$2" ]; then
-        echo -n "One-way delay:  "
+        echo -n "Msg dly: "
     fi
-    read_measurement_results $1 $instr_st_ow_dly $addr_msr1 $2
+    read_measurement_results $1 $instr_st_msg_dly $addr_avg $2
 }
 
 result_ttl_ival() {
-    # $1 - dev/wbmo
+    # $1 - dev/wbm0
     # $2 - verbosity
 
     if [ -n "$2" ]; then
-        echo -n "TTL interval:   "
+        echo -n "TTL ivl: "
     fi
-    read_measurement_results $1 $instr_st_ttl_ival $addr_msr1 $2
+    read_measurement_results $1 $instr_st_ttl_ival $addr_avg $2
+}
+
+result_eca_delay() {
+    # $1 - dev/wbm0
+    # $2 - verbosity
+
+    if [ -n "$2" ]; then
+        echo -n "ECA dly: "
+    fi
+    read_measurement_results $1 $instr_st_eca_dly $addr_avg $2
+}
+
+result_ml_period() {
+    # $1 - dev/wbm0
+    # $2 - verbosity
+
+    if [ -n "$2" ]; then
+        echo -n "loop prd: "
+    fi
+    read_measurement_results $1 $instr_st_ml_prd $addr_avg $2
+}
+
+result_diob_delay() {
+    # $1 - dev/wbm0
+    # $2 - verbosity
+
+    if [ -n "$2" ]; then
+        echo -n "DIOB dly: "
+    fi
+    read_measurement_results $1 $instr_st_diob_dly $addr_avg $2
+}
+
+result_rx() {
+    # $1 - dev/wbm0
+    # $2 - verbosity
+
+    echo -n "Counts: " && \
+	read_counters $1 $2 && \
+	result_eca_delay $1 $2 && \
+	result_rx_delay $1 $2 && \
+	result_msg_delay $1 $2 && \
+	result_ttl_ival $1 $2 && \
+	result_ml_period $1 $2
 }
 
 disable_mps() {
     echo "Stop MPS on $1"
-    eb-write $1 $addr_cmd/4 $instr_dis_mps
-    wait_seconds 1
+    write_cmd $1 $instr_dis_mps
 }
 
 enable_mps() {
     echo "Start MPS on $1"
-    eb-write $1 $addr_cmd/4 $instr_en_mps
-    wait_seconds 1
+    write_cmd $1 $instr_en_mps
 }
 
 disable_mps_all() {
@@ -663,6 +798,21 @@ enable_mps_all() {
     enable_mps $tx_node_dev
 }
 
+eb_read_uint64() {
+    # $1 - device (dev/wbm0)
+    # $2 - address (0x2014000)
+
+    device=$1
+    addr=$2
+
+    val_hi="0x$(eb-read $device ${addr}/4)" # read and keep value as hex
+    addr=$(($addr + 4))
+    val_lo="0x$(eb-read $device ${addr}/4)"
+    val=$(($val_hi << 4))
+    val=$(($val + $val_lo))
+    echo "$val"
+}
+
 read_measurement_results() {
     # $1 - node device (dev/wbm0)
     # $2 - instruction code to store measurement results to a location in the shared memory
@@ -673,33 +823,54 @@ read_measurement_results() {
     instr_msr=$2
     addr_msr=$3
 
-    eb-write $device $addr_cmd/4 $instr_msr
+    write_cmd $device $instr_msr
 
-    avg=$(eb-read -q $device ${addr_msr}/8)
-    avg_dec=$(printf "%d" 0x$avg)
-    #echo "avg= 0x$avg (${avg_dec})"
-
-    addr_msr=$(( $addr_msr + 8 ))
-    min=$(eb-read -q $device ${addr_msr}/8)
-    min_dec=$(printf "%lli" 0x$min)
+    avg=$(eb_read_uint64 $device $addr_msr)  # average
+    avg=$(($avg / 1000))                     # ns->us
 
     addr_msr=$(( $addr_msr + 8 ))
-    max=$(eb-read -q $device ${addr_msr}/8)
-    max_dec=$(printf "%d" 0x$max)
+    min=$(eb_read_uint64 $device $addr_msr)
+    min=$(printf "%lli" $min)                # min might be negative
+    min=$(($min / 1000))                     # ns->us
 
     addr_msr=$(( $addr_msr + 8 ))
-    cnt_val=$(eb-read -q $device ${addr_msr}/4)
-    cnt_val_dec=$(printf "%d" 0x$cnt_val)
+    max=$(eb_read_uint64 $device $addr_msr)  # max
+    max=$(($max / 1000))                     # ns->us
+
+    addr_msr=$(( $addr_msr + 8 ))
+    cnt_val=$(eb-read $device ${addr_msr}/4)
+    cnt_val=$(printf "%d" 0x$cnt_val)        # valid, converted to decimal
 
     addr_msr=$(( $addr_msr + 4 ))
-    cnt_all=$(eb-read -q $device ${addr_msr}/4)
-    cnt_all_dec=$(printf "%d" 0x$cnt_all)
-    echo -n "${avg_dec} ${min_dec} ${max_dec} ${cnt_val_dec} ${cnt_all_dec}"
+    cnt_all=$(eb-read $device ${addr_msr}/4)
+    cnt_all=$(printf "%d" 0x$cnt_all)        # all
+
+    echo -n "${avg} ${min} ${max} ${cnt_val} ${cnt_all}"
     if [ -n "$4" ]; then
-        echo " (avg min max valid all)"
+        echo " (avg min max [us] valid all)"
     else
         echo
     fi
+}
+
+read_array() {
+    # $1 - node device (dev/wbm0)
+    # $2 - array length
+
+    local device=$1
+    local shared=$addr_array_8
+    local length=$2
+    local my_array=()
+
+    write_cmd $device $instr_st_array
+
+    for i in $(seq $length); do
+        hex_val=$(eb-read $device $shared/4)
+        my_array+=($(printf "%d" 0x$hex_val))
+        shared=$(( $shared + 4 ))
+    done
+
+    echo "${my_array[@]}"
 }
 
 ##########################################################
@@ -710,7 +881,7 @@ read_measurement_results() {
 
 do_test2() {
     echo "injectg timing messages to tx_node_dev that simulate the FBAS class 2 signals"
-    saft-ctl $tx_node_name -p inject $evt_mps_flag_tst 0x0 1000000
+    saft-ctl $tx_node_name -p inject $evt_mps_1_tst 0x0 1000000
 
     # Case 1: consider the ahead time of 500 us (flagForceLate=0)
     # wrc output (TX)
@@ -756,7 +927,7 @@ do_test2() {
 
 reset_node() {
     # $1 - node device label
-    # $2 - sender node groups
+    # $[2:] - sender node groups
 
     check_node "$1"
 
@@ -767,7 +938,7 @@ reset_node() {
     sleep 1
 
     echo "CONFIGURE state "
-    configure_node "$1" "$2"
+    configure_node "$@"
 
     echo "OPREADY state "
     make_node_ready "$1"

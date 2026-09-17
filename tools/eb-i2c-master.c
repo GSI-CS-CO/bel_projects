@@ -80,16 +80,85 @@ int interface = 0;            /* Interface ID */
 bool write_op = false;        /* Write or read operation? */
 unsigned int adr_size = 7;    /* Address size */
 unsigned int addr = 0x0;      /* I2C slave address */
-unsigned int data_byte = 0x0; /* Data to send */
+unsigned int data_byte[4];    /* Data to send */
 bool got_address = false;     /* Got valid I2C slave address */
 bool got_data = false;        /* Got data to send? */
 bool high_speed_clk = false;  /* Set clock to maximum speed (simulation, debugging, ...) */
+char *token;                  /* For tokenizing the data string argument */
+int data_count = 0;           /* Number of I2C data */
+
+/* Function to convert string into int */
+/* ==================================================================================================== */
+int convert_to_int(const char *str)
+{
+  int value = 0;
+
+  /* Check for hexadecimal (0x) prefix */
+  if (strncmp(str, "0x", 2) == 0)
+  {
+    if (sscanf(str, "%x", &value) != 1)
+    {
+      fprintf(stderr, "Invalid hexadecimal value: %s\n", str);
+      exit(1);
+    }
+  }
+  /* Check for binary (0b) prefix */
+  else if (strncmp(str, "0b", 2) == 0)
+  {
+    /* Convert binary string to int */
+    char *endptr;
+    value = strtol(str + 2, &endptr, 2);
+    /* Ensure the entire binary string was converted */
+    if (*endptr != '\0')
+    {
+      fprintf(stderr, "Invalid binary value: %s\n", str);
+      exit(1);
+    }
+  }
+  /* Handle invalid format */
+  else
+  {
+    fprintf(stderr, "Unknown format: %s\n", str);
+    exit(1);
+  }
+
+  return value;
+}
 
 /* Function print_help */
 /* ==================================================================================================== */
 void print_help(void)
 {
-  printf("%s is a simple tool to control each WB I2C master.\n", program);
+  printf("%s is a simple tool to control each WB I2C master.\n\n", program);
+  printf("Usage: %s <device>\n", program);
+  printf("\n");
+  printf("Arguments: \n");
+  printf("-w,  write to I2C device\n");
+  printf("-r,  read from I2C device\n");
+  printf("-i,  I2C device interface\n");
+  printf("-a,  I2C device address (0x21)\n");
+  printf("-d,  I2C device data, divided by semicolon (0x06,0x00,...)\n");
+  printf("-v,  verbose\n");
+  printf("\n");
+  printf("Example configuration (Pex10 USBC1): \n");
+  printf("- Set all pins of a PCA9535 as outputs (you only need to do to this once):\n");
+  printf("  %s <device> -i 1 -w -a 0x21 -d 0x06,0x00,0x00 -v\n", program);
+  printf("\n");
+  printf("- Set all USBC1 IOs as outputs (without termination):\n");
+  printf("  %s <device> -i 1 -w -a 0x21 -d 0x02,0x0,0x0 -v\n", program);
+  printf("\n");
+  printf("- Set all USBC1 IOs as outputs (with termination):\n");
+  printf("  %s <device> -i 1 -w -a 0x21 -d 0x02,0x0,0b00011111 -v\n", program);
+  printf("\n");
+  printf("- Set all USBC1 IOs as inputs (without termination):\n");
+  printf("  %s <device> -i 1 -w -a 0x21 -d 0x02,0b00011111,0x0 -v\n", program);
+  printf("\n");
+  printf("- Set all USBC1 IOs as inputs (with termination):\n");
+  printf("  %s <device> -i 1 -w -a 0x21 -d 0x02,0b00011111,0b00011111 -v\n", program);
+  printf("\n");
+  printf("Patterns:\n");
+  printf("-i X -> X USBCX (1..4)\n");
+  printf("-d Address, OUT_000_IO5_IO4_IO3_IO2_IO1, TERM_000_IO5_IO4_IO3_IO2_IO1\n");
 }
 
 /* Function read_i2c_core_status */
@@ -184,7 +253,7 @@ void transfer_i2c_data(void)
   eb_device_write(device, (eb_address_t)(current_base), EB_DATA32, current_value, 0, NULL);
   read_i2c_core_status();
 
-  /* Generate start condition */
+  /* Generate start condition and write to i2c bus */
   current_base = base+(OC_I2C_CR<<2);
   if (write_op) { config_byte = OC_I2C_STA + OC_I2C_WR; }
   else          { config_byte = OC_I2C_STA; }
@@ -193,8 +262,21 @@ void transfer_i2c_data(void)
   if (verbose) { printf("Info: Send start condition 0x%x (Reg: 0x%x) ...\n", config_byte, current_base); }
   read_i2c_core_status();
 
-  /* To do: Check busy or RxAck flag on real hardware when pexarria10 is available */
-  sleep(0.500);
+  for (int i = 0; i < data_count; i++) {
+
+    /* Write to/Select output register data  */
+    current_base = base+(OC_I2C_TXR<<2);
+    current_value = data_byte[i];
+    eb_device_write(device, (eb_address_t)(current_base), EB_DATA32, current_value, 0, NULL);
+
+    if (verbose) { printf("Info: Send data 0x%02x on I2C bus ...\n", data_byte[i]); }
+
+    /* Write to i2c bus */
+    current_base = base+(OC_I2C_CR<<2);
+    config_byte = OC_I2C_WR;
+    current_value = config_byte;
+    eb_device_write(device, (eb_address_t)(current_base), EB_DATA32, current_value, 0, NULL);
+  }
 
   /* Generate stop condition */
   current_base = base+(OC_I2C_CR<<2);
@@ -203,6 +285,8 @@ void transfer_i2c_data(void)
   eb_device_write(device, (eb_address_t)(current_base), EB_DATA32, current_value, 0, NULL);
   if (verbose) { printf("Info: Send stop condition 0x%x (Reg: 0x%x) ...\n", config_byte, current_base); }
   read_i2c_core_status();
+
+  /* To do: Check busy or RxAck flag */
 }
 
 /* Function main */
@@ -274,16 +358,13 @@ int main (int argc, char** argv)
         }
         break;
       case 'd':
-        if (argv[optind-1] != NULL)
-        {
-          data_byte = strtoul(argv[optind-1], &pEnd, 0);
-          got_data = true;
-        }
-        else
-        {
-          printf("Error: Missing data!\n");
-          error++;
-        }
+      token = strtok(argv[optind-1], ",");
+    while (token != NULL)
+    {
+      data_byte[data_count] = convert_to_int(token);
+      data_count++;
+      token = strtok(NULL, ",");
+    }
         break;
       case '?':
         error++;

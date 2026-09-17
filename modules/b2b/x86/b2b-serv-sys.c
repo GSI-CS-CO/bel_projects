@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 17-May-2023
+ *  version : 09-jan-2026
  *
  * publishes status of a b2b system (CBU, PM, KD ...)
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERVSYS_VERSION 0x000700
+#define B2B_SERVSYS_VERSION 0x000813
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -61,20 +61,20 @@ uint64_t   ebDevice;
 #define DIMCHARSIZE 32                   // standard size for char services
 #define DIMMAXSIZE  1024                 // max size for service names
 
-char      disName[DIMMAXSIZE];
+char          disName[DIMMAXSIZE];
 
-char      disVersion[DIMCHARSIZE];
-char      disState[DIMCHARSIZE];
-char      disHostname[DIMCHARSIZE];
-uint64_t  disStatus;
-uint32_t  disNTransfer;
+char          disHostname[DIMCHARSIZE];
+char          disState[DIMCHARSIZE];
+char          disVersion[DIMCHARSIZE];
+uint64_t      disStatus;
+comlib_diag_t disDiagData;
 
-uint32_t  disVersionId      = 0;
-uint32_t  disStateId        = 0;
-uint32_t  disHostnameId     = 0;
-uint32_t  disStatusId       = 0;
-uint32_t  disNTransferId    = 0;
-uint32_t  dicClearDiagId    = 0;
+uint32_t      disHostnameId      = 0;
+uint32_t      disStateId         = 0;
+uint32_t      disVersionId       = 0;
+uint32_t      disStatusId        = 0;
+uint32_t      disDiagDataId      = 0;
+uint32_t      dicClearDiagId     = 0;
 
  
 static void die(const char* where, eb_status_t status) {
@@ -111,20 +111,20 @@ void disAddServices(char *prefix)
 {
   char name[DIMMAXSIZE];
   
-  sprintf(name, "%s_version_fw", prefix);
-  disVersionId   = dis_add_service(name, "C", disVersion, 8, 0 , 0);
+  sprintf(name, "%s_version_fw",    prefix);
+  disVersionId        = dis_add_service(name, "C",             disVersion,   8,                   0, 0);
 
-  sprintf(name, "%s_state", prefix);
-  disStateId      = dis_add_service(name, "C", disState, 10, 0 , 0);
+  sprintf(name, "%s_state",         prefix);
+  disStateId          = dis_add_service(name, "C",             disState,     10,                  0, 0);
 
-  sprintf(name, "%s_hostname", prefix);
-  disHostnameId   = dis_add_service(name, "C", disHostname, DIMCHARSIZE, 0 , 0);
+  sprintf(name, "%s_hostname",      prefix);
+  disHostnameId       = dis_add_service(name, "C",             disHostname,  DIMCHARSIZE,         0, 0);
 
-  sprintf(name, "%s_status", prefix);
-  disStatusId     = dis_add_service(name, "X", &disStatus, sizeof(disStatus), 0 , 0);
+  sprintf(name, "%s_status",        prefix);
+  disStatusId         = dis_add_service(name, "X",             &disStatus,   sizeof(disStatus),   0, 0);
 
-  sprintf(name, "%s_ntransfer", prefix);
-  disNTransferId  = dis_add_service(name, "I", &disNTransfer, sizeof(disNTransfer), 0 , 0);
+  sprintf(name, "%s_comlib_diag",   prefix);
+  disDiagDataId    = dis_add_service(name, "X:1;I:3;X:2;I:18", &disDiagData, sizeof(disDiagData), 0, 0);
 
   sprintf(name, "%s_cmd_cleardiag", prefix);
   dicClearDiagId =  dis_add_cmnd(name, 0, cmdClearDiag, 0);
@@ -145,6 +145,7 @@ int main(int argc, char** argv) {
   uint32_t nBadStatus;
   uint32_t nBadState;
   uint32_t nTransfer;
+  
 
   uint32_t actState = COMMON_STATE_UNKNOWN;    // actual state of gateway
   uint32_t verLib;
@@ -154,12 +155,14 @@ int main(int argc, char** argv) {
   uint32_t cpu;
   uint32_t status;
 
+  comlib_diag_t diagData;
+
   char     prefix[DIMMAXSIZE];
   char     disName[DIMMAXSIZE];
 
-  program    = argv[0];
-  getVersion = 0;
-  snoop      = 0;
+  program        = argv[0];
+  getVersion     = 0;
+  snoop          = 0;
 
   while ((opt = getopt(argc, argv, "seh")) != -1) {
     switch (opt) {
@@ -222,7 +225,22 @@ int main(int argc, char** argv) {
     verFwOld = verFw;
 
     while (1) {
-      b2b_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
+      // read data
+      comlib_readDiag2(ebDevice, &state, &verFw, &statusArray, &diagData, 0);
+
+      // if system is PSM, misuse unused values from common, frickelbude (C)
+      // we could get rid of this, if we used a dedicated SCU for each PSM
+      if (strstr(prefix, "sis18-psm"))  diagData.nTransfer = diagData.nTransfer;
+      if (strstr(prefix, "esr-psm"))    diagData.nTransfer = diagData.nInjection;
+      if (strstr(prefix, "yr-psm"))     diagData.nTransfer = diagData.nInjection;
+      if (strstr(prefix, "sis100-psm")) diagData.nTransfer = diagData.statTrans;
+
+      if (verFw != verFwOld) {
+        sprintf(disVersion, "%s", b2b_version_text(verFw));
+        dis_update_service(disVersionId);
+        verFwOld = verFw;
+      } // if verFw 
+
       if (actState != state) {
         actState = state;
         sprintf(disState, "%s", b2b_state_text(state));
@@ -234,16 +252,9 @@ int main(int argc, char** argv) {
         dis_update_service(disStatusId);
       } // if disStatus
 
-      if (disNTransfer != nTransfer) {
-        disNTransfer = nTransfer;
-        dis_update_service(disNTransferId);
-      } // if disNTransfer  
-
-      if (verFw != verFwOld) {
-        sprintf(disVersion, "%s", b2b_version_text(verFw));
-        dis_update_service(disVersionId);
-        verFwOld = verFw;
-      } // if verFw 
+      // common diagnostic data, just publish everything
+      disDiagData = diagData;
+      dis_update_service(disDiagDataId);
         
       sleep(1);
     } // while

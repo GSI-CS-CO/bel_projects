@@ -8,11 +8,12 @@ domain=$(hostname -d)
 rxscu_name="scuxl0497"
 def_txscu_name="scuxl0396"
 txscu_name=()                         # array with transmitter names
-rxscu="scuxl0497.$domain"
+rxscu="$rxscu_name.$domain"
 txscu=()                              # array with transmitter domain names
-fw_scu_def="fbas.scucontrol.bin"      # default LM32 FW for TX/RX SCUs
-fw_scu_multi="fbas16.scucontrol.bin"  # supports up to 16 MPS channels
+fw_scu_def="fbas16.scucontrol.bin"    # FW that supports up to 16 TX nodes, each has 1 MPS channels
 ssh_opts="-o StrictHostKeyChecking=no"   # no hostkey checking
+getopt_opts="u:p:t:r:g:i:eyvh"        # user options
+n_tx_rates=12                         # TX messaging rates
 
 usage() {
 
@@ -26,6 +27,11 @@ usage() {
     echo "  -p <userpassd>         user password"
     echo "  -t <TX SCU>            transmitter SCU, by default $def_txscu_name"
     echo "  -r <RX SCU>            receiver SCU, by default $rxscu_name"
+    echo "  -g <event gen period>  pseudo event generation period (10 seconds by default)"
+    echo "  -i <index of TX rate>  index of the TX messaging rate (by default m=0 or 30Hz)"
+    echo "                         0:30Hz, 1:10Hz, 2:12.5Hz, 3:20Hz, 4:50Hz, 5:100Hz"
+    echo "                         6:200Hz, 7:500Hz, 8:1KHz, 9:2KHz, 10:5KHz, 11:10KHz"
+    echo "  -e                     exclude TTL measurement"
     echo "  -y                     'yes' to all prompts"
     echo "  -v                     verbosity for the measurement results"
     echo "  -h                     display this help and exit"
@@ -43,24 +49,21 @@ user_approval() {
 pre_check() {
     echo "TX: snoop TLU event (for IO action):"
     echo "    saft-ctl tr0 -xv snoop 0 0 0"
-    echo "TX: events expected, when B1 output is driven on RX:"
+    echo "TX: expected events at a chosen input port (B2/IO2):"
     echo "    GID: 0x0fff EVTNO: 0x0100 Other: 0x000000001"
     echo "    GID: 0x0fff EVTNO: 0x0100 Other: 0x000000000"
-
-    echo "RX: drive B1 output:"
-    echo "      saft-io-ctl tr0 -n B1 -o 1 -d 1"
-    echo "      saft-io-ctl tr0 -n B1 -o 1 -d 0"
 }
 
 setup_nodes() {
 
-    filenames="$fw_scu_def $fw_scu_multi $script_rxscu"
+    filenames="$fw_scu_def $script_rxscu"
+
     mac_txscu=()
     all_scu=(${txscu[@]} "$rxscu")
 
     for scu in "${all_scu[@]}"; do
         # get MAC address
-        mac_scu=$(timeout 10 sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" "eb-mon -m dev/wbm0")
+        mac_scu=$(run_remote $scu "eb-mon -m dev/wbm0")
         ret_code=$?
         if [ $ret_code -eq 0 ]; then
             if [ "$scu" != "$rxscu" ]; then
@@ -72,22 +75,11 @@ setup_nodes() {
         fi
 
         # check deployment
-        for filename in $filenames; do
-            timeout 10 sshpass -p "$userpasswd" ssh $ssh_opts $username@$scu "source setup_local.sh && print_file_info $filename"
-            ret_code=$?
-
-            if [ $ret_code -eq 124 ]; then
-                echo "access to $scu timed out. Exit!"
-                exit 1
-            elif [ $ret_code -ne 0 ]; then
-                echo "$filename not found on ${scu}. Exit!"
-                exit 2
-            fi
-        done
+        check_deployment $scu $filenames
 
         # set up TX nodes
         if [ "$scu" != "$rxscu" ]; then
-            output=$(timeout 10 sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" "source setup_local.sh && setup_mpstx")
+            output=$(run_remote $scu "source setup_local.sh && setup_mpstx $idx_msg_period")
             ret_code=$?
             if [ $ret_code -ne 0 ]; then
                 echo "Error ($ret_code): cannot set up $scu"
@@ -105,7 +97,7 @@ setup_nodes() {
         sender_opts="SENDER_TX ${mac_txscu[@]}"
     fi
 
-    output=$(timeout 10 sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && setup_mpsrx $fw_scu_multi $sender_opts")
+    output=$(run_remote $rxscu "source setup_local.sh && setup_mpsrx $fw_scu_def $sender_opts")
     ret_code=$?
     if [ $ret_code -ne 0 ]; then
         echo "Error ($ret_code): cannot set up $rxscu_name"
@@ -117,39 +109,57 @@ setup_nodes() {
 
 measure_nw_perf() {
     echo -e "start the measurements\n"
-    output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && enable_mps \$rx_node_dev")
+    output=$(run_remote $rxscu "source setup_local.sh && enable_mps \$rx_node_dev")
+
+    # use local script to print info
+    output=$(source $dir_name/../scu/setup_local.sh && info_nw_perf $gen_period)
+    echo -e "$output\n"
 
     # enable simultaneous operation of TX nodes
     pids=()
+
     for i in ${!txscu[@]}; do
-        echo ${txscu[$i]}:
+        echo ${txscu[$i]}
 
         # enable MPS operation, start test => keep process ID
-        output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@${txscu[$i]}" "source setup_local.sh && enable_mps \$tx_node_dev")
+        output=$(run_remote ${txscu[$i]} "source setup_local.sh && enable_mps \$tx_node_dev")
 
         # start test sub-process and keep its process ID
-        sshpass -p "$userpasswd" ssh $ssh_opts "$username@${txscu[$i]}" "source setup_local.sh && start_nw_perf" &
+        run_remote ${txscu[$i]} "source setup_local.sh && start_nw_perf $gen_period" &
         pids[$i]=$!
     done
+
+    # notice the start time (after calling sub-process in the last device)
+    start=$(date +%s)
 
     # wait until all sub-processes are complete
     for pid in ${pids[@]}; do
         wait $pid
     done
 
-    echo -e "stop the measurements\n"
+    # notice the end time (sub-process is finished in the last device)
+    end=$(date +%s)
+    # calculate the runtime
+    runtime=$((end - start))
+
+    echo -e "stop the measurements, runtime $runtime seconds\n"
     for scu in ${txscu[@]}; do
-        output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" "source setup_local.sh && disable_mps \$tx_node_dev")
+        output=$(run_remote $scu "source setup_local.sh && stop_operation \$tx_node_dev")
     done
 
-    output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && disable_mps \$rx_node_dev")
+    output=$(run_remote $rxscu "source setup_local.sh && stop_operation \$rx_node_dev")
 
     # report test result
-    echo -e "measurement stats: MPS signaling\n"
+    echo "measurement stats of MPS signaling"
+    if [ -z "$verbose" ]; then
+        echo -e "MPS node:       tx_cnt rx_vld rx_ovf\n"
+    else
+        echo
+    fi
 
     sum_tx_cnt=0
     for scu in ${txscu[@]}; do
-        cnt=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" \
+        cnt=$(run_remote $scu \
             "source setup_local.sh && \
             read_counters \$tx_node_dev $verbose")
         echo "TX (${scu%%.*}): $cnt"
@@ -157,7 +167,7 @@ measure_nw_perf() {
 	sum_tx_cnt=$(( $sum_tx_cnt + $tx_cnt ))
     done
 
-    cnt=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" \
+    cnt=$(run_remote $rxscu \
         "source setup_local.sh && \
         read_counters \$rx_node_dev $verbose")
     echo "RX (${rxscu%%.*}): $cnt"
@@ -167,79 +177,123 @@ measure_nw_perf() {
 
     result="received $rx_cnt of $sum_tx_cnt"
     if [ $rx_cnt -eq $sum_tx_cnt ]; then
-	echo PASS: $result
+	echo -e "PASS: $result\n"
     else
-	echo FAIL: $result
+	echo -e "FAIL: $result\n"
     fi
 
+    # print measurement header
+    if [ -z "$verbose" ]; then
+        echo -e "Delay:  avg min max [us] vld all [])\n"
+        # declare measurement entries
+        tx_delay_entries=("eca dly" "tx dly " "ml prd ")
+        rx_delay_entries=("eca dly" "rx dly " "msg dly" "ml prd " "ttl    ")
+    fi
+
+    i=0
     for scu in ${txscu[@]}; do
         echo "TX (${scu%%.*}):"
-        sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" \
+
+        # read command output line by line
+        run_remote $scu \
             "source setup_local.sh && \
-            result_sg_latency \$tx_node_dev $verbose && \
-            result_tx_delay \$tx_node_dev $verbose"
+            result_eca_delay \$tx_node_dev $verbose && \
+            result_tx_delay \$tx_node_dev $verbose && \
+            result_ml_period \$tx_node_dev $verbose" |
+        while IFS= read -r line; do
+            delay_entry="${tx_delay_entries[$i]}"
+            if [ -n "$delay_entry" ]; then
+                delay_entry=" $delay_entry:"
+            fi
+            echo "$delay_entry $line"
+            i=$((i + 1))
+        done
     done
 
+    i=0
     echo "RX (${rxscu%%.*}):"
-    sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" \
+    run_remote $rxscu \
         "source setup_local.sh && \
-        result_ow_delay \$rx_node_dev $verbose && \
-        result_ttl_ival \$rx_node_dev $verbose"
+        result_eca_delay \$rx_node_dev $verbose && \
+        result_rx_delay \$rx_node_dev $verbose && \
+        result_msg_delay \$rx_node_dev $verbose && \
+        result_ml_period \$rx_node_dev $verbose && \
+        result_diob_delay \$rx_node_dev $verbose && \
+        result_ttl_ival \$rx_node_dev $verbose" |
+    while IFS= read -r line; do
+        delay_entry="${rx_delay_entries[$i]}"
+        if [ -n "$delay_entry" ]; then
+            delay_entry=" $delay_entry:"
+        fi
+        echo "$delay_entry $line"
+        i=$((i +  1))
+    done
 }
 
 measure_ttl() {
+    echo -e "RX: start the FW operation\n"
+    output=$(run_remote $rxscu "source setup_local.sh && start_operation \$rx_node_dev")
+
+    echo -e "TX: start the FW operation: TX=${txscu_name[*]}"
+    for scu in ${txscu[@]}; do
+        output=$(run_remote $scu "source setup_local.sh && start_operation \$tx_node_dev")
+    done
+
     echo -e "start the measurement\n"
-    output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && enable_mps \$rx_node_dev")
+    output=$(run_remote $rxscu "source setup_local.sh && enable_mps \$rx_node_dev")
 
     n_toggle=10
-    echo -e "toggle MPS operation (n=$n_toggle): TX=${txscu_name[@]}"
+    echo -e "toggle MPS operation (n=$n_toggle): TX=${txscu_name[*]}"
     for i in $(seq 1 $n_toggle); do
         echo -en " $i: enable \r"
 
         for scu in ${txscu[@]}; do
-            output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" "source setup_local.sh && enable_mps \$tx_node_dev")
+            output=$(run_remote $scu "source setup_local.sh && enable_mps \$tx_node_dev")
         done
 
         sleep 1
         echo -en " $i: disable\r"
 
         for scu in ${txscu[@]}; do
-            output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$scu" "source setup_local.sh && disable_mps \$tx_node_dev")
+            output=$(run_remote $scu "source setup_local.sh && disable_mps \$tx_node_dev")
         done
 
         sleep 1
     done
 
     echo -e "\nstop the measurement\n"
-    output=$(sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && disable_mps \$rx_node_dev")
+    output=$(run_remote $rxscu "source setup_local.sh && disable_mps \$rx_node_dev")
 
     echo -e "measurement stats: TTL\n"
-    sshpass -p "$userpasswd" ssh $ssh_opts "$username@$rxscu" "source setup_local.sh && result_ttl_ival \$rx_node_dev \$addr_cnt1 $verbose"
+    run_remote $rxscu "source setup_local.sh && result_ttl_ival \$rx_node_dev \$addr_cnt1 $verbose"
 }
 
-unset username userpasswd option verbose
+unset username userpasswd gen_period idx_msg_period exclude_ttl auto verbose
 unset OPTIND
 
-while getopts 'hyu:p:vt:r:' c; do
+while getopts $getopt_opts c; do
     case $c in
-        h) usage; exit 0 ;;
         u) username=$OPTARG ;;
         p) userpasswd=$OPTARG ;;
-        y) option="auto" ;;
-        v) verbose="yes" ;;
         t) txscu_name+=("$OPTARG"); txscu+=("$OPTARG.$domain") ;;
         r) rxscu_name=$OPTARG; rxscu=$OPTARG.$domain ;;
+        g) gen_period=$OPTARG ;;
+        i) idx_msg_period=$OPTARG ;;
+        e) exclude_ttl="exclude_ttl" ;;
+        y) auto="auto" ;;
+        v) verbose="yes" ;;
+        h) usage; exit 0 ;;
         *) usage; exit 1 ;;
     esac
 done
 
-# get username and password to access SCUs
-if [ -z "$username" ]; then
-    read -rp "username to access '$rxscu_name, ${txscu_name[@]}': " username
-fi
-
-if [ -z "$userpasswd" ]; then
-    read -rsp "password for '$username' : " userpasswd
+# check the index of the TX messaging period
+if [ "$idx_msg_period" ]; then
+    num=$(($idx_msg_period)) 2>/dev/null
+    if [ $num -ge $n_tx_rates ]; then
+        echo "Error: invalid index for TX messaging period: $num (valid index is less than $n_tx_rates). Exit!"
+        usage; exit 1
+    fi
 fi
 
 # get the default transmitter SCU name
@@ -248,20 +302,39 @@ if [ ${#txscu_name[@]} -eq 0 ]; then
     txscu+=("$def_txscu_name.$domain")
 fi
 
-echo -e "\n--- Step 1: set up nodes (RX=$rxscu_name, TX=${txscu_name[@]}) ---\n"
+scu_names="$rxscu_name, ${txscu_name[*]}"
+# get username and password to access SCUs
+if [ -z "$username" ]; then
+    read -rp "username to access '$scu_names': " username
+fi
+
+if [ -z "$userpasswd" ]; then
+    read -rsp "password for '$username@{$scu_names}': " userpasswd; echo
+fi
+
+# set the pseudo event generation period
+if [ -z "$gen_period" ]; then
+    gen_period=10
+fi
+
+echo -e "\n--- Step 1: set up nodes (RX=$rxscu_name, TX=${txscu_name[*]}) ---\n"
 setup_nodes
 
 # optional pre-check before real test
-echo -e "\n--- Step 2: pre-check (RX=$rxscu_name, TX=${txscu_name[@]}) ---\n"
+echo -e "\n--- Step 2: pre-check (RX=$rxscu_name, TX=${txscu_name[*]}) ---\n"
 pre_check
 
-if [ "$option" != "auto" ]; then
+if [ -z "$auto" ]; then
     user_approval
 fi
 
-echo -e "\n--- Step 3: measure network performance (RX=$rxscu_name, TX=${txscu_name[@]}) ---\n"
+echo -e "\n--- Step 3: measure network performance (RX=$rxscu_name, TX=${txscu_name[*]}) ---\n"
 measure_nw_perf
 
+if [ -n "$exclude_ttl" ]; then
+    exit 0
+fi
+
 # TTL measurement
-echo -e "\n--- Step 4: measure TTL (RX=$rxscu_name, TX=${txscu_name[@]}) ---\n"
+echo -e "\n--- Step 4: measure TTL (RX=$rxscu_name, TX=${txscu_name[*]}) ---\n"
 measure_ttl

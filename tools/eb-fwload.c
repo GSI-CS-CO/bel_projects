@@ -1,8 +1,8 @@
 /** @file eb-fwload.c
  *  @brief A program which uploads firmware to a cpu.
- *  
+ *
  *  complete ripoff of eb-put with added reset controls and auto address detection
- *  Copyright (C) 2011-2012 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+ *  Copyright (C) 2011-2012 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *
  *  @author M. Kreider <m.kreider@gsi.de>
@@ -19,7 +19,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
@@ -35,7 +35,6 @@
 #include <errno.h>
 
 #include <etherbone.h>
-#include <glue/version.h>
 
 #define OPERATIONS_PER_CYCLE 32
 
@@ -95,23 +94,23 @@ static const char* firmware;
 static void dec_todo(eb_user_data_t data, eb_device_t dev, eb_operation_t op, eb_status_t status) {
   /* Check overall status */
   if (status != EB_OK) {
-    fprintf(stderr, "\r%s: etherbone cycle error: %s\n", 
+    fprintf(stderr, "\r%s: etherbone cycle error: %s\n",
                     program, eb_status(status));
     exit(1);
   }
-  
+
   /* Check operation error lines */
   for (; op != EB_NULL; op = eb_operation_next(op)) {
     if (eb_operation_had_error(op)) {
       fprintf(stderr, "\r%s: wishbone segfault writing %s %s bits to address 0x%"EB_ADDR_FMT".\n",
-        program, 
+        program,
         eb_width_data(eb_operation_format(op)),
-        eb_format_endian(eb_operation_format(op)), 
+        eb_format_endian(eb_operation_format(op)),
         eb_operation_address(op));
       exit(1);
     }
   }
-  
+
   --todo;
 }
 
@@ -123,24 +122,24 @@ static void transfer(eb_device_t device, eb_address_t address, eb_format_t forma
   eb_status_t status;
   uint8_t buffer[16];
   int i, j;
-  
+
   size = format & EB_DATAX;
-  
+
   if (verbose)
     fprintf(stdout, "\rProgramming 0x%"EB_ADDR_FMT"-", address);
-  
+
   if ((status = eb_cycle_open(device, 0, &dec_todo, &cycle)) != EB_OK) {
     fprintf(stderr, "\r%s: cannot create cycle: %s\n", program, eb_status(status));
     exit(1);
   }
-  
+
   for (i = 0; i < count; ++i) {
     if (fread(buffer, 1, size, firmware_f) != size) {
-      fprintf(stderr, "\r%s: short read from '%s'\n", 
+      fprintf(stderr, "\r%s: short read from '%s'\n",
                       program, firmware);
       exit(1);
     }
-    
+
     /* Construct value */
     data = 0;
     if ((format & EB_ENDIAN_MASK) == EB_BIG_ENDIAN) {
@@ -154,28 +153,28 @@ static void transfer(eb_device_t device, eb_address_t address, eb_format_t forma
         data |= buffer[j];
       }
     }
-    
+
     eb_cycle_write(cycle, address, format, data);
     address += size;
   }
-  
+
   if (verbose) {
     fprintf(stdout, "0x%"EB_ADDR_FMT"...", address-1);
     fflush(stdout);
   }
-  
+
   if (force)
     eb_cycle_close_silently(cycle);
   else
     eb_cycle_close(cycle);
   ++todo;
 }
-  
+
 int main(int argc, char** argv) {
   long value;
   char* value_end;
   int opt, cycle, error;
-  
+
   eb_socket_t socket;
   eb_status_t status;
   eb_device_t device;
@@ -188,7 +187,7 @@ int main(int argc, char** argv) {
   eb_format_t bulk;
   eb_format_t edge;
   eb_address_t end_address, end_bulk, step, pos;
-  
+
   /* Specific command-line options */
   int attempts, probe, cycles;
   const char* netaddress;
@@ -274,14 +273,14 @@ int main(int argc, char** argv) {
       return 1;
     }
   }
-  
+
   if (error) return 1;
-  
+
   if (optind + 4 != argc) {
     fprintf(stderr, "%s: expecting four non-optional arguments: <proto/host/port> <id> <offset> <firmware>, got %u\n", program, argc);
     return 1;
   }
-  
+
   netaddress = argv[optind];
   pId     = argv[optind+1];
 
@@ -301,7 +300,7 @@ int main(int argc, char** argv) {
     resetOffsSet  = USER_RST_OFFS_SET;
     resetOffsClr  = USER_RST_OFFS_CLR;
     resetSet      = (1 << idNum) | resetAll;
-    resetClr      = resetSet; 
+    resetClr      = resetSet;
   } else if(*pId == 'w') {
     idType        = CPU_WR;
     idNum         = 0;
@@ -312,10 +311,10 @@ int main(int argc, char** argv) {
     resetOffsSet  = 0;
     resetOffsClr  = 0;
     resetSet      = WR_RST_SET;
-    resetClr      = WR_RST_CLR; 
+    resetClr      = WR_RST_CLR;
   } else {
     fprintf(stderr, "%s: CPU ID must start with 'u' (User) or 'w' (WhiteRabbit) -- '%s'\n", program, pId);
-    return 1;    
+    return 1;
   }
 
   offset = strtoull(argv[optind+2], &value_end, 0);
@@ -324,46 +323,46 @@ int main(int argc, char** argv) {
                     program, argv[optind+2]);
     return 1;
   }
-  
+
   firmware = argv[optind+3];
   if ((firmware_f = fopen(firmware, "r")) == 0) {
     fprintf(stderr, "%s: fopen, %s -- '%s'\n",
                     program, strerror(errno), firmware);
     return 1;
   }
-  
+
   if (fseeko(firmware_f, 0, SEEK_END) != 0) {
     fprintf(stderr, "%s: fseeko, %s -- '%s'\n",
                     program, strerror(errno), firmware);
     return 1;
   }
-  
+
   firmware_length = ftello(firmware_f);
   fseeko(firmware_f, 0, SEEK_SET);
-  
+
   if (verbose)
-    fprintf(stdout, "Opening socket with %s-bit address and %s-bit data widths\n", 
+    fprintf(stdout, "Opening socket with %s-bit address and %s-bit data widths\n",
                     eb_width_address(address_width), eb_width_data(data_width));
-  
+
   if ((status = eb_socket_open(EB_ABI_CODE, 0, address_width|data_width, &socket)) != EB_OK) {
     fprintf(stderr, "%s: failed to open Etherbone socket: %s\n", program, eb_status(status));
     return 1;
   }
-  
+
   if (verbose)
     fprintf(stdout, "Connecting to '%s' with %d retry attempts...\n", netaddress, attempts);
-  
+
   if ((status = eb_device_open(socket, netaddress, EB_ADDRX|EB_DATAX, attempts, &device)) != EB_OK) {
     fprintf(stderr, "%s: failed to open Etherbone device: %s\n", program, eb_status(status));
     return 1;
   }
-  
+
   line_width = eb_device_width(device);
   if (verbose)
-    fprintf(stdout, "  negotiated %s-bit address and %s-bit data session.\n", 
+    fprintf(stdout, "  negotiated %s-bit address and %s-bit data session.\n",
                     eb_width_address(line_width), eb_width_data(line_width));
-  
-  
+
+
   /* Get Reset Core address */
   num_devices = MAX_DEVICES;
   eb_sdb_find_by_identity(device, vendIdRst, prodIdRst, &devices[0], &num_devices);
@@ -386,78 +385,78 @@ int main(int argc, char** argv) {
   address     = addr_first + offset;
 
   if (verbose) fprintf(stdout, "%c%u: RAM Base Adr @ 0x%"EB_ADDR_FMT", Offset 0x%"EB_ADDR_FMT", FW size %u, Write Start @ 0x%"EB_ADDR_FMT", Write End @ 0x%"EB_ADDR_FMT"\n", idType, idNum, addr_first,  offset, (unsigned int)firmware_length, address, address+firmware_length-1);
-    
+
   if (probe) {
     if ((devices[idNum].bus_specific & SDB_WISHBONE_LITTLE_ENDIAN) != 0)
       device_support = EB_LITTLE_ENDIAN;
     else
       device_support = EB_BIG_ENDIAN;
     device_support |= devices[idNum].bus_specific & EB_DATAX;
-    
+
     if (addr_last - address < firmware_length-1) {
       if (!quiet)
-        fprintf(stderr, "%s: warning: firmware end address 0x%"EB_ADDR_FMT" is past device end 0x%"EB_ADDR_FMT".\n", 
+        fprintf(stderr, "%s: warning: firmware end address 0x%"EB_ADDR_FMT" is past device end 0x%"EB_ADDR_FMT".\n",
                         program, address+firmware_length-1, addr_last);
     }
   } else {
     device_support = endian | EB_DATAX;
   }
-  
+
   /* Did the user request a bad endian? We use it anyway, but issue warning. */
   if (endian != 0 && (device_support & EB_ENDIAN_MASK) != endian) {
     if (!quiet)
       fprintf(stderr, "%s: warning: target device is %s (writing as %s).\n",
                       program, eb_format_endian(device_support), eb_format_endian(endian));
   }
-  
+
   if (endian == 0) {
     /* Select the probed endian. May still be 0 if device not found. */
     endian = device_support & EB_ENDIAN_MASK;
   }
-  
+
   /* We need to know endian if it's not aligned to the line size */
   if (endian == 0) {
     fprintf(stderr, "%s: error: must know endian to program firmware\n",
                     program);
     return 1;
   }
-  
+
   /* We need to pick the operation width we use.
    * It must be supported both by the device and the line.
    */
   line_widths = ((line_width & EB_DATAX) << 1) - 1; /* Link can support any access smaller than line_width */
   write_sizes = line_widths & device_support;
-    
+
   /* We cannot work with a device that requires larger access than we support */
   if (write_sizes == 0) {
     fprintf(stderr, "%s: error: device's %s-bit data port cannot be used via a %s-bit wire format\n",
                     program, eb_width_data(device_support), eb_width_data(line_width));
     return 1;
   }
-  
+
   /* Pick the largest possible write_size for bulk transfer */
   bulk = write_sizes;
   bulk |= bulk >> 1;
   bulk |= bulk >> 2;
   bulk ^= bulk >> 1;
-  
+
   /* Pick the smallest possible write_size for edge transfer */
   edge = write_sizes & -write_sizes;
-  
+
   /* Calculate a reasonable number to pack in a packet */
   if (cycles == 0) {
     eb_width_t line_alignment;
     int cost, status;
-    
+
     status = OPERATIONS_PER_CYCLE / ((line_width & EB_DATAX) * 8);
     if (status == 0) status = 1;
-    
+
     /* How many bytes per line alignment? */
     line_alignment = line_width >> 4 | (line_width & EB_DATAX);
     line_alignment |= line_alignment >> 1;
     line_alignment |= line_alignment >> 2;
     line_alignment ^= line_alignment >> 1;
-    
+
     /* Can the writes be compressed? */
     if (bulk != (line_width & EB_DATAX)) {
       /* Each needs its own header */
@@ -469,16 +468,16 @@ int main(int argc, char** argv) {
       cost *= line_alignment;
       cost += status * 6 * line_alignment;
     }
-    
+
     /* A decent MTU */
     cycles = 1450 / cost;
     if (cycles == 0) cycles = 1;
   }
-  
+
   if (verbose)
     fprintf(stdout, "Programming using batches of %d %s %s-bit words and %s-bit alignment\n",
                      OPERATIONS_PER_CYCLE*cycles, eb_format_endian(endian), eb_width_data(bulk), eb_width_data(edge));
-  
+
   /* Confirm we can write the requested size faithfully */
   if ((firmware_length & (edge-1)) != 0) {
     fprintf(stderr, "%s: error: firmware length 0x%"EB_ADDR_FMT" is not a multiple of the minimum device granularity, %s-bit.\n",
@@ -494,19 +493,19 @@ int main(int argc, char** argv) {
                     program, address, eb_width_data(edge));
   }
 
-  
+
   /* Put CPU into reset */
   if (verbose) fprintf(stdout, "Getting CPU %c%u into reset..., writing 0x%08x @ 0x%"EB_ADDR_FMT"\n", idType, idNum, (unsigned int)resetSet, resetAddress + resetOffsSet);
   if ((status = eb_device_write(device, resetAddress + resetOffsSet, EB_BIG_ENDIAN | EB_DATA32, resetSet, 0, eb_block)) != EB_OK) {
     fprintf(stderr, "\r%s: cannot reset CPU(s): %s\n", program, eb_status(status));
     return 1;
   }
-  
+
 
   /* Start counting cycles */
   todo = 0;
   end_address = address + firmware_length;
-  
+
 
   /* Write any edge chunks needed to reach bulk alignment */
   for (pos = address; (pos & (bulk-1)) != 0; pos += edge) {
@@ -516,19 +515,19 @@ int main(int argc, char** argv) {
   while (todo > 0) {
     eb_socket_run(socket, -1);
   }
-  
+
   /* Begin the bulk transfer */
   end_bulk = end_address & ~(eb_address_t)(bulk-1);
-  
+
 
   for (cycle = 0; pos < end_bulk; pos += step*bulk) {
     step = end_bulk - pos;
     step /= bulk;
-    
+
     /* Don't put too many in one cycle */
     if (step > OPERATIONS_PER_CYCLE) step = OPERATIONS_PER_CYCLE;
     transfer(device, pos, endian | bulk, step);
-    
+
     /* Flush? */
     if (++cycle == cycles) {
       cycle = 0;
@@ -537,17 +536,17 @@ int main(int argc, char** argv) {
       }
     }
   }
-  
+
   /* Write any edge chunks needed to reach bulk final address */
   for (; pos < end_address; pos += edge)
     transfer(device, pos, endian | edge, 1);
-  
+
   if (verbose) {
     fprintf(stdout, " done!\n");
     fprintf(stdout, "Awaiting acknowledgement... ");
     fflush(stdout);
   }
-  
+
   /* Wait for tail to be written */
   while (todo > 0) {
     eb_socket_run(socket, -1);
@@ -562,16 +561,16 @@ int main(int argc, char** argv) {
     fprintf(stderr, "\r%s: failed to get CPU(s) out of reset: %s\n", program, eb_status(status));
     return 1;
   }
-  
+
   if ((status = eb_device_close(device)) != EB_OK) {
     fprintf(stderr, "%s: failed to close Etherbone device: %s\n", program, eb_status(status));
     return 1;
   }
-  
+
   if ((status = eb_socket_close(socket)) != EB_OK) {
     fprintf(stderr, "%s: failed to close Etherbone socket: %s\n", program, eb_status(status));
     return 1;
   }
-  
+
   return 0;
 }

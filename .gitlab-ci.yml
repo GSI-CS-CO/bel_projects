@@ -1,0 +1,84 @@
+stages:
+  - build
+
+build:
+  stage: build
+  
+  image: debian:stable
+
+  before_script:
+    # Export section
+    - export PROXY="proxy.gsi.de:3128"
+    - export HTTP_PROXY="http://proxy.gsi.de:3128"
+    - export HTTPS_PROXY="http://proxy.gsi.de:3128"
+    - export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig"
+
+    # Configure proxy for apt
+    - echo "Acquire::http::Proxy \"http://proxy.gsi.de:3128\";" >> /etc/apt/apt.conf.d/00gsiproxy
+
+    # Update package lists
+    - apt-get update
+
+    # Install required dependencies
+    - apt-get -y install sudo unzip wget git automake libtool libreadline-dev build-essential libboost-all-dev pkg-config libsigc++-2.0-dev --fix-missing
+
+    # Configure proxy for wget
+    - echo -e 'use_proxy=on\nhttp_proxy=proxy.gsi.de:3128\nhttps_proxy=proxy.gsi.de:3128' >> /etc/wgetrc
+
+    # Compatibility workaround for MPFR library version
+    - ln -s /usr/lib/x86_64-linux-gnu/libmpfr.so.6 \
+            /usr/lib/x86_64-linux-gnu/libmpfr.so.4 || true
+  
+  script:
+    # =========================
+    # Core build
+    # =========================
+    - make
+
+    # =========================
+    # Etherbone
+    # =========================
+    - make etherbone
+    - make etherbone-install
+
+    # =========================
+    # Tools
+    # =========================
+    - make tools
+    - make tools-install
+
+    # =========================
+    # Simple display
+    # =========================
+    - make simple-display
+    - make simple-display-install
+
+    # =========================
+    # PHTIF
+    # =========================
+    - make phtif
+
+    # =========================
+    # librtpi
+    # =========================
+    - make librtpi
+    - make librtpi-install
+    - cp "$(pwd)/res/librtpi/librtpi.pc" /usr/local/lib/pkgconfig
+
+    # =========================
+    # saftlib
+    # =========================
+    - make saftlib -j$(nproc)
+    - sudo make saftlib-install
+
+    # =========================
+    # Firmware builds
+    # =========================
+    - make fw-bg
+    - make fw-fg-scu2-scu3
+
+    # =========================
+    # Tests / timing projects
+    # =========================
+    - make test_run_all
+

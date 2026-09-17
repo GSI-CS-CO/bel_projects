@@ -189,7 +189,7 @@ start_dm_synchron() {
 }
 
 ######################
-## Get a value of given variable
+## Set a value of given variable
 ######################
 
 set_value() {
@@ -218,10 +218,10 @@ get_value() {
 }
 
 ######################
-## Run a pattern
+## Run a schedule/pattern
 ######################
 
-run_pattern() {
+run_finite_schedule() {
     # $1 - external file with schedule (ie., my_mps_rx_rate_16.dot)
 
     if [ ! -f $patt_loc/$1 ]; then
@@ -264,6 +264,57 @@ run_pattern() {
     start_dm_patt $pattern
     echo "sleep $sleep_period" && wait_print_seconds $sleep_period
     cnt_dm_msg
+}
+
+start_loop_schedule() {
+    # $1 - external file with schedule (ie., my_mps_basic_loop.dot)
+
+    if [ ! -f $patt_loc/$1 ]; then
+        echo "'$patt_loc/$1' not found. Exit"
+        return 1
+    fi
+
+    pattern=$(get_value $1 "pattern")
+
+    if [ -z "$pattern" ]; then
+        echo "Pattern not found. Exit"
+        return 1
+    fi
+
+    tperiod=$(get_value $1 "tperiod")
+
+    if [ -z "$tperiod" ]; then
+        echo "tperiod not found. Exit"
+        return 1
+    fi
+
+    echo "pattern=$pattern tperiod=$tperiod"
+
+    clear_dm_diag
+    clear_dm_patt
+    load_dm_patt $1
+    start_dm_patt $pattern
+}
+
+stop_loop_schedule() {
+    # $1 - external file with schedule (ie., my_mps_basic_loop.dot)
+
+    if [ ! -f $patt_loc/$1 ]; then
+        echo "'$patt_loc/$1' not found. Exit"
+        return 1
+    fi
+
+    pattern=$(get_value $1 "pattern")
+
+    if [ -z "$pattern" ]; then
+        echo "Pattern not found. Exit"
+        return 1
+    fi
+
+    echo "pattern=$pattern"
+
+    stop_dm_patt $pattern
+    #cnt_dm_msg
 }
 
 ######################

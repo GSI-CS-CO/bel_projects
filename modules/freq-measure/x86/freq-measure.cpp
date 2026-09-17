@@ -3,14 +3,14 @@
  *  author  : Michael Reese, GSI-Darmstadt
  *  version : 04-Mar-2022
  *
- * Precise measurement of frequency on B2B-PM-Nodes. 
+ * Precise measurement of frequency on B2B-PM-Nodes.
  * The Measurement is based on the same ECA events that the embedded CPU uses to measure the frequency.
- * Because the host system provides floating point numbers and more CPU power a linear regression is 
+ * Because the host system provides floating point numbers and more CPU power a linear regression is
  * possible to get a more precise value of the frequency. Measurement results are published as DIM
  * services.
- * 
+ *
  * At the moment, the zero-crossing events for the frequency measurement come from the B2B system.
- * 
+ *
  * TODO: In the future, this tool should generate these events by itself.
  *
  *********************************************************************************************/
@@ -24,6 +24,8 @@
 #include <cstdio>
 #include <cstdint>
 #include <cmath>
+#include <cassert>
+#include <fstream>
 
 // saftlib includes
 #include <TimingReceiver.h>
@@ -152,8 +154,8 @@ private:
 std::string error_format(double x, double dx) {
 	int precision=log(100/dx)/log(10);
 	std::ostringstream out;
-	out //<< x << " " << dx << " " << precision << " " 
-		<< std::fixed << std::setprecision(precision) << x 
+	out //<< x << " " << dx << " " << precision << " "
+		<< std::fixed << std::setprecision(precision) << x
 	    << "(" << (int)round(dx*pow(10,precision)) << ")";
 	return out.str();
 }
@@ -180,7 +182,7 @@ struct DataPoint {
 	DataPoint(int64_t n, int64_t t) : number(n), time_ns(t) {}
 };
 
-// edge_times needs to be sorted 
+// edge_times needs to be sorted
 FrequencyMeasurement::FrequencyMeasurement(const std::vector<int64_t> &edge_times_ns) : valid(false) {
 	LinearRegression lin_reg_all;
 	LinearRegression lin_reg_freq_slope;
@@ -200,10 +202,10 @@ FrequencyMeasurement::FrequencyMeasurement(const std::vector<int64_t> &edge_time
 
 	// temporary data
 	std::vector<DataPoint> points; // needed for chi^2 calculation later
-	std::vector<std::vector<int64_t> > bursts(1); 
-	
+	std::vector<std::vector<int64_t> > bursts(1);
 
-	int64_t previous_number = 0; // keep track of the last period number 
+
+	int64_t previous_number = 0; // keep track of the last period number
 
 	// loop over all data points (make sure that points edge_times_ns[0],[1],[2] are not used again)
 	for (int i = 0; i < edge_times_ns.size(); ++i) {
@@ -214,18 +216,18 @@ FrequencyMeasurement::FrequencyMeasurement(const std::vector<int64_t> &edge_time
 			bursts.push_back(std::vector<int64_t>());
 		}
 		// add point to the burst
-		bursts.back().push_back(edge_times_ns[i]); 
+		bursts.back().push_back(edge_times_ns[i]);
 
 		// add the point to the straight line fit only if is in agreement (considering the error of the line fit)
 		if (lin_reg_all.evaluate(number, edge_times_ns[i])) {
 			points.push_back(DataPoint(number, edge_times_ns[i]));
-			if (i > 2) { // points 0,1,2 were are already used 
+			if (i > 2) { // points 0,1,2 were are already used
 				lin_reg_all.add_point(number, edge_times_ns[i]); // linear regression to all the points
 			}
-		} 
+		}
 		previous_number = number;
 	}
-	
+
 	// calculate chi^2
 	for (int i = 0; i < points.size(); ++i) {
 		double x = points[i].number;
@@ -297,7 +299,7 @@ double test(double freq) {
 	std::cout << "bursts=" << result.num_bursts << " \t";
 	std::cout << "points=" << result.num_points << " \t";
 	std::cout << "outliers=" << result.num_outliers << " \t";
-	
+
 	std::cout << std::endl;
 
 	return result.freq_Hz;
@@ -436,7 +438,7 @@ struct DataAcquisition {
 				std::cout << "points=" << result.num_points << " \t";
 				std::cout << "outliers=" << result.num_outliers << " \t";
 				std::cout << "sid=" << SID << " \t";
-				std::cout << std::endl;		
+				std::cout << std::endl;
 			}
 
 			result_for_sid[SID].nuSet      = expected_frequency_Hz;
@@ -604,4 +606,3 @@ int main(int argc, char **argv){
 	}
 	return 0;
 }
-
