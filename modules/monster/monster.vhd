@@ -956,15 +956,12 @@ architecture rtl of monster is
       1 => c_loc_wb_master,
       2 => c_loc_embedded_cpu,
       3 => c_loc_scubus_tag);
-    constant c_ftm_channel_types : t_nat_array(1 downto 0) := c_scu_channel_types(1 downto 0);
-    constant c_channel_types     : t_nat_array(2 downto 0) := c_scu_channel_types(2 downto 0);
+    constant c_channel_types    : t_nat_array(2 downto 0) := c_scu_channel_types(2 downto 0);
   begin
     if g_en_scubus then
       return c_scu_channel_types;
-    elsif g_en_eca_io_channel then
-      return c_channel_types;
     else
-      return c_ftm_channel_types;
+      return c_channel_types;
     end if;
   end f_channel_types;
 
@@ -2870,7 +2867,6 @@ end generate;
 
    genEcaStuff : if g_en_eca generate
 
-
       no_genTLUStuff : if not(c_use_tlu) generate
         dev_bus_master_i(dev_slaves'pos(devs_tlu)) <= cc_dummy_slave_out;
         dev_msi_slave_i(dev_slaves'pos(devs_tlu)) <= cc_dummy_master_out;
@@ -2968,7 +2964,6 @@ end generate;
             end generate;
           end generate;
 
-
       ecawb : eca_wb_event
         port map(
           w_clk_i    => clk_sys,
@@ -2995,7 +2990,6 @@ end generate;
           a_stream_o => s_stream_i(1),
           a_stall_i  => s_stall_o(1));
 
-    eca_io_channel_wb : if g_en_eca_io_channel generate
       eca : wr_eca
         generic map(
           g_channel_types  => c_channel_types,
@@ -3022,11 +3016,6 @@ end generate;
           i_rst_n_i   => rstn_sys,
           i_master_i  => dev_msi_slave_o(dev_slaves'pos(devs_eca_ctl)),
           i_master_o  => dev_msi_slave_i(dev_slaves'pos(devs_eca_ctl)));
-    end generate;
-
-    eca_io_channel_wb_n : if not g_en_eca_io_channel generate
-      s_eca_io <= (others => (others => '0'));
-    end generate;
 
       -- Legacy 8ns time
       ref_tai8ns <= "000" & s_time(63 downto 3);
@@ -3102,8 +3091,6 @@ end generate;
           master_o    => top_bus_slave_i(top_my_masters'pos(topm_eca_wbm)),
           master_i    => top_bus_slave_o(top_my_masters'pos(topm_eca_wbm)));
 
-
-    eca_io : if g_en_eca_io_channel generate
       c2 : eca_queue
         generic map(
           g_queue_id  => 2)
@@ -3116,7 +3103,6 @@ end generate;
           q_rst_n_i   => rstn_sys,
           q_slave_i   => top_bus_master_o(top_slaves'pos(tops_emb_cpu)),
           q_slave_o   => top_bus_master_i(top_slaves'pos(tops_emb_cpu)));
-    end generate;
 
   end generate;
 
