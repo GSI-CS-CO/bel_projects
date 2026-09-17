@@ -213,6 +213,8 @@ vEbwrs& CarpeDM::createCommand(vEbwrs& ew, const std::string& type, const std::s
             void CarpeDM::dirtyCtShow()                      { return impl_->dirtyCtShow();}
             void CarpeDM::showCpuList()                      { return impl_->showCpuList();}
          uint8_t CarpeDM::getCpuQty()                        { return impl_->getCpuQty();}
+         uint8_t CarpeDM::getThrQty()                        { return impl_->getThrQty();}
+         uint32_t CarpeDM::getCtlAdr(const uint8_t& idx)     { return impl_->getCtlAdr(idx);}
             bool CarpeDM::isCpuIdxValid(uint8_t cpuIdx)      { return impl_->isCpuIdxValid(cpuIdx);}
             void CarpeDM::showMemSpace()                     { return impl_->showMemSpace();}
             void CarpeDM::lockManagerClear()                 { return impl_->lockManagerClear();}

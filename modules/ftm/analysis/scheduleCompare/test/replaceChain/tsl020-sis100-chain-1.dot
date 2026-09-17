@@ -1,7 +1,5 @@
 digraph G {
-graph [
-name="-compact"
-]
+  graph [mindist=1.0 name="-compact" nodesep=0.6 overlap=false rankdir=TB ranksep=1.0 root=Demo]
 SA_20220620094802208_DEFAULT_ENTRY [beamproc=undefined, bpentry=false, bpexit=false, color=darkorange3, fillcolor=green, label=SA_20220620094802208_DEFAULT_ENTRY, patentry=true, patexit=false, pattern=SA_20220620094802208_DEFAULT, penwidth=2, qhi=false, qil=false, qlo=true, shape=rectangle, style=filled, tperiod=10000, type=block];
 SA_20220620094802208_DEFAULT_EXIT [beamproc=undefined, bpentry=false, bpexit=false, color=purple, fillcolor=green, label=SA_20220620094802208_DEFAULT_EXIT, patentry=false, patexit=true, pattern=SA_20220620094802208_DEFAULT, penwidth=2, qhi=false, qil=false, qlo=true, shape=rectangle, style=filled, tperiod=10000, type=block];
 SIS100_PROTON_000 [beamin=0, beamproc=undefined, bpcstart=0, bpentry=false, bpexit=false, bpid=6, color=black, evtno=259, fid=1, fillcolor=green, gid=310, id="0x1136103000100180", label=SIS100_PROTON_000, par="0x0000140000000000", patentry=false, patexit=false, pattern=SIS100_PROTON, reqnobeam=0, shape=oval, sid=1, style=filled, tef=0, toffs=0, type=tmsg, vacc=0];

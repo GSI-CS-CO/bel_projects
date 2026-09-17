@@ -1,0 +1,17 @@
+digraph G {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+Block1[cpu="0", flags="0x00100107", type="block", tperiod="10000000", pattern="A", patentry="false", patexit="false", beamproc="beamA", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green"];
+Block2[cpu="0", flags="0x00108107", type="block", tperiod="10000000", pattern="A", patentry="false", patexit="true", beamproc="beamA", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green", penwidth=2, color = "purple"];
+Origin[cpu="0", flags="0x0000200d", type="origin", toffs="0", pattern="B", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", thread="1", shape     = "octagon", color  = "cyan", fillcolor = "white", penwidth=2, color = "darkorange3"];
+Start[cpu="0", flags="0x0000800e", type="startthread", toffs="0", pattern="B", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", startoffs="50000000", thread="1", shape     = "triangle", color  = "cyan", fillcolor = "white"];
+Tmsg1[cpu="0", flags="0x00002102", type="tmsg", toffs="0", pattern="A", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="0", evtno="0", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1000000000000000", par="0x0000000000000001", tef="0", shape     = "oval", fillcolor = "green", penwidth=2, color = "darkorange3"];
+Tmsg2[cpu="0", flags="0x00000102", type="tmsg", toffs="0", pattern="A", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="0", evtno="0", beamin="0", bpcstart="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1000000000000000", par="0x0000000000000002", tef="0", shape     = "oval", fillcolor = "green"];
+Block1->Tmsg2 [type="defdst", color = "red"];
+Origin->Start [type="defdst", color = "red"];
+Origin->Start [type="origindst", color = "gray"];
+Start->Tmsg1 [type="defdst", color = "red"];
+Tmsg1->Block1 [type="defdst", color = "red"];
+Tmsg2->Block2 [type="defdst", color = "red"];
+Block1->Tmsg1 [type="altdst", color = "black"];
+}

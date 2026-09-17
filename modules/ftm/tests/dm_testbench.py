@@ -16,6 +16,7 @@ import unittest    # contains super class
 Module dm_testbench collects functions to handle patterns for the data master testbench.
 """
 class DmTestbench(unittest.TestCase):
+
   @classmethod
   def setUpClass(self):
     """Set up for all test cases: store the environment variables in variables.
@@ -23,12 +24,18 @@ class DmTestbench(unittest.TestCase):
     self.binaryDmCmd = os.environ.get('TEST_BINARY_DM_CMD', 'dm-cmd')
     self.binaryDmSched = os.environ.get('TEST_BINARY_DM_SCHED', 'dm-sched')
     self.datamaster = os.environ['DATAMASTER']
-    self.schedules_folder = os.environ.get('TEST_SCHEDULES', 'schedules/')
+    self.schedulesFolder = os.environ.get('TEST_SCHEDULES', 'schedules/')
     self.snoop_command = os.environ.get('SNOOP_COMMAND', 'saft-ctl tr0 -xv snoop 0 0 0')
+    self.deleteFiles = os.environ.get('DELETE_FILES', 'True')
     self.patternStarted = False
+    self.cpuQuantity, self.threadQuantity = self.getThreadQuantityFromFirmware()
 
   def setUp(self):
+    # ~ self.logToFile('    setUp:' + str(datetime.datetime.now()), 'dm-test-timestamps.txt')
     self.initDatamaster()
+
+  # ~ def tearDown(self):
+    # ~ self.logToFile(' tearDown:' + str(datetime.datetime.now()), 'dm-test-timestamps.txt')
 
   def initDatamaster(self):
     """Initialize (clean) the datamaster.
@@ -63,8 +70,8 @@ class DmTestbench(unittest.TestCase):
     If start is False, do not start a pattern.
     """
     if len(scheduleFile) > 0:
-      scheduleFile = self.schedules_folder + scheduleFile
-      print (f"Connect to device '{self.datamaster}', schedule file '{scheduleFile}'.   ", end='', flush=True)
+      scheduleFile = self.schedulesFolder + scheduleFile
+      # ~ print (f"Connect to device '{self.datamaster}', schedule file '{scheduleFile}'.   ", end='', flush=True)
       self.startAndGetSubprocessStdout([self.binaryDmSched, self.datamaster, 'add', scheduleFile])
     if start:
       if len(pattern) > 0:
@@ -190,21 +197,23 @@ class DmTestbench(unittest.TestCase):
     diffLines = list(difflib.unified_diff(current, expected, n=0))
     self.assertEqual(len(diffLines), 0, f'Diff: file {fileExpected}\n{diffLines}')
 
-  def getSnoopCommand(self, duration):
-    snoop_command1 = self.snoop_command + ' ' + str(duration)
-    if self.snoop_command[len(self.snoop_command)-1:] == "'":
-      snoop_command1 = self.snoop_command[:-1] + ' ' + str(duration) + "'"
+  def getSnoopCommand(self, eventId='0', mask='0', duration=1):
+    snoop_command1 = self.snoop_command.replace('snoop 0 0 0', f'snoop {eventId} {mask} 0 {str(duration)}')
     # ~ print(f'getSnoopCommand: {snoop_command1}')
     return snoop_command1
 
   def getEbResetCommand(self):
+    """Get the eb-reset command. If eb-reset exists in the repository or
+    workspace, this file name is returned. Otherwise 'eb-reset' is returned,
+    which assumes that eb-reset is installed.
+    """
     ebResetCommand1 = '../../../tools/eb-reset'
     if not os.path.isfile(ebResetCommand1):
       ebResetCommand1 = 'eb-reset'
     # ~ print(f'getEbResetCommand: {ebResetCommand1}')
     return ebResetCommand1
 
-  def snoopToCsv(self, csvFileName, duration=1, resource=None):
+  def snoopToCsv(self, csvFileName, eventId='0', mask='0', duration=1, resource=None):
     """Snoop timing messages with saft-ctl for <duration> seconds (default = 1) and write the messages to <csvFileName>.
     Details: start saft-ctl with Popen, run it for <duration> seconds.
     Use 'resource is None' as an indicator that this method is called in the main thread.
@@ -213,14 +222,14 @@ class DmTestbench(unittest.TestCase):
     before the snoop command is started.
     """
     testName = os.environ['PYTEST_CURRENT_TEST']
-    logging.getLogger().info(f'{testName}, snoopToCsv: {csvFileName=}, {duration=}, {resource=}')
+    logging.getLogger().info(f'{testName}, snoopToCsv: {csvFileName=}, {eventId=}, {mask=}, {duration=}, {resource=}')
     with open(csvFileName, 'wb') as file1:
       try:
         startTime = datetime.datetime.now()
         if not resource is None:
           print('snoopToCsv: Start Thread ', startTime.time())
           resource.release()
-        process = subprocess.run(self.getSnoopCommand(duration), shell=True, check=True, stdout=file1)
+        process = subprocess.run(self.getSnoopCommand(eventId, mask, duration), shell=True, check=True, stdout=file1)
         endTime = datetime.datetime.now()
         if not resource is None:
           print(f'snoopToCsv: Return: {process.returncode:3d}   {endTime.time()}, duration: {endTime - startTime}')
@@ -231,26 +240,29 @@ class DmTestbench(unittest.TestCase):
         else:
           self.exc_info = sys.exc_info()
 
-  def snoopToCsvWithAction(self, csvFileName, action, duration=1):
+  def snoopToCsvWithAction(self, csvFileName, action, actionArgs=[], eventId='0', mask='0', duration=1):
     """Snoop timing messages with saft-ctl for <duration> seconds (default = 1).
     Write the messages to <csvFileName>.
     Details: start saft-ctl with Popen in its own thread, run it for <duration> seconds.
     action should end before snoop.
     """
     testName = os.environ['PYTEST_CURRENT_TEST']
-    logging.getLogger().info(f'{testName}, snoopToCsvWithAction: {csvFileName=}, {duration=}')
+    logging.getLogger().info(f'{testName}, snoopToCsvWithAction: {csvFileName=}, {eventId=}, {mask=}, {duration=}, {action=}, {actionArgs=}')
     self.exc_info = None
     print('snoopToCsv: acquire lock ', datetime.datetime.now().time())
     resource = threading.Lock()
     # wait at most 10 seconds for the thread to start.
     # Lock is released before the main action of the thread starts.
     resource.acquire(timeout=10.0)
-    snoop = threading.Thread(target=self.snoopToCsv, args=(csvFileName, duration, resource))
+    snoop = threading.Thread(target=self.snoopToCsv, args=(csvFileName, eventId, mask, duration, resource))
     snoop.start()
     resource.acquire(timeout=10.0)
     print('snoopToCsv: call action  ', datetime.datetime.now().time())
     try:
-      action()
+      if len(actionArgs) == 0:
+        action()
+      else:
+        action(actionArgs)
     finally:
       print('snoopToCsv: finish action', datetime.datetime.now().time())
       snoop.join()
@@ -260,13 +272,13 @@ class DmTestbench(unittest.TestCase):
         # ~ print(f'{self.exc_info=}')
         raise self.exc_info[1].with_traceback(self.exc_info[2])
 
-  def analyseFrequencyFromCsv(self, csvFileName, column=20, printTable=True, checkValues=dict()):
+  def analyseFrequencyFromCsv(self, csvFileName, column=20, printTable=True, checkValues=dict(), addDelayed=False):
     """Analyse the frequency of the values in the specified column. Default column is 20 (parameter of the timing message).
     Prints (if printTable=True) the table of values, counters, and frequency over the whole time span.
-    Column for EVTNO is 8.
+    Column for EVTNO is 8. Timing messages should have 'fid=1' otherwise column numbers are different.
     checkValues is a dictionary of key-value pairs to check. Key is a value in the column and value is the required frequency.
     The value can be '>n', '<n', '=n', 'n' (which is the same as '=n'), '=0'. The syntax '<n' fails if there are no occurrences.
-    Checks for intevalls are not possible since checkValues is a dictionary and keys occur at most once.
+    Checks for intervalls are not possible since checkValues is a dictionary and keys occur at most once.
     Example: column=8 and checkValues={'0x0001': 62} checks that EVTNO 0x0001 occurs in 62 lines of the file to analyse.
     Example: column=8 and checkValues={'0x0002': '>0'} checks that EVTNO 0x0002 occurs at least once in the file to analyse.
     Example: column=4 and checkValues={'0x7': '=0'} checks that FID 0x7 does NOT occur in the file to analyse.
@@ -280,6 +292,7 @@ class DmTestbench(unittest.TestCase):
     with open(csvFileName) as csv_file:
       csv_reader = csv.reader(csv_file, delimiter=' ')
       for row in csv_reader:
+        self.assertGreater(len(row), column, f'Column {column} does not exist. Maximal column {len(row)}. May be fid=1 should be used in schedule.')
         line_count += 1
         time1 = datetime.datetime.strptime(row[1] + ' ' + row[2][:-3], '%Y-%m-%d %H:%M:%S.%f')
         if minTime > time1:
@@ -328,22 +341,55 @@ class DmTestbench(unittest.TestCase):
             self.assertFalse(item in listCounter.keys(), f'Key {item} found, should not occur')
           elif item in listCounter.keys():
             if str(checkValues[item])[0] == '>':
-              self.assertGreater(listCounter[item], int(checkValues[item][1:]), f'assertGreater for {item}: is:{listCounter[item]} expected:{checkValues[item]}')
+              if addDelayed and (item + '!delayed') in listCounter.keys():
+                self.assertGreater(listCounter[item] + listCounter[item + '!delayed'], int(checkValues[item][1:]), f'assertGreater for {item}: is:{listCounter[item]} + { + listCounter[item + "!delayed"]} expected:{checkValues[item]}')
+              else:
+                self.assertGreater(listCounter[item], int(checkValues[item][1:]), f'assertGreater for {item}: is:{listCounter[item]} expected:{checkValues[item]}')
             elif str(checkValues[item])[0] == '<':
-              self.assertGreater(int(checkValues[item][1:]), listCounter[item], f'assertSmaller for {item}: is:{listCounter[item]} expected:{checkValues[item]}')
+              if addDelayed and (item + '!delayed') in listCounter.keys():
+                self.assertGreater(int(checkValues[item][1:]), listCounter[item] + listCounter[item + '!delayed'], f'assertSmaller for {item}: is:{listCounter[item]} + { + listCounter[item + "!delayed"]} expected:{checkValues[item]}')
+              else:
+                self.assertGreater(int(checkValues[item][1:]), listCounter[item], f'assertSmaller for {item}: is:{listCounter[item]} expected:{checkValues[item]}')
             elif str(checkValues[item])[0] == '=':
-              self.assertEqual(listCounter[item], int(checkValues[item][1:]), f'assertEqual for {item}: is:{listCounter[item]} expected:{checkValues[item]}')
+              if addDelayed and (item + '!delayed') in listCounter.keys():
+                self.assertEqual(listCounter[item] + listCounter[item + '!delayed'], int(checkValues[item][1:]), f'assertEqual for {item}: is:{listCounter[item]} + { + listCounter[item + "!delayed"]} expected:{checkValues[item]}')
+              else:
+                self.assertEqual(listCounter[item], int(checkValues[item][1:]), f'assertEqual for {item}: is:{listCounter[item]} expected:{checkValues[item]}')
             else:
-              self.assertEqual(listCounter[item], int(checkValues[item]), f'assertEqual for {item}: is:{listCounter[item]} expected:{checkValues[item]}')
+              if addDelayed and (item + '!delayed') in listCounter.keys():
+                self.assertEqual(listCounter[item] + listCounter[item + '!delayed'], int(checkValues[item]), f'assertEqual for {item}: is:{listCounter[item]} + { + listCounter[item + "!delayed"]} expected:{checkValues[item]}')
+              else:
+                self.assertEqual(listCounter[item], int(checkValues[item]), f'assertEqual for {item}: is:{listCounter[item]} expected:{checkValues[item]}')
+          elif addDelayed and item + '!delayed' in listCounter.keys():
+            if str(checkValues[item])[0] == '>':
+              self.assertGreater(listCounter[item + '!delayed'], int(checkValues[item][1:]), f'assertGreater for {item}: is:{listCounter[item + "!delayed"]} expected:{checkValues[item]}')
+            elif str(checkValues[item])[0] == '<':
+              self.assertGreater(int(checkValues[item][1:]), listCounter[item + '!delayed'], f'assertSmaller for {item}: is:{listCounter[item + "!delayed"]} expected:{checkValues[item]}')
+            elif str(checkValues[item])[0] == '=':
+              self.assertEqual(listCounter[item + '!delayed'], int(checkValues[item][1:]), f'assertEqual for {item}: is:{listCounter[item + "!delayed"]} expected:{checkValues[item]}')
+            else:
+              self.assertEqual(listCounter[item + '!delayed'], int(checkValues[item]), f'assertEqual for {item}: is:{listCounter[item + "!delayed"]} expected:{checkValues[item]}')
           else:
             self.assertTrue(item in listCounter.keys(), f'Key {item} not found, but expected.')
 
-  def analyseDmCmdOutput(self, threadsToCheck=0):
-    outputStdoutStderr = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster), [0])
+  def analyseDmCmdOutput(self, threadsToCheck='', useVerbose=False) -> dict:
+    """Collect the message counts for all threads. Use dm-cmd to get the
+    status with the message counts. Return a dict with the message counts.
+    Key: first letter is cpu, next two letters thread number.
+    Example: key=123 is cpu 1, thread 23.
+    Assumption: less than 10 cpus, less than 100 threads.
+    """
+    if useVerbose:
+      outputStdoutStderr = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster, '-v'), [0])
+      offsetLines = 7 + 16 + self.cpuQuantity
+    else:
+      outputStdoutStderr = self.startAndGetSubprocessOutput((self.binaryDmCmd, self.datamaster), [0])
+      offsetLines = 7 + self.cpuQuantity
     output = outputStdoutStderr[0]
+    testName = os.environ['PYTEST_CURRENT_TEST']
+    logging.getLogger().debug(f'{testName}, analyseDmCmdOutput' + '\n' + '\n'.join(output))
     msgCounts = {}
-    # ~ firstCount = 0
-    threadsCheck = 0
+    threadsCheck = '0' * (self.threadQuantity * self.cpuQuantity)
     index = 0
     countLines = len(output)
     offset = 0
@@ -352,18 +398,21 @@ class DmTestbench(unittest.TestCase):
     thread = 0
     running = ''
     for line in output:
-      if index > 11 and index < (countLines - 1):
+      if index > offsetLines and index < (countLines - 1):
         try:
           cpu = int(line[3 + offset1])
-          thread = int(line[9 + offset1])
+          if line[8 + offset1] == ' ':
+            thread = int(line[9 + offset1])
+          else:
+            thread = int(line[8 + offset1:10 + offset1])
           running = line[21 + offset1:24 + offset1]
           count = int(line[32 + offset:42 + offset])
+          msgCounts[f'{cpu:1d}{thread:02d}'] = str(count)
+          if running == 'yes':
+            threadsCheck = threadsCheck[:self.threadQuantity * cpu + thread] + '1' + threadsCheck[self.threadQuantity * cpu + thread + 1:]
+          # ~ print(f'threadsCheck: {threadsCheck}, threadsToCheck: {threadsToCheck}, running:{running} {cpu} {thread} "{line[8 + offset1:10 + offset1]}"')
         except ValueError:
           print(f'ValueError:{index} CPU {cpu} Thread {thread}  line: "{line}", "{line[3 + offset1]}", "{line[9 + offset1]}", "{line[32 + offset:42 + offset]}", offset={offset}, offset1={offset1}')
-        msgCounts[str(10*cpu) + str(thread)] = str(count)
-        if running == 'yes':
-          threadsCheck = threadsCheck + (1 << (8*cpu + thread))
-        # ~ print(f'threadsCheck: {threadsCheck:#X}, threadsToCheck: {threadsToCheck:#X}, running:{running} {cpu} {thread}')
         if offset == 0:
           offset = 10
           offset1 = 5
@@ -371,51 +420,56 @@ class DmTestbench(unittest.TestCase):
           offset = 0
           offset1 = 0
       index = index + 1
-    self.assertEqual(countLines-13, len(msgCounts))
-    if threadsToCheck > 0:
-      self.assertEqual(threadsCheck, threadsToCheck, f'threads running: {threadsCheck:#X}, expected: {threadsToCheck:#X}')
+    self.assertEqual(countLines - offsetLines - 2, len(msgCounts), f'Output has {countLines} lines, messages: {len(msgCounts)}')
+    if threadsToCheck != '':
+      self.assertEqual(threadsCheck, threadsToCheck, f'threads running: {threadsCheck}, expected: {threadsToCheck}')
     return msgCounts
 
-  def checkRunningThreadsCmd(self, messageInterval=1.0):
+  def checkRunningThreadsCmd(self, messageInterval=1.0, cpuList=[0,1,2,3]):
+    """Check that threads are running by comparison of message counts.
+    Assumption: there is at least one timing message for this thread in
+    messageIntervall (default 1.0 second).
+    dm-cmd runs twice and the message count for the second run must be
+    greater than the first message count. In addition the first
+    message count should be grater than 0.
+    """
     firstCounts = self.analyseDmCmdOutput()
     self.delay(messageInterval)
     secondCounts = self.analyseDmCmdOutput()
     for key in firstCounts:
       firstCount = int(firstCounts[key])
       secondCount = int(secondCounts[key])
-      # ~ print(f'key={key}, firstCount={firstCount}, secondCount={secondCount}')
       cpu = int(key[0])
-      thread = int(key[1])
-      self.assertGreater(secondCount, firstCount, f'CPU {cpu} Thread {thread} First: {firstCount}, second: {secondCount}')
-      self.assertGreater(firstCount, 0, f'CPU {cpu} Thread {thread} firstCount is {firstCount}')
+      if cpu in cpuList:
+        thread = int(key[1:])
+        # ~ print(f'{key=}, {firstCount=}, {secondCount=}, {key[0]=}, {cpu=}, {key[1:]=}, {thread=}')
+        self.assertGreater(secondCount, firstCount, f'CPU {cpu} Thread {thread} First: {firstCount}, second: {secondCount}')
+        self.assertGreater(firstCount, 0, f'CPU {cpu} Thread {thread} firstCount is {firstCount}')
 
-  match = 'Qty: '
-  lengthQ = len(match)
-
-  """Get the quantity of command executions from the output line of 'dm-cmd <datamaster> queue -v <block name>'.
-  Search for 'Qty: ' in the line and parse the number.
-  """
   def getQuantity(self, line):
-    pos = line.find(self.match)
-    pos1 = line.find(' ', pos + self.lengthQ)
+    """Get the quantity of command executions from the output line of 'dm-cmd <datamaster> queue -v <block name>'.
+    Search for 'Qty: ' in the line and parse the number.
+    """
+    pos = line.find('Qty: ')
+    pos1 = line.find(' ', pos + len('Qty: '))
     quantity = 0
     if pos > -1 and pos1 > pos:
-      quantity = int(line[pos + self.lengthQ:pos1])
+      quantity = int(line[pos + len('Qty: '):pos1])
     return quantity
 
-  """ Check that a flush command is executed and the defined queues are flushed.
-  queuesToFlush: binary value between 0 and 7 for the queues to flush.
-  blockName: name of the block with the queues to check.
-  flushPrio: priority of the flush command. Defines the queue where to look for the flush command.
-  Priority queues higher than the flushPrio are not affected by the flush command since these
-  queues are empty when a flush command with lower priority is executed. Therefore queuesToFlush is changed for
-  flushprio = 0, 1.
-  The check for the executed flush command and the checks for the flushed queues are independant. All checks
-  are done in one parse run of the output of 'dm-cmd <datamaster> -v queue <blockName>'. Flags and counters
-  are used to signal the section inside the output.
-  checkFlush = False means: check that no flush is executed.
-  """
-  def check_queue_flushed(self, queuesToFlush, blockName, flushPrio, checkFlush=True):
+  def checkQueueFlushed(self, queuesToFlush, blockName, flushPrio, checkFlush=True):
+    """ Check that a flush command is executed and the defined queues are flushed.
+    queuesToFlush: binary value between 0 and 7 for the queues to flush.
+    blockName: name of the block with the queues to check.
+    flushPrio: priority of the flush command. Defines the queue where to look for the flush command.
+    Priority queues higher than the flushPrio are not affected by the flush command since these
+    queues are empty when a flush command with lower priority is executed. Therefore queuesToFlush is changed for
+    flushprio = 0, 1.
+    The check for the executed flush command and the checks for the flushed queues are independant. All checks
+    are done in one parse run of the output of 'dm-cmd <datamaster> -v queue <blockName>'. Flags and counters
+    are used to signal the section inside the output.
+    checkFlush = False means: check that no flush is executed.
+    """
     output = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-v', 'queue', blockName), [0], 38)
     checkQueue0 = False
     check0 = False
@@ -503,14 +557,217 @@ class DmTestbench(unittest.TestCase):
     else:
       self.assertFalse(flushExecuted, f'flushExecuted: {flushExecuted}, queuesToFlush: {queuesToFlush}')
 
+  def inspectQueue(self, node, read=0, write=0, pending=0, retry=False):
+    # check the result with dm-cmd ... queue <node>.
+    lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, 'queue', node), [0], 10, 0)
+    print('1. try', '\n'.join(lines))
+    try:
+      self.verifyInspectingQueueOutput(lines, node, read, write, pending)
+    except AssertionError as instance:
+      testName = os.environ['PYTEST_CURRENT_TEST']
+      logging.getLogger().warning(f'{testName}, AssertionError while Inspecting Queues, try second inspection.' + '\n' + '\n'.join(lines))
+      self.assertEqual(instance.args[0][:111], f"'Priority 0 (priolo)  RdIdx: 0 WrIdx: 1    Pending: 1' != 'Priority 0 (priolo)  RdIdx: {read} WrIdx: {write}    Pending: {pending}", 'current exception is ' + instance.args[0])
+      # second try: check the result with dm-cmd ... queue <node>.
+      if retry:
+        self.delay(1.0)
+        lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, 'queue', node), [0], 10, 0)
+        print('2. try', '\n'.join(lines))
+        self.verifyInspectingQueueOutput(lines, node, 1, 1, 0)
+
+  def verifyInspectingQueueOutput(self, lines, node, read, write, pending):
+    # verify the output (lines 1 to 9).
+    expectedLines = ['', f'Inspecting Queues of Block {node}',
+    'Priority 2 (prioil)  Not instantiated',
+    'Priority 1 (priohi)  Not instantiated',
+    f'Priority 0 (priolo)  RdIdx: {read} WrIdx: {write}    Pending: {pending}',
+    '', '', '', '']
+    for i in range(0,4):
+      expectedLines[i+5] = f'#{(i+read) % 4} empty   -'
+    if pending == 1:
+      expectedLines[5] = '#0 pending Valid Time: 0x0000000000000000 0000000000000000000    CmdType: noop    Qty: 1'
+    for i in range(1,9):
+      self.assertEqual(lines[i], expectedLines[i], 'wrong output, expected: ' + expectedLines[i] + '\n' + '\n'.join(lines))
+
   def delay(self, duration):
     """Delay for <duration> seconds. <duration> is a float.
     """
     time.sleep(duration)
 
+  def runThreadXCommand(self, cpu, thread, command):
+    """Test for one CPU and one thread with 'command'.
+    Check the return code of 0 for success and one line of output on stdout.
+    """
+    self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', f'{cpu}', '-t', f'{thread}', command), [0], 1, 0)
+
+  def prepareRunThreads(self, cpus=15):
+    """Check that no thread runs on the CPUs given by 'cpu' (bit mask).
+    Load schedules into DM, one for each CPU and start all threads.
+    Check that these are running.
+    """
+    testName = os.environ['PYTEST_CURRENT_TEST']
+    logging.getLogger().debug(f'{testName} prepare threads {datetime.datetime.now()}')
+    cpuList = self.listFromBits(cpus, self.cpuQuantity)
+    cpuMask = self.maskFromList(cpuList, self.cpuQuantity)
+    # Add schedules for all CPUs and start pattern on all threads.
+    for cpu in cpuList:
+      self.addSchedule(f'pps-all-threads-cpu{cpu}.dot')
+    # Check all CPUs that no thread is running.
+    lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', cpuMask, 'running'), [0], len(cpuList), 0)
+    for i in range(len(cpuList)):
+      expectedText = 'CPU {variable} Running Threads: 0x0'.format(variable=i)
+      try:
+        self.assertEqual(lines[i], expectedText, 'wrong output, expected: ' + expectedText + '\n' + '\n'.join(lines))
+      except AssertionError as exception:
+        # second try to check the running threads
+        # dm-cmd -c cpuMask running shows the same result as the first call. So halt all threads before.
+        self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'halt'), [0], 0, 0)
+        lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', cpuMask, 'running'), [0], len(cpuList), 0)
+        for i in range(len(cpuList)):
+          expectedText = 'CPU {variable} Running Threads: 0x0'.format(variable=i)
+          self.assertEqual(lines[i], expectedText, 'wrong output, expected: ' + expectedText + '\n' + '\n'.join(lines))
+    if self.threadQuantity == 32:
+      threadMask = '0xffffffff'
+      threadList = [('a', '0x01010101'), ('b', '0x02020202'), ('c', '0x04040404'), ('d', '0x08080808'), ('e', '0x10101010'), ('f', '0x20202020'), ('g', '0x40404040'), ('h', '0x80808080')]
+    elif self.threadQuantity == 8:
+      threadMask = '0xff'
+      threadList = [('a', '0x01'), ('b', '0x02'), ('c', '0x04'), ('d', '0x08'), ('e', '0x10'), ('f', '0x20'), ('g', '0x40'), ('h', '0x80')]
+    else:
+      self.assertFalse(True, f'threadQuantity is {self.threadQuantity}, allowed: 8 or 32')
+    # Start pattern for all CPUs in cpuList and all threads
+    for x, thread in threadList:
+      for cpu in cpuList:
+        patternName = f'PPS{cpu}' + x
+        logging.getLogger().debug(f'{testName} {patternName} {cpu} {thread} {datetime.datetime.now()}')
+        self.startAndCheckSubprocess((self.binaryDmCmd, self.datamaster, 'startpattern', patternName, '-t', thread), [0])
+    self.checkRunningThreadsCmd(cpuList=cpuList)
+    # Check all CPUs that all threads are running.
+    lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', cpuMask, 'running'), [0], len(cpuList), 0)
+    for i in range(len(cpuList)):
+      if i in cpuList:
+        expectedText = 'CPU {variable} Running Threads: {mask}'.format(variable=i, mask=threadMask)
+      else:
+        expectedText = 'CPU {variable} Running Threads: {mask}'.format(variable=i, mask='0x0')
+      try:
+        self.assertEqual(lines[i], expectedText, 'wrong output, expected: ' + expectedText + '\n' + '\n'.join(lines))
+      except AssertionError as exception:
+        self.delay(1.0)
+        lines = self.startAndGetSubprocessStdout((self.binaryDmCmd, self.datamaster, '-c', cpuMask, 'running'), [0], len(cpuList), 0)
+        for i in range(len(cpuList)):
+          if i in cpuList:
+            expectedText = 'CPU {variable} Running Threads: {mask}'.format(variable=i, mask=threadMask)
+          else:
+            expectedText = 'CPU {variable} Running Threads: {mask}'.format(variable=i, mask='0x0')
+          self.assertEqual(lines[i], expectedText, 'wrong output, expected: ' + expectedText + '\n' + '\n'.join(lines))
+    logging.getLogger().debug(f'{testName}         threads {datetime.datetime.now()}')
+
   def deleteFile(self, fileName):
     """Delete file <fileName>.
     """
-    fileToRemove = pathlib.Path(fileName)
-    if fileToRemove.exists():
-      fileToRemove.unlink()
+    if self.deleteFiles.lower() == 'true':
+      fileToRemove = pathlib.Path(fileName)
+      if fileToRemove.exists():
+        fileToRemove.unlink()
+
+  def resetAllCpus(self):
+    """Reset each CPU (loop over all lm32 CPUs).
+    """
+    for cpu in range(self.cpuQuantity):
+      self.startAndCheckSubprocess((self.getEbResetCommand(), self.datamaster, 'cpureset', str(cpu)), [0])
+    self.delay(2.0)
+
+  def maskFromList(self, itemList, quantity) -> str:
+    mask = 0
+    for item in itemList:
+      if isinstance(item, int) and item < quantity:
+        mask = (1 << item) | mask
+    return f'0x{mask:0x}'
+
+  def listFromBits(self, bits, quantity) -> list:
+    """Convert a 'bits', given as a string or an int, into a list of
+    int items. quantity is the maximal int + 1.
+    """
+    itemList = []
+    if isinstance(bits, str):
+      bits = int(bits, base=16)
+    for i in range(quantity):
+      if (1 << i) & bits > 0:
+        itemList.append(i)
+      # ~ print(f'{bits=}, {i=}, {itemList=}, {((1 << i) & bits)=}')
+    return itemList
+
+  def bitCount(self, bits, quantity) -> int:
+    """Count how many bits are 1 in the number 'bits'.
+    This is the number of items enabled in 'bits'.
+    """
+    if isinstance(bits, str):
+      bits = int(bits, base=16)
+    count = 0
+    for i in range(quantity):
+      # ~ print(f'{i=}, {(1 << i)=}, {bits=}, {count=}')
+      if (1 << i) & bits > 0:
+        count = count + 1
+    return count
+
+  def printStdOutStdErr(self, lines):
+    """Print the lines of stdout and stderr. This is given as a list of
+    two lists of lines.
+    """
+    if len(lines[0]) > 0:
+      print(f'{chr(10).join(lines[0])}')
+    if len(lines[1]) > 0:
+      print(f'{chr(10).join(lines[1])}')
+
+  @classmethod
+  def getThreadQuantityFromFirmware(self) -> [int, int]:
+    """This class method uses 'eb-info -w' to get the thread quantity
+    and the CPU quantity from the lm32 firmware.
+    This method is used once in the set up of a class by setUpClass.
+    """
+    threads = 8
+    cpus = 4
+    # pass cmd and args to the function
+    process = subprocess.Popen(('eb-info', '-w', self.datamaster), stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+    # get command output and error
+    stdout, stderr = process.communicate()
+    self.assertTrue(process.returncode in [0], f'wrong return code {process.returncode}, expected: [0], '
+          + f'stderr: {stderr.decode("utf-8").splitlines()}\nstdout: {stdout.decode("utf-8").splitlines()}')
+    lines = stdout.decode("utf-8").splitlines()
+    for line in lines:
+      if 'ThreadQty   : 32' in line:
+        threads = 32
+      if 'holding a Firmware ID' in line:
+        cpus = int(line[14])
+    return cpus, threads
+
+  @classmethod
+  def logToFile(self, text, fileName):
+    """This class method logs a text to a fileName. The text is prefixed
+    by the current test name. This is appended to the file.
+    """
+    testName = os.environ['PYTEST_CURRENT_TEST']
+    with open(fileName, 'a') as file1:
+      file1.write(testName + ': ' + text + '\n')
+
+  def checkRunningThreads(self, lines, masks) -> str:
+    """Check the hex numbers describing the running threads.
+    Since in some cases it is not determined which thread is used for a
+    command, we have to check the lines against multiple masks.
+    :param lines is a list of lines, describes the running threads.
+    :param masks is a list (not a set!) of hex numbers as strings.
+    Each number describes an allowed pattern of running threads.
+    """
+    remainingMasks = masks.copy()
+    threadState = ''
+    for line in lines:
+      pos = line.find('0x')
+      if (pos != -1):
+        threadState = line[pos:]
+        self.assertTrue(threadState in remainingMasks, f'Wrong running state. {threadState} not in {remainingMasks}, line {lines.index(line)}.')
+        remainingMasks.remove(threadState)
+    # ~ self.assertEqual(0, len(remainingMasks),f'Remaining masks: {remainingMasks}')
+    return threadState
+
+  def printTimestamp(self, text):
+    """Print the current timestamp with some preceeding text.
+    """
+    print(text, datetime.datetime.now().time())

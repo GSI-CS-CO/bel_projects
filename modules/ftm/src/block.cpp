@@ -9,18 +9,29 @@ void Block::deserialise(uint8_t* b)  {
   setRdIdxs(writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[BLOCK_CMDQ_RD_IDXS]));
 }
 
-void Block::serialise(const vAdr &va, uint8_t* b) const {
+void Block::serialise(const mVal &m, uint8_t* b) const {
 
 
 
-  Node::serialise(va, b);
-  writeLeNumberToBeBytes(b + (ptrdiff_t)BLOCK_PERIOD,  this->tPeriod);
-  writeLeNumberToBeBytes(b + (ptrdiff_t)BLOCK_ALT_DEST_PTR,  va[ADR_BLOCK_DST_LST]);
-  writeLeNumberToBeBytes(b + (ptrdiff_t)BLOCK_CMDQ_IL_PTR,   va[ADR_BLOCK_Q_IL]);
-  writeLeNumberToBeBytes(b + (ptrdiff_t)BLOCK_CMDQ_HI_PTR,   va[ADR_BLOCK_Q_HI]);
-  writeLeNumberToBeBytes(b + (ptrdiff_t)BLOCK_CMDQ_LO_PTR,   va[ADR_BLOCK_Q_LO]);
+  Node::serialise(m, b);
+
+  //period field is a bit tricky if you want to be able to use 32 and 64b pointers. we need to set all non defined map keys to zero
+  
+
+  writeLeNumberToBeBytes(b + (ptrdiff_t)BLOCK_PERIOD,  this->tPeriod); 
+  //we don't necessarily have references for the block period. Check first to avoid exceptions if key not found
+  //if (m.count(BLOCK_PERIOD_HI)) {writeLeNumberToBeBytes(b + (ptrdiff_t)BLOCK_PERIOD_HI,     m.at(BLOCK_PERIOD_HI));}
+  //if (m.count(BLOCK_PERIOD_LO)) {writeLeNumberToBeBytes(b + (ptrdiff_t)BLOCK_PERIOD_LO,     m.at(BLOCK_PERIOD_LO));}
+  
+  //writeLeNumberToBeBytes(b + (ptrdiff_t)BLOCK_ALT_DEST_PTR,  m.at(BLOCK_ALT_DEST_PTR));
+  //writeLeNumberToBeBytes(b + (ptrdiff_t)BLOCK_CMDQ_IL_PTR,   m.at(BLOCK_CMDQ_IL_PTR));
+  //writeLeNumberToBeBytes(b + (ptrdiff_t)BLOCK_CMDQ_HI_PTR,   m.at(BLOCK_CMDQ_HI_PTR));
+  //writeLeNumberToBeBytes(b + (ptrdiff_t)BLOCK_CMDQ_LO_PTR,   m.at(BLOCK_CMDQ_LO_PTR));
   writeLeNumberToBeBytes(b + (ptrdiff_t)BLOCK_CMDQ_WR_IDXS,  this->getWrIdxs());
   writeLeNumberToBeBytes(b + (ptrdiff_t)BLOCK_CMDQ_RD_IDXS,  this->getRdIdxs());
+
+  //FIXME : TEST ONLY
+  for (auto it = m.begin(); it != m.end(); it++) { writeLeNumberToBeBytes(b + (ptrdiff_t)it->first, it->second); }
 
 }
 

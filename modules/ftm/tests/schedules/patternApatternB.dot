@@ -1,0 +1,25 @@
+digraph G {
+  graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+  node [type=block cpu=1 pattern=B tperiod=0 style=filled fillcolor=white shape=rectangle color=black]
+  ALIGN_V0 [flags="0x00000007" patentry=1 penwidth=2 color=darkorange3]
+  BLOCK0_V0 [flags="0x00000007" tperiod=100000000]
+  REPCOUNT_BLOCK_V0 [flags="0x00100007" patexit=1 qlo=1 penwidth=2 color=purple]
+  node [pattern=A]
+  ENTRY [flags="0x00002107" tperiod=100000000 patentry=true fillcolor=green penwidth=2 color=darkorange3]
+  EXIT [flags="0x00708107" tperiod=100000000 patexit=true qlo=true qhi=true qil=true fillcolor=green penwidth=2 color=purple]
+  ALIGN_V1 [flags="0x00000107" fillcolor=green]
+  BLOCK0_V1 [flags="0x00000107" tperiod=100000000 fillcolor=green]
+  BLOCK1_V1 [flags="0x00000107" tperiod=100000000 fillcolor=green]
+  REPCOUNT_BLOCK_V1 [flags="0x00100107" qlo=true fillcolor=green]
+
+  edge [type=defdst color=red]
+  ALIGN_V0->BLOCK0_V0
+  BLOCK0_V0->REPCOUNT_BLOCK_V0
+  ENTRY->ALIGN_V1
+  ALIGN_V1->BLOCK0_V1
+  BLOCK0_V1->BLOCK1_V1
+  BLOCK1_V1->REPCOUNT_BLOCK_V1
+  EXIT->ENTRY
+  REPCOUNT_BLOCK_V0->EXIT
+  REPCOUNT_BLOCK_V1->EXIT
+}

@@ -40,33 +40,75 @@ class UnitTestParallelBranch(dm_testbench.DmTestbench):
       with open('diag3_branch.txt', 'w') as file3:
         file3.write("\n".join(diag3))
 
+  def generateSchedule(self, scheduleFile, cpuList):
+    """Generate the following schedule and write it to a file. For each
+    CPU a section with names containing 'A', 'B', ... ist generated.
+        digraph branch1 {
+          name=branch1
+          node [type=tmsg cpu=0 fid=1 toffs=0 pattern=A]
+          A1 [par="0xA1" evtno="0xA1"]
+          A2 [par="0xA2" evtno="0xA2"]
+          A3 [par="0xA3" evtno="0xA3"]
+          BlockA [type=block qlo=1 tperiod=1000000 patentry=1 patexit=1]
+          A2 -> BlockA -> A1 -> BlockA [type=defdst]
+          A3 -> BlockA [type=defdst]
+          BlockA -> A2 [type=altdst]
+          BlockA -> A3 [type=altdst]
+          node [type=tmsg cpu=1 fid=1 toffs=0 pattern=B]
+          B1 [par="0xB1" evtno="0xB1"]
+          B2 [par="0xB2" evtno="0xB2"]
+          B3 [par="0xB3" evtno="0xB3"]
+          BlockB [type=block qlo=1 tperiod=1000000 patentry=1 patexit=1]
+          B2 -> BlockB -> B1 -> BlockB [type=defdst]
+          B3 -> BlockB [type=defdst]
+          BlockB -> B2 [type=altdst]
+          BlockB -> B3 [type=altdst]
+          """
+    lines = []
+    lines.append(f'digraph branch1 ' + '{')
+    lines.append(f'  name=branch1')
+    for patternName in cpuList:
+      lines.append(f'  node [type=tmsg cpu={ord(patternName) - ord("A")} fid=1 toffs=0 pattern={patternName}]')
+      lines.append(f'  {patternName}1 [par="0x{patternName}1" evtno="0x{patternName}1"]')
+      lines.append(f'  {patternName}2 [par="0x{patternName}2" evtno="0x{patternName}2"]')
+      lines.append(f'  {patternName}3 [par="0x{patternName}3" evtno="0x{patternName}3"]')
+      lines.append(f'  Block{patternName} [type=block qlo=1 tperiod=1000000 patentry=1 patexit=1]')
+      lines.append(f'  {patternName}2 -> Block{patternName} -> {patternName}1 -> Block{patternName} [type=defdst]')
+      lines.append(f'  {patternName}3 -> Block{patternName} [type=defdst]')
+      lines.append(f'  Block{patternName} -> {patternName}2 [type=altdst]')
+      lines.append(f'  Block{patternName} -> {patternName}3 [type=altdst]')
+    lines.append('}')
+    lines.append('')
+    # write the file
+    with open(scheduleFile, 'w') as file1:
+      file1.write("\n".join(lines))
+
   def run_test_branch(self, cpuList, diag=False):
-    file_name = 'snoop_branch1.csv'
+    fileName = 'snoop_branch1.csv'
+    scheduleFile = 'branch1.dot'
     self.diag = diag
     self.cpuList = cpuList
+    while len(self.cpuList) > self.cpuQuantity:
+      self.cpuList.pop()
     self.snoopTime = int(max(self.offsetNanoseconds1, self.offsetNanoseconds2)/1000000000) + 1
-    self.addSchedule('branch1.dot')
+    self.generateSchedule(self.schedulesFolder + scheduleFile, self.cpuList)
+    self.addSchedule(scheduleFile)
     for x in cpuList:
       self.startPattern('', x)
-    self.snoopToCsvWithAction(file_name, self.doBranch, self.snoopTime)
+    self.snoopToCsvWithAction(fileName, self.doBranch, duration=self.snoopTime)
     checkValues = {}
     column_evtno = 8
     if len(cpuList) == 1:
       checkValues = {'0x00a1': '>990', '0x00a2': '1', '0x00a3': '1'}
-    elif len(cpuList) == 2:
-      checkValues = {'0x00a1': '>990', '0x00a2': '1', '0x00a3': '1',
-                      '0x00b1': '>990', '0x00b2': '1', '0x00b3': '1'}
-    elif len(cpuList) == 3:
-      checkValues = {'0x00a1': '>990', '0x00a2': '1', '0x00a3': '1',
-                      '0x00b1': '>990', '0x00b2': '1', '0x00b3': '1',
-                      '0x00c1': '>990', '0x00c2': '1', '0x00c3': '1'}
-    elif len(cpuList) == 4:
-      checkValues = {'0x00a1': '>990', '0x00a2': '1', '0x00a3': '1',
-                      '0x00b1': '>990', '0x00b2': '1', '0x00b3': '1',
-                      '0x00c1': '>990', '0x00c2': '1', '0x00c3': '1',
-                      '0x00d1': '>990', '0x00d2': '1', '0x00d3': '1'}
-    self.analyseFrequencyFromCsv(file_name, column_evtno, checkValues=checkValues)
-    self.deleteFile(file_name)
+    if len(cpuList) == 2:
+      checkValues.update({'0x00b1': '>990', '0x00b2': '1', '0x00b3': '1'})
+    if len(cpuList) == 3:
+      checkValues.update({'0x00c1': '>990', '0x00c2': '1', '0x00c3': '1'})
+    if len(cpuList) == 4:
+      checkValues.update({'0x00d1': '>990', '0x00d2': '1', '0x00d3': '1'})
+    self.analyseFrequencyFromCsv(fileName, column_evtno, checkValues=checkValues)
+    self.deleteFile(fileName)
+    self.deleteFile(self.schedulesFolder + scheduleFile)
 
   def test_branchCPU0(self):
     self.run_test_branch(['A'])

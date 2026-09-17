@@ -6,6 +6,10 @@ All other schedules include a forbidden edge type or a forbidden child type.
 
 Build process: when building the test object libcarpedm / dmtest, start with \texttt{make clean} to build a consitent test object.
 
+\texttt{singleEdgeTest} has a mode which does not generate meta nodes. This is used to generate schedules for the pytest tests.
+The meta nodes are needed for the validation tests, but they are not
+allowed for tests which upload schedule to the lm32 firmware.
+
 For this, the combinations of a node and an outgoing edge and,
 respectively, a node and an incoming edge.
 
@@ -19,36 +23,38 @@ Classification of nodes:
 \end{enumerate}
 
 \begin{table}
-\begin{adjustwidth}{-15mm}{}
+\begin{adjustwidth}{-24mm}{}
 \caption{Schedule -- Valid edge types per node type}
-\begin{tabular}[t]{|l|c|c|c|c|c|c|c|c|c|c|c|c|c|}
+\begin{tabular}[t]{|p{17.4mm}|c|c|c|c|c|c|c|c|c|c|c|c|c|}
 
 \hline
 Edge Type & \multicolumn{13}{c|}{Node Type - Out-Edge, first node} \\
 \hline
-                 & \ry{block} & \ry{blockalign} & \ry{flow} & \ry{flush} & \ry{listdst} & \ry{noop} & \ry{origin} & \ry{qbuf} & \ry{qinfo} & \ry{startthread} & \ry{switch} & \ry{tmsg} & \ry{wait} \\
+                    & \ry{block} & \ry{blockalign} & \ry{flow} & \ry{flush} & \ry{listdst} & \ry{noop} & \ry{origin} & \ry{qbuf} & \ry{qinfo} & \ry{startthread} & \ry{switch} & \ry{tmsg} & \ry{wait} \\
 \hline
-defdst           & 0..1       & 0..1            & 0..1      &  1         & --           & 0..1      & 0..1        & --        & --         & 0..1             & 0..1        & 1         & 0..1      \\
-altdst           & 0..9       & 0..9            & --        & --         & --           & --        & --          & --        & --         & --               & --          & --        & --        \\
-listdst          & 0..1       & 0..1            & --        & --         & --           & --        & --          & --        & --         & --               & --          & --        & --        \\
-baddefdst        & --         & --              & --        & --         & --           & --        & --          & --        & --         & --               & --          & --        & --        \\
-target (Switch)  & --         & --              & --        & --         & --           & --        & --          & --        & --         & --               & 0..1        & --        & --        \\
-target (Command) & --         & --              & 0..1      & 0..1       & --           & 0..1      & --          & --        & --         & --               & --          & --        & 0..1      \\
-flowdst          & --         & --              & 0..1      & --         & --           & --        & --          & --        & --         & --               & --          & --        & --        \\
-flushovr         & --         & --              & --        & 0..1       & --           & --        & --          & --        & --         & --               & --          & --        & --        \\
-switchdst        & --         & --              & --        & --         & --           & --        & --          & --        & --         & --               & 0..1        & --        & --        \\
-meta             & --         & --              & --        & --         & --           & --        & --          & --        & 2          & --               & --          & --        & --        \\
-origindst        & --         & --              & --        & --         & --           & --        & 1           & --        & --         & --               & --          & --        & --        \\
-priolo           & 0..1       & 0..1            & --        & --         & --           & --        & --          & --        & --         & --               & --          & --        & --        \\
-priohi           & 0..1       & 0..1            & --        & --         & --           & --        & --          & --        & --         & --               & --          & --        & --        \\
-prioil           & 0..1       & 0..1            & --        & --         & --           & --        & --          & --        & --         & --               & --          & --        & --        \\
-dynid x          & --         & --              & --        & --         & --           & --        & --          & --        & --         & --               & --          & --        & --        \\
-dynpar0          & --         & --              & --        & --         & --           & --        & --          & --        & --         & --               & --          & 0..1      & --        \\
-dynpar1          & --         & --              & --        & --         & --           & --        & --          & --        & --         & --               & --          & 0..1      & --        \\
-dyntef           & --         & --              & --        & --         & --           & --        & --          & --        & --         & --               & --          & --        & --        \\
-dynres           & --         & --              & --        & --         & --           & --        & --          & --        & --         & --               & --          & --        & --        \\
+defdst              & 0..1       & 0..1            & 0..1      &  1         & --           & 0..1      & 0..1        & --        & --         & 0..1             & 0..1        & 1         & 0..1      \\
+altdst              & 0..9       & 0..9            & --        & --         & --           & --        & --          & --        & --         & --               & --          & --        & --        \\
+listdst             & 0..1       & 0..1            & --        & --         & --           & --        & --          & --        & --         & --               & --          & --        & --        \\
+baddefdst           & --         & --              & --        & --         & --           & --        & --          & --        & --         & --               & --          & --        & --        \\
+target
+{\tiny  (Switch)}   & --         & --              & --        & --         & --           & --        & --          & --        & --         & --               & 0..1        & --        & --        \\
+target
+{\tiny  (Command)}  & --         & --              & 0..1      & 0..1       & --           & 0..1      & --          & --        & --         & --               & --          & --        & 0..1      \\
+flowdst             & --         & --              & 0..1      & --         & --           & --        & --          & --        & --         & --               & --          & --        & --        \\
+flushovr            & --         & --              & --        & 0..1       & --           & --        & --          & --        & --         & --               & --          & --        & --        \\
+switchdst           & --         & --              & --        & --         & --           & --        & --          & --        & --         & --               & 0..1        & --        & --        \\
+meta                & --         & --              & --        & --         & --           & --        & --          & --        & 2          & --               & --          & --        & --        \\
+origindst           & --         & --              & --        & --         & --           & --        & 1           & --        & --         & --               & --          & --        & --        \\
+priolo              & 0..1       & 0..1            & --        & --         & --           & --        & --          & --        & --         & --               & --          & --        & --        \\
+priohi              & 0..1       & 0..1            & --        & --         & --           & --        & --          & --        & --         & --               & --          & --        & --        \\
+prioil              & 0..1       & 0..1            & --        & --         & --           & --        & --          & --        & --         & --               & --          & --        & --        \\
+dynid x             & --         & --              & --        & --         & --           & --        & --          & --        & --         & --               & --          & --        & --        \\
+dynpar0             & --         & --              & --        & --         & --           & --        & --          & --        & --         & --               & --          & 0..1      & --        \\
+dynpar1             & --         & --              & --        & --         & --           & --        & --          & --        & --         & --               & --          & 0..1      & --        \\
+dyntef              & --         & --              & --        & --         & --           & --        & --          & --        & --         & --               & --          & --        & --        \\
+dynres              & --         & --              & --        & --         & --           & --        & --          & --        & --         & --               & --          & --        & --        \\
 \hline
-sum              & 0..14      & 0..14           & 1..3      & 1..3       & 0..          & 1..2      & 1..2        & 0..       & 2          & 0..1             & 1..3        & 1..3      & 1..2      \\
+sum                 & 0..14      & 0..14           & 1..3      & 1..3       & 0..          & 1..2      & 1..2        & 0..       & 2          & 0..1             & 1..3        & 1..3      & 1..2      \\
 \hline
 \end{tabular}
 \end{adjustwidth}
@@ -60,35 +66,37 @@ The last row combines all edge types and show the maximal number of outgoing edg
 \end{enumerate}
 
 \begin{table}
-\begin{adjustwidth}{-25mm}{}
+\begin{adjustwidth}{-21mm}{}
 \caption{Schedule -- Valid edge types per node type}
-\begin{tabular}[t]{|l|c|c|c|c|c|c|c|c|c|c|c|c|c|}
+\begin{tabular}[t]{|p{17.4mm}|c|c|c|c|c|c|c|c|c|c|c|c|c|}
 % const children_t cNonMeta = {n::sTMsg, n::sCmdNoop, n::sCmdFlow, n::sOrigin, n::sStartThread, n::sSwitch, n::sCmdFlush, n::sCmdWait, n::sBlockFixed, n::sBlockAlign};
 \hline
 Edge Type & \multicolumn{13}{c|}{Node Type - In-Edge, second node} \\
 \hline
-                 & \ry{block} & \ry{blockalign} & \ry{flow } & \ry{flush} & \ry{listdst} & \ry{noop}  & \ry{origin} & \ry{qbuf} & \ry{qinfo} & \ry{startthread} & \ry{switch} & \ry{tmsg} & \ry{wait} \\
+                  & \ry{block} & \ry{blockalign} & \ry{flow } & \ry{flush} & \ry{listdst} & \ry{noop}  & \ry{origin} & \ry{qbuf} & \ry{qinfo} & \ry{startthread} & \ry{switch} & \ry{tmsg} & \ry{wait} \\
 \hline
-defdst           & 0..        & 0..             & 0..        & 0..        & --           & 0..        & 0..         & --        & --         & 0..              & 0..         & 0..        & 0..      \\
-altdst           & 0..        & 0..             & 0..        & 0..        & --           & 0..        & 0..         & --        & --         & 0..              & 0..         & 0..        & 0..      \\
-listdst          & 0..1       & 0..1            & --         & --         & --           & --         & --          & --        & --         & --               & --          & --         & --       \\
-baddefdst        & --         & --              & --         & --         & --           & --         & --          & --        & --         & --               & --          & --         & --       \\
-target (Switch)  & 0..        & 0..             & --         & --         & --           & --         & --          & --        & --         & --               & --          & --         & --       \\
-target (Command) & 0..        & 0..             & --         & --         & --           & --         & --          & --        & --         & --               & --          & --         & --       \\
-flowdst          & 0..        & 0..             & 0..        & 0..        & --           & 0..        & 0..         & --        & --         & 0..              & 0..         & 0..        & 0..      \\
-flushovr         & 0..        & 0..             & 0..        & 0..        & --           & 0..        & 0..         & --        & --         & 0..              & 0..         & 0..        & 0..      \\
-switchdst        & 0..        & 0..             & 0..        & 0..        & --           & 0..        & 0..         & --        & --         & 0..              & 0..         & 0..        & 0..      \\
-meta             & --         & --              & --         & --         & --           & --         & --          & 1         & --         & --               & --          & --         & --       \\
-origindst        & 0..        & 0..             & 0..        & 0..        & --           & 0..        & 0..         & --        & --         & 0..              & 0..         & 0..        & 0..      \\
-priolo           & --         & --              & --         & --         & --           & --         & --          & --        & 0..1       & --               & --          & --         & --       \\
-priohi           & --         & --              & --         & --         & --           & --         & --          & --        & 0..1       & --               & --          & --         & --       \\
-prioil           & --         & --              & --         & --         & --           & --         & --          & --        & 0..1       & --               & --          & --         & --       \\
-dynid x          & --         & --              & --         & --         & --           & --         & --          & --        & --         & --               & --          & --         & --       \\
-dynpar0          & 0..1       & 0..1            & 0..1       & 0..1       & --           & 0..1       & 0..1        & --        & --         & 0..1             & 0..1        & 0..1       & 0..1     \\
-dynpar1          & 0..1       & 0..1            & 0..1       & 0..1       & --           & 0..1       & 0..1        & --        & --         & 0..1             & 0..1        & 0..1       & 0..1     \\
-dyntef           & --         & --              & --         & --         & --           & --         & --          & --        & --         & --               & --          & --         & --       \\
-dynres           & --         & --              & --         & --         & --           & --         & --          & --        & --         & --               & --          & --         & --       \\
-any edge         & 0..        & 0..             & 0..        & 0..        & 0            & 0..        & 0..         & 1         & 0..1       & 0..              & 0..         & 0..        & 0..      \\
+defdst            & 0..        & 0..             & 0..        & 0..        & --           & 0..        & 0..         & --        & --         & 0..              & 0..         & 0..        & 0..      \\
+altdst            & 0..        & 0..             & 0..        & 0..        & --           & 0..        & 0..         & --        & --         & 0..              & 0..         & 0..        & 0..      \\
+listdst           & 0..1       & 0..1            & --         & --         & --           & --         & --          & --        & --         & --               & --          & --         & --       \\
+baddefdst         & --         & --              & --         & --         & --           & --         & --          & --        & --         & --               & --          & --         & --       \\
+target
+{\tiny (Switch)}  & 0..        & 0..             & --         & --         & --           & --         & --          & --        & --         & --               & --          & --         & --       \\
+target
+{\tiny (Command)} & 0..        & 0..             & --         & --         & --           & --         & --          & --        & --         & --               & --          & --         & --       \\
+flowdst           & 0..        & 0..             & 0..        & 0..        & --           & 0..        & 0..         & --        & --         & 0..              & 0..         & 0..        & 0..      \\
+flushovr          & 0..        & 0..             & 0..        & 0..        & --           & 0..        & 0..         & --        & --         & 0..              & 0..         & 0..        & 0..      \\
+switchdst         & 0..        & 0..             & 0..        & 0..        & --           & 0..        & 0..         & --        & --         & 0..              & 0..         & 0..        & 0..      \\
+meta              & --         & --              & --         & --         & --           & --         & --          & 1         & --         & --               & --          & --         & --       \\
+origindst         & 0..        & 0..             & 0..        & 0..        & --           & 0..        & 0..         & --        & --         & 0..              & 0..         & 0..        & 0..      \\
+priolo            & --         & --              & --         & --         & --           & --         & --          & --        & 0..1       & --               & --          & --         & --       \\
+priohi            & --         & --              & --         & --         & --           & --         & --          & --        & 0..1       & --               & --          & --         & --       \\
+prioil            & --         & --              & --         & --         & --           & --         & --          & --        & 0..1       & --               & --          & --         & --       \\
+dynid x           & --         & --              & --         & --         & --           & --         & --          & --        & --         & --               & --          & --         & --       \\
+dynpar0           & 0..1       & 0..1            & 0..1       & 0..1       & --           & 0..1       & 0..1        & --        & --         & 0..1             & 0..1        & 0..1       & 0..1     \\
+dynpar1           & 0..1       & 0..1            & 0..1       & 0..1       & --           & 0..1       & 0..1        & --        & --         & 0..1             & 0..1        & 0..1       & 0..1     \\
+dyntef            & --         & --              & --         & --         & --           & --         & --          & --        & --         & --               & --          & --         & --       \\
+dynres            & --         & --              & --         & --         & --           & --         & --          & --        & --         & --               & --          & --         & --       \\
+any edge          & 0..        & 0..             & 0..        & 0..        & 0            & 0..        & 0..         & 1         & 0..1       & 0..              & 0..         & 0..        & 0..      \\
 \hline
 \end{tabular}
 \end{adjustwidth}
@@ -101,7 +109,8 @@ Open questions:
 \begin{enumerate}
 \item Is the list of node types complete?
 \item Is the list of edge types complete?
-\item Node type listdst: no rules for in- or out-edges defined. Is this correct?
+\item Node type listdst: no rules for in- or out-edges defined. Is this correct? With release 9.0.0 of the firmware,
+listdst nodes have exactly one edge of type defdst to a block.
 \item Edge types dynid x, dyntef, dynres: are these edge types used?
 \item How to distinguish edge types target (Switch) and target (Command)?
 \item Node type flush and flow: these nodes may have priority queues (lo, hi, il). Why are the queues allowed?
@@ -110,6 +119,6 @@ There are no meta nodes generated for these queues. Why?
 Should the rules be fixed for this invalid schedule?
 \item Is an edge of type defdst necessary for a node of type flow? For node type flush it is necessary.
 \item There are no ConstellationRules for nodes of type listdst and qbuf. Is this correct? Yes! Node types must be childless.
-\item Nodes types listdst and qbuf must be childless.
+\item Node type qbuf must be childless.
+\item Node type listdst has one defdst to a block. This node type is automatically generated by libcarpedm.
 \end{enumerate}
-

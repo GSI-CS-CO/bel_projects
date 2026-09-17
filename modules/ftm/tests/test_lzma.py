@@ -1,16 +1,22 @@
 import dm_testbench
-import pytest
 
 """Class tests the error in decompression which occurs with large
 schedules and log pattern names.
 """
 class UnitTestLzma(dm_testbench.DmTestbench):
 
+  def setUp(self):
+    super().setUp();
+    if self.threadQuantity == 8:
+      self.maxNodes = 1866
+    else:
+      self.maxNodes = 1837
+
   def test_large_patternname_ok(self):
     """OK test: use a schedule with 862 messages and a pattern name of 30 chars.
     This works without an exception, including start of pattern.
     """
-    fileName = self.schedules_folder + 'lzma_862_30_msg.dot'
+    fileName = self.schedulesFolder + 'lzma_862_30_msg.dot'
     patternName = 'PatternNameMsg4567890123456789'
     self.generate_schedule_msg(fileName, patternName, 862)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
@@ -23,7 +29,7 @@ class UnitTestLzma(dm_testbench.DmTestbench):
     """OK test: use a schedule with 862 messages and a pattern name of 1000 chars.
     This works without an exception, including start of pattern.
     """
-    fileName = self.schedules_folder + 'lzma_862_1000_msg.dot'
+    fileName = self.schedulesFolder + 'lzma_862_1000_msg.dot'
     patternName = 'PatternNameMsg4567890123456789'
     patternName = self.generate_schedule_msg(fileName, patternName, 862, patternNameLength=1000)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
@@ -36,9 +42,9 @@ class UnitTestLzma(dm_testbench.DmTestbench):
     """OK test: use a schedule with 1867 messages and a pattern name of 1000 chars.
     This works without an exception, including start of pattern.
     """
-    fileName = self.schedules_folder + 'lzma_1867_1000_msg.dot'
+    fileName = self.schedulesFolder + 'lzma_1867_1000_msg.dot'
     patternName = 'PatternNameMsg4567890123456789'
-    patternName = self.generate_schedule_msg(fileName, patternName, 1867, patternNameLength=1000)
+    patternName = self.generate_schedule_msg(fileName, patternName, self.maxNodes, patternNameLength=1000)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [0], linesCout=0, linesCerr=0)
     self.deleteFile(fileName)
@@ -50,9 +56,9 @@ class UnitTestLzma(dm_testbench.DmTestbench):
     This works without an exception, including start of pattern.
     This is the maximal number of nodes. 100% memory used.
     """
-    fileName = self.schedules_folder + 'lzma_1867_30_msg.dot'
+    fileName = self.schedulesFolder + 'lzma_1867_30_msg.dot'
     patternName = 'PatternNameMsg4567890123456789'
-    self.generate_schedule_msg(fileName, patternName, 1867)
+    self.generate_schedule_msg(fileName, patternName, self.maxNodes)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [0], linesCout=0, linesCerr=0)
     self.deleteFile(fileName)
@@ -64,7 +70,7 @@ class UnitTestLzma(dm_testbench.DmTestbench):
     Fail test: use a schedule with 1000 messages and a pattern name of 30 chars.
     This does not work. Ends with SEGV (return code -11).
     """
-    fileName = self.schedules_folder + 'lzma_1000_30_msg.dot'
+    fileName = self.schedulesFolder + 'lzma_1000_30_msg.dot'
     self.generate_schedule_msg(fileName, 'PatternNameMsg4567890123456789', 1000)
     self.startAndCheckSubprocess((self.binaryDmSched, self.datamaster, 'add',
         fileName), [-11], linesCout=0, linesCerr=0)

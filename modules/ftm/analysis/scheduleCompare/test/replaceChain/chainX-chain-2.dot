@@ -1,7 +1,5 @@
 digraph G {
-graph [
-name="chainX-compact"
-]
+  graph [name="chainX-compact"]
 1 [color=white];
 2 [color=white];
 3 [color=white];

@@ -211,6 +211,8 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
                void dirtyCtShow();
                void showCpuList() ;
             uint8_t getCpuQty() ;
+            uint8_t getThrQty() ;
+            uint32_t getCtlAdr(const uint8_t& idx);
                bool isCpuIdxValid(uint8_t cpuIdx) ;
                void showMemSpace();
                void lockManagerClear();

@@ -1,0 +1,10 @@
+digraph "pps-test2-0" {
+name="pps-test2-0"
+graph [rankdir=TB nodesep=0.6 mindist=1.0 ranksep=1.0 overlap=false]
+subgraph subgraph0 {
+  node [cpu=0 pattern=A]
+  Evt_A [type=tmsg patentry=1 toffs=0 fid=1 gid=5, evtno="0xfff", sid=2, bpid=8, par=1 shape=oval fillcolor=green penwidth=2 color=darkorange3]
+  B_A [type=block patexit=1 tperiod=100000000 qlo=1 shape=rectangle fillcolor=green penwidth=2 color=purple]
+  Evt_A -> B_A -> Evt_A [type=defdst color=red]
+}
+}

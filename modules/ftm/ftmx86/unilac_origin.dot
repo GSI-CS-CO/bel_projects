@@ -1,0 +1,219 @@
+digraph g {
+name="Test_Origin_and_Start_Thread";
+
+graph []
+edge  [type="defdst"]
+
+subgraph cpu1 {
+  node  [cpu="1"];
+
+  
+  Ori_T01  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=01];
+  Ori_T02  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=02];
+  Ori_T03  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=03];
+  Ori_T04  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=04];
+  Ori_T05  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=05];
+  Ori_T06  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=06];
+  Ori_T07  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=07];
+  Ori_T08  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=08];
+  Ori_T09  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=09];
+  Ori_T10  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=10];
+  Ori_T11  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=11];
+  Ori_T12  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=12];
+  Ori_T13  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=13];
+  Ori_T14  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=14];
+  Ori_T15  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=15];
+  Ori_T16  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=16];
+  Ori_T17  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=17];
+  Ori_T18  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=18];
+  Ori_T19  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=19];
+  Ori_T20  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=20];
+  Ori_T21  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=21];
+  Ori_T22  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=22];
+  Ori_T23  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=23];
+  Ori_T24  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=24];
+  Ori_T25  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=25];
+  Ori_T26  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=26];
+  Ori_T27  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=27];
+  Ori_T28  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=28];
+  Ori_T29  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=29];
+  Ori_T30  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=30];
+  Ori_T31  [type="origin",       pattern="MAIN", patentry="1", toffs=    0,   thread=31];
+  
+  
+
+  StThr   [type="startthread",  pattern="MAIN", patentry="0", toffs=0, startoffs=0;  thread="0x1e"];
+  
+  
+  Evt_MAIN  [type="tmsg",         pattern="MAIN", patentry="0", toffs=0,   fid=1, evtno=1, par="0x00"];
+  B_MAIN    [type="block",        pattern="MAIN", patexit="1",  tperiod=19800000, qlo="1"];
+  B_VARI    [type="block",        pattern="MAIN", patexit="0",  tperiod=200000];
+
+  Evt_01      [type="tmsg",         pattern="01", patentry="1", toffs=10001,   fid=1, evtno=2, par=01];
+  Evt_02      [type="tmsg",         pattern="02", patentry="1", toffs=10002,   fid=1, evtno=2, par=02];
+  Evt_03      [type="tmsg",         pattern="03", patentry="1", toffs=10003,   fid=1, evtno=2, par=03];
+  Evt_04      [type="tmsg",         pattern="04", patentry="1", toffs=10004,   fid=1, evtno=2, par=04];
+  Evt_05      [type="tmsg",         pattern="05", patentry="1", toffs=10005,   fid=1, evtno=2, par=05];
+  Evt_06      [type="tmsg",         pattern="06", patentry="1", toffs=10006,   fid=1, evtno=2, par=06];
+  Evt_07      [type="tmsg",         pattern="07", patentry="1", toffs=10007,   fid=1, evtno=2, par=07];
+  Evt_08      [type="tmsg",         pattern="08", patentry="1", toffs=10008,   fid=1, evtno=2, par=08];
+  Evt_09      [type="tmsg",         pattern="09", patentry="1", toffs=10009,   fid=1, evtno=2, par=09];
+  Evt_10      [type="tmsg",         pattern="10", patentry="1", toffs=10010,   fid=1, evtno=2, par=10];
+  Evt_11      [type="tmsg",         pattern="11", patentry="1", toffs=10011,   fid=1, evtno=2, par=11];
+  Evt_12      [type="tmsg",         pattern="12", patentry="1", toffs=10012,   fid=1, evtno=2, par=12];
+  Evt_13      [type="tmsg",         pattern="13", patentry="1", toffs=10013,   fid=1, evtno=2, par=13];
+  Evt_14      [type="tmsg",         pattern="14", patentry="1", toffs=10014,   fid=1, evtno=2, par=14];
+  Evt_15      [type="tmsg",         pattern="15", patentry="1", toffs=10015,   fid=1, evtno=2, par=15];
+  Evt_16      [type="tmsg",         pattern="16", patentry="1", toffs=10016,   fid=1, evtno=2, par=16];
+  Evt_17      [type="tmsg",         pattern="17", patentry="1", toffs=10017,   fid=1, evtno=2, par=17];
+  Evt_18      [type="tmsg",         pattern="18", patentry="1", toffs=10018,   fid=1, evtno=2, par=18];
+  Evt_19      [type="tmsg",         pattern="19", patentry="1", toffs=10019,   fid=1, evtno=2, par=19];
+  Evt_20      [type="tmsg",         pattern="20", patentry="1", toffs=10020,   fid=1, evtno=2, par=20];
+  Evt_21      [type="tmsg",         pattern="21", patentry="1", toffs=10021,   fid=1, evtno=2, par=21];
+  Evt_22      [type="tmsg",         pattern="22", patentry="1", toffs=10022,   fid=1, evtno=2, par=22];
+  Evt_23      [type="tmsg",         pattern="23", patentry="1", toffs=10023,   fid=1, evtno=2, par=23];
+  Evt_24      [type="tmsg",         pattern="24", patentry="1", toffs=10024,   fid=1, evtno=2, par=24];
+  Evt_25      [type="tmsg",         pattern="25", patentry="1", toffs=10025,   fid=1, evtno=2, par=25];
+  Evt_26      [type="tmsg",         pattern="26", patentry="1", toffs=10026,   fid=1, evtno=2, par=26];
+  Evt_27      [type="tmsg",         pattern="27", patentry="1", toffs=10027,   fid=1, evtno=2, par=27];
+  Evt_28      [type="tmsg",         pattern="28", patentry="1", toffs=10028,   fid=1, evtno=2, par=28];
+  Evt_29      [type="tmsg",         pattern="29", patentry="1", toffs=10029,   fid=1, evtno=2, par=29];
+  Evt_30      [type="tmsg",         pattern="30", patentry="1", toffs=10030,   fid=1, evtno=2, par=30];
+  Evt_31      [type="tmsg",         pattern="31", patentry="1", toffs=10031,   fid=1, evtno=2, par=31];
+  
+
+  B_01       [type="block",        pattern="01", patexit="1", tperiod=1000000];
+  B_02       [type="block",        pattern="02", patexit="1", tperiod=1000000];
+  B_03       [type="block",        pattern="03", patexit="1", tperiod=1000000];
+  B_04       [type="block",        pattern="04", patexit="1", tperiod=1000000];
+  B_05       [type="block",        pattern="05", patexit="1", tperiod=1000000];
+  B_06       [type="block",        pattern="06", patexit="1", tperiod=1000000];
+  B_07       [type="block",        pattern="07", patexit="1", tperiod=1000000];
+  B_08       [type="block",        pattern="08", patexit="1", tperiod=1000000];
+  B_09       [type="block",        pattern="09", patexit="1", tperiod=1000000];
+  B_10       [type="block",        pattern="10", patexit="1", tperiod=1000000];
+  B_11       [type="block",        pattern="11", patexit="1", tperiod=1000000];
+  B_12       [type="block",        pattern="12", patexit="1", tperiod=1000000];
+  B_13       [type="block",        pattern="13", patexit="1", tperiod=1000000];
+  B_14       [type="block",        pattern="14", patexit="1", tperiod=1000000];
+  B_15       [type="block",        pattern="15", patexit="1", tperiod=1000000];
+  B_16       [type="block",        pattern="16", patexit="1", tperiod=1000000];
+  B_17       [type="block",        pattern="17", patexit="1", tperiod=1000000];
+  B_18       [type="block",        pattern="18", patexit="1", tperiod=1000000];
+  B_19       [type="block",        pattern="19", patexit="1", tperiod=1000000];
+  B_20       [type="block",        pattern="20", patexit="1", tperiod=1000000];
+  B_21       [type="block",        pattern="21", patexit="1", tperiod=1000000];
+  B_22       [type="block",        pattern="22", patexit="1", tperiod=1000000];
+  B_23       [type="block",        pattern="23", patexit="1", tperiod=1000000];
+  B_24       [type="block",        pattern="24", patexit="1", tperiod=1000000];
+  B_25       [type="block",        pattern="25", patexit="1", tperiod=1000000];
+  B_26       [type="block",        pattern="26", patexit="1", tperiod=1000000];
+  B_27       [type="block",        pattern="27", patexit="1", tperiod=1000000];
+  B_28       [type="block",        pattern="28", patexit="1", tperiod=1000000];
+  B_29       [type="block",        pattern="29", patexit="1", tperiod=1000000];
+  B_30       [type="block",        pattern="30", patexit="1", tperiod=1000000];
+  B_31       [type="block",        pattern="31", patexit="1", tperiod=1000000];
+  
+Ori_T01 -> Ori_T02; 
+Ori_T02 -> Ori_T03; 
+Ori_T03 -> Ori_T04; 
+Ori_T04 -> Ori_T05; 
+Ori_T05 -> Ori_T06; 
+Ori_T06 -> Ori_T07; 
+Ori_T07 -> Ori_T08; 
+Ori_T08 -> Ori_T09; 
+Ori_T09 -> Ori_T10; 
+Ori_T10 -> Ori_T11; 
+Ori_T11 -> Ori_T12; 
+Ori_T12 -> Ori_T13; 
+Ori_T13 -> Ori_T14; 
+Ori_T14 -> Ori_T15; 
+Ori_T15 -> Ori_T16; 
+Ori_T16 -> Ori_T17; 
+Ori_T17 -> Ori_T18; 
+Ori_T18 -> Ori_T19; 
+Ori_T19 -> Ori_T20; 
+Ori_T20 -> Ori_T21; 
+Ori_T21 -> Ori_T22; 
+Ori_T22 -> Ori_T23; 
+Ori_T23 -> Ori_T24; 
+Ori_T24 -> Ori_T25; 
+Ori_T25 -> Ori_T26; 
+Ori_T26 -> Ori_T27; 
+Ori_T27 -> Ori_T28; 
+Ori_T28 -> Ori_T29; 
+Ori_T29 -> Ori_T30; 
+Ori_T30 -> Ori_T31; 
+Ori_T31 -> B_VARI -> StThr -> Evt_MAIN   -> B_MAIN -> B_VARI;
+
+
+  
+  Evt_01 -> B_01;
+  Evt_02 -> B_02;
+  Evt_03 -> B_03;
+  Evt_04 -> B_04;
+  Evt_05 -> B_05;
+  Evt_06 -> B_06;
+  Evt_07 -> B_07;
+  Evt_08 -> B_08;
+  Evt_09 -> B_09;
+  Evt_10 -> B_10;
+  Evt_11 -> B_11;
+  Evt_12 -> B_12;
+  Evt_13 -> B_13;
+  Evt_14 -> B_14;
+  Evt_15 -> B_15;
+  Evt_16 -> B_16;
+  Evt_17 -> B_17;
+  Evt_18 -> B_18;
+  Evt_19 -> B_19;
+  Evt_20 -> B_20;
+  Evt_21 -> B_21;
+  Evt_22 -> B_22;
+  Evt_23 -> B_23;
+  Evt_24 -> B_24;
+  Evt_25 -> B_25;
+  Evt_26 -> B_26;
+  Evt_27 -> B_27;
+  Evt_28 -> B_28;
+  Evt_29 -> B_29;
+  Evt_30 -> B_30;
+  Evt_31 -> B_31;
+
+  Ori_T01 -> Evt_01 [type="origindst"];
+  Ori_T02 -> Evt_02 [type="origindst"];
+  Ori_T03 -> Evt_03 [type="origindst"];
+  Ori_T04 -> Evt_04 [type="origindst"];
+  Ori_T05 -> Evt_05 [type="origindst"];
+  Ori_T06 -> Evt_06 [type="origindst"];
+  Ori_T07 -> Evt_07 [type="origindst"];
+  Ori_T08 -> Evt_08 [type="origindst"];
+  Ori_T09 -> Evt_09 [type="origindst"];
+  Ori_T10 -> Evt_10 [type="origindst"];
+  Ori_T11 -> Evt_11 [type="origindst"];
+  Ori_T12 -> Evt_12 [type="origindst"];
+  Ori_T13 -> Evt_13 [type="origindst"];
+  Ori_T14 -> Evt_14 [type="origindst"];
+  Ori_T15 -> Evt_15 [type="origindst"];
+  Ori_T16 -> Evt_16 [type="origindst"];
+  Ori_T17 -> Evt_17 [type="origindst"];
+  Ori_T18 -> Evt_18 [type="origindst"];
+  Ori_T19 -> Evt_19 [type="origindst"];
+  Ori_T20 -> Evt_20 [type="origindst"];
+  Ori_T21 -> Evt_21 [type="origindst"];
+  Ori_T22 -> Evt_22 [type="origindst"];
+  Ori_T23 -> Evt_23 [type="origindst"];
+  Ori_T24 -> Evt_24 [type="origindst"];
+  Ori_T25 -> Evt_25 [type="origindst"];
+  Ori_T26 -> Evt_26 [type="origindst"];
+  Ori_T27 -> Evt_27 [type="origindst"];
+  Ori_T28 -> Evt_28 [type="origindst"];
+  Ori_T29 -> Evt_29 [type="origindst"];
+  Ori_T30 -> Evt_30 [type="origindst"];
+  Ori_T31 -> Evt_31 [type="origindst"];
+
+}
+
+
+
+}

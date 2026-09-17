@@ -191,7 +191,7 @@ public:
 
 
   void debug(std::ostream& os);
-
+  vStrC getAllNodes();
 
 };
 

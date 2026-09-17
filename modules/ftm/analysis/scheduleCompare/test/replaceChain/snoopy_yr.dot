@@ -1,0 +1,17 @@
+digraph G {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+CRYRING_C_2019_november_extraction_000[cpu="1", flags="0x00000102", type="tmsg", toffs="0", pattern="CRYRING_C_2019_november_extraction", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="200", evtno="259", beamin="0", sid="1", bpid="10", reqnobeam="0", vacc="0", id="0x10c8103000100280", par="0x0000040000000000", tef="0", shape     = "oval", fillcolor = "green"];
+CRYRING_C_2019_november_extraction_001[cpu="1", flags="0x00000102", type="tmsg", toffs="0", pattern="CRYRING_C_2019_november_extraction", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="201", evtno="259", beamin="0", sid="1", bpid="10", reqnobeam="0", vacc="0", id="0x10c9103000100280", par="0x0000040000000000", tef="0", shape     = "oval", fillcolor = "green"];
+CRYRING_C_2019_november_extraction_002[cpu="1", flags="0x00000102", type="tmsg", toffs="0", pattern="CRYRING_C_2019_november_extraction", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="202", evtno="259", beamin="0", sid="1", bpid="10", reqnobeam="0", vacc="0", id="0x10ca103000100280", par="0x0000040000000000", tef="0", shape     = "oval", fillcolor = "green"];
+CRYRING_C_2019_november_extraction_003[cpu="1", flags="0x00000102", type="tmsg", toffs="0", pattern="CRYRING_C_2019_november_extraction", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="203", evtno="259", beamin="0", sid="1", bpid="10", reqnobeam="0", vacc="0", id="0x10cb103000100280", par="0x0000040000000000", tef="0", shape     = "oval", fillcolor = "green"];
+CRYRING_C_2019_november_extraction_BLOCK[cpu="1", flags="0x00000107", type="block", tperiod="6892000000", pattern="CRYRING_C_2019_november_extraction", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green"];
+CRYRING_C_2019_november_extraction_REPCOUNT_BLOCK[cpu="1", flags="0x00100107", type="block", tperiod="10000", pattern="CRYRING_C_2019_november_extraction", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green"];
+CRYRING_C_2019_november_extraction_000->CRYRING_C_2019_november_extraction_001 [type="defdst", color     = "red"];
+CRYRING_C_2019_november_extraction_001->CRYRING_C_2019_november_extraction_002 [type="defdst", color     = "red"];
+CRYRING_C_2019_november_extraction_002->CRYRING_C_2019_november_extraction_003 [type="defdst", color     = "red"];
+CRYRING_C_2019_november_extraction_003->CRYRING_C_2019_november_extraction_BLOCK [type="defdst", color     = "red"];
+CRYRING_C_2019_november_extraction_BLOCK->CRYRING_C_2019_november_extraction_REPCOUNT_BLOCK [type="defdst", color     = "red"];
+CRYRING_C_2019_november_extraction_REPCOUNT_BLOCK->CRYRING_C_2019_november_extraction_000 [type="altdst", color     = "black"];
+}
+

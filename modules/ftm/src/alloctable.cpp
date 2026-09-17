@@ -1,9 +1,13 @@
 #include "alloctable.h"
+#include "reflocation.h"
+#include "dotstr.h"
+
+namespace dnt = DotStr::Node::TypeVal;
 
   AllocTable::AllocTable(AllocTable const &src) {
     a = src.a;
     m = src.m;
-
+    rl = src.rl;
     recreatePools(AllocPoolMode::WITH_MGMT);
     syncBmpsToPools();
   }
@@ -12,7 +16,7 @@
   {
     a = src.a;
     m = src.m;
-
+    rl = src.rl;
     recreatePools(AllocPoolMode::WITH_MGMT);
     syncBmpsToPools();
 
@@ -20,15 +24,19 @@
   }
 
 
-  bool AllocTable::insert(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v, bool staged) {
+  bool AllocTable::insert(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v, bool staged, bool global) {
    /*
     std::cout << "Problem: " << std::endl;
     if (lookupAdr(cpu, adr) != a.end()) std::cout << (int)cpu << " Adr 0x" << std::hex << adr << " exists already" << std::endl;
     if (lookupHash(hash) != a.end()) std::cout << "Hash 0x" << std::hex << hash << " exists already" << std::endl;
     if (lookupVertex(v) != a.end()) std::cout << "V 0x" << std::dec << v << " (hash 0x" << hash << ") exists already" << std::endl;
     */
-    vPool[cpu].occupyChunk(adr);
-    auto x = a.insert({cpu, adr, hash, v, staged});
+    if(!global) { vPool[cpu].occupyChunk(adr); }
+    else { 
+      uint32_t rtAdr = adrConv(AdrType::MGMT, AdrType::INT, cpu, adr);
+      //std::cout << "Global for adr 0x" << std::hex << adr << " goes down to rt as 0x" << std::hex << rtAdr << std::endl;
+      rt->insert(rtAdr, hash);}
+    auto x = a.insert({cpu, adr, hash, v, staged, global});
 
     return x.second;
   }
@@ -93,18 +101,39 @@
     return ret;
 
   }
+/*  amI AllocTable::handleGlobals(uint8_t cpu, uint32_t adr, const std::string& exMsg) {
+    amI ret;
+    uint32_t baseAdr;
+    if (cpu > getMemories().size()) baseAdr = 0;
+    else                            baseAdr = getMemories()[cpu].sharedOffs;
 
+    RefLocationSearch rls = rl->getSearch(adr - baseadr); // search for it
+    
+    if(rls.getLocVal() == adr - baseadr) { // we got a match
+      auto x = a.insert({cpu, adr, 0x0, null_vertex, false, true});
+      if (x.second) {ret = a.iterator_to( *x.first );} // if it went okay, return iterator
+      else          {throw std::runtime_error(exMsg + " Got a global table match, but couldnt insert into alloctable\n");}
+    } throw std::runtime_error(exMsg  + " Not in alloctable and no match in global table\n");
+    
+    return ret;
+  }   
+*/
   //Allocation functions
-  int AllocTable::allocate(uint8_t cpu, uint32_t hash, vertex_t v, bool staged) {
-    uint32_t chunkAdr;
-    //std::cout << "Cpu " << (int)cpu << " mempools " << vPool.size() << std::endl;
-    if (cpu >= vPool.size()) {
-      //std::cout << "cpu idx out of range" << std::endl;
-      return ALLOC_NO_SPACE;}
-
-    if (!(vPool[cpu].acquireChunk(chunkAdr)))       return ALLOC_NO_SPACE;
-    if (!(insert(cpu, chunkAdr, hash, v, staged)))  return ALLOC_ENTRY_EXISTS;
-
+  int AllocTable::allocate(uint8_t cpu, uint32_t hash, vertex_t v, Graph& g, bool staged) {
+    if(g[v].type == dnt::sGlobal) {
+      //uint32_t tmpAdr = rl->getSearch(g[v].section, DotStr::Misc::sZero).getLocVal();       
+      uint32_t adr = rl->getLocVal(g[v].section); 
+     
+      
+      if (!(insert(cpu, adr, hash, v, false, true)))  return ALLOC_ENTRY_EXISTS;
+    } else {
+      uint32_t chunkAdr;
+      if (cpu >= vPool.size()) { return ALLOC_NO_SPACE; }
+  
+      if (!(vPool[cpu].acquireChunk(chunkAdr)))                     return ALLOC_NO_SPACE;
+      if (!(insert(cpu, chunkAdr, hash, v, staged, false)))           return ALLOC_ENTRY_EXISTS;
+    }
+    
     return ALLOC_OK;
   }
 
@@ -391,7 +420,7 @@
     os << "Mgmt StartAdr: 0x" << std::hex << mgmtStartAdr << " , Size: " << std::dec << mgmtTotalSize << std::endl;
     os << "Grp  StartAdr: 0x" << std::hex << 0 << " , Size: " << std::dec << mgmtGrpSize << std::endl;
     os << "Cov  StartAdr: 0x" << std::hex << mgmtGrpSize << " , Size: " << std::dec << mgmtCovSize << std::endl;
-
+    os << "Ref  StartAdr: 0x" << std::hex << mgmtCovSize << " , Size: " << std::dec << mgmtRefSize << std::endl;
 
     for (mmI x = m.begin(); x != m.end(); x++) {
 

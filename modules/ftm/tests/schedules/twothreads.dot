@@ -8,7 +8,7 @@ node [cpu=0 fid=1 toffs=0 pattern=A type=tmsg]
   Tmsg1 -> Block1 -> Tmsg2 -> Block2 [type=defdst]
   Block1 -> Tmsg1 [type=altdst]
 
-  Start [type=startthread thread=1 pattern=B patentry=0 patexit=1 startoffs=50000000]
+  Start [type=startthread thread="0x2" pattern=B patentry=0 patexit=1 startoffs=50000000]
   Start -> Tmsg1 [type=defdst]
   Origin [type=origin thread=1 pattern=B patentry=1]
   Origin -> Start [type=defdst]
