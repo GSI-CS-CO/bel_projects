@@ -828,7 +828,7 @@ architecture rtl of monster is
   signal uart_mux           : std_logic; -- either usb or external
   signal uart_wrc           : std_logic; -- from wrc
   signal s_neorv32_uart0_out: std_logic; -- from neorv32
-  signal s_neorv32_uart0_in : std_logic; 
+  signal s_neorv32_uart0_in : std_logic;
   signal s_neorv32_uart1_out: std_logic;
   signal s_neorv32_uart1_in : std_logic;
   signal uart_to_usb        : std_logic;
@@ -3028,6 +3028,10 @@ end generate;
           i_rst_n_i   => rstn_sys,
           i_master_i  => dev_msi_slave_o(dev_slaves'pos(devs_eca_ctl)),
           i_master_o  => dev_msi_slave_i(dev_slaves'pos(devs_eca_ctl)));
+    end generate;
+
+    eca_io_channel_wb_n : if not g_en_eca_io_channel generate
+      s_eca_io <= (others => (others => '0'));
     end generate;
 
       -- Legacy 8ns time
