@@ -91,28 +91,28 @@ entity ftm is
     p16             : out   std_logic := 'Z'; -- FPLED5  = TTLIO3 (red)  0=on, Z=off
     n16             : out   std_logic := 'Z'; -- FPLED6           (blue)
 
-    p17             : in    std_logic;        -- N_LVDS_1 / SYnIN
-    n17             : in    std_logic;        -- P_LVDS_1 / SYpIN
-    p18             : in    std_logic;        -- N_LVDS_2 / TRnIN
-    n18             : in    std_logic;        -- P_LVDS_2 / TRpIN
+    --p17             : in    std_logic;        -- N_LVDS_1 / SYnIN
+    --n17             : in    std_logic;        -- P_LVDS_1 / SYpIN
+    --p18             : in    std_logic;        -- N_LVDS_2 / TRnIN
+    --n18             : in    std_logic;        -- P_LVDS_2 / TRpIN
     p19             : out   std_logic;        -- N_LVDS_3 / CK200n
     --n19             : out   std_logic;        -- P_LVDS_3 / CK200p -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
-    p21             : in    std_logic;        -- N_LVDS_6  = TTLIO1 in
-    n21             : in    std_logic;        -- P_LVDS_6
-    p22             : in    std_logic;        -- N_LVDS_8  = TTLIO2 in
-    n22             : in    std_logic;        -- P_PVDS_8
-    p23             : in    std_logic;        -- N_LVDS_10 = TTLIO3 in
-    n23             : in    std_logic;        -- P_LVDS_10
+    --p21             : in    std_logic;        -- N_LVDS_6  = TTLIO1 in
+    --n21             : in    std_logic;        -- P_LVDS_6
+    --p22             : in    std_logic;        -- N_LVDS_8  = TTLIO2 in
+    --n22             : in    std_logic;        -- P_PVDS_8
+    --p23             : in    std_logic;        -- N_LVDS_10 = TTLIO3 in
+    --n23             : in    std_logic;        -- P_LVDS_10
     p24             : out   std_logic;        -- N_LVDS_4 / SYnOU
     --n24             : out   std_logic;        -- P_LVDS_4 / SYpOU -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
-    p25             : out   std_logic;        -- N_LVDS_5  = TTLIO1 out
-    n25             : out   std_logic;        -- P_LVDS_5
+    --p25             : out   std_logic;        -- N_LVDS_5  = TTLIO1 out
+    --n25             : out   std_logic;        -- P_LVDS_5
     p26             : out   std_logic := 'Z'; -- FPLED3    = TTLIO2 (red)  0=on, Z=off
     n26             : out   std_logic := 'Z'; -- FPLED4             (blue)
-    p27             : out   std_logic;        -- N_LVDS_7  = TTLIO2 out
-    n27             : out   std_logic;        -- P_LVDS_7
-    p28             : out   std_logic;        -- N_LVDS_9  = TTLIO3 out
-    n28             : out   std_logic;        -- P_LVDS_9
+    --p27             : out   std_logic;        -- N_LVDS_7  = TTLIO2 out
+    --n27             : out   std_logic;        -- P_LVDS_7
+    --p28             : out   std_logic;        -- N_LVDS_9  = TTLIO3 out
+    --n28             : out   std_logic;        -- P_LVDS_9
     p29             : out   std_logic := 'Z'; -- FPLED1    = TTLIO1 (red)  0=on, Z=off
     n29             : out   std_logic := 'Z'; -- FPLED2             (blue)
     p30             : out   std_logic := 'Z'; -- n/c
@@ -379,26 +379,26 @@ begin
   p16 <= '0' when lvds_oen(2)='1' else 'Z'; -- FPLED5/TTLIO3 red
 
   -- LVDS inputs
-  lvds_p_i(0) <= p21; -- TTLIO1
-  lvds_p_i(1) <= p22; -- TTLIO2
-  lvds_p_i(2) <= p23; -- TTLIO3
-  lvds_p_i(3) <= p17; -- LVDS_1 / SYIN
-  lvds_p_i(4) <= p18; -- LVDS_2 / TRIN
-  lvds_n_i(0) <= n21; -- TTLIO1
-  lvds_n_i(1) <= n22; -- TTLIO2
-  lvds_n_i(2) <= n23; -- TTLIO3
-  lvds_n_i(3) <= n17; -- LVDS_1 / SYIN
-  lvds_n_i(4) <= n18; -- LVDS_2 / TRIN
+  --lvds_p_i(0) <= p21; -- TTLIO1
+  --lvds_p_i(1) <= p22; -- TTLIO2
+  --lvds_p_i(2) <= p23; -- TTLIO3
+  --lvds_p_i(3) <= p17; -- LVDS_1 / SYIN
+  --lvds_p_i(4) <= p18; -- LVDS_2 / TRIN
+  --lvds_n_i(0) <= n21; -- TTLIO1
+  --lvds_n_i(1) <= n22; -- TTLIO2
+  --lvds_n_i(2) <= n23; -- TTLIO3
+  --lvds_n_i(3) <= n17; -- LVDS_1 / SYIN
+  --lvds_n_i(4) <= n18; -- LVDS_2 / TRIN
 
   -- LVDS outputs
-  n25 <= '0'; -- TTLIO1
-  n27 <= '0'; -- TTLIO2
-  n28 <= '0'; -- TTLIO3
+  --n25 <= lvds_n_o(0); -- TTLIO1
+  --n27 <= lvds_n_o(1); -- TTLIO2
+  --n28 <= lvds_n_o(2); -- TTLIO3
   --n19 <= lvds_n_o(3); -- LVDS_3 / CK200 -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
   --n24 <= lvds_n_o(4); -- LVDS_4 / SYOU  -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
-  --p25 <= '0'; -- TTLIO1
-  --p27 <= '0'; -- TTLIO2
-  --p28 <= '0'; -- TTLIO3
+  --p25 <= lvds_p_o(0); -- TTLIO1
+  --p27 <= lvds_p_o(1); -- TTLIO2
+  --p28 <= lvds_p_o(2); -- TTLIO3
   --p19 <= lvds_p_o(3); -- LVDS_3 / CK200 -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
   --p24 <= lvds_p_o(4); -- LVDS_4 / SYOU  -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
 
