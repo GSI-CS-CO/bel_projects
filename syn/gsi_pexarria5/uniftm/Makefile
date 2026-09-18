@@ -18,6 +18,8 @@ PREFIX    ?= /usr/local
 CFLAGS    = -I. -I$(PATHFTM)/include -I$(PATHFW) -I$(PRIOPATH) -I$(EBMPATH) -DDEBUGLEVEL=$(DEBUGLVL) -D_THR_QTY_=$(THR_QTY) -DDIAGNOSTICS -DDM_VERSION="\"$(VERSION)\"" -DDM_RELEASE="\"$(RELEASE)\""
 
 
+CFLAGS += -DDM_SHARED_MMAP_HEADER=\"$(TARGET)_shared_mmap.h\"
+
 include ../../build.mk
 
 all: $(TARGET).elf
