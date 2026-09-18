@@ -958,7 +958,6 @@ architecture rtl of monster is
     constant c_ftm_channel_types : t_nat_array(1 downto 0) := c_scu_channel_types(1 downto 0);
     constant c_channel_types     : t_nat_array(2 downto 0) := c_scu_channel_types(2 downto 0);
   begin
-  begin
     if g_en_scubus then
       return c_scu_channel_types;
     else
@@ -3018,7 +3017,6 @@ end generate;
           i_rst_n_i   => rstn_sys,
           i_master_i  => dev_msi_slave_o(dev_slaves'pos(devs_eca_ctl)),
           i_master_o  => dev_msi_slave_i(dev_slaves'pos(devs_eca_ctl)));
-    end generate;
 
       -- Legacy 8ns time
       ref_tai8ns <= "000" & s_time(63 downto 3);
