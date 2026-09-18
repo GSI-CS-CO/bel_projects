@@ -216,6 +216,7 @@ architecture rtl of ftm is
   signal led_pps      : std_logic;
 
   signal gpio_o       : std_logic_vector(7 downto 0);
+  signal gpio_i       : std_logic_vector(1 downto 0);
   signal lvds_p_i     : std_logic_vector(4 downto 0);
   signal lvds_n_i     : std_logic_vector(4 downto 0);
   signal lvds_i_led   : std_logic_vector(4 downto 0);
