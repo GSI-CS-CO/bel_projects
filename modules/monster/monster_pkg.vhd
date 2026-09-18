@@ -1,3 +1,4 @@
+
 --! @file monster_pkg.vhd
 --! @brief Monster (all your top are belong to BEL) package
 --! @author Wesley W. Terpstra <w.terpstra@gsi.de>
@@ -132,7 +133,6 @@ package monster_pkg is
       g_en_a10ts             : boolean := false;
       g_delay_diagnostics    : boolean := false;
       g_en_eca               : boolean := true;
-      g_en_eca_io_channel    : boolean := true;
       g_en_wd_tmr            : boolean := false;
       g_en_timer             : boolean := false;
       g_en_eca_tap           : boolean := false;

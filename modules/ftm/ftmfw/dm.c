@@ -52,7 +52,10 @@
 #include "dm.h"
 #include "prio_regs.h"
 #include "dbg.h"
-#include "ftm_shared_mmap.h"
+#ifndef DM_SHARED_MMAP_HEADER
+#define DM_SHARED_MMAP_HEADER "ftm_shared_mmap.h"
+#endif
+#include DM_SHARED_MMAP_HEADER
 
 uint64_t SHARED dummy = 0; ///< dummy using the SHARED type so nothing gets optimized away
 
