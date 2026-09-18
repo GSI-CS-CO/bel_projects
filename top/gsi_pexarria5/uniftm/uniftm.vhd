@@ -228,7 +228,7 @@ architecture rtl of uniftm is
   signal butis_clk_200 : std_logic;
   signal butis_t0_ts   : std_logic;
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 14) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 11) :=
   (
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
     ("LED1_BASE_R", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
@@ -239,11 +239,8 @@ architecture rtl of uniftm is
     ("LED2_ADD_B ", IO_NONE,         false,   false,  5,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LED3_ADD_G ", IO_NONE,         false,   false,  6,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LED4_ADD_W ", IO_NONE,         false,   false,  7,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("IO1        ", IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
-    ("IO2        ", IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
-    ("IO3        ", IO_NONE,         false,   false,  2,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
-    ("MHDMR_SYIN ", IO_NONE,         false,   false,  3,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
-    ("MHDMR_TRIN ", IO_NONE,         false,   false,  4,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
+    ("V_HAPPY_IN1", IO_NONE,         false,   false,  0,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("V_HAPPY_IN2", IO_NONE,         false,   false,  1,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
     ("MHDMR_CK200", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_LVDS),
     ("MHDMR_SYOU ", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_LVDS)
   );
@@ -262,11 +259,8 @@ begin
       g_project             => c_project,
       g_flash_bits          => 25,
       g_gpio_out            => 8,
-      g_lvds_in             => 2,
-      g_lvds_out            => 0,
-      g_lvds_inout          => 3,
+      g_gpio_in             => 2,
       g_fixed               => 2,
-      g_lvds_invert         => true,
       g_en_pcie             => true,
       g_en_usb              => true,
       g_en_lcd              => false,
@@ -276,10 +270,10 @@ begin
       g_lm32_ramsizes       => c_lm32_ramsizes/4,
       g_lm32_MSIs           => 1,
       g_delay_diagnostics   => true,
+      g_en_tlu              => false,
       g_lm32_init_files     => f_string_list_repeat(c_initf_name, c_cores),
       g_lm32_profiles       => f_string_list_repeat(c_profile_name, c_cores),
-      g_en_eca              => true,
-      g_en_eca_io_channel   => false
+      g_en_eca              => true
     )
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
@@ -303,14 +297,7 @@ begin
       sfp_tx_fault_i         => sfp4_tx_fault,
       sfp_los_i              => sfp4_los,
       gpio_o                 => gpio_o,
-      lvds_p_i               => lvds_p_i,
-      lvds_n_i               => lvds_n_i,
-      lvds_i_led_o           => lvds_i_led,
-      lvds_p_o               => lvds_p_o,
-      lvds_n_o               => lvds_n_o,
-      lvds_o_led_o           => lvds_o_led,
-      lvds_oen_o             => lvds_oen,
-      lvds_term_o            => lvds_term,
+      gpio_i                 => gpio_i,
       led_link_up_o          => led_link_up,
       led_link_act_o         => led_link_act,
       led_track_o            => led_track,
@@ -422,6 +409,9 @@ begin
   n5  <= '0' when lvds_i_led(4)='1' else 'Z'; -- LED2 (near HDMI = TRIN  / LVDS2)
   --p6  <= '0' when lvds_o_led(3)='1' else 'Z'; -- LED3 (near HDMI = CK200 / LVDS3) -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
   --n6  <= '0' when lvds_o_led(4)='1' else 'Z'; -- LED4 (near HDMI = SYOU  / LVDS4) -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
+
+  gpio_i(0) <= '0';
+  gpio_i(1) <= '0';
 
   -- Wires to CPLD, currently unused
   con <= (others => 'Z');
