@@ -110,6 +110,7 @@ pipeline {
                        [name: "pexarria5", quartus: "18"],
                        [name: "pexarria5-sdr", quartus: "18"],
                        [name: "ftm", quartus: "18"],
+                       [name: "uniftm", quartus: "18"],
                        [name: "exploder5", quartus: "18"],
                        [name: "pmc", quartus: "18"],
                        [name: "microtca", quartus: "18"],
