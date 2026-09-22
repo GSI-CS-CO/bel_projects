@@ -52,6 +52,7 @@ def buildGateware(gateware, branchName) {
                        sh "make ${gateware.name} BUILD_ARTIFACT=yes"
                        // Only run -check if quartus is not "none"
                        if (gateware.quartus != "none") {
+                           sh "make ${gateware.name}-sort"
                            sh "make ${gateware.name}-check BUILD_ARTIFACT=yes"
                        }
                    }
