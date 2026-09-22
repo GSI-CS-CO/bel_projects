@@ -532,11 +532,7 @@ set_eca_rules() {
             done
         fi
 
-        echo "enable capture on ECA tap: $node_device"
-        eb-mon $node_device ecatapenable
-        eb-mon $node_device wrstatreset 8 50000
-        eb-mon $node_device ecatapreset 0
-        eb-mon $node_device ecatapclear 0xf
+        enable_ecatap "$node_device"
     fi
 
     echo "show actual ECA conditions"
@@ -562,6 +558,17 @@ start_operation() {
 
     write_cmd $1 $instr_fsm_startop
     echo "Started operation on $1"
+}
+
+enable_ecatap() {
+
+    # $1 - device (dev/wbm0)
+
+    echo "enable capture on ECA tap: $1"
+    eb-mon $1 ecatapenable
+    eb-mon $1 wrstatreset 8 50000
+    eb-mon $1 ecatapreset 0
+    eb-mon $1 ecatapclear 0xf
 }
 
 ######################
@@ -1008,6 +1015,7 @@ do_test2() {
 # + reset LM32
 # + set node type, if 'RX'
 # + set oper. mode to 'OPREADY'
+# + clear ECA tap
 ####################
 
 reset_node() {
@@ -1042,6 +1050,8 @@ reset_node() {
 
     echo "list all IO conditions in ECA"
     saft-io-ctl $node_name -l
+
+    enable_ecatap "$device"
 }
 
 ###################
