@@ -604,11 +604,16 @@ pexp-neorv32-check:
 # SCU slaves
 # #################################################################################################
 
+print_skipping_sort:
+	@echo "Skipping sort process ..."
+
 addac:		firmware
 	$(MAKE) -C syn/gsi_addac all
 
 addac-clean::
 	$(MAKE) -C syn/gsi_addac clean
+
+addac-sort: print_skipping_sort
 
 addac-check:
 	$(call check_timing, $(CHECK_ADDAC))
@@ -620,6 +625,8 @@ addac2:		firmware
 addac2-clean::
 	$(MAKE) -C syn/gsi_addac2 clean
 
+addac2-sort: print_skipping_sort
+
 addac2-check:
 	$(call check_timing, $(CHECK_ADDAC2))
 	$(call copy_release, $(CHECK_ADDAC2), $(PATH_ADDAC2), gw-scu-slave-addac2)
@@ -629,6 +636,8 @@ diob:		firmware
 
 diob-clean::
 	$(MAKE) -C syn/scu_diob clean
+
+diob-sort: print_skipping_sort
 
 diob-check:
 	$(call check_timing, $(CHECK_DIOB))
@@ -640,6 +649,8 @@ sio3:		firmware
 sio3-clean::
 	$(MAKE) -C syn/scu_sio3 clean
 
+sio3-sort: print_skipping_sort
+
 sio3-check:
 	$(call check_timing, $(CHECK_SIO3))
 	$(call copy_release, $(CHECK_SIO3), $(PATH_SIO3), gw-scu-slave-sio3)
@@ -650,12 +661,16 @@ ifa8:		firmware # cyclone
 ifa8-clean::
 	$(MAKE) -C syn/gsi_ifa8 clean
 
+ifa8-sort: print_skipping_sort
+
 ifa8-check:
 	$(call check_timing, $(CHECK_IFA8))
 	$(call copy_release, $(CHECK_IFA8), $(PATH_IFA8), gw-scu-slave-ifa8)
 
 blm:		firmware
 	$(MAKE) -C syn/blm_aco all
+
+blm-sort: print_skipping_sort
 
 blm-clean::
 	$(MAKE) -C syn/blm_aco clean
