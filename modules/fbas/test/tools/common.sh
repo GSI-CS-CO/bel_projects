@@ -190,7 +190,7 @@ enable_tr_mps() {
 
 stop_rx_operation() {
     output=$(run_remote $rxscu \
-        "source setup_local.sh && stop_test4 \$rx_node_dev")
+        "source setup_local.sh && stop_test4 \$rx_node_dev && inject_stop_event \$rx_node_name")
     ret_code=$?
     report_code $ret_code
     exit_on_fail $ret_code

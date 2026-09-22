@@ -143,6 +143,7 @@ export          evt_tlu="0xffff100000000000"  # TLU event (used to catch the sig
 export    evt_new_cycle="0xffffdddd00000000"  # event for new cycle
 export evt_mps_node_reg="0x1fcdfcd000000000"  # event ID for the node registration messages
 export      evt_id_mask="0xffffffff00000000"  # event mask
+export     evt_mps_stop="0x1fcbfcb000000042"  # stop event
 export     reg_evt_mask="0xffffffffffffffff"  # registration event mask
 
 export   n_max_tx_nodes=4                     # maximum number of TX nodes
@@ -666,6 +667,13 @@ stop_test4() {
     # $1 - dev/wbm0
 
     stop_operation $1
+}
+
+inject_stop_event() {
+    # $1 - node, tr0
+
+    saft-ctl $1 inject $evt_mps_stop 0 0
+
 }
 
 info_nw_perf() {
