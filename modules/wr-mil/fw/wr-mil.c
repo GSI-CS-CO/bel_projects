@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Micheal Reese, Mathias Kreider GSI-Darmstadt
- *  version : 02-jul-2026
+ *  version : 23-sep-2026
  *
  *  firmware required for the White Rabbit -> MIL Gateways
  *  
@@ -37,9 +37,9 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define WRMIL_FW_VERSION       0x000110    // make this consistent with makefile
+#define WRMIL_FW_VERSION         0x000111  // make this consistent with makefile
 
-#define RESET_INHIBIT_COUNTER    10000     // count so many main ECA timemouts, prior sending fill event
+#define RESET_INHIBIT_COUNTER       10000  // count so many main ECA timemouts, prior sending fill event
 #define BLACKBOX_SCU_PLUGIN_SELECT 0x0840  // register for blackbox plugin select
 #define BLACKBOX_SCU_PLUGIN_NR        0x3  // plugin number for SCU blackbox
 //#define WR_MIL_GATEWAY_LATENCY 70650     // additional latency in units of nanoseconds
@@ -281,39 +281,56 @@ uint32_t configMILEvents(int enable_fifo)
 uint32_t extern_entryActionConfigured()
 {
   uint32_t status = COMMON_STATUS_OK;
+  uint32_t useBB  = 0;                // using gateware with blackbox
 
   // get and publish NIC data
   fwlib_publishNICData(); 
 
-  // get address of MIL device sending MIL telegrams; 0 is MIL piggy
-  if (*pSharedSetMilDev == 0){
-    pMilSend = fwlib_getMilPiggy();
-    if (!pMilSend) {
-      DBPRINT1("wr-mil: ERROR - can't find MIL device; sender\n");
+  // get address of MIL sender
+  switch (*pSharedSetMilDev) {
+    case 0    :    // MIL Piggy
+      pMilSend = fwlib_getMilPiggy();
+      if (!pMilSend) {
+        DBPRINT1("wr-mil: ERROR - can't find MIL device; sender\n");
+        return COMMON_STATUS_OUTOFRANGE;
+      } // if !pMilSend
+      break;
+    case 1 ... 12:  // SIO3 on SCU bus (without blackbox)
+      // SCU slaves have offsets 0x20000, 0x40000... for slots 1, 2 ...
+      pMilSend = fwlib_getSbMaster();
+      if (!pMilSend) {
+        DBPRINT1("wr-mil: ERROR - can't find MIL device; sender\n");
+        return COMMON_STATUS_OUTOFRANGE;
+      } // if !pMilSend
+      else pMilSend += *pSharedSetMilDev * 0x20000;
+      break;
+    case 14   :    // blackbox in SCU gateware, SCU4.1/RMT
+      // SCU slaves have offsets 0x20000, 0x40000... for slots 1, 2 ...
+      pMilSend = fwlib_getSbMaster();
+      if (!pMilSend) {
+        DBPRINT1("wr-mil: ERROR - can't find MIL device; sender\n");
+        return COMMON_STATUS_OUTOFRANGE;
+      } // if !pMilSend
+      else pMilSend += *pSharedSetMilDev * 0x20000;
+      useBB = 1;
+      break;
+    default :
+      DBPRINT1("wr-mil: ERROR - illegal MIL device number; sender\n");
       return COMMON_STATUS_OUTOFRANGE;
-    } // if !pMilSend
-  } // if SetMilDev
-  else {
-    // SCU slaves have offsets 0x20000, 0x40000... for slots 1, 2 ...
-    pMilSend = fwlib_getSbMaster();
-    if (!pMilSend) {
-      DBPRINT1("wr-mil: ERROR - can't find MIL device; sender\n");
-      return COMMON_STATUS_OUTOFRANGE;
-    } // if !pMilSend
-    else {
-      pMilSend += *pSharedSetMilDev * 0x20000;
+      break;
+  } // switch pSharedSetMilDev
 
-      // select blackbox plugin for SCU
-      if (*pSharedSetMilDev == 14) {
-        (pMilSend + BLACKBOX_SCU_PLUGIN_SELECT) = BLACKBOX_SCU_PLUGIN_NR;
-      } // if 
-  } // else SetMilDev
-
-  // reset MIL sender and wait
-  if ((status = resetDevMil(pMilSend, 0))  != MIL_STAT_OK) {
-    DBPRINT1("wr-mil: ERROR - can't reset MIL device; sender\n");
-    return WRMIL_STATUS_MIL;
-  }  // if reset
+  // reset MIL sender
+  if (useBB) {  // use SCU4.1/RMT with blackbox
+    // hacky code here; we have to clean this up once the blackbox becomes stable
+    *(pMilSend + BLACKBOX_SCU_PLUGIN_SELECT) = BLACKBOX_SCU_PLUGIN_NR;
+  } // if useBB
+  else {        // use SCU with MIL piggy or native SIO3 without Blackbox
+    if ((status = resetDevMil(pMilSend, 0))  != MIL_STAT_OK) {
+      DBPRINT1("wr-mil: ERROR - can't reset MIL device; sender\n");
+      return WRMIL_STATUS_MIL;
+    }  // if reset
+  } // else useBB
 
   // get address of MIL device receiving MIL telegrams; only piggy is supported
   //  if (*pSharedSetMilMon){
