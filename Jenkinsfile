@@ -15,6 +15,7 @@ def buildGateware(gateware, branchName) {
                "QUARTUS_ROOTDIR=${quartus}",
                "QSYS_ROOTDIR=${quartus}/sopc_builder/bin",
                "QUARTUS_64BIT=1",
+               "GSI_BUILD_TYPE=Nightly_Build_CI",
                // Extend PATH and LD_LIBRARY_PATH for Quartus and project scripts
                "PATH=${WORKSPACE}/res/bin:${PATH}:${quartus}/sopc_builder/bin:${WORKSPACE}/res/rocky-9",
                "LD_LIBRARY_PATH=${WORKSPACE}/res/rocky-9",
