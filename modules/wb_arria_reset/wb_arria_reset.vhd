@@ -299,7 +299,7 @@ begin
               when others => null;
             end case;
           else -- read
-            case to_integer(unsigned(slave_i.adr(8 downto 2))) is
+            case to_integer(unsigned(slave_i.adr(7 downto 2))) is
               when 1 => slave_o.dat <= '0' & reset_reg(reset_reg'left downto 1);
               when 2 => slave_o.dat <= hw_version;
               when 3 => slave_o.dat <= x"0000000" & "000" & not disable_wd;
