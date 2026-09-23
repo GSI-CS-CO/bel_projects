@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Michael Reese GSI-Darmstadt
- *  version : 10-Jul-2024
+ *  version : 22-Sep-2026
  *
  * Command-line interface for wr-mil
  *
@@ -77,7 +77,10 @@ static void help(void) {
   fprintf(stderr, "\n");
   fprintf(stderr, "All following parameters are to be used with command 'configure' \n"                );
   fprintf(stderr, "parameters -w and -s are mandatory\n"                                               );
-  fprintf(stderr, "  -w <MIL device>     MIL device for sending MIL messages; 0: MIL Piggy; 1..: SIO\n");
+  fprintf(stderr, "  -w <MIL device>     MIL device for sending MIL messages; this can be \n"          );
+  fprintf(stderr, "                      0: MIL Piggy\n"                                               );
+  fprintf(stderr, "                      1..12: SIO as SCU bus slave (gateware without blackbox)\n"    );
+  frpintf(stderr, "                      14: 'SCU blackbox', virtual SCU bus slave\n"                  );
   fprintf(stderr, "  -s <MIL domain>     MIL domain; this can be\n"                                    );
   fprintf(stderr, "                      0: PZU-QR; UNILAC, Source Right\n"                            );
   fprintf(stderr, "                      1: PZU-QL; UNILAC, Source Left\n"                             );     
@@ -239,11 +242,11 @@ int main(int argc, char** argv) {
         negative = 1;
         break;
       case 't':
-        utc_trigger = strtoull(optarg, &tail, 0);
+        utc_trigger    = strtoull(optarg, &tail, 0);
         if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1;}
         break;
       case 'o':
-        utc_offset = strtoull(optarg, &tail, 0) * 1000; // convert to ms
+        utc_offset     = strtoull(optarg, &tail, 0) * 1000; // convert to ms
         if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1;}
         break;
       case 'd':
@@ -251,12 +254,17 @@ int main(int argc, char** argv) {
         if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1;}
         break;
       case 'u':
-        utc_utc_delay = strtoull(optarg, &tail, 0);
+        utc_utc_delay  = strtoull(optarg, &tail, 0);
         if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1;}
         break;
       case 'w':
-        mil_wb_dev   = strtoull(optarg, &tail, 0);
+        tmp            = strtoull(optarg, &tail, 0);
         if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1;}
+        switch (tmp) {
+          case 0..12: mil_wb_dev = tmp; break;
+          case 14   : mil_wb_dev = tmp; break;
+          default: fprintf(stderr, "Illegal MIL device '%d'!\n", tmp); return 1;
+        } // switch tmp        
         break;
       case 's':
         tmp           = strtoull(optarg, &tail, 0);
@@ -271,7 +279,7 @@ int main(int argc, char** argv) {
           case 6: mil_domain = PZU_TK;     break;
           case 7: mil_domain = SIS18_RING; break;
           case 8: mil_domain = ESR_RING;   break;
-          default: fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1; 
+          default: fprintf(stderr, "Illegal MIL domain '%d'!\n", tmp); return 1; 
         } // switch tmp
         break;
         /*      case 's':

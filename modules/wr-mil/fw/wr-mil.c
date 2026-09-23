@@ -37,13 +37,15 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define WRMIL_FW_VERSION      0x000110    // make this consistent with makefile
+#define WRMIL_FW_VERSION       0x000110    // make this consistent with makefile
 
-#define RESET_INHIBIT_COUNTER    10000    // count so many main ECA timemouts, prior sending fill event
-//#define WR_MIL_GATEWAY_LATENCY 70650    // additional latency in units of nanoseconds
-                                          // this value was determined by measuring the time difference
-                                          // of the MIL event rising edge and the ECA output rising edge (no offset)
-                                          // and tuning this time difference to 100.0(5)us
+#define RESET_INHIBIT_COUNTER    10000     // count so many main ECA timemouts, prior sending fill event
+#define BLACKBOX_SCU_PLUGIN_SELECT 0x0840  // register for blackbox plugin select
+#define BLACKBOX_SCU_PLUGIN_NR        0x3  // plugin number for SCU blackbox
+//#define WR_MIL_GATEWAY_LATENCY 70650     // additional latency in units of nanoseconds
+                                           // this value was determined by measuring the time difference
+                                           // of the MIL event rising edge and the ECA output rising edge (no offset)
+                                           // and tuning this time difference to 100.0(5)us
 
 // standard includes
 #include <stdio.h>
@@ -298,7 +300,13 @@ uint32_t extern_entryActionConfigured()
       DBPRINT1("wr-mil: ERROR - can't find MIL device; sender\n");
       return COMMON_STATUS_OUTOFRANGE;
     } // if !pMilSend
-    else pMilSend += *pSharedSetMilDev * 0x20000;
+    else {
+      pMilSend += *pSharedSetMilDev * 0x20000;
+
+      // select blackbox plugin for SCU
+      if (*pSharedSetMilDev == 14) {
+        (pMilSend + BLACKBOX_SCU_PLUGIN_SELECT) = BLACKBOX_SCU_PLUGIN_NR;
+      } // if 
   } // else SetMilDev
 
   // reset MIL sender and wait
