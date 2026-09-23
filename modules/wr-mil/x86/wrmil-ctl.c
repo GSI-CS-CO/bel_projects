@@ -80,7 +80,7 @@ static void help(void) {
   fprintf(stderr, "  -w <MIL device>     MIL device for sending MIL messages; this can be \n"          );
   fprintf(stderr, "                      0: MIL Piggy\n"                                               );
   fprintf(stderr, "                      1..12: SIO as SCU bus slave (gateware without blackbox)\n"    );
-  frpintf(stderr, "                      14: 'SCU blackbox', virtual SCU bus slave\n"                  );
+  fprintf(stderr, "                      14: 'SCU blackbox', virtual SCU bus slave\n"                  );
   fprintf(stderr, "  -s <MIL domain>     MIL domain; this can be\n"                                    );
   fprintf(stderr, "                      0: PZU-QR; UNILAC, Source Right\n"                            );
   fprintf(stderr, "                      1: PZU-QL; UNILAC, Source Left\n"                             );     
@@ -261,9 +261,9 @@ int main(int argc, char** argv) {
         tmp            = strtoull(optarg, &tail, 0);
         if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1;}
         switch (tmp) {
-          case 0..12: mil_wb_dev = tmp; break;
-          case 14   : mil_wb_dev = tmp; break;
-          default: fprintf(stderr, "Illegal MIL device '%d'!\n", tmp); return 1;
+          case 0 ... 12: mil_wb_dev = tmp; break;
+          case 14      : mil_wb_dev = tmp; break;
+          default      : fprintf(stderr, "Illegal MIL device '%d'!\n", tmp); return 1; break;
         } // switch tmp        
         break;
       case 's':

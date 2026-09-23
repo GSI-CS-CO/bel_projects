@@ -86,8 +86,8 @@
 #define WRMIL_SHARED_SET_UTC_OFFSET_HI     (WRMIL_SHARED_SET_LATENCY          + _32b_SIZE_)  // offset [ms] between the TAI and the MIL-UTC, high word 
 #define WRMIL_SHARED_SET_UTC_OFFSET_LO     (WRMIL_SHARED_SET_UTC_OFFSET_HI    + _32b_SIZE_)  // offset [ms] between the TAI and the MIL-UTC, low  word
 #define WRMIL_SHARED_SET_REQUEST_FILL_EVT  (WRMIL_SHARED_SET_UTC_OFFSET_LO    + _32b_SIZE_)  // if this is written to 1, the gateway will send a fill event as soon as possible
-#define WRMIL_SHARED_SET_MIL_DEV           (WRMIL_SHARED_SET_REQUEST_FILL_EVT + _32b_SIZE_)  // MIL device for sending MIL messages; 0: MIL Piggy; 1..: SIO in slot 1..
-#define WRMIL_SHARED_SET_MIL_MON           (WRMIL_SHARED_SET_MIL_DEV          + _32b_SIZE_)  // 1: monitor MIL event data; 0; don't monitor MIL event data
+#define WRMIL_SHARED_SET_MIL_DEV           (WRMIL_SHARED_SET_REQUEST_FILL_EVT + _32b_SIZE_)  // MIL device for sending MIL messages; 0: MIL Piggy; 1..12: SIO without blackbox in slot 1..12; 14: blackbox in SCU4.1@RMT
+#define WRMIL_SHARED_SET_MIL_MON           (WRMIL_SHARED_SET_MIL_DEV          + _32b_SIZE_)  // 1: monitor MIL event data; 0; don't monitor MIL event data (MIL piggy on SCU3 only)
 
 // get values
 #define WRMIL_SHARED_GET_N_EVTS_SND_HI     (WRMIL_SHARED_SET_MIL_MON          + _32b_SIZE_)  // number of sent MIL telegrams, high word
