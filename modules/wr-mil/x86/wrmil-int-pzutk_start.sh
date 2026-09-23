@@ -18,6 +18,9 @@ export MILADDR=0x5c2000      # address of MIL device to which MIL telegram is wr
 # SIO  : Wishbone address of 'SCU-BUS-Master' + (slot number) * 0x20000
 #        the register 0x800 needs to be added
 #        example SIO slot #1: 0x420800
+# BBox : Wishbone address of 'SCU-BUS-Master' + (slot number: 14) * 0x20000
+#        the register 0x2000 needs to be added
+#        example blackbox in SCU4.1/RMT: 0x5c2000
 ###########################################
 # setting for development
 # gateway: N/A
@@ -70,7 +73,7 @@ saft-ecpu-ctl $SDGW -c 0x1fe1a01000000001 0xffffffffffffffff 20000 0xa01 -d
 # lm32 writes to MIL device via ECA wishbone channel
 echo -e WRMIL: configure $DGW wishbone channel, needed for writing telegrams to the MIL device
 saft-wbm-ctl $SDGW -c 0x1ff0000000000000 0xffff000000000000 0 1 -d
-saft-wbm-ctl $SDGW -r 1 $MILADDR 0 0x5f
+saft-wbm-ctl $SDGW -r 1 $MILADDR 0 0x5c
 
 # lm32 listens to timing messages for EVTNO 0x000..0x0ff
 saft-ecpu-ctl $SDGW -c 0x1${SIDGW}000000000000 0xfffff00000000000 500000 0xff -g -d
