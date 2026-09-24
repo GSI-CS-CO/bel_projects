@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Michael Reese GSI-Darmstadt
- *  version : 22-Sep-2026
+ *  version : 24-Sep-2026
  *
  * Command-line interface for wr-mil
  *
