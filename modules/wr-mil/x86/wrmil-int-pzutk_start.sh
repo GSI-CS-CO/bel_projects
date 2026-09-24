@@ -11,7 +11,7 @@ export SDGW=tr0              # saftlib device
 export TLUIO=LEMO_IN_0       # SCU3 'B1', SCU4.1/RMT 'LEMO_IN_0'
 export NGW=6                 # of GW; pzu_qr, pzu_ql ...
 export SIDGW=290             # SID of puz_qr, pzu_ql ... (new reference groups, may 2025)
-export MILDEV=14             # MIL device, piggy(0), sio slot 1 (1) ...
+export MILDEV=14             # MIL device, piggy(0), sio slot (1..12), SCU blackbox (14)
 export MILADDR=0x5c2000      # address of MIL device to which MIL telegram is written
 # piggy: Wishbone address of 'GSI_MIL_SCU'
 #        the register 0x1004 needs to be added
