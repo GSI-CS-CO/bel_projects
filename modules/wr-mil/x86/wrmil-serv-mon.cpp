@@ -111,6 +111,7 @@ using namespace std;
 #define FID                0x1          // format ID of timing messages
 #define UPDATE_TIME_MS    1000          // time for status updates [ms]
 #define MATCH_WIN_US        20          // window for matching start and stop evts [us]
+#define STOP_DELAY_US        0          // delay for stop signal [us]; allows using secondory signals, in case signal from from MIL TIF is not available
 #define INITMINMAX 10000000000          // init value for min/max
 
 static const char* program;
@@ -142,6 +143,7 @@ double    tAveOld;                      // helper for stats
 double    tAveStreamOld;                // helper for stats
 int       flagClear;                    // flag for clearing diag data;
 uint32_t  matchWindow       = MATCH_WIN_US;
+uint32_t  stopDelay         = STOP_DELAY_US;
 uint32_t  modeCompare       = 0;
 uint64_t  offsetStart;                  // correction to be used for different monitoring types
 uint64_t  offsetStop;                   // correction to be used for different monitoring types
@@ -347,6 +349,7 @@ static void help(void) {
   std::cerr << "                       4: as mode '1' but discarding data from MIL piggy"           << std::endl;
   std::cerr << "                       5: compare sent MIL telegrams with WR timing messages"       << std::endl;
   std::cerr << "  -m <match windows>   [us] windows for matching start/stop evts; default 20"       << std::endl;
+  std::cerr << "  -n <stop delay>      [us] delay for stop evt; for non-aligned signals; default 0" << std::endl;
   std::cerr << std::endl;
   std::cerr << "  The paremter -s is mandatory"                                                     << std::endl;
   std::cerr << "  -s <MIL domain>      MIL domain; this can be"                                     << std::endl;
@@ -421,7 +424,7 @@ int main(int argc, char** argv)
 
   // parse for options
   program = argv[0];
-  while ((opt = getopt(argc, argv, "s:m:c:hefd")) != -1) {
+  while ((opt = getopt(argc, argv, "s:m:n:c:hefd")) != -1) {
     switch (opt) {
       case 'e' :
         getVersion  = true;
@@ -463,6 +466,9 @@ int main(int argc, char** argv)
         break;
       case 'm':
         matchWindow = strtoull(optarg, &tail, 0);
+        break;
+      case 'n':
+        stopDelay   = strtoull(optarg, &tail, 0);
         break;
       case 'c':
         modeCompare = strtoull(optarg, &tail, 0);
@@ -629,7 +635,7 @@ int main(int argc, char** argv)
       // we also do prefix machting of the first four bits of the evtNo (should be '0x0')
       tmpTag        = tagStop;        
       snoopID       = ((uint64_t)FID << 60) | idStop;
-      condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, maskStop, offsetStop));
+      condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, maskStop, offsetStop + one_us_ns * stopDelay));
       tag[1]        = tmpTag;
     
       // let's go!

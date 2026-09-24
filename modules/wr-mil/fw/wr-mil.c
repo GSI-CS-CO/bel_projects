@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Micheal Reese, Mathias Kreider GSI-Darmstadt
- *  version : 23-sep-2026
+ *  version : 24-sep-2026
  *
  *  firmware required for the White Rabbit -> MIL Gateways
  *  
@@ -37,7 +37,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define WRMIL_FW_VERSION         0x000111  // make this consistent with makefile
+#define WRMIL_FW_VERSION         0x000200  // make this consistent with makefile
 
 #define RESET_INHIBIT_COUNTER       10000  // count so many main ECA timemouts, prior sending fill event
 #define BLACKBOX_SCU_PLUGIN_SELECT 0x0840  // register for blackbox plugin select
@@ -129,6 +129,8 @@ uint32_t request_fill_evt;
 int32_t  mil_latency;
 uint32_t mil_domain;
 uint32_t mil_mon;
+
+uint32_t useBlackbox         = 0;
 
 uint32_t inhibit_fill_events = 0;       // this is a counter to block any sending of fill events for some cycles after a real event was sent
 
@@ -281,10 +283,11 @@ uint32_t configMILEvents(int enable_fifo)
 uint32_t extern_entryActionConfigured()
 {
   uint32_t status = COMMON_STATUS_OK;
-  uint32_t useBB  = 0;                // using gateware with blackbox
 
   // get and publish NIC data
-  fwlib_publishNICData(); 
+  fwlib_publishNICData();
+
+  useBlackbox = 0;
 
   // get address of MIL sender
   switch (*pSharedSetMilDev) {
@@ -312,7 +315,7 @@ uint32_t extern_entryActionConfigured()
         return COMMON_STATUS_OUTOFRANGE;
       } // if !pMilSend
       else pMilSend += *pSharedSetMilDev * 0x20000;
-      useBB = 1;
+      useBlackbox = 1;
       break;
     default :
       DBPRINT1("wr-mil: ERROR - illegal MIL device number; sender\n");
@@ -321,8 +324,11 @@ uint32_t extern_entryActionConfigured()
   } // switch pSharedSetMilDev
 
   // reset MIL sender
-  if (useBB) {  // use SCU4.1/RMT with blackbox
+  if (useBlackbox) {  // use SCU4.1/RMT with blackbox
     // hacky code here; we have to clean this up once the blackbox becomes stable
+    // all internal stuff is the blackbox is cleared when selecting plugin '0'
+    // then we switch to to the MIL plugin '3'
+    *(pMilSend + BLACKBOX_SCU_PLUGIN_SELECT) = 0;
     *(pMilSend + BLACKBOX_SCU_PLUGIN_SELECT) = BLACKBOX_SCU_PLUGIN_NR;
   } // if useBB
   else {        // use SCU with MIL piggy or native SIO3 without Blackbox
@@ -494,7 +500,9 @@ void prepMilTelegramEca(uint32_t milTelegram, uint64_t *evtId, uint64_t *param)
 
   // param
   *param     = ((uint64_t)mil_domain) << 32;
-  *param    |= (uint64_t)milTelegram & 0xffffffff;
+  if (useBlackbox) *param    |= ((uint64_t)milTelegram & 0xffffffff) << 16;  // blockbox requires MIL data in bits 16..31
+  else             *param    |= ((uint64_t)milTelegram & 0xffffffff) <<  0;  // SCU, SIO3 require MIL data in bits 0..15
+    
 } // void prepMilTelegramEca
 
 
