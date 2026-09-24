@@ -52,15 +52,22 @@
 
 namespace stats {
 
-  struct metrics {
+  typedef struct metrics {
     int count;
     double old_mean;
     double new_mean;
     double old_variance;
     double new_variance;
-  } s;
+  } metrics_t;
 
-  void clear()
+  metrics_t latency; // measured C2 messaging latency
+  metrics_t rate;    // measured C2 messaging rate
+
+  uint64_t test_event_id; // C2 event id
+  uint64_t test_event_ts; // C2 event timestamp
+  uint64_t stop_event_id; // event id to trigger measurement reports
+
+  void clear(metrics_t& s)
   {
     s.count = 0;
     s.new_mean = 0;
@@ -69,9 +76,9 @@ namespace stats {
     s.old_variance = 0;
   }
 
-  void calculate(double x)
+  void calculate(double x, metrics_t& s)
   {
-    s.count ++;
+    s.count++;
 
     if (s.count == 1) {
       s.old_mean = x;
@@ -87,51 +94,83 @@ namespace stats {
     }
   }
 
-  int count()
+  int count(metrics_t& s)
   {
     return s.count;
   }
 
-  double mean()
+  double mean(metrics_t& s)
   {
     return (( s.count > 0) ? s.new_mean : 0.0);
   }
 
-  double variance()
+  double variance(metrics_t& s)
   {
     return (( s.count > 1 ) ? s.new_variance/(s.count - 1) : 0.0);
   }
 
-  double std_dev()
+  double std_dev(metrics_t& s)
   {
-    return std::sqrt(variance());
+    return std::sqrt(variance(s));
   }
 
-  void report()
+  void report(metrics_t& s)
   {
-    std::cout << std::dec << "c2 latency: mean = " << mean() << " "
-              << "dev = " << std_dev() << " "
-              << "count = " << count() << " " << std::endl;
+    std::cout << std::dec << "mean = " << mean(s) << " "
+              << "dev = " << std_dev(s) << " "
+              << "count = " << count(s) << " " << std::endl;
   }
 
-  void sig_handler(int sig)
+  void report_all()
   {
-    report();
-    exit(sig);
+      std::cout << "c2 latency [ns]: ";
+      report(latency);
+
+      std::cout << "c2 rate [ns]: ";
+      report(rate);
   }
 
-  uint64_t stop;
+  void clear_all()
+  {
+      clear(latency);
+      clear(rate);
+      test_event_ts = 0;
+  }
+
+}
+
+volatile std::sig_atomic_t termination_requested = 0;
+
+void sig_handler(int sig)
+{
+  termination_requested = sig;
+}
+
+void check_termination()
+{
+  if (termination_requested) {
+    stats::report_all();
+
+    exit(termination_requested);
+  }
 }
 
 void on_action(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags) {
 
-  if (event == stats::stop) {
-    stats::report();
-    stats::clear();
+  if (event == stats::stop_event_id) {
+    stats::report_all();
+    stats::clear_all();
     return;
   }
 
-  stats::calculate((executed.getTAI() - deadline.getTAI()));
+  if (event == stats::test_event_id) {
+    if (stats::test_event_ts) {
+      stats::calculate((deadline.getTAI() - stats::test_event_ts), stats::rate);
+    }
+    stats::test_event_ts = deadline.getTAI();
+  }
+
+  stats::calculate((executed.getTAI() - deadline.getTAI()), stats::latency);
 }
 
 int main(int argc, char *argv[]) {
@@ -155,12 +194,14 @@ int main(int argc, char *argv[]) {
   uint64_t &c2     = snoop_args[0];
   uint64_t &mask   = snoop_args[1];
   uint64_t &offset = snoop_args[2];
-  stats::stop = snoop_args[3];
+  stats::test_event_id = c2;
+  stats::test_event_ts = 0;
+  stats::stop_event_id = snoop_args[3];
 
-  std::cout << std::hex << "c2 = " << c2 << " "
-            << "mask = " << mask << " "
-            << "offset = " << offset << " "
-            << "stop = " << stats::stop << std::endl;
+  std::cout << std::hex << "c2=" << c2 << " "
+            << "mask=" << mask << " "
+            << "offset=" << offset << " "
+            << "stop=" << stats::stop_event_id << std::endl;
 
   auto saftd = saftlib::SAFTd_Proxy::create();
   auto tr = saftlib::TimingReceiver_Proxy::create(saftd->getDevices()[argv[1]]);
@@ -176,12 +217,13 @@ int main(int argc, char *argv[]) {
 
   sw_condition->SigAction.connect(sigc::ptr_fun(&on_action));
 
-  signal(SIGINT, stats::sig_handler);
+  signal(SIGINT, sig_handler);
 
   for (;;) {
     //saftbus::Loop::get_default().iteration(true);
     saftlib::wait_for_signal();
     // saftbus::SignalGroup::get_global().wait_for_signal();
+    check_termination();
   }
 
   return 0;
