@@ -1,7 +1,5 @@
 digraph G {
-graph [
-name="-compact"
-]
+  graph [name="-compact"]
 "0015c1aed91f2d2e8b69bb9b986b7fb537174011" [label="0015c1ae "];
 "0086adcca9a65460ba359633662b9e2fd1bb5218" [label="0086adcc  (origin/csl_pexarria10)"];
 "00ed914ed4f6f10503be6a5e1bdb1e89766ca824" [label="00ed914e "];

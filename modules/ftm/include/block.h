@@ -31,7 +31,7 @@ public:
 
   void show(void)       const;
   void show(uint32_t cnt, const char* sPrefix)  const;
-  void serialise(const vAdr &va, uint8_t* b) const;
+  void serialise(const mVal &m, uint8_t* b) const;
   void deserialise(uint8_t* b);
   uint32_t getWrIdxs(void) const {return (uint32_t)((this->wrIdxIl << 16) | (this->wrIdxHi << 8) | (this->wrIdxLo << 0));};
   uint32_t getRdIdxs(void) const {return (uint32_t)((this->rdIdxIl << 16) | (this->rdIdxHi << 8) | (this->rdIdxLo << 0));};

@@ -3,6 +3,7 @@
 #include "node.h"
 #include "block.h"
 #include "meta.h"
+#include "global.h"
 #include "event.h"
 
 
@@ -68,5 +69,9 @@ void VisitorValidation::visit(const CmdQBuffer& el) const {
 }
 
 void VisitorValidation::visit(const DestList& el) const {
+  //meta check unnecessary, not allowed to have children
+}
+
+void VisitorValidation::visit(const Global& el) const {
   //meta check unnecessary, not allowed to have children
 }

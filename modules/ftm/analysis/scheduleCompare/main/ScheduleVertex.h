@@ -51,6 +51,7 @@ class ScheduleVertex {
   std::string permanent = std::string("");
   std::string thread = std::string("");
   std::string startoffs = std::string("");
+  std::string section = std::string("");
   // for syntax check of dot files:
   std::string cpu = std::string("");
   std::string qty = std::string("");
@@ -68,6 +69,7 @@ class ScheduleVertex {
   int compare(const ScheduleVertex& v1, const ScheduleVertex& v2);
   std::string printProtocol();
   void switchCompareNames(const bool flag);
+  void switchUndefinedAsEmpty(const bool flag);
   operator std::string();
   inline bool operator==(const ScheduleVertex& rhs) { return compare(*this, rhs) == 0; }
   inline bool operator!=(const ScheduleVertex& rhs) { return compare(*this, rhs) != 0; }
@@ -79,9 +81,11 @@ class ScheduleVertex {
  private:
   enum class valueType { STRING, BOOLEAN, HEX };
   bool compareNames = true;
+  bool undefinedAsEmpty = false;
   int compareBlock(const ScheduleVertex& v1, const ScheduleVertex& v2);
   int compareFlow(const ScheduleVertex& v1, const ScheduleVertex& v2);
   int compareFlush(const ScheduleVertex& v1, const ScheduleVertex& v2);
+  int compareGlobal(const ScheduleVertex& v1, const ScheduleVertex& v2);
   int compareListdst(const ScheduleVertex& v1, const ScheduleVertex& v2);
   int compareNoop(const ScheduleVertex& v1, const ScheduleVertex& v2);
   int compareQbuf(const ScheduleVertex& v1, const ScheduleVertex& v2);

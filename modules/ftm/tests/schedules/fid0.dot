@@ -1,0 +1,9 @@
+digraph fid0 {
+graph [name=fid0]
+node [pattern=FID0 toffs=0 tef=0 cpu=0 par=0 type=tmsg fid=0]
+edge[type=defdst color=red]
+B_PPS[type=block tperiod=10000000 patexit=1]
+Evt1 [par=1 patentry=1]
+Evt2 [par=2 toffs=50000]
+B_PPS -> Evt1 -> Evt2 -> B_PPS
+}

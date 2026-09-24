@@ -1,0 +1,14 @@
+digraph "patternA-v1" {
+  name = "patternA-v1"
+  node [pattern=Pattern_A type=block cpu=1 style=filled fillcolor=white color=black penwidth=2 shape=rectangle]
+  "Pattern_A_BLOCK_V1" [tperiod=100000000]
+  "Pattern_A_ALIGN_V1" [tperiod=0]
+  "Pattern_A_REPCOUNT_BLOCK_V1" [tperiod=0 qlo=1]
+  "Pattern_A_ENTRY" [patentry=true tperiod=100000000 color=darkorange3]
+  "Pattern_A_EXIT" [patexit=true tperiod=100000000 qlo=1 qhi=1 qil=1 color=purple]
+  edge [type=defdst color=red]
+  "Pattern_A_ENTRY" -> "Pattern_A_ALIGN_V1"
+  "Pattern_A_ALIGN_V1" -> "Pattern_A_BLOCK_V1"
+  "Pattern_A_BLOCK_V1" -> "Pattern_A_REPCOUNT_BLOCK_V1"
+  "Pattern_A_REPCOUNT_BLOCK_V1" -> "Pattern_A_EXIT"
+}

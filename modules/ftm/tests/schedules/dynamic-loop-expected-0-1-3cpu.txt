@@ -1,0 +1,72 @@
+CPU:00,THR:00,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:IN_A, OriginPattern:INIT_A0
+CPU:00,THR:01,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:02,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:03,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:04,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:05,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:06,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:00,THR:07,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:00,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:01,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:02,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:03,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:04,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:05,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:06,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:01,THR:07,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:00,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:01,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:02,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:03,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:04,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:05,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:06,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle
+CPU:02,THR:07,RUN:0
+MSG:000000000
+PAT:undefined,NOD:idle, Origin:undefined, OriginPattern:idle

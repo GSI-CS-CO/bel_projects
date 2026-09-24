@@ -17,6 +17,7 @@
 #include "idformat.h"
 #include "lzmaCompression.h"
 #include "ebwrapper.h"
+#include "log.h"
 
 
   CarpeDM::CarpeDMimpl::CarpeDMimpl()                                        : sLog(std::cout),  sErr(std::cerr) {Validation::init();}
@@ -33,7 +34,7 @@
        atDown.removeMemories();
        gDown.clear();
        //sLog << "eb connect with" << en << std::endl;
-       return ebd.connect(en, atUp, atDown); 
+       return ebd.connect(en, atUp, atDown, rl);
    } //Open connection to a DM via Etherbone
 
   bool CarpeDM::CarpeDMimpl::disconnect() {return ebd.disconnect();} //Close connection
@@ -72,12 +73,12 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
         id = 0;
         for(auto& it : vTmp) {  //for each format vector element
           //use dot property tag string as key to dp map (map of tags to (maps of vertex_indices to values))
-  
+
           uint64_t val = s2u<uint64_t>(boost::get(it.s, dp, v)); // use vertex index v as key in this property map to obtain value
           //sLog << ", " << std::dec << it.s << " = " << (val & ((1 << it.bits ) - 1) ) << ", (" << (int)it.pos << ",0x" << std::hex << ((1 << it.bits ) - 1) << ")";
           id |= ((val & ((1 << it.bits ) - 1) ) << it.pos); // OR the masked and shifted value to id
         }
-  
+
         ss.flush();
         ss << "0x" << std::hex << id;
         g[v].id = ss.str();
@@ -87,7 +88,7 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
         fid = ((id >> ID_FID_POS) & ID_FID_MSK);
         if (fid >= idFormats.size()) throw std::runtime_error("bad format id (FID) " + std::to_string(fid) + " within ID field of Node '" + g[v].name + "'");
         vPf& vTmp = idFormats[fid];
-  
+
         for(auto& it : vTmp) {
           ss.flush();
           ss << std::dec << ((id >> it.pos) &  ((1 << it.bits ) - 1) );
@@ -108,8 +109,13 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
     boost::ref_property_map<Graph *, std::string> gname( boost::get_property(g, boost::graph_name));
     dp.property(dgp::sName,     gname);
     dp.property(dep::Base::sType,               boost::get(&myEdge::type,          g));
+    dp.property(dep::Data::sFieldHead,          boost::get(&myEdge::fhead,         g));
+    dp.property(dep::Data::sFieldTail,          boost::get(&myEdge::ftail,         g));
+    dp.property(dep::Data::sBitWidth,           boost::get(&myEdge::bwidth,        g));
     dp.property(dnp::Base::sName,               boost::get(&myVertex::name,        g));
     dp.property(dnp::Base::sCpu,                boost::get(&myVertex::cpu,         g));
+
+    dp.property(dnp::Base::sSection,            boost::get(&myVertex::section,     g));
 
     dp.property(dnp::Base::sType,               boost::get(&myVertex::type,        g));
     dp.property(dnp::Base::sFlags,              boost::get(&myVertex::flags,       g));
@@ -137,6 +143,7 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
     dp.property(dnp::TMsg::SubId::sBPCstart,    boost::get(&myVertex::id_bpcstart, g));
     dp.property(dnp::TMsg::SubId::sReqNoB,      boost::get(&myVertex::id_reqnob,   g));
     dp.property(dnp::TMsg::SubId::sVacc,        boost::get(&myVertex::id_vacc,     g));
+    dp.property(dnp::TMsg::SubId::sEvtIdAtt,    boost::get(&myVertex::id_evtidatt, g));
     dp.property(dnp::TMsg::sPar,                boost::get(&myVertex::par,         g));
     dp.property(dnp::TMsg::sTef,                boost::get(&myVertex::tef,         g));
 
@@ -157,7 +164,7 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
     dp.property(dnp::Cmd::sDstPattern,          boost::get(&myVertex::cmdDestPat,  g));
     dp.property(dnp::Cmd::sDstBeamproc,         boost::get(&myVertex::cmdDestBp,   g));
     dp.property(dnp::Cmd::sDstThr,              boost::get(&myVertex::cmdDestThr,   g));
-    
+
     dp.property(dnp::Base::sThread,             boost::get(&myVertex::thread,      g));
 
     return (const boost::dynamic_properties)dp;
@@ -204,7 +211,7 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
         sLog << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalChunkQty(x) << std::setw(10) << atDown.getFreeChunkQty(x)  << std::setw(10) << atDown.getUsedChunkQty(x);
         sLog << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalBmpBits(x) << std::setw(10) << atDown.getFreeBmpBits(x)  << std::setw(10) << atDown.getUsedBmpBits(x);
         sLog << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalBmpSize(x);
-      }  
+      }
       sLog << std::endl;
     }
   }
@@ -324,13 +331,13 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
 
         if (filterMeta) {
           boost::write_graphviz(out, fg, make_vertex_writer(boost::get(&myVertex::np, fg)),
-                      make_edge_writer(boost::get(&myEdge::type, fg)), sample_graph_writer{DotStr::Graph::sDefName},
+                      make_edge_writer(boost::get(&myEdge::type, fg), boost::get(&myEdge::fhead, fg), boost::get(&myEdge::ftail, fg), boost::get(&myEdge::bwidth, fg)), sample_graph_writer{DotStr::Graph::sDefName},
                       boost::get(&myVertex::name, fg));
         }
         else {
 
           boost::write_graphviz(out, g, make_vertex_writer(boost::get(&myVertex::np, g)),
-                      make_edge_writer(boost::get(&myEdge::type, g)), sample_graph_writer{DotStr::Graph::sDefName},
+                      make_edge_writer(boost::get(&myEdge::type, fg), boost::get(&myEdge::fhead, fg), boost::get(&myEdge::ftail, fg), boost::get(&myEdge::bwidth, fg)), sample_graph_writer{DotStr::Graph::sDefName},
                       boost::get(&myVertex::name, g));
         }
       }
@@ -351,12 +358,15 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
 
   bool CarpeDM::CarpeDMimpl::validate(Graph& g, AllocTable& at, bool force) {
     try {
-          BOOST_FOREACH( vertex_t v, vertices(g) ) { Validation::neighbourhoodCheck(v, g);  }
+          BOOST_FOREACH( vertex_t v, vertices(g) ) {
+            Validation::neighbourhoodCheck(v, g);
+            Validation::neighbourhoodCheckCpu(v, g);
+          }
 
           BOOST_FOREACH( vertex_t v, vertices(g) ) {
             if (g[v].np == nullptr) throw std::runtime_error("Validation of Sequence: Node '" + g[v].name + "' was not allocated" );
             g[v].np->accept(VisitorValidation(g, v, at, force));
-          }
+        }
     } catch (std::runtime_error const& err) { throw std::runtime_error("Validation of " + std::string(err.what()) ); }
     return true;
   }
@@ -364,17 +374,17 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
 
 
   //Transaction Management: If an upload preparation operation fails for any reason, we roll back the meta tables
-  
+
   template <typename R, typename ... As1, typename ... As2>
   R CarpeDM::CarpeDMimpl::safeguardTransaction(R(CarpeDMimpl::*func)(As1...), As2 ... args)
-  { 
+  {
     HashMap hmBak     = hm;
     GroupTable gtBak  = gt;
     CovenantTable ctBak = ct;
-    R ret;    
+    R ret;
 
     try {
-      ret = (*this.*func)(std::forward<As2>(args)...); 
+      ret = (*this.*func)(std::forward<As2>(args)...);
     } catch(...) {
       hm = hmBak;
       gt = gtBak;
@@ -391,7 +401,7 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
     //R test;
     //decltype(func)::foo = 1;
     vEbwrs ew;
-    ew = (*this.*func)(ew, std::forward<As2>(args)...); 
+    ew = (*this.*func)(ew, std::forward<As2>(args)...);
     send(ew);
     return ew.va.size();
   }

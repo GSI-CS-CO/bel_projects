@@ -2,7 +2,7 @@ digraph WaitloopFlush {
 name=WaitloopFlush
 
 edge [type=defdst]
-node [cpu=3 pattern=A fid=1 toffs=0 type=block]
+node [cpu=2 pattern=A fid=1 toffs=0 type=block]
 
 CMD_LOOP_INIT [type=flow patentry=true qty=10000 vabs=true]
 CMD_FLUSH [type=flush toffs=10 prio=1 qlo=true tvalid=500000000]

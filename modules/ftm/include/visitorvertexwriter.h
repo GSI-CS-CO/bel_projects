@@ -5,27 +5,7 @@
 #include <iostream>
 #include "common.h"
 
-class Node;
-
-class Event;
-class Block;
-class BlockAlign;
-class BlockFixed;
-class Meta;
-
-class Command;
-class Noop;
-class TimingMsg;
-class Flow;
-class Switch;
-class Origin;
-class StartThread;
-class Flush;
-class Wait;
-
-class CmdQMeta;
-class CmdQBuffer;
-class DestList;
+#include "visitorclasslist.h"
 
 
 enum class FormatNum {DEC, HEX, HEX16, HEX32, HEX64, BIT, BOOL};
@@ -62,6 +42,7 @@ enum class FormatNum {DEC, HEX, HEX16, HEX32, HEX64, BIT, BOOL};
     virtual void visit(const CmdQMeta& el) const;
     virtual void visit(const CmdQBuffer& el) const;
     virtual void visit(const DestList& el) const;
+    virtual void visit(const Global& el) const;
 
   };
 

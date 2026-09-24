@@ -1,0 +1,36 @@
+digraph pps_all2 {
+graph [name=pps_all2]
+edge [type=defdst]
+node [cpu=2 fid=1 toffs=0 tef=0 tperiod=1000000000]
+Block2a[type=block pattern=PPS2a patexit=1 qlo=1]
+Evt2a[type=tmsg pattern=PPS2a patentry=1 gid=12 evtno=212 par=48]
+Block2a->Evt2a->Block2a
+
+Block2b[type=block pattern=PPS2b patexit=1 qlo=1]
+Evt2b[type=tmsg pattern=PPS2b patentry=1 gid=12 evtno=212 par=49]
+Block2b->Evt2b->Block2b
+
+Block2c[type=block pattern=PPS2c patexit=1 qlo=1]
+Evt2c[type=tmsg pattern=PPS2c patentry=1 gid=12 evtno=212 par=50]
+Block2c->Evt2c->Block2c
+
+Block2d[type=block pattern=PPS2d patexit=1 qlo=1]
+Evt2d[type=tmsg pattern=PPS2d patentry=1 gid=12 evtno=212 par=51]
+Block2d->Evt2d->Block2d
+
+Block2e[type=block pattern=PPS2e patexit=1 qlo=1]
+Evt2e[type=tmsg pattern=PPS2e patentry=1 gid=12 evtno=212 par=52]
+Block2e->Evt2e->Block2e
+
+Block2f[type=block pattern=PPS2f patexit=1 qlo=1]
+Evt2f[type=tmsg pattern=PPS2f patentry=1 gid=12 evtno=212 par=52]
+Block2f->Evt2f->Block2f
+
+Block2g[type=block pattern=PPS2g patexit=1 qlo=1]
+Evt2g[type=tmsg pattern=PPS2g patentry=1 gid=12 evtno=212 par=54]
+Block2g->Evt2g->Block2g
+
+Block2h[type=block pattern=PPS2h patexit=1 qlo=1]
+Evt2h[type=tmsg pattern=PPS2h patentry=1 gid=12 evtno=212 par=55]
+Block2h->Evt2h->Block2h
+}

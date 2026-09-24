@@ -1,0 +1,9 @@
+digraph "pps-test1-1" {
+name="pps-test1-1"
+subgraph subgraph1 {
+  node [cpu=1 pattern=B]
+  Evt_B [type=tmsg patentry=1 toffs=0 fid=1 gid=5 evtno=205 sid=2 bpid=8 id="0x10050cd000200200" par="0xf0"]
+  B_B [type=block shape=rectangle patexit=1 tperiod=100000000 qlo=1]
+  Evt_B -> B_B [type="defdst"]
+}
+}

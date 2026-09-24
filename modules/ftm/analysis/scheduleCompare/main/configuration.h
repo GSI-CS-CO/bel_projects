@@ -44,6 +44,8 @@ struct configuration {
   bool superverbose = false;
   // option -t
   bool test = false;
+  // option -u - interpret "undefined" as empty string.
+  bool undefinedAsEmpty = false;
   // option -v
   bool verbose = false;
 };

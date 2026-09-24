@@ -74,11 +74,15 @@ public:
   virtual bool isEvent(void) const {return false;}
   virtual bool isCmd(void) const {return false;}
   virtual void deserialise(uint8_t* b) = 0;
-  virtual void serialise(const vAdr &va, uint8_t* b) const {
+  virtual void serialise(const mVal &m, uint8_t* b) const {
     std::memset(b, 0, _MEM_BLOCK_SIZE);
-    writeLeNumberToBeBytes(b + (ptrdiff_t)NODE_DEF_DEST_PTR,  va[ADR_DEF_DST]);
+    writeLeNumberToBeBytes(b + (ptrdiff_t)NODE_DEF_DEST_PTR,  (m.find(NODE_DEF_DEST_PTR) != m.end()) ? m.at(NODE_DEF_DEST_PTR) : LM32_NULL_PTR);
     writeLeNumberToBeBytes(b + (ptrdiff_t)NODE_HASH,   this->hash);
     writeLeNumberToBeBytes(b + (ptrdiff_t)NODE_FLAGS,  this->flags);
+
+    //TODO This is the point where we check for dynamic fields. if we have any, copy over them right now.
+
+
   }
 
 };

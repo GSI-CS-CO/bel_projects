@@ -1,7 +1,5 @@
 digraph G {
-graph [
-name="cycle10-compact"
-]
+  graph [name="cycle10-compact"]
 h [shape=rectangle, type=block];
 "g
 ...(7)

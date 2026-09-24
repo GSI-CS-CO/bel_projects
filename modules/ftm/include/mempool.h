@@ -44,7 +44,7 @@ public:
   // actually not used by this class, but best place to keep the info
 
 
-  MemPool(uint8_t cpu, uint32_t extBaseAdr, uint32_t intBaseAdr, uint32_t peerBaseAdr, uint32_t sharedOffs, uint32_t space, uint32_t rawSize)
+  MemPool(uint8_t cpu, uint32_t extBaseAdr, uint32_t intBaseAdr, uint32_t peerBaseAdr, uint32_t sharedOffs, uint32_t space, uint32_t rawSize, uint32_t ctlSize)
         : cpu(cpu),
           extBaseAdr(extBaseAdr),
           intBaseAdr(intBaseAdr),
@@ -54,7 +54,7 @@ public:
           nodeQty(space / _MEM_BLOCK_SIZE),
           bmpBits(nodeQty),
           bmpSize((bmpBits + 8 * _MEM_BLOCK_SIZE -1) / (8 * _MEM_BLOCK_SIZE) * _MEM_BLOCK_SIZE),
-          bmpOffs(sharedOffs + _SHCTL_END_),
+          bmpOffs(sharedOffs + ctlSize),
           startOffs(bmpOffs + bmpSize),
           endOffs(startOffs + (nodeQty * _MEM_BLOCK_SIZE - bmpSize)),
           bmp(bmpSize)
@@ -90,6 +90,8 @@ public:
   uint32_t getTotalSpace()    const { return nodeQty * _MEM_BLOCK_SIZE; }
   uint32_t getFreeSpace()     const { return pool.size() * _MEM_BLOCK_SIZE; }
   uint32_t getUsedSpace()     const { return nodeQty - (pool.size() * _MEM_BLOCK_SIZE); }
+  uint32_t getStartOffs()     const { return startOffs; }
+  uint32_t getEndOffs()     const { return endOffs; }
 
   bool acquireChunk(uint32_t &adr);
   bool freeChunk(uint32_t adr);

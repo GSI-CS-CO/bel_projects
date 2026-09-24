@@ -1,0 +1,8 @@
+digraph G {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+B_00[cpu="0", flags="0x00000007", type="block", tperiod="1000000000", pattern="undefined", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white"];
+EVT_01[cpu="0", flags="0x00000002", type="tmsg", toffs="0", pattern="undefined", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="4095", evtno="4095", beamin="0", bpcstart="0", sid="4095", bpid="16383", reqnobeam="0", vacc="0", id="0x1ffffff0ffffffc0", par="0x000000000000bee0", tef="0", shape     = "oval", fillcolor = "white"];
+B_00->EVT_01 [type="defdst", color = "red"];
+EVT_01->B_00 [type="defdst", color = "red"];
+}

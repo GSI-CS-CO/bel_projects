@@ -28,17 +28,19 @@
   morekeywords={digraph, graph, subgraph, edge, node, color, style, shape, fillcolor},
 }
 
+\newcommand{\atSign}{{\fontfamily{ptm}\selectfont @}}
+
 \newcommand{\ry}{\rotatebox{90}}
 \begin{document}
 
 \begin{titlepage}
 \vspace{2cm}
 \begin{center}
-\Huge{Tests for the Datamaster}
+\Huge{Tests for the FAIR Datamaster}
 
 \Large{Martin Skorsky}
 
-\Large{Last change: 2022-07-20}
+\Large{Last change: 2024-10-02}
 \end{center}
 \vfill
 \end{titlepage}
@@ -46,54 +48,115 @@
 \tableofcontents
 
 \chapter{Overview - What is tested}
-The tests for the datamaster are written with Python and the pytest framework. This implies that tests can be strated
+The tests for the datamaster are written with Python and the pytest framework. This implies that tests can be started
 by name and also with a name pattern to select a group of tests. The tests use the datamaster tools \texttt{dm-cmd}
 and \texttt{dm-sched}.
 
 The tests use the instance of the current build folder of the datamaster tools and \texttt{libcarpedm}.
 
-All tests are on branch \texttt{dm-fallout-tests-2}. The tests run with \texttt{make} or \texttt{make all} in folder \texttt{modules/ftm/tests}.
+All tests are on branch \texttt{dm-fallout-tests}. The tests run with \texttt{make} or \texttt{make all} in folder \texttt{modules/ftm/tests}.
 To compile \texttt{libcarpedm} use \texttt{make prepare}. This runs \texttt{make clean} and \texttt{make} in folder \texttt{modules/ftm/ftmx86}.
 
+Important: The tests need exclusive access to the datamaster and the timing receiver. Otherwise the schedules and timing messages may be not the ones to test.
+
+Examples:
+
+\texttt{OPTIONS='--runslow' make}
+
+Run all tests against the local datamaster, even those marked with --runslow. These test take longer than usual tests.
+
+\texttt{OPTIONS='--runslow -k test\_threadsStartStop' make}
+
+Run tests with test\_threadsStartStop in the file name, the class name or the test method name. In this case it is a file name.
+
+These two markers are allowed to skip some of the tests.
+\begin{enumerate}
+\item \texttt{--runslow} Tests marked with this marker are long running tests which slow down the over all execution time. If you add this marker to
+the \texttt{OPTIONS}, these tests will run. Do not use it during test development.
+\item \texttt{--development} Tests marked with this marker are not ready for automated testing. These are under development. If you add this marker
+to the \texttt{OPTIONS}, these tests will run.
+\end{enumerate}
+Some test need both markers to run.
+
 \begin{table}
-\caption{Which test tests what \\ x means: this test uses the component, T means: this test tests this component.
+\caption{Which test tests what (Part 1)\\ x means: this test uses the component, T means: this test tests this component.
 For some tests the result is not checked.
 These are considered as OK if no exception occurs.}
 \centering
 \begin{tabular}[t]{|l|r|c|c|c|c|c|c|c|c|}
 \hline
-Test                          & \ry{count of tests} & \ry{Tools} & \ry{libcarpedm} & \ry{firmware} & \ry{uses Python} & \ry{checks result } \\ \hline
-dmPerformance                 &                     &   x        &   T             &   x           &   -              &   -                 \\ \hline
-test\_addDownloadCompare.py   &  5                  &   T        &   T             &   T           &   x              &   -                 \\ \hline
-test\_altDestinations.py      &  4                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
-test\_async.py                &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_basic.py                &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_booster\_startthread.py &  7                  &   x        &   T             &   T           &   x              &   x                 \\ \hline
-test\_bpcStart.py             &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_coupling.py             &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_dmThreads.py            &  9                  &   x        &   x             &   T           &   x              &   x                 \\ \hline
-test\_dm\_cmd.py              &  24                 &   T        &   x             &   x           &   x              &   x                 \\ \hline
-test\_environment.py          &  3                  &   -        &   -             &   -           &   x              &   x                 \\ \hline
-test\_fid7.py                 &  1                  &   x        &   x             &   T           &   x              &   x                 \\ \hline
-test\_flow.py                 &  5                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_flowpattern.py          &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_flush.py                &  24                 &   x        &   T             &   T           &   x              &   x                 \\ \hline
-test\_loop.py                 &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_memory.py               &  10                 &   T        &   T             &   T           &   x              &   x                 \\ \hline
-test\_parallelBranch.py       &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_pps.py                  &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_prio\_and\_type.py      &  2                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_run\_all\_single.py     &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_run\_cpu0\_single.py    &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_safe2remove.py          &  17                 &   x        &   T             &   T           &   x              &   x                 \\ \hline
-test\_schedules.py            &  2                  &   x        &   x             &   T           &   x              &   -                 \\ \hline
-test\_singleEdgeTest.py       &  1                  &   -        &   T             &   -           &   -              &   x                 \\ \hline
-test\_start\_stop\_abort.py   &  2                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_switch.py               &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
-test\_zzz\_finish.py          &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+Test                                    & \ry{number of tests } & \ry{Tools} & \ry{libcarpedm} & \ry{firmware} & \ry{uses Python} & \ry{checks result } \\ \hline
+dmPerformance                           &                     &   x        &   T             &   x           &   -              &   -                 \\ \hline
+test\_Cpu0Cpu1.py                       &  4                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_RunningThreads.py                 &  1                  &   -        &   -             &   -           &   x              &   x                 \\ \hline
+test\_add.py                            &  1                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_addDownloadCompare.py             &  238                &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_altDestinations.py                &  20                 &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_async.py                          &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_basic.py                          &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_blink.py                          &  1                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_boosterStartthread.py             &  8                  &   x        &   T             &   T           &   x              &   x                 \\ \hline
+test\_bpcStart.py                       &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_coupling.py                       &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_dmCmd.py                          &  31                 &   T        &   x             &   x           &   x              &   x                 \\ \hline
+test\_dmCmdAbort.py                     &  3                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_dmCmdAsyncclear.py                &  1                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_dmCmdClearcpudiag.py              &  1                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_dmCmdCursor.py                    &  1                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_dmCmdDeadlinePreptimeStarttime.py &  18                 &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_dmCmdForce.py                     &  1                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_dmCmdHeap.py                      &  3                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_dmCmdHex.py                       &  1                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_dmCmdNoop.py                      &  1                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_dmCmdOrigin.py                    &  1                  &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_dmSched.py                        &  8                  &   T        &   x             &   x           &   x              &   x                 \\ \hline
+test\_dmTestbench.py                    &  19                 &   T        &   x             &   x           &   x              &   x                 \\ \hline
+test\_dmThreads.py                      &  33                 &   x        &   x             &   T           &   x              &   x                 \\ \hline
+test\_environment.py                    &  3                  &   -        &   -             &   -           &   x              &   x                 \\ \hline
+test\_fid.py                            &  3                  &   x        &   x             &   T           &   x              &   x                 \\ \hline
+test\_flow.py                           &  5                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_flowpattern.py                    &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_flush.py                          &  24                 &   x        &   T             &   T           &   x              &   x                 \\ \hline
 \end{tabular}
-
 \end{table}
+
+\begin{table}
+\caption{Which test tests what (Part 2)\\ x means: this test uses the component, T means: this test tests this component.
+For some tests the result is not checked.
+These are considered as OK if no exception occurs.}
+\centering
+\begin{tabular}[t]{|l|r|c|c|c|c|c|c|c|c|}
+\hline
+Test                                    & \ry{number of tests } & \ry{Tools} & \ry{libcarpedm} & \ry{firmware} & \ry{uses Python} & \ry{checks result } \\ \hline
+test\_loop.py                           &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_lzma.py                           &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_memory.py                         &  15                 &   T        &   T             &   T           &   x              &   x                 \\ \hline
+test\_originStartthread.py              &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_originTwothreads.py               &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_overwrite.py                      &  3                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_overwriteQueue.py                 &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_parallelBranch.py                 &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_patternStartStop.py               &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_pps.py                            &  10                 &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_pps10Hz.py                        &  3                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_prioAndType.py                    &  2                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_priorityQueue.py                  &  2                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_referenceEdges.py                 &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_remove.py                         &  6                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_runAllSingle.py                   &  4                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_runCpu0Single.py                  &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_safe2remove.py                    &  19                 &   x        &   T             &   T           &   x              &   x                 \\ \hline
+test\_schedules.py                      &  6                  &   x        &   x             &   T           &   x              &   -                 \\ \hline
+test\_simultaneousThreads.py            &  3                  &   x        &   x             &   T           &   x              &   -                 \\ \hline
+test\_singleEdgeTest.py                 &  1                  &   -        &   T             &   -           &   -              &   x                 \\ \hline
+test\_startStopAbort.py                 &  2                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_switch.py                         &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+test\_unilac.py                         &  3                  &   x        &   x             &   T           &   x              &   x                 \\ \hline
+test\_waitloopFlush.py                  &  1                  &   x        &   x             &   T           &   x              &   x                 \\ \hline
+test\_zzzFinish.py                      &  1                  &   x        &   T             &   x           &   x              &   x                 \\ \hline
+\end{tabular}
+\end{table}
+
 \chapter{The Tests}
 \section{dmPerformance}
 \texttt{dmPerformance} tests the performance improvements in libcarpedm.
@@ -102,22 +165,85 @@ the schedule is removable, removes it and then adds another schedule.
 This is done for a small schedule and a larger schedule. The test is ok
 if all commands work. There is no check for this.
 
+\section{test\_Cpu0Cpu1.py}
+\texttt{test\_Cpu0Cpu1.py} tests three cases where an edge connects nodes on two CPUs.
+
+In the test \texttt{testTwoCpusFlow}, a flow node on CPU 0 connects with a target edge
+and a flowdst edge to CPU 1. The test starts patterns, snoops the messages and checks that more than 35
+messages were sent after one second. See Figure~\ref{fig:cpu0-1-flow-block-target}.
+    \begin{figure}
+        \centering
+        \includegraphics*[width=1.0\textwidth,keepaspectratio]{TestPattern/cpu0-1-flow-block-target.pdf}
+        \caption{A flow node on CPU 0 connects with a target edge to a block node on CPU 1}
+        \label{fig:cpu0-1-flow-block-target}
+    \end{figure}
+
+In the test \texttt{testTwoCpusFlush}, a target edge and a flushovr edge connect CPU 0 and CPU 1.
+The test starts patterns, snoops the messages and checks the messages after one second.
+See Figure~\ref{fig:cpu0-1-flush-block-flushovr}.
+    \begin{figure}
+        \centering
+        \includegraphics*[width=1.0\textwidth,keepaspectratio]{TestPattern/cpu0-1-flush-block-flushovr.pdf}
+        \caption{A flush node on CPU 0 connects with a flushovr edge to a block node on CPU 1}
+        \label{fig:cpu0-1-flush-block-flushovr}
+    \end{figure}
+
+In the test \texttt{testTwoCpusSwitch}, a switchdst edge and a target edge connect from CPU 0 to CPU 1.
+The test starts patterns, snoops the messages and checks the messages after one second.
+See Figure~\ref{fig:cpu0-1-switch-block-target}.
+    \begin{figure}
+        \centering
+        \includegraphics*[width=1.0\textwidth,keepaspectratio]{TestPattern/cpu0-1-switch-block-target.pdf}
+        \caption{A switch node on CPU 0 connects with a target edge to a block node on CPU 1}
+        \label{fig:cpu0-1-switch-block-target}
+    \end{figure}
+
+In the test \texttt{testTwoCpusOrigin}, a origindst edge connects from CPU 0 to CPU 1.
+The test tries to add the schedules, but this fails because such an edge is not allowed (neigbourhood validation forbids this).
+See Figure~\ref{fig:cpu0-1-origin-block-origindst}.
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.9\textheight,keepaspectratio]{TestPattern/cpu0-1-origin-block-origindst.pdf}
+        \caption{A origin node on CPU 0 connects with an origindst edge to an event node on CPU 1}
+        \label{fig:cpu0-1-origin-block-origindst}
+    \end{figure}
+
+Only for some node types and edge types it is allowed that source and target node run on different CPUs.
+
+\section{test\_RunningThreads.py}
+\texttt{test\_RunningThreads.py} is a test for development. The aim is to improve \texttt{prepareRunThreads}.
+There were sporadic failures in the check that no thread is running. The command
+\texttt{dm-cmd <datamaster> running} shows running threads, which is unexpected.
+The test runs \texttt{prepareRunThreads} for 1000 times. The test adds some error handling and
+statistics in \texttt{tearDown}. It is marked with \atSign{}pytest.mark.development, since this test is
+not needed in test runs.
+
+\section{test\_add.py}
+\texttt{test\_add.py} contains one test that adds a schedule, adds a second schedule. Then download the
+resulting schedule and compare this to an expected dot file. See Figure~\ref{fig:patternA-v1-v2}.
+    \begin{figure}
+        \centering
+        \includegraphics*[width=1.0\textwidth,keepaspectratio]{TestPattern/patternA-v1-v2.pdf}
+        \caption{The resulting schedule which is added in two steps.}
+        \label{fig:patternA-v1-v2}
+    \end{figure}
+
 \section{test\_addDownloadCompare.py}
 \texttt{test\_addDownloadCompare.py} test that a schedule is equivalent
 to the schedule which is downloaded form the datamaster firmware.
 The test steps are: clear the datamaster, add a schedule, start all
 pattern, download the schedule, compare both schedules with
-\texttt{scheduleCompare}. There should be no difference with
-\texttt{scheduleCompare}. Each test case uses a different schedule.
+\texttt{scheduleCompare}. \texttt{scheduleCompare} should find no difference
+between the original and the downloaded schedule. Each test case uses a
+different schedule.
 
 This test requires \texttt{scheduleCompare} to be installed. This tool
-checks that two dot-files represent the same schedule. For installation
-use branch origin/dm-analysis. The tool is build with make in folder
-modules/ftm/analysis/scheduleCompare/main/. It is installed with sudo
-make install in the same folder.
+checks that two dot-files represent the same schedule. The tool is build
+with make in folder modules/ftm/analysis/scheduleCompare/main/.
+It is installed with sudo make install in the same folder.
 
 \section{test\_altDestinations.py}
-\texttt{test\_altDestinations} tests the limit of 9 edges of type
+\texttt{test\_altDestinations} tests for 9 edges and 10 edges of type
 \texttt{altdst} for a block node.
 The schedule \texttt{altdst-flow-9.dot} has one block, nine flow commands
 and nine messages. each flow command changes flow to another message.
@@ -125,16 +251,16 @@ The test adds this schedule and starts the pattern in this schedule.
 The test checks that messages are produced.
 
 The schedule \texttt{altdst-flow-10.dot} is similar to the one obove,
-but with 10 flow nodes and 10 messages. Adding this schedule fails.
-The test checks for the correct error response.
+but with 10 flow nodes and 10 messages. Adding this schedule is OK.
+The test checks for the correct response.
 
 The schedule \texttt{altdst-9.dot} has one block and nine messages.
 The test switches through all messages and checks with snoop that the
 correct messages are send.
 
 The schedule \texttt{altdst-10.dot} has one block and 10 messages.
-This schedule cannot be added to the datamaster. The test checks for
-the correct error response.
+This schedule can be added to the datamaster. The test checks for
+the correct response.
 
 The schedule \texttt{test-altdst-missing-node.dot} has one block with 9
 altdst edges and one defdst edge. The test checks that a switch command
@@ -192,8 +318,29 @@ This test was \texttt{full\_test/static/basic}.
   The test is successful if no schedule is loaded. Checked with \texttt{dm-sched status}
 \end{enumerate}
 
-\section{test\_booster\_startthread.py}
-\texttt{test\_booster\_startthread.py} tests schedules with nodes of
+\section{test\_blink.py}
+\begin{enumerate}
+  \item Purpose of Test
+
+  Test flow nodes in connection with origin, preptime and two threads.
+  \item Test Actions
+
+  Start pattern \texttt{ping} for a single timing message which indicates the start of the test.
+  Set origin, preptime, starttime for threads 0, 1 of CPU 0. Read these values. Start thread 0, 1 of CPU 0
+  with a single command. Snoop timing messages for 10 seconds and check the frequency of the messages.
+    \begin{figure}
+        \centering
+        \includegraphics*[width=1.0\textwidth,keepaspectratio]{TestPattern/blink-download.pdf}
+        \caption{Flip between two sequences of timing events}
+        \label{fig:blink}
+    \end{figure}
+  \item Success Criteria
+
+  The test is successful when snoop of timing messages receives all four types of messages, each marked by the parameter.
+\end{enumerate}
+
+\section{test\_boosterStartthread.py}
+\texttt{test\_boosterStartthread.py} tests schedules with nodes of
 type \texttt{origin} and type \texttt{startthread}.
 \begin{enumerate}
 \item \texttt{test\_threeThreads0}
@@ -220,7 +367,7 @@ for two seconds. The result is checked for the event numbers
 0x0103 (exactly one), 0x0160 (at least one).
     \begin{figure}
         \centering
-        \includegraphics*[width=1.2\textwidth,keepaspectratio]{TestPattern/booster_startthread-1-s.pdf}
+        \includegraphics*[width=1.0\textwidth,keepaspectratio]{TestPattern/booster_startthread-1-s.pdf}
         \caption{Schedule for test of origin with thread 1}
         \label{fig:Schedule_booster_startthread-1}
     \end{figure}
@@ -233,7 +380,7 @@ for three seconds. The result is checked for the event numbers
 0x0103 (exactly one), 0x0160 (at least one).
     \begin{figure}
         \centering
-        \includegraphics*[width=1.2\textwidth,keepaspectratio]{TestPattern/booster_startthread-2-s.pdf}
+        \includegraphics*[width=1.0\textwidth,keepaspectratio]{TestPattern/booster_startthread-2-s.pdf}
         \caption{Schedule for test of origin with thread 1}
         \label{fig:Schedule_booster_startthread-2}
     \end{figure}
@@ -252,7 +399,7 @@ The delay of evtno=0x0002 with 1µs is defined by toffs=1000. The delay of evtno
 What is the effect of toffs and startoffs defined in the three startthread nodes?
     \begin{figure}
         \centering
-        \includegraphics*[width=1.2\textwidth,keepaspectratio]{TestPattern/booster_startthread-3-s.pdf}
+        \includegraphics*[width=1.0\textwidth,keepaspectratio]{TestPattern/booster_startthread-3-s.pdf}
         \caption{Schedule for test of origin and startthread}
         \label{fig:Schedule_booster_startthread-3}
     \end{figure}
@@ -302,7 +449,7 @@ for the messages of each thread. This is checked with a snoop for 2 seconds.
 Use schedule \\ \texttt{booster-8-loops.dot} (see~\ref{fig:Schedule_booster_8_loops}).
     \begin{figure}
         \centering
-        \includegraphics*[width=1.1\textwidth,keepaspectratio]{TestPattern/booster_8_loops.pdf}
+        \includegraphics*[width=1.0\textwidth,keepaspectratio]{TestPattern/booster_8_loops.pdf}
         \caption{Schedule for starting threads 0 to 7 in a main loop}
         \label{fig:Schedule_booster_8_loops}
     \end{figure}
@@ -338,8 +485,8 @@ This test was \texttt{full\_test/dynamic/coupling}.
   compared to an expected dot-file.
 \end{enumerate}
 
-\section{test\_dm\_cmd.py}
-\texttt{test\_dm\_cmd.py} contains Python unit tests for the tool dm-cmd.
+\section{test\_dmCmd.py}
+\texttt{test\_dmCmd.py} contains Python unit tests for the tool dm-cmd.
 Each unit test calls dm-cmd with commands and options and checks the result
 with the output on stdout and stderr. There are also negative tests with
 an invalid command line. These tests are successful when the response is
@@ -357,19 +504,116 @@ There are five tests for the stop command. The test cases are
 There are tests for \texttt{dm-cmd reset} and for \texttt{dm-cmd reset all}. These two tests check for
 return code 0, but not the status of the datamaster.
 
-\section{test\_dm\_sched.py}
-\texttt{test\_dm\_sched.py} contains 8 unit tests for the tool dm-sched. Each unit test calls dm-sched
-with commands and options and checks the result with the output on stdout and stderr.
+\section{test\_dmCmdAbort.py}
+\texttt{test\_dmCmdAbort.py} tests \texttt{dm-cmd $<$datamaster$>$ abort} for different CPUs and threads.
+Mainly tests the options \texttt{-c} and \texttt{-t}.
+\begin{enumerate}
+\item testAbortSingleThreadDecimal tests this for each CPU and each thread, given as decimal numbers.
+\item testAbortSingleThreadHex tests this for each CPU and each thread, given as hexadecimal numbers.
+\item testAbortRunningThreads runs schedules on all threads and \texttt{abort}s for CPU 0 and 1 the threads 1, 3, 5, 7.
+\end{enumerate}
+
+\section{test\_dmCmdAsyncclear.py}
+\texttt{test\_dmCmdAsyncclear.py} tests \texttt{dm-cmd $<$datamaster$>$ asyncclear} for different CPUs and threads.
+Send the command \texttt{noop} to Block0b. Since the schedules send a message every second, this command is in the queue
+for a second. The \texttt{asyncclear} clears this command in the queue. This is
+checked with \texttt{dm-cmd $<$datamaster$>$ queue Block0b}. Before
+\texttt{asyncclear} the command is in the queue, afterwards the queue is empty.
+
+\section{test\_dmCmdClearcpudiag.py}
+\texttt{test\_dmCmdClearcpudiag.py} tests the command \texttt{dm-cmd
+$<$datamaster$>$ clearcpudiag} for different CPUs and threads.
+Run \texttt{clearCPUdiag} for CPU 0 and 1 and for the threads 1, 3, 5, 7.
+Check the result with \texttt{dm-cmd $<$datamaster$>$ diag}.
+
+\section{test\_dmCmdCursor.py}
+\texttt{test\_dmCmdCursor.py} tests \texttt{dm-cmd $<$datamaster$>$ cursor}
+for two CPUs and four threads. Run \texttt{dm-cmd $<$datamaster$>$ cursor}
+for CPU 0 and 1 and for the threads 1, 3, 5, 7.
+Check for the correct number of output lines.
+
+\section{test\_dmCmdDeadlinePreptimeStarttime.py}
+\texttt{test\_dmCmdDeadlinePreptimeStarttime.py} tests the five commands \\
+\texttt{dm-cmd $<$datamaster$>$ origin}, \\
+\texttt{dm-cmd $<$datamaster$>$ cursor}, \\
+\texttt{dm-cmd $<$datamaster$>$ deadline}, \\
+\texttt{dm-cmd $<$datamaster$>$ preptime}, and \\
+\texttt{dm-cmd $<$datamaster$>$ startline} \\
+for different CPUs and threads.
+Tests the commands \texttt{origin, cursor, starttime, preptime}, and
+\texttt{deadline} for different combinations  of threads.
+With \texttt{preptime}, all combinations for the threadbits between 0
+and 255 ist tested. This is every subset of a
+set of 8 threads. In addition, invalid thread masks and thread numbers
+out of range are tested.
+
+\section{test\_dmCmdForce.py}
+\texttt{test\_dmCmdForce.py} tests the command \texttt{dm-cmd
+$<$datamaster$>$ force} for different CPUs and threads.
+Run \texttt{force} for CPU 0 and 1 and for the threads 1, 3, 5, 7.
+Check for the correct number of output lines.
+
+\section{test\_dmCmdHeap.py}
+\texttt{test\_dmCmdHeap.py} tests \texttt{dm-cmd $<$datamaster$>$ heap}
+for different CPUs and threads.
+\begin{enumerate}
+\item testHeapSingleThreadDecimal tests this for each CPU and each
+thread, given as decimal numbers.
+\item testHeapSingleThreadHex tests this for each CPU and each thread,
+given as hexadecimal numbers.
+\item testInspectHeap run \texttt{heap} for CPU 0 and 1 and for the
+threads 1, 3, 5, 7. Check for the correct number of output lines.
+Run \texttt{heap} for each thread on each CPU.
+\end{enumerate}
+
+\section{test\_dmCmdHex.py}
+\texttt{test\_dmCmdHex.py} tests \texttt{dm-cmd $<$datamaster$>$ hex}
+for the nodes \texttt{Block0a} and \texttt{Block0a\_ListDst\_0}. This
+is done on a pps pattern on CPU0. The output is different for 8 and 32 threads.
+The output is checked.
+
+\section{test\_dmCmdNoop.py}
+\texttt{test\_dmCmdNoop.py} tests \texttt{dm-cmd $<$datamaster$>$ noop} for different CPUs and threads.
+Check with \texttt{dm-cmd $<$datamaster$>$ queue Block0b} that the queue of Block0b is empty.
+Send the command \texttt{noop} to Block0b. Check with \texttt{dm-cmd $<$datamaster$>$ queue Block0b}
+that the command \texttt{noop} is in the queue of Block0b.
+
+\section{test\_dmCmdOrigin.py}
+\texttt{test\_dmCmdOrigin.py} tests \texttt{dm-cmd $<$datamaster$>$ origin}
+for two CPUs and four threads. Run \texttt{origin} for CPU 0 and 1 and for
+the threads 1, 3, 5, 7. Check for the correct number of output lines.
+
+\section{test\_dmSched.py}
+\texttt{test\_dmSched.py} contains 8 unit tests for the tool dm-sched.
+Each unit test calls dm-sched with commands and options and checks the
+result with the output on stdout and stderr.
 
 \begin{enumerate}
 \item \texttt{dm-sched $<$datamaster$>$ -h}: check for correct usage message.
-\item \texttt{dm-sched $<$datamaster$>$}: check for defualt operation (same as status).
+\item \texttt{dm-sched $<$datamaster$>$}: check for default operation (same as status).
 \item \texttt{dm-sched $<$datamaster$>$ status}: check for printig the datamaster status.
-\item \texttt{dm-sched $<$datamaster$>$ dump}: check that the current schedule is dumped to file download.dot (the default file name).
-\item \texttt{dm-sched $<$datamaster$>$ dump -0 dump.dot}: check that the current schedule is dumped to file dump.dot.
+\item \texttt{dm-sched $<$datamaster$>$ dump}: check that the current
+schedule is dumped to file download.dot (the default file name).
+\item \texttt{dm-sched $<$datamaster$>$ dump -o dump.dot}: check that
+the current schedule is dumped to file dump.dot.
 \item \texttt{dm-sched $<$datamaster$>$ clear}: check the clear command.
 \item \texttt{dm-sched $<$datamaster$>$ rawvisited}: check the rawvisited command.
 \item \texttt{dm-sched $<$datamaster$>$ add pps.dot}: check for adding a schedule.
+\end{enumerate}
+
+\section{test\_dmTestbench.py}
+\begin{enumerate}
+  \item Purpose of Test
+
+  Tests the method analyseFrequencyFromCsv which is in
+  the module dm\_testbench.py.
+  \item Test Actions
+
+  Run 8 tests for the different check syntax of this method with the
+  file \texttt{other/snoop\_test\_analyseFrequencyFromCsv.csv}.
+  \item Success Criteria
+
+  Use the assertions in method analyseFrequencyFromCsv.
 \end{enumerate}
 
 \section{test\_dmThreads.py}
@@ -386,10 +630,15 @@ the schedules one 4 CPUs, each with 8 threads. This produces 32 messages per sec
 \texttt{test\_environment.py} checks the test environment. The test is ok if and only if dm-cmd and dm-sched are
 from folder ../bin and libcarpedm is loaded from ../lib. This is checked with \texttt{ldd}.
 
-\section{test\_fid7.py}
-\texttt{test\_fid7.py} tests the fix for the format id 7 bug. This bug
+\section{test\_fid.py}
+\texttt{test\_fid.py} tests timing messages with different values of fid.
+\begin{enumerate}
+\item \texttt{test\_fid7} tests the fix for the format id 7 bug. This bug
 was: under some conditions an illegal format id 7 was in the message.
 The test checks that ony format id 1 is in the snooped messages.
+\item \texttt{test\_fid0} tests with fid 0, which results in 19 fields in the timing messages.
+\item \texttt{test\_fid1} tests the standard format of the timing messages.
+\end{enumerate}
 
 \section{test\_flow.py}
 This test is based on \texttt{full\_test/dynamic/branch/single}, using flow instead of flowcommand.
@@ -444,7 +693,7 @@ The flow commands are used to fill the command queues of the block. They switch 
 differ in the parameter value.
 
 Naming of the tests:
-test\_flow\_flushX\_prioY, where
+\texttt{test\_flow\_flushX\_prioY}, where
 X are the queues to flush. Allowed values: None, 0, 1, 2, 01, 02, 12, 123.
 Y is the priority of the flush. Allowed values: 0, 1, 2.
 Naming of patterns:
@@ -524,23 +773,28 @@ splits the timing messages into two loops when there are more than 1000 nodes.
 \\ \texttt{test\_memory\_full\_msg\_half} uses 900 timing messages for the test.
 \\ \texttt{test\_memory\_full\_msg\_ok} uses 1867 timing messages, which is the maximal number of nodes allowed.
 \\ \texttt{test\_memory\_full\_msg\_infinite\_loop\_ok} uses 1000 timing messages. This is added and started.
-\\ \texttt{test\_memory\_full\_msg\_infinite\_loop\_fail} uses 1001 timing messages. This schedule is rejected and not added.
+\\ \texttt{test\_memory\_full\_msg\_infinite\_loop\_fail} uses 1001 timing
+messages. \\ This schedule is rejected and not added.
 
-\section{test\_origin\_startthread.py}
+\section{test\_originStartthread.py}
 \begin{enumerate}
-\item Thread 0 assigns Tmsg\{1,2,3\} and Block\{1,2,3\} to thread 1,2,3 and starts these.
-The test then starts pattern B (Tmsg4 and Block4) to show that this does not stop the other threads.
-The test stops pattern A1 which stops thread 1.
-The test stops pattern A which stops thread 3.
-The test stops node Block2 which stops thread 2 (there is no pattern on this thread).
-See Figure~\ref{fig:schedule_origin_startthreads} for the schedule.
+\item \texttt{test\_threadsStartStop} \\
+Thread 0 assigns Tmsg\{1,2,3\} and Block\{1,2,3\} to thread 1,2,3 and starts these threads.
+The test then starts pattern D (Tmsg4 and Block4) to show that this does not stop the other threads.
+The test stops pattern A which stops thread 1.
+The test stops pattern C which stops thread 3.
+The test stops node Block2 which stops thread 2.
+See Figure~\ref{fig:schedule_origin_startthreads} for the schedule. For the Tmsg and the Blocks the
+diagram shows the threads. There is no command to stop a thread.
     \begin{figure}
         \centering
         \includegraphics*[width=1.\textwidth,keepaspectratio]{TestPattern/threadsStartStop.pdf}
-        \caption{Schedule to start threads with origins}
+        \caption{Schedule which assigns origins and then starts threads
+        with these origins. This is used in test\_originStartthread.py}
         \label{fig:schedule_origin_startthreads}
     \end{figure}
-\item This test demonstrates that a node can exist in two threads.
+\item \texttt{test\_nodeInTwoThreads} \\
+This test demonstrates that a node can exist in two threads.
 Tmsg1 ist in thread 1, Tmsg2 is in thread 2. Successor for both is Tmsg3.
 Thus we have a timing message from Tmsg3 for each timing message from Tmsg1 and Tmsg2.
 The loop in thread 0 (nodes Tmsg0, OriginN, StartthreadN, Block0) starts
@@ -549,21 +803,339 @@ See Figure~\ref{fig:schedule_nodeInTwoThreads} for the schedule.
     \begin{figure}
         \centering
         \includegraphics*[width=1.\textwidth,keepaspectratio]{TestPattern/nodeInTwoThreads.pdf}
-        \caption{Schedule with a node in two threads}
+        \caption{Schedule with a node in two threads. This is used in test\_originStartthread.py}
         \label{fig:schedule_nodeInTwoThreads}
     \end{figure}
+\item \texttt{test\_startStopAllThreads} \\
+    Run a pps pattern on all threads and all CPUs. Halt all threads and check this state.
+    Then start four threads 0,1,2,3 on all CPUs and check.
+    For more than 8 threads:
+    Then start four threads 8,9,10,11 on all CPUs and check.
+    Then start four threads 16,17,18,19 on all CPUs and check.
+    Then start four threads 24,25,26,27 on all CPUs and check.
+\item \texttt{test\_startStopBlocks} \\
+    Run a pps pattern on all threads of CPU 0.
+    Stop block Block0b four times and check the result. This block is on
+    thread 1, and for more than 8 threads also on thread 9, 17, 25.
+    Thus we check that one of these threads is stopped for more than
+    8 threads.
 \end{enumerate}
+
+\section{test\_originTwothreads.py}
+\begin{enumerate}
+  \item Purpose of Test
+
+  This test shows that an origin node and a startthread node work.
+  \item Test Actions
+
+  Origin and Start are in pattern B.
+  Pattern B is started and produces with Tmsg1 events with parameter 1. Tmsg2 produces events with parameter 2.
+  The node Start starts thread 1 and is the origin for this thread. Thus, thread 1 is started every 50 ms by itself.
+  There is a snoop action for 1 s.
+    \begin{figure}
+        \centering
+        \includegraphics*[width=0.65\textheight,keepaspectratio]{TestPattern/twothreads.pdf}
+        \caption{Schedule with two threads used in test\_originTwothreads.py}
+        \label{fig:schedule_twoThreads}
+    \end{figure}
+  \item Success Criteria
+
+  The result of the snoop should get at least 15 events with parameter 1 and one message with parameter 2.
+\end{enumerate}
+
+\section{test\_overwrite.py}
+\begin{enumerate}
+\item testOverwrite1
+    Load and start pattern A, a loop of a message and a block.
+    Stop the pattern and overwrite the block with a blockalign.
+    Analyse the timing messages with the parameter field.
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.3\textheight,keepaspectratio]{TestPattern/overwrite1-0.pdf}
+        \includegraphics*[height=0.3\textheight,keepaspectratio]{TestPattern/overwrite1-1.pdf}
+        \includegraphics*[height=0.3\textheight,keepaspectratio]{TestPattern/overwrite1-1-download.pdf}
+        \caption{Schedules for testOverwrite1 (test\_overwrite.py). The first schedule
+        consists of a block and an event. The parameter of the messages is 1,
+        which is checked in the snooped messages. This pattern runs for a second.
+        It is overwritten with the second schedule containing a blockalign and an event.
+        This event sends parameter 2, which is also checked in the snooped messages.
+        The third schedule is the result.}
+        \label{fig:Schedules_for_testOverwrite1}
+    \end{figure}
+
+\item testOverwrite2
+    Load a schedule with a switch. Executing the switch interchanges
+    the defdst to EvtA with the altdst to EvtB. Then the schedule loops
+    over EvtB.
+    Overwrite the schedule with the original schedule changes the edges back
+    to defdst to EvtA and altdst to EvtB. Then the switch is executed again.
+    Analyse the timing messages with the parameter field.
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.3\textheight,keepaspectratio]{TestPattern/overwrite2-0.pdf}
+        \includegraphics*[height=0.3\textheight,keepaspectratio]{TestPattern/overwrite2-1-download.pdf}
+        \includegraphics*[height=0.3\textheight,keepaspectratio]{TestPattern/overwrite2-2-download.pdf}
+        \caption{Schedules for testOverwrite2 (test\_overwrite.py). The first
+        schedule shows the defdst to EvtA and the altdst to EvtB. After executing
+        the switch, the second schedule shows the defdst to EvtB and the altdst to EvtA.
+        Overwritting with the original scheulde results in the third schedule.}
+        \label{fig:Schedules_for_testOverwrite2}
+    \end{figure}
+
+\item testOverwrite3
+    Load a schedule with a switch. Executing the switch interchanges
+    the defdst to EvtA with the altdst to EvtB. Then the schedule loops
+    over EvtB.
+    Overwrite the schedule with a smiliar schedule which replaces the switch
+    with a flow and the switchdst edge with a flowdst edge.
+    Analyse the timing messages with the parameter field.
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.28\textheight,keepaspectratio]{TestPattern/overwrite3-0.pdf}
+        \includegraphics*[height=0.28\textheight,keepaspectratio]{TestPattern/overwrite3-0-download.pdf}
+        \includegraphics*[height=0.28\textheight,keepaspectratio]{TestPattern/overwrite3-1-download.pdf}
+        \includegraphics*[height=0.28\textheight,keepaspectratio]{TestPattern/overwrite3-1.pdf}
+        \includegraphics*[height=0.28\textheight,keepaspectratio]{TestPattern/overwrite3-2-download.pdf}
+        \caption{Schedules for testOverwrite3 (test\_overwrite.py). The first schedule
+        contains a switch. The second schedule is the check before executing the
+        switch. The third schedule is the check after executing the
+        switch. The fourth schedule overwrites the first
+        with a flow node. The fifth schedule is the result.}
+        \label{fig:Schedules_for_testOverwrite3}
+    \end{figure}
+
+\end{enumerate}
+
+\section{test\_overwriteQueue.py}
+The test \texttt{test\_overwriteSchedules} overwrites a block with a low priority
+queue with a block that has a low and a high priority queue. The low priority
+queue is always needed to stop the pattern PPS\_Q. The test is successful when
+the downloaded schedules are isomorphic to the expected schedules with the
+meta nodes. The messages are checked for the appropriate number of messages.
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.28\textheight,keepaspectratio]{TestPattern/pps-no-queue.pdf}
+        \includegraphics*[height=0.28\textheight,keepaspectratio]{TestPattern/pps-qlo.pdf}
+        \includegraphics*[height=0.28\textheight,keepaspectratio]{TestPattern/pps-qlo-status.pdf}
+        \includegraphics*[height=0.28\textheight,keepaspectratio]{TestPattern/pps-qlo.pdf}
+        \includegraphics*[height=0.28\textheight,keepaspectratio]{TestPattern/pps-qlo-status.pdf}
+        \caption{Schedules for test\_overwriteSchedules (test\_overwriteQueue.py). The first schedule
+        contains a block with no queue. The second overwrites this with a low priority queue.
+        The result is the third schedule. The fourth schedule overwrites this with a block with
+        two queues. The result is the fifth schedule.}
+        \label{fig:Schedules_for_test_overwriteSchedules}
+    \end{figure}
 
 \section{test\_parallelBranch.py}
 Use schedule \texttt{branch1.dot} to test branching with flow commands
 with absolute time offset. The checks use snoop for specific event numbers.
 The four tests are for CPU 0, CPU 0 and 1, CPU 0, 1, and 2, all 4 CPUs.
+    \begin{figure}
+        \centering
+        \includegraphics*[width=\textwidth,keepaspectratio]{TestPattern/branch1.pdf}
+        \caption{Schedule for test\_parallelBranch.py.}
+        \label{fig:Pattern_for_test_parallelBranch}
+    \end{figure}
+    Each of these pattern A, B, C, D runs on a different CPU.
+
+\section{test\_patternStartStop.py}
+The test \texttt{test\_startStopPattern} runs a pps pattern on all threads of CPU 0.
+    Stop pattern Block0b which should fail, since not a pattern name.
+    Stop pattern PPS0b which is OK. This pattern runs on threads 1, 9, 17, 25
+    (the last three for 32 threads). Check which thread is stopped.
+    Start pattern Block0b which should fail, since not a pattern name.
+    Start pattern PPS0b on the thread, which was stopped before. The start
+    is OK. Check that all threads (8 or 32) are running.
 
 \section{test\_pps.py}
-\texttt{test\_pps.py} (pps: pulse per second) is a basic test with a
+\texttt{test\_pps.py} (pps: pulse per second) is a collection of tests based
+on schedules with a simple loop of a timing message and a block.
+
+\begin{enumerate}
+\item test\_pps is a basic test with a
 schedule which sends two timing messages every second. The test checks
-with 'saft-ctl snoop' the timing messages.
-\section{test\_prio\_and\_type.py}
+with \texttt{saft-ctl snoop} the timing messages.
+
+\item test\_ppsAdd is a basic test with a schedule which sends one timing
+message every second. The test checks with \texttt{saft-ctl snoop} the timing
+messages. Download the schedule with \texttt{dm-sched status} and compare
+with the uploaded schedule with \texttt{scheduleCompare}. The two schedules
+should be isomorphic.
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.3\textheight,keepaspectratio]{TestPattern/pps-subgraph.pdf}
+        \caption{Pattern for test\_ppsAdd.}
+        \label{fig:Pattern_for_test_ppsAdd}
+    \end{figure}
+
+\item testPpsAdd0
+    Add two schedules. The first schedule contains two nodes and an edge.
+    The second adds some edges to the first schedule.
+    Start pattern A and use a flow command to trigger messages.
+    The status of the schedules is compared against known schedule files with
+    \texttt{scheduleCompare}. The messages are snooped and checked.
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.3\textheight,keepaspectratio]{TestPattern/pps-test0-0.pdf}
+        \includegraphics*[height=0.3\textheight,keepaspectratio]{TestPattern/pps-test0-1-download.pdf}
+        \caption{Schedules for testPpsAdd0 (test\_pps.py). The first produces
+        one timing message. The second is the result after adding more edges.}
+        \label{fig:Schedules_for_testPpsAdd0}
+    \end{figure}
+    During snoop start pattern A. This produces 1 message. Pattern A finishes.
+    Download the schedule for later compare.
+    Add a schedule which contains two edges.
+    Queue a flow command with quantity 10 to block B\_A.
+    Again start pattern A. The flow command triggers the next messages.
+    At the end, 12 messages are produced and the pattern loops in block B\_A.
+
+\item testPpsAdd1
+    Add two schedules. The first schedule contains pattern A with two nodes and an edge.
+    The second adds a similar pattern B.
+    The messages are snooped and checked.
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.3\textheight,keepaspectratio]{TestPattern/pps-test1-0.pdf}
+        \includegraphics*[height=0.3\textheight,keepaspectratio]{TestPattern/pps-test1-1-download.pdf}
+        \caption{Schedules for testPpsAdd1 (test\_pps.py).}
+        \label{fig:Schedules_for_testPpsAdd1-0}
+    \end{figure}
+
+\item testPpsAdd2
+    Test that the validation for nodes connected by defdst or altdst on
+    the same CPU works. Add a first schedule. Try to add a second schedule.
+    This fails due to an edge from CPU 0 to CPU 1.
+    Add a third schedule with a target edge from CPU 0 to CPU 1. This works.
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.3\textheight,keepaspectratio]{TestPattern/pps-test2-0.pdf}
+        \includegraphics*[height=0.3\textheight,keepaspectratio]{TestPattern/pps-test2-1.pdf}
+        \includegraphics*[height=0.3\textheight,keepaspectratio]{TestPattern/pps-test2-1-download.pdf}
+        \includegraphics*[height=0.3\textheight,keepaspectratio]{TestPattern/pps-test2-2-download.pdf}
+        \caption{Schedules for testPpsAdd2 (test\_pps.py). The upper part of the figure shows
+        the first schedule on the left. Try to add the middle schedule. This fails, since block B\_A is on CPU 0
+        but Evt\_B and B\_B are on CPU 1. The schedule on the right is the result. The lower part of the figure
+        shows the result after adding a wait node W\_A with two blocks B\_B and B\_C to the original
+        schedule of Evt\_A and B\_A.}
+        \label{fig:Schedules_for_testPpsAdd2-0}
+    \end{figure}
+
+\item testPpsAdd3
+    Test with five schedules.
+    Add two schedules, remove the third, add the fourth, remove the fifth.
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.45\textheight,keepaspectratio]{TestPattern/pps-test3-0.pdf}
+        \includegraphics*[height=0.45\textheight,keepaspectratio]{TestPattern/pps-test3-1.pdf}
+        \includegraphics*[height=0.45\textheight,keepaspectratio]{TestPattern/pps-test3-1-download.pdf}
+        \caption{Schedules for testPpsAdd3 (test\_pps.py), first step. Starting with the upper left schedule,
+        adding the upper right schedule results in the schedule in the lower part of the figure.}
+        \label{fig:Schedules_for_testPpsAdd3-0}
+    \end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.45\textheight,keepaspectratio]{TestPattern/pps-test3-2.pdf}
+        \includegraphics*[height=0.45\textheight,keepaspectratio]{TestPattern/pps-test3-2-download.pdf}
+        \caption{Schedules for testPpsAdd3 (test\_pps.py), second step. Remove the schedule with Evt\_B and B\_B results in the second schedule.}
+        \label{fig:Schedules_for_testPpsAdd3-1}
+    \end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.45\textheight,keepaspectratio]{TestPattern/pps-test3-3.pdf}
+        \includegraphics*[height=0.45\textheight,keepaspectratio]{TestPattern/pps-test3-3-download.pdf}
+        \caption{Schedules for testPpsAdd3 (test\_pps.py), third step. Add the schedule with Evt\_D and B\_D results in the second schedule.}
+        \label{fig:Schedules_for_testPpsAdd3-2}
+    \end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.45\textheight,keepaspectratio]{TestPattern/pps-test3-4.pdf}
+        \includegraphics*[height=0.45\textheight,keepaspectratio]{TestPattern/pps-test3-4-download.pdf}
+        \caption{Schedules for testPpsAdd3 (test\_pps.py), fourth step. Remove the first schedule results in the schedule with Evt\_D and B\_D.}
+        \label{fig:Schedules_for_testPpsAdd3-3}
+    \end{figure}
+
+\item testPpsAdd4
+    Test removing a pattern which is running. This is rejected as expected.
+    Then stop the pattern A and remove it.
+    Check that the appropriate number of messages is produced.
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.43\textheight,keepaspectratio]{TestPattern/pps-test4-0.pdf}
+        \includegraphics*[height=0.4\textheight,keepaspectratio]{TestPattern/pps-test4-1.pdf}
+        \includegraphics*[height=0.43\textheight,keepaspectratio]{TestPattern/pps-test4-1-download.pdf}
+        \caption{Schedules for testPpsAdd4 (test\_pps.py), first part. Removing the three nodes Evt\_A,
+        B\_A, and B\_C from the first schedule fails since pattern A is running. The resulting
+        schedule in the lower part is the same as the first schedule.}
+        \label{fig:Schedules_for_testPpsAdd4-0}
+    \end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.45\textheight,keepaspectratio]{TestPattern/pps-test4-2.pdf}
+        \includegraphics*[height=0.45\textheight,keepaspectratio]{TestPattern/pps-test4-2-download.pdf}
+        \caption{Schedules for testPpsAdd4 (test\_pps.py), second part. After stopping pattern A, nodes
+        Evt\_A and B\_A are removed and the result is the last schedule.}
+        \label{fig:Schedules_for_testPpsAdd4-1}
+    \end{figure}
+
+\item testPpsAdd5
+    Test removing a pattern which is running. This is rejected as expected.
+    When pattern A has finished, remove it.
+    Check that the appropriate number of messages is produced.
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.43\textheight,keepaspectratio]{TestPattern/pps-test5-0.pdf}
+        \includegraphics*[height=0.43\textheight,keepaspectratio]{TestPattern/pps-test5-1.pdf}
+        \includegraphics*[height=0.43\textheight,keepaspectratio]{TestPattern/pps-test5-1-download.pdf}
+        \includegraphics*[height=0.43\textheight,keepaspectratio]{TestPattern/pps-test5-2-download.pdf}
+        \caption{Schedules for testPpsAdd5 (test\_pps.py). From the left upper schedule remove nodes
+        Evt\_B and B\_B while pattern A is running. This fails with return code 250. Pattern A finishes.
+        Trying to remove Evt\_B and B\_B again results in the lower right schedule with nodes Evt\_A and B\_A.}
+        \label{fig:Schedules_for_testPpsAdd5-0}
+    \end{figure}
+
+\item testPpsAdd6
+    Test adding a node which changes the pattern entry.
+    Check that the appropriate number of messages is produced.
+    \begin{figure}
+        \centering
+        \includegraphics{TestPattern/pps-test6-0.pdf}
+        \includegraphics{TestPattern/pps-test6-0-download.pdf}
+        \includegraphics{TestPattern/pps-test6-1.pdf}
+        \includegraphics{TestPattern/pps-test6-1-download.pdf}
+        \caption{Schedules for testPpsAdd6 (test\_pps.py), first part. Start pattern A in the upper left schedule.
+        The result is the upper right schedule. Overwrite the schedule with an altdst edge from
+        BlockA to EvtA and no pattern entry. Result is the lower right schedule.
+        Cannot start pattern, because entry is missing.}
+        \label{fig:Schedules_for_testPpsAdd6-0}
+    \end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics{TestPattern/pps-test6-2.pdf}
+        \includegraphics{TestPattern/pps-test6-2-download.pdf}
+        \caption{Schedules for testPpsAdd6 (test\_pps.py), second part.
+        Add the left schedule with EvtB as pattern entry. Then start pattern A. This results in the right schedule.}
+        \label{fig:Schedules_for_testPpsAdd6-1}
+    \end{figure}
+
+\item testPpsAdd8
+    Test adding a schedule with a node with name ending in ListDst\_3. This fails,
+    because this name is generated during upload and a collision happens.
+    Second attempt is to add a similar schedule with the name Block0\_0\_ListDst\_6.
+    This works. The generated nodes have the names Block0\_0\_ListDst\_x with x from 0 to 5.
+    Download the schedule including meta nodes and compare it to the expected one with \texttt{scheduleCompare}.
+    \begin{figure}
+        \centering
+        \includegraphics*[width=1.0\textwidth,keepaspectratio]{TestPattern/pps-test8-0.pdf}
+        \includegraphics*[width=1.0\textwidth,keepaspectratio]{TestPattern/pps-test8-1.pdf}
+        \includegraphics*[width=1.0\textwidth,keepaspectratio]{TestPattern/pps-test8-1-download.pdf}
+        \caption{Schedules for testPpsAdd8 (test\_pps.py). The first one fails to load. The second
+        is added successfully. Compare it with the third schedule.}
+        \label{fig:Schedules_for_testPpsAdd8-0}
+    \end{figure}
+
+\end{enumerate}
+
+\section{test\_prioAndType.py}
 This test was \texttt{full\_test/static/prio\_and\_type}.
 \begin{enumerate}
   \item Purpose of Test
@@ -595,7 +1167,142 @@ displaying the priority queues.
 
   Two checks of the time values with \texttt{dm-cmd rawqueue}.
 \end{enumerate}
-\section{test\_run\_all\_single.py}
+
+\section{test\_priorityQueue.py}
+\texttt{test\_priorityQueue.py} tests the execution of priority queues.
+
+    Generate a schedule with 5 or 6 altdst edges to a central block.
+    These edges connect this central block with tmsg nodes. The tmsg nodes
+    have a defdst edge to the central block.
+
+    With a generated schedule test altdst. Use a loop over all tmsg
+    nodes to switch the destinations such that the schedule flow from the
+    central block switches through all tmsg nodes. See Figure~\ref{fig:priorityQueue-5}
+    \begin{figure}
+        \centering
+        \includegraphics*[width=0.95\textwidth,keepaspectratio]{TestPattern/priorityQueue-5.pdf}
+        \caption{Pattern for the priority queue tests}
+        \label{fig:priorityQueue-5}
+    \end{figure}
+
+\section{test\_referenceEdges.py}
+\texttt{test\_referenceEdges.py} tests that reference edges work.
+At most three reference edges are allowed for a node. testReferenceEdgeLoop1 uses 1 reference edge.
+testReferenceEdgeLoop3 uses 3 reference edges. testReferenceEdgeLoop4 uses 4 reference edges, which is forbidden.
+
+\begin{enumerate}
+\item testReferenceEdgeSimple
+    Use a schedule with an edge of type reference between two loops
+    (a block and a tmsg). The loops run with 10Hz.
+    Check for the correct parameter value when using the reference.
+\item testReferenceEdgeLoop1
+    Use a schedule with a loop of a block and two tmsg.
+    The loops run with 1Hz. There is a reference between the two tmsg nodes.
+    Check for the correct gid value in the timing messages.
+    Check for the correct parameter value when using the reference.
+
+\item testReferenceEdgeLoop3
+    Use a schedule with a loop of a block and four tmsg.
+    The loops run with 1Hz. There is are references between the tmsg nodes.
+    Check for the correct gid value in the timing messages.
+    Check for the correct parameter value when using the reference.
+    See Figure~\ref{fig:testReferenceEdgeLoop3}.
+    \begin{figure}
+        \centering
+        \includegraphics*[height=0.9\textheight,keepaspectratio]{TestPattern/reference-loop3.pdf}
+        \caption{Schedule for testReferenceEdgeLoop3 (test\_referenceEdges.py).}
+        \label{fig:testReferenceEdgeLoop3}
+    \end{figure}
+\item testReferenceEdgeLoop4
+    Use a schedule with a loop of a block and five tmsg and four references.
+    This is not allowed. Adding the schedule fails.
+\end{enumerate}
+
+\section{test\_remove.py}
+\begin{enumerate}
+\item testRemove1
+    Load and during snoop start pattern A, a loop of a message and a
+    block. This produces messages with 10Hz.
+    Download the schedule for later compare.
+    Stop the pattern and remove the pattern which is nearly the same, but
+    the block has no type. The result is a schedule with only the block.
+    \begin{figure}
+        \centering
+        \includegraphics{TestPattern/remove1-0.pdf}
+        \includegraphics{TestPattern/remove1-1.pdf}
+        \includegraphics{TestPattern/remove1-1-download.pdf}
+        \caption{Schedules for testRemove1 (test\_remove.py). The first schedule
+        is the loop. The second schedule is removed from the first,
+        resulting in the third schedule.}
+        \label{fig:Schedules_for_testRemove1}
+    \end{figure}
+
+\item testRemove2
+    Load and start pattern A, a loop of a message and a block.
+    Stop the pattern and remove parts of the pattern which is nearly the same, but
+    the block has no type and a different event node EvtC. Remove fails,
+    because EvtC is unknown in the existing schedule.
+
+    The difference to testRemove1 is that the schedule for removal contains
+    EvtC instead of EvtA.
+    \begin{figure}
+        \centering
+        \includegraphics{TestPattern/remove2-0.pdf}
+        \includegraphics{TestPattern/remove2-1.pdf}
+        \includegraphics{TestPattern/remove2-1-download.pdf}
+        \caption{Schedules for testRemove2 (test\_remove.py). The first schedule
+        is the loop. The second schedule is removed from the first,
+        resulting in the third schedule.}
+        \label{fig:Schedules_for_testRemove2}
+    \end{figure}
+
+\item testRemove3
+    Load and start pattern A, a loop of message EvtA and block BlockA.
+    Stop the pattern and remove the pattern which is nearly the same, but
+    the block BlockA has no type. The remove command fails.
+
+    The difference to testRemove1 is that the schedule for removal contains
+    EvtA without a type. Thus, the remove command tries to remove BlockA,
+    which would leave EvtA childless.
+    \begin{figure}
+        \centering
+        \includegraphics{TestPattern/remove3-0.pdf}
+        \includegraphics{TestPattern/remove3-1.pdf}
+        \includegraphics{TestPattern/remove3-1-download.pdf}
+        \caption{Schedules for testRemove3 (test\_remove.py). The first schedule
+        is the loop. The second schedule is removed from the first,
+        resulting in the third schedule.}
+        \label{fig:Schedules_for_testRemove3}
+    \end{figure}
+
+\item testRemove4
+    Load and start pattern A, a loop of message EvtA and block BlockA.
+    Stop the pattern and remove EvtA. The result is a schedule with only
+    the block. Then add node EvtA of type switch and block BlockB. Thus,
+    EvtA changes the type.
+    \begin{figure}
+        \centering
+        \includegraphics{TestPattern/remove4-0.pdf}
+        \includegraphics{TestPattern/remove4-1.pdf}
+        \includegraphics{TestPattern/remove4-1-download.pdf}
+        \caption{Schedules for testRemove4 (test\_remove.py). First part.
+        First schedule consists of EvtA and BlockA. Remove the second schedule and get
+        the third schedule as result.}
+        \label{fig:Schedules_for_testRemove4-1}
+    \end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics{TestPattern/remove4-2.pdf}
+        \includegraphics{TestPattern/remove4-2-download.pdf}
+        \caption{Schedules for testRemove4 (test\_remove.py). Second part.
+        Add the first schedule with EvtA as a switch node. The result
+        is the second schedule.}
+        \label{fig:Schedules_for_testRemove4-2}
+    \end{figure}
+
+\end{enumerate}
+
+\section{test\_runAllSingle.py}
 This test was \texttt{full\_test/dynamic/basics/run\_all\_single}.
 \begin{enumerate}
   \item Purpose of Test
@@ -618,7 +1325,8 @@ This test was \texttt{full\_test/dynamic/basics/run\_all\_single}.
 
   For each pattern the correct CPU is used.
 \end{enumerate}
-\section{test\_run\_cpu0\_single.py}
+
+\section{test\_runCpu0Single.py}
 This test was \texttt{full\_test/dynamic/basics/run\_cpu0\_single}.
 \begin{enumerate}
   \item Purpose of Test
@@ -659,12 +1367,27 @@ This test was \texttt{full\_test/dynamic/basics/run\_cpu0\_single}.
 \end{enumerate}
 These test steps are applied to a bunch of schedules.
 The schedules use 1 to 4 CPUs whith 1, 2, 4, and 9 pattern beside the default pattern. There are 1, 10, or 150 blocks per pattern.
+
 \section{test\_schedules.py}
-\texttt{test\_schedules.py} collects schedules which are started. Tests that the schedules are compiled and loaded.
+\texttt{test\_schedules.py} collects schedules from INT or PROD. All patterns are started. The tests need 4 CPUs.
+Tests that the schedules are compiled and loaded. This includes
+two schedules from INT and PROD as of 2024-10-02.
+
+\section{test\_simultaneousThreads.py}
+\texttt{test\_simultaneousThreads.py} tests that startthread nodes can start a number of threads simultaneously.
+In Figure~\ref{fig:Pattern_for_the_simultaneous_start_of_threads} StartThread (runs in thread 0) starts threads 1, 2, and 3.
+To check that the threads are running, each threads produces timing messages with the thread number as parameter.
+    \begin{figure}
+        \centering
+        \includegraphics*[width=1.0\textwidth,keepaspectratio]{TestPattern/simultaneousThreads4.pdf}
+        \caption{Pattern for the simultaneous start of threads}
+        \label{fig:Pattern_for_the_simultaneous_start_of_threads}
+    \end{figure}
+The tests run for two threads (0 and 1), four threads (0, 1, 2, 3) and all threads (8 or 32).
 
 \include{singleEdgeTest}
 
-\section{test\_start\_stop\_abort.py}
+\section{test\_startStopAbort.py}
 This test was \texttt{full\_test/dynamic/basics/start\_stop\_abort}.
 \begin{enumerate}
   \item Purpose of Test
@@ -708,8 +1431,32 @@ This test was \texttt{full\_test/dynamic/switch}. The schedule \\
   The correct nodes are visited after each step.
 \end{enumerate}
 
-\section{test\_waitloop\_flush.py}
-\texttt{test\_waitloop\_flush.py} uses a schedule with a wait loop to check
+\section{test\_unilac.py}
+There are three tests with the same structure. The tests work with message rates of
+5 kHz, 45kHz, 90 kHz.
+\begin{enumerate}
+  \item Purpose of Test
+
+  This test is used to ensure that the datamaster can handle the amount of timming messages
+  needed to control UNILAC. This should be at least 600 messages in a 20 msec intervall. This
+  is a message rate of 30 kHz.
+  \item Test Actions
+  The schedule consists of two series of timing messages which are numbered by evtno and parameter.
+  At the end of the first series a flow command directs the flow to the second series of timing messages.
+  The block has a length of 10 msec, so it is executed with 100 Hz.
+    \begin{figure}
+        \centering
+        \includegraphics*[width=0.95\textwidth,keepaspectratio]{TestPattern/unilac100.pdf}
+        \caption{Schedule to test the message rate for the UNILAC}
+        \label{fig:unilac100}
+    \end{figure}
+  \item Success Criteria
+
+  Mesages with parameter 1 are received by saft-ctl snoop with 50 Hz.
+\end{enumerate}
+
+\section{test\_waitloopFlush.py}
+\texttt{test\_waitloopFlush.py} uses a schedule with a wait loop to check
 the correctness of the flush command. The schedule contains BLOCK\_LOOP with a low
 prio queue and a high prio queue. On pattern start, a flow command is queue in
 the low prio queue with quantity 10,000. This redirects the pattern to
@@ -722,13 +1469,13 @@ The test checks after 0.1 seconds that the flush is not executed, but after 1 se
 it is executed. The timeline of the checks is not precise enough to check
 exactly after 0.5 seconds the execution.
 
-\section{test\_zzz\_finish.py}
+\section{test\_zzzFinish.py}
 \texttt{test\_pps.py} (pps: pulse per second) is a basic test with a
 schedule which sends two timing messages every second. The test checks
 with 'saft-ctl snoop' the timing messages. This test should be the last
 in the whole test suite to leave the datamaster with a defined schedule.
 
-\chapter{Common Components}
+\chapter{Common Components - The Testbench}
 \section{dm\_testbench.py}
 \texttt{dm\_testbench.py} is a collection of Python functions for use
 in other test scripts.
@@ -753,6 +1500,10 @@ Usually the binaries for dm-cmd and dm-sched together with the libcarpedm
 are used from the build of the test repository in folders \\
 \texttt{modules/ftm/bin} and \texttt{modules/ftm/lib}. This is
 configured in the Makefile.
+
+Set the thread quantity (read from the lm32 firmware with eb-info) and
+set the CPU quantity to 4.
+
 \item setUp(self)
 
 Call \texttt{self.initDatamaster()}.
@@ -871,6 +1622,13 @@ from the current output. Assert that a unified diff has no lines.
 \item getSnoopCommand(self, duration)
 
 Get the snoop command with the duration given in seconds.
+
+\item getResetCommand(self)
+
+Get the eb-reset command. If eb-reset exists in the repository or
+workspace, this file name is returned. Otherwise 'eb-reset' is returned,
+which assumes that eb-reset is installed.
+
 \item snoopToCsv(self, csvFileName, duration=1)
 
 Run the snoop command for duration seconds and store the output in
@@ -903,13 +1661,13 @@ If True, the occurrences of all values in 'column' are printed.
 
 checkValues is a dictionary of key-value pairs to check. Key is a value
 in the column and value is the required frequency.
-The value can be '>n', '<n', '=n', 'n' (which is the same as '=n'), '=0'.
-The syntax '<n' fails if there are no occurrences.
+The value can be '$>$n', '$<$n', '=n', 'n' (which is the same as '=n'), '=0'.
+The syntax '$<$n' fails if there are no occurrences.
 Checks for intevalls are not possible since checkValues is a dictionary
 and keys occur at most once.
 Example: column=8 and checkValues={('0x0001', 62)} checks that EVTNO 0x0001
 occurs in 62 lines of the file to analyse.
-Example: column=8 and checkValues={('0x0002', '>0')} checks that EVTNO 0x0002
+Example: column=8 and checkValues={('0x0002', '$>$0')} checks that EVTNO 0x0002
 occurs at least once in the file to analyse.
 Example: column=4 and checkValues={'0x7': '=0'} checks that FID 0x7 does
 NOT occur in the file to analyse.
@@ -917,24 +1675,106 @@ NOT occur in the file to analyse.
 \item analyseDmCmdOutput(self, threadsToCheck=0)
 
 Run 'dm-cmd' with default action which shows the running threads and
-the message counts. threadsToCheck is an integer, where 32 bits are used
-as a bit mask. Each bit indicates a thread of 8 threads for 4 CPUs.
+the message counts. threadsToCheck is a string of 0 and 1.
+For 8 threads and 4 CPUs, the string is 32 chars long.
+For 32 threads and 4 CPUs, the string is 128 chars long.
 A thread is considered running if the output line for that thread contains 'yes'.
 A list of (key, message counts) is returned. Keys of this list are numbers xy,
 where x is the CPU number, y is the thread number, both single digits.
 If a thread hangs, dm-cmd may show 'yes' for this thread running, but the
 thread is in undefined status. To avoid this, use the method 'checkRunningThreadsCmd'.
+
 \item checkRunningThreadsCmd(self, messageInterval=1.0)
 
 Use analyseDmCmdOutput twice with a delay of messageInterval in between.
 Assert that the message counts increase with the second call and are greater
 than 0 on the first call.
+
+\item getQuantity(self, line)
+Get the quantity of command executions from the output line
+of 'dm-cmd $<$datamaster$>$ queue -v $<$block name$>$'.
+    Search for 'Qty: ' in the line and parse the number.
+
+\item checkQueueFlushed(self, queuesToFlush, blockName, flushPrio, checkFlush=True)
+Check that a flush command is executed and the defined queues are flushed.
+\begin{enumerate}
+\item queuesToFlush: binary value between 0 and 7 for the queues to flush.
+\item blockName: name of the block with the queues to check.
+\item flushPrio: priority of the flush command. Defines the queue where to look for the flush command.
+Priority queues higher than the flushPrio are not affected by the flush command since these
+queues are empty when a flush command with lower priority is executed. Therefore queuesToFlush is changed for
+\item flushprio = 0, 1.
+The check for the executed flush command and the checks for the flushed queues are independant. All checks
+are done in one parse run of the output of 'dm-cmd $<$datamaster$>$ -v queue $<$blockName$>$'. Flags and counters
+are used to signal the section inside the output.
+\item checkFlush = False means: check that no flush is executed.
+\end{enumerate}
+
 \item delay(self, duration)
 
 Sleep for 'duration' seconds. 'duration' is a float.
+
+\item runThreadXCommand(self, cpu, thread, command)
+
+Test for one CPU and one thread with 'command'.
+Check the return code of 0 for success and one line of output on stdout.
+
+\item prepareRunThreads(self, cpus=15):
+
+Check that no thread runs on the CPUs given by 'cpus' (bit mask).
+Load schedules (see \ref{fig:pps-cpu0}) into datamaster, one for each CPU and start all threads.
+Check that these are running. By default cpus=15, all CPUs are used.
+    \begin{figure}
+        \centering
+        \includegraphics*[width=0.95\textwidth,keepaspectratio]{TestPattern/pps-all-threads-cpu0.pdf}
+        \caption{Schedule with 8 PPS pattern to run 8 threads on one CPU used in method prepareRunThreads}
+        \label{fig:pps-cpu0}
+    \end{figure}
+
 \item deleteFile(self, fileName)
 
 Delete the file with name 'fileName'.
+
+\item resetAllCpus(self):
+
+Reset each CPU (loop over all lm32 CPUs). Use eb-reset $<$datamaster$>$ cpureset $<$cpu$>$.
+
+\item listFromBits(self, bits, quantity) $->$ list
+
+Convert 'bits', given as a string or an int, into a list of
+int items. quantity is the maximal int + 1.
+
+\item bitCount(self, bits, quantity) $->$ int
+
+Count how many bits are 1 in the number 'bits'.
+This is the number of items enabled in 'bits'.
+
+\item printStdOutStdErr(self, lines)
+
+Print the lines of stdout and stderr. This is given as a list of
+two lists of lines.
+
+\item getThreadQuantityFromFirmware(self) $->$ int
+
+This class method uses 'eb-info -w' to get the thread quantity
+from the lm32 firmware. This method is used once in the set up of
+a class by setUpClass.
+
+\item logToFile(self, text, fileName)
+
+This class method logs a text to a fileName. The text is prefixed
+by the current test name. This is appended to the file.
+
+\item checkRunningThreads(self, lines, masks) $->$ str
+
+Check the hex numbers describing the running threads.
+Since in some cases it is not determined which thread is used for a
+command, we have to check the lines against multiple masks.
+\begin{enumerate}
+\item lines is a list of lines, describes the running threads.
+\item masks is a list (not a set!) of hex numbers as strings.
+\end{enumerate}
+    Each number describes an allowed pattern of running threads.
 \end{enumerate}
 
 \section{Structure of Description}

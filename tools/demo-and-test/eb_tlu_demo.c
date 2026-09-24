@@ -192,25 +192,25 @@ int main(int argc, const char** argv) {
 	usleep(1000);
 
  /* Channels containing timestamp */
-if ((status = eb_device_read(device, wrTLU + GSI_TM_LATCH_FIFO_READY, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block)) != EB_OK)
+  if ((status = eb_device_read(device, wrTLU + GSI_TM_LATCH_FIFO_READY, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block)) != EB_OK)
 		die("TLU eb_device_read", status);
 	temp = data;
-     itoa(temp,bufft,2);
+  itoa(temp,bufft,2);
      
-		printf("Channels                         :%s\n",channelStr);
-		printf("Channels containing Timestamp    :%s\n",bufft);
+  printf("Channels                         :%s\n",channelStr);
+  printf("Channels containing Timestamp    :%s\n",bufft);
 
 
   /* Select Channel to perform FIFO Related Operations*/
   if ((status = eb_device_write(device, wrTLU + GSI_TM_LATCH_CH_SELECT, EB_BIG_ENDIAN|EB_DATA32, channelSelect, 0, eb_block)) != EB_OK)
     die("TLU eb_device_write", status);
     
- /* Read Channel Select Value */
- if ((status = eb_device_read(device, wrTLU + GSI_TM_LATCH_CH_SELECT, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block)) != EB_OK)
+  /* Read Channel Select Value */
+  if ((status = eb_device_read(device, wrTLU + GSI_TM_LATCH_CH_SELECT, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block)) != EB_OK)
 		die("TLU eb_device_read", status);
 	temp = data;
 	channelSelect = temp;
-    printf("Channel Selected is %lld\n\n",temp);
+  printf("Channel Selected is %lld\n\n",temp);
 
  /* Generate Test Pulse on  the selected channel */
  // if ((status = eb_device_write(device, wrTLU + GSI_TM_LATCH_FIFO_TEST, EB_BIG_ENDIAN|EB_DATA32, 0xF,0,eb_block)) != EB_OK)
@@ -219,9 +219,9 @@ if ((status = eb_device_read(device, wrTLU + GSI_TM_LATCH_FIFO_READY, EB_BIG_END
 
 
   /* Channel FIFO Length Before Read Operation */
-if ((status = eb_device_read(device, wrTLU + GSI_TM_LATCH_FIFO_CNT, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block)) != EB_OK)
+  if ((status = eb_device_read(device, wrTLU + GSI_TM_LATCH_FIFO_CNT, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block)) != EB_OK)
 		die("TLU eb_device_read", status);
-		count_prev = data;
+  count_prev = data;
  
     
  

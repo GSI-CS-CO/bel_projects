@@ -1,15 +1,14 @@
 digraph "booster-8-loops" {
+
 name="booster-8-loops"
 edge [type=defdst]
 node [cpu=0 fid=1 fillcolor=white style=filled type=block tperiod=1000 pattern=MAIN toffs=0]
-
 Evt_MAIN [type=tmsg patentry=1 evtno=0 par=0]
-B_MAIN [patexit=1 tperiod=100000000]
-
+B_MAIN [patexit=1 tperiod=100000000 qlo=1]
 Evt_MAIN -> Origin_T1 -> Startthread_T1 -> Origin_T2 -> Startthread_T2 -> Origin_T3 -> Startthread_T3 -> Origin_T4 -> Startthread_T4 -> Origin_T5 -> Startthread_T5 -> Origin_T6 -> Startthread_T6 -> Origin_T7 -> Startthread_T7 -> B_MAIN -> Evt_MAIN
 
 Origin_T1 [type=origin toffs=10000000 thread=1]
-Startthread_T1 [type=startthread toffs=12000000 startoffs=12000000 thread=1]
+Startthread_T1 [type=startthread toffs=12000000 startoffs=12000000 thread="0x2"]
 Evt1 [type=tmsg pattern=Pattern1 evtno=1 par=1]
 Block1 [pattern=Pattern1]
 Block1a [pattern=Pattern1]
@@ -17,7 +16,7 @@ Origin_T1 -> Block1 [type=origindst]
 Block1 -> Evt1 -> Block1a
 
 Origin_T2 [type=origin toffs=20000000 thread=2]
-Startthread_T2 [type=startthread toffs=22000000 startoffs=22000000 thread=2]
+Startthread_T2 [type=startthread toffs=22000000 startoffs=22000000 thread="0x4"]
 Evt2 [type=tmsg pattern=Pattern2 evtno=2 par=2]
 Block2 [pattern=Pattern2]
 Block2a [pattern=Pattern2]
@@ -25,7 +24,7 @@ Origin_T2 -> Block2 [type=origindst]
 Block2 -> Evt2 -> Block2a
 
 Origin_T3 [type=origin toffs=30000000 thread=3]
-Startthread_T3 [type=startthread toffs=32000000 startoffs=32000000 thread=3]
+Startthread_T3 [type=startthread toffs=32000000 startoffs=32000000 thread="0x8"]
 Evt3 [type=tmsg pattern=Pattern3 evtno=3 par=3]
 Block3 [pattern=Pattern3]
 Block3a [pattern=Pattern3]
@@ -33,7 +32,7 @@ Origin_T3 -> Block3 [type=origindst]
 Block3 -> Evt3 -> Block3a
 
 Origin_T4 [type=origin toffs=40000000 thread=4]
-Startthread_T4 [type=startthread toffs=42000000 startoffs=42000000 thread=4]
+Startthread_T4 [type=startthread toffs=42000000 startoffs=42000000 thread="0x10"]
 Evt4 [type=tmsg pattern=Pattern4 evtno=4 par=4]
 Block4 [pattern=Pattern4]
 Block4a [pattern=Pattern4]
@@ -41,7 +40,7 @@ Origin_T4 -> Block4 [type=origindst]
 Block4 -> Evt4 -> Block4a
 
 Origin_T5 [type=origin toffs=50000000 thread=5]
-Startthread_T5 [type=startthread toffs=52000000 startoffs=52000000 thread=5]
+Startthread_T5 [type=startthread toffs=52000000 startoffs=52000000 thread="0x20"]
 Evt5 [type=tmsg pattern=Pattern5 evtno=5 par=5]
 Block5 [pattern=Pattern5]
 Block5a [pattern=Pattern5]
@@ -49,7 +48,7 @@ Origin_T5 -> Block5 [type=origindst]
 Block5 -> Evt5 -> Block5a
 
 Origin_T6 [type=origin toffs=60000000 thread=6]
-Startthread_T6 [type=startthread toffs=62000000 startoffs=62000000 thread=6]
+Startthread_T6 [type=startthread toffs=62000000 startoffs=62000000 thread="0x40"]
 Evt6 [type=tmsg pattern=Pattern6 evtno=6 par=6]
 Block6 [pattern=Pattern6]
 Block6a [pattern=Pattern6]
@@ -57,11 +56,10 @@ Origin_T6 -> Block6 [type=origindst]
 Block6 -> Evt6 -> Block6a
 
 Origin_T7 [type=origin toffs=70000000 thread=7]
-Startthread_T7 [type=startthread toffs=72000000 startoffs=72000000 thread=7]
+Startthread_T7 [type=startthread toffs=72000000 startoffs=72000000 thread="0x80"]
 Evt7 [type=tmsg pattern=Pattern7 evtno=7 par=7]
 Block7 [pattern=Pattern7]
 Block7a [pattern=Pattern7]
 Origin_T7 -> Block7 [type=origindst]
 Block7 -> Evt7 -> Block7a
-
 }
