@@ -305,16 +305,17 @@ uint32_t extern_entryActionConfigured()
         DBPRINT1("wr-mil: ERROR - can't find MIL device; sender\n");
         return COMMON_STATUS_OUTOFRANGE;
       } // if !pMilSend
-      else pMilSend += *pSharedSetMilDev * 0x20000;
+      else pMilSend += (*pSharedSetMilDev * 0x20000) >> 2;
       break;
     case 14   :    // blackbox in SCU gateware, SCU4.1/RMT
       // SCU slaves have offsets 0x20000, 0x40000... for slots 1, 2 ...
       pMilSend = fwlib_getSbMaster();
+      pp_printf("pmilsend base %x\n", pMilSend);
       if (!pMilSend) {
         DBPRINT1("wr-mil: ERROR - can't find MIL device; sender\n");
         return COMMON_STATUS_OUTOFRANGE;
       } // if !pMilSend
-      else pMilSend += *pSharedSetMilDev * 0x20000;
+      else pMilSend += (*pSharedSetMilDev * 0x20000) >> 2;
       useBlackbox = 1;
       break;
     default :
@@ -328,8 +329,9 @@ uint32_t extern_entryActionConfigured()
     // hacky code here; we have to clean this up once the blackbox becomes stable
     // all internal stuff is the blackbox is cleared when selecting plugin '0'
     // then we switch to to the MIL plugin '3'
-    *(pMilSend + BLACKBOX_SCU_PLUGIN_SELECT) = 0;
-    *(pMilSend + BLACKBOX_SCU_PLUGIN_SELECT) = BLACKBOX_SCU_PLUGIN_NR;
+    pMilSend += (BLACKBOX_SCU_PLUGIN_SELECT >> 2);
+    *(volatile uint16_t *)pMilSend = 0x0;  
+    *(volatile uint16_t *)pMilSend = (uint16_t)BLACKBOX_SCU_PLUGIN_NR;
   } // if useBB
   else {        // use SCU with MIL piggy or native SIO3 without Blackbox
     if ((status = resetDevMil(pMilSend, 0))  != MIL_STAT_OK) {
