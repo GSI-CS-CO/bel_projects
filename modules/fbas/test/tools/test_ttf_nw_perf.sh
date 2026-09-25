@@ -54,6 +54,20 @@ pre_check() {
     echo "    GID: 0x0fff EVTNO: 0x0100 Other: 0x000000000"
 }
 
+info_messaging_rate() {
+    # $1 - index
+
+    msg_rates=(33333 100000 80000 50000 20000 10000 \
+            #  30,   10,    12.5, 20,   50,   100 [Hz]
+                5000 2000 1000  500   200   100)
+            #   200, 500, 1000, 2000, 5000, 10000 [Hz]
+
+    msg_rate_us=${msg_rates[$1]}
+    msg_rate_hz=$(bc <<< "scale=1; 1000000/$msg_rate_us")
+
+    printf "TX: msg rate = %.1f Hz (%d us)\n" $msg_rate_hz $msg_rate_us
+}
+
 setup_nodes() {
 
     filenames="$fw_scu_def $script_rxscu"
@@ -109,6 +123,9 @@ setup_nodes() {
 
 measure_nw_perf() {
     echo -e "start the measurements\n"
+
+    info_messaging_rate $idx_msg_period
+
     output=$(run_remote $rxscu "source setup_local.sh && enable_mps \$rx_node_dev")
 
     # use local script to print info
