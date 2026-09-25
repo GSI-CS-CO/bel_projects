@@ -99,8 +99,13 @@
 #define WRMIL_SHARED_GET_N_EVTS_RECD_LO    (WRMIL_SHARED_GET_N_EVTS_RECD_HI   + _32b_SIZE_)  // number of received MIL telegrams (data), low word
 #define WRMIL_SHARED_GET_N_EVTS_ERR        (WRMIL_SHARED_GET_N_EVTS_RECD_LO   + _32b_SIZE_)  // number of received MIL telegrams with errors, detected by VHDL manchester decoder
 #define WRMIL_SHARED_GET_N_EVTS_BURST      (WRMIL_SHARED_GET_N_EVTS_ERR       + _32b_SIZE_)  // number of occurences of 'nonsense high frequency bursts' 
+#define WRMIL_SHARED_GET_N_EVTS_BUSY_HI    (WRMIL_SHARED_GET_N_EVTS_BURST     + _32b_SIZE_)  // number of detected 'busy' signals (VHDL, blackbox only), high word
+#define WRMIL_SHARED_GET_N_EVTS_BUSY_LO    (WRMIL_SHARED_GET_N_EVTS_BUSY_HI   + _32b_SIZE_)  // number of detected 'busy' signals (VHDL, blackbox only), low word
+#define WRMIL_SHARED_GET_N_EVTS_MISSED     (WRMIL_SHARED_GET_N_EVTS_BUSY_LO   + _32b_SIZE_)  // number of detected 'missed' signals (VHDL, blackbox only)
+#define WRMIL_SHARED_GET_USE_BB            (WRMIL_SHARED_GET_N_EVTS_MISSED    + _32b_SIZE_)  // 1: use blackbox plugin; 0: don't use blackbox plugin
+
 
 // diagnosis: end of used shared memory
-#define WRMIL_SHARED_END                   (WRMIL_SHARED_GET_N_EVTS_BURST     + _32b_SIZE_) 
+#define WRMIL_SHARED_END                   (WRMIL_SHARED_GET_USE_BB           + _32b_SIZE_) 
 
 #endif

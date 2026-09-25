@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Micheal Reese, Mathias Kreider GSI-Darmstadt
- *  version : 24-sep-2026
+ *  version : 25-sep-2026
  *
  *  firmware required for the White Rabbit -> MIL Gateways
  *  
@@ -94,7 +94,11 @@ volatile uint32_t *pSharedGetNEvtsRecTLo;  // pointer to a "user defined" u32 re
 volatile uint32_t *pSharedGetNEvtsRecDHi;  // pointer to a "user defined" u32 register; here: number of telegrams received (data), high word
 volatile uint32_t *pSharedGetNEvtsRecDLo;  // pointer to a "user defined" u32 register; here: number of telegrams received (data), high word
 volatile uint32_t *pSharedGetNEvtsErr;     // pointer to a "user defined" u32 register; here: number of received MIL telegrams with errors, detected by VHDL manchester decoder
-volatile uint32_t *pSharedGetNEvtsBurst;   // pointer to a "user defined" u32 register; here: number of occurences of 'nonsense high frequency bursts' 
+volatile uint32_t *pSharedGetNEvtsBurst;   // pointer to a "user defined" u32 register; here: number of occurences of 'nonsense high frequency bursts'
+volatile uint32_t *pSharedGetNEvtsBusyHi;  // pointer to a "user defined" u32 register; here: number of detected 'busy' signals (VHDL, blackbox only), high word
+volatile uint32_t *pSharedGetNEvtsBusyLo;  // pointer to a "user defined" u32 register; here: number of detected 'busy' signals (VHDL, blackbox only), low word
+volatile uint32_t *pSharedGetNEvtsMissed;  // pointer to a "user defined" u32 register; here: number of detected 'missed' signals (VHDL, blackbox only)
+volatile uint32_t *pSharedGetUseBlackbox;  // pointer to a "user defined" u32 register; here: 1: use blackbox plugin; 0: don't use blackbox plugin
 
 uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM
 volatile uint32_t *pMilSend;            // address of MIL device sending timing messages, usually this will be a SIO
@@ -104,6 +108,7 @@ uint64_t statusArray;                   // all status infos are ORed bit-wise in
 uint64_t nEvtsSnd;                      // # of sent MIL telegrams
 uint64_t nEvtsRecT;                     // # of received MIL telegrams (TAI)
 uint64_t nEvtsRecD;                     // # of received MIL telegrams (data)
+uint64_t nEvtsBusy;                     // # of detected 'busy' signals (VHDL, blackbox only)    
 uint32_t nEvtsErr;                      // # of late messages with errors
 uint32_t nEvtsBurst;                    // # of detected 'high frequency bursts'
 uint32_t nEvtsLate;                     // # of late messages
@@ -111,6 +116,7 @@ uint32_t nEvtsEarly;                    // # of early messages
 uint32_t nEvtsConflict;                 // # of conflict messages
 uint32_t nEvtsDelayed;                  // # of delayed messages
 uint32_t nEvtsSlow;                     // # of slow messages
+uint32_t nEvtsMissed;                   // # of 'missed' signals (VHDL, blackbox only)
 uint32_t offsSlow;                      // offset for slow messages [ns]
 uint32_t offsSlowMax;                   // offset for slow messages [ns]; max
 uint32_t offsSlowMin;                   // offset for slow messages [ns]; min
@@ -181,6 +187,10 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
   pSharedGetNEvtsRecDLo      = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_RECD_LO    >> 2));
   pSharedGetNEvtsErr         = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_ERR        >> 2));
   pSharedGetNEvtsBurst       = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_BURST      >> 2));
+  pSharedGetNEvtsBusyHi      = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_BUSY_HI    >> 2));
+  pSharedGetNEvtsBusyLo      = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_BUSY_LO    >> 2));
+  pSharedGetNEvtsMissed      = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_MISSED     >> 2));
+  pSharedGetUseBlackbox      = (uint32_t *)(pShared + (WRMIL_SHARED_GET_USE_BB            >> 2));
 
   // find address of CPU from external perspective
   idx = 0;
@@ -228,6 +238,7 @@ void extern_clearDiag()
   nEvtsSnd      = 0x0;
   nEvtsRecT     = 0x0;
   nEvtsRecD     = 0x0;
+  nEvtsBusy     = 0x0;
   nEvtsErr      = 0x0;
   nEvtsBurst    = 0x0;
   nEvtsLate     = 0x0;
@@ -235,6 +246,7 @@ void extern_clearDiag()
   nEvtsConflict = 0x0;
   nEvtsDelayed  = 0x0;
   nEvtsSlow     = 0x0;
+  nEvtsMissed   = 0x0;
   offsSlow      = 0x0;
   offsSlowMax   = 0x0;
   offsSlowMin   = 0xffffffff;
@@ -392,6 +404,9 @@ uint32_t extern_entryActionOperation()
   *pSharedGetNEvtsRecDLo    = 0x0;
   *pSharedGetNEvtsErr       = 0x0;
   *pSharedGetNEvtsBurst     = 0x0;
+  *pSharedGetNEvtsBusyHi    = 0x0;
+  *pSharedGetNEvtsBusyLo    = 0x0;
+  *pSharedGetNEvtsMissed    = 0x0;
 
   // init set values
   utc_trigger          = *pSharedSetUtcTrigger;
@@ -409,6 +424,7 @@ uint32_t extern_entryActionOperation()
   nEvtsSnd             = 0;
   nEvtsRecT            = 0;
   nEvtsRecD            = 0;
+  nEvtsBusy            = 0;
   nEvtsErr             = 0;
   nEvtsBurst           = 0;
   nEvtsLate            = 0;
@@ -416,6 +432,7 @@ uint32_t extern_entryActionOperation()
   nEvtsConflict        = 0;
   nEvtsDelayed         = 0;
   nEvtsSlow            = 0;
+  nEvtsMissed          = 0;
   offsSlow             = 0;
   offsSlowMax          = 0;
   offsSlowMin          = 0xffffffff;
@@ -874,8 +891,12 @@ int main(void) {
     *pSharedGetNEvtsRecTLo = (uint32_t)(nEvtsRecT & 0xffffffff);
     *pSharedGetNEvtsRecDHi = (uint32_t)(nEvtsRecD >> 32);
     *pSharedGetNEvtsRecDLo = (uint32_t)(nEvtsRecD & 0xffffffff);
+    *pSharedGetNEvtsBusyHi = (uint32_t)(nEvtsBusy >> 32);
+    *pSharedGetNEvtsBusylo = (uint32_t)(nEvtsBusy & 0xfffffffff);
     *pSharedGetNEvtsErr    = nEvtsErr;
     *pSharedGetNEvtsBurst  = nEvtsBurst;
+    *pSharedGetNEvtsMissed = nEvtsMissed;
+    *pSharedGetUseBlackbox = useBlackbox;
   } // while
 
   return(1); // this should never happen ...
