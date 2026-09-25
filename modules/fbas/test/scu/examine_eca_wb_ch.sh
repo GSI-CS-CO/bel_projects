@@ -69,7 +69,7 @@ echo "### Examine the ECA to LM32 shared memory transfer ###"
 saft-wbm-ctl $TR -x
 
 # create event conditions
-for i in $(seq 0 $(($N_IDX - 1))); do
+for i in $(seq 1 $N_IDX); do
     saft-wbm-ctl $TR -c $EVT_ID_0 $EVT_MASK 0 $i -d
 done
 
