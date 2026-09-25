@@ -43,6 +43,7 @@ typedef enum MSR_ITEMS {
   MSR_RX_DLY,  // receiver handler delay
   MSR_SG_LTY,  // signalling latency
   MSR_MSG_DLY, // messaging delay
+  MSR_MSG_RATE,// messaging rate
   MSR_TTL,     // TTL threshold/interval
   MSR_ML_PRD,  // period of the main loop
   MSR_DIOB_DLY,// DIOB access delay

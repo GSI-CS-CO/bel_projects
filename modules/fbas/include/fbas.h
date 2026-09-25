@@ -71,7 +71,12 @@
 #define FBAS_SHARED_MSG_DLY_MAX    (FBAS_SHARED_MSG_DLY_MIN    + 2 * _32b_SIZE_)   // max
 #define FBAS_SHARED_MSG_DLY_VLD    (FBAS_SHARED_MSG_DLY_MAX    + 2 * _32b_SIZE_)   // valid count
 #define FBAS_SHARED_MSG_DLY_ALL    (FBAS_SHARED_MSG_DLY_VLD    + _32b_SIZE_)       // all/total count
-#define FBAS_SHARED_TTL_PRD_AVG    (FBAS_SHARED_MSG_DLY_ALL    + _32b_SIZE_)       // TTL, avg
+#define FBAS_SHARED_MSG_RATE_AVG   (FBAS_SHARED_MSG_DLY_ALL    + _32b_SIZE_)       // messaging rate, avg
+#define FBAS_SHARED_MSG_RATE_MIN   (FBAS_SHARED_MSG_RATE_AVG   + 2 * _32b_SIZE_)   // min
+#define FBAS_SHARED_MSG_RATE_MAX   (FBAS_SHARED_MSG_RATE_MIN   + 2 * _32b_SIZE_)   // max
+#define FBAS_SHARED_MSG_RATE_VLD   (FBAS_SHARED_MSG_RATE_MAX   + 2 * _32b_SIZE_)   // valid count
+#define FBAS_SHARED_MSG_RATE_ALL   (FBAS_SHARED_MSG_RATE_VLD   + _32b_SIZE_)       // all/total count
+#define FBAS_SHARED_TTL_PRD_AVG    (FBAS_SHARED_MSG_RATE_ALL   + _32b_SIZE_)       // TTL, avg
 #define FBAS_SHARED_TTL_PRD_MIN    (FBAS_SHARED_TTL_PRD_AVG    + 2 * _32b_SIZE_)   // min
 #define FBAS_SHARED_TTL_PRD_MAX    (FBAS_SHARED_TTL_PRD_MIN    + 2 * _32b_SIZE_)   // max
 #define FBAS_SHARED_TTL_PRD_VLD    (FBAS_SHARED_TTL_PRD_MAX    + 2 * _32b_SIZE_)   // valid count
