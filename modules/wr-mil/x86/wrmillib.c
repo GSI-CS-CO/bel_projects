@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 06-jul-2026
+ *  version : 25-sep-2026
  *
  * library for wr-mil
  *
@@ -92,6 +92,10 @@ eb_address_t wrmil_get_nEvtsRecDHi;       // number of received MIL telegrams (d
 eb_address_t wrmil_get_nEvtsRecDLo;       // number of received MIL telegrams (data), low word
 eb_address_t wrmil_get_nEvtsErr;          // number of received MIL 'broken' MIL telegrams detected by VHDL Manchester decoder
 eb_address_t wrmil_get_nEvtsBurst;        // number of detected 'high frequency bursts'
+eb_address_t wrmil_get_nEvtsBusyHi;       // number of detected 'busy' signals (VHDL, blackbox only), high word
+eb_address_t wrmil_get_nEvtsBusyLo;       // number of detected 'busy' signals (VHDL, blackbox only), low word
+eb_address_t wrmil_get_nEvtsMissed;       // number of detected 'missed' signals (VHDL, blackbox only)
+eb_address_t wrmil_get_useBlackbox;       // 1: use blackbox plugin; 0: don't use blackbox plugin
 
 eb_address_t wrf50_get_TMainsAct;         // period of mains cycle [ns], actual value                           
 eb_address_t wrf50_get_TDMAct;            // period of Data Master cycle [ns], actual value                     
@@ -208,6 +212,10 @@ uint32_t wrmil_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t c
   wrmil_get_nEvtsRecDLo  = lm32_base + SHARED_OFFS + WRMIL_SHARED_GET_N_EVTS_RECD_LO;
   wrmil_get_nEvtsErr     = lm32_base + SHARED_OFFS + WRMIL_SHARED_GET_N_EVTS_ERR;
   wrmil_get_nEvtsBurst   = lm32_base + SHARED_OFFS + WRMIL_SHARED_GET_N_EVTS_BURST;
+  wrmil_get_nEvtsBusyHi  = lm32_base + SHARED_OFFS + WRMIL_SHARED_GET_N_EVTS_BUSY_HI;
+  wrmil_get_nEvtsBusyLo  = lm32_base + SHARED_OFFS + WRMIL_SHARED_GET_N_EVTS_BUSY_LO;
+  wrmil_get_nEvtsMissed  = lm32_base + SHARED_OFFS + WRMIL_SHARED_GET_N_EVTS_MISSED;
+  wrmil_get_useBlackbox  = lm32_base + SHARED_OFFS + WRMIL_SHARED_GET_USE_BB; 
 
   // do this just at the very end
   *ebDevice = (uint64_t)eb_device;
@@ -326,7 +334,7 @@ uint32_t wrmil_version_library(uint32_t *version)
 
 
 void wrmil_printDiag(uint32_t utcTrigger, uint32_t utcDelay, uint32_t trigUtcDelay, uint32_t gid, int32_t latency, uint64_t utcOffset, uint32_t requestFill, uint32_t milDev,
-                     uint32_t milMon, uint64_t nEvtsSnd, uint64_t nEvtsRecT, uint64_t nEvtsRecD, uint32_t nEvtsErr, uint32_t nEvtsBurst)
+                     uint32_t milMon, uint64_t nEvtsSnd, uint64_t nEvtsRecT, uint64_t nEvtsRecD, uint32_t nEvtsErr, uint32_t nEvtsBurst, uint64_t nEvtsBusy, uint32_t nEvtsMissed, uint32_t flagUseBlackbox)
 {
   printf("wrmil: info  ...\n\n");
 
@@ -343,7 +351,9 @@ void wrmil_printDiag(uint32_t utcTrigger, uint32_t utcDelay, uint32_t trigUtcDel
   printf("# MIL events received (TAI)         : 0d%015lu\n"    , nEvtsRecT);
   printf("# MIL events received (data)        : 0d%015lu\n"    , nEvtsRecD);
   printf("# MIL events received (error)       : 0d%015u\n"     , nEvtsErr);
-  printf("# high frequency bursts             : 0d%015u\n"     , nEvtsBurst);
+  printf("# MIL events HW busy (VHDL)         : 0d%015u\n"     , nEvtsBusy);
+  printf("# MIL events HW missed (VHDL)       : 0d%015u\n"     , nEvtsMissed);
+  printf("# type (1: use blackbox, 0: don't)  : 0d%015u\n"     , flagUseBlackbox);  
 } // wrmil_printDiag
 
 
@@ -383,8 +393,9 @@ void wrf50_printDiag(int32_t f50Offs, uint32_t mode, uint32_t TMainsAct, uint32_
 } // wrf50_printDiag
 
 
-uint32_t wrmil_info_read(uint64_t ebDevice, uint32_t *utcTrigger, uint32_t *utcUtcDelay, uint32_t *trigUtcDelay, uint32_t *gid, int32_t *latency, uint64_t *utcOffset, uint32_t *requestFill, uint32_t *milDev,
-                         uint32_t *milMon, uint64_t *nEvtsSnd, uint64_t *nEvtsRecT, uint64_t *nEvtsRecD, uint32_t *nEvtsErr, uint32_t *nEvtsBurst, int printFlag)
+uint32_t wrmil_info_read(uint64_t ebDevice, uint32_t *utcTrigger, uint32_t *utcUtcDelay, uint32_t *trigUtcDelay, uint32_t *gid, int32_t *latency, uint64_t *utcOffset, uint32_t *requestFill,
+                         uint32_t *milDev, uint32_t *milMon, uint64_t *nEvtsSnd, uint64_t *nEvtsRecT, uint64_t *nEvtsRecD, uint32_t *nEvtsErr, uint32_t *nEvtsBurst, uint64_t *nEvtsBusy,
+                         uint32_t *nEvtsMissed, uint32_t *flagUseBlackbox,  uint32_t printFlag)
 {
   eb_cycle_t   eb_cycle;
   eb_status_t  eb_status;
@@ -413,28 +424,37 @@ uint32_t wrmil_info_read(uint64_t ebDevice, uint32_t *utcTrigger, uint32_t *utcU
   eb_cycle_read(eb_cycle, wrmil_get_nEvtsRecDLo , EB_BIG_ENDIAN|EB_DATA32, &(data[15]));
   eb_cycle_read(eb_cycle, wrmil_get_nEvtsErr    , EB_BIG_ENDIAN|EB_DATA32, &(data[16]));
   eb_cycle_read(eb_cycle, wrmil_get_nEvtsBurst  , EB_BIG_ENDIAN|EB_DATA32, &(data[17]));
+  eb_cycle_read(eb_cycle, wrmil_get_nEvtsBusyHi , EB_BIG_ENDIAN|EB_DATA32, &(data[18]));
+  eb_cycle_read(eb_cycle, wrmil_get_nEvtsBusyLo , EB_BIG_ENDIAN|EB_DATA32, &(data[19]));
+  eb_cycle_read(eb_cycle, wrmil_get_nEvtsMissed , EB_BIG_ENDIAN|EB_DATA32, &(data[20]));
+  eb_cycle_read(eb_cycle, wrmil_get_useBlackbox , EB_BIG_ENDIAN|EB_DATA32, &(data[21]));
   if ((eb_status = eb_cycle_close(eb_cycle)) != EB_OK) return COMMON_STATUS_EB;
 
-  *utcTrigger    = data[0];
-  *utcUtcDelay   = data[1];
-  *trigUtcDelay  = data[2];
-  *gid           = data[3];
-  *latency       = data[4];
-  *utcOffset     = ((uint64_t)data[5] & 0xffffffff) << 32;
-  *utcOffset    |= (uint64_t)data[6] & 0xffffffff;
-  *requestFill   = data[7];
-  *milDev        = data[8];
-  *milMon        = data[9];
-  *nEvtsSnd      = ((uint64_t)data[10] & 0xffffffff) << 32;
-  *nEvtsSnd     |= (uint64_t)data[11] & 0xffffffff;
-  *nEvtsRecT      = ((uint64_t)data[12] & 0xffffffff) << 32;
-  *nEvtsRecT     |= (uint64_t)data[13] & 0xffffffff;
-  *nEvtsRecD      = ((uint64_t)data[14] & 0xffffffff) << 32;
-  *nEvtsRecD     |= (uint64_t)data[15] & 0xffffffff;
-  *nEvtsErr      = data[16];
-  *nEvtsBurst    = data[17];
+  *utcTrigger      = data[0];
+  *utcUtcDelay     = data[1];
+  *trigUtcDelay    = data[2];
+  *gid             = data[3];
+  *latency         = data[4];
+  *utcOffset       = ((uint64_t)data[5] & 0xffffffff) << 32;
+  *utcOffset      |= (uint64_t)data[6] & 0xffffffff;
+  *requestFill     = data[7];
+  *milDev          = data[8];
+  *milMon          = data[9];
+  *nEvtsSnd        = ((uint64_t)data[10] & 0xffffffff) << 32;
+  *nEvtsSnd       |=  (uint64_t)data[11] & 0xffffffff;
+  *nEvtsRecT       = ((uint64_t)data[12] & 0xffffffff) << 32;
+  *nEvtsRecT      |=  (uint64_t)data[13] & 0xffffffff;
+  *nEvtsRecD       = ((uint64_t)data[14] & 0xffffffff) << 32;
+  *nEvtsRecD      |=  (uint64_t)data[15] & 0xffffffff;
+  *nEvtsErr        = data[16];
+  *nEvtsBurst      = data[17];
+  *nEvtsBusy       = ((uint64_t)data[18] & 0xffffffff) << 32;
+  *nEvtsBusy      |=  (uint64_t)data[19] & 0xffffffff;
+  *nEvtsMissed     = data[20];
+  *flagUseBlackbox = data[21];
 
-  if (printFlag) wrmil_printDiag(*utcTrigger, *utcUtcDelay, *trigUtcDelay, *gid, *latency, *utcOffset, *requestFill, *milDev, *milMon, *nEvtsSnd, *nEvtsRecT, *nEvtsRecD, *nEvtsErr, *nEvtsBurst);
+  if (printFlag) wrmil_printDiag(*utcTrigger, *utcUtcDelay, *trigUtcDelay, *gid, *latency, *utcOffset, *requestFill, *milDev, *milMon, *nEvtsSnd, *nEvtsRecT, *nEvtsRecD, *nEvtsErr,
+                                 *nEvtsBurst, *nEvtsBusy, *nEvtsMissed, *flagUseBlackbox);
   
   return COMMON_STATUS_OK;
 } // wrmil_info_read
