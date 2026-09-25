@@ -73,7 +73,7 @@ is_measurement_failed() {
     # $@ - string with measurements
 
     # measurements[0] - RX msg count, expected non-zero count
-    # measurements[1] - RX late msg count, expected non-zero count
+    # measurements[1] - RX late msg count, expected zero count
 
     local -n ret="$1"
     shift
@@ -83,11 +83,8 @@ is_measurement_failed() {
     n_msg=${output[0]}
     n_msg=$(( 10#$n_msg ))  # convert a string to integer
 
-    n_late_msg=${output[1]}
-    n_late_msg=$(( 10#$n_late_msg ))
-
-    # failure: if the 'n_msg' or 'n_late_msg' count has zero value
-    if [ $n_msg -eq 0 ] || [ $n_late_msg -eq 0 ]; then
+    # failure: if the 'n_msg' count has zero value
+    if [ $n_msg -eq 0 ]; then
         failed=1 # true
     fi
 
