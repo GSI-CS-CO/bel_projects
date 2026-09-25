@@ -521,8 +521,7 @@ set_eca_rules() {
 
         if [ -z "$addr_scu_echo" ]; then
             echo "addr_scu_echo is not applicable for this platform."
-            echo "Skip the creation of macros for the ECA WB master. Exit!"
-            exit 1
+            echo "Skip the creation of macros for the ECA WB master."
         else
             echo "create $n_max_tx_nodes macros for transferring high 16 bits of the parameter to the echo register $addr_scu_echo"
             flag=0x4c    # write high 16 bits of the upper 32 bits in the parameter field
