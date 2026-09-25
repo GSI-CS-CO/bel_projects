@@ -362,7 +362,9 @@ static void help(void) {
   std::cerr << "                       6: PZU_TK; UNILAC, Transfer Line"                            << std::endl;
   std::cerr << "                       7: SIS18_RING"                                               << std::endl;
   std::cerr << "                       8: ESR_RING"                                                 << std::endl;
-  std::cerr << "                       9: PARTIH"                                                   << std::endl;
+  std::cerr << "                       9: PARTIH_00; 1st local gateway"                             << std::endl;
+  std::cerr << "                      10: PZU_TK_00; UNILAC, Transfer Line; 1st local gateway"      << std::endl;
+  std::cerr << "                      11: PZU_TK_01; UNILAC, Transfer Line; 2nd local gateway"      << std::endl;
   std::cerr << std::endl;
   std::cerr << "This tool monitors a White Rabbit -> MIL gateway."                                  << std::endl;
   std::cerr << std::endl;
@@ -440,30 +442,34 @@ int main(int argc, char** argv)
         tmpi        = strtoull(optarg, &tail, 0);
         if (*tail != 0) {std::cerr << "Specify a proper number, not " << optarg << "'%s'!" << std::endl; return 1;}
         switch (tmpi) {
-          case 0: gid = PZU_QR;     sprintf(domainName, "%s", "pzu_qr");     break;
-          case 1: gid = PZU_QL;     sprintf(domainName, "%s", "pzu_ql");     break;
-          case 2: gid = PZU_QN;     sprintf(domainName, "%s", "pzu_qn");     break;
-          case 3: gid = PZU_UN;     sprintf(domainName, "%s", "pzu_un");     break;
-          case 4: gid = PZU_UH;     sprintf(domainName, "%s", "pzu_uh");     break;
-          case 5: gid = PZU_AT;     sprintf(domainName, "%s", "pzu_at");     break;
-          case 6: gid = PZU_TK;     sprintf(domainName, "%s", "pzu_tk");     break;
-          case 7: gid = SIS18_RING; sprintf(domainName, "%s", "sis18_ring"); break;
-          case 8: gid = ESR_RING;   sprintf(domainName, "%s", "esr_ring");   break;
-          case 9: gid = PARTIH;     sprintf(domainName, "%s", "partih");     break;
+          case  0: gid = PZU_QR;     sprintf(domainName, "%s", "pzu_qr");     break;
+          case  1: gid = PZU_QL;     sprintf(domainName, "%s", "pzu_ql");     break;
+          case  2: gid = PZU_QN;     sprintf(domainName, "%s", "pzu_qn");     break;
+          case  3: gid = PZU_UN;     sprintf(domainName, "%s", "pzu_un");     break;
+          case  4: gid = PZU_UH;     sprintf(domainName, "%s", "pzu_uh");     break;
+          case  5: gid = PZU_AT;     sprintf(domainName, "%s", "pzu_at");     break;
+          case  6: gid = PZU_TK;     sprintf(domainName, "%s", "pzu_tk");     break;
+          case  7: gid = SIS18_RING; sprintf(domainName, "%s", "sis18_ring"); break;
+          case  8: gid = ESR_RING;   sprintf(domainName, "%s", "esr_ring");   break;
+          case  9: gid = PARTIH;     sprintf(domainName, "%s", "partih_00");  break;
+          case 10: gid = PZU_TK;     sprintf(domainName, "%s", "pzu_tk_00");  break;
+          case 11: gid = PZU_TK;     sprintf(domainName, "%s", "pzu_tk_01");  break;
           default: {std::cerr << "Specify a proper number, not " << tmpi << "'%s'!" << std::endl; return 1;} break;
         } // switch tmpi
 #ifdef USEMASP
         switch (tmpi) {
-          case 0: maspNomen = std::string("U_WR2MIL_PZUQR");    break;
-          case 1: maspNomen = std::string("U_WR2MIL_PZUQL");    break;
-          case 2: maspNomen = std::string("U_WR2MIL_PZUQN");    break;
-          case 3: maspNomen = std::string("U_WR2MIL_PZUUN");    break;
-          case 4: maspNomen = std::string("U_WR2MIL_PZUUH");    break;
-          case 5: maspNomen = std::string("U_WR2MIL_PZUAT");    break;
-          case 6: maspNomen = std::string("U_WR2MIL_PZUTK");    break;
-          case 7: maspNomen = std::string("U_WR2MIL_SIS18");    break;
-          case 8: maspNomen = std::string("U_WR2MIL_ESR");      break;
-          case 9: maspNomen = std::string("U_WR2MIL_PARTIH");   break;
+          case  0: maspNomen = std::string("U_WR2MIL_PZUQR");     break;
+          case  1: maspNomen = std::string("U_WR2MIL_PZUQL");     break;
+          case  2: maspNomen = std::string("U_WR2MIL_PZUQN");     break;
+          case  3: maspNomen = std::string("U_WR2MIL_PZUUN");     break;
+          case  4: maspNomen = std::string("U_WR2MIL_PZUUH");     break;
+          case  5: maspNomen = std::string("U_WR2MIL_PZUAT");     break;
+          case  6: maspNomen = std::string("U_WR2MIL_PZUTK");     break;
+          case  7: maspNomen = std::string("U_WR2MIL_SIS18");     break;
+          case  8: maspNomen = std::string("U_WR2MIL_ESR");       break;
+          case  9: maspNomen = std::string("U_WR2MIL_PARTIH_00"); break;
+          case 10: maspNomen = std::string("U_WR2MIL_PZUTK_00");  break;
+          case 11: maspNomen = std::string("U_WR2MIL_PZUTK_01");  break;
         } // switch tmpi
 #endif
         break;
