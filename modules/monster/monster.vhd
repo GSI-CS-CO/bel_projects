@@ -78,6 +78,7 @@ use work.cellular_ram_pkg.all;
 use work.neorv32_shell_pkg.all;
 use work.pwm_pkg.all;
 use work.xwb_register_link_ada_gen_pkg.all;
+use work.wr_info_pkg.all;
 
 entity monster is
   generic(
@@ -614,7 +615,8 @@ architecture rtl of monster is
     devs_enc_err_counter,
     devs_a10vs,
     devs_cellular_ram,
-    devs_pwm
+    devs_pwm,
+    devs_wr_info
   );
   constant c_dev_slaves          : natural := dev_slaves'pos(dev_slaves'right)+1;
 
@@ -662,7 +664,8 @@ architecture rtl of monster is
     dev_slaves'pos(devs_enc_err_counter)=> f_sdb_auto_device(c_enc_err_counter_sdb,                g_en_enc_err_counter),
     dev_slaves'pos(devs_a10vs)          => f_sdb_auto_device(c_a10vs_sdb,                          g_en_a10vs),
     dev_slaves'pos(devs_cellular_ram)   => f_sdb_auto_device(f_cellular_ram_sdb(g_cr_bits),        g_en_cellular_ram),
-    dev_slaves'pos(devs_pwm)            => f_sdb_auto_device(c_pwm_sdb,                            g_en_pwm));
+    dev_slaves'pos(devs_pwm)            => f_sdb_auto_device(c_pwm_sdb,                            g_en_pwm),
+    dev_slaves'pos(devs_wr_info)        => f_sdb_auto_device(c_wr_info_sdb,                        not g_en_cb_wr_master_port));
   constant c_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_bridge_sdb  : t_sdb_bridge       := f_xwb_bridge_layout_sdb(true, c_dev_layout, c_dev_sdb_address);
@@ -3787,6 +3790,24 @@ end generate;
         pwm_latch_i       => pps,
         pwm_o             => s_gpio_src_pwm((c_eca_gpio-1) downto 0)
       );
+  end generate;
+
+  wr_info_y : if not g_en_cb_wr_master_port generate
+    xwb_wr_info : wr_info
+      port map(
+        clk_i             => clk_sys,
+        rst_n_i           => rstn_sys,
+        wr_time_valid     => tm_valid,
+        wr_link_valid     => s_link_ok,
+        wr_aux_time_valid => tm_valid_aux,
+        wr_aux_link_valid => s_link_ok_aux,
+        slave_i           => dev_bus_master_o(dev_slaves'pos(devs_wr_info)),
+        slave_o           => dev_bus_master_i(dev_slaves'pos(devs_wr_info))
+      );
+  end generate;
+
+  wr_info_n : if g_en_cb_wr_master_port generate
+    dev_bus_master_i(dev_slaves'pos(devs_wr_info)) <= cc_dummy_slave_out;
   end generate;
 
   -- END OF Wishbone slaves

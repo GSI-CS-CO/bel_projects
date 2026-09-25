@@ -59,5 +59,6 @@ modules = {
     "neorv32/src/hdl",
     "pwm",
     "wb_register_ada_gen",
+    "wr_info",
   ]
 }
