@@ -41,7 +41,7 @@
 #define PZU_F50                       0x4c0   // TOS internal: UNILAC 50 Hz synchronization
 #define SIS18_RING                    0x12c   // LSA SIS18 ring
 #define ESR_RING                      0x154   // LSA ESR ring
-#define PARTIH                        0x290   // PARTIH; chk group ID
+#define PARTIH                        0x290   // PARTIH; chk group ID ; change code for pzKennung in fw/wr-mil.c when assigning final group ID
 #define LOC_MIL_SEND                  0xff0   // internal: MIL telegrams to be sent
 #define LOC_MIL_REC                   0xff1   // internal: MIL telegrams received (data)
 #define LOC_TLU                       0xfe1   // internal: MIL telegrams received (timestamp only)
