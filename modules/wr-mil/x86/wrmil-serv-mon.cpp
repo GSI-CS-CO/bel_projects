@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 08-aug-2026
+ *  version : 25-sep-2026
  *
  * monitors WR-MIL gateway (server part)
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define WRMIL_SERV_MON_VERSION 0x000110
+#define WRMIL_SERV_MON_VERSION 0x000200
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -362,6 +362,7 @@ static void help(void) {
   std::cerr << "                       6: PZU_TK; UNILAC, Transfer Line"                            << std::endl;
   std::cerr << "                       7: SIS18_RING"                                               << std::endl;
   std::cerr << "                       8: ESR_RING"                                                 << std::endl;
+  std::cerr << "                       9: PARTIH"                                                   << std::endl;
   std::cerr << std::endl;
   std::cerr << "This tool monitors a White Rabbit -> MIL gateway."                                  << std::endl;
   std::cerr << std::endl;
@@ -448,6 +449,7 @@ int main(int argc, char** argv)
           case 6: gid = PZU_TK;     sprintf(domainName, "%s", "pzu_tk");     break;
           case 7: gid = SIS18_RING; sprintf(domainName, "%s", "sis18_ring"); break;
           case 8: gid = ESR_RING;   sprintf(domainName, "%s", "esr_ring");   break;
+          case 9: gid = PARTIH;     sprintf(domainName, "%s", "partih");     break;
           default: {std::cerr << "Specify a proper number, not " << tmpi << "'%s'!" << std::endl; return 1;} break;
         } // switch tmpi
 #ifdef USEMASP
@@ -461,6 +463,7 @@ int main(int argc, char** argv)
           case 6: maspNomen = std::string("U_WR2MIL_PZUTK");    break;
           case 7: maspNomen = std::string("U_WR2MIL_SIS18");    break;
           case 8: maspNomen = std::string("U_WR2MIL_ESR");      break;
+          case 9: maspNomen = std::string("U_WR2MIL_PARTIH");   break;
         } // switch tmpi
 #endif
         break;

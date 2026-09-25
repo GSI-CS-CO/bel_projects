@@ -567,6 +567,7 @@ uint32_t convert_WReventID_to_milTelegram(uint64_t evtId, uint32_t *milTelegram)
     case PZU_UH    : pzKennung = 13; break;
     case PZU_AT    : pzKennung = 14; break;
     case PZU_TK    : pzKennung = 15; break;
+    // case PARTIH    : pzKennung = 15; break;   // private communication Peter: PARTIH should use Kennung of TK; chk: commented as we used a duplicate GID/case for testing
     default :        pzKennung =  0; break;
   } // switch gid
     
