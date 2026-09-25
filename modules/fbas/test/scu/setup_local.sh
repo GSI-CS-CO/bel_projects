@@ -87,7 +87,7 @@ export addr_avg="$(printf "0x%x" $((addr_fbas + 344)))"      # average value of 
 export addr_eca_vld="$(printf "0x%x" $((addr_fbas + 384)))"  # ECA valid action count
 export addr_eca_ovf="$(printf "0x%x" $((addr_fbas + 388)))"  # ECA overflow action count
 export addr_senderid="$(printf "0x%x" $((addr_fbas + 392)))" # sender ID
-export addr_array_8="$(printf "0x%x" $((addr_fbas + 624)))"  # uint32_t array[8]
+export addr_array_8="$(printf "0x%x" $((addr_fbas + 656)))"  # uint32_t array[8] for actual RX rate
 
 # Declare common constants
 

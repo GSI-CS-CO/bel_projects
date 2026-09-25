@@ -568,7 +568,7 @@ static uint32_t handleEcaEvent(uint32_t pollTimeout, uint32_t* mpsTask, msgCtrl_
         break;
       case FBAS_WR_EVT:
       case FBAS_WR_FLG:
-        if (nodeType == FBAS_NODE_RX) { // FBAS RX re-generates MPS class 2 signals
+        if (nodeType == FBAS_NODE_RX) { // FBAS RX captures MPS class 2 messages
           // store and handle received MPS flag
           offset = msgStoreMpsMsg(&ecaParam, &ecaDeadline, pMsgCtrl);
           if (offset >= 0) {
@@ -605,6 +605,16 @@ static uint32_t handleEcaEvent(uint32_t pollTimeout, uint32_t* mpsTask, msgCtrl_
           // measure the ECA delay
           measureSummarize(MSR_ECA_DLY, ecaDeadline, now, DISABLE_VERBOSITY);
           measureExportSummary(MSR_ECA_DLY, pSharedApp, FBAS_SHARED_ECA_DLY_AVG);
+
+          // measure the C2 messaging rate (based on deadline and base event ID)
+          if (ecaEvtId == FBAS_FLG_EID) {
+            ts = *(pSharedApp + (FBAS_SHARED_GET_TS1 >> 2));
+            if (ts) {
+              measureSummarize(MSR_MSG_RATE, ts, ecaDeadline, DISABLE_VERBOSITY);
+              measureExportSummary(MSR_MSG_RATE, pSharedApp, FBAS_SHARED_MSG_RATE_AVG);
+            }
+            *(pSharedApp + (FBAS_SHARED_GET_TS1 >> 2)) = ecaDeadline;
+          }
         }
         break;
 
