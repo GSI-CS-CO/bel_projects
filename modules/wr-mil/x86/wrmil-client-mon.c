@@ -55,7 +55,7 @@
 
 const char* program;
 
-#define WRMILNSYS   11                   // number of WRMIL systems
+#define WRMILNSYS   13                   // number of WRMIL systems
 
 #define DIMCHARSIZE 32                   // standard size for char services
 #define DIMMAXSIZE  1024                 // max size for service names
@@ -80,10 +80,12 @@ const char * sysShortNames[] = {
   "pzu_uh",
   "pzu_at",
   "pzu_tk",
+  "pzu_tk_00",
+  "pzu_tk_01",
   "pzu_f50",
   "sis18_ring",
   "esr_ring",
-  "partih"
+  "partih_00"
 };
 
 struct wrmilGw_t {
