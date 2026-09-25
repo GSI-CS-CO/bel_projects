@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Michael Reese GSI-Darmstadt
- *  version : 24-Sep-2026
+ *  version : 25-Sep-2026
  *
  * Command-line interface for wr-mil
  *
@@ -91,6 +91,7 @@ static void help(void) {
   fprintf(stderr, "                      6: PZU-TK; UNILAC, Transfer Line\n"                           );
   fprintf(stderr, "                      7: PZ-SIS18\n"                                                );
   fprintf(stderr, "                      8: PZ-ESR\n"                                                  );
+  fprintf(stderr, "                      9: PARTIH\n"                                                  );
   fprintf(stderr, "  -l <latency corr>   [ns] latency correction for all MIL telegrams, default 0\n"   );
   fprintf(stderr, "  -g                  'latency' shall be negative\n"                                );
   fprintf(stderr, "  -t <trigger>        UTC: evtNo of trigger event [0..255], default 0xf6\n"         );
@@ -279,6 +280,7 @@ int main(int argc, char** argv) {
           case 6: mil_domain = PZU_TK;     break;
           case 7: mil_domain = SIS18_RING; break;
           case 8: mil_domain = ESR_RING;   break;
+          case 9: mil_domain = PARTIH;     break;
           default: fprintf(stderr, "Illegal MIL domain '%d'!\n", tmp); return 1; 
         } // switch tmp
         break;
