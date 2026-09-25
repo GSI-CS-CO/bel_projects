@@ -127,6 +127,8 @@ export instr_st_ml_prd=0x3a     # store the main loop period measurement results
 export instr_st_diob_dly=0x3d   # store the DIOB access delay measurement results to the shared memory
 export instr_st_array=0x3b      # store the uint32_t array[8] to the reserved location of the shared memory
 export instr_set_tx_rate=0x3c   # set the TX messaging rate: FBAS_CMD_SET_TX_RATE
+export instr_st_msg_rate=0x3e   # store the measurement results of the messaging rate
+
 
 export     mac_any_node="0xffffffffffff"      # MAC address of any node
 # Raw event data (bits 63-16 = event ID, 15-8 = channel, 7-0 = flag)
@@ -773,6 +775,16 @@ result_msg_delay() {
     read_measurement_results $1 $instr_st_msg_dly $addr_avg $2
 }
 
+result_msg_rate() {
+    # $1 - dev/wbm0
+    # $2 - verbosity
+
+    if [ -n "$2" ]; then
+        echo -n "Msg rate: "
+    fi
+    read_measurement_results $1 $instr_st_msg_rate $addr_avg $2
+}
+
 result_ttl_ival() {
     # $1 - dev/wbm0
     # $2 - verbosity
@@ -822,6 +834,7 @@ result_rx() {
 	result_eca_delay $1 $2 && \
 	result_rx_delay $1 $2 && \
 	result_msg_delay $1 $2 && \
+	result_msg_rate $1 $2 && \
 	result_ttl_ival $1 $2 && \
 	result_ml_period $1 $2
 }

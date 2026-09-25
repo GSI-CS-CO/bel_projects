@@ -36,6 +36,7 @@ get_tr_measurements() {
     read_counters \$rx_node_dev && \
     result_rx_delay \$rx_node_dev && \
     result_msg_delay \$rx_node_dev && \
+    result_msg_rate \$rx_node_dev && \
     result_ttl_ival \$rx_node_dev && \
     result_ml_period \$rx_node_dev && \
     result_diob_delay \$rx_node_dev && \
@@ -69,14 +70,15 @@ format_measurements() {
 
     # delays
     line+="\t--- delays, us (avg, min, max, valid, all)\n"
-    line+="\tECA delay  : ${output[@]:30:5}\n" # get 5 elements starting at index 30
+    line+="\tECA delay  : ${output[@]:35:5}\n" # get 5 elements starting at index 35
     line+="\tRX delay   : ${output[@]:5:5}\n"  # get 5 elements starting at index 5
     line+="\tMsg delay  : ${output[@]:10:5}\n" # get 5 elements starting at index 10
-    line+="\tDIOB delay : ${output[@]:25:5}\n" # get 5 elements starting at index 25
-    line+="\tTTL period : ${output[@]:15:5}\n" # get 5 elements starting at index 15
-    line+="\tLoop period: ${output[@]:20:5}\n" # get 5 elements starting at index 20
+    line+="\tMsg rate   : ${output[@]:15:5}\n" # get 5 elements starting at index 15
+    line+="\tDIOB delay : ${output[@]:30:5}\n" # get 5 elements starting at index 30
+    line+="\tTTL period : ${output[@]:20:5}\n" # get 5 elements starting at index 20
+    line+="\tLoop period: ${output[@]:25:5}\n" # get 5 elements starting at index 25
     line+="\t--- action handling rate\n"
-    line+="\t${output[@]:35:8}\n"              # get 8 elements starting at index 35
+    line+="\t${output[@]:40:8}\n"              # get 8 elements starting at index 40
 
     ret="$line"
 }
