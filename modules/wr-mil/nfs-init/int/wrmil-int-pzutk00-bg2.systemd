@@ -1,5 +1,5 @@
 # yocto
-SERVICEA=wrmil-servmon-int-pzutk.service
+SERVICEA=wrmil-servmon-int-pzutk00.service
 cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
 systemctl daemon-reload
 
