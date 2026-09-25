@@ -115,6 +115,7 @@ package monster_pkg is
       g_num_i2c_interfaces   : integer := 1;
       g_num_pwm_channels     : integer := 8;
       g_dual_port_wr         : boolean := false;
+      g_en_cb_wr_master_port : boolean := false;
       g_io_table             : t_io_mapping_table_arg_array(natural range <>);
       g_en_pmc               : boolean := false;
       g_a10_use_sys_fpll     : boolean := false;

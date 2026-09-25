@@ -116,6 +116,7 @@ entity monster is
     g_num_i2c_interfaces   : integer;
     g_num_pwm_channels     : integer;
     g_dual_port_wr         : boolean;
+    g_en_cb_wr_master_port : boolean;
     g_io_table             : t_io_mapping_table_arg_array;
     g_en_pmc               : boolean;
     g_a10_use_sys_fpll     : boolean;
@@ -700,9 +701,9 @@ architecture rtl of monster is
    top_slaves'pos(tops_mbox)             => f_sdb_auto_device(c_mbox_sdb,                                                true),
    top_slaves'pos(tops_dev)              => f_sdb_auto_bridge(c_dev_bridge_sdb,                                          true),
    top_slaves'pos(tops_mil)              => f_sdb_auto_device(c_xwb_gsi_mil_scu,                                         g_en_mil),
-   top_slaves'pos(tops_wr_fast_path)     => f_sdb_auto_bridge(c_wrcore_bridge_sdb,                                       true),
+   top_slaves'pos(tops_wr_fast_path)     => f_sdb_auto_bridge(c_wrcore_bridge_sdb,                                       g_en_cb_wr_master_port),
    top_slaves'pos(tops_ebm)              => f_sdb_auto_device(c_ebm_sdb,                                                 true),
-   top_slaves'pos(tops_wr_aux_fast_path) => f_sdb_auto_bridge(c_wrcore_aux_bridge_sdb,                                   g_dual_port_wr),
+   top_slaves'pos(tops_wr_aux_fast_path) => f_sdb_auto_bridge(c_wrcore_aux_bridge_sdb,                                   (g_en_cb_wr_master_port and g_dual_port_wr)),
    top_slaves'pos(tops_ebm_aux)          => f_sdb_auto_device(c_ebm_sdb,                                                 g_dual_port_wr),
    top_slaves'pos(tops_emb_cpu)          => f_sdb_auto_device(c_eca_queue_slave_sdb,                                     g_en_eca),
    top_slaves'pos(tops_beam_dump)        => f_sdb_embed_device(c_beam_dump_sdb, x"70000000",                             g_en_beam_dump),
@@ -841,7 +842,7 @@ architecture rtl of monster is
   signal uart_mux           : std_logic; -- either usb or external
   signal uart_wrc           : std_logic; -- from wrc
   signal s_neorv32_uart0_out: std_logic; -- from neorv32
-  signal s_neorv32_uart0_in : std_logic; 
+  signal s_neorv32_uart0_in : std_logic;
   signal s_neorv32_uart1_out: std_logic;
   signal s_neorv32_uart1_in : std_logic;
   signal uart_to_usb        : std_logic;
@@ -1593,17 +1594,24 @@ begin
       master_i      => top_msi_slave_o (top_slaves'pos(tops_dev)),
       master_o      => top_msi_slave_i (top_slaves'pos(tops_dev)));
 
-  top2wrc_bus : xwb_register_link_ada_gen
-    generic map(
-      g_wb_adapter  => false)
-    port map(
-      clk_sys_i     => clk_sys,
-      rst_n_i       => rstn_sys,
-      slave_i       => top_bus_master_o(top_slaves'pos(tops_wr_fast_path)),
-      slave_o       => top_bus_master_i(top_slaves'pos(tops_wr_fast_path)),
-      master_i      => wrc_slave_o,
-      master_o      => wrc_slave_i);
+  top2wrc_bus_y : if g_en_cb_wr_master_port generate
+    top2wrc_bus : xwb_register_link_ada_gen
+      generic map(
+        g_wb_adapter  => false)
+      port map(
+        clk_sys_i     => clk_sys,
+        rst_n_i       => rstn_sys,
+        slave_i       => top_bus_master_o(top_slaves'pos(tops_wr_fast_path)),
+        slave_o       => top_bus_master_i(top_slaves'pos(tops_wr_fast_path)),
+        master_i      => wrc_slave_o,
+        master_o      => wrc_slave_i);
+  end generate;
+  top2wrc_bus_n : if not g_en_cb_wr_master_port generate
+    top_bus_master_i(top_slaves'pos(tops_wr_fast_path)) <= cc_dummy_slave_out;
+    wrc_slave_i                                         <= cc_dummy_slave_in;
+  end generate;
 
+  top2wrc_aux_bus_y : if (g_en_cb_wr_master_port and g_dual_port_wr) generate
   top2wrc_aux_bus : xwb_register_link_ada_gen
     generic map(
       g_wb_adapter  => false)
@@ -1614,6 +1622,12 @@ begin
       slave_o       => top_bus_master_i(top_slaves'pos(tops_wr_aux_fast_path)),
       master_i      => wrc_aux_slave_o,
       master_o      => wrc_aux_slave_i);
+  end generate;
+  top2wrc_aux_bus_n : if not (g_en_cb_wr_master_port and g_dual_port_wr) generate
+    top_bus_master_i(top_slaves'pos(tops_wr_aux_fast_path)) <= cc_dummy_slave_out;
+    wrc_aux_slave_i                                         <= cc_dummy_slave_in;
+  end generate;
+
 
   -- END OF Wishbone crossbars
   ----------------------------------------------------------------------------------
