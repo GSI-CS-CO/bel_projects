@@ -217,6 +217,7 @@ measure_nw_perf() {
         result_eca_delay \$rx_node_dev $verbose && \
         result_rx_delay \$rx_node_dev $verbose && \
         result_msg_delay \$rx_node_dev $verbose && \
+        result_msg_rate \$rx_node_dev $verbose && \
         result_ml_period \$rx_node_dev $verbose && \
         result_diob_delay \$rx_node_dev $verbose && \
         result_ttl_ival \$rx_node_dev $verbose" |

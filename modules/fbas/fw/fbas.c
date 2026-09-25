@@ -873,6 +873,10 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd)
         measurePrintSummary(MSR_MSG_DLY);
         measureExportSummary(MSR_MSG_DLY, pSharedApp, FBAS_SHARED_GET_AVG);
         break;
+      case FBAS_CMD_PRINT_MSG_RATE:
+        measurePrintSummary(MSR_MSG_RATE);
+        measureExportSummary(MSR_MSG_RATE, pSharedApp, FBAS_SHARED_GET_AVG);
+        break;
       case FBAS_CMD_PRINT_TTL:
         measurePrintSummary(MSR_TTL);
         measureExportSummary(MSR_TTL, pSharedApp, FBAS_SHARED_GET_AVG);
