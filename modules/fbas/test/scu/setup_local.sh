@@ -139,8 +139,8 @@ export    evt_mps_1_tst="0xffffeeee00000003"  # event to generate the MPS TEST f
 export     evt_mps_2_ok="0xffffeeee00000101"  # event to generate the MPS OK flag (2nd channel)
 export    evt_mps_2_nok="0xffffeeee00000102"  # event to generate the MPS NOK flag (2nd channel)
 export    evt_mps_2_tst="0xffffeeee00000103"  # event to generate the MPS TEST flag (2nd channel)
-export evt_mps_prot_std="0x1fcbfcb000000000"  # event with MPS protocol (regular)
-export evt_mps_prot_chg="0x1fccfcc000000000"  # event with MPS protocol (change in flag)
+export evt_mps_prot_flg="0x1fcbfcb000000000"  # event with MPS protocol (flag)
+export evt_mps_prot_evt="0x1fccfcc000000000"  # event with MPS protocol (event)
 export          evt_tlu="0xffff100000000000"  # TLU event (used to catch the signal change at IO port)
 export    evt_new_cycle="0xffffdddd00000000"  # event for new cycle
 export evt_mps_node_reg="0x1fcdfcd000000000"  # event ID for the node registration messages
@@ -512,11 +512,15 @@ set_eca_rules() {
         echo "snoop TLU events by using the saft tool: saft-ctl $node_name -xv snoop $evt_tlu $evt_id_mask 0"
         echo "or by using eb tool and the dedicated LM32 firmware: eb-console $node_device"
     else
+        echo "configure ECA LM32 channel of $node_name: set FBAS_WR_FLG ($evt_mps_prot_flag, tag $eca_tag_c2_flag), FBAS_WR_EVT ($evt_mps_prot_evt, tag $eca_tag_c2_event)"
+        saft-ecpu-ctl $node_name -c $evt_mps_prot_flg $evt_id_mask 0 $eca_tag_c2_flag -d
+        saft-ecpu-ctl $node_name -c $evt_mps_prot_evt $evt_id_mask 0 $eca_tag_c2_event -d
+
         echo "configure ECA WB channel of $node_name"
-        echo "create $n_max_tx_nodes ECA conditions starting with event ID $evt_mps_prot_std"
+        echo "create $n_max_tx_nodes ECA conditions starting with event ID $evt_mps_prot_flg"
 
         for i in $(seq 0 $(( n_max_tx_nodes - 1))); do
-            evt_id=$(( evt_mps_prot_std + i ))
+            evt_id=$(( evt_mps_prot_flg + i ))
             idx=$((i + 1))
             saft-wbm-ctl $node_name -c $evt_id $reg_evt_mask 0 $idx -d
         done
