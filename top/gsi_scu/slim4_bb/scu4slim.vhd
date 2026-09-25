@@ -1,0 +1,576 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library work;
+use work.gencores_pkg.all;
+use work.monster_pkg.all;
+use work.ramsize_pkg.c_lm32_ramsizes;
+use work.altera_lvds_pkg.all;
+use work.altera_networks_pkg.all;
+
+entity scu4slim is
+  port(
+    ------------------------------------------------------------------------
+    -- Input clocks
+    ------------------------------------------------------------------------
+    clk_20m_vcxo_i        : in std_logic; -- 20MHz VCXO clock
+    clk_20m_vcxo_alt_i    : in std_logic; -- 20MHz VCXO clock alternative
+
+    clk_125m_local_i      : in std_logic; -- Local clk from 125Mhz oszillator
+
+    clk_125m_tcb_pllref_i : in std_logic; -- 125 MHz PLL reference at tranceiver bank
+    clk_125m_tcb_local_i  : in std_logic; -- Local clk from 125Mhz oszillator at tranceiver bank
+    clk_125m_tcb_sfpref_i : in std_logic; -- PLL/SFP reference clk from 125Mhz oszillator at tranceiver bank
+
+    ------------------------------------------------------------------------
+    -- PCI express pins
+    ------------------------------------------------------------------------
+    pcie_refclk_i : in    std_logic;
+    pcie_rx_i     : in    std_logic_vector(3 downto 0);
+    pcie_tx_o     : out   std_logic_vector(3 downto 0);
+    nPCI_RESET_i  : in    std_logic;
+
+    ------------------------------------------------------------------------
+    -- WR DAC signals
+    ------------------------------------------------------------------------
+    wr_dac_sclk_o : out std_logic;
+    wr_dac_din_o  : out std_logic;
+    wr_ndac_cs_o  : out std_logic_vector(2 downto 1);
+
+    -----------------------------------------------------------------------
+    -- OneWire
+    -----------------------------------------------------------------------
+    OneWire_CB       : inout std_logic;
+    onewire_ext      : inout std_logic; -- to extension board
+    onewire_ext_splz : out   std_logic;   --Strong Pull-Up for Onewire
+    OneWire_CB_splz  : out   std_logic;   --Strong Pull-Up for Onewire
+
+    -----------------------------------------------------------------------
+    -- ComExpress signals
+    -----------------------------------------------------------------------
+    ser0_rxd          : out std_logic;  -- RX/TX view from ComX
+    ser0_txd          : in  std_logic;  -- RX/TX view from ComX
+    ser1_rxd          : out std_logic;  -- RX/TX view from ComX
+    ser1_txd          : in  std_logic;  -- RX/TX view from ComX
+    nTHRMTRIP         : in  std_logic;
+    WDT               : in  std_logic;
+    fpga_res_i        : in  std_logic;
+    nSys_Reset        : in  std_logic;  -- Reset From ComX
+
+    -----------------------------------------------------------------------
+    -- SCU Bus
+    -----------------------------------------------------------------------
+    A_D               : inout std_logic_vector(15 downto 0);
+    A_A               : out   std_logic_vector(15 downto 0);
+    A_nTiming_Cycle   : out   std_logic;
+    A_nDS             : out   std_logic;
+    A_nReset          : out   std_logic;
+    nSel_Ext_Data_DRV : out   std_logic;
+    A_RnW             : out   std_logic;
+    A_Spare           : out   std_logic_vector(1 downto 0);
+    A_nSEL            : out   std_logic_vector(12 downto 1);
+    A_nDtack          : in    std_logic;
+    A_nSRQ            : in    std_logic_vector(12 downto 1);
+    A_SysClock        : out   std_logic;
+    ADR_TO_SCUB       : out   std_logic;
+    nADR_EN           : out   std_logic;
+    A_OneWire         : inout std_logic;
+
+    -----------------------------------------------------------------------
+    -- Misc.
+    -----------------------------------------------------------------------
+    nFPGA_Res_Out : out   std_logic;  -- Reset  Output
+    user_btn      : in    std_logic;  -- User Button
+    avr_sda       : inout std_logic;  -- I2C Connection to AVR MCU
+    avr_scl       : inout std_logic;  -- I2C Connection to AVR MCU
+    serial_cb_out : out   std_logic_vector (1 downto 0); -- Serial to Backplane
+    serial_cb_in  : in    std_logic_vector (1 downto 0); -- Serial to Backplane
+    rear_in       : in    std_logic_vector (1 downto 0); -- GPIO to Backplane
+    rear_out      : out   std_logic_vector (1 downto 0); -- GPIO to Backplane
+
+    -----------------------------------------------------------------------
+    -- SCU-CB Version
+    -----------------------------------------------------------------------
+    scu_cb_version : in  std_logic_vector(3 downto 0); -- must be assigned with weak pull ups
+
+    -----------------------------------------------------------------------
+    -- LVTTL IOs
+    -----------------------------------------------------------------------
+    fastIO_p_i : in  std_logic_vector(2 downto 0);
+    fastIO_n_i : in  std_logic_vector(2 downto 0);
+    fastIO_p_o : out std_logic_vector(2 downto 0); -- Negativ Pin assigned by Quartus, manually assignment causes issues
+    lemo_out   : out std_logic_vector(3 downto 0); -- Isolated Onboard TTL OUT
+    lemo_in    : in  std_logic_vector(1 downto 0); -- Isolated OnBoard TTL IN
+
+    -----------------------------------------------------------------------
+    -- Extension Connector
+    -----------------------------------------------------------------------
+    ext_ch : inout std_logic_vector(21 downto 0);
+    ext_id : in    std_logic_vector(3 downto 0);
+
+    -----------------------------------------------------------------------
+    -- usb
+    -----------------------------------------------------------------------
+    --slrd : out   std_logic;
+    --slwr : out   std_logic;
+    --fd   : inout std_logic_vector(7 downto 0) := (others => 'Z');
+    --pa   : inout std_logic_vector(7 downto 0) := (others => 'Z');
+    --ctl  : in    std_logic_vector(2 downto 0);
+    --uclk : in    std_logic;
+    --ures : out   std_logic;
+
+    -----------------------------------------------------------------------
+    -- leds onboard
+    -----------------------------------------------------------------------
+    wr_led_pps : out std_logic := '1';
+    user_led_0 : out std_logic_vector(2 downto 0) := (others => '1');
+    wr_rgb_led : out std_logic_vector(2 downto 0) := (others => '1');
+    lemo_led   : out std_logic_vector(5 downto 0) := (others => '1');
+    debug_led  : out std_logic_vector(7 downto 0) := (others => '1');
+
+    -----------------------------------------------------------------------
+    -- Pseudo-SRAM (2x 256Mbit)
+    -----------------------------------------------------------------------
+    psram_a    : out   std_logic_vector(23 downto 0) := (others => 'Z');
+    psram_dq   : inout std_logic_vector(15 downto 0) := (others => 'Z');
+    psram_clk  : out   std_logic := '0';
+    psram_advn : out   std_logic_vector(1 downto 0) := (others => '1');
+    psram_cre  : out   std_logic_vector(1 downto 0) := (others => '1');
+    psram_cen  : out   std_logic_vector(1 downto 0) := (others => '1');
+    psram_oen  : out   std_logic_vector(1 downto 0) := (others => '1');
+    psram_wen  : out   std_logic_vector(1 downto 0) := (others => '1');
+    psram_ubn  : out   std_logic_vector(1 downto 0) := (others => '1');
+    psram_lbn  : out   std_logic_vector(1 downto 0) := (others => '1');
+    psram_wait : in    std_logic_vector(1 downto 0);
+
+    -----------------------------------------------------------------------
+    -- SPI Flash User Mode
+    -----------------------------------------------------------------------
+    --UM_AS_D           : inout std_logic_vector(3 downto 0) := (others => 'Z');
+    --UM_nCSO           : out   std_logic := 'Z';
+    --UM_DCLK           : out   std_logic := 'Z';
+
+    -----------------------------------------------------------------------
+    -- SFP
+    -----------------------------------------------------------------------
+    --sfp_led_fpg_o    : out   std_logic;
+    --sfp_led_fpr_o    : out   std_logic;
+    sfp_tx_disable_o : out   std_logic;
+    sfp_tx_fault_i   : in    std_logic;
+    sfp_los_i        : in    std_logic;
+    sfp_txp_o        : out   std_logic;
+    sfp_rxp_i        : in    std_logic;
+    sfp_mod0_i       : in    std_logic;
+    sfp_mod1_io      : inout std_logic;
+    sfp_mod2_io      : inout std_logic;
+    sfp_rate_sel_o   : out   std_logic);
+
+end scu4slim;
+
+architecture rtl of scu4slim is
+
+  signal s_led_link_up  : std_logic;
+  signal s_led_link_act : std_logic;
+  signal s_led_track    : std_logic;
+  signal s_led_pps      : std_logic;
+  signal s_lemo_led     : std_logic_vector (5 downto 0);
+
+  signal s_gpio_o    : std_logic_vector(30 downto 0);
+  signal s_gpio_i    : std_logic_vector(2 downto 0);
+  signal s_lvds_p_i  : std_logic_vector(2 downto 0);
+  signal s_lvds_n_i  : std_logic_vector(2 downto 0);
+  signal s_lvds_p_o  : std_logic_vector(2 downto 0);
+  signal s_lvds_term : std_logic_vector(2 downto 0);
+
+  signal s_clk_20m_vcxo_i       : std_logic;
+  signal s_clk_125m_pllref_i    : std_logic;
+  signal s_clk_125m_local_i     : std_logic;
+  signal s_clk_sfp_i            : std_logic;
+  signal s_stub_pll_reset       : std_logic;
+  signal s_stub_pll_locked      : std_logic;
+  signal s_stub_pll_locked_prev : std_logic;
+
+  signal s_i2c_scl_pad_out  : std_logic_vector(1 downto 1);
+  signal s_i2c_scl_pad_in   : std_logic_vector(1 downto 1);
+  signal s_i2c_scl_padoen   : std_logic_vector(1 downto 1);
+  signal s_i2c_sda_pad_out  : std_logic_vector(1 downto 1);
+  signal s_i2c_sda_pad_in   : std_logic_vector(1 downto 1);
+  signal s_i2c_sda_padoen   : std_logic_vector(1 downto 1);
+
+  signal s_core_clk_25m     : std_logic;
+
+  signal s_psram_cen        : std_logic_vector(3 downto 0);
+  signal s_psram_cre        : std_logic_vector(3 downto 0);
+  signal s_psram_advn       : std_logic_vector(3 downto 0);
+  signal s_psram_oen        : std_logic_vector(3 downto 0);
+  signal s_psram_wen        : std_logic_vector(3 downto 0);
+  signal s_psram_ubn        : std_logic_vector(3 downto 0);
+  signal s_psram_lbn        : std_logic_vector(3 downto 0);
+  signal s_psram_wait       : std_logic_vector(3 downto 0);
+
+  signal s_psram_sel        : std_logic_vector(3 downto 0);
+
+  signal s_debug_led        : std_logic_vector(7 downto 0);
+
+  signal rstn_ref           : std_logic;
+  signal clk_ref            : std_logic;
+
+  signal s_lemo_io    : std_logic_vector(25 downto 0);
+  signal s_lemo_oe    : std_logic_vector(25 downto 0);
+  signal s_lemo_input : std_logic_vector(13 downto 0);
+
+  signal scub_a                 : std_logic_vector(15 downto 0);
+  signal scub_d_out             : std_logic_vector(15 downto 0);
+  signal scub_d_in              : std_logic_vector(15 downto 0);
+  signal scub_d_tri_out         : std_logic;
+  signal scub_nsel              : std_logic_vector(12 downto 1);
+  signal scub_nsel_ext_data_drv : std_logic;
+  signal scub_A_RnW             : std_logic;
+  signal scub_A_nDS             : std_logic;
+  signal scub_ntiming_cycle     : std_logic;
+  signal is_rmt                 : std_logic;
+  signal A_D_mux                : std_logic_vector(15 downto 0);
+
+  signal s_front_in             : std_logic_vector(74 downto 0);
+  signal s_front_out            : std_logic_vector(74 downto 0);
+  signal s_front_dir            : std_logic_vector(74 downto 0);
+  signal s_rear_in              : std_logic_vector(47 downto 0);
+  signal s_rear_out             : std_logic_vector(47 downto 0);
+
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 50) :=
+  (
+    -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
+    ("LEMO_IN_0  ",    IO_NONE,         false,   false,  0,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("LEMO_IN_1  ",    IO_NONE,         false,   false,  1,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_IN_0   ",    IO_NONE,         false,   false,  2,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_IN_1   ",    IO_NONE,         false,   false,  3,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_IN_2   ",    IO_NONE,         false,   false,  4,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_IN_3   ",    IO_NONE,         false,   false,  5,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_IN_4   ",    IO_NONE,         false,   false,  6,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_IN_5   ",    IO_NONE,         false,   false,  7,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_IN_6   ",    IO_NONE,         false,   false,  8,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_IN_7   ",    IO_NONE,         false,   false,  9,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_IN_8   ",    IO_NONE,         false,   false,  10,    IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_IN_9   ",    IO_NONE,         false,   false,  11,    IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_IN_10  ",    IO_NONE,         false,   false,  12,    IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_IN_11  ",    IO_NONE,         false,   false,  13,    IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("USER_LED0_R",    IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("USER_LED0_G",    IO_NONE,         false,   false,  1,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("USER_LED0_B",    IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LEMO_OUT_0 ",    IO_NONE,         false,   false,  3,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LEMO_OUT_1 ",    IO_NONE,         false,   false,  4,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LEMO_OUT_2 ",    IO_NONE,         false,   false,  5,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LEMO_OUT_3 ",    IO_NONE,         false,   false,  6,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_0  ",    IO_NONE,         false,   false,  7,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_1  ",    IO_NONE,         false,   false,  8,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_2  ",    IO_NONE,         false,   false,  9,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_3  ",    IO_NONE,         false,   false, 10,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_4  ",    IO_NONE,         false,   false, 11,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_5  ",    IO_NONE,         false,   false, 12,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_6  ",    IO_NONE,         false,   false, 13,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_7  ",    IO_NONE,         false,   false, 14,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_8  ",    IO_NONE,         false,   false, 15,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_9  ",    IO_NONE,         false,   false, 16,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_10 ",    IO_NONE,         false,   false, 17,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_11 ",    IO_NONE,         false,   false, 18,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_12 ",    IO_NONE,         false,   false, 19,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_13 ",    IO_NONE,         false,   false, 20,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_14 ",    IO_NONE,         false,   false, 21,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_15 ",    IO_NONE,         false,   false, 22,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_16 ",    IO_NONE,         false,   false, 23,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_17 ",    IO_NONE,         false,   false, 24,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_18 ",    IO_NONE,         false,   false, 25,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_19 ",    IO_NONE,         false,   false, 26,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_20 ",    IO_NONE,         false,   false, 27,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_21 ",    IO_NONE,         false,   false, 28,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_22 ",    IO_NONE,         false,   false, 29,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RMT_OUT_23 ",    IO_NONE,         false,   false, 30,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("FAST_IN_0  ",    IO_NONE,         false,   false,  0,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
+    ("FAST_IN_1  ",    IO_NONE,         false,   false,  1,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
+    ("FAST_IN_2  ",    IO_NONE,         false,   false,  2,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
+    ("FAST_OUT_0 ",    IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_LVDS,  false,        false,       IO_LVDS),
+    ("FAST_OUT_1 ",    IO_NONE,         false,   false,  1,     IO_OUTPUT,   IO_LVDS,  false,        false,       IO_LVDS),
+    ("FAST_OUT_2 ",    IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_LVDS,  false,        false,       IO_LVDS)
+  );
+
+  constant c_family       : string := "Arria 10 GX SCU4";
+  constant c_project      : string := "scu4slim";
+  constant c_cores        : natural:= 2;
+  constant c_initf_name   : string := c_project & ".mif" & ';' & c_project & "_stub.mif";
+  constant c_profile_name : string := "medium_icache_debug";
+  constant c_cr_bits      : natural := 24;
+
+begin
+
+  main : monster
+    generic map(
+      g_family             => c_family,
+      g_project            => c_project,
+      g_flash_bits         => 25, -- !!! TODO: Check this
+      g_cr_bits            => c_cr_bits,
+      g_gpio_in            => 14,
+      g_gpio_out           => 31,
+      g_lvds_in            => 3,
+      g_lvds_out           => 3,
+      g_lvds_invert        => false,
+      g_en_user_ow         => true,
+      g_en_ddr3            => false,
+      g_en_cfi             => false,
+      g_en_i2c_wrapper     => true,
+      g_num_i2c_interfaces => 1,
+      g_en_scubus          => true,
+      g_en_pcie            => true,
+      g_en_tlu             => false,
+      g_en_usb             => false,
+      g_en_cellular_ram    => true,
+      g_rams               => 2,
+      g_io_table           => io_mapping_table,
+      g_en_tempsens        => false,
+      g_en_a10ts           => true,
+      g_a10_use_sys_fpll   => false,
+      g_a10_use_ref_fpll   => false,
+      g_en_enc_err_counter => true,
+      g_en_eca_tap         => true,
+      g_delay_diagnostics  => true,
+      g_lm32_cores         => c_cores,
+      g_lm32_ramsizes      => c_lm32_ramsizes/4,
+      g_lm32_init_files    => f_string_list_repeat(c_initf_name, c_cores),
+      g_lm32_profiles      => f_string_list_repeat(c_profile_name, c_cores),
+      g_en_asmi            => true,
+      g_en_a10vs           => true
+    )
+    port map(
+      core_clk_20m_vcxo_i     => clk_20m_vcxo_i,
+      core_clk_125m_pllref_i  => clk_125m_tcb_pllref_i,
+      core_clk_125m_local_i   => clk_125m_tcb_local_i,
+      core_clk_125m_sfpref_i  => clk_125m_tcb_pllref_i,
+      core_clk_25m_o          => s_core_clk_25m,
+      core_clk_wr_ref_o       => clk_ref,
+      core_rstn_wr_ref_o      => rstn_ref,
+      wr_onewire_io           => OneWire_CB,
+      wr_sfp_sda_io           => sfp_mod2_io,
+      wr_sfp_scl_io           => sfp_mod1_io,
+      wr_sfp_det_i            => sfp_mod0_i,
+      wr_sfp_tx_o             => sfp_txp_o,
+      wr_sfp_rx_i             => sfp_rxp_i,
+      wr_dac_sclk_o           => wr_dac_sclk_o,
+      wr_dac_din_o            => wr_dac_din_o,
+      wr_ndac_cs_o            => wr_ndac_cs_o,
+      wr_uart_o               => ser1_rxd,
+      wr_uart_i               => ser1_txd,
+      wbar_phy_dis_o          => sfp_tx_disable_o,
+      sfp_tx_fault_i          => sfp_tx_fault_i,
+      sfp_los_i               => sfp_los_i,
+      gpio_i(13 downto 0)      => s_rear_out(35 downto 24) & lemo_in,
+      gpio_o(30 downto 0)     => s_gpio_o,
+      lvds_p_i                => s_lvds_p_i,
+      lvds_n_i                => s_lvds_n_i,
+      lvds_p_o                => s_lvds_p_o,
+      led_link_up_o           => s_led_link_up,
+      led_link_act_o          => s_led_link_act,
+      led_track_o             => s_led_track,
+      led_pps_o               => s_led_pps,
+      debug_sys_locked_o      => s_debug_led(0),
+      debug_ge_85_c_o         => s_debug_led(1),
+      debug_ref1_locked_o     => s_debug_led(2),
+      debug_dmtd1_locked_o    => s_debug_led(3),
+      debug_ref2_locked_o     => s_debug_led(4),
+      debug_dmtd2_locked_o    => s_debug_led(5),
+      pcie_ready_o            => s_debug_led(6),
+      scubus_a_a              => scub_a,
+      scubus_a_d_out          => scub_d_out,
+      scubus_a_d_in           => scub_d_in,
+      scubus_a_d_tri_out      => scub_d_tri_out,
+      scubus_nsel_data_drv    => scub_nsel_ext_data_drv,
+      scubus_a_nds            => scub_A_nDS,
+      scubus_a_rnw            => scub_A_RnW,
+      scubus_a_ndtack         => A_nDtack,
+      scubus_a_nsrq           => A_nSRQ,
+      scubus_a_nsel           => scub_nSEL,
+      scubus_a_ntiming_cycle  => scub_ntiming_cycle,
+      scubus_a_sysclock       => A_SysClock,
+      ow_io(0)                => onewire_ext,
+      ow_io(1)                => A_OneWire,
+      pcie_refclk_i           => pcie_refclk_i,
+      pcie_rstn_i             => nPCI_RESET_i,
+      pcie_rx_i               => pcie_rx_i,
+      pcie_tx_o               => pcie_tx_o,
+      -- I2C
+      i2c_scl_pad_i           => s_i2c_scl_pad_in,
+      i2c_scl_pad_o           => s_i2c_scl_pad_out,
+      i2c_scl_padoen_o        => s_i2c_scl_padoen,
+      i2c_sda_pad_i           => s_i2c_sda_pad_in,
+      i2c_sda_pad_o           => s_i2c_sda_pad_out,
+      i2c_sda_padoen_o        => s_i2c_sda_padoen,
+      -- PSRAM
+      cr_clk_o                => psram_clk,
+      cr_addr_o               => psram_a,
+      cr_data_io              => psram_dq,
+      cr_lbn_o                => s_psram_lbn,
+      cr_ubn_o                => s_psram_ubn,
+      cr_cen_o                => s_psram_cen,
+      cr_oen_o                => s_psram_oen,
+      cr_wen_o                => s_psram_wen,
+      cr_cre_o                => s_psram_cre,
+      cr_advn_o               => s_psram_advn,
+      cr_wait_i               => s_psram_wait,
+      hw_version              => x"0000000" & not scu_cb_version,
+      -- blackbox
+      is_rmt                  => is_rmt,
+      front_in                => s_front_in,
+      front_out               => s_front_out,
+      rear_in                 => s_rear_in,
+      rear_out                => s_rear_out,
+      frontend_plugin_select  => rear_in(1) & rear_in(0)
+    );
+
+  -- Dual PSRAM
+  dual_ram : for i in 0 to 1 generate
+    psram_cen(i)    <= s_psram_cen(i);
+    psram_cre(i)    <= s_psram_cre(i);
+    psram_oen(i)    <= s_psram_oen(i);
+    psram_wen(i)    <= s_psram_wen(i);
+    psram_lbn(i)    <= s_psram_lbn(i);
+    psram_ubn(i)    <= s_psram_ubn(i);
+    psram_advn(i)   <= s_psram_advn(i);
+    s_psram_wait(i) <= psram_wait(i);
+  end generate;
+
+  -- LEDs
+  wr_led_pps    <= s_led_pps;                                             -- white = PPS
+  wr_rgb_led(0) <= s_led_link_act;                                        -- WR-RGB Red
+  wr_rgb_led(1) <= s_led_track;                                           -- WR-RGB Green
+  wr_rgb_led(2) <= '1' when (not s_led_track and s_led_link_up) else '0'; -- WR-RGB Blue
+  user_led_0    <= s_gpio_o(2 downto 0);
+
+  lemos : for i in 0 to 2 generate
+    s_lvds_p_i(i) <= fastIO_p_i(i);
+    s_lvds_n_i(i) <= fastIO_n_i(i);
+    fastIO_p_o(i) <= s_lvds_p_o(i);
+  end generate;
+  lemo_out <= s_gpio_o(6 downto 3);
+
+  -- LEMOs
+  --lemos : for i in 0 to 2 generate
+    --s_lvds_p_i(i) <= fastIO_p_i(i);
+    --s_lvds_n_i(i) <= fastIO_n_i(i);
+    --fastIO_p_o(i) <= s_lvds_p_o(i);
+  --  fastIO_p_o <= s_gpio_o(9 downto 7);
+
+  --  lvds_to_single_gpio : altera_lvds_ibuf
+  --    generic map(
+  --      g_family  => c_family)
+  --    port map(
+  --      datain_b  => fastIO_n_i(i),
+  --      datain    => fastIO_p_i(i),
+  --      dataout   => s_gpio_i(i)
+  --    );
+  --end generate;
+  --lemo_out <= s_gpio_o(6 downto 3);
+
+  -- Lemo LEDs
+  s_lemo_led (3 downto 0) <= s_gpio_o(6 downto 3);
+  s_lemo_led (5 downto 4) <= lemo_in;
+
+  -- ECA to gpio
+  s_rear_in(23 downto 0) <= s_gpio_o(30 downto 7);
+
+  tri_state_a_d: process (A_D, scub_d_tri_out, A_D_mux)
+  begin
+    if (scub_d_tri_out = '1') then
+      A_D <= A_D_mux;
+    else
+      A_D <= (others => 'Z');
+    end if;
+  end process;
+
+  standalone_backplane : process (is_rmt, s_lemo_io, A_D_mux, scub_A_RnW, scub_nSEL, scub_d_out, scub_a, scub_nsel_ext_data_drv, scub_d_in)
+  begin
+    if (is_rmt = '1') then
+      nSel_Ext_Data_DRV <= '0';          -- activate the drivers
+
+      s_front_in(56)           <= serial_cb_in(0);            -- Serial_CB_In1
+      s_front_in(57)           <= serial_cb_in(1);            -- Serial_CB_In2
+      serial_cb_out(0)         <= s_front_out(58);            -- Serial_CB_Out1
+      s_front_in(58)           <= s_front_out(58);            -- feedback
+      serial_cb_out(1)         <= s_front_out(59);            -- Serial_CB_Out2
+      s_front_in(59)           <= s_front_out(59);            -- feedback
+      rear_out(0)              <= s_front_out(60);            -- Rear_Out0
+      s_front_in(60)           <= s_front_out(60);            -- feedback
+      rear_out(1)              <= s_front_out(61);            -- Rear_Out1
+      s_front_in(61)           <= s_front_out(61);            -- feedback
+      A_nDS                    <= s_front_out(62);            -- nDS
+      s_front_in(62)           <= s_front_out(62);            -- feedback
+      A_nTiming_Cycle          <= s_front_out(63);            -- nTimingCycle
+      s_front_in(63)           <= s_front_out(63);            -- feedback
+      A_RnW                    <= not s_front_out(67);        -- R/W
+      ADR_TO_SCUB              <= s_front_out(68);            -- Direction for A0 - A15
+      A_Spare                  <= s_front_out(66 downto 65);  -- Spare0, Spare1
+      s_front_in(66 downto 65) <= s_front_out(66 downto 65);  -- feedback
+
+      A_nSEL(12 downto 1)      <= s_front_out(43 downto 32);  -- nBoardSel1 - nBoardSel12
+      s_front_in(43 downto 32) <= s_front_out(43 downto 32);  -- feedback
+      s_front_in(31 downto 16) <= A_D(15 downto 0);           -- D0 - D15
+      A_A(15 downto 0)         <= s_front_out(15 downto 0);   -- A0 - A15
+      s_front_in(55 downto 44) <= A_nSRQ(12 downto 1);        -- SRQ1 - SRQ12
+
+    else
+      ADR_TO_SCUB       <= '1';
+      A_nTiming_Cycle   <= scub_ntiming_cycle;
+      A_RnW             <= scub_A_RnW;
+      nSel_Ext_Data_DRV <= scub_nsel_ext_data_drv;
+      A_nSEL            <= scub_nSEL;
+      A_D_mux           <= scub_d_out;
+      A_A               <= scub_a;
+      A_nDS             <= scub_A_nDS;
+
+    end if;
+
+    scub_d_in <= A_D;
+
+  end process;
+
+  -- Extend LEMO input/outputs to LEDs at 20Hz
+  lemo_leds : for i in 0 to 5 generate
+    lemo_ledx : gc_extend_pulse
+      generic map(
+        g_width => 125_000_000/20) -- 20 Hz
+      port map(
+        clk_i      => clk_ref,
+        rst_n_i    => rstn_ref,
+        pulse_i    => s_lemo_led(i),
+        extended_o => lemo_led(i));
+  end generate;
+
+  -- OneWire
+  onewire_ext_splz  <= '1';  --Strong Pull-Up disabled
+  OneWire_CB_splz   <= '1';  --Strong Pull-Up disabled
+
+  --Extension Piggy
+  ext_ch(0) <= s_led_pps;
+  ext_ch(1) <= s_core_clk_25m;
+  ext_ch(21 downto 2) <= (others => 'Z');
+
+  -- I2C to ATXMEGA
+  avr_scl             <= s_i2c_scl_pad_out(1) when (s_i2c_scl_padoen(1) = '0') else 'Z';
+  avr_sda             <= s_i2c_sda_pad_out(1) when (s_i2c_sda_padoen(1) = '0') else 'Z';
+  s_i2c_scl_pad_in(1) <= avr_scl;
+  s_i2c_sda_pad_in(1) <= avr_sda;
+
+  -- Resets
+  A_nReset      <= rstn_ref;
+  nFPGA_Res_Out <= rstn_ref;
+
+  -- fixed scubus signals
+  nADR_EN     <= '0';
+  --A_OneWire   <= 'Z';
+
+  -- SFP
+  sfp_rate_sel_o <= '1'; --SFP rate full speed
+
+  -- Debug
+  debug_led(6 downto 0) <= not(s_debug_led(6 downto 0));
+  debug_led(7)          <= nPCI_RESET_i;
+
+end rtl;

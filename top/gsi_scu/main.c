@@ -23,7 +23,7 @@
 #include "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"
 #include "../../ip_cores/saftlib/src/eca_flags.h"
 #include "history.h"
-#ifdef SCU4SLIM
+#if defined(SCU4SLIM) || defined(SCU4SLIM_BB)
   #include "scu4slim_shared_mmap.h"
 #else
   #include "scu_control_shared_mmap.h"
