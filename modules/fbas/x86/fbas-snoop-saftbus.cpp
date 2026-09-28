@@ -170,7 +170,7 @@ void on_action(uint64_t event, uint64_t param, saftlib::Time deadline, saftlib::
     stats::test_event_ts = deadline.getTAI();
   }
 
-  stats::calculate((executed.getTAI() - deadline.getTAI()), stats::latency);
+  stats::calculate(static_cast<double>(static_cast<int64_t>(executed.getTAI() - deadline.getTAI())), stats::latency);
 }
 
 int main(int argc, char *argv[]) {
