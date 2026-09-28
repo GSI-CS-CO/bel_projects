@@ -35,6 +35,15 @@ get_tr_measurements() {
     local output
     output=$(run_remote $1 \
     "source setup_local.sh && \
+    read_counters \$rx_node_dev && \
+    result_eca_delay \$rx_node_dev && \
+    result_rx_delay \$rx_node_dev && \
+    result_msg_delay \$rx_node_dev && \
+    result_msg_rate \$rx_node_dev && \
+    result_diob_delay \$rx_node_dev && \
+    result_ttl_ival \$rx_node_dev && \
+    result_ml_period \$rx_node_dev && \
+    read_array \$rx_node_dev 8 && \
     stats_eca_tap \$rx_node_dev")
     ret_code=$?
     exit_on_fail $ret_code
@@ -57,12 +66,31 @@ format_measurements() {
     local line
 
     # counters
-    line+="\tRX msgs    : ${output[0]}\n"    # 1st element
-    line+="\tLate msgs  : ${output[1]}\n"    # 2nd element
-    line+="\tAvg latency: ${output[2]}\n"    # 3rd element
-    line+="\tMin latency: ${output[3]}\n"    # 4th element
-    line+="\tMax latency: ${output[4]}\n"    # 5th element
-    line+="\tCal latency: ${output[5]}\n"    # last element
+    line+="\t--- LM32 stats, us (avg, min, max, valid, all)\n"
+    line+="\tRX msgs    : ${output[1]}\n"    # 2nd element
+    line+="\tOvf msgs   : ${output[2]}\n"    # 3rd element
+    line+="\tOld msgs   : ${output[3]}\n"    # 4th element
+    line+="\tBad msgs   : ${output[4]}\n"    # 5th element
+
+    # delays
+    line+="\tECA delay  : ${output[@]:5:5}\n"  # get 5 elements starting at index 5
+    line+="\tRX delay   : ${output[@]:10:5}\n" # get 5 elements starting at index 10
+    line+="\tMsg delay  : ${output[@]:15:5}\n" # get 5 elements starting at index 15
+    line+="\tMsg rate   : ${output[@]:20:5}\n" # get 5 elements starting at index 20
+    line+="\tDIOB delay : ${output[@]:25:5}\n" # get 5 elements starting at index 25
+    line+="\tTTL period : ${output[@]:30:5}\n" # get 5 elements starting at index 30
+    line+="\tLoop period: ${output[@]:35:5}\n" # get 5 elements starting at index 35
+    line+="\t--- action handling rate\n"
+    line+="\t${output[@]:40:8}\n"              # get 8 elements starting at index 40
+
+    # ECA tap
+    line+="\t--- ECA tap stats, (latencies in ns)\n"
+    line+="\tRX msgs    : ${output[48]}\n"    # 49th element
+    line+="\tLate msgs  : ${output[49]}\n"    # 50th element
+    line+="\tAvg latency: ${output[50]}\n"    # 51st element
+    line+="\tMin latency: ${output[51]}\n"    # 52nd element
+    line+="\tMax latency: ${output[52]}\n"    # 53th element
+    line+="\tCal latency: ${output[53]}\n"    # 54th element
 
     ret="$line"
 }
@@ -72,20 +100,34 @@ is_measurement_failed() {
     # $1 - return/reply variable
     # $@ - string with measurements
 
-    # measurements[0] - RX msg count, expected non-zero count
-    # measurements[1] - RX late msg count, expected zero count
+    # measurements[1] - eca valid, expected non-zero count
+    # measurements[2] - eca overflow, expected zero count
+    # measurements[15]- average messaging delay, expected below 1 ms
 
     local -n ret="$1"
     shift
     local output=($@)  # make array
     local failed=0 # false
 
-    n_msg=${output[0]}
-    n_msg=$(( 10#$n_msg ))  # convert a string to integer
+    eca_valid=${output[1]}
+    eca_valid=$(( 10#$eca_valid ))  # convert a string to integer
 
-    # failure: if the 'n_msg' count has zero value
-    if [ $n_msg -eq 0 ]; then
+    eca_overflow=${output[2]}
+    eca_overflow=$(( 10#$eca_overflow ))
+
+    # failure: if the 'ECA overflow' counter has non-zero or
+    # 'ECA valid' counter has zero value
+    if [ $eca_overflow -ne 0 ] || [ $eca_valid -eq 0 ]; then
         failed=1 # true
+        echo "failure: valid=$eca_valid, overflow=$eca_overflow"
+    fi
+
+    # failure: if the 'average messaging delay' is higher than 1 ms
+    avg_msg_dly=${output[15]}
+    avg_msg_dly=$(( 10#$avg_msg_dly ))     # convert a string to integer
+    if [ $avg_msg_dly -gt 1000 ]; then
+        failed=2 # true
+        echo "failure: avg messaging delay=$avg_msg_dly"
     fi
 
     ret=$failed
