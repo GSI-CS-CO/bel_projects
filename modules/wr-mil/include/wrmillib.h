@@ -173,6 +173,9 @@ extern "C" {
                            uint64_t *nEvtsRecD,                  // number of MIL telegrams received (data)
                            uint32_t *nEvtsRecErr,                // number of 'broken' MIL telegrams received by VHDL Manchester decoder
                            uint32_t *nEvtsBurst,                 // number of detected high frequency bursts
+                           uint64_t *nEvtsBusy,                  // number of detected 'busy' signals (VHDL)
+                           uint32_t *nEvtsMissed,                // number of detected 'missed' signals (VHDL)
+                           uint32_t *flagUseBlackbox,            // 1: use blackbox; 0: use standard MIL interface
                            int      printFlag                    // print info to screen 
                            );
 

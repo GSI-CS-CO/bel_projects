@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Micheal Reese, Mathias Kreider GSI-Darmstadt
- *  version : 25-sep-2026
+ *  version : 28-sep-2026
  *
  *  firmware required for the White Rabbit -> MIL Gateways
  *  
@@ -42,6 +42,8 @@
 #define RESET_INHIBIT_COUNTER       10000  // count so many main ECA timemouts, prior sending fill event
 #define BLACKBOX_SCU_PLUGIN_SELECT 0x0440  // register for blackbox plugin select
 #define BLACKBOX_SCU_PLUGIN_NR        0x3  // plugin number for SCU blackbox
+#define BLACKBOX_SCU_EVTS_BUSY     0x2024  // register for blackbox busy signal counter (16bit)
+#define BLACKBOX_SCU_EVTS_MISSED   0x2028  // register for blackbox missed signal counter (16bit)
 //#define WR_MIL_GATEWAY_LATENCY 70650     // additional latency in units of nanoseconds
                                            // this value was determined by measuring the time difference
                                            // of the MIL event rising edge and the ECA output rising edge (no offset)
@@ -103,6 +105,11 @@ volatile uint32_t *pSharedGetUseBlackbox;  // pointer to a "user defined" u32 re
 uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM
 volatile uint32_t *pMilSend;            // address of MIL device sending timing messages, usually this will be a SIO
 volatile uint32_t *pMilRec;             // address of MIL device receiving timing messages, usually this will be a MIL piggy
+volatile uint32_t *pMilPlugin;          // blackbox: address of plugin select register
+volatile uint32_t *pMilNEvtsBusy;       // blackbox: address of counter for busy signal
+volatile uint32_t *pMilNEvtsMissed;     // blackbox: address of counter for missed signal
+
+
 
 uint64_t statusArray;                   // all status infos are ORed bit-wise into statusArray, statusArray is then published
 uint64_t nEvtsSnd;                      // # of sent MIL telegrams
@@ -136,7 +143,11 @@ int32_t  mil_latency;
 uint32_t mil_domain;
 uint32_t mil_mon;
 
-uint32_t useBlackbox         = 0;
+uint32_t useBlackbox         = 0;       // 1: use blackbox
+uint16_t nEvtsBusyOld        = 0;       // temporay variables for handling counter overrun
+uint16_t nEvtsBusyNew        = 0;
+uint64_t nEvtsBusyOverRun    = 0;
+
 
 uint32_t inhibit_fill_events = 0;       // this is a counter to block any sending of fill events for some cycles after a real event was sent
 
@@ -234,28 +245,29 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
 // clear project specific diagnostics
 void extern_clearDiag()
 {
-  statusArray   = 0x0;
-  nEvtsSnd      = 0x0;
-  nEvtsRecT     = 0x0;
-  nEvtsRecD     = 0x0;
-  nEvtsBusy     = 0x0;
-  nEvtsErr      = 0x0;
-  nEvtsBurst    = 0x0;
-  nEvtsLate     = 0x0;
-  nEvtsEarly    = 0x0;
-  nEvtsConflict = 0x0;
-  nEvtsDelayed  = 0x0;
-  nEvtsSlow     = 0x0;
-  nEvtsMissed   = 0x0;
-  offsSlow      = 0x0;
-  offsSlowMax   = 0x0;
-  offsSlowMin   = 0xffffffff;
-  comLatency    = 0x0;
-  comLatencyMax = 0x0;
-  comLatencyMin = 0xffffffff; 
-  offsDone      = 0x0;
-  offsDoneMax   = 0x0;
-  offsDoneMin   = 0xffffffff;
+  statusArray      = 0x0;
+  nEvtsSnd         = 0x0;
+  nEvtsRecT        = 0x0;
+  nEvtsRecD        = 0x0;
+  nEvtsBusy        = 0x0;
+  nEvtsBusyOverRun = 0x0;
+  nEvtsErr         = 0x0;
+  nEvtsBurst       = 0x0;
+  nEvtsLate        = 0x0;
+  nEvtsEarly       = 0x0;
+  nEvtsConflict    = 0x0;
+  nEvtsDelayed     = 0x0;
+  nEvtsSlow        = 0x0;
+  nEvtsMissed      = 0x0;
+  offsSlow         = 0x0;
+  offsSlowMax      = 0x0;
+  offsSlowMin      = 0xffffffff;
+  comLatency       = 0x0;
+  comLatencyMax    = 0x0;
+  comLatencyMin    = 0xffffffff; 
+  offsDone         = 0x0;
+  offsDoneMax      = 0x0;
+  offsDoneMin      = 0xffffffff;
   resetEventErrCntMil(pMilRec, 0);
 } // extern_clearDiag 
 
@@ -325,10 +337,19 @@ uint32_t extern_entryActionConfigured()
       pp_printf("pmilsend base %x\n", pMilSend);
       if (!pMilSend) {
         DBPRINT1("wr-mil: ERROR - can't find MIL device; sender\n");
+        pMilPlugin      = 0x0;
+        pMilNEvtsBusy   = 0x0;
+        pMilNEvtsMissed = 0x0;
         return COMMON_STATUS_OUTOFRANGE;
       } // if !pMilSend
-      else pMilSend += (*pSharedSetMilDev * 0x20000) >> 2;
-      useBlackbox = 1;
+      else {
+        pMilSend       += (*pSharedSetMilDev * 0x20000) >> 2;
+        pMilPlugin      = pMilSend + (BLACKBOX_SCU_PLUGIN_SELECT >> 2);
+        pMilNEvtsBusy   = pMilSend + (BLACKBOX_SCU_EVTS_BUSY >> 2);
+        pMilNEvtsMissed = pMilSend + (BLACKBOX_SCU_EVTS_MISSED >> 2);
+             
+        useBlackbox = 1;
+      } // else !pMilSend
       break;
     default :
       DBPRINT1("wr-mil: ERROR - illegal MIL device number; sender\n");
@@ -341,9 +362,8 @@ uint32_t extern_entryActionConfigured()
     // hacky code here; we have to clean this up once the blackbox becomes stable
     // all internal stuff is the blackbox is cleared when selecting plugin '0'
     // then we switch to to the MIL plugin '3'
-    pMilSend += (BLACKBOX_SCU_PLUGIN_SELECT >> 2);
-    *(volatile uint16_t *)pMilSend = 0x0;  
-    *(volatile uint16_t *)pMilSend = (uint16_t)BLACKBOX_SCU_PLUGIN_NR;
+    *(volatile uint16_t *)pMilPlugin = 0x0;  
+    *(volatile uint16_t *)pMilPlugin = (uint16_t)BLACKBOX_SCU_PLUGIN_NR;
   } // if useBB
   else {        // use SCU with MIL piggy or native SIO3 without Blackbox
     if ((status = resetDevMil(pMilSend, 0))  != MIL_STAT_OK) {
@@ -425,6 +445,7 @@ uint32_t extern_entryActionOperation()
   nEvtsRecT            = 0;
   nEvtsRecD            = 0;
   nEvtsBusy            = 0;
+  nEvtsBusyOverRun     = 0;
   nEvtsErr             = 0;
   nEvtsBurst           = 0;
   nEvtsLate            = 0;
@@ -810,6 +831,17 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   // check WR sync state
   if (fwlib_wrCheckSyncState() == COMMON_STATUS_WRBADSYNC) return COMMON_STATUS_WRBADSYNC;
   else                                                     return status;
+
+  // blackbox: get counter values
+  if (useBlackbox) {
+    nEvtsMissed  = *(volatile uint16_t *)pMilNEvtsMissed;
+    nEvtsBusyNew = *(volatile uint16_t *)pMilNEvtsBusy;
+    if (nEvtsBusyNew < nEvtsBusyOld) { // handle overrun of 16 bit counter
+      nEvtsBusyOverRun += 0xffff;
+      nEvtsBusyOld      = nEvtsBusyNew;
+    } // if nEvtsBusyNew
+    nEvtsBusy    = nEvtsBusyOverRun + nEvtsBusyNew;
+  } // if useBlackbox
   //return status;
 } // doActionOperation
 
@@ -892,7 +924,7 @@ int main(void) {
     *pSharedGetNEvtsRecDHi = (uint32_t)(nEvtsRecD >> 32);
     *pSharedGetNEvtsRecDLo = (uint32_t)(nEvtsRecD & 0xffffffff);
     *pSharedGetNEvtsBusyHi = (uint32_t)(nEvtsBusy >> 32);
-    *pSharedGetNEvtsBusylo = (uint32_t)(nEvtsBusy & 0xfffffffff);
+    *pSharedGetNEvtsBusyLo = (uint32_t)(nEvtsBusy & 0xfffffffff);
     *pSharedGetNEvtsErr    = nEvtsErr;
     *pSharedGetNEvtsBurst  = nEvtsBurst;
     *pSharedGetNEvtsMissed = nEvtsMissed;
