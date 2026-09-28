@@ -57,6 +57,7 @@ CHECK_FTM10            = ./syn/gsi_pexarria10/ftm10/ftm10
 CHECK_A10GX            = ./syn/gsi_a10gx_pcie/control/pci_control
 CHECK_IDROGEN          = ./syn/in2p3_idrogen/control/idrogen
 CHECK_SCU4SLIM         = ./syn/gsi_scu/slim4/scu4slim
+CHECK_SCU4SLIM_BB      = ./syn/gsi_scu/slim4/scu4slim_bb
 CHECK_DIOB             = ./syn/scu_diob/scu_diob
 CHECK_ADDAC            = ./syn/gsi_addac/scu_addac
 CHECK_ADDAC2           = ./syn/gsi_addac2/scu_addac2
@@ -89,6 +90,7 @@ PATH_FTM10             = syn/gsi_pexarria10/ftm10
 PATH_A10GX             = syn/gsi_a10gx_pcie/control
 PATH_IDROGEN           = syn/in2p3_idrogen/control
 PATH_SCU4SLIM          = syn/gsi_scu/slim4
+PATH_SCU4SLIM_BB       = syn/gsi_scu/slim4_bb
 PATH_DIOB              = syn/scu_diob
 PATH_ADDAC             = syn/gsi_addac
 PATH_ADDAC2            = syn/gsi_addac2
@@ -534,6 +536,19 @@ scu4slim-sort:
 scu4slim-check:
 	$(call check_timing, $(CHECK_SCU4SLIM))
 	$(call copy_release, $(CHECK_SCU4SLIM), $(PATH_SCU4SLIM), gw-scu4slim-scu4dot1)
+
+scu4slim_bb:		firmware
+	$(MAKE) -C $(PATH_SCU4SLIM_BB) all_gen
+
+scu4slim_bb-clean::
+	$(MAKE) -C $(PATH_SCU4SLIM_BB) clean
+
+scu4slim_bb-sort:
+	$(call sort_file, $(CHECK_SCU4SLIM_BB))
+
+scu4slim_bb-check:
+	$(call check_timing, $(CHECK_SCU4SLIM_BB))
+	$(call copy_release, $(CHECK_SCU4SLIM_BB), $(PATH_SCU4SLIM_BB), gw-scu4slim_bb-scu4dot1)
 
 pexarria5-sdr:	firmware
 	$(MAKE) -C $(PATH_PEXARRIA5_SDR) all

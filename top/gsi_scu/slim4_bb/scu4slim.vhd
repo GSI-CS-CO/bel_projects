@@ -9,7 +9,7 @@ use work.ramsize_pkg.c_lm32_ramsizes;
 use work.altera_lvds_pkg.all;
 use work.altera_networks_pkg.all;
 
-entity scu4slim is
+entity scu4slim_bb is
   port(
     ------------------------------------------------------------------------
     -- Input clocks
@@ -166,9 +166,9 @@ entity scu4slim is
     sfp_mod2_io      : inout std_logic;
     sfp_rate_sel_o   : out   std_logic);
 
-end scu4slim;
+end scu4slim_bb;
 
-architecture rtl of scu4slim is
+architecture rtl of scu4slim_bb is
 
   signal s_led_link_up  : std_logic;
   signal s_led_link_act : std_logic;
