@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 25-sep-2026
+ *  version : 28-sep-2026
  *
  * library for wr-mil
  *
@@ -351,7 +351,8 @@ void wrmil_printDiag(uint32_t utcTrigger, uint32_t utcDelay, uint32_t trigUtcDel
   printf("# MIL events received (TAI)         : 0d%015lu\n"    , nEvtsRecT);
   printf("# MIL events received (data)        : 0d%015lu\n"    , nEvtsRecD);
   printf("# MIL events received (error)       : 0d%015u\n"     , nEvtsErr);
-  printf("# MIL events HW busy (VHDL)         : 0d%015u\n"     , nEvtsBusy);
+  printf("# MIL events received (burst)       : 0d%015u\n"     , nEvtsBurst;
+  printf("# MIL events HW busy (VHDL)         : 0d%015lu\n"    , nEvtsBusy);
   printf("# MIL events HW missed (VHDL)       : 0d%015u\n"     , nEvtsMissed);
   printf("# type (1: use blackbox, 0: don't)  : 0d%015u\n"     , flagUseBlackbox);  
 } // wrmil_printDiag
