@@ -856,6 +856,8 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd)
         //DBPRINT2("fbas%d: disabled MPS %lx\n", nodeType, mpsTask);
         measurePutTimestamp(MSR_ML_PRD, 0);
         measureClearSummary(MSR_ML_PRD, ENABLE_VERBOSITY);
+        measurePutTimestamp(MSR_MSG_RATE, 0);
+        measureClearSummary(MSR_MSG_RATE, DISABLE_VERBOSITY);
         break;
       case FBAS_CMD_PRINT_TX_DLY:
         measurePrintSummary(MSR_TX_DLY);
