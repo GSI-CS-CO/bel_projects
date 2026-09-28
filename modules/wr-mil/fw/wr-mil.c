@@ -412,7 +412,7 @@ uint32_t extern_entryActionOperation()
   // flush ECA queue for lm32
   i = 0;
   while (fwlib_wait4ECAEvent(1000, &tDummy, &eDummy, &pDummy, &fDummy, &flagDummy1, &flagDummy2, &flagDummy3, &flagDummy4) !=  COMMON_ECADO_TIMEOUT) {i++;}
-  DBPRINT1("wr-mil: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
+  DBPRINT2("wr-mil: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
   // init set values
     
   // init get values
