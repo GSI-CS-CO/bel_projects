@@ -225,7 +225,7 @@ for i in $(seq 0 $(($N_EVT - 1))); do
             val16="$(echo $val16 | cut -c13-16)"
             echo "- read the value from $STATUS_REG ($val16 is NOT expected)"
             reg_val=$(eb-read $DEV $STATUS_REG/2)
-            if [ "$reg_val" == "$val16" ]; then
+            if [ "$reg_val" = "$val16" ]; then
                 echo "- FAIL: $reg_val == $val16"
             else
                 echo "+ PASS: $reg_val != $val16"
@@ -239,7 +239,7 @@ for i in $(seq 0 $(($N_EVT - 1))); do
             reg_val=$(eb-read $DEV $STATUS_REG/2)
             reg_val_hi="$(echo $reg_val | cut -c1-2)"
             val16_hi="$(echo $val16 | cut -c1-2)"
-            if [ "$reg_val_hi" == "$val16_hi" ]; then
+            if [ "$reg_val_hi" = "$val16_hi" ]; then
                 echo "- FAIL: ${reg_val_hi}.. (of $reg_val) == $val16"
             else
                 echo "+ PASS: ${reg_val_hi}.. (of $reg_val) != $val16"
@@ -253,7 +253,7 @@ for i in $(seq 0 $(($N_EVT - 1))); do
             reg_val=$(eb-read $DEV $STATUS_REG/2)
             reg_val_lo="$(echo $reg_val | cut -c3-4)"
             val16_lo="$(echo $val16 | cut -c3-4)"
-            if [ "$reg_val_lo" == "$val16_lo" ]; then
+            if [ "$reg_val_lo" = "$val16_lo" ]; then
                 echo "- FAIL: ..${reg_val_lo} (of $reg_val) == $val16"
             else
                 echo "+ PASS: ..${reg_val_lo} (of $reg_val) != $val16"
