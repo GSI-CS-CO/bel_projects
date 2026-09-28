@@ -437,7 +437,6 @@ uint32_t extern_entryActionOperation()
   request_fill_evt     = *pSharedSetReqFillEvt;
   inhibit_fill_events  = RESET_INHIBIT_COUNTER;
   mil_latency          = *pSharedSetLatency;
-  pp_printf("latency %d\n", mil_latency);
   mil_domain           = *pSharedSetGid;
   mil_mon              = *pSharedSetMilMon;
 
@@ -696,7 +695,10 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       // build timing message and inject into ECA
 
       // deadline
-      sendDeadline  = recDeadline + WRMIL_PRETRIGGER_DM + mil_latency - WRMIL_MILSEND_LATENCY;
+      if (flagIsLate) recDeadline = getSysTime(); // if late, send as soon as possible
+      
+      sendDeadline = recDeadline + WRMIL_PRETRIGGER_DM + mil_latency - WRMIL_MILSEND_LATENCY;
+      
        // protect from nonsense hi-frequency bursts
       if (sendDeadline < previous_time + WRMIL_MILSEND_MININTERVAL) {
         sendDeadline = previous_time + WRMIL_MILSEND_MININTERVAL;
@@ -828,20 +830,21 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     if (offsDone   < offsDoneMin)     offsDoneMin   = offsDone;
   } // if eca action
 
-  // check WR sync state
-  if (fwlib_wrCheckSyncState() == COMMON_STATUS_WRBADSYNC) return COMMON_STATUS_WRBADSYNC;
-  else                                                     return status;
-
   // blackbox: get counter values
   if (useBlackbox) {
     nEvtsMissed  = *(volatile uint16_t *)pMilNEvtsMissed;
     nEvtsBusyNew = *(volatile uint16_t *)pMilNEvtsBusy;
-    if (nEvtsBusyNew < nEvtsBusyOld) { // handle overrun of 16 bit counter
-      nEvtsBusyOverRun += 0xffff;
-      nEvtsBusyOld      = nEvtsBusyNew;
-    } // if nEvtsBusyNew
+
+    // handle overrun of 16 bit counter
+    if (nEvtsBusyNew < nEvtsBusyOld)  nEvtsBusyOverRun += 0xffff;
     nEvtsBusy    = nEvtsBusyOverRun + nEvtsBusyNew;
+    nEvtsBusyOld = nEvtsBusyNew;
   } // if useBlackbox
+
+  // check WR sync state
+  if (fwlib_wrCheckSyncState() == COMMON_STATUS_WRBADSYNC) return COMMON_STATUS_WRBADSYNC;
+  else                                                     return status;
+
   //return status;
 } // doActionOperation
 
