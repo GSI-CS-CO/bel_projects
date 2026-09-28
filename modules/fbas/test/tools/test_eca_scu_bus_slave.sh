@@ -233,3 +233,5 @@ done
 
 echo -e "\n$datamaster:$sched_filename $rxscu:$fw_rxscu host:$localhost ($(date))\n"
 echo -e "$results"
+
+exit $break_loop # use the measurement failure as an exit code
