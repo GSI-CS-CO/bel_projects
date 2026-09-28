@@ -395,7 +395,7 @@ void wrf50_printDiag(int32_t f50Offs, uint32_t mode, uint32_t TMainsAct, uint32_
 
 uint32_t wrmil_info_read(uint64_t ebDevice, uint32_t *utcTrigger, uint32_t *utcUtcDelay, uint32_t *trigUtcDelay, uint32_t *gid, int32_t *latency, uint64_t *utcOffset, uint32_t *requestFill,
                          uint32_t *milDev, uint32_t *milMon, uint64_t *nEvtsSnd, uint64_t *nEvtsRecT, uint64_t *nEvtsRecD, uint32_t *nEvtsErr, uint32_t *nEvtsBurst, uint64_t *nEvtsBusy,
-                         uint32_t *nEvtsMissed, uint32_t *flagUseBlackbox,  uint32_t printFlag)
+                         uint32_t *nEvtsMissed, uint32_t *flagUseBlackbox, int printFlag)
 {
   eb_cycle_t   eb_cycle;
   eb_status_t  eb_status;

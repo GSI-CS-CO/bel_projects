@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 25-sep-2026
+ *  version : 28-sep-2026
  *
  * monitors WR-MIL gateway (server part)
  *
@@ -660,11 +660,11 @@ int main(int argc, char** argv)
 
     saftlib::Time deadline_t;
     uint64_t      t_new, t_old, t_lastlog;
-    uint32_t      tmp32a, tmp32b, tmp32c, tmp32f, tmp32g, tmp32h;
+    uint32_t      tmp32a, tmp32b, tmp32c, tmp32f, tmp32g, tmp32h, tmp32i, tmp32j;
     int32_t       stmp32a;
-    uint64_t      tmp64a;
-    uint32_t      fwGid, fwEvtsRecErr, fwEvtsBurst/*, fwState, fwVersion, nBadStatus, nBadState*/;
-    uint64_t      fwEvtsSnd, fwEvtsRecT, fwEvtsRecD/*, fwStatus*/;
+    uint64_t      tmp64a, tmp64b;
+    uint32_t      fwGid, fwEvtsRecErr, fwEvtsBurst  /*, fwState, fwVersion, nBadStatus, nBadState*/;
+    uint64_t      fwEvtsSnd, fwEvtsRecT, fwEvtsRecD /*, fwStatus*/;
 
     t_old     = comlib_getSysTime();
     t_lastlog = comlib_getSysTime();
@@ -682,7 +682,7 @@ int main(int argc, char** argv)
         //wrmil_common_read(ebDevice, &fwStatus, &fwState, &nBadStatus, &nBadState, &fwVersion, &tmp32c, 0);
 
         comlib_readDiag2(ebDevice, &state, &verFw, &statusArray, &diagData, 0); // quick and dirty, no error checking
-        wrmil_info_read(ebDevice, &tmp32a, &tmp32b, &tmp32c, &fwGid, &stmp32a, &tmp64a, &tmp32f, &tmp32g, &tmp32h, &fwEvtsSnd, &fwEvtsRecT, &fwEvtsRecD, &fwEvtsRecErr, &fwEvtsBurst, 0);
+        wrmil_info_read(ebDevice, &tmp32a, &tmp32b, &tmp32c, &fwGid, &stmp32a, &tmp64a, &tmp32f, &tmp32g, &tmp32h, &fwEvtsSnd, &fwEvtsRecT, &fwEvtsRecD, &fwEvtsRecErr, &fwEvtsBurst, &tmp64b, &tmp32i, &tmp32j, 0);
         // if (fwGid != gid) statusArray |= COMMON_STATUS_OUTOFRANGE; // signal an error, buggy? better not use
         
         // update monitoring data
