@@ -204,7 +204,7 @@ measure_nw_perf() {
         echo -e "Delay:  avg min max [us] vld all [])\n"
         # declare measurement entries
         tx_delay_entries=("eca dly" "tx dly " "ml prd ")
-        rx_delay_entries=("eca dly" "rx dly " "msg dly" "ml prd " "ttl    ")
+        rx_delay_entries=("eca dly" "rx dly " "msg dly" "msg rte" "mlp prd" "dio dly" "ttl ivl" "eca tap")
     fi
 
     i=0
