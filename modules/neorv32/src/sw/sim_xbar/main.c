@@ -41,20 +41,24 @@ void run_test(bool atomic)
 
   while(!stop) {
     failed = false;
+
     for(int i = 0; i < N; i++) {
-      if (!atomic) nums[i] = SEED_0^i;
-      else         nums[i] = SEED_1^i;
+      if (!atomic) nums[i] = SEED_0 << i;
+      else         nums[i] = SEED_1 << i;
     }
-    //neorv32_gpio_pin_set(0, 1);
+
+    if (atomic) gsi_wishbone_start_atomic_access();
     for(int i = 0; i < N; i++) {
       *(RAM_base_address + i)   = nums[i];
     }
-    //neorv32_gpio_pin_set(0, 0);
-    //neorv32_gpio_pin_set(0, 1);
+    if (atomic) gsi_wishbone_stop_atomic_access();
+
+    if (atomic) gsi_wishbone_start_atomic_access();
     for(int i = 0; i < N; i++) {
       nums_test[i] = *(RAM_base_address + i);
     }
-    //neorv32_gpio_pin_set(0, 0);
+    if (atomic) gsi_wishbone_stop_atomic_access();
+
     for(int i = 0; i < N; i++) {
       if(nums[i] != nums_test[i]) {
         neorv32_uart0_printf("Data at address 0x%x is not correct, expected 0x%x, got 0x%x\n", (RAM_base_address + i), nums[i], nums_test[i]);
