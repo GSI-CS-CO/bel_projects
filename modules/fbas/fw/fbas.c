@@ -186,7 +186,6 @@ static status_t initSharedMem(uint32_t *const sharedStart)
 
   sbInitSharedMemory(pSharedApp);
 
-
   // clear the app-spec region of the shared memory
   pSharedTemp = (uint32_t *)(pSharedApp + (FBAS_SHARED_END >> 2 ));
   pShared = pSharedApp;

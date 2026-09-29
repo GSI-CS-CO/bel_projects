@@ -123,6 +123,7 @@ export instr_st_rx_dly=0x39     # store the RX handler delay measurement results
 export instr_st_ml_prd=0x3a     # store the main loop period measurement results to shared memory
 export instr_st_diob_dly=0x3d   # store the DIOB access delay measurement results to the shared memory
 export instr_st_array=0x3b      # store the uint32_t array[8] to the reserved location of the shared memory
+export instr_set_tx_rate=0x3c   # set the TX messaging rate: FBAS_CMD_SET_TX_RATE
 
 export     mac_any_node="0xffffffffffff"      # MAC address of any node
 # Raw event data (bits 63-16 = event ID, 15-8 = channel, 7-0 = flag)
@@ -149,9 +150,23 @@ user_approval() {
     fi
 }
 
-wait_seconds() {
-    #echo "wait $1 seconds ..."
-    sleep $1
+write_cmd() {
+    # $1 - device (dev/wbm0)
+    # $2 - command code
+
+    if [ "$#" -ne 2 ]; then
+        echo "wrong argument: $@. Exit!"
+        exit 1
+    fi
+
+    status=$(printf %d $2)
+    eb-write $1 $addr_cmd/4 $(($2)) # write a command code to the command buffer
+
+    while [ "$status" -ne 0 ]; do   # and wait for a while so that command code is read by LM32
+        sleep 0.1
+        status=$(eb-read $1 $addr_cmd/4)
+        status=$(printf "%d" 0x$status)
+    done
 }
 
 wait_print_seconds() {
@@ -166,7 +181,7 @@ wait_print_seconds() {
         v=$[ $1 - $i ]
         v=$(printf "%*d\r" "8" $v)          # print numbers in 8 digits leading with spaces
         echo -ne "time left (seconds): $v"  # overwrite previous output
-        wait_seconds 1
+        sleep 1
     done
 
 }
@@ -193,7 +208,7 @@ start_saftd() {
         echo "wait until SAFT daemon terminates"
         for i in $(seq 1 10); do
             echo -ne "time left (seconds): $[ 10 - $i ]\r"
-            wait_seconds 1
+            sleep 1
         done
     fi
 
@@ -215,7 +230,7 @@ start_saftbusd() {
         echo "wait until watchdog is released"
         for i in $(seq 1 10); do
             echo -ne "time left (seconds): $[ 10 - $i ]\r"
-            wait_seconds 1
+            sleep 1
         done
     fi
 
@@ -270,7 +285,7 @@ load_node_fw() {
         echo "Error: failed to load LM32 FW '$fw_filename'. Exit!"
         exit 1
     fi
-    wait_seconds 1
+    sleep 1
 }
 
 configure_node() {
@@ -285,21 +300,23 @@ configure_node() {
 
     device=$(eval echo "\$$1")  # reference node device label (string) as variable
 
-    eb-write $device $addr_cmd/4 $instr_fsm_configure
-    wait_seconds 1
+    write_cmd $device $instr_fsm_configure
 
     if [ "$1" == "rx_node_dev" ]; then
         echo "set node type to RX (0x1)"
         eb-write $device $addr_set_node_type/4 0x1
-        wait_seconds 1
 
         echo "tell LM32 to set the node type"
-        eb-write $device $addr_cmd/4 $instr_set_nodetype
-        wait_seconds 1
+        write_cmd $device $instr_set_nodetype
 
         echo "verify the actual node type (expected 0x1)"
-        eb-read $device $addr_get_node_type/4
-        wait_seconds 1
+        type=$(eb-read $device $addr_get_node_type/4)
+        type=$(printf "%d" 0x$type)
+
+        if [ "$type" -ne 1 ]; then
+            echo "failed to set node type to RX: $type (expected 1). Exit!"
+            exit 1
+        fi
 
         if [ $# -gt 1 ]; then
             shift
@@ -312,10 +329,8 @@ configure_node() {
             idx=$(($2)) 2>/dev/null   # force arithmetic evaluation (accept non-numeric input)
         fi
         eb-write $device $addr_set_node_type/4 $idx
-        wait_seconds 1
 
-        eb-write $device $addr_cmd/4 0x3c
-        wait_seconds 1
+        write_cmd $device $instr_set_tx_rate
 
         echo "TX messaging period: $idx"
     fi
@@ -392,9 +407,8 @@ set_senderid() {
         id_32=$(($senderid & 0xffffffff))                 # low 32-bit of sender ID
         eb-write $device $addr_id/4 $id_32
 
-        eb-write $device $addr_cmd/4 $instr_load_senderid
+        write_cmd $device $instr_load_senderid
         i=$(( $i + 1 ))
-        sleep 0.2
     done
 
 }
@@ -438,8 +452,7 @@ make_node_ready() {
 
     device=$(eval echo "\$$1")  # reference node device label (string) as variable
 
-    eb-write $device $addr_cmd/4 $instr_fsm_startop
-    wait_seconds 1
+    write_cmd $device $instr_fsm_startop
 }
 
 configure_eca() {
@@ -502,18 +515,15 @@ set_eca_rules() {
 stop_operation() {
     # $1 - device (dev/wbm0)
 
-    eb-write $1 $addr_cmd/4 $instr_dis_mps
-    sleep 0.1
-    eb-write $1 $addr_cmd/4 $instr_fsm_stopop
-    sleep 0.1
+    write_cmd $1 $instr_dis_mps
+    write_cmd $1 $instr_fsm_stopop
     echo "Stopped operation on $1"
 }
 
 start_operation() {
     # $1 - device (dev/wbm0)
 
-    eb-write $1 $addr_cmd/4 $instr_fsm_startop
-    sleep 0.1
+    write_cmd $1 $instr_fsm_startop
     echo "Started operation on $1"
 }
 
@@ -522,7 +532,7 @@ start_operation() {
 ######################
 
 setup_mpstx() {
-    # $1 - optional, index of the TX messaging period (0..8)
+    # $1 - optional, index of the TX messaging period (0..11)
 
     node_dev_label="tx_node_dev"
     echo "load firmware"
@@ -613,19 +623,17 @@ read_counters() {
 start_test4() {
     # $1 - dev/wbm0
 
-    echo -e "\nEnable MPS task on $1"
     enable_mps $1
 }
 
 stop_test4() {
     # $1 - dev/wbm0
 
-    echo -e "\nDisable MPS task on $1"
-    disable_mps $1
+    stop_operation $1
 }
 
 info_nw_perf() {
-    # $1 - number of iterations
+    # $1 - event generation duration
 
     n=$1
 
@@ -770,14 +778,12 @@ result_rx() {
 
 disable_mps() {
     echo "Stop MPS on $1"
-    eb-write $1 $addr_cmd/4 $instr_dis_mps
-    wait_seconds 1
+    write_cmd $1 $instr_dis_mps
 }
 
 enable_mps() {
     echo "Start MPS on $1"
-    eb-write $1 $addr_cmd/4 $instr_en_mps
-    wait_seconds 1
+    write_cmd $1 $instr_en_mps
 }
 
 disable_mps_all() {
@@ -817,7 +823,7 @@ read_measurement_results() {
     instr_msr=$2
     addr_msr=$3
 
-    eb-write $device $addr_cmd/4 $instr_msr
+    write_cmd $device $instr_msr
 
     avg=$(eb_read_uint64 $device $addr_msr)  # average
     avg=$(($avg / 1000))                     # ns->us
@@ -856,7 +862,7 @@ read_array() {
     local length=$2
     local my_array=()
 
-    eb-write $device $addr_cmd/4 $instr_st_array
+    write_cmd $device $instr_st_array
 
     for i in $(seq $length); do
         hex_val=$(eb-read $device $shared/4)
