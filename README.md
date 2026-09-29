@@ -20,6 +20,9 @@ GSI Timing Gateware and Tools
     - [Quartus Setup](#quartus-setup)
     - [Quartus Version](#quartus-version)
     - [Library libpng12](#library-libpng12)
+      - [Ubuntu](#ubuntu)
+      - [Mint](#mint)
+      - [Backup Plan](#backup-plan)
     - [Tool qmegawiz](#tool-qmegawiz)
       - [Headless qmegawiz](#headless-qmegawiz)
     - [Tool qsys-generate](#tool-qsys-generate)
@@ -196,12 +199,11 @@ Error: Quartus error while loading shared libraries: libpng12-0.0: ... [Ubuntu/M
 
 Solution: Install the missing package
 
-```shell
-make libpng12
-sudo make libpng12-install
-```
+#### Ubuntu
 
-If you can't compile libpng12, use this instead:
+Get the package from here: https://packages.ubuntu.com/xenial/amd64/libpng12-0/download
+
+#### Mint
 
 ```shell
 sudo add-apt-repository ppa:linuxuprising/libpng12
@@ -209,9 +211,7 @@ sudo apt update
 sudo apt install libpng12-0
 ```
 
-<<<<<<< HEAD
 If this PPA can't be added, you need to compile the library:
-
 
 ```shell
 cd res/ubuntu-22-and-later
@@ -222,9 +222,6 @@ cd libpng-1.2.54
 make
 sudo make install
 ```
-=======
-If this PPA can't be added, you need to compile the library.
->>>>>>> 849c3b89e (README.md: Revise libpng12 installation steps in README)
 
 #### Backup Plan
 
@@ -562,6 +559,8 @@ Instruction length: 8
 ID: 0x06D48093
 Mask: 0xFFFFFFFF
 ```
+
+![JTAG Chain](res/readme/jtag_chain.png)
 
 Click "Auto Detect" and edit/change the unknown device to COOLRUNNER-II.
 
