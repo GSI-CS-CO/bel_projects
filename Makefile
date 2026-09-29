@@ -481,6 +481,7 @@ uniftm-sort:
 
 uniftm-check:
 	$(call check_timing, $(CHECK_UNIFTM))
+	$(call copy_release, $(CHECK_UNIFTM), $(PATH_UNIFTM), gw-uniftm)
 
 # #################################################################################################
 # Arria 10 devices
