@@ -4,5 +4,5 @@ use ieee.numeric_std.all;
 
 library work;
 package ramsize_pkg is
-  constant c_lm32_ramsizes : natural := 163840;
+  constant c_lm32_ramsizes : natural := 524288;
 end ramsize_pkg;

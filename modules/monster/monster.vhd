@@ -131,7 +131,6 @@ entity monster is
     g_en_a10ts             : boolean;
     g_delay_diagnostics    : boolean;
     g_en_eca               : boolean;
-    g_en_eca_io_channel    : boolean;
     g_en_wd_tmr            : boolean;
     g_en_timer             : boolean;
     g_en_eca_tap           : boolean;
@@ -627,7 +626,7 @@ architecture rtl of monster is
     dev_slaves'pos(devs_eca_aq)         => f_sdb_auto_device(c_eca_queue_slave_sdb,                g_en_eca),
     dev_slaves'pos(devs_eca_tlu)        => f_sdb_auto_device(c_eca_tlu_slave_sdb,                  g_en_eca),
     dev_slaves'pos(devs_eca_wbm)        => f_sdb_auto_device(c_eca_ac_wbm_slave_sdb,               g_en_eca),
-    dev_slaves'pos(devs_serdes_clk_gen) => f_sdb_auto_device(c_wb_serdes_clk_gen_sdb,              not g_lm32_are_ftm),
+    dev_slaves'pos(devs_serdes_clk_gen) => f_sdb_auto_device(c_wb_serdes_clk_gen_sdb,              true),
     dev_slaves'pos(devs_control)        => f_sdb_auto_device(c_io_control_sdb,                     true),
     dev_slaves'pos(devs_ftm_cluster)    => f_sdb_auto_bridge(c_ftm_slaves,                         true),
     dev_slaves'pos(devs_lcd)            => f_sdb_auto_device(c_wb_serial_lcd_sdb,                  g_en_lcd),
@@ -828,7 +827,7 @@ architecture rtl of monster is
   signal uart_mux           : std_logic; -- either usb or external
   signal uart_wrc           : std_logic; -- from wrc
   signal s_neorv32_uart0_out: std_logic; -- from neorv32
-  signal s_neorv32_uart0_in : std_logic; 
+  signal s_neorv32_uart0_in : std_logic;
   signal s_neorv32_uart1_out: std_logic;
   signal s_neorv32_uart1_in : std_logic;
   signal uart_to_usb        : std_logic;
@@ -961,10 +960,8 @@ architecture rtl of monster is
   begin
     if g_en_scubus then
       return c_scu_channel_types;
-    elsif g_en_eca_io_channel then
-      return c_channel_types;
     else
-      return c_ftm_channel_types;
+      return c_channel_types;
     end if;
   end f_channel_types;
 
@@ -973,7 +970,6 @@ architecture rtl of monster is
   signal s_stall_i   : std_logic_vector(c_channel_types'range) := (others => '0');
   signal s_channel_o : t_channel_array(c_channel_types'range);
   signal s_time      : t_time;
-
 
   function TO_INTEGER(x: boolean ) return integer is
   begin
@@ -2745,7 +2741,6 @@ end generate;
   end generate;
 
   -- Instantiate SERDES clock generator
-  genSerdes : if not g_lm32_are_ftm generate
   cmp_serdes_clk_gen : xwb_serdes_clk_gen
     generic map(
       g_num_serdes_bits       => 8,
@@ -2761,11 +2756,6 @@ end generate;
       rst_ref_n_i  => rstn_ref,
       eca_time_i   => ref_tai8ns,
       serdes_dat_o => lvds_dat_fr_clk_gen);
-  end generate;
-
-  genNoSerdes : if g_lm32_are_ftm generate
-    lvds_dat_fr_clk_gen <= (others => (others => '0'));
-  end generate;
 
   -- LVDS component data input is OR between ECA chan output and SERDES clk. gen.
   gen_lvds_dat : for i in lvds_dat'range generate
@@ -3001,7 +2991,6 @@ end generate;
           a_stream_o => s_stream_i(1),
           a_stall_i  => s_stall_o(1));
 
-    eca_io_channel_wb : if g_en_eca_io_channel generate
       eca : wr_eca
         generic map(
           g_channel_types  => c_channel_types,
@@ -3028,7 +3017,6 @@ end generate;
           i_rst_n_i   => rstn_sys,
           i_master_i  => dev_msi_slave_o(dev_slaves'pos(devs_eca_ctl)),
           i_master_o  => dev_msi_slave_i(dev_slaves'pos(devs_eca_ctl)));
-    end generate;
 
       -- Legacy 8ns time
       ref_tai8ns <= "000" & s_time(63 downto 3);
@@ -3104,8 +3092,6 @@ end generate;
           master_o    => top_bus_slave_i(top_my_masters'pos(topm_eca_wbm)),
           master_i    => top_bus_slave_o(top_my_masters'pos(topm_eca_wbm)));
 
-
-    eca_io : if g_en_eca_io_channel generate
       c2 : eca_queue
         generic map(
           g_queue_id  => 2)
@@ -3118,7 +3104,6 @@ end generate;
           q_rst_n_i   => rstn_sys,
           q_slave_i   => top_bus_master_o(top_slaves'pos(tops_emb_cpu)),
           q_slave_o   => top_bus_master_i(top_slaves'pos(tops_emb_cpu)));
-    end generate;
 
   end generate;
 

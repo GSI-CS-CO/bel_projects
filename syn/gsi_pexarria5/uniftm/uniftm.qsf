@@ -116,7 +116,7 @@ set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_RETIMING ON
 set_global_assignment -name PLACEMENT_EFFORT_MULTIPLIER 10
 set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
 set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
-set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:ftm.tcl"
+set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:uniftm.tcl"
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:00:25 FEBRUARY 13, 2012"
 set_global_assignment -name QIP_FILE "../../../ip_cores/general-cores/platform/altera/networks/arria5/dual_region.qip"
 set_global_assignment -name QIP_FILE "../../../ip_cores/general-cores/platform/altera/networks/arria5/global_region.qip"
@@ -137,7 +137,7 @@ set_global_assignment -name QSYS_FILE ../../../modules/temp_sens/temp_sens.qsys
 set_global_assignment -name REMOVE_DUPLICATE_REGISTERS OFF
 set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
 set_global_assignment -name SDC_FILE ../../../top/common/arria5.sdc
-set_global_assignment -name SEED 215
+set_global_assignment -name SEED 139
 set_global_assignment -name SMART_RECOMPILE ON
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
 set_global_assignment -name STRATIXII_CONFIGURATION_DEVICE EPCQ256
@@ -149,7 +149,7 @@ set_global_assignment -name SYNTHESIS_EFFORT AUTO
 set_global_assignment -name SYNTH_TIMING_DRIVEN_SYNTHESIS ON
 set_global_assignment -name TIMING_ANALYZER_DO_CCPP_REMOVAL ON
 set_global_assignment -name TIMING_ANALYZER_MULTICORNER_ANALYSIS ON
-set_global_assignment -name TOP_LEVEL_ENTITY ftm
+set_global_assignment -name TOP_LEVEL_ENTITY uniftm
 set_global_assignment -name TRI_STATE_SPI_PINS ON
 set_global_assignment -name USE_CONFIGURATION_DEVICE ON
 set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/generated/lm32_allprofiles.v" -library work
@@ -856,8 +856,8 @@ set_global_assignment -name VHDL_FILE ../../../modules/wb_scu_reg/wb_scu_reg_pkg
 set_global_assignment -name VHDL_FILE ../../../modules/wb_scu_reg/wb_scu_reg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/wb_timer/wb_timer_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/wb_timer/wb_timer.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../top/gsi_pexarria5/ftm/ftm.vhd -library work
-set_global_assignment -name VHDL_FILE ../../../top/gsi_pexarria5/ftm/ramsize_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../top/gsi_pexarria5/uniftm/ramsize_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../top/gsi_pexarria5/uniftm/uniftm.vhd -library work
 set_global_assignment -name VHDL_INPUT_VERSION VHDL_2008
 set_global_assignment -name VHDL_SHOW_LMF_MAPPING_MESSAGES OFF
 set_instance_assignment -name FAST_INPUT_REGISTER ON -to ctl
