@@ -484,6 +484,19 @@ ftm-check:
 	$(call check_timing, $(CHECK_FTM))
 	$(call copy_release, $(CHECK_FTM), $(PATH_FTM), gw-ftm)
 
+uniftm:	firmware
+	$(MAKE) -C $(PATH_UNIFTM) all
+
+uniftm-clean::
+	$(MAKE) -C $(PATH_UNIFTM) clean
+
+uniftm-sort:
+	$(call sort_file, $(CHECK_UNIFTM))
+
+uniftm-check:
+	$(call check_timing, $(CHECK_UNIFTM))
+	$(call copy_release, $(CHECK_UNIFTM), $(PATH_UNIFTM), gw-uniftm)
+
 # #################################################################################################
 # Arria 10 devices
 # #################################################################################################
