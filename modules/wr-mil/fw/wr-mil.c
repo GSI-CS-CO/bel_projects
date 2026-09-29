@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Micheal Reese, Mathias Kreider GSI-Darmstadt
- *  version : 28-sep-2026
+ *  version : 29-sep-2026
  *
  *  firmware required for the White Rabbit -> MIL Gateways
  *  
@@ -42,8 +42,9 @@
 #define RESET_INHIBIT_COUNTER       10000  // count so many main ECA timemouts, prior sending fill event
 #define BLACKBOX_SCU_PLUGIN_SELECT 0x0440  // register for blackbox plugin select
 #define BLACKBOX_SCU_PLUGIN_NR        0x3  // plugin number for SCU blackbox
-#define BLACKBOX_SCU_EVTS_BUSY     0x2024  // register for blackbox busy signal counter (16bit)
-#define BLACKBOX_SCU_EVTS_MISSED   0x2028  // register for blackbox missed signal counter (16bit)
+#define BLACKBOX_SCU_EVTS_BUSY     0x2024  // register (r) for blackbox busy signal counter (16bit)
+#define BLACKBOX_SCU_EVTS_MISSED   0x2028  // register (r) for blackbox missed signal counter (16bit)
+#define BLACKBOX_SCU_EVTS_CLEAR    0x2040  // register (w) for blackbox counters (1 bit per counter, 16bit)
 //#define WR_MIL_GATEWAY_LATENCY 70650     // additional latency in units of nanoseconds
                                            // this value was determined by measuring the time difference
                                            // of the MIL event rising edge and the ECA output rising edge (no offset)
@@ -108,14 +109,16 @@ volatile uint32_t *pMilRec;             // address of MIL device receiving timin
 volatile uint32_t *pMilPlugin;          // blackbox: address of plugin select register
 volatile uint32_t *pMilNEvtsBusy;       // blackbox: address of counter for busy signal
 volatile uint32_t *pMilNEvtsMissed;     // blackbox: address of counter for missed signal
-
-
+volatile uint32_t *pMilNEvtsClear;      // blackbox: address to clear all counters
 
 uint64_t statusArray;                   // all status infos are ORed bit-wise into statusArray, statusArray is then published
 uint64_t nEvtsSnd;                      // # of sent MIL telegrams
 uint64_t nEvtsRecT;                     // # of received MIL telegrams (TAI)
 uint64_t nEvtsRecD;                     // # of received MIL telegrams (data)
-uint64_t nEvtsBusy;                     // # of detected 'busy' signals (VHDL, blackbox only)    
+uint64_t nEvtsBusy;                     // # of detected 'busy' signals (VHDL, blackbox only)
+uint16_t nEvtsBusyOld;                  // temporay variables for handling counter overrun
+uint16_t nEvtsBusyNew;                  // temporay variables for handling counter overrun
+uint64_t nEvtsBusyOverRun;              // temporay variables for handling counter overrun
 uint32_t nEvtsErr;                      // # of late messages with errors
 uint32_t nEvtsBurst;                    // # of detected 'high frequency bursts'
 uint32_t nEvtsLate;                     // # of late messages
@@ -144,9 +147,6 @@ uint32_t mil_domain;
 uint32_t mil_mon;
 
 uint32_t useBlackbox         = 0;       // 1: use blackbox
-uint16_t nEvtsBusyOld        = 0;       // temporay variables for handling counter overrun
-uint16_t nEvtsBusyNew        = 0;
-uint64_t nEvtsBusyOverRun    = 0;
 
 
 uint32_t inhibit_fill_events = 0;       // this is a counter to block any sending of fill events for some cycles after a real event was sent
@@ -250,6 +250,8 @@ void extern_clearDiag()
   nEvtsRecT        = 0x0;
   nEvtsRecD        = 0x0;
   nEvtsBusy        = 0x0;
+  nEvtsBusyNew     = 0x0;
+  nEvtsBusyOld     = 0x0;
   nEvtsBusyOverRun = 0x0;
   nEvtsErr         = 0x0;
   nEvtsBurst       = 0x0;
@@ -268,7 +270,8 @@ void extern_clearDiag()
   offsDone         = 0x0;
   offsDoneMax      = 0x0;
   offsDoneMin      = 0xffffffff;
-  resetEventErrCntMil(pMilRec, 0);
+  if (useBlackbox)  *(volatile uint16_t *)pMilNEvtsClear = 0xffff;
+  else              resetEventErrCntMil(pMilRec, 0);
 } // extern_clearDiag 
 
 
@@ -345,8 +348,9 @@ uint32_t extern_entryActionConfigured()
       else {
         pMilSend       += (*pSharedSetMilDev * 0x20000) >> 2;
         pMilPlugin      = pMilSend + (BLACKBOX_SCU_PLUGIN_SELECT >> 2);
-        pMilNEvtsBusy   = pMilSend + (BLACKBOX_SCU_EVTS_BUSY >> 2);
-        pMilNEvtsMissed = pMilSend + (BLACKBOX_SCU_EVTS_MISSED >> 2);
+        pMilNEvtsBusy   = pMilSend + (BLACKBOX_SCU_EVTS_BUSY     >> 2);
+        pMilNEvtsMissed = pMilSend + (BLACKBOX_SCU_EVTS_MISSED   >> 2);
+        pMilNEvtsClear  = pMilSend + (BLACKBOX_SCU_EVTS_CLEAR    >> 2);
              
         useBlackbox = 1;
       } // else !pMilSend
@@ -444,6 +448,8 @@ uint32_t extern_entryActionOperation()
   nEvtsRecT            = 0;
   nEvtsRecD            = 0;
   nEvtsBusy            = 0;
+  nEvtsBusyNew         = 0;
+  nEvtsBusyOld         = 0;
   nEvtsBusyOverRun     = 0;
   nEvtsErr             = 0;
   nEvtsBurst           = 0;
@@ -458,10 +464,10 @@ uint32_t extern_entryActionOperation()
   offsSlowMin          = 0xffffffff;
   comLatency           = 0;
   comLatencyMax        = 0;
-  comLatencyMin        = 0xffffffff;;
+  comLatencyMin        = 0xffffffff;
   offsDone             = 0;
   offsDoneMax          = 0;
-  offsDoneMin          = 0xffffffff;;
+  offsDoneMin          = 0xffffffff;
 
   // configure MIL receiver for timing events for all 16 virtual accelerators
   // if mil_mon == 2, the FIFO for event data monitoring must be enabled
@@ -604,7 +610,7 @@ uint32_t convert_WReventID_to_milTelegram(uint64_t evtId, uint32_t *milTelegram)
     case PZU_UH    : pzKennung = 13; break;
     case PZU_AT    : pzKennung = 14; break;
     case PZU_TK    : pzKennung = 15; break;
-    // case PARTIH    : pzKennung = 15; break;   // private communication Peter: PARTIH should use Kennung of TK; chk: commented as we used a duplicate GID/case for testing
+    case PARTIH    : pzKennung = 15; break;   // private communication Peter: PARTIH should use Kennung of TK; chk: commented as we used a duplicate GID/case for testing
     default :        pzKennung =  0; break;
   } // switch gid
     
@@ -653,7 +659,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint32_t recMilEvtData;                                     // event data received from MIL
   uint32_t recMilEvtCode;                                     // event code received from MIL
   uint32_t recMilVAcc;                                        // event virt acc received from MIL
-  uint32_t recMilEvts[] = {0xffff};                           // list of MIL events we like to liste to (here: dummy)
+  uint32_t recMilEvts[] = {0xffff};                           // list of MIL events we like to listen to (here: dummy)
   uint64_t sendDeadline;                                      // deadline to send
   uint64_t sendEvtId;                                         // evtid to send
   uint64_t sendParam;                                         // parameter to send
