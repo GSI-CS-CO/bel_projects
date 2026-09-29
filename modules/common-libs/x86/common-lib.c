@@ -339,7 +339,7 @@ void comlib_printDiag2(uint32_t state, uint32_t version, uint64_t statusArray, c
     if ((statusArray >> i) & 0x1)
       printf("    status bit is set               : %s\n", comlib_statusText(i));
   } // for i
-} // comlib_printDiag;
+} // comlib_printDiag2;
 
 
 int comlib_readDiag(eb_device_t device, uint64_t  *statusArray, uint32_t  *state, uint32_t  *version, uint64_t  *mac, uint32_t  *ip, uint32_t  *nBadStatus,
@@ -442,7 +442,7 @@ int comlib_readDiag2(eb_device_t device, uint32_t  *state, uint32_t  *version, u
   if (printFlag) comlib_printDiag2(*state, *version, *statusArray, *diagData);
 
   return eb_status;
-} // comlib_readDiag
+} // comlib_readDiag2
 
 
 uint32_t comlib_ecaq_open(const char* devName, uint32_t qIdx, eb_device_t *device, eb_address_t *ecaq_base)
@@ -514,12 +514,19 @@ uint32_t comlib_wait4ECAEvent2(uint32_t timeout_ms,  eb_device_t device, eb_addr
   uint32_t    evtParamLow ;        // low 32 bit of parameter field
   uint64_t    timeoutT;            // when to time out
   uint64_t    timeout;             // timeout
-  uint64_t startT;                 // time when starting this routine
-  uint64_t stopT;                  // time when finishing this routine
+  uint64_t    startT;              // time when starting this routine
+  uint64_t    startT2;             // time when reading message data from the ECA
+  uint64_t    stopT;               // time when finishing this routine
+  uint64_t    deadlineUTC;         // assumption: system time is UTC
 
-  timeout  = ((uint64_t)timeout_ms + 1) * 1000000;
-  startT   = comlib_getSysTime();
-  timeoutT = comlib_getSysTime() + timeout;
+  // required for cheap autocalibration of UTC offset
+  static uint64_t UTCOffset = 37000000000;
+  static uint32_t firstTime = 1;
+  uint32_t    estLatency;          // estimated latency
+
+  timeout    = ((uint64_t)timeout_ms + 1) * 1000000;
+  startT     = comlib_getSysTime();
+  timeoutT   = startT + timeout;
 
   while (comlib_getSysTime() < timeoutT) {
     // read flag from ECA queue
@@ -567,24 +574,35 @@ uint32_t comlib_wait4ECAEvent2(uint32_t timeout_ms,  eb_device_t device, eb_addr
       *evtId       = ((uint64_t)evtIdHigh    << 32) + (uint64_t)evtIdLow;
       *param       = ((uint64_t)evtParamHigh << 32) + (uint64_t)evtParamLow;
 
+      deadlineUTC  = *deadline - UTCOffset;
+
       stopT        = comlib_getSysTime();
+      estLatency   = (uint32_t)(stopT - startT2) * 2;  // factor 2 is hackish; assumption: reading ecaFlag takes as long as the all the other data
 
       // monitoring stuff
-      if (*deadline < startT) {
+      if ((deadlineUTC < startT - estLatency) && !firstTime) {
         *isSlow     = 1;
-        *offsSlow   = (uint32_t)(startT - *deadline);
+        *offsSlow   = (uint32_t)(startT - deadlineUTC);
         // if late or delayed, the message deadline will be prior tStart
         // although we might have waited already for quite some time
         // this might lead to erronously large values for comLatency
         // the hackish solution right now is to use a defined bogus value
-        if (*isLate || *isDelayed) *comLatency = COMMON_LATENCYBOGUS;
+        if (*isLate || *isDelayed) *comLatency = estLatency; 
         else                       *comLatency = (uint32_t)(stopT - startT);
       } // if missed
       else {
+        firstTime   = 0;
         *isSlow     = 0;
         *offsSlow   = 0;
-        *comLatency = (uint32_t)(stopT - *deadline);
+        *comLatency = estLatency;
+
+        // cheap calibration of UTC offset for next iteration
+        if (!(*isLate || *isEarly || *isDelayed || *isConflict)) {
+          if (*deadline > startT2) UTCOffset = *deadline - startT2;
+        } // if isLate etc
       } // else missed
+
+      //printf("comlatency %u, utcoffset %u, latency %u\n", *comLatency, (uint32_t)(UTCOffset/1000), (uint32_t)latency);
 
       return COMMON_STATUS_OK;
     } // if data is valid
