@@ -1,5 +1,5 @@
 [Unit]
-Description = wrmil monitoring server for INT PARTIH
+Description = wrmil monitoring server for INT PARTIH, 1st local gateway
 
 [Service]
 Type = simple

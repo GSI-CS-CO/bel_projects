@@ -1,5 +1,5 @@
 [Unit]
-Description = wrmil monitoring server for INT PZU TK
+Description = wrmil monitoring server for INT PZU TK, 2nd local gateway
 
 [Service]
 Type = simple
