@@ -381,6 +381,37 @@ static status_t setEndpDstAddr(int idx)
 }
 
 /**
+ * \brief Probe ECA queues
+ *
+ * Find the ECA queues that are synthesized in the timing receiver platform.
+ *
+ * Output the short information (base address and ID of the connected ECA action channel)
+ * for each ECA queue (via eCPU UART).
+ *
+ */
+void probeEcaQueue(void)
+{
+  #define ECAQMAX 4 // up to 4 ECA queues
+  const char* ch_names[ECAQMAX] = {"linux", "acwbm", "ecpu", "tag scubus"};
+  sdb_location ecaq_base[ECAQMAX];
+  uint32_t ecaq_idx = 0;
+  uint32_t *base;
+  uint32_t ch_id;
+  const char* ch_name;
+
+  // get list of ECA queues
+  find_device_multi(ecaq_base, &ecaq_idx, ECAQMAX, ECA_QUEUE_SDB_VENDOR_ID, ECA_QUEUE_SDB_DEVICE_ID);
+
+  for (int i = 0; i < ecaq_idx; i++) {
+    base = (uint32_t *)(getSdbAdr(&ecaq_base[i]));
+    ch_id = *(base + (ECA_QUEUE_QUEUE_ID_GET >> 2));
+    ch_name = (ch_id < ECAQMAX) ? ch_names[ch_id] : "unknown";
+    DBPRINT1("ECA queue %d: base_addr=0x%08x, ch_id=0x%x (%s)\n",
+             i, (uint32_t)base, ch_id, ch_name);
+  }
+}
+
+/**
  * \brief Read a node ID
  *
  * RX node accepts the timing messages only from valid sender nodes.
@@ -721,6 +752,9 @@ uint32_t extern_entryActionConfigured()
     outPortCfg.type = IO_CFG_CHANNEL_LVDS;
     outPortCfg.total= N_OUT_LEMO_PEXARIA;
   }
+
+  // probe existing ECA queues
+  probeEcaQueue();
 
   sbInit(); // probe SCU bus
 
