@@ -512,7 +512,7 @@ set_eca_rules() {
         echo "snoop TLU events by using the saft tool: saft-ctl $node_name -xv snoop $evt_tlu $evt_id_mask 0"
         echo "or by using eb tool and the dedicated LM32 firmware: eb-console $node_device"
     else
-        echo "configure ECA LM32 channel of $node_name: set FBAS_WR_FLG ($evt_mps_prot_flag, tag $eca_tag_c2_flag), FBAS_WR_EVT ($evt_mps_prot_evt, tag $eca_tag_c2_event)"
+        echo "configure ECA LM32 channel of $node_name: set FBAS_WR_FLG ($evt_mps_prot_flg, tag $eca_tag_c2_flag), FBAS_WR_EVT ($evt_mps_prot_evt, tag $eca_tag_c2_event)"
         saft-ecpu-ctl $node_name -c $evt_mps_prot_flg $evt_id_mask 0 $eca_tag_c2_flag -d
         saft-ecpu-ctl $node_name -c $evt_mps_prot_evt $evt_id_mask 0 $eca_tag_c2_event -d
 
