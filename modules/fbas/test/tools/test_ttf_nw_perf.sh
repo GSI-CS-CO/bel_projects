@@ -13,7 +13,7 @@ txscu=()                              # array with transmitter domain names
 fw_scu_def="fbas16.scucontrol.bin"    # FW that supports up to 16 TX nodes, each has 1 MPS channels
 ssh_opts="-o StrictHostKeyChecking=no"   # no hostkey checking
 getopt_opts="u:p:t:r:g:i:eyvh"        # user options
-n_tx_rates=12                         # TX messaging rates
+n_tx_rates=21                         # number of TX messaging rates
 
 usage() {
 
@@ -29,8 +29,9 @@ usage() {
     echo "  -r <RX SCU>            receiver SCU, by default $rxscu_name"
     echo "  -g <event gen period>  pseudo event generation period (10 seconds by default)"
     echo "  -i <index of TX rate>  index of the TX messaging rate (by default i=0 or 30Hz)"
-    echo "                         0:30Hz, 1:10Hz, 2:12.5Hz, 3:20Hz, 4:50Hz, 5:100Hz"
-    echo "                         6:200Hz, 7:500Hz, 8:1KHz, 9:2KHz, 10:5KHz, 11:10KHz"
+    echo "                         0=30, 1=10, 2=20 3=50Hz, 4=100, 5=200, 6=300, 7=400 [Hz]"
+    echo "                         8=500, 9=800, 10=1K, 11=1.2K, 12=1.5K, 13=1.8K [Hz]"
+    echo "                         14=2K, 15=3K, 16=4K, 17=5K, 18=6K, 19=7K, 20=8K [Hz]"
     echo "  -e                     exclude TTL measurement"
     echo "  -y                     'yes' to all prompts"
     echo "  -v                     verbosity for the measurement results"
@@ -57,10 +58,12 @@ pre_check() {
 info_messaging_rate() {
     # $1 - index
 
-    msg_rates=(33333 100000 80000 50000 20000 10000 \
-            #  30,   10,    12.5, 20,   50,   100 [Hz]
-                5000 2000 1000  500   200   100)
-            #   200, 500, 1000, 2000, 5000, 10000 [Hz]
+    msg_rates=(33333 100000 50000 20000 10000 5000 3333 2500 \
+              # 30,  10,    20,   50,   100,  200, 300, 400 [Hz]
+              2000   1250 1000  833   666   555 \
+              # 500, 800, 1K,   1.2K, 1.5K, 1.8K [Hz]
+              500    333  250   200   166   143  125)
+              # 2K,  3K,  4K,   5K,   6K,   7K,  8K [Hz]
 
     msg_rate_us=${msg_rates[$1]}
     msg_rate_hz=$(bc <<< "scale=1; 1000000/$msg_rate_us")
