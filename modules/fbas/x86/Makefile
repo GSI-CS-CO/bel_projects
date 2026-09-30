@@ -28,8 +28,8 @@ WBFLAG  += -I$(WBDIR)
 WBSRC    = $(WBDIR)/wb_api.c
 
 # saftlib
-CXXFLAGS = --std=c++11 `pkg-config saftlib --cflags`
-LDLIBS  = `pkg-config saftlib --libs`
+CXXFLAGS += --std=c++11 `pkg-config saftlib --cflags`
+LDLIBS  += `pkg-config saftlib --libs`
 
 all: $(TARGETS)
 
