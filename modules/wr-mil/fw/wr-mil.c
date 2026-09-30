@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Micheal Reese, Mathias Kreider GSI-Darmstadt
- *  version : 29-sep-2026
+ *  version : 30-sep-2026
  *
  *  firmware required for the White Rabbit -> MIL Gateways
  *  
@@ -842,8 +842,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     nEvtsBusyNew = *(volatile uint16_t *)pMilNEvtsBusy;
 
     // handle overrun of 16 bit counter
-    if (nEvtsBusyNew < nEvtsBusyOld)  nEvtsBusyOverRun += 0xffff;
-    nEvtsBusy    = nEvtsBusyOverRun + nEvtsBusyNew;
+    if (nEvtsBusyNew < nEvtsBusyOld)  nEvtsBusyOverRun += 0x10000;
+    nEvtsBusy    = nEvtsBusyOverRun + (uint64_t)nEvtsBusyNew;
     nEvtsBusyOld = nEvtsBusyNew;
   } // if useBlackbox
 
