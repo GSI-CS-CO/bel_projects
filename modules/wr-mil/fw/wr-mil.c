@@ -24,7 +24,6 @@
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
-
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -37,7 +36,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define WRMIL_FW_VERSION         0x000200  // make this consistent with makefile
+#define WRMIL_FW_VERSION         0x000201  // make this consistent with makefile
 
 #define RESET_INHIBIT_COUNTER       10000  // count so many main ECA timemouts, prior sending fill event
 #define BLACKBOX_SCU_PLUGIN_SELECT 0x0440  // register for blackbox plugin select
