@@ -8,8 +8,8 @@
 # gateway : dev/wbm0, tr0
 export TRGW=dev/wbm0         # EB device 
 export SDGW=tr0              # saftlib device
-export NGW=5                 # of GW; pzu_qr, pzu_ql ...
-export SIDGW=280             # SID of puz_qr, pzu_ql ... (new reference groups, may 2025)
+export NGW=6                 # of GW; pzu_qr, pzu_ql ...
+export SIDGW=290             # SID of puz_qr, pzu_ql ... (new reference groups, may 2025)
 export MILDEV=1              # MIL device, piggy(0), sio slot 1 (1) ...
 export MILADDR=0x420800      # address of MIL device to which MIL telegram is written
 # piggy: Wishbone address of 'GSI_MIL_SCU'
@@ -23,7 +23,7 @@ export MILADDR=0x420800      # address of MIL device to which MIL telegram is wr
 # gateway: N/A
 ###########################################
 
-echo -e WRMIL start script for PZU_QR
+echo -e WRMIL start script for GID 0x$SIDGW
 
 ###########################################
 # clean up stuff
@@ -52,7 +52,7 @@ eb-fwload $TRGW u 0x0 wrmil.bin
 
 echo -e WRMIL: configure firmware for gateway $NGW
 sleep 2
-wrmil-ctl $TRGW -s$NGW -w1 -m1 -l1375 configure
+wrmil-ctl $TRGW -s$NGW -w$MILDEV -m2 -l0 -t255 -d650 -u56 configure
 sleep 2
 wrmil-ctl $TRGW startop
 
@@ -70,7 +70,7 @@ saft-ecpu-ctl $SDGW -c 0x1fe1a01000000001 0xffffffffffffffff 20000 0xa01 -d
 # lm32 writes to MIL device via ECA wishbone channel
 echo -e WRMIL: configure $DGW wishbone channel, needed for writing telegrams to the MIL device
 saft-wbm-ctl $SDGW -c 0x1ff0000000000000 0xffff000000000000 0 1 -d
-saft-wbm-ctl $SDGW -r 1 0x420800 0 0x5f
+saft-wbm-ctl $SDGW -r 1 $MILADDR 0 0x5f
 
 # lm32 listens to timing messages for EVTNO 0x000..0x0ff
 saft-ecpu-ctl $SDGW -c 0x1${SIDGW}000000000000 0xfffff00000000000 500000 0xff -g -d
