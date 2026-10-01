@@ -1041,6 +1041,16 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
           uint32_t count = msgSendPcFlag(pMsgCtrl, (FBAS_FLG_EID + myIdx));
           // export the counter of sent timing messages
           *(pSharedApp + (FBAS_SHARED_TX_MSG_CNT >> 2)) = measureCountEvt(TX_EVT_CNT, count);
+
+          // measure the TX messaging rate
+          if (count) {  // if C2 message is sent
+            last = measureGetTimestamp(MSR_MSG_RATE);
+            if (last && pMsgCtrl->last) {  // if both timestamps (last and now) are known
+              measureSummarize(MSR_MSG_RATE, last, pMsgCtrl->last, DISABLE_VERBOSITY);
+              measureExportSummary(MSR_MSG_RATE, pSharedApp, FBAS_SHARED_MSG_RATE_AVG);
+            }
+            measurePutTimestamp(MSR_MSG_RATE, pMsgCtrl->last);
+          }
         }
       }
       else if (timerIsExpired(pTimerConsole)) {
