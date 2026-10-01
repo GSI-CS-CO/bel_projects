@@ -219,6 +219,7 @@ measure_nw_perf() {
             "source setup_local.sh && \
             result_eca_delay \$tx_node_dev $verbose && \
             result_tx_delay \$tx_node_dev $verbose && \
+            result_msg_rate \$tx_node_dev $verbose && \
             result_ml_period \$tx_node_dev $verbose" |
         while IFS= read -r line; do
             delay_entry="${tx_delay_entries[$i]}"
