@@ -8,7 +8,8 @@
 # gateway : dev/wbm0, tr0
 export TRGW=dev/wbm0         # EB device 
 export SDGW=tr0              # saftlib device
-export TLUIO=LEMO_IN_0       # SCU3 'B1', SCU4.1/RMT 'LEMO_IN_0'
+export TLUIO=RMT_IN_2        # SCU3 'B1', SCU4.1/RMT 'LEMO_IN_0', 'RMT_IN_2'(busy)
+export TLUIOEDGE=0           # 1: rising edge, 0: falling edge
 export NGW=9                 # of GW; pzu_qr, pzu_ql ...
 export SIDGW=1df             # SID of puz_qr, pzu_ql ... (new reference groups, may 2025)
 export MILDEV=14             # MIL device, piggy(0), sio slot (1..12), SCU blackbox (14)
@@ -69,7 +70,7 @@ saft-io-ctl $SDGW -n $TLUIO -o 0
 saft-io-ctl $SDGW -n $TLUIO -b 0x1fe1a01000000000
 
 # lm32 listens to TLU
-saft-ecpu-ctl $SDGW -c 0x1fe1a01000000001 0xffffffffffffffff 20000 0xa01 -d
+saft-ecpu-ctl $SDGW -c 0x1fe1a0100000000${TLUIOEDGE} 0xffffffffffffffff 20000 0xa01 -d
 
 # lm32 writes to MIL device via ECA wishbone channel
 echo -e WRMIL: configure $DGW wishbone channel, needed for writing telegrams to the MIL device
