@@ -4,9 +4,7 @@
 
 #include <neorv32.h>
 #include <neorv32_uart.h>
-#include <sdb_add_neorv32.h>
 
-#include <mini_sdb.h>
 
 #define BAUD_RATE 115200
 #define CLOCK_HZ 62500000
@@ -23,7 +21,7 @@ int main(void)
   neorv32_uart0_setup(BAUD_RATE, 0);
 
   /* Get SDB root */
-  ui_SDBroot = (uint32_t) sdb_add();
+  ui_SDBroot = neorv32_gpio_port_get();
 
   /* Start endless loop */
   neorv32_aux_print_logo();

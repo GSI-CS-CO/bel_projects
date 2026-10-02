@@ -1,5 +1,6 @@
+program.elf
+program.bin
+program.dis
+program.mif
 *.o
-*.dis
-*.bin
-*.elf
-*.mif
+test-results/

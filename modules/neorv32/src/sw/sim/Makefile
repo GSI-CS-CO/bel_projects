@@ -7,4 +7,4 @@ C_SOURCES += \
   $(NEORV32_SRC_FILES_DIR)neorv32_gpio.c \
   $(NEORV32_COMMON_DIR)gsi_test_neorv32.c
 
-include ../common/Makefile.common
+include ../common/neorv32.mk
