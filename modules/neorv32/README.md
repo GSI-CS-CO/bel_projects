@@ -17,7 +17,6 @@ NEORV32 evaluation and integration into `bel_projects`.
   - [Burst Mode Adapter (ECA message)](#burst-mode-adapter-eca-message)
 - [JTAG](#jtag)
 
-
 # FAQ and Common Problems
 
 ## NEORV32 Sources
@@ -58,6 +57,13 @@ Depending on your Linux distribution, a different toolchain may be installed.
 † Needed when riscv64-XYZ is used.
 
 # Simulation
+From the `bel_projects` root, run both simulation tests with GHDL:
+
+```bash
+make test_neorv32 NO_QUARTUS=yes
+```
+
+`NO_QUARTUS=yes` uses the simulation libraries from the repository instead of `/eda/sim_lib`. Both Slim and Xbar tests passed with exit code 0.
 
 ```
 cd sim
