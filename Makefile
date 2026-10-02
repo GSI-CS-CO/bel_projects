@@ -30,6 +30,8 @@ export ECA
 PATH:=$(PWD)/res/bin:$(PWD)/lm32-toolchain/bin:$(PATH)
 PYTHONUSERBASE:=$(PWD)/res
 export PYTHONUSERBASE
+NEORV32_PATH=$(PWD)/modules/neorv32/
+export NEORV32_PATH
 
 # This is mainly used to sort QSF files. After sorting it adds and deletes a "GIT marker" which will mark the file as changed.
 # Additionally all empty lines will be removed.
@@ -912,6 +914,18 @@ test_lm32_examples:
 test_fbas:
 	$(MAKE) -C modules/fbas/fw
 
-test_neorv32:
-	$(MAKE) -C modules/neorv32/sim
-	$(MAKE) -C modules/neorv32/sim xbar
+test_neorv32: test_neorv32_quartus_note test_neorv32_software  test_neorv32_simulation
+
+test_neorv32_quartus_note:
+	@echo "Note: Use make test_neorv32 NO_QUARTUS=yes if there is no Quartus installation on your system"
+
+test_neorv32_software:
+	$(MAKE) -C $(NEORV32_PATH)/src/sw/sim
+	$(MAKE) -C $(NEORV32_PATH)/src/sw/sim_xbar
+	$(MAKE) -C $(NEORV32_PATH)/src/sw/sdb-demo
+	$(MAKE) -C $(NEORV32_PATH)/src/sw/idle-init
+	$(MAKE) -C $(NEORV32_PATH)/src/sw/uart0_test
+
+test_neorv32_simulation:
+	$(MAKE) -C $(NEORV32_PATH)/sim
+	$(MAKE) -C $(NEORV32_PATH)/sim xbar
