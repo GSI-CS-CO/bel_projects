@@ -1,21 +1,29 @@
 # yocto; temporarily disabled
-#SERVICEA=bla-a.service
-#SERVICEB=bla-b.service
-#SERVICEC=bla-c.service
-#cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
-#cp -a $MOUNTPOINT/systemd/$SERVICEB /lib/systemd/system
-#cp -a $MOUNTPOINT/systemd/$SERVICEC /lib/systemd/system
-#systemctl daemon-reload
-#
-#systemctl start $SERVICEA
-#systemctl start $SERVICEB
-#systemctl start $SERVICEC
+SERVICEA=syncmon-int-sis18-inj.service
+SERVICEB=syncmon-int-sis18-ext.service
+SERVICEC=syncmon-int-esr-inj.service
+SERVICED=syncmon-int-esr-ext.service
+SERVICEE=syncmon-int-yr-inj.service
+
+cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
+cp -a $MOUNTPOINT/systemd/$SERVICEB /lib/systemd/system
+cp -a $MOUNTPOINT/systemd/$SERVICEC /lib/systemd/system
+cp -a $MOUNTPOINT/systemd/$SERVICED /lib/systemd/system
+cp -a $MOUNTPOINT/systemd/$SERVICEE /lib/systemd/system
+
+systemctl daemon-reload
+
+systemctl start $SERVICEA
+systemctl start $SERVICEB
+systemctl start $SERVICEC
+systemctl start $SERVICED
+systemctl start $SERVICEE
 
 # hack for acc7
-export DIM_DNS_NODE=asl105
-
-sync-serv-mon tr0 -d -s1 int &
-sync-serv-mon tr0 -d -s2 int &
-sync-serv-mon tr0 -d -s3 int &
-sync-serv-mon tr0 -d -s4 int &
-sync-serv-mon tr0 -d -s5 int &
+#export DIM_DNS_NODE=asl105
+#
+#sync-serv-mon tr0 -d -s1 int &
+#sync-serv-mon tr0 -d -s2 int &
+#sync-serv-mon tr0 -d -s3 int &
+#sync-serv-mon tr0 -d -s4 int &
+#sync-serv-mon tr0 -d -s5 int &

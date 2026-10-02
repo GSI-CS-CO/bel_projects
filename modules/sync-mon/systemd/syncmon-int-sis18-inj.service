@@ -1,0 +1,12 @@
+[Unit]
+Description = service for TOS synchronization monitor, SIS18 injection
+Requires = saftbus.service
+After = saftbus.service
+
+[Service]
+Type = simple
+Environment="DIM_DNS_NODE=asl105"
+ExecStart = sync-serv-mon tr0 -d -s1 int
+
+[Install]
+WantedBy = multi-user.target
