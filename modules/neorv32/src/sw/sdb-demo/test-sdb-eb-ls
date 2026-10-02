@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+# Save eb-ls and the CPU listing as text files, then compare with diff.
+set -euo pipefail
+
+host=
+dev=dev/ttyUSB0
+uart=${SDB_UART:-/dev/ttyACM0}
+results=test-results/file-compare
+
+usage()
+{
+  cat <<'HELP'
+Usage: test-sdb-eb-ls [OPTIONS]
+
+Save eb-ls and the loaded SDB demo's UART output, then compare both files.
+
+  -H, --host HOST       SSH host (default: run locally)
+  -d, --device DEVICE   Etherbone device (default: dev/ttyUSB0)
+  -u, --uart PORT       UART0 port (default: /dev/ttyACM0)
+  -r, --results DIR     Output directory (default: test-results/file-compare)
+  -h, --help            Show this help
+
+Without --host, commands run locally. SDB_UART overrides the UART default.
+Relative output paths are relative to the script directory.
+Exit status: 0 = identical files, 1 = differences/test failure, 2 = invalid arguments.
+
+Example:
+  ./test-sdb-eb-ls --host user@remote.pc --device dev/ttyUSB0 --uart /dev/ttyACM0 --results test-results/file-compare
+HELP
+}
+
+while (($#))
+do
+  case "$1" in
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    -H|--host|-d|--device|-u|--uart|-r|--results)
+      if (($# < 2)) || [[ -z $2 || $2 == -* ]]
+      then
+        echo "Missing value for $1" >&2
+        exit 2
+      fi
+
+      case "$1" in
+        -H|--host) host=$2 ;;
+        -d|--device) dev=$2 ;;
+        -u|--uart) uart=$2 ;;
+        -r|--results) results=$2 ;;
+      esac
+      shift 2
+      ;;
+    *)
+      echo "Unknown argument: $1 (see --help)" >&2
+      exit 2
+      ;;
+  esac
+done
+
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
+
+remote()
+{
+  if [[ -z $host ]]
+  then
+    "$@"
+  else
+    local command
+    printf -v command '%q ' "$@"
+    ssh -o BatchMode=yes -o ConnectTimeout=10 "$host" "$command"
+  fi
+}
+
+mkdir -p "$results"
+remote eb-ls "$dev" > "$results/eb-ls.txt"
+
+# Restart the already loaded demo; it waits about 20 seconds before printing.
+remote eb-neorv32-ctl -r "$dev"
+remote picocom -q -b 115200 --flow n --parity n --databits 8 --stopbits 1 \
+  --no-escape --exit-after 30000 "$uart" < <(sleep 30) > "$results/uart.raw"
+
+# UART transmits CRLF; store ordinary Unix text for the file comparison.
+tr -d '\r' < "$results/uart.raw" > "$results/cpu.txt"
+grep -q '^BusPath ' "$results/cpu.txt"
+
+diff -u "$results/eb-ls.txt" "$results/cpu.txt"
+echo 'PASS: Files are identical.'
