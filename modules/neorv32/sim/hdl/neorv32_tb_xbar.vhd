@@ -77,7 +77,7 @@ begin
   -- NEORV32 shell
   neorv32_shell_inst: neorv32_shell
   generic map (
-    g_sdb_addr               => x"12345678",
+    g_sdb_addr               => c_sdb_address,
     g_use_wb_adapter         => true,
     g_mem_wishbone_init_file => "../src/sw/sim_xbar/program.mif"
   )
