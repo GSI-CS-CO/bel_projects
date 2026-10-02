@@ -123,7 +123,7 @@ architecture rtl of neorv32_shell is
 begin
 
   -- NEORV32 CPU
-  neorv32_top_inst : neorv32_top
+  neorv32_top_inst : entity neorv32.neorv32_top
   generic map (
     CLOCK_FREQUENCY   => g_clock_frequency,
     BOOT_MODE_SELECT  => 1,
