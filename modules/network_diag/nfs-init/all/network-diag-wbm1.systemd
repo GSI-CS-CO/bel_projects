@@ -1,4 +1,4 @@
-#SERVICEA=network-diag.service
+#SERVICEA=network-diag-wbm1.service
 #cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
 #systemctl daemon-reload
 
