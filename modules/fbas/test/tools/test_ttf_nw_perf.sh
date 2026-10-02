@@ -14,6 +14,12 @@ fw_scu_def="fbas16.scucontrol.bin"    # FW that supports up to 16 TX nodes, each
 ssh_opts="-o StrictHostKeyChecking=no"   # no hostkey checking
 getopt_opts="u:p:t:r:g:i:eyvh"        # user options
 n_tx_rates=21                         # number of TX messaging rates
+msg_rates=(33333 100000 50000 20000 10000 5000 3333 2500 \
+            # 30,  10,    20,   50,   100,  200, 300, 400 [Hz]
+            2000   1250 1000  833   666   555 \
+            # 500, 800, 1K,   1.2K, 1.5K, 1.8K [Hz]
+            500    333  250   200   166   143  125)
+            # 2K,  3K,  4K,   5K,   6K,   7K,  8K [Hz]
 
 usage() {
 
@@ -58,17 +64,12 @@ pre_check() {
 info_messaging_rate() {
     # $1 - index
 
-    msg_rates=(33333 100000 50000 20000 10000 5000 3333 2500 \
-              # 30,  10,    20,   50,   100,  200, 300, 400 [Hz]
-              2000   1250 1000  833   666   555 \
-              # 500, 800, 1K,   1.2K, 1.5K, 1.8K [Hz]
-              500    333  250   200   166   143  125)
-              # 2K,  3K,  4K,   5K,   6K,   7K,  8K [Hz]
+    if [ -n "$1" ]; then
+        msg_rate_us=${msg_rates[$1]}
+        msg_rate_hz=$(bc <<< "scale=1; 1000000/$msg_rate_us")
 
-    msg_rate_us=${msg_rates[$1]}
-    msg_rate_hz=$(bc <<< "scale=1; 1000000/$msg_rate_us")
-
-    printf "TX: msg rate = %.1f Hz (%d us)\n" $msg_rate_hz $msg_rate_us
+        printf "TX: msg rate = %.1f Hz (%d us)\n" $msg_rate_hz $msg_rate_us
+    fi
 }
 
 setup_nodes() {
