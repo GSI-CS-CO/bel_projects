@@ -11,6 +11,7 @@ STAGING     ?=
 
 # relative paths
 FW          ?=../fw
+
 # library, if it exists (later maybe)
 
 # include common Makefile stuff
