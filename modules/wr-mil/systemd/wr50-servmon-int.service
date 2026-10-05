@@ -1,0 +1,12 @@
+[Unit]
+Description = wrf50 (50 Hz sync DM) monitoring service INT
+Requires = saftbus.service
+After = saftbus.service
+
+[Service]
+Type = simple
+Environment="DIM_DNS_NODE=asl105"
+ExecStart = wrmil-serv-mon tr0 -d int
+
+[Install]
+WantedBy = multi-user.target
