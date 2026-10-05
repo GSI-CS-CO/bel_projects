@@ -53,7 +53,12 @@ TARGETS := software nfsinit
 all: $(TARGETS)
 
 software:: 
+ifeq ($(SYSENV), YOCTO)
+# I really hate this hack, but I found no simpler solution
+	bash x86/make-yocto-software-all
+else
 	$(MAKE) -C $(SW) all
+endif
 
 firmware:
 	$(MAKE) TARGET=wrmil -C $(FW)
@@ -100,7 +105,7 @@ deploy:
 #	cp $(SW)/*.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin                    # '/usr' is a hack
 
 # systemd
-#	cp $(SYSTEMD)/*.service $(STAGING)/$(SYSTEMD)                       # systemd units
+	cp $(SYSTEMD)/*.service $(STAGING)/$(SYSTEMD)                       # systemd units
 
 # header files, required for building FESA
 	cp $(INC)/syncmonlib.h $(STAGING)$(ARCH)$(PREFIX)/usr/include         # '/usr' is a hack	
