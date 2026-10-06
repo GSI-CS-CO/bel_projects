@@ -248,7 +248,7 @@ architecture rtl of ftm is
 
   constant c_family       : string  := "Arria V";
   constant c_project      : string  := "ftm";
-  constant c_initf_name   : string  := c_project & ".mif";
+  constant c_initf_name   : string  := c_project & "_stub.mif";
   constant c_profile_name : string  := "medium_icache";
   constant c_cores        : natural := 4;
 
@@ -272,12 +272,9 @@ begin
       g_lm32_are_ftm        => true,
       g_lm32_cores          => c_cores,
       g_lm32_ramsizes       => c_lm32_ramsizes/4,
-      g_lm32_MSIs           => 1,
-      g_delay_diagnostics   => true,
       g_en_tlu              => false,
       g_lm32_init_files     => f_string_list_repeat(c_initf_name, c_cores),
-      g_lm32_profiles       => f_string_list_repeat(c_profile_name, c_cores),
-      g_en_eca              => true
+      g_lm32_profiles       => f_string_list_repeat(c_profile_name, c_cores)
     )
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
