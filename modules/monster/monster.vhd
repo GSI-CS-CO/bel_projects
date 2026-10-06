@@ -440,7 +440,7 @@ entity monster is
     ge_85_c_o              : out   std_logic;
    -- g_en_tempsens
     tempsens_clr_out       : out   std_logic;
-    -- rack mount timing receiver
+    -- g_en_blackbox
     is_rmt                 : out   std_logic := '0';
     front_in               : in  std_logic_vector(74 downto 0);
     front_out              : out std_logic_vector(74 downto 0);
@@ -3337,33 +3337,33 @@ end generate;
         Test                  => 0,
         Time_Out_in_ns        => 350)
       port map(
-        clk_sys_i          => clk_sys,
-        clk_ref_i          => clk_ref,
-        rst_n_i            => rstn_sys,
-        tag                => tag,
-        tag_valid          => tag_valid,
-        irq_master_o       => dev_msi_slave_i (dev_slaves'pos(devs_scubirq)),
-        irq_master_i       => dev_msi_slave_o (dev_slaves'pos(devs_scubirq)),
-        ctrl_irq_o         => dev_bus_master_i(dev_slaves'pos(devs_scubirq)),
-        ctrl_irq_i         => dev_bus_master_o(dev_slaves'pos(devs_scubirq)),
-        scu_slave_o        => top_bus_master_i(top_slaves'pos(tops_scubus)),
-        scu_slave_i        => top_bus_master_o(top_slaves'pos(tops_scubus)),
-        scub_data_out      => scubus_a_d_out,
-        scub_data_in       => scubus_a_d_in,
-        scub_data_tri_out  => scubus_a_d_tri_out,
-        nscub_ds           => scubus_a_nds,
-        nscub_dtack        => scubus_a_ndtack,
-        scub_addr          => scubus_a_a,
-        scub_rdnwr         => scubus_a_rnw,
-        nscub_srq_slaves   => scubus_a_nsrq,
-        nscub_slave_sel    => scubus_a_nsel,
-        nscub_timing_cycle => scubus_a_ntiming_cycle,
-        nsel_ext_data_drv  => scubus_nsel_data_drv,
-        is_rmt             => s_is_rmt,
-        front_in           => front_in,
-        front_out          => front_out,
-        rear_in            => rear_in,
-        rear_out           => rear_out,
+        clk_sys_i              => clk_sys,
+        clk_ref_i              => clk_ref,
+        rst_n_i                => rstn_sys,
+        tag                    => tag,
+        tag_valid              => tag_valid,
+        irq_master_o           => dev_msi_slave_i (dev_slaves'pos(devs_scubirq)),
+        irq_master_i           => dev_msi_slave_o (dev_slaves'pos(devs_scubirq)),
+        ctrl_irq_o             => dev_bus_master_i(dev_slaves'pos(devs_scubirq)),
+        ctrl_irq_i             => dev_bus_master_o(dev_slaves'pos(devs_scubirq)),
+        scu_slave_o            => top_bus_master_i(top_slaves'pos(tops_scubus)),
+        scu_slave_i            => top_bus_master_o(top_slaves'pos(tops_scubus)),
+        scub_data_out          => scubus_a_d_out,
+        scub_data_in           => scubus_a_d_in,
+        scub_data_tri_out      => scubus_a_d_tri_out,
+        nscub_ds               => scubus_a_nds,
+        nscub_dtack            => scubus_a_ndtack,
+        scub_addr              => scubus_a_a,
+        scub_rdnwr             => scubus_a_rnw,
+        nscub_srq_slaves       => scubus_a_nsrq,
+        nscub_slave_sel        => scubus_a_nsel,
+        nscub_timing_cycle     => scubus_a_ntiming_cycle,
+        nsel_ext_data_drv      => scubus_nsel_data_drv,
+        is_rmt                 => s_is_rmt,
+        front_in               => front_in,
+        front_out              => front_out,
+        rear_in                => rear_in,
+        rear_out               => rear_out,
         frontend_plugin_select => frontend_plugin_select
       );
   end generate;

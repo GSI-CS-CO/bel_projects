@@ -449,11 +449,11 @@ package monster_pkg is
       poweroff_comx          : out std_logic;
       -- rack mount timing receiver
       is_rmt                 : out   std_logic := 'Z';
-      front_in               : in  std_logic_vector(74 downto 0);
+      front_in               : in  std_logic_vector(74 downto 0) := (others => '0');
       front_out              : out std_logic_vector(74 downto 0);
-      rear_in                : in  std_logic_vector(47 downto 0);
+      rear_in                : in  std_logic_vector(47 downto 0) := (others => '0');
       rear_out               : out std_logic_vector(47 downto 0);
-      frontend_plugin_select : in std_logic_vector(1 downto 0));
+      frontend_plugin_select : in std_logic_vector(1 downto 0) := (others => '0'));
   end component;
 
   constant c_user_1wire_sdb : t_sdb_device := (
