@@ -87,6 +87,8 @@ architecture wb_irq_scu_bus_arch of wb_irq_scu_bus is
   signal Dtack_to_SCUB           : std_logic;
   signal bb_irq                  : std_logic_vector(15 downto 0);
   signal ext_nscub_dtack         : std_logic;
+  signal s_scub_data_out         : std_logic_vector(15 downto 0);
+  signal s_scub_data_tri_out     : std_logic;
 begin
   mx: scu_bus_mux
   port map(
@@ -120,9 +122,9 @@ begin
      slave_o            => scu_slave_o_from_scub,
      srq_active         => scu_srq_active,
      
-     SCUB_Data_Out      => scub_data_out,
+     SCUB_Data_Out      => s_scub_data_out,
      SCUB_Data_In       => scub_data_in_to_master,
-     SCUB_Data_Tri_Out  => scub_data_tri_out,
+     SCUB_Data_Tri_Out  => s_scub_data_tri_out,
      nSCUB_DS           => s_nscub_ds,
      nSCUB_Dtack        => ext_nscub_dtack and s_nscub_dtack,
      SCUB_Addr          => s_scub_addr,
@@ -163,7 +165,7 @@ begin
     trigger       => nscub_dtack,
     is_rmt        => s_is_rmt);
 
-  s_scub_data   <= scub_data_out when scub_data_tri_out = '1' else (others => 'Z');
+  s_scub_data   <= s_scub_data_out when s_scub_data_tri_out = '1' else (others => 'Z');
   s_ntag_valid  <= not tag_valid;
   s_nscub_dtack <= not s_scub_dtack;
   scub_virtual_slave: scu_bus_slave
@@ -268,9 +270,11 @@ begin
 
 
    
-  is_rmt          <= s_is_rmt;
-  scub_addr       <= s_scub_addr;
-  scub_rdnwr      <= s_scub_rdnwr;
-  nscub_ds        <= s_nscub_ds;
-  nscub_slave_sel <= s_nscub_slave_sel(11 downto 0);
+  is_rmt            <= s_is_rmt;
+  scub_addr         <= s_scub_addr;
+  scub_rdnwr        <= s_scub_rdnwr;
+  nscub_ds          <= s_nscub_ds;
+  nscub_slave_sel   <= s_nscub_slave_sel(11 downto 0);
+  scub_data_out     <= s_scub_data_out;
+  scub_data_tri_out <= s_scub_data_tri_out;
 end architecture;
