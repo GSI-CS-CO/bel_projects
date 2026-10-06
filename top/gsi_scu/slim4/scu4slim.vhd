@@ -238,23 +238,11 @@ architecture rtl of scu4slim is
   signal s_rear_in              : std_logic_vector(47 downto 0);
   signal s_rear_out             : std_logic_vector(47 downto 0);
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 50) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 14) :=
   (
     -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
     ("LEMO_IN_0  ",    IO_NONE,         false,   false,  0,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
     ("LEMO_IN_1  ",    IO_NONE,         false,   false,  1,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_IN_0   ",    IO_NONE,         false,   false,  2,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_IN_1   ",    IO_NONE,         false,   false,  3,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_IN_2   ",    IO_NONE,         false,   false,  4,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_IN_3   ",    IO_NONE,         false,   false,  5,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_IN_4   ",    IO_NONE,         false,   false,  6,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_IN_5   ",    IO_NONE,         false,   false,  7,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_IN_6   ",    IO_NONE,         false,   false,  8,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_IN_7   ",    IO_NONE,         false,   false,  9,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_IN_8   ",    IO_NONE,         false,   false,  10,    IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_IN_9   ",    IO_NONE,         false,   false,  11,    IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_IN_10  ",    IO_NONE,         false,   false,  12,    IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_IN_11  ",    IO_NONE,         false,   false,  13,    IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
     ("USER_LED0_R",    IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("USER_LED0_G",    IO_NONE,         false,   false,  1,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("USER_LED0_B",    IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
@@ -262,30 +250,6 @@ architecture rtl of scu4slim is
     ("LEMO_OUT_1 ",    IO_NONE,         false,   false,  4,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LEMO_OUT_2 ",    IO_NONE,         false,   false,  5,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LEMO_OUT_3 ",    IO_NONE,         false,   false,  6,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_OUT_0  ",    IO_NONE,         false,   false,  7,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_OUT_1  ",    IO_NONE,         false,   false,  8,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_OUT_2  ",    IO_NONE,         false,   false,  9,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_OUT_3  ",    IO_NONE,         false,   false, 10,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_OUT_4  ",    IO_NONE,         false,   false, 11,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_OUT_5  ",    IO_NONE,         false,   false, 12,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_OUT_6  ",    IO_NONE,         false,   false, 13,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_OUT_7  ",    IO_NONE,         false,   false, 14,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_OUT_8  ",    IO_NONE,         false,   false, 15,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_OUT_9  ",    IO_NONE,         false,   false, 16,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_OUT_10 ",    IO_NONE,         false,   false, 17,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_OUT_11 ",    IO_NONE,         false,   false, 18,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_OUT_12 ",    IO_NONE,         false,   false, 19,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_OUT_13 ",    IO_NONE,         false,   false, 20,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_OUT_14 ",    IO_NONE,         false,   false, 21,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_OUT_15 ",    IO_NONE,         false,   false, 22,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_OUT_16 ",    IO_NONE,         false,   false, 23,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_OUT_17 ",    IO_NONE,         false,   false, 24,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_OUT_18 ",    IO_NONE,         false,   false, 25,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_OUT_19 ",    IO_NONE,         false,   false, 26,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_OUT_20 ",    IO_NONE,         false,   false, 27,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_OUT_21 ",    IO_NONE,         false,   false, 28,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_OUT_22 ",    IO_NONE,         false,   false, 29,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("RMT_OUT_23 ",    IO_NONE,         false,   false, 30,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("FAST_IN_0  ",    IO_NONE,         false,   false,  0,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
     ("FAST_IN_1  ",    IO_NONE,         false,   false,  1,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
     ("FAST_IN_2  ",    IO_NONE,         false,   false,  2,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
@@ -309,8 +273,8 @@ begin
       g_project            => c_project,
       g_flash_bits         => 25, -- !!! TODO: Check this
       g_cr_bits            => c_cr_bits,
-      g_gpio_in            => 14,
-      g_gpio_out           => 31,
+      g_gpio_in            => 2,
+      g_gpio_out           => 7,
       g_lvds_in            => 3,
       g_lvds_out           => 3,
       g_lvds_invert        => false,
@@ -362,8 +326,8 @@ begin
       wbar_phy_dis_o          => sfp_tx_disable_o,
       sfp_tx_fault_i          => sfp_tx_fault_i,
       sfp_los_i               => sfp_los_i,
-      gpio_i(13 downto 0)      => s_rear_out(35 downto 24) & lemo_in,
-      gpio_o(30 downto 0)     => s_gpio_o,
+      gpio_i(1 downto 0)      => lemo_in,
+      gpio_o(6 downto 0)     => s_gpio_o(6 downto 0),
       lvds_p_i                => s_lvds_p_i,
       lvds_n_i                => s_lvds_n_i,
       lvds_p_o                => s_lvds_p_o,
@@ -417,9 +381,9 @@ begin
       cr_wait_i               => s_psram_wait,
       hw_version              => x"0000000" & not scu_cb_version,
       -- blackbox
-      is_rmt                  => is_rmt,
+      is_rmt                  => open,
       front_in                => s_front_in,
-      front_out               => s_front_out,
+      front_out               => open,
       rear_in                 => s_rear_in,
       rear_out                => s_rear_out,
       frontend_plugin_select  => rear_in(1) & rear_in(0)
@@ -485,51 +449,15 @@ begin
     end if;
   end process;
 
-  standalone_backplane : process (is_rmt, s_lemo_io, A_D_mux, scub_A_RnW, scub_nSEL, scub_d_out, scub_a, scub_nsel_ext_data_drv, scub_d_in)
-  begin
-    if (is_rmt = '1') then
-      nSel_Ext_Data_DRV <= '0';          -- activate the drivers
-
-      s_front_in(56)           <= serial_cb_in(0);            -- Serial_CB_In1
-      s_front_in(57)           <= serial_cb_in(1);            -- Serial_CB_In2
-      serial_cb_out(0)         <= s_front_out(58);            -- Serial_CB_Out1
-      s_front_in(58)           <= s_front_out(58);            -- feedback
-      serial_cb_out(1)         <= s_front_out(59);            -- Serial_CB_Out2
-      s_front_in(59)           <= s_front_out(59);            -- feedback
-      rear_out(0)              <= s_front_out(60);            -- Rear_Out0
-      s_front_in(60)           <= s_front_out(60);            -- feedback
-      rear_out(1)              <= s_front_out(61);            -- Rear_Out1
-      s_front_in(61)           <= s_front_out(61);            -- feedback
-      A_nDS                    <= s_front_out(62);            -- nDS
-      s_front_in(62)           <= s_front_out(62);            -- feedback
-      A_nTiming_Cycle          <= s_front_out(63);            -- nTimingCycle
-      s_front_in(63)           <= s_front_out(63);            -- feedback
-      A_RnW                    <= not s_front_out(67);        -- R/W
-      ADR_TO_SCUB              <= s_front_out(68);            -- Direction for A0 - A15
-      A_Spare                  <= s_front_out(66 downto 65);  -- Spare0, Spare1
-      s_front_in(66 downto 65) <= s_front_out(66 downto 65);  -- feedback
-
-      A_nSEL(12 downto 1)      <= s_front_out(43 downto 32);  -- nBoardSel1 - nBoardSel12
-      s_front_in(43 downto 32) <= s_front_out(43 downto 32);  -- feedback
-      s_front_in(31 downto 16) <= A_D(15 downto 0);           -- D0 - D15
-      A_A(15 downto 0)         <= s_front_out(15 downto 0);   -- A0 - A15
-      s_front_in(55 downto 44) <= A_nSRQ(12 downto 1);        -- SRQ1 - SRQ12
-
-    else
-      ADR_TO_SCUB       <= '1';
-      A_nTiming_Cycle   <= scub_ntiming_cycle;
-      A_RnW             <= scub_A_RnW;
-      nSel_Ext_Data_DRV <= scub_nsel_ext_data_drv;
-      A_nSEL            <= scub_nSEL;
-      A_D_mux           <= scub_d_out;
-      A_A               <= scub_a;
-      A_nDS             <= scub_A_nDS;
-
-    end if;
-
-    scub_d_in <= A_D;
-
-  end process;
+  ADR_TO_SCUB       <= '1';
+  A_nTiming_Cycle   <= scub_ntiming_cycle;
+  A_RnW             <= scub_A_RnW;
+  nSel_Ext_Data_DRV <= scub_nsel_ext_data_drv;
+  A_nSEL            <= scub_nSEL;
+  A_D_mux           <= scub_d_out;
+  A_A               <= scub_a;
+  A_nDS             <= scub_A_nDS;
+  scub_d_in         <= A_D;
 
   -- Extend LEMO input/outputs to LEDs at 20Hz
   lemo_leds : for i in 0 to 5 generate

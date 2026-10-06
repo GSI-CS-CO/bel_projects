@@ -1,3 +1,10 @@
+
+
+
+
+
+
+
 set_global_assignment -name ACTIVE_SERIAL_CLOCK FREQ_100MHZ
 set_global_assignment -name ADV_NETLIST_OPT_SYNTH_WYSIWYG_REMAP OFF
 set_global_assignment -name AHDL_FILE ../../../modules/modulbus/i2c.tdf
@@ -198,6 +205,45 @@ set_global_assignment -name STRATIXIII_UPDATE_MODE REMOTE
 set_global_assignment -name STRATIXV_CONFIGURATION_SCHEME "ACTIVE SERIAL X4"
 set_global_assignment -name SYNCHRONIZER_IDENTIFICATION "FORCED IF ASYNCHRONOUS"
 set_global_assignment -name SYNTH_TIMING_DRIVEN_SYNTHESIS ON
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/common_helpers/bb_magic_reg.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/common_helpers/bb_manchester.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/common_helpers/bb_priority_encoders.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/common_helpers/bb_timestamper.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/common_helpers/bb_uart.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/flex_bus/flex_buffer.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/flex_bus/flex_filterplus.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/flex_bus/flex_filter.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/flex_bus/flex_hub.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/flex_bus/flex_in.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/flex_bus/flex_out.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/flex_bus/flex_superhub.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/frontend_plugins/frontend_scu_standalone.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/frontend_plugins/interbackplane/cardlet_plugins/ibpl_empty.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/frontend_plugins/interbackplane/cardlet_plugins/ibpl_in.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/frontend_plugins/interbackplane/cardlet_plugins/ibpl_lwlin.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/frontend_plugins/interbackplane/cardlet_plugins/ibpl_out.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/frontend_plugins/str_backplane/frontend_str_backplane.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/frontend_plugins/str_backplane/str_backplane_comm.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/io_blackbox.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/proc_plugins/proc_disable.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/proc_plugins/proc_in_debounce.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/proc_plugins/proc_in_long_debounce.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/proc_plugins/proc_modem.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/proc_plugins/proc_pass.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/user_plugins/minisio/mil2/fivetofour.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/user_plugins/minisio/mil2/fourtofive.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/user_plugins/minisio/mil2_master.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/user_plugins/minisio/mil2/mil2_receiver.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/user_plugins/minisio/mil2/mil2_transmitter.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/user_plugins/minisio/mil2/nrzi_rx.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/user_plugins/minisio/mil2/nrzi_tx.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/user_plugins/minisio/mil_fifo.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/user_plugins/minisio/user_mil2.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/user_plugins/user_empty.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/user_plugins/user_fbic.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/user_plugins/user_gpio.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/user_plugins/user_mil_timing.sv -library work
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../ip_cores/blackbox/hdl/user_plugins/user_str_pt.sv -library work
 set_global_assignment -name TIMING_ANALYZER_DO_CCPP_REMOVAL ON
 set_global_assignment -name TIMING_ANALYZER_MULTICORNER_ANALYSIS ON
 set_global_assignment -name TOP_LEVEL_ENTITY scu4slim
@@ -288,6 +334,7 @@ set_global_assignment -name VERILOG_FILE ../../../modules/lpc_uart/serirq_slave.
 set_global_assignment -name VERILOG_FILE ../../../modules/remote_update/asmi5/asmi5/synthesis/submodules/asmi5_asmi_parallel_0.v -library work
 set_global_assignment -name VERILOG_FILE ../../../modules/remote_update/asmi_arriaII/asmi_arriaII/synthesis/submodules/asmi_arriaII_asmi_parallel_0.v -library work
 set_global_assignment -name VERILOG_FILE ../../../modules/stub_pll/stub_pll/altera_iopll_160/synth/stub_pll_altera_iopll_160_z2kwsvq.v -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/blackbox/hdl/blackbox_config_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_commit_len_fifo.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_framer.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_master_eth_tx.vhd" -library work
@@ -853,7 +900,9 @@ set_global_assignment -name VHDL_FILE ../../../modules/remote_update/wb_asmi_sla
 set_global_assignment -name VHDL_FILE ../../../modules/remote_update/wb_asmi.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/remote_update/wb_remote_update.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/reverse_lpb/reverse_lpb.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/detect_backplane.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/housekeeping.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/scu_bus_mux.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/scu_bus_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/scu_bus_slave_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/scu_bus_slave.vhd -library work
