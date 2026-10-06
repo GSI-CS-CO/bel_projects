@@ -55,7 +55,7 @@
 
 const char* program;
 
-#define WRMILNSYS   13                   // number of WRMIL systems
+#define WRMILNSYS   13                   // number of WRMIL systems; n<20, otherwise screensize does not fit
 
 #define DIMCHARSIZE 32                   // standard size for char services
 #define DIMMAXSIZE  1024                 // max size for service names
@@ -236,7 +236,7 @@ void printServices()
     printf(" %2x %10s %8s %10s %13s %109s %12s\n", i, sysShortNames[i], cVersion, cState, cStatus, cData, cHost);
   } // for i
 
-  for (i=0; i<10; i++) printf("%s\n", empty);
+  for (i=0; i<(20-WRMILNSYS); i++) printf("%s\n", empty);
   printf("%s\n", footer);
 } // printServices
 
