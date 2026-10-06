@@ -140,7 +140,8 @@ entity monster is
     g_en_enc_err_counter   : boolean;
     g_en_a10vs             : boolean;
     g_en_cellular_ram      : boolean;
-    g_en_virtual_jtag      : boolean);
+    g_en_virtual_jtag      : boolean;
+    g_en_blackbox          : boolean);
   port(
     -- Required: core signals
     core_clk_20m_vcxo_i    : in    std_logic;
@@ -3333,6 +3334,7 @@ end generate;
       generic map(
         g_interface_mode      => PIPELINED,
         g_address_granularity => BYTE,
+        g_en_blackbox         => g_en_blackbox,
         clk_in_hz             => 62_500_000,
         Test                  => 0,
         Time_Out_in_ns        => 350)

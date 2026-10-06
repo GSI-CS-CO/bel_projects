@@ -141,7 +141,8 @@ package monster_pkg is
       g_en_enc_err_counter   : boolean := false;
       g_en_a10vs             : boolean := false;
       g_en_cellular_ram      : boolean := false;
-      g_en_virtual_jtag      : boolean := false
+      g_en_virtual_jtag      : boolean := false;
+      g_en_blackbox          : boolean := false
     );
     port(
       -- Required: core signals

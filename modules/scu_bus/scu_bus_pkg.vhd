@@ -57,6 +57,7 @@ component wb_irq_scu_bus is
   generic (
     g_interface_mode      : t_wishbone_interface_mode       := PIPELINED;
     g_address_granularity : t_wishbone_address_granularity  := BYTE;
+    g_en_blackbox         : boolean := false;
     clk_in_hz             : integer := 62_500_000;
     time_out_in_ns        : integer := 250;
     test                  : integer range 0 to 1 := 0);
