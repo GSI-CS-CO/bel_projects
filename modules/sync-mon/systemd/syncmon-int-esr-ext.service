@@ -1,5 +1,5 @@
 [Unit]
-Description = service for TOS synchronization monitor, ESR extraction
+Description = service for TOS synchronization monitor, ESR extraction, INT
 Requires = saftbus.service
 After = saftbus.service
 
