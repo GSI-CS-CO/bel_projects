@@ -58,6 +58,8 @@ eb_address_t pps_addr       = EB_NULL;
 eb_address_t eca_addr       = EB_NULL;
 eb_address_t endpoint_addr  = EB_NULL;
 eb_address_t etherbone_addr = EB_NULL;
+eb_address_t wr_info_addr   = EB_NULL;
+eb_address_t ebm_addr       = EB_NULL;
 eb_address_t tlu_addr       = EB_NULL;
 eb_address_t wb4_ram        = EB_NULL;
 eb_address_t wb4_1wire      = EB_NULL;
@@ -337,6 +339,23 @@ eb_status_t wb_wr_get_mac(eb_device_t device, int devIndex, uint64_t *mac )
 #endif
 
   *mac = 0x0;
+  if ((status = wb_check_device(device, WR_INFO_VENDOR, WR_INFO_PRODUCT, WR_INFO_VMAJOR, WR_INFO_VMINOR, devIndex, &wr_info_addr)) == EB_OK) {
+    if ((status = wb_check_device(device, EBM_VENDOR, EBM_PRODUCT, EBM_VMAJOR, EBM_VMINOR, devIndex, &ebm_addr)) == EB_OK) {
+      address = ebm_addr + EBM_OWN_MAC_HI;
+      if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &hidata, 0, eb_block)) != EB_OK) return status;
+
+      address = ebm_addr + EBM_OWN_MAC_LO;
+      if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &lodata, 0, eb_block)) != EB_OK) return status;
+      lodata = 0x0000ffff & lodata; // only lowest two bytes are of interest
+
+      *mac = (uint64_t)hidata;
+      *mac = (*mac << 16);
+      *mac = *mac + lodata;
+
+      return status;
+    }
+  }
+
   if ((status = wb_check_device(device, WR_ENDPOINT_VENDOR, WR_ENDPOINT_PRODUCT, WR_ENDPOINT_VMAJOR, WR_ENDPOINT_VMINOR, devIndex, &endpoint_addr)) != EB_OK) return status;
 
   address = endpoint_addr + WR_ENDPOINT_MACHI;
@@ -367,6 +386,14 @@ eb_status_t wb_wr_get_link(eb_device_t device, int devIndex, int *link )
 #endif
 
   *link = 0x0;
+  if ((status = wb_check_device(device, WR_INFO_VENDOR, WR_INFO_PRODUCT, WR_INFO_VMAJOR, WR_INFO_VMINOR, devIndex, &wr_info_addr)) == EB_OK) {
+    address = wr_info_addr + WR_INFO_STATUS;
+    if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block)) != EB_OK) return status;
+    *link = (data & WR_INFO_STATUS_LINK) != 0;
+
+    return status;
+  }
+
   if ((status = wb_check_device(device, WR_ENDPOINT_VENDOR, WR_ENDPOINT_PRODUCT, WR_ENDPOINT_VMAJOR, WR_ENDPOINT_VMINOR, devIndex, &endpoint_addr)) != EB_OK) return status;
 
   address = endpoint_addr + WR_ENDPOINT_LINK;
@@ -391,6 +418,16 @@ eb_status_t wb_wr_get_ip(eb_device_t device, int devIndex, int *ip )
 #endif
 
   *ip = 0x0;
+
+  if ((status = wb_check_device(device, WR_INFO_VENDOR, WR_INFO_PRODUCT, WR_INFO_VMAJOR, WR_INFO_VMINOR, devIndex, &wr_info_addr)) == EB_OK) {
+    if ((status = wb_check_device(device, EBM_VENDOR, EBM_PRODUCT, EBM_VMAJOR, EBM_VMINOR, devIndex, &ebm_addr)) == EB_OK) {
+      address = ebm_addr + EBM_OWN_IP;
+      if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block)) != EB_OK) return status;
+      *ip = data;
+
+      return status;
+    }
+  }
 
   if ((status = wb_check_device(device, ETHERBONE_CONFIG_VENDOR, ETHERBONE_CONFIG_PRODUCT, ETHERBONE_CONFIG_VMAJOR, ETHERBONE_CONFIG_VMINOR, devIndex, &etherbone_addr)) != EB_OK) return status;
 
@@ -457,6 +494,14 @@ eb_status_t wb_wr_get_sync_state(eb_device_t device, int devIndex, int *syncStat
 #endif
 
   *syncState  = 0x0;
+
+  if ((status = wb_check_device(device, WR_INFO_VENDOR, WR_INFO_PRODUCT, WR_INFO_VMAJOR, WR_INFO_VMINOR, devIndex, &wr_info_addr)) == EB_OK) {
+    address = wr_info_addr + WR_INFO_STATUS;
+    if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block)) != EB_OK) return status;
+    *syncState  = (data & WR_INFO_STATUS_LOCK) ? WR_PPS_GEN_ESCR_MASK : 0; // time valid => TRACKING
+
+    return status;
+  }
 
   if ((status = wb_check_device(device, WR_PPS_GEN_VENDOR, WR_PPS_GEN_PRODUCT, WR_PPS_GEN_VMAJOR, WR_PPS_GEN_VMINOR, devIndex, &pps_addr)) != EB_OK) return status;
 
