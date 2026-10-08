@@ -348,9 +348,9 @@ eb_status_t wb_wr_get_mac(eb_device_t device, int devIndex, uint64_t *mac )
       if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &lodata, 0, eb_block)) != EB_OK) return status;
       lodata = 0x0000ffff & lodata; // only lowest two bytes are of interest
 
-      *mac = (uint64_t)hidata;
-      *mac = (*mac << 16);
-      *mac = *mac + lodata;
+      *mac = (uint64_t)lodata;
+      *mac = (*mac << 32);
+      *mac = *mac + hidata;
 
       return status;
     }
