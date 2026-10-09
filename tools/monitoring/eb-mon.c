@@ -686,10 +686,13 @@ int main(int argc, char** argv) {
   }
   
   if (getWRUptime) {
-    if ((status = wb_wr_get_uptime(device, devIndex, &uptime)) != EB_OK) die("WR get uptime", status);
     if (verbose) fprintf(stdout, "FPGA uptime [h]: ");
-    fprintf(stdout, "%013.2f\n", (double)uptime / 3600.0 );
-  } 
+    if ((status = wb_wr_get_uptime(device, devIndex, &uptime)) != EB_OK) {
+      fprintf(stdout, "not available\n");
+    } else {
+      fprintf(stdout, "%013.2f\n", (double)uptime / 3600.0 );
+    }
+  }
 
   if (getBuildType) {
     if ((status = wb_get_build_type(device, BUILDTYPELEN, buildType, &dummy32)) != EB_OK) die("WB get build type", status);

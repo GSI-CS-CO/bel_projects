@@ -135,7 +135,7 @@ set_global_assignment -name QIP_FILE ../../../modules/pll/arria5/ref_pll5.qip
 set_global_assignment -name QIP_FILE ../../../modules/pll/arria5/sys_pll5.qip
 set_global_assignment -name RELEASE_CLEARS_BEFORE_TRI_STATES ON
 set_global_assignment -name SDC_FILE ../../../top/common/arria5.sdc
-set_global_assignment -name SEED 177
+set_global_assignment -name SEED 230
 set_global_assignment -name SMART_RECOMPILE ON
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
 set_global_assignment -name STRATIXII_CONFIGURATION_DEVICE EPCQ256
@@ -351,7 +351,62 @@ set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_tlp.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_wb_pkg.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_wb.vhd" -library work
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_bootrom_image.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_bootrom_rom.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_bootrom.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_bus.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cache_ram.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cache.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cfs.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_clint.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_alu_bitmanip.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_alu_cfu.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_alu_cond.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_alu_crypto.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_alu_fpu.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_alu_muldiv.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_alu_shifter.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_alu.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_control.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_counters.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_decompressor.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_frontend.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_hwtrig.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_lsu.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_pmp.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_regfile.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu_trace.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_cpu.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_debug_auth.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_debug_dm.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_debug_dtm.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_dma.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_dmem_ram.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_dmem.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_gpio.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_gptmr.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_imem_image.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_imem_ram.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_imem_rom.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_imem.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_neoled.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_onewire.vhd -library neorv32
 set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_package.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_prim.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_pwm.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_sdi.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_slink.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_spi.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_sysinfo.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_sys.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_top.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_tracer.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_trng.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_twd.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_twi.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_uart.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_wdt.vhd -library neorv32
+set_global_assignment -name VHDL_FILE ../../../ip_cores/neorv32/rtl/core/neorv32_xbus.vhd -library neorv32
 set_global_assignment -name VHDL_FILE "../../../ip_cores/pci-core/src/hdl/wb_pci_pkg.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/pci-core/src/hdl/wb_pmc_host_bridge_pkg.vhd" -library work
 set_global_assignment -name VHDL_FILE "../../../ip_cores/pci-core/src/hdl/wb_pmc_host_bridge.vhd" -library work

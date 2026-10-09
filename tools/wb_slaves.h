@@ -66,6 +66,37 @@
 
 
 
+//-- WR-INFO --
+// device ID
+#define WR_INFO_VENDOR          WB_GSI        // vendor ID
+#define WR_INFO_PRODUCT         0x77722d69    // device ID ("wr-info")
+#define WR_INFO_VMAJOR          0             // major revision
+#define WR_INFO_VMINOR          0             // minor revision
+
+// register offsets
+#define WR_INFO_STATUS          0x00          // status
+
+// masks
+#define WR_INFO_STATUS_LOCK     0x1           // bit 0: time valid (locked)
+#define WR_INFO_STATUS_LINK     0x2           // bit 1: link valid
+
+
+
+//-- Etherbone-Master --
+// source of own_ip/own_mac when a WR_INFO device is present
+// device ID
+#define EBM_VENDOR              WB_GSI        // vendor ID
+#define EBM_PRODUCT             0x00000815    // device ID ("etherbone master")
+#define EBM_VMAJOR              1             // major revision
+#define EBM_VMINOR              1             // minor revision
+
+// register offsets
+#define EBM_OWN_IP              0x44          // own IP address
+#define EBM_OWN_MAC_HI          0x48          // own MAC high 4 bytes
+#define EBM_OWN_MAC_LO          0x4c          // own MAC low 2 bytes
+
+
+
 //-- Etherbone-Config --
 #ifdef META_TIMING
 #include "hw/etherbone-config.h"
