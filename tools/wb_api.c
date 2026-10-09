@@ -50,6 +50,9 @@
 #include <wb_api.h>
 #include <wb_slaves.h>
 
+// print a warning if the optional WR_INFO device is not found (0: quiet, 1: warn)
+#define WR_INFO_MISSING_WARN 0
+
 // global variables
 eb_device_t  known_dev      = EB_NULL;   // etherbone device
 eb_socket_t  known_sock     = EB_NULL;   // etherbone socket
@@ -219,7 +222,8 @@ eb_status_t wb_get_device_address(eb_device_t device, uint64_t vendor_id, uint32
   if ((status = eb_sdb_find_by_identity(device, vendor_id, product_id, sdbDevice, nDevices)) != EB_OK) return status;
   if (*nDevices == 0) {
     sprintf(buff, "device vendor %"PRIx64", product %x does not exist!", vendor_id, product_id);
-    wb_warn(EB_FAIL, buff);
+    // WR_INFO is optional: only warn if WR_INFO_MISSING_WARN is set
+    if ((vendor_id != WR_INFO_VENDOR) || (WR_INFO_MISSING_WARN)) wb_warn(EB_FAIL, buff);
     return EB_FAIL;
   }
   if (*nDevices > maxDev) {
