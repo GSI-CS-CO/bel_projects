@@ -130,7 +130,7 @@ measure_nw_perf() {
 
     info_messaging_rate $idx_msg_period
 
-    output=$(run_remote $rxscu "source setup_local.sh && enable_mps \$rx_node_dev")
+    output=$(run_remote $rxscu "source setup_local.sh && start_operation \$rx_node_dev")
 
     # use local script to print info
     output=$(source $dir_name/../scu/setup_local.sh && info_nw_perf $gen_period)
@@ -143,7 +143,7 @@ measure_nw_perf() {
         echo ${txscu[$i]}
 
         # enable MPS operation, start test => keep process ID
-        output=$(run_remote ${txscu[$i]} "source setup_local.sh && enable_mps \$tx_node_dev")
+        output=$(run_remote ${txscu[$i]} "source setup_local.sh && start_operation \$tx_node_dev")
 
         # start test sub-process and keep its process ID
         run_remote ${txscu[$i]} "source setup_local.sh && start_nw_perf $gen_period" &
@@ -267,7 +267,6 @@ measure_ttl() {
     done
 
     echo -e "start the measurement\n"
-    output=$(run_remote $rxscu "source setup_local.sh && enable_mps \$rx_node_dev")
 
     n_toggle=10
     echo -e "toggle MPS operation (n=$n_toggle): TX=${txscu_name[*]}"
@@ -275,21 +274,21 @@ measure_ttl() {
         echo -en " $i: enable \r"
 
         for scu in ${txscu[@]}; do
-            output=$(run_remote $scu "source setup_local.sh && enable_mps \$tx_node_dev")
+            output=$(run_remote $scu "source setup_local.sh && start_operation \$tx_node_dev")
         done
 
         sleep 1
         echo -en " $i: disable\r"
 
         for scu in ${txscu[@]}; do
-            output=$(run_remote $scu "source setup_local.sh && disable_mps \$tx_node_dev")
+            output=$(run_remote $scu "source setup_local.sh && stop_operation \$tx_node_dev")
         done
 
         sleep 1
     done
 
     echo -e "\nstop the measurement\n"
-    output=$(run_remote $rxscu "source setup_local.sh && disable_mps \$rx_node_dev")
+    output=$(run_remote $rxscu "source setup_local.sh && stop_operation \$rx_node_dev")
 
     echo -e "measurement stats: TTL\n"
     run_remote $rxscu "source setup_local.sh && result_ttl_ival \$rx_node_dev \$addr_cnt1 $verbose"
