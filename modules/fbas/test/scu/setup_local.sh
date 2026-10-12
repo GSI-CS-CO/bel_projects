@@ -115,8 +115,6 @@ export instr_load_senderid=0x19 # load sender ID
 export instr_probe_sb_diob=0x20 # probe DIOB slave card on SCU bus
 export instr_probe_sb_user=0x21 # probe a given slave (sys and group IDs are expected in shared mem @FBAS_SHARED_SET_SBSLAVES)
 
-export instr_en_mps=0x30        # enable MPS signalling
-export instr_dis_mps=0x31       # disable MPS signalling
 export instr_st_tx_dly=0x32     # store the TX handler delay measurement results to shared memory
 export instr_st_msg_dly=0x33    # store the measurement results of the messaging delay
 export instr_st_sg_lty=0x34     # store the signalling latency measurement results to shared memory
@@ -668,18 +666,6 @@ read_counters() {
     echo -e "$counts"
 }
 
-start_test4() {
-    # $1 - dev/wbm0
-
-    enable_mps $1
-}
-
-stop_test4() {
-    # $1 - dev/wbm0
-
-    stop_operation $1
-}
-
 inject_stop_event() {
     # $1 - node, tr0
 
@@ -883,26 +869,16 @@ stats_eca_tap() {
     fi
 }
 
-disable_mps() {
-    echo "Stop MPS on $1"
-    write_cmd $1 $instr_dis_mps
-}
-
-enable_mps() {
-    echo "Start MPS on $1"
-    write_cmd $1 $instr_en_mps
-}
-
 disable_mps_all() {
     echo "Disable MPS"
-    disable_mps $tx_node_dev
-    disable_mps $rx_node_dev
+    stop_operation $tx_node_dev
+    stop_operation $rx_node_dev
 }
 
 enable_mps_all() {
     echo "Enable MPS"
-    enable_mps $rx_node_dev
-    enable_mps $tx_node_dev
+    start_operation $rx_node_dev
+    start_operation $tx_node_dev
 }
 
 eb_read_uint64() {
