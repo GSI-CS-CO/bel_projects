@@ -114,7 +114,9 @@ static status_t setEndpDstAddr(int idx);
 static status_t readNodeId(uint32_t* base, uint32_t offset);
 static void clearError(size_t len, mpsMsg_t* buf);
 static void setOpMode(uint64_t mode);
-static void cmdHandler(uint32_t *reqState, uint32_t cmd);
+static void cmdHandler(uint32_t *actState, uint32_t *reqState, uint32_t cmd);
+static void respondToHost(const uint32_t data);
+static void handleAppCmd(const uint32_t cmd);
 static void timerHandler(void);
 static uint32_t handleEcaEvent(uint32_t pollTimeout, uint32_t* mpsTask, msgCtrl_t* pMsgCtrl, mpsMsg_t** head);
 static void wrConsolePeriodic(void);
@@ -808,27 +810,86 @@ uint32_t extern_entryActionOperation()
     }
   }
 
+  mpsTask |= TSK_TX_MPS_FLAGS;  // enable transmission of the MPS flags
+  mpsTask |= TSK_TX_MPS_EVENTS; // enable transmission of the MPS events
+  mpsTask |= TSK_MONIT_MPS_TTL; // enable lifetime monitoring of the MPS flags
+  // clear ECA queue by polling it => done in extern_entryActionOperation()
+  timerStart(pTimerMpsTtl);     // start timers
+  timerStart(pTimerRegistr);
+  //DBPRINT2("fbas%d: enabled MPS %lx\n", nodeType, mpsTask);
+  measurePutTimestamp(MSR_ML_PRD, getSysTime());
+  measureClearSummary(MSR_MSG_RATE, DISABLE_VERBOSITY);
+  mpsMsgCtrl.last = 0;
+  mpsMsgCtrl.ttl = 0;
+
   return status;
 }
 
 // exit action state 'op ready'
-uint32_t extern_exitActionOperation(){
+uint32_t extern_exitActionOperation() {
   uint32_t status = COMMON_STATUS_OK;
 
-  //... insert code here
+  mpsTask &= ~TSK_TX_MPS_FLAGS;  // disable transmission of the MPS flags
+  mpsTask &= ~TSK_TX_MPS_EVENTS; // disable transmission of the MPS events
+  mpsTask &= ~TSK_MONIT_MPS_TTL; // disable lifetime monitoring of the MPS flags
+  mpsTask &= ~TSK_REG_COMPLETE;  // reset the node registration
+  timerStart(pTimerConsole);     // start timer
+  //DBPRINT2("fbas%d: disabled MPS %lx\n", nodeType, mpsTask);
+  measurePutTimestamp(MSR_ML_PRD, 0);
+  measureClearSummary(MSR_ML_PRD, ENABLE_VERBOSITY);
 
   return status;
-} // exitActionOperation
+}
+
+/*******************************************************************************
+ * \brief Handle the app-specific commands received from host
+ *
+ * Handle app-specific commands in the 'configured' state only.
+ * Otherwise, commands are denied.
+ *
+ * \param actState Actual state
+ * \param reqState Requested state
+ * \param cmd      Command code
+ *
+ ******************************************************************************/
+static void cmdHandler(uint32_t *actState, uint32_t *reqState, uint32_t cmd)
+{
+  if (!cmd)        // response to 'null' command has caused 'null' MSIs to host
+    return;
+
+  uint32_t response = cmd;
+  if (cmd <= COMMON_CMD_RESERVEDTILHERE) {
+    response |= (COMMON_STATUS_OK << 16);      // if common instruction, then respond with OK
+    respondToHost(response);
+  }
+  else {
+    if (*actState == COMMON_STATE_CONFIGURED)  // 'configured' state, execute app-specific commands
+      handleAppCmd(cmd);
+    else {
+      response |= (COMMON_STATUS_ERROR << 16); // otherwise, return ERROR
+      respondToHost(response);
+    }
+  }
+}
+
+/*******************************************************************************
+ *
+ * \brief Respond to host on reception of the host command
+ *
+ * \param data Response data
+ *
+ ******************************************************************************/
+void respondToHost(const uint32_t data)
+{
+}
 
 /**
- * \brief handle user-defined commands (instructions)
+ * \brief Handle the app-specific commands
  *
- * \param reqState  request state?
- * \param cmd       received user command
+ * \param cmd  Command code
  *
- * \ret none
  **/
-static void cmdHandler(uint32_t *reqState, uint32_t cmd)
+static void handleAppCmd(const uint32_t cmd)
 {
   uint32_t u32val;
   uint8_t u8val;
@@ -870,28 +931,6 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd)
         outPort.idx  = 0;
         driveOutPort(&outPort, u8val);
         DBPRINT2("fbas%d: IO%lu=%x\n", nodeType, u32val+1, u8val);
-        break;
-      case FBAS_CMD_EN_MPS_FWD:
-        mpsTask |= TSK_TX_MPS_FLAGS;  // enable transmission of the MPS flags
-        mpsTask |= TSK_TX_MPS_EVENTS; // enable transmission of the MPS events
-        mpsTask |= TSK_MONIT_MPS_TTL; // enable lifetime monitoring of the MPS flags
-        // clear ECA queue by polling it => done in extern_entryActionOperation()
-        timerStart(pTimerMpsTtl);     // start timers
-        timerStart(pTimerRegistr);
-        //DBPRINT2("fbas%d: enabled MPS %lx\n", nodeType, mpsTask);
-        measurePutTimestamp(MSR_ML_PRD, getSysTime());
-        break;
-      case FBAS_CMD_DIS_MPS_FWD:
-        mpsTask &= ~TSK_TX_MPS_FLAGS;  // disable transmission of the MPS flags
-        mpsTask &= ~TSK_TX_MPS_EVENTS; // disable transmission of the MPS events
-        mpsTask &= ~TSK_MONIT_MPS_TTL; // disable lifetime monitoring of the MPS flags
-        mpsTask &= ~TSK_REG_COMPLETE;  // reset the node registration
-        timerStart(pTimerConsole);     // start timer
-        //DBPRINT2("fbas%d: disabled MPS %lx\n", nodeType, mpsTask);
-        measurePutTimestamp(MSR_ML_PRD, 0);
-        measureClearSummary(MSR_ML_PRD, ENABLE_VERBOSITY);
-        measurePutTimestamp(MSR_MSG_RATE, 0);
-        measureClearSummary(MSR_MSG_RATE, DISABLE_VERBOSITY);
         break;
       case FBAS_CMD_PRINT_TX_DLY:
         measurePrintSummary(MSR_TX_DLY);
@@ -952,9 +991,9 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd)
       default:
         DBPRINT2("fbas%d: received unknown command '0x%08lx'\n", nodeType, cmd);
         break;
-    } // switch
-  } // if command
-} // cmdHandler
+    }
+  }
+}
 
 /**
  * \brief Timer interrupt handler
@@ -1124,7 +1163,7 @@ int main(void) {
   while (1) {
     check_stack_fwid(buildID);                                         // check for stack corruption
     fwlib_cmdHandler(&reqState, &cmd);                                 // check for common commands and possibly request state changes
-    cmdHandler(&reqState, cmd);                                        // check for project relevant commands
+    cmdHandler(&actState, &reqState, cmd);                             // handle the app-specific commands
     status = COMMON_STATUS_OK;                                         // reset status for each iteration
     status = fwlib_changeState(&actState, &reqState, status);          // handle requested state changes
     switch(actState) {                                                 // state specific do actions
