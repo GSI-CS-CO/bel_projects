@@ -134,8 +134,6 @@ typedef enum {
 #define FBAS_CMD_GET_SENDERID   0x19   // get sender IDs (sender MAC addresses)
 #define FBAS_CMD_PROBE_SB_DIOB  0x20   // probe DIOB slave card on SCU bus
 #define FBAS_CMD_PROBE_SB_USER  0x21   // probe a given slave (sys and group IDs are expected in shared mem @FBAS_SHARED_SET_SBSLAVES)
-#define FBAS_CMD_EN_MPS_FWD     0x30   // enable MPS signal forwarding
-#define FBAS_CMD_DIS_MPS_FWD    0x31   // disable MPS signal forwarding
 #define FBAS_CMD_PRINT_TX_DLY   0x32   // print result of TX handler delay measurement
 #define FBAS_CMD_PRINT_MSG_DLY  0x33   // print the measurement result of messaging delay
 #define FBAS_CMD_PRINT_SG_LTY   0x34   // print result of MPS signalling latency measurement

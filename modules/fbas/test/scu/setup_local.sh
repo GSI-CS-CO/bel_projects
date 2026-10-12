@@ -550,7 +550,6 @@ set_eca_rules() {
 stop_operation() {
     # $1 - device (dev/wbm0)
 
-    write_cmd $1 $instr_dis_mps
     write_cmd $1 $instr_fsm_stopop
     echo "Stopped operation on $1"
 
@@ -584,8 +583,11 @@ setup_mpstx() {
     # $1 - optional, index of the TX messaging period (0..11)
 
     node_dev_label="tx_node_dev"
-    echo "load firmware"
 
+    echo "configure ECA"
+    configure_eca "$node_dev_label"
+
+    echo "load firmware"
     load_node_fw "$node_dev_label"
 
     echo "CONFIGURE state "
@@ -593,9 +595,6 @@ setup_mpstx() {
 
     echo "OPREADY state "
     make_node_ready "$node_dev_label"
-
-    echo "configure TR"
-    configure_eca "$node_dev_label"
 }
 
 ####################
@@ -609,6 +608,9 @@ setup_mpsrx() {
 
     node_dev_label="rx_node_dev"
 
+    echo "configure ECA"
+    configure_eca "$node_dev_label"
+
     echo "load firmware"
     load_node_fw "$node_dev_label" "$1"
 
@@ -618,9 +620,6 @@ setup_mpsrx() {
 
     echo "OPREADY state "
     make_node_ready "$node_dev_label"
-
-    echo "configure TR"
-    configure_eca "$node_dev_label"
 }
 
 ###################
