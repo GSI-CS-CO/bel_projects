@@ -62,7 +62,7 @@
 
 
 static const char* devName;
-static const char* program;
+static const char* program = "eb_asmi";
 static eb_address_t wb_asmi_base;
 static eb_address_t scubus_base;
 static eb_device_t device;
