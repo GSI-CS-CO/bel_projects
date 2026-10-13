@@ -1,8 +1,10 @@
-#SERVICEA=network-diag-wbm1.service
-#cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
-#systemctl daemon-reload
+# yocto
+SERVICEA=network-diag-wbm1.service
+cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
 
-#systemctl start $SERVICEA
+systemctl daemon-reload
+
+systemctl start $SERVICEA
 
 # hack for sl7
-eb-mon dev/wbm1 -s 10 0 | logger -t eb-mon -p local0.info &
+#eb-mon dev/wbm1 -s 10 0 | logger -t eb-mon -p local0.info &
