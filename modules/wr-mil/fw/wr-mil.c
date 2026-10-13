@@ -36,7 +36,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define WRMIL_FW_VERSION         0x000201  // make this consistent with makefile
+#define WRMIL_FW_VERSION         0x000202  // make this consistent with makefile
 
 #define RESET_INHIBIT_COUNTER       10000  // count so many main ECA timemouts, prior sending fill event
 #define BLACKBOX_SCU_PLUGIN_SELECT 0x0440  // register for blackbox plugin select
@@ -336,7 +336,7 @@ uint32_t extern_entryActionConfigured()
     case 14   :    // blackbox in SCU gateware, SCU4.1/RMT
       // SCU slaves have offsets 0x20000, 0x40000... for slots 1, 2 ...
       pMilSend = fwlib_getSbMaster();
-      pp_printf("pmilsend base %x\n", pMilSend);
+      DBPRINT1("pmilsend base %x\n", pMilSend);
       if (!pMilSend) {
         DBPRINT1("wr-mil: ERROR - can't find MIL device; sender\n");
         pMilPlugin      = 0x0;
@@ -932,7 +932,7 @@ int main(void) {
     *pSharedGetNEvtsRecDHi = (uint32_t)(nEvtsRecD >> 32);
     *pSharedGetNEvtsRecDLo = (uint32_t)(nEvtsRecD & 0xffffffff);
     *pSharedGetNEvtsBusyHi = (uint32_t)(nEvtsBusy >> 32);
-    *pSharedGetNEvtsBusyLo = (uint32_t)(nEvtsBusy & 0xfffffffff);
+    *pSharedGetNEvtsBusyLo = (uint32_t)(nEvtsBusy & 0xffffffff);
     *pSharedGetNEvtsErr    = nEvtsErr;
     *pSharedGetNEvtsBurst  = nEvtsBurst;
     *pSharedGetNEvtsMissed = nEvtsMissed;

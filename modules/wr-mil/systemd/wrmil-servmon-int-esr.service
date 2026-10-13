@@ -1,5 +1,7 @@
 [Unit]
 Description = wrmil monitoring server for INT ESR
+Requires = saftbus.service
+After = saftbus.service
 
 [Service]
 Type = simple
