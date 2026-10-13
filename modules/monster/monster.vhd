@@ -79,6 +79,7 @@ use work.neorv32_shell_pkg.all;
 use work.pwm_pkg.all;
 use work.xwb_register_link_ada_gen_pkg.all;
 use work.wr_info_pkg.all;
+use work.vuart_pkg.all;
 
 entity monster is
   generic(
@@ -574,6 +575,35 @@ architecture rtl of monster is
   attribute keep of sdb_dummy_dev : signal is true;
 
   ----------------------------------------------------------------------------------
+  -- GSI WR Support Crossbar (behind the Dev Crossbar) -----------------------------
+  ----------------------------------------------------------------------------------
+  constant c_wr_support_masters  : natural := 1;
+  constant c_wr_supportm_dev     : natural := 0;
+
+  type wr_support_slaves is (
+  -- required slaves
+    devs_wr_info,
+    devs_wr_vuart_wrc,
+    devs_wr_vuart_aux_wrc,
+    devs_wr_vuart_neorv32
+  );
+  constant c_wr_support_slaves   : natural := wr_support_slaves'pos(wr_support_slaves'right)+1;
+
+  constant c_wr_support_layout_req_slaves : t_sdb_record_array(c_wr_support_slaves-1 downto 0) :=
+   (wr_support_slaves'pos(devs_wr_info)          => f_sdb_auto_device(c_wr_info_sdb, not g_en_cb_wr_master_port),
+    wr_support_slaves'pos(devs_wr_vuart_wrc)     => f_sdb_auto_device(c_vuart_sdb,   not g_en_cb_wr_master_port,                    "VUART-WRC0"),
+    wr_support_slaves'pos(devs_wr_vuart_aux_wrc) => f_sdb_auto_device(c_vuart_sdb,   not g_en_cb_wr_master_port and g_dual_port_wr, "VUART-WRC1"),
+    wr_support_slaves'pos(devs_wr_vuart_neorv32) => f_sdb_auto_device(c_vuart_sdb,   g_en_neorv32,                                  "VUART-N32"));
+  constant c_wr_support_layout      : t_sdb_record_array := f_sdb_auto_layout(c_wr_support_layout_req_slaves);
+  constant c_wr_support_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_wr_support_layout_req_slaves);
+  constant c_wr_support_bridge_sdb  : t_sdb_bridge       := f_xwb_bridge_layout_sdb(true, c_wr_support_layout, c_wr_support_sdb_address);
+
+  signal wr_support_bus_slave_i  : t_wishbone_slave_in_array  (c_wr_support_masters-1 downto 0);
+  signal wr_support_bus_slave_o  : t_wishbone_slave_out_array (c_wr_support_masters-1 downto 0);
+  signal wr_support_bus_master_i : t_wishbone_master_in_array (c_wr_support_slaves-1 downto 0);
+  signal wr_support_bus_master_o : t_wishbone_master_out_array(c_wr_support_slaves-1 downto 0);
+
+  ----------------------------------------------------------------------------------
   -- GSI Dev Crossbar Slaves -------------------------------------------------------
   ----------------------------------------------------------------------------------
 
@@ -615,7 +645,7 @@ architecture rtl of monster is
     devs_a10vs,
     devs_cellular_ram,
     devs_pwm,
-    devs_wr_info
+    devs_wr_support
   );
   constant c_dev_slaves          : natural := dev_slaves'pos(dev_slaves'right)+1;
 
@@ -664,7 +694,7 @@ architecture rtl of monster is
     dev_slaves'pos(devs_a10vs)          => f_sdb_auto_device(c_a10vs_sdb,                          g_en_a10vs),
     dev_slaves'pos(devs_cellular_ram)   => f_sdb_auto_device(f_cellular_ram_sdb(g_cr_bits),        g_en_cellular_ram),
     dev_slaves'pos(devs_pwm)            => f_sdb_auto_device(c_pwm_sdb,                            g_en_pwm),
-    dev_slaves'pos(devs_wr_info)        => f_sdb_auto_device(c_wr_info_sdb,                        not g_en_cb_wr_master_port));
+    dev_slaves'pos(devs_wr_support)     => f_sdb_auto_bridge(c_wr_support_bridge_sdb,              true));
   constant c_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_bridge_sdb  : t_sdb_bridge       := f_xwb_bridge_layout_sdb(true, c_dev_layout, c_dev_sdb_address);
@@ -844,13 +874,17 @@ architecture rtl of monster is
   signal uart_mux           : std_logic; -- either usb or external
   signal uart_wrc           : std_logic; -- from wrc
   signal s_neorv32_uart0_out: std_logic; -- from neorv32
-  signal s_neorv32_uart0_in : std_logic; 
+  signal s_neorv32_uart0_in : std_logic;
   signal s_neorv32_uart1_out: std_logic;
   signal s_neorv32_uart1_in : std_logic;
   signal uart_to_usb        : std_logic;
 
   signal uart_aux_mux : std_logic;
   signal uart_aux_wrc : std_logic;
+
+  signal vuart_wrc_txd     : std_logic := '1'; -- vuart -> WRCORE console rx (idle high)
+  signal vuart_aux_wrc_txd : std_logic := '1'; -- vuart -> 2nd WRCORE console rx
+  signal vuart_neorv32_txd : std_logic := '1'; -- vuart -> neorv32 console rx
 
   signal s_usb_fd_o   : std_logic_vector(7 downto 0);
   signal s_usb_fd_oen : std_logic;
@@ -1571,6 +1605,38 @@ begin
       msi_slave_i   => dev_msi_slave_i,
       msi_slave_o   => dev_msi_slave_o);
 
+  wr_support_bar : xwb_sdb_crossbar
+    generic map(
+      g_num_masters => c_wr_support_masters,
+      g_num_slaves  => c_wr_support_slaves,
+      g_registered  => true,
+      g_wraparound  => true,
+      g_sdb_wb_mode => PIPELINED,
+      g_verbose     => true,
+      g_layout      => c_wr_support_layout,
+      g_sdb_addr    => c_wr_support_sdb_address,
+      g_sdb_name    => "WR-Support-Crossbar")
+    port map(
+      clk_sys_i     => clk_sys,
+      rst_n_i       => rstn_sys,
+      slave_i       => wr_support_bus_slave_i,
+      slave_o       => wr_support_bus_slave_o,
+      msi_master_o  => open,
+      master_i      => wr_support_bus_master_i,
+      master_o      => wr_support_bus_master_o,
+      msi_slave_o   => open);
+
+  dev2wr_support_bus : xwb_register_link_ada_gen
+    generic map(
+      g_wb_adapter  => false)
+    port map(
+      clk_sys_i     => clk_sys,
+      rst_n_i       => rstn_sys,
+      slave_i       => dev_bus_master_o(dev_slaves'pos(devs_wr_support)),
+      slave_o       => dev_bus_master_i(dev_slaves'pos(devs_wr_support)),
+      master_i      => wr_support_bus_slave_o(c_wr_supportm_dev),
+      master_o      => wr_support_bus_slave_i(c_wr_supportm_dev));
+
   top2dev_bus : xwb_register_link_ada_gen
     generic map(
       g_wb_adapter  => false)
@@ -1918,12 +1984,14 @@ end generate;
   wr_uart_o <= uart_wrc;
   neorv32_uart_n : if not g_en_neorv32 generate
     uart_to_usb <= uart_wrc;
-    uart_mux    <= uart_usb and wr_uart_i;
+    uart_mux    <= uart_usb and wr_uart_i and vuart_wrc_txd;
   end generate;
   neorv32_uart_y : if g_en_neorv32 generate
     uart_to_usb <= s_neorv32_uart0_out;
-    s_neorv32_uart0_in    <= uart_usb;
+    uart_mux    <= wr_uart_i and vuart_wrc_txd;
+    s_neorv32_uart0_in    <= uart_usb and vuart_neorv32_txd;
   end generate;
+  uart_aux_mux <= vuart_aux_wrc_txd;
 
   neorv32_n : if not g_en_neorv32 generate
     top_bus_slave_i (top_my_masters'pos(topm_neorv32)) <= cc_dummy_master_out;
@@ -3786,13 +3854,61 @@ end generate;
         wr_link_valid     => s_link_ok,
         wr_aux_time_valid => tm_valid_aux,
         wr_aux_link_valid => s_link_ok_aux,
-        slave_i           => dev_bus_master_o(dev_slaves'pos(devs_wr_info)),
-        slave_o           => dev_bus_master_i(dev_slaves'pos(devs_wr_info))
+        slave_i           => wr_support_bus_master_o(wr_support_slaves'pos(devs_wr_info)),
+        slave_o           => wr_support_bus_master_i(wr_support_slaves'pos(devs_wr_info))
       );
   end generate;
 
   wr_info_n : if g_en_cb_wr_master_port generate
-    dev_bus_master_i(dev_slaves'pos(devs_wr_info)) <= cc_dummy_slave_out;
+    wr_support_bus_master_i(wr_support_slaves'pos(devs_wr_info)) <= cc_dummy_slave_out;
+  end generate;
+
+  vuart_wrc_y : if not g_en_cb_wr_master_port generate
+    vuart_wrc : vuart
+      port map(
+        clk_i      => clk_sys,
+        rst_n_i    => rstn_sys,
+        slave_i    => wr_support_bus_master_o(wr_support_slaves'pos(devs_wr_vuart_wrc)),
+        slave_o    => wr_support_bus_master_i(wr_support_slaves'pos(devs_wr_vuart_wrc)),
+        uart_rxd_i => uart_wrc,
+        uart_txd_o => vuart_wrc_txd);
+  end generate;
+
+  vuart_wrc_n : if g_en_cb_wr_master_port generate
+    wr_support_bus_master_i(wr_support_slaves'pos(devs_wr_vuart_wrc)) <= cc_dummy_slave_out;
+    vuart_wrc_txd <= '1';
+  end generate;
+
+  vuart_aux_wrc_y : if not g_en_cb_wr_master_port and g_dual_port_wr generate
+    vuart_aux_wrc : vuart
+      port map(
+        clk_i      => clk_sys,
+        rst_n_i    => rstn_sys,
+        slave_i    => wr_support_bus_master_o(wr_support_slaves'pos(devs_wr_vuart_aux_wrc)),
+        slave_o    => wr_support_bus_master_i(wr_support_slaves'pos(devs_wr_vuart_aux_wrc)),
+        uart_rxd_i => uart_aux_wrc,
+        uart_txd_o => vuart_aux_wrc_txd);
+  end generate;
+
+  vuart_aux_wrc_n : if not (not g_en_cb_wr_master_port and g_dual_port_wr) generate
+    wr_support_bus_master_i(wr_support_slaves'pos(devs_wr_vuart_aux_wrc)) <= cc_dummy_slave_out;
+    vuart_aux_wrc_txd <= '1';
+  end generate;
+
+  vuart_neorv32_y : if g_en_neorv32 generate
+    vuart_neorv32 : vuart
+      port map(
+        clk_i      => clk_sys,
+        rst_n_i    => rstn_sys,
+        slave_i    => wr_support_bus_master_o(wr_support_slaves'pos(devs_wr_vuart_neorv32)),
+        slave_o    => wr_support_bus_master_i(wr_support_slaves'pos(devs_wr_vuart_neorv32)),
+        uart_rxd_i => s_neorv32_uart0_out,
+        uart_txd_o => vuart_neorv32_txd);
+  end generate;
+
+  vuart_neorv32_n : if not g_en_neorv32 generate
+    wr_support_bus_master_i(wr_support_slaves'pos(devs_wr_vuart_neorv32)) <= cc_dummy_slave_out;
+    vuart_neorv32_txd <= '1';
   end generate;
 
   -- END OF Wishbone slaves
