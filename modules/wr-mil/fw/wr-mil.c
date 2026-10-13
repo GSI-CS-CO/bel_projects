@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Micheal Reese, Mathias Kreider GSI-Darmstadt
- *  version : 02-jul-2026
+ *  version : 30-sep-2026
  *
  *  firmware required for the White Rabbit -> MIL Gateways
  *  
@@ -24,7 +24,6 @@
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
-
  *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -37,13 +36,18 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define WRMIL_FW_VERSION      0x000110    // make this consistent with makefile
+#define WRMIL_FW_VERSION         0x000201  // make this consistent with makefile
 
-#define RESET_INHIBIT_COUNTER    10000    // count so many main ECA timemouts, prior sending fill event
-//#define WR_MIL_GATEWAY_LATENCY 70650    // additional latency in units of nanoseconds
-                                          // this value was determined by measuring the time difference
-                                          // of the MIL event rising edge and the ECA output rising edge (no offset)
-                                          // and tuning this time difference to 100.0(5)us
+#define RESET_INHIBIT_COUNTER       10000  // count so many main ECA timemouts, prior sending fill event
+#define BLACKBOX_SCU_PLUGIN_SELECT 0x0440  // register for blackbox plugin select
+#define BLACKBOX_SCU_PLUGIN_NR        0x3  // plugin number for SCU blackbox
+#define BLACKBOX_SCU_EVTS_BUSY     0x2024  // register (r) for blackbox busy signal counter (16bit)
+#define BLACKBOX_SCU_EVTS_MISSED   0x2028  // register (r) for blackbox missed signal counter (16bit)
+#define BLACKBOX_SCU_EVTS_CLEAR    0x2040  // register (w) for blackbox counters (1 bit per counter, 16bit)
+//#define WR_MIL_GATEWAY_LATENCY 70650     // additional latency in units of nanoseconds
+                                           // this value was determined by measuring the time difference
+                                           // of the MIL event rising edge and the ECA output rising edge (no offset)
+                                           // and tuning this time difference to 100.0(5)us
 
 // standard includes
 #include <stdio.h>
@@ -92,16 +96,28 @@ volatile uint32_t *pSharedGetNEvtsRecTLo;  // pointer to a "user defined" u32 re
 volatile uint32_t *pSharedGetNEvtsRecDHi;  // pointer to a "user defined" u32 register; here: number of telegrams received (data), high word
 volatile uint32_t *pSharedGetNEvtsRecDLo;  // pointer to a "user defined" u32 register; here: number of telegrams received (data), high word
 volatile uint32_t *pSharedGetNEvtsErr;     // pointer to a "user defined" u32 register; here: number of received MIL telegrams with errors, detected by VHDL manchester decoder
-volatile uint32_t *pSharedGetNEvtsBurst;   // pointer to a "user defined" u32 register; here: number of occurences of 'nonsense high frequency bursts' 
+volatile uint32_t *pSharedGetNEvtsBurst;   // pointer to a "user defined" u32 register; here: number of occurences of 'nonsense high frequency bursts'
+volatile uint32_t *pSharedGetNEvtsBusyHi;  // pointer to a "user defined" u32 register; here: number of detected 'busy' signals (VHDL, blackbox only), high word
+volatile uint32_t *pSharedGetNEvtsBusyLo;  // pointer to a "user defined" u32 register; here: number of detected 'busy' signals (VHDL, blackbox only), low word
+volatile uint32_t *pSharedGetNEvtsMissed;  // pointer to a "user defined" u32 register; here: number of detected 'missed' signals (VHDL, blackbox only)
+volatile uint32_t *pSharedGetUseBlackbox;  // pointer to a "user defined" u32 register; here: 1: use blackbox plugin; 0: don't use blackbox plugin
 
 uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM
 volatile uint32_t *pMilSend;            // address of MIL device sending timing messages, usually this will be a SIO
 volatile uint32_t *pMilRec;             // address of MIL device receiving timing messages, usually this will be a MIL piggy
+volatile uint32_t *pMilPlugin;          // blackbox: address of plugin select register
+volatile uint32_t *pMilNEvtsBusy;       // blackbox: address of counter for busy signal
+volatile uint32_t *pMilNEvtsMissed;     // blackbox: address of counter for missed signal
+volatile uint32_t *pMilNEvtsClear;      // blackbox: address to clear all counters
 
 uint64_t statusArray;                   // all status infos are ORed bit-wise into statusArray, statusArray is then published
 uint64_t nEvtsSnd;                      // # of sent MIL telegrams
 uint64_t nEvtsRecT;                     // # of received MIL telegrams (TAI)
 uint64_t nEvtsRecD;                     // # of received MIL telegrams (data)
+uint64_t nEvtsBusy;                     // # of detected 'busy' signals (VHDL, blackbox only)
+uint16_t nEvtsBusyOld;                  // temporay variables for handling counter overrun
+uint16_t nEvtsBusyNew;                  // temporay variables for handling counter overrun
+uint64_t nEvtsBusyOverRun;              // temporay variables for handling counter overrun
 uint32_t nEvtsErr;                      // # of late messages with errors
 uint32_t nEvtsBurst;                    // # of detected 'high frequency bursts'
 uint32_t nEvtsLate;                     // # of late messages
@@ -109,6 +125,7 @@ uint32_t nEvtsEarly;                    // # of early messages
 uint32_t nEvtsConflict;                 // # of conflict messages
 uint32_t nEvtsDelayed;                  // # of delayed messages
 uint32_t nEvtsSlow;                     // # of slow messages
+uint32_t nEvtsMissed;                   // # of 'missed' signals (VHDL, blackbox only)
 uint32_t offsSlow;                      // offset for slow messages [ns]
 uint32_t offsSlowMax;                   // offset for slow messages [ns]; max
 uint32_t offsSlowMin;                   // offset for slow messages [ns]; min
@@ -127,6 +144,9 @@ uint32_t request_fill_evt;
 int32_t  mil_latency;
 uint32_t mil_domain;
 uint32_t mil_mon;
+
+uint32_t useBlackbox         = 0;       // 1: use blackbox
+
 
 uint32_t inhibit_fill_events = 0;       // this is a counter to block any sending of fill events for some cycles after a real event was sent
 
@@ -177,6 +197,10 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
   pSharedGetNEvtsRecDLo      = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_RECD_LO    >> 2));
   pSharedGetNEvtsErr         = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_ERR        >> 2));
   pSharedGetNEvtsBurst       = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_BURST      >> 2));
+  pSharedGetNEvtsBusyHi      = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_BUSY_HI    >> 2));
+  pSharedGetNEvtsBusyLo      = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_BUSY_LO    >> 2));
+  pSharedGetNEvtsMissed      = (uint32_t *)(pShared + (WRMIL_SHARED_GET_N_EVTS_MISSED     >> 2));
+  pSharedGetUseBlackbox      = (uint32_t *)(pShared + (WRMIL_SHARED_GET_USE_BB            >> 2));
 
   // find address of CPU from external perspective
   idx = 0;
@@ -220,27 +244,33 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
 // clear project specific diagnostics
 void extern_clearDiag()
 {
-  statusArray   = 0x0;
-  nEvtsSnd      = 0x0;
-  nEvtsRecT     = 0x0;
-  nEvtsRecD     = 0x0;
-  nEvtsErr      = 0x0;
-  nEvtsBurst    = 0x0;
-  nEvtsLate     = 0x0;
-  nEvtsEarly    = 0x0;
-  nEvtsConflict = 0x0;
-  nEvtsDelayed  = 0x0;
-  nEvtsSlow     = 0x0;
-  offsSlow      = 0x0;
-  offsSlowMax   = 0x0;
-  offsSlowMin   = 0xffffffff;
-  comLatency    = 0x0;
-  comLatencyMax = 0x0;
-  comLatencyMin = 0xffffffff; 
-  offsDone      = 0x0;
-  offsDoneMax   = 0x0;
-  offsDoneMin   = 0xffffffff;
-  resetEventErrCntMil(pMilRec, 0);
+  statusArray      = 0x0;
+  nEvtsSnd         = 0x0;
+  nEvtsRecT        = 0x0;
+  nEvtsRecD        = 0x0;
+  nEvtsBusy        = 0x0;
+  nEvtsBusyNew     = 0x0;
+  nEvtsBusyOld     = 0x0;
+  nEvtsBusyOverRun = 0x0;
+  nEvtsErr         = 0x0;
+  nEvtsBurst       = 0x0;
+  nEvtsLate        = 0x0;
+  nEvtsEarly       = 0x0;
+  nEvtsConflict    = 0x0;
+  nEvtsDelayed     = 0x0;
+  nEvtsSlow        = 0x0;
+  nEvtsMissed      = 0x0;
+  offsSlow         = 0x0;
+  offsSlowMax      = 0x0;
+  offsSlowMin      = 0xffffffff;
+  comLatency       = 0x0;
+  comLatencyMax    = 0x0;
+  comLatencyMin    = 0xffffffff; 
+  offsDone         = 0x0;
+  offsDoneMax      = 0x0;
+  offsDoneMin      = 0xffffffff;
+  if (useBlackbox)  *(volatile uint16_t *)pMilNEvtsClear = 0xffff;
+  else              resetEventErrCntMil(pMilRec, 0);
 } // extern_clearDiag 
 
 
@@ -281,31 +311,69 @@ uint32_t extern_entryActionConfigured()
   uint32_t status = COMMON_STATUS_OK;
 
   // get and publish NIC data
-  fwlib_publishNICData(); 
+  fwlib_publishNICData();
 
-  // get address of MIL device sending MIL telegrams; 0 is MIL piggy
-  if (*pSharedSetMilDev == 0){
-    pMilSend = fwlib_getMilPiggy();
-    if (!pMilSend) {
-      DBPRINT1("wr-mil: ERROR - can't find MIL device; sender\n");
-      return COMMON_STATUS_OUTOFRANGE;
-    } // if !pMilSend
-  } // if SetMilDev
-  else {
-    // SCU slaves have offsets 0x20000, 0x40000... for slots 1, 2 ...
-    pMilSend = fwlib_getSbMaster();
-    if (!pMilSend) {
-      DBPRINT1("wr-mil: ERROR - can't find MIL device; sender\n");
-      return COMMON_STATUS_OUTOFRANGE;
-    } // if !pMilSend
-    else pMilSend += *pSharedSetMilDev * 0x20000;
-  } // else SetMilDev
+  useBlackbox = 0;
 
-  // reset MIL sender and wait
-  if ((status = resetDevMil(pMilSend, 0))  != MIL_STAT_OK) {
-    DBPRINT1("wr-mil: ERROR - can't reset MIL device; sender\n");
-    return WRMIL_STATUS_MIL;
-  }  // if reset
+  // get address of MIL sender
+  switch (*pSharedSetMilDev) {
+    case 0    :    // MIL Piggy
+      pMilSend = fwlib_getMilPiggy();
+      if (!pMilSend) {
+        DBPRINT1("wr-mil: ERROR - can't find MIL device; sender\n");
+        return COMMON_STATUS_OUTOFRANGE;
+      } // if !pMilSend
+      break;
+    case 1 ... 12:  // SIO3 on SCU bus (without blackbox)
+      // SCU slaves have offsets 0x20000, 0x40000... for slots 1, 2 ...
+      pMilSend = fwlib_getSbMaster();
+      if (!pMilSend) {
+        DBPRINT1("wr-mil: ERROR - can't find MIL device; sender\n");
+        return COMMON_STATUS_OUTOFRANGE;
+      } // if !pMilSend
+      else pMilSend += (*pSharedSetMilDev * 0x20000) >> 2;
+      break;
+    case 14   :    // blackbox in SCU gateware, SCU4.1/RMT
+      // SCU slaves have offsets 0x20000, 0x40000... for slots 1, 2 ...
+      pMilSend = fwlib_getSbMaster();
+      pp_printf("pmilsend base %x\n", pMilSend);
+      if (!pMilSend) {
+        DBPRINT1("wr-mil: ERROR - can't find MIL device; sender\n");
+        pMilPlugin      = 0x0;
+        pMilNEvtsBusy   = 0x0;
+        pMilNEvtsMissed = 0x0;
+        return COMMON_STATUS_OUTOFRANGE;
+      } // if !pMilSend
+      else {
+        pMilSend       += (*pSharedSetMilDev * 0x20000) >> 2;
+        pMilPlugin      = pMilSend + (BLACKBOX_SCU_PLUGIN_SELECT >> 2);
+        pMilNEvtsBusy   = pMilSend + (BLACKBOX_SCU_EVTS_BUSY     >> 2);
+        pMilNEvtsMissed = pMilSend + (BLACKBOX_SCU_EVTS_MISSED   >> 2);
+        pMilNEvtsClear  = pMilSend + (BLACKBOX_SCU_EVTS_CLEAR    >> 2);
+             
+        useBlackbox = 1;
+      } // else !pMilSend
+      break;
+    default :
+      DBPRINT1("wr-mil: ERROR - illegal MIL device number; sender\n");
+      return COMMON_STATUS_OUTOFRANGE;
+      break;
+  } // switch pSharedSetMilDev
+
+  // reset MIL sender
+  if (useBlackbox) {  // use SCU4.1/RMT with blackbox
+    // hacky code here; we have to clean this up once the blackbox becomes stable
+    // all internal stuff is the blackbox is cleared when selecting plugin '0'
+    // then we switch to to the MIL plugin '3'
+    *(volatile uint16_t *)pMilPlugin = 0x0;  
+    *(volatile uint16_t *)pMilPlugin = (uint16_t)BLACKBOX_SCU_PLUGIN_NR;
+  } // if useBB
+  else {        // use SCU with MIL piggy or native SIO3 without Blackbox
+    if ((status = resetDevMil(pMilSend, 0))  != MIL_STAT_OK) {
+      DBPRINT1("wr-mil: ERROR - can't reset MIL device; sender\n");
+      return WRMIL_STATUS_MIL;
+    }  // if reset
+  } // else useBB
 
   // get address of MIL device receiving MIL telegrams; only piggy is supported
   //  if (*pSharedSetMilMon){
@@ -347,7 +415,7 @@ uint32_t extern_entryActionOperation()
   // flush ECA queue for lm32
   i = 0;
   while (fwlib_wait4ECAEvent(1000, &tDummy, &eDummy, &pDummy, &fDummy, &flagDummy1, &flagDummy2, &flagDummy3, &flagDummy4) !=  COMMON_ECADO_TIMEOUT) {i++;}
-  DBPRINT1("wr-mil: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
+  DBPRINT2("wr-mil: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
   // init set values
     
   // init get values
@@ -359,6 +427,9 @@ uint32_t extern_entryActionOperation()
   *pSharedGetNEvtsRecDLo    = 0x0;
   *pSharedGetNEvtsErr       = 0x0;
   *pSharedGetNEvtsBurst     = 0x0;
+  *pSharedGetNEvtsBusyHi    = 0x0;
+  *pSharedGetNEvtsBusyLo    = 0x0;
+  *pSharedGetNEvtsMissed    = 0x0;
 
   // init set values
   utc_trigger          = *pSharedSetUtcTrigger;
@@ -369,13 +440,16 @@ uint32_t extern_entryActionOperation()
   request_fill_evt     = *pSharedSetReqFillEvt;
   inhibit_fill_events  = RESET_INHIBIT_COUNTER;
   mil_latency          = *pSharedSetLatency;
-  pp_printf("latency %d\n", mil_latency);
   mil_domain           = *pSharedSetGid;
   mil_mon              = *pSharedSetMilMon;
 
   nEvtsSnd             = 0;
   nEvtsRecT            = 0;
   nEvtsRecD            = 0;
+  nEvtsBusy            = 0;
+  nEvtsBusyNew         = 0;
+  nEvtsBusyOld         = 0;
+  nEvtsBusyOverRun     = 0;
   nEvtsErr             = 0;
   nEvtsBurst           = 0;
   nEvtsLate            = 0;
@@ -383,15 +457,16 @@ uint32_t extern_entryActionOperation()
   nEvtsConflict        = 0;
   nEvtsDelayed         = 0;
   nEvtsSlow            = 0;
+  nEvtsMissed          = 0;
   offsSlow             = 0;
   offsSlowMax          = 0;
   offsSlowMin          = 0xffffffff;
   comLatency           = 0;
   comLatencyMax        = 0;
-  comLatencyMin        = 0xffffffff;;
+  comLatencyMin        = 0xffffffff;
   offsDone             = 0;
   offsDoneMax          = 0;
-  offsDoneMin          = 0xffffffff;;
+  offsDoneMin          = 0xffffffff;
 
   // configure MIL receiver for timing events for all 16 virtual accelerators
   // if mil_mon == 2, the FIFO for event data monitoring must be enabled
@@ -469,7 +544,9 @@ void prepMilTelegramEca(uint32_t milTelegram, uint64_t *evtId, uint64_t *param)
 
   // param
   *param     = ((uint64_t)mil_domain) << 32;
-  *param    |= (uint64_t)milTelegram & 0xffffffff;
+  if (useBlackbox) *param    |= ((uint64_t)milTelegram & 0xffffffff) << 16;  // blockbox requires MIL data in bits 16..31
+  else             *param    |= ((uint64_t)milTelegram & 0xffffffff) <<  0;  // SCU, SIO3 require MIL data in bits 0..15
+    
 } // void prepMilTelegramEca
 
 
@@ -532,6 +609,7 @@ uint32_t convert_WReventID_to_milTelegram(uint64_t evtId, uint32_t *milTelegram)
     case PZU_UH    : pzKennung = 13; break;
     case PZU_AT    : pzKennung = 14; break;
     case PZU_TK    : pzKennung = 15; break;
+    case PARTIH    : pzKennung = 15; break;   // private communication Peter: PARTIH should use Kennung of TK; chk: commented as we used a duplicate GID/case for testing
     default :        pzKennung =  0; break;
   } // switch gid
     
@@ -580,7 +658,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint32_t recMilEvtData;                                     // event data received from MIL
   uint32_t recMilEvtCode;                                     // event code received from MIL
   uint32_t recMilVAcc;                                        // event virt acc received from MIL
-  uint32_t recMilEvts[] = {0xffff};                           // list of MIL events we like to liste to (here: dummy)
+  uint32_t recMilEvts[] = {0xffff};                           // list of MIL events we like to listen to (here: dummy)
   uint64_t sendDeadline;                                      // deadline to send
   uint64_t sendEvtId;                                         // evtid to send
   uint64_t sendParam;                                         // parameter to send
@@ -622,7 +700,10 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       // build timing message and inject into ECA
 
       // deadline
-      sendDeadline  = recDeadline + WRMIL_PRETRIGGER_DM + mil_latency - WRMIL_MILSEND_LATENCY;
+      if (flagIsLate) recDeadline = getSysTime(); // if late, send as soon as possible
+      
+      sendDeadline = recDeadline + WRMIL_PRETRIGGER_DM + mil_latency - WRMIL_MILSEND_LATENCY;
+      
        // protect from nonsense hi-frequency bursts
       if (sendDeadline < previous_time + WRMIL_MILSEND_MININTERVAL) {
         sendDeadline = previous_time + WRMIL_MILSEND_MININTERVAL;
@@ -754,9 +835,21 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     if (offsDone   < offsDoneMin)     offsDoneMin   = offsDone;
   } // if eca action
 
+  // blackbox: get counter values
+  if (useBlackbox) {
+    nEvtsMissed  = *(volatile uint16_t *)pMilNEvtsMissed;
+    nEvtsBusyNew = *(volatile uint16_t *)pMilNEvtsBusy;
+
+    // handle overrun of 16 bit counter
+    if (nEvtsBusyNew < nEvtsBusyOld)  nEvtsBusyOverRun += 0x10000;
+    nEvtsBusy    = nEvtsBusyOverRun + (uint64_t)nEvtsBusyNew;
+    nEvtsBusyOld = nEvtsBusyNew;
+  } // if useBlackbox
+
   // check WR sync state
   if (fwlib_wrCheckSyncState() == COMMON_STATUS_WRBADSYNC) return COMMON_STATUS_WRBADSYNC;
   else                                                     return status;
+
   //return status;
 } // doActionOperation
 
@@ -838,8 +931,12 @@ int main(void) {
     *pSharedGetNEvtsRecTLo = (uint32_t)(nEvtsRecT & 0xffffffff);
     *pSharedGetNEvtsRecDHi = (uint32_t)(nEvtsRecD >> 32);
     *pSharedGetNEvtsRecDLo = (uint32_t)(nEvtsRecD & 0xffffffff);
+    *pSharedGetNEvtsBusyHi = (uint32_t)(nEvtsBusy >> 32);
+    *pSharedGetNEvtsBusyLo = (uint32_t)(nEvtsBusy & 0xfffffffff);
     *pSharedGetNEvtsErr    = nEvtsErr;
     *pSharedGetNEvtsBurst  = nEvtsBurst;
+    *pSharedGetNEvtsMissed = nEvtsMissed;
+    *pSharedGetUseBlackbox = useBlackbox;
   } // while
 
   return(1); // this should never happen ...

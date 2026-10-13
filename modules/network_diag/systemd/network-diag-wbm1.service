@@ -1,0 +1,12 @@
+[Unit]
+Description = White Rabbit network info diagnostic logging
+Requires = dev-wbm1.device
+After = dev-wbm1.device
+
+[Service]
+Type = simple
+ExecStart = eb-mon dev/wbm1 -s 10 0
+#ExecStart = /bin/sh -c 'eb-mon dev/wbm1 -s 10 0 | logger -t eb-mon -p local0.info'
+
+[Install]
+WantedBy = multi-user.target

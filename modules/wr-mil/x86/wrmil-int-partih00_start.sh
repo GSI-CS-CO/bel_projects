@@ -8,22 +8,27 @@
 # gateway : dev/wbm0, tr0
 export TRGW=dev/wbm0         # EB device 
 export SDGW=tr0              # saftlib device
-export NGW=5                 # of GW; pzu_qr, pzu_ql ...
-export SIDGW=280             # SID of puz_qr, pzu_ql ... (new reference groups, may 2025)
-export MILDEV=1              # MIL device, piggy(0), sio slot 1 (1) ...
-export MILADDR=0x420800      # address of MIL device to which MIL telegram is written
+export TLUIO=RMT_IN_2        # SCU3 'B1', SCU4.1/RMT 'LEMO_IN_0', 'RMT_IN_2'(busy)
+export TLUIOEDGE=0           # 1: rising edge, 0: falling edge
+export NGW=9                 # of GW; pzu_qr, pzu_ql ...
+export SIDGW=1df             # SID of puz_qr, pzu_ql ... (new reference groups, may 2025)
+export MILDEV=14             # MIL device, piggy(0), sio slot (1..12), SCU blackbox (14)
+export MILADDR=0x5c2000      # address of MIL device to which MIL telegram is written
 # piggy: Wishbone address of 'GSI_MIL_SCU'
 #        the register 0x1004 needs to be added
 #        exammple piggy: 0x9004
 # SIO  : Wishbone address of 'SCU-BUS-Master' + (slot number) * 0x20000
 #        the register 0x800 needs to be added
 #        example SIO slot #1: 0x420800
+# BBox : Wishbone address of 'SCU-BUS-Master' + (slot number: 14) * 0x20000
+#        the register 0x2000 needs to be added
+#        example blackbox in SCU4.1/RMT: 0x5c2000
 ###########################################
 # setting for development
 # gateway: N/A
 ###########################################
 
-echo -e WRMIL start script for PZU_QR
+echo -e WRMIL start script for GID 0x$SIDGW
 
 ###########################################
 # clean up stuff
@@ -52,7 +57,7 @@ eb-fwload $TRGW u 0x0 wrmil.bin
 
 echo -e WRMIL: configure firmware for gateway $NGW
 sleep 2
-wrmil-ctl $TRGW -s$NGW -w1 -m1 -l1375 configure
+wrmil-ctl $TRGW -s$NGW -w$MILDEV -m1 -l500 -t255 -d650 -u56 configure
 sleep 2
 wrmil-ctl $TRGW startop
 
@@ -61,16 +66,16 @@ wrmil-ctl $TRGW startop
 ###########################################
 echo -e WRMIL: configure $SDGW for timestamping, needed for monitoring
 #  configured as TLU input (Lemo cable from MIL piggy)
-saft-io-ctl $SDGW -n B1 -o 0 
-saft-io-ctl $SDGW -n B1 -b 0x1fe1a01000000000
+saft-io-ctl $SDGW -n $TLUIO -o 0 
+saft-io-ctl $SDGW -n $TLUIO -b 0x1fe1a01000000000
 
 # lm32 listens to TLU
-saft-ecpu-ctl $SDGW -c 0x1fe1a01000000001 0xffffffffffffffff 20000 0xa01 -d
+saft-ecpu-ctl $SDGW -c 0x1fe1a0100000000${TLUIOEDGE} 0xffffffffffffffff 20000 0xa01 -d
 
 # lm32 writes to MIL device via ECA wishbone channel
 echo -e WRMIL: configure $DGW wishbone channel, needed for writing telegrams to the MIL device
 saft-wbm-ctl $SDGW -c 0x1ff0000000000000 0xffff000000000000 0 1 -d
-saft-wbm-ctl $SDGW -r 1 0x420800 0 0x5f
+saft-wbm-ctl $SDGW -r 1 $MILADDR 0 0x5c
 
 # lm32 listens to timing messages for EVTNO 0x000..0x0ff
 saft-ecpu-ctl $SDGW -c 0x1${SIDGW}000000000000 0xfffff00000000000 500000 0xff -g -d
@@ -78,5 +83,5 @@ saft-ecpu-ctl $SDGW -c 0x1${SIDGW}000000000000 0xfffff00000000000 500000 0xff -g
 ###########################################
 # reset diagnostics
 ###########################################
-sleep 1
+sleep 2
 wrmil-ctl $TRGW cleardiag

@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 02-Apr-2025
+ *  version : 25-sep-2025
  *
  * subscribes to and displays status of a wr-mil gateway
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define WRMIL_CLIENT_MON_VERSION 0x000110
+#define WRMIL_CLIENT_MON_VERSION 0x000201
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -55,7 +55,7 @@
 
 const char* program;
 
-#define WRMILNSYS   10                   // number of WRMIL systems
+#define WRMILNSYS   13                   // number of WRMIL systems; n<20, otherwise screensize does not fit
 
 #define DIMCHARSIZE 32                   // standard size for char services
 #define DIMMAXSIZE  1024                 // max size for service names
@@ -80,9 +80,12 @@ const char * sysShortNames[] = {
   "pzu_uh",
   "pzu_at",
   "pzu_tk",
+  "pzu_tk_00",
+  "pzu_tk_01",
   "pzu_f50",
   "sis18_ring",
-  "esr_ring"
+  "esr_ring",
+  "partih_00"
 };
 
 struct wrmilGw_t {
@@ -233,7 +236,7 @@ void printServices()
     printf(" %2x %10s %8s %10s %13s %109s %12s\n", i, sysShortNames[i], cVersion, cState, cStatus, cData, cHost);
   } // for i
 
-  for (i=0; i<10; i++) printf("%s\n", empty);
+  for (i=0; i<(20-WRMILNSYS); i++) printf("%s\n", empty);
   printf("%s\n", footer);
 } // printServices
 

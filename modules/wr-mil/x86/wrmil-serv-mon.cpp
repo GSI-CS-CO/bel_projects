@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 08-aug-2026
+ *  version : 28-sep-2026
  *
  * monitors WR-MIL gateway (server part)
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define WRMIL_SERV_MON_VERSION 0x000110
+#define WRMIL_SERV_MON_VERSION 0x000201
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -111,6 +111,7 @@ using namespace std;
 #define FID                0x1          // format ID of timing messages
 #define UPDATE_TIME_MS    1000          // time for status updates [ms]
 #define MATCH_WIN_US        20          // window for matching start and stop evts [us]
+#define STOP_DELAY_US        0          // delay for stop signal [us]; allows using secondory signals, in case signal from from MIL TIF is not available
 #define INITMINMAX 10000000000          // init value for min/max
 
 static const char* program;
@@ -142,6 +143,7 @@ double    tAveOld;                      // helper for stats
 double    tAveStreamOld;                // helper for stats
 int       flagClear;                    // flag for clearing diag data;
 uint32_t  matchWindow       = MATCH_WIN_US;
+uint32_t  stopDelay         = STOP_DELAY_US;
 uint32_t  modeCompare       = 0;
 uint64_t  offsetStart;                  // correction to be used for different monitoring types
 uint64_t  offsetStop;                   // correction to be used for different monitoring types
@@ -347,6 +349,7 @@ static void help(void) {
   std::cerr << "                       4: as mode '1' but discarding data from MIL piggy"           << std::endl;
   std::cerr << "                       5: compare sent MIL telegrams with WR timing messages"       << std::endl;
   std::cerr << "  -m <match windows>   [us] windows for matching start/stop evts; default 20"       << std::endl;
+  std::cerr << "  -n <stop delay>      [us] delay for stop evt; for non-aligned signals; default 0" << std::endl;
   std::cerr << std::endl;
   std::cerr << "  The paremter -s is mandatory"                                                     << std::endl;
   std::cerr << "  -s <MIL domain>      MIL domain; this can be"                                     << std::endl;
@@ -359,6 +362,9 @@ static void help(void) {
   std::cerr << "                       6: PZU_TK; UNILAC, Transfer Line"                            << std::endl;
   std::cerr << "                       7: SIS18_RING"                                               << std::endl;
   std::cerr << "                       8: ESR_RING"                                                 << std::endl;
+  std::cerr << "                       9: PARTIH_00; 1st local gateway"                             << std::endl;
+  std::cerr << "                      10: PZU_TK_00; UNILAC, Transfer Line; 1st local gateway"      << std::endl;
+  std::cerr << "                      11: PZU_TK_01; UNILAC, Transfer Line; 2nd local gateway"      << std::endl;
   std::cerr << std::endl;
   std::cerr << "This tool monitors a White Rabbit -> MIL gateway."                                  << std::endl;
   std::cerr << std::endl;
@@ -421,7 +427,7 @@ int main(int argc, char** argv)
 
   // parse for options
   program = argv[0];
-  while ((opt = getopt(argc, argv, "s:m:c:hefd")) != -1) {
+  while ((opt = getopt(argc, argv, "s:m:n:c:hefd")) != -1) {
     switch (opt) {
       case 'e' :
         getVersion  = true;
@@ -436,33 +442,42 @@ int main(int argc, char** argv)
         tmpi        = strtoull(optarg, &tail, 0);
         if (*tail != 0) {std::cerr << "Specify a proper number, not " << optarg << "'%s'!" << std::endl; return 1;}
         switch (tmpi) {
-          case 0: gid = PZU_QR;     sprintf(domainName, "%s", "pzu_qr");     break;
-          case 1: gid = PZU_QL;     sprintf(domainName, "%s", "pzu_ql");     break;
-          case 2: gid = PZU_QN;     sprintf(domainName, "%s", "pzu_qn");     break;
-          case 3: gid = PZU_UN;     sprintf(domainName, "%s", "pzu_un");     break;
-          case 4: gid = PZU_UH;     sprintf(domainName, "%s", "pzu_uh");     break;
-          case 5: gid = PZU_AT;     sprintf(domainName, "%s", "pzu_at");     break;
-          case 6: gid = PZU_TK;     sprintf(domainName, "%s", "pzu_tk");     break;
-          case 7: gid = SIS18_RING; sprintf(domainName, "%s", "sis18_ring"); break;
-          case 8: gid = ESR_RING;   sprintf(domainName, "%s", "esr_ring");   break;
+          case  0: gid = PZU_QR;     sprintf(domainName, "%s", "pzu_qr");     break;
+          case  1: gid = PZU_QL;     sprintf(domainName, "%s", "pzu_ql");     break;
+          case  2: gid = PZU_QN;     sprintf(domainName, "%s", "pzu_qn");     break;
+          case  3: gid = PZU_UN;     sprintf(domainName, "%s", "pzu_un");     break;
+          case  4: gid = PZU_UH;     sprintf(domainName, "%s", "pzu_uh");     break;
+          case  5: gid = PZU_AT;     sprintf(domainName, "%s", "pzu_at");     break;
+          case  6: gid = PZU_TK;     sprintf(domainName, "%s", "pzu_tk");     break;
+          case  7: gid = SIS18_RING; sprintf(domainName, "%s", "sis18_ring"); break;
+          case  8: gid = ESR_RING;   sprintf(domainName, "%s", "esr_ring");   break;
+          case  9: gid = PARTIH;     sprintf(domainName, "%s", "partih_00");  break;
+          case 10: gid = PZU_TK;     sprintf(domainName, "%s", "pzu_tk_00");  break;
+          case 11: gid = PZU_TK;     sprintf(domainName, "%s", "pzu_tk_01");  break;
           default: {std::cerr << "Specify a proper number, not " << tmpi << "'%s'!" << std::endl; return 1;} break;
         } // switch tmpi
 #ifdef USEMASP
         switch (tmpi) {
-          case 0: maspNomen = std::string("U_WR2MIL_PZUQR");    break;
-          case 1: maspNomen = std::string("U_WR2MIL_PZUQL");    break;
-          case 2: maspNomen = std::string("U_WR2MIL_PZUQN");    break;
-          case 3: maspNomen = std::string("U_WR2MIL_PZUUN");    break;
-          case 4: maspNomen = std::string("U_WR2MIL_PZUUH");    break;
-          case 5: maspNomen = std::string("U_WR2MIL_PZUAT");    break;
-          case 6: maspNomen = std::string("U_WR2MIL_PZUTK");    break;
-          case 7: maspNomen = std::string("U_WR2MIL_SIS18");    break;
-          case 8: maspNomen = std::string("U_WR2MIL_ESR");      break;
+          case  0: maspNomen = std::string("U_WR2MIL_PZUQR");     break;
+          case  1: maspNomen = std::string("U_WR2MIL_PZUQL");     break;
+          case  2: maspNomen = std::string("U_WR2MIL_PZUQN");     break;
+          case  3: maspNomen = std::string("U_WR2MIL_PZUUN");     break;
+          case  4: maspNomen = std::string("U_WR2MIL_PZUUH");     break;
+          case  5: maspNomen = std::string("U_WR2MIL_PZUAT");     break;
+          case  6: maspNomen = std::string("U_WR2MIL_PZUTK");     break;
+          case  7: maspNomen = std::string("U_WR2MIL_SIS18");     break;
+          case  8: maspNomen = std::string("U_WR2MIL_ESR");       break;
+          case  9: maspNomen = std::string("U_WR2MIL_PARTIH_00"); break;
+          case 10: maspNomen = std::string("U_WR2MIL_PZUTK_00");  break;
+          case 11: maspNomen = std::string("U_WR2MIL_PZUTK_01");  break;
         } // switch tmpi
 #endif
         break;
       case 'm':
         matchWindow = strtoull(optarg, &tail, 0);
+        break;
+      case 'n':
+        stopDelay   = strtoull(optarg, &tail, 0);
         break;
       case 'c':
         modeCompare = strtoull(optarg, &tail, 0);
@@ -629,7 +644,7 @@ int main(int argc, char** argv)
       // we also do prefix machting of the first four bits of the evtNo (should be '0x0')
       tmpTag        = tagStop;        
       snoopID       = ((uint64_t)FID << 60) | idStop;
-      condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, maskStop, offsetStop));
+      condition[1]  = SoftwareCondition_Proxy::create(sink->NewCondition(false, snoopID, maskStop, offsetStop + one_us_ns * stopDelay));
       tag[1]        = tmpTag;
     
       // let's go!
@@ -645,11 +660,11 @@ int main(int argc, char** argv)
 
     saftlib::Time deadline_t;
     uint64_t      t_new, t_old, t_lastlog;
-    uint32_t      tmp32a, tmp32b, tmp32c, tmp32f, tmp32g, tmp32h;
+    uint32_t      tmp32a, tmp32b, tmp32c, tmp32f, tmp32g, tmp32h, tmp32i, tmp32j;
     int32_t       stmp32a;
-    uint64_t      tmp64a;
-    uint32_t      fwGid, fwEvtsRecErr, fwEvtsBurst/*, fwState, fwVersion, nBadStatus, nBadState*/;
-    uint64_t      fwEvtsSnd, fwEvtsRecT, fwEvtsRecD/*, fwStatus*/;
+    uint64_t      tmp64a, tmp64b;
+    uint32_t      fwGid, fwEvtsRecErr, fwEvtsBurst  /*, fwState, fwVersion, nBadStatus, nBadState*/;
+    uint64_t      fwEvtsSnd, fwEvtsRecT, fwEvtsRecD /*, fwStatus*/;
 
     t_old     = comlib_getSysTime();
     t_lastlog = comlib_getSysTime();
@@ -667,7 +682,7 @@ int main(int argc, char** argv)
         //wrmil_common_read(ebDevice, &fwStatus, &fwState, &nBadStatus, &nBadState, &fwVersion, &tmp32c, 0);
 
         comlib_readDiag2(ebDevice, &state, &verFw, &statusArray, &diagData, 0); // quick and dirty, no error checking
-        wrmil_info_read(ebDevice, &tmp32a, &tmp32b, &tmp32c, &fwGid, &stmp32a, &tmp64a, &tmp32f, &tmp32g, &tmp32h, &fwEvtsSnd, &fwEvtsRecT, &fwEvtsRecD, &fwEvtsRecErr, &fwEvtsBurst, 0);
+        wrmil_info_read(ebDevice, &tmp32a, &tmp32b, &tmp32c, &fwGid, &stmp32a, &tmp64a, &tmp32f, &tmp32g, &tmp32h, &fwEvtsSnd, &fwEvtsRecT, &fwEvtsRecD, &fwEvtsRecErr, &fwEvtsBurst, &tmp64b, &tmp32i, &tmp32j, 0);
         // if (fwGid != gid) statusArray |= COMMON_STATUS_OUTOFRANGE; // signal an error, buggy? better not use
         
         // update monitoring data

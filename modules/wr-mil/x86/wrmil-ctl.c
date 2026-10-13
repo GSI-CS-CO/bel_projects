@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Michael Reese GSI-Darmstadt
- *  version : 10-Jul-2024
+ *  version : 25-Sep-2026
  *
  * Command-line interface for wr-mil
  *
@@ -77,7 +77,10 @@ static void help(void) {
   fprintf(stderr, "\n");
   fprintf(stderr, "All following parameters are to be used with command 'configure' \n"                );
   fprintf(stderr, "parameters -w and -s are mandatory\n"                                               );
-  fprintf(stderr, "  -w <MIL device>     MIL device for sending MIL messages; 0: MIL Piggy; 1..: SIO\n");
+  fprintf(stderr, "  -w <MIL device>     MIL device for sending MIL messages; this can be \n"          );
+  fprintf(stderr, "                      0: MIL Piggy\n"                                               );
+  fprintf(stderr, "                      1..12: SIO as SCU bus slave (gateware without blackbox)\n"    );
+  fprintf(stderr, "                      14: 'SCU blackbox', virtual SCU bus slave\n"                  );
   fprintf(stderr, "  -s <MIL domain>     MIL domain; this can be\n"                                    );
   fprintf(stderr, "                      0: PZU-QR; UNILAC, Source Right\n"                            );
   fprintf(stderr, "                      1: PZU-QL; UNILAC, Source Left\n"                             );     
@@ -88,6 +91,7 @@ static void help(void) {
   fprintf(stderr, "                      6: PZU-TK; UNILAC, Transfer Line\n"                           );
   fprintf(stderr, "                      7: PZ-SIS18\n"                                                );
   fprintf(stderr, "                      8: PZ-ESR\n"                                                  );
+  fprintf(stderr, "                      9: PARTIH\n"                                                  );
   fprintf(stderr, "  -l <latency corr>   [ns] latency correction for all MIL telegrams, default 0\n"   );
   fprintf(stderr, "  -g                  'latency' shall be negative\n"                                );
   fprintf(stderr, "  -t <trigger>        UTC: evtNo of trigger event [0..255], default 0xf6\n"         );
@@ -189,6 +193,9 @@ int main(int argc, char** argv) {
   uint64_t getNEvtsRecD;                       // number MIL telegrams received (data)
   uint32_t getNEvtsErr;                        // number 'broken' MIL telegrams received, detected by VHDL Manchester decoder
   uint32_t getNEvtsBurst;                      // number of detected 'high frequency bursts'
+  uint64_t getNEvtsBusy;                       // number of detected 'busy' signals (VHDL)      
+  uint32_t getNEvtsMissed;                     // number of detected 'missed' signals (VHDL)    
+  uint32_t getFlagUseBlackbox;                 // 1: use blackbox; 0: use standard MIL interface 
 
   uint32_t actState = COMMON_STATE_UNKNOWN;    // actual state of gateway
   uint32_t actNTransfer;                       // actual number of transfers
@@ -239,11 +246,11 @@ int main(int argc, char** argv) {
         negative = 1;
         break;
       case 't':
-        utc_trigger = strtoull(optarg, &tail, 0);
+        utc_trigger    = strtoull(optarg, &tail, 0);
         if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1;}
         break;
       case 'o':
-        utc_offset = strtoull(optarg, &tail, 0) * 1000; // convert to ms
+        utc_offset     = strtoull(optarg, &tail, 0) * 1000; // convert to ms
         if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1;}
         break;
       case 'd':
@@ -251,12 +258,17 @@ int main(int argc, char** argv) {
         if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1;}
         break;
       case 'u':
-        utc_utc_delay = strtoull(optarg, &tail, 0);
+        utc_utc_delay  = strtoull(optarg, &tail, 0);
         if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1;}
         break;
       case 'w':
-        mil_wb_dev   = strtoull(optarg, &tail, 0);
+        tmp            = strtoull(optarg, &tail, 0);
         if (*tail != 0) {fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1;}
+        switch (tmp) {
+          case 0 ... 12: mil_wb_dev = tmp; break;
+          case 14      : mil_wb_dev = tmp; break;
+          default      : fprintf(stderr, "Illegal MIL device '%d'!\n", tmp); return 1; break;
+        } // switch tmp        
         break;
       case 's':
         tmp           = strtoull(optarg, &tail, 0);
@@ -271,7 +283,8 @@ int main(int argc, char** argv) {
           case 6: mil_domain = PZU_TK;     break;
           case 7: mil_domain = SIS18_RING; break;
           case 8: mil_domain = ESR_RING;   break;
-          default: fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg); return 1; 
+          case 9: mil_domain = PARTIH;     break;
+          default: fprintf(stderr, "Illegal MIL domain '%d'!\n", tmp); return 1; 
         } // switch tmp
         break;
         /*      case 's':
@@ -327,7 +340,7 @@ int main(int argc, char** argv) {
   if (getInfo) {
     // status
     wrmil_info_read(ebDevice, &getUtcTrigger, &getUtcDelay, &getTrigUtcDelay, &getGid, &getLatency, &getUtcOffset, &getRequestFill, &getMilDev, &getMilMon,
-                    &getNEvtsSnd, &getNEvtsRecT,  &getNEvtsRecD, &getNEvtsErr, &getNEvtsBurst, 0);
+                    &getNEvtsSnd, &getNEvtsRecT,  &getNEvtsRecD, &getNEvtsErr, &getNEvtsBurst, &getNEvtsBusy, &getNEvtsMissed, &getFlagUseBlackbox, 0);
     wrmil_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &verFw, &nTransfer, 0);
 
     // print set status bits (except OK)
@@ -383,7 +396,7 @@ int main(int argc, char** argv) {
         if ((statusArray >> i) & 0x1)  printf("    status bit is set : %s\n", wrmil_status_text(i));
       } // for i
       wrmil_info_read(ebDevice, &getUtcTrigger, &getUtcDelay, &getTrigUtcDelay, &getGid, &getLatency, &getUtcOffset, &getRequestFill, &getMilDev,
-                      &getMilMon, &getNEvtsSnd, &getNEvtsRecT, &getNEvtsRecD, &getNEvtsErr, &getNEvtsBurst, 1);
+                      &getMilMon, &getNEvtsSnd, &getNEvtsRecT, &getNEvtsRecD, &getNEvtsErr, &getNEvtsBurst, &getNEvtsBusy, &getNEvtsMissed, &getFlagUseBlackbox, 1);
     } // "diag"
   } //if command
 
@@ -414,7 +427,7 @@ if (snoop) {
 
       if (printFlag) {
         wrmil_info_read(ebDevice, &getUtcTrigger, &getUtcDelay, &getTrigUtcDelay, &getGid, &getLatency, &getUtcOffset, &getRequestFill, &getMilDev,
-                        &getMilMon, &getNEvtsSnd, &getNEvtsRecT, &getNEvtsRecD, &getNEvtsErr, &getNEvtsBurst, 0);
+                        &getMilMon, &getNEvtsSnd, &getNEvtsRecT, &getNEvtsRecD, &getNEvtsErr, &getNEvtsBurst, &getNEvtsBusy, &getNEvtsMissed, &getFlagUseBlackbox, 1);
         printf(", %s (%6u), ",  comlib_stateText(state), nBadState);
         if ((statusArray >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);
         else printf("NOTOK(%6u)\n", nBadStatus);

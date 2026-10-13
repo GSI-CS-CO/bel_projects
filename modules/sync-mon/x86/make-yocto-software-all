@@ -1,0 +1,11 @@
+#!/bin/sh
+# build script for software for yocto
+#
+#set -x
+
+unset LD_LIBRARY_PATH
+source /common/usr/embedded/yocto/fesa/current/sdk/environment-setup-core2-64-ffos-linux
+cd x86
+make SYSENV=YOCTO PREFIX= all
+
+

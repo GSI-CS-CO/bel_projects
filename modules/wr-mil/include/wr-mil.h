@@ -41,6 +41,7 @@
 #define PZU_F50                       0x4c0   // TOS internal: UNILAC 50 Hz synchronization
 #define SIS18_RING                    0x12c   // LSA SIS18 ring
 #define ESR_RING                      0x154   // LSA ESR ring
+#define PARTIH                        0x1df   // PARTIH; chk group ID ; change code for pzKennung in fw/wr-mil.c when assigning final group ID
 #define LOC_MIL_SEND                  0xff0   // internal: MIL telegrams to be sent
 #define LOC_MIL_REC                   0xff1   // internal: MIL telegrams received (data)
 #define LOC_TLU                       0xfe1   // internal: MIL telegrams received (timestamp only)
@@ -86,8 +87,8 @@
 #define WRMIL_SHARED_SET_UTC_OFFSET_HI     (WRMIL_SHARED_SET_LATENCY          + _32b_SIZE_)  // offset [ms] between the TAI and the MIL-UTC, high word 
 #define WRMIL_SHARED_SET_UTC_OFFSET_LO     (WRMIL_SHARED_SET_UTC_OFFSET_HI    + _32b_SIZE_)  // offset [ms] between the TAI and the MIL-UTC, low  word
 #define WRMIL_SHARED_SET_REQUEST_FILL_EVT  (WRMIL_SHARED_SET_UTC_OFFSET_LO    + _32b_SIZE_)  // if this is written to 1, the gateway will send a fill event as soon as possible
-#define WRMIL_SHARED_SET_MIL_DEV           (WRMIL_SHARED_SET_REQUEST_FILL_EVT + _32b_SIZE_)  // MIL device for sending MIL messages; 0: MIL Piggy; 1..: SIO in slot 1..
-#define WRMIL_SHARED_SET_MIL_MON           (WRMIL_SHARED_SET_MIL_DEV          + _32b_SIZE_)  // 1: monitor MIL event data; 0; don't monitor MIL event data
+#define WRMIL_SHARED_SET_MIL_DEV           (WRMIL_SHARED_SET_REQUEST_FILL_EVT + _32b_SIZE_)  // MIL device for sending MIL messages; 0: MIL Piggy; 1..12: SIO without blackbox in slot 1..12; 14: blackbox in SCU4.1@RMT
+#define WRMIL_SHARED_SET_MIL_MON           (WRMIL_SHARED_SET_MIL_DEV          + _32b_SIZE_)  // 1: monitor MIL event data; 0; don't monitor MIL event data (MIL piggy on SCU3 only)
 
 // get values
 #define WRMIL_SHARED_GET_N_EVTS_SND_HI     (WRMIL_SHARED_SET_MIL_MON          + _32b_SIZE_)  // number of sent MIL telegrams, high word
@@ -98,8 +99,13 @@
 #define WRMIL_SHARED_GET_N_EVTS_RECD_LO    (WRMIL_SHARED_GET_N_EVTS_RECD_HI   + _32b_SIZE_)  // number of received MIL telegrams (data), low word
 #define WRMIL_SHARED_GET_N_EVTS_ERR        (WRMIL_SHARED_GET_N_EVTS_RECD_LO   + _32b_SIZE_)  // number of received MIL telegrams with errors, detected by VHDL manchester decoder
 #define WRMIL_SHARED_GET_N_EVTS_BURST      (WRMIL_SHARED_GET_N_EVTS_ERR       + _32b_SIZE_)  // number of occurences of 'nonsense high frequency bursts' 
+#define WRMIL_SHARED_GET_N_EVTS_BUSY_HI    (WRMIL_SHARED_GET_N_EVTS_BURST     + _32b_SIZE_)  // number of detected 'busy' signals (VHDL, blackbox only), high word
+#define WRMIL_SHARED_GET_N_EVTS_BUSY_LO    (WRMIL_SHARED_GET_N_EVTS_BUSY_HI   + _32b_SIZE_)  // number of detected 'busy' signals (VHDL, blackbox only), low word
+#define WRMIL_SHARED_GET_N_EVTS_MISSED     (WRMIL_SHARED_GET_N_EVTS_BUSY_LO   + _32b_SIZE_)  // number of detected 'missed' signals (VHDL, blackbox only)
+#define WRMIL_SHARED_GET_USE_BB            (WRMIL_SHARED_GET_N_EVTS_MISSED    + _32b_SIZE_)  // 1: use blackbox plugin; 0: don't use blackbox plugin
+
 
 // diagnosis: end of used shared memory
-#define WRMIL_SHARED_END                   (WRMIL_SHARED_GET_N_EVTS_BURST     + _32b_SIZE_) 
+#define WRMIL_SHARED_END                   (WRMIL_SHARED_GET_USE_BB           + _32b_SIZE_) 
 
 #endif

@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 19-Dec-2025
+ *  version : 28-sep-2026
  *
  * library for wr-mil
  *
@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define WRMILLIB_VERSION 0x000110
+#define WRMILLIB_VERSION 0x000201
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  WRMILLIB_STATUS_OK                 0            // OK
@@ -173,6 +173,9 @@ extern "C" {
                            uint64_t *nEvtsRecD,                  // number of MIL telegrams received (data)
                            uint32_t *nEvtsRecErr,                // number of 'broken' MIL telegrams received by VHDL Manchester decoder
                            uint32_t *nEvtsBurst,                 // number of detected high frequency bursts
+                           uint64_t *nEvtsBusy,                  // number of detected 'busy' signals (VHDL)
+                           uint32_t *nEvtsMissed,                // number of detected 'missed' signals (VHDL)
+                           uint32_t *flagUseBlackbox,            // 1: use blackbox; 0: use standard MIL interface
                            int      printFlag                    // print info to screen 
                            );
 
