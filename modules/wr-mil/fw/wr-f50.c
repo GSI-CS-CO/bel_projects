@@ -40,7 +40,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define WRF50_FW_VERSION      0x000201                                  // make this consistent with makefile
+#define WRF50_FW_VERSION      0x000202                                  // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>

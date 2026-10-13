@@ -1,5 +1,7 @@
 [Unit]
 Description = wrmil monitoring server for PRO SIS18
+Requires = saftbus.service
+After = saftbus.service8
 
 [Service]
 Type = simple

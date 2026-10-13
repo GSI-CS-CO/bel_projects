@@ -1,5 +1,7 @@
 [Unit]
 Description = wrmil monitoring server for INT PZU UN
+Requires = saftbus.service
+After = saftbus.service
 
 [Service]
 Type = simple
