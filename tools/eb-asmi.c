@@ -387,6 +387,7 @@ void show_help() {
   printf("-w <file>   write programming file into flash\n");
   printf("-v <file>   verify flash against programming file\n");
   printf("-n          no erase before writing; use with -w\n");
+  printf("-i          ignore CRC check during programming\n");
 }
 
 unsigned int how_many_sectors(int epcsid, unsigned int size) {
@@ -438,6 +439,7 @@ int main(int argc, char * const* argv) {
   int bflag = 0;
   int eflag = 0;
   int nflag = 0;
+  int iflag = 0;
   char *svalue = NULL;
   int index;
   int c;
@@ -450,7 +452,7 @@ int main(int argc, char * const* argv) {
 
   opterr = 0;
 
-  while ((c = getopt (argc, argv, "w:rv:bhens:")) != -1)
+  while ((c = getopt (argc, argv, "w:rv:bhens:i")) != -1)
     switch (c)
       {
         case 'e':
@@ -476,6 +478,9 @@ int main(int argc, char * const* argv) {
           exit(1);
         case 's':
           svalue = optarg;
+          break;
+        case 'i':
+          iflag = 1;
           break;
         case '?':
           if (optopt == 'w' || optopt == 'v' || optopt == 's')
@@ -685,9 +690,13 @@ int main(int argc, char * const* argv) {
 
       //check crc of written data
       read_asmi_crc(slave_id, waddr, PAGE_SIZE, &crc_hw);
-      if (crc != (crc_hw)) {
-          printf("\ncrc wrong in page 0x%x: 0x%x != 0x%"EB_DATA_FMT"\n", waddr, crc, crc_hw);
-          exit(1);
+      //look at ignore flag
+      if (iflag == 0) {
+        //check the crc value
+        if (crc != (crc_hw)) {
+            printf("\ncrc wrong in page 0x%x: 0x%x != 0x%"EB_DATA_FMT"\n", waddr, crc, crc_hw);
+            exit(1);
+        }
       }
 
       waddr += PAGE_SIZE;
