@@ -9,7 +9,7 @@ use work.wishbone_pkg.all;
 -- vuart: serial virtual UART wishbone slave
 -- Bridges an external (Etherbone) host to a core's physical console UART so
 -- that tools/eb-console.c can talk to that core. Register map (big endian,
--- matches eb-console.c): TX @ base+0x10 (write = send byte, read = tx busy),
+-- matches eb-console.c): TX @ base+0x10 (write = send byte, read = tx ready),
 -- RX @ base+0x14 (read = {bit8:ready, bit7..0:byte}, pops the RX FIFO).
 --------------------------------------------------------------------------------
 entity vuart is
@@ -65,12 +65,12 @@ begin
       r_tx_trig <= '0';
       if slave_i.cyc = '1' and slave_i.stb = '1' then
         case slave_i.adr(4 downto 0) is
-          when "10000" => -- 0x10: TX (write = send byte, read = tx busy)
+          when "10000" => -- 0x10: TX (write = send byte, read = {bit8:ready})
             if slave_i.we = '1' then
               r_tx_trig <= '1';
               r_tx_data <= slave_i.dat(7 downto 0);
             else
-              r_dat(8) <= s_tx_busy;
+              r_dat(8) <= not s_tx_busy and not r_tx_trig;
             end if;
           when "10100" => -- 0x14: RX (read = {ready, byte}, pops the FIFO)
             if slave_i.we = '0' then
