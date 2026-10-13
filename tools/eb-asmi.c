@@ -1,5 +1,5 @@
 //
-// eb-sflash: tool for programming scu slave card remotly with new gateware
+// eb-asmi: tool for programming new gateware with asmi remote update core
 //
 
 //standard includes
@@ -379,7 +379,7 @@ int kbhit(void)
 
 
 void show_help() {
-  printf("Usage: eb-sflash [OPTION] <proto/host/port>\n");
+  printf("Usage: eb-asmi [OPTION] <proto/host/port>\n");
   printf("\n");
   printf("-h          show the help for this program\n");
   printf("-b          blank check the flash\n");
