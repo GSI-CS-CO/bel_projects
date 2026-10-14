@@ -106,6 +106,7 @@ static struct timer_dbg_s timerDbg;
 static void init();
 static status_t initSharedMem(uint32_t *const sharedStart);
 static void initMpsData();
+static void initCounters();
 static void initIrqTable();
 static void printSrcAddr();
 static status_t convertMacToU8(uint8_t buf[ETH_ALEN], uint32_t* hi, uint32_t* lo);
@@ -233,12 +234,23 @@ static void initMpsData()
 
   // clear the statistics
   measureClearSummary(N_MSR_ITEMS, ENABLE_VERBOSITY);
+  initCounters();
 
   //TODO: include function call below in fwlib_doActionS0()
   // if (findEcaCtl() != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
   if (findEcaCtl() != COMMON_STATUS_OK) {
     DBPRINT1("ECA ctl not found!");
   }
+}
+
+/**
+ * \brief Initialize the counters in the shared memory
+ */
+static void initCounters()
+{
+  *(pSharedApp + (FBAS_SHARED_TX_MSG_CNT >> 2)) = 0;
+  *(pSharedApp + (FBAS_SHARED_OLD_MSG_CNT >> 2)) = 0;
+  *(pSharedApp + (FBAS_SHARED_BAD_MSG_CNT >> 2)) = 0;
 }
 
 /**
@@ -818,9 +830,12 @@ uint32_t extern_entryActionOperation()
   timerStart(pTimerRegistr);
   //DBPRINT2("fbas%d: enabled MPS %lx\n", nodeType, mpsTask);
   measurePutTimestamp(MSR_ML_PRD, getSysTime());
-  measureClearSummary(MSR_MSG_RATE, DISABLE_VERBOSITY);
+  measureClearSummary(N_MSR_ITEMS, DISABLE_VERBOSITY);
   mpsMsgCtrl.last = 0;
   mpsMsgCtrl.ttl = 0;
+
+  // clear counters in the shared memory
+  initCounters();
 
   return status;
 }
