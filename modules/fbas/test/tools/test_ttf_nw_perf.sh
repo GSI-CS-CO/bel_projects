@@ -21,6 +21,36 @@ msg_rates=(33333 100000 50000 20000 10000 5000 3333 2500 \
             500    333  250   200   166   143  125)
             # 2K,  3K,  4K,   5K,   6K,   7K,  8K [Hz]
 
+pids=()                               # sub-process ids for each running test on SCUs
+
+# signal handler
+sigint_handler()
+{
+    # stop all TX and RX devices, if CTRL+C is requested
+    echo
+
+    local pcnt=0
+
+    for pid in ${pids[@]}; do
+        pkill $pid
+        pcnt=$(( $pcnt + 1 ))
+    done
+
+    if [ $pcnt -ne 0 ]; then
+        echo "Stopped $pcnt sub-process(es)."
+        pcnt=0
+    fi
+
+    for i in ${!txscu[@]}; do
+        run_remote ${txscu[$i]} "source setup_local.sh && eb-reset \$tx_node_dev cpureset 0"
+    done
+
+    run_remote $rxscu "source setup_local.sh && eb-reset \$rx_node_dev cpureset 0"
+
+    echo "All LM32 CPUs are resetted. Exit."
+    exit
+}
+
 usage() {
 
     echo "Run a MPS signalling test between TX and RX SCUs."
@@ -137,8 +167,6 @@ measure_nw_perf() {
     echo -e "$output\n"
 
     # enable simultaneous operation of TX nodes
-    pids=()
-
     for i in ${!txscu[@]}; do
         echo ${txscu[$i]}
 
@@ -293,6 +321,8 @@ measure_ttl() {
     echo -e "measurement stats: TTL\n"
     run_remote $rxscu "source setup_local.sh && result_ttl_ival \$rx_node_dev \$addr_cnt1 $verbose"
 }
+
+trap sigint_handler SIGINT
 
 unset username userpasswd gen_period idx_msg_period exclude_ttl auto verbose
 unset OPTIND
