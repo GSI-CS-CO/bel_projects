@@ -312,6 +312,7 @@ configure_node() {
     if [ "$1" == "rx_node_dev" ]; then
         echo "set node type to RX (0x1)"
         eb-write $device $addr_set_node_type/4 0x1
+        eb-write $device $addr_get_node_type/4 0
 
         echo "tell LM32 to set the node type"
         write_cmd $device $instr_set_nodetype
