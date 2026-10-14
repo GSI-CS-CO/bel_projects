@@ -83,14 +83,6 @@ user_approval() {
     fi
 }
 
-pre_check() {
-    echo "TX: snoop TLU event (for IO action):"
-    echo "    saft-ctl tr0 -xv snoop 0 0 0"
-    echo "TX: expected events at a chosen input port (B2/IO2):"
-    echo "    GID: 0x0fff EVTNO: 0x0100 Other: 0x000000001"
-    echo "    GID: 0x0fff EVTNO: 0x0100 Other: 0x000000000"
-}
-
 info_messaging_rate() {
     # $1 - index
 
@@ -376,15 +368,9 @@ fi
 echo -e "\n--- Step 1: set up nodes (RX=$rxscu_name, TX=${txscu_name[*]}) ---\n"
 setup_nodes
 
-# optional pre-check before real test
-echo -e "\n--- Step 2: pre-check (RX=$rxscu_name, TX=${txscu_name[*]}) ---\n"
-pre_check
+echo -e "\n--- Step 2: measure network performance (RX=$rxscu_name, TX=${txscu_name[*]}) ---\n"
 
-if [ -z "$auto" ]; then
-    user_approval
-fi
 
-echo -e "\n--- Step 3: measure network performance (RX=$rxscu_name, TX=${txscu_name[*]}) ---\n"
 measure_nw_perf
 
 if [ -n "$exclude_ttl" ]; then
@@ -392,5 +378,5 @@ if [ -n "$exclude_ttl" ]; then
 fi
 
 # TTL measurement
-echo -e "\n--- Step 4: measure TTL (RX=$rxscu_name, TX=${txscu_name[*]}) ---\n"
+echo -e "\n--- Step 3: measure TTL (RX=$rxscu_name, TX=${txscu_name[*]}) ---\n"
 measure_ttl
