@@ -207,8 +207,8 @@ measure_nw_perf() {
     if [ -z "$verbose" ]; then
         echo -e "Delay:  avg min max [us] vld all [])\n"
         # declare measurement entries
-        tx_delay_entries=("eca dly" "tx dly " "ml prd ")
-        rx_delay_entries=("eca dly" "rx dly " "msg dly" "msg rte" "mlp prd" "dio dly" "ttl ivl" "eca tap")
+        tx_delay_entries=("eca dly" "tx dly " "tx rate" "ml prd ")
+        rx_delay_entries=("eca dly" "rx dly " "msg dly" "rx rate" "mlp prd" "dio dly" "ttl ivl" "eca tap")
     fi
 
     i=0
