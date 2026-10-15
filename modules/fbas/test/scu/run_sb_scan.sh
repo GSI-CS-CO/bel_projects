@@ -20,7 +20,7 @@ fi
 echo "To check the scan result, launch 'eb-console $DEV' in another shell."
 
 # load FW
-eb-fwload $DEV u 0 $IMG
+eb-fwload $DEV u 0 $filepath
 sleep 1
 
 # transit to 'configure' state
