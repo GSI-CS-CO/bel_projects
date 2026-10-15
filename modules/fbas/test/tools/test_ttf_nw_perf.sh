@@ -12,7 +12,7 @@ rxscu="$rxscu_name.$domain"
 txscu=()                              # array with transmitter domain names
 fw_scu_def="fbas16.scucontrol.bin"    # FW that supports up to 16 TX nodes, each has 1 MPS channels
 ssh_opts="-o StrictHostKeyChecking=no"   # no hostkey checking
-getopt_opts="u:p:t:r:g:i:eyvh"        # user options
+getopt_opts="u:p:t:r:g:i:ceyvh"       # user options
 n_tx_rates=21                         # number of TX messaging rates
 msg_rates=(33333 100000 50000 20000 10000 5000 3333 2500 \
             # 30,  10,    20,   50,   100,  200, 300, 400 [Hz]
@@ -54,7 +54,6 @@ sigint_handler()
 usage() {
 
     echo "Run a MPS signalling test between TX and RX SCUs."
-    echo "User might be logged in to both SCUs to perform optional pre-check."
     echo
     echo "Usage: $0 [options]"
     echo
@@ -68,6 +67,7 @@ usage() {
     echo "                         0=30, 1=10, 2=20 3=50Hz, 4=100, 5=200, 6=300, 7=400 [Hz]"
     echo "                         8=500, 9=800, 10=1K, 11=1.2K, 12=1.5K, 13=1.8K [Hz]"
     echo "                         14=2K, 15=3K, 16=4K, 17=5K, 18=6K, 19=7K, 20=8K [Hz]"
+    echo "  -c                     optional, maximum RX message rate check (assert max_rx_rate < 1,25 * tx_rate, us)"
     echo "  -e                     exclude TTL measurement"
     echo "  -y                     'yes' to all prompts"
     echo "  -v                     verbosity for the measurement results"
@@ -148,7 +148,13 @@ setup_nodes() {
 }
 
 measure_nw_perf() {
-    echo -e "start the measurements\n"
+
+    # use nameref to return a value to the given input parameter
+    local -n max_rx_rate="$1"    # RX msg rate
+    # $2 - optional counter for measurement
+    local measure_cnt=$2
+
+    echo -e "start the measurement: $measure_cnt\n"
 
     info_messaging_rate $idx_msg_period
 
@@ -191,7 +197,7 @@ measure_nw_perf() {
     output=$(run_remote $rxscu "source setup_local.sh && stop_operation \$rx_node_dev")
 
     # report test result
-    echo "measurement stats of MPS signaling"
+    echo "measurement stats of MPS signaling: $measure_cnt"
     if [ -z "$verbose" ]; then
         echo -e "MPS node:       tx_cnt rx_vld rx_ovf\n"
     else
@@ -275,6 +281,10 @@ measure_nw_perf() {
     run_remote $rxscu \
         "source setup_local.sh && \
         stats_eca_tap \$rx_node_dev $verbose"
+
+    msg_rate=$(run_remote $rxscu "source setup_local.sh && result_msg_rate \$rx_node_dev")
+    array_msg_rate=($msg_rate) # convert to array
+    max_rx_rate="${array_msg_rate[2]}" # return the RX msg rate
 }
 
 measure_ttl() {
@@ -316,7 +326,7 @@ measure_ttl() {
 
 trap sigint_handler SIGINT
 
-unset username userpasswd gen_period idx_msg_period exclude_ttl auto verbose
+unset username userpasswd gen_period idx_msg_period rx_msg_rate_check exclude_ttl auto verbose
 unset OPTIND
 
 while getopts $getopt_opts c; do
@@ -327,6 +337,7 @@ while getopts $getopt_opts c; do
         r) rxscu_name=$OPTARG; rxscu=$OPTARG.$domain ;;
         g) gen_period=$OPTARG ;;
         i) idx_msg_period=$OPTARG ;;
+        c) rx_msg_rate_check="yes" ;;
         e) exclude_ttl="exclude_ttl" ;;
         y) auto="auto" ;;
         v) verbose="yes" ;;
@@ -370,8 +381,26 @@ setup_nodes
 
 echo -e "\n--- Step 2: measure network performance (RX=$rxscu_name, TX=${txscu_name[*]}) ---\n"
 
+measure_cnt=1 # measurement counter
 
-measure_nw_perf
+# optional check for max RX msg rate
+max_rx_msg_rate=${msg_rates[$idx_msg_period]}
+rx_rate_threshold=$(( max_rx_msg_rate + max_rx_msg_rate / 4 ))
+
+while [ $max_rx_msg_rate -lt $rx_rate_threshold ]; do # normal/expected behaviour
+    measure_nw_perf max_rx_msg_rate  $measure_cnt     # get the max RX msg rate
+    max_rx_msg_rate=$(( 10#$max_rx_msg_rate ))        # convert a string to integer
+
+    if [ -z "$rx_msg_rate_check" ]; then
+        break
+    fi
+
+    measure_cnt=$(( measure_cnt + 1 ))
+done
+
+if [ $max_rx_msg_rate -ge $rx_rate_threshold ]; then
+    echo "Got high msg rate than expected [us]: $max_rx_msg_rate >> ${msg_rates[$idx_msg_period]}"
+fi
 
 if [ -n "$exclude_ttl" ]; then
     exit 0
