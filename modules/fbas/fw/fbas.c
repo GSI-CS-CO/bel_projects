@@ -828,7 +828,7 @@ uint32_t extern_entryActionOperation()
   // clear ECA queue by polling it => done in extern_entryActionOperation()
   timerStart(pTimerMpsTtl);     // start timers
   timerStart(pTimerRegistr);
-  //DBPRINT2("fbas%d: enabled MPS %lx\n", nodeType, mpsTask);
+
   measurePutTimestamp(MSR_ML_PRD, getSysTime());
   measureClearSummary(N_MSR_ITEMS, DISABLE_VERBOSITY);
   mpsMsgCtrl.last = 0;
@@ -849,9 +849,6 @@ uint32_t extern_exitActionOperation() {
   mpsTask &= ~TSK_MONIT_MPS_TTL; // disable lifetime monitoring of the MPS flags
   mpsTask &= ~TSK_REG_COMPLETE;  // reset the node registration
   timerStart(pTimerConsole);     // start timer
-  //DBPRINT2("fbas%d: disabled MPS %lx\n", nodeType, mpsTask);
-  measurePutTimestamp(MSR_ML_PRD, 0);
-  measureClearSummary(MSR_ML_PRD, ENABLE_VERBOSITY);
 
   return status;
 }
