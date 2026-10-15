@@ -561,6 +561,8 @@ start_operation() {
 
     write_cmd $1 $instr_fsm_startop
     echo "Started operation on $1"
+
+    enable_ecatap $1
 }
 
 enable_ecatap() {
