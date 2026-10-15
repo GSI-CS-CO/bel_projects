@@ -20,6 +20,7 @@ msg_rates=(33333 100000 50000 20000 10000 5000 3333 2500 \
             # 500, 800, 1K,   1.2K, 1.5K, 1.8K [Hz]
             500    333  250   200   166   143  125)
             # 2K,  3K,  4K,   5K,   6K,   7K,  8K [Hz]
+idx_msg_period=0                      # default index for the TX messaging rate
 
 pids=()                               # sub-process ids for each running test on SCUs
 
@@ -326,7 +327,7 @@ measure_ttl() {
 
 trap sigint_handler SIGINT
 
-unset username userpasswd gen_period idx_msg_period rx_msg_rate_check exclude_ttl auto verbose
+unset username userpasswd gen_period rx_msg_rate_check exclude_ttl auto verbose
 unset OPTIND
 
 while getopts $getopt_opts c; do
