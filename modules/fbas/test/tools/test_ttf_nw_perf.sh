@@ -32,7 +32,7 @@ sigint_handler()
     local pcnt=0
 
     for pid in ${pids[@]}; do
-        pkill $pid
+        kill $pid
         pcnt=$(( $pcnt + 1 ))
     done
 
