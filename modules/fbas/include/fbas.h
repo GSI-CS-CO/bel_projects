@@ -104,11 +104,12 @@
 #endif
 
 // compile-time check shared memory regions
+// common_shared_begin + fbas_shared_offs = fbas_shared_c2_msg_begin
 #if FBAS_SHARED_C2_MSG_BEGIN < COMMON_SHARED_END
-  #error Overlapped shared memory regions: increase FBAS_SHARED_OFFS!
-  #pragma message "FBAS_SHARED_OFFS  = " XSTR(FBAS_SHARED_OFFS)
-  #pragma message "FBAS_SHARED_BEGIN = " XSTR(FBAS_SHARED_BEGIN)
   #pragma message "COMMON_SHARED_END = " XSTR(COMMON_SHARED_END)
+  #pragma message "FBAS_SHARED_C2_MSG_BEGIN = " XSTR(FBAS_SHARED_C2_MSG_BEGIN)
+  #pragma message "FBAS_SHARED_OFFS  = " XSTR(FBAS_SHARED_OFFS)
+  #error Overlapped shared memory regions (COMMON_SHARED vs. FBAS_SHARED_*) : increase FBAS_SHARED_OFFS!
 #endif
 
 // node type
