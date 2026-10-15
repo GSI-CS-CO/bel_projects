@@ -1,5 +1,7 @@
 [Unit]
 Description = wrmil monitoring server for INT PZU TK, 1st local gateway
+Requires = saftbus.service
+After = saftbus.service
 
 [Service]
 Type = simple
