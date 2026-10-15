@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 19-Aug-2024
+ *  version : 15-oct-2026
  *
  * library for b2b
  *
@@ -575,6 +575,9 @@ uint32_t b2b_context_ext_upload(uint64_t ebDevice, uint32_t sid, uint32_t gid, u
       break;
     case CRYRING_RING :
       gidExt = CRYRING_B2B_EXTRACT;
+      break;
+    case SIS100_RING :
+      gidExt = SIS100_B2B_EXTRACT;
       break;
     default           :
       gidExt = GID_INVALID;

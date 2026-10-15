@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 03-jan-2025
+ *  version : 15-oct-2026
  *
  * library for b2b
  *
@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define B2BLIB_VERSION 0x000813
+#define B2BLIB_VERSION 0x000815
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  B2BLIB_STATUS_OK                 0            // OK
@@ -66,7 +66,7 @@ extern "C" {
 #define  B2BLIB_STATE_ERROR               6            // in error -> IDLE ("recover")
 #define  B2BLIB_STATE_FATAL               7            // in fatal error; RIP
   
-  enum ringMachine{NORING, SIS18, ESR, CRYRING};
+  enum ringMachine{NORING, SIS18, ESR, CRYRING, SIS100};
   typedef enum ringMachine ring_t;
 
   enum tuneKnob{NOKNOB, TRIGEXT, TRIGINJ, PHASE};
