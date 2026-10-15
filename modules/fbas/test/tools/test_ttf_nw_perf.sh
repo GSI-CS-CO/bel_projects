@@ -12,7 +12,7 @@ rxscu="$rxscu_name.$domain"
 txscu=()                              # array with transmitter domain names
 fw_scu_def="fbas16.scucontrol.bin"    # FW that supports up to 16 TX nodes, each has 1 MPS channels
 ssh_opts="-o StrictHostKeyChecking=no"   # no hostkey checking
-getopt_opts="u:p:t:r:g:i:ceyvh"       # user options
+getopt_opts="u:p:t:r:g:i:c:eyvh"      # user options
 n_tx_rates=21                         # number of TX messaging rates
 msg_rates=(33333 100000 50000 20000 10000 5000 3333 2500 \
             # 30,  10,    20,   50,   100,  200, 300, 400 [Hz]
@@ -68,7 +68,7 @@ usage() {
     echo "                         0=30, 1=10, 2=20 3=50Hz, 4=100, 5=200, 6=300, 7=400 [Hz]"
     echo "                         8=500, 9=800, 10=1K, 11=1.2K, 12=1.5K, 13=1.8K [Hz]"
     echo "                         14=2K, 15=3K, 16=4K, 17=5K, 18=6K, 19=7K, 20=8K [Hz]"
-    echo "  -c                     optional, maximum RX message rate check (assert max_rx_rate < 1,25 * tx_rate, us)"
+    echo "  -c <% deviation>       check the deviation in measured RX message rate against the given percentage deviation (0..100)"
     echo "  -e                     exclude TTL measurement"
     echo "  -y                     'yes' to all prompts"
     echo "  -v                     verbosity for the measurement results"
@@ -329,7 +329,7 @@ measure_ttl() {
 
 trap sigint_handler SIGINT
 
-unset username userpasswd gen_period rx_msg_rate_check exclude_ttl auto verbose
+unset username userpasswd gen_period c_percent_dev exclude_ttl auto verbose
 unset OPTIND
 
 while getopts $getopt_opts c; do
@@ -340,7 +340,7 @@ while getopts $getopt_opts c; do
         r) rxscu_name=$OPTARG; rxscu=$OPTARG.$domain ;;
         g) gen_period=$OPTARG ;;
         i) idx_msg_period=$OPTARG ;;
-        c) rx_msg_rate_check="yes" ;;
+        c) c_percent_dev=$OPTARG ;;
         e) exclude_ttl="exclude_ttl" ;;
         y) auto="auto" ;;
         v) verbose="yes" ;;
@@ -351,9 +351,30 @@ done
 
 # check the index of the TX messaging period
 if [ "$idx_msg_period" ]; then
-    num=$(($idx_msg_period)) 2>/dev/null
+    if ! [[ "$idx_msg_period" =~ ^[0-9]+$ ]]; then
+        echo "Error: invalid index for TX messaging period: $idx_msg_period. Exit!"
+        usage; exit 1
+    fi
+
+    num=$(( 10#$idx_msg_period )) 2>/dev/null
     if [ $num -ge $n_tx_rates ]; then
         echo "Error: invalid index for TX messaging period: $num (valid index is less than $n_tx_rates). Exit!"
+        usage; exit 1
+    fi
+
+    idx_msg_period=$num
+fi
+
+# check the given percentage deviation
+if [ "$c_percent_dev" ]; then
+    if ! [[ "$c_percent_dev" =~ ^[0-9]+$ ]]; then
+        echo "Error: invalid percentage deviation for measured RX messaging rate: $c_percent_dev. Exit!"
+        usage; exit 1
+    fi
+
+    num=$(( 10#$c_percent_dev))
+    if [ $num -lt 0 ] || [ $num -gt 100 ]; then
+        echo "Error: invalid percentage deviation for measured RX messaging rate: $c_percent_dev. Exit!"
         usage; exit 1
     fi
 fi
@@ -388,9 +409,10 @@ measure_cnt=1 # measurement counter
 
 # optional check for max RX msg rate
 max_rx_msg_rate=${msg_rates[$idx_msg_period]}
-rx_rate_threshold=$(( max_rx_msg_rate + max_rx_msg_rate / 4 ))
+deviation=$(( max_rx_msg_rate * ${c_percent_dev:-0} / 100 ))
+rx_rate_threshold=$(( max_rx_msg_rate + deviation ))
 
-while [ $max_rx_msg_rate -lt $rx_rate_threshold ]; do # normal/expected behaviour
+while [ $max_rx_msg_rate -le $rx_rate_threshold ]; do # normal/expected behaviour
     measure_nw_perf max_rx_msg_rate  $measure_cnt     # get the max RX msg rate
 
     max_rx_msg_rate=${max_rx_msg_rate%%.*}            # handle a missing or zero value
@@ -401,15 +423,15 @@ while [ $max_rx_msg_rate -lt $rx_rate_threshold ]; do # normal/expected behaviou
 
     max_rx_msg_rate=$(( 10#$max_rx_msg_rate ))        # convert a string to integer
 
-    if [ -z "$rx_msg_rate_check" ]; then
+    if [ -z "$c_percent_dev" ]; then
         break
     fi
 
     measure_cnt=$(( measure_cnt + 1 ))
 done
 
-if [ $max_rx_msg_rate -ge $rx_rate_threshold ]; then
-    echo "Got high msg rate than expected [us]: $max_rx_msg_rate >> ${msg_rates[$idx_msg_period]}"
+if [ $max_rx_msg_rate -gt $rx_rate_threshold ]; then
+    echo "Got too slow msg rate than expected [us]: $max_rx_msg_rate >> ${msg_rates[$idx_msg_period]}"
 fi
 
 if [ -n "$exclude_ttl" ]; then
