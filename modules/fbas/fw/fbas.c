@@ -869,33 +869,14 @@ uint32_t extern_exitActionOperation() {
  ******************************************************************************/
 static void cmdHandler(uint32_t *actState, uint32_t *reqState, uint32_t cmd)
 {
-  if (!cmd)        // response to 'null' command has caused 'null' MSIs to host
+  if (!cmd)
     return;
 
-  uint32_t response = cmd;
-  if (cmd <= COMMON_CMD_RESERVEDTILHERE) {
-    response |= (COMMON_STATUS_OK << 16);      // if common instruction, then respond with OK
-    respondToHost(response);
-  }
-  else {
-    if (*actState == COMMON_STATE_CONFIGURED)  // 'configured' state, execute app-specific commands
+  // execute application commands in the 'configured' state
+  if (cmd > COMMON_CMD_RESERVEDTILHERE) {
+    if (*actState == COMMON_STATE_CONFIGURED)
       handleAppCmd(cmd);
-    else {
-      response |= (COMMON_STATUS_ERROR << 16); // otherwise, return ERROR
-      respondToHost(response);
-    }
   }
-}
-
-/*******************************************************************************
- *
- * \brief Respond to host on reception of the host command
- *
- * \param data Response data
- *
- ******************************************************************************/
-void respondToHost(const uint32_t data)
-{
 }
 
 /**
