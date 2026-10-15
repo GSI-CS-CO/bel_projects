@@ -33,7 +33,7 @@ sigint_handler()
     local pcnt=0
 
     for pid in ${pids[@]}; do
-        kill $pid
+        kill $pid 2>/dev/null
         pcnt=$(( $pcnt + 1 ))
     done
 
@@ -184,6 +184,8 @@ measure_nw_perf() {
     for pid in ${pids[@]}; do
         wait $pid
     done
+
+    pids=() # clear sub-process IDs when sub-processes are complete -> avoid to kill completed sub-processes
 
     # notice the end time (sub-process is finished in the last device)
     end=$(date +%s)
