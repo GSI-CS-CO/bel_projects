@@ -189,6 +189,7 @@ fi
 echo -e "\n--- 5. Start the measurements ---\n"
 
 unset results
+break_loop=1  # expect loop below update it
 for i in ${!m_rates[@]}; do
 
     rate=${m_rates[$i]}
