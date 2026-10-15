@@ -390,6 +390,13 @@ rx_rate_threshold=$(( max_rx_msg_rate + max_rx_msg_rate / 4 ))
 
 while [ $max_rx_msg_rate -lt $rx_rate_threshold ]; do # normal/expected behaviour
     measure_nw_perf max_rx_msg_rate  $measure_cnt     # get the max RX msg rate
+
+    max_rx_msg_rate=${max_rx_msg_rate%%.*}            # handle a missing or zero value
+    if ! [[ "$max_rx_msg_rate" =~  ^[0-9]+$ ]] || [ $max_rx_msg_rate -eq 0 ]; then
+        echo "Invalid max RX msg rate: $max_rx_msg_rate. Exit!"
+        exit 1
+    fi
+
     max_rx_msg_rate=$(( 10#$max_rx_msg_rate ))        # convert a string to integer
 
     if [ -z "$rx_msg_rate_check" ]; then
