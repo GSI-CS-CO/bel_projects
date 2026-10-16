@@ -651,8 +651,8 @@ static uint32_t handleEcaEvent(uint32_t pollTimeout, uint32_t* mpsTask, msgCtrl_
           measureSummarize(MSR_ECA_DLY, ecaDeadline, now, DISABLE_VERBOSITY);
           measureExportSummary(MSR_ECA_DLY, pSharedApp, FBAS_SHARED_ECA_DLY_AVG);
 
-          // measure the C2 messaging rate (based on deadline and base event ID)
-          if (ecaEvtId == FBAS_FLG_EID) {
+          // measure the aggregate C2 messaging rate (based on base ID and deadline of received event)
+          if ((ecaEvtId & 0xfffffffffffffff0ULL) == FBAS_FLG_EID) {
             ts = measureGetTimestamp(MSR_MSG_RATE);
             if (ts) {
               measureSummarize(MSR_MSG_RATE, ts, ecaDeadline, DISABLE_VERBOSITY);
