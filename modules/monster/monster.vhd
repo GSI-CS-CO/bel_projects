@@ -1981,17 +1981,11 @@ end generate;
   sdb_dummy_top <= f_report_wishbone_address(c_top_sdb_address, "SDB TOP");
   sdb_dummy_dev <= f_report_wishbone_address(c_dev_sdb_address, "SDB DEV");
 
-  wr_uart_o <= uart_wrc;
-  neorv32_uart_n : if not g_en_neorv32 generate
-    uart_to_usb <= uart_wrc;
-    uart_mux    <= uart_usb and wr_uart_i and vuart_wrc_txd;
-  end generate;
-  neorv32_uart_y : if g_en_neorv32 generate
-    uart_to_usb <= s_neorv32_uart0_out;
-    uart_mux    <= wr_uart_i and vuart_wrc_txd;
-    s_neorv32_uart0_in    <= uart_usb and vuart_neorv32_txd;
-  end generate;
-  uart_aux_mux <= vuart_aux_wrc_txd;
+  wr_uart_o          <= uart_wrc;
+  uart_to_usb        <= uart_wrc;
+  uart_mux           <= uart_usb and wr_uart_i and vuart_wrc_txd;
+  uart_aux_mux       <= vuart_aux_wrc_txd;
+  s_neorv32_uart0_in <= vuart_neorv32_txd;
 
   neorv32_n : if not g_en_neorv32 generate
     top_bus_slave_i (top_my_masters'pos(topm_neorv32)) <= cc_dummy_master_out;
