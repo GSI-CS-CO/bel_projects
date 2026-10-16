@@ -10,6 +10,9 @@ CFLAGS      = -I. -I$(PSCU)/include -I$(WRPC_IMPORT) -I$(PATHSCU) -DHISTORY -fno
 
 include ../../build.mk
 
+# SCU firmware lists its sources explicitly below
+INCLUDES      :=
+
 CFLAGS        += -O2
 
 $(TARGET).elf: $(PATHSCU)/main.c  $(INCPATH)/display.c  $(PATHSCU)/cb.c \
