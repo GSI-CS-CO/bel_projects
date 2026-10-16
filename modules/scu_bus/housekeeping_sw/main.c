@@ -4,8 +4,8 @@
 #include <stdarg.h>
 
 #include "syscon.h"
-#include "hw/memlayout.h"
 #include "board.h" //from WR
+#include "hk_base.h"
 #include "pp-printf.h"
 #include "hk_board.h"
 #include "uart.h"
@@ -90,7 +90,7 @@ int main(void)
     while (1) {};
   }
   uart_hw_init();
-  uart_write_string("\nDebug Port\n");
+  puts("\nDebug Port\n");
 
   pp_printf("aru_base: 0x%x\n", aru_base);
   pp_printf("scu_reg: 0x%x\n", scu_reg);
