@@ -33,6 +33,7 @@
 #include <unistd.h> /* getopt */
 #include <termios.h>
 #include <fcntl.h>
+#include <signal.h>
 
 #define CERN_ID	0xce42
 #define UART_ID	0xe2d13d04
@@ -42,6 +43,20 @@
 #define BATCH_SIZE 200
 
 const char *program;
+static struct termios old_tc;
+static int old_flags = -1;
+
+/* restore stdin: termios and O_NONBLOCK are shared with the calling shell */
+static void restore_stdin(void) {
+  if (old_flags == -1) return;
+  tcsetattr(STDIN_FD, TCSANOW, &old_tc);
+  fcntl(STDIN_FD, F_SETFL, old_flags);
+}
+
+static void on_signal(int sig) {
+  restore_stdin();
+  _exit(0);
+}
 
 static void help(void) {
   fprintf(stderr, "Usage: %s [OPTION] <proto/host/port>\n", program);
@@ -61,7 +76,7 @@ int main(int argc, char** argv) {
   int opt, error, c, i, flags, busy;
   char *tail;
   struct sdb_device sdb[10];
-  struct termios tc, old;
+  struct termios tc;
   eb_status_t status;
   eb_socket_t socket;
   eb_device_t device;
@@ -134,18 +149,25 @@ int main(int argc, char** argv) {
   rx = sdb[i].sdb_component.addr_first + VUART_RX;
   
   /* disable input buffering and echo */
-  tcgetattr(STDIN_FD, &old);
+  tcgetattr(STDIN_FD, &old_tc);
+  flags = fcntl(STDIN_FD, F_GETFL, 0);
+  old_flags = flags;
+  atexit(restore_stdin);
+  signal(SIGINT,  on_signal);
+  signal(SIGTERM, on_signal);
+  signal(SIGHUP,  on_signal);
+  signal(SIGQUIT, on_signal);
+  
   tcgetattr(STDIN_FD, &tc);
   tc.c_cflag = B9600 | CS8 | CLOCAL | CREAD;
   tc.c_iflag = IGNPAR;
   tc.c_oflag = 0;
-  tc.c_lflag = 0;
+  tc.c_lflag = ISIG; /* control-C raises SIGINT, even while blocked in eb_block */
   tc.c_cc[VMIN]=1;
   tc.c_cc[VTIME]=0;
   tcflush(STDIN_FD, TCIFLUSH);
   tcsetattr(STDIN_FD, TCSANOW, &tc);
   
-  flags = fcntl(STDIN_FD, F_GETFL, 0);
   flags |= O_NONBLOCK;
   fcntl(STDIN_FD, F_SETFL, flags);
   
@@ -183,10 +205,8 @@ int main(int argc, char** argv) {
       nread = read(STDIN_FD, &byte, 1);
       if (nread == 0)
         exit(0); /* EOF, user stopped, all right */
-      if (nread == 1 && byte == 3) { /* control-C */
-        tcsetattr(STDIN_FD, TCSANOW, &old);
+      if (nread == 1 && byte == 3) /* control-C */
         exit(0);
-      }
       if (nread == 1) {
         tx_data = byte;
         eb_device_write(device, tx, EB_BIG_ENDIAN|EB_DATA32, tx_data, eb_block, 0);

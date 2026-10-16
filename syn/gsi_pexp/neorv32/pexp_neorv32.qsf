@@ -136,7 +136,7 @@ set_global_assignment -name QIP_FILE ../../../modules/pll/arria5/sys_pll5.qip
 set_global_assignment -name QSYS_FILE ../../../modules/jtag/virtual_jtag/virtual_jtag.qsys
 set_global_assignment -name RELEASE_CLEARS_BEFORE_TRI_STATES ON
 set_global_assignment -name SDC_FILE ../../../top/common/arria5.sdc
-set_global_assignment -name SEED 131
+set_global_assignment -name SEED 73
 set_global_assignment -name SLD_NODE_CREATOR_ID 110 -section_id auto_signaltap_0
 set_global_assignment -name SLD_NODE_ENTITY_NAME sld_signaltap -section_id auto_signaltap_0
 set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_ADVANCED_TRIGGER_ENTITY=basic,1," -section_id auto_signaltap_0
@@ -671,6 +671,8 @@ set_global_assignment -name VHDL_FILE ../../../modules/temp_sens/hdl/temp_sensor
 set_global_assignment -name VHDL_FILE ../../../modules/temp_sens/hdl/wb_temp_sense_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/temp_sens/hdl/wb_temp_sense.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/temp_sens/synthesis/temp_sens.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/vuart/src/hdl/vuart_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/vuart/src/hdl/vuart.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/watchdog/watchdog_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/watchdog/watchdog.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria10_reset/arria10_reset/altera_remote_update_231/synth/arria10_reset_pkg.vhd -library arria10_reset_altera_remote_update_231
