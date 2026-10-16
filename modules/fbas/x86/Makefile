@@ -27,13 +27,19 @@ WBFLAG   = -DNOWB_SIMULATE
 WBFLAG  += -I$(WBDIR)
 WBSRC    = $(WBDIR)/wb_api.c
 
+# saftlib
+CXXFLAGS += --std=c++11 `pkg-config saftlib --cflags`
+LDLIBS  += `pkg-config saftlib --libs`
+
 all: $(TARGETS)
 
 fbas-mon: fbas-mon.c
 	$(CC) $(CFLAGS) $(WBFLAG) $(WBSRC) $(WRPCSRC) -o $@ $? $(LIBS)
 
+fbas-snoop-saftbus: fbas-snoop-saftbus.cpp
+
 clean:
-	rm -f *.o fbas-mon
+	rm -f *.o fbas-mon fbas-snoop-saftbus
 
 #install:
 #	mkdir -p $(STAGING)$(PREFIX)/bin

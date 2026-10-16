@@ -119,13 +119,10 @@ main() {
         echo "$0: - Hence, test may fail!"
     fi
 
-    run_remote $rxscu "source setup_local.sh && setup_mpsrx $fw_rxscu $sender_opts"
-    run_remote $txscu "source setup_local.sh && setup_mpstx"
-
     echo 'start test4 (RX, TX)'
     echo "-----------"
-    run_remote $rxscu "source setup_local.sh && start_test4 \$rx_node_dev"
-    run_remote $txscu "source setup_local.sh && start_test4 \$tx_node_dev"
+    run_remote $rxscu "source setup_local.sh && setup_mpsrx $fw_rxscu $sender_opts"
+    run_remote $txscu "source setup_local.sh && setup_mpstx"
 
     echo "wait $duration_sec seconds (start Xenabay schedule now)"
     echo "------------"
@@ -134,13 +131,13 @@ main() {
     echo 'stop test4 (TX, RX)'
     echo "----------"
     echo -n "TX: "
-    run_remote $txscu "source setup_local.sh && stop_test4 \$tx_node_dev && \
+    run_remote $txscu "source setup_local.sh && stop_operation \$tx_node_dev && \
         result_eca_delay \$tx_node_dev $verbose && \
         result_tx_delay \$tx_node_dev $verbose && \
         result_ml_period \$tx_node_dev $verbose && \
         read_counters \$tx_node_dev $verbose"
     echo -n "RX: "
-    run_remote $rxscu "source setup_local.sh && stop_test4 \$rx_node_dev && \
+    run_remote $rxscu "source setup_local.sh && stop_operation \$rx_node_dev && \
         result_eca_delay \$rx_node_dev $verbose && \
         result_msg_delay \$rx_node_dev $verbose && \
         result_ml_period \$rx_node_dev $verbose && \

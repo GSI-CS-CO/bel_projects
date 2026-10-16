@@ -43,9 +43,10 @@ mpsMsg_t   bufMpsMsg[N_MAX_MPS_CHANNELS];       // buffer for the C2 message
 mpsMsg_t *const bufPcEvent = &bufMpsMsg[0];     // head of the C2 message buffer (used as the PC event buffer for TX node)
 msgCtrl_t  mpsMsgCtrl;                          // C2 messaging control structure
 const uint32_t txMsgRates[N_TX_RATES] = {       // TX messaging rates, [us]
-              33333, 100000, 80000, 50000,      // 30, 10, 12.5, 20 [Hz]
-              20000, 10000, 5000, 2000,         // 50, 100, 200, 500 [Hz]
-              1000, 500, 200, 100};             // 1000, 2000, 5000, 10000 [Hz]
+              33333, 100000, 50000, 20000,      // 30, 10, 20, 50 [Hz]
+              10000, 5000, 3333, 2500,          // 100, 200, 300, 400 [Hz]
+              2000, 1250, 1000, 833, 666, 555,  // 500, 800, 1000, 1200, 1500, 1800 [Hz]
+              500, 333, 250, 200, 166, 143, 125};// 2K, 3K, 4K, 5K, 6K, 7K, 8K [Hz]
 
 static int addr_equal(uint8_t a[ETH_ALEN], uint8_t b[ETH_ALEN]); // wr-switch-sw/userspace/libwr
 static uint8_t *addr_copy(uint8_t dst[ETH_ALEN], uint8_t src[ETH_ALEN]);
@@ -294,7 +295,7 @@ void msgInitMpsMsgBuf(const uint64_t *id)
   uint8_t *mac = (uint8_t *)id;
   mac+=2;                         // lower 6-byte is MAC address
 
-  for (int i = 0; i < N_MAX_MPS_CHANNELS; ++i)
+  for (int i = 0; i < N_MAX_TX_NODES; ++i)
   {
     msgResetMpsBuf(i, mac, MPS_FLAG_TEST);
     DBPRINT1("%x: mac=%x:%x:%x:%x:%x:%x bic_id=%x ch_id=%x flag=%x @0x%8p\n",

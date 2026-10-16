@@ -180,17 +180,9 @@ reset_tr_ecpu() {
     register_senders "$@"
 }
 
-enable_tr_mps() {
-    output=$(run_remote $rxscu \
-        "source setup_local.sh && start_test4 \$rx_node_dev")
-    ret_code=$?
-    report_code $ret_code
-    exit_on_fail $ret_code
-}
-
 stop_rx_operation() {
     output=$(run_remote $rxscu \
-        "source setup_local.sh && stop_test4 \$rx_node_dev")
+        "source setup_local.sh && stop_operation \$rx_node_dev && inject_stop_event \$rx_node_name")
     ret_code=$?
     report_code $ret_code
     exit_on_fail $ret_code
@@ -238,7 +230,7 @@ check_dm_schedule() {
     # | 5           | 200  | 800 | 1600 | 3200 |
 
     local std_periods=(100000 80000 50000 33333 20000 10000 5000) # default messaging periods [us]
-    local high_periods=(2000 1000 500 200 100 80 50)              # additional higher messaging periods [us]
+    local high_periods=(2000 1000 800 500 333 200 100 80 50 40 20) # additional higher messaging periods [us]
     local all_rates=()                                            # all allowed message reception rates [Hz]
 
     # determine the timing message block depth: number of messages with the same timestamp
@@ -255,26 +247,34 @@ check_dm_schedule() {
 
     # calculate the aggregate message reception rates (for RX node)
 
+    local all_periods=(${std_periods[*]})
+    if [ "$enable_high_rates" = "y" ]; then
+        all_periods+=(${high_periods[*]})
+    fi
+
     local index=0
-    for period in "${std_periods[@]}" ; do
+    for period in "${all_periods[@]}" ; do
         all_rates[index]=$(bc <<< "scale=1; 1000000/$period * $block") # floating-point arithmetic
         index=$(( $index + 1 ))
     done
 
-    if [ "$enable_high_rates" = "y" ]; then
-        for period in "${high_periods[@]}"; do
-            all_rates[index]=$(bc <<< "scale=1; 1000000/$period * $block")
-            index=$(( $index + 1 ))
-        done
-    fi
-
     echo -e "Timing message block depth: $block [messages]"
 
-    echo "Measurements will be done for the following message reception rates [Hz]:"
-    for rate in ${all_rates[*]}; do
-        echo $rate
-    done
+    local n_all_periods=${#all_periods[@]}
 
+    echo "Measurements will be done for the following messaging rates:"
+    echo
+    echo "| TX rate, us  |  Aggregate RX rate, Hz         |"
+    echo "| sender(s)    |  1       |  4       |  16      |"
+    echo "|-----------------------------------------------|"
+
+    for i in $(seq 0 $((n_all_periods - 1))); do
+        period=${all_periods[i]}
+        rate=$(bc <<< "scale=0; ${all_rates[i]}")
+        rate_4=$(bc <<< "scale=0; ${all_rates[i]} * 4")
+        rate_16=$(bc <<< "scale=0; ${all_rates[i]} * 16")
+        printf "| %-12.0f | %-8.0f | %-8.0f | %-8.0f |\n" $period $rate $rate_4 $rate_16
+    done
     msg_rates=("${all_rates[@]}")
     msg_block="$block"
 }

@@ -102,13 +102,13 @@ setup_tx_node:
 	@source setup.sh && setup_fbastx
 
 disable_tx_node:
-	@source setup.sh && disable_mps $$tx_node_dev
+	@source setup.sh && stop_operation $$tx_node_dev
 
 disable_rx_node:
-	@source setup.sh && disable_mps $$rx_node_dev
+	@source setup.sh && stop_operation $$rx_node_dev
 
 enable_rx_node:
-	@source setup.sh && enable_mps $$rx_node_dev
+	@source setup.sh && start_operation $$rx_node_dev
 
 enable_rx_tx_nodes:
 	@source setup.sh && enable_mps_all

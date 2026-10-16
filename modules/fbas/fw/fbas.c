@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define FBAS_FW_VERSION 0x010402        // make this consistent with makefile -> export VERSION
+#define FBAS_FW_VERSION 0x010502        // make this consistent with makefile -> export VERSION
 
 // standard includes
 #include <stdio.h>
@@ -106,6 +106,7 @@ static struct timer_dbg_s timerDbg;
 static void init();
 static status_t initSharedMem(uint32_t *const sharedStart);
 static void initMpsData();
+static void initCounters();
 static void initIrqTable();
 static void printSrcAddr();
 static status_t convertMacToU8(uint8_t buf[ETH_ALEN], uint32_t* hi, uint32_t* lo);
@@ -114,7 +115,9 @@ static status_t setEndpDstAddr(int idx);
 static status_t readNodeId(uint32_t* base, uint32_t offset);
 static void clearError(size_t len, mpsMsg_t* buf);
 static void setOpMode(uint64_t mode);
-static void cmdHandler(uint32_t *reqState, uint32_t cmd);
+static void cmdHandler(uint32_t *actState, uint32_t *reqState, uint32_t cmd);
+static void respondToHost(const uint32_t data);
+static void handleAppCmd(const uint32_t cmd);
 static void timerHandler(void);
 static uint32_t handleEcaEvent(uint32_t pollTimeout, uint32_t* mpsTask, msgCtrl_t* pMsgCtrl, mpsMsg_t** head);
 static void wrConsolePeriodic(void);
@@ -183,6 +186,8 @@ static status_t initSharedMem(uint32_t *const sharedStart)
   DBPRINT1("fbas%d: FBAS_SENDERID 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_SENDERID >> 2)), (pSharedExt + (FBAS_SHARED_SENDERID >> 2)));
   DBPRINT1("fbas%d: FBAS_ACT_RATE 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_ACT_RATE >> 2)), (pSharedExt + (FBAS_SHARED_ACT_RATE >> 2)));
   DBPRINT1("fbas%d: FBAS_ERROR_FLAG 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_ERROR_FLAG >> 2)), (pSharedExt + (FBAS_SHARED_ERROR_FLAG >> 2)));
+  DBPRINT1("fbas%d: FBAS_C2_MSG_BEGIN 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_C2_MSG_BEGIN >> 2)), (pSharedExt + (FBAS_SHARED_C2_MSG_BEGIN >> 2)));
+  DBPRINT1("fbas%d: FBAS_C2_MSG_END 0x%8p (0x%8p)\n", nodeType, (pSharedApp + (FBAS_SHARED_C2_MSG_END >> 2)), (pSharedExt + (FBAS_SHARED_C2_MSG_END >> 2)));
 
   sbInitSharedMemory(pSharedApp);
 
@@ -216,17 +221,36 @@ static void initMpsData()
   msgInitMpsMsgBuf(&myMac);
   msgInitPcEventBuf(&myMac, 0, 0);
 
+  // initialize the shared memory locations allocated for the C2 protocols
+  for (int i = 0; i < N_MAX_TX_NODES; i++) {
+    *(pSharedApp + (FBAS_SHARED_C2_MSG_BEGIN >> 2) + (i << 2) + 0) = 0; // parameter (high bytes)
+    *(pSharedApp + (FBAS_SHARED_C2_MSG_BEGIN >> 2) + (i << 2) + 1) = 0; // parameter (low bytes)
+    *(pSharedApp + (FBAS_SHARED_C2_MSG_BEGIN >> 2) + (i << 2) + 2) = 0; // timestamp (high bytes)
+    *(pSharedApp + (FBAS_SHARED_C2_MSG_BEGIN >> 2) + (i << 2) + 3) = 0; // timestamp (low bytes)
+  }
+
   // initialize the MPS messaging controller
   msgInitMsgCtrl(&mpsMsgCtrl, N_MPS_CHANNELS, 0, txMsgRates[0]);
 
   // clear the statistics
   measureClearSummary(N_MSR_ITEMS, ENABLE_VERBOSITY);
+  initCounters();
 
   //TODO: include function call below in fwlib_doActionS0()
   // if (findEcaCtl() != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
   if (findEcaCtl() != COMMON_STATUS_OK) {
     DBPRINT1("ECA ctl not found!");
   }
+}
+
+/**
+ * \brief Initialize the counters in the shared memory
+ */
+static void initCounters()
+{
+  *(pSharedApp + (FBAS_SHARED_TX_MSG_CNT >> 2)) = 0;
+  *(pSharedApp + (FBAS_SHARED_OLD_MSG_CNT >> 2)) = 0;
+  *(pSharedApp + (FBAS_SHARED_BAD_MSG_CNT >> 2)) = 0;
 }
 
 /**
@@ -368,6 +392,37 @@ static status_t setEndpDstAddr(int idx)
   dstNwAddr[DST_ADDR_EBM].mac = dstNwAddr[idx].mac;
 
   return status;
+}
+
+/**
+ * \brief Probe ECA queues
+ *
+ * Find the ECA queues that are synthesized in the timing receiver platform.
+ *
+ * Output the short information (base address and ID of the connected ECA action channel)
+ * for each ECA queue (via eCPU UART).
+ *
+ */
+void probeEcaQueue(void)
+{
+  #define ECAQMAX 4 // up to 4 ECA queues
+  const char* ch_names[ECAQMAX] = {"linux", "acwbm", "ecpu", "tag scubus"};
+  sdb_location ecaq_base[ECAQMAX];
+  uint32_t ecaq_idx = 0;
+  uint32_t *base;
+  uint32_t ch_id;
+  const char* ch_name;
+
+  // get list of ECA queues
+  find_device_multi(ecaq_base, &ecaq_idx, ECAQMAX, ECA_QUEUE_SDB_VENDOR_ID, ECA_QUEUE_SDB_DEVICE_ID);
+
+  for (int i = 0; i < ecaq_idx; i++) {
+    base = (uint32_t *)(getSdbAdr(&ecaq_base[i]));
+    ch_id = *(base + (ECA_QUEUE_QUEUE_ID_GET >> 2));
+    ch_name = (ch_id < ECAQMAX) ? ch_names[ch_id] : "unknown";
+    DBPRINT1("ECA queue %d: base_addr=0x%08x, ch_id=0x%x (%s)\n",
+             i, (uint32_t)base, ch_id, ch_name);
+  }
 }
 
 /**
@@ -538,7 +593,7 @@ static uint32_t handleEcaEvent(uint32_t pollTimeout, uint32_t* mpsTask, msgCtrl_
             }
 
             // send the PC event
-            uint32_t count = msgSendPcEvent(pMsgCtrl, *head, FBAS_FLG_EID, N_EXTRA_MPS_NOK);
+            uint32_t count = msgSendPcEvent(pMsgCtrl, *head, (FBAS_FLG_EID + myIdx), N_EXTRA_MPS_NOK);
             // count sent PC events
             *(pSharedApp + (FBAS_SHARED_TX_MSG_CNT >> 2)) = measureCountEvt(TX_EVT_CNT, count);
 
@@ -558,7 +613,7 @@ static uint32_t handleEcaEvent(uint32_t pollTimeout, uint32_t* mpsTask, msgCtrl_
         break;
       case FBAS_WR_EVT:
       case FBAS_WR_FLG:
-        if (nodeType == FBAS_NODE_RX) { // FBAS RX re-generates MPS class 2 signals
+        if (nodeType == FBAS_NODE_RX) { // FBAS RX captures MPS class 2 messages
           // store and handle received MPS flag
           offset = msgStoreMpsMsg(&ecaParam, &ecaDeadline, pMsgCtrl);
           if (offset >= 0) {
@@ -595,6 +650,16 @@ static uint32_t handleEcaEvent(uint32_t pollTimeout, uint32_t* mpsTask, msgCtrl_
           // measure the ECA delay
           measureSummarize(MSR_ECA_DLY, ecaDeadline, now, DISABLE_VERBOSITY);
           measureExportSummary(MSR_ECA_DLY, pSharedApp, FBAS_SHARED_ECA_DLY_AVG);
+
+          // measure the aggregate C2 messaging rate (based on base ID and deadline of received event)
+          if ((ecaEvtId & 0xfffffffffffffff0ULL) == FBAS_FLG_EID) {
+            ts = measureGetTimestamp(MSR_MSG_RATE);
+            if (ts) {
+              measureSummarize(MSR_MSG_RATE, ts, ecaDeadline, DISABLE_VERBOSITY);
+              measureExportSummary(MSR_MSG_RATE, pSharedApp, FBAS_SHARED_MSG_RATE_AVG);
+            }
+            measurePutTimestamp(MSR_MSG_RATE, ecaDeadline);
+          }
         }
         break;
 
@@ -625,7 +690,7 @@ static uint32_t handleEcaEvent(uint32_t pollTimeout, uint32_t* mpsTask, msgCtrl_
             dstNwAddr[DST_ADDR_RXNODE].mac = node_id;
             myIdx = ch_id;
             msgInitPcEventBuf(&myMac, bic_id, ch_id);
-            DBPRINT2("reg OK: RX MAC=%llx\n", dstNwAddr[DST_ADDR_RXNODE].mac);
+            DBPRINT2("reg OK: idx=%x RX MAC=%llx\n", myIdx, dstNwAddr[DST_ADDR_RXNODE].mac);
             *mpsTask |= TSK_REG_COMPLETE;
           }
         }
@@ -702,6 +767,9 @@ uint32_t extern_entryActionConfigured()
     outPortCfg.total= N_OUT_LEMO_PEXARIA;
   }
 
+  // probe existing ECA queues
+  probeEcaQueue();
+
   sbInit(); // probe SCU bus
 
   // app specific IO setup (TX: B2 as input, all output disabled)
@@ -754,27 +822,67 @@ uint32_t extern_entryActionOperation()
     }
   }
 
+  mpsTask |= TSK_TX_MPS_FLAGS;  // enable transmission of the MPS flags
+  mpsTask |= TSK_TX_MPS_EVENTS; // enable transmission of the MPS events
+  mpsTask |= TSK_MONIT_MPS_TTL; // enable lifetime monitoring of the MPS flags
+  // clear ECA queue by polling it => done in extern_entryActionOperation()
+  timerStart(pTimerMpsTtl);     // start timers
+  timerStart(pTimerRegistr);
+
+  measurePutTimestamp(MSR_ML_PRD, getSysTime());
+  measureClearSummary(N_MSR_ITEMS, DISABLE_VERBOSITY);
+  mpsMsgCtrl.last = 0;
+  mpsMsgCtrl.ttl = 0;
+
+  // clear counters in the shared memory
+  initCounters();
+
   return status;
 }
 
 // exit action state 'op ready'
-uint32_t extern_exitActionOperation(){
+uint32_t extern_exitActionOperation() {
   uint32_t status = COMMON_STATUS_OK;
 
-  //... insert code here
+  mpsTask &= ~TSK_TX_MPS_FLAGS;  // disable transmission of the MPS flags
+  mpsTask &= ~TSK_TX_MPS_EVENTS; // disable transmission of the MPS events
+  mpsTask &= ~TSK_MONIT_MPS_TTL; // disable lifetime monitoring of the MPS flags
+  mpsTask &= ~TSK_REG_COMPLETE;  // reset the node registration
+  timerStart(pTimerConsole);     // start timer
 
   return status;
-} // exitActionOperation
+}
+
+/*******************************************************************************
+ * \brief Handle the app-specific commands received from host
+ *
+ * Handle app-specific commands in the 'configured' state only.
+ * Otherwise, commands are denied.
+ *
+ * \param actState Actual state
+ * \param reqState Requested state
+ * \param cmd      Command code
+ *
+ ******************************************************************************/
+static void cmdHandler(uint32_t *actState, uint32_t *reqState, uint32_t cmd)
+{
+  if (!cmd)
+    return;
+
+  // execute application commands in the 'configured' state
+  if (cmd > COMMON_CMD_RESERVEDTILHERE) {
+    if (*actState == COMMON_STATE_CONFIGURED)
+      handleAppCmd(cmd);
+  }
+}
 
 /**
- * \brief handle user-defined commands (instructions)
+ * \brief Handle the app-specific commands
  *
- * \param reqState  request state?
- * \param cmd       received user command
+ * \param cmd  Command code
  *
- * \ret none
  **/
-static void cmdHandler(uint32_t *reqState, uint32_t cmd)
+static void handleAppCmd(const uint32_t cmd)
 {
   uint32_t u32val;
   uint8_t u8val;
@@ -817,26 +925,6 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd)
         driveOutPort(&outPort, u8val);
         DBPRINT2("fbas%d: IO%lu=%x\n", nodeType, u32val+1, u8val);
         break;
-      case FBAS_CMD_EN_MPS_FWD:
-        mpsTask |= TSK_TX_MPS_FLAGS;  // enable transmission of the MPS flags
-        mpsTask |= TSK_TX_MPS_EVENTS; // enable transmission of the MPS events
-        mpsTask |= TSK_MONIT_MPS_TTL; // enable lifetime monitoring of the MPS flags
-        // clear ECA queue by polling it => done in extern_entryActionOperation()
-        timerStart(pTimerMpsTtl);     // start timers
-        timerStart(pTimerRegistr);
-        //DBPRINT2("fbas%d: enabled MPS %lx\n", nodeType, mpsTask);
-        measurePutTimestamp(MSR_ML_PRD, getSysTime());
-        break;
-      case FBAS_CMD_DIS_MPS_FWD:
-        mpsTask &= ~TSK_TX_MPS_FLAGS;  // disable transmission of the MPS flags
-        mpsTask &= ~TSK_TX_MPS_EVENTS; // disable transmission of the MPS events
-        mpsTask &= ~TSK_MONIT_MPS_TTL; // disable lifetime monitoring of the MPS flags
-        mpsTask &= ~TSK_REG_COMPLETE;  // reset the node registration
-        timerStart(pTimerConsole);     // start timer
-        //DBPRINT2("fbas%d: disabled MPS %lx\n", nodeType, mpsTask);
-        measurePutTimestamp(MSR_ML_PRD, 0);
-        measureClearSummary(MSR_ML_PRD, ENABLE_VERBOSITY);
-        break;
       case FBAS_CMD_PRINT_TX_DLY:
         measurePrintSummary(MSR_TX_DLY);
         measureExportSummary(MSR_TX_DLY, pSharedApp, FBAS_SHARED_GET_AVG);
@@ -852,6 +940,10 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd)
       case FBAS_CMD_PRINT_MSG_DLY:
         measurePrintSummary(MSR_MSG_DLY);
         measureExportSummary(MSR_MSG_DLY, pSharedApp, FBAS_SHARED_GET_AVG);
+        break;
+      case FBAS_CMD_PRINT_MSG_RATE:
+        measurePrintSummary(MSR_MSG_RATE);
+        measureExportSummary(MSR_MSG_RATE, pSharedApp, FBAS_SHARED_GET_AVG);
         break;
       case FBAS_CMD_PRINT_TTL:
         measurePrintSummary(MSR_TTL);
@@ -892,9 +984,9 @@ static void cmdHandler(uint32_t *reqState, uint32_t cmd)
       default:
         DBPRINT2("fbas%d: received unknown command '0x%08lx'\n", nodeType, cmd);
         break;
-    } // switch
-  } // if command
-} // cmdHandler
+    }
+  }
+}
 
 /**
  * \brief Timer interrupt handler
@@ -978,9 +1070,19 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
 
         // periodic messaging of the stored PC flag (unicast transmission)
         if (setEndpDstAddr(DST_ADDR_RXNODE) == COMMON_STATUS_OK) {
-          uint32_t count = msgSendPcFlag(pMsgCtrl, FBAS_FLG_EID);
+          uint32_t count = msgSendPcFlag(pMsgCtrl, (FBAS_FLG_EID + myIdx));
           // export the counter of sent timing messages
           *(pSharedApp + (FBAS_SHARED_TX_MSG_CNT >> 2)) = measureCountEvt(TX_EVT_CNT, count);
+
+          // measure the TX messaging rate
+          if (count) {  // if C2 message is sent
+            last = measureGetTimestamp(MSR_MSG_RATE);
+            if (last && pMsgCtrl->last) {  // if both timestamps (last and now) are known
+              measureSummarize(MSR_MSG_RATE, last, pMsgCtrl->last, DISABLE_VERBOSITY);
+              measureExportSummary(MSR_MSG_RATE, pSharedApp, FBAS_SHARED_MSG_RATE_AVG);
+            }
+            measurePutTimestamp(MSR_MSG_RATE, pMsgCtrl->last);
+          }
         }
       }
       else if (timerIsExpired(pTimerConsole)) {
@@ -990,6 +1092,7 @@ uint32_t doActionOperation(uint32_t* pMpsTask,          // MPS-relevant tasks
       break;
 
     case FBAS_NODE_RX:
+
       if (*pMpsTask & TSK_EVAL_MPS_TTL) {
         // evaluate lifetime of the MPS protocols and handle expired MPS protocols
         *pMpsTask &= ~TSK_EVAL_MPS_TTL;
@@ -1053,7 +1156,7 @@ int main(void) {
   while (1) {
     check_stack_fwid(buildID);                                         // check for stack corruption
     fwlib_cmdHandler(&reqState, &cmd);                                 // check for common commands and possibly request state changes
-    cmdHandler(&reqState, cmd);                                        // check for project relevant commands
+    cmdHandler(&actState, &reqState, cmd);                             // handle the app-specific commands
     status = COMMON_STATUS_OK;                                         // reset status for each iteration
     status = fwlib_changeState(&actState, &reqState, status);          // handle requested state changes
     switch(actState) {                                                 // state specific do actions
