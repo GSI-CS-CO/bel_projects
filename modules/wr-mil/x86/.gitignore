@@ -1,0 +1,6 @@
+wrf50-ctl
+wrf50-serv-mon
+wrmil-client-mon
+wrmil-ctl
+wrmil-serv-mon
+*.so*
