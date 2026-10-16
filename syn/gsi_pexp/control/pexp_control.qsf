@@ -1,19 +1,20 @@
-set_global_assignment -name ACTIVE_SERIAL_CLOCK FREQ_100MHZ
+set_global_assignment -name ACTIVE_SERIAL_CLOCK FREQ_25MHZ
 set_global_assignment -name ADV_NETLIST_OPT_SYNTH_WYSIWYG_REMAP OFF
 set_global_assignment -name AHDL_FILE ../../../modules/modulbus/i2c.tdf
 set_global_assignment -name ALLOW_POWER_UP_DONT_CARE OFF
 set_global_assignment -name AUTO_SHIFT_REGISTER_RECOGNITION OFF
 set_global_assignment -name CRC_ERROR_OPEN_DRAIN ON
 set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
-set_global_assignment -name DEVICE 5agxma3d4f27i3
+set_global_assignment -name DEVICE 5AGXMA3D4F27I3
 set_global_assignment -name ECO_OPTIMIZE_TIMING ON
 set_global_assignment -name EDA_BOARD_DESIGN_BOUNDARY_SCAN_TOOL "<None>"
 set_global_assignment -name EDA_OUTPUT_DATA_FORMAT NONE -section_id eda_board_design_boundary_scan
 set_global_assignment -name EDA_OUTPUT_DATA_FORMAT NONE -section_id eda_simulation
 set_global_assignment -name EDA_SIMULATION_TOOL "<None>"
-set_global_assignment -name ENABLE_BOOT_SEL_PIN ON
-set_global_assignment -name ENABLE_CONFIGURATION_PINS ON
-set_global_assignment -name ENABLE_NCE_PIN ON
+set_global_assignment -name ENABLE_BOOT_SEL_PIN OFF
+set_global_assignment -name ENABLE_CONFIGURATION_PINS OFF
+set_global_assignment -name ENABLE_NCE_PIN OFF
+set_global_assignment -name ENABLE_OCT_DONE OFF
 set_global_assignment -name ENABLE_SIGNALTAP OFF
 set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 2
 set_global_assignment -name FAMILY "Arria V"
@@ -624,9 +625,13 @@ set_global_assignment -name VHDL_FILE ../../../modules/psram/psram.vhd -library 
 set_global_assignment -name VHDL_FILE ../../../modules/pwm/src/pwm_channel.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/pwm/src/pwm_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/pwm/src/pwm.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/remote_update/altasmi.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/remote_update/asmi10/asmi10/altera_asmi_parallel_231/synth/asmi10_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/remote_update/asmi10/asmi10/synth/asmi10.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/remote_update/asmi5/asmi5/synthesis/asmi5.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/remote_update/asmi_arriaII/asmi_arriaII/synthesis/asmi_arriaII.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/remote_update/remote_update_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/remote_update/wb_asmi_slave.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/remote_update/wb_asmi.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/detect_backplane.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/scu_bus_mux.vhd -library work
