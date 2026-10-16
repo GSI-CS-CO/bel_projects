@@ -189,7 +189,7 @@ begin
   a5: if g_family(1 to 7) = "Arria V" generate
     asmi_5: asmi5
       port map (
-        clkin         => not clk_flash_i,
+        clkin         => clk_flash_i,
         fast_read     => s_read,
         rden          => s_rden,
         addr          => s_addr,
@@ -212,7 +212,7 @@ begin
         illegal_erase => illegal_erase,
         read_address  => s_read10_addr,
         rdid_out      => s_rdid_out,
-        read_dummyclk => s_read_dclk
+        read_dummyclk => '0'   -- set to low, according to User Guide 18.0
       );
   end generate;
 
