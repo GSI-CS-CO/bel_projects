@@ -84,6 +84,7 @@ pipeline {
    options {
        // Keep last 7 builds and last 2 artifacts
        buildDiscarder(logRotator(numToKeepStr: '7', artifactNumToKeepStr: '7'))
+       disableConcurrentBuilds(abortPrevious: true)
    }
    triggers {
        // Poll the repository every 15 minutes (no webhook needed)
