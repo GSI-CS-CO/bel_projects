@@ -609,6 +609,9 @@ uint32_t b2b_context_ext_upload(uint64_t ebDevice, uint32_t sid, uint32_t gid, u
   if ((eb_status = eb_cycle_close(eb_cycle)) != EB_OK) return COMMON_STATUS_EB;
 
   b2b_log(buff);
+
+  sprintf(buff, "ext_upload: (continuted)  sidext, gidext, mode %x, %x, %x\n", b2b_set_sidExt, b2b_set_gidExt, b2b_set_mode);
+  b2b_log(buff);
   
   return COMMON_STATUS_OK;
 } // b2b_context_ext_upload

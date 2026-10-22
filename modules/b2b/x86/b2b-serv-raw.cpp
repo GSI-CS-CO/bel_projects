@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-jan-2026
+ *  version : 22-dec-2026
  *
  * publishes raw data of the b2b system
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000813
+#define B2B_SERV_RAW_VERSION 0x000815
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -356,10 +356,11 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       getval.flagEvtErr       |= flagErr << tag;
 
       switch(setval.ext_gid) {
-        case SIS18_RING   : getval.ext_dKickProbLen = dicKickLenSIS18Ext[setval.ext_sid]; getval.ext_dKickProbLevel = dicKickLevelSIS18Ext[setval.ext_sid]; break;
-        case ESR_RING     : getval.ext_dKickProbLen = dicKickLenESRExt[setval.ext_sid];   getval.ext_dKickProbLevel = dicKickLevelESRExt[setval.ext_sid];   break;
-        case CRYRING_RING : getval.ext_dKickProbLen = dicKickLenYRExt[setval.ext_sid];    getval.ext_dKickProbLevel = dicKickLevelYRExt[setval.ext_sid];    break;
-        default           : getval.ext_dKickProbLen = -1;                                 getval.ext_dKickProbLevel = -1;                                   break;
+        case SIS18_RING   : getval.ext_dKickProbLen = dicKickLenSIS18Ext[setval.ext_sid];  getval.ext_dKickProbLevel = dicKickLevelSIS18Ext[setval.ext_sid];  break;
+        case ESR_RING     : getval.ext_dKickProbLen = dicKickLenESRExt[setval.ext_sid];    getval.ext_dKickProbLevel = dicKickLevelESRExt[setval.ext_sid];    break;
+        case CRYRING_RING : getval.ext_dKickProbLen = dicKickLenYRExt[setval.ext_sid];     getval.ext_dKickProbLevel = dicKickLevelYRExt[setval.ext_sid];     break;
+        case SIS100_RING  : getval.ext_dKickProbLen = dicKickLenSIS100Ext[setval.ext_sid]; getval.ext_dKickProbLevel = dicKickLevelSIS100Ext[setval.ext_sid]; break;
+        default           : getval.ext_dKickProbLen = -1;                                  getval.ext_dKickProbLevel = -1;                                    break;
       } // switch setval ext_gid
       
       break;
@@ -374,9 +375,10 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       getval.flagEvtErr       |= flagErr << tag;
 
       switch(setval.inj_gid) {
-        case ESR_RING     : getval.inj_dKickProbLen = dicKickLenESRInj[setval.inj_sid];   getval.inj_dKickProbLevel = dicKickLevelESRInj[setval.inj_sid];   break;
-        case CRYRING_RING : getval.inj_dKickProbLen = dicKickLenYRInj[setval.inj_sid];    getval.inj_dKickProbLevel = dicKickLevelYRInj[setval.inj_sid];    break;
-        default           : getval.inj_dKickProbLen = -1;                                 getval.inj_dKickProbLevel = -1;                                   break;
+        case ESR_RING     : getval.inj_dKickProbLen = dicKickLenESRInj[setval.inj_sid];    getval.inj_dKickProbLevel = dicKickLevelESRInj[setval.inj_sid];    break;
+        case CRYRING_RING : getval.inj_dKickProbLen = dicKickLenYRInj[setval.inj_sid];     getval.inj_dKickProbLevel = dicKickLevelYRInj[setval.inj_sid];     break;
+        case SIS100_RING  : getval.inj_dKickProbLen = dicKickLenSIS100Inj[setval.inj_sid]; getval.inj_dKickProbLevel = dicKickLevelSIS100Inj[setval.inj_sid]; break;
+        default           : getval.inj_dKickProbLen = -1;                                  getval.inj_dKickProbLevel = -1;                                    break;
       } // switch setval ext_gid
       
       break;
@@ -553,7 +555,7 @@ void dicSubscribeServices(char *prefix)
 static void help(void) {
   std::cerr << std::endl << "Usage: " << program << " <device name> [OPTIONS] <server name prefix>" << std::endl;
   std::cerr << std::endl;
-  std::cerr << "  -e<index>            specify extraction ring (0: SIS18[default], 1: ESR, 2: CRYRING)" << std::endl;
+  std::cerr << "  -e<index>            specify extraction ring (0: SIS18[default], 1: ESR, 2: CRYRING, 3: SIS100)" << std::endl;
   std::cerr << "  -h                   display this help and exit" << std::endl;
   std::cerr << "  -f                   use the first attached device (and ignore <device name>)" << std::endl;
   std::cerr << std::endl;
@@ -606,6 +608,7 @@ int main(int argc, char** argv)
           case 0 : reqExtRing = SIS18_RING;   break;
           case 1 : reqExtRing = ESR_RING;     break;
           case 2 : reqExtRing = CRYRING_RING; break;
+          case 3 : reqExtRing = SIS100_RING;  break;
           default:
             std::cerr << "option -e: parameter out of range" << std::endl;
             return 1;
@@ -657,6 +660,10 @@ int main(int argc, char** argv)
     case CRYRING_RING :
       nCondition = 7;
       sprintf(ringName, "yr");
+      break;
+    case SIS100_RING :
+      nCondition = 7;
+      sprintf(ringName, "sis100");
       break;
     default :
         std::cerr << "Ring '"<< reqExtRing << "' does not exist" << std::endl;
@@ -841,7 +848,6 @@ int main(int argc, char** argv)
         condition[17] = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
         //tag[17]        = tmpTag;
 
-
         break;
       case ESR_RING : 
 
@@ -995,6 +1001,52 @@ int main(int argc, char** argv)
         // CRYRING extraction kicker diagnostic
         tmpTag        = tagKde;
         snoopID       = ((uint64_t)FID << 60) | ((uint64_t)CRYRING_RING << 48) | ((uint64_t)B2B_ECADO_B2B_DIAGKICKEXT << 36);
+        condition[6]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[6]        = tmpTag;
+
+        break;
+
+      case SIS100_RING : 
+
+        // SIS100, CMD_B2B_START, signals start of data collection
+        tmpTag        = tagStart;
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS100_RING << 48) | ((uint64_t)B2B_ECADO_B2B_START << 36);
+        condition[0]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[0]        = tmpTag;
+        
+        // SIS100, CMD_B2B_START, +100ms (!), signals stop of data collection 
+        tmpTag        = tagStop;
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS100_RING << 48) | ((uint64_t)B2B_ECADO_B2B_START << 36);
+        condition[1]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 100000000, tmpTag));
+        //tag[1]        = tmpTag;
+        
+        // SIS100 to extraction, PMEXT, 
+        tmpTag        = tagPme;        
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS100_B2B_EXTRACT << 48) | ((uint64_t)B2B_ECADO_B2B_PMEXT << 36);
+        condition[2]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[2]        = tmpTag;
+
+        // SIS100 to extraction, PREXT
+        tmpTag        = tagPre;
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS100_B2B_EXTRACT << 48) | ((uint64_t)B2B_ECADO_B2B_PREXT << 36);
+        condition[3]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[3]        = tmpTag;
+
+        // SIS100 to extraction, DIAGEXT
+        tmpTag        = tagPde;
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS100_B2B_EXTRACT << 48) | ((uint64_t)B2B_ECADO_B2B_DIAGEXT << 36);
+        condition[4]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[4]        = tmpTag;
+       
+        // SIS100 extraction kicker trigger
+        tmpTag        = tagKte;
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS100_RING << 48) | ((uint64_t)B2B_ECADO_B2B_TRIGGEREXT << 36);
+        condition[5]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
+        //tag[5]        = tmpTag;
+        
+        // SIS100 extraction kicker diagnostic
+        tmpTag        = tagKde;
+        snoopID       = ((uint64_t)FID << 60) | ((uint64_t)SIS100_RING << 48) | ((uint64_t)B2B_ECADO_B2B_DIAGKICKEXT << 36);
         condition[6]  = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(false, snoopID, 0xfffffff000000000, 0, tmpTag));
         //tag[6]        = tmpTag;
 
