@@ -157,15 +157,17 @@ int main(int argc, char** argv)
         
   
   try {
-    std::string dim_server_name   = "b2b_" + envName + "_ring_pnames";
-    std::string dim_sis18_service = "b2b_" + envName + "_sis18";
-    std::string dim_esr_service   = "b2b_" + envName + "_esr";
-    std::string dim_yr_service    = "b2b_" + envName + "_yr";
+    std::string dim_server_name    = "b2b_" + envName + "_ring_pnames";
+    std::string dim_sis18_service  = "b2b_" + envName + "_sis18";
+    std::string dim_esr_service    = "b2b_" + envName + "_esr";
+    std::string dim_yr_service     = "b2b_" + envName + "_yr";
+    std::string dim_sis100_service = "b2b_" + envName + "_sis100";
 
     std::vector<PatternNameService> b2b_ring_pnames_services;
-    b2b_ring_pnames_services.push_back(PatternNameService(dim_sis18_service, "T=300", "S="));
-    b2b_ring_pnames_services.push_back(PatternNameService(dim_esr_service  , "T=340", "S="));
-    b2b_ring_pnames_services.push_back(PatternNameService(dim_yr_service   , "T=210", "S="));
+    b2b_ring_pnames_services.push_back(PatternNameService(dim_sis18_service , "T=300", "S="));
+    b2b_ring_pnames_services.push_back(PatternNameService(dim_esr_service   , "T=340", "S="));
+    b2b_ring_pnames_services.push_back(PatternNameService(dim_yr_service    , "T=210", "S="));
+    b2b_ring_pnames_services.push_back(PatternNameService(dim_sis100_service, "T=310", "S="));
 
     if (!dis_start_serving(dim_server_name.c_str())) {
       throw std::runtime_error("cannot start DIM server");
