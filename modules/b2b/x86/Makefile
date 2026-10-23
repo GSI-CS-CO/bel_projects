@@ -68,7 +68,7 @@ b2b-sim: b2b-sim.c
 	$(CC) $(CFLAGS) $(CCFLAGS) -o b2b-sim b2b-sim.c $(LIBS)	
 
 b2b-pname-info: b2b-pname-info.cpp
-	$(CXX) $(CFLAGS) $(CCFLAGS) -o b2b-pname-info b2b-pname-info.cpp $(XLIBS) -ldim -lpthread
+	$(CXX) $(CFLAGS) $(CCFLAGS) -o b2b-pname-info b2b-pname-info.cpp $(LIBS) -ldim -lpthread
 
 b2b-jitter-check: b2b-jitter-check.cpp
 	$(CXX) $(CFLAGS) $(CXFLAGS) ../../common-libs/x86/common-lib.c -o b2b-jitter-check b2b-jitter-check.cpp $(XLIBS) -ldim -lpthread
