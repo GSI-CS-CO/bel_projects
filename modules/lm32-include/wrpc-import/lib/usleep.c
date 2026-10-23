@@ -77,3 +77,20 @@ int usleep(unsigned usec)
 	__delay(usec * usleep_lpj / usec_per_jiffy);
 	return 0;
 }
+
+/*
+ * Cheap busy-wait without calibration, for CPUs that cannot reach the WR
+ * syscon timer (usleep_init() would hang there). Timing is approximate
+ * (USRCPUCLK in kHz, rough guess of cycles per loop iteration).
+ */
+#define USLEEP_BUSY_CYCLES_PER_LOOP 8
+
+void usleep_busy(unsigned usec)
+{
+	volatile uint32_t i;
+	uint32_t loops_per_usec = USRCPUCLK / 1000 / USLEEP_BUSY_CYCLES_PER_LOOP;
+
+	while (usec--)
+		for (i = 0; i < loops_per_usec; i++)
+			;
+}

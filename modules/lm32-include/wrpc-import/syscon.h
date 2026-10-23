@@ -36,6 +36,7 @@ static inline void timer_delay_ms(int ms)
 //extern void usleep_init(void);
 //#ifndef unix
 //extern int usleep(unsigned usec);
+extern void usleep_busy(unsigned usec);
 //#endif
 
 
