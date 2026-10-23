@@ -56,6 +56,8 @@ void uart_init_hw()
 
 void uart_write_byte(int b)
 {
+	if (uart == (volatile struct UART_WB *)ERROR_NOT_FOUND)
+		return;
 	if (b == '\n')
 		uart_write_byte('\r');
 	while (uart->SR & UART_SR_TX_BUSY)
@@ -65,6 +67,8 @@ void uart_write_byte(int b)
 
 int uart_poll()
 {
+	if (uart == (volatile struct UART_WB *)ERROR_NOT_FOUND)
+		return 0;
 	return uart->SR & UART_SR_RX_RDY;
 }
 
