@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 16-dec-2024
+ *  version : 23-oct-2026
  *
  * publishes additional diagnostic data of the kicker
  *
@@ -37,7 +37,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_KICKD_VERSION 0x000813
+#define B2B_SERV_KICKD_VERSION 0x000816
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -275,7 +275,7 @@ using namespace std;
 static void help(void) {
   std::cerr << std::endl << "Usage: " << program << " <device name> [OPTIONS] <server name prefix>" << std::endl;
   std::cerr << std::endl;
-  std::cerr << "  -r<index>            specify ring  (0: SIS18[default], 1: ESR, 2: CRYRING)" << std::endl;
+  std::cerr << "  -r<index>            specify ring  (0: SIS18[default], 1: ESR, 2: CRYRING, 3: SIS100)" << std::endl;
   std::cerr << "  -m<index>            specify mode  (0: extraction[default], 1: injection)" << std::endl;
   std::cerr << "  -i<index>            specify input (1..N; [default is IO1])" << std::endl;
   std::cerr << "  -h                   display this help and exit" << std::endl;
@@ -330,6 +330,7 @@ int main(int argc, char** argv)
           case 0 : reqRing = SIS18_RING;   break;
           case 1 : reqRing = ESR_RING;     break;
           case 2 : reqRing = CRYRING_RING; break;
+          case 3 : reqRing = SIS100_RING;  break;
           default:
             std::cerr << "option -e: parameter out of range" << std::endl;
             return 1;
@@ -408,6 +409,10 @@ int main(int argc, char** argv)
     case CRYRING_RING :
       nCondition = 4;
       sprintf(ringName, "yr");
+      break;
+    case SIS100_RING :
+      nCondition = 4;
+      sprintf(ringName, "sis100");
       break;
     default :
         std::cerr << "Ring '"<< reqRing << "' does not exist" << std::endl;

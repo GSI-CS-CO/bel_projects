@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define ECPU_MON_VERSION 0x000813
+#define ECPU_MON_VERSION 0x000816
 
 // standard includes 
 #include <unistd.h> // getopt

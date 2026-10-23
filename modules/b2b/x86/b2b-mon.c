@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 14-feb-2025
+ *  version : 22-oct-2026
  *
  * subscribes to and displays status of many b2b transfers
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_MON_VERSION 0x000813
+#define B2B_MON_VERSION 0x000816
 
 // standard includes 
 #include <unistd.h> // getopt
