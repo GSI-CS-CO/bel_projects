@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-dec-2026
+ *  version : 22-oct-2026
  *
  * publishes raw data of the b2b system
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_SERV_RAW_VERSION 0x000815
+#define B2B_SERV_RAW_VERSION 0x000816
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS

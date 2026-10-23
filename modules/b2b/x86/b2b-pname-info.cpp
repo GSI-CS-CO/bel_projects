@@ -3,12 +3,12 @@
  *
  *  created : 2021
  *  author  : Michael Reese, Dietrich Beck GSI-Darmstadt
- *  version : 21-jan-2026
+ *  version : 22-oct-2026
  *
  * a hackish solution providing pattern name information for relevant Sequence IDs
  *
  *********************************************************************************************/
-#define B2B_PNAME_VERSION 0x000813
+#define B2B_PNAME_VERSION 0x000816
 
 #include <dis.h>
 #include <cstdio>
