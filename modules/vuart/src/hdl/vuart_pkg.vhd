@@ -38,4 +38,16 @@ package vuart_pkg is
       uart_txd_o : out std_logic);       -- drives core console RX (idle high)
   end component;
 
+  -- FIFO-only virtual UART (no serialization), core -> host only. Uses
+  -- c_vuart_sdb (eb-console.c finds it), tell instances apart by SDB name.
+  component vuart_fifo is
+    generic (
+      g_size : natural := 1024); -- FIFO depth in bytes
+    port(
+      clk_i   : in  std_logic;
+      rst_n_i : in  std_logic;
+      slave_i : in  t_wishbone_slave_in;
+      slave_o : out t_wishbone_slave_out);
+  end component;
+
 end package;
