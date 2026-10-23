@@ -585,7 +585,8 @@ architecture rtl of monster is
     devs_wr_info,
     devs_wr_vuart_wrc,
     devs_wr_vuart_aux_wrc,
-    devs_wr_vuart_neorv32
+    devs_wr_vuart_neorv32,
+    devs_wr_vuart_lm32
   );
   constant c_wr_support_slaves   : natural := wr_support_slaves'pos(wr_support_slaves'right)+1;
 
@@ -593,7 +594,8 @@ architecture rtl of monster is
    (wr_support_slaves'pos(devs_wr_info)          => f_sdb_auto_device(c_wr_info_sdb, not g_en_cb_wr_master_port),
     wr_support_slaves'pos(devs_wr_vuart_wrc)     => f_sdb_auto_device(c_vuart_sdb,   not g_en_cb_wr_master_port,                    "VUART-WRC0"),
     wr_support_slaves'pos(devs_wr_vuart_aux_wrc) => f_sdb_auto_device(c_vuart_sdb,   not g_en_cb_wr_master_port and g_dual_port_wr, "VUART-WRC1"),
-    wr_support_slaves'pos(devs_wr_vuart_neorv32) => f_sdb_auto_device(c_vuart_sdb,   g_en_neorv32,                                  "VUART-N32"));
+    wr_support_slaves'pos(devs_wr_vuart_neorv32) => f_sdb_auto_device(c_vuart_sdb,   g_en_neorv32,                                  "VUART-N32"),
+    wr_support_slaves'pos(devs_wr_vuart_lm32)    => f_sdb_auto_device(c_vuart_sdb,   not g_en_cb_wr_master_port and g_lm32_cores > 0, "VUART-LM32"));
   constant c_wr_support_layout      : t_sdb_record_array := f_sdb_auto_layout(c_wr_support_layout_req_slaves);
   constant c_wr_support_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_wr_support_layout_req_slaves);
   constant c_wr_support_bridge_sdb  : t_sdb_bridge       := f_xwb_bridge_layout_sdb(true, c_wr_support_layout, c_wr_support_sdb_address);
@@ -3903,6 +3905,19 @@ end generate;
   vuart_neorv32_n : if not g_en_neorv32 generate
     wr_support_bus_master_i(wr_support_slaves'pos(devs_wr_vuart_neorv32)) <= cc_dummy_slave_out;
     vuart_neorv32_txd <= '1';
+  end generate;
+
+  vuart_lm32_y : if not g_en_cb_wr_master_port and g_lm32_cores > 0 generate
+    vuart_lm32 : vuart_fifo
+      port map(
+        clk_i   => clk_sys,
+        rst_n_i => rstn_sys,
+        slave_i => wr_support_bus_master_o(wr_support_slaves'pos(devs_wr_vuart_lm32)),
+        slave_o => wr_support_bus_master_i(wr_support_slaves'pos(devs_wr_vuart_lm32)));
+  end generate;
+
+  vuart_lm32_n : if not (not g_en_cb_wr_master_port and g_lm32_cores > 0) generate
+    wr_support_bus_master_i(wr_support_slaves'pos(devs_wr_vuart_lm32)) <= cc_dummy_slave_out;
   end generate;
 
   -- END OF Wishbone slaves
