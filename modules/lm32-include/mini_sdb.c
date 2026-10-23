@@ -235,6 +235,32 @@ uint8_t* find_device(uint32_t devid)
 
 
 
+static int sdb_name_starts_with(sdb_location *loc, const char *prefix)
+{
+  const char *name = loc->sdb->device.sdb_component.product.name;
+  uint32_t i;
+
+  for (i = 0; prefix[i]; i++)
+    if (i >= sizeof(loc->sdb->device.sdb_component.product.name) || name[i] != prefix[i]) return 0;
+  return 1;
+}
+
+// The WR UART and all vUARTs share CERN/WR_UART, so pick by SDB name:
+// the LM32 console FIFO (VUART-LM32) first, else the first non-vUART (WR UART).
+static uint32_t* find_uart_adr(void)
+{
+  sdb_location found_sdb[8];
+  uint32_t idx = 0;
+  uint32_t i;
+
+  find_device_multi(&found_sdb[0], &idx, 8, CERN, WR_UART);
+  for (i = 0; i < idx; i++)
+    if (sdb_name_starts_with(&found_sdb[i], "VUART-LM32")) return (uint32_t*)getSdbAdr(&found_sdb[i]);
+  for (i = 0; i < idx; i++)
+    if (!sdb_name_starts_with(&found_sdb[i], "VUART-")) return (uint32_t*)getSdbAdr(&found_sdb[i]);
+  return (uint32_t*)ERROR_NOT_FOUND;
+}
+
 void discoverPeriphery(void)
 {
   sdb_location found_sdb[20];
@@ -244,9 +270,7 @@ void discoverPeriphery(void)
   pCpuMsiBox      = NULL;
   pMyMsi          = NULL;
 
-  //pUart           = find_device_adr(CERN, WR_UART);
-  pUart          = (uint32_t*)0x80040500;
-  //BASE_UART       = (char *)pUart; //make WR happy ...
+  pUart           = find_uart_adr();
 
 
   pCpuId          = find_device_adr(GSI, CPU_INFO_ROM);
