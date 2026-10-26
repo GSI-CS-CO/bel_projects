@@ -403,7 +403,8 @@ begin
               if (s_busy = '1' and (slave_i.adr(7 downto 0) /= BUSY_CHECK)) then
                 slave_o.err <= '1';
 
-              -- enable 4byte address mode
+              -- enable/disable 4byte address mode
+              -- wren needs to be enabled too
               elsif (slave_i.adr(7 downto 0) = SET_4BMODE) then
                 wb_state <= stall1;
                 slave_o.stall <= '1';
