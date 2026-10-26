@@ -77,6 +77,7 @@ volatile uint32_t *pIOCtrl;             // WB address of IO Control
 volatile uint32_t *pMILPiggy;           // WB address of MIL device bus (MIL piggy)
 volatile uint32_t *pOLED;               // WB address of OLED (display)
 volatile uint32_t *pSbMaster;           // WB address of SCU bus master
+volatile uint32_t *pWRInfo;             // WB address of WR info unit
 
 // global variables
 uint32_t *pSharedVersion;               // pointer to a "user defined" u32 register; here: publish version
@@ -226,6 +227,14 @@ uint32_t findSbMaster() //find WB address of SCU bus master
   else                                                      return COMMON_STATUS_OK;
 } // findSbMaster
 
+uint32_t findWRInfoUnit()
+{
+  pWRInfo = find_device_adr(WR_INFO_VENDOR, WR_INFO_PRODUCT);
+
+  if (!pWRInfo) {DBPRINT1("common-fwlib: can't find WR info unit\n"); return COMMON_STATUS_ERROR;}
+  else                                                      return COMMON_STATUS_OK;
+}
+
 uint32_t exitActionError()
 {
   return COMMON_STATUS_OK;
@@ -365,8 +374,18 @@ uint64_t fwlib_wrGetMac()  // get my own MAC
   uint32_t macHi, macLo;
   uint64_t mac;
 
-  macHi = (*(pWREp + (WR_ENDPOINT_MACHI >> 2))) & 0xffff;
-  macLo =  *(pWREp + (WR_ENDPOINT_MACLO >> 2));
+  // get MAC address from EB master (starting from WR v5), otherwise get from Endpoint (WR v4.2)
+  macHi = macLo = 0;
+  if (findWRInfoUnit() == COMMON_STATUS_OK) {             // WR v5
+    if (pEbm) {
+      macHi = (*(pEbm + (EBM_OWN_MAC_HI >> 2))) & 0xffff; // own MAC high 4 bytes
+      macLo =  *(pEbm + (EBM_OWN_MAC_LO >> 2));           // own MAC low 2 bytes
+    }
+  }
+  else if (pWREp) {                                        // WR v4.2
+    macHi = (*(pWREp + (WR_ENDPOINT_MACHI >> 2))) & 0xffff;
+    macLo =  *(pWREp + (WR_ENDPOINT_MACLO >> 2));
+  }
 
   mac = macHi;
   mac = (mac << 32);
@@ -375,6 +394,23 @@ uint64_t fwlib_wrGetMac()  // get my own MAC
   return mac;
 } // fwlib_wrGetMac
 
+uint32_t fwlib_wrGetIP()  // get my own IP
+{
+  uint32_t ip;
+
+  // get IP address from EB master (starting from WR v5), otherwise get from EtherBone config (WR v4.2)
+  ip = 0;
+  if (findWRInfoUnit() == COMMON_STATUS_OK) {             // WR v5
+    if (pEbm) {
+      ip = (*(pEbm + (EBM_OWN_IP >> 2))) & 0xffff;
+    }
+  }
+  else if (pEbCfg) {                                      // WR v4.2 (or legacy)
+    ip  = *(pEbCfg + (EBC_SRC_IP >> 2));
+  }
+
+  return ip;
+}
 
 uint32_t fwlib_ioCtrlSetGate(uint32_t enable, uint32_t io)  // set gate of LVDS input
 {
@@ -407,7 +443,7 @@ uint32_t fwlib_ebmInit(uint32_t msTimeout, uint64_t dstMac, uint32_t dstIp, uint
   // init ebm
   ebm_init();
   ebm_config_if(DESTINATION,  dstMac    , dstIp,                       0xebd0);
-  ebm_config_if(SOURCE, fwlib_wrGetMac(), *(pEbCfg + (EBC_SRC_IP>>2)), 0xebd0);
+  ebm_config_if(SOURCE, fwlib_wrGetMac(), fwlib_wrGetIP(), 0xebd0);
   ebm_config_meta(1500, 0x0, eb_ops);
   ebm_clr();
 
@@ -935,11 +971,11 @@ void fwlib_publishNICData()
   uint64_t mac;
   uint32_t ip;
 
-  mac = fwlib_wrGetMac(pWREp);
+  mac = fwlib_wrGetMac();
   *pSharedMacHi = (uint32_t)(mac >> 32) & 0xffff;
   *pSharedMacLo = (uint32_t)(mac        & 0xffffffff);
 
-  ip  = *(pEbCfg + (EBC_SRC_IP>>2));
+  ip  = fwlib_wrGetIP();
   *pSharedIp    = ip;
 } //fwlib_publishNICData
 

@@ -32,6 +32,10 @@
 #define EBC_SRC_IP 0x18 // reg offset in ebconfig space for source IP
 #define EBC_DEFAULT_IP 0xc0a80064
 
+#define EBM_OWN_IP              0x44          // own IP address
+#define EBM_OWN_MAC_HI          0x48          // own MAC high 4 bytes
+#define EBM_OWN_MAC_LO          0x4c          // own MAC low 2 bytes
+
 extern volatile uint32_t* pEbm;
 extern volatile uint32_t* pEbmLast;
 
