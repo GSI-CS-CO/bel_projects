@@ -24,6 +24,9 @@
 #define WB_CERN         0xce42
 #define WB_GSI          0x0651
 
+/////////////////////////////////////////// misc ///////////////////////////////////////////////
+#define WR_DEFAULT_IP   0xc0a80064    // 192.168.0.100: WR default IP, used until a valid IP is assigned
+
 /////////////////////////////////////////// devices ////////////////////////////////////////////
 
 //-- WR-PPS-Generator --
@@ -139,10 +142,6 @@
 
 // register offsets
 #define WB4_BLOCKRAM_WR_UPTIME      0xa0                // uptime of WR
-#define WB4_BLOCKRAM_IPSTATE_050004 0x1a5b4             // ip state for gw v5.0.4
-#define WB4_BLOCKRAM_IPSTATE_060001 0x1b544             // ip state for gw v6.0.1
-#define WB4_BLOCKRAM_IPSTATE_060102 0x1b544             // ip state for gw v6.1.2
-#define WB4_BLOCKRAM_IPSTATE_060201 0x1b544             // ip state for gw v6.2.1
 
 // masks
 
