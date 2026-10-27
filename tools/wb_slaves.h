@@ -66,6 +66,22 @@
 
 
 
+//-- WR-INFO --
+// device ID
+#define WR_INFO_VENDOR          WB_GSI        // vendor ID
+#define WR_INFO_PRODUCT         0x77722d69    // device ID ("wr-info")
+#define WR_INFO_VMAJOR          0             // major revision
+#define WR_INFO_VMINOR          0             // minor revision
+
+// register offsets
+#define WR_INFO_STATUS          0x00          // status
+
+// masks
+#define WR_INFO_STATUS_LOCK     0x1           // bit 0: time valid (locked)
+#define WR_INFO_STATUS_LINK     0x2           // bit 1: link valid
+
+
+
 //-- Etherbone-Config --
 #ifdef META_TIMING
 #include "hw/etherbone-config.h"
