@@ -445,10 +445,8 @@ eb_status_t wb_wr_get_ip(eb_device_t device, int devIndex, int *ip )
 
 eb_status_t wb_wr_get_ip_state(eb_device_t device, int devIndex, uint32_t buildNumber,  int *ipState)
 {
-  eb_data_t    data;
-  eb_address_t address;
-  eb_address_t offset;
   eb_status_t  status;
+  int          ip;
 
 #ifdef WB_SIMULATE
   *ipState = 1;
@@ -458,28 +456,9 @@ eb_status_t wb_wr_get_ip_state(eb_device_t device, int devIndex, uint32_t buildN
 
   *ipState = -1;
 
-  // unfortunately, the offset depends on the buildnumber
-  switch (buildNumber) {
-    case 0x050004 :
-      offset = WB4_BLOCKRAM_IPSTATE_050004;
-      break;
-    case 0x060001 :
-      offset = WB4_BLOCKRAM_IPSTATE_060001;
-      break;
-    case 0x060102 :
-      offset = WB4_BLOCKRAM_IPSTATE_060102;
-      break;
-    case 0x060201 :
-      offset = WB4_BLOCKRAM_IPSTATE_060201;
-      break;
-    default : return EB_OK;
-  } // switch
-
-  if ((status = wb_check_device(device, WB4_BLOCKRAM_VENDOR, WB4_BLOCKRAM_PRODUCT, WB4_BLOCKRAM_VMAJOR, WB4_BLOCKRAM_VMINOR, devIndex, &wb4_ram)) != EB_OK) return status;
-
-  address = wb4_ram + offset;
-  if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block)) != EB_OK) return status;
-  *ipState = data;
+  // buildNumber is no longer needed; the IP is invalid as long as it is the WR default IP
+  if ((status = wb_wr_get_ip(device, devIndex, &ip)) != EB_OK) return status;
+  *ipState = ((uint32_t)ip == WR_DEFAULT_IP) ? 0 : 1;
 
   return EB_OK;
 } // wb_wr_get_ip_state
