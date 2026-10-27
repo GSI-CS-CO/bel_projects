@@ -1354,11 +1354,6 @@ int main(void) {
   else
     mprintf("SYS_CON found on adr: 0x%x\n", BASE_SYSCON);
 
-  timer_init(1); //needed by usleep_init()
-#if 0
-  usleep_init();
-#endif
-
   if((int)cpu_info_base == ERROR_NOT_FOUND) {
     mprintf("no CPU INFO ROM found!\n");
   } else {
