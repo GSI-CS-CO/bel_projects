@@ -378,8 +378,8 @@ uint64_t fwlib_wrGetMac()  // get my own MAC
   macHi = macLo = 0;
   if (findWRInfoUnit() == COMMON_STATUS_OK) {             // WR v5
     if (pEbm) {
-      macHi = (*(pEbm + (EBM_OWN_MAC_HI >> 2))) & 0xffff; // own MAC high 4 bytes
-      macLo =  *(pEbm + (EBM_OWN_MAC_LO >> 2));           // own MAC low 2 bytes
+      macHi = (*(pEbm + (EBM_OWN_MAC_HI >> 2))) & 0xffff; // own MAC high 2 bytes
+      macLo =  *(pEbm + (EBM_OWN_MAC_LO >> 2));           // own MAC low 4 bytes
     }
   }
   else if (pWREp) {                                        // WR v4.2
