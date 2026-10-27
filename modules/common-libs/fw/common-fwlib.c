@@ -402,7 +402,7 @@ uint32_t fwlib_wrGetIP()  // get my own IP
   ip = 0;
   if (findWRInfoUnit() == COMMON_STATUS_OK) {             // WR v5
     if (pEbm) {
-      ip = (*(pEbm + (EBM_OWN_IP >> 2))) & 0xffff;
+      ip = (*(pEbm + (EBM_OWN_IP >> 2)));
     }
   }
   else if (pEbCfg) {                                      // WR v4.2 (or legacy)
