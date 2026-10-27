@@ -435,14 +435,14 @@ uint32_t fwlib_ebmInit(uint32_t msTimeout, uint64_t dstMac, uint32_t dstIp, uint
   // check IP
   timeoutT = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000;
   while (timeoutT < getSysTime()) {
-    if (*(pEbCfg + (EBC_SRC_IP>>2)) == EBC_DEFAULT_IP) asm("nop");
+    if (fwlib_wrGetIP() == EBC_DEFAULT_IP) asm("nop");
     else break;
   } // while no IP via DHCP
-  if (*(pEbCfg + (EBC_SRC_IP>>2)) == EBC_DEFAULT_IP) return COMMON_STATUS_NOIP;
+  if (fwlib_wrGetIP() == EBC_DEFAULT_IP) return COMMON_STATUS_NOIP;
 
   // init ebm
   ebm_init();
-  ebm_config_if(DESTINATION,  dstMac    , dstIp,                       0xebd0);
+  ebm_config_if(DESTINATION,  dstMac    , dstIp,           0xebd0);
   ebm_config_if(SOURCE, fwlib_wrGetMac(), fwlib_wrGetIP(), 0xebd0);
   ebm_config_meta(1500, 0x0, eb_ops);
   ebm_clr();
