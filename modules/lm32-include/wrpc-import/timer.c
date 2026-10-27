@@ -14,10 +14,12 @@
 
 void timer_init(int enable)
 {
+#error "Function timer_init is deprecated!"
 	writel( SYSC_TCR_ENABLE, (void*) BASE_SYSCON + SYSC_REG_TCR );
 }
 
 uint32_t timer_get_tics()
 {
+#error "Function timer_init is deprecated, please use uwait!"
 	return readl( (void*) BASE_SYSCON + SYSC_REG_TVR );
 }
