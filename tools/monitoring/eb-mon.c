@@ -672,10 +672,7 @@ int main(int argc, char** argv) {
          sprintf(ipStateStr, "invalid");
          break;
        case 1 :
-         sprintf(ipStateStr, "valid (BOOTP)");
-         break;;
-       case 2:
-         sprintf(ipStateStr, "valid (static)");
+         sprintf(ipStateStr, "valid");
          break;
        default :
          sprintf(ipStateStr, "error");
