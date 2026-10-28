@@ -1462,7 +1462,7 @@ begin
       g_base          => 0,
       g_vco_freq      => 1000, -- 1GHz
       g_output_freq   => (0 => 200),
-      g_output_select => (0 => f_pick(c_is_arria5, 4, 3)))
+      g_output_select => (0 => f_pick(c_is_arria5, 1, 3))) -- Arria V: cntsel 1 = outclk_1 (200 MHz BuTiS); 4 would be loaden
     port map(
       clk_i       => clk_free,
       rstn_i      => rstn_free,
