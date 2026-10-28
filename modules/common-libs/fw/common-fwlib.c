@@ -134,35 +134,35 @@ void ebmClearSharedMem()
 
 uint32_t findPPSGen() //find WB address of WR PPS Gen
 {
-  pPPSGen = 0x0;
-
   // get Wishbone address for PPS Gen
   pPPSGen = find_device_adr(CERN, WR_PPS_GEN);
 
-  if (!pPPSGen) {DBPRINT1("common-fwlib: can't find WR PPS Gen\n"); return COMMON_STATUS_ERROR;}
-  else                                                           return COMMON_STATUS_OK;
+  if (pPPSGen == ERROR_INVALID_ADDR) {
+    DBPRINT1("common-fwlib: can't find WR PPS Gen\n"); return COMMON_STATUS_ERROR;
+  }
+  else                                                 return COMMON_STATUS_OK;
 } // findPPSGen
 
 
 uint32_t findWREp() //find WB address of WR Endpoint
 {
-  pWREp = 0x0;
-
   pWREp = find_device_adr(WR_ENDPOINT_VENDOR, WR_ENDPOINT_PRODUCT);
 
-  if (!pWREp) {DBPRINT1("common-fwlib: can't find WR Endpoint\n"); return COMMON_STATUS_ERROR;}
-  else                                                          return COMMON_STATUS_OK;
+  if (pWREp == ERROR_INVALID_ADDR) {
+    DBPRINT1("common-fwlib: can't find WR Endpoint\n"); return COMMON_STATUS_ERROR;
+  }
+  else                                                  return COMMON_STATUS_OK;
 } // findWREp
 
 
 uint32_t findIOCtrl() // find WB address of IO Control
 {
-  pIOCtrl = 0x0;
-
   pIOCtrl = find_device_adr(IO_CTRL_VENDOR, IO_CTRL_PRODUCT);
 
-  if (!pIOCtrl) {DBPRINT1("common-fwlib: can't find IO Control\n"); return COMMON_STATUS_ERROR;}
-  else                                                           return COMMON_STATUS_OK;
+  if (pIOCtrl == ERROR_INVALID_ADDR) {
+    DBPRINT1("common-fwlib: can't find IO Control\n"); return COMMON_STATUS_ERROR;
+  }
+  else                                                 return COMMON_STATUS_OK;
 } // findIOCtrol
 
 
@@ -195,35 +195,35 @@ uint32_t findECAQueue() // find WB address of ECA channel for LM32
 
 uint32_t findMILPiggy() //find WB address of MIL Piggy
 {
-  pMILPiggy = 0x0;
-
   // get Wishbone address for MIL Piggy
   pMILPiggy = find_device_adr(GSI, SCU_MIL);
 
-  if (!pMILPiggy) {DBPRINT1("common-fwlib: can't find MIL piggy\n"); return COMMON_STATUS_ERROR;}
-  else                                                            return COMMON_STATUS_OK;
+  if (pMILPiggy == ERROR_INVALID_ADDR) {
+    DBPRINT1("common-fwlib: can't find MIL piggy\n"); return COMMON_STATUS_ERROR;
+  }
+  else                                                return COMMON_STATUS_OK;
 } // findMILPiggy
 
 
 uint32_t findOLED() //find WB address of OLED
 {
-  pOLED = 0x0;
-
   // get Wishbone address for OLED
   pOLED = find_device_adr(OLED_SDB_VENDOR_ID, OLED_SDB_DEVICE_ID);
 
-  if (!pOLED) {DBPRINT1("common-fwlib: can't find OLED\n"); return COMMON_STATUS_ERROR;}
-  else                                                      return COMMON_STATUS_OK;
+  if (pOLED == ERROR_INVALID_ADDR) {
+    DBPRINT1("common-fwlib: can't find OLED\n"); return COMMON_STATUS_ERROR;
+  }
+  else                                           return COMMON_STATUS_OK;
 } // findOLED
 
 uint32_t findSbMaster() //find WB address of SCU bus master
 {
-  pSbMaster = 0x0;
-
   // get Wishbone address for SCU bus master
   pSbMaster = find_device_adr(GSI, SCU_BUS_MASTER);
 
-  if (!pSbMaster) {DBPRINT1("common-fwlib: can't find SCU bus master\n"); return COMMON_STATUS_ERROR;}
+  if (pSbMaster == ERROR_INVALID_ADDR) {
+    DBPRINT1("common-fwlib: can't find SCU bus master\n");  return COMMON_STATUS_ERROR;
+  }
   else                                                      return COMMON_STATUS_OK;
 } // findSbMaster
 
@@ -231,7 +231,9 @@ uint32_t findWRInfoUnit()
 {
   pWRInfo = find_device_adr(WR_INFO_VENDOR, WR_INFO_PRODUCT);
 
-  if (!pWRInfo) {DBPRINT1("common-fwlib: can't find WR info unit\n"); return COMMON_STATUS_ERROR;}
+  if (pWRInfo == ERROR_INVALID_ADDR) {
+    DBPRINT1("common-fwlib: can't find WR info unit\n");    return COMMON_STATUS_ERROR;
+  }
   else                                                      return COMMON_STATUS_OK;
 }
 
