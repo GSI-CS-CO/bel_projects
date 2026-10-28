@@ -301,6 +301,9 @@ int main(int argc, char** argv) {
         getWRDateOther=1;
         devNameOther = optarg;
         break;
+      case 'd':
+        getWRDate=1;
+        break;
       case 'K':
         getWRDNDate=1;
         break;
@@ -672,10 +675,7 @@ int main(int argc, char** argv) {
          sprintf(ipStateStr, "invalid");
          break;
        case 1 :
-         sprintf(ipStateStr, "valid (BOOTP)");
-         break;;
-       case 2:
-         sprintf(ipStateStr, "valid (static)");
+         sprintf(ipStateStr, "valid");
          break;
        default :
          sprintf(ipStateStr, "error");

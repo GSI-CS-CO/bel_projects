@@ -91,7 +91,7 @@ eb_status_t wb_wr_get_time(eb_device_t  device,                // EB device
 // gets the actual UTC or TAI time (depends on configuration of clock master) for TR with two White Rabbit ports
 // this is a very special routine to be used by Dr K + wing*wo*man only
 eb_status_t wb_wr_get_dualnic_time(eb_device_t  device,        // EB device
-                                   int devIndex,               // 0,1,2... - there may be more than 1 device on the WB bus
+                                   int devIndex,               // NIC index; with WR_INFO: 0 (ECA), 1 (auxiliary WR port); otherwise PPS GEN index
                                    uint64_t *nsecs             // timestamp [ns]
                                    );
 
@@ -116,8 +116,8 @@ eb_status_t wb_wr_get_ip(eb_device_t device,                   // EB device
 // gets ip state of White Rabbit port
 eb_status_t wb_wr_get_ip_state(eb_device_t device,             // EB device
                                int devIndex,                   // 0,1,2... - there may be more than 1 device on the WB bus
-                               uint32_t buildNumber,           // FPGA build number as obtained from routine wb_get_build_type
-                               int *ipState                    // state of IP; -1: unknown, 0: in training, 1: set via bootp, 2: set statically
+                               uint32_t buildNumber,           // unused, kept for compatibility
+                               int *ipState                    // state of IP; -1: unknown, 0: invalid (WR default IP), 1: valid
                                );
 
 // gets sync state of WR port

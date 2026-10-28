@@ -24,6 +24,9 @@
 #define WB_CERN         0xce42
 #define WB_GSI          0x0651
 
+/////////////////////////////////////////// misc ///////////////////////////////////////////////
+#define WR_DEFAULT_IP   0xc0a80064    // 192.168.0.100: WR default IP, used until a valid IP is assigned
+
 /////////////////////////////////////////// devices ////////////////////////////////////////////
 
 //-- WR-PPS-Generator --
@@ -75,10 +78,16 @@
 
 // register offsets
 #define WR_INFO_STATUS          0x00          // status
+#define WR_INFO_AUX_STATUS      0x04          // status of auxiliary WR port (2nd NIC)
+#define WR_INFO_AUX_TIME_LATCH  0x20          // any access latches time of auxiliary WR port
+#define WR_INFO_AUX_TIME_HI     0x24          // latched time of auxiliary WR port [ns], high word
+#define WR_INFO_AUX_TIME_LO     0x28          // latched time of auxiliary WR port [ns], low word
+#define WR_INFO_UPTIME          0x30          // uptime [s] since FPGA reset
 
 // masks
 #define WR_INFO_STATUS_LOCK     0x1           // bit 0: time valid (locked)
 #define WR_INFO_STATUS_LINK     0x2           // bit 1: link valid
+#define WR_INFO_STATUS_PRESENT  0x8           // bit 3, auxiliary WR port only: present (dual port gateware)
 
 
 
@@ -139,10 +148,6 @@
 
 // register offsets
 #define WB4_BLOCKRAM_WR_UPTIME      0xa0                // uptime of WR
-#define WB4_BLOCKRAM_IPSTATE_050004 0x1a5b4             // ip state for gw v5.0.4
-#define WB4_BLOCKRAM_IPSTATE_060001 0x1b544             // ip state for gw v6.0.1
-#define WB4_BLOCKRAM_IPSTATE_060102 0x1b544             // ip state for gw v6.1.2
-#define WB4_BLOCKRAM_IPSTATE_060201 0x1b544             // ip state for gw v6.2.1
 
 // masks
 

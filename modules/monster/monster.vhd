@@ -975,6 +975,8 @@ architecture rtl of monster is
   signal tm_cycles : std_logic_vector(27 downto 0);
 
   signal tm_valid_aux  : std_logic;
+  signal tm_tai_aux    : std_logic_vector(39 downto 0);
+  signal tm_cycles_aux : std_logic_vector(27 downto 0);
 
   signal ref_tai8ns : std_logic_vector(63 downto 0);
 
@@ -2434,8 +2436,8 @@ end generate;
         tm_clk_aux_lock_en_i => (others => '0'),
         tm_clk_aux_locked_o  => open,
         tm_time_valid_o      => tm_valid_aux,
-        tm_tai_o             => open,
-        tm_cycles_o          => open,
+        tm_tai_o             => tm_tai_aux,
+        tm_cycles_o          => tm_cycles_aux,
         pps_p_o              => pps_aux,
         rst_aux_n_o          => open,
         link_ok_o            => s_link_ok_aux);
@@ -3843,6 +3845,9 @@ end generate;
 
   wr_info_y : if not g_en_cb_wr_master_port generate
     xwb_wr_info : wr_info
+      generic map(
+        g_dual_port_wr    => g_dual_port_wr,
+        g_clk_freq        => 62_500_000)
       port map(
         clk_i             => clk_sys,
         rst_n_i           => rstn_sys,
@@ -3850,6 +3855,9 @@ end generate;
         wr_link_valid     => s_link_ok,
         wr_aux_time_valid => tm_valid_aux,
         wr_aux_link_valid => s_link_ok_aux,
+        clk_ref_aux_i     => clk_ref_aux,
+        wr_aux_tai_i      => tm_tai_aux,
+        wr_aux_cycles_i   => tm_cycles_aux,
         slave_i           => wr_support_bus_master_o(wr_support_slaves'pos(devs_wr_info)),
         slave_o           => wr_support_bus_master_i(wr_support_slaves'pos(devs_wr_info))
       );
