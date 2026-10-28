@@ -537,6 +537,14 @@ eb_status_t wb_wr_get_uptime(eb_device_t device, int devIndex, uint32_t *uptime)
 
   *uptime  = 0;
 
+  // WR_INFO present: get uptime from WR_INFO
+  if ((status = wb_check_device(device, WR_INFO_VENDOR, WR_INFO_PRODUCT, WR_INFO_VMAJOR, WR_INFO_VMINOR, 0, &wr_info_addr)) == EB_OK) {
+    if ((status = eb_device_read(device, wr_info_addr + WR_INFO_UPTIME, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block)) != EB_OK) return status;
+    *uptime = data;
+
+    return EB_OK;
+  } // if WR_INFO
+
   if ((status = wb_check_device(device, WB4_BLOCKRAM_VENDOR, WB4_BLOCKRAM_PRODUCT, WB4_BLOCKRAM_VMAJOR, WB4_BLOCKRAM_VMINOR, devIndex, &wb4_ram)) != EB_OK) return status;
 
   address = wb4_ram + WB4_BLOCKRAM_WR_UPTIME;
