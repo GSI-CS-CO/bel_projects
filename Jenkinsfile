@@ -15,7 +15,6 @@ def buildGateware(gateware, branchName) {
                "QUARTUS_ROOTDIR=${quartus}",
                "QSYS_ROOTDIR=${quartus}/sopc_builder/bin",
                "QUARTUS_64BIT=1",
-               "GSI_BUILD_TYPE=Nightly_Build_CI",
                // Extend PATH and LD_LIBRARY_PATH for Quartus and project scripts
                "PATH=${WORKSPACE}/res/bin:${PATH}:${quartus}/sopc_builder/bin:${WORKSPACE}/res/rocky-9",
                "LD_LIBRARY_PATH=${WORKSPACE}/res/rocky-9",
@@ -30,10 +29,16 @@ def buildGateware(gateware, branchName) {
 
                    checkout scmGit(
                        branches: [[name: "*/${branchName}"]],
-                       extensions: [[$class: 'SubmoduleOption', parentCredentials: true]],
+                       extensions: [[$class: 'SubmoduleOption', parentCredentials: true],
+                                    [$class: 'CloneOption', noTags: false, shallow: false]],
                        userRemoteConfigs: [[url: "${GIT_UPSTREAM}"]]
                    )
                }
+
+               // Build type: git tag if the checked out commit is tagged, otherwise nightly build
+               def gitTag    = sh(script: "git describe --tags --exact-match HEAD 2>/dev/null || true", returnStdout: true).trim()
+               def buildType = gitTag ? gitTag : "Nightly_Build_CI"
+               echo "GSI_BUILD_TYPE=${buildType}"
 
                // -----------------------------
                // Stage: Prepare build environment
@@ -48,13 +53,15 @@ def buildGateware(gateware, branchName) {
                // Stage: Build the gateware
                // -----------------------------
                stage("build ${gateware.name}") {
-                   wrap([$class: 'Xvnc', takeScreenshot: false, useXauthority: true]) {
-                       sh "make"
-                       sh "make ${gateware.name} BUILD_ARTIFACT=yes"
-                       // Only run -check if quartus is not "none"
-                       if (gateware.quartus != "none") {
-                           sh "make ${gateware.name}-sort"
-                           sh "make ${gateware.name}-check BUILD_ARTIFACT=yes"
+                   withEnv(["GSI_BUILD_TYPE=${buildType}"]) {
+                       wrap([$class: 'Xvnc', takeScreenshot: false, useXauthority: true]) {
+                           sh "make"
+                           sh "make ${gateware.name} BUILD_ARTIFACT=yes"
+                           // Only run -check if quartus is not "none"
+                           if (gateware.quartus != "none") {
+                               sh "make ${gateware.name}-sort"
+                               sh "make ${gateware.name}-check BUILD_ARTIFACT=yes"
+                           }
                        }
                    }
                }
