@@ -29,7 +29,7 @@ struct UART_WB {
   uint32_t RDR;
 } __attribute__ ((packed));
 
-/* wrpc-import/lib/usleep.c */
+/* busy-wait, implemented in main.c */
 int usleep(unsigned usec);
 
 #endif

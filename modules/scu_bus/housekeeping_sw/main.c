@@ -46,6 +46,19 @@ void w1_init(void)
 }
 
 
+/* replaces the deprecated wrpc-import/lib/usleep.c (also used by w1.c);
+   uwait() is not possible here, the housekeeping SoC has no CPU timer */
+#define USLEEP_CYCLES_PER_LOOP 8
+int usleep(unsigned usec)
+{
+  volatile uint32_t i;
+  uint32_t loops_per_usec = USRCPUCLK / 1000 / USLEEP_CYCLES_PER_LOOP;
+
+  while (usec--)
+    for (i = 0; i < loops_per_usec; i++)
+      ;
+  return 0;
+}
 
 void msDelay(uint32_t msecs) {
   usleep(1000 * msecs);
