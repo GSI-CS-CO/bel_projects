@@ -315,14 +315,14 @@ eb_status_t wb_wr_get_dualnic_time(eb_device_t  device, int devIndex, uint64_t *
     eb_cycle_read(cycle, pps_addr + WR_PPS_GEN_CNTR_UTCHI, EB_BIG_ENDIAN|EB_DATA32, &data4);
     if ((status = eb_cycle_close(cycle)) != EB_OK) return status;
   } while (data1 != data4);
-  
+
   secs     = (uint64_t)data1 & 0xff;
   secs     = secs << 32 | (uint64_t)data2;
   nanosecs = (uint64_t)data3;
   while (nanosecs >= one_s_ns) {
     nanosecs =- one_s_ns;
     secs++;
-  } // while 
+  } // while
   *nsecs  = secs * one_s_ns + nanosecs;
 
   return EB_OK;
@@ -350,11 +350,10 @@ eb_status_t wb_wr_get_mac(eb_device_t device, int devIndex, uint64_t *mac )
 
       address = ebm_addr + EBM_OWN_MAC_LO;
       if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &lodata, 0, eb_block)) != EB_OK) return status;
-      lodata = 0x0000ffff & lodata; // only lowest two bytes are of interest
 
-      *mac = (uint64_t)lodata;
+      *mac = hidata;
       *mac = (*mac << 32);
-      *mac = *mac + hidata;
+      *mac = *mac + lodata;
 
       return status;
     }
@@ -1149,9 +1148,9 @@ eb_status_t wb_wr_sfp_reset(eb_device_t device, int devIndex, int phyIndex)
   } // switch phyIndex
 
   // get address of RESET controller
-  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR_RESET, devIndex, &reset_addr)) != EB_OK) return status;  
+  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR_RESET, devIndex, &reset_addr)) != EB_OK) return status;
   address      = reset_addr + FPGA_RESET_PHY_RESET;
-  
+
   // turn SFP off and on
   if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, regValue, 0, eb_block)) != EB_OK) return status;
   usleep(750000);
@@ -1179,7 +1178,7 @@ eb_status_t wb_wr_phy_reset(eb_device_t device, int devIndex, int phyIndex)
     default: return EB_ADDRESS;
   } // switch phyIndex
 
-  // get address of RESET controller 
+  // get address of RESET controller
   if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR_RESET, devIndex, &reset_addr)) != EB_OK) return status;
   address      = reset_addr + FPGA_RESET_PHY_RESET;
 
@@ -1298,9 +1297,9 @@ eb_status_t wb_comx_power(eb_device_t device, int devIndex, uint32_t value)
 
   address = reset_addr + FPGA_RESET_COMX_PWRBUTTON;
 
-  
+
   switch (value) {
-    case 0 :                 
+    case 0 :
       tSleep = 6000000;      // long press: power off
       break;
     case 1:
@@ -1317,7 +1316,7 @@ eb_status_t wb_comx_power(eb_device_t device, int devIndex, uint32_t value)
   usleep(tSleep);
   data = (eb_data_t)(FPGA_RESET_COMX_PWRBUTTON_REL);
   if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, data, 0, eb_block)) != EB_OK) return status;
-  
+
   return status;
 } // wb_comx_power
 

@@ -22,6 +22,7 @@ static inline void __delay(int count)
 
 static int verify_lpj(int lpj)
 {
+#error "Function verify_lpj is deprecated!"
 	unsigned long j;
 
 	/* wait for the beginning of a tick */
@@ -40,6 +41,7 @@ static int verify_lpj(int lpj)
 
 void usleep_init(void)
 {
+#error "Function usleep_init is deprecated!"
 	int lpj = 1024, test_lpj;
 	int step = 1024;
 
@@ -65,6 +67,7 @@ void usleep_init(void)
 /* lpj is around 20800 on the spec: the above calculation overflows at 200ms */
 int usleep(unsigned usec)
 {
+#error "Function usleep is deprecated!"
 	/* Sleep 10ms each time, so we support 20x faster cards */
 	const int step = 10 * 1000;
 	const int usec_per_jiffy = 1000 * 1000 / TICS_PER_SECOND;
@@ -87,6 +90,7 @@ int usleep(unsigned usec)
 
 void usleep_busy(unsigned usec)
 {
+#warning "Function usleep_busy is deprecated, please use uwait!"
 	volatile uint32_t i;
 	uint32_t loops_per_usec = USRCPUCLK / 1000 / USLEEP_BUSY_CYCLES_PER_LOOP;
 

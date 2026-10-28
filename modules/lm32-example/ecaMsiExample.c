@@ -347,9 +347,6 @@ void init()
     return;
   }
 
-  timer_init(1);          // needed by usleep_init()
-  usleep_init();          // needed by scu_mil.c
-
   isr_table_clr();        // clear interrupt table
   irq_set_mask(0x01);
   irq_disable();          // disable interrupts

@@ -45,9 +45,9 @@ CFLAGS += -ffunction-sections -fdata-sections -Wl,--gc-sections
 
 STUBD	?= $(TOP)/modules/lm32_stub
 STUBS	?= $(STUBD)/stubs.c $(STUBD)/crt0.S
-INCLUDES  += $(WRPC_IMPORT)/uart.c $(WRPC_IMPORT)/timer.c $(WRPC_IMPORT)/vsprintf-full.c $(WRPC_IMPORT)/div64.c $(WRPC_IMPORT)/printf.c \
+INCLUDES  += $(WRPC_IMPORT)/uart.c $(WRPC_IMPORT)/vsprintf-full.c $(WRPC_IMPORT)/div64.c $(WRPC_IMPORT)/printf.c \
 		$(INCPATH)/dbg.c $(INCPATH)/aux.c $(INCPATH)/irq.c $(INCPATH)/mini_sdb.c $(INCPATH)/sdb_add.c $(INCPATH)/assert.c \
-		$(INCPATH)/stack-check.c $(WRPC_IMPORT)/lib/usleep.c $(WRPC_IMPORT)/dev/w1-hw.c $(WRPC_IMPORT)/dev/w1.c $(WRPC_IMPORT)/dev/w1-temp.c
+		$(INCPATH)/stack-check.c $(WRPC_IMPORT)/dev/w1-hw.c $(WRPC_IMPORT)/dev/w1.c $(WRPC_IMPORT)/dev/w1-temp.c
 LDFLAGS		?= -nostdlib -T ram.ld -lgcc -lc
 
 ifndef RAM_SIZE

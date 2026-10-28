@@ -92,8 +92,8 @@
 
 // register offsets
 #define EBM_OWN_IP              0x44          // own IP address
-#define EBM_OWN_MAC_HI          0x48          // own MAC high 4 bytes
-#define EBM_OWN_MAC_LO          0x4c          // own MAC low 2 bytes
+#define EBM_OWN_MAC_LO          0x48          // own MAC low 4 bytes
+#define EBM_OWN_MAC_HI          0x4c          // own MAC high 2 bytes
 
 
 
