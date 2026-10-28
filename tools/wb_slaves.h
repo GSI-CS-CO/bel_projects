@@ -82,6 +82,7 @@
 #define WR_INFO_AUX_TIME_LATCH  0x20          // any access latches time of auxiliary WR port
 #define WR_INFO_AUX_TIME_HI     0x24          // latched time of auxiliary WR port [ns], high word
 #define WR_INFO_AUX_TIME_LO     0x28          // latched time of auxiliary WR port [ns], low word
+#define WR_INFO_UPTIME          0x30          // uptime [s] since FPGA reset
 
 // masks
 #define WR_INFO_STATUS_LOCK     0x1           // bit 0: time valid (locked)
