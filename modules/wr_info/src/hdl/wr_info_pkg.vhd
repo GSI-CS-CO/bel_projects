@@ -29,7 +29,8 @@ package wr_info_pkg is
 
   component wr_info is
     generic(
-      g_dual_port_wr    : boolean := false);
+      g_dual_port_wr    : boolean := false;
+      g_clk_freq        : natural := 62_500_000);
     port(
       clk_i             : in  std_logic;
       rst_n_i           : in  std_logic;

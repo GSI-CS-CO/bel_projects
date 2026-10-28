@@ -3846,7 +3846,8 @@ end generate;
   wr_info_y : if not g_en_cb_wr_master_port generate
     xwb_wr_info : wr_info
       generic map(
-        g_dual_port_wr    => g_dual_port_wr)
+        g_dual_port_wr    => g_dual_port_wr,
+        g_clk_freq        => 62_500_000)
       port map(
         clk_i             => clk_sys,
         rst_n_i           => rstn_sys,

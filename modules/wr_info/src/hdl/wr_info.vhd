@@ -1,5 +1,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 library work;
 use work.wishbone_pkg.all;
@@ -9,7 +10,8 @@ use work.eca_internals_pkg.all;
 
 entity wr_info is
   generic(
-    g_dual_port_wr    : boolean := false);
+    g_dual_port_wr    : boolean := false;
+    g_clk_freq        : natural := 62_500_000); -- frequency of clk_i [Hz], for the uptime counter
   port(
     clk_i             : in  std_logic;
     rst_n_i           : in  std_logic;
@@ -43,6 +45,10 @@ architecture rtl of wr_info is
   signal rc_time_gray1 : t_time;
   signal rc_time       : t_time;
   signal r_aux_time    : t_time := (others => '0');
+
+  -- uptime [s] since reset
+  signal r_prescaler   : natural range 0 to g_clk_freq-1 := 0;
+  signal r_uptime      : unsigned(31 downto 0) := (others => '0');
 
 begin
 
@@ -97,6 +103,21 @@ begin
     rc_time <= (others => '0');
   end generate;
 
+  uptime : process(clk_i, rst_n_i)
+  begin
+    if rst_n_i = '0' then
+      r_prescaler <= 0;
+      r_uptime    <= (others => '0');
+    elsif rising_edge(clk_i) then
+      if r_prescaler = g_clk_freq-1 then
+        r_prescaler <= 0;
+        r_uptime    <= r_uptime + 1;
+      else
+        r_prescaler <= r_prescaler + 1;
+      end if;
+    end if;
+  end process;
+
   slave_o.dat   <= r_dat;
   slave_o.ack   <= r_ack;
   slave_o.err   <= '0';
@@ -131,6 +152,8 @@ begin
             r_dat <= r_aux_time(63 downto 32);
           when "001010" => -- 0x28: auxiliary WR port, latched time low [ns]
             r_dat <= r_aux_time(31 downto 0);
+          when "001100" => -- 0x30: uptime [s] since reset
+            r_dat <= std_logic_vector(r_uptime);
           when others => null;
         end case;
       end if;
