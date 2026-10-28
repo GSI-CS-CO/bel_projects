@@ -304,8 +304,35 @@ eb_status_t wb_wr_get_dualnic_time(eb_device_t  device, int devIndex, uint64_t *
   return EB_OK;
 #endif
 
-  // get time from PPS GEN
   *nsecs = 0;
+
+  // WR_INFO present: 1st NIC from ECA, 2nd NIC from WR_INFO (if present)
+  if ((status = wb_check_device(device, WR_INFO_VENDOR, WR_INFO_PRODUCT, WR_INFO_VMAJOR, WR_INFO_VMINOR, 0, &wr_info_addr)) == EB_OK) {
+    if (devIndex == 0) return wb_wr_get_time(device, 0, nsecs);
+    if (devIndex != 1) {
+      wb_warn(EB_OOM, "WR_INFO supports two NICs only (index 0, 1)");
+      return EB_OOM;
+    } // if devIndex
+
+    if ((status = eb_device_read(device, wr_info_addr + WR_INFO_AUX_STATUS, EB_BIG_ENDIAN|EB_DATA32, &data1, 0, eb_block)) != EB_OK) return status;
+    if (!(data1 & WR_INFO_STATUS_PRESENT)) {
+      wb_warn(EB_FAIL, "no 2nd NIC: WR_INFO reports no auxiliary WR port");
+      return EB_FAIL;
+    } // if !present
+
+    // latch and read in one cycle
+    if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;
+    eb_cycle_write(cycle, wr_info_addr + WR_INFO_AUX_TIME_LATCH, EB_BIG_ENDIAN|EB_DATA32, 0x1);
+    eb_cycle_read(cycle, wr_info_addr + WR_INFO_AUX_TIME_HI, EB_BIG_ENDIAN|EB_DATA32, &data1);
+    eb_cycle_read(cycle, wr_info_addr + WR_INFO_AUX_TIME_LO, EB_BIG_ENDIAN|EB_DATA32, &data2);
+    if ((status = eb_cycle_close(cycle)) != EB_OK) return status;
+
+    *nsecs = ((uint64_t)data1 << 32) | (uint64_t)data2;
+
+    return EB_OK;
+  } // if WR_INFO
+
+  // get time from PPS GEN
   if ((status = wb_check_device(device, WR_PPS_GEN_VENDOR, WR_PPS_GEN_PRODUCT, WR_PPS_GEN_VMAJOR, WR_PPS_GEN_VMINOR, devIndex, &pps_addr)) != EB_OK) return status;
   do {
     if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;
