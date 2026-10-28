@@ -888,7 +888,7 @@ test_run_all: test_install_dim test_build_ftm_shared_map \
 	test_b2b test_wr-mil test_wr-unipz test_dm-unipz \
 	test_uni-blm test_uni-chop \
 	test_fec_analyzer test_freq-measure test_sync-mon \
-	test_lm32_examples test_fbas
+	test_lm32_examples test_fbas test_gateware_fw
 
 test_install_dim:
 	unzip -n res/dim/$(DIM_VERSION).zip -d res/dim/
@@ -943,6 +943,15 @@ test_lm32_examples:
 
 test_fbas:
 	$(MAKE) -C modules/fbas/fw
+
+# embedded gateware firmware only, no synthesis
+test_gateware_fw:
+	$(MAKE) -C $(PATH_SCU2) scu_control.mif
+	$(MAKE) -C $(PATH_SCU3) scu_control.mif
+	$(MAKE) -C syn/gsi_addac housekeeping.mif
+	$(MAKE) -C syn/gsi_addac2 housekeeping.mif
+	$(MAKE) -C syn/scu_diob housekeeping.mif
+	$(MAKE) -C syn/scu_sio3 housekeeping.mif
 
 test_neorv32: test_neorv32_quartus_note test_neorv32_software  test_neorv32_simulation
 
