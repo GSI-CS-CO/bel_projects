@@ -21,7 +21,8 @@
 
 /* Reading the time of the auxiliary WR port: access WR_INFO_AUX_TIME_LATCH_RW, then read
    WR_INFO_AUX_TIME_HI_RO and WR_INFO_AUX_TIME_LO_RO, preferably within one Etherbone cycle.
-   The time is only valid if WR_INFO_STATUS_PRESENT_MASK and WR_INFO_STATUS_TIME_VALID_MASK are set
-   in WR_INFO_AUX_STATUS_RO. */
+   The registers exist only if WR_INFO_STATUS_PRESENT_MASK is set in WR_INFO_AUX_STATUS_RO.
+   The time is synchronized to WR only if WR_INFO_STATUS_TIME_VALID_MASK is set there; it is
+   readable regardless, as the time of the primary WR port (ECA) is. */
 
 #endif /* WR_INFO_REGS */
