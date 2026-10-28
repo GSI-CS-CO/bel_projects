@@ -10,6 +10,8 @@ typedef struct{
   uint32_t dps;                                       // uncertainty [ps]
 } b2bt_t;
 
+#define ERROR_INVALID_ADDR (uint32_t*)(ERROR_NOT_FOUND)
+
 // adjusts ns such, that ps part remains small 
 b2bt_t fwlib_cleanB2bt(b2bt_t t_ps                    // time [ps]
                        );
