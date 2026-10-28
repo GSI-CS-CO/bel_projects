@@ -301,6 +301,9 @@ int main(int argc, char** argv) {
         getWRDateOther=1;
         devNameOther = optarg;
         break;
+      case 'd':
+        getWRDate=1;
+        break;
       case 'K':
         getWRDNDate=1;
         break; 
