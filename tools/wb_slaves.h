@@ -78,10 +78,15 @@
 
 // register offsets
 #define WR_INFO_STATUS          0x00          // status
+#define WR_INFO_AUX_STATUS      0x04          // status of auxiliary WR port (2nd NIC)
+#define WR_INFO_AUX_TIME_LATCH  0x20          // any access latches time of auxiliary WR port
+#define WR_INFO_AUX_TIME_HI     0x24          // latched time of auxiliary WR port [ns], high word
+#define WR_INFO_AUX_TIME_LO     0x28          // latched time of auxiliary WR port [ns], low word
 
 // masks
 #define WR_INFO_STATUS_LOCK     0x1           // bit 0: time valid (locked)
 #define WR_INFO_STATUS_LINK     0x2           // bit 1: link valid
+#define WR_INFO_STATUS_PRESENT  0x8           // bit 3, auxiliary WR port only: present (dual port gateware)
 
 
 
