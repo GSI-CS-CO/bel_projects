@@ -10,6 +10,8 @@ typedef struct{
   uint32_t dps;                                       // uncertainty [ps]
 } b2bt_t;
 
+#define ERROR_INVALID_ADDR (uint32_t*)(ERROR_NOT_FOUND)
+
 // adjusts ns such, that ps part remains small 
 b2bt_t fwlib_cleanB2bt(b2bt_t t_ps                    // time [ps]
                        );
@@ -45,6 +47,9 @@ uint64_t fwlib_tps2tns(b2bt_t t_ps                    // time [ps]
 
 // get my own MAC, returns MAC
 uint64_t fwlib_wrGetMac();
+
+// get my own IP
+uint32_t fwlib_wrGetIP();
 
 //check status of White Rabbit, returns (error) status
 uint32_t fwlib_wrCheckSyncState();
