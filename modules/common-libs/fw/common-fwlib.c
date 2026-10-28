@@ -399,7 +399,7 @@ uint32_t fwlib_wrGetIP()  // get my own IP
   uint32_t ip;
 
   // get IP address from EB master (starting from WR v5), otherwise get from EtherBone config (WR v4.2)
-  ip = 0;
+  ip = EBC_DEFAULT_IP;
   if (findWRInfoUnit() == COMMON_STATUS_OK) {             // WR v5
     if (pEbm) {
       ip = (*(pEbm + (EBM_OWN_IP >> 2)));
