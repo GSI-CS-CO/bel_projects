@@ -76,7 +76,7 @@ while {[gets $gitstatus line] >= 0} {
 }
 close $gitstatus
 
-if {$changes eq ""} {
+if {$changes eq "" || [info exists env(GSI_BUILD_TYPE)]} {
     lappend output "Repository  : clean"
 } else {
     lappend output "Repository  : dirty"
