@@ -216,6 +216,10 @@ architecture rtl of scu4slim is
   signal rstn_ref           : std_logic;
   signal clk_ref            : std_logic;
 
+  signal scub_d_out         : std_logic_vector(15 downto 0);
+  signal scub_d_in          : std_logic_vector(15 downto 0);
+  signal scub_d_tri_out     : std_logic;
+
   constant io_mapping_table : t_io_mapping_table_arg_array(0 to 14) :=
   (
     -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
@@ -323,7 +327,9 @@ begin
       debug_dmtd2_locked_o    => s_debug_led(5),
       pcie_ready_o            => s_debug_led(6),
       scubus_a_a              => A_A,
-      scubus_a_d              => A_D,
+      scubus_a_d_out          => scub_d_out,
+      scubus_a_d_in           => scub_d_in,
+      scubus_a_d_tri_out      => scub_d_tri_out,
       scubus_nsel_data_drv    => nSel_Ext_Data_DRV,
       scubus_a_nds            => A_nDS,
       scubus_a_rnw            => A_RnW,
@@ -443,6 +449,10 @@ begin
   nADR_EN     <= '0';
   A_Spare     <= (others => 'Z');
   --A_OneWire   <= 'Z';
+
+  -- scubus data tri-state
+  A_D       <= scub_d_out when scub_d_tri_out = '1' else (others => 'Z');
+  scub_d_in <= A_D;
 
   -- SFP
   sfp_rate_sel_o <= '1'; --SFP rate full speed
