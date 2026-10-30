@@ -76,7 +76,7 @@ set_global_assignment -name QIP_FILE ../../../modules/pll/arria5/sys_pll5.qip
 set_global_assignment -name QSYS_FILE ../../../modules/jtag/virtual_jtag/virtual_jtag.qsys
 set_global_assignment -name RELEASE_CLEARS_BEFORE_TRI_STATES ON
 set_global_assignment -name SDC_FILE ../../../top/common/arria5.sdc
-set_global_assignment -name SEED 73
+set_global_assignment -name SEED 6
 set_global_assignment -name SLD_NODE_CREATOR_ID 110 -section_id auto_signaltap_0
 set_global_assignment -name SLD_NODE_ENTITY_NAME sld_signaltap -section_id auto_signaltap_0
 set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_ADVANCED_TRIGGER_ENTITY=basic,1," -section_id auto_signaltap_0
