@@ -86,7 +86,7 @@ set_global_assignment -name REPORT_SOURCE_ASSIGNMENTS ON
 set_global_assignment -name ROUTER_LCELL_INSERTION_AND_LOGIC_DUPLICATION AUTO
 set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
 set_global_assignment -name SDC_FILE ../../../top/common/arria5.sdc
-set_global_assignment -name SEED 184
+set_global_assignment -name SEED 73
 set_global_assignment -name SMART_RECOMPILE ON
 set_global_assignment -name STRATIXIII_CONFIGURATION_SCHEME "ACTIVE SERIAL"
 set_global_assignment -name STRATIXIII_UPDATE_MODE REMOTE
