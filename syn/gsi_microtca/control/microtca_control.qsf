@@ -84,7 +84,7 @@ set_global_assignment -name QSYS_FILE ../../../modules/temp_sens/temp_sens.qsys
 set_global_assignment -name RELEASE_CLEARS_BEFORE_TRI_STATES ON
 set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
 set_global_assignment -name SDC_FILE ../../../top/common/arria5.sdc
-set_global_assignment -name SEED 109
+set_global_assignment -name SEED 118
 set_global_assignment -name SMART_RECOMPILE ON
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
 set_global_assignment -name STRATIXII_CONFIGURATION_DEVICE EPCQ256
@@ -998,6 +998,7 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to tclk_en_n_o[3]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to tclk_en_n_o[4]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to uclk
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to ures
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to wakeup
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to wr_dac_din_o
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to wr_dac_sclk_o
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to wr_ndac_cs_o[1]
@@ -1398,5 +1399,3 @@ set_location_assignment PIN_Y26 -to pcie_rx_i[1]
 set_location_assignment PIN_Y4 -to dis_di_o[3]
 set_location_assignment PIN_Y5 -to dis_di_o[1]
 set_location_assignment PIN_Y9 -to wr_ndac_cs_o[1]
-
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to wakeup
