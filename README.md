@@ -117,7 +117,7 @@ make saftlib
 make saftlib-install # optional
 ```
 
-For detailed information check ip_cores/saftlib/CompileAndConfigureSaftlib.md.
+For detailed information check `ip_cores/saftlib/README.md` (section "Compile and install").
 
 ## Build Gateware(s)
 
