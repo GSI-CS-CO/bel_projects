@@ -126,17 +126,25 @@ make scu2               # Arria II
 make scu3               # Arria II
 make vetar2a            # Arria II
 make vetar2a-ee-butis   # Arria II
+make addac              # Arria II
+make addac2             # Arria II
+make diob               # Arria II
+make sio3               # Arria II
 make ftm                # Arria V
+make uniftm             # Arria V
 make pexarria5          # Arria V
+make pexarria5-sdr      # Arria V
 make exploder5          # Arria V
 make pmc                # Arria V
 make microtca           # Arria V
 make pexp               # Arria V
+make pexp-sdr           # Arria V
+make pexp-pps           # Arria V
+make pexp-neorv32       # Arria V
 make scu4slim           # Arria 10
 make pexarria10         # Arria 10
 make ftm10              # Arria 10
 make scu5               # Arria 10
-make ftm5               # Arria 10
 make ftm5dp             # Arria 10
 ```
 
