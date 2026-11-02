@@ -96,7 +96,7 @@ lm32_allprofiles.v: $(BEL_PROJECTS_DIR)/ip_cores/general-cores/modules/wishbone/
 	sed -i '/input \[ (32-1):0\] interrupt;/a \/\* verilator lint_on  SYMRSVDWORD \*\/' $@
 
 # modify the list of VHDL source files ( exclude certain files or replace them with patched files)
-vhdl_sources: hdl_sources wb_irq_slave.vhd ep_rx_buffer.vhd wr_core.vhd eca_tdp.vhd eca_sdp.vhd monster_pkg.vhd io_control_pkg.vhd io_control.vhd wb_mil_scu_pkg.vhd wb_mil_scu.vhd wb_scu_bus.vhd wb_irq_scu_bus.vhd
+vhdl_sources: hdl_sources wb_irq_slave.vhd ep_rx_buffer.vhd wr_core.vhd eca_tdp.vhd eca_sdp.vhd monster_pkg.vhd io_control_pkg.vhd io_control.vhd wb_mil_scu_pkg.vhd wb_mil_scu.vhd wb_scu_bus.vhd wb_irq_scu_bus.vhd pci_control.vhd dm_diag.vhd wb_serdes_clk_gen.vhd
 	grep -r '.vhd$$' $<                         | \
 	grep -v wb_pmc_host_bridge.vhd              | \
 	grep -v VME_CR_CSR_Space.vhd                | \
@@ -121,6 +121,9 @@ vhdl_sources: hdl_sources wb_irq_slave.vhd ep_rx_buffer.vhd wr_core.vhd eca_tdp.
 	sed '/\/wb_arria_reset.vhd/cwb_arria_reset.vhd' | \
 	sed '/\/monster_pkg.vhd/cmonster_pkg.vhd'   | \
 	sed '/\/monster.vhd/cmonster.vhd'           | \
+	sed '/\/pci_control.vhd/cpci_control.vhd'   | \
+	sed '/\/dm_diag.vhd/cdm_diag.vhd'           | \
+	sed '/\/wb_serdes_clk_gen.vhd/cwb_serdes_clk_gen.vhd' | \
 	sed '/\/eca_sdp.vhd/ceca_sdp.vhd'           | \
 	sed '/\/eca_tdp.vhd/ceca_tdp.vhd'           | \
 	sed '/\/ep_rx_buffer.vhd/cep_rx_buffer.vhd' | \
@@ -151,8 +154,7 @@ eca_sdp.vhd: $(BEL_PROJECTS_DIR)/ip_cores/wr-cores/modules/wr_eca/eca_sdp.vhd
 	sed -i "s/severity/--severity/g" $@
 	sed -i "s/bug :/--bug :/g" $@
 
-monster_pkg.vhd: $(BEL_PROJECTS_DIR)/modules/monster/monster_pkg.vhd
-	sed "s/t_io_mapping_table_arg_array(natural range <>)/t_io_mapping_table_arg_array/g" $< > $@
+# monster_pkg.vhd is a local copy (with g_simulation), do not regenerate it from modules/monster
 
 io_control_pkg.vhd: $(BEL_PROJECTS_DIR)/modules/io_control/src/hdl/io_control_pkg.vhd
 	sed "s/t_io_mapping_table_arg_array(natural range <>)/t_io_mapping_table_arg_array/g" $< > $@
