@@ -116,6 +116,7 @@ int main(int argc, char * const* argv) {
   struct sdb_device sdbDevice[SDB_DEVICES];
   int nDevices;  
   int c;
+  program = argv[0];
   opterr = 0;
 
   while ((c = getopt (argc, argv, "h")) != -1)
