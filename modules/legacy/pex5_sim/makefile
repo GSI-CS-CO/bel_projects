@@ -1,6 +1,8 @@
 GHDL_INTEL=`pwd`/intel
 GHDL_INTEL_OBJ=$(GHDL_INTEL)/altera_mf/v93/altera_mf.o
 BEL_PROJECTS_DIR=../../..
+QUARTUS_SIM_LIB ?= $(QUARTUS)/eda/sim_lib
+GHDL_VENDOR_PATH ?= /usr/lib/ghdl/vendors
 
 GHDLFLAGS = --ieee=synopsys --std=93c \
 	-fexplicit -frelaxed-rules --no-vital-checks --warn-binding --mb-comments \
@@ -15,9 +17,13 @@ GHDLFLAGS = --ieee=synopsys --std=93c \
 
 all: testbench
 
-intel-vendor-lib: ${QUARTUS_PATH}/quartus/eda/sim_lib/altera_mf.vhd
-	/usr/lib/ghdl/vendors/compile-altera.sh --skip-largefiles --all --vhdl93 --source ${QUARTUS_PATH}/quartus/eda/sim_lib --output $(GHDL_INTEL)
+intel-vendor-lib: $(QUARTUS_SIM_LIB)/altera_mf.vhd
+	$(GHDL_VENDOR_PATH)/compile-altera.sh --skip-largefiles --all --vhdl93 --source $(QUARTUS_SIM_LIB) --output $(GHDL_INTEL)
 	touch intel-vendor-lib
+
+$(QUARTUS_SIM_LIB)/altera_mf.vhd:
+	@echo "Error: $@ not found. Set QUARTUS to your Quartus installation (.../quartus) or QUARTUS_SIM_LIB directly." >&2
+	@exit 1
 
 run: testbench 
 	ghdl -r testbench --stop-time=1000us --wave=simulation.ghw --ieee-asserts=disable -gg_en_simbridge=false
