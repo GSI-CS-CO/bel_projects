@@ -29,7 +29,7 @@ GSI Timing Gateware and Tools
     - [Required Packages](#required-packages)
     - [Library libmpfr](#library-libmpfr)
     - [Tool hdlmake](#tool-hdlmake)
-      - [Tool hdlmake not Found (Python 2.7)](#tool-hdlmake-not-found-python-27)
+      - [Tool hdlmake not found (for both Python 2.7 & Python 3.x)](#tool-hdlmake-not-found-for-both-python-27--python-3x)
     - [Python not found](#python-not-found)
     - [No module named pkg_resources](#no-module-named-pkg_resources)
     - [Setuptools not found](#setuptools-not-found)
