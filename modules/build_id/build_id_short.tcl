@@ -41,9 +41,9 @@ if { [catch {close $revl}] } {
 set source_info "$branch-$count"
 
 if {$tcl_platform(os) == "Linux"} {
-  set lsb [open "| lsb_release -d" "r"]
+  set lsb [open "| uname -o -r -m" "r"]
   gets $lsb desc
-  set build_os "[lindex [split $desc "\t"] 1], kernel $tcl_platform(osVersion)"
+  set build_os "$desc"
   close $lsb
 } else {
   set build_os "$tcl_platform(os) $tcl_platform(osVersion)"
