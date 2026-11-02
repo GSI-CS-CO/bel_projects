@@ -295,6 +295,7 @@ int main(int argc, char * const* argv) {
   int epcs_addr = 0;
 
 
+  program = argv[0];
   opterr = 0;
 
   while ((c = getopt (argc, argv, "s:w:rv:bthe:")) != -1)
