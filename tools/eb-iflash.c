@@ -542,6 +542,7 @@ int main(int argc, char * const* argv) {
   errno = 0;
  
   /* Process the command-line arguments */
+  program = argv[0];
   opterr = 0;
   while ((c = getopt (argc, argv, "i:w:v:hfuer:s:t:")) != -1)
     switch (c)
