@@ -225,7 +225,7 @@ If this PPA can't be added, you need to compile the library:
 cd res/ubuntu-22-and-later
 tar xf libpng_1.2.54.orig.tar
 cd libpng-1.2.54
-./autogen
+./autogen.sh
 ./configure
 make
 sudo make install
