@@ -74,6 +74,7 @@ def buildGateware(gateware, branchName) {
                        **/artifacts/gw-*.rpd,
                        **/artifacts/gw-*.sof,
                        **/artifacts/gw-*.jic,
+                       **/artifacts/gw-*.txt,
                        **/artifacts/fw-fg-scu2-scu3-*.bin,
                        **/artifacts/fw-bg-pexp-pmc-amc-pex5-exp5-*.bin,
                    """, allowEmptyArchive: true
