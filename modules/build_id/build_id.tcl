@@ -131,3 +131,8 @@ foreach {a b c d} $bytes {
 
 puts $outputFile "END;"
 close $outputFile
+
+# Plain-text copy of the ROM content (archived as build artifact)
+set outputFile [open "build_id.txt" "w"]
+foreach row $output { puts $outputFile $row }
+close $outputFile
