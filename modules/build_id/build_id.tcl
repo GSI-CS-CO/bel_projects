@@ -1,3 +1,6 @@
+# Remove build info of a previous run, so a failed run cannot leave stale data
+file delete -force build_id.txt
+
 if {[info exists env(GSI_BUILD_TYPE)]} {
   set build_type $env(GSI_BUILD_TYPE)
 } else {
@@ -130,4 +133,9 @@ foreach {a b c d} $bytes {
 }
 
 puts $outputFile "END;"
+close $outputFile
+
+# Plain-text copy of the ROM content (archived as build artifact)
+set outputFile [open "build_id.txt" "w"]
+foreach row $output { puts $outputFile $row }
 close $outputFile
