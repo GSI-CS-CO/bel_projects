@@ -31,7 +31,7 @@ GSI Timing Gateware and Tools
     - [Required Packages](#required-packages)
     - [Library libmpfr](#library-libmpfr)
     - [Tool hdlmake](#tool-hdlmake)
-      - [Tool hdlmake not Found (Python 2.7)](#tool-hdlmake-not-found-python-27)
+      - [Tool hdlmake not found (for both Python 2.7 & Python 3.x)](#tool-hdlmake-not-found-for-both-python-27--python-3x)
     - [Python not found](#python-not-found)
     - [No module named pkg_resources](#no-module-named-pkg_resources)
     - [Setuptools not found](#setuptools-not-found)
@@ -117,7 +117,7 @@ make saftlib
 make saftlib-install # optional
 ```
 
-For detailed information check ip_cores/saftlib/CompileAndConfigureSaftlib.md.
+For detailed information check `ip_cores/saftlib/README.md` (section "Compile and install").
 
 ## Build Gateware(s)
 
@@ -128,17 +128,25 @@ make scu2               # Arria II
 make scu3               # Arria II
 make vetar2a            # Arria II
 make vetar2a-ee-butis   # Arria II
+make addac              # Arria II
+make addac2             # Arria II
+make diob               # Arria II
+make sio3               # Arria II
 make ftm                # Arria V
+make uniftm             # Arria V
 make pexarria5          # Arria V
+make pexarria5-sdr      # Arria V
 make exploder5          # Arria V
 make pmc                # Arria V
 make microtca           # Arria V
 make pexp               # Arria V
+make pexp-sdr           # Arria V
+make pexp-pps           # Arria V
+make pexp-neorv32       # Arria V
 make scu4slim           # Arria 10
 make pexarria10         # Arria 10
 make ftm10              # Arria 10
 make scu5               # Arria 10
-make ftm5               # Arria 10
 make ftm5dp             # Arria 10
 ```
 
@@ -217,7 +225,7 @@ If this PPA can't be added, you need to compile the library:
 cd res/ubuntu-22-and-later
 tar xf libpng_1.2.54.orig.tar
 cd libpng-1.2.54
-./autogen
+./autogen.sh
 ./configure
 make
 sudo make install
@@ -421,45 +429,6 @@ Solution:
 ```shell
 sudo apt-get install pkg-config
 export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
-```
-
-Error: Compillation: "saftbus/process.cpp:14:10: fatal error: linux/ioprio.h: No such file or directory"
-
-Solution:
-
-1. In Makefile.am
-
-  - line 405: delete 'saft-roundtrip-latency saft-standalone-roundtrip-latency'
-  - delete lines 486-490
-
-```make
-saft_roundtrip_latency_LDADD = $(EB_LIBS)  $(SIGCPP_LIBS) libsaftbus.la libsaft-proxy.la -ldl #-lltdl
-saft_roundtrip_latency_SOURCES = src/saft-roundtrip-latency.cpp
-
-saft_standalone_roundtrip_latency_LDADD = $(EB_LIBS)  $(SIGCPP_LIBS) libsaftbus.la libsaft-service.la  -ldl #-lltdl
-saft_standalone_roundtrip_latency_SOURCES = src/saft-standalone-roundtrip-latency.cpp
-```
-
-2. In saftbus/process.cpp, replace the entire code by
-
-```cpp
-#include "process.hpp"
-
-#include <iostream>
-#include <sstream>
-#include <cstring>
-
-bool set_realtime_scheduling(std::string argvi, char *prio) {
-  return true;
-}
-
-bool set_cpu_affinity(std::string argvi, char *affinity) {
-  return true;
-}
-
-bool set_ioprio(char *ioprio) {
-  return true;
-}
 ```
 
 ### CC not found
