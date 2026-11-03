@@ -137,6 +137,11 @@ if [ "$(BUILD_ARTIFACT)" = "yes" ] || [ "$(BUILD_ARTIFACT)" = "y" ]; then \
         cp "$(strip $(1)).$$ext" "$(strip $(2))/$(strip $(3))-$(GIT_BRANCH_NAME).$$ext"; \
         mv "$(strip $(2))/$(strip $(3))-$(GIT_BRANCH_NAME).$$ext" artifacts/; \
     done; \
+    if [ -f "$(strip $(2))/build_id.txt" ]; then \
+        cp "$(strip $(2))/build_id.txt" "artifacts/$(strip $(3))-$(GIT_BRANCH_NAME).txt"; \
+    else \
+        echo "Warning: $(strip $(2))/build_id.txt not found - skipping build info artifact."; \
+    fi; \
     echo "Generated artifact files!"; \
 else \
     echo "BUILD_ARTIFACT is not set to yes/y - skipping artifact generation."; \
