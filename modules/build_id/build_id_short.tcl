@@ -1,3 +1,6 @@
+# Remove build info of a previous run, so a failed run cannot leave stale data
+file delete -force build_id.txt
+
 if {[info exists env(GSI_BUILD_TYPE)]} {
   set build_type $env(GSI_BUILD_TYPE)
 } else {
