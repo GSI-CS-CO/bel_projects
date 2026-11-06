@@ -73,7 +73,7 @@ saft-io-ctl $SDGW -n $TLUIO -b 0x1fe1a01000000000
 saft-ecpu-ctl $SDGW -c 0x1fe1a0100000000${TLUIOEDGE} 0xffffffffffffffff 20000 0xa01 -d
 
 # lm32 writes to MIL device via ECA wishbone channel
-echo -e WRMIL: configure $DGW wishbone channel, needed for writing telegrams to the MIL device
+echo -e WRMIL: configure $SDGW wishbone channel, needed for writing telegrams to the MIL device
 saft-wbm-ctl $SDGW -c 0x1ff0000000000000 0xffff000000000000 0 1 -d
 saft-wbm-ctl $SDGW -r 1 $MILADDR 0 0x5c
 

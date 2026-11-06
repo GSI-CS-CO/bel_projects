@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 28-sep-2026
+ *  version : 06-nov-2026
  *
  * monitors WR-MIL gateway (server part)
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define WRMIL_SERV_MON_VERSION 0x000203
+#define WRMIL_SERV_MON_VERSION 0x000204
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -734,7 +734,7 @@ int main(int argc, char** argv)
       if (printFlag) {
         // grrrr.... logger omits white spaces, thus the formatting becomes lousy
         // the following lines do padding with a dedicated character 
-#define LENGID 11                                        // GID name with most characters is SIS18_RING requiring a MIL gateway
+#define LENGID 12                                        // GID name with most characters is ESR_RING_00 requiring a MIL gateway
         char fill[LENGID+1];
         int  len;
         for (int i=0;i<LENGID;i++) fill[i] = '.';
