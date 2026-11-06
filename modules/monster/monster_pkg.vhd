@@ -142,7 +142,8 @@ package monster_pkg is
       g_en_enc_err_counter   : boolean := false;
       g_en_a10vs             : boolean := false;
       g_en_cellular_ram      : boolean := false;
-      g_en_virtual_jtag      : boolean := false
+      g_en_virtual_jtag      : boolean := false;
+      g_en_phy_reg           : boolean := true
     );
     port(
       -- Required: core signals
@@ -495,6 +496,30 @@ package monster_pkg is
       slave_o    : out t_wishbone_slave_out;
       gpio_oen_o : out std_logic_vector(f_sub1(g_gpio_inout) downto 0);
       lvds_oen_o : out std_logic_vector(f_sub1(g_lvds_inout) downto 0));
+  end component;
+
+  component monster_phy_reg is
+    generic(
+      g_enable : boolean := false);
+    port(
+      tx_clk_i            : in  std_logic;
+      rx_clk_i            : in  std_logic;
+      wrc_tx_data_i       : in  std_logic_vector;
+      wrc_tx_k_i          : in  std_logic_vector;
+      wrc_tx_disparity_o  : out std_logic;
+      wrc_tx_enc_err_o    : out std_logic;
+      wrc_rx_data_o       : out std_logic_vector;
+      wrc_rx_k_o          : out std_logic_vector;
+      wrc_rx_enc_err_o    : out std_logic;
+      wrc_rx_bitslide_o   : out std_logic_vector;
+      phy_tx_data_o       : out std_logic_vector;
+      phy_tx_k_o          : out std_logic_vector;
+      phy_tx_disparity_i  : in  std_logic;
+      phy_tx_enc_err_i    : in  std_logic;
+      phy_rx_data_i       : in  std_logic_vector;
+      phy_rx_k_i          : in  std_logic_vector;
+      phy_rx_enc_err_i    : in  std_logic;
+      phy_rx_bitslide_i   : in  std_logic_vector);
   end component;
 
 end package;
