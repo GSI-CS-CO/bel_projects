@@ -145,7 +145,8 @@ entity monster is
     g_en_enc_err_counter   : boolean;
     g_en_a10vs             : boolean;
     g_en_cellular_ram      : boolean;
-    g_en_virtual_jtag      : boolean);
+    g_en_virtual_jtag      : boolean;
+    g_en_phy_reg           : boolean);
   port(
     -- Required: core signals
     core_clk_20m_vcxo_i    : in    std_logic;
@@ -945,6 +946,15 @@ architecture rtl of monster is
   signal phy_rx_enc_err   : std_logic;
   signal phy_rx_bitslide  : std_logic_vector(f_pcs_bts_width(g_pcs_16bit)-1 downto 0);
 
+  signal wrc_phy_tx_data      : std_logic_vector(f_pcs_data_width(g_pcs_16bit)-1 downto 0);
+  signal wrc_phy_tx_k         : std_logic_vector(f_pcs_k_width(g_pcs_16bit)-1 downto 0);
+  signal wrc_phy_tx_disparity : std_logic;
+  signal wrc_phy_tx_enc_err   : std_logic;
+  signal wrc_phy_rx_data      : std_logic_vector(f_pcs_data_width(g_pcs_16bit)-1 downto 0);
+  signal wrc_phy_rx_k         : std_logic_vector(f_pcs_k_width(g_pcs_16bit)-1 downto 0);
+  signal wrc_phy_rx_enc_err   : std_logic;
+  signal wrc_phy_rx_bitslide  : std_logic_vector(f_pcs_bts_width(g_pcs_16bit)-1 downto 0);
+
   signal phy_aux_ready        : std_logic;
   signal phy_aux_loopen       : std_logic;
   signal phy_aux_rst          : std_logic;
@@ -959,6 +969,15 @@ architecture rtl of monster is
   signal phy_aux_rx_k         : std_logic_vector(f_pcs_k_width(g_pcs_16bit)-1 downto 0);
   signal phy_aux_rx_enc_err   : std_logic;
   signal phy_aux_rx_bitslide  : std_logic_vector(f_pcs_bts_width(g_pcs_16bit)-1 downto 0);
+
+  signal wrc_phy_aux_tx_data      : std_logic_vector(f_pcs_data_width(g_pcs_16bit)-1 downto 0);
+  signal wrc_phy_aux_tx_k         : std_logic_vector(f_pcs_k_width(g_pcs_16bit)-1 downto 0);
+  signal wrc_phy_aux_tx_disparity : std_logic;
+  signal wrc_phy_aux_tx_enc_err   : std_logic;
+  signal wrc_phy_aux_rx_data      : std_logic_vector(f_pcs_data_width(g_pcs_16bit)-1 downto 0);
+  signal wrc_phy_aux_rx_k         : std_logic_vector(f_pcs_k_width(g_pcs_16bit)-1 downto 0);
+  signal wrc_phy_aux_rx_enc_err   : std_logic;
+  signal wrc_phy_aux_rx_bitslide  : std_logic_vector(f_pcs_bts_width(g_pcs_16bit)-1 downto 0);
 
   signal link_act : std_logic;
   signal link_up  : std_logic;
@@ -2077,15 +2096,15 @@ end generate;
       phy_sfp_los_i        => '0',
       phy_sfp_tx_disable_o => open,
       phy_ref_clk_i        => phy_tx_clk,
-      phy_tx_data_o        => phy_tx_data,
-      phy_tx_k_o           => phy_tx_k,
-      phy_tx_disparity_i   => phy_tx_disparity,
-      phy_tx_enc_err_i     => phy_tx_enc_err,
-      phy_rx_data_i        => phy_rx_data,
+      phy_tx_data_o        => wrc_phy_tx_data,
+      phy_tx_k_o           => wrc_phy_tx_k,
+      phy_tx_disparity_i   => wrc_phy_tx_disparity,
+      phy_tx_enc_err_i     => wrc_phy_tx_enc_err,
+      phy_rx_data_i        => wrc_phy_rx_data,
       phy_rx_rbclk_i       => phy_rx_rbclk,
-      phy_rx_k_i           => phy_rx_k,
-      phy_rx_enc_err_i     => phy_rx_enc_err,
-      phy_rx_bitslide_i    => phy_rx_bitslide,
+      phy_rx_k_i           => wrc_phy_rx_k,
+      phy_rx_enc_err_i     => wrc_phy_rx_enc_err,
+      phy_rx_bitslide_i    => wrc_phy_rx_bitslide,
       phy_rst_o            => phy_rst,
       phy_loopen_o         => phy_loopen,
       phy8_o               => phy8_i,
@@ -2176,15 +2195,15 @@ end generate;
       phy_sfp_los_i        => '0',
       phy_sfp_tx_disable_o => open,
       phy_ref_clk_i        => phy_tx_clk,
-      phy_tx_data_o        => phy_tx_data,
-      phy_tx_k_o           => phy_tx_k,
-      phy_tx_disparity_i   => phy_tx_disparity,
-      phy_tx_enc_err_i     => phy_tx_enc_err,
-      phy_rx_data_i        => phy_rx_data,
+      phy_tx_data_o        => wrc_phy_tx_data,
+      phy_tx_k_o           => wrc_phy_tx_k,
+      phy_tx_disparity_i   => wrc_phy_tx_disparity,
+      phy_tx_enc_err_i     => wrc_phy_tx_enc_err,
+      phy_rx_data_i        => wrc_phy_rx_data,
       phy_rx_rbclk_i       => phy_rx_rbclk,
-      phy_rx_k_i           => phy_rx_k,
-      phy_rx_enc_err_i     => phy_rx_enc_err,
-      phy_rx_bitslide_i    => phy_rx_bitslide,
+      phy_rx_k_i           => wrc_phy_rx_k,
+      phy_rx_enc_err_i     => wrc_phy_rx_enc_err,
+      phy_rx_bitslide_i    => wrc_phy_rx_bitslide,
       phy_rst_o            => phy_rst,
       phy_loopen_o         => phy_loopen,
       phy8_o               => phy8_i,
@@ -2275,15 +2294,15 @@ end generate;
       phy_sfp_los_i        => '0',
       phy_sfp_tx_disable_o => open,
       phy_ref_clk_i        => phy_tx_clk,
-      phy_tx_data_o        => phy_tx_data,
-      phy_tx_k_o           => phy_tx_k,
-      phy_tx_disparity_i   => phy_tx_disparity,
-      phy_tx_enc_err_i     => phy_tx_enc_err,
-      phy_rx_data_i        => phy_rx_data,
+      phy_tx_data_o        => wrc_phy_tx_data,
+      phy_tx_k_o           => wrc_phy_tx_k,
+      phy_tx_disparity_i   => wrc_phy_tx_disparity,
+      phy_tx_enc_err_i     => wrc_phy_tx_enc_err,
+      phy_rx_data_i        => wrc_phy_rx_data,
       phy_rx_rbclk_i       => phy_rx_rbclk,
-      phy_rx_k_i           => phy_rx_k,
-      phy_rx_enc_err_i     => phy_rx_enc_err,
-      phy_rx_bitslide_i    => phy_rx_bitslide,
+      phy_rx_k_i           => wrc_phy_rx_k,
+      phy_rx_enc_err_i     => wrc_phy_rx_enc_err,
+      phy_rx_bitslide_i    => wrc_phy_rx_bitslide,
       phy_rst_o            => phy_rst,
       phy_loopen_o         => phy_loopen,
       phy8_o               => phy8_i,
@@ -2388,15 +2407,15 @@ end generate;
         phy_sfp_los_i        => '0',
         phy_sfp_tx_disable_o => open,
         phy_ref_clk_i        => phy_aux_tx_clk,
-        phy_tx_data_o        => phy_aux_tx_data,
-        phy_tx_k_o           => phy_aux_tx_k,
-        phy_tx_disparity_i   => phy_aux_tx_disparity,
-        phy_tx_enc_err_i     => phy_aux_tx_enc_err,
-        phy_rx_data_i        => phy_aux_rx_data,
+        phy_tx_data_o        => wrc_phy_aux_tx_data,
+        phy_tx_k_o           => wrc_phy_aux_tx_k,
+        phy_tx_disparity_i   => wrc_phy_aux_tx_disparity,
+        phy_tx_enc_err_i     => wrc_phy_aux_tx_enc_err,
+        phy_rx_data_i        => wrc_phy_aux_rx_data,
         phy_rx_rbclk_i       => phy_aux_rx_rbclk,
-        phy_rx_k_i           => phy_aux_rx_k,
-        phy_rx_enc_err_i     => phy_aux_rx_enc_err,
-        phy_rx_bitslide_i    => phy_aux_rx_bitslide,
+        phy_rx_k_i           => wrc_phy_aux_rx_k,
+        phy_rx_enc_err_i     => wrc_phy_aux_rx_enc_err,
+        phy_rx_bitslide_i    => wrc_phy_aux_rx_bitslide,
         phy_rst_o            => phy_aux_rst,
         phy_loopen_o         => phy_aux_loopen,
         phy8_o               => phy8_aux_i,
@@ -2460,6 +2479,30 @@ end generate;
       dac_clr_n_o   => open,
       dac_sclk_o    => wr_dac_sclk_o,
       dac_din_o     => wr_dac_din_o);
+
+  -- Optional register stage between PHY and WR core (adds latency, see monster_phy_reg)
+  phy_reg : monster_phy_reg
+    generic map (
+      g_enable => g_en_phy_reg)
+    port map (
+      tx_clk_i           => phy_tx_clk,
+      rx_clk_i           => phy_rx_rbclk,
+      wrc_tx_data_i      => wrc_phy_tx_data,
+      wrc_tx_k_i         => wrc_phy_tx_k,
+      wrc_tx_disparity_o => wrc_phy_tx_disparity,
+      wrc_tx_enc_err_o   => wrc_phy_tx_enc_err,
+      wrc_rx_data_o      => wrc_phy_rx_data,
+      wrc_rx_k_o         => wrc_phy_rx_k,
+      wrc_rx_enc_err_o   => wrc_phy_rx_enc_err,
+      wrc_rx_bitslide_o  => wrc_phy_rx_bitslide,
+      phy_tx_data_o      => phy_tx_data,
+      phy_tx_k_o         => phy_tx_k,
+      phy_tx_disparity_i => phy_tx_disparity,
+      phy_tx_enc_err_i   => phy_tx_enc_err,
+      phy_rx_data_i      => phy_rx_data,
+      phy_rx_k_i         => phy_rx_k,
+      phy_rx_enc_err_i   => phy_rx_enc_err,
+      phy_rx_bitslide_i  => phy_rx_bitslide);
 
   phy_a2 : if c_is_arria2 generate
     phy : wr_arria2_phy
@@ -2568,6 +2611,29 @@ end generate;
   end generate phy_a10;
 
   dual_port_wr : if g_dual_port_wr generate
+    phy_aux_reg : monster_phy_reg
+      generic map (
+        g_enable => g_en_phy_reg)
+      port map (
+        tx_clk_i           => phy_aux_tx_clk,
+        rx_clk_i           => phy_aux_rx_rbclk,
+        wrc_tx_data_i      => wrc_phy_aux_tx_data,
+        wrc_tx_k_i         => wrc_phy_aux_tx_k,
+        wrc_tx_disparity_o => wrc_phy_aux_tx_disparity,
+        wrc_tx_enc_err_o   => wrc_phy_aux_tx_enc_err,
+        wrc_rx_data_o      => wrc_phy_aux_rx_data,
+        wrc_rx_k_o         => wrc_phy_aux_rx_k,
+        wrc_rx_enc_err_o   => wrc_phy_aux_rx_enc_err,
+        wrc_rx_bitslide_o  => wrc_phy_aux_rx_bitslide,
+        phy_tx_data_o      => phy_aux_tx_data,
+        phy_tx_k_o         => phy_aux_tx_k,
+        phy_tx_disparity_i => phy_aux_tx_disparity,
+        phy_tx_enc_err_i   => phy_aux_tx_enc_err,
+        phy_rx_data_i      => phy_aux_rx_data,
+        phy_rx_k_i         => phy_aux_rx_k,
+        phy_rx_enc_err_i   => phy_aux_rx_enc_err,
+        phy_rx_bitslide_i  => phy_aux_rx_bitslide);
+
     phy_aux_a10 : if c_is_arria10 generate
       phy_aux : wr_arria10_transceiver
         generic map (
