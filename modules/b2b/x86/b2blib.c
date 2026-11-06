@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 19-Aug-2024
+ *  version : 15-oct-2026
  *
  * library for b2b
  *
@@ -576,6 +576,9 @@ uint32_t b2b_context_ext_upload(uint64_t ebDevice, uint32_t sid, uint32_t gid, u
     case CRYRING_RING :
       gidExt = CRYRING_B2B_EXTRACT;
       break;
+    case SIS100_RING :
+      gidExt = SIS100_B2B_EXTRACT;
+      break;
     default           :
       gidExt = GID_INVALID;
       break;
@@ -605,6 +608,10 @@ uint32_t b2b_context_ext_upload(uint64_t ebDevice, uint32_t sid, uint32_t gid, u
   eb_cycle_write(eb_cycle, b2b_set_fMBTune,       EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)fMBTune);
   if ((eb_status = eb_cycle_close(eb_cycle)) != EB_OK) return COMMON_STATUS_EB;
 
+  b2b_log(buff);
+
+  snprintf(buff, sizeof(buff), "ext_upload: (continued) sidext, gidext, mode addr %" EB_ADDR_FMT ", %" EB_ADDR_FMT ", %" EB_ADDR_FMT, b2b_set_sidExt, b2b_set_gidExt, b2b_set_mode);
+  
   b2b_log(buff);
   
   return COMMON_STATUS_OK;

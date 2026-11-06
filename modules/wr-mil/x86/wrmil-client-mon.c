@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 25-sep-2026
+ *  version : 05-nov-2026
  *
  * subscribes to and displays status of a wr-mil gateway
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define WRMIL_CLIENT_MON_VERSION 0x000202
+#define WRMIL_CLIENT_MON_VERSION 0x000203
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -55,7 +55,7 @@
 
 const char* program;
 
-#define WRMILNSYS   13                   // number of WRMIL systems; n<20, otherwise screensize does not fit
+#define WRMILNSYS   14                   // number of WRMIL systems; n<20, otherwise screensize does not fit
 
 #define DIMCHARSIZE 32                   // standard size for char services
 #define DIMMAXSIZE  1024                 // max size for service names
@@ -85,6 +85,7 @@ const char * sysShortNames[] = {
   "pzu_f50",
   "sis18_ring",
   "esr_ring",
+  "esr_ring_00",
   "partih_00"
 };
 

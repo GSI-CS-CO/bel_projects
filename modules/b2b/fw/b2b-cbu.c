@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 05-jan-2026
+ *  version : 22-oct-2026
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  NB: units of variables are [ns] unless explicitely mentioned as suffix
@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000813                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000816                                      // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -389,7 +389,6 @@ uint32_t setSubmit()
   setFFinTune[sid]     = *pSharedSetFFinTune;
   setCPhase[sid]       = *pSharedSetCPhase;
 
-
   // additional values required in case of injection into another ring
   if (flagInject) {
     setGid[sid]       += *pSharedSetGidInj;
@@ -416,7 +415,7 @@ uint32_t setSubmit()
   } // else flagInject   
   
   setFlagValid[sid]    = 1;
-  //pp_printf("submit %u\n", sid);
+
   return COMMON_STATUS_OK;
 } // setSubmit
 
@@ -541,7 +540,11 @@ uint32_t getTrigGid(uint32_t extFlag)
     case CRYRING_B2B_EXTRACT :
       if (extFlag) trigGid = CRYRING_RING;
       else         trigGid = GID_INVALID;
-      break;     
+      break;
+    case SIS100_B2B_EXTRACT :
+      if (extFlag) trigGid = SIS100_RING;
+      else         trigGid = GID_INVALID;
+      break;
     default :
       trigGid = GID_INVALID;
   } // switch gid

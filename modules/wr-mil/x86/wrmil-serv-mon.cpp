@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 28-sep-2026
+ *  version : 06-nov-2026
  *
  * monitors WR-MIL gateway (server part)
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define WRMIL_SERV_MON_VERSION 0x000202
+#define WRMIL_SERV_MON_VERSION 0x000204
 
 #define __STDC_FORMAT_MACROS
 #define __STDC_CONSTANT_MACROS
@@ -365,6 +365,7 @@ static void help(void) {
   std::cerr << "                       9: PARTIH_00; 1st local gateway"                             << std::endl;
   std::cerr << "                      10: PZU_TK_00; UNILAC, Transfer Line; 1st local gateway"      << std::endl;
   std::cerr << "                      11: PZU_TK_01; UNILAC, Transfer Line; 2nd local gateway"      << std::endl;
+  std::cerr << "                      12: ESR_RING_00; ESR; 1st local gateway"                      << std::endl;
   std::cerr << std::endl;
   std::cerr << "This tool monitors a White Rabbit -> MIL gateway."                                  << std::endl;
   std::cerr << std::endl;
@@ -442,18 +443,19 @@ int main(int argc, char** argv)
         tmpi        = strtoull(optarg, &tail, 0);
         if (*tail != 0) {std::cerr << "Specify a proper number, not " << optarg << "'%s'!" << std::endl; return 1;}
         switch (tmpi) {
-          case  0: gid = PZU_QR;     sprintf(domainName, "%s", "pzu_qr");     break;
-          case  1: gid = PZU_QL;     sprintf(domainName, "%s", "pzu_ql");     break;
-          case  2: gid = PZU_QN;     sprintf(domainName, "%s", "pzu_qn");     break;
-          case  3: gid = PZU_UN;     sprintf(domainName, "%s", "pzu_un");     break;
-          case  4: gid = PZU_UH;     sprintf(domainName, "%s", "pzu_uh");     break;
-          case  5: gid = PZU_AT;     sprintf(domainName, "%s", "pzu_at");     break;
-          case  6: gid = PZU_TK;     sprintf(domainName, "%s", "pzu_tk");     break;
-          case  7: gid = SIS18_RING; sprintf(domainName, "%s", "sis18_ring"); break;
-          case  8: gid = ESR_RING;   sprintf(domainName, "%s", "esr_ring");   break;
-          case  9: gid = PARTIH;     sprintf(domainName, "%s", "partih_00");  break;
-          case 10: gid = PZU_TK;     sprintf(domainName, "%s", "pzu_tk_00");  break;
-          case 11: gid = PZU_TK;     sprintf(domainName, "%s", "pzu_tk_01");  break;
+          case  0: gid = PZU_QR;     sprintf(domainName, "%s", "pzu_qr");       break;
+          case  1: gid = PZU_QL;     sprintf(domainName, "%s", "pzu_ql");       break;
+          case  2: gid = PZU_QN;     sprintf(domainName, "%s", "pzu_qn");       break;
+          case  3: gid = PZU_UN;     sprintf(domainName, "%s", "pzu_un");       break;
+          case  4: gid = PZU_UH;     sprintf(domainName, "%s", "pzu_uh");       break;
+          case  5: gid = PZU_AT;     sprintf(domainName, "%s", "pzu_at");       break;
+          case  6: gid = PZU_TK;     sprintf(domainName, "%s", "pzu_tk");       break;
+          case  7: gid = SIS18_RING; sprintf(domainName, "%s", "sis18_ring");   break;
+          case  8: gid = ESR_RING;   sprintf(domainName, "%s", "esr_ring");     break;
+          case  9: gid = PARTIH;     sprintf(domainName, "%s", "partih_00");    break;
+          case 10: gid = PZU_TK;     sprintf(domainName, "%s", "pzu_tk_00");    break;
+          case 11: gid = PZU_TK;     sprintf(domainName, "%s", "pzu_tk_01");    break;
+          case 12: gid = ESR_RING;   sprintf(domainName, "%s", "esr_ring_00");  break;
           default: {std::cerr << "Specify a proper number, not " << tmpi << "'%s'!" << std::endl; return 1;} break;
         } // switch tmpi
 #ifdef USEMASP
@@ -470,6 +472,7 @@ int main(int argc, char** argv)
           case  9: maspNomen = std::string("U_WR2MIL_PARTIH_00"); break;
           case 10: maspNomen = std::string("U_WR2MIL_PZUTK_00");  break;
           case 11: maspNomen = std::string("U_WR2MIL_PZUTK_01");  break;
+          case 12: maspNomen = std::string("U_WR2MIL_ESR_00");    break;            
         } // switch tmpi
 #endif
         break;
@@ -731,7 +734,7 @@ int main(int argc, char** argv)
       if (printFlag) {
         // grrrr.... logger omits white spaces, thus the formatting becomes lousy
         // the following lines do padding with a dedicated character 
-#define LENGID 11                                        // GID name with most characters is SIS18_RING requiring a MIL gateway
+#define LENGID 12                                        // GID name with most characters is ESR_RING_00 requiring a MIL gateway
         char fill[LENGID+1];
         int  len;
         for (int i=0;i<LENGID;i++) fill[i] = '.';

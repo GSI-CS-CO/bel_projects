@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 14-feb-2025
+ *  version : 06-nov-2026
  *
  * subscribes to and displays status of many b2b transfers
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  *********************************************************************************************/
-#define B2B_MON_VERSION 0x000813
+#define B2B_MON_VERSION 0x000816
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -59,7 +59,7 @@ const char* program;
 #define  DIMCHARSIZE 32                   // standard size for char services
 #define  DIMMAXSIZE  1024                 // max size for service names
 #define  SCREENWIDTH 1024                 // width of screen
-#define  NALLSID     48                   // number of all SIDs observed; SIS18 (16), ESR (16), CRYRING (16)
+#define  NALLSID     64                   // number of all SIDs observed; SIS18 (16), ESR (16), CRYRING (16), SIS100(16)
 #define  TINACTIVE   3600                 // [s]; if the previous data is more in the past than this value, the transfer data is considered inactive
 #define  TOLD        3600 * 24            // [s]; if the previous data is more in the past than this value, the transfer data is considered out of date
 #define  CLIGHT      299792458.0          // speed-of-light in vacuum
@@ -111,7 +111,8 @@ int      flagPrintInactive;                                 // flag: print inact
 int      flagPrintOther;                                    // flag: print alternative data set
 int      flagPrintSis18;                                    // flag: print SIDs for SIS18
 int      flagPrintEsr;                                      // flag: print SIDs for ESR
-int      flagPrintYr;                                       // flag: print SIDs for CRYRINg
+int      flagPrintYr;                                       // flag: print SIDs for CRYRING
+int      flagPrintSis100;                                   // flag: print SIDs for SIS100
 int      flagPrintNow;                                      // flag: print stuff to screen NOW
 int      flagPrintNs;                                       // flag: in units of nanoseconds
 
@@ -164,6 +165,10 @@ void idx2RingSid(uint32_t idx, ring_t *ring, uint32_t *sid)
       *ring = CRYRING;
       *sid  = idx - 32;
       break;
+    case 48 ... 63 :
+      *ring = SIS100;
+      *sid  = idx - 48;
+      break;
     default :
       *ring = NORING;
       *sid  = 0;
@@ -189,9 +194,9 @@ double convertUnit(double value_ns, uint64_t TH1)
 
 void buildHeader()
 {
-  sprintf(headerK, "|        pattern name | t_last [UTC] | orign | sid|  mode   | kick set    trg offst start fltop | destn | sid| phase set get  | kick  set    trg offst start fltop Doffst  TOF |");
+  sprintf(headerK, "|               chain | t_last [UTC] | orign | sid|  mode   | kick set    trg offst start fltop | destn | sid| phase set get  | kick  set    trg offst start fltop Doffst  TOF |");
   sprintf(emptyK,  "|                     |              |       |    |         |                                   |       |    |                |                                                |");
-  sprintf(headerN, "|        pattern name | t_last [UTC] | orign | sid|  mode   | h1gDDS ext set      get(stdev)diff[Hz]  v/c | h1gDDS inj set      get(stdev)diff[Hz]  v/c | prob ext inj [%%]     |");
+  sprintf(headerN, "|               chain | t_last [UTC] | orign | sid|  mode   | h1gDDS ext set      get(stdev)diff[Hz]  v/c | h1gDDS inj set      get(stdev)diff[Hz]  v/c | prob ext inj [%%]     |");
   sprintf(emptyN,  "|                     |              |       |    |         |                                             |                                             |                      |");
   //        printf("12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n");  
 } // buildHeader
@@ -232,8 +237,8 @@ void buildPrintLine(uint32_t idx)
 
   uint32_t sid;
   ring_t   ringExt;
-  double   cRingExt;
-  double   cRingInj; 
+  double   cRingExt; // circumference extraction ring
+  double   cRingInj; // circumference injection ring
 
   uint64_t actNsecs;
   time_t   actT;
@@ -242,16 +247,17 @@ void buildPrintLine(uint32_t idx)
   actT      = (time_t)(actNsecs / 1000000000);
   dtmp1     = NAN;
 
-  if (idx > NALLSID) return;
+  if (idx >= NALLSID) return;
 
   idx2RingSid(idx, &ringExt, &sid);
 
   // extraction ring name
   switch (ringExt) {
-    case SIS18   : sprintf(origin, "SIS18");  sprintf(tmp1, "ESR"); cRingExt = 216; cRingInj = 108; break;
-    case ESR     : sprintf(origin, "ESR");    sprintf(tmp1, "YR");  cRingExt = 108; cRingInj =  54; break;
-    case CRYRING : sprintf(origin, "YR");     sprintf(tmp1, " ");   cRingExt =  54; cRingInj = NAN; break;
-    default      : sprintf(origin, TXTUNKWN); sprintf(tmp1, " ");   cRingExt = NAN; cRingInj = NAN; break;
+    case SIS18   : sprintf(origin, "SIS18");  sprintf(tmp1, "ESR"); cRingExt =  216; cRingInj = 108; break;
+    case ESR     : sprintf(origin, "ESR");    sprintf(tmp1, "YR");  cRingExt =  108; cRingInj =  54; break;
+    case CRYRING : sprintf(origin, "YR");     sprintf(tmp1, " ");   cRingExt =   54; cRingInj = NAN; break;
+    case SIS100  : sprintf(origin, "SIS100"); sprintf(tmp1, " ");   cRingExt = 1084; cRingInj = NAN; break;
+    default      : sprintf(origin, TXTUNKWN); sprintf(tmp1, " ");   cRingExt =  NAN; cRingInj = NAN; break;
   } // switch ringExt
 
   // pattern name
@@ -507,9 +513,10 @@ void dicSubscribeServices(char *prefix, uint32_t idx)
 
   idx2RingSid(idx, &ring, &sid);
   switch (ring) {
-    case SIS18   : sprintf(ringName, "sis18"); break;
-    case ESR     : sprintf(ringName, "esr");   break;
-    case CRYRING : sprintf(ringName, "yr");    break;
+    case SIS18   : sprintf(ringName, "sis18");  break;
+    case ESR     : sprintf(ringName, "esr");    break;
+    case CRYRING : sprintf(ringName, "yr");     break;
+    case SIS100  : sprintf(ringName, "sis100"); break;
     default : break;
   } // switch ring
 
@@ -569,6 +576,7 @@ uint32_t calcFlagPrint()
     if (!flagPrintSis18)    if (ring == SIS18)                   flagPrintIdx[i] = 0;
     if (!flagPrintEsr)      if (ring == ESR)                     flagPrintIdx[i] = 0;
     if (!flagPrintYr)       if (ring == CRYRING)                 flagPrintIdx[i] = 0;
+    if (!flagPrintSis100)   if (ring == SIS100)                  flagPrintIdx[i] = 0;
     if (flagPrintIdx[i]) nLines++;
   } // for i
 
@@ -593,7 +601,7 @@ void printData(char *name)
   if (flagPrintNs) sprintf(unitInfo, "(units [ns] unless explicitly given)");
   else             sprintf(unitInfo, " (units [°] unless explicitly given)");
   sprintf(title,  "\033[7m B2B Monitor %3s -------------------------------------------------------------------------------------------------------------- %s - v%8s\033[0m", name, unitInfo, b2b_version_text(B2B_MON_VERSION));
-  sprintf(footer, "\033[7m exit <q> | toggle data <d>, units <u> | toggle inactive <i>, SIS18 <0>, ESR <1>, YR <2> | help <h>                                                           %s\033[0m", buff);
+  sprintf(footer, "\033[7m exit <q> | toggle data <d>, units <u> | toggle inactive <i>, SIS18 <0>, ESR <1>, YR <2>, SIS100 <3> | help <h>                                               %s\033[0m", buff);
 
   comlib_term_curpos(1,1);
 
@@ -658,6 +666,7 @@ int main(int argc, char** argv)
   flagPrintSis18    = 1;
   flagPrintEsr      = 1;
   flagPrintYr       = 1;
+  flagPrintSis100   = 1;
   flagPrintOther    = 0;
   flagPrintNs       = 0;
 
@@ -752,6 +761,11 @@ int main(int argc, char** argv)
         case '2' :
           // toggle printing of CRYRING patterns
           flagPrintYr = !flagPrintYr;
+          flagPrintNow = 1;
+          break;
+        case '3' :
+          // toggle printing of SIS100 patterns
+          flagPrintSis100 = !flagPrintSis100;
           flagPrintNow = 1;
           break;
         case 'd' :
