@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-oct-2026
+ *  version : 06-nov-2026
  *
  * subscribes to and displays status of many b2b transfers
  *
@@ -247,7 +247,7 @@ void buildPrintLine(uint32_t idx)
   actT      = (time_t)(actNsecs / 1000000000);
   dtmp1     = NAN;
 
-  if (idx > NALLSID) return;
+  if (idx >= NALLSID) return;
 
   idx2RingSid(idx, &ringExt, &sid);
 
