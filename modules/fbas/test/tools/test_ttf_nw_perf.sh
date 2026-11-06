@@ -12,13 +12,49 @@ rxscu="$rxscu_name.$domain"
 txscu=()                              # array with transmitter domain names
 fw_scu_def="fbas16.scucontrol.bin"    # FW that supports up to 16 TX nodes, each has 1 MPS channels
 ssh_opts="-o StrictHostKeyChecking=no"   # no hostkey checking
-getopt_opts="u:p:t:r:g:i:eyvh"        # user options
-n_tx_rates=12                         # TX messaging rates
+getopt_opts="u:p:t:r:g:i:c:eyvh"      # user options
+n_tx_rates=21                         # number of TX messaging rates
+msg_rates=(33333 100000 50000 20000 10000 5000 3333 2500 \
+            # 30,  10,    20,   50,   100,  200, 300, 400 [Hz]
+            2000   1250 1000  833   666   555 \
+            # 500, 800, 1K,   1.2K, 1.5K, 1.8K [Hz]
+            500    333  250   200   166   143  125)
+            # 2K,  3K,  4K,   5K,   6K,   7K,  8K [Hz]
+idx_msg_period=0                      # default index for the TX messaging rate
+
+pids=()                               # sub-process ids for each running test on SCUs
+
+# signal handler
+sigint_handler()
+{
+    # stop all TX and RX devices, if CTRL+C is requested
+    echo
+
+    local pcnt=0
+
+    for pid in ${pids[@]}; do
+        kill $pid 2>/dev/null
+        pcnt=$(( $pcnt + 1 ))
+    done
+
+    if [ $pcnt -ne 0 ]; then
+        echo "Stopped $pcnt sub-process(es)."
+        pcnt=0
+    fi
+
+    for i in ${!txscu[@]}; do
+        run_remote ${txscu[$i]} "source setup_local.sh && eb-reset \$tx_node_dev cpureset 0"
+    done
+
+    run_remote $rxscu "source setup_local.sh && eb-reset \$rx_node_dev cpureset 0"
+
+    echo "All LM32 CPUs are resetted. Exit."
+    exit
+}
 
 usage() {
 
     echo "Run a MPS signalling test between TX and RX SCUs."
-    echo "User might be logged in to both SCUs to perform optional pre-check."
     echo
     echo "Usage: $0 [options]"
     echo
@@ -28,9 +64,11 @@ usage() {
     echo "  -t <TX SCU>            transmitter SCU, by default $def_txscu_name"
     echo "  -r <RX SCU>            receiver SCU, by default $rxscu_name"
     echo "  -g <event gen period>  pseudo event generation period (10 seconds by default)"
-    echo "  -i <index of TX rate>  index of the TX messaging rate (by default m=0 or 30Hz)"
-    echo "                         0:30Hz, 1:10Hz, 2:12.5Hz, 3:20Hz, 4:50Hz, 5:100Hz"
-    echo "                         6:200Hz, 7:500Hz, 8:1KHz, 9:2KHz, 10:5KHz, 11:10KHz"
+    echo "  -i <index of TX rate>  index of the TX messaging rate (by default i=0 or 30Hz)"
+    echo "                         0=30, 1=10, 2=20 3=50Hz, 4=100, 5=200, 6=300, 7=400 [Hz]"
+    echo "                         8=500, 9=800, 10=1K, 11=1.2K, 12=1.5K, 13=1.8K [Hz]"
+    echo "                         14=2K, 15=3K, 16=4K, 17=5K, 18=6K, 19=7K, 20=8K [Hz]"
+    echo "  -c <% deviation>       check the deviation in measured RX message rate against the given percentage deviation (0..100)"
     echo "  -e                     exclude TTL measurement"
     echo "  -y                     'yes' to all prompts"
     echo "  -v                     verbosity for the measurement results"
@@ -46,12 +84,15 @@ user_approval() {
     fi
 }
 
-pre_check() {
-    echo "TX: snoop TLU event (for IO action):"
-    echo "    saft-ctl tr0 -xv snoop 0 0 0"
-    echo "TX: expected events at a chosen input port (B2/IO2):"
-    echo "    GID: 0x0fff EVTNO: 0x0100 Other: 0x000000001"
-    echo "    GID: 0x0fff EVTNO: 0x0100 Other: 0x000000000"
+info_messaging_rate() {
+    # $1 - index
+
+    if [ -n "$1" ]; then
+        msg_rate_us=${msg_rates[$1]}
+        msg_rate_hz=$(bc <<< "scale=1; 1000000/$msg_rate_us")
+
+        printf "TX: msg rate = %.1f Hz (%d us)\n" $msg_rate_hz $msg_rate_us
+    fi
 }
 
 setup_nodes() {
@@ -108,21 +149,28 @@ setup_nodes() {
 }
 
 measure_nw_perf() {
-    echo -e "start the measurements\n"
-    output=$(run_remote $rxscu "source setup_local.sh && enable_mps \$rx_node_dev")
+
+    # use nameref to return a value to the given input parameter
+    local -n max_rx_rate="$1"    # RX msg rate
+    # $2 - optional counter for measurement
+    local measure_cnt=$2
+
+    echo -e "start the measurement: $measure_cnt\n"
+
+    info_messaging_rate $idx_msg_period
+
+    output=$(run_remote $rxscu "source setup_local.sh && start_operation \$rx_node_dev")
 
     # use local script to print info
     output=$(source $dir_name/../scu/setup_local.sh && info_nw_perf $gen_period)
     echo -e "$output\n"
 
     # enable simultaneous operation of TX nodes
-    pids=()
-
     for i in ${!txscu[@]}; do
         echo ${txscu[$i]}
 
         # enable MPS operation, start test => keep process ID
-        output=$(run_remote ${txscu[$i]} "source setup_local.sh && enable_mps \$tx_node_dev")
+        output=$(run_remote ${txscu[$i]} "source setup_local.sh && start_operation \$tx_node_dev")
 
         # start test sub-process and keep its process ID
         run_remote ${txscu[$i]} "source setup_local.sh && start_nw_perf $gen_period" &
@@ -137,6 +185,8 @@ measure_nw_perf() {
         wait $pid
     done
 
+    pids=() # clear sub-process IDs when sub-processes are complete -> avoid to kill completed sub-processes
+
     # notice the end time (sub-process is finished in the last device)
     end=$(date +%s)
     # calculate the runtime
@@ -150,7 +200,7 @@ measure_nw_perf() {
     output=$(run_remote $rxscu "source setup_local.sh && stop_operation \$rx_node_dev")
 
     # report test result
-    echo "measurement stats of MPS signaling"
+    echo "measurement stats of MPS signaling: $measure_cnt"
     if [ -z "$verbose" ]; then
         echo -e "MPS node:       tx_cnt rx_vld rx_ovf\n"
     else
@@ -186,8 +236,8 @@ measure_nw_perf() {
     if [ -z "$verbose" ]; then
         echo -e "Delay:  avg min max [us] vld all [])\n"
         # declare measurement entries
-        tx_delay_entries=("eca dly" "tx dly " "ml prd ")
-        rx_delay_entries=("eca dly" "rx dly " "msg dly" "ml prd " "ttl    ")
+        tx_delay_entries=("eca dly" "tx dly " "tx rate" "ml prd ")
+        rx_delay_entries=("eca dly" "rx dly " "msg dly" "rx rate" "mlp prd" "dio dly" "ttl ivl" "eca tap")
     fi
 
     i=0
@@ -199,6 +249,7 @@ measure_nw_perf() {
             "source setup_local.sh && \
             result_eca_delay \$tx_node_dev $verbose && \
             result_tx_delay \$tx_node_dev $verbose && \
+            result_msg_rate \$tx_node_dev $verbose && \
             result_ml_period \$tx_node_dev $verbose" |
         while IFS= read -r line; do
             delay_entry="${tx_delay_entries[$i]}"
@@ -217,6 +268,7 @@ measure_nw_perf() {
         result_eca_delay \$rx_node_dev $verbose && \
         result_rx_delay \$rx_node_dev $verbose && \
         result_msg_delay \$rx_node_dev $verbose && \
+        result_msg_rate \$rx_node_dev $verbose && \
         result_ml_period \$rx_node_dev $verbose && \
         result_diob_delay \$rx_node_dev $verbose && \
         result_ttl_ival \$rx_node_dev $verbose" |
@@ -228,6 +280,14 @@ measure_nw_perf() {
         echo "$delay_entry $line"
         i=$((i +  1))
     done
+
+    run_remote $rxscu \
+        "source setup_local.sh && \
+        stats_eca_tap \$rx_node_dev $verbose"
+
+    msg_rate=$(run_remote $rxscu "source setup_local.sh && result_msg_rate \$rx_node_dev")
+    array_msg_rate=($msg_rate) # convert to array
+    max_rx_rate="${array_msg_rate[2]}" # return the RX msg rate
 }
 
 measure_ttl() {
@@ -240,7 +300,6 @@ measure_ttl() {
     done
 
     echo -e "start the measurement\n"
-    output=$(run_remote $rxscu "source setup_local.sh && enable_mps \$rx_node_dev")
 
     n_toggle=10
     echo -e "toggle MPS operation (n=$n_toggle): TX=${txscu_name[*]}"
@@ -248,27 +307,29 @@ measure_ttl() {
         echo -en " $i: enable \r"
 
         for scu in ${txscu[@]}; do
-            output=$(run_remote $scu "source setup_local.sh && enable_mps \$tx_node_dev")
+            output=$(run_remote $scu "source setup_local.sh && start_operation \$tx_node_dev")
         done
 
         sleep 1
         echo -en " $i: disable\r"
 
         for scu in ${txscu[@]}; do
-            output=$(run_remote $scu "source setup_local.sh && disable_mps \$tx_node_dev")
+            output=$(run_remote $scu "source setup_local.sh && stop_operation \$tx_node_dev")
         done
 
         sleep 1
     done
 
     echo -e "\nstop the measurement\n"
-    output=$(run_remote $rxscu "source setup_local.sh && disable_mps \$rx_node_dev")
+    output=$(run_remote $rxscu "source setup_local.sh && stop_operation \$rx_node_dev")
 
     echo -e "measurement stats: TTL\n"
     run_remote $rxscu "source setup_local.sh && result_ttl_ival \$rx_node_dev \$addr_cnt1 $verbose"
 }
 
-unset username userpasswd gen_period idx_msg_period exclude_ttl auto verbose
+trap sigint_handler SIGINT
+
+unset username userpasswd gen_period c_percent_dev exclude_ttl auto verbose
 unset OPTIND
 
 while getopts $getopt_opts c; do
@@ -279,6 +340,7 @@ while getopts $getopt_opts c; do
         r) rxscu_name=$OPTARG; rxscu=$OPTARG.$domain ;;
         g) gen_period=$OPTARG ;;
         i) idx_msg_period=$OPTARG ;;
+        c) c_percent_dev=$OPTARG ;;
         e) exclude_ttl="exclude_ttl" ;;
         y) auto="auto" ;;
         v) verbose="yes" ;;
@@ -289,9 +351,30 @@ done
 
 # check the index of the TX messaging period
 if [ "$idx_msg_period" ]; then
-    num=$(($idx_msg_period)) 2>/dev/null
+    if ! [[ "$idx_msg_period" =~ ^[0-9]+$ ]]; then
+        echo "Error: invalid index for TX messaging period: $idx_msg_period. Exit!"
+        usage; exit 1
+    fi
+
+    num=$(( 10#$idx_msg_period )) 2>/dev/null
     if [ $num -ge $n_tx_rates ]; then
         echo "Error: invalid index for TX messaging period: $num (valid index is less than $n_tx_rates). Exit!"
+        usage; exit 1
+    fi
+
+    idx_msg_period=$num
+fi
+
+# check the given percentage deviation
+if [ "$c_percent_dev" ]; then
+    if ! [[ "$c_percent_dev" =~ ^[0-9]+$ ]]; then
+        echo "Error: invalid percentage deviation for measured RX messaging rate: $c_percent_dev. Exit!"
+        usage; exit 1
+    fi
+
+    num=$(( 10#$c_percent_dev))
+    if [ $num -lt 0 ] || [ $num -gt 100 ]; then
+        echo "Error: invalid percentage deviation for measured RX messaging rate: $c_percent_dev. Exit!"
         usage; exit 1
     fi
 fi
@@ -320,21 +403,41 @@ fi
 echo -e "\n--- Step 1: set up nodes (RX=$rxscu_name, TX=${txscu_name[*]}) ---\n"
 setup_nodes
 
-# optional pre-check before real test
-echo -e "\n--- Step 2: pre-check (RX=$rxscu_name, TX=${txscu_name[*]}) ---\n"
-pre_check
+echo -e "\n--- Step 2: measure network performance (RX=$rxscu_name, TX=${txscu_name[*]}) ---\n"
 
-if [ -z "$auto" ]; then
-    user_approval
+measure_cnt=1 # measurement counter
+
+# optional check for max RX msg rate
+max_rx_msg_rate=${msg_rates[$idx_msg_period]}
+deviation=$(( max_rx_msg_rate * ${c_percent_dev:-0} / 100 ))
+rx_rate_threshold=$(( max_rx_msg_rate + deviation ))
+
+while [ $max_rx_msg_rate -le $rx_rate_threshold ]; do # normal/expected behaviour
+    measure_nw_perf max_rx_msg_rate  $measure_cnt     # get the max RX msg rate
+
+    max_rx_msg_rate=${max_rx_msg_rate%%.*}            # handle a missing or zero value
+    if ! [[ "$max_rx_msg_rate" =~  ^[0-9]+$ ]] || [ $max_rx_msg_rate -eq 0 ]; then
+        echo "Invalid max RX msg rate: $max_rx_msg_rate. Exit!"
+        exit 1
+    fi
+
+    max_rx_msg_rate=$(( 10#$max_rx_msg_rate ))        # convert a string to integer
+
+    if [ -z "$c_percent_dev" ]; then
+        break
+    fi
+
+    measure_cnt=$(( measure_cnt + 1 ))
+done
+
+if [ $max_rx_msg_rate -gt $rx_rate_threshold ]; then
+    echo "Got too slow msg rate than expected [us]: $max_rx_msg_rate >> ${msg_rates[$idx_msg_period]}"
 fi
-
-echo -e "\n--- Step 3: measure network performance (RX=$rxscu_name, TX=${txscu_name[*]}) ---\n"
-measure_nw_perf
 
 if [ -n "$exclude_ttl" ]; then
     exit 0
 fi
 
 # TTL measurement
-echo -e "\n--- Step 4: measure TTL (RX=$rxscu_name, TX=${txscu_name[*]}) ---\n"
+echo -e "\n--- Step 3: measure TTL (RX=$rxscu_name, TX=${txscu_name[*]}) ---\n"
 measure_ttl

@@ -130,20 +130,20 @@ start_basic() {
 
 measure_ttl_ival() {
     echo -n "enable MPS operation of RX: "
-    enable_mps $rx_node_dev
+    start_operation $rx_node_dev
 
     echo -e "toggle MPS operation of TX:\n"
     for i in $(seq 1 10); do
         echo -en "   $i : enable  "
-        enable_mps $tx_node_dev
+        start_operation $tx_node_dev
         sleep 1
         echo -en "   $i : disable "
-        disable_mps $tx_node_dev
+        stop_operation $tx_node_dev
         sleep 1
     done
 
     echo -n "disable MPS operation of RX: "
-    disable_mps $rx_node_dev
+    stop_operation $rx_node_dev
 
     result_ttl_ival $rx_node_dev "verbose"
 }

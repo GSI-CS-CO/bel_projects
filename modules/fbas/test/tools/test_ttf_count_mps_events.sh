@@ -69,10 +69,6 @@ inject_events() {
     # $1 - number of iterations of the given schedule
     # $2 - filename with schedule for the MPS events
 
-    echo -e "\n enable MPS operation (RX=$rxscu_name)"
-    output=$(run_remote $rxscu \
-        "source setup_local.sh && enable_mps \$rx_node_dev")
-
     # start local injection of MPS events
     echo -e " inject MPS events\n"
     run_remote $rxscu \
@@ -80,7 +76,7 @@ inject_events() {
 
     echo -e "\n disable MPS operation (RX=$rxscu_name)"
     output=$(run_remote $rxscu \
-        "source setup_local.sh && disable_mps \$rx_node_dev")
+        "source setup_local.sh && stop_operation \$rx_node_dev")
 }
 
 show_rx_stats() {

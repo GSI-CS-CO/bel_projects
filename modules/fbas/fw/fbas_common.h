@@ -35,9 +35,9 @@ typedef uint32_t status_t;
 #define F_MPS_BCAST        30  // frequency to broadcast MPS flags [MPS_FS_530]
 
 // MPS flags
-#define MPS_FLAG_OK        1   // OK
-#define MPS_FLAG_NOK       2   // NOK
-#define MPS_FLAG_TEST      3   // TEST
+#define MPS_FLAG_OK        0   // OK
+#define MPS_FLAG_NOK       1   // NOK
+#define MPS_FLAG_TEST      2   // TEST
 
 // Ethernet MAC address
 #define ETH_ALEN           6

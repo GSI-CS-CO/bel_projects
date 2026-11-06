@@ -23,7 +23,8 @@ create_clock -period 20Mhz  -name clk_20m_vcxo_in        [get_ports {clk_20m_vcx
 create_clock -period 125Mhz -name clk_125m_tcb_local_in  [get_ports {clk_125m_local_i}]
 create_clock -period 125Mhz -name clk_125m_tcb_pllref_in [get_ports {clk_125m_pllref_i}]
 create_clock -period 125Mhz -name clk_125m_tcb_sfpref_in [get_ports {clk_125m_sfpref_i}]
-create_clock -period 10Mhz  -name clk10                  [get_ports {monster:main|clk_10m}]
+# 10 MHz for the voltage sensor (a10vs), divided by logic from clk_200m (register monster:main|clk_10m)
+create_clock -period 10Mhz  -name clk10                  [get_registers {*main|clk_10m}]
 
 # Cut temperature and voltage sensors
 set_false_path -from {monster:main|a10ts:\a10ts_y:a10ts_inst|a10ts_ip:\ext_trigger_n:core_a10ts_ip|altera_temp_sense:temp_sense_0|*} -to {monster:main|a10ts:\a10ts_y:a10ts_inst|*}
@@ -36,6 +37,7 @@ set_false_path -from {monster:main|a10vs:\a10vs_y:a10vs_0|a10vs_ip:a10vs_ip_0|a1
 set_clock_groups -asynchronous \
 -group [get_clocks {altera_reserved_tck}] \
 -group [get_clocks {clk_20m_vcxo_in}] \
+-group [get_clocks {clk10}] \
 -group [get_clocks {clk_125m_tcb_local_i}] \
 -group [get_clocks {clk_125m_tcb_pllref_i}] \
 -group [get_clocks {clk_125m_tcb_sfpref_i}] \

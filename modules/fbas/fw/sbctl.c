@@ -100,7 +100,7 @@ void sbInit(void)
   probeSbSlaves(pSbMaster, CID_SYS_DIOB, CID_GRP_DIOB, &sbDiobs);
 
   // init the DIOB echo register
-  writeDiobReg(0, SBS_ECHO);
+  writeDiobReg(0xfba5, SBS_ECHO);
 }
 
 /**
@@ -236,6 +236,7 @@ status_t probeSbSlaves(volatile uint16_t* pMaster, uint16_t sysId, uint16_t grpI
 
       // base address of the current slot
       DBPRINT1("\t base adr=0x%08x\n", (pMaster + (slot << 16)));
+      DBPRINT1("\t echo adr=0x%08x\n", (pMaster + (slot << 16) + SBS_ECHO));
 
       // standard register values of a selected SCU bus slave
       u16val  = *(pMaster + (slot << 16) + SBS_SLAVE_ID); // get slave ID

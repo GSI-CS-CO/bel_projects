@@ -90,10 +90,6 @@ echo "Measurement: $header"
 echo -en " reset eCPU (LM32) of '$rxscu_name': "
 reset_tr_ecpu "${ids[@]}"
 
-# enable MPS task of rxscu
-echo -en " enable MPS operation of '$rxscu_name': "
-enable_tr_mps
-
 # start a schedule on DM
 echo -en " start a schedule on '$datamaster': "
 start_dm_schedule

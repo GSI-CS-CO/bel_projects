@@ -60,13 +60,10 @@ check_deployment $rxscu $filenames
 echo -e "\nset up '$rxscu_name'\n------------"
 output=$(run_remote $rxscu "source setup_local.sh && setup_mpsrx $fw_rxscu SENDER_ALL")
 
-# enable MPS task of rxscu
-run_remote $rxscu "source setup_local.sh && start_test4 \$rx_node_dev"
-
 echo "wait $duration_sec seconds (start Xenabay schedule now)"
 echo "------------"
 sleep $duration_sec  # wait for given seconds
 
 # disable MPX task of rxscu"
-run_remote $rxscu "source setup_local.sh && stop_test4 \$rx_node_dev && \
+run_remote $rxscu "source setup_local.sh && stop_operation \$rx_node_dev && \
     read_counters \$rx_node_dev $verbose && result_msg_delay \$rx_node_dev $verbose"

@@ -1,3 +1,6 @@
+# Remove build info of a previous run, so a failed run cannot leave stale data
+file delete -force build_id.txt
+
 if {[info exists env(GSI_BUILD_TYPE)]} {
   set build_type $env(GSI_BUILD_TYPE)
 } else {
@@ -41,9 +44,9 @@ if { [catch {close $revl}] } {
 set source_info "$branch-$count"
 
 if {$tcl_platform(os) == "Linux"} {
-  set lsb [open "| lsb_release -d" "r"]
+  set lsb [open "| uname -o -r -m" "r"]
   gets $lsb desc
-  set build_os "[lindex [split $desc "\t"] 1], kernel $tcl_platform(osVersion)"
+  set build_os "$desc"
   close $lsb
 } else {
   set build_os "$tcl_platform(os) $tcl_platform(osVersion)"
@@ -111,4 +114,9 @@ foreach {a b c d} $bytes {
 }
 
 puts $outputFile "END;"
+close $outputFile
+
+# Plain-text copy of the ROM content (archived as build artifact)
+set outputFile [open "build_id.txt" "w"]
+foreach row $output { puts $outputFile $row }
 close $outputFile

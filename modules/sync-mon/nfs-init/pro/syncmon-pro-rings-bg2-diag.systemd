@@ -1,4 +1,4 @@
-# yocto; temporarily disabled
+# yocto
 SERVICEA=syncmon-pro-sis18-inj.service
 SERVICEB=syncmon-pro-sis18-ext.service
 SERVICEC=syncmon-pro-esr-inj.service

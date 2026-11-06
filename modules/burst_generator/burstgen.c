@@ -179,7 +179,7 @@ static void initMsrTaskSchedPeriod(void)
     msrTickActExit = 0;
 
     // clear ECA action counters and buffer for measurements
-    memset(pSharedActCnt, 0, sizeof(uint32_t) * N_ACT_CNT);
+    memset((void *)pSharedActCnt, 0, sizeof(uint32_t) * N_ACT_CNT);
     memset(msrPeriod, 0, sizeof(uint64_t) * N_MSR_PERIOD);
 
     uint32_t offset = (uint32_t)(&msrPeriod[0]) - (uint32_t)pShared;
@@ -1637,9 +1637,6 @@ status_t init(void)
   }
 
   fwlib_publishNICData(); // NIC data (MAC, IP) are assigned to global variables (pSharedIp, pSharedMacHi/Lo)
-
-  timer_init(1);          // needed by usleep_init()
-  usleep_init();          // needed by scu_mil.c
 
   isr_table_clr();        // set MSI IRQ handler
   irq_set_mask(0x01);     // ...

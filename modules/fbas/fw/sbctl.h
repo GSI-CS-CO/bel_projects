@@ -19,13 +19,13 @@
 #define SBS_CID_NO_EXT    0xDEAD // no extension card is installed
 
 // CID for DIOB
-#define CID_SYS_DIOB      55
-#define CID_GRP_DIOB      26
+#define CID_SYS_DIOB      55  // 0x37
+#define CID_GRP_DIOB      26  // 0x1a
 
 // base address of standard registers for all slave devices on the SCU bus
 #define STD_REG_BASE      0x0000
 
-// standard registers for SCU bus slaves, https://www-acc.gsi.de/wiki/Hardware/Intern/StdRegScuBusSlave
+// standard registers for SCU bus slaves, https://www.acc.gsi.de/wiki/bin/view/Hardware/Intern/StdRegScuBusSlave
 #define SBS_SLAVE_ID      0x01 // slave ID, reserved
 #define SBS_FW_VER        0x02 // firmware version, rd
 #define SBS_FW_REL        0x03 // firmware release, rd

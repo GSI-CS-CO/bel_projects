@@ -34,13 +34,15 @@ get_tr_measurements() {
     output=$(run_remote $1 \
     "source setup_local.sh && \
     read_counters \$rx_node_dev && \
+    result_eca_delay \$rx_node_dev && \
     result_rx_delay \$rx_node_dev && \
     result_msg_delay \$rx_node_dev && \
+    result_msg_rate \$rx_node_dev && \
+    result_diob_delay \$rx_node_dev && \
     result_ttl_ival \$rx_node_dev && \
     result_ml_period \$rx_node_dev && \
-    result_diob_delay \$rx_node_dev && \
-    result_eca_delay \$rx_node_dev && \
-    read_array \$rx_node_dev 8")
+    read_array \$rx_node_dev 8 && \
+    stats_eca_tap \$rx_node_dev")
     ret_code=$?
     exit_on_fail $ret_code
 
@@ -62,21 +64,31 @@ format_measurements() {
     local line
 
     # counters
+    line+="\t--- LM32 stats, us (avg, min, max, valid, all)\n"
     line+="\tRX msgs    : ${output[1]}\n"    # 2nd element
     line+="\tOvf msgs   : ${output[2]}\n"    # 3rd element
     line+="\tOld msgs   : ${output[3]}\n"    # 4th element
     line+="\tBad msgs   : ${output[4]}\n"    # 5th element
 
     # delays
-    line+="\t--- delays, us (avg, min, max, valid, all)\n"
-    line+="\tECA delay  : ${output[@]:30:5}\n" # get 5 elements starting at index 30
-    line+="\tRX delay   : ${output[@]:5:5}\n"  # get 5 elements starting at index 5
-    line+="\tMsg delay  : ${output[@]:10:5}\n" # get 5 elements starting at index 10
+    line+="\tECA delay  : ${output[@]:5:5}\n"  # get 5 elements starting at index 5
+    line+="\tRX delay   : ${output[@]:10:5}\n" # get 5 elements starting at index 10
+    line+="\tMsg delay  : ${output[@]:15:5}\n" # get 5 elements starting at index 15
+    line+="\tMsg rate   : ${output[@]:20:5}\n" # get 5 elements starting at index 20
     line+="\tDIOB delay : ${output[@]:25:5}\n" # get 5 elements starting at index 25
-    line+="\tTTL period : ${output[@]:15:5}\n" # get 5 elements starting at index 15
-    line+="\tLoop period: ${output[@]:20:5}\n" # get 5 elements starting at index 20
+    line+="\tTTL period : ${output[@]:30:5}\n" # get 5 elements starting at index 30
+    line+="\tLoop period: ${output[@]:35:5}\n" # get 5 elements starting at index 35
     line+="\t--- action handling rate\n"
-    line+="\t${output[@]:35:8}\n"              # get 8 elements starting at index 35
+    line+="\t${output[@]:40:8}\n"              # get 8 elements starting at index 40
+
+    # ECA tap
+    line+="\t--- ECA tap stats, (latencies in ns)\n"
+    line+="\tRX msgs    : ${output[48]}\n"    # 49th element
+    line+="\tLate msgs  : ${output[49]}\n"    # 50th element
+    line+="\tAvg latency: ${output[50]}\n"    # 51st element
+    line+="\tMin latency: ${output[51]}\n"    # 52nd element
+    line+="\tMax latency: ${output[52]}\n"    # 53th element
+    line+="\tCal latency: ${output[53]}\n"    # 54th element
 
     ret="$line"
 }
@@ -88,7 +100,7 @@ is_measurement_failed() {
 
     # measurements[1] - eca valid, expected non-zero count
     # measurements[2] - eca overflow, expected zero count
-    # measurements[8] - average messaging delay, expected below 1 ms
+    # measurements[15]- average messaging delay, expected below 1 ms
 
     local -n ret="$1"
     shift
@@ -108,9 +120,9 @@ is_measurement_failed() {
     fi
 
     # failure: if the 'average messaging delay' is higher than 1 ms
-    avg_msg_dly=${output[8]}
+    avg_msg_dly=${output[15]}
     avg_msg_dly=$(( 10#$avg_msg_dly ))     # convert a string to integer
-    if [ $avg_msg_dly -gt 1000000 ]; then
+    if [ $avg_msg_dly -gt 1000 ]; then
         failed=2 # true
     fi
 
@@ -186,10 +198,6 @@ for i in ${!m_rates[@]}; do
     # reset the FW in receiver node
     echo -en " reset eCPU (LM32) of '$rxscu_name': "
     reset_tr_ecpu "${ids[@]}"
-
-    # enable MPS task of rxscu
-    echo -en " enable MPS operation of '$rxscu_name': "
-    enable_tr_mps
 
     # start a schedule on DM
     echo -en " start a schedule on '$datamaster': "

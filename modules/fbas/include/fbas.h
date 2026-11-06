@@ -5,8 +5,14 @@
 // DP RAM layout (offsets)
 // ****************************************************************************************
 
+#define FBAS_SHARED_OFFS           (0x300)                                         // offset from COMMON_SHARED_BEGIN
+
+// C2 message buffer (parameter and timestamp for 16 senders)
+#define FBAS_SHARED_C2_MSG_BEGIN   (COMMON_SHARED_BEGIN        + FBAS_SHARED_OFFS) // begin of the C2 message buffer (16*4)
+#define FBAS_SHARED_C2_MSG_END     (FBAS_SHARED_C2_MSG_BEGIN   + 64 * _32b_SIZE_)  // end of the C2 message buffer
+
 // set values for data supply
-#define FBAS_SHARED_BEGIN          (COMMON_SHARED_END          + _32b_SIZE_)       // begin of the app-spec region
+#define FBAS_SHARED_BEGIN          (FBAS_SHARED_C2_MSG_END     + 0)                // begin of the app-spec region
 #define FBAS_SHARED_SET_ID         (FBAS_SHARED_BEGIN          + _32b_SIZE_)       // reserved
 #define FBAS_SHARED_SET_NODETYPE   (FBAS_SHARED_SET_ID         + _32b_SIZE_)       // FBAS node type
 #define FBAS_SHARED_SET_SBSLAVES   (FBAS_SHARED_SET_NODETYPE   + _32b_SIZE_)       // SCU bus slaves (bit1=slot1, 1-12)
@@ -65,7 +71,12 @@
 #define FBAS_SHARED_MSG_DLY_MAX    (FBAS_SHARED_MSG_DLY_MIN    + 2 * _32b_SIZE_)   // max
 #define FBAS_SHARED_MSG_DLY_VLD    (FBAS_SHARED_MSG_DLY_MAX    + 2 * _32b_SIZE_)   // valid count
 #define FBAS_SHARED_MSG_DLY_ALL    (FBAS_SHARED_MSG_DLY_VLD    + _32b_SIZE_)       // all/total count
-#define FBAS_SHARED_TTL_PRD_AVG    (FBAS_SHARED_MSG_DLY_ALL    + _32b_SIZE_)       // TTL, avg
+#define FBAS_SHARED_MSG_RATE_AVG   (FBAS_SHARED_MSG_DLY_ALL    + _32b_SIZE_)       // messaging rate, avg
+#define FBAS_SHARED_MSG_RATE_MIN   (FBAS_SHARED_MSG_RATE_AVG   + 2 * _32b_SIZE_)   // min
+#define FBAS_SHARED_MSG_RATE_MAX   (FBAS_SHARED_MSG_RATE_MIN   + 2 * _32b_SIZE_)   // max
+#define FBAS_SHARED_MSG_RATE_VLD   (FBAS_SHARED_MSG_RATE_MAX   + 2 * _32b_SIZE_)   // valid count
+#define FBAS_SHARED_MSG_RATE_ALL   (FBAS_SHARED_MSG_RATE_VLD   + _32b_SIZE_)       // all/total count
+#define FBAS_SHARED_TTL_PRD_AVG    (FBAS_SHARED_MSG_RATE_ALL   + _32b_SIZE_)       // TTL, avg
 #define FBAS_SHARED_TTL_PRD_MIN    (FBAS_SHARED_TTL_PRD_AVG    + 2 * _32b_SIZE_)   // min
 #define FBAS_SHARED_TTL_PRD_MAX    (FBAS_SHARED_TTL_PRD_MIN    + 2 * _32b_SIZE_)   // max
 #define FBAS_SHARED_TTL_PRD_VLD    (FBAS_SHARED_TTL_PRD_MAX    + 2 * _32b_SIZE_)   // valid count
@@ -79,9 +90,6 @@
 #define FBAS_SHARED_ERROR_FLAG     (FBAS_SHARED_ACT_RATE       + 8 * _32b_SIZE_)   // error flag
 #define FBAS_SHARED_END            (FBAS_SHARED_ERROR_FLAG     + _32b_SIZE_)       // end of the app-spec region
 
-// valid value for data fields in the MPS payload
-#define MPS_VID_FBAS     105   // VLAN ID for FBAS
-
 // macro defintions
 // gcc.gnu.org/onlinedocs/cpp/Stringizing.html#Stringizing
 #define XSTR(s) STR(s)
@@ -93,6 +101,15 @@
 
 #ifdef PLATFORM
   #define MYPLATFORM XSTR(PLATFORM)
+#endif
+
+// compile-time check shared memory regions
+// common_shared_begin + fbas_shared_offs = fbas_shared_c2_msg_begin
+#if FBAS_SHARED_C2_MSG_BEGIN < COMMON_SHARED_END
+  #pragma message "COMMON_SHARED_END = " XSTR(COMMON_SHARED_END)
+  #pragma message "FBAS_SHARED_C2_MSG_BEGIN = " XSTR(FBAS_SHARED_C2_MSG_BEGIN)
+  #pragma message "FBAS_SHARED_OFFS  = " XSTR(FBAS_SHARED_OFFS)
+  #error Overlapped shared memory regions (COMMON_SHARED vs. FBAS_SHARED_*) : increase FBAS_SHARED_OFFS!
 #endif
 
 // node type
@@ -118,8 +135,6 @@ typedef enum {
 #define FBAS_CMD_GET_SENDERID   0x19   // get sender IDs (sender MAC addresses)
 #define FBAS_CMD_PROBE_SB_DIOB  0x20   // probe DIOB slave card on SCU bus
 #define FBAS_CMD_PROBE_SB_USER  0x21   // probe a given slave (sys and group IDs are expected in shared mem @FBAS_SHARED_SET_SBSLAVES)
-#define FBAS_CMD_EN_MPS_FWD     0x30   // enable MPS signal forwarding
-#define FBAS_CMD_DIS_MPS_FWD    0x31   // disable MPS signal forwarding
 #define FBAS_CMD_PRINT_TX_DLY   0x32   // print result of TX handler delay measurement
 #define FBAS_CMD_PRINT_MSG_DLY  0x33   // print the measurement result of messaging delay
 #define FBAS_CMD_PRINT_SG_LTY   0x34   // print result of MPS signalling latency measurement
@@ -132,6 +147,7 @@ typedef enum {
 #define FBAS_CMD_PRINT_ACT_RATE 0x3b   // print the action rate
 #define FBAS_CMD_SET_TX_RATE    0x3c   // set the TX messaging rate
 #define FBAS_CMD_PRINT_DIOB_DLY 0x3d   // print the measurement results of the DIOB access delay
+#define FBAS_CMD_PRINT_MSG_RATE 0x3e   // print the measurement result of messaging rate
 
 // mask bit for MPS-relevant tasks (up to 31)
 #define TSK_TX_MPS_FLAGS        0x10000000 // transmit MPS flags

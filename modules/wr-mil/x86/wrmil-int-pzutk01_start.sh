@@ -25,7 +25,7 @@ export MILADDR=0x5c2000      # address of MIL device to which MIL telegram is wr
 #        example blackbox in SCU4.1/RMT: 0x5c2000
 ###########################################
 # setting for development
-# gateway: N/A
+# gateway: 2nd 'local' WR-MIL gateway
 ###########################################
 
 echo -e WRMIL start script for GID 0x$SIDGW

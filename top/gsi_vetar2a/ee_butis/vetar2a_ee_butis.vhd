@@ -317,7 +317,7 @@ architecture rtl of vetar2a_ee_butis is
   constant c_family       : string := "Arria II";
   constant c_project      : string := "vetar2a_ee_butis";
   constant c_cores        : natural:= 1;
-  constant c_initf_name   : string := c_project & ".mif";
+  constant c_initf_name   : string := "vetar2a_stub.mif";
   constant c_profile_name : string := "medium_icache_debug";
   -- projectname is standard to ensure a stub mif that prevents unwanted scanning of the bus
   -- multiple init files for n processors are to be seperated by semicolon ';'

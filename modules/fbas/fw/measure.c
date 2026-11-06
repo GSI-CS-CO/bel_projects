@@ -48,8 +48,10 @@ static struct outlierStat_s outlierStat[N_MSR_ITEMS] = {
   {20000, 0},     // receiver handler delay, MSR_RX_DLY < 20 us
   {200000, 0},    // (obsolote) signalling latency, MSR_SG_LTY
   {200000, 0},    // messaging delay, MSR_MSG_DLY < 200 us
+  {10000000, 0},  // messaging rate, MSR_MSG_RATE < 10 ms
   {101000000, 0}, // TTL threshold/interval, MSR_TTL < 1,01 ms
-  {200000, 0}     // period of the main loop, MSR_ML_PRD < 200 us
+  {200000, 0},    // period of the main loop, MSR_ML_PRD < 200 us
+  {20000, 0},     // DIOB access delay, MSR_DIOB_DLY < 20 us
 };
 
 static msrSumStats_t sumStats[N_MSR_ITEMS];  // buffer for summary statistics

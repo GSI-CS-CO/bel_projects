@@ -5,14 +5,14 @@ Location: **bel_projects/modules/fbas**
 In general, the purpose of all Machine Protection Systems (**MPS**) is to protect the beam production machines (UNILAC, SIS18, etc) from damage in dangerous situations.
 One of these MPSs is the Fast Beam Abort System (**FBAS**) for the SIS100 machine.
 
-According to the Technical Concept ([pdf)](https://www-acc.gsi.de/wiki/pub/Timing/Intern/MPS/F-TC-C-03e_SIS100_Fast_Beam_Abort_System_Requirements_v1.0.pdf)), FBAS shall utilize the Timing network and Timing Receivers (**TR**) for signaling MPS events.
+According to the last-known Technical Concept ([pdf)](https://www-acc.gsi.de/wiki/pub/Timing/Intern/MPS/F-TC-C-03e_SIS100_Fast_Beam_Abort_System_Requirements_v1.0.pdf)), FBAS shall utilize the Timing network and Timing Receivers (**TR**) for signaling MPS events.
 In MPS context, events are declared as changes of any machine protection condition.
 For FBAS, such MPS events shall be distributed as timing events between the transmitter and receiver logic modules (SCUs).
 
 The final goal of the project is to develop embedded modules for the FBAS event signaling system,  in form of:
    - firmware for embedded CPU (LM32) in TR
-   - API for user-space program (saftlib driver/plug-in)
-   - WR timing network
+   - configuration of WR switches within the dedicated WR timing network
+   - optional, API for user-space program (saftlib driver/plug-in)
 
 ## 2. Status
 
@@ -25,6 +25,8 @@ Directory structure:
    - fw: contains firmware source files and Makefile
    - include: header files
    - test: test artifacts (scripts, WRS configuration, DM schedule etc)
+   - x86: diagnostic utility for host
+   - rte: scripts for the legacy and yocto deployments on asl75x (update it :exclamation:)
 
 ## 3. Build, install and debug a LM32 firmware
 
@@ -36,6 +38,8 @@ Makefile is used to build the firmware binaries (.bin, .elf). Invoke a command g
 $ make           # it will build firmware, fbas*.scucontrol.bin
 $ make clean     # deletes all artifacts
 ```
+
+Starting from v1.5.1, only **fbas16.scucontrol.bin** is selected as valid firmware for tests.
 
 ### 3.2. Install a firmware binary to a target TR
 
@@ -59,23 +63,31 @@ $ eb-console dev/wbm0     # in another terminal
 A piece of the debug output message is given below as example.
 
 ```
-Target BRG at base 0xa0000000 0xa0100000  entry 0
-Target DEV at 0xa0140000
-Target DEV at 0xa0180000
-fbas: CPU RAM External 0x20140000, begin shared 0x00000500, command 0x20140508
-fbas: app specific shared begin 0x10000500
-fbas0: SHARED_SET_NODETYPE 0x10000820
-fbas0: SHARED_GET_NODETYPE 0x10000830
-fbas0: SHARED_GET_TS1 0x10000938
-fbas0: SHARED_GET_CNT 0x10000934
-fbas0: SHARED_CNT_VAL 0x10000990
-fbas0: SHARED_CNT_OVF 0x10000994
-fbas0: SHARED_SENDERID 0x10000998
-common-fwlib: 788 bytes of shared mem are actually used
+fbas: CPU RAM: 0x20140000, common shared: 0x20140500
+common-fwlib: 1716 bytes of shared mem are actually used
 
-common-fwlib: ***** firmware fbas v000002 started from scratch *****
-common-fwlib: fwlib_init, shared size [bytes], common part 392, total 788
-common-fwlib: cpuRamExternal 0x20140000,  cpuRamExternalData4EB 0x20140544
+common-fwlib: ***** firmware fbas v010502 started from scratch *****
+common-fwlib: fwlib_init, shared size [bytes], common part 464, total 1716
+common-fwlib: cpuRamExternal 0x20140000,  cpuRamExternalData4EB 0x2014058c
+
+fbas0: COMMON_CMD 0x10000508 (0x20140508)
+fbas0: FBAS_BEGIN 0x10000900 (0x20140900)
+fbas0: FBAS_SET_NODETYPE 0x10000908 (0x20140908)
+fbas0: FBAS_GET_NODETYPE 0x10000918 (0x20140918)
+fbas0: FBAS_GET_AVG 0x10000a58 (0x20140a58)
+fbas0: FBAS_ECA_VLD 0x10000a80 (0x20140a80)
+fbas0: FBAS_ECA_OVF 0x10000a84 (0x20140a84)
+fbas0: FBAS_TX_MSG 0x10000a1c (0x20140a1c)
+fbas0: FBAS_OLD_MSG 0x10000a20 (0x20140a20)
+fbas0: FBAS_BAD_MSG 0x10000a24 (0x20140a24)
+fbas0: FBAS_SENDERID 0x10000a88 (0x20140a88)
+fbas0: FBAS_ACT_RATE 0x10000b90 (0x20140b90)
+fbas0: FBAS_ERROR_FLAG 0x10000bb0 (0x20140bb0)
+fbas0: FBAS_C2_MSG_BEGIN 0x10000800 (0x20140800)
+fbas0: FBAS_C2_MSG_END 0x10000900 (0x20140900)
+sbctl: SHARED_SET_SBSLAVES 0x1000090c
+sbctl: SHARED_GET_SBSLAVES 0x1000091c
+sbctl: SHARED_GET_SBSTDBEGIN 0x10000920
 ...
 
 ```
@@ -84,8 +96,9 @@ common-fwlib: cpuRamExternal 0x20140000,  cpuRamExternalData4EB 0x20140544
 
 There are several test cases available in 'bel_projects/modules/fbas/test/tools'.
 
-   - measure signaling network performance (test_ttf_nw_perf.sh)
-   - test timing message transmission (test_ttf_basic.sh)
+   - test the signaling network (test_ttf_nw_perf.sh, SCUs)
+   - measure the maximum receiver rate (measure_ttf_rx_rate.sh, DM and SCUs)
+   - test the ECA to SCU bus slave transfer (test_eca_scu_bus_slave.sh, DM and SCUs)
    - other
 
 Basic test setup is built in TTF:
@@ -94,53 +107,43 @@ Basic test setup is built in TTF:
    - scuxl0497: RX SCU
 
 If TTF test setup will be used, then it's recommended to run tests in any management master host (ie., tsl101).
-All test-relevant artifacts can be deployed with a helper script ('bel_projects/modules/fbas/test/deploy_mngmt_host.sh') to the management master host (in the '$HOME/fbas_test' directory).
+
+~~All test-relevant artifacts can be deployed with a helper script ('bel_projects/modules/fbas/test/helpers/deploy_mngmt_host.sh') to the management master host (in the '$HOME/fbas_test' directory).~~
 
 ### 4.1. Running a test case
 
-All TRs must have their IP address before testing: either per BOOTP or manually.
-
-```
-$ (sudo) eb-console dev/wbm0   # launch WR console
-$ wrc# ip                      # check an IP address
-$ wrc# ip set 192.168.131.30   # set an IP address, if it's missing
-```
-
-Assume, test artifacts are successfully deployed in 'tsl101'.
+Assume, test artifacts are successfully deployed in target SCUs and DM.
 
 In order to start a desired test case, switch to the '$HOME/fbas_test/tools' directory.
 
-### 4.2. Measure the signaling network performance
+### 4.2. Test the signaling network
 
 Here, signaling latency and some internal timing delay are measured:
-   - event handling delay: time period between generation of MPS event at TX node and storing of corresponding MPS flag at TX node (measured by TX node)
-   - messaging delay (alias one-way): time period between transmission of timing message (with MPS event) by TX node and handling of the same timing message by RX node (measured by RX node)
-   - transmission delay: time period between detection of MPS event by TX node and generation of output signal on reception of corresponding timing message by RX node (measured on TX node by using feedback from RX node)
-   - signaling latency: time period between generation of MPS event at TX node and generation of output signal on reception of corresponding timing message by RX node (measured on TX node by using feedback from RX node)
+   - ECA event handling delay: time period spent for fetching a MPS event from ECA  (measured by both TX and RX nodes)
+   - transmitter delay: time period between fetching a MPS event and delivering to EB master (measured on TX node)
+   - receiver delay: time period between fetcing a MPS event and storing it to a dedicated buffer (measured on RX node)
+   - messaging delay: no meaning since the ECA to SCU bus slave transfer ~~time period between fetching a MPS event and driving the dedicated output signal (measured by RX node)~~
+   - messaging latency: time period between generation of MPS event at TX node and generation of output signal on reception of corresponding timing message by RX node (measured on RX node)
 
-TX SCU is configured to act on 2 events: FBAS and feedback (IO).
-   - on detection of FBAS event, the TX SCU generates a MPS flag and broadcasts it via WR network.
-   - on feedback event, the TX node calculates the elapsed time to signal FBAS event.
+TX SCU is configured to act on Power Converter (PC) event:
+   - on detection of PC event, the TX SCU generates a corresponding timing messages (with FBAS Class 2 protocol, C2 protocol) and sends it via WR network
 
-Similarly, RX SCU is configured to act on timing event (with MPS flag) and drives its output port to signal the FBAS event reception.
-The feedback channel from RX SCU to TX SCU is made of the LEMO cable connection: RX:IO1 to TX:IO2.
+RX SCU is configured to act on timing events (with MPS flag) and do the corresponding ECA to SCU bus slave transfer. Here only 16-bit part of the timing message is transferred to a SCU bus slave, which provides a dedicated IO register.
 
-The FBAS event is simulated by injecting a timing event TX SCU locally with **saft-ctl** tool.
-The required event configuration for RX/TX SCUs is done also with **saft-ecpu-ctl** and **saft-io-ctl** tools.
+The PC event on TX SCU is simulated by generating the PPS signal locally with **saft-ctl** tool.
+The required ECA configuration for RX/TX SCUs is done also with **saft-ecpu-ctl** and **saft-io-ctl** tools.
 
-All procedures of the test are scripted in 'test_ttf_nw_perf.sh'.
-To start a test with basic setup, invoke below command (in $HOME/fbas_test/tools):
+All procedures of the test are scripted in each test/measurement scripts.
 
-```
-./test_ttf_nw_perf.sh -v
-```
-
-Assume, another setup is built with two TX SCUs (TX1=scuxl0339 and TX2=scuxl0305) and a RX SCU (scuxl0411).
-The IO connection between RX and TX nodes via LEMO cable: RX:IO1 <===> TX1:IO2, RX:IO2 <===> TX2:IO2.
-For 'test_ttf_nw_perf.sh' the **order of TX nodes** should reflect the IO connection, otherwise the test run will return dubious measurement results:
+To start a test with basic setup, invoke a following command:
 
 ```
-./test_ttf_nw_perf.sh -v -y -t scuxl0329 -t scuxl0305 -r scuxl0411
+./test_ttf_nw_perf.sh -u root -e -y -v
+```
+
+To perform a test with other SCUs, specify the SCUs with -t (for TX) and -r (for RX) options:
+```
+./test_ttf_nw_perf.sh -u root -e -y -v -t scuxl0264 -t scuxl0305 -t scuxl0321 -t scuxl0329 -r scuxl0411
 ```
 
 ## 5. Q&A
