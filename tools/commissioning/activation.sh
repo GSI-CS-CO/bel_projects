@@ -297,7 +297,13 @@ func_flash_fpga()
     then
       func_check_usb_connection
       echo "Trying to flash the FPGA now ..."
-      eb-flash $USB_DEVICE $VETAR2A_RPD_FILE
+      # gateware with ASMI core (g_en_asmi) has no legacy flash controller -> eb-asmi
+      if eb-ls $USB_DEVICE | grep -aq "wb asmi parallel"
+      then
+        eb-asmi $USB_DEVICE -w $VETAR2A_RPD_FILE
+      else
+        eb-flash $USB_DEVICE $VETAR2A_RPD_FILE
+      fi
       RET=$?
       if [ $RET -ne 0 ]
       then

@@ -37,7 +37,7 @@ ifndef CONFIG_NO_ASSERT
 endif
 
 .PHONY: ram.ld buildid.c $(PATHPKG)/ramsize_pkg.vhd $(TARGET)_shared_mmap.h
-.PRECIOUS: $(TARGET).bin
+.PRECIOUS: $(TARGET).bin $(TARGET).opt
 
 include $(INCPATH)/build_lm32.mk
 
@@ -94,11 +94,12 @@ prog:
 	[ $$($(QUARTUS_BIN)/quartus_cpf --version | sed -ne 's/^Version \([0-9]*\).*$$/\1/p') -lt 13 ] || \
 		echo "IGNORE_EPCS_ID_CHECK=ON" >> $@.tmp
 	echo "BITSTREAM_COMPRESSION=ON" >> $@.tmp
+	echo "MEMORY_MAP_FILE=ON" >> $@.tmp
 	mv $@.tmp $@
 
 %.jic:	%.sof %.opt
 ifndef SKIP_JIC
-	$(QUARTUS_BIN)/quartus_cpf -c -o $*.opt -d $(FLASH) -s $(DEVICE) $< $@
+	$(QUARTUS_BIN)/quartus_cpf -c -o $*.opt -d $(FLASH) -m $(SPI_LANES) -s $(DEVICE) $< $@
 endif
 ifdef SKIP_JIC
 	echo "Skipping JIC file..."

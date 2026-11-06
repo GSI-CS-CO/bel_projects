@@ -179,7 +179,7 @@ begin
          busy          => busy,
          datain        => s_datain,
          data_valid    => data_valid,
-         dataout       => s_dataout,
+         dataout       => dataout,
          rdid_out      => s_rdid_out,
          status_out    => s_status_out,
          read_address  => s_read_addr(23 downto 0)
@@ -204,7 +204,7 @@ begin
         en4b_addr     => s_en4b,
         ex4b_addr     => s_ex4b,
         reset         => not rst_n_i,
-        dataout       => s_dataout,
+        dataout       => dataout,
         busy          => busy,
         data_valid    => data_valid,
         status_out    => s_status_out,
@@ -406,7 +406,8 @@ begin
               if (s_busy = '1' and (slave_i.adr(7 downto 0) /= BUSY_CHECK)) then
                 slave_o.err <= '1';
 
-              -- enable 4byte address mode
+              -- enable/disable 4byte address mode
+              -- wren needs to be enabled too
               elsif (slave_i.adr(7 downto 0) = SET_4BMODE) then
                 wb_state <= stall1;
                 slave_o.stall <= '1';
