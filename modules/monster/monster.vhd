@@ -2762,7 +2762,7 @@ end generate;
       msi_master_o => top_msi_slave_i (top_slaves'pos(tops_mbox)),
       msi_master_i => top_msi_slave_o (top_slaves'pos(tops_mbox)));
 
-  flash_a2 : if c_is_arria2 generate
+  flash_a2 : if c_is_arria2 and not g_en_asmi generate
     flash : flash_top
       generic map(
         g_family                 => "Arria II GX",
@@ -2782,7 +2782,7 @@ end generate;
         clk_in_i  => clk_flash_in);
   end generate;
 
-  flash_a5 : if c_is_arria5 generate
+  flash_a5 : if c_is_arria5 and not g_en_asmi generate
     flash : flash_top
       generic map(
         g_family                 => "Arria V",
@@ -2800,6 +2800,11 @@ end generate;
         clk_ext_i => clk_flash_ext,
         clk_out_i => clk_flash_ext,
         clk_in_i  => clk_flash_ext);
+  end generate;
+
+  -- Arria II/V with ASMI: legacy flash controller is not needed (see wb_asmi)
+  flash_a2_a5_n : if (c_is_arria2 or c_is_arria5) and g_en_asmi generate
+    dev_bus_master_i(dev_slaves'pos(devs_flash)) <= cc_dummy_slave_out;
   end generate;
 
   wb_reset : wb_arria_reset
