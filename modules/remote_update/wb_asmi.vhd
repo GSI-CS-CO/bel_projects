@@ -62,8 +62,10 @@ architecture arch of wb_asmi is
   signal  s_status_out    : std_logic_vector(7 downto 0);
 
 
-  type    t_wb_cyc  is (idle, stall1, stall2, busy_wait, read_valid, cycle_end, err, write_addr_ready, read_addr_ready, erase_stall);
+  type    t_wb_cyc  is (idle, stall1, stall2, busy_wait, read_valid, read_done, cycle_end, err, write_addr_ready, read_addr_ready, erase_stall);
   signal  wb_state      : t_wb_cyc;
+  signal  r_stall       : std_logic;  -- stall driven by the wb_cycle process
+  signal  s_read_hold   : std_logic;  -- holds off requests while a flash read runs
 
   signal  s_rden_ext    : std_logic;
   signal  s_read_ext    : std_logic;
@@ -259,14 +261,24 @@ begin
     empty_o => read_fifo_empty,
     full_o  => read_fifo_full);
 
-  fifo_rd: process(slave_i.cyc, slave_i.stb, read_fifo_empty, slave_i.adr)
-  begin
-    if slave_i.cyc = '1' and slave_i.stb = '1' and read_fifo_empty = '0' and slave_i.adr(7 downto 0) = FIFO_READ  and slave_i.we = '0' then
-      read_fifo_rd <= '1';
-    else
-      read_fifo_rd <= '0';
-    end if;
-  end process;
+  -- pop only when wb_cycle acks the FIFO_READ, so a stalled or rejected
+  -- request does not lose data
+  read_fifo_rd <= '1' when slave_i.cyc = '1' and slave_i.stb = '1' and
+                           wb_state = idle and s_busy = '0' and
+                           read_fifo_empty = '0' and slave_i.we = '0' and
+                           slave_i.adr(7 downto 0) = FIFO_READ and
+                           slave_i.sel(3 downto 0) = x"8" else
+                  '0';
+
+  -- During a flash read only BUSY_CHECK is answered. Stall everything else
+  -- until the read is done, instead of accepting it and never answering.
+  -- read_addr_ready lasts one cycle and answers nothing, so it stalls all.
+  s_read_hold <= '1' when wb_state = read_addr_ready else
+                 '1' when (wb_state = read_valid or wb_state = read_done) and
+                          slave_i.adr(7 downto 0) /= BUSY_CHECK else
+                 '0';
+
+  slave_o.stall <= r_stall or s_read_hold;
 
   crc_arriaII: if g_family = "Arria II" generate
     crc_in <= c_CRC32_INIT_VALUE when (s_first_word = '1' and read_fifo_we = '1') else
@@ -358,7 +370,7 @@ begin
         s_write_strobe  <= '0';
         s_read_strobe   <= '0';
         slave_o.ack     <= '0';
-        slave_o.stall   <= '0';
+        r_stall         <= '0';
         slave_o.err     <= '0';
         s_rdid          <= '0';
         s_read_status   <= '0';
@@ -378,7 +390,7 @@ begin
         s_write_strobe  <= '0';
         s_read_strobe   <= '0';
         slave_o.ack     <= '0';
-        slave_o.stall   <= '0';
+        r_stall         <= '0';
         slave_o.err     <= '0';
         s_rdid          <= '0';
         s_read_status   <= '0';
@@ -407,7 +419,7 @@ begin
               -- wren needs to be enabled too
               elsif (slave_i.adr(7 downto 0) = SET_4BMODE) then
                 wb_state <= stall1;
-                slave_o.stall <= '1';
+                r_stall <= '1';
                 if slave_i.we = '1' and slave_i.sel = x"f" then
                   if slave_i.dat(0) = '1' then
                     s_en4b <= '1';
@@ -420,7 +432,7 @@ begin
               -- read dummyclock 
               elsif (slave_i.adr(7 downto 0) = READ_DCLK) then
                 wb_state <= stall1;
-                slave_o.stall <= '1';
+                r_stall <= '1';
                 if slave_i.we = '1' and slave_i.sel = x"f" then
                   s_read_dclk <= '1';
                 end if;
@@ -428,7 +440,7 @@ begin
               -- read status from epcs
               elsif (slave_i.adr(7 downto 0) = READ_STATUS) then
                 wb_state      <= stall1;
-                slave_o.stall <= '1';
+                r_stall <= '1';
                 if slave_i.we = '0' then
                   s_read_status <= '1';
                 end if;
@@ -452,7 +464,7 @@ begin
               -- read memory capacity id from epcs
               elsif (slave_i.adr(7 downto 0) = READ_ID) then
                 wb_state      <= stall1;
-                slave_o.stall <= '1';
+                r_stall <= '1';
                 if slave_i.we = '0' then
                   s_rdid <= '1';
                 end if;
@@ -460,7 +472,7 @@ begin
               -- sector erase
               elsif (slave_i.adr(7 downto 0) = SECTOR_ERASE) then
                 wb_state      <= erase_stall;
-                slave_o.stall <= '1';
+                r_stall <= '1';
 
                 if slave_i.we = '1' then
                   if (slave_i.sel(3 downto 0) = x"f") then
@@ -473,7 +485,7 @@ begin
               -- bulk erase
               elsif (slave_i.adr(7 downto 0) = BULK_ERASE) then
                 wb_state      <= erase_stall;
-                slave_o.stall <= '1';
+                r_stall <= '1';
 
                 if slave_i.we = '1' then
                   if (slave_i.sel(3 downto 0) = x"f") then
@@ -525,7 +537,7 @@ begin
 
               -- write buffer to the flash
               elsif (slave_i.adr(7 downto 0) = WRITE_BUFFER) then
-                slave_o.stall <= '1';
+                r_stall <= '1';
                 if (slave_i.sel(3 downto 0) = x"f") and slave_i.we = '1' then
                   s_addr <= slave_i.dat(31 downto 0);
                   wb_state <= write_addr_ready;    
@@ -537,7 +549,6 @@ begin
               -- access to flash          
               elsif (slave_i.adr(7 downto 0) = FLASH_ACCESS) then
                 if slave_i.we = '0' then
-                  --slave_o.stall <= '1';
                   -- do not wait for busy going down
                   slave_o.ack <= '1';
                   wb_state <= read_addr_ready;
@@ -562,19 +573,17 @@ begin
           when read_addr_ready =>
             s_rden        <= '1';
             s_read        <= '1';
-            --slave_o.stall <= '1';
             wb_state      <= read_valid;
           
           -- write buffer to flash
           when write_addr_ready =>
             s_wren        <= '1';
             s_write       <= '1';
-            slave_o.stall <= '1';
+            r_stall <= '1';
             wb_state      <= stall1;
              
           -- multi byte read
           when read_valid =>
-            --slave_o.stall <= '1';
             s_rden        <= '1';
             if slave_i.cyc = '1' and slave_i.stb = '1' and slave_i.adr(7 downto 0) = BUSY_CHECK then
               slave_o.ack <= '1';
@@ -597,13 +606,26 @@ begin
               v_read_tmo := 0;
               s_byte_count := 0;
               s_word_count := 0;
+              wb_state <= read_done;
+            else
+              v_read_tmo := v_read_tmo + 1;
+            end if;
+
+          -- read is complete, wait until the core goes idle, otherwise a held
+          -- request would get an error from the busy check in idle
+          when read_done =>
+            if slave_i.cyc = '1' and slave_i.stb = '1' and slave_i.adr(7 downto 0) = BUSY_CHECK then
+              slave_o.ack <= '1';
+            end if;
+            if s_busy = '0' or v_read_tmo = TIMEOUT then
+              v_read_tmo := 0;
               wb_state <= idle;
             else
               v_read_tmo := v_read_tmo + 1;
             end if;
           
           when stall1 =>
-            slave_o.stall   <= '1';
+            r_stall   <= '1';
             if s_illegal_write = '1' or s_illegal_erase = '1' then
               wb_state <= err;
             else
@@ -611,7 +633,7 @@ begin
             end if;
 
           when stall2 =>
-            slave_o.stall   <= '1';
+            r_stall   <= '1';
             if s_illegal_write = '1' or s_illegal_erase = '1' then
               wb_state <= err;
             else
@@ -620,7 +642,7 @@ begin
 
 
           when erase_stall =>
-            slave_o.stall   <= '1';
+            r_stall   <= '1';
             if s_illegal_write = '1' or s_illegal_erase = '1' then
               wb_state <= err;
             else
@@ -629,7 +651,7 @@ begin
             end if;
           
           when busy_wait =>
-            slave_o.stall   <= '1';
+            r_stall   <= '1';
             if s_illegal_write = '1' or s_illegal_erase = '1' then
               wb_state <= err;
             elsif s_busy = '0' then
