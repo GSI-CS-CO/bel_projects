@@ -259,17 +259,33 @@ void read_asmi_crc(int slave_nr, unsigned int asmi_addr, unsigned int bytes_to_r
 void read_asmi_page(eb_data_t* page_buffer, int asmi_addr, eb_data_t* crc) {
   eb_status_t status;
   eb_data_t data;
+  eb_data_t cmd = 1;
   int i;
+
+  // crc reads leave their first bytes in the fifo, and reading an empty fifo
+  // returns a bus error, so stop at the first error
+  for(i = 0; i <= PAGE_SIZE; i++)
+    if (eb_device_read(device, wb_asmi_base + FIFO_READ, EB_BIG_ENDIAN|EB_DATA8, &data, 0, eb_block) != EB_OK)
+      break;
+
   if ((status = eb_cycle_open(device,0, eb_block, &cycle)) != EB_OK)
     die("EP eb_cycle_open", status);
 
   eb_cycle_write(cycle, wb_asmi_base + SET_READ_NUMBER, EB_BIG_ENDIAN|EB_DATA32, PAGE_SIZE);
   eb_cycle_write(cycle, wb_asmi_base + SET_ADDR, EB_BIG_ENDIAN|EB_DATA32, asmi_addr);
   eb_cycle_read(cycle, wb_asmi_base + FLASH_ACCESS, EB_BIG_ENDIAN|EB_DATA32, &data);
-  eb_cycle_read(cycle, wb_asmi_base + READ_CRC, EB_BIG_ENDIAN|EB_DATA32, crc);
 
   if ((status = eb_cycle_close(cycle)) != EB_OK)
     die("read data eb_cycle_close", status);
+
+  // wb_asmi only answers BUSY_CHECK while the flash read is running
+  while (cmd != 0) {
+    if ((status = eb_device_read(device, wb_asmi_base + BUSY_CHECK, EB_BIG_ENDIAN|EB_DATA32, &cmd, 0, eb_block)) != EB_OK)
+      die("reading BUSY_CHECK failed", status);
+  }
+
+  if ((status = eb_device_read(device, wb_asmi_base + READ_CRC, EB_BIG_ENDIAN|EB_DATA32, crc, 0, eb_block)) != EB_OK)
+    die("read crc failed", status);
 
   if ((status = eb_cycle_open(device,0, eb_block, &cycle)) != EB_OK)
     die("EP eb_cycle_open", status);
