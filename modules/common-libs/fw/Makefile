@@ -1,4 +1,4 @@
-TARGET		= example
+TARGET		= example2
 #PLATFPATH       = ../../../syn/gsi_exploder5/exploder5_csco_tr
 PLATFPATH       = ../../../syn/gsi_pexarria5/control
 #PLATFPATH       = ../../../syn/gsi_scu/control3
@@ -40,7 +40,7 @@ include ../../../syn/build.mk
 
 fwbin: $(TARGET).bin 
 
-$(TARGET).elf: $(PATHFW)/example.c $(PATHFW)/common-fwlib.c
+$(TARGET).elf: $(PATHFW)/example2.c $(PATHFW)/common-fwlib.c $(INCPATH)/ebm.c 
 
 clean::
 	rm -f $(PATHFW)/*.o $(PATHFW)/*.a $(PATHFW)/*.elf $(PATHFW)/*.bin
