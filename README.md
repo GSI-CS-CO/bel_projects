@@ -533,6 +533,16 @@ Mask: 0xFFFFFFFF
 
 Click "Auto Detect" and edit/change the unknown device to COOLRUNNER-II.
 
+Command line: the CPLD is device 1 and the FPGA is device 2 in the JTAG chain. Without a device index, `quartus_pgm`
+targets device 1 and fails with `Error (209015): Can't configure device. Expected JTAG ID code ... but found JTAG ID code 0x06...093`.
+Append `@2` to the file name to program the FPGA:
+
+```shell
+jtagconfig                                           # list the chain, check the CPLD ID (e.g. 0x06D48093 or 0x06E5D093)
+jtagconfig --define 0x06E5D093 COOLRUNNER-II 8       # only needed if the CPLD shows up as unknown device
+quartus_pgm -c 1 -m jtag -o "p;device.sof@2"         # configure the FPGA (volatile)
+```
+
 ### USB-Blaster Issues
 
 Error: quartus: USB-Blaster can't find FPGA [Ubuntu/Mint/...]
