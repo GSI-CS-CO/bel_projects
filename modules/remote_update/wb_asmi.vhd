@@ -573,6 +573,8 @@ begin
           when read_addr_ready =>
             s_rden        <= '1';
             s_read        <= '1';
+            s_word_count  := 0;
+            v_read_tmo    := 0;
             wb_state      <= read_valid;
           
           -- write buffer to flash
@@ -588,10 +590,13 @@ begin
             if slave_i.cyc = '1' and slave_i.stb = '1' and slave_i.adr(7 downto 0) = BUSY_CHECK then
               slave_o.ack <= '1';
             end if;
-            -- check if data valid ever comes
+            -- data valid stopped coming: end the read. The FLASH_ACCESS
+            -- request was acked at the start, so there is nothing to answer
+            -- with err. The short FIFO and the CRC show the failure.
             if v_read_tmo = TIMEOUT then
-              wb_state <= err;
               v_read_tmo := 0;
+              s_word_count := 0;
+              wb_state <= read_done;
             -- valid data on the output
             elsif s_data_valid = '1' then
               if s_word_count = 0 then
