@@ -552,13 +552,18 @@ begin
                   -- do not wait for busy going down
                   slave_o.ack <= '1';
                   wb_state <= read_addr_ready;
-                -- write to page buffer
+                -- write one byte to the page buffer. input_mux takes the byte
+                -- from the lane sel picks, so only a single lane is valid.
+                -- Refused bytes must not reach the core: a byte past the page
+                -- size would wrap around and overwrite the first one.
                 elsif slave_i.we = '1' then
-                  s_wren        <= '1';
-                  s_shift_bytes <= '1';
-                  if s_byte_count < PAGESIZE then
-                    slave_o.ack <= '1'; -- written to fifo
-                    s_byte_count := s_byte_count + 1;
+                  if s_byte_count < PAGESIZE and
+                     (slave_i.sel(3 downto 0) = x"1" or slave_i.sel(3 downto 0) = x"2" or
+                      slave_i.sel(3 downto 0) = x"4" or slave_i.sel(3 downto 0) = x"8") then
+                    s_wren        <= '1';
+                    s_shift_bytes <= '1';
+                    slave_o.ack   <= '1';
+                    s_byte_count  := s_byte_count + 1;
                   else
                     slave_o.err <= '1';
                   end if;
