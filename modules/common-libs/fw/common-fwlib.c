@@ -231,7 +231,8 @@ uint32_t findWRInfoUnit()
 {
   pWRInfo = find_device_adr(WR_INFO_VENDOR, WR_INFO_PRODUCT);
 
-  if (!pWRInfo) {DBPRINT1("common-fwlib: can't find WR info unit\n"); return COMMON_STATUS_ERROR;}
+  // find_device_adr returns ERROR_NOT_FOUND (not 0) if the device is missing (e.g. WR core v4.2)
+  if (!pWRInfo || (pWRInfo == (uint32_t *)ERROR_NOT_FOUND)) {pWRInfo = 0x0; DBPRINT3("common-fwlib: can't find WR info unit\n"); return COMMON_STATUS_ERROR;}
   else                                                      return COMMON_STATUS_OK;
 }
 
@@ -382,7 +383,7 @@ uint64_t fwlib_wrGetMac()  // get my own MAC
       macLo =  *(pEbm + (EBM_OWN_MAC_LO >> 2));           // own MAC low 4 bytes
     }
   }
-  else if (pWREp) {                                        // WR v4.2
+  else if (pWREp || (findWREp() == COMMON_STATUS_OK)) {   // WR v4.2; find endpoint if not yet done (e.g. before state S0)
     macHi = (*(pWREp + (WR_ENDPOINT_MACHI >> 2))) & 0xffff;
     macLo =  *(pWREp + (WR_ENDPOINT_MACLO >> 2));
   }
