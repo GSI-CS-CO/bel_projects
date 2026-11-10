@@ -124,6 +124,22 @@ void extern_clearDiag()
 } // clearDiag
 
 
+// print MAC and IP of this node
+void printNICData()
+{
+  uint64_t mac;
+  uint32_t ip;
+
+  mac = fwlib_wrGetMac();
+  ip  = fwlib_wrGetIP();
+  pp_printf("example: MAC %02x:%02x:%02x:%02x:%02x:%02x\n",
+            (unsigned int)((mac >> 40) & 0xff), (unsigned int)((mac >> 32) & 0xff), (unsigned int)((mac >> 24) & 0xff),
+            (unsigned int)((mac >> 16) & 0xff), (unsigned int)((mac >>  8) & 0xff), (unsigned int)( mac        & 0xff));
+  pp_printf("example: IP  %d.%d.%d.%d\n",
+            (int)((ip >> 24) & 0xff), (int)((ip >> 16) & 0xff), (int)((ip >> 8) & 0xff), (int)(ip & 0xff));
+} // printNICData
+
+
 // entry action configured state
 uint32_t extern_entryActionConfigured()
 {
@@ -204,6 +220,7 @@ int main(void) {
   initSharedMem(&sharedSize);                                          // initialize shared memory
   fwlib_init((uint32_t *)_startshared, cpuRamExternal, SHARED_OFFS, sharedSize, "example", EXAMPLE_FW_VERSION); // init common stuff
   fwlib_clearDiag();                                                   // clear common diagnostic data
+  printNICData();                                                      // print MAC and IP at boot
 
   while (1) {
     check_stack_fwid(buildID);                                         // check for stack corruption
