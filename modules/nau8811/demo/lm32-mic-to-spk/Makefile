@@ -16,6 +16,10 @@ CFLAGS				= -I$(MYPATH) -I$(NAU8811_FILES) \
 
 include $(BASE_DIR_PATH)/syn/build.mk
 
+# printf/sprintf/mprintf are only aliases of pp_printf/pp_sprintf (see ram.ld.S):
+# keep pp_printf/pp_sprintf despite --gc-sections and do not link the newlib versions
+LDFLAGS := -Wl,-u,pp_printf -Wl,-u,pp_sprintf -Wl,--defsym,printf=pp_printf -Wl,--defsym,sprintf=pp_sprintf $(LDFLAGS)
+
 $(TARGET).elf: $(MYPATH)/main.c $(INCPATH)/ebm.c $(NAU8811_FILES)/nau8811_audio_driver.c
 
 clean::
