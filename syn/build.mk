@@ -38,7 +38,6 @@ CFLAGS	+= 	-mmultiply-enabled -mbarrel-shift-enabled -Os \
 	-std=gnu99 \
 	-DCONFIG_WR_NODE \
 	-DCONFIG_PRINT_BUFSIZE=128 \
-	-DCONFIG_PRINTF_64BIT \
 	-DSDBFS_BIG_ENDIAN
 
 CFLAGS += -ffunction-sections -fdata-sections -Wl,--gc-sections
