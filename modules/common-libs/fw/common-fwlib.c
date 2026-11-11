@@ -385,7 +385,7 @@ uint64_t fwlib_wrGetMac()  // get my own MAC
       macLo =  *(pEbm + (EBM_OWN_MAC_LO >> 2));           // own MAC low 4 bytes
     }
   }
-  else if (pWREp || (findWREp() == COMMON_STATUS_OK)) {   // WR v4.2; find endpoint if not yet done (e.g. before state S0)
+  else if (((pWREp != 0x0) && (pWREp != ERROR_INVALID_ADDR)) || (findWREp() == COMMON_STATUS_OK)) { // WR v4.2; find endpoint if not yet done (e.g. before state S0)
     macHi = (*(pWREp + (WR_ENDPOINT_MACHI >> 2))) & 0xffff;
     macLo =  *(pWREp + (WR_ENDPOINT_MACLO >> 2));
   }
