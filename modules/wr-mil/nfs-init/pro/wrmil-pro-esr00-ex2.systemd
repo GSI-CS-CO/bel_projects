@@ -1,0 +1,8 @@
+# local WR-MIL gateway for ESR at HITRAP
+# yocto
+SERVICEA=wrmil-servmon-pro-esr00.service
+cp -a $MOUNTPOINT/systemd/$SERVICEA /lib/systemd/system
+systemctl daemon-reload
+
+systemctl start $SERVICEA
+
