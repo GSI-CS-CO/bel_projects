@@ -125,7 +125,8 @@ int comlib_readDiag(eb_device_t device,                // Etherbone device
 // read (and print) diagnostic data, returns eb_status, new routine
 int comlib_readDiag2(eb_device_t   device,             // Etherbone device
                      uint32_t      *state,             // state
-                     uint32_t      *version,           // firmware version
+                     uint32_t      *fwVersion,         // firmware version
+                     uint32_t      *gwVersion,         // gateware version
                      uint64_t      *statusArray,       // array with status bits
                      comlib_diag_t *diagData,          // diagnostic data
                      int            printFlag          // '1' print information to stdout
@@ -134,8 +135,8 @@ int comlib_readDiag2(eb_device_t   device,             // Etherbone device
 // prints diagnostic data, ABI compatibiliy wrapper
 void comlib_printDiag(uint64_t  statusArray,           // array with status bits                                                                                                                        
                       uint32_t  state,                 // state                                                                                                                                         
-                      uint32_t  version,               // firmware version                                                                                                                              
-                      uint64_t  mac,                   // WR MAC                                                                                                                                        
+                      uint32_t  version,               // fw version
+                      uint64_t  mac,                   // WR MAC
                       uint32_t  ip,                    // WR IP                                                                                                                                         
                       uint32_t  nBadStatus,            // # of bad status incidents                                                                                                                     
                       uint32_t  nBadState,             // # of bad state incidents                                                                                                                      
@@ -152,7 +153,8 @@ void comlib_printDiag(uint64_t  statusArray,           // array with status bits
 
 // prints diagnostic data, new routine
 void comlib_printDiag2(uint32_t      state,            // state
-                       uint32_t      version,          // firmware version
+                       uint32_t      fwVersion,        // firmware version
+                       uint32_t      gwVersion,        // gateware version
                        uint64_t      statusArray,      // array with status bits
                        comlib_diag_t diagData          // diagnostic data
                        );

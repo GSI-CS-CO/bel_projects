@@ -1,4 +1,4 @@
-TARGET		= example2
+TARGET		?= example
 #PLATFPATH       = ../../../syn/gsi_exploder5/exploder5_csco_tr
 PLATFPATH       = ../../../syn/gsi_pexarria5/control
 #PLATFPATH       = ../../../syn/gsi_scu/control3
@@ -12,7 +12,7 @@ RAM_SIZE        := $(shell cat 	$(PLATFMAKEFILE) | grep -m1 RAM_SIZE  | cut -d'=
 
 SHARED_SIZE    	?= 4K
 USRCPUCLK      	?= 125000
-VERSION  	= 00.00.05
+VERSION  	= 00.00.06
 
 .DEFAULT_GOAL	:= fwbin
 
@@ -40,7 +40,8 @@ include ../../../syn/build.mk
 
 fwbin: $(TARGET).bin 
 
-$(TARGET).elf: $(PATHFW)/example2.c $(PATHFW)/common-fwlib.c $(INCPATH)/ebm.c 
+example.elf: 	$(PATHFW)/example.c $(PATHFW)/common-fwlib.c $(INCPATH)/ebm.c 
+example2.elf: 	$(PATHFW)/example2.c $(PATHFW)/common-fwlib.c $(INCPATH)/ebm.c 
 
 clean::
 	rm -f $(PATHFW)/*.o $(PATHFW)/*.a $(PATHFW)/*.elf $(PATHFW)/*.bin

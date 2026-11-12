@@ -74,6 +74,9 @@ typedef union {                                // easier copying of bytes float 
 
 // other
 #define COMMON_TIMMSG_LEN                 8    // length of timing message [32bit words]
+#define COMMON_GWVER_INVALID              0xdeadbeef
+#define COMMON_GWVER_FALLOUT              0x0006fa11
+#define COMMON_GWVER_GOOSEV0              0x00070000
 
 // ****************************************************************************************
 // DP RAM
@@ -117,8 +120,8 @@ typedef union {                                // easier copying of bytes float 
 #define COMMON_SHARED_OFFSDONE        (COMMON_SHARED_COMLATENCYMIN  + _32b_SIZE_)         // offset event deadline to time when we are done [ns]
 #define COMMON_SHARED_OFFSDONEMAX     (COMMON_SHARED_OFFSDONE       + _32b_SIZE_)         // offset event deadline to time when we are done [ns]; max
 #define COMMON_SHARED_OFFSDONEMIN     (COMMON_SHARED_OFFSDONEMAX    + _32b_SIZE_)         // offset event deadline to time when we are done [ns]; min
-#define COMMON_SHARED_RESERVED1       (COMMON_SHARED_OFFSDONEMIN    + _32b_SIZE_)         // reserved
-#define COMMON_SHARED_RESERVED2       (COMMON_SHARED_RESERVED1      + _32b_SIZE_)         // reserved
+#define COMMON_SHARED_GWVERSION       (COMMON_SHARED_OFFSDONEMIN    + _32b_SIZE_)         // reserved
+#define COMMON_SHARED_RESERVED2       (COMMON_SHARED_GWVERSION      + _32b_SIZE_)         // reserved
 #define COMMON_SHARED_RESERVED3       (COMMON_SHARED_RESERVED2      + _32b_SIZE_)         // reserved
 #define COMMON_SHARED_RESERVED4       (COMMON_SHARED_RESERVED3      + _32b_SIZE_)         // reserved
 #define COMMON_SHARED_DATA_4EB        (COMMON_SHARED_RESERVED4      + _32b_SIZE_)         // shared area for EB return values
