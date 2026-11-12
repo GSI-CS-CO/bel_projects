@@ -3,9 +3,9 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-Jan-2026
+ *  version : 12-nov-2026
  *
- * common x86 routines for firmware
+ * common x86 routines for firmware communication
  *
  * -------------------------------------------------------------------------------------------
  * License Agreement for this software:
@@ -37,7 +37,7 @@
 #ifndef _COMMON_LIB_H_
 #define _COMMON_LIB_H_
 
-#define COMMON_LIB_VERSION "0.05.05"
+#define COMMON_LIB_VERSION "0.05.06"
 
 #include <etherbone.h>
 
