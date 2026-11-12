@@ -18,6 +18,7 @@
  * assembly versions such as arch/ppc/lib/div64.S and arch/sh/lib/div64.S.
  */
 #include <stdint.h>
+#include "util.h"
 
 uint32_t __div64_32(uint64_t *n, uint32_t base)
 {

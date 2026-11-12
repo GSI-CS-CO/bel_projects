@@ -182,7 +182,7 @@ static char *number(char *buf, NUMBER_TYPE num, int base, int size, int precisio
 	return buf;
 }
 
-static char *string(char *buf, char *s, int field_width, int precision, int flags)
+static char *string(char *buf, const char *s, int field_width, int precision, int flags)
 {
 	int len, i;
 

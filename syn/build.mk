@@ -38,7 +38,6 @@ CFLAGS	+= 	-mmultiply-enabled -mbarrel-shift-enabled -Os \
 	-std=gnu99 \
 	-DCONFIG_WR_NODE \
 	-DCONFIG_PRINT_BUFSIZE=128 \
-	-DCONFIG_PRINTF_64BIT \
 	-DSDBFS_BIG_ENDIAN
 
 CFLAGS += -ffunction-sections -fdata-sections -Wl,--gc-sections
@@ -47,7 +46,7 @@ STUBD	?= $(TOP)/modules/lm32_stub
 STUBS	?= $(STUBD)/stubs.c $(STUBD)/crt0.S
 INCLUDES  += $(WRPC_IMPORT)/uart.c $(WRPC_IMPORT)/vsprintf-full.c $(WRPC_IMPORT)/div64.c $(WRPC_IMPORT)/printf.c \
 		$(INCPATH)/dbg.c $(INCPATH)/aux.c $(INCPATH)/irq.c $(INCPATH)/mini_sdb.c $(INCPATH)/sdb_add.c $(INCPATH)/assert.c \
-		$(INCPATH)/stack-check.c $(WRPC_IMPORT)/dev/w1-hw.c $(WRPC_IMPORT)/dev/w1.c $(WRPC_IMPORT)/dev/w1-temp.c
+		$(INCPATH)/stack-check.c
 LDFLAGS		?= -nostdlib -T ram.ld -lgcc -lc
 
 ifndef RAM_SIZE
