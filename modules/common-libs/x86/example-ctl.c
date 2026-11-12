@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 02-jan-2026
+ *  version : 12-nov-2026
  *
  *  command-line interface for example firmware
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  *********************************************************************************************/
-#define EXAMPLE_X86_VERSION  "00.00.05"
+#define EXAMPLE_X86_VERSION  "00.00.06"
 
 // standard includes 
 #include <unistd.h> // getopt

@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 03-jul-2026
+ *  version : 12-nov-2026
  *
  *  lm32 example program using common libraries
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define EXAMPLE_FW_VERSION 0x000005                                     // make this consistent with makefile
+#define EXAMPLE_FW_VERSION 0x000006                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -220,7 +220,12 @@ int main(void) {
   initSharedMem(&sharedSize);                                          // initialize shared memory
   fwlib_init((uint32_t *)_startshared, cpuRamExternal, SHARED_OFFS, sharedSize, "example", EXAMPLE_FW_VERSION); // init common stuff
   fwlib_clearDiag();                                                   // clear common diagnostic data
-  printNICData();                                                      // print MAC and IP at boot
+
+  /* important: don't add own code here as the state machine is not initialized!!! 
+   * there are two options
+   * 1) do things right: a) enter your code in doActionOperation() and b) use example-ctl to transit to state OpReady
+   * 2) hackish: enter your code below '... insert code here ...' further down
+   */
 
   while (1) {
     check_stack_fwid(buildID);                                         // check for stack corruption

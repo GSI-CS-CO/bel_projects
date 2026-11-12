@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 03-Jul-2026
+ *  version : 12-nov-2026
  *
  *  common functions used by various firmware projects
  *
@@ -80,7 +80,8 @@ volatile uint32_t *pSbMaster;           // WB address of SCU bus master
 volatile uint32_t *pWRInfo;             // WB address of WR info unit
 
 // global variables
-uint32_t *pSharedVersion;               // pointer to a "user defined" u32 register; here: publish version
+uint32_t *pSharedFwVersion;             // pointer to a "user defined" u32 register; here: publish firmware version
+uint32_t *pSharedGwVersion;             // pointer to a "user defined" u32 register; here: publish gateware version
 uint32_t *pSharedStatusArrayLo;         // pointer to a "user defined" u32 register; here: publish OR of all (actual) error bits; low word
 uint32_t *pSharedStatusArrayHi;         // pointer to a "user defined" u32 register; here: publish OR of all (actual) error bits; high word
 uint32_t *pSharedNBadStatus;            // pointer to a "user defined" u32 register; here: publish # of bad status (=error) incidents
@@ -377,18 +378,27 @@ uint64_t fwlib_wrGetMac()  // get my own MAC
   uint32_t macHi, macLo;
   uint64_t mac;
 
-  // get MAC address from EB master (starting from WR v5), otherwise get from Endpoint (WR v4.2)
-  macHi = macLo = 0;
-  if (findWRInfoUnit() == COMMON_STATUS_OK) {             // WR v5
-    if (pEbm) {
-      macHi = (*(pEbm + (EBM_OWN_MAC_HI >> 2))) & 0xffff; // own MAC high 2 bytes
-      macLo =  *(pEbm + (EBM_OWN_MAC_LO >> 2));           // own MAC low 4 bytes
-    }
-  }
-  else if (((pWREp != 0x0) && (pWREp != ERROR_INVALID_ADDR)) || (findWREp() == COMMON_STATUS_OK)) { // WR v4.2; find endpoint if not yet done (e.g. before state S0)
-    macHi = (*(pWREp + (WR_ENDPOINT_MACHI >> 2))) & 0xffff;
-    macLo =  *(pWREp + (WR_ENDPOINT_MACLO >> 2));
-  }
+  macHi = 0x0;
+  macLo = 0x0;
+
+  // read MAC address from gateware
+  
+  switch (fwlib_getGwVersion()) {
+    case COMMON_GWVER_FALLOUT :
+      if (pWREp) {
+        macHi = (*(pWREp + (WR_ENDPOINT_MACHI >> 2))) & 0xffff;
+        macLo =  *(pWREp + (WR_ENDPOINT_MACLO >> 2));
+      } // if pWRep
+      break;
+    case COMMON_GWVER_GOOSEV0 :
+      if (pEbm) {
+        macHi = (*(pEbm + (EBM_OWN_MAC_HI >> 2))) & 0xffff; // own MAC high 2 bytes
+        macLo =  *(pEbm + (EBM_OWN_MAC_LO >> 2));           // own MAC low 4 bytes
+      } // if pEbm
+      break;
+    default :
+      break;
+  } // switch gw version
 
   mac = macHi;
   mac = (mac << 32);
@@ -397,23 +407,27 @@ uint64_t fwlib_wrGetMac()  // get my own MAC
   return mac;
 } // fwlib_wrGetMac
 
+
 uint32_t fwlib_wrGetIP()  // get my own IP
 {
   uint32_t ip;
 
-  // get IP address from EB master (starting from WR v5), otherwise get from EtherBone config (WR v4.2)
   ip = EBC_DEFAULT_IP;
-  if (findWRInfoUnit() == COMMON_STATUS_OK) {             // WR v5
-    if (pEbm) {
-      ip = (*(pEbm + (EBM_OWN_IP >> 2)));
-    }
-  }
-  else if (pEbCfg) {                                      // WR v4.2 (or legacy)
-    ip  = *(pEbCfg + (EBC_SRC_IP >> 2));
-  }
 
+  // read IP address from gateware
+  switch (fwlib_getGwVersion()) {
+    case COMMON_GWVER_FALLOUT :
+      if (pEbCfg) ip = *(pEbCfg + (EBC_SRC_IP >> 2));
+      break;
+    case COMMON_GWVER_GOOSEV0 :
+      if (pEbm)   ip = (*(pEbm  + (EBM_OWN_IP >> 2)));
+      break;
+    default :
+      break;
+  } // switch gw version      
   return ip;
-}
+} // fwlib_wrGetIp
+
 
 uint32_t fwlib_ioCtrlSetGate(uint32_t enable, uint32_t io)  // set gate of LVDS input
 {
@@ -652,11 +666,30 @@ void fwlib_publishSharedSize(uint32_t size)
 } // fwlib_publishSharedInfo
 
 
+uint32_t fwlib_getGwVersion()
+{
+  static uint32_t version = COMMON_GWVER_INVALID;
+
+  // this implementation is hackish
+  // in the future a more general solution shall be used - assumption:
+  // the reset controller provides a register with gw version number - to be implemented
+
+  if (version == COMMON_GWVER_INVALID) {
+    if      (findWRInfoUnit() == COMMON_STATUS_OK) version = COMMON_GWVER_GOOSEV0;  // goose v0 
+    else if (findWREp()       == COMMON_STATUS_OK) version = COMMON_GWVER_FALLOUT;  // old stuff
+    else version = COMMON_GWVER_INVALID;
+  } // if invalid
+  
+  return version; 
+} // fwlib_getGwVersion
+
+
 void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t sharedOffs, uint32_t sharedSize, char * name, uint32_t fwVersion) // determine address and clear shared mem
 {
   uint32_t *pSharedTemp;
   uint32_t *pShared;
   uint32_t commonSharedSize;
+  uint32_t gwVersion;
   int      i;
 
   // set pointer to shared memory
@@ -667,7 +700,7 @@ void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t shared
   else                DBPRINT1("common-fwlib: ERROR cpuRamExternal undefined\n");
 
   // get address to data
-  pSharedVersion          = (uint32_t *)(pShared + (COMMON_SHARED_VERSION >> 2));
+  pSharedFwVersion        = (uint32_t *)(pShared + (COMMON_SHARED_VERSION >> 2));
   pSharedStatusArrayHi    = (uint32_t *)(pShared + (COMMON_SHARED_STATUSHI >> 2));
   pSharedStatusArrayLo    = (uint32_t *)(pShared + (COMMON_SHARED_STATUSLO >> 2));
   pSharedCmd              = (uint32_t *)(pShared + (COMMON_SHARED_CMD >> 2));
@@ -699,6 +732,7 @@ void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t shared
   pSharedOffsDone         = (uint32_t *)(pShared + (COMMON_SHARED_OFFSDONE >> 2));
   pSharedOffsDoneMax      = (uint32_t *)(pShared + (COMMON_SHARED_OFFSDONEMAX >> 2));
   pSharedOffsDoneMin      = (uint32_t *)(pShared + (COMMON_SHARED_OFFSDONEMIN >> 2));
+  pSharedGwVersion        = (uint32_t *)(pShared + (COMMON_SHARED_GWVERSION >> 2));
   pSharedUsedSize         = (uint32_t *)(pShared + (COMMON_SHARED_USEDSIZE >> 2));
 
   // clear shared mem
@@ -710,19 +744,23 @@ void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t shared
     i++;
   } // while pSharedTemp
 
-  fwlib_publishSharedSize(sharedSize);                              // set shared size total
+  fwlib_publishSharedSize(sharedSize);                             // set shared size total
   commonSharedSize   = (uint32_t)(pSharedTemp - pShared) << 2;     // calc shared size common
+
+  gwVersion          = fwlib_getGwVersion();
 
   // basic info to wr console
   DBPRINT1("\n");
-  DBPRINT1("common-fwlib: ***** firmware %s v%06x started from scratch *****\n", name, (unsigned int)fwVersion);
+  DBPRINT1("common-fwlib: gateware v0x%06x detected\n", (unsigned int)gwVersion);
+  DBPRINT1("common-fwlib: ***** firmware %s v0x%06x started from scratch *****\n", name, (unsigned int)fwVersion);
   DBPRINT1("common-fwlib: fwlib_init, shared size [bytes], common part %d, total %d\n", commonSharedSize, sharedSize);
   DBPRINT1("common-fwlib: cpuRamExternal 0x%08x,  cpuRamExternalData4EB 0x%08x\n", cpuRamExternal, cpuRamExternalData4EB);
   DBPRINT1("\n");
 
   // set initial values;
   ebmClearSharedMem();
-  *pSharedVersion      = fwVersion; // of all the shared variables, only VERSION is a constant. Set it now!
+  *pSharedFwVersion    = fwVersion;           // of all the shared variables, only VERSION is a constant. Set it now!
+  *pSharedGwVersion    = gwVersion;           // assume GW version is constant too :-)
   *pSharedNBadStatus   = 0;
   *pSharedNBadState    = 0;
   flagRecover          = 0;
@@ -933,10 +971,22 @@ uint32_t fwlib_doActionS0()
   uint32_t status = COMMON_STATUS_OK;
   uint64_t now;
 
-  if (findECAQueue() != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
-  if (findPPSGen()   != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
-  if (findWREp()     != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
-  if (findIOCtrl()   != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
+  // all gatewares must have the following
+  if (findECAQueue()       != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
+  if (findIOCtrl()         != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
+
+  switch (fwlib_getGwVersion()) {
+    case COMMON_GWVER_FALLOUT :
+      if (findPPSGen()     != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
+      if (findWREp()       != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
+      break;
+    case COMMON_GWVER_GOOSEV0 :
+      if (findWRInfoUnit() != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
+      break;
+    default :
+      break;
+  } // switch
+
   findOLED();       // ignore error; not every TR has OLED device
   findMILPiggy();   // ignore error; not every TR has a MIL piggy
   findSbMaster();   // ignore error; not every TR has SCU bus master

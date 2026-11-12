@@ -1,6 +1,8 @@
 #ifndef _COMMON_FWLIB_
 #define _COMMON_FWLIB_
 
+#include <common-core.h>
+
 // typedef for treating sub-ns timestamps within the b2b firmware
 // the picosecond part may exceed +-1000, but it is recommended to
 // use fwlib_cleanB2bt for alignment 
@@ -112,6 +114,9 @@ void fwlib_init(uint32_t *startShared,                // start of shared section
 // publish (used) size of shared memory
 void fwlib_publishSharedSize(uint32_t size            // used size of shared memory
                              );
+
+// get version of gateware
+uint32_t fwlib_getGwVersion();
 
 // init stuff for handling commands, trivial for now, will be extended
 void fwlib_initCmds();
