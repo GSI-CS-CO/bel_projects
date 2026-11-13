@@ -8,7 +8,7 @@
 // the picosecond part may exceed +-1000, but it is recommended to
 // use fwlib_cleanB2bt for alignment 
 typedef struct{                                      
-  uint64_t ns;                                        // full nanoseconds of time
+  int64_t  ns;                                        // full nanoseconds of time; chk: changed to signed int to allow for negative values
   int32_t  ps;                                        // ps fraction of time, should be positive
   uint32_t dps;                                       // uncertainty [ps]
 } b2bt_t;

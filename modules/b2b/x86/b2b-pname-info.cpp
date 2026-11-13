@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Michael Reese, Dietrich Beck GSI-Darmstadt
- *  version : 22-oct-2026
+ *  version : 13-nov-2026
  *
  * a hackish solution providing pattern name information for relevant Sequence IDs
  *
@@ -114,7 +114,7 @@ struct PatternNameService {
 			std::fill(buffers[sid].begin(), buffers[sid].end(), '\0');
 			// build a SID search string, e.g. "S=10"
 			std::ostringstream sid_str;
-			sid_str << sid_prefix << sid;
+			sid_str << sid_prefix << sid << ":";   // terminate, otherwise "S=1" matches "S=10"..."S=15"
 			// go through the script_output line-by-line
 			std::istringstream in(script_output);
 			std::string line;

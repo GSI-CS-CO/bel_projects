@@ -133,6 +133,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   if ((sid < 0) || (sid >= B2B_NSID)) return;
   if (!flagSetValid[sid])             return;
   flagGetValid[sid] = (*size != sizeof(uint32_t));
+  if (!flagGetValid[sid])             return;
   
   strftime(tCBS, 52, "%d-%b-%Y_%H:%M:%S", gmtime(&(utc_secs[sid])));
 
@@ -303,7 +304,7 @@ int main(int argc, char** argv) {
         break;
       case 'f' :
         tmp = strtok(optarg, " ");
-        if (strlen(tmp) == 0) {
+        if ((tmp == NULL) || (strlen(tmp) == 0)) {
           fprintf(stderr, "Specify a proper name, not '%s'!\n", optarg);
           exit(1);
         } // if strlen

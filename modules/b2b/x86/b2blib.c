@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 15-oct-2026
+ *  version : 13-nov-2026
  *
  * library for b2b
  *
@@ -41,6 +41,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <math.h>
+#include <inttypes.h>
 
 // etherbone
 #include <etherbone.h>
@@ -232,6 +233,7 @@ void b2b_debug(uint32_t flagDebug)
   else {
     b2b_flagDebug = 0;
     if (logfile) fclose(logfile);
+    logfile = NULL;
   } // else flagdebug
 } // b2b_debug
 
@@ -272,6 +274,7 @@ uint32_t b2b_calc_max_sysdev_ps(uint64_t TH1_as, uint32_t nSamples, uint32_t pri
   TH1_fs = TH1_as / 1000;
   
   // ommit 1st timestamp
+  if (nSamples < 2) return 0;                     // avoid division by zero below
   nSamples--;
   
   dSysMax = 0.0;
@@ -563,7 +566,6 @@ uint32_t b2b_context_ext_upload(uint64_t ebDevice, uint32_t sid, uint32_t gid, u
   sprintf(buff, "ext_upload: sid %u, gid %u, mode %u, fineTune %u, mbTune %u, cTrig %f", sid, gid, mode, fFineTune, fMBTune, cTrig);
   // b2b_log("ext upload start");
   
-  if (!ebDevice) return COMMON_STATUS_EB;
 
   // convert GID of extraction ring to GID of B2B transfer (assuming simple extraction)
   switch(gid) {
@@ -584,8 +586,8 @@ uint32_t b2b_context_ext_upload(uint64_t ebDevice, uint32_t sid, uint32_t gid, u
       break;
   } // switch gid
   if (gidExt == GID_INVALID) return COMMON_STATUS_OUTOFRANGE;
-
-  /* chk more range checking */
+  if (!(nueH1 > 0.0))        return COMMON_STATUS_OUTOFRANGE;
+  if (!ebDevice)             return COMMON_STATUS_EB;
 
   // convert frequency [Hz] to period [as]
   if (fNueConv) TH1 = (double)1000000000000000000.0 / b2b_flsa2fdds(nueH1);
@@ -631,8 +633,6 @@ uint32_t b2b_context_inj_upload(uint64_t ebDevice, uint32_t sidExt, uint32_t gid
   fdat_t       tmp;
 
   //b2b_log("inj_upload start");
-  
-  if (!ebDevice) return COMMON_STATUS_EB;
 
   // convert GID of injection ring to GID 'offset' of B2B transfer (assuming transfer ring-ring)
   switch(gid) {
@@ -647,16 +647,16 @@ uint32_t b2b_context_inj_upload(uint64_t ebDevice, uint32_t sidExt, uint32_t gid
       break;
   } // switch gid
   if (gidInj == GID_INVALID) return COMMON_STATUS_OUTOFRANGE;
-
-  /* chk more range checking */
+  if (!(nueH1 > 0.0))        return COMMON_STATUS_OUTOFRANGE;
+  if (!ebDevice)             return COMMON_STATUS_EB;
 
   // convert frequency [Hz] to period [as]
   if (fNueConv) TH1 = (double)1000000000000000000.0 / b2b_flsa2fdds(nueH1);
   else          TH1 = (double)1000000000000000000.0 / nueH1;
 
   // parameter field
-   paramHi = (uint32_t)((param >> 32) & 0xffffffff);
-   paramLo = (uint32_t)( param & 0xfffffff);
+  paramHi = (uint32_t)((param >> 32) & 0xffffffff); 
+  paramLo = (uint32_t)( param        & 0xffffffff); // chk, mask was 0xfffffff
   // hack: swap high/loword
   /*paramHi = (uint32_t)( param & 0xfffffff);
     paramLo = (uint32_t)((param >> 32) & 0xffffffff);*/
@@ -677,7 +677,7 @@ uint32_t b2b_context_inj_upload(uint64_t ebDevice, uint32_t sidExt, uint32_t gid
   eb_cycle_write(eb_cycle, b2b_set_nBuckInj,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)((uint32_t)nBucket));
   if ((eb_status = eb_cycle_close(eb_cycle)) != EB_OK) return COMMON_STATUS_EB;
 
-  sprintf(buff, "inj_upload: sidExt %u, gid %u, sid %u, bpid %u, paramHi %u, paramLo %u, param 0x%lx", sidExt, gid, sid, bpid, paramHi, paramLo, param);
+  sprintf(buff, "inj_upload: sidExt %u, gid %u, sid %u, bpid %u, paramHi %u, paramLo %u, param 0x%" PRIx64, sidExt, gid, sid, bpid, paramHi, paramLo, param);
   b2b_log(buff);
   
   return COMMON_STATUS_OK;

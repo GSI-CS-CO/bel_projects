@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 05-jan-2026
+ *  version : 13-nov-2026
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -149,7 +149,7 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
     *reqState = COMMON_STATE_FATAL;
     DBPRINT1("b2b-pm: fatal error - did not find THIS CPU!\n");
   } // if idx
-  else cpuRamExternal = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
+  else if (idx > cpuId) cpuRamExternal = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
 
   DBPRINT2("b2b-pm: CPU RAM external 0x%8x, shared offset 0x%08x\n", cpuRamExternal, SHARED_OFFS);
   DBPRINT2("b2b-pm: fw common shared begin   0x%08x\n", pShared);
@@ -287,7 +287,7 @@ int32_t phaseFitAverage(uint64_t TH1_as, uint32_t nSamples, b2bt_t *phase_t) {
   int64_t  max_deviation_as;                // maximum of all deviations [as]
   int64_t  min_deviation_as;                // minimum of all deviations [as]
   int64_t  subnsfit_dev_as;                 // sub-ns-fit deviation [as]
-  uint32_t window_as;                       // window given by max and min deviation
+  uint64_t window_as;                       // window given by max and min deviation
   b2bt_t   ts_t;                            // timestamp [ps]
   int      nGood;                           // number of good timestamps
 
@@ -348,12 +348,12 @@ int32_t phaseFitAverage(uint64_t TH1_as, uint32_t nSamples, b2bt_t *phase_t) {
   // calculate average and max-min window
   ave_deviation_as = sum_deviation_as / nGood;
   subnsfit_dev_as  = (max_deviation_as + min_deviation_as) >> 1; 
-  window_as        = (uint32_t)(max_deviation_as - min_deviation_as);
+  window_as        = (uint64_t)(max_deviation_as - min_deviation_as);
   // calculate a phasmax_deviation_as + me value and convert to ps
   ts_t.ns          = tFirst_ns;
   if (B2B_FW_USESUBNSFIT) ts_t.ps = subnsfit_dev_as  / 1000000;  // sub-ns fit
   else                    ts_t.ps = ave_deviation_as / 1000000;  // average fit
-  ts_t.dps         = window_as >> 20;                // cheap division by 1000000
+  ts_t.dps         = (uint32_t)(window_as >> 20);    // cheap division by 1000000
   *phase_t         = fwlib_cleanB2bt(ts_t);
 
   //pp_printf("nSamples %d, nGood %d, correction [ps] %d, dt [ps] %d\n", nSamples, nGood, ts_t.ps, ts_t.dps);
@@ -647,7 +647,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       acquireTimestamps(tStamp, nSamples, &nInput, TMeas_us, 2, B2B_ECADO_TLUINPUT3);
       //pp_printf("nInput %d \n", nInput);
       // find closest timestamp
-      if (nInput > 2) {
+      if ((nInput > 2) && !flagPMError) {                             // reference phase must be valid
         insertionSort(tStamp, nInput);                                // need at least two timestamps
         if (phaseFit(TH1_as, nInput, &tH1Phase_t) == COMMON_STATUS_OK) {
           dtPhase_as   = (tH1Phase_t.ns - tH1_t.ns) * 1000000000;     // difference [as]

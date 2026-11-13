@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 04-Mar-2025
+ *  version : 13-nov-2026
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -127,7 +127,7 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
     *reqState = COMMON_STATE_FATAL;
     DBPRINT1("b2b-pmstub: fatal error - did not find THIS CPU!\n");
   } // if idx
-  else cpuRamExternal           = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
+  else if (idx > cpuId) cpuRamExternal = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
   
   DBPRINT2("b2b-pmstub: CPU RAM external 0x%8x, shared offset 0x%08x\n", cpuRamExternal, SHARED_OFFS);
   DBPRINT2("b2b-pmstub: fw common shared begin   0x%08x\n", pShared);
@@ -330,10 +330,10 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     case B2B_ECADO_B2B_PMINJ :
       if (!sendEvtNo) sendEvtNo = B2B_ECADO_B2B_PRINJ;
 
-      *pSharedGetTH1Hi = (uint32_t)((recParam >> 32) & 0x00ffffff);   // lower 56 bit used as period
+      *pSharedGetTH1Hi = (uint32_t)((recParam >> 32) & 0x000fffff);   // lower 52 bit used as period
       *pSharedGetTH1Lo = (uint32_t)( recParam        & 0xffffffff);
       *pSharedGetNH    = (uint32_t)((recParam>> 56)  & 0xff      );   // upper 8 bit used as harmonic number
-      TH1_as           = recParam & 0x00ffffffffffffff;
+      TH1_as           = recParam & 0x000fffffffffffff;
       recGid           = (uint32_t)((recEvtId >> 48) & 0xfff     );
       recSid           = (uint32_t)((recEvtId >> 20) & 0xfff     );
       recBpid          = (uint32_t)((recEvtId >>  6) & 0x3fff    );
@@ -366,7 +366,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       sendTEF      = (uint32_t)( (int16_t)(tH1_t.ps)  & 0xffff);
       sendTEF     |= (uint32_t)((uint16_t)(tH1_t.dps) & 0xffff) << 16; 
       sendDeadline = getSysTime() + (uint64_t)B2B_AHEADT;              // use a more aggressive deadline < COMMON_AHEADT
-      fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, 0, 0);
+      fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam, sendTEF, 0);
 
       // send the confidence value of the phase fit to ECA (for monitoring purposes)
       sendEvtId    = fwlib_buildEvtidV1(0xfff, ecaAction, 0, recSid, recBpid, 0x0);

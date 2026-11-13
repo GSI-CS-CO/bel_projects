@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 05-jan-2026
+ *  version : 13-nov-2026
  *
  *  firmware for the psm module
  *  
@@ -141,7 +141,7 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
     *reqState = COMMON_STATE_FATAL;
     DBPRINT1("b2b-psm: fatal error - did not find THIS CPU!\n");
   } // if idx
-  else cpuRamExternal           = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
+  else if (idx > cpuId) cpuRamExternal = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
   
   DBPRINT2("b2b-psm: CPU RAM external 0x%8x, shared offset 0x%08x\n", cpuRamExternal, SHARED_OFFS);
   DBPRINT2("b2b-psm: fw common shared begin   0x%08x\n", pShared);

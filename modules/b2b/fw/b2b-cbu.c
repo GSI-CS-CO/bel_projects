@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-oct-2026
+ *  version : 13-nov-2026
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  NB: units of variables are [ns] unless explicitely mentioned as suffix
@@ -246,7 +246,7 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
   pSharedSetTH1InjLo      = (uint32_t *)(pShared + (B2B_SHARED_SET_TH1INJLO    >> 2));
   pSharedSetNHInj         = (uint32_t *)(pShared + (B2B_SHARED_SET_NHINJ       >> 2));
   pSharedSetCTrigInj      =    (float *)(pShared + (B2B_SHARED_SET_CTRIGINJ    >> 2));
-  pSharedSetNBuckInj      = (uint32_t *)(pShared + (B2B_SHARED_SET_CTRIGINJ    >> 2));
+  pSharedSetNBuckInj      = (uint32_t *)(pShared + (B2B_SHARED_SET_NBUCKINJ    >> 2));
   
   pSharedGetGid           = (uint32_t *)(pShared + (B2B_SHARED_GET_GID         >> 2));
   pSharedGetSid           = (uint32_t *)(pShared + (B2B_SHARED_GET_SID         >> 2));
@@ -276,7 +276,7 @@ void initSharedMem(uint32_t *reqState, uint32_t *sharedSize)
     *reqState = COMMON_STATE_FATAL;
     DBPRINT1("b2b-cbu: fatal error - did not find THIS CPU!\n");
   } // if idx
-  else cpuRamExternal = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
+   else if (idx > cpuId) cpuRamExternal = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
   
   DBPRINT2("b2b-cbu: CPU RAM external 0x%8x, shared offset 0x%08x\n", cpuRamExternal, SHARED_OFFS);
   DBPRINT2("b2b-cbu: fw common shared begin   0x%08x\n", pShared);
@@ -359,8 +359,8 @@ uint32_t setSubmit()
   int          sid;
   int          flagInject;
 
-  // SID is used as array index. Strict checking required to avoid segfaults etc
-  if (*pSharedSetSidEExt > 15)   return COMMON_STATUS_OUTOFRANGE;
+  // SID is used as array index
+  if (*pSharedSetSidEExt >= B2B_NSID) return COMMON_STATUS_OUTOFRANGE;
   else sid = *pSharedSetSidEExt;
 
   // diable 'valid' flag here so that the corresponding setting is disabled in case of erronous settings
@@ -406,8 +406,8 @@ uint32_t setSubmit()
   else {
     setTH1Inj_as[sid]  = 0;
     setNHInj[sid]      = 0;
+    setLSidInj[sid]    = 0;
     setLBpidInj[sid]   = 0;
-    setLParamInj[sid]  = 0;
     setLParamInj[sid]  = 0;
     setCTrigInj[sid]   = 0;
     setNBuckInj[sid]   = 0;
@@ -541,6 +541,10 @@ uint32_t getTrigGid(uint32_t extFlag)
       if (extFlag) trigGid = CRYRING_RING;
       else         trigGid = GID_INVALID;
       break;
+    case SIS18_B2B_SIS100 :
+      if (extFlag) trigGid = SIS18_RING;
+      else         trigGid = SIS100_RING;
+      break;
     case SIS100_B2B_EXTRACT :
       if (extFlag) trigGid = SIS100_RING;
       else         trigGid = GID_INVALID;
@@ -596,7 +600,7 @@ uint32_t calcExtTime(b2bt_t *tExtract, uint64_t tWant)
 
 
 // fine tune for individual h=1 cycles
-void rfFineTune(uint64_t tH1Ext_as, uint64_t tH1Inj_as, uint64_t *tMatch_as, uint64_t *dt_as)
+void rfFineTune(uint64_t tH1Ext_as, uint64_t tH1Inj_as, uint64_t *tMatch_as, int64_t *dt_as)
 {
   uint64_t half;                                    // helper variable
   uint64_t nDiff;                                   // # we need project Tdiff into the future
@@ -744,7 +748,7 @@ uint32_t calcPhaseMatch(uint64_t tMin, b2bt_t *tPhaseMatch, uint64_t *TBeat_as) 
   tMatch_as = nDiff * TSlow_as + tSlow_as;              
 
   *TBeat_as   = (TSlow_as / Tdiff_as);                    // beating period
-  if ((*TBeat_as % Tdiff_as) > half) *TBeat_as++;
+  if ((TSlow_as % Tdiff_as) > half) (*TBeat_as)++;        // rounding
   *TBeat_as   = *TBeat_as * TSlow_as;
   
   //tmp = tFast; pp_printf("b2b: tmp %llu\n", tmp);
@@ -1178,7 +1182,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
       // submit data and primitive error checks
       if ((status = setSubmit()) != COMMON_STATUS_OK) {mState = B2B_MFSM_NOTHING;          return status;}
-      if (sid > 15)                                   {sid = 0; mState = B2B_MFSM_NOTHING; return COMMON_STATUS_OUTOFRANGE;}
+      if (sid >= B2B_NSID)                            {sid = 0; mState = B2B_MFSM_NOTHING; return COMMON_STATUS_OUTOFRANGE;}
       if (!setFlagValid[sid])                         {mState = B2B_MFSM_NOTHING;          return B2B_STATUS_BADSETTING;}
 
       // copy LSA data needed for proper trigger messages
@@ -1313,6 +1317,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
       tH1Inj_t.ns  -= cPhase_t.ns;
       tH1Inj_t.ps  -= cPhase_t.ps;
+      tH1Inj_t      = fwlib_cleanB2bt(tH1Inj_t);
       transStat    |= mState;
       mState        = getNextMState(mode, mState);
       //pp_printf("b2b: PRINJ %u\n", mState);
@@ -1393,50 +1398,67 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
   // prepare fast extraction with phase matching between both machines is (here: phase shift method @ extraction): calculate phase shift
   if (mState == B2B_MFSM_EXT_PSHIFT_C) {
-    // calculate phase difference at extraction time
-    tPhase0Ext     = tTrig;                                                            // exact phase 0 at ~extraction time
-    tPhase0Ext.ns -= tCBS;                                                             // relative to tCBS
-    //tmp32 = tPhase0Ext.ns; pp_printf("phase 0 ext %d\n", tmp32);
-    tPhase0Ext_as  =  tPhase0Ext.ns *  one_ns_as +  tPhase0Ext.ps * one_ps_as;         // convert to as
+    // handle previous errors
+    if (errorFlags || (TH1Ext_as == 0) || (TH1Inj_as == 0)) {
+      pShiftExt.ns   = 0;
+      pShiftExt.ps   = 0;
+      errorFlags    |= B2B_ERRFLAG_CBU;
+    } // if previous errors
+    else {
+      // calculate phase difference at extraction time
+      tPhase0Ext     = tTrig;                                                            // exact phase 0 at ~extraction time
+      tPhase0Ext.ns -= tCBS;                                                             // relative to tCBS
+      //tmp32 = tPhase0Ext.ns; pp_printf("phase 0 ext %d\n", tmp32);
+      tPhase0Ext_as  =  tPhase0Ext.ns *  one_ns_as +  tPhase0Ext.ps * one_ps_as;         // convert to as
+      
+      tPhase0Inj     = fwlib_advanceTimePs(tH1Inj_t, tTrig, TH1Inj_as);                  // exact phase 0 at ~extraction time
+      tPhase0Inj.ns -= tCBS;                                                             // relative to tCBS
+      //tmp32 = tPhase0Inj.ns; pp_printf("phase 0 inj %d\n", tmp32);
+      tPhase0Inj_as  =  tPhase0Inj.ns *  one_ns_as +  tPhase0Inj.ps * one_ps_as;         // convert to as
 
-    tPhase0Inj     = fwlib_advanceTimePs(tH1Inj_t, tTrig, TH1Inj_as);                  // exact phase 0 at ~extraction time
-    tPhase0Inj.ns -= tCBS;                                                             // relative to tCBS
-    //tmp32 = tPhase0Inj.ns; pp_printf("phase 0 inj %d\n", tmp32);
-    tPhase0Inj_as  =  tPhase0Inj.ns *  one_ns_as +  tPhase0Inj.ps * one_ps_as;         // convert to as
-
-    while (tPhase0Ext_as > tPhase0Inj_as) {tPhase0Ext_as -= TH1Ext_as;}                // make sure phase extraction is smaller than injection
-    tPhaseDiff_as  = tPhase0Inj_as - tPhase0Ext_as;                                    // phase difference we need to shift
-
+      while (tPhase0Ext_as > tPhase0Inj_as) {tPhase0Ext_as -= TH1Ext_as;}                // make sure phase extraction is smaller than injection
+      tPhaseDiff_as  = tPhase0Inj_as - tPhase0Ext_as;                                    // phase difference we need to shift
+      
     /*while (tPhaseDiff_as < 0) {tPhaseDiff_as += TH1Ext_as;}                            // keep it simple: only positive phase shifting - no longer needed as we shift three lines above*/
-
-    pShiftExt.ns   = (uint64_t)tPhaseDiff_as / one_ns_as;                              // convert to ns
-    //tmp32          = (uint32_t)pShiftExt.ns; pp_printf("shift ns %d", tmp32);
-    pShiftExt.ps   = ((uint64_t)tPhaseDiff_as % one_ns_as) / one_ps_as;                // remaining ps
-    //tmp32          = (uint32_t)pShiftExt.ps;
-    //pp_printf("; shift ps %d\n", tmp32);
+      
+      pShiftExt.ns   = (uint64_t)tPhaseDiff_as / one_ns_as;                              // convert to ns
+      //tmp32          = (uint32_t)pShiftExt.ns; pp_printf("shift ns %d", tmp32);
+      pShiftExt.ps   = ((uint64_t)tPhaseDiff_as % one_ns_as) / one_ps_as;                // remaining ps
+      //tmp32          = (uint32_t)pShiftExt.ps;
+      //pp_printf("; shift ps %d\n", tmp32);
+    } // else: no previous errors
+    
     transStat   |= mState;
     mState       = getNextMState(mode, mState);
   } // B2B_MFSM_EXT_PSHIFT_C  
 
   // prepare fast extraction with phase matching between both machines is (here: phase shift method @ injection): calculate phase shift
   if (mState == B2B_MFSM_INJ_PSHIFT_C) {
-    // calculate phase difference at extraction time
-    tPhase0Ext     = tTrig;                                                            // exact phase 0 at ~extraction time
-    tPhase0Ext.ns -= tCBS;                                                             // relative to tCBS
-    tPhase0Ext_as  =  tPhase0Ext.ns *  one_ns_as +  tPhase0Ext.ps * one_ps_as;         // convert to as
+    // handle previous errors
+    if (errorFlags || (TH1Ext_as == 0) || (TH1Inj_as == 0)) {
+      pShiftInj.ns   = 0;
+      pShiftInj.ps   = 0;
+      errorFlags    |= B2B_ERRFLAG_CBU;
+    } // if previous errors
+    else {
+      // calculate phase difference at extraction time
+      tPhase0Ext     = tTrig;                                                            // exact phase 0 at ~extraction time
+      tPhase0Ext.ns -= tCBS;                                                             // relative to tCBS
+      tPhase0Ext_as  =  tPhase0Ext.ns *  one_ns_as +  tPhase0Ext.ps * one_ps_as;         // convert to as
+      
+      tPhase0Inj     = fwlib_advanceTimePs(tH1Inj_t, tTrig, TH1Inj_as);                  // exact phase 0 at ~extraction time
+      tPhase0Inj.ns -= tCBS;                                                             // relative to tCBS
+      tPhase0Inj_as  =  tPhase0Inj.ns *  one_ns_as +  tPhase0Inj.ps * one_ps_as;         // convert to as
 
-    tPhase0Inj     = fwlib_advanceTimePs(tH1Inj_t, tTrig, TH1Inj_as);                  // exact phase 0 at ~extraction time
-    tPhase0Inj.ns -= tCBS;                                                             // relative to tCBS
-    tPhase0Inj_as  =  tPhase0Inj.ns *  one_ns_as +  tPhase0Inj.ps * one_ps_as;         // convert to as
+      while (tPhase0Inj_as > tPhase0Ext_as) {tPhase0Inj_as -= TH1Inj_as;}                // make sure phase injection is smaller than extraction
+      tPhaseDiff_as  = tPhase0Ext_as - tPhase0Inj_as;                                    // phase difference we need to shift (relative to extraction ring)
 
-    while (tPhase0Inj_as > tPhase0Ext_as) {tPhase0Inj_as -= TH1Inj_as;}                // make sure phase injection is smaller than extraction
-    tPhaseDiff_as  = tPhase0Ext_as - tPhase0Inj_as;                                    // phase difference we need to shift (relative to extraction ring)
-
-    pShiftInj.ns   = (uint64_t)tPhaseDiff_as / one_ns_as;                              // convert to ns
-    //tmp32          = (uint32_t)pShiftExt.ns; pp_printf("shift ns %d", tmp32);
-    pShiftInj.ps   = ((uint64_t)tPhaseDiff_as % one_ns_as) / one_ps_as;                // remaining ps
-    //tmp32          = (uint32_t)pShiftExt.ps;
-    //pp_printf("; shift ps %d\n", tmp32);
+      pShiftInj.ns   = (uint64_t)tPhaseDiff_as / one_ns_as;                              // convert to ns
+      //tmp32          = (uint32_t)pShiftExt.ns; pp_printf("shift ns %d", tmp32);
+      pShiftInj.ps   = ((uint64_t)tPhaseDiff_as % one_ns_as) / one_ps_as;                // remaining ps
+      //tmp32          = (uint32_t)pShiftExt.ps;
+      //pp_printf("; shift ps %d\n", tmp32);
+    } // else: no previous errors
     transStat   |= mState;
     mState       = getNextMState(mode, mState);
   } // B2B_MFSM_EXT_PSHIFT_C  
@@ -1454,7 +1476,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     sendEvtId      = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PSHIFTEXT, flagsExt, sidExt, bpidExt, 0);
     // set (start bit), messes up a bit in BPID; PSM of low-level rf has inverted definition of direction
     sendEvtId     |= 0x0000000000010000;
-    tmp.f          = -360.0 * fwlib_tps2tfns(pShiftExt)/((float)TH1Ext_as / 1000000000.0);// phase shift [degree, float]
+    if (TH1Ext_as) tmp.f = -360.0 * fwlib_tps2tfns(pShiftExt)/((float)TH1Ext_as / 1000000000.0);// phase shift [degree, float]
+    else           tmp.f = 0.0;
     // change endianess
     pShiftPhase    = (tmp.data & 0x0000ffff) << 16;
     pShiftPhase   |= (tmp.data & 0xffff0000) >> 16;
@@ -1495,7 +1518,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     sendEvtId      = fwlib_buildEvtidV1(gid, B2B_ECADO_B2B_PSHIFTINJ, flagsInj, sidInj, bpidInj, 0);
     // set (start bit), messes up a bit in BPID; PSM of low-level rf has inverted definition of direction
     sendEvtId     |= 0x0000000000010000;
-    tmp.f          = -360.0 * fwlib_tps2tfns(pShiftInj)/((float)TH1Inj_as / 1000000000.0);// phase shift [degree, float]
+    if (TH1Inj_as) tmp.f = -360.0 * fwlib_tps2tfns(pShiftInj)/((float)TH1Inj_as / 1000000000.0);// phase shift [degree, float]
+    else           tmp.f = 0.0;
     // change endianess
     pShiftPhase    = (tmp.data & 0x0000ffff) << 16;
     pShiftPhase   |= (tmp.data & 0xffff0000) >> 16;

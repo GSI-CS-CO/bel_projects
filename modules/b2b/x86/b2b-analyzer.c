@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 07-aug-2026
+ *  version : 13-nov-2026
  *
  * analyzes and publishes get values
  * 
@@ -59,8 +59,8 @@
 const char* program;
 
 #define DDSSTEP     0.046566129            // min frequency step of gDDS
-#define FLTMAX      1.0E38;                
-#define FLTMIN      -1.0E38;
+#define FLTMAX      1.0E38
+#define FLTMIN      -1.0E38
 
 // dim stuff
 #define    DIMCHARSIZE 32                  // standard size for char services
@@ -325,8 +325,10 @@ void calcStats(double *meanNew,         // new mean value, please remember for l
     *sdev      = sqrt(*var);
   }
   else {
-    *meanNew = val;
-    *var     = 0;
+    *meanNew   = val;
+    *streamNew = 0;
+    *var       = 0;
+    *sdev      = 0;
   }
 } // calcStats
 
@@ -417,8 +419,9 @@ void cmdClearDiag(long *tag, uint32_t *address, int *size)
 {
   int32_t sid;
   
-  if (*size != sizeof(uint32_t)) return;
+  if (*size != sizeof(uint32_t))      return;
   sid = (uint32_t)(*address);
+  if ((sid < 0) || (sid >= B2B_NSID)) return;
 
   clearStats(sid);
   disDiagData.tDiag = comlib_getSysTime();
@@ -446,6 +449,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
   if ((sid < 0) || (sid >= B2B_NSID)) return;
   if (!flagSetValid[sid])             return;
   flagGetValid[sid] = (*size != sizeof(uint32_t));
+  if (!flagGetValid[sid])             return;
 
   mode = dicSetval[sid].mode;
 
@@ -687,7 +691,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
     // remainder phase to electronics monitor
     if ((dicSetval[sid].ext_T != -1) && !isnan(dicGetval[sid].ktiOff) && !isnan(dicGetval[sid].inj_dKickMon) && (dicGetval[sid].ext_phase != -1)) {
       tmp64 = dicGetval[sid].tCBS + dicGetval[sid].ktiOff + dicGetval[sid].inj_dKickMon;   // TAI of dKickMon [ns]
-      tmp64 = (tmp64 - dicGetval[sid].ext_phase) % 1000000000;                             // difference to measured phase [as]; NB: everyting relative to extraction phase
+      tmp64 = (tmp64 - dicGetval[sid].ext_phase) * 1000000000;                             // difference to measured phase [as]; NB: everyting relative to extraction phase - chk
       act   = (int32_t)((tmp64 % (dicSetval[sid].ext_T) / 1000000000));                    // remainder [ns]
       n   = ++(inj_monRemN[sid]);
       
@@ -895,10 +899,10 @@ void disAddServices(char *prefix)
 
     sprintf(name, "%s-cal_stat_sid%02d", prefix, i);
     disDiagstatId[i] = dis_add_service(name, "D:1;I:1;D:5;I:1;D:5;I:1;D:5;I:1;D:5;I:1;D:5;I:1;D:5;I:1;D:5;I:1;D:4", &(disDiagstat[i]), sizeof(diagstat_t), 0 , 0);
-
-    sprintf(name, "%s-cal_cmd_cleardiag", prefix);
-    disClearDiagId   = dis_add_cmnd(name, "I:1", cmdClearDiag, 0);
   } // for i
+
+  sprintf(name, "%s-cal_cmd_cleardiag", prefix);
+  disClearDiagId   = dis_add_cmnd(name, "I:1", cmdClearDiag, 0);
 } // disAddServices
 
 

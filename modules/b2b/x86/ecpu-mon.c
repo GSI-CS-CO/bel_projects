@@ -3,7 +3,7 @@
  *
  *  created : 2026
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 03-jul-2026
+ *  version : 13-nov-2026
  *
  * subscribes to and displays status of a ecpu systems based on common lib
  * (requires a server such as 'b2b-serv-sys' on each local host)
@@ -400,7 +400,7 @@ void printServices(int flagOnce)
     // print hostname always
     tmp = (uint32_t *)(&(dicSystem[i].hostname));
     if (*tmp == no_link_32)                          sprintf(cHost,         "%16s",         no_link_str);
-    else                                             sprintf(cHost,         "%16s",         dicSystem[i].hostname);
+    else                                             snprintf(cHost, sizeof(cHost), "%16.16s", dicSystem[i].hostname);
 
     // check link for commonlib diagnostic data
     tmp =  (uint32_t *)(&(dicSystem[i].diagData));

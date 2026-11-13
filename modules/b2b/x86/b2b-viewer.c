@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 16-Apr-2025
+ *  version : 13-nov-2026
  *
  * subscribes to and displays status of a b2b transfer
  *
@@ -787,7 +787,7 @@ int main(int argc, char** argv) {
     dicSubscribeServices(prefix, sid);
 
     while (!quit) {
-      /*if (once) {sleep(1); quit=1;}                 // wait a bit to get the values */
+      if (once) {sleep(1); quit=1;}                   // wait a bit to get the values, chk: comment?
       printData(once, sid, name);
       if (!quit) {
         userInput = comlib_term_getChar();

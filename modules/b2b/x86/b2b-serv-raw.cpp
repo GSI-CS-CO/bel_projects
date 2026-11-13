@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-oct-2026
+ *  version : 13-nov-2026
  *
  * publishes raw data of the b2b system
  *
@@ -255,7 +255,7 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
   recGid      = ((evtId  & 0x0fff000000000000) >> 48);
 
   // check ranges
-  if (recSid  > B2B_NSID)                 return;
+  if (recSid  >= B2B_NSID)                return;
   if (tag > tagStop)                      return;
   if ((!flagActive) && (tag != tagStart)) return;
   //printf("tag %d\n", tag);
@@ -374,6 +374,7 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
       flagErr                  = ((evtId & B2B_ERRFLAG_KDINJ) != 0);
       getval.flagEvtErr       |= flagErr << tag;
 
+      if (setval.inj_sid >= B2B_NSID) {getval.inj_dKickProbLen = -1; getval.inj_dKickProbLevel = -1; break;} // KTI not received
       switch(setval.inj_gid) {
         case ESR_RING     : getval.inj_dKickProbLen = dicKickLenESRInj[setval.inj_sid];    getval.inj_dKickProbLevel = dicKickLevelESRInj[setval.inj_sid];    break;
         case CRYRING_RING : getval.inj_dKickProbLen = dicKickLenYRInj[setval.inj_sid];     getval.inj_dKickProbLevel = dicKickLevelYRInj[setval.inj_sid];     break;

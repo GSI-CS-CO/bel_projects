@@ -332,7 +332,7 @@ b2bt_t fwlib_advanceTimePs(b2bt_t t1_t, b2bt_t t2_t, uint64_t  T_as)
 } // fwlib_advanceTimePs
 
 
-b2bt_t fwlib_tfns2tps(float t_ns)
+b2bt_t fwlib_tfns2tps(float t_ns)  
 {
   b2bt_t t_ps;
 
