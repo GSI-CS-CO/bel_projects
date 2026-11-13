@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 12-nov-2026
+ *  version : 13-nov-2026
  *
  *  common x86 routines useful for CLIs handling firmware
  * 
@@ -303,12 +303,14 @@ void comlib_printDiag2(uint32_t state, uint32_t fwVersion, uint32_t gwVersion, u
 
   secs     = (unsigned long)((double)(data.tS0) / 1000000000.0);
   tm = gmtime(&secs);
-  strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S TAI", tm);
+  if (tm) strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S TAI", tm);
+  else    sprintf(timestr, "invalid");
   printf("firmware boot at                    : %s\n", timestr);
 
   secs     = (unsigned long)((double)(data.tDiag) / 1000000000.0);
   tm = gmtime(&secs);
-  strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S TAI", tm);
+  if (tm) strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S TAI", tm);
+  else    sprintf(timestr, "invalid");
   printf("diagnostics reset at                : %s\n"       , timestr);
   printf("fwVersion                           : %06x\n"     , fwVersion);
   printf("gwVersion                           : %06x\n"     , gwVersion);
@@ -464,13 +466,16 @@ uint32_t comlib_ecaq_open(const char* devName, uint32_t qIdx, eb_device_t *devic
 
   // open Etherbone device and socket
   if ((status = eb_socket_open(EB_ABI_CODE, 0, EB_ADDRX|EB_DATAX, &common_socket)) != EB_OK)    return COMMON_STATUS_EB;
-  if ((status = eb_device_open(common_socket, devName, EB_ADDRX|EB_DATAX, 3, device)) != EB_OK) return COMMON_STATUS_EB;
+  if ((status = eb_device_open(common_socket, devName, EB_ADDRX|EB_DATAX, 3, device)) != EB_OK) {eb_socket_close(common_socket); *device = 0x0; return COMMON_STATUS_EB;}
 
   //  get Wishbone address of ecaq
-  if ((status = eb_sdb_find_by_identity(*device, ECA_QUEUE_SDB_VENDOR_ID, ECA_QUEUE_SDB_DEVICE_ID, sdbDevice, &nDevices)) != EB_OK) return COMMON_STATUS_EB;
-  if (nDevices == 0)       return COMMON_STATUS_EB;
-  //if (nDevices > maxDev)   return COMMON_STATUS_EB;
-  if ((uint32_t)nDevices < qIdx + 1) return COMMON_STATUS_EB;
+  // nDevices returns the number of queues FOUND, which may exceed maxDev; only maxDev entries are filled
+  if (((status = eb_sdb_find_by_identity(*device, ECA_QUEUE_SDB_VENDOR_ID, ECA_QUEUE_SDB_DEVICE_ID, sdbDevice, &nDevices)) != EB_OK)
+      || (nDevices == 0) || (qIdx >= (uint32_t)nDevices) || (qIdx >= (uint32_t)maxDev)) {
+    comlib_ecaq_close(*device);
+    *device = 0x0;
+    return COMMON_STATUS_EB;
+  }
   *ecaq_base  = sdbDevice[qIdx].sdb_component.addr_first;
 
   //printf("open eca q, nDevices %d, idx %d, ecaq_base %lx\n", nDevices, qIdx, (uint32_t)(*ecaq_base));

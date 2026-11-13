@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 12-nov-2026
+ *  version : 13-nov-2026
  *
  *  lm32 example program using common libraries
  *  
@@ -99,7 +99,7 @@ void initSharedMem( uint32_t *sharedSize)
   find_device_multi(&found_clu, &idx, 1, GSI, LM32_CB_CLUSTER);	
   idx = 0;
   find_device_multi_in_subtree(&found_clu, &found_sdb[0], &idx, c_Max_Rams, GSI, LM32_RAM_USER);
-  if(idx >= cpuId) cpuRamExternal           = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
+  if(idx > cpuId)  cpuRamExternal           = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
 
   DBPRINT2("example: CPU RAM External 0x%8x, begin shared 0x%08x\n", cpuRamExternal, SHARED_OFFS);
   DBPRINT2("example: fw common shared begin   0x%08x\n", pShared);

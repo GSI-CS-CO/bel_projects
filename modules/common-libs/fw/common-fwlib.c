@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 12-nov-2026
+ *  version : 13-nov-2026
  *
  *  common functions used by various firmware projects
  *
@@ -139,6 +139,7 @@ uint32_t findPPSGen() //find WB address of WR PPS Gen
   pPPSGen = find_device_adr(CERN, WR_PPS_GEN);
 
   if (pPPSGen == ERROR_INVALID_ADDR) {
+    pPPSGen = 0x0;                                       // keep callers' NULL checks working
     DBPRINT1("common-fwlib: can't find WR PPS Gen\n"); return COMMON_STATUS_ERROR;
   }
   else                                                 return COMMON_STATUS_OK;
@@ -150,6 +151,7 @@ uint32_t findWREp() //find WB address of WR Endpoint
   pWREp = find_device_adr(WR_ENDPOINT_VENDOR, WR_ENDPOINT_PRODUCT);
 
   if (pWREp == ERROR_INVALID_ADDR) {
+    pWREp = 0x0;                                       // keep callers' NULL checks working
     DBPRINT1("common-fwlib: can't find WR Endpoint\n"); return COMMON_STATUS_ERROR;
   }
   else                                                  return COMMON_STATUS_OK;
@@ -161,6 +163,7 @@ uint32_t findIOCtrl() // find WB address of IO Control
   pIOCtrl = find_device_adr(IO_CTRL_VENDOR, IO_CTRL_PRODUCT);
 
   if (pIOCtrl == ERROR_INVALID_ADDR) {
+    pIOCtrl = 0x0;                                       // keep callers' NULL checks working
     DBPRINT1("common-fwlib: can't find IO Control\n"); return COMMON_STATUS_ERROR;
   }
   else                                                 return COMMON_STATUS_OK;
@@ -200,6 +203,7 @@ uint32_t findMILPiggy() //find WB address of MIL Piggy
   pMILPiggy = find_device_adr(GSI, SCU_MIL);
 
   if (pMILPiggy == ERROR_INVALID_ADDR) {
+    pMILPiggy = 0x0;                                       // keep callers' NULL checks working
     DBPRINT1("common-fwlib: can't find MIL piggy\n"); return COMMON_STATUS_ERROR;
   }
   else                                                return COMMON_STATUS_OK;
@@ -212,6 +216,7 @@ uint32_t findOLED() //find WB address of OLED
   pOLED = find_device_adr(OLED_SDB_VENDOR_ID, OLED_SDB_DEVICE_ID);
 
   if (pOLED == ERROR_INVALID_ADDR) {
+    pOLED = 0x0;                                       // keep callers' NULL checks working
     DBPRINT1("common-fwlib: can't find OLED\n"); return COMMON_STATUS_ERROR;
   }
   else                                           return COMMON_STATUS_OK;
@@ -223,6 +228,7 @@ uint32_t findSbMaster() //find WB address of SCU bus master
   pSbMaster = find_device_adr(GSI, SCU_BUS_MASTER);
 
   if (pSbMaster == ERROR_INVALID_ADDR) {
+    pSbMaster = 0x0;                                       // keep callers' NULL checks working
     DBPRINT1("common-fwlib: can't find SCU bus master\n");  return COMMON_STATUS_ERROR;
   }
   else                                                      return COMMON_STATUS_OK;
@@ -234,6 +240,7 @@ uint32_t findWRInfoUnit()
 
   // find_device_adr returns ERROR_NOT_FOUND (not 0) if the device is missing (e.g. WR core v4.2)
   if (pWRInfo == ERROR_INVALID_ADDR) {
+    pWRInfo = 0x0;                                       // keep callers' NULL checks working
     DBPRINT3("common-fwlib: can't find WR info unit\n");    return COMMON_STATUS_ERROR;
   }
   else                                                      return COMMON_STATUS_OK;
@@ -329,9 +336,10 @@ b2bt_t fwlib_tfns2tps(float t_ns)
 {
   b2bt_t t_ps;
 
-  t_ps.ns = t_ns;
-  t_ps.ps = (t_ns - (float)(t_ps.ns)) * 1000.0;
-  t_ps    = fwlib_cleanB2bt(t_ps);
+  t_ps.ns  = t_ns;
+  t_ps.ps  = (t_ns - (float)(t_ps.ns)) * 1000.0;
+  t_ps.dps = 0;
+  t_ps     = fwlib_cleanB2bt(t_ps);
 
   return t_ps;
 } // tfns2ps
@@ -435,11 +443,12 @@ uint32_t fwlib_ioCtrlSetGate(uint32_t enable, uint32_t io)  // set gate of LVDS 
 
   if ((enable != 1) && (enable != 0)) return COMMON_STATUS_OUTOFRANGE;
   if (io > 31)                        return COMMON_STATUS_OUTOFRANGE;
+  if (!pIOCtrl)                       return COMMON_STATUS_ERROR;
 
   if (enable) offset = IO_CTRL_LVDSINGATESETLOW;
   else        offset = IO_CTRL_LVDSINGATERESETLOW;
 
-  *(pIOCtrl + (offset >> 2)) = (1 << io);
+  *(pIOCtrl + (offset >> 2)) = (1u << io);
 
   return COMMON_STATUS_OK;
 } // fwlib_ioCtrlSetGate
@@ -451,7 +460,7 @@ uint32_t fwlib_ebmInit(uint32_t msTimeout, uint64_t dstMac, uint32_t dstIp, uint
 
   // check IP
   timeoutT = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000;
-  while (timeoutT < getSysTime()) {
+  while (getSysTime() < timeoutT) {
     if (fwlib_wrGetIP() == EBC_DEFAULT_IP) asm("nop");
     else break;
   } // while no IP via DHCP
@@ -492,7 +501,7 @@ uint32_t fwlib_ebmReadN(uint32_t msTimeout, uint32_t address, uint32_t *data, ui
   int      i;
   uint32_t handshakeIdx;
 
-  handshakeIdx = n32BitWords + 1;
+  handshakeIdx = n32BitWords+1;                  // first word after the requested data used to determine if the read has completed
 
   if (n32BitWords >= ( COMMON_DATA4EBSIZE >> 2)) return COMMON_STATUS_OUTOFRANGE;
   if (n32BitWords == 0)                          return COMMON_STATUS_OUTOFRANGE;
@@ -771,9 +780,9 @@ void fwlib_printOLED(char *chars)
 {
   uint32_t i;
 
-  if (!pOLED) return;                         // no OLED: just return
+  if (!pOLED || !chars) return;               // no OLED: just return
 
-  for (i=0;i<strlen(chars);i++) *(pOLED + (OLED_UART_OWR >> 2)) = chars[i];
+  for (i=0; chars[i] != '\0'; i++) *(pOLED + (OLED_UART_OWR >> 2)) = chars[i];
 } // fwlib_printOLED
 
 
@@ -907,6 +916,7 @@ uint32_t fwlib_wait4MILEvent(uint32_t usTimeout, uint32_t *evtData, uint32_t *ev
   *virtAcc    = 0xffff;
   *evtData    = 0xffff;
   *evtCode    = 0xffff;
+  if (!pMILPiggy) return COMMON_STATUS_ERROR;   // no MIL piggy on this board
   if (nValidEvtCodes == 0) valid = 1;           // just return with the first element read from FIFO
   else                     valid = 0;           // only return if element read from FIFO matches one of the validEvtcodes
 
@@ -938,6 +948,8 @@ uint32_t fwlib_wait4MILEvent(uint32_t usTimeout, uint32_t *evtData, uint32_t *ev
 void fwlib_milPulseLemo(uint32_t nLemo) // pulse lemo for debugging with scope
 {
   uint32_t i;
+
+  if (!pMILPiggy) return;                       // no MIL piggy on this board
 
   setLemoOutputEvtMil(pMILPiggy, 0, nLemo, 1);
   for (i=0; i< 10 * COMMON_US_ASMNOP; i++) asm("nop");
@@ -1163,6 +1175,7 @@ uint32_t fwlib_changeState(uint32_t *actState, uint32_t *reqState, uint32_t actS
         break;
       case COMMON_STATE_STOPPING:
         nextState = COMMON_STATE_CONFIGURED;      //automatic transition but without entryActionConfigured
+        break;
       case COMMON_STATE_ERROR:
         if      (*reqState == COMMON_STATE_IDLE)       {statusTransition = exitActionError();               nextState = *reqState;}
         break;

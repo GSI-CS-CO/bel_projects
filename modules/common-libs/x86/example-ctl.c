@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 12-nov-2026
+ *  version : 13-nov-2026
  *
  *  command-line interface for example firmware
  *
@@ -201,6 +201,7 @@ int main(int argc, char** argv) {
   /* get device Wishbone address of lm32 */
   nDevices = 1; // quick and dirty, use only first core
   if ((eb_status = eb_sdb_find_by_identity(device, GSI, LM32_RAM_USER, &sdbDevice, &nDevices)) != EB_OK) die("find lm32", eb_status);
+  if (nDevices == 0) die("find lm32", EB_ADDRESS);                     // sdbDevice would be uninitialized
   lm32_base =  sdbDevice.sdb_component.addr_first;
 
   // init addresses to DP RAM
@@ -215,7 +216,7 @@ int main(int argc, char** argv) {
 
   if (command) {
     // state required to give proper warnings
-    comlib_readDiag(device, &sumStatus, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &nLate, &offsDone, &comLatency, &usedSize, 0);
+    if ((eb_status = comlib_readDiag(device, &sumStatus, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &nLate, &offsDone, &comLatency, &usedSize, 0)) != EB_OK) die("read diag", eb_status);
 
     // request state changes
     if (!strcasecmp(command, "configure")) {
@@ -242,7 +243,6 @@ int main(int argc, char** argv) {
     // diagnostics
     if (!strcasecmp(command, "cleardiag")) {
       eb_device_write(device, example_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_CLEARDIAG , 0, eb_block);
-      if (state != COMMON_STATE_OPREADY) printf("example: WARNING command has no effect (not in state OPREADY)\n");
     } // "cleardiag"
     if (!strcasecmp(command, "diag")) {
       comlib_readDiag(device, &sumStatus, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, &nLate, &offsDone, &comLatency, &usedSize, 1);

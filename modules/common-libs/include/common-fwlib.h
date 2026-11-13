@@ -2,6 +2,7 @@
 #define _COMMON_FWLIB_
 
 #include <common-core.h>
+#include "mini_sdb.h"
 
 // typedef for treating sub-ns timestamps within the b2b firmware
 // the picosecond part may exceed +-1000, but it is recommended to
