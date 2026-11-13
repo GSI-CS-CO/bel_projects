@@ -1,6 +1,8 @@
 #ifndef _COMMON_DEFS_
 #define _COMMON_DEFS_
 
+#include <stdint.h>
+
 // !!!!!
 // experimental: let's try to use common defines used by many lm32 projects
 // !!!!!
@@ -18,7 +20,7 @@ typedef union {                                // easier copying of bytes float 
 } fdat_t;
 
 #define  COMMON_US_ASMNOP        31           // # of asm("nop") operations per microsecond
-#define  COMMON_MS_ASMNOP        31 * 1000    // # of asm("nop") operations per microsecond
+#define  COMMON_MS_ASMNOP        (31 * 1000)  // # of asm("nop") operations per millisecond
 #define  COMMON_DEFAULT_TIMEOUT  100          // default timeout used by main loop [ms]
 #define  COMMON_ECATIMEOUT       1            // timeout for querying ECA action [ms]
 #define  COMMON_MILTIMEOUT       100          // timeout for querying MIL events [ms]
@@ -74,6 +76,9 @@ typedef union {                                // easier copying of bytes float 
 
 // other
 #define COMMON_TIMMSG_LEN                 8    // length of timing message [32bit words]
+#define COMMON_GWVER_INVALID              0xdeadbeef
+#define COMMON_GWVER_FALLOUT              0x0006fa11
+#define COMMON_GWVER_GOOSEV0              0x00070000
 
 // ****************************************************************************************
 // DP RAM
@@ -117,12 +122,12 @@ typedef union {                                // easier copying of bytes float 
 #define COMMON_SHARED_OFFSDONE        (COMMON_SHARED_COMLATENCYMIN  + _32b_SIZE_)         // offset event deadline to time when we are done [ns]
 #define COMMON_SHARED_OFFSDONEMAX     (COMMON_SHARED_OFFSDONE       + _32b_SIZE_)         // offset event deadline to time when we are done [ns]; max
 #define COMMON_SHARED_OFFSDONEMIN     (COMMON_SHARED_OFFSDONEMAX    + _32b_SIZE_)         // offset event deadline to time when we are done [ns]; min
-#define COMMON_SHARED_RESERVED1       (COMMON_SHARED_OFFSDONEMIN    + _32b_SIZE_)         // reserved
-#define COMMON_SHARED_RESERVED2       (COMMON_SHARED_RESERVED1      + _32b_SIZE_)         // reserved
+#define COMMON_SHARED_GWVERSION       (COMMON_SHARED_OFFSDONEMIN    + _32b_SIZE_)         // reserved
+#define COMMON_SHARED_RESERVED2       (COMMON_SHARED_GWVERSION      + _32b_SIZE_)         // reserved
 #define COMMON_SHARED_RESERVED3       (COMMON_SHARED_RESERVED2      + _32b_SIZE_)         // reserved
 #define COMMON_SHARED_RESERVED4       (COMMON_SHARED_RESERVED3      + _32b_SIZE_)         // reserved
-#define COMMON_SHARED_DATA_4EB        (COMMON_SHARED_RESERVED4      + _32b_SIZE_)         // shared area for EB return values
-#define COMMON_SHARED_USEDSIZE        (COMMON_SHARED_DATA_4EB       + (COMMON_DATA4EBSIZE << 2))  // used size of shared memory [bytes] /* chk */
+#define COMMON_SHARED_DATA_4EB        (COMMON_SHARED_RESERVED4      + _32b_SIZE_)         // shared area for EB return values; '...DATA_4EB' requires one extra word
+#define COMMON_SHARED_USEDSIZE        (COMMON_SHARED_DATA_4EB       + (COMMON_DATA4EBSIZE + _32b_SIZE_))  // used size of shared memory [bytes]
 #define COMMON_SHARED_END             (COMMON_SHARED_USEDSIZE       + _32b_SIZE_)         // here the common part of the shared memory ends
 
 #endif 

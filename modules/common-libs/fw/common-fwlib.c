@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 03-Jul-2026
+ *  version : 13-nov-2026
  *
  *  common functions used by various firmware projects
  *
@@ -80,7 +80,8 @@ volatile uint32_t *pSbMaster;           // WB address of SCU bus master
 volatile uint32_t *pWRInfo;             // WB address of WR info unit
 
 // global variables
-uint32_t *pSharedVersion;               // pointer to a "user defined" u32 register; here: publish version
+uint32_t *pSharedFwVersion;             // pointer to a "user defined" u32 register; here: publish firmware version
+uint32_t *pSharedGwVersion;             // pointer to a "user defined" u32 register; here: publish gateware version
 uint32_t *pSharedStatusArrayLo;         // pointer to a "user defined" u32 register; here: publish OR of all (actual) error bits; low word
 uint32_t *pSharedStatusArrayHi;         // pointer to a "user defined" u32 register; here: publish OR of all (actual) error bits; high word
 uint32_t *pSharedNBadStatus;            // pointer to a "user defined" u32 register; here: publish # of bad status (=error) incidents
@@ -134,35 +135,38 @@ void ebmClearSharedMem()
 
 uint32_t findPPSGen() //find WB address of WR PPS Gen
 {
-  pPPSGen = 0x0;
-
   // get Wishbone address for PPS Gen
   pPPSGen = find_device_adr(CERN, WR_PPS_GEN);
 
-  if (!pPPSGen) {DBPRINT1("common-fwlib: can't find WR PPS Gen\n"); return COMMON_STATUS_ERROR;}
-  else                                                           return COMMON_STATUS_OK;
+  if (pPPSGen == ERROR_INVALID_ADDR) {
+    pPPSGen = 0x0;                                       // keep callers' NULL checks working
+    DBPRINT1("common-fwlib: can't find WR PPS Gen\n"); return COMMON_STATUS_ERROR;
+  }
+  else                                                 return COMMON_STATUS_OK;
 } // findPPSGen
 
 
 uint32_t findWREp() //find WB address of WR Endpoint
 {
-  pWREp = 0x0;
-
   pWREp = find_device_adr(WR_ENDPOINT_VENDOR, WR_ENDPOINT_PRODUCT);
 
-  if (!pWREp) {DBPRINT1("common-fwlib: can't find WR Endpoint\n"); return COMMON_STATUS_ERROR;}
-  else                                                          return COMMON_STATUS_OK;
+  if (pWREp == ERROR_INVALID_ADDR) {
+    pWREp = 0x0;                                       // keep callers' NULL checks working
+    DBPRINT1("common-fwlib: can't find WR Endpoint\n"); return COMMON_STATUS_ERROR;
+  }
+  else                                                  return COMMON_STATUS_OK;
 } // findWREp
 
 
 uint32_t findIOCtrl() // find WB address of IO Control
 {
-  pIOCtrl = 0x0;
-
   pIOCtrl = find_device_adr(IO_CTRL_VENDOR, IO_CTRL_PRODUCT);
 
-  if (!pIOCtrl) {DBPRINT1("common-fwlib: can't find IO Control\n"); return COMMON_STATUS_ERROR;}
-  else                                                           return COMMON_STATUS_OK;
+  if (pIOCtrl == ERROR_INVALID_ADDR) {
+    pIOCtrl = 0x0;                                       // keep callers' NULL checks working
+    DBPRINT1("common-fwlib: can't find IO Control\n"); return COMMON_STATUS_ERROR;
+  }
+  else                                                 return COMMON_STATUS_OK;
 } // findIOCtrol
 
 
@@ -195,35 +199,38 @@ uint32_t findECAQueue() // find WB address of ECA channel for LM32
 
 uint32_t findMILPiggy() //find WB address of MIL Piggy
 {
-  pMILPiggy = 0x0;
-
   // get Wishbone address for MIL Piggy
   pMILPiggy = find_device_adr(GSI, SCU_MIL);
 
-  if (!pMILPiggy) {DBPRINT1("common-fwlib: can't find MIL piggy\n"); return COMMON_STATUS_ERROR;}
-  else                                                            return COMMON_STATUS_OK;
+  if (pMILPiggy == ERROR_INVALID_ADDR) {
+    pMILPiggy = 0x0;                                       // keep callers' NULL checks working
+    DBPRINT1("common-fwlib: can't find MIL piggy\n"); return COMMON_STATUS_ERROR;
+  }
+  else                                                return COMMON_STATUS_OK;
 } // findMILPiggy
 
 
 uint32_t findOLED() //find WB address of OLED
 {
-  pOLED = 0x0;
-
   // get Wishbone address for OLED
   pOLED = find_device_adr(OLED_SDB_VENDOR_ID, OLED_SDB_DEVICE_ID);
 
-  if (!pOLED) {DBPRINT1("common-fwlib: can't find OLED\n"); return COMMON_STATUS_ERROR;}
-  else                                                      return COMMON_STATUS_OK;
+  if (pOLED == ERROR_INVALID_ADDR) {
+    pOLED = 0x0;                                       // keep callers' NULL checks working
+    DBPRINT1("common-fwlib: can't find OLED\n"); return COMMON_STATUS_ERROR;
+  }
+  else                                           return COMMON_STATUS_OK;
 } // findOLED
 
 uint32_t findSbMaster() //find WB address of SCU bus master
 {
-  pSbMaster = 0x0;
-
   // get Wishbone address for SCU bus master
   pSbMaster = find_device_adr(GSI, SCU_BUS_MASTER);
 
-  if (!pSbMaster) {DBPRINT1("common-fwlib: can't find SCU bus master\n"); return COMMON_STATUS_ERROR;}
+  if (pSbMaster == ERROR_INVALID_ADDR) {
+    pSbMaster = 0x0;                                       // keep callers' NULL checks working
+    DBPRINT1("common-fwlib: can't find SCU bus master\n");  return COMMON_STATUS_ERROR;
+  }
   else                                                      return COMMON_STATUS_OK;
 } // findSbMaster
 
@@ -231,7 +238,11 @@ uint32_t findWRInfoUnit()
 {
   pWRInfo = find_device_adr(WR_INFO_VENDOR, WR_INFO_PRODUCT);
 
-  if (!pWRInfo) {DBPRINT1("common-fwlib: can't find WR info unit\n"); return COMMON_STATUS_ERROR;}
+  // find_device_adr returns ERROR_NOT_FOUND (not 0) if the device is missing (e.g. WR core v4.2)
+  if (pWRInfo == ERROR_INVALID_ADDR) {
+    pWRInfo = 0x0;                                       // keep callers' NULL checks working
+    DBPRINT3("common-fwlib: can't find WR info unit\n");    return COMMON_STATUS_ERROR;
+  }
   else                                                      return COMMON_STATUS_OK;
 }
 
@@ -325,9 +336,10 @@ b2bt_t fwlib_tfns2tps(float t_ns)
 {
   b2bt_t t_ps;
 
-  t_ps.ns = t_ns;
-  t_ps.ps = (t_ns - (float)(t_ps.ns)) * 1000.0;
-  t_ps    = fwlib_cleanB2bt(t_ps);
+  t_ps.ns  = t_ns;
+  t_ps.ps  = (t_ns - (float)(t_ps.ns)) * 1000.0;
+  t_ps.dps = 0;
+  t_ps     = fwlib_cleanB2bt(t_ps);
 
   return t_ps;
 } // tfns2ps
@@ -374,18 +386,27 @@ uint64_t fwlib_wrGetMac()  // get my own MAC
   uint32_t macHi, macLo;
   uint64_t mac;
 
-  // get MAC address from EB master (starting from WR v5), otherwise get from Endpoint (WR v4.2)
-  macHi = macLo = 0;
-  if (findWRInfoUnit() == COMMON_STATUS_OK) {             // WR v5
-    if (pEbm) {
-      macHi = (*(pEbm + (EBM_OWN_MAC_HI >> 2))) & 0xffff; // own MAC high 2 bytes
-      macLo =  *(pEbm + (EBM_OWN_MAC_LO >> 2));           // own MAC low 4 bytes
-    }
-  }
-  else if (pWREp) {                                        // WR v4.2
-    macHi = (*(pWREp + (WR_ENDPOINT_MACHI >> 2))) & 0xffff;
-    macLo =  *(pWREp + (WR_ENDPOINT_MACLO >> 2));
-  }
+  macHi = 0x0;
+  macLo = 0x0;
+
+  // read MAC address from gateware
+  
+  switch (fwlib_getGwVersion()) {
+    case COMMON_GWVER_FALLOUT :
+      if (pWREp) {
+        macHi = (*(pWREp + (WR_ENDPOINT_MACHI >> 2))) & 0xffff;
+        macLo =  *(pWREp + (WR_ENDPOINT_MACLO >> 2));
+      } // if pWRep
+      break;
+    case COMMON_GWVER_GOOSEV0 :
+      if (pEbm) {
+        macHi = (*(pEbm + (EBM_OWN_MAC_HI >> 2))) & 0xffff; // own MAC high 2 bytes
+        macLo =  *(pEbm + (EBM_OWN_MAC_LO >> 2));           // own MAC low 4 bytes
+      } // if pEbm
+      break;
+    default :
+      break;
+  } // switch gw version
 
   mac = macHi;
   mac = (mac << 32);
@@ -394,23 +415,27 @@ uint64_t fwlib_wrGetMac()  // get my own MAC
   return mac;
 } // fwlib_wrGetMac
 
+
 uint32_t fwlib_wrGetIP()  // get my own IP
 {
   uint32_t ip;
 
-  // get IP address from EB master (starting from WR v5), otherwise get from EtherBone config (WR v4.2)
-  ip = 0;
-  if (findWRInfoUnit() == COMMON_STATUS_OK) {             // WR v5
-    if (pEbm) {
-      ip = (*(pEbm + (EBM_OWN_IP >> 2)));
-    }
-  }
-  else if (pEbCfg) {                                      // WR v4.2 (or legacy)
-    ip  = *(pEbCfg + (EBC_SRC_IP >> 2));
-  }
+  ip = EBC_DEFAULT_IP;
 
+  // read IP address from gateware
+  switch (fwlib_getGwVersion()) {
+    case COMMON_GWVER_FALLOUT :
+      if (pEbCfg) ip = *(pEbCfg + (EBC_SRC_IP >> 2));
+      break;
+    case COMMON_GWVER_GOOSEV0 :
+      if (pEbm)   ip = (*(pEbm  + (EBM_OWN_IP >> 2)));
+      break;
+    default :
+      break;
+  } // switch gw version      
   return ip;
-}
+} // fwlib_wrGetIp
+
 
 uint32_t fwlib_ioCtrlSetGate(uint32_t enable, uint32_t io)  // set gate of LVDS input
 {
@@ -418,11 +443,12 @@ uint32_t fwlib_ioCtrlSetGate(uint32_t enable, uint32_t io)  // set gate of LVDS 
 
   if ((enable != 1) && (enable != 0)) return COMMON_STATUS_OUTOFRANGE;
   if (io > 31)                        return COMMON_STATUS_OUTOFRANGE;
+  if (!pIOCtrl)                       return COMMON_STATUS_ERROR;
 
   if (enable) offset = IO_CTRL_LVDSINGATESETLOW;
   else        offset = IO_CTRL_LVDSINGATERESETLOW;
 
-  *(pIOCtrl + (offset >> 2)) = (1 << io);
+  *(pIOCtrl + (offset >> 2)) = (1u << io);
 
   return COMMON_STATUS_OK;
 } // fwlib_ioCtrlSetGate
@@ -434,7 +460,7 @@ uint32_t fwlib_ebmInit(uint32_t msTimeout, uint64_t dstMac, uint32_t dstIp, uint
 
   // check IP
   timeoutT = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000;
-  while (timeoutT < getSysTime()) {
+  while (getSysTime() < timeoutT) {
     if (fwlib_wrGetIP() == EBC_DEFAULT_IP) asm("nop");
     else break;
   } // while no IP via DHCP
@@ -475,7 +501,7 @@ uint32_t fwlib_ebmReadN(uint32_t msTimeout, uint32_t address, uint32_t *data, ui
   int      i;
   uint32_t handshakeIdx;
 
-  handshakeIdx = n32BitWords + 1;
+  handshakeIdx = n32BitWords+1;                  // first word after the requested data used to determine if the read has completed
 
   if (n32BitWords >= ( COMMON_DATA4EBSIZE >> 2)) return COMMON_STATUS_OUTOFRANGE;
   if (n32BitWords == 0)                          return COMMON_STATUS_OUTOFRANGE;
@@ -649,11 +675,30 @@ void fwlib_publishSharedSize(uint32_t size)
 } // fwlib_publishSharedInfo
 
 
+uint32_t fwlib_getGwVersion()
+{
+  static uint32_t version = COMMON_GWVER_INVALID;
+
+  // this implementation is hackish
+  // in the future a more general solution shall be used - assumption:
+  // the reset controller provides a register with gw version number - to be implemented
+
+  if (version == COMMON_GWVER_INVALID) {
+    if      (findWRInfoUnit() == COMMON_STATUS_OK) version = COMMON_GWVER_GOOSEV0;  // goose v0 
+    else if (findWREp()       == COMMON_STATUS_OK) version = COMMON_GWVER_FALLOUT;  // old stuff
+    else version = COMMON_GWVER_INVALID;
+  } // if invalid
+  
+  return version; 
+} // fwlib_getGwVersion
+
+
 void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t sharedOffs, uint32_t sharedSize, char * name, uint32_t fwVersion) // determine address and clear shared mem
 {
   uint32_t *pSharedTemp;
   uint32_t *pShared;
   uint32_t commonSharedSize;
+  uint32_t gwVersion;
   int      i;
 
   // set pointer to shared memory
@@ -664,7 +709,7 @@ void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t shared
   else                DBPRINT1("common-fwlib: ERROR cpuRamExternal undefined\n");
 
   // get address to data
-  pSharedVersion          = (uint32_t *)(pShared + (COMMON_SHARED_VERSION >> 2));
+  pSharedFwVersion        = (uint32_t *)(pShared + (COMMON_SHARED_VERSION >> 2));
   pSharedStatusArrayHi    = (uint32_t *)(pShared + (COMMON_SHARED_STATUSHI >> 2));
   pSharedStatusArrayLo    = (uint32_t *)(pShared + (COMMON_SHARED_STATUSLO >> 2));
   pSharedCmd              = (uint32_t *)(pShared + (COMMON_SHARED_CMD >> 2));
@@ -696,6 +741,7 @@ void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t shared
   pSharedOffsDone         = (uint32_t *)(pShared + (COMMON_SHARED_OFFSDONE >> 2));
   pSharedOffsDoneMax      = (uint32_t *)(pShared + (COMMON_SHARED_OFFSDONEMAX >> 2));
   pSharedOffsDoneMin      = (uint32_t *)(pShared + (COMMON_SHARED_OFFSDONEMIN >> 2));
+  pSharedGwVersion        = (uint32_t *)(pShared + (COMMON_SHARED_GWVERSION >> 2));
   pSharedUsedSize         = (uint32_t *)(pShared + (COMMON_SHARED_USEDSIZE >> 2));
 
   // clear shared mem
@@ -707,19 +753,23 @@ void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t shared
     i++;
   } // while pSharedTemp
 
-  fwlib_publishSharedSize(sharedSize);                              // set shared size total
+  fwlib_publishSharedSize(sharedSize);                             // set shared size total
   commonSharedSize   = (uint32_t)(pSharedTemp - pShared) << 2;     // calc shared size common
+
+  gwVersion          = fwlib_getGwVersion();
 
   // basic info to wr console
   DBPRINT1("\n");
-  DBPRINT1("common-fwlib: ***** firmware %s v%06x started from scratch *****\n", name, (unsigned int)fwVersion);
+  DBPRINT1("common-fwlib: gateware v0x%06x detected\n", (unsigned int)gwVersion);
+  DBPRINT1("common-fwlib: ***** firmware %s v0x%06x started from scratch *****\n", name, (unsigned int)fwVersion);
   DBPRINT1("common-fwlib: fwlib_init, shared size [bytes], common part %d, total %d\n", commonSharedSize, sharedSize);
   DBPRINT1("common-fwlib: cpuRamExternal 0x%08x,  cpuRamExternalData4EB 0x%08x\n", cpuRamExternal, cpuRamExternalData4EB);
   DBPRINT1("\n");
 
   // set initial values;
   ebmClearSharedMem();
-  *pSharedVersion      = fwVersion; // of all the shared variables, only VERSION is a constant. Set it now!
+  *pSharedFwVersion    = fwVersion;           // of all the shared variables, only VERSION is a constant. Set it now!
+  *pSharedGwVersion    = gwVersion;           // assume GW version is constant too :-)
   *pSharedNBadStatus   = 0;
   *pSharedNBadState    = 0;
   flagRecover          = 0;
@@ -730,9 +780,9 @@ void fwlib_printOLED(char *chars)
 {
   uint32_t i;
 
-  if (!pOLED) return;                         // no OLED: just return
+  if (!pOLED || !chars) return;               // no OLED: just return
 
-  for (i=0;i<strlen(chars);i++) *(pOLED + (OLED_UART_OWR >> 2)) = chars[i];
+  for (i=0; chars[i] != '\0'; i++) *(pOLED + (OLED_UART_OWR >> 2)) = chars[i];
 } // fwlib_printOLED
 
 
@@ -866,6 +916,7 @@ uint32_t fwlib_wait4MILEvent(uint32_t usTimeout, uint32_t *evtData, uint32_t *ev
   *virtAcc    = 0xffff;
   *evtData    = 0xffff;
   *evtCode    = 0xffff;
+  if (!pMILPiggy) return COMMON_STATUS_ERROR;   // no MIL piggy on this board
   if (nValidEvtCodes == 0) valid = 1;           // just return with the first element read from FIFO
   else                     valid = 0;           // only return if element read from FIFO matches one of the validEvtcodes
 
@@ -897,6 +948,8 @@ uint32_t fwlib_wait4MILEvent(uint32_t usTimeout, uint32_t *evtData, uint32_t *ev
 void fwlib_milPulseLemo(uint32_t nLemo) // pulse lemo for debugging with scope
 {
   uint32_t i;
+
+  if (!pMILPiggy) return;                       // no MIL piggy on this board
 
   setLemoOutputEvtMil(pMILPiggy, 0, nLemo, 1);
   for (i=0; i< 10 * COMMON_US_ASMNOP; i++) asm("nop");
@@ -930,10 +983,22 @@ uint32_t fwlib_doActionS0()
   uint32_t status = COMMON_STATUS_OK;
   uint64_t now;
 
-  if (findECAQueue() != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
-  if (findPPSGen()   != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
-  if (findWREp()     != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
-  if (findIOCtrl()   != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
+  // all gatewares must have the following
+  if (findECAQueue()       != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
+  if (findIOCtrl()         != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
+
+  switch (fwlib_getGwVersion()) {
+    case COMMON_GWVER_FALLOUT :
+      if (findPPSGen()     != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
+      if (findWREp()       != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
+      break;
+    case COMMON_GWVER_GOOSEV0 :
+      if (findWRInfoUnit() != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
+      break;
+    default :
+      break;
+  } // switch
+
   findOLED();       // ignore error; not every TR has OLED device
   findMILPiggy();   // ignore error; not every TR has a MIL piggy
   findSbMaster();   // ignore error; not every TR has SCU bus master
@@ -1110,6 +1175,7 @@ uint32_t fwlib_changeState(uint32_t *actState, uint32_t *reqState, uint32_t actS
         break;
       case COMMON_STATE_STOPPING:
         nextState = COMMON_STATE_CONFIGURED;      //automatic transition but without entryActionConfigured
+        break;
       case COMMON_STATE_ERROR:
         if      (*reqState == COMMON_STATE_IDLE)       {statusTransition = exitActionError();               nextState = *reqState;}
         break;
