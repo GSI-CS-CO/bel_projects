@@ -399,7 +399,7 @@ int ivtpar(char txtnam[], char parnam[], int* l0, int lchange[IVTMAXPAR])
         ic++;
         vtp[ipar][1]++;
         vt[ic-1][il-1]=ch;
-      } /* else lblank 
+      } /* else lblank */
      } /* for ich*/
     } /* if nch */
 
