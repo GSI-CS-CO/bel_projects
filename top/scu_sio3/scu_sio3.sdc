@@ -15,12 +15,11 @@ create_clock -name scubus_clk     -period   12.5MHz   [get_ports A_SysClock]
 derive_clock_uncertainty
 
 
-create_generated_clock -name { sio3_clk_sw|local_clk|altpll_component|auto_generated|pll1|clk[0] } -source [get_clocks sio3_clk_sw|local_clk|altpll_component|*|clk[0] ] -divide_by 8 -multiply_by 5 -duty_cycle 50.00 [get_clocks sio3_clk_sw|local_clk|altpll_component|*|clk[0] ]
+create_generated_clock -name {sio3_clk_sw|local_clk|altpll_component|auto_generated|pll1|clk[0]} -source {sio3_clk_sw|\pll_20_sio:local_clk|altpll_component|auto_generated|pll1|inclk[0]} -divide_by 8 -multiply_by 5 -duty_cycle 50.00 { sio3_clk_sw|\pll_20_sio:local_clk|altpll_component|auto_generated|pll1|clk[0] }
 
 create_generated_clock -name {sio3_clk_sw|sys_or_local_pll|altpll_component|auto_generated|pll1|clk[0]} -source {sio3_clk_sw|sys_or_local_pll|altpll_component|auto_generated|pll1|inclk[0]} -divide_by 1 -multiply_by 10 -duty_cycle 50.00 { sio3_clk_sw|sys_or_local_pll|altpll_component|auto_generated|pll1|clk[0] }
 create_generated_clock -name {sio3_clk_sw|sys_or_local_pll|altpll_component|auto_generated|pll1|clk[1]} -source {sio3_clk_sw|sys_or_local_pll|altpll_component|auto_generated|pll1|inclk[0]} -divide_by 5 -multiply_by 4  -duty_cycle 50.00 { sio3_clk_sw|sys_or_local_pll|altpll_component|auto_generated|pll1|clk[1] }
 create_generated_clock -name {sio3_clk_sw|sys_or_local_pll|altpll_component|auto_generated|pll1|clk[2]} -source {sio3_clk_sw|sys_or_local_pll|altpll_component|auto_generated|pll1|inclk[0]} -divide_by 1 -multiply_by 2  -duty_cycle 50.00 { sio3_clk_sw|sys_or_local_pll|altpll_component|auto_generated|pll1|clk[2] }
-create_generated_clock -name {sio3_clk_sw|sys_or_local_pll|altpll_component|auto_generated|pll1|clk[3]} -source {sio3_clk_sw|sys_or_local_pll|altpll_component|auto_generated|pll1|inclk[0]} -divide_by 1 -multiply_by 20 -duty_cycle 50.00 { sio3_clk_sw|sys_or_local_pll|altpll_component|auto_generated|pll1|clk[3] }
 
 
 
@@ -33,7 +32,6 @@ set_clock_groups -asynchronous                                                  
  -group {sio3_clk_sw|sys_or_local_pll|altpll_component|auto_generated|pll1|clk[0] }\
  -group {sio3_clk_sw|sys_or_local_pll|altpll_component|auto_generated|pll1|clk[1] }\
  -group {sio3_clk_sw|sys_or_local_pll|altpll_component|auto_generated|pll1|clk[2] }\
- -group {sio3_clk_sw|sys_or_local_pll|altpll_component|auto_generated|pll1|clk[3] }\
  -group {dsc_denoised                                                             }
 
 
