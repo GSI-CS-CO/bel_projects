@@ -920,6 +920,8 @@ int main(int argc, char** argv) {
       }
       if (num == 0) {
         fprintf(stderr, "%s: no known flash devices found\n", program);
+        fprintf(stderr, "%s: this device may use the ASMI flash controller, try: eb-asmi %s -w %s\n",
+                        program, device_address, firmware);
         return 1;
       }
       if (num > 1) {
