@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 03-jul-2026
+ *  version : 13-nov-2026
  *
  * subscribes to and displays status of a b2b system (CBU, PM, KD ...)
  *
@@ -182,8 +182,8 @@ const char * typeNames[] = {
   "CBU",
   " PM",
   "PSM",
-  "KDE",
   "KDI",
+  "KDE",
   "DAQ",
   "CAL",
 };
@@ -310,13 +310,13 @@ void printServices(int flagOnce)
     else                                         sprintf(cStatus, "%13"PRIx64"",  dicSystem[i].status);
     tmp = (uint32_t *)(&(dicSystem[i].state));
     if (*tmp == no_link_32)                      sprintf(cState,    "%10s",       no_link_str);
-    else                                         sprintf(cState,    "%10s",       dicSystem[i].state); 
+    else                                         snprintf(cState, sizeof(cState), "%10.10s", dicSystem[i].state);
     tmp = (uint32_t *)(&(dicSystem[i].version));
     if (*tmp == no_link_32)                      sprintf(cVersion,   "%8s",       no_link_str);
-    else                                         sprintf(cVersion,   "%8s",       dicSystem[i].version); 
+    else                                         snprintf(cVersion, sizeof(cVersion), "%8.8s", dicSystem[i].version);
     tmp = (uint32_t *)(&(dicSystem[i].hostname));
     if (*tmp == no_link_32)                      sprintf(cHost,     "%16s",       no_link_str);
-    else                                         sprintf(cHost,     "%16s",       dicSystem[i].hostname);
+    else                                         snprintf(cHost, sizeof(cHost), "%16.16s", dicSystem[i].hostname);
     tmp = (uint32_t *)(&(dicSystem[i].jitter));
     if (*tmp == no_link_32)                      sprintf(cJitter,    "   ");          // no link, just 'blank' as not all processes have a jitter check
     else  {
@@ -449,7 +449,7 @@ int main(int argc, char** argv) {
       sysId = 0xffff;
       userInput = comlib_term_getChar();
       switch (userInput) {
-        case 'A' ... 'O' :
+        case 'A' ... 'P' :
           sysId = userInput - 55;                 // no break on purpose
         case '0' ... '9' :
           if (sysId == 0xffff) sysId = userInput - 48; // ugly
