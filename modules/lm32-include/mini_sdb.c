@@ -235,28 +235,31 @@ uint8_t* find_device(uint32_t devid)
 
 
 
-// find the UART of this lm32
-// WR4: a single UART (WR-Periph-UART), WR5: VUART-WRC0 and VUART-LM32 share the same IDs -> pick VUART-LM32 by name
-static uint32_t* find_uart_adr(void)
+static int sdb_name_starts_with(sdb_location *loc, const char *prefix)
 {
-  sdb_location found_uart[4];
-  uint32_t     idx = 0;
-  uint32_t     i, j;
-  const char   lm32Uart[] = "VUART-LM32";
-  const char   *name;
+  const char *name = loc->sdb->device.sdb_component.product.name;
+  uint32_t i;
 
-  find_device_multi(&found_uart[0], &idx, 4, CERN, WR_UART);
-  if (idx == 0) return (uint32_t*)ERROR_NOT_FOUND;
-
-  for (i = 0; i < idx; i++) {
-    name = found_uart[i].sdb->device.sdb_component.product.name;
-    for (j = 0; j < sizeof(lm32Uart) - 1; j++) if (name[j] != lm32Uart[j]) break;
-    if (j == sizeof(lm32Uart) - 1) return (uint32_t*)getSdbAdr(&found_uart[i]);
-  }
-
-  return (uint32_t*)getSdbAdr(&found_uart[0]);                 // fallback: first UART found (old behaviour)
+  for (i = 0; prefix[i]; i++)
+    if (i >= sizeof(loc->sdb->device.sdb_component.product.name) || name[i] != prefix[i]) return 0;
+  return 1;
 }
 
+// The WR UART and all vUARTs share CERN/WR_UART, so pick by SDB name:
+// the LM32 console FIFO (VUART-LM32) first, else the first non-vUART (WR UART).
+static uint32_t* find_uart_adr(void)
+{
+  sdb_location found_sdb[8];
+  uint32_t idx = 0;
+  uint32_t i;
+
+  find_device_multi(&found_sdb[0], &idx, 8, CERN, WR_UART);
+  for (i = 0; i < idx; i++)
+    if (sdb_name_starts_with(&found_sdb[i], "VUART-LM32")) return (uint32_t*)getSdbAdr(&found_sdb[i]);
+  for (i = 0; i < idx; i++)
+    if (!sdb_name_starts_with(&found_sdb[i], "VUART-")) return (uint32_t*)getSdbAdr(&found_sdb[i]);
+  return (uint32_t*)ERROR_NOT_FOUND;
+}
 
 void discoverPeriphery(void)
 {
