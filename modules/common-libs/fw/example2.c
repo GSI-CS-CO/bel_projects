@@ -213,6 +213,7 @@ int main(void) {
 
   // init 
   init();                                                              // initialize stuff for lm32
+  pp_printf("example2: booted, UART @ 0x%08x\n", (unsigned int)pUart);  // first sign of life, before EB init
   initSharedMem(&sharedSize);                                          // initialize shared memory
   fwlib_init((uint32_t *)_startshared, cpuRamExternal, SHARED_OFFS, sharedSize, "example", EXAMPLE_FW_VERSION); // init common stuff
   fwlib_clearDiag();                                                   // clear common diagnostic data
