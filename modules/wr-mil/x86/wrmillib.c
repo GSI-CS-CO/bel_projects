@@ -529,12 +529,13 @@ uint32_t wrmil_common_read(uint64_t ebDevice, uint64_t *statusArray, uint32_t *s
   eb_status_t   eb_status;
   eb_device_t   eb_device;
   comlib_diag_t data;
+  uint32_t      gwVersion;
 
 
   if (!ebDevice) return COMMON_STATUS_EB;
   eb_device = (eb_device_t)ebDevice;
 
-  if ((eb_status = comlib_readDiag2(eb_device, state, version, statusArray, &data, printDiag)) != COMMON_STATUS_OK) return COMMON_STATUS_EB;
+  if ((eb_status = comlib_readDiag2(eb_device, state, version, &gwVersion, statusArray, &data, printDiag)) != COMMON_STATUS_OK) return COMMON_STATUS_EB;
 
   *nBadStatus = data.nBadStatus;
   *nBadState  = data.nBadState;
