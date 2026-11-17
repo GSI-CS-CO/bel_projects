@@ -70,33 +70,6 @@ static uint8_t* erase_bitmap;
 static int erase_bitmap_size;
 static FILE* firmware_f;
 
-/* print one argument so it can be pasted into a POSIX shell */
-static void print_shell_arg(const char* arg) {
-  const char* c;
-  if (*arg && strspn(arg, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-+=.,:/@%") == strlen(arg)) {
-    fputs(arg, stderr);
-    return;
-  }
-  fputc('\'', stderr);
-  for (c = arg; *c; ++c) {
-    if (*c == '\'') fputs("'\\''", stderr);
-    else fputc(*c, stderr);
-  }
-  fputc('\'', stderr);
-}
-
-/* print the current command line with -o added */
-static void print_force_cmd(int argc, char** argv) {
-  int i;
-  print_shell_arg(argv[0]);
-  fputs(" -o", stderr);
-  for (i = 1; i < argc; ++i) {
-    fputc(' ', stderr);
-    print_shell_arg(argv[i]);
-  }
-  fputc('\n', stderr);
-}
-
 static void help(void) {
   fprintf(stderr, "Usage: %s [OPTION] <proto/host/port> <firmware>\n", program);
   fprintf(stderr, "\n");
@@ -870,11 +843,13 @@ int main(int argc, char** argv) {
     fprintf(stderr, "%s: NOTE: If you want to update to the G-Release or later (after fallout), please do this:\n", program);
     fprintf(stderr, "  1. eb-config-nv %s 10 4\n", dev);
     fprintf(stderr, "  2. power-cycle the card (important!)\n");
-    fprintf(stderr, "  3. flash with -o (force): ");
-    print_force_cmd(argc, argv);
+    fprintf(stderr, "  3. flash with -o (force): %s -o", program);
+    for (i = 1; i < argc; ++i) fprintf(stderr, " %s", argv[i]);
+    fprintf(stderr, "\n");
     fprintf(stderr, "%s: NOTE: If you want to flash fallout or an older release, just do this:\n", program);
-    fprintf(stderr, "  1. flash with -o (force): ");
-    print_force_cmd(argc, argv);
+    fprintf(stderr, "  1. flash with -o (force): %s -o", program);
+    for (i = 1; i < argc; ++i) fprintf(stderr, " %s", argv[i]);
+    fprintf(stderr, "\n");
     return 1;
   }
 
