@@ -86,6 +86,7 @@ static void help(void) {
   fprintf(stderr, "  -c <cycles>    number of cycles per bridge access         (4)\n");
   fprintf(stderr, "  -r <retries>   number of times to attempt autonegotiation (3)\n");
   fprintf(stderr, "  -f             full; skip quick scan and erase everything\n");
+  fprintf(stderr, "  -o             force; required to flash (see G-release note)\n");
   fprintf(stderr, "  -p             disable self-describing wishbone device probe\n");
   fprintf(stderr, "  -n             do not verify contents after programming\n");
   fprintf(stderr, "  -z             simply erase everything\n");
@@ -688,6 +689,7 @@ int main(int argc, char** argv) {
   long value;
   char* value_end;
   int opt, error, i;
+  int force;
 
   eb_socket_t socket;
   eb_status_t status;
@@ -710,6 +712,7 @@ int main(int argc, char** argv) {
   cycles_per_poll = 4;
   retries = 3;
   full = 0;
+  force = 0;
   probe = 1;
   verify = 1;
   invert = -1; /* auto */
@@ -719,7 +722,7 @@ int main(int argc, char** argv) {
 
   /* Process the command-line arguments */
   error = 0;
-  while ((opt = getopt(argc, argv, "t:e:a:d:bli:s:w:c:r:fpnzvqh")) != -1) {
+  while ((opt = getopt(argc, argv, "t:e:a:d:bli:s:w:c:r:fopnzvqh")) != -1) {
     switch (opt) {
     case 't':
       address = strtoull(optarg, &value_end, 0);
@@ -802,6 +805,9 @@ int main(int argc, char** argv) {
     case 'f':
       full = 1;
       break;
+    case 'o':
+      force = 1;
+      break;
     case 'p':
       probe = 0;
       break;
@@ -831,6 +837,21 @@ int main(int argc, char** argv) {
   }
 
   if (error) return 1;
+
+  if (!force) {
+    const char* dev = (optind < argc) ? argv[optind] : "<proto/host/port>";
+    fprintf(stderr, "%s: NOTE: If you want to update to the G-Release or later (after fallout), please do this:\n", program);
+    fprintf(stderr, "  1. eb-config-nv %s 10 4\n", dev);
+    fprintf(stderr, "  2. power-cycle the card (important!)\n");
+    fprintf(stderr, "  3. flash with -o (force): %s -o", program);
+    for (i = 1; i < argc; ++i) fprintf(stderr, " %s", argv[i]);
+    fprintf(stderr, "\n");
+    fprintf(stderr, "%s: NOTE: If you want to flash fallout or an older release, just do this:\n", program);
+    fprintf(stderr, "  1. flash with -o (force): %s -o", program);
+    for (i = 1; i < argc; ++i) fprintf(stderr, " %s", argv[i]);
+    fprintf(stderr, "\n");
+    return 1;
+  }
 
   if (optind + 2 != argc) {
     fprintf(stderr, "%s: expecting two non-optional arguments: <proto/host/port> <firmware(rpd file)>\n", program);
@@ -920,6 +941,8 @@ int main(int argc, char** argv) {
       }
       if (num == 0) {
         fprintf(stderr, "%s: no known flash devices found\n", program);
+        fprintf(stderr, "%s: this device may use the ASMI flash controller, try: eb-asmi %s -w %s\n",
+                        program, device_address, firmware);
         return 1;
       }
       if (num > 1) {

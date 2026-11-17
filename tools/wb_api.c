@@ -50,6 +50,9 @@
 #include <wb_api.h>
 #include <wb_slaves.h>
 
+// print a warning if the optional WR_INFO device is not found (0: quiet, 1: warn)
+#define WR_INFO_MISSING_WARN 0
+
 // global variables
 eb_device_t  known_dev      = EB_NULL;   // etherbone device
 eb_socket_t  known_sock     = EB_NULL;   // etherbone socket
@@ -58,6 +61,8 @@ eb_address_t pps_addr       = EB_NULL;
 eb_address_t eca_addr       = EB_NULL;
 eb_address_t endpoint_addr  = EB_NULL;
 eb_address_t etherbone_addr = EB_NULL;
+eb_address_t wr_info_addr   = EB_NULL;
+eb_address_t ebm_addr       = EB_NULL;
 eb_address_t tlu_addr       = EB_NULL;
 eb_address_t wb4_ram        = EB_NULL;
 eb_address_t wb4_1wire      = EB_NULL;
@@ -217,7 +222,8 @@ eb_status_t wb_get_device_address(eb_device_t device, uint64_t vendor_id, uint32
   if ((status = eb_sdb_find_by_identity(device, vendor_id, product_id, sdbDevice, nDevices)) != EB_OK) return status;
   if (*nDevices == 0) {
     sprintf(buff, "device vendor %"PRIx64", product %x does not exist!", vendor_id, product_id);
-    wb_warn(EB_FAIL, buff);
+    // WR_INFO is optional: only warn if WR_INFO_MISSING_WARN is set
+    if ((vendor_id != WR_INFO_VENDOR) || (WR_INFO_MISSING_WARN)) wb_warn(EB_FAIL, buff);
     return EB_FAIL;
   }
   if (*nDevices > maxDev) {
@@ -298,8 +304,35 @@ eb_status_t wb_wr_get_dualnic_time(eb_device_t  device, int devIndex, uint64_t *
   return EB_OK;
 #endif
 
-  // get time from PPS GEN
   *nsecs = 0;
+
+  // WR_INFO present: 1st NIC from ECA, 2nd NIC from WR_INFO (if present)
+  if ((status = wb_check_device(device, WR_INFO_VENDOR, WR_INFO_PRODUCT, WR_INFO_VMAJOR, WR_INFO_VMINOR, 0, &wr_info_addr)) == EB_OK) {
+    if (devIndex == 0) return wb_wr_get_time(device, 0, nsecs);
+    if (devIndex != 1) {
+      wb_warn(EB_OOM, "WR_INFO supports two NICs only (index 0, 1)");
+      return EB_OOM;
+    } // if devIndex
+
+    if ((status = eb_device_read(device, wr_info_addr + WR_INFO_AUX_STATUS, EB_BIG_ENDIAN|EB_DATA32, &data1, 0, eb_block)) != EB_OK) return status;
+    if (!(data1 & WR_INFO_STATUS_PRESENT)) {
+      wb_warn(EB_FAIL, "no 2nd NIC: WR_INFO reports no auxiliary WR port");
+      return EB_FAIL;
+    } // if !present
+
+    // latch and read in one cycle
+    if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;
+    eb_cycle_write(cycle, wr_info_addr + WR_INFO_AUX_TIME_LATCH, EB_BIG_ENDIAN|EB_DATA32, 0x1);
+    eb_cycle_read(cycle, wr_info_addr + WR_INFO_AUX_TIME_HI, EB_BIG_ENDIAN|EB_DATA32, &data1);
+    eb_cycle_read(cycle, wr_info_addr + WR_INFO_AUX_TIME_LO, EB_BIG_ENDIAN|EB_DATA32, &data2);
+    if ((status = eb_cycle_close(cycle)) != EB_OK) return status;
+
+    *nsecs = ((uint64_t)data1 << 32) | (uint64_t)data2;
+
+    return EB_OK;
+  } // if WR_INFO
+
+  // get time from PPS GEN
   if ((status = wb_check_device(device, WR_PPS_GEN_VENDOR, WR_PPS_GEN_PRODUCT, WR_PPS_GEN_VMAJOR, WR_PPS_GEN_VMINOR, devIndex, &pps_addr)) != EB_OK) return status;
   do {
     if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;
@@ -309,14 +342,14 @@ eb_status_t wb_wr_get_dualnic_time(eb_device_t  device, int devIndex, uint64_t *
     eb_cycle_read(cycle, pps_addr + WR_PPS_GEN_CNTR_UTCHI, EB_BIG_ENDIAN|EB_DATA32, &data4);
     if ((status = eb_cycle_close(cycle)) != EB_OK) return status;
   } while (data1 != data4);
-  
+
   secs     = (uint64_t)data1 & 0xff;
   secs     = secs << 32 | (uint64_t)data2;
   nanosecs = (uint64_t)data3;
   while (nanosecs >= one_s_ns) {
     nanosecs =- one_s_ns;
     secs++;
-  } // while 
+  } // while
   *nsecs  = secs * one_s_ns + nanosecs;
 
   return EB_OK;
@@ -337,6 +370,22 @@ eb_status_t wb_wr_get_mac(eb_device_t device, int devIndex, uint64_t *mac )
 #endif
 
   *mac = 0x0;
+  if ((status = wb_check_device(device, WR_INFO_VENDOR, WR_INFO_PRODUCT, WR_INFO_VMAJOR, WR_INFO_VMINOR, devIndex, &wr_info_addr)) == EB_OK) {
+    if ((status = wb_check_device(device, EBM_VENDOR, EBM_PRODUCT, EBM_VMAJOR, EBM_VMINOR, devIndex, &ebm_addr)) == EB_OK) {
+      address = ebm_addr + EBM_OWN_MAC_HI;
+      if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &hidata, 0, eb_block)) != EB_OK) return status;
+
+      address = ebm_addr + EBM_OWN_MAC_LO;
+      if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &lodata, 0, eb_block)) != EB_OK) return status;
+
+      *mac = hidata;
+      *mac = (*mac << 32);
+      *mac = *mac + lodata;
+
+      return status;
+    }
+  }
+
   if ((status = wb_check_device(device, WR_ENDPOINT_VENDOR, WR_ENDPOINT_PRODUCT, WR_ENDPOINT_VMAJOR, WR_ENDPOINT_VMINOR, devIndex, &endpoint_addr)) != EB_OK) return status;
 
   address = endpoint_addr + WR_ENDPOINT_MACHI;
@@ -367,6 +416,14 @@ eb_status_t wb_wr_get_link(eb_device_t device, int devIndex, int *link )
 #endif
 
   *link = 0x0;
+  if ((status = wb_check_device(device, WR_INFO_VENDOR, WR_INFO_PRODUCT, WR_INFO_VMAJOR, WR_INFO_VMINOR, devIndex, &wr_info_addr)) == EB_OK) {
+    address = wr_info_addr + WR_INFO_STATUS;
+    if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block)) != EB_OK) return status;
+    *link = (data & WR_INFO_STATUS_LINK) != 0;
+
+    return status;
+  }
+
   if ((status = wb_check_device(device, WR_ENDPOINT_VENDOR, WR_ENDPOINT_PRODUCT, WR_ENDPOINT_VMAJOR, WR_ENDPOINT_VMINOR, devIndex, &endpoint_addr)) != EB_OK) return status;
 
   address = endpoint_addr + WR_ENDPOINT_LINK;
@@ -392,6 +449,16 @@ eb_status_t wb_wr_get_ip(eb_device_t device, int devIndex, int *ip )
 
   *ip = 0x0;
 
+  if ((status = wb_check_device(device, WR_INFO_VENDOR, WR_INFO_PRODUCT, WR_INFO_VMAJOR, WR_INFO_VMINOR, devIndex, &wr_info_addr)) == EB_OK) {
+    if ((status = wb_check_device(device, EBM_VENDOR, EBM_PRODUCT, EBM_VMAJOR, EBM_VMINOR, devIndex, &ebm_addr)) == EB_OK) {
+      address = ebm_addr + EBM_OWN_IP;
+      if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block)) != EB_OK) return status;
+      *ip = data;
+
+      return status;
+    }
+  }
+
   if ((status = wb_check_device(device, ETHERBONE_CONFIG_VENDOR, ETHERBONE_CONFIG_PRODUCT, ETHERBONE_CONFIG_VMAJOR, ETHERBONE_CONFIG_VMINOR, devIndex, &etherbone_addr)) != EB_OK) return status;
 
   address = etherbone_addr + ETHERBONE_CONFIG_IP;
@@ -404,10 +471,8 @@ eb_status_t wb_wr_get_ip(eb_device_t device, int devIndex, int *ip )
 
 eb_status_t wb_wr_get_ip_state(eb_device_t device, int devIndex, uint32_t buildNumber,  int *ipState)
 {
-  eb_data_t    data;
-  eb_address_t address;
-  eb_address_t offset;
   eb_status_t  status;
+  int          ip;
 
 #ifdef WB_SIMULATE
   *ipState = 1;
@@ -417,28 +482,9 @@ eb_status_t wb_wr_get_ip_state(eb_device_t device, int devIndex, uint32_t buildN
 
   *ipState = -1;
 
-  // unfortunately, the offset depends on the buildnumber
-  switch (buildNumber) {
-    case 0x050004 :
-      offset = WB4_BLOCKRAM_IPSTATE_050004;
-      break;
-    case 0x060001 :
-      offset = WB4_BLOCKRAM_IPSTATE_060001;
-      break;
-    case 0x060102 :
-      offset = WB4_BLOCKRAM_IPSTATE_060102;
-      break;
-    case 0x060201 :
-      offset = WB4_BLOCKRAM_IPSTATE_060201;
-      break;
-    default : return EB_OK;
-  } // switch
-
-  if ((status = wb_check_device(device, WB4_BLOCKRAM_VENDOR, WB4_BLOCKRAM_PRODUCT, WB4_BLOCKRAM_VMAJOR, WB4_BLOCKRAM_VMINOR, devIndex, &wb4_ram)) != EB_OK) return status;
-
-  address = wb4_ram + offset;
-  if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block)) != EB_OK) return status;
-  *ipState = data;
+  // buildNumber is no longer needed; the IP is invalid as long as it is the WR default IP
+  if ((status = wb_wr_get_ip(device, devIndex, &ip)) != EB_OK) return status;
+  *ipState = ((uint32_t)ip == WR_DEFAULT_IP) ? 0 : 1;
 
   return EB_OK;
 } // wb_wr_get_ip_state
@@ -457,6 +503,14 @@ eb_status_t wb_wr_get_sync_state(eb_device_t device, int devIndex, int *syncStat
 #endif
 
   *syncState  = 0x0;
+
+  if ((status = wb_check_device(device, WR_INFO_VENDOR, WR_INFO_PRODUCT, WR_INFO_VMAJOR, WR_INFO_VMINOR, devIndex, &wr_info_addr)) == EB_OK) {
+    address = wr_info_addr + WR_INFO_STATUS;
+    if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block)) != EB_OK) return status;
+    *syncState  = (data & WR_INFO_STATUS_LOCK) ? WR_PPS_GEN_ESCR_MASK : 0; // time valid => TRACKING
+
+    return status;
+  }
 
   if ((status = wb_check_device(device, WR_PPS_GEN_VENDOR, WR_PPS_GEN_PRODUCT, WR_PPS_GEN_VMAJOR, WR_PPS_GEN_VMINOR, devIndex, &pps_addr)) != EB_OK) return status;
 
@@ -481,6 +535,14 @@ eb_status_t wb_wr_get_uptime(eb_device_t device, int devIndex, uint32_t *uptime)
 #endif
 
   *uptime  = 0;
+
+  // WR_INFO present: get uptime from WR_INFO
+  if ((status = wb_check_device(device, WR_INFO_VENDOR, WR_INFO_PRODUCT, WR_INFO_VMAJOR, WR_INFO_VMINOR, 0, &wr_info_addr)) == EB_OK) {
+    if ((status = eb_device_read(device, wr_info_addr + WR_INFO_UPTIME, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block)) != EB_OK) return status;
+    *uptime = data;
+
+    return EB_OK;
+  } // if WR_INFO
 
   if ((status = wb_check_device(device, WB4_BLOCKRAM_VENDOR, WB4_BLOCKRAM_PRODUCT, WB4_BLOCKRAM_VMAJOR, WB4_BLOCKRAM_VMINOR, devIndex, &wb4_ram)) != EB_OK) return status;
 
@@ -1100,9 +1162,9 @@ eb_status_t wb_wr_sfp_reset(eb_device_t device, int devIndex, int phyIndex)
   } // switch phyIndex
 
   // get address of RESET controller
-  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR_RESET, devIndex, &reset_addr)) != EB_OK) return status;  
+  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR_RESET, devIndex, &reset_addr)) != EB_OK) return status;
   address      = reset_addr + FPGA_RESET_PHY_RESET;
-  
+
   // turn SFP off and on
   if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, regValue, 0, eb_block)) != EB_OK) return status;
   usleep(750000);
@@ -1130,7 +1192,7 @@ eb_status_t wb_wr_phy_reset(eb_device_t device, int devIndex, int phyIndex)
     default: return EB_ADDRESS;
   } // switch phyIndex
 
-  // get address of RESET controller 
+  // get address of RESET controller
   if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR_RESET, devIndex, &reset_addr)) != EB_OK) return status;
   address      = reset_addr + FPGA_RESET_PHY_RESET;
 
@@ -1249,9 +1311,9 @@ eb_status_t wb_comx_power(eb_device_t device, int devIndex, uint32_t value)
 
   address = reset_addr + FPGA_RESET_COMX_PWRBUTTON;
 
-  
+
   switch (value) {
-    case 0 :                 
+    case 0 :
       tSleep = 6000000;      // long press: power off
       break;
     case 1:
@@ -1268,7 +1330,7 @@ eb_status_t wb_comx_power(eb_device_t device, int devIndex, uint32_t value)
   usleep(tSleep);
   data = (eb_data_t)(FPGA_RESET_COMX_PWRBUTTON_REL);
   if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, data, 0, eb_block)) != EB_OK) return status;
-  
+
   return status;
 } // wb_comx_power
 
