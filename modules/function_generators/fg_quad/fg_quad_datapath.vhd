@@ -34,8 +34,8 @@ entity fg_quad_datapath is
   load_start:         in  std_logic;
   sync_start:         in  std_logic;
   step_sel:           in  std_logic_vector(2 downto 0);
-  shift_a:            in  integer range 0 to 48;          -- shiftvalue coeff b
-  shift_b:            in  integer range 0 to 48;          -- shiftvalue coeff b
+  shift_a:            in  integer range 0 to 63;          -- shiftvalue coeff a
+  shift_b:            in  integer range 0 to 63;          -- shiftvalue coeff b
   freq_sel:           in  std_logic_vector(2 downto 0);
   state_change_irq:   out std_logic;
   dreq:               out std_logic;
@@ -125,6 +125,8 @@ signal s_freq_cnt_en:             std_logic := '1';
 
 signal s_step_cnt:                unsigned(c_step_cnt_width - 1 downto 0);
 signal s_stp_reached:             std_logic;
+signal s_load_set:                std_logic;    -- segment boundary, take next parameter set
+signal s_dreq:                    std_logic;    -- parameter set taken, request the next one
 signal s_cont:                    std_logic;
 
 signal s_is_running:              std_logic;
@@ -166,14 +168,14 @@ begin
       freq_sel_reg  <=  (others => '0');
       step_sel_reg  <=  (others => '0');
     else
-      if s_stp_reached = '1' or sync_start = '1' then
+      if s_load_set = '1' or sync_start = '1' then
         -- shifting for quadratic coefficient a
         s_a_reg <= shift_left(resize(signed(data_a), 64), shift_a);
         s_Q_reg <= shift_left(resize(signed(data_b), 64), shift_b); -- Q0 = b
         s_X_reg <= shift_left(resize(signed(data_c), 64), 32);      -- X0 = c
       end if;
 
-      if s_stp_reached = '1' or load_start = '1' then
+      if s_load_set = '1' or load_start = '1' then
         step_sel_reg <= step_sel;
         freq_sel_reg <= freq_sel;
       end if;
@@ -218,6 +220,7 @@ end process;
 
 
   s_stp_reached <= std_logic(s_step_cnt(s_step_cnt'high));
+  s_load_set    <= '1' when control_state = quad_inc and s_stp_reached = '1' and s_freq_en = '1' else '0';
 
 -- control state machine
   control_sm: process (clk, nrst, sync_rst, s_cont)
@@ -228,6 +231,7 @@ end process;
       s_inc_quad            <= '0';
       s_signal_state_change <= '0';
       s_segment_finished    <= '0';
+      s_dreq                <= '0';
 
     elsif rising_edge(clk) then
       if sync_rst = '1' then
@@ -236,6 +240,7 @@ end process;
         s_inc_quad            <= '0';
         s_signal_state_change <= '0';
         s_segment_finished    <= '0';
+        s_dreq                <= '0';
       else
         s_inc_quad            <= '0';
         s_add_lin_quad        <= '0';
@@ -243,10 +248,7 @@ end process;
         s_is_running          <= '0';
         s_signal_state_change <= '0';
         s_segment_finished    <= '0';
-
-        if a_en = '1' then
-          s_coeff_rcvd <= '1';
-        end if;
+        s_dreq                <= '0';
 
         case control_state is
           when idle =>
@@ -267,6 +269,7 @@ end process;
                 s_step_cnt <= to_unsigned(c_step_cnt(to_integer(unsigned(step_sel_reg))), c_step_cnt_width);
                 s_coeff_rcvd <= '0';
                 s_inc_quad <= '1';
+                s_dreq <= '1';
                 control_state <= lin_inc;
               else
                 -- no parameters received
@@ -296,6 +299,11 @@ end process;
           when others =>
 
         end case;
+
+        -- a coefficient write in the boundary cycle belongs to the next set, set wins over clear
+        if a_en = '1' then
+          s_coeff_rcvd <= '1';
+        end if;
       end if;
     end if;
   end process;
@@ -398,14 +406,14 @@ begin
         freq_sel_reg  <=  (others => '0');
         step_sel_reg  <=  (others => '0');
       else
-        if s_stp_reached = '1' or sync_start_stretched = '1' then
+        if s_load_set = '1' or sync_start_stretched = '1' then
           -- shifting for quadratic coefficient a
           s_a_reg <= shift_left(resize(signed(data_a), 64), shift_a);
           s_Q_reg <= shift_left(resize(signed(data_b), 64), shift_b); -- Q0 = b
           s_X_reg <= shift_left(resize(signed(data_c), 64), 32);      -- X0 = c
         end if;
 
-        if s_stp_reached = '1' or load_start_stretched = '1' then
+        if s_load_set = '1' or load_start_stretched = '1' then
           step_sel_reg <= step_sel;
           freq_sel_reg <= freq_sel;
         end if;
@@ -463,6 +471,7 @@ end process;
 
 
   s_stp_reached <= std_logic(s_step_cnt(s_step_cnt'high));
+  s_load_set    <= '1' when control_state = quad_inc and s_stp_reached = '1' and s_freq_en = '1' else '0';
 
 -- control state machine
   control_sm: process (clk, nrst, sync_rst_stretched, s_cont)
@@ -473,6 +482,7 @@ end process;
       s_inc_quad              <= '0';
       s_signal_state_change   <= '0';
       s_segment_finished      <= '0';
+      s_dreq                  <= '0';
 
     elsif rising_edge(clk) then
 
@@ -484,6 +494,7 @@ end process;
         s_inc_quad            <= '0';
         s_signal_state_change <= '0';
         s_segment_finished    <= '0';
+        s_dreq                <= '0';
       else
         s_inc_quad            <= '0';
         s_add_lin_quad        <= '0';
@@ -491,10 +502,7 @@ end process;
         s_is_running          <= '0';
         s_signal_state_change <= '0';
         s_segment_finished    <= '0';
-
-        if a_en_stretched = '1' then
-          s_coeff_rcvd <= '1';
-        end if;
+        s_dreq                <= '0';
 
         case control_state is
           when idle =>
@@ -515,6 +523,7 @@ end process;
                 s_step_cnt <= to_unsigned(c_step_cnt(to_integer(unsigned(step_sel_reg))), c_step_cnt_width);
                 s_coeff_rcvd <= '0';
                 s_inc_quad <= '1';
+                s_dreq <= '1';
                 control_state <= lin_inc;
               else
                 -- no parameters received
@@ -544,6 +553,11 @@ end process;
           when others =>
 
         end case;
+
+        -- a coefficient write in the boundary cycle belongs to the next set, set wins over clear
+        if a_en_stretched = '1' then
+          s_coeff_rcvd <= '1';
+        end if;
       end if; --sync_rst_stretched
 
 	 else
@@ -561,7 +575,7 @@ end generate ACU_IMPLEM;
 -- Interrupts are edge detect on scu_bus_slave_macro , no need to shrink them
 
 state_change_irq <= sync_start or s_signal_state_change;
-dreq             <= s_stp_reached;
+dreq             <= s_dreq;
 
 -- output register for the 24 most significant bits
 sw_out    <= std_logic_vector(s_X_reg(63 downto 32));

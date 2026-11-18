@@ -24,8 +24,8 @@ component fg_quad_datapath is
   load_start:         in  std_logic;
   sync_start:         in  std_logic;
   step_sel:           in  std_logic_vector(2 downto 0);
-  shift_a:            in  integer range 0 to 48;          -- shiftvalue coeff b
-  shift_b:            in  integer range 0 to 48;          -- shiftvalue coeff b
+  shift_a:            in  integer range 0 to 63;          -- shiftvalue coeff a
+  shift_b:            in  integer range 0 to 63;          -- shiftvalue coeff b
   freq_sel:           in  std_logic_vector(2 downto 0);
   state_change_irq:   out std_logic;
   dreq:               out std_logic;
