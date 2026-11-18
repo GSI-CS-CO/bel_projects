@@ -446,13 +446,15 @@ begin
         fg_cntrl_reg(1) <= '0';
       end if;
 
+      -- clear the pending irqs, a new irq in the same cycle wins
+      if wr_irq_act = '1' then
+        irq_act_reg(1 downto 0) <= "00";
+      end if;
       if dreq = '1' then
         irq_act_reg(0) <= '1';
-      elsif state_change_irq = '1' then
+      end if;
+      if state_change_irq = '1' then
         irq_act_reg(1) <= '1';
-      elsif wr_irq_act = '1' then
-        -- clear the pending irqs
-        irq_act_reg(1 downto 0) <= "00";
       end if;
       irq_act_reg(2)          <= fg_is_running;
       irq_act_reg(9 downto 4) <= fg_cntrl_reg(9 downto 4);
