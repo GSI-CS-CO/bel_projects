@@ -301,9 +301,14 @@ riscv-toolchain-clean::
 	rm -rf riscv-11.2-small.tgz || true
 	rm -rf riscv-toolchain || true
 
+# WRPC-SW configuration (ip_cores/wrpc-sw/configs/$(WRPC_DEFCONFIG)). Legacy: WRPC_DEFCONFIG ?= gsi_defconfig
+WRPC_DEFCONFIG ?= gsi_snmp_defconfig
+
 wrpc-sw-config::
-	test -s ip_cores/wrpc-sw/.config || \
-		$(MAKE) -C ip_cores/wrpc-sw/ gsi_defconfig
+	if [ ! -s ip_cores/wrpc-sw/.config ] || \
+	   [ ip_cores/wrpc-sw/configs/$(WRPC_DEFCONFIG) -nt ip_cores/wrpc-sw/.config ]; then \
+		$(MAKE) -C ip_cores/wrpc-sw/ $(WRPC_DEFCONFIG); \
+	fi
 
 firmware:	sdbfs etherbone lm32-toolchain riscv-toolchain wrpc-sw-config
 ifeq ($(UNAME), x86_64)
