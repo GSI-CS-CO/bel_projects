@@ -117,15 +117,17 @@ entity pexarria10 is
     sfp_mod2_io      : inout std_logic;
 
     -----------------------------------------------------------------------
-    -- SFP (auxiliary - not used here)
+    -- SFP (auxiliary) signals routed to USB-C connector 5 (pexarria10 only)
+    -- Fixed direction (2x SN74AXC4T774), MOD1/MOD2 bidirectional (MAX3394)
     -----------------------------------------------------------------------
-    sfp_aux_tx_disable_io_nc : inout std_logic;                    -- USBC5 (pexarria10 only)
-    sfp_aux_tx_fault_io_nc   : inout std_logic;                    -- USBC5 (pexarria10 only)
-    sfp_aux_los_io_nc        : inout std_logic;                    -- USBC5 (pexarria10 only)
-    sfp_aux_mod0_io_nc       : inout std_logic;                    -- USBC5 (pexarria10 only)
-    sfp_aux_mod1_io_nc       : inout std_logic;                    -- USBC5 (pexarria10 only)
-    sfp_aux_mod2_io_nc       : inout std_logic;                    -- USBC5 (pexarria10 only)
-    sfp_aux_gpio_io_extra    : inout std_logic_vector(3 downto 0); -- USBC5 (pexarria10 only)
+    sfp_aux_tx_disable_o : out   std_logic;                    -- USBC5 B10, FPGA output
+    sfp_aux_gpio_o       : out   std_logic_vector(2 downto 0); -- USBC5 A2/A3/A10, FPGA outputs
+    sfp_aux_tx_fault_i   : in    std_logic;                    -- USBC5 B3, FPGA input (10k pull-up)
+    sfp_aux_los_i        : in    std_logic;                    -- USBC5 B2, FPGA input (10k pull-up)
+    sfp_aux_mod0_i       : in    std_logic;                    -- USBC5 B11, FPGA input (10k pull-up)
+    sfp_aux_gpio3_i      : in    std_logic;                    -- USBC5 A11, FPGA input (100k pull-down)
+    sfp_aux_mod1_io      : inout std_logic;                    -- USBC5 A6/B6, bidirectional
+    sfp_aux_mod2_io      : inout std_logic;                    -- USBC5 A7/B7, bidirectional
 
     -----------------------------------------------------------------------
     -- USBC no USB functionality only LVDS signals
@@ -161,8 +163,8 @@ architecture rtl of pexarria10 is
   signal s_led_track    : std_logic;
   signal s_led_pps      : std_logic;
 
-  signal s_gpio_o   : std_logic_vector(19 downto 0);
-  signal s_gpio_i   : std_logic_vector(15 downto 0);
+  signal s_gpio_o   : std_logic_vector(15 downto 0); -- 8 inout + 8 out
+  signal s_gpio_i   : std_logic_vector(11 downto 0); -- 8 inout + 4 in
   signal s_lvds_p_i : std_logic_vector(19 downto 0);
   signal s_lvds_n_i : std_logic_vector(19 downto 0);
   signal s_lvds_p_o : std_logic_vector(19 downto 0);
@@ -201,20 +203,20 @@ architecture rtl of pexarria10 is
     ("CPLD_IO_3  ",  IO_NONE,         false,   false,  3,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
     ("CPLD_IO_4  ",  IO_NONE,         false,   false,  4,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
     ("CPLD_IO_5  ",  IO_NONE,         false,   false,  5,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("USBC5_TX1P ",  IO_NONE,         false,   false,  6,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("USBC5_TX1N ",  IO_NONE,         false,   false,  7,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("USBC5_TX2P ",  IO_NONE,         false,   false,  8,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("USBC5_TX2N ",  IO_NONE,         false,   false,  9,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("USBC5_RX1P ",  IO_NONE,         false,   false, 10,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("USBC5_RX1N ",  IO_NONE,         false,   false, 11,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("USBC5_RX2P ",  IO_NONE,         false,   false, 12,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("USBC5_RX2N ",  IO_NONE,         false,   false, 13,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("USBC5_DATP ",  IO_NONE,         false,   false, 14,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("USBC5_DATN ",  IO_NONE,         false,   false, 15,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL),
-    ("RT_LED_RED ",  IO_NONE,         false,   false, 16,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("RT_LED_BLU ",  IO_NONE,         false,   false, 17,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("RT_LED_GRE ",  IO_NONE,         false,   false, 18,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("RT_LED_WHI ",  IO_NONE,         false,   false, 19,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("USBC5_IO0  ",  IO_NONE,         false,   false,  6,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL), -- SFP2_MOD1 (A6/B6)
+    ("USBC5_IO1  ",  IO_NONE,         false,   false,  7,     IO_INOUTPUT, IO_GPIO,  false,        false,       IO_TTL), -- SFP2_MOD2 (A7/B7)
+    ("USBC5_OUT0 ",  IO_NONE,         false,   false,  8,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL), -- SFP2_TX_DIS (B10)
+    ("USBC5_OUT1 ",  IO_NONE,         false,   false,  9,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL), -- SFP2_AUX_GPIO_0 (A2)
+    ("USBC5_OUT2 ",  IO_NONE,         false,   false, 10,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL), -- SFP2_AUX_GPIO_1 (A3)
+    ("USBC5_OUT3 ",  IO_NONE,         false,   false, 11,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL), -- SFP2_AUX_GPIO_2 (A10)
+    ("RT_LED_RED ",  IO_NONE,         false,   false, 12,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RT_LED_BLU ",  IO_NONE,         false,   false, 13,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RT_LED_GRE ",  IO_NONE,         false,   false, 14,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("RT_LED_WHI ",  IO_NONE,         false,   false, 15,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("USBC5_IN0  ",  IO_NONE,         false,   false,  8,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL), -- SFP2_TX_FAULT (B3)
+    ("USBC5_IN1  ",  IO_NONE,         false,   false,  9,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL), -- SFP2_LOS (B2)
+    ("USBC5_IN2  ",  IO_NONE,         false,   false, 10,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL), -- SFP2_MOD0 (B11)
+    ("USBC5_IN3  ",  IO_NONE,         false,   false, 11,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL), -- SFP2_AUX_GPIO_3 (A11)
     ("USBC1_IO1  ",  IO_I2C_USB_C,    false,   false,  0,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
     ("USBC1_IO2  ",  IO_I2C_USB_C,    false,   false,  1,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
     ("USBC1_IO3  ",  IO_I2C_USB_C,    false,   false,  2,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
@@ -251,8 +253,9 @@ begin
       g_project            => c_project,
       g_flash_bits         => 25, -- !!! TODO: Check this
       g_cr_bits            => c_cr_bits,
-      g_gpio_inout         => 16,
-      g_gpio_out           => 4,
+      g_gpio_inout         => 8, -- CPLD_IO_0..5, USBC5_IO0..1
+      g_gpio_in            => 4, -- USBC5_IN0..3
+      g_gpio_out           => 8, -- USBC5_OUT0..3, RT_LED_*
       g_lvds_inout         => 20,
       g_en_i2c_wrapper     => true,
       g_num_i2c_interfaces => 6,
@@ -358,32 +361,28 @@ begin
   wr_leds_o(1)                  <= not s_led_track;                          -- green = timing valid
   wr_leds_o(2)                  <= not (s_led_link_up and not(s_led_track)); -- blue  = link
   wr_leds_o(3)                  <= not s_led_pps;                            -- white = PPS
-  wr_aux_leds_or_node_leds_o(0) <= s_gpio_o(16);                             -- red
-  wr_aux_leds_or_node_leds_o(1) <= s_gpio_o(17);                             -- red
-  wr_aux_leds_or_node_leds_o(2) <= s_gpio_o(18);                             -- orange
-  wr_aux_leds_or_node_leds_o(3) <= s_gpio_o(19);                             -- orange
+  wr_aux_leds_or_node_leds_o(0) <= s_gpio_o(12);                             -- red
+  wr_aux_leds_or_node_leds_o(1) <= s_gpio_o(13);                             -- red
+  wr_aux_leds_or_node_leds_o(2) <= s_gpio_o(14);                             -- orange
+  wr_aux_leds_or_node_leds_o(3) <= s_gpio_o(15);                             -- orange
 
-  -- Additional GPIOs (USBC5)
-  sfp_aux_tx_disable_io_nc <= s_gpio_o(6)  when s_gpio_o(6)='0'  else 'Z';
-  sfp_aux_tx_fault_io_nc   <= s_gpio_o(7)  when s_gpio_o(7)='0'  else 'Z';
-  sfp_aux_los_io_nc        <= s_gpio_o(8)  when s_gpio_o(8)='0'  else 'Z';
-  sfp_aux_mod0_io_nc       <= s_gpio_o(9)  when s_gpio_o(9)='0'  else 'Z';
-  sfp_aux_mod1_io_nc       <= s_gpio_o(10) when s_gpio_o(10)='0' else 'Z';
-  sfp_aux_mod2_io_nc       <= s_gpio_o(11) when s_gpio_o(11)='0' else 'Z';
-  sfp_aux_gpio_io_extra(0) <= s_gpio_o(12) when s_gpio_o(12)='0' else 'Z';
-  sfp_aux_gpio_io_extra(1) <= s_gpio_o(13) when s_gpio_o(13)='0' else 'Z';
-  sfp_aux_gpio_io_extra(2) <= s_gpio_o(14) when s_gpio_o(14)='0' else 'Z';
-  sfp_aux_gpio_io_extra(3) <= s_gpio_o(15) when s_gpio_o(15)='0' else 'Z';
-  s_gpio_i(6)              <= sfp_aux_tx_disable_io_nc;
-  s_gpio_i(7)              <= sfp_aux_tx_fault_io_nc;
-  s_gpio_i(8)              <= sfp_aux_los_io_nc;
-  s_gpio_i(9)              <= sfp_aux_mod0_io_nc;
-  s_gpio_i(10)             <= sfp_aux_mod1_io_nc;
-  s_gpio_i(11)             <= sfp_aux_mod2_io_nc;
-  s_gpio_i(12)             <= sfp_aux_gpio_io_extra(0);
-  s_gpio_i(13)             <= sfp_aux_gpio_io_extra(1);
-  s_gpio_i(14)             <= sfp_aux_gpio_io_extra(2);
-  s_gpio_i(15)             <= sfp_aux_gpio_io_extra(3);
+  -- USBC5: 2x bidirectional (open drain via MAX3394)
+  sfp_aux_mod1_io <= s_gpio_o(6) when s_gpio_o(6)='0' else 'Z';
+  sfp_aux_mod2_io <= s_gpio_o(7) when s_gpio_o(7)='0' else 'Z';
+  s_gpio_i(6)     <= sfp_aux_mod1_io;
+  s_gpio_i(7)     <= sfp_aux_mod2_io;
+
+  -- USBC5: 4x output (SN74AXC4T774, A->B)
+  sfp_aux_tx_disable_o <= s_gpio_o(8);
+  sfp_aux_gpio_o(0)    <= s_gpio_o(9);
+  sfp_aux_gpio_o(1)    <= s_gpio_o(10);
+  sfp_aux_gpio_o(2)    <= s_gpio_o(11);
+
+  -- USBC5: 4x input (SN74AXC4T774, B->A)
+  s_gpio_i(8)  <= sfp_aux_tx_fault_i;
+  s_gpio_i(9)  <= sfp_aux_los_i;
+  s_gpio_i(10) <= sfp_aux_mod0_i;
+  s_gpio_i(11) <= sfp_aux_gpio3_i;
 
   -------------------------------------------------
   -- LVDS USBC mapping
