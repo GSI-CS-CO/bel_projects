@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 13-nov-2026
+ *  version : 19-nov-2026
  *
  * checks jitter between two timing receivers connected via a Lemo cable 
  * the first timing receiver outputs a PPS pulse
@@ -303,15 +303,15 @@ void ppsOutConfig()
   } // for it
 
 
-  // input not found
+  // output not found (i_found is set when searching the outputs)
   if (i_found == false) {
-    std::cerr << "no input with the name " << ppsName << std::endl;
+    std::cerr << "no output with the name " << ppsName << std::endl;
     exit(1);
   }
 
-  // output not found
+  // input not found (o_found is set when searching the inputs)
   if (o_found == false) {
-    std::cerr << "no output with the name " << ppsName << std::endl;
+    std::cerr << "no input with the name " << ppsName << std::endl;
     exit(1);
   }
   

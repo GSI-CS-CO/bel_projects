@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 13-nov-2026
+ *  version : 19-nov-2026
  *
  * publishes additional diagnostic data of the kicker
  *
@@ -342,7 +342,7 @@ int main(int argc, char** argv)
         break;
       case 'm' :
         reqMode = strtol(optarg, &tail, 0);
-        if (reqMode > 1) fprintf(stderr, "parameter out of range)\n");
+        if (reqMode > 1) {fprintf(stderr, "option -m: parameter out of range\n"); return 1;}
         if (*tail != 0) {
           fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg);
           return 1;

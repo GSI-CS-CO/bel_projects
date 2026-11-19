@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 13-nov-2026
+ *  version : 19-nov-2026
  *
  *  firmware implementing the CBU (Central Bunch-To-Bucket Unit)
  *  NB: units of variables are [ns] unless explicitely mentioned as suffix
@@ -788,6 +788,9 @@ uint32_t calcPhaseMatch(uint64_t tMin, b2bt_t *tPhaseMatch, uint64_t *TBeat_as) 
   tMatch0_as  = tMatch_as;
   nH1BeatExt = *TBeat_as / TRfExt_as;
   maxProbes  = 0;
+  tTimeout   = 0;                                   // only meaningful with multi-beat tuning (see below)
+  TBeat      = 0;
+  iMatch     = 0;
   // multi-beat tuning is applied if one of the following conditions is fullfilled
   // a. very short beating period
   // b. geometric harmonic number of injection > 1 (CR -> HESR, 'brute force')
@@ -1181,7 +1184,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       status         = COMMON_STATUS_OK;                      // set to 'ok' if a a new transfer starts
 
       // submit data and primitive error checks
-      if ((status = setSubmit()) != COMMON_STATUS_OK) {mState = B2B_MFSM_NOTHING;          return status;}
+      if ((status = setSubmit()) != COMMON_STATUS_OK) {mState = B2B_MFSM_NOTHING;          return status;}  // on failure, don't continue with transfer
       if (sid >= B2B_NSID)                            {sid = 0; mState = B2B_MFSM_NOTHING; return COMMON_STATUS_OUTOFRANGE;}
       if (!setFlagValid[sid])                         {mState = B2B_MFSM_NOTHING;          return B2B_STATUS_BADSETTING;}
 
@@ -1214,7 +1217,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       // hacky: set time for phase shift
       // negative number of buckets: one integer equals 500us; example: -20 -> 10 ms shift time
       if (nBucketExt >= 0) TPhaseShift = B2B_PHASESHIFTTIME;            // default case
-      else                 TPhaseShift = (-nBucketExt * 1000000) >> 1;  // hacky tweak of phase shift time [ns]
+      else                 TPhaseShift = (-nBucketExt * 1000000) >> 1;  // hacky tweak of phase shift time [ns], chk this must be fixed by an additional parameter
 
       // check upper limit
       if (TPhaseShift > (B2B_KICKOFFSETMAX - B2B_KICKOFFSETMIN))
@@ -1399,7 +1402,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   // prepare fast extraction with phase matching between both machines is (here: phase shift method @ extraction): calculate phase shift
   if (mState == B2B_MFSM_EXT_PSHIFT_C) {
     // handle previous errors
-    if (errorFlags || (TH1Ext_as == 0) || (TH1Inj_as == 0)) {
+    if (errorFlags || (TH1Ext_as == 0) || (TH1Inj_as == 0) ||
+        (tTrig.ns < tH1Inj_t.ns) || ((tTrig.ns - tH1Inj_t.ns) > (int64_t)one_s_ns)) {     // last two: fwlib_advanceTimePs() would fail
       pShiftExt.ns   = 0;
       pShiftExt.ps   = 0;
       errorFlags    |= B2B_ERRFLAG_CBU;
@@ -1435,7 +1439,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   // prepare fast extraction with phase matching between both machines is (here: phase shift method @ injection): calculate phase shift
   if (mState == B2B_MFSM_INJ_PSHIFT_C) {
     // handle previous errors
-    if (errorFlags || (TH1Ext_as == 0) || (TH1Inj_as == 0)) {
+    if (errorFlags || (TH1Ext_as == 0) || (TH1Inj_as == 0) ||
+        (tTrig.ns < tH1Inj_t.ns) || ((tTrig.ns - tH1Inj_t.ns) > (int64_t)one_s_ns)) {     // last two: fwlib_advanceTimePs() would fail
       pShiftInj.ns   = 0;
       pShiftInj.ps   = 0;
       errorFlags    |= B2B_ERRFLAG_CBU;

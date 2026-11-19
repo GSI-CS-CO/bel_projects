@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-Sep-2023
+ *  version : 19-nov-2026
  *
  * simple simulation program for b2b measurements
  * - phase diagnostics
@@ -345,7 +345,7 @@ int main(int argc, char** argv) {
         break;
       case 'f' :
         tmp = strtok(optarg, " ");
-        if (strlen(tmp) == 0) {
+        if ((tmp == NULL) || (strlen(tmp) == 0)) {
           fprintf(stderr, "specify a proper name, not '%s'!\n", optarg);
           exit(1);
         } // if strlen
@@ -371,6 +371,11 @@ int main(int argc, char** argv) {
     printf("option 's' (nSamples): valid range is 3..%d\n", MAXSAMPLES);
     return 1;
   } // if nSamples
+
+  if (TH1_as == 0) {
+    printf("option 'T' (rf-period): must be > 0\n");
+    return 1;
+  } // if TH1_as
 
   if ((mode < 1) || (mode > 2)) {
     printf("option 'm' (mode): valid range is 1..2\n");

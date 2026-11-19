@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 13-nov-2026
+ *  version : 19-nov-2026
  *
  * subscribes to and displays status of a b2b system (CBU, PM, KD ...)
  *
@@ -426,7 +426,7 @@ int main(int argc, char** argv) {
   } // if optind
 
   if (optind< argc) {
-    sprintf(environment, "%s", argv[optind]);
+    snprintf(environment, sizeof(environment), "%s", argv[optind]);
     sprintf(prefix, "b2b_%s", environment);
   } // if optind
   else {

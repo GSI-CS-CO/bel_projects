@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 13-nov-2026
+ *  version : 19-nov-2026
  *
  * library for b2b
  *
@@ -360,6 +360,7 @@ uint32_t b2b_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t cpu
 
   //  get Wishbone address of lm32 
   if ((status = eb_sdb_find_by_identity(eb_device, GSI, LM32_RAM_USER, &sdbDevice, &nDevices)) != EB_OK) return COMMON_STATUS_EB;
+  if (nDevices == 0) return COMMON_STATUS_EB;              // no lm32 found; sdbDevice would be uninitialized
 
   lm32_base            = sdbDevice.sdb_component.addr_first;
 

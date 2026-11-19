@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 13-nov-2026
+ *  version : 19-nov-2026
  *
  * publishes raw data of the b2b system
  *
@@ -348,10 +348,10 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
     case tagKde     :          // data types within parameter field are 'int' as this a. should be easy for the users b. granularity is 1ns only
       tmpu                     = (uint32_t)(param & 0x00000000ffffffff);
       if (tmpu == 0x7fffffff) getval.ext_dKickProb = NAN;
-      else                    getval.ext_dKickProb = tmpu;
+      else                    getval.ext_dKickProb = tmpu;           // always positive
       tmpu                     = (uint32_t)((param & 0xffffffff00000000) >> 32);
       if (tmpu == 0x7fffffff) getval.ext_dKickMon  = NAN;
-      else                    getval.ext_dKickMon  = tmpu;
+      else                    getval.ext_dKickMon  = tmpu;           // always positive
       flagErr                  = ((evtId & B2B_ERRFLAG_KDEXT) != 0);
       getval.flagEvtErr       |= flagErr << tag;
 
@@ -367,10 +367,10 @@ static void timingMessage(uint32_t tag, saftlib::Time deadline, uint64_t evtId, 
     case tagKdi     :          // data types within parameter field are 'int' as this a. should be easy for the users b. granularity is 1ns only
       tmpu                     = (uint32_t)(param & 0x00000000ffffffff);
       if (tmpu == 0x7fffffff) getval.inj_dKickProb = NAN;
-      else                    getval.inj_dKickProb = tmpu;
+      else                    getval.inj_dKickProb = tmpu;           // always positive
       tmpu                     = (uint32_t)((param & 0xffffffff00000000) >> 32);
       if (tmpu == 0x7fffffff) getval.inj_dKickMon  = NAN;
-      else                    getval.inj_dKickMon  = tmpu;
+      else                    getval.inj_dKickMon  = tmpu;           // always positive
       flagErr                  = ((evtId & B2B_ERRFLAG_KDINJ) != 0);
       getval.flagEvtErr       |= flagErr << tag;
 

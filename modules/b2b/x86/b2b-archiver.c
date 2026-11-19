@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-dec-2024
+ *  version : 19-nov-2026
  *
  * archives set and get values to data files
  *
@@ -336,7 +336,7 @@ int main(int argc, char** argv) {
   if (getVersion) printf("%s: version %s\n", program, b2b_version_text(B2B_ARCHIVER_VERSION));
 
   for (i=0; i<B2B_NSID; i++) {
-    sprintf(filename[i], "%s_%s_sid%02d.dat", fprefix, sprefix, i);
+    snprintf(filename[i], sizeof(filename[i]), "%s_%s_sid%02d.dat", fprefix, sprefix, i);
     printf("open data file %s\n", filename[i]);
     if (!(dataFile = fopen(filename[i], fileMode))) {
       fprintf(stderr, "%s: can't open file %s\n", program, filename[i]);

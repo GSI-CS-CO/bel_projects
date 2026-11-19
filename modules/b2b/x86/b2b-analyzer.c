@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 13-nov-2026
+ *  version : 19-nov-2026
  *
  * analyzes and publishes get values
  * 
@@ -615,7 +615,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
 
     // remainder of h=1 phase at electronics monitor
     if ((dicSetval[sid].ext_T != -1) && !isnan(dicGetval[sid].kteOff) && !isnan(dicGetval[sid].ext_dKickMon) && (dicGetval[sid].ext_phase != -1)) {
-      tmp64 = dicGetval[sid].tCBS + dicGetval[sid].kteOff + dicGetval[sid].ext_dKickMon;   // TAI of dKickMon [ns]
+      tmp64 = dicGetval[sid].tCBS + (int64_t)(dicGetval[sid].kteOff + dicGetval[sid].ext_dKickMon);   // TAI of dKickMon [ns]; add offsets as integer, uint64 + float is evaluated in float
       tmp64 = (tmp64 - dicGetval[sid].ext_phase) * 1000000000;                             // difference to measured phase [as]
       act   = (double)((tmp64 % (dicSetval[sid].ext_T) / 1000000000));                     // remainder [ns]
       n   = ++(ext_monRemN[sid]);
@@ -690,7 +690,7 @@ void recGetvalue(long *tag, diagval_t *address, int *size)
 
     // remainder phase to electronics monitor
     if ((dicSetval[sid].ext_T != -1) && !isnan(dicGetval[sid].ktiOff) && !isnan(dicGetval[sid].inj_dKickMon) && (dicGetval[sid].ext_phase != -1)) {
-      tmp64 = dicGetval[sid].tCBS + dicGetval[sid].ktiOff + dicGetval[sid].inj_dKickMon;   // TAI of dKickMon [ns]
+      tmp64 = dicGetval[sid].tCBS + (int64_t)(dicGetval[sid].ktiOff + dicGetval[sid].inj_dKickMon);   // TAI of dKickMon [ns]; add offsets as integer, uint64 + float is evaluated in float
       tmp64 = (tmp64 - dicGetval[sid].ext_phase) * 1000000000;                             // difference to measured phase [as]; NB: everyting relative to extraction phase - chk
       act   = (int32_t)((tmp64 % (dicSetval[sid].ext_T) / 1000000000));                    // remainder [ns]
       n   = ++(inj_monRemN[sid]);

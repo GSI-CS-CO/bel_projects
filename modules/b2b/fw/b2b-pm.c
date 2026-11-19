@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 13-nov-2026
+ *  version : 19-nov-2026
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -387,6 +387,7 @@ uint32_t phaseFit(uint64_t period_as, uint32_t nSamples, b2bt_t *phase_t)
 
   // check period
   periodNs = (int32_t)(period_as/1000000000);                          // convert to ns chk: consider right-shift by 30 bits instead
+  if (periodNs == 0)          return B2B_STATUS_PHASEFAILED;           // period below 1 ns: avoid division by zero below
   maxDelta = periodNs / 10;                                            // allow 10% deviation chk: consider right-shift by 3 bits instead
   diff     = (int32_t)(tStamp[usedIdx+1] - tStamp[usedIdx]);           // time difference of selected timestamps
   delta    = diff % periodNs;                                          // difference is multiple of period? (missing timestamp possible)!

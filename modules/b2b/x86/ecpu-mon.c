@@ -3,7 +3,7 @@
  *
  *  created : 2026
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 13-nov-2026
+ *  version : 19-nov-2026
  *
  * subscribes to and displays status of a ecpu systems based on common lib
  * (requires a server such as 'b2b-serv-sys' on each local host)
@@ -255,8 +255,8 @@ const char * typeNames[] = {
   "CBU",
   " PM",
   "PSM",
-  "KDE",
   "KDI",
+  "KDE",
   "DAQ",
   "CAL",
   " QR",

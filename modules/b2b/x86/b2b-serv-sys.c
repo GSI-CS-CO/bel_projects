@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 12-nov-2026
+ *  version : 19-nov-2026
  *
  * publishes status of a b2b system (CBU, PM, KD ...)
  *
@@ -77,9 +77,9 @@ uint32_t      disDiagDataId      = 0;
 uint32_t      dicClearDiagId     = 0;
 
  
-static void die(const char* where, eb_status_t status) {
+static void die(const char* where, uint32_t status) {
   fprintf(stderr, "%s: %s failed: %s\n",
-          program, where, eb_status(status));
+          program, where, b2b_status_text(status));  // callers pass COMMON_STATUS_xxx, not eb_status_t
   exit(1);
 } //die
 
