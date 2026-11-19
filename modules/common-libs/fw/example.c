@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 03-jul-2026
+ *  version : 13-nov-2026
  *
  *  lm32 example program using common libraries
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define EXAMPLE_FW_VERSION 0x000005                                     // make this consistent with makefile
+#define EXAMPLE_FW_VERSION 0x000506                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -79,7 +79,7 @@ void init()
 
 
 // determine address and clear shared mem
-void initSharedMem() 
+void initSharedMem( uint32_t *sharedSize) 
 {
   uint32_t idx;
   uint32_t *pSharedTemp;
@@ -99,7 +99,7 @@ void initSharedMem()
   find_device_multi(&found_clu, &idx, 1, GSI, LM32_CB_CLUSTER);	
   idx = 0;
   find_device_multi_in_subtree(&found_clu, &found_sdb[0], &idx, c_Max_Rams, GSI, LM32_RAM_USER);
-  if(idx >= cpuId) cpuRamExternal           = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
+  if(idx > cpuId)  cpuRamExternal           = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
 
   DBPRINT2("example: CPU RAM External 0x%8x, begin shared 0x%08x\n", cpuRamExternal, SHARED_OFFS);
   DBPRINT2("example: fw common shared begin   0x%08x\n", pShared);
@@ -107,10 +107,13 @@ void initSharedMem()
 
   // clear shared mem
   i = 0;
-  pSharedTemp        = (uint32_t *)(pShared + (COMMON_SHARED_BEGIN >> 2 ));
-  DBPRINT2("wr-unipz: COMMON_SHARED_BEGIN 0x%08x\n", pSharedTemp);
+  pSharedTemp        = (uint32_t *)(pShared + (COMMON_SHARED_END >> 2 ) + 1);
+  DBPRINT2("example: fw specific shared begin 0x%08x\n", pSharedTemp);
+
   // ... insert code here to clear shared RAM
-  DBPRINT2("wr-unipz: used size of shared mem is %d words (uint32_t), begin %x, end %x\n", i, pShared, pSharedTemp-1);
+
+  *sharedSize        = (uint32_t)(pSharedTemp - pShared) << 2;
+  DBPRINT2("example: used size of shared mem is %d words (uint32_t), begin %x, end %x\n", i, pShared, pSharedTemp-1);
 } // initSharedMem 
 
 
@@ -119,6 +122,22 @@ void extern_clearDiag()
 {
   // ... insert code here
 } // clearDiag
+
+
+// print MAC and IP of this node
+void printNICData()
+{
+  uint64_t mac;
+  uint32_t ip;
+
+  mac = fwlib_wrGetMac();
+  ip  = fwlib_wrGetIP();
+  pp_printf("example: MAC %02x:%02x:%02x:%02x:%02x:%02x\n",
+            (unsigned int)((mac >> 40) & 0xff), (unsigned int)((mac >> 32) & 0xff), (unsigned int)((mac >> 24) & 0xff),
+            (unsigned int)((mac >> 16) & 0xff), (unsigned int)((mac >>  8) & 0xff), (unsigned int)( mac        & 0xff));
+  pp_printf("example: IP  %d.%d.%d.%d\n",
+            (int)((ip >> 24) & 0xff), (int)((ip >> 16) & 0xff), (int)((ip >> 8) & 0xff), (int)(ip & 0xff));
+} // printNICData
 
 
 // entry action configured state
@@ -186,6 +205,7 @@ int main(void) {
   uint32_t actState;                                          // actual FSM state
   uint32_t pubState;                                          // value of published state
   uint32_t reqState;                                          // requested FSM state
+  uint32_t sharedSize;                                        // size of shared memory
   uint32_t *buildID;
 
   // init local variables
@@ -197,9 +217,15 @@ int main(void) {
 
   // init 
   init();                                                              // initialize stuff for lm32
-  initSharedMem();                                                     // initialize shared memory
-  fwlib_init((uint32_t *)_startshared, cpuRamExternal, SHARED_OFFS, "example", EXAMPLE_FW_VERSION); // init common stuff
+  initSharedMem(&sharedSize);                                          // initialize shared memory
+  fwlib_init((uint32_t *)_startshared, cpuRamExternal, SHARED_OFFS, sharedSize, "example", EXAMPLE_FW_VERSION); // init common stuff
   fwlib_clearDiag();                                                   // clear common diagnostic data
+
+  /* important: don't add own code here as the state machine is not initialized!!! 
+   * there are two options
+   * 1) do things right: a) enter your code in doActionOperation() and b) use example-ctl to transit to state OpReady
+   * 2) hackish: enter your code below '... insert code here ...' further down
+   */
 
   while (1) {
     check_stack_fwid(buildID);                                         // check for stack corruption
@@ -235,7 +261,9 @@ int main(void) {
     fwlib_publishStatusArray(statusArray);
     pubState             = actState;
     fwlib_publishState(pubState);
-    // ... insert code here
+    
+    // ... insert code here to publish your stuff
+    
   } // while
 
   return(1);

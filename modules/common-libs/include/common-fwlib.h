@@ -1,6 +1,9 @@
 #ifndef _COMMON_FWLIB_
 #define _COMMON_FWLIB_
 
+#include <common-core.h>
+#include "mini_sdb.h"
+
 // typedef for treating sub-ns timestamps within the b2b firmware
 // the picosecond part may exceed +-1000, but it is recommended to
 // use fwlib_cleanB2bt for alignment 
@@ -9,6 +12,8 @@ typedef struct{
   int32_t  ps;                                        // ps fraction of time, should be positive
   uint32_t dps;                                       // uncertainty [ps]
 } b2bt_t;
+
+#define ERROR_INVALID_ADDR (uint32_t*)(ERROR_NOT_FOUND)
 
 // adjusts ns such, that ps part remains small 
 b2bt_t fwlib_cleanB2bt(b2bt_t t_ps                    // time [ps]
@@ -45,6 +50,9 @@ uint64_t fwlib_tps2tns(b2bt_t t_ps                    // time [ps]
 
 // get my own MAC, returns MAC
 uint64_t fwlib_wrGetMac();
+
+// get my own IP
+uint32_t fwlib_wrGetIP();
 
 //check status of White Rabbit, returns (error) status
 uint32_t fwlib_wrCheckSyncState();
@@ -107,6 +115,9 @@ void fwlib_init(uint32_t *startShared,                // start of shared section
 // publish (used) size of shared memory
 void fwlib_publishSharedSize(uint32_t size            // used size of shared memory
                              );
+
+// get version of gateware
+uint32_t fwlib_getGwVersion();
 
 // init stuff for handling commands, trivial for now, will be extended
 void fwlib_initCmds();

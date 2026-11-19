@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 03-Jul-2026
+ *  version : 13-nov-2026
  *
  *  common x86 routines useful for CLIs handling firmware
  * 
@@ -56,7 +56,8 @@ eb_address_t common_offsDone;       // offset event deadline to time when we are
 eb_address_t common_offsDoneMax;    // offset event deadline to time when we are done [ns]; max
 eb_address_t common_offsDoneMin;    // offset event deadline to time when we are done [ns]; min
 eb_address_t common_cmd;            // command, write
-eb_address_t common_version;        // version, read
+eb_address_t common_fwVersion;      // firmware version, read
+eb_address_t common_gwVersion;      // gateware version  read
 eb_address_t common_nBadStatus;     // # of bad status ("ERROR") incidents
 eb_address_t common_nBadState;      // # of bad state ("not in operation") incidents
 eb_address_t common_macHi;          // MAC address, high word
@@ -220,7 +221,8 @@ void comlib_initShared(eb_address_t lm32_base, eb_address_t sharedOffset)
   common_statusHi      = lm32_base + sharedOffset + COMMON_SHARED_STATUSHI;
   common_cmd           = lm32_base + sharedOffset + COMMON_SHARED_CMD;
   common_state         = lm32_base + sharedOffset + COMMON_SHARED_STATE;
-  common_version       = lm32_base + sharedOffset + COMMON_SHARED_VERSION;
+  common_fwVersion     = lm32_base + sharedOffset + COMMON_SHARED_VERSION;
+  common_gwVersion     = lm32_base + sharedOffset + COMMON_SHARED_GWVERSION;
   common_macHi         = lm32_base + sharedOffset + COMMON_SHARED_MACHI;
   common_macLo         = lm32_base + sharedOffset + COMMON_SHARED_MACLO;
   common_Ip            = lm32_base + sharedOffset + COMMON_SHARED_IP;
@@ -281,11 +283,11 @@ void comlib_printDiag(uint64_t statusArray, uint32_t state, uint32_t version, ui
   data.offsDoneMin   = 0;
   data.usedSize      = usedSize;
   
-  comlib_printDiag2(state, version, statusArray, data);
+  comlib_printDiag2(state, version, 0x0, statusArray, data);
 } // comlib_printDiag
 
 
-void comlib_printDiag2(uint32_t state, uint32_t version, uint64_t statusArray, comlib_diag_t data) 
+void comlib_printDiag2(uint32_t state, uint32_t fwVersion, uint32_t gwVersion, uint64_t statusArray, comlib_diag_t data) 
 {
   const struct tm* tm;
   char             timestr[60];
@@ -301,14 +303,17 @@ void comlib_printDiag2(uint32_t state, uint32_t version, uint64_t statusArray, c
 
   secs     = (unsigned long)((double)(data.tS0) / 1000000000.0);
   tm = gmtime(&secs);
-  strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S TAI", tm);
+  if (tm) strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S TAI", tm);
+  else    sprintf(timestr, "invalid");
   printf("firmware boot at                    : %s\n", timestr);
 
   secs     = (unsigned long)((double)(data.tDiag) / 1000000000.0);
   tm = gmtime(&secs);
-  strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S TAI", tm);
+  if (tm) strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S TAI", tm);
+  else    sprintf(timestr, "invalid");
   printf("diagnostics reset at                : %s\n"       , timestr);
-  printf("version                             : %06x\n"     , version);
+  printf("fwVersion                           : %06x\n"     , fwVersion);
+  printf("gwVersion                           : %06x\n"     , gwVersion);
   printf("mac                                 : 0x%012" PRIx64 "\n", data.mac);
   printf("ip                                  : %03d.%03d.%03d.%03d\n", (data.ip & 0xff000000) >> 24, (data.ip & 0x00ff0000) >> 16, (data.ip & 0x0000ff00) >> 8, (data.ip & 0x000000ff));
   printf("used shared mem [byte]              : %u\n"       , data.usedSize);
@@ -347,9 +352,10 @@ int comlib_readDiag(eb_device_t device, uint64_t  *statusArray, uint32_t  *state
                     uint32_t *nLate, uint32_t *offsDone, uint32_t *comLatency, uint32_t *usedSize, int  printFlag)
 {
   comlib_diag_t data = {0};
+  uint32_t      dummy32;
   int           status;
 
-  status = comlib_readDiag2(device, state, version, statusArray, &data, printFlag);
+  status = comlib_readDiag2(device, state, version, &dummy32, statusArray, &data, printFlag);
 
   *mac        = data.mac;
   *ip         = data.ip;
@@ -369,11 +375,11 @@ int comlib_readDiag(eb_device_t device, uint64_t  *statusArray, uint32_t  *state
 } // comlib_readDiag
 
 
-int comlib_readDiag2(eb_device_t device, uint32_t  *state, uint32_t  *version, uint64_t  *statusArray, comlib_diag_t *diagData, int  printFlag)
+int comlib_readDiag2(eb_device_t device, uint32_t  *state, uint32_t  *fwVersion, uint32_t *gwVersion, uint64_t  *statusArray, comlib_diag_t *diagData, int  printFlag)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;
-  eb_data_t   data[31];
+  eb_data_t   data[32];
 
   // fill with '0', just in case ...
   
@@ -381,7 +387,7 @@ int comlib_readDiag2(eb_device_t device, uint32_t  *state, uint32_t  *version, u
   eb_cycle_read(cycle, common_statusHi,       EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
   eb_cycle_read(cycle, common_statusLo,       EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
   eb_cycle_read(cycle, common_state,          EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
-  eb_cycle_read(cycle, common_version,        EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
+  eb_cycle_read(cycle, common_fwVersion,      EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
   eb_cycle_read(cycle, common_macHi,          EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
   eb_cycle_read(cycle, common_macLo,          EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
   eb_cycle_read(cycle, common_Ip,             EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
@@ -408,12 +414,14 @@ int comlib_readDiag2(eb_device_t device, uint32_t  *state, uint32_t  *version, u
   eb_cycle_read(cycle, common_offsDone,       EB_BIG_ENDIAN|EB_DATA32, &(data[27]));
   eb_cycle_read(cycle, common_offsDoneMax,    EB_BIG_ENDIAN|EB_DATA32, &(data[28]));
   eb_cycle_read(cycle, common_offsDoneMin,    EB_BIG_ENDIAN|EB_DATA32, &(data[29]));
-  eb_cycle_read(cycle, common_usedSize,       EB_BIG_ENDIAN|EB_DATA32, &(data[30]));
+  eb_cycle_read(cycle, common_gwVersion,      EB_BIG_ENDIAN|EB_DATA32, &(data[30]));
+  eb_cycle_read(cycle, common_usedSize,       EB_BIG_ENDIAN|EB_DATA32, &(data[31]));
   if ((eb_status = eb_cycle_close(cycle)) != EB_OK) return eb_status;
 
   *statusArray               = ((uint64_t)(data[0]) << 32) | (uint64_t)(data[1]);
   *state                     = data[2];
-  *version                   = data[3];
+  *fwVersion                 = data[3];
+  *gwVersion                 = data[30];
   diagData->mac              = ((uint64_t)(data[4]) << 32) | (uint64_t)(data[5]);
   diagData->ip               = data[6];
   diagData->nBadStatus       = data[7];
@@ -437,9 +445,9 @@ int comlib_readDiag2(eb_device_t device, uint32_t  *state, uint32_t  *version, u
   diagData->offsDone         = data[27];
   diagData->offsDoneMax      = data[28];
   diagData->offsDoneMin      = data[29];
-  diagData->usedSize         = data[30];
+  diagData->usedSize         = data[31];
 
-  if (printFlag) comlib_printDiag2(*state, *version, *statusArray, *diagData);
+  if (printFlag) comlib_printDiag2(*state, *fwVersion, *gwVersion, *statusArray, *diagData);
 
   return eb_status;
 } // comlib_readDiag2
@@ -458,13 +466,16 @@ uint32_t comlib_ecaq_open(const char* devName, uint32_t qIdx, eb_device_t *devic
 
   // open Etherbone device and socket
   if ((status = eb_socket_open(EB_ABI_CODE, 0, EB_ADDRX|EB_DATAX, &common_socket)) != EB_OK)    return COMMON_STATUS_EB;
-  if ((status = eb_device_open(common_socket, devName, EB_ADDRX|EB_DATAX, 3, device)) != EB_OK) return COMMON_STATUS_EB;
+  if ((status = eb_device_open(common_socket, devName, EB_ADDRX|EB_DATAX, 3, device)) != EB_OK) {eb_socket_close(common_socket); *device = 0x0; return COMMON_STATUS_EB;}
 
   //  get Wishbone address of ecaq
-  if ((status = eb_sdb_find_by_identity(*device, ECA_QUEUE_SDB_VENDOR_ID, ECA_QUEUE_SDB_DEVICE_ID, sdbDevice, &nDevices)) != EB_OK) return COMMON_STATUS_EB;
-  if (nDevices == 0)       return COMMON_STATUS_EB;
-  //if (nDevices > maxDev)   return COMMON_STATUS_EB;
-  if ((uint32_t)nDevices < qIdx + 1) return COMMON_STATUS_EB;
+  // nDevices returns the number of queues FOUND, which may exceed maxDev; only maxDev entries are filled
+  if (((status = eb_sdb_find_by_identity(*device, ECA_QUEUE_SDB_VENDOR_ID, ECA_QUEUE_SDB_DEVICE_ID, sdbDevice, &nDevices)) != EB_OK)
+      || (nDevices == 0) || (qIdx >= (uint32_t)nDevices) || (qIdx >= (uint32_t)maxDev)) {
+    comlib_ecaq_close(*device);
+    *device = 0x0;
+    return COMMON_STATUS_EB;
+  }
   *ecaq_base  = sdbDevice[qIdx].sdb_component.addr_first;
 
   //printf("open eca q, nDevices %d, idx %d, ecaq_base %lx\n", nDevices, qIdx, (uint32_t)(*ecaq_base));
