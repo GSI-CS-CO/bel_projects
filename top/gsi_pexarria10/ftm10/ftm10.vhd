@@ -15,6 +15,7 @@ entity ftm10 is
     ------------------------------------------------------------------------
     clk_20m_vcxo_i        : in std_logic; -- 20MHz VCXO clock
     clk_20m_vcxo_alt_i    : in std_logic; -- 20MHz VCXO clock alternative
+    clk_20m_aux_vcxo_i    : in std_logic; -- 20MHz VCXO clock WR2 (rev B)
 
     clk_125m_local_i      : in std_logic; -- Local clk from 125Mhz oszillator
     clk_125m_local_alt_i  : in std_logic; -- Local clk from 125Mhz oszillator alternative
@@ -37,6 +38,10 @@ entity ftm10 is
     wr_dac_sclk_o : out std_logic;
     wr_dac_din_o  : out std_logic;
     wr_ndac_cs_o  : out std_logic_vector(2 downto 1);
+
+    wr_aux_dac_sclk_o : out std_logic; -- WR2 DACs (rev B)
+    wr_aux_dac_din_o  : out std_logic;
+    wr_aux_ndac_cs_o  : out std_logic_vector(2 downto 1);
 
     -----------------------------------------------------------------------
     -- SPI Flash User Mode
@@ -114,6 +119,7 @@ entity ftm10 is
     sfp_mod0_i         : in    std_logic;
     sfp_mod1_io        : inout std_logic;
     sfp_mod2_io        : inout std_logic;
+    sfp_rate_sel_o     : out   std_logic; -- rev B
 
     -----------------------------------------------------------------------
     -- SFP (auxiliary - only used on ftm10)
@@ -126,6 +132,7 @@ entity ftm10 is
     sfp_aux_mod0_i       : in    std_logic;
     sfp_aux_mod1_io      : inout std_logic;
     sfp_aux_mod2_io      : inout std_logic;
+    sfp_aux_rate_sel_o   : out   std_logic; -- rev B
 
     -----------------------------------------------------------------------
     -- USBC no USB functionality only LVDS signals
@@ -271,7 +278,7 @@ begin
     )
     port map(
       core_clk_20m_vcxo_i     => clk_20m_vcxo_i,
-      aux_clk_20m_vcxo_i      => clk_20m_vcxo_i,
+      aux_clk_20m_vcxo_i      => clk_20m_aux_vcxo_i,
       core_clk_125m_pllref_i  => clk_125m_tcb_pllref_i,
       core_clk_125m_sfpref_i  => clk_125m_tcb_pllref_i,
       aux_clk_125m_pllref_i   => clk_125m_tcb_pllref_i,
@@ -280,6 +287,9 @@ begin
       wr_dac_sclk_o           => wr_dac_sclk_o,
       wr_dac_din_o            => wr_dac_din_o,
       wr_ndac_cs_o            => wr_ndac_cs_o,
+      wr_aux_dac_sclk_o       => wr_aux_dac_sclk_o,
+      wr_aux_dac_din_o        => wr_aux_dac_din_o,
+      wr_aux_ndac_cs_o        => wr_aux_ndac_cs_o,
       wr_onewire_io           => OneWire_CB,
       wr_aux_onewire_io       => OneWire_aux_CB,
       wr_sfp_sda_io           => sfp_mod2_io,
@@ -426,5 +436,9 @@ begin
   OneWire_aux_CB_splz <= '1'; -- Strong Pull-Up disabled
 
   nres_out_o <= '0';
+
+  -- SFP rate select (rev B): keep low, translator inputs must not float
+  sfp_rate_sel_o     <= '0';
+  sfp_aux_rate_sel_o <= '0';
 
 end rtl;
