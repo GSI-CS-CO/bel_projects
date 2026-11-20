@@ -71,6 +71,7 @@ eb_address_t reset_addr     = EB_NULL;
 eb_address_t brom_addr      = EB_NULL;
 eb_address_t dm_diag_addr   = EB_NULL;
 eb_address_t eca_tap_addr   = EB_NULL;
+eb_address_t io_ctrl_addr   = EB_NULL;
 
 eb_address_t BASE_ONEWIRE;
 extern struct w1_bus wrpc_w1_bus;
@@ -1411,3 +1412,66 @@ eb_status_t wb_get_build_type(eb_device_t device, int size, char *buildType, uin
   return EB_OK;
 
 } // wb_build_type
+
+
+// blink all GPIO and LVDS outputs one after another, then restore OE, termination and legacy mode
+eb_status_t wb_io_identify(eb_device_t device, int devIndex, uint32_t nCycles)
+{
+  const eb_address_t maskReg[4] = {IO_CTRL_GPIOOESETLOW, IO_CTRL_LVDSOESETLOW, IO_CTRL_GPIOTERMSETLOW, IO_CTRL_LVDSTERMSETLOW};
+  const eb_address_t infoReg[2] = {IO_CTRL_GPIOINFO, IO_CTRL_LVDSINFO};
+  const eb_address_t outReg[2]  = {IO_CTRL_GPIOOUT, IO_CTRL_LVDSOUT};
+  const eb_data_t    high[2]    = {0x1, 0xff};
+  eb_data_t    config;
+  eb_data_t    saved[4][2];                   // OE/termination, low/high word
+  eb_data_t    data;
+  int          nOut[2];                       // # of GPIO/LVDS outputs (incl. inouts)
+  int          i, j, k;
+  uint32_t     cycle;
+  eb_status_t  status;
+
+#ifdef WB_SIMULATE
+  return EB_OK;
+#endif
+
+  if ((status = wb_check_device(device, IO_CTRL_VENDOR, IO_CTRL_PRODUCT, IO_CTRL_VMAJOR, IO_CTRL_VMINOR, devIndex, &io_ctrl_addr)) != EB_OK) return status;
+
+  // save state
+  if ((status = eb_device_read(device, io_ctrl_addr + IO_CTRL_CONFIG, EB_BIG_ENDIAN|EB_DATA32, &config, 0, eb_block)) != EB_OK) return status;
+  for (i=0; i<2; i++) {
+    if ((status = eb_device_read(device, io_ctrl_addr + infoReg[i], EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block)) != EB_OK) return status;
+    nOut[i] = (data & 0xff) + ((data >> 8) & 0xff);
+    if (nOut[i] > 64) nOut[i] = 64;
+  } // for i
+  for (i=0; i<4; i++)
+    for (j=0; j<2; j++)
+      if ((status = eb_device_read(device, io_ctrl_addr + maskReg[i] + 4*j, EB_BIG_ENDIAN|EB_DATA32, &saved[i][j], 0, eb_block)) != EB_OK) return status;
+
+  // disable legacy mode, drive all outputs low, enable all outputs and terminations
+  if ((status = eb_device_write(device, io_ctrl_addr + IO_CTRL_CONFIG, EB_BIG_ENDIAN|EB_DATA32, 0x0, 0, eb_block)) != EB_OK) return status;
+  for (i=0; i<2; i++)
+    for (k=0; k<nOut[i]; k++)
+      if ((status = eb_device_write(device, io_ctrl_addr + outReg[i] + 4*k, EB_BIG_ENDIAN|EB_DATA32, 0x0, 0, eb_block)) != EB_OK) return status;
+  for (i=0; i<4; i++)
+    for (j=0; j<2; j++)
+      if ((status = eb_device_write(device, io_ctrl_addr + maskReg[i] + 4*j, EB_BIG_ENDIAN|EB_DATA32, 0xffffffff, 0, eb_block)) != EB_OK) return status;
+
+  // blink: 125 ms high, 50 ms low per output
+  for (cycle=0; cycle<nCycles; cycle++)
+    for (i=0; i<2; i++)
+      for (k=0; k<nOut[i]; k++) {
+        if ((status = eb_device_write(device, io_ctrl_addr + outReg[i] + 4*k, EB_BIG_ENDIAN|EB_DATA32, high[i], 0, eb_block)) != EB_OK) return status;
+        usleep(125000);
+        if ((status = eb_device_write(device, io_ctrl_addr + outReg[i] + 4*k, EB_BIG_ENDIAN|EB_DATA32, 0x0, 0, eb_block)) != EB_OK) return status;
+        usleep(50000);
+      } // for k
+
+  // restore state: set saved bits, reset all others
+  for (i=0; i<4; i++)
+    for (j=0; j<2; j++) {
+      if ((status = eb_device_write(device, io_ctrl_addr + maskReg[i] + 4*j,     EB_BIG_ENDIAN|EB_DATA32, saved[i][j], 0, eb_block)) != EB_OK) return status;
+      if ((status = eb_device_write(device, io_ctrl_addr + maskReg[i] + 8 + 4*j, EB_BIG_ENDIAN|EB_DATA32, ~saved[i][j] & 0xffffffff, 0, eb_block)) != EB_OK) return status;
+    } // for j
+  status = eb_device_write(device, io_ctrl_addr + IO_CTRL_CONFIG, EB_BIG_ENDIAN|EB_DATA32, config, 0, eb_block);
+
+  return status;
+} // wb_io_identify
