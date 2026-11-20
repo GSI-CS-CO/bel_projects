@@ -310,6 +310,8 @@
 #define IO_CTRL_LVDSOESETLOW         0x0300            // LVDS OE: as GPIO OE
 #define IO_CTRL_GPIOTERMSETLOW       0x0400            // GPIO termination: as GPIO OE
 #define IO_CTRL_LVDSTERMSETLOW       0x0500            // LVDS termination: as GPIO OE
+#define IO_CTRL_GPIOOUTGATESETLOW    0x3000            // GPIO output gate: as GPIO OE
+#define IO_CTRL_LVDSOUTGATESETLOW    0x4000            // LVDS output gate: as GPIO OE
 #define IO_CTRL_GPIOOUT              0xa000            // GPIO drive output n at +4*n; 0x1: high
 #define IO_CTRL_LVDSOUT              0xb000            // LVDS drive output n at +4*n; 0xff: high
 

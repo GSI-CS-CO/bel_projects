@@ -846,7 +846,10 @@ int main(int argc, char** argv) {
     if (!strcasecmp(command, "identify")) {
       if (optind+2 < argc) {printf("expecting at most one argument: identify [cycles]\n"); return 1;}
       nCycles = 1;
-      if (optind+1 < argc) nCycles = strtoul(argv[optind+1], &tail, 0);
+      if (optind+1 < argc) {
+        nCycles = strtoul(argv[optind+1], &tail, 0);
+        if ((*tail != 0) || (tail == argv[optind+1]) || (nCycles < 1)) {printf("identify: cycles must be a number >= 1, not '%s'\n", argv[optind+1]); return 1;}
+      }
       if ((status = wb_io_identify(device, 0, nCycles)) != EB_OK) die("WB IO identify", status);   // there is only one IO_CONTROL
       fprintf(stdout, "eb-mon: %s\n", command);
     } // identify
