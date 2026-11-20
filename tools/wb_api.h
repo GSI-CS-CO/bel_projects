@@ -302,7 +302,7 @@ eb_status_t wb_get_build_type(eb_device_t device,              // EB device
                               uint32_t *buildNumber            // build number is of format 0x00xxyyzz; where xx is major, yy is minor and zz is micro; 0xffffffff if invalid
                               );
 
-// blink all GPIO and LVDS outputs of IO_CONTROL one after another; OE, termination and legacy mode are restored afterwards
+// blink all GPIO and LVDS outputs of IO_CONTROL one after another; OE, termination, output gates and legacy mode are restored afterwards
 eb_status_t wb_io_identify(eb_device_t device,                 // EB device
                            int devIndex,                       // 0,1,2... - there may be more than 1 device on the WB bus
                            uint32_t nCycles                    // # of blink sequences
