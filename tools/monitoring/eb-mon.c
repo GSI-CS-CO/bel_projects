@@ -34,7 +34,7 @@
 // For all questions and ideas contact: d.beck@gsi.de
 // Last update: 25-April-2015
 //////////////////////////////////////////////////////////////////////////////////////////////
-#define EBMON_VERSION "2.2.5"
+#define EBMON_VERSION "2.3.0"
 #define AHEADT       1000000     // data master works ahead of time [ns]
 #define EARLYDT   1000000000     // detection limit for early events [ns]
 
@@ -104,6 +104,7 @@ static void help(void)
   fprintf(stderr, "  ecatapenable                       command enables capture on ECA-Tap\n");
   fprintf(stderr, "  ecatapdisable                      command disables capture on ECA-Tap\n");
   fprintf(stderr, "  encerrclear  <clearFlag>           command clears the enconder error counter (b1: PHY index 1; b0: PHY index 0)\n");
+  fprintf(stderr, "  identify     [cycles]              command blinks all GPIO and LVDS outputs (incl. LEDs) one after another (default: 1)\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to get some info about WR enabled hardware.\n");
   fprintf(stderr, "Example1: '%s -v dev/wbm0' display typical information.\n", program);
@@ -247,6 +248,7 @@ int main(int argc, char** argv) {
   uint64_t    stallTS;
   short       ecaClearFlag;
   short       encErrClearFlag;
+  uint32_t    nCycles;
   uint64_t    ecaNMessage;
   int64_t     ecaDtSum;
   int64_t     ecaDtMin;
@@ -840,6 +842,17 @@ int main(int argc, char** argv) {
       if (encErrClearFlag & 0x2) wb_wr_reset_enc_err_counter(device, devIndex, 1);
       fprintf(stdout, "eb-mon: %s\n", command);
     } // encerrclear
+
+    if (!strcasecmp(command, "identify")) {
+      if (optind+2 < argc) {printf("expecting at most one argument: identify [cycles]\n"); return 1;}
+      nCycles = 1;
+      if (optind+1 < argc) {
+        nCycles = strtoul(argv[optind+1], &tail, 0);
+        if ((*tail != 0) || (tail == argv[optind+1]) || (nCycles < 1)) {printf("identify: cycles must be a number >= 1, not '%s'\n", argv[optind+1]); return 1;}
+      }
+      if ((status = wb_io_identify(device, 0, nCycles)) != EB_OK) die("WB IO identify", status);   // there is only one IO_CONTROL
+      fprintf(stdout, "eb-mon: %s\n", command);
+    } // identify
 
   } // if command
 
