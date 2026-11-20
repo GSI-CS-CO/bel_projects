@@ -17,6 +17,7 @@
  *  04-OCT-2020 reuse this retro code, simplified linux version only
  *  14-DEC-2020 GPL licensed
  *  15-APR-2021 rename variable 'new'
+ *  13-Nov-2026 bug fixes
  *
  *  This software helps in creating simple text based user interfaces for programs. 
  *  See ivtpar.h for help.
@@ -55,7 +56,7 @@
 #include <string.h>
 
 
-#define TOPHEADER     "\033[7m I V T P A R  ------------------------------------------------ GB, DB 1989-2021 \033[0m"
+#define TOPHEADER     "\033[7m I V T P A R  ------------------------------------------------ GB, DB 1989-2026 \033[0m"
 // search escape sequences, https://stackoverflow.com/questions/51024909/how-to-move-cursor-back-in-c-console
 
 // define special keys
@@ -241,8 +242,8 @@ int ivtpar(char txtnam[], char parnam[], int* l0, int lchange[IVTMAXPAR])
  char   help;                   /* another help variable        */
  char   vtline[1000];           /* help line for file reading   */
  char   buff[100];
- //char   headerline[80];		/* displayed header line 	*/
- short  error;                  /* general error flag           */
+ //char   headerline[80];	/* displayed header line 	*/
+ short  error=0;                /* general error flag           */
  short  no_txtfile;             /* flag for missing txtfile     */
  short  no_parfile=1;           /* flag for missing parfile     */
  short  par_mismatch=1;         /* flag for parameter mismatch  */
@@ -325,6 +326,11 @@ int ivtpar(char txtnam[], char parnam[], int* l0, int lchange[IVTMAXPAR])
     if(ch <= 32) vt[ic][il]= ' ';   /* if junk, just assume a blank */
     
     if((ch == 36) || (ch == 38)) {  /* '$' or '&'                   */
+      if (npar >= IVTMAXPAR) {      /* vtp[] holds IVTMAXPAR entries */
+        printf("\n ivtpar: too many (>%d) parameters in txtfile \n", IVTMAXPAR);
+        fclose(file);
+        return 0;
+      }
       ic--;                         /* inhibit output of '$' or '&' */
       vt81[il]--;                   /* decrement length of line     */
       npar++;                       /* increment no. of parameters  */
@@ -376,21 +382,26 @@ int ivtpar(char txtnam[], char parnam[], int* l0, int lchange[IVTMAXPAR])
      nch1 = nch;
      for(ich=nch1-1;ich>=0;ich--){       /* 'remove' trailing blanks */
       ch=vtline[ich];
-      if(ch >= 32) break;
+      if(ch > 32) break;                 /* chk: maybe '>='          */
       nch = nch - 1;
      } /* for ich */
 
      lblank=1;
      for(ich=0;ich<nch;ich++){      
       ch=vtline[ich];
-      if(lblank && (ch <= 32)) lblank=0; /* 'remove' leading blanks  */
-      else {                             /* copy to output matrix    */
-       ic++;
-       vtp[ipar][1]++;
-       vt[ic-1][il-1]=ch;
+      if(lblank && (ch <= 32)) continue; /* skip all leading blanks; the old code skipped only one, */
+      lblank=0;                          /* or ate the first inner blank ("a b" -> "ab")            */
+      /* old code:
+         if(lblank && (ch <= 32)) lblank=0; // 'remove' leading blanks  
+         else { 
+      */
+      {                                  /* copy to output matrix    */
+        ic++;
+        vtp[ipar][1]++;
+        vt[ic-1][il-1]=ch;
       } /* else lblank */
      } /* for ich*/
-    }/* if nch */
+    } /* if nch */
 
     if (ic >= 80) {/* check maximum length of output line            */
       printf("\n ivtpar: the length of a line (txtfile + parameter) \n");
@@ -412,8 +423,7 @@ int ivtpar(char txtnam[], char parnam[], int* l0, int lchange[IVTMAXPAR])
    vtpo(28,1);
    printf("parameter file not found, I''ll create a new one\n");
    file = fopen(parnam,"w");
-   no_parfile=0;
-   fclose(file);
+   if (file) {no_parfile=0; fclose(file);}   /* fclose(NULL), if parnam is not writable */
   } /* if file */
  }  /* if maxpar */
 

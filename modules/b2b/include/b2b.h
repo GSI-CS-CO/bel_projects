@@ -116,7 +116,7 @@
 #define B2B_AHEADT                300000    // more aggressive ahead interval for determining the deadline of a timing message
 #define B2B_ACCEPTKMON             10000    // timewindow [us]!!! in which monitor signal  from kicker electronics is expected
 #define B2B_ACCEPTKPROBE             100    // timewindow [us]!!! in which signals from kicker magnet probe are expected
-#define B2B_TDIAGOBS B2B_TFLATTOP-100000    // observation interval for phase diagnostic; a bit shorter than length of flat top; chk original value was 15900000
+#define B2B_TDIAGOBS (B2B_TFLATTOP-100000)  // observation interval for phase diagnostic; a bit shorter than length of flat top; chk original value was 15900000
 #define B2B_NSID                      16    // max number of SID settings
 #define B2B_F_CLK              200000000    // clock for DDS, here: BuTiS 200 MHz
 #define B2B_WR_JITTER              30000    // jitter [fs]!!! of White Rabbit clock
@@ -147,7 +147,7 @@
 #define B2B_SHARED_SET_LSIDINJ     (B2B_SHARED_SET_GIDINJ      + _32b_SIZE_)       // LSA SID of injection ring
 #define B2B_SHARED_SET_LBPIDINJ    (B2B_SHARED_SET_LSIDINJ     + _32b_SIZE_)       // LSA BPID of injection ring
 #define B2B_SHARED_SET_LPARAMINJHI (B2B_SHARED_SET_LBPIDINJ    + _32b_SIZE_)       // LSA param of injection ring, high bits
-#define B2B_SHARED_SET_LPARAMINJLO (B2B_SHARED_SET_LPARAMINJHI + _32b_SIZE_)       // LSA param of injection ring, high bits
+#define B2B_SHARED_SET_LPARAMINJLO (B2B_SHARED_SET_LPARAMINJHI + _32b_SIZE_)       // LSA param of injection ring, low bits
 #define B2B_SHARED_SET_TH1INJHI    (B2B_SHARED_SET_LPARAMINJLO + _32b_SIZE_)       // period [as] of h=1 injection, high bits
 #define B2B_SHARED_SET_TH1INJLO    (B2B_SHARED_SET_TH1INJHI    + _32b_SIZE_)       // period of h=1 injection, low bits
 #define B2B_SHARED_SET_NHINJ       (B2B_SHARED_SET_TH1INJLO    + _32b_SIZE_)       // harmonic number of injection RF

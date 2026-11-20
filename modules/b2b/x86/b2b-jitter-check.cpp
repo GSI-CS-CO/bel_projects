@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 28-feb-2025
+ *  version : 19-nov-2026
  *
  * checks jitter between two timing receivers connected via a Lemo cable 
  * the first timing receiver outputs a PPS pulse
@@ -303,15 +303,15 @@ void ppsOutConfig()
   } // for it
 
 
-  // input not found
+  // output not found (i_found is set when searching the outputs)
   if (i_found == false) {
-    std::cerr << "no input with the name " << ppsName << std::endl;
+    std::cerr << "no output with the name " << ppsName << std::endl;
     exit(1);
   }
 
-  // output not found
+  // input not found (o_found is set when searching the inputs)
   if (o_found == false) {
-    std::cerr << "no output with the name " << ppsName << std::endl;
+    std::cerr << "no input with the name " << ppsName << std::endl;
     exit(1);
   }
   
@@ -448,10 +448,15 @@ int main(int argc, char** argv)
 
   //printf("optind %d\n", optind);
 
+  if (optind+1 >= argc) {
+    std::cerr << program << " expecting two non-optional arguments: <device name PPS> <device name TS>" << std::endl;
+    help();
+    return 1;
+  }
   deviceNamePPS = argv[optind];
   deviceNameTS  = argv[optind+1];
-  if (optind+1 < argc) sprintf(prefix, "b2b_%s", argv[optind+2]);
-  else                 sprintf(prefix, "b2b_blabla");
+  if (optind+2 < argc) snprintf(prefix, sizeof(prefix), "b2b_%s", argv[optind+2]);
+  else                 snprintf(prefix, sizeof(prefix), "b2b_blabla");
 
   gethostname(disHostname, 32);
   sprintf(ppsName, "IO%d", ioPPS);

@@ -5,6 +5,11 @@
 # './buildApp.sh $HOME/consoleApps/b2b b2b-int-transfer-mon b2b-mon'
 # './buildApp.sh $HOME/consoleApps/b2b b2b-pro-transfer-mon b2b-mon'
 
+if [ $# -lt 3 ]; then
+  echo "usage: $0 <app base path> <app name> <binary>"
+  exit 1
+fi
+
 SW=../x86
 USRPATH=/common/usr/timing/user-dietrich/rocky9
 APPBUILD=$1/$2/current

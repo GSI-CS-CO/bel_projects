@@ -3,7 +3,7 @@
  *
  *  created : 2021
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-jan-2026
+ *  version : 19-nov-2026
  *
  * publishes status of a b2b system (CBU, PM, KD ...)
  *
@@ -77,9 +77,9 @@ uint32_t      disDiagDataId      = 0;
 uint32_t      dicClearDiagId     = 0;
 
  
-static void die(const char* where, eb_status_t status) {
+static void die(const char* where, uint32_t status) {
   fprintf(stderr, "%s: %s failed: %s\n",
-          program, where, eb_status(status));
+          program, where, b2b_status_text(status));  // callers pass COMMON_STATUS_xxx, not eb_status_t
   exit(1);
 } //die
 
@@ -150,6 +150,7 @@ int main(int argc, char** argv) {
   uint32_t actState = COMMON_STATE_UNKNOWN;    // actual state of gateway
   uint32_t verLib;
   uint32_t verFw;
+  uint32_t verGw;
   uint32_t verFwOld;
 
   uint32_t cpu;
@@ -226,7 +227,7 @@ int main(int argc, char** argv) {
 
     while (1) {
       // read data
-      comlib_readDiag2(ebDevice, &state, &verFw, &statusArray, &diagData, 0);
+      comlib_readDiag2(ebDevice, &state, &verFw, &verGw, &statusArray, &diagData, 0);
 
       // if system is PSM, misuse unused values from common, frickelbude (C)
       // we could get rid of this, if we used a dedicated SCU for each PSM
