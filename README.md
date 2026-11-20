@@ -9,6 +9,7 @@ GSI Timing Gateware and Tools
   - [Kernel Drivers](#kernel-drivers)
   - [Etherbone](#etherbone)
   - [Tools (Monitoring and EB-Tools)](#tools-monitoring-and-eb-tools)
+  - [SNMP (WR Core)](#snmp-wr-core)
   - [Saftlib](#saftlib)
   - [Build Gateware(s)](#build-gatewares)
   - [Additional Targets](#additional-targets)
@@ -106,6 +107,16 @@ Additional tools like eb-console and eb-flash.
 ```shell
 make tools
 make tools-install # optional
+```
+
+## SNMP (WR Core)
+
+The WR core answers SNMP requests (UDP port 161, community `public`). Query it from the bel_projects directory (the MIB file is in `ip_cores/wrpc-sw/lib`):
+
+```shell
+sudo apt install snmp snmp-mibs-downloader # Debian/Ubuntu; Rocky: net-snmp-utils
+snmpwalk -v 2c -c public -m WR-WRPC-MIB -M +ip_cores/wrpc-sw/lib <ip> wrpcCore
+snmpget  -v 2c -c public -m WR-WRPC-MIB -M +ip_cores/wrpc-sw/lib <ip> wrpcPtpServoStateN.0
 ```
 
 ## Saftlib
