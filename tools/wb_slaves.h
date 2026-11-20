@@ -303,6 +303,15 @@
 // register offsets
 #define IO_CTRL_LVDSINGATESETLOW     0x2000            // LVDS input gate set low, one bit per input   /* chk, subject to change */
 #define IO_CTRL_LVDSINGATERESETLOW   0x2008            // LVDS input gate reset low, one bit per input /* chk, subject to change */
+#define IO_CTRL_CONFIG               0x0010            // bit 0: legacy mode
+#define IO_CTRL_GPIOINFO             0x0104            // GPIO info: b15..8 # of outputs, b7..0 # of inouts
+#define IO_CTRL_LVDSINFO             0x0108            // LVDS info: as GPIO info
+#define IO_CTRL_GPIOOESETLOW         0x0200            // GPIO OE: +0x0 set low, +0x4 set high, +0x8 reset low, +0xc reset high
+#define IO_CTRL_LVDSOESETLOW         0x0300            // LVDS OE: as GPIO OE
+#define IO_CTRL_GPIOTERMSETLOW       0x0400            // GPIO termination: as GPIO OE
+#define IO_CTRL_LVDSTERMSETLOW       0x0500            // LVDS termination: as GPIO OE
+#define IO_CTRL_GPIOOUT              0xa000            // GPIO drive output n at +4*n; 0x1: high
+#define IO_CTRL_LVDSOUT              0xb000            // LVDS drive output n at +4*n; 0xff: high
 
 // masks
 
