@@ -220,7 +220,8 @@ end process;
 
 
   s_stp_reached <= std_logic(s_step_cnt(s_step_cnt'high));
-  s_load_set    <= '1' when control_state = quad_inc and s_stp_reached = '1' and s_freq_en = '1' else '0';
+  s_load_set    <= '1' when control_state = quad_inc and s_stp_reached = '1' and s_freq_en = '1'
+                       and s_coeff_rcvd = '1' else '0';    -- no reload at stop, output keeps its last value
 
 -- control state machine
   control_sm: process (clk, nrst, sync_rst, s_cont)
@@ -471,7 +472,8 @@ end process;
 
 
   s_stp_reached <= std_logic(s_step_cnt(s_step_cnt'high));
-  s_load_set    <= '1' when control_state = quad_inc and s_stp_reached = '1' and s_freq_en = '1' else '0';
+  s_load_set    <= '1' when control_state = quad_inc and s_stp_reached = '1' and s_freq_en = '1'
+                       and s_coeff_rcvd = '1' else '0';    -- no reload at stop, output keeps its last value
 
 -- control state machine
   control_sm: process (clk, nrst, sync_rst_stretched, s_cont)

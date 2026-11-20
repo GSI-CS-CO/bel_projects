@@ -6,7 +6,8 @@
 --   slow:  next set is written in the middle of the segment
 --   edge:  coefficient write falls exactly into the segment boundary cycle
 -- Checked: sample values and order of the sets, number of dreq pulses, the stop irq is not
--- masked by dreq, generator stops after the last set. Shift values above 48 are used.
+-- masked by dreq, generator stops after the last set and keeps its last output value.
+-- Shift values above 48 are used.
 --
 -- VHDL-2008 (external names). Run from this directory:
 --   ghdl:      ghdl -a --std=08 ../../fg_quad_pkg.vhd ../../fg_quad_datapath.vhd fg_quad_datapath_tb.vhd
@@ -89,6 +90,7 @@ architecture sim of fg_quad_datapath_tb is
   signal n_dreq:            integer := 0;
   signal n_stop_irq:        integer := 0;
   signal n_errors:          integer := 0;
+  signal last_out:          std_logic_vector(31 downto 0) := (others => '0');   -- last output sample
 
 begin
 
@@ -169,6 +171,7 @@ begin
           else
             v_x := v_x + v_q;
             v_q := v_q + v_a;
+            last_out <= std_logic_vector(v_x(63 downto 32));
             if sw_out /= std_logic_vector(v_x(63 downto 32)) then
               report "set " & integer'image(v_set) & " sample " & integer'image(v_cnt) &
                      ": sw_out " & integer'image(to_integer(signed(sw_out))) &
@@ -288,9 +291,12 @@ begin
                integer'image(c_sets'length - 1) severity error;
       assert n_stop_irq = 1
         report t_mode'image(mode) & ": " & integer'image(n_stop_irq) & " stop irqs, expected 1" severity error;
+      assert sw_out = last_out
+        report t_mode'image(mode) & ": sw_out " & integer'image(to_integer(signed(sw_out))) &
+               " after stop, expected last sample " & integer'image(to_integer(signed(last_out))) severity error;
 
       if n_errors = v_errors and fg_is_running = '0' and n_samples = c_steps * c_sets'length - 1
-         and n_dreq = c_sets'length - 1 and n_stop_irq = 1 then
+         and n_dreq = c_sets'length - 1 and n_stop_irq = 1 and sw_out = last_out then
         report t_mode'image(mode) & ": passed";
       else
         report t_mode'image(mode) & ": FAILED" severity error;
