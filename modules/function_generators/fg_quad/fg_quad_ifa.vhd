@@ -322,10 +322,6 @@ begin
         blk_start_l_wr <= '0';
         blk_start_h_wr <= '0';
     elsif rising_edge(clk) then
-      if fg_cntrl_reg(0) = '1' then
-        blk_sm <= idle;
-      end if;
-
       blk_cntrl_wr   <= '0';
       blk_coeff_a_wr <= '0';
       blk_coeff_b_wr <= '0';
@@ -379,6 +375,22 @@ begin
           end if;
 
       end case;
+
+      -- io_dec leaves block mode with the next command word (fc /= 0x6b).
+      -- A block that is still open at that point is incomplete (lost word):
+      -- abort it, so that the next block starts aligned again.
+      if blk_sm /= idle and fc /= x"6b" then
+        blk_sm         <= idle;
+        blk_coeff_a_wr <= '0';
+        blk_coeff_b_wr <= '0';
+        blk_shift_wr   <= '0';
+        blk_start_l_wr <= '0';
+        blk_start_h_wr <= '0';
+      end if;
+
+      if fg_cntrl_reg(0) = '1' then
+        blk_sm <= idle;
+      end if;
     end if;
   end process;
 

@@ -4793,7 +4793,7 @@ applicable agreement for further details.
 		(type "PARAMETER_UNSIGNED_DEC")	)
 	(parameter
 		"fw_version"
-		"3"
+		"4"
 		""
 		(type "PARAMETER_UNSIGNED_DEC")	)
 	(drawing
