@@ -76,6 +76,7 @@ use work.enc_err_counter_pkg.all;
 use work.a10vs_pkg.all;
 use work.cellular_ram_pkg.all;
 use work.neorv32_shell_pkg.all;
+use work.xwb_2port_fifo_pkg.all;
 
 entity monster is
   generic(
@@ -605,7 +606,8 @@ architecture rtl of monster is
     devs_asmi,
     devs_enc_err_counter,
     devs_a10vs,
-    devs_cellular_ram
+    devs_cellular_ram,
+    devs_boot_fifo_wr
   );
   constant c_dev_slaves          : natural := dev_slaves'pos(dev_slaves'right)+1;
 
@@ -651,7 +653,8 @@ architecture rtl of monster is
     dev_slaves'pos(devs_asmi)           => f_sdb_auto_device(c_wb_asmi_sdb,                        g_en_asmi),
     dev_slaves'pos(devs_enc_err_counter)=> f_sdb_auto_device(c_enc_err_counter_sdb,                g_en_enc_err_counter),
     dev_slaves'pos(devs_a10vs)          => f_sdb_auto_device(c_a10vs_sdb,                          g_en_a10vs),
-    dev_slaves'pos(devs_cellular_ram)   => f_sdb_auto_device(f_cellular_ram_sdb(g_cr_bits),        g_en_cellular_ram));
+    dev_slaves'pos(devs_cellular_ram)   => f_sdb_auto_device(f_cellular_ram_sdb(g_cr_bits),        g_en_cellular_ram),
+    dev_slaves'pos(devs_boot_fifo_wr)   => f_sdb_auto_device(c_boot_fifo_wr_sdb,                   g_en_neorv32));
   constant c_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_bridge_sdb  : t_sdb_bridge       := f_xwb_bridge_layout_sdb(true, c_dev_layout, c_dev_sdb_address);
@@ -1911,7 +1914,7 @@ end generate;
       g_mem_wishbone_imem_size  => g_neorv32_ramsize,
       g_mem_wishbone_imem_addr  => std_ulogic_vector(c_neorv32_ram_addr),
       g_sdb_addr                => c_top_sdb_address,
-      g_mem_wishbone_init_file  => "../../../../../modules/neorv32/src/sw/idle-init/program.mif",
+      g_mem_wishbone_init_file  => "../../../../../modules/neorv32/src/sw/mem_access/main_exe.mif",   --"../../../../../modules/neorv32/src/sw/idle-init/program.mif"
       g_use_wb_adapter          => true,
       g_en_debugging            => true
     )
@@ -1927,6 +1930,8 @@ end generate;
       uart0_i     => s_neorv32_uart0_in,
       uart1_o     => s_neorv32_uart1_out,
       uart1_i     => s_neorv32_uart1_in,
+      fifo_w_i    => dev_bus_master_o(dev_slaves'pos(devs_boot_fifo_wr)),
+      fifo_w_o    => dev_bus_master_i(dev_slaves'pos(devs_boot_fifo_wr)),
       jtag_tck_i  => s_tck,
       jtag_tdi_i  => s_tdi,
       jtag_tdo_o  => s_tdo,
@@ -3686,6 +3691,8 @@ end generate;
       enc_err_i     => phy_rx_enc_err,
       enc_err_aux_i => phy_aux_rx_enc_err);
   end generate;
+
+
 
   a10vs_n : if not g_en_a10vs generate
     dev_bus_master_i(dev_slaves'pos(devs_a10vs)) <= cc_dummy_slave_out;

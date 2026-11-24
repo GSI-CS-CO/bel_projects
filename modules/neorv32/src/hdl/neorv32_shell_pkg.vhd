@@ -5,6 +5,7 @@ use ieee.numeric_std.all;
 library work;
 use work.wishbone_pkg.all;
 use work.genram_pkg.all;
+use work.xwb_2port_fifo_pkg.all; 
 
 library neorv32;
 use neorv32.neorv32_package.all;
@@ -14,6 +15,7 @@ package neorv32_shell_pkg is
   function f_neorv32_ram_sdb(g_ram_size : natural) return t_sdb_device;
   function f_neorv32_report_wb_range(start_addr : std_ulogic_vector(31 downto 0); sdb_addr :t_wishbone_address) return std_logic;
 
+
   component neorv32_shell is
     generic (
       g_clock_frequency           : natural := 62500000;                            -- clock frequency of clk_i in Hz
@@ -21,8 +23,10 @@ package neorv32_shell_pkg is
       g_mem_wishbone_imem_size    : natural := 4*8000;                              -- memory size in bytes
       g_mem_wishbone_imem_addr    : std_ulogic_vector(31 downto 0) := x"71000000";  -- imem RAM start address
       g_mem_wishbone_init_file    : string := "";                                   -- init file Wishbone instruction memory
-      g_mem_int_imem_size         : natural := 16*1024;                             -- size of processor-internal instruction memory in bytes
+      g_mem_int_imem_size         : natural := 32*1024;                             -- size of processor-internal instruction memory in bytes --origin: 16*1024
       g_mem_int_dmem_size         : natural := 16*1024;                             -- size of processor-internal data memory in bytes
+      g_boot_fifo_size            : natural := 512;
+      g_async_fifo_adapter        : boolean := false;
       g_use_wb_adapter            : boolean := false;                               -- use wishbone slave adapter CLASSIC/PIPELINED
       g_en_debugging              : boolean := false                                -- enable OCD debugging
     );
@@ -41,12 +45,31 @@ package neorv32_shell_pkg is
       slave_o    : out t_wishbone_slave_out;
       master_i   : in  t_wishbone_master_in;
       master_o   : out t_wishbone_master_out;
+      fifo_w_i   : in  t_wishbone_slave_in;
+      fifo_w_o   : out t_wishbone_slave_out;
       -- JTAG
       jtag_tck_i : in  std_logic;
       jtag_tdi_i : in  std_logic;
       jtag_tdo_o : out std_logic;
       jtag_tms_i : in  std_logic);
     end component;
+
+    constant c_boot_fifo_wr_sdb : t_sdb_device := (
+    abi_class     => x"0000", -- undocumented device
+    abi_ver_major => x"01",
+    abi_ver_minor => x"01",
+    wbd_endian    => c_sdb_endian_big,
+    wbd_width     => x"4", -- 32-bit port granularity
+    sdb_component => (
+    addr_first    => x"0000000000000000",
+    addr_last     => x"00000000000000ff",
+    product => (
+    vendor_id     => x"0000000000000651", -- GSI
+    device_id     => x"cacacaca",
+    version       => x"00000001",
+    date          => x"20261106",
+    name          => "NEORV_BOOT_FIFO_WR ")));
+
 
 end package;
 
@@ -57,6 +80,7 @@ end package;
     begin
       report "NEORV32: Wishbone start address (dec) = " & integer'image(to_integer(unsigned(start_addr)));
       report "NEORV32: SDB address (dec)            = " & integer'image(to_integer(unsigned(sdb_addr)));
+
       return '0';
     end f_neorv32_report_wb_range;
 

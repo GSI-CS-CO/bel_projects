@@ -36,7 +36,8 @@ COMMON_CFLAGS := $(ARCH_ABI_FLAGS) -ffunction-sections -fdata-sections \
                  -D NEORV32
 COMMON_ASFLAGS := $(ARCH_ABI_FLAGS)
 LINKER_FLAGS := -nostartfiles -nostdlib $(ARCH_ABI_FLAGS) -T $(LINKER_SCRIPT) \
-                -Wl,--build-id=none -lgcc -lc -L$(PICOLIBC_LIB) -Wl,--gc-sections
+                -Wl,--build-id=none -lgcc -lc -L$(PICOLIBC_LIB) -Wl,--gc-sections \
+                -Wl,--defsym,__neorv32_rom_base=0x90000000
 
 # Source files (project can override or extend)
 ASM_SOURCES ?= start.s

@@ -24,7 +24,7 @@ int main(void)
   /* Test UART */
   neorv32_rte_setup();
   neorv32_uart0_setup(BAUD_RATE, 0);
-  neorv32_uart0_puts("Hello world!\n");
+  neorv32_uart0_puts("Hello world hahaha!\n");
   neorv32_uart0_printf("Got 0x%x\n", foo_read);
 
   /* Test return to start.s */

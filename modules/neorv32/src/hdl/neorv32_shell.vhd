@@ -6,9 +6,11 @@ library work;
 use work.wishbone_pkg.all;
 use work.genram_pkg.all;
 use work.neorv32_shell_pkg.all;
+use work.xwb_2port_fifo_pkg.all; 
 
 library neorv32;
 use neorv32.neorv32_package.all;
+
 
 entity neorv32_shell is
   generic (
@@ -17,8 +19,10 @@ entity neorv32_shell is
     g_mem_wishbone_imem_size    : natural := 4*8000;                             -- memory size in bytes
     g_mem_wishbone_imem_addr    : std_ulogic_vector(31 downto 0) := x"71000000"; -- imem RAM start address
     g_mem_wishbone_init_file    : string := "";                                  -- init file Wishbone instruction memory
-    g_mem_int_imem_size         : natural := 16*1024;                            -- size of processor-internal instruction memory in bytes
+    g_mem_int_imem_size         : natural := 32*1024;                            -- size of processor-internal instruction memory in bytes
     g_mem_int_dmem_size         : natural := 16*1024;                            -- size of processor-internal data memory in bytes
+    g_boot_fifo_size            : natural := 512;                                -- test
+    g_async_fifo_adapter        : boolean := false;
     g_use_wb_adapter            : boolean := false;                              -- use wishbone slave adapter CLASSIC/PIPELINED
     g_en_debugging              : boolean := false                               -- enable OCD debugging
   );
@@ -39,6 +43,8 @@ entity neorv32_shell is
     slave_o    : out t_wishbone_slave_out;
     master_i   : in  t_wishbone_master_in;
     master_o   : out t_wishbone_master_out;
+    fifo_w_i   : in  t_wishbone_slave_in;
+    fifo_w_o   : out t_wishbone_slave_out;
     -- JTAG
     jtag_tck_i : in  std_logic;
     jtag_tdi_i : in  std_logic;
@@ -81,6 +87,8 @@ architecture rtl of neorv32_shell is
   constant c_stack_start     : unsigned(31 downto 0) := unsigned(c_stack_start_slv);
 
   constant BOOT_ADDR_CUSTOM_C : std_ulogic_vector(31 downto 0) := g_mem_wishbone_imem_addr;
+  constant IMEM_BASE_CUSTOM_C : std_ulogic_vector(31 downto 0) := x"90000000";  --align to 0x4000
+
 
   signal s_xbus_adr     : std_ulogic_vector(31 downto 0);
   signal s_xbus_dat_out : std_ulogic_vector(31 downto 0);
@@ -104,6 +112,9 @@ architecture rtl of neorv32_shell is
   signal s_wb_ram_neorv32_i : t_wishbone_slave_in;
   signal s_wb_ram_neorv32_o : t_wishbone_slave_out;
 
+  signal xwb_fifo_neorv32_i : t_wishbone_slave_in;
+  signal xwb_fifo_neorv32_o : t_wishbone_slave_out;
+
   signal s_resetn_com   : std_ulogic;
 
   signal addr : std_logic_vector(31 downto 0) := (others => '0');
@@ -123,10 +134,11 @@ begin
   neorv32_top_inst : neorv32_top
   generic map (
     CLOCK_FREQUENCY   => g_clock_frequency,
-    BOOT_MODE_SELECT  => 1,
+    BOOT_MODE_SELECT  => 0,                  -- origin: 1 , test
     XBUS_EN           => true,
     BOOT_ADDR_CUSTOM  => BOOT_ADDR_CUSTOM_C, -- Keep Quartus happy
-    IMEM_EN           => false,
+    IMEM_EN           => true,               -- origin: false  , test
+    IMEM_BASE         => IMEM_BASE_CUSTOM_C,  --test customized base imem address
     IMEM_SIZE         => g_mem_int_imem_size,
     DMEM_EN           => true,
     DMEM_SIZE         => g_mem_int_dmem_size,
@@ -195,26 +207,60 @@ begin
       slave2_i  => slave_i,
       slave2_o  => slave_o);
 
-  s_wb_ram_neorv32_i.cyc <= s_xbus_cyc and s_instruction;
-  s_wb_ram_neorv32_i.stb <= s_xbus_stb and s_instruction;
+
+  neorv32_boot_fifo: xwb_2port_fifo
+    generic map(
+      g_fifo_size              => g_boot_fifo_size,
+      g_show_ahead             => true,
+      g_with_rd_empty          => true,
+      g_with_rd_almost_empty   => true,
+      g_with_rd_count          => true,
+      g_with_wr_full           => true,       --enable full flag
+      g_with_wr_almost_full    => true,
+      g_with_wr_count          => true,
+      g_almost_empty_thres     => 4, 
+      g_almost_full_thres      => 500,
+      g_async_adapter          => g_async_fifo_adapter)
+    port map(
+      clk_w_i        => clk_i,
+      rstn_i         => rstn_i,
+      slave_w_i      => fifo_w_i,
+      slave_w_o      => fifo_w_o,
+      clk_r_i        => clk_i,
+      slave_r_i      => xwb_fifo_neorv32_i,
+      slave_r_o      => xwb_fifo_neorv32_o
+    );
+ 
+  --Demux0: GPIO1=1->, GPIO1=0->Demux1
+  --Demux1: s_instruction=1->DPRAM; s_instruction=0 -> arbited_master
+  s_wb_ram_neorv32_i.cyc <= s_xbus_cyc and not(s_gpio_out(1)) and s_instruction;
+  s_wb_ram_neorv32_i.stb <= s_xbus_stb and not(s_gpio_out(1)) and s_instruction;
   s_wb_ram_neorv32_i.adr <= std_logic_vector(s_xbus_adr);
   s_wb_ram_neorv32_i.sel <= std_logic_vector(s_xbus_sel);
-  s_wb_ram_neorv32_i.we  <= s_xbus_we and s_instruction;
+  s_wb_ram_neorv32_i.we  <= s_xbus_we and not(s_gpio_out(1)) and s_instruction;
   s_wb_ram_neorv32_i.dat <= std_logic_vector(s_xbus_dat_out);
 
-  s_arbited_master.cyc <= s_xbus_cyc and not(s_instruction);
-  s_arbited_master.stb <= s_xbus_stb and not(s_instruction);
+  s_arbited_master.cyc <= s_xbus_cyc and not(s_gpio_out(1)) and not(s_instruction);
+  s_arbited_master.stb <= s_xbus_stb and not(s_gpio_out(1)) and not(s_instruction);
   s_arbited_master.adr <= std_logic_vector(s_xbus_adr);
   s_arbited_master.sel <= std_logic_vector(s_xbus_sel);
-  s_arbited_master.we  <= s_xbus_we and not(s_instruction);
+  s_arbited_master.we  <= s_xbus_we and not(s_gpio_out(1)) and not(s_instruction);
   s_arbited_master.dat <= std_logic_vector(s_xbus_dat_out);
+  
+  xwb_fifo_neorv32_i.cyc <= s_xbus_cyc and s_gpio_out(1);
+  xwb_fifo_neorv32_i.stb <= s_xbus_stb and s_gpio_out(1);
+  xwb_fifo_neorv32_i.adr <= std_logic_vector(s_xbus_adr);
+  xwb_fifo_neorv32_i.sel <= std_logic_vector(s_xbus_sel);
+  xwb_fifo_neorv32_i.we  <= s_xbus_we and s_gpio_out(1);
+  xwb_fifo_neorv32_i.dat <= std_logic_vector(s_xbus_dat_out);
+
 
   n_g_use_wb_adapter: if not g_use_wb_adapter generate
     master_o <= s_arbited_master;
   end generate;
 
   y_g_use_wb_adapter: if g_use_wb_adapter generate
-    signal r_master_o       : t_wishbone_master_out;
+    signal r_master_o     : t_wishbone_master_out;
 
     signal s_fifo_out     : std_logic_vector(1 + 1 + c_wishbone_address_width + (c_wishbone_address_width/8) + 1 + c_wishbone_data_width - 1 downto 0);
     signal s_block_we     : std_logic;
@@ -282,15 +328,23 @@ begin
     end process;
   end generate;
 
-  -- Wishbone arbiter (read from own RAM or access the whole Wishbone space)
-  s_instruction <= '1' when
+  -- -- Wishbone arbiter (read from own RAM or access the whole Wishbone space)
+  s_instruction <= '1' when                                --Address Decoding
     ((unsigned(s_xbus_adr) >= c_wb_imem_base) and
      (unsigned(s_xbus_adr) < c_wb_imem_end)) or
      (unsigned(s_xbus_adr) >= c_stack_start)
   else '0';
 
-  s_xbus_dat_in <= std_ulogic_vector(s_wb_ram_neorv32_o.dat) when (s_instruction = '1') else std_ulogic_vector(master_i.dat);
-  s_xbus_ack    <= s_wb_ram_neorv32_o.ack when (s_instruction = '1') else std_ulogic(master_i.ack);
-  s_xbus_err    <= s_wb_ram_neorv32_o.err when (s_instruction = '1') else std_ulogic(master_i.err);
+  --Multiplexer: fifo/wb_ram/master_i to CPU
+  s_xbus_dat_in <= std_ulogic_vector(xwb_fifo_neorv32_o.dat) when (s_gpio_out(1) = '1') else 
+                   std_ulogic_vector(s_wb_ram_neorv32_o.dat) when (s_instruction = '1') else 
+                   std_ulogic_vector(master_i.dat);
+  s_xbus_ack    <= xwb_fifo_neorv32_o.ack when (s_gpio_out(1) = '1') else
+                   s_wb_ram_neorv32_o.ack when (s_instruction = '1') else 
+                   std_ulogic(master_i.ack);
+  s_xbus_err    <= xwb_fifo_neorv32_o.err when (s_gpio_out(1) = '1') else 
+                   s_wb_ram_neorv32_o.err when (s_instruction = '1') else 
+                   std_ulogic(master_i.err);
+  
 
 end rtl;

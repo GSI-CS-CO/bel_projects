@@ -55,6 +55,8 @@ files = [
   "../../ip_cores/neorv32/rtl/core/neorv32_uart.vhd",
   "../../ip_cores/neorv32/rtl/core/neorv32_wdt.vhd",
   "../../ip_cores/neorv32/rtl/core/neorv32_xbus.vhd",
+  "src/hdl/xwb_2port_fifo_pkg.vhd",
+  "src/hdl/xwb_2port_fifo.vhd",
   "src/hdl/neorv32_shell_pkg.vhd",
   "src/hdl/neorv32_shell.vhd",
 ]
