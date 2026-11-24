@@ -85,5 +85,22 @@ At least to enable insertions into the ECA queue a block transfer/pipelined mode
 
 # JTAG
 
-To connect the JTAG adapter to the RISC-V core a “virtual JTAG” adapter is added from the IP library from Quartus.
-As per the neorv32 documentation I tried OpenOCD, but haven’t gotten it to work yet. The target and the configuration file have to be modified. The GDB commands seem to be wrong and only work when adding an underscore.
+The on-chip debugger is reached through the Altera SLD hub (virtual JTAG), so the same USB-Blaster cable is used for
+programming, SignalTap and debugging (see [neorv32 discussion #1587](https://github.com/stnolting/neorv32/discussions/1587)).
+
+- Gateware: `src/hdl/neorv32_debug_dtm_altera_sld.vhd` replaces the default `neorv32_debug_dtm` (selected in `Manifest.py`).
+  It instantiates its own `sld_virtual_jtag` (SLD node id `0x00406E00`), the DTM `jtag_*` ports are unused,
+  so targets should set `g_en_virtual_jtag => false`.
+- OpenOCD: the Altera fork shipped with Quartus 23 (`$QUARTUS/bin/openocd`, adapter `aji_client`)
+  with `openocd/neorv32_altera_vjtag.cfg`. It connects to the Quartus JTAG server (`jtagd`), which may run remotely.
+  `src/sw/gdb-example/start-openocd.sh` sets the JTAG clock, checks the debug node, detects a CPLD in the chain
+  and starts OpenOCD (see `src/sw/gdb-example/README.md`).
+- Tested on pexp (`pexp-neorv32`, CPLD in the chain: add `-c 'set PRE_TAPS {{cpld 8 0x06e5d093}}'`,
+  SignalTap can stay enabled) and on a pexarria5 test build.
+- `jtagconfig -n` must list `Node 00406E00 (110:8) #0`. If the node is missing, lower the JTAG clock, e.g.
+  `jtagconfig --setparam "USB-BlasterII [1-6]" JtagClock 6M` (24 MHz did not work on a pexarria5 via Promo12 adapter).
+
+```
+openocd -c 'set CABLE {USB-BlasterII on 127.0.0.1:13090 [1-6]}' -f modules/neorv32/openocd/neorv32_altera_vjtag.cfg
+# then: telnet localhost 4444  (halt, reg pc, mdw 0x71000000 4, resume)  or  gdb: target extended-remote :3333
+```
