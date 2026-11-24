@@ -27,7 +27,7 @@ files = [
   "../../ip_cores/neorv32/rtl/core/neorv32_cpu.vhd",
   "../../ip_cores/neorv32/rtl/core/neorv32_debug_auth.vhd",
   "../../ip_cores/neorv32/rtl/core/neorv32_debug_dm.vhd",
-  "../../ip_cores/neorv32/rtl/core/neorv32_debug_dtm.vhd",
+  "src/hdl/neorv32_debug_dtm_altera_sld.vhd", # Altera SLD/virtual JTAG DTM instead of rtl/core/neorv32_debug_dtm.vhd
   "../../ip_cores/neorv32/rtl/core/neorv32_dma.vhd",
   "../../ip_cores/neorv32/rtl/core/neorv32_dmem_ram.vhd",
   "../../ip_cores/neorv32/rtl/core/neorv32_dmem.vhd",
