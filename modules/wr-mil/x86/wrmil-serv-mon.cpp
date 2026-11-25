@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 06-nov-2026
+ *  version : 25-nov-2026
  *
  * monitors WR-MIL gateway (server part)
  *
@@ -418,6 +418,7 @@ int main(int argc, char** argv)
   uint64_t actStatusArray = 0x0;               // actual status array of gateway
   uint32_t verLib;                             // library version
   uint32_t verFw;                              // firmware version
+  uint32_t verGw;                              // gateware version
 
   comlib_diag_t diagData;
   
@@ -684,7 +685,7 @@ int main(int argc, char** argv)
         // update firmware data
         //wrmil_common_read(ebDevice, &fwStatus, &fwState, &nBadStatus, &nBadState, &fwVersion, &tmp32c, 0);
 
-        comlib_readDiag2(ebDevice, &state, &verFw, &statusArray, &diagData, 0); // quick and dirty, no error checking
+        comlib_readDiag2(ebDevice, &state, &verFw, &verGw, &statusArray, &diagData, 0); // quick and dirty, no error checking
         wrmil_info_read(ebDevice, &tmp32a, &tmp32b, &tmp32c, &fwGid, &stmp32a, &tmp64a, &tmp32f, &tmp32g, &tmp32h, &fwEvtsSnd, &fwEvtsRecT, &fwEvtsRecD, &fwEvtsRecErr, &fwEvtsBurst, &tmp64b, &tmp32i, &tmp32j, 0);
         // if (fwGid != gid) statusArray |= COMMON_STATUS_OUTOFRANGE; // signal an error, buggy? better not use
         

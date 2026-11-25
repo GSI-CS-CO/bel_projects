@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 03-jul-2026
+ *  version : 25-nov-2026
  *
  * monitors UNILAC 50 Hz synchronization
  *
@@ -491,6 +491,7 @@ int main(int argc, char** argv)
   char     disName[DIMMAXSIZE];          // name of DIM server
   uint32_t verLib;                       // library version
   uint32_t verFw;                        // firmware version
+  uint32_t verGw;                        // gateware version
   
   char     ebPath[1024];
   uint64_t ebDevice;
@@ -638,7 +639,7 @@ int main(int argc, char** argv)
     uint64_t      t_new, t_old;
     uint32_t      tmp32a, tmp32b, tmp32c;
     int32_t       stmp32a, stmp32b, stmp32c, stmp32d, stmp32e, stmp32f, stmp32g, stmp32h, stmp32i;
-    uint32_t      fwTMainsAct, fwState, fwVersion, fwLockState, fwNLocked, fwNCycles, fwNSent, fwMode;
+    uint32_t      fwTMainsAct, fwState, fwVersion, gwVersion, fwLockState, fwNLocked, fwNCycles, fwNSent, fwMode;
     uint64_t      fwStatus, fwLockDate;
     comlib_diag_t tmpDiagData;
     int           nUpdate = 0;
@@ -658,7 +659,7 @@ int main(int argc, char** argv)
       if (((t_new - t_old) / one_ms_ns) > UPDATE_TIME_MS) {
         // update firmware data
         wrmil_common_read(ebDevice, &fwStatus, &fwState, &tmp32a, &tmp32b, &fwVersion, &tmp32c, 0);
-        if (comlib_readDiag2(ebDevice, &fwState, &fwVersion, &fwStatus, &tmpDiagData, 0) ==  COMMON_STATUS_OK) disDiagData = tmpDiagData;
+        if (comlib_readDiag2(ebDevice, &fwState, &fwVersion, &gwVersion, &fwStatus, &tmpDiagData, 0) ==  COMMON_STATUS_OK) disDiagData = tmpDiagData;
         wrf50_info_read(ebDevice, &offsetMains, &fwMode , &fwTMainsAct, &tmp32b, &tmp32c, &stmp32a, &stmp32b, &stmp32c, &stmp32g, &stmp32h, &stmp32i, &stmp32d, &stmp32e, &stmp32f, &fwLockState, &fwLockDate, &fwNLocked,
                         &fwNCycles, &fwNSent, 0);
         
