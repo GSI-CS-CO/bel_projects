@@ -97,8 +97,9 @@ clean:
 install:
 	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/bin	
 	cp $(TARGETS) $(STAGING)$(ARCH)$(PREFIX)/bin	
+	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/lib
 	cp $(WRMILLIB).1.0 $(STAGING)$(ARCH)$(PREFIX)/lib
-	ln -sf $(STAGING)$(ARCH)$(PREFIX)/lib/$(WRMILLIB).1.0 $(STAGING)$(ARCH)$(PREFIX)/lib/$(WRMILLIB).1
-	ln -sf $(STAGING)$(ARCH)$(PREFIX)/lib/$(WRMILLIB).1 $(STAGING)$(ARCH)$(PREFIX)/lib/$(WRMILLIB)
+	ln -sf $(WRMILLIB).1.0 $(STAGING)$(ARCH)$(PREFIX)/lib/$(WRMILLIB).1
+	ln -sf $(WRMILLIB).1 $(STAGING)$(ARCH)$(PREFIX)/lib/$(WRMILLIB)
 
 .PHONY: all clean

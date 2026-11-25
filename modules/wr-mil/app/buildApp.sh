@@ -4,6 +4,8 @@
 # './buildApp.sh $HOME/consoleApps/wr-mil wrmil-pro-sys-mon wrmil-client-mon'
 #set -x
 
+if [ $# -lt 3 ]; then echo "usage: $0 <base dir> <app name> <binary>"; exit 1; fi
+
 SW=../x86
 USRPATH=/common/usr/timing/user-dietrich/rocky9
 APPBUILD=$1/$2/current

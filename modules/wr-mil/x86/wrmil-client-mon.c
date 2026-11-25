@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 05-nov-2026
+ *  version : 25-nov-2026
  *
  * subscribes to and displays status of a wr-mil gateway
  *
@@ -85,7 +85,7 @@ const char * sysShortNames[] = {
   "pzu_f50",
   "sis18_ring",
   "esr_ring",
-  "esr_ring_00",
+  "esr_rng_00",
   "partih_00"
 };
 
@@ -201,14 +201,14 @@ void printServices()
     if (dicSystem[i].status    == no_link_64)    sprintf(cStatus,  "%13s",         no_link_str);
     else                                         sprintf(cStatus,  "%13"PRIx64"",  dicSystem[i].status);
     tmp = (uint32_t *)(dicSystem[i].state);
-    if (*tmp == no_link_32)                      sprintf(cState,   "%10s",         no_link_str);
-    else                                         sprintf(cState,   "%10s",         dicSystem[i].state); 
+    if (*tmp == no_link_32)                      snprintf(cState,   sizeof(cState),   "%10s", no_link_str);
+    else                                         snprintf(cState,   sizeof(cState),   "%10s", dicSystem[i].state);
     tmp = (uint32_t *)(dicSystem[i].version);
-    if (*tmp == no_link_32)                      sprintf(cVersion, "%8s",          no_link_str);
-    else                                         sprintf(cVersion, "%8s",          dicSystem[i].version); 
+    if (*tmp == no_link_32)                      snprintf(cVersion, sizeof(cVersion), "%8s",  no_link_str);
+    else                                         snprintf(cVersion, sizeof(cVersion), "%8s",  dicSystem[i].version);
     tmp = (uint32_t *)(dicSystem[i].hostname);
-    if (*tmp == no_link_32)                      sprintf(cHost,   "%12s",          no_link_str);
-    else                                         sprintf(cHost,   "%12s",          dicSystem[i].hostname);
+    if (*tmp == no_link_32)                      snprintf(cHost,    sizeof(cHost),    "%12s", no_link_str);
+    else                                         snprintf(cHost,    sizeof(cHost),    "%12s", dicSystem[i].hostname);
     tmp = (uint32_t *)(&(dicSystem[i].monData));
     if (*tmp == no_link_32)                      sprintf(cData,   "%96s",          no_link_str);
     else  {
@@ -326,7 +326,7 @@ int main(int argc, char** argv) {
   } // if optind
 
   if (optind< argc) {
-    sprintf(environment, "%s", argv[optind]);
+    snprintf(environment, sizeof(environment), "%s", argv[optind]);
     sprintf(prefix, "wrmil_%s", environment);
   } // if optind
   else {
@@ -352,7 +352,7 @@ int main(int argc, char** argv) {
           sysId = userInput - 87;                 // no break on purpose
         case '0' ... '9' :
           if (sysId == 0xffff) sysId = userInput - 48; // ugly
-          dicCmdClearDiag(prefix, sysId);
+          if (sysId < WRMILNSYS) dicCmdClearDiag(prefix, sysId);
           break;
         case 'h'         :
           printHelpText();

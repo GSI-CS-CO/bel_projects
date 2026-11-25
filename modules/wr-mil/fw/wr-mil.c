@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Micheal Reese, Mathias Kreider GSI-Darmstadt
- *  version : 30-sep-2026
+ *  version : 25-nov-2026
  *
  *  firmware required for the White Rabbit -> MIL Gateways
  *  
@@ -269,8 +269,8 @@ void extern_clearDiag()
   offsDone         = 0x0;
   offsDoneMax      = 0x0;
   offsDoneMin      = 0xffffffff;
-  if (useBlackbox)  *(volatile uint16_t *)pMilNEvtsClear = 0xffff;
-  else              resetEventErrCntMil(pMilRec, 0);
+  if (useBlackbox)  {if (pMilNEvtsClear) *(volatile uint16_t *)pMilNEvtsClear = 0xffff;}  // pointers are only valid after 'configure'
+  else              {if (pMilRec)        resetEventErrCntMil(pMilRec, 0);}
 } // extern_clearDiag 
 
 
@@ -747,6 +747,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
           fwlib_ecaWriteTM(sendDeadline, sendEvtId, sendParam, 0x0, 1);
           nEvtsSnd++;
         } // for i        
+        previous_time = sendDeadline;                 // UTC telegrams occupy the MIL bus too; include them in the burst protection
       } // if utc_trigger
 
       // reset inhibit counter for fill events

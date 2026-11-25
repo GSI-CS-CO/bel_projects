@@ -205,6 +205,7 @@ void iLimit_print(iLimit_t *limit, uint64_t sysTime)
     // possibly reset limit counter
     if (limit->printN >= limit->printMaxN) if ((sysTime - limit->printT0)   > limit->printInterval) {limit->printT0 = 0; limit->printN = 1;}
     if (limit->printN <  limit->printMaxN) (limit->print_user_routine)((double)(limit->value));
+    limit->flag = 0;                                         // report each occurence only once
   } // if limit flag
 } // iLimit_print
 
@@ -491,7 +492,6 @@ int main(int argc, char** argv)
   char     disName[DIMMAXSIZE];          // name of DIM server
   uint32_t verLib;                       // library version
   uint32_t verFw;                        // firmware version
-  uint32_t verGw;                        // gateware version
   
   char     ebPath[1024];
   uint64_t ebDevice;
@@ -511,10 +511,6 @@ int main(int argc, char** argv)
       case 'd' :
         // chk, keep for compatibility reasons, remove at some time
         break;
-#ifdef USEMASP
-        maspNomen = std::string("U_WRF50_SYNC");    break;
-#endif
-        break;
       case 'h':
         help();
         return 0;
@@ -524,6 +520,10 @@ int main(int argc, char** argv)
         return 1;
     } // switch opt
   }   // while opt
+
+#ifdef USEMASP
+  maspNomen = std::string("U_WRF50_SYNC");
+#endif
 
   if (optind >= argc) {
     std::cerr << program << ": expecting one non-optional arguments: <device name>" << std::endl;
@@ -549,7 +549,7 @@ int main(int argc, char** argv)
   gethostname(disHostname, 32);
   sprintf(domainName,"%s", "pzu_f50");
   
-  if (optind+1 < argc) sprintf(prefix, "wrmil_%s_%s-mon", argv[++optind], domainName);
+  if (optind+1 < argc) snprintf(prefix, sizeof(prefix), "wrmil_%s_%s-mon", argv[++optind], domainName);
   else                 sprintf(prefix, "wrmil_%s-mon", domainName);
 
   // start server

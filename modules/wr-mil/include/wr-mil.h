@@ -83,7 +83,7 @@
 #define WRMIL_SHARED_SET_UTC_UTC_DELAY     (WRMIL_SHARED_SET_UTC_TRIGGER      + _32b_SIZE_)  // delay [us] between the 5 generated UTC MIL events
 #define WRMIL_SHARED_SET_TRIG_UTC_DELAY    (WRMIL_SHARED_SET_UTC_UTC_DELAY    + _32b_SIZE_)  // delay [us] between the trigger event and the first UTC (and other) generated events
 #define WRMIL_SHARED_SET_GID               (WRMIL_SHARED_SET_TRIG_UTC_DELAY   + _32b_SIZE_)  // timing group ID for which the gateway is generating MIL events (example: 0x12c is SIS18)
-#define WRMIL_SHARED_SET_LATENCY           (WRMIL_SHARED_SET_GID              + _32b_SIZE_)  // [us] MIL event is generated 100us+latency after the WR event. The value of latency can be negative
+#define WRMIL_SHARED_SET_LATENCY           (WRMIL_SHARED_SET_GID              + _32b_SIZE_)  // [ns] MIL event is generated 100us+latency after the WR event. The value of latency can be negative
 #define WRMIL_SHARED_SET_UTC_OFFSET_HI     (WRMIL_SHARED_SET_LATENCY          + _32b_SIZE_)  // offset [ms] between the TAI and the MIL-UTC, high word 
 #define WRMIL_SHARED_SET_UTC_OFFSET_LO     (WRMIL_SHARED_SET_UTC_OFFSET_HI    + _32b_SIZE_)  // offset [ms] between the TAI and the MIL-UTC, low  word
 #define WRMIL_SHARED_SET_REQUEST_FILL_EVT  (WRMIL_SHARED_SET_UTC_OFFSET_LO    + _32b_SIZE_)  // if this is written to 1, the gateway will send a fill event as soon as possible

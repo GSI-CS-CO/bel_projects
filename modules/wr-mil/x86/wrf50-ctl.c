@@ -1,9 +1,9 @@
-/*******************************************************************************************
+/*******************************************************************************************76
  *  wrf50-ctl.c
  *
  *  created : 2024
  *  author  : Dietrich Beck, Michael Reese GSI-Darmstadt
- *  version : 22-Jul-2025
+ *  version : 25-nov-2025
  *
  * Command-line interface for wr-f50
  *
@@ -61,7 +61,7 @@ static int logLevel    = 0;
 
 static void die(const char* where, eb_status_t status) {
   fprintf(stderr, "%s: %s failed: %s\n",
-          program, where, eb_status(status));
+          program, where, comlib_statusText(status));
   exit(1);
 } //die
 
@@ -76,9 +76,9 @@ static void help(void) {
   fprintf(stderr, "  -i                  show 50 Hz sync information\n"                                );
   fprintf(stderr, "\n");
   fprintf(stderr, "All following parameters are to be used with command 'configure' \n"                );
-  fprintf(stderr, "  -o <offset>         offset [us] to zero transition of 50 Hz mains, default 0\n"   );
+  fprintf(stderr, "  -o <offset>         offset [ns] to zero transition of 50 Hz mains, default 0\n"   );
   fprintf(stderr, "                      'offset': t_cycle_mains - t_cycle_DM and must be positive\n"  );
-  fprintf(stderr, "  -m <mode>           mode selection, default 1 \n"                                 );
+  fprintf(stderr, "  -m <mode>           mode selection, default 2 \n"                                 );
   fprintf(stderr, "                      0: off\n"                                                     );
   fprintf(stderr, "                      2: hard locking, Data Master simulation mode\n"               );
   fprintf(stderr, "                      4: hard locking of Data Master\n"                             );
@@ -92,7 +92,7 @@ static void help(void) {
   fprintf(stderr, "  cleardiag           command clears FW statistics\n"                               );
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to control the UNILAC 50 Hz synchronization from the command line\n"  );
-  fprintf(stderr, "Example1: '%s dev/wbm0 -m 3 configure'\n", program                                  );
+  fprintf(stderr, "Example1: '%s -m 2 dev/wbm0 configure'\n", program                                  );
   fprintf(stderr, "\n");
   fprintf(stderr, "For debugging, some messages are available via the ECA with gid 0x4c0. EvtNo:\n"    );
   fprintf(stderr, "    0xa01: rising and falling edge of HW signal from 50 Hz module\n"                );
@@ -172,7 +172,10 @@ int main(int argc, char** argv) {
         // - the minimum cycle length
         // - minus the offset for sending the message
         // - minus the critical limit for late messages
-        if (f50Offset > (WRF50_CYCLELEN_MIN - WRF50_TUNE_MSG_DELAY - COMMON_LATELIMIT)) {fprintf(stderr, "Parameter o: %d out of range\n", f50Offset); return 1;}
+        if ((f50Offset < 0) || (f50Offset > (WRF50_CYCLELEN_MIN - WRF50_TUNE_MSG_DELAY - COMMON_LATELIMIT))) {
+          fprintf(stderr, "Parameter o: %d out of range\n", f50Offset);
+          return 1;
+        } // if f50Offset ...
         break;
       case 'm':
         tmp           = strtol(optarg, &tail, 0);
@@ -247,7 +250,7 @@ int main(int argc, char** argv) {
     if (!strcasecmp(command, "configure")) {
       if ((state != COMMON_STATE_CONFIGURED) && (state != COMMON_STATE_IDLE)) printf("wr-f50: WARNING command has no effect (not in state CONFIGURED or IDLE)\n");
       else {
-        if (wrf50_upload(ebDevice, f50Offset, mode) != COMMON_STATUS_OK) die("wr-f50 upload", status);
+        if ((status = wrf50_upload(ebDevice, f50Offset, mode)) != COMMON_STATUS_OK) die("wr-f50 upload", status);
         wrmil_cmd_configure(ebDevice);
       } // else state
     } // "configure"

@@ -138,6 +138,7 @@ const char* wrmil_status_text(uint32_t code)
     case WRMIL_STATUS_SAFETYMARGIN         : sprintf(message, "error %d, %s", code, "violation of safety margin for data master and timing network"); break;
     case WRMIL_STATUS_LATEMESSAGE          : sprintf(message, "error %d, %s", code, "late timing message received"); break;
     case WRMIL_STATUS_BADSETTING           : sprintf(message, "error %d, %s", code, "bad setting data"); break;
+    case WRMIL_STATUS_MIL                  : sprintf(message, "error %d, %s", code, "an error occured on MIL hardware"); break;
     default                                : sprintf(message, "%s", comlib_statusText(code)); break;
   } // switch code
   
@@ -185,10 +186,14 @@ uint32_t wrmil_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t c
 
   // open Etherbone device and socket 
   if ((status = eb_socket_open(EB_ABI_CODE, 0, EB_ADDRX|EB_DATAX, &eb_socket)) != EB_OK) return COMMON_STATUS_EB;
-  if ((status = eb_device_open(eb_socket, devName, EB_ADDRX|EB_DATAX, 3, &eb_device)) != EB_OK) return COMMON_STATUS_EB;
+  if ((status = eb_device_open(eb_socket, devName, EB_ADDRX|EB_DATAX, 3, &eb_device)) != EB_OK) {eb_socket_close(eb_socket); return COMMON_STATUS_EB;}
 
-  //  get Wishbone address of lm32 
-  if ((status = eb_sdb_find_by_identity(eb_device, GSI, LM32_RAM_USER, &sdbDevice, &nDevices)) != EB_OK) return COMMON_STATUS_EB;
+  //  get Wishbone address of lm32; nDevices returns the number of cores found
+  if (((status = eb_sdb_find_by_identity(eb_device, GSI, LM32_RAM_USER, &sdbDevice, &nDevices)) != EB_OK) || (nDevices < 1)) {
+    eb_device_close(eb_device);
+    eb_socket_close(eb_socket);
+    return COMMON_STATUS_EB;
+  } // if status
 
   lm32_base            = sdbDevice.sdb_component.addr_first;
 
@@ -237,10 +242,14 @@ uint32_t wrf50_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t c
 
   // open Etherbone device and socket 
   if ((status = eb_socket_open(EB_ABI_CODE, 0, EB_ADDRX|EB_DATAX, &eb_socket)) != EB_OK) return COMMON_STATUS_EB;
-  if ((status = eb_device_open(eb_socket, devName, EB_ADDRX|EB_DATAX, 3, &eb_device)) != EB_OK) return COMMON_STATUS_EB;
+  if ((status = eb_device_open(eb_socket, devName, EB_ADDRX|EB_DATAX, 3, &eb_device)) != EB_OK) {eb_socket_close(eb_socket); return COMMON_STATUS_EB;}
 
-  //  get Wishbone address of lm32 
-  if ((status = eb_sdb_find_by_identity(eb_device, GSI, LM32_RAM_USER, &sdbDevice, &nDevices)) != EB_OK) return COMMON_STATUS_EB;
+  //  get Wishbone address of lm32; nDevices returns the number of cores found
+  if (((status = eb_sdb_find_by_identity(eb_device, GSI, LM32_RAM_USER, &sdbDevice, &nDevices)) != EB_OK) || (nDevices < 1)) {
+    eb_device_close(eb_device);
+    eb_socket_close(eb_socket);
+    return COMMON_STATUS_EB;
+  } // if status
 
   lm32_base            = sdbDevice.sdb_component.addr_first;
 
@@ -372,7 +381,7 @@ void wrf50_printDiag(int32_t f50Offs, uint32_t mode, uint32_t TMainsAct, uint32_
   
   printf("wrf50: info  ...\n\n");
   
-  printf("offset to 50 Hz mains [us]          : %15d\n"        , f50Offs);
+  printf("offset to 50 Hz mains [ns]          : %15d\n"        , f50Offs);
   printf("mode                                : %15u\n"        , mode);
   printf("act period of mains [us]            : %15.3f\n"      , (double)TMainsAct/1000.0);
   printf("act period of DM [us]               : %15.3f\n"      , (double)TDmAct/1000.0);
@@ -581,7 +590,7 @@ uint32_t wrf50_upload(uint64_t ebDevice, int32_t  phaseOffset, uint32_t mode)
 
   // EB cycle
   if (eb_cycle_open(ebDevice, 0, eb_block, &eb_cycle) != EB_OK) return COMMON_STATUS_EB;
-  eb_cycle_write(eb_cycle, wrf50_set_f50Offset, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)phaseOffset);
+  eb_cycle_write(eb_cycle, wrf50_set_f50Offset, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)phaseOffset);       // we must cast a signed integer to a 32bit prior casting to eb_data_t
   eb_cycle_write(eb_cycle, wrf50_set_mode     , EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)mode);
   if ((eb_status = eb_cycle_close(eb_cycle)) != EB_OK) {printf("wr-f50: upload failed %d \n", eb_status); return eb_status;}
 

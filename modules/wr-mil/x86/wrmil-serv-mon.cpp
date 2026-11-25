@@ -230,7 +230,7 @@ static void timingMessage(uint64_t evtId, uint64_t param, saftlib::Time deadline
   // check ranges
   if (mFid != FID)                        return;  // unexpected format of timing message
   if (tag   > tagStop)                    return;  // illegal tag
-  if ((modeCompare == 2) && ((mEvtNo >= 0x0e0) && (mEvtNo <= 0x0e4))) return; // exclude UTC telegrams
+  if ((modeCompare == 3) && ((mEvtNo >= 0x0e0) && (mEvtNo <= 0x0e4))) return; // exclude UTC telegrams
   //printf("tag %d\n", tag);
 
   
@@ -456,7 +456,7 @@ int main(int argc, char** argv)
           case  9: gid = PARTIH;     sprintf(domainName, "%s", "partih_00");    break;
           case 10: gid = PZU_TK;     sprintf(domainName, "%s", "pzu_tk_00");    break;
           case 11: gid = PZU_TK;     sprintf(domainName, "%s", "pzu_tk_01");    break;
-          case 12: gid = ESR_RING;   sprintf(domainName, "%s", "esr_ring_00");  break;
+          case 12: gid = ESR_RING;   sprintf(domainName, "%s", "esr_rng_00");  break;
           default: {std::cerr << "Specify a proper number, not " << tmpi << "'%s'!" << std::endl; return 1;} break;
         } // switch tmpi
 #ifdef USEMASP
@@ -517,11 +517,13 @@ int main(int argc, char** argv)
   gethostname(disHostname, 32);
   
   if (optind+1 < argc) {
-    sprintf(environment, "%s", argv[++optind]);
+    snprintf(environment, sizeof(environment), "%s", argv[++optind]);
     sprintf(prefix, "wrmil_%s_%s-mon", environment, domainName);
   } // if optind
-  else
+  else {
+    sprintf(environment, "%s", "n/a");
     sprintf(prefix, "wrmil_%s-mon", domainName);
+  } // else optind
 
   // start dim server
   printf("%s: starting server using prefix %s\n", program, prefix);
@@ -739,6 +741,7 @@ int main(int argc, char** argv)
         char fill[LENGID+1];
         int  len;
         for (int i=0;i<LENGID;i++) fill[i] = '.';
+        fill[LENGID] = '\0';
         len = strlen(domainName);
         if (len < LENGID) sprintf(&(fill[LENGID - len]), "%s", domainName);
 

@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 28-sep-2026
+ *  version : 25-nov-2026
  *
  * library for wr-mil
  *
@@ -163,7 +163,7 @@ extern "C" {
                            uint32_t *utcDelay,                   // delay [us] between the 5 generated UTC MIL events
                            uint32_t *trigUtcDelay,               // delay [us] between the trigger event and the first UTC (and other) generated events
                            uint32_t *gid,                        // timing group ID for which the gateway is generating MIL events (example: 0x12c is SIS18)
-                           int32_t  *latency,                    // MIL event is generated 100us+latency after the WR event. The value of latency can be negative
+                           int32_t  *latency,                    // [ns] MIL event is generated 100us+latency after the WR event. The value of latency can be negative
                            uint64_t *utcOffset,                  // delay [ms] between the TAI and the MIL-UTC, high word   
                            uint32_t *requestFill,                // if this is written to 1, the gateway will send a fill event as soon as possible
                            uint32_t *milDev,                     // MIL device for sending MIL messages; 0: MIL Piggy; 1..: SIO in slot 1..
@@ -220,7 +220,7 @@ extern "C" {
                         uint32_t utcUtcDelay,                    // delay [us] between the 5 generated UTC MIL events
                         uint32_t trigUtcDelay,                   // delay [us] between the trigger event and the first UTC (and other) generated events
                         uint32_t gid,                            // timing group ID for which the gateway is generating MIL events (example: 0x12c is SIS18)
-                        int32_t  latency,                        // MIL event is generated 100us+latency after the WR event. The value of latency can be negative
+                        int32_t  latency,                        // [ns] MIL event is generated 100us+latency after the WR event. The value of latency can be negative
                         uint64_t utcOffset,                      // delay [ms] between the TAI and the MIL-UTC, high word   
                         uint32_t requestFill,                    // if this is written to 1, the gateway will send a fill event as soon as possible
                         uint32_t milDev,                         // MIL device for sending MIL messages; 0: MIL Piggy; 1..: SIO in slot 1..
@@ -230,7 +230,7 @@ extern "C" {
 
   // uploads configuration, returns error code
   uint32_t wrf50_upload(uint64_t ebDevice,                       // EB device
-                        int32_t  phaseOffset,                    // offset [us] to the zero transition of the 50 Hz mains signal
+                        int32_t  phaseOffset,                    // offset [ns] to the zero transition of the 50 Hz mains signal; must not be negative
                         uint32_t mode                            // see WRF50_MODE_...
                         );
 

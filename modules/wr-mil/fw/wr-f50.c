@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 02-jan-2026
+ *  version : 25-nov-2026
  *
  *  firmware required for the 50 Hz mains -> WR gateway
  *  
@@ -152,6 +152,7 @@ uint64_t t2DM;                             // timestamp of actual cycle + 2 (pre
 
 int      validF50;                         // mains timestamps are valid
 int      validDM;                          // Data Master timestamps are valid
+uint32_t nCyclesDM;                        // number of DM cycle start messages since entering operation
 
 
 void init() // typical init for lm32
@@ -354,6 +355,7 @@ uint32_t extern_entryActionOperation()
 
   validF50                  = 0;
   validDM                   = 0;
+  nCyclesDM                 = 0;
 
   return COMMON_STATUS_OK;
 } // extern_entryActionOperation
@@ -396,7 +398,7 @@ void updateStamps(uint64_t newStamp,               // new timestamp
 
 
 // calculates next timestamp
-uint64_t nextStamp(uint64_t stamps[],              // all timestamps
+void     nextStamp(uint64_t stamps[],              // all timestamps
                    uint64_t *t1,                   // time stamp of actual cycle + 1 (predicted) 
                    uint64_t *t2                    // time stamp of actual cycle + 2 (predicted) 
                    )
@@ -427,7 +429,11 @@ uint64_t nextStamp(uint64_t stamps[],              // all timestamps
   int64_t    n;                                    // number of measurements
 
   // basic check
-  if (WRF50_N_STAMPS < 2) return getSysTime() + WRF50_CYCLELEN_MIN;
+  if (WRF50_N_STAMPS < 2) {
+    *t1 = getSysTime() + WRF50_CYCLELEN_MIN;
+    *t2 = *t1 + WRF50_CYCLELEN_MIN;
+    return;
+  } // if n_stamps ...
 
   x0        = stamps[0] - 1000000;
   x_mean    = 0;
@@ -470,8 +476,8 @@ uint64_t nextStamp(uint64_t stamps[],              // all timestamps
 
   // respect hard limits
   actStamp = stamps[WRF50_N_STAMPS - 1];
-  if ((nxtStamp - actStamp) < WRF50_CYCLELEN_MIN) nxtStamp = actStamp + WRF50_CYCLELEN_MIN;
-  if ((nxtStamp - actStamp) > WRF50_CYCLELEN_MAX) nxtStamp = actStamp + WRF50_CYCLELEN_MAX;
+  if ((int64_t)(nxtStamp - actStamp) < WRF50_CYCLELEN_MIN) nxtStamp = actStamp + WRF50_CYCLELEN_MIN;
+  if ((int64_t)(nxtStamp - actStamp) > WRF50_CYCLELEN_MAX) nxtStamp = actStamp + WRF50_CYCLELEN_MAX;
 
   *t1 = nxtStamp;
 
@@ -480,8 +486,8 @@ uint64_t nextStamp(uint64_t stamps[],              // all timestamps
 
   // respect hard limits
   actStamp = *t1;
-  if ((nxtStamp - actStamp) < WRF50_CYCLELEN_MIN) nxtStamp = actStamp + WRF50_CYCLELEN_MIN;
-  if ((nxtStamp - actStamp) > WRF50_CYCLELEN_MAX) nxtStamp = actStamp + WRF50_CYCLELEN_MAX;
+  if ((int64_t)(nxtStamp - actStamp) < WRF50_CYCLELEN_MIN) nxtStamp = actStamp + WRF50_CYCLELEN_MIN;
+  if ((int64_t)(nxtStamp - actStamp) > WRF50_CYCLELEN_MAX) nxtStamp = actStamp + WRF50_CYCLELEN_MAX;
 
   *t2 = nxtStamp;
 } // calcNextStamp
@@ -538,6 +544,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
       // update timestamps
       updateStamps(recDeadline, stampsDM, &validDM);
+      nCyclesDM++;
 
       if (validDM) {
         // in an ideal world, getTDMAct will equal getTDMSet
@@ -553,8 +560,10 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         // statistics for Data Master
         // comparing length of actual cycle with previous cycle; in ideal world, the offset difference should be zero
         getDTDMAct = getTDMAct - (stampsDM[WRF50_N_STAMPS - 2] - stampsDM[WRF50_N_STAMPS - 3]);
-        if (getDTDMAct > getDTDMMax) getDTDMMax = getDTDMAct;
-        if (getDTDMAct < getDTDMMin) getDTDMMin = getDTDMAct;
+        if (nCyclesDM >= 3) {                       // min/max only if the three most recent DM timestamps are from this run
+          if (getDTDMAct > getDTDMMax) getDTDMMax = getDTDMAct;
+          if (getDTDMAct < getDTDMMin) getDTDMMin = getDTDMAct;
+        } // if nCyclesDM
       } // if validDM
 
       break;
@@ -579,14 +588,18 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         
         // statistics 50 Hz mains, comparing actual and predicted value (from previous cycle)
         getOffsMainsAct = t0F50 - t1F50;
-        if (getOffsMainsAct > getOffsMainsMax) getOffsMainsMax = getOffsMainsAct;
-        if (getOffsMainsAct < getOffsMainsMin) getOffsMainsMin = getOffsMainsAct;
+        if (t1F50) {                                // min/max only if a prediction exists
+          if (getOffsMainsAct > getOffsMainsMax) getOffsMainsMax = getOffsMainsAct;
+          if (getOffsMainsAct < getOffsMainsMin) getOffsMainsMin = getOffsMainsAct;
+        } // if t1F50
 
         // statistics Data Master
         // comparing actual value of DM and 50 Hz mains; in an ideal world, the offset should be zero
         getOffsDMAct = t0DM - t0F50;
-        if (getOffsDMAct > getOffsDMMax) getOffsDMMax = getOffsDMAct;
-        if (getOffsDMAct < getOffsDMMin) getOffsDMMin = getOffsDMAct;
+        if (t0DM) {                                 // min/max only if a DM timestamp exists
+          if (getOffsDMAct > getOffsDMMax) getOffsDMMax = getOffsDMAct;
+          if (getOffsDMAct < getOffsDMMin) getOffsDMMin = getOffsDMAct;
+        } // if t0DM
       } // if validF50
 
       // we don't know the current situation, set to lock state 'unknown'
@@ -784,7 +797,7 @@ int main(void) {
     *pSharedGetOffsMainsMax   = getOffsMainsMax;
     *pSharedGetLockState      = getLockState;
     *pSharedGetLockDateHi     = (uint32_t)(getLockDate >> 32);
-    *pSharedGetLockDateLo     = (uint32_t)(getLockDate && 0xffffffff);
+    *pSharedGetLockDateLo     = (uint32_t)(getLockDate & 0xffffffff);
     *pSharedGetNLocked        = getNLocked;
     *pSharedGetNCycles        = getNCycles;
     *pSharedGetNSent          = getNSent;

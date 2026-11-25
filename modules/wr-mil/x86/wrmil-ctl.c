@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Michael Reese GSI-Darmstadt
- *  version : 25-Sep-2026
+ *  version : 25-nov-2026
  *
  * Command-line interface for wr-mil
  *
@@ -234,6 +234,7 @@ int main(int argc, char** argv) {
         break;
       case 'm':
         mil_wb_mon = strtoull(optarg, &tail, 0);
+        if ((*tail != 0) || (mil_wb_mon > 2)) {fprintf(stderr, "Specify a proper number [0..2], not '%s'!\n", optarg); return 1;}
         break;
       case 'f':
         request_fill = 1;
@@ -359,35 +360,35 @@ int main(int argc, char** argv) {
       if (mil_wb_dev  == -1) {fprintf(stderr, "parameter -w is non-optional\n"); return 1;}
       if ((state != COMMON_STATE_CONFIGURED) && (state != COMMON_STATE_IDLE)) printf("wr-mil: WARNING command has no effect (not in state CONFIGURED or IDLE)\n");
       else {
-        if (wrmil_upload(ebDevice, utc_trigger, utc_utc_delay, trig_utc_delay, mil_domain, mil_latency, utc_offset, request_fill, mil_wb_dev, mil_wb_mon) != COMMON_STATUS_OK) die("wrmil upload", status);  ;
+        if ((status = wrmil_upload(ebDevice, utc_trigger, utc_utc_delay, trig_utc_delay, mil_domain, mil_latency, utc_offset, request_fill, mil_wb_dev, mil_wb_mon)) != COMMON_STATUS_OK) die("wrmil upload", status);
         wrmil_cmd_configure(ebDevice);
       } // else state
     } // "configure"
 
     if (!strcasecmp(command, "startop")) {
       wrmil_cmd_startop(ebDevice);
-      if (state != COMMON_STATE_CONFIGURED) printf("wr-f50: WARNING command has no effect (not in state CONFIGURED)\n");
+      if (state != COMMON_STATE_CONFIGURED) printf("wr-mil: WARNING command has no effect (not in state CONFIGURED)\n");
     } // "startop"
 
     if (!strcasecmp(command, "stopop")) {
       wrmil_cmd_stopop(ebDevice);
-      if (state != COMMON_STATE_OPREADY) printf("wr-f50: WARNING command has no effect (not in state OPREADY)\n");
+      if (state != COMMON_STATE_OPREADY) printf("wr-mil: WARNING command has no effect (not in state OPREADY)\n");
     } // "startop"
 
     if (!strcasecmp(command, "recover")) {
       wrmil_cmd_recover(ebDevice);
-      if (state != COMMON_STATE_ERROR) printf("wr-f50: WARNING command has no effect (not in state ERROR)\n");
+      if (state != COMMON_STATE_ERROR) printf("wr-mil: WARNING command has no effect (not in state ERROR)\n");
     } // "recover"
 
     if (!strcasecmp(command, "idle")) {
       wrmil_cmd_idle(ebDevice);
-      if (state != COMMON_STATE_CONFIGURED) printf("wr-f50: WARNING command has no effect (not in state CONFIGURED)\n");
+      if (state != COMMON_STATE_CONFIGURED) printf("wr-mil: WARNING command has no effect (not in state CONFIGURED)\n");
     } // "idle"
     // diagnostics
 
     if (!strcasecmp(command, "cleardiag")) {
       wrmil_cmd_cleardiag(ebDevice);
-      if (state != COMMON_STATE_OPREADY) printf("wr-f50: WARNING command has no effect (not in state OPREADY)\n");
+      if (state != COMMON_STATE_OPREADY) printf("wr-mil: WARNING command has no effect (not in state OPREADY)\n");
     } // "cleardiag"
 
     if (!strcasecmp(command, "diag")) {
