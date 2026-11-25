@@ -9,7 +9,7 @@ over the FPGA's JTAG port (USB-Blaster, Altera virtual JTAG). No extra JTAG or U
   e.g. `make pexp-neorv32`.
 - OpenOCD from Quartus 23 (Altera fork with `aji_client`); `QUARTUS` must point to that installation (the directory containing `bin/openocd`).
 - A Quartus JTAG server (`jtagd`) that sees the cable, local or remote (`jtagconfig --addserver <host[:port]> <password>`).
-- `gdb-multiarch` (or `riscv64-unknown-elf-gdb`).
+- `gdb-multiarch` (or `riscv64-unknown-elf-gdb`) (`sudo apt install gdb-multiarch`).
 
 Check that the debug node is visible:
 
