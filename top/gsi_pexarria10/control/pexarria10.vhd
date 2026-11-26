@@ -115,6 +115,7 @@ entity pexarria10 is
     sfp_mod0_i       : in    std_logic;
     sfp_mod1_io      : inout std_logic;
     sfp_mod2_io      : inout std_logic;
+    sfp_rate_sel_o   : out   std_logic; -- rev B
 
     -----------------------------------------------------------------------
     -- SFP (auxiliary) signals routed to USB-C connector 5 (pexarria10 only)
@@ -438,5 +439,8 @@ begin
   OneWire_aux_CB_splz <= 'Z'; -- Unconnected on pexarria10 (FTM10 only)
 
   nres_out_o <= '0';
+
+  -- SFP rate select (rev B): keep low, translator input must not float
+  sfp_rate_sel_o <= '0';
 
 end rtl;
