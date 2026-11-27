@@ -3,7 +3,12 @@
  * Cesar Prados, Alessandro Rubini, 2013. GNU GPL2 or later
  */
 #include "dev/w1.h"
-#include "syscon.h" /* for usleep */
+#ifdef __lm32__
+#include "syscon.h" /* for usleep_busy, usleep is deprecated on LM32 */
+#define usleep(usec) usleep_busy(usec)
+#else
+#include <unistd.h> /* for usleep (host tools, e.g. eb-mon) */
+#endif
 
 #define LSB_ADDR(X) ((X) & 0xFF)
 #define MSB_ADDR(X) (((X) & 0xFF00)>>8)

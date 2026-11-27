@@ -65,14 +65,14 @@ void uart_write_byte(int b)
 	uart->TDR = b;
 }
 
-int uart_poll()
+int uart_poll(void)
 {
 	if (uart == (volatile struct UART_WB *)ERROR_NOT_FOUND)
 		return 0;
 	return uart->SR & UART_SR_RX_RDY;
 }
 
-int uart_read_byte()
+int uart_read_byte(void)
 {
 	if (!uart_poll())
 		return -1;
@@ -82,6 +82,7 @@ int uart_read_byte()
 int puts(const char *s)
 {
   char c;
-  while(c=*s++)
+  while ((c = *s++))
     uart_write_byte(c);
+  return 0;
 }
