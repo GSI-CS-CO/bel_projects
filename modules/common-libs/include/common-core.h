@@ -3,7 +3,7 @@
  *
  *  created : 2023
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-Sep-2023
+ *  version : 12-nov-2026
  *
  * common routines x86 and epcu firmware
  *
@@ -37,7 +37,7 @@
 #ifndef _COMMON_CORE_H_
 #define _COMMON_CORE_H_
 
-#define COMMON_CORE_VERSION "00.05.05"
+#define COMMON_CORE_VERSION "00.05.06"
 
 // non-optimed routine for converting single precision to half precision float
 // IEEE 754 but no support for subnormal numbers
