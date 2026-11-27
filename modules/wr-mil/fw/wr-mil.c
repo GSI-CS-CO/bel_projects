@@ -3,7 +3,7 @@
  *
  *  created : 2024
  *  author  : Dietrich Beck, Micheal Reese, Mathias Kreider GSI-Darmstadt
- *  version : 25-nov-2026
+ *  version : 27-nov-2026
  *
  *  firmware required for the White Rabbit -> MIL Gateways
  *  
@@ -36,7 +36,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define WRMIL_FW_VERSION         0x000202  // make this consistent with makefile
+#define WRMIL_FW_VERSION         0x000203  // make this consistent with makefile
 
 #define RESET_INHIBIT_COUNTER       10000  // count so many main ECA timemouts, prior sending fill event
 #define BLACKBOX_SCU_PLUGIN_SELECT 0x0440  // register for blackbox plugin select
@@ -737,9 +737,9 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       if (recEvtNo == utc_trigger) {
         // send EVT_UTC_1/2/3/4/5 telegrams
         make_mil_timestamp(sendDeadline, evt_utc, utc_offset);
-        sendDeadline += trig_utc_delay * one_us_ns;
         for (i=0; i<WRMIL_N_UTC_EVTS; i++){
-          sendDeadline += utc_utc_delay * one_us_ns;
+          if (i==0) sendDeadline += trig_utc_delay * one_us_ns;  // delay after utc_trigger
+          else      sendDeadline += utc_utc_delay  * one_us_ns;  // delay between UTC telegrams
           prepMilTelegramEca(evt_utc[i], &sendEvtId, &sendParam);
           // nicer evtId for debugging only
           sendEvtId &= 0xffff000fffffffff;
