@@ -280,6 +280,8 @@ uint32_t configMILEvents(int enable_fifo)
   uint32_t i,j;
   uint32_t fifo_mask;
 
+  if (!pMilRec) return COMMON_STATUS_ERROR;   // no MIL receiver available
+
   // initialize status and command register with initial values; disable event filtering; clear filter RAM
   if (writeCtrlStatRegEvtMil(pMilRec, 0, MIL_CTRL_STAT_ENDECODER_FPGA | MIL_CTRL_STAT_INTR_DEB_ON) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
 
@@ -376,14 +378,12 @@ uint32_t extern_entryActionConfigured()
   } // else useBB
 
   // get address of MIL device receiving MIL telegrams; only piggy is supported
-  //  if (*pSharedSetMilMon){
-  if (1) {
-    pMilRec = fwlib_getMilPiggy();
-    if (!pMilRec) {
-      DBPRINT1("wr-mil: ERROR - can't find MIL device; receiver\n");
-      return COMMON_STATUS_OUTOFRANGE;
-    } // if !pMilRec
-
+  // the receiver is an optional feature of SCU3
+  pMilRec = fwlib_getMilPiggy();
+  if (!pMilRec) {
+    DBPRINT1("wr-mil: WARNING - can't find MIL device; receiver disabled\n");
+  } // if !pMilRec
+  else {
     // reset MIL receiver and wait
     if ((status = resetDevMil(pMilRec, 0))  != MIL_STAT_OK) {
       DBPRINT1("wr-mil: ERROR - can't reset MIL device; receiver\n");
@@ -442,6 +442,10 @@ uint32_t extern_entryActionOperation()
   mil_latency          = *pSharedSetLatency;
   mil_domain           = *pSharedSetGid;
   mil_mon              = *pSharedSetMilMon;
+  if (mil_mon && !pMilRec) {
+    DBPRINT1("wr-mil: WARNING - MIL monitoring requested, but no MIL receiver available; monitoring disabled\n");
+    mil_mon            = 0;
+  } // if mil_mon
 
   nEvtsSnd             = 0;
   nEvtsRecT            = 0;
@@ -776,7 +780,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       } // if mil_mon
 
       // read number of received 'broken' MIL telegrams
-      readEventErrCntMil(pMilRec, 0, &nEvtsErr);
+      if (pMilRec) readEventErrCntMil(pMilRec, 0, &nEvtsErr);
 
       nEvtsRecT++;
       
